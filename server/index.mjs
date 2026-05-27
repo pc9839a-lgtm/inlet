@@ -4562,6 +4562,10 @@ async function changeUserPassword(input = {}) {
 
 const managerPermissionTabs = ['edit', 'style', 'inbox', 'stats', 'settings'];
 
+function normalizeManagerStatus(value = '') {
+  return String(value || 'active') === 'active' ? 'active' : 'removed';
+}
+
 function normalizeManagerAccess(access = {}) {
   return managerPermissionTabs.reduce((next, tab) => {
     const current = access?.[tab] || {};
@@ -4586,7 +4590,7 @@ function managersFromPage(page = {}) {
         name: String(manager?.name || '').trim(),
         email,
         ownerId,
-        status: manager?.status === 'disabled' ? 'disabled' : 'active',
+        status: normalizeManagerStatus(manager?.status),
         access: normalizeManagerAccess(manager?.access || {}),
       };
     })
@@ -4633,7 +4637,7 @@ function projectAccessFromPage(page = {}, project = {}) {
 function managerAccessForIdentity(identity = {}, access = {}) {
   if (!identity.ownerId) return null;
   const managers = Array.isArray(access.managers) ? access.managers : [];
-  return managers.find((manager) => manager.status !== 'disabled' && manager.ownerId === identity.ownerId) || null;
+  return managers.find((manager) => manager.status === 'active' && manager.ownerId === identity.ownerId) || null;
 }
 
 function canAccessProject(identity = {}, access = {}, options = {}) {
@@ -4663,7 +4667,7 @@ async function writeProjectAccess(project = {}, access = {}) {
         ...manager,
         ownerId: safeId(manager.ownerId || ownerIdForEmail(manager.email), ''),
         email: normalizeEmail(manager.email || ''),
-        status: manager.status === 'disabled' ? 'disabled' : 'active',
+        status: normalizeManagerStatus(manager.status),
         access: normalizeManagerAccess(manager.access || {}),
       })).filter((manager) => manager.ownerId && manager.email)
       : [],
@@ -4719,7 +4723,7 @@ async function syncD1ProjectAccess(project = {}, access = {}) {
         ownerId: safeId(manager.ownerId || ownerIdForEmail(manager.email), ''),
         role: 'manager',
         access: normalizeManagerAccess(manager.access || {}),
-        status: manager.status === 'disabled' ? 'removed' : 'active',
+        status: normalizeManagerStatus(manager.status),
         invitedByAccountId: ownerId || null,
       })).filter((manager) => manager.ownerId),
     ];
@@ -4853,7 +4857,7 @@ async function syncD1ProjectMember(project = {}, manager = {}, access = {}) {
     ownerId: manager.ownerId,
     role: 'manager',
     access: manager.access || {},
-    status: manager.status === 'disabled' ? 'removed' : 'active',
+    status: normalizeManagerStatus(manager.status),
     acceptedAt: manager.acceptedAt,
   }, {
     projectId: normalizeProject(project).projectId,
@@ -4891,13 +4895,13 @@ async function createOwnershipTransferRequest(req, project = {}, input = {}) {
     ...manager,
     email: normalizeEmail(manager.email || ''),
     ownerId: safeId(manager.ownerId || ownerIdForEmail(manager.email), ''),
-    status: manager.status === 'disabled' ? 'disabled' : 'active',
+    status: normalizeManagerStatus(manager.status),
     access: normalizeManagerAccess(manager.access || {}),
   })) : [];
   const managerId = String(input.managerId || input.targetManagerId || input.id || '').trim();
   const managerEmail = normalizeEmail(input.managerEmail || input.email || '');
   const selected = managers.find((manager) => (
-    manager.status !== 'disabled'
+    manager.status === 'active'
     && ((managerId && String(manager.id) === managerId) || (managerId && String(manager.ownerId) === managerId) || (managerEmail && manager.email === managerEmail))
   )) || null;
   if (!selected?.ownerId || !selected.email) {
@@ -5000,7 +5004,7 @@ async function applyOwnershipTransferCompletion(project = {}, request = {}, acce
       ...manager,
       email: normalizeEmail(manager.email || ''),
       ownerId: safeId(manager.ownerId || ownerIdForEmail(manager.email), ''),
-      status: manager.status === 'disabled' ? 'disabled' : 'active',
+      status: normalizeManagerStatus(manager.status),
       access: normalizeManagerAccess(manager.access || {}),
     }))
     .filter((manager) => manager.ownerId && manager.email && manager.ownerId !== toAccountId && manager.email !== managerEmail);

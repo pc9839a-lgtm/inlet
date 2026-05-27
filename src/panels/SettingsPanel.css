@@ -271,6 +271,16 @@
   gap: 0;
 }
 
+.manager-card.disabled {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.manager-card.disabled .manager-card-head strong,
+.manager-card.disabled .manager-card-head span {
+  color: #94a3b8;
+}
+
 .manager-card-head {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -368,6 +378,12 @@
   padding: 0 12px;
   font-size: 12px;
   font-weight: 950;
+}
+
+.manager-card-actions button:disabled,
+.manager-detail-actions button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
 }
 
 .manager-card-body {

@@ -88,6 +88,7 @@ function managerAccessSummary(manager) {
   const access = manager.access || {};
   const editable = MANAGER_PERMISSION_TABS.filter((tab) => access[tab]?.write).map((tab) => MANAGER_TAB_LABELS[tab]);
   const viewOnly = MANAGER_PERMISSION_TABS.filter((tab) => access[tab]?.read && !access[tab]?.write).map((tab) => MANAGER_TAB_LABELS[tab]);
+  if (manager.status !== 'active') return '비활성';
   if (editable.length) return `편집 ${editable.join(', ')}`;
   if (viewOnly.length) return `보기 ${viewOnly.join(', ')}`;
   return '권한 없음';
@@ -137,7 +138,7 @@ export default function SettingsPanel({
   const managerMode = isManagerMode(accessMode);
   const canManageProjectUsers = !managerMode;
   const [managerDraft, setManagerDraft] = useState(() => managers.map(normalizeManagerAccount));
-  const eligibleTransferManagers = useMemo(() => managerDraft.filter((manager) => manager.email && manager.status !== 'disabled'), [managerDraft]);
+  const eligibleTransferManagers = useMemo(() => managerDraft.filter((manager) => manager.email && manager.status === 'active'), [managerDraft]);
   const [transferManagerId, setTransferManagerId] = useState('');
   const [showTransfer, setShowTransfer] = useState(false);
   const [expandedManagerId, setExpandedManagerId] = useState('');
@@ -276,9 +277,31 @@ export default function SettingsPanel({
     notify('매니저 입력 칸을 추가했습니다.', 'success');
   };
 
+  const toggleManagerDisabled = (index) => {
+    const current = managerDraft[index];
+    updateManager(index, { status: current?.status === 'active' ? 'disabled' : 'active' });
+  };
+
+  const removeManager = async (index) => {
+    const manager = managerDraft[index];
+    const ok = await confirmAction({
+      title: '매니저 삭제',
+      message: `${managerLabel(manager)}의 페이지 접근 권한을 제거합니다. 저장하면 서버 접근도 차단됩니다.`,
+      confirmLabel: '삭제',
+      cancelLabel: '취소',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    updateManagerDrafts(managerDraft.filter((_, currentIndex) => currentIndex !== index));
+  };
+
   const createInvite = async (manager, index) => {
     if (!manager.email) {
       notify('매니저 이메일을 먼저 입력하세요.', 'error');
+      return;
+    }
+    if (manager.status !== 'active') {
+      notify('비활성 매니저는 초대할 수 없습니다.', 'error');
       return;
     }
     updateOwnership({ managers: managerDraft.map(normalizeManagerAccount) });
@@ -427,8 +450,9 @@ export default function SettingsPanel({
               const inviteUrl = manager.inviteUrl || managerInviteUrl(manager.inviteToken);
               const expanded = expandedManagerId === manager.id;
               const menuExpanded = expandedManagerMenuId === manager.id;
+              const disabledManager = manager.status !== 'active';
               return (
-                <div className="manager-card compact" key={manager.id || index}>
+                <div className={`manager-card compact ${disabledManager ? 'disabled' : ''}`} key={manager.id || index}>
                   <div className="manager-card-head">
                     <div>
                       <strong>{managerLabel(manager)}</strong>
@@ -436,7 +460,8 @@ export default function SettingsPanel({
                     </div>
                     <div className="manager-card-actions">
                       <button type="button" onClick={() => setExpandedManagerId(expanded ? '' : manager.id)}>{expanded ? '접기' : '설정'}</button>
-                      <button type="button" className="danger-btn" disabled={lockedSections.managers} onClick={() => updateManagerDrafts(managerDraft.filter((_, currentIndex) => currentIndex !== index))}>삭제</button>
+                      <button type="button" disabled={lockedSections.managers} onClick={() => toggleManagerDisabled(index)}>{disabledManager ? '활성' : '비활성'}</button>
+                      <button type="button" className="danger-btn" disabled={lockedSections.managers} onClick={() => removeManager(index)}>삭제</button>
                     </div>
                   </div>
                   {expanded && (
@@ -447,14 +472,14 @@ export default function SettingsPanel({
                       </div>
                       <div className="manager-preset-row" aria-label="빠른 권한 설정">
                         {MANAGER_ACCESS_PRESETS.map((preset) => (
-                          <button type="button" key={preset.id} disabled={lockedSections.managers} onClick={() => setManagerPreset(index, preset)}>
+                          <button type="button" key={preset.id} disabled={lockedSections.managers || disabledManager} onClick={() => setManagerPreset(index, preset)}>
                             {preset.label}
                           </button>
                         ))}
                       </div>
                       <div className="manager-detail-actions">
                         <button type="button" onClick={() => setExpandedManagerMenuId(menuExpanded ? '' : manager.id)}>{menuExpanded ? '메뉴권한 닫기' : '메뉴권한'}</button>
-                        <button type="button" onClick={() => (inviteUrl ? copyInvite(manager) : createInvite(manager, index))} disabled={lockedSections.managers || loading}>{loading ? '복사 중' : '초대'}</button>
+                        <button type="button" onClick={() => (inviteUrl ? copyInvite(manager) : createInvite(manager, index))} disabled={lockedSections.managers || disabledManager || loading}>{loading ? '복사 중' : '초대'}</button>
                       </div>
                       {menuExpanded && (
                         <div className="manager-permission-panel">
@@ -463,7 +488,7 @@ export default function SettingsPanel({
                             {MANAGER_PERMISSION_TABS.map((permissionTab) => (
                               <div className="manager-permission-row" key={permissionTab}>
                                 <strong>{MANAGER_TAB_LABELS[permissionTab]}</strong>
-                                <select value={managerPermissionMode(manager, permissionTab)} disabled={lockedSections.managers} onChange={(event) => setManagerPermissionMode(index, permissionTab, event.target.value)}>
+                                <select value={managerPermissionMode(manager, permissionTab)} disabled={lockedSections.managers || disabledManager} onChange={(event) => setManagerPermissionMode(index, permissionTab, event.target.value)}>
                                   <option value="none">권한 없음</option>
                                   <option value="read">보기</option>
                                   <option value="write">편집</option>

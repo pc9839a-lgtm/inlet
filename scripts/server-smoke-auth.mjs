@@ -573,6 +573,54 @@ await runSmoke('server-smoke-manager-invite-session', async ({ baseUrl }) => {
     'X-Inlet-Session': acceptedData.session,
   });
   await assertManagerServerAccessMatrix(baseUrl, project, managerSessionHeaders, 'accepted manager session');
+
+  const disabledManagerSave = await fetchWithTimeout(`${baseUrl}/api/pages/${project.slug}`, {
+    method: 'POST',
+    headers: ownerHeaders,
+    body: JSON.stringify({
+      project,
+      page: {
+        slug: project.slug,
+        title: 'Invite Smoke Page Disabled Manager',
+        blocks: [],
+        ownership: {
+          ownerEmail: 'owner@example.test',
+          managers: [{
+            id: acceptedData.manager.id,
+            name: 'Accepted Manager',
+            email: 'invite-manager@example.test',
+            status: 'disabled',
+            access: acceptedData.manager.access,
+          }],
+        },
+      },
+    }),
+  });
+  assert(disabledManagerSave.status === 200, `disabled manager save expected 200, got ${disabledManagerSave.status}`);
+  await expectStatus('disabled accepted manager read denied', 403, () => fetchWithTimeout(`${baseUrl}/api/pages/${project.slug}?projectId=${project.projectId}&ownerId=${project.ownerId}`, {
+    headers: managerSessionHeaders,
+  }));
+
+  const removedManagerSave = await fetchWithTimeout(`${baseUrl}/api/pages/${project.slug}`, {
+    method: 'POST',
+    headers: ownerHeaders,
+    body: JSON.stringify({
+      project,
+      page: {
+        slug: project.slug,
+        title: 'Invite Smoke Page Removed Manager',
+        blocks: [],
+        ownership: {
+          ownerEmail: 'owner@example.test',
+          managers: [],
+        },
+      },
+    }),
+  });
+  assert(removedManagerSave.status === 200, `removed manager save expected 200, got ${removedManagerSave.status}`);
+  await expectStatus('removed accepted manager read denied', 403, () => fetchWithTimeout(`${baseUrl}/api/pages/${project.slug}?projectId=${project.projectId}&ownerId=${project.ownerId}`, {
+    headers: managerSessionHeaders,
+  }));
 }, {
   env: {
     INLET_SESSION_AUTH_MODE: 'strict',

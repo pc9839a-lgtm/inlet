@@ -39,11 +39,12 @@ function safeAccess(access = {}) {
 
 export function normalizeManagerAccount(manager = {}) {
   const email = normalizedEmail(manager.email);
+  const status = ['active', 'disabled', 'removed'].includes(manager.status) ? manager.status : 'active';
   return {
     id: String(manager.id || email || `manager-${Date.now()}`),
     name: String(manager.name || '').trim(),
     email,
-    status: manager.status === 'disabled' ? 'disabled' : 'active',
+    status,
     invitedAt: manager.invitedAt || '',
     inviteToken: String(manager.inviteToken || '').trim(),
     inviteUrl: String(manager.inviteUrl || '').trim(),
@@ -69,7 +70,7 @@ export function managerForAuthUser(page = {}, authUser = null) {
   const email = normalizedEmail(authUser?.email);
   if (!email) return null;
   const ownership = safeOwnership(page);
-  return ownership.managers.find((manager) => manager.status !== 'disabled' && manager.email === email) || null;
+  return ownership.managers.find((manager) => manager.status === 'active' && manager.email === email) || null;
 }
 
 export function accessModeFor({ authUser = null, page = null, clientAdminEnabled = false } = {}) {
@@ -89,6 +90,7 @@ export function accessModeFor({ authUser = null, page = null, clientAdminEnabled
   if (clientAdminEnabled && ownership.clientAccess && ownership.clientEmail && ownership.clientEmail === email) {
     return ACCESS_MODES.CLIENT_ADMIN;
   }
+  if (ownership.ownerEmail) return ACCESS_MODES.UNAUTHORIZED;
 
   return ACCESS_MODES.BUILDER;
 }

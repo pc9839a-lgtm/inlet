@@ -1,5 +1,5 @@
 import { normalizeAuthUser, workspaceIdForAuthUser } from '../src/lib/authIdentity.js';
-import { ACCESS_MODES, accessModeFor, canReadTab, canUseAdminSurface, canUseBuilderSurface, canWriteTab, tabsForAccessMode } from '../src/lib/authContext.js';
+import { ACCESS_MODES, accessModeFor, canReadTab, canUseAdminSurface, canUseBuilderSurface, canWriteTab, managerForAuthUser, tabsForAccessMode } from '../src/lib/authContext.js';
 import { projectContext } from '../src/lib/projectContext.js';
 
 function assert(condition, message) {
@@ -46,12 +46,42 @@ const ownerPage = {
           settings: { read: false, write: false },
         },
       },
+      {
+        id: 'manager-disabled',
+        name: 'Disabled Manager',
+        email: 'disabled-manager@example.com',
+        status: 'disabled',
+        access: {
+          edit: { read: true, write: true },
+          style: { read: true, write: true },
+          inbox: { read: true, write: true },
+          stats: { read: true, write: false },
+          settings: { read: true, write: false },
+        },
+      },
+      {
+        id: 'manager-removed',
+        name: 'Removed Manager',
+        email: 'removed-manager@example.com',
+        status: 'removed',
+        access: {
+          edit: { read: true, write: true },
+          style: { read: true, write: true },
+          inbox: { read: true, write: true },
+          stats: { read: true, write: false },
+          settings: { read: true, write: false },
+        },
+      },
     ],
   },
 };
 const managerUser = normalizeAuthUser({ name: 'Manager', email: 'manager@example.com' });
+const disabledManagerUser = normalizeAuthUser({ name: 'Disabled Manager', email: 'disabled-manager@example.com' });
+const removedManagerUser = normalizeAuthUser({ name: 'Removed Manager', email: 'removed-manager@example.com' });
 const builderMode = accessModeFor({ authUser: userA1, page: ownerPage });
 const managerMode = accessModeFor({ authUser: managerUser, page: ownerPage });
+const disabledManagerMode = accessModeFor({ authUser: disabledManagerUser, page: ownerPage });
+const removedManagerMode = accessModeFor({ authUser: removedManagerUser, page: ownerPage });
 const clientModeDisabled = accessModeFor({ authUser: clientUser, page: ownerPage });
 const clientMode = accessModeFor({ authUser: clientUser, page: ownerPage, clientAdminEnabled: true });
 const roleClientMode = accessModeFor({ authUser: { ...userB, role: 'client-admin' }, page, clientAdminEnabled: true });
@@ -59,7 +89,11 @@ const unauthorizedMode = accessModeFor({ authUser: null, page });
 
 assert(builderMode === ACCESS_MODES.BUILDER, 'owner should stay in builder mode');
 assert(managerMode === ACCESS_MODES.MANAGER, 'invited manager should enter manager mode');
-assert(clientModeDisabled === ACCESS_MODES.BUILDER, 'client admin mode should stay disabled without the internal flag');
+assert(disabledManagerMode === ACCESS_MODES.UNAUTHORIZED, 'disabled manager should be unauthorized');
+assert(removedManagerMode === ACCESS_MODES.UNAUTHORIZED, 'removed manager should be unauthorized');
+assert(managerForAuthUser(ownerPage, disabledManagerUser) === null, 'disabled manager lookup should return null');
+assert(managerForAuthUser(ownerPage, removedManagerUser) === null, 'removed manager lookup should return null');
+assert(clientModeDisabled === ACCESS_MODES.UNAUTHORIZED, 'client admin mode should stay unauthorized without the internal flag');
 assert(clientMode === ACCESS_MODES.CLIENT_ADMIN, 'matching client email should enter client admin mode');
 assert(roleClientMode === ACCESS_MODES.CLIENT_ADMIN, 'explicit client-admin role should enter client admin mode');
 assert(unauthorizedMode === ACCESS_MODES.UNAUTHORIZED, 'missing auth should be unauthorized');
@@ -76,4 +110,4 @@ assert(canUseBuilderSurface(managerMode, ownerPage, managerUser), 'manager with 
 assert(canUseAdminSurface(builderMode), 'builder should use admin surface');
 assert(!canUseAdminSurface(managerMode), 'manager must not use admin surface');
 
-console.log(JSON.stringify({ ok: true, checks: 27 }, null, 2));
+console.log(JSON.stringify({ ok: true, checks: 31 }, null, 2));
