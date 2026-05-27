@@ -650,6 +650,53 @@ await runSmoke('server-smoke-auth-email-delivery-smtp-skip', async ({ baseUrl })
   timeoutMs: 10000,
 });
 
+await runSmoke('server-smoke-ai-key-storage', async ({ baseUrl }) => {
+  const projectId = 'smoke-ai-key-project';
+  const missing = await fetchWithTimeout(`${baseUrl}/api/ai/key?projectId=${projectId}`, {
+    headers: authHeaders({ 'X-Inlet-Project-Id': projectId }),
+  });
+  assert(missing.status === 200, `AI key missing status expected 200, got ${missing.status}`);
+  const missingData = await missing.json();
+  assert(missingData.key?.status === 'missing' && missingData.key?.connected === false, 'AI key should start missing');
+
+  const invalid = await fetchWithTimeout(`${baseUrl}/api/ai/key`, {
+    method: 'PUT',
+    headers: authHeaders({ 'Content-Type': 'application/json', 'X-Inlet-Project-Id': projectId }),
+    body: JSON.stringify({ projectId, apiKey: 'bad-key' }),
+  });
+  assert(invalid.status === 400, `AI key invalid save expected 400, got ${invalid.status}`);
+
+  const saved = await fetchWithTimeout(`${baseUrl}/api/ai/key`, {
+    method: 'PUT',
+    headers: authHeaders({ 'Content-Type': 'application/json', 'X-Inlet-Project-Id': projectId }),
+    body: JSON.stringify({ projectId, apiKey: 'sk-test1234567890abcdef' }),
+  });
+  assert(saved.status === 200, `AI key save expected 200, got ${saved.status}`);
+  const savedData = await saved.json();
+  assert(savedData.key?.status === 'connected' && savedData.key?.maskedKey === 'sk-...cdef', 'AI key save should return masked connected status');
+  assert(!JSON.stringify(savedData).includes('sk-test1234567890abcdef'), 'AI key response must not expose raw key');
+
+  const stored = await fetchWithTimeout(`${baseUrl}/api/ai/key?projectId=${projectId}`, {
+    headers: authHeaders({ 'X-Inlet-Project-Id': projectId }),
+  });
+  assert(stored.status === 200, `AI key stored status expected 200, got ${stored.status}`);
+  const storedData = await stored.json();
+  assert(storedData.key?.connected === true && storedData.key?.maskedKey === 'sk-...cdef', 'AI key stored status should stay masked');
+
+  const removed = await fetchWithTimeout(`${baseUrl}/api/ai/key?projectId=${projectId}`, {
+    method: 'DELETE',
+    headers: authHeaders({ 'X-Inlet-Project-Id': projectId }),
+  });
+  assert(removed.status === 200, `AI key delete expected 200, got ${removed.status}`);
+  const removedData = await removed.json();
+  assert(removedData.key?.status === 'missing' && removedData.key?.connected === false, 'AI key delete should return missing status');
+}, {
+  env: {
+    INLET_AI_KEY_SECRET: 'smoke-ai-key-secret',
+  },
+  timeoutMs: 10000,
+});
+
 await runSmoke('server-smoke-strict-session-missing-secret', async ({ baseUrl }) => {
   const project = { projectId: 'smoke-strict-no-secret', ownerId: 'local-user', slug: 'smoke-strict-no-secret' };
   const forgedHeaders = authHeaders({

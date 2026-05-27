@@ -107,6 +107,7 @@ Do not reassign these unless a regression is found:
 - Production deploy is confirmed through GitHub push plus Cloudflare Pages retry. Wrangler direct deploy still requires `CLOUDFLARE_API_TOKEN`, so current deploy path is GitHub push -> Cloudflare Pages build/retry.
 - Account/session hardening patch 1 is done locally: email verification delivery now has a `mock`/`smtp` server boundary, SMTP mode does not expose verification tokens, health reports auth email delivery readiness, password reset returns users to login instead of creating a sessionless logged-in state, and server smoke covers SMTP-missing skip behavior.
 - Account status model exists: accounts can be soft-blocked as `suspended` or `deleted` without physical removal, inactive accounts are denied login/session/profile/password operations, and duplicate email/phone checks still see inactive records so operational history stays attached.
+- Server-side customer AI key storage exists: `/api/ai/key` can read masked status, save an encrypted OpenAI key scoped by account/project, and soft-delete it without ever returning the raw key. Server smoke verifies invalid-key rejection, masked connected status, and delete-to-missing behavior.
 
 ## Optional Parallel Split
 
@@ -144,9 +145,10 @@ These are not already-done items. Patch sequentially from item 1 unless the owne
 
 2. Customer-owned AI key storage
    - Per-request customer API key support exists.
-   - Remaining work: encrypted per-account or per-project key storage.
-   - Add key status states: connected, invalid, quota/rate-limited, missing.
-   - Add delete/disconnect key action and audit entry.
+   - Encrypted per-account/per-project server key storage exists with masked status and delete/disconnect API.
+   - Remaining work: connect the AI panel UI to `/api/ai/key` so operators can save/delete without page JSON/localStorage.
+   - Add live key test states: valid, invalid, quota/rate-limited.
+   - Add audit entry for key save/delete/test.
    - Never store raw keys in page JSON/localStorage by default.
 
 3. D1 real runtime smoke and write-side migration

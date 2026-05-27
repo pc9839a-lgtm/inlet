@@ -327,6 +327,13 @@ requireAll(aiPanel, [
   '입력한 API 키는 저장하지 않고 이번 요청에만 서버로 전달합니다.',
 ], 'customer-owned AI key UI contract');
 
+const serverIndex = await read('server/index.mjs');
+requireAll(serverIndex, [
+  "url.pathname === '/api/ai/key'",
+  'encryptAiSecret(apiKey)',
+  "maskedKey: record.last4 ? `sk-...${record.last4}` : ''",
+], 'server customer-owned AI key storage contract');
+
 const app = await read('src/App.jsx');
 requireAll(app, [
   "const AdminPanel = lazy(() => import('./panels/AdminPanel.jsx'))",

@@ -1,5 +1,5 @@
 import { createServer } from 'node:http';
-import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { lookup } from 'node:dns/promises';
 import net from 'node:net';
 import tls from 'node:tls';
@@ -21,6 +21,7 @@ const dataDir = path.resolve(rootDir, env.INLET_DATA_DIR || 'server/data');
 const leadsFile = path.join(dataDir, 'leads.jsonl');
 const usersFile = path.join(dataDir, 'users.jsonl');
 const emailVerificationsFile = path.join(dataDir, 'email-verifications.jsonl');
+const aiKeysFile = path.join(dataDir, 'ai-keys.jsonl');
 const pagesDir = path.join(dataDir, 'pages');
 const storageRuntime = createStorageRuntime(env);
 const apiAuthConfig = {
@@ -262,6 +263,26 @@ const server = createServer(async (req, res) => {
         return;
       }
       sendJson(res, 200, { ok: true, map });
+      return;
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/ai/key') {
+      const status = await readAiKeyStatus(req, projectFromQuery(url));
+      sendJson(res, 200, { ok: true, key: status });
+      return;
+    }
+
+    if (req.method === 'PUT' && url.pathname === '/api/ai/key') {
+      const body = await readJson(req);
+      const status = await saveAiKey(req, body || {});
+      sendJson(res, 200, { ok: true, key: status });
+      return;
+    }
+
+    if (req.method === 'DELETE' && url.pathname === '/api/ai/key') {
+      const body = await readJson(req).catch(() => ({}));
+      const status = await deleteAiKey(req, { ...projectFromQuery(url), ...(body || {}) });
+      sendJson(res, 200, { ok: true, key: status });
       return;
     }
 
@@ -1050,6 +1071,149 @@ function decodeHtmlEntities(value = '') {
 
 function escapeRegExp(value = '') {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function aiKeySecret() {
+  return createHash('sha256')
+    .update(String(env.INLET_AI_KEY_SECRET || sessionAuthConfig.secret || apiAuthConfig.token || 'inlet-local-ai-key-secret'))
+    .digest();
+}
+
+function encryptAiSecret(value = '') {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv('aes-256-gcm', aiKeySecret(), iv);
+  const encrypted = Buffer.concat([cipher.update(String(value), 'utf8'), cipher.final()]);
+  return {
+    iv: iv.toString('base64url'),
+    ciphertext: encrypted.toString('base64url'),
+    tag: cipher.getAuthTag().toString('base64url'),
+    algorithm: 'aes-256-gcm',
+  };
+}
+
+function decryptAiSecret(record = {}) {
+  const cipher = record.cipher || {};
+  if (!cipher.iv || !cipher.ciphertext || !cipher.tag) return '';
+  const decipher = createDecipheriv('aes-256-gcm', aiKeySecret(), Buffer.from(cipher.iv, 'base64url'));
+  decipher.setAuthTag(Buffer.from(cipher.tag, 'base64url'));
+  return Buffer.concat([
+    decipher.update(Buffer.from(cipher.ciphertext, 'base64url')),
+    decipher.final(),
+  ]).toString('utf8');
+}
+
+async function readAiKeyRecords() {
+  try {
+    return (await readJsonlRecords(aiKeysFile)).records.filter((record) => record && typeof record === 'object');
+  } catch {
+    return [];
+  }
+}
+
+function aiKeyScope(req, input = {}) {
+  const identity = requestIdentity(req);
+  const ownerId = safeId(input.ownerId || identity.ownerId || '', '');
+  const projectId = safeId(input.projectId || identity.projectId || '', '');
+  if (!ownerId) {
+    const error = new Error('Account identity is required for AI key storage.');
+    error.status = 401;
+    error.details = { code: 'AUTH_SESSION_INVALID' };
+    throw error;
+  }
+  return { ownerId, projectId };
+}
+
+function aiKeyRecordId(scope = {}) {
+  return [scope.ownerId, scope.projectId || 'account', 'openai'].join(':');
+}
+
+function publicAiKeyStatus(record = null, scope = {}) {
+  if (!record || record.status === 'deleted') {
+    return {
+      provider: 'openai',
+      status: 'missing',
+      ownerId: scope.ownerId || '',
+      projectId: scope.projectId || '',
+      connected: false,
+    };
+  }
+  return {
+    provider: 'openai',
+    status: record.status || 'connected',
+    ownerId: record.ownerId || scope.ownerId || '',
+    projectId: record.projectId || scope.projectId || '',
+    connected: ['connected', 'valid'].includes(record.status || 'connected'),
+    maskedKey: record.last4 ? `sk-...${record.last4}` : '',
+    updatedAt: record.updatedAt || '',
+    lastTestStatus: record.lastTestStatus || '',
+    lastTestMessage: record.lastTestMessage || '',
+  };
+}
+
+async function findAiKeyRecord(scope = {}) {
+  const id = aiKeyRecordId(scope);
+  const records = await readAiKeyRecords();
+  return records.find((record) => record.id === id && record.status !== 'deleted') || null;
+}
+
+async function readAiKeyStatus(req, input = {}) {
+  const scope = aiKeyScope(req, input);
+  return publicAiKeyStatus(await findAiKeyRecord(scope), scope);
+}
+
+async function saveAiKey(req, input = {}) {
+  const scope = aiKeyScope(req, input);
+  const apiKey = String(input.apiKey || input.key || '').trim();
+  if (!apiKey.startsWith('sk-') || apiKey.length < 20) {
+    const error = new Error('OpenAI API key format is invalid.');
+    error.status = 400;
+    error.details = { code: 'AI_KEY_INVALID' };
+    throw error;
+  }
+  const now = new Date().toISOString();
+  const record = {
+    id: aiKeyRecordId(scope),
+    ...scope,
+    provider: 'openai',
+    status: 'connected',
+    cipher: encryptAiSecret(apiKey),
+    last4: apiKey.slice(-4),
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  return withFileLock(aiKeysFile, async () => {
+    const records = await readAiKeyRecords();
+    const index = records.findIndex((item) => item.id === record.id);
+    const nextRecords = records.slice();
+    nextRecords[index >= 0 ? index : nextRecords.length] = {
+      ...(index >= 0 ? records[index] : {}),
+      ...record,
+      createdAt: index >= 0 ? (records[index].createdAt || now) : now,
+    };
+    await writeJsonlRecords(aiKeysFile, nextRecords);
+    return publicAiKeyStatus(nextRecords[index >= 0 ? index : nextRecords.length - 1], scope);
+  });
+}
+
+async function deleteAiKey(req, input = {}) {
+  const scope = aiKeyScope(req, input);
+  const id = aiKeyRecordId(scope);
+  const now = new Date().toISOString();
+  return withFileLock(aiKeysFile, async () => {
+    const records = await readAiKeyRecords();
+    const index = records.findIndex((item) => item.id === id);
+    if (index < 0) return publicAiKeyStatus(null, scope);
+    const nextRecords = records.slice();
+    nextRecords[index] = {
+      ...records[index],
+      status: 'deleted',
+      deletedAt: now,
+      updatedAt: now,
+    };
+    await writeJsonlRecords(aiKeysFile, nextRecords);
+    return publicAiKeyStatus(null, scope);
+  });
 }
 
 function requireOpenAiKey(requestKey = '') {
