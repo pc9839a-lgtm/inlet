@@ -112,6 +112,7 @@ Do not reassign these unless a regression is found:
 - Account status model exists: accounts can be soft-blocked as `suspended` or `deleted` without physical removal, inactive accounts are denied login/session/profile/password operations, and duplicate email/phone checks still see inactive records so operational history stays attached.
 - Server-side customer AI key storage exists: `/api/ai/key` can read masked status, save an encrypted OpenAI key scoped by account/project, and soft-delete it without ever returning the raw key. Server smoke verifies invalid-key rejection, masked connected status, and delete-to-missing behavior.
 - AI panel server-key wiring exists: in server AI mode the panel reads masked key status, saves/deletes via `/api/ai/key`, and generation/test requests include project auth headers so the server can use the stored key without putting the raw key in page JSON or localStorage.
+- AI key test/audit hardening exists: `/api/ai/test` returns `keyTest.status` for stored-key tests, records last test status/message/time on the masked key record, and writes local/D1 audit rows for save, delete, and test actions.
 
 ## Optional Parallel Split
 
@@ -151,8 +152,8 @@ These are not already-done items. Patch sequentially from item 1 unless the owne
    - Per-request customer API key support exists.
    - Encrypted per-account/per-project server key storage exists with masked status and delete/disconnect API.
    - AI panel UI is connected to `/api/ai/key` for masked status, save, and delete.
-   - Add live key test states: valid, invalid, quota/rate-limited.
-   - Add audit entry for key save/delete/test.
+   - Stored-key test now records `valid`, `missing`, `invalid`, `quota_rate_limited`, or `request_failed` status when the endpoint can classify the failure.
+   - Local JSONL audit plus D1 audit write attempts exist for key save/delete/test.
    - Never store raw keys in page JSON/localStorage by default.
 
 3. D1 real runtime smoke and write-side migration

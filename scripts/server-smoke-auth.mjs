@@ -1,5 +1,7 @@
 import { assert, authHeaders, fetchWithTimeout, runSmoke } from './lib/serverSmokeHarness.mjs';
 import { createHmac } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 
 function stableHash(value = '') {
   let hash = 2166136261;
@@ -650,7 +652,7 @@ await runSmoke('server-smoke-auth-email-delivery-smtp-skip', async ({ baseUrl })
   timeoutMs: 10000,
 });
 
-await runSmoke('server-smoke-ai-key-storage', async ({ baseUrl }) => {
+await runSmoke('server-smoke-ai-key-storage', async ({ baseUrl, dataDir }) => {
   const projectId = 'smoke-ai-key-project';
   const missing = await fetchWithTimeout(`${baseUrl}/api/ai/key?projectId=${projectId}`, {
     headers: authHeaders({ 'X-Inlet-Project-Id': projectId }),
@@ -690,6 +692,21 @@ await runSmoke('server-smoke-ai-key-storage', async ({ baseUrl }) => {
   assert(removed.status === 200, `AI key delete expected 200, got ${removed.status}`);
   const removedData = await removed.json();
   assert(removedData.key?.status === 'missing' && removedData.key?.connected === false, 'AI key delete should return missing status');
+
+  const missingTest = await fetchWithTimeout(`${baseUrl}/api/ai/test`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json', 'X-Inlet-Project-Id': projectId }),
+    body: JSON.stringify({ project: { projectId } }),
+  });
+  assert(missingTest.status === 500, `AI key missing test expected 500, got ${missingTest.status}`);
+  const missingTestData = await missingTest.json();
+  assert(missingTestData.keyTest?.status === 'missing', 'AI key missing test should expose missing status');
+
+  const auditRaw = await readFile(path.join(dataDir, 'audit.jsonl'), 'utf8');
+  const auditActions = auditRaw.trim().split(/\n+/).map((line) => JSON.parse(line).action);
+  assert(auditActions.includes('ai_key.save'), 'AI key save audit should be written');
+  assert(auditActions.includes('ai_key.delete'), 'AI key delete audit should be written');
+  assert(auditActions.includes('ai_key.test'), 'AI key test audit should be written');
 }, {
   env: {
     INLET_AI_KEY_SECRET: 'smoke-ai-key-secret',

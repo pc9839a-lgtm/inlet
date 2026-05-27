@@ -22,6 +22,7 @@ const leadsFile = path.join(dataDir, 'leads.jsonl');
 const usersFile = path.join(dataDir, 'users.jsonl');
 const emailVerificationsFile = path.join(dataDir, 'email-verifications.jsonl');
 const aiKeysFile = path.join(dataDir, 'ai-keys.jsonl');
+const auditFile = path.join(dataDir, 'audit.jsonl');
 const pagesDir = path.join(dataDir, 'pages');
 const storageRuntime = createStorageRuntime(env);
 const apiAuthConfig = {
@@ -293,8 +294,17 @@ const server = createServer(async (req, res) => {
     if (req.method === 'POST' && url.pathname === '/api/ai/test') {
       const body = await readJson(req);
       const apiKey = body?.apiKey || await resolveStoredAiKey(req, body?.project || {});
-      await testOpenAi(body?.model, apiKey);
-      sendJson(res, 200, { ok: true });
+      const scope = body?.apiKey ? null : tryAiKeyScope(req, body?.project || {});
+      try {
+        await testOpenAi(body?.model, apiKey);
+        if (scope) await updateAiKeyTestStatus(req, scope, { status: 'valid', message: 'AI key test succeeded.' });
+        sendJson(res, 200, { ok: true, keyTest: { status: 'valid', message: 'AI key test succeeded.' } });
+      } catch (error) {
+        const keyTest = classifyAiKeyTestError(error);
+        if (scope) await updateAiKeyTestStatus(req, scope, keyTest);
+        error.details = { ...(error.details || {}), keyTest };
+        throw error;
+      }
       return;
     }
 
@@ -1149,6 +1159,14 @@ function aiKeyRecordId(scope = {}) {
   return [scope.ownerId, scope.projectId || 'account', 'openai'].join(':');
 }
 
+function tryAiKeyScope(req, input = {}) {
+  try {
+    return aiKeyScope(req, input);
+  } catch {
+    return null;
+  }
+}
+
 function publicAiKeyStatus(record = null, scope = {}) {
   if (!record || record.status === 'deleted') {
     return {
@@ -1204,7 +1222,7 @@ async function saveAiKey(req, input = {}) {
     updatedAt: now,
   };
 
-  return withFileLock(aiKeysFile, async () => {
+  const status = await withFileLock(aiKeysFile, async () => {
     const records = await readAiKeyRecords();
     const index = records.findIndex((item) => item.id === record.id);
     const nextRecords = records.slice();
@@ -1216,6 +1234,8 @@ async function saveAiKey(req, input = {}) {
     await writeJsonlRecords(aiKeysFile, nextRecords);
     return publicAiKeyStatus(nextRecords[index >= 0 ? index : nextRecords.length - 1], scope);
   });
+  await writeAiKeyAudit(req, scope, 'ai_key.save', { status: status.status, maskedKey: status.maskedKey });
+  return status;
 }
 
 async function deleteAiKey(req, input = {}) {
@@ -1234,8 +1254,80 @@ async function deleteAiKey(req, input = {}) {
       updatedAt: now,
     };
     await writeJsonlRecords(aiKeysFile, nextRecords);
+    await writeAiKeyAudit(req, scope, 'ai_key.delete', { previousStatus: records[index]?.status || '' });
     return publicAiKeyStatus(null, scope);
   });
+}
+
+async function updateAiKeyTestStatus(req, scope = {}, result = {}) {
+  const id = aiKeyRecordId(scope);
+  const now = new Date().toISOString();
+  const status = String(result.status || 'request_failed');
+  const message = String(result.message || '').slice(0, 240);
+  let publicStatus = null;
+  await withFileLock(aiKeysFile, async () => {
+    const records = await readAiKeyRecords();
+    const index = records.findIndex((item) => item.id === id && item.status !== 'deleted');
+    if (index < 0) return;
+    const nextRecords = records.slice();
+    const record = records[index];
+    nextRecords[index] = {
+      ...record,
+      status: status === 'valid' ? 'connected' : record.status || 'connected',
+      lastTestStatus: status,
+      lastTestMessage: message,
+      lastTestedAt: now,
+      updatedAt: now,
+    };
+    await writeJsonlRecords(aiKeysFile, nextRecords);
+    publicStatus = publicAiKeyStatus(nextRecords[index], scope);
+  });
+  await writeAiKeyAudit(req, scope, 'ai_key.test', { status, message });
+  return publicStatus;
+}
+
+function classifyAiKeyTestError(error = {}) {
+  const statusCode = Number(error.status || 0);
+  const text = String(error.message || error || '');
+  if (/api key is required|missing|OPENAI_API_KEY/i.test(text)) {
+    return { status: 'missing', message: 'API key is missing.' };
+  }
+  if (statusCode === 401 || statusCode === 403 || statusCode === 400 || /invalid api key|incorrect api key|authentication|format/i.test(text)) {
+    return { status: 'invalid', message: text || 'API key authentication failed.' };
+  }
+  if (statusCode === 429 || /quota|billing|rate limit/i.test(text)) {
+    return { status: 'quota_rate_limited', message: text || 'API quota, rate limit, or billing needs attention.' };
+  }
+  return { status: 'request_failed', message: text || 'API key test request failed.' };
+}
+
+async function writeAiKeyAudit(req, scope = {}, action = '', metadata = {}) {
+  const entry = {
+    id: safeId(`${action}_${Date.now()}_${Math.random().toString(16).slice(2)}`, ''),
+    projectId: scope.projectId || '',
+    actorAccountId: scope.ownerId || '',
+    action,
+    targetType: 'ai_key',
+    targetId: aiKeyRecordId(scope),
+    ip: req?.socket?.remoteAddress || '',
+    userAgent: String(req?.headers?.['user-agent'] || ''),
+    metadata,
+    createdAt: new Date().toISOString(),
+  };
+
+  if (storageRuntime.active === 'd1') {
+    try {
+      await insertD1AuditLog(storageRuntime.d1, entry);
+    } catch (error) {
+      console.warn('D1 AI key audit write failed:', error?.message || error);
+    }
+  }
+
+  try {
+    await appendJsonlRecord(auditFile, entry);
+  } catch (error) {
+    console.warn('AI key audit write failed:', error?.message || error);
+  }
 }
 
 async function resolveStoredAiKey(req, input = {}) {
