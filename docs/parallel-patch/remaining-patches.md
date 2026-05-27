@@ -10,7 +10,7 @@ Current execution mode: one worker continues sequentially from the highest prior
 
 Last checked on 2026-05-27:
 
-- Passing: `npm run css:qa`, `npm run runtime:qa`, `npm run templates:qa`, `npm run bundle:qa`, `npm run deployment:qa`, `npm run integration:qa`.
+- Passing baseline before the current D1 coverage patch: `npm run css:qa`, `npm run runtime:qa`, `npm run templates:qa`, `npm run bundle:qa`, `npm run deployment:qa`, `npm run integration:qa`.
 - CSS source total: `391276/500000`.
 - Main referenced JS: `317751/430000`.
 - Largest lazy preview CSS: `188791` bytes.
@@ -81,7 +81,7 @@ Do not reassign these unless a regression is found:
 - D1 production database `inlet-prod` exists on Cloudflare, is bound as `DB` in `wrangler.jsonc`, and has `migrations/0001_inlet_core.sql` applied.
 - D1 production schema groundwork exists in `migrations/0001_inlet_core.sql` for accounts, projects, members, invites, pages, revisions, leads, events, delivery logs, AI drafts, subscriptions, payments, ownership transfer requests, and audit logs.
 - D1 adapter groundwork exists in `server/storage/d1Adapter.mjs`; it now includes lead/event row encoding, decoding, paged list helpers, idempotent lead upsert, event insert helpers, monthly stats SQL aggregation, delivery log sync, and delivery retry queue reads.
-- D1 runtime selection groundwork exists in `server/storage/runtimeAdapter.mjs`; `INLET_STORAGE_ADAPTER=jsonl|d1|auto` is recognized and `/api/health` reports the requested/active storage mode. Runtime routes still use JSONL until the D1 route migration is completed.
+- D1 runtime selection groundwork exists in `server/storage/runtimeAdapter.mjs`; `INLET_STORAGE_ADAPTER=jsonl|d1|auto` is recognized and `/api/health` reports requested/active storage mode plus route-level coverage for accounts, pages, leads, events/stats, delivery logs, AI drafts, invites/members, ownership transfer, and AI key storage.
 - D1 lead/event route migration has started: `/api/leads` create/list/update/delete, month-bounded CSV export, `/api/events` create/list, and month-bounded `/api/stats/summary` use D1 when `storageRuntime.active === 'd1'`; lead status, kind, delivery-status, and month-bounded search filters are covered.
 - D1 duplicate lead detection now uses contact/email SQL lookup instead of hydrating the first 100 monthly leads.
 - D1 stats now uses SQL aggregate queries for monthly PV/CTA/form/reservation/lead/status/delivery/type/trend counts instead of hydrating the full month into memory, honors `dateFrom/dateTo` inside the selected month, and dedupes events with `dedupe_key` when available.
@@ -95,7 +95,8 @@ Do not reassign these unless a regression is found:
 - D1 page storage now has `pages` and `page_revisions` encode/decode/upsert/read/list helpers. Page GET/POST and revision list/read use D1 when `storageRuntime.active === 'd1'`, with JSON file storage kept as local fallback.
 - D1 AI draft storage now has `ai_drafts` encode/decode/upsert/list/soft-delete helpers. `/api/ai/drafts` list/save/delete uses D1 when active, with JSON file storage kept as local fallback.
 - D1 project access read fallback exists: if `access.json` is absent and D1 is active, project access can be derived from `projects` plus active `project_members`. The full write-side migration is still staged to avoid breaking legacy projects without account rows.
-- D1 adapter behavior QA exists in `scripts/d1-adapter-quality-check.mjs` and verifies lead/event encode/decode, lead upsert, event dedupe insert, paged lists, SQL stats aggregation, and storage runtime fallback/ready plans.
+- D1 adapter behavior QA exists in `scripts/d1-adapter-quality-check.mjs` and verifies lead/event encode/decode, lead upsert, event dedupe insert, paged lists, SQL stats aggregation, storage runtime fallback/ready plans, and runtime route coverage.
+- D1 runtime coverage QA exists as `npm run d1:runtime:qa`; it proves that missing D1 bindings show JSONL fallback for every route and ready D1 bindings expose active/partial/jsonl status by feature group.
 - Preview renderer CSS import regression is fixed: `LandingRenderer.css` now imports `preview-cards.css` by relative path, so Vite no longer looks for a missing root-level `styles/preview-cards.css`.
 - Account dashboard polish exists: the dashboard now shows account email, phone, role label, and a clear logout action instead of a bare email-only header.
 - Auth error messages now use readable Korean copy for duplicate email/phone, password policy, email verification, login, and expired session cases.
@@ -154,6 +155,7 @@ These are not already-done items. Patch sequentially from item 1 unless the owne
 
 3. D1 real runtime smoke and write-side migration
    - D1 schema and adapter QA exist.
+   - `/api/health` now exposes route-level D1 coverage, and `npm run d1:runtime:qa` locks the expected active/partial/jsonl states.
    - Remaining work: real Cloudflare Worker/Pages Functions D1 binding smoke.
    - Complete write-side project access/member permission migration from `access.json` fallback into D1.
    - Add confirmed JSONL -> D1 write backfill after dry-run review.

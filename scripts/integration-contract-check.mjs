@@ -27,6 +27,7 @@ for (const name of [
   'jsonl:qa',
   'd1:schema:qa',
   'd1:adapter:qa',
+  'd1:runtime:qa',
   'ops:qa',
   'stats:qa',
   'csv:qa',
@@ -232,12 +233,27 @@ requireAll(d1RuntimeAdapter, [
   'normalizeStorageMode',
   'detectD1Binding',
   'createStorageRuntime',
+  'storageRuntimeCoverage',
   'storageRuntimeHealth',
   'storageRuntimePlan',
+  'D1_RUNTIME_ROUTE_COVERAGE',
   'INLET_STORAGE_ADAPTER',
   'INLET_STORAGE_MODE',
   'd1UnavailablePlan',
 ], 'D1 runtime adapter contract');
+
+const d1RuntimeQa = await read('scripts/d1-runtime-coverage-check.mjs');
+requireAll(d1RuntimeQa, [
+  'D1_RUNTIME_ROUTE_COVERAGE',
+  'storageRuntimeCoverage',
+  'accounts',
+  'leads',
+  'eventsStats',
+  'invitesMembers',
+  'ownershipTransfer',
+  'aiKeys',
+  'AI key vault should stay JSONL',
+], 'D1 runtime coverage QA contract');
 
 const d1AdapterQa = await read('scripts/d1-adapter-quality-check.mjs');
 requireAll(d1AdapterQa, [
@@ -256,6 +272,7 @@ requireAll(d1AdapterQa, [
   'listD1Events',
   'listD1OwnershipTransferRequests',
   'createStorageRuntime',
+  'storageRuntimeCoverage',
   'storageRuntimePlan',
 ], 'D1 adapter QA contract');
 

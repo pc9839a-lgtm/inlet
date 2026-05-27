@@ -1,5 +1,6 @@
 import {
   createStorageRuntime,
+  storageRuntimeCoverage,
   storageRuntimeHealth,
   storageRuntimePlan,
 } from '../server/storage/runtimeAdapter.mjs';
@@ -891,11 +892,13 @@ assert(missingPlan.adapter === 'd1' && missingPlan.available === false && missin
 
 const readyRuntime = createStorageRuntime({ INLET_STORAGE_ADAPTER: 'auto', DB: db });
 const readyPlan = storageRuntimePlan(readyRuntime, 'leads', { month: '2026-05' });
+const readyCoverage = storageRuntimeCoverage(readyRuntime);
 assert(readyRuntime.active === 'd1' && readyPlan.fullScan === false, 'ready D1 runtime should become indexed d1');
+assert(readyCoverage.some((item) => item.key === 'leads' && item.adapter === 'd1'), 'ready D1 runtime should expose active lead coverage');
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 46,
+  checks: 47,
   accounts: db.rows.accounts.length,
   projects: db.rows.projects.length,
   invites: db.rows.invites.length,

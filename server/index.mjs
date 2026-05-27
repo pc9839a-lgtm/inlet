@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { duplicateWindowMs as duplicatePolicyWindowMs, isReservationLead as isReservationLeadPolicy, normalizeLeadContact, sameLeadKind as sameLeadKindPolicy } from '../src/lib/leadDuplicatePolicy.js';
 import { buildStats as buildStatsSummary } from '../src/lib/statsMetrics.js';
 import { appendJsonlRecord, queryJsonlRecords, readJsonlRecords, writeJsonlRecords } from './storage/jsonlAdapter.mjs';
-import { createStorageRuntime, storageRuntimeHealth, storageRuntimePlan } from './storage/runtimeAdapter.mjs';
+import { createStorageRuntime, storageRuntimeCoverage, storageRuntimeHealth, storageRuntimePlan } from './storage/runtimeAdapter.mjs';
 import { aggregateD1Stats, deleteD1AiDraft, deleteD1Lead, findD1LeadsByContact, getD1AccountByEmail, getD1AccountByPhone, getD1Lead, getD1PageBySlug, getD1PageRevision, getD1ProjectAccess, insertD1AuditLog, insertD1Event, insertD1PageRevision, listD1AiDrafts, listD1DeliveryLogs, listD1DeliveryRetryQueue, listD1Events, listD1Leads, listD1OwnershipTransferRequests, listD1PageRevisions, upsertD1Account, upsertD1AiDraft, upsertD1Invite, upsertD1Lead, upsertD1OwnershipTransferRequest, upsertD1Page, upsertD1ProjectMember } from './storage/d1Adapter.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -112,7 +112,10 @@ const server = createServer(async (req, res) => {
           emailDeliveryMode: authEmailConfig.mode,
           emailDeliveryReady: authEmailConfig.mode === 'mock' || (!!smtpConfig.host && !!smtpConfig.from),
         },
-        storage: storageRuntimeHealth(storageRuntime),
+        storage: {
+          ...storageRuntimeHealth(storageRuntime),
+          coverage: storageRuntimeCoverage(storageRuntime),
+        },
       });
       return;
     }
