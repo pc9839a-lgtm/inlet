@@ -77,9 +77,9 @@ Run these three workers in parallel. They must not share write ownership.
 
 | Worker | Patch | Files |
 | --- | --- | --- |
-| Worker 1 | Auth/session + storage/index | `server/index.mjs`, storage adapters/scripts, auth QA |
-| Worker 2 | Browser visual QA + deployment artifacts | browser/rendering QA, build/clean/prune scripts, deployment docs |
-| Worker 3 | Live integrations | AI/SMTP/OAuth/conversion QA scripts and ops docs |
+| Worker 1 | Auth/session/account/member/billing/storage | `server/index.mjs`, `server/storage/**`, account/payment scripts, auth QA |
+| Worker 2 | Browser visual QA + frontend product polish | browser/rendering QA, editor/settings/inbox UI, build/clean/prune scripts |
+| Worker 3 | Live integrations + internal admin/ops docs | AI key handling, SMTP/OAuth/conversion/webhook QA, admin/ops docs |
 
 ## Immediate Remaining Functional Patches
 
@@ -116,11 +116,111 @@ These are not already-done items. Patch in this order unless a worker is blocked
    - Real AI, SMTP, OAuth, conversion tracking, and webhook end-to-end checks require keys, public URL, and live server.
    - Missing credentials must remain `skipped-live`, not a false failure.
 
-## Worker 1: Auth Session And Storage Scale
+## Expanded Launch Backlog
+
+Use this as the full production checklist. These items are not already done unless explicitly listed in the Already Done section.
+
+1. Login, account, and member management
+   - Replace local-only auth UX with production account flows backed by the server store.
+   - Implement real login session issue/refresh/logout for masters, client admins, and managers.
+   - Add email verification request/confirm flow; signup must stay blocked until email is verified.
+   - Keep password rule: at least 6 chars and must include English letters plus numbers.
+   - Password reset must work as "email verification completed -> set new password".
+   - Enforce duplicate email and duplicate phone server-side, not only in local UI.
+   - Add account profile/settings for name, email, phone, password change, customer-owned AI API key status, and logout.
+   - Add session expiry handling in the frontend: expired session should return to login with a clear message.
+   - Add account deletion/suspension state model, but do not hard-delete operational records until retention policy exists.
+
+2. Member roles and permissions
+   - Keep manager permissions in normal Settings for every client/admin project, not in internal admin.
+   - Permission labels must be user-facing Korean: `보기` and `편집`.
+   - Menu permission itself should be compact/selectable, not a grid that shows every read/write toggle at once.
+   - Manager invite should create and copy the invite link in one action after valid email/name input.
+   - Invited manager must login/signup, then only load the invited project if the authenticated email matches the invite email.
+   - If invite email does not match login/signup email, show `초대받은 이메일을 확인해주세요.`
+   - Add manager disable/remove flow and ensure removed managers lose server access immediately.
+   - Add manager activity/audit rows for invite created, invite accepted, permission changed, and removed.
+
+3. Internal admin and operator control
+   - Internal admin must be route-only, such as `/admin`, and must require internal master/operator login.
+   - Public workspace navigation must not show internal admin controls.
+   - Internal admin should manage users, projects, billing states, ownership transfer approvals, abuse reports, and system health.
+   - Add search/filter by email, phone, project id, slug, plan, status, and payment status.
+   - Add operator audit log for all dangerous actions.
+   - Add admin approval queue for ownership transfer.
+   - Add manual account suspend/restore and project pause/archive tools.
+
+4. Ownership transfer and billing handoff
+   - In project Settings, ownership transfer should be a collapsed `소유권이전` section.
+   - Transfer target must be selected from existing managers only.
+   - Transfer request should go to internal admin approval before completion.
+   - If a paid subscription exists, transfer remains pending until the current billing period expires or subscription is canceled.
+   - After transfer completes, new owner must be able to attach their own card/payment method.
+   - Add transfer states: requested, waiting_billing_clearance, approved, rejected, completed, canceled.
+   - Add user-facing status copy for each state.
+   - Add smoke/contract QA proving managers cannot self-transfer ownership without admin approval.
+
+5. Plans, payment, and subscription
+   - Add plan model under the 9,900 KRW ceiling: free/trial, 3,300, 6,600, 9,900.
+   - Feature limits must be enforced server-side: pages, monthly leads, stats retention, managers, custom domain, conversion tracking.
+   - Add payment provider abstraction first, then Toss Payments implementation.
+   - Add checkout, billing key/card registration, subscription renewal, cancel-at-period-end, payment failure, and grace-period state.
+   - Add webhook signature verification and idempotency keys before accepting payment state changes.
+   - Add payment history and invoice/receipt link storage.
+   - Add admin manual override for billing state with audit log.
+   - Keep payment provider secrets server-only.
+
+6. Customer-owned AI API keys
+   - Since AI cost is customer-owned, add per-account or per-project API key storage.
+   - Encrypt or seal API keys at rest; do not store raw keys in page JSON/localStorage.
+   - Add key test endpoint and clear status: connected, invalid, quota/rate-limited, missing.
+   - Add UI copy explaining that AI usage is billed by the customer's own provider/API key.
+   - Keep AI draft output editable and never insert non-editable template fragments.
+   - Add per-project model selection and safe fallback when key is missing.
+
+7. D1 storage route migration
+   - Runtime selection exists, but routes still operate on JSONL fallback.
+   - Move `/api/leads` create/list/update/delete to D1 when `INLET_STORAGE_ADAPTER=d1|auto` and binding exists.
+   - Move `/api/events` create/list/dedupe to D1.
+   - Move `/api/stats/summary` to D1 server aggregation; do not fetch all events/leads into memory.
+   - Move CSV export to D1 month-bounded queries.
+   - Move delivery logs/retry queue to D1.
+   - Move accounts, sessions, manager invites, page metadata, revisions, AI drafts, subscriptions, payments, transfer requests, and audit logs to D1.
+   - Keep JSONL fallback for local dev and import/backfill only.
+   - Add JSONL -> D1 import script with dry-run, counts, duplicate handling, and rollback note.
+
+8. Inbox, stats, and retention
+   - Inbox first load must stay limited to 50 and use "더보기" paging.
+   - Inbox and CSV must stay month-bounded.
+   - Add monthly lead quota enforcement per plan.
+   - Add stats retention by plan: free short retention, paid longer retention.
+   - Add server-side indexes/queries for PV, CTA, form submit, reservation, conversion rate, page, source, device.
+   - Add dedupe strategy for events and leads using D1 indexes.
+   - Add admin retention job or scheduled cleanup plan.
+
+9. Public landing, templates, and editor polish
+   - Templates are now 3, but each must feel like a real service page, not a sample shell.
+   - Keep all template content editable via existing blocks.
+   - Add HTML/import mode later only if it maps to editable blocks or a controlled embedded-code block.
+   - Continue fixing style controls where text color/font/underline do not reflect live preview immediately.
+   - Keep premium effects subtle, randomized, and image-overlay aware.
+   - Preserve cards block `1/2` columns only unless product direction changes.
+   - Run real browser QA against start modal, editor, template first viewport, inbox, settings, and legal footer pages.
+
+10. Legal, email, and operational integrations
+   - Legal pages exist, but content should become service-generic and configurable, not hard-coded example business copy.
+   - Add transactional email provider: verification, invite, password reset, payment failure, transfer approval/rejection.
+   - Keep SMTP/mock checks as skipped-live until credentials exist.
+   - Add custom domain flow later: DNS instructions, verification, SSL status, route binding.
+   - Add conversion tracking live verification for GTM, Meta, Google Ads, Naver, Kakao.
+   - Add webhook delivery retry/dead-letter UI backed by D1.
+   - Add real browser visual QA mandatory gate before production launch.
+
+## Worker 1: Auth Session, Accounts, Billing, And Storage Scale
 
 Goal:
 
-- Move from local identity headers and JSONL full scans toward production-ready account/session and indexed storage.
+- Move from local identity headers and JSONL full scans toward production-ready account/session, member management, billing state, and indexed storage.
 
 Current state:
 
@@ -128,6 +228,7 @@ Current state:
 - Server trusts local identity headers in dev/operator mode.
 - Signed session strict mode exists for invite acceptance and smoke verification.
 - Manager invite acceptance exists on `/invite/:token`.
+- Register/password endpoints exist as smoke-level account groundwork, but they are not complete hosted login/email-verification membership flows.
 - JSONL works but still scans files for duplicate lookup, stats, export, and repair.
 - List/stat reads are routed through the JSONL query boundary, but the implementation is still a full-scan fallback.
 
@@ -140,9 +241,18 @@ Tasks:
 - Keep local identity headers only for dev/smoke mode.
 - Keep smoke proving forged owner headers are ignored when session enforcement is enabled.
 - Move persisted manager invitations from project `access.json` into the long-term account/auth store once that store exists.
-- Add account lifecycle screens for master signup/login and manager login if this MVP moves beyond local auth.
+- Implement master/client/manager login with signed sessions and server-side account lookup.
+- Implement email verification issue/confirm flow and block signup/invite acceptance until verified.
+- Implement password reset as verified-email password change.
+- Enforce duplicate email and duplicate phone in D1.
+- Add account profile/session/logout endpoints.
+- Move persisted manager invitations from project `access.json` into D1 `invites` and `project_members`.
+- Add ownership transfer request/approval state in D1 before UI completion.
+- Add payment/subscription state APIs before real Toss provider wiring.
 - Add a DB/index implementation behind the existing JSONL adapter boundary.
 - Use `migrations/0001_inlet_core.sql` as the first D1 migration and keep `d1:schema:qa` passing when changing account, billing, ownership transfer, lead/event, or audit structures.
+- Keep `d1:adapter:qa` passing when changing D1 lead/event/account runtime behavior.
+- Add migration/backfill scripts from JSONL to D1 with dry-run.
 - Keep JSONL as fallback.
 - Use query plan `activeIndexFields`, `missingIndexFields`, `recommendedIndex`, `indexKey`, and `migrationPriority` to prioritize the first DB indexes.
 - Keep expanding the adapter query contract when new lead/event/stat read paths are added.
@@ -171,11 +281,11 @@ Verification:
 - `npm run integration:qa`
 - `npm run build`
 
-## Worker 2: Real Browser QA And Deployment Artifacts
+## Worker 2: Real Browser QA And Frontend Product Polish
 
 Goal:
 
-- Make visual QA and build artifacts deployment-safe.
+- Make visual QA, frontend product polish, and build artifacts deployment-safe.
 
 Current state:
 
@@ -190,6 +300,15 @@ Current state:
 
 Tasks:
 
+- Polish Settings manager permissions without moving them to internal admin.
+- Replace implementation language with user-facing Korean labels: `보기`, `편집`, `소유권이전`.
+- Keep manager permission editor compact: menu-level permission first, detailed mode only when expanded.
+- Keep invite creation/copy one-step after valid manager email/name.
+- Polish account/login/signup/reset UI once Worker 1 exposes production endpoints.
+- Polish plan/usage/billing state UI once Worker 1 exposes subscription state.
+- Continue editor/style live-preview fixes for color/font/underline/background effects.
+- Keep inbox compact row design: row number visible, date-only in list view, no useless phone/message/mail/copy action clutter.
+- Keep CSV export clearly month-bound.
 - Do not add Playwright/Puppeteer as a default dependency yet; keep it optional to avoid forcing browser downloads into offline/local installs.
 - Use `INLET_BROWSER_QA_REQUIRE=1` in CI or release verification when Playwright/Puppeteer is installed.
 - Use `INLET_BROWSER_QA_TEMPLATE_ROUTES=auto` or a comma-separated route list when screenshotting template/public routes.
@@ -203,7 +322,7 @@ Tasks:
 
 Do not touch:
 
-- Server auth/session behavior.
+- Server auth/session/storage behavior except consuming stable APIs.
 - Template content.
 - Live integration credentials or provider logic.
 
@@ -217,11 +336,11 @@ Verification:
 - `npm run deployment:qa`
 - strict artifact QA
 
-## Worker 3: Live Integration Verification
+## Worker 3: Live Integration, Internal Admin, And Ops Verification
 
 Goal:
 
-- Turn offline mock confidence into real live verification once credentials and public URLs exist.
+- Turn offline mock confidence into real live verification, internal admin readiness, and operations documentation once credentials and public URLs exist.
 
 Current state:
 
@@ -238,6 +357,11 @@ Live requirements:
 
 Tasks:
 
+- Document production env groups: app, auth/session, D1, payments, SMTP, AI key policy, OAuth, conversion, webhook.
+- Document customer-owned AI key policy and support boundaries.
+- Document plan limits and what happens at quota.
+- Document internal admin route and operator-only approval actions.
+- Document deployment rollback and D1 migration/backfill procedure.
 - Keep missing credentials as `skipped-live`, not failure.
 - Keep `liveSummary` present when adding new providers or live checks.
 - Run `npm run live:qa` before launch review to see which live checks are ready versus explicitly skipped.

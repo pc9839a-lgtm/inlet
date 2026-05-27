@@ -11,8 +11,8 @@ Use `remaining-patches.md` for the current 3-worker split. Old completed worker 
 
 Current split:
 
-- Worker 1: Auth/session + storage/index.
-- Worker 2: Real browser QA + deployment artifacts.
-- Worker 3: Live integrations.
+- Worker 1: Auth/session/account/member/billing/storage.
+- Worker 2: Real browser QA + frontend product polish + deployment artifacts.
+- Worker 3: Live integrations + internal admin/ops documentation.
 
 Do not recreate old worker files unless explicitly asked.

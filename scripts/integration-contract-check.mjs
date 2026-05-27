@@ -487,9 +487,12 @@ requireAll(opsQa, [
 const remainingPatches = await read('docs/parallel-patch/remaining-patches.md');
 requireAll(remainingPatches, [
   'Remaining Patches: 3 Workers',
-  'Worker 1: Auth Session And Storage Scale',
-  'Worker 2: Real Browser QA And Deployment Artifacts',
-  'Worker 3: Live Integration Verification',
+  'Worker 1: Auth Session, Accounts, Billing, And Storage Scale',
+  'Worker 2: Real Browser QA And Frontend Product Polish',
+  'Worker 3: Live Integration, Internal Admin, And Ops Verification',
+  'Expanded Launch Backlog',
+  'Login, account, and member management',
+  'Plans, payment, and subscription',
   'deployment:qa',
   'Do not reassign these',
   'npm run live:qa',
