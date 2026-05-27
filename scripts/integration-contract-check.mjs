@@ -742,12 +742,14 @@ requireAll(browserVisualQa, [
 requireAll(productionBrowserQa, [
   'INLET_PRODUCTION_QA_URL',
   'INLET_PRODUCTION_BROWSER_QA_REQUIRE',
+  'INLET_BROWSER_QA_REQUIRE',
   'manager-limited',
   'owner-settings',
   'INLET_BROWSER_QA_FORBID_TEXT',
   'browser-visual-quality-check.mjs',
 ], 'production browser QA contract');
 requireAll(hostedApiQa, [
+  'normalizeCheckOutput',
   'INLET_PUBLIC_API_URL',
   'INLET_HOSTED_API_QA_REQUIRE',
   'INLET_HOSTED_API_EXPECT_D1',

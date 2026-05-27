@@ -18,6 +18,7 @@ Last checked on 2026-05-28 after commit `77f6e85`:
 - Full offline QA: `npm run qa:all` passes `33` steps, including `api:hosted:qa`, `api:hosted:routes:qa`, and `api:functions:qa`.
 - Real browser visual QA: `INLET_BROWSER_QA_REQUIRE=1` passes against production `https://inlet-8mr.pages.dev/?tab=stats` with `INLET_BROWSER_QA_STATE_PRESET=manager-limited`, verifying the Stats tab deep link. It also passes against production `https://inlet-8mr.pages.dev/?tab=settings` with `INLET_BROWSER_QA_STATE_PRESET=owner-settings` plus `INLET_BROWSER_QA_CLICK_TEXT=매니저 권한,관리`, verifying the Settings manager card and ownership transfer entry.
 - Production browser visual QA: `npm run browser:production:qa` now runs the manager stats and owner settings checks together. With `INLET_PRODUCTION_BROWSER_QA_REQUIRE=1`, both production cases pass and assert that start-modal text is absent through `INLET_BROWSER_QA_FORBID_TEXT`.
+- Production browser visual QA also accepts `INLET_BROWSER_QA_REQUIRE=1` as the mandatory-browser alias, so release commands do not silently run optional mode because the wrong require env was used.
 - Strict artifact QA: passes with no leftover `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, or `preview.zip` artifacts.
 - GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `77f6e85`.
 - Cloudflare Pages: production deployment `84d6d32e` succeeded for commit `77f6e85`; public URL `https://inlet-8mr.pages.dev/` returns `200` and hosted API route QA passes.
@@ -26,6 +27,7 @@ Last checked on 2026-05-28 after commit `77f6e85`:
 - Hosted API runtime QA: `INLET_PUBLIC_API_URL=https://inlet-8mr.pages.dev INLET_HOSTED_API_QA_REQUIRE=1 npm run api:hosted:qa` passes with `liveSummary.ready=1`.
 - Hosted route QA: `INLET_PUBLIC_API_URL=https://inlet-8mr.pages.dev INLET_HOSTED_ROUTE_QA_REQUIRE=1 INLET_HOSTED_ROUTE_QA_WRITE=1 npm run api:hosted:routes:qa` passes with `liveSummary.ready=46`, proving D1-backed public writes for `/api/leads` and `/api/events`, protected read/write checks for page routes, authenticated D1 read checks for lead list, stats summary, CSV export, delivery logs, retry queue, page save/read, revision list/read, restore, hosted account flow checks, hosted manager invite create/read/accept checks, hosted AI key status/save/delete, hosted AI draft save/list/delete, hosted ownership transfer create/list, and internal admin billing-wait/block/complete checks.
 - Hosted route QA success details now use `detail`; `failureReason` is reserved for failed-live checks so production logs do not look like false failures.
+- Hosted API runtime QA removes empty `failureReason` on ready checks; the field is now reserved for failed-live/static-fallback cases.
 - Cloudflare D1 direct API check confirms `inlet-prod` exists with required core tables and empty initial core counts for accounts/projects/leads/events/audit_logs.
 - Current UI note: Cards block is intentionally limited to `1/2` columns. Keep that scope unless the product direction changes.
 

@@ -22,6 +22,13 @@ function skipped(missing = []) {
   };
 }
 
+function normalizeCheckOutput(check = {}) {
+  if (!Object.prototype.hasOwnProperty.call(check, 'failureReason')) return check;
+  const { failureReason, ...rest } = check;
+  if (check.status === 'ready') return rest;
+  return { ...rest, failureReason };
+}
+
 async function run() {
   if (!baseUrl) return skipped(['INLET_PUBLIC_API_URL']);
 
@@ -45,7 +52,7 @@ async function run() {
     const coverageOk = Array.isArray(payload?.storage?.coverage) && payload.storage.coverage.length > 0;
     const ready = apiOk && authOk && storageOk && coverageOk && !htmlFallback;
 
-    const check = {
+    const check = normalizeCheckOutput({
       name: 'Hosted API runtime',
       status: ready ? 'ready' : 'failed-live',
       missing: [],
@@ -61,7 +68,7 @@ async function run() {
         storageRequested: payload?.storage?.requested || '',
         coverageCount: Array.isArray(payload?.storage?.coverage) ? payload.storage.coverage.length : 0,
       },
-    };
+    });
     return {
       ok: ready || !requireHosted,
       liveSummary: summarize([check]),
