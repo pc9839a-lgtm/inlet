@@ -22,6 +22,17 @@ function skipped(missing = []) {
   };
 }
 
+function normalizeCheckOutput(checks = []) {
+  return checks.map((check) => {
+    if (!Object.prototype.hasOwnProperty.call(check, 'failureReason')) return check;
+    const { failureReason, ...rest } = check;
+    if (check.status === 'ready') {
+      return failureReason ? { ...rest, detail: failureReason } : rest;
+    }
+    return { ...rest, failureReason };
+  });
+}
+
 async function jsonFetch(path, options = {}) {
   const res = await fetch(`${baseUrl}${path}`, {
     ...options,
@@ -657,11 +668,12 @@ async function run() {
     httpStatus: transferCompleted.res.status,
   });
 
+  const outputChecks = normalizeCheckOutput(checks);
   return {
-    ok: checks.every((check) => check.status === 'ready') || !requireHosted,
-    liveSummary: summarize(checks),
+    ok: outputChecks.every((check) => check.status === 'ready') || !requireHosted,
+    liveSummary: summarize(outputChecks),
     projectId: project.projectId,
-    checks,
+    checks: outputChecks,
   };
 }
 

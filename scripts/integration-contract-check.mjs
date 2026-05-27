@@ -624,6 +624,15 @@ requireAll(d1HostedQaCleanup, [
   'plan-only',
 ], 'D1 hosted QA cleanup contract');
 
+const hostedRouteQa = await read('scripts/hosted-api-routes-quality-check.mjs');
+requireAll(hostedRouteQa, [
+  'normalizeCheckOutput',
+  'detail: failureReason',
+  'failureReason',
+  'INLET_HOSTED_ROUTE_QA_WRITE',
+  'Hosted /api/leads authenticated D1 list',
+], 'hosted route QA output contract');
+
 const d1LiveQa = await read('scripts/d1-live-quality-check.mjs');
 requireAll(d1LiveQa, [
   'INLET_D1_LIVE_QA',
