@@ -48,10 +48,13 @@ const chromePathInput = String(process.env.INLET_BROWSER_QA_CHROME_PATH || '').t
 const viewportsInput = String(process.env.INLET_BROWSER_QA_VIEWPORTS || 'all').trim().toLowerCase();
 const allViewports = [
   { name: 'desktop', width: 1280, height: 900 },
+  { name: 'compact', width: 920, height: 900 },
   { name: 'mobile', width: 390, height: 844 },
 ];
 const viewports = viewportsInput === 'desktop'
   ? allViewports.filter((viewport) => viewport.name === 'desktop')
+  : viewportsInput === 'compact'
+    ? allViewports.filter((viewport) => viewport.name === 'compact')
   : viewportsInput === 'mobile'
     ? allViewports.filter((viewport) => viewport.name === 'mobile')
     : allViewports;
@@ -65,7 +68,7 @@ const launchPlan = {
   optionalTemplateRoutes: 'Set INLET_BROWSER_QA_TEMPLATE_ROUTES=auto or a comma-separated route list.',
   optionalStatePreset: 'Set INLET_BROWSER_QA_STATE_PRESET=owner-settings, client-settings, or manager-limited for authenticated visual states.',
   optionalInteraction: 'Set INLET_BROWSER_QA_CLICK_SELECTOR=.top-tabs button:last-child or INLET_BROWSER_QA_CLICK_TEXT=설정 and INLET_BROWSER_QA_EXPECT_TEXT=매니저 권한,소유권이전 for panel checks.',
-  optionalViewports: 'Set INLET_BROWSER_QA_VIEWPORTS=desktop for authenticated admin/builder checks that are blocked on mobile.',
+  optionalViewports: 'Set INLET_BROWSER_QA_VIEWPORTS=desktop or compact for authenticated admin/builder checks that are blocked below 900px.',
 };
 
 function resolveOptional(name) {

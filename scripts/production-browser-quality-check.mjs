@@ -112,6 +112,16 @@ const cases = [
     forbiddenText: '처음 화면을 어떻게 만들까요?,화면을 불러오는 중 오류가 발생했습니다',
   },
   {
+    name: 'owner settings manager permissions compact',
+    url: `${baseUrl}/?tab=settings`,
+    statePreset: 'owner-settings',
+    viewports: 'compact',
+    clickText: '매니저 권한,관리,메뉴권한',
+    expectedText: '매니저 권한,메뉴권한,편집,통계',
+    expectedSelector: '.manager-access-card,.manager-card-body,.manager-permission-panel,.manager-permission-row',
+    forbiddenText: '처음 화면을 어떻게 만들까요?,화면을 불러오는 중 오류가 발생했습니다',
+  },
+  {
     name: 'manager invite acceptance',
     url: `${baseUrl}/invite/qa-visual-invite`,
     statePreset: 'invite-acceptance',
