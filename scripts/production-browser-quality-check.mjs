@@ -33,6 +33,24 @@ const cases = [
     forbiddenText: '화면을 불러오는 중 오류가 발생했습니다',
   },
   {
+    name: 'template debt first viewport',
+    url: `${baseUrl}/?tab=edit`,
+    statePreset: 'template-preview:debt-relief-consult',
+    expectedSelector: '.landing-page,.landing-section.topnav,.landing-section.hero,.landing-section.form',
+  },
+  {
+    name: 'template wedding first viewport',
+    url: `${baseUrl}/?tab=edit`,
+    statePreset: 'template-preview:wedding-invitation',
+    expectedSelector: '.landing-page,.landing-section.hero,.landing-section.form',
+  },
+  {
+    name: 'template quote first viewport',
+    url: `${baseUrl}/?tab=edit`,
+    statePreset: 'template-preview:quote-request',
+    expectedSelector: '.landing-page,.landing-section.topnav,.landing-section.hero,.landing-section.form,.landing-section.reservation',
+  },
+  {
     name: 'owner inbox',
     url: `${baseUrl}/?tab=inbox`,
     statePreset: 'owner-settings',
@@ -103,6 +121,7 @@ function runCase(testCase) {
       INLET_BROWSER_QA_VIEWPORTS: testCase.viewports || 'desktop',
       INLET_BROWSER_QA_EXPECT_TEXT: testCase.expectedText,
       INLET_BROWSER_QA_FORBID_TEXT: testCase.forbiddenText,
+      INLET_BROWSER_QA_EXPECT_SELECTOR: testCase.expectedSelector || '',
       INLET_BROWSER_QA_SCREENSHOT_DIR: `.tmp-browser-visual/production-${safeCaseName(testCase.name)}`,
     };
     if (requireRealBrowser) env.INLET_BROWSER_QA_REQUIRE = '1';
