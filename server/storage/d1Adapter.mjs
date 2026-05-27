@@ -178,6 +178,25 @@ export function decodeD1ProjectMember(row = {}) {
   };
 }
 
+export function encodeD1Project(project = {}, context = {}) {
+  const now = new Date().toISOString();
+  const slug = String(context.slug || project.slug || 'my-page').replace(/[^a-zA-Z0-9-_]/g, '') || 'my-page';
+  const ownerId = String(context.ownerId || project.ownerId || project.ownerAccountId || project.owner_account_id || '');
+  const projectId = String(context.projectId || project.projectId || project.id || `${ownerId}_${slug}_${stableD1Hash(`${ownerId}:${slug}`)}`);
+  return {
+    id: projectId,
+    owner_account_id: ownerId,
+    slug,
+    title: String(project.title || context.title || slug),
+    client_email: String(project.clientEmail || project.client_email || '').trim().toLowerCase(),
+    plan: String(project.plan || 'free'),
+    billing_status: String(project.billingStatus || project.billing_status || 'trial'),
+    status: String(project.status || 'active'),
+    created_at: String(project.createdAt || project.created_at || now),
+    updated_at: String(project.updatedAt || project.updated_at || now),
+  };
+}
+
 export function decodeD1Project(row = {}) {
   return {
     id: row.id || '',
@@ -504,6 +523,38 @@ export async function getD1ProjectById(db, projectId = '') {
   return row ? decodeD1Project(row) : null;
 }
 
+export async function upsertD1Project(db, project = {}, context = {}) {
+  assertD1Binding(db);
+  const row = encodeD1Project(project, context);
+  await db.prepare(`
+    INSERT INTO projects (
+      id, owner_account_id, slug, title, client_email, plan, billing_status, status, created_at, updated_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      owner_account_id = excluded.owner_account_id,
+      slug = excluded.slug,
+      title = excluded.title,
+      client_email = excluded.client_email,
+      plan = excluded.plan,
+      billing_status = excluded.billing_status,
+      status = excluded.status,
+      updated_at = excluded.updated_at
+  `).bind(
+    row.id,
+    row.owner_account_id,
+    row.slug,
+    row.title,
+    row.client_email,
+    row.plan,
+    row.billing_status,
+    row.status,
+    row.created_at,
+    row.updated_at,
+  ).run();
+  return decodeD1Project(row);
+}
+
 export async function listD1ProjectMembers(db, { projectId } = {}) {
   assertD1Binding(db);
   const result = await queryD1Rows(
@@ -661,6 +712,38 @@ export async function upsertD1ProjectMember(db, member = {}, context = {}) {
     row.updated_at,
   ).run();
   return decodeD1ProjectMember(row);
+}
+
+export async function replaceD1ProjectMembers(db, { projectId, roles = [], members = [] } = {}) {
+  assertD1Binding(db);
+  const normalizedRoles = roles.map((role) => String(role || '').trim()).filter(Boolean);
+  const normalizedProjectId = String(projectId || '');
+  const keepIds = members.map((member) => String(member.accountId || member.ownerId || '')).filter(Boolean);
+  if (!normalizedProjectId || normalizedRoles.length === 0) return { removed: 0 };
+
+  for (const member of members) {
+    await upsertD1ProjectMember(db, member, {
+      projectId: normalizedProjectId,
+      accountId: member.accountId || member.ownerId,
+      invitedByAccountId: member.invitedByAccountId || null,
+    });
+  }
+
+  const rolePlaceholders = normalizedRoles.map(() => '?').join(', ');
+  const keepClause = keepIds.length > 0 ? `AND account_id NOT IN (${keepIds.map(() => '?').join(', ')})` : '';
+  const result = await db.prepare(`
+    UPDATE project_members
+    SET status = 'removed', updated_at = ?
+    WHERE project_id = ?
+      AND role IN (${rolePlaceholders})
+      ${keepClause}
+  `).bind(
+    new Date().toISOString(),
+    normalizedProjectId,
+    ...normalizedRoles,
+    ...keepIds,
+  ).run();
+  return { removed: Number(result?.meta?.changes || result?.changes || 0) };
 }
 
 export async function getD1PageBySlug(db, { projectId, slug } = {}) {

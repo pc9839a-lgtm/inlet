@@ -11,7 +11,7 @@ import { duplicateWindowMs as duplicatePolicyWindowMs, isReservationLead as isRe
 import { buildStats as buildStatsSummary } from '../src/lib/statsMetrics.js';
 import { appendJsonlRecord, queryJsonlRecords, readJsonlRecords, writeJsonlRecords } from './storage/jsonlAdapter.mjs';
 import { createStorageRuntime, storageRuntimeCoverage, storageRuntimeHealth, storageRuntimePlan } from './storage/runtimeAdapter.mjs';
-import { aggregateD1Stats, deleteD1AiDraft, deleteD1Lead, findD1LeadsByContact, getD1AccountByEmail, getD1AccountByPhone, getD1Lead, getD1PageBySlug, getD1PageRevision, getD1ProjectAccess, insertD1AuditLog, insertD1Event, insertD1PageRevision, listD1AiDrafts, listD1DeliveryLogs, listD1DeliveryRetryQueue, listD1Events, listD1Leads, listD1OwnershipTransferRequests, listD1PageRevisions, upsertD1Account, upsertD1AiDraft, upsertD1Invite, upsertD1Lead, upsertD1OwnershipTransferRequest, upsertD1Page, upsertD1ProjectMember } from './storage/d1Adapter.mjs';
+import { aggregateD1Stats, deleteD1AiDraft, deleteD1Lead, findD1LeadsByContact, getD1AccountByEmail, getD1AccountByPhone, getD1Lead, getD1PageBySlug, getD1PageRevision, getD1ProjectAccess, insertD1AuditLog, insertD1Event, insertD1PageRevision, listD1AiDrafts, listD1DeliveryLogs, listD1DeliveryRetryQueue, listD1Events, listD1Leads, listD1OwnershipTransferRequests, listD1PageRevisions, replaceD1ProjectMembers, upsertD1Account, upsertD1AiDraft, upsertD1Invite, upsertD1Lead, upsertD1OwnershipTransferRequest, upsertD1Page, upsertD1Project, upsertD1ProjectMember } from './storage/d1Adapter.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
@@ -4667,7 +4667,67 @@ async function writeProjectAccess(project = {}, access = {}) {
     updatedAt: new Date().toISOString(),
   };
   await writeFile(file, JSON.stringify(next, null, 2), 'utf8');
+  await syncD1ProjectAccess(normalizeProject(project), next);
   return next;
+}
+
+async function syncD1ProjectAccess(project = {}, access = {}) {
+  if (storageRuntime.active !== 'd1' || !hasProject(project)) return null;
+  const normalizedProject = normalizeProject(project);
+  const ownerId = safeId(access.ownerId || normalizedProject.ownerId, normalizedProject.ownerId);
+  const clientOwnerIds = Array.isArray(access.clientOwnerIds)
+    ? access.clientOwnerIds.map((id) => safeId(id, '')).filter(Boolean)
+    : [];
+  const managers = Array.isArray(access.managers) ? access.managers : [];
+  try {
+    await upsertD1Project(storageRuntime.d1, {
+      projectId: normalizedProject.projectId,
+      ownerId,
+      slug: normalizedProject.slug,
+      title: access.title || normalizedProject.slug,
+      clientEmail: normalizeEmail(access.clientEmail || ''),
+      updatedAt: access.updatedAt || new Date().toISOString(),
+    }, {
+      projectId: normalizedProject.projectId,
+      ownerId,
+      slug: normalizedProject.slug,
+    });
+    const members = [
+      ...(ownerId ? [{
+        id: `${normalizedProject.projectId}-master`,
+        ownerId,
+        role: 'master',
+        access: {},
+        status: 'active',
+      }] : []),
+      ...clientOwnerIds.map((clientOwnerId) => ({
+        id: `${normalizedProject.projectId}-client-${clientOwnerId}`,
+        ownerId: clientOwnerId,
+        role: 'client_admin',
+        access: {},
+        status: access.clientAccess === false ? 'removed' : 'active',
+        invitedByAccountId: ownerId || null,
+      })),
+      ...managers.map((manager) => ({
+        id: manager.id || manager.ownerId,
+        ownerId: safeId(manager.ownerId || ownerIdForEmail(manager.email), ''),
+        role: 'manager',
+        access: normalizeManagerAccess(manager.access || {}),
+        status: manager.status === 'disabled' ? 'removed' : 'active',
+        invitedByAccountId: ownerId || null,
+      })).filter((manager) => manager.ownerId),
+    ];
+    return replaceD1ProjectMembers(storageRuntime.d1, {
+      projectId: normalizedProject.projectId,
+      roles: ['master', 'client_admin', 'manager'],
+      members,
+    });
+  } catch (error) {
+    return {
+      ok: false,
+      error: error?.code || error?.message || 'D1_PROJECT_ACCESS_SYNC_FAILED',
+    };
+  }
 }
 
 async function authorizeProjectAccess(req, project = {}, options = {}) {

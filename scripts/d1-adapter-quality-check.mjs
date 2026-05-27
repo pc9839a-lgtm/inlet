@@ -27,6 +27,7 @@ import {
   encodeD1Page,
   encodeD1PageRevision,
   encodeD1ProjectMember,
+  encodeD1Project,
   findD1LeadsByContact,
   getD1AccountByEmail,
   getD1AccountByPhone,
@@ -52,6 +53,8 @@ import {
   upsertD1Lead,
   upsertD1OwnershipTransferRequest,
   upsertD1Page,
+  upsertD1Project,
+  replaceD1ProjectMembers,
   upsertD1ProjectMember,
 } from '../server/storage/d1Adapter.mjs';
 
@@ -83,6 +86,25 @@ function fakeD1() {
           return this;
         },
         async run() {
+          if (sql.includes('INSERT INTO projects')) {
+            const [
+              id,
+              owner_account_id,
+              slug,
+              title,
+              client_email,
+              plan,
+              billing_status,
+              status,
+              created_at,
+              updated_at,
+            ] = this.params;
+            const next = { id, owner_account_id, slug, title, client_email, plan, billing_status, status, created_at, updated_at };
+            const index = rows.projects.findIndex((row) => row.id === id);
+            if (index >= 0) rows.projects[index] = { ...rows.projects[index], ...next };
+            else rows.projects.push(next);
+            return { success: true, meta: { changes: 1 } };
+          }
           if (sql.includes('INSERT INTO accounts')) {
             const [
               id,
@@ -150,7 +172,24 @@ function fakeD1() {
             const index = rows.project_members.findIndex((row) => row.project_id === project_id && row.account_id === account_id);
             if (index >= 0) rows.project_members[index] = { ...rows.project_members[index], ...next };
             else rows.project_members.push(next);
-            return { success: true };
+            return { success: true, meta: { changes: 1 } };
+          }
+          if (sql.includes('UPDATE project_members') && sql.includes("SET status = 'removed'")) {
+            const params = this.params.slice();
+            const updatedAt = params.shift();
+            const projectId = params.shift();
+            const roleCount = (sql.match(/\?/g) || []).length - 2 - (sql.includes('account_id NOT IN') ? (sql.match(/account_id NOT IN \(([^)]+)\)/)?.[1].match(/\?/g) || []).length : 0);
+            const roles = params.splice(0, roleCount);
+            const keepIds = params;
+            let changes = 0;
+            for (const row of rows.project_members) {
+              if (row.project_id === projectId && roles.includes(row.role) && !keepIds.includes(row.account_id)) {
+                if (row.status !== 'removed') changes += 1;
+                row.status = 'removed';
+                row.updated_at = updatedAt;
+              }
+            }
+            return { success: true, meta: { changes } };
           }
           if (sql.includes('INSERT INTO ownership_transfer_requests')) {
             const [
@@ -737,6 +776,13 @@ const encodedMember = encodeD1ProjectMember({
 }, { projectId: 'project-1', accountId: 'manager-owner', invitedByAccountId: 'owner-1' });
 assert(encodedMember.project_id === 'project-1' && encodedMember.account_id === 'manager-owner', 'project member should encode project and account ids');
 assert(decodeD1ProjectMember(encodedMember).access.inbox.read, 'project member access should round-trip');
+const encodedProject = encodeD1Project({
+  projectId: 'project-1',
+  ownerId: 'owner-1',
+  slug: 'landing',
+  clientEmail: 'Client@Example.TEST',
+}, { projectId: 'project-1', ownerId: 'owner-1', slug: 'landing' });
+assert(encodedProject.id === 'project-1' && encodedProject.client_email === 'client@example.test', 'project should encode id, owner, slug, and client email');
 assert(decodeD1Project({ id: 'project-1', owner_account_id: 'owner-1', slug: 'landing' }).ownerId === 'owner-1', 'project should decode owner account id');
 
 const encodedTransfer = encodeD1OwnershipTransferRequest({
@@ -773,18 +819,7 @@ const encodedAiDraft = encodeD1AiDraft({
 assert(encodedAiDraft.project_id === 'project-1' && decodeD1AiDraft(encodedAiDraft).blocks.length === 1, 'AI draft should encode and decode draft JSON');
 
 const db = fakeD1();
-db.rows.projects.push({
-  id: 'project-1',
-  owner_account_id: 'owner-1',
-  slug: 'landing',
-  title: 'Landing',
-  client_email: 'client@example.test',
-  plan: 'free',
-  billing_status: 'trial',
-  status: 'active',
-  created_at: '2026-05-10T00:00:00.000Z',
-  updated_at: '2026-05-10T00:00:00.000Z',
-});
+await upsertD1Project(db, encodedProject);
 await upsertD1Account(db, encodedAccount);
 const accountByEmail = await getD1AccountByEmail(db, 'USER@example.test');
 const accountByPhone = await getD1AccountByPhone(db, '010-3333-4444');
@@ -797,6 +832,22 @@ await upsertD1ProjectMember(db, { ...decodeD1ProjectMember(encodedMember), statu
 assert(db.rows.project_members.length === 1 && db.rows.project_members[0].account_id === 'manager-owner', 'project member upsert should preserve unique project account member');
 await upsertD1ProjectMember(db, { id: 'master-member', ownerId: 'owner-1', role: 'master', access: {}, status: 'active' }, { projectId: 'project-1', accountId: 'owner-1' });
 await upsertD1ProjectMember(db, { id: 'client-member', ownerId: 'client-owner', role: 'client_admin', access: {}, status: 'active' }, { projectId: 'project-1', accountId: 'client-owner' });
+await replaceD1ProjectMembers(db, {
+  projectId: 'project-1',
+  roles: ['manager'],
+  members: [
+    { id: 'member-1', ownerId: 'manager-owner', role: 'manager', access: { inbox: { read: true } }, status: 'active' },
+    { id: 'member-2', ownerId: 'manager-disabled', role: 'manager', access: {}, status: 'removed' },
+  ],
+});
+await replaceD1ProjectMembers(db, {
+  projectId: 'project-1',
+  roles: ['manager'],
+  members: [
+    { id: 'member-1', ownerId: 'manager-owner', role: 'manager', access: { inbox: { read: true } }, status: 'active' },
+  ],
+});
+assert(db.rows.project_members.some((row) => row.account_id === 'manager-disabled' && row.status === 'removed'), 'project member replacement should remove omitted managers');
 const d1ProjectById = await getD1ProjectById(db, 'project-1');
 const d1ProjectBySlug = await getD1ProjectBySlug(db, 'landing');
 const d1Members = await listD1ProjectMembers(db, { projectId: 'project-1' });

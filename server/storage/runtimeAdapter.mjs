@@ -77,7 +77,7 @@ export const D1_RUNTIME_ROUTE_COVERAGE = [
       'POST /api/projects/invites/:token/accept',
     ],
     d1: 'partial',
-    note: 'Invite/member rows sync to D1 when active; access.json remains the primary write source for legacy project permissions.',
+    note: 'Project access writes are mirrored into D1 when active; access.json remains the local compatibility source for legacy projects.',
   },
   {
     key: 'ownershipTransfer',

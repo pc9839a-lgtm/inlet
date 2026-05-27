@@ -88,13 +88,13 @@ Do not reassign these unless a regression is found:
 - D1 delivery logs now sync from lead delivery payloads into `delivery_logs`; delivery log and retry queue APIs use D1 when active, while JSONL remains the local fallback.
 - D1 backfill dry-run exists as `npm run d1:backfill:dry-run`; it scans JSONL project/singleton data and reports lead/event/page/delivery-log counts, invalid lines, duplicate ids, duplicate monthly contacts, and duplicate event dedupe keys without writing to D1.
 - D1 account helper exists for normalized account encode/decode, email lookup, phone lookup, and account upsert. Auth register/login/session/password routes now use D1 `accounts` when `storageRuntime.active === 'd1'`; JSONL remains the fallback.
-- D1 invite/member sync exists: manager invite creation writes to D1 `invites` when D1 is active, and invite acceptance syncs accepted invite status plus the manager row into D1 `project_members`. `access.json` is still the live permission source until D1 project access reads are fully switched.
+- D1 invite/member sync exists: manager invite creation writes to D1 `invites` when D1 is active, invite acceptance syncs accepted invite status plus the manager row into D1 `project_members`, and project access writes now mirror `projects/project_members` into D1 while `access.json` remains the local compatibility source.
 - D1 ownership transfer request storage exists: `ownership_transfer_requests` encode/decode/upsert/list helpers are wired, `/api/projects/ownership-transfer` can create/list requests, `/api/admin/ownership-transfer/:id` can move requests into approval/billing-clearance states, and JSONL/access metadata remains the local fallback.
 - Ownership transfer smoke now proves client admins can request transfer, managers cannot request transfer, and only the master can move a request into billing-clearance/approval state.
 - Internal `/admin` now shows a project-scoped ownership transfer approval queue with refresh, billing-wait, approve, and reject actions. Manager permission settings remain in normal Settings, not internal admin.
 - D1 page storage now has `pages` and `page_revisions` encode/decode/upsert/read/list helpers. Page GET/POST and revision list/read use D1 when `storageRuntime.active === 'd1'`, with JSON file storage kept as local fallback.
 - D1 AI draft storage now has `ai_drafts` encode/decode/upsert/list/soft-delete helpers. `/api/ai/drafts` list/save/delete uses D1 when active, with JSON file storage kept as local fallback.
-- D1 project access read fallback exists: if `access.json` is absent and D1 is active, project access can be derived from `projects` plus active `project_members`. The full write-side migration is still staged to avoid breaking legacy projects without account rows.
+- D1 project access read fallback exists: if `access.json` is absent and D1 is active, project access can be derived from `projects` plus active `project_members`. The remaining migration is a real Cloudflare D1 smoke plus deciding when to make D1 the primary permission read/write source for hosted projects.
 - D1 adapter behavior QA exists in `scripts/d1-adapter-quality-check.mjs` and verifies lead/event encode/decode, lead upsert, event dedupe insert, paged lists, SQL stats aggregation, storage runtime fallback/ready plans, and runtime route coverage.
 - D1 runtime coverage QA exists as `npm run d1:runtime:qa`; it proves that missing D1 bindings show JSONL fallback for every route and ready D1 bindings expose active/partial/jsonl status by feature group.
 - Preview renderer CSS import regression is fixed: `LandingRenderer.css` now imports `preview-cards.css` by relative path, so Vite no longer looks for a missing root-level `styles/preview-cards.css`.
@@ -157,7 +157,7 @@ These are not already-done items. Patch sequentially from item 1 unless the owne
    - D1 schema and adapter QA exist.
    - `/api/health` now exposes route-level D1 coverage, and `npm run d1:runtime:qa` locks the expected active/partial/jsonl states.
    - Remaining work: real Cloudflare Worker/Pages Functions D1 binding smoke.
-   - Complete write-side project access/member permission migration from `access.json` fallback into D1.
+   - Project access/member writes are now mirrored into D1; remaining work is a hosted D1 smoke and switching hosted reads to D1 as the primary source.
    - Add confirmed JSONL -> D1 write backfill after dry-run review.
    - Keep JSONL fallback only for local dev/import.
 

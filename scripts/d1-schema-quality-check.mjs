@@ -55,6 +55,8 @@ for (const token of [
   'queryD1Rows',
   'countD1Rows',
   'getD1ProjectBySlug',
+  'upsertD1Project',
+  'replaceD1ProjectMembers',
   'listD1Leads',
   'listD1Events',
   'encodeD1Lead',
