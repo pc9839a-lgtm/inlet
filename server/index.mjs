@@ -26,6 +26,7 @@ const pagesDir = path.join(dataDir, 'pages');
 const storageRuntime = createStorageRuntime(env);
 const apiAuthConfig = {
   token: String(env.INLET_API_TOKEN || '').trim(),
+  allowedOrigins: parseAllowedOrigins(env.INLET_ALLOWED_ORIGINS || ''),
 };
 const projectAuthConfig = {
   enforce: env.INLET_PROJECT_AUTH_ENFORCE !== '0',
@@ -87,7 +88,7 @@ const allowedBlockTypes = [
 ];
 
 const server = createServer(async (req, res) => {
-  setCors(res);
+  setCors(req, res);
 
   if (req.method === 'OPTIONS') {
     sendJson(res, 204, {});
@@ -644,10 +645,26 @@ function parseMs(value, fallback, minimum = 0) {
   return Number.isFinite(parsed) && parsed > 0 ? Math.max(minimum, parsed) : fallback;
 }
 
-function setCors(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+function parseAllowedOrigins(value = '') {
+  return String(value || '')
+    .split(',')
+    .map((origin) => origin.trim().replace(/\/+$/, ''))
+    .filter(Boolean);
+}
+
+function requestOrigin(req) {
+  return String(req?.headers?.origin || '').trim().replace(/\/+$/, '');
+}
+
+function setCors(req, res) {
+  const origin = requestOrigin(req);
+  const allowAll = apiAuthConfig.allowedOrigins.length === 0 || apiAuthConfig.allowedOrigins.includes('*');
+  const allowedOrigin = allowAll ? '*' : (apiAuthConfig.allowedOrigins.includes(origin) ? origin : '');
+  if (allowedOrigin) res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+  res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Inlet-Api-Token,X-Inlet-Owner-Id,X-Inlet-Project-Id,X-Inlet-Session');
+  res.setHeader('Access-Control-Max-Age', '86400');
 }
 
 function authorizeApiRequest(req, url) {

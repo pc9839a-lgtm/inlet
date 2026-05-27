@@ -121,6 +121,7 @@ Production environment variables:
 - `INLET_API_PORT=<platform-port-or-8787>`
 - `INLET_API_TOKEN=<strong-random-token>`
 - `INLET_DATA_DIR=<persistent-disk-path>`
+- `INLET_ALLOWED_ORIGINS=https://inlet-8mr.pages.dev,<your-production-domain>` so the API does not allow arbitrary browser origins in production.
 - `INLET_SESSION_AUTH_MODE=production`
 - `INLET_SESSION_SECRET=<long-random-secret>`
 - `INLET_STORAGE_ADAPTER=d1` when the deployed API has a valid D1 binding; use `auto` only during staged rollout.

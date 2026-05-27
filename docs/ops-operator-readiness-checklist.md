@@ -35,6 +35,7 @@ Owner: operator plus Worker 4 policy.
 ## Credentials
 
 - `INLET_API_TOKEN` set for server.
+- `INLET_ALLOWED_ORIGINS` set to the deployed Pages/custom domain before exposing the API publicly.
 - `INLET_SESSION_AUTH_MODE=strict` and `INLET_SESSION_SECRET` set before exposing manager invite/session flows outside local smoke/dev.
 - Treat `INLET_SESSION_AUTH_MODE=production` as signed-session strict mode. `/api/health` must report `auth.sourceOfTruth=signed-session`.
 - Do not use `INLET_SESSION_AUTH_MODE=hosted` for launch until `/api/health` reports `auth.hostedAuthImplemented=true`.

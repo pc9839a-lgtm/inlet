@@ -30,6 +30,7 @@ for (const name of [
   'd1:runtime:qa',
   'ops:qa',
   'api:container:qa',
+  'api:security:qa',
   'stats:qa',
   'csv:qa',
   'perf:qa',
@@ -549,6 +550,13 @@ requireAll(apiContainerQa, [
   '/api/health',
   'INLET_STORAGE_ADAPTER=d1',
 ], 'API container QA contract');
+
+const apiSecurityQa = await read('scripts/api-security-quality-check.mjs');
+requireAll(apiSecurityQa, [
+  'INLET_ALLOWED_ORIGINS',
+  'Access-Control-Max-Age',
+  'setCors(req, res)',
+], 'API security QA contract');
 
 const perfQa = await read('scripts/offline-performance-check.mjs');
 requireAll(perfQa, [
