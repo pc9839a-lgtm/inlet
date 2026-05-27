@@ -136,6 +136,30 @@ async function run() {
     httpStatus: protectedRetryQueue.res.status,
   });
 
+  const protectedPage = await jsonFetch(`/api/pages/${encodeURIComponent(project.slug)}?projectId=${encodeURIComponent(project.projectId)}`);
+  checks.push({
+    name: 'Hosted /api/pages/:slug read protection',
+    status: protectedPage.res.status === 403 ? 'ready' : 'failed-live',
+    httpStatus: protectedPage.res.status,
+  });
+
+  const protectedPageWrite = await jsonFetch(`/api/pages/${encodeURIComponent(project.slug)}`, {
+    method: 'POST',
+    body: JSON.stringify({ project, page: { slug: project.slug, title: 'Blocked write' } }),
+  });
+  checks.push({
+    name: 'Hosted /api/pages/:slug write protection',
+    status: protectedPageWrite.res.status === 403 ? 'ready' : 'failed-live',
+    httpStatus: protectedPageWrite.res.status,
+  });
+
+  const protectedRevisions = await jsonFetch(`/api/pages/${encodeURIComponent(project.slug)}/revisions?projectId=${encodeURIComponent(project.projectId)}`);
+  checks.push({
+    name: 'Hosted /api/pages/:slug/revisions read protection',
+    status: protectedRevisions.res.status === 403 ? 'ready' : 'failed-live',
+    httpStatus: protectedRevisions.res.status,
+  });
+
   return {
     ok: checks.every((check) => check.status === 'ready') || !requireHosted,
     liveSummary: summarize(checks),

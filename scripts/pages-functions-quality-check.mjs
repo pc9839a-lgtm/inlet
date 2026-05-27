@@ -12,6 +12,10 @@ const deliveryLogs = await readFile('functions/api/leads/delivery-logs.js', 'utf
 const retryQueue = await readFile('functions/api/leads/retry-queue.js', 'utf8');
 const events = await readFile('functions/api/events.js', 'utf8');
 const statsSummary = await readFile('functions/api/stats/summary.js', 'utf8');
+const pages = await readFile('functions/api/pages/[slug].js', 'utf8');
+const pageRevisions = await readFile('functions/api/pages/[slug]/revisions.js', 'utf8');
+const pageRevision = await readFile('functions/api/pages/[slug]/revisions/[id].js', 'utf8');
+const pageRestore = await readFile('functions/api/pages/[slug]/restore.js', 'utf8');
 const wrangler = await readFile('wrangler.jsonc', 'utf8');
 const hostedQa = await readFile('scripts/hosted-api-quality-check.mjs', 'utf8');
 const hostedRoutesQa = await readFile('scripts/hosted-api-routes-quality-check.mjs', 'utf8');
@@ -50,6 +54,10 @@ for (const [name, source, tokens] of [
   ['retry queue', retryQueue, ['listD1DeliveryRetryQueue', "type: 'delivery-retry-queue'", 'deadLetter', 'authorizeProject']],
   ['events', events, ['insertD1Event', 'listD1Events', 'publicWrite: true', 'eventType', 'meta: { source:']],
   ['stats summary', statsSummary, ['aggregateD1Stats', "source: 'server'", "adapter: 'd1'", 'authorizeProject']],
+  ['pages', pages, ['getD1PageBySlug', 'upsertD1Page', 'ensureD1ProjectShell', 'authorizeProject']],
+  ['page revisions', pageRevisions, ['listD1PageRevisions', 'authorizeProject', 'revisions']],
+  ['page revision', pageRevision, ['getD1PageRevision', 'Revision not found', 'revision.page']],
+  ['page restore', pageRestore, ['getD1PageRevision', 'upsertD1Page', 'restore:', 'authorizeProject']],
 ]) {
   for (const token of tokens) {
     assert(source.includes(token), `Pages ${name} function missing ${token}`);
@@ -80,6 +88,8 @@ for (const token of [
   '/api/leads/retry-queue',
   '/api/events',
   '/api/stats/summary',
+  '/api/pages',
+  ':slug read protection',
   'INLET_HOSTED_ROUTE_QA_WRITE',
   'read protection',
 ]) {
@@ -97,6 +107,10 @@ console.log(JSON.stringify({
     'functions/api/leads/retry-queue.js',
     'functions/api/events.js',
     'functions/api/stats/summary.js',
+    'functions/api/pages/[slug].js',
+    'functions/api/pages/[slug]/revisions.js',
+    'functions/api/pages/[slug]/revisions/[id].js',
+    'functions/api/pages/[slug]/restore.js',
   ],
   binding: 'DB',
 }, null, 2));
