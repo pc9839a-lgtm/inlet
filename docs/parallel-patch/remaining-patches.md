@@ -67,7 +67,7 @@ Do not reassign these unless a regression is found:
 - `npm run live:qa` summarizes AI, SMTP, OAuth, conversion, and real-browser live readiness in one skipped-live/ready report.
 - D1 production database `inlet-prod` exists on Cloudflare, is bound as `DB` in `wrangler.jsonc`, and has `migrations/0001_inlet_core.sql` applied.
 - D1 production schema groundwork exists in `migrations/0001_inlet_core.sql` for accounts, projects, members, invites, pages, revisions, leads, events, delivery logs, AI drafts, subscriptions, payments, ownership transfer requests, and audit logs.
-- D1 adapter groundwork exists in `server/storage/d1Adapter.mjs`; runtime routes still use JSONL until the D1 binding and route migration are completed.
+- D1 adapter groundwork exists in `server/storage/d1Adapter.mjs`; it now includes lead/event row encoding, decoding, paged list helpers, idempotent lead upsert, and event insert helpers. Runtime routes still use JSONL until the D1 binding and route migration are completed.
 
 ## 3 Parallel Workers
 

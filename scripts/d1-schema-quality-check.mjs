@@ -52,14 +52,26 @@ for (const token of [
   'd1UnavailablePlan',
   'assertD1Binding',
   'queryD1Rows',
+  'countD1Rows',
   'getD1ProjectBySlug',
   'listD1Leads',
   'listD1Events',
+  'encodeD1Lead',
+  'decodeD1Lead',
+  'upsertD1Lead',
+  'encodeD1Event',
+  'decodeD1Event',
+  'insertD1Event',
   'insertD1AuditLog',
   'fallbackAdapter',
 ]) {
   assert(adapter.includes(token), `D1 adapter missing contract token: ${token}`);
 }
+
+assert(adapter.includes('ON CONFLICT(id) DO UPDATE SET'), 'D1 lead upsert should be idempotent');
+assert(adapter.includes('INSERT OR IGNORE INTO events'), 'D1 event insert should dedupe repeated event ids');
+assert(adapter.includes('created_month'), 'D1 adapter should preserve month index field');
+assert(adapter.includes('contact_key'), 'D1 adapter should preserve lead dedupe key');
 
 assert(wrangler.includes('"name": "inlet"'), 'wrangler config should keep project name');
 assert(wrangler.includes('"pages_build_output_dir": "dist"'), 'wrangler config should keep Pages output dir');

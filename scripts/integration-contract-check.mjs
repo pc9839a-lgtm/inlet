@@ -146,6 +146,12 @@ requireAll(d1Adapter, [
   'assertD1Binding',
   'listD1Leads',
   'listD1Events',
+  'encodeD1Lead',
+  'decodeD1Lead',
+  'upsertD1Lead',
+  'encodeD1Event',
+  'decodeD1Event',
+  'insertD1Event',
   'insertD1AuditLog',
   'fallbackAdapter',
 ], 'D1 adapter contract');
