@@ -325,6 +325,107 @@ async function run() {
     httpStatus: inviteAccept.res.status,
   });
 
+  const aiKeyMissing = await jsonFetch(`/api/ai/key?projectId=${encodeURIComponent(project.projectId)}&ownerId=${encodeURIComponent(accountPatch.data?.user?.ownerId || login.data?.user?.ownerId || '')}`, {
+    headers: { 'X-Inlet-Session': refreshedSession },
+  });
+  checks.push({
+    name: 'Hosted /api/ai/key missing status',
+    status: aiKeyMissing.res.ok && aiKeyMissing.data?.key?.status === 'missing' ? 'ready' : 'failed-live',
+    httpStatus: aiKeyMissing.res.status,
+  });
+
+  const aiKeyInvalid = await jsonFetch('/api/ai/key', {
+    method: 'PUT',
+    headers: { 'X-Inlet-Session': refreshedSession },
+    body: JSON.stringify({
+      projectId: project.projectId,
+      ownerId: accountPatch.data?.user?.ownerId || login.data?.user?.ownerId || '',
+      apiKey: 'bad-key',
+    }),
+  });
+  checks.push({
+    name: 'Hosted /api/ai/key invalid protection',
+    status: aiKeyInvalid.res.status === 400 ? 'ready' : 'failed-live',
+    httpStatus: aiKeyInvalid.res.status,
+  });
+
+  const aiKeySave = await jsonFetch('/api/ai/key', {
+    method: 'PUT',
+    headers: { 'X-Inlet-Session': refreshedSession },
+    body: JSON.stringify({
+      projectId: project.projectId,
+      ownerId: accountPatch.data?.user?.ownerId || login.data?.user?.ownerId || '',
+      apiKey: `sk-hosted-route-qa-${stamp}-abcdef`,
+    }),
+  });
+  checks.push({
+    name: 'Hosted /api/ai/key save',
+    status: aiKeySave.res.ok && aiKeySave.data?.key?.connected === true && aiKeySave.data?.key?.maskedKey?.endsWith('cdef') && !JSON.stringify(aiKeySave.data).includes(`sk-hosted-route-qa-${stamp}`) ? 'ready' : 'failed-live',
+    httpStatus: aiKeySave.res.status,
+  });
+
+  const aiKeyTestInvalid = await jsonFetch('/api/ai/test', {
+    method: 'POST',
+    headers: { 'X-Inlet-Session': refreshedSession },
+    body: JSON.stringify({
+      project: { ...project, ownerId: accountPatch.data?.user?.ownerId || login.data?.user?.ownerId || '' },
+      apiKey: 'bad-key',
+      model: 'gpt-4.1',
+    }),
+  });
+  checks.push({
+    name: 'Hosted /api/ai/test invalid key classification',
+    status: aiKeyTestInvalid.res.status === 400 && aiKeyTestInvalid.data?.keyTest?.status === 'invalid' ? 'ready' : 'failed-live',
+    httpStatus: aiKeyTestInvalid.res.status,
+  });
+
+  const aiDraftSave = await jsonFetch('/api/ai/drafts', {
+    method: 'POST',
+    headers: { 'X-Inlet-Session': refreshedSession },
+    body: JSON.stringify({
+      project: { ...project, ownerId: accountPatch.data?.user?.ownerId || login.data?.user?.ownerId || '' },
+      draft: {
+        id: `ai-draft-${stamp}`,
+        pageTitle: 'Hosted AI Draft QA',
+        blocks: [{ type: 'hero', title: 'Hosted AI', body: 'editable draft smoke' }],
+      },
+    }),
+  });
+  checks.push({
+    name: 'Hosted /api/ai/drafts save',
+    status: aiDraftSave.res.ok && aiDraftSave.data?.draft?.id === `ai-draft-${stamp}` ? 'ready' : 'failed-live',
+    httpStatus: aiDraftSave.res.status,
+  });
+
+  const aiDraftList = await jsonFetch(`/api/ai/drafts?projectId=${encodeURIComponent(project.projectId)}&ownerId=${encodeURIComponent(accountPatch.data?.user?.ownerId || login.data?.user?.ownerId || '')}`, {
+    headers: { 'X-Inlet-Session': refreshedSession },
+  });
+  checks.push({
+    name: 'Hosted /api/ai/drafts list',
+    status: aiDraftList.res.ok && Array.isArray(aiDraftList.data?.drafts) && aiDraftList.data.drafts.some((item) => item.id === `ai-draft-${stamp}`) ? 'ready' : 'failed-live',
+    httpStatus: aiDraftList.res.status,
+  });
+
+  const aiDraftDelete = await jsonFetch(`/api/ai/drafts/${encodeURIComponent(`ai-draft-${stamp}`)}?projectId=${encodeURIComponent(project.projectId)}&ownerId=${encodeURIComponent(accountPatch.data?.user?.ownerId || login.data?.user?.ownerId || '')}`, {
+    method: 'DELETE',
+    headers: { 'X-Inlet-Session': refreshedSession },
+  });
+  checks.push({
+    name: 'Hosted /api/ai/drafts delete',
+    status: aiDraftDelete.res.ok && aiDraftDelete.data?.id === `ai-draft-${stamp}` ? 'ready' : 'failed-live',
+    httpStatus: aiDraftDelete.res.status,
+  });
+
+  const aiKeyDelete = await jsonFetch(`/api/ai/key?projectId=${encodeURIComponent(project.projectId)}&ownerId=${encodeURIComponent(accountPatch.data?.user?.ownerId || login.data?.user?.ownerId || '')}`, {
+    method: 'DELETE',
+    headers: { 'X-Inlet-Session': refreshedSession },
+  });
+  checks.push({
+    name: 'Hosted /api/ai/key delete',
+    status: aiKeyDelete.res.ok && aiKeyDelete.data?.key?.status === 'missing' ? 'ready' : 'failed-live',
+    httpStatus: aiKeyDelete.res.status,
+  });
+
   const transferCreate = await jsonFetch('/api/projects/ownership-transfer', {
     method: 'POST',
     headers: { 'X-Inlet-Session': refreshedSession },

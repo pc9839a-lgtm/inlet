@@ -9,6 +9,7 @@ export const D1_SCHEMA_TABLES = [
   'events',
   'delivery_logs',
   'ai_drafts',
+  'ai_keys',
   'subscriptions',
   'payments',
   'ownership_transfer_requests',

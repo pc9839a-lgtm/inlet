@@ -33,6 +33,12 @@ const inviteAccept = await readFile('functions/api/projects/invites/[token]/acce
 const ownershipShared = await readFile('functions/api/projects/_ownership.js', 'utf8');
 const ownershipProject = await readFile('functions/api/projects/ownership-transfer.js', 'utf8');
 const ownershipAdmin = await readFile('functions/api/admin/ownership-transfer/[id].js', 'utf8');
+const aiShared = await readFile('functions/api/ai/_ai.js', 'utf8');
+const aiKey = await readFile('functions/api/ai/key.js', 'utf8');
+const aiTest = await readFile('functions/api/ai/test.js', 'utf8');
+const aiDraft = await readFile('functions/api/ai/draft.js', 'utf8');
+const aiDrafts = await readFile('functions/api/ai/drafts.js', 'utf8');
+const aiDraftDelete = await readFile('functions/api/ai/drafts/[id].js', 'utf8');
 const wrangler = await readFile('wrangler.jsonc', 'utf8');
 const hostedQa = await readFile('scripts/hosted-api-quality-check.mjs', 'utf8');
 const hostedRoutesQa = await readFile('scripts/hosted-api-routes-quality-check.mjs', 'utf8');
@@ -92,6 +98,12 @@ for (const [name, source, tokens] of [
   ['ownership shared', ownershipShared, ['upsertD1OwnershipTransferRequest', 'listD1OwnershipTransferRequests', 'completeD1OwnershipTransfer', 'OWNERSHIP_TRANSFER_BILLING_NOT_CLEAR']],
   ['ownership project', ownershipProject, ['createD1OwnershipTransferRequest', 'listD1OwnershipTransfers', 'authorizeProject']],
   ['ownership admin', ownershipAdmin, ['updateD1OwnershipTransferRequest', 'params.id', 'authorizeProject']],
+  ['ai shared', aiShared, ['ai_keys', 'encryptSecret', 'resolveAiKey', 'listD1AiDrafts', 'upsertD1AiDraft', 'deleteD1AiDraft']],
+  ['ai key', aiKey, ['readAiKeyStatus', 'saveAiKey', 'deleteAiKey']],
+  ['ai test', aiTest, ['testOpenAiKey', 'classifyAiKeyTestError', 'keyTest']],
+  ['ai draft', aiDraft, ['generateAiDraft', 'resolveAiKey']],
+  ['ai drafts', aiDrafts, ['listAiDrafts', 'saveAiDraft']],
+  ['ai draft delete', aiDraftDelete, ['removeAiDraft', 'params.id']],
 ]) {
   for (const token of tokens) {
     assert(source.includes(token), `Pages ${name} function missing ${token}`);
@@ -130,11 +142,16 @@ for (const token of [
   '/api/projects/invites',
   '/api/projects/ownership-transfer',
   '/api/admin/ownership-transfer',
+  '/api/ai/key',
+  '/api/ai/drafts',
+  '/api/ai/test',
   '/accept',
   ':slug read protection',
   'Hosted /api/auth login/session',
   'Hosted /api/projects/invites create',
   'Hosted /api/projects/ownership-transfer create',
+  'Hosted /api/ai/key save',
+  'Hosted /api/ai/drafts save',
   'INLET_HOSTED_ROUTE_QA_WRITE',
   'read protection',
 ]) {
@@ -170,6 +187,11 @@ console.log(JSON.stringify({
     'functions/api/projects/invites/[token]/accept.js',
     'functions/api/projects/ownership-transfer.js',
     'functions/api/admin/ownership-transfer/[id].js',
+    'functions/api/ai/key.js',
+    'functions/api/ai/test.js',
+    'functions/api/ai/draft.js',
+    'functions/api/ai/drafts.js',
+    'functions/api/ai/drafts/[id].js',
   ],
   binding: 'DB',
 }, null, 2));

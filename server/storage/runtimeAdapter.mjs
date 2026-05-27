@@ -97,8 +97,8 @@ export const D1_RUNTIME_ROUTE_COVERAGE = [
       'PUT /api/ai/key',
       'DELETE /api/ai/key',
     ],
-    d1: 'jsonl',
-    note: 'Encrypted customer AI keys still use the server JSONL key vault until a D1 secrets/audit design is approved.',
+    d1: 'active',
+    note: 'Hosted Pages Functions store encrypted customer AI keys in D1; local server keeps JSONL fallback for development.',
   },
 ];
 

@@ -68,7 +68,7 @@ assert(readyHealth.active === 'd1' && readyHealth.d1Ready && !readyHealth.fallba
 assert(readyCoverage.find((item) => item.key === 'leads')?.status === 'active', 'leads should be active on D1 runtime');
 assert(readyCoverage.find((item) => item.key === 'eventsStats')?.adapter === 'd1', 'stats should use D1 on D1 runtime');
 assert(readyCoverage.find((item) => item.key === 'invitesMembers')?.status === 'partial', 'invite/member coverage should remain partial until access writes move to D1');
-assert(readyCoverage.find((item) => item.key === 'aiKeys')?.status === 'jsonl', 'AI key vault should stay JSONL until the key storage migration is designed');
+assert(readyCoverage.find((item) => item.key === 'aiKeys')?.status === 'active', 'AI key vault should use D1 when hosted runtime has a binding');
 assert(readyCoverage.every((item) => Array.isArray(item.routes) && item.routes.length > 0), 'every coverage row should expose routes');
 
 console.log(JSON.stringify({

@@ -261,7 +261,7 @@ requireAll(d1RuntimeQa, [
   'invitesMembers',
   'ownershipTransfer',
   'aiKeys',
-  'AI key vault should stay JSONL',
+  'AI key vault should use D1',
 ], 'D1 runtime coverage QA contract');
 
 const d1AdapterQa = await read('scripts/d1-adapter-quality-check.mjs');

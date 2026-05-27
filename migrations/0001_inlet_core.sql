@@ -191,6 +191,26 @@ CREATE TABLE IF NOT EXISTS ai_drafts (
 
 CREATE INDEX IF NOT EXISTS idx_ai_drafts_project_created ON ai_drafts(project_id, created_at DESC);
 
+CREATE TABLE IF NOT EXISTS ai_keys (
+  id TEXT PRIMARY KEY,
+  owner_account_id TEXT NOT NULL,
+  project_id TEXT,
+  provider TEXT NOT NULL DEFAULT 'openai',
+  status TEXT NOT NULL DEFAULT 'connected',
+  cipher_json TEXT NOT NULL,
+  last4 TEXT,
+  last_test_status TEXT,
+  last_test_message TEXT,
+  last_tested_at TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  deleted_at TEXT,
+  FOREIGN KEY(owner_account_id) REFERENCES accounts(id),
+  FOREIGN KEY(project_id) REFERENCES projects(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_ai_keys_owner_project ON ai_keys(owner_account_id, project_id, provider, status);
+
 CREATE TABLE IF NOT EXISTS subscriptions (
   id TEXT PRIMARY KEY,
   project_id TEXT NOT NULL UNIQUE,
@@ -269,4 +289,3 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 CREATE INDEX IF NOT EXISTS idx_audit_project_created ON audit_logs(project_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_actor_created ON audit_logs(actor_account_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_action_created ON audit_logs(action, created_at DESC);
-
