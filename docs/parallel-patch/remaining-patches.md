@@ -8,18 +8,19 @@ Current execution mode: one worker continues sequentially from the highest prior
 
 ## Current Recheck Snapshot
 
-Last checked on 2026-05-27:
+Last checked on 2026-05-27 after commit `a773768`:
 
-- Passing baseline before the current D1 coverage patch: `npm run css:qa`, `npm run runtime:qa`, `npm run templates:qa`, `npm run bundle:qa`, `npm run deployment:qa`, `npm run integration:qa`.
+- Passing baseline after the server mojibake cleanup/deploy patch: `node --check server\index.mjs`, `npm run css:qa`, `npm run runtime:qa`, `npm run templates:qa`, `npm run bundle:qa`, `npm run deployment:qa`, `npm run integration:qa`, `npm run mojibake:qa`, `npm run ai:qa`, `npm run csv:qa`.
 - CSS source total: `391276/500000`.
-- Main referenced JS: `317751/430000`.
+- Main referenced JS: `318085/430000`.
 - Largest lazy preview CSS: `188791` bytes.
 - Templates: `3` templates, `189` structural checks.
 - Full offline QA: `npm run qa:all` passes `30` steps.
 - Real browser visual QA: `INLET_BROWSER_QA_REQUIRE=1` passes against a local `vite preview` build using local Chrome CDP. `INLET_BROWSER_QA_EXTRA_URLS=auto` also passes for `/about`, `/contact`, `/privacy`, and `/terms`.
 - Strict artifact QA: passes with no leftover `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, or `preview.zip` artifacts.
-- GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `537551f`.
-- Cloudflare Pages: production deployment `3903ca07` succeeded for commit `537551f`; public URL `https://inlet-8mr.pages.dev/` returns `200` and `<title>Inlet</title>`.
+- GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `a773768`.
+- Cloudflare Pages: production deployment `ed5254ac` succeeded for commit `a773768`; public URL `https://inlet-8mr.pages.dev/` returns `200`, `<title>Inlet</title>`, and the current asset `index-50-TRYio.js`.
+- `npm run live:qa` currently passes as a readiness report with `6` explicit `skipped-live` checks: hosted API health, AI live generation, SMTP live delivery, Google OAuth consent, conversion public diagnostics, and real browser visual QA.
 - Current UI note: Cards block is intentionally limited to `1/2` columns. Keep that scope unless the product direction changes.
 
 ## Already Done
@@ -66,6 +67,7 @@ Do not reassign these unless a regression is found:
 - Dist artifacts: `bundle:qa` reports `staleAssetCount: 0`, and strict artifact QA passes with no leftover local generated artifacts.
 - Full QA aggregate: `npm run qa:all` runs 30 verification steps and cleans generated `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, and `preview.zip` artifacts before strict artifact gates.
 - Mojibake QA: `mojibake:qa` scans runtime source/server text, and it is included in Worker 3 QA plus integration readiness.
+- Server/operator-facing mojibake cleanup is now stricter: `scripts/mojibake-quality-check.mjs` catches additional broken CJK and `?`-prefixed Korean mojibake patterns. `server/index.mjs` compiles after cleanup, and lead/event/CSV/SMTP/integration/page/revision/account-facing server strings no longer trip the current guard.
 - Mock integrations: AI/SMTP/webhook/OAuth/conversion skipped-live and mock checks pass.
 - AI, mock integration, and conversion QA now include `liveSummary` counts so pass/fail/skipped-live status is visible without reading every row.
 - Browser visual QA keeps Playwright/Puppeteer optional by default and supports mandatory mode with `INLET_BROWSER_QA_REQUIRE=1`.
@@ -245,14 +247,14 @@ Use this as the full production checklist. These items are not already done unle
 5. Customer-owned AI API keys
    - Since AI cost is customer-owned, server AI mode now supports per-request customer API keys.
    - Raw keys are still not stored in page JSON/localStorage unless the explicit development flag `VITE_INLET_ALLOW_CLIENT_AI_KEY_STORAGE=1` is enabled.
-   - Remaining work: add per-account or per-project encrypted key storage.
-   - Add key test endpoint and clear status: connected, invalid, quota/rate-limited, missing.
+   - Encrypted per-account/per-project key storage exists through `/api/ai/key`, with masked status, save, and delete.
+   - Remaining work: add explicit live key test result states for connected, invalid, quota/rate-limited, and missing, plus audit rows for save/delete/test.
    - Add UI copy explaining that AI usage is billed by the customer's own provider/API key.
    - Keep AI draft output editable and never insert non-editable template fragments.
    - Add per-project model selection and safe fallback when key is missing.
 
 6. D1 storage route migration
-   - Runtime selection exists, but routes still operate on JSONL fallback.
+   - Runtime selection exists, and the core routes below use D1 when `INLET_STORAGE_ADAPTER=d1|auto` has a valid `DB` binding.
    - `/api/leads` create/list/update/delete and month-bounded CSV export have started using D1 for basic lead operations when `INLET_STORAGE_ADAPTER=d1|auto` and binding exists.
    - Remaining lead route work: confirmed write backfill and real D1 Worker smoke coverage.
    - `/api/events` create/list and month-bounded `/api/stats/summary` now use D1 when active.

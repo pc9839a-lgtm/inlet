@@ -2,6 +2,14 @@
 
 Updated: 2026-05-27
 
+Latest verified frontend deployment:
+
+- GitHub `main`: `a773768`
+- Cloudflare Pages deployment: `ed5254ac`
+- Public URL: `https://inlet-8mr.pages.dev/`
+- Verification: public URL returns `200`, title `Inlet`, and current asset `index-50-TRYio.js`.
+- Current live readiness: `npm run live:qa` passes as a readiness report with hosted API, AI, SMTP, OAuth, conversion diagnostics, and real-browser checks explicitly marked `skipped-live` until credentials/public API URL are set.
+
 ## Decision
 
 Use this split for the first production deploy:
