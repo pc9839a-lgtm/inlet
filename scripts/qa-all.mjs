@@ -24,6 +24,7 @@ const steps = [
   ['live:qa', ['scripts/live-readiness-check.mjs']],
   ['jsonl:qa', ['scripts/jsonl-ops-quality-check.mjs']],
   ['d1:schema:qa', ['scripts/d1-schema-quality-check.mjs']],
+  ['d1:adapter:qa', ['scripts/d1-adapter-quality-check.mjs']],
   ['ops:qa', ['scripts/ops-readiness-check.mjs']],
   ['rendering:qa', ['scripts/rendering-quality-check.mjs']],
   ['css:qa', ['scripts/css-quality-check.mjs']],

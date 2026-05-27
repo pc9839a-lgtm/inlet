@@ -23,6 +23,7 @@
     "live:qa": "node scripts/live-readiness-check.mjs",
     "jsonl:qa": "node scripts/jsonl-ops-quality-check.mjs",
     "d1:schema:qa": "node scripts/d1-schema-quality-check.mjs",
+    "d1:adapter:qa": "node scripts/d1-adapter-quality-check.mjs",
     "ops:qa": "node scripts/ops-readiness-check.mjs",
     "rendering:qa": "node scripts/rendering-quality-check.mjs",
     "artifact:qa": "node scripts/artifact-quality-check.mjs",

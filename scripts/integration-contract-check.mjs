@@ -26,6 +26,7 @@ for (const name of [
   'auth:qa',
   'jsonl:qa',
   'd1:schema:qa',
+  'd1:adapter:qa',
   'ops:qa',
   'stats:qa',
   'csv:qa',
@@ -167,6 +168,17 @@ requireAll(d1RuntimeAdapter, [
   'INLET_STORAGE_MODE',
   'd1UnavailablePlan',
 ], 'D1 runtime adapter contract');
+
+const d1AdapterQa = await read('scripts/d1-adapter-quality-check.mjs');
+requireAll(d1AdapterQa, [
+  'fakeD1',
+  'upsertD1Lead',
+  'listD1Leads',
+  'insertD1Event',
+  'listD1Events',
+  'createStorageRuntime',
+  'storageRuntimePlan',
+], 'D1 adapter QA contract');
 
 const d1Migration = await read('migrations/0001_inlet_core.sql');
 requireAll(d1Migration, [
@@ -495,7 +507,7 @@ requireAll(parallelReadme, [
 console.log(JSON.stringify({
   ok: true,
   checks: 37,
-  scripts: 19,
+  scripts: 20,
   contracts: [
     'jsonl-ops',
     'd1-schema',

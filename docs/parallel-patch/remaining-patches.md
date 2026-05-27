@@ -13,7 +13,7 @@ Last checked on 2026-05-27:
 - Main referenced JS: `313614/430000`.
 - Largest lazy preview CSS: `188791` bytes.
 - Templates: `3` templates, `189` structural checks.
-- Full offline QA: `npm run qa:all` passes `29` steps.
+- Full offline QA: `npm run qa:all` passes `30` steps.
 - Strict artifact QA: passes with no leftover `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, or `preview.zip` artifacts.
 - Current UI note: Cards block is intentionally limited to `1/2` columns. Keep that scope unless the product direction changes.
 
@@ -54,7 +54,7 @@ Do not reassign these unless a regression is found:
 - Lazy CSS: panel/home/preview owner CSS files are imported by their lazy components, and `LandingRenderer` CSS is no longer part of the first screen CSS.
 - Bundle: referenced main JS `313614/430000`; initial app CSS is about `131KB`; preview renderer CSS is lazy (`LandingRenderer-*.css`, `188984` bytes, `initial:false`).
 - Dist artifacts: `bundle:qa` reports `staleAssetCount: 0`, and strict artifact QA passes with no leftover local generated artifacts.
-- Full QA aggregate: `npm run qa:all` runs 29 verification steps and cleans generated `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, and `preview.zip` artifacts before strict artifact gates.
+- Full QA aggregate: `npm run qa:all` runs 30 verification steps and cleans generated `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, and `preview.zip` artifacts before strict artifact gates.
 - Mojibake QA: `mojibake:qa` scans runtime source/server text, and it is included in Worker 3 QA plus integration readiness.
 - Mock integrations: AI/SMTP/webhook/OAuth/conversion skipped-live and mock checks pass.
 - AI, mock integration, and conversion QA now include `liveSummary` counts so pass/fail/skipped-live status is visible without reading every row.
@@ -69,6 +69,7 @@ Do not reassign these unless a regression is found:
 - D1 production schema groundwork exists in `migrations/0001_inlet_core.sql` for accounts, projects, members, invites, pages, revisions, leads, events, delivery logs, AI drafts, subscriptions, payments, ownership transfer requests, and audit logs.
 - D1 adapter groundwork exists in `server/storage/d1Adapter.mjs`; it now includes lead/event row encoding, decoding, paged list helpers, idempotent lead upsert, and event insert helpers.
 - D1 runtime selection groundwork exists in `server/storage/runtimeAdapter.mjs`; `INLET_STORAGE_ADAPTER=jsonl|d1|auto` is recognized and `/api/health` reports the requested/active storage mode. Runtime routes still use JSONL until the D1 route migration is completed.
+- D1 adapter behavior QA exists in `scripts/d1-adapter-quality-check.mjs` and verifies lead/event encode/decode, lead upsert, event dedupe insert, paged lists, and storage runtime fallback/ready plans.
 
 ## 3 Parallel Workers
 
@@ -162,6 +163,7 @@ Verification:
 
 - `npm run auth:qa`
 - `npm run d1:schema:qa`
+- `npm run d1:adapter:qa`
 - `npm run server:smoke:auth`
 - `npm run server:smoke:leads`
 - `npm run server:smoke:events`
