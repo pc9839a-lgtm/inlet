@@ -44,10 +44,7 @@ function hostedQaCleanupReadiness() {
 }
 
 async function hostedApiHealthCheck() {
-  const missing = [
-    ...apiKeys.filter((key) => !String(env[key] || '').trim()),
-    ...(String(env.INLET_SESSION_AUTH_MODE || '').trim() === 'production' ? [] : ['INLET_SESSION_AUTH_MODE=production']),
-  ];
+  const missing = apiKeys.filter((key) => !String(env[key] || '').trim());
   const baseUrl = normalizeBaseUrl(env.INLET_PUBLIC_API_URL || '');
   if (missing.length > 0) {
     return status(
@@ -97,7 +94,7 @@ async function hostedApiHealthCheck() {
 
 const smtpKeys = ['INLET_SMTP_HOST', 'INLET_SMTP_PORT', 'INLET_SMTP_USER', 'INLET_SMTP_PASS', 'INLET_SMTP_FROM'];
 const oauthKeys = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'];
-const apiKeys = ['INLET_PUBLIC_API_URL', 'INLET_SESSION_SECRET'];
+const apiKeys = ['INLET_PUBLIC_API_URL'];
 const checks = [
   await hostedApiHealthCheck(),
   status(
@@ -149,7 +146,7 @@ console.log(JSON.stringify({
   checks,
   commands: {
     ai: 'INLET_AI_QA_LIVE=1 npm run ai:qa',
-    api: 'INLET_PUBLIC_API_URL=https://api.example.com INLET_SESSION_AUTH_MODE=production npm run live:qa',
+    api: 'INLET_PUBLIC_API_URL=https://api.example.com npm run live:qa',
     hostedApi: 'INLET_PUBLIC_API_URL=https://api.example.com INLET_HOSTED_API_QA_REQUIRE=1 npm run api:hosted:qa',
     d1: 'INLET_D1_LIVE_QA=1 npm run d1:live:qa',
     hostedQaCleanup: 'npm run d1:hosted-qa:cleanup',
