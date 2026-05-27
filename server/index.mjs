@@ -205,7 +205,7 @@ const server = createServer(async (req, res) => {
       const body = await readJson(req);
       const project = await authorizeProjectAccess(req, body?.project || {}, { write: true, tab: 'edit' });
       await assertProjectAdmin(req, project, 'create manager invite');
-      const invite = await createManagerInvite(project, body?.manager || body?.invite || {});
+      const invite = await createManagerInvite(req, project, body?.manager || body?.invite || {});
       sendJson(res, 200, { ok: true, invite });
       return;
     }
@@ -255,7 +255,7 @@ const server = createServer(async (req, res) => {
     const inviteAcceptMatch = url.pathname.match(/^\/api\/projects\/invites\/([^/]+)\/accept$/);
     if (inviteAcceptMatch && req.method === 'POST') {
       const body = await readJson(req);
-      const result = await acceptManagerInvite(decodeURIComponent(inviteAcceptMatch[1]), body || {});
+      const result = await acceptManagerInvite(req, decodeURIComponent(inviteAcceptMatch[1]), body || {});
       sendJson(res, 200, { ok: true, ...result });
       return;
     }
@@ -1302,16 +1302,30 @@ function classifyAiKeyTestError(error = {}) {
 }
 
 async function writeAiKeyAudit(req, scope = {}, action = '', metadata = {}) {
-  const entry = {
-    id: safeId(`${action}_${Date.now()}_${Math.random().toString(16).slice(2)}`, ''),
+  await writeAuditLog(req, {
     projectId: scope.projectId || '',
     actorAccountId: scope.ownerId || '',
     action,
     targetType: 'ai_key',
     targetId: aiKeyRecordId(scope),
+    metadata,
+  });
+}
+
+async function writeAuditLog(req, entryInput = {}) {
+  const identity = requestIdentity(req);
+  const action = String(entryInput.action || '').trim();
+  if (!action) return;
+  const entry = {
+    id: safeId(`${action}_${Date.now()}_${Math.random().toString(16).slice(2)}`, ''),
+    projectId: String(entryInput.projectId || '').trim(),
+    actorAccountId: safeId(entryInput.actorAccountId || identity.ownerId || '', ''),
+    action,
+    targetType: String(entryInput.targetType || '').trim(),
+    targetId: String(entryInput.targetId || '').trim(),
     ip: req?.socket?.remoteAddress || '',
     userAgent: String(req?.headers?.['user-agent'] || ''),
-    metadata,
+    metadata: entryInput.metadata || {},
     createdAt: new Date().toISOString(),
   };
 
@@ -1319,14 +1333,14 @@ async function writeAiKeyAudit(req, scope = {}, action = '', metadata = {}) {
     try {
       await insertD1AuditLog(storageRuntime.d1, entry);
     } catch (error) {
-      console.warn('D1 AI key audit write failed:', error?.message || error);
+      console.warn('D1 audit write failed:', error?.message || error);
     }
   }
 
   try {
     await appendJsonlRecord(auditFile, entry);
   } catch (error) {
-    console.warn('AI key audit write failed:', error?.message || error);
+    console.warn('Audit write failed:', error?.message || error);
   }
 }
 
@@ -4786,6 +4800,81 @@ async function assertProjectAdmin(req, project = {}, action = 'manage project') 
   throw accessError(`Only the project master or client admin can ${action}.`);
 }
 
+function managerAuditKey(manager = {}) {
+  return safeId(manager.ownerId || ownerIdForEmail(manager.email) || manager.id, '');
+}
+
+function normalizedAccessSignature(access = {}) {
+  return JSON.stringify(normalizeManagerAccess(access || {}));
+}
+
+async function writeManagerAccessAudit(req, project = {}, previousAccess = {}, nextAccess = {}) {
+  const normalizedProject = normalizeProject(project);
+  const previousManagers = Array.isArray(previousAccess?.managers) ? previousAccess.managers.map((manager) => ({
+    ...manager,
+    email: normalizeEmail(manager.email || ''),
+    ownerId: safeId(manager.ownerId || ownerIdForEmail(manager.email), ''),
+    status: normalizeManagerStatus(manager.status),
+    access: normalizeManagerAccess(manager.access || {}),
+  })) : [];
+  const nextManagers = Array.isArray(nextAccess?.managers) ? nextAccess.managers.map((manager) => ({
+    ...manager,
+    email: normalizeEmail(manager.email || ''),
+    ownerId: safeId(manager.ownerId || ownerIdForEmail(manager.email), ''),
+    status: normalizeManagerStatus(manager.status),
+    access: normalizeManagerAccess(manager.access || {}),
+  })) : [];
+  const previousByKey = new Map(previousManagers.map((manager) => [managerAuditKey(manager), manager]));
+  const nextByKey = new Map(nextManagers.map((manager) => [managerAuditKey(manager), manager]));
+  const writes = [];
+
+  for (const next of nextManagers) {
+    const key = managerAuditKey(next);
+    if (!key) continue;
+    const previous = previousByKey.get(key);
+    if (!previous) continue;
+    if (previous.status === 'active' && next.status !== 'active') {
+      writes.push(writeAuditLog(req, {
+        projectId: normalizedProject.projectId,
+        action: 'manager.removed',
+        targetType: 'manager',
+        targetId: key,
+        metadata: { email: next.email, status: next.status },
+      }));
+      continue;
+    }
+    if (previous.status !== next.status || normalizedAccessSignature(previous.access) !== normalizedAccessSignature(next.access)) {
+      writes.push(writeAuditLog(req, {
+        projectId: normalizedProject.projectId,
+        action: 'manager.permission_changed',
+        targetType: 'manager',
+        targetId: key,
+        metadata: {
+          email: next.email,
+          previousStatus: previous.status,
+          nextStatus: next.status,
+          previousAccess: previous.access,
+          nextAccess: next.access,
+        },
+      }));
+    }
+  }
+
+  for (const previous of previousManagers) {
+    const key = managerAuditKey(previous);
+    if (!key || previous.status !== 'active' || nextByKey.has(key)) continue;
+    writes.push(writeAuditLog(req, {
+      projectId: normalizedProject.projectId,
+      action: 'manager.removed',
+      targetType: 'manager',
+      targetId: key,
+      metadata: { email: previous.email, status: 'removed' },
+    }));
+  }
+
+  await Promise.all(writes);
+}
+
 async function updateProjectAccessFromPage(req, page = {}, project = {}) {
   if (!projectAuthConfig.enforce || !hasProject(project)) return null;
   const normalizedProject = normalizeProject(project);
@@ -4797,7 +4886,9 @@ async function updateProjectAccessFromPage(req, page = {}, project = {}) {
   const previousManagerOwnerIds = Array.isArray(current?.managerOwnerIds) ? current.managerOwnerIds : [];
   const clientOwnerIds = [...new Set([...(next.clientOwnerIds || []), ...previousClientOwnerIds].filter(Boolean))];
   const managerOwnerIds = [...new Set([...(next.managerOwnerIds || []), ...previousManagerOwnerIds].filter(Boolean))];
-  return writeProjectAccess(normalizedProject, { ...current, ...next, clientOwnerIds, managerOwnerIds });
+  const updated = await writeProjectAccess(normalizedProject, { ...current, ...next, clientOwnerIds, managerOwnerIds });
+  if (current) await writeManagerAccessAudit(req, normalizedProject, current, updated);
+  return updated;
 }
 
 function publicInvite(invite = {}) {
@@ -4814,7 +4905,7 @@ function publicInvite(invite = {}) {
   };
 }
 
-async function createManagerInvite(project = {}, manager = {}) {
+async function createManagerInvite(req, project = {}, manager = {}) {
   const normalizedProject = normalizeProject(project);
   const access = await readProjectAccess(normalizedProject);
   if (!access) throw accessError('Project access metadata is required before inviting managers.', 'PROJECT_ACCESS_REQUIRED');
@@ -4834,6 +4925,13 @@ async function createManagerInvite(project = {}, manager = {}) {
   invites.push(invite);
   await writeProjectAccess(normalizedProject, { ...access, invites });
   await syncD1Invite(normalizedProject, invite, access);
+  await writeAuditLog(req, {
+    projectId: normalizedProject.projectId,
+    action: 'manager.invite_created',
+    targetType: 'manager_invite',
+    targetId: invite.id,
+    metadata: { email: invite.email, access: invite.access, expiresAt: invite.expiresAt },
+  });
   return {
     ...publicInvite({ ...invite, project: normalizedProject }),
     token: invite.token,
@@ -5211,7 +5309,7 @@ async function readManagerInvite(token = '') {
   return null;
 }
 
-async function acceptManagerInvite(token = '', body = {}) {
+async function acceptManagerInvite(req, token = '', body = {}) {
   const safeToken = String(token || '').trim();
   const entries = await allProjectAccessEntries();
   for (const entry of entries) {
@@ -5285,6 +5383,14 @@ async function acceptManagerInvite(token = '', body = {}) {
     });
     await syncD1Invite(project, invites[inviteIndex], entry.access);
     await syncD1ProjectMember(project, accepted, entry.access);
+    await writeAuditLog(req, {
+      projectId: project.projectId,
+      actorAccountId: accepted.ownerId,
+      action: 'manager.invite_accepted',
+      targetType: 'manager',
+      targetId: accepted.ownerId,
+      metadata: { email: accepted.email, inviteId: invite.id, access: accepted.access },
+    });
     return {
       invite: publicInvite({ ...invites[inviteIndex], project }),
       manager: accepted,

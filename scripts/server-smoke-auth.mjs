@@ -460,7 +460,7 @@ await runSmoke('server-smoke-auth', async ({ baseUrl }) => {
   assert(newOwnerAfterTransferData.page?.ownership?.ownerEmail !== 'hacker@example.test', 'manager page write must not overwrite ownership metadata');
 }, { env: { INLET_SESSION_SECRET: 'smoke-session-secret' } });
 
-await runSmoke('server-smoke-manager-invite-session', async ({ baseUrl }) => {
+await runSmoke('server-smoke-manager-invite-session', async ({ baseUrl, dataDir }) => {
   const secret = 'smoke-session-secret';
   const project = { projectId: 'smoke-invite-project', ownerId: 'local-user', slug: 'smoke-invite-page' };
   const ownerSession = signedSession({ ownerId: project.ownerId, projectId: project.projectId, role: 'master', email: 'owner@example.test' }, secret);
@@ -574,6 +574,34 @@ await runSmoke('server-smoke-manager-invite-session', async ({ baseUrl }) => {
   });
   await assertManagerServerAccessMatrix(baseUrl, project, managerSessionHeaders, 'accepted manager session');
 
+  const permissionChangedSave = await fetchWithTimeout(`${baseUrl}/api/pages/${project.slug}`, {
+    method: 'POST',
+    headers: ownerHeaders,
+    body: JSON.stringify({
+      project,
+      page: {
+        slug: project.slug,
+        title: 'Invite Smoke Page Permission Changed Manager',
+        blocks: [],
+        ownership: {
+          ownerEmail: 'owner@example.test',
+          managers: [{
+            id: acceptedData.manager.id,
+            name: 'Accepted Manager',
+            email: 'invite-manager@example.test',
+            status: 'active',
+            access: {
+              edit: { read: true, write: false },
+              inbox: { read: false, write: false },
+              stats: { read: true, write: false },
+            },
+          }],
+        },
+      },
+    }),
+  });
+  assert(permissionChangedSave.status === 200, `permission changed manager save expected 200, got ${permissionChangedSave.status}`);
+
   const disabledManagerSave = await fetchWithTimeout(`${baseUrl}/api/pages/${project.slug}`, {
     method: 'POST',
     headers: ownerHeaders,
@@ -621,6 +649,13 @@ await runSmoke('server-smoke-manager-invite-session', async ({ baseUrl }) => {
   await expectStatus('removed accepted manager read denied', 403, () => fetchWithTimeout(`${baseUrl}/api/pages/${project.slug}?projectId=${project.projectId}&ownerId=${project.ownerId}`, {
     headers: managerSessionHeaders,
   }));
+
+  const auditRaw = await readFile(path.join(dataDir, 'audit.jsonl'), 'utf8');
+  const auditActions = auditRaw.trim().split(/\n+/).map((line) => JSON.parse(line).action);
+  assert(auditActions.includes('manager.invite_created'), 'manager invite creation audit should be written');
+  assert(auditActions.includes('manager.invite_accepted'), 'manager invite acceptance audit should be written');
+  assert(auditActions.includes('manager.permission_changed'), 'manager permission change audit should be written');
+  assert(auditActions.includes('manager.removed'), 'manager removal audit should be written');
 }, {
   env: {
     INLET_SESSION_AUTH_MODE: 'strict',
