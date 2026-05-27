@@ -33,6 +33,8 @@ for (const token of [
   'X-Inlet-Session',
   'X-Inlet-Api-Token',
   'publicWrite',
+  'ensureD1ProjectShell',
+  'INSERT OR IGNORE INTO projects',
   'Project access is required.',
 ]) {
   assert(shared.includes(token), `Pages shared API helper missing ${token}`);

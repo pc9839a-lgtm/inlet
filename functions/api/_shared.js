@@ -76,6 +76,52 @@ export function assertD1(env = {}) {
   return env.DB;
 }
 
+export async function ensureD1ProjectShell(db, project = {}) {
+  const projectId = String(project.projectId || project.id || '').trim();
+  if (!projectId) return null;
+  const ownerId = String(project.ownerId || project.ownerAccountId || `public_${projectId}`).trim();
+  const safeOwnerId = ownerId || `public_${projectId}`;
+  const slug = String(project.slug || projectId).replace(/[^a-zA-Z0-9-_]/g, '') || projectId;
+  const now = new Date().toISOString();
+
+  await db.prepare(`
+    INSERT OR IGNORE INTO accounts (
+      id, email, phone, name, password_hash, email_verified_at, status, created_at, updated_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).bind(
+    safeOwnerId,
+    `${safeOwnerId}@public.inlet.local`,
+    null,
+    safeOwnerId,
+    '',
+    now,
+    'active',
+    now,
+    now,
+  ).run();
+
+  await db.prepare(`
+    INSERT OR IGNORE INTO projects (
+      id, owner_account_id, slug, title, client_email, plan, billing_status, status, created_at, updated_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).bind(
+    projectId,
+    safeOwnerId,
+    slug,
+    String(project.title || slug),
+    String(project.clientEmail || '').trim().toLowerCase(),
+    String(project.plan || 'free'),
+    String(project.billingStatus || 'trial'),
+    String(project.status || 'active'),
+    now,
+    now,
+  ).run();
+
+  return { projectId, ownerId: safeOwnerId, slug };
+}
+
 export function apiTokenAuthorized(request, env = {}) {
   const expected = String(env.INLET_API_TOKEN || '').trim();
   if (!expected) return false;

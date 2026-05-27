@@ -1,5 +1,5 @@
 import { insertD1Event, listD1Events } from '../../server/storage/d1Adapter.mjs';
-import { assertD1, authorizeProject, handleApiError, jsonResponse, monthFromRequest, optionsResponse, projectFromRequest, readJson } from './_shared.js';
+import { assertD1, authorizeProject, ensureD1ProjectShell, handleApiError, jsonResponse, monthFromRequest, optionsResponse, projectFromRequest, readJson } from './_shared.js';
 
 const METHODS = 'GET, POST, OPTIONS';
 
@@ -14,6 +14,7 @@ export async function onRequest({ request, env }) {
       const body = await readJson(request);
       const project = projectFromRequest(url, body, request);
       await authorizeProject(request, env, project, { publicWrite: true });
+      await ensureD1ProjectShell(db, project);
       const event = body.event && typeof body.event === 'object' ? body.event : body;
       const saved = await insertD1Event(db, {
         ...event,
