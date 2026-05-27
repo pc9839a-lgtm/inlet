@@ -159,13 +159,19 @@
 
 .ownership-transfer-status {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   padding: 10px;
   border: 1px solid #fed7aa;
   border-radius: 15px;
   background: #fff7ed;
+}
+
+.ownership-transfer-status > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
 }
 
 .ownership-transfer-status strong {
@@ -181,6 +187,42 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.ownership-transfer-status small {
+  color: #b45309;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.ownership-transfer-status.status-approved,
+.ownership-transfer-status.status-completed {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.ownership-transfer-status.status-approved strong,
+.ownership-transfer-status.status-approved span,
+.ownership-transfer-status.status-approved small,
+.ownership-transfer-status.status-completed strong,
+.ownership-transfer-status.status-completed span,
+.ownership-transfer-status.status-completed small {
+  color: #166534;
+}
+
+.ownership-transfer-status.status-rejected,
+.ownership-transfer-status.status-canceled {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.ownership-transfer-status.status-rejected strong,
+.ownership-transfer-status.status-rejected span,
+.ownership-transfer-status.status-rejected small,
+.ownership-transfer-status.status-canceled strong,
+.ownership-transfer-status.status-canceled span,
+.ownership-transfer-status.status-canceled small {
+  color: #991b1b;
 }
 
 .ownership-transfer-status button {

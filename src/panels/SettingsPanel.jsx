@@ -10,6 +10,7 @@ import {
   normalizeOwnershipSettings,
 } from '../lib/authContext.js';
 import { createLocalManagerInvite, createServerManagerInvite, createServerOwnershipTransfer, managerInviteUrl } from '../lib/managerInvites.js';
+import { ownershipTransferBillingLabel, ownershipTransferStatusCopy, ownershipTransferStatusLabel } from '../lib/ownershipTransfer.js';
 import { normalizeIntegrations } from '../lib/pageModel.js';
 import { confirmAction, notify } from '../lib/uiFeedback.js';
 import './SettingsPanel.css';
@@ -356,7 +357,7 @@ export default function SettingsPanel({
       clientEmail: selected.email,
       clientAccess: true,
       transferRequest: {
-        status: 'pending-admin-approval',
+        status: 'requested',
         managerId: selected.id,
         managerName: selected.name || '',
         managerEmail: selected.email,
@@ -368,6 +369,49 @@ export default function SettingsPanel({
     });
     setTransferManagerId(selected.id);
     notify('소유권이전 요청을 만들었습니다.', 'success');
+  };
+
+  const requestOwnershipTransferPersisted = async () => {
+    const selected = eligibleTransferManagers.find((manager) => manager.id === transferManagerId) || eligibleTransferManagers[0];
+    if (!serverPage) {
+      await requestOwnershipTransfer();
+      return;
+    }
+    if (!selected) {
+      notify('소유권을 넘길 매니저를 먼저 추가하고 이메일을 입력하세요.', 'error');
+      return;
+    }
+    const ok = await confirmAction({
+      title: `${managerLabel(selected)}에게 소유권이전 요청`,
+      message: '내부 관리자 최종 승인 후 처리됩니다. 결제가 있으면 만료 또는 해지 후 이전하고, 이후 새 소유자 카드 결제로 연결할 예정입니다.',
+      confirmLabel: '요청',
+    });
+    if (!ok) return;
+    try {
+      updateOwnership({ managers: managerDraft.map(normalizeManagerAccount) });
+      const request = await createServerOwnershipTransfer(page, authUser, {
+        managerId: selected.id,
+        managerEmail: selected.email,
+      });
+      updateOwnership({
+        clientEmail: selected.email,
+        clientAccess: true,
+        transferRequest: request || {
+          status: 'requested',
+          managerId: selected.id,
+          managerName: selected.name || '',
+          managerEmail: selected.email,
+          requestedBy: authUser?.email || ownership.ownerEmail || '',
+          requestedAt: new Date().toISOString(),
+          billingPolicy: '기존 결제가 있으면 만료 또는 해지 후 소유권이전, 이후 새 소유자 카드 결제 가능',
+          adminApprovalRequired: true,
+        },
+      });
+      setTransferManagerId(selected.id);
+      notify('소유권이전 요청을 저장했습니다.', 'success');
+    } catch (error) {
+      notify(`소유권이전 요청에 실패했습니다. ${String(error?.message || error)}`, 'error');
+    }
   };
 
   const cancelOwnershipTransfer = async () => {
@@ -428,10 +472,15 @@ export default function SettingsPanel({
                 <button type="button" onClick={requestOwnershipTransferPersisted} disabled={!eligibleTransferManagers.length}>요청</button>
               </div>
               {transferRequest?.status && (
-                <div className="ownership-transfer-status">
-                  <strong>승인 대기</strong>
-                  <span>{transferRequest.managerName || transferRequest.managerEmail} · {transferRequest.billingPolicy}</span>
-                  <button type="button" onClick={cancelOwnershipTransfer}>취소</button>
+                <div className={`ownership-transfer-status status-${transferRequest.status}`}>
+                  <div>
+                    <strong>{ownershipTransferStatusLabel(transferRequest.status)}</strong>
+                    <span>{transferRequest.managerName || transferRequest.managerEmail || '대상 미지정'} · {ownershipTransferStatusCopy(transferRequest.status)}</span>
+                    <small>{ownershipTransferBillingLabel(transferRequest.billingClearanceStatus)} · {transferRequest.requestedAt ? String(transferRequest.requestedAt).slice(0, 10) : '날짜 없음'}</small>
+                  </div>
+                  {['requested', 'pending-admin-approval'].includes(transferRequest.status) && (
+                    <button type="button" onClick={cancelOwnershipTransfer}>취소</button>
+                  )}
                 </div>
               )}
             </div>

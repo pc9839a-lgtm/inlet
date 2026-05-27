@@ -3,18 +3,10 @@ import { AiPanel } from '../ai/AiPanel.jsx';
 import { START_MODE_KEY } from '../config/storageKeys.js';
 import { Field } from '../editor/controls.jsx';
 import { apiFetch, postJson, projectAuthHeaders } from '../lib/apiClient.js';
+import { ownershipTransferBillingLabel, ownershipTransferStatusCopy, ownershipTransferStatusLabel } from '../lib/ownershipTransfer.js';
 import { projectContext } from '../lib/projectContext.js';
 import { notify } from '../lib/uiFeedback.js';
 import './AdminPanel.css';
-
-const TRANSFER_STATUS_LABELS = {
-  requested: '승인 대기',
-  waiting_billing_clearance: '결제 정리 대기',
-  approved: '승인됨',
-  rejected: '거절됨',
-  completed: '완료',
-  canceled: '취소됨',
-};
 
 export default function AdminPanel({ page, updatePage, updateAi, setPage, setStartMode, authUser = null, onExit }) {
   const context = useMemo(() => projectContext(page, authUser), [authUser, page]);
@@ -126,8 +118,9 @@ export default function AdminPanel({ page, updatePage, updateAi, setPage, setSta
               <div className="admin-transfer-row" key={request.id}>
                 <div>
                   <strong>{request.managerName || request.managerEmail || request.toAccountId || '대상 미지정'}</strong>
-                  <span>{request.managerEmail || request.toAccountId} · {TRANSFER_STATUS_LABELS[request.status] || request.status}</span>
-                  <small>{request.requestedAt ? request.requestedAt.slice(0, 10) : ''} · {request.billingClearanceStatus || 'not_checked'}</small>
+                  <span>{request.managerEmail || request.toAccountId} · {ownershipTransferStatusLabel(request.status)}</span>
+                  <small>{request.requestedAt ? request.requestedAt.slice(0, 10) : ''} · {ownershipTransferBillingLabel(request.billingClearanceStatus)}</small>
+                  <small>{ownershipTransferStatusCopy(request.status)}</small>
                 </div>
                 <div className="admin-transfer-actions">
                   <button type="button" disabled={busy} onClick={() => updateTransferStatus(request, 'waiting_billing_clearance', 'active_subscription')}>결제대기</button>
