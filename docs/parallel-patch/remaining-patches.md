@@ -8,7 +8,7 @@ Current execution mode: one worker continues sequentially from the highest prior
 
 ## Current Recheck Snapshot
 
-Last checked on 2026-05-28 after commit `a342ea0`:
+Last checked on 2026-05-28 after commit `fe44467`:
 
 - Passing baseline after the authenticated browser QA, tab deep-link deployment, production browser QA, hosted API runtime QA, Pages Functions health API, and D1 hosted route patches: `npm run qa:all`, `npm run integration:qa`, `npm run api:functions:qa`, `npm run api:hosted:routes:qa`, `npm run deployment:qa`, and strict `artifact:qa`.
 - CSS source total: `391276/500000`.
@@ -19,12 +19,12 @@ Last checked on 2026-05-28 after commit `a342ea0`:
 - Real browser visual QA: `INLET_BROWSER_QA_REQUIRE=1` passes against production `https://inlet-8mr.pages.dev/?tab=stats` with `INLET_BROWSER_QA_STATE_PRESET=manager-limited`, verifying the Stats tab deep link. It also passes against production `https://inlet-8mr.pages.dev/?tab=settings` with `INLET_BROWSER_QA_STATE_PRESET=owner-settings` plus `INLET_BROWSER_QA_CLICK_TEXT=매니저 권한,관리`, verifying the Settings manager card and ownership transfer entry.
 - Production browser visual QA: `npm run browser:production:qa` now runs the manager stats and owner settings checks together. With `INLET_PRODUCTION_BROWSER_QA_REQUIRE=1`, both production cases pass and assert that start-modal text is absent through `INLET_BROWSER_QA_FORBID_TEXT`.
 - Strict artifact QA: passes with no leftover `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, or `preview.zip` artifacts.
-- GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `a342ea0`.
-- Cloudflare Pages: production deployment `81c16d76` succeeded for commit `a342ea0`; public URL `https://inlet-8mr.pages.dev/` returns `200`, `<title>Inlet</title>`, and the current asset `index-CBvGgFDN.js`.
+- GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `fe44467`.
+- Cloudflare Pages: production deployment `ae28ec6d` succeeded for commit `fe44467`; public URL `https://inlet-8mr.pages.dev/` returns `200`, `<title>Inlet</title>`, and the current asset `index-CBvGgFDN.js`.
 - `/api/health` is now served by Cloudflare Pages Functions with `uses_functions=true`, `service=inlet-api`, `mode=pages-functions`, `auth.sourceOfTruth=signed-session`, `auth.signedSessionReady=true`, `storage.active=d1`, `storage.d1Ready=true`, and `storage.coverage.length=9`.
 - `npm run live:qa` now reports hosted API health as `ready` when run with `INLET_PUBLIC_API_URL=https://inlet-8mr.pages.dev`, `INLET_SESSION_AUTH_MODE=production`, and the Cloudflare-configured session secret represented locally.
 - Hosted API runtime QA: `INLET_PUBLIC_API_URL=https://inlet-8mr.pages.dev INLET_HOSTED_API_QA_REQUIRE=1 npm run api:hosted:qa` passes with `liveSummary.ready=1`.
-- Hosted route QA: `INLET_PUBLIC_API_URL=https://inlet-8mr.pages.dev INLET_HOSTED_ROUTE_QA_REQUIRE=1 INLET_HOSTED_ROUTE_QA_WRITE=1 npm run api:hosted:routes:qa` passes with `liveSummary.ready=10`, proving D1-backed public writes for `/api/leads` and `/api/events` plus 403 read protection for `/api/leads`, `/api/leads/export.csv`, `/api/leads/delivery-logs`, `/api/leads/retry-queue`, `/api/stats/summary`, `/api/pages/:slug`, and `/api/pages/:slug/revisions`.
+- Hosted route QA: `INLET_PUBLIC_API_URL=https://inlet-8mr.pages.dev INLET_HOSTED_ROUTE_QA_REQUIRE=1 INLET_HOSTED_ROUTE_QA_WRITE=1 npm run api:hosted:routes:qa` passes with `liveSummary.ready=19`, proving D1-backed public writes for `/api/leads` and `/api/events`, protected read/write checks for page routes, and hosted account flow checks for email verification issue/confirm, register, duplicate register rejection, login/session refresh, account patch, verified password change, and logout.
 - Cloudflare D1 direct API check confirms `inlet-prod` exists with required core tables and empty initial core counts for accounts/projects/leads/events/audit_logs.
 - Current UI note: Cards block is intentionally limited to `1/2` columns. Keep that scope unless the product direction changes.
 
@@ -92,7 +92,8 @@ Do not reassign these unless a regression is found:
 - D1 adapter groundwork exists in `server/storage/d1Adapter.mjs`; it now includes lead/event row encoding, decoding, paged list helpers, idempotent lead upsert, event insert helpers, monthly stats SQL aggregation, delivery log sync, and delivery retry queue reads.
 - D1 runtime selection groundwork exists in `server/storage/runtimeAdapter.mjs`; `INLET_STORAGE_ADAPTER=jsonl|d1|auto` is recognized and `/api/health` reports requested/active storage mode plus route-level coverage for accounts, pages, leads, events/stats, delivery logs, AI drafts, invites/members, ownership transfer, and AI key storage.
 - D1 lead/event route migration has started: `/api/leads` create/list/update/delete, month-bounded CSV export, `/api/events` create/list, and month-bounded `/api/stats/summary` use D1 when `storageRuntime.active === 'd1'`; lead status, kind, delivery-status, and month-bounded search filters are covered.
-- Cloudflare Pages Functions now host `/api/leads`, `/api/leads/export.csv`, `/api/leads/delivery-logs`, `/api/leads/retry-queue`, `/api/events`, `/api/stats/summary`, `/api/pages/:slug`, `/api/pages/:slug/revisions`, `/api/pages/:slug/revisions/:id`, and `/api/pages/:slug/restore` against production D1 for the hosted route slices. Public POST writes create a minimal project/account shell when needed to satisfy D1 foreign keys; GET/read paths still require signed session or API token.
+- Cloudflare Pages Functions now host `/api/leads`, `/api/leads/export.csv`, `/api/leads/delivery-logs`, `/api/leads/retry-queue`, `/api/events`, `/api/stats/summary`, `/api/pages/:slug`, `/api/pages/:slug/revisions`, `/api/pages/:slug/revisions/:id`, `/api/pages/:slug/restore`, `/api/auth/email-verification`, `/api/auth/email-verification/confirm`, `/api/auth/register`, `/api/auth/login`, `/api/auth/session`, `/api/auth/logout`, `/api/auth/account`, `/api/auth/account/status`, and `/api/auth/password` against production D1 for the hosted route slices. Public POST writes create a minimal project/account shell when needed to satisfy D1 foreign keys; protected GET/read paths still require signed session or API token.
+- Browser production QA presets now use stored auth state without fake signed-session tokens, so hosted `/api/auth/session` no longer clears the visual QA login state during manager/settings screenshots.
 - D1 duplicate lead detection now uses contact/email SQL lookup instead of hydrating the first 100 monthly leads.
 - D1 stats now uses SQL aggregate queries for monthly PV/CTA/form/reservation/lead/status/delivery/type/trend counts instead of hydrating the full month into memory, honors `dateFrom/dateTo` inside the selected month, and dedupes events with `dedupe_key` when available.
 - D1 delivery logs now sync from lead delivery payloads into `delivery_logs`; delivery log and retry queue APIs use D1 when active, while JSONL remains the local fallback.
@@ -174,8 +175,8 @@ These are not already-done items. Patch sequentially from item 1 unless the owne
    - Real Cloudflare D1 database/schema smoke is prepared through `npm run d1:live:qa`; latest direct check confirms the production D1 schema exists.
    - Hosted API QA now detects whether `/api/health` is a real API JSON response or a static Pages HTML fallback.
    - Pages Functions `/api/health` is deployed with signed-session health and D1 binding active.
-   - Pages Functions `/api/leads`, `/api/leads/export.csv`, `/api/leads/delivery-logs`, `/api/leads/retry-queue`, `/api/events`, `/api/stats/summary`, `/api/pages/:slug`, `/api/pages/:slug/revisions`, `/api/pages/:slug/revisions/:id`, and `/api/pages/:slug/restore` are deployed for the current hosted route slices. Live hosted route QA proves public lead/event writes and protected read endpoints.
-   - Remaining work: migrate hosted auth/session, invites/members, ownership transfer, AI draft/key routes, and admin approval routes.
+   - Pages Functions `/api/leads`, `/api/leads/export.csv`, `/api/leads/delivery-logs`, `/api/leads/retry-queue`, `/api/events`, `/api/stats/summary`, `/api/pages/:slug`, `/api/pages/:slug/revisions`, `/api/pages/:slug/revisions/:id`, `/api/pages/:slug/restore`, and the account/auth session routes are deployed for the current hosted route slices. Live hosted route QA proves public lead/event writes, protected read endpoints, and D1-backed account register/login/session/profile/password behavior.
+   - Remaining work: migrate hosted invites/members, ownership transfer, AI draft/key routes, and admin approval routes.
    - Project access/member writes are now mirrored into D1; remaining work is switching hosted reads to D1 as the primary source for every protected route, not only the current slice.
    - Add confirmed JSONL -> D1 write backfill after dry-run review.
    - Keep JSONL fallback only for local dev/import.
