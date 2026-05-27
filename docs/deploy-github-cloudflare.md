@@ -148,6 +148,8 @@ docker build -f Dockerfile.api -t wayzi-api .
 docker run --rm -p 8787:8787 -v inlet-data:/data --env-file .env.production wayzi-api
 ```
 
+The API image includes a container `HEALTHCHECK` that calls `GET http://127.0.0.1:$INLET_API_PORT/api/health`. Keep `npm run api:container:qa` passing whenever changing `Dockerfile.api` or API runtime env requirements.
+
 ## Cloudflare DNS
 
 Use Cloudflare DNS for both frontend and API:

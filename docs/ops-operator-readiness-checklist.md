@@ -7,6 +7,7 @@ Owner: operator plus Worker 4 policy.
 
 - Install dependencies: `npm install`.
 - Run server syntax check: `node --check server/index.mjs`.
+- Run API container contract QA: `npm run api:container:qa`.
 - Run runtime QA: `npm run runtime:qa`.
 - Run mojibake text QA: `npm run mojibake:qa`.
 - Run auth context QA: `npm run auth:qa`.

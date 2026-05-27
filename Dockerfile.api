@@ -14,5 +14,6 @@ COPY src ./src
 
 EXPOSE 8787
 
-CMD ["npm", "run", "server"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 CMD node -e "const port=process.env.INLET_API_PORT||8787; fetch('http://127.0.0.1:'+port+'/api/health').then(r=>{ if(!r.ok) process.exit(1); return r.json(); }).then(j=>process.exit(j&&j.ok===true?0:1)).catch(()=>process.exit(1));"
 
+CMD ["npm", "run", "server"]

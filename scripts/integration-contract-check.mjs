@@ -29,6 +29,7 @@ for (const name of [
   'd1:adapter:qa',
   'd1:runtime:qa',
   'ops:qa',
+  'api:container:qa',
   'stats:qa',
   'csv:qa',
   'perf:qa',
@@ -540,6 +541,14 @@ requireAll(liveQa, [
   'Conversion public diagnostics',
   'Real browser visual QA',
 ], 'live readiness aggregate QA');
+
+const apiContainerQa = await read('scripts/api-container-quality-check.mjs');
+requireAll(apiContainerQa, [
+  'Dockerfile.api',
+  'HEALTHCHECK',
+  '/api/health',
+  'INLET_STORAGE_ADAPTER=d1',
+], 'API container QA contract');
 
 const perfQa = await read('scripts/offline-performance-check.mjs');
 requireAll(perfQa, [
