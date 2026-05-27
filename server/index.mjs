@@ -167,6 +167,13 @@ const server = createServer(async (req, res) => {
       return;
     }
 
+    if (req.method === 'PATCH' && url.pathname === '/api/auth/account/status') {
+      const body = await readJson(req);
+      const result = await updateUserAccountStatus(req, body || {});
+      sendJson(res, 200, { ok: true, ...result });
+      return;
+    }
+
     if (req.method === 'POST' && url.pathname === '/api/auth/email-verification') {
       const body = await readJson(req);
       const verification = await issueEmailVerification(body?.email || body?.user?.email || '', body?.purpose || 'signup');
@@ -3787,11 +3794,28 @@ function authUserPublic(user = {}) {
     name: user.name || '',
     email: user.email || '',
     phone: user.phone || '',
+    status: normalizeAccountStatus(user.status || 'active'),
     emailVerified: !!user.emailVerified,
     phoneVerified: !!user.phoneVerified,
+    suspendedAt: user.suspendedAt || '',
+    deletedAt: user.deletedAt || '',
     createdAt: user.createdAt || '',
     updatedAt: user.updatedAt || '',
   };
+}
+
+function normalizeAccountStatus(value = 'active') {
+  const status = String(value || 'active').trim().toLowerCase();
+  return ['active', 'suspended', 'deleted'].includes(status) ? status : 'active';
+}
+
+function assertAccountActive(user = {}, action = 'use account') {
+  const status = normalizeAccountStatus(user.status || 'active');
+  if (status === 'active') return;
+  const error = new Error(status === 'deleted' ? 'Account is deleted.' : 'Account is suspended.');
+  error.status = 403;
+  error.details = { code: status === 'deleted' ? 'AUTH_ACCOUNT_DELETED' : 'AUTH_ACCOUNT_SUSPENDED', action };
+  throw error;
 }
 
 function passwordHash(password = '', email = '') {
@@ -4002,6 +4026,7 @@ async function registerUserAccount(input = {}, options = {}) {
       phoneVerified: false,
       emailVerified: true,
       passwordHash: password ? passwordHash(password, email) : '',
+      status: 'active',
       source: String(options.source || input.source || 'signup'),
       createdAt: now,
       updatedAt: now,
@@ -4035,6 +4060,7 @@ async function registerUserAccount(input = {}, options = {}) {
       phoneVerified: false,
       emailVerified: true,
       passwordHash: password ? passwordHash(password, email) : '',
+      status: 'active',
       source: String(options.source || input.source || 'signup'),
       createdAt: now,
       updatedAt: now,
@@ -4063,6 +4089,7 @@ async function loginUserAccount(input = {}) {
     error.details = { code: 'AUTH_LOGIN_INVALID' };
     throw error;
   }
+  assertAccountActive(user, 'login');
   if (user.emailVerified !== true) {
     const error = new Error('Email verification is required before login.');
     error.status = 403;
@@ -4102,6 +4129,7 @@ async function refreshUserSession(req, input = {}) {
     error.details = { code: 'AUTH_ACCOUNT_NOT_FOUND' };
     throw error;
   }
+  assertAccountActive(user, 'refresh session');
   if (user.emailVerified !== true) {
     const error = new Error('Email verification is required before session refresh.');
     error.status = 403;
@@ -4156,6 +4184,7 @@ async function updateUserAccount(req, input = {}) {
       error.details = { code: 'AUTH_ACCOUNT_NOT_FOUND' };
       throw error;
     }
+    assertAccountActive(current, 'update account');
     const duplicatePhone = await getD1AccountByPhone(storageRuntime.d1, phone);
     if (duplicatePhone && normalizeEmail(duplicatePhone.email) !== email) {
       const error = new Error('Phone number is already registered.');
@@ -4190,6 +4219,7 @@ async function updateUserAccount(req, input = {}) {
       error.details = { code: 'AUTH_ACCOUNT_NOT_FOUND' };
       throw error;
     }
+    assertAccountActive(users[index], 'update account');
     const duplicatePhone = users.find((user, currentIndex) => currentIndex !== index && normalizePhone(user.phone) === phone);
     if (duplicatePhone) {
       const error = new Error('Phone number is already registered.');
@@ -4216,6 +4246,71 @@ async function updateUserAccount(req, input = {}) {
         email: publicUser.email,
       }),
     };
+  });
+}
+
+async function updateUserAccountStatus(req, input = {}) {
+  const token = sessionTokenFromRequest(req, input);
+  const payload = verifySessionToken(token);
+  if (!payload) {
+    const error = new Error('Session is invalid or expired.');
+    error.status = 401;
+    error.details = { code: 'AUTH_SESSION_INVALID' };
+    throw error;
+  }
+
+  const email = normalizeEmail(payload.email || input.email || '');
+  const ownerId = safeId(payload.ownerId || '', '');
+  const status = normalizeAccountStatus(input.status || input.accountStatus || '');
+  if (status === 'active') {
+    const error = new Error('Only suspended or deleted status can be set through this endpoint.');
+    error.status = 400;
+    error.details = { code: 'AUTH_ACCOUNT_STATUS_INVALID' };
+    throw error;
+  }
+
+  const now = new Date().toISOString();
+  const statusPatch = {
+    status,
+    ...(status === 'suspended' ? { suspendedAt: now } : {}),
+    ...(status === 'deleted' ? { deletedAt: now } : {}),
+    updatedAt: now,
+  };
+
+  if (storageRuntime.active === 'd1') {
+    const current = email ? await getD1AccountByEmail(storageRuntime.d1, email) : null;
+    if (!current || (ownerId && safeId(current.ownerId || current.id, '') !== ownerId)) {
+      const error = new Error('Session account was not found.');
+      error.status = 404;
+      error.details = { code: 'AUTH_ACCOUNT_NOT_FOUND' };
+      throw error;
+    }
+    assertAccountActive(current, 'update account status');
+    const updated = await upsertD1Account(storageRuntime.d1, {
+      ...current,
+      ...statusPatch,
+    });
+    return { user: authUserPublic(updated), session: '' };
+  }
+
+  return withFileLock(usersFile, async () => {
+    const users = await readUserAccounts();
+    const index = users.findIndex((user) => (email && normalizeEmail(user.email) === email) || (ownerId && safeId(user.ownerId || user.id, '') === ownerId));
+    if (index < 0) {
+      const error = new Error('Account not found.');
+      error.status = 404;
+      error.details = { code: 'AUTH_ACCOUNT_NOT_FOUND' };
+      throw error;
+    }
+    assertAccountActive(users[index], 'update account status');
+    const nextUser = {
+      ...users[index],
+      ...statusPatch,
+    };
+    const nextUsers = users.slice();
+    nextUsers[index] = nextUser;
+    await writeJsonlRecords(usersFile, nextUsers);
+    return { user: authUserPublic(nextUser), session: '' };
   });
 }
 
@@ -4248,6 +4343,7 @@ async function changeUserPassword(input = {}) {
       error.details = { code: 'AUTH_ACCOUNT_NOT_FOUND' };
       throw error;
     }
+    assertAccountActive(user, 'change password');
     const updated = await upsertD1Account(storageRuntime.d1, {
       ...user,
       passwordHash: passwordHash(password, email),
@@ -4265,6 +4361,7 @@ async function changeUserPassword(input = {}) {
       error.details = { code: 'AUTH_ACCOUNT_NOT_FOUND' };
       throw error;
     }
+    assertAccountActive(users[index], 'change password');
     const nextUser = {
       ...users[index],
       passwordHash: passwordHash(password, email),

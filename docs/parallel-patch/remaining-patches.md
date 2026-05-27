@@ -106,6 +106,7 @@ Do not reassign these unless a regression is found:
 - Account dashboard now exposes the AI cost/key policy as account state, so operators see that AI generation uses a customer key per request unless a server fallback key is configured.
 - Production deploy is confirmed through GitHub push plus Cloudflare Pages retry. Wrangler direct deploy still requires `CLOUDFLARE_API_TOKEN`, so current deploy path is GitHub push -> Cloudflare Pages build/retry.
 - Account/session hardening patch 1 is done locally: email verification delivery now has a `mock`/`smtp` server boundary, SMTP mode does not expose verification tokens, health reports auth email delivery readiness, password reset returns users to login instead of creating a sessionless logged-in state, and server smoke covers SMTP-missing skip behavior.
+- Account status model exists: accounts can be soft-blocked as `suspended` or `deleted` without physical removal, inactive accounts are denied login/session/profile/password operations, and duplicate email/phone checks still see inactive records so operational history stays attached.
 
 ## Optional Parallel Split
 
@@ -137,8 +138,8 @@ These are not already-done items. Patch sequentially from item 1 unless the owne
    - Email verification delivery boundary exists: default mock for offline QA, SMTP mode hides tokens and reports skipped when SMTP is not configured.
    - Password reset flow now runs as `email verified -> set new password -> return to login`.
    - Expired-session UX already clears local auth and shows a clear login-required toast.
+   - Account deletion/suspension state model exists without hard-deleting operational records.
    - Remaining work: configure real transactional SMTP provider and run a live send smoke with credentials.
-   - Add account deletion/suspension state model without hard-deleting operational records.
    - Keep duplicate email/phone enforcement server-side.
 
 2. Customer-owned AI key storage

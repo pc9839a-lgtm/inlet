@@ -27,6 +27,9 @@ export function authAccountErrorMessage(error) {
   if (code === 'AUTH_LOGIN_REQUIRED') return '이메일과 비밀번호를 입력해주세요.';
   if (code === 'AUTH_SESSION_INVALID') return '로그인 세션이 만료되었습니다. 다시 로그인해주세요.';
   if (code === 'AUTH_ACCOUNT_NOT_FOUND') return '계정을 찾을 수 없습니다. 이메일을 확인해주세요.';
+  if (code === 'AUTH_ACCOUNT_SUSPENDED') return '정지된 계정입니다. 관리자에게 문의해주세요.';
+  if (code === 'AUTH_ACCOUNT_DELETED') return '탈퇴 처리된 계정입니다.';
+  if (code === 'AUTH_ACCOUNT_STATUS_INVALID') return '변경할 수 없는 계정 상태입니다.';
   return String(error?.message || error || '계정 처리 중 오류가 발생했습니다.');
 }
 export async function requestEmailVerification(email = '', purpose = 'signup') {
@@ -81,6 +84,17 @@ export async function updateAuthAccount(input = {}) {
     headers: input.session ? { 'X-Inlet-Session': input.session } : {},
   });
   return data?.user ? { ...data.user, session: data.session || input.session || '' } : null;
+}
+
+export async function updateAuthAccountStatus(input = {}) {
+  const data = await postJson('/api/auth/account/status', {
+    status: input.status || '',
+    session: input.session || '',
+  }, {
+    method: 'PATCH',
+    headers: input.session ? { 'X-Inlet-Session': input.session } : {},
+  });
+  return data?.user ? { ...data.user, session: data.session || '' } : null;
 }
 
 export async function registerAuthAccount(user = {}) {

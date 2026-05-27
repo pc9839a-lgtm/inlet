@@ -211,6 +211,51 @@ await runSmoke('server-smoke-auth', async ({ baseUrl }) => {
   });
   assert(accountDuplicatePhone.status === 409, `account duplicate phone update expected 409, got ${accountDuplicatePhone.status}`);
 
+  const statusAccount = await fetchWithTimeout(`${baseUrl}/api/auth/register`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ user: { name: 'Status User', email: 'status-user@example.test', phone: '010-1234-5678', password: 'secret1', emailVerified: true } }),
+  });
+  assert(statusAccount.status === 200, `status account register expected 200, got ${statusAccount.status}`);
+
+  const statusLogin = await fetchWithTimeout(`${baseUrl}/api/auth/login`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ email: 'status-user@example.test', password: 'secret1', projectId: 'status-project' }),
+  });
+  assert(statusLogin.status === 200, `status account login expected 200, got ${statusLogin.status}`);
+  const statusLoginData = await statusLogin.json();
+
+  const statusDeleted = await fetchWithTimeout(`${baseUrl}/api/auth/account/status`, {
+    method: 'PATCH',
+    headers: authHeaders({ 'Content-Type': 'application/json', 'X-Inlet-Session': statusLoginData.session }),
+    body: JSON.stringify({ status: 'deleted' }),
+  });
+  assert(statusDeleted.status === 200, `account soft delete expected 200, got ${statusDeleted.status}`);
+  const statusDeletedData = await statusDeleted.json();
+  assert(statusDeletedData.user?.status === 'deleted', 'account soft delete should keep record with deleted status');
+
+  const deletedLogin = await fetchWithTimeout(`${baseUrl}/api/auth/login`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ email: 'status-user@example.test', password: 'secret1', projectId: 'status-project' }),
+  });
+  assert(deletedLogin.status === 403, `deleted account login expected 403, got ${deletedLogin.status}`);
+
+  const deletedRefresh = await fetchWithTimeout(`${baseUrl}/api/auth/session`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json', 'X-Inlet-Session': statusLoginData.session }),
+    body: JSON.stringify({ projectId: 'status-project' }),
+  });
+  assert(deletedRefresh.status === 403, `deleted account session refresh expected 403, got ${deletedRefresh.status}`);
+
+  const deletedDuplicateEmail = await fetchWithTimeout(`${baseUrl}/api/auth/register`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ user: { name: 'Deleted Duplicate', email: 'status-user@example.test', phone: '010-1234-5679', password: 'secret1', emailVerified: true } }),
+  });
+  assert(deletedDuplicateEmail.status === 409, `soft-deleted account duplicate email expected 409, got ${deletedDuplicateEmail.status}`);
+
   const project = { projectId: 'smoke-auth-project', ownerId: 'local-user', slug: 'smoke-auth-page' };
   const saved = await fetchWithTimeout(`${baseUrl}/api/pages/${project.slug}`, {
     method: 'POST',
