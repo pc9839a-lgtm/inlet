@@ -16,6 +16,9 @@ const requiredEnvHints = [
   'INLET_API_TOKEN',
   'INLET_SESSION_AUTH_MODE',
   'INLET_SESSION_SECRET',
+  'INLET_PUBLIC_API_URL',
+  'INLET_HOSTED_API_QA_REQUIRE',
+  'INLET_HOSTED_API_EXPECT_D1',
   'OPENAI_API_KEY',
   'INLET_SMTP_HOST',
   'INLET_SMTP_USER',
@@ -53,6 +56,7 @@ for (const command of [
   'npm run server:smoke:events',
   'npm run server:smoke:pages',
   'npm run server:smoke:integrations',
+  'npm run api:hosted:qa',
 ]) {
   assert(readiness.includes(command), `operator checklist missing ${command}`);
 }

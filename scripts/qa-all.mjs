@@ -22,6 +22,7 @@ const steps = [
   ['perf:qa', ['scripts/offline-performance-check.mjs']],
   ['integration:mock:qa', ['scripts/mock-integration-quality-check.mjs']],
   ['live:qa', ['scripts/live-readiness-check.mjs']],
+  ['api:hosted:qa', ['scripts/hosted-api-quality-check.mjs']],
   ['jsonl:qa', ['scripts/jsonl-ops-quality-check.mjs']],
   ['d1:schema:qa', ['scripts/d1-schema-quality-check.mjs']],
   ['d1:adapter:qa', ['scripts/d1-adapter-quality-check.mjs']],

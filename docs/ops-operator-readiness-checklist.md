@@ -99,6 +99,7 @@ Missing live credentials should be recorded as `skipped-live`, not local QA fail
 - OAuth consent screen.
 - Production AI generation with paid account.
 - Real ad platform conversion diagnostics.
+- Hosted API runtime check: run `npm run api:hosted:qa` with `INLET_PUBLIC_API_URL` set to the deployed API URL. `static-pages-html-fallback` means the URL is still only serving the static frontend, not the server API.
 
 Local mock QA must still pass before accepting a `skipped-live` result. `npm run integration:mock:qa` proves SMTP success/retryable failure/non-retryable failure/timeout/retry/dead-letter, webhook retry/dead-letter/idempotency/duplicate compaction, and OAuth missing client ID/missing secret/expired/revoked/not-configured handling without external credentials.
 
@@ -111,6 +112,7 @@ For each launch candidate, record:
 - QA commands run and pass/fail/skipped-live results.
 - `liveSummary` from `npm run ai:qa`, `npm run integration:mock:qa`, and `npm run conversion:qa`.
 - `liveSummary` from `npm run live:qa` showing every enabled live path is either ready or explicitly accepted as skipped-live.
+- `liveSummary` from `npm run api:hosted:qa` showing hosted `/api/health` is ready, or explicitly recording why it is still skipped/failed before launch.
 - Build output directory and bundle totals.
 - Backup/restore dry-run evidence.
 - CSV export sample evidence.
