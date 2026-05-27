@@ -8,18 +8,18 @@ Current execution mode: one worker continues sequentially from the highest prior
 
 ## Current Recheck Snapshot
 
-Last checked on 2026-05-27 after commit `a773768`:
+Last checked on 2026-05-27 after commit `d1fcb7b`:
 
-- Passing baseline after the server mojibake cleanup/deploy patch: `node --check server\index.mjs`, `npm run css:qa`, `npm run runtime:qa`, `npm run templates:qa`, `npm run bundle:qa`, `npm run deployment:qa`, `npm run integration:qa`, `npm run mojibake:qa`, `npm run ai:qa`, `npm run csv:qa`.
+- Passing baseline after the manager access/audit deployment patches: `node --check server\index.mjs`, `node --check scripts\server-smoke-auth.mjs`, `npm run auth:qa`, `npm run server:smoke:auth`, `npm run d1:adapter:qa`, `npm run d1:runtime:qa`, `npm run css:qa`, `npm run rendering:qa`, `npm run runtime:qa`, `npm run build`, `npm run deployment:qa`, `npm run integration:qa`, `npm run mojibake:qa`, and strict `artifact:qa`.
 - CSS source total: `391276/500000`.
-- Main referenced JS: `318085/430000`.
+- Main referenced JS: `318142/430000`.
 - Largest lazy preview CSS: `188791` bytes.
 - Templates: `3` templates, `189` structural checks.
 - Full offline QA: `npm run qa:all` passes `30` steps.
 - Real browser visual QA: `INLET_BROWSER_QA_REQUIRE=1` passes against a local `vite preview` build using local Chrome CDP. `INLET_BROWSER_QA_EXTRA_URLS=auto` also passes for `/about`, `/contact`, `/privacy`, and `/terms`.
 - Strict artifact QA: passes with no leftover `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, or `preview.zip` artifacts.
-- GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `a773768`.
-- Cloudflare Pages: production deployment `ed5254ac` succeeded for commit `a773768`; public URL `https://inlet-8mr.pages.dev/` returns `200`, `<title>Inlet</title>`, and the current asset `index-50-TRYio.js`.
+- GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `d1fcb7b`.
+- Cloudflare Pages: production deployment `fe827cf3` succeeded for commit `d1fcb7b`; public URL `https://inlet-8mr.pages.dev/` returns `200`, `<title>Inlet</title>`, and the current asset `index-Dryygo8e.js`.
 - `npm run live:qa` currently passes as a readiness report with `6` explicit `skipped-live` checks: hosted API health, AI live generation, SMTP live delivery, Google OAuth consent, conversion public diagnostics, and real browser visual QA.
 - Current UI note: Cards block is intentionally limited to `1/2` columns. Keep that scope unless the product direction changes.
 
@@ -113,6 +113,8 @@ Do not reassign these unless a regression is found:
 - Server-side customer AI key storage exists: `/api/ai/key` can read masked status, save an encrypted OpenAI key scoped by account/project, and soft-delete it without ever returning the raw key. Server smoke verifies invalid-key rejection, masked connected status, and delete-to-missing behavior.
 - AI panel server-key wiring exists: in server AI mode the panel reads masked key status, saves/deletes via `/api/ai/key`, and generation/test requests include project auth headers so the server can use the stored key without putting the raw key in page JSON or localStorage.
 - AI key test/audit hardening exists: `/api/ai/test` returns `keyTest.status` for stored-key tests, records last test status/message/time on the masked key record, and writes local/D1 audit rows for save, delete, and test actions.
+- Manager disable/remove hardening exists: Settings can mark managers inactive or remove them, inactive/removed managers are blocked by both frontend access-mode resolution and server project access checks, and ownership transfer can only target active managers.
+- Manager access audit exists: manager invite creation, invite acceptance, permission changes, and removal write local `audit.jsonl` rows and attempt D1 `audit_logs` rows when D1 is active.
 
 ## Optional Parallel Split
 
@@ -174,8 +176,9 @@ These are not already-done items. Patch sequentially from item 1 unless the owne
 5. Manager permissions and ownership UX polish
    - Keep manager permissions inside normal Settings.
    - Keep internal owner/operator controls behind `/admin`.
-   - Add manager disable/remove flow with immediate server access revocation.
-   - Add manager activity/audit rows for invite created, invite accepted, permission changed, removed.
+   - Disable/remove flow and server access revocation are done.
+   - Activity/audit rows for invite created, invite accepted, permission changed, and removed are done.
+   - Remaining work: improve user-facing transfer status copy for requested/waiting/approved/rejected/completed/canceled.
    - Add browser visual QA for compact manager card, ownership transfer box, disabled/removed manager states.
 
 6. Authenticated browser visual QA
@@ -223,8 +226,8 @@ Use this as the full production checklist. These items are not already done unle
    - Manager invite should create and copy the invite link in one action after valid email/name input.
    - Invited manager must login/signup, then only load the invited project if the authenticated email matches the invite email. Login-mode invite acceptance already checks the account password server-side.
    - If invite email does not match login/signup email, show `초대받은 이메일을 확인해주세요.`
-   - Add manager disable/remove flow and ensure removed managers lose server access immediately.
-   - Add manager activity/audit rows for invite created, invite accepted, permission changed, and removed.
+   - Manager disable/remove flow now revokes frontend and server access.
+   - Manager activity/audit rows now cover invite created, invite accepted, permission changed, and removed.
 
 3. Internal admin and operator control
    - Internal admin must be route-only, such as `/admin`, and must require internal master/operator login.
