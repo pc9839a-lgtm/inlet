@@ -197,6 +197,13 @@ function authStatePresetData(name) {
       startMode: 'manual',
     };
   }
+  if (name === 'owner-start-modal') {
+    return {
+      auth: { role: 'master', accessMode: 'builder', name: '마스터', email: 'owner@example.test', workspaceId: 'qa-owner', session: '' },
+      page: basePage,
+      dashboard: { open: true },
+    };
+  }
   if (name === 'client-settings') {
     return {
       auth: { role: 'client-admin', accessMode: 'clientAdmin', name: '클라이언트 관리자', email: 'client@example.test', workspaceId: 'qa-client', session: '' },
@@ -225,7 +232,11 @@ function statePresetInitScript(name) {
     localStorage.setItem(${JSON.stringify(AUTH_KEY)}, JSON.stringify(data.auth));
     localStorage.setItem(${JSON.stringify(STORAGE_KEY)}, JSON.stringify(data.page));
     localStorage.setItem(${JSON.stringify(DASHBOARD_KEY)}, JSON.stringify(data.dashboard));
-    localStorage.setItem(${JSON.stringify(START_MODE_KEY)}, data.startMode);
+    if (Object.prototype.hasOwnProperty.call(data, 'startMode')) {
+      localStorage.setItem(${JSON.stringify(START_MODE_KEY)}, data.startMode);
+    } else {
+      localStorage.removeItem(${JSON.stringify(START_MODE_KEY)});
+    }
   })();`;
 }
 

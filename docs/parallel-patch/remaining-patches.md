@@ -18,7 +18,7 @@ Last checked on 2026-05-28 after commit `faf0e4b`:
 - Templates: `3` templates, `189` structural checks.
 - Full offline QA: `npm run qa:all` passes `33` steps, including `api:hosted:qa`, `api:hosted:routes:qa`, and `api:functions:qa`.
 - Real browser visual QA: `INLET_BROWSER_QA_REQUIRE=1` passes against production `https://inlet-8mr.pages.dev/?tab=stats` with `INLET_BROWSER_QA_STATE_PRESET=manager-limited`, verifying the Stats tab deep link. It also passes against production `https://inlet-8mr.pages.dev/?tab=settings` with `INLET_BROWSER_QA_STATE_PRESET=owner-settings` plus `INLET_BROWSER_QA_CLICK_TEXT=매니저 권한,관리`, verifying the Settings manager card and ownership transfer entry.
-- Production browser visual QA: `npm run browser:production:qa` now runs seven production cases: public desktop home, public mobile PC-guard, owner edit cards, owner inbox, manager stats, owner settings manager permissions, and internal admin ownership queue. With `INLET_PRODUCTION_BROWSER_QA_REQUIRE=1` or `INLET_BROWSER_QA_REQUIRE=1`, all cases use a real browser and assert that error/start-modal text is absent where it should not appear.
+- Production browser visual QA: `npm run browser:production:qa` now runs eight production cases: public desktop home, public mobile PC-guard, owner edit cards, owner start modal, owner inbox, manager stats, owner settings manager permissions, and internal admin ownership queue. With `INLET_PRODUCTION_BROWSER_QA_REQUIRE=1` or `INLET_BROWSER_QA_REQUIRE=1`, all cases use a real browser and assert that error/start-modal text is present or absent where expected.
 - Production browser visual QA now reports the browser engine, viewport list, screenshot count, and screenshot paths per case, so failed or suspicious screens can be inspected without rerunning route discovery.
 - Production browser visual QA also accepts `INLET_BROWSER_QA_REQUIRE=1` as the mandatory-browser alias, so release commands do not silently run optional mode because the wrong require env was used.
 - Strict artifact QA: passes with no leftover `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, or `preview.zip` artifacts.
@@ -212,9 +212,9 @@ These are not already-done items. Patch sequentially from item 1 unless the owne
 6. Authenticated browser visual QA
    - Public route visual QA exists.
    - Scripted logged-in states now exist for manager-limited stats and owner settings/manager permissions.
-   - Production browser QA now covers public desktop home, public mobile PC-guard, owner edit cards, owner inbox, manager stats, owner settings manager permissions, and internal admin ownership queue.
+   - Production browser QA now covers public desktop home, public mobile PC-guard, owner edit cards, owner start modal, owner inbox, manager stats, owner settings manager permissions, and internal admin ownership queue.
    - Production browser QA now prints per-case engine, viewport, screenshot count, and screenshot paths.
-   - Remaining work: dedicated start-modal creation flow, template first viewport, and invite acceptance screenshots.
+   - Remaining work: template first viewport and invite acceptance screenshots.
    - Add screenshot artifact paths and failure reason output for every route/state.
 
 7. Live integrations

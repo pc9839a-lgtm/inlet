@@ -26,6 +26,13 @@ const cases = [
     forbiddenText: '화면을 불러오는 중 오류가 발생했습니다,처음 화면을 어떻게 만들까요?',
   },
   {
+    name: 'owner start modal',
+    url: `${baseUrl}/`,
+    statePreset: 'owner-start-modal',
+    expectedText: '처음 화면을 어떻게 만들까요?,AI 초안으로 시작,직접 만들기,템플릿으로 시작',
+    forbiddenText: '화면을 불러오는 중 오류가 발생했습니다',
+  },
+  {
     name: 'owner inbox',
     url: `${baseUrl}/?tab=inbox`,
     statePreset: 'owner-settings',
