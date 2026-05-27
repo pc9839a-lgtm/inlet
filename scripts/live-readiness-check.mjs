@@ -83,6 +83,16 @@ const apiKeys = ['INLET_PUBLIC_API_URL', 'INLET_SESSION_SECRET'];
 const checks = [
   await hostedApiHealthCheck(),
   status(
+    'Cloudflare D1 live schema',
+    env.INLET_D1_LIVE_QA === '1' && hasAll(['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN']),
+    [
+      env.INLET_D1_LIVE_QA === '1' ? '' : 'INLET_D1_LIVE_QA=1',
+      env.CLOUDFLARE_ACCOUNT_ID ? '' : 'CLOUDFLARE_ACCOUNT_ID',
+      env.CLOUDFLARE_API_TOKEN ? '' : 'CLOUDFLARE_API_TOKEN',
+    ].filter(Boolean),
+    'Run npm run d1:live:qa to confirm inlet-prod table schema and basic counts through the Cloudflare D1 API.',
+  ),
+  status(
     'AI live generation',
     env.INLET_AI_QA_LIVE === '1' && !!String(env.OPENAI_API_KEY || '').trim(),
     ['INLET_AI_QA_LIVE=1', 'OPENAI_API_KEY'].filter((key) => key.includes('=') ? env.INLET_AI_QA_LIVE !== '1' : !String(env[key] || '').trim()),
@@ -121,6 +131,7 @@ console.log(JSON.stringify({
   commands: {
     ai: 'INLET_AI_QA_LIVE=1 npm run ai:qa',
     api: 'INLET_PUBLIC_API_URL=https://api.example.com INLET_SESSION_AUTH_MODE=production npm run live:qa',
+    d1: 'INLET_D1_LIVE_QA=1 npm run d1:live:qa',
     browser: 'INLET_BROWSER_QA_URL=http://localhost:5173 INLET_BROWSER_QA_REQUIRE=1 npm run browser:visual:qa',
     mock: 'npm run integration:mock:qa',
     conversion: 'npm run conversion:qa',

@@ -25,6 +25,7 @@
     "d1:schema:qa": "node scripts/d1-schema-quality-check.mjs",
     "d1:adapter:qa": "node scripts/d1-adapter-quality-check.mjs",
     "d1:runtime:qa": "node scripts/d1-runtime-coverage-check.mjs",
+    "d1:live:qa": "node scripts/d1-live-quality-check.mjs",
     "d1:backfill:dry-run": "node scripts/d1-backfill-dry-run.mjs",
     "ops:qa": "node scripts/ops-readiness-check.mjs",
     "api:container:qa": "node scripts/api-container-quality-check.mjs",

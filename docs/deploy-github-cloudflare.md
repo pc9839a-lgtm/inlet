@@ -4,11 +4,12 @@ Updated: 2026-05-27
 
 Latest verified frontend deployment:
 
-- GitHub `main`: `a773768`
-- Cloudflare Pages deployment: `ed5254ac`
+- GitHub `main`: `88641f8`
+- Cloudflare Pages deployment: `8b097d68`
 - Public URL: `https://inlet-8mr.pages.dev/`
-- Verification: public URL returns `200`, title `Inlet`, and current asset `index-50-TRYio.js`.
-- Current live readiness: `npm run live:qa` passes as a readiness report with hosted API, AI, SMTP, OAuth, conversion diagnostics, and real-browser checks explicitly marked `skipped-live` until credentials/public API URL are set.
+- Verification: public URL returns `200`, title `Inlet`, and current asset `index-DbHRhTVR.js`.
+- Current live readiness: `npm run live:qa` passes as a readiness report with hosted API, D1 live schema, AI, SMTP, OAuth, conversion diagnostics, and real-browser checks explicitly marked `skipped-live` until credentials/public API URL are set.
+- D1 direct check: Cloudflare D1 API confirms `inlet-prod` database `b68d3820-001f-4dbe-87cd-dc9fc0be17ee`, production version, and required core tables. Current core counts are empty for accounts/projects/leads/events/audit_logs.
 
 ## Decision
 
@@ -69,6 +70,7 @@ Required repository secrets for later live checks:
 - `OPENAI_API_KEY`
 - SMTP secrets if live SMTP QA is enabled
 - OAuth secrets if Google OAuth goes live
+- `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` if `npm run d1:live:qa` is enabled in CI
 
 Do not put production secrets into the repository.
 
@@ -175,13 +177,15 @@ Before first production deploy:
 ```bash
 npm run qa:all
 npm run live:qa
+npm run d1:live:qa
 ```
 
 Expected before credentials are set:
 
 - `qa:all` must pass.
-- `live:qa` may report `skipped-live` for AI, SMTP, OAuth, conversion diagnostics, and real browser QA.
+- `live:qa` may report `skipped-live` for D1 live schema, AI, SMTP, OAuth, conversion diagnostics, and real browser QA.
 - `live:qa` may report `skipped-live` for hosted API until `INLET_PUBLIC_API_URL`, `INLET_SESSION_AUTH_MODE=production`, and `INLET_SESSION_SECRET` are set. Once those exist, it calls `GET $INLET_PUBLIC_API_URL/api/health` and reports `failed-live` if signed-session auth or storage coverage is missing.
+- `d1:live:qa` reports `skipped-live` until `INLET_D1_LIVE_QA=1`, `CLOUDFLARE_ACCOUNT_ID`, and `CLOUDFLARE_API_TOKEN` are set. Once enabled, it confirms the configured D1 database has the required tables and basic count queries work.
 
 After API and Pages URLs exist:
 

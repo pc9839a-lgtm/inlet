@@ -20,7 +20,8 @@ Last checked on 2026-05-27 after commit `662936e`:
 - Strict artifact QA: passes with no leftover `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, or `preview.zip` artifacts.
 - GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `662936e`.
 - Cloudflare Pages: production deployment `17287831` succeeded for commit `662936e`; public URL `https://inlet-8mr.pages.dev/` returns `200`, `<title>Inlet</title>`, and the current asset `index-DbHRhTVR.js`.
-- `npm run live:qa` currently passes as a readiness report with `6` explicit `skipped-live` checks: hosted API health, AI live generation, SMTP live delivery, Google OAuth consent, conversion public diagnostics, and real browser visual QA.
+- `npm run live:qa` currently passes as a readiness report with explicit `skipped-live` checks: hosted API health, Cloudflare D1 live schema, AI live generation, SMTP live delivery, Google OAuth consent, conversion public diagnostics, and real browser visual QA.
+- Cloudflare D1 direct API check confirms `inlet-prod` exists with required core tables and empty initial core counts for accounts/projects/leads/events/audit_logs.
 - Current UI note: Cards block is intentionally limited to `1/2` columns. Keep that scope unless the product direction changes.
 
 ## Already Done
@@ -99,6 +100,7 @@ Do not reassign these unless a regression is found:
 - D1 project access read fallback exists: if `access.json` is absent and D1 is active, project access can be derived from `projects` plus active `project_members`. The remaining migration is a real Cloudflare D1 smoke plus deciding when to make D1 the primary permission read/write source for hosted projects.
 - D1 adapter behavior QA exists in `scripts/d1-adapter-quality-check.mjs` and verifies lead/event encode/decode, lead upsert, event dedupe insert, paged lists, SQL stats aggregation, storage runtime fallback/ready plans, and runtime route coverage.
 - D1 runtime coverage QA exists as `npm run d1:runtime:qa`; it proves that missing D1 bindings show JSONL fallback for every route and ready D1 bindings expose active/partial/jsonl status by feature group.
+- D1 live schema QA exists as `npm run d1:live:qa`; it stays `skipped-live` until `INLET_D1_LIVE_QA=1`, `CLOUDFLARE_ACCOUNT_ID`, and `CLOUDFLARE_API_TOKEN` are provided, then checks the real Cloudflare D1 schema and basic counts.
 - Preview renderer CSS import regression is fixed: `LandingRenderer.css` now imports `preview-cards.css` by relative path, so Vite no longer looks for a missing root-level `styles/preview-cards.css`.
 - Account dashboard polish exists: the dashboard now shows account email, phone, role label, and a clear logout action instead of a bare email-only header.
 - Auth error messages now use readable Korean copy for duplicate email/phone, password policy, email verification, login, and expired session cases.
@@ -162,7 +164,8 @@ These are not already-done items. Patch sequentially from item 1 unless the owne
 3. D1 real runtime smoke and write-side migration
    - D1 schema and adapter QA exist.
    - `/api/health` now exposes route-level D1 coverage, and `npm run d1:runtime:qa` locks the expected active/partial/jsonl states.
-   - Remaining work: real Cloudflare Worker/Pages Functions D1 binding smoke.
+   - Real Cloudflare D1 database/schema smoke is prepared through `npm run d1:live:qa`; latest direct check confirms the production D1 schema exists.
+   - Remaining work: real hosted API runtime smoke with a D1 binding, not only direct D1 API schema validation.
    - Project access/member writes are now mirrored into D1; remaining work is a hosted D1 smoke and switching hosted reads to D1 as the primary source.
    - Add confirmed JSONL -> D1 write backfill after dry-run review.
    - Keep JSONL fallback only for local dev/import.
