@@ -30,6 +30,7 @@
     "d1:backfill:dry-run": "node scripts/d1-backfill-dry-run.mjs",
     "ops:qa": "node scripts/ops-readiness-check.mjs",
     "api:container:qa": "node scripts/api-container-quality-check.mjs",
+    "api:functions:qa": "node scripts/pages-functions-quality-check.mjs",
     "api:security:qa": "node scripts/api-security-quality-check.mjs",
     "rendering:qa": "node scripts/rendering-quality-check.mjs",
     "artifact:qa": "node scripts/artifact-quality-check.mjs",

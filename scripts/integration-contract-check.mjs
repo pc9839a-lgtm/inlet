@@ -545,12 +545,21 @@ requireAll(liveQa, [
 ], 'live readiness aggregate QA');
 
 const apiContainerQa = await read('scripts/api-container-quality-check.mjs');
+const pagesFunctionsQa = await read('scripts/pages-functions-quality-check.mjs');
 requireAll(apiContainerQa, [
   'Dockerfile.api',
   'HEALTHCHECK',
   '/api/health',
   'INLET_STORAGE_ADAPTER=d1',
 ], 'API container QA contract');
+requireAll(pagesFunctionsQa, [
+  'functions/api/health.js',
+  'pages-functions',
+  'inlet-api',
+  'sourceOfTruth',
+  'signed-session',
+  "storageActive === 'd1'",
+], 'Pages Functions API health QA contract');
 
 const apiSecurityQa = await read('scripts/api-security-quality-check.mjs');
 requireAll(apiSecurityQa, [
