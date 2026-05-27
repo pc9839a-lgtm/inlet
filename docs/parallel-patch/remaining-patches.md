@@ -8,7 +8,7 @@ Current execution mode: one worker continues sequentially from the highest prior
 
 ## Current Recheck Snapshot
 
-Last checked on 2026-05-28 after commit `9218613`:
+Last checked on 2026-05-28 after commit `2467876`, with the guarded D1 backfill write-plan patch in progress:
 
 - Passing baseline after the authenticated browser QA, tab deep-link deployment, production browser QA, hosted API runtime QA, Pages Functions health API, and D1 hosted route patches: `npm run qa:all`, `npm run integration:qa`, `npm run api:functions:qa`, `npm run api:hosted:routes:qa`, `npm run deployment:qa`, and strict `artifact:qa`.
 - CSS source total: `391276/500000`.
@@ -19,8 +19,8 @@ Last checked on 2026-05-28 after commit `9218613`:
 - Real browser visual QA: `INLET_BROWSER_QA_REQUIRE=1` passes against production `https://inlet-8mr.pages.dev/?tab=stats` with `INLET_BROWSER_QA_STATE_PRESET=manager-limited`, verifying the Stats tab deep link. It also passes against production `https://inlet-8mr.pages.dev/?tab=settings` with `INLET_BROWSER_QA_STATE_PRESET=owner-settings` plus `INLET_BROWSER_QA_CLICK_TEXT=매니저 권한,관리`, verifying the Settings manager card and ownership transfer entry.
 - Production browser visual QA: `npm run browser:production:qa` now runs the manager stats and owner settings checks together. With `INLET_PRODUCTION_BROWSER_QA_REQUIRE=1`, both production cases pass and assert that start-modal text is absent through `INLET_BROWSER_QA_FORBID_TEXT`.
 - Strict artifact QA: passes with no leftover `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, or `preview.zip` artifacts.
-- GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `9218613`.
-- Cloudflare Pages: production deployment `a4acc35c` succeeded for commit `9218613`; public URL `https://inlet-8mr.pages.dev/` returns `200`, `<title>Inlet</title>`, and the current asset `index-CBvGgFDN.js`.
+- GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `2467876`.
+- Cloudflare Pages: production deployment `06373b1f` succeeded for commit `2467876`; public URL `https://inlet-8mr.pages.dev/` returns `200` and hosted API route QA passes.
 - `/api/health` is now served by Cloudflare Pages Functions with `uses_functions=true`, `service=inlet-api`, `mode=pages-functions`, `auth.sourceOfTruth=signed-session`, `auth.signedSessionReady=true`, `storage.active=d1`, `storage.d1Ready=true`, and `storage.coverage.length=9`.
 - `npm run live:qa` now reports hosted API health as `ready` when run with `INLET_PUBLIC_API_URL=https://inlet-8mr.pages.dev`, `INLET_SESSION_AUTH_MODE=production`, and the Cloudflare-configured session secret represented locally.
 - Hosted API runtime QA: `INLET_PUBLIC_API_URL=https://inlet-8mr.pages.dev INLET_HOSTED_API_QA_REQUIRE=1 npm run api:hosted:qa` passes with `liveSummary.ready=1`.
@@ -98,6 +98,7 @@ Do not reassign these unless a regression is found:
 - D1 stats now uses SQL aggregate queries for monthly PV/CTA/form/reservation/lead/status/delivery/type/trend counts instead of hydrating the full month into memory, honors `dateFrom/dateTo` inside the selected month, and dedupes events with `dedupe_key` when available.
 - D1 delivery logs now sync from lead delivery payloads into `delivery_logs`; delivery log and retry queue APIs use D1 when active, while JSONL remains the local fallback.
 - D1 backfill dry-run exists as `npm run d1:backfill:dry-run`; it scans JSONL project/singleton data and reports lead/event/page/delivery-log counts, invalid lines, duplicate ids, duplicate monthly contacts, and duplicate event dedupe keys without writing to D1.
+- D1 guarded backfill write plan exists as `npm run d1:backfill:plan`; it is plan-only by default, skips empty local data, preflights existing production ids, and requires explicit write/approval/rollback-ack environment variables before any D1 insert can run.
 - D1 account helper exists for normalized account encode/decode, email lookup, phone lookup, and account upsert. Auth register/login/session/password routes now use D1 `accounts` when `storageRuntime.active === 'd1'`; JSONL remains the fallback.
 - D1 invite/member sync exists: manager invite creation writes to D1 `invites` when D1 is active, invite acceptance syncs accepted invite status plus the manager row into D1 `project_members`, and project access writes now mirror `projects/project_members` into D1 while `access.json` remains the local compatibility source.
 - D1 ownership transfer request storage exists: `ownership_transfer_requests` encode/decode/upsert/list helpers are wired, `/api/projects/ownership-transfer` can create/list requests, `/api/admin/ownership-transfer/:id` can move requests into approval/billing-clearance states, and JSONL/access metadata remains the local fallback.
@@ -179,9 +180,9 @@ These are not already-done items. Patch sequentially from item 1 unless the owne
    - Hosted API QA now detects whether `/api/health` is a real API JSON response or a static Pages HTML fallback.
    - Pages Functions `/api/health` is deployed with signed-session health and D1 binding active.
    - Pages Functions `/api/leads`, `/api/leads/export.csv`, `/api/leads/delivery-logs`, `/api/leads/retry-queue`, `/api/events`, `/api/stats/summary`, `/api/pages/:slug`, `/api/pages/:slug/revisions`, `/api/pages/:slug/revisions/:id`, `/api/pages/:slug/restore`, account/auth session routes, manager invite/member routes, ownership transfer routes, and internal admin ownership approval routes are deployed for the current hosted route slices. Live hosted route QA proves public lead/event writes, protected read endpoints, D1-backed account behavior, invite create/read/accept behavior, ownership transfer request/list, and admin billing-clearance completion behavior.
-   - Remaining work: add confirmed JSONL -> D1 write backfill and rollback procedure; hosted core route migration is now functionally covered through `ready=35`.
+   - Remaining work: run the guarded JSONL -> D1 write backfill only after operator approval and backup/export confirmation; hosted core route migration is now functionally covered through `ready=35`.
    - Project access/member writes are now mirrored into D1; remaining work is switching hosted reads to D1 as the primary source for every protected route, not only the current slice.
-   - Add confirmed JSONL -> D1 write backfill after dry-run review.
+   - Use `npm run d1:backfill:dry-run` and `npm run d1:backfill:plan` before any production write. The write path must stay blocked unless `INLET_D1_BACKFILL_WRITE=1`, `INLET_D1_BACKFILL_APPROVAL=I_APPROVE_D1_BACKFILL_WRITE`, and `INLET_D1_BACKFILL_ROLLBACK_ACK=I_HAVE_D1_BACKUP_OR_EXPORT` are set.
    - Keep JSONL fallback only for local dev/import.
 
 4. Inbox, stats, and large-data scale
@@ -280,16 +281,16 @@ Use this as the full production checklist. These items are not already done unle
 6. D1 storage route migration
    - Runtime selection exists, and the core routes below use D1 when `INLET_STORAGE_ADAPTER=d1|auto` has a valid `DB` binding.
    - `/api/leads` create/list/update/delete and month-bounded CSV export have started using D1 for basic lead operations when `INLET_STORAGE_ADAPTER=d1|auto` and binding exists.
-   - Remaining lead route work: confirmed write backfill and real D1 Worker smoke coverage.
+   - Remaining lead route work: approved production backfill execution and real D1 Worker smoke coverage.
    - `/api/events` create/list and month-bounded `/api/stats/summary` now use D1 when active.
    - Month-bounded `/api/stats/summary` now uses D1 SQL aggregate queries for high-volume counts and no longer hydrates the full month for the core summary.
    - Remaining stats work: D1-specific smoke coverage with a real Worker binding and deeper SQL aggregates for future custom dimensions.
    - CSV export uses D1 for month-bounded lead exports when active.
-   - Delivery logs/retry queue now have D1 read paths and log sync from lead upsert; remaining work is real Worker binding smoke and JSONL backfill.
+   - Delivery logs/retry queue now have D1 read paths and log sync from lead upsert; remaining work is real Worker binding smoke and approved JSONL backfill execution.
    - Move remaining write-side project access, deeper audit/session metadata to D1.
    - Page metadata, revisions, and AI drafts now use D1 when active.
    - Keep JSONL fallback for local dev and import/backfill only.
-   - JSONL -> D1 dry-run exists; remaining work is confirmed write mode with rollback note after reviewing dry-run output.
+   - JSONL -> D1 dry-run and guarded write-plan exist; remaining work is actual production execution after reviewing dry-run/plan output and confirming backup/export.
 
 7. Inbox, stats, and retention
    - Inbox first load must stay limited to 50 and use `더보기` paging.
@@ -365,7 +366,7 @@ Tasks:
 - Use `migrations/0001_inlet_core.sql` as the first D1 migration and keep `d1:schema:qa` passing when changing account, ownership transfer, lead/event, or audit structures.
 - Keep `d1:adapter:qa` passing when changing D1 lead/event/account runtime behavior.
 - Keep `d1:adapter:qa` passing when changing D1 stats aggregation; it now covers aggregate counts and trend buckets.
-- Use `npm run d1:backfill:dry-run` before any real D1 write migration; confirmed write mode still requires explicit operator approval and rollback notes.
+- Use `npm run d1:backfill:dry-run` and `npm run d1:backfill:plan` before any real D1 write migration; write mode still requires explicit operator approval and rollback/backup acknowledgement.
 - Keep JSONL as fallback.
 - Use query plan `activeIndexFields`, `missingIndexFields`, `recommendedIndex`, `indexKey`, and `migrationPriority` to prioritize the first DB indexes.
 - Keep expanding the adapter query contract when new lead/event/stat read paths are added.

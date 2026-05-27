@@ -1,14 +1,14 @@
 # GitHub And Cloudflare Deployment Plan
 
-Updated: 2026-05-27
+Updated: 2026-05-28
 
 Latest verified frontend deployment:
 
-- GitHub `main`: `7b69abe`
-- Cloudflare Pages deployment: `63204ee2`
+- GitHub `main`: `2467876`
+- Cloudflare Pages deployment: `06373b1f`
 - Public URL: `https://inlet-8mr.pages.dev/`
-- Verification: public URL returns `200`, title `Inlet`, and current asset `index-DbHRhTVR.js`.
-- Current live readiness: `npm run live:qa` passes as a readiness report with hosted API, D1 live schema, AI, SMTP, OAuth, conversion diagnostics, and real-browser checks explicitly marked `skipped-live` until credentials/public API URL are set.
+- Verification: public URL returns `200`; hosted API health, hosted route QA, and production browser QA pass against `https://inlet-8mr.pages.dev/`.
+- Current live readiness: hosted D1 Pages Functions are active. AI/SMTP/OAuth/conversion checks remain credential-bound and must stay `skipped-live` until credentials are configured.
 - D1 direct check: Cloudflare D1 API confirms `inlet-prod` database `b68d3820-001f-4dbe-87cd-dc9fc0be17ee`, production version, and required core tables. Current core counts are empty for accounts/projects/leads/events/audit_logs.
 
 ## Decision
@@ -205,13 +205,53 @@ Then run one real lead submission and confirm:
 - stats update,
 - SMTP/webhook delivery logs show the expected status.
 
+## JSONL To D1 Backfill Procedure
+
+Use this only when moving real local JSONL records into production D1. Do not run write mode just because the script exists.
+
+Plan-only checks:
+
+```bash
+npm run d1:backfill:dry-run
+npm run d1:backfill:plan
+```
+
+Write-mode requirements:
+
+- Review the dry-run and plan output first.
+- Confirm the target D1 database was backed up or exported.
+- Confirm the planned ids do not already exist in D1. The script blocks existing ids by default.
+- Keep `INLET_D1_BACKFILL_ALLOW_EXISTING_IDS=1` unset unless the duplicate-id plan was manually reviewed.
+
+Production write command shape:
+
+```powershell
+$env:INLET_D1_BACKFILL_WRITE='1'
+$env:INLET_D1_BACKFILL_APPROVAL='I_APPROVE_D1_BACKFILL_WRITE'
+$env:INLET_D1_BACKFILL_ROLLBACK_ACK='I_HAVE_D1_BACKUP_OR_EXPORT'
+$env:CLOUDFLARE_ACCOUNT_ID='<account-id>'
+$env:CLOUDFLARE_API_TOKEN='<token-with-d1-edit>'
+$env:INLET_D1_DATABASE_ID='b68d3820-001f-4dbe-87cd-dc9fc0be17ee'
+npm run d1:backfill:plan
+Remove-Item Env:\INLET_D1_BACKFILL_WRITE,Env:\INLET_D1_BACKFILL_APPROVAL,Env:\INLET_D1_BACKFILL_ROLLBACK_ACK
+```
+
+After write mode:
+
+```bash
+npm run d1:live:qa
+npm run api:hosted:routes:qa
+```
+
+Rollback is manual: restore the D1 export or remove only the imported ids listed in the backfill output. Do not run broad deletes against production D1.
+
 ## Cloudflare-Native Phase 2
 
 Move to Workers only after these are done:
 
 1. Implement D1 behind the existing JSONL adapter boundary.
 2. Keep JSONL only as local/dev fallback.
-3. Add import/backfill scripts from JSONL data to D1.
+3. Use `npm run d1:backfill:dry-run` and guarded `npm run d1:backfill:plan` for JSONL imports to D1.
 4. Route account/session, manager invite, leads, events, stats, delivery logs, revisions, ownership transfer, and billing state through D1.
 5. Deploy API as Worker or Pages Functions after route parity QA passes.
 

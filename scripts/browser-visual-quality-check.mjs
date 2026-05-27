@@ -1,5 +1,6 @@
 import { createRequire } from 'node:module';
 import { spawn } from 'node:child_process';
+import { once } from 'node:events';
 import { existsSync } from 'node:fs';
 import { mkdir, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -334,6 +335,22 @@ async function waitForExpectedTextsInCdp(client) {
 
 async function wait(ms) {
   await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function terminateBrowserProcess(browser) {
+  if (!browser || browser.exitCode !== null) return;
+  browser.kill();
+  await Promise.race([
+    once(browser, 'close').catch(() => null),
+    wait(3000),
+  ]);
+  if (browser.exitCode === null) {
+    browser.kill('SIGKILL');
+    await Promise.race([
+      once(browser, 'close').catch(() => null),
+      wait(2000),
+    ]);
+  }
 }
 
 async function fetchJson(url, options) {
@@ -696,7 +713,7 @@ if (!targetUrl) {
       }
     }
   } finally {
-    browser.kill();
+    await terminateBrowserProcess(browser);
   }
 
   assert(results.length === targets.length * viewports.length, `expected ${targets.length * viewports.length} screenshots, got ${results.length}`);

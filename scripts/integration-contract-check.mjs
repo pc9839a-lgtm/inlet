@@ -593,9 +593,21 @@ requireAll(d1BackfillDryRun, [
   'future D1 write backfill with explicit confirmation only',
 ], 'D1 backfill dry-run contract');
 
+const d1BackfillPlan = await read('scripts/d1-backfill-write-plan.mjs');
+requireAll(d1BackfillPlan, [
+  'INLET_D1_BACKFILL_WRITE',
+  'I_APPROVE_D1_BACKFILL_WRITE',
+  'I_HAVE_D1_BACKUP_OR_EXPORT',
+  'preflightExistingIds',
+  'INSERT OR IGNORE INTO leads',
+  'INSERT OR IGNORE INTO events',
+  'Rollback must only be used',
+], 'D1 backfill write plan contract');
+
 const packageSource = await read('package.json');
 requireAll(packageSource, [
   'd1:backfill:dry-run',
+  'd1:backfill:plan',
   'd1:live:qa',
 ], 'D1 backfill package script');
 
