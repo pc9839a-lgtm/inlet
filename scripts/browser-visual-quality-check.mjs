@@ -162,7 +162,7 @@ function authStatePresetData(name) {
   };
   if (name === 'owner-settings') {
     return {
-      auth: { role: 'master', accessMode: 'builder', name: '마스터', email: 'owner@example.test', workspaceId: 'qa-owner', session: 'visual.qa.owner' },
+      auth: { role: 'master', accessMode: 'builder', name: '마스터', email: 'owner@example.test', workspaceId: 'qa-owner', session: '' },
       page: basePage,
       dashboard: { open: true },
       startMode: 'manual',
@@ -170,7 +170,7 @@ function authStatePresetData(name) {
   }
   if (name === 'client-settings') {
     return {
-      auth: { role: 'client-admin', accessMode: 'clientAdmin', name: '클라이언트 관리자', email: 'client@example.test', workspaceId: 'qa-client', session: 'visual.qa.client' },
+      auth: { role: 'client-admin', accessMode: 'clientAdmin', name: '클라이언트 관리자', email: 'client@example.test', workspaceId: 'qa-client', session: '' },
       page: basePage,
       dashboard: { open: true },
       startMode: 'manual',
@@ -178,7 +178,7 @@ function authStatePresetData(name) {
   }
   if (name === 'manager-limited') {
     return {
-      auth: { role: 'manager', accessMode: 'manager', name: activeManager.name, email: activeManager.email, workspaceId: 'qa-manager', session: 'visual.qa.manager' },
+      auth: { role: 'manager', accessMode: 'manager', name: activeManager.name, email: activeManager.email, workspaceId: 'qa-manager', session: '' },
       page: basePage,
       dashboard: { open: true },
       startMode: 'manual',
