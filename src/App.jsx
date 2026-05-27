@@ -94,6 +94,11 @@ function tabFromLocation(fallback = 'edit') {
   return TAB_KEYS.has(requested) ? requested : fallback;
 }
 
+function hasTabDeepLink() {
+  if (typeof location === 'undefined') return false;
+  return TAB_KEYS.has(new URLSearchParams(location.search).get('tab') || '');
+}
+
 function replaceLocationTab(nextTab) {
   if (typeof location === 'undefined' || typeof history === 'undefined') return;
   if (!TAB_KEYS.has(nextTab)) return;
@@ -455,6 +460,7 @@ function App() {
   const [stylePreviewTheme, setStylePreviewTheme] = useState(null);
   const [templateChoices, setTemplateChoices] = useState([]);
   const mobileBlocked = useMemo(() => typeof window !== 'undefined' && window.innerWidth < 900, []);
+  const tabDeepLink = useMemo(() => hasTabDeepLink(), []);
   const { handlePageSaveError, useLatestServerPage, keepLocalPageDraft, forceSaveLocalPage } = usePageConflict({
     authUser,
     pageConflict,
@@ -1553,7 +1559,7 @@ function App() {
   return (
     <>
       <div className={`builder-shell${canUseBuilder && startMode === 'template' ? ' template-intro-shell' : ''}`}>
-        {canManageAdmin && !startMode && <Suspense fallback={<LazyPanelFallback />}><StartModeOverlay onManual={()=>chooseStartMode('manual')} onAi={()=>chooseStartMode('ai')} onTemplate={()=>chooseStartMode('template')} onClose={()=>setStartMode('manual')} templates={templateChoices}/></Suspense>} 
+        {canManageAdmin && !startMode && !tabDeepLink && <Suspense fallback={<LazyPanelFallback />}><StartModeOverlay onManual={()=>chooseStartMode('manual')} onAi={()=>chooseStartMode('ai')} onTemplate={()=>chooseStartMode('template')} onClose={()=>setStartMode('manual')} templates={templateChoices}/></Suspense>} 
         <aside className="left-workspace">
           <section className="work-panel">
             {canManageAdmin && startMode === 'template' ? (
