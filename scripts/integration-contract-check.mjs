@@ -665,6 +665,7 @@ requireAll(artifactQa, [
 ], 'strict artifact QA contract');
 
 const browserVisualQa = await read('scripts/browser-visual-quality-check.mjs');
+const productionBrowserQa = await read('scripts/production-browser-quality-check.mjs');
 requireAll(browserVisualQa, [
   'INLET_BROWSER_QA_REQUIRE',
   'INLET_BROWSER_QA_EXTRA_URLS',
@@ -683,6 +684,14 @@ requireAll(browserVisualQa, [
   'requires Playwright, Puppeteer, or local Chrome/Edge',
   '.error-screen, .app-error-screen, .block-render-fallback',
 ], 'browser visual QA enforcement contract');
+requireAll(productionBrowserQa, [
+  'INLET_PRODUCTION_QA_URL',
+  'INLET_PRODUCTION_BROWSER_QA_REQUIRE',
+  'manager-limited',
+  'owner-settings',
+  'INLET_BROWSER_QA_FORBID_TEXT',
+  'browser-visual-quality-check.mjs',
+], 'production browser QA contract');
 
 const opsQa = await read('scripts/ops-readiness-check.mjs');
 requireAll(opsQa, [

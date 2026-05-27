@@ -42,6 +42,7 @@
     "deploy:pages": "wrangler pages deploy dist --project-name inlet --branch main",
     "deploy:pages:preview": "wrangler pages deploy dist --project-name inlet --branch staging",
     "browser:visual:qa": "node scripts/browser-visual-quality-check.mjs",
+    "browser:production:qa": "node scripts/production-browser-quality-check.mjs",
     "accessibility:qa": "node scripts/accessibility-quality-check.mjs",
     "qa:all": "node scripts/qa-all.mjs"
   },
