@@ -56,6 +56,34 @@ const cases = [
   },
 ];
 
+function safeCaseName(name) {
+  return name
+    .replace(/[^a-z0-9]+/gi, '-')
+    .replace(/^-|-$/g, '')
+    .toLowerCase();
+}
+
+function parseBrowserOutput(stdout, name) {
+  const text = stdout.trim();
+  if (!text) return { name, ok: true, engine: '', screenshotCount: 0, screenshots: [] };
+  try {
+    const data = JSON.parse(text);
+    const screenshots = Array.isArray(data.results)
+      ? data.results.map((item) => item.screenshot).filter(Boolean)
+      : [];
+    return {
+      name,
+      ok: true,
+      engine: data.engine || '',
+      screenshotCount: screenshots.length,
+      screenshots,
+      viewports: Array.from(new Set((data.results || []).map((item) => item.viewport).filter(Boolean))),
+    };
+  } catch {
+    return { name, ok: true, engine: '', screenshotCount: 0, screenshots: [], parseWarning: 'browser QA output was not JSON' };
+  }
+}
+
 function runCase(testCase) {
   return new Promise((resolve, reject) => {
     const baseEnv = Object.fromEntries(
@@ -68,6 +96,7 @@ function runCase(testCase) {
       INLET_BROWSER_QA_VIEWPORTS: testCase.viewports || 'desktop',
       INLET_BROWSER_QA_EXPECT_TEXT: testCase.expectedText,
       INLET_BROWSER_QA_FORBID_TEXT: testCase.forbiddenText,
+      INLET_BROWSER_QA_SCREENSHOT_DIR: `.tmp-browser-visual/production-${safeCaseName(testCase.name)}`,
     };
     if (requireRealBrowser) env.INLET_BROWSER_QA_REQUIRE = '1';
     if (testCase.clickText) env.INLET_BROWSER_QA_CLICK_TEXT = testCase.clickText;
@@ -87,7 +116,7 @@ function runCase(testCase) {
         reject(new Error(`${testCase.name} failed with exit ${code}\n${stdout}\n${stderr}`));
         return;
       }
-      resolve({ name: testCase.name, ok: true, output: stdout.trim() });
+      resolve(parseBrowserOutput(stdout, testCase.name));
     });
   });
 }
@@ -101,5 +130,13 @@ console.log(JSON.stringify({
   ok: true,
   baseUrl,
   requireRealBrowser,
-  cases: results.map(({ name, ok }) => ({ name, ok })),
+  cases: results.map(({ name, ok, engine, screenshotCount, screenshots, viewports, parseWarning }) => ({
+    name,
+    ok,
+    engine,
+    screenshotCount,
+    viewports,
+    screenshots,
+    ...(parseWarning ? { parseWarning } : {}),
+  })),
 }, null, 2));
