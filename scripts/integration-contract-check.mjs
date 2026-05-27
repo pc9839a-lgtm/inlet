@@ -666,6 +666,7 @@ requireAll(artifactQa, [
 
 const browserVisualQa = await read('scripts/browser-visual-quality-check.mjs');
 const productionBrowserQa = await read('scripts/production-browser-quality-check.mjs');
+const hostedApiQa = await read('scripts/hosted-api-quality-check.mjs');
 requireAll(browserVisualQa, [
   'INLET_BROWSER_QA_REQUIRE',
   'INLET_BROWSER_QA_EXTRA_URLS',
@@ -692,6 +693,15 @@ requireAll(productionBrowserQa, [
   'INLET_BROWSER_QA_FORBID_TEXT',
   'browser-visual-quality-check.mjs',
 ], 'production browser QA contract');
+requireAll(hostedApiQa, [
+  'INLET_PUBLIC_API_URL',
+  'INLET_HOSTED_API_QA_REQUIRE',
+  'INLET_HOSTED_API_EXPECT_D1',
+  'static-pages-html-fallback',
+  'sourceOfTruth',
+  'signed-session',
+  "storageActive === 'd1'",
+], 'hosted API runtime QA contract');
 
 const opsQa = await read('scripts/ops-readiness-check.mjs');
 requireAll(opsQa, [

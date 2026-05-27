@@ -21,6 +21,7 @@
     "integration:qa": "node scripts/integration-contract-check.mjs",
     "integration:mock:qa": "node scripts/mock-integration-quality-check.mjs",
     "live:qa": "node scripts/live-readiness-check.mjs",
+    "api:hosted:qa": "node scripts/hosted-api-quality-check.mjs",
     "jsonl:qa": "node scripts/jsonl-ops-quality-check.mjs",
     "d1:schema:qa": "node scripts/d1-schema-quality-check.mjs",
     "d1:adapter:qa": "node scripts/d1-adapter-quality-check.mjs",

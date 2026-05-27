@@ -131,6 +131,7 @@ console.log(JSON.stringify({
   commands: {
     ai: 'INLET_AI_QA_LIVE=1 npm run ai:qa',
     api: 'INLET_PUBLIC_API_URL=https://api.example.com INLET_SESSION_AUTH_MODE=production npm run live:qa',
+    hostedApi: 'INLET_PUBLIC_API_URL=https://api.example.com INLET_HOSTED_API_QA_REQUIRE=1 npm run api:hosted:qa',
     d1: 'INLET_D1_LIVE_QA=1 npm run d1:live:qa',
     browser: 'INLET_BROWSER_QA_URL=http://localhost:5173 INLET_BROWSER_QA_REQUIRE=1 npm run browser:visual:qa',
     mock: 'npm run integration:mock:qa',

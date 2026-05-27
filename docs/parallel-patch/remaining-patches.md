@@ -22,6 +22,7 @@ Last checked on 2026-05-28 after commit `b798724`:
 - GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `b798724`.
 - Cloudflare Pages: production deployment `e14d28d0` succeeded for commit `b798724`; public URL `https://inlet-8mr.pages.dev/` returns `200`, `<title>Inlet</title>`, and the current asset `index-CBvGgFDN.js`.
 - `npm run live:qa` currently passes as a readiness report with explicit `skipped-live` checks: hosted API health, Cloudflare D1 live schema, AI live generation, SMTP live delivery, Google OAuth consent, conversion public diagnostics, and real browser visual QA.
+- Hosted API runtime QA: `npm run api:hosted:qa` now exists. With `INLET_PUBLIC_API_URL=https://inlet-8mr.pages.dev`, it detects `static-pages-html-fallback`, which confirms the current Pages deployment is frontend-only and `/api/*` is not yet a real hosted API runtime.
 - Cloudflare D1 direct API check confirms `inlet-prod` exists with required core tables and empty initial core counts for accounts/projects/leads/events/audit_logs.
 - Current UI note: Cards block is intentionally limited to `1/2` columns. Keep that scope unless the product direction changes.
 
@@ -168,7 +169,8 @@ These are not already-done items. Patch sequentially from item 1 unless the owne
    - D1 schema and adapter QA exist.
    - `/api/health` now exposes route-level D1 coverage, and `npm run d1:runtime:qa` locks the expected active/partial/jsonl states.
    - Real Cloudflare D1 database/schema smoke is prepared through `npm run d1:live:qa`; latest direct check confirms the production D1 schema exists.
-   - Remaining work: real hosted API runtime smoke with a D1 binding, not only direct D1 API schema validation.
+   - Hosted API QA now detects whether `/api/health` is a real API JSON response or a static Pages HTML fallback.
+   - Remaining work: deploy the API runtime with signed-session auth and D1 binding, then run `INLET_PUBLIC_API_URL=<api-url> INLET_HOSTED_API_QA_REQUIRE=1 npm run api:hosted:qa`.
    - Project access/member writes are now mirrored into D1; remaining work is a hosted D1 smoke and switching hosted reads to D1 as the primary source.
    - Add confirmed JSONL -> D1 write backfill after dry-run review.
    - Keep JSONL fallback only for local dev/import.
