@@ -531,6 +531,9 @@ const liveQa = await read('scripts/live-readiness-check.mjs');
 requireAll(liveQa, [
   'liveSummary',
   'Hosted API health',
+  'hostedApiHealthCheck',
+  'failed-live',
+  '/api/health',
   'AI live generation',
   'SMTP live delivery',
   'Google OAuth consent',

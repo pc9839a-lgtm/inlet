@@ -170,7 +170,7 @@ Expected before credentials are set:
 
 - `qa:all` must pass.
 - `live:qa` may report `skipped-live` for AI, SMTP, OAuth, conversion diagnostics, and real browser QA.
-- `live:qa` may report `skipped-live` for hosted API until `INLET_PUBLIC_API_URL`, `INLET_SESSION_AUTH_MODE=production`, and `INLET_SESSION_SECRET` are set.
+- `live:qa` may report `skipped-live` for hosted API until `INLET_PUBLIC_API_URL`, `INLET_SESSION_AUTH_MODE=production`, and `INLET_SESSION_SECRET` are set. Once those exist, it calls `GET $INLET_PUBLIC_API_URL/api/health` and reports `failed-live` if signed-session auth or storage coverage is missing.
 
 After API and Pages URLs exist:
 
