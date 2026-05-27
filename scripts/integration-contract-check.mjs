@@ -314,18 +314,25 @@ requireAll(aiQa, [
 const aiDraftGenerator = await read('src/ai/aiDraftGenerator.js');
 const aiSettings = await read('src/ai/aiSettings.js');
 const aiPanel = await read('src/ai/AiPanel.jsx');
+const aiKeyRepository = await read('src/lib/aiKeyRepository.js');
 requireAll(aiDraftGenerator, [
-  "postJson('/api/ai/draft', { model, input: normalizedInput, apiKey: apiKey || '' })",
-  "postJson('/api/ai/test', { model, apiKey: apiKey || '' })",
+  "postJson('/api/ai/draft', { model, input: normalizedInput, apiKey: apiKey || '', project: request.project }, request.options)",
+  "postJson('/api/ai/test', { model, apiKey: apiKey || '', project: request.project }, request.options)",
 ], 'customer-owned AI key request contract');
 requireAll(aiSettings, [
   'VITE_INLET_ALLOW_CLIENT_AI_KEY_STORAGE=1',
   "isClientAiKeyStorageEnabled() ? (settings.apiKey || '') : ''",
 ], 'customer-owned AI key storage contract');
 requireAll(aiPanel, [
-  '고객 API 키를 이번 세션에서만 사용합니다. 저장하지 않습니다.',
-  '입력한 API 키는 저장하지 않고 이번 요청에만 서버로 전달합니다.',
+  'saveServerAiKey(key, page, authUser)',
+  'deleteServerAiKey(page, authUser)',
+  'serverAiKeyLabel(serverKeyStatus)',
 ], 'customer-owned AI key UI contract');
+requireAll(aiKeyRepository, [
+  "apiFetch(`/api/ai/key?",
+  "postJson('/api/ai/key'",
+  'serverAiKeyLabel',
+], 'frontend server AI key repository contract');
 
 const serverIndex = await read('server/index.mjs');
 requireAll(serverIndex, [

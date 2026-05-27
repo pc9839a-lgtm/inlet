@@ -20,6 +20,7 @@ import {
 import { generateAiDraft, testOpenAiKey } from './aiDraftGenerator';
 import { AI_BLOCK_LABELS, applyAiDraftToPage } from './aiDraftApply';
 import { isClientAiKeyStorageEnabled, isServerAiMode } from '../config/runtimeConfig.js';
+import { deleteServerAiKey, fetchServerAiKeyStatus, saveServerAiKey, serverAiKeyLabel } from '../lib/aiKeyRepository.js';
 import { deleteServerAiDraft, fetchServerAiDrafts, saveServerAiDraft } from '../lib/aiDraftRepository.js';
 import './ai.css';
 
@@ -214,6 +215,7 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
   const [applyMode, setApplyMode] = useState('replace');
   const [applyOptions, setApplyOptions] = useState({ updateTheme: true, updateFixed: true });
   const [error, setError] = useState('');
+  const [serverKeyStatus, setServerKeyStatus] = useState(null);
   const draftHistory = Array.isArray(ai.draftHistory) ? ai.draftHistory : [];
   const recommendedTemplate = useMemo(() => recommendTemplateForInput(input), [input.goal]);
   const hasPrompt = String(input.prompt || '').trim().length > 0;
@@ -235,12 +237,33 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
       ? '브라우저 API 키 저장 허용'
       : '현재 화면에서만 API 키 사용';
   const connectionNote = serverAi
-    ? '입력한 API 키는 저장하지 않고 이번 요청에만 서버로 전달합니다. 입력하지 않으면 서버 환경변수 키를 사용합니다.'
+    ? 'API 키는 서버에 암호화 저장됩니다. 입력하지 않으면 저장된 키 또는 서버 환경변수 키를 사용합니다.'
     : canStoreClientKey
       ? 'API 키를 브라우저 저장소에 저장합니다. 개인 기기에서만 사용하세요.'
       : '기본 정책상 API 키를 저장하지 않습니다. 새로고침하면 다시 입력해야 합니다.';
 
   useServerDraftHistory(serverAi, page, authUser, updateAi);
+
+  useEffect(() => {
+    if (!serverAi) return undefined;
+    let alive = true;
+    fetchServerAiKeyStatus(page, authUser)
+      .then((status) => {
+        if (!alive) return;
+        setServerKeyStatus(status);
+        if (status?.connected) {
+          updateAi({
+            ...ai,
+            enabled: true,
+            apiKey: '',
+            lastTestStatus: ai.lastTestStatus && ai.lastTestStatus !== 'idle' ? ai.lastTestStatus : 'saved',
+            lastTestMessage: ai.lastTestMessage || serverAiKeyLabel(status),
+          });
+        }
+      })
+      .catch((err) => console.warn('Server AI key status failed:', err));
+    return () => { alive = false; };
+  }, [serverAi, page.slug, page.projectId, authUser?.session]);
 
   const updateInput = (patch) => {
     const next = normalizeAiDraftInput({ ...input, ...patch });
@@ -248,11 +271,29 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
     updateAi({ ...ai, draftInput: next });
   };
 
-  const saveApi = () => {
+  const saveApi = async () => {
     if (serverAi) {
       const key = apiKeyDraft.trim();
       if (key && !isValidOpenAiKey(key)) {
         updateAi({ ...ai, lastTestStatus: 'failed', lastTestMessage: 'API 키 형식을 확인해주세요.' });
+        return;
+      }
+      if (key) {
+        try {
+          const status = await saveServerAiKey(key, page, authUser);
+          setServerKeyStatus(status);
+          setApiKeyDraft('');
+          updateAi({
+            ...ai,
+            enabled: true,
+            apiKey: '',
+            updatedAt: new Date().toISOString(),
+            lastTestStatus: 'saved',
+            lastTestMessage: serverAiKeyLabel(status),
+          });
+        } catch (err) {
+          updateAi({ ...ai, lastTestStatus: 'failed', lastTestMessage: `API 키 저장 실패: ${String(err?.message || err).slice(0, 160)}` });
+        }
         return;
       }
       updateAi({
@@ -261,7 +302,7 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
         apiKey: '',
         updatedAt: new Date().toISOString(),
         lastTestStatus: 'saved',
-        lastTestMessage: key ? '고객 API 키를 이번 세션에서만 사용합니다. 저장하지 않습니다.' : '서버 환경변수 API 키를 사용합니다.',
+        lastTestMessage: serverKeyStatus?.connected ? serverAiKeyLabel(serverKeyStatus) : '서버 환경변수 API 키를 사용합니다.',
       });
       return;
     }
@@ -282,7 +323,25 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
     });
   };
 
-  const clearApi = () => {
+  const clearApi = async () => {
+    if (serverAi) {
+      try {
+        const status = await deleteServerAiKey(page, authUser);
+        setServerKeyStatus(status);
+        setApiKeyDraft('');
+        updateAi({
+          ...ai,
+          enabled: false,
+          apiKey: '',
+          lastTestStatus: 'idle',
+          lastTestMessage: '서버에 저장된 API 키를 삭제했습니다.',
+          updatedAt: new Date().toISOString(),
+        });
+      } catch (err) {
+        updateAi({ ...ai, lastTestStatus: 'failed', lastTestMessage: `API 키 삭제 실패: ${String(err?.message || err).slice(0, 160)}` });
+      }
+      return;
+    }
     setApiKeyDraft('');
     updateAi({
       ...ai,
@@ -305,7 +364,7 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
     setTesting(true);
     updateAi({ ...ai, apiKey: serverAi || !canStoreClientKey ? '' : key, enabled: true, lastTestStatus: 'testing', lastTestMessage: '연결 확인 중' });
     try {
-      await testOpenAiKey({ apiKey: key, model: ai.model });
+      await testOpenAiKey({ apiKey: key, model: ai.model, page, authUser });
       updateAi({
         ...ai,
         apiKey: serverAi || !canStoreClientKey ? '' : key,
@@ -361,7 +420,7 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
         ...autoTemplatePatch,
       });
       setInput(inputForGenerate);
-      const result = await generateAiDraft({ apiKey: clientApiKey, model: ai.model, input: inputForGenerate });
+      const result = await generateAiDraft({ apiKey: clientApiKey, model: ai.model, input: inputForGenerate, page, authUser });
       const item = draftHistoryItem(result, inputForGenerate, ai.model);
       setDraft({ ...result, historyId: item.id });
       setExcludedBlockKeys([]);
@@ -431,7 +490,7 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
               <label>
                 <span>OpenAI API Key</span>
                 <input type="password" value={apiKeyDraft} onChange={(event) => setApiKeyDraft(event.target.value)} placeholder="sk-..." />
-                <small>{connectionNote}</small>
+                <small>{apiKeyDraft ? connectionNote : serverAiKeyLabel(serverKeyStatus)}</small>
               </label>
               <em className={`status-${ai.lastTestStatus || 'idle'}`}>{getAiStatusLabel(ai.lastTestStatus)}</em>
             </div>
@@ -445,9 +504,9 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
             </div>
           )}
           <div className="ai-access-actions">
-            <button type="button" onClick={saveApi}>{serverAi ? '이번 세션 사용' : 'API 키 저장'}</button>
+            <button type="button" onClick={saveApi}>{serverAi ? '서버에 저장' : 'API 키 저장'}</button>
             <button type="button" className="ghost" onClick={runTest} disabled={testing}>{testing ? '확인 중' : '연결 테스트'}</button>
-            {!serverAi && <button type="button" className="ghost" onClick={clearApi}>삭제</button>}
+            <button type="button" className="ghost" onClick={clearApi}>삭제</button>
           </div>
           {(ai.lastTestMessage || !serverAi) && (
             <p className="ai-access-note">

@@ -288,7 +288,8 @@ const server = createServer(async (req, res) => {
 
     if (req.method === 'POST' && url.pathname === '/api/ai/test') {
       const body = await readJson(req);
-      await testOpenAi(body?.model, body?.apiKey);
+      const apiKey = body?.apiKey || await resolveStoredAiKey(req, body?.project || {});
+      await testOpenAi(body?.model, apiKey);
       sendJson(res, 200, { ok: true });
       return;
     }
@@ -318,7 +319,8 @@ const server = createServer(async (req, res) => {
 
     if (req.method === 'POST' && url.pathname === '/api/ai/draft') {
       const body = await readJson(req);
-      const draft = await generateAiDraft(body?.input, body?.model, body?.apiKey);
+      const apiKey = body?.apiKey || await resolveStoredAiKey(req, body?.project || {});
+      const draft = await generateAiDraft(body?.input, body?.model, apiKey);
       sendJson(res, 200, { ok: true, draft });
       return;
     }
@@ -1214,6 +1216,16 @@ async function deleteAiKey(req, input = {}) {
     await writeJsonlRecords(aiKeysFile, nextRecords);
     return publicAiKeyStatus(null, scope);
   });
+}
+
+async function resolveStoredAiKey(req, input = {}) {
+  try {
+    const scope = aiKeyScope(req, input);
+    const record = await findAiKeyRecord(scope);
+    return record ? decryptAiSecret(record) : '';
+  } catch {
+    return '';
+  }
 }
 
 function requireOpenAiKey(requestKey = '') {

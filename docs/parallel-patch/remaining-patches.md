@@ -108,6 +108,7 @@ Do not reassign these unless a regression is found:
 - Account/session hardening patch 1 is done locally: email verification delivery now has a `mock`/`smtp` server boundary, SMTP mode does not expose verification tokens, health reports auth email delivery readiness, password reset returns users to login instead of creating a sessionless logged-in state, and server smoke covers SMTP-missing skip behavior.
 - Account status model exists: accounts can be soft-blocked as `suspended` or `deleted` without physical removal, inactive accounts are denied login/session/profile/password operations, and duplicate email/phone checks still see inactive records so operational history stays attached.
 - Server-side customer AI key storage exists: `/api/ai/key` can read masked status, save an encrypted OpenAI key scoped by account/project, and soft-delete it without ever returning the raw key. Server smoke verifies invalid-key rejection, masked connected status, and delete-to-missing behavior.
+- AI panel server-key wiring exists: in server AI mode the panel reads masked key status, saves/deletes via `/api/ai/key`, and generation/test requests include project auth headers so the server can use the stored key without putting the raw key in page JSON or localStorage.
 
 ## Optional Parallel Split
 
@@ -146,7 +147,7 @@ These are not already-done items. Patch sequentially from item 1 unless the owne
 2. Customer-owned AI key storage
    - Per-request customer API key support exists.
    - Encrypted per-account/per-project server key storage exists with masked status and delete/disconnect API.
-   - Remaining work: connect the AI panel UI to `/api/ai/key` so operators can save/delete without page JSON/localStorage.
+   - AI panel UI is connected to `/api/ai/key` for masked status, save, and delete.
    - Add live key test states: valid, invalid, quota/rate-limited.
    - Add audit entry for key save/delete/test.
    - Never store raw keys in page JSON/localStorage by default.

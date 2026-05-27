@@ -1,7 +1,8 @@
 import { buildAiDraftPrompt } from './aiDraftPrompt.js';
 import { normalizeAiDraftInput, validateAiDraftJson } from './aiDraftSchema.js';
 import { isServerAiMode } from '../config/runtimeConfig.js';
-import { postJson } from '../lib/apiClient.js';
+import { postJson, projectAuthHeaders } from '../lib/apiClient.js';
+import { projectContext } from '../lib/projectContext.js';
 
 const AI_REQUEST_TIMEOUT_MS = 45000;
 
@@ -281,14 +282,24 @@ async function repairDraftIfWeak({ apiKey, model, basePrompt, draft, input }) {
   }
 }
 
-export async function generateAiDraft({ apiKey, model = 'gpt-4.1', input }) {
+function serverAiRequestOptions(page = null, authUser = null) {
+  if (!page) return {};
+  const context = projectContext(page, authUser);
+  return {
+    project: context,
+    options: { headers: projectAuthHeaders(context) },
+  };
+}
+
+export async function generateAiDraft({ apiKey, model = 'gpt-4.1', input, page = null, authUser = null }) {
   const normalizedInput = normalizeAiDraftInput({
     ...input,
     creativeSeed: createCreativeSeed(),
   });
 
   if (isServerAiMode()) {
-    const data = await postJson('/api/ai/draft', { model, input: normalizedInput, apiKey: apiKey || '' });
+    const request = serverAiRequestOptions(page, authUser);
+    const data = await postJson('/api/ai/draft', { model, input: normalizedInput, apiKey: apiKey || '', project: request.project }, request.options);
     const json = finalizeAiDraftResponse(data?.draft || data, normalizedInput);
     const check = validateAiDraftJson(json);
     if (!check.ok) throw new Error(check.message);
@@ -304,9 +315,10 @@ export async function generateAiDraft({ apiKey, model = 'gpt-4.1', input }) {
   return repairDraftIfWeak({ apiKey, model, basePrompt: prompt, draft: json, input: normalizedInput });
 }
 
-export async function testOpenAiKey({ apiKey, model = 'gpt-4.1' }) {
+export async function testOpenAiKey({ apiKey, model = 'gpt-4.1', page = null, authUser = null }) {
   if (isServerAiMode()) {
-    await postJson('/api/ai/test', { model, apiKey: apiKey || '' });
+    const request = serverAiRequestOptions(page, authUser);
+    await postJson('/api/ai/test', { model, apiKey: apiKey || '', project: request.project }, request.options);
     return true;
   }
 
