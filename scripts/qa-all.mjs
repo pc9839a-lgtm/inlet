@@ -1,0 +1,91 @@
+import { spawn } from 'node:child_process';
+import { readdir, rm } from 'node:fs/promises';
+import path from 'node:path';
+
+const root = process.cwd();
+
+const steps = [
+  ['templates:qa', ['scripts/template-quality-check.mjs']],
+  ['ai:qa', ['scripts/ai-quality-check.mjs']],
+  ['stats:qa', ['scripts/stats-quality-check.mjs']],
+  ['revision:qa', ['scripts/revision-quality-check.mjs']],
+  ['auth:qa', ['scripts/auth-context-check.mjs']],
+  ['server:smoke:auth', ['scripts/server-smoke-auth.mjs']],
+  ['server:smoke:leads', ['scripts/server-smoke-leads.mjs']],
+  ['server:smoke:events', ['scripts/server-smoke-events.mjs']],
+  ['server:smoke:pages', ['scripts/server-smoke-pages.mjs']],
+  ['server:smoke:integrations', ['scripts/server-smoke-integrations.mjs']],
+  ['conversion:qa', ['scripts/conversion-quality-check.mjs']],
+  ['csv:qa', ['scripts/csv-quality-check.mjs']],
+  ['runtime:qa', ['scripts/runtime-quality-check.mjs']],
+  ['mojibake:qa', ['scripts/mojibake-quality-check.mjs']],
+  ['perf:qa', ['scripts/offline-performance-check.mjs']],
+  ['integration:mock:qa', ['scripts/mock-integration-quality-check.mjs']],
+  ['live:qa', ['scripts/live-readiness-check.mjs']],
+  ['jsonl:qa', ['scripts/jsonl-ops-quality-check.mjs']],
+  ['ops:qa', ['scripts/ops-readiness-check.mjs']],
+  ['rendering:qa', ['scripts/rendering-quality-check.mjs']],
+  ['css:qa', ['scripts/css-quality-check.mjs']],
+  ['build', ['scripts/build.mjs']],
+  ['bundle:qa', ['scripts/bundle-quality-check.mjs']],
+  ['deployment:qa', ['scripts/deployment-artifact-check.mjs']],
+  ['accessibility:qa', ['scripts/accessibility-quality-check.mjs']],
+  ['artifact:qa', ['scripts/artifact-quality-check.mjs']],
+  ['worker3:qa', ['scripts/worker3-quality-check.mjs']],
+  ['integration:qa', ['scripts/integration-contract-check.mjs']],
+];
+
+function runStep(label, args) {
+  return new Promise((resolve, reject) => {
+    console.log(`\n[qa:all] ${label}`);
+    const child = spawn(process.execPath, args, {
+      cwd: process.cwd(),
+      env: process.env,
+      stdio: 'inherit',
+      shell: false,
+    });
+    child.on('error', reject);
+    child.on('exit', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`${label} failed with exit code ${code}`));
+    });
+  });
+}
+
+function isGeneratedArtifactName(name) {
+  return name.startsWith('dist-check-') || name.startsWith('.tmp-') || name.startsWith('inlet-deploy-artifact-') || name === 'preview.zip';
+}
+
+function assertSafeArtifactPath(target) {
+  const relative = path.relative(root, target);
+  if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {
+    throw new Error(`refusing to clean artifact outside workspace: ${target}`);
+  }
+}
+
+async function cleanGeneratedArtifacts(reason) {
+  const entries = await readdir(root, { withFileTypes: true });
+  const targets = entries.filter((entry) => isGeneratedArtifactName(entry.name)).map((entry) => path.join(root, entry.name));
+
+  for (const target of targets) {
+    assertSafeArtifactPath(target);
+    await rm(target, { recursive: true, force: true, maxRetries: 5, retryDelay: 150 });
+  }
+
+  if (targets.length) {
+    console.log(`[qa:all] cleaned ${targets.length} generated artifact(s) before ${reason}`);
+  }
+}
+
+await cleanGeneratedArtifacts('start');
+
+for (const [label, args] of steps) {
+  if (label === 'artifact:qa' || label === 'worker3:qa' || label === 'integration:qa') {
+    await cleanGeneratedArtifacts(label);
+  }
+  await runStep(label, args);
+}
+
+await cleanGeneratedArtifacts('finish');
+
+console.log(JSON.stringify({ ok: true, steps: steps.length }, null, 2));

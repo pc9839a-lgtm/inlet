@@ -1,0 +1,144 @@
+import { useEffect, useRef, useState } from 'react';
+
+function pickSafe(value, list, fallback) {
+  return list.includes(value) ? value : fallback;
+}
+
+export function RenderSpacer({ block }) {
+  const height = Math.max(8, Math.min(200, Number(block.s?.height ?? 40)));
+  return (
+    <section
+      id={`block-${block.id}`}
+      className="landing-section spacer-sec"
+      style={{ height: `${height}px` }}
+      aria-label="여백"
+    />
+  );
+}
+
+export function RenderTopNav({ block, go }) {
+  const menuRef = useRef(null);
+  const [loopMenu, setLoopMenu] = useState(false);
+  const s = block.s || {};
+  const bg = pickSafe(s.bg, ['white','transparent','dark'], 'white');
+  const isImageLogo = s.logoType === 'image' && !!s.logoImage;
+  const logoStyle = isImageLogo ? 'image' : pickSafe(s.logoStyle || 'plain', ['plain','badge'], 'plain');
+  const logoSize = pickSafe(s.logoSize || 'medium', ['small','medium','large'], 'medium');
+  const menuStyle = pickSafe(s.menuStyle || 'pill', ['pill','text','outline'], 'pill');
+  const menuSize = pickSafe(s.menuSize || 'medium', ['small','medium','large'], 'medium');
+  const align = pickSafe(s.align || 'left', ['left','center','right'], 'left');
+  const menus = Array.isArray(s.menus) ? s.menus.slice(0, 5) : [];
+  const menuSignature = menus.map((m) => `${m.id}:${m.label}`).join('|');
+  const isPillMenu = menuStyle === 'pill';
+  const menuBg = s.menuBgColor && s.menuBgColor !== '#F1F5F9' ? s.menuBgColor : (isPillMenu && bg === 'dark' ? '#ffffff' : 'var(--card)');
+  const logoText = s.logoTextColor || (bg === 'dark' ? '#ffffff' : 'var(--text)');
+  const menuText = s.menuTextColor || (isPillMenu ? '#111827' : (bg === 'dark' ? '#ffffff' : 'var(--text)'));
+  const savedMenuHover = s.menuHoverColor && !['#ffffff', '#fff', '#F1F5F9'].includes(s.menuHoverColor) ? s.menuHoverColor : '';
+  const menuHover = savedMenuHover || (isPillMenu ? 'var(--accent)' : (bg === 'dark' ? 'rgba(255,255,255,.14)' : 'rgba(17,24,39,.08)'));
+  const menuHoverText = s.menuHoverTextColor || (isPillMenu ? '#ffffff' : (bg === 'dark' ? '#ffffff' : 'var(--text)'));
+  const barBg = s.barBgColor || (bg === 'dark' ? '#111827' : bg === 'transparent' ? 'rgba(255,255,255,.72)' : '#ffffff');
+  const vars = {
+    '--top-bar-bg': barBg,
+    '--top-logo-color': s.logoColor || '#111827',
+    '--top-logo-text': logoText,
+    '--top-menu-bg': menuBg,
+    '--top-menu-text': menuText,
+    '--top-menu-hover': menuHover,
+    '--top-menu-hover-text': menuHoverText,
+  };
+  const renderMenuButton = (m, duplicate = false) => (
+    <button
+      type="button"
+      key={`${duplicate ? 'copy-' : ''}${m.id}`}
+      tabIndex={duplicate ? -1 : undefined}
+      aria-hidden={duplicate ? 'true' : undefined}
+      onClick={duplicate ? undefined : () => go(m.target, m.url, m.label)}
+    >
+      {m.label}
+    </button>
+  );
+
+  useEffect(() => {
+    const menu = menuRef.current;
+    if (!menu || menus.length < 2) {
+      setLoopMenu(false);
+      return undefined;
+    }
+    if (menus.length >= 3) {
+      setLoopMenu(true);
+      return undefined;
+    }
+    const check = () => {
+      const firstSet = menu.querySelector('.top-menu-set');
+      const originalWidth = firstSet?.scrollWidth || 0;
+      setLoopMenu(originalWidth > menu.clientWidth + 6);
+    };
+    check();
+    requestAnimationFrame(check);
+    document.fonts?.ready?.then(check).catch(() => {});
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(check) : null;
+    observer?.observe(menu);
+    const firstSet = menu.querySelector('.top-menu-set');
+    if (firstSet) observer?.observe(firstSet);
+    window.addEventListener('resize', check);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', check);
+    };
+  }, [menuSignature]);
+
+  return (
+    <section id={`block-${block.id}`} className={`landing-section topnav topnav-one-line topnav-${bg} topnav-align-${align} topnav-logo-${logoStyle} logo-${logoSize} menu-${menuStyle} menu-${menuSize} ${loopMenu ? 'topnav-menu-loop' : ''} ${s.sticky ? 'topnav-sticky' : ''}`} style={vars}>
+      <div className="top-logo">{isImageLogo ? <img src={s.logoImage} alt="" /> : <strong>{s.logoText || 'LOGO'}</strong>}</div>
+      <div className="top-menu" ref={menuRef}>
+        <div className="top-menu-track">
+          <div className="top-menu-set">{menus.map((m) => renderMenuButton(m))}</div>
+          {menus.length > 1 && <div className="top-menu-set top-menu-set-copy">{menus.map((m) => renderMenuButton(m, true))}</div>}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function RenderDivider({ block }) {
+  const s = block.s || {};
+  const style = pickSafe(s.style || 'solid', ['solid','dashed','dotted'], 'solid');
+  const align = pickSafe(s.align || 'center', ['left','center','right'], 'center');
+  const lineStyle = {
+    width: `${Math.max(10, Math.min(100, Number(s.width ?? 100)))}%`,
+    borderTopWidth: `${Math.max(1, Math.min(8, Number(s.thickness ?? 1)))}px`,
+    borderTopStyle: style,
+    borderTopColor: s.color || '#E2E8F0',
+  };
+  const wrapStyle = {
+    marginTop: `${Math.max(0, Math.min(80, Number(s.marginY ?? 24)))}px`,
+    marginBottom: `${Math.max(0, Math.min(80, Number(s.marginY ?? 24)))}px`,
+  };
+
+  return (
+    <section id={`block-${block.id}`} className={`landing-section divider-sec divider-align-${align}`} style={wrapStyle}>
+      <div style={lineStyle} />
+    </section>
+  );
+}
+
+export function RenderFooter({ block }) {
+  const s = block.s || {};
+  const bg = pickSafe(s.bg, ['plain','soft','dark'], 'plain');
+  const align = pickSafe(s.align, ['left','center','right'], 'center');
+
+  return (
+    <footer id={`block-${block.id}`} className={`landing-footer footer-${bg} align-${align}`}>
+      <strong>{s.company}</strong>
+      {s.owner && <p>대표 {s.owner}</p>}
+      {s.phone && <p>{s.phone}</p>}
+      {s.email && <p>{s.email}</p>}
+      {s.address && <p>{s.address}</p>}
+      {s.biz && <p>{s.biz}</p>}
+      <div>
+        {s.privacyUrl && <button type="button">개인정보처리방침</button>}
+        {s.termsUrl && <button type="button">이용약관</button>}
+      </div>
+    </footer>
+  );
+}

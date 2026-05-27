@@ -1,0 +1,28 @@
+.landing-section.text-plain{padding:24px 18px!important;border:0!important;border-radius:0!important;background:transparent!important;color:var(--text)!important}
+.landing-section.text-card{padding:36px 24px 38px!important;border:1px solid rgba(15,23,42,.12)!important;border-radius:22px!important;background:var(--card)!important;color:var(--text)!important;overflow:hidden!important;box-shadow:none!important}
+.landing-section.text-card::before,.landing-section.text-notice::before{content:none!important}
+.landing-section.text-notice{padding:32px 24px 34px!important;border:1px solid #fed7aa!important;border-left:0!important;border-radius:22px!important;background:linear-gradient(180deg,#fff7ed,#fffbeb)!important;color:#111827!important;overflow:hidden!important;box-shadow:none!important}
+.landing-section.text-notice h2{color:#9a3412!important}
+.landing-section.text-notice p{color:#7c2d12!important;opacity:.86!important}
+.landing-section.text-plain.preview-selected-block{outline-offset:2px!important}
+.phone-frame .landing-page .landing-content>.landing-section.text[data-text-layout=plain],.preview-workspace .landing-page .landing-content>.landing-section.text[data-text-layout=plain]{margin-top:24px!important;margin-bottom:24px!important;padding:24px 18px!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+.phone-frame .landing-page .landing-content>.landing-section.text[data-text-layout=card],.preview-workspace .landing-page .landing-content>.landing-section.text[data-text-layout=card]{margin-top:24px!important;margin-bottom:24px!important;padding:44px 24px 46px!important;border:1px solid rgba(15,23,42,.12)!important;border-radius:22px!important;background:var(--card)!important;box-shadow:none!important}
+.phone-frame .landing-page .landing-content>.landing-section.text[data-text-layout=notice],.preview-workspace .landing-page .landing-content>.landing-section.text[data-text-layout=notice]{margin-top:24px!important;margin-bottom:24px!important;padding:38px 24px 40px!important;border:1px solid #fed7aa!important;border-radius:22px!important;background:linear-gradient(180deg,#fff7ed,#fffbeb)!important;box-shadow:none!important}
+.landing-page.bg-effect-snow,.landing-page.bg-effect-petals,.landing-page.bg-effect-sparkle{position:relative}
+.landing-page .landing-content{position:relative;z-index:1}
+.bg-effect-layer{position:absolute;inset:0;z-index:3;pointer-events:none;opacity:var(--bg-effect-opacity,.45);overflow:hidden}
+.bg-effect-layer i{display:block;position:absolute;left:var(--x);top:var(--y);width:var(--s);height:var(--s);opacity:var(--o);animation:bgFall var(--d) linear infinite;animation-delay:var(--delay);will-change:transform,opacity;filter:blur(var(--blur,0))}
+.bottom-bar{z-index:5}
+.bg-effect-snow .bg-effect-layer{mix-blend-mode:screen}
+.bg-effect-snow .bg-effect-layer i{border-radius:999px;background:radial-gradient(circle,rgba(255,255,255,.98) 0 34%,rgba(255,255,255,.7) 58%,rgba(255,255,255,0) 76%);box-shadow:0 0 8px rgba(255,255,255,.32)}
+.bg-effect-petals .bg-effect-layer{opacity:calc(var(--bg-effect-opacity,.45)*.82)}
+.bg-effect-petals .bg-effect-layer i{width:calc(var(--s)*.76);height:var(--s);border-radius:78% 22% 72% 28%;background:linear-gradient(145deg,rgba(255,247,251,.92),rgba(251,207,232,.62) 48%,rgba(244,114,182,.32));box-shadow:0 2px 7px rgba(190,24,93,.1);animation-name:bgPetal;transform-origin:45% 72%}
+.bg-effect-petals .bg-effect-layer i::after{content:"";position:absolute;left:47%;top:12%;width:1px;height:76%;background:linear-gradient(180deg,rgba(190,24,93,.16),rgba(190,24,93,0));transform:rotate(10deg)}
+.bg-effect-sparkle .bg-effect-layer{mix-blend-mode:screen;opacity:calc(var(--bg-effect-opacity,.45)*1.15)}
+.bg-effect-sparkle .bg-effect-layer i{border-radius:999px;background:radial-gradient(circle,#fff 0 16%,rgba(255,255,255,.78) 28%,rgba(255,255,255,0) 68%);box-shadow:0 0 10px rgba(255,255,255,.95),0 0 24px rgba(250,204,21,.58),0 0 42px rgba(147,197,253,.42);animation-name:bgSparkle}
+.bg-effect-sparkle .bg-effect-layer i::before,.bg-effect-sparkle .bg-effect-layer i::after{content:"";position:absolute;left:50%;top:50%;width:260%;height:1px;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.9),rgba(255,255,255,0));transform:translate(-50%,-50%) rotate(45deg)}
+.bg-effect-sparkle .bg-effect-layer i::after{transform:translate(-50%,-50%) rotate(-45deg)}
+@keyframes bgFall{0%{transform:translate3d(0,0,0);opacity:0}12%{opacity:var(--o)}100%{transform:translate3d(var(--drift),125vh,0);opacity:.08}}
+@keyframes bgPetal{0%{transform:translate3d(0,0,0) rotate(var(--r));opacity:0}14%{opacity:var(--o)}42%{transform:translate3d(var(--sway),48vh,0) rotate(calc(var(--r) + 92deg));opacity:var(--o)}100%{transform:translate3d(var(--drift),126vh,0) rotate(calc(var(--r) + 265deg));opacity:.04}}
+@keyframes bgSparkle{0%{transform:translate3d(0,0,0) scale(.28) rotate(0);opacity:0}16%{opacity:calc(var(--o)*.35)}34%{transform:translate3d(calc(var(--sway)*.45),38vh,0) scale(1.35) rotate(35deg);opacity:var(--o)}52%{opacity:calc(var(--o)*.68)}74%{transform:translate3d(calc(var(--drift)*.8),78vh,0) scale(.78) rotate(70deg);opacity:calc(var(--o)*.28)}100%{transform:translate3d(var(--drift),116vh,0) scale(.38) rotate(105deg);opacity:0}}
+@media (prefers-reduced-motion:reduce){.bg-effect-layer i{animation:none!important}}

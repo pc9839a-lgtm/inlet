@@ -1,0 +1,43 @@
+import {
+  CalendarDays,
+  Code2,
+  FileText,
+  LayoutGrid,
+  HelpCircle,
+  Image as ImageIcon,
+  Link as LinkIcon,
+  MapPin,
+  Menu,
+  MessageCircle,
+  Minus,
+  Phone,
+  Plus,
+  Search,
+  TimerReset,
+  Type,
+} from 'lucide-react';
+import { SINGLETON_BLOCK_TYPES } from './blockTypes.js';
+
+export const META = {
+  topnav: { label: '상단 메뉴', badge: 'MENU', icon: Menu },
+  hero: { label: '히어로', badge: 'TOP', icon: FileText, category: 'content' },
+  image: { label: '이미지', badge: 'IMG', icon: ImageIcon, category: 'content' },
+  text: { label: '텍스트', badge: 'TXT', icon: Type, category: 'content' },
+  cards: { label: '카드', badge: 'CARD', icon: LayoutGrid, category: 'content' },
+  links: { label: '링크', badge: 'LINK', icon: LinkIcon, category: 'conversion' },
+  map: { label: '지도', badge: 'MAP', icon: MapPin, category: 'info' },
+  schedule: { label: '일정', badge: 'DATE', icon: CalendarDays, category: 'info' },
+  faq: { label: 'FAQ', badge: 'FAQ', icon: HelpCircle, category: 'content' },
+  timer: { label: '타이머', badge: 'TIME', icon: TimerReset, category: 'info' },
+  activity: { label: '접수현황', badge: 'LIVE', icon: MessageCircle, category: 'info' },
+  spacer: { label: '여백', badge: 'SPACE', icon: Plus, category: 'layout' },
+  divider: { label: '구분선', badge: 'LINE', icon: Minus, category: 'layout' },
+  code: { label: '코드 입력', badge: 'CODE', icon: Code2, category: 'content' },
+  search: { label: '검색', badge: 'FIND', icon: Search, category: 'info' },
+  form: { label: '상담 폼', badge: 'DB', icon: MessageCircle, category: 'conversion' },
+  reservation: { label: '방문 예약', badge: 'RSV', icon: CalendarDays, category: 'conversion' },
+  bottombar: { label: '하단 고정 버튼', badge: 'CTA', icon: Phone },
+  footer: { label: '푸터', badge: 'INFO', icon: FileText },
+};
+
+export { SINGLETON_BLOCK_TYPES };

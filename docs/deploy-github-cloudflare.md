@@ -1,0 +1,189 @@
+# GitHub And Cloudflare Deployment Plan
+
+Updated: 2026-05-27
+
+## Decision
+
+Use this split for the first production deploy:
+
+1. GitHub repository
+   - Source of truth.
+   - Runs `npm run qa:all` on push and pull request.
+   - Cloudflare Pages connects to this repository through the Cloudflare Git integration.
+
+2. Cloudflare Pages
+   - Hosts the Vite frontend from `dist`.
+   - Production branch: `main`.
+   - Preview branch: `staging` or feature branches.
+   - Build command: `npm run qa:all`.
+   - Build output directory: `dist`.
+
+3. Node API server
+   - Runs `server/index.mjs`.
+   - Must be deployed on a Node runtime with persistent disk for the current JSONL storage.
+   - Put it behind a Cloudflare proxied DNS record such as `api.example.com`.
+   - Do not deploy the current server directly to Cloudflare Workers yet.
+
+4. Later Cloudflare Worker/D1 migration
+   - Move the API to Workers only after the JSONL adapter is backed by D1 or another durable database.
+   - The current JSONL full-scan fallback is launch-acceptable for small data, but it is not the final Cloudflare-native storage layer.
+
+## Why Not Workers For The Current API
+
+The current API is a Node server:
+
+- Entry: `server/index.mjs`
+- Start command: `npm run server`
+- Storage: JSONL files under `INLET_DATA_DIR`
+- Uses local filesystem persistence and long-running server process assumptions.
+
+Cloudflare Workers can run many Node-compatible APIs, but Worker filesystem support is virtual/temporary and not the right durable source of truth for leads, events, pages, manager invites, delivery logs, and revisions. For Cloudflare-native API hosting, replace JSONL persistence behind the existing adapter with D1 first.
+
+## GitHub Setup
+
+1. Initialize or connect the repository from this project root.
+2. Push to GitHub.
+3. Confirm `.github/workflows/qa.yml` runs and passes.
+4. Protect `main` so deploys require the QA workflow to pass.
+
+Required repository secrets for later live checks:
+
+- `OPENAI_API_KEY`
+- SMTP secrets if live SMTP QA is enabled
+- OAuth secrets if Google OAuth goes live
+
+Do not put production secrets into the repository.
+
+## Cloudflare Pages Setup
+
+Create a Cloudflare Pages project using Git integration, not Direct Upload.
+
+Settings:
+
+- Framework preset: Vite or None
+- Build command: `npm run qa:all`
+- Build output directory: `dist`
+- Production branch: `main`
+- Preview branch: `staging` or pull request previews
+- Pages project name: `inlet`
+
+Manual deploy after Wrangler authentication:
+
+```bash
+npm run build
+npm run deploy:pages
+```
+
+Preview deploy:
+
+```bash
+npm run build
+npm run deploy:pages:preview
+```
+
+Production environment variables:
+
+- `VITE_INLET_AI_MODE=server`
+- `VITE_INLET_LEAD_MODE=server`
+- `VITE_INLET_PAGE_MODE=server`
+- `VITE_INLET_ENABLE_OWNER_ADMIN_MODE=1`
+- `VITE_INLET_API_BASE=https://api.example.com`
+- `VITE_INLET_API_TOKEN=<public-client-token-if-kept>`
+- `VITE_INLET_MAP_EMBED_BASE=<map-wrapper-url-if-used>`
+- `VITE_GOOGLE_MAPS_EMBED_KEY=<embed-key-if-used>`
+
+Replace `api.example.com` with the real API domain.
+
+## Node API Server Setup
+
+Deploy the API to a Node host first.
+
+Required:
+
+- Node 24 or compatible current Node runtime.
+- Persistent disk mounted for `INLET_DATA_DIR`.
+- HTTPS domain, normally behind Cloudflare proxy.
+- Process command: `npm run server`.
+- Container option: build with `Dockerfile.api` and mount persistent storage to `/data`.
+
+Production environment variables:
+
+- `INLET_API_PORT=<platform-port-or-8787>`
+- `INLET_API_TOKEN=<strong-random-token>`
+- `INLET_DATA_DIR=<persistent-disk-path>`
+- `INLET_SESSION_AUTH_MODE=production`
+- `INLET_SESSION_SECRET=<long-random-secret>`
+- `INLET_DELIVERY_AUTO_RETRY=1`
+- `INLET_DELIVERY_RETRY_INTERVAL_MS=60000`
+- `INLET_DELIVERY_RETRY_MAX_ATTEMPTS=3`
+- `OPENAI_API_KEY=<only-if-server-AI-enabled>`
+- `INLET_SMTP_HOST=<smtp-host>`
+- `INLET_SMTP_PORT=<smtp-port>`
+- `INLET_SMTP_SECURE=0`
+- `INLET_SMTP_USER=<smtp-user>`
+- `INLET_SMTP_PASS=<smtp-password>`
+- `INLET_SMTP_FROM=<sender-email>`
+
+Health check:
+
+- `GET https://api.example.com/api/health`
+- Must report production/strict auth source as signed-session before exposing manager invite/session flows.
+
+Container example:
+
+```bash
+docker build -f Dockerfile.api -t wayzi-api .
+docker run --rm -p 8787:8787 -v inlet-data:/data --env-file .env.production wayzi-api
+```
+
+## Cloudflare DNS
+
+Use Cloudflare DNS for both frontend and API:
+
+- `app.example.com` or root domain -> Cloudflare Pages
+- `api.example.com` -> Node API host, proxied through Cloudflare
+
+Keep API CORS aligned with the Pages production domain.
+
+## Release Gate
+
+Before first production deploy:
+
+```bash
+npm run qa:all
+npm run live:qa
+```
+
+Expected before credentials are set:
+
+- `qa:all` must pass.
+- `live:qa` may report `skipped-live` for AI, SMTP, OAuth, conversion diagnostics, and real browser QA.
+
+After API and Pages URLs exist:
+
+```powershell
+$env:INLET_BROWSER_QA_URL='https://app.example.com'
+$env:INLET_BROWSER_QA_REQUIRE='1'
+npm run browser:visual:qa
+Remove-Item Env:\INLET_BROWSER_QA_URL,Env:\INLET_BROWSER_QA_REQUIRE
+```
+
+Then run one real lead submission and confirm:
+
+- lead appears in the server inbox,
+- CSV export works for the selected month,
+- stats update,
+- SMTP/webhook delivery logs show the expected status.
+
+## Cloudflare-Native Phase 2
+
+Move to Workers only after these are done:
+
+1. Add D1 schema for pages, revisions, leads, events, accounts, manager invites, delivery logs, retry queue, and AI drafts.
+2. Implement D1 behind the existing JSONL adapter boundary.
+3. Keep JSONL only as local/dev fallback.
+4. Add migration/import scripts.
+5. Add `wrangler.jsonc` with D1 bindings.
+6. Deploy API as Worker or Pages Functions.
+
+Until then, Cloudflare should own frontend hosting, DNS, TLS, CDN, cache, and preview deployments; the API should stay on a real Node host with persistent storage.

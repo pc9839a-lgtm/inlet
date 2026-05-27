@@ -1,0 +1,51 @@
+{
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "server": "node server/index.mjs",
+    "ai:qa": "node scripts/ai-quality-check.mjs",
+    "stats:qa": "node scripts/stats-quality-check.mjs",
+    "revision:qa": "node scripts/revision-quality-check.mjs",
+    "templates:qa": "node scripts/template-quality-check.mjs",
+    "auth:qa": "node scripts/auth-context-check.mjs",
+    "server:smoke:auth": "node scripts/server-smoke-auth.mjs",
+    "server:smoke:leads": "node scripts/server-smoke-leads.mjs",
+    "server:smoke:events": "node scripts/server-smoke-events.mjs",
+    "server:smoke:pages": "node scripts/server-smoke-pages.mjs",
+    "server:smoke:integrations": "node scripts/server-smoke-integrations.mjs",
+    "conversion:qa": "node scripts/conversion-quality-check.mjs",
+    "csv:qa": "node scripts/csv-quality-check.mjs",
+    "runtime:qa": "node scripts/runtime-quality-check.mjs",
+    "mojibake:qa": "node scripts/mojibake-quality-check.mjs",
+    "perf:qa": "node scripts/offline-performance-check.mjs",
+    "integration:qa": "node scripts/integration-contract-check.mjs",
+    "integration:mock:qa": "node scripts/mock-integration-quality-check.mjs",
+    "live:qa": "node scripts/live-readiness-check.mjs",
+    "jsonl:qa": "node scripts/jsonl-ops-quality-check.mjs",
+    "ops:qa": "node scripts/ops-readiness-check.mjs",
+    "rendering:qa": "node scripts/rendering-quality-check.mjs",
+    "artifact:qa": "node scripts/artifact-quality-check.mjs",
+    "deployment:qa": "node scripts/deployment-artifact-check.mjs",
+    "bundle:qa": "node scripts/bundle-quality-check.mjs",
+    "worker3:qa": "node scripts/worker3-quality-check.mjs",
+    "css:qa": "node scripts/css-quality-check.mjs",
+    "css:fix": "node scripts/css-quality-check.mjs --fix",
+    "build": "node scripts/build.mjs",
+    "preview": "vite preview --host 0.0.0.0",
+    "deploy:pages": "wrangler pages deploy dist --project-name inlet --branch main",
+    "deploy:pages:preview": "wrangler pages deploy dist --project-name inlet --branch staging",
+    "browser:visual:qa": "node scripts/browser-visual-quality-check.mjs",
+    "accessibility:qa": "node scripts/accessibility-quality-check.mjs",
+    "qa:all": "node scripts/qa-all.mjs"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "lucide-react": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "vite": "latest"
+  },
+  "devDependencies": {
+    "wrangler": "^4.95.0"
+  }
+}

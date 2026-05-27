@@ -1,0 +1,423 @@
+.manager-access-card {
+  overflow: hidden;
+}
+
+.manager-access-card .section-title {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 16px;
+}
+
+.manager-access-card .section-title p {
+  max-width: 620px;
+  margin: 7px 0 0;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 850;
+  line-height: 1.45;
+  letter-spacing: 0;
+}
+
+.manager-access-card .section-title button,
+.manager-empty-state button {
+  min-height: 42px;
+  border: 1px solid #111827;
+  border-radius: 14px;
+  background: #111827;
+  color: #fff;
+  padding: 0 15px;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.manager-list {
+  display: grid;
+  gap: 14px;
+}
+
+.manager-owner-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: #f8fafc;
+}
+
+.manager-owner-summary > div {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.manager-owner-summary span {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.manager-owner-summary strong {
+  min-width: 0;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 950;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.manager-owner-summary .toggle {
+  min-width: 190px;
+  background: #fff !important;
+}
+
+.manager-owner-summary.compact {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.manager-fold-btn,
+.manager-card-actions button {
+  min-height: 38px;
+  border: 1px solid #dbe3ef;
+  border-radius: 13px;
+  background: #fff;
+  color: #111827;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.manager-fold-btn {
+  border-color: #111827;
+  background: #111827;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.ownership-transfer-box {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 15px;
+  border: 1px solid #dbe3ef;
+  border-radius: 20px;
+  background: #fff;
+}
+
+.ownership-transfer-box strong {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.ownership-transfer-box p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.45;
+}
+
+.ownership-transfer-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.ownership-transfer-controls select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #dbe3ef;
+  border-radius: 13px;
+  background: #fff;
+  color: #111827;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.ownership-transfer-controls button,
+.ownership-transfer-status button {
+  min-height: 42px;
+  border: 1px solid #111827;
+  border-radius: 13px;
+  background: #111827;
+  color: #fff;
+  padding: 0 13px;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.ownership-transfer-controls button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.ownership-transfer-status {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #fed7aa;
+  border-radius: 15px;
+  background: #fff7ed;
+}
+
+.ownership-transfer-status strong {
+  color: #9a3412;
+  font-size: 12px;
+}
+
+.ownership-transfer-status span {
+  min-width: 0;
+  color: #9a3412;
+  font-size: 12px;
+  font-weight: 850;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ownership-transfer-status button {
+  border-color: #fed7aa;
+  background: #fff;
+  color: #9a3412;
+}
+
+.manager-empty-state {
+  min-height: 170px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px 18px;
+  padding: 22px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #fbfdff, #f8fafc);
+}
+
+.manager-empty-state strong {
+  grid-column: 1 / -1;
+  color: #111827;
+  font-size: 18px;
+  font-weight: 950;
+  letter-spacing: 0;
+}
+
+.manager-empty-state p {
+  grid-column: 1 / -1;
+  margin: -6px 0 2px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 850;
+  line-height: 1.45;
+}
+
+.manager-empty-state div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.manager-empty-state span {
+  min-height: 30px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #fff;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.manager-empty-state button {
+  align-self: center;
+  white-space: nowrap;
+}
+
+.manager-empty-state.compact {
+  min-height: 126px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.manager-empty-state.compact p {
+  grid-column: 1;
+  margin: -4px 0 0;
+}
+
+.manager-empty-state.compact button {
+  grid-row: 1 / 3;
+  grid-column: 2;
+}
+
+.manager-card {
+  display: grid;
+  gap: 14px;
+  border: 1px solid #dbe3ef;
+  border-radius: 22px;
+  background: #fff;
+  padding: 16px;
+}
+
+.manager-card.compact {
+  gap: 0;
+}
+
+.manager-card-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.manager-card.compact .manager-card-head {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.manager-card-head strong,
+.manager-subtitle {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 950;
+  letter-spacing: 0;
+}
+
+.manager-card-head span {
+  display: block;
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.manager-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.manager-detail-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.manager-detail-actions button {
+  min-height: 42px;
+  border: 1px solid #dbe3ef;
+  border-radius: 14px;
+  background: #fff;
+  color: #111827;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.manager-detail-actions button:first-child {
+  border-color: #111827;
+  background: #111827;
+  color: #fff;
+}
+
+.manager-card .danger-btn {
+  min-height: 38px;
+  border: 1px solid #fecaca;
+  border-radius: 13px;
+  background: #fff5f5;
+  color: #dc2626;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.manager-card-body {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #eef2f7;
+}
+
+.manager-permission-panel {
+  display: grid;
+  gap: 10px;
+}
+
+.manager-subtitle {
+  margin-top: 2px;
+}
+
+.manager-permission-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.manager-permission-row {
+  display: grid;
+  grid-template-columns: minmax(100px, 1fr) 180px;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #e6edf6;
+  border-radius: 16px;
+  background: #fbfcfe;
+}
+
+.manager-permission-row strong {
+  font-size: 13px;
+  font-weight: 950;
+  color: #111827;
+}
+
+.manager-permission-row select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #dbe3ef;
+  border-radius: 14px;
+  background: #fff;
+  color: #111827;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 900;
+  outline: none;
+}
+
+@media (max-width: 1180px) {
+  .manager-access-card .section-title,
+  .manager-owner-summary,
+  .manager-owner-summary.compact,
+  .ownership-transfer-controls,
+  .ownership-transfer-status,
+  .manager-empty-state,
+  .manager-empty-state.compact,
+  .manager-card-head,
+  .manager-permission-row {
+    grid-template-columns: 1fr;
+  }
+
+  .manager-card-actions {
+    justify-content: stretch;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .manager-empty-state button,
+  .manager-empty-state.compact button,
+  .manager-access-card .section-title button {
+    width: 100%;
+    grid-column: auto;
+    grid-row: auto;
+  }
+}

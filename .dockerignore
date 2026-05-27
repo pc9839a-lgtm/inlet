@@ -1,0 +1,12 @@
+node_modules
+dist
+dist-check-*
+.tmp-*
+inlet-deploy-artifact-*
+preview.zip
+server/data
+*.log
+*.png
+.git
+.github
+

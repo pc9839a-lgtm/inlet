@@ -1,0 +1,30 @@
+.admin-panel {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.admin-panel .card {
+  border: 1px solid #dbe3ef;
+  background: #fff;
+}
+
+.admin-panel .section-title button {
+  min-height: 40px;
+  border: 1px solid #dbe3ef;
+  border-radius: 14px;
+  background: #fff;
+  color: #111827;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.admin-panel .ghost-btn {
+  min-height: 46px;
+  border: 1px solid #111827;
+  border-radius: 14px;
+  background: #111827;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 950;
+}

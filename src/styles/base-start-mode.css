@@ -1,0 +1,19 @@
+.start-mode-overlay{position:fixed!important;inset:0!important;z-index:9999!important;background:rgba(15,23,42,.42)!important;backdrop-filter:blur(10px)!important;display:grid!important;place-items:center!important;padding:24px!important;animation:startModeOverlayIn .18s ease both!important}
+.start-mode-card{position:relative!important;width:min(520px,100%)!important;max-height:calc(100vh - 48px)!important;overflow:auto!important;border-radius:28px!important;background:#fff!important;box-shadow:0 30px 90px rgba(15,23,42,.24)!important;padding:24px!important;animation:startModeCardIn .22s cubic-bezier(.2,.9,.2,1) both!important}
+.start-mode-card.template-mode{width:min(760px,100%)!important}
+.start-mode-close{position:absolute!important;top:14px!important;right:14px!important;width:36px!important;height:36px!important;border:1px solid #dbe3ef!important;border-radius:50%!important;background:#fff!important;color:#64748b!important;font-size:22px!important;line-height:1!important;font-weight:850!important;box-shadow:0 10px 24px rgba(15,23,42,.1)!important;cursor:pointer!important}
+.start-mode-close:hover{color:#111827!important;background:#f8fafc!important}
+.start-mode-title span{color:#2563eb!important;font-size:12px!important;font-weight:950!important}
+.start-mode-title h2{margin:7px 0 0!important;color:#111827!important;font-size:28px!important;line-height:1.2!important;font-weight:950!important;letter-spacing:-.05em!important}
+.start-mode-title p{margin:9px 0 0!important;color:#64748b!important;font-size:14px!important;line-height:1.55!important;font-weight:800!important}
+.start-mode-actions{margin-top:18px!important;display:grid!important;gap:10px!important}
+.start-mode-actions button{width:100%!important;min-height:86px!important;padding:16px!important;border:1px solid #dbe3ef!important;border-radius:20px!important;background:#fff!important;color:#111827!important;display:grid!important;gap:6px!important;text-align:left!important;cursor:pointer!important}
+.start-mode-actions button.primary{background:#111827!important;border-color:#111827!important;color:#fff!important}
+.start-mode-actions strong{color:inherit!important;font-size:17px!important;line-height:1.2!important;font-weight:950!important}
+.start-mode-actions span{color:inherit!important;opacity:.72!important;font-size:13px!important;line-height:1.45!important;font-weight:800!important}
+.start-mode-card.template-mode .start-mode-actions{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+.start-mode-card.template-mode .start-mode-actions button{min-height:58px!important;padding:12px 14px!important;border-radius:18px!important}
+.start-mode-card.template-mode .start-mode-actions span{display:none!important}
+@keyframes startModeOverlayIn{0%{opacity:0}100%{opacity:1}}
+@keyframes startModeCardIn{0%{transform:translateY(10px) scale(.98);opacity:.8}100%{transform:translateY(0) scale(1);opacity:1}}
+@media (max-width:640px){.start-mode-overlay{padding:16px!important}.start-mode-card{padding:22px!important;border-radius:24px!important}.start-mode-title h2{font-size:25px!important}.start-mode-actions button{min-height:78px!important}.start-mode-card.template-mode .start-mode-actions{grid-template-columns:1fr!important}}

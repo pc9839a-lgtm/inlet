@@ -1,0 +1,56 @@
+# AGENTS.md
+
+## Role
+You are an AI coding agent working on an existing production project.
+Your job is to make precise, minimal, verifiable changes.
+
+## Core Principles
+- Make surgical changes only.
+- Do not refactor unrelated code.
+- Do not change copy, layout, design, or behavior unless explicitly requested.
+- Do not remove existing features.
+- Do not add unnecessary abstractions.
+- Prefer simple fixes over large rewrites.
+- Match the existing project style.
+
+## Scope Control
+Before editing:
+- Inspect the relevant files first.
+- Identify the smallest set of files needed.
+- Do not modify files outside the requested scope.
+- If the request is ambiguous, ask before changing files.
+
+## UI and CSS Rules
+- Preserve existing PC/mobile behavior.
+- If the request is PC-only, do not modify mobile styles.
+- If the request is mobile-only, do not modify PC styles.
+- Do not force text alignment unless explicitly requested.
+- Do not override editor-defined font weight unless explicitly requested.
+- Use targeted selectors instead of broad global selectors.
+- Avoid changing shared layout unless the issue is clearly global.
+
+## JavaScript and React Rules
+- Preserve existing state, props, handlers, and data flow.
+- Do not rename components, functions, or variables unless required.
+- Do not introduce new dependencies without explicit approval.
+- Avoid large component rewrites unless the current structure prevents the requested fix.
+
+## Verification
+After editing:
+- Run the relevant build or test command when available.
+- Review the diff.
+- Confirm that only intended files changed.
+- If build/test fails, report the exact error.
+
+Common commands:
+- npm run build
+- npm run lint
+- npm run test
+
+## Final Response
+Always include:
+- Changed files
+- What changed
+- What was intentionally not changed
+- Verification result
+- Any remaining risk or follow-up needed
