@@ -140,6 +140,8 @@ const statsMetrics = await readFile('src/lib/statsMetrics.js', 'utf8');
 const utilityBlocks = await readFile('src/preview/renderers/UtilityBlocks.jsx', 'utf8');
 const builderFeedback = await readFile('src/builder/BuilderFeedback.jsx', 'utf8');
 const editorControls = await readFile('src/editor/controls.jsx', 'utf8');
+const richField = await readFile('src/editor/RichField.jsx', 'utf8');
+const previewUtils = await readFile('src/preview/renderers/previewUtils.jsx', 'utf8');
 const stylePanel = await readFile('src/panels/StylePanel.jsx', 'utf8');
 const runtimeConfigSource = await readFile('src/config/runtimeConfig.js', 'utf8');
 
@@ -199,6 +201,13 @@ assert(builderFeedback.includes('aria-label="닫기"'), 'icon close buttons must
 assert(editorControls.includes('aria-label={`${label} 수정`}') && editorControls.includes('aria-label={`${label} 삭제`}') && editorControls.includes('aria-label={`${label} 업로드`}'), 'image icon buttons must keep accessible names');
 assert(editorControls.includes('aria-label={`${label} 색상 추출`}') && stylePanel.includes('aria-label={`${label} 색상 추출`}'), 'eyedropper icon buttons must keep accessible names');
 
+assert(richField.includes("onInput={save}") && richField.includes("onBlur={save}"), 'RichField must save content edits immediately and on blur');
+assert(richField.includes("onInput={(e)=>applyColor(e.target.value)}") && richField.includes("onChange={(e)=>applyColor(e.target.value)}"), 'RichField color input must update while dragging and after picker commit');
+assert(!richField.includes('lastColor'), 'RichField must allow reapplying the same color to a new selection');
+assert(richField.includes("document.execCommand('foreColor', false, color)") && richField.includes('window.requestAnimationFrame'), 'RichField color formatting must save after browser selection formatting settles');
+assert(previewUtils.includes('dangerouslySetInnerHTML') && previewUtils.includes('style="color:${color}"') && previewUtils.includes('<u>${inner}</u>') && previewUtils.includes('<strong>${inner}</strong>'), 'preview rich text renderer must preserve color, underline, and bold markup');
+assert(stylePanel.includes('onPreviewThemeChange?.(draftTheme)') && app.includes('const [stylePreviewTheme, setStylePreviewTheme] = useState(null)'), 'StylePanel draft changes must keep live preview wiring');
+
 const stats = await Promise.all(sourceFiles.map((file) => stat(file)));
 const totalSourceBytes = stats.reduce((sum, item) => sum + item.size, 0);
 
@@ -206,5 +215,5 @@ console.log(JSON.stringify({
   ok: true,
   filesChecked: sources.size,
   sourceBytes: totalSourceBytes,
-  checks: sources.size * 3 + 34,
+  checks: sources.size * 3 + 40,
 }, null, 2));

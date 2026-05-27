@@ -67,7 +67,6 @@ export default function RichField({ label, value, onChange }) {
   const ref = useRef(null);
   const savedRange = useRef(null);
   const lastValue = useRef(String(value || ''));
-  const lastColor = useRef('');
 
   useEffect(() => {
     const el = ref.current;
@@ -143,8 +142,7 @@ export default function RichField({ label, value, onChange }) {
   };
 
   const applyColor = (color) => {
-    if (!color || lastColor.current === color) return;
-    lastColor.current = color;
+    if (!color) return;
     applyInline('color', color);
   };
 
