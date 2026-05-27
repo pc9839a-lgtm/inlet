@@ -18,12 +18,12 @@ Last checked on 2026-05-28 after commit `67279fa`:
 - Templates: `3` templates, `189` structural checks.
 - Full offline QA: `npm run qa:all` passes `33` steps, including `api:hosted:qa`, `api:hosted:routes:qa`, and `api:functions:qa`.
 - Real browser visual QA: `INLET_BROWSER_QA_REQUIRE=1` passes against production `https://inlet-8mr.pages.dev/?tab=stats` with `INLET_BROWSER_QA_STATE_PRESET=manager-limited`, verifying the Stats tab deep link. It also passes against production `https://inlet-8mr.pages.dev/?tab=settings` with `INLET_BROWSER_QA_STATE_PRESET=owner-settings` plus `INLET_BROWSER_QA_CLICK_TEXT=매니저 권한,관리`, verifying the Settings manager card and ownership transfer entry.
-- Production browser visual QA: `npm run browser:production:qa` now runs eleven production cases: public desktop home, public mobile PC-guard, owner edit cards, owner start modal, the 3 primary template first viewports, owner inbox, manager stats, owner settings manager permissions, and internal admin ownership queue. With `INLET_PRODUCTION_BROWSER_QA_REQUIRE=1` or `INLET_BROWSER_QA_REQUIRE=1`, all cases use a real browser and assert that error/start-modal text, required selectors, and target screens are present or absent where expected.
+- Production browser visual QA: `npm run browser:production:qa` now runs twelve production cases: public desktop home, public mobile PC-guard, owner edit cards, owner start modal, the 3 primary template first viewports, owner inbox, manager stats, owner settings manager permissions, internal admin ownership queue, and manager invite acceptance. With `INLET_PRODUCTION_BROWSER_QA_REQUIRE=1` or `INLET_BROWSER_QA_REQUIRE=1`, all cases use a real browser and assert that error/start-modal text, required selectors, and target screens are present or absent where expected.
 - Production browser visual QA now reports the browser engine, viewport list, screenshot count, and screenshot paths per case, so failed or suspicious screens can be inspected without rerunning route discovery.
 - Production browser visual QA also accepts `INLET_BROWSER_QA_REQUIRE=1` as the mandatory-browser alias, so release commands do not silently run optional mode because the wrong require env was used.
 - Strict artifact QA: passes with no leftover `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, or `preview.zip` artifacts.
 - GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `67279fa`.
-- Cloudflare Pages: production deployment `c0acdf0f` succeeded for commit `67279fa` with `uses_functions=true`; public URL `https://inlet-8mr.pages.dev/` returns `200`, hosted API runtime QA passes, and production browser QA passes eleven real-browser cases with the current QA scripts.
+- Cloudflare Pages: production deployment `c0acdf0f` succeeded for commit `67279fa` with `uses_functions=true`; public URL `https://inlet-8mr.pages.dev/` returns `200`, hosted API runtime QA passes, and production browser QA passes twelve real-browser cases with the current QA scripts.
 - Cloudflare Pages deployment `fcab1c27` for commit `4b214b1` failed during the verbose `qa:all` build log phase before deploy. The follow-up `79d5d59` compacted CSS QA output for Pages builds and deployed successfully.
 - `/api/health` is now served by Cloudflare Pages Functions with `uses_functions=true`, `service=inlet-api`, `mode=pages-functions`, `auth.sourceOfTruth=signed-session`, `auth.signedSessionReady=true`, `storage.active=d1`, `storage.d1Ready=true`, and `storage.coverage.length=9`.
 - `npm run live:qa` now reports hosted API health as `ready` when run with `INLET_PUBLIC_API_URL=https://inlet-8mr.pages.dev`; it reads the deployed `/api/health` response directly and no longer requires local session-secret env just to inspect hosted health. It also surfaces the hosted QA D1 cleanup plan so `hosted-route-qa-*` and `@inlet.test` cleanup readiness is visible before launch review.
@@ -49,6 +49,7 @@ Do not reassign these unless a regression is found:
 - Signup now requires email verification server-side; smoke covers unverified signup rejection and verified-token signup.
 - Settings manager invite UI: masters and transferred client admins can issue and copy manager invite links from the Settings permission card.
 - Public manager invite acceptance: `/invite/:token` lets invited managers confirm email/name, stores the returned session, and opens the assigned project.
+- Browser visual QA covers the manager invite acceptance screen without writing test invite rows to production D1 by mocking the invite read response in the browser init script.
 - Manager invite login hardening: invite acceptance in login mode now verifies the invited account password server-side; wrong passwords return 401 before the manager is added.
 - Invite acceptance screen is lazy-loaded so the manager invite route does not add to the normal initial app path.
 - Manager server permission matrix: smoke now verifies edit read/write allow, inbox read/write deny, stats read allow/write deny, and invite creation deny for both local manager headers and accepted signed manager sessions.
@@ -85,7 +86,7 @@ Do not reassign these unless a regression is found:
 - Browser visual QA skipped output now includes POSIX and PowerShell mandatory real-browser commands to run when a local URL/browser dependency is available.
 - Browser visual QA now also supports local Chrome/Edge through CDP without installing Playwright/Puppeteer. It resets its dedicated browser profile per run, writes desktop/mobile screenshots, rejects blank/error/overflow screens, and reports the actual browser engine used.
 - Browser visual QA now supports `INLET_BROWSER_QA_EXTRA_URLS=auto`, which expands public footer/legal route coverage to `/about`, `/contact`, `/privacy`, and `/terms`.
-- Browser visual QA now supports authenticated state presets through `INLET_BROWSER_QA_STATE_PRESET=owner-settings|client-settings|manager-limited`, template state presets through `INLET_BROWSER_QA_STATE_PRESET=template-preview:<template-id>`, text/selector interactions through `INLET_BROWSER_QA_CLICK_TEXT` and `INLET_BROWSER_QA_CLICK_SELECTOR`, expected text assertions through `INLET_BROWSER_QA_EXPECT_TEXT`, required selector assertions through `INLET_BROWSER_QA_EXPECT_SELECTOR`, and desktop-only authenticated checks through `INLET_BROWSER_QA_VIEWPORTS=desktop`.
+- Browser visual QA now supports authenticated state presets through `INLET_BROWSER_QA_STATE_PRESET=owner-settings|client-settings|manager-limited`, template state presets through `INLET_BROWSER_QA_STATE_PRESET=template-preview:<template-id>`, invite acceptance mocking through `INLET_BROWSER_QA_STATE_PRESET=invite-acceptance`, text/selector interactions through `INLET_BROWSER_QA_CLICK_TEXT` and `INLET_BROWSER_QA_CLICK_SELECTOR`, expected text assertions through `INLET_BROWSER_QA_EXPECT_TEXT`, required selector assertions through `INLET_BROWSER_QA_EXPECT_SELECTOR`, and desktop-only authenticated checks through `INLET_BROWSER_QA_VIEWPORTS=desktop`.
 - Authenticated tab deep links now work through `?tab=edit|style|inbox|stats|settings`. The app sanitizes requested tabs against the known navigation keys, falls back to the first allowed tab when the account cannot access the requested tab, and updates the URL when operators switch tabs.
 - App shell title is normalized to `Inlet` for generated production builds instead of the old MVP placeholder title.
 - `INLET_SESSION_AUTH_MODE=production` now aliases to strict signed-session auth and rejects forged dev identity headers.
@@ -212,10 +213,10 @@ These are not already-done items. Patch sequentially from item 1 unless the owne
 6. Authenticated browser visual QA
    - Public route visual QA exists.
    - Scripted logged-in states now exist for manager-limited stats and owner settings/manager permissions.
-   - Production browser QA now covers public desktop home, public mobile PC-guard, owner edit cards, owner start modal, the 3 primary template first viewports, owner inbox, manager stats, owner settings manager permissions, and internal admin ownership queue.
+   - Production browser QA now covers public desktop home, public mobile PC-guard, owner edit cards, owner start modal, the 3 primary template first viewports, owner inbox, manager stats, owner settings manager permissions, internal admin ownership queue, and manager invite acceptance.
    - Production browser QA now prints per-case engine, viewport, screenshot count, and screenshot paths.
-   - Remaining work: invite acceptance screenshots.
-   - Add screenshot artifact paths and failure reason output for every route/state.
+   - Remaining work: manager permission overflow/mobile states, deeper editor interactions, and legal/footer route screenshots.
+   - Screenshot artifact paths and failure reason output are available for every production browser QA case.
 
 7. Live integrations
    - Mock/skipped-live checks pass.

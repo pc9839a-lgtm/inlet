@@ -79,6 +79,14 @@ const cases = [
     expectedText: '내부 관리자,소유권이전 승인,새로고침',
     forbiddenText: '처음 화면을 어떻게 만들까요?,화면을 불러오는 중 오류가 발생했습니다',
   },
+  {
+    name: 'manager invite acceptance',
+    url: `${baseUrl}/invite/qa-visual-invite`,
+    statePreset: 'invite-acceptance',
+    expectedText: 'Inlet,manager@example.test',
+    expectedSelector: '.auth-shell,.auth-card,.auth-form',
+    forbiddenText: '화면을 불러오는 중 오류가 발생했습니다',
+  },
 ];
 
 function safeCaseName(name) {

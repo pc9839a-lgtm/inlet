@@ -211,6 +211,20 @@ function authStatePresetData(name) {
       startMode: 'manual',
     };
   }
+  if (name === 'invite-acceptance') {
+    return {
+      mockInvite: {
+        token: 'qa-visual-invite',
+        id: 'qa-visual-invite',
+        name: 'Visual Manager',
+        email: 'manager@example.test',
+        status: 'pending',
+        access: activeManager.access,
+        invitedAt: '2026-05-28T00:00:00.000Z',
+        project: { projectId: 'qa-owner-project', slug: 'browser-qa' },
+      },
+    };
+  }
   if (name === 'owner-start-modal') {
     return {
       auth: { role: 'master', accessMode: 'builder', name: '마스터', email: 'owner@example.test', workspaceId: 'qa-owner', session: '' },
@@ -243,13 +257,28 @@ function statePresetInitScript(name) {
   if (!data) return '';
   return `(() => {
     const data = ${JSON.stringify(data)};
-    localStorage.setItem(${JSON.stringify(AUTH_KEY)}, JSON.stringify(data.auth));
-    localStorage.setItem(${JSON.stringify(STORAGE_KEY)}, JSON.stringify(data.page));
-    localStorage.setItem(${JSON.stringify(DASHBOARD_KEY)}, JSON.stringify(data.dashboard));
+    if (data.auth) localStorage.setItem(${JSON.stringify(AUTH_KEY)}, JSON.stringify(data.auth));
+    if (data.page) localStorage.setItem(${JSON.stringify(STORAGE_KEY)}, JSON.stringify(data.page));
+    if (data.dashboard) localStorage.setItem(${JSON.stringify(DASHBOARD_KEY)}, JSON.stringify(data.dashboard));
     if (Object.prototype.hasOwnProperty.call(data, 'startMode')) {
       localStorage.setItem(${JSON.stringify(START_MODE_KEY)}, data.startMode);
     } else {
       localStorage.removeItem(${JSON.stringify(START_MODE_KEY)});
+    }
+    if (data.mockInvite) {
+      const originalFetch = window.fetch.bind(window);
+      window.fetch = (input, init = {}) => {
+        const rawUrl = typeof input === 'string' ? input : input?.url || '';
+        const url = new URL(rawUrl, location.origin);
+        const invitePath = '/api/projects/invites/' + encodeURIComponent(data.mockInvite.token);
+        if (url.pathname === invitePath && String(init?.method || 'GET').toUpperCase() === 'GET') {
+          return Promise.resolve(new Response(JSON.stringify({ ok: true, invite: data.mockInvite }), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }));
+        }
+        return originalFetch(input, init);
+      };
     }
   })();`;
 }
