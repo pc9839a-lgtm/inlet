@@ -4,8 +4,8 @@ Updated: 2026-05-27
 
 Latest verified frontend deployment:
 
-- GitHub `main`: `88641f8`
-- Cloudflare Pages deployment: `8b097d68`
+- GitHub `main`: `7b69abe`
+- Cloudflare Pages deployment: `63204ee2`
 - Public URL: `https://inlet-8mr.pages.dev/`
 - Verification: public URL returns `200`, title `Inlet`, and current asset `index-DbHRhTVR.js`.
 - Current live readiness: `npm run live:qa` passes as a readiness report with hosted API, D1 live schema, AI, SMTP, OAuth, conversion diagnostics, and real-browser checks explicitly marked `skipped-live` until credentials/public API URL are set.

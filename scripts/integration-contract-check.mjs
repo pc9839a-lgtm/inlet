@@ -28,6 +28,7 @@ for (const name of [
   'd1:schema:qa',
   'd1:adapter:qa',
   'd1:runtime:qa',
+  'd1:live:qa',
   'ops:qa',
   'api:container:qa',
   'api:security:qa',
@@ -586,7 +587,19 @@ requireAll(d1BackfillDryRun, [
 const packageSource = await read('package.json');
 requireAll(packageSource, [
   'd1:backfill:dry-run',
+  'd1:live:qa',
 ], 'D1 backfill package script');
+
+const d1LiveQa = await read('scripts/d1-live-quality-check.mjs');
+requireAll(d1LiveQa, [
+  'INLET_D1_LIVE_QA',
+  'CLOUDFLARE_ACCOUNT_ID',
+  'CLOUDFLARE_API_TOKEN',
+  'skipped-live',
+  'failed-live',
+  'SELECT name FROM sqlite_master',
+  'audit_logs',
+], 'D1 live QA contract');
 
 requireAll(server, [
   'queryJsonlRecords',

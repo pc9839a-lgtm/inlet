@@ -8,7 +8,7 @@ Current execution mode: one worker continues sequentially from the highest prior
 
 ## Current Recheck Snapshot
 
-Last checked on 2026-05-27 after commit `662936e`:
+Last checked on 2026-05-27 after commit `7b69abe`:
 
 - Passing baseline after the manager access/audit deployment patches: `node --check server\index.mjs`, `node --check scripts\server-smoke-auth.mjs`, `npm run auth:qa`, `npm run server:smoke:auth`, `npm run d1:adapter:qa`, `npm run d1:runtime:qa`, `npm run css:qa`, `npm run rendering:qa`, `npm run runtime:qa`, `npm run build`, `npm run deployment:qa`, `npm run integration:qa`, `npm run mojibake:qa`, and strict `artifact:qa`.
 - CSS source total: `391276/500000`.
@@ -18,8 +18,8 @@ Last checked on 2026-05-27 after commit `662936e`:
 - Full offline QA: `npm run qa:all` passes `30` steps.
 - Real browser visual QA: `INLET_BROWSER_QA_REQUIRE=1` passes against a local `vite preview` build using local Chrome CDP. `INLET_BROWSER_QA_EXTRA_URLS=auto` also passes for `/about`, `/contact`, `/privacy`, and `/terms`.
 - Strict artifact QA: passes with no leftover `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, or `preview.zip` artifacts.
-- GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `662936e`.
-- Cloudflare Pages: production deployment `17287831` succeeded for commit `662936e`; public URL `https://inlet-8mr.pages.dev/` returns `200`, `<title>Inlet</title>`, and the current asset `index-DbHRhTVR.js`.
+- GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `7b69abe`.
+- Cloudflare Pages: production deployment `63204ee2` succeeded for commit `7b69abe`; public URL `https://inlet-8mr.pages.dev/` returns `200`, `<title>Inlet</title>`, and the current asset `index-DbHRhTVR.js`.
 - `npm run live:qa` currently passes as a readiness report with explicit `skipped-live` checks: hosted API health, Cloudflare D1 live schema, AI live generation, SMTP live delivery, Google OAuth consent, conversion public diagnostics, and real browser visual QA.
 - Cloudflare D1 direct API check confirms `inlet-prod` exists with required core tables and empty initial core counts for accounts/projects/leads/events/audit_logs.
 - Current UI note: Cards block is intentionally limited to `1/2` columns. Keep that scope unless the product direction changes.
