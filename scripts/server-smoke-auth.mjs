@@ -581,6 +581,30 @@ await runSmoke('server-smoke-auth-session-refresh', async ({ baseUrl }) => {
   timeoutMs: 10000,
 });
 
+await runSmoke('server-smoke-auth-email-delivery-smtp-skip', async ({ baseUrl }) => {
+  const health = await fetchWithTimeout(`${baseUrl}/api/health`);
+  assert(health.status === 200, `SMTP auth email health expected 200, got ${health.status}`);
+  const healthData = await health.json();
+  assert(healthData.auth?.emailDeliveryMode === 'smtp', 'SMTP auth email smoke should expose smtp mode');
+  assert(healthData.auth?.emailDeliveryReady === false, 'SMTP auth email smoke should expose missing SMTP config');
+
+  const issue = await fetchWithTimeout(`${baseUrl}/api/auth/email-verification`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ email: 'smtp-skip@example.test', purpose: 'password-reset' }),
+  });
+  assert(issue.status === 200, `SMTP auth email issue expected 200, got ${issue.status}`);
+  const issueData = await issue.json();
+  assert(issueData.verification?.delivery?.mode === 'smtp', 'SMTP auth email issue should report smtp delivery mode');
+  assert(issueData.verification?.delivery?.status === 'skipped', 'SMTP auth email issue should skip without SMTP config');
+  assert(!issueData.verification?.token, 'SMTP auth email issue must not expose token by default');
+}, {
+  env: {
+    INLET_AUTH_EMAIL_MODE: 'smtp',
+  },
+  timeoutMs: 10000,
+});
+
 await runSmoke('server-smoke-strict-session-missing-secret', async ({ baseUrl }) => {
   const project = { projectId: 'smoke-strict-no-secret', ownerId: 'local-user', slug: 'smoke-strict-no-secret' };
   const forgedHeaders = authHeaders({

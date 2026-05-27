@@ -105,6 +105,7 @@ Do not reassign these unless a regression is found:
 - Customer-owned AI key groundwork is started. Server AI test/draft endpoints can accept a per-request `apiKey`, validate its format, and fall back to `OPENAI_API_KEY` only when no customer key is sent. The frontend can pass the typed key through server mode without saving it to page JSON/localStorage by default.
 - Account dashboard now exposes the AI cost/key policy as account state, so operators see that AI generation uses a customer key per request unless a server fallback key is configured.
 - Production deploy is confirmed through GitHub push plus Cloudflare Pages retry. Wrangler direct deploy still requires `CLOUDFLARE_API_TOKEN`, so current deploy path is GitHub push -> Cloudflare Pages build/retry.
+- Account/session hardening patch 1 is done locally: email verification delivery now has a `mock`/`smtp` server boundary, SMTP mode does not expose verification tokens, health reports auth email delivery readiness, password reset returns users to login instead of creating a sessionless logged-in state, and server smoke covers SMTP-missing skip behavior.
 
 ## Optional Parallel Split
 
@@ -133,9 +134,10 @@ Patch in this order. Billing must not jump ahead of the foundation work:
 These are not already-done items. Patch sequentially from item 1 unless the owner explicitly changes priority.
 
 1. Production account/session hardening
-   - Replace mock email verification delivery with transactional email.
-   - Add password reset flow as `email verified -> set new password`.
-   - Add expired-session UX that returns to login with a clear message.
+   - Email verification delivery boundary exists: default mock for offline QA, SMTP mode hides tokens and reports skipped when SMTP is not configured.
+   - Password reset flow now runs as `email verified -> set new password -> return to login`.
+   - Expired-session UX already clears local auth and shows a clear login-required toast.
+   - Remaining work: configure real transactional SMTP provider and run a live send smoke with credentials.
    - Add account deletion/suspension state model without hard-deleting operational records.
    - Keep duplicate email/phone enforcement server-side.
 

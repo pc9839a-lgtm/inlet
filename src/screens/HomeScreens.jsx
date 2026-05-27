@@ -339,13 +339,15 @@ function PublicHome({ onLogin, onSignup }) {
 
 function AuthScreen({ onAuth, initialMode = 'login', onBack }) {
   const [mode, setMode] = useState(initialMode);
-  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', password2: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', password2: '', verificationCode: '' });
   const [emailVerified, setEmailVerified] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [saving, setSaving] = useState(false);
 
   const set = (key, value) => {
     setError('');
+    setNotice('');
     if (key === 'email') setEmailVerified(false);
     setForm((prev) => ({ ...prev, [key]: value }));
   };
@@ -353,15 +355,28 @@ function AuthScreen({ onAuth, initialMode = 'login', onBack }) {
   const verifyEmail = async () => {
     const email = form.email.trim().toLowerCase();
     setError('');
+    setNotice('');
     if (!email) {
       setError('이메일을 입력해주세요.');
       return;
     }
     setSaving(true);
     try {
+      if (form.verificationCode.trim()) {
+        await confirmEmailVerification({ email, token: form.verificationCode.trim() });
+        setEmailVerified(true);
+        setNotice('이메일 인증이 완료되었습니다.');
+        return;
+      }
       const verification = await requestEmailVerification(email, mode === 'reset' ? 'password-reset' : 'signup');
-      await confirmEmailVerification({ email, token: verification?.token || '' });
+      const token = String(verification?.token || '').trim();
+      if (!token) {
+        setNotice('인증 메일을 보냈습니다. 이메일로 받은 인증 코드를 입력한 뒤 다시 인증해주세요.');
+        return;
+      }
+      await confirmEmailVerification({ email, token });
       setEmailVerified(true);
+      setNotice('이메일 인증이 완료되었습니다.');
     } catch (err) {
       setError(authAccountErrorMessage(err));
     } finally {
@@ -394,12 +409,11 @@ function AuthScreen({ onAuth, initialMode = 'login', onBack }) {
       }
       setSaving(true);
       try {
-        const user = await changeAuthPassword({ email, password: form.password, emailVerified: true });
-        onAuth({
-          ...(user || {}),
-          email,
-          signedAt: new Date().toISOString(),
-        });
+        await changeAuthPassword({ email, password: form.password, emailVerified: true });
+        setForm((prev) => ({ ...prev, password: '', password2: '', verificationCode: '' }));
+        setEmailVerified(false);
+        setMode('login');
+        setNotice('비밀번호를 변경했습니다. 새 비밀번호로 로그인해주세요.');
       } catch (err) {
         setError(authAccountErrorMessage(err));
       } finally {
@@ -508,21 +522,30 @@ function AuthScreen({ onAuth, initialMode = 'login', onBack }) {
           )}
 
           {(mode === 'signup' || mode === 'reset') && (
-            <button className="ghost-btn" type="button" onClick={verifyEmail} disabled={emailVerified}>
-              {emailVerified ? '이메일 인증 완료' : '이메일 인증'}
-            </button>
+            <>
+              {!emailVerified && (
+                <label>
+                  <span>이메일 인증 코드</span>
+                  <input value={form.verificationCode} onChange={(e)=>set('verificationCode', e.target.value)} placeholder="인증 코드" />
+                </label>
+              )}
+              <button className="ghost-btn" type="button" onClick={verifyEmail} disabled={emailVerified || saving}>
+                {emailVerified ? '이메일 인증 완료' : form.verificationCode ? '인증 코드 확인' : '인증 메일 보내기'}
+              </button>
+            </>
           )}
 
+          {notice && <p className="auth-notice">{notice}</p>}
           {error && <p className="auth-error">{error}</p>}
 
           <button type="submit" disabled={saving}>{saving ? '처리 중' : mode === 'login' ? '로그인' : mode === 'reset' ? '비밀번호 변경' : '회원가입'}</button>
         </form>
 
-        <button className="auth-switch" type="button" onClick={()=>{ setError(''); setMode(mode === 'login' ? 'signup' : 'login'); }}>
+        <button className="auth-switch" type="button" onClick={()=>{ setError(''); setNotice(''); setEmailVerified(false); setMode(mode === 'login' ? 'signup' : 'login'); }}>
           {mode === 'login' ? '아직 계정이 없나요? 회원가입' : '이미 계정이 있나요? 로그인'}
         </button>
         {mode === 'login' && (
-          <button className="auth-switch" type="button" onClick={()=>{ setError(''); setEmailVerified(false); setMode('reset'); }}>
+          <button className="auth-switch" type="button" onClick={()=>{ setError(''); setNotice(''); setEmailVerified(false); setMode('reset'); }}>
             이메일 인증 후 비밀번호 변경
           </button>
         )}

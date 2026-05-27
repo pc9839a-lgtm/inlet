@@ -54,6 +54,10 @@ const smtpConfig = {
   pass: String(env.INLET_SMTP_PASS || '').trim(),
   from: String(env.INLET_SMTP_FROM || env.INLET_SMTP_USER || '').trim(),
 };
+const authEmailConfig = {
+  mode: String(env.INLET_AUTH_EMAIL_MODE || 'mock').trim().toLowerCase() === 'smtp' ? 'smtp' : 'mock',
+  exposeToken: env.INLET_AUTH_EMAIL_EXPOSE_TOKEN === '1' || !env.INLET_AUTH_EMAIL_MODE || String(env.INLET_AUTH_EMAIL_MODE).trim().toLowerCase() === 'mock',
+};
 const eventRetentionConfig = {
   maxRecords: Math.max(1000, Number(env.INLET_EVENTS_MAX_RECORDS || 20000)),
   dedupeMs: Math.max(0, Number(env.INLET_EVENTS_DEDUPE_MS || 15000)),
@@ -104,6 +108,8 @@ const server = createServer(async (req, res) => {
           hostedAuthImplemented: sessionAuthSource.hostedAuthImplemented,
           signedSessionReady: !!sessionAuthConfig.secret,
           devHeadersAccepted: sessionAuthConfig.mode === 'dev-headers',
+          emailDeliveryMode: authEmailConfig.mode,
+          emailDeliveryReady: authEmailConfig.mode === 'mock' || (!!smtpConfig.host && !!smtpConfig.from),
         },
         storage: storageRuntimeHealth(storageRuntime),
       });
@@ -3815,13 +3821,55 @@ async function readEmailVerifications() {
 }
 
 function publicEmailVerification(record = {}) {
+  const delivery = record.delivery && typeof record.delivery === 'object'
+    ? record.delivery
+    : { mode: 'mock', status: 'issued' };
   return {
     email: normalizeEmail(record.email || ''),
     purpose: String(record.purpose || 'signup'),
     status: record.status || 'pending',
     expiresAt: record.expiresAt || '',
-    delivery: 'mock',
-    ...(record.token ? { token: record.token } : {}),
+    delivery,
+    ...(record.token && authEmailConfig.exposeToken ? { token: record.token } : {}),
+  };
+}
+
+async function deliverEmailVerification(record = {}) {
+  if (authEmailConfig.mode !== 'smtp') {
+    return {
+      mode: 'mock',
+      status: 'issued',
+      message: 'Offline QA mode returns the verification token in the API response.',
+    };
+  }
+
+  if (!smtpConfig.host || !smtpConfig.from) {
+    return {
+      mode: 'smtp',
+      status: 'skipped',
+      reason: 'smtp_not_configured',
+      message: 'SMTP settings are missing. Configure INLET_SMTP_HOST and INLET_SMTP_FROM before live email verification.',
+    };
+  }
+
+  const purpose = String(record.purpose || 'signup') === 'password-reset' ? '비밀번호 변경' : '회원가입';
+  const result = await sendEmailNotification({
+    to: record.email,
+    subject: `[Inlet] ${purpose} 이메일 인증 코드`,
+    text: [
+      'Inlet 이메일 인증 코드입니다.',
+      '',
+      `인증 코드: ${record.token}`,
+      `만료 시간: ${record.expiresAt || '-'}`,
+      '',
+      '본인이 요청하지 않았다면 이 메일을 무시해주세요.',
+    ].join('\n'),
+  });
+
+  return {
+    mode: 'smtp',
+    status: result.ok ? 'sent' : 'failed',
+    ...(result.message ? { message: result.message } : {}),
   };
 }
 
@@ -3843,6 +3891,7 @@ async function issueEmailVerification(emailInput = '', purposeInput = 'signup') 
     createdAt: now,
     expiresAt: new Date(Date.now() + 1000 * 60 * 15).toISOString(),
   };
+  record.delivery = await deliverEmailVerification(record);
   await appendJsonlRecord(emailVerificationsFile, record);
   return publicEmailVerification(record);
 }
