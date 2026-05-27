@@ -8,18 +8,18 @@ Current execution mode: one worker continues sequentially from the highest prior
 
 ## Current Recheck Snapshot
 
-Last checked on 2026-05-27 after commit `d1fcb7b`:
+Last checked on 2026-05-27 after commit `662936e`:
 
 - Passing baseline after the manager access/audit deployment patches: `node --check server\index.mjs`, `node --check scripts\server-smoke-auth.mjs`, `npm run auth:qa`, `npm run server:smoke:auth`, `npm run d1:adapter:qa`, `npm run d1:runtime:qa`, `npm run css:qa`, `npm run rendering:qa`, `npm run runtime:qa`, `npm run build`, `npm run deployment:qa`, `npm run integration:qa`, `npm run mojibake:qa`, and strict `artifact:qa`.
 - CSS source total: `391276/500000`.
-- Main referenced JS: `318142/430000`.
+- Main referenced JS: `318187/430000`.
 - Largest lazy preview CSS: `188791` bytes.
 - Templates: `3` templates, `189` structural checks.
 - Full offline QA: `npm run qa:all` passes `30` steps.
 - Real browser visual QA: `INLET_BROWSER_QA_REQUIRE=1` passes against a local `vite preview` build using local Chrome CDP. `INLET_BROWSER_QA_EXTRA_URLS=auto` also passes for `/about`, `/contact`, `/privacy`, and `/terms`.
 - Strict artifact QA: passes with no leftover `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, or `preview.zip` artifacts.
-- GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `d1fcb7b`.
-- Cloudflare Pages: production deployment `fe827cf3` succeeded for commit `d1fcb7b`; public URL `https://inlet-8mr.pages.dev/` returns `200`, `<title>Inlet</title>`, and the current asset `index-Dryygo8e.js`.
+- GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `662936e`.
+- Cloudflare Pages: production deployment `17287831` succeeded for commit `662936e`; public URL `https://inlet-8mr.pages.dev/` returns `200`, `<title>Inlet</title>`, and the current asset `index-DbHRhTVR.js`.
 - `npm run live:qa` currently passes as a readiness report with `6` explicit `skipped-live` checks: hosted API health, AI live generation, SMTP live delivery, Google OAuth consent, conversion public diagnostics, and real browser visual QA.
 - Current UI note: Cards block is intentionally limited to `1/2` columns. Keep that scope unless the product direction changes.
 
@@ -115,6 +115,7 @@ Do not reassign these unless a regression is found:
 - AI key test/audit hardening exists: `/api/ai/test` returns `keyTest.status` for stored-key tests, records last test status/message/time on the masked key record, and writes local/D1 audit rows for save, delete, and test actions.
 - Manager disable/remove hardening exists: Settings can mark managers inactive or remove them, inactive/removed managers are blocked by both frontend access-mode resolution and server project access checks, and ownership transfer can only target active managers.
 - Manager access audit exists: manager invite creation, invite acceptance, permission changes, and removal write local `audit.jsonl` rows and attempt D1 `audit_logs` rows when D1 is active.
+- Ownership transfer status UX exists: Settings and internal Admin now share readable Korean labels/copy for requested, billing wait, approved, rejected, completed, and canceled states; the Settings request button now calls the real server persistence path in server mode.
 
 ## Optional Parallel Split
 
@@ -178,7 +179,7 @@ These are not already-done items. Patch sequentially from item 1 unless the owne
    - Keep internal owner/operator controls behind `/admin`.
    - Disable/remove flow and server access revocation are done.
    - Activity/audit rows for invite created, invite accepted, permission changed, and removed are done.
-   - Remaining work: improve user-facing transfer status copy for requested/waiting/approved/rejected/completed/canceled.
+   - User-facing transfer status copy for requested/waiting/approved/rejected/completed/canceled is done.
    - Add browser visual QA for compact manager card, ownership transfer box, disabled/removed manager states.
 
 6. Authenticated browser visual QA
