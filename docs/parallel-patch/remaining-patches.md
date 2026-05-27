@@ -8,7 +8,7 @@ Current execution mode: one worker continues sequentially from the highest prior
 
 ## Current Recheck Snapshot
 
-Last checked on 2026-05-28 after commit `77f6e85`:
+Last checked on 2026-05-28 after commit `79d5d59`:
 
 - Passing baseline after the authenticated browser QA, tab deep-link deployment, production browser QA, hosted API runtime QA, Pages Functions health API, and D1 hosted route patches: `npm run qa:all`, `npm run integration:qa`, `npm run api:functions:qa`, `npm run api:hosted:routes:qa`, `npm run deployment:qa`, and strict `artifact:qa`.
 - CSS source total: `391276/500000`.
@@ -21,8 +21,9 @@ Last checked on 2026-05-28 after commit `77f6e85`:
 - Production browser visual QA: `npm run browser:production:qa` now runs the manager stats and owner settings checks together. With `INLET_PRODUCTION_BROWSER_QA_REQUIRE=1`, both production cases pass and assert that start-modal text is absent through `INLET_BROWSER_QA_FORBID_TEXT`.
 - Production browser visual QA also accepts `INLET_BROWSER_QA_REQUIRE=1` as the mandatory-browser alias, so release commands do not silently run optional mode because the wrong require env was used.
 - Strict artifact QA: passes with no leftover `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, or `preview.zip` artifacts.
-- GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `77f6e85`.
-- Cloudflare Pages: production deployment `84d6d32e` succeeded for commit `77f6e85`; public URL `https://inlet-8mr.pages.dev/` returns `200` and hosted API route QA passes.
+- GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `79d5d59`.
+- Cloudflare Pages: production deployment `0b66df12` succeeded for commit `79d5d59` with `uses_functions=true`; public URL `https://inlet-8mr.pages.dev/` returns `200` and hosted API route QA passes.
+- Cloudflare Pages deployment `fcab1c27` for commit `4b214b1` failed during the verbose `qa:all` build log phase before deploy. The follow-up `79d5d59` compacted CSS QA output for Pages builds and deployed successfully.
 - `/api/health` is now served by Cloudflare Pages Functions with `uses_functions=true`, `service=inlet-api`, `mode=pages-functions`, `auth.sourceOfTruth=signed-session`, `auth.signedSessionReady=true`, `storage.active=d1`, `storage.d1Ready=true`, and `storage.coverage.length=9`.
 - `npm run live:qa` now reports hosted API health as `ready` when run with `INLET_PUBLIC_API_URL=https://inlet-8mr.pages.dev`; it reads the deployed `/api/health` response directly and no longer requires local session-secret env just to inspect hosted health. It also surfaces the hosted QA D1 cleanup plan so `hosted-route-qa-*` and `@inlet.test` cleanup readiness is visible before launch review.
 - Hosted API runtime QA: `INLET_PUBLIC_API_URL=https://inlet-8mr.pages.dev INLET_HOSTED_API_QA_REQUIRE=1 npm run api:hosted:qa` passes with `liveSummary.ready=1`.

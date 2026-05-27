@@ -181,6 +181,8 @@ npm run api:hosted:qa
 npm run d1:live:qa
 ```
 
+Cloudflare Pages runs `npm run qa:all` as the production build command. CSS QA automatically switches to compact output on Pages through `CF_PAGES=1`; if a non-Pages CI runner hits log limits, set `INLET_QA_COMPACT=1`.
+
 Expected before credentials are set:
 
 - `qa:all` must pass.
@@ -188,6 +190,7 @@ Expected before credentials are set:
 - `live:qa` may report `skipped-live` for hosted API until `INLET_PUBLIC_API_URL` is set. Once set, it calls `GET $INLET_PUBLIC_API_URL/api/health` and reports `failed-live` if signed-session auth or storage coverage is missing.
 - `api:hosted:qa` reports `skipped-live` until `INLET_PUBLIC_API_URL` is set. When pointed at the static Pages URL, it must report `static-pages-html-fallback`; when pointed at the deployed API URL with `INLET_HOSTED_API_QA_REQUIRE=1`, it must pass with `auth.sourceOfTruth=signed-session` and D1 storage active unless `INLET_HOSTED_API_EXPECT_D1=0` is explicitly set.
 - `d1:live:qa` reports `skipped-live` until `INLET_D1_LIVE_QA=1`, `CLOUDFLARE_ACCOUNT_ID`, and `CLOUDFLARE_API_TOKEN` are set. Once enabled, it confirms the configured D1 database has the required tables and basic count queries work.
+- If a Pages deployment fails after local `npm run qa:all` passes, inspect deployment logs first. A previous failure happened during verbose CSS QA output; keep compact output enabled for Pages release builds.
 
 After API and Pages URLs exist:
 
