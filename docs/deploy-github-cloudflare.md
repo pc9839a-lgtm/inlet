@@ -4,8 +4,8 @@ Updated: 2026-05-28
 
 Latest verified frontend deployment:
 
-- GitHub `main`: `2467876`
-- Cloudflare Pages deployment: `06373b1f`
+- GitHub `main`: `77f6e85`
+- Cloudflare Pages deployment: `84d6d32e`
 - Public URL: `https://inlet-8mr.pages.dev/`
 - Verification: public URL returns `200`; hosted API health, hosted route QA, and production browser QA pass against `https://inlet-8mr.pages.dev/`.
 - Current live readiness: hosted D1 Pages Functions are active. AI/SMTP/OAuth/conversion checks remain credential-bound and must stay `skipped-live` until credentials are configured.
