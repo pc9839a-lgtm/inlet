@@ -32,6 +32,10 @@ const expectedTexts = String(process.env.INLET_BROWSER_QA_EXPECT_TEXT || '')
   .split(',')
   .map((text) => text.trim())
   .filter(Boolean);
+const forbiddenTexts = String(process.env.INLET_BROWSER_QA_FORBID_TEXT || '')
+  .split(',')
+  .map((text) => text.trim())
+  .filter(Boolean);
 const screenshotDir = process.env.INLET_BROWSER_QA_SCREENSHOT_DIR || '.tmp-browser-visual';
 const chromeDebugPort = Number(process.env.INLET_BROWSER_QA_CHROME_PORT || 9223);
 const chromePathInput = String(process.env.INLET_BROWSER_QA_CHROME_PATH || '').trim();
@@ -407,12 +411,17 @@ async function evaluateBrowserMetrics(client) {
     const phoneRect = phone?.getBoundingClientRect();
     const landingRect = landing?.getBoundingClientRect();
     const landingStyle = landing ? getComputedStyle(landing) : null;
-    const expectedTexts = __EXPECTED_TEXTS__;
+      const expectedTexts = __EXPECTED_TEXTS__;
+      const forbiddenTexts = __FORBIDDEN_TEXTS__;
     return {
       title: document.title,
       bodyTextLength: bodyText.trim().length || 0,
       bodyTextSample: bodyText.trim().slice(0, 600),
       expectedTextMatches: expectedTexts.reduce((matches, text) => {
+        matches[text] = bodyText.includes(text);
+        return matches;
+      }, {}),
+      forbiddenTextMatches: forbiddenTexts.reduce((matches, text) => {
         matches[text] = bodyText.includes(text);
         return matches;
       }, {}),
@@ -427,7 +436,9 @@ async function evaluateBrowserMetrics(client) {
       appErrorText: bodyText.includes('화면을 불러오는 중 오류가 발생했습니다'),
       visibleControls: document.querySelectorAll('button, input, textarea, select, a').length,
     };
-  })()`.replace('__EXPECTED_TEXTS__', JSON.stringify(expectedTexts));
+  })()`
+    .replace('__EXPECTED_TEXTS__', JSON.stringify(expectedTexts))
+    .replace('__FORBIDDEN_TEXTS__', JSON.stringify(forbiddenTexts));
   const result = await client.send('Runtime.evaluate', { expression, returnByValue: true });
   return result.result?.value || {};
 }
@@ -441,6 +452,9 @@ function assertBrowserMetrics({ metrics, errors, viewport, url, screenshot }) {
   assert(!metrics.appErrorText, `${viewport.name} app error boundary text is visible at ${url}; screenshot target ${screenshot}`);
   for (const text of expectedTexts) {
     assert(metrics.expectedTextMatches?.[text], `${viewport.name} expected text not found at ${url}: ${text}; screenshot target ${screenshot}; body: ${metrics.bodyTextSample || ''}`);
+  }
+  for (const text of forbiddenTexts) {
+    assert(!metrics.forbiddenTextMatches?.[text], `${viewport.name} forbidden text appeared at ${url}: ${text}; screenshot target ${screenshot}; body: ${metrics.bodyTextSample || ''}`);
   }
   if (metrics.phoneWidth) {
     assert(metrics.phoneWidth <= 460, `${viewport.name} phone frame is too wide at ${url}; screenshot target ${screenshot}`);
@@ -472,6 +486,7 @@ if (!targetUrl) {
     clickSelectors,
     clickTexts,
     expectedTexts,
+    forbiddenTexts,
     viewports: viewports.map((viewport) => viewport.name),
     cleanupArtifact: screenshotDir.startsWith('.tmp-'),
     launchPlan,
@@ -498,7 +513,7 @@ if (!targetUrl) {
         await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
         await runPlaywrightLikeActions(page);
         await waitForExpectedTextsInPlaywrightLikePage(page);
-        const metrics = await page.evaluate((expectedTexts) => {
+        const metrics = await page.evaluate((expectedTexts, forbiddenTexts) => {
         const body = document.body;
         const phone = document.querySelector('.phone-frame');
         const landing = document.querySelector('.landing-page');
@@ -515,6 +530,10 @@ if (!targetUrl) {
             matches[text] = bodyText.includes(text);
             return matches;
           }, {}),
+          forbiddenTextMatches: forbiddenTexts.reduce((matches, text) => {
+            matches[text] = bodyText.includes(text);
+            return matches;
+          }, {}),
           bodyScrollWidth: body?.scrollWidth || 0,
           viewportWidth: window.innerWidth,
           phoneWidth: phoneRect?.width || 0,
@@ -526,7 +545,7 @@ if (!targetUrl) {
           appErrorText: bodyText.includes('화면을 불러오는 중 오류가 발생했습니다.'),
           visibleControls: document.querySelectorAll('button, input, textarea, select, a').length,
         };
-        }, expectedTexts);
+        }, expectedTexts, forbiddenTexts);
 
         const screenshot = path.join(screenshotDir, screenshotName(url, viewport.name, results.length));
         assertBrowserMetrics({ metrics, errors, viewport, url, screenshot });
@@ -541,7 +560,7 @@ if (!targetUrl) {
   }
 
   assert(results.length === targets.length * viewports.length, `expected ${targets.length * viewports.length} screenshots, got ${results.length}`);
-  console.log(JSON.stringify({ ok: true, engine: 'playwright', targetUrl, extraUrls, templateRoutes, statePreset, clickSelectors, clickTexts, expectedTexts, screenshotDir, cleanupArtifact: screenshotDir.startsWith('.tmp-'), results }, null, 2));
+  console.log(JSON.stringify({ ok: true, engine: 'playwright', targetUrl, extraUrls, templateRoutes, statePreset, clickSelectors, clickTexts, expectedTexts, forbiddenTexts, screenshotDir, cleanupArtifact: screenshotDir.startsWith('.tmp-'), results }, null, 2));
 } else if (hasPuppeteer) {
   const puppeteer = await import('puppeteer');
   const browser = await puppeteer.default.launch({ headless: 'new' });
@@ -563,7 +582,7 @@ if (!targetUrl) {
         await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
         await runPlaywrightLikeActions(page);
         await waitForExpectedTextsInPlaywrightLikePage(page);
-        const metrics = await page.evaluate((expectedTexts) => {
+        const metrics = await page.evaluate((expectedTexts, forbiddenTexts) => {
         const body = document.body;
         const phone = document.querySelector('.phone-frame');
         const landing = document.querySelector('.landing-page');
@@ -578,6 +597,10 @@ if (!targetUrl) {
             matches[text] = bodyText.includes(text);
             return matches;
           }, {}),
+          forbiddenTextMatches: forbiddenTexts.reduce((matches, text) => {
+            matches[text] = bodyText.includes(text);
+            return matches;
+          }, {}),
           bodyScrollWidth: body?.scrollWidth || 0,
           viewportWidth: window.innerWidth,
           phoneWidth: phoneRect?.width || 0,
@@ -587,7 +610,7 @@ if (!targetUrl) {
           appErrorText: bodyText.includes('화면을 불러오는 중 오류가 발생했습니다.'),
           visibleControls: document.querySelectorAll('button, input, textarea, select, a').length,
         };
-        }, expectedTexts);
+        }, expectedTexts, forbiddenTexts);
 
         const screenshot = path.join(screenshotDir, screenshotName(url, viewport.name, results.length));
         assertBrowserMetrics({ metrics, errors, viewport, url, screenshot });
@@ -602,7 +625,7 @@ if (!targetUrl) {
   }
 
   assert(results.length === targets.length * viewports.length, `expected ${targets.length * viewports.length} screenshots, got ${results.length}`);
-  console.log(JSON.stringify({ ok: true, engine: 'puppeteer', targetUrl, extraUrls, templateRoutes, statePreset, clickSelectors, clickTexts, expectedTexts, screenshotDir, cleanupArtifact: screenshotDir.startsWith('.tmp-'), results }, null, 2));
+  console.log(JSON.stringify({ ok: true, engine: 'puppeteer', targetUrl, extraUrls, templateRoutes, statePreset, clickSelectors, clickTexts, expectedTexts, forbiddenTexts, screenshotDir, cleanupArtifact: screenshotDir.startsWith('.tmp-'), results }, null, 2));
 } else if (chromeExecutable) {
   const browserUserDataDir = path.resolve(screenshotDir, '.chrome-profile');
   await rm(browserUserDataDir, { recursive: true, force: true });
@@ -677,7 +700,7 @@ if (!targetUrl) {
   }
 
   assert(results.length === targets.length * viewports.length, `expected ${targets.length * viewports.length} screenshots, got ${results.length}`);
-  console.log(JSON.stringify({ ok: true, engine: 'local-chrome-cdp', chromeExecutable, targetUrl, extraUrls, templateRoutes, statePreset, clickSelectors, clickTexts, expectedTexts, screenshotDir, cleanupArtifact: screenshotDir.startsWith('.tmp-'), results }, null, 2));
+  console.log(JSON.stringify({ ok: true, engine: 'local-chrome-cdp', chromeExecutable, targetUrl, extraUrls, templateRoutes, statePreset, clickSelectors, clickTexts, expectedTexts, forbiddenTexts, screenshotDir, cleanupArtifact: screenshotDir.startsWith('.tmp-'), results }, null, 2));
 } else {
   assert(!requireRealBrowser, 'INLET_BROWSER_QA_REQUIRE=1 requires Playwright, Puppeteer, or local Chrome/Edge. Set INLET_BROWSER_QA_CHROME_PATH if Chrome is installed in a custom path.');
   console.log(JSON.stringify({
@@ -691,6 +714,7 @@ if (!targetUrl) {
     clickSelectors,
     clickTexts,
     expectedTexts,
+    forbiddenTexts,
     viewports: viewports.map((viewport) => viewport.name),
     screenshotDir,
     cleanupArtifact: screenshotDir.startsWith('.tmp-'),

@@ -211,6 +211,7 @@ assert(files.browserVisualQa.includes('owner-settings') && files.browserVisualQa
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_CLICK_TEXT'), 'browser visual QA should support post-navigation interaction checks');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_CLICK_SELECTOR'), 'browser visual QA should support precise selector interaction checks');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_EXPECT_TEXT'), 'browser visual QA should assert authenticated screen text');
+assert(files.browserVisualQa.includes('INLET_BROWSER_QA_FORBID_TEXT'), 'browser visual QA should assert forbidden text is absent');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_VIEWPORTS'), 'browser visual QA should allow desktop-only authenticated checks');
 assert(files.browserVisualQa.includes('--window-size=1280,900'), 'local Chrome visual QA should launch with a desktop-sized window');
 

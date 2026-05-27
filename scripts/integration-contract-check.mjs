@@ -673,6 +673,7 @@ requireAll(browserVisualQa, [
   'INLET_BROWSER_QA_CLICK_SELECTOR',
   'INLET_BROWSER_QA_CLICK_TEXT',
   'INLET_BROWSER_QA_EXPECT_TEXT',
+  'INLET_BROWSER_QA_FORBID_TEXT',
   'INLET_BROWSER_QA_VIEWPORTS',
   'owner-settings',
   'client-settings',
