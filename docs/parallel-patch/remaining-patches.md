@@ -12,6 +12,7 @@ Last checked on 2026-05-28 after commit `77f6e85`:
 
 - Passing baseline after the authenticated browser QA, tab deep-link deployment, production browser QA, hosted API runtime QA, Pages Functions health API, and D1 hosted route patches: `npm run qa:all`, `npm run integration:qa`, `npm run api:functions:qa`, `npm run api:hosted:routes:qa`, `npm run deployment:qa`, and strict `artifact:qa`.
 - CSS source total: `391276/500000`.
+- CSS QA now emits compact file summaries on Cloudflare Pages or when `INLET_QA_COMPACT=1`, preventing release build logs from being dominated by every split CSS file row.
 - Main referenced JS: `318589/430000`.
 - Largest lazy preview CSS: `188791` bytes.
 - Templates: `3` templates, `189` structural checks.

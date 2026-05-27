@@ -148,6 +148,7 @@ const allowBaselineIncrease = process.env.INLET_CSS_ALLOW_BASELINE_INCREASE === 
 const maxFileBytes = Number(process.env.INLET_CSS_FILE_BUDGET_BYTES || 260000);
 const warnRatio = Number(process.env.INLET_CSS_WARN_RATIO || 0.9);
 const shouldFix = process.argv.includes('--fix');
+const compactOutput = process.env.INLET_QA_COMPACT === '1' || process.env.CF_PAGES === '1';
 const areaBudgets = {
   base: Number(process.env.INLET_CSS_BASE_BUDGET_BYTES || 125000),
   editor: Number(process.env.INLET_CSS_EDITOR_BUDGET_BYTES || 50000),
@@ -312,5 +313,7 @@ console.log(JSON.stringify({
   areas: Object.fromEntries(Object.entries(areaReports).sort(([a], [b]) => a.localeCompare(b))),
   areaBudgets,
   catchAllFileBaselines,
-  files: reports,
+  fileCount: reports.length,
+  largestFiles: reports.slice().sort((a, b) => b.bytes - a.bytes).slice(0, 8),
+  ...(compactOutput ? {} : { files: reports }),
 }, null, 2));

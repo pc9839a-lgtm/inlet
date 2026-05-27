@@ -721,6 +721,7 @@ requireAll(artifactQa, [
 const browserVisualQa = await read('scripts/browser-visual-quality-check.mjs');
 const productionBrowserQa = await read('scripts/production-browser-quality-check.mjs');
 const hostedApiQa = await read('scripts/hosted-api-quality-check.mjs');
+const cssQa = await read('scripts/css-quality-check.mjs');
 requireAll(browserVisualQa, [
   'INLET_BROWSER_QA_REQUIRE',
   'INLET_BROWSER_QA_EXTRA_URLS',
@@ -758,6 +759,12 @@ requireAll(hostedApiQa, [
   'signed-session',
   "storageActive === 'd1'",
 ], 'hosted API runtime QA contract');
+requireAll(cssQa, [
+  'INLET_QA_COMPACT',
+  'CF_PAGES',
+  'largestFiles',
+  'fileCount',
+], 'CSS QA compact output contract');
 
 const opsQa = await read('scripts/ops-readiness-check.mjs');
 requireAll(opsQa, [
