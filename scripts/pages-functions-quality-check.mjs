@@ -30,6 +30,9 @@ const invitesShared = await readFile('functions/api/projects/_invites.js', 'utf8
 const invitesCreate = await readFile('functions/api/projects/invites.js', 'utf8');
 const inviteRead = await readFile('functions/api/projects/invites/[token].js', 'utf8');
 const inviteAccept = await readFile('functions/api/projects/invites/[token]/accept.js', 'utf8');
+const ownershipShared = await readFile('functions/api/projects/_ownership.js', 'utf8');
+const ownershipProject = await readFile('functions/api/projects/ownership-transfer.js', 'utf8');
+const ownershipAdmin = await readFile('functions/api/admin/ownership-transfer/[id].js', 'utf8');
 const wrangler = await readFile('wrangler.jsonc', 'utf8');
 const hostedQa = await readFile('scripts/hosted-api-quality-check.mjs', 'utf8');
 const hostedRoutesQa = await readFile('scripts/hosted-api-routes-quality-check.mjs', 'utf8');
@@ -86,6 +89,9 @@ for (const [name, source, tokens] of [
   ['invites create', invitesCreate, ['createD1ManagerInvite', 'authorizeProject', 'invite']],
   ['invite read', inviteRead, ['getD1PublicInvite', 'params.token']],
   ['invite accept', inviteAccept, ['acceptD1ManagerInvite', 'params.token']],
+  ['ownership shared', ownershipShared, ['upsertD1OwnershipTransferRequest', 'listD1OwnershipTransferRequests', 'completeD1OwnershipTransfer', 'OWNERSHIP_TRANSFER_BILLING_NOT_CLEAR']],
+  ['ownership project', ownershipProject, ['createD1OwnershipTransferRequest', 'listD1OwnershipTransfers', 'authorizeProject']],
+  ['ownership admin', ownershipAdmin, ['updateD1OwnershipTransferRequest', 'params.id', 'authorizeProject']],
 ]) {
   for (const token of tokens) {
     assert(source.includes(token), `Pages ${name} function missing ${token}`);
@@ -122,10 +128,13 @@ for (const token of [
   '/api/auth/session',
   '/api/auth/email-verification',
   '/api/projects/invites',
+  '/api/projects/ownership-transfer',
+  '/api/admin/ownership-transfer',
   '/accept',
   ':slug read protection',
   'Hosted /api/auth login/session',
   'Hosted /api/projects/invites create',
+  'Hosted /api/projects/ownership-transfer create',
   'INLET_HOSTED_ROUTE_QA_WRITE',
   'read protection',
 ]) {
@@ -159,6 +168,8 @@ console.log(JSON.stringify({
     'functions/api/projects/invites.js',
     'functions/api/projects/invites/[token].js',
     'functions/api/projects/invites/[token]/accept.js',
+    'functions/api/projects/ownership-transfer.js',
+    'functions/api/admin/ownership-transfer/[id].js',
   ],
   binding: 'DB',
 }, null, 2));

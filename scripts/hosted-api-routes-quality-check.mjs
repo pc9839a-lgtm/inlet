@@ -325,6 +325,80 @@ async function run() {
     httpStatus: inviteAccept.res.status,
   });
 
+  const transferCreate = await jsonFetch('/api/projects/ownership-transfer', {
+    method: 'POST',
+    headers: { 'X-Inlet-Session': refreshedSession },
+    body: JSON.stringify({
+      project: { ...project, ownerId: accountPatch.data?.user?.ownerId || login.data?.user?.ownerId || '' },
+      transfer: {
+        managerEmail,
+        managerName: 'Hosted Manager QA',
+        note: 'hosted ownership transfer smoke',
+      },
+    }),
+  });
+  const transferId = String(transferCreate.data?.request?.id || '').trim();
+  checks.push({
+    name: 'Hosted /api/projects/ownership-transfer create',
+    status: transferCreate.res.ok && transferCreate.data?.request?.managerEmail === managerEmail && transferId ? 'ready' : 'failed-live',
+    httpStatus: transferCreate.res.status,
+  });
+
+  const transferList = await jsonFetch(`/api/projects/ownership-transfer?projectId=${encodeURIComponent(project.projectId)}`, {
+    headers: { 'X-Inlet-Session': refreshedSession },
+  });
+  checks.push({
+    name: 'Hosted /api/projects/ownership-transfer list',
+    status: transferList.res.ok && Array.isArray(transferList.data?.requests) && transferList.data.requests.some((item) => item.id === transferId) ? 'ready' : 'failed-live',
+    httpStatus: transferList.res.status,
+  });
+
+  const transferWaiting = await jsonFetch(`/api/admin/ownership-transfer/${encodeURIComponent(transferId)}`, {
+    method: 'POST',
+    headers: { 'X-Inlet-Session': refreshedSession },
+    body: JSON.stringify({
+      project: { ...project, ownerId: accountPatch.data?.user?.ownerId || login.data?.user?.ownerId || '' },
+      status: 'waiting_billing_clearance',
+      billingClearanceStatus: 'active_subscription',
+      note: 'billing active',
+    }),
+  });
+  checks.push({
+    name: 'Hosted /api/admin/ownership-transfer billing wait',
+    status: transferWaiting.res.ok && transferWaiting.data?.request?.status === 'waiting_billing_clearance' ? 'ready' : 'failed-live',
+    httpStatus: transferWaiting.res.status,
+  });
+
+  const transferBlocked = await jsonFetch(`/api/admin/ownership-transfer/${encodeURIComponent(transferId)}`, {
+    method: 'POST',
+    headers: { 'X-Inlet-Session': refreshedSession },
+    body: JSON.stringify({
+      project: { ...project, ownerId: accountPatch.data?.user?.ownerId || login.data?.user?.ownerId || '' },
+      status: 'completed',
+      billingClearanceStatus: 'active_subscription',
+    }),
+  });
+  checks.push({
+    name: 'Hosted /api/admin/ownership-transfer billing block',
+    status: transferBlocked.res.status === 409 ? 'ready' : 'failed-live',
+    httpStatus: transferBlocked.res.status,
+  });
+
+  const transferCompleted = await jsonFetch(`/api/admin/ownership-transfer/${encodeURIComponent(transferId)}`, {
+    method: 'POST',
+    headers: { 'X-Inlet-Session': refreshedSession },
+    body: JSON.stringify({
+      project: { ...project, ownerId: accountPatch.data?.user?.ownerId || login.data?.user?.ownerId || '' },
+      status: 'completed',
+      billingClearanceStatus: 'clear',
+    }),
+  });
+  checks.push({
+    name: 'Hosted /api/admin/ownership-transfer complete',
+    status: transferCompleted.res.ok && transferCompleted.data?.request?.status === 'completed' ? 'ready' : 'failed-live',
+    httpStatus: transferCompleted.res.status,
+  });
+
   return {
     ok: checks.every((check) => check.status === 'ready') || !requireHosted,
     liveSummary: summarize(checks),
