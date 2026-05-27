@@ -128,6 +128,34 @@ function authStatePresetData(name) {
   const basePage = {
     title: '브라우저 QA 페이지',
     slug: 'browser-qa',
+    blocks: [
+      {
+        id: 'qa-hero',
+        type: 'hero',
+        visible: true,
+        s: {
+          title: '브라우저 QA 페이지',
+          subtitle: '운영 화면 검증을 위한 테스트 페이지입니다.',
+          ctaLabel: '상담 신청',
+        },
+      },
+      {
+        id: 'qa-cards',
+        type: 'cards',
+        visible: true,
+        s: {
+          title: '카드 안내',
+          desc: '카드 1열과 2열 표시 상태를 확인합니다.',
+          layout: 'grid',
+          tone: 'soft',
+          columns: 2,
+          items: [
+            { id: 'qa-card-1', eyebrow: '01', title: '첫 번째 카드', body: '핵심 내용을 짧게 입력하세요.' },
+            { id: 'qa-card-2', eyebrow: '02', title: '두 번째 카드', body: '사용자가 바로 이해할 수 있게 정리하세요.' },
+          ],
+        },
+      },
+    ],
     ownership: {
       ownerEmail: 'owner@example.test',
       clientEmail: 'client@example.test',
