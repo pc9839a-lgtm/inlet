@@ -133,6 +133,15 @@ const cases = [
     forbiddenText: '泥섏쓬 ?붾㈃???대뼸寃?留뚮뱾源뚯슂?,?붾㈃??遺덈윭?ㅻ뒗 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎',
   },
   {
+    name: 'owner style font tone live preview',
+    url: `${baseUrl}/?tab=style`,
+    statePreset: 'owner-settings',
+    viewports: 'desktop',
+    clickSelector: '.style-subnav button:nth-child(3),.style-panel-box .style-segment-line:nth-child(2) button:nth-child(3),.style-panel-box .style-segment-line:nth-child(3) button:nth-child(3)',
+    expectedSelector: '.phone-frame .landing-page.font-bold.font-family-serif',
+    forbiddenText: '泥섏쓬 ?붾㈃???대뼸寃?留뚮뱾源뚯슂?,?붾㈃??遺덈윭?ㅻ뒗 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎',
+  },
+  {
     name: 'manager invite acceptance',
     url: `${baseUrl}/invite/qa-visual-invite`,
     statePreset: 'invite-acceptance',

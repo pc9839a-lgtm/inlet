@@ -216,10 +216,13 @@ assert(files.browserVisualQa.includes('INLET_BROWSER_QA_EXPECT_TEXT'), 'browser 
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_FORBID_TEXT'), 'browser visual QA should assert forbidden text is absent');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_VIEWPORTS'), 'browser visual QA should allow desktop-only authenticated checks');
 assert(files.browserVisualQa.includes('--window-size=1280,900'), 'local Chrome visual QA should launch with a desktop-sized window');
+const productionBrowserQa = await readFile('scripts/production-browser-quality-check.mjs', 'utf8');
+assert(productionBrowserQa.includes('owner style text color live preview'), 'production browser QA should cover style text color live preview');
+assert(productionBrowserQa.includes('owner style font tone live preview') && productionBrowserQa.includes('.landing-page.font-bold.font-family-serif'), 'production browser QA should cover style font/tone live preview');
 
 console.log(JSON.stringify({
   ok: true,
-  checks: requiredDispatch.length + rendererContracts.length * 2 + cssContracts.length + visualGeometryContracts.length + viewportContracts.length + previewSourceEntries.length * 2 + 24,
+  checks: requiredDispatch.length + rendererContracts.length * 2 + cssContracts.length + visualGeometryContracts.length + viewportContracts.length + previewSourceEntries.length * 2 + 26,
   visualGeometryChecks: visualGeometryContracts.length,
   viewportContracts: viewportContracts.length,
 }, null, 2));
