@@ -8,19 +8,19 @@ Current execution mode: one worker continues sequentially from the highest prior
 
 ## Current Recheck Snapshot
 
-Last checked on 2026-05-28 after commit `b798724`:
+Last checked on 2026-05-28 after commit `f2de5ef`:
 
-- Passing baseline after the authenticated browser QA, tab deep-link deployment, and production browser QA command patches: `npm run rendering:qa`, `npm run runtime:qa`, `npm run integration:qa`, `npm run build`, `npm run deployment:qa`, and strict `artifact:qa`.
+- Passing baseline after the authenticated browser QA, tab deep-link deployment, production browser QA, and hosted API runtime QA patches: `npm run qa:all`, `npm run integration:qa`, `npm run ops:qa`, `npm run deployment:qa`, and strict `artifact:qa`.
 - CSS source total: `391276/500000`.
 - Main referenced JS: `318589/430000`.
 - Largest lazy preview CSS: `188791` bytes.
 - Templates: `3` templates, `189` structural checks.
-- Full offline QA: `npm run qa:all` passes `30` steps.
+- Full offline QA: `npm run qa:all` passes `31` steps, including `api:hosted:qa`.
 - Real browser visual QA: `INLET_BROWSER_QA_REQUIRE=1` passes against production `https://inlet-8mr.pages.dev/?tab=stats` with `INLET_BROWSER_QA_STATE_PRESET=manager-limited`, verifying the Stats tab deep link. It also passes against production `https://inlet-8mr.pages.dev/?tab=settings` with `INLET_BROWSER_QA_STATE_PRESET=owner-settings` plus `INLET_BROWSER_QA_CLICK_TEXT=매니저 권한,관리`, verifying the Settings manager card and ownership transfer entry.
 - Production browser visual QA: `npm run browser:production:qa` now runs the manager stats and owner settings checks together. With `INLET_PRODUCTION_BROWSER_QA_REQUIRE=1`, both production cases pass and assert that start-modal text is absent through `INLET_BROWSER_QA_FORBID_TEXT`.
 - Strict artifact QA: passes with no leftover `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, or `preview.zip` artifacts.
-- GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `b798724`.
-- Cloudflare Pages: production deployment `e14d28d0` succeeded for commit `b798724`; public URL `https://inlet-8mr.pages.dev/` returns `200`, `<title>Inlet</title>`, and the current asset `index-CBvGgFDN.js`.
+- GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `f2de5ef`.
+- Cloudflare Pages: production deployment `a3ce1b06` succeeded for commit `f2de5ef`; public URL `https://inlet-8mr.pages.dev/` returns `200`, `<title>Inlet</title>`, and the current asset `index-CBvGgFDN.js`.
 - `npm run live:qa` currently passes as a readiness report with explicit `skipped-live` checks: hosted API health, Cloudflare D1 live schema, AI live generation, SMTP live delivery, Google OAuth consent, conversion public diagnostics, and real browser visual QA.
 - Hosted API runtime QA: `npm run api:hosted:qa` now exists. With `INLET_PUBLIC_API_URL=https://inlet-8mr.pages.dev`, it detects `static-pages-html-fallback`, which confirms the current Pages deployment is frontend-only and `/api/*` is not yet a real hosted API runtime.
 - Cloudflare D1 direct API check confirms `inlet-prod` exists with required core tables and empty initial core counts for accounts/projects/leads/events/audit_logs.
