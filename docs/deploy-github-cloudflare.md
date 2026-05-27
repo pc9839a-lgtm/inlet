@@ -24,8 +24,10 @@ Use this split for the first production deploy:
    - Put it behind a Cloudflare proxied DNS record such as `api.example.com`.
    - Do not deploy the current server directly to Cloudflare Workers yet.
 
-4. Later Cloudflare Worker/D1 migration
-   - Move the API to Workers only after the JSONL adapter is backed by D1 or another durable database.
+4. Cloudflare Worker/D1 migration path
+   - D1 database `inlet-prod` is created and `migrations/0001_inlet_core.sql` has been applied.
+   - `wrangler.jsonc` exposes the binding as `DB`.
+   - Runtime routes still use the JSONL adapter until the API is moved behind the D1 adapter.
    - The current JSONL full-scan fallback is launch-acceptable for small data, but it is not the final Cloudflare-native storage layer.
 
 ## Why Not Workers For The Current API
@@ -38,6 +40,14 @@ The current API is a Node server:
 - Uses local filesystem persistence and long-running server process assumptions.
 
 Cloudflare Workers can run many Node-compatible APIs, but Worker filesystem support is virtual/temporary and not the right durable source of truth for leads, events, pages, manager invites, delivery logs, and revisions. For Cloudflare-native API hosting, replace JSONL persistence behind the existing adapter with D1 first.
+
+Current D1 production database:
+
+- Name: `inlet-prod`
+- Binding: `DB`
+- Database ID: `b68d3820-001f-4dbe-87cd-dc9fc0be17ee`
+- Region: APAC
+- Applied migration: `migrations/0001_inlet_core.sql`
 
 ## GitHub Setup
 
@@ -179,11 +189,10 @@ Then run one real lead submission and confirm:
 
 Move to Workers only after these are done:
 
-1. Add D1 schema for pages, revisions, leads, events, accounts, manager invites, delivery logs, retry queue, and AI drafts.
-2. Implement D1 behind the existing JSONL adapter boundary.
-3. Keep JSONL only as local/dev fallback.
-4. Add migration/import scripts.
-5. Add `wrangler.jsonc` with D1 bindings.
-6. Deploy API as Worker or Pages Functions.
+1. Implement D1 behind the existing JSONL adapter boundary.
+2. Keep JSONL only as local/dev fallback.
+3. Add import/backfill scripts from JSONL data to D1.
+4. Route account/session, manager invite, leads, events, stats, delivery logs, revisions, ownership transfer, and billing state through D1.
+5. Deploy API as Worker or Pages Functions after route parity QA passes.
 
 Until then, Cloudflare should own frontend hosting, DNS, TLS, CDN, cache, and preview deployments; the API should stay on a real Node host with persistent storage.

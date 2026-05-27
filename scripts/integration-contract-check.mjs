@@ -25,6 +25,7 @@ for (const name of [
   'templates:qa',
   'auth:qa',
   'jsonl:qa',
+  'd1:schema:qa',
   'ops:qa',
   'stats:qa',
   'csv:qa',
@@ -125,6 +126,44 @@ requireAll(jsonlAdapter, [
   'cacheHit',
   'missingIndexFields',
 ], 'jsonl storage adapter');
+
+const d1SchemaQa = await read('scripts/d1-schema-quality-check.mjs');
+requireAll(d1SchemaQa, [
+  'migrations/0001_inlet_core.sql',
+  'server/storage/d1Adapter.mjs',
+  'accounts',
+  'subscriptions',
+  'payments',
+  'ownership_transfer_requests',
+  'audit_logs',
+], 'D1 schema QA contract');
+
+const d1Adapter = await read('server/storage/d1Adapter.mjs');
+requireAll(d1Adapter, [
+  'D1_SCHEMA_TABLES',
+  'D1_INDEX_PRIORITIES',
+  'd1UnavailablePlan',
+  'assertD1Binding',
+  'listD1Leads',
+  'listD1Events',
+  'insertD1AuditLog',
+  'fallbackAdapter',
+], 'D1 adapter contract');
+
+const d1Migration = await read('migrations/0001_inlet_core.sql');
+requireAll(d1Migration, [
+  'CREATE TABLE IF NOT EXISTS accounts',
+  'CREATE TABLE IF NOT EXISTS projects',
+  'CREATE TABLE IF NOT EXISTS project_members',
+  'CREATE TABLE IF NOT EXISTS leads',
+  'CREATE TABLE IF NOT EXISTS events',
+  'CREATE TABLE IF NOT EXISTS subscriptions',
+  'CREATE TABLE IF NOT EXISTS payments',
+  'CREATE TABLE IF NOT EXISTS ownership_transfer_requests',
+  'CREATE TABLE IF NOT EXISTS audit_logs',
+  'idx_leads_project_month',
+  'idx_events_project_month_type',
+], 'D1 core migration contract');
 
 const integrationSmoke = await read('scripts/server-smoke-integrations.mjs');
 requireAll(integrationSmoke, [
@@ -438,9 +477,10 @@ requireAll(parallelReadme, [
 console.log(JSON.stringify({
   ok: true,
   checks: 37,
-  scripts: 18,
+  scripts: 19,
   contracts: [
     'jsonl-ops',
+    'd1-schema',
     'delivery-retry-observability',
     'stats-source-pagination',
     'funnel-events',
@@ -461,6 +501,7 @@ console.log(JSON.stringify({
     'strict-artifact-qa',
     'full-qa-aggregate',
     'jsonl-storage-adapter',
+    'd1-storage-adapter',
     'mandatory-browser-visual-qa',
   ],
 }, null, 2));

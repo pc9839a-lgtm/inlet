@@ -2,5 +2,12 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "inlet",
   "compatibility_date": "2026-05-27",
-  "pages_build_output_dir": "dist"
+  "pages_build_output_dir": "dist",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "inlet-prod",
+      "database_id": "b68d3820-001f-4dbe-87cd-dc9fc0be17ee"
+    }
+  ]
 }
