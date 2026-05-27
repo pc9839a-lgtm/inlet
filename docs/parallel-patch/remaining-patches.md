@@ -1,8 +1,10 @@
-﻿# Remaining Patches: 3 Workers
+﻿# Remaining Patches
 
 Updated: 2026-05-27
 
 This is the only active patch assignment file. All completed worker handoff files and old backlog/history files were removed from this folder to prevent duplicate work.
+
+Current execution mode: one worker continues sequentially from the highest priority. Parallel split is optional only if explicitly requested again.
 
 ## Current Recheck Snapshot
 
@@ -16,6 +18,8 @@ Last checked on 2026-05-27:
 - Full offline QA: `npm run qa:all` passes `30` steps.
 - Real browser visual QA: `INLET_BROWSER_QA_REQUIRE=1` passes against a local `vite preview` build using local Chrome CDP. `INLET_BROWSER_QA_EXTRA_URLS=auto` also passes for `/about`, `/contact`, `/privacy`, and `/terms`.
 - Strict artifact QA: passes with no leftover `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, or `preview.zip` artifacts.
+- GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `537551f`.
+- Cloudflare Pages: production deployment `3903ca07` succeeded for commit `537551f`; public URL `https://inlet-8mr.pages.dev/` returns `200` and `<title>Inlet</title>`.
 - Current UI note: Cards block is intentionally limited to `1/2` columns. Keep that scope unless the product direction changes.
 
 ## Already Done
@@ -100,15 +104,16 @@ Do not reassign these unless a regression is found:
 - Ownership transfer completion now exists. `completed` is rejected unless `billingClearanceStatus` is `clear`; when completed, the target manager becomes the project owner, previous owner/client access is removed, the manager row is removed from manager permissions, page ownership metadata is updated, and server smoke verifies old-owner denial plus new-owner access.
 - Customer-owned AI key groundwork is started. Server AI test/draft endpoints can accept a per-request `apiKey`, validate its format, and fall back to `OPENAI_API_KEY` only when no customer key is sent. The frontend can pass the typed key through server mode without saving it to page JSON/localStorage by default.
 - Account dashboard now exposes the AI cost/key policy as account state, so operators see that AI generation uses a customer key per request unless a server fallback key is configured.
+- Production deploy is confirmed through GitHub push plus Cloudflare Pages retry. Wrangler direct deploy still requires `CLOUDFLARE_API_TOKEN`, so current deploy path is GitHub push -> Cloudflare Pages build/retry.
 
-## 3 Parallel Workers
+## Optional Parallel Split
 
-Run these three workers in parallel. They must not share write ownership.
+Default is single-worker sequential patching. If parallel work is explicitly requested again, split only by file ownership.
 
 | Worker | Patch | Files |
 | --- | --- | --- |
 | Worker 1 | Auth/session/account/member/storage | `server/index.mjs`, `server/storage/**`, account/auth/storage scripts, auth QA |
-| Worker 2 | Browser visual QA + frontend product polish | browser/rendering QA, editor/settings/inbox UI, build/clean/prune scripts |
+| Worker 2 | Frontend/editor/settings/inbox/visual QA | `src/**`, browser/rendering QA, build/clean/prune scripts |
 | Worker 3 | Live integrations + internal admin/ops docs | AI key handling, SMTP/OAuth/conversion/webhook QA, admin/ops docs |
 
 ## Sequential Patch Priority
@@ -125,49 +130,64 @@ Patch in this order. Billing must not jump ahead of the foundation work:
 
 ## Immediate Remaining Functional Patches
 
-These are not already-done items. Patch in this order unless a worker is blocked:
+These are not already-done items. Patch sequentially from item 1 unless the owner explicitly changes priority.
 
-1. Real browser visual QA coverage expansion
-   - Mandatory real-browser mode now works locally through Chrome CDP and has passed against a production preview build.
-   - Public footer/legal pages are covered by `INLET_BROWSER_QA_EXTRA_URLS=auto`.
-   - Remaining work is authenticated/app-state coverage, not engine enablement.
-   - Add scripted logged-in states for start modal, editor, cards block `1/2` column behavior, template first viewport, inbox, and settings.
+1. Production account/session hardening
+   - Replace mock email verification delivery with transactional email.
+   - Add password reset flow as `email verified -> set new password`.
+   - Add expired-session UX that returns to login with a clear message.
+   - Add account deletion/suspension state model without hard-deleting operational records.
+   - Keep duplicate email/phone enforcement server-side.
 
-2. Settings and manager permissions UX
-   - Manager permission structure exists, and quick presets now reduce the first-screen clutter.
-   - Keep manager permissions inside Settings for every client admin.
-   - Keep internal owner/admin/operator controls behind `/admin`.
-   - Keep read/write labels user-facing as `보기/편집`, not implementation language.
-   - Remaining work: browser visual QA for the compact manager card, ownership transfer box, and disabled/removed manager states.
+2. Customer-owned AI key storage
+   - Per-request customer API key support exists.
+   - Remaining work: encrypted per-account or per-project key storage.
+   - Add key status states: connected, invalid, quota/rate-limited, missing.
+   - Add delete/disconnect key action and audit entry.
+   - Never store raw keys in page JSON/localStorage by default.
 
-3. Auth and account lifecycle
-   - Signed sessions and server login exist, but hosted provider auth and real transactional email delivery are not implemented yet.
-   - Remaining work: provider-backed email delivery, full account settings edit form, email mismatch hardening, and password reset-by-email-verification UX.
-   - Phone self-verification is explicitly out of scope for now.
+3. D1 real runtime smoke and write-side migration
+   - D1 schema and adapter QA exist.
+   - Remaining work: real Cloudflare Worker/Pages Functions D1 binding smoke.
+   - Complete write-side project access/member permission migration from `access.json` fallback into D1.
+   - Add confirmed JSONL -> D1 write backfill after dry-run review.
+   - Keep JSONL fallback only for local dev/import.
 
-4. Ownership transfer
-   - Ownership transfer request storage now selects an existing manager and records a pending request.
-   - Server approval/reject/billing-clearance state transition now exists behind master-only `/api/admin/ownership-transfer/:id`.
-   - Internal admin approval queue UI now exists for the current project.
-   - Final completion behavior now changes owner/client records after billing is clear.
-   - Requests stay pending/blocked until payment/subscription state allows transfer through `billingClearanceStatus: clear`.
-   - Real payment handoff is intentionally deferred until the final billing phase; model only transfer states and UI copy now.
+4. Inbox, stats, and large-data scale
+   - Inbox first load must stay 50 rows and use `더보기`.
+   - Inbox/CSV must stay month-bounded.
+   - Add server-side indexes/queries for PV, CTA, form submit, reservation, conversion, page, source, device.
+   - Add retention hooks and future quota hooks without enforcing paid plans yet.
+   - Add more D1-specific smoke for stats/CSV/delivery logs.
 
-5. Storage and large-data scale
-   - JSONL adapter boundary exists, but implementation is still a fallback full scan.
-   - Add DB/index implementation behind the adapter, starting from the D1 schema and adapter groundwork.
-   - Keep inbox and CSV month-bounded.
-   - Keep stats server-aggregated and indexed before large production data.
+5. Manager permissions and ownership UX polish
+   - Keep manager permissions inside normal Settings.
+   - Keep internal owner/operator controls behind `/admin`.
+   - Add manager disable/remove flow with immediate server access revocation.
+   - Add manager activity/audit rows for invite created, invite accepted, permission changed, removed.
+   - Add browser visual QA for compact manager card, ownership transfer box, disabled/removed manager states.
 
-6. Live integrations
+6. Authenticated browser visual QA
+   - Public route visual QA exists.
+   - Remaining work: scripted logged-in states for start modal, editor, cards block `1/2`, template first viewport, inbox, stats, settings, manager permissions, ownership transfer.
+   - Add screenshot artifact paths and failure reason output for every route/state.
+
+7. Live integrations
    - Mock/skipped-live checks pass.
-   - Real AI, SMTP, OAuth, conversion tracking, and webhook end-to-end checks require keys, public URL, and live server.
-   - Missing credentials must remain `skipped-live`, not a false failure.
+   - Real SMTP, OAuth, conversion tracking, webhook retry/dead-letter, and live AI checks need credentials/public URL.
+   - Missing credentials must remain `skipped-live`, not false failures.
+   - Add operator-facing readiness screen or checklist status.
 
-7. Billing and subscription, final only
-   - Do not implement checkout, card registration, subscription renewal, or Toss Payments before account, permission, D1 storage, inbox/stat scale, visual QA, and live integration readiness are stable.
+8. Public landing/template/editor polish
+   - Keep 3 templates, but continue making each feel like a real service page.
+   - Keep every template section editable via existing blocks.
+   - Continue fixing live preview issues for text color/font/underline and premium effects.
+   - HTML/import mode is later only if it maps to editable blocks or controlled embedded-code blocks.
+
+9. Billing and subscription, final only
+   - Do not implement checkout, card registration, renewal, invoices, or Toss Payments before the above is stable.
    - Keep only lightweight schema/state placeholders needed by ownership transfer approval.
-   - The 3,300/6,600/9,900 KRW plan design belongs to the final commercial launch phase.
+   - Final plan ladder remains under 9,900 KRW: 3,300 / 6,600 / 9,900.
 
 ## Expanded Launch Backlog
 
@@ -369,9 +389,9 @@ Tasks:
 - Keep inbox compact row design: row number visible, date-only in list view, no useless phone/message/mail/copy action clutter.
 - Keep CSV export clearly month-bound.
 - Do not add Playwright/Puppeteer as a default dependency yet; keep it optional to avoid forcing browser downloads into offline/local installs.
-- Use `INLET_BROWSER_QA_REQUIRE=1` in CI or release verification when Playwright/Puppeteer is installed.
+- Use `INLET_BROWSER_QA_REQUIRE=1` in CI or release verification with Playwright/Puppeteer or local Chrome/Edge CDP.
 - Use `INLET_BROWSER_QA_TEMPLATE_ROUTES=auto` or a comma-separated route list when screenshotting template/public routes.
-- If a browser dependency is added, run desktop and mobile screenshots.
+- Run desktop and mobile screenshots for authenticated states before release.
 - Detect blank page, app error boundary, severe overflow, and missing screenshot files.
 - Support template routes for the 3 templates if routable.
 - Keep `.tmp-browser-visual` cleanup covered by artifact QA.

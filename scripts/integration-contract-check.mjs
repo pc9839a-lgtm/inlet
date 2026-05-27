@@ -618,7 +618,11 @@ requireAll(opsQa, [
 
 const remainingPatches = await read('docs/parallel-patch/remaining-patches.md');
 requireAll(remainingPatches, [
-  'Remaining Patches: 3 Workers',
+  'Remaining Patches',
+  'Current execution mode: one worker continues sequentially',
+  'Production account/session hardening',
+  'Customer-owned AI key storage',
+  'D1 real runtime smoke and write-side migration',
   'Worker 1: Auth Session, Accounts, Members, And Storage Scale',
   'Worker 2: Real Browser QA And Frontend Product Polish',
   'Worker 3: Live Integration, Internal Admin, And Ops Verification',
@@ -634,9 +638,11 @@ const parallelReadme = await read('docs/parallel-patch/README.md');
 requireAll(parallelReadme, [
   'remaining-patches.md',
   'Only two files should remain',
-  'Worker 1',
-  'Worker 2',
-  'Worker 3',
+  'Primary mode: one worker continues sequentially',
+  'Parallel split is optional',
+  'server/storage/auth',
+  'frontend/editor/QA',
+  'integrations/admin/ops',
 ], 'parallel README');
 
 console.log(JSON.stringify({
