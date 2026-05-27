@@ -122,6 +122,20 @@ async function run() {
     httpStatus: protectedCsv.status,
   });
 
+  const protectedDeliveryLogs = await jsonFetch(`/api/leads/delivery-logs?projectId=${encodeURIComponent(project.projectId)}&month=${month}`);
+  checks.push({
+    name: 'Hosted /api/leads/delivery-logs read protection',
+    status: protectedDeliveryLogs.res.status === 403 ? 'ready' : 'failed-live',
+    httpStatus: protectedDeliveryLogs.res.status,
+  });
+
+  const protectedRetryQueue = await jsonFetch(`/api/leads/retry-queue?projectId=${encodeURIComponent(project.projectId)}`);
+  checks.push({
+    name: 'Hosted /api/leads/retry-queue read protection',
+    status: protectedRetryQueue.res.status === 403 ? 'ready' : 'failed-live',
+    httpStatus: protectedRetryQueue.res.status,
+  });
+
   return {
     ok: checks.every((check) => check.status === 'ready') || !requireHosted,
     liveSummary: summarize(checks),
