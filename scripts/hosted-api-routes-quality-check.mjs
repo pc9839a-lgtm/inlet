@@ -68,6 +68,18 @@ async function run() {
         phone: '010-0000-0000',
         memo: 'hosted route write smoke',
         createdAt: new Date().toISOString(),
+        delivery: {
+          status: 'failed',
+          retry: { attempts: 1, nextRetryAt: new Date(Date.now() + 60000).toISOString() },
+          logs: [{
+            id: `delivery-${stamp}`,
+            target: 'hosted-route-qa-webhook',
+            status: 'failed',
+            message: 'hosted route delivery smoke',
+            idempotencyKey: `delivery-${stamp}`,
+            at: new Date().toISOString(),
+          }],
+        },
       },
     }),
   });
@@ -253,6 +265,58 @@ async function run() {
     name: 'Hosted /api/auth/account patch',
     status: accountPatch.res.ok && accountPatch.data?.user?.phone === authPhoneNext ? 'ready' : 'failed-live',
     httpStatus: accountPatch.res.status,
+  });
+
+  const authedLeads = await jsonFetch(`/api/leads?projectId=${encodeURIComponent(project.projectId)}&month=${month}&limit=10`, {
+    headers: { 'X-Inlet-Session': refreshedSession },
+  });
+  checks.push({
+    name: 'Hosted /api/leads authenticated D1 list',
+    status: authedLeads.res.ok && authedLeads.data?.meta?.source === 'd1' && Array.isArray(authedLeads.data?.leads) && authedLeads.data.leads.some((item) => item.id === `lead-${stamp}`) ? 'ready' : 'failed-live',
+    httpStatus: authedLeads.res.status,
+    failureReason: authedLeads.data?.error || `leads=${Array.isArray(authedLeads.data?.leads) ? authedLeads.data.leads.length : 'not-array'}`,
+  });
+
+  const authedStats = await jsonFetch(`/api/stats/summary?projectId=${encodeURIComponent(project.projectId)}&month=${month}`, {
+    headers: { 'X-Inlet-Session': refreshedSession },
+  });
+  checks.push({
+    name: 'Hosted /api/stats/summary authenticated D1 aggregate',
+    status: authedStats.res.ok && authedStats.data?.adapter === 'd1' && authedStats.data?.totals?.leads >= 1 && authedStats.data?.summary?.funnel?.pageViews >= 1 ? 'ready' : 'failed-live',
+    httpStatus: authedStats.res.status,
+    failureReason: authedStats.data?.error || JSON.stringify({ totals: authedStats.data?.totals, funnel: authedStats.data?.summary?.funnel }),
+  });
+
+  const authedCsv = await fetch(`${baseUrl}/api/leads/export.csv?projectId=${encodeURIComponent(project.projectId)}&month=${month}`, {
+    headers: { 'X-Inlet-Session': refreshedSession },
+    signal: AbortSignal.timeout(10000),
+  });
+  const authedCsvText = await authedCsv.text();
+  checks.push({
+    name: 'Hosted /api/leads/export.csv authenticated D1 month export',
+    status: authedCsv.ok && authedCsvText.includes('Hosted Route QA') && authedCsv.headers.get('content-type')?.includes('text/csv') ? 'ready' : 'failed-live',
+    httpStatus: authedCsv.status,
+    failureReason: authedCsvText.slice(0, 160),
+  });
+
+  const authedDeliveryLogs = await jsonFetch(`/api/leads/delivery-logs?projectId=${encodeURIComponent(project.projectId)}&month=${month}&leadId=${encodeURIComponent(`lead-${stamp}`)}`, {
+    headers: { 'X-Inlet-Session': refreshedSession },
+  });
+  checks.push({
+    name: 'Hosted /api/leads/delivery-logs authenticated D1 list',
+    status: authedDeliveryLogs.res.ok && authedDeliveryLogs.data?.queryPlan?.adapter === 'd1' && Array.isArray(authedDeliveryLogs.data?.logs) && authedDeliveryLogs.data.logs.some((item) => item.idempotencyKey === `delivery-${stamp}`) ? 'ready' : 'failed-live',
+    httpStatus: authedDeliveryLogs.res.status,
+    failureReason: authedDeliveryLogs.data?.error || `logs=${Array.isArray(authedDeliveryLogs.data?.logs) ? authedDeliveryLogs.data.logs.length : 'not-array'}`,
+  });
+
+  const authedRetryQueue = await jsonFetch(`/api/leads/retry-queue?projectId=${encodeURIComponent(project.projectId)}&status=failed`, {
+    headers: { 'X-Inlet-Session': refreshedSession },
+  });
+  checks.push({
+    name: 'Hosted /api/leads/retry-queue authenticated D1 list',
+    status: authedRetryQueue.res.ok && authedRetryQueue.data?.queryPlan?.adapter === 'd1' && authedRetryQueue.data?.retryable >= 1 && Array.isArray(authedRetryQueue.data?.entries) && authedRetryQueue.data.entries.some((item) => item.leadId === `lead-${stamp}`) ? 'ready' : 'failed-live',
+    httpStatus: authedRetryQueue.res.status,
+    failureReason: authedRetryQueue.data?.error || JSON.stringify({ retryable: authedRetryQueue.data?.retryable, count: authedRetryQueue.data?.count }),
   });
 
   const passwordChange = await jsonFetch('/api/auth/password', {

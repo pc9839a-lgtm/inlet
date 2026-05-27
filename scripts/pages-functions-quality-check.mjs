@@ -148,6 +148,11 @@ for (const token of [
   '/accept',
   ':slug read protection',
   'Hosted /api/auth login/session',
+  'Hosted /api/leads authenticated D1 list',
+  'Hosted /api/stats/summary authenticated D1 aggregate',
+  'Hosted /api/leads/export.csv authenticated D1 month export',
+  'Hosted /api/leads/delivery-logs authenticated D1 list',
+  'Hosted /api/leads/retry-queue authenticated D1 list',
   'Hosted /api/projects/invites create',
   'Hosted /api/projects/ownership-transfer create',
   'Hosted /api/ai/key save',
@@ -160,7 +165,7 @@ for (const token of [
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 42,
+  checks: 47,
   functions: [
     'functions/api/health.js',
     'functions/api/leads.js',
