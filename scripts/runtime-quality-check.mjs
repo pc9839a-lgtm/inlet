@@ -166,6 +166,7 @@ assert(runtimeConfigSource.includes('VITE_INLET_ENABLE_OWNER_ADMIN_MODE') && run
 assert(app.includes('isOwnerAdminModeEnabled') && app.includes('clientAdminEnabled: ownerAdminModeEnabled'), 'App must derive client admin access from the internal runtime flag');
 assert(app.includes('canUseBuilder && tab === \'edit\'') && app.includes('canUseBuilder && tab === \'style\''), 'builder-only editor and style tabs must stay permission gated');
 assert(app.includes('NAV.filter(([key]) => allowedTabs.includes(key))'), 'navigation must render only allowed tabs');
+assert(app.includes('function tabFromLocation') && app.includes("new URLSearchParams(location.search).get('tab')") && app.includes('replaceLocationTab(nextTab)'), 'App must support tab query deep links for authenticated visual QA and operator URLs');
 assert(app.includes('canManageAdmin && !startMode') && app.includes('canManageAdmin && startMode === \'template\''), 'template/start controls must stay master-admin-only');
 assert(app.includes('adminRoute') && app.includes("return /^\\/(?:admin|[^/?#]+\\/admin)\\/?$/.test(location.pathname)") && app.includes('<AdminPanel'), 'admin panel must stay on a private /admin route');
 assert(app.includes('const canWriteTabKey = (key) => canWriteTab(accessMode, page, authUser, key)') && app.includes('blockWrite'), 'App must enforce manager write permissions before mutation');

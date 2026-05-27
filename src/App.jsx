@@ -86,6 +86,22 @@ const BLOCK_EDITORS = {
   footer: FooterEditor,
 };
 
+const TAB_KEYS = new Set(NAV.map(([key]) => key));
+
+function tabFromLocation(fallback = 'edit') {
+  if (typeof location === 'undefined') return fallback;
+  const requested = new URLSearchParams(location.search).get('tab') || '';
+  return TAB_KEYS.has(requested) ? requested : fallback;
+}
+
+function replaceLocationTab(nextTab) {
+  if (typeof location === 'undefined' || typeof history === 'undefined') return;
+  if (!TAB_KEYS.has(nextTab)) return;
+  const url = new URL(location.href);
+  url.searchParams.set('tab', nextTab);
+  history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+}
+
 const InboxPanel = lazy(() => import('./panels/InboxPanel.jsx'));
 const StatsPanel = lazy(() => import('./panels/StatsPanel.jsx'));
 const StylePanel = lazy(() => import('./panels/StylePanel.jsx'));
@@ -414,7 +430,7 @@ function App() {
   const [statsPeriod, setStatsPeriod] = useState('7d');
   const [leadConflict, setLeadConflict] = useState(null);
   const [events, setEvents] = useState(() => load(EVENTS_KEY, []));
-  const [tab, setTab] = useState('edit');
+  const [tab, setTab] = useState(() => tabFromLocation('edit'));
   const [openId, setOpenId] = useState(page.blocks[0]?.id || '');
   const [addOpen, setAddOpen] = useState(false);
   const [dragId, setDragId] = useState('');
@@ -656,7 +672,9 @@ function App() {
   useEffect(() => {
     if (allowedTabs.includes(tab)) return;
     clearPendingStyle();
-    setTab(allowedTabs[0] || 'inbox');
+    const nextTab = allowedTabs[0] || 'inbox';
+    replaceLocationTab(nextTab);
+    setTab(nextTab);
   }, [allowedTabs, tab]);
   useEffect(() => {
     if (!hasPendingStyle) return undefined;
@@ -1166,6 +1184,7 @@ function App() {
     if (nextTab === tab) return;
     const run = () => {
       clearPendingStyle();
+      replaceLocationTab(nextTab);
       setTab(nextTab);
     };
     if (!confirmLeaveStyleChanges(run)) return;
