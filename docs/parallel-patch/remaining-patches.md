@@ -8,22 +8,23 @@ Current execution mode: one worker continues sequentially from the highest prior
 
 ## Current Recheck Snapshot
 
-Last checked on 2026-05-28 after commit `1771ad4`:
+Last checked on 2026-05-28 after commit `8f27a40`:
 
-- Passing baseline after the authenticated browser QA, tab deep-link deployment, production browser QA, hosted API runtime QA, and Pages Functions health API patches: `npm run qa:all`, `npm run integration:qa`, `npm run api:functions:qa`, `npm run deployment:qa`, and strict `artifact:qa`.
+- Passing baseline after the authenticated browser QA, tab deep-link deployment, production browser QA, hosted API runtime QA, Pages Functions health API, and D1 hosted route patches: `npm run qa:all`, `npm run integration:qa`, `npm run api:functions:qa`, `npm run api:hosted:routes:qa`, `npm run deployment:qa`, and strict `artifact:qa`.
 - CSS source total: `391276/500000`.
 - Main referenced JS: `318589/430000`.
 - Largest lazy preview CSS: `188791` bytes.
 - Templates: `3` templates, `189` structural checks.
-- Full offline QA: `npm run qa:all` passes `32` steps, including `api:hosted:qa` and `api:functions:qa`.
+- Full offline QA: `npm run qa:all` passes `33` steps, including `api:hosted:qa`, `api:hosted:routes:qa`, and `api:functions:qa`.
 - Real browser visual QA: `INLET_BROWSER_QA_REQUIRE=1` passes against production `https://inlet-8mr.pages.dev/?tab=stats` with `INLET_BROWSER_QA_STATE_PRESET=manager-limited`, verifying the Stats tab deep link. It also passes against production `https://inlet-8mr.pages.dev/?tab=settings` with `INLET_BROWSER_QA_STATE_PRESET=owner-settings` plus `INLET_BROWSER_QA_CLICK_TEXT=매니저 권한,관리`, verifying the Settings manager card and ownership transfer entry.
 - Production browser visual QA: `npm run browser:production:qa` now runs the manager stats and owner settings checks together. With `INLET_PRODUCTION_BROWSER_QA_REQUIRE=1`, both production cases pass and assert that start-modal text is absent through `INLET_BROWSER_QA_FORBID_TEXT`.
 - Strict artifact QA: passes with no leftover `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, or `preview.zip` artifacts.
-- GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `1771ad4`.
-- Cloudflare Pages: production deployment `66732e67` succeeded for commit `1771ad4`; public URL `https://inlet-8mr.pages.dev/` returns `200`, `<title>Inlet</title>`, and the current asset `index-CBvGgFDN.js`.
+- GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `8f27a40`.
+- Cloudflare Pages: production deployment `aa2060bf` succeeded for commit `8f27a40`; public URL `https://inlet-8mr.pages.dev/` returns `200`, `<title>Inlet</title>`, and the current asset `index-CBvGgFDN.js`.
 - `/api/health` is now served by Cloudflare Pages Functions with `uses_functions=true`, `service=inlet-api`, `mode=pages-functions`, `auth.sourceOfTruth=signed-session`, `auth.signedSessionReady=true`, `storage.active=d1`, `storage.d1Ready=true`, and `storage.coverage.length=9`.
 - `npm run live:qa` now reports hosted API health as `ready` when run with `INLET_PUBLIC_API_URL=https://inlet-8mr.pages.dev`, `INLET_SESSION_AUTH_MODE=production`, and the Cloudflare-configured session secret represented locally.
 - Hosted API runtime QA: `INLET_PUBLIC_API_URL=https://inlet-8mr.pages.dev INLET_HOSTED_API_QA_REQUIRE=1 npm run api:hosted:qa` passes with `liveSummary.ready=1`.
+- Hosted route QA: `INLET_PUBLIC_API_URL=https://inlet-8mr.pages.dev INLET_HOSTED_ROUTE_QA_REQUIRE=1 INLET_HOSTED_ROUTE_QA_WRITE=1 npm run api:hosted:routes:qa` passes with `liveSummary.ready=4`, proving D1-backed public writes for `/api/leads` and `/api/events` plus 403 read protection for `/api/leads` and `/api/stats/summary`.
 - Cloudflare D1 direct API check confirms `inlet-prod` exists with required core tables and empty initial core counts for accounts/projects/leads/events/audit_logs.
 - Current UI note: Cards block is intentionally limited to `1/2` columns. Keep that scope unless the product direction changes.
 
@@ -69,7 +70,7 @@ Do not reassign these unless a regression is found:
 - Lazy CSS: panel/home/preview owner CSS files are imported by their lazy components, and `LandingRenderer` CSS is no longer part of the first screen CSS.
 - Bundle: referenced main JS `313614/430000`; initial app CSS is about `131KB`; preview renderer CSS is lazy (`LandingRenderer-*.css`, `188984` bytes, `initial:false`).
 - Dist artifacts: `bundle:qa` reports `staleAssetCount: 0`, and strict artifact QA passes with no leftover local generated artifacts.
-- Full QA aggregate: `npm run qa:all` runs 30 verification steps and cleans generated `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, and `preview.zip` artifacts before strict artifact gates.
+- Full QA aggregate: `npm run qa:all` runs 33 verification steps and cleans generated `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, and `preview.zip` artifacts before strict artifact gates.
 - Mojibake QA: `mojibake:qa` scans runtime source/server text, and it is included in Worker 3 QA plus integration readiness.
 - Server/operator-facing mojibake cleanup is now stricter: `scripts/mojibake-quality-check.mjs` catches additional broken CJK and `?`-prefixed Korean mojibake patterns. `server/index.mjs` compiles after cleanup, and lead/event/CSV/SMTP/integration/page/revision/account-facing server strings no longer trip the current guard.
 - Mock integrations: AI/SMTP/webhook/OAuth/conversion skipped-live and mock checks pass.
@@ -91,6 +92,7 @@ Do not reassign these unless a regression is found:
 - D1 adapter groundwork exists in `server/storage/d1Adapter.mjs`; it now includes lead/event row encoding, decoding, paged list helpers, idempotent lead upsert, event insert helpers, monthly stats SQL aggregation, delivery log sync, and delivery retry queue reads.
 - D1 runtime selection groundwork exists in `server/storage/runtimeAdapter.mjs`; `INLET_STORAGE_ADAPTER=jsonl|d1|auto` is recognized and `/api/health` reports requested/active storage mode plus route-level coverage for accounts, pages, leads, events/stats, delivery logs, AI drafts, invites/members, ownership transfer, and AI key storage.
 - D1 lead/event route migration has started: `/api/leads` create/list/update/delete, month-bounded CSV export, `/api/events` create/list, and month-bounded `/api/stats/summary` use D1 when `storageRuntime.active === 'd1'`; lead status, kind, delivery-status, and month-bounded search filters are covered.
+- Cloudflare Pages Functions now host `/api/leads`, `/api/events`, and `/api/stats/summary` against production D1 for the first hosted route slice. Public POST writes create a minimal project/account shell when needed to satisfy D1 foreign keys; GET/read paths still require signed session or API token.
 - D1 duplicate lead detection now uses contact/email SQL lookup instead of hydrating the first 100 monthly leads.
 - D1 stats now uses SQL aggregate queries for monthly PV/CTA/form/reservation/lead/status/delivery/type/trend counts instead of hydrating the full month into memory, honors `dateFrom/dateTo` inside the selected month, and dedupes events with `dedupe_key` when available.
 - D1 delivery logs now sync from lead delivery payloads into `delivery_logs`; delivery log and retry queue APIs use D1 when active, while JSONL remains the local fallback.
@@ -172,8 +174,9 @@ These are not already-done items. Patch sequentially from item 1 unless the owne
    - Real Cloudflare D1 database/schema smoke is prepared through `npm run d1:live:qa`; latest direct check confirms the production D1 schema exists.
    - Hosted API QA now detects whether `/api/health` is a real API JSON response or a static Pages HTML fallback.
    - Pages Functions `/api/health` is deployed with signed-session health and D1 binding active.
-   - Remaining work: migrate actual API routes beyond health to Pages Functions or a dedicated API Worker/container, then run route-level hosted smoke for auth, pages, leads, events/stats, CSV, invites, and ownership transfer.
-   - Project access/member writes are now mirrored into D1; remaining work is a hosted D1 smoke and switching hosted reads to D1 as the primary source.
+   - Pages Functions `/api/leads`, `/api/events`, and `/api/stats/summary` are deployed for the first hosted route slice. Live hosted route QA proves public lead/event writes and protected read endpoints.
+   - Remaining work: migrate hosted CSV export, delivery logs/retry queue, pages/revisions, auth/session, invites/members, ownership transfer, AI draft/key routes, and admin approval routes.
+   - Project access/member writes are now mirrored into D1; remaining work is switching hosted reads to D1 as the primary source for every protected route, not only the current slice.
    - Add confirmed JSONL -> D1 write backfill after dry-run review.
    - Keep JSONL fallback only for local dev/import.
 
