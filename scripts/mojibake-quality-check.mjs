@@ -15,6 +15,8 @@ const mojibakePatterns = [
   { name: 'broken-japanese-close-label', pattern: /リ린/ },
   { name: 'broken-middle-dot', pattern: /쨌/ },
   { name: 'known-broken-submit-labels', pattern: /덉빟|묒닔|꾩넚|뺤씤|섏씠|대찓|곕씫|몃룞|뚯뒪|/ },
+  { name: 'server-operator-mojibake-cjk', pattern: /諛|獄|揆|珥|吏|遺|誘몃|蹂몄|媛|윭|뙣|쒓컙|몄쬆|留뚮즺|臾댁/ },
+  { name: 'broken-question-korean-prefix', pattern: /\?(?:묒|곹|대|몃|덉|쒓|꾩|낅|듬||뚯)/ },
 ];
 
 function assert(condition, message) {

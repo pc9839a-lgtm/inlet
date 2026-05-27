@@ -1268,7 +1268,7 @@ async function testOpenAi(model = 'gpt-4.1', requestKey = '') {
   const data = await callOpenAi({
     key,
     model: normalizeModel(model),
-    input: '정상 연결 확인용입니다. OK만 출력하세요.',
+    input: '정상 연결 확인입니다. OK만 출력하세요.',
     max_output_tokens: 16,
   });
   return data;
@@ -1325,8 +1325,8 @@ function draftQualityIssues(draft = {}, input = {}) {
   const text = draftTextBlob(draft);
   const compact = text.replace(/\s+/g, '');
   const issues = [];
-  const genericPhrases = ['제목과내용만', '쉽고예쁘게', '고객맞춤', '빠른문의', '문의해주세요', '정보를남겨주시면', '확인후연락', '맞춤형서비스', '최상의서비스', '전문적인상담'];
-  const genericHits = genericPhrases.filter((phrase) => compact.includes(phrase));
+  const genericPhrases = ['제목과 안내문만', '쉽고 간단하게', '고객 맞춤', '빠른 문의', '문의해주세요', '정보를 남겨주시면', '확인 후 연락', '맞춤형 서비스', '최상의 서비스', '전문적인 상담'];
+  const genericHits = genericPhrases.filter((phrase) => compact.includes(phrase.replace(/\s+/g, '')));
   const tokens = keywordTokens(input);
   const tokenHits = tokens.filter((token) => text.includes(token)).length;
   const hero = blocks.find((block) => block.type === 'hero');
@@ -1352,41 +1352,40 @@ function draftQualityIssues(draft = {}, input = {}) {
   const uniqueCtas = new Set(ctaLabels.map((label) => String(label).replace(/\s+/g, ''))).size;
 
   if (text.length < 420) issues.push('전체 카피 정보량이 부족합니다.');
-  if (genericHits.length) issues.push(`복붙형 일반 문구가 남아 있습니다: ${genericHits.slice(0, 3).join(', ')}`);
+  if (genericHits.length) issues.push(`반복적인 일반 문구가 남아 있습니다: ${genericHits.slice(0, 3).join(', ')}`);
   if (tokens.length >= 2 && tokenHits < Math.min(2, tokens.length)) issues.push('사용자 입력 키워드가 충분히 반영되지 않았습니다.');
   if (tokens.length >= 2 && tokens.filter((token) => heroText.includes(token)).length < 1) issues.push('히어로에 사용자의 핵심 키워드가 보이지 않습니다.');
   if (textBodies.length >= 2 && new Set(textBodies).size < textBodies.length) issues.push('텍스트 블록 내용이 반복됩니다.');
-  if (form && questions.length < 3) issues.push('상담폼 질문이 너무 얕습니다.');
+  if (form && questions.length < 3) issues.push('상담 폼 질문이 너무 적습니다.');
   if (form && meaningfulQuestions.length < 2 && !requestedSections.includes('reservation')) issues.push('폼에 업종 판단 질문이 부족합니다.');
   if (form && meaningfulQuestions.length && weakQuestionLabels >= meaningfulQuestions.length) issues.push('폼 질문 라벨이 너무 일반적입니다.');
   if (requestedSections.includes('reservation') && !blocks.some((block) => block.type === 'reservation')) issues.push('방문예약 목적에 예약 블록이 없습니다.');
-  if (requestedSections.includes('timer') && !blocks.some((block) => block.type === 'timer')) issues.push('이벤트/마감 목적에 타이머 블록이 없습니다.');
-  if (ctaLabels.length >= 2 && uniqueCtas < 2) issues.push('CTA/버튼 문구가 행동별로 구분되지 않습니다.');
+  if (requestedSections.includes('timer') && !blocks.some((block) => block.type === 'timer')) issues.push('이벤트 마감 목적에 타이머 블록이 없습니다.');
+  if (ctaLabels.length >= 2 && uniqueCtas < 2) issues.push('CTA/버튼 문구가 행동별로 구분되지 않았습니다.');
 
   return issues.slice(0, 5);
 }
-
 function buildQualityRepairPrompt(basePrompt, draft, issues, input) {
   return `
-아래 초안은 품질 검사에서 탈락했다. 같은 JSON 스키마를 유지하되 더 깊고 구체적인 전환형 랜딩페이지 초안으로 전면 재작성하라.
+아래 초안은 품질 검사에서 보강이 필요합니다. 같은 JSON 스키마를 유지하되 더 깊고 구체적인 전환형 랜딩페이지 초안으로 다시 작성하세요.
 
-[탈락 사유]
+[보강 사유]
 ${issues.map((issue) => `- ${issue}`).join('\n')}
 
-[보강 지시]
-- 업종/서비스/타깃/혜택 키워드를 카피에 자연스럽게 더 넣는다.
-- 각 text 블록은 서로 다른 역할을 맡긴다: 문제 공감, 선택 기준, 진행 흐름, 안심 근거 중 하나.
-- body는 최소 35자 이상, 모바일에서 읽히는 1~2문장으로 쓴다.
-- 폼 질문은 이름/연락처 외에 업종별 판단에 필요한 항목을 1~3개 추가한다.
-- 질문 라벨은 "문의내용" 같은 일반어보다 희망 일정, 현재 상황, 관심 항목, 예산/규모처럼 판단 가능한 항목으로 쓴다.
-- 버튼 문구는 상담/예약/전화/확인 등 행동이 구분되게 쓴다.
-- 요청 섹션에 reservation/timer가 있으면 해당 블록을 우선 포함한다.
-- 일반 템플릿 문구를 제거하고 실제 ${input.industry || '서비스'} 랜딩처럼 보이게 만든다.
+[보강 지침]
+- 업종/서비스에 가까운 선택 키워드를 카피에 자연스럽게 넣으세요.
+- 각 text 블록은 서로 다른 역할을 맡기세요. 예: 문제 공감, 선택 기준, 진행 흐름, 신뢰 근거 중 하나.
+- body는 최소 35자 이상, 모바일에서 읽히는 1~2문장으로 쓰세요.
+- 폼 질문은 이름/연락처 외에 업종별 판단에 필요한 항목을 1~3개 추가하세요.
+- 질문 라벨은 "문의내용" 같은 일반 라벨보다 일정, 현재 상황, 관심 항목, 예산/규모처럼 판단 가능한 항목으로 쓰세요.
+- 버튼 문구는 상담, 예약, 전화, 확인 같은 행동이 구분되게 쓰세요.
+- 요청 섹션에 reservation/timer가 있으면 해당 블록을 우선 포함하세요.
+- 일반 템플릿 문구를 제거하고 실제 ${input.industry || '서비스'} 랜딩처럼 보이게 만드세요.
 
 [원래 요청]
 ${basePrompt}
 
-[탈락 초안]
+[보강 전 초안]
 ${JSON.stringify(draft)}
 `.trim();
 }
@@ -1418,7 +1417,7 @@ async function repairDraftIfWeak({ key, model, basePrompt, draft, input }) {
 function isTransientAiError(error) {
   const message = String(error?.message || '');
   return error?.status === 504
-    || /서버 오류|요청 시간이 초과|잠시 후 다시/i.test(message);
+    || /server error|timeout|temporarily unavailable|retry|rate limit|요청 시간|서버 오류|잠시 후/i.test(message);
 }
 
 async function callOpenAiWithFallback(args) {
@@ -1493,15 +1492,15 @@ function formatOpenAiError(message = '', status = 0) {
   }
 
   if (status === 401 || /incorrect api key|invalid api key|authentication/i.test(text)) {
-    return 'OpenAI API 키 인증에 실패했습니다. 서버 환경변수 OPENAI_API_KEY를 확인해주세요.';
+    return 'OpenAI API 인증에 실패했습니다. 고객 API 키 또는 서버 OPENAI_API_KEY를 확인하세요.';
   }
 
   if (status === 429 || /rate limit|quota|billing/i.test(text)) {
-    return 'OpenAI 사용량 한도 또는 결제 설정 문제로 요청이 막혔습니다. OpenAI 계정의 결제/한도를 확인해주세요.';
+    return 'OpenAI 사용 한도 또는 결제 설정 문제로 요청이 막혔습니다. OpenAI 계정의 결제/한도를 확인하세요.';
   }
 
   if (status >= 500) {
-    return `OpenAI 서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.${suffix}`;
+    return `OpenAI 서버 오류가 발생했습니다. 잠시 후 다시 시도하세요.${suffix}`;
   }
 
   return text || `OpenAI 요청 실패: ${status}`;
@@ -1524,7 +1523,7 @@ function normalizeAiDraftInput(input = {}) {
     prompt: String(input.prompt || '').trim(),
     industry: String(input.industry || '').trim(),
     serviceName: String(input.serviceName || '').trim(),
-    goal: String(input.goal || '상담신청').trim(),
+    goal: String(input.goal || '상담 신청').trim(),
     benefit: String(input.benefit || '').trim(),
     cta: String(input.cta || '상담 신청하기').trim(),
     contactMethod: String(input.contactMethod || '상담폼').trim(),
@@ -1549,12 +1548,12 @@ function validateRequiredInput(input) {
 
 function aiTemplateGuide(style = 'auto') {
   const guides = {
-    auto: 'creativeSeed를 기준으로 아래 5가지 템플릿 중 하나를 선택한다. 같은 입력이라도 매번 다른 구조/문장/블록 순서를 만든다.',
-    trust: '신뢰형: 문제 공감 -> 전문성/검증 포인트 -> 핵심 혜택 -> 문의 유도. 차분하고 근거 중심으로 구성한다.',
-    promo: '프로모션형: 강한 첫 문장 -> 혜택/마감/한정성 -> 빠른 CTA -> 폼. 단, 허위 보장과 과장 표현은 금지한다.',
-    booking: '예약전환형: 일정 선택 장점 -> 상담/방문 흐름 -> 예약 CTA -> reservation 중심으로 구성한다.',
-    story: '스토리형: 고객 상황 -> 해결 장면 -> 선택 이유 -> 행동 유도. 문장은 감각적이되 짧게 쓴다.',
-    compare: '비교설득형: 기존 방식의 불편 -> 이 서비스의 차이 -> 선택 기준 -> 문의 CTA. 비교는 명확하되 비방은 금지한다.',
+    auto: 'creativeSeed를 기준으로 trust, promo, booking, story, compare 중 하나를 골라 같은 입력이어도 구조와 문장이 반복되지 않게 만드세요.',
+    trust: '신뢰형: 문제 공감 -> 전문성/검증 근거 -> 선택 기준 -> 문의 유도 순서로 차분하게 구성하세요.',
+    promo: '프로모션형: 강한 첫 문장 -> 혜택/마감/한정성 -> 빠른 CTA 순서로 구성하되 허위 보장과 과장은 금지하세요.',
+    booking: '예약전환형: 일정 선택 장점 -> 상담/방문 흐름 -> 예약 CTA -> reservation 중심으로 구성하세요.',
+    story: '스토리형: 고객 상황 -> 해결 장면 -> 선택 이유 -> 행동 유도 순서로 감각적이지만 짧게 쓰세요.',
+    compare: '비교형: 기존 방식의 불편 -> 이 서비스의 차이 -> 선택 기준 -> 문의 CTA 순서로 구성하세요.',
   };
   return guides[style] || guides.auto;
 }
@@ -1563,136 +1562,51 @@ function buildAiDraftPrompt(input) {
   const allowed = allowedBlockTypes.join(', ');
   const selectedTemplate = input.templateStyle || 'auto';
   return `
-너는 전환율 높은 모바일 랜딩페이지를 만드는 한국어 카피라이터, UX 설계자, 퍼포먼스 마케터다.
-
-사용자가 입력한 정보를 바탕으로 앱에서 바로 편집 가능한 랜딩페이지 블록 JSON만 생성한다.
-단순히 블록을 배치하지 말고, 고객의 불안/욕구/전환 장벽을 추론해 카피, CTA, 폼 질문, 메뉴, 하단 버튼, 시각 톤까지 한 번에 설계한다.
+당신은 전환율 높은 모바일 랜딩페이지를 설계하는 한국어 카피라이터이자 UX 설계자입니다.
+사용자 입력을 바탕으로 편집 가능한 랜딩페이지 블록 JSON만 생성하세요.
 
 [중요 규칙]
-- HTML, CSS, JavaScript를 절대 출력하지 않는다.
-- 설명 문장, 마크다운, 코드블록 없이 JSON만 출력한다.
-- 앱에서 지원하는 블록 타입만 사용한다: ${allowed}
-- benefit은 블록 타입으로 절대 쓰지 않는다. 혜택은 반드시 type:"text"로 만든다.
-- topnav, bottombar, footer는 생성하지 않는다.
-- 모바일 화면 기준으로 짧고 명확한 문구를 작성한다.
-- 짧은 입력이어도 업종 관행, 고객 불안, 구매/문의 동기를 추론해 빈약하지 않게 구성한다.
-- 사용자가 나중에 수동 편집하기 쉬운 단순한 구조로 만들되, 모든 초안이 같은 흐름이 되지 않게 한다.
-- 과장 광고, 허위 보장, 지나친 자극 문구는 피한다.
-- CTA는 핵심 행동 1개 중심으로 구성한다.
-- pageTitle, brandName, primaryAction은 업종/서비스에 맞게 구체적으로 작성한다.
-- 상담폼 질문은 꼭 필요한 항목만 만든다.
-- form을 만들 경우 이름/연락처는 필수로 포함한다.
-- form 질문에는 placeholder와 선택형 options를 넣어 사용자가 바로 수정 가능한 상태로 만든다.
-- links를 만들 경우 contactMethod에 맞춰 form/reservation/phone/url 중 하나로 연결한다.
-- links 아이템은 같은 라벨을 반복하지 말고 상담/예약/전화/카카오 등 행동 차이를 분명히 쓴다.
-- 전화번호가 입력에 없으면 target:"phone" 링크를 만들지 않는다. 임의 전화번호를 만들지 않는다.
-- 외부 URL이 입력에 없으면 target:"url" 링크를 만들지 않는다. 임의 URL을 만들지 않는다.
-- 실제 이미지 URL이나 이미지 데이터가 없으면 type:"image" 블록을 만들지 않는다.
-- timer를 넣는 경우 문구는 업종 혜택과 연결된 마감/잔여 상담/예약 기준으로 작성한다.
-- 전체 블록은 5~8개 정도로 구성한다.
-- 각 title은 18자 내외, body는 모바일에서 읽기 쉽게 1~2문장으로 작성한다.
-- "혜택" 섹션은 반드시 text 블록으로 생성한다. type:"benefit" 금지.
-- FAQ가 필요하면 type:"faq" 위젯으로 만든다.
-- 위치/방문이 중요한 서비스면 type:"map" 위젯을 포함할 수 있다. 지도는 중앙 Google Embed 래퍼 기반이며 placeName/address/detailAddress/phone/parkingText/mapMode만 넣는다.
-- 한 줄짜리 뻔한 문구를 반복하지 말고, 업종별 구체 단어를 최소 4개 이상 사용한다.
-- "최고", "무조건", "100%", "보장" 같은 검증 불가 표현은 피한다.
-- "제목과 내용만", "쉽고 예쁘게", "고객 맞춤", "빠른 문의", "문의해주세요"처럼 업종이 바뀌어도 그대로 쓸 수 있는 문구는 실패로 간주한다.
-- 각 블록은 서로 다른 역할을 가져야 한다. 같은 의미의 상담 유도 문장을 반복하지 않는다.
-- 단순 소개가 아니라 전환 설계여야 한다. 고객이 망설이는 이유, 선택 기준, 다음 행동을 반드시 연결한다.
-
-[짧은 입력 보강]
-- serviceName이 비어 있으면 업종명에서 자연스러운 임시 서비스명을 만든다.
-- benefit이 비어 있으면 업종별 대표 혜택 2~3개를 추론해 body에 녹인다.
-- targetCustomer가 비어 있으면 가장 가능성 높은 고객군을 가정하되 과하게 좁히지 않는다.
-- keyMessage가 비어 있어도 hero/title은 구체적으로 작성한다.
-- 지역, 가격, 일정, 대상, 절차 정보가 비어 있으면 허위 숫자를 만들지 말고 "상담 시 확인"처럼 안전하게 표현한다.
-
-[깊이 기준]
-- hero는 "누구에게 / 무엇을 / 왜 지금"이 드러나야 한다.
-- 첫 text는 고객의 문제 또는 선택 기준을 짚는다.
-- 두 번째 text는 서비스의 차별점/진행 흐름/혜택을 구체화한다.
-- links는 실제 행동 버튼 역할을 해야 한다.
-- form/reservation은 업종별로 필요한 질문 3~5개를 포함하되 과하게 묻지 않는다.
-- theme는 카피 톤과 어울리는 색/배경/버튼 효과를 제안한다.
-
-[전환 설계 체크리스트]
-출력 전 스스로 아래 항목을 검토하고 JSON에 반영한다.
-- 첫 화면만 봐도 어떤 서비스인지 알 수 있는가?
-- 고객이 왜 지금 남겨야 하는지 이유가 있는가?
-- 상담/예약 전에 필요한 정보만 묻는가?
-- 업종/서비스명/혜택/타깃 중 최소 3개가 카피에 녹아 있는가?
-- 버튼 문구가 모두 같은 말이 아니라 행동별로 구분되는가?
-- 복붙 느낌의 빈 문구가 없는가?
-
-[출력 전 자체 검수 프로세스]
-최종 JSON을 출력하기 전에 내부적으로 반드시 아래 순서를 수행한다. 이 과정은 출력하지 않는다.
-1. 초안을 만든다.
-2. 아래 탈락 조건 중 하나라도 있으면 초안을 폐기하고 다시 쓴다.
-3. 통과한 최종 JSON만 출력한다.
-
-탈락 조건:
-- hero에 업종/서비스/대상 중 2개 이상이 드러나지 않는다.
-- text body가 어떤 업종에도 쓸 수 있는 일반 문장이다.
-- 사용자 입력 키워드가 전체 카피에 거의 보이지 않는다.
-- links/form/reservation의 행동 목적이 서로 구분되지 않는다.
-- 폼 질문이 이름/연락처만 있고 업종별 판단 질문이 없다.
-- theme가 기본 검정/흰색 수준으로만 끝난다.
-- qualityNote가 "구성했습니다", "반영했습니다" 같은 설명뿐이고 전략이 없다.
-
-[카피 작성 방식]
-- 짧게 쓰되 정보량을 높인다.
-- 추상어보다 구체 명사를 우선한다.
-- 가격/성과/기간을 지어내지 않는다.
-- 불확실한 정보는 "상담 시 확인", "현재 조건 기준 안내"처럼 안전하게 쓴다.
-- 모바일에서 읽히도록 문장은 짧게 나누되, body는 최소 35자 이상 작성한다.
-
-[템플릿 다양화]
-선택 템플릿: ${selectedTemplate}
-템플릿 가이드: ${aiTemplateGuide(selectedTemplate)}
-creativeSeed: ${input.creativeSeed || 'none'}
-
-가능한 템플릿 패턴:
-- trust: hero -> text(문제/신뢰) -> text(혜택) -> activity -> form
-- promo: hero -> timer -> text(혜택) -> links -> form
-- booking: hero -> text(방문 흐름) -> reservation -> links -> faq
-- story: hero -> text(고객 상황) -> text(해결) -> activity -> form
-- compare: hero -> text(비교 기준) -> text(선택 이유) -> links -> form
-auto인 경우 creativeSeed를 참고해 위 패턴 중 하나를 고르고, block 순서/layout/title 표현을 매번 다르게 만든다.
+- HTML, CSS, JavaScript, 마크다운, 코드블록 없이 JSON만 출력하세요.
+- 허용 블록 타입만 사용하세요: ${allowed}
+- benefit은 블록 타입이 아닙니다. 혜택 섹션은 type:"text"로 만드세요.
+- topnav, bottombar, footer는 생성하지 마세요.
+- 모든 문구는 모바일 첫 화면 기준으로 짧고 명확하게 작성하세요.
+- 고객의 불안, 선택 기준, 다음 행동을 자연스럽게 연결하세요.
+- 과장 광고, 허위 보장, 검증 불가능한 수치는 금지하세요.
+- 모든 블록은 서로 다른 역할을 가져야 하며 같은 상담 유도 문장을 반복하지 마세요.
+- 전체 블록은 5~8개 정도로 구성하세요.
+- form을 만들면 이름과 연락처는 필수로 포함하고, 업종별 판단 질문을 1~3개 추가하세요.
+- links는 실제 행동 버튼 역할이어야 하며 form, reservation, phone, url 중 하나로 연결하세요.
+- 전화번호나 외부 URL이 입력되지 않았으면 임의 전화번호/URL을 만들지 마세요.
+- 이미지 URL이 없으면 image 블록을 만들지 마세요.
+- timer는 이벤트, 마감, 한정 상담 목적일 때만 사용하세요.
+- map은 위치/방문이 중요한 서비스에서만 사용하고 placeName, address, detailAddress, phone, parkingText, mapMode만 넣으세요.
+- 선택 템플릿: ${selectedTemplate}
+- 템플릿 가이드: ${aiTemplateGuide(selectedTemplate)}
+- creativeSeed: ${input.creativeSeed || 'none'}
 
 [사용자 입력]
 자유 요청: ${input.prompt || '없음'}
-업종: ${input.industry}
-서비스명/상품명: ${input.serviceName || '입력 없음 - 업종 기반으로 추론'}
+업종: ${input.industry || '미입력'}
+서비스명/상품명: ${input.serviceName || '미입력'}
 랜딩 목적: ${input.goal}
-핵심 혜택: ${input.benefit || '입력 없음 - 업종 기반으로 추론'}
+핵심 혜택: ${input.benefit || '미입력'}
 CTA 문구: ${input.cta}
 연락 방식: ${input.contactMethod}
-타깃 고객: ${input.targetCustomer || '입력 없음 - 업종 기반으로 추론'}
+대상 고객: ${input.targetCustomer || '미입력'}
 톤: ${input.tone || 'premium'}
-템플릿: ${selectedTemplate}
 강조 문구: ${input.keyMessage || '없음'}
 제외 표현: ${input.avoidWords || '없음'}
 포함 섹션: ${(input.sections || []).join(', ')}
 추천 메타: ${JSON.stringify(input.templateMeta || null)}
 
-[입력 반영 우선순위]
-1. 자유 요청에 적힌 업종, 고객, 혜택, 금지사항을 가장 우선한다.
-2. 상세 입력값은 자유 요청을 보완하는 기준으로 사용한다.
-3. 추천 메타와 템플릿은 구조 참고용이며, 사용자가 고른 목적/연락/섹션을 덮어쓰지 않는다.
-4. 입력에 없는 가격, 기간, 수치, 성과, 보장 문구는 새로 만들지 않는다.
-5. 포함 섹션에 없는 블록은 꼭 필요한 경우에만 1개 이하로 추가한다.
-
 [출력 JSON 스키마]
 {
   "pageTitle": "문자열",
-  "brandName": "짧은 브랜드/서비스명",
+  "brandName": "브랜드 또는 서비스명",
   "templateStyle": "trust|promo|booking|story|compare",
   "qualityNote": "구성 의도 한 문장",
-  "primaryAction": {
-    "label": "대표 CTA",
-    "target": "form|reservation|phone|url",
-    "url": ""
-  },
+  "primaryAction": { "label": "대표 CTA", "target": "form|reservation|phone|url", "url": "" },
   "theme": {
     "tone": "simple|premium|friendly|professional|strong_cta",
     "accentColor": "#111827",
@@ -1709,34 +1623,17 @@ CTA 문구: ${input.cta}
   "blocks": [
     { "type": "hero", "title": "문자열", "body": "문자열", "ctaText": "문자열", "align": "left|center", "height": "medium|large", "titleSize": "medium|large" },
     { "type": "text", "title": "문자열", "body": "문자열", "layout": "plain|card|notice", "align": "left|center", "size": "medium|large" },
-    {
-      "type": "links",
-      "title": "문자열",
-      "layout": "list|card|carousel",
-      "items": [{ "label": "문자열", "target": "form|reservation|phone|url", "url": "", "emoji": "문자 1개 또는 빈 문자열", "iconMode": "emoji|none" }]
-    },
-    { "type": "image", "image": "실제 이미지 URL 또는 data URI", "caption": "문자열" },
-    { "type": "map", "placeName": "장소명", "address": "문자열", "detailAddress": "문자열", "phone": "문자열", "parkingText": "문자열", "mapMode": "google_embed" },
+    { "type": "links", "title": "문자열", "layout": "list|card|carousel", "items": [{ "label": "문자열", "target": "form|reservation|phone|url", "url": "", "emoji": "문자 1개 또는 빈 문자열", "iconMode": "emoji|none" }] },
+    { "type": "map", "placeName": "문자열", "address": "문자열", "detailAddress": "문자열", "phone": "문자열", "parkingText": "문자열", "mapMode": "google_embed" },
     { "type": "timer", "label": "마감까지 남은 시간", "repeatMode": "daily24|fixed", "timerTheme": "modern|glass|minimal|accent", "urgentStyle": "flip|line|flow|none", "ctaLabel": "문자열" },
-    { "type": "activity", "title": "실시간 접수현황", "mode": "feed|count", "sampleKind": "consult|reservation|both", "style": "minimal|glass|dark" },
-    {
-      "type": "form",
-      "title": "문자열",
-      "desc": "문자열",
-      "submit": "문자열",
-      "style": "card|line|soft|minimal",
-      "inputStyle": "round|box|underline",
-      "buttonStyle": "solid|round|line",
-      "buttonHover": "fill|slide|zoom",
-      "questions": [{ "label": "이름", "type": "name|short|phone|email|long|select|multi|address", "required": true, "placeholder": "문자열", "options": ["선택지"] }]
-    },
+    { "type": "activity", "title": "실시간 접수 현황", "mode": "feed|count", "sampleKind": "consult|reservation|both", "style": "minimal|glass|dark" },
+    { "type": "form", "title": "문자열", "desc": "문자열", "submit": "문자열", "style": "card|line|soft|minimal", "inputStyle": "round|box|underline", "buttonStyle": "solid|round|line", "buttonHover": "fill|slide|zoom", "questions": [{ "label": "이름", "type": "name|short|phone|email|long|select|multi|address", "required": true, "placeholder": "문자열", "options": ["선택지"] }] },
     { "type": "faq", "title": "자주 묻는 질문", "layout": "accordion|card|plain", "items": [{ "q": "질문", "a": "답변" }] },
     { "type": "reservation", "title": "문자열", "desc": "문자열", "weekdays": ["mon","tue","wed","thu","fri"], "start": "10:00", "end": "18:00", "interval": 30, "customFields": [{ "label": "추가 확인 항목", "type": "short|long|select", "required": false, "options": ["선택지"] }] }
   ]
 }
 `.trim();
 }
-
 function getResponseText(data) {
   if (typeof data?.output_text === 'string') return data.output_text;
   const parts = [];
@@ -1820,7 +1717,7 @@ function validateDraft(draft) {
   }
   const emptyImage = draft.blocks.find((block) => block?.type === 'image' && !block.image && !block.url && !block.src && !(Array.isArray(block.gallery) && block.gallery.length));
   if (emptyImage) {
-    const error = new Error('이미지 블록에는 실제 이미지가 필요합니다. 이미지를 쓰지 않거나 실제 이미지 URL을 넣어 다시 생성해주세요.');
+    const error = new Error('이미지 블록에는 실제 이미지 URL이 필요합니다. 이미지를 쓰지 않거나 실제 이미지 URL을 넣어 다시 생성하세요.');
     error.status = 502;
     throw error;
   }
@@ -1830,7 +1727,7 @@ function validateDraft(draft) {
     return false;
   }));
   if (badLink) {
-    const error = new Error('전화 또는 외부 링크는 실제 연결 주소가 필요합니다. 전화번호/URL을 입력하거나 해당 링크를 제외해주세요.');
+    const error = new Error('전화 또는 외부 링크에는 실제 연결 주소가 필요합니다. 전화번호/URL을 입력하거나 해당 링크를 제외하세요.');
     error.status = 502;
     throw error;
   }
@@ -3289,12 +3186,12 @@ function buildServerIntegrationJobs(integrations = {}, lead = {}, page = {}) {
   if (integrations.sheets?.enabled && isValidHttpUrl(integrations.sheets.url)) {
     jobs.push({
       type: 'http',
-      label: '구글시트',
+      label: '구글 시트',
       url: integrations.sheets.url,
       payload: {
         ...payload,
         target: 'google_sheets',
-        sheetName: integrations.sheets.sheetName || '접수함',
+        sheetName: integrations.sheets.sheetName || '접수DB',
       },
       secret: integrations.sheets.secret || '',
     });
@@ -3388,7 +3285,7 @@ function buildLeadEmailText(lead = {}, page = {}) {
   const answers = Array.isArray(lead.answers) ? lead.answers : [];
   const answerLines = answers.map((answer) => {
     const value = Array.isArray(answer.value) ? answer.value.join(', ') : String(answer.value || '-');
-    return `- ${answer.label || answer.id || '항목'}: ${value}`;
+    return `- ${answer.label || answer.id || '답변'}: ${value}`;
   });
 
   return [
@@ -3407,7 +3304,7 @@ function buildLeadEmailText(lead = {}, page = {}) {
 }
 
 async function sendSmtpMail({ to, from, subject, text }) {
-  if (!isValidEmail(to)) throw new Error('받을 이메일 주소를 확인해주세요.');
+  if (!isValidEmail(to)) throw new Error('받을 이메일 주소를 확인하세요.');
   const socket = await openSmtpSocket();
   const session = createSmtpSession(socket);
 
@@ -3603,7 +3500,7 @@ function leadsToCsvV2(leads = []) {
     '접수ID',
     '접수유형',
     '상태',
-    '접수시간',
+    '접수일시',
     '이름',
     '대표연락처',
     '연락처',
@@ -3613,9 +3510,9 @@ function leadsToCsvV2(leads = []) {
     '예약일',
     '예약시간',
     '메모',
-    '외부 전송상태',
-    '외부 전송요약',
-    '외부 전송로그',
+    '외부 전송 상태',
+    '외부 전송 요약',
+    '외부 전송 로그',
     '답변',
     '입력값',
   ];
@@ -3645,7 +3542,7 @@ function csvAnswers(answers = []) {
   return (Array.isArray(answers) ? answers : [])
     .map((answer) => {
       const value = Array.isArray(answer.value) ? answer.value.join(', ') : String(answer.value || '');
-      return `${answer.label || answer.id || '항목'}: ${value}`;
+      return `${answer.label || answer.id || '답변'}: ${value}`;
     })
     .filter(Boolean)
     .join(' / ');
@@ -3715,7 +3612,7 @@ function csvDeliveryLogsExport(logs = []) {
 
 function csvAnswersExport(answers = []) {
   return (Array.isArray(answers) ? answers : [])
-    .map((answer) => `${answer.label || answer.id || '항목'}: ${csvFlatValue(answer.value)}`)
+    .map((answer) => `${answer.label || answer.id || '답변'}: ${csvFlatValue(answer.value)}`)
     .filter(Boolean)
     .join(' / ');
 }
@@ -3742,7 +3639,7 @@ function leadsToCsvExport(leads = []) {
     '접수ID',
     '접수유형',
     '상태',
-    '접수시간',
+    '접수일시',
     '이름',
     '대표연락처',
     '연락처',
@@ -3752,9 +3649,9 @@ function leadsToCsvExport(leads = []) {
     '예약일',
     '예약시간',
     '메모',
-    '외부 전송상태',
-    '외부 전송요약',
-    '외부 전송로그',
+    '외부 전송 상태',
+    '외부 전송 요약',
+    '외부 전송 로그',
     '답변',
     '입력값',
   ];
@@ -4890,7 +4787,7 @@ function publicOwnershipTransferRequest(request = {}, manager = {}) {
     requestedAt: request.requestedAt || '',
     approvedAt: request.approvedAt || '',
     completedAt: request.completedAt || '',
-    billingPolicy: '결제 중이면 만료 또는 해지 후 최종 승인됩니다. 이후 새 소유자 계정 카드로 결제할 수 있게 연결합니다.',
+    billingPolicy: '결제가 진행 중이면 만료 또는 해지 후 최종 승인됩니다. 이후 새 소유자 계정의 카드로 결제할 수 있게 연결합니다.',
   };
 }
 
@@ -5631,12 +5528,11 @@ function serverDeliveryStatusText(status = 'none') {
     none: '미연결',
   }[status] || '미연결';
 }
-
 function serverCsvAnswers(answers = []) {
   return (Array.isArray(answers) ? answers : [])
     .map((answer) => {
       const value = Array.isArray(answer.value) ? answer.value.join(', ') : String(answer.value || '');
-      return `${answer.label || answer.id || '항목'}: ${value}`;
+      return `${answer.label || answer.id || '답변'}: ${value}`;
     })
     .filter(Boolean)
     .join(' / ');
@@ -5654,7 +5550,7 @@ function leadsToCsv(leads = []) {
     '접수ID',
     '접수유형',
     '상태',
-    '접수시간',
+    '접수일시',
     '이름',
     '대표연락처',
     '연락처',
@@ -5662,8 +5558,8 @@ function leadsToCsv(leads = []) {
     '주소',
     '문의내용',
     '메모',
-    '외부전송상태',
-    '외부전송요약',
+    '외부 전송 상태',
+    '외부 전송 요약',
     '답변',
     '입력값',
   ];
