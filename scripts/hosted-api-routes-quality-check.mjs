@@ -319,6 +319,93 @@ async function run() {
     failureReason: authedRetryQueue.data?.error || JSON.stringify({ retryable: authedRetryQueue.data?.retryable, count: authedRetryQueue.data?.count }),
   });
 
+  const pageSaveV1 = await jsonFetch(`/api/pages/${encodeURIComponent(project.slug)}`, {
+    method: 'POST',
+    headers: { 'X-Inlet-Session': refreshedSession },
+    body: JSON.stringify({
+      project: { ...project, ownerId: accountPatch.data?.user?.ownerId || login.data?.user?.ownerId || '' },
+      page: {
+        slug: project.slug,
+        title: 'Hosted Page QA v1',
+        blocks: [{ id: `hero-${stamp}`, type: 'hero', s: { title: 'Hosted Page QA v1' } }],
+      },
+      reason: 'hosted-route-qa-v1',
+    }),
+  });
+  checks.push({
+    name: 'Hosted /api/pages/:slug authenticated D1 save v1',
+    status: pageSaveV1.res.ok && pageSaveV1.data?.page?.title === 'Hosted Page QA v1' ? 'ready' : 'failed-live',
+    httpStatus: pageSaveV1.res.status,
+    failureReason: pageSaveV1.data?.error || pageSaveV1.text?.slice?.(0, 160) || '',
+  });
+
+  const pageSaveV2 = await jsonFetch(`/api/pages/${encodeURIComponent(project.slug)}`, {
+    method: 'POST',
+    headers: { 'X-Inlet-Session': refreshedSession },
+    body: JSON.stringify({
+      project: { ...project, ownerId: accountPatch.data?.user?.ownerId || login.data?.user?.ownerId || '' },
+      page: {
+        slug: project.slug,
+        title: 'Hosted Page QA v2',
+        blocks: [{ id: `hero-${stamp}`, type: 'hero', s: { title: 'Hosted Page QA v2' } }],
+      },
+      reason: 'hosted-route-qa-v2',
+    }),
+  });
+  checks.push({
+    name: 'Hosted /api/pages/:slug authenticated D1 save v2',
+    status: pageSaveV2.res.ok && pageSaveV2.data?.page?.title === 'Hosted Page QA v2' && Number(pageSaveV2.data?.page?.revision || 0) >= 2 ? 'ready' : 'failed-live',
+    httpStatus: pageSaveV2.res.status,
+    failureReason: pageSaveV2.data?.error || JSON.stringify({ title: pageSaveV2.data?.page?.title, revision: pageSaveV2.data?.page?.revision }),
+  });
+
+  const pageReadAuthed = await jsonFetch(`/api/pages/${encodeURIComponent(project.slug)}?projectId=${encodeURIComponent(project.projectId)}`, {
+    headers: { 'X-Inlet-Session': refreshedSession },
+  });
+  checks.push({
+    name: 'Hosted /api/pages/:slug authenticated D1 read',
+    status: pageReadAuthed.res.ok && pageReadAuthed.data?.page?.title === 'Hosted Page QA v2' ? 'ready' : 'failed-live',
+    httpStatus: pageReadAuthed.res.status,
+    failureReason: pageReadAuthed.data?.error || pageReadAuthed.data?.page?.title || '',
+  });
+
+  const revisionsList = await jsonFetch(`/api/pages/${encodeURIComponent(project.slug)}/revisions?projectId=${encodeURIComponent(project.projectId)}&limit=5`, {
+    headers: { 'X-Inlet-Session': refreshedSession },
+  });
+  const revisions = Array.isArray(revisionsList.data?.revisions) ? revisionsList.data.revisions : [];
+  const oldestRevision = revisions[revisions.length - 1] || null;
+  checks.push({
+    name: 'Hosted /api/pages/:slug/revisions authenticated D1 list',
+    status: revisionsList.res.ok && revisions.length >= 2 && oldestRevision?.id ? 'ready' : 'failed-live',
+    httpStatus: revisionsList.res.status,
+    failureReason: revisionsList.data?.error || `revisions=${revisions.length}`,
+  });
+
+  const revisionRead = await jsonFetch(`/api/pages/${encodeURIComponent(project.slug)}/revisions/${encodeURIComponent(oldestRevision?.id || '')}?projectId=${encodeURIComponent(project.projectId)}`, {
+    headers: { 'X-Inlet-Session': refreshedSession },
+  });
+  checks.push({
+    name: 'Hosted /api/pages/:slug/revisions/:id authenticated D1 read',
+    status: revisionRead.res.ok && revisionRead.data?.revision?.id === oldestRevision?.id && revisionRead.data?.page?.title === 'Hosted Page QA v1' ? 'ready' : 'failed-live',
+    httpStatus: revisionRead.res.status,
+    failureReason: revisionRead.data?.error || JSON.stringify({ id: revisionRead.data?.revision?.id, title: revisionRead.data?.page?.title }),
+  });
+
+  const pageRestore = await jsonFetch(`/api/pages/${encodeURIComponent(project.slug)}/restore`, {
+    method: 'POST',
+    headers: { 'X-Inlet-Session': refreshedSession },
+    body: JSON.stringify({
+      project: { ...project, ownerId: accountPatch.data?.user?.ownerId || login.data?.user?.ownerId || '' },
+      revisionId: oldestRevision?.id || '',
+    }),
+  });
+  checks.push({
+    name: 'Hosted /api/pages/:slug/restore authenticated D1 write',
+    status: pageRestore.res.ok && pageRestore.data?.page?.title === 'Hosted Page QA v1' ? 'ready' : 'failed-live',
+    httpStatus: pageRestore.res.status,
+    failureReason: pageRestore.data?.error || pageRestore.data?.page?.title || '',
+  });
+
   const passwordChange = await jsonFetch('/api/auth/password', {
     method: 'POST',
     body: JSON.stringify({ email: authEmail, password: 'secret2', emailVerified: true }),

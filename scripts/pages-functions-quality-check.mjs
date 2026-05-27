@@ -153,6 +153,12 @@ for (const token of [
   'Hosted /api/leads/export.csv authenticated D1 month export',
   'Hosted /api/leads/delivery-logs authenticated D1 list',
   'Hosted /api/leads/retry-queue authenticated D1 list',
+  'Hosted /api/pages/:slug authenticated D1 save v1',
+  'Hosted /api/pages/:slug authenticated D1 save v2',
+  'Hosted /api/pages/:slug authenticated D1 read',
+  'Hosted /api/pages/:slug/revisions authenticated D1 list',
+  'Hosted /api/pages/:slug/revisions/:id authenticated D1 read',
+  'Hosted /api/pages/:slug/restore authenticated D1 write',
   'Hosted /api/projects/invites create',
   'Hosted /api/projects/ownership-transfer create',
   'Hosted /api/ai/key save',
@@ -165,7 +171,7 @@ for (const token of [
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 47,
+  checks: 53,
   functions: [
     'functions/api/health.js',
     'functions/api/leads.js',
