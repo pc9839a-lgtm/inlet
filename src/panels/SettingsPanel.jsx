@@ -95,6 +95,12 @@ function managerAccessSummary(manager) {
   return '권한 없음';
 }
 
+function managerInviteState(manager, inviteUrl = '') {
+  if (manager.acceptedAt) return '가입 완료';
+  if (inviteUrl) return '초대 링크 있음';
+  return '초대 전';
+}
+
 function SettingsSection({ id, title, openSection, setOpenSection, locked = false, onSave, onEdit, children, className = '' }) {
   const open = openSection === id;
   return (
@@ -297,6 +303,10 @@ export default function SettingsPanel({
   };
 
   const createInvite = async (manager, index) => {
+    if (!String(manager.name || '').trim()) {
+      notify('매니저 이름을 먼저 입력하세요.', 'error');
+      return;
+    }
     if (!manager.email) {
       notify('매니저 이메일을 먼저 입력하세요.', 'error');
       return;
@@ -439,7 +449,7 @@ export default function SettingsPanel({
         <SettingsSection id="managers" title="매니저 권한" openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.managers} onSave={saveManagers} onEdit={editManagers} className="manager-access-card">
           <div className="manager-section-tools">
             <div>
-              <p>필요한 항목만 열어서 관리합니다.</p>
+              <p>기본 정보만 먼저 보이고, 상세 권한과 초대 링크는 매니저별로 열어서 관리합니다.</p>
             </div>
             <button type="button" disabled={lockedSections.managers} onClick={addManager}>매니저 추가</button>
           </div>
@@ -504,11 +514,15 @@ export default function SettingsPanel({
                 <div className={`manager-card compact ${disabledManager ? 'disabled' : ''}`} key={manager.id || index}>
                   <div className="manager-card-head">
                     <div>
-                      <strong>{managerLabel(manager)}</strong>
-                      <span>{manager.email || '이메일 필요'} · {managerAccessSummary(manager)}</span>
+                      <div className="manager-title-row">
+                        <strong>{managerLabel(manager)}</strong>
+                        <span className={`manager-state-pill ${disabledManager ? 'off' : 'on'}`}>{disabledManager ? '비활성' : '활성'}</span>
+                        <span className="manager-state-pill neutral">{managerInviteState(manager, inviteUrl)}</span>
+                      </div>
+                      <span className="manager-card-summary">{manager.email || '이메일 필요'} · {managerAccessSummary(manager)}</span>
                     </div>
                     <div className="manager-card-actions">
-                      <button type="button" onClick={() => setExpandedManagerId(expanded ? '' : manager.id)}>{expanded ? '접기' : '설정'}</button>
+                      <button type="button" onClick={() => setExpandedManagerId(expanded ? '' : manager.id)}>{expanded ? '닫기' : '관리'}</button>
                       <button type="button" disabled={lockedSections.managers} onClick={() => toggleManagerDisabled(index)}>{disabledManager ? '활성' : '비활성'}</button>
                       <button type="button" className="danger-btn" disabled={lockedSections.managers} onClick={() => removeManager(index)}>삭제</button>
                     </div>
@@ -519,6 +533,7 @@ export default function SettingsPanel({
                         <Field label="이름" value={manager.name} disabled={lockedSections.managers} onChange={(value) => updateManager(index, { name: value })} />
                         <Field label="이메일" value={manager.email} disabled={lockedSections.managers} onChange={(value) => updateManager(index, { email: value.trim().toLowerCase() })} />
                       </div>
+                      <div className="manager-subtitle">빠른 권한</div>
                       <div className="manager-preset-row" aria-label="빠른 권한 설정">
                         {MANAGER_ACCESS_PRESETS.map((preset) => (
                           <button type="button" key={preset.id} disabled={lockedSections.managers || disabledManager} onClick={() => setManagerPreset(index, preset)}>
@@ -528,7 +543,7 @@ export default function SettingsPanel({
                       </div>
                       <div className="manager-detail-actions">
                         <button type="button" onClick={() => setExpandedManagerMenuId(menuExpanded ? '' : manager.id)}>{menuExpanded ? '메뉴권한 닫기' : '메뉴권한'}</button>
-                        <button type="button" onClick={() => (inviteUrl ? copyInvite(manager) : createInvite(manager, index))} disabled={lockedSections.managers || disabledManager || loading}>{loading ? '복사 중' : '초대'}</button>
+                        <button type="button" onClick={() => (inviteUrl ? copyInvite(manager) : createInvite(manager, index))} disabled={lockedSections.managers || disabledManager || loading}>{loading ? '복사 중' : inviteUrl ? '초대링크 복사' : '초대 링크 만들기'}</button>
                       </div>
                       {menuExpanded && (
                         <div className="manager-permission-panel">
