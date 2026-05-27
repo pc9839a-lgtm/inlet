@@ -635,6 +635,17 @@ requireAll(d1LiveQa, [
   'audit_logs',
 ], 'D1 live QA contract');
 
+const liveReadiness = await read('scripts/live-readiness-check.mjs');
+requireAll(liveReadiness, [
+  'Hosted QA D1 cleanup plan',
+  'hostedQaCleanupReadiness',
+  'INLET_D1_QA_CLEANUP_WRITE',
+  'I_APPROVE_HOSTED_QA_CLEANUP',
+  'hosted-route-qa-',
+  'inlet.test',
+  'd1:hosted-qa:cleanup',
+], 'live readiness hosted QA cleanup contract');
+
 requireAll(server, [
   'queryJsonlRecords',
   'normalizeSessionAuthMode',

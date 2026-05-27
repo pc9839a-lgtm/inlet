@@ -184,7 +184,7 @@ npm run d1:live:qa
 Expected before credentials are set:
 
 - `qa:all` must pass.
-- `live:qa` may report `skipped-live` for D1 live schema, AI, SMTP, OAuth, conversion diagnostics, and real browser QA.
+- `live:qa` may report `skipped-live` for D1 live schema, hosted QA cleanup plan, AI, SMTP, OAuth, conversion diagnostics, and real browser QA.
 - `live:qa` may report `skipped-live` for hosted API until `INLET_PUBLIC_API_URL`, `INLET_SESSION_AUTH_MODE=production`, and `INLET_SESSION_SECRET` are set. Once those exist, it calls `GET $INLET_PUBLIC_API_URL/api/health` and reports `failed-live` if signed-session auth or storage coverage is missing.
 - `api:hosted:qa` reports `skipped-live` until `INLET_PUBLIC_API_URL` is set. When pointed at the static Pages URL, it must report `static-pages-html-fallback`; when pointed at the deployed API URL with `INLET_HOSTED_API_QA_REQUIRE=1`, it must pass with `auth.sourceOfTruth=signed-session` and D1 storage active unless `INLET_HOSTED_API_EXPECT_D1=0` is explicitly set.
 - `d1:live:qa` reports `skipped-live` until `INLET_D1_LIVE_QA=1`, `CLOUDFLARE_ACCOUNT_ID`, and `CLOUDFLARE_API_TOKEN` are set. Once enabled, it confirms the configured D1 database has the required tables and basic count queries work.

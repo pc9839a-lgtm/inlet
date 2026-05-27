@@ -25,6 +25,24 @@ function normalizeBaseUrl(value = '') {
   return String(value || '').trim().replace(/\/+$/, '');
 }
 
+function hostedQaCleanupReadiness() {
+  const missing = ['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN'].filter((key) => !String(env[key] || '').trim());
+  const writeRequested = env.INLET_D1_QA_CLEANUP_WRITE === '1';
+  const approvalOk = env.INLET_D1_QA_CLEANUP_APPROVAL === 'I_APPROVE_HOSTED_QA_CLEANUP';
+  return status(
+    'Hosted QA D1 cleanup plan',
+    missing.length === 0,
+    missing,
+    'Run npm run d1:hosted-qa:cleanup to review test-only hosted-route-qa-* and @inlet.test rows. Write mode must stay blocked unless the operator explicitly approves cleanup.',
+    {
+      mode: writeRequested && approvalOk ? 'write-enabled' : 'plan-only',
+      projectPrefix: 'hosted-route-qa-',
+      emailDomain: 'inlet.test',
+      writeGuard: 'INLET_D1_QA_CLEANUP_WRITE=1 + INLET_D1_QA_CLEANUP_APPROVAL=I_APPROVE_HOSTED_QA_CLEANUP',
+    },
+  );
+}
+
 async function hostedApiHealthCheck() {
   const missing = [
     ...apiKeys.filter((key) => !String(env[key] || '').trim()),
@@ -92,6 +110,7 @@ const checks = [
     ].filter(Boolean),
     'Run npm run d1:live:qa to confirm inlet-prod table schema and basic counts through the Cloudflare D1 API.',
   ),
+  hostedQaCleanupReadiness(),
   status(
     'AI live generation',
     env.INLET_AI_QA_LIVE === '1' && !!String(env.OPENAI_API_KEY || '').trim(),
@@ -133,6 +152,7 @@ console.log(JSON.stringify({
     api: 'INLET_PUBLIC_API_URL=https://api.example.com INLET_SESSION_AUTH_MODE=production npm run live:qa',
     hostedApi: 'INLET_PUBLIC_API_URL=https://api.example.com INLET_HOSTED_API_QA_REQUIRE=1 npm run api:hosted:qa',
     d1: 'INLET_D1_LIVE_QA=1 npm run d1:live:qa',
+    hostedQaCleanup: 'npm run d1:hosted-qa:cleanup',
     browser: 'INLET_BROWSER_QA_URL=http://localhost:5173 INLET_BROWSER_QA_REQUIRE=1 npm run browser:visual:qa',
     mock: 'npm run integration:mock:qa',
     conversion: 'npm run conversion:qa',
