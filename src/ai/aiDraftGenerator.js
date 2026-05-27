@@ -288,7 +288,7 @@ export async function generateAiDraft({ apiKey, model = 'gpt-4.1', input }) {
   });
 
   if (isServerAiMode()) {
-    const data = await postJson('/api/ai/draft', { model, input: normalizedInput });
+    const data = await postJson('/api/ai/draft', { model, input: normalizedInput, apiKey: apiKey || '' });
     const json = finalizeAiDraftResponse(data?.draft || data, normalizedInput);
     const check = validateAiDraftJson(json);
     if (!check.ok) throw new Error(check.message);
@@ -306,7 +306,7 @@ export async function generateAiDraft({ apiKey, model = 'gpt-4.1', input }) {
 
 export async function testOpenAiKey({ apiKey, model = 'gpt-4.1' }) {
   if (isServerAiMode()) {
-    await postJson('/api/ai/test', { model });
+    await postJson('/api/ai/test', { model, apiKey: apiKey || '' });
     return true;
   }
 

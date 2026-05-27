@@ -4,14 +4,54 @@ import {
   storageRuntimePlan,
 } from '../server/storage/runtimeAdapter.mjs';
 import {
+  aggregateD1Stats,
+  decodeD1AiDraft,
+  decodeD1Account,
   decodeD1Event,
+  decodeD1Invite,
   decodeD1Lead,
+  decodeD1OwnershipTransferRequest,
+  decodeD1Page,
+  decodeD1PageRevision,
+  decodeD1ProjectMember,
+  decodeD1Project,
+  deleteD1AiDraft,
+  deleteD1Lead,
+  encodeD1AiDraft,
+  encodeD1Account,
   encodeD1Event,
+  encodeD1Invite,
   encodeD1Lead,
+  encodeD1OwnershipTransferRequest,
+  encodeD1Page,
+  encodeD1PageRevision,
+  encodeD1ProjectMember,
+  findD1LeadsByContact,
+  getD1AccountByEmail,
+  getD1AccountByPhone,
+  getD1Lead,
+  getD1PageBySlug,
+  getD1PageRevision,
+  getD1ProjectAccess,
+  getD1ProjectById,
+  getD1ProjectBySlug,
+  listD1AiDrafts,
   insertD1Event,
+  insertD1PageRevision,
+  listD1DeliveryLogs,
+  listD1DeliveryRetryQueue,
   listD1Events,
   listD1Leads,
+  listD1OwnershipTransferRequests,
+  listD1PageRevisions,
+  listD1ProjectMembers,
+  upsertD1Account,
+  upsertD1AiDraft,
+  upsertD1Invite,
   upsertD1Lead,
+  upsertD1OwnershipTransferRequest,
+  upsertD1Page,
+  upsertD1ProjectMember,
 } from '../server/storage/d1Adapter.mjs';
 
 function assert(condition, message) {
@@ -22,6 +62,15 @@ function fakeD1() {
   const rows = {
     leads: [],
     events: [],
+    delivery_logs: [],
+    accounts: [],
+    projects: [],
+    invites: [],
+    project_members: [],
+    ownership_transfer_requests: [],
+    pages: [],
+    page_revisions: [],
+    ai_drafts: [],
   };
   return {
     rows,
@@ -33,6 +82,152 @@ function fakeD1() {
           return this;
         },
         async run() {
+          if (sql.includes('INSERT INTO accounts')) {
+            const [
+              id,
+              email,
+              phone,
+              name,
+              password_hash,
+              email_verified_at,
+              status,
+              created_at,
+              updated_at,
+            ] = this.params;
+            const next = {
+              id,
+              email,
+              phone,
+              name,
+              password_hash,
+              email_verified_at,
+              status,
+              created_at,
+              updated_at,
+            };
+            const index = rows.accounts.findIndex((row) => row.id === id);
+            if (index >= 0) rows.accounts[index] = { ...rows.accounts[index], ...next };
+            else rows.accounts.push(next);
+            return { success: true };
+          }
+          if (sql.includes('INSERT INTO invites')) {
+            const [
+              id,
+              project_id,
+              email,
+              phone,
+              name,
+              token_hash,
+              access_json,
+              status,
+              invited_by_account_id,
+              accepted_account_id,
+              expires_at,
+              accepted_at,
+              created_at,
+              updated_at,
+            ] = this.params;
+            const next = { id, project_id, email, phone, name, token_hash, access_json, status, invited_by_account_id, accepted_account_id, expires_at, accepted_at, created_at, updated_at };
+            const index = rows.invites.findIndex((row) => row.id === id);
+            if (index >= 0) rows.invites[index] = { ...rows.invites[index], ...next };
+            else rows.invites.push(next);
+            return { success: true };
+          }
+          if (sql.includes('INSERT INTO project_members')) {
+            const [
+              id,
+              project_id,
+              account_id,
+              role,
+              access_json,
+              status,
+              invited_by_account_id,
+              created_at,
+              updated_at,
+            ] = this.params;
+            const next = { id, project_id, account_id, role, access_json, status, invited_by_account_id, created_at, updated_at };
+            const index = rows.project_members.findIndex((row) => row.project_id === project_id && row.account_id === account_id);
+            if (index >= 0) rows.project_members[index] = { ...rows.project_members[index], ...next };
+            else rows.project_members.push(next);
+            return { success: true };
+          }
+          if (sql.includes('INSERT INTO ownership_transfer_requests')) {
+            const [
+              id,
+              project_id,
+              from_account_id,
+              to_account_id,
+              requested_by_account_id,
+              approved_by_account_id,
+              status,
+              billing_clearance_status,
+              note,
+              requested_at,
+              approved_at,
+              completed_at,
+            ] = this.params;
+            const next = { id, project_id, from_account_id, to_account_id, requested_by_account_id, approved_by_account_id, status, billing_clearance_status, note, requested_at, approved_at, completed_at };
+            const index = rows.ownership_transfer_requests.findIndex((row) => row.id === id);
+            if (index >= 0) rows.ownership_transfer_requests[index] = { ...rows.ownership_transfer_requests[index], ...next };
+            else rows.ownership_transfer_requests.push(next);
+            return { success: true };
+          }
+          if (sql.includes('INSERT INTO pages')) {
+            const [
+              id,
+              project_id,
+              slug,
+              title,
+              page_json,
+              revision,
+              published_at,
+              created_at,
+              updated_at,
+            ] = this.params;
+            const next = { id, project_id, slug, title, page_json, revision, published_at, created_at, updated_at };
+            const index = rows.pages.findIndex((row) => row.project_id === project_id && row.slug === slug);
+            if (index >= 0) rows.pages[index] = { ...rows.pages[index], ...next, id: rows.pages[index].id };
+            else rows.pages.push(next);
+            return { success: true };
+          }
+          if (sql.includes('INSERT OR IGNORE INTO page_revisions')) {
+            const [
+              id,
+              page_id,
+              project_id,
+              revision,
+              page_json,
+              reason,
+              created_by_account_id,
+              created_at,
+            ] = this.params;
+            if (!rows.page_revisions.some((row) => row.page_id === page_id && row.revision === revision)) {
+              rows.page_revisions.push({ id, page_id, project_id, revision, page_json, reason, created_by_account_id, created_at });
+            }
+            return { success: true };
+          }
+          if (sql.includes('INSERT INTO ai_drafts')) {
+            const [
+              id,
+              project_id,
+              prompt_hash,
+              draft_json,
+              status,
+              created_by_account_id,
+              created_at,
+            ] = this.params;
+            const next = { id, project_id, prompt_hash, draft_json, status, created_by_account_id, created_at };
+            const index = rows.ai_drafts.findIndex((row) => row.id === id);
+            if (index >= 0) rows.ai_drafts[index] = { ...rows.ai_drafts[index], ...next };
+            else rows.ai_drafts.push(next);
+            return { success: true };
+          }
+          if (sql.includes("UPDATE ai_drafts SET status = 'deleted'")) {
+            const [projectId, id] = this.params;
+            const draft = rows.ai_drafts.find((row) => row.project_id === projectId && row.id === id);
+            if (draft) draft.status = 'deleted';
+            return { success: true };
+          }
           if (sql.includes('INSERT INTO leads')) {
             const [
               id,
@@ -106,18 +301,239 @@ function fakeD1() {
             }
             return { success: true };
           }
+          if (sql.includes('INSERT INTO delivery_logs')) {
+            const [
+              id,
+              project_id,
+              lead_id,
+              provider,
+              target,
+              status,
+              retryable,
+              attempts,
+              idempotency_key,
+              error,
+              next_retry_at,
+              created_month,
+              created_at,
+              updated_at,
+            ] = this.params;
+            const next = {
+              id,
+              project_id,
+              lead_id,
+              provider,
+              target,
+              status,
+              retryable,
+              attempts,
+              idempotency_key,
+              error,
+              next_retry_at,
+              created_month,
+              created_at,
+              updated_at,
+            };
+            const index = rows.delivery_logs.findIndex((row) => row.id === id);
+            if (index >= 0) rows.delivery_logs[index] = { ...rows.delivery_logs[index], ...next };
+            else rows.delivery_logs.push(next);
+            return { success: true };
+          }
+          if (sql.includes('DELETE FROM leads')) {
+            const [projectId, id] = this.params;
+            const index = rows.leads.findIndex((row) => row.project_id === projectId && row.id === id);
+            if (index >= 0) rows.leads.splice(index, 1);
+            return { success: true };
+          }
           throw new Error(`Unexpected fake D1 run SQL: ${sql}`);
         },
         async all() {
-          if (sql.includes('FROM leads')) {
-            const [projectId, month, maybeStatus, maybeLimit, maybeOffset] = this.params;
+          if (sql.includes('FROM project_members')) {
+            const [projectId, removed] = this.params;
+            const filtered = rows.project_members
+              .filter((row) => row.project_id === projectId && row.status !== removed)
+              .sort((a, b) => `${a.role}:${a.created_at}`.localeCompare(`${b.role}:${b.created_at}`));
+            return { results: filtered, meta: { rows_read: filtered.length } };
+          }
+          if (sql.includes('FROM ai_drafts')) {
+            const [projectId, limit, offset] = this.params;
+            const includeDeleted = !sql.includes("status <> 'deleted'");
+            const filtered = rows.ai_drafts
+              .filter((row) => row.project_id === projectId)
+              .filter((row) => includeDeleted || row.status !== 'deleted')
+              .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+            return { results: filtered.slice(offset, offset + limit), meta: { rows_read: filtered.length } };
+          }
+          if (sql.includes('FROM page_revisions')) {
+            const [projectId, pageId, limit, offset] = this.params;
+            const filtered = rows.page_revisions
+              .filter((row) => row.project_id === projectId && row.page_id === pageId)
+              .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+            return { results: filtered.slice(offset, offset + limit), meta: { rows_read: filtered.length } };
+          }
+          if (sql.includes('FROM ownership_transfer_requests')) {
+            let paramIndex = 0;
+            const projectId = this.params[paramIndex++];
             const hasStatus = sql.includes('status = ?');
-            const limit = Number(hasStatus ? maybeLimit : maybeStatus);
-            const offset = Number(hasStatus ? maybeOffset : maybeLimit);
-            const status = hasStatus ? maybeStatus : '';
+            const status = hasStatus ? this.params[paramIndex++] : '';
+            const hasTarget = sql.includes('to_account_id = ?');
+            const target = hasTarget ? this.params[paramIndex++] : '';
+            const limit = Number(this.params[paramIndex++]);
+            const offset = Number(this.params[paramIndex++]);
+            const filtered = rows.ownership_transfer_requests
+              .filter((row) => row.project_id === projectId)
+              .filter((row) => !status || row.status === status)
+              .filter((row) => !target || row.to_account_id === target)
+              .sort((a, b) => String(b.requested_at).localeCompare(String(a.requested_at)));
+            return { results: filtered.slice(offset, offset + limit), meta: { rows_read: filtered.length } };
+          }
+          if (sql.includes('FROM delivery_logs') && sql.includes('GROUP BY status, retryable')) {
+            const [projectId] = this.params;
+            const statusFilter = sql.includes('status = ?') ? this.params[1] : '';
+            const deadOnly = sql.includes("AND status = 'dead-letter'");
+            const grouped = new Map();
+            rows.delivery_logs
+              .filter((row) => row.project_id === projectId)
+              .filter((row) => row.retryable === 1 || row.status === 'dead-letter')
+              .filter((row) => !deadOnly || row.status === 'dead-letter')
+              .filter((row) => !statusFilter || row.status === statusFilter)
+              .forEach((row) => {
+                const key = `${row.status}|${row.retryable}`;
+                const prev = grouped.get(key) || { status: row.status, retryable: row.retryable, total: 0 };
+                prev.total += 1;
+                grouped.set(key, prev);
+              });
+            return { results: Array.from(grouped.values()), meta: { rows_read: rows.delivery_logs.length } };
+          }
+          if (sql.includes('FROM delivery_logs')) {
+            let paramIndex = 0;
+            const projectId = this.params[paramIndex++];
+            const hasMonth = sql.includes('created_month = ?');
+            const month = hasMonth ? this.params[paramIndex++] : '';
+            const hasLead = sql.includes('lead_id = ?');
+            const leadId = hasLead ? this.params[paramIndex++] : '';
+            const hasStatus = sql.includes('status = ?');
+            const status = hasStatus ? this.params[paramIndex++] : '';
+            const retryOnly = sql.includes('retryable = 1');
+            const deadOnly = sql.includes("AND status = 'dead-letter'");
+            const limit = Number(this.params[paramIndex++]);
+            const offset = Number(this.params[paramIndex++]);
+            const filtered = rows.delivery_logs
+              .filter((row) => row.project_id === projectId)
+              .filter((row) => !month || row.created_month === month)
+              .filter((row) => !leadId || row.lead_id === leadId)
+              .filter((row) => !status || row.status === status)
+              .filter((row) => !retryOnly || row.retryable === 1 || row.status === 'dead-letter')
+              .filter((row) => !deadOnly || row.status === 'dead-letter')
+              .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+            return { results: filtered.slice(offset, offset + limit), meta: { rows_read: filtered.length } };
+          }
+          if (sql.includes('FROM events') && sql.includes('GROUP BY event_type')) {
+            const [projectId, month, dateFrom = '', dateTo = ''] = this.params;
+            const grouped = new Map();
+            const seen = new Set();
+            rows.events
+              .filter((row) => row.project_id === projectId && row.created_month === month)
+              .filter((row) => inFakeDateRange(row, dateFrom, dateTo))
+              .forEach((row) => {
+                const key = `${row.event_type}:${fakeEventDedupeKey(row)}`;
+                if (seen.has(key)) return;
+                seen.add(key);
+                grouped.set(row.event_type, (grouped.get(row.event_type) || 0) + 1);
+              });
+            return {
+              results: Array.from(grouped.entries()).map(([event_type, total]) => ({ event_type, total })),
+              meta: { rows_read: rows.events.length },
+            };
+          }
+          if (sql.includes('FROM events') && sql.includes('GROUP BY day')) {
+            const [projectId, month, dateFrom = '', dateTo = ''] = this.params;
+            const grouped = new Map();
+            const seen = new Set();
+            rows.events
+              .filter((row) => row.project_id === projectId && row.created_month === month)
+              .filter((row) => inFakeDateRange(row, dateFrom, dateTo))
+              .forEach((row) => {
+                const day = row.created_at.slice(0, 10);
+                const key = `${day}:${row.event_type}:${fakeEventDedupeKey(row)}`;
+                if (seen.has(key)) return;
+                seen.add(key);
+                const prev = grouped.get(day) || { day, pv: 0, cta: 0 };
+                if (row.event_type === 'page_view') prev.pv += 1;
+                if (row.event_type === 'cta_click') prev.cta += 1;
+                grouped.set(day, prev);
+              });
+            return { results: Array.from(grouped.values()), meta: { rows_read: rows.events.length } };
+          }
+          if (sql.includes('FROM leads') && sql.includes('GROUP BY status, kind, delivery_status')) {
+            const [projectId, month, dateFrom = '', dateTo = ''] = this.params;
+            const grouped = new Map();
+            rows.leads
+              .filter((row) => row.project_id === projectId && row.created_month === month)
+              .filter((row) => inFakeDateRange(row, dateFrom, dateTo))
+              .forEach((row) => {
+                const key = [row.status, row.kind, row.delivery_status].join('|');
+                const prev = grouped.get(key) || {
+                  status: row.status,
+                  kind: row.kind,
+                  delivery_status: row.delivery_status,
+                  total: 0,
+                };
+                prev.total += 1;
+                grouped.set(key, prev);
+              });
+            return { results: Array.from(grouped.values()), meta: { rows_read: rows.leads.length } };
+          }
+          if (sql.includes('FROM leads') && sql.includes('GROUP BY day')) {
+            const [projectId, month, dateFrom = '', dateTo = ''] = this.params;
+            const grouped = new Map();
+            rows.leads
+              .filter((row) => row.project_id === projectId && row.created_month === month)
+              .filter((row) => inFakeDateRange(row, dateFrom, dateTo))
+              .forEach((row) => {
+                const day = row.created_at.slice(0, 10);
+                const prev = grouped.get(day) || { day, db: 0 };
+                prev.db += 1;
+                grouped.set(day, prev);
+              });
+            return { results: Array.from(grouped.values()), meta: { rows_read: rows.leads.length } };
+          }
+          if (sql.includes('FROM leads') && sql.includes('ORDER BY created_at DESC LIMIT ?') && sql.includes('contact_key = ?')) {
+            const [projectId, month] = this.params;
+            const limit = Number(this.params[this.params.length - 1]);
+            const contacts = new Set(this.params.slice(2, -1).map((value) => String(value || '').toLowerCase()));
+            const filtered = rows.leads
+              .filter((row) => row.project_id === projectId && row.created_month === month)
+              .filter((row) => {
+                const phone = String(row.phone || '').replace(/\D/g, '').toLowerCase();
+                const email = String(row.email || '').trim().toLowerCase();
+                const contact = String(row.contact_key || '').trim().toLowerCase();
+                return contacts.has(phone) || contacts.has(email) || contacts.has(contact);
+              })
+              .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+            return { results: filtered.slice(0, limit), meta: { rows_read: filtered.length } };
+          }
+          if (sql.includes('FROM leads')) {
+            let paramIndex = 0;
+            const projectId = this.params[paramIndex++];
+            const month = this.params[paramIndex++];
+            const hasStatus = sql.includes('status = ?');
+            const status = hasStatus ? this.params[paramIndex++] : '';
+            const hasKind = sql.includes('kind = ?');
+            const kind = hasKind ? this.params[paramIndex++] : '';
+            const hasDeliveryStatus = sql.includes('delivery_status = ?');
+            const deliveryStatus = hasDeliveryStatus ? this.params[paramIndex++] : '';
+            const hasSearch = sql.includes('LOWER(name) LIKE ?');
+            const search = hasSearch ? String(this.params[paramIndex++]).replace(/%/g, '').toLowerCase() : '';
+            if (hasSearch) paramIndex += 4;
+            const limit = Number(this.params[paramIndex++]);
+            const offset = Number(this.params[paramIndex++]);
             const filtered = rows.leads
               .filter((row) => row.project_id === projectId && row.created_month === month)
               .filter((row) => !status || row.status === status)
+              .filter((row) => !kind || row.kind === kind)
+              .filter((row) => !deliveryStatus || row.delivery_status === deliveryStatus)
+              .filter((row) => !search || fakeLeadSearchText(row).includes(search))
               .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
             return { results: filtered.slice(offset, offset + limit), meta: { rows_read: filtered.length } };
           }
@@ -136,12 +552,96 @@ function fakeD1() {
           throw new Error(`Unexpected fake D1 all SQL: ${sql}`);
         },
         async first() {
+          if (sql.includes('SELECT * FROM accounts WHERE email = ?')) {
+            const [email] = this.params;
+            return rows.accounts.find((row) => row.email === email) || null;
+          }
+          if (sql.includes('SELECT * FROM accounts WHERE phone = ?')) {
+            const [phone] = this.params;
+            return rows.accounts.find((row) => row.phone === phone) || null;
+          }
+          if (sql.includes('SELECT * FROM projects WHERE id = ?')) {
+            const [projectId] = this.params;
+            return rows.projects.find((row) => row.id === projectId) || null;
+          }
+          if (sql.includes('SELECT * FROM projects WHERE slug = ?')) {
+            const [slug] = this.params;
+            return rows.projects.find((row) => row.slug === slug) || null;
+          }
+          if (sql.includes('SELECT * FROM pages WHERE project_id = ? AND slug = ?')) {
+            const [projectId, slug] = this.params;
+            return rows.pages.find((row) => row.project_id === projectId && row.slug === slug) || null;
+          }
+          if (sql.includes('SELECT id, revision, created_at FROM pages')) {
+            const [projectId, slug] = this.params;
+            const page = rows.pages.find((row) => row.project_id === projectId && row.slug === slug);
+            return page ? { id: page.id, revision: page.revision, created_at: page.created_at } : null;
+          }
+          if (sql.includes('SELECT id FROM pages')) {
+            const [projectId, slug] = this.params;
+            const page = rows.pages.find((row) => row.project_id === projectId && row.slug === slug);
+            return page ? { id: page.id } : null;
+          }
+          if (sql.includes('SELECT * FROM page_revisions')) {
+            const [projectId, pageId, id] = this.params;
+            return rows.page_revisions.find((row) => row.project_id === projectId && row.page_id === pageId && row.id === id) || null;
+          }
+          if (sql.includes('SELECT * FROM leads')) {
+            const [projectId, id] = this.params;
+            return rows.leads.find((row) => row.project_id === projectId && row.id === id) || null;
+          }
+          if (sql.includes('COUNT(*) AS total FROM ownership_transfer_requests')) {
+            let paramIndex = 0;
+            const projectId = this.params[paramIndex++];
+            const hasStatus = sql.includes('status = ?');
+            const status = hasStatus ? this.params[paramIndex++] : '';
+            const hasTarget = sql.includes('to_account_id = ?');
+            const target = hasTarget ? this.params[paramIndex++] : '';
+            return {
+              total: rows.ownership_transfer_requests
+                .filter((row) => row.project_id === projectId)
+                .filter((row) => !status || row.status === status)
+                .filter((row) => !target || row.to_account_id === target)
+                .length,
+            };
+          }
+          if (sql.includes('COUNT(*) AS total FROM delivery_logs')) {
+            let paramIndex = 0;
+            const projectId = this.params[paramIndex++];
+            const hasMonth = sql.includes('created_month = ?');
+            const month = hasMonth ? this.params[paramIndex++] : '';
+            const hasLead = sql.includes('lead_id = ?');
+            const leadId = hasLead ? this.params[paramIndex++] : '';
+            const hasStatus = sql.includes('status = ?');
+            const status = hasStatus ? this.params[paramIndex++] : '';
+            return {
+              total: rows.delivery_logs
+                .filter((row) => row.project_id === projectId)
+                .filter((row) => !month || row.created_month === month)
+                .filter((row) => !leadId || row.lead_id === leadId)
+                .filter((row) => !status || row.status === status)
+                .length,
+            };
+          }
           if (sql.includes('COUNT(*) AS total FROM leads')) {
-            const [projectId, month, status = ''] = this.params;
+            let paramIndex = 0;
+            const projectId = this.params[paramIndex++];
+            const month = this.params[paramIndex++];
+            const hasStatus = sql.includes('status = ?');
+            const status = hasStatus ? this.params[paramIndex++] : '';
+            const hasKind = sql.includes('kind = ?');
+            const kind = hasKind ? this.params[paramIndex++] : '';
+            const hasDeliveryStatus = sql.includes('delivery_status = ?');
+            const deliveryStatus = hasDeliveryStatus ? this.params[paramIndex++] : '';
+            const hasSearch = sql.includes('LOWER(name) LIKE ?');
+            const search = hasSearch ? String(this.params[paramIndex++]).replace(/%/g, '').toLowerCase() : '';
             return {
               total: rows.leads
                 .filter((row) => row.project_id === projectId && row.created_month === month)
-                .filter((row) => !sql.includes('status = ?') || row.status === status)
+                .filter((row) => !hasStatus || row.status === status)
+                .filter((row) => !hasKind || row.kind === kind)
+                .filter((row) => !hasDeliveryStatus || row.delivery_status === deliveryStatus)
+                .filter((row) => !hasSearch || fakeLeadSearchText(row).includes(search))
                 .length,
             };
           }
@@ -159,6 +659,26 @@ function fakeD1() {
       };
     },
   };
+}
+
+function inFakeDateRange(row, dateFrom = '', dateTo = '') {
+  if (dateFrom && String(row.created_at) < String(dateFrom)) return false;
+  if (dateTo && String(row.created_at) > String(dateTo)) return false;
+  return true;
+}
+
+function fakeEventDedupeKey(row = {}) {
+  return row.dedupe_key || row.id;
+}
+
+function fakeLeadSearchText(row = {}) {
+  return [
+    row.name,
+    row.phone,
+    row.email,
+    row.contact_key,
+    row.values_json,
+  ].join(' ').toLowerCase();
 }
 
 const sampleLead = {
@@ -188,7 +708,117 @@ const encodedEvent = encodeD1Event({
 assert(encodedEvent.event_type === 'page_view', 'event type should encode');
 assert(decodeD1Event(encodedEvent).visitorId === 'visitor-1', 'event visitor should round-trip');
 
+const encodedAccount = encodeD1Account({
+  email: 'User@Example.Test',
+  phone: '010-3333-4444',
+  name: 'User',
+  passwordHash: 'hash',
+  emailVerified: true,
+});
+assert(encodedAccount.email === 'user@example.test' && encodedAccount.phone === '01033334444', 'account email and phone should encode normalized values');
+assert(decodeD1Account(encodedAccount).emailVerified, 'account email verification should decode');
+
+const encodedInvite = encodeD1Invite({
+  id: 'invite-1',
+  email: 'Manager@Example.Test',
+  name: 'Manager',
+  token: 'invite-token',
+  access: { edit: { read: true, write: true } },
+}, { projectId: 'project-1', ownerId: 'owner-1' });
+assert(encodedInvite.email === 'manager@example.test' && encodedInvite.project_id === 'project-1', 'invite should encode normalized email and project id');
+assert(decodeD1Invite(encodedInvite).access.edit.write, 'invite access should round-trip');
+
+const encodedMember = encodeD1ProjectMember({
+  id: 'member-1',
+  ownerId: 'manager-owner',
+  role: 'manager',
+  access: { inbox: { read: true, write: false } },
+}, { projectId: 'project-1', accountId: 'manager-owner', invitedByAccountId: 'owner-1' });
+assert(encodedMember.project_id === 'project-1' && encodedMember.account_id === 'manager-owner', 'project member should encode project and account ids');
+assert(decodeD1ProjectMember(encodedMember).access.inbox.read, 'project member access should round-trip');
+assert(decodeD1Project({ id: 'project-1', owner_account_id: 'owner-1', slug: 'landing' }).ownerId === 'owner-1', 'project should decode owner account id');
+
+const encodedTransfer = encodeD1OwnershipTransferRequest({
+  id: 'transfer-1',
+  fromAccountId: 'owner-1',
+  toAccountId: 'manager-owner',
+  requestedByAccountId: 'owner-1',
+  note: 'handoff after billing clears',
+}, { projectId: 'project-1' });
+assert(encodedTransfer.project_id === 'project-1' && encodedTransfer.status === 'requested', 'ownership transfer should encode default requested status');
+assert(decodeD1OwnershipTransferRequest(encodedTransfer).billingClearanceStatus === 'not_checked', 'ownership transfer billing status should round-trip');
+
+const encodedPage = encodeD1Page({
+  slug: 'landing',
+  title: 'Landing',
+  blocks: [{ id: 'hero', type: 'hero' }],
+  updatedAt: '2026-05-10T04:00:00.000Z',
+}, { projectId: 'project-1', slug: 'landing' });
+assert(encodedPage.project_id === 'project-1' && encodedPage.slug === 'landing', 'page should encode project and slug');
+assert(decodeD1Page(encodedPage).blocks.length === 1, 'page JSON should round-trip');
+
+const encodedPageRevision = encodeD1PageRevision({
+  id: 'page-rev-1',
+  page: decodeD1Page(encodedPage),
+}, { pageId: encodedPage.id, projectId: 'project-1', revision: 1 });
+assert(encodedPageRevision.page_id === encodedPage.id && decodeD1PageRevision(encodedPageRevision).page.slug === 'landing', 'page revision should encode page snapshot');
+
+const encodedAiDraft = encodeD1AiDraft({
+  id: 'draft-1',
+  title: 'Draft',
+  blocks: [{ id: 'hero', type: 'hero' }],
+  createdAt: '2026-05-10T05:00:00.000Z',
+}, { projectId: 'project-1' });
+assert(encodedAiDraft.project_id === 'project-1' && decodeD1AiDraft(encodedAiDraft).blocks.length === 1, 'AI draft should encode and decode draft JSON');
+
 const db = fakeD1();
+db.rows.projects.push({
+  id: 'project-1',
+  owner_account_id: 'owner-1',
+  slug: 'landing',
+  title: 'Landing',
+  client_email: 'client@example.test',
+  plan: 'free',
+  billing_status: 'trial',
+  status: 'active',
+  created_at: '2026-05-10T00:00:00.000Z',
+  updated_at: '2026-05-10T00:00:00.000Z',
+});
+await upsertD1Account(db, encodedAccount);
+const accountByEmail = await getD1AccountByEmail(db, 'USER@example.test');
+const accountByPhone = await getD1AccountByPhone(db, '010-3333-4444');
+assert(accountByEmail?.email === 'user@example.test' && accountByPhone?.phone === '01033334444', 'account lookup should use normalized email and phone');
+await upsertD1Invite(db, encodedInvite);
+await upsertD1Invite(db, { ...decodeD1Invite(encodedInvite), status: 'accepted', acceptedAt: '2026-05-10T03:00:00.000Z' }, { projectId: 'project-1', ownerId: 'owner-1' });
+assert(db.rows.invites.length === 1 && db.rows.invites[0].status === 'accepted', 'invite upsert should update existing D1 invite');
+await upsertD1ProjectMember(db, decodeD1ProjectMember(encodedMember), { projectId: 'project-1', accountId: 'manager-owner', invitedByAccountId: 'owner-1' });
+await upsertD1ProjectMember(db, { ...decodeD1ProjectMember(encodedMember), status: 'active' }, { projectId: 'project-1', accountId: 'manager-owner', invitedByAccountId: 'owner-1' });
+assert(db.rows.project_members.length === 1 && db.rows.project_members[0].account_id === 'manager-owner', 'project member upsert should preserve unique project account member');
+await upsertD1ProjectMember(db, { id: 'master-member', ownerId: 'owner-1', role: 'master', access: {}, status: 'active' }, { projectId: 'project-1', accountId: 'owner-1' });
+await upsertD1ProjectMember(db, { id: 'client-member', ownerId: 'client-owner', role: 'client_admin', access: {}, status: 'active' }, { projectId: 'project-1', accountId: 'client-owner' });
+const d1ProjectById = await getD1ProjectById(db, 'project-1');
+const d1ProjectBySlug = await getD1ProjectBySlug(db, 'landing');
+const d1Members = await listD1ProjectMembers(db, { projectId: 'project-1' });
+const d1Access = await getD1ProjectAccess(db, { projectId: 'project-1' });
+assert(d1ProjectById?.projectId === 'project-1' && d1ProjectBySlug?.slug === 'landing', 'D1 project lookup should decode by id and slug');
+assert(d1Members.length === 3 && d1Access?.ownerId === 'owner-1' && d1Access.clientOwnerIds.includes('client-owner'), 'D1 project access should derive owner/client/manager ids');
+await upsertD1OwnershipTransferRequest(db, decodeD1OwnershipTransferRequest(encodedTransfer), { projectId: 'project-1' });
+await upsertD1OwnershipTransferRequest(db, { ...decodeD1OwnershipTransferRequest(encodedTransfer), status: 'waiting_billing_clearance', billingClearanceStatus: 'active_subscription' }, { projectId: 'project-1' });
+const transferPage = await listD1OwnershipTransferRequests(db, { projectId: 'project-1', status: 'waiting_billing_clearance', limit: 10 });
+assert(db.rows.ownership_transfer_requests.length === 1 && transferPage.records[0]?.billingClearanceStatus === 'active_subscription', 'ownership transfer upsert/list should preserve billing clearance state');
+await upsertD1Page(db, decodeD1Page(encodedPage), { projectId: 'project-1', slug: 'landing' });
+await upsertD1Page(db, { ...decodeD1Page(encodedPage), title: 'Landing v2' }, { projectId: 'project-1', slug: 'landing' });
+const pageBySlug = await getD1PageBySlug(db, { projectId: 'project-1', slug: 'landing' });
+const pageRevisions = await listD1PageRevisions(db, { projectId: 'project-1', slug: 'landing' });
+const oneRevision = await getD1PageRevision(db, { projectId: 'project-1', slug: 'landing', id: pageRevisions[0]?.id });
+assert(pageBySlug?.title === 'Landing v2' && pageRevisions.length === 2 && oneRevision?.page?.slug === 'landing', 'D1 page upsert and revisions should round-trip');
+await upsertD1AiDraft(db, decodeD1AiDraft(encodedAiDraft), { projectId: 'project-1' });
+await upsertD1AiDraft(db, { ...decodeD1AiDraft(encodedAiDraft), title: 'Draft v2' }, { projectId: 'project-1' });
+let aiDrafts = await listD1AiDrafts(db, { projectId: 'project-1' });
+assert(aiDrafts.length === 1 && aiDrafts[0].title === 'Draft v2', 'D1 AI draft upsert/list should round-trip');
+await deleteD1AiDraft(db, { projectId: 'project-1', id: 'draft-1' });
+aiDrafts = await listD1AiDrafts(db, { projectId: 'project-1' });
+assert(aiDrafts.length === 0 && db.rows.ai_drafts[0].status === 'deleted', 'D1 AI draft delete should soft-delete draft');
 await upsertD1Lead(db, sampleLead, { projectId: 'project-1', pageSlug: 'landing' });
 await upsertD1Lead(db, { ...sampleLead, status: 'checked' }, { projectId: 'project-1', pageSlug: 'landing' });
 assert(db.rows.leads.length === 1 && db.rows.leads[0].status === 'checked', 'lead upsert should update existing row');
@@ -196,13 +826,62 @@ assert(db.rows.leads.length === 1 && db.rows.leads[0].status === 'checked', 'lea
 const leadPage = await listD1Leads(db, { projectId: 'project-1', month: '2026-05', limit: 10 });
 assert(leadPage.records.length === 1 && leadPage.total === 1, 'lead list should return one decoded row');
 assert(leadPage.records[0].phone === '010-1111-2222', 'lead list should decode original lead');
+const filteredLeadPage = await listD1Leads(db, { projectId: 'project-1', month: '2026-05', status: 'checked', kind: 'consult', deliveryStatus: 'pending', limit: 10 });
+assert(filteredLeadPage.records.length === 1 && filteredLeadPage.total === 1, 'lead list should filter by status, kind, and delivery status');
+const searchedLeadPage = await listD1Leads(db, { projectId: 'project-1', month: '2026-05', q: 'kim', limit: 10 });
+assert(searchedLeadPage.records.length === 1 && searchedLeadPage.total === 1, 'lead list should filter by search text');
+const contactLeads = await findD1LeadsByContact(db, { projectId: 'project-1', month: '2026-05', phone: '01011112222' });
+assert(contactLeads.length === 1 && contactLeads[0].id === 'lead-1', 'lead contact lookup should avoid monthly row hydration');
+await upsertD1Lead(db, {
+  ...sampleLead,
+  status: 'checked',
+  delivery: {
+    status: 'failed',
+    summary: 'webhook failed',
+    retry: { attempts: 1, maxAttempts: 3, nextRetryAt: '2026-05-10T03:00:00.000Z' },
+    logs: [
+      {
+        target: 'Webhook',
+        status: 'failed',
+        message: 'timeout',
+        idempotencyKey: 'lead-1:webhook',
+        at: '2026-05-10T02:10:00.000Z',
+      },
+    ],
+  },
+}, { projectId: 'project-1', pageSlug: 'landing' });
+const deliveryLogs = await listD1DeliveryLogs(db, { projectId: 'project-1', month: '2026-05', leadId: 'lead-1', limit: 10 });
+assert(deliveryLogs.records.length === 1 && deliveryLogs.records[0].idempotencyKey === 'lead-1:webhook', 'delivery logs should persist from D1 lead delivery payload');
+const deliveryQueue = await listD1DeliveryRetryQueue(db, { projectId: 'project-1', limit: 10 });
+assert(deliveryQueue.retryable === 1 && deliveryQueue.entries[0]?.leadId === 'lead-1' && deliveryQueue.entries[0]?.canRetry, 'delivery retry queue should read D1 delivery logs');
+const oneLead = await getD1Lead(db, { projectId: 'project-1', id: 'lead-1' });
+assert(oneLead?.id === 'lead-1' && oneLead.status === 'checked', 'lead get should return decoded D1 row');
+await deleteD1Lead(db, { projectId: 'project-1', id: 'lead-1' });
+assert(db.rows.leads.length === 0, 'lead delete should remove D1 row');
+await upsertD1Lead(db, { ...sampleLead, status: 'checked' }, { projectId: 'project-1', pageSlug: 'landing' });
 
 await insertD1Event(db, { id: 'event-1', type: 'page_view', createdAt: '2026-05-10T02:00:00.000Z' }, { projectId: 'project-1', pageSlug: 'landing' });
 await insertD1Event(db, { id: 'event-1', type: 'page_view', createdAt: '2026-05-10T02:00:00.000Z' }, { projectId: 'project-1', pageSlug: 'landing' });
 assert(db.rows.events.length === 1, 'event insert should ignore duplicate ids');
+await insertD1Event(db, { id: 'event-2', type: 'cta_click', createdAt: '2026-05-10T02:05:00.000Z' }, { projectId: 'project-1', pageSlug: 'landing' });
+await insertD1Event(db, { id: 'event-2-duplicate', type: 'cta_click', dedupeKey: 'cta-same-1', createdAt: '2026-05-10T02:05:05.000Z' }, { projectId: 'project-1', pageSlug: 'landing' });
+await insertD1Event(db, { id: 'event-2-duplicate-b', type: 'cta_click', dedupeKey: 'cta-same-1', createdAt: '2026-05-10T02:05:10.000Z' }, { projectId: 'project-1', pageSlug: 'landing' });
+await insertD1Event(db, { id: 'event-3', type: 'form_submit_success', createdAt: '2026-05-11T02:05:00.000Z' }, { projectId: 'project-1', pageSlug: 'landing' });
 
 const eventPage = await listD1Events(db, { projectId: 'project-1', month: '2026-05', eventType: 'page_view', limit: 10 });
 assert(eventPage.records.length === 1 && eventPage.records[0].type === 'page_view', 'event list should decode events');
+const d1Stats = await aggregateD1Stats(db, { projectId: 'project-1', month: '2026-05' });
+assert(d1Stats.totals.events === 4 && d1Stats.totals.leads === 1, 'D1 stats aggregate should count events and leads without row hydration');
+assert(d1Stats.summary.pv === 1 && d1Stats.summary.cta === 2 && d1Stats.summary.submitSuccess === 1, 'D1 stats aggregate event funnel mismatch');
+assert(d1Stats.summary.db === 1 && d1Stats.summary.consultLeads === 1, 'D1 stats aggregate lead funnel mismatch');
+assert(d1Stats.summary.trend.some((day) => day.id === '2026-05-10' && day.pv === 1 && day.cta === 2 && day.db === 1), 'D1 stats aggregate trend mismatch');
+const d1NarrowStats = await aggregateD1Stats(db, {
+  projectId: 'project-1',
+  month: '2026-05',
+  dateFrom: '2026-05-11T00:00:00.000Z',
+  dateTo: '2026-05-11T23:59:59.999Z',
+});
+assert(d1NarrowStats.totals.events === 1 && d1NarrowStats.totals.leads === 0, 'D1 stats aggregate should honor date range filters');
 
 const missingRuntime = createStorageRuntime({ INLET_STORAGE_ADAPTER: 'd1' });
 const missingHealth = storageRuntimeHealth(missingRuntime);
@@ -216,9 +895,17 @@ assert(readyRuntime.active === 'd1' && readyPlan.fullScan === false, 'ready D1 r
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 18,
+  checks: 46,
+  accounts: db.rows.accounts.length,
+  projects: db.rows.projects.length,
+  invites: db.rows.invites.length,
+  projectMembers: db.rows.project_members.length,
+  ownershipTransfers: db.rows.ownership_transfer_requests.length,
+  pages: db.rows.pages.length,
+  pageRevisions: db.rows.page_revisions.length,
+  aiDrafts: db.rows.ai_drafts.length,
   leads: db.rows.leads.length,
   events: db.rows.events.length,
+  deliveryLogs: db.rows.delivery_logs.length,
   storageModes: ['jsonl', 'd1', 'auto'],
 }, null, 2));
-

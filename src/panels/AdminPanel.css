@@ -28,3 +28,100 @@
   font-size: 13px;
   font-weight: 950;
 }
+
+.admin-transfer-list {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-empty {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  border: 1px dashed #dbe3ef;
+  border-radius: 16px;
+  padding: 0 16px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.admin-transfer-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  border: 1px solid #dbe3ef;
+  border-radius: 18px;
+  background: #fbfdff;
+  padding: 14px;
+}
+
+.admin-transfer-row > div:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.admin-transfer-row strong {
+  color: #111827;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.admin-transfer-row span,
+.admin-transfer-row small {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 850;
+  overflow-wrap: anywhere;
+}
+
+.admin-transfer-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.admin-transfer-actions button {
+  min-height: 38px;
+  border: 1px solid #dbe3ef;
+  border-radius: 999px;
+  background: #fff;
+  color: #111827;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.admin-transfer-actions button:nth-child(2),
+.admin-transfer-actions button:nth-child(3) {
+  border-color: #111827;
+  background: #111827;
+  color: #fff;
+}
+
+.admin-transfer-actions button:nth-child(4) {
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.admin-transfer-actions button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 760px) {
+  .admin-transfer-row {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-transfer-actions {
+    justify-content: stretch;
+  }
+
+  .admin-transfer-actions button {
+    flex: 1 1 92px;
+  }
+}

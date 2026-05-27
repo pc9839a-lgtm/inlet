@@ -202,6 +202,10 @@ assert(files.browserVisualQa.includes('appErrorText'), 'browser visual QA should
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_REQUIRE'), 'browser visual QA should support mandatory real-browser mode');
 assert(files.browserVisualQa.includes('realBrowserCommand'), 'browser visual QA skipped output should include the real-browser command');
 assert(files.browserVisualQa.includes('realBrowserPowerShellCommand'), 'browser visual QA skipped output should include a PowerShell real-browser command');
+assert(files.browserVisualQa.includes('local-chrome-cdp'), 'browser visual QA should support local Chrome/Edge CDP without Playwright');
+assert(files.browserVisualQa.includes('INLET_BROWSER_QA_CHROME_PATH'), 'browser visual QA should allow a custom local Chrome/Edge path');
+assert(files.browserVisualQa.includes("INLET_BROWSER_QA_EXTRA_URLS=auto"), 'browser visual QA should document automatic footer/legal route coverage');
+assert(files.browserVisualQa.includes("'/privacy'") && files.browserVisualQa.includes("'/terms'"), 'browser visual QA auto routes should cover legal pages');
 
 console.log(JSON.stringify({
   ok: true,

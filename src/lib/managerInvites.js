@@ -38,6 +38,21 @@ export async function createServerManagerInvite(page, authUser, manager) {
   return data?.invite || null;
 }
 
+export async function createServerOwnershipTransfer(page, authUser, transfer) {
+  if (!isServerPageMode()) {
+    throw new Error('서버 페이지 모드에서만 소유권이전 요청을 저장할 수 있습니다.');
+  }
+
+  const context = projectContext(page, authUser);
+  const data = await postJson('/api/projects/ownership-transfer', {
+    project: context,
+    transfer,
+  }, {
+    headers: projectAuthHeaders(context),
+  });
+  return data?.request || null;
+}
+
 export async function fetchServerManagerInvite(token) {
   const safeToken = encodeURIComponent(String(token || '').trim());
   if (!safeToken) return null;

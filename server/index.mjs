@@ -11,6 +11,7 @@ import { duplicateWindowMs as duplicatePolicyWindowMs, isReservationLead as isRe
 import { buildStats as buildStatsSummary } from '../src/lib/statsMetrics.js';
 import { appendJsonlRecord, queryJsonlRecords, readJsonlRecords, writeJsonlRecords } from './storage/jsonlAdapter.mjs';
 import { createStorageRuntime, storageRuntimeHealth, storageRuntimePlan } from './storage/runtimeAdapter.mjs';
+import { aggregateD1Stats, deleteD1AiDraft, deleteD1Lead, findD1LeadsByContact, getD1AccountByEmail, getD1AccountByPhone, getD1Lead, getD1PageBySlug, getD1PageRevision, getD1ProjectAccess, insertD1AuditLog, insertD1Event, insertD1PageRevision, listD1AiDrafts, listD1DeliveryLogs, listD1DeliveryRetryQueue, listD1Events, listD1Leads, listD1OwnershipTransferRequests, listD1PageRevisions, upsertD1Account, upsertD1AiDraft, upsertD1Invite, upsertD1Lead, upsertD1OwnershipTransferRequest, upsertD1Page, upsertD1ProjectMember } from './storage/d1Adapter.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
@@ -19,6 +20,7 @@ const port = Number(env.INLET_API_PORT || process.env.PORT || 8787);
 const dataDir = path.resolve(rootDir, env.INLET_DATA_DIR || 'server/data');
 const leadsFile = path.join(dataDir, 'leads.jsonl');
 const usersFile = path.join(dataDir, 'users.jsonl');
+const emailVerificationsFile = path.join(dataDir, 'email-verifications.jsonl');
 const pagesDir = path.join(dataDir, 'pages');
 const storageRuntime = createStorageRuntime(env);
 const apiAuthConfig = {
@@ -133,6 +135,46 @@ const server = createServer(async (req, res) => {
       return;
     }
 
+    if (req.method === 'POST' && url.pathname === '/api/auth/login') {
+      const body = await readJson(req);
+      const result = await loginUserAccount(body?.user || body || {});
+      sendJson(res, 200, { ok: true, ...result });
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/auth/session') {
+      const body = await readJson(req);
+      const result = await refreshUserSession(req, body || {});
+      sendJson(res, 200, { ok: true, ...result });
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/auth/logout') {
+      sendJson(res, 200, { ok: true, loggedOut: true, mode: 'stateless-session' });
+      return;
+    }
+
+    if (req.method === 'PATCH' && url.pathname === '/api/auth/account') {
+      const body = await readJson(req);
+      const result = await updateUserAccount(req, body || {});
+      sendJson(res, 200, { ok: true, ...result });
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/auth/email-verification') {
+      const body = await readJson(req);
+      const verification = await issueEmailVerification(body?.email || body?.user?.email || '', body?.purpose || 'signup');
+      sendJson(res, 200, { ok: true, verification });
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/auth/email-verification/confirm') {
+      const body = await readJson(req);
+      const verification = await confirmEmailVerification(body || {});
+      sendJson(res, 200, { ok: true, verification });
+      return;
+    }
+
     if (req.method === 'POST' && url.pathname === '/api/auth/password') {
       const body = await readJson(req);
       const user = await changeUserPassword(body || {});
@@ -146,6 +188,37 @@ const server = createServer(async (req, res) => {
       await assertProjectAdmin(req, project, 'create manager invite');
       const invite = await createManagerInvite(project, body?.manager || body?.invite || {});
       sendJson(res, 200, { ok: true, invite });
+      return;
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/projects/ownership-transfer') {
+      const project = await authorizeProjectAccess(req, projectFromQuery(url), { tab: 'settings' });
+      await assertProjectAdmin(req, project, 'view ownership transfer requests');
+      const result = await listOwnershipTransferRequests(project, {
+        status: url.searchParams.get('status') || '',
+        cursor: Number(url.searchParams.get('cursor') || 0),
+        limit: Number(url.searchParams.get('limit') || 50),
+      });
+      sendJson(res, 200, { ok: true, ...result });
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/projects/ownership-transfer') {
+      const body = await readJson(req);
+      const project = await authorizeProjectAccess(req, body?.project || {}, { write: true, tab: 'settings' });
+      await assertProjectAdmin(req, project, 'request ownership transfer');
+      const request = await createOwnershipTransferRequest(req, project, body?.transfer || body?.request || {});
+      sendJson(res, 200, { ok: true, request });
+      return;
+    }
+
+    const adminTransferMatch = url.pathname.match(/^\/api\/admin\/ownership-transfer\/([^/]+)$/);
+    if (adminTransferMatch && req.method === 'PATCH') {
+      const body = await readJson(req);
+      const project = await authorizeProjectAccess(req, body?.project || {}, { write: true, tab: 'settings' });
+      await assertProjectMaster(req, project, 'approve ownership transfer');
+      const request = await updateOwnershipTransferRequest(req, project, decodeURIComponent(adminTransferMatch[1]), body || {});
+      sendJson(res, 200, { ok: true, request });
       return;
     }
 
@@ -181,7 +254,7 @@ const server = createServer(async (req, res) => {
 
     if (req.method === 'POST' && url.pathname === '/api/ai/test') {
       const body = await readJson(req);
-      await testOpenAi(body?.model);
+      await testOpenAi(body?.model, body?.apiKey);
       sendJson(res, 200, { ok: true });
       return;
     }
@@ -211,7 +284,7 @@ const server = createServer(async (req, res) => {
 
     if (req.method === 'POST' && url.pathname === '/api/ai/draft') {
       const body = await readJson(req);
-      const draft = await generateAiDraft(body?.input, body?.model);
+      const draft = await generateAiDraft(body?.input, body?.model, body?.apiKey);
       sendJson(res, 200, { ok: true, draft });
       return;
     }
@@ -289,6 +362,12 @@ const server = createServer(async (req, res) => {
         ...exportDateFilters,
         deliveryStatus: url.searchParams.get('deliveryStatus') || '',
       };
+      if (storageRuntime.active === 'd1' && hasProject(project) && canUseD1LeadList(csvFilters)) {
+        const d1Leads = await listD1LeadsForExport(project, csvFilters);
+        const filtered = ids.length ? d1Leads.filter((lead) => ids.includes(String(lead.id || ''))) : d1Leads;
+        sendCsv(res, csvFileName(project.slug || 'my-page'), leadsToCsvExport(filtered));
+        return;
+      }
       const csvPlan = storageQueryPlan('leads', csvFilters);
       const csvResult = await queryJsonlRecords(projectLeadsFile(project) || leadsFile, {
         type: 'csv-leads',
@@ -315,6 +394,7 @@ const server = createServer(async (req, res) => {
       const project = await authorizeProjectAccess(req, projectFromQuery(url), { tab: 'inbox' });
       const result = await listDeliveryRetryQueue(project, {
         status: url.searchParams.get('status') || '',
+        month: url.searchParams.get('month') || '',
         limit: Number(url.searchParams.get('limit') || 200),
       });
       sendJson(res, 200, { ok: true, ...result });
@@ -334,6 +414,7 @@ const server = createServer(async (req, res) => {
       const result = await listDeliveryLogs(project, {
         leadId: url.searchParams.get('leadId') || '',
         status: url.searchParams.get('status') || '',
+        month: url.searchParams.get('month') || '',
         limit: Number(url.searchParams.get('limit') || 200),
       });
       sendJson(res, 200, { ok: true, ...result });
@@ -601,6 +682,10 @@ function verifySessionToken(token = '') {
 
 function sessionSignature(payloadPart = '') {
   return createHmac('sha256', sessionAuthConfig.secret).update(payloadPart).digest('base64url');
+}
+
+function sessionTokenFromRequest(req, input = {}) {
+  return String(input.session || req.headers['x-inlet-session'] || '').trim();
 }
 
 function createSessionToken(payload = {}) {
@@ -954,18 +1039,23 @@ function escapeRegExp(value = '') {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function requireOpenAiKey() {
-  const key = String(process.env.OPENAI_API_KEY || '').trim();
+function requireOpenAiKey(requestKey = '') {
+  const key = String(requestKey || process.env.OPENAI_API_KEY || '').trim();
   if (!key) {
-    const error = new Error('OPENAI_API_KEY 서버 환경변수가 필요합니다.');
+    const error = new Error('OpenAI API 키가 필요합니다. 고객 API 키를 입력하거나 서버 환경변수 OPENAI_API_KEY를 설정하세요.');
     error.status = 500;
+    throw error;
+  }
+  if (!key.startsWith('sk-') || key.length < 20) {
+    const error = new Error('OpenAI API 키 형식이 올바르지 않습니다.');
+    error.status = 400;
     throw error;
   }
   return key;
 }
 
-async function testOpenAi(model = 'gpt-4.1') {
-  const key = requireOpenAiKey();
+async function testOpenAi(model = 'gpt-4.1', requestKey = '') {
+  const key = requireOpenAiKey(requestKey);
   const data = await callOpenAi({
     key,
     model: normalizeModel(model),
@@ -975,11 +1065,11 @@ async function testOpenAi(model = 'gpt-4.1') {
   return data;
 }
 
-async function generateAiDraft(input = {}, model = 'gpt-4.1') {
+async function generateAiDraft(input = {}, model = 'gpt-4.1', requestKey = '') {
   const normalized = normalizeAiDraftInput(input);
   validateRequiredInput(normalized);
   const prompt = buildAiDraftPrompt(normalized);
-  const key = requireOpenAiKey();
+  const key = requireOpenAiKey(requestKey);
   const requestedModel = normalizeModel(model);
   const completion = await callOpenAiWithFallback({
     key,
@@ -1547,6 +1637,12 @@ function validateDraft(draft) {
 }
 
 async function listAiDrafts(project = {}) {
+  if (storageRuntime.active === 'd1' && hasProject(project)) {
+    return listD1AiDrafts(storageRuntime.d1, {
+      projectId: normalizeProject(project).projectId,
+      limit: 20,
+    });
+  }
   return readAiDraftList(project);
 }
 
@@ -1565,6 +1661,12 @@ async function saveAiDraft(body = {}) {
     createdAt: item.createdAt || new Date().toISOString(),
     savedAt: new Date().toISOString(),
   };
+  if (storageRuntime.active === 'd1' && hasProject(project)) {
+    return upsertD1AiDraft(storageRuntime.d1, saved, {
+      projectId: project.projectId,
+      createdByAccountId: body.createdByAccountId || body.authUser?.ownerId || '',
+    });
+  }
   const targetFile = aiDraftsFile(project);
   return withFileLock(targetFile, async () => {
     const current = await readAiDraftList(project);
@@ -1575,6 +1677,12 @@ async function saveAiDraft(body = {}) {
 }
 
 async function deleteAiDraft(id, project = {}) {
+  if (storageRuntime.active === 'd1' && hasProject(project)) {
+    return deleteD1AiDraft(storageRuntime.d1, {
+      projectId: normalizeProject(project).projectId,
+      id,
+    });
+  }
   const targetFile = aiDraftsFile(project);
   return withFileLock(targetFile, async () => {
     const current = await readAiDraftList(project);
@@ -1616,6 +1724,20 @@ async function saveLead(body = {}) {
     page: body.page || normalizedLead.page || null,
     ...(hasProject(project) ? { project } : {}),
   };
+
+  if (storageRuntime.active === 'd1' && hasProject(project)) {
+    const duplicate = await findD1DuplicateLead(normalizedLead, project);
+    if (duplicate && String(duplicate.id || '') !== String(normalizedLead.id || '')) {
+      const error = new Error('이미 접수된 연락처입니다.');
+      error.status = 409;
+      throw error;
+    }
+    const savedD1 = await upsertD1Lead(storageRuntime.d1, saved, {
+      projectId: project.projectId,
+      pageSlug: project.slug || body.page?.slug || '',
+    });
+    return { ...saved, ...savedD1, storageAdapter: 'd1' };
+  }
 
   const targetFile = projectLeadsFile(project) || leadsFile;
   await mkdir(path.dirname(targetFile), { recursive: true });
@@ -1676,6 +1798,28 @@ async function findDuplicateLead(lead = {}, project = {}) {
   }) || null;
 }
 
+async function findD1DuplicateLead(lead = {}, project = {}) {
+  const phone = normalizeLeadContact(lead.phone);
+  const email = normalizeLeadContact(lead.email);
+  if (!phone && !email) return null;
+  const month = String(lead.createdAt || lead.savedAt || new Date().toISOString()).slice(0, 7);
+  const candidates = await findD1LeadsByContact(storageRuntime.d1, {
+    projectId: normalizeProject(project).projectId,
+    month,
+    phone,
+    email,
+    limit: 100,
+  });
+  const windowMs = duplicatePolicyWindowMs(lead.duplicateWindow || lead.duplicateWindowKey || '1d');
+  const now = Date.now();
+  return (candidates || []).find((item) => {
+    if (!sameLeadKindPolicy(item, lead)) return false;
+    const time = Date.parse(item.createdAt || item.savedAt || '');
+    if (!Number.isNaN(time) && now - time > windowMs) return false;
+    return (phone && normalizeLeadContact(item.phone) === phone) || (email && normalizeLeadContact(item.email) === email);
+  }) || null;
+}
+
 function eventFingerprint(event = {}) {
   return [
     event.type,
@@ -1721,6 +1865,12 @@ async function saveEvent(body = {}) {
     createdAt: event.createdAt || new Date().toISOString(),
     ...(hasProject(project) ? { project } : {}),
   };
+  if (storageRuntime.active === 'd1' && hasProject(project)) {
+    return insertD1Event(storageRuntime.d1, saved, {
+      projectId: project.projectId,
+      pageSlug: project.slug || body.page?.slug || '',
+    });
+  }
   const targetFile = projectEventsFile(project) || path.join(dataDir, 'events.jsonl');
   await mkdir(path.dirname(targetFile), { recursive: true });
   return withFileLock(targetFile, async () => {
@@ -1878,6 +2028,22 @@ function storageMigrationPriority(type = 'records', activeIndexFields = []) {
 
 async function listEventsPage(limit, project = {}, cursor = 0, filters = {}) {
   const dateFilters = normalizeDateFilters(filters);
+  if (storageRuntime.active === 'd1' && hasProject(project) && dateFilters.month) {
+    const result = await listD1Events(storageRuntime.d1, {
+      projectId: normalizeProject(project).projectId,
+      month: dateFilters.month,
+      eventType: String(dateFilters.eventType || dateFilters.type || '').trim(),
+      cursor,
+      limit,
+    });
+    return {
+      events: result.records,
+      total: result.total,
+      nextCursor: result.nextCursor,
+      hasMore: result.hasMore,
+      queryPlan: storageQueryPlan('events', dateFilters),
+    };
+  }
   const targetFile = projectEventsFile(project) || path.join(dataDir, 'events.jsonl');
   const plan = storageQueryPlan('events', dateFilters);
   const result = await queryJsonlRecords(targetFile, {
@@ -2151,6 +2317,27 @@ function matchesLeadFilters(lead = {}, filters = {}) {
 }
 
 async function listLeadsPage(limit, project = {}, cursor = 0, filters = {}) {
+  if (storageRuntime.active === 'd1' && hasProject(project) && canUseD1LeadList(filters)) {
+    const dateFilters = normalizeDateFilters(filters);
+    const result = await listD1Leads(storageRuntime.d1, {
+      projectId: project.projectId,
+      month: dateFilters.month,
+      status: filters.status && filters.status !== 'all' ? filters.status : '',
+      kind: d1LeadKindFilter(filters.kind),
+      deliveryStatus: d1LeadDeliveryStatusFilter(filters.deliveryStatus),
+      q: String(filters.q || '').trim(),
+      cursor,
+      limit,
+    });
+    return {
+      leads: result.records,
+      total: result.total,
+      nextCursor: result.nextCursor,
+      hasMore: result.hasMore,
+      queryPlan: storageQueryPlan('leads', filters),
+    };
+  }
+
   const targetFile = projectLeadsFile(project) || leadsFile;
   const plan = storageQueryPlan('leads', filters);
   const result = await queryJsonlRecords(targetFile, {
@@ -2170,10 +2357,101 @@ async function listLeadsPage(limit, project = {}, cursor = 0, filters = {}) {
   };
 }
 
+function canUseD1LeadList(filters = {}) {
+  const dateFilters = normalizeDateFilters(filters);
+  if (!dateFilters.month) return false;
+  if (String(filters.kind || '').trim() && !d1LeadKindFilter(filters.kind)) return false;
+  if (String(filters.deliveryStatus || '').trim() && !d1LeadDeliveryStatusFilter(filters.deliveryStatus)) return false;
+  return true;
+}
+
+function d1LeadKindFilter(value = '') {
+  const kind = String(value || '').trim();
+  if (!kind || kind === 'all') return '';
+  if (kind === 'reservation') return '방문예약';
+  if (kind === 'consult') return '상담신청';
+  return kind;
+}
+
+function d1LeadDeliveryStatusFilter(value = '') {
+  const status = String(value || '').trim();
+  if (!status || status === 'all' || status === 'needs-attention') return '';
+  return status;
+}
+
+async function listD1LeadsForExport(project = {}, filters = {}) {
+  const dateFilters = normalizeDateFilters(filters);
+  const records = [];
+  let cursor = 0;
+  let guard = 0;
+  do {
+    const page = await listD1Leads(storageRuntime.d1, {
+      projectId: normalizeProject(project).projectId,
+      month: dateFilters.month,
+      status: filters.status && filters.status !== 'all' ? filters.status : '',
+      kind: d1LeadKindFilter(filters.kind),
+      deliveryStatus: d1LeadDeliveryStatusFilter(filters.deliveryStatus),
+      q: String(filters.q || '').trim(),
+      cursor,
+      limit: 100,
+    });
+    records.push(...(page.records || []));
+    cursor = page.nextCursor;
+    guard += 1;
+    if (guard > 1000) break;
+  } while (cursor != null && records.length < 100000);
+  return records.filter((lead) => matchesLeadFilters(lead, filters));
+}
+
+async function listD1EventsForStats(project = {}, filters = {}) {
+  const dateFilters = normalizeDateFilters(filters);
+  const records = [];
+  let cursor = 0;
+  let guard = 0;
+  do {
+    const page = await listD1Events(storageRuntime.d1, {
+      projectId: normalizeProject(project).projectId,
+      month: dateFilters.month,
+      eventType: String(dateFilters.eventType || dateFilters.type || '').trim(),
+      cursor,
+      limit: 500,
+    });
+    records.push(...(page.records || []));
+    cursor = page.nextCursor;
+    guard += 1;
+    if (guard > 1000) break;
+  } while (cursor != null && records.length < 500000);
+  return records.filter((event) => !(dateFilters.dateFrom || dateFilters.dateTo) || dateRangeFilter(event, dateFilters));
+}
+
 async function statsSummary(project = {}, filters = {}) {
   const dateFilters = normalizeDateFilters(filters);
   const period = String(filters.period || 'thisMonth').trim() || 'thisMonth';
   const eventPlan = storageQueryPlan('stats', dateFilters);
+  if (storageRuntime.active === 'd1' && hasProject(project) && dateFilters.month) {
+    const d1Stats = await aggregateD1Stats(storageRuntime.d1, {
+      projectId: normalizeProject(project).projectId,
+      month: dateFilters.month,
+      dateFrom: dateFilters.dateFrom || '',
+      dateTo: dateFilters.dateTo || '',
+    });
+    return {
+      source: 'server',
+      project: normalizeProject(project),
+      period,
+      dateFrom: dateFilters.dateFrom || '',
+      dateTo: dateFilters.dateTo || '',
+      totals: d1Stats.totals,
+      queryPlan: {
+        ...eventPlan,
+        aggregate: true,
+        rowHydration: false,
+        events: storageQueryPlan('events', dateFilters),
+        leads: storageQueryPlan('leads', dateFilters),
+      },
+      summary: d1Stats.summary,
+    };
+  }
   const [eventsResult, leadsResult] = await Promise.all([
     queryJsonlRecords(projectEventsFile(project) || path.join(dataDir, 'events.jsonl'), {
       type: 'stats-events',
@@ -2227,6 +2505,22 @@ async function updateLead(id, patch = {}, project = {}) {
   }
 
   const targetProject = hasProject(project) ? normalizeProject(project) : {};
+  if (storageRuntime.active === 'd1' && hasProject(targetProject)) {
+    const current = await getD1Lead(storageRuntime.d1, { projectId: targetProject.projectId, id });
+    if (!current) {
+      const error = new Error('Lead not found.');
+      error.status = 404;
+      throw error;
+    }
+    assertLeadVersion(current, patch, id);
+    const safePatch = sanitizedLeadPatch(patch);
+    const nextLead = { ...current, ...safePatch, updatedAt: new Date().toISOString() };
+    return upsertD1Lead(storageRuntime.d1, nextLead, {
+      projectId: targetProject.projectId,
+      pageSlug: targetProject.slug || current.pageSlug || '',
+    });
+  }
+
   const targetFile = projectLeadsFile(targetProject) || leadsFile;
   return withFileLock(targetFile, async () => {
     const leads = await readLeadList(targetProject);
@@ -2237,33 +2531,41 @@ async function updateLead(id, patch = {}, project = {}) {
       throw error;
     }
 
-    const expectedUpdatedAt = patch.__expectedUpdatedAt || patch.expectedUpdatedAt || '';
-    const currentVersion = leads[index].updatedAt || leads[index].savedAt || leads[index].createdAt || '';
-    if (expectedUpdatedAt && currentVersion && String(expectedUpdatedAt) !== String(currentVersion)) {
-      const error = new Error('Lead was changed elsewhere. Reload before saving.');
-      error.status = 409;
-      error.details = {
-        code: 'LEAD_REVISION_CONFLICT',
-        latest: {
-          id: leads[index].id || id,
-          updatedAt: leads[index].updatedAt || '',
-          savedAt: leads[index].savedAt || '',
-          createdAt: leads[index].createdAt || '',
-          status: leads[index].status || '',
-        },
-      };
-      throw error;
-    }
-
-    const safePatch = { ...patch };
-    delete safePatch.id;
-    delete safePatch.project;
-    delete safePatch.__expectedUpdatedAt;
-    delete safePatch.expectedUpdatedAt;
+    assertLeadVersion(leads[index], patch, id);
+    const safePatch = sanitizedLeadPatch(patch);
     leads[index] = { ...leads[index], ...safePatch, updatedAt: new Date().toISOString() };
     await writeLeadList(leads, targetProject);
     return leads[index];
   });
+}
+
+function assertLeadVersion(current = {}, patch = {}, id = '') {
+  const expectedUpdatedAt = patch.__expectedUpdatedAt || patch.expectedUpdatedAt || '';
+  const currentVersion = current.updatedAt || current.savedAt || current.createdAt || '';
+  if (expectedUpdatedAt && currentVersion && String(expectedUpdatedAt) !== String(currentVersion)) {
+    const error = new Error('Lead was changed elsewhere. Reload before saving.');
+    error.status = 409;
+    error.details = {
+      code: 'LEAD_REVISION_CONFLICT',
+      latest: {
+        id: current.id || id,
+        updatedAt: current.updatedAt || '',
+        savedAt: current.savedAt || '',
+        createdAt: current.createdAt || '',
+        status: current.status || '',
+      },
+    };
+    throw error;
+  }
+}
+
+function sanitizedLeadPatch(patch = {}) {
+  const safePatch = { ...patch };
+  delete safePatch.id;
+  delete safePatch.project;
+  delete safePatch.__expectedUpdatedAt;
+  delete safePatch.expectedUpdatedAt;
+  return safePatch;
 }
 
 async function deleteLead(id, project = {}) {
@@ -2274,6 +2576,16 @@ async function deleteLead(id, project = {}) {
   }
 
   const targetProject = hasProject(project) ? normalizeProject(project) : {};
+  if (storageRuntime.active === 'd1' && hasProject(targetProject)) {
+    const current = await getD1Lead(storageRuntime.d1, { projectId: targetProject.projectId, id });
+    if (!current) {
+      const error = new Error('Lead not found.');
+      error.status = 404;
+      throw error;
+    }
+    return deleteD1Lead(storageRuntime.d1, { projectId: targetProject.projectId, id });
+  }
+
   const targetFile = projectLeadsFile(targetProject) || leadsFile;
   return withFileLock(targetFile, async () => {
     const leads = await readLeadList(targetProject);
@@ -2291,6 +2603,27 @@ async function deleteLead(id, project = {}) {
 
 async function deliverLead(id, body = {}) {
   const project = hasProject(body.project) ? normalizeProject(body.project) : {};
+  if (storageRuntime.active === 'd1' && hasProject(project)) {
+    const current = await getD1Lead(storageRuntime.d1, { projectId: project.projectId, id });
+    if (!current) {
+      const error = new Error('Lead not found.');
+      error.status = 404;
+      throw error;
+    }
+    const baseLead = { ...current, ...(body.lead || {}) };
+    const deliveryPage = deliveryPageFrom(body.page || baseLead.deliveryPage || baseLead.page || {});
+    const delivery = await sendServerLeadIntegrations(baseLead, deliveryPage);
+    return upsertD1Lead(storageRuntime.d1, {
+      ...baseLead,
+      delivery,
+      deliveryPage,
+      updatedAt: new Date().toISOString(),
+    }, {
+      projectId: project.projectId,
+      pageSlug: project.slug || baseLead.pageSlug || '',
+    });
+  }
+
   const targetFile = projectLeadsFile(project) || leadsFile;
   return withFileLock(targetFile, async () => {
     const leads = await readLeadList(project);
@@ -2312,6 +2645,10 @@ async function deliverLead(id, body = {}) {
 
 async function retryFailedLeads(body = {}) {
   const project = hasProject(body.project) ? normalizeProject(body.project) : {};
+  if (storageRuntime.active === 'd1' && hasProject(project)) {
+    return retryFailedD1Leads(body, project);
+  }
+
   const targetFile = projectLeadsFile(project) || leadsFile;
   return withFileLock(targetFile, async () => {
   const leads = await readLeadList(project);
@@ -2361,6 +2698,64 @@ async function retryFailedLeads(body = {}) {
   });
 }
 
+async function retryFailedD1Leads(body = {}, project = {}) {
+  const leadId = String(body.leadId || '').trim();
+  const month = String(body.month || new Date().toISOString().slice(0, 7)).trim();
+  let candidates = [];
+  if (leadId) {
+    const lead = await getD1Lead(storageRuntime.d1, { projectId: project.projectId, id: leadId });
+    if (lead) candidates = [lead];
+  } else {
+    const [failed, partial] = await Promise.all([
+      listD1Leads(storageRuntime.d1, { projectId: project.projectId, month, deliveryStatus: 'failed', limit: 100 }),
+      listD1Leads(storageRuntime.d1, { projectId: project.projectId, month, deliveryStatus: 'partial', limit: 100 }),
+    ]);
+    candidates = [...(failed.records || []), ...(partial.records || [])];
+  }
+
+  let retried = 0;
+  const summary = { success: 0, failed: 0, partial: 0, deadLetter: 0, skipped: 0 };
+  const leads = [];
+  for (const lead of candidates) {
+    if (!['failed', 'partial'].includes(lead.delivery?.status)) {
+      summary.skipped += 1;
+      continue;
+    }
+    const deliveryPage = deliveryPageFrom(body.page || lead.deliveryPage || lead.page || {});
+    const delivery = await sendServerLeadIntegrations(lead, deliveryPage);
+    const previousRetry = lead.delivery?.retry || {};
+    const attempts = Number(previousRetry.attempts || 0) + 1;
+    const deadLetter = delivery.status !== 'success' && attempts >= deliveryRetryConfig.maxAttempts;
+    const retry = {
+      attempts,
+      maxAttempts: deliveryRetryConfig.maxAttempts,
+      lastAttemptAt: new Date().toISOString(),
+      nextRetryAt: delivery.status === 'success' || deadLetter
+        ? ''
+        : new Date(Date.now() + deliveryRetryConfig.intervalMs).toISOString(),
+      ...(deadLetter ? { deadLetter: true, deadLetterAt: new Date().toISOString() } : {}),
+    };
+    const saved = await upsertD1Lead(storageRuntime.d1, {
+      ...lead,
+      delivery: { ...delivery, retry },
+      deliveryPage,
+      updatedAt: new Date().toISOString(),
+    }, {
+      projectId: project.projectId,
+      pageSlug: project.slug || lead.pageSlug || '',
+    });
+    leads.push(saved);
+    if (delivery.status === 'success') summary.success += 1;
+    else if (delivery.status === 'partial') summary.partial += 1;
+    else summary.failed += 1;
+    if (deadLetter) summary.deadLetter += 1;
+    retried += 1;
+  }
+
+  const queue = await listD1DeliveryRetryQueue(storageRuntime.d1, { projectId: project.projectId, limit: 200 });
+  return { retried, ...summary, queue, leads };
+}
+
 async function migrateLeads(project = {}, options = {}) {
   const targetProject = hasProject(project) ? normalizeProject(project) : {};
   const targetFile = projectLeadsFile(targetProject) || leadsFile;
@@ -2385,7 +2780,35 @@ async function listDeliveryLogs(project = {}, options = {}) {
   const limit = Math.max(1, Math.min(1000, Number(options.limit || 200)));
   const leadId = String(options.leadId || '').trim();
   const status = String(options.status || '').trim();
-  const filters = { deliveryStatus: status || 'all' };
+  const month = String(options.month || '').trim();
+  const filters = { month, deliveryStatus: status || 'all' };
+  if (storageRuntime.active === 'd1' && hasProject(targetProject)) {
+    const result = await listD1DeliveryLogs(storageRuntime.d1, {
+      projectId: targetProject.projectId,
+      month,
+      leadId,
+      status,
+      limit,
+    });
+    const logs = (result.records || []).map((log) => ({
+      leadId: log.leadId || '',
+      leadName: '',
+      leadType: '',
+      deliveryStatus: log.deliveryStatus || 'none',
+      summary: log.error || '',
+      retry: null,
+      target: log.target || log.provider || '',
+      status: log.deliveryStatus || log.status || '',
+      message: log.error || '',
+      idempotencyKey: log.idempotencyKey || '',
+      at: log.at || log.createdAt || '',
+    }));
+    return {
+      total: result.total,
+      logs,
+      queryPlan: storageQueryPlan('delivery-logs', filters),
+    };
+  }
   const plan = storageQueryPlan('leads', filters);
   const result = await queryJsonlRecords(projectLeadsFile(targetProject) || leadsFile, {
     type: 'delivery-logs',
@@ -2471,7 +2894,19 @@ async function listDeliveryRetryQueue(project = {}, options = {}) {
   const targetProject = hasProject(project) ? normalizeProject(project) : {};
   const limit = Math.max(1, Math.min(1000, Number(options.limit || 200)));
   const status = String(options.status || '').trim();
-  const filters = { deliveryStatus: status || 'needs-attention' };
+  const month = String(options.month || '').trim();
+  const filters = { month, deliveryStatus: status || 'needs-attention' };
+  if (storageRuntime.active === 'd1' && hasProject(targetProject)) {
+    const result = await listD1DeliveryRetryQueue(storageRuntime.d1, {
+      projectId: targetProject.projectId,
+      status,
+      limit,
+    });
+    return {
+      ...result,
+      queryPlan: storageQueryPlan('delivery-retry-queue', filters),
+    };
+  }
   const plan = storageQueryPlan('leads', filters);
   const result = await queryJsonlRecords(projectLeadsFile(targetProject) || leadsFile, {
     type: 'delivery-retry-queue',
@@ -3305,6 +3740,11 @@ async function readProjectAccess(project = {}) {
   try {
     return JSON.parse(await readFile(file, 'utf8'));
   } catch {
+    if (storageRuntime.active === 'd1' && hasProject(project)) {
+      return getD1ProjectAccess(storageRuntime.d1, {
+        projectId: normalizeProject(project).projectId,
+      });
+    }
     return null;
   }
 }
@@ -3366,6 +3806,97 @@ async function readUserAccounts() {
   }
 }
 
+async function readEmailVerifications() {
+  try {
+    return (await readJsonlRecords(emailVerificationsFile)).records.filter((record) => record && typeof record === 'object');
+  } catch {
+    return [];
+  }
+}
+
+function publicEmailVerification(record = {}) {
+  return {
+    email: normalizeEmail(record.email || ''),
+    purpose: String(record.purpose || 'signup'),
+    status: record.status || 'pending',
+    expiresAt: record.expiresAt || '',
+    delivery: 'mock',
+    ...(record.token ? { token: record.token } : {}),
+  };
+}
+
+async function issueEmailVerification(emailInput = '', purposeInput = 'signup') {
+  const email = normalizeEmail(emailInput);
+  if (!isValidEmail(email)) {
+    const error = new Error('Valid email is required.');
+    error.status = 400;
+    error.details = { code: 'AUTH_EMAIL_REQUIRED' };
+    throw error;
+  }
+  const now = new Date().toISOString();
+  const record = {
+    id: randomBytes(12).toString('base64url'),
+    email,
+    purpose: String(purposeInput || 'signup').trim() || 'signup',
+    token: randomBytes(18).toString('base64url'),
+    status: 'pending',
+    createdAt: now,
+    expiresAt: new Date(Date.now() + 1000 * 60 * 15).toISOString(),
+  };
+  await appendJsonlRecord(emailVerificationsFile, record);
+  return publicEmailVerification(record);
+}
+
+async function confirmEmailVerification(input = {}) {
+  const email = normalizeEmail(input.email || '');
+  const token = String(input.token || '').trim();
+  if (!isValidEmail(email)) {
+    const error = new Error('Valid email is required.');
+    error.status = 400;
+    error.details = { code: 'AUTH_EMAIL_REQUIRED' };
+    throw error;
+  }
+  if (!token) {
+    const error = new Error('Email verification token is required.');
+    error.status = 400;
+    error.details = { code: 'EMAIL_VERIFICATION_TOKEN_REQUIRED' };
+    throw error;
+  }
+  return withFileLock(emailVerificationsFile, async () => {
+    const records = await readEmailVerifications();
+    const index = records.findIndex((record) => normalizeEmail(record.email) === email && String(record.token || '') === token);
+    if (index < 0) {
+      const error = new Error('Email verification token is invalid.');
+      error.status = 403;
+      error.details = { code: 'EMAIL_VERIFICATION_INVALID' };
+      throw error;
+    }
+    const current = records[index];
+    if (current.expiresAt && Date.parse(current.expiresAt) < Date.now()) {
+      const nextExpired = { ...current, status: 'expired', confirmedAt: '' };
+      const nextRecords = records.slice();
+      nextRecords[index] = nextExpired;
+      await writeJsonlRecords(emailVerificationsFile, nextRecords);
+      const error = new Error('Email verification token has expired.');
+      error.status = 410;
+      error.details = { code: 'EMAIL_VERIFICATION_EXPIRED' };
+      throw error;
+    }
+    const confirmed = { ...current, status: 'confirmed', confirmedAt: new Date().toISOString() };
+    const nextRecords = records.slice();
+    nextRecords[index] = confirmed;
+    await writeJsonlRecords(emailVerificationsFile, nextRecords);
+    return publicEmailVerification({ ...confirmed, token: '' });
+  });
+}
+
+async function hasConfirmedEmailVerification(email = '') {
+  const records = await readEmailVerifications();
+  return records.some((record) => normalizeEmail(record.email) === normalizeEmail(email)
+    && record.status === 'confirmed'
+    && (!record.expiresAt || Date.parse(record.expiresAt) >= Date.now()));
+}
+
 async function registerUserAccount(input = {}, options = {}) {
   const email = normalizeEmail(input.email || '');
   const phone = normalizePhone(input.phone || '');
@@ -3388,6 +3919,45 @@ async function registerUserAccount(input = {}, options = {}) {
     error.status = 400;
     error.details = { code: 'AUTH_PASSWORD_POLICY' };
     throw error;
+  }
+  const verified = input.emailVerified === true || await hasConfirmedEmailVerification(email);
+  if (!verified) {
+    const error = new Error('Email verification is required before signup.');
+    error.status = 403;
+    error.details = { code: 'EMAIL_VERIFICATION_REQUIRED' };
+    throw error;
+  }
+
+  if (storageRuntime.active === 'd1') {
+    const duplicateEmail = await getD1AccountByEmail(storageRuntime.d1, email);
+    if (duplicateEmail) {
+      const error = new Error('Email is already registered.');
+      error.status = 409;
+      error.details = { code: 'AUTH_EMAIL_DUPLICATE', field: 'email' };
+      throw error;
+    }
+    const duplicatePhone = await getD1AccountByPhone(storageRuntime.d1, phone);
+    if (duplicatePhone) {
+      const error = new Error('Phone number is already registered.');
+      error.status = 409;
+      error.details = { code: 'AUTH_PHONE_DUPLICATE', field: 'phone' };
+      throw error;
+    }
+    const now = new Date().toISOString();
+    const user = await upsertD1Account(storageRuntime.d1, {
+      id: safeId(input.id || ownerIdForEmail(email), ownerIdForEmail(email)),
+      ownerId: ownerIdForEmail(email),
+      name: name || email,
+      email,
+      phone,
+      phoneVerified: false,
+      emailVerified: true,
+      passwordHash: password ? passwordHash(password, email) : '',
+      source: String(options.source || input.source || 'signup'),
+      createdAt: now,
+      updatedAt: now,
+    });
+    return authUserPublic(user);
   }
 
   return withFileLock(usersFile, async () => {
@@ -3414,7 +3984,7 @@ async function registerUserAccount(input = {}, options = {}) {
       email,
       phone,
       phoneVerified: false,
-      emailVerified: input.emailVerified === true,
+      emailVerified: true,
       passwordHash: password ? passwordHash(password, email) : '',
       source: String(options.source || input.source || 'signup'),
       createdAt: now,
@@ -3422,6 +3992,181 @@ async function registerUserAccount(input = {}, options = {}) {
     };
     await appendJsonlRecord(usersFile, user);
     return authUserPublic(user);
+  });
+}
+
+async function loginUserAccount(input = {}) {
+  const email = normalizeEmail(input.email || '');
+  const password = String(input.password || '');
+  if (!isValidEmail(email) || !password) {
+    const error = new Error('Email and password are required.');
+    error.status = 400;
+    error.details = { code: 'AUTH_LOGIN_REQUIRED' };
+    throw error;
+  }
+  const users = storageRuntime.active === 'd1' ? [] : await readUserAccounts();
+  const user = storageRuntime.active === 'd1'
+    ? await getD1AccountByEmail(storageRuntime.d1, email)
+    : users.find((item) => normalizeEmail(item.email) === email);
+  if (!user || user.passwordHash !== passwordHash(password, email)) {
+    const error = new Error('Email or password is invalid.');
+    error.status = 401;
+    error.details = { code: 'AUTH_LOGIN_INVALID' };
+    throw error;
+  }
+  if (user.emailVerified !== true) {
+    const error = new Error('Email verification is required before login.');
+    error.status = 403;
+    error.details = { code: 'EMAIL_VERIFICATION_REQUIRED' };
+    throw error;
+  }
+  const publicUser = authUserPublic(user);
+  return {
+    user: publicUser,
+    session: createSessionToken({
+      ownerId: publicUser.ownerId,
+      projectId: safeId(input.projectId || '', ''),
+      role: input.role || 'master',
+      email: publicUser.email,
+    }),
+  };
+}
+
+async function refreshUserSession(req, input = {}) {
+  const token = sessionTokenFromRequest(req, input);
+  const payload = verifySessionToken(token);
+  if (!payload) {
+    const error = new Error('Session is invalid or expired.');
+    error.status = 401;
+    error.details = { code: 'AUTH_SESSION_INVALID' };
+    throw error;
+  }
+  const email = normalizeEmail(payload.email || input.email || '');
+  const ownerId = safeId(payload.ownerId || '', '');
+  const users = storageRuntime.active === 'd1' ? [] : await readUserAccounts();
+  const user = storageRuntime.active === 'd1'
+    ? (email ? await getD1AccountByEmail(storageRuntime.d1, email) : null)
+    : users.find((item) => (email && normalizeEmail(item.email) === email) || (ownerId && safeId(item.ownerId || item.id, '') === ownerId));
+  if (!user) {
+    const error = new Error('Session account was not found.');
+    error.status = 404;
+    error.details = { code: 'AUTH_ACCOUNT_NOT_FOUND' };
+    throw error;
+  }
+  if (user.emailVerified !== true) {
+    const error = new Error('Email verification is required before session refresh.');
+    error.status = 403;
+    error.details = { code: 'EMAIL_VERIFICATION_REQUIRED' };
+    throw error;
+  }
+  const publicUser = authUserPublic(user);
+  const nextProjectId = safeId(input.projectId || payload.projectId || '', '');
+  return {
+    user: publicUser,
+    session: createSessionToken({
+      ownerId: publicUser.ownerId,
+      projectId: nextProjectId,
+      role: payload.role || input.role || 'master',
+      email: publicUser.email,
+    }),
+    expiresInSeconds: 60 * 60 * 24 * 30,
+  };
+}
+
+async function updateUserAccount(req, input = {}) {
+  const token = sessionTokenFromRequest(req, input);
+  const payload = verifySessionToken(token);
+  if (!payload) {
+    const error = new Error('Session is invalid or expired.');
+    error.status = 401;
+    error.details = { code: 'AUTH_SESSION_INVALID' };
+    throw error;
+  }
+  const email = normalizeEmail(payload.email || input.email || '');
+  const ownerId = safeId(payload.ownerId || '', '');
+  const name = String(input.name || '').trim();
+  const phone = normalizePhone(input.phone || '');
+  if (!isValidEmail(email)) {
+    const error = new Error('Valid email is required.');
+    error.status = 400;
+    error.details = { code: 'AUTH_EMAIL_REQUIRED' };
+    throw error;
+  }
+  if (!phone) {
+    const error = new Error('Phone number is required.');
+    error.status = 400;
+    error.details = { code: 'AUTH_PHONE_REQUIRED' };
+    throw error;
+  }
+
+  if (storageRuntime.active === 'd1') {
+    const current = await getD1AccountByEmail(storageRuntime.d1, email);
+    if (!current || (ownerId && safeId(current.ownerId || current.id, '') !== ownerId)) {
+      const error = new Error('Session account was not found.');
+      error.status = 404;
+      error.details = { code: 'AUTH_ACCOUNT_NOT_FOUND' };
+      throw error;
+    }
+    const duplicatePhone = await getD1AccountByPhone(storageRuntime.d1, phone);
+    if (duplicatePhone && normalizeEmail(duplicatePhone.email) !== email) {
+      const error = new Error('Phone number is already registered.');
+      error.status = 409;
+      error.details = { code: 'AUTH_PHONE_DUPLICATE', field: 'phone' };
+      throw error;
+    }
+    const updated = await upsertD1Account(storageRuntime.d1, {
+      ...current,
+      name: name || current.name || email,
+      phone,
+      updatedAt: new Date().toISOString(),
+    });
+    const publicUser = authUserPublic(updated);
+    return {
+      user: publicUser,
+      session: createSessionToken({
+        ownerId: publicUser.ownerId,
+        projectId: safeId(input.projectId || payload.projectId || '', ''),
+        role: payload.role || input.role || 'master',
+        email: publicUser.email,
+      }),
+    };
+  }
+
+  return withFileLock(usersFile, async () => {
+    const users = await readUserAccounts();
+    const index = users.findIndex((user) => normalizeEmail(user.email) === email || (ownerId && safeId(user.ownerId || user.id, '') === ownerId));
+    if (index < 0) {
+      const error = new Error('Account not found.');
+      error.status = 404;
+      error.details = { code: 'AUTH_ACCOUNT_NOT_FOUND' };
+      throw error;
+    }
+    const duplicatePhone = users.find((user, currentIndex) => currentIndex !== index && normalizePhone(user.phone) === phone);
+    if (duplicatePhone) {
+      const error = new Error('Phone number is already registered.');
+      error.status = 409;
+      error.details = { code: 'AUTH_PHONE_DUPLICATE', field: 'phone' };
+      throw error;
+    }
+    const nextUser = {
+      ...users[index],
+      name: name || users[index].name || email,
+      phone,
+      updatedAt: new Date().toISOString(),
+    };
+    const nextUsers = users.slice();
+    nextUsers[index] = nextUser;
+    await writeJsonlRecords(usersFile, nextUsers);
+    const publicUser = authUserPublic(nextUser);
+    return {
+      user: publicUser,
+      session: createSessionToken({
+        ownerId: publicUser.ownerId,
+        projectId: safeId(input.projectId || payload.projectId || '', ''),
+        role: payload.role || input.role || 'master',
+        email: publicUser.email,
+      }),
+    };
   });
 }
 
@@ -3446,6 +4191,22 @@ async function changeUserPassword(input = {}) {
     error.details = { code: 'AUTH_PASSWORD_POLICY' };
     throw error;
   }
+  if (storageRuntime.active === 'd1') {
+    const user = await getD1AccountByEmail(storageRuntime.d1, email);
+    if (!user) {
+      const error = new Error('Account was not found.');
+      error.status = 404;
+      error.details = { code: 'AUTH_ACCOUNT_NOT_FOUND' };
+      throw error;
+    }
+    const updated = await upsertD1Account(storageRuntime.d1, {
+      ...user,
+      passwordHash: passwordHash(password, email),
+      updatedAt: new Date().toISOString(),
+    });
+    return authUserPublic(updated);
+  }
+
   return withFileLock(usersFile, async () => {
     const users = await readUserAccounts();
     const index = users.findIndex((user) => normalizeEmail(user.email) === email);
@@ -3677,11 +4438,351 @@ async function createManagerInvite(project = {}, manager = {}) {
     .filter((item) => item.email !== invite.email && item.token !== invite.token);
   invites.push(invite);
   await writeProjectAccess(normalizedProject, { ...access, invites });
+  await syncD1Invite(normalizedProject, invite, access);
   return {
     ...publicInvite({ ...invite, project: normalizedProject }),
     token: invite.token,
     acceptUrl: `/invite/${encodeURIComponent(invite.token)}`,
   };
+}
+
+async function syncD1Invite(project = {}, invite = {}, access = {}) {
+  if (storageRuntime.active !== 'd1') return null;
+  return upsertD1Invite(storageRuntime.d1, invite, {
+    projectId: normalizeProject(project).projectId,
+    ownerId: safeId(access.ownerId || normalizeProject(project).ownerId, ''),
+    invitedByAccountId: safeId(access.ownerId || normalizeProject(project).ownerId, ''),
+  });
+}
+
+async function syncD1ProjectMember(project = {}, manager = {}, access = {}) {
+  if (storageRuntime.active !== 'd1') return null;
+  return upsertD1ProjectMember(storageRuntime.d1, {
+    id: manager.id,
+    ownerId: manager.ownerId,
+    role: 'manager',
+    access: manager.access || {},
+    status: manager.status === 'disabled' ? 'removed' : 'active',
+    acceptedAt: manager.acceptedAt,
+  }, {
+    projectId: normalizeProject(project).projectId,
+    accountId: manager.ownerId,
+    invitedByAccountId: safeId(access.ownerId || normalizeProject(project).ownerId, ''),
+  });
+}
+
+function publicOwnershipTransferRequest(request = {}, manager = {}) {
+  return {
+    id: request.id || '',
+    projectId: request.projectId || '',
+    managerId: manager.id || request.managerId || '',
+    managerName: manager.name || request.managerName || '',
+    managerEmail: manager.email || request.managerEmail || '',
+    fromAccountId: request.fromAccountId || '',
+    toAccountId: request.toAccountId || '',
+    requestedByAccountId: request.requestedByAccountId || '',
+    approvedByAccountId: request.approvedByAccountId || '',
+    status: request.status || 'requested',
+    billingClearanceStatus: request.billingClearanceStatus || 'not_checked',
+    note: request.note || '',
+    requestedAt: request.requestedAt || '',
+    approvedAt: request.approvedAt || '',
+    completedAt: request.completedAt || '',
+    billingPolicy: '결제 중이면 만료 또는 해지 후 최종 승인됩니다. 이후 새 소유자 계정 카드로 결제할 수 있게 연결합니다.',
+  };
+}
+
+async function createOwnershipTransferRequest(req, project = {}, input = {}) {
+  const normalizedProject = normalizeProject(project);
+  const access = await readProjectAccess(normalizedProject);
+  if (!access) throw accessError('Project access metadata is required before ownership transfer.', 'PROJECT_ACCESS_REQUIRED');
+  const managers = Array.isArray(access.managers) ? access.managers.map((manager) => ({
+    ...manager,
+    email: normalizeEmail(manager.email || ''),
+    ownerId: safeId(manager.ownerId || ownerIdForEmail(manager.email), ''),
+    status: manager.status === 'disabled' ? 'disabled' : 'active',
+    access: normalizeManagerAccess(manager.access || {}),
+  })) : [];
+  const managerId = String(input.managerId || input.targetManagerId || input.id || '').trim();
+  const managerEmail = normalizeEmail(input.managerEmail || input.email || '');
+  const selected = managers.find((manager) => (
+    manager.status !== 'disabled'
+    && ((managerId && String(manager.id) === managerId) || (managerId && String(manager.ownerId) === managerId) || (managerEmail && manager.email === managerEmail))
+  )) || null;
+  if (!selected?.ownerId || !selected.email) {
+    const error = new Error('Ownership transfer target must be an active manager.');
+    error.status = 400;
+    error.details = { code: 'OWNERSHIP_TRANSFER_MANAGER_REQUIRED' };
+    throw error;
+  }
+  const identity = requestIdentity(req);
+  const now = new Date().toISOString();
+  const request = {
+    id: safeId(input.id || `transfer-${Date.now()}-${randomBytes(4).toString('hex')}`, `transfer-${Date.now()}`),
+    projectId: normalizedProject.projectId,
+    managerId: selected.id || selected.ownerId,
+    managerName: selected.name || '',
+    managerEmail: selected.email,
+    fromAccountId: safeId(access.ownerId || normalizedProject.ownerId, ''),
+    toAccountId: selected.ownerId,
+    requestedByAccountId: safeId(identity.ownerId || access.ownerId || normalizedProject.ownerId, ''),
+    status: 'requested',
+    billingClearanceStatus: 'not_checked',
+    note: String(input.note || '').trim(),
+    requestedAt: now,
+  };
+  if (storageRuntime.active === 'd1') {
+    const saved = await upsertD1OwnershipTransferRequest(storageRuntime.d1, request, {
+      projectId: request.projectId,
+      fromAccountId: request.fromAccountId,
+      toAccountId: request.toAccountId,
+      requestedByAccountId: request.requestedByAccountId,
+    });
+    await writeProjectAccess(normalizedProject, { ...access, transferRequest: publicOwnershipTransferRequest(saved, selected) });
+    return publicOwnershipTransferRequest(saved, selected);
+  }
+  const fallback = publicOwnershipTransferRequest(request, selected);
+  const transferRequests = Array.isArray(access.transferRequests) ? access.transferRequests.filter((item) => item.id !== fallback.id) : [];
+  transferRequests.unshift(fallback);
+  await writeProjectAccess(normalizedProject, { ...access, transferRequest: fallback, transferRequests });
+  return fallback;
+}
+
+async function listOwnershipTransferRequests(project = {}, filters = {}) {
+  const normalizedProject = normalizeProject(project);
+  if (storageRuntime.active === 'd1') {
+    const page = await listD1OwnershipTransferRequests(storageRuntime.d1, {
+      projectId: normalizedProject.projectId,
+      status: filters.status || '',
+      cursor: filters.cursor || 0,
+      limit: filters.limit || 50,
+    });
+    return {
+      requests: page.records.map((request) => publicOwnershipTransferRequest(request)),
+      total: page.total,
+      nextCursor: page.nextCursor,
+      hasMore: page.hasMore,
+      queryPlan: storageRuntimePlan(storageRuntime, 'ownership_transfer_requests', { projectId: normalizedProject.projectId, status: filters.status || '' }),
+    };
+  }
+  const access = await readProjectAccess(normalizedProject);
+  const requests = Array.isArray(access?.transferRequests)
+    ? access.transferRequests
+    : (access?.transferRequest ? [access.transferRequest] : []);
+  const filtered = filters.status ? requests.filter((request) => request.status === filters.status) : requests;
+  const cursor = Math.max(0, Number(filters.cursor || 0));
+  const limit = Math.max(1, Math.min(100, Number(filters.limit || 50)));
+  const page = filtered.slice(cursor, cursor + limit);
+  return {
+    requests: page,
+    total: filtered.length,
+    nextCursor: cursor + page.length < filtered.length ? cursor + page.length : null,
+    hasMore: cursor + page.length < filtered.length,
+    queryPlan: storageRuntimePlan(storageRuntime, 'ownership_transfer_requests', { projectId: normalizedProject.projectId, fallback: true }),
+  };
+}
+
+function normalizeTransferStatus(value = '') {
+  const status = String(value || '').trim();
+  return ['requested', 'waiting_billing_clearance', 'approved', 'rejected', 'completed', 'canceled'].includes(status) ? status : '';
+}
+
+function normalizeBillingClearanceStatus(value = '') {
+  const status = String(value || '').trim();
+  return ['not_checked', 'clear', 'active_subscription', 'past_due'].includes(status) ? status : '';
+}
+
+async function applyOwnershipTransferCompletion(project = {}, request = {}, access = {}, now = new Date().toISOString()) {
+  const normalizedProject = normalizeProject(project);
+  const toAccountId = safeId(request.toAccountId || '', '');
+  const fromAccountId = safeId(request.fromAccountId || access.ownerId || normalizedProject.ownerId, '');
+  const managerEmail = normalizeEmail(request.managerEmail || '');
+  if (!toAccountId || !managerEmail) {
+    const error = new Error('Ownership transfer target account is missing.');
+    error.status = 400;
+    error.details = { code: 'OWNERSHIP_TRANSFER_TARGET_REQUIRED' };
+    throw error;
+  }
+
+  const managers = (Array.isArray(access.managers) ? access.managers : [])
+    .map((manager) => ({
+      ...manager,
+      email: normalizeEmail(manager.email || ''),
+      ownerId: safeId(manager.ownerId || ownerIdForEmail(manager.email), ''),
+      status: manager.status === 'disabled' ? 'disabled' : 'active',
+      access: normalizeManagerAccess(manager.access || {}),
+    }))
+    .filter((manager) => manager.ownerId && manager.email && manager.ownerId !== toAccountId && manager.email !== managerEmail);
+
+  const nextAccess = await writeProjectAccess(normalizedProject, {
+    ...access,
+    ownerId: toAccountId,
+    ownerEmail: managerEmail,
+    clientEmail: '',
+    clientAccess: false,
+    clientOwnerIds: [],
+    managerOwnerIds: managers.map((manager) => manager.ownerId),
+    managers,
+    transferredAt: now,
+  });
+
+  if (storageRuntime.active === 'd1') {
+    await storageRuntime.d1.prepare(`
+      UPDATE projects
+      SET owner_account_id = ?, client_email = '', billing_status = CASE
+        WHEN billing_status = 'transfer_pending' THEN 'trial'
+        ELSE billing_status
+      END, updated_at = ?
+      WHERE id = ?
+    `).bind(toAccountId, now, normalizedProject.projectId).run();
+    await upsertD1ProjectMember(storageRuntime.d1, {
+      id: `${normalizedProject.projectId}-${toAccountId}-master`,
+      ownerId: toAccountId,
+      role: 'master',
+      access: {},
+      status: 'active',
+      acceptedAt: now,
+      updatedAt: now,
+    }, {
+      projectId: normalizedProject.projectId,
+      accountId: toAccountId,
+      invitedByAccountId: fromAccountId || null,
+    });
+    if (fromAccountId && fromAccountId !== toAccountId) {
+      await storageRuntime.d1.prepare(`
+        UPDATE project_members
+        SET status = 'removed', updated_at = ?
+        WHERE project_id = ? AND account_id = ? AND role IN ('master', 'client_admin')
+      `).bind(now, normalizedProject.projectId, fromAccountId).run();
+    }
+    await storageRuntime.d1.prepare(`
+      UPDATE project_members
+      SET status = 'removed', updated_at = ?
+      WHERE project_id = ? AND account_id = ? AND role = 'manager'
+    `).bind(now, normalizedProject.projectId, toAccountId).run();
+  }
+
+  const currentPage = await readPage(normalizedProject.slug || 'my-page', normalizedProject);
+  if (currentPage) {
+    await savePage(currentPage.slug || normalizedProject.slug || 'my-page', {
+      ...currentPage,
+      ownerId: toAccountId,
+      ownership: {
+        ...(currentPage.ownership || {}),
+        ownerEmail: managerEmail,
+        clientEmail: '',
+        clientAccess: false,
+        transferredAt: now,
+        transferRequest: {
+          ...(currentPage.ownership?.transferRequest || {}),
+          ...publicOwnershipTransferRequest({ ...request, status: 'completed', completedAt: now }),
+        },
+        managers,
+      },
+      revisionReason: 'ownership-transfer-completed',
+    }, { ...normalizedProject, ownerId: toAccountId }, {
+      reason: 'ownership-transfer-completed',
+      createdByAccountId: fromAccountId,
+    });
+  }
+
+  return nextAccess;
+}
+
+async function updateOwnershipTransferRequest(req, project = {}, id = '', input = {}) {
+  const normalizedProject = normalizeProject(project);
+  const requestId = safeId(id, '');
+  const status = normalizeTransferStatus(input.status || input.request?.status);
+  if (!requestId || !status || status === 'requested') {
+    const error = new Error('Valid ownership transfer status is required.');
+    error.status = 400;
+    error.details = { code: 'OWNERSHIP_TRANSFER_STATUS_REQUIRED' };
+    throw error;
+  }
+  const identity = requestIdentity(req);
+  const now = new Date().toISOString();
+  const billingClearanceInput = normalizeBillingClearanceStatus(input.billingClearanceStatus || input.billing_clearance_status);
+  const billingClearanceStatus = billingClearanceInput || (status === 'waiting_billing_clearance' ? 'active_subscription' : 'not_checked');
+
+  if (storageRuntime.active === 'd1') {
+    const page = await listD1OwnershipTransferRequests(storageRuntime.d1, { projectId: normalizedProject.projectId, limit: 100 });
+    const current = page.records.find((request) => request.id === requestId);
+    if (!current) {
+      const error = new Error('Ownership transfer request not found.');
+      error.status = 404;
+      throw error;
+    }
+    const effectiveBillingClearanceStatus = billingClearanceInput || current.billingClearanceStatus || billingClearanceStatus;
+    if (status === 'completed' && effectiveBillingClearanceStatus !== 'clear') {
+      const error = new Error('Ownership transfer cannot complete until billing is clear.');
+      error.status = 409;
+      error.details = { code: 'OWNERSHIP_TRANSFER_BILLING_NOT_CLEAR' };
+      throw error;
+    }
+    const access = await readProjectAccess(normalizedProject);
+    if (!access) throw accessError('Project access metadata is required before ownership transfer.', 'PROJECT_ACCESS_REQUIRED');
+    const saved = await upsertD1OwnershipTransferRequest(storageRuntime.d1, {
+      ...current,
+      status,
+      billingClearanceStatus: effectiveBillingClearanceStatus,
+      note: String(input.note || current.note || ''),
+      approvedByAccountId: safeId(identity.ownerId || '', ''),
+      approvedAt: ['approved', 'rejected', 'waiting_billing_clearance'].includes(status) ? now : current.approvedAt,
+      completedAt: status === 'completed' ? now : current.completedAt,
+    }, {
+      projectId: normalizedProject.projectId,
+      fromAccountId: current.fromAccountId,
+      toAccountId: current.toAccountId,
+      requestedByAccountId: current.requestedByAccountId,
+    });
+    if (status === 'completed') {
+      await applyOwnershipTransferCompletion(normalizedProject, saved, access, now);
+    }
+    await insertD1AuditLog(storageRuntime.d1, {
+      projectId: normalizedProject.projectId,
+      actorAccountId: safeId(identity.ownerId || '', ''),
+      action: `ownership_transfer.${status}`,
+      targetType: 'ownership_transfer_request',
+      targetId: requestId,
+      metadata: { billingClearanceStatus: effectiveBillingClearanceStatus, note: input.note || '' },
+    });
+    return publicOwnershipTransferRequest(saved);
+  }
+
+  const access = await readProjectAccess(normalizedProject);
+  if (!access) throw accessError('Project access metadata is required before ownership transfer.', 'PROJECT_ACCESS_REQUIRED');
+  const requests = Array.isArray(access.transferRequests)
+    ? access.transferRequests
+    : (access.transferRequest ? [access.transferRequest] : []);
+  const index = requests.findIndex((request) => request.id === requestId);
+  if (index < 0) {
+    const error = new Error('Ownership transfer request not found.');
+    error.status = 404;
+    throw error;
+  }
+  const effectiveBillingClearanceStatus = billingClearanceInput || requests[index].billingClearanceStatus || billingClearanceStatus;
+  if (status === 'completed' && effectiveBillingClearanceStatus !== 'clear') {
+    const error = new Error('Ownership transfer cannot complete until billing is clear.');
+    error.status = 409;
+    error.details = { code: 'OWNERSHIP_TRANSFER_BILLING_NOT_CLEAR' };
+    throw error;
+  }
+  const nextRequest = {
+    ...requests[index],
+    status,
+    billingClearanceStatus: effectiveBillingClearanceStatus,
+    note: String(input.note || requests[index].note || ''),
+    approvedByAccountId: safeId(identity.ownerId || '', ''),
+    approvedAt: ['approved', 'rejected', 'waiting_billing_clearance'].includes(status) ? now : requests[index].approvedAt,
+    completedAt: status === 'completed' ? now : requests[index].completedAt,
+  };
+  const nextRequests = requests.slice();
+  nextRequests[index] = nextRequest;
+  await writeProjectAccess(normalizedProject, { ...access, transferRequest: nextRequest, transferRequests: nextRequests });
+  if (status === 'completed') {
+    await applyOwnershipTransferCompletion(normalizedProject, nextRequest, { ...access, transferRequest: nextRequest, transferRequests: nextRequests }, now);
+  }
+  return publicOwnershipTransferRequest(nextRequest);
 }
 
 async function allProjectAccessEntries() {
@@ -3757,6 +4858,13 @@ async function acceptManagerInvite(token = '', body = {}) {
         emailVerified: true,
         source: 'manager-invite',
       }, { source: 'manager-invite' });
+    } else {
+      await loginUserAccount({
+        email,
+        password: body.password || '',
+        projectId: entry.access.projectId,
+        role: 'manager',
+      });
     }
     const accepted = {
       id: invite.id,
@@ -3780,6 +4888,8 @@ async function acceptManagerInvite(token = '', body = {}) {
       managerOwnerIds: [...new Set([...(entry.access.managerOwnerIds || []), invite.ownerId].filter(Boolean))],
       invites,
     });
+    await syncD1Invite(project, invites[inviteIndex], entry.access);
+    await syncD1ProjectMember(project, accepted, entry.access);
     return {
       invite: publicInvite({ ...invites[inviteIndex], project }),
       manager: accepted,
@@ -3830,6 +4940,12 @@ function pageFile(slug, project = {}) {
 }
 
 async function readPage(slug, project = {}) {
+  if (storageRuntime.active === 'd1' && hasProject(project)) {
+    return getD1PageBySlug(storageRuntime.d1, {
+      projectId: normalizeProject(project).projectId,
+      slug: safeSlug(slug),
+    });
+  }
   try {
     const raw = await readFile(pageFile(slug, project), 'utf8');
     return JSON.parse(raw);
@@ -3926,6 +5042,15 @@ async function savePage(slug, page, project = {}, options = {}) {
     updatedAt: new Date().toISOString(),
   };
 
+  if (storageRuntime.active === 'd1' && hasProject(normalizedProject)) {
+    return upsertD1Page(storageRuntime.d1, saved, {
+      projectId: normalizedProject.projectId,
+      slug: safe,
+      reason: page.revisionReason || options.reason || '',
+      createdByAccountId: options.createdByAccountId || '',
+    });
+  }
+
   await mkdir(path.dirname(targetFile), { recursive: true });
   await writeFile(targetFile, JSON.stringify(saved, null, 2), 'utf8');
   await writePageRevision(safe, saved, normalizedProject);
@@ -3933,6 +5058,19 @@ async function savePage(slug, page, project = {}, options = {}) {
 }
 
 async function writePageRevision(slug, page, project = {}) {
+  if (storageRuntime.active === 'd1' && hasProject(project)) {
+    const normalizedProject = normalizeProject({ ...project, slug });
+    const current = await getD1PageBySlug(storageRuntime.d1, {
+      projectId: normalizedProject.projectId,
+      slug: safeSlug(slug),
+    });
+    if (!current?.id) return null;
+    return insertD1PageRevision(storageRuntime.d1, { page, reason: page.revisionReason || '' }, {
+      pageId: current.id,
+      projectId: normalizedProject.projectId,
+      revision: Math.max(1, Number(current.revision || 1) + 1),
+    });
+  }
   const dir = pageRevisionDir(slug, project);
   const revisionId = new Date().toISOString().replace(/[:.]/g, '-');
   const revision = {
@@ -3965,6 +5103,21 @@ async function prunePageRevisions(dir, limit) {
 }
 
 async function listPageRevisions(slug, project = {}) {
+  if (storageRuntime.active === 'd1' && hasProject(project)) {
+    const revisions = await listD1PageRevisions(storageRuntime.d1, {
+      projectId: normalizeProject(project).projectId,
+      slug: safeSlug(slug),
+      limit: 20,
+    });
+    return revisions.map((revision) => ({
+      id: revision.id,
+      revisionAt: revision.revisionAt || '',
+      title: revision.title || '',
+      slug: revision.slug || slug,
+      updatedAt: revision.updatedAt || '',
+      blocks: revision.blocks || 0,
+    }));
+  }
   const dir = pageRevisionDir(slug, project);
   let entries = [];
   try {
@@ -4007,6 +5160,17 @@ async function readPageRevision(slug, revisionId, project = {}) {
   }
 
   const normalizedProject = hasProject(project) ? normalizeProject({ ...project, slug }) : {};
+  if (storageRuntime.active === 'd1' && hasProject(normalizedProject)) {
+    const revision = await getD1PageRevision(storageRuntime.d1, {
+      projectId: normalizedProject.projectId,
+      slug: safeSlug(slug),
+      id: safeRevisionId,
+    });
+    if (revision) return revision;
+    const error = new Error('Revision not found.');
+    error.status = 404;
+    throw error;
+  }
   const file = path.join(pageRevisionDir(slug, normalizedProject), `${safeRevisionId}.json`);
   try {
     return JSON.parse(await readFile(file, 'utf8'));
@@ -4026,6 +5190,12 @@ async function restorePageRevision(slug, revisionId, project = {}) {
   }
 
   const normalizedProject = hasProject(project) ? normalizeProject({ ...project, slug }) : {};
+  if (storageRuntime.active === 'd1' && hasProject(normalizedProject)) {
+    const revision = await readPageRevision(slug, safeRevisionId, normalizedProject);
+    const current = await readPage(slug, normalizedProject);
+    if (current) await writePageRevision(slug, { ...current, revisionReason: 'pre-restore-backup' }, normalizedProject);
+    return savePage(slug, revision.page, normalizedProject, { reason: 'restore' });
+  }
   const file = path.join(pageRevisionDir(slug, normalizedProject), `${safeRevisionId}.json`);
   let revision = null;
   try {

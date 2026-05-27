@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect, useRef, useState } from 'react';
-import { authAccountErrorMessage, changeAuthPassword, isValidAccountPassword, normalizeAccountPhone, registerAuthAccount } from '../lib/authAccounts.js';
+import { authAccountErrorMessage, changeAuthPassword, confirmEmailVerification, isValidAccountPassword, loginAuthAccount, normalizeAccountPhone, registerAuthAccount, requestEmailVerification } from '../lib/authAccounts.js';
 
 const demoHero = {
   title: '고객 상담을\n빠르게 연결',
@@ -350,14 +350,23 @@ function AuthScreen({ onAuth, initialMode = 'login', onBack }) {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const verifyEmail = () => {
+  const verifyEmail = async () => {
     const email = form.email.trim().toLowerCase();
     setError('');
     if (!email) {
       setError('이메일을 입력해주세요.');
       return;
     }
-    setEmailVerified(true);
+    setSaving(true);
+    try {
+      const verification = await requestEmailVerification(email, mode === 'reset' ? 'password-reset' : 'signup');
+      await confirmEmailVerification({ email, token: verification?.token || '' });
+      setEmailVerified(true);
+    } catch (err) {
+      setError(authAccountErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const submit = async (event) => {
@@ -419,11 +428,16 @@ function AuthScreen({ onAuth, initialMode = 'login', onBack }) {
         setError('비밀번호가 일치하지 않습니다.');
         return;
       }
+
+      if (!emailVerified) {
+        setError('이메일 인증을 먼저 완료해주세요.');
+        return;
+      }
     }
 
     setSaving(true);
     try {
-      const registered = mode === 'signup'
+      const authUser = mode === 'signup'
         ? await registerAuthAccount({
           name: form.name.trim(),
           email,
@@ -432,12 +446,12 @@ function AuthScreen({ onAuth, initialMode = 'login', onBack }) {
           emailVerified: true,
           source: 'signup',
         })
-        : null;
+        : await loginAuthAccount({ email, password: form.password });
       onAuth({
-        ...(registered || {}),
-        name: registered?.name || (mode === 'signup' ? form.name.trim() : (form.name.trim() || '사용자')),
+        ...(authUser || {}),
+        name: authUser?.name || (mode === 'signup' ? form.name.trim() : (form.name.trim() || '사용자')),
         email,
-        phone: registered?.phone || phone,
+        phone: authUser?.phone || phone,
         signedAt: new Date().toISOString(),
       });
     } catch (err) {
@@ -493,7 +507,7 @@ function AuthScreen({ onAuth, initialMode = 'login', onBack }) {
             </label>
           )}
 
-          {mode === 'reset' && (
+          {(mode === 'signup' || mode === 'reset') && (
             <button className="ghost-btn" type="button" onClick={verifyEmail} disabled={emailVerified}>
               {emailVerified ? '이메일 인증 완료' : '이메일 인증'}
             </button>
@@ -526,36 +540,118 @@ function TemplatePanelSlot({ Component, page, templates, onApply }) {
   );
 }
 
-function Dashboard({ user, page, leads, onCreate, onEdit, onPreview, onLogout, onAi, onManual, onTemplate, templates = [], TemplatesPanelComponent = null }) {
+function Dashboard({ user, page, leads, onCreate, onEdit, onPreview, onLogout, onAccountUpdate, onAi, onManual, onTemplate, templates = [], TemplatesPanelComponent = null }) {
   const hasPage = !!page?.title;
   const leadCount = Array.isArray(leads) ? leads.length : 0;
   const [createOpen, setCreateOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [accountSaving, setAccountSaving] = useState(false);
+  const [accountError, setAccountError] = useState('');
+  const [accountDraft, setAccountDraft] = useState({ name: user?.name || '', phone: user?.phone || '' });
   const openCreate = () => setCreateOpen(true);
+  const accountName = user?.name || user?.email || '사용자';
+  const accountMode = user?.accessMode || user?.role || 'master';
+  const modeLabel = accountMode === 'manager' ? '매니저' : accountMode === 'clientAdmin' ? '클라이언트 관리자' : '마스터';
+  const aiStatus = page?.ai?.lastTestStatus || 'idle';
+  const aiCostLabel = aiStatus === 'success' || aiStatus === 'saved' ? '고객 키 확인됨' : '요청 시 고객 키';
+  const setAccountField = (key, value) => {
+    setAccountError('');
+    setAccountDraft((current) => ({ ...current, [key]: value }));
+  };
+  const saveAccount = async (event) => {
+    event.preventDefault();
+    if (!onAccountUpdate) return;
+    setAccountSaving(true);
+    setAccountError('');
+    try {
+      await onAccountUpdate(accountDraft);
+      setAccountOpen(false);
+    } catch (err) {
+      setAccountError(authAccountErrorMessage(err));
+    } finally {
+      setAccountSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    setAccountDraft({ name: user?.name || '', phone: user?.phone || '' });
+  }, [user?.name, user?.phone]);
 
   return (
     <div className="home-shell">
       <header className="home-header">
         <div className="home-brand">
           <strong>Inlet</strong>
-          <span>인렛 관리</span>
+          <span>랜딩 관리</span>
         </div>
 
-        <div className="home-user">
-          <span>{user?.email || '사용자'}</span>
+        <div className="home-user home-account-card">
+          <div className="home-account-avatar" aria-hidden="true">{String(accountName).slice(0, 1).toUpperCase()}</div>
+          <div className="home-account-meta">
+            <strong>{accountName}</strong>
+            <span>{user?.email || '이메일 없음'}</span>
+          </div>
+          <em>{modeLabel}</em>
+          <button type="button" onClick={() => setAccountOpen((open) => !open)}>{accountOpen ? '닫기' : '계정'}</button>
           <button type="button" onClick={onLogout}>로그아웃</button>
         </div>
       </header>
 
       <main className="home-main">
-        <section className="home-hero">
+        <section className="home-hero home-dashboard-hero">
           <div>
-            <span>고객 인입 랜딩 빌더</span>
-            <h1>고객이 들어오는<br/>페이지를 만드세요.</h1>
-            <p>AI 초안으로 시작하고, 필요한 부분만 직접 수정하세요.</p>
+            <span>고객 접수 랜딩 빌더</span>
+            <h1>랜딩페이지를 만들고<br/>접수와 통계를 관리하세요.</h1>
+            <p>페이지 제작, 접수함, 통계, 설정을 한 화면에서 관리합니다.</p>
           </div>
 
           <button type="button" onClick={openCreate}>새 랜딩 만들기</button>
         </section>
+
+        <section className="home-account-summary" aria-label="계정 상태">
+          <div>
+            <span>계정</span>
+            <strong>{user?.email || '이메일 없음'}</strong>
+          </div>
+          <div>
+            <span>휴대폰</span>
+            <strong>{user?.phone || '미등록'}</strong>
+          </div>
+          <div>
+            <span>권한</span>
+            <strong>{modeLabel}</strong>
+          </div>
+          <div>
+            <span>AI 비용</span>
+            <strong>{aiCostLabel}</strong>
+          </div>
+        </section>
+
+        {accountOpen && (
+          <section className="home-section home-account-edit">
+            <div className="home-section-title">
+              <h2>계정 설정</h2>
+              <button type="button" onClick={() => setAccountOpen(false)}>닫기</button>
+            </div>
+            <form className="home-account-form" onSubmit={saveAccount}>
+              <label>
+                <span>이름</span>
+                <input value={accountDraft.name} onChange={(event) => setAccountField('name', event.target.value)} placeholder="이름" />
+              </label>
+              <label>
+                <span>이메일</span>
+                <input value={user?.email || ''} disabled placeholder="email@example.com" />
+              </label>
+              <label>
+                <span>휴대폰</span>
+                <input type="tel" inputMode="tel" value={accountDraft.phone} onChange={(event) => setAccountField('phone', event.target.value)} placeholder="01012345678" />
+              </label>
+              <p>비밀번호 변경은 로그인 화면의 이메일 인증 후 비밀번호 변경 흐름을 사용합니다. AI API 키는 기본적으로 저장하지 않고 생성 요청 시 고객 키를 사용합니다.</p>
+              {accountError && <strong className="auth-error">{accountError}</strong>}
+              <button type="submit" disabled={accountSaving}>{accountSaving ? '저장 중' : '저장'}</button>
+            </form>
+          </section>
+        )}
 
         {createOpen && (
           <DashboardCreateFlow
@@ -599,7 +695,6 @@ function Dashboard({ user, page, leads, onCreate, onEdit, onPreview, onLogout, o
     </div>
   );
 }
-
 function DashboardCreateFlow({ page, templates = [], onAi, onManual, onTemplate, onClose, TemplatesPanelComponent = null }) {
   const [step, setStep] = useState('menu');
   const footerBlock = page?.blocks?.find((block) => block.type === 'footer');
@@ -861,3 +956,4 @@ function StartModeOverlay({ onManual, onAi, onTemplate, onClose, templates = [] 
 
 export { PublicHome, AuthScreen, Dashboard, CreateLandingModal, StartModeOverlay };
 import './HomeScreens.css';
+

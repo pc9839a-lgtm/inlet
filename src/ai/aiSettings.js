@@ -1,10 +1,10 @@
 import { isClientAiKeyStorageEnabled } from '../config/runtimeConfig.js';
 
 export const AI_STORAGE_NOTICE =
-  'API 키는 기본값으로 브라우저에 저장하지 않고 현재 화면에서만 사용합니다. 저장을 허용하려면 VITE_INLET_ALLOW_CLIENT_AI_KEY_STORAGE=1을 설정하세요.';
+  'API 키는 기본값으로 브라우저에 저장하지 않습니다. 현재 화면에서만 사용하며, 저장을 허용하려면 VITE_INLET_ALLOW_CLIENT_AI_KEY_STORAGE=1을 설정하세요.';
 
 export const AI_MODEL_OPTIONS = [
-  ['gpt-4.1', '품질 우선'],
+  ['gpt-4.1', '최고 품질'],
   ['gpt-4.1-mini', '균형'],
   ['gpt-4o-mini', '저비용'],
   ['gpt-4.1-nano', '초고속'],

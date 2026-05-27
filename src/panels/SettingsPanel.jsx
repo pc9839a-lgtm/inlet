@@ -9,7 +9,7 @@ import {
   normalizeManagerAccount,
   normalizeOwnershipSettings,
 } from '../lib/authContext.js';
-import { createLocalManagerInvite, createServerManagerInvite, managerInviteUrl } from '../lib/managerInvites.js';
+import { createLocalManagerInvite, createServerManagerInvite, createServerOwnershipTransfer, managerInviteUrl } from '../lib/managerInvites.js';
 import { normalizeIntegrations } from '../lib/pageModel.js';
 import { confirmAction, notify } from '../lib/uiFeedback.js';
 import './SettingsPanel.css';
@@ -21,6 +21,42 @@ const MANAGER_TAB_LABELS = {
   stats: '통계',
   settings: '설정',
 };
+
+const MANAGER_ACCESS_PRESETS = [
+  {
+    id: 'editor',
+    label: '편집 담당',
+    access: {
+      edit: { read: true, write: true },
+      style: { read: true, write: true },
+      inbox: { read: false, write: false },
+      stats: { read: false, write: false },
+      settings: { read: false, write: false },
+    },
+  },
+  {
+    id: 'operator',
+    label: '운영 담당',
+    access: {
+      edit: { read: false, write: false },
+      style: { read: false, write: false },
+      inbox: { read: true, write: true },
+      stats: { read: true, write: false },
+      settings: { read: false, write: false },
+    },
+  },
+  {
+    id: 'viewer',
+    label: '조회 전용',
+    access: {
+      edit: { read: false, write: false },
+      style: { read: false, write: false },
+      inbox: { read: true, write: false },
+      stats: { read: true, write: false },
+      settings: { read: false, write: false },
+    },
+  },
+];
 
 function newManager() {
   return normalizeManagerAccount({
@@ -227,6 +263,11 @@ export default function SettingsPanel({
     });
   };
 
+  const setManagerPreset = (index, preset) => {
+    updateManager(index, { access: preset.access });
+    setExpandedManagerMenuId('');
+  };
+
   const addManager = () => {
     const manager = newManager();
     updateManagerDrafts([...managerDraft, manager]);
@@ -240,6 +281,7 @@ export default function SettingsPanel({
       notify('매니저 이메일을 먼저 입력하세요.', 'error');
       return;
     }
+    updateOwnership({ managers: managerDraft.map(normalizeManagerAccount) });
     setInviteLoading(manager.id || manager.email || String(index));
     try {
       const invite = serverPage
@@ -360,7 +402,7 @@ export default function SettingsPanel({
                     <option key={manager.id} value={manager.id}>{managerLabel(manager)} · {manager.email}</option>
                   ))}
                 </select>
-                <button type="button" onClick={requestOwnershipTransfer} disabled={!eligibleTransferManagers.length}>요청</button>
+                <button type="button" onClick={requestOwnershipTransferPersisted} disabled={!eligibleTransferManagers.length}>요청</button>
               </div>
               {transferRequest?.status && (
                 <div className="ownership-transfer-status">
@@ -402,6 +444,13 @@ export default function SettingsPanel({
                       <div className="settings-grid">
                         <Field label="이름" value={manager.name} disabled={lockedSections.managers} onChange={(value) => updateManager(index, { name: value })} />
                         <Field label="이메일" value={manager.email} disabled={lockedSections.managers} onChange={(value) => updateManager(index, { email: value.trim().toLowerCase() })} />
+                      </div>
+                      <div className="manager-preset-row" aria-label="빠른 권한 설정">
+                        {MANAGER_ACCESS_PRESETS.map((preset) => (
+                          <button type="button" key={preset.id} disabled={lockedSections.managers} onClick={() => setManagerPreset(index, preset)}>
+                            {preset.label}
+                          </button>
+                        ))}
                       </div>
                       <div className="manager-detail-actions">
                         <button type="button" onClick={() => setExpandedManagerMenuId(menuExpanded ? '' : manager.id)}>{menuExpanded ? '메뉴권한 닫기' : '메뉴권한'}</button>

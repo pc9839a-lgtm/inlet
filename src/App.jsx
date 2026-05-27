@@ -25,6 +25,7 @@ import TargetControl from './editor/TargetControl.jsx';
 import RichField from './editor/RichField.jsx';
 import { normalizeButtons } from './lib/blockButtons.js';
 import { canUseAdminSurface, canUseBuilderSurface, canWriteTab, isClientAdminMode, tabsForAccessMode, accessModeFor } from './lib/authContext.js';
+import { logoutAuthAccount, refreshAuthSession, updateAuthAccount } from './lib/authAccounts.js';
 import { normalizeAuthUser } from './lib/authIdentity.js';
 import { generateStandaloneFormHtml } from './lib/formEmbed.js';
 import { fetchAllServerEvents, persistEvent } from './lib/eventRepository.js';
@@ -426,6 +427,7 @@ function App() {
   const [pageConflict, setPageConflict] = useState(null);
   const [previewCopyIssue, setPreviewCopyIssue] = useState(null);
   const saveErrorNoticeRef = useRef('');
+  const sessionRefreshRef = useRef('');
   const templateModuleRef = useRef(null);
   const { toast, confirmDialog, setToast, setConfirmDialog, showToast, requestConfirm } = useBuilderFeedback();
   const [connectionsEditing, setConnectionsEditing] = useState(true);
@@ -515,6 +517,37 @@ function App() {
     saveLocalJson(AUTH_KEY, normalized, '로그인 정보', { quietSuccess: true });
     if (JSON.stringify(normalized) !== JSON.stringify(authUser)) setAuthUser(normalized);
   }, [authUser]);
+
+  useEffect(() => {
+    const session = String(authUser?.session || '').trim();
+    if (!session || sessionRefreshRef.current === session) return;
+    sessionRefreshRef.current = session;
+    let alive = true;
+    refreshAuthSession({ session, projectId: page.projectId || '' })
+      .then((nextUser) => {
+        if (!alive || !nextUser) return;
+        const normalized = normalizeAuthUser({
+          ...authUser,
+          ...nextUser,
+          session: nextUser.session || session,
+          signedAt: new Date().toISOString(),
+        });
+        sessionRefreshRef.current = String(normalized.session || session);
+        saveLocalJson(AUTH_KEY, normalized, '로그인 정보', { quietSuccess: true });
+        setAuthUser(normalized);
+      })
+      .catch((error) => {
+        if (!alive) return;
+        const status = Number(error?.status || 0);
+        if (status === 401 || status === 403 || status === 404) {
+          localStorage.removeItem(AUTH_KEY);
+          setAuthUser(null);
+          setWorkspaceOpen(false);
+          showToast('로그인 세션이 만료되었습니다. 다시 로그인해주세요.', 'error');
+        }
+      });
+    return () => { alive = false; };
+  }, [authUser?.session, page.projectId]);
   useEffect(() => {
     let alive = true;
     fetchServerPage(page.slug, projectContext(page, authUser))
@@ -1252,6 +1285,12 @@ function App() {
   };
 
   const logout = () => {
+    const session = String(authUser?.session || '').trim();
+    if (session) {
+      logoutAuthAccount({ session }).catch((error) => {
+        console.warn('Session logout request failed:', error);
+      });
+    }
     localStorage.removeItem(AUTH_KEY);
     saveLocalJson(DASHBOARD_KEY, { open: false }, '작업공간 상태', { quietSuccess: true });
     setAuthUser(null);
@@ -1263,6 +1302,29 @@ function App() {
     saveLocalJson(AUTH_KEY, normalized, '로그인 정보', { quietSuccess: true });
     setAuthUser(normalized);
     setAuthView('');
+  };
+
+  const updateAccountProfile = async (patch = {}) => {
+    const session = String(authUser?.session || '').trim();
+    if (!session) {
+      showToast('로그인 세션이 없습니다. 다시 로그인해주세요.', 'error');
+      throw new Error('Missing session');
+    }
+    const updated = await updateAuthAccount({
+      ...patch,
+      session,
+      projectId: page.projectId || '',
+    });
+    const normalized = normalizeAuthUser({
+      ...authUser,
+      ...updated,
+      session: updated?.session || session,
+      signedAt: new Date().toISOString(),
+    });
+    saveLocalJson(AUTH_KEY, normalized, '로그인 정보', { quietSuccess: true });
+    setAuthUser(normalized);
+    showToast('계정 정보가 저장되었습니다.', 'ok');
+    return normalized;
   };
 
   const acceptInviteAuth = async (result = {}) => {
@@ -1460,6 +1522,7 @@ function App() {
             onEdit={openWorkspace}
             onPreview={openPreview}
             onLogout={logout}
+            onAccountUpdate={updateAccountProfile}
             TemplatesPanelComponent={TemplatesPanel}
           />
           {canUseBuilder && createOpen && <CreateLandingModal page={page} onClose={()=>setCreateOpen(false)} onAi={createWithAi} onManual={createManual} onTemplate={createFromTemplate} templates={templateChoices} TemplatesPanelComponent={TemplatesPanel}/>}

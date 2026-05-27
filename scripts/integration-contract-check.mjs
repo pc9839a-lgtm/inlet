@@ -71,7 +71,32 @@ requireAll(server, [
   'createManagerInvite',
   'assertProjectAdmin',
   'acceptManagerInvite',
+  '/api/projects/ownership-transfer',
+  'adminTransferMatch',
+  'createOwnershipTransferRequest',
+  'listOwnershipTransferRequests',
+  'updateOwnershipTransferRequest',
+  'insertD1AuditLog',
+  'upsertD1OwnershipTransferRequest',
+  'listD1OwnershipTransferRequests',
+  "reason: 'restore'",
   'createSessionToken',
+  'loginUserAccount',
+  'issueEmailVerification',
+  'confirmEmailVerification',
+  'hasConfirmedEmailVerification',
+  'upsertD1Lead',
+  'listD1Leads',
+  'getD1Lead',
+  'deleteD1Lead',
+  'findD1DuplicateLead',
+  'canUseD1LeadList',
+  'listD1LeadsForExport',
+  'd1LeadKindFilter',
+  'd1LeadDeliveryStatusFilter',
+  'listD1EventsForStats',
+  'assertLeadVersion',
+  'sanitizedLeadPatch',
   "tab: 'inbox'",
   "tab: 'stats'",
   "tab: 'edit'",
@@ -82,10 +107,24 @@ requireAll(authSmoke, [
   'client@example.test',
   'manager@example.test',
   '/api/auth/register',
+  '/api/auth/login',
+  '/api/auth/session',
+  '/api/auth/logout',
+  '/api/auth/email-verification',
   '/api/auth/password',
   'duplicate account email expected 409',
   'duplicate account phone expected 409',
   'weak password register expected 400',
+  'unverified signup expected 403',
+  'email verification issue expected 200',
+  'email verification confirm expected 200',
+  'verified signup expected 200',
+  'account login invalid password expected 401',
+  'account login expected 200',
+  'server-smoke-auth-session-refresh',
+  'session refresh expected 200',
+  'session logout expected 200',
+  'invalid session refresh expected 401',
   'password change without email verification expected 403',
   'password change after email verification expected 200',
   'signup invite without phone expected 400',
@@ -93,12 +132,19 @@ requireAll(authSmoke, [
   'server-smoke-strict-session-missing-secret',
   'server-smoke-strict-invalid-session',
   'accepted manager should receive signed session',
+  'manager invite login wrong password expected 401',
   'assertManagerServerAccessMatrix',
   'inbox write denied',
   'stats write denied',
   'invite create denied',
   'client admin manager invite expected 200',
   'client admin manager invite should include token',
+  'client admin ownership transfer request expected 200',
+  'ownership transfer request should stay requested before internal approval',
+  'client ownership transfer approval expected 403',
+  'owner ownership transfer approval expected 200',
+  'ownership transfer approval should preserve billing wait state',
+  'manager ownership transfer request expected 403',
   'strict mode without session secret should reject dev headers',
   'strict mode with invalid session should reject forged dev headers',
   'manager page write must not overwrite ownership metadata',
@@ -146,13 +192,37 @@ requireAll(d1Adapter, [
   'd1UnavailablePlan',
   'assertD1Binding',
   'listD1Leads',
+  'getD1Lead',
+  'deleteD1Lead',
+  'deliveryStatus',
   'listD1Events',
   'encodeD1Lead',
   'decodeD1Lead',
   'upsertD1Lead',
+  'encodeD1Page',
+  'decodeD1Page',
+  'upsertD1Page',
+  'getD1PageBySlug',
+  'insertD1PageRevision',
+  'listD1PageRevisions',
+  'getD1PageRevision',
+  'decodeD1Project',
+  'getD1ProjectById',
+  'getD1ProjectBySlug',
+  'listD1ProjectMembers',
+  'getD1ProjectAccess',
+  'encodeD1AiDraft',
+  'decodeD1AiDraft',
+  'upsertD1AiDraft',
+  'listD1AiDrafts',
+  'deleteD1AiDraft',
   'encodeD1Event',
   'decodeD1Event',
   'insertD1Event',
+  'encodeD1OwnershipTransferRequest',
+  'decodeD1OwnershipTransferRequest',
+  'upsertD1OwnershipTransferRequest',
+  'listD1OwnershipTransferRequests',
   'insertD1AuditLog',
   'fallbackAdapter',
 ], 'D1 adapter contract');
@@ -173,9 +243,18 @@ const d1AdapterQa = await read('scripts/d1-adapter-quality-check.mjs');
 requireAll(d1AdapterQa, [
   'fakeD1',
   'upsertD1Lead',
+  'getD1Lead',
+  'deleteD1Lead',
+  'upsertD1Page',
+  'getD1PageBySlug',
+  'listD1PageRevisions',
+  'upsertD1AiDraft',
+  'listD1AiDrafts',
+  'deleteD1AiDraft',
   'listD1Leads',
   'insertD1Event',
   'listD1Events',
+  'listD1OwnershipTransferRequests',
   'createStorageRuntime',
   'storageRuntimePlan',
 ], 'D1 adapter QA contract');
@@ -231,6 +310,22 @@ requireAll(aiQa, [
   'bad-model-response',
   'liveSummary',
 ], 'AI live QA status contract');
+
+const aiDraftGenerator = await read('src/ai/aiDraftGenerator.js');
+const aiSettings = await read('src/ai/aiSettings.js');
+const aiPanel = await read('src/ai/AiPanel.jsx');
+requireAll(aiDraftGenerator, [
+  "postJson('/api/ai/draft', { model, input: normalizedInput, apiKey: apiKey || '' })",
+  "postJson('/api/ai/test', { model, apiKey: apiKey || '' })",
+], 'customer-owned AI key request contract');
+requireAll(aiSettings, [
+  'VITE_INLET_ALLOW_CLIENT_AI_KEY_STORAGE=1',
+  "isClientAiKeyStorageEnabled() ? (settings.apiKey || '') : ''",
+], 'customer-owned AI key storage contract');
+requireAll(aiPanel, [
+  '고객 API 키를 이번 세션에서만 사용합니다. 저장하지 않습니다.',
+  '입력한 API 키는 저장하지 않고 이번 요청에만 서버로 전달합니다.',
+], 'customer-owned AI key UI contract');
 
 const app = await read('src/App.jsx');
 requireAll(app, [
@@ -315,10 +410,20 @@ requireAll(inviteAcceptScreen, [
 const authAccounts = await read('src/lib/authAccounts.js');
 requireAll(authAccounts, [
   '/api/auth/register',
+  '/api/auth/login',
+  '/api/auth/session',
+  '/api/auth/logout',
+  '/api/auth/email-verification',
+  '/api/auth/email-verification/confirm',
   '/api/auth/password',
   'AUTH_EMAIL_DUPLICATE',
   'AUTH_PHONE_DUPLICATE',
   'AUTH_PASSWORD_POLICY',
+  'AUTH_LOGIN_INVALID',
+  'AUTH_SESSION_INVALID',
+  'EMAIL_VERIFICATION_REQUIRED',
+  'refreshAuthSession',
+  'logoutAuthAccount',
   'normalizeAccountPhone',
   'isValidAccountPassword',
 ], 'auth account duplicate contract');
@@ -408,6 +513,21 @@ requireAll(perfQa, [
   'migrationPriority',
 ], 'offline performance QA');
 
+const d1BackfillDryRun = await read('scripts/d1-backfill-dry-run.mjs');
+requireAll(d1BackfillDryRun, [
+  'dryRun: true',
+  'duplicateMonthlyContacts',
+  'duplicateMonthlyEventDedupeKeys',
+  'deliveryLogs',
+  'skippedInvalidLines',
+  'future D1 write backfill with explicit confirmation only',
+], 'D1 backfill dry-run contract');
+
+const packageSource = await read('package.json');
+requireAll(packageSource, [
+  'd1:backfill:dry-run',
+], 'D1 backfill package script');
+
 requireAll(server, [
   'queryJsonlRecords',
   'normalizeSessionAuthMode',
@@ -426,6 +546,16 @@ requireAll(server, [
   "type: 'delivery-retry-queue'",
   "type: 'stats-events'",
   "type: 'stats-leads'",
+  'aggregateD1Stats',
+  'getD1AccountByEmail',
+  'getD1AccountByPhone',
+  'upsertD1Account',
+  'upsertD1Invite',
+  'upsertD1ProjectMember',
+  'findD1LeadsByContact',
+  'listD1DeliveryLogs',
+  'listD1DeliveryRetryQueue',
+  'rowHydration: false',
   'matchesLeadFilters',
 ], 'server indexed storage boundary contract');
 assert(!server.includes('async function listLeads(') && !server.includes('async function listEvents(') && !server.includes('function filterLeadList('), 'server must not keep legacy unpaged lead/event list helpers');
@@ -464,9 +594,11 @@ requireAll(artifactQa, [
 const browserVisualQa = await read('scripts/browser-visual-quality-check.mjs');
 requireAll(browserVisualQa, [
   'INLET_BROWSER_QA_REQUIRE',
+  'INLET_BROWSER_QA_EXTRA_URLS',
   'INLET_BROWSER_QA_TEMPLATE_ROUTES',
   'launchPlan',
-  'requires Playwright or Puppeteer',
+  'local-chrome-cdp',
+  'requires Playwright, Puppeteer, or local Chrome/Edge',
   '.error-screen, .app-error-screen, .block-render-fallback',
 ], 'browser visual QA enforcement contract');
 
@@ -487,12 +619,12 @@ requireAll(opsQa, [
 const remainingPatches = await read('docs/parallel-patch/remaining-patches.md');
 requireAll(remainingPatches, [
   'Remaining Patches: 3 Workers',
-  'Worker 1: Auth Session, Accounts, Billing, And Storage Scale',
+  'Worker 1: Auth Session, Accounts, Members, And Storage Scale',
   'Worker 2: Real Browser QA And Frontend Product Polish',
   'Worker 3: Live Integration, Internal Admin, And Ops Verification',
   'Expanded Launch Backlog',
   'Login, account, and member management',
-  'Plans, payment, and subscription',
+  'Plans, payment, and subscription, final phase',
   'deployment:qa',
   'Do not reassign these',
   'npm run live:qa',

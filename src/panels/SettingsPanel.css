@@ -314,6 +314,34 @@
   gap: 8px;
 }
 
+.manager-preset-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.manager-preset-row button {
+  min-height: 42px;
+  border: 1px solid #dbe3ef;
+  border-radius: 14px;
+  background: #f8fafc;
+  color: #111827;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.manager-preset-row button:hover {
+  border-color: #111827;
+  background: #fff;
+}
+
+.manager-preset-row button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
 .manager-detail-actions button {
   min-height: 42px;
   border: 1px solid #dbe3ef;
@@ -411,6 +439,10 @@
     justify-content: stretch;
     display: grid;
     grid-template-columns: 1fr 1fr;
+  }
+
+  .manager-preset-row {
+    grid-template-columns: 1fr;
   }
 
   .manager-empty-state button,

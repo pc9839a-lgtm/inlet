@@ -132,6 +132,36 @@ await runSmoke('server-smoke-auth', async ({ baseUrl }) => {
   });
   assert(weakPassword.status === 400, `weak password register expected 400, got ${weakPassword.status}`);
 
+  const unverifiedSignup = await fetchWithTimeout(`${baseUrl}/api/auth/register`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ user: { name: 'Unverified Signup', email: 'unverified@example.test', phone: '010-1000-2003', password: 'secret1', emailVerified: false } }),
+  });
+  assert(unverifiedSignup.status === 403, `unverified signup expected 403, got ${unverifiedSignup.status}`);
+
+  const verificationIssue = await fetchWithTimeout(`${baseUrl}/api/auth/email-verification`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ email: 'verified-signup@example.test', purpose: 'signup' }),
+  });
+  assert(verificationIssue.status === 200, `email verification issue expected 200, got ${verificationIssue.status}`);
+  const verificationIssueData = await verificationIssue.json();
+  assert(verificationIssueData.verification?.token, 'email verification issue should expose mock token for offline QA');
+
+  const verificationConfirm = await fetchWithTimeout(`${baseUrl}/api/auth/email-verification/confirm`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ email: 'verified-signup@example.test', token: verificationIssueData.verification.token }),
+  });
+  assert(verificationConfirm.status === 200, `email verification confirm expected 200, got ${verificationConfirm.status}`);
+
+  const verifiedSignup = await fetchWithTimeout(`${baseUrl}/api/auth/register`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ user: { name: 'Verified Signup', email: 'verified-signup@example.test', phone: '010-1000-2004', password: 'secret1' } }),
+  });
+  assert(verifiedSignup.status === 200, `verified signup expected 200, got ${verifiedSignup.status}`);
+
   const passwordNoVerify = await fetchWithTimeout(`${baseUrl}/api/auth/password`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
@@ -145,6 +175,41 @@ await runSmoke('server-smoke-auth', async ({ baseUrl }) => {
     body: JSON.stringify({ email: 'billing@example.test', password: 'changed1', emailVerified: true }),
   });
   assert(passwordChanged.status === 200, `password change after email verification expected 200, got ${passwordChanged.status}`);
+
+  const loginInvalid = await fetchWithTimeout(`${baseUrl}/api/auth/login`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ email: 'billing@example.test', password: 'wrong1' }),
+  });
+  assert(loginInvalid.status === 401, `account login invalid password expected 401, got ${loginInvalid.status}`);
+
+  const loginOk = await fetchWithTimeout(`${baseUrl}/api/auth/login`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ email: 'billing@example.test', password: 'changed1', projectId: 'smoke-auth-project' }),
+  });
+  assert(loginOk.status === 200, `account login expected 200, got ${loginOk.status}`);
+  const loginOkData = await loginOk.json();
+  assert(loginOkData.user?.email === 'billing@example.test', 'account login should return normalized account');
+  assert(Object.prototype.hasOwnProperty.call(loginOkData, 'session'), 'account login should return a session field');
+
+  const accountUpdated = await fetchWithTimeout(`${baseUrl}/api/auth/account`, {
+    method: 'PATCH',
+    headers: authHeaders({ 'Content-Type': 'application/json', 'X-Inlet-Session': loginOkData.session }),
+    body: JSON.stringify({ name: 'Billing Owner', phone: '010-9999-0000' }),
+  });
+  assert(accountUpdated.status === 200, `account profile update expected 200, got ${accountUpdated.status}`);
+  const accountUpdatedData = await accountUpdated.json();
+  assert(accountUpdatedData.user?.name === 'Billing Owner', 'account profile update should persist name');
+  assert(accountUpdatedData.user?.phone === '01099990000', 'account profile update should normalize phone');
+  assert(accountUpdatedData.session, 'account profile update should return a refreshed session');
+
+  const accountDuplicatePhone = await fetchWithTimeout(`${baseUrl}/api/auth/account`, {
+    method: 'PATCH',
+    headers: authHeaders({ 'Content-Type': 'application/json', 'X-Inlet-Session': accountUpdatedData.session }),
+    body: JSON.stringify({ name: 'Billing Owner', phone: '010-1000-2004' }),
+  });
+  assert(accountDuplicatePhone.status === 409, `account duplicate phone update expected 409, got ${accountDuplicatePhone.status}`);
 
   const project = { projectId: 'smoke-auth-project', ownerId: 'local-user', slug: 'smoke-auth-page' };
   const saved = await fetchWithTimeout(`${baseUrl}/api/pages/${project.slug}`, {
@@ -236,6 +301,61 @@ await runSmoke('server-smoke-auth', async ({ baseUrl }) => {
   const clientManagerInviteData = await clientManagerInvite.json();
   assert(clientManagerInviteData.invite?.token, 'client admin manager invite should include token');
 
+  const clientTransfer = await fetchWithTimeout(`${baseUrl}/api/projects/ownership-transfer`, {
+    method: 'POST',
+    headers: authHeaders({
+      'Content-Type': 'application/json',
+      'X-Inlet-Owner-Id': clientOwnerId,
+      'X-Inlet-Project-Id': project.projectId,
+    }),
+    body: JSON.stringify({
+      project,
+      transfer: { managerEmail: 'manager@example.test' },
+    }),
+  });
+  assert(clientTransfer.status === 200, `client admin ownership transfer request expected 200, got ${clientTransfer.status}`);
+  const clientTransferData = await clientTransfer.json();
+  assert(clientTransferData.request?.status === 'requested', 'ownership transfer request should stay requested before internal approval');
+
+  const transferList = await fetchWithTimeout(`${baseUrl}/api/projects/ownership-transfer?projectId=${project.projectId}&ownerId=${project.ownerId}&slug=${project.slug}`, {
+    headers: authHeaders({
+      'X-Inlet-Owner-Id': clientOwnerId,
+      'X-Inlet-Project-Id': project.projectId,
+    }),
+  });
+  assert(transferList.status === 200, `ownership transfer list expected 200, got ${transferList.status}`);
+  const transferListData = await transferList.json();
+  assert(transferListData.requests?.length === 1, 'ownership transfer list should include created request');
+  const transferId = transferListData.requests[0].id;
+
+  const clientTransferApproval = await fetchWithTimeout(`${baseUrl}/api/admin/ownership-transfer/${encodeURIComponent(transferId)}`, {
+    method: 'PATCH',
+    headers: authHeaders({
+      'Content-Type': 'application/json',
+      'X-Inlet-Owner-Id': clientOwnerId,
+      'X-Inlet-Project-Id': project.projectId,
+    }),
+    body: JSON.stringify({
+      project,
+      status: 'approved',
+    }),
+  });
+  assert(clientTransferApproval.status === 403, `client ownership transfer approval expected 403, got ${clientTransferApproval.status}`);
+
+  const ownerTransferApproval = await fetchWithTimeout(`${baseUrl}/api/admin/ownership-transfer/${encodeURIComponent(transferId)}`, {
+    method: 'PATCH',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({
+      project,
+      status: 'waiting_billing_clearance',
+      billingClearanceStatus: 'active_subscription',
+      note: 'billing must clear before completion',
+    }),
+  });
+  assert(ownerTransferApproval.status === 200, `owner ownership transfer approval expected 200, got ${ownerTransferApproval.status}`);
+  const ownerTransferApprovalData = await ownerTransferApproval.json();
+  assert(ownerTransferApprovalData.request?.status === 'waiting_billing_clearance', 'ownership transfer approval should preserve billing wait state');
+
   const managerOwnerId = `user_${stableHash('manager@example.test')}`;
   const managerHeaders = authHeaders({
     'X-Inlet-Owner-Id': managerOwnerId,
@@ -243,12 +363,55 @@ await runSmoke('server-smoke-auth', async ({ baseUrl }) => {
   });
   await assertManagerServerAccessMatrix(baseUrl, project, managerHeaders, 'manager header identity');
 
-  const ownerAfterManagerWrite = await fetchWithTimeout(`${baseUrl}/api/pages/${project.slug}?projectId=${project.projectId}&ownerId=${project.ownerId}`, {
+  const managerTransfer = await fetchWithTimeout(`${baseUrl}/api/projects/ownership-transfer`, {
+    method: 'POST',
+    headers: { ...managerHeaders, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      project,
+      transfer: { managerEmail: 'manager@example.test' },
+    }),
+  });
+  assert(managerTransfer.status === 403, `manager ownership transfer request expected 403, got ${managerTransfer.status}`);
+
+  const ownerTransferCompleteBlocked = await fetchWithTimeout(`${baseUrl}/api/admin/ownership-transfer/${encodeURIComponent(transferId)}`, {
+    method: 'PATCH',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({
+      project,
+      status: 'completed',
+      billingClearanceStatus: 'active_subscription',
+      note: 'should not complete while billing is active',
+    }),
+  });
+  assert(ownerTransferCompleteBlocked.status === 409, `ownership transfer completion before billing clear expected 409, got ${ownerTransferCompleteBlocked.status}`);
+
+  const ownerTransferComplete = await fetchWithTimeout(`${baseUrl}/api/admin/ownership-transfer/${encodeURIComponent(transferId)}`, {
+    method: 'PATCH',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({
+      project,
+      status: 'completed',
+      billingClearanceStatus: 'clear',
+      note: 'billing clear and transfer complete',
+    }),
+  });
+  assert(ownerTransferComplete.status === 200, `ownership transfer completion expected 200, got ${ownerTransferComplete.status}`);
+  const ownerTransferCompleteData = await ownerTransferComplete.json();
+  assert(ownerTransferCompleteData.request?.status === 'completed', 'ownership transfer should reach completed state');
+
+  const oldOwnerAfterTransfer = await fetchWithTimeout(`${baseUrl}/api/pages/${project.slug}?projectId=${project.projectId}&ownerId=${project.ownerId}`, {
     headers: authHeaders(),
   });
-  const ownerAfterManagerWriteData = await ownerAfterManagerWrite.json();
-  assert(ownerAfterManagerWriteData.page?.ownership?.ownerEmail !== 'hacker@example.test', 'manager page write must not overwrite ownership metadata');
-});
+  assert(oldOwnerAfterTransfer.status === 403, `old owner read after ownership transfer expected 403, got ${oldOwnerAfterTransfer.status}`);
+
+  const newOwnerAfterTransfer = await fetchWithTimeout(`${baseUrl}/api/pages/${project.slug}?projectId=${project.projectId}&ownerId=${project.ownerId}`, {
+    headers: managerHeaders,
+  });
+  assert(newOwnerAfterTransfer.status === 200, `new owner read after ownership transfer expected 200, got ${newOwnerAfterTransfer.status}`);
+  const newOwnerAfterTransferData = await newOwnerAfterTransfer.json();
+  assert(newOwnerAfterTransferData.page?.ownership?.ownerEmail === 'manager@example.test', 'completed transfer should update page owner email');
+  assert(newOwnerAfterTransferData.page?.ownership?.ownerEmail !== 'hacker@example.test', 'manager page write must not overwrite ownership metadata');
+}, { env: { INLET_SESSION_SECRET: 'smoke-session-secret' } });
 
 await runSmoke('server-smoke-manager-invite-session', async ({ baseUrl }) => {
   const secret = 'smoke-session-secret';
@@ -304,10 +467,24 @@ await runSmoke('server-smoke-manager-invite-session', async ({ baseUrl }) => {
   });
   assert(inviteRead.status === 200, `manager invite read expected 200, got ${inviteRead.status}`);
 
+  const managerAccount = await fetchWithTimeout(`${baseUrl}/api/auth/register`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ user: { name: 'Invite Manager', email: 'invite-manager@example.test', phone: '010-2222-3333', password: 'secret1', emailVerified: true } }),
+  });
+  assert(managerAccount.status === 200, `manager invite login account register expected 200, got ${managerAccount.status}`);
+
+  const badPasswordAccept = await fetchWithTimeout(`${baseUrl}/api/projects/invites/${encodeURIComponent(inviteData.invite.token)}/accept`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ email: 'invite-manager@example.test', name: 'Accepted Manager', authMode: 'login', password: 'wrong1' }),
+  });
+  assert(badPasswordAccept.status === 401, `manager invite login wrong password expected 401, got ${badPasswordAccept.status}`);
+
   const accepted = await fetchWithTimeout(`${baseUrl}/api/projects/invites/${encodeURIComponent(inviteData.invite.token)}/accept`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ email: 'invite-manager@example.test', name: 'Accepted Manager' }),
+    body: JSON.stringify({ email: 'invite-manager@example.test', name: 'Accepted Manager', authMode: 'login', password: 'secret1' }),
   });
   assert(accepted.status === 200, `manager invite accept expected 200, got ${accepted.status}`);
   const acceptedData = await accepted.json();
@@ -352,6 +529,53 @@ await runSmoke('server-smoke-manager-invite-session', async ({ baseUrl }) => {
 }, {
   env: {
     INLET_SESSION_AUTH_MODE: 'strict',
+    INLET_SESSION_SECRET: 'smoke-session-secret',
+  },
+  timeoutMs: 10000,
+});
+
+await runSmoke('server-smoke-auth-session-refresh', async ({ baseUrl }) => {
+  const registered = await fetchWithTimeout(`${baseUrl}/api/auth/register`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ user: { name: 'Session User', email: 'session-user@example.test', phone: '010-7777-8888', password: 'secret1', emailVerified: true } }),
+  });
+  assert(registered.status === 200, `session user register expected 200, got ${registered.status}`);
+
+  const login = await fetchWithTimeout(`${baseUrl}/api/auth/login`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ email: 'session-user@example.test', password: 'secret1', projectId: 'session-project' }),
+  });
+  assert(login.status === 200, `session login expected 200, got ${login.status}`);
+  const loginData = await login.json();
+  assert(loginData.session, 'session login should return signed session when secret is configured');
+
+  const refreshed = await fetchWithTimeout(`${baseUrl}/api/auth/session`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json', 'X-Inlet-Session': loginData.session }),
+    body: JSON.stringify({ projectId: 'session-project-next' }),
+  });
+  assert(refreshed.status === 200, `session refresh expected 200, got ${refreshed.status}`);
+  const refreshedData = await refreshed.json();
+  assert(refreshedData.user?.email === 'session-user@example.test', 'session refresh should return account user');
+  assert(refreshedData.session, 'session refresh should return refreshed signed session');
+
+  const logout = await fetchWithTimeout(`${baseUrl}/api/auth/logout`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json', 'X-Inlet-Session': refreshedData.session }),
+    body: JSON.stringify({}),
+  });
+  assert(logout.status === 200, `session logout expected 200, got ${logout.status}`);
+
+  const invalidRefresh = await fetchWithTimeout(`${baseUrl}/api/auth/session`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json', 'X-Inlet-Session': 'invalid.session' }),
+    body: JSON.stringify({}),
+  });
+  assert(invalidRefresh.status === 401, `invalid session refresh expected 401, got ${invalidRefresh.status}`);
+}, {
+  env: {
     INLET_SESSION_SECRET: 'smoke-session-secret',
   },
   timeoutMs: 10000,

@@ -230,12 +230,12 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
   const qualityWarnings = draftQualityWarnings(draft);
   const editability = draftEditabilitySummary(draft);
   const connectionTitle = serverAi
-    ? '서버 AI 프록시 사용 중'
+    ? '서버 중계 + 고객 API 키'
     : canStoreClientKey
       ? '브라우저 API 키 저장 허용'
       : '현재 화면에서만 API 키 사용';
   const connectionNote = serverAi
-    ? '라이브 검증은 서버의 /api/ai/test로 확인합니다. 실패하면 서버 환경 변수의 OpenAI 키를 확인해야 합니다.'
+    ? '입력한 API 키는 저장하지 않고 이번 요청에만 서버로 전달합니다. 입력하지 않으면 서버 환경변수 키를 사용합니다.'
     : canStoreClientKey
       ? 'API 키를 브라우저 저장소에 저장합니다. 개인 기기에서만 사용하세요.'
       : '기본 정책상 API 키를 저장하지 않습니다. 새로고침하면 다시 입력해야 합니다.';
@@ -250,13 +250,18 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
 
   const saveApi = () => {
     if (serverAi) {
+      const key = apiKeyDraft.trim();
+      if (key && !isValidOpenAiKey(key)) {
+        updateAi({ ...ai, lastTestStatus: 'failed', lastTestMessage: 'API 키 형식을 확인해주세요.' });
+        return;
+      }
       updateAi({
         ...ai,
         enabled: true,
         apiKey: '',
         updatedAt: new Date().toISOString(),
         lastTestStatus: 'saved',
-        lastTestMessage: '서버 AI 프록시 모드가 적용되었습니다.',
+        lastTestMessage: key ? '고객 API 키를 이번 세션에서만 사용합니다. 저장하지 않습니다.' : '서버 환경변수 API 키를 사용합니다.',
       });
       return;
     }
@@ -300,7 +305,7 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
     setTesting(true);
     updateAi({ ...ai, apiKey: serverAi || !canStoreClientKey ? '' : key, enabled: true, lastTestStatus: 'testing', lastTestMessage: '연결 확인 중' });
     try {
-      await testOpenAiKey({ apiKey: serverAi ? '' : key, model: ai.model });
+      await testOpenAiKey({ apiKey: key, model: ai.model });
       updateAi({
         ...ai,
         apiKey: serverAi || !canStoreClientKey ? '' : key,
@@ -356,7 +361,7 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
         ...autoTemplatePatch,
       });
       setInput(inputForGenerate);
-      const result = await generateAiDraft({ apiKey: serverAi ? '' : clientApiKey, model: ai.model, input: inputForGenerate });
+      const result = await generateAiDraft({ apiKey: clientApiKey, model: ai.model, input: inputForGenerate });
       const item = draftHistoryItem(result, inputForGenerate, ai.model);
       setDraft({ ...result, historyId: item.id });
       setExcludedBlockKeys([]);
@@ -423,11 +428,11 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
         <div className="ai-access-card">
           {serverAi ? (
             <div className="ai-access-main">
-              <div>
-                <span>AI 연결</span>
-                <strong>{connectionTitle}</strong>
-                <p>{connectionNote}</p>
-              </div>
+              <label>
+                <span>OpenAI API Key</span>
+                <input type="password" value={apiKeyDraft} onChange={(event) => setApiKeyDraft(event.target.value)} placeholder="sk-..." />
+                <small>{connectionNote}</small>
+              </label>
               <em className={`status-${ai.lastTestStatus || 'idle'}`}>{getAiStatusLabel(ai.lastTestStatus)}</em>
             </div>
           ) : (
@@ -440,7 +445,7 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
             </div>
           )}
           <div className="ai-access-actions">
-            <button type="button" onClick={saveApi}>{serverAi ? '서버 설정 사용' : 'API 키 저장'}</button>
+            <button type="button" onClick={saveApi}>{serverAi ? '이번 세션 사용' : 'API 키 저장'}</button>
             <button type="button" className="ghost" onClick={runTest} disabled={testing}>{testing ? '확인 중' : '연결 테스트'}</button>
             {!serverAi && <button type="button" className="ghost" onClick={clearApi}>삭제</button>}
           </div>

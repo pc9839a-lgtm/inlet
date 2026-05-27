@@ -10,7 +10,7 @@ function inviteErrorMessage(error) {
   const status = Number(error?.status || 0);
   const code = error?.details?.code || error?.details?.errorCode || '';
   const message = String(error?.message || error || '');
-  if (code === 'AUTH_EMAIL_DUPLICATE' || code === 'AUTH_PHONE_DUPLICATE' || code === 'AUTH_PHONE_REQUIRED') return authAccountErrorMessage(error);
+  if (code === 'AUTH_EMAIL_DUPLICATE' || code === 'AUTH_PHONE_DUPLICATE' || code === 'AUTH_PHONE_REQUIRED' || code === 'AUTH_LOGIN_INVALID' || code === 'AUTH_LOGIN_REQUIRED') return authAccountErrorMessage(error);
   if (status === 403 && code === 'INVITE_EMAIL_MISMATCH') return '초대받은 이메일과 로그인 이메일이 다릅니다. 이메일을 확인해주세요.';
   if (status === 403 && code === 'EMAIL_VERIFICATION_REQUIRED') return '이메일 인증을 완료해야 회원가입할 수 있습니다.';
   if (status === 409) return '이미 처리된 초대입니다. 초대 상태를 다시 확인해주세요.';
@@ -128,7 +128,7 @@ export default function InviteAcceptScreen({ token, authUser = null, onAccepted,
         name: form.name,
         email: currentEmail,
         phone: normalizeAccountPhone(form.phone),
-        password: mode === 'signup' ? form.password : '',
+        password: form.password,
         authMode: mode,
         emailVerified: mode !== 'signup' || emailVerified,
       });
