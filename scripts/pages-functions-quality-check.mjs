@@ -16,6 +16,16 @@ const pages = await readFile('functions/api/pages/[slug].js', 'utf8');
 const pageRevisions = await readFile('functions/api/pages/[slug]/revisions.js', 'utf8');
 const pageRevision = await readFile('functions/api/pages/[slug]/revisions/[id].js', 'utf8');
 const pageRestore = await readFile('functions/api/pages/[slug]/restore.js', 'utf8');
+const authShared = await readFile('functions/api/auth/_auth.js', 'utf8');
+const authRegister = await readFile('functions/api/auth/register.js', 'utf8');
+const authLogin = await readFile('functions/api/auth/login.js', 'utf8');
+const authSession = await readFile('functions/api/auth/session.js', 'utf8');
+const authLogout = await readFile('functions/api/auth/logout.js', 'utf8');
+const authAccount = await readFile('functions/api/auth/account.js', 'utf8');
+const authAccountStatus = await readFile('functions/api/auth/account/status.js', 'utf8');
+const authPassword = await readFile('functions/api/auth/password.js', 'utf8');
+const authEmailVerification = await readFile('functions/api/auth/email-verification.js', 'utf8');
+const authEmailVerificationConfirm = await readFile('functions/api/auth/email-verification/confirm.js', 'utf8');
 const wrangler = await readFile('wrangler.jsonc', 'utf8');
 const hostedQa = await readFile('scripts/hosted-api-quality-check.mjs', 'utf8');
 const hostedRoutesQa = await readFile('scripts/hosted-api-routes-quality-check.mjs', 'utf8');
@@ -58,6 +68,16 @@ for (const [name, source, tokens] of [
   ['page revisions', pageRevisions, ['listD1PageRevisions', 'authorizeProject', 'revisions']],
   ['page revision', pageRevision, ['getD1PageRevision', 'Revision not found', 'revision.page']],
   ['page restore', pageRestore, ['getD1PageRevision', 'upsertD1Page', 'restore:', 'authorizeProject']],
+  ['auth shared', authShared, ['getD1AccountByEmail', 'getD1AccountByPhone', 'upsertD1Account', 'createSessionToken', 'verifySessionToken', 'issueEmailVerificationToken']],
+  ['auth register', authRegister, ['registerAccount', 'user', 'AUTH_METHODS']],
+  ['auth login', authLogin, ['loginAccount', 'ok: true', 'AUTH_METHODS']],
+  ['auth session', authSession, ['getSessionAccount', 'expiresInSeconds', 'createSessionToken']],
+  ['auth logout', authLogout, ['stateless-session', 'loggedOut']],
+  ['auth account', authAccount, ['getSessionAccount', 'getD1AccountByPhone', 'AUTH_PHONE_DUPLICATE']],
+  ['auth account status', authAccountStatus, ['normalizeAccountStatus', 'AUTH_ACCOUNT_STATUS_INVALID', 'session:']],
+  ['auth password', authPassword, ['passwordHash', 'EMAIL_VERIFICATION_REQUIRED', 'AUTH_PASSWORD_POLICY']],
+  ['auth email verification', authEmailVerification, ['issueEmailVerificationToken', 'verification']],
+  ['auth email verification confirm', authEmailVerificationConfirm, ['confirmEmailVerificationToken', 'verification']],
 ]) {
   for (const token of tokens) {
     assert(source.includes(token), `Pages ${name} function missing ${token}`);
@@ -89,7 +109,12 @@ for (const token of [
   '/api/events',
   '/api/stats/summary',
   '/api/pages',
+  '/api/auth/register',
+  '/api/auth/login',
+  '/api/auth/session',
+  '/api/auth/email-verification',
   ':slug read protection',
+  'Hosted /api/auth login/session',
   'INLET_HOSTED_ROUTE_QA_WRITE',
   'read protection',
 ]) {
@@ -111,6 +136,15 @@ console.log(JSON.stringify({
     'functions/api/pages/[slug]/revisions.js',
     'functions/api/pages/[slug]/revisions/[id].js',
     'functions/api/pages/[slug]/restore.js',
+    'functions/api/auth/register.js',
+    'functions/api/auth/login.js',
+    'functions/api/auth/session.js',
+    'functions/api/auth/logout.js',
+    'functions/api/auth/account.js',
+    'functions/api/auth/account/status.js',
+    'functions/api/auth/password.js',
+    'functions/api/auth/email-verification.js',
+    'functions/api/auth/email-verification/confirm.js',
   ],
   binding: 'DB',
 }, null, 2));

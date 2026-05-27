@@ -160,6 +160,122 @@ async function run() {
     httpStatus: protectedRevisions.res.status,
   });
 
+  const authEmail = `hosted-route-qa-${stamp}@inlet.test`;
+  const authPhone = `010${stamp.slice(-8)}`;
+  const authPhoneNext = `011${stamp.slice(-8)}`;
+  const verificationIssue = await jsonFetch('/api/auth/email-verification', {
+    method: 'POST',
+    body: JSON.stringify({ email: authEmail, purpose: 'signup' }),
+  });
+  const verificationToken = String(verificationIssue.data?.verification?.token || '').trim();
+  checks.push({
+    name: 'Hosted /api/auth/email-verification issue',
+    status: verificationIssue.res.ok && verificationToken ? 'ready' : 'failed-live',
+    httpStatus: verificationIssue.res.status,
+  });
+
+  const verificationConfirm = await jsonFetch('/api/auth/email-verification/confirm', {
+    method: 'POST',
+    body: JSON.stringify({ email: authEmail, token: verificationToken }),
+  });
+  checks.push({
+    name: 'Hosted /api/auth/email-verification confirm',
+    status: verificationConfirm.res.ok && verificationConfirm.data?.verification?.status === 'confirmed' ? 'ready' : 'failed-live',
+    httpStatus: verificationConfirm.res.status,
+  });
+
+  const register = await jsonFetch('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({
+      user: {
+        name: 'Hosted Auth QA',
+        email: authEmail,
+        phone: authPhone,
+        password: 'secret1',
+        emailVerified: true,
+        source: 'hosted-route-qa',
+      },
+    }),
+  });
+  checks.push({
+    name: 'Hosted /api/auth/register',
+    status: register.res.ok && register.data?.user?.email === authEmail ? 'ready' : 'failed-live',
+    httpStatus: register.res.status,
+  });
+
+  const duplicateRegister = await jsonFetch('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({
+      user: {
+        name: 'Hosted Auth QA Duplicate',
+        email: authEmail,
+        phone: authPhone,
+        password: 'secret1',
+        emailVerified: true,
+      },
+    }),
+  });
+  checks.push({
+    name: 'Hosted /api/auth/register duplicate protection',
+    status: duplicateRegister.res.status === 409 ? 'ready' : 'failed-live',
+    httpStatus: duplicateRegister.res.status,
+  });
+
+  const login = await jsonFetch('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email: authEmail, password: 'secret1', projectId: project.projectId }),
+  });
+  const session = String(login.data?.session || '').trim();
+  checks.push({
+    name: 'Hosted /api/auth login/session',
+    status: login.res.ok && login.data?.user?.email === authEmail && session ? 'ready' : 'failed-live',
+    httpStatus: login.res.status,
+  });
+
+  const sessionRefresh = await jsonFetch('/api/auth/session', {
+    method: 'POST',
+    headers: { 'X-Inlet-Session': session },
+    body: JSON.stringify({ session, projectId: project.projectId }),
+  });
+  const refreshedSession = String(sessionRefresh.data?.session || session).trim();
+  checks.push({
+    name: 'Hosted /api/auth/session refresh',
+    status: sessionRefresh.res.ok && sessionRefresh.data?.user?.email === authEmail && refreshedSession ? 'ready' : 'failed-live',
+    httpStatus: sessionRefresh.res.status,
+  });
+
+  const accountPatch = await jsonFetch('/api/auth/account', {
+    method: 'PATCH',
+    headers: { 'X-Inlet-Session': refreshedSession },
+    body: JSON.stringify({ session: refreshedSession, name: 'Hosted Auth QA Updated', phone: authPhoneNext, projectId: project.projectId }),
+  });
+  checks.push({
+    name: 'Hosted /api/auth/account patch',
+    status: accountPatch.res.ok && accountPatch.data?.user?.phone === authPhoneNext ? 'ready' : 'failed-live',
+    httpStatus: accountPatch.res.status,
+  });
+
+  const passwordChange = await jsonFetch('/api/auth/password', {
+    method: 'POST',
+    body: JSON.stringify({ email: authEmail, password: 'secret2', emailVerified: true }),
+  });
+  checks.push({
+    name: 'Hosted /api/auth/password verified change',
+    status: passwordChange.res.ok && passwordChange.data?.user?.email === authEmail ? 'ready' : 'failed-live',
+    httpStatus: passwordChange.res.status,
+  });
+
+  const logout = await jsonFetch('/api/auth/logout', {
+    method: 'POST',
+    headers: { 'X-Inlet-Session': refreshedSession },
+    body: JSON.stringify({}),
+  });
+  checks.push({
+    name: 'Hosted /api/auth/logout',
+    status: logout.res.ok && logout.data?.loggedOut === true ? 'ready' : 'failed-live',
+    httpStatus: logout.res.status,
+  });
+
   return {
     ok: checks.every((check) => check.status === 'ready') || !requireHosted,
     liveSummary: summarize(checks),
