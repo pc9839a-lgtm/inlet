@@ -1,4 +1,4 @@
-import { getD1InviteByToken, upsertD1Invite, upsertD1ProjectMember } from '../../../server/storage/d1Adapter.mjs';
+import { getD1InviteByToken, upsertD1Invite, upsertD1Project, upsertD1ProjectMember } from '../../../server/storage/d1Adapter.mjs';
 import { ensureD1ProjectShell } from '../_shared.js';
 import { createSessionToken, loginAccount, normalizeEmail, normalizePhone, ownerIdForEmail, registerAccount } from '../auth/_auth.js';
 
@@ -43,6 +43,29 @@ export async function createD1ManagerInvite(db, project = {}, manager = {}, iden
   const ownerId = String(identity.ownerId || project.ownerId || '').trim();
   if (!ownerId) throw inviteError('Project owner identity is required.', 403, { code: 'PROJECT_ACCESS_REQUIRED' });
   await ensureD1ProjectShell(db, { ...project, ownerId });
+  await upsertD1Project(db, {
+    ...project,
+    projectId,
+    ownerId,
+    ownerAccountId: ownerId,
+    slug: project.slug || projectId,
+    updatedAt: new Date().toISOString(),
+  }, {
+    projectId,
+    ownerId,
+    slug: project.slug || projectId,
+  });
+  await upsertD1ProjectMember(db, {
+    id: `${projectId}-${ownerId}-master`,
+    ownerId,
+    role: 'master',
+    access: {},
+    status: 'active',
+  }, {
+    projectId,
+    accountId: ownerId,
+    invitedByAccountId: ownerId,
+  });
 
   const email = normalizeEmail(manager.email || manager.managerEmail || '');
   if (!email) throw inviteError('Manager email is required.', 400, { code: 'MANAGER_EMAIL_REQUIRED' });
