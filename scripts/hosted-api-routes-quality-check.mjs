@@ -113,6 +113,15 @@ async function run() {
     httpStatus: protectedStats.res.status,
   });
 
+  const protectedCsv = await fetch(`${baseUrl}/api/leads/export.csv?projectId=${encodeURIComponent(project.projectId)}&month=${month}`, {
+    signal: AbortSignal.timeout(10000),
+  });
+  checks.push({
+    name: 'Hosted /api/leads/export.csv read protection',
+    status: protectedCsv.status === 403 ? 'ready' : 'failed-live',
+    httpStatus: protectedCsv.status,
+  });
+
   return {
     ok: checks.every((check) => check.status === 'ready') || !requireHosted,
     liveSummary: summarize(checks),

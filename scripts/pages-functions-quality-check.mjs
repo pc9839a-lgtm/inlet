@@ -7,6 +7,7 @@ function assert(condition, message) {
 const health = await readFile('functions/api/health.js', 'utf8');
 const shared = await readFile('functions/api/_shared.js', 'utf8');
 const leads = await readFile('functions/api/leads.js', 'utf8');
+const leadCsv = await readFile('functions/api/leads/export.csv.js', 'utf8');
 const events = await readFile('functions/api/events.js', 'utf8');
 const statsSummary = await readFile('functions/api/stats/summary.js', 'utf8');
 const wrangler = await readFile('wrangler.jsonc', 'utf8');
@@ -42,6 +43,7 @@ for (const token of [
 
 for (const [name, source, tokens] of [
   ['leads', leads, ['upsertD1Lead', 'listD1Leads', 'publicWrite: true', 'deliveryStatus', 'meta: { source:']],
+  ['lead csv', leadCsv, ['listD1Leads', 'month is required for CSV export.', 'text/csv; charset=utf-8', "Content-Disposition", 'csvCell']],
   ['events', events, ['insertD1Event', 'listD1Events', 'publicWrite: true', 'eventType', 'meta: { source:']],
   ['stats summary', statsSummary, ['aggregateD1Stats', "source: 'server'", "adapter: 'd1'", 'authorizeProject']],
 ]) {
@@ -69,6 +71,7 @@ for (const token of [
 
 for (const token of [
   '/api/leads',
+  '/api/leads/export.csv',
   '/api/events',
   '/api/stats/summary',
   'INLET_HOSTED_ROUTE_QA_WRITE',
@@ -83,6 +86,7 @@ console.log(JSON.stringify({
   functions: [
     'functions/api/health.js',
     'functions/api/leads.js',
+    'functions/api/leads/export.csv.js',
     'functions/api/events.js',
     'functions/api/stats/summary.js',
   ],
