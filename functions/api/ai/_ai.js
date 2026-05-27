@@ -158,7 +158,7 @@ export async function saveAiDraft(request, env = {}, input = {}) {
     savedAt: now,
   }, {
     projectId: scope.projectId,
-    createdByAccountId: scope.ownerId,
+    createdByAccountId: null,
   });
 }
 
