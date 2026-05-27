@@ -27,8 +27,8 @@ Use this split for the first production deploy:
 4. Cloudflare Worker/D1 migration path
    - D1 database `inlet-prod` is created and `migrations/0001_inlet_core.sql` has been applied.
    - `wrangler.jsonc` exposes the binding as `DB`.
-   - Runtime routes still use the JSONL adapter until the API is moved behind the D1 adapter.
-   - The current JSONL full-scan fallback is launch-acceptable for small data, but it is not the final Cloudflare-native storage layer.
+   - Lead/event/stats/page/account/invite/ownership routes can use D1 when the API runtime starts with `INLET_STORAGE_ADAPTER=d1` or `auto` and a valid `DB` binding is present.
+   - Project access writes mirror into D1 while `access.json` remains the local compatibility source. Hosted production should move API reads to D1 after the first live D1 smoke passes.
 
 ## Why Not Workers For The Current API
 
@@ -123,6 +123,7 @@ Production environment variables:
 - `INLET_DATA_DIR=<persistent-disk-path>`
 - `INLET_SESSION_AUTH_MODE=production`
 - `INLET_SESSION_SECRET=<long-random-secret>`
+- `INLET_STORAGE_ADAPTER=d1` when the deployed API has a valid D1 binding; use `auto` only during staged rollout.
 - `INLET_DELIVERY_AUTO_RETRY=1`
 - `INLET_DELIVERY_RETRY_INTERVAL_MS=60000`
 - `INLET_DELIVERY_RETRY_MAX_ATTEMPTS=3`
@@ -138,6 +139,7 @@ Health check:
 
 - `GET https://api.example.com/api/health`
 - Must report production/strict auth source as signed-session before exposing manager invite/session flows.
+- Must include `storage.coverage`; for D1 rollout confirm leads, events/stats, pages, accounts, delivery logs, AI drafts, and ownership transfer are `active`, invites/members are `partial`, and AI key vault is still `jsonl`.
 
 Container example:
 
@@ -168,6 +170,7 @@ Expected before credentials are set:
 
 - `qa:all` must pass.
 - `live:qa` may report `skipped-live` for AI, SMTP, OAuth, conversion diagnostics, and real browser QA.
+- `live:qa` may report `skipped-live` for hosted API until `INLET_PUBLIC_API_URL`, `INLET_SESSION_AUTH_MODE=production`, and `INLET_SESSION_SECRET` are set.
 
 After API and Pages URLs exist:
 

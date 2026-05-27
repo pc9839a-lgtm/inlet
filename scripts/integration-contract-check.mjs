@@ -530,6 +530,7 @@ requireAll(conversionQa, [
 const liveQa = await read('scripts/live-readiness-check.mjs');
 requireAll(liveQa, [
   'liveSummary',
+  'Hosted API health',
   'AI live generation',
   'SMTP live delivery',
   'Google OAuth consent',

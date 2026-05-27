@@ -77,7 +77,7 @@ Do not reassign these unless a regression is found:
 - `/api/health` now exposes `auth.sourceOfTruth`; production/strict reports `signed-session`, while hosted mode remains blocked as `hosted-auth-unimplemented` until a real provider is integrated.
 - JSONL query plans now expose active/missing index fields plus the recommended DB/index adapter target.
 - JSONL query plans now also expose `indexKey` and `migrationPriority`, so stats/events/month and delivery retry paths can be indexed first.
-- `npm run live:qa` summarizes AI, SMTP, OAuth, conversion, and real-browser live readiness in one skipped-live/ready report.
+- `npm run live:qa` summarizes hosted API health, AI, SMTP, OAuth, conversion, and real-browser live readiness in one skipped-live/ready report.
 - D1 production database `inlet-prod` exists on Cloudflare, is bound as `DB` in `wrangler.jsonc`, and has `migrations/0001_inlet_core.sql` applied.
 - D1 production schema groundwork exists in `migrations/0001_inlet_core.sql` for accounts, projects, members, invites, pages, revisions, leads, events, delivery logs, AI drafts, subscriptions, payments, ownership transfer requests, and audit logs.
 - D1 adapter groundwork exists in `server/storage/d1Adapter.mjs`; it now includes lead/event row encoding, decoding, paged list helpers, idempotent lead upsert, event insert helpers, monthly stats SQL aggregation, delivery log sync, and delivery retry queue reads.

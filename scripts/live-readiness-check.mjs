@@ -22,7 +22,17 @@ function summarize(items = []) {
 
 const smtpKeys = ['INLET_SMTP_HOST', 'INLET_SMTP_PORT', 'INLET_SMTP_USER', 'INLET_SMTP_PASS', 'INLET_SMTP_FROM'];
 const oauthKeys = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'];
+const apiKeys = ['INLET_PUBLIC_API_URL', 'INLET_SESSION_SECRET'];
 const checks = [
+  status(
+    'Hosted API health',
+    hasAll(apiKeys) && String(env.INLET_SESSION_AUTH_MODE || '').trim() === 'production',
+    [
+      ...apiKeys.filter((key) => !String(env[key] || '').trim()),
+      ...(String(env.INLET_SESSION_AUTH_MODE || '').trim() === 'production' ? [] : ['INLET_SESSION_AUTH_MODE=production']),
+    ],
+    'Call GET $INLET_PUBLIC_API_URL/api/health and confirm auth.sourceOfTruth=signed-session plus storage.active=d1 or expected fallback.',
+  ),
   status(
     'AI live generation',
     env.INLET_AI_QA_LIVE === '1' && !!String(env.OPENAI_API_KEY || '').trim(),
@@ -61,6 +71,7 @@ console.log(JSON.stringify({
   checks,
   commands: {
     ai: 'INLET_AI_QA_LIVE=1 npm run ai:qa',
+    api: 'INLET_PUBLIC_API_URL=https://api.example.com INLET_SESSION_AUTH_MODE=production npm run live:qa',
     browser: 'INLET_BROWSER_QA_URL=http://localhost:5173 INLET_BROWSER_QA_REQUIRE=1 npm run browser:visual:qa',
     mock: 'npm run integration:mock:qa',
     conversion: 'npm run conversion:qa',
