@@ -276,6 +276,55 @@ async function run() {
     httpStatus: logout.res.status,
   });
 
+  const managerEmail = `hosted-manager-${stamp}@inlet.test`;
+  const managerPhone = `012${stamp.slice(-8)}`;
+  const inviteCreate = await jsonFetch('/api/projects/invites', {
+    method: 'POST',
+    headers: { 'X-Inlet-Session': refreshedSession },
+    body: JSON.stringify({
+      project: { ...project, ownerId: accountPatch.data?.user?.ownerId || login.data?.user?.ownerId || '' },
+      manager: {
+        name: 'Hosted Manager QA',
+        email: managerEmail,
+        access: {
+          edit: { read: true, write: true },
+          inbox: { read: true, write: false },
+          stats: { read: true, write: false },
+        },
+      },
+    }),
+  });
+  const inviteToken = String(inviteCreate.data?.invite?.token || '').trim();
+  checks.push({
+    name: 'Hosted /api/projects/invites create',
+    status: inviteCreate.res.ok && inviteCreate.data?.invite?.email === managerEmail && inviteToken ? 'ready' : 'failed-live',
+    httpStatus: inviteCreate.res.status,
+  });
+
+  const inviteRead = await jsonFetch(`/api/projects/invites/${encodeURIComponent(inviteToken)}`);
+  checks.push({
+    name: 'Hosted /api/projects/invites/:token read',
+    status: inviteRead.res.ok && inviteRead.data?.invite?.email === managerEmail ? 'ready' : 'failed-live',
+    httpStatus: inviteRead.res.status,
+  });
+
+  const inviteAccept = await jsonFetch(`/api/projects/invites/${encodeURIComponent(inviteToken)}/accept`, {
+    method: 'POST',
+    body: JSON.stringify({
+      authMode: 'signup',
+      name: 'Hosted Manager QA',
+      email: managerEmail,
+      phone: managerPhone,
+      password: 'secret3',
+      emailVerified: true,
+    }),
+  });
+  checks.push({
+    name: 'Hosted /api/projects/invites/:token accept',
+    status: inviteAccept.res.ok && inviteAccept.data?.manager?.email === managerEmail && inviteAccept.data?.session ? 'ready' : 'failed-live',
+    httpStatus: inviteAccept.res.status,
+  });
+
   return {
     ok: checks.every((check) => check.status === 'ready') || !requireHosted,
     liveSummary: summarize(checks),

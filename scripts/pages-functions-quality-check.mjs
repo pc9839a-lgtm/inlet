@@ -26,6 +26,10 @@ const authAccountStatus = await readFile('functions/api/auth/account/status.js',
 const authPassword = await readFile('functions/api/auth/password.js', 'utf8');
 const authEmailVerification = await readFile('functions/api/auth/email-verification.js', 'utf8');
 const authEmailVerificationConfirm = await readFile('functions/api/auth/email-verification/confirm.js', 'utf8');
+const invitesShared = await readFile('functions/api/projects/_invites.js', 'utf8');
+const invitesCreate = await readFile('functions/api/projects/invites.js', 'utf8');
+const inviteRead = await readFile('functions/api/projects/invites/[token].js', 'utf8');
+const inviteAccept = await readFile('functions/api/projects/invites/[token]/accept.js', 'utf8');
 const wrangler = await readFile('wrangler.jsonc', 'utf8');
 const hostedQa = await readFile('scripts/hosted-api-quality-check.mjs', 'utf8');
 const hostedRoutesQa = await readFile('scripts/hosted-api-routes-quality-check.mjs', 'utf8');
@@ -78,6 +82,10 @@ for (const [name, source, tokens] of [
   ['auth password', authPassword, ['passwordHash', 'EMAIL_VERIFICATION_REQUIRED', 'AUTH_PASSWORD_POLICY']],
   ['auth email verification', authEmailVerification, ['issueEmailVerificationToken', 'verification']],
   ['auth email verification confirm', authEmailVerificationConfirm, ['confirmEmailVerificationToken', 'verification']],
+  ['invites shared', invitesShared, ['upsertD1Invite', 'getD1InviteByToken', 'upsertD1ProjectMember', 'acceptD1ManagerInvite']],
+  ['invites create', invitesCreate, ['createD1ManagerInvite', 'authorizeProject', 'invite']],
+  ['invite read', inviteRead, ['getD1PublicInvite', 'params.token']],
+  ['invite accept', inviteAccept, ['acceptD1ManagerInvite', 'params.token']],
 ]) {
   for (const token of tokens) {
     assert(source.includes(token), `Pages ${name} function missing ${token}`);
@@ -113,8 +121,11 @@ for (const token of [
   '/api/auth/login',
   '/api/auth/session',
   '/api/auth/email-verification',
+  '/api/projects/invites',
+  '/accept',
   ':slug read protection',
   'Hosted /api/auth login/session',
+  'Hosted /api/projects/invites create',
   'INLET_HOSTED_ROUTE_QA_WRITE',
   'read protection',
 ]) {
@@ -145,6 +156,9 @@ console.log(JSON.stringify({
     'functions/api/auth/password.js',
     'functions/api/auth/email-verification.js',
     'functions/api/auth/email-verification/confirm.js',
+    'functions/api/projects/invites.js',
+    'functions/api/projects/invites/[token].js',
+    'functions/api/projects/invites/[token]/accept.js',
   ],
   binding: 'DB',
 }, null, 2));
