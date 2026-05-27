@@ -13,7 +13,8 @@ export function aiError(message, status = 400, details = {}) {
 export async function requireAiScope(request, env = {}, input = {}, options = {}) {
   const db = assertD1(env);
   const url = new URL(request.url);
-  const project = projectFromRequest(url, input, request);
+  const projectInput = input?.project ? input : { project: input };
+  const project = projectFromRequest(url, projectInput, request);
   if (project.projectId) await authorizeProject(request, env, project, options);
   const identity = await sessionIdentity(request, env);
   const ownerId = String(identity?.ownerId || project.ownerId || input.ownerId || '').trim();
@@ -146,7 +147,7 @@ export async function listAiDrafts(request, env = {}) {
 }
 
 export async function saveAiDraft(request, env = {}, input = {}) {
-  const scope = await requireAiScope(request, env, input.project || input, { write: true, tab: 'edit' });
+  const scope = await requireAiScope(request, env, input, { write: true, tab: 'edit' });
   const item = input.draft;
   if (!item || typeof item !== 'object') throw aiError('draft object is required.', 400, { code: 'AI_DRAFT_REQUIRED' });
   await ensureD1ProjectShell(scope.db, { ...scope.project, projectId: scope.projectId, ownerId: scope.ownerId });
