@@ -1,6 +1,6 @@
 ﻿# Remaining Patches
 
-Updated: 2026-05-27
+Updated: 2026-05-28
 
 This is the only active patch assignment file. All completed worker handoff files and old backlog/history files were removed from this folder to prevent duplicate work.
 
@@ -8,18 +8,18 @@ Current execution mode: one worker continues sequentially from the highest prior
 
 ## Current Recheck Snapshot
 
-Last checked on 2026-05-27 after commit `7b69abe`:
+Last checked on 2026-05-28 after commit `5a0aadd`:
 
-- Passing baseline after the manager access/audit deployment patches: `node --check server\index.mjs`, `node --check scripts\server-smoke-auth.mjs`, `npm run auth:qa`, `npm run server:smoke:auth`, `npm run d1:adapter:qa`, `npm run d1:runtime:qa`, `npm run css:qa`, `npm run rendering:qa`, `npm run runtime:qa`, `npm run build`, `npm run deployment:qa`, `npm run integration:qa`, `npm run mojibake:qa`, and strict `artifact:qa`.
+- Passing baseline after the authenticated browser QA and tab deep-link deployment patches: `npm run rendering:qa`, `npm run runtime:qa`, `npm run integration:qa`, `npm run build`, `npm run deployment:qa`, and strict `artifact:qa`.
 - CSS source total: `391276/500000`.
-- Main referenced JS: `318187/430000`.
+- Main referenced JS: `318589/430000`.
 - Largest lazy preview CSS: `188791` bytes.
 - Templates: `3` templates, `189` structural checks.
 - Full offline QA: `npm run qa:all` passes `30` steps.
-- Real browser visual QA: `INLET_BROWSER_QA_REQUIRE=1` passes against a local `vite preview` build using local Chrome CDP. `INLET_BROWSER_QA_EXTRA_URLS=auto` also passes for `/about`, `/contact`, `/privacy`, and `/terms`.
+- Real browser visual QA: `INLET_BROWSER_QA_REQUIRE=1` passes against production `https://inlet-8mr.pages.dev/?tab=stats` with `INLET_BROWSER_QA_STATE_PRESET=manager-limited`, verifying the Stats tab deep link. It also passes against production `https://inlet-8mr.pages.dev/?tab=settings` with `INLET_BROWSER_QA_STATE_PRESET=owner-settings` plus `INLET_BROWSER_QA_CLICK_TEXT=매니저 권한`, verifying the Settings manager card and ownership transfer entry.
 - Strict artifact QA: passes with no leftover `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, or `preview.zip` artifacts.
-- GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `7b69abe`.
-- Cloudflare Pages: production deployment `63204ee2` succeeded for commit `7b69abe`; public URL `https://inlet-8mr.pages.dev/` returns `200`, `<title>Inlet</title>`, and the current asset `index-DbHRhTVR.js`.
+- GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `5a0aadd`.
+- Cloudflare Pages: production deployment `3e9cb127` succeeded for commit `5a0aadd`; public URL `https://inlet-8mr.pages.dev/` returns `200`, `<title>Inlet</title>`, and the current asset `index-B5uzCbuA.js`.
 - `npm run live:qa` currently passes as a readiness report with explicit `skipped-live` checks: hosted API health, Cloudflare D1 live schema, AI live generation, SMTP live delivery, Google OAuth consent, conversion public diagnostics, and real browser visual QA.
 - Cloudflare D1 direct API check confirms `inlet-prod` exists with required core tables and empty initial core counts for accounts/projects/leads/events/audit_logs.
 - Current UI note: Cards block is intentionally limited to `1/2` columns. Keep that scope unless the product direction changes.
@@ -75,6 +75,8 @@ Do not reassign these unless a regression is found:
 - Browser visual QA skipped output now includes POSIX and PowerShell mandatory real-browser commands to run when a local URL/browser dependency is available.
 - Browser visual QA now also supports local Chrome/Edge through CDP without installing Playwright/Puppeteer. It resets its dedicated browser profile per run, writes desktop/mobile screenshots, rejects blank/error/overflow screens, and reports the actual browser engine used.
 - Browser visual QA now supports `INLET_BROWSER_QA_EXTRA_URLS=auto`, which expands public footer/legal route coverage to `/about`, `/contact`, `/privacy`, and `/terms`.
+- Browser visual QA now supports authenticated state presets through `INLET_BROWSER_QA_STATE_PRESET=owner-settings|client-settings|manager-limited`, text/selector interactions through `INLET_BROWSER_QA_CLICK_TEXT` and `INLET_BROWSER_QA_CLICK_SELECTOR`, expected text assertions through `INLET_BROWSER_QA_EXPECT_TEXT`, and desktop-only authenticated checks through `INLET_BROWSER_QA_VIEWPORTS=desktop`.
+- Authenticated tab deep links now work through `?tab=edit|style|inbox|stats|settings`. The app sanitizes requested tabs against the known navigation keys, falls back to the first allowed tab when the account cannot access the requested tab, and updates the URL when operators switch tabs.
 - App shell title is normalized to `Inlet` for generated production builds instead of the old MVP placeholder title.
 - `INLET_SESSION_AUTH_MODE=production` now aliases to strict signed-session auth and rejects forged dev identity headers.
 - `/api/health` now exposes `auth.sourceOfTruth`; production/strict reports `signed-session`, while hosted mode remains blocked as `hosted-auth-unimplemented` until a real provider is integrated.
@@ -183,11 +185,13 @@ These are not already-done items. Patch sequentially from item 1 unless the owne
    - Disable/remove flow and server access revocation are done.
    - Activity/audit rows for invite created, invite accepted, permission changed, and removed are done.
    - User-facing transfer status copy for requested/waiting/approved/rejected/completed/canceled is done.
-   - Add browser visual QA for compact manager card, ownership transfer box, disabled/removed manager states.
+   - Production browser visual QA now verifies the compact manager card, ownership transfer entry, and disabled/removed manager rows through `?tab=settings` plus the `owner-settings` preset.
+   - Remaining work: visual-polish pass on the expanded permission editor itself, including mobile/overflow checks and invite-link copy state.
 
 6. Authenticated browser visual QA
    - Public route visual QA exists.
-   - Remaining work: scripted logged-in states for start modal, editor, cards block `1/2`, template first viewport, inbox, stats, settings, manager permissions, ownership transfer.
+   - Scripted logged-in states now exist for manager-limited stats and owner settings/manager permissions.
+   - Remaining work: start modal, editor, cards block `1/2`, template first viewport, inbox, invite acceptance, and admin ownership transfer queue screenshots.
    - Add screenshot artifact paths and failure reason output for every route/state.
 
 7. Live integrations
