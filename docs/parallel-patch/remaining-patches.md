@@ -99,6 +99,7 @@ Do not reassign these unless a regression is found:
 - D1 delivery logs now sync from lead delivery payloads into `delivery_logs`; delivery log and retry queue APIs use D1 when active, while JSONL remains the local fallback.
 - D1 backfill dry-run exists as `npm run d1:backfill:dry-run`; it scans JSONL project/singleton data and reports lead/event/page/delivery-log counts, invalid lines, duplicate ids, duplicate monthly contacts, and duplicate event dedupe keys without writing to D1.
 - D1 guarded backfill write plan exists as `npm run d1:backfill:plan`; it is plan-only by default, skips empty local data, preflights existing production ids, and requires explicit write/approval/rollback-ack environment variables before any D1 insert can run.
+- Hosted route QA cleanup plan exists as `npm run d1:hosted-qa:cleanup`; it targets only `hosted-route-qa-*` projects and `@inlet.test` QA accounts, runs plan-only by default, and requires `INLET_D1_QA_CLEANUP_WRITE=1` plus `INLET_D1_QA_CLEANUP_APPROVAL=I_APPROVE_HOSTED_QA_CLEANUP` before deleting QA rows.
 - D1 account helper exists for normalized account encode/decode, email lookup, phone lookup, and account upsert. Auth register/login/session/password routes now use D1 `accounts` when `storageRuntime.active === 'd1'`; JSONL remains the fallback.
 - D1 invite/member sync exists: manager invite creation writes to D1 `invites` when D1 is active, invite acceptance syncs accepted invite status plus the manager row into D1 `project_members`, and project access writes now mirror `projects/project_members` into D1 while `access.json` remains the local compatibility source.
 - D1 ownership transfer request storage exists: `ownership_transfer_requests` encode/decode/upsert/list helpers are wired, `/api/projects/ownership-transfer` can create/list requests, `/api/admin/ownership-transfer/:id` can move requests into approval/billing-clearance states, and JSONL/access metadata remains the local fallback.
@@ -191,6 +192,7 @@ These are not already-done items. Patch sequentially from item 1 unless the owne
    - Add server-side indexes/queries for PV, CTA, form submit, reservation, conversion, page, source, device.
    - Add retention hooks and future quota hooks without enforcing paid plans yet.
    - Add more D1-specific smoke for stats/CSV/delivery logs.
+   - Keep hosted QA data cleanup plan-only unless the operator explicitly approves deleting `hosted-route-qa-*` and `@inlet.test` rows from production D1.
 
 5. Manager permissions and ownership UX polish
    - Keep manager permissions inside normal Settings.

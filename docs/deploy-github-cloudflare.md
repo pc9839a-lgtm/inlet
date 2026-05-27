@@ -245,6 +245,36 @@ npm run api:hosted:routes:qa
 
 Rollback is manual: restore the D1 export or remove only the imported ids listed in the backfill output. Do not run broad deletes against production D1.
 
+## Hosted QA Data Cleanup
+
+Hosted route QA writes test-only records into production D1 using `hosted-route-qa-*` project ids and `@inlet.test` emails. Cleanup is guarded and plan-only by default.
+
+Plan-only check:
+
+```bash
+npm run d1:hosted-qa:cleanup
+```
+
+Production cleanup requirements:
+
+- Review the plan output first.
+- Delete only the hosted route QA rows. Do not change the project prefix or email domain to target real customer data.
+- Keep write mode blocked unless the operator explicitly approves the cleanup.
+
+Write command shape:
+
+```powershell
+$env:INLET_D1_QA_CLEANUP_WRITE='1'
+$env:INLET_D1_QA_CLEANUP_APPROVAL='I_APPROVE_HOSTED_QA_CLEANUP'
+$env:CLOUDFLARE_ACCOUNT_ID='<account-id>'
+$env:CLOUDFLARE_API_TOKEN='<token-with-d1-edit>'
+$env:INLET_D1_DATABASE_ID='b68d3820-001f-4dbe-87cd-dc9fc0be17ee'
+npm run d1:hosted-qa:cleanup
+Remove-Item Env:\INLET_D1_QA_CLEANUP_WRITE,Env:\INLET_D1_QA_CLEANUP_APPROVAL
+```
+
+After cleanup, rerun hosted route QA only if another QA write is acceptable. Otherwise use `npm run d1:live:qa` for a read-only schema/count check.
+
 ## Cloudflare-Native Phase 2
 
 Move to Workers only after these are done:

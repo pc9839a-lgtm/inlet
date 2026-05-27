@@ -608,8 +608,21 @@ const packageSource = await read('package.json');
 requireAll(packageSource, [
   'd1:backfill:dry-run',
   'd1:backfill:plan',
+  'd1:hosted-qa:cleanup',
   'd1:live:qa',
 ], 'D1 backfill package script');
+
+const d1HostedQaCleanup = await read('scripts/d1-hosted-qa-cleanup.mjs');
+requireAll(d1HostedQaCleanup, [
+  'INLET_D1_QA_CLEANUP_WRITE',
+  'I_APPROVE_HOSTED_QA_CLEANUP',
+  'hosted-route-qa-',
+  'inlet.test',
+  'DELETE FROM delivery_logs',
+  'DELETE FROM page_revisions',
+  'DELETE FROM accounts',
+  'plan-only',
+], 'D1 hosted QA cleanup contract');
 
 const d1LiveQa = await read('scripts/d1-live-quality-check.mjs');
 requireAll(d1LiveQa, [
