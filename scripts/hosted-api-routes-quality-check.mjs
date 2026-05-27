@@ -332,6 +332,7 @@ async function run() {
     name: 'Hosted /api/ai/key missing status',
     status: aiKeyMissing.res.ok && aiKeyMissing.data?.key?.status === 'missing' ? 'ready' : 'failed-live',
     httpStatus: aiKeyMissing.res.status,
+    failureReason: aiKeyMissing.data?.error || aiKeyMissing.data?.key?.status || '',
   });
 
   const aiKeyInvalid = await jsonFetch('/api/ai/key', {
@@ -347,6 +348,7 @@ async function run() {
     name: 'Hosted /api/ai/key invalid protection',
     status: aiKeyInvalid.res.status === 400 ? 'ready' : 'failed-live',
     httpStatus: aiKeyInvalid.res.status,
+    failureReason: aiKeyInvalid.data?.error || aiKeyInvalid.text?.slice?.(0, 160) || '',
   });
 
   const aiKeySave = await jsonFetch('/api/ai/key', {
@@ -377,6 +379,7 @@ async function run() {
     name: 'Hosted /api/ai/test invalid key classification',
     status: aiKeyTestInvalid.res.status === 400 && aiKeyTestInvalid.data?.keyTest?.status === 'invalid' ? 'ready' : 'failed-live',
     httpStatus: aiKeyTestInvalid.res.status,
+    failureReason: aiKeyTestInvalid.data?.error || aiKeyTestInvalid.text?.slice?.(0, 160) || '',
   });
 
   const aiDraftSave = await jsonFetch('/api/ai/drafts', {
@@ -395,6 +398,7 @@ async function run() {
     name: 'Hosted /api/ai/drafts save',
     status: aiDraftSave.res.ok && aiDraftSave.data?.draft?.id === `ai-draft-${stamp}` ? 'ready' : 'failed-live',
     httpStatus: aiDraftSave.res.status,
+    failureReason: aiDraftSave.data?.error || aiDraftSave.text?.slice?.(0, 160) || '',
   });
 
   const aiDraftList = await jsonFetch(`/api/ai/drafts?projectId=${encodeURIComponent(project.projectId)}&ownerId=${encodeURIComponent(accountPatch.data?.user?.ownerId || login.data?.user?.ownerId || '')}`, {
@@ -404,6 +408,7 @@ async function run() {
     name: 'Hosted /api/ai/drafts list',
     status: aiDraftList.res.ok && Array.isArray(aiDraftList.data?.drafts) && aiDraftList.data.drafts.some((item) => item.id === `ai-draft-${stamp}`) ? 'ready' : 'failed-live',
     httpStatus: aiDraftList.res.status,
+    failureReason: aiDraftList.data?.error || `drafts=${Array.isArray(aiDraftList.data?.drafts) ? aiDraftList.data.drafts.length : 'not-array'}`,
   });
 
   const aiDraftDelete = await jsonFetch(`/api/ai/drafts/${encodeURIComponent(`ai-draft-${stamp}`)}?projectId=${encodeURIComponent(project.projectId)}&ownerId=${encodeURIComponent(accountPatch.data?.user?.ownerId || login.data?.user?.ownerId || '')}`, {
@@ -414,6 +419,7 @@ async function run() {
     name: 'Hosted /api/ai/drafts delete',
     status: aiDraftDelete.res.ok && aiDraftDelete.data?.id === `ai-draft-${stamp}` ? 'ready' : 'failed-live',
     httpStatus: aiDraftDelete.res.status,
+    failureReason: aiDraftDelete.data?.error || aiDraftDelete.text?.slice?.(0, 160) || '',
   });
 
   const aiKeyDelete = await jsonFetch(`/api/ai/key?projectId=${encodeURIComponent(project.projectId)}&ownerId=${encodeURIComponent(accountPatch.data?.user?.ownerId || login.data?.user?.ownerId || '')}`, {

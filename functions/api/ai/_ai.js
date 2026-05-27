@@ -1,5 +1,5 @@
 import { listD1AiDrafts, upsertD1AiDraft, deleteD1AiDraft } from '../../../server/storage/d1Adapter.mjs';
-import { assertD1, authorizeProject, handleApiError, jsonResponse, optionsResponse, projectFromRequest, readJson, sessionIdentity } from '../_shared.js';
+import { assertD1, authorizeProject, ensureD1ProjectShell, handleApiError, jsonResponse, optionsResponse, projectFromRequest, readJson, sessionIdentity } from '../_shared.js';
 
 export const AI_METHODS = 'GET, POST, PUT, DELETE, OPTIONS';
 
@@ -149,6 +149,7 @@ export async function saveAiDraft(request, env = {}, input = {}) {
   const scope = await requireAiScope(request, env, input.project || input, { write: true, tab: 'edit' });
   const item = input.draft;
   if (!item || typeof item !== 'object') throw aiError('draft object is required.', 400, { code: 'AI_DRAFT_REQUIRED' });
+  await ensureD1ProjectShell(scope.db, { ...scope.project, projectId: scope.projectId, ownerId: scope.ownerId });
   const now = new Date().toISOString();
   return upsertD1AiDraft(scope.db, {
     ...item,
