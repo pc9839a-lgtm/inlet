@@ -156,6 +156,18 @@ requireAll(d1Adapter, [
   'fallbackAdapter',
 ], 'D1 adapter contract');
 
+const d1RuntimeAdapter = await read('server/storage/runtimeAdapter.mjs');
+requireAll(d1RuntimeAdapter, [
+  'normalizeStorageMode',
+  'detectD1Binding',
+  'createStorageRuntime',
+  'storageRuntimeHealth',
+  'storageRuntimePlan',
+  'INLET_STORAGE_ADAPTER',
+  'INLET_STORAGE_MODE',
+  'd1UnavailablePlan',
+], 'D1 runtime adapter contract');
+
 const d1Migration = await read('migrations/0001_inlet_core.sql');
 requireAll(d1Migration, [
   'CREATE TABLE IF NOT EXISTS accounts',
@@ -508,6 +520,7 @@ console.log(JSON.stringify({
     'full-qa-aggregate',
     'jsonl-storage-adapter',
     'd1-storage-adapter',
+    'd1-runtime-adapter',
     'mandatory-browser-visual-qa',
   ],
 }, null, 2));

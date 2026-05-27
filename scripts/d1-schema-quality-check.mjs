@@ -6,6 +6,7 @@ function assert(condition, message) {
 
 const schema = await readFile('migrations/0001_inlet_core.sql', 'utf8');
 const adapter = await readFile('server/storage/d1Adapter.mjs', 'utf8');
+const runtimeAdapter = await readFile('server/storage/runtimeAdapter.mjs', 'utf8');
 const wrangler = await readFile('wrangler.jsonc', 'utf8');
 
 const requiredTables = [
@@ -73,6 +74,19 @@ assert(adapter.includes('INSERT OR IGNORE INTO events'), 'D1 event insert should
 assert(adapter.includes('created_month'), 'D1 adapter should preserve month index field');
 assert(adapter.includes('contact_key'), 'D1 adapter should preserve lead dedupe key');
 
+for (const token of [
+  'normalizeStorageMode',
+  'detectD1Binding',
+  'createStorageRuntime',
+  'storageRuntimeHealth',
+  'storageRuntimePlan',
+  'INLET_STORAGE_ADAPTER',
+  'INLET_STORAGE_MODE',
+  'd1UnavailablePlan',
+]) {
+  assert(runtimeAdapter.includes(token), `D1 runtime adapter missing contract token: ${token}`);
+}
+
 assert(wrangler.includes('"name": "inlet"'), 'wrangler config should keep project name');
 assert(wrangler.includes('"pages_build_output_dir": "dist"'), 'wrangler config should keep Pages output dir');
 assert(wrangler.includes('"d1_databases"'), 'wrangler config should include D1 bindings');
@@ -90,4 +104,5 @@ console.log(JSON.stringify({
   database: 'inlet-prod',
   migration: '0001_inlet_core.sql',
   adapter: 'server/storage/d1Adapter.mjs',
+  runtimeAdapter: 'server/storage/runtimeAdapter.mjs',
 }, null, 2));

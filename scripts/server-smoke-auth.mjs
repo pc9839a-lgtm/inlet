@@ -78,6 +78,13 @@ async function assertManagerServerAccessMatrix(baseUrl, project, headers, label 
 }
 
 await runSmoke('server-smoke-auth', async ({ baseUrl }) => {
+  const health = await fetchWithTimeout(`${baseUrl}/api/health`);
+  assert(health.status === 200, `health expected 200, got ${health.status}`);
+  const healthData = await health.json();
+  assert(healthData.storage?.requested === 'jsonl', 'default storage should request jsonl');
+  assert(healthData.storage?.active === 'jsonl', 'default storage should stay on jsonl');
+  assert(healthData.storage?.d1Ready === false, 'default Node smoke should not report D1 ready');
+
   const favicon = await fetchWithTimeout(`${baseUrl}/favicon.ico`);
   assert(favicon.status === 204, `favicon expected 204, got ${favicon.status}`);
 
@@ -462,6 +469,31 @@ await runSmoke('server-smoke-hosted-session-mode', async ({ baseUrl }) => {
   env: {
     INLET_SESSION_AUTH_MODE: 'hosted',
     INLET_SESSION_SECRET: 'smoke-session-secret',
+  },
+  timeoutMs: 10000,
+});
+
+await runSmoke('server-smoke-d1-storage-fallback', async ({ baseUrl }) => {
+  const health = await fetchWithTimeout(`${baseUrl}/api/health`);
+  assert(health.status === 200, `D1 fallback health expected 200, got ${health.status}`);
+  const healthData = await health.json();
+  assert(healthData.storage?.requested === 'd1', 'D1 fallback smoke should request d1');
+  assert(healthData.storage?.active === 'jsonl', 'D1 fallback smoke should stay on jsonl without binding');
+  assert(healthData.storage?.fallback === true, 'D1 fallback smoke should expose fallback=true');
+  assert(healthData.storage?.d1Ready === false, 'D1 fallback smoke should expose d1Ready=false');
+
+  const project = { projectId: 'smoke-d1-fallback', ownerId: 'local-user', slug: 'smoke-d1-fallback' };
+  const res = await fetchWithTimeout(`${baseUrl}/api/leads?projectId=${project.projectId}&ownerId=${project.ownerId}&slug=${project.slug}&month=2026-05&limit=1`, {
+    headers: authHeaders(),
+  });
+  assert(res.status === 200, `D1 fallback lead list expected 200, got ${res.status}`);
+  const data = await res.json();
+  assert(data.queryPlan?.adapter === 'd1', 'D1 fallback query plan should report requested adapter d1');
+  assert(data.queryPlan?.available === false, 'D1 fallback query plan should expose unavailable binding');
+  assert(data.queryPlan?.fallbackAdapter === 'jsonl', 'D1 fallback query plan should point to jsonl fallback');
+}, {
+  env: {
+    INLET_STORAGE_ADAPTER: 'd1',
   },
   timeoutMs: 10000,
 });

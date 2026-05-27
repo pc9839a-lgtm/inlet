@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { duplicateWindowMs as duplicatePolicyWindowMs, isReservationLead as isReservationLeadPolicy, normalizeLeadContact, sameLeadKind as sameLeadKindPolicy } from '../src/lib/leadDuplicatePolicy.js';
 import { buildStats as buildStatsSummary } from '../src/lib/statsMetrics.js';
 import { appendJsonlRecord, queryJsonlRecords, readJsonlRecords, writeJsonlRecords } from './storage/jsonlAdapter.mjs';
+import { createStorageRuntime, storageRuntimeHealth, storageRuntimePlan } from './storage/runtimeAdapter.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
@@ -19,6 +20,7 @@ const dataDir = path.resolve(rootDir, env.INLET_DATA_DIR || 'server/data');
 const leadsFile = path.join(dataDir, 'leads.jsonl');
 const usersFile = path.join(dataDir, 'users.jsonl');
 const pagesDir = path.join(dataDir, 'pages');
+const storageRuntime = createStorageRuntime(env);
 const apiAuthConfig = {
   token: String(env.INLET_API_TOKEN || '').trim(),
 };
@@ -101,6 +103,7 @@ const server = createServer(async (req, res) => {
           signedSessionReady: !!sessionAuthConfig.secret,
           devHeadersAccepted: sessionAuthConfig.mode === 'dev-headers',
         },
+        storage: storageRuntimeHealth(storageRuntime),
       });
       return;
     }
@@ -1841,6 +1844,15 @@ function storageQueryPlan(type = 'records', filters = {}) {
     if (field === 'eventType') return !!boundedBy.eventType;
     return !!boundedBy[field];
   });
+  const runtimePlan = storageRuntimePlan(storageRuntime, type, filters, {
+    indexReadyFields: fields,
+    activeIndexFields,
+    recommendedIndex: indexKey,
+    indexKey,
+    boundedBy,
+    migrationPriority: storageMigrationPriority(type, activeIndexFields),
+  });
+  if (runtimePlan) return runtimePlan;
   return {
     adapter: 'jsonl',
     indexed: false,
