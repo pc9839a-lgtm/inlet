@@ -122,6 +122,17 @@ const cases = [
     forbiddenText: '처음 화면을 어떻게 만들까요?,화면을 불러오는 중 오류가 발생했습니다',
   },
   {
+    name: 'owner style text color live preview',
+    url: `${baseUrl}/?tab=style`,
+    statePreset: 'owner-settings',
+    viewports: 'desktop',
+    clickSelector: '.style-subnav button:nth-child(3)',
+    setInput: '.style-card input[type="color"]=>#dc2626',
+    expectedSelector: '.style-card input[type="color"],.phone-frame .landing-page',
+    expectedComputed: '.phone-frame .landing-page|color|rgb(220, 38, 38)',
+    forbiddenText: '泥섏쓬 ?붾㈃???대뼸寃?留뚮뱾源뚯슂?,?붾㈃??遺덈윭?ㅻ뒗 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎',
+  },
+  {
     name: 'manager invite acceptance',
     url: `${baseUrl}/invite/qa-visual-invite`,
     statePreset: 'invite-acceptance',
@@ -176,6 +187,9 @@ function runCase(testCase) {
     };
     if (requireRealBrowser) env.INLET_BROWSER_QA_REQUIRE = '1';
     if (testCase.clickText) env.INLET_BROWSER_QA_CLICK_TEXT = testCase.clickText;
+    if (testCase.clickSelector) env.INLET_BROWSER_QA_CLICK_SELECTOR = testCase.clickSelector;
+    if (testCase.setInput) env.INLET_BROWSER_QA_SET_INPUT = testCase.setInput;
+    if (testCase.expectedComputed) env.INLET_BROWSER_QA_EXPECT_COMPUTED = testCase.expectedComputed;
 
     const child = spawn(process.execPath, ['scripts/browser-visual-quality-check.mjs'], {
       env,

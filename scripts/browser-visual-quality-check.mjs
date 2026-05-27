@@ -30,6 +30,24 @@ const clickSelectors = String(process.env.INLET_BROWSER_QA_CLICK_SELECTOR || '')
   .split(',')
   .map((selector) => selector.trim())
   .filter(Boolean);
+const setInputs = String(process.env.INLET_BROWSER_QA_SET_INPUT || '')
+  .split(',')
+  .map((entry) => entry.trim())
+  .filter(Boolean)
+  .map((entry) => {
+    const [selector, ...valueParts] = entry.split('=>');
+    return { selector: selector?.trim() || '', value: valueParts.join('=>').trim() };
+  })
+  .filter((entry) => entry.selector && entry.value);
+const expectedComputedStyles = String(process.env.INLET_BROWSER_QA_EXPECT_COMPUTED || '')
+  .split(';')
+  .map((entry) => entry.trim())
+  .filter(Boolean)
+  .map((entry) => {
+    const [selector, property, ...valueParts] = entry.split('|');
+    return { selector: selector?.trim() || '', property: property?.trim() || '', value: valueParts.join('|').trim() };
+  })
+  .filter((entry) => entry.selector && entry.property && entry.value);
 const expectedTexts = String(process.env.INLET_BROWSER_QA_EXPECT_TEXT || '')
   .split(',')
   .map((text) => text.trim())
@@ -316,6 +334,20 @@ async function clickSelectorInPlaywrightLikePage(page, selector) {
   assert(clicked, `could not find clickable selector: ${selector}`);
 }
 
+async function setInputInPlaywrightLikePage(page, selector, value) {
+  const changed = await page.evaluate(({ selector: targetSelector, value: nextValue }) => {
+    const target = document.querySelector(targetSelector);
+    if (!target) return false;
+    target.focus?.();
+    const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(target), 'value')?.set;
+    setter ? setter.call(target, nextValue) : target.value = nextValue;
+    target.dispatchEvent(new InputEvent('input', { bubbles: true, data: nextValue }));
+    target.dispatchEvent(new Event('change', { bubbles: true }));
+    return true;
+  }, { selector, value });
+  assert(changed, `could not find input selector: ${selector}`);
+}
+
 async function runPlaywrightLikeActions(page) {
   for (const selector of clickSelectors) {
     await clickSelectorInPlaywrightLikePage(page, selector);
@@ -324,6 +356,11 @@ async function runPlaywrightLikeActions(page) {
   }
   for (const text of clickTexts) {
     await clickTextInPlaywrightLikePage(page, text);
+    if (typeof page.waitForTimeout === 'function') await page.waitForTimeout(350);
+    else await wait(350);
+  }
+  for (const { selector, value } of setInputs) {
+    await setInputInPlaywrightLikePage(page, selector, value);
     if (typeof page.waitForTimeout === 'function') await page.waitForTimeout(350);
     else await wait(350);
   }
@@ -347,6 +384,28 @@ async function waitForExpectedTextsInPlaywrightLikePage(page) {
     else await wait(250);
   }
   throw new Error(`expected text did not appear after interaction: ${expectedTexts.join(', ')}; body: ${lastSample}`);
+}
+
+async function waitForExpectedComputedStylesInPlaywrightLikePage(page) {
+  if (!expectedComputedStyles.length) return;
+  const started = Date.now();
+  let lastSample = '';
+  while (Date.now() - started < 6000) {
+    const result = await page.evaluate((checks) => {
+      const failures = [];
+      for (const check of checks) {
+        const target = document.querySelector(check.selector);
+        const value = target ? getComputedStyle(target).getPropertyValue(check.property).trim() : '';
+        if (value !== check.value) failures.push({ ...check, actual: value });
+      }
+      return { ok: failures.length === 0, sample: JSON.stringify(failures).slice(0, 600) };
+    }, expectedComputedStyles);
+    if (result.ok) return;
+    lastSample = result.sample || '';
+    if (typeof page.waitForTimeout === 'function') await page.waitForTimeout(250);
+    else await wait(250);
+  }
+  throw new Error(`expected computed style did not appear after interaction: ${lastSample}`);
 }
 
 async function clickTextInCdp(client, text) {
@@ -385,6 +444,28 @@ async function clickSelectorInCdp(client, selector) {
   assert(clicked, `could not find clickable selector: ${selector}`);
 }
 
+async function setInputInCdp(client, selector, value) {
+  const expression = `(() => {
+    const target = document.querySelector(${JSON.stringify(selector)});
+    if (!target) return false;
+    const nextValue = ${JSON.stringify(value)};
+    target.focus?.();
+    const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(target), 'value')?.set;
+    setter ? setter.call(target, nextValue) : target.value = nextValue;
+    target.dispatchEvent(new InputEvent('input', { bubbles: true, data: nextValue }));
+    target.dispatchEvent(new Event('change', { bubbles: true }));
+    return true;
+  })()`;
+  const started = Date.now();
+  let changed = false;
+  while (!changed && Date.now() - started < 6000) {
+    const result = await client.send('Runtime.evaluate', { expression, returnByValue: true });
+    changed = result.result?.value === true;
+    if (!changed) await wait(250);
+  }
+  assert(changed, `could not find input selector: ${selector}`);
+}
+
 async function runCdpActions(client) {
   for (const selector of clickSelectors) {
     await clickSelectorInCdp(client, selector);
@@ -392,6 +473,10 @@ async function runCdpActions(client) {
   }
   for (const text of clickTexts) {
     await clickTextInCdp(client, text);
+    await wait(350);
+  }
+  for (const { selector, value } of setInputs) {
+    await setInputInCdp(client, selector, value);
     await wait(350);
   }
 }
@@ -416,6 +501,30 @@ async function waitForExpectedTextsInCdp(client) {
     await wait(250);
   }
   throw new Error(`expected text did not appear after interaction: ${expectedTexts.join(', ')}; body: ${lastSample}`);
+}
+
+async function waitForExpectedComputedStylesInCdp(client) {
+  if (!expectedComputedStyles.length) return;
+  const expression = `(() => {
+    const checks = ${JSON.stringify(expectedComputedStyles)};
+    const failures = [];
+    for (const check of checks) {
+      const target = document.querySelector(check.selector);
+      const value = target ? getComputedStyle(target).getPropertyValue(check.property).trim() : '';
+      if (value !== check.value) failures.push({ ...check, actual: value });
+    }
+    return { ok: failures.length === 0, sample: JSON.stringify(failures).slice(0, 600) };
+  })()`;
+  const started = Date.now();
+  let lastSample = '';
+  while (Date.now() - started < 6000) {
+    const result = await client.send('Runtime.evaluate', { expression, returnByValue: true });
+    const value = result.result?.value || {};
+    if (value.ok) return;
+    lastSample = value.sample || '';
+    await wait(250);
+  }
+  throw new Error(`expected computed style did not appear after interaction: ${lastSample}`);
 }
 
 async function wait(ms) {
@@ -596,9 +705,11 @@ if (!targetUrl) {
     statePreset,
     clickSelectors,
     clickTexts,
+    setInputs,
     expectedTexts,
     forbiddenTexts,
     expectedSelectors,
+    expectedComputedStyles,
     viewports: viewports.map((viewport) => viewport.name),
     cleanupArtifact: screenshotDir.startsWith('.tmp-'),
     launchPlan,
@@ -625,6 +736,7 @@ if (!targetUrl) {
         await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
         await runPlaywrightLikeActions(page);
         await waitForExpectedTextsInPlaywrightLikePage(page);
+        await waitForExpectedComputedStylesInPlaywrightLikePage(page);
         const metrics = await page.evaluate((expectedTexts, forbiddenTexts, expectedSelectors) => {
         const body = document.body;
         const phone = document.querySelector('.phone-frame');
@@ -676,7 +788,7 @@ if (!targetUrl) {
   }
 
   assert(results.length === targets.length * viewports.length, `expected ${targets.length * viewports.length} screenshots, got ${results.length}`);
-  console.log(JSON.stringify({ ok: true, engine: 'playwright', targetUrl, extraUrls, templateRoutes, statePreset, clickSelectors, clickTexts, expectedTexts, forbiddenTexts, expectedSelectors, screenshotDir, cleanupArtifact: screenshotDir.startsWith('.tmp-'), results }, null, 2));
+  console.log(JSON.stringify({ ok: true, engine: 'playwright', targetUrl, extraUrls, templateRoutes, statePreset, clickSelectors, clickTexts, setInputs, expectedTexts, forbiddenTexts, expectedSelectors, expectedComputedStyles, screenshotDir, cleanupArtifact: screenshotDir.startsWith('.tmp-'), results }, null, 2));
 } else if (hasPuppeteer) {
   const puppeteer = await import('puppeteer');
   const browser = await puppeteer.default.launch({ headless: 'new' });
@@ -698,6 +810,7 @@ if (!targetUrl) {
         await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
         await runPlaywrightLikeActions(page);
         await waitForExpectedTextsInPlaywrightLikePage(page);
+        await waitForExpectedComputedStylesInPlaywrightLikePage(page);
         const metrics = await page.evaluate((expectedTexts, forbiddenTexts, expectedSelectors) => {
         const body = document.body;
         const phone = document.querySelector('.phone-frame');
@@ -745,7 +858,7 @@ if (!targetUrl) {
   }
 
   assert(results.length === targets.length * viewports.length, `expected ${targets.length * viewports.length} screenshots, got ${results.length}`);
-  console.log(JSON.stringify({ ok: true, engine: 'puppeteer', targetUrl, extraUrls, templateRoutes, statePreset, clickSelectors, clickTexts, expectedTexts, forbiddenTexts, expectedSelectors, screenshotDir, cleanupArtifact: screenshotDir.startsWith('.tmp-'), results }, null, 2));
+  console.log(JSON.stringify({ ok: true, engine: 'puppeteer', targetUrl, extraUrls, templateRoutes, statePreset, clickSelectors, clickTexts, setInputs, expectedTexts, forbiddenTexts, expectedSelectors, expectedComputedStyles, screenshotDir, cleanupArtifact: screenshotDir.startsWith('.tmp-'), results }, null, 2));
 } else if (chromeExecutable) {
   const browserUserDataDir = path.resolve(screenshotDir, '.chrome-profile');
   await rm(browserUserDataDir, { recursive: true, force: true });
@@ -804,6 +917,7 @@ if (!targetUrl) {
         await wait(800);
         await runCdpActions(client);
         await waitForExpectedTextsInCdp(client);
+        await waitForExpectedComputedStylesInCdp(client);
         const metrics = await evaluateBrowserMetrics(client);
         const screenshot = path.join(screenshotDir, screenshotName(url, viewport.name, results.length));
         assertBrowserMetrics({ metrics, errors, viewport, url, screenshot });
@@ -820,7 +934,7 @@ if (!targetUrl) {
   }
 
   assert(results.length === targets.length * viewports.length, `expected ${targets.length * viewports.length} screenshots, got ${results.length}`);
-  console.log(JSON.stringify({ ok: true, engine: 'local-chrome-cdp', chromeExecutable, targetUrl, extraUrls, templateRoutes, statePreset, clickSelectors, clickTexts, expectedTexts, forbiddenTexts, expectedSelectors, screenshotDir, cleanupArtifact: screenshotDir.startsWith('.tmp-'), results }, null, 2));
+  console.log(JSON.stringify({ ok: true, engine: 'local-chrome-cdp', chromeExecutable, targetUrl, extraUrls, templateRoutes, statePreset, clickSelectors, clickTexts, setInputs, expectedTexts, forbiddenTexts, expectedSelectors, expectedComputedStyles, screenshotDir, cleanupArtifact: screenshotDir.startsWith('.tmp-'), results }, null, 2));
 } else {
   assert(!requireRealBrowser, 'INLET_BROWSER_QA_REQUIRE=1 requires Playwright, Puppeteer, or local Chrome/Edge. Set INLET_BROWSER_QA_CHROME_PATH if Chrome is installed in a custom path.');
   console.log(JSON.stringify({
@@ -833,9 +947,11 @@ if (!targetUrl) {
     statePreset,
     clickSelectors,
     clickTexts,
+    setInputs,
     expectedTexts,
     forbiddenTexts,
     expectedSelectors,
+    expectedComputedStyles,
     viewports: viewports.map((viewport) => viewport.name),
     screenshotDir,
     cleanupArtifact: screenshotDir.startsWith('.tmp-'),
