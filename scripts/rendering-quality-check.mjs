@@ -206,10 +206,17 @@ assert(files.browserVisualQa.includes('local-chrome-cdp'), 'browser visual QA sh
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_CHROME_PATH'), 'browser visual QA should allow a custom local Chrome/Edge path');
 assert(files.browserVisualQa.includes("INLET_BROWSER_QA_EXTRA_URLS=auto"), 'browser visual QA should document automatic footer/legal route coverage');
 assert(files.browserVisualQa.includes("'/privacy'") && files.browserVisualQa.includes("'/terms'"), 'browser visual QA auto routes should cover legal pages');
+assert(files.browserVisualQa.includes('INLET_BROWSER_QA_STATE_PRESET'), 'browser visual QA should support authenticated state presets');
+assert(files.browserVisualQa.includes('owner-settings') && files.browserVisualQa.includes('client-settings') && files.browserVisualQa.includes('manager-limited'), 'browser visual QA should include owner, client admin, and manager authenticated presets');
+assert(files.browserVisualQa.includes('INLET_BROWSER_QA_CLICK_TEXT'), 'browser visual QA should support post-navigation interaction checks');
+assert(files.browserVisualQa.includes('INLET_BROWSER_QA_CLICK_SELECTOR'), 'browser visual QA should support precise selector interaction checks');
+assert(files.browserVisualQa.includes('INLET_BROWSER_QA_EXPECT_TEXT'), 'browser visual QA should assert authenticated screen text');
+assert(files.browserVisualQa.includes('INLET_BROWSER_QA_VIEWPORTS'), 'browser visual QA should allow desktop-only authenticated checks');
+assert(files.browserVisualQa.includes('--window-size=1280,900'), 'local Chrome visual QA should launch with a desktop-sized window');
 
 console.log(JSON.stringify({
   ok: true,
-  checks: requiredDispatch.length + rendererContracts.length * 2 + cssContracts.length + visualGeometryContracts.length + viewportContracts.length + previewSourceEntries.length * 2 + 15,
+  checks: requiredDispatch.length + rendererContracts.length * 2 + cssContracts.length + visualGeometryContracts.length + viewportContracts.length + previewSourceEntries.length * 2 + 22,
   visualGeometryChecks: visualGeometryContracts.length,
   viewportContracts: viewportContracts.length,
 }, null, 2));
