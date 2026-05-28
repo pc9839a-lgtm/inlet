@@ -4,7 +4,19 @@ Updated: 2026-05-28
 
 This is the only active patch assignment file. All completed worker handoff files and old backlog/history files were removed from this folder to prevent duplicate work.
 
-Current execution mode: one worker continues sequentially from the highest priority. Parallel split is optional only if explicitly requested again.
+Current execution mode: parallel patching is active. Use the five worker handoff files in this folder for implementation boundaries. This file remains the master backlog and launch-state reference.
+
+## Parallel Worker Split
+
+Run these in parallel only by file ownership:
+
+1. Worker 1: account, auth, email verification, sessions, member data.
+2. Worker 2: lead intake, duplicate policy, inbox, stats, D1 scale, CSV.
+3. Worker 3: personal-rehabilitation, mobile-wedding-invitation, and real-estate-presale templates plus editor/preview polish.
+4. Worker 4: Settings manager permissions, ownership transfer, page duplication URL flow.
+5. Worker 5: QA, deployment, live integration readiness, docs and ops.
+
+High-conflict files are `src/App.jsx`, `src/panels/SettingsPanel.jsx`, `server/index.mjs`, `package.json`, `migrations/0001_inlet_core.sql`, and `src/styles/panels.css`. A worker may touch a high-conflict file only if their handoff document explicitly assigns that file.
 
 ## Current Recheck Snapshot
 
@@ -141,31 +153,23 @@ Do not reassign these unless a regression is found:
 - Manager access audit exists: manager invite creation, invite acceptance, permission changes, and removal write local `audit.jsonl` rows and attempt D1 `audit_logs` rows when D1 is active.
 - Ownership transfer status UX exists: Settings and internal Admin now share readable Korean labels/copy for requested, billing wait, approved, rejected, completed, and canceled states; the Settings request button now calls the real server persistence path in server mode.
 
-## Optional Parallel Split
+## Active Parallel Split
 
-Default is single-worker sequential patching. If parallel work is explicitly requested again, split only by file ownership.
+Parallel patching is active. Use the worker files in this folder as the actual handoff documents.
 
-| Worker | Patch | Files |
+| Worker | Patch | Main boundary |
 | --- | --- | --- |
-| Worker 1 | Auth/session/account/member/storage | `server/index.mjs`, `server/storage/**`, account/auth/storage scripts, auth QA |
-| Worker 2 | Frontend/editor/settings/inbox/visual QA | `src/**`, browser/rendering QA, build/clean/prune scripts |
-| Worker 3 | Live integrations + internal admin/ops docs | AI key handling, SMTP/OAuth/conversion/webhook QA, admin/ops docs |
+| Worker 1 | Account, auth, sessions, members | `server/index.mjs`, `server/storage/**`, `src/auth/**`, auth QA |
+| Worker 2 | Leads, duplicate policy, inbox, stats, D1 scale | lead/event/stat/CSV server paths, `InboxPanel`, `StatsPanel`, D1/perf QA |
+| Worker 3 | Three templates and editor/preview polish | `src/templates/**`, `src/preview/**`, block editors, preview CSS |
+| Worker 4 | Manager permissions, ownership transfer, page duplication URL flow | `SettingsPanel`, permission/page duplication UI, panels CSS |
+| Worker 5 | QA, deployment, live readiness, ops | `scripts/*qa*`, `package.json`, `wrangler.jsonc`, docs |
 
-## Sequential Patch Priority
-
-Patch in this order. Billing must not jump ahead of the foundation work:
-
-1. Account/session/login/email verification/password reset.
-2. Manager invite, member permission, and ownership transfer request state.
-3. D1 route migration for leads, events, stats, CSV, delivery logs, invites, account records, and ownership transfer.
-4. Inbox/stat large-data behavior, retention hooks, and quota hooks without paid-plan enforcement.
-5. Frontend product polish: Settings, Inbox, editor live preview, template first viewport, real browser visual QA.
-6. Live integration readiness: customer-owned AI keys, SMTP, OAuth, conversion tracking, webhook retry/dead-letter.
-7. Final billing phase: 3,300/6,600/9,900 plans, checkout, card registration, subscription renewal, payment failure, invoices, and payment admin overrides.
+Billing must not jump ahead of the foundation work. The 3,300/6,600/9,900 plan work stays last, except for lightweight feature-gate placeholders needed by page duplication or ownership transfer.
 
 ## Immediate Remaining Functional Patches
 
-These are not already-done items. Patch sequentially from item 1 unless the owner explicitly changes priority.
+These are not already-done items. Patch in parallel by worker ownership. If one worker blocks on another worker's API/UI contract, leave a clear note and continue with independently testable parts.
 
 1. Production account/session hardening
    - Email verification delivery boundary exists: default mock for offline QA, SMTP mode hides tokens and reports skipped when SMTP is not configured.
@@ -200,6 +204,10 @@ These are not already-done items. Patch sequentially from item 1 unless the owne
 4. Inbox, stats, and large-data scale
    - Inbox first load must stay 50 rows and use `더보기`.
    - Inbox/CSV must stay month-bounded.
+   - Add lead duplicate and spam policy before billing launch: phone/email is the primary duplicate key, cookie/client id prevents accidental repeat submission, and IP is only a short-window spam/rate-limit signal.
+   - Do not hard-block every duplicate lead. Save the row with duplicate/spam metadata unless it is an obvious rapid repeat or rate-limit case.
+   - Lead duplicate metadata should include `clientId`, `ipHash`, `userAgentHash`, `duplicate`, `duplicateReason`, `riskScore`, and normalized contact fields where practical.
+   - Inbox and CSV should show/export duplicate status and reason so operators can decide whether to follow up.
    - Add server-side indexes/queries for PV, CTA, form submit, reservation, conversion, page, source, device.
    - Add retention hooks and future quota hooks without enforcing paid plans yet.
    - Add more D1-specific smoke for stats/CSV/delivery logs.
@@ -229,12 +237,24 @@ These are not already-done items. Patch sequentially from item 1 unless the owne
    - Add operator-facing readiness screen or checklist status.
 
 8. Public landing/template/editor polish
-   - Keep 3 templates, but continue making each feel like a real service page.
+   - Keep exactly 3 templates: personal rehabilitation consultation, mobile wedding invitation, and real estate presale.
+   - Continue making each template feel like a real service page.
    - Keep every template section editable via existing blocks.
+   - Do not add instructional copy, feature explanations, sample-editor text, or "edit this section" style guidance inside templates. Template copy must read like a real public landing page.
    - Continue fixing live preview issues for block-specific style controls, nested rich text edge cases, and premium effects. Text color, font/tone live preview, same-color rich text reapply, and rich text bold/underline toolbar behavior now have automated coverage.
    - HTML/import mode is later only if it maps to editable blocks or controlled embedded-code blocks.
 
-9. Billing and subscription, final only
+9. Page duplication and URL setup
+   - Template duplication is not needed. Templates are only start presets.
+   - Paid feature should be page duplication, not template duplication.
+   - Page duplication must open a URL setup modal before creating the copied page.
+   - URL setup must support default provided domain plus slug, or custom domain with pending DNS state.
+   - Store URL state as fields such as `domainType`, `slug`, `customDomain`, and `domainStatus`; do not hard-code the current Cloudflare Pages domain into page data.
+   - Page duplication copies page settings, blocks, style, form structure, CTA, effects, and SEO basics.
+   - Page duplication must not copy leads, stats, delivery logs, manager permissions, ownership-transfer history, payment/subscription state, or audit history.
+   - Until billing exists, use a plan placeholder/feature gate so the UX can show locked paid behavior without implementing checkout.
+
+10. Billing and subscription, final only
    - Do not implement checkout, card registration, renewal, invoices, or Toss Payments before the above is stable.
    - Keep only lightweight schema/state placeholders needed by ownership transfer approval.
    - Final plan ladder remains under 9,900 KRW: 3,300 / 6,600 / 9,900.
@@ -310,14 +330,18 @@ Use this as the full production checklist. These items are not already done unle
 7. Inbox, stats, and retention
    - Inbox first load must stay limited to 50 and use `더보기` paging.
    - Inbox and CSV must stay month-bounded.
+   - Lead intake duplicate policy must use phone/email as primary duplicate detection, cookie/client id for accidental repeat prevention, and IP only for short-window abuse/rate limiting.
+   - Store duplicate/spam metadata for operator review instead of losing potentially valid leads.
    - Keep monthly lead quota and stats retention hooks ready, but defer final plan enforcement to the final billing phase.
    - Add server-side indexes/queries for PV, CTA, form submit, reservation, conversion rate, page, source, device.
    - Add dedupe strategy for events and leads using D1 indexes.
    - Add admin retention job or scheduled cleanup plan.
 
 8. Public landing, templates, and editor polish
-   - Templates are now 3, but each must feel like a real service page, not a sample shell.
+   - Templates are exactly 3: personal rehabilitation consultation, mobile wedding invitation, and real estate presale.
+   - Each must feel like a real service page, not a sample shell.
    - Keep all template content editable via existing blocks.
+   - Do not include instructional copy, feature descriptions, editor guidance, placeholder usage text, or sample-section explanations in public template content.
    - Add HTML/import mode later only if it maps to editable blocks or a controlled embedded-code block.
    - Continue fixing style controls where block-specific style controls, nested rich text cases, or premium effects do not reflect live preview immediately. Text color, font/tone live preview, and rich text bold/underline toolbar behavior now have production browser QA coverage.
    - Keep premium effects subtle, randomized, and image-overlay aware.
@@ -336,7 +360,7 @@ Use this as the full production checklist. These items are not already done unle
 10. Plans, payment, and subscription, final phase
    - This is the last production patch group, after account, permissions, storage, stats, visual QA, templates, and live integration readiness.
    - Add plan model under the 9,900 KRW ceiling: free/trial, 3,300, 6,600, 9,900.
-   - Feature limits must be enforced server-side: pages, monthly leads, stats retention, managers, custom domain, conversion tracking.
+   - Feature limits must be enforced server-side: pages, page duplication, monthly leads, stats retention, managers, custom domain, conversion tracking.
    - Add payment provider abstraction first, then Toss Payments implementation.
    - Add checkout, billing key/card registration, subscription renewal, cancel-at-period-end, payment failure, and grace-period state.
    - Add webhook signature verification and idempotency keys before accepting payment state changes.
