@@ -1,6 +1,14 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { isServerPageMode } from '../config/runtimeConfig.js';
 import { Field, ImageInput, Toggle } from '../editor/controls.jsx';
+import {
+  authAccountErrorMessage,
+  changeAuthPassword,
+  confirmEmailVerification,
+  isValidAccountPassword,
+  normalizeAccountPhone,
+  requestEmailVerification,
+} from '../lib/authAccounts.js';
 import {
   DEFAULT_MANAGER_ACCESS,
   MANAGER_PERMISSION_TABS,
@@ -181,6 +189,158 @@ function SettingsSection({ id, title, openSection, setOpenSection, locked = fals
   );
 }
 
+function AccountSettingsSection({ authUser, onAccountUpdate, onLogout }) {
+  const [profileDraft, setProfileDraft] = useState({ name: authUser?.name || '', phone: authUser?.phone || '' });
+  const [passwordDraft, setPasswordDraft] = useState({ code: '', password: '', password2: '' });
+  const [saving, setSaving] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [changing, setChanging] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [error, setError] = useState('');
+  const email = String(authUser?.email || '').trim().toLowerCase();
+
+  useEffect(() => {
+    setProfileDraft({ name: authUser?.name || '', phone: authUser?.phone || '' });
+  }, [authUser?.name, authUser?.phone]);
+
+  if (!authUser) {
+    return <p className="account-settings-empty">로그인된 계정이 없습니다.</p>;
+  }
+
+  const setProfileField = (key, value) => {
+    setError('');
+    setNotice('');
+    setProfileDraft((draft) => ({ ...draft, [key]: value }));
+  };
+
+  const setPasswordField = (key, value) => {
+    setError('');
+    setNotice('');
+    setPasswordDraft((draft) => ({ ...draft, [key]: value }));
+  };
+
+  const saveProfile = async (event) => {
+    event.preventDefault();
+    if (!onAccountUpdate) return;
+    setSaving(true);
+    setError('');
+    setNotice('');
+    try {
+      await onAccountUpdate({
+        name: profileDraft.name,
+        phone: normalizeAccountPhone(profileDraft.phone),
+      });
+      setNotice('계정 정보가 저장되었습니다.');
+    } catch (err) {
+      setError(authAccountErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const sendPasswordCode = async () => {
+    if (!email) {
+      setError('계정 이메일을 확인할 수 없습니다.');
+      return;
+    }
+    setVerifying(true);
+    setError('');
+    setNotice('');
+    try {
+      const verification = await requestEmailVerification(email, 'password-reset');
+      setNotice(verification?.token ? `개발 확인용 인증값: ${verification.token}` : '인증 메일을 보냈습니다.');
+    } catch (err) {
+      setError(authAccountErrorMessage(err));
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const changePassword = async (event) => {
+    event.preventDefault();
+    if (!email) {
+      setError('계정 이메일을 확인할 수 없습니다.');
+      return;
+    }
+    if (!passwordDraft.code.trim()) {
+      setError('인증 코드를 입력해주세요.');
+      return;
+    }
+    if (!isValidAccountPassword(passwordDraft.password)) {
+      setError('비밀번호는 영문과 숫자를 포함해 6자리 이상이어야 합니다.');
+      return;
+    }
+    if (passwordDraft.password !== passwordDraft.password2) {
+      setError('새 비밀번호가 서로 다릅니다.');
+      return;
+    }
+    setChanging(true);
+    setError('');
+    setNotice('');
+    try {
+      await confirmEmailVerification({ email, token: passwordDraft.code.trim() });
+      await changeAuthPassword({ email, password: passwordDraft.password, emailVerified: true });
+      setPasswordDraft({ code: '', password: '', password2: '' });
+      setNotice('비밀번호가 변경되었습니다. 다음 로그인부터 새 비밀번호를 사용하세요.');
+    } catch (err) {
+      setError(authAccountErrorMessage(err));
+    } finally {
+      setChanging(false);
+    }
+  };
+
+  return (
+    <div className="account-settings-card">
+      <form className="account-settings-form" onSubmit={saveProfile}>
+        <div className="account-settings-grid">
+          <label>
+            <span>이름</span>
+            <input value={profileDraft.name} onChange={(event) => setProfileField('name', event.target.value)} placeholder="이름" />
+          </label>
+          <label>
+            <span>이메일</span>
+            <input value={email} disabled placeholder="email@example.com" />
+          </label>
+          <label>
+            <span>휴대폰</span>
+            <input type="tel" inputMode="tel" value={profileDraft.phone} onChange={(event) => setProfileField('phone', event.target.value)} placeholder="01012345678" />
+          </label>
+          <div className="account-settings-actions">
+            <button type="submit" disabled={saving}>{saving ? '저장 중' : '계정 저장'}</button>
+            <button type="button" onClick={onLogout}>로그아웃</button>
+          </div>
+        </div>
+      </form>
+
+      <form className="account-password-form" onSubmit={changePassword}>
+        <div className="account-password-head">
+          <strong>비밀번호 변경</strong>
+          <button type="button" disabled={verifying} onClick={sendPasswordCode}>{verifying ? '발송 중' : '인증 메일 보내기'}</button>
+        </div>
+        <div className="account-settings-grid">
+          <label>
+            <span>인증 코드</span>
+            <input value={passwordDraft.code} onChange={(event) => setPasswordField('code', event.target.value)} placeholder="이메일 인증 코드" />
+          </label>
+          <label>
+            <span>새 비밀번호</span>
+            <input type="password" value={passwordDraft.password} onChange={(event) => setPasswordField('password', event.target.value)} placeholder="영문+숫자 6자리 이상" />
+          </label>
+          <label>
+            <span>새 비밀번호 확인</span>
+            <input type="password" value={passwordDraft.password2} onChange={(event) => setPasswordField('password2', event.target.value)} placeholder="다시 입력" />
+          </label>
+          <div className="account-settings-actions">
+            <button type="submit" disabled={changing}>{changing ? '변경 중' : '비밀번호 변경'}</button>
+          </div>
+        </div>
+      </form>
+      {notice && <p className="account-settings-notice">{notice}</p>}
+      {error && <p className="account-settings-error">{error}</p>}
+    </div>
+  );
+}
+
 export default function SettingsPanel({
   page,
   updatePage,
@@ -191,6 +351,8 @@ export default function SettingsPanel({
   onReset,
   authUser = null,
   accessMode = 'builder',
+  onAccountUpdate,
+  onLogout,
 }) {
   const integrations = normalizeIntegrations(page.integrations || {});
   const duplicateCollectionSettings = normalizeDuplicateCollectionSettings(page.leadDuplicateSettings || page.duplicateCollectionSettings || {});
@@ -534,6 +696,10 @@ export default function SettingsPanel({
 
   return (
     <div className="simple-panel settings-panel">
+      <SettingsSection id="account" title="내 계정" openSection={openSection} setOpenSection={setOpenSection} className="account-settings-section">
+        <AccountSettingsSection authUser={authUser} onAccountUpdate={onAccountUpdate} onLogout={onLogout} />
+      </SettingsSection>
+
       <SettingsSection id="basic" title="페이지 기본" openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.basic} onSave={saveBasic} onEdit={() => editSection('basic')}>
         <div className="settings-grid">
           <Field label="페이지명" value={basicDraft.title} disabled={lockedSections.basic || clientAdminMode} onChange={(value) => setBasicDraft((draft) => ({ ...draft, title: value }))} />
