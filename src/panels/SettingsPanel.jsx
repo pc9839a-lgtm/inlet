@@ -17,7 +17,6 @@ import {
   normalizeManagerAccount,
   normalizeOwnershipSettings,
 } from '../lib/authContext.js';
-import { fetchServerBlockedLeadHistory } from '../lib/leadRepository.js';
 import { createLocalManagerInvite, createServerManagerInvite, createServerOwnershipTransfer, managerInviteUrl } from '../lib/managerInvites.js';
 import { ownershipTransferBillingLabel, ownershipTransferStatusCopy, ownershipTransferStatusLabel } from '../lib/ownershipTransfer.js';
 import { normalizePageDuplicateUrl, pageDuplicateUrlIssues, sanitizeDuplicateSlug } from '../lib/pageDuplication.js';
@@ -68,89 +67,6 @@ const MANAGER_ACCESS_PRESETS = [
     },
   },
 ];
-
-const DEFAULT_DUPLICATE_COLLECTION_SETTINGS = {
-  rejectIpDuplicate: false,
-  rejectCookieDuplicate: true,
-  formDuplicateLimitCount: '3',
-  formDuplicateLimitWindow: '1d',
-  phoneEmailMode: 'mark',
-};
-
-const DUPLICATE_LIMIT_COUNTS = [
-  ['1', '?? ???? 1? ???? ??'],
-  ['2', '?? ???? 2? ???? ??'],
-  ['3', '?? ???? 3? ???? ??'],
-  ['5', '?? ???? 5? ???? ??'],
-];
-
-const DUPLICATE_LIMIT_WINDOWS = [
-  ['1d', '1?'],
-  ['3d', '3?'],
-  ['7d', '7?'],
-  ['30d', '1??'],
-];
-
-function normalizeDuplicateCollectionSettings(settings = {}) {
-  return {
-    ...DEFAULT_DUPLICATE_COLLECTION_SETTINGS,
-    ...(settings || {}),
-    rejectIpDuplicate: !!settings.rejectIpDuplicate,
-    rejectCookieDuplicate: settings.rejectCookieDuplicate !== false,
-    formDuplicateLimitCount: ['1', '2', '3', '5'].includes(String(settings.formDuplicateLimitCount || ''))
-      ? String(settings.formDuplicateLimitCount)
-      : DEFAULT_DUPLICATE_COLLECTION_SETTINGS.formDuplicateLimitCount,
-    formDuplicateLimitWindow: ['1d', '3d', '7d', '30d'].includes(String(settings.formDuplicateLimitWindow || ''))
-      ? String(settings.formDuplicateLimitWindow)
-      : DEFAULT_DUPLICATE_COLLECTION_SETTINGS.formDuplicateLimitWindow,
-    phoneEmailMode: ['mark', 'warn', 'block'].includes(String(settings.phoneEmailMode || ''))
-      ? String(settings.phoneEmailMode)
-      : DEFAULT_DUPLICATE_COLLECTION_SETTINGS.phoneEmailMode,
-  };
-}
-
-const BLOCK_REASON_LABELS = {
-  phone_duplicate: '??? ??',
-  email_duplicate: '??? ??',
-  client_duplicate_limit: '?? ??',
-  ip_duplicate_limit: 'IP ??',
-  ip_rate_limit_1m: 'IP ?? ??',
-  rate_limited: '?? ??',
-};
-
-function currentHistoryMonth() {
-  return new Date().toISOString().slice(0, 7);
-}
-
-function blockedHistoryLabel(value, fallback = '-') {
-  const text = String(value || '').trim();
-  return text || fallback;
-}
-
-function blockedHistoryReason(reason) {
-  const key = String(reason || '').trim();
-  return BLOCK_REASON_LABELS[key] || key || '??';
-}
-
-function blockedHistoryIdentity(item = {}) {
-  return blockedHistoryLabel(
-    item.contactSummary || item.maskedContact || item.clientId || item.userAgentHash,
-    '?? ?? ??',
-  );
-}
-
-function DuplicateSelect({ label, value, options, disabled = false, onChange }) {
-  return (
-    <label className="duplicate-policy-select">
-      <span>{label}</span>
-      <select value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)}>
-        {options.map(([optionValue, optionLabel]) => (
-          <option key={optionValue} value={optionValue}>{optionLabel}</option>
-        ))}
-      </select>
-    </label>
-  );
-}
 
 function newManager() {
   return normalizeManagerAccount({
@@ -386,12 +302,6 @@ export default function SettingsPanel({
   onLogout,
 }) {
   const integrations = normalizeIntegrations(page.integrations || {});
-  const duplicateCollectionSettings = normalizeDuplicateCollectionSettings(page.leadDuplicateSettings || page.duplicateCollectionSettings || {});
-  const blockedDuplicateHistory = Array.isArray(page.leadDuplicateSettings?.blockedHistory)
-    ? page.leadDuplicateSettings.blockedHistory
-    : Array.isArray(page.blockedLeadHistory)
-      ? page.blockedLeadHistory
-      : [];
   const ownership = normalizeOwnershipSettings(page, authUser);
   const managers = ownership.managers || [];
   const transferRequest = page.ownership?.transferRequest || null;
@@ -407,17 +317,8 @@ export default function SettingsPanel({
   const [expandedManagerMenuId, setExpandedManagerMenuId] = useState('');
   const [inviteLoading, setInviteLoading] = useState('');
   const [conversionLocked, setConversionLocked] = useState(() => !!(page.meta?.ads || page.meta?.pixel || page.meta?.naver || page.meta?.kakao));
-  const [openSection, setOpenSection] = useState('duplicatePolicy');
-  const [lockedSections, setLockedSections] = useState({ basic: false, duplicatePolicy: false, managers: false, send: false, seo: false, tracking: false });
-  const [duplicatePolicyDraft, setDuplicatePolicyDraft] = useState(() => duplicateCollectionSettings);
-  const [blockedHistoryMonth, setBlockedHistoryMonth] = useState(currentHistoryMonth);
-  const [blockedHistoryState, setBlockedHistoryState] = useState({
-    records: [],
-    total: 0,
-    loading: false,
-    error: '',
-    loaded: false,
-  });
+  const [openSection, setOpenSection] = useState('basic');
+  const [lockedSections, setLockedSections] = useState({ basic: false, managers: false, send: false, seo: false, tracking: false });
   const [duplicateOpen, setDuplicateOpen] = useState(false);
   const [duplicateDraft, setDuplicateDraft] = useState(() => normalizePageDuplicateUrl({
     domainType: 'default',
@@ -484,58 +385,6 @@ export default function SettingsPanel({
     lockSection('managers');
     notify('매니저 권한을 저장했습니다.', 'success');
   };
-  const saveDuplicatePolicy = () => {
-    updatePage({ leadDuplicateSettings: normalizeDuplicateCollectionSettings(duplicatePolicyDraft) });
-    lockSection('duplicatePolicy');
-    notify('수집 데이터 중복 설정을 저장했습니다.', 'success');
-  };
-  const editDuplicatePolicy = () => {
-    setDuplicatePolicyDraft(normalizeDuplicateCollectionSettings(page.leadDuplicateSettings || page.duplicateCollectionSettings || duplicatePolicyDraft));
-    editSection('duplicatePolicy');
-  };
-  const updateDuplicatePolicyDraft = (patch) => {
-    setDuplicatePolicyDraft((draft) => normalizeDuplicateCollectionSettings({ ...draft, ...patch }));
-  };
-  const loadBlockedHistory = async () => {
-    if (clientAdminMode) return;
-    setBlockedHistoryState((state) => ({ ...state, loading: true, error: '' }));
-    try {
-      const result = await fetchServerBlockedLeadHistory(page, authUser, {
-        month: blockedHistoryMonth,
-        pageSlug: page.slug || '',
-        limit: 50,
-      });
-      if (!result) {
-        setBlockedHistoryState({
-          records: blockedDuplicateHistory,
-          total: blockedDuplicateHistory.length,
-          loading: false,
-          error: '',
-          loaded: true,
-        });
-        return;
-      }
-      setBlockedHistoryState({
-        records: result.records,
-        total: result.total,
-        loading: false,
-        error: '',
-        loaded: true,
-      });
-    } catch (error) {
-      setBlockedHistoryState({
-        records: blockedDuplicateHistory,
-        total: blockedDuplicateHistory.length,
-        loading: false,
-        error: error?.message || '서버 차단 내역을 불러오지 못했습니다.',
-        loaded: true,
-      });
-    }
-  };
-  useEffect(() => {
-    if (openSection !== 'duplicatePolicy' || clientAdminMode) return;
-    loadBlockedHistory();
-  }, [openSection, clientAdminMode, blockedHistoryMonth, page.slug, page.projectId, authUser?.session]);
   const editManagers = () => {
     setManagerDraft((managers.length ? managers : managerDraft).map(normalizeManagerAccount));
     editSection('managers');
@@ -773,10 +622,6 @@ export default function SettingsPanel({
     notify('소유권이전 요청을 취소했습니다.', 'success');
   };
 
-  const displayedBlockedHistory = blockedHistoryState.loaded
-    ? blockedHistoryState.records
-    : blockedDuplicateHistory;
-
   return (
     <div className="simple-panel settings-panel">
       <SettingsSection id="account" title="내 계정" openSection={openSection} setOpenSection={setOpenSection} className="account-settings-section">
@@ -806,77 +651,7 @@ export default function SettingsPanel({
         </SettingsSection>
       )}
 
-      {!clientAdminMode && (
-        <SettingsSection id="duplicatePolicy" title="?? ??? ?? ??" openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.duplicatePolicy} onSave={saveDuplicatePolicy} onEdit={editDuplicatePolicy} className="duplicate-policy-card">
-          <div className="duplicate-policy-grid">
-            <Toggle label="IP ?? ?? ??" checked={!!duplicatePolicyDraft.rejectIpDuplicate} disabled={lockedSections.duplicatePolicy} onChange={(value) => updateDuplicatePolicyDraft({ rejectIpDuplicate: value })} />
-            <Toggle label="??? ??? ?? ?? ??" checked={!!duplicatePolicyDraft.rejectCookieDuplicate} disabled={lockedSections.duplicatePolicy} onChange={(value) => updateDuplicatePolicyDraft({ rejectCookieDuplicate: value })} />
-            <DuplicateSelect
-              label="? ??? ?? ?? ??"
-              value={duplicatePolicyDraft.formDuplicateLimitCount}
-              disabled={lockedSections.duplicatePolicy}
-              options={DUPLICATE_LIMIT_COUNTS}
-              onChange={(value) => updateDuplicatePolicyDraft({ formDuplicateLimitCount: value })}
-            />
-            <DuplicateSelect
-              label="? ??? ?? ?? ??"
-              value={duplicatePolicyDraft.formDuplicateLimitWindow}
-              disabled={lockedSections.duplicatePolicy}
-              options={DUPLICATE_LIMIT_WINDOWS}
-              onChange={(value) => updateDuplicatePolicyDraft({ formDuplicateLimitWindow: value })}
-            />
-            <DuplicateSelect
-              label="???/??? ??"
-              value={duplicatePolicyDraft.phoneEmailMode}
-              disabled={lockedSections.duplicatePolicy}
-              options={[['mark', '???'], ['warn', '??'], ['block', '??']]}
-              onChange={(value) => updateDuplicatePolicyDraft({ phoneEmailMode: value })}
-            />
-          </div>
-          <div className="duplicate-policy-history">
-            <div className="duplicate-policy-history-head">
-              <div>
-                <strong>?? ??</strong>
-                <p>??? ?? ??? ??? ??? ?????. IP ??? ???? ????.</p>
-              </div>
-              <div className="duplicate-policy-history-controls">
-                <input
-                  type="month"
-                  value={blockedHistoryMonth}
-                  disabled={blockedHistoryState.loading}
-                  onChange={(event) => setBlockedHistoryMonth(event.target.value || currentHistoryMonth())}
-                />
-                <button type="button" disabled={blockedHistoryState.loading} onClick={loadBlockedHistory}>
-                  {blockedHistoryState.loading ? '?? ?' : '????'}
-                </button>
-              </div>
-            </div>
-            {blockedHistoryState.error && (
-              <span className="duplicate-policy-history-error">{blockedHistoryState.error}</span>
-            )}
-            {blockedHistoryState.loading ? (
-              <span>?? ??? ???? ????.</span>
-            ) : displayedBlockedHistory.length === 0 ? (
-              <span>??? ?? ??? ????.</span>
-            ) : (
-              <ul>
-                {displayedBlockedHistory.slice(0, 8).map((item, index) => (
-                  <li key={item.id || index}>
-                    <b>{String(item.date || item.createdAt || '').slice(0, 10) || '?? ??'}</b>
-                    <em>{blockedHistoryLabel(item.pageSlug || item.page || item.form || item.formId, '??? ???')}</em>
-                    <small>{blockedHistoryReason(item.reason || item.duplicateReason)} ? {blockedHistoryIdentity(item)}</small>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {blockedHistoryState.total > displayedBlockedHistory.length && (
-              <small className="duplicate-policy-history-more">? {blockedHistoryState.total}? ? ?? {displayedBlockedHistory.length}? ??</small>
-            )}
-          </div>
-        </SettingsSection>
-      )}
-
-      {canManageProjectUsers && (
+            {canManageProjectUsers && (
         <SettingsSection id="managers" title="매니저 권한" openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.managers} onSave={saveManagers} onEdit={editManagers} className="manager-access-card">
           <div className="manager-section-tools">
             <div>

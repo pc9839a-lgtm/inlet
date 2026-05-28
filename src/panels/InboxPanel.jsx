@@ -18,8 +18,82 @@ import {
   normalizeLeadItem,
   statusClass,
 } from '../lib/leadModel.js';
+import { fetchServerBlockedLeadHistory } from '../lib/leadRepository.js';
 import { currentMonthValue, monthDateRange } from '../lib/monthRange.js';
 import './InboxPanel.css';
+
+const DUPLICATE_TEXT = {
+  title: '\u0057\u0041\u0059\u005a\u0049 \uc911\ubcf5 \ucc28\ub2e8',
+  ip: '\u0049\u0050 \uc911\ubcf5 \ucc28\ub2e8',
+  cookie: '\ucfe0\ud0a4 \uc911\ubcf5 \ucc28\ub2e8',
+  count: '\uc911\ubcf5 \uc81c\ud55c \uac1c\uc218',
+  window: '\uc911\ubcf5 \uc81c\ud55c \uae30\uac04',
+  contact: '\uc5f0\ub77d\ucc98/\uc774\uba54\uc77c \uc911\ubcf5',
+  history: '\ucc28\ub2e8 \ub0b4\uc5ed',
+  refresh: '\uc870\ud68c',
+  loading: '\uc870\ud68c \uc911',
+  empty: '\ucc28\ub2e8 \ub0b4\uc5ed \uc5c6\uc74c',
+  noDate: '\ub0a0\uc9dc \uc5c6\uc74c',
+  noPage: '\ud398\uc774\uc9c0 \ubbf8\uc9c0\uc815',
+  noIdentity: '\uc2dd\ubcc4 \uc815\ubcf4 \uc5c6\uc74c',
+  total: '\ucd1d',
+  recent: '\uac74 \uc911 \ucd5c\uadfc',
+  shown: '\uac74',
+  on: '\ucf1c\uc9d0',
+  off: '\uaebc\uc9d0',
+};
+
+const DUPLICATE_LIMIT_COUNTS = [
+  ['1', '\uac19\uc740 \ub370\uc774\ud130 1\uac1c \uc774\uc0c1'],
+  ['2', '\uac19\uc740 \ub370\uc774\ud130 2\uac1c \uc774\uc0c1'],
+  ['3', '\uac19\uc740 \ub370\uc774\ud130 3\uac1c \uc774\uc0c1'],
+  ['5', '\uac19\uc740 \ub370\uc774\ud130 5\uac1c \uc774\uc0c1'],
+];
+
+const DUPLICATE_LIMIT_WINDOWS = [
+  ['1d', '1\uc77c'],
+  ['3d', '3\uc77c'],
+  ['7d', '7\uc77c'],
+  ['30d', '1\uac1c\uc6d4'],
+];
+
+const DUPLICATE_CONTACT_OPTIONS = [
+  ['mark', '\ud45c\uc2dc'],
+  ['warn', '\uacbd\uace0'],
+  ['block', '\ucc28\ub2e8'],
+];
+
+const BLOCK_REASON_LABELS = {
+  phone_duplicate: '\uc5f0\ub77d\ucc98 \uc911\ubcf5',
+  email_duplicate: '\uc774\uba54\uc77c \uc911\ubcf5',
+  client_duplicate_limit: '\ucfe0\ud0a4 \uc911\ubcf5',
+  ip_duplicate_limit: 'IP \uc911\ubcf5',
+  ip_rate_limit_1m: 'IP \uacfc\ub2e4 \uc81c\ucd9c',
+  rate_limited: '\uc81c\ucd9c \uc81c\ud55c',
+};
+
+function normalizeDuplicateSettings(settings = {}) {
+  const source = settings && typeof settings === 'object' ? settings : {};
+  const count = String(source.formDuplicateLimitCount || '3');
+  const windowKey = String(source.formDuplicateLimitWindow || '1d');
+  const phoneEmailMode = String(source.phoneEmailMode || 'mark');
+  return {
+    rejectIpDuplicate: !!source.rejectIpDuplicate,
+    rejectCookieDuplicate: source.rejectCookieDuplicate !== false,
+    formDuplicateLimitCount: ['1', '2', '3', '5'].includes(count) ? count : '3',
+    formDuplicateLimitWindow: ['1d', '3d', '7d', '30d'].includes(windowKey) ? windowKey : '1d',
+    phoneEmailMode: ['mark', 'warn', 'block'].includes(phoneEmailMode) ? phoneEmailMode : 'mark',
+  };
+}
+
+function blockedReason(reason) {
+  const key = String(reason || '').trim();
+  return BLOCK_REASON_LABELS[key] || key || '\ucc28\ub2e8';
+}
+
+function blockedIdentity(item = {}) {
+  return String(item.contactSummary || item.maskedContact || item.clientId || item.userAgentHash || DUPLICATE_TEXT.noIdentity).trim();
+}
 
 function leadTime(lead = {}) {
   const time = new Date(lead.createdAt || lead.savedAt || 0).getTime();
@@ -68,6 +142,118 @@ function ConnectionChoiceRow({ label, value, onChange, options }) {
         {options.map(([key, text]) => <MiniToggle key={key} active={value === key} onClick={() => onChange(key)}>{text}</MiniToggle>)}
       </div>
     </div>
+  );
+}
+
+function DuplicatePolicySwitch({ label, checked, onChange }) {
+  return (
+    <button type="button" className={`inbox-policy-switch ${checked ? 'on' : ''}`} onClick={() => onChange(!checked)}>
+      <span>{label}</span>
+      <b>{checked ? DUPLICATE_TEXT.on : DUPLICATE_TEXT.off}</b>
+    </button>
+  );
+}
+
+function DuplicatePolicySelect({ label, value, options, onChange }) {
+  return (
+    <label className="inbox-policy-select">
+      <span>{label}</span>
+      <select value={value} onChange={(event) => onChange(event.target.value)}>
+        {options.map(([optionValue, optionLabel]) => (
+          <option key={optionValue} value={optionValue}>{optionLabel}</option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function IntakeDuplicatePolicyPanel({ page, authUser, updatePage }) {
+  const [open, setOpen] = useState(false);
+  const [month, setMonth] = useState(currentMonthValue());
+  const [history, setHistory] = useState({ records: [], total: 0, loading: false, error: '' });
+  const settings = normalizeDuplicateSettings(page.leadDuplicateSettings || page.duplicateCollectionSettings || {});
+  const localHistory = Array.isArray(page.leadDuplicateSettings?.blockedHistory)
+    ? page.leadDuplicateSettings.blockedHistory
+    : Array.isArray(page.blockedLeadHistory)
+      ? page.blockedLeadHistory
+      : [];
+  const visibleHistory = history.records.length || history.error || history.loading ? history.records : localHistory;
+
+  const save = (patch) => {
+    updatePage?.({ leadDuplicateSettings: normalizeDuplicateSettings({ ...settings, ...patch }) });
+  };
+
+  const loadHistory = async () => {
+    setHistory((current) => ({ ...current, loading: true, error: '' }));
+    try {
+      const result = await fetchServerBlockedLeadHistory(page, authUser, { month, limit: 50 });
+      setHistory({
+        records: result?.records || [],
+        total: Number(result?.total || 0),
+        loading: false,
+        error: '',
+      });
+    } catch (error) {
+      setHistory({
+        records: localHistory,
+        total: localHistory.length,
+        loading: false,
+        error: String(error?.message || error || ''),
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (open) loadHistory();
+  }, [open, month]);
+
+  return (
+    <section className={`card inbox-policy-card ${open ? 'open' : ''}`}>
+      <button type="button" className="inbox-policy-head" onClick={() => setOpen(!open)}>
+        <strong>{DUPLICATE_TEXT.title}</strong>
+        <span>{open ? '\uc811\uae30' : '\uc5f4\uae30'}</span>
+      </button>
+      {open && (
+        <div className="inbox-policy-body">
+          <div className="inbox-policy-grid">
+            <DuplicatePolicySwitch label={DUPLICATE_TEXT.ip} checked={settings.rejectIpDuplicate} onChange={(value) => save({ rejectIpDuplicate: value })} />
+            <DuplicatePolicySwitch label={DUPLICATE_TEXT.cookie} checked={settings.rejectCookieDuplicate} onChange={(value) => save({ rejectCookieDuplicate: value })} />
+            <DuplicatePolicySelect label={DUPLICATE_TEXT.count} value={settings.formDuplicateLimitCount} options={DUPLICATE_LIMIT_COUNTS} onChange={(value) => save({ formDuplicateLimitCount: value })} />
+            <DuplicatePolicySelect label={DUPLICATE_TEXT.window} value={settings.formDuplicateLimitWindow} options={DUPLICATE_LIMIT_WINDOWS} onChange={(value) => save({ formDuplicateLimitWindow: value })} />
+            <DuplicatePolicySelect label={DUPLICATE_TEXT.contact} value={settings.phoneEmailMode} options={DUPLICATE_CONTACT_OPTIONS} onChange={(value) => save({ phoneEmailMode: value })} />
+          </div>
+
+          <div className="inbox-policy-history">
+            <div className="inbox-policy-history-head">
+              <strong>{DUPLICATE_TEXT.history}</strong>
+              <div>
+                <input type="month" value={month} onChange={(event) => setMonth(event.target.value || currentMonthValue())} />
+                <button type="button" disabled={history.loading} onClick={loadHistory}>{history.loading ? DUPLICATE_TEXT.loading : DUPLICATE_TEXT.refresh}</button>
+              </div>
+            </div>
+            {history.error && <span className="inbox-policy-error">{history.error}</span>}
+            {history.loading ? (
+              <span className="inbox-policy-empty">{DUPLICATE_TEXT.loading}</span>
+            ) : !visibleHistory.length ? (
+              <span className="inbox-policy-empty">{DUPLICATE_TEXT.empty}</span>
+            ) : (
+              <ul>
+                {visibleHistory.slice(0, 8).map((item, index) => (
+                  <li key={item.id || index}>
+                    <b>{String(item.date || item.createdAt || '').slice(0, 10) || DUPLICATE_TEXT.noDate}</b>
+                    <em>{String(item.pageSlug || item.page || item.form || item.formId || DUPLICATE_TEXT.noPage)}</em>
+                    <small>{blockedReason(item.reason || item.duplicateReason)} · {blockedIdentity(item)}</small>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {history.total > visibleHistory.length && (
+              <small className="inbox-policy-more">{DUPLICATE_TEXT.total} {history.total}{DUPLICATE_TEXT.recent} {visibleHistory.length}{DUPLICATE_TEXT.shown}</small>
+            )}
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -290,7 +476,7 @@ function LeadConflictNotice({ conflict, onReload, onRetry, onDismiss }) {
   );
 }
 
-export default function InboxPanel({ leads, page, syncing = false, totalLeads = 0, hasMoreLeads = false, loadMoreLeads, onFiltersChange, updateIntegrations, updateLead, deleteLead, retryLeadDelivery, retryFailedDeliveries, exportLeadsCsv, leadConflict, onReloadLeadConflict, onRetryLeadConflict, onDismissLeadConflict }) {
+export default function InboxPanel({ leads, page, authUser = null, updatePage, syncing = false, totalLeads = 0, hasMoreLeads = false, loadMoreLeads, onFiltersChange, updateIntegrations, updateLead, deleteLead, retryLeadDelivery, retryFailedDeliveries, exportLeadsCsv, leadConflict, onReloadLeadConflict, onRetryLeadConflict, onDismissLeadConflict }) {
   const [filter, setFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [deliveryFilter, setDeliveryFilter] = useState('all');
@@ -344,6 +530,8 @@ export default function InboxPanel({ leads, page, syncing = false, totalLeads = 
 
   return (
     <div className="simple-panel inbox-panel inbox-v2 inbox-v3">
+      <IntakeDuplicatePolicyPanel page={page} authUser={authUser} updatePage={updatePage} />
+
       <section className="inbox-summary-v2 inbox-summary-v3">
         <button className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>
           <span>전체</span><strong>{normalized.length}건</strong><small>신규 {newCount}건</small>
