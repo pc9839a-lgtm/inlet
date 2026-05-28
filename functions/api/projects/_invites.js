@@ -120,7 +120,7 @@ export async function acceptD1ManagerInvite(request, env = {}, token = '', input
         email,
         phone: normalizePhone(input.phone || ''),
         password: input.password || '',
-        emailVerified: input.emailVerified === true,
+        token: input.token || input.verificationToken || '',
         source: 'manager-invite',
       }, env),
     }

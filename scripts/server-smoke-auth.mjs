@@ -28,6 +28,25 @@ async function expectStatus(label, expected, request) {
   return response;
 }
 
+async function issueSignupVerification(baseUrl, email) {
+  const issue = await fetchWithTimeout(`${baseUrl}/api/auth/email-verification`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ email, purpose: 'signup' }),
+  });
+  assert(issue.status === 200, `signup verification issue for ${email} expected 200, got ${issue.status}`);
+  const data = await issue.json();
+  const token = data.verification?.token || '';
+  assert(token, `signup verification for ${email} should expose mock token for offline QA`);
+  const confirm = await fetchWithTimeout(`${baseUrl}/api/auth/email-verification/confirm`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ email, token }),
+  });
+  assert(confirm.status === 200, `signup verification confirm for ${email} expected 200, got ${confirm.status}`);
+  return token;
+}
+
 async function assertManagerServerAccessMatrix(baseUrl, project, headers, label = 'manager') {
   await expectStatus(`${label} edit read`, 200, () => fetchWithTimeout(`${baseUrl}/api/pages/${project.slug}?projectId=${project.projectId}&ownerId=${project.ownerId}`, {
     headers,
@@ -107,7 +126,7 @@ await runSmoke('server-smoke-auth', async ({ baseUrl }) => {
   const account = await fetchWithTimeout(`${baseUrl}/api/auth/register`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ user: { name: 'Billing User', email: 'billing@example.test', phone: '010-1000-2000', password: 'secret1', emailVerified: true } }),
+    body: JSON.stringify({ user: { name: 'Billing User', email: 'billing@example.test', phone: '010-1000-2000', password: 'secret1', token: await issueSignupVerification(baseUrl, 'billing@example.test') } }),
   });
   assert(account.status === 200, `account register expected 200, got ${account.status}`);
   const accountData = await account.json();
@@ -116,21 +135,21 @@ await runSmoke('server-smoke-auth', async ({ baseUrl }) => {
   const duplicateEmail = await fetchWithTimeout(`${baseUrl}/api/auth/register`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ user: { name: 'Duplicate Email', email: 'billing@example.test', phone: '010-1000-2001', password: 'secret1', emailVerified: true } }),
+    body: JSON.stringify({ user: { name: 'Duplicate Email', email: 'billing@example.test', phone: '010-1000-2001', password: 'secret1', token: await issueSignupVerification(baseUrl, 'billing@example.test') } }),
   });
   assert(duplicateEmail.status === 409, `duplicate account email expected 409, got ${duplicateEmail.status}`);
 
   const duplicatePhone = await fetchWithTimeout(`${baseUrl}/api/auth/register`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ user: { name: 'Duplicate Phone', email: 'billing-phone@example.test', phone: '01010002000', password: 'secret1', emailVerified: true } }),
+    body: JSON.stringify({ user: { name: 'Duplicate Phone', email: 'billing-phone@example.test', phone: '01010002000', password: 'secret1', token: await issueSignupVerification(baseUrl, 'billing-phone@example.test') } }),
   });
   assert(duplicatePhone.status === 409, `duplicate account phone expected 409, got ${duplicatePhone.status}`);
 
   const weakPassword = await fetchWithTimeout(`${baseUrl}/api/auth/register`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ user: { name: 'Weak Password', email: 'weak@example.test', phone: '010-1000-2002', password: '123456', emailVerified: true } }),
+    body: JSON.stringify({ user: { name: 'Weak Password', email: 'weak@example.test', phone: '010-1000-2002', password: '123456', token: await issueSignupVerification(baseUrl, 'weak@example.test') } }),
   });
   assert(weakPassword.status === 400, `weak password register expected 400, got ${weakPassword.status}`);
 
@@ -225,7 +244,7 @@ await runSmoke('server-smoke-auth', async ({ baseUrl }) => {
   const statusAccount = await fetchWithTimeout(`${baseUrl}/api/auth/register`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ user: { name: 'Status User', email: 'status-user@example.test', phone: '010-1234-5678', password: 'secret1', emailVerified: true } }),
+    body: JSON.stringify({ user: { name: 'Status User', email: 'status-user@example.test', phone: '010-1234-5678', password: 'secret1', token: await issueSignupVerification(baseUrl, 'status-user@example.test') } }),
   });
   assert(statusAccount.status === 200, `status account register expected 200, got ${statusAccount.status}`);
 
@@ -263,14 +282,14 @@ await runSmoke('server-smoke-auth', async ({ baseUrl }) => {
   const deletedDuplicateEmail = await fetchWithTimeout(`${baseUrl}/api/auth/register`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ user: { name: 'Deleted Duplicate', email: 'status-user@example.test', phone: '010-1234-5679', password: 'secret1', emailVerified: true } }),
+    body: JSON.stringify({ user: { name: 'Deleted Duplicate', email: 'status-user@example.test', phone: '010-1234-5679', password: 'secret1', token: await issueSignupVerification(baseUrl, 'status-user@example.test') } }),
   });
   assert(deletedDuplicateEmail.status === 409, `soft-deleted account duplicate email expected 409, got ${deletedDuplicateEmail.status}`);
 
   const suspendedAccount = await fetchWithTimeout(`${baseUrl}/api/auth/register`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ user: { name: 'Suspended User', email: 'suspended-user@example.test', phone: '010-1234-5680', password: 'secret1', emailVerified: true } }),
+    body: JSON.stringify({ user: { name: 'Suspended User', email: 'suspended-user@example.test', phone: '010-1234-5680', password: 'secret1', token: await issueSignupVerification(baseUrl, 'suspended-user@example.test') } }),
   });
   assert(suspendedAccount.status === 200, `suspended account register expected 200, got ${suspendedAccount.status}`);
 
@@ -301,7 +320,7 @@ await runSmoke('server-smoke-auth', async ({ baseUrl }) => {
   const suspendedDuplicatePhone = await fetchWithTimeout(`${baseUrl}/api/auth/register`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ user: { name: 'Suspended Duplicate', email: 'suspended-duplicate@example.test', phone: '010-1234-5680', password: 'secret1', emailVerified: true } }),
+    body: JSON.stringify({ user: { name: 'Suspended Duplicate', email: 'suspended-duplicate@example.test', phone: '010-1234-5680', password: 'secret1', token: await issueSignupVerification(baseUrl, 'suspended-duplicate@example.test') } }),
   });
   assert(suspendedDuplicatePhone.status === 409, `suspended account duplicate phone expected 409, got ${suspendedDuplicatePhone.status}`);
 
@@ -564,7 +583,7 @@ await runSmoke('server-smoke-manager-invite-session', async ({ baseUrl, dataDir 
   const managerAccount = await fetchWithTimeout(`${baseUrl}/api/auth/register`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ user: { name: 'Invite Manager', email: 'invite-manager@example.test', phone: '010-2222-3333', password: 'secret1', emailVerified: true } }),
+    body: JSON.stringify({ user: { name: 'Invite Manager', email: 'invite-manager@example.test', phone: '010-2222-3333', password: 'secret1', token: await issueSignupVerification(baseUrl, 'invite-manager@example.test') } }),
   });
   assert(managerAccount.status === 200, `manager invite login account register expected 200, got ${managerAccount.status}`);
 
@@ -603,14 +622,14 @@ await runSmoke('server-smoke-manager-invite-session', async ({ baseUrl, dataDir 
   const signupMissingPhone = await fetchWithTimeout(`${baseUrl}/api/projects/invites/${encodeURIComponent(signupInviteData.invite.token)}/accept`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ email: 'signup-manager@example.test', name: 'Signup Manager', authMode: 'signup', emailVerified: true, password: 'secret1' }),
+    body: JSON.stringify({ email: 'signup-manager@example.test', name: 'Signup Manager', authMode: 'signup', token: await issueSignupVerification(baseUrl, 'signup-manager@example.test'), password: 'secret1' }),
   });
   assert(signupMissingPhone.status === 400, `signup invite without phone expected 400, got ${signupMissingPhone.status}`);
 
   const signupAccepted = await fetchWithTimeout(`${baseUrl}/api/projects/invites/${encodeURIComponent(signupInviteData.invite.token)}/accept`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ email: 'signup-manager@example.test', name: 'Signup Manager', phone: '010-3333-4444', authMode: 'signup', emailVerified: true, password: 'secret1' }),
+    body: JSON.stringify({ email: 'signup-manager@example.test', name: 'Signup Manager', phone: '010-3333-4444', authMode: 'signup', token: await issueSignupVerification(baseUrl, 'signup-manager@example.test'), password: 'secret1' }),
   });
   assert(signupAccepted.status === 200, `signup manager invite accept expected 200, got ${signupAccepted.status}`);
 
@@ -715,7 +734,7 @@ await runSmoke('server-smoke-auth-session-refresh', async ({ baseUrl }) => {
   const registered = await fetchWithTimeout(`${baseUrl}/api/auth/register`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ user: { name: 'Session User', email: 'session-user@example.test', phone: '010-7777-8888', password: 'secret1', emailVerified: true } }),
+    body: JSON.stringify({ user: { name: 'Session User', email: 'session-user@example.test', phone: '010-7777-8888', password: 'secret1', token: await issueSignupVerification(baseUrl, 'session-user@example.test') } }),
   });
   assert(registered.status === 200, `session user register expected 200, got ${registered.status}`);
 

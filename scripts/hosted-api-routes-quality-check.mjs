@@ -250,6 +250,25 @@ async function run() {
     httpStatus: verificationConfirm.res.status,
   });
 
+  const legacySignupFlag = await jsonFetch('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({
+      user: {
+        name: 'Hosted Auth QA Legacy',
+        email: authEmail,
+        phone: authPhone,
+        password: 'secret1',
+        emailVerified: true,
+      },
+    }),
+  });
+  checks.push({
+    name: 'Hosted /api/auth/register legacy flag rejected',
+    status: legacySignupFlag.res.status === 403 ? 'ready' : 'failed-live',
+    httpStatus: legacySignupFlag.res.status,
+    failureReason: legacySignupFlag.data?.code || legacySignupFlag.data?.error || '',
+  });
+
   const register = await jsonFetch('/api/auth/register', {
     method: 'POST',
     body: JSON.stringify({
@@ -258,7 +277,7 @@ async function run() {
         email: authEmail,
         phone: authPhone,
         password: 'secret1',
-        emailVerified: true,
+        token: verificationToken,
         source: 'hosted-route-qa',
       },
     }),
@@ -277,7 +296,7 @@ async function run() {
         email: authEmail,
         phone: authPhone,
         password: 'secret1',
-        emailVerified: true,
+        token: verificationToken,
       },
     }),
   });
@@ -545,6 +564,17 @@ async function run() {
     httpStatus: inviteRead.res.status,
   });
 
+  const managerVerificationIssue = await jsonFetch('/api/auth/email-verification', {
+    method: 'POST',
+    body: JSON.stringify({ email: managerEmail, purpose: 'signup' }),
+  });
+  const managerVerificationToken = String(managerVerificationIssue.data?.verification?.token || '').trim();
+  checks.push({
+    name: 'Hosted /api/projects/invites signup verification issue',
+    status: managerVerificationIssue.res.ok && managerVerificationToken ? 'ready' : 'failed-live',
+    httpStatus: managerVerificationIssue.res.status,
+  });
+
   const inviteAccept = await jsonFetch(`/api/projects/invites/${encodeURIComponent(inviteToken)}/accept`, {
     method: 'POST',
     body: JSON.stringify({
@@ -553,7 +583,7 @@ async function run() {
       email: managerEmail,
       phone: managerPhone,
       password: 'secret3',
-      emailVerified: true,
+      token: managerVerificationToken,
     }),
   });
   checks.push({

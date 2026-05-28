@@ -188,10 +188,13 @@ export async function registerAccount(input = {}, env = {}) {
   const phone = normalizePhone(input.phone || '');
   const name = String(input.name || '').trim();
   const password = String(input.password || '');
+  const token = String(input.token || input.verificationToken || '').trim();
   if (!isValidEmail(email)) throw authError('Valid email is required.', 400, { code: 'AUTH_EMAIL_REQUIRED' });
   if (!phone) throw authError('Phone number is required.', 400, { code: 'AUTH_PHONE_REQUIRED' });
   if (!isValidPassword(password)) throw authError('Password must include letters and numbers and be at least 6 characters.', 400, { code: 'AUTH_PASSWORD_POLICY' });
-  if (input.emailVerified !== true) throw authError('Email verification is required before signup.', 403, { code: 'EMAIL_VERIFICATION_REQUIRED' });
+  if (!token) throw authError('Email verification is required before signup.', 403, { code: 'EMAIL_VERIFICATION_REQUIRED' });
+  const verification = await confirmEmailVerificationToken({ email, token }, env);
+  if (verification.purpose !== 'signup') throw authError('Email verification token is invalid.', 403, { code: 'EMAIL_VERIFICATION_INVALID' });
   if (await getD1AccountByEmail(env.DB, email)) throw authError('Email is already registered.', 409, { code: 'AUTH_EMAIL_DUPLICATE', field: 'email' });
   if (await getD1AccountByPhone(env.DB, phone)) throw authError('Phone number is already registered.', 409, { code: 'AUTH_PHONE_DUPLICATE', field: 'phone' });
   const now = new Date().toISOString();
@@ -293,7 +296,7 @@ async function deliverAuthEmail(message = {}, env = {}) {
     };
   }
   if (provider === 'ses') return sendSesAuthEmail(message, env);
-  throw authError('인증 메일을 보내지 못했습니다. 잠시 후 다시 시도해주세요.', 503, {
+  throw authError('?? ??? ??? ?????. ?? ? ?? ??? ???.', 503, {
     code: 'EMAIL_SEND_PROVIDER_UNSUPPORTED',
     provider,
   });
@@ -305,7 +308,7 @@ async function sendSesAuthEmail(message = {}, env = {}) {
   const secretAccessKey = String(env.AWS_SES_SECRET_ACCESS_KEY || env.INLET_AWS_SES_SECRET_ACCESS_KEY || '').trim();
   const from = String(env.INLET_AUTH_EMAIL_FROM || '').trim();
   if (!region || !accessKeyId || !secretAccessKey || !from) {
-    throw authError('인증 메일을 보내지 못했습니다. 잠시 후 다시 시도해주세요.', 503, {
+    throw authError('?? ??? ??? ?????. ?? ? ?? ??? ???.', 503, {
       code: 'EMAIL_SEND_NOT_CONFIGURED',
       provider: 'ses',
     });
@@ -365,7 +368,7 @@ async function sendSesAuthEmail(message = {}, env = {}) {
       signal: AbortSignal.timeout(10000),
     });
   } catch {
-    throw authError('인증 메일을 보내지 못했습니다. 잠시 후 다시 시도해주세요.', 503, {
+    throw authError('?? ??? ??? ?????. ?? ? ?? ??? ???.', 503, {
       code: 'EMAIL_SEND_TIMEOUT',
       provider: 'ses',
     });
@@ -387,7 +390,7 @@ async function sendSesAuthEmail(message = {}, env = {}) {
         : res.status === 429 || errorType.includes('throttl') || errorType.includes('limit')
           ? 'EMAIL_SEND_QUOTA_EXCEEDED'
           : 'EMAIL_SEND_PROVIDER_ERROR';
-    throw authError('인증 메일을 보내지 못했습니다. 잠시 후 다시 시도해주세요.', 503, {
+    throw authError('?? ??? ??? ?????. ?? ? ?? ??? ???.', 503, {
       code,
       provider: 'ses',
       httpStatus: res.status,
@@ -404,39 +407,38 @@ async function sendSesAuthEmail(message = {}, env = {}) {
 
 function authEmailSubject(purpose = 'signup') {
   return String(purpose || '') === 'password-reset'
-    ? '[Inlet] 비밀번호 변경 이메일 인증'
-    : '[Inlet] 회원가입 이메일 인증';
+    ? '[Inlet] ???? ?? ??? ??'
+    : '[Inlet] ???? ??? ??';
 }
 
 function authEmailText(message = {}) {
-  const purposeText = String(message.purpose || '') === 'password-reset' ? '비밀번호 변경' : '회원가입';
+  const purposeText = String(message.purpose || '') === 'password-reset' ? '???? ??' : '????';
   return [
-    `Inlet ${purposeText} 이메일 인증입니다.`,
+    `Inlet ${purposeText} ??? ?????.`,
     '',
-    '아래 인증 토큰을 화면의 이메일 인증 입력칸에 붙여넣어 주세요.',
+    '?? ?? ??? ??? ??? ?? ???? ???? ???.',
     '',
     message.token,
     '',
-    `만료 시간: ${message.expiresAt || '-'}`,
+    `?? ??: ${message.expiresAt || '-'}`,
     '',
-    '본인이 요청하지 않았다면 이 메일을 무시해주세요.',
+    '??? ???? ???? ? ??? ??? ???.',
   ].join('\n');
 }
 
 function authEmailHtml(message = {}) {
-  const purposeText = String(message.purpose || '') === 'password-reset' ? '비밀번호 변경' : '회원가입';
+  const purposeText = String(message.purpose || '') === 'password-reset' ? '???? ??' : '????';
   const token = escapeHtml(message.token || '');
   return [
     '<div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827">',
-    `<h2 style="margin:0 0 12px">Inlet ${escapeHtml(purposeText)} 이메일 인증</h2>`,
-    '<p>아래 인증 토큰을 화면의 이메일 인증 입력칸에 붙여넣어 주세요.</p>',
+    `<h2 style="margin:0 0 12px">Inlet ${escapeHtml(purposeText)} ??? ??</h2>`,
+    '<p>?? ?? ??? ??? ??? ?? ???? ???? ???.</p>',
     `<pre style="white-space:pre-wrap;word-break:break-all;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:14px">${token}</pre>`,
-    `<p style="color:#6b7280">만료 시간: ${escapeHtml(message.expiresAt || '-')}</p>`,
-    '<p style="color:#6b7280">본인이 요청하지 않았다면 이 메일을 무시해주세요.</p>',
+    `<p style="color:#6b7280">?? ??: ${escapeHtml(message.expiresAt || '-')}</p>`,
+    '<p style="color:#6b7280">??? ???? ???? ? ??? ??? ???.</p>',
     '</div>',
   ].join('');
 }
-
 function escapeHtml(value = '') {
   return String(value || '')
     .replace(/&/g, '&amp;')

@@ -457,7 +457,7 @@ function AuthScreen({ onAuth, initialMode = 'login', onBack }) {
           email,
           phone,
           password: form.password,
-          emailVerified: true,
+          token: form.verificationCode.trim(),
           source: 'signup',
         })
         : await loginAuthAccount({ email, password: form.password });

@@ -104,6 +104,7 @@ export async function registerAuthAccount(user = {}) {
       ...user,
       email: String(user.email || '').trim().toLowerCase(),
       phone: normalizeAccountPhone(user.phone),
+      token: user.token || user.verificationToken || '',
       source: user.source || 'signup',
     },
   });

@@ -4545,6 +4545,7 @@ async function registerUserAccount(input = {}, options = {}) {
   const phone = normalizePhone(input.phone || '');
   const name = String(input.name || '').trim();
   const password = String(input.password || '');
+  const token = String(input.token || input.verificationToken || '').trim();
   if (!isValidEmail(email)) {
     const error = new Error('Valid email is required.');
     error.status = 400;
@@ -4563,12 +4564,20 @@ async function registerUserAccount(input = {}, options = {}) {
     error.details = { code: 'AUTH_PASSWORD_POLICY' };
     throw error;
   }
-  const verified = input.emailVerified === true || await hasConfirmedEmailVerification(email);
-  if (!verified) {
+  if (!token && !await hasConfirmedEmailVerification(email)) {
     const error = new Error('Email verification is required before signup.');
     error.status = 403;
     error.details = { code: 'EMAIL_VERIFICATION_REQUIRED' };
     throw error;
+  }
+  if (token) {
+    const verification = await confirmEmailVerification({ email, token });
+    if (verification.purpose !== 'signup') {
+      const error = new Error('Email verification token is invalid.');
+      error.status = 403;
+      error.details = { code: 'EMAIL_VERIFICATION_INVALID' };
+      throw error;
+    }
   }
 
   if (storageRuntime.active === 'd1') {
@@ -5715,7 +5724,7 @@ async function acceptManagerInvite(req, token = '', body = {}) {
       error.details = { code: 'INVITE_EMAIL_MISMATCH' };
       throw error;
     }
-    if (String(body.authMode || '').toLowerCase() === 'signup' && body.emailVerified !== true) {
+    if (String(body.authMode || '').toLowerCase() === 'signup' && !String(body.token || body.verificationToken || '').trim() && !await hasConfirmedEmailVerification(email)) {
       const error = new Error('Email verification is required before signup.');
       error.status = 403;
       error.details = { code: 'EMAIL_VERIFICATION_REQUIRED' };
@@ -5727,7 +5736,7 @@ async function acceptManagerInvite(req, token = '', body = {}) {
         email,
         phone: body.phone || '',
         password: body.password || '',
-        emailVerified: true,
+        token: body.token || body.verificationToken || '',
         source: 'manager-invite',
       }, { source: 'manager-invite' });
     } else {
