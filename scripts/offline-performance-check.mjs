@@ -133,6 +133,7 @@ const leadRepository = await readFile('src/lib/leadRepository.js', 'utf8');
 const eventRepository = await readFile('src/lib/eventRepository.js', 'utf8');
 const inboxPanel = await readFile('src/panels/InboxPanel.jsx', 'utf8');
 const serverSource = await readFile('server/index.mjs', 'utf8');
+const d1Adapter = await readFile('server/storage/d1Adapter.mjs', 'utf8');
 
 const jsonlFallbackPlan = {
   leads: { adapter: 'jsonl', indexed: false, fullScan: true, endpoint: '/api/leads' },
@@ -158,6 +159,8 @@ assert(serverSource.includes('storageQueryPlan') && serverSource.includes('fullS
 assert(serverSource.includes("type: 'leads'") && serverSource.includes("type: 'events'") && serverSource.includes("type: 'stats-events'") && serverSource.includes("type: 'stats-leads'") && serverSource.includes("type: 'delivery-logs'") && serverSource.includes("type: 'delivery-retry-queue'"), 'Server paged list and stats endpoints should expose JSONL query plans through the adapter boundary');
 assert(serverSource.includes('activeIndexFields') && serverSource.includes('missingIndexFields') && serverSource.includes('recommendedIndex'), 'Server query plans should expose DB/index migration fields');
 assert(serverSource.includes('indexKey') && serverSource.includes('migrationPriority') && serverSource.includes('storageMigrationPriority'), 'Server query plans should expose DB/index migration priority');
+assert(serverSource.includes('findD1LeadsByIntakeSignals') && serverSource.includes('ip_rate_limit_1m'), 'Server should use D1 intake-signal lookup for dedupe/rate-limit policy');
+assert(d1Adapter.includes('channelData') && d1Adapter.includes('deviceData'), 'D1 stats should aggregate indexed event channel/device dimensions');
 assert(!serverSource.includes('async function listLeads(') && !serverSource.includes('async function listEvents(') && !serverSource.includes('function filterLeadList('), 'Legacy unpaged server list helpers must not be reintroduced');
 assert(Object.values(jsonlFallbackPlan).every((plan) => plan.adapter === 'jsonl' && plan.fullScan === true && plan.indexed === false), 'perf QA should report JSONL fallback full scans explicitly');
 
@@ -168,9 +171,9 @@ console.log(JSON.stringify({
     fallback: 'jsonl',
     fullScanEndpoints: jsonlFallbackPlan,
     nextIndexFields: {
-      leads: ['project', 'page', 'month', 'status', 'kind', 'deliveryStatus'],
-      events: ['project', 'page', 'month', 'eventType'],
-      stats: ['project', 'page', 'month', 'eventType', 'status', 'kind', 'deliveryStatus'],
+      leads: ['project', 'page', 'month', 'status', 'kind', 'deliveryStatus', 'phoneNormalized', 'emailNormalized', 'clientId', 'ipHash', 'duplicate'],
+      events: ['project', 'page', 'month', 'eventType', 'channel', 'device'],
+      stats: ['project', 'page', 'month', 'eventType', 'channel', 'device', 'status', 'kind', 'deliveryStatus'],
     },
     queryPlanFields: ['activeIndexFields', 'missingIndexFields', 'recommendedIndex', 'indexKey', 'migrationPriority', 'nextAdapter'],
   },
@@ -183,5 +186,5 @@ console.log(JSON.stringify({
     skewedEventFilterMs: skewedEventFilter.ms,
     skewedStatsSummaryMs: skewedStatsRun.ms,
   },
-  checks: 30,
+  checks: 32,
 }, null, 2));

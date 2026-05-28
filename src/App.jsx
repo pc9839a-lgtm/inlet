@@ -35,6 +35,7 @@ import { isOwnerAdminModeEnabled, isServerLeadMode } from './config/runtimeConfi
 import { downloadLeadsCsv } from './lib/leadCsv.js';
 import { clampDateRangeToMonth, currentMonthValue, monthDateRange } from './lib/monthRange.js';
 import { fetchServerPage, persistPage } from './lib/pageRepository.js';
+import { canUsePageDuplication, createDuplicatedPage } from './lib/pageDuplication.js';
 import { projectContext } from './lib/projectContext.js';
 import { fetchLinkPreview, linkThumbnailFromUrl, normalizeExternalUrl } from './lib/linkPreview.js';
 import { isReservationLead, normalizeLeadItem } from './lib/leadModel.js';
@@ -769,6 +770,24 @@ function App() {
     });
     setOpenId(cp.id);
     setAddOpen(false);
+  };
+  const duplicatePageWithUrl = (urlConfig) => {
+    if (blockWrite('settings')) {
+      return { ok: false, message: '설정 편집 권한이 없습니다.' };
+    }
+    if (!canUsePageDuplication(page)) {
+      return { ok: false, locked: true, message: '페이지 복제는 유료 기능입니다. 결제 연동 후 사용할 수 있습니다.' };
+    }
+    const nextPage = createDuplicatedPage(page, urlConfig);
+    setPage(nextPage);
+    setLeads([]);
+    setEvents([]);
+    setOpenId(nextPage.blocks?.find((block) => block.type === 'hero')?.id || nextPage.blocks?.[0]?.id || '');
+    setTab('edit');
+    replaceLocationTab('edit');
+    saveLocalJson(START_MODE_KEY, 'manual', '시작 방식', { quietSuccess: true });
+    showToast(`페이지를 복제했습니다. 새 URL: /${nextPage.slug}`, 'success');
+    return { ok: true, page: nextPage };
   };
   const reorderToIndex = (fromId, targetIndex) => {
     if (blockWrite('edit')) return;
@@ -1609,7 +1628,7 @@ function App() {
                   {canUseBuilder && tab === 'style' && <StylePanel page={page} updateTheme={updateTheme} onPreviewThemeChange={setStylePreviewTheme}/>}
                   {tab === 'inbox' && <InboxPanel leads={leads} page={page} syncing={leadsSyncing} totalLeads={leadPageMeta.total} hasMoreLeads={leadPageMeta.hasMore} loadMoreLeads={loadMoreLeads} onFiltersChange={setInboxFilters} updateIntegrations={updateIntegrations} connectionsEditing={connectionsEditing} setConnectionsEditing={setConnectionsEditing} updateLead={updateLead} deleteLead={deleteLead} retryLeadDelivery={retryLeadDelivery} retryFailedDeliveries={retryFailedDeliveries} exportLeadsCsv={exportLeadsCsv} leadConflict={leadConflict} onReloadLeadConflict={reloadLeadConflict} onRetryLeadConflict={retryLeadConflict} onDismissLeadConflict={() => setLeadConflict(null)} accessMode={accessMode}/>}
                   {tab === 'stats' && <StatsPanel events={events} leads={leads} page={page} eventPageMeta={statsEventPageMeta} leadPageMeta={statsLeadPageMeta} statsPartial={statsPartial} period={statsPeriod} onPeriodChange={setStatsPeriod} accessMode={accessMode}/>}
-                  {tab === 'settings' && <SettingsPanel page={page} updatePage={updatePage} updateMeta={updateMeta} updateIntegrations={updateIntegrations} setPage={setNormalizedPage} onReset={reset} authUser={authUser} accessMode={accessMode}/>}
+                  {tab === 'settings' && <SettingsPanel page={page} updatePage={updatePage} updateMeta={updateMeta} updateIntegrations={updateIntegrations} setPage={setNormalizedPage} onDuplicatePage={duplicatePageWithUrl} canDuplicatePage={canUsePageDuplication(page)} onReset={reset} authUser={authUser} accessMode={accessMode}/>}
                 </Suspense>
               </>
             )}

@@ -57,6 +57,8 @@ for (const command of [
   'npm run server:smoke:pages',
   'npm run server:smoke:integrations',
   'npm run api:hosted:qa',
+  'npm run artifact:clean',
+  'npm run artifact:qa -- --strict',
 ]) {
   assert(readiness.includes(command), `operator checklist missing ${command}`);
 }
@@ -74,6 +76,12 @@ for (const liveGate of [
   'OAuth',
   'Conversion tracking',
   'Map wrapper',
+  'INLET_PRODUCTION_BROWSER_QA_REQUIRE=1',
+  'INLET_PRODUCTION_QA_INCLUDE_NEXT_SETTINGS=1',
+  'requireRealBrowser=true',
+  'Cloudflare Pages deployment id',
+  'GitHub `main` commit SHA',
+  'Settings duplicate policy/page duplication modal coverage',
 ]) {
   assert(readiness.includes(liveGate), `operator checklist missing live gate detail: ${liveGate}`);
 }

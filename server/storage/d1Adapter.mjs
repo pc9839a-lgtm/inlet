@@ -17,9 +17,9 @@ export const D1_SCHEMA_TABLES = [
 ];
 
 export const D1_INDEX_PRIORITIES = {
-  leads: ['project_id', 'created_month', 'status', 'kind', 'delivery_status', 'contact_key'],
-  events: ['project_id', 'created_month', 'event_type', 'dedupe_key'],
-  stats: ['project_id', 'created_month', 'event_type', 'status', 'kind', 'delivery_status'],
+  leads: ['project_id', 'created_month', 'status', 'kind', 'delivery_status', 'contact_key', 'phone_normalized', 'email_normalized', 'client_id', 'ip_hash', 'duplicate'],
+  events: ['project_id', 'created_month', 'event_type', 'channel', 'device', 'dedupe_key'],
+  stats: ['project_id', 'created_month', 'event_type', 'channel', 'device', 'status', 'kind', 'delivery_status'],
   billing: ['project_id', 'status', 'current_period_end'],
   audit: ['project_id', 'actor_account_id', 'action', 'created_at'],
 };
@@ -372,6 +372,15 @@ export function encodeD1Lead(lead = {}, context = {}) {
     phone: String(lead.phone || lead.values?.phone || ''),
     email: String(lead.email || lead.values?.email || ''),
     contact_key: String(lead.contactKey || d1ContactKey(lead)),
+    client_id: String(lead.clientId || lead.values?.clientId || ''),
+    ip_hash: String(lead.ipHash || ''),
+    user_agent_hash: String(lead.userAgentHash || ''),
+    phone_normalized: String(lead.phoneNormalized || String(lead.phone || lead.values?.phone || '').replace(/\D/g, '')),
+    email_normalized: String(lead.emailNormalized || lead.email || lead.values?.email || '').trim().toLowerCase(),
+    duplicate: lead.duplicate ? 1 : 0,
+    duplicate_reason: String(lead.duplicateReason || ''),
+    risk_score: Math.max(0, Number(lead.riskScore || 0)),
+    submitted_at: String(lead.submittedAt || createdAt),
     values_json: encodeD1Json(values),
     delivery_status: String(lead.deliveryStatus || lead.delivery?.status || 'pending'),
     source_url: String(lead.sourceUrl || lead.url || ''),
@@ -397,6 +406,15 @@ export function decodeD1Lead(row = {}) {
     phone: row.phone || raw.phone || '',
     email: row.email || raw.email || '',
     contactKey: row.contact_key || raw.contactKey || '',
+    clientId: row.client_id || raw.clientId || raw.values?.clientId || '',
+    ipHash: row.ip_hash || raw.ipHash || '',
+    userAgentHash: row.user_agent_hash || raw.userAgentHash || '',
+    phoneNormalized: row.phone_normalized || raw.phoneNormalized || raw.values?.phoneNormalized || '',
+    emailNormalized: row.email_normalized || raw.emailNormalized || raw.values?.emailNormalized || '',
+    duplicate: Number(row.duplicate || 0) === 1 || !!raw.duplicate,
+    duplicateReason: row.duplicate_reason || raw.duplicateReason || '',
+    riskScore: Number(row.risk_score ?? raw.riskScore ?? 0),
+    submittedAt: row.submitted_at || raw.submittedAt || row.created_at || raw.createdAt || '',
     values: values.values || raw.values || {},
     answers: Array.isArray(values.answers) ? values.answers : (Array.isArray(raw.answers) ? raw.answers : []),
     deliveryStatus: row.delivery_status || raw.deliveryStatus || raw.delivery?.status || 'pending',
@@ -419,6 +437,8 @@ export function encodeD1Event(event = {}, context = {}) {
     visitor_id: String(event.visitorId || event.visitor_id || ''),
     session_id: String(event.sessionId || event.session_id || ''),
     dedupe_key: String(event.dedupeKey || event.dedupe_key || ''),
+    channel: String(event.channel || event.source || event.utmSource || event.utm_source || 'direct').trim().toLowerCase() || 'direct',
+    device: String(event.device || event.deviceType || 'unknown').trim().toLowerCase() || 'unknown',
     payload_json: encodeD1Json({ raw: event }),
     created_month: d1CreatedMonth(event.createdMonth || createdAt),
     created_at: createdAt,
@@ -439,6 +459,9 @@ export function decodeD1Event(row = {}) {
     visitorId: row.visitor_id || raw.visitorId || '',
     sessionId: row.session_id || raw.sessionId || '',
     dedupeKey: row.dedupe_key || raw.dedupeKey || '',
+    channel: row.channel || raw.channel || raw.source || 'direct',
+    source: row.channel || raw.source || raw.channel || 'direct',
+    device: row.device || raw.device || 'unknown',
     createdMonth: row.created_month || d1CreatedMonth(row.created_at),
     createdAt: row.created_at || raw.createdAt || '',
   };
@@ -1016,6 +1039,76 @@ export async function findD1LeadsByContact(db, { projectId, month, phone = '', e
   return result.records.map(decodeD1Lead);
 }
 
+export async function findD1LeadsByIntakeSignals(db, { projectId, month, pageSlug = '', phone = '', email = '', clientId = '', ipHash = '', limit = 200 } = {}) {
+  assertD1Binding(db);
+  const normalizedPhone = String(phone || '').replace(/\D/g, '');
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  const safeClientId = String(clientId || '').trim();
+  const safeIpHash = String(ipHash || '').trim();
+  if (!projectId || !month || (!normalizedPhone && !normalizedEmail && !safeClientId && !safeIpHash)) return [];
+
+  const safeLimit = Math.max(1, Math.min(500, Number(limit || 200)));
+  const filters = ['project_id = ?', 'created_month = ?'];
+  const params = [projectId, month];
+  if (pageSlug) {
+    filters.push('page_slug = ?');
+    params.push(String(pageSlug));
+  }
+  const signalFilters = [];
+  if (normalizedPhone) {
+    signalFilters.push('phone_normalized = ?', 'contact_key = ?', "REPLACE(REPLACE(REPLACE(phone, '-', ''), ' ', ''), '.', '') = ?");
+    params.push(normalizedPhone, normalizedPhone, normalizedPhone);
+  }
+  if (normalizedEmail) {
+    signalFilters.push('email_normalized = ?', 'LOWER(email) = ?', 'contact_key = ?');
+    params.push(normalizedEmail, normalizedEmail, normalizedEmail);
+  }
+  if (safeClientId) {
+    signalFilters.push('client_id = ?');
+    params.push(safeClientId);
+  }
+  if (safeIpHash) {
+    signalFilters.push('ip_hash = ?');
+    params.push(safeIpHash);
+  }
+  filters.push(`(${signalFilters.join(' OR ')})`);
+  params.push(safeLimit);
+  try {
+    const result = await queryD1Rows(
+      db,
+      `SELECT * FROM leads WHERE ${filters.join(' AND ')} ORDER BY created_at DESC LIMIT ?`,
+      params,
+    );
+    return result.records.map(decodeD1Lead);
+  } catch (error) {
+    if (!isD1MissingLeadDedupeColumnError(error)) throw error;
+    const [contacts, recent] = await Promise.all([
+      findD1LeadsByContact(db, { projectId, month, phone: normalizedPhone, email: normalizedEmail, limit: safeLimit }),
+      listD1Leads(db, { projectId, month, limit: Math.min(100, safeLimit) }).then((page) => page.records || []),
+    ]);
+    return uniqueD1Leads([...contacts, ...recent]).filter((lead) => {
+      if (pageSlug && lead.pageSlug && lead.pageSlug !== pageSlug) return false;
+      return (
+        (normalizedPhone && String(lead.phoneNormalized || lead.phone || '').replace(/\D/g, '') === normalizedPhone) ||
+        (normalizedEmail && String(lead.emailNormalized || lead.email || '').trim().toLowerCase() === normalizedEmail) ||
+        (safeClientId && String(lead.clientId || lead.values?.clientId || '').trim() === safeClientId) ||
+        (safeIpHash && String(lead.ipHash || '').trim() === safeIpHash)
+      );
+    });
+  }
+}
+
+function uniqueD1Leads(leads = []) {
+  const seen = new Set();
+  return leads.filter((lead) => {
+    const key = String(lead.id || '');
+    if (!key) return true;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 export async function listD1Events(db, { projectId, month, eventType = '', cursor = 0, limit = 100 } = {}) {
   assertD1Binding(db);
   const safeLimit = Math.max(1, Math.min(500, Number(limit || 100)));
@@ -1117,7 +1210,7 @@ export async function aggregateD1Stats(db, { projectId, month, dateFrom = '', da
   }
   const scope = d1MonthDateScope({ projectId, month, dateFrom, dateTo });
 
-  const [eventCounts, eventTrend, leadCounts, leadTrend] = await Promise.all([
+  const [eventCounts, eventTrend, eventChannels, eventDevices, leadCounts, leadTrend] = await Promise.all([
     queryD1Rows(
       db,
       `SELECT event_type,
@@ -1138,6 +1231,8 @@ export async function aggregateD1Stats(db, { projectId, month, dateFrom = '', da
        ORDER BY day ASC`,
       scope.params,
     ),
+    queryD1EventDimension(db, scope, 'channel'),
+    queryD1EventDimension(db, scope, 'device'),
     queryD1Rows(
       db,
       `SELECT status, kind, delivery_status, COUNT(*) AS total
@@ -1161,6 +1256,8 @@ export async function aggregateD1Stats(db, { projectId, month, dateFrom = '', da
     month,
     eventCounts: eventCounts.records,
     eventTrend: eventTrend.records,
+    eventChannels: eventChannels.records,
+    eventDevices: eventDevices.records,
     leadCounts: leadCounts.records,
     leadTrend: leadTrend.records,
   });
@@ -1180,9 +1277,103 @@ function d1MonthDateScope({ projectId, month, dateFrom = '', dateTo = '' } = {})
   return { where: filters.join(' AND '), params };
 }
 
+async function queryD1EventDimension(db, scope = {}, column = '') {
+  const safeColumn = column === 'device' ? 'device' : 'channel';
+  try {
+    return await queryD1Rows(
+      db,
+      `SELECT COALESCE(NULLIF(${safeColumn}, ''), 'unknown') AS name,
+              COUNT(DISTINCT CASE WHEN dedupe_key IS NOT NULL AND dedupe_key != '' THEN dedupe_key ELSE id END) AS total
+       FROM events
+       WHERE ${scope.where}
+       GROUP BY name`,
+      scope.params,
+    );
+  } catch (error) {
+    if (!isD1MissingEventDimensionColumnError(error)) throw error;
+    return { records: [], meta: { fallback: 'missing-event-dimension-column' } };
+  }
+}
+
+function isD1MissingEventDimensionColumnError(error) {
+  return /no such column|has no column|table events has no column|unknown column/i.test(String(error?.message || error || ''));
+}
+
 export async function upsertD1Lead(db, lead = {}, context = {}) {
   assertD1Binding(db);
   const row = encodeD1Lead(lead, context);
+  try {
+    await db.prepare(`
+    INSERT INTO leads (
+      id, project_id, page_id, page_slug, kind, status, name, phone, email, contact_key,
+      client_id, ip_hash, user_agent_hash, phone_normalized, email_normalized,
+      duplicate, duplicate_reason, risk_score, submitted_at,
+      values_json, delivery_status, source_url, created_month, created_at, updated_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      page_id = excluded.page_id,
+      page_slug = excluded.page_slug,
+      kind = excluded.kind,
+      status = excluded.status,
+      name = excluded.name,
+      phone = excluded.phone,
+      email = excluded.email,
+      contact_key = excluded.contact_key,
+      client_id = excluded.client_id,
+      ip_hash = excluded.ip_hash,
+      user_agent_hash = excluded.user_agent_hash,
+      phone_normalized = excluded.phone_normalized,
+      email_normalized = excluded.email_normalized,
+      duplicate = excluded.duplicate,
+      duplicate_reason = excluded.duplicate_reason,
+      risk_score = excluded.risk_score,
+      submitted_at = excluded.submitted_at,
+      values_json = excluded.values_json,
+      delivery_status = excluded.delivery_status,
+      source_url = excluded.source_url,
+      created_month = excluded.created_month,
+      updated_at = excluded.updated_at
+  `).bind(
+    row.id,
+    row.project_id,
+    row.page_id,
+    row.page_slug,
+    row.kind,
+    row.status,
+    row.name,
+    row.phone,
+    row.email,
+    row.contact_key,
+    row.client_id,
+    row.ip_hash,
+    row.user_agent_hash,
+    row.phone_normalized,
+    row.email_normalized,
+    row.duplicate,
+    row.duplicate_reason,
+    row.risk_score,
+    row.submitted_at,
+    row.values_json,
+    row.delivery_status,
+    row.source_url,
+    row.created_month,
+    row.created_at,
+    row.updated_at,
+  ).run();
+  } catch (error) {
+    if (!isD1MissingLeadDedupeColumnError(error)) throw error;
+    await upsertD1LeadLegacy(db, row);
+  }
+  await syncD1DeliveryLogsForLead(db, lead, { projectId: row.project_id, leadId: row.id });
+  return decodeD1Lead(row);
+}
+
+function isD1MissingLeadDedupeColumnError(error) {
+  return /no such column|has no column|table leads has no column|unknown column/i.test(String(error?.message || error || ''));
+}
+
+async function upsertD1LeadLegacy(db, row = {}) {
   await db.prepare(`
     INSERT INTO leads (
       id, project_id, page_id, page_slug, kind, status, name, phone, email, contact_key,
@@ -1221,11 +1412,9 @@ export async function upsertD1Lead(db, lead = {}, context = {}) {
     row.created_at,
     row.updated_at,
   ).run();
-  await syncD1DeliveryLogsForLead(db, lead, { projectId: row.project_id, leadId: row.id });
-  return decodeD1Lead(row);
 }
 
-function buildD1StatsSummary({ month, eventCounts = [], eventTrend = [], leadCounts = [], leadTrend = [] } = {}) {
+function buildD1StatsSummary({ month, eventCounts = [], eventTrend = [], eventChannels = [], eventDevices = [], leadCounts = [], leadTrend = [] } = {}) {
   const eventMap = countRowsByKey(eventCounts, 'event_type');
   const pv = Number(eventMap.page_view || 0);
   const cta = Number(eventMap.cta_click || 0);
@@ -1286,6 +1475,8 @@ function buildD1StatsSummary({ month, eventCounts = [], eventTrend = [], leadCou
       statusData,
       deliveryData,
       typeData,
+      channelData: countRowsByKey(eventChannels, 'name'),
+      deviceData: countRowsByKey(eventDevices, 'name'),
     },
     totals: {
       events: sumTotals(eventCounts),
@@ -1477,6 +1668,36 @@ function d1DeliveryQueueEntry(log = {}) {
 export async function insertD1Event(db, event = {}, context = {}) {
   assertD1Binding(db);
   const row = encodeD1Event(event, context);
+  try {
+    await db.prepare(`
+    INSERT OR IGNORE INTO events (
+      id, project_id, page_id, page_slug, event_type, visitor_id, session_id,
+      dedupe_key, channel, device, payload_json, created_month, created_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).bind(
+    row.id,
+    row.project_id,
+    row.page_id,
+    row.page_slug,
+    row.event_type,
+    row.visitor_id,
+    row.session_id,
+    row.dedupe_key,
+    row.channel,
+    row.device,
+    row.payload_json,
+    row.created_month,
+    row.created_at,
+  ).run();
+  } catch (error) {
+    if (!isD1MissingEventDimensionColumnError(error)) throw error;
+    await insertD1EventLegacy(db, row);
+  }
+  return decodeD1Event(row);
+}
+
+async function insertD1EventLegacy(db, row = {}) {
   await db.prepare(`
     INSERT OR IGNORE INTO events (
       id, project_id, page_id, page_slug, event_type, visitor_id, session_id,
@@ -1496,7 +1717,6 @@ export async function insertD1Event(db, event = {}, context = {}) {
     row.created_month,
     row.created_at,
   ).run();
-  return decodeD1Event(row);
 }
 
 export async function insertD1AuditLog(db, entry = {}) {

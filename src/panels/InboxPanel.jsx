@@ -414,6 +414,8 @@ export default function InboxPanel({ leads, page, syncing = false, totalLeads = 
                     </button>
 
                     <div className="lead-row-meta-v3">
+                      {lead.duplicate && <b className="lead-status hold">중복</b>}
+                      {lead.duplicateReason?.includes('spam_suspected') && <b className="lead-status hold">스팸의심</b>}
                       <b className={`lead-status ${statusClass(lead.status)}`}>{lead.status}</b>
                       <small>{fmtDateOnly(lead.createdAt)}</small>
                       <button type="button" onClick={() => setOpenId(opened ? '' : lead.id)}>{opened ? '닫기' : '상세'}</button>

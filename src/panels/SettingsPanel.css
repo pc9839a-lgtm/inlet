@@ -522,6 +522,329 @@
   outline: none;
 }
 
+.duplicate-policy-card {
+  overflow: hidden;
+}
+
+.duplicate-policy-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.duplicate-policy-grid .toggle {
+  min-height: 58px;
+  margin: 0;
+}
+
+.duplicate-policy-select {
+  min-width: 0;
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 160px;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #dbe3ef;
+  border-radius: 18px;
+  background: #fbfdff;
+  box-sizing: border-box;
+}
+
+.duplicate-policy-select span {
+  min-width: 0;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 950;
+  overflow-wrap: anywhere;
+}
+
+.duplicate-policy-select select {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid #dbe3ef;
+  border-radius: 13px;
+  background: #fff;
+  color: #111827;
+  padding: 0 10px;
+  font-size: 13px;
+  font-weight: 900;
+  outline: none;
+}
+
+.duplicate-policy-select select:disabled {
+  opacity: .65;
+}
+
+.duplicate-policy-history {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: #f8fafc;
+}
+
+.duplicate-policy-history strong {
+  display: block;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.duplicate-policy-history p {
+  margin: 5px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.45;
+}
+
+.duplicate-policy-history > span {
+  min-height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+  background: #fff;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.duplicate-policy-history ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.duplicate-policy-history li {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 4px 10px;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.duplicate-policy-history b,
+.duplicate-policy-history em,
+.duplicate-policy-history small {
+  min-width: 0;
+  font-style: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.duplicate-policy-history b {
+  color: #111827;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.duplicate-policy-history em {
+  color: #111827;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.duplicate-policy-history small {
+  grid-column: 2;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.page-duplicate-card {
+  overflow: hidden;
+}
+
+.page-duplicate-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: #f8fafc;
+}
+
+.page-duplicate-summary strong {
+  display: block;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.page-duplicate-summary p,
+.page-duplicate-lock {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.45;
+}
+
+.page-duplicate-summary button,
+.settings-url-modal-actions button {
+  min-height: 42px;
+  border: 1px solid #111827;
+  border-radius: 14px;
+  background: #111827;
+  color: #fff;
+  padding: 0 15px;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.settings-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(15, 23, 42, .45);
+}
+
+.settings-url-modal {
+  width: min(560px, 100%);
+  display: grid;
+  gap: 16px;
+  border: 1px solid #dbe3ef;
+  border-radius: 28px;
+  background: #fff;
+  padding: 22px;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, .22);
+}
+
+.settings-url-modal-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.settings-url-modal-head span {
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.settings-url-modal-head h2 {
+  margin: 4px 0 0;
+  color: #111827;
+  font-size: 26px;
+  font-weight: 950;
+  letter-spacing: -0.04em;
+}
+
+.settings-url-modal-head button,
+.settings-url-modal-actions button:first-child {
+  min-height: 40px;
+  border: 1px solid #dbe3ef;
+  border-radius: 14px;
+  background: #fff;
+  color: #111827;
+  padding: 0 13px;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.settings-url-choice {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: #f8fafc;
+}
+
+.settings-url-choice button {
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: transparent;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.settings-url-choice button.active {
+  background: #111827;
+  color: #fff;
+}
+
+.settings-url-form {
+  display: grid;
+  gap: 12px;
+}
+
+.settings-url-form label {
+  display: grid;
+  gap: 7px;
+}
+
+.settings-url-form span {
+  color: #111827;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.settings-url-form input {
+  width: 100%;
+  min-height: 48px;
+  box-sizing: border-box;
+  border: 1px solid #dbe3ef;
+  border-radius: 15px;
+  background: #f8fafc;
+  color: #111827;
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.settings-url-form small,
+.settings-url-lock,
+.settings-url-error {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.45;
+}
+
+.settings-url-error {
+  margin: 0;
+  color: #dc2626;
+}
+
+.settings-url-lock {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid #fed7aa;
+  border-radius: 16px;
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.settings-url-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.settings-url-modal-actions button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
 @media (max-width: 1180px) {
   .manager-access-card .section-title,
   .manager-owner-summary,
@@ -531,7 +854,12 @@
   .manager-empty-state,
   .manager-empty-state.compact,
   .manager-card-head,
-  .manager-permission-row {
+  .manager-permission-row,
+  .duplicate-policy-grid,
+  .duplicate-policy-select,
+  .page-duplicate-summary,
+  .settings-url-modal-head,
+  .settings-url-choice {
     grid-template-columns: 1fr;
   }
 
@@ -553,6 +881,14 @@
 
   .manager-detail-actions {
     grid-template-columns: 1fr;
+  }
+
+  .duplicate-policy-history li {
+    grid-template-columns: 1fr;
+  }
+
+  .duplicate-policy-history small {
+    grid-column: auto;
   }
 
   .manager-empty-state button,

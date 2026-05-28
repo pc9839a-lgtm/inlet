@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 
 const baseUrl = process.env.INLET_PRODUCTION_QA_URL || 'https://inlet-8mr.pages.dev';
 const requireRealBrowser = process.env.INLET_PRODUCTION_BROWSER_QA_REQUIRE === '1' || process.env.INLET_BROWSER_QA_REQUIRE === '1';
+const includeNextSettingsCases = process.env.INLET_PRODUCTION_QA_INCLUDE_NEXT_SETTINGS === '1' || !!process.env.INLET_PRODUCTION_QA_URL;
 
 const cases = [
   {
@@ -133,6 +134,25 @@ const cases = [
     forbiddenText: '泥섏쓬 ?붾㈃???대뼸寃?留뚮뱾源뚯슂?,?붾㈃??遺덈윭?ㅻ뒗 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎',
   },
   {
+    name: 'owner settings duplicate policy',
+    nextReleaseOnly: true,
+    url: `${baseUrl}/?tab=settings`,
+    statePreset: 'owner-settings',
+    viewports: 'desktop',
+    expectedSelector: '.duplicate-policy-card,.duplicate-policy-grid,.duplicate-policy-select,.duplicate-policy-history',
+    forbiddenText: '泥섏쓬 ?붾㈃???대뼸寃?留뚮뱾源뚯슂?,?붾㈃??遺덈윭?ㅻ뒗 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎',
+  },
+  {
+    name: 'owner settings page duplication modal',
+    nextReleaseOnly: true,
+    url: `${baseUrl}/?tab=settings`,
+    statePreset: 'owner-settings',
+    viewports: 'desktop',
+    clickSelector: '.page-duplicate-summary button',
+    expectedSelector: '.page-duplicate-card,.settings-url-modal,.settings-url-choice,.settings-url-form,.settings-url-lock',
+    forbiddenText: '泥섏쓬 ?붾㈃???대뼸寃?留뚮뱾源뚯슂?,?붾㈃??遺덈윭?ㅻ뒗 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎',
+  },
+  {
     name: 'owner style font tone live preview',
     url: `${baseUrl}/?tab=style`,
     statePreset: 'owner-settings',
@@ -231,7 +251,16 @@ function runCase(testCase) {
 }
 
 const results = [];
-for (const testCase of cases) {
+const activeCases = cases.filter((testCase) => !testCase.nextReleaseOnly || includeNextSettingsCases);
+const skippedCases = cases
+  .filter((testCase) => testCase.nextReleaseOnly && !includeNextSettingsCases)
+  .map((testCase) => ({
+    name: testCase.name,
+    status: 'skipped-live',
+    reason: 'next Settings duplicate policy/page duplication UI is not required on the default production URL until a new deployment URL is provided or INLET_PRODUCTION_QA_INCLUDE_NEXT_SETTINGS=1 is set',
+  }));
+
+for (const testCase of activeCases) {
   results.push(await runCase(testCase));
 }
 
@@ -239,6 +268,8 @@ console.log(JSON.stringify({
   ok: true,
   baseUrl,
   requireRealBrowser,
+  includeNextSettingsCases,
+  skippedCases,
   cases: results.map(({ name, ok, engine, screenshotCount, screenshots, viewports, parseWarning }) => ({
     name,
     ok,

@@ -11,7 +11,7 @@ function inviteErrorMessage(error) {
   const code = error?.details?.code || error?.details?.errorCode || '';
   const message = String(error?.message || error || '');
   if (code === 'AUTH_EMAIL_DUPLICATE' || code === 'AUTH_PHONE_DUPLICATE' || code === 'AUTH_PHONE_REQUIRED' || code === 'AUTH_LOGIN_INVALID' || code === 'AUTH_LOGIN_REQUIRED') return authAccountErrorMessage(error);
-  if (status === 403 && code === 'INVITE_EMAIL_MISMATCH') return '초대받은 이메일과 로그인 이메일이 다릅니다. 이메일을 확인해주세요.';
+  if (status === 403 && code === 'INVITE_EMAIL_MISMATCH') return '초대받은 이메일을 확인해주세요.';
   if (status === 403 && code === 'EMAIL_VERIFICATION_REQUIRED') return '이메일 인증을 완료해야 회원가입할 수 있습니다.';
   if (status === 409) return '이미 처리된 초대입니다. 초대 상태를 다시 확인해주세요.';
   if (status === 410) return '만료된 초대 링크입니다. 다시 초대를 요청해주세요.';
@@ -36,7 +36,7 @@ export default function InviteAcceptScreen({ token, authUser = null, onAccepted,
   const helperText = useMemo(() => {
     if (!invite) return '';
     if (!currentEmail) return '초대받은 이메일로 로그인하거나 회원가입하세요.';
-    if (!emailMatches) return '초대받은 이메일과 입력한 이메일이 다릅니다. 이메일을 확인해주세요.';
+    if (!emailMatches) return '초대받은 이메일을 확인해주세요.';
     if (mode === 'signup' && !emailVerified) return '회원가입은 이메일 인증 완료 후 진행됩니다.';
     return '이 이메일로 초대된 페이지를 바로 불러옵니다.';
   }, [currentEmail, emailMatches, emailVerified, invite, mode]);
@@ -80,7 +80,7 @@ export default function InviteAcceptScreen({ token, authUser = null, onAccepted,
       return;
     }
     if (!emailMatches) {
-      setError('초대받은 이메일과 다릅니다. 이메일을 확인해주세요.');
+      setError('초대받은 이메일을 확인해주세요.');
       return;
     }
     setEmailVerified(true);
@@ -95,7 +95,7 @@ export default function InviteAcceptScreen({ token, authUser = null, onAccepted,
       return;
     }
     if (!emailMatches) {
-      setError('초대받은 이메일과 다릅니다. 이메일을 확인해주세요.');
+      setError('초대받은 이메일을 확인해주세요.');
       return;
     }
     if (mode === 'signup') {

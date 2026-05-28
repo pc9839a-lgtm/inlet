@@ -1,7 +1,7 @@
 # Live Integration Verification Matrix
 
 Status: launch checklist.
-Owner: Worker 4 policy, Worker 1 integration implementation, Worker 3 QA evidence.
+Owner: Worker 5 QA/ops. Coordinate provider implementation or product UI changes with the owning worker.
 
 | Integration | Env Vars | Local Fixture | Live Verification | Failure Mode | Owner |
 | --- | --- | --- | --- | --- | --- |
@@ -18,6 +18,7 @@ Owner: Worker 4 policy, Worker 1 integration implementation, Worker 3 QA evidenc
 
 ## Shared Local Checks
 
+- `npm run qa:all` runs the full offline gate and must pass before a release commit is pushed.
 - `npm run server:smoke:integrations` verifies webhook delivery, retry queue, timeout failure, retry metadata, delivery logs, and idempotency key presence.
 - `npm run server:smoke:auth` verifies strict signed sessions, forged header rejection, manager invite acceptance, and manager tab/action enforcement.
 - `npm run integration:mock:qa` verifies SMTP success/retryable failure/non-retryable failure/timeout/retry/dead-letter, webhook retry/dead-letter/idempotency/duplicate compaction mock data, and OAuth missing ID/missing secret/expired/revoked/not-configured states.
@@ -26,6 +27,7 @@ Owner: Worker 4 policy, Worker 1 integration implementation, Worker 3 QA evidenc
 - `npm run ai:qa`, `npm run integration:mock:qa`, and `npm run conversion:qa` include `liveSummary` counts. The launch record must copy those counts so pass/fail/skipped-live totals are visible without reading every provider row.
 - `npm run live:qa` provides one consolidated readiness report for AI, SMTP, OAuth, conversion diagnostics, and real-browser visual QA.
 - `npm run runtime:qa` verifies repository/runtime wiring.
+- `npm run browser:production:qa` must be run with a real browser for launch sign-off. Use `INLET_PRODUCTION_BROWSER_QA_REQUIRE=1`; missing browser runtime in mandatory mode is a release failure, not `skipped-live`.
 
 ## Result Labels
 
@@ -52,3 +54,14 @@ Do not convert `skipped-live` into a local QA failure. A launch record may inclu
 - A mock pass does not prove external account configuration. It proves local retry, dead-letter, idempotency, and status handling before live credentials are attached.
 - `liveSummary.fail` must be zero for release. `liveSummary.skipped-live` is allowed only with an explicit launch-risk acceptance.
 - Use `docs/ops-operator-readiness-checklist.md` as the sign-off record source for credential gate evidence.
+
+## Launch Record Fields
+
+Record these fields beside the final QA output:
+
+- GitHub repository and commit SHA pushed to `main`.
+- Cloudflare Pages deployment id and production URL.
+- `npm run live:qa` `liveSummary` counts.
+- `npm run browser:production:qa` browser engine, screenshot count, and whether mandatory browser mode was enabled.
+- Every `skipped-live` row with the exact missing credential or external account access.
+- Operator decision for each skipped SMTP/OAuth/AI/conversion/webhook check.

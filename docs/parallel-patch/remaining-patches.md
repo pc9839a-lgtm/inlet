@@ -18,6 +18,27 @@ Run these in parallel only by file ownership:
 
 High-conflict files are `src/App.jsx`, `src/panels/SettingsPanel.jsx`, `server/index.mjs`, `package.json`, `migrations/0001_inlet_core.sql`, and `src/styles/panels.css`. A worker may touch a high-conflict file only if their handoff document explicitly assigns that file.
 
+## Parallel Reporting Policy
+
+Do not require workers to report after every small patch. Each worker should work through their assigned document, inspect the related area, and patch obvious bugs or risk in that same area without waiting for another instruction.
+
+Workers should stop and ask only for:
+
+- destructive data deletion or production migration writes;
+- payment-provider implementation or real billing behavior;
+- unclear product decisions;
+- changes that require another worker's owned files;
+- high-conflict file edits not allowed by their worker document;
+- live credentials, DNS, OAuth consent, SMTP credentials, or other external access.
+
+Final report is one time only:
+
+- Modified files.
+- Implemented work.
+- Extra risks found and patched.
+- QA commands and pass/fail result.
+- Remaining risk that needs another worker, credentials, deployment, or a product decision.
+
 ## Current Recheck Snapshot
 
 Last checked on 2026-05-28 after commit `53e3f36`:
@@ -46,6 +67,60 @@ Last checked on 2026-05-28 after commit `53e3f36`:
 - Hosted API runtime QA removes empty `failureReason` on ready checks; the field is now reserved for failed-live/static-fallback cases.
 - Cloudflare D1 direct API check confirms `inlet-prod` exists with required core tables and empty initial core counts for accounts/projects/leads/events/audit_logs.
 - Current UI note: Cards block is intentionally limited to `1/2` columns. Keep that scope unless the product direction changes.
+
+## Active Parallel Recheck Notes
+
+Latest local review of active Worker 1, 2, 3, 4, and 5 changes:
+
+- Worker 1 auth/member changes are locally passing `auth:qa`, `server:smoke:auth`, `runtime:qa`, and full `qa:all`. Invite email mismatch copy is now the shorter user-facing `초대받은 이메일을 확인해주세요.`.
+- Worker 2 lead/D1 duplicate groundwork is locally passing `server:smoke:leads`, `csv:qa`, `d1:schema:qa`, `d1:adapter:qa`, `perf:qa`, `runtime:qa`, and full `qa:all`. D1 migration `0002_lead_dedupe_fields.sql` adds lead dedupe/risk metadata and indexes.
+- Worker 2 is not complete until user-configurable duplicate/spam settings are enforced by the server. Current hard-coded defaults such as phone/email 30 days, client repeat 30 minutes, and IP 1 minute / 3 submissions may remain defaults only. Project/page `leadDuplicateSettings` must override them.
+- Worker 2 is also not complete until blocked/rate-limited submissions are stored in a blocked-history path that the UI can read. A UI placeholder that reads `page.leadDuplicateSettings.blockedHistory` is not enough without server persistence/API.
+- Worker 3 template changes are locally passing `templates:qa`, `rendering:qa`, `runtime:qa`, and full `qa:all`. Template count remains 3 and current structural checks are 199. Continue rejecting instructional copy inside templates.
+- Worker 4 has partial local implementation for Settings duplicate/spam settings UI, page duplication URL modal, and paid feature placeholder. It is not complete until server policy/API from Worker 2 is wired and the page duplication flow is covered by focused browser/runtime QA.
+- Worker 5 has partial local implementation for `artifact:clean`, integration QA contract checks, and updated deployment/live ops docs. It is locally passing `integration:qa`, `ops:qa`, strict `artifact:qa`, and full `qa:all`.
+- Current local full gate passed with active parallel changes: `npm run qa:all`, `npm run build -- --outDir dist-check-workers-123`, `npm run integration:qa`, `npm run runtime:qa`, `npm run mojibake:qa`, and strict `artifact:qa`.
+- These active changes are local until committed, pushed, D1 migration applied, Cloudflare deployed, and production hosted/browser QA passes.
+
+## Next Parallel Assignments
+
+Use this section when a worker has finished the current patch and QA is passing. Do not make them wait for a separate report cycle if the next item is inside their file boundary.
+
+1. Worker 1 next assignment: account/member hardening
+   - Build out the real account settings UX for name, email, phone, password change, logout, and session status.
+   - Add transactional email provider boundaries for verification, invite, password reset, ownership transfer approval/rejection, and later payment failure.
+   - Keep mock/offline verification working; missing credentials must be skipped-live/unavailable, not a broken flow.
+   - Continue moving account, session, member, invite, and access reads toward D1 while keeping JSONL/dev fallback.
+   - Add account states: active, pending_verification, suspended, deleted_pending_retention.
+   - Reject suspended/deleted accounts during login/session refresh with clear Korean copy.
+   - Extend duplicate email/phone checks across inactive/suspended/deleted records unless a retention policy later allows reuse.
+   - Add audit rows for verification, password/profile changes, invite acceptance, member removal, session/security state, and suspension.
+
+2. Worker 2 current assignment: configurable duplicate/spam enforcement
+   - Server must consume saved project/page duplicate settings, not only hard-coded defaults.
+   - Persist blocked/rate-limited submission history to a server-readable path.
+   - UI blocked history must come from server data, not only `page.leadDuplicateSettings.blockedHistory`.
+   - Keep inbox first load limited, month-bounded CSV, D1 lead indexes, and performance QA passing.
+
+3. Worker 3 next assignment: three-template depth and editor polish
+   - Keep exactly three templates: 개인회생, 모바일 청첩장, 분양.
+   - Remove all public instructional/sample/usage-guide copy.
+   - Make each first viewport feel like a finished real service page.
+   - Improve topnav, CTA density, form flow, map/gallery, bottom CTA, and mobile fit.
+   - Continue live-preview fixes for text color, background, font, underline, premium effects, and preview scroll.
+   - Premium effects must be subtle, randomized, image-overlay aware, and non-blocking.
+   - Cards block remains `1/2` columns only.
+
+4. Worker 4 current assignment: settings and page duplication completion
+   - Settings duplicate/spam UI is not complete until Worker 2 server policy/API is wired.
+   - Page duplication URL modal needs focused QA for locked/unlocked paid state, default slug validation, custom-domain pending state, and copied-data exclusions.
+   - Manager permission UI must stay compact and project-level, not internal-admin-only.
+
+5. Worker 5 current assignment: production QA and ops release gate
+   - Keep `artifact:clean`, integration QA, ops QA, and full QA green.
+   - Add production browser QA for duplicate/spam settings UI and page duplication modal after Worker 2/4 finish their server/UI pieces.
+   - Before deployment, confirm D1 migrations are applied, especially lead dedupe fields.
+   - After deployment, run hosted route QA and production browser QA before calling the patch released.
 
 ## Already Done
 
@@ -205,6 +280,13 @@ These are not already-done items. Patch in parallel by worker ownership. If one 
    - Inbox first load must stay 50 rows and use `더보기`.
    - Inbox/CSV must stay month-bounded.
    - Add lead duplicate and spam policy before billing launch: phone/email is the primary duplicate key, cookie/client id prevents accidental repeat submission, and IP is only a short-window spam/rate-limit signal.
+   - Duplicate/spam behavior must be configurable per project/page by the user, not hard-coded globally.
+   - Add a user-facing collection duplicate settings area similar to `수집 데이터 중복 설정`.
+   - Required settings: IP duplicate collection rejection on/off, cookie duplicate collection rejection on/off, form-field duplicate limit count, form-field duplicate limit period.
+   - Provide sensible defaults: cookie duplicate rejection on, IP duplicate rejection off or short-window only, phone/email duplicate marking on, hard-block only for rapid repeat/rate-limit abuse.
+   - Add blocked/limited submission history so users can review what was blocked, why it was blocked, when it happened, and which page/form caused it.
+   - Treat the current lead duplicate implementation as incomplete if the server does not read and enforce project/page settings.
+   - Treat the current blocked-history implementation as incomplete if blocked submissions are not persisted server-side and exposed through a read path.
    - Do not hard-block every duplicate lead. Save the row with duplicate/spam metadata unless it is an obvious rapid repeat or rate-limit case.
    - Lead duplicate metadata should include `clientId`, `ipHash`, `userAgentHash`, `duplicate`, `duplicateReason`, `riskScore`, and normalized contact fields where practical.
    - Inbox and CSV should show/export duplicate status and reason so operators can decide whether to follow up.
@@ -220,6 +302,7 @@ These are not already-done items. Patch in parallel by worker ownership. If one 
    - Activity/audit rows for invite created, invite accepted, permission changed, and removed are done.
    - User-facing transfer status copy for requested/waiting/approved/rejected/completed/canceled is done.
    - Production browser visual QA now verifies the compact manager card, ownership transfer entry, and disabled/removed manager rows through `?tab=settings` plus the `owner-settings` preset.
+   - Page duplication URL modal and paid placeholder may exist locally. Remaining work: verify it with browser/runtime QA, keep it disabled for unpaid plans, and ensure it does not copy leads/stats/managers/billing data.
    - Remaining work: visual-polish pass on the expanded permission editor itself, including mobile/overflow checks and invite-link copy state.
 
 6. Authenticated browser visual QA
@@ -235,6 +318,7 @@ These are not already-done items. Patch in parallel by worker ownership. If one 
    - Real SMTP, OAuth, conversion tracking, webhook retry/dead-letter, and live AI checks need credentials/public URL.
    - Missing credentials must remain `skipped-live`, not false failures.
    - Add operator-facing readiness screen or checklist status.
+   - Worker 5 has added/updated release-order documentation and `artifact:clean` locally. Keep this as a release gate before strict artifact QA, especially after browser screenshot QA.
 
 8. Public landing/template/editor polish
    - Keep exactly 3 templates: personal rehabilitation consultation, mobile wedding invitation, and real estate presale.
@@ -253,6 +337,7 @@ These are not already-done items. Patch in parallel by worker ownership. If one 
    - Page duplication copies page settings, blocks, style, form structure, CTA, effects, and SEO basics.
    - Page duplication must not copy leads, stats, delivery logs, manager permissions, ownership-transfer history, payment/subscription state, or audit history.
    - Until billing exists, use a plan placeholder/feature gate so the UX can show locked paid behavior without implementing checkout.
+   - Current local implementation may have the modal and helper functions, but it is not complete until QA proves locked/unlocked behavior, default-domain slug validation, custom-domain pending state, and copied-data exclusions.
 
 10. Billing and subscription, final only
    - Do not implement checkout, card registration, renewal, invoices, or Toss Payments before the above is stable.
@@ -331,6 +416,8 @@ Use this as the full production checklist. These items are not already done unle
    - Inbox first load must stay limited to 50 and use `더보기` paging.
    - Inbox and CSV must stay month-bounded.
    - Lead intake duplicate policy must use phone/email as primary duplicate detection, cookie/client id for accidental repeat prevention, and IP only for short-window abuse/rate limiting.
+   - Duplicate and spam prevention settings must be configurable by the project/page owner.
+   - Users need a blocked-submission history view for blocked IP/cookie/rate-limit/form-field duplicate cases.
    - Store duplicate/spam metadata for operator review instead of losing potentially valid leads.
    - Keep monthly lead quota and stats retention hooks ready, but defer final plan enforcement to the final billing phase.
    - Add server-side indexes/queries for PV, CTA, form submit, reservation, conversion rate, page, source, device.

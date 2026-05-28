@@ -37,6 +37,7 @@
     "api:security:qa": "node scripts/api-security-quality-check.mjs",
     "rendering:qa": "node scripts/rendering-quality-check.mjs",
     "artifact:qa": "node scripts/artifact-quality-check.mjs",
+    "artifact:clean": "node scripts/artifact-cleanup.mjs",
     "deployment:qa": "node scripts/deployment-artifact-check.mjs",
     "bundle:qa": "node scripts/bundle-quality-check.mjs",
     "worker3:qa": "node scripts/worker3-quality-check.mjs",

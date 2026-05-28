@@ -5,6 +5,8 @@ function assert(condition, message) {
 }
 
 const schema = await readFile('migrations/0001_inlet_core.sql', 'utf8');
+const leadDedupeMigration = await readFile('migrations/0002_lead_dedupe_fields.sql', 'utf8');
+const eventDimensionsMigration = await readFile('migrations/0003_event_dimensions.sql', 'utf8');
 const adapter = await readFile('server/storage/d1Adapter.mjs', 'utf8');
 const runtimeAdapter = await readFile('server/storage/runtimeAdapter.mjs', 'utf8');
 const wrangler = await readFile('wrangler.jsonc', 'utf8');
@@ -64,6 +66,7 @@ for (const token of [
   'encodeD1Lead',
   'decodeD1Lead',
   'upsertD1Lead',
+  'findD1LeadsByIntakeSignals',
   'encodeD1Event',
   'decodeD1Event',
   'insertD1Event',
@@ -77,6 +80,49 @@ assert(adapter.includes('ON CONFLICT(id) DO UPDATE SET'), 'D1 lead upsert should
 assert(adapter.includes('INSERT OR IGNORE INTO events'), 'D1 event insert should dedupe repeated event ids');
 assert(adapter.includes('created_month'), 'D1 adapter should preserve month index field');
 assert(adapter.includes('contact_key'), 'D1 adapter should preserve lead dedupe key');
+
+for (const token of [
+  'ALTER TABLE leads ADD COLUMN client_id',
+  'ALTER TABLE leads ADD COLUMN ip_hash',
+  'ALTER TABLE leads ADD COLUMN user_agent_hash',
+  'ALTER TABLE leads ADD COLUMN phone_normalized',
+  'ALTER TABLE leads ADD COLUMN email_normalized',
+  'ALTER TABLE leads ADD COLUMN duplicate',
+  'ALTER TABLE leads ADD COLUMN duplicate_reason',
+  'ALTER TABLE leads ADD COLUMN risk_score',
+  'ALTER TABLE leads ADD COLUMN submitted_at',
+  'idx_leads_phone_30d',
+  'idx_leads_email_30d',
+  'idx_leads_client_repeat',
+  'idx_leads_ip_short_window',
+  'idx_leads_duplicate',
+]) {
+  assert(leadDedupeMigration.includes(token), `D1 lead dedupe migration missing token: ${token}`);
+}
+
+for (const token of [
+  'ALTER TABLE events ADD COLUMN channel',
+  'ALTER TABLE events ADD COLUMN device',
+  'idx_events_project_month_channel',
+  'idx_events_project_month_device',
+]) {
+  assert(eventDimensionsMigration.includes(token), `D1 event dimensions migration missing token: ${token}`);
+}
+
+for (const token of [
+  'isD1MissingLeadDedupeColumnError',
+  'isD1MissingEventDimensionColumnError',
+  'upsertD1LeadLegacy',
+  'insertD1EventLegacy',
+  'findD1LeadsByIntakeSignals',
+  'phone_normalized',
+  'email_normalized',
+  'duplicate_reason',
+  'channelData',
+  'deviceData',
+]) {
+  assert(adapter.includes(token), `D1 lead dedupe adapter missing token: ${token}`);
+}
 
 for (const token of [
   'normalizeStorageMode',
@@ -107,6 +153,8 @@ console.log(JSON.stringify({
   binding: 'DB',
   database: 'inlet-prod',
   migration: '0001_inlet_core.sql',
+  leadDedupeMigration: '0002_lead_dedupe_fields.sql',
+  eventDimensionsMigration: '0003_event_dimensions.sql',
   adapter: 'server/storage/d1Adapter.mjs',
   runtimeAdapter: 'server/storage/runtimeAdapter.mjs',
 }, null, 2));

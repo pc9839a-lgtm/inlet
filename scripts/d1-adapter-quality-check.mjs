@@ -29,6 +29,7 @@ import {
   encodeD1ProjectMember,
   encodeD1Project,
   findD1LeadsByContact,
+  findD1LeadsByIntakeSignals,
   getD1AccountByEmail,
   getD1AccountByPhone,
   getD1Lead,
@@ -62,7 +63,7 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-function fakeD1() {
+function fakeD1(options = {}) {
   const rows = {
     leads: [],
     events: [],
@@ -269,6 +270,9 @@ function fakeD1() {
             return { success: true };
           }
           if (sql.includes('INSERT INTO leads')) {
+            if (options.legacyLeadSchema && sql.includes('client_id')) {
+              throw new Error('table leads has no column named client_id');
+            }
             const [
               id,
               project_id,
@@ -280,6 +284,15 @@ function fakeD1() {
               phone,
               email,
               contact_key,
+              client_id,
+              ip_hash,
+              user_agent_hash,
+              phone_normalized,
+              email_normalized,
+              duplicate,
+              duplicate_reason,
+              risk_score,
+              submitted_at,
               values_json,
               delivery_status,
               source_url,
@@ -298,6 +311,15 @@ function fakeD1() {
               phone,
               email,
               contact_key,
+              client_id,
+              ip_hash,
+              user_agent_hash,
+              phone_normalized,
+              email_normalized,
+              duplicate,
+              duplicate_reason,
+              risk_score,
+              submitted_at,
               values_json,
               delivery_status,
               source_url,
@@ -311,6 +333,9 @@ function fakeD1() {
             return { success: true };
           }
           if (sql.includes('INSERT OR IGNORE INTO events')) {
+            if (options.legacyEventSchema && sql.includes('channel')) {
+              throw new Error('table events has no column named channel');
+            }
             const [
               id,
               project_id,
@@ -320,10 +345,17 @@ function fakeD1() {
               visitor_id,
               session_id,
               dedupe_key,
-              payload_json,
-              created_month,
-              created_at,
             ] = this.params;
+            let payload_json;
+            let created_month;
+            let created_at;
+            let channel = 'direct';
+            let device = 'unknown';
+            if (sql.includes('channel')) {
+              [channel, device, payload_json, created_month, created_at] = this.params.slice(8);
+            } else {
+              [payload_json, created_month, created_at] = this.params.slice(8);
+            }
             if (!rows.events.some((row) => row.id === id)) {
               rows.events.push({
                 id,
@@ -334,6 +366,8 @@ function fakeD1() {
                 visitor_id,
                 session_id,
                 dedupe_key,
+                channel,
+                device,
                 payload_json,
                 created_month,
                 created_at,
@@ -486,6 +520,26 @@ function fakeD1() {
               meta: { rows_read: rows.events.length },
             };
           }
+          if (sql.includes('FROM events') && sql.includes('GROUP BY name')) {
+            const [projectId, month, dateFrom = '', dateTo = ''] = this.params;
+            const dimension = sql.includes('device') ? 'device' : 'channel';
+            const grouped = new Map();
+            const seen = new Set();
+            rows.events
+              .filter((row) => row.project_id === projectId && row.created_month === month)
+              .filter((row) => inFakeDateRange(row, dateFrom, dateTo))
+              .forEach((row) => {
+                const name = row[dimension] || 'unknown';
+                const key = `${dimension}:${name}:${fakeEventDedupeKey(row)}`;
+                if (seen.has(key)) return;
+                seen.add(key);
+                grouped.set(name, (grouped.get(name) || 0) + 1);
+              });
+            return {
+              results: Array.from(grouped.entries()).map(([name, total]) => ({ name, total })),
+              meta: { rows_read: rows.events.length },
+            };
+          }
           if (sql.includes('FROM events') && sql.includes('GROUP BY day')) {
             const [projectId, month, dateFrom = '', dateTo = ''] = this.params;
             const grouped = new Map();
@@ -537,6 +591,28 @@ function fakeD1() {
                 grouped.set(day, prev);
               });
             return { results: Array.from(grouped.values()), meta: { rows_read: rows.leads.length } };
+          }
+          if (sql.includes('FROM leads') && sql.includes('phone_normalized = ?')) {
+            let paramIndex = 0;
+            const projectId = this.params[paramIndex++];
+            const month = this.params[paramIndex++];
+            const hasPage = sql.includes('page_slug = ?');
+            const pageSlug = hasPage ? this.params[paramIndex++] : '';
+            const signalValues = new Set(this.params.slice(paramIndex, -1).map((value) => String(value || '').toLowerCase()));
+            const limit = Number(this.params[this.params.length - 1]);
+            const filtered = rows.leads
+              .filter((row) => row.project_id === projectId && row.created_month === month)
+              .filter((row) => !pageSlug || row.page_slug === pageSlug)
+              .filter((row) => {
+                const phone = String(row.phone_normalized || row.phone || '').replace(/\D/g, '').toLowerCase();
+                const email = String(row.email_normalized || row.email || '').trim().toLowerCase();
+                const contact = String(row.contact_key || '').trim().toLowerCase();
+                const client = String(row.client_id || '').trim().toLowerCase();
+                const ip = String(row.ip_hash || '').trim().toLowerCase();
+                return [phone, email, contact, client, ip].some((value) => signalValues.has(value));
+              })
+              .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+            return { results: filtered.slice(0, limit), meta: { rows_read: filtered.length } };
           }
           if (sql.includes('FROM leads') && sql.includes('ORDER BY created_at DESC LIMIT ?') && sql.includes('contact_key = ?')) {
             const [projectId, month] = this.params;
@@ -728,6 +804,12 @@ const sampleLead = {
   email: 'kim@example.test',
   status: 'new',
   type: 'consult',
+  clientId: 'client-1',
+  ipHash: 'ip-hash-1',
+  userAgentHash: 'ua-hash-1',
+  duplicate: true,
+  duplicateReason: 'phone_30d',
+  riskScore: 30,
   answers: [{ label: 'budget', value: '100' }],
   values: { name: 'Kim', phone: '010-1111-2222' },
   createdAt: '2026-05-10T01:00:00.000Z',
@@ -737,16 +819,22 @@ const encodedLead = encodeD1Lead(sampleLead, { projectId: 'project-1', pageSlug:
 assert(encodedLead.project_id === 'project-1', 'lead project id should encode');
 assert(encodedLead.created_month === '2026-05', 'lead created month should encode');
 assert(encodedLead.contact_key === '01011112222', 'lead contact key should prefer normalized phone');
+assert(encodedLead.phone_normalized === '01011112222' && encodedLead.duplicate === 1, 'lead dedupe metadata should encode');
 assert(decodeD1Lead(encodedLead).answers.length === 1, 'lead answers should round-trip');
+assert(decodeD1Lead(encodedLead).duplicateReason === 'phone_30d' && decodeD1Lead(encodedLead).clientId === 'client-1', 'lead dedupe metadata should round-trip');
 
 const encodedEvent = encodeD1Event({
   id: 'event-1',
   type: 'page_view',
   visitorId: 'visitor-1',
+  channel: 'naver',
+  device: 'mobile',
   createdAt: '2026-05-10T02:00:00.000Z',
 }, { projectId: 'project-1', pageSlug: 'landing' });
 assert(encodedEvent.event_type === 'page_view', 'event type should encode');
+assert(encodedEvent.channel === 'naver' && encodedEvent.device === 'mobile', 'event channel and device should encode');
 assert(decodeD1Event(encodedEvent).visitorId === 'visitor-1', 'event visitor should round-trip');
+assert(decodeD1Event(encodedEvent).channel === 'naver' && decodeD1Event(encodedEvent).device === 'mobile', 'event dimensions should round-trip');
 
 const encodedAccount = encodeD1Account({
   email: 'User@Example.Test',
@@ -876,7 +964,10 @@ await upsertD1Lead(db, { ...sampleLead, status: 'checked' }, { projectId: 'proje
 assert(db.rows.leads.length === 1 && db.rows.leads[0].status === 'checked', 'lead upsert should update existing row');
 
 const leadPage = await listD1Leads(db, { projectId: 'project-1', month: '2026-05', limit: 10 });
-assert(leadPage.records.length === 1 && leadPage.total === 1, 'lead list should return one decoded row');
+assert(
+  leadPage.records.length === 1 && leadPage.total === 1,
+  `lead list should return one decoded row: ${JSON.stringify({ leadPage, rows: db.rows.leads })}`,
+);
 assert(leadPage.records[0].phone === '010-1111-2222', 'lead list should decode original lead');
 const filteredLeadPage = await listD1Leads(db, { projectId: 'project-1', month: '2026-05', status: 'checked', kind: 'consult', deliveryStatus: 'pending', limit: 10 });
 assert(filteredLeadPage.records.length === 1 && filteredLeadPage.total === 1, 'lead list should filter by status, kind, and delivery status');
@@ -884,6 +975,15 @@ const searchedLeadPage = await listD1Leads(db, { projectId: 'project-1', month: 
 assert(searchedLeadPage.records.length === 1 && searchedLeadPage.total === 1, 'lead list should filter by search text');
 const contactLeads = await findD1LeadsByContact(db, { projectId: 'project-1', month: '2026-05', phone: '01011112222' });
 assert(contactLeads.length === 1 && contactLeads[0].id === 'lead-1', 'lead contact lookup should avoid monthly row hydration');
+const signalLeads = await findD1LeadsByIntakeSignals(db, {
+  projectId: 'project-1',
+  month: '2026-05',
+  pageSlug: 'landing',
+  phone: '01011112222',
+  clientId: 'client-1',
+  ipHash: 'ip-hash-1',
+});
+assert(signalLeads.length === 1 && signalLeads[0].id === 'lead-1', 'lead intake signal lookup should use normalized dedupe fields');
 await upsertD1Lead(db, {
   ...sampleLead,
   status: 'checked',
@@ -912,13 +1012,21 @@ await deleteD1Lead(db, { projectId: 'project-1', id: 'lead-1' });
 assert(db.rows.leads.length === 0, 'lead delete should remove D1 row');
 await upsertD1Lead(db, { ...sampleLead, status: 'checked' }, { projectId: 'project-1', pageSlug: 'landing' });
 
+const legacyLeadDb = fakeD1({ legacyLeadSchema: true });
+await upsertD1Lead(legacyLeadDb, sampleLead, { projectId: 'project-legacy', pageSlug: 'landing' });
+assert(legacyLeadDb.rows.leads.length === 1 && legacyLeadDb.rows.leads[0].id === 'lead-1', 'lead upsert should fallback before dedupe migration is applied');
+
 await insertD1Event(db, { id: 'event-1', type: 'page_view', createdAt: '2026-05-10T02:00:00.000Z' }, { projectId: 'project-1', pageSlug: 'landing' });
 await insertD1Event(db, { id: 'event-1', type: 'page_view', createdAt: '2026-05-10T02:00:00.000Z' }, { projectId: 'project-1', pageSlug: 'landing' });
 assert(db.rows.events.length === 1, 'event insert should ignore duplicate ids');
-await insertD1Event(db, { id: 'event-2', type: 'cta_click', createdAt: '2026-05-10T02:05:00.000Z' }, { projectId: 'project-1', pageSlug: 'landing' });
-await insertD1Event(db, { id: 'event-2-duplicate', type: 'cta_click', dedupeKey: 'cta-same-1', createdAt: '2026-05-10T02:05:05.000Z' }, { projectId: 'project-1', pageSlug: 'landing' });
-await insertD1Event(db, { id: 'event-2-duplicate-b', type: 'cta_click', dedupeKey: 'cta-same-1', createdAt: '2026-05-10T02:05:10.000Z' }, { projectId: 'project-1', pageSlug: 'landing' });
-await insertD1Event(db, { id: 'event-3', type: 'form_submit_success', createdAt: '2026-05-11T02:05:00.000Z' }, { projectId: 'project-1', pageSlug: 'landing' });
+await insertD1Event(db, { id: 'event-2', type: 'cta_click', channel: 'naver', device: 'mobile', createdAt: '2026-05-10T02:05:00.000Z' }, { projectId: 'project-1', pageSlug: 'landing' });
+await insertD1Event(db, { id: 'event-2-duplicate', type: 'cta_click', dedupeKey: 'cta-same-1', channel: 'kakao', device: 'mobile', createdAt: '2026-05-10T02:05:05.000Z' }, { projectId: 'project-1', pageSlug: 'landing' });
+await insertD1Event(db, { id: 'event-2-duplicate-b', type: 'cta_click', dedupeKey: 'cta-same-1', channel: 'kakao', device: 'mobile', createdAt: '2026-05-10T02:05:10.000Z' }, { projectId: 'project-1', pageSlug: 'landing' });
+await insertD1Event(db, { id: 'event-3', type: 'form_submit_success', channel: 'google', device: 'desktop', createdAt: '2026-05-11T02:05:00.000Z' }, { projectId: 'project-1', pageSlug: 'landing' });
+
+const legacyEventDb = fakeD1({ legacyEventSchema: true });
+await insertD1Event(legacyEventDb, { id: 'legacy-event-1', type: 'page_view', channel: 'naver', device: 'mobile', createdAt: '2026-05-10T02:00:00.000Z' }, { projectId: 'project-legacy', pageSlug: 'landing' });
+assert(legacyEventDb.rows.events.length === 1 && legacyEventDb.rows.events[0].id === 'legacy-event-1', 'event insert should fallback before dimension migration is applied');
 
 const eventPage = await listD1Events(db, { projectId: 'project-1', month: '2026-05', eventType: 'page_view', limit: 10 });
 assert(eventPage.records.length === 1 && eventPage.records[0].type === 'page_view', 'event list should decode events');
@@ -926,6 +1034,8 @@ const d1Stats = await aggregateD1Stats(db, { projectId: 'project-1', month: '202
 assert(d1Stats.totals.events === 4 && d1Stats.totals.leads === 1, 'D1 stats aggregate should count events and leads without row hydration');
 assert(d1Stats.summary.pv === 1 && d1Stats.summary.cta === 2 && d1Stats.summary.submitSuccess === 1, 'D1 stats aggregate event funnel mismatch');
 assert(d1Stats.summary.db === 1 && d1Stats.summary.consultLeads === 1, 'D1 stats aggregate lead funnel mismatch');
+assert(d1Stats.summary.channelData.naver === 1 && d1Stats.summary.channelData.kakao === 1, 'D1 stats aggregate should dedupe channel counts');
+assert(d1Stats.summary.deviceData.mobile === 2 && d1Stats.summary.deviceData.desktop === 1, 'D1 stats aggregate should include device counts');
 assert(d1Stats.summary.trend.some((day) => day.id === '2026-05-10' && day.pv === 1 && day.cta === 2 && day.db === 1), 'D1 stats aggregate trend mismatch');
 const d1NarrowStats = await aggregateD1Stats(db, {
   projectId: 'project-1',
@@ -949,7 +1059,7 @@ assert(readyCoverage.some((item) => item.key === 'leads' && item.adapter === 'd1
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 47,
+  checks: 56,
   accounts: db.rows.accounts.length,
   projects: db.rows.projects.length,
   invites: db.rows.invites.length,

@@ -11,6 +11,7 @@ import {
 } from '../lib/authContext.js';
 import { createLocalManagerInvite, createServerManagerInvite, createServerOwnershipTransfer, managerInviteUrl } from '../lib/managerInvites.js';
 import { ownershipTransferBillingLabel, ownershipTransferStatusCopy, ownershipTransferStatusLabel } from '../lib/ownershipTransfer.js';
+import { normalizePageDuplicateUrl, pageDuplicateUrlIssues, sanitizeDuplicateSlug } from '../lib/pageDuplication.js';
 import { normalizeIntegrations } from '../lib/pageModel.js';
 import { confirmAction, notify } from '../lib/uiFeedback.js';
 import './SettingsPanel.css';
@@ -58,6 +59,59 @@ const MANAGER_ACCESS_PRESETS = [
     },
   },
 ];
+
+const DEFAULT_DUPLICATE_COLLECTION_SETTINGS = {
+  rejectIpDuplicate: false,
+  rejectCookieDuplicate: true,
+  formDuplicateLimitCount: '3',
+  formDuplicateLimitWindow: '1d',
+  phoneEmailMode: 'mark',
+};
+
+const DUPLICATE_LIMIT_COUNTS = [
+  ['1', '1회'],
+  ['2', '2회'],
+  ['3', '3회'],
+  ['5', '5회'],
+];
+
+const DUPLICATE_LIMIT_WINDOWS = [
+  ['1d', '1일'],
+  ['3d', '3일'],
+  ['7d', '7일'],
+  ['30d', '30일'],
+];
+
+function normalizeDuplicateCollectionSettings(settings = {}) {
+  return {
+    ...DEFAULT_DUPLICATE_COLLECTION_SETTINGS,
+    ...(settings || {}),
+    rejectIpDuplicate: !!settings.rejectIpDuplicate,
+    rejectCookieDuplicate: settings.rejectCookieDuplicate !== false,
+    formDuplicateLimitCount: ['1', '2', '3', '5'].includes(String(settings.formDuplicateLimitCount || ''))
+      ? String(settings.formDuplicateLimitCount)
+      : DEFAULT_DUPLICATE_COLLECTION_SETTINGS.formDuplicateLimitCount,
+    formDuplicateLimitWindow: ['1d', '3d', '7d', '30d'].includes(String(settings.formDuplicateLimitWindow || ''))
+      ? String(settings.formDuplicateLimitWindow)
+      : DEFAULT_DUPLICATE_COLLECTION_SETTINGS.formDuplicateLimitWindow,
+    phoneEmailMode: ['mark', 'warn', 'block'].includes(String(settings.phoneEmailMode || ''))
+      ? String(settings.phoneEmailMode)
+      : DEFAULT_DUPLICATE_COLLECTION_SETTINGS.phoneEmailMode,
+  };
+}
+
+function DuplicateSelect({ label, value, options, disabled = false, onChange }) {
+  return (
+    <label className="duplicate-policy-select">
+      <span>{label}</span>
+      <select value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)}>
+        {options.map(([optionValue, optionLabel]) => (
+          <option key={optionValue} value={optionValue}>{optionLabel}</option>
+        ))}
+      </select>
+    </label>
+  );
+}
 
 function newManager() {
   return normalizeManagerAccount({
@@ -132,11 +186,19 @@ export default function SettingsPanel({
   updatePage,
   updateMeta,
   updateIntegrations,
+  onDuplicatePage,
+  canDuplicatePage = false,
   onReset,
   authUser = null,
   accessMode = 'builder',
 }) {
   const integrations = normalizeIntegrations(page.integrations || {});
+  const duplicateCollectionSettings = normalizeDuplicateCollectionSettings(page.leadDuplicateSettings || page.duplicateCollectionSettings || {});
+  const blockedDuplicateHistory = Array.isArray(page.leadDuplicateSettings?.blockedHistory)
+    ? page.leadDuplicateSettings.blockedHistory
+    : Array.isArray(page.blockedLeadHistory)
+      ? page.blockedLeadHistory
+      : [];
   const ownership = normalizeOwnershipSettings(page, authUser);
   const managers = ownership.managers || [];
   const transferRequest = page.ownership?.transferRequest || null;
@@ -153,7 +215,13 @@ export default function SettingsPanel({
   const [inviteLoading, setInviteLoading] = useState('');
   const [conversionLocked, setConversionLocked] = useState(() => !!(page.meta?.ads || page.meta?.pixel || page.meta?.naver || page.meta?.kakao));
   const [openSection, setOpenSection] = useState('basic');
-  const [lockedSections, setLockedSections] = useState({ basic: false, managers: false, send: false, seo: false, tracking: false });
+  const [lockedSections, setLockedSections] = useState({ basic: false, duplicatePolicy: false, managers: false, send: false, seo: false, tracking: false });
+  const [duplicatePolicyDraft, setDuplicatePolicyDraft] = useState(() => duplicateCollectionSettings);
+  const [duplicateOpen, setDuplicateOpen] = useState(false);
+  const [duplicateDraft, setDuplicateDraft] = useState(() => normalizePageDuplicateUrl({
+    domainType: 'default',
+    slug: `${sanitizeDuplicateSlug(page.slug || 'my-page') || 'my-page'}-copy`,
+  }));
   const [basicDraft, setBasicDraft] = useState(() => ({ title: page.title || '', slug: page.slug || '' }));
   const [sendDraft, setSendDraft] = useState(() => ({
     webhookEnabled: !!integrations.webhook.enabled,
@@ -192,10 +260,40 @@ export default function SettingsPanel({
     lockSection('basic');
     notify('페이지 기본 설정을 저장했습니다.', 'success');
   };
+  const setDuplicateField = (key, value) => {
+    setDuplicateDraft((draft) => normalizePageDuplicateUrl({ ...draft, [key]: value }));
+  };
+  const duplicateIssues = pageDuplicateUrlIssues(duplicateDraft, page);
+  const duplicateBlocked = duplicateIssues.length > 0 || !canDuplicatePage;
+  const requestPageDuplicate = () => {
+    if (!canDuplicatePage) {
+      notify('페이지 복제는 유료 기능입니다. 결제 연동 후 사용할 수 있습니다.', 'warning');
+      return;
+    }
+    if (duplicateIssues.length) {
+      notify(duplicateIssues[0], 'error');
+      return;
+    }
+    const result = onDuplicatePage?.(duplicateDraft);
+    if (result?.ok) setDuplicateOpen(false);
+    if (result && !result.ok) notify(result.message || '페이지 복제를 진행할 수 없습니다.', result.locked ? 'warning' : 'error');
+  };
   const saveManagers = () => {
     updateOwnership({ managers: managerDraft.map(normalizeManagerAccount) });
     lockSection('managers');
     notify('매니저 권한을 저장했습니다.', 'success');
+  };
+  const saveDuplicatePolicy = () => {
+    updatePage({ leadDuplicateSettings: normalizeDuplicateCollectionSettings(duplicatePolicyDraft) });
+    lockSection('duplicatePolicy');
+    notify('수집 데이터 중복 설정을 저장했습니다.', 'success');
+  };
+  const editDuplicatePolicy = () => {
+    setDuplicatePolicyDraft(normalizeDuplicateCollectionSettings(page.leadDuplicateSettings || page.duplicateCollectionSettings || duplicatePolicyDraft));
+    editSection('duplicatePolicy');
+  };
+  const updateDuplicatePolicyDraft = (patch) => {
+    setDuplicatePolicyDraft((draft) => normalizeDuplicateCollectionSettings({ ...draft, ...patch }));
   };
   const editManagers = () => {
     setManagerDraft((managers.length ? managers : managerDraft).map(normalizeManagerAccount));
@@ -284,9 +382,8 @@ export default function SettingsPanel({
     notify('매니저 입력 칸을 추가했습니다.', 'success');
   };
 
-  const toggleManagerDisabled = (index) => {
-    const current = managerDraft[index];
-    updateManager(index, { status: current?.status === 'active' ? 'disabled' : 'active' });
+  const disableManager = (index) => {
+    updateManager(index, { status: 'disabled' });
   };
 
   const removeManager = async (index) => {
@@ -445,6 +542,21 @@ export default function SettingsPanel({
         </div>
       </SettingsSection>
 
+      {!clientAdminMode && (
+        <SettingsSection id="duplicate" title="페이지 복제" openSection={openSection} setOpenSection={setOpenSection} className="page-duplicate-card">
+          <div className="page-duplicate-summary">
+            <div>
+              <strong>유료 기능</strong>
+              <p>현재 페이지의 설정, 블록, 스타일, 폼, CTA, 효과, SEO 기본값만 복사합니다. 접수/통계/전송로그/매니저 권한/소유권이전 기록은 복사하지 않습니다.</p>
+            </div>
+            <button type="button" onClick={() => setDuplicateOpen(true)}>URL 설정</button>
+          </div>
+          {!canDuplicatePage && (
+            <p className="page-duplicate-lock">결제 연동 전까지는 URL 설정 흐름만 확인할 수 있습니다. 템플릿 복제가 아니라 페이지 복제만 유료 기능입니다.</p>
+          )}
+        </SettingsSection>
+      )}
+
       {canManageProjectUsers && (
         <SettingsSection id="managers" title="매니저 권한" openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.managers} onSave={saveManagers} onEdit={editManagers} className="manager-access-card">
           <div className="manager-section-tools">
@@ -523,7 +635,7 @@ export default function SettingsPanel({
                     </div>
                     <div className="manager-card-actions">
                       <button type="button" onClick={() => setExpandedManagerId(expanded ? '' : manager.id)}>{expanded ? '닫기' : '관리'}</button>
-                      <button type="button" disabled={lockedSections.managers} onClick={() => toggleManagerDisabled(index)}>{disabledManager ? '활성' : '비활성'}</button>
+                      {!disabledManager && <button type="button" disabled={lockedSections.managers} onClick={() => disableManager(index)}>비활성 처리</button>}
                       <button type="button" className="danger-btn" disabled={lockedSections.managers} onClick={() => removeManager(index)}>삭제</button>
                     </div>
                   </div>
@@ -567,6 +679,55 @@ export default function SettingsPanel({
                 </div>
               );
             })}
+          </div>
+        </SettingsSection>
+      )}
+
+      {!clientAdminMode && (
+        <SettingsSection id="duplicatePolicy" title="수집 데이터 중복 설정" openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.duplicatePolicy} onSave={saveDuplicatePolicy} onEdit={editDuplicatePolicy} className="duplicate-policy-card">
+          <div className="duplicate-policy-grid">
+            <Toggle label="IP중복 수집 거절" checked={!!duplicatePolicyDraft.rejectIpDuplicate} disabled={lockedSections.duplicatePolicy} onChange={(value) => updateDuplicatePolicyDraft({ rejectIpDuplicate: value })} />
+            <Toggle label="쿠키를 이용한 중복 수집 거절" checked={!!duplicatePolicyDraft.rejectCookieDuplicate} disabled={lockedSections.duplicatePolicy} onChange={(value) => updateDuplicatePolicyDraft({ rejectCookieDuplicate: value })} />
+            <DuplicateSelect
+              label="폼 데이터 중복 제한 개수"
+              value={duplicatePolicyDraft.formDuplicateLimitCount}
+              disabled={lockedSections.duplicatePolicy}
+              options={DUPLICATE_LIMIT_COUNTS}
+              onChange={(value) => updateDuplicatePolicyDraft({ formDuplicateLimitCount: value })}
+            />
+            <DuplicateSelect
+              label="폼 데이터 중복 제한 기간"
+              value={duplicatePolicyDraft.formDuplicateLimitWindow}
+              disabled={lockedSections.duplicatePolicy}
+              options={DUPLICATE_LIMIT_WINDOWS}
+              onChange={(value) => updateDuplicatePolicyDraft({ formDuplicateLimitWindow: value })}
+            />
+            <DuplicateSelect
+              label="연락처/이메일 중복"
+              value={duplicatePolicyDraft.phoneEmailMode}
+              disabled={lockedSections.duplicatePolicy}
+              options={[['mark', '표시만'], ['warn', '경고'], ['block', '차단']]}
+              onChange={(value) => updateDuplicatePolicyDraft({ phoneEmailMode: value })}
+            />
+          </div>
+          <div className="duplicate-policy-history">
+            <div>
+              <strong>차단/제한 이력</strong>
+              <p>서버가 저장한 차단 이력이 있으면 날짜, 페이지/폼, 사유, 마스킹된 식별자만 표시합니다.</p>
+            </div>
+            {blockedDuplicateHistory.length === 0 ? (
+              <span>표시할 이력이 없습니다.</span>
+            ) : (
+              <ul>
+                {blockedDuplicateHistory.slice(0, 5).map((item, index) => (
+                  <li key={item.id || index}>
+                    <b>{String(item.date || item.createdAt || '').slice(0, 10) || '날짜 없음'}</b>
+                    <em>{item.page || item.form || item.formId || '페이지/폼 미지정'}</em>
+                    <small>{item.reason || item.duplicateReason || '사유 없음'} · {item.maskedContact || item.ipHash || item.clientId || '식별자 없음'}</small>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </SettingsSection>
       )}
@@ -703,6 +864,46 @@ export default function SettingsPanel({
         <SettingsSection id="reset" title="초기화" openSection={openSection} setOpenSection={setOpenSection} className="danger-zone">
           <button className="reset-danger" onClick={onReset}>전체 데이터 초기화</button>
         </SettingsSection>
+      )}
+      {duplicateOpen && (
+        <div className="settings-modal-backdrop" role="presentation">
+          <section className="settings-url-modal" role="dialog" aria-modal="true" aria-labelledby="duplicate-url-title">
+            <div className="settings-url-modal-head">
+              <div>
+                <span>페이지 복제</span>
+                <h2 id="duplicate-url-title">URL 설정</h2>
+              </div>
+              <button type="button" onClick={() => setDuplicateOpen(false)} aria-label="닫기">닫기</button>
+            </div>
+
+            <div className="settings-url-choice" role="group" aria-label="도메인 선택">
+              <button type="button" className={duplicateDraft.domainType === 'default' ? 'active' : ''} onClick={() => setDuplicateField('domainType', 'default')}>기본 제공 도메인</button>
+              <button type="button" className={duplicateDraft.domainType === 'custom' ? 'active' : ''} onClick={() => setDuplicateField('domainType', 'custom')}>개인 도메인</button>
+            </div>
+
+            <div className="settings-url-form">
+              <label>
+                <span>URL 경로</span>
+                <input value={duplicateDraft.slug} onChange={(event) => setDuplicateField('slug', event.target.value)} placeholder="new-page" />
+              </label>
+              {duplicateDraft.domainType === 'custom' && (
+                <label>
+                  <span>개인 도메인</span>
+                  <input value={duplicateDraft.customDomain} onChange={(event) => setDuplicateField('customDomain', event.target.value)} placeholder="landing.example.com" />
+                  <small>저장 후 DNS 확인 대기 상태로 기록됩니다.</small>
+                </label>
+              )}
+            </div>
+
+            {duplicateIssues.length > 0 && <p className="settings-url-error">{duplicateIssues[0]}</p>}
+            {!canDuplicatePage && <p className="settings-url-lock">유료 기능 잠금 상태입니다. 결제 기능이 연결되면 이 URL 설정으로 페이지 복제를 진행합니다.</p>}
+
+            <div className="settings-url-modal-actions">
+              <button type="button" onClick={() => setDuplicateOpen(false)}>취소</button>
+              <button type="button" className="primary" disabled={duplicateBlocked} onClick={requestPageDuplicate}>페이지 복제</button>
+            </div>
+          </section>
+        </div>
       )}
     </div>
   );

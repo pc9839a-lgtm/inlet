@@ -28,12 +28,44 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
     assert(res.ok && data.lead?.id === lead.id, `lead save failed: ${lead.id}`);
   }
 
+  const duplicateSaved = await json({ baseUrl }, 'POST', '/api/leads', {
+    project,
+    page,
+    lead: { id: 'lead-a-duplicate', type: 'consult', status: 'new', name: 'Alpha Again', phone: '01000000001', clientId: 'client-repeat-a', ipHash: 'ip-smoke-duplicate' },
+  });
+  assert(duplicateSaved.res.ok && duplicateSaved.data.lead?.duplicate, 'duplicate lead should be saved with duplicate metadata');
+  assert(String(duplicateSaved.data.lead?.duplicateReason || '').includes('phone_30d'), 'duplicate reason should include phone_30d');
+
+  const clientRepeat = await json({ baseUrl }, 'POST', '/api/leads', {
+    project,
+    page,
+    lead: { id: 'lead-client-repeat', type: 'consult', status: 'new', name: 'Client Repeat', clientId: 'client-repeat-a', ipHash: 'ip-smoke-client' },
+  });
+  assert(clientRepeat.res.ok && clientRepeat.data.lead?.duplicate, 'client repeat should be saved as duplicate metadata');
+  assert(String(clientRepeat.data.lead?.duplicateReason || '').includes('client_repeat_30m'), 'duplicate reason should include client_repeat_30m');
+
+  const rateProject = { projectId: 'smoke-leads-rate', slug: 'smoke-rate' };
+  for (let index = 0; index < 3; index += 1) {
+    const { res } = await json({ baseUrl }, 'POST', '/api/leads', {
+      project: rateProject,
+      page,
+      lead: { id: `rate-${index}`, type: 'consult', status: 'new', name: `Rate ${index}`, ipHash: 'ip-rate-1m', createdAt: `2026-05-21T03:00:0${index}.000Z` },
+    });
+    assert(res.ok, `rate seed lead should save: ${index}`);
+  }
+  const rateLimited = await json({ baseUrl }, 'POST', '/api/leads', {
+    project: rateProject,
+    page,
+    lead: { id: 'rate-blocked', type: 'consult', status: 'new', name: 'Rate Blocked', ipHash: 'ip-rate-1m', createdAt: '2026-05-21T03:00:04.000Z' },
+  });
+  assert(rateLimited.res.status === 429 && rateLimited.data.code === 'LEAD_RATE_LIMITED', 'same IP 4th submission in 1 minute should be rate limited');
+
   const firstPage = await json({ baseUrl }, 'GET', `/api/leads?${query}&limit=2`);
   assert(firstPage.data.leads.length === 2, 'lead first page length mismatch');
-  assert(firstPage.data.total === 3 && firstPage.data.hasMore, 'lead pagination meta mismatch');
+  assert(firstPage.data.total === 5 && firstPage.data.hasMore, 'lead pagination meta mismatch');
 
   const secondPage = await json({ baseUrl }, 'GET', `/api/leads?${query}&limit=2&cursor=${firstPage.data.nextCursor}`);
-  assert(secondPage.data.leads.length === 1 && !secondPage.data.hasMore, 'lead second page mismatch');
+  assert(secondPage.data.leads.length === 2 && secondPage.data.hasMore, 'lead second page mismatch');
 
   const filtered = await json({ baseUrl }, 'GET', `/api/leads?${query}&kind=reservation&q=beta`);
   assert(filtered.data.total === 1 && filtered.data.leads[0].id === 'lead-b', 'lead server filter mismatch');
@@ -72,9 +104,16 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
   const bulkProject = { projectId: 'smoke-leads-bulk', slug: 'smoke-bulk' };
   const bulkQuery = new URLSearchParams(bulkProject).toString();
   for (let index = 0; index < 305; index += 1) {
-    const lead = { id: `bulk-${index}`, type: 'consult', status: 'new', name: `Bulk ${index}` };
-    const { res } = await json({ baseUrl }, 'POST', '/api/leads', { project: bulkProject, page, lead });
-    assert(res.ok, `bulk lead save failed: ${index}`);
+    const lead = {
+      id: `bulk-${index}`,
+      type: 'consult',
+      status: 'new',
+      name: `Bulk ${index}`,
+      ipHash: `ip-bulk-${index}`,
+      createdAt: new Date(Date.UTC(2026, 4, 1, 0, index, 0)).toISOString(),
+    };
+    const { res, data } = await json({ baseUrl }, 'POST', '/api/leads', { project: bulkProject, page, lead });
+    assert(res.ok, `bulk lead save failed: ${index} ${res.status} ${JSON.stringify(data)}`);
   }
   const bulkFirst = await json({ baseUrl }, 'GET', `/api/leads?${bulkQuery}&limit=200`);
   assert(bulkFirst.data.total === 305 && bulkFirst.data.leads.length === 200 && bulkFirst.data.hasMore, `bulk first page mismatch: ${JSON.stringify({ status: bulkFirst.res.status, total: bulkFirst.data.total, count: bulkFirst.data.leads?.length, hasMore: bulkFirst.data.hasMore, error: bulkFirst.data.error })}`);
@@ -98,6 +137,7 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
         ? `2026-04-${String((index % 15) + 1).padStart(2, '0')}T03:00:00.000Z`
         : `2026-05-${String((index % 28) + 1).padStart(2, '0')}T03:00:00.000Z`,
       delivery: { status: isTarget ? 'failed' : 'success' },
+      ipHash: `ip-month-${index}`,
       values: isTarget ? { reservationDate: '2026-05-22' } : {},
     };
     const saved = await json({ baseUrl }, 'POST', '/api/leads', { project: monthProject, page, lead });

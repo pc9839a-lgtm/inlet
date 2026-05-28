@@ -1,7 +1,7 @@
 # Operator Readiness Checklist
 
 Status: launch checklist.
-Owner: operator plus Worker 4 policy.
+Owner: operator plus Worker 5 QA/ops. Coordinate product, server, billing, or provider behavior changes with the owning worker before changing code.
 
 ## Local Verification
 
@@ -22,6 +22,8 @@ Owner: operator plus Worker 4 policy.
 - Run rendering QA: `npm run rendering:qa`.
 - Run accessibility QA: `npm run accessibility:qa`.
 - Run Worker 3 aggregate QA: `npm run worker3:qa`.
+- Run production browser QA in mandatory real-browser mode before launch sign-off: `INLET_PRODUCTION_BROWSER_QA_REQUIRE=1 npm run browser:production:qa`.
+- For a newly deployed Settings patch, include duplicate policy and page duplication modal browser cases with `INLET_PRODUCTION_QA_URL=https://<production-host>` or `INLET_PRODUCTION_QA_INCLUDE_NEXT_SETTINGS=1`.
 - Run JSONL operations QA: `npm run jsonl:qa`.
 - Run server auth smoke: `npm run server:smoke:auth`.
 - Run server leads smoke: `npm run server:smoke:leads`.
@@ -30,7 +32,7 @@ Owner: operator plus Worker 4 policy.
 - Run server integrations smoke: `npm run server:smoke:integrations`.
 - Run production build: `npm run build -- --outDir dist-check-readiness`.
 - Confirm the build output includes `bundle-quality-check` JSON with JS/CSS totals under budget.
-- Remove `dist-check-readiness` and run strict artifact QA: `npm run artifact:qa`.
+- Remove generated QA/browser artifacts with `npm run artifact:clean`, then run strict artifact QA: `npm run artifact:qa -- --strict`.
 
 ## Credentials
 
@@ -89,6 +91,10 @@ Do not mark a launch candidate live-ready until each enabled integration has eit
 - Cache busting strategy confirmed.
 - `robots.txt` and sitemap route checked.
 - Windows EPERM local build cleanup notes treated as local-only risk, not production incident.
+- GitHub `main` commit SHA recorded before Cloudflare Pages deploy.
+- Cloudflare Pages deployment id, production URL, and Pages Functions state recorded after deploy.
+- Hosted API QA and hosted route QA run against the deployed production URL when `INLET_PUBLIC_API_URL` is available.
+- Browser QA screenshots and Chrome profile output cleaned with `npm run artifact:clean` before strict artifact QA.
 
 ## Live-Only Checks
 
@@ -113,6 +119,8 @@ For each launch candidate, record:
 - `liveSummary` from `npm run ai:qa`, `npm run integration:mock:qa`, and `npm run conversion:qa`.
 - `liveSummary` from `npm run live:qa` showing every enabled live path is either ready or explicitly accepted as skipped-live.
 - `liveSummary` from `npm run api:hosted:qa` showing hosted `/api/health` is ready, or explicitly recording why it is still skipped/failed before launch.
+- Production browser QA result showing `requireRealBrowser=true`, browser engine, screenshot count, and Settings duplicate policy/page duplication modal coverage.
+- Cloudflare Pages deployment id, production URL, Pages Functions state, and GitHub `main` commit SHA.
 - Build output directory and bundle totals.
 - Backup/restore dry-run evidence.
 - CSV export sample evidence.

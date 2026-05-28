@@ -18,8 +18,19 @@ Current execution mode:
 
 - Primary mode: parallel patching is active.
 - Five workers can run at the same time only if they respect file ownership.
-- Each worker must patch only their assigned area, run their own QA, and report changed files plus remaining risk.
+- Each worker must patch only their assigned area, run their own QA, and report changed files plus remaining risk once at the end.
+- Do not pause for routine progress reports. Intermediate reporting is only for blockers, destructive data actions, unclear product decisions, or cross-worker file conflicts.
+- Within the assigned area, workers should fix obvious bugs, risk, missing QA, and small consistency issues they discover while patching.
+- Workers should not stop after listing risk if the risk is inside their assigned area and can be patched safely.
 - Final integration must be done after all worker branches/patches are merged.
+
+Final worker report format:
+
+- Modified files
+- Implemented work
+- Extra risks found and patched
+- QA commands and pass/fail result
+- Remaining risk that genuinely needs another worker, credentials, deployment, or product decision
 
 Billing, subscriptions, and the 3,300/6,600/9,900 KRW plan work is intentionally last. Do not start payment-provider work until account, permission, D1 storage, inbox/stat scale, visual QA, and live integration readiness are stable.
 

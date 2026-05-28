@@ -103,6 +103,7 @@ export function leadsToCsv(leads = [], options = {}) {
     '답변',
     '입력값',
   ];
+  headers.splice(headers.length - 2, 0, 'duplicate', 'duplicateReason', 'riskScore', 'submittedAt');
 
   const source = options.filters ? filterLeadsForCsv(leads, options.filters) : (leads || []).map(normalizeLeadItem);
   const rows = source.map((item) => [
@@ -122,6 +123,10 @@ export function leadsToCsv(leads = [], options = {}) {
     deliveryStatusLabel(item.delivery?.status),
     item.delivery?.summary || '',
     deliveryLogsText(item.delivery?.logs),
+    item.duplicate ? 'yes' : 'no',
+    item.duplicateReason || '',
+    item.riskScore ?? '',
+    fmtDate(item.submittedAt || item.createdAt),
     answerText(item.answers),
     valuesText(item.values),
   ]);

@@ -45,6 +45,7 @@ for (const name of [
   'bundle:qa',
   'worker3:qa',
   'artifact:qa',
+  'artifact:clean',
   'deployment:qa',
   'qa:all',
 ]) {
@@ -717,6 +718,16 @@ requireAll(artifactQa, [
   "args.includes('--no-strict')",
   'INLET_ARTIFACT_QA_STRICT',
 ], 'strict artifact QA contract');
+const artifactCleanup = await read('scripts/artifact-cleanup.mjs');
+requireAll(artifactCleanup, [
+  'dist-check-',
+  '.tmp-',
+  'inlet-deploy-artifact-',
+  'preview.zip',
+  'assertSafeArtifactPath',
+  'maxRetries',
+  '--dry-run',
+], 'artifact cleanup contract');
 
 const browserVisualQa = await read('scripts/browser-visual-quality-check.mjs');
 const productionBrowserQa = await read('scripts/production-browser-quality-check.mjs');
@@ -746,6 +757,14 @@ requireAll(productionBrowserQa, [
   'INLET_BROWSER_QA_REQUIRE',
   'manager-limited',
   'owner-settings',
+  'owner settings duplicate policy',
+  'owner settings page duplication modal',
+  'INLET_PRODUCTION_QA_INCLUDE_NEXT_SETTINGS',
+  'includeNextSettingsCases',
+  'nextReleaseOnly',
+  '.duplicate-policy-card',
+  '.page-duplicate-summary button',
+  '.settings-url-modal',
   'INLET_BROWSER_QA_FORBID_TEXT',
   'browser-visual-quality-check.mjs',
 ], 'production browser QA contract');

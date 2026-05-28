@@ -11,7 +11,7 @@ import { duplicateWindowMs as duplicatePolicyWindowMs, isReservationLead as isRe
 import { buildStats as buildStatsSummary } from '../src/lib/statsMetrics.js';
 import { appendJsonlRecord, queryJsonlRecords, readJsonlRecords, writeJsonlRecords } from './storage/jsonlAdapter.mjs';
 import { createStorageRuntime, storageRuntimeCoverage, storageRuntimeHealth, storageRuntimePlan } from './storage/runtimeAdapter.mjs';
-import { aggregateD1Stats, deleteD1AiDraft, deleteD1Lead, findD1LeadsByContact, getD1AccountByEmail, getD1AccountByPhone, getD1Lead, getD1PageBySlug, getD1PageRevision, getD1ProjectAccess, insertD1AuditLog, insertD1Event, insertD1PageRevision, listD1AiDrafts, listD1DeliveryLogs, listD1DeliveryRetryQueue, listD1Events, listD1Leads, listD1OwnershipTransferRequests, listD1PageRevisions, replaceD1ProjectMembers, upsertD1Account, upsertD1AiDraft, upsertD1Invite, upsertD1Lead, upsertD1OwnershipTransferRequest, upsertD1Page, upsertD1Project, upsertD1ProjectMember } from './storage/d1Adapter.mjs';
+import { aggregateD1Stats, deleteD1AiDraft, deleteD1Lead, findD1LeadsByContact, findD1LeadsByIntakeSignals, getD1AccountByEmail, getD1AccountByPhone, getD1Lead, getD1PageBySlug, getD1PageRevision, getD1ProjectAccess, insertD1AuditLog, insertD1Event, insertD1PageRevision, listD1AiDrafts, listD1DeliveryLogs, listD1DeliveryRetryQueue, listD1Events, listD1Leads, listD1OwnershipTransferRequests, listD1PageRevisions, replaceD1ProjectMembers, upsertD1Account, upsertD1AiDraft, upsertD1Invite, upsertD1Lead, upsertD1OwnershipTransferRequest, upsertD1Page, upsertD1Project, upsertD1ProjectMember } from './storage/d1Adapter.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
@@ -342,6 +342,7 @@ const server = createServer(async (req, res) => {
     if (req.method === 'POST' && url.pathname === '/api/leads') {
       const body = await readJson(req);
       body.project = await authorizeProjectAccess(req, body?.project || {}, { write: true, bootstrap: true, page: body?.page || {}, tab: 'inbox' });
+      body.requestMeta = requestMetaFrom(req);
       const saved = await saveLead(body);
       sendJson(res, 200, { ok: true, lead: saved });
       return;
@@ -377,7 +378,7 @@ const server = createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && url.pathname === '/api/leads') {
-      const limit = Math.max(1, Math.min(500, Number(url.searchParams.get('limit') || 100)));
+      const limit = Math.max(1, Math.min(500, Number(url.searchParams.get('limit') || 50)));
       const cursor = Math.max(0, Number(url.searchParams.get('cursor') || 0));
       const project = await authorizeProjectAccess(req, projectFromQuery(url), { tab: 'inbox' });
       const result = await listLeadsPage(limit, project, cursor, {
@@ -664,6 +665,30 @@ function parseAllowedOrigins(value = '') {
 
 function requestOrigin(req) {
   return String(req?.headers?.origin || '').trim().replace(/\/+$/, '');
+}
+
+function firstHeaderValue(value = '') {
+  return String(Array.isArray(value) ? value[0] : value || '').split(',')[0].trim();
+}
+
+function requestIp(req) {
+  return firstHeaderValue(req?.headers?.['cf-connecting-ip'])
+    || firstHeaderValue(req?.headers?.['x-forwarded-for'])
+    || firstHeaderValue(req?.headers?.['x-real-ip'])
+    || String(req?.socket?.remoteAddress || '').trim();
+}
+
+function stableRequestHash(value = '') {
+  const text = String(value || '').trim();
+  return text ? createHash('sha256').update(text).digest('hex').slice(0, 32) : '';
+}
+
+function requestMetaFrom(req) {
+  const userAgent = String(req?.headers?.['user-agent'] || '').trim();
+  return {
+    ipHash: stableRequestHash(requestIp(req)),
+    userAgentHash: stableRequestHash(userAgent),
+  };
 }
 
 function setCors(req, res) {
@@ -1929,7 +1954,7 @@ async function saveLead(body = {}) {
   }
 
   const project = hasProject(body.project) ? normalizeProject(body.project) : {};
-  const normalizedLead = normalizeServerLead(lead);
+  const normalizedLead = normalizeServerLead(lead, body);
   const saved = {
     ...normalizedLead,
     savedAt: new Date().toISOString(),
@@ -1938,7 +1963,10 @@ async function saveLead(body = {}) {
   };
 
   if (storageRuntime.active === 'd1' && hasProject(project)) {
-    const duplicate = await findD1DuplicateLead(normalizedLead, project);
+    const policy = await leadIntakePolicy(saved, project, { d1: true });
+    if (policy.blocked) throw leadRateLimitError(policy);
+    Object.assign(saved, policy.leadPatch);
+    const duplicate = null;
     if (duplicate && String(duplicate.id || '') !== String(normalizedLead.id || '')) {
       const error = new Error('이미 접수된 연락처입니다.');
       error.status = 409;
@@ -1955,7 +1983,10 @@ async function saveLead(body = {}) {
   await mkdir(path.dirname(targetFile), { recursive: true });
 
   return withFileLock(targetFile, async () => {
-    const duplicate = await findDuplicateLead(normalizedLead, project);
+    const policy = await leadIntakePolicy(saved, project);
+    if (policy.blocked) throw leadRateLimitError(policy);
+    Object.assign(saved, policy.leadPatch);
+    const duplicate = null;
     if (duplicate && String(duplicate.id || '') !== String(normalizedLead.id || '')) {
       const error = new Error('이미 접수된 연락처입니다.');
       error.status = 409;
@@ -1974,17 +2005,36 @@ async function saveLead(body = {}) {
   });
 }
 
-function normalizeServerLead(lead = {}) {
+function normalizeServerLead(lead = {}, body = {}) {
   const delivery = lead.delivery || {};
+  const requestMeta = body.requestMeta || {};
+  const phoneNormalized = normalizeLeadPhone(lead.phone || lead.values?.phone || '');
+  const emailNormalized = normalizeLeadEmail(lead.email || lead.values?.email || '');
+  const clientId = String(lead.clientId || body.clientId || lead.values?.clientId || lead.cookieId || lead.visitorId || '').trim();
+  const submittedAt = lead.submittedAt || lead.createdAt || lead.savedAt || new Date().toISOString();
   return {
     ...lead,
     id: lead.id || randomId(),
     type: isReservationLeadPolicy(lead) ? '방문예약' : '상담신청',
     status: ['신규', '확인중', '연락완료', '예약완료', '보류', '종료'].includes(lead.status) ? lead.status : '신규',
     memo: lead.memo || '',
-    createdAt: lead.createdAt || lead.savedAt || new Date().toISOString(),
+    createdAt: submittedAt,
+    submittedAt,
+    clientId,
+    ipHash: String(lead.ipHash || requestMeta.ipHash || '').trim(),
+    userAgentHash: String(lead.userAgentHash || requestMeta.userAgentHash || '').trim(),
+    phoneNormalized,
+    emailNormalized,
+    duplicate: !!lead.duplicate,
+    duplicateReason: String(lead.duplicateReason || '').trim(),
+    riskScore: Math.max(0, Number(lead.riskScore || 0)),
     answers: Array.isArray(lead.answers) ? lead.answers : [],
-    values: lead.values || {},
+    values: {
+      ...(lead.values || {}),
+      ...(clientId ? { clientId } : {}),
+      ...(phoneNormalized ? { phoneNormalized } : {}),
+      ...(emailNormalized ? { emailNormalized } : {}),
+    },
     delivery: {
       status: delivery.status || 'none',
       summary: delivery.summary || '외부 전송 없음',
@@ -1994,7 +2044,131 @@ function normalizeServerLead(lead = {}) {
   };
 }
 
+function normalizeLeadPhone(value = '') {
+  return String(value || '').replace(/\D/g, '');
+}
+
+function normalizeLeadEmail(value = '') {
+  return String(value || '').trim().toLowerCase();
+}
+
+function leadTimeMs(lead = {}) {
+  const time = Date.parse(lead.submittedAt || lead.createdAt || lead.savedAt || '');
+  return Number.isNaN(time) ? Date.now() : time;
+}
+
+function leadPageKey(lead = {}) {
+  return String(lead.pageSlug || lead.page?.slug || lead.project?.slug || lead.sourcePageSlug || '').trim();
+}
+
+function sameLeadPage(a = {}, b = {}) {
+  const left = leadPageKey(a);
+  const right = leadPageKey(b);
+  return !left || !right || left === right;
+}
+
+function leadPolicyMonth(value = '') {
+  const text = String(value || new Date().toISOString()).slice(0, 7);
+  return /^\d{4}-\d{2}$/.test(text) ? text : new Date().toISOString().slice(0, 7);
+}
+
+function previousPolicyMonth(month = '') {
+  const match = /^(\d{4})-(\d{2})$/.exec(month);
+  if (!match) return '';
+  const date = new Date(Number(match[1]), Number(match[2]) - 2, 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function uniqueLeads(leads = []) {
+  const seen = new Set();
+  return leads.filter((lead) => {
+    const key = String(lead.id || `${lead.createdAt}:${lead.phone}:${lead.email}`);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+async function leadPolicyCandidates(lead = {}, project = {}, options = {}) {
+  if (!options.d1) return readLeadList(project);
+  const normalizedProject = normalizeProject(project);
+  const month = leadPolicyMonth(lead.submittedAt || lead.createdAt);
+  const months = [month, previousPolicyMonth(month)].filter(Boolean);
+  const phone = lead.phoneNormalized || normalizeLeadPhone(lead.phone);
+  const email = lead.emailNormalized || normalizeLeadEmail(lead.email);
+  const pages = await Promise.all(months.map(async (itemMonth) => {
+    return findD1LeadsByIntakeSignals(storageRuntime.d1, {
+      projectId: normalizedProject.projectId,
+      month: itemMonth,
+      pageSlug: leadPageKey(lead),
+      phone,
+      email,
+      clientId: lead.clientId || lead.values?.clientId || '',
+      ipHash: lead.ipHash || '',
+      limit: 200,
+    });
+  }));
+  return uniqueLeads(pages.flat());
+}
+
+async function leadIntakePolicy(lead = {}, project = {}, options = {}) {
+  const candidates = (await leadPolicyCandidates(lead, project, options))
+    .filter((item) => item && String(item.id || '') !== String(lead.id || ''));
+  const now = leadTimeMs(lead);
+  const phone = lead.phoneNormalized || normalizeLeadPhone(lead.phone);
+  const email = lead.emailNormalized || normalizeLeadEmail(lead.email);
+  const clientId = String(lead.clientId || '').trim();
+  const ipHash = String(lead.ipHash || '').trim();
+  const reasons = new Set();
+
+  for (const item of candidates) {
+    if (!sameLeadPage(item, lead)) continue;
+    const age = now - leadTimeMs(item);
+    if (age < 0) continue;
+    const itemPhone = item.phoneNormalized || normalizeLeadPhone(item.phone);
+    const itemEmail = item.emailNormalized || normalizeLeadEmail(item.email);
+    if (age <= 30 * 24 * 60 * 60 * 1000 && phone && itemPhone === phone) reasons.add('phone_30d');
+    if (age <= 30 * 24 * 60 * 60 * 1000 && email && itemEmail === email) reasons.add('email_30d');
+    if (age <= 30 * 60 * 1000 && clientId && String(item.clientId || item.values?.clientId || '').trim() === clientId) reasons.add('client_repeat_30m');
+  }
+
+  const ipMinuteCount = ipHash ? candidates.filter((item) => {
+    if (!sameLeadPage(item, lead)) return false;
+    if (String(item.ipHash || '').trim() !== ipHash) return false;
+    const age = now - leadTimeMs(item);
+    return age >= 0 && age <= 60 * 1000;
+  }).length : 0;
+  if (ipMinuteCount >= 3) {
+    return { blocked: true, reason: 'ip_rate_limit_1m', retryAfter: 60 };
+  }
+
+  const ipDayCount = ipHash ? candidates.filter((item) => {
+    if (String(item.ipHash || '').trim() !== ipHash) return false;
+    const age = now - leadTimeMs(item);
+    return age >= 0 && age <= 24 * 60 * 60 * 1000;
+  }).length : 0;
+  if (ipDayCount >= 20) reasons.add('spam_suspected');
+
+  const duplicateReason = Array.from(reasons).join(',');
+  return {
+    blocked: false,
+    leadPatch: {
+      duplicate: reasons.has('phone_30d') || reasons.has('email_30d') || reasons.has('client_repeat_30m'),
+      duplicateReason,
+      riskScore: Math.min(100, (reasons.has('spam_suspected') ? 70 : 0) + (duplicateReason ? 30 : 0)),
+    },
+  };
+}
+
+function leadRateLimitError(policy = {}) {
+  const error = new Error('Too many lead submissions. Please retry later.');
+  error.status = 429;
+  error.details = { code: 'LEAD_RATE_LIMITED', reason: policy.reason || 'rate_limited', retryAfter: policy.retryAfter || 60 };
+  return error;
+}
+
 async function findDuplicateLead(lead = {}, project = {}) {
+  return null;
   const phone = normalizeLeadContact(lead.phone);
   const email = normalizeLeadContact(lead.email);
   if (!phone && !email) return null;
@@ -2011,6 +2185,7 @@ async function findDuplicateLead(lead = {}, project = {}) {
 }
 
 async function findD1DuplicateLead(lead = {}, project = {}) {
+  return null;
   const phone = normalizeLeadContact(lead.phone);
   const email = normalizeLeadContact(lead.email);
   if (!phone && !email) return null;
@@ -3761,6 +3936,7 @@ function leadsToCsvExport(leads = []) {
     '답변',
     '입력값',
   ];
+  headers.splice(headers.length - 2, 0, 'duplicate', 'duplicateReason', 'riskScore', 'submittedAt');
   const rows = leads.map((lead) => [
     lead.id || '',
     lead.type || '',
@@ -3778,6 +3954,10 @@ function leadsToCsvExport(leads = []) {
     deliveryStatusExportText(lead.delivery?.status),
     lead.delivery?.summary || '',
     csvDeliveryLogsExport(lead.delivery?.logs),
+    lead.duplicate ? 'yes' : 'no',
+    lead.duplicateReason || '',
+    lead.riskScore ?? '',
+    formatCsvDate(lead.submittedAt || lead.createdAt),
     csvAnswersExport(lead.answers),
     csvValuesExport(lead.values),
   ]);

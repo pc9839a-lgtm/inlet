@@ -32,6 +32,7 @@ export function authAccountErrorMessage(error) {
   if (code === 'AUTH_ACCOUNT_STATUS_INVALID') return '변경할 수 없는 계정 상태입니다.';
   return String(error?.message || error || '계정 처리 중 오류가 발생했습니다.');
 }
+
 export async function requestEmailVerification(email = '', purpose = 'signup') {
   const data = await postJson('/api/auth/email-verification', {
     email: String(email || '').trim().toLowerCase(),
@@ -117,4 +118,3 @@ export async function changeAuthPassword(input = {}) {
   });
   return data?.user || null;
 }
-
