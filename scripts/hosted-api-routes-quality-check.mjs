@@ -722,8 +722,9 @@ async function run() {
   });
 
   const outputChecks = normalizeCheckOutput(checks);
+  const allReady = outputChecks.every((check) => check.status === 'ready');
   return {
-    ok: outputChecks.every((check) => check.status === 'ready') || !requireHosted,
+    ok: allReady || (!requireHosted && !allowWrites),
     liveSummary: summarize(outputChecks),
     projectId: project.projectId,
     checks: outputChecks,
