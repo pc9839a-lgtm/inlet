@@ -20,9 +20,12 @@ const requiredEnvHints = [
   'INLET_HOSTED_API_QA_REQUIRE',
   'INLET_HOSTED_API_EXPECT_D1',
   'OPENAI_API_KEY',
-  'INLET_SMTP_HOST',
-  'INLET_SMTP_USER',
-  'INLET_SMTP_PASS',
+  'INLET_AUTH_EMAIL_MODE',
+  'INLET_EMAIL_PROVIDER',
+  'AWS_SES_REGION',
+  'AWS_SES_ACCESS_KEY_ID',
+  'AWS_SES_SECRET_ACCESS_KEY',
+  'INLET_AUTH_EMAIL_FROM',
   'VITE_INLET_MAP_EMBED_BASE',
   'VITE_GOOGLE_MAPS_EMBED_KEY',
 ];
@@ -70,8 +73,8 @@ for (const liveGate of [
   'bad-model-response',
   'INLET_SESSION_AUTH_MODE=strict',
   'INLET_SESSION_SECRET',
-  'INLET_SMTP_HOST',
-  'INLET_SMTP_PASS',
+  'AWS_SES_REGION',
+  'AWS_SES_SECRET_ACCESS_KEY',
   'idempotency key',
   'OAuth',
   'Conversion tracking',
@@ -87,7 +90,7 @@ for (const liveGate of [
 }
 
 const matrix = await read('docs/ops-live-integration-matrix.md');
-for (const label of ['skipped-live', 'SMTP', 'External webhook', 'AI live generation', 'GTM', 'integration:mock:qa', 'Live Phase Acceptance']) {
+for (const label of ['skipped-live', 'AWS SES', 'External webhook', 'AI live generation', 'GTM', 'integration:mock:qa', 'Live Phase Acceptance']) {
   assert(matrix.includes(label), `integration matrix missing ${label}`);
 }
 for (const label of ['liveSummary', 'liveSummary.fail', 'liveSummary.skipped-live']) {

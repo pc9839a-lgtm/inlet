@@ -104,6 +104,16 @@ QA:
 
 Keep the offline mock flow working, but add a real provider boundary.
 
+Decision baseline as of 2026-05-28:
+
+- Preferred first live provider: AWS SES.
+- Reason: lowest long-term unit cost, stable production scale, no monthly minimum for basic sending.
+- Free tier exists but is limited: AWS SES currently provides up to 3,000 message charges per month for the first 12 months after SES usage starts. Do not design the product around the free tier.
+- Expected post-free cost: roughly USD 0.10 per 1,000 outbound emails, excluding data/add-on charges.
+- Brevo/Resend may remain secondary adapters, but do not block launch on them if SES is chosen.
+- Cloudflare Pages Functions must use an HTTP/API signing flow, not raw SMTP sockets. Do not rely on `node:net` or `node:tls` SMTP in production runtime.
+- SES account may start in sandbox. Production sending requires SES production access approval and verified sender domain/email.
+
 Email events:
 
 - signup verification;
@@ -116,17 +126,56 @@ Email events:
 Rules:
 
 - Do not hard-code one provider.
-- SMTP or provider implementation must be swappable.
+- Provider implementation must be swappable.
+- Do not expose raw verification tokens to the browser in production email mode.
+- User-facing send failure copy must stay generic:
+  - `인증 메일을 보내지 못했습니다. 잠시 후 다시 시도해주세요.`
+- Do not show quota, provider, DNS, sandbox, API key, or internal reason to the user.
+- Server/operator logs may classify internal causes:
+  - `EMAIL_SEND_NOT_CONFIGURED`
+  - `EMAIL_SEND_QUOTA_EXCEEDED`
+  - `EMAIL_SEND_PROVIDER_ERROR`
+  - `EMAIL_SEND_TIMEOUT`
+  - `EMAIL_SEND_SANDBOX_REJECTED`
+  - `EMAIL_DOMAIN_NOT_VERIFIED`
 - Missing credentials must report `skipped-live` or unavailable, not fail normal offline QA.
 - Do not log secrets.
 - Do not expose raw tokens in production logs.
 - Token expiry and one-time-use behavior must be smoke-tested.
+
+Required SES configuration:
+
+- AWS region, for example `ap-northeast-2` or another selected SES-supported region.
+- `AWS_SES_REGION`
+- `AWS_SES_ACCESS_KEY_ID`
+- `AWS_SES_SECRET_ACCESS_KEY`
+- `INLET_AUTH_EMAIL_FROM`, for example `WAYZI <no-reply@your-domain>`
+- `INLET_AUTH_EMAIL_MODE=api`
+- `INLET_EMAIL_PROVIDER=ses`
+
+Required DNS/domain setup:
+
+- Verify sender domain in SES.
+- Add DKIM records.
+- Add SPF record.
+- Add DMARC record.
+- Use a service-owned sender such as `no-reply@your-domain`.
+- Do not send production auth mail from a personal mailbox.
+
+Rate-limit rules:
+
+- Same email verification request: at most once per minute.
+- Same email daily resend cap: small fixed count, for example 5.
+- Same IP short-window cap: required to reduce abuse.
+- Already verified account should not receive unlimited signup verification mail.
+- Mail provider failure must not bypass email verification.
 
 Expected output:
 
 - provider interface or small service module;
 - server route integration;
 - mock/offline implementation;
+- AWS SES HTTP/API implementation for Cloudflare Pages Functions;
 - live readiness status in existing live/ops QA if touched.
 
 QA:
@@ -134,6 +183,7 @@ QA:
 - `npm run server:smoke:auth`
 - `npm run integration:mock:qa` if mock integration contracts change
 - `npm run live:qa` should show skipped-live without credentials.
+- hosted QA with real credentials should prove email issue route returns provider delivery status without exposing token.
 
 ## Patch D: D1 Account/Member Persistence Hardening
 

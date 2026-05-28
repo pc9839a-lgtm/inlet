@@ -70,7 +70,15 @@ export async function onRequest({ request, env }) {
     INLET_STORAGE_ADAPTER: env.INLET_STORAGE_ADAPTER || 'd1',
   });
   const auth = sessionSource(env.INLET_SESSION_AUTH_MODE || 'production');
-  const authEmailMode = String(env.INLET_AUTH_EMAIL_MODE || 'mock').trim().toLowerCase() === 'smtp' ? 'smtp' : 'mock';
+  const authEmailModeInput = String(env.INLET_AUTH_EMAIL_MODE || 'mock').trim().toLowerCase();
+  const authEmailMode = authEmailModeInput === 'api' ? 'api' : 'mock';
+  const authEmailProvider = authEmailMode === 'api' ? String(env.INLET_EMAIL_PROVIDER || 'ses').trim().toLowerCase() : 'mock';
+  const sesReady = !!(
+    env.AWS_SES_REGION &&
+    env.AWS_SES_ACCESS_KEY_ID &&
+    env.AWS_SES_SECRET_ACCESS_KEY &&
+    env.INLET_AUTH_EMAIL_FROM
+  );
 
   return json(request, env, 200, {
     ok: true,
@@ -84,7 +92,8 @@ export async function onRequest({ request, env }) {
       signedSessionReady: !!String(env.INLET_SESSION_SECRET || '').trim(),
       devHeadersAccepted: auth.devHeadersAccepted,
       emailDeliveryMode: authEmailMode,
-      emailDeliveryReady: authEmailMode !== 'smtp' || (!!env.INLET_SMTP_HOST && !!env.INLET_SMTP_FROM),
+      emailDeliveryProvider: authEmailProvider,
+      emailDeliveryReady: authEmailMode === 'mock' || (authEmailProvider === 'ses' && sesReady),
     },
     storage: {
       ...storageRuntimeHealth(storageRuntime),

@@ -43,7 +43,7 @@ Owner: operator plus Worker 5 QA/ops. Coordinate product, server, billing, or pr
 - Do not use `INLET_SESSION_AUTH_MODE=hosted` for launch until `/api/health` reports `auth.hostedAuthImplemented=true`.
 - `VITE_INLET_API_TOKEN` set only for trusted admin/editor deployment.
 - `OPENAI_API_KEY` set for server AI mode.
-- SMTP credentials set if email delivery is enabled.
+- AWS SES auth email credentials set if real signup/password-reset email delivery is enabled.
 - Google Maps Embed key set only on map wrapper service.
 - Webhook endpoints verified with test payload.
 - GTM/Meta/Google Ads/Naver/Kakao IDs verified on public preview page.
@@ -55,7 +55,7 @@ Do not mark a launch candidate live-ready until each enabled integration has eit
 | Integration | Required Inputs | Command | Manual Evidence |
 | --- | --- | --- | --- |
 | AI generation | `OPENAI_API_KEY`, `INLET_AI_QA_LIVE=1`, server URL if not localhost | `npm run ai:qa` | One short prompt returns editable hero, form/reservation, and CTA blocks. Failures must be recorded as `server-unreachable`, `missing-key`, `request-failed`, or `bad-model-response`. |
-| SMTP | `INLET_SMTP_HOST`, `INLET_SMTP_PORT`, `INLET_SMTP_USER`, `INLET_SMTP_PASS`, `INLET_SMTP_FROM` | `npm run integration:mock:qa` then `npm run server:smoke:integrations` | Test lead reaches an operator inbox and delivery log is `sent`. |
+| AWS SES auth email | `INLET_AUTH_EMAIL_MODE=api`, `INLET_EMAIL_PROVIDER=ses`, `AWS_SES_REGION`, `AWS_SES_ACCESS_KEY_ID`, `AWS_SES_SECRET_ACCESS_KEY`, `INLET_AUTH_EMAIL_FROM` | `npm run server:smoke:auth` then hosted auth email QA with SES credentials | Signup/password-reset verification email is delivered and the browser response does not expose the token. |
 | External webhook | Real CRM/test endpoint URL and timeout policy | `npm run server:smoke:integrations` | CRM receives one payload; repeated retry keeps one idempotency key record. |
 | OAuth | Client ID, client secret, redirect URL, operator test account | `npm run integration:mock:qa` | Consent succeeds, one event is created, revoke state is captured before re-consent. |
 | Conversion tracking | Public URL plus GTM/Meta/Ads/Naver/Kakao account access | `npm run conversion:qa` | Platform diagnostics see public-page events and no editor/template-preview events. |
@@ -100,14 +100,14 @@ Do not mark a launch candidate live-ready until each enabled integration has eit
 
 Missing live credentials should be recorded as `skipped-live`, not local QA failure.
 
-- SMTP real email delivery.
+- AWS SES real auth email delivery.
 - External CRM webhook delivery.
 - OAuth consent screen.
 - Production AI generation with paid account.
 - Real ad platform conversion diagnostics.
 - Hosted API runtime check: run `npm run api:hosted:qa` with `INLET_PUBLIC_API_URL` set to the deployed API URL. `static-pages-html-fallback` means the URL is still only serving the static frontend, not the server API.
 
-Local mock QA must still pass before accepting a `skipped-live` result. `npm run integration:mock:qa` proves SMTP success/retryable failure/non-retryable failure/timeout/retry/dead-letter, webhook retry/dead-letter/idempotency/duplicate compaction, and OAuth missing client ID/missing secret/expired/revoked/not-configured handling without external credentials.
+Local mock QA must still pass before accepting a `skipped-live` result. `npm run integration:mock:qa` proves legacy SMTP lead-delivery plumbing, webhook retry/dead-letter/idempotency/duplicate compaction, and OAuth missing client ID/missing secret/expired/revoked/not-configured handling without external credentials. Auth email live delivery is AWS SES in Pages Functions.
 
 ## Sign-Off Record
 

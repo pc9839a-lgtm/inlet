@@ -137,13 +137,15 @@ export async function issueEmailVerificationToken(input = {}, env = {}) {
   const payload = { email, purpose, iat: now, exp: now + 60 * 15 };
   const payloadPart = base64UrlEncode(JSON.stringify(payload));
   const token = `${payloadPart}.${await hmacBase64Url(payloadPart, authSecret(env))}`;
+  const delivery = await deliverAuthEmail({ email, purpose, token, expiresAt: new Date(payload.exp * 1000).toISOString() }, env);
+  const exposeToken = shouldExposeVerificationToken(env, delivery);
   return {
     email,
     purpose,
     status: 'pending',
     expiresAt: new Date(payload.exp * 1000).toISOString(),
-    delivery: { mode: 'mock', status: 'issued' },
-    token,
+    delivery,
+    ...(exposeToken ? { token } : {}),
   };
 }
 
@@ -259,4 +261,211 @@ function base64UrlDecode(value = '') {
   const binary = atob(padded);
   const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
   return new TextDecoder().decode(bytes);
+}
+
+function emailProvider(env = {}) {
+  const mode = String(env.INLET_AUTH_EMAIL_MODE || 'mock').trim().toLowerCase();
+  if (mode === 'api') return String(env.INLET_EMAIL_PROVIDER || 'ses').trim().toLowerCase();
+  return 'mock';
+}
+
+function shouldExposeVerificationToken(env = {}, delivery = {}) {
+  if (String(env.INLET_AUTH_EMAIL_EXPOSE_TOKEN || '').trim() === '1') return true;
+  return delivery.mode === 'mock';
+}
+
+async function deliverAuthEmail(message = {}, env = {}) {
+  const provider = emailProvider(env);
+  if (provider === 'mock') {
+    return {
+      mode: 'mock',
+      provider: 'mock',
+      status: 'issued',
+      message: 'Offline QA mode returns the verification token in the API response.',
+    };
+  }
+  if (provider === 'ses') return sendSesAuthEmail(message, env);
+  throw authError('인증 메일을 보내지 못했습니다. 잠시 후 다시 시도해주세요.', 503, {
+    code: 'EMAIL_SEND_PROVIDER_UNSUPPORTED',
+    provider,
+  });
+}
+
+async function sendSesAuthEmail(message = {}, env = {}) {
+  const region = String(env.AWS_SES_REGION || env.INLET_AWS_SES_REGION || '').trim();
+  const accessKeyId = String(env.AWS_SES_ACCESS_KEY_ID || env.INLET_AWS_SES_ACCESS_KEY_ID || '').trim();
+  const secretAccessKey = String(env.AWS_SES_SECRET_ACCESS_KEY || env.INLET_AWS_SES_SECRET_ACCESS_KEY || '').trim();
+  const from = String(env.INLET_AUTH_EMAIL_FROM || '').trim();
+  if (!region || !accessKeyId || !secretAccessKey || !from) {
+    throw authError('인증 메일을 보내지 못했습니다. 잠시 후 다시 시도해주세요.', 503, {
+      code: 'EMAIL_SEND_NOT_CONFIGURED',
+      provider: 'ses',
+    });
+  }
+
+  const subject = authEmailSubject(message.purpose);
+  const text = authEmailText(message);
+  const html = authEmailHtml(message);
+  const body = JSON.stringify({
+    FromEmailAddress: from,
+    Destination: { ToAddresses: [message.email] },
+    Content: {
+      Simple: {
+        Subject: { Data: subject, Charset: 'UTF-8' },
+        Body: {
+          Text: { Data: text, Charset: 'UTF-8' },
+          Html: { Data: html, Charset: 'UTF-8' },
+        },
+      },
+    },
+  });
+
+  const host = `email.${region}.amazonaws.com`;
+  const path = '/v2/email/outbound-emails';
+  const now = new Date();
+  const amzDate = awsAmzDate(now);
+  const dateStamp = amzDate.slice(0, 8);
+  const payloadHash = await sha256Hex(body);
+  const canonicalHeaders = [
+    `content-type:application/json`,
+    `host:${host}`,
+    `x-amz-date:${amzDate}`,
+  ].join('\n') + '\n';
+  const signedHeaders = 'content-type;host;x-amz-date';
+  const canonicalRequest = ['POST', path, '', canonicalHeaders, signedHeaders, payloadHash].join('\n');
+  const credentialScope = `${dateStamp}/${region}/ses/aws4_request`;
+  const stringToSign = [
+    'AWS4-HMAC-SHA256',
+    amzDate,
+    credentialScope,
+    await sha256Hex(canonicalRequest),
+  ].join('\n');
+  const signingKey = await awsSigningKey(secretAccessKey, dateStamp, region, 'ses');
+  const signature = bytesToHex(await hmacBytesRaw(signingKey, stringToSign));
+  const authorization = `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+
+  let res;
+  try {
+    res = await fetch(`https://${host}${path}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Amz-Date': amzDate,
+        Authorization: authorization,
+      },
+      body,
+      signal: AbortSignal.timeout(10000),
+    });
+  } catch {
+    throw authError('인증 메일을 보내지 못했습니다. 잠시 후 다시 시도해주세요.', 503, {
+      code: 'EMAIL_SEND_TIMEOUT',
+      provider: 'ses',
+    });
+  }
+
+  const responseText = await res.text();
+  let responseData = {};
+  try {
+    responseData = responseText ? JSON.parse(responseText) : {};
+  } catch {
+    responseData = {};
+  }
+  if (!res.ok) {
+    const errorType = String(responseData.__type || responseData.message || responseData.Message || '').toLowerCase();
+    const code = errorType.includes('sandbox')
+      ? 'EMAIL_SEND_SANDBOX_REJECTED'
+      : errorType.includes('notverified') || errorType.includes('identity')
+        ? 'EMAIL_DOMAIN_NOT_VERIFIED'
+        : res.status === 429 || errorType.includes('throttl') || errorType.includes('limit')
+          ? 'EMAIL_SEND_QUOTA_EXCEEDED'
+          : 'EMAIL_SEND_PROVIDER_ERROR';
+    throw authError('인증 메일을 보내지 못했습니다. 잠시 후 다시 시도해주세요.', 503, {
+      code,
+      provider: 'ses',
+      httpStatus: res.status,
+    });
+  }
+
+  return {
+    mode: 'api',
+    provider: 'ses',
+    status: 'sent',
+    messageId: responseData.MessageId || responseData.messageId || '',
+  };
+}
+
+function authEmailSubject(purpose = 'signup') {
+  return String(purpose || '') === 'password-reset'
+    ? '[Inlet] 비밀번호 변경 이메일 인증'
+    : '[Inlet] 회원가입 이메일 인증';
+}
+
+function authEmailText(message = {}) {
+  const purposeText = String(message.purpose || '') === 'password-reset' ? '비밀번호 변경' : '회원가입';
+  return [
+    `Inlet ${purposeText} 이메일 인증입니다.`,
+    '',
+    '아래 인증 토큰을 화면의 이메일 인증 입력칸에 붙여넣어 주세요.',
+    '',
+    message.token,
+    '',
+    `만료 시간: ${message.expiresAt || '-'}`,
+    '',
+    '본인이 요청하지 않았다면 이 메일을 무시해주세요.',
+  ].join('\n');
+}
+
+function authEmailHtml(message = {}) {
+  const purposeText = String(message.purpose || '') === 'password-reset' ? '비밀번호 변경' : '회원가입';
+  const token = escapeHtml(message.token || '');
+  return [
+    '<div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827">',
+    `<h2 style="margin:0 0 12px">Inlet ${escapeHtml(purposeText)} 이메일 인증</h2>`,
+    '<p>아래 인증 토큰을 화면의 이메일 인증 입력칸에 붙여넣어 주세요.</p>',
+    `<pre style="white-space:pre-wrap;word-break:break-all;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:14px">${token}</pre>`,
+    `<p style="color:#6b7280">만료 시간: ${escapeHtml(message.expiresAt || '-')}</p>`,
+    '<p style="color:#6b7280">본인이 요청하지 않았다면 이 메일을 무시해주세요.</p>',
+    '</div>',
+  ].join('');
+}
+
+function escapeHtml(value = '') {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function awsAmzDate(date = new Date()) {
+  return date.toISOString().replace(/[:-]|\.\d{3}/g, '');
+}
+
+async function sha256Hex(value = '') {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+  return bytesToHex(new Uint8Array(digest));
+}
+
+async function awsSigningKey(secret, dateStamp, region, service) {
+  const dateKey = await hmacBytesRaw(new TextEncoder().encode(`AWS4${secret}`), dateStamp);
+  const regionKey = await hmacBytesRaw(dateKey, region);
+  const serviceKey = await hmacBytesRaw(regionKey, service);
+  return hmacBytesRaw(serviceKey, 'aws4_request');
+}
+
+async function hmacBytesRaw(keyBytes, value = '') {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    keyBytes,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const signature = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(value));
+  return new Uint8Array(signature);
+}
+
+function bytesToHex(bytes) {
+  return Array.from(bytes).map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }

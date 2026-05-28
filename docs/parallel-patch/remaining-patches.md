@@ -4,12 +4,12 @@ Updated: 2026-05-28
 
 Current deployed baseline:
 
-- GitHub `main`: `6e4178c`
-- Cloudflare Pages deployment: `1aa8ce74`
+- GitHub `main`: `db6d3b0`
+- Cloudflare Pages deployment: `3c76ed78`
 - URL: `https://inlet-8mr.pages.dev`
 - D1: `inlet-prod`
-- Applied migrations: `0001`, `0002_lead_dedupe_fields.sql`, `0003_event_dimensions.sql`
-- Passed after deployment: hosted API QA, hosted route QA, production browser QA with next Settings cases enabled.
+- Applied migrations: `0001`, `0002_lead_dedupe_fields.sql`, `0003_event_dimensions.sql`, `0004_lead_blocked_submissions.sql`
+- Passed after deployment: hosted API QA, hosted route QA, production browser QA, strict artifact QA.
 
 This document lists only remaining production work. Completed baseline work should not be reassigned unless a regression is found.
 
@@ -39,7 +39,7 @@ Compatibility labels for QA contracts:
 ## Immediate Priority
 
 1. Account settings and real email delivery.
-2. Lead duplicate/spam policy persistence and blocked history.
+2. Settings UI connection for blocked-history and duplicate/spam policy visibility.
 3. Stats and inbox operation quality.
 4. Template quality pass for the three active templates.
 5. Settings/admin UX completion.
@@ -58,7 +58,15 @@ Main remaining work:
 - Password reset must stay as: email verification completed -> set new password -> return to login.
 - Duplicate email and duplicate phone must be checked server-side across active, pending, suspended, and deleted-pending-retention accounts unless a later retention policy explicitly allows reuse.
 - Add transactional email provider boundary for verification, manager invite, password reset, ownership transfer approval/rejection, and later payment failure.
-- Do not hard-code one provider. SMTP/provider should be swappable.
+- Preferred live provider decision: start with AWS SES unless changed by owner.
+- Keep provider swappable, but first implementation should target AWS SES HTTP/API sending for Cloudflare Pages Functions.
+- Do not use raw SMTP sockets in production Pages Functions.
+- SES has a limited free tier, but launch planning must not depend on free usage:
+  - first 12 months after SES usage starts: up to 3,000 message charges/month free;
+  - normal outbound email price is roughly USD 0.10 per 1,000 emails, plus possible data/add-on charges.
+- SES requires domain verification, DKIM/SPF/DMARC DNS, and production access approval if the account is still in sandbox.
+- User-facing mail failure copy must be generic. Do not show quota/provider/internal reason to users.
+- Internal logs should classify not configured, quota exceeded, timeout, provider error, sandbox rejection, and domain not verified.
 - Missing email credentials must be `skipped-live` or unavailable, not a broken signup path.
 - Move remaining account/session/member/invite access reads toward D1 while keeping JSONL/dev fallback.
 - Add audit rows for signup, verification, login failure category, password change, profile change, invite accepted, member removed, account suspended/restored.
@@ -75,8 +83,8 @@ Done baseline, do not repeat:
 
 Main remaining work:
 
-- Server must enforce per project/page duplicate settings, not only defaults.
-- Persist blocked or rate-limited attempts in a server-readable blocked-history path.
+- Server now enforces per project/page duplicate settings as of `db6d3b0`.
+- Server now persists blocked/rate-limited attempts in D1/JSONL blocked-history as of `db6d3b0`.
 - UI blocked history must read from server data, not from page JSON placeholder.
 - Required owner settings: IP duplicate rejection, cookie/client duplicate rejection, form-field duplicate count, duplicate period, phone/email mark vs block mode.
 - Defaults should be conservative: cookie duplicate rejection on for accidental repeats, IP rejection off or short-window only, phone/email mark-only by default.
@@ -92,6 +100,8 @@ Main remaining work:
 Done baseline, do not repeat:
 
 - D1 lead dedupe/event dimension migrations are applied.
+- D1 blocked lead submission migration is applied.
+- Server duplicate policy and blocked-history API are deployed.
 - Hosted route QA confirms lead/event public writes and authenticated reads.
 - Month-bounded CSV and paging exist.
 - Basic stats summary route exists.
@@ -160,6 +170,18 @@ Main remaining work:
 - Keep artifact cleanup safe. It must never delete source, migrations, config, or committed assets.
 - Maintain release order docs: local QA, build, D1 migration, push, Pages deployment, hosted QA, production browser QA, live readiness.
 - Live integrations still needing credentials: SMTP/email, OAuth/Google, conversion tracking accounts, webhook/CRM endpoint, optional live AI test with customer key.
+- Email credential target is now AWS SES unless owner changes this decision.
+- Required SES live checklist:
+  - AWS account ready;
+  - SES region selected;
+  - sending domain selected;
+  - SES domain identity verified;
+  - DKIM records added;
+  - SPF record added;
+  - DMARC record added;
+  - production access requested/approved if sandboxed;
+  - Cloudflare Pages secrets added for SES access key/secret and sender;
+  - live email QA run without exposing token to browser.
 - Missing credentials must remain `skipped-live`, not false failure.
 - Add rollback/backup runbook for D1 schema changes and Pages deployment rollback.
 - Add custom domain readiness checklist: DNS instructions, verification status, SSL status, route binding.

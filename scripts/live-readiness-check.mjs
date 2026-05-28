@@ -92,7 +92,7 @@ async function hostedApiHealthCheck() {
   }
 }
 
-const smtpKeys = ['INLET_SMTP_HOST', 'INLET_SMTP_PORT', 'INLET_SMTP_USER', 'INLET_SMTP_PASS', 'INLET_SMTP_FROM'];
+const sesKeys = ['INLET_AUTH_EMAIL_MODE=api', 'INLET_EMAIL_PROVIDER=ses', 'AWS_SES_REGION', 'AWS_SES_ACCESS_KEY_ID', 'AWS_SES_SECRET_ACCESS_KEY', 'INLET_AUTH_EMAIL_FROM'];
 const oauthKeys = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'];
 const apiKeys = ['INLET_PUBLIC_API_URL'];
 const checks = [
@@ -115,10 +115,14 @@ const checks = [
     'Generate one short prompt and confirm editable blocks.',
   ),
   status(
-    'SMTP live delivery',
-    hasAll(smtpKeys),
-    smtpKeys.filter((key) => !String(env[key] || '').trim()),
-    'Submit one test lead and confirm operator inbox delivery plus sent delivery log.',
+    'AWS SES auth email delivery',
+    env.INLET_AUTH_EMAIL_MODE === 'api' && env.INLET_EMAIL_PROVIDER === 'ses' && hasAll(['AWS_SES_REGION', 'AWS_SES_ACCESS_KEY_ID', 'AWS_SES_SECRET_ACCESS_KEY', 'INLET_AUTH_EMAIL_FROM']),
+    sesKeys.filter((key) => {
+      if (key === 'INLET_AUTH_EMAIL_MODE=api') return env.INLET_AUTH_EMAIL_MODE !== 'api';
+      if (key === 'INLET_EMAIL_PROVIDER=ses') return env.INLET_EMAIL_PROVIDER !== 'ses';
+      return !String(env[key] || '').trim();
+    }),
+    'Send one auth verification email through SES and confirm no verification token is exposed in the browser response.',
   ),
   status(
     'Google OAuth consent',

@@ -5,7 +5,7 @@ Owner: Worker 5 QA/ops. Coordinate provider implementation or product UI changes
 
 | Integration | Env Vars | Local Fixture | Live Verification | Failure Mode | Owner |
 | --- | --- | --- | --- | --- | --- |
-| SMTP | `INLET_SMTP_HOST`, `INLET_SMTP_PORT`, `INLET_SMTP_SECURE`, `INLET_SMTP_USER`, `INLET_SMTP_PASS`, `INLET_SMTP_FROM` | `npm run server:smoke:integrations` covers delivery plumbing; `npm run integration:mock:qa` covers success, retryable failure, non-retryable failure, timeout, retry, dead-letter, idempotency key | Send test lead and confirm email in operator inbox | `skipped-live` if credentials missing; failed if configured but send fails; inspect `/api/leads/delivery-logs` | Worker 1 |
+| AWS SES auth email | `INLET_AUTH_EMAIL_MODE=api`, `INLET_EMAIL_PROVIDER=ses`, `AWS_SES_REGION`, `AWS_SES_ACCESS_KEY_ID`, `AWS_SES_SECRET_ACCESS_KEY`, `INLET_AUTH_EMAIL_FROM` | mock auth email mode covers token issue/confirm; `npm run server:smoke:auth` keeps local mock verification passing | Send signup/password-reset verification email through SES and confirm browser response does not expose token | `skipped-live` if credentials/domain approval missing; failed if configured but send fails; user copy remains generic | Worker 1 |
 | External webhook | Page integration URL, `INLET_INTEGRATION_TIMEOUT_MS` | `npm run server:smoke:integrations`; `npm run integration:mock:qa` covers retry, dead-letter, idempotency evidence, and duplicate retry compaction | Send lead to real endpoint and inspect received payload plus `GET /api/leads/retry-queue` | failed/partial delivery, retry queue, dead-letter state, idempotency mismatch | Worker 1 |
 | Google Calendar OAuth | TBD client id/secret | `npm run integration:mock:qa` covers not-configured, missing client ID, missing secret, expired token, revoked token, connected state | OAuth consent, create test event, revoke token | `skipped-live` until OAuth exists or credentials are available | Worker 1 |
 | Google Maps wrapper | `VITE_INLET_MAP_EMBED_BASE`, wrapper service key | Map widget local render | Public custom domain renders map iframe from wrapper domain | wrapper 404, Google referrer restriction | Worker 1/4 |
@@ -21,11 +21,11 @@ Owner: Worker 5 QA/ops. Coordinate provider implementation or product UI changes
 - `npm run qa:all` runs the full offline gate and must pass before a release commit is pushed.
 - `npm run server:smoke:integrations` verifies webhook delivery, retry queue, timeout failure, retry metadata, delivery logs, and idempotency key presence.
 - `npm run server:smoke:auth` verifies strict signed sessions, forged header rejection, manager invite acceptance, and manager tab/action enforcement.
-- `npm run integration:mock:qa` verifies SMTP success/retryable failure/non-retryable failure/timeout/retry/dead-letter, webhook retry/dead-letter/idempotency/duplicate compaction mock data, and OAuth missing ID/missing secret/expired/revoked/not-configured states.
+- `npm run integration:mock:qa` verifies legacy SMTP delivery plumbing for lead notifications, webhook retry/dead-letter/idempotency/duplicate compaction mock data, and OAuth missing ID/missing secret/expired/revoked/not-configured states.
 - `npm run ai:qa` verifies fixture quality and editable AI draft structure; live mode reports one of `skipped-live`, `server-unreachable`, `missing-key`, `request-failed`, or `bad-model-response`.
 - `npm run conversion:qa` verifies tracking insertion contracts and editor/template-preview suppression; ad platform diagnostics are reported as `skipped-live` without credentials.
 - `npm run ai:qa`, `npm run integration:mock:qa`, and `npm run conversion:qa` include `liveSummary` counts. The launch record must copy those counts so pass/fail/skipped-live totals are visible without reading every provider row.
-- `npm run live:qa` provides one consolidated readiness report for AI, SMTP, OAuth, conversion diagnostics, and real-browser visual QA.
+- `npm run live:qa` provides one consolidated readiness report for AI, AWS SES auth email, OAuth, conversion diagnostics, and real-browser visual QA.
 - `npm run runtime:qa` verifies repository/runtime wiring.
 - `npm run browser:production:qa` must be run with a real browser for launch sign-off. Use `INLET_PRODUCTION_BROWSER_QA_REQUIRE=1`; missing browser runtime in mandatory mode is a release failure, not `skipped-live`.
 
@@ -40,8 +40,8 @@ Do not convert `skipped-live` into a local QA failure. A launch record may inclu
 
 ## Implementation Tasks
 
-- Worker 4: local SMTP mock fixture now covers success, retryable failure, non-retryable failure, timeout, retry, dead-letter, and idempotency evidence through `npm run integration:mock:qa`.
-- Worker 1: add a real SMTP dry-run endpoint only if operators need inbox testing without submitting a real lead.
+- Worker 4: local SMTP mock fixture remains for lead delivery integrations and idempotency evidence through `npm run integration:mock:qa`.
+- Worker 1: AWS SES auth email delivery is the live signup/password-reset email path for Pages Functions.
 - Worker 1: delivery status inspection now has `/api/leads/delivery-logs` and `/api/leads/retry-queue`; future work is UI surfacing and retention cleanup.
 - Worker 2: expose AI live generation status clearly in settings.
 - Worker 3: add conversion event evidence checklist for public route.
@@ -64,4 +64,4 @@ Record these fields beside the final QA output:
 - `npm run live:qa` `liveSummary` counts.
 - `npm run browser:production:qa` browser engine, screenshot count, and whether mandatory browser mode was enabled.
 - Every `skipped-live` row with the exact missing credential or external account access.
-- Operator decision for each skipped SMTP/OAuth/AI/conversion/webhook check.
+- Operator decision for each skipped AWS SES/OAuth/AI/conversion/webhook check.

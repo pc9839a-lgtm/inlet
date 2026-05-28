@@ -539,7 +539,7 @@ requireAll(liveQa, [
   'failed-live',
   '/api/health',
   'AI live generation',
-  'SMTP live delivery',
+  'AWS SES auth email delivery',
   'Google OAuth consent',
   'Conversion public diagnostics',
   'Real browser visual QA',
