@@ -409,7 +409,7 @@ function AuthScreen({ onAuth, initialMode = 'login', onBack }) {
       }
       setSaving(true);
       try {
-        await changeAuthPassword({ email, password: form.password, emailVerified: true });
+        await changeAuthPassword({ email, password: form.password, token: form.verificationCode.trim() });
         setForm((prev) => ({ ...prev, password: '', password2: '', verificationCode: '' }));
         setEmailVerified(false);
         setMode('login');

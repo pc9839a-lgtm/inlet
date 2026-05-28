@@ -310,7 +310,7 @@ function AccountSettingsSection({ authUser, onAccountUpdate, onLogout }) {
     setNotice('');
     try {
       await confirmEmailVerification({ email, token: passwordDraft.code.trim() });
-      await changeAuthPassword({ email, password: passwordDraft.password, emailVerified: true });
+      await changeAuthPassword({ email, password: passwordDraft.password, token: passwordDraft.code.trim() });
       setPasswordDraft({ code: '', password: '', password2: '' });
       setNotice('비밀번호가 변경되었습니다. 다음 로그인부터 새 비밀번호를 사용하세요.');
     } catch (err) {

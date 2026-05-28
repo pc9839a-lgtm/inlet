@@ -114,7 +114,7 @@ export async function changeAuthPassword(input = {}) {
   const data = await postJson('/api/auth/password', {
     email: String(input.email || '').trim().toLowerCase(),
     password: input.password || '',
-    emailVerified: input.emailVerified === true,
+    token: input.token || input.verificationToken || '',
   });
   return data?.user || null;
 }

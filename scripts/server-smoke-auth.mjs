@@ -171,10 +171,19 @@ await runSmoke('server-smoke-auth', async ({ baseUrl }) => {
   });
   assert(passwordNoVerify.status === 403, `password change without email verification expected 403, got ${passwordNoVerify.status}`);
 
+  const passwordVerificationIssue = await fetchWithTimeout(`${baseUrl}/api/auth/email-verification`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ email: 'billing@example.test', purpose: 'password-reset' }),
+  });
+  assert(passwordVerificationIssue.status === 200, `password reset verification issue expected 200, got ${passwordVerificationIssue.status}`);
+  const passwordVerificationIssueData = await passwordVerificationIssue.json();
+  assert(passwordVerificationIssueData.verification?.token, 'password reset verification should expose mock token for offline QA');
+
   const passwordChanged = await fetchWithTimeout(`${baseUrl}/api/auth/password`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ email: 'billing@example.test', password: 'changed1', emailVerified: true }),
+    body: JSON.stringify({ email: 'billing@example.test', password: 'changed1', token: passwordVerificationIssueData.verification.token }),
   });
   assert(passwordChanged.status === 200, `password change after email verification expected 200, got ${passwordChanged.status}`);
 

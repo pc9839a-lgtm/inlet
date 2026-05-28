@@ -98,7 +98,7 @@ for (const [name, source, tokens] of [
   ['auth logout', authLogout, ['stateless-session', 'loggedOut']],
   ['auth account', authAccount, ['getSessionAccount', 'getD1AccountByPhone', 'AUTH_PHONE_DUPLICATE']],
   ['auth account status', authAccountStatus, ['normalizeAccountStatus', 'AUTH_ACCOUNT_STATUS_INVALID', 'session:']],
-  ['auth password', authPassword, ['passwordHash', 'EMAIL_VERIFICATION_REQUIRED', 'AUTH_PASSWORD_POLICY']],
+  ['auth password', authPassword, ['confirmEmailVerificationToken', 'password-reset', 'EMAIL_VERIFICATION_REQUIRED', 'AUTH_PASSWORD_POLICY']],
   ['auth email verification', authEmailVerification, ['issueEmailVerificationToken', 'verification']],
   ['auth email verification confirm', authEmailVerificationConfirm, ['confirmEmailVerificationToken', 'verification']],
   ['invites shared', invitesShared, ['upsertD1Invite', 'getD1InviteByToken', 'upsertD1ProjectMember', 'acceptD1ManagerInvite']],

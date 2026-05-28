@@ -4887,16 +4887,24 @@ async function updateUserAccountStatus(req, input = {}) {
 async function changeUserPassword(input = {}) {
   const email = normalizeEmail(input.email || '');
   const password = String(input.password || '');
+  const token = String(input.token || input.verificationToken || '').trim();
   if (!isValidEmail(email)) {
     const error = new Error('Valid email is required.');
     error.status = 400;
     error.details = { code: 'AUTH_EMAIL_REQUIRED' };
     throw error;
   }
-  if (input.emailVerified !== true) {
+  if (!token) {
     const error = new Error('Email verification is required before changing password.');
     error.status = 403;
     error.details = { code: 'EMAIL_VERIFICATION_REQUIRED' };
+    throw error;
+  }
+  const verification = await confirmEmailVerification({ email, token });
+  if (verification.purpose !== 'password-reset') {
+    const error = new Error('Email verification token is invalid.');
+    error.status = 403;
+    error.details = { code: 'EMAIL_VERIFICATION_INVALID' };
     throw error;
   }
   if (!isValidPassword(password)) {

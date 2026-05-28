@@ -470,9 +470,20 @@ async function run() {
     failureReason: pageRestore.data?.error || pageRestore.data?.page?.title || '',
   });
 
+  const passwordVerificationIssue = await jsonFetch('/api/auth/email-verification', {
+    method: 'POST',
+    body: JSON.stringify({ email: authEmail, purpose: 'password-reset' }),
+  });
+  const passwordVerificationToken = String(passwordVerificationIssue.data?.verification?.token || '').trim();
+  checks.push({
+    name: 'Hosted /api/auth/password verification issue',
+    status: passwordVerificationIssue.res.ok && passwordVerificationToken ? 'ready' : 'failed-live',
+    httpStatus: passwordVerificationIssue.res.status,
+  });
+
   const passwordChange = await jsonFetch('/api/auth/password', {
     method: 'POST',
-    body: JSON.stringify({ email: authEmail, password: 'secret2', emailVerified: true }),
+    body: JSON.stringify({ email: authEmail, password: 'secret2', token: passwordVerificationToken }),
   });
   checks.push({
     name: 'Hosted /api/auth/password verified change',
