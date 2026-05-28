@@ -231,11 +231,11 @@ await runSmoke('server-smoke-auth', async ({ baseUrl }) => {
   const statusDeleted = await fetchWithTimeout(`${baseUrl}/api/auth/account/status`, {
     method: 'PATCH',
     headers: authHeaders({ 'Content-Type': 'application/json', 'X-Inlet-Session': statusLoginData.session }),
-    body: JSON.stringify({ status: 'deleted' }),
+    body: JSON.stringify({ status: 'deleted_pending_retention' }),
   });
   assert(statusDeleted.status === 200, `account soft delete expected 200, got ${statusDeleted.status}`);
   const statusDeletedData = await statusDeleted.json();
-  assert(statusDeletedData.user?.status === 'deleted', 'account soft delete should keep record with deleted status');
+  assert(statusDeletedData.user?.status === 'deleted_pending_retention', 'account soft delete should keep record with deleted-pending-retention status');
 
   const deletedLogin = await fetchWithTimeout(`${baseUrl}/api/auth/login`, {
     method: 'POST',
@@ -257,6 +257,44 @@ await runSmoke('server-smoke-auth', async ({ baseUrl }) => {
     body: JSON.stringify({ user: { name: 'Deleted Duplicate', email: 'status-user@example.test', phone: '010-1234-5679', password: 'secret1', emailVerified: true } }),
   });
   assert(deletedDuplicateEmail.status === 409, `soft-deleted account duplicate email expected 409, got ${deletedDuplicateEmail.status}`);
+
+  const suspendedAccount = await fetchWithTimeout(`${baseUrl}/api/auth/register`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ user: { name: 'Suspended User', email: 'suspended-user@example.test', phone: '010-1234-5680', password: 'secret1', emailVerified: true } }),
+  });
+  assert(suspendedAccount.status === 200, `suspended account register expected 200, got ${suspendedAccount.status}`);
+
+  const suspendedLogin = await fetchWithTimeout(`${baseUrl}/api/auth/login`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ email: 'suspended-user@example.test', password: 'secret1', projectId: 'status-project' }),
+  });
+  assert(suspendedLogin.status === 200, `suspended account login expected 200, got ${suspendedLogin.status}`);
+  const suspendedLoginData = await suspendedLogin.json();
+
+  const statusSuspended = await fetchWithTimeout(`${baseUrl}/api/auth/account/status`, {
+    method: 'PATCH',
+    headers: authHeaders({ 'Content-Type': 'application/json', 'X-Inlet-Session': suspendedLoginData.session }),
+    body: JSON.stringify({ status: 'suspended' }),
+  });
+  assert(statusSuspended.status === 200, `account suspend expected 200, got ${statusSuspended.status}`);
+  const statusSuspendedData = await statusSuspended.json();
+  assert(statusSuspendedData.user?.status === 'suspended', 'account suspend should keep record with suspended status');
+
+  const suspendedLoginBlocked = await fetchWithTimeout(`${baseUrl}/api/auth/login`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ email: 'suspended-user@example.test', password: 'secret1', projectId: 'status-project' }),
+  });
+  assert(suspendedLoginBlocked.status === 403, `suspended account login expected 403, got ${suspendedLoginBlocked.status}`);
+
+  const suspendedDuplicatePhone = await fetchWithTimeout(`${baseUrl}/api/auth/register`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ user: { name: 'Suspended Duplicate', email: 'suspended-duplicate@example.test', phone: '010-1234-5680', password: 'secret1', emailVerified: true } }),
+  });
+  assert(suspendedDuplicatePhone.status === 409, `suspended account duplicate phone expected 409, got ${suspendedDuplicatePhone.status}`);
 
   const project = { projectId: 'smoke-auth-project', ownerId: 'local-user', slug: 'smoke-auth-page' };
   const saved = await fetchWithTimeout(`${baseUrl}/api/pages/${project.slug}`, {

@@ -11,13 +11,15 @@ export async function onRequest({ request, env }) {
     const { user } = await getSessionAccount(request, env, input);
     assertAccountActive(user, 'update account status');
     const status = normalizeAccountStatus(input.status || input.accountStatus || '');
-    if (status === 'active') throw authError('Only suspended or deleted status can be set through this endpoint.', 400, { code: 'AUTH_ACCOUNT_STATUS_INVALID' });
+    if (!['suspended', 'deleted_pending_retention'].includes(status)) {
+      throw authError('Only suspended or deleted-pending-retention status can be set through this endpoint.', 400, { code: 'AUTH_ACCOUNT_STATUS_INVALID' });
+    }
     const now = new Date().toISOString();
     const updated = await upsertD1Account(env.DB, {
       ...user,
       status,
       ...(status === 'suspended' ? { suspendedAt: now } : {}),
-      ...(status === 'deleted' ? { deletedAt: now } : {}),
+      ...(status === 'deleted_pending_retention' ? { deletedAt: now } : {}),
       updatedAt: now,
     });
     return jsonResponse(request, env, 200, { ok: true, user: authUserPublic(updated), session: '' }, AUTH_METHODS);

@@ -55,15 +55,23 @@ export function authUserPublic(user = {}) {
 
 export function normalizeAccountStatus(value = 'active') {
   const status = String(value || 'active').trim().toLowerCase();
-  return ['active', 'suspended', 'deleted'].includes(status) ? status : 'active';
+  if (status === 'deleted') return 'deleted_pending_retention';
+  return ['active', 'pending_verification', 'suspended', 'deleted_pending_retention'].includes(status) ? status : 'active';
 }
 
 export function assertAccountActive(user = {}, action = 'use account') {
   const status = normalizeAccountStatus(user.status || 'active');
   if (status === 'active') return;
-  const error = new Error(status === 'deleted' ? 'Account is deleted.' : 'Account is suspended.');
+  const error = new Error(status === 'deleted_pending_retention' ? 'Account is deleted.' : status === 'pending_verification' ? 'Email verification is required.' : 'Account is suspended.');
   error.status = 403;
-  error.details = { code: status === 'deleted' ? 'AUTH_ACCOUNT_DELETED' : 'AUTH_ACCOUNT_SUSPENDED', action };
+  error.details = {
+    code: status === 'deleted_pending_retention'
+      ? 'AUTH_ACCOUNT_DELETED'
+      : status === 'pending_verification'
+        ? 'EMAIL_VERIFICATION_REQUIRED'
+        : 'AUTH_ACCOUNT_SUSPENDED',
+    action,
+  };
   throw error;
 }
 
