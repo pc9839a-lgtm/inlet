@@ -9,7 +9,7 @@ export async function onRequest({ request, env }) {
     const url = new URL(request.url);
     const body = request.method === 'POST' ? await readJson(request) : {};
     const project = projectFromRequest(url, body, request);
-    const { identity } = await authorizeProject(request, env, project, { write: request.method === 'POST' });
+    const { identity } = await authorizeProject(request, env, project, { write: request.method === 'POST', tab: 'settings', masterOnly: request.method === 'POST' });
     if (request.method === 'GET') {
       const result = await listD1OwnershipTransfers(db, project, {
         status: url.searchParams.get('status') || '',

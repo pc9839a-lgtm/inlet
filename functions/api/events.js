@@ -29,7 +29,7 @@ export async function onRequest({ request, env }) {
 
     if (request.method === 'GET') {
       const project = projectFromRequest(url, {}, request);
-      await authorizeProject(request, env, project);
+      await authorizeProject(request, env, project, { tab: 'stats' });
       const result = await listD1Events(db, {
         projectId: project.projectId,
         month: monthFromRequest(url),

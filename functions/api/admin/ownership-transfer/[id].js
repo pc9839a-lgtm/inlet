@@ -8,7 +8,7 @@ export async function onRequest({ request, env, params }) {
     const db = assertD1(env);
     const body = await readJson(request);
     const project = projectFromRequest(new URL(request.url), body, request);
-    const { identity } = await authorizeProject(request, env, project, { write: true });
+    const { identity } = await authorizeProject(request, env, project, { write: true, tab: 'settings', masterOnly: true });
     const updated = await updateD1OwnershipTransferRequest(db, project, decodeURIComponent(params.id || ''), body, identity || {});
     return jsonResponse(request, env, 200, { ok: true, request: updated }, OWNERSHIP_METHODS);
   } catch (error) {

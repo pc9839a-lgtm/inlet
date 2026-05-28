@@ -18,7 +18,7 @@ export async function onRequest({ request, env, params }) {
     const url = new URL(request.url);
     const db = assertD1(env);
     const project = projectFromRequest(url, {}, request);
-    await authorizeProject(request, env, project);
+    await authorizeProject(request, env, project, { tab: 'edit' });
     const revision = await getD1PageRevision(db, {
       projectId: project.projectId,
       slug: safeSlug(params?.slug),

@@ -14,7 +14,7 @@ export async function onRequest({ request, env }) {
     const url = new URL(request.url);
     const db = assertD1(env);
     const project = projectFromRequest(url, {}, request);
-    await authorizeProject(request, env, project);
+    await authorizeProject(request, env, project, { tab: 'stats' });
     const month = monthFromRequest(url);
     const result = await aggregateD1Stats(db, {
       projectId: project.projectId,

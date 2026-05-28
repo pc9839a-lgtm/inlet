@@ -1,4 +1,8 @@
+import { getD1ProjectAccess } from '../../server/storage/d1Adapter.mjs';
+
 const DEFAULT_ORIGIN = 'https://inlet-8mr.pages.dev';
+const MANAGER_TABS = ['edit', 'style', 'inbox', 'stats', 'settings'];
+const CLIENT_ADMIN_TABS = ['inbox', 'stats', 'settings'];
 
 export function corsHeaders(request, env = {}, methods = 'GET, POST, OPTIONS') {
   const origin = request.headers.get('Origin') || '';
@@ -166,11 +170,70 @@ export async function authorizeProject(request, env = {}, project = {}, options 
   const enforce = String(env.INLET_PROJECT_AUTH_ENFORCE || '1') !== '0';
   const identity = await sessionIdentity(request, env);
   if (!enforce) return { project, identity };
-  if (identity?.projectId && identity.projectId === project.projectId) return { project, identity };
+  if (identity?.projectId && identity.projectId === project.projectId) {
+    if (apiTokenAuthorized(request, env)) return { project, identity };
+    if (env.DB && typeof env.DB.prepare === 'function') {
+      const access = await getD1ProjectAccess(env.DB, { projectId: project.projectId });
+      if (access) {
+        if (canUseProjectAccess(identity, access, options)) return { project, identity, access };
+        const error = new Error(options.write ? 'Project write access denied.' : 'Project access denied.');
+        error.status = 403;
+        throw error;
+      }
+    }
+    const role = normalizeRole(identity.role);
+    if (['master', 'owner', 'builder'].includes(role)) return { project, identity };
+    if (!options.write && ['manager', 'client_admin'].includes(role)) return { project, identity };
+  }
 
   const error = new Error('Project access is required.');
   error.status = 403;
   throw error;
+}
+
+function normalizeRole(value = '') {
+  return String(value || '').trim().toLowerCase().replace(/[-\s]/g, '_');
+}
+
+function normalizeAccess(access = {}) {
+  return MANAGER_TABS.reduce((next, tab) => {
+    const current = access?.[tab] || {};
+    next[tab] = {
+      read: !!current.read || !!current.write,
+      write: !!current.write,
+    };
+    return next;
+  }, {});
+}
+
+function activeMemberFor(identity = {}, access = {}) {
+  const ownerId = String(identity.ownerId || '');
+  const managers = Array.isArray(access.managers) ? access.managers : [];
+  if (ownerId && ownerId === String(access.ownerId || '')) {
+    return { role: 'master', access: {}, status: 'active' };
+  }
+  if (Array.isArray(access.clientOwnerIds) && access.clientOwnerIds.includes(ownerId)) {
+    return { role: 'client_admin', access: {}, status: 'active' };
+  }
+  return managers.find((member) => member.status === 'active' && String(member.ownerId || '') === ownerId) || null;
+}
+
+function canUseProjectAccess(identity = {}, access = {}, options = {}) {
+  const member = activeMemberFor(identity, access);
+  if (!member) return false;
+  const role = normalizeRole(member.role || identity.role);
+  if (role === 'master') return true;
+  if (options.masterOnly) return false;
+
+  const tab = String(options.tab || '').trim();
+  if (role === 'client_admin') {
+    if (!tab) return !options.write;
+    return CLIENT_ADMIN_TABS.includes(tab);
+  }
+  if (role !== 'manager') return false;
+  if (!tab) return !options.write;
+  const permission = normalizeAccess(member.access || {})[tab] || {};
+  return options.write ? !!permission.write : (!!permission.read || !!permission.write);
 }
 
 export async function handleApiError(request, env, error, methods) {

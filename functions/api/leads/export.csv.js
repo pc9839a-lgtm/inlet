@@ -31,7 +31,7 @@ export async function onRequest({ request, env }) {
 
     const db = assertD1(env);
     const project = projectFromRequest(url, {}, request);
-    await authorizeProject(request, env, project);
+    await authorizeProject(request, env, project, { tab: 'inbox' });
 
     const leads = [];
     let cursor = 0;
