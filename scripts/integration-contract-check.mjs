@@ -607,6 +607,8 @@ requireAll(d1BackfillPlan, [
 
 const packageSource = await read('package.json');
 requireAll(packageSource, [
+  'auth:qa',
+  'scripts/auth-quality-check.mjs',
   'd1:backfill:dry-run',
   'd1:backfill:plan',
   'd1:hosted-qa:cleanup',

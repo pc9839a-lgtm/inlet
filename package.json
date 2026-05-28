@@ -7,7 +7,7 @@
     "stats:qa": "node scripts/stats-quality-check.mjs",
     "revision:qa": "node scripts/revision-quality-check.mjs",
     "templates:qa": "node scripts/template-quality-check.mjs",
-    "auth:qa": "node scripts/auth-context-check.mjs",
+    "auth:qa": "node scripts/auth-quality-check.mjs",
     "server:smoke:auth": "node scripts/server-smoke-auth.mjs",
     "server:smoke:leads": "node scripts/server-smoke-leads.mjs",
     "server:smoke:events": "node scripts/server-smoke-events.mjs",
