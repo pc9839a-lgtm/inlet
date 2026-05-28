@@ -71,6 +71,8 @@ for (const token of [
   'MANAGER_TABS',
   'ensureD1ProjectShell',
   'INSERT OR IGNORE INTO projects',
+  'isPublicProjectShell',
+  'pendingClaim',
   'Project access is required.',
 ]) {
   assert(shared.includes(token), `Pages shared API helper missing ${token}`);

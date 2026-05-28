@@ -206,11 +206,22 @@ function normalizeAccess(access = {}) {
   }, {});
 }
 
+function isMasterLikeIdentity(identity = {}) {
+  return ['master', 'owner', 'builder'].includes(normalizeRole(identity.role));
+}
+
+function isPublicProjectShell(access = {}) {
+  return String(access.ownerId || '').startsWith('public_');
+}
+
 function activeMemberFor(identity = {}, access = {}) {
   const ownerId = String(identity.ownerId || '');
   const managers = Array.isArray(access.managers) ? access.managers : [];
   if (ownerId && ownerId === String(access.ownerId || '')) {
     return { role: 'master', access: {}, status: 'active' };
+  }
+  if (ownerId && isPublicProjectShell(access) && isMasterLikeIdentity(identity)) {
+    return { role: 'master', access: {}, status: 'active', pendingClaim: true };
   }
   if (Array.isArray(access.clientOwnerIds) && access.clientOwnerIds.includes(ownerId)) {
     return { role: 'client_admin', access: {}, status: 'active' };
