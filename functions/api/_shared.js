@@ -126,6 +126,14 @@ export async function ensureD1ProjectShell(db, project = {}) {
   return { projectId, ownerId: safeOwnerId, slug };
 }
 
+export function publicProjectShell(project = {}) {
+  return {
+    ...project,
+    ownerId: '',
+    ownerAccountId: '',
+  };
+}
+
 export function apiTokenAuthorized(request, env = {}) {
   const expected = String(env.INLET_API_TOKEN || '').trim();
   if (!expected) return false;

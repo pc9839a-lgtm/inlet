@@ -70,6 +70,7 @@ for (const token of [
   'CLIENT_ADMIN_TABS',
   'MANAGER_TABS',
   'ensureD1ProjectShell',
+  'publicProjectShell',
   'INSERT OR IGNORE INTO projects',
   'isPublicProjectShell',
   'pendingClaim',
@@ -79,12 +80,12 @@ for (const token of [
 }
 
 for (const [name, source, tokens] of [
-  ['leads', leads, ['upsertD1Lead', 'listD1Leads', 'findD1LeadsByIntakeSignals', 'insertD1BlockedLeadSubmission', 'publicWrite: true', "tab: 'inbox'", 'deliveryStatus', 'LEAD_RATE_LIMITED', 'meta: { source:']],
+  ['leads', leads, ['upsertD1Lead', 'listD1Leads', 'findD1LeadsByIntakeSignals', 'insertD1BlockedLeadSubmission', 'publicWrite: true', 'publicProjectShell(project)', "tab: 'inbox'", 'deliveryStatus', 'LEAD_RATE_LIMITED', 'meta: { source:']],
   ['lead csv', leadCsv, ['listD1Leads', 'month is required for CSV export.', 'text/csv; charset=utf-8', "Content-Disposition", 'csvCell', "tab: 'inbox'"]],
   ['blocked history', blockedHistory, ['listD1BlockedLeadSubmissions', 'pageSlug', "source: 'd1'", "tab: 'settings'"]],
   ['delivery logs', deliveryLogs, ['listD1DeliveryLogs', "type: 'delivery-logs'", "adapter: 'd1'", "tab: 'inbox'"]],
   ['retry queue', retryQueue, ['listD1DeliveryRetryQueue', "type: 'delivery-retry-queue'", 'deadLetter', "tab: 'inbox'"]],
-  ['events', events, ['insertD1Event', 'listD1Events', 'publicWrite: true', "tab: 'stats'", 'eventType', 'meta: { source:']],
+  ['events', events, ['insertD1Event', 'listD1Events', 'publicWrite: true', 'publicProjectShell(project)', "tab: 'stats'", 'eventType', 'meta: { source:']],
   ['stats summary', statsSummary, ['aggregateD1Stats', "source: 'server'", "adapter: 'd1'", "tab: 'stats'"]],
   ['pages', pages, ['getD1PageBySlug', 'upsertD1Page', 'ensureD1ProjectShell', 'authorizeProject']],
   ['page revisions', pageRevisions, ['listD1PageRevisions', "tab: 'edit'", 'revisions']],

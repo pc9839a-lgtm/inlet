@@ -1,5 +1,5 @@
 import { findD1LeadsByIntakeSignals, insertD1BlockedLeadSubmission, listD1Leads, upsertD1Lead } from '../../server/storage/d1Adapter.mjs';
-import { assertD1, authorizeProject, ensureD1ProjectShell, handleApiError, jsonResponse, monthFromRequest, optionsResponse, projectFromRequest, readJson } from './_shared.js';
+import { assertD1, authorizeProject, ensureD1ProjectShell, handleApiError, jsonResponse, monthFromRequest, optionsResponse, projectFromRequest, publicProjectShell, readJson } from './_shared.js';
 
 const METHODS = 'GET, POST, OPTIONS';
 
@@ -14,7 +14,7 @@ export async function onRequest({ request, env }) {
       const body = await readJson(request);
       const project = projectFromRequest(url, body, request);
       await authorizeProject(request, env, project, { publicWrite: true });
-      await ensureD1ProjectShell(db, project);
+      await ensureD1ProjectShell(db, publicProjectShell(project));
       const lead = body.lead && typeof body.lead === 'object' ? body.lead : body;
       const duplicatePolicy = await evaluateD1LeadDuplicatePolicy(db, project, body.page || {}, lead);
       if (duplicatePolicy.blocked) {
