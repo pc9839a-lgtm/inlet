@@ -11,7 +11,7 @@ import { duplicateWindowMs as duplicatePolicyWindowMs, isReservationLead as isRe
 import { buildStats as buildStatsSummary } from '../src/lib/statsMetrics.js';
 import { appendJsonlRecord, queryJsonlRecords, readJsonlRecords, writeJsonlRecords } from './storage/jsonlAdapter.mjs';
 import { createStorageRuntime, storageRuntimeCoverage, storageRuntimeHealth, storageRuntimePlan } from './storage/runtimeAdapter.mjs';
-import { aggregateD1Stats, deleteD1AiDraft, deleteD1Lead, findD1LeadsByContact, findD1LeadsByIntakeSignals, getD1AccountByEmail, getD1AccountByPhone, getD1Lead, getD1PageBySlug, getD1PageRevision, getD1ProjectAccess, insertD1AuditLog, insertD1Event, insertD1PageRevision, listD1AiDrafts, listD1DeliveryLogs, listD1DeliveryRetryQueue, listD1Events, listD1Leads, listD1OwnershipTransferRequests, listD1PageRevisions, replaceD1ProjectMembers, upsertD1Account, upsertD1AiDraft, upsertD1Invite, upsertD1Lead, upsertD1OwnershipTransferRequest, upsertD1Page, upsertD1Project, upsertD1ProjectMember } from './storage/d1Adapter.mjs';
+import { aggregateD1Stats, deleteD1AiDraft, deleteD1Lead, findD1LeadsByContact, findD1LeadsByIntakeSignals, getD1AccountByEmail, getD1AccountByPhone, getD1Lead, getD1PageBySlug, getD1PageRevision, getD1ProjectAccess, insertD1AuditLog, insertD1BlockedLeadSubmission, insertD1Event, insertD1PageRevision, listD1AiDrafts, listD1BlockedLeadSubmissions, listD1DeliveryLogs, listD1DeliveryRetryQueue, listD1Events, listD1Leads, listD1OwnershipTransferRequests, listD1PageRevisions, replaceD1ProjectMembers, upsertD1Account, upsertD1AiDraft, upsertD1Invite, upsertD1Lead, upsertD1OwnershipTransferRequest, upsertD1Page, upsertD1Project, upsertD1ProjectMember } from './storage/d1Adapter.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
@@ -389,6 +389,22 @@ const server = createServer(async (req, res) => {
         dateFrom: url.searchParams.get('dateFrom') || '',
         dateTo: url.searchParams.get('dateTo') || '',
         deliveryStatus: url.searchParams.get('deliveryStatus') || '',
+      });
+      sendJson(res, 200, { ok: true, ...result });
+      return;
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/leads/blocked-history') {
+      const limit = Math.max(1, Math.min(200, Number(url.searchParams.get('limit') || 50)));
+      const cursor = Math.max(0, Number(url.searchParams.get('cursor') || 0));
+      const project = await authorizeProjectAccess(req, projectFromQuery(url), { tab: 'settings' });
+      const result = await listBlockedLeadSubmissions(project, {
+        pageSlug: url.searchParams.get('pageSlug') || url.searchParams.get('slug') || '',
+        month: url.searchParams.get('month') || '',
+        dateFrom: url.searchParams.get('dateFrom') || '',
+        dateTo: url.searchParams.get('dateTo') || '',
+        limit,
+        cursor,
       });
       sendJson(res, 200, { ok: true, ...result });
       return;
@@ -1963,8 +1979,11 @@ async function saveLead(body = {}) {
   };
 
   if (storageRuntime.active === 'd1' && hasProject(project)) {
-    const policy = await leadIntakePolicy(saved, project, { d1: true });
-    if (policy.blocked) throw leadRateLimitError(policy);
+    const policy = await leadIntakePolicy(saved, project, { d1: true, page: body.page || {} });
+    if (policy.blocked) {
+      await recordBlockedLeadSubmission(policy, saved, project, { d1: true });
+      throw leadRateLimitError(policy);
+    }
     Object.assign(saved, policy.leadPatch);
     const duplicate = null;
     if (duplicate && String(duplicate.id || '') !== String(normalizedLead.id || '')) {
@@ -1983,8 +2002,11 @@ async function saveLead(body = {}) {
   await mkdir(path.dirname(targetFile), { recursive: true });
 
   return withFileLock(targetFile, async () => {
-    const policy = await leadIntakePolicy(saved, project);
-    if (policy.blocked) throw leadRateLimitError(policy);
+    const policy = await leadIntakePolicy(saved, project, { page: body.page || {} });
+    if (policy.blocked) {
+      await recordBlockedLeadSubmission(policy, saved, project);
+      throw leadRateLimitError(policy);
+    }
     Object.assign(saved, policy.leadPatch);
     const duplicate = null;
     if (duplicate && String(duplicate.id || '') !== String(normalizedLead.id || '')) {
@@ -2072,6 +2094,32 @@ function leadPolicyMonth(value = '') {
   return /^\d{4}-\d{2}$/.test(text) ? text : new Date().toISOString().slice(0, 7);
 }
 
+function normalizeLeadDuplicateSettings(settings = {}) {
+  const source = settings && typeof settings === 'object' ? settings : {};
+  const rawCount = Number(source.formDuplicateLimitCount ?? source.fieldDuplicateLimitCount ?? source.duplicateLimitCount ?? 3);
+  const phoneEmailMode = String(source.phoneEmailMode || source.phoneEmailDuplicateMode || source.contactDuplicateMode || 'mark').trim();
+  const windowKey = String(source.formDuplicateLimitWindow || source.fieldDuplicateLimitPeriod || source.duplicateWindow || source.duplicateWindowKey || '1mo').trim();
+  return {
+    rejectIpDuplicate: !!(source.rejectIpDuplicate ?? source.ipDuplicateRejectEnabled ?? false),
+    rejectCookieDuplicate: source.rejectCookieDuplicate ?? source.cookieDuplicateRejectEnabled ?? false ? true : false,
+    formDuplicateLimitCount: Math.max(1, Math.min(100, Number.isFinite(rawCount) ? rawCount : 1)),
+    formDuplicateLimitWindow: windowKey,
+    formDuplicateLimitMs: duplicatePolicyWindowMs(windowKey),
+    phoneEmailMode: ['block', 'reject', 'deny'].includes(phoneEmailMode) ? 'block' : 'mark',
+  };
+}
+
+function leadPolicySettingsFrom(lead = {}, options = {}) {
+  return normalizeLeadDuplicateSettings(
+    options.settings ||
+    lead.page?.leadDuplicateSettings ||
+    lead.page?.duplicateCollectionSettings ||
+    options.page?.leadDuplicateSettings ||
+    options.page?.duplicateCollectionSettings ||
+    {},
+  );
+}
+
 function previousPolicyMonth(month = '') {
   const match = /^(\d{4})-(\d{2})$/.exec(month);
   if (!match) return '';
@@ -2114,12 +2162,15 @@ async function leadPolicyCandidates(lead = {}, project = {}, options = {}) {
 async function leadIntakePolicy(lead = {}, project = {}, options = {}) {
   const candidates = (await leadPolicyCandidates(lead, project, options))
     .filter((item) => item && String(item.id || '') !== String(lead.id || ''));
+  const settings = leadPolicySettingsFrom(lead, options);
   const now = leadTimeMs(lead);
   const phone = lead.phoneNormalized || normalizeLeadPhone(lead.phone);
   const email = lead.emailNormalized || normalizeLeadEmail(lead.email);
   const clientId = String(lead.clientId || '').trim();
   const ipHash = String(lead.ipHash || '').trim();
   const reasons = new Set();
+  let clientWindowCount = 0;
+  let ipWindowCount = 0;
 
   for (const item of candidates) {
     if (!sameLeadPage(item, lead)) continue;
@@ -2127,9 +2178,41 @@ async function leadIntakePolicy(lead = {}, project = {}, options = {}) {
     if (age < 0) continue;
     const itemPhone = item.phoneNormalized || normalizeLeadPhone(item.phone);
     const itemEmail = item.emailNormalized || normalizeLeadEmail(item.email);
-    if (age <= 30 * 24 * 60 * 60 * 1000 && phone && itemPhone === phone) reasons.add('phone_30d');
-    if (age <= 30 * 24 * 60 * 60 * 1000 && email && itemEmail === email) reasons.add('email_30d');
+    if (age <= settings.formDuplicateLimitMs && phone && itemPhone === phone) reasons.add('phone_30d');
+    if (age <= settings.formDuplicateLimitMs && email && itemEmail === email) reasons.add('email_30d');
     if (age <= 30 * 60 * 1000 && clientId && String(item.clientId || item.values?.clientId || '').trim() === clientId) reasons.add('client_repeat_30m');
+    if (age <= settings.formDuplicateLimitMs && clientId && String(item.clientId || item.values?.clientId || '').trim() === clientId) clientWindowCount += 1;
+    if (age <= settings.formDuplicateLimitMs && ipHash && String(item.ipHash || '').trim() === ipHash) ipWindowCount += 1;
+  }
+
+  if (settings.phoneEmailMode === 'block' && (reasons.has('phone_30d') || reasons.has('email_30d'))) {
+    return {
+      blocked: true,
+      reason: reasons.has('phone_30d') ? 'phone_duplicate' : 'email_duplicate',
+      retryAfter: Math.ceil(settings.formDuplicateLimitMs / 1000),
+      policySnapshot: settings,
+      leadPatch: duplicateLeadPatch(reasons),
+    };
+  }
+
+  if (settings.rejectCookieDuplicate && clientId && clientWindowCount >= settings.formDuplicateLimitCount) {
+    return {
+      blocked: true,
+      reason: 'client_duplicate_limit',
+      retryAfter: Math.ceil(settings.formDuplicateLimitMs / 1000),
+      policySnapshot: settings,
+      leadPatch: duplicateLeadPatch(reasons),
+    };
+  }
+
+  if (settings.rejectIpDuplicate && ipHash && ipWindowCount >= settings.formDuplicateLimitCount) {
+    return {
+      blocked: true,
+      reason: 'ip_duplicate_limit',
+      retryAfter: Math.ceil(settings.formDuplicateLimitMs / 1000),
+      policySnapshot: settings,
+      leadPatch: duplicateLeadPatch(reasons),
+    };
   }
 
   const ipMinuteCount = ipHash ? candidates.filter((item) => {
@@ -2139,7 +2222,7 @@ async function leadIntakePolicy(lead = {}, project = {}, options = {}) {
     return age >= 0 && age <= 60 * 1000;
   }).length : 0;
   if (ipMinuteCount >= 3) {
-    return { blocked: true, reason: 'ip_rate_limit_1m', retryAfter: 60 };
+    return { blocked: true, reason: 'ip_rate_limit_1m', retryAfter: 60, policySnapshot: settings, leadPatch: duplicateLeadPatch(reasons) };
   }
 
   const ipDayCount = ipHash ? candidates.filter((item) => {
@@ -2149,15 +2232,115 @@ async function leadIntakePolicy(lead = {}, project = {}, options = {}) {
   }).length : 0;
   if (ipDayCount >= 20) reasons.add('spam_suspected');
 
-  const duplicateReason = Array.from(reasons).join(',');
   return {
     blocked: false,
-    leadPatch: {
-      duplicate: reasons.has('phone_30d') || reasons.has('email_30d') || reasons.has('client_repeat_30m'),
-      duplicateReason,
-      riskScore: Math.min(100, (reasons.has('spam_suspected') ? 70 : 0) + (duplicateReason ? 30 : 0)),
-    },
+    policySnapshot: settings,
+    leadPatch: duplicateLeadPatch(reasons),
   };
+}
+
+function duplicateLeadPatch(reasons = new Set()) {
+  const duplicateReason = Array.from(reasons).join(',');
+  return {
+    duplicate: reasons.has('phone_30d') || reasons.has('email_30d') || reasons.has('client_repeat_30m'),
+    duplicateReason,
+    riskScore: Math.min(100, (reasons.has('spam_suspected') ? 70 : 0) + (duplicateReason ? 30 : 0)),
+  };
+}
+
+function blockedLeadSubmissionRecord(policy = {}, lead = {}, project = {}) {
+  const now = new Date().toISOString();
+  const phone = lead.phoneNormalized || normalizeLeadPhone(lead.phone || lead.values?.phone || '');
+  const email = lead.emailNormalized || normalizeLeadEmail(lead.email || lead.values?.email || '');
+  const pageSlug = leadPageKey(lead) || project.slug || '';
+  return {
+    id: `blocked_${randomId()}`,
+    projectId: project.projectId || '',
+    pageSlug,
+    reason: String(policy.reason || 'rate_limited'),
+    riskScore: Number(policy.leadPatch?.riskScore || 100),
+    policySnapshot: policy.policySnapshot || {},
+    ipHash: String(lead.ipHash || ''),
+    clientId: String(lead.clientId || lead.values?.clientId || ''),
+    userAgentHash: String(lead.userAgentHash || ''),
+    contactSummary: [phone ? maskContactValue(phone) : '', email ? maskContactValue(email) : ''].filter(Boolean).join(' / '),
+    fieldSummary: {
+      name: String(lead.name || lead.values?.name || '').slice(0, 80),
+      type: String(lead.type || lead.kind || '').slice(0, 40),
+      phoneTail: phone ? phone.slice(-4) : '',
+      emailDomain: email.includes('@') ? email.split('@').pop() : '',
+    },
+    createdMonth: leadPolicyMonth(lead.submittedAt || lead.createdAt || now),
+    createdAt: now,
+  };
+}
+
+function maskContactValue(value = '') {
+  const text = String(value || '');
+  if (!text) return '';
+  if (text.includes('@')) {
+    const [name, domain] = text.split('@');
+    return `${name.slice(0, 2)}***@${domain || ''}`;
+  }
+  return text.length > 4 ? `${text.slice(0, 3)}****${text.slice(-4)}` : '****';
+}
+
+async function recordBlockedLeadSubmission(policy = {}, lead = {}, project = {}, options = {}) {
+  const entry = blockedLeadSubmissionRecord(policy, lead, project);
+  if (options.d1 && storageRuntime.active === 'd1' && hasProject(project)) {
+    await insertD1BlockedLeadSubmission(storageRuntime.d1, entry, {
+      projectId: normalizeProject(project).projectId,
+      pageSlug: entry.pageSlug,
+    });
+    return entry;
+  }
+  const targetFile = projectBlockedLeadsFile(project) || path.join(dataDir, 'blocked-leads.jsonl');
+  await mkdir(path.dirname(targetFile), { recursive: true });
+  await appendJsonlRecord(targetFile, entry);
+  return entry;
+}
+
+async function listBlockedLeadSubmissions(project = {}, filters = {}) {
+  const normalizedFilters = normalizeDateFilters(filters);
+  if (storageRuntime.active === 'd1' && hasProject(project) && normalizedFilters.month) {
+    const result = await listD1BlockedLeadSubmissions(storageRuntime.d1, {
+      projectId: normalizeProject(project).projectId,
+      pageSlug: filters.pageSlug || '',
+      month: normalizedFilters.month,
+      dateFrom: normalizedFilters.dateFrom || '',
+      dateTo: normalizedFilters.dateTo || '',
+      limit: filters.limit,
+      cursor: filters.cursor,
+    });
+    return {
+      records: result.records,
+      total: result.total,
+      nextCursor: result.nextCursor,
+      hasMore: result.hasMore,
+      queryPlan: storageQueryPlan('blocked-leads', normalizedFilters),
+    };
+  }
+  const targetFile = projectBlockedLeadsFile(project) || path.join(dataDir, 'blocked-leads.jsonl');
+  const result = await queryJsonlRecords(targetFile, {
+    type: 'blocked-leads',
+    filters: { ...normalizedFilters, pageSlug: filters.pageSlug || '' },
+    limit: filters.limit || 50,
+    cursor: filters.cursor || 0,
+    filter: (entry) => matchesBlockedLeadFilters(entry, { ...normalizedFilters, pageSlug: filters.pageSlug || '' }),
+    plan: storageQueryPlan('blocked-leads', normalizedFilters),
+  });
+  return {
+    records: result.records,
+    total: result.total,
+    nextCursor: result.nextCursor,
+    hasMore: result.hasMore,
+    queryPlan: result.queryPlan,
+  };
+}
+
+function matchesBlockedLeadFilters(entry = {}, filters = {}) {
+  if (filters.pageSlug && String(entry.pageSlug || '') !== String(filters.pageSlug)) return false;
+  return dateRangeFilter({ createdAt: entry.createdAt || '' }, filters);
 }
 
 function leadRateLimitError(policy = {}) {
@@ -5596,6 +5779,11 @@ function projectLeadsFile(project = {}) {
 function projectEventsFile(project = {}) {
   const dir = projectDir(project);
   return dir ? path.join(dir, 'events.jsonl') : '';
+}
+
+function projectBlockedLeadsFile(project = {}) {
+  const dir = projectDir(project);
+  return dir ? path.join(dir, 'blocked-leads.jsonl') : '';
 }
 
 function aiDraftsFile(project = {}) {

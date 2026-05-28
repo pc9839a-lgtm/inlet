@@ -60,6 +60,37 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
   });
   assert(rateLimited.res.status === 429 && rateLimited.data.code === 'LEAD_RATE_LIMITED', 'same IP 4th submission in 1 minute should be rate limited');
 
+  const policyProject = { projectId: 'smoke-leads-policy', slug: 'smoke-policy' };
+  const policyPage = {
+    ...page,
+    slug: 'smoke-policy',
+    leadDuplicateSettings: {
+      rejectIpDuplicate: true,
+      rejectCookieDuplicate: true,
+      formDuplicateLimitCount: 1,
+      formDuplicateLimitWindow: '1mo',
+      phoneEmailMode: 'block',
+    },
+  };
+  const policySeed = await json({ baseUrl }, 'POST', '/api/leads', {
+    project: policyProject,
+    page: policyPage,
+    lead: { id: 'policy-seed', type: 'consult', status: 'new', name: 'Policy Seed', phone: '010-7777-0001', clientId: 'policy-client', ipHash: 'ip-policy' },
+  });
+  assert(policySeed.res.ok, 'policy seed lead should save');
+  const policyBlocked = await json({ baseUrl }, 'POST', '/api/leads', {
+    project: policyProject,
+    page: policyPage,
+    lead: { id: 'policy-blocked', type: 'consult', status: 'new', name: 'Policy Blocked', phone: '01077770001', clientId: 'policy-client', ipHash: 'ip-policy' },
+  });
+  assert(policyBlocked.res.status === 429 && policyBlocked.data.code === 'LEAD_RATE_LIMITED', 'settings should block configured duplicate lead');
+  assert(['phone_duplicate', 'client_duplicate_limit', 'ip_duplicate_limit'].includes(policyBlocked.data.reason), `unexpected policy block reason: ${policyBlocked.data.reason}`);
+
+  const blockedHistoryQuery = new URLSearchParams({ ...policyProject, month: '2026-05', limit: '20' }).toString();
+  const blockedHistory = await json({ baseUrl }, 'GET', `/api/leads/blocked-history?${blockedHistoryQuery}`);
+  assert(blockedHistory.res.ok && blockedHistory.data.records?.length >= 1, 'blocked history should expose rate limited submissions');
+  assert(blockedHistory.data.records.some((record) => record.reason === policyBlocked.data.reason), 'blocked history should include block reason');
+
   const firstPage = await json({ baseUrl }, 'GET', `/api/leads?${query}&limit=2`);
   assert(firstPage.data.leads.length === 2, 'lead first page length mismatch');
   assert(firstPage.data.total === 5 && firstPage.data.hasMore, 'lead pagination meta mismatch');

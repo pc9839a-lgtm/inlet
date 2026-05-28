@@ -1,10 +1,13 @@
-# Parallel Patch Files
+# Parallel Patch Handoff
 
 Updated: 2026-05-28
 
-Active files in this folder:
+This folder is the active handoff set for the next production patches after deployment `6e4178c`.
 
-- `README.md`
+Do not use older backlog notes as the source of truth. The current deployment is live on Cloudflare Pages, D1 migrations `0002` and `0003` have been applied, hosted route QA passed, and production browser QA passed including Settings duplicate policy and page duplication modal coverage.
+
+Active files:
+
 - `remaining-patches.md`
 - `worker-1-auth-members.md`
 - `worker-2-leads-stats-d1.md`
@@ -12,43 +15,61 @@ Active files in this folder:
 - `worker-4-manager-ownership.md`
 - `worker-5-qa-ops-live.md`
 
-Use `remaining-patches.md` for the master backlog and current state. Use the worker files as the actual parallel handoff documents. Old completed worker files, backlog files, and historical review files must stay deleted so work does not repeat finished patches.
+## How To Work
 
-Current execution mode:
+Primary mode: parallel patching is active.
 
-- Primary mode: parallel patching is active.
-- Five workers can run at the same time only if they respect file ownership.
-- Each worker must patch only their assigned area, run their own QA, and report changed files plus remaining risk once at the end.
-- Do not pause for routine progress reports. Intermediate reporting is only for blockers, destructive data actions, unclear product decisions, or cross-worker file conflicts.
-- Within the assigned area, workers should fix obvious bugs, risk, missing QA, and small consistency issues they discover while patching.
-- Workers should not stop after listing risk if the risk is inside their assigned area and can be patched safely.
-- Final integration must be done after all worker branches/patches are merged.
+Five workers can run at the same time only if they respect file ownership.
 
-Final worker report format:
+Five workers may patch in parallel only by file ownership.
 
-- Modified files
-- Implemented work
-- Extra risks found and patched
-- QA commands and pass/fail result
-- Remaining risk that genuinely needs another worker, credentials, deployment, or product decision
+1. Worker 1: account, auth, sessions, member records, transactional email boundary.
+2. Worker 2: lead intake, duplicate/spam policy, blocked history, inbox, stats, CSV, D1 scale.
+3. Worker 3: the three templates, public landing quality, editor/preview polish.
+4. Worker 4: Settings UX, manager permissions, ownership transfer, page duplication UX, internal admin UI.
+5. Worker 5: QA automation, deployment, live integration readiness, operations docs.
 
-Billing, subscriptions, and the 3,300/6,600/9,900 KRW plan work is intentionally last. Do not start payment-provider work until account, permission, D1 storage, inbox/stat scale, visual QA, and live integration readiness are stable.
+Each worker should read only their own worker file plus `remaining-patches.md`. Do not wait for routine progress reporting. Patch the assigned area, fix obvious adjacent bugs inside the same boundary, run QA, and report once at the end.
 
-Hard split:
+## Stop Conditions
 
-- Worker 1 owns account, auth, email verification, sessions, member data.
-- Worker 2 owns lead intake, duplicate policy, inbox, stats, D1 scale, CSV.
-- Worker 3 owns the three templates, public landing/editor preview polish, block style behavior.
-- Worker 4 owns Settings manager permission UX, ownership transfer, page duplication UX.
-- Worker 5 owns QA automation, deploy readiness, live integration readiness, docs/ops.
+Stop and ask only for:
 
-High-conflict files:
+- destructive production data deletion;
+- real payment-provider behavior;
+- production D1 backfill writes beyond migrations already approved;
+- SMTP/OAuth/conversion/webhook credentials;
+- DNS or custom-domain ownership changes;
+- product decisions not stated in the worker file;
+- edits in another worker's high-conflict file.
+
+Do not stop just because a task reveals another fix inside the same worker boundary. Patch it and add QA.
+
+## High-conflict files
+
+These files require the owning worker rule:
 
 - `src/App.jsx`
 - `src/panels/SettingsPanel.jsx`
 - `server/index.mjs`
+- `server/storage/d1Adapter.mjs`
 - `package.json`
-- `migrations/0001_inlet_core.sql`
-- `src/styles/panels.css`
+- `wrangler.jsonc`
+- `migrations/*.sql`
+- `scripts/production-browser-quality-check.mjs`
 
-Touch high-conflict files only when assigned by the worker document. If two workers need the same high-conflict file, one worker patches first and the other rebases after.
+If a high-conflict file is needed by two workers, one worker patches first and the second worker rebases or waits for merge.
+
+## Final Report Format
+
+Each worker must finish with:
+
+- modified files;
+- implemented work;
+- risks found and patched;
+- QA commands with pass/fail;
+- remaining blocker that needs credentials, deployment, another worker, or a product decision.
+
+## Billing Rule
+
+Do not start payment provider implementation yet. The 3,300 / 6,600 / 9,900 KRW plans remain the final phase after account, email, duplicate policy, stats, templates, admin, and live integration readiness are stable.

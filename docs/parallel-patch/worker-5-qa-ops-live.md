@@ -4,26 +4,21 @@ Updated: 2026-05-28
 
 ## Goal
 
-Keep the project deployable while other workers patch in parallel. Expand QA only where it catches real regressions and document live integration readiness without blocking offline work.
+Keep the project deployable while Workers 1-4 continue feature work. Add QA that catches real regressions, keep deployment reliable, and make live integration readiness explicit.
 
-## Work Mode
+## Current Baseline
 
-- Do not send routine progress reports.
-- Inspect the QA/deploy/live-readiness area broadly, not only the exact bullet list.
-- Patch obvious stale QA contracts, false failures, missing cleanup, missing artifact gates, browser QA blind spots, deployment-doc drift, and skipped-live reporting risks found inside this worker area.
-- Do not stop after listing a QA/ops risk if it can be fixed safely within owned files.
-- Ask only for live credentials, destructive production cleanup, Cloudflare setting changes with cost/security impact, or edits outside this worker boundary.
+Already completed for deployment `6e4178c`:
 
-## Owns
+- GitHub `main` pushed.
+- Cloudflare Pages deployment succeeded.
+- Pages Functions active.
+- D1 migrations `0002` and `0003` applied.
+- Hosted API QA passed.
+- Hosted route QA passed.
+- Production browser QA passed with duplicate settings and page duplication modal cases enabled.
 
-- QA scripts.
-- Browser visual QA.
-- Deployment gates.
-- Artifact/bundle/CSS/runtime checks.
-- Artifact cleanup command and release cleanup workflow.
-- Live readiness reports.
-- Ops documentation.
-- Cloudflare/GitHub deployment notes.
+Do not redo the last deployment unless a new worker patch needs release.
 
 ## Primary Files
 
@@ -31,43 +26,120 @@ Keep the project deployable while other workers patch in parallel. Expand QA onl
 - `scripts/*quality*`
 - `scripts/*deployment*`
 - `scripts/*browser*`
+- `scripts/*hosted*`
 - `package.json`
 - `wrangler.jsonc`
 - `docs/**`
 
-## Allowed High-Conflict Files
+Do not change product behavior unless adding a non-behavioral selector/hook is required and coordinated with the owning worker.
 
-- `package.json`
-- `wrangler.jsonc`
-- `docs/**`
+## Patch A: QA Coverage For New Work
 
-Do not edit product UI or server behavior unless adding a QA hook requires a small non-behavioral data-testid/selector change. Coordinate such UI hooks with the owning worker.
+Add/update QA as Workers 1-4 add behavior.
 
-## Required Product Rules
+Upcoming required cases:
 
-- Browser QA must remain capable of using local Chrome/Edge CDP without forcing Playwright/Puppeteer install.
-- Mandatory browser mode must fail if no real browser ran.
-- Production browser QA should keep covering public routes, templates, settings/manager states, admin, invite acceptance, style live preview, and rich text toolbar behavior.
+- account settings screen;
+- logout/session expiry UX;
+- email verification success/failure;
+- password reset verified change;
+- duplicate policy save/reload;
+- blocked history panel;
+- stats channel/device/source filters;
+- page duplication locked/unlocked URL flow;
+- admin user/project search;
+- template mobile first viewport and effects.
+
+Rules:
+
+- Browser QA must support local Chrome/Edge CDP without requiring Playwright/Puppeteer install.
+- Mandatory mode must fail if no real browser ran.
+- Production browser QA should report screenshot paths.
+- Do not make skipped-live look like pass for a required release case.
+
+## Patch B: Hosted Route QA
+
+Keep hosted route QA aligned with production APIs.
+
+Add route coverage when new endpoints are added for:
+
+- account profile update;
+- account suspend/restore;
+- email provider test/status;
+- blocked history read;
+- duplicate policy save/read;
+- stats dimensions;
+- admin user/project search;
+- page duplication request/preview.
+
+Rules:
+
+- Write QA data with unique prefixes.
+- Cleanup path must be documented.
+- Production destructive cleanup requires explicit approval.
+- Protected routes must check unauthenticated and unauthorized states.
+
+## Patch C: Deployment And Artifact Safety
+
+Release order:
+
+1. local relevant QA;
+2. `npm run build`;
+3. `npm run deployment:qa`;
+4. D1 migration review/apply if needed;
+5. commit;
+6. push to GitHub main;
+7. Cloudflare Pages deploy/retry if auto deploy is skipped;
+8. hosted API QA;
+9. hosted route QA;
+10. production browser QA;
+11. live readiness QA.
+
+Rules:
+
+- `artifact:clean` must never delete source, migrations, config, or committed assets.
+- Windows local locked `dist` or `.tmp-browser-visual` is a local cleanup issue, not automatically a product blocker.
+- Deployment artifact QA must fail stale referenced assets.
+- Build output budgets must stay enforced.
+
+## Patch D: Live Integration Readiness
+
+Live integrations needing credentials:
+
+- SMTP or transactional email provider;
+- OAuth/Google Calendar if used;
+- GTM;
+- Meta Pixel/CAPI;
+- Google Ads;
+- Naver;
+- Kakao;
+- webhook/CRM endpoint;
+- optional live AI test using customer-owned key.
+
+Rules:
+
+- Missing credentials are `skipped-live`.
 - Missing live credentials must be `skipped-live`, not false failures.
-- Live integrations still needing credentials: SMTP, OAuth, conversion tracking, webhook, live AI generation.
-- Customer-owned AI key policy must remain visible in docs and checks.
-- Payment provider work remains last.
+- Invalid credentials are failed-live.
+- Live readiness output must show ready/skipped/failed counts.
+- Customer-owned AI key policy must remain clear: customer pays their own AI provider usage.
+- Do not store raw AI keys in page JSON/localStorage.
 
-Deployment rules:
+## Patch E: Ops Runbooks
 
-- Build before release.
-- Push to GitHub main only after local QA passes.
-- Deploy Cloudflare Pages from the pushed commit.
-- After deploy, run hosted API QA and production browser QA.
-- Clean `.tmp-browser-visual` before strict artifact QA.
-- `artifact:clean` should remove local generated artifacts such as `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, `preview.zip`, and `.tmp-browser-visual` without touching source, migrations, config, or committed assets.
-- If `artifact:clean` exists locally, keep it covered by `integration:qa` and document it in release order.
+Maintain docs for:
 
-Current local recheck notes:
-
-- `artifact:clean` script and ops release-order docs may exist locally.
-- `integration:qa`, `ops:qa`, strict `artifact:qa`, and full `qa:all` pass locally with the active changes.
-- Worker 5 should still add/keep production browser QA coverage for any new Settings duplicate policy UI and page duplication modal before launch sign-off.
+- Cloudflare Pages deploy;
+- D1 migration and rollback;
+- D1 backup/export before destructive changes;
+- hosted QA data cleanup;
+- custom domain setup;
+- DNS verification;
+- SSL status;
+- SMTP credential setup;
+- conversion tracking verification;
+- webhook retry/dead-letter;
+- incident rollback.
 
 ## Do Not Touch
 
@@ -77,25 +149,14 @@ Current local recheck notes:
 - Account/auth route behavior.
 - Payment provider implementation.
 
-## QA
-
-Run relevant checks depending on what changed:
-
-- `npm run qa:all`
-- `npm run runtime:qa`
-- `npm run css:qa`
-- `npm run bundle:qa`
-- `npm run deployment:qa`
-- `npm run integration:qa`
-- `npm run browser:production:qa`
-- `npm run live:qa`
-- strict `artifact:qa`
+## Final Report
 
 Report:
 
-- Changed QA/deploy files.
-- New checks added.
-- Extra QA/ops risks found and patched.
-- Local QA pass/fail.
-- Production deploy id and commit if deployed.
-- Remaining skipped-live items and exact credentials needed.
+- changed QA/deploy/doc files;
+- new checks added;
+- local QA pass/fail;
+- deployed commit and deployment id if deployed;
+- hosted QA results if deployed;
+- production browser QA results if visible UI changed;
+- remaining skipped-live credentials.

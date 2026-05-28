@@ -7,6 +7,7 @@ export const D1_SCHEMA_TABLES = [
   'page_revisions',
   'leads',
   'events',
+  'lead_blocked_submissions',
   'delivery_logs',
   'ai_drafts',
   'ai_keys',
@@ -19,6 +20,7 @@ export const D1_SCHEMA_TABLES = [
 export const D1_INDEX_PRIORITIES = {
   leads: ['project_id', 'created_month', 'status', 'kind', 'delivery_status', 'contact_key', 'phone_normalized', 'email_normalized', 'client_id', 'ip_hash', 'duplicate'],
   events: ['project_id', 'created_month', 'event_type', 'channel', 'device', 'dedupe_key'],
+  blockedLeads: ['project_id', 'created_month', 'page_slug', 'reason', 'ip_hash', 'client_id'],
   stats: ['project_id', 'created_month', 'event_type', 'channel', 'device', 'status', 'kind', 'delivery_status'],
   billing: ['project_id', 'status', 'current_period_end'],
   audit: ['project_id', 'actor_account_id', 'action', 'created_at'],
@@ -423,6 +425,45 @@ export function decodeD1Lead(row = {}) {
     createdMonth: row.created_month || d1CreatedMonth(row.created_at),
     createdAt: row.created_at || raw.createdAt || '',
     updatedAt: row.updated_at || raw.updatedAt || '',
+  };
+}
+
+export function encodeD1BlockedLeadSubmission(entry = {}, context = {}) {
+  const createdAt = String(entry.createdAt || entry.created_at || new Date().toISOString());
+  return {
+    id: String(entry.id || d1Id()),
+    project_id: String(context.projectId || entry.projectId || ''),
+    page_id: context.pageId || entry.pageId || null,
+    page_slug: String(context.pageSlug || entry.pageSlug || ''),
+    reason: String(entry.reason || 'rate_limited'),
+    risk_score: Math.max(0, Number(entry.riskScore || entry.risk_score || 0)),
+    policy_snapshot_json: encodeD1Json(entry.policySnapshot || {}, {}),
+    ip_hash: String(entry.ipHash || entry.ip_hash || ''),
+    client_id: String(entry.clientId || entry.client_id || ''),
+    user_agent_hash: String(entry.userAgentHash || entry.user_agent_hash || ''),
+    contact_summary: String(entry.contactSummary || entry.contact_summary || ''),
+    field_summary_json: encodeD1Json(entry.fieldSummary || {}, {}),
+    created_month: d1CreatedMonth(entry.createdMonth || entry.created_month || createdAt),
+    created_at: createdAt,
+  };
+}
+
+export function decodeD1BlockedLeadSubmission(row = {}) {
+  return {
+    id: row.id || '',
+    projectId: row.project_id || '',
+    pageId: row.page_id || '',
+    pageSlug: row.page_slug || '',
+    reason: row.reason || 'rate_limited',
+    riskScore: Number(row.risk_score || 0),
+    policySnapshot: decodeD1Json(row.policy_snapshot_json, {}),
+    ipHash: row.ip_hash || '',
+    clientId: row.client_id || '',
+    userAgentHash: row.user_agent_hash || '',
+    contactSummary: row.contact_summary || '',
+    fieldSummary: decodeD1Json(row.field_summary_json, {}),
+    createdMonth: row.created_month || d1CreatedMonth(row.created_at),
+    createdAt: row.created_at || '',
   };
 }
 
@@ -999,6 +1040,70 @@ export async function listD1Leads(db, { projectId, month, status = '', kind = ''
   const total = await countD1Rows(db, `SELECT COUNT(*) AS total FROM leads WHERE ${filters.join(' AND ')}`, params.slice(0, -2));
   return {
     records: result.records.map(decodeD1Lead),
+    total,
+    nextCursor: safeCursor + result.records.length < total ? safeCursor + result.records.length : null,
+    hasMore: safeCursor + result.records.length < total,
+    meta: result.meta,
+  };
+}
+
+export async function insertD1BlockedLeadSubmission(db, entry = {}, context = {}) {
+  assertD1Binding(db);
+  const row = encodeD1BlockedLeadSubmission(entry, context);
+  await db.prepare(`
+    INSERT INTO lead_blocked_submissions (
+      id, project_id, page_id, page_slug, reason, risk_score, policy_snapshot_json,
+      ip_hash, client_id, user_agent_hash, contact_summary, field_summary_json,
+      created_month, created_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).bind(
+    row.id,
+    row.project_id,
+    row.page_id,
+    row.page_slug,
+    row.reason,
+    row.risk_score,
+    row.policy_snapshot_json,
+    row.ip_hash,
+    row.client_id,
+    row.user_agent_hash,
+    row.contact_summary,
+    row.field_summary_json,
+    row.created_month,
+    row.created_at,
+  ).run();
+  return decodeD1BlockedLeadSubmission(row);
+}
+
+export async function listD1BlockedLeadSubmissions(db, { projectId, pageSlug = '', month = '', dateFrom = '', dateTo = '', cursor = 0, limit = 50 } = {}) {
+  assertD1Binding(db);
+  const safeLimit = Math.max(1, Math.min(200, Number(limit || 50)));
+  const safeCursor = Math.max(0, Number(cursor || 0));
+  const filters = ['project_id = ?', 'created_month = ?'];
+  const params = [projectId, month];
+  if (pageSlug) {
+    filters.push('page_slug = ?');
+    params.push(String(pageSlug));
+  }
+  if (dateFrom) {
+    filters.push('created_at >= ?');
+    params.push(String(dateFrom).length === 10 ? `${dateFrom}T00:00:00.000Z` : String(dateFrom));
+  }
+  if (dateTo) {
+    filters.push('created_at <= ?');
+    params.push(String(dateTo).length === 10 ? `${dateTo}T23:59:59.999Z` : String(dateTo));
+  }
+  params.push(safeLimit, safeCursor);
+  const where = filters.join(' AND ');
+  const result = await queryD1Rows(
+    db,
+    `SELECT * FROM lead_blocked_submissions WHERE ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+    params,
+  );
+  const total = await countD1Rows(db, `SELECT COUNT(*) AS total FROM lead_blocked_submissions WHERE ${where}`, params.slice(0, -2));
+  return {
+    records: result.records.map(decodeD1BlockedLeadSubmission),
     total,
     nextCursor: safeCursor + result.records.length < total ? safeCursor + result.records.length : null,
     hasMore: safeCursor + result.records.length < total,

@@ -4,157 +4,208 @@ Updated: 2026-05-28
 
 ## Goal
 
-Make lead intake, duplicate/spam handling, inbox paging, CSV, stats, and D1 large-data behavior ready for real operation.
+Make lead intake, duplicate/spam prevention, blocked history, inbox, CSV, stats, and D1 scale behavior production-grade.
 
-## Work Mode
+This worker owns the data policy. Worker 4 may build Settings UI, but the server behavior and persistence must be correct here.
 
-- Do not send routine progress reports.
-- Inspect the lead/inbox/stats/D1 area broadly, not only the exact bullet list.
-- Patch obvious duplicate, spam, paging, CSV, stats accuracy, D1 query, retention, and QA risks found inside this worker area.
-- Do not stop after listing a data/scale risk if it can be fixed safely within owned files.
-- Ask only for production D1 write migration, data deletion, unclear product decisions, or edits outside this worker boundary.
+## Current Baseline
 
-## Owns
+Already deployed:
 
-- Public lead submit dedupe/rate-limit policy.
-- Server-side duplicate/spam settings model and API contract.
-- Blocked/limited submission history storage and read API.
-- Inbox first-load limit and `더보기` paging.
-- Month-bounded lead list and CSV export.
-- Duplicate/spam badges and export fields.
-- Stats SQL aggregation and D1 performance checks.
-- Large fixture/performance QA.
-- JSONL fallback boundary and D1 migration safety.
+- D1 lead dedupe columns migration `0002` applied.
+- D1 event dimension migration `0003` applied.
+- Hosted route QA passed for lead write/read, event write, stats summary, CSV, delivery logs, retry queue.
+- Inbox first-load/month-bounded behavior exists.
+- Basic duplicate metadata fields exist.
+- Patch A/B local implementation exists after 2026-05-28 patch:
+  - server consumes `leadDuplicateSettings` / `duplicateCollectionSettings` aliases;
+  - default phone/email duplicate behavior is mark-only;
+  - explicit `phoneEmailMode: block` blocks duplicate contact submissions;
+  - explicit `rejectCookieDuplicate` / `rejectIpDuplicate` block by configured count/window;
+  - hard 1-minute same-IP abuse rate limit remains active;
+  - blocked submissions are persisted to JSONL and D1 `lead_blocked_submissions`;
+  - `GET /api/leads/blocked-history` returns safe, paged, month/date-bounded rows.
+
+Do not redo the D1 baseline. Finish policy and operational behavior.
 
 ## Primary Files
 
 - `server/index.mjs`
+- `server/storage/d1Adapter.mjs`
+- `server/storage/runtimeAdapter.mjs`
 - `server/storage/**`
+- `src/lib/leadCsv.js`
 - `src/panels/InboxPanel.jsx`
 - `src/panels/StatsPanel.jsx`
-- `scripts/*leads*`
-- `scripts/*stats*`
-- `scripts/*csv*`
-- `scripts/*perf*`
-- `scripts/*d1*`
+- `scripts/server-smoke-leads.mjs`
+- `scripts/stats-quality-check.mjs`
+- `scripts/csv-quality-check.mjs`
+- `scripts/offline-performance-check.mjs`
+- `scripts/d1-adapter-quality-check.mjs`
+- `migrations/*.sql` only for lead/event/stat schema/index changes
 
-## Allowed High-Conflict Files
+Do not edit Settings UI unless coordinating with Worker 4.
 
-- `server/index.mjs`
-- `src/panels/InboxPanel.jsx`
-- `src/panels/StatsPanel.jsx`
-- `migrations/0001_inlet_core.sql` only if dedupe fields/indexes require it.
+## Patch A: Server-Enforced Duplicate Settings
 
-Do not edit `src/panels/SettingsPanel.jsx`.
+Status: implemented locally, not yet deployed unless the current branch has been pushed and migration `0004` applied.
 
-## Required Product Rules
+The server must consume project/page duplicate settings. Hard-coded values may be defaults only.
 
-Lead duplicate policy:
+Phone/email is the primary duplicate key.
 
-- Phone/email is the primary duplicate key.
-- Cookie/client id prevents accidental repeated submission from the same browser.
-- IP is only a short-window spam/rate-limit signal. Do not use IP alone for long-term blocking.
-- Prefer saving duplicate leads with metadata over losing potentially valid leads.
-- Hard-block only obvious rapid repeat or rate-limit abuse.
-- Duplicate/spam behavior must be configurable per project/page by the owner. Do not hard-code one global policy.
-- If there is already a hard-coded duplicate/rate-limit implementation, treat it as incomplete until it reads project/page `leadDuplicateSettings` or the final equivalent persisted settings.
-- Hard-coded values such as phone/email 30 days, client repeat 30 minutes, and IP 1 minute / 3 submissions may be defaults only. User settings must override them.
+Cookie/client id prevents accidental repeated submission.
 
-Required configurable settings:
+IP is only a short-window spam/rate-limit signal.
 
-- `ipDuplicateRejectEnabled`: IP duplicate collection rejection on/off.
-- `cookieDuplicateRejectEnabled`: cookie/client-id duplicate collection rejection on/off.
-- `fieldDuplicateLimitCount`: how many same form-field duplicates are allowed before limiting.
-- `fieldDuplicateLimitPeriod`: duplicate check period, such as 1 day, 7 days, 1 month.
-- `phoneEmailDuplicateMode`: mark-only or reject for phone/email duplicates. Default should be mark-only unless the owner explicitly chooses stricter behavior.
-- Map any UI names such as `rejectIpDuplicate`, `rejectCookieDuplicate`, `formDuplicateLimitCount`, `formDuplicateLimitWindow`, and `phoneEmailMode` into the server policy consistently.
+Required settings:
 
-Default recommendation:
+- `ipDuplicateRejectEnabled`
+- `cookieDuplicateRejectEnabled`
+- `fieldDuplicateLimitCount`
+- `fieldDuplicateLimitPeriod`
+- `phoneEmailDuplicateMode`
 
-- Cookie duplicate rejection on for short accidental repeats.
-- IP duplicate rejection off by default, or limited to short-window abuse only.
-- Phone/email duplicate detection on with `duplicate=true` metadata, not hard reject.
-- Hard-block only rapid repeat, high risk score, or explicit owner-selected reject mode.
+Map any UI aliases into the same server model:
 
-Recommended rules:
+- `rejectIpDuplicate`
+- `rejectCookieDuplicate`
+- `formDuplicateLimitCount`
+- `formDuplicateLimitWindow`
+- `phoneEmailMode`
 
-- Same page/project + same phone within 30 days -> save as duplicate with `phone_30d`.
-- Same page/project + same email within 30 days -> save as duplicate with `email_30d`.
-- Same page + same client id within 30 minutes -> block or save as duplicate with `client_repeat_30m`.
-- Same page + same IP 3+ times in 1 minute -> rate limit.
-- Same IP too many times per day -> `spam_suspected`.
+Default policy:
 
-Blocked/limited submission history:
+- cookie/client duplicate rejection on for short accidental repeat;
+- IP rejection off by default or short-window only;
+- phone/email duplicate detection on;
+- phone/email default behavior is mark-only, not hard block;
+- hard block only rapid repeat, rate-limit abuse, high risk score, or explicit strict owner setting.
 
-- Store a row for blocked or rate-limited submissions.
-- Include time, project/page/form id, reason, risk score, duplicate policy snapshot, IP hash, client id, user agent hash, normalized phone/email hash if available, and submitted field summary without exposing more PII than needed.
-- Provide a read API for the UI to show blocked history.
-- A UI-only `blockedHistory` placeholder on page JSON is not enough. The server must persist blocked/rate-limited attempts and expose them through a stable read path.
-- CSV export for normal leads should not silently include blocked rows unless the user explicitly chooses a blocked-history export later.
+Required tests:
 
-Data fields to add or normalize where practical:
+- Covered in `scripts/server-smoke-leads.mjs`: phone duplicate mark, client repeat mark, hard same-IP abuse block, configured strict policy block, blocked history read.
+- Still add if editing this area again: explicit IP-off same-IP non-abuse fixture and cookie-off fixture.
 
-- `clientId`
-- `ipHash`
-- `userAgentHash`
-- `phoneNormalized`
-- `emailNormalized`
-- `duplicate`
-- `duplicateReason`
-- `riskScore`
-- `submittedAt`
-- `blocked`
-- `blockedReason`
-- `policySnapshot`
+## Patch B: Blocked Submission History
 
-Inbox/CSV:
+Status: implemented locally, with D1 migration `migrations/0004_lead_blocked_submissions.sql`.
 
-- First load must stay limited to 50 rows.
-- More rows only through `더보기`.
-- Month-bounded query only.
-- CSV must be month-bounded.
-- CSV should include duplicate status/reason and useful operator fields.
-- Compact row should not reintroduce useless phone/message/mail/copy action clutter.
+Implement server-persisted blocked/rate-limited history.
 
-Stats:
+Do not treat page JSON `blockedHistory` as sufficient.
 
-- D1 SQL aggregation should remain preferred for monthly PV, CTA, form, reservation, lead, status, delivery, and trend.
-- Add/verify indexes for page, month/date, type, source, device, dedupe key where useful.
+Required fields:
+
+- id;
+- createdAt;
+- projectId;
+- pageSlug or pageId;
+- form/block id if available;
+- reason;
+- riskScore;
+- policySnapshot;
+- ipHash;
+- clientId;
+- userAgentHash;
+- phone/email masked or hashed summary;
+- submitted field summary with minimal PII.
+
+Read API:
+
+- owner/client admin can read blocked history for their project/page;
+- manager access follows project permission rules;
+- unauthenticated users cannot read it;
+- response uses safe fields only;
+- support month/date bounds and pagination.
+
+UI contract for Worker 4:
+
+- empty state must mean no rows;
+- loading/unavailable state must mean server path not loaded;
+- blocked history should show date, page/form, reason, risk score, and safe identifier.
+
+QA:
+
+- Passed locally: `npm run server:smoke:leads`
+- Passed locally: `npm run d1:schema:qa`
+- Passed locally: `npm run integration:qa`
+- Hosted follow-up after deploy: apply migration `0004`, then run `api:hosted:routes:qa`.
+
+## Patch C: Inbox And CSV Operation Quality
+
+Keep:
+
+- first load 50 rows;
+- more rows only by paging;
+- month-bounded list;
+- month-bounded CSV;
+- date-only compact list view;
+- no useless phone/message/mail/copy action clutter in compact rows.
+
+Improve:
+
+- duplicate badge and reason visibility;
+- blocked/limited status visibility where relevant;
+- CSV fields for duplicate, duplicate reason, risk score, source page, delivery status, memo, form values;
+- Excel/Korean compatibility remains intact.
+
+QA:
+
+- `npm run csv:qa`
+- `npm run server:smoke:leads`
+- large fixture/perf check if query behavior changes.
+
+## Patch D: Stats Expansion
+
+Add or verify D1 aggregate coverage for:
+
+- PV;
+- CTA click;
+- link click;
+- form start;
+- submit attempt;
+- submit success;
+- reservation attempt;
+- reservation success;
+- conversion rate;
+- source/channel;
+- device;
+- page;
+- monthly trend;
+- period comparison.
+
+Rules:
+
+- Do not hydrate huge event lists on the client for core stats.
+- D1 SQL aggregation is preferred for production.
+- JSONL full scan remains local fallback only.
+- Add indexes before adding high-volume queries.
+
+QA:
+
+- `npm run stats:qa`
+- `npm run perf:qa`
+- `npm run d1:adapter:qa`
+- `npm run server:smoke:events`
 
 ## Do Not Touch
 
-- Template content.
+- Template copy.
 - Manager permission UI.
-- Auth UI except consuming stable account/session identity.
+- Page duplication UX.
+- Account auth behavior except consuming stable identity.
 - Billing checkout.
-- Public legal page copy.
 
-## QA
-
-Run at minimum:
-
-- `npm run server:smoke:leads`
-- `npm run server:smoke:events`
-- `npm run stats:qa`
-- `npm run csv:qa`
-- `npm run perf:qa`
-- `npm run d1:adapter:qa`
-- Add/keep tests proving user settings override defaults:
-  - IP duplicate rejection off does not block normal same-IP submissions except clear abuse.
-  - IP duplicate rejection on blocks or limits according to configured threshold/window.
-  - cookie/client duplicate rejection on/off changes behavior.
-  - phone/email mode `mark` saves duplicate metadata; mode `block` stores a blocked-history row.
-  - blocked-history read path returns safe fields only.
-- `npm run api:hosted:routes:qa` if hosted env is available
-- `npm run build`
+## Final Report
 
 Report:
 
-- Changed files.
-- Duplicate/rate-limit policy implemented.
-- Duplicate/spam settings fields and defaults.
-- Blocked submission history storage/API.
-- Extra lead/stat/D1 risks found and patched.
-- D1 indexes or schema changes.
-- Measured behavior for large fixture, if added.
-- Remaining risk for real production data volume.
+- changed files;
+- exact duplicate policy defaults and settings;
+- blocked history API/storage;
+- D1 schema/index changes;
+- inbox/CSV changes;
+- stats aggregation changes;
+- QA commands and results;
+- remaining production data-volume risk.

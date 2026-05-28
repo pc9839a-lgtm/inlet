@@ -1,134 +1,191 @@
-# Worker 4: Manager Permissions, Ownership Transfer, Page Duplication UX
+# Worker 4: Settings, Managers, Ownership, Page Duplication, Admin
 
 Updated: 2026-05-28
 
 ## Goal
 
-Finish Settings manager permission UX, ownership transfer UX, and paid-gated page duplication flow without implementing final payment checkout.
+Finish Settings and operator UX after deployment `6e4178c`: manager permissions, ownership transfer, page duplication, duplicate policy UI wiring, and internal admin tools.
 
-## Work Mode
+Do not implement final payment checkout.
 
-- Do not send routine progress reports.
-- Inspect the Settings/manager/ownership/page-duplication area broadly, not only the exact bullet list.
-- Patch obvious permission UX, invite flow, ownership transfer, page duplication, URL setup, locked paid-state, and visual overflow risks found inside this worker area.
-- Do not stop after listing a manager/ownership/page-duplication risk if it can be fixed safely within owned files.
-- Ask only for real payment behavior, destructive ownership changes, unclear product decisions, or edits outside this worker boundary.
+## Current Baseline
 
-## Owns
+Already deployed:
 
-- Settings manager permission UI.
-- Settings duplicate/spam prevention UI if Worker 2 exposes or documents the API/model.
-- Manager invite UX.
-- Ownership transfer request UX.
-- Internal-admin ownership approval UI only where required.
-- Page duplication UX and URL setup modal.
-- Feature-gate placeholder for paid-only page duplication.
+- Settings manager permission baseline exists.
+- Manager invite accept route exists.
+- Ownership transfer API and internal admin queue baseline exist.
+- Page duplication URL modal baseline exists.
+- Duplicate/spam settings section baseline exists.
+- Production browser QA covers manager settings, duplicate settings, page duplication modal, and internal admin ownership queue.
+
+Do not redo those from scratch. Make them complete and usable.
 
 ## Primary Files
 
 - `src/panels/SettingsPanel.jsx`
-- `src/App.jsx` only for route/tab gating or page duplication modal entry.
+- `src/panels/SettingsPanel.css`
+- `src/App.jsx` only for route/tab gating or admin/page duplication entry
+- `src/lib/pageDuplication.js`
+- `src/lib/managerInvites.js`
+- `src/lib/ownershipTransfer.js`
 - `src/lib/permissions*`
-- `src/lib/page*`
-- `src/styles/panels.css`
-- `scripts/*permission*`
-- `scripts/*ownership*`
-- `scripts/browser-visual-quality-check.mjs` only if adding focused visual QA.
+- `scripts/production-browser-quality-check.mjs` only for visual QA coverage
 
-## Allowed High-Conflict Files
+Server changes should be minimal unless Worker 2 or Worker 1 has already provided the API contract.
 
-- `src/panels/SettingsPanel.jsx`
-- `src/App.jsx`
-- `src/styles/panels.css`
+## Patch A: Manager Permission UX
 
-Do not change server auth internals unless the API contract already exists and only a small route call is needed.
+Rules:
 
-## Required Product Rules
+- Manager permission settings belong in project Settings for every client/admin project.
+- Do not move normal client manager settings into internal admin.
+- Internal admin is for operator-only control, not normal project staff management.
+- Use user-facing Korean labels: 보기, 편집.
+- Do not show a huge read/write grid by default.
+- First show manager summary and menu-level permission.
+- Detailed permission editing may open after selecting a manager/menu.
+- Remove unnecessary active toggle if remove/disable covers the need.
+- Manager invite should create and copy the invite link in one action after valid name/email.
+- Invite acceptance must require login/signup and matching email.
+- If authenticated email differs from invite email, show: `초대받은 이메일을 확인해주세요.`
 
-Manager permissions:
+QA:
 
-- Manager permission settings belong in normal Settings for every client/admin project.
-- Do not move client manager permission controls into internal admin.
-- Labels must be user-facing Korean: `보기`, `편집`.
-- Menu permission itself should be compact. Do not show a huge read/write toggle grid by default.
-- Detailed permissions can expand after selecting a menu/manager.
-- Manager invite should create and copy the invite link in one action after valid name/email input.
-- Remove unnecessary active toggle if deletion/disable covers the actual need.
-- Invited manager must login/signup and only load the invited project when authenticated email matches invite email.
-- If email differs, show `초대받은 이메일을 확인해주세요.`
+- compact desktop and normal desktop browser QA;
+- manager cannot access tabs without permission;
+- manager cannot write where only 보기 is granted;
+- removed manager loses access.
 
-Ownership transfer:
+## Patch B: Ownership Transfer UX
 
-- In Settings, show collapsed section named exactly `소유권이전`.
+Rules:
+
+- Section title is exactly `소유권이전`.
+- Keep section collapsed by default.
 - Transfer target must be selected from existing managers only.
-- Request must go to internal admin approval before completion.
-- If paid subscription exists later, transfer waits until billing period expires or subscription is canceled.
-- Real card/payment handoff is deferred to final billing.
+- Transfer request must go to internal admin approval before completion.
+- User-facing states: requested, waiting billing clearance, approved, rejected, completed, canceled.
+- If a paid subscription exists later, transfer waits until current billing period expires or subscription is canceled.
+- Do not implement card/payment handoff now.
 
-Page duplication:
+Admin:
+
+- internal admin queue should show transfer requester, target manager, project, current billing placeholder, status, timestamps.
+- admin can approve/reject/mark billing wait only through protected operator route.
+- every dangerous action needs audit log.
+
+QA:
+
+- manager cannot self-transfer ownership;
+- non-owner cannot request transfer;
+- approval path updates status;
+- billing-blocked path stays pending.
+
+## Patch C: Page Duplication UX
+
+Rules:
 
 - Template duplication is not needed.
-- Paid feature is page duplication only.
-- `페이지 복제` must not immediately copy the page.
-- First open `URL 설정` modal.
-- URL setup must support:
-  - `기본 제공 도메인`: slug input and duplicate check.
-  - `개인 도메인`: domain input saved as pending DNS state.
-- Store URL data as fields like `domainType`, `slug`, `customDomain`, `domainStatus`.
-- Do not hard-code current Cloudflare Pages domain in saved page data.
-- Future base-domain change must not require rewriting page records.
-- Copy page settings, blocks, style, form structure, CTA, effects, and SEO basics.
-- Do not copy leads, stats, delivery logs, manager permissions, ownership-transfer history, payment/subscription state, or audit history.
-- Until billing exists, use plan/feature placeholder to show locked paid behavior.
+- Page duplication is paid-only later.
+- Clicking page duplication must first open URL setup.
+- Do not immediately copy a page.
 
-Duplicate/spam settings UI:
+URL setup:
 
-- If Worker 2 provides the data/API contract, add the owner-facing settings section for collection duplicate settings.
-- Section title should be `수집 데이터 중복 설정`.
-- The UI must let users choose options instead of forcing one hidden server policy.
-- Required controls:
-  - `IP중복 수집 거절` on/off.
-  - `쿠키를 이용한 중복 수집 거절` on/off.
-  - `폼 데이터 중복 제한 개수` select.
-  - `폼 데이터 중복 제한 기간` select.
-- Defaults should match Worker 2 policy: cookie duplicate rejection on, IP duplicate rejection off or short-window only, phone/email duplicate mark-only unless stricter mode is selected.
-- Add a blocked history entry point or panel so users can review blocked/limited submissions.
-- Blocked history should show date, page/form, reason, and safe identifiers such as masked contact or hashed IP/client id. Do not expose raw IP if Worker 2 stores only hashes.
-- Keep the UI compact and consistent with Settings. Do not show a huge advanced grid by default.
-- If the UI currently saves only to page JSON, treat it as partial until it is wired to Worker 2's server persistence/read path.
-- The UI must clearly show when blocked history is empty versus not yet loaded from the server.
-- Add focused QA or browser QA for opening the duplicate settings section, changing the options, saving, and seeing the saved values remain after reload/server fetch.
+- default provided domain mode: slug input, slug validation, duplicate check;
+- custom domain mode: domain input, pending DNS status;
+- saved fields should be domain-agnostic: `domainType`, `slug`, `customDomain`, `domainStatus`;
+- do not hard-code current Cloudflare Pages domain into page records;
+- future base-domain change should not require rewriting all page records.
 
-Current local recheck notes:
+Copy behavior:
 
-- A Settings `수집 데이터 중복 설정` section, page duplication `URL 설정` modal, and paid placeholder may exist locally.
-- Do not treat Worker 4 as complete until page duplication has QA for locked paid state, default-domain slug validation, custom-domain pending state, and copied-data exclusions.
-- Do not treat duplicate/spam settings UI as complete until server policy consumes the saved settings and blocked history comes from a server read path.
+- copy page settings, blocks, style, form structure, CTA, effects, SEO basics;
+- do not copy leads, stats, delivery logs, manager permissions, ownership transfer history, billing/subscription state, or audit history.
+
+Paid state:
+
+- before billing implementation, show locked paid behavior clearly;
+- do not pretend checkout exists;
+- page duplication request can validate URL flow but must not unlock paid copy without plan state.
+
+QA:
+
+- locked plan shows locked state;
+- URL modal opens first;
+- default slug validation works;
+- custom domain pending state works;
+- copied data exclusions are tested in unit/runtime QA.
+
+## Patch D: Duplicate/Spam Settings UI Wiring
+
+Worker 2 owns server policy. Worker 4 owns the Settings UI.
+
+UI must expose:
+
+- IP duplicate rejection on/off;
+- cookie/client duplicate rejection on/off;
+- form-field duplicate count;
+- duplicate period;
+- phone/email mark vs block mode;
+- blocked history panel or entry point.
+
+Rules:
+
+- Keep section compact.
+- Do not show a massive advanced grid by default.
+- Empty blocked history means no blocked rows.
+- Unloaded/unavailable history must be a different state.
+- Save should persist to the server model when Worker 2 API exists.
+- Until API exists, label it as local draft or disabled; do not make it look production-enforced.
+
+QA:
+
+- open section;
+- change options;
+- save;
+- reload/fetch and verify values;
+- blocked-history empty/unavailable states.
+
+## Patch E: Internal Admin Operator Tools
+
+Internal admin should remain route-only, such as `/admin`.
+
+Needed tools:
+
+- user search by email, phone, status;
+- project search by project id, slug, owner/client email;
+- ownership transfer approval queue;
+- account suspend/restore;
+- project pause/archive;
+- abuse/blocked-history review;
+- audit log search/filter;
+- system health summary.
+
+Rules:
+
+- Public workspace navigation must not show internal admin controls.
+- Operator actions require protected operator auth.
+- Every dangerous action needs audit log.
 
 ## Do Not Touch
 
 - Template content.
-- Lead duplicate/rate-limit implementation.
+- Lead duplicate server implementation.
 - D1 backfill.
-- SMTP/OAuth/live conversion implementation.
+- SMTP/OAuth/conversion live implementation.
 - Toss/payment checkout.
 
-## QA
-
-Run at minimum:
-
-- `npm run auth:qa` if touching permission/session gates.
-- `npm run rendering:qa`
-- `npm run runtime:qa`
-- Add focused browser/runtime QA for page duplication URL modal and duplicate/spam settings persistence.
-- `npm run browser:production:qa` after deploy if UI changes are visible.
-- `npm run build`
+## Final Report
 
 Report:
 
-- Changed files.
-- Manager invite behavior.
-- Ownership transfer states touched.
-- Page duplication modal flow and URL fields.
-- Extra manager/ownership/page duplication risks found and patched.
-- Remaining server API gaps, if any.
+- changed files;
+- manager permission behavior;
+- ownership transfer states touched;
+- page duplication URL flow;
+- duplicate settings UI/API wiring state;
+- internal admin tools changed;
+- QA commands and results;
+- remaining server/API or billing blockers.

@@ -7,6 +7,7 @@ function assert(condition, message) {
 const schema = await readFile('migrations/0001_inlet_core.sql', 'utf8');
 const leadDedupeMigration = await readFile('migrations/0002_lead_dedupe_fields.sql', 'utf8');
 const eventDimensionsMigration = await readFile('migrations/0003_event_dimensions.sql', 'utf8');
+const blockedLeadMigration = await readFile('migrations/0004_lead_blocked_submissions.sql', 'utf8');
 const adapter = await readFile('server/storage/d1Adapter.mjs', 'utf8');
 const runtimeAdapter = await readFile('server/storage/runtimeAdapter.mjs', 'utf8');
 const wrangler = await readFile('wrangler.jsonc', 'utf8');
@@ -20,6 +21,7 @@ const requiredTables = [
   'page_revisions',
   'leads',
   'events',
+  'lead_blocked_submissions',
   'delivery_logs',
   'ai_drafts',
   'ai_keys',
@@ -30,7 +32,8 @@ const requiredTables = [
 ];
 
 for (const table of requiredTables) {
-  assert(schema.includes(`CREATE TABLE IF NOT EXISTS ${table}`), `missing D1 table: ${table}`);
+  const tableSchema = table === 'lead_blocked_submissions' ? blockedLeadMigration : schema;
+  assert(tableSchema.includes(`CREATE TABLE IF NOT EXISTS ${table}`), `missing D1 table: ${table}`);
   assert(adapter.includes(`'${table}'`), `D1 adapter table list missing: ${table}`);
 }
 
@@ -62,6 +65,8 @@ for (const token of [
   'upsertD1Project',
   'replaceD1ProjectMembers',
   'listD1Leads',
+  'insertD1BlockedLeadSubmission',
+  'listD1BlockedLeadSubmissions',
   'listD1Events',
   'encodeD1Lead',
   'decodeD1Lead',
@@ -110,6 +115,16 @@ for (const token of [
 }
 
 for (const token of [
+  'CREATE TABLE IF NOT EXISTS lead_blocked_submissions',
+  'policy_snapshot_json',
+  'idx_blocked_leads_project_month',
+  'idx_blocked_leads_project_page',
+  'idx_blocked_leads_reason',
+]) {
+  assert(blockedLeadMigration.includes(token), `D1 blocked lead migration missing token: ${token}`);
+}
+
+for (const token of [
   'isD1MissingLeadDedupeColumnError',
   'isD1MissingEventDimensionColumnError',
   'upsertD1LeadLegacy',
@@ -155,6 +170,7 @@ console.log(JSON.stringify({
   migration: '0001_inlet_core.sql',
   leadDedupeMigration: '0002_lead_dedupe_fields.sql',
   eventDimensionsMigration: '0003_event_dimensions.sql',
+  blockedLeadMigration: '0004_lead_blocked_submissions.sql',
   adapter: 'server/storage/d1Adapter.mjs',
   runtimeAdapter: 'server/storage/runtimeAdapter.mjs',
 }, null, 2));
