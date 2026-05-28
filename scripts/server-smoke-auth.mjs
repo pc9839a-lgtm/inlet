@@ -167,9 +167,9 @@ await runSmoke('server-smoke-auth', async ({ baseUrl }) => {
   const passwordNoVerify = await fetchWithTimeout(`${baseUrl}/api/auth/password`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ email: 'billing@example.test', password: 'changed1', emailVerified: false }),
+    body: JSON.stringify({ email: 'billing@example.test', password: 'changed1', emailVerified: true }),
   });
-  assert(passwordNoVerify.status === 403, `password change without email verification expected 403, got ${passwordNoVerify.status}`);
+  assert(passwordNoVerify.status === 403, `legacy password change flag without token expected 403, got ${passwordNoVerify.status}`);
 
   const passwordVerificationIssue = await fetchWithTimeout(`${baseUrl}/api/auth/email-verification`, {
     method: 'POST',

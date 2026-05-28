@@ -133,7 +133,7 @@ requireAll(authSmoke, [
   'session refresh expected 200',
   'session logout expected 200',
   'invalid session refresh expected 401',
-  'password change without email verification expected 403',
+  'legacy password change flag without token expected 403',
   'password change after email verification expected 200',
   'signup invite without phone expected 400',
   'server-smoke-manager-invite-session',

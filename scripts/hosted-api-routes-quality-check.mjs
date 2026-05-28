@@ -470,6 +470,17 @@ async function run() {
     failureReason: pageRestore.data?.error || pageRestore.data?.page?.title || '',
   });
 
+  const passwordLegacyFlag = await jsonFetch('/api/auth/password', {
+    method: 'POST',
+    body: JSON.stringify({ email: authEmail, password: 'secret2', emailVerified: true }),
+  });
+  checks.push({
+    name: 'Hosted /api/auth/password legacy flag rejected',
+    status: passwordLegacyFlag.res.status === 403 ? 'ready' : 'failed-live',
+    httpStatus: passwordLegacyFlag.res.status,
+    failureReason: passwordLegacyFlag.data?.code || passwordLegacyFlag.data?.error || '',
+  });
+
   const passwordVerificationIssue = await jsonFetch('/api/auth/email-verification', {
     method: 'POST',
     body: JSON.stringify({ email: authEmail, purpose: 'password-reset' }),
