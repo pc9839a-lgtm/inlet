@@ -620,6 +620,7 @@ requireAll(d1HostedQaCleanup, [
   'hosted-route-qa-',
   'inlet.test',
   'DELETE FROM delivery_logs',
+  'DELETE FROM lead_blocked_submissions',
   'DELETE FROM page_revisions',
   'DELETE FROM accounts',
   'plan-only',

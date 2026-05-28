@@ -101,6 +101,12 @@ const targets = [
     params: [projectLike],
   },
   {
+    table: 'lead_blocked_submissions',
+    countSql: 'SELECT COUNT(*) AS count FROM lead_blocked_submissions WHERE project_id LIKE ?',
+    deleteSql: 'DELETE FROM lead_blocked_submissions WHERE project_id LIKE ?',
+    params: [projectLike],
+  },
+  {
     table: 'page_revisions',
     countSql: 'SELECT COUNT(*) AS count FROM page_revisions WHERE project_id LIKE ?',
     deleteSql: 'DELETE FROM page_revisions WHERE project_id LIKE ?',

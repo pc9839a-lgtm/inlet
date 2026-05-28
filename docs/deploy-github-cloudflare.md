@@ -250,7 +250,7 @@ Rollback is manual: restore the D1 export or remove only the imported ids listed
 
 ## Hosted QA Data Cleanup
 
-Hosted route QA writes test-only records into production D1 using `hosted-route-qa-*` project ids and `@inlet.test` emails. Cleanup is guarded and plan-only by default.
+Hosted route QA writes test-only records into production D1 using `hosted-route-qa-*` project ids and `@inlet.test` emails. This includes projects, pages, revisions, leads, events, delivery logs, blocked submission history, invites, manager/member rows, ownership transfer rows, AI key/draft smoke rows, and test accounts. Cleanup is guarded and plan-only by default.
 
 Plan-only check:
 
