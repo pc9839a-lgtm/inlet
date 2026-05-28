@@ -8,7 +8,7 @@ Current execution mode: one worker continues sequentially from the highest prior
 
 ## Current Recheck Snapshot
 
-Last checked on 2026-05-28 after commit `ea1a146`:
+Last checked on 2026-05-28 after commit `53e3f36`:
 
 - Passing baseline after the authenticated browser QA, tab deep-link deployment, production browser QA, hosted API runtime QA, Pages Functions health API, and D1 hosted route patches: `npm run qa:all`, `npm run integration:qa`, `npm run api:functions:qa`, `npm run api:hosted:routes:qa`, `npm run deployment:qa`, and strict `artifact:qa`.
 - CSS source total: `391276/500000`.
@@ -18,13 +18,13 @@ Last checked on 2026-05-28 after commit `ea1a146`:
 - Templates: `3` templates, `189` structural checks.
 - Full offline QA: `npm run qa:all` passes `33` steps, including `api:hosted:qa`, `api:hosted:routes:qa`, and `api:functions:qa`.
 - Real browser visual QA: `INLET_BROWSER_QA_REQUIRE=1` passes against production `https://inlet-8mr.pages.dev/?tab=stats` with `INLET_BROWSER_QA_STATE_PRESET=manager-limited`, verifying the Stats tab deep link. It also passes against production `https://inlet-8mr.pages.dev/?tab=settings` with `INLET_BROWSER_QA_STATE_PRESET=owner-settings` plus `INLET_BROWSER_QA_CLICK_TEXT=매니저 권한,관리`, verifying the Settings manager card and ownership transfer entry.
-- Production browser visual QA: `npm run browser:production:qa` now runs nineteen production cases: public desktop home, public mobile PC-guard, public about/contact/privacy/terms routes, owner edit cards, owner start modal, the 3 primary template first viewports, owner inbox, manager stats, owner settings manager permissions, owner settings manager permissions compact, owner style text color live preview, owner style font/tone live preview, internal admin ownership queue, and manager invite acceptance. With `INLET_PRODUCTION_BROWSER_QA_REQUIRE=1` or `INLET_BROWSER_QA_REQUIRE=1`, all cases use a real browser and assert that error/start-modal text, required selectors, target screens, style color computed result, and font/tone preview classes are present where expected.
+- Production browser visual QA: `npm run browser:production:qa` now runs twenty production cases: public desktop home, public mobile PC-guard, public about/contact/privacy/terms routes, owner edit cards, owner start modal, the 3 primary template first viewports, owner inbox, manager stats, owner settings manager permissions, owner settings manager permissions compact, owner style text color live preview, owner style font/tone live preview, owner rich text bold/underline toolbar, internal admin ownership queue, and manager invite acceptance. With `INLET_PRODUCTION_BROWSER_QA_REQUIRE=1` or `INLET_BROWSER_QA_REQUIRE=1`, all cases use a real browser and assert that error/start-modal text, required selectors, target screens, style color computed result, font/tone preview classes, and rich text toolbar HTML mutations are present where expected.
 - Browser visual QA now supports `INLET_BROWSER_QA_SET_INPUT` plus `INLET_BROWSER_QA_EXPECT_COMPUTED`, so release checks can mutate a real input and wait for computed preview styles instead of only checking static text/selectors.
 - Production browser visual QA now reports the browser engine, viewport list, screenshot count, and screenshot paths per case, so failed or suspicious screens can be inspected without rerunning route discovery.
 - Production browser visual QA also accepts `INLET_BROWSER_QA_REQUIRE=1` as the mandatory-browser alias, so release commands do not silently run optional mode because the wrong require env was used.
 - Strict artifact QA: passes with no leftover `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, or `preview.zip` artifacts.
-- GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `ea1a146`.
-- Cloudflare Pages: production deployment `851cbcfc` succeeded for commit `ea1a146` with `uses_functions=true`; public URL `https://inlet-8mr.pages.dev/` returns `200`, hosted API runtime QA passes, and production browser QA passes nineteen real-browser cases with the current QA scripts.
+- GitHub: pushed to `pc9839a-lgtm/inlet` `main` at commit `53e3f36`.
+- Cloudflare Pages: production deployment `16aaedfa` succeeded for commit `53e3f36` with `uses_functions=true`; public URL `https://inlet-8mr.pages.dev/` returns `200`, hosted API runtime QA passes, and production browser QA passes twenty real-browser cases with the current QA scripts.
 - Cloudflare Pages deployment `fcab1c27` for commit `4b214b1` failed during the verbose `qa:all` build log phase before deploy. The follow-up `79d5d59` compacted CSS QA output for Pages builds and deployed successfully.
 - `/api/health` is now served by Cloudflare Pages Functions with `uses_functions=true`, `service=inlet-api`, `mode=pages-functions`, `auth.sourceOfTruth=signed-session`, `auth.signedSessionReady=true`, `storage.active=d1`, `storage.d1Ready=true`, and `storage.coverage.length=9`.
 - `npm run live:qa` now reports hosted API health as `ready` when run with `INLET_PUBLIC_API_URL=https://inlet-8mr.pages.dev`; it reads the deployed `/api/health` response directly and no longer requires local session-secret env just to inspect hosted health. It also surfaces the hosted QA D1 cleanup plan so `hosted-route-qa-*` and `@inlet.test` cleanup readiness is visible before launch review.
@@ -90,6 +90,7 @@ Do not reassign these unless a regression is found:
 - Browser visual QA now supports authenticated state presets through `INLET_BROWSER_QA_STATE_PRESET=owner-settings|client-settings|manager-limited`, template state presets through `INLET_BROWSER_QA_STATE_PRESET=template-preview:<template-id>`, invite acceptance mocking through `INLET_BROWSER_QA_STATE_PRESET=invite-acceptance`, text/selector interactions through `INLET_BROWSER_QA_CLICK_TEXT` and `INLET_BROWSER_QA_CLICK_SELECTOR`, expected text assertions through `INLET_BROWSER_QA_EXPECT_TEXT`, required selector assertions through `INLET_BROWSER_QA_EXPECT_SELECTOR`, and authenticated desktop checks through `INLET_BROWSER_QA_VIEWPORTS=desktop|compact`. The compact viewport is 920px wide so it exercises narrow desktop layouts without hitting the app's below-900px PC-only guard.
 - Browser visual QA now supports real input mutation and computed-style waits through `INLET_BROWSER_QA_SET_INPUT` and `INLET_BROWSER_QA_EXPECT_COMPUTED`. Production QA uses this to open `?tab=style`, switch to the text style section, set the text color input, and verify the mobile preview `.landing-page` computed color changes. A second style case clicks tone/font controls and verifies `.landing-page.font-bold.font-family-serif`.
 - Rich text color reapply is fixed: selecting a different text range and applying the same color again is no longer blocked by a stale last-color guard. Runtime QA now locks immediate rich-field save behavior and preview rich HTML color/bold/underline preservation.
+- Rich text toolbar bold/underline is fixed in production: the editor now preserves the active selection before toolbar clicks, and the editable baseline font weight no longer makes browser bold toggles invert to normal text. Production browser QA covers the bold and underline toolbar buttons against the deployed editor.
 - Authenticated tab deep links now work through `?tab=edit|style|inbox|stats|settings`. The app sanitizes requested tabs against the known navigation keys, falls back to the first allowed tab when the account cannot access the requested tab, and updates the URL when operators switch tabs.
 - App shell title is normalized to `Inlet` for generated production builds instead of the old MVP placeholder title.
 - `INLET_SESSION_AUTH_MODE=production` now aliases to strict signed-session auth and rejects forged dev identity headers.
@@ -216,9 +217,9 @@ These are not already-done items. Patch sequentially from item 1 unless the owne
 6. Authenticated browser visual QA
    - Public route visual QA exists.
    - Scripted logged-in states now exist for manager-limited stats and owner settings/manager permissions.
-   - Production browser QA now covers public desktop home, public mobile PC-guard, public about/contact/privacy/terms routes, owner edit cards, owner start modal, the 3 primary template first viewports, owner inbox, manager stats, owner settings manager permissions, owner settings manager permissions compact, owner style text color live preview, owner style font/tone live preview, internal admin ownership queue, and manager invite acceptance.
+   - Production browser QA now covers public desktop home, public mobile PC-guard, public about/contact/privacy/terms routes, owner edit cards, owner start modal, the 3 primary template first viewports, owner inbox, manager stats, owner settings manager permissions, owner settings manager permissions compact, owner style text color live preview, owner style font/tone live preview, owner rich text bold/underline toolbar, internal admin ownership queue, and manager invite acceptance.
    - Production browser QA now prints per-case engine, viewport, screenshot count, and screenshot paths.
-   - Remaining work: deeper editor interactions beyond the covered style text-color and font/tone live preview paths, especially rich text toolbar selection behavior, underline toggling, and block-specific style controls.
+   - Remaining work: deeper editor interactions beyond the covered style text-color, font/tone, and rich text bold/underline paths, especially block-specific style controls, nested rich text edge cases, and premium effect controls.
    - Screenshot artifact paths and failure reason output are available for every production browser QA case.
 
 7. Live integrations
@@ -230,7 +231,7 @@ These are not already-done items. Patch sequentially from item 1 unless the owne
 8. Public landing/template/editor polish
    - Keep 3 templates, but continue making each feel like a real service page.
    - Keep every template section editable via existing blocks.
-   - Continue fixing live preview issues for underline selection edge cases, block-specific style controls, and premium effects. Text color, font/tone live preview, and same-color rich text reapply now have automated coverage.
+   - Continue fixing live preview issues for block-specific style controls, nested rich text edge cases, and premium effects. Text color, font/tone live preview, same-color rich text reapply, and rich text bold/underline toolbar behavior now have automated coverage.
    - HTML/import mode is later only if it maps to editable blocks or controlled embedded-code blocks.
 
 9. Billing and subscription, final only
@@ -318,10 +319,10 @@ Use this as the full production checklist. These items are not already done unle
    - Templates are now 3, but each must feel like a real service page, not a sample shell.
    - Keep all template content editable via existing blocks.
    - Add HTML/import mode later only if it maps to editable blocks or a controlled embedded-code block.
-   - Continue fixing style controls where underline selection or block-specific style controls do not reflect live preview immediately. Text color and font/tone live preview now have production browser QA coverage.
+   - Continue fixing style controls where block-specific style controls, nested rich text cases, or premium effects do not reflect live preview immediately. Text color, font/tone live preview, and rich text bold/underline toolbar behavior now have production browser QA coverage.
    - Keep premium effects subtle, randomized, and image-overlay aware.
    - Preserve cards block `1/2` columns only unless product direction changes.
-   - Run real browser QA against remaining deeper editor interactions, manager permission overflow/mobile refinements, and any new public/legal routes. Invite acceptance, legal footer pages, compact manager settings, style text color, and style font/tone live preview are already covered.
+   - Run real browser QA against remaining deeper editor interactions, manager permission overflow/mobile refinements, and any new public/legal routes. Invite acceptance, legal footer pages, compact manager settings, style text color, style font/tone live preview, and rich text bold/underline toolbar behavior are already covered.
 
 9. Legal, email, and operational integrations
    - Legal pages exist, but content should become service-generic and configurable, not hard-coded example business copy.
