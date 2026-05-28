@@ -104,6 +104,16 @@ export default function RichField({ label, value, onChange }) {
     return sel.getRangeAt(0);
   };
 
+  const preserveCurrentSelection = () => {
+    const el = ref.current;
+    const sel = window.getSelection?.();
+    if (!el || !sel || !sel.rangeCount) return null;
+    const range = sel.getRangeAt(0);
+    if (!el.contains(range.commonAncestorContainer)) return null;
+    savedRange.current = range.cloneRange();
+    return range;
+  };
+
   const selectAllWhenNoSelection = () => {
     const el = ref.current;
     const sel = window.getSelection?.();
@@ -126,9 +136,10 @@ export default function RichField({ label, value, onChange }) {
   const applyInline = (type, color = '#2563eb') => {
     const el = ref.current;
     if (!el) return;
-    el.focus();
 
-    restoreSelection();
+    const activeRange = preserveCurrentSelection() || restoreSelection();
+    el.focus();
+    if (activeRange) restoreSelection();
     if (type === 'color') selectAllWhenNoSelection();
     if (type === 'bold') document.execCommand('bold');
     if (type === 'underline') document.execCommand('underline');

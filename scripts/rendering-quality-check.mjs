@@ -211,6 +211,7 @@ assert(files.browserVisualQa.includes('owner-settings') && files.browserVisualQa
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_CLICK_TEXT'), 'browser visual QA should support post-navigation interaction checks');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_CLICK_SELECTOR'), 'browser visual QA should support precise selector interaction checks');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_SET_INPUT'), 'browser visual QA should support input mutation checks');
+assert(files.browserVisualQa.includes('INLET_BROWSER_QA_RICH_FORMAT'), 'browser visual QA should support rich text toolbar formatting checks');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_EXPECT_COMPUTED'), 'browser visual QA should support computed-style checks');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_EXPECT_TEXT'), 'browser visual QA should assert authenticated screen text');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_FORBID_TEXT'), 'browser visual QA should assert forbidden text is absent');
@@ -219,10 +220,11 @@ assert(files.browserVisualQa.includes('--window-size=1280,900'), 'local Chrome v
 const productionBrowserQa = await readFile('scripts/production-browser-quality-check.mjs', 'utf8');
 assert(productionBrowserQa.includes('owner style text color live preview'), 'production browser QA should cover style text color live preview');
 assert(productionBrowserQa.includes('owner style font tone live preview') && productionBrowserQa.includes('.landing-page.font-bold.font-family-serif'), 'production browser QA should cover style font/tone live preview');
+assert(productionBrowserQa.includes('owner rich text bold underline toolbar') && productionBrowserQa.includes('INLET_BROWSER_QA_RICH_FORMAT'), 'production browser QA should cover rich text bold/underline toolbar formatting');
 
 console.log(JSON.stringify({
   ok: true,
-  checks: requiredDispatch.length + rendererContracts.length * 2 + cssContracts.length + visualGeometryContracts.length + viewportContracts.length + previewSourceEntries.length * 2 + 26,
+  checks: requiredDispatch.length + rendererContracts.length * 2 + cssContracts.length + visualGeometryContracts.length + viewportContracts.length + previewSourceEntries.length * 2 + 28,
   visualGeometryChecks: visualGeometryContracts.length,
   viewportContracts: viewportContracts.length,
 }, null, 2));

@@ -142,6 +142,15 @@ const cases = [
     forbiddenText: '泥섏쓬 ?붾㈃???대뼸寃?留뚮뱾源뚯슂?,?붾㈃??遺덈윭?ㅻ뒗 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎',
   },
   {
+    name: 'owner rich text bold underline toolbar',
+    url: `${baseUrl}/?tab=edit`,
+    statePreset: 'owner-settings',
+    viewports: 'desktop',
+    expectedSelector: '.rich-field-wysiwyg .rich-editor',
+    richFormat: '.rich-field-wysiwyg:nth-of-type(1) .rich-editor|.rich-field-wysiwyg:nth-of-type(1) .rich-head button:nth-child(1)|<strong>||<b>||font-weight: bold||font-weight: 700;.rich-field-wysiwyg:nth-of-type(1) .rich-editor|.rich-field-wysiwyg:nth-of-type(1) .rich-head button:nth-child(2)|<u>||text-decoration',
+    forbiddenText: '?붾㈃??遺덈윭?ㅻ뒗 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎,泥섏쓬 ?붾㈃???대뼸寃?留뚮뱾源뚯슂?',
+  },
+  {
     name: 'manager invite acceptance',
     url: `${baseUrl}/invite/qa-visual-invite`,
     statePreset: 'invite-acceptance',
@@ -198,6 +207,7 @@ function runCase(testCase) {
     if (testCase.clickText) env.INLET_BROWSER_QA_CLICK_TEXT = testCase.clickText;
     if (testCase.clickSelector) env.INLET_BROWSER_QA_CLICK_SELECTOR = testCase.clickSelector;
     if (testCase.setInput) env.INLET_BROWSER_QA_SET_INPUT = testCase.setInput;
+    if (testCase.richFormat) env.INLET_BROWSER_QA_RICH_FORMAT = testCase.richFormat;
     if (testCase.expectedComputed) env.INLET_BROWSER_QA_EXPECT_COMPUTED = testCase.expectedComputed;
 
     const child = spawn(process.execPath, ['scripts/browser-visual-quality-check.mjs'], {

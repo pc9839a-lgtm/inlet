@@ -39,6 +39,19 @@ const setInputs = String(process.env.INLET_BROWSER_QA_SET_INPUT || '')
     return { selector: selector?.trim() || '', value: valueParts.join('=>').trim() };
   })
   .filter((entry) => entry.selector && entry.value);
+const richFormatChecks = String(process.env.INLET_BROWSER_QA_RICH_FORMAT || '')
+  .split(';')
+  .map((entry) => entry.trim())
+  .filter(Boolean)
+  .map((entry) => {
+    const [fieldSelector, buttonSelector, ...htmlParts] = entry.split('|');
+    return {
+      fieldSelector: fieldSelector?.trim() || '',
+      buttonSelector: buttonSelector?.trim() || '',
+      expectedHtml: htmlParts.join('|').trim(),
+    };
+  })
+  .filter((entry) => entry.fieldSelector && entry.buttonSelector && entry.expectedHtml);
 const expectedComputedStyles = String(process.env.INLET_BROWSER_QA_EXPECT_COMPUTED || '')
   .split(';')
   .map((entry) => entry.trim())
@@ -348,6 +361,27 @@ async function setInputInPlaywrightLikePage(page, selector, value) {
   assert(changed, `could not find input selector: ${selector}`);
 }
 
+async function applyRichFormatInPlaywrightLikePage(page, fieldSelector, buttonSelector, expectedHtml) {
+  const result = await page.evaluate(async ({ fieldSelector: targetField, buttonSelector: targetButton, expectedHtml: expected }) => {
+    const field = document.querySelector(targetField);
+    const button = document.querySelector(targetButton);
+    if (!field || !button) {
+      return { ok: false, reason: 'missing-target', html: field?.innerHTML || '', buttons: Array.from(document.querySelectorAll('.rich-head button')).map((item) => item.title || item.textContent || '').slice(0, 12) };
+    }
+    field.focus();
+    const range = document.createRange();
+    range.selectNodeContents(field);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    button.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }));
+    button.click();
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    return { ok: expected.split('||').some((token) => token && field.innerHTML.includes(token)), html: field.innerHTML };
+  }, { fieldSelector, buttonSelector, expectedHtml });
+  assert(result.ok, `rich format check failed: field=${fieldSelector} button=${buttonSelector} expected=${expectedHtml}; html=${result.html || ''}; reason=${result.reason || ''}; buttons=${(result.buttons || []).join(' | ')}`);
+}
+
 async function runPlaywrightLikeActions(page) {
   for (const selector of clickSelectors) {
     await clickSelectorInPlaywrightLikePage(page, selector);
@@ -361,6 +395,11 @@ async function runPlaywrightLikeActions(page) {
   }
   for (const { selector, value } of setInputs) {
     await setInputInPlaywrightLikePage(page, selector, value);
+    if (typeof page.waitForTimeout === 'function') await page.waitForTimeout(350);
+    else await wait(350);
+  }
+  for (const { fieldSelector, buttonSelector, expectedHtml } of richFormatChecks) {
+    await applyRichFormatInPlaywrightLikePage(page, fieldSelector, buttonSelector, expectedHtml);
     if (typeof page.waitForTimeout === 'function') await page.waitForTimeout(350);
     else await wait(350);
   }
@@ -466,6 +505,32 @@ async function setInputInCdp(client, selector, value) {
   assert(changed, `could not find input selector: ${selector}`);
 }
 
+async function applyRichFormatInCdp(client, fieldSelector, buttonSelector, expectedHtml) {
+  const expression = `new Promise((resolve) => {
+    const field = document.querySelector(${JSON.stringify(fieldSelector)});
+    const button = document.querySelector(${JSON.stringify(buttonSelector)});
+    const expected = ${JSON.stringify(expectedHtml)};
+    if (!field || !button) {
+      resolve({ ok: false, reason: 'missing-target', html: field?.innerHTML || '', buttons: Array.from(document.querySelectorAll('.rich-head button')).map((item) => item.title || item.textContent || '').slice(0, 12) });
+      return;
+    }
+    field.focus();
+    const range = document.createRange();
+    range.selectNodeContents(field);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    button.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }));
+    button.click();
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      resolve({ ok: expected.split('||').some((token) => token && field.innerHTML.includes(token)), html: field.innerHTML });
+    }));
+  })`;
+  const result = await client.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
+  const value = result.result?.value || {};
+  assert(value.ok, `rich format check failed: field=${fieldSelector} button=${buttonSelector} expected=${expectedHtml}; html=${value.html || ''}; reason=${value.reason || ''}; buttons=${(value.buttons || []).join(' | ')}`);
+}
+
 async function runCdpActions(client) {
   for (const selector of clickSelectors) {
     await clickSelectorInCdp(client, selector);
@@ -477,6 +542,10 @@ async function runCdpActions(client) {
   }
   for (const { selector, value } of setInputs) {
     await setInputInCdp(client, selector, value);
+    await wait(350);
+  }
+  for (const { fieldSelector, buttonSelector, expectedHtml } of richFormatChecks) {
+    await applyRichFormatInCdp(client, fieldSelector, buttonSelector, expectedHtml);
     await wait(350);
   }
 }
@@ -706,6 +775,7 @@ if (!targetUrl) {
     clickSelectors,
     clickTexts,
     setInputs,
+    richFormatChecks,
     expectedTexts,
     forbiddenTexts,
     expectedSelectors,
@@ -788,7 +858,7 @@ if (!targetUrl) {
   }
 
   assert(results.length === targets.length * viewports.length, `expected ${targets.length * viewports.length} screenshots, got ${results.length}`);
-  console.log(JSON.stringify({ ok: true, engine: 'playwright', targetUrl, extraUrls, templateRoutes, statePreset, clickSelectors, clickTexts, setInputs, expectedTexts, forbiddenTexts, expectedSelectors, expectedComputedStyles, screenshotDir, cleanupArtifact: screenshotDir.startsWith('.tmp-'), results }, null, 2));
+  console.log(JSON.stringify({ ok: true, engine: 'playwright', targetUrl, extraUrls, templateRoutes, statePreset, clickSelectors, clickTexts, setInputs, richFormatChecks, expectedTexts, forbiddenTexts, expectedSelectors, expectedComputedStyles, screenshotDir, cleanupArtifact: screenshotDir.startsWith('.tmp-'), results }, null, 2));
 } else if (hasPuppeteer) {
   const puppeteer = await import('puppeteer');
   const browser = await puppeteer.default.launch({ headless: 'new' });
@@ -858,7 +928,7 @@ if (!targetUrl) {
   }
 
   assert(results.length === targets.length * viewports.length, `expected ${targets.length * viewports.length} screenshots, got ${results.length}`);
-  console.log(JSON.stringify({ ok: true, engine: 'puppeteer', targetUrl, extraUrls, templateRoutes, statePreset, clickSelectors, clickTexts, setInputs, expectedTexts, forbiddenTexts, expectedSelectors, expectedComputedStyles, screenshotDir, cleanupArtifact: screenshotDir.startsWith('.tmp-'), results }, null, 2));
+  console.log(JSON.stringify({ ok: true, engine: 'puppeteer', targetUrl, extraUrls, templateRoutes, statePreset, clickSelectors, clickTexts, setInputs, richFormatChecks, expectedTexts, forbiddenTexts, expectedSelectors, expectedComputedStyles, screenshotDir, cleanupArtifact: screenshotDir.startsWith('.tmp-'), results }, null, 2));
 } else if (chromeExecutable) {
   const browserUserDataDir = path.resolve(screenshotDir, '.chrome-profile');
   await rm(browserUserDataDir, { recursive: true, force: true });
@@ -934,7 +1004,7 @@ if (!targetUrl) {
   }
 
   assert(results.length === targets.length * viewports.length, `expected ${targets.length * viewports.length} screenshots, got ${results.length}`);
-  console.log(JSON.stringify({ ok: true, engine: 'local-chrome-cdp', chromeExecutable, targetUrl, extraUrls, templateRoutes, statePreset, clickSelectors, clickTexts, setInputs, expectedTexts, forbiddenTexts, expectedSelectors, expectedComputedStyles, screenshotDir, cleanupArtifact: screenshotDir.startsWith('.tmp-'), results }, null, 2));
+  console.log(JSON.stringify({ ok: true, engine: 'local-chrome-cdp', chromeExecutable, targetUrl, extraUrls, templateRoutes, statePreset, clickSelectors, clickTexts, setInputs, richFormatChecks, expectedTexts, forbiddenTexts, expectedSelectors, expectedComputedStyles, screenshotDir, cleanupArtifact: screenshotDir.startsWith('.tmp-'), results }, null, 2));
 } else {
   assert(!requireRealBrowser, 'INLET_BROWSER_QA_REQUIRE=1 requires Playwright, Puppeteer, or local Chrome/Edge. Set INLET_BROWSER_QA_CHROME_PATH if Chrome is installed in a custom path.');
   console.log(JSON.stringify({
@@ -948,6 +1018,7 @@ if (!targetUrl) {
     clickSelectors,
     clickTexts,
     setInputs,
+    richFormatChecks,
     expectedTexts,
     forbiddenTexts,
     expectedSelectors,
