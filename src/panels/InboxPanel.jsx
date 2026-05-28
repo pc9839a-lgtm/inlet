@@ -23,44 +23,51 @@ import { currentMonthValue, monthDateRange } from '../lib/monthRange.js';
 import './InboxPanel.css';
 
 const DUPLICATE_TEXT = {
-  title: '\u0057\u0041\u0059\u005a\u0049 \uc911\ubcf5 \ucc28\ub2e8',
-  ip: '\u0049\u0050 \uc911\ubcf5 \ucc28\ub2e8',
-  cookie: '\ucfe0\ud0a4 \uc911\ubcf5 \ucc28\ub2e8',
-  count: '\uc911\ubcf5 \uc81c\ud55c \uac1c\uc218',
-  window: '\uc911\ubcf5 \uc81c\ud55c \uae30\uac04',
-  contact: '\uc5f0\ub77d\ucc98/\uc774\uba54\uc77c \uc911\ubcf5',
-  history: '\ucc28\ub2e8 \ub0b4\uc5ed',
-  refresh: '\uc870\ud68c',
-  loading: '\uc870\ud68c \uc911',
-  empty: '\ucc28\ub2e8 \ub0b4\uc5ed \uc5c6\uc74c',
-  noDate: '\ub0a0\uc9dc \uc5c6\uc74c',
-  noPage: '\ud398\uc774\uc9c0 \ubbf8\uc9c0\uc815',
-  noIdentity: '\uc2dd\ubcc4 \uc815\ubcf4 \uc5c6\uc74c',
-  total: '\ucd1d',
-  recent: '\uac74 \uc911 \ucd5c\uadfc',
-  shown: '\uac74',
-  on: '\ucf1c\uc9d0',
-  off: '\uaebc\uc9d0',
+  fallbackService: '현재 페이지',
+  titleSuffix: '접수 중복 관리',
+  subtitle: '같은 사람이 반복 제출했을 때 접수할지 차단할지 정합니다.',
+  ip: 'IP 중복 차단',
+  ipDesc: '같은 IP에서 설정한 횟수 이상 접수되면 차단합니다.',
+  cookie: '쿠키 중복 차단',
+  cookieDesc: '같은 브라우저에서 반복 접수하면 차단합니다.',
+  count: '제한 횟수',
+  countDesc: '선택한 기간 안에서 몇 번째 접수부터 막을지 정합니다.',
+  window: '제한 기간',
+  windowDesc: '중복 여부를 확인할 기간입니다.',
+  contact: '연락처/이메일 중복',
+  contactDesc: '같은 연락처나 이메일이 다시 들어왔을 때 처리 방식입니다.',
+  history: '차단 내역',
+  historyDesc: '차단된 접수만 월별로 확인합니다.',
+  refresh: '조회',
+  loading: '조회 중',
+  empty: '차단 내역 없음',
+  noDate: '날짜 없음',
+  noPage: '페이지 미지정',
+  noIdentity: '식별 정보 없음',
+  total: '총',
+  recent: '건 중 최근',
+  shown: '건',
+  on: '사용',
+  off: '미사용',
 };
 
 const DUPLICATE_LIMIT_COUNTS = [
-  ['1', '\uac19\uc740 \ub370\uc774\ud130 1\uac1c \uc774\uc0c1'],
-  ['2', '\uac19\uc740 \ub370\uc774\ud130 2\uac1c \uc774\uc0c1'],
-  ['3', '\uac19\uc740 \ub370\uc774\ud130 3\uac1c \uc774\uc0c1'],
-  ['5', '\uac19\uc740 \ub370\uc774\ud130 5\uac1c \uc774\uc0c1'],
+  ['1', '1회부터 차단'],
+  ['2', '2회부터 차단'],
+  ['3', '3회부터 차단'],
+  ['5', '5회부터 차단'],
 ];
 
 const DUPLICATE_LIMIT_WINDOWS = [
-  ['1d', '1\uc77c'],
-  ['3d', '3\uc77c'],
-  ['7d', '7\uc77c'],
-  ['30d', '1\uac1c\uc6d4'],
+  ['1d', '1일'],
+  ['3d', '3일'],
+  ['7d', '7일'],
+  ['30d', '1개월'],
 ];
 
 const DUPLICATE_CONTACT_OPTIONS = [
-  ['mark', '\ud45c\uc2dc'],
-  ['warn', '\uacbd\uace0'],
-  ['block', '\ucc28\ub2e8'],
+  ['mark', '접수 후 표시'],
+  ['block', '차단'],
 ];
 
 const BLOCK_REASON_LABELS = {
@@ -82,7 +89,7 @@ function normalizeDuplicateSettings(settings = {}) {
     rejectCookieDuplicate: source.rejectCookieDuplicate !== false,
     formDuplicateLimitCount: ['1', '2', '3', '5'].includes(count) ? count : '3',
     formDuplicateLimitWindow: ['1d', '3d', '7d', '30d'].includes(windowKey) ? windowKey : '1d',
-    phoneEmailMode: ['mark', 'warn', 'block'].includes(phoneEmailMode) ? phoneEmailMode : 'mark',
+    phoneEmailMode: ['mark', 'block'].includes(phoneEmailMode) ? phoneEmailMode : 'mark',
   };
 }
 
@@ -145,19 +152,19 @@ function ConnectionChoiceRow({ label, value, onChange, options }) {
   );
 }
 
-function DuplicatePolicySwitch({ label, checked, onChange }) {
+function DuplicatePolicySwitch({ label, description, checked, onChange }) {
   return (
     <button type="button" className={`inbox-policy-switch ${checked ? 'on' : ''}`} onClick={() => onChange(!checked)}>
-      <span>{label}</span>
+      <span><b>{label}</b><small>{description}</small></span>
       <b>{checked ? DUPLICATE_TEXT.on : DUPLICATE_TEXT.off}</b>
     </button>
   );
 }
 
-function DuplicatePolicySelect({ label, value, options, onChange }) {
+function DuplicatePolicySelect({ label, description, value, options, onChange }) {
   return (
     <label className="inbox-policy-select">
-      <span>{label}</span>
+      <span><b>{label}</b><small>{description}</small></span>
       <select value={value} onChange={(event) => onChange(event.target.value)}>
         {options.map(([optionValue, optionLabel]) => (
           <option key={optionValue} value={optionValue}>{optionLabel}</option>
@@ -172,6 +179,7 @@ function IntakeDuplicatePolicyPanel({ page, authUser, updatePage }) {
   const [month, setMonth] = useState(currentMonthValue());
   const [history, setHistory] = useState({ records: [], total: 0, loading: false, error: '' });
   const settings = normalizeDuplicateSettings(page.leadDuplicateSettings || page.duplicateCollectionSettings || {});
+  const serviceName = String(page?.title || page?.name || DUPLICATE_TEXT.fallbackService).trim() || DUPLICATE_TEXT.fallbackService;
   const localHistory = Array.isArray(page.leadDuplicateSettings?.blockedHistory)
     ? page.leadDuplicateSettings.blockedHistory
     : Array.isArray(page.blockedLeadHistory)
@@ -210,22 +218,28 @@ function IntakeDuplicatePolicyPanel({ page, authUser, updatePage }) {
   return (
     <section className={`card inbox-policy-card ${open ? 'open' : ''}`}>
       <button type="button" className="inbox-policy-head" onClick={() => setOpen(!open)}>
-        <strong>{DUPLICATE_TEXT.title}</strong>
-        <span>{open ? '\uc811\uae30' : '\uc5f4\uae30'}</span>
+        <span>
+          <strong>{serviceName} {DUPLICATE_TEXT.titleSuffix}</strong>
+          <small>{DUPLICATE_TEXT.subtitle}</small>
+        </span>
+        <em>{open ? '접기' : '설정'}</em>
       </button>
       {open && (
         <div className="inbox-policy-body">
           <div className="inbox-policy-grid">
-            <DuplicatePolicySwitch label={DUPLICATE_TEXT.ip} checked={settings.rejectIpDuplicate} onChange={(value) => save({ rejectIpDuplicate: value })} />
-            <DuplicatePolicySwitch label={DUPLICATE_TEXT.cookie} checked={settings.rejectCookieDuplicate} onChange={(value) => save({ rejectCookieDuplicate: value })} />
-            <DuplicatePolicySelect label={DUPLICATE_TEXT.count} value={settings.formDuplicateLimitCount} options={DUPLICATE_LIMIT_COUNTS} onChange={(value) => save({ formDuplicateLimitCount: value })} />
-            <DuplicatePolicySelect label={DUPLICATE_TEXT.window} value={settings.formDuplicateLimitWindow} options={DUPLICATE_LIMIT_WINDOWS} onChange={(value) => save({ formDuplicateLimitWindow: value })} />
-            <DuplicatePolicySelect label={DUPLICATE_TEXT.contact} value={settings.phoneEmailMode} options={DUPLICATE_CONTACT_OPTIONS} onChange={(value) => save({ phoneEmailMode: value })} />
+            <DuplicatePolicySwitch label={DUPLICATE_TEXT.ip} description={DUPLICATE_TEXT.ipDesc} checked={settings.rejectIpDuplicate} onChange={(value) => save({ rejectIpDuplicate: value })} />
+            <DuplicatePolicySwitch label={DUPLICATE_TEXT.cookie} description={DUPLICATE_TEXT.cookieDesc} checked={settings.rejectCookieDuplicate} onChange={(value) => save({ rejectCookieDuplicate: value })} />
+            <DuplicatePolicySelect label={DUPLICATE_TEXT.count} description={DUPLICATE_TEXT.countDesc} value={settings.formDuplicateLimitCount} options={DUPLICATE_LIMIT_COUNTS} onChange={(value) => save({ formDuplicateLimitCount: value })} />
+            <DuplicatePolicySelect label={DUPLICATE_TEXT.window} description={DUPLICATE_TEXT.windowDesc} value={settings.formDuplicateLimitWindow} options={DUPLICATE_LIMIT_WINDOWS} onChange={(value) => save({ formDuplicateLimitWindow: value })} />
+            <DuplicatePolicySelect label={DUPLICATE_TEXT.contact} description={DUPLICATE_TEXT.contactDesc} value={settings.phoneEmailMode} options={DUPLICATE_CONTACT_OPTIONS} onChange={(value) => save({ phoneEmailMode: value })} />
           </div>
 
           <div className="inbox-policy-history">
             <div className="inbox-policy-history-head">
-              <strong>{DUPLICATE_TEXT.history}</strong>
+              <span>
+                <strong>{DUPLICATE_TEXT.history}</strong>
+                <small>{DUPLICATE_TEXT.historyDesc}</small>
+              </span>
               <div>
                 <input type="month" value={month} onChange={(event) => setMonth(event.target.value || currentMonthValue())} />
                 <button type="button" disabled={history.loading} onClick={loadHistory}>{history.loading ? DUPLICATE_TEXT.loading : DUPLICATE_TEXT.refresh}</button>
