@@ -8,6 +8,7 @@ const health = await readFile('functions/api/health.js', 'utf8');
 const shared = await readFile('functions/api/_shared.js', 'utf8');
 const leads = await readFile('functions/api/leads.js', 'utf8');
 const leadCsv = await readFile('functions/api/leads/export.csv.js', 'utf8');
+const blockedHistory = await readFile('functions/api/leads/blocked-history.js', 'utf8');
 const deliveryLogs = await readFile('functions/api/leads/delivery-logs.js', 'utf8');
 const retryQueue = await readFile('functions/api/leads/retry-queue.js', 'utf8');
 const events = await readFile('functions/api/events.js', 'utf8');
@@ -71,8 +72,9 @@ for (const token of [
 }
 
 for (const [name, source, tokens] of [
-  ['leads', leads, ['upsertD1Lead', 'listD1Leads', 'publicWrite: true', 'deliveryStatus', 'meta: { source:']],
+  ['leads', leads, ['upsertD1Lead', 'listD1Leads', 'findD1LeadsByIntakeSignals', 'insertD1BlockedLeadSubmission', 'publicWrite: true', 'deliveryStatus', 'LEAD_RATE_LIMITED', 'meta: { source:']],
   ['lead csv', leadCsv, ['listD1Leads', 'month is required for CSV export.', 'text/csv; charset=utf-8', "Content-Disposition", 'csvCell']],
+  ['blocked history', blockedHistory, ['listD1BlockedLeadSubmissions', 'pageSlug', "source: 'd1'", 'authorizeProject']],
   ['delivery logs', deliveryLogs, ['listD1DeliveryLogs', "type: 'delivery-logs'", "adapter: 'd1'", 'authorizeProject']],
   ['retry queue', retryQueue, ['listD1DeliveryRetryQueue', "type: 'delivery-retry-queue'", 'deadLetter', 'authorizeProject']],
   ['events', events, ['insertD1Event', 'listD1Events', 'publicWrite: true', 'eventType', 'meta: { source:']],
@@ -130,6 +132,7 @@ for (const token of [
 for (const token of [
   '/api/leads',
   '/api/leads/export.csv',
+  '/api/leads/blocked-history',
   '/api/leads/delivery-logs',
   '/api/leads/retry-queue',
   '/api/events',
@@ -149,8 +152,10 @@ for (const token of [
   ':slug read protection',
   'Hosted /api/auth login/session',
   'Hosted /api/leads authenticated D1 list',
+  'Hosted /api/leads duplicate policy block',
   'Hosted /api/stats/summary authenticated D1 aggregate',
   'Hosted /api/leads/export.csv authenticated D1 month export',
+  'Hosted /api/leads/blocked-history authenticated D1 list',
   'Hosted /api/leads/delivery-logs authenticated D1 list',
   'Hosted /api/leads/retry-queue authenticated D1 list',
   'Hosted /api/pages/:slug authenticated D1 save v1',
@@ -171,11 +176,12 @@ for (const token of [
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 53,
+  checks: 56,
   functions: [
     'functions/api/health.js',
     'functions/api/leads.js',
     'functions/api/leads/export.csv.js',
+    'functions/api/leads/blocked-history.js',
     'functions/api/leads/delivery-logs.js',
     'functions/api/leads/retry-queue.js',
     'functions/api/events.js',

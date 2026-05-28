@@ -77,6 +77,8 @@ async function run() {
         status: 'new',
         name: 'Hosted Route QA',
         phone: '010-0000-0000',
+        clientId: `client-${stamp}`,
+        ipHash: `ip-${stamp}`,
         memo: 'hosted route write smoke',
         createdAt: new Date().toISOString(),
         delivery: {
@@ -98,6 +100,40 @@ async function run() {
     name: 'Hosted /api/leads public write',
     status: lead.res.ok && lead.data?.lead?.id === `lead-${stamp}` ? 'ready' : 'failed-live',
     httpStatus: lead.res.status,
+  });
+
+  const blockedLead = await jsonFetch('/api/leads', {
+    method: 'POST',
+    body: JSON.stringify({
+      project,
+      page: {
+        slug: project.slug,
+        leadDuplicateSettings: {
+          rejectIpDuplicate: true,
+          rejectCookieDuplicate: true,
+          formDuplicateLimitCount: 1,
+          formDuplicateLimitWindow: '30d',
+          phoneEmailMode: 'block',
+        },
+      },
+      lead: {
+        id: `blocked-${stamp}`,
+        type: 'consult',
+        kind: 'consult',
+        status: 'new',
+        name: 'Hosted Route QA Blocked',
+        phone: '01000000000',
+        clientId: `client-${stamp}`,
+        ipHash: `ip-${stamp}`,
+        createdAt: new Date().toISOString(),
+      },
+    }),
+  });
+  checks.push({
+    name: 'Hosted /api/leads duplicate policy block',
+    status: blockedLead.res.status === 429 && blockedLead.data?.code === 'LEAD_RATE_LIMITED' ? 'ready' : 'failed-live',
+    httpStatus: blockedLead.res.status,
+    failureReason: blockedLead.data?.error || blockedLead.text?.slice(0, 160),
   });
 
   const event = await jsonFetch('/api/events', {
@@ -150,6 +186,13 @@ async function run() {
     name: 'Hosted /api/leads/delivery-logs read protection',
     status: protectedDeliveryLogs.res.status === 403 ? 'ready' : 'failed-live',
     httpStatus: protectedDeliveryLogs.res.status,
+  });
+
+  const protectedBlockedHistory = await jsonFetch(`/api/leads/blocked-history?projectId=${encodeURIComponent(project.projectId)}&month=${month}`);
+  checks.push({
+    name: 'Hosted /api/leads/blocked-history read protection',
+    status: protectedBlockedHistory.res.status === 403 ? 'ready' : 'failed-live',
+    httpStatus: protectedBlockedHistory.res.status,
   });
 
   const protectedRetryQueue = await jsonFetch(`/api/leads/retry-queue?projectId=${encodeURIComponent(project.projectId)}`);
@@ -318,6 +361,16 @@ async function run() {
     status: authedDeliveryLogs.res.ok && authedDeliveryLogs.data?.queryPlan?.adapter === 'd1' && Array.isArray(authedDeliveryLogs.data?.logs) && authedDeliveryLogs.data.logs.some((item) => item.idempotencyKey === `delivery-${stamp}`) ? 'ready' : 'failed-live',
     httpStatus: authedDeliveryLogs.res.status,
     failureReason: authedDeliveryLogs.data?.error || `logs=${Array.isArray(authedDeliveryLogs.data?.logs) ? authedDeliveryLogs.data.logs.length : 'not-array'}`,
+  });
+
+  const authedBlockedHistory = await jsonFetch(`/api/leads/blocked-history?projectId=${encodeURIComponent(project.projectId)}&month=${month}&pageSlug=${encodeURIComponent(project.slug)}`, {
+    headers: { 'X-Inlet-Session': refreshedSession },
+  });
+  checks.push({
+    name: 'Hosted /api/leads/blocked-history authenticated D1 list',
+    status: authedBlockedHistory.res.ok && authedBlockedHistory.data?.meta?.source === 'd1' && Array.isArray(authedBlockedHistory.data?.records) && authedBlockedHistory.data.records.some((item) => item.reason === blockedLead.data?.reason) ? 'ready' : 'failed-live',
+    httpStatus: authedBlockedHistory.res.status,
+    failureReason: authedBlockedHistory.data?.error || `records=${Array.isArray(authedBlockedHistory.data?.records) ? authedBlockedHistory.data.records.length : 'not-array'}`,
   });
 
   const authedRetryQueue = await jsonFetch(`/api/leads/retry-queue?projectId=${encodeURIComponent(project.projectId)}&status=failed`, {

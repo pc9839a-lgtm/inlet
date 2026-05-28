@@ -104,6 +104,32 @@ export async function fetchAllServerLeads(page, authUser = null, options = {}) {
   return leads;
 }
 
+export async function fetchServerBlockedLeadHistory(page, authUser = null, options = {}) {
+  if (!isServerLeadMode()) return null;
+
+  const context = projectContext(page, authUser);
+  const params = contextParams(context, {
+    pageSlug: options.pageSlug || context.slug || '',
+    month: options.month || new Date().toISOString().slice(0, 7),
+    dateFrom: options.dateFrom || '',
+    dateTo: options.dateTo || '',
+    limit: options.limit || 50,
+    cursor: options.cursor || 0,
+  });
+  const res = await apiFetch(`/api/leads/blocked-history?${params.toString()}`, {
+    headers: projectAuthHeaders(context),
+  });
+  if (!res.ok) throwApiError(await readResponseError(res, `차단 내역을 불러오지 못했습니다: ${res.status}`), res.status);
+  const data = await res.json();
+  return {
+    records: Array.isArray(data?.records) ? data.records : [],
+    total: Number(data?.total || 0),
+    nextCursor: data?.nextCursor ?? null,
+    hasMore: !!data?.hasMore,
+    queryPlan: data?.queryPlan || data?.meta || null,
+  };
+}
+
 export async function persistLead(lead, page, authUser = null) {
   if (!isServerLeadMode()) return { ok: true, mode: 'local', lead };
 

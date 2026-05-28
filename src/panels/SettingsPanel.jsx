@@ -17,6 +17,7 @@ import {
   normalizeManagerAccount,
   normalizeOwnershipSettings,
 } from '../lib/authContext.js';
+import { fetchServerBlockedLeadHistory } from '../lib/leadRepository.js';
 import { createLocalManagerInvite, createServerManagerInvite, createServerOwnershipTransfer, managerInviteUrl } from '../lib/managerInvites.js';
 import { ownershipTransferBillingLabel, ownershipTransferStatusCopy, ownershipTransferStatusLabel } from '../lib/ownershipTransfer.js';
 import { normalizePageDuplicateUrl, pageDuplicateUrlIssues, sanitizeDuplicateSlug } from '../lib/pageDuplication.js';
@@ -106,6 +107,36 @@ function normalizeDuplicateCollectionSettings(settings = {}) {
       ? String(settings.phoneEmailMode)
       : DEFAULT_DUPLICATE_COLLECTION_SETTINGS.phoneEmailMode,
   };
+}
+
+const BLOCK_REASON_LABELS = {
+  phone_duplicate: '연락처 중복',
+  email_duplicate: '이메일 중복',
+  client_duplicate_limit: '쿠키 중복',
+  ip_duplicate_limit: 'IP 중복',
+  ip_rate_limit_1m: 'IP 과다 제출',
+  rate_limited: '제출 제한',
+};
+
+function currentHistoryMonth() {
+  return new Date().toISOString().slice(0, 7);
+}
+
+function blockedHistoryLabel(value, fallback = '-') {
+  const text = String(value || '').trim();
+  return text || fallback;
+}
+
+function blockedHistoryReason(reason) {
+  const key = String(reason || '').trim();
+  return BLOCK_REASON_LABELS[key] || key || '차단';
+}
+
+function blockedHistoryIdentity(item = {}) {
+  return blockedHistoryLabel(
+    item.contactSummary || item.maskedContact || item.clientId || item.userAgentHash,
+    '식별자 없음',
+  );
 }
 
 function DuplicateSelect({ label, value, options, disabled = false, onChange }) {
@@ -379,6 +410,14 @@ export default function SettingsPanel({
   const [openSection, setOpenSection] = useState('basic');
   const [lockedSections, setLockedSections] = useState({ basic: false, duplicatePolicy: false, managers: false, send: false, seo: false, tracking: false });
   const [duplicatePolicyDraft, setDuplicatePolicyDraft] = useState(() => duplicateCollectionSettings);
+  const [blockedHistoryMonth, setBlockedHistoryMonth] = useState(currentHistoryMonth);
+  const [blockedHistoryState, setBlockedHistoryState] = useState({
+    records: [],
+    total: 0,
+    loading: false,
+    error: '',
+    loaded: false,
+  });
   const [duplicateOpen, setDuplicateOpen] = useState(false);
   const [duplicateDraft, setDuplicateDraft] = useState(() => normalizePageDuplicateUrl({
     domainType: 'default',
@@ -457,6 +496,46 @@ export default function SettingsPanel({
   const updateDuplicatePolicyDraft = (patch) => {
     setDuplicatePolicyDraft((draft) => normalizeDuplicateCollectionSettings({ ...draft, ...patch }));
   };
+  const loadBlockedHistory = async () => {
+    if (clientAdminMode) return;
+    setBlockedHistoryState((state) => ({ ...state, loading: true, error: '' }));
+    try {
+      const result = await fetchServerBlockedLeadHistory(page, authUser, {
+        month: blockedHistoryMonth,
+        pageSlug: page.slug || '',
+        limit: 50,
+      });
+      if (!result) {
+        setBlockedHistoryState({
+          records: blockedDuplicateHistory,
+          total: blockedDuplicateHistory.length,
+          loading: false,
+          error: '',
+          loaded: true,
+        });
+        return;
+      }
+      setBlockedHistoryState({
+        records: result.records,
+        total: result.total,
+        loading: false,
+        error: '',
+        loaded: true,
+      });
+    } catch (error) {
+      setBlockedHistoryState({
+        records: blockedDuplicateHistory,
+        total: blockedDuplicateHistory.length,
+        loading: false,
+        error: error?.message || '서버 차단 내역을 불러오지 못했습니다.',
+        loaded: true,
+      });
+    }
+  };
+  useEffect(() => {
+    if (openSection !== 'duplicatePolicy' || clientAdminMode) return;
+    loadBlockedHistory();
+  }, [openSection, clientAdminMode, blockedHistoryMonth, page.slug, page.projectId, authUser?.session]);
   const editManagers = () => {
     setManagerDraft((managers.length ? managers : managerDraft).map(normalizeManagerAccount));
     editSection('managers');
@@ -694,6 +773,10 @@ export default function SettingsPanel({
     notify('소유권이전 요청을 취소했습니다.', 'success');
   };
 
+  const displayedBlockedHistory = blockedHistoryState.loaded
+    ? blockedHistoryState.records
+    : blockedDuplicateHistory;
+
   return (
     <div className="simple-panel settings-panel">
       <SettingsSection id="account" title="내 계정" openSection={openSection} setOpenSection={setOpenSection} className="account-settings-section">
@@ -877,22 +960,43 @@ export default function SettingsPanel({
             />
           </div>
           <div className="duplicate-policy-history">
-            <div>
-              <strong>차단/제한 이력</strong>
-              <p>서버가 저장한 차단 이력이 있으면 날짜, 페이지/폼, 사유, 마스킹된 식별자만 표시합니다.</p>
+            <div className="duplicate-policy-history-head">
+              <div>
+                <strong>차단 내역</strong>
+                <p>선택한 월에 서버가 차단한 제출만 표시합니다. IP 원문은 표시하지 않습니다.</p>
+              </div>
+              <div className="duplicate-policy-history-controls">
+                <input
+                  type="month"
+                  value={blockedHistoryMonth}
+                  disabled={blockedHistoryState.loading}
+                  onChange={(event) => setBlockedHistoryMonth(event.target.value || currentHistoryMonth())}
+                />
+                <button type="button" disabled={blockedHistoryState.loading} onClick={loadBlockedHistory}>
+                  {blockedHistoryState.loading ? '조회 중' : '새로고침'}
+                </button>
+              </div>
             </div>
-            {blockedDuplicateHistory.length === 0 ? (
-              <span>표시할 이력이 없습니다.</span>
+            {blockedHistoryState.error && (
+              <span className="duplicate-policy-history-error">{blockedHistoryState.error}</span>
+            )}
+            {blockedHistoryState.loading ? (
+              <span>차단 내역을 불러오는 중입니다.</span>
+            ) : displayedBlockedHistory.length === 0 ? (
+              <span>표시할 차단 내역이 없습니다.</span>
             ) : (
               <ul>
-                {blockedDuplicateHistory.slice(0, 5).map((item, index) => (
+                {displayedBlockedHistory.slice(0, 8).map((item, index) => (
                   <li key={item.id || index}>
                     <b>{String(item.date || item.createdAt || '').slice(0, 10) || '날짜 없음'}</b>
-                    <em>{item.page || item.form || item.formId || '페이지/폼 미지정'}</em>
-                    <small>{item.reason || item.duplicateReason || '사유 없음'} · {item.maskedContact || item.ipHash || item.clientId || '식별자 없음'}</small>
+                    <em>{blockedHistoryLabel(item.pageSlug || item.page || item.form || item.formId, '페이지 미지정')}</em>
+                    <small>{blockedHistoryReason(item.reason || item.duplicateReason)} · {blockedHistoryIdentity(item)}</small>
                   </li>
                 ))}
               </ul>
+            )}
+            {blockedHistoryState.total > displayedBlockedHistory.length && (
+              <small className="duplicate-policy-history-more">총 {blockedHistoryState.total}건 중 최근 {displayedBlockedHistory.length}건 표시</small>
             )}
           </div>
         </SettingsSection>
