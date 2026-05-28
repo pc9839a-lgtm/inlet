@@ -783,13 +783,18 @@ requireAll(opsQa, [
 const remainingPatches = await read('docs/parallel-patch/remaining-patches.md');
 requireAll(remainingPatches, [
   'Remaining Patches',
-  'Current execution mode: one worker continues sequentially',
+  'Current execution mode: parallel patching is active',
+  'Parallel Worker Split',
   'Production account/session hardening',
   'Customer-owned AI key storage',
   'D1 real runtime smoke and write-side migration',
-  'Worker 1: Auth Session, Accounts, Members, And Storage Scale',
-  'Worker 2: Real Browser QA And Frontend Product Polish',
-  'Worker 3: Live Integration, Internal Admin, And Ops Verification',
+  'Worker 1: account, auth, email verification, sessions, member data',
+  'Worker 2: lead intake, duplicate policy, inbox, stats, D1 scale, CSV',
+  'Worker 3: personal-rehabilitation, mobile-wedding-invitation, and real-estate-presale templates',
+  'Worker 4: Settings manager permissions, ownership transfer, page duplication URL flow',
+  'Worker 5: QA, deployment, live integration readiness, docs and ops',
+  'Add lead duplicate and spam policy',
+  'Page duplication and URL setup',
   'Expanded Launch Backlog',
   'Login, account, and member management',
   'Plans, payment, and subscription, final phase',
@@ -801,13 +806,35 @@ requireAll(remainingPatches, [
 const parallelReadme = await read('docs/parallel-patch/README.md');
 requireAll(parallelReadme, [
   'remaining-patches.md',
-  'Only two files should remain',
-  'Primary mode: one worker continues sequentially',
-  'Parallel split is optional',
-  'server/storage/auth',
-  'frontend/editor/QA',
-  'integrations/admin/ops',
+  'worker-1-auth-members.md',
+  'worker-2-leads-stats-d1.md',
+  'worker-3-templates-editor.md',
+  'worker-4-manager-ownership.md',
+  'worker-5-qa-ops-live.md',
+  'Primary mode: parallel patching is active',
+  'Five workers can run at the same time only if they respect file ownership',
+  'High-conflict files',
 ], 'parallel README');
+
+const workerDocs = await Promise.all([
+  read('docs/parallel-patch/worker-1-auth-members.md'),
+  read('docs/parallel-patch/worker-2-leads-stats-d1.md'),
+  read('docs/parallel-patch/worker-3-templates-editor.md'),
+  read('docs/parallel-patch/worker-4-manager-ownership.md'),
+  read('docs/parallel-patch/worker-5-qa-ops-live.md'),
+]);
+requireAll(workerDocs.join('\n'), [
+  'Duplicate email and duplicate phone must be server-side checks',
+  'Phone/email is the primary duplicate key',
+  'Cookie/client id prevents accidental repeated submission',
+  'IP is only a short-window spam/rate-limit signal',
+  'Do not write instructional copy',
+  'Only these three templates are active',
+  'Page duplication',
+  'URL setup',
+  'Template duplication is not needed',
+  'Missing live credentials must be `skipped-live`, not false failures',
+], 'parallel worker docs');
 
 console.log(JSON.stringify({
   ok: true,
