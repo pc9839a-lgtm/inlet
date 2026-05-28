@@ -302,10 +302,10 @@ export default function InboxPanel({ leads, page, syncing = false, totalLeads = 
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      onFiltersChange?.({ kind: filter, status: statusFilter, q: query.trim(), month });
+      onFiltersChange?.({ kind: filter, status: statusFilter, deliveryStatus: deliveryFilter, q: query.trim(), month });
     }, 250);
     return () => window.clearTimeout(timer);
-  }, [filter, month, onFiltersChange, query, statusFilter]);
+  }, [deliveryFilter, filter, month, onFiltersChange, query, statusFilter]);
 
   const { normalized, consultCount, reservationCount, newCount, failedDeliveryCount, filtered } = useMemo(() => {
     const items = (leads || []).map(normalizeLeadItem);
@@ -333,6 +333,14 @@ export default function InboxPanel({ leads, page, syncing = false, totalLeads = 
 
     return { normalized: items, consultCount: consult, reservationCount: reservation, newCount: fresh, failedDeliveryCount: failed, filtered: visible };
   }, [deliveryFilter, filter, leads, query, selectedMonthRange, statusFilter]);
+  const loadedCount = normalized.length;
+  const serverTotal = Number(totalLeads || loadedCount);
+  const loadMoreLabel = hasMoreLeads
+    ? `더보기 ${loadedCount}/${serverTotal || loadedCount}`
+    : '더보기';
+  const listSummary = serverTotal > loadedCount
+    ? `${filtered.length}건 표시 중 · 서버 ${serverTotal}건 중 ${loadedCount}건 로드`
+    : `${filtered.length}건 표시 중`;
 
   return (
     <div className="simple-panel inbox-panel inbox-v2 inbox-v3">
@@ -386,17 +394,18 @@ export default function InboxPanel({ leads, page, syncing = false, totalLeads = 
         <div className="section-title inbox-list-title">
           <div>
             <h2>접수 DB</h2>
-            <p>{filtered.length}건 표시 중{failedDeliveryCount ? ` · 전송 확인 ${failedDeliveryCount}건` : ''}</p>
+            <p>{listSummary}{failedDeliveryCount ? ` · 전송 확인 ${failedDeliveryCount}건` : ''}</p>
           </div>
           <div className="inbox-list-actions">
             {failedDeliveryCount > 0 && <button type="button" className="danger" onClick={retryFailedDeliveries}>실패 재전송</button>}
-            {hasMoreLeads && <button type="button" disabled={syncing} onClick={loadMoreLeads}>{syncing ? '불러오는 중' : `더보기 ${normalized.length}/${totalLeads || normalized.length}`}</button>}
-            <button type="button" disabled={!filtered.length} onClick={() => exportLeadsCsv?.(filtered, { month, kind: filter, status: statusFilter, deliveryStatus: deliveryFilter, q: query.trim() })}>CSV</button>
+            {hasMoreLeads && <button type="button" disabled={syncing} onClick={loadMoreLeads}>{syncing ? '불러오는 중' : loadMoreLabel}</button>}
+            <button type="button" disabled={!filtered.length} title={`${month} 월 단위 CSV로 내보냅니다.`} onClick={() => exportLeadsCsv?.(filtered, { month, kind: filter, status: statusFilter, deliveryStatus: deliveryFilter, q: query.trim() })}>월 CSV</button>
             <button type="button" onClick={() => { setFilter('all'); setStatusFilter('all'); setDeliveryFilter('all'); setQuery(''); }}>초기화</button>
           </div>
         </div>
 
         {syncing && <div className="inbox-sync-note">서버 접수 데이터를 불러오는 중입니다.</div>}
+        {hasMoreLeads && !syncing && <div className="inbox-sync-note">현재 월 조건의 일부만 불러왔습니다. 더보기를 누르면 다음 50건을 이어서 불러옵니다.</div>}
 
         {!filtered.length ? <div className="empty">조건에 맞는 접수 데이터가 없습니다.</div> : (
           <div className="lead-list-v3">

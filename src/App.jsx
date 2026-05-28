@@ -432,7 +432,7 @@ function App() {
   const [statsEventPageMeta, setStatsEventPageMeta] = useState({ total: 0, nextCursor: null, hasMore: false, source: 'local' });
   const [statsLeadPageMeta, setStatsLeadPageMeta] = useState({ total: 0, nextCursor: null, hasMore: false, source: 'local' });
   const [statsPartial, setStatsPartial] = useState(false);
-  const [inboxFilters, setInboxFilters] = useState({ kind: 'all', status: 'all', q: '', month: currentMonthValue() });
+  const [inboxFilters, setInboxFilters] = useState({ kind: 'all', status: 'all', deliveryStatus: 'all', q: '', month: currentMonthValue() });
   const [statsPeriod, setStatsPeriod] = useState('7d');
   const [leadConflict, setLeadConflict] = useState(null);
   const [events, setEvents] = useState(() => load(EVENTS_KEY, []));
@@ -593,6 +593,7 @@ function App() {
       withMeta: true,
       kind: inboxFilters.kind === 'all' ? '' : inboxFilters.kind,
       status: inboxFilters.status === 'all' ? '' : inboxFilters.status,
+      deliveryStatus: inboxFilters.deliveryStatus === 'all' ? '' : inboxFilters.deliveryStatus,
       q: inboxFilters.q,
       month: monthRange.month,
       dateFrom: monthRange.dateFrom,
@@ -620,7 +621,7 @@ function App() {
         if (alive) setLeadsSyncing(false);
       });
     return () => { alive = false; };
-  }, [tab, page.slug, page.projectId, authUser, inboxFilters.kind, inboxFilters.month, inboxFilters.status, inboxFilters.q]);
+  }, [tab, page.slug, page.projectId, authUser, inboxFilters.kind, inboxFilters.month, inboxFilters.status, inboxFilters.deliveryStatus, inboxFilters.q]);
   useEffect(() => {
     if (tab !== 'stats') return undefined;
     if (!isServerLeadMode()) {
@@ -927,6 +928,7 @@ function App() {
       dateTo: monthRange.dateTo,
       kind: exportFilters.kind || inboxFilters.kind,
       status: exportFilters.status || inboxFilters.status,
+      deliveryStatus: exportFilters.deliveryStatus || inboxFilters.deliveryStatus,
       q: exportFilters.q ?? inboxFilters.q,
     };
     try {
@@ -950,6 +952,7 @@ function App() {
         withMeta: true,
         kind: inboxFilters.kind === 'all' ? '' : inboxFilters.kind,
         status: inboxFilters.status === 'all' ? '' : inboxFilters.status,
+        deliveryStatus: inboxFilters.deliveryStatus === 'all' ? '' : inboxFilters.deliveryStatus,
         q: inboxFilters.q,
         month: monthRange.month,
         dateFrom: monthRange.dateFrom,
@@ -983,6 +986,7 @@ function App() {
         withMeta: true,
         kind: inboxFilters.kind === 'all' ? '' : inboxFilters.kind,
         status: inboxFilters.status === 'all' ? '' : inboxFilters.status,
+        deliveryStatus: inboxFilters.deliveryStatus === 'all' ? '' : inboxFilters.deliveryStatus,
         q: inboxFilters.q,
         month: monthRange.month,
         dateFrom: monthRange.dateFrom,
