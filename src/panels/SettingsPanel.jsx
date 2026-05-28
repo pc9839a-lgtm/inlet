@@ -78,17 +78,17 @@ const DEFAULT_DUPLICATE_COLLECTION_SETTINGS = {
 };
 
 const DUPLICATE_LIMIT_COUNTS = [
-  ['1', '1회'],
-  ['2', '2회'],
-  ['3', '3회'],
-  ['5', '5회'],
+  ['1', '?? ???? 1? ???? ??'],
+  ['2', '?? ???? 2? ???? ??'],
+  ['3', '?? ???? 3? ???? ??'],
+  ['5', '?? ???? 5? ???? ??'],
 ];
 
 const DUPLICATE_LIMIT_WINDOWS = [
-  ['1d', '1일'],
-  ['3d', '3일'],
-  ['7d', '7일'],
-  ['30d', '30일'],
+  ['1d', '1?'],
+  ['3d', '3?'],
+  ['7d', '7?'],
+  ['30d', '1??'],
 ];
 
 function normalizeDuplicateCollectionSettings(settings = {}) {
@@ -110,12 +110,12 @@ function normalizeDuplicateCollectionSettings(settings = {}) {
 }
 
 const BLOCK_REASON_LABELS = {
-  phone_duplicate: '연락처 중복',
-  email_duplicate: '이메일 중복',
-  client_duplicate_limit: '쿠키 중복',
-  ip_duplicate_limit: 'IP 중복',
-  ip_rate_limit_1m: 'IP 과다 제출',
-  rate_limited: '제출 제한',
+  phone_duplicate: '??? ??',
+  email_duplicate: '??? ??',
+  client_duplicate_limit: '?? ??',
+  ip_duplicate_limit: 'IP ??',
+  ip_rate_limit_1m: 'IP ?? ??',
+  rate_limited: '?? ??',
 };
 
 function currentHistoryMonth() {
@@ -129,13 +129,13 @@ function blockedHistoryLabel(value, fallback = '-') {
 
 function blockedHistoryReason(reason) {
   const key = String(reason || '').trim();
-  return BLOCK_REASON_LABELS[key] || key || '차단';
+  return BLOCK_REASON_LABELS[key] || key || '??';
 }
 
 function blockedHistoryIdentity(item = {}) {
   return blockedHistoryLabel(
     item.contactSummary || item.maskedContact || item.clientId || item.userAgentHash,
-    '식별자 없음',
+    '?? ?? ??',
   );
 }
 
@@ -407,7 +407,7 @@ export default function SettingsPanel({
   const [expandedManagerMenuId, setExpandedManagerMenuId] = useState('');
   const [inviteLoading, setInviteLoading] = useState('');
   const [conversionLocked, setConversionLocked] = useState(() => !!(page.meta?.ads || page.meta?.pixel || page.meta?.naver || page.meta?.kakao));
-  const [openSection, setOpenSection] = useState('basic');
+  const [openSection, setOpenSection] = useState('duplicatePolicy');
   const [lockedSections, setLockedSections] = useState({ basic: false, duplicatePolicy: false, managers: false, send: false, seo: false, tracking: false });
   const [duplicatePolicyDraft, setDuplicatePolicyDraft] = useState(() => duplicateCollectionSettings);
   const [blockedHistoryMonth, setBlockedHistoryMonth] = useState(currentHistoryMonth);
@@ -806,6 +806,76 @@ export default function SettingsPanel({
         </SettingsSection>
       )}
 
+      {!clientAdminMode && (
+        <SettingsSection id="duplicatePolicy" title="?? ??? ?? ??" openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.duplicatePolicy} onSave={saveDuplicatePolicy} onEdit={editDuplicatePolicy} className="duplicate-policy-card">
+          <div className="duplicate-policy-grid">
+            <Toggle label="IP ?? ?? ??" checked={!!duplicatePolicyDraft.rejectIpDuplicate} disabled={lockedSections.duplicatePolicy} onChange={(value) => updateDuplicatePolicyDraft({ rejectIpDuplicate: value })} />
+            <Toggle label="??? ??? ?? ?? ??" checked={!!duplicatePolicyDraft.rejectCookieDuplicate} disabled={lockedSections.duplicatePolicy} onChange={(value) => updateDuplicatePolicyDraft({ rejectCookieDuplicate: value })} />
+            <DuplicateSelect
+              label="? ??? ?? ?? ??"
+              value={duplicatePolicyDraft.formDuplicateLimitCount}
+              disabled={lockedSections.duplicatePolicy}
+              options={DUPLICATE_LIMIT_COUNTS}
+              onChange={(value) => updateDuplicatePolicyDraft({ formDuplicateLimitCount: value })}
+            />
+            <DuplicateSelect
+              label="? ??? ?? ?? ??"
+              value={duplicatePolicyDraft.formDuplicateLimitWindow}
+              disabled={lockedSections.duplicatePolicy}
+              options={DUPLICATE_LIMIT_WINDOWS}
+              onChange={(value) => updateDuplicatePolicyDraft({ formDuplicateLimitWindow: value })}
+            />
+            <DuplicateSelect
+              label="???/??? ??"
+              value={duplicatePolicyDraft.phoneEmailMode}
+              disabled={lockedSections.duplicatePolicy}
+              options={[['mark', '???'], ['warn', '??'], ['block', '??']]}
+              onChange={(value) => updateDuplicatePolicyDraft({ phoneEmailMode: value })}
+            />
+          </div>
+          <div className="duplicate-policy-history">
+            <div className="duplicate-policy-history-head">
+              <div>
+                <strong>?? ??</strong>
+                <p>??? ?? ??? ??? ??? ?????. IP ??? ???? ????.</p>
+              </div>
+              <div className="duplicate-policy-history-controls">
+                <input
+                  type="month"
+                  value={blockedHistoryMonth}
+                  disabled={blockedHistoryState.loading}
+                  onChange={(event) => setBlockedHistoryMonth(event.target.value || currentHistoryMonth())}
+                />
+                <button type="button" disabled={blockedHistoryState.loading} onClick={loadBlockedHistory}>
+                  {blockedHistoryState.loading ? '?? ?' : '????'}
+                </button>
+              </div>
+            </div>
+            {blockedHistoryState.error && (
+              <span className="duplicate-policy-history-error">{blockedHistoryState.error}</span>
+            )}
+            {blockedHistoryState.loading ? (
+              <span>?? ??? ???? ????.</span>
+            ) : displayedBlockedHistory.length === 0 ? (
+              <span>??? ?? ??? ????.</span>
+            ) : (
+              <ul>
+                {displayedBlockedHistory.slice(0, 8).map((item, index) => (
+                  <li key={item.id || index}>
+                    <b>{String(item.date || item.createdAt || '').slice(0, 10) || '?? ??'}</b>
+                    <em>{blockedHistoryLabel(item.pageSlug || item.page || item.form || item.formId, '??? ???')}</em>
+                    <small>{blockedHistoryReason(item.reason || item.duplicateReason)} ? {blockedHistoryIdentity(item)}</small>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {blockedHistoryState.total > displayedBlockedHistory.length && (
+              <small className="duplicate-policy-history-more">? {blockedHistoryState.total}? ? ?? {displayedBlockedHistory.length}? ??</small>
+            )}
+          </div>
+        </SettingsSection>
+      )}
+
       {canManageProjectUsers && (
         <SettingsSection id="managers" title="매니저 권한" openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.managers} onSave={saveManagers} onEdit={editManagers} className="manager-access-card">
           <div className="manager-section-tools">
@@ -932,75 +1002,7 @@ export default function SettingsPanel({
         </SettingsSection>
       )}
 
-      {!clientAdminMode && (
-        <SettingsSection id="duplicatePolicy" title="수집 데이터 중복 설정" openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.duplicatePolicy} onSave={saveDuplicatePolicy} onEdit={editDuplicatePolicy} className="duplicate-policy-card">
-          <div className="duplicate-policy-grid">
-            <Toggle label="IP중복 수집 거절" checked={!!duplicatePolicyDraft.rejectIpDuplicate} disabled={lockedSections.duplicatePolicy} onChange={(value) => updateDuplicatePolicyDraft({ rejectIpDuplicate: value })} />
-            <Toggle label="쿠키를 이용한 중복 수집 거절" checked={!!duplicatePolicyDraft.rejectCookieDuplicate} disabled={lockedSections.duplicatePolicy} onChange={(value) => updateDuplicatePolicyDraft({ rejectCookieDuplicate: value })} />
-            <DuplicateSelect
-              label="폼 데이터 중복 제한 개수"
-              value={duplicatePolicyDraft.formDuplicateLimitCount}
-              disabled={lockedSections.duplicatePolicy}
-              options={DUPLICATE_LIMIT_COUNTS}
-              onChange={(value) => updateDuplicatePolicyDraft({ formDuplicateLimitCount: value })}
-            />
-            <DuplicateSelect
-              label="폼 데이터 중복 제한 기간"
-              value={duplicatePolicyDraft.formDuplicateLimitWindow}
-              disabled={lockedSections.duplicatePolicy}
-              options={DUPLICATE_LIMIT_WINDOWS}
-              onChange={(value) => updateDuplicatePolicyDraft({ formDuplicateLimitWindow: value })}
-            />
-            <DuplicateSelect
-              label="연락처/이메일 중복"
-              value={duplicatePolicyDraft.phoneEmailMode}
-              disabled={lockedSections.duplicatePolicy}
-              options={[['mark', '표시만'], ['warn', '경고'], ['block', '차단']]}
-              onChange={(value) => updateDuplicatePolicyDraft({ phoneEmailMode: value })}
-            />
-          </div>
-          <div className="duplicate-policy-history">
-            <div className="duplicate-policy-history-head">
-              <div>
-                <strong>차단 내역</strong>
-                <p>선택한 월에 서버가 차단한 제출만 표시합니다. IP 원문은 표시하지 않습니다.</p>
-              </div>
-              <div className="duplicate-policy-history-controls">
-                <input
-                  type="month"
-                  value={blockedHistoryMonth}
-                  disabled={blockedHistoryState.loading}
-                  onChange={(event) => setBlockedHistoryMonth(event.target.value || currentHistoryMonth())}
-                />
-                <button type="button" disabled={blockedHistoryState.loading} onClick={loadBlockedHistory}>
-                  {blockedHistoryState.loading ? '조회 중' : '새로고침'}
-                </button>
-              </div>
-            </div>
-            {blockedHistoryState.error && (
-              <span className="duplicate-policy-history-error">{blockedHistoryState.error}</span>
-            )}
-            {blockedHistoryState.loading ? (
-              <span>차단 내역을 불러오는 중입니다.</span>
-            ) : displayedBlockedHistory.length === 0 ? (
-              <span>표시할 차단 내역이 없습니다.</span>
-            ) : (
-              <ul>
-                {displayedBlockedHistory.slice(0, 8).map((item, index) => (
-                  <li key={item.id || index}>
-                    <b>{String(item.date || item.createdAt || '').slice(0, 10) || '날짜 없음'}</b>
-                    <em>{blockedHistoryLabel(item.pageSlug || item.page || item.form || item.formId, '페이지 미지정')}</em>
-                    <small>{blockedHistoryReason(item.reason || item.duplicateReason)} · {blockedHistoryIdentity(item)}</small>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {blockedHistoryState.total > displayedBlockedHistory.length && (
-              <small className="duplicate-policy-history-more">총 {blockedHistoryState.total}건 중 최근 {displayedBlockedHistory.length}건 표시</small>
-            )}
-          </div>
-        </SettingsSection>
-      )}
+      
 
       <SettingsSection id="send" title="전송" openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.send} onSave={saveSend} onEdit={() => editSection('send')} className="settings-conversion-card">
         <div className="settings-conversion-grid">
