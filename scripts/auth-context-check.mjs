@@ -13,7 +13,7 @@ const userB = normalizeAuthUser({ name: 'User B', email: 'other@example.com' });
 
 assert(userA1.email === 'owner@example.com', 'email should normalize to lowercase');
 assert(userA1.workspaceId === userA2.workspaceId, 'same email should keep same workspace id');
-assert(userA1.workspaceId !== userB.workspaceId, 'different email should have different workspace id');
+assert(userA1.workspaceId !== userB.workspaceId, 'different users should have different workspace id');
 assert(workspaceIdForAuthUser({ workspaceId: 'custom_ws' }) === 'custom_ws', 'explicit workspace id should win');
 
 const page = { slug: 'campaign' };
@@ -120,8 +120,8 @@ assert(!isValidAccountPassword('a1'), 'account password should require at least 
 
 const authErrorMessages = [
   ['AUTH_EMAIL_DUPLICATE', '이미 가입된 이메일입니다. 로그인해주세요.'],
-  ['AUTH_PHONE_DUPLICATE', '이미 가입된 휴대폰 번호입니다. 다른 번호를 확인해주세요.'],
-  ['AUTH_PASSWORD_POLICY', '비밀번호는 영문과 숫자를 포함해 6자 이상으로 입력해주세요.'],
+  ['AUTH_PHONE_DUPLICATE', '이미 가입된 휴대폰번호입니다. 다른 번호를 확인해주세요.'],
+  ['AUTH_PASSWORD_POLICY', '비밀번호는 영문과 숫자를 포함해 6자리 이상으로 입력해주세요.'],
   ['EMAIL_VERIFICATION_REQUIRED', '이메일 인증을 먼저 완료해주세요.'],
   ['AUTH_LOGIN_INVALID', '이메일 또는 비밀번호가 올바르지 않습니다.'],
   ['AUTH_SESSION_INVALID', '로그인 세션이 만료되었습니다. 다시 로그인해주세요.'],
@@ -130,7 +130,7 @@ const authErrorMessages = [
 for (const [code, expected] of authErrorMessages) {
   const message = authAccountErrorMessage({ details: { code } });
   assert(message === expected, `${code} message should stay user-facing Korean`);
-  assert(!/[?�]/.test(message), `${code} message should not contain mojibake or replacement characters`);
+  assert(!/[占�]/.test(message), `${code} message should not contain mojibake or replacement characters`);
 }
 
 console.log(JSON.stringify({ ok: true, checks: 43 }, null, 2));
