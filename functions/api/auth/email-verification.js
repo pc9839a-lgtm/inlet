@@ -10,13 +10,6 @@ export async function onRequest({ request, env }) {
     const verification = await issueEmailVerificationToken(input, env);
     return jsonResponse(request, env, 200, { ok: true, verification }, AUTH_METHODS);
   } catch (error) {
-    if (request.headers.get('X-Inlet-Debug') === 'auth-email' && error?.details?.provider === 'ses') {
-      return jsonResponse(request, env, Number(error.status || 500), {
-        ok: false,
-        error: String(error?.message || error),
-        debug: error.details,
-      }, AUTH_METHODS);
-    }
     return handleApiError(request, env, error, AUTH_METHODS);
   }
 }
