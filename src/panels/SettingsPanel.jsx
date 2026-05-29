@@ -134,7 +134,7 @@ function SettingsSection({
           </span>
           {description && <small>{description}</small>}
         </span>
-        <span className="settings-section-state">{open ? '접기' : '설정'}</span>
+        <span className="settings-section-state">{open ? '접기' : '열기'}</span>
       </button>
       {open && (
         <div className="settings-section-body">
@@ -336,6 +336,7 @@ export default function SettingsPanel({
   const [inviteLoading, setInviteLoading] = useState('');
   const [conversionLocked, setConversionLocked] = useState(() => !!(page.meta?.ads || page.meta?.pixel || page.meta?.naver || page.meta?.kakao));
   const [openSection, setOpenSection] = useState('basic');
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [lockedSections, setLockedSections] = useState({ basic: false, managers: false, send: false, seo: false, tracking: false });
   const [duplicateOpen, setDuplicateOpen] = useState(false);
   const [duplicateDraft, setDuplicateDraft] = useState(() => normalizePageDuplicateUrl({
@@ -642,18 +643,12 @@ export default function SettingsPanel({
 
   return (
     <div className="simple-panel settings-panel">
-      <div className="settings-overview-card">
+      <div className="settings-compact-head">
         <div>
           <span>설정</span>
-          <h2>{page.title || '현재 페이지'}</h2>
-          <p>운영에 필요한 항목만 먼저 보이도록 정리했습니다. 접수 중복 관리는 접수함에서 설정합니다.</p>
+          <strong>{page.title || '현재 페이지'}</strong>
         </div>
-        <strong>/{page.slug || 'page'}</strong>
-      </div>
-
-      <div className="settings-group-label">
-        <span>기본 운영</span>
-        <small>페이지 주소, 권한, 전송처럼 자주 쓰는 설정입니다.</small>
+        <em>/{page.slug || 'page'}</em>
       </div>
 
       <SettingsSection id="basic" title="페이지 기본" description="페이지명과 공개 주소를 관리합니다." badge="필수" openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.basic} onSave={saveBasic} onEdit={() => editSection('basic')}>
@@ -805,138 +800,147 @@ export default function SettingsPanel({
 
       {!clientAdminMode && (
         <>
-          <div className="settings-group-label advanced">
-            <span>고급 설정</span>
-            <small>검색 노출, 광고 추적, 전환 이벤트처럼 필요할 때만 여는 항목입니다.</small>
+          <div className={`settings-advanced-box ${advancedOpen ? 'open' : ''}`}>
+            <button type="button" className="settings-advanced-head" onClick={() => setAdvancedOpen(!advancedOpen)}>
+              <span>
+                <strong>고급 설정</strong>
+                <small>SEO · 추적 코드 · 페이지 복제</small>
+              </span>
+              <em>{advancedOpen ? '접기' : '열기'}</em>
+            </button>
           </div>
 
-          <SettingsSection id="seo" title="SEO 설정" description="검색 결과와 공유 링크에 보이는 정보를 설정합니다." openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.seo} onSave={saveSeo} onEdit={() => editSection('seo')}>
-            <div className="settings-grid">
-              <div className="settings-field-hint-wrap">
-                <Field label="메타 제목" value={seoDraft.title} disabled={lockedSections.seo} placeholder="강남 피부관리 상담 예약 | 브랜드명" onChange={(value) => setSeoDraft((draft) => ({ ...draft, title: value }))} />
-              </div>
-              <div className="settings-field-hint-wrap">
-                <Field label="메타 설명" textarea value={seoDraft.desc} disabled={lockedSections.seo} placeholder="무료 상담, 방문 예약, 혜택을 80자 안팎으로 요약" onChange={(value) => setSeoDraft((draft) => ({ ...draft, desc: value }))} />
-              </div>
-              <div className="settings-field-hint-wrap">
-                <ImageInput label="파비콘" value={seoDraft.favicon} disabled={lockedSections.seo} onChange={(value) => setSeoDraft((draft) => ({ ...draft, favicon: value }))} />
-                <small className="settings-field-hint">32x32 PNG/ICO</small>
-              </div>
-              <div className="settings-field-hint-wrap">
-                <ImageInput label="공유 이미지" value={seoDraft.og} disabled={lockedSections.seo} onChange={(value) => setSeoDraft((draft) => ({ ...draft, og: value }))} />
-                <small className="settings-field-hint">1200x630 JPG/PNG/WebP</small>
-              </div>
-              <div className="settings-field-hint-wrap">
-                <Field label="네이버 웹마스터" value={seoDraft.naverWebmaster} disabled={lockedSections.seo} placeholder="naver-site-verification content 값" onChange={(value) => setSeoDraft((draft) => ({ ...draft, naverWebmaster: value }))} />
-              </div>
-              <div className="settings-field-hint-wrap">
-                <Field label="구글 콘솔" value={seoDraft.console} disabled={lockedSections.seo} placeholder="google-site-verification content 값" onChange={(value) => setSeoDraft((draft) => ({ ...draft, console: value }))} />
-              </div>
-            </div>
-          </SettingsSection>
+          {advancedOpen && (
+            <div className="settings-advanced-list">
+              <SettingsSection id="seo" title="SEO 설정" description="검색 결과와 공유 링크에 보이는 정보를 설정합니다." openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.seo} onSave={saveSeo} onEdit={() => editSection('seo')}>
+                <div className="settings-grid">
+                  <div className="settings-field-hint-wrap">
+                    <Field label="메타 제목" value={seoDraft.title} disabled={lockedSections.seo} placeholder="강남 피부관리 상담 예약 | 브랜드명" onChange={(value) => setSeoDraft((draft) => ({ ...draft, title: value }))} />
+                  </div>
+                  <div className="settings-field-hint-wrap">
+                    <Field label="메타 설명" textarea value={seoDraft.desc} disabled={lockedSections.seo} placeholder="무료 상담, 방문 예약, 혜택을 80자 안팎으로 요약" onChange={(value) => setSeoDraft((draft) => ({ ...draft, desc: value }))} />
+                  </div>
+                  <div className="settings-field-hint-wrap">
+                    <ImageInput label="파비콘" value={seoDraft.favicon} disabled={lockedSections.seo} onChange={(value) => setSeoDraft((draft) => ({ ...draft, favicon: value }))} />
+                    <small className="settings-field-hint">32x32 PNG/ICO</small>
+                  </div>
+                  <div className="settings-field-hint-wrap">
+                    <ImageInput label="공유 이미지" value={seoDraft.og} disabled={lockedSections.seo} onChange={(value) => setSeoDraft((draft) => ({ ...draft, og: value }))} />
+                    <small className="settings-field-hint">1200x630 JPG/PNG/WebP</small>
+                  </div>
+                  <div className="settings-field-hint-wrap">
+                    <Field label="네이버 웹마스터" value={seoDraft.naverWebmaster} disabled={lockedSections.seo} placeholder="naver-site-verification content 값" onChange={(value) => setSeoDraft((draft) => ({ ...draft, naverWebmaster: value }))} />
+                  </div>
+                  <div className="settings-field-hint-wrap">
+                    <Field label="구글 콘솔" value={seoDraft.console} disabled={lockedSections.seo} placeholder="google-site-verification content 값" onChange={(value) => setSeoDraft((draft) => ({ ...draft, console: value }))} />
+                  </div>
+                </div>
+              </SettingsSection>
 
-          <SettingsSection id="tracking" title="추적 코드" description="GTM, GA4, 광고 픽셀 기본 ID를 연결합니다." openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.tracking} onSave={saveTracking} onEdit={() => editSection('tracking')}>
-            <div className="settings-grid">
-              <div className="settings-field-hint-wrap">
-                <Field label="GTM" value={trackingDraft.gtm} disabled={lockedSections.tracking} placeholder="GTM-XXXXXXX" onChange={(value) => setTrackingDraft((draft) => ({ ...draft, gtm: value }))} />
-              </div>
-              <div className="settings-field-hint-wrap">
-                <Field label="GA4" value={trackingDraft.ga4} disabled={lockedSections.tracking} placeholder="G-XXXXXXXXXX" onChange={(value) => setTrackingDraft((draft) => ({ ...draft, ga4: value }))} />
-              </div>
-              <div className="settings-field-hint-wrap">
-                <Field label="Google Ads 태그" value={trackingDraft.googleAdsTag} disabled={lockedSections.tracking} placeholder="AW-123456789" onChange={(value) => setTrackingDraft((draft) => ({ ...draft, googleAdsTag: value }))} />
-              </div>
-              <div className="settings-field-hint-wrap">
-                <Field label="Meta Pixel" value={trackingDraft.pixel} disabled={lockedSections.tracking} placeholder="123456789012345" onChange={(value) => setTrackingDraft((draft) => ({ ...draft, pixel: value }))} />
-              </div>
-              <div className="settings-field-hint-wrap">
-                <Field label="네이버 WCS" value={trackingDraft.naver} disabled={lockedSections.tracking} placeholder="s_abcdef1234" onChange={(value) => setTrackingDraft((draft) => ({ ...draft, naver: value }))} />
-              </div>
-              <div className="settings-field-hint-wrap">
-                <Field label="카카오 픽셀" value={trackingDraft.kakao} disabled={lockedSections.tracking} placeholder="카카오 픽셀 ID" onChange={(value) => setTrackingDraft((draft) => ({ ...draft, kakao: value }))} />
-              </div>
-            </div>
-          </SettingsSection>
+              <SettingsSection id="tracking" title="추적 코드" description="GTM, GA4, 광고 픽셀 기본 ID를 연결합니다." openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.tracking} onSave={saveTracking} onEdit={() => editSection('tracking')}>
+                <div className="settings-grid">
+                  <div className="settings-field-hint-wrap">
+                    <Field label="GTM" value={trackingDraft.gtm} disabled={lockedSections.tracking} placeholder="GTM-XXXXXXX" onChange={(value) => setTrackingDraft((draft) => ({ ...draft, gtm: value }))} />
+                  </div>
+                  <div className="settings-field-hint-wrap">
+                    <Field label="GA4" value={trackingDraft.ga4} disabled={lockedSections.tracking} placeholder="G-XXXXXXXXXX" onChange={(value) => setTrackingDraft((draft) => ({ ...draft, ga4: value }))} />
+                  </div>
+                  <div className="settings-field-hint-wrap">
+                    <Field label="Google Ads 태그" value={trackingDraft.googleAdsTag} disabled={lockedSections.tracking} placeholder="AW-123456789" onChange={(value) => setTrackingDraft((draft) => ({ ...draft, googleAdsTag: value }))} />
+                  </div>
+                  <div className="settings-field-hint-wrap">
+                    <Field label="Meta Pixel" value={trackingDraft.pixel} disabled={lockedSections.tracking} placeholder="123456789012345" onChange={(value) => setTrackingDraft((draft) => ({ ...draft, pixel: value }))} />
+                  </div>
+                  <div className="settings-field-hint-wrap">
+                    <Field label="네이버 WCS" value={trackingDraft.naver} disabled={lockedSections.tracking} placeholder="s_abcdef1234" onChange={(value) => setTrackingDraft((draft) => ({ ...draft, naver: value }))} />
+                  </div>
+                  <div className="settings-field-hint-wrap">
+                    <Field label="카카오 픽셀" value={trackingDraft.kakao} disabled={lockedSections.tracking} placeholder="카카오 픽셀 ID" onChange={(value) => setTrackingDraft((draft) => ({ ...draft, kakao: value }))} />
+                  </div>
+                </div>
+              </SettingsSection>
 
-          <SettingsSection id="conversion" title="전환 추적" description="상담 신청, 예약 완료 같은 전환 이벤트를 광고 채널로 전송합니다." openSection={openSection} setOpenSection={setOpenSection} className="settings-conversion-card">
-            <div className="settings-conversion-grid">
-              <div className="settings-full settings-conversion-values" style={{ display: 'grid', gap: 10, minWidth: 0 }}>
-                <label style={{ display: 'grid', gap: 7, minWidth: 0 }}>
-                  <span style={{ color: '#111827', fontSize: 13, fontWeight: 950 }}>Google Ads 전환코드</span>
-                  <textarea
-                    value={page.meta.ads || ''}
-                    disabled={conversionLocked}
-                    onChange={(event) => updateConversionMeta({ ads: event.target.value })}
-                    placeholder="AW-123456789/AbCdEf"
-                    style={{ boxSizing: 'border-box', width: '100%', minHeight: 96, resize: 'vertical' }}
-                  />
-                </label>
-                <label style={{ display: 'grid', gap: 7, minWidth: 0 }}>
-                  <span style={{ color: '#111827', fontSize: 13, fontWeight: 950 }}>Meta Pixel ID</span>
-                  <input
-                    value={page.meta.pixel || ''}
-                    disabled={conversionLocked}
-                    onChange={(event) => updateConversionMeta({ pixel: event.target.value })}
-                    placeholder="123456789012345"
-                    style={{ boxSizing: 'border-box', width: '100%' }}
-                  />
-                </label>
-                <label style={{ display: 'grid', gap: 7, minWidth: 0 }}>
-                  <span style={{ color: '#111827', fontSize: 13, fontWeight: 950 }}>네이버 전환 ID</span>
-                  <input
-                    value={page.meta.naver || ''}
-                    disabled={conversionLocked}
-                    onChange={(event) => updateConversionMeta({ naver: event.target.value })}
-                    placeholder="s_abcdef1234"
-                    style={{ boxSizing: 'border-box', width: '100%' }}
-                  />
-                </label>
-                <label style={{ display: 'grid', gap: 7, minWidth: 0 }}>
-                  <span style={{ color: '#111827', fontSize: 13, fontWeight: 950 }}>카카오 픽셀 ID</span>
-                  <input
-                    value={page.meta.kakao || ''}
-                    disabled={conversionLocked}
-                    onChange={(event) => updateConversionMeta({ kakao: event.target.value })}
-                    placeholder="987654321"
-                    style={{ boxSizing: 'border-box', width: '100%' }}
-                  />
-                </label>
-                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-                  {conversionLocked ? (
-                    <button type="button" className="test-connection-btn" onClick={() => setConversionLocked(false)}>수정</button>
-                  ) : (
-                    <button type="button" className="save-connection-btn" disabled={!hasConversionValue} onClick={saveConversionValues}>저장</button>
+              <SettingsSection id="conversion" title="전환 추적" description="상담 신청, 예약 완료 같은 전환 이벤트를 광고 채널로 전송합니다." openSection={openSection} setOpenSection={setOpenSection} className="settings-conversion-card">
+                <div className="settings-conversion-grid">
+                  <div className="settings-full settings-conversion-values" style={{ display: 'grid', gap: 10, minWidth: 0 }}>
+                    <label style={{ display: 'grid', gap: 7, minWidth: 0 }}>
+                      <span style={{ color: '#111827', fontSize: 13, fontWeight: 950 }}>Google Ads 전환코드</span>
+                      <textarea
+                        value={page.meta.ads || ''}
+                        disabled={conversionLocked}
+                        onChange={(event) => updateConversionMeta({ ads: event.target.value })}
+                        placeholder="AW-123456789/AbCdEf"
+                        style={{ boxSizing: 'border-box', width: '100%', minHeight: 96, resize: 'vertical' }}
+                      />
+                    </label>
+                    <label style={{ display: 'grid', gap: 7, minWidth: 0 }}>
+                      <span style={{ color: '#111827', fontSize: 13, fontWeight: 950 }}>Meta Pixel ID</span>
+                      <input
+                        value={page.meta.pixel || ''}
+                        disabled={conversionLocked}
+                        onChange={(event) => updateConversionMeta({ pixel: event.target.value })}
+                        placeholder="123456789012345"
+                        style={{ boxSizing: 'border-box', width: '100%' }}
+                      />
+                    </label>
+                    <label style={{ display: 'grid', gap: 7, minWidth: 0 }}>
+                      <span style={{ color: '#111827', fontSize: 13, fontWeight: 950 }}>네이버 전환 ID</span>
+                      <input
+                        value={page.meta.naver || ''}
+                        disabled={conversionLocked}
+                        onChange={(event) => updateConversionMeta({ naver: event.target.value })}
+                        placeholder="s_abcdef1234"
+                        style={{ boxSizing: 'border-box', width: '100%' }}
+                      />
+                    </label>
+                    <label style={{ display: 'grid', gap: 7, minWidth: 0 }}>
+                      <span style={{ color: '#111827', fontSize: 13, fontWeight: 950 }}>카카오 픽셀 ID</span>
+                      <input
+                        value={page.meta.kakao || ''}
+                        disabled={conversionLocked}
+                        onChange={(event) => updateConversionMeta({ kakao: event.target.value })}
+                        placeholder="987654321"
+                        style={{ boxSizing: 'border-box', width: '100%' }}
+                      />
+                    </label>
+                    <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                      {conversionLocked ? (
+                        <button type="button" className="test-connection-btn" onClick={() => setConversionLocked(false)}>수정</button>
+                      ) : (
+                        <button type="button" className="save-connection-btn" disabled={!hasConversionValue} onClick={saveConversionValues}>저장</button>
+                      )}
+                    </div>
+                  </div>
+                  {showConversionToggles && (
+                    <>
+                      <Toggle label="전환 추적 사용" checked={!!integrations.conversion.enabled} onChange={(value) => updateIntegrations('conversion', { enabled: value })} />
+                      <div className="settings-full settings-conversion-help">
+                        dataLayer는 별도 ID 없이 이벤트만 전송합니다. 접수 성공 시 <code>lead_submit</code>, 방문예약 성공 시 <code>reservation_submit</code> 이벤트를 전송합니다.
+                      </div>
+                      <Toggle label="dataLayer" checked={!!integrations.conversion.dataLayer} onChange={(value) => updateIntegrations('conversion', { dataLayer: value })} />
+                      {conversionReady.pixel && <Toggle label="Meta Pixel" checked={!!integrations.conversion.metaPixel} onChange={(value) => updateIntegrations('conversion', { metaPixel: value })} />}
+                      {conversionReady.ads && <Toggle label="Google Ads" checked={!!integrations.conversion.googleAds} onChange={(value) => updateIntegrations('conversion', { googleAds: value })} />}
+                      {conversionReady.naver && <Toggle label="네이버" checked={!!integrations.conversion.naver} onChange={(value) => updateIntegrations('conversion', { naver: value })} />}
+                      {conversionReady.kakao && <Toggle label="카카오" checked={!!integrations.conversion.kakao} onChange={(value) => updateIntegrations('conversion', { kakao: value })} />}
+                    </>
                   )}
                 </div>
-              </div>
-              {showConversionToggles && (
-                <>
-                  <Toggle label="전환 추적 사용" checked={!!integrations.conversion.enabled} onChange={(value) => updateIntegrations('conversion', { enabled: value })} />
-                  <div className="settings-full settings-conversion-help">
-                    dataLayer는 별도 ID 없이 이벤트만 전송합니다. 접수 성공 시 <code>lead_submit</code>, 방문예약 성공 시 <code>reservation_submit</code> 이벤트를 전송합니다.
-                  </div>
-                  <Toggle label="dataLayer" checked={!!integrations.conversion.dataLayer} onChange={(value) => updateIntegrations('conversion', { dataLayer: value })} />
-                  {conversionReady.pixel && <Toggle label="Meta Pixel" checked={!!integrations.conversion.metaPixel} onChange={(value) => updateIntegrations('conversion', { metaPixel: value })} />}
-                  {conversionReady.ads && <Toggle label="Google Ads" checked={!!integrations.conversion.googleAds} onChange={(value) => updateIntegrations('conversion', { googleAds: value })} />}
-                  {conversionReady.naver && <Toggle label="네이버" checked={!!integrations.conversion.naver} onChange={(value) => updateIntegrations('conversion', { naver: value })} />}
-                  {conversionReady.kakao && <Toggle label="카카오" checked={!!integrations.conversion.kakao} onChange={(value) => updateIntegrations('conversion', { kakao: value })} />}
-                </>
-              )}
-            </div>
-          </SettingsSection>
+              </SettingsSection>
 
-          <SettingsSection id="duplicate" title="페이지 복제" description="현재 페이지를 다른 URL로 복사합니다. 접수 데이터와 통계는 복사하지 않습니다." badge="유료" openSection={openSection} setOpenSection={setOpenSection} className="page-duplicate-card">
-            <div className="page-duplicate-summary">
-              <div>
-                <strong>복제 범위</strong>
-                <p>설정, 블록, 스타일, 폼, CTA, 효과, SEO 기본값만 복사합니다.</p>
-              </div>
-              <button type="button" onClick={() => setDuplicateOpen(true)}>URL 설정</button>
+              <SettingsSection id="duplicate" title="페이지 복제" description="현재 페이지를 다른 URL로 복사합니다. 접수 데이터와 통계는 복사하지 않습니다." badge="유료" openSection={openSection} setOpenSection={setOpenSection} className="page-duplicate-card">
+                <div className="page-duplicate-summary">
+                  <div>
+                    <strong>복제 범위</strong>
+                    <p>설정, 블록, 스타일, 폼, CTA, 효과, SEO 기본값만 복사합니다.</p>
+                  </div>
+                  <button type="button" onClick={() => setDuplicateOpen(true)}>URL 설정</button>
+                </div>
+                {!canDuplicatePage && (
+                  <p className="page-duplicate-lock">결제 연동 전까지는 URL 설정 흐름만 확인할 수 있습니다.</p>
+                )}
+              </SettingsSection>
             </div>
-            {!canDuplicatePage && (
-              <p className="page-duplicate-lock">결제 연동 전까지는 URL 설정 흐름만 확인할 수 있습니다.</p>
-            )}
-          </SettingsSection>
+          )}
         </>
       )}
 

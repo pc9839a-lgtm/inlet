@@ -100,6 +100,17 @@ function hasTabDeepLink() {
   return TAB_KEYS.has(new URLSearchParams(location.search).get('tab') || '');
 }
 
+function publicLandingSlugFromLocation() {
+  if (typeof location === 'undefined') return '';
+  const pathname = location.pathname.replace(/\/+$/, '') || '/';
+  if (pathname === '/') return '';
+  if (WAYZI_STATIC_PAGES[pathname]) return '';
+  if (/^\/invite\/[^/?#]+/.test(pathname)) return '';
+  if (/^\/(?:admin|[^/?#]+\/admin)$/.test(pathname)) return '';
+  const slug = pathname.replace(/^\//, '').split('/')[0] || '';
+  return /^[a-zA-Z0-9-_]+$/.test(slug) ? slug : '';
+}
+
 function replaceLocationTab(nextTab) {
   if (typeof location === 'undefined' || typeof history === 'undefined') return;
   if (!TAB_KEYS.has(nextTab)) return;
@@ -575,6 +586,7 @@ function App() {
     const pathname = location.pathname.replace(/\/+$/, '') || '/';
     return WAYZI_STATIC_PAGES[pathname] || null;
   }, []);
+  const publicLandingSlug = useMemo(() => publicLandingSlugFromLocation(), []);
 
   const markSaveStatus = (tone, label, detail = '') => {
     setSaveStatus({ tone, label, detail, at: new Date().toISOString() });
@@ -1567,6 +1579,17 @@ function App() {
   };
 
   if (staticPage) return withWayziFooter(<WayziStaticPage page={staticPage} />);
+
+  if (publicLandingSlug) {
+    const publicPage = normalize({ ...previewPage, slug: publicLandingSlug || previewPage.slug });
+    return (
+      <LazyChunkBoundary resetKey={`public-${publicLandingSlug}`}>
+        <Suspense fallback={<LazyPanelFallback />}>
+          <PreviewRenderer page={publicPage} leads={leads} addLead={addLead} track={track} />
+        </Suspense>
+      </LazyChunkBoundary>
+    );
+  }
 
   if (mobileBlocked) return withWayziFooter(<div className="mobile-block"><div><Smartphone size={42}/><h1>편집은 PC에서 이용해주세요.</h1><p>결과물은 모바일 화면으로 최적화됩니다.</p></div></div>);
 
