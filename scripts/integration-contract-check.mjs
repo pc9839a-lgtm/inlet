@@ -385,7 +385,7 @@ requireAll(app, [
   '538-42-01450',
   '개인정보처리방침',
   'adminRoute',
-  "return /^\\/(?:admin|[^/?#]+\\/admin)\\/?$/.test(location.pathname)",
+  "return /^\\/(?:admin|[^/?#]+\\/admin)\\/?$/.test(routePath)",
   '<AdminPanel',
   'const canWriteTabKey = (key) => canWriteTab(accessMode, page, authUser, key)',
   'blockWrite',

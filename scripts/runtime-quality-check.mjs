@@ -171,7 +171,7 @@ assert(app.includes('NAV.filter(([key]) => allowedTabs.includes(key))'), 'naviga
 assert(app.includes('function tabFromLocation') && app.includes('function hasTabDeepLink') && app.includes("new URLSearchParams(location.search).get('tab')") && app.includes('replaceLocationTab(nextTab)'), 'App must support tab query deep links for authenticated visual QA and operator URLs');
 assert(app.includes('!tabDeepLink && <Suspense') && app.includes('<StartModeOverlay'), 'tab deep links must bypass the start mode overlay');
 assert(app.includes('canManageAdmin && !startMode') && app.includes('canManageAdmin && startMode === \'template\''), 'template/start controls must stay master-admin-only');
-assert(app.includes('adminRoute') && app.includes("return /^\\/(?:admin|[^/?#]+\\/admin)\\/?$/.test(location.pathname)") && app.includes('<AdminPanel'), 'admin panel must stay on a private /admin route');
+assert(app.includes('adminRoute') && app.includes("return /^\\/(?:admin|[^/?#]+\\/admin)\\/?$/.test(routePath)") && app.includes('<AdminPanel'), 'admin panel must stay on a private /admin route');
 assert(app.includes('const canWriteTabKey = (key) => canWriteTab(accessMode, page, authUser, key)') && app.includes('blockWrite'), 'App must enforce manager write permissions before mutation');
 assert(app.includes('selectedBlockId={canUseBuilder ? openId : \'\'}') && app.includes('onSelectBlock={canUseBuilder ? selectPreviewBlock : undefined}'), 'client admin preview must not route into block editing');
 assert(app.includes('class LazyEditorBoundary'), 'fixed block editors must isolate lazy chunk failures');
