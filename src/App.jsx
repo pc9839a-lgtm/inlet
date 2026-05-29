@@ -683,20 +683,15 @@ function App() {
     setPublicPageLoaded(false);
     setPublicPageError('');
     fetchPublicServerPage(publicLandingSlug)
-      .then(async (serverPage) => {
+      .then((serverPage) => {
         if (!alive) return;
         let nextPage = serverPage ? normalize(serverPage) : null;
         if (!nextPage && publicLandingSlug === 'my-page') {
-          try {
-            const templates = await import('./templates/landingTemplates.js');
-            nextPage = normalize({
-              ...templates.createTemplatePage('debt-relief-consult', defaultPage),
-              slug: 'my-page',
-              projectId: 'my-page',
-            });
-          } catch (error) {
-            console.warn('Public fallback page load failed:', error);
-          }
+          nextPage = normalize({
+            ...defaultPage,
+            slug: 'my-page',
+            projectId: 'my-page',
+          });
         }
         if (!alive) return;
         setPublicServerPage(nextPage);
