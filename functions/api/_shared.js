@@ -179,7 +179,7 @@ export async function authorizeProject(request, env = {}, project = {}, options 
   const enforce = String(env.INLET_PROJECT_AUTH_ENFORCE || '1') !== '0';
   const identity = await sessionIdentity(request, env);
   if (!enforce) return { project, identity };
-  if (identity?.projectId && identity.projectId === project.projectId) {
+  if (identity && (!identity.projectId || identity.projectId === project.projectId)) {
     if (apiTokenAuthorized(request, env)) return { project, identity };
     if (env.DB && typeof env.DB.prepare === 'function') {
       const access = await getD1ProjectAccess(env.DB, { projectId: project.projectId });
