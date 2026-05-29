@@ -359,6 +359,10 @@ function shouldExposeVerificationToken(env = {}, delivery = {}) {
 
 async function deliverAuthEmail(message = {}, env = {}) {
   const provider = emailProvider(env);
+  const nextMessage = {
+    ...message,
+    supportEmail: String(env.INLET_SUPPORT_EMAIL || 'support@pagero.kr').trim() || 'support@pagero.kr',
+  };
   if (provider === 'mock') {
     return {
       mode: 'mock',
@@ -367,7 +371,7 @@ async function deliverAuthEmail(message = {}, env = {}) {
       message: 'Offline QA mode returns the verification token in the API response.',
     };
   }
-  if (provider === 'ses') return sendSesAuthEmail(message, env);
+  if (provider === 'ses') return sendSesAuthEmail(nextMessage, env);
   throw authError('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 503, {
     code: 'EMAIL_SEND_PROVIDER_UNSUPPORTED',
     provider,
@@ -511,6 +515,7 @@ function mimeBase64Word(value = '') {
 }
 
 function authEmailText(message = {}) {
+  const supportEmail = String(message.supportEmail || 'support@pagero.kr').trim();
   const purposeText = String(message.purpose || '') === 'password-reset' ? '비밀번호 변경' : '회원가입';
   return [
     `페이지로 ${purposeText} 인증입니다.`,
@@ -522,13 +527,16 @@ function authEmailText(message = {}) {
     '이 코드는 전송 후 30분이 지나면 만료됩니다.',
     `만료 시간: ${message.expiresAt || '-'}`,
     '',
-    '본인이 요청하지 않았다면 이 메일은 무시해주세요.',
+    `본인이 요청하지 않았다면 고객센터(${supportEmail})에 문의해주세요.`,
     '',
-    'WAYZI',
+    '페이지로',
+    '대표 김도윤 · 사업자번호 538-42-01450',
+    `고객센터: ${supportEmail}`,
   ].join('\n');
 }
 
 function authEmailHtml(message = {}) {
+  const supportEmail = escapeHtml(String(message.supportEmail || 'support@pagero.kr').trim());
   const purposeText = String(message.purpose || '') === 'password-reset' ? '비밀번호 변경' : '회원가입';
   const token = escapeHtml(message.token || '');
   return `<!doctype html>
@@ -546,11 +554,12 @@ function authEmailHtml(message = {}) {
       <div style="margin-top:14px;font-size:13px;font-weight:800;color:#64748b;">30분 후 만료됩니다.</div>
     </div>
     <div style="padding:0 30px 28px;text-align:center;">
-      <p style="margin:0;font-size:13px;line-height:1.7;color:#64748b;">본인이 요청하지 않았다면 이 메일은 무시해주세요.<br>보안을 위해 이 코드를 다른 사람에게 알려주지 마세요.</p>
+      <p style="margin:0;font-size:13px;line-height:1.7;color:#64748b;">본인이 요청하지 않았다면 고객센터(<a href="mailto:${supportEmail}" style="color:#2563eb;text-decoration:none;font-weight:800;">${supportEmail}</a>)에 문의해주세요.<br>보안을 위해 이 코드를 다른 사람에게 알려주지 마세요.</p>
     </div>
     <div style="padding:18px 30px;background:#0f172a;color:#cbd5e1;text-align:center;font-size:12px;line-height:1.6;">
-      <strong style="display:block;color:#ffffff;font-size:14px;letter-spacing:.4px;">WAYZI</strong>
-      대표 김도윤 · 사업자번호 538-42-01450
+      <strong style="display:block;color:#ffffff;font-size:14px;letter-spacing:.4px;">페이지로</strong>
+      대표 김도윤 · 사업자번호 538-42-01450<br>
+      고객센터: <a href="mailto:${supportEmail}" style="color:#dbeafe;text-decoration:none;">${supportEmail}</a>
     </div>
   </div>
 </body>
