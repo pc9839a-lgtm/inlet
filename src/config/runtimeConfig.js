@@ -12,9 +12,11 @@ function envMs(key, fallback) {
 }
 
 const apiBaseUrl = normalizeBaseUrl(envValue('VITE_INLET_API_BASE') || envValue('VITE_API_BASE_URL'));
+const isLocalBrowser = typeof location !== 'undefined' && /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+const defaultDataMode = isLocalBrowser ? 'local' : 'server';
 const mapEmbedBaseUrl = normalizeBaseUrl(
   envValue('VITE_INLET_MAP_EMBED_BASE')
-    || (typeof location !== 'undefined' && /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? `${location.origin}/embed` : 'https://map.inlet.page/embed'),
+    || (isLocalBrowser ? `${location.origin}/embed` : 'https://map.inlet.page/embed'),
 );
 const leadIntegrationTimeoutMs = envMs('VITE_INLET_INTEGRATION_TIMEOUT_MS', 10000);
 
@@ -24,8 +26,8 @@ export const runtimeConfig = {
   googleMapsEmbedKey: envValue('VITE_GOOGLE_MAPS_EMBED_KEY'),
   apiToken: envValue('VITE_INLET_API_TOKEN') || envValue('VITE_API_TOKEN'),
   aiMode: envValue('VITE_INLET_AI_MODE') || (apiBaseUrl ? 'server' : 'client'),
-  leadMode: envValue('VITE_INLET_LEAD_MODE') || 'local',
-  pageMode: envValue('VITE_INLET_PAGE_MODE') || 'local',
+  leadMode: envValue('VITE_INLET_LEAD_MODE') || defaultDataMode,
+  pageMode: envValue('VITE_INLET_PAGE_MODE') || defaultDataMode,
   leadIntegrationTimeoutMs,
   customCodeJsEnabled: envValue('VITE_INLET_ENABLE_CUSTOM_CODE_JS') === '1',
   clientAiKeyStorageEnabled: envValue('VITE_INLET_ALLOW_CLIENT_AI_KEY_STORAGE') === '1',

@@ -1288,8 +1288,9 @@ function App() {
       const nextPage = normalizePageForSave({ ...page, theme: { ...page.theme, ...stylePreviewTheme } });
       setPage(nextPage);
       saveLocalJson(STORAGE_KEY, nextPage, '페이지');
+      let result = null;
       try {
-        await persistPage(nextPage, authUser);
+        result = await persistPage(nextPage, authUser);
       } catch (error) {
         const handled = await handlePageSaveError(error, nextPage);
         markSaveStatus(handled ? 'warning' : 'error', handled ? '저장 충돌' : '서버 저장 실패', handled
@@ -1302,7 +1303,9 @@ function App() {
       setConnectionsEditing(false);
       setSaved(true);
       setTimeout(() => setSaved(false), 1000);
-      markSaveStatus('ok', '서버 저장됨', '스타일과 페이지가 서버에 저장되었습니다.');
+      const saveModeLabel = result?.mode === 'local' ? '로컬 저장됨' : '서버 저장됨';
+      const saveModeDetail = result?.mode === 'local' ? '스타일과 페이지가 브라우저에 저장되었습니다.' : '스타일과 페이지가 서버에 저장되었습니다.';
+      markSaveStatus('ok', saveModeLabel, saveModeDetail);
       showToast('스타일 설정이 저장되었습니다.', 'success');
   };
 
@@ -1328,8 +1331,9 @@ function App() {
 
     const nextPage = normalizePageForSave(page);
     saveLocalJson(STORAGE_KEY, nextPage, '페이지');
+    let result = null;
     try {
-      await persistPage(nextPage, authUser);
+      result = await persistPage(nextPage, authUser);
     } catch (error) {
       const handled = await handlePageSaveError(error, nextPage);
       markSaveStatus(handled ? 'warning' : 'error', handled ? '저장 충돌' : '서버 저장 실패', handled
@@ -1341,7 +1345,9 @@ function App() {
     setConnectionsEditing(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 1000);
-    markSaveStatus('ok', '서버 저장됨', '페이지가 서버에 저장되었습니다.');
+    const saveModeLabel = result?.mode === 'local' ? '로컬 저장됨' : '서버 저장됨';
+    const saveModeDetail = result?.mode === 'local' ? '페이지가 브라우저에 저장되었습니다.' : '페이지가 서버에 저장되었습니다.';
+    markSaveStatus('ok', saveModeLabel, saveModeDetail);
   };
   const changeTab = (nextTab) => {
     if (!allowedTabs.includes(nextTab)) return;
