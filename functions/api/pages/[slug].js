@@ -2,6 +2,7 @@ import { decodeD1Page, getD1PageBySlug, getD1ProjectBySlug, upsertD1Page } from 
 import { assertD1, authorizeProject, ensureD1ProjectShell, handleApiError, jsonResponse, optionsResponse, projectFromRequest, readJson, sessionIdentity } from '../_shared.js';
 
 const METHODS = 'GET, POST, OPTIONS';
+const PUBLIC_PAGE_CACHE_CONTROL = 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400';
 
 function safeSlug(value = '') {
   return String(value || 'my-page').replace(/[^a-zA-Z0-9-_]/g, '') || 'my-page';
@@ -57,7 +58,9 @@ export async function onRequest({ request, env, params }) {
           : await getPublicPageBySlug(db, slug);
         const { page, project: publicProject } = result;
         if (!page) return jsonResponse(request, env, 404, { ok: false, error: 'Page not found' }, METHODS);
-        return jsonResponse(request, env, 200, { ok: true, page: publicPagePayload(page, publicProject) }, METHODS);
+        return jsonResponse(request, env, 200, { ok: true, page: publicPagePayload(page, publicProject) }, METHODS, {
+          cacheControl: PUBLIC_PAGE_CACHE_CONTROL,
+        });
       }
       await authorizeProject(request, env, project);
       const page = await getD1PageBySlug(db, { projectId: project.projectId, slug });

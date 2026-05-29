@@ -87,7 +87,7 @@ for (const [name, source, tokens] of [
   ['retry queue', retryQueue, ['listD1DeliveryRetryQueue', "type: 'delivery-retry-queue'", 'deadLetter', "tab: 'inbox'"]],
   ['events', events, ['insertD1Event', 'listD1Events', 'publicWrite: true', 'publicProjectShell(project)', "tab: 'stats'", 'eventType', 'meta: { source:']],
   ['stats summary', statsSummary, ['aggregateD1Stats', "source: 'server'", "adapter: 'd1'", "tab: 'stats'"]],
-  ['pages', pages, ['getD1PageBySlug', 'upsertD1Page', 'ensureD1ProjectShell', 'authorizeProject']],
+  ['pages', pages, ['getD1PageBySlug', 'upsertD1Page', 'ensureD1ProjectShell', 'authorizeProject', 'PUBLIC_PAGE_CACHE_CONTROL', 'stale-while-revalidate=86400']],
   ['page revisions', pageRevisions, ['listD1PageRevisions', "tab: 'edit'", 'revisions']],
   ['page revision', pageRevision, ['getD1PageRevision', "tab: 'edit'", 'revision.page']],
   ['page restore', pageRestore, ['getD1PageRevision', 'upsertD1Page', 'restore:', "tab: 'edit'"]],

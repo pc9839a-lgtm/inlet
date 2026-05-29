@@ -271,7 +271,7 @@ function FormHtmlModal({ form, onClose, generateStandaloneFormHtml }) {
       <div ref={dialogRef} className="inlet-html-modal compact" role="dialog" aria-modal="true" aria-labelledby="inlet-html-modal-title">
         <div className="inlet-html-head">
           <div>
-            <strong id="inlet-html-modal-title">Inlet Form HTML</strong>
+            <strong id="inlet-html-modal-title">페이지로 Form HTML</strong>
             <span>주소검색까지 포함된 단독 실행 코드입니다.</span>
           </div>
           <button type="button" onClick={onClose} aria-label="닫기">×</button>
@@ -279,7 +279,7 @@ function FormHtmlModal({ form, onClose, generateStandaloneFormHtml }) {
 
         <div className="inlet-code-notice">
           <b>현재는 단독 실행형 코드</b>
-          <p>서버/CDN 없이도 붙여넣으면 바로 작동하도록 스타일과 스크립트를 포함합니다. 그래서 코드가 길어집니다. 추후 Inlet 공통 스크립트를 배포하면 짧은 임베드 코드로 전환할 수 있습니다.</p>
+          <p>서버/CDN 없이도 붙여넣으면 바로 작동하도록 스타일과 스크립트를 포함합니다. 그래서 코드가 길어집니다. 추후 페이지로 공통 스크립트를 배포하면 짧은 임베드 코드로 전환할 수 있습니다.</p>
         </div>
 
         {showCode && <textarea readOnly value={code}/>}

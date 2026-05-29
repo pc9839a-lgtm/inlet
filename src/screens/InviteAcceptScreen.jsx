@@ -186,7 +186,7 @@ export default function InviteAcceptScreen({ token, authUser = null, onAccepted,
       <section className="auth-card">
         {onBack && <button className="auth-back" type="button" onClick={onBack}>메인으로</button>}
         <div className="auth-brand">
-          <strong>Inlet</strong>
+          <strong>페이지로</strong>
           <span>매니저 초대</span>
         </div>
         <div className="auth-copy">

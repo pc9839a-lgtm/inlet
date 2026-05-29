@@ -11,12 +11,12 @@
     questions: Array.isArray(form?.questions) ? form.questions : [],
   };
   const data = JSON.stringify(safe).replace(/</g,'\\u003c');
-  return `<!-- Inlet Form Embed Start -->
+  return `<!-- 페이지로 Form Embed Start -->
 <div id="inlet-form-root"></div>
 <script>window.INLET_FORM_CONFIG=${data};window.INLET_WEBHOOK_URL=window.INLET_WEBHOOK_URL||'';</script>
 <script>
 (function(){
-var cfg=window.INLET_FORM_CONFIG||{},root=document.getElementById('inlet-form-root'),brand='Inlet'; if(!root)return;
+var cfg=window.INLET_FORM_CONFIG||{},root=document.getElementById('inlet-form-root'),brand='페이지로'; if(!root)return;
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(s){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s];});}
 function notice(msg){var box=root.querySelector('[data-inlet-notice]');if(!box){box=document.createElement('div');box.setAttribute('data-inlet-notice','true');box.style.cssText='margin:10px 0;padding:10px 12px;border-radius:12px;background:#fee2e2;color:#991b1b;font-size:13px;font-weight:800;line-height:1.4';root.querySelector('.inlet-form')?.prepend(box);}box.textContent=msg;}
 function loadPostcode(cb){if(window.daum&&window.daum.Postcode)return cb(true);var old=document.querySelector('script[data-daum-postcode="true"]');if(old){old.addEventListener('load',function(){cb(true)},{once:true});old.addEventListener('error',function(){cb(false)},{once:true});return;}var s=document.createElement('script');s.src='https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js';s.async=true;s.dataset.daumPostcode='true';s.onload=function(){cb(true)};s.onerror=function(){cb(false)};document.head.appendChild(s);}
@@ -26,6 +26,6 @@ root.querySelectorAll('[data-address-button]').forEach(function(btn){btn.addEven
 root.querySelector('form').addEventListener('submit',function(e){e.preventDefault();var fd=new FormData(e.target),values={};cfg.questions.forEach(function(q){if(q.type==='multi')values[q.label]=fd.getAll(q.id);else if(q.type==='address')values[q.label]=[fd.get(q.id+'_postcode'),fd.get(q.id+'_base'),fd.get(q.id+'_detail')].filter(Boolean).join(' ');else values[q.label]=fd.get(q.id)||'';});var payload={brand:brand,type:'상담신청',title:cfg.title,values:values,createdAt:new Date().toISOString(),pageUrl:location.href};var done=function(){root.querySelector('.inlet-form').innerHTML='<div class="inlet-success"><h2>'+esc(cfg.successTitle)+'</h2><p>'+esc(cfg.success)+'</p><div class="inlet-brand">Made with '+brand+'</div></div>'};if(window.INLET_WEBHOOK_URL){fetch(window.INLET_WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(done).catch(function(){notice('전송에 실패했습니다.')});}else{try{var saved=JSON.parse(localStorage.getItem('inlet_form_leads')||'[]');saved.unshift(payload);localStorage.setItem('inlet_form_leads',JSON.stringify(saved.slice(0,200)));}catch(err){}done();}});
 })();
 </script>
-<!-- Inlet Form Embed End -->`;
+<!-- 페이지로 Form Embed End -->`;
 }
 

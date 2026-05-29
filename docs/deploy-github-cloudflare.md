@@ -86,6 +86,8 @@ Settings:
 - Production branch: `main`
 - Preview branch: `staging` or pull request previews
 - Pages project name: `inlet`
+- Production custom domains: `pagero.kr`, `www.pagero.kr`
+- Product display name: `페이지로`
 
 Manual deploy after Wrangler authentication:
 
@@ -107,12 +109,28 @@ Production environment variables:
 - `VITE_INLET_LEAD_MODE=server`
 - `VITE_INLET_PAGE_MODE=server`
 - `VITE_INLET_ENABLE_OWNER_ADMIN_MODE=1`
-- `VITE_INLET_API_BASE=https://api.example.com`
-- `VITE_INLET_API_TOKEN=<public-client-token-if-kept>`
+- `INLET_ALLOWED_ORIGINS=https://pagero.kr,https://www.pagero.kr,https://inlet-8mr.pages.dev`
+- `INLET_PROJECT_AUTH_ENFORCE=1`
+- `INLET_SESSION_SECRET=<long-random-secret>`
+- D1 binding `DB` -> `inlet-prod`
+- `VITE_INLET_API_BASE` should normally be unset on Cloudflare Pages so the browser calls same-origin `/api/*` Functions.
+- `VITE_INLET_API_TOKEN` should normally be unset for the public Pages app.
 - `VITE_INLET_MAP_EMBED_BASE=<map-wrapper-url-if-used>`
 - `VITE_GOOGLE_MAPS_EMBED_KEY=<embed-key-if-used>`
 
-Replace `api.example.com` with the real API domain.
+Do not rename the internal `INLET_*` environment keys during the brand rename. They are technical compatibility keys; only user-facing copy should show `페이지로`.
+
+Current custom-domain rollout status:
+
+- `pagero.kr`: DNS zone active, Pages custom domain pending HTTP validation.
+- `www.pagero.kr`: DNS zone active, Pages custom domain pending HTTP validation.
+- Until validation completes, `https://inlet-8mr.pages.dev` remains the working fallback host.
+
+Public page cost rule:
+
+- Public landing-page reads use `/api/pages/:slug?public=1` and may be edge cached briefly.
+- Form submit, lead list, stats, account/session, manager invite, and admin APIs must remain `no-store`.
+- Public page viewing should stay cheap; DB writes happen on form submit and editor save only.
 
 ## Node API Server Setup
 

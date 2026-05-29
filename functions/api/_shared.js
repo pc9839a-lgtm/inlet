@@ -20,13 +20,14 @@ export function corsHeaders(request, env = {}, methods = 'GET, POST, OPTIONS') {
   };
 }
 
-export function jsonResponse(request, env, status, payload, methods) {
+export function jsonResponse(request, env, status, payload, methods, options = {}) {
   return new Response(JSON.stringify(payload, null, 2), {
     status,
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'no-store',
+      'Cache-Control': options.cacheControl || 'no-store',
       ...corsHeaders(request, env, methods),
+      ...(options.headers || {}),
     },
   });
 }

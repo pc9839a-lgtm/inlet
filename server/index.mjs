@@ -3607,7 +3607,7 @@ async function sendServerLeadIntegrations(lead, page = {}) {
 
 function buildServerIntegrationJobs(integrations = {}, lead = {}, page = {}) {
   const payload = {
-    brand: 'Inlet',
+    brand: '페이지로',
     page: {
       title: page.title || '',
       slug: page.slug || '',
@@ -4449,9 +4449,9 @@ async function deliverEmailVerification(record = {}) {
   const purpose = String(record.purpose || 'signup') === 'password-reset' ? '비밀번호 변경' : '회원가입';
   const result = await sendEmailNotification({
     to: record.email,
-    subject: `[Inlet] ${purpose} 이메일 인증 코드`,
+    subject: `[페이지로] ${purpose} 이메일 인증 코드`,
     text: [
-      'Inlet 이메일 인증 코드입니다.',
+      '페이지로 이메일 인증 코드입니다.',
       '',
       `인증 코드: ${record.token}`,
       `만료 시간: ${record.expiresAt || '-'}`,

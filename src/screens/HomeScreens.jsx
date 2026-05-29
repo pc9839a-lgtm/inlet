@@ -202,10 +202,10 @@ function BuilderLiveDemo() {
   }, [step.ghost]);
 
   return (
-    <div className="live-demo-shell live-screen-loop" aria-label="Inlet 화면 제작 반복 예시">
+    <div className="live-demo-shell live-screen-loop" aria-label="페이지로 화면 제작 반복 예시">
       <div className="live-phone">
         <div className="live-phone-top">
-          <span>Inlet Page</span>
+          <span>페이지로</span>
           <b>LIVE</b>
         </div>
 
@@ -307,8 +307,8 @@ function PublicHome({ onLogin, onSignup }) {
     <div className="public-home-shell">
       <header className="public-home-header">
         <div className="public-home-brand">
-          <strong>Inlet</strong>
-          <span>인렛</span>
+          <strong>페이지로</strong>
+          <span>페이지로</span>
         </div>
 
         <nav>
@@ -320,7 +320,7 @@ function PublicHome({ onLogin, onSignup }) {
       <main className="public-home-main">
         <section className="public-hero public-hero-single">
           <div className="public-hero-copy">
-            <span>Inlet Page · Form · Inbox</span>
+            <span>페이지로 · Form · Inbox</span>
             <h1>고객이 들어오는<br/>첫 화면을 만드세요.</h1>
             <p>AI 초안으로 시작하고, 문구·버튼·상담폼은 직접 쉽게 수정하세요.</p>
 
@@ -480,12 +480,12 @@ function AuthScreen({ onAuth, initialMode = 'login', onBack }) {
       <section className="auth-card">
         {onBack && <button className="auth-back" type="button" onClick={onBack}>← 메인으로</button>}
         <div className="auth-brand">
-          <strong>Inlet</strong>
+          <strong>페이지로</strong>
           <span>고객 인입 랜딩 빌더</span>
         </div>
 
         <div className="auth-copy">
-          <h1>{mode === 'login' ? '로그인' : 'Inlet 시작하기'}</h1>
+          <h1>{mode === 'login' ? '로그인' : '페이지로 시작하기'}</h1>
           <p>고객이 들어오는 첫 화면을 만들고 관리하세요.</p>
         </div>
 
@@ -604,7 +604,7 @@ function Dashboard({ user, page, leads, onCreate, onEdit, onPreview, onLogout, o
     <div className="home-shell">
       <header className="home-header">
         <div className="home-brand">
-          <strong>Inlet</strong>
+          <strong>페이지로</strong>
           <span>랜딩 관리</span>
         </div>
 
@@ -763,7 +763,7 @@ function DashboardCreateFlow({ page, templates = [], onAi, onManual, onTemplate,
 
       {step === 'manual' && (
         <div className="home-create-footer-form">
-          <label><span>상호명</span><input value={footer.company} onChange={(e) => setFooterField('company', e.target.value)} placeholder="예: 인렛 상담센터" /></label>
+          <label><span>상호명</span><input value={footer.company} onChange={(e) => setFooterField('company', e.target.value)} placeholder="예: 페이지로 상담센터" /></label>
           <label><span>대표자</span><input value={footer.owner} onChange={(e) => setFooterField('owner', e.target.value)} placeholder="예: 홍길동" /></label>
           <label><span>연락처</span><input value={footer.phone} onChange={(e) => setFooterField('phone', e.target.value)} placeholder="010-0000-0000" /></label>
           <label><span>주소</span><input value={footer.address} onChange={(e) => setFooterField('address', e.target.value)} placeholder="사업장 주소" /></label>
@@ -925,7 +925,7 @@ function CreateLandingModal({ page, onClose, onAi, onManual, onTemplate, templat
               <p>푸터에 들어갈 최소 정보만 먼저 입력합니다. 나머지는 편집 화면에서 구성합니다.</p>
             </div>
             <div className="create-footer-form">
-              <label><span>상호명</span><input value={footer.company} onChange={(e) => setFooterField('company', e.target.value)} placeholder="예: 인렛 상담센터" /></label>
+              <label><span>상호명</span><input value={footer.company} onChange={(e) => setFooterField('company', e.target.value)} placeholder="예: 페이지로 상담센터" /></label>
               <label><span>대표자</span><input value={footer.owner} onChange={(e) => setFooterField('owner', e.target.value)} placeholder="예: 홍길동" /></label>
               <label><span>연락처</span><input value={footer.phone} onChange={(e) => setFooterField('phone', e.target.value)} placeholder="010-0000-0000" /></label>
               <label><span>주소</span><input value={footer.address} onChange={(e) => setFooterField('address', e.target.value)} placeholder="사업장 주소" /></label>
