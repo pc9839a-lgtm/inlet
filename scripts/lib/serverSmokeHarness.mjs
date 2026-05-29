@@ -137,6 +137,8 @@ export async function withServer(task, options = {}) {
       INLET_EVENTS_DEDUPE_MS: '30000',
       INLET_INTEGRATION_TIMEOUT_MS: '250',
       INLET_API_TOKEN: apiToken,
+      INLET_AUTH_EMAIL_MODE: 'mock',
+      INLET_EMAIL_PROVIDER: 'mock',
       ...(options.env || {}),
     },
     stdio: ['ignore', 'ignore', 'pipe'],
