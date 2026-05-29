@@ -100,9 +100,9 @@ function hasTabDeepLink() {
   return TAB_KEYS.has(new URLSearchParams(location.search).get('tab') || '');
 }
 
-function publicLandingSlugFromLocation() {
-  if (typeof location === 'undefined') return '';
-  const pathname = location.pathname.replace(/\/+$/, '') || '/';
+function publicLandingSlugFromLocation(path = '') {
+  if (typeof location === 'undefined' && !path) return '';
+  const pathname = String(path || location.pathname || '/').replace(/\/+$/, '') || '/';
   if (pathname === '/') return '';
   if (WAYZI_STATIC_PAGES[pathname]) return '';
   if (/^\/invite\/[^/?#]+/.test(pathname)) return '';
@@ -549,6 +549,7 @@ function App() {
   const [publicPageLoading, setPublicPageLoading] = useState(false);
   const [publicPageLoaded, setPublicPageLoaded] = useState(false);
   const [publicPageError, setPublicPageError] = useState('');
+  const [routePath, setRoutePath] = useState(() => (typeof location === 'undefined' ? '/' : location.pathname));
   const mobileBlocked = useMemo(() => typeof window !== 'undefined' && window.innerWidth < 900, []);
   const tabDeepLink = useMemo(() => hasTabDeepLink(), []);
   const { handlePageSaveError, useLatestServerPage, keepLocalPageDraft, forceSaveLocalPage } = usePageConflict({
@@ -576,20 +577,17 @@ function App() {
     return { ...nextPage, mapSiteId };
   }, [page, stylePreviewTheme, mapSiteId]);
   const inviteToken = useMemo(() => {
-    if (typeof location === 'undefined') return '';
-    const match = location.pathname.match(/^\/invite\/([^/?#]+)/);
+    const match = routePath.match(/^\/invite\/([^/?#]+)/);
     return match ? decodeURIComponent(match[1]) : '';
-  }, []);
+  }, [routePath]);
   const adminRoute = useMemo(() => {
-    if (typeof location === 'undefined') return false;
-    return /^\/(?:admin|[^/?#]+\/admin)\/?$/.test(location.pathname);
-  }, []);
+    return /^\/(?:admin|[^/?#]+\/admin)\/?$/.test(routePath);
+  }, [routePath]);
   const staticPage = useMemo(() => {
-    if (typeof location === 'undefined') return null;
-    const pathname = location.pathname.replace(/\/+$/, '') || '/';
+    const pathname = routePath.replace(/\/+$/, '') || '/';
     return WAYZI_STATIC_PAGES[pathname] || null;
-  }, []);
-  const publicLandingSlug = useMemo(() => publicLandingSlugFromLocation(), []);
+  }, [routePath]);
+  const publicLandingSlug = useMemo(() => publicLandingSlugFromLocation(routePath), [routePath]);
 
   const markSaveStatus = (tone, label, detail = '') => {
     setSaveStatus({ tone, label, detail, at: new Date().toISOString() });
@@ -615,6 +613,16 @@ function App() {
     return result;
   };
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const syncRoute = () => setRoutePath(window.location.pathname || '/');
+    window.addEventListener('popstate', syncRoute);
+    window.addEventListener('hashchange', syncRoute);
+    return () => {
+      window.removeEventListener('popstate', syncRoute);
+      window.removeEventListener('hashchange', syncRoute);
+    };
+  }, []);
   useEffect(() => {
     if (publicLandingSlug) return;
     saveLocalJson(STORAGE_KEY, normalizePageForSave(page), '페이지');
