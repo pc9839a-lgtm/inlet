@@ -1,4 +1,5 @@
 import { readOrCreateWorkspaceId, workspaceIdForAuthUser } from './authIdentity.js';
+import { sanitizePageSlug } from './pageSlugs.js';
 
 function safeId(value, fallback) {
   const cleaned = String(value || '').replace(/[^a-zA-Z0-9-_]/g, '');
@@ -6,7 +7,7 @@ function safeId(value, fallback) {
 }
 
 export function projectContext(page = {}, authUser = null) {
-  const slug = safeId(page.slug, 'my-page');
+  const slug = safeId(sanitizePageSlug(page.slug, 'my-page'), 'my-page');
   const workspaceId = authUser ? '' : readOrCreateWorkspaceId();
   const legacyOwnerId = safeId(authUser?.email || authUser?.id || authUser?.name || '', '');
   const ownerSource = authUser ? workspaceIdForAuthUser(authUser) : workspaceId;

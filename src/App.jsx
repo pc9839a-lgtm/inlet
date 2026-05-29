@@ -37,6 +37,7 @@ import { currentMonthValue, monthDateRange } from './lib/monthRange.js';
 import { fetchPublicServerPage, fetchServerPage, persistPage } from './lib/pageRepository.js';
 import { canUsePageDuplication, createDuplicatedPage } from './lib/pageDuplication.js';
 import { projectContext } from './lib/projectContext.js';
+import { createUniquePageSlug, shouldAutoReplaceSlug } from './lib/pageSlugs.js';
 import { fetchLinkPreview, linkThumbnailFromUrl, normalizeExternalUrl } from './lib/linkPreview.js';
 import { isReservationLead, normalizeLeadItem } from './lib/leadModel.js';
 import { clone, defaultPage, ensureUniqueAnchors, newBlock, normalize, normalizeIntegrations, normalizePageForSave, sanitizeBlock, uid } from './lib/pageModel.js';
@@ -677,11 +678,14 @@ function App() {
         }
         setPage((current) => {
           const currentSlug = current.slug || slug;
-          const nextContext = projectContext({ slug: currentSlug }, authUser);
+          const nextSlug = current.projectId && current.projectId === projectContext({ slug: currentSlug }, authUser).projectId
+            ? currentSlug
+            : (shouldAutoReplaceSlug(currentSlug) ? createUniquePageSlug(currentSlug, authUser) : currentSlug);
+          const nextContext = projectContext({ slug: nextSlug }, authUser);
           if (current.projectId === nextContext.projectId) return current;
           return normalizePageForSave({
             ...current,
-            slug: currentSlug,
+            slug: nextSlug,
             projectId: nextContext.projectId,
             ownerId: nextContext.ownerId,
           });
@@ -1612,14 +1616,28 @@ function App() {
 
   const createManual = (footerInfo = {}) => {
     if (!canManageAdmin) return;
+    const nextSlug = shouldAutoReplaceSlug(page.slug) ? createUniquePageSlug(page.slug || 'page', authUser) : page.slug;
+    const nextContext = projectContext({ slug: nextSlug }, authUser);
     if (footerInfo && Object.keys(footerInfo).length) {
       const nextPage = normalizePageForSave({
         ...page,
+        slug: nextSlug,
+        projectId: nextContext.projectId,
+        ownerId: nextContext.ownerId,
         blocks: page.blocks.map((block) => (
           block.type === 'footer'
             ? { ...block, s: { ...block.s, ...footerInfo } }
             : block
         )),
+      });
+      setPage(nextPage);
+      saveLocalJson(STORAGE_KEY, nextPage, '페이지');
+    } else if (nextSlug !== page.slug || page.projectId !== nextContext.projectId) {
+      const nextPage = normalizePageForSave({
+        ...page,
+        slug: nextSlug,
+        projectId: nextContext.projectId,
+        ownerId: nextContext.ownerId,
       });
       setPage(nextPage);
       saveLocalJson(STORAGE_KEY, nextPage, '페이지');
@@ -1636,9 +1654,11 @@ function App() {
     try {
       const templates = await loadTemplateModule();
       const templatePage = templates.createTemplatePage(templateId, page);
-      const templateContext = projectContext({ slug: templatePage.slug }, authUser);
+      const nextSlug = createUniquePageSlug(templatePage.slug, authUser);
+      const templateContext = projectContext({ slug: nextSlug }, authUser);
       const next = normalizePageForSave({
         ...templatePage,
+        slug: nextSlug,
         projectId: templateContext.projectId,
         ownerId: templateContext.ownerId,
       });
