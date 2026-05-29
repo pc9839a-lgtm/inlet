@@ -35,16 +35,16 @@
 
 .public-landing-viewport .topnav.topnav-one-line {
   position: fixed !important;
-  left: 50% !important;
+  left: max(0px, calc((100vw - 860px) / 2)) !important;
   right: auto !important;
   top: 0 !important;
   z-index: 140 !important;
   width: min(860px, 100vw) !important;
   max-width: 860px !important;
-  transform: translateX(-50%) !important;
+  transform: none !important;
   box-sizing: border-box !important;
   margin: 0 !important;
-  border-radius: 0 0 var(--radius) var(--radius) !important;
+  border-radius: 0 0 22px 22px !important;
 }
 
 .public-landing-viewport .landing-content > .topnav:first-child + .hero-full,
@@ -62,13 +62,13 @@
 
 .public-landing-viewport .bottom-bar {
   position: fixed !important;
-  left: 50% !important;
+  left: max(0px, calc((100vw - 860px) / 2)) !important;
   right: auto !important;
   bottom: 0 !important;
   z-index: 120 !important;
   width: min(860px, 100vw) !important;
   max-width: 860px !important;
-  transform: translateX(-50%) !important;
+  transform: none !important;
   box-sizing: border-box !important;
   margin: 0 !important;
   pointer-events: none !important;
@@ -115,11 +115,13 @@
   }
 
   .public-landing-viewport .bottom-bar {
+    left: 0 !important;
     width: 100vw !important;
     max-width: 100vw !important;
   }
 
   .public-landing-viewport .topnav.topnav-one-line {
+    left: 0 !important;
     width: 100vw !important;
     max-width: 100vw !important;
   }
