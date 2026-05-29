@@ -9,6 +9,7 @@
 }
 
 .public-landing-viewport {
+  position: relative;
   width: min(860px, 100%);
   height: 100vh;
   overflow: hidden;
@@ -26,6 +27,7 @@
   overflow-y: auto !important;
   overscroll-behavior: contain !important;
   -webkit-overflow-scrolling: touch !important;
+  scrollbar-gutter: stable !important;
 }
 
 .public-landing-viewport .landing-content {
@@ -50,6 +52,17 @@
   box-sizing: border-box !important;
   margin: 0 !important;
   border-radius: 0 0 22px 22px !important;
+  padding: 14px 22px !important;
+  box-shadow: 0 16px 42px rgba(15, 23, 42, .16) !important;
+}
+
+.public-landing-viewport .topnav-menu-loop .top-menu-track {
+  animation: none !important;
+  transform: none !important;
+}
+
+.public-landing-viewport .topnav-menu-set-copy {
+  display: none !important;
 }
 
 .public-landing-viewport .landing-content > .topnav:first-child + .hero-full,
@@ -78,17 +91,32 @@
   box-sizing: border-box !important;
   margin: 0 !important;
   pointer-events: none !important;
-  padding-left: 22px !important;
-  padding-right: 22px !important;
+  padding: 12px 22px calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+  background: linear-gradient(180deg, rgba(238, 241, 246, 0), rgba(238, 241, 246, .94) 24%, rgba(238, 241, 246, 1)) !important;
 }
 
 .public-landing-viewport > .bottom-bar .bottom-bar-buttons,
 .public-landing-viewport .bottom-bar .bottom-bar-buttons {
   width: 100% !important;
+  display: grid !important;
+  grid-template-columns: repeat(var(--bottom-button-count, 2), minmax(0, 1fr)) !important;
+  gap: 10px !important;
 }
 
 .public-landing-viewport .bottom-bar button {
   pointer-events: auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  min-height: 58px !important;
+  padding: 0 14px !important;
+  overflow: hidden !important;
+}
+
+.public-landing-viewport .bottom-bar button b {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
 }
 
 .public-landing-empty {
@@ -138,6 +166,8 @@
     left: 0 !important;
     width: 100vw !important;
     max-width: 100vw !important;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
   }
 
   .public-landing-viewport .topnav.topnav-one-line {

@@ -393,6 +393,7 @@ function RenderBottom({ block, blocks = [], buttonEffect = 'fill', go }) {
     '--bottom-button-text': s.buttonTextColor || '#ffffff',
     '--button': themeButtonColor(s),
     '--button-text': s.buttonTextColor || '#ffffff',
+    '--bottom-button-count': String(Math.max(1, btns.length || 1)),
   };
 
   return (

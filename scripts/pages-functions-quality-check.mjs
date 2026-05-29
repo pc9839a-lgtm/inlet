@@ -11,6 +11,7 @@ const leadCsv = await readFile('functions/api/leads/export.csv.js', 'utf8');
 const blockedHistory = await readFile('functions/api/leads/blocked-history.js', 'utf8');
 const deliveryLogs = await readFile('functions/api/leads/delivery-logs.js', 'utf8');
 const retryQueue = await readFile('functions/api/leads/retry-queue.js', 'utf8');
+const leadDeliver = await readFile('functions/api/leads/[id]/deliver.js', 'utf8');
 const events = await readFile('functions/api/events.js', 'utf8');
 const statsSummary = await readFile('functions/api/stats/summary.js', 'utf8');
 const pages = await readFile('functions/api/pages/[slug].js', 'utf8');
@@ -85,6 +86,7 @@ for (const [name, source, tokens] of [
   ['blocked history', blockedHistory, ['listD1BlockedLeadSubmissions', 'pageSlug', "source: 'd1'", "tab: 'inbox'"]],
   ['delivery logs', deliveryLogs, ['listD1DeliveryLogs', "type: 'delivery-logs'", "adapter: 'd1'", "tab: 'inbox'"]],
   ['retry queue', retryQueue, ['listD1DeliveryRetryQueue', "type: 'delivery-retry-queue'", 'deadLetter', "tab: 'inbox'"]],
+  ['lead deliver', leadDeliver, ['getD1Lead', 'upsertD1Lead', 'publicWrite: true', '알림 전송 설정 없음']],
   ['events', events, ['insertD1Event', 'listD1Events', 'publicWrite: true', 'publicProjectShell(project)', "tab: 'stats'", 'eventType', 'meta: { source:']],
   ['stats summary', statsSummary, ['aggregateD1Stats', "source: 'server'", "adapter: 'd1'", "tab: 'stats'"]],
   ['pages', pages, ['getD1PageBySlug', 'upsertD1Page', 'ensureD1ProjectShell', 'authorizeProject', 'PUBLIC_PAGE_CACHE_CONTROL', 'stale-while-revalidate=86400']],
@@ -143,6 +145,7 @@ for (const token of [
   '/api/leads/blocked-history',
   '/api/leads/delivery-logs',
   '/api/leads/retry-queue',
+  '/api/leads/:id/deliver',
   '/api/events',
   '/api/stats/summary',
   '/api/pages',
@@ -192,6 +195,7 @@ console.log(JSON.stringify({
     'functions/api/leads/blocked-history.js',
     'functions/api/leads/delivery-logs.js',
     'functions/api/leads/retry-queue.js',
+    'functions/api/leads/[id]/deliver.js',
     'functions/api/events.js',
     'functions/api/stats/summary.js',
     'functions/api/pages/[slug].js',

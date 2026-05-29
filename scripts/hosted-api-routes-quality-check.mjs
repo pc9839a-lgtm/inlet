@@ -158,6 +158,20 @@ async function run() {
     httpStatus: event.res.status,
   });
 
+  const leadDeliver = await jsonFetch(`/api/leads/${encodeURIComponent(`lead-${stamp}`)}/deliver`, {
+    method: 'POST',
+    body: JSON.stringify({
+      project,
+      page: { slug: project.slug },
+    }),
+  });
+  checks.push({
+    name: 'Hosted /api/leads/:id/deliver public write',
+    status: leadDeliver.res.ok && leadDeliver.data?.delivery?.status === 'none' ? 'ready' : 'failed-live',
+    httpStatus: leadDeliver.res.status,
+    failureReason: leadDeliver.data?.error || leadDeliver.text?.slice?.(0, 160) || '',
+  });
+
   const protectedLeads = await jsonFetch(`/api/leads?projectId=${encodeURIComponent(project.projectId)}&month=${month}`);
   checks.push({
     name: 'Hosted /api/leads read protection',

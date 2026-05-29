@@ -107,6 +107,7 @@ function publicLandingSlugFromLocation() {
   if (WAYZI_STATIC_PAGES[pathname]) return '';
   if (/^\/invite\/[^/?#]+/.test(pathname)) return '';
   if (/^\/(?:admin|[^/?#]+\/admin)$/.test(pathname)) return '';
+  if (/^\/(?:login|signup|api|assets|embed)(?:\/|$)/.test(pathname)) return '';
   const slug = pathname.replace(/^\//, '').split('/')[0] || '';
   return /^[a-zA-Z0-9-_]+$/.test(slug) ? slug : '';
 }
@@ -705,14 +706,7 @@ function App() {
     fetchPublicServerPage(publicLandingSlug)
       .then((serverPage) => {
         if (!alive) return;
-        let nextPage = serverPage ? normalize(serverPage) : null;
-        if (!nextPage) {
-          nextPage = normalize({
-            ...defaultPage,
-            slug: publicLandingSlug,
-            projectId: publicLandingSlug,
-          });
-        }
+        const nextPage = serverPage ? normalize(serverPage) : null;
         if (!alive) return;
         setPublicServerPage(nextPage);
         setPublicPageError(nextPage ? '' : '페이지를 찾을 수 없습니다.');
@@ -1006,7 +1000,14 @@ function App() {
     trackForPage(targetPage, { type: isReservationLead(savedLead) ? 'reservation_submit' : 'form_submit', label: savedLead.type });
 
     persistLead(savedLead, targetPage, authUser)
-      .then(()=>runLeadDeliveryForPage(savedLead, targetPage))
+      .then(()=>runLeadDeliveryForPage(savedLead, targetPage).catch((error) => {
+        console.warn('Lead delivery failed after save:', error);
+        return {
+          status: 'failed',
+          summary: '접수는 저장됐지만 알림 전송은 실패했습니다.',
+          logs: [{ target: '알림 전송', status: 'failed', message: String(error?.message || error), at: new Date().toISOString() }],
+        };
+      }))
       .then((report) => {
         if (!report) return;
         setLeads((list)=>list.map((item)=>item.id === savedLead.id ? { ...item, delivery: report } : item));
@@ -1679,16 +1680,15 @@ function App() {
   if (staticPage) return withWayziFooter(<WayziStaticPage page={staticPage} />);
 
   if (publicLandingSlug) {
-    const publicFallbackPage = normalize({ ...defaultPage, slug: publicLandingSlug, projectId: publicLandingSlug });
     const publicPage = publicServerPage
       ? normalize({ ...publicServerPage, slug: publicLandingSlug || publicServerPage.slug })
-      : publicFallbackPage;
+      : null;
     return (
       <main className="public-landing-shell">
         <div className="public-landing-viewport">
           <LazyChunkBoundary resetKey={`public-${publicLandingSlug}`}>
             <Suspense fallback={<LazyPanelFallback />}>
-              {!publicPage && (publicPageLoading || !publicPageLoaded) ? (
+              {publicPageLoading || !publicPageLoaded ? (
                 <LazyPanelFallback />
               ) : !publicPage ? (
                 <section className="public-landing-empty">
