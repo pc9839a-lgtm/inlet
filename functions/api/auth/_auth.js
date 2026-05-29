@@ -142,16 +142,20 @@ export async function issueEmailVerificationToken(input = {}, env = {}) {
   const purpose = String(input.purpose || 'signup').trim() || 'signup';
   if (!isValidEmail(email)) throw authError('Valid email is required.', 400, { code: 'AUTH_EMAIL_REQUIRED' });
   const now = Math.floor(Date.now() / 1000);
-  const payload = { email, purpose, iat: now, exp: now + 60 * 15 };
+  const expiresAt = new Date((now + 60 * 30) * 1000).toISOString();
+  const code = verificationCode();
+  const stored = await storeEmailVerificationCode(env.DB, { email, purpose, code, expiresAt }, env);
+  const payload = { email, purpose, iat: now, exp: now + 60 * 30 };
   const payloadPart = base64UrlEncode(JSON.stringify(payload));
-  const token = `${payloadPart}.${await hmacBase64Url(payloadPart, authSecret(env))}`;
-  const delivery = await deliverAuthEmail({ email, purpose, token, expiresAt: new Date(payload.exp * 1000).toISOString() }, env);
+  const signedFallbackToken = `${payloadPart}.${await hmacBase64Url(payloadPart, authSecret(env))}`;
+  const token = stored ? code : signedFallbackToken;
+  const delivery = await deliverAuthEmail({ email, purpose, token: code, expiresAt }, env);
   const exposeToken = shouldExposeVerificationToken(env, delivery);
   return {
     email,
     purpose,
     status: 'pending',
-    expiresAt: new Date(payload.exp * 1000).toISOString(),
+    expiresAt,
     delivery,
     ...(exposeToken ? { token } : {}),
   };
@@ -162,6 +166,8 @@ export async function confirmEmailVerificationToken(input = {}, env = {}) {
   const token = String(input.token || '').trim();
   if (!isValidEmail(email)) throw authError('Valid email is required.', 400, { code: 'AUTH_EMAIL_REQUIRED' });
   if (!token) throw authError('Email verification token is required.', 400, { code: 'EMAIL_VERIFICATION_TOKEN_REQUIRED' });
+  const stored = await confirmStoredEmailVerificationCode(env.DB, { email, code: token }, env);
+  if (stored) return stored;
   const [payloadPart, signaturePart] = token.split('.');
   if (!payloadPart || !signaturePart) throw authError('Email verification token is invalid.', 403, { code: 'EMAIL_VERIFICATION_INVALID' });
   const expected = await hmacBase64Url(payloadPart, authSecret(env));
@@ -181,6 +187,67 @@ export async function confirmEmailVerificationToken(input = {}, env = {}) {
     confirmedAt: new Date().toISOString(),
     delivery: { mode: 'mock', status: 'confirmed' },
   };
+}
+
+function verificationCode() {
+  const bytes = new Uint32Array(1);
+  crypto.getRandomValues(bytes);
+  return String(bytes[0] % 1000000).padStart(6, '0');
+}
+
+function verificationId() {
+  return crypto.randomUUID?.() || `email-verification-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+async function storeEmailVerificationCode(db, record = {}, env = {}) {
+  if (!db?.prepare) return false;
+  const codeHash = await hmacHex(`${record.email}:${record.purpose}:${record.code}`, authSecret(env));
+  try {
+    await db.prepare(`
+      INSERT INTO auth_email_verifications (id, email, purpose, code_hash, status, attempts, expires_at)
+      VALUES (?, ?, ?, ?, 'pending', 0, ?)
+    `).bind(verificationId(), record.email, record.purpose, codeHash, record.expiresAt).run();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function confirmStoredEmailVerificationCode(db, input = {}, env = {}) {
+  if (!db?.prepare || !/^\d{6}$/.test(String(input.code || ''))) return null;
+  const rows = await db.prepare(`
+    SELECT id, email, purpose, code_hash, attempts, expires_at
+    FROM auth_email_verifications
+    WHERE email = ? AND status = 'pending'
+    ORDER BY created_at DESC
+    LIMIT 5
+  `).bind(input.email).all();
+  const records = rows?.results || [];
+  const now = Date.now();
+  for (const record of records) {
+    if (Date.parse(record.expires_at || '') <= now) {
+      await db.prepare("UPDATE auth_email_verifications SET status = 'expired' WHERE id = ?").bind(record.id).run();
+      continue;
+    }
+    if (Number(record.attempts || 0) >= 5) {
+      await db.prepare("UPDATE auth_email_verifications SET status = 'blocked' WHERE id = ?").bind(record.id).run();
+      continue;
+    }
+    const expected = await hmacHex(`${input.email}:${record.purpose}:${input.code}`, authSecret(env));
+    if (expected === record.code_hash) {
+      const confirmedAt = new Date().toISOString();
+      await db.prepare("UPDATE auth_email_verifications SET status = 'confirmed', confirmed_at = ? WHERE id = ?").bind(confirmedAt, record.id).run();
+      return {
+        email: input.email,
+        purpose: String(record.purpose || 'signup'),
+        status: 'confirmed',
+        confirmedAt,
+        delivery: { mode: 'api', status: 'confirmed' },
+      };
+    }
+    await db.prepare('UPDATE auth_email_verifications SET attempts = attempts + 1 WHERE id = ?').bind(record.id).run();
+  }
+  throw authError('Email verification token is invalid.', 403, { code: 'EMAIL_VERIFICATION_INVALID' });
 }
 
 export async function registerAccount(input = {}, env = {}) {
@@ -296,7 +363,7 @@ async function deliverAuthEmail(message = {}, env = {}) {
     };
   }
   if (provider === 'ses') return sendSesAuthEmail(message, env);
-  throw authError('?? ??? ??? ?????. ?? ? ?? ??? ???.', 503, {
+  throw authError('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 503, {
     code: 'EMAIL_SEND_PROVIDER_UNSUPPORTED',
     provider,
   });
@@ -308,7 +375,7 @@ async function sendSesAuthEmail(message = {}, env = {}) {
   const secretAccessKey = String(env.AWS_SES_SECRET_ACCESS_KEY || env.INLET_AWS_SES_SECRET_ACCESS_KEY || '').trim();
   const from = String(env.INLET_AUTH_EMAIL_FROM || '').trim();
   if (!region || !accessKeyId || !secretAccessKey || !from) {
-    throw authError('?? ??? ??? ?????. ?? ? ?? ??? ???.', 503, {
+    throw authError('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 503, {
       code: 'EMAIL_SEND_NOT_CONFIGURED',
       provider: 'ses',
     });
@@ -368,7 +435,7 @@ async function sendSesAuthEmail(message = {}, env = {}) {
       signal: AbortSignal.timeout(10000),
     });
   } catch {
-    throw authError('?? ??? ??? ?????. ?? ? ?? ??? ???.', 503, {
+    throw authError('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 503, {
       code: 'EMAIL_SEND_TIMEOUT',
       provider: 'ses',
     });
@@ -390,7 +457,7 @@ async function sendSesAuthEmail(message = {}, env = {}) {
         : res.status === 429 || errorType.includes('throttl') || errorType.includes('limit')
           ? 'EMAIL_SEND_QUOTA_EXCEEDED'
           : 'EMAIL_SEND_PROVIDER_ERROR';
-    throw authError('?? ??? ??? ?????. ?? ? ?? ??? ???.', 503, {
+    throw authError('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 503, {
       code,
       provider: 'ses',
       httpStatus: res.status,
@@ -407,37 +474,55 @@ async function sendSesAuthEmail(message = {}, env = {}) {
 
 function authEmailSubject(purpose = 'signup') {
   return String(purpose || '') === 'password-reset'
-    ? '[페이지로] ???? ?? ??? ??'
-    : '[페이지로] ???? ??? ??';
+    ? '[페이지로] 비밀번호 변경 인증 코드'
+    : '[페이지로] 이메일 인증 코드';
 }
 
 function authEmailText(message = {}) {
-  const purposeText = String(message.purpose || '') === 'password-reset' ? '???? ??' : '????';
+  const purposeText = String(message.purpose || '') === 'password-reset' ? '비밀번호 변경' : '회원가입';
   return [
-    `페이지로 ${purposeText} ??? ?????.`,
+    `페이지로 ${purposeText} 인증입니다.`,
     '',
-    '?? ?? ??? ??? ??? ?? ???? ???? ???.',
+    '아래 확인 코드를 화면에 입력해주세요.',
     '',
     message.token,
     '',
-    `?? ??: ${message.expiresAt || '-'}`,
+    '이 코드는 전송 후 30분이 지나면 만료됩니다.',
+    `만료 시간: ${message.expiresAt || '-'}`,
     '',
-    '??? ???? ???? ? ??? ??? ???.',
+    '본인이 요청하지 않았다면 이 메일은 무시해주세요.',
+    '',
+    'WAYZI',
   ].join('\n');
 }
 
 function authEmailHtml(message = {}) {
-  const purposeText = String(message.purpose || '') === 'password-reset' ? '???? ??' : '????';
+  const purposeText = String(message.purpose || '') === 'password-reset' ? '비밀번호 변경' : '회원가입';
   const token = escapeHtml(message.token || '');
-  return [
-    '<div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827">',
-    `<h2 style="margin:0 0 12px">페이지로 ${escapeHtml(purposeText)} ??? ??</h2>`,
-    '<p>?? ?? ??? ??? ??? ?? ???? ???? ???.</p>',
-    `<pre style="white-space:pre-wrap;word-break:break-all;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:14px">${token}</pre>`,
-    `<p style="color:#6b7280">?? ??: ${escapeHtml(message.expiresAt || '-')}</p>`,
-    '<p style="color:#6b7280">??? ???? ???? ? ??? ??? ???.</p>',
-    '</div>',
-  ].join('');
+  return `<!doctype html>
+<html lang="ko">
+<body style="margin:0;background:#f3f6fb;padding:32px 16px;font-family:Arial,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:#101828;">
+  <div style="max-width:520px;margin:0 auto;background:#ffffff;border:1px solid #dbe4f0;border-radius:24px;box-shadow:0 18px 50px rgba(15,23,42,.10);overflow:hidden;">
+    <div style="padding:30px 30px 18px;text-align:center;">
+      <div style="display:inline-block;margin-bottom:14px;padding:7px 12px;border-radius:999px;background:#eef4ff;color:#1d4ed8;font-size:13px;font-weight:800;">페이지로 이메일 인증</div>
+      <h1 style="margin:0;font-size:24px;line-height:1.3;font-weight:900;color:#0f172a;">${escapeHtml(purposeText)} 확인 코드</h1>
+      <p style="margin:10px 0 0;font-size:15px;line-height:1.6;color:#667085;">아래 6자리 코드를 인증 화면에 입력해주세요.</p>
+    </div>
+    <div style="margin:0 30px 22px;padding:24px 16px;border-radius:20px;background:#f8fafc;border:1px solid #e2e8f0;text-align:center;">
+      <div style="font-size:13px;font-weight:900;color:#475569;margin-bottom:8px;">확인 코드</div>
+      <div style="font-size:48px;line-height:1;font-weight:950;letter-spacing:6px;color:#020617;">${token}</div>
+      <div style="margin-top:14px;font-size:13px;font-weight:800;color:#64748b;">30분 후 만료됩니다.</div>
+    </div>
+    <div style="padding:0 30px 28px;text-align:center;">
+      <p style="margin:0;font-size:13px;line-height:1.7;color:#64748b;">본인이 요청하지 않았다면 이 메일은 무시해주세요.<br>보안을 위해 이 코드를 다른 사람에게 알려주지 마세요.</p>
+    </div>
+    <div style="padding:18px 30px;background:#0f172a;color:#cbd5e1;text-align:center;font-size:12px;line-height:1.6;">
+      <strong style="display:block;color:#ffffff;font-size:14px;letter-spacing:.4px;">WAYZI</strong>
+      대표 김도윤 · 사업자번호 538-42-01450
+    </div>
+  </div>
+</body>
+</html>`;
 }
 function escapeHtml(value = '') {
   return String(value || '')

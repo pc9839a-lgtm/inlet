@@ -8,6 +8,7 @@ const schema = await readFile('migrations/0001_inlet_core.sql', 'utf8');
 const leadDedupeMigration = await readFile('migrations/0002_lead_dedupe_fields.sql', 'utf8');
 const eventDimensionsMigration = await readFile('migrations/0003_event_dimensions.sql', 'utf8');
 const blockedLeadMigration = await readFile('migrations/0004_lead_blocked_submissions.sql', 'utf8');
+const authEmailMigration = await readFile('migrations/0005_auth_email_verifications.sql', 'utf8');
 const adapter = await readFile('server/storage/d1Adapter.mjs', 'utf8');
 const runtimeAdapter = await readFile('server/storage/runtimeAdapter.mjs', 'utf8');
 const wrangler = await readFile('wrangler.jsonc', 'utf8');
@@ -125,6 +126,17 @@ for (const token of [
 }
 
 for (const token of [
+  'CREATE TABLE IF NOT EXISTS auth_email_verifications',
+  'code_hash',
+  "status TEXT NOT NULL DEFAULT 'pending'",
+  'attempts INTEGER NOT NULL DEFAULT 0',
+  'idx_auth_email_verifications_lookup',
+  'idx_auth_email_verifications_purpose',
+]) {
+  assert(authEmailMigration.includes(token), `D1 auth email migration missing token: ${token}`);
+}
+
+for (const token of [
   'isD1MissingLeadDedupeColumnError',
   'isD1MissingEventDimensionColumnError',
   'upsertD1LeadLegacy',
@@ -171,6 +183,7 @@ console.log(JSON.stringify({
   leadDedupeMigration: '0002_lead_dedupe_fields.sql',
   eventDimensionsMigration: '0003_event_dimensions.sql',
   blockedLeadMigration: '0004_lead_blocked_submissions.sql',
+  authEmailMigration: '0005_auth_email_verifications.sql',
   adapter: 'server/storage/d1Adapter.mjs',
   runtimeAdapter: 'server/storage/runtimeAdapter.mjs',
 }, null, 2));

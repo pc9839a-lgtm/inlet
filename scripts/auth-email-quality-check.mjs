@@ -12,7 +12,7 @@ async function expectAuthEmailError(env = {}, expectedCode = '') {
     const message = String(error?.message || '');
     assert(error?.status === 503, `expected email send failure status 503, got ${error?.status}`);
     assert(error?.details?.code === expectedCode, `expected ${expectedCode}, got ${error?.details?.code}`);
-    assert(message === '?? ??? ??? ?????. ?? ? ?? ??? ???.', 'email send failure must use generic Korean copy');
+    assert(message === '메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 'email send failure must use generic Korean copy');
     assert(!/AWS|SES|quota|sandbox|domain|secret|token|access key/i.test(message), 'email send failure must not expose provider/internal detail');
     return;
   }
@@ -40,10 +40,15 @@ await expectAuthEmailError({
 
 const authSource = await readFile('functions/api/auth/_auth.js', 'utf8');
 for (const token of [
-  '[페이지로] ???? ?? ??? ??',
-  '[페이지로] ???? ??? ??',
-  '?? ?? ??? ??? ??? ?? ???? ???? ???.',
-  '??? ???? ???? ? ??? ??? ???.',
+  '[페이지로] 비밀번호 변경 인증 코드',
+  '[페이지로] 이메일 인증 코드',
+  '아래 6자리 코드를 인증 화면에 입력해주세요.',
+  'font-size:48px',
+  'letter-spacing:6px',
+  '30분 후 만료됩니다.',
+  '본인이 요청하지 않았다면 이 메일은 무시해주세요.',
+  'auth_email_verifications',
+  'Number(record.attempts || 0) >= 5',
   'EMAIL_SEND_SANDBOX_REJECTED',
   'EMAIL_DOMAIN_NOT_VERIFIED',
   'EMAIL_SEND_QUOTA_EXCEEDED',
