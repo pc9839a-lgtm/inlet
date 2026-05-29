@@ -146,6 +146,11 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
   }, [normal.length]);
 
   useEffect(() => {
+    if (publicView) {
+      setHideBottomForForm(false);
+      return;
+    }
+
     const root = pageRef.current;
     if (!root) return;
 
@@ -175,7 +180,7 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
       root.removeEventListener('scroll', check);
       window.removeEventListener('resize', check);
     };
-  }, [normal.length]);
+  }, [normal.length, publicView]);
 
   useEffect(() => {
     const root = pageRef.current;
@@ -286,7 +291,8 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
   const bgEffect = pickSafe(page.theme.bgEffect || 'none', ['none','snow','petals','sparkle'], 'none');
   const bgEffectOpacity = Math.max(0.1, Math.min(0.9, Number(page.theme.bgEffectOpacity ?? 45) / 100));
 
-  const bottomNode = bottomActive && !hideBottomForForm ? <RenderBottom block={bottom} blocks={blocks} go={go}/> : null;
+  const shouldHideBottom = !publicView && hideBottomForForm;
+  const bottomNode = bottomActive && !shouldHideBottom ? <RenderBottom block={bottom} blocks={blocks} go={go}/> : null;
 
   const pageNode = (
     <div ref={pageRef} onClickCapture={templatePreview || publicView ? undefined : handlePreviewSelect} className={`landing-page font-${page.theme.font} font-family-${page.theme.fontFamily || 'pretendard'} bgmode-${page.theme.bgMode || 'solid'} bg-effect-${bgEffect} button-effect-${buttonEffect} ${publicView ? 'public-render' : ''} ${templatePreview ? 'template-preview' : ''} ${bottomActive ? 'has-bottom-bar' : ''} ${page.theme.animOn ? `anim-on anim-${page.theme.animType || 'fade'}` : ''}`} style={{'--accent':page.theme.accent,'--button':page.theme.accent,'--button-text':'#ffffff','--bg':pageBg,'--card':page.theme.card,'--text':page.theme.text,'--radius':`${page.theme.radius}px`,'--bg-effect-opacity':bgEffectOpacity,background:pageBg,color:page.theme.text,backgroundSize:bgSize,backgroundPosition:bgPosition,backgroundRepeat:'no-repeat'}}>
