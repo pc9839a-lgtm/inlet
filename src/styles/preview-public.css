@@ -29,6 +29,32 @@
   margin: 0 auto !important;
 }
 
+.public-landing-empty {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  gap: 10px;
+  padding: 32px 24px;
+  text-align: center;
+  background: #fff;
+}
+
+.public-landing-empty h1 {
+  margin: 0;
+  color: #111827;
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 950;
+}
+
+.public-landing-empty p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.55;
+  font-weight: 800;
+}
+
 @media (max-width: 860px) {
   .public-landing-shell {
     display: block;

@@ -548,6 +548,8 @@ function App() {
   const [templateChoices, setTemplateChoices] = useState([]);
   const [publicServerPage, setPublicServerPage] = useState(null);
   const [publicPageLoading, setPublicPageLoading] = useState(false);
+  const [publicPageLoaded, setPublicPageLoaded] = useState(false);
+  const [publicPageError, setPublicPageError] = useState('');
   const mobileBlocked = useMemo(() => typeof window !== 'undefined' && window.innerWidth < 900, []);
   const tabDeepLink = useMemo(() => hasTabDeepLink(), []);
   const { handlePageSaveError, useLatestServerPage, keepLocalPageDraft, forceSaveLocalPage } = usePageConflict({
@@ -678,18 +680,25 @@ function App() {
     if (!publicLandingSlug) return undefined;
     let alive = true;
     setPublicPageLoading(true);
+    setPublicPageLoaded(false);
+    setPublicPageError('');
     fetchPublicServerPage(publicLandingSlug)
       .then((serverPage) => {
         if (!alive) return;
         setPublicServerPage(serverPage ? normalize(serverPage) : null);
+        setPublicPageError(serverPage ? '' : '페이지를 찾을 수 없습니다.');
       })
       .catch((error) => {
         if (!alive) return;
         console.warn('Public page load failed:', error);
         setPublicServerPage(null);
+        setPublicPageError('페이지를 불러오지 못했습니다.');
       })
       .finally(() => {
-        if (alive) setPublicPageLoading(false);
+        if (alive) {
+          setPublicPageLoading(false);
+          setPublicPageLoaded(true);
+        }
       });
     return () => { alive = false; };
   }, [publicLandingSlug]);
@@ -1611,14 +1620,19 @@ function App() {
   if (staticPage) return withWayziFooter(<WayziStaticPage page={staticPage} />);
 
   if (publicLandingSlug) {
-    const publicPage = normalize({ ...(publicServerPage || previewPage), slug: publicLandingSlug || publicServerPage?.slug || previewPage.slug });
+    const publicPage = publicServerPage ? normalize({ ...publicServerPage, slug: publicLandingSlug || publicServerPage.slug }) : null;
     return (
       <main className="public-landing-shell">
         <div className="public-landing-viewport">
           <LazyChunkBoundary resetKey={`public-${publicLandingSlug}`}>
             <Suspense fallback={<LazyPanelFallback />}>
-              {publicPageLoading ? (
+              {publicPageLoading || !publicPageLoaded ? (
                 <LazyPanelFallback />
+              ) : !publicPage ? (
+                <section className="public-landing-empty">
+                  <h1>페이지를 찾을 수 없습니다.</h1>
+                  <p>{publicPageError || '주소를 확인하거나 페이지를 다시 저장해주세요.'}</p>
+                </section>
               ) : (
                 <PreviewRenderer
                   page={publicPage}

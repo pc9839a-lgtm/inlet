@@ -1,4 +1,4 @@
-import { getD1PageBySlug, getD1ProjectBySlug, upsertD1Page } from '../../../server/storage/d1Adapter.mjs';
+import { decodeD1Page, getD1PageBySlug, getD1ProjectBySlug, upsertD1Page } from '../../../server/storage/d1Adapter.mjs';
 import { assertD1, authorizeProject, ensureD1ProjectShell, handleApiError, jsonResponse, optionsResponse, projectFromRequest, readJson, sessionIdentity } from '../_shared.js';
 
 const METHODS = 'GET, POST, OPTIONS';
@@ -20,6 +20,27 @@ function publicPagePayload(page = {}, project = {}) {
   };
 }
 
+async function getPublicPageBySlug(db, slug) {
+  const project = await getD1ProjectBySlug(db, slug);
+  if (project?.projectId && project.status !== 'archived') {
+    const page = await getD1PageBySlug(db, { projectId: project.projectId, slug });
+    if (page) return { page, project };
+  }
+
+  const row = await db.prepare(`
+    SELECT pages.*
+    FROM pages
+    LEFT JOIN projects ON projects.id = pages.project_id
+    WHERE pages.slug = ?
+      AND COALESCE(projects.status, 'active') <> 'archived'
+    ORDER BY pages.updated_at DESC
+    LIMIT 1
+  `).bind(slug).first();
+  if (!row) return { page: null, project: null };
+  const page = decodeD1Page(row);
+  return { page, project: { projectId: page.projectId, slug: page.slug } };
+}
+
 export async function onRequest({ request, env, params }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, METHODS);
 
@@ -31,11 +52,10 @@ export async function onRequest({ request, env, params }) {
     if (request.method === 'GET') {
       const project = projectFromRequest(url, {}, request);
       if (url.searchParams.get('public') === '1') {
-        const publicProject = project.projectId ? project : await getD1ProjectBySlug(db, slug);
-        if (!publicProject?.projectId || publicProject.status === 'archived') {
-          return jsonResponse(request, env, 404, { ok: false, error: 'Page not found' }, METHODS);
-        }
-        const page = await getD1PageBySlug(db, { projectId: publicProject.projectId, slug });
+        const result = project.projectId
+          ? { project, page: await getD1PageBySlug(db, { projectId: project.projectId, slug }) }
+          : await getPublicPageBySlug(db, slug);
+        const { page, project: publicProject } = result;
         if (!page) return jsonResponse(request, env, 404, { ok: false, error: 'Page not found' }, METHODS);
         return jsonResponse(request, env, 200, { ok: true, page: publicPagePayload(page, publicProject) }, METHODS);
       }
