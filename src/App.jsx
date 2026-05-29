@@ -686,11 +686,11 @@ function App() {
       .then((serverPage) => {
         if (!alive) return;
         let nextPage = serverPage ? normalize(serverPage) : null;
-        if (!nextPage && publicLandingSlug === 'my-page') {
+        if (!nextPage) {
           nextPage = normalize({
             ...defaultPage,
-            slug: 'my-page',
-            projectId: 'my-page',
+            slug: publicLandingSlug,
+            projectId: publicLandingSlug,
           });
         }
         if (!alive) return;
@@ -1629,9 +1629,7 @@ function App() {
   if (staticPage) return withWayziFooter(<WayziStaticPage page={staticPage} />);
 
   if (publicLandingSlug) {
-    const publicFallbackPage = publicLandingSlug === 'my-page'
-      ? normalize({ ...defaultPage, slug: 'my-page', projectId: 'my-page' })
-      : null;
+    const publicFallbackPage = normalize({ ...defaultPage, slug: publicLandingSlug, projectId: publicLandingSlug });
     const publicPage = publicServerPage
       ? normalize({ ...publicServerPage, slug: publicLandingSlug || publicServerPage.slug })
       : publicFallbackPage;
