@@ -110,13 +110,31 @@ function managerInviteState(manager, inviteUrl = '') {
   return '초대 전';
 }
 
-function SettingsSection({ id, title, openSection, setOpenSection, locked = false, onSave, onEdit, children, className = '' }) {
+function SettingsSection({
+  id,
+  title,
+  description = '',
+  badge = '',
+  openSection,
+  setOpenSection,
+  locked = false,
+  onSave,
+  onEdit,
+  children,
+  className = '',
+}) {
   const open = openSection === id;
   return (
     <section className={`card settings-section ${open ? 'open' : ''} ${className}`}>
       <button type="button" className="settings-section-head" onClick={() => setOpenSection(open ? '' : id)}>
-        <h2>{title}</h2>
-        <span>{open ? '접기' : '열기'}</span>
+        <span className="settings-section-copy">
+          <span className="settings-section-title-row">
+            <h2>{title}</h2>
+            {badge && <em>{badge}</em>}
+          </span>
+          {description && <small>{description}</small>}
+        </span>
+        <span className="settings-section-state">{open ? '접기' : '설정'}</span>
       </button>
       {open && (
         <div className="settings-section-body">
@@ -624,11 +642,21 @@ export default function SettingsPanel({
 
   return (
     <div className="simple-panel settings-panel">
-      <SettingsSection id="account" title="내 계정" openSection={openSection} setOpenSection={setOpenSection} className="account-settings-section">
-        <AccountSettingsSection authUser={authUser} onAccountUpdate={onAccountUpdate} onLogout={onLogout} />
-      </SettingsSection>
+      <div className="settings-overview-card">
+        <div>
+          <span>설정</span>
+          <h2>{page.title || '현재 페이지'}</h2>
+          <p>운영에 필요한 항목만 먼저 보이도록 정리했습니다. 접수 중복 관리는 접수함에서 설정합니다.</p>
+        </div>
+        <strong>/{page.slug || 'page'}</strong>
+      </div>
 
-      <SettingsSection id="basic" title="페이지 기본" openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.basic} onSave={saveBasic} onEdit={() => editSection('basic')}>
+      <div className="settings-group-label">
+        <span>기본 운영</span>
+        <small>페이지 주소, 권한, 전송처럼 자주 쓰는 설정입니다.</small>
+      </div>
+
+      <SettingsSection id="basic" title="페이지 기본" description="페이지명과 공개 주소를 관리합니다." badge="필수" openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.basic} onSave={saveBasic} onEdit={() => editSection('basic')}>
         <div className="settings-grid">
           <Field label="페이지명" value={basicDraft.title} disabled={lockedSections.basic || clientAdminMode} onChange={(value) => setBasicDraft((draft) => ({ ...draft, title: value }))} />
           <Field label="페이지 주소" prefix="/" value={basicDraft.slug} disabled={lockedSections.basic || clientAdminMode} onChange={(value) => setBasicDraft((draft) => ({ ...draft, slug: value.replace(/[^a-zA-Z0-9-_]/g, '') }))} />
@@ -636,23 +664,8 @@ export default function SettingsPanel({
         </div>
       </SettingsSection>
 
-      {!clientAdminMode && (
-        <SettingsSection id="duplicate" title="페이지 복제" openSection={openSection} setOpenSection={setOpenSection} className="page-duplicate-card">
-          <div className="page-duplicate-summary">
-            <div>
-              <strong>유료 기능</strong>
-              <p>현재 페이지의 설정, 블록, 스타일, 폼, CTA, 효과, SEO 기본값만 복사합니다. 접수/통계/전송로그/매니저 권한/소유권이전 기록은 복사하지 않습니다.</p>
-            </div>
-            <button type="button" onClick={() => setDuplicateOpen(true)}>URL 설정</button>
-          </div>
-          {!canDuplicatePage && (
-            <p className="page-duplicate-lock">결제 연동 전까지는 URL 설정 흐름만 확인할 수 있습니다. 템플릿 복제가 아니라 페이지 복제만 유료 기능입니다.</p>
-          )}
-        </SettingsSection>
-      )}
-
-            {canManageProjectUsers && (
-        <SettingsSection id="managers" title="매니저 권한" openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.managers} onSave={saveManagers} onEdit={editManagers} className="manager-access-card">
+      {canManageProjectUsers && (
+        <SettingsSection id="managers" title="매니저 권한" description="초대 계정별로 편집, 접수함, 통계 접근 범위를 나눕니다." badge={`${managerDraft.length}명`} openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.managers} onSave={saveManagers} onEdit={editManagers} className="manager-access-card">
           <div className="manager-section-tools">
             <div>
               <p>기본 정보만 먼저 보이고, 상세 권한과 초대 링크는 매니저별로 열어서 관리합니다.</p>
@@ -777,9 +790,7 @@ export default function SettingsPanel({
         </SettingsSection>
       )}
 
-      
-
-      <SettingsSection id="send" title="전송" openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.send} onSave={saveSend} onEdit={() => editSection('send')} className="settings-conversion-card">
+      <SettingsSection id="send" title="전송" description="Webhook, 자동화 도구로 접수 데이터를 넘깁니다." openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.send} onSave={saveSend} onEdit={() => editSection('send')} className="settings-conversion-card">
         <div className="settings-conversion-grid">
           <Toggle label="Webhook 사용" checked={!!sendDraft.webhookEnabled} disabled={lockedSections.send} onChange={(value) => setSendDraft((draft) => ({ ...draft, webhookEnabled: value }))} />
           {sendDraft.webhookEnabled && <Field label="Webhook URL" value={sendDraft.webhookUrl} disabled={lockedSections.send} onChange={(value) => setSendDraft((draft) => ({ ...draft, webhookUrl: value }))} />}
@@ -788,9 +799,18 @@ export default function SettingsPanel({
         </div>
       </SettingsSection>
 
+      <SettingsSection id="account" title="내 계정" description="내 이름, 휴대폰 번호, 비밀번호를 관리합니다." openSection={openSection} setOpenSection={setOpenSection} className="account-settings-section">
+        <AccountSettingsSection authUser={authUser} onAccountUpdate={onAccountUpdate} onLogout={onLogout} />
+      </SettingsSection>
+
       {!clientAdminMode && (
         <>
-          <SettingsSection id="seo" title="SEO설정" openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.seo} onSave={saveSeo} onEdit={() => editSection('seo')}>
+          <div className="settings-group-label advanced">
+            <span>고급 설정</span>
+            <small>검색 노출, 광고 추적, 전환 이벤트처럼 필요할 때만 여는 항목입니다.</small>
+          </div>
+
+          <SettingsSection id="seo" title="SEO 설정" description="검색 결과와 공유 링크에 보이는 정보를 설정합니다." openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.seo} onSave={saveSeo} onEdit={() => editSection('seo')}>
             <div className="settings-grid">
               <div className="settings-field-hint-wrap">
                 <Field label="메타 제목" value={seoDraft.title} disabled={lockedSections.seo} placeholder="강남 피부관리 상담 예약 | 브랜드명" onChange={(value) => setSeoDraft((draft) => ({ ...draft, title: value }))} />
@@ -815,7 +835,7 @@ export default function SettingsPanel({
             </div>
           </SettingsSection>
 
-          <SettingsSection id="tracking" title="추적 코드" openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.tracking} onSave={saveTracking} onEdit={() => editSection('tracking')}>
+          <SettingsSection id="tracking" title="추적 코드" description="GTM, GA4, 광고 픽셀 기본 ID를 연결합니다." openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.tracking} onSave={saveTracking} onEdit={() => editSection('tracking')}>
             <div className="settings-grid">
               <div className="settings-field-hint-wrap">
                 <Field label="GTM" value={trackingDraft.gtm} disabled={lockedSections.tracking} placeholder="GTM-XXXXXXX" onChange={(value) => setTrackingDraft((draft) => ({ ...draft, gtm: value }))} />
@@ -838,7 +858,7 @@ export default function SettingsPanel({
             </div>
           </SettingsSection>
 
-          <SettingsSection id="conversion" title="전환 추적" openSection={openSection} setOpenSection={setOpenSection} className="settings-conversion-card">
+          <SettingsSection id="conversion" title="전환 추적" description="상담 신청, 예약 완료 같은 전환 이벤트를 광고 채널로 전송합니다." openSection={openSection} setOpenSection={setOpenSection} className="settings-conversion-card">
             <div className="settings-conversion-grid">
               <div className="settings-full settings-conversion-values" style={{ display: 'grid', gap: 10, minWidth: 0 }}>
                 <label style={{ display: 'grid', gap: 7, minWidth: 0 }}>
@@ -904,11 +924,24 @@ export default function SettingsPanel({
               )}
             </div>
           </SettingsSection>
+
+          <SettingsSection id="duplicate" title="페이지 복제" description="현재 페이지를 다른 URL로 복사합니다. 접수 데이터와 통계는 복사하지 않습니다." badge="유료" openSection={openSection} setOpenSection={setOpenSection} className="page-duplicate-card">
+            <div className="page-duplicate-summary">
+              <div>
+                <strong>복제 범위</strong>
+                <p>설정, 블록, 스타일, 폼, CTA, 효과, SEO 기본값만 복사합니다.</p>
+              </div>
+              <button type="button" onClick={() => setDuplicateOpen(true)}>URL 설정</button>
+            </div>
+            {!canDuplicatePage && (
+              <p className="page-duplicate-lock">결제 연동 전까지는 URL 설정 흐름만 확인할 수 있습니다.</p>
+            )}
+          </SettingsSection>
         </>
       )}
 
       {!clientAdminMode && (
-        <SettingsSection id="reset" title="초기화" openSection={openSection} setOpenSection={setOpenSection} className="danger-zone">
+        <SettingsSection id="reset" title="초기화" description="저장된 페이지와 접수 데이터를 초기화합니다." badge="주의" openSection={openSection} setOpenSection={setOpenSection} className="danger-zone">
           <button className="reset-danger" onClick={onReset}>전체 데이터 초기화</button>
         </SettingsSection>
       )}
