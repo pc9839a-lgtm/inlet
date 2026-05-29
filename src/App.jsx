@@ -683,10 +683,24 @@ function App() {
     setPublicPageLoaded(false);
     setPublicPageError('');
     fetchPublicServerPage(publicLandingSlug)
-      .then((serverPage) => {
+      .then(async (serverPage) => {
         if (!alive) return;
-        setPublicServerPage(serverPage ? normalize(serverPage) : null);
-        setPublicPageError(serverPage ? '' : '페이지를 찾을 수 없습니다.');
+        let nextPage = serverPage ? normalize(serverPage) : null;
+        if (!nextPage && publicLandingSlug === 'my-page') {
+          try {
+            const templates = await import('./templates/landingTemplates.js');
+            nextPage = normalize({
+              ...templates.createTemplatePage('debt-relief-consult', defaultPage),
+              slug: 'my-page',
+              projectId: 'my-page',
+            });
+          } catch (error) {
+            console.warn('Public fallback page load failed:', error);
+          }
+        }
+        if (!alive) return;
+        setPublicServerPage(nextPage);
+        setPublicPageError(nextPage ? '' : '페이지를 찾을 수 없습니다.');
       })
       .catch((error) => {
         if (!alive) return;
