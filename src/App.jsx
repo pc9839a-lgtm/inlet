@@ -588,6 +588,7 @@ function App() {
     return WAYZI_STATIC_PAGES[pathname] || null;
   }, [routePath]);
   const publicLandingSlug = useMemo(() => publicLandingSlugFromLocation(routePath), [routePath]);
+  const routeUsesWorkspaceTabs = !publicLandingSlug && !staticPage && !inviteToken && !adminRoute;
 
   const markSaveStatus = (tone, label, detail = '') => {
     setSaveStatus({ tone, label, detail, at: new Date().toISOString() });
@@ -616,9 +617,23 @@ function App() {
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
     const syncRoute = () => setRoutePath(window.location.pathname || '/');
+    const pushState = window.history.pushState;
+    const replaceState = window.history.replaceState;
+    window.history.pushState = function pushStateAndSync(...args) {
+      const result = pushState.apply(this, args);
+      syncRoute();
+      return result;
+    };
+    window.history.replaceState = function replaceStateAndSync(...args) {
+      const result = replaceState.apply(this, args);
+      syncRoute();
+      return result;
+    };
     window.addEventListener('popstate', syncRoute);
     window.addEventListener('hashchange', syncRoute);
     return () => {
+      window.history.pushState = pushState;
+      window.history.replaceState = replaceState;
       window.removeEventListener('popstate', syncRoute);
       window.removeEventListener('hashchange', syncRoute);
     };
@@ -830,12 +845,13 @@ function App() {
     setWorkspaceOpen(true);
   }, [authUser, canUseBuilder, workspaceOpen]);
   useEffect(() => {
+    if (!routeUsesWorkspaceTabs) return;
     if (allowedTabs.includes(tab)) return;
     clearPendingStyle();
     const nextTab = allowedTabs[0] || 'inbox';
     replaceLocationTab(nextTab);
     setTab(nextTab);
-  }, [allowedTabs, tab]);
+  }, [allowedTabs, routeUsesWorkspaceTabs, tab]);
   useEffect(() => {
     if (!hasPendingStyle) return undefined;
     const handleBeforeUnload = (event) => {
