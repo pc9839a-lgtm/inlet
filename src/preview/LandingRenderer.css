@@ -1,4 +1,5 @@
 @import '../styles/preview-core.css';
+@import '../styles/preview-public.css';
 @import '../styles/preview-forms.css';
 @import '../styles/preview-forms-visibility.css';
 @import '../styles/preview-forms-design.css';

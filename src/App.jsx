@@ -1613,20 +1613,24 @@ function App() {
   if (publicLandingSlug) {
     const publicPage = normalize({ ...(publicServerPage || previewPage), slug: publicLandingSlug || publicServerPage?.slug || previewPage.slug });
     return (
-      <LazyChunkBoundary resetKey={`public-${publicLandingSlug}`}>
-        <Suspense fallback={<LazyPanelFallback />}>
-          {publicPageLoading ? (
-            <LazyPanelFallback />
-          ) : (
-            <PreviewRenderer
-              page={publicPage}
-              leads={leads}
-              addLead={(lead) => addLeadForPage(publicPage, lead)}
-              track={(event) => trackForPage(publicPage, event)}
-            />
-          )}
-        </Suspense>
-      </LazyChunkBoundary>
+      <main className="public-landing-shell">
+        <div className="public-landing-viewport">
+          <LazyChunkBoundary resetKey={`public-${publicLandingSlug}`}>
+            <Suspense fallback={<LazyPanelFallback />}>
+              {publicPageLoading ? (
+                <LazyPanelFallback />
+              ) : (
+                <PreviewRenderer
+                  page={publicPage}
+                  leads={leads}
+                  addLead={(lead) => addLeadForPage(publicPage, lead)}
+                  track={(event) => trackForPage(publicPage, event)}
+                />
+              )}
+            </Suspense>
+          </LazyChunkBoundary>
+        </div>
+      </main>
     );
   }
 
