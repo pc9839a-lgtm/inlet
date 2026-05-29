@@ -65,8 +65,8 @@ export async function onRequest({ request, env, params }) {
     if (request.method === 'POST') {
       const body = await readJson(request);
       const project = projectFromRequest(url, body, request);
+      await authorizeProject(request, env, project, { write: true, tab: 'edit' });
       await ensureD1ProjectShell(db, project);
-      await authorizeProject(request, env, project, { write: true, tab: 'edit', publicWrite: true });
       const identity = await sessionIdentity(request, env);
       const incoming = body.page && typeof body.page === 'object' ? body.page : body;
       const saved = await upsertD1Page(db, { ...incoming, slug }, {
