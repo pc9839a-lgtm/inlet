@@ -303,14 +303,26 @@ function connectionTitle(type) {
   return map[type] || 'Connection';
 }
 
-function InboxConnectionsPanel({ page, updateIntegrations }) {
+function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
   const integrations = normalizeIntegrations(page.integrations || {});
   const [open, setOpen] = useState(false);
   const [result, setResult] = useState(null);
+  const [savingType, setSavingType] = useState('');
   const counts = useMemo(() => connectionCounts(integrations), [integrations]);
 
   const setIntegration = (section, patch) => updateIntegrations(section, patch);
-  const saveSection = (type) => setResult({ ok: true, message: `${connectionTitle(type)} saved.` });
+  const saveSection = async (type) => {
+    setSavingType(type);
+    setResult(null);
+    try {
+      await onSavePage?.();
+      setResult({ ok: true, message: `${connectionTitle(type)} 설정을 서버에 저장했습니다.` });
+    } catch (error) {
+      setResult({ ok: false, message: `저장에 실패했습니다. ${String(error?.message || error)}` });
+    } finally {
+      setSavingType('');
+    }
+  };
 
   return (
     <section className={`card inbox-connect-card easy-mode v4 ${open ? 'open' : ''}`}>
@@ -325,7 +337,7 @@ function InboxConnectionsPanel({ page, updateIntegrations }) {
 
       {open && (
         <div className="inbox-connect-body">
-          {result && <div className="connection-result ok"><strong>Saved</strong><span>{result.message}</span></div>}
+          {result && <div className={`connection-result ${result.ok ? 'ok' : 'error'}`}><strong>{result.ok ? '저장됨' : '저장 실패'}</strong><span>{result.message}</span></div>}
 
           <div className="connection-group-title">Basic</div>
           <ConnectionItem title="Internal inbox" state={connectionState('internal', integrations)} opened={false} onOpen={() => {}} summary="Always stored">
@@ -333,7 +345,7 @@ function InboxConnectionsPanel({ page, updateIntegrations }) {
           </ConnectionItem>
 
           <div className="connection-group-title">Notification</div>
-          <ConnectionItem title="Email alert" state={connectionState('email', integrations)} opened={true} onOpen={() => {}} summary={integrations.email.enabled ? integrations.email.to : 'Off'} actions={<button type="button" className="save-connection-btn" onClick={() => saveSection('email')}>Save</button>}>
+          <ConnectionItem title="Email alert" state={connectionState('email', integrations)} opened={true} onOpen={() => {}} summary={integrations.email.enabled ? integrations.email.to : 'Off'} actions={<button type="button" className="save-connection-btn" disabled={savingType === 'email'} onClick={() => saveSection('email')}>{savingType === 'email' ? '저장 중' : '저장'}</button>}>
             <div className="connection-form-box compact-line">
               <ConnectionToggleRow label="Use email alert" checked={!!integrations.email.enabled} onChange={(value) => setIntegration('email', { enabled: value })} />
               {integrations.email.enabled && <>
@@ -344,7 +356,7 @@ function InboxConnectionsPanel({ page, updateIntegrations }) {
           </ConnectionItem>
 
           <div className="connection-group-title">Webhook</div>
-          <ConnectionItem title="Webhook" state={connectionState('webhook', integrations)} opened={true} onOpen={() => {}} summary={integrations.webhook.enabled ? integrations.webhook.url : 'Off'} actions={<button type="button" className="save-connection-btn" onClick={() => saveSection('webhook')}>Save</button>}>
+          <ConnectionItem title="Webhook" state={connectionState('webhook', integrations)} opened={true} onOpen={() => {}} summary={integrations.webhook.enabled ? integrations.webhook.url : 'Off'} actions={<button type="button" className="save-connection-btn" disabled={savingType === 'webhook'} onClick={() => saveSection('webhook')}>{savingType === 'webhook' ? '저장 중' : '저장'}</button>}>
             <div className="connection-form-box compact-line">
               <ConnectionToggleRow label="Use webhook" checked={!!integrations.webhook.enabled} onChange={(value) => setIntegration('webhook', { enabled: value })} />
               {integrations.webhook.enabled && <ConnectionInputRow label="URL" value={integrations.webhook.url || ''} onChange={(value) => setIntegration('webhook', { url: value })} placeholder="https://..." />}
@@ -451,7 +463,7 @@ function LeadConflictNotice({ conflict, onReload, onRetry, onDismiss }) {
   );
 }
 
-export default function InboxPanel({ leads, page, authUser = null, updatePage, syncing = false, totalLeads = 0, hasMoreLeads = false, loadMoreLeads, onFiltersChange, updateIntegrations, updateLead, deleteLead, retryLeadDelivery, retryFailedDeliveries, exportLeadsCsv, leadConflict, onReloadLeadConflict, onRetryLeadConflict, onDismissLeadConflict }) {
+export default function InboxPanel({ leads, page, authUser = null, updatePage, syncing = false, totalLeads = 0, hasMoreLeads = false, loadMoreLeads, onFiltersChange, updateIntegrations, onSavePage, updateLead, deleteLead, retryLeadDelivery, retryFailedDeliveries, exportLeadsCsv, leadConflict, onReloadLeadConflict, onRetryLeadConflict, onDismissLeadConflict }) {
   const [filter, setFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [deliveryFilter, setDeliveryFilter] = useState('all');
@@ -688,7 +700,7 @@ export default function InboxPanel({ leads, page, authUser = null, updatePage, s
         )}
       </section>
 
-      <InboxConnectionsPanel page={page} updateIntegrations={updateIntegrations} />
+      <InboxConnectionsPanel page={page} updateIntegrations={updateIntegrations} onSavePage={onSavePage} />
     </div>
   );
 }

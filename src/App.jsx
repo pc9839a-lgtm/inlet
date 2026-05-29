@@ -986,6 +986,14 @@ function App() {
       ? deliverServerLead(lead, targetPage, authUser)
       : sendLeadIntegrations(lead, targetPage)
   );
+  const upsertVisibleLead = (nextLead) => {
+    const normalized = normalizeLeadItem(nextLead);
+    setLeads((list) => {
+      const existingIndex = list.findIndex((item) => String(item.id) === String(normalized.id));
+      if (existingIndex < 0) return [normalized, ...list];
+      return list.map((item, index) => index === existingIndex ? { ...item, ...normalized } : item);
+    });
+  };
   const addLeadForPage = (targetPage, lead) => {
     const savedLead = normalizeLeadItem({
       id: uid(),
@@ -1000,14 +1008,18 @@ function App() {
     trackForPage(targetPage, { type: isReservationLead(savedLead) ? 'reservation_submit' : 'form_submit', label: savedLead.type });
 
     persistLead(savedLead, targetPage, authUser)
-      .then(()=>runLeadDeliveryForPage(savedLead, targetPage).catch((error) => {
+      .then((persistedLead) => {
+        if (persistedLead) upsertVisibleLead({ ...savedLead, ...persistedLead });
+        const leadForDelivery = normalizeLeadItem({ ...savedLead, ...(persistedLead || {}) });
+        return runLeadDeliveryForPage(leadForDelivery, targetPage).catch((error) => {
         console.warn('Lead delivery failed after save:', error);
         return {
           status: 'failed',
           summary: '접수는 저장됐지만 알림 전송은 실패했습니다.',
           logs: [{ target: '알림 전송', status: 'failed', message: String(error?.message || error), at: new Date().toISOString() }],
         };
-      }))
+        });
+      })
       .then((report) => {
         if (!report) return;
         setLeads((list)=>list.map((item)=>item.id === savedLead.id ? { ...item, delivery: report } : item));
@@ -1856,7 +1868,7 @@ function App() {
                 <LazyChunkBoundary resetKey={tab}>
                   <Suspense fallback={<LazyPanelFallback/>}>
                   {canUseBuilder && tab === 'style' && <StylePanel page={page} updateTheme={updateTheme} onPreviewThemeChange={setStylePreviewTheme}/>}
-                  {tab === 'inbox' && <InboxPanel leads={leads} page={page} authUser={authUser} updatePage={updatePage} syncing={leadsSyncing} totalLeads={leadPageMeta.total} hasMoreLeads={leadPageMeta.hasMore} loadMoreLeads={loadMoreLeads} onFiltersChange={setInboxFilters} updateIntegrations={updateIntegrations} connectionsEditing={connectionsEditing} setConnectionsEditing={setConnectionsEditing} updateLead={updateLead} deleteLead={deleteLead} retryLeadDelivery={retryLeadDelivery} retryFailedDeliveries={retryFailedDeliveries} exportLeadsCsv={exportLeadsCsv} leadConflict={leadConflict} onReloadLeadConflict={reloadLeadConflict} onRetryLeadConflict={retryLeadConflict} onDismissLeadConflict={() => setLeadConflict(null)} accessMode={accessMode}/>}
+                  {tab === 'inbox' && <InboxPanel leads={leads} page={page} authUser={authUser} updatePage={updatePage} syncing={leadsSyncing} totalLeads={leadPageMeta.total} hasMoreLeads={leadPageMeta.hasMore} loadMoreLeads={loadMoreLeads} onFiltersChange={setInboxFilters} updateIntegrations={updateIntegrations} onSavePage={saveNow} connectionsEditing={connectionsEditing} setConnectionsEditing={setConnectionsEditing} updateLead={updateLead} deleteLead={deleteLead} retryLeadDelivery={retryLeadDelivery} retryFailedDeliveries={retryFailedDeliveries} exportLeadsCsv={exportLeadsCsv} leadConflict={leadConflict} onReloadLeadConflict={reloadLeadConflict} onRetryLeadConflict={retryLeadConflict} onDismissLeadConflict={() => setLeadConflict(null)} accessMode={accessMode}/>}
                   {tab === 'stats' && <StatsPanel events={events} leads={leads} page={page} eventPageMeta={statsEventPageMeta} leadPageMeta={statsLeadPageMeta} statsPartial={statsPartial} period={statsPeriod} onPeriodChange={setStatsPeriod} serverStats={serverStatsSummary} accessMode={accessMode}/>}
                   {tab === 'settings' && <SettingsPanel page={page} updatePage={updatePage} updateMeta={updateMeta} updateIntegrations={updateIntegrations} setPage={setNormalizedPage} onDuplicatePage={duplicatePageWithUrl} canDuplicatePage={canUsePageDuplication(page)} onReset={reset} authUser={authUser} accessMode={accessMode} onAccountUpdate={updateAccountProfile} onLogout={logout}/>}
                   </Suspense>
