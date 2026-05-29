@@ -152,19 +152,35 @@
 }
 
 .topnav-menu-loop .top-menu {
-  justify-content: flex-end !important;
-  overflow-x: auto !important;
-  overflow-y: visible !important;
+  justify-content: flex-start !important;
+  overflow: hidden !important;
 }
 
 .topnav-menu-loop .top-menu-track {
-  justify-content: flex-end !important;
-  animation: none !important;
-  transform: none !important;
+  justify-content: flex-start !important;
+  min-width: max-content !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+  gap: 18px !important;
+  animation: topMenuRoll 14s linear infinite !important;
 }
 
 .topnav-menu-loop .top-menu-set-copy {
-  display: none !important;
+  display: flex !important;
+}
+
+.topnav-menu-loop .top-menu button[aria-hidden="true"] {
+  pointer-events: none !important;
+}
+
+.topnav-menu-loop .top-menu:hover .top-menu-track {
+  animation-play-state: paused !important;
+}
+
+@keyframes topMenuRoll {
+  to {
+    transform: translateX(calc(-50% - 9px));
+  }
 }
 
 .top-menu-theme-row {
