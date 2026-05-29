@@ -34,7 +34,7 @@ import { deleteServerLead, deliverServerLead, downloadServerLeadsCsv, fetchAllSe
 import { isOwnerAdminModeEnabled, isServerLeadMode } from './config/runtimeConfig.js';
 import { downloadLeadsCsv } from './lib/leadCsv.js';
 import { clampDateRangeToMonth, currentMonthValue, monthDateRange } from './lib/monthRange.js';
-import { fetchServerPage, persistPage } from './lib/pageRepository.js';
+import { fetchPublicServerPage, fetchServerPage, persistPage } from './lib/pageRepository.js';
 import { canUsePageDuplication, createDuplicatedPage } from './lib/pageDuplication.js';
 import { projectContext } from './lib/projectContext.js';
 import { fetchLinkPreview, linkThumbnailFromUrl, normalizeExternalUrl } from './lib/linkPreview.js';
@@ -546,6 +546,8 @@ function App() {
   const [authView, setAuthView] = useState('');
   const [stylePreviewTheme, setStylePreviewTheme] = useState(null);
   const [templateChoices, setTemplateChoices] = useState([]);
+  const [publicServerPage, setPublicServerPage] = useState(null);
+  const [publicPageLoading, setPublicPageLoading] = useState(false);
   const mobileBlocked = useMemo(() => typeof window !== 'undefined' && window.innerWidth < 900, []);
   const tabDeepLink = useMemo(() => hasTabDeepLink(), []);
   const { handlePageSaveError, useLatestServerPage, keepLocalPageDraft, forceSaveLocalPage } = usePageConflict({
@@ -613,8 +615,9 @@ function App() {
   };
 
   useEffect(() => {
+    if (publicLandingSlug) return;
     saveLocalJson(STORAGE_KEY, normalizePageForSave(page), '페이지');
-  }, [page]);
+  }, [page, publicLandingSlug]);
   useEffect(() => {
     saveLocalJson(LEADS_KEY, leads, '접수 데이터', { quietSuccess: true });
   }, [leads]);
@@ -659,6 +662,7 @@ function App() {
     return () => { alive = false; };
   }, [authUser?.session, page.projectId]);
   useEffect(() => {
+    if (publicLandingSlug) return undefined;
     let alive = true;
     fetchServerPage(page.slug, projectContext(page, authUser))
       .then((serverPage) => {
@@ -669,7 +673,26 @@ function App() {
         console.warn('Server page load failed:', error);
       });
     return () => { alive = false; };
-  }, []);
+  }, [publicLandingSlug]);
+  useEffect(() => {
+    if (!publicLandingSlug) return undefined;
+    let alive = true;
+    setPublicPageLoading(true);
+    fetchPublicServerPage(publicLandingSlug)
+      .then((serverPage) => {
+        if (!alive) return;
+        setPublicServerPage(serverPage ? normalize(serverPage) : null);
+      })
+      .catch((error) => {
+        if (!alive) return;
+        console.warn('Public page load failed:', error);
+        setPublicServerPage(null);
+      })
+      .finally(() => {
+        if (alive) setPublicPageLoading(false);
+      });
+    return () => { alive = false; };
+  }, [publicLandingSlug]);
   useEffect(() => {
     if (tab !== 'inbox' || !isServerLeadMode()) return undefined;
     let alive = true;
@@ -894,7 +917,7 @@ function App() {
       return { ...p, blocks: ensureUniqueAnchors([...nextNormal, ...fixed]) };
     });
   };
-  const track = (ev) => {
+  const trackForPage = (targetPage, ev) => {
     const event = {
     id: uid(),
     type: ev.type,
@@ -904,10 +927,11 @@ function App() {
     createdAt: new Date().toISOString(),
     };
     setEvents((list) => [event, ...list].slice(0, 1000));
-    persistEvent(event, page, authUser).catch((error) => {
+    persistEvent(event, targetPage, authUser).catch((error) => {
       console.warn('Server event save failed:', error);
     });
   };
+  const track = (ev) => trackForPage(page, ev);
   const syncLeadPatch = (id, patch) => {
     const current = leads.find((lead) => lead.id === id) || null;
     const expectedUpdatedAt = current?.updatedAt || current?.savedAt || current?.createdAt || '';
@@ -923,7 +947,12 @@ function App() {
       ? deliverServerLead(lead, page, authUser)
       : sendLeadIntegrations(lead, page)
   );
-  const addLead = (lead) => {
+  const runLeadDeliveryForPage = (lead, targetPage) => (
+    isServerLeadMode()
+      ? deliverServerLead(lead, targetPage, authUser)
+      : sendLeadIntegrations(lead, targetPage)
+  );
+  const addLeadForPage = (targetPage, lead) => {
     const savedLead = normalizeLeadItem({
       id: uid(),
       status: '신규',
@@ -934,10 +963,10 @@ function App() {
     });
     setLeads((l) => [savedLead, ...l]);
     setLeadPageMeta((meta) => ({ ...meta, total: Number(meta.total || 0) + 1 }));
-    track({ type: isReservationLead(savedLead) ? 'reservation_submit' : 'form_submit', label: savedLead.type });
+    trackForPage(targetPage, { type: isReservationLead(savedLead) ? 'reservation_submit' : 'form_submit', label: savedLead.type });
 
-    persistLead(savedLead, page, authUser)
-      .then(()=>runLeadDelivery(savedLead))
+    persistLead(savedLead, targetPage, authUser)
+      .then(()=>runLeadDeliveryForPage(savedLead, targetPage))
       .then((report) => {
         if (!report) return;
         setLeads((list)=>list.map((item)=>item.id === savedLead.id ? { ...item, delivery: report } : item));
@@ -965,6 +994,7 @@ function App() {
         syncLeadPatch(savedLead.id, { delivery });
       });
   };
+  const addLead = (lead) => addLeadForPage(page, lead);
   const retryLeadDelivery = (lead) => {
     const pending = { status: 'pending', summary: '외부 전송 재시도 중', logs: lead.delivery?.logs || [] };
     setLeads((list)=>list.map((item)=>item.id === lead.id ? { ...item, delivery: pending } : item));
@@ -1581,11 +1611,20 @@ function App() {
   if (staticPage) return withWayziFooter(<WayziStaticPage page={staticPage} />);
 
   if (publicLandingSlug) {
-    const publicPage = normalize({ ...previewPage, slug: publicLandingSlug || previewPage.slug });
+    const publicPage = normalize({ ...(publicServerPage || previewPage), slug: publicLandingSlug || publicServerPage?.slug || previewPage.slug });
     return (
       <LazyChunkBoundary resetKey={`public-${publicLandingSlug}`}>
         <Suspense fallback={<LazyPanelFallback />}>
-          <PreviewRenderer page={publicPage} leads={leads} addLead={addLead} track={track} />
+          {publicPageLoading ? (
+            <LazyPanelFallback />
+          ) : (
+            <PreviewRenderer
+              page={publicPage}
+              leads={leads}
+              addLead={(lead) => addLeadForPage(publicPage, lead)}
+              track={(event) => trackForPage(publicPage, event)}
+            />
+          )}
         </Suspense>
       </LazyChunkBoundary>
     );

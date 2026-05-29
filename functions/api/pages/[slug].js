@@ -1,10 +1,23 @@
-import { getD1PageBySlug, upsertD1Page } from '../../../server/storage/d1Adapter.mjs';
+import { getD1PageBySlug, getD1ProjectBySlug, upsertD1Page } from '../../../server/storage/d1Adapter.mjs';
 import { assertD1, authorizeProject, ensureD1ProjectShell, handleApiError, jsonResponse, optionsResponse, projectFromRequest, readJson, sessionIdentity } from '../_shared.js';
 
 const METHODS = 'GET, POST, OPTIONS';
 
 function safeSlug(value = '') {
   return String(value || 'my-page').replace(/[^a-zA-Z0-9-_]/g, '') || 'my-page';
+}
+
+function publicPagePayload(page = {}, project = {}) {
+  return {
+    ...page,
+    projectId: page.projectId || project.projectId || project.id || '',
+    slug: page.slug || project.slug || '',
+    ownership: undefined,
+    ai: undefined,
+    integrations: {
+      conversion: page.integrations?.conversion || {},
+    },
+  };
 }
 
 export async function onRequest({ request, env, params }) {
@@ -17,6 +30,15 @@ export async function onRequest({ request, env, params }) {
 
     if (request.method === 'GET') {
       const project = projectFromRequest(url, {}, request);
+      if (url.searchParams.get('public') === '1') {
+        const publicProject = project.projectId ? project : await getD1ProjectBySlug(db, slug);
+        if (!publicProject?.projectId || publicProject.status === 'archived') {
+          return jsonResponse(request, env, 404, { ok: false, error: 'Page not found' }, METHODS);
+        }
+        const page = await getD1PageBySlug(db, { projectId: publicProject.projectId, slug });
+        if (!page) return jsonResponse(request, env, 404, { ok: false, error: 'Page not found' }, METHODS);
+        return jsonResponse(request, env, 200, { ok: true, page: publicPagePayload(page, publicProject) }, METHODS);
+      }
       await authorizeProject(request, env, project);
       const page = await getD1PageBySlug(db, { projectId: project.projectId, slug });
       if (!page) return jsonResponse(request, env, 404, { ok: false, error: 'Page not found' }, METHODS);

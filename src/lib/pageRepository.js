@@ -40,6 +40,15 @@ export async function fetchServerPage(slug, context = {}) {
   });
 }
 
+export async function fetchPublicServerPage(slug) {
+  const safeSlug = pageSlug(slug);
+  const res = await apiFetch(`/api/pages/${encodeURIComponent(safeSlug)}?public=1`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`공개 페이지 불러오기 실패: ${res.status}`);
+  const data = await res.json();
+  return data?.page || null;
+}
+
 export async function persistPage(page, authUser = null, options = {}) {
   const safePage = normalizePageForSave(page);
   if (!isServerPageMode()) {
