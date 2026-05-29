@@ -31,7 +31,7 @@ import { generateStandaloneFormHtml } from './lib/formEmbed.js';
 import { fetchAllServerEvents, persistEvent } from './lib/eventRepository.js';
 import { sendLeadIntegrations } from './lib/leadIntegrations.js';
 import { deleteServerLead, deliverServerLead, downloadServerLeadsCsv, fetchAllServerLeads, fetchServerLeads, persistLead, retryFailedServerLeads, updateServerLead } from './lib/leadRepository.js';
-import { isOwnerAdminModeEnabled, isServerLeadMode } from './config/runtimeConfig.js';
+import { isOwnerAdminModeEnabled, isServerLeadMode, publicLandingUrl } from './config/runtimeConfig.js';
 import { downloadLeadsCsv } from './lib/leadCsv.js';
 import { clampDateRangeToMonth, currentMonthValue, monthDateRange } from './lib/monthRange.js';
 import { fetchPublicServerPage, fetchServerPage, persistPage } from './lib/pageRepository.js';
@@ -1360,7 +1360,7 @@ function App() {
     if (!confirmLeaveStyleChanges(run)) return;
     run();
   };
-  const previewUrl = `${location.origin}/${page.slug || ''}`;
+  const previewUrl = publicLandingUrl(page.slug || '');
   const loadTemplateModule = async () => {
     if (templateModuleRef.current) return templateModuleRef.current;
     const module = await import('./templates/landingTemplates.js');

@@ -1,6 +1,6 @@
 import { normalizeIntegrations, uid } from './pageModel.js';
 import { BRAND_NAME } from '../config/brand.js';
-import { runtimeConfig } from '../config/runtimeConfig.js';
+import { publicLandingUrl, runtimeConfig } from '../config/runtimeConfig.js';
 import { trackingConfig } from './conversionTracking.js';
 
 export function isValidUrl(value = '') {
@@ -110,7 +110,7 @@ export function integrationPayload(lead, page) {
     page: {
       title: page.title,
       slug: page.slug,
-      url: `${location.origin}/${page.slug || ''}`,
+      url: publicLandingUrl(page.slug || ''),
     },
     lead,
     createdAt: lead.createdAt,

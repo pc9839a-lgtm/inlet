@@ -14,6 +14,7 @@ function envMs(key, fallback) {
 const apiBaseUrl = normalizeBaseUrl(envValue('VITE_INLET_API_BASE') || envValue('VITE_API_BASE_URL'));
 const isLocalBrowser = typeof location !== 'undefined' && /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 const defaultDataMode = isLocalBrowser ? 'local' : 'server';
+const publicLandingBaseUrl = normalizeBaseUrl(envValue('VITE_INLET_PUBLIC_BASE_URL') || (isLocalBrowser ? location.origin : 'https://pagero.kr'));
 const mapEmbedBaseUrl = normalizeBaseUrl(
   envValue('VITE_INLET_MAP_EMBED_BASE')
     || (isLocalBrowser ? `${location.origin}/embed` : 'https://map.inlet.page/embed'),
@@ -22,6 +23,7 @@ const leadIntegrationTimeoutMs = envMs('VITE_INLET_INTEGRATION_TIMEOUT_MS', 1000
 
 export const runtimeConfig = {
   apiBaseUrl,
+  publicLandingBaseUrl,
   mapEmbedBaseUrl,
   googleMapsEmbedKey: envValue('VITE_GOOGLE_MAPS_EMBED_KEY'),
   apiToken: envValue('VITE_INLET_API_TOKEN') || envValue('VITE_API_TOKEN'),
@@ -57,4 +59,9 @@ export function isServerPageMode() {
 export function runtimeApiUrl(path) {
   const safePath = String(path || '').startsWith('/') ? String(path || '') : `/${path || ''}`;
   return `${runtimeConfig.apiBaseUrl}${safePath}`;
+}
+
+export function publicLandingUrl(slug = '') {
+  const safeSlug = String(slug || '').replace(/^\/+/, '');
+  return `${runtimeConfig.publicLandingBaseUrl}/${safeSlug}`;
 }
