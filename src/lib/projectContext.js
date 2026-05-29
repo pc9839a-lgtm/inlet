@@ -7,6 +7,18 @@ function safeId(value, fallback) {
 }
 
 export function projectContext(page = {}, authUser = null) {
+  if (authUser?.projectId && authUser?.ownerId) {
+    const slug = safeId(sanitizePageSlug(page.slug || authUser.slug, 'my-page'), 'my-page');
+    return {
+      ownerId: safeId(authUser.ownerId, 'local-user'),
+      projectId: safeId(page.projectId || authUser.projectId, authUser.projectId),
+      slug,
+      session: authUser.session || '',
+      legacyOwnerId: safeId(authUser.legacyOwnerId || '', ''),
+      legacyProjectId: safeId(authUser.legacyProjectId || '', ''),
+    };
+  }
+
   const slug = safeId(sanitizePageSlug(page.slug, 'my-page'), 'my-page');
   const workspaceId = authUser ? '' : readOrCreateWorkspaceId();
   const legacyOwnerId = safeId(authUser?.email || authUser?.id || authUser?.name || '', '');

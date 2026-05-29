@@ -57,6 +57,9 @@ export async function persistPage(page, authUser = null, options = {}) {
 
   const slug = pageSlug(safePage);
   const context = projectContext(safePage, authUser);
+  if (!context.session) {
+    throw new ApiError('로그인 세션이 없습니다. 다시 로그인해주세요.', 401, { code: 'AUTH_SESSION_MISSING' });
+  }
   return postJson(`/api/pages/${encodeURIComponent(slug)}`, {
     page: safePage,
     project: context,
