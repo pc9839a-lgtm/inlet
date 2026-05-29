@@ -1629,13 +1629,18 @@ function App() {
   if (staticPage) return withWayziFooter(<WayziStaticPage page={staticPage} />);
 
   if (publicLandingSlug) {
-    const publicPage = publicServerPage ? normalize({ ...publicServerPage, slug: publicLandingSlug || publicServerPage.slug }) : null;
+    const publicFallbackPage = publicLandingSlug === 'my-page'
+      ? normalize({ ...defaultPage, slug: 'my-page', projectId: 'my-page' })
+      : null;
+    const publicPage = publicServerPage
+      ? normalize({ ...publicServerPage, slug: publicLandingSlug || publicServerPage.slug })
+      : publicFallbackPage;
     return (
       <main className="public-landing-shell">
         <div className="public-landing-viewport">
           <LazyChunkBoundary resetKey={`public-${publicLandingSlug}`}>
             <Suspense fallback={<LazyPanelFallback />}>
-              {publicPageLoading || !publicPageLoaded ? (
+              {!publicPage && (publicPageLoading || !publicPageLoaded) ? (
                 <LazyPanelFallback />
               ) : !publicPage ? (
                 <section className="public-landing-empty">
