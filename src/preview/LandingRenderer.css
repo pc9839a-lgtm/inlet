@@ -1,5 +1,4 @@
 @import '../styles/preview-core.css';
-@import '../styles/preview-public.css';
 @import '../styles/preview-forms.css';
 @import '../styles/preview-forms-visibility.css';
 @import '../styles/preview-forms-design.css';
@@ -53,3 +52,4 @@
 @import '../styles/preview-workspace-effects-nav.css';
 @import '../styles/preview-workspace-effects-widgets.css';
 @import '../styles/preview-workspace-effects-map-faq.css';
+@import '../styles/preview-public.css';
