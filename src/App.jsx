@@ -532,6 +532,7 @@ function App() {
   const [previewCopyIssue, setPreviewCopyIssue] = useState(null);
   const saveErrorNoticeRef = useRef('');
   const sessionRefreshRef = useRef('');
+  const accountPageLoadRef = useRef('');
   const templateModuleRef = useRef(null);
   const { toast, confirmDialog, setToast, setConfirmDialog, showToast, requestConfirm } = useBuilderFeedback();
   const [connectionsEditing, setConnectionsEditing] = useState(true);
@@ -660,18 +661,37 @@ function App() {
     return () => { alive = false; };
   }, [authUser?.session, page.projectId]);
   useEffect(() => {
-    if (publicLandingSlug) return undefined;
+    if (publicLandingSlug || !authUser) return undefined;
     let alive = true;
-    fetchServerPage(page.slug, projectContext(page, authUser))
+    const slug = page.slug || defaultPage.slug || 'my-page';
+    const context = projectContext({ slug }, authUser);
+    const loadKey = `${context.projectId}:${context.slug}:${authUser?.session || authUser?.workspaceId || authUser?.email || ''}`;
+    if (accountPageLoadRef.current === loadKey) return undefined;
+    accountPageLoadRef.current = loadKey;
+    fetchServerPage(slug, context)
       .then((serverPage) => {
-        if (!alive || !serverPage) return;
-        setPage(normalize(serverPage));
+        if (!alive) return;
+        if (serverPage) {
+          setPage(normalize(serverPage));
+          return;
+        }
+        setPage((current) => {
+          const currentSlug = current.slug || slug;
+          const nextContext = projectContext({ slug: currentSlug }, authUser);
+          if (current.projectId === nextContext.projectId) return current;
+          return normalizePageForSave({
+            ...current,
+            slug: currentSlug,
+            projectId: nextContext.projectId,
+            ownerId: nextContext.ownerId,
+          });
+        });
       })
       .catch((error) => {
         console.warn('Server page load failed:', error);
       });
     return () => { alive = false; };
-  }, [publicLandingSlug]);
+  }, [publicLandingSlug, authUser?.session, authUser?.workspaceId, authUser?.email]);
   useEffect(() => {
     if (!publicLandingSlug) return undefined;
     let alive = true;
@@ -1615,7 +1635,13 @@ function App() {
     if (!canUseBuilder) return;
     try {
       const templates = await loadTemplateModule();
-      const next = templates.createTemplatePage(templateId, page);
+      const templatePage = templates.createTemplatePage(templateId, page);
+      const templateContext = projectContext({ slug: templatePage.slug }, authUser);
+      const next = normalizePageForSave({
+        ...templatePage,
+        projectId: templateContext.projectId,
+        ownerId: templateContext.ownerId,
+      });
       setPage(next);
       saveLocalJson(STORAGE_KEY, normalizePageForSave(next), '페이지');
       saveLocalJson(START_MODE_KEY, 'manual', '시작 선택', { quietSuccess: true });

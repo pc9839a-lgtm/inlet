@@ -1,4 +1,4 @@
-import { decodeD1Page, getD1PageBySlug, getD1ProjectBySlug, upsertD1Page } from '../../../server/storage/d1Adapter.mjs';
+import { decodeD1Page, getD1PageBySlug, upsertD1Page } from '../../../server/storage/d1Adapter.mjs';
 import { assertD1, authorizeProject, ensureD1ProjectShell, handleApiError, jsonResponse, optionsResponse, projectFromRequest, readJson, sessionIdentity } from '../_shared.js';
 
 const METHODS = 'GET, POST, OPTIONS';
@@ -22,19 +22,13 @@ function publicPagePayload(page = {}, project = {}) {
 }
 
 async function getPublicPageBySlug(db, slug) {
-  const project = await getD1ProjectBySlug(db, slug);
-  if (project?.projectId && project.status !== 'archived') {
-    const page = await getD1PageBySlug(db, { projectId: project.projectId, slug });
-    if (page) return { page, project };
-  }
-
   const row = await db.prepare(`
     SELECT pages.*
     FROM pages
     LEFT JOIN projects ON projects.id = pages.project_id
     WHERE pages.slug = ?
       AND COALESCE(projects.status, 'active') <> 'archived'
-    ORDER BY pages.updated_at DESC
+    ORDER BY pages.updated_at DESC, projects.updated_at DESC
     LIMIT 1
   `).bind(slug).first();
   if (!row) return { page: null, project: null };
