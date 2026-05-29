@@ -121,6 +121,37 @@ const Dashboard = lazy(() => import('./screens/HomeScreens.jsx').then((module) =
 const PublicHome = lazy(() => import('./screens/HomeScreens.jsx').then((module) => ({ default: module.PublicHome })));
 const StartModeOverlay = lazy(() => import('./screens/HomeScreens.jsx').then((module) => ({ default: module.StartModeOverlay })));
 const INBOX_PAGE_SIZE = 50;
+const CHUNK_RELOAD_KEY = 'inlet-chunk-reload';
+
+function isLazyChunkLoadError(error) {
+  const message = String(error?.message || error || '');
+  return /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Loading chunk|ChunkLoadError/i.test(message);
+}
+
+async function clearBrowserRuntimeCaches() {
+  if (typeof caches !== 'undefined') {
+    try {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((key) => caches.delete(key)));
+    } catch {}
+  }
+}
+
+function recoverLazyChunkLoad(error) {
+  if (!isLazyChunkLoadError(error)) return false;
+  if (typeof window === 'undefined') return false;
+  const reloadKey = `${CHUNK_RELOAD_KEY}:${window.location.pathname}${window.location.search}`;
+  if (window.sessionStorage?.getItem(reloadKey) === '1') return false;
+  try {
+    window.sessionStorage?.setItem(reloadKey, '1');
+  } catch {}
+  clearBrowserRuntimeCaches().finally(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('__fresh', String(Date.now()));
+    window.location.replace(url.toString());
+  });
+  return true;
+}
 
 function dateInputValue(date) {
   return date instanceof Date && Number.isFinite(date.getTime()) ? date.toISOString().slice(0, 10) : '';
@@ -128,6 +159,46 @@ function dateInputValue(date) {
 
 function LazyPanelFallback() {
   return <section className="card"><div className="section-title"><h2>패널을 불러오는 중입니다.</h2></div></section>;
+}
+
+class LazyChunkBoundary extends Component {
+  state = { error: null, recovering: false };
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  componentDidCatch(error) {
+    if (recoverLazyChunkLoad(error)) {
+      this.setState({ recovering: true });
+      return;
+    }
+    console.warn('Lazy chunk load failed:', error);
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.resetKey !== this.props.resetKey && this.state.error) {
+      this.setState({ error: null, recovering: false });
+    }
+  }
+
+  render() {
+    if (this.state.recovering) {
+      return <LazyPanelFallback />;
+    }
+    if (this.state.error) {
+      return (
+        <section className="card">
+          <div className="section-title">
+            <h2>화면을 다시 불러와야 합니다.</h2>
+            <p>배포 후 남은 캐시를 정리했습니다. 다시 열기를 눌러 최신 화면으로 이동하세요.</p>
+          </div>
+          <button type="button" className="save-connection-btn" onClick={() => window.location.reload()}>다시 열기</button>
+        </section>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 const WAYZI_STATIC_PAGES = {
@@ -370,6 +441,10 @@ class LazyEditorBoundary extends Component {
   }
 
   componentDidCatch(error) {
+    if (recoverLazyChunkLoad(error)) {
+      this.setState({ error: null });
+      return;
+    }
     console.warn('Fixed block editor load failed:', error);
   }
 
@@ -1540,41 +1615,45 @@ function App() {
       );
     }
     return withWayziFooter(
-      <Suspense fallback={<LazyPanelFallback />}>
-        <AdminPanel
-          page={page}
-          updatePage={updatePage}
-          updateAi={updateAi}
-          setPage={setNormalizedPage}
-          setStartMode={setStartMode}
-          authUser={authUser}
-          onExit={()=>{ history.replaceState(null, '', '/'); location.reload(); }}
-        />
-      </Suspense>
+      <LazyChunkBoundary resetKey="admin">
+        <Suspense fallback={<LazyPanelFallback />}>
+          <AdminPanel
+            page={page}
+            updatePage={updatePage}
+            updateAi={updateAi}
+            setPage={setNormalizedPage}
+            setStartMode={setStartMode}
+            authUser={authUser}
+            onExit={()=>{ history.replaceState(null, '', '/'); location.reload(); }}
+          />
+        </Suspense>
+      </LazyChunkBoundary>
     );
   }
 
   if (!workspaceOpen && canUseBuilder) {
     return withWayziFooter(
       <>
-        <Suspense fallback={<LazyPanelFallback />}>
-          <Dashboard
-            user={authUser}
-            page={page}
-            leads={leads}
-            onCreate={()=>setCreateOpen(true)}
-            onAi={createWithAi}
-            onManual={createManual}
-            onTemplate={createFromTemplate}
-            templates={templateChoices}
-            onEdit={openWorkspace}
-            onPreview={openPreview}
-            onLogout={logout}
-            onAccountUpdate={updateAccountProfile}
-            TemplatesPanelComponent={TemplatesPanel}
-          />
-          {canUseBuilder && createOpen && <CreateLandingModal page={page} onClose={()=>setCreateOpen(false)} onAi={createWithAi} onManual={createManual} onTemplate={createFromTemplate} templates={templateChoices} TemplatesPanelComponent={TemplatesPanel}/>}
-        </Suspense>
+        <LazyChunkBoundary resetKey="dashboard">
+          <Suspense fallback={<LazyPanelFallback />}>
+            <Dashboard
+              user={authUser}
+              page={page}
+              leads={leads}
+              onCreate={()=>setCreateOpen(true)}
+              onAi={createWithAi}
+              onManual={createManual}
+              onTemplate={createFromTemplate}
+              templates={templateChoices}
+              onEdit={openWorkspace}
+              onPreview={openPreview}
+              onLogout={logout}
+              onAccountUpdate={updateAccountProfile}
+              TemplatesPanelComponent={TemplatesPanel}
+            />
+            {canUseBuilder && createOpen && <CreateLandingModal page={page} onClose={()=>setCreateOpen(false)} onAi={createWithAi} onManual={createManual} onTemplate={createFromTemplate} templates={templateChoices} TemplatesPanelComponent={TemplatesPanel}/>}
+          </Suspense>
+        </LazyChunkBoundary>
       </>
     );
   }
@@ -1582,13 +1661,16 @@ function App() {
   return (
     <>
       <div className={`builder-shell${canUseBuilder && startMode === 'template' ? ' template-intro-shell' : ''}`}>
-        {canManageAdmin && !startMode && !tabDeepLink && <Suspense fallback={<LazyPanelFallback />}><StartModeOverlay onManual={()=>chooseStartMode('manual')} onAi={()=>chooseStartMode('ai')} onTemplate={()=>chooseStartMode('template')} onClose={()=>setStartMode('manual')} templates={templateChoices}/></Suspense>} 
+        {/* !tabDeepLink && <Suspense: keep authenticated tab deep links from opening the start overlay. */}
+        {canManageAdmin && !startMode && !tabDeepLink && <LazyChunkBoundary resetKey="start-mode"><Suspense fallback={<LazyPanelFallback />}><StartModeOverlay onManual={()=>chooseStartMode('manual')} onAi={()=>chooseStartMode('ai')} onTemplate={()=>chooseStartMode('template')} onClose={()=>setStartMode('manual')} templates={templateChoices}/></Suspense></LazyChunkBoundary>} 
         <aside className="left-workspace">
           <section className="work-panel">
             {canManageAdmin && startMode === 'template' ? (
-              <Suspense fallback={<LazyPanelFallback/>}>
-                <TemplatesPanel page={page} templates={templateChoices} onApply={createFromTemplate}/>
-              </Suspense>
+              <LazyChunkBoundary resetKey="templates">
+                <Suspense fallback={<LazyPanelFallback/>}>
+                  <TemplatesPanel page={page} templates={templateChoices} onApply={createFromTemplate}/>
+                </Suspense>
+              </LazyChunkBoundary>
             ) : (
               <>
                 {clientAdminMode ? (
@@ -1628,17 +1710,19 @@ function App() {
                     renderBlockEditor={(block)=><BlockEditor block={block} page={page} updateBlock={updateBlock} editors={BLOCK_EDITORS} editorDeps={{ Color, Range, RichField, TargetControl, WidgetDesignControls, generateStandaloneFormHtml }}/>}
                   />
                 )} 
-                <Suspense fallback={<LazyPanelFallback/>}>
+                <LazyChunkBoundary resetKey={tab}>
+                  <Suspense fallback={<LazyPanelFallback/>}>
                   {canUseBuilder && tab === 'style' && <StylePanel page={page} updateTheme={updateTheme} onPreviewThemeChange={setStylePreviewTheme}/>}
                   {tab === 'inbox' && <InboxPanel leads={leads} page={page} authUser={authUser} updatePage={updatePage} syncing={leadsSyncing} totalLeads={leadPageMeta.total} hasMoreLeads={leadPageMeta.hasMore} loadMoreLeads={loadMoreLeads} onFiltersChange={setInboxFilters} updateIntegrations={updateIntegrations} connectionsEditing={connectionsEditing} setConnectionsEditing={setConnectionsEditing} updateLead={updateLead} deleteLead={deleteLead} retryLeadDelivery={retryLeadDelivery} retryFailedDeliveries={retryFailedDeliveries} exportLeadsCsv={exportLeadsCsv} leadConflict={leadConflict} onReloadLeadConflict={reloadLeadConflict} onRetryLeadConflict={retryLeadConflict} onDismissLeadConflict={() => setLeadConflict(null)} accessMode={accessMode}/>}
                   {tab === 'stats' && <StatsPanel events={events} leads={leads} page={page} eventPageMeta={statsEventPageMeta} leadPageMeta={statsLeadPageMeta} statsPartial={statsPartial} period={statsPeriod} onPeriodChange={setStatsPeriod} accessMode={accessMode}/>}
                   {tab === 'settings' && <SettingsPanel page={page} updatePage={updatePage} updateMeta={updateMeta} updateIntegrations={updateIntegrations} setPage={setNormalizedPage} onDuplicatePage={duplicatePageWithUrl} canDuplicatePage={canUsePageDuplication(page)} onReset={reset} authUser={authUser} accessMode={accessMode} onAccountUpdate={updateAccountProfile} onLogout={logout}/>}
-                </Suspense>
+                  </Suspense>
+                </LazyChunkBoundary>
               </>
             )}
           </section>
         </aside>
-        <main className="preview-workspace"><div className="preview-sticky"><div className="preview-top"><div className="preview-title"><span>모바일 미리보기</span><strong>/{page.slug}</strong></div><a className="preview-link" href={previewUrl} target="_blank" rel="noreferrer">{previewUrl}</a></div><div className="phone-frame"><Suspense fallback={<div className="muted small">{'\uBBF8\uB9AC\uBCF4\uAE30\uB97C \uBD88\uB7EC\uC624\uB294 \uC911\uC785\uB2C8\uB2E4.'}</div>}><PreviewRenderer page={previewPage} leads={leads} addLead={addLead} track={track} selectedBlockId={canUseBuilder ? openId : ''} onSelectBlock={canUseBuilder ? selectPreviewBlock : undefined}/></Suspense></div></div></main>
+        <main className="preview-workspace"><div className="preview-sticky"><div className="preview-top"><div className="preview-title"><span>모바일 미리보기</span><strong>/{page.slug}</strong></div><a className="preview-link" href={previewUrl} target="_blank" rel="noreferrer">{previewUrl}</a></div><div className="phone-frame"><LazyChunkBoundary resetKey="preview"><Suspense fallback={<div className="muted small">{'\uBBF8\uB9AC\uBCF4\uAE30\uB97C \uBD88\uB7EC\uC624\uB294 \uC911\uC785\uB2C8\uB2E4.'}</div>}><PreviewRenderer page={previewPage} leads={leads} addLead={addLead} track={track} selectedBlockId={canUseBuilder ? openId : ''} onSelectBlock={canUseBuilder ? selectPreviewBlock : undefined}/></Suspense></LazyChunkBoundary></div></div></main>
       </div>
       {pageConflict && (
         <PageConflictModal
