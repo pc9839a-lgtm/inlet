@@ -221,9 +221,9 @@ async function storeEmailVerificationCode(db, record = {}, env = {}) {
 async function confirmStoredEmailVerificationCode(db, input = {}, env = {}) {
   if (!db?.prepare || !/^\d{6}$/.test(String(input.code || ''))) return null;
   const rows = await db.prepare(`
-    SELECT id, email, purpose, code_hash, attempts, expires_at
+    SELECT id, email, purpose, code_hash, status, attempts, expires_at, confirmed_at
     FROM auth_email_verifications
-    WHERE email = ? AND status = 'pending'
+    WHERE email = ? AND status IN ('pending', 'confirmed')
     ORDER BY created_at DESC
     LIMIT 5
   `).bind(input.email).all();
@@ -240,6 +240,15 @@ async function confirmStoredEmailVerificationCode(db, input = {}, env = {}) {
     }
     const expected = await hmacHex(`${input.email}:${record.purpose}:${input.code}`, authSecret(env));
     if (expected === record.code_hash) {
+      if (String(record.status || '') === 'confirmed') {
+        return {
+          email: input.email,
+          purpose: String(record.purpose || 'signup'),
+          status: 'confirmed',
+          confirmedAt: record.confirmed_at || new Date().toISOString(),
+          delivery: { mode: 'api', status: 'confirmed' },
+        };
+      }
       const confirmedAt = new Date().toISOString();
       await db.prepare("UPDATE auth_email_verifications SET status = 'confirmed', confirmed_at = ? WHERE id = ?").bind(confirmedAt, record.id).run();
       return {
