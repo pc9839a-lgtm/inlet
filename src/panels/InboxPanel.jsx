@@ -382,6 +382,30 @@ function fmtDateOnly(value) {
   return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('ko-KR');
 }
 
+function deliveryTone(status = 'none') {
+  if (status === 'success') return 'success';
+  if (status === 'failed' || status === 'partial') return 'failed';
+  if (status === 'pending') return 'pending';
+  return 'none';
+}
+
+function deliveryLogStatusText(status = '') {
+  return status === 'success' ? '성공' : status === 'pending' ? '대기' : '실패';
+}
+
+function deliveryProviderText(log = {}) {
+  const provider = String(log.provider || '').toLowerCase();
+  if (provider === 'ses' || provider === 'email') return '메일';
+  if (provider === 'webhook') return '웹훅';
+  return log.target || '전송';
+}
+
+function deliveryTimeText(value = '') {
+  if (!value) return '';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? String(value).slice(0, 16) : date.toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' });
+}
+
 function DebouncedMemoInput({ value, onCommit }) {
   const [draft, setDraft] = useState(value || '');
 
@@ -605,21 +629,26 @@ export default function InboxPanel({ leads, page, authUser = null, updatePage, s
                         </section>
                       )}
 
-                      <section className="lead-detail-section">
-                        <h3>외부 전송</h3>
-                        <div className="lead-info-grid">
-                          <LeadInfoRow label="상태" value={deliveryStatusLabel(lead.delivery?.status)} />
-                          <LeadInfoRow label="요약" value={lead.delivery?.summary || '외부 전송 없음'} />
+                      <section className={`lead-detail-section lead-delivery-section ${deliveryTone(lead.delivery?.status)}`}>
+                        <div className="lead-delivery-head">
+                          <h3>전송 상태</h3>
+                          <b>{deliveryStatusLabel(lead.delivery?.status)}</b>
+                        </div>
+                        <div className="lead-delivery-summary">
+                          <strong>{lead.delivery?.summary || '외부 전송 없음'}</strong>
+                          <span>{lead.delivery?.logs?.length ? `${lead.delivery.logs.length}개 전송 로그` : '연결된 메일 또는 웹훅이 없습니다.'}</span>
                           {['failed', 'partial'].includes(lead.delivery?.status) && (
                             <button type="button" onClick={() => retryLeadDelivery?.(lead)}>재전송</button>
                           )}
                         </div>
                         {!!(lead.delivery?.logs || []).length && (
-                          <div className="lead-answer-list-v3">
+                          <div className="lead-delivery-log-list">
                             {(lead.delivery.logs || []).map((log, idx) => (
-                              <div key={`${log.target}-${idx}`}>
-                                <span>{log.target || '전송 대상'}</span>
-                                <b>{`${log.status === 'success' ? '성공' : '실패'} · ${log.message || '-'}`}</b>
+                              <div className={`lead-delivery-log ${deliveryTone(log.status)}`} key={`${log.target}-${idx}`}>
+                                <span>{deliveryProviderText(log)}</span>
+                                <b>{deliveryLogStatusText(log.status)}</b>
+                                <em>{log.message || '-'}</em>
+                                {log.at && <small>{deliveryTimeText(log.at)}</small>}
                               </div>
                             ))}
                           </div>
