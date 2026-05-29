@@ -61,6 +61,7 @@ for (const token of [
 
 for (const token of [
   'sessionIdentity',
+  'sessionSecret',
   'crypto.subtle.importKey',
   'X-Inlet-Session',
   'X-Inlet-Api-Token',

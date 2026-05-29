@@ -146,7 +146,7 @@ export function apiTokenAuthorized(request, env = {}) {
 
 export async function sessionIdentity(request, env = {}) {
   const token = String(request.headers.get('X-Inlet-Session') || '').trim();
-  const secret = String(env.INLET_SESSION_SECRET || '').trim();
+  const secret = sessionSecret(env);
   if (!token || !secret) return null;
   const [payloadPart, signaturePart] = token.split('.');
   if (!payloadPart || !signaturePart) return null;
@@ -165,6 +165,10 @@ export async function sessionIdentity(request, env = {}) {
   } catch {
     return null;
   }
+}
+
+function sessionSecret(env = {}) {
+  return String(env.INLET_SESSION_SECRET || env.INLET_API_TOKEN || 'inlet-local-auth-secret').trim();
 }
 
 export async function authorizeProject(request, env = {}, project = {}, options = {}) {

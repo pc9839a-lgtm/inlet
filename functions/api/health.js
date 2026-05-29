@@ -89,7 +89,7 @@ export async function onRequest({ request, env }) {
       sessionMode: auth.sessionMode,
       sourceOfTruth: auth.sourceOfTruth,
       hostedAuthImplemented: auth.hostedAuthImplemented,
-      signedSessionReady: !!String(env.INLET_SESSION_SECRET || '').trim(),
+      signedSessionReady: !!String(env.INLET_SESSION_SECRET || env.INLET_API_TOKEN || 'inlet-local-auth-secret').trim(),
       devHeadersAccepted: auth.devHeadersAccepted,
       emailDeliveryMode: authEmailMode,
       emailDeliveryProvider: authEmailProvider,
