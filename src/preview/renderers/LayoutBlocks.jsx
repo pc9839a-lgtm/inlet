@@ -1,5 +1,3 @@
-import { useEffect, useRef, useState } from 'react';
-
 function pickSafe(value, list, fallback) {
   return list.includes(value) ? value : fallback;
 }
@@ -17,8 +15,6 @@ export function RenderSpacer({ block }) {
 }
 
 export function RenderTopNav({ block, go }) {
-  const menuRef = useRef(null);
-  const [loopMenu, setLoopMenu] = useState(false);
   const s = block.s || {};
   const bg = pickSafe(s.bg, ['white','transparent','dark'], 'white');
   const isImageLogo = s.logoType === 'image' && !!s.logoImage;
@@ -28,7 +24,6 @@ export function RenderTopNav({ block, go }) {
   const menuSize = pickSafe(s.menuSize || 'medium', ['small','medium','large'], 'medium');
   const align = pickSafe(s.align || 'left', ['left','center','right'], 'left');
   const menus = Array.isArray(s.menus) ? s.menus.slice(0, 5) : [];
-  const menuSignature = menus.map((m) => `${m.id}:${m.label}`).join('|');
   const isPillMenu = menuStyle === 'pill';
   const menuBg = s.menuBgColor && s.menuBgColor !== '#F1F5F9' ? s.menuBgColor : (isPillMenu && bg === 'dark' ? '#ffffff' : 'var(--card)');
   const logoText = s.logoTextColor || (bg === 'dark' ? '#ffffff' : 'var(--text)');
@@ -58,42 +53,12 @@ export function RenderTopNav({ block, go }) {
     </button>
   );
 
-  useEffect(() => {
-    const menu = menuRef.current;
-    if (!menu || menus.length < 2) {
-      setLoopMenu(false);
-      return undefined;
-    }
-    if (menus.length >= 3) {
-      setLoopMenu(true);
-      return undefined;
-    }
-    const check = () => {
-      const firstSet = menu.querySelector('.top-menu-set');
-      const originalWidth = firstSet?.scrollWidth || 0;
-      setLoopMenu(originalWidth > menu.clientWidth + 6);
-    };
-    check();
-    requestAnimationFrame(check);
-    document.fonts?.ready?.then(check).catch(() => {});
-    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(check) : null;
-    observer?.observe(menu);
-    const firstSet = menu.querySelector('.top-menu-set');
-    if (firstSet) observer?.observe(firstSet);
-    window.addEventListener('resize', check);
-    return () => {
-      observer?.disconnect();
-      window.removeEventListener('resize', check);
-    };
-  }, [menuSignature]);
-
   return (
-    <section id={`block-${block.id}`} className={`landing-section topnav topnav-one-line topnav-${bg} topnav-align-${align} topnav-logo-${logoStyle} logo-${logoSize} menu-${menuStyle} menu-${menuSize} ${loopMenu ? 'topnav-menu-loop' : ''} ${s.sticky ? 'topnav-sticky' : ''}`} style={vars}>
+    <section id={`block-${block.id}`} className={`landing-section topnav topnav-one-line topnav-${bg} topnav-align-${align} topnav-logo-${logoStyle} logo-${logoSize} menu-${menuStyle} menu-${menuSize} ${s.sticky ? 'topnav-sticky' : ''}`} style={vars}>
       <div className="top-logo">{isImageLogo ? <img src={s.logoImage} alt="" /> : <strong>{s.logoText || 'LOGO'}</strong>}</div>
-      <div className="top-menu" ref={menuRef}>
+      <div className="top-menu">
         <div className="top-menu-track">
           <div className="top-menu-set">{menus.map((m) => renderMenuButton(m))}</div>
-          {menus.length > 1 && <div className="top-menu-set top-menu-set-copy">{menus.map((m) => renderMenuButton(m, true))}</div>}
         </div>
       </div>
     </section>
