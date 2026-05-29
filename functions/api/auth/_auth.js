@@ -474,6 +474,8 @@ async function sendSesAuthEmail(message = {}, env = {}) {
       code,
       provider: 'ses',
       httpStatus: res.status,
+      errorType: String(responseData.__type || ''),
+      providerMessage: String(responseData.message || responseData.Message || '').slice(0, 500),
     });
   }
 
