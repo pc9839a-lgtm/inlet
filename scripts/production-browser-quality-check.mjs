@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 
-const baseUrl = process.env.INLET_PRODUCTION_QA_URL || 'https://inlet-8mr.pages.dev';
+const baseUrl = process.env.INLET_PRODUCTION_QA_URL || 'https://pagero.kr';
 const requireRealBrowser = process.env.INLET_PRODUCTION_BROWSER_QA_REQUIRE === '1' || process.env.INLET_BROWSER_QA_REQUIRE === '1';
 const includeNextSettingsCases = process.env.INLET_PRODUCTION_QA_INCLUDE_NEXT_SETTINGS === '1' || !!process.env.INLET_PRODUCTION_QA_URL;
 

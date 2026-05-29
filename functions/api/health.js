@@ -36,7 +36,7 @@ function sessionSource(mode = '') {
 function corsHeaders(request, env = {}) {
   const origin = request.headers.get('Origin') || '';
   const allowed = parseAllowedOrigins(env.INLET_ALLOWED_ORIGINS || '');
-  const allowOrigin = allowed.includes(origin) ? origin : allowed[0] || 'https://inlet-8mr.pages.dev';
+  const allowOrigin = allowed.includes(origin) ? origin : allowed[0] || 'https://pagero.kr';
   return {
     'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Methods': 'GET, OPTIONS',

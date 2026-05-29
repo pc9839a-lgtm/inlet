@@ -1,6 +1,6 @@
 import { getD1ProjectAccess } from '../../server/storage/d1Adapter.mjs';
 
-const DEFAULT_ORIGIN = 'https://inlet-8mr.pages.dev';
+const DEFAULT_ORIGIN = 'https://pagero.kr';
 const MANAGER_TABS = ['edit', 'style', 'inbox', 'stats', 'settings'];
 const CLIENT_ADMIN_TABS = ['inbox', 'stats', 'settings'];
 

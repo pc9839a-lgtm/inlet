@@ -107,7 +107,7 @@ function corsHeadersForCsv(request, env = {}) {
     .split(',')
     .map((item) => item.trim().replace(/\/+$/, ''))
     .filter(Boolean);
-  const allowOrigin = allowed.includes(origin) ? origin : allowed[0] || 'https://inlet-8mr.pages.dev';
+  const allowOrigin = allowed.includes(origin) ? origin : allowed[0] || 'https://pagero.kr';
   return {
     'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Methods': METHODS,

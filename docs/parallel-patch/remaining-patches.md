@@ -6,7 +6,7 @@ Current deployed baseline:
 
 - GitHub `main`: `db6d3b0`
 - Cloudflare Pages deployment: `3c76ed78`
-- URL: `https://inlet-8mr.pages.dev`
+- URL: `https://pagero.kr`
 - D1: `inlet-prod`
 - Applied migrations: `0001`, `0002_lead_dedupe_fields.sql`, `0003_event_dimensions.sql`, `0004_lead_blocked_submissions.sql`
 - Passed after deployment: hosted API QA, hosted route QA, production browser QA, strict artifact QA.

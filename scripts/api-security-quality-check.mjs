@@ -22,7 +22,7 @@ for (const token of [
 
 assert(envExample.includes('INLET_ALLOWED_ORIGINS'), '.env.example missing INLET_ALLOWED_ORIGINS');
 assert(deployDoc.includes('INLET_ALLOWED_ORIGINS'), 'deploy doc missing INLET_ALLOWED_ORIGINS');
-assert(deployDoc.includes('https://inlet-8mr.pages.dev'), 'deploy doc should mention the current Pages origin example');
+assert(deployDoc.includes('https://pagero.kr'), 'deploy doc should mention the current production origin');
 
 console.log(JSON.stringify({
   ok: true,

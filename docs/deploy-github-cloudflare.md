@@ -6,8 +6,8 @@ Latest verified frontend deployment:
 
 - GitHub `main`: `77f6e85`
 - Cloudflare Pages deployment: `84d6d32e`
-- Public URL: `https://inlet-8mr.pages.dev/`
-- Verification: public URL returns `200`; hosted API health, hosted route QA, and production browser QA pass against `https://inlet-8mr.pages.dev/`.
+- Public URL: `https://pagero.kr/`
+- Verification: public URL returns `200`; hosted API health, hosted route QA, and production browser QA pass against `https://pagero.kr/`.
 - Current live readiness: hosted D1 Pages Functions are active. AI/SMTP/OAuth/conversion checks remain credential-bound and must stay `skipped-live` until credentials are configured.
 - D1 direct check: Cloudflare D1 API confirms `inlet-prod` database `b68d3820-001f-4dbe-87cd-dc9fc0be17ee`, production version, and required core tables. Current core counts are empty for accounts/projects/leads/events/audit_logs.
 
@@ -131,7 +131,7 @@ Production environment variables:
 - `INLET_API_PORT=<platform-port-or-8787>`
 - `INLET_API_TOKEN=<strong-random-token>`
 - `INLET_DATA_DIR=<persistent-disk-path>`
-- `INLET_ALLOWED_ORIGINS=https://inlet-8mr.pages.dev,<your-production-domain>` so the API does not allow arbitrary browser origins in production.
+- `INLET_ALLOWED_ORIGINS=https://pagero.kr,https://www.pagero.kr,https://inlet-8mr.pages.dev` so the API does not allow arbitrary browser origins in production.
 - `INLET_SESSION_AUTH_MODE=production`
 - `INLET_SESSION_SECRET=<long-random-secret>`
 - `INLET_STORAGE_ADAPTER=d1` when the deployed API has a valid D1 binding; use `auto` only during staged rollout.
