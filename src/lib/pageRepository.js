@@ -60,6 +60,7 @@ export async function persistPage(page, authUser = null, options = {}) {
   return postJson(`/api/pages/${encodeURIComponent(slug)}`, {
     page: safePage,
     project: context,
+    tab: options.tab || '',
     ...(options.expectedUpdatedAt ? { expectedUpdatedAt: options.expectedUpdatedAt } : {}),
   }, { headers: projectAuthHeaders(context) });
 }

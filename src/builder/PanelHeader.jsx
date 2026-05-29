@@ -7,32 +7,10 @@ const saveStateColors = {
   error: '#dc2626',
 };
 
-const saveStateStyle = {
-  width: 'min(220px, 100%)',
-  marginTop: 8,
-  color: '#64748b',
-  lineHeight: 1.25,
-};
-
-const saveStateLabelStyle = {
-  display: 'block',
-  fontSize: 12,
-  fontWeight: 950,
-};
-
-const saveStateDetailStyle = {
-  display: 'block',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-  fontSize: 11,
-  fontWeight: 800,
-};
-
 export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPreview, onStartChoice, onDashboard, previewUrl }) {
   const titles = {
     edit: ['편집', ''],
-    templates: ['템플릿', '예시 화면을 좌우로 넘겨보고 페이지 구성을 선택합니다.'],
+    templates: ['템플릿', '예시 화면을 보고 페이지 구성을 선택합니다.'],
     style: ['스타일', ''],
     inbox: ['접수함', ''],
     stats: ['통계', ''],
@@ -48,9 +26,9 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
         <h1>{title}</h1>
         {desc && <span>{desc}</span>}
         {saveStatus && (
-          <div style={saveStateStyle} title={saveStatus.detail || saveStatus.label} aria-live="polite">
-            <strong style={{ ...saveStateLabelStyle, color: saveStateColors[saveStatus.tone] || saveStateColors.idle }}>{saveStatus.label}</strong>
-            {saveStatus.detail && <small style={saveStateDetailStyle}>{saveStatus.detail}</small>}
+          <div className="panel-save-status" title={saveStatus.detail || saveStatus.label} aria-live="polite">
+            <strong style={{ color: saveStateColors[saveStatus.tone] || saveStateColors.idle }}>{saveStatus.label}</strong>
+            {saveStatus.detail && <small>{saveStatus.detail}</small>}
           </div>
         )}
       </div>

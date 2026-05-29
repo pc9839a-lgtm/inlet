@@ -1325,7 +1325,7 @@ function App() {
       saveLocalJson(STORAGE_KEY, nextPage, '페이지');
       let result = null;
       try {
-        result = await persistPage(nextPage, authUser);
+        result = await persistPage(nextPage, authUser, { tab: 'style' });
       } catch (error) {
         const handled = await handlePageSaveError(error, nextPage);
         markSaveStatus(handled ? 'warning' : 'error', handled ? '저장 충돌' : '서버 저장 실패', handled
@@ -1368,7 +1368,7 @@ function App() {
     saveLocalJson(STORAGE_KEY, nextPage, '페이지');
     let result = null;
     try {
-      result = await persistPage(nextPage, authUser);
+      result = await persistPage(nextPage, authUser, { tab });
     } catch (error) {
       const handled = await handlePageSaveError(error, nextPage);
       markSaveStatus(handled ? 'warning' : 'error', handled ? '저장 충돌' : '서버 저장 실패', handled
