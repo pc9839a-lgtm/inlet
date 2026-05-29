@@ -5147,7 +5147,9 @@ async function authorizeProjectAccess(req, project = {}, options = {}) {
   const normalizedProject = normalizeProject(project);
   const identity = requestIdentity(req);
   if (!identity.ownerId) throw accessError('Project owner identity is required.', 'PROJECT_ACCESS_REQUIRED');
-  if (identity.projectId && identity.projectId !== normalizedProject.projectId) {
+  const role = String(identity.role || '').trim().toLowerCase().replace(/[-\s]/g, '_');
+  const masterSameOwner = ['master', 'owner', 'builder'].includes(role) && identity.ownerId === normalizedProject.ownerId;
+  if (identity.projectId && identity.projectId !== normalizedProject.projectId && !masterSameOwner) {
     throw accessError('Project identity does not match the requested project.', 'PROJECT_ACCESS_MISMATCH');
   }
 

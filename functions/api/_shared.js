@@ -179,6 +179,19 @@ export async function authorizeProject(request, env = {}, project = {}, options 
   const enforce = String(env.INLET_PROJECT_AUTH_ENFORCE || '1') !== '0';
   const identity = await sessionIdentity(request, env);
   if (!enforce) return { project, identity };
+  const role = normalizeRole(identity?.role);
+  const sameOwner = !project.ownerId || !identity?.ownerId || String(identity.ownerId) === String(project.ownerId);
+  if (identity && ['master', 'owner', 'builder'].includes(role) && sameOwner) {
+    if (env.DB && typeof env.DB.prepare === 'function') {
+      const access = await getD1ProjectAccess(env.DB, { projectId: project.projectId });
+      if (access && !canUseProjectAccess(identity, access, options)) {
+        const error = new Error(options.write ? 'Project write access denied.' : 'Project access denied.');
+        error.status = 403;
+        throw error;
+      }
+    }
+    return { project, identity };
+  }
   if (identity && (!identity.projectId || identity.projectId === project.projectId)) {
     if (apiTokenAuthorized(request, env)) return { project, identity };
     if (env.DB && typeof env.DB.prepare === 'function') {
@@ -190,7 +203,6 @@ export async function authorizeProject(request, env = {}, project = {}, options 
         throw error;
       }
     }
-    const role = normalizeRole(identity.role);
     if (['master', 'owner', 'builder'].includes(role)) return { project, identity };
     if (!options.write && ['manager', 'client_admin'].includes(role)) return { project, identity };
   }

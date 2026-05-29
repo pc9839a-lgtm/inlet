@@ -91,8 +91,9 @@
 }
 
 .top-menu-track {
-  width: max-content !important;
-  margin-left: auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin-left: 0 !important;
 }
 
 .top-menu-set-copy {
@@ -355,7 +356,7 @@
   }
 
   .topnav-one-line .top-logo {
-    max-width: 38% !important;
+    max-width: 34% !important;
   }
 
   .topnav-one-line .top-logo strong {
@@ -366,9 +367,27 @@
   }
 
   .topnav-one-line .top-menu button {
-    max-width: 104px !important;
+    flex: 1 1 0 !important;
+    max-width: none !important;
+    min-width: 0 !important;
     min-height: 34px !important;
-    padding: 0 10px !important;
+    padding: 0 8px !important;
     font-size: 11px !important;
+  }
+
+  .topnav-one-line .top-menu {
+    overflow-x: hidden !important;
+  }
+
+  .topnav-one-line .top-menu-track,
+  .topnav-one-line .top-menu-set {
+    width: 100% !important;
+    min-width: 0 !important;
+    justify-content: flex-end !important;
+    gap: 5px !important;
+  }
+
+  .topnav-one-line .top-menu-set {
+    flex: 1 1 auto !important;
   }
 }
