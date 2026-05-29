@@ -768,6 +768,8 @@ function sessionIdentity(req) {
   return {
     ownerId: safeId(payload.ownerId || '', ''),
     projectId: safeId(payload.projectId || '', ''),
+    role: String(payload.role || ''),
+    email: normalizeEmail(payload.email || ''),
     source: 'signed-session',
   };
 }
@@ -5037,21 +5039,38 @@ function projectAccessFromPage(page = {}, project = {}) {
 }
 
 function managerAccessForIdentity(identity = {}, access = {}) {
-  if (!identity.ownerId) return null;
+  const ownerIds = identityOwnerAliases(identity);
+  if (!ownerIds.size) return null;
   const managers = Array.isArray(access.managers) ? access.managers : [];
-  return managers.find((manager) => manager.status === 'active' && manager.ownerId === identity.ownerId) || null;
+  return managers.find((manager) => manager.status === 'active' && ownerIds.has(String(manager.ownerId || ''))) || null;
 }
 
 function canAccessProject(identity = {}, access = {}, options = {}) {
-  if (!identity.ownerId) return false;
-  if (identity.ownerId === safeId(access.ownerId, '')) return true;
-  if (access.clientAccess && Array.isArray(access.clientOwnerIds) && access.clientOwnerIds.includes(identity.ownerId)) return true;
+  const ownerIds = identityOwnerAliases(identity);
+  if (!ownerIds.size) return false;
+  if (ownerIds.has(safeId(access.ownerId, ''))) return true;
+  if (access.clientAccess && Array.isArray(access.clientOwnerIds) && access.clientOwnerIds.some((id) => ownerIds.has(safeId(id, '')))) return true;
   const manager = managerAccessForIdentity(identity, access);
   if (!manager) return false;
   const tab = String(options.tab || '').trim();
   if (!tab) return true;
   const permission = manager.access?.[tab] || {};
   return options.write ? !!permission.write : !!(permission.read || permission.write);
+}
+
+function identityOwnerAliases(identity = {}) {
+  const aliases = new Set();
+  const ownerId = safeId(identity.ownerId || '', '');
+  const emailOwnerId = ownerIdForEmail(identity.email || '');
+  if (ownerId) aliases.add(ownerId);
+  if (emailOwnerId) aliases.add(emailOwnerId);
+  return aliases;
+}
+
+function sameOwnerIdentity(identity = {}, project = {}) {
+  const projectOwnerId = safeId(project.ownerId || project.ownerAccountId || '', '');
+  if (!projectOwnerId) return true;
+  return identityOwnerAliases(identity).has(projectOwnerId);
 }
 
 async function writeProjectAccess(project = {}, access = {}) {
@@ -5148,7 +5167,7 @@ async function authorizeProjectAccess(req, project = {}, options = {}) {
   const identity = requestIdentity(req);
   if (!identity.ownerId) throw accessError('Project owner identity is required.', 'PROJECT_ACCESS_REQUIRED');
   const role = String(identity.role || '').trim().toLowerCase().replace(/[-\s]/g, '_');
-  const masterSameOwner = ['master', 'owner', 'builder'].includes(role) && identity.ownerId === normalizedProject.ownerId;
+  const masterSameOwner = ['master', 'owner', 'builder'].includes(role) && sameOwnerIdentity(identity, normalizedProject);
   if (identity.projectId && identity.projectId !== normalizedProject.projectId && !masterSameOwner) {
     throw accessError('Project identity does not match the requested project.', 'PROJECT_ACCESS_MISMATCH');
   }
@@ -5159,7 +5178,7 @@ async function authorizeProjectAccess(req, project = {}, options = {}) {
     return normalizedProject;
   }
 
-  if (identity.ownerId !== normalizedProject.ownerId) {
+  if (!sameOwnerIdentity(identity, normalizedProject)) {
     throw accessError('Project access has not been granted.');
   }
 

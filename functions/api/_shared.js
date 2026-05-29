@@ -180,29 +180,23 @@ export async function authorizeProject(request, env = {}, project = {}, options 
   const identity = await sessionIdentity(request, env);
   if (!enforce) return { project, identity };
   const role = normalizeRole(identity?.role);
-  const sameOwner = !project.ownerId || !identity?.ownerId || String(identity.ownerId) === String(project.ownerId);
-  if (identity && ['master', 'owner', 'builder'].includes(role) && sameOwner) {
-    if (env.DB && typeof env.DB.prepare === 'function') {
-      const access = await getD1ProjectAccess(env.DB, { projectId: project.projectId });
-      if (access && !canUseProjectAccess(identity, access, options)) {
-        const error = new Error(options.write ? 'Project write access denied.' : 'Project access denied.');
-        error.status = 403;
-        throw error;
-      }
+
+  if (identity && env.DB && typeof env.DB.prepare === 'function') {
+    const access = await getD1ProjectAccess(env.DB, { projectId: project.projectId });
+    if (access) {
+      if (canUseProjectAccess(identity, access, options)) return { project, identity, access };
+      const error = new Error(options.write ? 'Project write access denied.' : 'Project access denied.');
+      error.status = 403;
+      throw error;
     }
+  }
+
+  if (identity && ['master', 'owner', 'builder'].includes(role) && sameOwnerIdentity(identity, project)) {
     return { project, identity };
   }
+
   if (identity && (!identity.projectId || identity.projectId === project.projectId)) {
     if (apiTokenAuthorized(request, env)) return { project, identity };
-    if (env.DB && typeof env.DB.prepare === 'function') {
-      const access = await getD1ProjectAccess(env.DB, { projectId: project.projectId });
-      if (access) {
-        if (canUseProjectAccess(identity, access, options)) return { project, identity, access };
-        const error = new Error(options.write ? 'Project write access denied.' : 'Project access denied.');
-        error.status = 403;
-        throw error;
-      }
-    }
     if (['master', 'owner', 'builder'].includes(role)) return { project, identity };
     if (!options.write && ['manager', 'client_admin'].includes(role)) return { project, identity };
   }
@@ -235,19 +229,43 @@ function isPublicProjectShell(access = {}) {
   return String(access.ownerId || '').startsWith('public_');
 }
 
+function stableHash(value = '') {
+  let hash = 2166136261;
+  for (const char of String(value)) {
+    hash ^= char.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36).padStart(7, '0');
+}
+
+function identityOwnerAliases(identity = {}) {
+  const aliases = new Set();
+  const ownerId = String(identity.ownerId || '').trim();
+  const email = String(identity.email || '').trim().toLowerCase();
+  if (ownerId) aliases.add(ownerId);
+  if (email) aliases.add(`user_${stableHash(email)}`);
+  return aliases;
+}
+
+function sameOwnerIdentity(identity = {}, project = {}) {
+  const projectOwnerId = String(project.ownerId || project.ownerAccountId || '').trim();
+  if (!projectOwnerId) return true;
+  return identityOwnerAliases(identity).has(projectOwnerId);
+}
+
 function activeMemberFor(identity = {}, access = {}) {
-  const ownerId = String(identity.ownerId || '');
+  const ownerIds = identityOwnerAliases(identity);
   const managers = Array.isArray(access.managers) ? access.managers : [];
-  if (ownerId && ownerId === String(access.ownerId || '')) {
+  if (ownerIds.has(String(access.ownerId || ''))) {
     return { role: 'master', access: {}, status: 'active' };
   }
-  if (ownerId && isPublicProjectShell(access) && isMasterLikeIdentity(identity)) {
+  if (ownerIds.size && isPublicProjectShell(access) && isMasterLikeIdentity(identity)) {
     return { role: 'master', access: {}, status: 'active', pendingClaim: true };
   }
-  if (Array.isArray(access.clientOwnerIds) && access.clientOwnerIds.includes(ownerId)) {
+  if (Array.isArray(access.clientOwnerIds) && access.clientOwnerIds.some((id) => ownerIds.has(String(id || '')))) {
     return { role: 'client_admin', access: {}, status: 'active' };
   }
-  return managers.find((member) => member.status === 'active' && String(member.ownerId || '') === ownerId) || null;
+  return managers.find((member) => member.status === 'active' && ownerIds.has(String(member.ownerId || ''))) || null;
 }
 
 function canUseProjectAccess(identity = {}, access = {}, options = {}) {

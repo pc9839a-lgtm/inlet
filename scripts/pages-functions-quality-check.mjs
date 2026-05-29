@@ -67,6 +67,8 @@ for (const token of [
   'publicWrite',
   'getD1ProjectAccess',
   'canUseProjectAccess',
+  'sameOwnerIdentity',
+  'identityOwnerAliases',
   'masterOnly',
   'CLIENT_ADMIN_TABS',
   'MANAGER_TABS',
