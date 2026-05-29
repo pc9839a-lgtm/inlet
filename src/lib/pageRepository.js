@@ -1,5 +1,5 @@
 import { isServerPageMode } from '../config/runtimeConfig.js';
-import { apiFetch, postJson, projectAuthHeaders } from './apiClient.js';
+import { ApiError, apiFetch, postJson, projectAuthHeaders } from './apiClient.js';
 import { normalizePageForSave } from './pageModel.js';
 import { projectContext } from './projectContext.js';
 

@@ -97,7 +97,7 @@ for (const [name, source, tokens] of [
   ['page revision', pageRevision, ['getD1PageRevision', "tab: 'edit'", 'revision.page']],
   ['page restore', pageRestore, ['getD1PageRevision', 'upsertD1Page', 'restore:', "tab: 'edit'"]],
   ['auth shared', authShared, ['getD1AccountByEmail', 'getD1AccountByPhone', 'upsertD1Account', 'createSessionToken', 'verifySessionToken', 'issueEmailVerificationToken']],
-  ['auth register', authRegister, ['registerAccount', 'user', 'AUTH_METHODS']],
+  ['auth register', authRegister, ['registerAccount', 'createSessionToken', 'session', 'AUTH_METHODS']],
   ['auth login', authLogin, ['loginAccount', 'ok: true', 'AUTH_METHODS']],
   ['auth session', authSession, ['getSessionAccount', 'expiresInSeconds', 'createSessionToken']],
   ['auth logout', authLogout, ['stateless-session', 'loggedOut']],

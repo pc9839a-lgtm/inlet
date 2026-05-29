@@ -31,7 +31,7 @@ import { generateStandaloneFormHtml } from './lib/formEmbed.js';
 import { fetchServerStatsSummary, persistEvent } from './lib/eventRepository.js';
 import { sendLeadIntegrations } from './lib/leadIntegrations.js';
 import { deleteServerLead, deliverServerLead, downloadServerLeadsCsv, fetchServerLeads, persistLead, retryFailedServerLeads, updateServerLead } from './lib/leadRepository.js';
-import { isOwnerAdminModeEnabled, isServerLeadMode, publicLandingUrl } from './config/runtimeConfig.js';
+import { isOwnerAdminModeEnabled, isServerLeadMode, isServerPageMode, publicLandingUrl } from './config/runtimeConfig.js';
 import { downloadLeadsCsv } from './lib/leadCsv.js';
 import { currentMonthValue, monthDateRange } from './lib/monthRange.js';
 import { fetchPublicServerPage, fetchServerPage, persistPage } from './lib/pageRepository.js';
@@ -654,6 +654,17 @@ function App() {
     saveLocalJson(AUTH_KEY, normalized, '로그인 정보', { quietSuccess: true });
     if (JSON.stringify(normalized) !== JSON.stringify(authUser)) setAuthUser(normalized);
   }, [authUser]);
+
+  useEffect(() => {
+    if (publicLandingSlug || !authUser || !isServerPageMode()) return;
+    if (String(authUser.session || '').trim()) return;
+    localStorage.removeItem(AUTH_KEY);
+    saveLocalJson(DASHBOARD_KEY, { open: false }, '작업공간 상태', { quietSuccess: true });
+    setAuthUser(null);
+    setWorkspaceOpen(false);
+    setAuthView('login');
+    showToast('로그인 세션이 없어 다시 로그인해야 합니다.', 'error');
+  }, [authUser?.email, authUser?.session, publicLandingSlug]);
 
   useEffect(() => {
     const session = String(authUser?.session || '').trim();
