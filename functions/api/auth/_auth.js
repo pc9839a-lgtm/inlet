@@ -117,7 +117,12 @@ export async function verifySessionToken(token = '', env = {}) {
     const payload = JSON.parse(base64UrlDecode(payloadPart));
     if (payload.exp && Number(payload.exp) < Math.floor(Date.now() / 1000)) return null;
     return payload;
-  } catch {
+  } catch (error) {
+    console.error('auth email SES request failed', {
+      code: 'EMAIL_SEND_TIMEOUT',
+      provider: 'ses',
+      message: String(error?.message || error || ''),
+    });
     return null;
   }
 }
@@ -457,6 +462,14 @@ async function sendSesAuthEmail(message = {}, env = {}) {
         : res.status === 429 || errorType.includes('throttl') || errorType.includes('limit')
           ? 'EMAIL_SEND_QUOTA_EXCEEDED'
           : 'EMAIL_SEND_PROVIDER_ERROR';
+    console.error('auth email SES provider rejected request', {
+      code,
+      provider: 'ses',
+      httpStatus: res.status,
+      errorType: String(responseData.__type || ''),
+      providerMessage: String(responseData.message || responseData.Message || '').slice(0, 500),
+      requestId: String(responseData.RequestId || responseData.requestId || ''),
+    });
     throw authError('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 503, {
       code,
       provider: 'ses',
