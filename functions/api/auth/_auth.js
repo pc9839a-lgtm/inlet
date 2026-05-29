@@ -373,7 +373,7 @@ async function sendSesAuthEmail(message = {}, env = {}) {
   const region = String(env.AWS_SES_REGION || env.INLET_AWS_SES_REGION || '').trim();
   const accessKeyId = String(env.AWS_SES_ACCESS_KEY_ID || env.INLET_AWS_SES_ACCESS_KEY_ID || '').trim();
   const secretAccessKey = String(env.AWS_SES_SECRET_ACCESS_KEY || env.INLET_AWS_SES_SECRET_ACCESS_KEY || '').trim();
-  const from = String(env.INLET_AUTH_EMAIL_FROM || '').trim();
+  const from = normalizeSesFromAddress(String(env.INLET_AUTH_EMAIL_FROM || '').trim());
   if (!region || !accessKeyId || !secretAccessKey || !from) {
     throw authError('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 503, {
       code: 'EMAIL_SEND_NOT_CONFIGURED',
@@ -476,6 +476,23 @@ function authEmailSubject(purpose = 'signup') {
   return String(purpose || '') === 'password-reset'
     ? '[페이지로] 비밀번호 변경 인증 코드'
     : '[페이지로] 이메일 인증 코드';
+}
+
+function normalizeSesFromAddress(value = '') {
+  const from = String(value || '').trim();
+  const match = from.match(/^(.+?)<([^<>]+)>$/);
+  if (!match) return from;
+  const displayName = match[1].trim().replace(/^["']|["']$/g, '');
+  const email = match[2].trim();
+  if (!displayName || /^[\x20-\x7E]+$/.test(displayName)) return `${displayName} <${email}>`;
+  return `${mimeBase64Word(displayName)} <${email}>`;
+}
+
+function mimeBase64Word(value = '') {
+  const bytes = new TextEncoder().encode(String(value || ''));
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return `=?UTF-8?B?${btoa(binary)}?=`;
 }
 
 function authEmailText(message = {}) {
