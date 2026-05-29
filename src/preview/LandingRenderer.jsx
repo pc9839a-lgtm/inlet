@@ -114,7 +114,7 @@ function BgEffectLayer({ effect }) {
   );
 }
 
-function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '', onSelectBlock, templatePreview = false }) {
+function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '', onSelectBlock, templatePreview = false, publicView = false }) {
   const suppressTopNav = page.slug === 'our-wedding-day' || page.title === '모바일 청첩장';
   const blocks = page.blocks.filter(b=>b.visible && !(b.type === 'topnav' && (suppressTopNav || b.s?.omitRender)));
   const bottom = blocks.find(b=>b.type==='bottombar');
@@ -286,7 +286,18 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
   const bgEffect = pickSafe(page.theme.bgEffect || 'none', ['none','snow','petals','sparkle'], 'none');
   const bgEffectOpacity = Math.max(0.1, Math.min(0.9, Number(page.theme.bgEffectOpacity ?? 45) / 100));
 
-  return <div ref={pageRef} onClickCapture={templatePreview ? undefined : handlePreviewSelect} className={`landing-page font-${page.theme.font} font-family-${page.theme.fontFamily || 'pretendard'} bgmode-${page.theme.bgMode || 'solid'} bg-effect-${bgEffect} button-effect-${buttonEffect} ${templatePreview ? 'template-preview' : ''} ${bottomActive ? 'has-bottom-bar' : ''} ${page.theme.animOn ? `anim-on anim-${page.theme.animType || 'fade'}` : ''}`} style={{'--accent':page.theme.accent,'--button':page.theme.accent,'--button-text':'#ffffff','--bg':pageBg,'--card':page.theme.card,'--text':page.theme.text,'--radius':`${page.theme.radius}px`,'--bg-effect-opacity':bgEffectOpacity,background:pageBg,color:page.theme.text,backgroundSize:bgSize,backgroundPosition:bgPosition,backgroundRepeat:'no-repeat'}}><div className="landing-content">{normal.map(b=><RenderBlock key={b.id} page={page} block={b} blocks={blocks} leads={leads} addLead={addLead} track={track} go={go}/>)}</div><BgEffectLayer effect={bgEffect} />{bottomActive && !hideBottomForForm && <RenderBottom block={bottom} blocks={blocks} go={go}/>}</div>;
+  const bottomNode = bottomActive && !hideBottomForForm ? <RenderBottom block={bottom} blocks={blocks} go={go}/> : null;
+
+  const pageNode = (
+    <div ref={pageRef} onClickCapture={templatePreview || publicView ? undefined : handlePreviewSelect} className={`landing-page font-${page.theme.font} font-family-${page.theme.fontFamily || 'pretendard'} bgmode-${page.theme.bgMode || 'solid'} bg-effect-${bgEffect} button-effect-${buttonEffect} ${publicView ? 'public-render' : ''} ${templatePreview ? 'template-preview' : ''} ${bottomActive ? 'has-bottom-bar' : ''} ${page.theme.animOn ? `anim-on anim-${page.theme.animType || 'fade'}` : ''}`} style={{'--accent':page.theme.accent,'--button':page.theme.accent,'--button-text':'#ffffff','--bg':pageBg,'--card':page.theme.card,'--text':page.theme.text,'--radius':`${page.theme.radius}px`,'--bg-effect-opacity':bgEffectOpacity,background:pageBg,color:page.theme.text,backgroundSize:bgSize,backgroundPosition:bgPosition,backgroundRepeat:'no-repeat'}}>
+      <div className="landing-content">{normal.map(b=><RenderBlock key={b.id} page={page} block={b} blocks={blocks} leads={leads} addLead={addLead} track={track} go={go}/>)}</div>
+      <BgEffectLayer effect={bgEffect} />
+      {!publicView && bottomNode}
+    </div>
+  );
+
+  if (!publicView) return pageNode;
+  return <>{pageNode}{bottomNode}</>;
 }
 class BlockErrorBoundary extends React.Component {
   constructor(props) {

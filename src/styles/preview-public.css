@@ -60,18 +60,26 @@
   padding-bottom: 112px !important;
 }
 
+.public-landing-viewport > .bottom-bar,
 .public-landing-viewport .bottom-bar {
   position: fixed !important;
   left: max(0px, calc((100vw - 860px) / 2)) !important;
   right: auto !important;
   bottom: 0 !important;
-  z-index: 120 !important;
+  z-index: 160 !important;
   width: min(860px, 100vw) !important;
   max-width: 860px !important;
   transform: none !important;
   box-sizing: border-box !important;
   margin: 0 !important;
   pointer-events: none !important;
+  padding-left: 22px !important;
+  padding-right: 22px !important;
+}
+
+.public-landing-viewport > .bottom-bar .bottom-bar-buttons,
+.public-landing-viewport .bottom-bar .bottom-bar-buttons {
+  width: 100% !important;
 }
 
 .public-landing-viewport .bottom-bar button {

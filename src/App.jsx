@@ -1654,6 +1654,7 @@ function App() {
               ) : (
                 <PreviewRenderer
                   page={publicPage}
+                  publicView
                   leads={leads}
                   addLead={(lead) => addLeadForPage(publicPage, lead)}
                   track={(event) => trackForPage(publicPage, event)}
