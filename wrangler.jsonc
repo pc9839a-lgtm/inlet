@@ -3,6 +3,13 @@
   "name": "inlet",
   "compatibility_date": "2026-05-27",
   "pages_build_output_dir": "dist",
+  "keep_vars": true,
+  "vars": {
+    "INLET_AUTH_EMAIL_MODE": "api",
+    "INLET_EMAIL_PROVIDER": "ses",
+    "AWS_SES_REGION": "ap-northeast-2",
+    "INLET_AUTH_EMAIL_FROM": "페이지로 <no-reply@pagero.kr>"
+  },
   "d1_databases": [
     {
       "binding": "DB",
