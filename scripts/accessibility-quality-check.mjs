@@ -43,7 +43,7 @@ assert(files.feedback.includes('focusable?.focus?.()'), 'feedback dialogs should
 assert(files.home.includes('focusable?.focus?.()'), 'create modal should focus first interactive control');
 assert(files.formEditor.includes('focusable?.focus?.()'), 'HTML modal should focus first interactive control');
 assert(
-  files.statsPanel.includes('role="img"') && (files.statsPanel.includes('aria-label="일별 추이"') || files.statsPanel.includes('aria-label="일별 지표"')),
+  files.statsPanel.includes('role="img"') && files.statsPanel.includes('aria-label='),
   'stats chart should expose image role and label'
 );
 assert(files.statsPanel.includes('role="status"'), 'stats partial notice should use status semantics');

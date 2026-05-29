@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { deliveryStatusClass, deliveryStatusLabel } from '../lib/leadIntegrations.js';
 import { fmtDate, leadKindLabel, leadPrimaryContact } from '../lib/leadModel.js';
-import { PERIOD_OPTIONS, buildStats as buildStatsMetrics, countBy as countByMetrics, statLabel } from '../lib/statsMetrics.js';
+import { currentMonthValue } from '../lib/monthRange.js';
+import { buildStats as buildStatsMetrics, countBy as countByMetrics, statLabel } from '../lib/statsMetrics.js';
 import './StatsPanel.css';
 
 function hasPartialStatsData({ statsPartial, eventPageMeta, leadPageMeta }) {
@@ -94,6 +95,34 @@ function ctaClickData(events = [], page = {}) {
   return Object.fromEntries(labels.filter((label) => counts[label]).map((label) => [label, counts[label]]));
 }
 
+function normalizeServerStats(serverStats, leads = []) {
+  const summary = serverStats?.summary || {};
+  return {
+    pv: Number(summary.pv || 0),
+    cta: Number(summary.cta || 0),
+    link: Number(summary.link || 0),
+    formStart: Number(summary.formStart || 0),
+    submitAttempt: Number(summary.submitAttempt || 0),
+    submitSuccess: Number(summary.submitSuccess || 0),
+    reservationAttempt: Number(summary.reservationAttempt || 0),
+    reservationSuccess: Number(summary.reservationSuccess || 0),
+    consultLeads: Number(summary.consultLeads || 0),
+    reservationLeads: Number(summary.reservationLeads || 0),
+    db: Number(summary.db || 0),
+    conversion: String(summary.conversion ?? '0.0'),
+    ctaConversion: String(summary.ctaConversion ?? '0.0'),
+    trend: Array.isArray(summary.trend) ? summary.trend : [],
+    statusData: summary.statusData || {},
+    deliveryData: summary.deliveryData || {},
+    typeData: summary.typeData || {},
+    channelData: summary.channelData || {},
+    deviceData: summary.deviceData || {},
+    ctaLabelData: summary.ctaLabelData || {},
+    filteredEvents: [],
+    filteredLeads: leads || [],
+  };
+}
+
 function Metric({ title, value, sub }) {
   return (
     <div className="metric metric-v2">
@@ -142,7 +171,7 @@ function ChannelFilter({ channels, value, onChange }) {
 function StatsTrend({ data }) {
   const [hover, setHover] = useState(null);
   const total = data.reduce((sum, row) => sum + Number(row.pv || 0) + Number(row.cta || 0) + Number(row.db || 0), 0);
-  if (!total) return <div className="stats-empty-chart">선택 기간 데이터 없음</div>;
+  if (!total) return <div className="stats-empty-chart">선택한 월에 데이터가 없습니다.</div>;
 
   const max = Math.max(1, ...data.flatMap((row) => [row.pv, row.cta, row.db]));
   const width = 320;
@@ -171,7 +200,7 @@ function StatsTrend({ data }) {
   return (
     <div className="stats-line-chart">
       <div className="stats-line-plot">
-        <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="일별 추이">
+        <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="월별 추이">
           {guide.map((y) => <line key={y} className="guide" x1="18" x2="302" y1={y} y2={y} />)}
           <polyline className="line pv" points={pointsAttr(pv)} />
           <polyline className="line cta" points={pointsAttr(cta)} />
@@ -193,7 +222,7 @@ function StatsTrend({ data }) {
       </div>
 
       <div className="line-labels">
-        {data.map((row) => <span key={row.id}>{row.label}</span>)}
+        {data.map((row) => <span key={row.id || row.label}>{row.label}</span>)}
       </div>
 
       <div className="trend-legend line-legend">
@@ -227,44 +256,61 @@ function StatCard({ title, data }) {
   );
 }
 
-export default function StatsPanel({ events, leads, page, eventPageMeta, leadPageMeta, statsPartial = false, period: controlledPeriod = '7d', onPeriodChange }) {
-  const [localPeriod, setLocalPeriod] = useState(controlledPeriod);
+export default function StatsPanel({ events, leads, page, eventPageMeta, leadPageMeta, statsPartial = false, period: controlledPeriod = currentMonthValue(), onPeriodChange, serverStats = null }) {
+  const [localPeriod, setLocalPeriod] = useState(controlledPeriod || currentMonthValue());
   const [channelFilter, setChannelFilter] = useState('all');
-  const period = controlledPeriod || localPeriod;
+  const month = controlledPeriod || localPeriod || currentMonthValue();
+  const serverMode = !!serverStats?.summary;
   const setPeriod = (value) => {
-    setLocalPeriod(value);
-    onPeriodChange?.(value);
+    const next = value || currentMonthValue();
+    setLocalPeriod(next);
+    onPeriodChange?.(next);
   };
-  const baseStats = useMemo(() => buildStatsMetrics(events, leads, period), [events, leads, period]);
-  const channelOptions = useMemo(() => buildChannelOptions(baseStats.filteredEvents, baseStats.filteredLeads), [baseStats.filteredEvents, baseStats.filteredLeads]);
+
+  const baseStats = useMemo(() => {
+    if (serverMode) return normalizeServerStats(serverStats, leads);
+    return buildStatsMetrics(events, leads, 'thisMonth');
+  }, [events, leads, serverMode, serverStats]);
+
+  const channelOptions = useMemo(() => {
+    if (serverMode) {
+      return Object.entries(baseStats.channelData || {})
+        .map(([channel, count]) => ({ channel, count }))
+        .sort((a, b) => b.count - a.count);
+    }
+    return buildChannelOptions(baseStats.filteredEvents, baseStats.filteredLeads);
+  }, [baseStats, serverMode]);
+
   const scopedEvents = useMemo(() => filterByChannel(events, channelFilter), [events, channelFilter]);
   const scopedLeads = useMemo(() => filterByChannel(leads, channelFilter), [leads, channelFilter]);
-  const stats = useMemo(() => buildStatsMetrics(scopedEvents, scopedLeads, period), [scopedEvents, scopedLeads, period]);
+  const stats = useMemo(() => {
+    if (serverMode) return baseStats;
+    return buildStatsMetrics(scopedEvents, scopedLeads, 'thisMonth');
+  }, [baseStats, scopedEvents, scopedLeads, serverMode]);
   const partialData = hasPartialStatsData({ statsPartial, eventPageMeta, leadPageMeta });
 
   useEffect(() => {
-    if (channelFilter === 'all') return;
+    if (serverMode || channelFilter === 'all') return;
     if (!channelOptions.some((item) => item.channel === channelFilter)) setChannelFilter('all');
-  }, [channelFilter, channelOptions]);
+  }, [channelFilter, channelOptions, serverMode]);
 
   return (
     <div className="simple-panel stats-panel stats-v2 stats-v3">
       <section className="card period-card stats-period-card">
         <div className="section-title">
-          <h2>기간</h2>
+          <h2>월별 통계</h2>
+          <p>{serverMode ? '서버 집계 기준' : '로컬 데이터 기준'}</p>
         </div>
-        <div className="period-tabs period-tabs-v2">
-          {PERIOD_OPTIONS.map(([key, text]) => (
-            <button key={key} className={period === key ? 'active' : ''} onClick={() => setPeriod(key)}>{text}</button>
-          ))}
+        <div className="period-tabs period-tabs-v2 stats-month-control">
+          <input type="month" value={month} onChange={(event) => setPeriod(event.target.value)} />
         </div>
       </section>
 
-      <ChannelFilter channels={channelOptions} value={channelFilter} onChange={setChannelFilter} />
+      {!serverMode && <ChannelFilter channels={channelOptions} value={channelFilter} onChange={setChannelFilter} />}
 
       {partialData && (
         <div className="stats-partial-notice" role="status">
-          서버 페이지가 더 남아 있어 현재 통계는 불러온 데이터 기준입니다.
+          일부 데이터만 불러온 상태입니다. 서버 집계 연결 상태를 확인하세요.
         </div>
       )}
 
@@ -273,13 +319,13 @@ export default function StatsPanel({ events, leads, page, eventPageMeta, leadPag
         <Metric title="CTA 클릭" value={stats.cta} sub="버튼" />
         <Metric title="상담 접수" value={stats.consultLeads} sub="상담" />
         <Metric title="예약 접수" value={stats.reservationLeads} sub="방문예약" />
-        <Metric title="접수율" value={`${stats.conversion}%`} sub="방문 대비" />
+        <Metric title="전환율" value={`${stats.conversion}%`} sub="방문 대비" />
         <Metric title="CTA 전환" value={`${stats.ctaConversion}%`} sub="클릭 대비" />
       </section>
 
       <section className="card stats-trend-card">
         <div className="section-title">
-          <h2>일별 추이</h2>
+          <h2>월간 추이</h2>
         </div>
         <StatsTrend data={stats.trend} />
       </section>
@@ -291,9 +337,9 @@ export default function StatsPanel({ events, leads, page, eventPageMeta, leadPag
 
       <section className="stats-columns stats-columns-v3 stats-columns-four">
         <StatCard title="외부 전송" data={stats.deliveryData} />
-        <StatCard title="CTA 클릭 위치" data={ctaClickData(stats.filteredEvents, page)} />
-        <StatCard title="유입 기기" data={countByMetrics(stats.filteredEvents, 'device')} />
-        <StatCard title="유입 채널" data={countByMetrics(stats.filteredEvents, 'channel')} />
+        <StatCard title="CTA 클릭 위치" data={serverMode ? stats.ctaLabelData : ctaClickData(stats.filteredEvents, page)} />
+        <StatCard title="유입 기기" data={serverMode ? stats.deviceData : countByMetrics(stats.filteredEvents, 'device')} />
+        <StatCard title="유입 채널" data={serverMode ? stats.channelData : countByMetrics(stats.filteredEvents, 'channel')} />
       </section>
 
       <section className="card stats-lead-table-card stats-lead-table-card-v3">

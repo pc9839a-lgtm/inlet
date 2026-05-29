@@ -28,18 +28,17 @@ import { canUseAdminSurface, canUseBuilderSurface, canWriteTab, isClientAdminMod
 import { logoutAuthAccount, refreshAuthSession, updateAuthAccount } from './lib/authAccounts.js';
 import { normalizeAuthUser } from './lib/authIdentity.js';
 import { generateStandaloneFormHtml } from './lib/formEmbed.js';
-import { fetchAllServerEvents, persistEvent } from './lib/eventRepository.js';
+import { fetchServerStatsSummary, persistEvent } from './lib/eventRepository.js';
 import { sendLeadIntegrations } from './lib/leadIntegrations.js';
-import { deleteServerLead, deliverServerLead, downloadServerLeadsCsv, fetchAllServerLeads, fetchServerLeads, persistLead, retryFailedServerLeads, updateServerLead } from './lib/leadRepository.js';
+import { deleteServerLead, deliverServerLead, downloadServerLeadsCsv, fetchServerLeads, persistLead, retryFailedServerLeads, updateServerLead } from './lib/leadRepository.js';
 import { isOwnerAdminModeEnabled, isServerLeadMode, publicLandingUrl } from './config/runtimeConfig.js';
 import { downloadLeadsCsv } from './lib/leadCsv.js';
-import { clampDateRangeToMonth, currentMonthValue, monthDateRange } from './lib/monthRange.js';
+import { currentMonthValue, monthDateRange } from './lib/monthRange.js';
 import { fetchPublicServerPage, fetchServerPage, persistPage } from './lib/pageRepository.js';
 import { canUsePageDuplication, createDuplicatedPage } from './lib/pageDuplication.js';
 import { projectContext } from './lib/projectContext.js';
 import { fetchLinkPreview, linkThumbnailFromUrl, normalizeExternalUrl } from './lib/linkPreview.js';
 import { isReservationLead, normalizeLeadItem } from './lib/leadModel.js';
-import { getPeriodRange } from './lib/statsMetrics.js';
 import { clone, defaultPage, ensureUniqueAnchors, newBlock, normalize, normalizeIntegrations, normalizePageForSave, sanitizeBlock, uid } from './lib/pageModel.js';
 import { load, save as saveJson, storageErrorMessage } from './lib/storage.js';
 import { normalizeAiDraftInput } from './ai/aiDraftSchema.js';
@@ -162,10 +161,6 @@ function recoverLazyChunkLoad(error) {
     window.location.replace(url.toString());
   });
   return true;
-}
-
-function dateInputValue(date) {
-  return date instanceof Date && Number.isFinite(date.getTime()) ? date.toISOString().slice(0, 10) : '';
 }
 
 function LazyPanelFallback() {
@@ -519,7 +514,8 @@ function App() {
   const [statsLeadPageMeta, setStatsLeadPageMeta] = useState({ total: 0, nextCursor: null, hasMore: false, source: 'local' });
   const [statsPartial, setStatsPartial] = useState(false);
   const [inboxFilters, setInboxFilters] = useState({ kind: 'all', status: 'all', deliveryStatus: 'all', q: '', month: currentMonthValue() });
-  const [statsPeriod, setStatsPeriod] = useState('7d');
+  const [statsPeriod, setStatsPeriod] = useState(currentMonthValue());
+  const [serverStatsSummary, setServerStatsSummary] = useState(null);
   const [leadConflict, setLeadConflict] = useState(null);
   const [events, setEvents] = useState(() => load(EVENTS_KEY, []));
   const [tab, setTab] = useState(() => tabFromLocation('edit'));
@@ -756,28 +752,27 @@ function App() {
       setStatsEventPageMeta({ total: events.length, nextCursor: null, hasMore: false, source: 'local' });
       setStatsLeadPageMeta({ total: leads.length, nextCursor: null, hasMore: false, source: 'local' });
       setStatsPartial(false);
+      setServerStatsSummary(null);
       return undefined;
     }
     let alive = true;
-    const periodRange = getPeriodRange(statsPeriod);
-    const statsRange = clampDateRangeToMonth({
-      dateFrom: dateInputValue(periodRange.start),
-      dateTo: dateInputValue(periodRange.end),
-    }, currentMonthValue(periodRange.end));
+    const statsRange = monthDateRange(statsPeriod || currentMonthValue());
     setStatsPartial(false);
+    setServerStatsSummary(null);
     Promise.all([
-      fetchAllServerEvents(page, authUser, { limit: 1000, max: 5000, withMeta: true, ...statsRange }),
-      fetchAllServerLeads(page, authUser, { limit: 1000, max: 5000, withMeta: true, ...statsRange }),
+      fetchServerStatsSummary(page, authUser, statsRange),
+      fetchServerLeads(page, authUser, { limit: 8, withMeta: true, ...statsRange }),
     ])
-      .then(([eventResult, leadResult]) => {
+      .then(([summaryResult, leadResult]) => {
         if (!alive) return;
-        if (eventResult) {
-          setEvents(eventResult.events || []);
+        setServerStatsSummary(summaryResult || null);
+        setEvents([]);
+        if (summaryResult) {
           setStatsEventPageMeta({
-            total: Number(eventResult.total || 0),
-            nextCursor: eventResult.nextCursor ?? null,
-            hasMore: !!eventResult.hasMore,
-            source: eventResult.source || 'server',
+            total: Number(summaryResult?.totals?.events || 0),
+            nextCursor: null,
+            hasMore: false,
+            source: summaryResult.source || 'server',
           });
         }
         if (leadResult) {
@@ -789,11 +784,14 @@ function App() {
             source: leadResult.source || 'server',
           });
         }
-        setStatsPartial(!!eventResult?.partial || !!leadResult?.partial);
+        setStatsPartial(false);
       })
       .catch((error) => {
         console.warn('Server stats data load failed:', error);
-        if (alive) setStatsPartial(true);
+        if (alive) {
+          setStatsPartial(true);
+          setServerStatsSummary(null);
+        }
       });
     return () => { alive = false; };
   }, [tab, page.slug, page.projectId, authUser, statsPeriod]);
@@ -1813,7 +1811,7 @@ function App() {
                   <Suspense fallback={<LazyPanelFallback/>}>
                   {canUseBuilder && tab === 'style' && <StylePanel page={page} updateTheme={updateTheme} onPreviewThemeChange={setStylePreviewTheme}/>}
                   {tab === 'inbox' && <InboxPanel leads={leads} page={page} authUser={authUser} updatePage={updatePage} syncing={leadsSyncing} totalLeads={leadPageMeta.total} hasMoreLeads={leadPageMeta.hasMore} loadMoreLeads={loadMoreLeads} onFiltersChange={setInboxFilters} updateIntegrations={updateIntegrations} connectionsEditing={connectionsEditing} setConnectionsEditing={setConnectionsEditing} updateLead={updateLead} deleteLead={deleteLead} retryLeadDelivery={retryLeadDelivery} retryFailedDeliveries={retryFailedDeliveries} exportLeadsCsv={exportLeadsCsv} leadConflict={leadConflict} onReloadLeadConflict={reloadLeadConflict} onRetryLeadConflict={retryLeadConflict} onDismissLeadConflict={() => setLeadConflict(null)} accessMode={accessMode}/>}
-                  {tab === 'stats' && <StatsPanel events={events} leads={leads} page={page} eventPageMeta={statsEventPageMeta} leadPageMeta={statsLeadPageMeta} statsPartial={statsPartial} period={statsPeriod} onPeriodChange={setStatsPeriod} accessMode={accessMode}/>}
+                  {tab === 'stats' && <StatsPanel events={events} leads={leads} page={page} eventPageMeta={statsEventPageMeta} leadPageMeta={statsLeadPageMeta} statsPartial={statsPartial} period={statsPeriod} onPeriodChange={setStatsPeriod} serverStats={serverStatsSummary} accessMode={accessMode}/>}
                   {tab === 'settings' && <SettingsPanel page={page} updatePage={updatePage} updateMeta={updateMeta} updateIntegrations={updateIntegrations} setPage={setNormalizedPage} onDuplicatePage={duplicatePageWithUrl} canDuplicatePage={canUsePageDuplication(page)} onReset={reset} authUser={authUser} accessMode={accessMode} onAccountUpdate={updateAccountProfile} onLogout={logout}/>}
                   </Suspense>
                 </LazyChunkBoundary>

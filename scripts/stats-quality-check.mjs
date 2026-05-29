@@ -97,17 +97,21 @@ assert(statsPanel.includes('eventPageMeta') && statsPanel.includes('leadPageMeta
 assert(statsPanel.includes('statsPartial') && statsPanel.includes('stats-partial-notice'), 'stats panel should expose partial data notice contract');
 assert(statsPanel.includes('role="status"'), 'partial data notice should be announced as status');
 assert(statsPanel.includes('onPeriodChange') && statsPanel.includes('controlledPeriod'), 'stats panel should notify App when the selected period changes');
+assert(statsPanel.includes('type="month"'), 'stats panel should expose month-only filter control');
+assert(statsPanel.includes('serverStats') && statsPanel.includes('normalizeServerStats'), 'stats panel should render server aggregate payloads');
 
 const appSource = await readFile('src/App.jsx', 'utf8');
-assert(appSource.includes('fetchAllServerLeads') && appSource.includes('fetchAllServerEvents'), 'stats tab should load server leads and events from the same source');
+assert(appSource.includes('fetchServerStatsSummary'), 'stats tab should load server aggregate summary');
+assert(appSource.includes('fetchServerLeads(page, authUser, { limit: 8'), 'stats tab should only load recent lead rows for the table');
 assert(appSource.includes('statsEventPageMeta') && appSource.includes('statsLeadPageMeta'), 'stats tab should keep independent pagination meta');
 assert(appSource.includes('eventPageMeta={statsEventPageMeta}') && appSource.includes('leadPageMeta={statsLeadPageMeta}'), 'stats panel should receive pagination meta from App');
-assert(appSource.includes('statsPeriod') && appSource.includes('clampDateRangeToMonth'), 'stats server loading should be capped to the selected period within one month');
-assert(appSource.includes('limit: 1000') && appSource.includes('max: 5000'), 'stats server loading should avoid unbounded full-history fetches');
+assert(appSource.includes('statsPeriod') && appSource.includes('monthDateRange(statsPeriod'), 'stats server loading should be fixed to one selected month');
+assert(appSource.includes('serverStatsSummary') && appSource.includes('serverStats={serverStatsSummary}'), 'stats panel should receive server summary state');
 
 const eventRepository = await readFile('src/lib/eventRepository.js', 'utf8');
 const leadRepository = await readFile('src/lib/leadRepository.js', 'utf8');
-assert(eventRepository.includes('withMeta') && eventRepository.includes("source: 'server'"), 'event repository should return full fetch meta');
+assert(eventRepository.includes('fetchServerStatsSummary') && eventRepository.includes('/api/stats/summary'), 'event repository should expose stats summary API');
+assert(eventRepository.includes('withMeta') && eventRepository.includes("source: 'server'"), 'event repository should keep paged event fetch meta for fallback use');
 assert(leadRepository.includes('fetchAllServerLeads') && leadRepository.includes("source: 'server'"), 'lead repository should return full fetch meta');
 assert(eventRepository.includes('dateFrom') && eventRepository.includes('dateTo'), 'event repository should send date range filters for bounded stats queries');
 assert(leadRepository.includes('dateFrom') && leadRepository.includes('dateTo'), 'lead repository should send date range filters for bounded stats queries');
@@ -119,4 +123,4 @@ assert(formBlocks.includes("type: 'reservation_submit_attempt'"), 'reservation a
 assert(formBlocks.includes("type: 'reservation_submit_success'"), 'reservation success event should be produced');
 assert(formBlocks.includes('onFocusCapture={markReservationStart}'), 'reservation form should produce a start event');
 
-console.log(JSON.stringify({ ok: true, checks: 58 }, null, 2));
+console.log(JSON.stringify({ ok: true, checks: 62 }, null, 2));

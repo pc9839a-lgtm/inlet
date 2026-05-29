@@ -16,7 +16,7 @@ function fixtureLeads(count = 10000) {
   return Array.from({ length: count }, (_, index) => ({
     id: `lead-${index}`,
     type: index % 5 === 0 ? 'reservation' : 'consult',
-    status: index % 7 === 0 ? '예약완료' : '신규',
+    status: index % 7 === 0 ? '?덉빟?꾨즺' : '?좉퇋',
     name: `Lead ${index}`,
     phone: `010-${String(index).padStart(4, '0')}-0000`,
     createdAt: index % 4 === 0 ? `2026-04-${String((index % 28) + 1).padStart(2, '0')}T03:00:00.000Z` : iso((index % 28) + 1, index % 1440),
@@ -147,7 +147,7 @@ const jsonlFallbackPlan = {
 assert(appSource.includes('const INBOX_PAGE_SIZE = 50'), 'Inbox initial and load-more size should stay at 50');
 assert(appSource.includes('monthDateRange(inboxFilters.month)'), 'Inbox server fetch should be month-bounded');
 assert(appSource.includes("deliveryStatus: inboxFilters.deliveryStatus === 'all' ? '' : inboxFilters.deliveryStatus"), 'Inbox server fetch should include delivery status filtering');
-assert(appSource.includes('clampDateRangeToMonth'), 'Stats server fetch should be capped to month range');
+assert(appSource.includes('monthDateRange(statsPeriod'), 'Stats server fetch should be capped to the selected month');
 assert(inboxPanel.includes('type="month"'), 'Inbox UI should expose month selection');
 assert(inboxPanel.includes('deliveryStatus: deliveryFilter') && inboxPanel.includes('월 CSV'), 'Inbox UI should expose monthly CSV with delivery filter contract');
 assert(inboxPanel.includes('다음 50건') && inboxPanel.includes('서버 ${serverTotal}건 중 ${loadedCount}건 로드'), 'Inbox UI should clearly indicate partial server pagination');
@@ -190,3 +190,4 @@ console.log(JSON.stringify({
   },
   checks: 32,
 }, null, 2));
+

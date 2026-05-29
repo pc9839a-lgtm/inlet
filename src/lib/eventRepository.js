@@ -71,6 +71,23 @@ export async function fetchAllServerEvents(page, authUser = null, options = {}) 
   return events;
 }
 
+export async function fetchServerStatsSummary(page, authUser = null, options = {}) {
+  if (!isServerLeadMode()) return null;
+
+  const context = projectContext(page, authUser);
+  const params = contextParams(context, {
+    month: options.month || '',
+    dateFrom: options.dateFrom || '',
+    dateTo: options.dateTo || '',
+  });
+
+  const res = await apiFetch(`/api/stats/summary?${params.toString()}`, {
+    headers: projectAuthHeaders(context),
+  });
+  if (!res.ok) throw new Error(`통계 요약을 불러오지 못했습니다: ${res.status}`);
+  return res.json();
+}
+
 export async function persistEvent(event, page, authUser = null) {
   if (!isServerLeadMode()) return { ok: true, mode: 'local' };
 
