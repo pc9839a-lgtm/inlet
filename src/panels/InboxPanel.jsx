@@ -4,9 +4,6 @@ import {
   connectionCounts,
   connectionState,
   deliveryStatusLabel,
-  isValidEmail,
-  runConnectionTest,
-  serviceLabel,
 } from '../lib/leadIntegrations.js';
 import {
   fmtDate,
@@ -23,9 +20,8 @@ import { currentMonthValue, monthDateRange } from '../lib/monthRange.js';
 import './InboxPanel.css';
 
 const DUPLICATE_TEXT = {
-  fallbackService: '현재 페이지',
-  titleSuffix: '중복 차단',
-  subtitle: '같은 방문자의 반복 접수를 어떻게 처리할지 정합니다.',
+  title: '중복 접수 차단',
+  subtitle: '같은 방문자가 반복 제출할 때 접수, 표시, 차단 기준을 정합니다.',
   ip: 'IP 중복 차단',
   ipDesc: '같은 IP에서 기준 횟수 이상 접수하면 차단합니다.',
   cookie: '쿠키 중복 차단',
@@ -69,6 +65,22 @@ const DUPLICATE_CONTACT_OPTIONS = [
   ['mark', '접수 후 표시'],
   ['block', '차단'],
 ];
+
+const CONNECTION_COPY = {
+  internal: {
+    title: '접수 저장',
+    summary: '모든 접수는 페이지로 서버 접수함에 먼저 저장됩니다.',
+    status: '항상 켜짐',
+  },
+  email: {
+    title: '이메일 알림',
+    summary: '새 접수가 들어오면 지정한 이메일로 알림을 보냅니다.',
+  },
+  webhook: {
+    title: 'Webhook 전송',
+    summary: 'Zapier, Make, CRM 같은 외부 도구로 접수 데이터를 보냅니다.',
+  },
+};
 const BLOCK_REASON_LABELS = {
   phone_duplicate: '\uc5f0\ub77d\ucc98 \uc911\ubcf5',
   email_duplicate: '\uc774\uba54\uc77c \uc911\ubcf5',
@@ -140,17 +152,6 @@ function ConnectionInputRow({ label, value, onChange, placeholder = '' }) {
   );
 }
 
-function ConnectionChoiceRow({ label, value, onChange, options }) {
-  return (
-    <div className="connection-inline-control">
-      <span>{label}</span>
-      <div className="inline-chip-row">
-        {options.map(([key, text]) => <MiniToggle key={key} active={value === key} onClick={() => onChange(key)}>{text}</MiniToggle>)}
-      </div>
-    </div>
-  );
-}
-
 function DuplicatePolicySwitch({ label, description, checked, onChange }) {
   return (
     <button type="button" className={`inbox-policy-switch ${checked ? 'on' : ''}`} onClick={() => onChange(!checked)}>
@@ -173,18 +174,42 @@ function DuplicatePolicySelect({ label, description, value, options, onChange })
   );
 }
 
+function compactConnectionState(state = {}) {
+  if (state.tone === 'ok' || state.tone === 'ready') return '정상';
+  if (state.tone === 'warn') return '확인 필요';
+  return '꺼짐';
+}
+
+function connectionSummary(type, integrations) {
+  if (type === 'internal') return CONNECTION_COPY.internal.status;
+  if (type === 'email') {
+    if (!integrations.email.enabled) return '꺼짐';
+    return integrations.email.to || '받을 이메일 필요';
+  }
+  if (type === 'webhook') {
+    if (!integrations.webhook.enabled) return '꺼짐';
+    return integrations.webhook.url || '전송 URL 필요';
+  }
+  return '';
+}
+
 function IntakeDuplicatePolicyPanel({ page, authUser, updatePage }) {
   const [open, setOpen] = useState(false);
   const [month, setMonth] = useState(currentMonthValue());
   const [history, setHistory] = useState({ records: [], total: 0, loading: false, error: '' });
   const settings = normalizeDuplicateSettings(page.leadDuplicateSettings || page.duplicateCollectionSettings || {});
-  const serviceName = String(page?.title || page?.name || DUPLICATE_TEXT.fallbackService).trim() || DUPLICATE_TEXT.fallbackService;
   const localHistory = Array.isArray(page.leadDuplicateSettings?.blockedHistory)
     ? page.leadDuplicateSettings.blockedHistory
     : Array.isArray(page.blockedLeadHistory)
       ? page.blockedLeadHistory
       : [];
   const visibleHistory = history.records.length || history.error || history.loading ? history.records : localHistory;
+  const policyChips = [
+    settings.rejectIpDuplicate ? 'IP 차단' : 'IP 허용',
+    settings.rejectCookieDuplicate ? '쿠키 차단' : '쿠키 허용',
+    settings.phoneEmailMode === 'block' ? '연락처 차단' : '중복 표시',
+    `${DUPLICATE_LIMIT_WINDOWS.find(([value]) => value === settings.formDuplicateLimitWindow)?.[1] || '1일'} 기준`,
+  ];
 
   const save = (patch) => {
     updatePage?.({ leadDuplicateSettings: normalizeDuplicateSettings({ ...settings, ...patch }) });
@@ -218,8 +243,11 @@ function IntakeDuplicatePolicyPanel({ page, authUser, updatePage }) {
     <section className={`card inbox-policy-card ${open ? 'open' : ''}`}>
       <button type="button" className="inbox-policy-head" onClick={() => setOpen(!open)}>
         <span>
-          <strong>{serviceName} {DUPLICATE_TEXT.titleSuffix}</strong>
+          <strong>{DUPLICATE_TEXT.title}</strong>
           <small>{DUPLICATE_TEXT.subtitle}</small>
+          <i className="inbox-policy-chip-row">
+            {policyChips.map((chip) => <b key={chip}>{chip}</b>)}
+          </i>
         </span>
         <em>{open ? '접기' : '열기'}</em>
       </button>
@@ -270,15 +298,16 @@ function IntakeDuplicatePolicyPanel({ page, authUser, updatePage }) {
   );
 }
 
-function ConnectionItem({ title, state, opened, onOpen, children, summary, actions }) {
+function ConnectionItem({ title, state, opened, onOpen, children, summary, description, actions }) {
   return (
     <div className={`connection-item connect-v4 ${opened ? 'open' : ''}`}>
       <div className="connection-row">
         <button type="button" className="connection-row-main" onClick={onOpen}>
           <strong>{title}</strong>
+          {description && <span>{description}</span>}
           {summary && <small>{summary}</small>}
         </button>
-        <ConnectionStatus state={state} />
+        <ConnectionStatus state={{ ...state, text: compactConnectionState(state) }} />
         <button type="button" className="connection-row-edit" onClick={onOpen}>{opened ? '닫기' : '설정'}</button>
       </div>
       {opened && (
@@ -293,14 +322,14 @@ function ConnectionItem({ title, state, opened, onOpen, children, summary, actio
 
 function connectionTitle(type) {
   const map = {
-    internal: 'Internal inbox',
+    internal: '접수 저장',
     google: 'Google',
-    email: 'Email alert',
+    email: '이메일 알림',
     webhook: 'Webhook',
-    automation: 'Automation',
-    calendar: 'Calendar',
+    automation: '자동화',
+    calendar: '캘린더',
   };
-  return map[type] || 'Connection';
+  return map[type] || '연동';
 }
 
 function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
@@ -327,11 +356,14 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
   return (
     <section className={`card inbox-connect-card easy-mode v4 ${open ? 'open' : ''}`}>
       <button className="inbox-connect-head" type="button" onClick={() => setOpen(!open)}>
-        <div><h2>External send</h2></div>
+        <div>
+          <h2>알림 / 연동</h2>
+          <p>접수 저장, 이메일 알림, 외부 전송을 접수함에서 관리합니다.</p>
+        </div>
         <div className="connect-head-right">
-          <span>{counts.ok} active</span>
-          {counts.warn > 0 && <i>{counts.warn} check</i>}
-          <b>{open ? 'Close' : 'Open'}</b>
+          <span>{counts.ok}개 켜짐</span>
+          {counts.warn > 0 && <i>{counts.warn}개 확인</i>}
+          <b>{open ? '접기' : '열기'}</b>
         </div>
       </button>
 
@@ -339,27 +371,24 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
         <div className="inbox-connect-body">
           {result && <div className={`connection-result ${result.ok ? 'ok' : 'error'}`}><strong>{result.ok ? '저장됨' : '저장 실패'}</strong><span>{result.message}</span></div>}
 
-          <div className="connection-group-title">Basic</div>
-          <ConnectionItem title="Internal inbox" state={connectionState('internal', integrations)} opened={false} onOpen={() => {}} summary="Always stored">
-            <div className="connection-form-box compact-line"><div className="connection-inline-control readonly"><span>Status</span><b>Active</b></div></div>
+          <ConnectionItem title={CONNECTION_COPY.internal.title} description={CONNECTION_COPY.internal.summary} state={connectionState('internal', integrations)} opened={false} onOpen={() => {}} summary={connectionSummary('internal', integrations)}>
+            <div className="connection-form-box compact-line"><div className="connection-inline-control readonly"><span>상태</span><b>항상 저장</b></div></div>
           </ConnectionItem>
 
-          <div className="connection-group-title">Notification</div>
-          <ConnectionItem title="Email alert" state={connectionState('email', integrations)} opened={true} onOpen={() => {}} summary={integrations.email.enabled ? integrations.email.to : 'Off'} actions={<button type="button" className="save-connection-btn" disabled={savingType === 'email'} onClick={() => saveSection('email')}>{savingType === 'email' ? '저장 중' : '저장'}</button>}>
+          <ConnectionItem title={CONNECTION_COPY.email.title} description={CONNECTION_COPY.email.summary} state={connectionState('email', integrations)} opened={true} onOpen={() => {}} summary={connectionSummary('email', integrations)} actions={<button type="button" className="save-connection-btn" disabled={savingType === 'email'} onClick={() => saveSection('email')}>{savingType === 'email' ? '저장 중' : '저장'}</button>}>
             <div className="connection-form-box compact-line">
-              <ConnectionToggleRow label="Use email alert" checked={!!integrations.email.enabled} onChange={(value) => setIntegration('email', { enabled: value })} />
+              <ConnectionToggleRow label="이메일 알림" checked={!!integrations.email.enabled} onChange={(value) => setIntegration('email', { enabled: value })} />
               {integrations.email.enabled && <>
-                <ConnectionInputRow label="Email" value={integrations.email.to || ''} onChange={(value) => setIntegration('email', { to: value })} placeholder="example@email.com" />
-                <div className="connection-inline-control"><span>Type</span><div className="inline-chip-row"><MiniToggle active={integrations.email.consult !== false} onClick={() => setIntegration('email', { consult: !(integrations.email.consult !== false) })}>Consult</MiniToggle><MiniToggle active={integrations.email.reservation !== false} onClick={() => setIntegration('email', { reservation: !(integrations.email.reservation !== false) })}>Reservation</MiniToggle></div></div>
+                <ConnectionInputRow label="받을 이메일" value={integrations.email.to || ''} onChange={(value) => setIntegration('email', { to: value })} placeholder="example@email.com" />
+                <div className="connection-inline-control"><span>알림 대상</span><div className="inline-chip-row"><MiniToggle active={integrations.email.consult !== false} onClick={() => setIntegration('email', { consult: !(integrations.email.consult !== false) })}>상담</MiniToggle><MiniToggle active={integrations.email.reservation !== false} onClick={() => setIntegration('email', { reservation: !(integrations.email.reservation !== false) })}>예약</MiniToggle></div></div>
               </>}
             </div>
           </ConnectionItem>
 
-          <div className="connection-group-title">Webhook</div>
-          <ConnectionItem title="Webhook" state={connectionState('webhook', integrations)} opened={true} onOpen={() => {}} summary={integrations.webhook.enabled ? integrations.webhook.url : 'Off'} actions={<button type="button" className="save-connection-btn" disabled={savingType === 'webhook'} onClick={() => saveSection('webhook')}>{savingType === 'webhook' ? '저장 중' : '저장'}</button>}>
+          <ConnectionItem title={CONNECTION_COPY.webhook.title} description={CONNECTION_COPY.webhook.summary} state={connectionState('webhook', integrations)} opened={true} onOpen={() => {}} summary={connectionSummary('webhook', integrations)} actions={<button type="button" className="save-connection-btn" disabled={savingType === 'webhook'} onClick={() => saveSection('webhook')}>{savingType === 'webhook' ? '저장 중' : '저장'}</button>}>
             <div className="connection-form-box compact-line">
-              <ConnectionToggleRow label="Use webhook" checked={!!integrations.webhook.enabled} onChange={(value) => setIntegration('webhook', { enabled: value })} />
-              {integrations.webhook.enabled && <ConnectionInputRow label="URL" value={integrations.webhook.url || ''} onChange={(value) => setIntegration('webhook', { url: value })} placeholder="https://..." />}
+              <ConnectionToggleRow label="Webhook 사용" checked={!!integrations.webhook.enabled} onChange={(value) => setIntegration('webhook', { enabled: value })} />
+              {integrations.webhook.enabled && <ConnectionInputRow label="전송 URL" value={integrations.webhook.url || ''} onChange={(value) => setIntegration('webhook', { url: value })} placeholder="https://..." />}
             </div>
           </ConnectionItem>
         </div>

@@ -473,3 +473,161 @@
     width: 100%;
   }
 }
+
+.inbox-policy-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-style: normal;
+  margin-top: 2px;
+}
+
+.inbox-policy-chip-row b {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 950;
+}
+
+.inbox-policy-card,
+.inbox-connect-card.v4 {
+  border-radius: 20px !important;
+  border-color: #dbe3ef !important;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, .035) !important;
+}
+
+.inbox-policy-head,
+.inbox-connect-card.v4 .inbox-connect-head {
+  min-height: 72px !important;
+  padding: 14px 16px !important;
+}
+
+.inbox-policy-head strong,
+.inbox-connect-card.v4 .inbox-connect-head h2 {
+  font-size: 17px !important;
+  letter-spacing: 0 !important;
+}
+
+.inbox-policy-grid {
+  grid-template-columns: 1fr !important;
+}
+
+.inbox-policy-switch,
+.inbox-policy-select {
+  min-height: 66px !important;
+  border-radius: 16px !important;
+  background: #fff !important;
+}
+
+.inbox-policy-select select {
+  width: 174px;
+  min-height: 40px;
+}
+
+.inbox-connect-card.v4 .inbox-connect-head p {
+  display: block !important;
+  margin: 5px 0 0 !important;
+  color: #64748b !important;
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+  font-weight: 850 !important;
+}
+
+.inbox-connect-card.v4 .inbox-connect-body {
+  padding: 0 16px 16px !important;
+}
+
+.connection-item.connect-v4 {
+  border-bottom-color: #edf2f7 !important;
+}
+
+.connection-row {
+  min-height: 74px !important;
+}
+
+.connection-row-main span {
+  display: block !important;
+  margin-top: 5px !important;
+  color: #64748b !important;
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+  font-weight: 850 !important;
+}
+
+.connection-row-main small {
+  display: block !important;
+  max-width: 320px;
+  color: #94a3b8 !important;
+  overflow-wrap: anywhere;
+}
+
+.connection-status.ok,
+.connection-status.ready {
+  border-color: #bbf7d0 !important;
+  background: #f0fdf4 !important;
+  color: #15803d !important;
+}
+
+.connection-status.warn {
+  border-color: #fed7aa !important;
+  background: #fff7ed !important;
+  color: #c2410c !important;
+}
+
+.connection-status.off {
+  border-color: #e2e8f0 !important;
+  background: #f8fafc !important;
+  color: #64748b !important;
+}
+
+.connection-detail-box.compact {
+  border-radius: 16px !important;
+  background: #fbfdff !important;
+}
+
+.connection-form-box.compact-line {
+  border-radius: 15px !important;
+}
+
+.connection-inline-control {
+  grid-template-columns: 104px minmax(0, 1fr) !important;
+}
+
+.inline-switch {
+  min-width: 76px !important;
+  height: 40px !important;
+}
+
+.inline-switch.on {
+  background: #16a34a !important;
+  border-color: #16a34a !important;
+}
+
+@media (max-width: 760px) {
+  .inbox-policy-head,
+  .inbox-connect-card.v4 .inbox-connect-head {
+    grid-template-columns: 1fr auto !important;
+  }
+
+  .connection-row {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+  }
+
+  .connection-row-edit {
+    grid-column: 2 !important;
+  }
+
+  .connection-status {
+    justify-self: start !important;
+  }
+
+  .connection-inline-control {
+    grid-template-columns: 1fr !important;
+  }
+}

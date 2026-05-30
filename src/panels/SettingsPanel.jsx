@@ -337,19 +337,13 @@ export default function SettingsPanel({
   const [conversionLocked, setConversionLocked] = useState(() => !!(page.meta?.ads || page.meta?.pixel || page.meta?.naver || page.meta?.kakao));
   const [openSection, setOpenSection] = useState('basic');
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [lockedSections, setLockedSections] = useState({ basic: false, managers: false, send: false, seo: false, tracking: false });
+  const [lockedSections, setLockedSections] = useState({ basic: false, managers: false, seo: false, tracking: false });
   const [duplicateOpen, setDuplicateOpen] = useState(false);
   const [duplicateDraft, setDuplicateDraft] = useState(() => normalizePageDuplicateUrl({
     domainType: 'default',
     slug: `${sanitizeDuplicateSlug(page.slug || 'my-page') || 'my-page'}-copy`,
   }));
   const [basicDraft, setBasicDraft] = useState(() => ({ title: page.title || '', slug: page.slug || '' }));
-  const [sendDraft, setSendDraft] = useState(() => ({
-    webhookEnabled: !!integrations.webhook.enabled,
-    webhookUrl: integrations.webhook.url || '',
-    automationEnabled: !!integrations.automation.enabled,
-    automationUrl: integrations.automation.url || '',
-  }));
   const [seoDraft, setSeoDraft] = useState(() => ({
     title: page.meta.title || '',
     desc: page.meta.desc || '',
@@ -407,12 +401,6 @@ export default function SettingsPanel({
   const editManagers = () => {
     setManagerDraft((managers.length ? managers : managerDraft).map(normalizeManagerAccount));
     editSection('managers');
-  };
-  const saveSend = () => {
-    updateIntegrations('webhook', { enabled: !!sendDraft.webhookEnabled, url: sendDraft.webhookUrl });
-    updateIntegrations('automation', { enabled: !!sendDraft.automationEnabled, url: sendDraft.automationUrl });
-    lockSection('send');
-    notify('전송 설정을 저장했습니다.', 'success');
   };
   const saveSeo = () => {
     updateMeta(seoDraft);
@@ -651,6 +639,10 @@ export default function SettingsPanel({
         <em>/{page.slug || 'page'}</em>
       </div>
 
+      <SettingsSection id="account" title="내 계정" description="이름, 휴대폰 번호, 비밀번호를 관리합니다." openSection={openSection} setOpenSection={setOpenSection} className="account-settings-section">
+        <AccountSettingsSection authUser={authUser} onAccountUpdate={onAccountUpdate} onLogout={onLogout} />
+      </SettingsSection>
+
       <SettingsSection id="basic" title="페이지 기본" description="페이지명과 공개 주소를 관리합니다." badge="필수" openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.basic} onSave={saveBasic} onEdit={() => editSection('basic')}>
         <div className="settings-grid">
           <Field label="페이지명" value={basicDraft.title} disabled={lockedSections.basic || clientAdminMode} onChange={(value) => setBasicDraft((draft) => ({ ...draft, title: value }))} />
@@ -784,19 +776,6 @@ export default function SettingsPanel({
           </div>
         </SettingsSection>
       )}
-
-      <SettingsSection id="send" title="전송" description="Webhook, 자동화 도구로 접수 데이터를 넘깁니다." openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.send} onSave={saveSend} onEdit={() => editSection('send')} className="settings-conversion-card">
-        <div className="settings-conversion-grid">
-          <Toggle label="Webhook 사용" checked={!!sendDraft.webhookEnabled} disabled={lockedSections.send} onChange={(value) => setSendDraft((draft) => ({ ...draft, webhookEnabled: value }))} />
-          {sendDraft.webhookEnabled && <Field label="Webhook URL" value={sendDraft.webhookUrl} disabled={lockedSections.send} onChange={(value) => setSendDraft((draft) => ({ ...draft, webhookUrl: value }))} />}
-          <Toggle label="자동화 연결" checked={!!sendDraft.automationEnabled} disabled={lockedSections.send} onChange={(value) => setSendDraft((draft) => ({ ...draft, automationEnabled: value }))} />
-          {sendDraft.automationEnabled && <Field label="자동화 URL" value={sendDraft.automationUrl} disabled={lockedSections.send} onChange={(value) => setSendDraft((draft) => ({ ...draft, automationUrl: value }))} />}
-        </div>
-      </SettingsSection>
-
-      <SettingsSection id="account" title="내 계정" description="내 이름, 휴대폰 번호, 비밀번호를 관리합니다." openSection={openSection} setOpenSection={setOpenSection} className="account-settings-section">
-        <AccountSettingsSection authUser={authUser} onAccountUpdate={onAccountUpdate} onLogout={onLogout} />
-      </SettingsSection>
 
       {!clientAdminMode && (
         <>
