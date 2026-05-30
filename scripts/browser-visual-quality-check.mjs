@@ -2,7 +2,8 @@ import { createRequire } from 'node:module';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { existsSync } from 'node:fs';
-import { mkdir, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, stat, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { AUTH_KEY, DASHBOARD_KEY, START_MODE_KEY, STORAGE_KEY } from '../src/config/storageKeys.js';
 import { createTemplatePage } from '../src/templates/landingTemplates.js';
@@ -986,9 +987,8 @@ if (!targetUrl) {
   assert(results.length === targets.length * viewports.length, `expected ${targets.length * viewports.length} screenshots, got ${results.length}`);
   console.log(JSON.stringify({ ok: true, engine: 'puppeteer', targetUrl, extraUrls, templateRoutes, statePreset, clickSelectors, clickTexts, setInputs, richFormatChecks, expectedTexts, forbiddenTexts, expectedSelectors, expectedComputedStyles, screenshotDir, cleanupArtifact: screenshotDir.startsWith('.tmp-'), results }, null, 2));
 } else if (chromeExecutable) {
-  const browserUserDataDir = path.resolve(screenshotDir, '.chrome-profile');
-  await rm(browserUserDataDir, { recursive: true, force: true });
-  await mkdir(browserUserDataDir, { recursive: true });
+  const browserUserDataDir = await mkdtemp(path.join(tmpdir(), 'inlet-browser-qa-'));
+  await mkdir(screenshotDir, { recursive: true });
   const chromeErrors = [];
   const browser = spawn(chromeExecutable, [
     '--headless=new',
@@ -1058,6 +1058,7 @@ if (!targetUrl) {
     }
   } finally {
     await terminateBrowserProcess(browser);
+    await rm(browserUserDataDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 250 }).catch(() => {});
   }
 
   assert(results.length === targets.length * viewports.length, `expected ${targets.length * viewports.length} screenshots, got ${results.length}`);

@@ -2,7 +2,9 @@ import { spawn } from 'node:child_process';
 
 const baseUrl = process.env.INLET_PRODUCTION_QA_URL || 'https://pagero.kr';
 const requireRealBrowser = process.env.INLET_PRODUCTION_BROWSER_QA_REQUIRE === '1' || process.env.INLET_BROWSER_QA_REQUIRE === '1';
-const includeNextSettingsCases = process.env.INLET_PRODUCTION_QA_INCLUDE_NEXT_SETTINGS === '1' || !!process.env.INLET_PRODUCTION_QA_URL;
+const includeAuthenticatedCases = process.env.INLET_PRODUCTION_QA_INCLUDE_AUTHENTICATED === '1';
+const includeMockCases = process.env.INLET_PRODUCTION_QA_INCLUDE_MOCKS === '1';
+const includeNextSettingsCases = process.env.INLET_PRODUCTION_QA_INCLUDE_NEXT_SETTINGS === '1';
 const publicSlug = String(process.env.INLET_PRODUCTION_QA_PUBLIC_SLUG || '').trim();
 
 const forbiddenErrorText = [
@@ -63,6 +65,7 @@ const cases = [
   },
   {
     name: 'owner edit cards',
+    authenticated: true,
     url: `${baseUrl}/?tab=edit`,
     statePreset: 'owner-settings',
     expectedText: '편집,브라우저 QA 페이지,카드,첫 번째 카드,두 번째 카드',
@@ -70,6 +73,7 @@ const cases = [
   },
   {
     name: 'owner start modal',
+    authenticated: true,
     url: `${baseUrl}/`,
     statePreset: 'owner-start-modal',
     expectedText: '처음 화면을 어떻게 만들까요,AI 초안으로 시작,직접 만들기,템플릿으로 시작',
@@ -77,6 +81,7 @@ const cases = [
   },
   {
     name: 'template debt first viewport',
+    authenticated: true,
     url: `${baseUrl}/?tab=edit`,
     statePreset: 'template-preview:debt-relief-consult',
     expectedSelector: '.landing-page,.landing-section.topnav,.landing-section.hero,.landing-section.form',
@@ -84,6 +89,7 @@ const cases = [
   },
   {
     name: 'template wedding first viewport',
+    authenticated: true,
     url: `${baseUrl}/?tab=edit`,
     statePreset: 'template-preview:wedding-invitation',
     expectedSelector: '.landing-page,.landing-section.hero,.landing-section.form',
@@ -91,6 +97,7 @@ const cases = [
   },
   {
     name: 'template real-estate first viewport',
+    authenticated: true,
     url: `${baseUrl}/?tab=edit`,
     statePreset: 'template-preview:quote-request',
     expectedSelector: '.landing-page,.landing-section.topnav,.landing-section.hero,.landing-section.form,.landing-section.reservation',
@@ -98,6 +105,7 @@ const cases = [
   },
   {
     name: 'owner inbox',
+    authenticated: true,
     url: `${baseUrl}/?tab=inbox`,
     statePreset: 'owner-settings',
     expectedText: '접수함,CSV,초기화',
@@ -105,6 +113,7 @@ const cases = [
   },
   {
     name: 'manager stats',
+    authenticated: true,
     url: `${baseUrl}/?tab=stats`,
     statePreset: 'manager-limited',
     expectedText: '월별 통계,유입 채널,전환율',
@@ -113,6 +122,7 @@ const cases = [
   },
   {
     name: 'owner settings manager permissions',
+    authenticated: true,
     url: `${baseUrl}/?tab=settings`,
     statePreset: 'owner-settings',
     expectedText: '브라우저 QA 페이지,설정,매니저 권한',
@@ -121,6 +131,7 @@ const cases = [
   },
   {
     name: 'internal admin ownership queue',
+    authenticated: true,
     url: `${baseUrl}/admin`,
     statePreset: 'owner-settings',
     expectedText: '내부 관리자,소유권이전 승인,새로고침',
@@ -128,6 +139,7 @@ const cases = [
   },
   {
     name: 'owner settings manager permissions compact',
+    authenticated: true,
     url: `${baseUrl}/?tab=settings`,
     statePreset: 'owner-settings',
     viewports: 'compact',
@@ -137,6 +149,7 @@ const cases = [
   },
   {
     name: 'owner style text color live preview',
+    authenticated: true,
     url: `${baseUrl}/?tab=style`,
     statePreset: 'owner-settings',
     viewports: 'desktop',
@@ -148,6 +161,7 @@ const cases = [
   },
   {
     name: 'owner style font tone live preview',
+    authenticated: true,
     url: `${baseUrl}/?tab=style`,
     statePreset: 'owner-settings',
     viewports: 'desktop',
@@ -157,6 +171,7 @@ const cases = [
   },
   {
     name: 'owner rich text bold underline toolbar',
+    authenticated: true,
     url: `${baseUrl}/?tab=edit`,
     statePreset: 'owner-settings',
     viewports: 'desktop',
@@ -166,6 +181,7 @@ const cases = [
   },
   {
     name: 'manager invite acceptance',
+    mocked: true,
     url: `${baseUrl}/invite/qa-visual-invite`,
     statePreset: 'invite-acceptance',
     expectedText: '페이지로,manager@example.test',
@@ -174,6 +190,7 @@ const cases = [
   },
   {
     name: 'owner inbox duplicate policy',
+    authenticated: true,
     nextReleaseOnly: true,
     url: `${baseUrl}/?tab=inbox`,
     statePreset: 'owner-settings',
@@ -185,6 +202,7 @@ const cases = [
   },
   {
     name: 'owner settings page duplication modal',
+    authenticated: true,
     nextReleaseOnly: true,
     url: `${baseUrl}/?tab=settings`,
     statePreset: 'owner-settings',
@@ -274,13 +292,22 @@ function runCase(testCase) {
 }
 
 const results = [];
-const activeCases = cases.filter((testCase) => !testCase.nextReleaseOnly || includeNextSettingsCases);
+const activeCases = cases.filter((testCase) => {
+  if (testCase.authenticated && !includeAuthenticatedCases) return false;
+  if (testCase.mocked && !includeMockCases) return false;
+  if (testCase.nextReleaseOnly && !includeNextSettingsCases) return false;
+  return true;
+});
 const skippedCases = cases
-  .filter((testCase) => testCase.nextReleaseOnly && !includeNextSettingsCases)
+  .filter((testCase) => (testCase.authenticated && !includeAuthenticatedCases) || (testCase.mocked && !includeMockCases) || (testCase.nextReleaseOnly && !includeNextSettingsCases))
   .map((testCase) => ({
     name: testCase.name,
     status: 'skipped-live',
-    reason: 'set INLET_PRODUCTION_QA_INCLUDE_NEXT_SETTINGS=1 after deployment to enforce this case',
+    reason: testCase.authenticated && !includeAuthenticatedCases
+      ? 'set INLET_PRODUCTION_QA_INCLUDE_AUTHENTICATED=1 with a valid production session strategy to enforce this case'
+      : testCase.mocked && !includeMockCases
+        ? 'set INLET_PRODUCTION_QA_INCLUDE_MOCKS=1 to enforce mock-only browser cases'
+      : 'set INLET_PRODUCTION_QA_INCLUDE_NEXT_SETTINGS=1 after deployment to enforce this case',
   }));
 
 for (const testCase of activeCases) {
@@ -291,6 +318,8 @@ console.log(JSON.stringify({
   ok: true,
   baseUrl,
   requireRealBrowser,
+  includeAuthenticatedCases,
+  includeMockCases,
   includeNextSettingsCases,
   publicSlug,
   activeCases: activeCases.length,
