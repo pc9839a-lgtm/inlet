@@ -447,6 +447,32 @@ async function waitForExpectedComputedStylesInPlaywrightLikePage(page) {
   throw new Error(`expected computed style did not appear after interaction: ${lastSample}`);
 }
 
+async function waitForRenderableControlsInPlaywrightLikePage(page) {
+  const started = Date.now();
+  let lastSample = '';
+  while (Date.now() - started < 8000) {
+    const result = await page.evaluate((selectors) => {
+      const bodyText = document.body?.innerText || '';
+      const visibleControls = document.querySelectorAll('button, input, textarea, select, a').length;
+      const selectorMatches = selectors.reduce((matches, selector) => {
+        matches[selector] = !!document.querySelector(selector);
+        return matches;
+      }, {});
+      return {
+        ok: visibleControls > 0 && selectors.every((selector) => selectorMatches[selector]),
+        visibleControls,
+        selectorMatches,
+        sample: bodyText.trim().slice(0, 600),
+      };
+    }, expectedSelectors);
+    if (result.ok) return;
+    lastSample = `controls=${result.visibleControls}; selectors=${JSON.stringify(result.selectorMatches)}; body=${result.sample || ''}`;
+    if (typeof page.waitForTimeout === 'function') await page.waitForTimeout(250);
+    else await wait(250);
+  }
+  throw new Error(`renderable controls/selectors did not appear: ${lastSample}`);
+}
+
 async function clickTextInCdp(client, text) {
   const expression = `(() => {
     const needle = ${JSON.stringify(text)};
@@ -594,6 +620,34 @@ async function waitForExpectedComputedStylesInCdp(client) {
     await wait(250);
   }
   throw new Error(`expected computed style did not appear after interaction: ${lastSample}`);
+}
+
+async function waitForRenderableControlsInCdp(client) {
+  const expression = `(() => {
+    const selectors = ${JSON.stringify(expectedSelectors)};
+    const bodyText = document.body?.innerText || '';
+    const visibleControls = document.querySelectorAll('button, input, textarea, select, a').length;
+    const selectorMatches = selectors.reduce((matches, selector) => {
+      matches[selector] = !!document.querySelector(selector);
+      return matches;
+    }, {});
+    return {
+      ok: visibleControls > 0 && selectors.every((selector) => selectorMatches[selector]),
+      visibleControls,
+      selectorMatches,
+      sample: bodyText.trim().slice(0, 600),
+    };
+  })()`;
+  const started = Date.now();
+  let lastSample = '';
+  while (Date.now() - started < 8000) {
+    const result = await client.send('Runtime.evaluate', { expression, returnByValue: true });
+    const value = result.result?.value || {};
+    if (value.ok) return;
+    lastSample = `controls=${value.visibleControls}; selectors=${JSON.stringify(value.selectorMatches)}; body=${value.sample || ''}`;
+    await wait(250);
+  }
+  throw new Error(`renderable controls/selectors did not appear: ${lastSample}`);
 }
 
 async function wait(ms) {
@@ -807,6 +861,7 @@ if (!targetUrl) {
         await runPlaywrightLikeActions(page);
         await waitForExpectedTextsInPlaywrightLikePage(page);
         await waitForExpectedComputedStylesInPlaywrightLikePage(page);
+        await waitForRenderableControlsInPlaywrightLikePage(page);
         const metrics = await page.evaluate((expectedTexts, forbiddenTexts, expectedSelectors) => {
         const body = document.body;
         const phone = document.querySelector('.phone-frame');
@@ -881,6 +936,7 @@ if (!targetUrl) {
         await runPlaywrightLikeActions(page);
         await waitForExpectedTextsInPlaywrightLikePage(page);
         await waitForExpectedComputedStylesInPlaywrightLikePage(page);
+        await waitForRenderableControlsInPlaywrightLikePage(page);
         const metrics = await page.evaluate((expectedTexts, forbiddenTexts, expectedSelectors) => {
         const body = document.body;
         const phone = document.querySelector('.phone-frame');
@@ -988,6 +1044,7 @@ if (!targetUrl) {
         await runCdpActions(client);
         await waitForExpectedTextsInCdp(client);
         await waitForExpectedComputedStylesInCdp(client);
+        await waitForRenderableControlsInCdp(client);
         const metrics = await evaluateBrowserMetrics(client);
         const screenshot = path.join(screenshotDir, screenshotName(url, viewport.name, results.length));
         assertBrowserMetrics({ metrics, errors, viewport, url, screenshot });
