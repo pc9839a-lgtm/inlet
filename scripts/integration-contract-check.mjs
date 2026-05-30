@@ -574,7 +574,7 @@ requireAll(perfQa, [
   'fixtureLeads',
   'fixtureEvents',
   '10000',
-  'const INBOX_PAGE_SIZE = 50',
+  'const INBOX_PAGE_SIZE = 10',
   'fullScanEndpoints',
   "fallback: 'jsonl'",
   'nextIndexFields',

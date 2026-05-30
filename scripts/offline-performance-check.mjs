@@ -98,12 +98,12 @@ const mayEventFilter = timed('10k event month filter', () => monthFilter(events,
 assert(mayEventFilter.value.length > 0 && mayEventFilter.value.every((event) => event.createdAt.startsWith('2026-05')), 'month filter should exclude April events');
 
 const paginationRun = timed('10k lead pagination', () => {
-  const first = paginate(mayLeadFilter.value.slice().reverse(), 50, 0);
-  const second = paginate(mayLeadFilter.value.slice().reverse(), 50, first.nextCursor || 0);
+  const first = paginate(mayLeadFilter.value.slice().reverse(), 10, 0);
+  const second = paginate(mayLeadFilter.value.slice().reverse(), 10, first.nextCursor || 0);
   return { first, second };
 }, 80);
-assert(paginationRun.value.first.page.length === 50 && paginationRun.value.first.nextCursor === 50, 'first pagination page should stay at 50');
-assert(paginationRun.value.second.page.length === 50, 'second pagination page should stay at 50');
+assert(paginationRun.value.first.page.length === 10 && paginationRun.value.first.nextCursor === 10, 'first pagination page should stay at 10');
+assert(paginationRun.value.second.page.length === 10, 'second pagination page should stay at 10');
 
 const csvFilter = timed('10k lead month CSV filter', () => filterLeadsForCsv(leads, {
   dateFrom: may.dateFrom,
@@ -144,13 +144,13 @@ const jsonlFallbackPlan = {
   retryQueue: { adapter: 'jsonl', indexed: false, fullScan: true, endpoint: '/api/leads/retry-queue' },
 };
 
-assert(appSource.includes('const INBOX_PAGE_SIZE = 50'), 'Inbox initial and load-more size should stay at 50');
+assert(appSource.includes('const INBOX_PAGE_SIZE = 10'), 'Inbox initial and load-more size should stay at 10');
 assert(appSource.includes('monthDateRange(inboxFilters.month)'), 'Inbox server fetch should be month-bounded');
 assert(appSource.includes("deliveryStatus: inboxFilters.deliveryStatus === 'all' ? '' : inboxFilters.deliveryStatus"), 'Inbox server fetch should include delivery status filtering');
 assert(appSource.includes('monthDateRange(statsPeriod'), 'Stats server fetch should be capped to the selected month');
 assert(inboxPanel.includes('type="month"'), 'Inbox UI should expose month selection');
 assert(inboxPanel.includes('deliveryStatus: deliveryFilter') && inboxPanel.includes('월 CSV'), 'Inbox UI should expose monthly CSV with delivery filter contract');
-assert(inboxPanel.includes('다음 50건') && inboxPanel.includes('서버 ${serverTotal}건 중 ${loadedCount}건 로드'), 'Inbox UI should clearly indicate partial server pagination');
+assert(inboxPanel.includes('다음 10건') && inboxPanel.includes('서버 ${serverTotal}건 중 ${loadedCount}건 로드'), 'Inbox UI should clearly indicate partial server pagination');
 assert(leadRepository.includes('dateFrom') && leadRepository.includes('dateTo') && leadRepository.includes('deliveryStatus'), 'Lead repository should pass date/delivery filters');
 assert(eventRepository.includes('dateFrom') && eventRepository.includes('dateTo'), 'Event repository should pass date filters');
 assert(serverSource.includes('dateRangeFilter') && serverSource.includes('deliveryStatus'), 'Server should filter leads/events by date and delivery status');
