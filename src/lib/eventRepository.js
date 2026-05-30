@@ -79,6 +79,7 @@ export async function fetchServerStatsSummary(page, authUser = null, options = {
     month: options.month || '',
     dateFrom: options.dateFrom || '',
     dateTo: options.dateTo || '',
+    channel: options.channel || '',
   });
 
   const res = await apiFetch(`/api/stats/summary?${params.toString()}`, {

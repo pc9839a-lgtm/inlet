@@ -42,7 +42,7 @@ export async function readJson(request) {
   try {
     return JSON.parse(text);
   } catch {
-    const error = new Error('Invalid JSON body.');
+    const error = new Error('요청 데이터 형식이 올바르지 않습니다.');
     error.status = 400;
     throw error;
   }
@@ -74,7 +74,7 @@ export function projectFromRequest(url, body = {}, request = null) {
 
 export function assertD1(env = {}) {
   if (!env.DB || typeof env.DB.prepare !== 'function') {
-    const error = new Error('D1 binding is not configured.');
+    const error = new Error('서버 데이터베이스 연결이 준비되지 않았습니다.');
     error.status = 503;
     throw error;
   }
@@ -173,7 +173,7 @@ function sessionSecret(env = {}) {
 
 export async function authorizeProject(request, env = {}, project = {}, options = {}) {
   if (!project.projectId) {
-    const error = new Error('projectId is required.');
+    const error = new Error('프로젝트 정보가 누락되었습니다.');
     error.status = 400;
     throw error;
   }
@@ -189,7 +189,9 @@ export async function authorizeProject(request, env = {}, project = {}, options 
     const access = await getD1ProjectAccess(env.DB, { projectId: project.projectId });
     if (access) {
       if (canUseProjectAccess(identity, access, options)) return { project, identity, access };
-      const error = new Error(options.write ? 'Project write access denied.' : 'Project access denied.');
+      const error = new Error(options.write
+        ? '현재 계정에 이 페이지 저장 권한이 없습니다. 마스터 계정 또는 편집 권한을 확인해주세요.'
+        : '현재 계정에 이 페이지 접근 권한이 없습니다. 다시 로그인하거나 페이지 소유 계정을 확인해주세요.');
       error.status = 403;
       throw error;
     }
@@ -205,7 +207,7 @@ export async function authorizeProject(request, env = {}, project = {}, options 
     if (!options.write && ['manager', 'client_admin'].includes(role)) return { project, identity };
   }
 
-  const error = new Error('Project access is required.');
+  const error = new Error('현재 계정에 이 페이지 접근 권한이 없습니다. 다시 로그인하거나 페이지 소유 계정을 확인해주세요.');
   error.status = 403;
   throw error;
 }
@@ -292,10 +294,23 @@ function canUseProjectAccess(identity = {}, access = {}, options = {}) {
 
 export async function handleApiError(request, env, error, methods) {
   const status = Number(error?.status || 500);
+  const message = userFacingApiError(error?.message || error, status);
   return jsonResponse(request, env, status, {
     ok: false,
-    error: String(error?.message || error),
+    error: message,
+    message,
+    code: error?.code || error?.details?.code || '',
   }, methods);
+}
+
+function userFacingApiError(message = '', status = 0) {
+  const text = String(message || '').trim();
+  if (/Project write access denied/i.test(text)) return '현재 계정에 이 페이지 저장 권한이 없습니다. 마스터 계정 또는 편집 권한을 확인해주세요.';
+  if (/Project access is required|Project access has not been granted|Project access denied/i.test(text)) return '현재 계정에 이 페이지 접근 권한이 없습니다. 다시 로그인하거나 페이지 소유 계정을 확인해주세요.';
+  if (/projectId is required/i.test(text)) return '프로젝트 정보가 누락되었습니다.';
+  if (/D1 binding is not configured/i.test(text)) return '서버 데이터베이스 연결이 준비되지 않았습니다.';
+  if (/Invalid JSON body/i.test(text)) return '요청 데이터 형식이 올바르지 않습니다.';
+  return text || `요청 처리 실패: ${status}`;
 }
 
 async function hmacBase64Url(payloadPart, secret) {

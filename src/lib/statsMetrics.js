@@ -21,7 +21,7 @@ export function statLabel(key) {
     cta_click: 'CTA 클릭',
     link_click: '링크 클릭',
     form_start: '폼 시작',
-    form_submit_attempt: '제출 시도',
+    form_submit_attempt: '상담 제출 시도',
     form_submit_success: '상담 제출 성공',
     form_submit: '상담 제출',
     reservation_submit_attempt: '예약 제출 시도',
@@ -29,14 +29,24 @@ export function statLabel(key) {
     reservation_success: '예약 성공',
     reservation_submit: '방문예약 제출',
     direct: '직접 유입',
+    referral: '외부 링크',
+    ads: '광고',
     naver: '네이버',
     google: '구글',
     kakao: '카카오',
     instagram: '인스타그램',
+    facebook: '페이스북',
+    youtube: '유튜브',
     mobile: '모바일',
-    desktop: '데스크톱',
+    desktop: 'PC',
     tablet: '태블릿',
     unknown: '미확인',
+    신규: '신규',
+    확인중: '확인중',
+    완료: '완료',
+    보류: '보류',
+    상담: '상담',
+    예약: '예약',
   }[key] || key;
 }
 
@@ -183,7 +193,9 @@ function statsDedupeKey(item = {}) {
   const label = item.label || item.sourceBlockTitle || item.message || '';
   const channel = item.channel || '';
   const device = item.device || '';
-  const signature = [createdAt, type, contact, name, label, channel, device].map((value) => String(value || '').trim().toLowerCase()).join('|');
+  const signature = [createdAt, type, contact, name, label, channel, device]
+    .map((value) => String(value || '').trim().toLowerCase())
+    .join('|');
   return signature.replace(/\|/g, '') ? `sig:${signature}` : '';
 }
 
@@ -260,9 +272,12 @@ function trendBuckets(range) {
   return days.length ? days : [{ id: dayId(new Date()), label: dayLabel(new Date()), pv: 0, cta: 0, db: 0 }];
 }
 
-function seoulParts(value) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
+function percent(num, den) {
+  return den ? ((num / den) * 100).toFixed(1) : '0.0';
+}
+
+function seoulParts(value = new Date()) {
+  const date = value instanceof Date ? value : new Date(value);
   const shifted = new Date(date.getTime() + SEOUL_OFFSET_MS);
   return {
     year: shifted.getUTCFullYear(),
@@ -272,18 +287,18 @@ function seoulParts(value) {
 }
 
 function seoulDate(year, month, day) {
-  return new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0) - SEOUL_OFFSET_MS);
+  return new Date(Date.UTC(year, month - 1, day) - SEOUL_OFFSET_MS);
 }
 
 function seoulDateFromInstant(value) {
   const parts = seoulParts(value);
-  return parts ? seoulDate(parts.year, parts.month, parts.day) : seoulDate(1970, 1, 1);
+  return seoulDate(parts.year, parts.month, parts.day);
 }
 
 function endOfSeoulDay(start) {
-  return new Date(addSeoulDays(start, 1).getTime() - 1);
+  return new Date(start.getTime() + DAY_MS - 1);
 }
 
-function addSeoulDays(start, days) {
-  return new Date(start.getTime() + days * DAY_MS);
+function addSeoulDays(date, days) {
+  return new Date(date.getTime() + days * DAY_MS);
 }

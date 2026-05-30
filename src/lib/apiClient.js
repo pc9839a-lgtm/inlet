@@ -45,15 +45,37 @@ function runtimeApiToken() {
   return String(runtimeConfig.apiToken || '').trim();
 }
 
+function userFacingApiMessage(message = '', status = 0) {
+  const text = String(message || '').trim();
+  if (/Project access is required|Project access has not been granted|Project access denied/i.test(text)) {
+    return '현재 계정에 이 페이지 접근 권한이 없습니다. 다시 로그인하거나 페이지 소유 계정을 확인해주세요.';
+  }
+  if (/Project write access denied/i.test(text)) {
+    return '현재 계정에 이 페이지 저장 권한이 없습니다. 마스터 계정 또는 편집 권한을 확인해주세요.';
+  }
+  if (/projectId is required/i.test(text)) {
+    return '프로젝트 정보가 누락되었습니다. 페이지를 다시 저장하거나 새로고침 후 다시 시도해주세요.';
+  }
+  if (/D1 binding is not configured/i.test(text)) {
+    return '서버 데이터베이스 연결이 준비되지 않았습니다.';
+  }
+  if (/Invalid JSON body/i.test(text)) {
+    return '요청 데이터 형식이 올바르지 않습니다.';
+  }
+  if (!text) return `요청 실패: ${status}`;
+  return text;
+}
+
 async function readApiError(res) {
   const raw = await res.text().catch(() => '');
   if (!raw) return { message: `요청 실패: ${res.status}`, details: null };
 
   try {
     const json = JSON.parse(raw);
-    return { message: json?.message || json?.error?.message || json?.error || raw, details: json };
+    const message = json?.message || json?.error?.message || json?.error || raw;
+    return { message: userFacingApiMessage(message, res.status), details: json };
   } catch {
-    return { message: raw, details: null };
+    return { message: userFacingApiMessage(raw, res.status), details: null };
   }
 }
 

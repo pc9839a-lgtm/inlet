@@ -21,6 +21,7 @@ export async function onRequest({ request, env }) {
       month,
       dateFrom: url.searchParams.get('dateFrom') || '',
       dateTo: url.searchParams.get('dateTo') || '',
+      channel: url.searchParams.get('channel') || '',
     });
 
     return jsonResponse(request, env, 200, {

@@ -27,6 +27,7 @@ export async function onRequest({ request, env }) {
           ok: false,
           code: 'LEAD_RATE_LIMITED',
           reason: duplicatePolicy.reason,
+          message: '중복 접수 정책에 따라 이번 접수는 차단되었습니다.',
           retryAfter: 60,
         }, METHODS);
       }
@@ -76,7 +77,7 @@ export async function onRequest({ request, env }) {
       }, METHODS);
     }
 
-    return jsonResponse(request, env, 405, { ok: false, error: 'Method not allowed.' }, METHODS);
+    return jsonResponse(request, env, 405, { ok: false, error: '허용되지 않는 요청 방식입니다.', message: '허용되지 않는 요청 방식입니다.' }, METHODS);
   } catch (error) {
     return handleApiError(request, env, error, METHODS);
   }
@@ -91,7 +92,7 @@ async function sendSavedLeadDelivery(db, lead = {}, inputPage = {}, project = {}
     const deliveryPage = normalizeDeliveryPage(inputPage, storedPage || {}, project);
     return await sendLeadDelivery(lead, deliveryPage, env);
   } catch (error) {
-    return deliveryReport('failed', '접수는 저장됐지만 알림 전송은 실패했습니다.', [{
+    return deliveryReport('failed', '접수는 저장됐지만 알림 전송에 실패했습니다.', [{
       target: '알림 전송',
       provider: 'server',
       status: 'failed',

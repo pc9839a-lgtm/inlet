@@ -51,14 +51,14 @@ export async function onRequest({ request, env, params }) {
           ? { project, page: await getD1PageBySlug(db, { projectId: project.projectId, slug }) }
           : await getPublicPageBySlug(db, slug);
         const { page, project: publicProject } = result;
-        if (!page) return jsonResponse(request, env, 404, { ok: false, error: 'Page not found' }, METHODS);
+        if (!page) return jsonResponse(request, env, 404, { ok: false, error: '페이지를 찾을 수 없습니다.', message: '페이지를 찾을 수 없습니다.' }, METHODS);
         return jsonResponse(request, env, 200, { ok: true, page: publicPagePayload(page, publicProject) }, METHODS, {
           cacheControl: PUBLIC_PAGE_CACHE_CONTROL,
         });
       }
       await authorizeProject(request, env, project);
       const page = await getD1PageBySlug(db, { projectId: project.projectId, slug });
-      if (!page) return jsonResponse(request, env, 404, { ok: false, error: 'Page not found' }, METHODS);
+      if (!page) return jsonResponse(request, env, 404, { ok: false, error: '페이지를 찾을 수 없습니다.', message: '페이지를 찾을 수 없습니다.' }, METHODS);
       return jsonResponse(request, env, 200, { ok: true, page }, METHODS);
     }
 
@@ -79,7 +79,7 @@ export async function onRequest({ request, env, params }) {
       return jsonResponse(request, env, 200, { ok: true, page: saved }, METHODS);
     }
 
-    return jsonResponse(request, env, 405, { ok: false, error: 'Method not allowed.' }, METHODS);
+    return jsonResponse(request, env, 405, { ok: false, error: '허용되지 않는 요청 방식입니다.', message: '허용되지 않는 요청 방식입니다.' }, METHODS);
   } catch (error) {
     return handleApiError(request, env, error, METHODS);
   }

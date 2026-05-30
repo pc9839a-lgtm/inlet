@@ -20,7 +20,7 @@ async function readResponseError(res, fallback) {
     const data = JSON.parse(raw);
     return { message: data?.message || data?.error?.message || data?.error || fallback, details: data };
   } catch {
-    return { message: raw, details: null };
+    return { message: raw || fallback, details: null };
   }
 }
 
@@ -154,11 +154,12 @@ export async function updateServerLead(id, patch, page, authUser = null) {
 export async function deleteServerLead(id, page, authUser = null) {
   if (!isServerLeadMode()) return { ok: true, mode: 'local' };
 
-  const params = contextParams(projectContext(page, authUser));
+  const context = projectContext(page, authUser);
+  const params = contextParams(context);
   const suffix = params.toString() ? `?${params.toString()}` : '';
   const res = await apiFetch(`/api/leads/${encodeURIComponent(id)}${suffix}`, {
     method: 'DELETE',
-    headers: projectAuthHeaders(projectContext(page, authUser)),
+    headers: projectAuthHeaders(context),
   });
   if (!res.ok) throwApiError(await readResponseError(res, `접수 데이터 삭제 실패: ${res.status}`), res.status);
   return res.json().catch(() => ({ ok: true }));
@@ -167,19 +168,21 @@ export async function deleteServerLead(id, page, authUser = null) {
 export async function deliverServerLead(lead, page, authUser = null) {
   if (!isServerLeadMode()) return null;
 
+  const context = projectContext(page, authUser);
   const data = await postJson(`/api/leads/${encodeURIComponent(lead.id)}/deliver`, {
     page,
-    project: projectContext(page, authUser),
-  }, { headers: projectAuthHeaders(projectContext(page, authUser)) });
+    project: context,
+  }, { headers: projectAuthHeaders(context) });
   return data?.delivery || data?.lead?.delivery || null;
 }
 
 export async function retryFailedServerLeads(page, authUser = null) {
   if (!isServerLeadMode()) return null;
 
+  const context = projectContext(page, authUser);
   return postJson('/api/leads/retry-failed', {
-    project: projectContext(page, authUser),
-  }, { headers: projectAuthHeaders(projectContext(page, authUser)) });
+    project: context,
+  }, { headers: projectAuthHeaders(context) });
 }
 
 export async function downloadServerLeadsCsv(page, authUser = null, fallbackLeads = [], options = {}) {

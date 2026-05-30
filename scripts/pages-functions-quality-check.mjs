@@ -105,7 +105,7 @@ for (const token of [
   'INSERT OR IGNORE INTO projects',
   'isPublicProjectShell',
   'pendingClaim',
-  'Project access is required.',
+  '현재 계정에 이 페이지 접근 권한이 없습니다.',
 ]) {
   assert(shared.includes(token), `Pages shared API helper missing ${token}`);
 }

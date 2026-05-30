@@ -517,6 +517,7 @@ function App() {
   const [statsPartial, setStatsPartial] = useState(false);
   const [inboxFilters, setInboxFilters] = useState({ kind: 'all', status: 'all', deliveryStatus: 'all', q: '', month: currentMonthValue() });
   const [statsPeriod, setStatsPeriod] = useState(currentMonthValue());
+  const [statsChannel, setStatsChannel] = useState('all');
   const [serverStatsSummary, setServerStatsSummary] = useState(null);
   const [leadConflict, setLeadConflict] = useState(null);
   const [events, setEvents] = useState(() => load(EVENTS_KEY, []));
@@ -812,7 +813,7 @@ function App() {
     setStatsPartial(false);
     setServerStatsSummary(null);
     Promise.all([
-      fetchServerStatsSummary(page, authUser, statsRange),
+      fetchServerStatsSummary(page, authUser, { ...statsRange, channel: statsChannel === 'all' ? '' : statsChannel }),
       fetchServerLeads(page, authUser, { limit: 8, withMeta: true, ...statsRange }),
     ])
       .then(([summaryResult, leadResult]) => {
@@ -846,7 +847,7 @@ function App() {
         }
       });
     return () => { alive = false; };
-  }, [tab, page.slug, page.projectId, authUser, statsPeriod]);
+  }, [tab, page.slug, page.projectId, authUser, statsPeriod, statsChannel]);
   useEffect(() => {
     if (tab !== 'style') setStylePreviewTheme(null);
   }, [tab]);
@@ -1035,6 +1036,8 @@ function App() {
       status: '신규',
       memo: '',
       createdAt: new Date().toISOString(),
+      channel: lead.channel || detectTrafficChannel(),
+      sourceUrl: lead.sourceUrl || (typeof location !== 'undefined' ? location.href : ''),
       delivery: { status: 'pending', summary: '외부 전송 확인 중', logs: [] },
       ...lead
     });
@@ -1904,7 +1907,7 @@ function App() {
                   <Suspense fallback={<LazyPanelFallback/>}>
                   {canUseBuilder && tab === 'style' && <StylePanel page={page} updateTheme={updateTheme} onPreviewThemeChange={setStylePreviewTheme}/>}
                   {tab === 'inbox' && <InboxPanel leads={leads} page={page} authUser={authUser} updatePage={updatePage} syncing={leadsSyncing} totalLeads={leadPageMeta.total} hasMoreLeads={leadPageMeta.hasMore} loadMoreLeads={loadMoreLeads} onFiltersChange={setInboxFilters} updateIntegrations={updateIntegrations} onSavePage={saveNow} connectionsEditing={connectionsEditing} setConnectionsEditing={setConnectionsEditing} updateLead={updateLead} deleteLead={deleteLead} retryLeadDelivery={retryLeadDelivery} retryFailedDeliveries={retryFailedDeliveries} exportLeadsCsv={exportLeadsCsv} leadConflict={leadConflict} onReloadLeadConflict={reloadLeadConflict} onRetryLeadConflict={retryLeadConflict} onDismissLeadConflict={() => setLeadConflict(null)} accessMode={accessMode}/>}
-                  {tab === 'stats' && <StatsPanel events={events} leads={leads} page={page} eventPageMeta={statsEventPageMeta} leadPageMeta={statsLeadPageMeta} statsPartial={statsPartial} period={statsPeriod} onPeriodChange={setStatsPeriod} serverStats={serverStatsSummary} accessMode={accessMode}/>}
+                  {tab === 'stats' && <StatsPanel events={events} leads={leads} page={page} eventPageMeta={statsEventPageMeta} leadPageMeta={statsLeadPageMeta} statsPartial={statsPartial} period={statsPeriod} onPeriodChange={setStatsPeriod} serverStats={serverStatsSummary} channel={statsChannel} onChannelChange={setStatsChannel} accessMode={accessMode}/>}
                   {tab === 'settings' && <SettingsPanel page={page} updatePage={updatePage} updateMeta={updateMeta} updateIntegrations={updateIntegrations} setPage={setNormalizedPage} onDuplicatePage={duplicatePageWithUrl} canDuplicatePage={canUsePageDuplication(page)} onReset={reset} authUser={authUser} accessMode={accessMode} onAccountUpdate={updateAccountProfile} onLogout={logout}/>}
                   </Suspense>
                 </LazyChunkBoundary>

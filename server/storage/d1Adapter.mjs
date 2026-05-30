@@ -1,4 +1,4 @@
-export const D1_SCHEMA_TABLES = [
+﻿export const D1_SCHEMA_TABLES = [
   'accounts',
   'projects',
   'project_members',
@@ -1308,22 +1308,25 @@ export async function listD1DeliveryRetryQueue(db, { projectId, status = '', cur
   };
 }
 
-export async function aggregateD1Stats(db, { projectId, month, dateFrom = '', dateTo = '' } = {}) {
+export async function aggregateD1Stats(db, { projectId, month, dateFrom = '', dateTo = '', channel = '' } = {}) {
   assertD1Binding(db);
   if (!projectId || !month) {
     return emptyD1StatsSummary(month);
   }
-  const scope = d1MonthDateScope({ projectId, month, dateFrom, dateTo });
+  const baseScope = d1MonthDateScope({ projectId, month, dateFrom, dateTo });
+  const safeChannel = normalizeD1ChannelFilter(channel);
+  const eventScope = withD1EventChannelScope(baseScope, safeChannel);
+  const leadScope = withD1LeadChannelScope(baseScope, safeChannel);
 
-  const [eventCounts, eventTrend, eventChannels, eventDevices, leadCounts, leadTrend] = await Promise.all([
+  const [eventCounts, eventTrend, eventChannels, availableEventChannels, eventDevices, leadCounts, leadTrend] = await Promise.all([
     queryD1Rows(
       db,
       `SELECT event_type,
               COUNT(DISTINCT CASE WHEN dedupe_key IS NOT NULL AND dedupe_key != '' THEN dedupe_key ELSE id END) AS total
        FROM events
-       WHERE ${scope.where}
+       WHERE ${eventScope.where}
        GROUP BY event_type`,
-      scope.params,
+      eventScope.params,
     ),
     queryD1Rows(
       db,
@@ -1331,37 +1334,40 @@ export async function aggregateD1Stats(db, { projectId, month, dateFrom = '', da
               COUNT(DISTINCT CASE WHEN event_type = 'page_view' THEN CASE WHEN dedupe_key IS NOT NULL AND dedupe_key != '' THEN dedupe_key ELSE id END END) AS pv,
               COUNT(DISTINCT CASE WHEN event_type = 'cta_click' THEN CASE WHEN dedupe_key IS NOT NULL AND dedupe_key != '' THEN dedupe_key ELSE id END END) AS cta
        FROM events
-       WHERE ${scope.where}
+       WHERE ${eventScope.where}
        GROUP BY day
        ORDER BY day ASC`,
-      scope.params,
+      eventScope.params,
     ),
-    queryD1EventDimension(db, scope, 'channel'),
-    queryD1EventDimension(db, scope, 'device'),
+    queryD1EventDimension(db, eventScope, 'channel'),
+    queryD1EventDimension(db, baseScope, 'channel'),
+    queryD1EventDimension(db, eventScope, 'device'),
     queryD1Rows(
       db,
       `SELECT status, kind, delivery_status, COUNT(*) AS total
        FROM leads
-       WHERE ${scope.where}
+       WHERE ${leadScope.where}
        GROUP BY status, kind, delivery_status`,
-      scope.params,
+      leadScope.params,
     ),
     queryD1Rows(
       db,
       `SELECT substr(datetime(created_at, '+9 hours'), 1, 10) AS day, COUNT(*) AS db
        FROM leads
-       WHERE ${scope.where}
+       WHERE ${leadScope.where}
        GROUP BY day
        ORDER BY day ASC`,
-      scope.params,
+      leadScope.params,
     ),
   ]);
 
   return buildD1StatsSummary({
     month,
+    channel: safeChannel,
     eventCounts: eventCounts.records,
     eventTrend: eventTrend.records,
     eventChannels: eventChannels.records,
+    availableEventChannels: availableEventChannels.records,
     eventDevices: eventDevices.records,
     leadCounts: leadCounts.records,
     leadTrend: leadTrend.records,
@@ -1380,6 +1386,34 @@ function d1MonthDateScope({ projectId, month, dateFrom = '', dateTo = '' } = {})
     params.push(String(dateTo));
   }
   return { where: filters.join(' AND '), params };
+}
+
+function normalizeD1ChannelFilter(channel = '') {
+  const value = String(channel || '').trim().toLowerCase();
+  if (!value || value === 'all') return '';
+  return value.replace(/[^a-z0-9_-]/g, '').slice(0, 50);
+}
+
+function withD1EventChannelScope(scope = {}, channel = '') {
+  if (!channel) return scope;
+  return {
+    where: `${scope.where} AND COALESCE(NULLIF(channel, ''), 'unknown') = ?`,
+    params: [...scope.params, channel],
+  };
+}
+
+function withD1LeadChannelScope(scope = {}, channel = '') {
+  if (!channel) return scope;
+  if (channel === 'direct' || channel === 'unknown') {
+    return {
+      where: `${scope.where} AND (source_url IS NULL OR source_url = '' OR source_url NOT LIKE '%utm_source=%')`,
+      params: [...scope.params],
+    };
+  }
+  return {
+    where: `${scope.where} AND source_url LIKE ?`,
+    params: [...scope.params, `%utm_source=${channel}%`],
+  };
 }
 
 async function queryD1EventDimension(db, scope = {}, column = '') {
@@ -1519,7 +1553,7 @@ async function upsertD1LeadLegacy(db, row = {}) {
   ).run();
 }
 
-function buildD1StatsSummary({ month, eventCounts = [], eventTrend = [], eventChannels = [], eventDevices = [], leadCounts = [], leadTrend = [] } = {}) {
+function buildD1StatsSummary({ month, channel = '', eventCounts = [], eventTrend = [], eventChannels = [], availableEventChannels = [], eventDevices = [], leadCounts = [], leadTrend = [] } = {}) {
   const eventMap = countRowsByKey(eventCounts, 'event_type');
   const pv = Number(eventMap.page_view || 0);
   const cta = Number(eventMap.cta_click || 0);
@@ -1535,7 +1569,7 @@ function buildD1StatsSummary({ month, eventCounts = [], eventTrend = [], eventCh
 
   const statusData = {};
   const deliveryData = {};
-  const typeData = { '상담': 0, '예약': 0 };
+  const typeData = { 상담: 0, 예약: 0 };
   let db = 0;
   for (const row of leadCounts || []) {
     const total = Number(row.total || 0);
@@ -1550,6 +1584,7 @@ function buildD1StatsSummary({ month, eventCounts = [], eventTrend = [], eventCh
 
   return {
     summary: {
+      selectedChannel: channel || 'all',
       pv,
       cta,
       link,
@@ -1581,6 +1616,7 @@ function buildD1StatsSummary({ month, eventCounts = [], eventTrend = [], eventCh
       deliveryData,
       typeData,
       channelData: countRowsByKey(eventChannels, 'name'),
+      availableChannelData: countRowsByKey(availableEventChannels.length ? availableEventChannels : eventChannels, 'name'),
       deviceData: countRowsByKey(eventDevices, 'name'),
     },
     totals: {
@@ -1591,7 +1627,6 @@ function buildD1StatsSummary({ month, eventCounts = [], eventTrend = [], eventCh
     },
   };
 }
-
 function emptyD1StatsSummary(month = '') {
   return buildD1StatsSummary({ month, eventCounts: [], eventTrend: [], leadCounts: [], leadTrend: [] });
 }

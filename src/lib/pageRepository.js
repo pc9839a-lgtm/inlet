@@ -16,6 +16,17 @@ function pageContextParams(context = {}) {
   return params;
 }
 
+async function readJsonError(res, fallback) {
+  const raw = await res.text().catch(() => '');
+  if (!raw) return fallback;
+  try {
+    const data = JSON.parse(raw);
+    return data?.message || data?.error?.message || data?.error || fallback;
+  } catch {
+    return raw || fallback;
+  }
+}
+
 async function fetchPageWithContext(safeSlug, context = {}) {
   const params = pageContextParams(context);
   const query = params.toString() ? `?${params.toString()}` : '';
@@ -23,7 +34,7 @@ async function fetchPageWithContext(safeSlug, context = {}) {
     headers: projectAuthHeaders(context),
   });
   if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`페이지 불러오기 실패: ${res.status}`);
+  if (!res.ok) throw new Error(await readJsonError(res, `페이지 불러오기 실패: ${res.status}`));
   const data = await res.json();
   return data?.page || null;
 }
@@ -44,7 +55,7 @@ export async function fetchPublicServerPage(slug) {
   const safeSlug = pageSlug(slug);
   const res = await apiFetch(`/api/pages/${encodeURIComponent(safeSlug)}?public=1`);
   if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`공개 페이지 불러오기 실패: ${res.status}`);
+  if (!res.ok) throw new Error(await readJsonError(res, `공개 페이지 불러오기 실패: ${res.status}`));
   const data = await res.json();
   return data?.page || null;
 }
@@ -80,7 +91,7 @@ export async function fetchPageRevisions(page, authUser = null) {
   const res = await apiFetch(`/api/pages/${encodeURIComponent(slug)}/revisions?${params.toString()}`, {
     headers: projectAuthHeaders(context),
   });
-  if (!res.ok) throw new Error(`페이지 저장본 불러오기 실패: ${res.status}`);
+  if (!res.ok) throw new Error(await readJsonError(res, `페이지 저장본 불러오기 실패: ${res.status}`));
   const data = await res.json();
   return Array.isArray(data?.revisions) ? data.revisions : [];
 }
@@ -97,7 +108,7 @@ export async function fetchPageRevision(page, revisionId, authUser = null) {
   const res = await apiFetch(`/api/pages/${encodeURIComponent(slug)}/revisions/${encodeURIComponent(revisionId)}?${params.toString()}`, {
     headers: projectAuthHeaders(context),
   });
-  if (!res.ok) throw new Error(`페이지 저장본 미리보기 실패: ${res.status}`);
+  if (!res.ok) throw new Error(await readJsonError(res, `페이지 저장본 미리보기 실패: ${res.status}`));
   const data = await res.json();
   return data?.revision || null;
 }
