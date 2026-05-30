@@ -189,8 +189,9 @@ const cases = [
     url: `${baseUrl}/?tab=settings`,
     statePreset: 'owner-settings',
     viewports: 'desktop',
-    expectedText: '설정,고급 설정',
-    expectedSelector: '.settings-panel',
+    clickSelector: '.page-duplicate-summary button',
+    expectedText: '설정,고급 설정,URL 설정,기본 제공 도메인,페이지 복제',
+    expectedSelector: '.settings-panel,.page-duplicate-summary button,.settings-url-modal',
     forbiddenText: '화면을 불러오는 중 오류가 발생했습니다,ApiError is not defined',
   },
   ...(publicSlug ? [{
