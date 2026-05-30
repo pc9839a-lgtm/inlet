@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { buildLeadDeliveryJobs, normalizeDeliveryPage } from '../functions/api/leads/_delivery.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -44,6 +45,32 @@ const aiDraftDelete = await readFile('functions/api/ai/drafts/[id].js', 'utf8');
 const wrangler = await readFile('wrangler.jsonc', 'utf8');
 const hostedQa = await readFile('scripts/hosted-api-quality-check.mjs', 'utf8');
 const hostedRoutesQa = await readFile('scripts/hosted-api-routes-quality-check.mjs', 'utf8');
+
+const storedDeliveryPage = normalizeDeliveryPage(
+  {
+    title: 'Public payload',
+    slug: 'public-page',
+    integrations: {
+      email: { enabled: false, to: '', consult: true, reservation: true },
+      webhook: { enabled: false, url: '' },
+      conversion: { enabled: true, dataLayer: true },
+    },
+  },
+  {
+    title: 'Stored page',
+    slug: 'public-page',
+    integrations: {
+      email: { enabled: true, to: 'pc9839a@naver.com', consult: true, reservation: true },
+      webhook: { enabled: false, url: '' },
+      conversion: { enabled: true, dataLayer: false },
+    },
+  },
+  { slug: 'public-page' },
+);
+assert(storedDeliveryPage.integrations.email.enabled === true, 'public lead payload must not disable stored email alerts');
+assert(storedDeliveryPage.integrations.email.to === 'pc9839a@naver.com', 'stored email alert recipient should remain authoritative');
+assert(storedDeliveryPage.integrations.conversion.dataLayer === true, 'public conversion settings can still merge from payload');
+assert(buildLeadDeliveryJobs(storedDeliveryPage, { id: 'lead-public-submit', type: 'consult' }).some((job) => job.type === 'email'), 'stored email settings should create a public submit delivery job');
 
 for (const token of [
   'export async function onRequest',

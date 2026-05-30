@@ -5,15 +5,30 @@ export function deliveryReport(status = 'none', summary = '알림 전송 설정 
 }
 
 export function normalizeDeliveryPage(inputPage = {}, storedPage = {}, project = {}) {
+  const storedIntegrations = storedPage.integrations || {};
+  const inputIntegrations = inputPage.integrations || {};
+  const hasStoredDeliverySettings = !!(
+    storedIntegrations.email
+    || storedIntegrations.webhook
+    || storedIntegrations.automation
+    || storedIntegrations.sheets
+  );
+  const integrations = hasStoredDeliverySettings
+    ? {
+      ...storedIntegrations,
+      conversion: {
+        ...(storedIntegrations.conversion || {}),
+        ...(inputIntegrations.conversion || {}),
+      },
+    }
+    : inputIntegrations;
+
   return {
     ...storedPage,
     ...inputPage,
     title: inputPage.title || storedPage.title || project.title || project.slug || '',
     slug: inputPage.slug || storedPage.slug || project.slug || '',
-    integrations: {
-      ...(storedPage.integrations || {}),
-      ...(inputPage.integrations || {}),
-    },
+    integrations,
   };
 }
 
