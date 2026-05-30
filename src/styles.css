@@ -35,5 +35,6 @@
 @import './styles/panels.css';
 @import './styles/panels-metrics.css';
 @import './styles/panels-settings.css';
+@import './styles/panels-create-modal.css';
 @import './styles/base-wayzi-footer.css';
 @import './styles/base-header-fix.css';

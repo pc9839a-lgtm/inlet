@@ -134,7 +134,6 @@ const lazyCssOwners = {
   'src/styles/panels-home-template-rail.css': 'src/panels/TemplatesPanel.css',
   'src/styles/panels-home-shell.css': 'src/screens/HomeScreens.css',
   'src/styles/panels-home-create.css': 'src/screens/HomeScreens.css',
-  'src/styles/panels-create-modal.css': 'src/screens/HomeScreens.css',
   'src/styles/panels-create-flow.css': 'src/screens/HomeScreens.css',
   'src/styles/panels-home.css': 'src/screens/HomeScreens.css',
   'src/styles/panels-home-auth.css': 'src/screens/HomeScreens.css',
