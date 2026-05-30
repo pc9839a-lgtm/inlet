@@ -58,6 +58,7 @@ const previewCssFiles = [
   'src/styles/preview-workspace-effects-nav.css',
   'src/styles/preview-workspace-effects-widgets.css',
   'src/styles/preview-workspace-effects-map-faq.css',
+  'src/styles/preview-public.css',
 ];
 
 const files = {
@@ -103,6 +104,8 @@ assert(files.landing.includes('BlockErrorBoundary'), 'block error boundary shoul
 assert(files.landing.includes('installConversionTracking(page)'), 'public renderer should install conversion tracking');
 assert(files.landing.includes('if (templatePreview) return;'), 'template preview should skip conversion tracking');
 assert(files.landing.includes('hideBottomForForm'), 'bottom bar should hide when form is visible');
+assert(files.landing.includes('publicView={publicView}'), 'public bottom bar should receive public rendering mode');
+assert(files.landing.includes('public-bottom-bar'), 'public bottom bar should have a stable public-only class');
 
 const rendererContracts = [
   [files.content, 'export function RenderHero', 'landing-section hero'],
@@ -168,6 +171,8 @@ const visualGeometryContracts = [
   ['links cards protect text overflow', files.previewCss.includes('minmax(0,1fr)') && /overflow-wrap|text-overflow/.test(files.previewCss)],
   ['timer grid uses stable tracks', files.previewCss.includes('.timer-grid') && files.previewCss.includes('repeat(4')],
   ['bottom bar keeps fixed button count tracks', files.previewCss.includes('bottom-bar.count-3') && files.previewCss.includes('repeat(3')],
+  ['public landing bottom CTA is fixed inside 860 shell', files.previewCss.includes('.public-landing-viewport .public-bottom-bar') && files.previewCss.includes('position: fixed') && files.previewCss.includes('width: min(860px, calc(100vw - 24px))')],
+  ['public landing reserves bottom CTA space', files.previewCss.includes('.landing-page.public-render.has-bottom-bar .landing-content') && files.previewCss.includes('padding-bottom: 126px')],
   ['map widget has bounded embed area', files.previewCss.includes('.inlet-map-section') && /min-height|aspect-ratio/.test(files.previewCss)],
   ['faq content has vertical spacing', files.previewCss.includes('.faq-widget') && files.previewCss.includes('gap:')],
   ['selected preview outline suppressed in template mode', files.previewCss.includes('.landing-page.template-preview') && files.previewCss.includes('outline: 0')],
