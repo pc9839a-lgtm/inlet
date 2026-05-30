@@ -188,7 +188,14 @@ export async function authorizeProject(request, env = {}, project = {}, options 
   if (identity && env.DB && typeof env.DB.prepare === 'function') {
     const access = await getD1ProjectAccess(env.DB, { projectId: project.projectId });
     if (access) {
-      if (canUseProjectAccess(identity, access, options)) return { project, identity, access };
+      const member = activeMemberFor(identity, access);
+      if (canUseProjectAccess(identity, access, options, member)) {
+        if (member?.pendingClaim && options.write) {
+          await claimPublicD1Project(env.DB, project, identity, access);
+          return { project, identity, access: { ...access, ownerId: identity.ownerId } };
+        }
+        return { project, identity, access };
+      }
       const error = new Error(options.write
         ? '현재 계정에 이 페이지 저장 권한이 없습니다. 마스터 계정 또는 편집 권한을 확인해주세요.'
         : '현재 계정에 이 페이지 접근 권한이 없습니다. 다시 로그인하거나 페이지 소유 계정을 확인해주세요.');
@@ -274,8 +281,8 @@ function activeMemberFor(identity = {}, access = {}) {
   return managers.find((member) => member.status === 'active' && ownerIds.has(String(member.ownerId || ''))) || null;
 }
 
-function canUseProjectAccess(identity = {}, access = {}, options = {}) {
-  const member = activeMemberFor(identity, access);
+function canUseProjectAccess(identity = {}, access = {}, options = {}, activeMember = null) {
+  const member = activeMember || activeMemberFor(identity, access);
   if (!member) return false;
   const role = normalizeRole(member.role || identity.role);
   if (role === 'master') return true;
@@ -290,6 +297,31 @@ function canUseProjectAccess(identity = {}, access = {}, options = {}) {
   if (!tab) return !options.write;
   const permission = normalizeAccess(member.access || {})[tab] || {};
   return options.write ? !!permission.write : (!!permission.read || !!permission.write);
+}
+
+async function claimPublicD1Project(db, project = {}, identity = {}, access = {}) {
+  const projectId = String(access.projectId || project.projectId || '').trim();
+  const ownerId = String(identity.ownerId || '').trim();
+  const previousOwnerId = String(access.ownerId || '').trim();
+  if (!db?.prepare || !projectId || !ownerId || !isPublicProjectShell(access)) return false;
+  const now = new Date().toISOString();
+  await db.prepare(`
+    UPDATE projects
+    SET owner_account_id = ?, updated_at = ?
+    WHERE id = ? AND owner_account_id = ?
+  `).bind(ownerId, now, projectId, previousOwnerId).run();
+  await db.prepare(`
+    INSERT INTO project_members (
+      id, project_id, account_id, role, access_json, status, invited_by_account_id, created_at, updated_at
+    )
+    VALUES (?, ?, ?, 'master', '{}', 'active', NULL, ?, ?)
+    ON CONFLICT(project_id, account_id) DO UPDATE SET
+      role = 'master',
+      access_json = '{}',
+      status = 'active',
+      updated_at = excluded.updated_at
+  `).bind(`${projectId}-master-${ownerId}`, projectId, ownerId, now, now).run();
+  return true;
 }
 
 export async function handleApiError(request, env, error, methods) {

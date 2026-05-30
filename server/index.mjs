@@ -5059,7 +5059,9 @@ function managerAccessForIdentity(identity = {}, access = {}) {
 function canAccessProject(identity = {}, access = {}, options = {}) {
   const ownerIds = identityOwnerAliases(identity);
   if (!ownerIds.size) return false;
+  const role = String(identity.role || '').trim().toLowerCase().replace(/[-\s]/g, '_');
   if (ownerIds.has(safeId(access.ownerId, ''))) return true;
+  if (isPublicProjectOwner(access.ownerId) && ['master', 'owner', 'builder'].includes(role)) return true;
   if (access.clientAccess && Array.isArray(access.clientOwnerIds) && access.clientOwnerIds.some((id) => ownerIds.has(safeId(id, '')))) return true;
   const manager = managerAccessForIdentity(identity, access);
   if (!manager) return false;
@@ -5082,6 +5084,10 @@ function sameOwnerIdentity(identity = {}, project = {}) {
   const projectOwnerId = safeId(project.ownerId || project.ownerAccountId || '', '');
   if (!projectOwnerId) return true;
   return identityOwnerAliases(identity).has(projectOwnerId);
+}
+
+function isPublicProjectOwner(ownerId = '') {
+  return safeId(ownerId, '').startsWith('public_');
 }
 
 async function writeProjectAccess(project = {}, access = {}) {
@@ -5178,14 +5184,22 @@ async function authorizeProjectAccess(req, project = {}, options = {}) {
   const identity = requestIdentity(req);
   if (!identity.ownerId) throw accessError('Project owner identity is required.', 'PROJECT_ACCESS_REQUIRED');
   const role = String(identity.role || '').trim().toLowerCase().replace(/[-\s]/g, '_');
+  const masterRole = ['master', 'owner', 'builder'].includes(role);
   const masterSameOwner = ['master', 'owner', 'builder'].includes(role) && sameOwnerIdentity(identity, normalizedProject);
-  if (identity.projectId && identity.projectId !== normalizedProject.projectId && !masterSameOwner) {
+  if (identity.projectId && identity.projectId !== normalizedProject.projectId && !masterSameOwner && !masterRole) {
     throw accessError('Project identity does not match the requested project.', 'PROJECT_ACCESS_MISMATCH');
   }
 
   const access = await readProjectAccess(normalizedProject);
   if (access) {
     if (!canAccessProject(identity, access, options)) throw accessError(options.write ? 'Project write access denied.' : 'Project access denied.');
+    if (options.write && masterRole && isPublicProjectOwner(access.ownerId)) {
+      await writeProjectAccess(normalizedProject, {
+        ...access,
+        ownerId: safeId(identity.ownerId, ''),
+        ownerEmail: normalizeEmail(identity.email || access.ownerEmail || ''),
+      });
+    }
     return normalizedProject;
   }
 
