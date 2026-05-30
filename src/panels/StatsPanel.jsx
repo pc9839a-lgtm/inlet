@@ -122,7 +122,7 @@ function ChannelFilter({ channels, value, onChange, serverMode }) {
     <section className="card stats-channel-filter">
       <div className="section-title">
         <h2>유입 채널</h2>
-        <p>{serverMode ? 'UTM 우선 집계' : '화면 데이터 기준'}</p>
+        <p>{serverMode ? '서버 집계 기준 UTM' : '화면 데이터 기준'}</p>
       </div>
       <div className="stats-channel-filter-list">
         <button type="button" className={value === 'all' ? 'active' : ''} onClick={() => onChange('all')}>

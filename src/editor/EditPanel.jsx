@@ -22,7 +22,6 @@ export default function EditPanel({ page, openId, setOpenId, addOpen, setAddOpen
         <div className="edit-animation-head">
           <div>
             <b>애니메이션</b>
-            
           </div>
           <label className="switch-clean">
             <input type="checkbox" checked={!!page.theme.animOn} onChange={(e)=>updateTheme({animOn:e.target.checked})} />
@@ -31,7 +30,7 @@ export default function EditPanel({ page, openId, setOpenId, addOpen, setAddOpen
         </div>
         {page.theme.animOn && (
           <div className="edit-animation-options">
-            {[['fade','서서히'],['up','아래에서'],['scale','확대']].map(([key,label]) => (
+            {[['fade','페이드'],['up','위로 등장'],['scale','확대']].map(([key,label]) => (
               <button key={key} type="button" className={(page.theme.animType || 'fade') === key ? 'active' : ''} onClick={()=>updateTheme({animType:key})}>{label}</button>
             ))}
           </div>
@@ -43,13 +42,13 @@ export default function EditPanel({ page, openId, setOpenId, addOpen, setAddOpen
           <button className="topnav-fixed-head" type="button" onClick={()=>setOpenId(openId===topNavBlock.id?'':topNavBlock.id)}>
             <div>
               <strong>상단 메뉴</strong>
-              <em>히어로 아래 표시</em>
+              <em>화면 상단에 고정 표시</em>
             </div>
             <label className="switch-clean" onClick={(e)=>e.stopPropagation()}>
               <input type="checkbox" checked={!!topNavBlock.visible} onChange={()=>toggleVisible(topNavBlock.id)} />
               <i></i>
             </label>
-            <b>{openId===topNavBlock.id?'⌃':'⌄'}</b>
+            <b>{openId===topNavBlock.id?'접기':'열기'}</b>
           </button>
           {openId===topNavBlock.id && (
             <div className="topnav-fixed-editor">
@@ -64,13 +63,13 @@ export default function EditPanel({ page, openId, setOpenId, addOpen, setAddOpen
           <button className="bottom-cta-head" type="button" onClick={()=>setOpenId(openId===bottomBlock.id?'':bottomBlock.id)}>
             <div>
               <strong>하단 고정 버튼</strong>
-              <em>화면 하단 표시</em>
+              <em>화면 하단에 고정 표시</em>
             </div>
             <label className="switch-clean" onClick={(e)=>e.stopPropagation()}>
               <input type="checkbox" checked={!!bottomBlock.visible} onChange={()=>toggleVisible(bottomBlock.id)} />
               <i></i>
             </label>
-            <b>{openId===bottomBlock.id?'⌃':'⌄'}</b>
+            <b>{openId===bottomBlock.id?'접기':'열기'}</b>
           </button>
           {openId===bottomBlock.id && (
             <div className="bottom-cta-editor">
@@ -85,13 +84,13 @@ export default function EditPanel({ page, openId, setOpenId, addOpen, setAddOpen
           <button className="footer-fixed-head" type="button" onClick={()=>setOpenId(openId===footerBlock.id?'':footerBlock.id)}>
             <div>
               <strong>푸터</strong>
-              <em>페이지 끝 표시</em>
+              <em>페이지 끝에 표시</em>
             </div>
             <label className="switch-clean" onClick={(e)=>e.stopPropagation()}>
               <input type="checkbox" checked={!!footerBlock.visible} onChange={()=>toggleVisible(footerBlock.id)} />
               <i></i>
             </label>
-            <b>{openId===footerBlock.id?'⌃':'⌄'}</b>
+            <b>{openId===footerBlock.id?'접기':'열기'}</b>
           </button>
           {openId===footerBlock.id && (
             <div className="footer-fixed-editor">
@@ -174,7 +173,7 @@ export default function EditPanel({ page, openId, setOpenId, addOpen, setAddOpen
                       onDragEnd={() => setDragId('')}
                       role="button"
                       tabIndex={0}
-                      title="잡고 끌어서 순서 변경"
+                      title="끌어서 순서 변경"
                     >
                       <GripVertical size={18}/>
                     </div>
@@ -200,7 +199,7 @@ export default function EditPanel({ page, openId, setOpenId, addOpen, setAddOpen
                       <button type="button" onClick={() => removeBlock(block.id)} className="danger" title="삭제"><Trash2 size={15}/></button>
                     </span>
 
-                    <button type="button" className="screen-open-toggle" onClick={() => setOpenId(open ? '' : block.id)}>{open ? '⌃' : '⌄'}</button>
+                    <button type="button" className="screen-open-toggle" onClick={() => setOpenId(open ? '' : block.id)}>{open ? '접기' : '열기'}</button>
                   </div>
                   {open && <div className="block-editor">{renderBlockEditor(block)}</div>}
                 </div>
@@ -223,7 +222,7 @@ export default function EditPanel({ page, openId, setOpenId, addOpen, setAddOpen
       </section>
 
       <section className={`add-dock fixed-add-dock ${addOpen ? 'open' : ''} ${openId ? 'editing' : ''}`}>
-        <button className="add-toggle" onClick={() => setAddOpen(!addOpen)}>
+        <button className="add-toggle" type="button" onClick={() => setAddOpen(!addOpen)}>
           <Plus size={18}/><strong>추가</strong><span>{addOpen ? '닫기' : '열기'}</span>
         </button>
         {addOpen && (
@@ -251,4 +250,3 @@ export default function EditPanel({ page, openId, setOpenId, addOpen, setAddOpen
     </div>
   );
 }
-
