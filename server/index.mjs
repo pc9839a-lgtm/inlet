@@ -143,7 +143,18 @@ const server = createServer(async (req, res) => {
     if (req.method === 'POST' && url.pathname === '/api/auth/register') {
       const body = await readJson(req);
       const user = await registerUserAccount(body?.user || body || {}, { source: 'signup' });
-      sendJson(res, 200, { ok: true, user });
+      const projectId = safeId(body?.projectId || body?.user?.projectId || '', '');
+      sendJson(res, 200, {
+        ok: true,
+        user,
+        session: createSessionToken({
+          ownerId: user.ownerId,
+          projectId,
+          role: body?.role || body?.user?.role || 'master',
+          email: user.email,
+        }),
+        expiresInSeconds: 60 * 60 * 24 * 30,
+      });
       return;
     }
 

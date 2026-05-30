@@ -731,17 +731,31 @@ await runSmoke('server-smoke-manager-invite-session', async ({ baseUrl, dataDir 
 });
 
 await runSmoke('server-smoke-auth-session-refresh', async ({ baseUrl }) => {
+  const project = { projectId: 'session-project', ownerId: '', slug: 'session-project' };
   const registered = await fetchWithTimeout(`${baseUrl}/api/auth/register`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ user: { name: 'Session User', email: 'session-user@example.test', phone: '010-7777-8888', password: 'secret1', token: await issueSignupVerification(baseUrl, 'session-user@example.test') } }),
+    body: JSON.stringify({ projectId: project.projectId, user: { name: 'Session User', email: 'session-user@example.test', phone: '010-7777-8888', password: 'secret1', token: await issueSignupVerification(baseUrl, 'session-user@example.test') } }),
   });
   assert(registered.status === 200, `session user register expected 200, got ${registered.status}`);
+  const registeredData = await registered.json();
+  project.ownerId = registeredData.user?.ownerId;
+  assert(registeredData.session, 'account register should return signed session when a session secret is configured');
+
+  const registerSessionSave = await fetchWithTimeout(`${baseUrl}/api/pages/${project.slug}`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json', 'X-Inlet-Session': registeredData.session }),
+    body: JSON.stringify({
+      project,
+      page: { slug: project.slug, title: 'Register Session Page', blocks: [], ownership: { ownerEmail: 'session-user@example.test' } },
+    }),
+  });
+  assert(registerSessionSave.status === 200, `register session page save expected 200, got ${registerSessionSave.status}`);
 
   const login = await fetchWithTimeout(`${baseUrl}/api/auth/login`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ email: 'session-user@example.test', password: 'secret1', projectId: 'session-project' }),
+    body: JSON.stringify({ email: 'session-user@example.test', password: 'secret1', projectId: project.projectId }),
   });
   assert(login.status === 200, `session login expected 200, got ${login.status}`);
   const loginData = await login.json();
