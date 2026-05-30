@@ -1,16 +1,10 @@
-import { getD1Lead, getD1PageBySlug, upsertD1Lead } from '../../../../server/storage/d1Adapter.mjs';
-import { isValidEmailAddress, sendSesEmail } from '../../_ses.js';
-import { assertD1, authorizeProject, handleApiError, jsonResponse, optionsResponse, projectFromRequest, readJson } from '../../_shared.js';
-import { normalizeDeliveryPage, sendLeadDelivery as sendLeadDeliveryShared } from '../_delivery.js';
+import { isValidEmailAddress, sendSesEmail } from '../_ses.js';
 
-const METHODS = 'POST, OPTIONS';
-const TERMINAL_DELIVERY_STATUSES = new Set(['success', 'partial']);
-
-function deliveryReport(status = 'none', summary = '알림 전송 설정 없음', logs = []) {
+export function deliveryReport(status = 'none', summary = '알림 전송 설정 없음', logs = []) {
   return { status, summary, logs };
 }
 
-function normalizePage(inputPage = {}, storedPage = {}, project = {}) {
+export function normalizeDeliveryPage(inputPage = {}, storedPage = {}, project = {}) {
   return {
     ...storedPage,
     ...inputPage,
@@ -23,14 +17,15 @@ function normalizePage(inputPage = {}, storedPage = {}, project = {}) {
   };
 }
 
-function buildJobs(page = {}, lead = {}) {
+export function buildLeadDeliveryJobs(page = {}, lead = {}) {
   const integrations = page.integrations || {};
   const jobs = [];
-  if (integrations.email?.enabled && isValidEmailAddress(integrations.email.to) && shouldSendEmailForLead(integrations.email, lead)) {
+  const email = integrations.email || {};
+  if (email.enabled && isValidEmailAddress(email.to) && shouldSendEmailForLead(email, lead)) {
     jobs.push({
       type: 'email',
       label: '이메일 알림',
-      to: integrations.email.to,
+      to: email.to,
       subject: `[${page.title || '페이지로'}] 새 접수가 들어왔습니다`,
       text: leadEmailText(lead, page),
       html: leadEmailHtml(lead, page),
@@ -58,7 +53,36 @@ function buildJobs(page = {}, lead = {}) {
   }));
 }
 
-async function runJob(job = {}, env = {}) {
+export async function sendLeadDelivery(lead = {}, page = {}, env = {}) {
+  const jobs = buildLeadDeliveryJobs(page, lead);
+  if (!jobs.length) return deliveryReport();
+  const settled = await Promise.allSettled(jobs.map(async (job) => {
+    const result = await runDeliveryJob(job, env);
+    return {
+      target: job.label,
+      provider: job.type === 'email' ? 'ses' : 'webhook',
+      status: result.ok ? 'success' : 'failed',
+      message: result.message || (result.ok ? '전송 완료' : '전송 실패'),
+      idempotencyKey: job.idempotencyKey || '',
+      at: new Date().toISOString(),
+    };
+  }));
+  const logs = settled.map((item, index) => {
+    const job = jobs[index] || {};
+    if (item.status === 'fulfilled') return item.value;
+    return {
+      target: job.label || '알림 전송',
+      provider: job.type === 'email' ? 'ses' : 'webhook',
+      status: 'failed',
+      message: safeDeliveryErrorMessage(item.reason),
+      idempotencyKey: job.idempotencyKey || '',
+      at: new Date().toISOString(),
+    };
+  });
+  return summarizeDelivery(logs);
+}
+
+async function runDeliveryJob(job = {}, env = {}) {
   if (job.type === 'email') {
     const result = await sendSesEmail({
       to: job.to,
@@ -79,35 +103,6 @@ async function runJob(job = {}, env = {}) {
     signal: AbortSignal.timeout(10000),
   });
   return { ok: res.ok, message: res.ok ? '전송 완료' : `응답 확인 필요 ${res.status}` };
-}
-
-async function sendLeadDelivery(lead = {}, page = {}, env = {}) {
-  const jobs = buildJobs(page, lead);
-  if (!jobs.length) return deliveryReport();
-  const settled = await Promise.allSettled(jobs.map(async (job) => {
-    const result = await runJob(job, env);
-    return {
-      target: job.label,
-      provider: job.type === 'email' ? 'ses' : 'webhook',
-      status: result.ok ? 'success' : 'failed',
-      message: result.message || (result.ok ? '전송 완료' : '전송 실패'),
-      idempotencyKey: job.idempotencyKey || '',
-      at: new Date().toISOString(),
-    };
-  }));
-  const logs = settled.map((item, index) => {
-    const job = jobs[index] || {};
-    if (item.status === 'fulfilled') return item.value;
-    return {
-      target: job.label || '알림 전송',
-      provider: job.type === 'email' ? 'ses' : 'webhook',
-      status: 'failed',
-      message: safeErrorMessage(item.reason),
-      idempotencyKey: job.idempotencyKey || '',
-      at: new Date().toISOString(),
-    };
-  });
-  return summarizeDelivery(logs);
 }
 
 function summarizeDelivery(logs = []) {
@@ -147,8 +142,8 @@ function leadEmailText(lead = {}, page = {}) {
 }
 
 function leadEmailHtml(lead = {}, page = {}) {
-  const lines = leadEmailText(lead, page).split('\n').map(escapeHtml).join('<br>');
-  return `<!doctype html><html lang="ko"><body style="margin:0;background:#f3f6fb;padding:28px 16px;font-family:Arial,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:#111827;"><div style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #dbe4f0;border-radius:22px;overflow:hidden;box-shadow:0 16px 44px rgba(15,23,42,.10);"><div style="padding:24px 26px;background:#111827;color:#fff;"><strong style="font-size:18px;">페이지로</strong><p style="margin:8px 0 0;color:#dbeafe;font-size:14px;">새 접수 알림</p></div><div style="padding:26px;font-size:15px;line-height:1.7;">${lines}</div></div></body></html>`;
+  const rows = leadEmailText(lead, page).split('\n').map(escapeHtml).join('<br>');
+  return `<!doctype html><html lang="ko"><body style="margin:0;background:#f3f6fb;padding:28px 16px;font-family:Arial,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:#111827;"><div style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #dbe4f0;border-radius:22px;overflow:hidden;box-shadow:0 16px 44px rgba(15,23,42,.10);"><div style="padding:24px 26px;background:#111827;color:#fff;"><strong style="font-size:20px;">페이지로</strong><p style="margin:8px 0 0;color:#dbeafe;font-size:14px;">새 접수 알림</p></div><div style="padding:26px;font-size:15px;line-height:1.7;">${rows}</div></div></body></html>`;
 }
 
 function deliveryIdempotencyKey(lead = {}, job = {}) {
@@ -168,7 +163,7 @@ function isValidHttpUrl(value = '') {
   }
 }
 
-function safeErrorMessage(error) {
+function safeDeliveryErrorMessage(error) {
   const code = String(error?.code || '').trim();
   if (code === 'EMAIL_SEND_NOT_CONFIGURED') return '메일 전송 설정이 필요합니다.';
   if (code === 'EMAIL_TO_INVALID') return '받을 이메일 주소를 확인해주세요.';
@@ -176,7 +171,7 @@ function safeErrorMessage(error) {
   if (code === 'EMAIL_SEND_SANDBOX_REJECTED') return '현재 SES 샌드박스 상태라 수신자 제한이 있습니다.';
   if (code === 'EMAIL_DOMAIN_NOT_VERIFIED') return '발신 도메인 인증을 확인해주세요.';
   if (code === 'EMAIL_SEND_QUOTA_EXCEEDED') return '메일 전송 한도를 초과했습니다.';
-  return String(error?.message || error || '전송 실패');
+  return String(error?.providerMessage || error?.message || error || '전송 실패');
 }
 
 function escapeHtml(value = '') {
@@ -186,45 +181,4 @@ function escapeHtml(value = '') {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
-}
-
-export async function onRequest({ request, env, params }) {
-  if (request.method === 'OPTIONS') return optionsResponse(request, env, METHODS);
-  if (request.method !== 'POST') return jsonResponse(request, env, 405, { ok: false, error: 'Method not allowed.' }, METHODS);
-
-  try {
-    const db = assertD1(env);
-    const input = await readJson(request);
-    const project = projectFromRequest(new URL(request.url), input, request);
-    await authorizeProject(request, env, project, { publicWrite: true });
-
-    const id = String(params?.id || '').trim();
-    const current = await getD1Lead(db, { projectId: project.projectId, id });
-    if (!current) return jsonResponse(request, env, 404, { ok: false, error: 'Lead not found' }, METHODS);
-
-    if (TERMINAL_DELIVERY_STATUSES.has(String(current.delivery?.status || current.deliveryStatus || ''))) {
-      return jsonResponse(request, env, 200, { ok: true, lead: current, delivery: current.delivery }, METHODS);
-    }
-
-    const storedPage = await getD1PageBySlug(db, {
-      projectId: project.projectId,
-      slug: input.page?.slug || current.pageSlug || project.slug || '',
-    });
-    const deliveryPage = normalizeDeliveryPage(input.page || {}, storedPage || {}, project);
-    const delivery = await sendLeadDeliveryShared(current, deliveryPage, env);
-    const saved = await upsertD1Lead(db, {
-      ...current,
-      delivery,
-      deliveryStatus: delivery.status,
-      updatedAt: new Date().toISOString(),
-    }, {
-      projectId: project.projectId,
-      pageId: current.pageId || '',
-      pageSlug: current.pageSlug || input.page?.slug || project.slug || '',
-    });
-
-    return jsonResponse(request, env, 200, { ok: true, lead: saved, delivery }, METHODS);
-  } catch (error) {
-    return handleApiError(request, env, error, METHODS);
-  }
 }

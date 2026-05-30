@@ -1,4 +1,5 @@
-import { findD1LeadsByIntakeSignals, insertD1BlockedLeadSubmission, listD1Leads, upsertD1Lead } from '../../server/storage/d1Adapter.mjs';
+import { findD1LeadsByIntakeSignals, getD1PageBySlug, insertD1BlockedLeadSubmission, listD1Leads, upsertD1Lead } from '../../server/storage/d1Adapter.mjs';
+import { deliveryReport, normalizeDeliveryPage, sendLeadDelivery } from './leads/_delivery.js';
 import { assertD1, authorizeProject, ensureD1ProjectShell, handleApiError, jsonResponse, monthFromRequest, optionsResponse, projectFromRequest, publicProjectShell, readJson } from './_shared.js';
 
 const METHODS = 'GET, POST, OPTIONS';
@@ -29,7 +30,7 @@ export async function onRequest({ request, env }) {
           retryAfter: 60,
         }, METHODS);
       }
-      const saved = await upsertD1Lead(db, {
+      let saved = await upsertD1Lead(db, {
         ...lead,
         createdAt: lead.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -37,6 +38,17 @@ export async function onRequest({ request, env }) {
         projectId: project.projectId,
         pageId: body.page?.id || lead.pageId || '',
         pageSlug: body.page?.slug || project.slug || lead.pageSlug || '',
+      });
+      const delivery = await sendSavedLeadDelivery(db, saved, body.page || {}, project, env);
+      saved = await upsertD1Lead(db, {
+        ...saved,
+        delivery,
+        deliveryStatus: delivery.status,
+        updatedAt: new Date().toISOString(),
+      }, {
+        projectId: project.projectId,
+        pageId: saved.pageId || body.page?.id || lead.pageId || '',
+        pageSlug: saved.pageSlug || body.page?.slug || project.slug || lead.pageSlug || '',
       });
       return jsonResponse(request, env, 200, { ok: true, lead: saved }, METHODS);
     }
@@ -67,6 +79,25 @@ export async function onRequest({ request, env }) {
     return jsonResponse(request, env, 405, { ok: false, error: 'Method not allowed.' }, METHODS);
   } catch (error) {
     return handleApiError(request, env, error, METHODS);
+  }
+}
+
+async function sendSavedLeadDelivery(db, lead = {}, inputPage = {}, project = {}, env = {}) {
+  try {
+    const storedPage = await getD1PageBySlug(db, {
+      projectId: project.projectId,
+      slug: inputPage.slug || lead.pageSlug || project.slug || '',
+    });
+    const deliveryPage = normalizeDeliveryPage(inputPage, storedPage || {}, project);
+    return await sendLeadDelivery(lead, deliveryPage, env);
+  } catch (error) {
+    return deliveryReport('failed', '접수는 저장됐지만 알림 전송은 실패했습니다.', [{
+      target: '알림 전송',
+      provider: 'server',
+      status: 'failed',
+      message: String(error?.message || error || '전송 실패'),
+      at: new Date().toISOString(),
+    }]);
   }
 }
 
