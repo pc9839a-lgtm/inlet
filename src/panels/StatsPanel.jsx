@@ -153,7 +153,7 @@ function StatsTrend({ data }) {
   if (!total) return <div className="stats-empty-chart">선택한 기간에 데이터가 없습니다.</div>;
   const max = Math.max(1, ...data.flatMap((row) => [row.pv, row.cta, row.db]));
   return (
-    <div className="stats-trend-grid compact-trend">
+    <div className="stats-trend-grid compact-trend" role="img" aria-label="월간 페이지 조회, CTA 클릭, 접수 추이 차트">
       {data.map((row) => (
         <div className="trend-day" key={row.id || row.label}>
           <div className="trend-bars">
