@@ -5987,7 +5987,7 @@ async function writePageRevision(slug, page, project = {}) {
     });
   }
   const dir = pageRevisionDir(slug, project);
-  const revisionId = new Date().toISOString().replace(/[:.]/g, '-');
+  const revisionId = `${new Date().toISOString().replace(/[:.]/g, '-')}-${randomId()}`;
   const revision = {
     id: revisionId,
     revisionAt: new Date().toISOString(),
