@@ -132,7 +132,7 @@ const CreateLandingModal = lazy(() => import('./screens/HomeScreens.jsx').then((
 const Dashboard = lazy(() => import('./screens/HomeScreens.jsx').then((module) => ({ default: module.Dashboard })));
 const PublicHome = lazy(() => import('./screens/HomeScreens.jsx').then((module) => ({ default: module.PublicHome })));
 const StartModeOverlay = lazy(() => import('./screens/HomeScreens.jsx').then((module) => ({ default: module.StartModeOverlay })));
-const INBOX_PAGE_SIZE = 50;
+const INBOX_PAGE_SIZE = 10;
 const CHUNK_RELOAD_KEY = 'inlet-chunk-reload';
 
 function isLazyChunkLoadError(error) {
@@ -2137,8 +2137,13 @@ function getTimerUrgency(diffMs = 0, done = false) {
 }
 function detectTrafficChannel() {
   if (typeof location !== 'undefined') {
-    const source = new URLSearchParams(location.search).get('utm_source');
+    const params = new URLSearchParams(location.search);
+    const source = params.get('utm_source') || params.get('source') || params.get('channel');
     if (source) return source.trim().toLowerCase();
+    if (params.get('gclid')) return 'google';
+    if (params.get('fbclid')) return 'meta';
+    if (params.get('n_media') || params.get('n_query')) return 'naver';
+    if (params.get('kakao_ad')) return 'kakao';
   }
   if (typeof document === 'undefined') return 'direct';
   const ref = String(document.referrer || '').toLowerCase();

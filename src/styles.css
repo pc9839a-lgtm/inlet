@@ -31,6 +31,7 @@
 @import './styles/editor-widget-controls.css';
 @import './styles/editor-stack.css';
 @import './styles/editor-demo.css';
+@import './styles/editor-add-dock-fix.css';
 @import './styles/panels.css';
 @import './styles/panels-metrics.css';
 @import './styles/panels-settings.css';

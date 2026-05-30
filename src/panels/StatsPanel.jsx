@@ -37,6 +37,22 @@ function buildChannelOptions(events = [], leads = []) {
     .sort((a, b) => b.count - a.count);
 }
 
+function stableChannelOptions(items = []) {
+  const defaults = ['direct', 'naver', 'google', 'kakao', 'instagram', 'referral'];
+  const order = new Map(defaults.map((channel, index) => [channel, index]));
+  const counts = new Map(defaults.map((channel) => [channel, 0]));
+  items.forEach((item) => {
+    const channel = String(item.channel || '').trim().toLowerCase() || 'unknown';
+    counts.set(channel, Number(item.count || 0));
+  });
+  return Array.from(counts.entries())
+    .map(([channel, count]) => ({ channel, count }))
+    .sort((a, b) => {
+      if (b.count !== a.count) return b.count - a.count;
+      return (order.get(a.channel) ?? 99) - (order.get(b.channel) ?? 99);
+    });
+}
+
 function collectPageCtaLabels(page = {}) {
   const labels = [];
   const push = (value) => {
@@ -233,11 +249,11 @@ export default function StatsPanel({
 
   const channelOptions = useMemo(() => {
     if (serverMode) {
-      return Object.entries(baseStats.channelOptionsData || {})
+      return stableChannelOptions(Object.entries(baseStats.channelOptionsData || {})
         .map(([channelName, count]) => ({ channel: channelName, count }))
-        .sort((a, b) => b.count - a.count);
+        .sort((a, b) => b.count - a.count));
     }
-    return buildChannelOptions(baseStats.filteredEvents, baseStats.filteredLeads);
+    return stableChannelOptions(buildChannelOptions(baseStats.filteredEvents, baseStats.filteredLeads));
   }, [baseStats, serverMode]);
 
   const scopedEvents = useMemo(() => filterByChannel(events, channelFilter), [events, channelFilter]);

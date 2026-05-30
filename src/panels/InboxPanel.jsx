@@ -609,7 +609,7 @@ export default function InboxPanel({ leads, page, authUser = null, updatePage, s
         </div>
 
         {syncing && <div className="inbox-sync-note">서버 접수 데이터를 불러오는 중입니다.</div>}
-        {hasMoreLeads && !syncing && <div className="inbox-sync-note">첫 화면은 50건만 표시합니다. 더보기를 누르면 다음 50건을 불러옵니다.</div>}
+        {hasMoreLeads && !syncing && <div className="inbox-sync-note">첫 화면은 10건만 표시합니다. 더보기를 누르면 다음 10건을 불러옵니다.</div>}
 
         {!filtered.length ? <div className="empty">조건에 맞는 접수 데이터가 없습니다.</div> : (
           <div className="lead-list-v3">
