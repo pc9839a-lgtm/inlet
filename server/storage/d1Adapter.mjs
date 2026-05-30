@@ -1363,6 +1363,8 @@ export async function aggregateD1Stats(db, { projectId, month, dateFrom = '', da
 
   return buildD1StatsSummary({
     month,
+    dateFrom,
+    dateTo,
     channel: safeChannel,
     eventCounts: eventCounts.records,
     eventTrend: eventTrend.records,
@@ -1379,13 +1381,23 @@ function d1MonthDateScope({ projectId, month, dateFrom = '', dateTo = '' } = {})
   const params = [projectId, month];
   if (dateFrom) {
     filters.push('created_at >= ?');
-    params.push(String(dateFrom));
+    params.push(d1DateBoundary(dateFrom, 'start'));
   }
   if (dateTo) {
     filters.push('created_at <= ?');
-    params.push(String(dateTo));
+    params.push(d1DateBoundary(dateTo, 'end'));
   }
   return { where: filters.join(' AND '), params };
+}
+
+function d1DateBoundary(value = '', edge = 'start') {
+  const text = String(value || '').trim();
+  if (!text) return text;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    const suffix = edge === 'end' ? 'T23:59:59.999+09:00' : 'T00:00:00.000+09:00';
+    return new Date(`${text}${suffix}`).toISOString();
+  }
+  return text;
 }
 
 function normalizeD1ChannelFilter(channel = '') {
@@ -1553,7 +1565,7 @@ async function upsertD1LeadLegacy(db, row = {}) {
   ).run();
 }
 
-function buildD1StatsSummary({ month, channel = '', eventCounts = [], eventTrend = [], eventChannels = [], availableEventChannels = [], eventDevices = [], leadCounts = [], leadTrend = [] } = {}) {
+function buildD1StatsSummary({ month, dateFrom = '', dateTo = '', channel = '', eventCounts = [], eventTrend = [], eventChannels = [], availableEventChannels = [], eventDevices = [], leadCounts = [], leadTrend = [] } = {}) {
   const eventMap = countRowsByKey(eventCounts, 'event_type');
   const pv = Number(eventMap.page_view || 0);
   const cta = Number(eventMap.cta_click || 0);
@@ -1611,7 +1623,7 @@ function buildD1StatsSummary({ month, channel = '', eventCounts = [], eventTrend
         reservationAttempts: reservationAttempt,
         reservationSuccesses: reservationSuccess,
       },
-      trend: mergeD1Trend(month, eventTrend, leadTrend),
+      trend: mergeD1Trend(month, eventTrend, leadTrend, { dateFrom, dateTo }),
       statusData,
       deliveryData,
       typeData,
@@ -1661,8 +1673,8 @@ function deliveryStatusLabel(status = 'none') {
   }[status] || status || '전송없음';
 }
 
-function mergeD1Trend(month = '', eventTrend = [], leadTrend = []) {
-  const buckets = createMonthBuckets(month);
+function mergeD1Trend(month = '', eventTrend = [], leadTrend = [], range = {}) {
+  const buckets = createStatsBuckets(month, range);
   const byDay = new Map(buckets.map((bucket) => [bucket.id, bucket]));
   for (const row of eventTrend || []) {
     const bucket = byDay.get(String(row.day || ''));
@@ -1689,6 +1701,16 @@ function createMonthBuckets(month = '') {
     const id = `${match[1]}-${match[2]}-${String(day).padStart(2, '0')}`;
     return { id, label: `${monthIndex}/${day}`, pv: 0, cta: 0, db: 0 };
   });
+}
+
+function createStatsBuckets(month = '', range = {}) {
+  const monthBuckets = createMonthBuckets(month);
+  const dateFrom = String(range.dateFrom || '').slice(0, 10);
+  const dateTo = String(range.dateTo || '').slice(0, 10);
+  if (!dateFrom && !dateTo) return monthBuckets;
+  const start = dateFrom || monthBuckets[0]?.id || '';
+  const end = dateTo || monthBuckets.at(-1)?.id || '';
+  return monthBuckets.filter((bucket) => bucket.id >= start && bucket.id <= end);
 }
 
 function stableD1Hash(value = '') {

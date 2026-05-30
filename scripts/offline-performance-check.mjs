@@ -147,7 +147,7 @@ const jsonlFallbackPlan = {
 assert(appSource.includes('const INBOX_PAGE_SIZE = 10'), 'Inbox initial and load-more size should stay at 10');
 assert(appSource.includes('monthDateRange(inboxFilters.month)'), 'Inbox server fetch should be month-bounded');
 assert(appSource.includes("deliveryStatus: inboxFilters.deliveryStatus === 'all' ? '' : inboxFilters.deliveryStatus"), 'Inbox server fetch should include delivery status filtering');
-assert(appSource.includes('monthDateRange(statsPeriod'), 'Stats server fetch should be capped to the selected month');
+assert(appSource.includes('statsDateRange(statsMonth'), 'Stats server fetch should be capped to selected month and day-range period');
 assert(inboxPanel.includes('type="month"'), 'Inbox UI should expose month selection');
 assert(inboxPanel.includes('deliveryStatus: deliveryFilter') && inboxPanel.includes('월 CSV'), 'Inbox UI should expose monthly CSV with delivery filter contract');
 assert(inboxPanel.includes('다음 10건') && inboxPanel.includes('서버 ${serverTotal}건 중 ${loadedCount}건 로드'), 'Inbox UI should clearly indicate partial server pagination');

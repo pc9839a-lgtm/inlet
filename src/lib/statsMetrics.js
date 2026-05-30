@@ -1,10 +1,8 @@
 export const PERIOD_OPTIONS = [
-  ['today', '오늘'],
-  ['yesterday', '어제'],
+  ['1d', '1일'],
   ['7d', '7일'],
   ['14d', '14일'],
-  ['thisMonth', '이번 달'],
-  ['lastMonth', '지난 달'],
+  ['30d', '30일'],
 ];
 
 export function countBy(items, key) {
@@ -58,11 +56,15 @@ export function getPeriodRange(period, now = new Date()) {
   let start = seoulDate(today.year, today.month, today.day);
   let end = endOfSeoulDay(start);
 
-  if (period === 'yesterday') {
+  if (period === '1d') {
+    start = addSeoulDays(start, 0);
+  } else if (period === 'yesterday') {
     start = addSeoulDays(start, -1);
     end = endOfSeoulDay(start);
   } else if (period === '14d') {
     start = addSeoulDays(start, -13);
+  } else if (period === '30d') {
+    start = addSeoulDays(start, -29);
   } else if (period === 'thisMonth') {
     start = seoulDate(today.year, today.month, 1);
   } else if (period === 'lastMonth') {

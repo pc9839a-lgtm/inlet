@@ -1,0 +1,60 @@
+.stats-period-controls {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 150px;
+  gap: 10px;
+  align-items: end;
+}
+
+.stats-range-tabs {
+  margin: 0 !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
+.stats-month-control {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.stats-month-control span {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.stats-month-control input {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #dbe3ef;
+  border-radius: 14px;
+  background: #fff;
+  color: #111827;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.stats-trend-line {
+  margin-top: 12px;
+}
+
+.stats-trend-line svg {
+  display: block;
+}
+
+.stats-trend-line .axis-label {
+  fill: #94a3b8;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.stats-trend-line .trend-legend {
+  margin-top: 8px;
+}
+
+@media (max-width: 720px) {
+  .stats-period-controls {
+    grid-template-columns: 1fr;
+  }
+}

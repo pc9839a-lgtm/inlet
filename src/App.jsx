@@ -33,7 +33,7 @@ import { sendLeadIntegrations } from './lib/leadIntegrations.js';
 import { deleteServerLead, deliverServerLead, downloadServerLeadsCsv, fetchServerLeads, persistLead, retryFailedServerLeads, updateServerLead } from './lib/leadRepository.js';
 import { isOwnerAdminModeEnabled, isServerLeadMode, isServerPageMode, publicLandingUrl } from './config/runtimeConfig.js';
 import { downloadLeadsCsv } from './lib/leadCsv.js';
-import { currentMonthValue, monthDateRange } from './lib/monthRange.js';
+import { currentMonthValue, monthDateRange, statsDateRange } from './lib/monthRange.js';
 import { fetchPublicServerPage, fetchServerPage, persistPage } from './lib/pageRepository.js';
 import { canUsePageDuplication, createDuplicatedPage } from './lib/pageDuplication.js';
 import { projectContext } from './lib/projectContext.js';
@@ -516,7 +516,8 @@ function App() {
   const [statsLeadPageMeta, setStatsLeadPageMeta] = useState({ total: 0, nextCursor: null, hasMore: false, source: 'local' });
   const [statsPartial, setStatsPartial] = useState(false);
   const [inboxFilters, setInboxFilters] = useState({ kind: 'all', status: 'all', deliveryStatus: 'all', q: '', month: currentMonthValue() });
-  const [statsPeriod, setStatsPeriod] = useState(currentMonthValue());
+  const [statsMonth, setStatsMonth] = useState(currentMonthValue());
+  const [statsPeriod, setStatsPeriod] = useState('30d');
   const [statsChannel, setStatsChannel] = useState('all');
   const [serverStatsSummary, setServerStatsSummary] = useState(null);
   const [leadConflict, setLeadConflict] = useState(null);
@@ -809,7 +810,7 @@ function App() {
       return undefined;
     }
     let alive = true;
-    const statsRange = monthDateRange(statsPeriod || currentMonthValue());
+    const statsRange = statsDateRange(statsMonth || currentMonthValue(), statsPeriod || '30d');
     setStatsPartial(false);
     setServerStatsSummary(null);
     Promise.all([
@@ -847,7 +848,7 @@ function App() {
         }
       });
     return () => { alive = false; };
-  }, [tab, page.slug, page.projectId, authUser, statsPeriod, statsChannel]);
+  }, [tab, page.slug, page.projectId, authUser, statsMonth, statsPeriod, statsChannel]);
   useEffect(() => {
     if (tab !== 'style') setStylePreviewTheme(null);
   }, [tab]);
@@ -1907,7 +1908,7 @@ function App() {
                   <Suspense fallback={<LazyPanelFallback/>}>
                   {canUseBuilder && tab === 'style' && <StylePanel page={page} updateTheme={updateTheme} onPreviewThemeChange={setStylePreviewTheme}/>}
                   {tab === 'inbox' && <InboxPanel leads={leads} page={page} authUser={authUser} updatePage={updatePage} syncing={leadsSyncing} totalLeads={leadPageMeta.total} hasMoreLeads={leadPageMeta.hasMore} loadMoreLeads={loadMoreLeads} onFiltersChange={setInboxFilters} updateIntegrations={updateIntegrations} onSavePage={saveNow} connectionsEditing={connectionsEditing} setConnectionsEditing={setConnectionsEditing} updateLead={updateLead} deleteLead={deleteLead} retryLeadDelivery={retryLeadDelivery} retryFailedDeliveries={retryFailedDeliveries} exportLeadsCsv={exportLeadsCsv} leadConflict={leadConflict} onReloadLeadConflict={reloadLeadConflict} onRetryLeadConflict={retryLeadConflict} onDismissLeadConflict={() => setLeadConflict(null)} accessMode={accessMode}/>}
-                  {tab === 'stats' && <StatsPanel events={events} leads={leads} page={page} eventPageMeta={statsEventPageMeta} leadPageMeta={statsLeadPageMeta} statsPartial={statsPartial} period={statsPeriod} onPeriodChange={setStatsPeriod} serverStats={serverStatsSummary} channel={statsChannel} onChannelChange={setStatsChannel} accessMode={accessMode}/>}
+                  {tab === 'stats' && <StatsPanel events={events} leads={leads} page={page} eventPageMeta={statsEventPageMeta} leadPageMeta={statsLeadPageMeta} statsPartial={statsPartial} month={statsMonth} onMonthChange={setStatsMonth} period={statsPeriod} onPeriodChange={setStatsPeriod} serverStats={serverStatsSummary} channel={statsChannel} onChannelChange={setStatsChannel} accessMode={accessMode}/>}
                   {tab === 'settings' && <SettingsPanel page={page} updatePage={updatePage} updateMeta={updateMeta} updateIntegrations={updateIntegrations} setPage={setNormalizedPage} onDuplicatePage={duplicatePageWithUrl} canDuplicatePage={canUsePageDuplication(page)} onReset={reset} authUser={authUser} accessMode={accessMode} onAccountUpdate={updateAccountProfile} onLogout={logout}/>}
                   </Suspense>
                 </LazyChunkBoundary>

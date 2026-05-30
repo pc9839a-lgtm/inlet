@@ -97,7 +97,9 @@ assert(statsPanel.includes('eventPageMeta') && statsPanel.includes('leadPageMeta
 assert(statsPanel.includes('statsPartial') && statsPanel.includes('stats-partial-notice'), 'stats panel should expose partial data notice contract');
 assert(statsPanel.includes('role="status"'), 'partial data notice should be announced as status');
 assert(statsPanel.includes('onPeriodChange') && statsPanel.includes('controlledPeriod'), 'stats panel should notify App when the selected period changes');
+assert(statsPanel.includes('PERIOD_OPTIONS') && statsPanel.includes('stats-range-tabs'), 'stats panel should expose 1/7/14/30 day period tabs');
 assert(statsPanel.includes('type="month"'), 'stats panel should expose month-only filter control');
+assert(statsPanel.includes('stats-line-chart') && statsPanel.includes('<polyline'), 'stats panel trend should render as a line chart');
 assert(statsPanel.includes('serverStats') && statsPanel.includes('normalizeServerStats'), 'stats panel should render server aggregate payloads');
 
 const appSource = await readFile('src/App.jsx', 'utf8');
@@ -105,7 +107,7 @@ assert(appSource.includes('fetchServerStatsSummary'), 'stats tab should load ser
 assert(appSource.includes('fetchServerLeads(page, authUser, { limit: 8'), 'stats tab should only load recent lead rows for the table');
 assert(appSource.includes('statsEventPageMeta') && appSource.includes('statsLeadPageMeta'), 'stats tab should keep independent pagination meta');
 assert(appSource.includes('eventPageMeta={statsEventPageMeta}') && appSource.includes('leadPageMeta={statsLeadPageMeta}'), 'stats panel should receive pagination meta from App');
-assert(appSource.includes('statsPeriod') && appSource.includes('monthDateRange(statsPeriod'), 'stats server loading should be fixed to one selected month');
+assert(appSource.includes('statsMonth') && appSource.includes('statsPeriod') && appSource.includes('statsDateRange(statsMonth'), 'stats server loading should use selected month plus day-range period');
 assert(appSource.includes('serverStatsSummary') && appSource.includes('serverStats={serverStatsSummary}'), 'stats panel should receive server summary state');
 
 const eventRepository = await readFile('src/lib/eventRepository.js', 'utf8');

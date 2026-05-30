@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { deliveryStatusClass, deliveryStatusLabel } from '../lib/leadIntegrations.js';
 import { fmtDate, leadKindLabel, leadPrimaryContact } from '../lib/leadModel.js';
 import { currentMonthValue } from '../lib/monthRange.js';
-import { buildStats as buildStatsMetrics, countBy as countByMetrics, statLabel } from '../lib/statsMetrics.js';
+import { PERIOD_OPTIONS, buildStats as buildStatsMetrics, countBy as countByMetrics, statLabel } from '../lib/statsMetrics.js';
 import './StatsPanel.css';
 
 function hasPartialStatsData({ statsPartial, eventPageMeta, leadPageMeta }) {
@@ -168,22 +168,47 @@ function StatsTrend({ data }) {
   const total = data.reduce((sum, row) => sum + Number(row.pv || 0) + Number(row.cta || 0) + Number(row.db || 0), 0);
   if (!total) return <div className="stats-empty-chart">선택한 기간에 데이터가 없습니다.</div>;
   const max = Math.max(1, ...data.flatMap((row) => [row.pv, row.cta, row.db]));
+  const width = 720;
+  const height = 240;
+  const padX = 34;
+  const padTop = 22;
+  const padBottom = 36;
+  const plotW = width - padX * 2;
+  const plotH = height - padTop - padBottom;
+  const x = (index) => padX + (data.length <= 1 ? plotW / 2 : (index / (data.length - 1)) * plotW);
+  const y = (value) => padTop + plotH - (Number(value || 0) / max) * plotH;
+  const points = (key) => data.map((row, index) => `${x(index).toFixed(1)},${y(row[key]).toFixed(1)}`).join(' ');
+  const labelEvery = data.length <= 14 ? 1 : Math.ceil(data.length / 8);
+  const series = [
+    ['pv', '조회'],
+    ['cta', '클릭'],
+    ['db', '접수'],
+  ];
+
   return (
-    <div className="stats-trend-grid compact-trend" role="img" aria-label="월간 페이지 조회, CTA 클릭, 접수 추이 차트">
-      {data.map((row) => (
-        <div className="trend-day" key={row.id || row.label}>
-          <div className="trend-bars">
-            <i className="pv" style={{ height: `${Math.max(6, Number(row.pv || 0) / max * 100)}%` }} />
-            <i className="cta" style={{ height: `${Math.max(6, Number(row.cta || 0) / max * 100)}%` }} />
-            <i className="db" style={{ height: `${Math.max(6, Number(row.db || 0) / max * 100)}%` }} />
-          </div>
-          <span>{row.label}</span>
-        </div>
-      ))}
+    <div className="stats-line-chart stats-trend-line" role="img" aria-label="기간별 조회, 클릭, 접수 라인 차트">
+      <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-hidden="true">
+        {[0.25, 0.5, 0.75, 1].map((ratio) => (
+          <line key={ratio} className="guide" x1={padX} x2={width - padX} y1={padTop + plotH * ratio} y2={padTop + plotH * ratio} />
+        ))}
+        {series.map(([key]) => (
+          <polyline key={key} className={`line ${key}`} points={points(key)} />
+        ))}
+        {series.map(([key]) => data.map((row, index) => (
+          <circle key={`${key}-${row.id || index}`} className={`dot ${key}`} cx={x(index)} cy={y(row[key])} r="4" />
+        )))}
+        {data.map((row, index) => {
+          const show = index === 0 || index === data.length - 1 || index % labelEvery === 0;
+          if (!show) return null;
+          return (
+            <text key={row.id || row.label} className="axis-label" x={x(index)} y={height - 10} textAnchor="middle">
+              {row.label}
+            </text>
+          );
+        })}
+      </svg>
       <div className="trend-legend">
-        <b><i className="pv" />조회</b>
-        <b><i className="cta" />클릭</b>
-        <b><i className="db" />접수</b>
+        {series.map(([key, label]) => <b key={key}><i className={key} />{label}</b>)}
       </div>
     </div>
   );
@@ -218,20 +243,30 @@ export default function StatsPanel({
   eventPageMeta,
   leadPageMeta,
   statsPartial = false,
-  period: controlledPeriod = currentMonthValue(),
+  month: controlledMonth = currentMonthValue(),
+  onMonthChange,
+  period: controlledPeriod = '30d',
   onPeriodChange,
   serverStats = null,
   channel: controlledChannel = 'all',
   onChannelChange,
 }) {
-  const [localPeriod, setLocalPeriod] = useState(controlledPeriod || currentMonthValue());
+  const [localMonth, setLocalMonth] = useState(controlledMonth || currentMonthValue());
+  const [localPeriod, setLocalPeriod] = useState(controlledPeriod || '30d');
   const [localChannel, setLocalChannel] = useState(controlledChannel || 'all');
-  const month = controlledPeriod || localPeriod || currentMonthValue();
+  const month = controlledMonth || localMonth || currentMonthValue();
+  const period = controlledPeriod || localPeriod || '30d';
   const serverMode = !!serverStats?.summary;
   const channelFilter = controlledChannel || localChannel || 'all';
 
-  const setPeriod = (value) => {
+  const setMonth = (value) => {
     const next = value || currentMonthValue();
+    setLocalMonth(next);
+    onMonthChange?.(next);
+  };
+
+  const setPeriod = (value) => {
+    const next = ['1d', '7d', '14d', '30d'].includes(String(value || '')) ? value : '30d';
     setLocalPeriod(next);
     onPeriodChange?.(next);
   };
@@ -244,8 +279,8 @@ export default function StatsPanel({
 
   const baseStats = useMemo(() => {
     if (serverMode) return normalizeServerStats(serverStats, leads);
-    return buildStatsMetrics(events, leads, 'thisMonth');
-  }, [events, leads, serverMode, serverStats]);
+    return buildStatsMetrics(events, leads, period);
+  }, [events, leads, period, serverMode, serverStats]);
 
   const channelOptions = useMemo(() => {
     if (serverMode) {
@@ -260,8 +295,8 @@ export default function StatsPanel({
   const scopedLeads = useMemo(() => filterByChannel(leads, channelFilter), [leads, channelFilter]);
   const stats = useMemo(() => {
     if (serverMode) return baseStats;
-    return buildStatsMetrics(scopedEvents, scopedLeads, 'thisMonth');
-  }, [baseStats, scopedEvents, scopedLeads, serverMode]);
+    return buildStatsMetrics(scopedEvents, scopedLeads, period);
+  }, [baseStats, period, scopedEvents, scopedLeads, serverMode]);
   const partialData = hasPartialStatsData({ statsPartial, eventPageMeta, leadPageMeta });
 
   useEffect(() => {
@@ -276,8 +311,18 @@ export default function StatsPanel({
           <h2>월별 통계</h2>
           <p>{serverMode ? '서버 집계 기준' : '화면 데이터 기준'}</p>
         </div>
-        <div className="period-tabs period-tabs-v2 stats-month-control">
-          <input type="month" value={month} onChange={(event) => setPeriod(event.target.value)} />
+        <div className="stats-period-controls">
+          <div className="period-tabs period-tabs-v2 stats-range-tabs" aria-label="통계 기간">
+            {PERIOD_OPTIONS.map(([value, label]) => (
+              <button type="button" key={value} className={period === value ? 'active' : ''} onClick={() => setPeriod(value)}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <label className="stats-month-control">
+            <span>조회 월</span>
+            <input type="month" value={month} onChange={(event) => setMonth(event.target.value)} />
+          </label>
         </div>
       </section>
 
