@@ -1780,3 +1780,204 @@
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
 }
+
+/* Final settings layout guard: this file has several legacy override layers. */
+.settings-panel {
+  display: grid !important;
+  gap: 12px !important;
+  padding: 0 0 18px !important;
+}
+
+.settings-panel .settings-compact-head {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 14px 16px !important;
+}
+
+.settings-panel .settings-compact-head strong {
+  display: block !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.settings-panel .settings-compact-head em {
+  justify-self: end !important;
+  width: auto !important;
+  max-width: 168px !important;
+  min-height: 34px !important;
+  padding: 0 12px !important;
+}
+
+.settings-panel .settings-section,
+.settings-panel .settings-advanced-box {
+  border: 1px solid #dbe3ef !important;
+  border-radius: 18px !important;
+  background: #fff !important;
+  overflow: hidden !important;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, .035) !important;
+}
+
+.settings-panel .settings-section-head,
+.settings-panel .settings-advanced-head {
+  width: 100% !important;
+  min-height: 64px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 64px !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 13px 16px !important;
+  border: 0 !important;
+  background: #fff !important;
+}
+
+.settings-panel .settings-section-copy,
+.settings-panel .settings-advanced-head > span {
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 4px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.settings-panel .settings-section-title-row {
+  width: 100% !important;
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  flex-wrap: wrap !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.settings-panel .settings-section-title-row h2,
+.settings-panel .settings-advanced-head strong {
+  margin: 0 !important;
+  min-width: 0 !important;
+  color: #111827 !important;
+  font-size: 16px !important;
+  line-height: 1.22 !important;
+  font-weight: 950 !important;
+  letter-spacing: 0 !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+}
+
+.settings-panel .settings-section-title-row em {
+  width: auto !important;
+  min-width: 0 !important;
+  min-height: 22px !important;
+  padding: 0 8px !important;
+  border: 0 !important;
+}
+
+.settings-panel .settings-section-copy small,
+.settings-panel .settings-advanced-head small {
+  display: block !important;
+  min-width: 0 !important;
+  color: #64748b !important;
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+  font-weight: 850 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.settings-panel .settings-section-state,
+.settings-panel .settings-advanced-head em {
+  justify-self: end !important;
+  width: 58px !important;
+  min-width: 58px !important;
+  max-width: 58px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  border: 1px solid #dbe3ef !important;
+  border-radius: 999px !important;
+  background: #fff !important;
+  color: #111827 !important;
+  font-size: 12px !important;
+  font-style: normal !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  overflow: hidden !important;
+}
+
+.settings-panel .settings-section.open .settings-section-state,
+.settings-panel .settings-advanced-box.open .settings-advanced-head em {
+  border-color: #111827 !important;
+  background: #111827 !important;
+  color: #fff !important;
+}
+
+.settings-panel .settings-section-body {
+  display: grid !important;
+  gap: 12px !important;
+  padding: 14px 16px 16px !important;
+  background: #fbfdff !important;
+  overflow: hidden !important;
+}
+
+.settings-panel .settings-grid,
+.settings-panel .account-settings-grid,
+.settings-panel .duplicate-policy-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+.settings-panel .field,
+.settings-panel .image-input,
+.settings-panel .duplicate-policy-select,
+.settings-panel .account-settings-form,
+.settings-panel .account-password-form,
+.settings-panel .page-duplicate-summary {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  border-radius: 18px !important;
+}
+
+.settings-panel .field input,
+.settings-panel .field textarea,
+.settings-panel .field select,
+.settings-panel .account-settings-grid input,
+.settings-panel .duplicate-policy-select select {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+@media (max-width: 720px) {
+  .settings-panel .settings-grid,
+  .settings-panel .account-settings-grid,
+  .settings-panel .duplicate-policy-grid,
+  .settings-panel .manager-owner-summary,
+  .settings-panel .manager-card-head,
+  .settings-panel .manager-card-actions,
+  .settings-panel .manager-permission-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  .settings-panel .settings-compact-head {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+  }
+
+  .settings-panel .settings-compact-head em {
+    max-width: 118px !important;
+  }
+}
