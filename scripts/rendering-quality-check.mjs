@@ -172,6 +172,8 @@ const visualGeometryContracts = [
   ['timer grid uses stable tracks', files.previewCss.includes('.timer-grid') && files.previewCss.includes('repeat(4')],
   ['bottom bar keeps fixed button count tracks', files.previewCss.includes('bottom-bar.count-3') && files.previewCss.includes('repeat(3')],
   ['public landing bottom CTA is fixed inside 860 shell', files.previewCss.includes('.public-landing-viewport .public-bottom-bar') && files.previewCss.includes('position: fixed') && files.previewCss.includes('width: min(860px, calc(100vw - 24px))')],
+  ['public landing bottom CTA uses editor button colors', files.previewCss.includes('.public-landing-viewport .public-bottom-bar button') && files.previewCss.includes('background: var(--bottom-button') && files.previewCss.includes('color: var(--bottom-button-text')],
+  ['public landing bottom CTA does not add a white overlay', files.previewCss.includes('.public-landing-viewport .public-bottom-bar') && files.previewCss.includes('background: transparent !important') && files.previewCss.includes('box-shadow: none !important')],
   ['public landing reserves bottom CTA space', files.previewCss.includes('.landing-page.public-render.has-bottom-bar .landing-content') && files.previewCss.includes('padding-bottom: 126px')],
   ['map widget has bounded embed area', files.previewCss.includes('.inlet-map-section') && /min-height|aspect-ratio/.test(files.previewCss)],
   ['faq content has vertical spacing', files.previewCss.includes('.faq-widget') && files.previewCss.includes('gap:')],
