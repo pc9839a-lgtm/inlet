@@ -191,7 +191,7 @@ export async function authorizeProject(request, env = {}, project = {}, options 
       const member = activeMemberFor(identity, access);
       if (canUseProjectAccess(identity, access, options, member)) {
         if (member?.pendingClaim && options.write) {
-          await claimPublicD1Project(env.DB, project, identity, access);
+          await claimD1ProjectShell(env.DB, project, identity, access);
           return { project, identity, access: { ...access, ownerId: identity.ownerId } };
         }
         return { project, identity, access };
@@ -238,8 +238,9 @@ function isMasterLikeIdentity(identity = {}) {
   return ['master', 'owner', 'builder'].includes(normalizeRole(identity.role));
 }
 
-function isPublicProjectShell(access = {}) {
-  return String(access.ownerId || '').startsWith('public_');
+function isClaimableProjectShell(access = {}) {
+  const ownerId = String(access.ownerId || '').trim();
+  return !ownerId || ownerId === 'local-user' || ownerId.startsWith('public_') || ownerId.startsWith('ws_');
 }
 
 function stableHash(value = '') {
@@ -272,7 +273,7 @@ function activeMemberFor(identity = {}, access = {}) {
   if (ownerIds.has(String(access.ownerId || ''))) {
     return { role: 'master', access: {}, status: 'active' };
   }
-  if (ownerIds.size && isPublicProjectShell(access) && isMasterLikeIdentity(identity)) {
+  if (ownerIds.size && isClaimableProjectShell(access) && isMasterLikeIdentity(identity)) {
     return { role: 'master', access: {}, status: 'active', pendingClaim: true };
   }
   if (Array.isArray(access.clientOwnerIds) && access.clientOwnerIds.some((id) => ownerIds.has(String(id || '')))) {
@@ -299,11 +300,11 @@ function canUseProjectAccess(identity = {}, access = {}, options = {}, activeMem
   return options.write ? !!permission.write : (!!permission.read || !!permission.write);
 }
 
-async function claimPublicD1Project(db, project = {}, identity = {}, access = {}) {
+async function claimD1ProjectShell(db, project = {}, identity = {}, access = {}) {
   const projectId = String(access.projectId || project.projectId || '').trim();
   const ownerId = String(identity.ownerId || '').trim();
   const previousOwnerId = String(access.ownerId || '').trim();
-  if (!db?.prepare || !projectId || !ownerId || !isPublicProjectShell(access)) return false;
+  if (!db?.prepare || !projectId || !ownerId || !isClaimableProjectShell(access)) return false;
   const now = new Date().toISOString();
   await db.prepare(`
     UPDATE projects

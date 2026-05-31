@@ -366,6 +366,14 @@ function shouldExposeVerificationToken(env = {}, delivery = {}) {
   return delivery.mode === 'mock';
 }
 
+function envFirst(env = {}, keys = [], fallback = '') {
+  for (const key of keys) {
+    const value = String(env[key] || '').trim();
+    if (value) return value;
+  }
+  return fallback;
+}
+
 async function deliverAuthEmail(message = {}, env = {}) {
   const provider = emailProvider(env);
   const nextMessage = {
@@ -388,10 +396,10 @@ async function deliverAuthEmail(message = {}, env = {}) {
 }
 
 async function sendSesAuthEmail(message = {}, env = {}) {
-  const region = String(env.AWS_SES_REGION || env.INLET_AWS_SES_REGION || '').trim();
-  const accessKeyId = String(env.AWS_SES_ACCESS_KEY_ID || env.INLET_AWS_SES_ACCESS_KEY_ID || '').trim();
-  const secretAccessKey = String(env.AWS_SES_SECRET_ACCESS_KEY || env.INLET_AWS_SES_SECRET_ACCESS_KEY || '').trim();
-  const from = normalizeSesFromAddress(String(env.INLET_AUTH_EMAIL_FROM || '').trim());
+  const region = envFirst(env, ['AWS_SES_REGION', 'INLET_AWS_SES_REGION', 'AWS_REGION'], 'ap-northeast-2');
+  const accessKeyId = envFirst(env, ['AWS_SES_ACCESS_KEY_ID', 'INLET_AWS_SES_ACCESS_KEY_ID', 'AWS_ACCESS_KEY_ID', 'SES_ACCESS_KEY_ID', 'Access key ID']);
+  const secretAccessKey = envFirst(env, ['AWS_SES_SECRET_ACCESS_KEY', 'INLET_AWS_SES_SECRET_ACCESS_KEY', 'AWS_SECRET_ACCESS_KEY', 'SES_SECRET_ACCESS_KEY', 'Secret access key']);
+  const from = normalizeSesFromAddress(envFirst(env, ['INLET_AUTH_EMAIL_FROM', 'INLET_LEAD_EMAIL_FROM', 'AWS_SES_FROM'], '페이지로 <support@pagero.kr>'));
   if (!region || !accessKeyId || !secretAccessKey || !from) {
     throw authError('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 503, {
       code: 'EMAIL_SEND_NOT_CONFIGURED',

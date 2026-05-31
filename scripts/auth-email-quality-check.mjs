@@ -54,6 +54,10 @@ for (const token of [
   'EMAIL_SEND_SANDBOX_REJECTED',
   'EMAIL_DOMAIN_NOT_VERIFIED',
   'EMAIL_SEND_QUOTA_EXCEEDED',
+  'AWS_ACCESS_KEY_ID',
+  'Secret access key',
+  'ap-northeast-2',
+  '페이지로 <support@pagero.kr>',
 ]) {
   assert(authSource.includes(token), `auth email source missing ${token}`);
 }

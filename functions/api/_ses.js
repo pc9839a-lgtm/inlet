@@ -16,11 +16,19 @@ export function normalizeSesFromAddress(value = '') {
   return `${mimeBase64Word(displayName)} <${email}>`;
 }
 
+function envFirst(env = {}, keys = [], fallback = '') {
+  for (const key of keys) {
+    const value = String(env[key] || '').trim();
+    if (value) return value;
+  }
+  return fallback;
+}
+
 export async function sendSesEmail({ to, subject, text, html, from = '' } = {}, env = {}) {
-  const region = String(env.AWS_SES_REGION || env.INLET_AWS_SES_REGION || '').trim();
-  const accessKeyId = String(env.AWS_SES_ACCESS_KEY_ID || env.INLET_AWS_SES_ACCESS_KEY_ID || '').trim();
-  const secretAccessKey = String(env.AWS_SES_SECRET_ACCESS_KEY || env.INLET_AWS_SES_SECRET_ACCESS_KEY || '').trim();
-  const fromAddress = normalizeSesFromAddress(from || env.INLET_LEAD_EMAIL_FROM || env.INLET_AUTH_EMAIL_FROM || '');
+  const region = envFirst(env, ['AWS_SES_REGION', 'INLET_AWS_SES_REGION', 'AWS_REGION'], 'ap-northeast-2');
+  const accessKeyId = envFirst(env, ['AWS_SES_ACCESS_KEY_ID', 'INLET_AWS_SES_ACCESS_KEY_ID', 'AWS_ACCESS_KEY_ID', 'SES_ACCESS_KEY_ID', 'Access key ID']);
+  const secretAccessKey = envFirst(env, ['AWS_SES_SECRET_ACCESS_KEY', 'INLET_AWS_SES_SECRET_ACCESS_KEY', 'AWS_SECRET_ACCESS_KEY', 'SES_SECRET_ACCESS_KEY', 'Secret access key']);
+  const fromAddress = normalizeSesFromAddress(from || envFirst(env, ['INLET_LEAD_EMAIL_FROM', 'INLET_AUTH_EMAIL_FROM', 'AWS_SES_FROM'], '페이지로 <support@pagero.kr>'));
   const toAddress = normalizeEmailAddress(to);
 
   if (!region || !accessKeyId || !secretAccessKey || !fromAddress) {

@@ -103,7 +103,9 @@ for (const token of [
   'ensureD1ProjectShell',
   'publicProjectShell',
   'INSERT OR IGNORE INTO projects',
-  'isPublicProjectShell',
+  'isClaimableProjectShell',
+  'local-user',
+  'ownerId.startsWith(\'ws_\')',
   'pendingClaim',
   '현재 계정에 이 페이지 접근 권한이 없습니다.',
 ]) {
