@@ -54,20 +54,11 @@
 }
 
 .stats-trend-card .section-title {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
+  display: block;
 }
 
 .stats-trend-card .section-title p {
-  max-width: 260px;
-  margin: 0 !important;
-  color: #64748b;
-  font-size: 12px;
-  font-weight: 850;
-  line-height: 1.35;
-  text-align: right;
+  display: none !important;
 }
 
 .stats-line-plot {
@@ -151,16 +142,6 @@
 @media (max-width: 720px) {
   .stats-period-controls {
     grid-template-columns: 1fr;
-  }
-
-  .stats-trend-card .section-title {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .stats-trend-card .section-title p {
-    max-width: none;
-    text-align: left;
   }
 
   .stats-chart-tooltip-wide {

@@ -100,7 +100,8 @@ assert(statsPanel.includes('onPeriodChange') && statsPanel.includes('controlledP
 assert(statsPanel.includes('PERIOD_OPTIONS') && statsPanel.includes('stats-range-tabs'), 'stats panel should expose 1/7/14/30 day period tabs');
 assert(statsPanel.includes('type="month"'), 'stats panel should expose month-only filter control');
 assert(statsPanel.includes('stats-line-chart') && statsPanel.includes('<polyline'), 'stats panel trend should render as a line chart');
-assert(statsPanel.includes('방문·접수 흐름') && !statsPanel.includes('월간 추이'), 'stats trend title should use service-friendly copy');
+assert(statsPanel.includes('상세통계') && !statsPanel.includes('월간 추이') && !statsPanel.includes('방문·접수 흐름'), 'stats trend title should use compact service copy');
+assert(!statsPanel.includes('마우스를 올리면'), 'stats trend should not render explanatory helper copy');
 assert(statsPanel.includes('stats-chart-tooltip') && statsPanel.includes('onMouseEnter'), 'stats line chart should expose hover details');
 assert(statsPanel.includes('fmtDateOnly') && !statsPanel.includes('fmtDate(lead.createdAt)'), 'recent leads should show date only without time');
 assert(statsPanel.includes('serverStats') && statsPanel.includes('normalizeServerStats'), 'stats panel should render server aggregate payloads');
@@ -128,4 +129,4 @@ assert(formBlocks.includes("type: 'reservation_submit_attempt'"), 'reservation a
 assert(formBlocks.includes("type: 'reservation_submit_success'"), 'reservation success event should be produced');
 assert(formBlocks.includes('onFocusCapture={markReservationStart}'), 'reservation form should produce a start event');
 
-console.log(JSON.stringify({ ok: true, checks: 65 }, null, 2));
+console.log(JSON.stringify({ ok: true, checks: 66 }, null, 2));

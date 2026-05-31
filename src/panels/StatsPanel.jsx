@@ -376,8 +376,7 @@ export default function StatsPanel({
 
       <section className="card stats-trend-card">
         <div className="section-title">
-          <h2>방문·접수 흐름</h2>
-          <p>마우스를 올리면 날짜별 상세 수치를 확인합니다.</p>
+          <h2>상세통계</h2>
         </div>
         <StatsTrend data={stats.trend} />
       </section>
