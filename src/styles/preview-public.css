@@ -172,6 +172,12 @@
   box-shadow: 0 16px 38px rgba(15, 23, 42, .18) !important;
 }
 
+.public-landing-viewport .public-bottom-bar.bottom-custom-color.color-light button {
+  background: var(--accent, #111827) !important;
+  border-color: var(--accent, #111827) !important;
+  color: #ffffff !important;
+}
+
 .public-landing-viewport .public-bottom-bar button b {
   color: inherit !important;
   min-width: 0 !important;

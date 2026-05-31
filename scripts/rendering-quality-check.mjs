@@ -105,6 +105,8 @@ assert(files.landing.includes('installConversionTracking(page)'), 'public render
 assert(files.landing.includes('if (templatePreview) return;'), 'template preview should skip conversion tracking');
 assert(files.landing.includes('hideBottomForForm'), 'bottom bar should hide when form is visible');
 assert(files.landing.includes('publicView={publicView}'), 'public bottom bar should receive public rendering mode');
+assert(files.landing.includes('accent={page.theme.accent}'), 'public bottom bar should receive page accent variable');
+assert(files.landing.includes("'--accent': accent"), 'bottom bar should expose accent when rendered outside landing page');
 assert(files.landing.includes('public-bottom-bar'), 'public bottom bar should have a stable public-only class');
 
 const rendererContracts = [

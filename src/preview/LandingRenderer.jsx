@@ -292,7 +292,7 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
   const bgEffectOpacity = Math.max(0.1, Math.min(0.9, Number(page.theme.bgEffectOpacity ?? 45) / 100));
 
   const shouldHideBottom = !publicView && hideBottomForForm;
-  const bottomNode = bottomActive && !shouldHideBottom ? <RenderBottom block={bottom} blocks={blocks} buttonEffect={buttonEffect} go={go} publicView={publicView}/> : null;
+  const bottomNode = bottomActive && !shouldHideBottom ? <RenderBottom block={bottom} blocks={blocks} accent={page.theme.accent} buttonEffect={buttonEffect} go={go} publicView={publicView}/> : null;
 
   const pageNode = (
     <div ref={pageRef} onClickCapture={templatePreview || publicView ? undefined : handlePreviewSelect} className={`landing-page font-${page.theme.font} font-family-${page.theme.fontFamily || 'pretendard'} bgmode-${page.theme.bgMode || 'solid'} bg-effect-${bgEffect} button-effect-${buttonEffect} ${publicView ? 'public-render' : ''} ${templatePreview ? 'template-preview' : ''} ${bottomActive ? 'has-bottom-bar' : ''} ${page.theme.animOn ? `anim-on anim-${page.theme.animType || 'fade'}` : ''}`} style={{'--accent':page.theme.accent,'--button':page.theme.accent,'--button-text':'#ffffff','--bg':pageBg,'--card':page.theme.card,'--text':page.theme.text,'--radius':`${page.theme.radius}px`,'--bg-effect-opacity':bgEffectOpacity,background:pageBg,color:page.theme.text,backgroundSize:bgSize,backgroundPosition:bgPosition,backgroundRepeat:'no-repeat'}}>
@@ -380,7 +380,7 @@ function getSyncedTimerSettings(blocks = []) {
   return timer?.s || null;
 }
 
-function RenderBottom({ block, blocks = [], buttonEffect = 'fill', go, publicView = false }) {
+function RenderBottom({ block, blocks = [], accent = '#111827', buttonEffect = 'fill', go, publicView = false }) {
   const s=block.s || {};
   const btns=normalizeButtons(s.buttons,s.count).slice(0,Number(s.count||1)).filter((b)=>b.enabled!==false);
   const timerSource = getSyncedTimerSettings(blocks);
@@ -389,6 +389,7 @@ function RenderBottom({ block, blocks = [], buttonEffect = 'fill', go, publicVie
   const style = pickSafe(s.style, ['pill','box'], 'pill');
   const color = pickSafe(s.color, ['dark','accent','light'], 'dark');
   const barStyle = {
+    '--accent': accent || '#111827',
     '--bottom-button': themeButtonColor(s),
     '--bottom-button-text': s.buttonTextColor || '#ffffff',
     '--button': themeButtonColor(s),
