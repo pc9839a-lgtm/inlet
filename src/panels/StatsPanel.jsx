@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { deliveryStatusClass, deliveryStatusLabel } from '../lib/leadIntegrations.js';
-import { fmtDate, leadKindLabel, leadPrimaryContact } from '../lib/leadModel.js';
+import { leadKindLabel, leadPrimaryContact } from '../lib/leadModel.js';
 import { currentMonthValue } from '../lib/monthRange.js';
 import { PERIOD_OPTIONS, buildStats as buildStatsMetrics, countBy as countByMetrics, statLabel } from '../lib/statsMetrics.js';
 import './StatsPanel.css';
@@ -129,6 +129,16 @@ function Metric({ title, value, sub }) {
   );
 }
 
+function fmtDateOnly(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value || '').slice(0, 10);
+  return date.toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+  });
+}
+
 function ChannelFilter({ channels, value, onChange, serverMode }) {
   const total = channels.reduce((sum, item) => sum + Number(item.count || 0), 0);
   const top = channels.slice(0, 7);
@@ -165,6 +175,7 @@ function ChannelFilter({ channels, value, onChange, serverMode }) {
 }
 
 function StatsTrend({ data }) {
+  const [hover, setHover] = useState(null);
   const total = data.reduce((sum, row) => sum + Number(row.pv || 0) + Number(row.cta || 0) + Number(row.db || 0), 0);
   if (!total) return <div className="stats-empty-chart">선택한 기간에 데이터가 없습니다.</div>;
   const max = Math.max(1, ...data.flatMap((row) => [row.pv, row.cta, row.db]));
@@ -184,10 +195,11 @@ function StatsTrend({ data }) {
     ['cta', '클릭'],
     ['db', '접수'],
   ];
+  const hoverTop = (row) => Math.min(y(row.pv), y(row.cta), y(row.db));
 
   return (
-    <div className="stats-line-chart stats-trend-line" role="img" aria-label="기간별 조회, 클릭, 접수 라인 차트">
-      <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-hidden="true">
+    <div className="stats-line-chart stats-trend-line stats-line-plot" role="img" aria-label="선택 기간 조회, 클릭, 접수 흐름 차트">
+      <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-hidden="true" onMouseLeave={() => setHover(null)}>
         {[0.25, 0.5, 0.75, 1].map((ratio) => (
           <line key={ratio} className="guide" x1={padX} x2={width - padX} y1={padTop + plotH * ratio} y2={padTop + plotH * ratio} />
         ))}
@@ -206,7 +218,26 @@ function StatsTrend({ data }) {
             </text>
           );
         })}
+        {data.map((row, index) => (
+          <rect
+            key={`hit-${row.id || row.label || index}`}
+            className="hit"
+            x={Math.max(0, x(index) - Math.max(16, plotW / Math.max(1, data.length - 1) / 2))}
+            y="0"
+            width={Math.min(width, Math.max(32, plotW / Math.max(1, data.length - 1)))}
+            height={height}
+            onMouseEnter={() => setHover({ row, x: x(index), y: hoverTop(row) })}
+            onMouseMove={() => setHover({ row, x: x(index), y: hoverTop(row) })}
+          />
+        ))}
       </svg>
+      {hover && (
+        <div className="stats-chart-tooltip stats-chart-tooltip-wide" style={{ left: `${(hover.x / width) * 100}%`, top: `${hover.y}px` }}>
+          <span>{hover.row.label}</span>
+          <strong>조회 {Number(hover.row.pv || 0).toLocaleString('ko-KR')}</strong>
+          <em>클릭 {Number(hover.row.cta || 0).toLocaleString('ko-KR')} · 접수 {Number(hover.row.db || 0).toLocaleString('ko-KR')}</em>
+        </div>
+      )}
       <div className="trend-legend">
         {series.map(([key, label]) => <b key={key}><i className={key} />{label}</b>)}
       </div>
@@ -308,7 +339,7 @@ export default function StatsPanel({
     <div className="simple-panel stats-panel stats-v2 stats-v3">
       <section className="card period-card stats-period-card">
         <div className="section-title">
-          <h2>월별 통계</h2>
+          <h2>기간 통계</h2>
           <p>{serverMode ? '서버 집계 기준' : '화면 데이터 기준'}</p>
         </div>
         <div className="stats-period-controls">
@@ -345,7 +376,8 @@ export default function StatsPanel({
 
       <section className="card stats-trend-card">
         <div className="section-title">
-          <h2>월간 추이</h2>
+          <h2>방문·접수 흐름</h2>
+          <p>마우스를 올리면 날짜별 상세 수치를 확인합니다.</p>
         </div>
         <StatsTrend data={stats.trend} />
       </section>
@@ -374,8 +406,8 @@ export default function StatsPanel({
                 <span>{leadKindLabel(lead)}</span>
                 <b>{lead.name || '이름 없음'}</b>
                 <em>{leadPrimaryContact(lead)}</em>
+                <small>{fmtDateOnly(lead.createdAt)}</small>
                 <i className={`delivery-badge ${deliveryStatusClass(lead.delivery?.status)}`}>{deliveryStatusLabel(lead.delivery?.status)}</i>
-                <small>{fmtDate(lead.createdAt)}</small>
               </div>
             ))}
           </div>

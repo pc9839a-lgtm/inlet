@@ -116,7 +116,7 @@ const cases = [
     authenticated: true,
     url: `${baseUrl}/?tab=stats`,
     statePreset: 'manager-limited',
-    expectedText: '월별 통계,유입 채널,전환율',
+    expectedText: '기간 통계,유입 채널,전환율',
     expectedSelector: '.stats-panel,.stats-channel-filter',
     forbiddenText: '시작 방식 선택,처음 화면을 어떻게 만들까요,매니저 권한,화면을 불러오는 중 오류가 발생했습니다,ApiError is not defined',
   },

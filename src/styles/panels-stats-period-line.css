@@ -53,8 +53,141 @@
   margin-top: 8px;
 }
 
+.stats-trend-card .section-title {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.stats-trend-card .section-title p {
+  max-width: 260px;
+  margin: 0 !important;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.35;
+  text-align: right;
+}
+
+.stats-line-plot {
+  position: relative;
+}
+
+.stats-line-chart .hit {
+  fill: transparent;
+  stroke: transparent;
+  pointer-events: all;
+  cursor: crosshair;
+}
+
+.stats-chart-tooltip-wide {
+  min-width: 162px;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.stats-chart-tooltip-wide em {
+  color: rgba(255, 255, 255, .78);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 850;
+  line-height: 1.25;
+}
+
+.stats-lead-table-card-v3 .section-title {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.stats-lead-table-v3 > div {
+  grid-template-columns: 58px minmax(96px, .8fr) minmax(112px, 1fr) 92px 78px !important;
+  min-height: 62px !important;
+  padding: 12px 14px !important;
+  gap: 10px !important;
+}
+
+.stats-lead-table-v3 span {
+  width: 46px;
+  justify-self: start;
+}
+
+.stats-lead-table-v3 b,
+.stats-lead-table-v3 em,
+.stats-lead-table-v3 small,
+.stats-lead-table-v3 .delivery-badge {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stats-lead-table-v3 small {
+  color: #64748b !important;
+  font-weight: 900 !important;
+}
+
+.stats-lead-table-v3 .delivery-badge {
+  justify-self: end !important;
+  max-width: 78px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0 10px;
+  border: 1px solid #dbe3ef;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 950;
+}
+
+.stats-columns-four .stat-row-v2 {
+  grid-template-columns: minmax(96px, 1fr) minmax(120px, 1.5fr) 46px !important;
+}
+
 @media (max-width: 720px) {
   .stats-period-controls {
     grid-template-columns: 1fr;
+  }
+
+  .stats-trend-card .section-title {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .stats-trend-card .section-title p {
+    max-width: none;
+    text-align: left;
+  }
+
+  .stats-chart-tooltip-wide {
+    min-width: 142px;
+  }
+
+  .stats-lead-table-v3 > div {
+    grid-template-columns: 52px minmax(0, 1fr) 76px !important;
+    align-items: start !important;
+  }
+
+  .stats-lead-table-v3 span {
+    grid-row: 1 / 3;
+  }
+
+  .stats-lead-table-v3 b {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .stats-lead-table-v3 .delivery-badge {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .stats-lead-table-v3 em,
+  .stats-lead-table-v3 small {
+    grid-column: 2 / -1;
   }
 }

@@ -1584,3 +1584,125 @@
     grid-template-columns: 1fr !important;
   }
 }
+
+.settings-panel {
+  padding-bottom: 18px;
+}
+
+.settings-panel .settings-compact-head,
+.settings-panel .settings-overview-card,
+.settings-panel .settings-section,
+.settings-panel .settings-advanced-box {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.settings-panel .settings-compact-head,
+.settings-panel .settings-overview-card {
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto) !important;
+  border-radius: 18px !important;
+}
+
+.settings-panel .settings-compact-head em,
+.settings-panel .settings-overview-card strong {
+  justify-self: end !important;
+  max-width: min(220px, 38vw) !important;
+  min-width: 0 !important;
+}
+
+.settings-panel .settings-section-head,
+.settings-panel .settings-advanced-head {
+  grid-template-columns: minmax(0, 1fr) 54px !important;
+  padding: 13px 16px !important;
+}
+
+.settings-panel .settings-section-copy {
+  gap: 4px !important;
+}
+
+.settings-panel .settings-section-title-row {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.settings-panel .settings-section-title-row h2 {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  line-height: 1.22 !important;
+}
+
+.settings-panel .settings-section-title-row em {
+  min-width: auto !important;
+  min-height: 22px !important;
+  padding: 0 8px !important;
+}
+
+.settings-panel .settings-section-state,
+.settings-panel .settings-advanced-head em {
+  justify-self: end !important;
+  width: 50px !important;
+  min-width: 50px !important;
+  max-width: 50px !important;
+  padding: 0 !important;
+}
+
+.settings-panel .settings-section-body {
+  overflow: hidden !important;
+}
+
+.settings-panel .settings-grid,
+.settings-panel .account-settings-grid,
+.settings-panel .duplicate-policy-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+.settings-panel .field,
+.settings-panel .duplicate-policy-select,
+.settings-panel .account-settings-form,
+.settings-panel .account-password-form,
+.settings-panel .page-duplicate-summary {
+  border-radius: 18px !important;
+}
+
+.settings-panel .field input,
+.settings-panel .field textarea,
+.settings-panel .field select,
+.settings-panel .duplicate-policy-select select,
+.settings-panel .account-settings-grid input {
+  width: 100% !important;
+}
+
+@media (max-width: 760px) {
+  .settings-panel .settings-compact-head,
+  .settings-panel .settings-overview-card,
+  .settings-panel .settings-section-head,
+  .settings-panel .settings-advanced-head,
+  .settings-panel .settings-grid,
+  .settings-panel .account-settings-grid,
+  .settings-panel .duplicate-policy-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .settings-panel .settings-compact-head em,
+  .settings-panel .settings-overview-card strong,
+  .settings-panel .settings-section-state,
+  .settings-panel .settings-advanced-head em {
+    justify-self: start !important;
+    max-width: 100% !important;
+  }
+}
