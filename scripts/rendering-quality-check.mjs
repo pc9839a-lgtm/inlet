@@ -108,6 +108,7 @@ assert(files.landing.includes('publicView={publicView}'), 'public bottom bar sho
 assert(files.landing.includes('accent={page.theme.accent}'), 'public bottom bar should receive page accent variable');
 assert(files.landing.includes("'--accent': accent"), 'bottom bar should expose accent when rendered outside landing page');
 assert(files.landing.includes('public-bottom-bar'), 'public bottom bar should have a stable public-only class');
+assert(files.layout.includes("logoStyle === 'badge' ? '#ffffff'"), 'badge topnav logo text should default to white on colored badges');
 
 const rendererContracts = [
   [files.content, 'export function RenderHero', 'landing-section hero'],

@@ -26,7 +26,7 @@ export function RenderTopNav({ block, go }) {
   const menus = Array.isArray(s.menus) ? s.menus.slice(0, 5) : [];
   const isPillMenu = menuStyle === 'pill';
   const menuBg = s.menuBgColor && s.menuBgColor !== '#F1F5F9' ? s.menuBgColor : (isPillMenu && bg === 'dark' ? '#ffffff' : 'var(--card)');
-  const logoText = s.logoTextColor || (bg === 'dark' ? '#ffffff' : 'var(--text)');
+  const logoText = s.logoTextColor || (logoStyle === 'badge' ? '#ffffff' : (bg === 'dark' ? '#ffffff' : 'var(--text)'));
   const menuText = s.menuTextColor || (isPillMenu ? '#111827' : (bg === 'dark' ? '#ffffff' : 'var(--text)'));
   const savedMenuHover = s.menuHoverColor && !['#ffffff', '#fff', '#F1F5F9'].includes(s.menuHoverColor) ? s.menuHoverColor : '';
   const menuHover = savedMenuHover || (isPillMenu ? 'var(--accent)' : (bg === 'dark' ? 'rgba(255,255,255,.14)' : 'rgba(17,24,39,.08)'));
