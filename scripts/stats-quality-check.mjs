@@ -83,6 +83,8 @@ const yesterdayStats = buildStats(events, leads, 'yesterday', now);
 assert(yesterdayStats.pv === 2 && yesterdayStats.db === 2, 'yesterday period mismatch');
 
 const statsPanel = await readFile('src/panels/StatsPanel.jsx', 'utf8');
+const inboxPanel = await readFile('src/panels/InboxPanel.jsx', 'utf8');
+const inboxCss = await readFile('src/panels/InboxPanel.css', 'utf8');
 assert(statsPanel.includes('eventPageMeta') && statsPanel.includes('leadPageMeta'), 'stats panel should accept pagination meta');
 assert(statsPanel.includes('statsPartial') && statsPanel.includes('stats-partial-notice'), 'stats panel should expose partial data notice contract');
 assert(statsPanel.includes('role="status"'), 'partial data notice should be announced as status');
@@ -97,6 +99,9 @@ assert(statsPanel.includes('fmtDateOnly') && !statsPanel.includes('fmtDate(lead.
 assert(statsPanel.includes('serverStats') && statsPanel.includes('normalizeServerStats'), 'stats panel should render server aggregate payloads');
 assert(!statsPanel.includes('DeliveryLogCard') && !statsPanel.includes('전송 로그') && !statsPanel.includes('외부 전송'), 'stats panel should not expose delivery log cards');
 
+assert(!inboxPanel.includes('lead-delivery') && !inboxPanel.includes('전송 상태') && !inboxPanel.includes('전송 로그'), 'inbox detail should not render delivery status/log sections');
+assert(!inboxCss.includes('lead-delivery'), 'inbox CSS should not keep unused delivery status/detail styles');
+
 const appSource = await readFile('src/App.jsx', 'utf8');
 assert(appSource.includes('fetchServerStatsSummary'), 'stats tab should load server aggregate summary');
 assert(appSource.includes('fetchServerLeads(page, authUser, { limit: 8'), 'stats tab should only load recent lead rows for the table');
@@ -108,4 +113,4 @@ const trafficAttribution = await readFile('src/lib/trafficAttribution.js', 'utf8
 assert(trafficAttribution.includes('trafficAttributionFromUrl') && trafficAttribution.includes('utm_source'), 'traffic attribution should parse UTM source');
 assert(trafficAttribution.includes('trafficChannelFromReferrer') && trafficAttribution.includes('sourceLabel'), 'traffic attribution should fall back to referrer and source label');
 
-console.log(JSON.stringify({ ok: true, checks: 58 }, null, 2));
+console.log(JSON.stringify({ ok: true, checks: 60 }, null, 2));
