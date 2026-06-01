@@ -631,3 +631,131 @@
     grid-template-columns: 1fr !important;
   }
 }
+
+/* Inbox UX hardening: one-column controls and stable action buttons. */
+.inbox-panel .inbox-policy-head,
+.inbox-panel .inbox-connect-card.v4 .inbox-connect-head {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 64px !important;
+  gap: 12px !important;
+}
+
+.inbox-panel .inbox-policy-head small,
+.inbox-panel .inbox-connect-card.v4 .inbox-connect-head p {
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.inbox-panel .inbox-policy-head em,
+.inbox-panel .connect-head-right b,
+.inbox-panel .connection-row-edit {
+  width: 64px !important;
+  min-width: 64px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 13px !important;
+  font-weight: 950 !important;
+  white-space: nowrap !important;
+}
+
+.inbox-panel .inbox-policy-card.open .inbox-policy-head em,
+.inbox-panel .inbox-connect-card.v4.open .connect-head-right b {
+  border-color: #111827 !important;
+  background: #111827 !important;
+  color: #fff !important;
+}
+
+.inbox-panel .inbox-policy-grid {
+  grid-template-columns: 1fr !important;
+}
+
+.inbox-panel .inbox-policy-switch,
+.inbox-panel .inbox-policy-select {
+  grid-template-columns: minmax(0, 1fr) 150px !important;
+  min-height: 72px !important;
+  padding: 12px !important;
+}
+
+.inbox-panel .inbox-policy-select select {
+  width: 150px !important;
+  max-width: 150px !important;
+}
+
+.inbox-panel .inbox-policy-switch span small,
+.inbox-panel .inbox-policy-select span small,
+.inbox-panel .inbox-policy-history-head small {
+  display: none !important;
+}
+
+.inbox-panel .inbox-policy-history-head {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+}
+
+.inbox-panel .inbox-policy-history li {
+  grid-template-columns: 78px minmax(0, 1fr) !important;
+}
+
+.inbox-panel .inbox-policy-history li small {
+  grid-column: 1 / -1 !important;
+}
+
+.inbox-panel .connection-row {
+  grid-template-columns: minmax(0, 1fr) 68px 64px !important;
+  min-height: 68px !important;
+}
+
+.inbox-panel .connection-row-main {
+  padding: 10px 0 !important;
+}
+
+.inbox-panel .connection-row-main span {
+  display: none !important;
+}
+
+.inbox-panel .connection-inline-control {
+  grid-template-columns: 92px minmax(0, 1fr) !important;
+}
+
+.inbox-panel .inbox-toolbar {
+  grid-template-columns: 1fr !important;
+}
+
+.inbox-panel .inbox-list-title,
+.inbox-panel .section-title.inbox-list-title {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 12px !important;
+}
+
+.inbox-panel .inbox-list-actions {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.inbox-panel .inbox-list-actions button {
+  min-height: 42px !important;
+  border-radius: 14px !important;
+}
+
+@media (max-width: 760px) {
+  .inbox-panel .inbox-policy-switch,
+  .inbox-panel .inbox-policy-select,
+  .inbox-panel .connection-row,
+  .inbox-panel .connection-inline-control {
+    grid-template-columns: 1fr !important;
+  }
+
+  .inbox-panel .inbox-policy-select select {
+    width: 100% !important;
+    max-width: none !important;
+  }
+}

@@ -417,3 +417,145 @@
     width: 100%;
   }
 }
+
+/* Settings panel hardening: keep the narrow builder column readable. */
+.settings-panel {
+  --settings-border: #dbe3ef;
+}
+
+.settings-panel .settings-compact-head {
+  padding: 16px 18px !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+}
+
+.settings-panel .settings-compact-head em {
+  max-width: 154px !important;
+  min-width: 0 !important;
+}
+
+.settings-panel .settings-section {
+  overflow: hidden !important;
+}
+
+.settings-panel .settings-section-head,
+.settings-panel .settings-advanced-head {
+  min-height: 66px !important;
+  grid-template-columns: minmax(0, 1fr) 64px !important;
+  padding: 14px 16px !important;
+}
+
+.settings-panel .settings-section-copy,
+.settings-panel .settings-section-title-row {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.settings-panel .settings-section-copy small,
+.settings-panel .settings-advanced-head small {
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.settings-panel .settings-section-state,
+.settings-panel .settings-advanced-head em {
+  width: 64px !important;
+  min-width: 64px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1px solid var(--settings-border) !important;
+  border-radius: 999px !important;
+  background: #fff !important;
+  color: #111827 !important;
+  font-size: 13px !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  font-style: normal !important;
+  white-space: nowrap !important;
+}
+
+.settings-panel .settings-section.open .settings-section-state,
+.settings-panel .settings-advanced-box.open .settings-advanced-head em {
+  border-color: #111827 !important;
+  background: #111827 !important;
+  color: #fff !important;
+}
+
+.settings-panel .settings-section-body {
+  padding: 14px 16px 16px !important;
+}
+
+.settings-panel .settings-grid,
+.settings-panel .settings-conversion-grid,
+.settings-panel .account-settings-grid {
+  grid-template-columns: 1fr !important;
+  gap: 12px !important;
+}
+
+.settings-panel .field,
+.settings-panel .image-input,
+.settings-panel .settings-conversion-values label,
+.settings-panel .toggle,
+.settings-panel .account-settings-form label,
+.settings-panel .account-password-form label {
+  min-width: 0 !important;
+  border-radius: 18px !important;
+}
+
+.settings-panel input,
+.settings-panel textarea,
+.settings-panel select {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.settings-panel .settings-section-actions {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+}
+
+.settings-panel .settings-section-actions button,
+.settings-panel .account-settings-actions button,
+.settings-panel .manager-section-tools button,
+.settings-panel .manager-card-actions button,
+.settings-panel .manager-detail-actions button,
+.settings-panel .manager-preset-row button,
+.settings-panel .ownership-transfer-controls button,
+.settings-panel .manager-empty-state button {
+  min-height: 44px !important;
+  border-radius: 15px !important;
+  white-space: nowrap !important;
+}
+
+.settings-panel .manager-section-tools,
+.settings-panel .manager-owner-summary.compact,
+.settings-panel .manager-card-head,
+.settings-panel .manager-detail-actions,
+.settings-panel .ownership-transfer-controls,
+.settings-panel .ownership-transfer-status {
+  grid-template-columns: 1fr !important;
+}
+
+.settings-panel .manager-section-tools p {
+  display: none !important;
+}
+
+.settings-panel .manager-card-actions,
+.settings-panel .manager-preset-row {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  justify-content: stretch !important;
+}
+
+.settings-panel .manager-card-actions .danger-btn {
+  grid-column: 1 / -1 !important;
+}
+
+.settings-panel .manager-permission-row {
+  grid-template-columns: minmax(0, 1fr) 132px !important;
+}
