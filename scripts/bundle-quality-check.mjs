@@ -19,6 +19,9 @@ const maxJsBytes = Number(process.env.INLET_BUNDLE_MAX_JS_BYTES || 430000);
 const maxCssBytes = Number(process.env.INLET_BUNDLE_MAX_CSS_BYTES || 430000);
 const maxTotalAssetBytes = Number(process.env.INLET_BUNDLE_MAX_TOTAL_ASSET_BYTES || 2200000);
 const warnRatio = Number(process.env.INLET_BUNDLE_WARN_RATIO || 0.9);
+const intentionalPublicScripts = new Set([
+  'embed/form.js',
+]);
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -123,9 +126,13 @@ if (!await exists(targetDir)) {
     });
   }
 
-  const checkedAssets = referencedAssets.size ? assets.filter((asset) => asset.referenced) : assets;
+  const checkedAssets = referencedAssets.size
+    ? assets.filter((asset) => asset.referenced || intentionalPublicScripts.has(asset.relative))
+    : assets;
   const initialAssets = initialAssetRefs.size ? assets.filter((asset) => asset.initial) : checkedAssets;
-  const staleAssets = referencedAssets.size ? assets.filter((asset) => !asset.referenced) : [];
+  const staleAssets = referencedAssets.size
+    ? assets.filter((asset) => !asset.referenced && !intentionalPublicScripts.has(asset.relative))
+    : [];
   const jsAssets = checkedAssets.filter((asset) => asset.ext === '.js');
   const cssAssets = checkedAssets.filter((asset) => asset.ext === '.css');
   const largestJs = jsAssets.toSorted((a, b) => b.bytes - a.bytes)[0] || null;

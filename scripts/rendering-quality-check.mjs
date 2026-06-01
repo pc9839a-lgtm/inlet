@@ -72,6 +72,7 @@ const files = {
   layout: await readFile('src/preview/renderers/LayoutBlocks.jsx', 'utf8'),
   utility: await readFile('src/preview/renderers/UtilityBlocks.jsx', 'utf8'),
   formEmbed: await readFile('src/lib/formEmbed.js', 'utf8'),
+  publicFormEmbed: await readFile('public/embed/form.js', 'utf8'),
   previewCss: (await Promise.all(previewCssFiles.map((file) => readFile(file, 'utf8')))).join('\n'),
   cssQa: await readFile('scripts/css-quality-check.mjs', 'utf8'),
   browserVisualQa: await readFile('scripts/browser-visual-quality-check.mjs', 'utf8'),
@@ -219,12 +220,13 @@ assert(files.browserVisualQa.includes('realBrowserCommand'), 'browser visual QA 
 assert(files.browserVisualQa.includes('realBrowserPowerShellCommand'), 'browser visual QA skipped output should include a PowerShell real-browser command');
 assert(files.browserVisualQa.includes('local-chrome-cdp'), 'browser visual QA should support local Chrome/Edge CDP without Playwright');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_CHROME_PATH'), 'browser visual QA should allow a custom local Chrome/Edge path');
-assert(files.formEmbed.includes('https://pagero.kr/api/leads'), 'standalone form embed should submit to Pagero lead API');
+assert(files.formEmbed.includes('https://pagero.kr/embed/form.js'), 'standalone form embed should use the compact Pagero loader');
+assert(files.publicFormEmbed.includes('https://pagero.kr/api/leads'), 'standalone form embed loader should submit to Pagero lead API');
 assert(files.formEmbed.includes('projectId: safePage.projectId'), 'standalone form embed should include the page project id');
 assert(files.formEmbed.includes('slug: safePage.slug'), 'standalone form embed should include the page slug');
-assert(files.formEmbed.includes('answers:extracted.answers'), 'standalone form embed should preserve structured answers');
-assert(files.formEmbed.includes('접수 저장에 실패했습니다'), 'standalone form embed should show server save failure');
-assert(files.formEmbed.includes('페이지로로 제작됨') && files.formEmbed.includes('sourceLabel'), 'standalone form embed should show Pagero credit and preserve attribution');
+assert(files.publicFormEmbed.includes('answers: extracted.answers'), 'standalone form embed should preserve structured answers');
+assert(files.publicFormEmbed.includes('접수 저장에 실패했습니다'), 'standalone form embed should show server save failure');
+assert(files.publicFormEmbed.includes('페이지로로 제작됨') && files.publicFormEmbed.includes('sourceLabel'), 'standalone form embed should show Pagero credit and preserve attribution');
 assert(files.browserVisualQa.includes("INLET_BROWSER_QA_EXTRA_URLS=auto"), 'browser visual QA should document automatic footer/legal route coverage');
 assert(files.browserVisualQa.includes("'/privacy'") && files.browserVisualQa.includes("'/terms'"), 'browser visual QA auto routes should cover legal pages');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_STATE_PRESET'), 'browser visual QA should support authenticated state presets');
