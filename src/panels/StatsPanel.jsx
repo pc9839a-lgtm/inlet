@@ -139,7 +139,7 @@ function fmtDateOnly(value) {
   });
 }
 
-function ChannelFilter({ channels, value, onChange, serverMode }) {
+function ChannelFilter({ channels, value, onChange }) {
   const total = channels.reduce((sum, item) => sum + Number(item.count || 0), 0);
   const top = channels.slice(0, 7);
   const rest = channels.slice(7);
@@ -148,7 +148,6 @@ function ChannelFilter({ channels, value, onChange, serverMode }) {
     <section className="card stats-channel-filter">
       <div className="section-title">
         <h2>유입 채널</h2>
-        <p>{serverMode ? '서버 집계 기준 UTM' : '화면 데이터 기준'}</p>
       </div>
       <div className="stats-channel-filter-list">
         <button type="button" className={value === 'all' ? 'active' : ''} onClick={() => onChange('all')}>
@@ -235,7 +234,7 @@ function StatsTrend({ data }) {
         <div className="stats-chart-tooltip stats-chart-tooltip-wide" style={{ left: `${(hover.x / width) * 100}%`, top: `${hover.y}px` }}>
           <span>{hover.row.label}</span>
           <strong>조회 {Number(hover.row.pv || 0).toLocaleString('ko-KR')}</strong>
-          <em>클릭 {Number(hover.row.cta || 0).toLocaleString('ko-KR')} · 접수 {Number(hover.row.db || 0).toLocaleString('ko-KR')}</em>
+          <em>클릭 {Number(hover.row.cta || 0).toLocaleString('ko-KR')} / 접수 {Number(hover.row.db || 0).toLocaleString('ko-KR')}</em>
         </div>
       )}
       <div className="trend-legend">
@@ -340,7 +339,6 @@ export default function StatsPanel({
       <section className="card period-card stats-period-card">
         <div className="section-title">
           <h2>기간 통계</h2>
-          <p>{serverMode ? '서버 집계 기준' : '화면 데이터 기준'}</p>
         </div>
         <div className="stats-period-controls">
           <div className="period-tabs period-tabs-v2 stats-range-tabs" aria-label="통계 기간">
@@ -357,7 +355,7 @@ export default function StatsPanel({
         </div>
       </section>
 
-      <ChannelFilter channels={channelOptions} value={channelFilter} onChange={setChannel} serverMode={serverMode} />
+      <ChannelFilter channels={channelOptions} value={channelFilter} onChange={setChannel} />
 
       {partialData && (
         <div className="stats-partial-notice" role="status">
@@ -366,10 +364,10 @@ export default function StatsPanel({
       )}
 
       <section className="stats-grid stats-summary stats-summary-v2 stats-summary-v3">
-        <Metric title="페이지뷰" value={stats.pv} sub="방문" />
-        <Metric title="CTA 클릭" value={stats.cta} sub="버튼" />
-        <Metric title="상담 접수" value={stats.consultLeads} sub="상담" />
-        <Metric title="예약 접수" value={stats.reservationLeads} sub="방문예약" />
+        <Metric title="조회" value={stats.pv} sub="방문" />
+        <Metric title="클릭" value={stats.cta} sub="버튼" />
+        <Metric title="상담" value={stats.consultLeads} sub="접수" />
+        <Metric title="예약" value={stats.reservationLeads} sub="접수" />
         <Metric title="전환율" value={`${stats.conversion}%`} sub="방문 대비" />
         <Metric title="CTA 전환" value={`${stats.ctaConversion}%`} sub="클릭 대비" />
       </section>

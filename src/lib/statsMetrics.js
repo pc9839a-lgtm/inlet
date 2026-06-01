@@ -20,11 +20,11 @@ export function statLabel(key) {
     link_click: '링크 클릭',
     form_start: '폼 시작',
     form_submit_attempt: '상담 제출 시도',
-    form_submit_success: '상담 제출 성공',
+    form_submit_success: '상담 제출 완료',
     form_submit: '상담 제출',
     reservation_submit_attempt: '예약 제출 시도',
-    reservation_submit_success: '예약 제출 성공',
-    reservation_success: '예약 성공',
+    reservation_submit_success: '예약 제출 완료',
+    reservation_success: '예약 완료',
     reservation_submit: '방문예약 제출',
     direct: '직접 유입',
     referral: '외부 링크',
@@ -51,6 +51,10 @@ export function statLabel(key) {
     보류: '보류',
     상담: '상담',
     예약: '예약',
+    none: '전송없음',
+    success: '전송완료',
+    failed: '전송실패',
+    partial: '일부실패',
   }[key] || key;
 }
 
@@ -155,8 +159,8 @@ export function buildStats(events = [], leads = [], period = '7d', now = new Dat
     submitSuccess,
     reservationAttempt,
     reservationSuccess,
-    consultLeads: typeData['상담'],
-    reservationLeads: typeData['예약'],
+    consultLeads: typeData.상담,
+    reservationLeads: typeData.예약,
     db,
     conversion: pv ? ((db / pv) * 100).toFixed(1) : '0.0',
     ctaConversion: cta ? ((db / cta) * 100).toFixed(1) : '0.0',
@@ -278,10 +282,6 @@ function trendBuckets(range) {
   }
 
   return days.length ? days : [{ id: dayId(new Date()), label: dayLabel(new Date()), pv: 0, cta: 0, db: 0 }];
-}
-
-function percent(num, den) {
-  return den ? ((num / den) * 100).toFixed(1) : '0.0';
 }
 
 function seoulParts(value = new Date()) {
