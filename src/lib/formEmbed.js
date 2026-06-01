@@ -14,6 +14,19 @@ function safeText(value = '', fallback = '') {
   return text || fallback;
 }
 
+function encodeConfig(value = {}) {
+  const json = JSON.stringify(value);
+  if (typeof TextEncoder !== 'undefined' && typeof btoa === 'function') {
+    const bytes = new TextEncoder().encode(json);
+    let binary = '';
+    bytes.forEach((byte) => {
+      binary += String.fromCharCode(byte);
+    });
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  }
+  return encodeURIComponent(json);
+}
+
 function normalizeQuestion(question = {}) {
   return {
     id: safeText(question.id, `q_${Math.random().toString(36).slice(2, 8)}`),
@@ -38,8 +51,6 @@ function normalizePage(page = {}) {
 
 export function generateStandaloneFormHtml(form = {}, page = {}) {
   const safePage = normalizePage(page);
-  const embedId = `pagero-form-${safeText(form.id || form.blockId || Math.random().toString(36).slice(2, 8)).replace(/[^a-zA-Z0-9_-]/g, '') || 'main'}`;
-  const configId = `${embedId}-config`;
   const config = {
     brand: '페이지로',
     formId: safeText(form.id || form.blockId || ''),
@@ -57,7 +68,5 @@ export function generateStandaloneFormHtml(form = {}, page = {}) {
     questions: Array.isArray(form.questions) ? form.questions.map(normalizeQuestion) : [],
   };
 
-  return `<div id="${escapeHtml(embedId)}"></div>
-<script type="application/json" id="${escapeHtml(configId)}">${escapeHtml(JSON.stringify(config))}</script>
-<script src="${DEFAULT_EMBED_SCRIPT_URL}" data-target="${escapeHtml(embedId)}" data-config="${escapeHtml(configId)}" defer></script>`;
+  return `<script src="${DEFAULT_EMBED_SCRIPT_URL}" data-pagero="${escapeHtml(encodeConfig(config))}" defer></script>`;
 }

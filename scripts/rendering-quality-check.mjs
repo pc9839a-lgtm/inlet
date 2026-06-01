@@ -221,7 +221,9 @@ assert(files.browserVisualQa.includes('realBrowserPowerShellCommand'), 'browser 
 assert(files.browserVisualQa.includes('local-chrome-cdp'), 'browser visual QA should support local Chrome/Edge CDP without Playwright');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_CHROME_PATH'), 'browser visual QA should allow a custom local Chrome/Edge path');
 assert(files.formEmbed.includes('https://pagero.kr/embed/form.js'), 'standalone form embed should use the compact Pagero loader');
+assert(files.formEmbed.includes('data-pagero=') && !files.formEmbed.includes('type="application/json"'), 'standalone form embed should be a single compact script tag');
 assert(files.publicFormEmbed.includes('https://pagero.kr/api/leads'), 'standalone form embed loader should submit to Pagero lead API');
+assert(files.publicFormEmbed.includes('decodeConfig') && files.publicFormEmbed.includes("script.getAttribute('data-pagero')"), 'standalone form embed loader should decode inline compact config');
 assert(files.formEmbed.includes('projectId: safePage.projectId'), 'standalone form embed should include the page project id');
 assert(files.formEmbed.includes('slug: safePage.slug'), 'standalone form embed should include the page slug');
 assert(files.publicFormEmbed.includes('answers: extracted.answers'), 'standalone form embed should preserve structured answers');
@@ -247,7 +249,7 @@ assert(productionBrowserQa.includes('owner rich text bold underline toolbar') &&
 
 console.log(JSON.stringify({
   ok: true,
-  checks: requiredDispatch.length + rendererContracts.length * 2 + cssContracts.length + visualGeometryContracts.length + viewportContracts.length + previewSourceEntries.length * 2 + 28,
+  checks: requiredDispatch.length + rendererContracts.length * 2 + cssContracts.length + visualGeometryContracts.length + viewportContracts.length + previewSourceEntries.length * 2 + 30,
   visualGeometryChecks: visualGeometryContracts.length,
   viewportContracts: viewportContracts.length,
 }, null, 2));

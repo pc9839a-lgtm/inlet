@@ -110,6 +110,23 @@
     return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
   }
 
+  function decodeConfig(raw) {
+    if (!raw) return {};
+    try {
+      var base64 = raw.replace(/-/g, '+').replace(/_/g, '/');
+      while (base64.length % 4) base64 += '=';
+      var binary = atob(base64);
+      var bytes = new Uint8Array(binary.length);
+      for (var i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+      if (typeof TextDecoder !== 'undefined') return JSON.parse(new TextDecoder().decode(bytes));
+      var escaped = '';
+      for (var j = 0; j < binary.length; j += 1) escaped += '%' + ('00' + binary.charCodeAt(j).toString(16)).slice(-2);
+      return JSON.parse(decodeURIComponent(escaped));
+    } catch (e) {
+      return JSON.parse(decodeURIComponent(raw));
+    }
+  }
+
   function render(target, cfg) {
     css();
     cfg.questions = Array.isArray(cfg.questions) ? cfg.questions : [];
@@ -164,11 +181,18 @@
   }
 
   function init(script) {
-    var target = document.getElementById(script.getAttribute('data-target'));
-    var configEl = document.getElementById(script.getAttribute('data-config'));
-    if (!target || !configEl) return;
+    var targetId = script.getAttribute('data-target');
+    var target = targetId ? document.getElementById(targetId) : null;
+    if (!target) {
+      target = document.createElement('div');
+      script.parentNode.insertBefore(target, script);
+    }
     try {
-      render(target, JSON.parse(configEl.textContent || '{}'));
+      var configEl = document.getElementById(script.getAttribute('data-config') || '');
+      var config = script.getAttribute('data-pagero')
+        ? decodeConfig(script.getAttribute('data-pagero'))
+        : JSON.parse(configEl ? configEl.textContent || '{}' : '{}');
+      render(target, config);
     } catch (e) {
       target.textContent = '페이지로 입력폼을 불러오지 못했습니다.';
     }
