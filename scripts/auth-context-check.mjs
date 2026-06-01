@@ -20,11 +20,17 @@ const page = { slug: 'campaign' };
 const contextA = projectContext(page, userA1);
 const contextA2 = projectContext(page, userA2);
 const contextB = projectContext(page, userB);
+const staleLocalContext = projectContext({ slug: 'campaign', projectId: 'local-user_campaign', ownerId: 'local-user' }, userA1);
+const staleOtherOwnerContext = projectContext({ slug: 'campaign', projectId: 'user_other_campaign', ownerId: 'user_other' }, userA1);
+const ownedExistingContext = projectContext({ slug: 'campaign', projectId: contextA.projectId, ownerId: contextA.ownerId }, userA1);
 
 assert(contextA.projectId === contextA2.projectId, 'same user should map to same project');
 assert(contextA.projectId !== contextB.projectId, 'different users should map to different projects');
 assert(contextA.slug === 'campaign', 'slug should be preserved');
 assert(contextA.legacyProjectId.includes('ownerexamplecom'), 'legacy project fallback should remain available');
+assert(staleLocalContext.projectId === contextA.projectId, 'authenticated context should drop stale local project ids');
+assert(staleOtherOwnerContext.projectId === contextA.projectId, 'authenticated context should drop another owner project id');
+assert(ownedExistingContext.projectId === contextA.projectId, 'authenticated context should preserve owned project id');
 
 const clientUser = normalizeAuthUser({ name: 'Client', email: 'client@example.com' });
 const ownerPage = {
@@ -133,4 +139,4 @@ for (const [code, expected] of authErrorMessages) {
   assert(!/[占�]/.test(message), `${code} message should not contain mojibake or replacement characters`);
 }
 
-console.log(JSON.stringify({ ok: true, checks: 43 }, null, 2));
+console.log(JSON.stringify({ ok: true, checks: 46 }, null, 2));

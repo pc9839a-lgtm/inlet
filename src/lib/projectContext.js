@@ -6,12 +6,24 @@ function safeId(value, fallback) {
   return cleaned || fallback;
 }
 
+function pageProjectIdForOwner(page = {}, ownerId = '') {
+  const current = safeId(page.projectId || page.id || '', '');
+  const currentOwner = safeId(page.ownerId || page.ownerAccountId || '', '');
+  if (!current) return '';
+  if (!ownerId) return current;
+  if (currentOwner && currentOwner !== ownerId) return '';
+  if (current.startsWith(`${ownerId}_`)) return current;
+  if (currentOwner === ownerId) return current;
+  return '';
+}
+
 export function projectContext(page = {}, authUser = null) {
   if (authUser?.projectId && authUser?.ownerId) {
     const slug = safeId(sanitizePageSlug(page.slug || authUser.slug, 'my-page'), 'my-page');
+    const ownerId = safeId(authUser.ownerId, 'local-user');
     return {
-      ownerId: safeId(authUser.ownerId, 'local-user'),
-      projectId: safeId(page.projectId || authUser.projectId, authUser.projectId),
+      ownerId,
+      projectId: safeId(pageProjectIdForOwner(page, ownerId) || authUser.projectId, authUser.projectId),
       slug,
       session: authUser.session || '',
       legacyOwnerId: safeId(authUser.legacyOwnerId || '', ''),
@@ -24,7 +36,7 @@ export function projectContext(page = {}, authUser = null) {
   const legacyOwnerId = safeId(authUser?.email || authUser?.id || authUser?.name || '', '');
   const ownerSource = authUser ? workspaceIdForAuthUser(authUser) : workspaceId;
   const ownerId = safeId(ownerSource, 'local-user');
-  const projectId = safeId(page.projectId || `${ownerId}_${slug}`, `${ownerId}_${slug}`);
+  const projectId = safeId(pageProjectIdForOwner(page, ownerId) || `${ownerId}_${slug}`, `${ownerId}_${slug}`);
 
   return {
     ownerId,
