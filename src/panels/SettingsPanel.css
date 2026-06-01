@@ -2075,3 +2075,143 @@
 .settings-panel .settings-conversion-grid {
   grid-template-columns: 1fr !important;
 }
+
+/* Final compact settings guard: prevent clipped buttons and nested pill-looking headers. */
+.settings-panel,
+.settings-panel * {
+  box-sizing: border-box !important;
+}
+
+.settings-panel {
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow-x: hidden !important;
+}
+
+.settings-panel .settings-compact-head,
+.settings-panel .settings-section,
+.settings-panel .settings-advanced-box,
+.settings-panel .settings-section-body,
+.settings-panel .settings-grid,
+.settings-panel .account-settings-grid,
+.settings-panel .manager-list,
+.settings-panel .manager-card,
+.settings-panel .manager-card-body {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.settings-panel .settings-compact-head {
+  grid-template-columns: minmax(0, 1fr) minmax(74px, auto) !important;
+  border-radius: 18px !important;
+}
+
+.settings-panel .settings-compact-head em {
+  max-width: 172px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.settings-panel .settings-section-head,
+.settings-panel .settings-advanced-head {
+  grid-template-columns: minmax(0, 1fr) 62px !important;
+  min-height: 64px !important;
+  padding: 14px 16px !important;
+}
+
+.settings-panel .settings-section-copy,
+.settings-panel .settings-section-title-row,
+.settings-panel .settings-section-title-row h2,
+.settings-panel .settings-section-copy small,
+.settings-panel .settings-advanced-head > span,
+.settings-panel .settings-advanced-head strong,
+.settings-panel .settings-advanced-head small {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.settings-panel .settings-section-title-row {
+  width: auto !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+.settings-panel .settings-section-title-row h2,
+.settings-panel .settings-advanced-head strong {
+  flex: 0 1 auto !important;
+  font-size: 17px !important;
+  line-height: 1.18 !important;
+}
+
+.settings-panel .settings-section-title-row em {
+  flex: 0 0 auto !important;
+  max-width: 76px !important;
+  border: 0 !important;
+  background: #edf5ff !important;
+  color: #2563eb !important;
+}
+
+.settings-panel .settings-section-state,
+.settings-panel .settings-advanced-head em {
+  width: 62px !important;
+  min-width: 62px !important;
+  max-width: 62px !important;
+  height: 38px !important;
+}
+
+.settings-panel .settings-grid,
+.settings-panel .settings-conversion-grid,
+.settings-panel .account-settings-grid,
+.settings-panel .duplicate-policy-grid {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.settings-panel .field,
+.settings-panel .image-input,
+.settings-panel .toggle,
+.settings-panel .duplicate-policy-select,
+.settings-panel .account-settings-form,
+.settings-panel .account-password-form,
+.settings-panel .page-duplicate-summary,
+.settings-panel .manager-owner-summary.compact,
+.settings-panel .manager-card-head,
+.settings-panel .manager-permission-row {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+.settings-panel .field input,
+.settings-panel .field textarea,
+.settings-panel .field select,
+.settings-panel .account-settings-grid input,
+.settings-panel .duplicate-policy-select select,
+.settings-panel .settings-url-form input {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.settings-panel .manager-owner-summary.compact,
+.settings-panel .manager-card-head,
+.settings-panel .manager-detail-actions,
+.settings-panel .ownership-transfer-controls,
+.settings-panel .ownership-transfer-status,
+.settings-panel .manager-permission-row {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.settings-panel .manager-section-tools,
+.settings-panel .manager-card-actions,
+.settings-panel .manager-preset-row {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+}
