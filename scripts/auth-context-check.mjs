@@ -23,6 +23,7 @@ const contextB = projectContext(page, userB);
 const staleLocalContext = projectContext({ slug: 'campaign', projectId: 'local-user_campaign', ownerId: 'local-user' }, userA1);
 const staleOtherOwnerContext = projectContext({ slug: 'campaign', projectId: 'user_other_campaign', ownerId: 'user_other' }, userA1);
 const ownedExistingContext = projectContext({ slug: 'campaign', projectId: contextA.projectId, ownerId: contextA.ownerId }, userA1);
+const publicServerContext = projectContext({ slug: 'campaign', projectId: 'server_project_123' }, null);
 
 assert(contextA.projectId === contextA2.projectId, 'same user should map to same project');
 assert(contextA.projectId !== contextB.projectId, 'different users should map to different projects');
@@ -31,6 +32,8 @@ assert(contextA.legacyProjectId.includes('ownerexamplecom'), 'legacy project fal
 assert(staleLocalContext.projectId === contextA.projectId, 'authenticated context should drop stale local project ids');
 assert(staleOtherOwnerContext.projectId === contextA.projectId, 'authenticated context should drop another owner project id');
 assert(ownedExistingContext.projectId === contextA.projectId, 'authenticated context should preserve owned project id');
+assert(publicServerContext.projectId === 'server_project_123', 'public landing submissions should use the stored server project id');
+assert(publicServerContext.ownerId === '', 'public landing submissions should not invent a visitor owner id');
 
 const clientUser = normalizeAuthUser({ name: 'Client', email: 'client@example.com' });
 const ownerPage = {

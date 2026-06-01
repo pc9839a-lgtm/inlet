@@ -32,6 +32,18 @@ export function projectContext(page = {}, authUser = null) {
   }
 
   const slug = safeId(sanitizePageSlug(page.slug, 'my-page'), 'my-page');
+  const publicProjectId = safeId(page.projectId || page.id || '', '');
+  if (!authUser && publicProjectId) {
+    return {
+      ownerId: '',
+      projectId: publicProjectId,
+      slug,
+      session: '',
+      legacyOwnerId: '',
+      legacyProjectId: '',
+    };
+  }
+
   const workspaceId = authUser ? '' : readOrCreateWorkspaceId();
   const legacyOwnerId = safeId(authUser?.email || authUser?.id || authUser?.name || '', '');
   const ownerSource = authUser ? workspaceIdForAuthUser(authUser) : workspaceId;
