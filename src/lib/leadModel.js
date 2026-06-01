@@ -15,7 +15,14 @@ function normalizedText(value) {
 
 export function normalizeLeadStatus(status) {
   const value = text(status);
-  return LEAD_STATUS.includes(value) ? value : '신규';
+  if (LEAD_STATUS.includes(value)) return value;
+  const lower = normalizedText(value);
+  if (['new', 'fresh'].includes(lower)) return '신규';
+  if (['pending', 'hold', 'checking'].includes(lower)) return '확인중';
+  if (['done', 'contacted'].includes(lower)) return '연락완료';
+  if (['reserved', 'booked'].includes(lower)) return '예약완료';
+  if (['closed', 'end'].includes(lower)) return '종료';
+  return '신규';
 }
 
 export function isReservationLead(lead = {}) {
@@ -45,7 +52,6 @@ export function normalizeLeadType(lead = {}) {
 
 export function normalizeLeadItem(lead = {}) {
   const delivery = lead.delivery || {};
-
   return {
     ...lead,
     id: lead.id || uid(),
@@ -58,12 +64,19 @@ export function normalizeLeadItem(lead = {}) {
     email: lead.email || '',
     address: lead.address || '',
     message: lead.message || '',
+    sourceUrl: lead.sourceUrl || lead.pageUrl || lead.url || '',
+    referrer: lead.referrer || '',
+    channel: lead.channel || '',
+    sourceLabel: lead.sourceLabel || '',
+    utmSource: lead.utmSource || lead.utm_source || '',
+    utmMedium: lead.utmMedium || lead.utm_medium || '',
+    utmCampaign: lead.utmCampaign || lead.utm_campaign || '',
     answers: Array.isArray(lead.answers) ? lead.answers : [],
     values: lead.values || {},
     history: Array.isArray(lead.history) ? lead.history : [],
     delivery: {
-      status: delivery.status || 'none',
-      summary: delivery.summary || '외부 전송 없음',
+      status: delivery.status || lead.deliveryStatus || 'none',
+      summary: delivery.summary || '알림 없음',
       logs: Array.isArray(delivery.logs) ? delivery.logs : [],
     },
   };
@@ -101,6 +114,12 @@ export function leadSearchText(lead) {
     lead.address,
     lead.message,
     lead.memo,
+    lead.sourceUrl,
+    lead.referrer,
+    lead.sourceLabel,
+    lead.channel,
+    lead.utmSource,
+    lead.utmCampaign,
     ...Object.values(lead.values || {}).map(searchableValue),
     ...(lead.answers || []).map((a) => `${a.label || ''} ${searchableValue(a.value)}`),
   ].join(' ').toLowerCase();

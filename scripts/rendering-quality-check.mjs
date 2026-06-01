@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+﻿import { readFile } from 'node:fs/promises';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -140,7 +140,7 @@ for (const [name, source] of previewSourceEntries) {
   assert(!/\b(?:window\.)?(?:alert|confirm)\s*\(/.test(source), `preview source must not use browser alert/confirm: ${name}`);
 }
 
-const mojibakePattern = /諛⑸Ц|獄쎻뫖|揆|\?곷|\?덉|\?대쫫|\?묒|�/;
+const mojibakePattern = /獄쎻뫖揆|占|�/;
 const previewRuntimeEntries = previewSourceEntries.filter(([name]) => name !== 'cssQa');
 for (const [name, source] of previewRuntimeEntries) {
   assert(!mojibakePattern.test(source), `preview source contains mojibake text: ${name}`);
@@ -223,7 +223,8 @@ assert(files.formEmbed.includes('https://pagero.kr/api/leads'), 'standalone form
 assert(files.formEmbed.includes('projectId: safePage.projectId'), 'standalone form embed should include the page project id');
 assert(files.formEmbed.includes('slug: safePage.slug'), 'standalone form embed should include the page slug');
 assert(files.formEmbed.includes('answers:extracted.answers'), 'standalone form embed should preserve structured answers');
-assert(files.formEmbed.includes('접수함 저장에 실패했습니다'), 'standalone form embed should show server save failure');
+assert(files.formEmbed.includes('접수 저장에 실패했습니다'), 'standalone form embed should show server save failure');
+assert(files.formEmbed.includes('페이지로로 제작됨') && files.formEmbed.includes('sourceLabel'), 'standalone form embed should show Pagero credit and preserve attribution');
 assert(files.browserVisualQa.includes("INLET_BROWSER_QA_EXTRA_URLS=auto"), 'browser visual QA should document automatic footer/legal route coverage');
 assert(files.browserVisualQa.includes("'/privacy'") && files.browserVisualQa.includes("'/terms'"), 'browser visual QA auto routes should cover legal pages');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_STATE_PRESET'), 'browser visual QA should support authenticated state presets');

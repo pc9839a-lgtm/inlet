@@ -1000,6 +1000,8 @@ function App() {
     utmMedium: ev.utmMedium || traffic.utmMedium,
     utmCampaign: ev.utmCampaign || traffic.utmCampaign,
     sourceUrl: ev.sourceUrl || traffic.sourceUrl,
+    referrer: ev.referrer || traffic.referrer,
+    sourceLabel: ev.sourceLabel || traffic.sourceLabel,
     device: ev.device || detectDeviceType(),
     createdAt: new Date().toISOString(),
     };
@@ -1044,13 +1046,15 @@ function App() {
       status: '신규',
       memo: '',
       createdAt: new Date().toISOString(),
+      delivery: { status: 'pending', summary: '외부 전송 확인 중', logs: [] },
+      ...lead,
       channel: lead.channel || traffic.channel,
       utmSource: lead.utmSource || traffic.utmSource,
       utmMedium: lead.utmMedium || traffic.utmMedium,
       utmCampaign: lead.utmCampaign || traffic.utmCampaign,
       sourceUrl: lead.sourceUrl || traffic.sourceUrl,
-      delivery: { status: 'pending', summary: '외부 전송 확인 중', logs: [] },
-      ...lead
+      referrer: lead.referrer || traffic.referrer,
+      sourceLabel: lead.sourceLabel || traffic.sourceLabel,
     });
     setLeads((l) => [savedLead, ...l]);
     setLeadPageMeta((meta) => ({ ...meta, total: Number(meta.total || 0) + 1 }));

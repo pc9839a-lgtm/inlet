@@ -167,6 +167,37 @@
     white-space: normal;
   }
 }
+
+.lead-source-label {
+  max-width: 132px;
+  min-height: 26px;
+  padding: 0 9px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 950;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inbox-policy-switch.compact,
+.inbox-policy-select.compact {
+  min-height: 64px;
+}
+
+.inbox-policy-switch.compact span,
+.inbox-policy-select.compact span {
+  gap: 0;
+}
+
+.inbox-connect-body.compact {
+  gap: 10px;
+}
 .inbox-policy-card {
   display: grid;
   gap: 0;

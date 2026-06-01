@@ -7,6 +7,9 @@ export const PERIOD_OPTIONS = [
   ['30d', '30일'],
 ];
 
+const SEOUL_OFFSET_MS = 9 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 export function countBy(items, key) {
   return (items || []).reduce((acc, item) => {
     const value = item?.[key] || 'unknown';
@@ -58,26 +61,21 @@ export function statLabel(key) {
     hold: '보류',
     신규: '신규',
     확인중: '확인중',
-    완료: '완료',
+    연락완료: '연락완료',
+    예약완료: '예약완료',
     보류: '보류',
+    종료: '종료',
     상담: '상담',
     예약: '예약',
-    none: '전송없음',
-    success: '전송완료',
-    failed: '전송실패',
-    partial: '일부실패',
   }[key] || key;
 }
-
-const SEOUL_OFFSET_MS = 9 * 60 * 60 * 1000;
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 export function getPeriodRange(period, now = new Date()) {
   const today = seoulParts(now);
   let start = seoulDate(today.year, today.month, today.day);
   let end = endOfSeoulDay(start);
 
-  if (period === '1d') {
+  if (period === '1d' || period === 'today') {
     start = addSeoulDays(start, 0);
   } else if (period === 'yesterday') {
     start = addSeoulDays(start, -1);
@@ -91,7 +89,7 @@ export function getPeriodRange(period, now = new Date()) {
   } else if (period === 'lastMonth') {
     start = seoulDate(today.year, today.month - 1, 1);
     end = endOfSeoulDay(seoulDate(today.year, today.month, 0));
-  } else if (period !== 'today') {
+  } else {
     start = addSeoulDays(start, -6);
   }
 
@@ -107,7 +105,6 @@ export function buildStats(events = [], leads = [], period = '7d', now = new Dat
   const seenEventIds = new Set();
   const seenLeadIds = new Set();
   const statusData = {};
-  const deliveryData = {};
   const typeData = { 상담: 0, 예약: 0 };
   const ctaLabelData = {};
   let pv = 0;
@@ -154,8 +151,6 @@ export function buildStats(events = [], leads = [], period = '7d', now = new Dat
     const type = statsLeadKind(item) === 'reservation' ? '예약' : '상담';
     typeData[type] += 1;
     statusData[item.status] = (statusData[item.status] || 0) + 1;
-    const deliveryKey = deliveryStatusLabel(item.delivery?.status || 'none');
-    deliveryData[deliveryKey] = (deliveryData[deliveryKey] || 0) + 1;
     const bucket = bucketMap[dayId(item.createdAt)];
     if (bucket) bucket.db += 1;
   });
@@ -192,7 +187,6 @@ export function buildStats(events = [], leads = [], period = '7d', now = new Dat
     },
     trend: buckets,
     statusData,
-    deliveryData,
     typeData,
     channelData: countByValue(filteredEvents, trafficChannelFromItem),
     deviceData: countBy(filteredEvents, 'device'),
@@ -214,34 +208,27 @@ function isDuplicateItem(item = {}, seenIds) {
 
 function statsDedupeKey(item = {}) {
   if (item?.id != null && String(item.id).trim()) return `id:${String(item.id).trim()}`;
-  const createdAt = item.createdAt || item.savedAt || '';
-  const type = item.type || '';
-  const contact = item.phone || item.email || item.address || '';
-  const name = item.name || '';
-  const label = item.label || item.sourceBlockTitle || item.message || '';
-  const channel = item.channel || '';
-  const utm = item.utmSource || item.utm_source || '';
-  const sourceUrl = item.sourceUrl || item.source_url || item.url || '';
-  const device = item.device || '';
-  const signature = [createdAt, type, contact, name, label, channel, utm, sourceUrl, device]
-    .map((value) => String(value || '').trim().toLowerCase())
-    .join('|');
+  const signature = [
+    item.createdAt || item.savedAt || '',
+    item.type || '',
+    item.phone || item.email || item.address || '',
+    item.name || '',
+    item.label || item.sourceBlockTitle || item.message || '',
+    item.channel || '',
+    item.utmSource || item.utm_source || '',
+    item.sourceUrl || item.source_url || item.url || '',
+    item.device || '',
+  ].map((value) => String(value || '').trim().toLowerCase()).join('|');
   return signature.replace(/\|/g, '') ? `sig:${signature}` : '';
 }
 
 function normalizeStatsLead(lead = {}) {
-  const delivery = lead.delivery || {};
   return {
     ...lead,
     status: lead.status || '신규',
     createdAt: lead.createdAt || lead.savedAt || new Date().toISOString(),
     answers: Array.isArray(lead.answers) ? lead.answers : [],
     values: lead.values || {},
-    delivery: {
-      status: delivery.status || 'none',
-      summary: delivery.summary || '',
-      logs: Array.isArray(delivery.logs) ? delivery.logs : [],
-    },
   };
 }
 
@@ -249,17 +236,7 @@ function statsLeadKind(lead = {}) {
   const values = lead.values && typeof lead.values === 'object' ? Object.keys(lead.values).join(' ') : '';
   const answers = Array.isArray(lead.answers) ? lead.answers.map((answer) => answer.label || '').join(' ') : '';
   const text = [lead.type, lead.sourceBlockTitle, lead.message, values, answers].join(' ').toLowerCase();
-  return /예약|방문|방문예약|reservation|booking|reserve/.test(text) ? 'reservation' : 'consult';
-}
-
-function deliveryStatusLabel(status = 'none') {
-  return {
-    pending: '전송중',
-    success: '전송완료',
-    failed: '전송실패',
-    partial: '일부실패',
-    none: '전송없음',
-  }[status] || status || '전송없음';
+  return /예약|방문|reservation|booking|reserve/.test(text) ? 'reservation' : 'consult';
 }
 
 function parseTime(value) {
@@ -287,18 +264,10 @@ function dayLabel(value) {
 function trendBuckets(range) {
   const days = [];
   let cur = seoulDateFromInstant(range.start);
-
   while (cur <= range.end && days.length < 32) {
-    days.push({
-      id: dayId(cur),
-      label: dayLabel(cur),
-      pv: 0,
-      cta: 0,
-      db: 0,
-    });
+    days.push({ id: dayId(cur), label: dayLabel(cur), pv: 0, cta: 0, db: 0 });
     cur = addSeoulDays(cur, 1);
   }
-
   return days.length ? days : [{ id: dayId(new Date()), label: dayLabel(new Date()), pv: 0, cta: 0, db: 0 }];
 }
 

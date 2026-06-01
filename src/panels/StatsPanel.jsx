@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { deliveryStatusClass, deliveryStatusLabel } from '../lib/leadIntegrations.js';
 import { leadKindLabel, leadPrimaryContact } from '../lib/leadModel.js';
 import { currentMonthValue } from '../lib/monthRange.js';
 import { PERIOD_OPTIONS, buildStats as buildStatsMetrics, countBy as countByMetrics, statLabel } from '../lib/statsMetrics.js';
@@ -7,51 +6,32 @@ import { trafficChannelFromItem } from '../lib/trafficAttribution.js';
 import './StatsPanel.css';
 
 function hasPartialStatsData({ statsPartial, eventPageMeta, leadPageMeta }) {
-  return Boolean(
-    statsPartial ||
-    eventPageMeta?.hasMore ||
-    eventPageMeta?.nextCursor ||
-    leadPageMeta?.hasMore ||
-    leadPageMeta?.nextCursor
-  );
-}
-
-function channelKey(item = {}) {
-  return trafficChannelFromItem(item);
+  return Boolean(statsPartial || eventPageMeta?.hasMore || eventPageMeta?.nextCursor || leadPageMeta?.hasMore || leadPageMeta?.nextCursor);
 }
 
 function filterByChannel(items = [], channel = 'all') {
   if (channel === 'all') return items;
-  return items.filter((item) => channelKey(item) === channel);
+  return items.filter((item) => trafficChannelFromItem(item) === channel);
 }
 
 function buildChannelOptions(events = [], leads = []) {
   const counts = new Map();
-  const add = (item) => {
-    const key = channelKey(item);
+  [...events, ...leads].forEach((item) => {
+    const key = trafficChannelFromItem(item);
     counts.set(key, (counts.get(key) || 0) + 1);
-  };
-  events.forEach(add);
-  leads.forEach(add);
-  return Array.from(counts.entries())
-    .map(([channel, count]) => ({ channel, count }))
-    .sort((a, b) => b.count - a.count);
+  });
+  return Array.from(counts.entries()).map(([channel, count]) => ({ channel, count })).sort((a, b) => b.count - a.count);
 }
 
 function stableChannelOptions(items = []) {
-  const defaults = ['direct', 'naver', 'google', 'kakao', 'instagram', 'meta', 'youtube'];
+  const defaults = ['direct', 'naver', 'google', 'kakao', 'instagram', 'meta', 'youtube', 'referral'];
   const order = new Map(defaults.map((channel, index) => [channel, index]));
   const counts = new Map(defaults.map((channel) => [channel, 0]));
-  items.forEach((item) => {
-    const channel = String(item.channel || '').trim().toLowerCase() || 'unknown';
-    counts.set(channel, Number(item.count || 0));
-  });
+  items.forEach((item) => counts.set(String(item.channel || 'direct'), Number(item.count || 0)));
   return Array.from(counts.entries())
     .map(([channel, count]) => ({ channel, count }))
-    .sort((a, b) => {
-      if (b.count !== a.count) return b.count - a.count;
-      return (order.get(a.channel) ?? 99) - (order.get(b.channel) ?? 99);
-    });
+    .filter((item) => item.count > 0 || defaults.includes(item.channel))
+    .sort((a, b) => (b.count - a.count) || ((order.get(a.channel) ?? 99) - (order.get(b.channel) ?? 99)));
 }
 
 function collectPageCtaLabels(page = {}) {
@@ -60,7 +40,6 @@ function collectPageCtaLabels(page = {}) {
     const text = String(value || '').trim();
     if (text && !labels.includes(text)) labels.push(text);
   };
-
   (page.blocks || []).forEach((block) => {
     if (!block || block.visible === false) return;
     const s = block.s || {};
@@ -74,18 +53,13 @@ function collectPageCtaLabels(page = {}) {
         .forEach((button) => push(button?.label));
     }
   });
-
   return labels;
 }
 
 function ctaClickData(events = [], page = {}) {
   const labels = collectPageCtaLabels(page);
   const allowed = new Set(labels);
-  const clicks = events.filter((event) => {
-    if (event.type !== 'cta_click') return false;
-    if (!allowed.size) return true;
-    return allowed.has(String(event.label || '').trim());
-  });
+  const clicks = events.filter((event) => event.type === 'cta_click' && (!allowed.size || allowed.has(String(event.label || '').trim())));
   const counts = countByMetrics(clicks, 'label');
   if (!allowed.size) return counts;
   return Object.fromEntries(labels.filter((label) => counts[label]).map((label) => [label, counts[label]]));
@@ -96,20 +70,12 @@ function normalizeServerStats(serverStats, leads = []) {
   return {
     pv: Number(summary.pv || 0),
     cta: Number(summary.cta || 0),
-    link: Number(summary.link || 0),
-    formStart: Number(summary.formStart || 0),
-    submitAttempt: Number(summary.submitAttempt || 0),
-    submitSuccess: Number(summary.submitSuccess || 0),
-    reservationAttempt: Number(summary.reservationAttempt || 0),
-    reservationSuccess: Number(summary.reservationSuccess || 0),
     consultLeads: Number(summary.consultLeads || 0),
     reservationLeads: Number(summary.reservationLeads || 0),
-    db: Number(summary.db || 0),
     conversion: String(summary.conversion ?? '0.0'),
     ctaConversion: String(summary.ctaConversion ?? '0.0'),
     trend: Array.isArray(summary.trend) ? summary.trend : [],
     statusData: summary.statusData || {},
-    deliveryData: summary.deliveryData || {},
     typeData: summary.typeData || {},
     channelData: summary.channelData || {},
     channelOptionsData: summary.availableChannelData || summary.channelData || {},
@@ -133,42 +99,24 @@ function Metric({ title, value, sub }) {
 function fmtDateOnly(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value || '').slice(0, 10);
-  return date.toLocaleDateString('ko-KR', {
-    year: 'numeric',
-    month: 'numeric',
-    day: 'numeric',
-  });
+  return date.toLocaleDateString('ko-KR', { year: 'numeric', month: 'numeric', day: 'numeric' });
 }
 
 function ChannelFilter({ channels, value, onChange }) {
   const total = channels.reduce((sum, item) => sum + Number(item.count || 0), 0);
-  const top = channels.slice(0, 7);
-  const rest = channels.slice(7);
-
+  const visible = channels.slice(0, 8);
   return (
     <section className="card stats-channel-filter">
-      <div className="section-title">
-        <h2>유입 채널</h2>
-      </div>
+      <div className="section-title"><h2>유입 채널</h2></div>
       <div className="stats-channel-filter-list">
         <button type="button" className={value === 'all' ? 'active' : ''} onClick={() => onChange('all')}>
-          <span>전체</span>
-          <b>{total}</b>
+          <span>전체</span><b>{total}</b>
         </button>
-        {top.map((item) => (
+        {visible.map((item) => (
           <button type="button" key={item.channel} className={value === item.channel ? 'active' : ''} onClick={() => onChange(item.channel)}>
-            <span>{statLabel(item.channel)}</span>
-            <b>{item.count}</b>
+            <span>{statLabel(item.channel)}</span><b>{item.count}</b>
           </button>
         ))}
-        {rest.length > 0 && (
-          <select value={rest.some((item) => item.channel === value) ? value : ''} onChange={(event) => event.target.value && onChange(event.target.value)} aria-label="추가 유입 채널">
-            <option value="">기타 {rest.length}개</option>
-            {rest.map((item) => (
-              <option key={item.channel} value={item.channel}>{statLabel(item.channel)} {item.count}</option>
-            ))}
-          </select>
-        )}
       </div>
     </section>
   );
@@ -190,33 +138,22 @@ function StatsTrend({ data }) {
   const y = (value) => padTop + plotH - (Number(value || 0) / max) * plotH;
   const points = (key) => data.map((row, index) => `${x(index).toFixed(1)},${y(row[key]).toFixed(1)}`).join(' ');
   const labelEvery = data.length <= 14 ? 1 : Math.ceil(data.length / 8);
-  const series = [
-    ['pv', '조회'],
-    ['cta', '클릭'],
-    ['db', '접수'],
-  ];
+  const series = [['pv', '조회'], ['cta', '클릭'], ['db', '접수']];
   const hoverTop = (row) => Math.min(y(row.pv), y(row.cta), y(row.db));
 
   return (
-    <div className="stats-line-chart stats-trend-line stats-line-plot" role="img" aria-label="선택 기간 조회, 클릭, 접수 흐름 차트">
+    <div className="stats-line-chart stats-trend-line stats-line-plot" role="img" aria-label="방문, 클릭, 접수 흐름 차트">
       <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-hidden="true" onMouseLeave={() => setHover(null)}>
         {[0.25, 0.5, 0.75, 1].map((ratio) => (
           <line key={ratio} className="guide" x1={padX} x2={width - padX} y1={padTop + plotH * ratio} y2={padTop + plotH * ratio} />
         ))}
-        {series.map(([key]) => (
-          <polyline key={key} className={`line ${key}`} points={points(key)} />
-        ))}
+        {series.map(([key]) => <polyline key={key} className={`line ${key}`} points={points(key)} />)}
         {series.map(([key]) => data.map((row, index) => (
           <circle key={`${key}-${row.id || index}`} className={`dot ${key}`} cx={x(index)} cy={y(row[key])} r="4" />
         )))}
         {data.map((row, index) => {
           const show = index === 0 || index === data.length - 1 || index % labelEvery === 0;
-          if (!show) return null;
-          return (
-            <text key={row.id || row.label} className="axis-label" x={x(index)} y={height - 10} textAnchor="middle">
-              {row.label}
-            </text>
-          );
+          return show ? <text key={row.id || row.label} className="axis-label" x={x(index)} y={height - 10} textAnchor="middle">{row.label}</text> : null;
         })}
         {data.map((row, index) => (
           <rect
@@ -238,9 +175,7 @@ function StatsTrend({ data }) {
           <em>클릭 {Number(hover.row.cta || 0).toLocaleString('ko-KR')} / 접수 {Number(hover.row.db || 0).toLocaleString('ko-KR')}</em>
         </div>
       )}
-      <div className="trend-legend">
-        {series.map(([key, label]) => <b key={key}><i className={key} />{label}</b>)}
-      </div>
+      <div className="trend-legend">{series.map(([key, label]) => <b key={key}><i className={key} />{label}</b>)}</div>
     </div>
   );
 }
@@ -248,7 +183,6 @@ function StatsTrend({ data }) {
 function StatCard({ title, data }) {
   const entries = Object.entries(data || {}).sort((a, b) => b[1] - a[1]);
   const max = Math.max(1, ...entries.map(([, value]) => value));
-
   return (
     <section className="card stat-card-v2">
       <div className="section-title"><h2>{title}</h2></div>
@@ -259,38 +193,6 @@ function StatCard({ title, data }) {
               <span>{statLabel(key)}</span>
               <div><i style={{ width: `${Math.max(4, Number(value || 0) / max * 100)}%` }} /></div>
               <b>{value}</b>
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
-
-function recentDeliveryLogs(leads = []) {
-  return leads
-    .flatMap((lead) => (lead.delivery?.logs || []).map((log) => ({
-      ...log,
-      leadId: lead.id,
-      leadName: lead.name || leadPrimaryContact(lead) || '이름 없음',
-      at: log.at || lead.updatedAt || lead.createdAt || '',
-    })))
-    .sort((a, b) => new Date(b.at || 0).getTime() - new Date(a.at || 0).getTime())
-    .slice(0, 8);
-}
-
-function DeliveryLogCard({ logs = [] }) {
-  return (
-    <section className="card stat-card-v2 stats-delivery-log-card">
-      <div className="section-title"><h2>전송 로그</h2></div>
-      {!logs.length ? <div className="empty">전송 로그 없음</div> : (
-        <div className="stat-list stat-list-v2">
-          {logs.map((log, index) => (
-            <div className="stat-row stat-row-v2" key={`${log.leadId || log.target}-${log.at || index}`}>
-              <span>{log.target || log.provider || '외부 전송'}</span>
-              <div><i style={{ width: log.status === 'success' ? '100%' : '38%' }} /></div>
-              <b>{log.status === 'success' ? '준비됨' : log.status === 'failed' ? '실패' : '확인 필요'}</b>
-              <small>{log.leadName} · {fmtDateOnly(log.at)}</small>
             </div>
           ))}
         </div>
@@ -347,9 +249,7 @@ export default function StatsPanel({
 
   const channelOptions = useMemo(() => {
     if (serverMode) {
-      return stableChannelOptions(Object.entries(baseStats.channelOptionsData || {})
-        .map(([channelName, count]) => ({ channel: channelName, count }))
-        .sort((a, b) => b.count - a.count));
+      return stableChannelOptions(Object.entries(baseStats.channelOptionsData || {}).map(([channelName, count]) => ({ channel: channelName, count })));
     }
     return stableChannelOptions(buildChannelOptions(baseStats.filteredEvents, baseStats.filteredLeads));
   }, [baseStats, serverMode]);
@@ -361,29 +261,23 @@ export default function StatsPanel({
     return buildStatsMetrics(scopedEvents, scopedLeads, period);
   }, [baseStats, period, scopedEvents, scopedLeads, serverMode]);
   const partialData = hasPartialStatsData({ statsPartial, eventPageMeta, leadPageMeta });
-  const deliveryLogs = useMemo(() => recentDeliveryLogs(stats.filteredLeads), [stats.filteredLeads]);
 
   useEffect(() => {
-    if (channelFilter === 'all') return;
-    if (!channelOptions.some((item) => item.channel === channelFilter)) setChannel('all');
+    if (channelFilter !== 'all' && !channelOptions.some((item) => item.channel === channelFilter)) setChannel('all');
   }, [channelFilter, channelOptions]);
 
   return (
     <div className="simple-panel stats-panel stats-v2 stats-v3">
       <section className="card period-card stats-period-card">
-        <div className="section-title">
-          <h2>기간 통계</h2>
-        </div>
+        <div className="section-title"><h2>상세 통계</h2></div>
         <div className="stats-period-controls">
           <div className="period-tabs period-tabs-v2 stats-range-tabs" aria-label="통계 기간">
             {PERIOD_OPTIONS.map(([value, label]) => (
-              <button type="button" key={value} className={period === value ? 'active' : ''} onClick={() => setPeriod(value)}>
-                {label}
-              </button>
+              <button type="button" key={value} className={period === value ? 'active' : ''} onClick={() => setPeriod(value)}>{label}</button>
             ))}
           </div>
           <label className="stats-month-control">
-            <span>조회 월</span>
+            <span>월 선택</span>
             <input type="month" value={month} onChange={(event) => setMonth(event.target.value)} />
           </label>
         </div>
@@ -391,11 +285,7 @@ export default function StatsPanel({
 
       <ChannelFilter channels={channelOptions} value={channelFilter} onChange={setChannel} />
 
-      {partialData && (
-        <div className="stats-partial-notice" role="status">
-          일부 데이터만 불러온 상태입니다. 서버 집계 연결 상태를 확인하세요.
-        </div>
-      )}
+      {partialData && <div className="stats-partial-notice" role="status">일부 데이터만 불러온 상태입니다. 서버 집계 기준으로 확인하세요.</div>}
 
       <section className="stats-grid stats-summary stats-summary-v2 stats-summary-v3">
         <Metric title="조회" value={stats.pv} sub="방문" />
@@ -407,9 +297,7 @@ export default function StatsPanel({
       </section>
 
       <section className="card stats-trend-card">
-        <div className="section-title">
-          <h2>방문·접수 통계</h2>
-        </div>
+        <div className="section-title"><h2>방문·접수</h2></div>
         <StatsTrend data={stats.trend} />
       </section>
 
@@ -419,8 +307,6 @@ export default function StatsPanel({
       </section>
 
       <section className="stats-columns stats-columns-v3 stats-columns-four">
-        <StatCard title="외부 전송" data={stats.deliveryData} />
-        <DeliveryLogCard logs={deliveryLogs} />
         <StatCard title="CTA 클릭 위치" data={serverMode ? stats.ctaLabelData : ctaClickData(stats.filteredEvents, page)} />
         <StatCard title="유입 기기" data={serverMode ? stats.deviceData : countByMetrics(stats.filteredEvents, 'device')} />
         <StatCard title="유입 채널" data={serverMode ? stats.channelData : stats.channelData} />
@@ -439,7 +325,6 @@ export default function StatsPanel({
                 <b>{lead.name || '이름 없음'}</b>
                 <em>{leadPrimaryContact(lead)}</em>
                 <small title={fmtDateOnly(lead.createdAt)}>{fmtDateOnly(lead.createdAt)}</small>
-                <i className={`delivery-badge ${deliveryStatusClass(lead.delivery?.status)}`}>{deliveryStatusLabel(lead.delivery?.status)}</i>
               </div>
             ))}
           </div>
