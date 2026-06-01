@@ -1,5 +1,7 @@
 import { isValidEmailAddress, sendSesEmail } from '../_ses.js';
 
+const SUPPORT_EMAIL = 'support@pagero.kr';
+
 export function deliveryReport(status = 'none', summary = '알림 전송 설정 없음', logs = []) {
   return { status, summary, logs };
 }
@@ -138,7 +140,7 @@ function summarizeDelivery(logs = []) {
 
 function shouldSendEmailForLead(email = {}, lead = {}) {
   const type = String(lead.type || lead.kind || '');
-  if (/예약|reservation|booking|reserve/i.test(type)) return email.reservation !== false;
+  if (/예약|방문|reservation|booking|reserve/i.test(type)) return email.reservation !== false;
   return email.consult !== false;
 }
 
@@ -164,7 +166,7 @@ function leadEmailText(lead = {}, page = {}) {
     ...(answerLines.length ? answerLines : ['- 추가 입력 없음']),
     '',
     '이 메일은 페이지로 접수 알림 설정에 따라 발송되었습니다.',
-    '본인이 요청하지 않았다면 support@pagero.kr 로 문의해주세요.',
+    `본인이 요청하지 않았다면 고객센터에 문의해주세요. 고객센터: ${SUPPORT_EMAIL}`,
   ].join('\n');
 }
 
@@ -202,7 +204,7 @@ function leadEmailHtml(lead = {}, page = {}) {
       <table style="width:100%;border-collapse:collapse;border:1px solid #e5edf6;border-radius:16px;overflow:hidden;">${renderRows(rows)}</table>
       <h2 style="margin:22px 0 10px;font-size:16px;">입력 내용</h2>
       <table style="width:100%;border-collapse:collapse;border:1px solid #e5edf6;border-radius:16px;overflow:hidden;">${renderRows(answerRows)}</table>
-      <p style="margin:20px 0 0;color:#64748b;font-size:12px;line-height:1.7;">이 메일은 페이지로 접수 알림 설정에 따라 발송되었습니다. 본인이 요청하지 않았다면 <a href="mailto:support@pagero.kr" style="color:#2563eb;text-decoration:none;">support@pagero.kr</a> 로 문의해주세요.</p>
+      <p style="margin:20px 0 0;color:#64748b;font-size:12px;line-height:1.7;">이 메일은 페이지로 접수 알림 설정에 따라 발송되었습니다. 본인이 요청하지 않았다면 <a href="mailto:${SUPPORT_EMAIL}" style="color:#2563eb;text-decoration:none;">${SUPPORT_EMAIL}</a>로 문의해주세요.</p>
     </div>
   </div>
 </body>
