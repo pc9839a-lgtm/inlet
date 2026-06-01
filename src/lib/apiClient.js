@@ -54,10 +54,10 @@ function userFacingApiMessage(message = '', status = 0) {
     return '현재 로그인 세션이 다른 페이지에 연결되어 있습니다. 새로고침 후 다시 저장해주세요.';
   }
   if (/Project access is required|Project access has not been granted|Project access denied/i.test(text)) {
-    return '현재 계정에 이 페이지 접근 권한이 없습니다. 다시 로그인하거나 페이지 소유 계정을 확인해주세요.';
+    return '현재 계정에는 이 페이지 접근 권한이 없습니다. 다시 로그인하거나 페이지 소유 계정을 확인해주세요.';
   }
   if (/Project write access denied/i.test(text)) {
-    return '현재 계정에 이 페이지 저장 권한이 없습니다. 마스터 계정 또는 편집 권한을 확인해주세요.';
+    return '현재 계정에는 이 페이지 저장 권한이 없습니다. 마스터 계정 또는 편집 권한을 확인해주세요.';
   }
   if (/projectId is required/i.test(text)) {
     return '프로젝트 정보가 누락되었습니다. 페이지를 다시 저장하거나 새로고침 후 다시 시도해주세요.';
