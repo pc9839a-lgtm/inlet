@@ -20,18 +20,18 @@ import { currentMonthValue, monthDateRange } from '../lib/monthRange.js';
 import './InboxPanel.css';
 
 const DUPLICATE_TEXT = {
-  title: '중복 접수 차단',
-  subtitle: '같은 방문자가 반복 제출할 때 접수, 표시, 차단 기준을 정합니다.',
+  title: '중복 차단',
+  subtitle: '같은 방문자의 반복 접수를 표시하거나 차단합니다.',
   ip: 'IP 중복 차단',
   ipDesc: '같은 IP에서 기준 횟수 이상 접수하면 차단합니다.',
   cookie: '쿠키 중복 차단',
   cookieDesc: '같은 브라우저에서 반복 접수하면 차단합니다.',
   count: '차단 기준',
-  countDesc: '선택 기간 안에서 몇 번째 접수부터 막을지 정합니다.',
-  window: '중복 확인 기간',
-  windowDesc: '반복 접수 여부를 확인할 기간입니다.',
-  contact: '연락처/이메일 중복',
-  contactDesc: '같은 연락처나 이메일이 다시 들어올 때의 처리 방식입니다.',
+  countDesc: '선택한 기간 안에서 몇 번째 접수부터 막을지 정합니다.',
+  window: '확인 기간',
+  windowDesc: '반복 접수를 검사할 기간입니다.',
+  contact: '연락처/이메일',
+  contactDesc: '같은 연락처나 이메일이 다시 들어올 때 처리합니다.',
   history: '차단 내역',
   historyDesc: '차단된 접수만 월별로 확인합니다.',
   refresh: '조회',
@@ -69,8 +69,8 @@ const DUPLICATE_CONTACT_OPTIONS = [
 const CONNECTION_COPY = {
   internal: {
     title: '접수 저장',
-    summary: '모든 접수는 페이지로 서버 접수함에 먼저 저장됩니다.',
-    status: '항상 켜짐',
+    summary: '모든 접수는 먼저 서버 접수함에 저장됩니다.',
+    status: '정상 저장',
   },
   email: {
     title: '이메일 알림',
@@ -81,13 +81,14 @@ const CONNECTION_COPY = {
     summary: 'Zapier, Make, CRM 같은 외부 도구로 접수 데이터를 보냅니다.',
   },
 };
+
 const BLOCK_REASON_LABELS = {
-  phone_duplicate: '\uc5f0\ub77d\ucc98 \uc911\ubcf5',
-  email_duplicate: '\uc774\uba54\uc77c \uc911\ubcf5',
-  client_duplicate_limit: '\ucfe0\ud0a4 \uc911\ubcf5',
-  ip_duplicate_limit: 'IP \uc911\ubcf5',
-  ip_rate_limit_1m: 'IP \uacfc\ub2e4 \uc81c\ucd9c',
-  rate_limited: '\uc81c\ucd9c \uc81c\ud55c',
+  phone_duplicate: '연락처 중복',
+  email_duplicate: '이메일 중복',
+  client_duplicate_limit: '쿠키 중복',
+  ip_duplicate_limit: 'IP 중복',
+  ip_rate_limit_1m: 'IP 과다 제출',
+  rate_limited: '제출 제한',
 };
 
 function normalizeDuplicateSettings(settings = {}) {
@@ -106,7 +107,7 @@ function normalizeDuplicateSettings(settings = {}) {
 
 function blockedReason(reason) {
   const key = String(reason || '').trim();
-  return BLOCK_REASON_LABELS[key] || key || '\ucc28\ub2e8';
+  return BLOCK_REASON_LABELS[key] || key || '차단';
 }
 
 function blockedIdentity(item = {}) {
@@ -204,11 +205,12 @@ function IntakeDuplicatePolicyPanel({ page, authUser, updatePage }) {
       ? page.blockedLeadHistory
       : [];
   const visibleHistory = history.records.length || history.error || history.loading ? history.records : localHistory;
+  const windowLabel = DUPLICATE_LIMIT_WINDOWS.find(([value]) => value === settings.formDuplicateLimitWindow)?.[1] || '1일';
   const policyChips = [
     settings.rejectIpDuplicate ? 'IP 차단' : 'IP 허용',
     settings.rejectCookieDuplicate ? '쿠키 차단' : '쿠키 허용',
     settings.phoneEmailMode === 'block' ? '연락처 차단' : '중복 표시',
-    `${DUPLICATE_LIMIT_WINDOWS.find(([value]) => value === settings.formDuplicateLimitWindow)?.[1] || '1일'} 기준`,
+    `${windowLabel} 기준`,
   ];
 
   const save = (patch) => {
@@ -372,7 +374,7 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
           {result && <div className={`connection-result ${result.ok ? 'ok' : 'error'}`}><strong>{result.ok ? '저장됨' : '저장 실패'}</strong><span>{result.message}</span></div>}
 
           <ConnectionItem title={CONNECTION_COPY.internal.title} description={CONNECTION_COPY.internal.summary} state={connectionState('internal', integrations)} opened={false} onOpen={() => {}} summary={connectionSummary('internal', integrations)}>
-            <div className="connection-form-box compact-line"><div className="connection-inline-control readonly"><span>상태</span><b>항상 저장</b></div></div>
+            <div className="connection-form-box compact-line"><div className="connection-inline-control readonly"><span>상태</span><b>정상 저장</b></div></div>
           </ConnectionItem>
 
           <ConnectionItem title={CONNECTION_COPY.email.title} description={CONNECTION_COPY.email.summary} state={connectionState('email', integrations)} opened={true} onOpen={() => {}} summary={connectionSummary('email', integrations)} actions={<button type="button" className="save-connection-btn" disabled={savingType === 'email'} onClick={() => saveSection('email')}>{savingType === 'email' ? '저장 중' : '저장'}</button>}>
@@ -396,6 +398,7 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
     </section>
   );
 }
+
 function StatusPills({ value, onChange }) {
   return (
     <div className="status-pill-row">
