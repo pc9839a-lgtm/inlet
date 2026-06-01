@@ -1048,21 +1048,29 @@ function App() {
 
     persistLead(savedLead, targetPage, authUser)
       .then((persistedLead) => {
-        if (persistedLead) upsertVisibleLead({ ...savedLead, ...persistedLead });
         const leadForDelivery = normalizeLeadItem({ ...savedLead, ...(persistedLead || {}) });
-        return runLeadDeliveryForPage(leadForDelivery, targetPage).catch((error) => {
-        console.warn('Lead delivery failed after save:', error);
-        return {
-          status: 'failed',
-          summary: '접수는 저장됐지만 알림 전송은 실패했습니다.',
-          logs: [{ target: '알림 전송', status: 'failed', message: String(error?.message || error), at: new Date().toISOString() }],
-        };
+        const leadIds = [savedLead.id, leadForDelivery.id].filter(Boolean).map(String);
+        upsertVisibleLead(leadForDelivery);
+        if (isServerLeadMode() && persistedLead?.delivery) {
+          return { report: persistedLead.delivery, leadIds };
+        }
+        return runLeadDeliveryForPage(leadForDelivery, targetPage).then((report) => ({ report, leadIds })).catch((error) => {
+          console.warn('Lead delivery failed after save:', error);
+          return {
+            report: {
+              status: 'failed',
+              summary: '접수는 저장됐지만 알림 전송은 실패했습니다.',
+              logs: [{ target: '알림 전송', status: 'failed', message: String(error?.message || error), at: new Date().toISOString() }],
+            },
+            leadIds,
+          };
         });
       })
-      .then((report) => {
+      .then(({ report, leadIds } = {}) => {
         if (!report) return;
-        setLeads((list)=>list.map((item)=>item.id === savedLead.id ? { ...item, delivery: report } : item));
-        if (!isServerLeadMode()) syncLeadPatch(savedLead.id, { delivery: report });
+        const ids = Array.isArray(leadIds) && leadIds.length ? leadIds : [savedLead.id];
+        setLeads((list)=>list.map((item)=>ids.includes(String(item.id)) ? { ...item, delivery: report, deliveryStatus: report.status } : item));
+        if (!isServerLeadMode()) syncLeadPatch(savedLead.id, { delivery: report, deliveryStatus: report.status });
       })
       .catch((error)=>{
         console.warn('Lead save or delivery failed:', error);

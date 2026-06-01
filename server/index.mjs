@@ -2263,6 +2263,7 @@ function duplicateLeadPatch(reasons = new Set()) {
 
 function blockedLeadSubmissionRecord(policy = {}, lead = {}, project = {}) {
   const now = new Date().toISOString();
+  const createdAt = lead.submittedAt || lead.createdAt || now;
   const phone = lead.phoneNormalized || normalizeLeadPhone(lead.phone || lead.values?.phone || '');
   const email = lead.emailNormalized || normalizeLeadEmail(lead.email || lead.values?.email || '');
   const pageSlug = leadPageKey(lead) || project.slug || '';
@@ -2283,8 +2284,8 @@ function blockedLeadSubmissionRecord(policy = {}, lead = {}, project = {}) {
       phoneTail: phone ? phone.slice(-4) : '',
       emailDomain: email.includes('@') ? email.split('@').pop() : '',
     },
-    createdMonth: leadPolicyMonth(lead.submittedAt || lead.createdAt || now),
-    createdAt: now,
+    createdMonth: leadPolicyMonth(createdAt),
+    createdAt,
   };
 }
 

@@ -18,9 +18,9 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
   const page = { title: 'Smoke Leads', slug: 'smoke-leads' };
 
   const leadInputs = [
-    { id: 'lead-a', type: 'consult', status: 'new', name: 'Alpha', phone: '010-0000-0001', memo: 'alpha memo' },
-    { id: 'lead-b', type: 'reservation', status: 'new', name: 'Beta', phone: '010-0000-0002', memo: 'beta memo', values: { reservationDate: '2026-05-22', reservationTime: '10:30' } },
-    { id: 'lead-c', type: 'consult', status: 'done', name: 'Gamma', phone: '010-0000-0003', memo: 'gamma memo' },
+    { id: 'lead-a', type: 'consult', status: 'new', name: 'Alpha', phone: '010-0000-0001', memo: 'alpha memo', createdAt: '2026-05-21T03:00:00.000Z' },
+    { id: 'lead-b', type: 'reservation', status: 'new', name: 'Beta', phone: '010-0000-0002', memo: 'beta memo', createdAt: '2026-05-22T03:00:00.000Z', values: { reservationDate: '2026-05-22', reservationTime: '10:30' } },
+    { id: 'lead-c', type: 'consult', status: 'done', name: 'Gamma', phone: '010-0000-0003', memo: 'gamma memo', createdAt: '2026-05-23T03:00:00.000Z' },
   ];
 
   for (const lead of leadInputs) {
@@ -31,7 +31,7 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
   const duplicateSaved = await json({ baseUrl }, 'POST', '/api/leads', {
     project,
     page,
-    lead: { id: 'lead-a-duplicate', type: 'consult', status: 'new', name: 'Alpha Again', phone: '01000000001', clientId: 'client-repeat-a', ipHash: 'ip-smoke-duplicate' },
+    lead: { id: 'lead-a-duplicate', type: 'consult', status: 'new', name: 'Alpha Again', phone: '01000000001', clientId: 'client-repeat-a', ipHash: 'ip-smoke-duplicate', createdAt: '2026-05-21T03:00:10.000Z' },
   });
   assert(duplicateSaved.res.ok && duplicateSaved.data.lead?.duplicate, 'duplicate lead should be saved with duplicate metadata');
   assert(String(duplicateSaved.data.lead?.duplicateReason || '').includes('phone_30d'), 'duplicate reason should include phone_30d');
@@ -39,7 +39,7 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
   const clientRepeat = await json({ baseUrl }, 'POST', '/api/leads', {
     project,
     page,
-    lead: { id: 'lead-client-repeat', type: 'consult', status: 'new', name: 'Client Repeat', clientId: 'client-repeat-a', ipHash: 'ip-smoke-client' },
+    lead: { id: 'lead-client-repeat', type: 'consult', status: 'new', name: 'Client Repeat', clientId: 'client-repeat-a', ipHash: 'ip-smoke-client', createdAt: '2026-05-21T03:00:20.000Z' },
   });
   assert(clientRepeat.res.ok && clientRepeat.data.lead?.duplicate, 'client repeat should be saved as duplicate metadata');
   assert(String(clientRepeat.data.lead?.duplicateReason || '').includes('client_repeat_30m'), 'duplicate reason should include client_repeat_30m');
@@ -75,13 +75,13 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
   const policySeed = await json({ baseUrl }, 'POST', '/api/leads', {
     project: policyProject,
     page: policyPage,
-    lead: { id: 'policy-seed', type: 'consult', status: 'new', name: 'Policy Seed', phone: '010-7777-0001', clientId: 'policy-client', ipHash: 'ip-policy' },
+    lead: { id: 'policy-seed', type: 'consult', status: 'new', name: 'Policy Seed', phone: '010-7777-0001', clientId: 'policy-client', ipHash: 'ip-policy', createdAt: '2026-05-21T03:00:00.000Z' },
   });
   assert(policySeed.res.ok, 'policy seed lead should save');
   const policyBlocked = await json({ baseUrl }, 'POST', '/api/leads', {
     project: policyProject,
     page: policyPage,
-    lead: { id: 'policy-blocked', type: 'consult', status: 'new', name: 'Policy Blocked', phone: '01077770001', clientId: 'policy-client', ipHash: 'ip-policy' },
+    lead: { id: 'policy-blocked', type: 'consult', status: 'new', name: 'Policy Blocked', phone: '01077770001', clientId: 'policy-client', ipHash: 'ip-policy', createdAt: '2026-05-21T03:00:04.000Z' },
   });
   assert(policyBlocked.res.status === 429 && policyBlocked.data.code === 'LEAD_RATE_LIMITED', 'settings should block configured duplicate lead');
   assert(['phone_duplicate', 'client_duplicate_limit', 'ip_duplicate_limit'].includes(policyBlocked.data.reason), `unexpected policy block reason: ${policyBlocked.data.reason}`);

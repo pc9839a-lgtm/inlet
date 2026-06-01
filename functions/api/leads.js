@@ -224,6 +224,6 @@ function blockedLeadRecord(policy = {}, lead = {}, project = {}, page = {}) {
       emailDomain: email.includes('@') ? email.split('@').pop() : '',
     },
     createdMonth: monthFromLead(lead),
-    createdAt: new Date().toISOString(),
+    createdAt: lead.createdAt || new Date().toISOString(),
   };
 }

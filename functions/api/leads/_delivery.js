@@ -36,6 +36,7 @@ export function buildLeadDeliveryJobs(page = {}, lead = {}) {
   const integrations = page.integrations || {};
   const jobs = [];
   const email = integrations.email || {};
+
   if (email.enabled && isValidEmailAddress(email.to) && shouldSendEmailForLead(email, lead)) {
     jobs.push({
       type: 'email',
@@ -46,6 +47,7 @@ export function buildLeadDeliveryJobs(page = {}, lead = {}) {
       html: leadEmailHtml(lead, page),
     });
   }
+
   if (integrations.webhook?.enabled && isValidHttpUrl(integrations.webhook.url)) {
     jobs.push({
       type: 'webhook',
@@ -62,6 +64,7 @@ export function buildLeadDeliveryJobs(page = {}, lead = {}) {
       },
     });
   }
+
   return jobs.map((job) => ({
     ...job,
     idempotencyKey: deliveryIdempotencyKey(lead, job),
@@ -71,6 +74,7 @@ export function buildLeadDeliveryJobs(page = {}, lead = {}) {
 export async function sendLeadDelivery(lead = {}, page = {}, env = {}) {
   const jobs = buildLeadDeliveryJobs(page, lead);
   if (!jobs.length) return deliveryReport();
+
   const settled = await Promise.allSettled(jobs.map(async (job) => {
     const result = await runDeliveryJob(job, env);
     return {
@@ -82,6 +86,7 @@ export async function sendLeadDelivery(lead = {}, page = {}, env = {}) {
       at: new Date().toISOString(),
     };
   }));
+
   const logs = settled.map((item, index) => {
     const job = jobs[index] || {};
     if (item.status === 'fulfilled') return item.value;
@@ -94,6 +99,7 @@ export async function sendLeadDelivery(lead = {}, page = {}, env = {}) {
       at: new Date().toISOString(),
     };
   });
+
   return summarizeDelivery(logs);
 }
 
@@ -107,6 +113,7 @@ async function runDeliveryJob(job = {}, env = {}) {
     }, env);
     return { ok: true, message: result.messageId ? `전송 완료 ${result.messageId}` : '전송 완료' };
   }
+
   const res = await fetch(job.url, {
     method: 'POST',
     headers: {
@@ -117,6 +124,7 @@ async function runDeliveryJob(job = {}, env = {}) {
     body: JSON.stringify({ ...(job.payload || {}), idempotencyKey: job.idempotencyKey || '' }),
     signal: AbortSignal.timeout(10000),
   });
+
   return { ok: res.ok, message: res.ok ? '전송 완료' : `응답 확인 필요 ${res.status}` };
 }
 
@@ -140,11 +148,12 @@ function leadEmailText(lead = {}, page = {}) {
     const value = Array.isArray(answer.value) ? answer.value.join(', ') : String(answer.value || '-');
     return `- ${answer.label || answer.id || '항목'}: ${value}`;
   });
+
   return [
-    `${page.title || page.slug || '페이지로'}에 새 접수가 들어왔습니다.`,
+    `${page.title || page.slug || '페이지'}에 새 접수가 들어왔습니다.`,
     '',
     `접수 유형: ${lead.type || lead.kind || '-'}`,
-    `접수 시간: ${lead.createdAt || lead.submittedAt || '-'}`,
+    `접수 시간: ${formatKoreanDateTime(lead.createdAt || lead.submittedAt)}`,
     `이름: ${lead.name || '-'}`,
     `연락처: ${lead.phone || '-'}`,
     `이메일: ${lead.email || '-'}`,
@@ -153,12 +162,51 @@ function leadEmailText(lead = {}, page = {}) {
     '',
     '[입력 내용]',
     ...(answerLines.length ? answerLines : ['- 추가 입력 없음']),
+    '',
+    '이 메일은 페이지로 접수 알림 설정에 따라 발송되었습니다.',
+    '본인이 요청하지 않았다면 support@pagero.kr 로 문의해주세요.',
   ].join('\n');
 }
 
 function leadEmailHtml(lead = {}, page = {}) {
-  const rows = leadEmailText(lead, page).split('\n').map(escapeHtml).join('<br>');
-  return `<!doctype html><html lang="ko"><body style="margin:0;background:#f3f6fb;padding:28px 16px;font-family:Arial,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:#111827;"><div style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #dbe4f0;border-radius:22px;overflow:hidden;box-shadow:0 16px 44px rgba(15,23,42,.10);"><div style="padding:24px 26px;background:#111827;color:#fff;"><strong style="font-size:20px;">페이지로</strong><p style="margin:8px 0 0;color:#dbeafe;font-size:14px;">새 접수 알림</p></div><div style="padding:26px;font-size:15px;line-height:1.7;">${rows}</div></div></body></html>`;
+  const rows = [
+    ['접수 유형', lead.type || lead.kind || '-'],
+    ['접수 시간', formatKoreanDateTime(lead.createdAt || lead.submittedAt)],
+    ['이름', lead.name || '-'],
+    ['연락처', lead.phone || '-'],
+    ['이메일', lead.email || '-'],
+    ['주소', lead.address || '-'],
+    ['문의 내용', lead.message || '-'],
+  ];
+  const answers = Array.isArray(lead.answers) ? lead.answers : [];
+  const answerRows = answers.length
+    ? answers.map((answer) => [answer.label || answer.id || '항목', Array.isArray(answer.value) ? answer.value.join(', ') : String(answer.value || '-')])
+    : [['추가 입력', '없음']];
+  const renderRows = (items) => items.map(([label, value]) => `
+    <tr>
+      <th style="width:116px;padding:12px 14px;background:#f8fafc;border-bottom:1px solid #e5edf6;color:#64748b;font-size:13px;text-align:left;vertical-align:top;">${escapeHtml(label)}</th>
+      <td style="padding:12px 14px;border-bottom:1px solid #e5edf6;color:#111827;font-size:14px;line-height:1.55;word-break:break-word;">${escapeHtml(value)}</td>
+    </tr>
+  `).join('');
+
+  return `<!doctype html>
+<html lang="ko">
+<body style="margin:0;background:#f3f6fb;padding:28px 16px;font-family:Arial,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:#111827;">
+  <div style="max-width:640px;margin:0 auto;background:#fff;border:1px solid #dbe4f0;border-radius:24px;overflow:hidden;box-shadow:0 16px 44px rgba(15,23,42,.10);">
+    <div style="padding:24px 26px;background:#0f172a;color:#fff;">
+      <div style="display:inline-block;padding:8px 12px;border-radius:999px;background:#2563eb;color:#fff;font-size:13px;font-weight:900;letter-spacing:.02em;">페이지로</div>
+      <h1 style="margin:16px 0 0;font-size:24px;line-height:1.25;">새 접수가 들어왔습니다</h1>
+      <p style="margin:8px 0 0;color:#dbeafe;font-size:14px;line-height:1.5;">${escapeHtml(page.title || page.slug || '랜딩페이지')}</p>
+    </div>
+    <div style="padding:24px 26px;">
+      <table style="width:100%;border-collapse:collapse;border:1px solid #e5edf6;border-radius:16px;overflow:hidden;">${renderRows(rows)}</table>
+      <h2 style="margin:22px 0 10px;font-size:16px;">입력 내용</h2>
+      <table style="width:100%;border-collapse:collapse;border:1px solid #e5edf6;border-radius:16px;overflow:hidden;">${renderRows(answerRows)}</table>
+      <p style="margin:20px 0 0;color:#64748b;font-size:12px;line-height:1.7;">이 메일은 페이지로 접수 알림 설정에 따라 발송되었습니다. 본인이 요청하지 않았다면 <a href="mailto:support@pagero.kr" style="color:#2563eb;text-decoration:none;">support@pagero.kr</a> 로 문의해주세요.</p>
+    </div>
+  </div>
+</body>
+</html>`;
 }
 
 function deliveryIdempotencyKey(lead = {}, job = {}) {
@@ -183,10 +231,20 @@ function safeDeliveryErrorMessage(error) {
   if (code === 'EMAIL_SEND_NOT_CONFIGURED') return '메일 전송 설정이 필요합니다.';
   if (code === 'EMAIL_TO_INVALID') return '받을 이메일 주소를 확인해주세요.';
   if (code === 'EMAIL_SEND_TIMEOUT') return '메일 전송 시간이 초과되었습니다.';
-  if (code === 'EMAIL_SEND_SANDBOX_REJECTED') return '현재 SES 샌드박스 상태라 수신자 제한이 있습니다.';
+  if (code === 'EMAIL_SEND_SANDBOX_REJECTED') return 'SES 샌드박스 상태에서는 인증된 수신자에게만 보낼 수 있습니다.';
   if (code === 'EMAIL_DOMAIN_NOT_VERIFIED') return '발신 도메인 인증을 확인해주세요.';
   if (code === 'EMAIL_SEND_QUOTA_EXCEEDED') return '메일 전송 한도를 초과했습니다.';
   return String(error?.providerMessage || error?.message || error || '전송 실패');
+}
+
+function formatKoreanDateTime(value) {
+  const date = value ? new Date(value) : null;
+  if (!date || Number.isNaN(date.getTime())) return '-';
+  return new Intl.DateTimeFormat('ko-KR', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+    timeZone: 'Asia/Seoul',
+  }).format(date);
 }
 
 function escapeHtml(value = '') {
