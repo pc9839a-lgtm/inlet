@@ -1,31 +1,184 @@
-﻿export function generateStandaloneFormHtml(form){
-  const safe = {
-    title: form?.title || '상담 신청',
-    desc: form?.desc || '',
-    submit: form?.submit || '신청하기',
-    successTitle: form?.successTitle || '상담 신청 완료',
-    success: form?.success || '상담 신청이 접수되었습니다.',
-    privacy: form?.privacy || '개인정보 수집 및 이용에 동의합니다.',
-    privacyRequired: form?.privacyRequired ?? true,
-    privacyDetail: form?.privacyDetail || '',
-    questions: Array.isArray(form?.questions) ? form.questions : [],
-  };
-  const data = JSON.stringify(safe).replace(/</g,'\\u003c');
-  return `<!-- 페이지로 Form Embed Start -->
-<div id="inlet-form-root"></div>
-<script>window.INLET_FORM_CONFIG=${data};window.INLET_WEBHOOK_URL=window.INLET_WEBHOOK_URL||'';</script>
-<script>
-(function(){
-var cfg=window.INLET_FORM_CONFIG||{},root=document.getElementById('inlet-form-root'),brand='페이지로'; if(!root)return;
-function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(s){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s];});}
-function notice(msg){var box=root.querySelector('[data-inlet-notice]');if(!box){box=document.createElement('div');box.setAttribute('data-inlet-notice','true');box.style.cssText='margin:10px 0;padding:10px 12px;border-radius:12px;background:#fee2e2;color:#991b1b;font-size:13px;font-weight:800;line-height:1.4';root.querySelector('.inlet-form')?.prepend(box);}box.textContent=msg;}
-function loadPostcode(cb){if(window.daum&&window.daum.Postcode)return cb(true);var old=document.querySelector('script[data-daum-postcode="true"]');if(old){old.addEventListener('load',function(){cb(true)},{once:true});old.addEventListener('error',function(){cb(false)},{once:true});return;}var s=document.createElement('script');s.src='https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js';s.async=true;s.dataset.daumPostcode='true';s.onload=function(){cb(true)};s.onerror=function(){cb(false)};document.head.appendChild(s);}
-function field(q){var req=q.required?' required':'',ph=esc(q.placeholder||q.label||'');if(q.type==='long')return '<textarea name="'+esc(q.id)+'" placeholder="'+ph+'"'+req+'></textarea>';if(q.type==='email')return '<input type="email" inputmode="email" autocomplete="email" name="'+esc(q.id)+'" placeholder="'+ph+'"'+req+'>';if(q.type==='phone')return '<input type="tel" inputmode="tel" autocomplete="tel" name="'+esc(q.id)+'" placeholder="'+ph+'"'+req+'>';if(q.type==='name')return '<input type="text" autocomplete="name" name="'+esc(q.id)+'" placeholder="'+ph+'"'+req+'>';if(q.type==='address')return '<div class="inlet-address" data-address-id="'+esc(q.id)+'"><button type="button" data-address-button="'+esc(q.id)+'">주소 검색</button><input type="text" name="'+esc(q.id)+'_base" placeholder="'+ph+'" readonly'+req+'><input type="text" name="'+esc(q.id)+'_detail" placeholder="상세주소"><input type="hidden" name="'+esc(q.id)+'_postcode"></div>';if(q.type==='select')return '<select name="'+esc(q.id)+'"'+req+'><option value="">'+esc(q.label)+'</option>'+(q.options||[]).map(function(o){return '<option>'+esc(o)+'</option>'}).join('')+'</select>';if(q.type==='multi')return '<div class="inlet-multi"><span>'+esc(q.label)+(q.required?' *':'')+'</span>'+(q.options||[]).map(function(o){return '<label><input type="checkbox" name="'+esc(q.id)+'" value="'+esc(o)+'"> '+esc(o)+'</label>'}).join('')+'</div>';return '<input type="text" name="'+esc(q.id)+'" placeholder="'+ph+'"'+req+'>';}
-root.innerHTML='<style>.inlet-form{max-width:520px;margin:0 auto;padding:24px;border:1px solid #e5e7eb;border-radius:24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#fff;color:#111827}.inlet-form h2{margin:0 0 8px;font-size:26px;letter-spacing:-.04em}.inlet-form p{margin:0 0 18px;color:#64748b;line-height:1.6}.inlet-form form{display:grid;gap:12px}.inlet-form input,.inlet-form textarea,.inlet-form select{width:100%;min-height:48px;border:1px solid #dbe3ef;border-radius:14px;padding:0 14px;font:inherit}.inlet-form textarea{min-height:110px;padding:13px 14px}.inlet-form button[type=submit],.inlet-address button{min-height:50px;border:0;border-radius:15px;background:#111827;color:#fff;font-weight:800;cursor:pointer}.inlet-address{display:grid;gap:8px}.inlet-multi{display:grid;gap:8px;padding:13px;border:1px solid #dbe3ef;border-radius:14px}.inlet-multi span{font-weight:800}.inlet-multi label,.inlet-agree{font-size:14px;color:#334155}.inlet-brand{margin-top:14px;text-align:center;font-size:12px;color:#94a3b8}.inlet-success{padding:24px;text-align:center;border-radius:20px;background:#f8fafc}.inlet-detail{white-space:pre-line;padding:12px;border-radius:12px;background:#f8fafc;color:#64748b;font-size:12px}</style><div class="inlet-form"><h2>'+esc(cfg.title)+'</h2><p>'+esc(cfg.desc)+'</p><form>'+(cfg.questions||[]).map(field).join('')+'<label class="inlet-agree"><input type="checkbox" '+(cfg.privacyRequired?'required':'')+'> '+esc(cfg.privacy)+'</label>'+(cfg.privacyDetail?'<details><summary>개인정보 내용 보기</summary><div class="inlet-detail">'+esc(cfg.privacyDetail)+'</div></details>':'')+'<button type="submit">'+esc(cfg.submit)+'</button></form><div class="inlet-brand">Made with '+brand+'</div></div>';
-root.querySelectorAll('[data-address-button]').forEach(function(btn){btn.addEventListener('click',function(){var id=btn.getAttribute('data-address-button');loadPostcode(function(ok){if(!ok||!window.daum||!window.daum.Postcode){notice('주소검색을 불러오지 못했습니다.');return;}new window.daum.Postcode({oncomplete:function(data){var wrap=root.querySelector('[data-address-id="'+id+'"]');if(!wrap)return;var base=data.roadAddress||data.jibunAddress||'';wrap.querySelector('[name="'+id+'_base"]').value=base;wrap.querySelector('[name="'+id+'_postcode"]').value=data.zonecode||'';}}).open();});});});
-root.querySelector('form').addEventListener('submit',function(e){e.preventDefault();var fd=new FormData(e.target),values={};cfg.questions.forEach(function(q){if(q.type==='multi')values[q.label]=fd.getAll(q.id);else if(q.type==='address')values[q.label]=[fd.get(q.id+'_postcode'),fd.get(q.id+'_base'),fd.get(q.id+'_detail')].filter(Boolean).join(' ');else values[q.label]=fd.get(q.id)||'';});var payload={brand:brand,type:'상담신청',title:cfg.title,values:values,createdAt:new Date().toISOString(),pageUrl:location.href};var done=function(){root.querySelector('.inlet-form').innerHTML='<div class="inlet-success"><h2>'+esc(cfg.successTitle)+'</h2><p>'+esc(cfg.success)+'</p><div class="inlet-brand">Made with '+brand+'</div></div>'};if(window.INLET_WEBHOOK_URL){fetch(window.INLET_WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(done).catch(function(){notice('전송에 실패했습니다.')});}else{try{var saved=JSON.parse(localStorage.getItem('inlet_form_leads')||'[]');saved.unshift(payload);localStorage.setItem('inlet_form_leads',JSON.stringify(saved.slice(0,200)));}catch(err){}done();}});
-})();
-</script>
-<!-- 페이지로 Form Embed End -->`;
+const DEFAULT_API_URL = 'https://pagero.kr/api/leads';
+
+function escapeHtml(value = '') {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
+function safeText(value = '', fallback = '') {
+  const text = String(value ?? '').trim();
+  return text || fallback;
+}
+
+function normalizeQuestion(question = {}) {
+  return {
+    id: safeText(question.id, `q_${Math.random().toString(36).slice(2, 8)}`),
+    label: safeText(question.label, '질문'),
+    type: safeText(question.type, 'short'),
+    required: !!question.required,
+    placeholder: safeText(question.placeholder, ''),
+    options: Array.isArray(question.options) ? question.options.map((item) => safeText(item)).filter(Boolean) : [],
+  };
+}
+
+function normalizePage(page = {}) {
+  const projectId = safeText(page.projectId || page.id || '');
+  const slug = safeText(page.slug || '');
+  return {
+    id: safeText(page.id || ''),
+    projectId,
+    slug,
+    title: safeText(page.title || page.name || ''),
+  };
+}
+
+function fieldMarkup(question = {}) {
+  const id = `inlet-${escapeHtml(question.id)}`;
+  const required = question.required ? ' required' : '';
+  const placeholder = escapeHtml(question.placeholder || question.label || '');
+  const label = `${escapeHtml(question.label)}${question.required ? '<b>*</b>' : ''}`;
+  if (question.type === 'long') {
+    return `<label class="inlet-form-field" for="${id}"><span>${label}</span><textarea id="${id}" name="${escapeHtml(question.id)}" placeholder="${placeholder}"${required}></textarea></label>`;
+  }
+  if (question.type === 'select') {
+    const options = question.options.length ? question.options : ['선택 1', '선택 2'];
+    return `<label class="inlet-form-field" for="${id}"><span>${label}</span><select id="${id}" name="${escapeHtml(question.id)}"${required}><option value="">선택</option>${options.map((option) => `<option value="${escapeHtml(option)}">${escapeHtml(option)}</option>`).join('')}</select></label>`;
+  }
+  if (question.type === 'multi') {
+    const options = question.options.length ? question.options : ['선택 1', '선택 2'];
+    return `<fieldset class="inlet-form-field inlet-form-checks"><legend>${label}</legend>${options.map((option, index) => `<label><input type="checkbox" name="${escapeHtml(question.id)}" value="${escapeHtml(option)}"${index === 0 && question.required ? ' data-required-group="1"' : ''}>${escapeHtml(option)}</label>`).join('')}</fieldset>`;
+  }
+  const inputType = question.type === 'email' ? 'email' : question.type === 'phone' ? 'tel' : 'text';
+  return `<label class="inlet-form-field" for="${id}"><span>${label}</span><input id="${id}" type="${inputType}" name="${escapeHtml(question.id)}" placeholder="${placeholder}"${required}></label>`;
+}
+
+export function generateStandaloneFormHtml(form = {}, page = {}) {
+  const safePage = normalizePage(page);
+  const questions = Array.isArray(form.questions) ? form.questions.map(normalizeQuestion) : [];
+  const config = {
+    apiUrl: DEFAULT_API_URL,
+    brand: '페이지로',
+    formId: safeText(form.id || form.blockId || ''),
+    title: safeText(form.title, '상담 신청'),
+    desc: safeText(form.desc || ''),
+    submit: safeText(form.submit, '접수하기'),
+    successTitle: safeText(form.successTitle, '접수 완료'),
+    success: safeText(form.success, '접수가 완료되었습니다. 확인 후 연락드리겠습니다.'),
+    privacy: safeText(form.privacy, '개인정보 수집 및 이용에 동의합니다.'),
+    privacyRequired: form.privacyRequired !== false,
+    page: safePage,
+    project: {
+      projectId: safePage.projectId,
+      slug: safePage.slug,
+    },
+    questions,
+  };
+
+  return `<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escapeHtml(config.title)}</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f6fb;color:#101827;font-family:Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}.inlet-form-wrap{width:min(100%,520px);margin:0 auto;padding:20px}.inlet-form-card{background:#fff;border:1px solid #d9e2ef;border-radius:22px;padding:24px;box-shadow:0 18px 42px rgba(15,23,42,.08)}.inlet-form-card h2{margin:0 0 8px;font-size:26px;line-height:1.2}.inlet-form-card p{margin:0 0 18px;color:#64748b;font-weight:700;line-height:1.55}.inlet-form-field{display:block;margin:0 0 14px}.inlet-form-field span,.inlet-form-checks legend{display:block;margin:0 0 8px;font-weight:900;font-size:14px}.inlet-form-field b{color:#2563eb;margin-left:4px}.inlet-form-field input,.inlet-form-field textarea,.inlet-form-field select{width:100%;border:1px solid #d8e2ef;border-radius:16px;background:#f8fbff;padding:15px 16px;font:inherit;font-weight:800;color:#101827;outline:none}.inlet-form-field textarea{min-height:112px;resize:vertical}.inlet-form-field input:focus,.inlet-form-field textarea:focus,.inlet-form-field select:focus{border-color:#2563eb;box-shadow:0 0 0 4px rgba(37,99,235,.12)}.inlet-form-checks{border:0;margin:0 0 14px;padding:0}.inlet-form-checks label{display:flex;gap:8px;align-items:center;margin:8px 0;font-weight:800}.inlet-form-privacy{display:flex;gap:10px;align-items:flex-start;margin:16px 0;color:#334155;font-size:13px;font-weight:800}.inlet-form-privacy input{margin-top:2px}.inlet-form-submit{width:100%;border:0;border-radius:18px;background:#101827;color:#fff;padding:16px;font:inherit;font-weight:900;cursor:pointer}.inlet-form-submit:disabled{opacity:.58;cursor:not-allowed}.inlet-form-notice{display:none;margin-top:14px;border-radius:14px;padding:13px 14px;font-weight:900;line-height:1.4}.inlet-form-notice.show{display:block}.inlet-form-notice.ok{background:#dcfce7;color:#047857}.inlet-form-notice.error{background:#fee2e2;color:#dc2626}
+</style>
+</head>
+<body>
+<div class="inlet-form-wrap">
+  <form class="inlet-form-card" data-inlet-form>
+    <h2>${escapeHtml(config.title)}</h2>
+    ${config.desc ? `<p>${escapeHtml(config.desc)}</p>` : ''}
+    ${questions.map(fieldMarkup).join('\n    ')}
+    ${config.privacyRequired ? `<label class="inlet-form-privacy"><input type="checkbox" name="privacy" required><span>${escapeHtml(config.privacy)}</span></label>` : ''}
+    <button class="inlet-form-submit" type="submit">${escapeHtml(config.submit)}</button>
+    <div class="inlet-form-notice" data-inlet-notice></div>
+  </form>
+</div>
+<script>
+window.INLET_FORM_CONFIG=${JSON.stringify(config)};
+(function(){
+  var cfg=window.INLET_FORM_CONFIG||{};
+  var form=document.querySelector('[data-inlet-form]');
+  var notice=document.querySelector('[data-inlet-notice]');
+  var submit=form&&form.querySelector('button[type="submit"]');
+  if(!form)return;
+  function text(value){return Array.isArray(value)?value.join(', '):String(value||'');}
+  function setNotice(message,type){
+    if(!notice)return;
+    notice.textContent=message;
+    notice.className='inlet-form-notice show '+(type||'ok');
+  }
+  function valuesFromForm(){
+    var data=new FormData(form);
+    var values={};
+    var answers=[];
+    (cfg.questions||[]).forEach(function(q){
+      var value=q.type==='multi'?data.getAll(q.id):data.get(q.id);
+      if(Array.isArray(value))value=value.filter(Boolean);
+      values[q.label]=value;
+      values[q.id]=value;
+      answers.push({id:q.id,label:q.label,type:q.type,required:!!q.required,value:value});
+    });
+    return {values:values,answers:answers};
+  }
+  function firstAnswer(answers,types,pattern){
+    for(var i=0;i<answers.length;i++){
+      var a=answers[i];
+      var label=String(a.label||'');
+      if(types.indexOf(a.type)>=0||pattern.test(label))return text(a.value);
+    }
+    return '';
+  }
+  function postJson(url,payload){
+    return fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  }
+  form.addEventListener('submit',function(event){
+    event.preventDefault();
+    if(submit)submit.disabled=true;
+    var extracted=valuesFromForm();
+    var now=new Date().toISOString();
+    var lead={
+      id:'embed_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
+      type:'상담',
+      kind:'consult',
+      formId:cfg.formId||'',
+      source:'embed',
+      sourceBlockTitle:cfg.title||'',
+      brand:cfg.brand||'페이지로',
+      name:firstAnswer(extracted.answers,['name'],/이름|성함|name/i),
+      phone:firstAnswer(extracted.answers,['phone'],/전화|연락|휴대|phone/i),
+      email:firstAnswer(extracted.answers,['email'],/메일|email/i),
+      address:firstAnswer(extracted.answers,['address'],/주소|address/i),
+      message:firstAnswer(extracted.answers,['long'],/문의|내용|메시지|message/i),
+      values:extracted.values,
+      answers:extracted.answers,
+      pageUrl:location.href,
+      referrer:document.referrer||'',
+      createdAt:now,
+      createdMonth:now.slice(0,7)
+    };
+    var payload={lead:lead,page:cfg.page||{},project:cfg.project||{}};
+    var hasProject=payload.project&&payload.project.projectId&&payload.project.slug;
+    var request=hasProject&&cfg.apiUrl
+      ? postJson(cfg.apiUrl,payload).then(function(res){if(!res.ok)throw new Error('server '+res.status);return res.json().catch(function(){return {};});})
+      : Promise.reject(new Error('missing project'));
+    request.then(function(){
+      if(window.INLET_WEBHOOK_URL)postJson(window.INLET_WEBHOOK_URL,{brand:cfg.brand,type:lead.type,title:cfg.title,values:extracted.values,createdAt:now,pageUrl:location.href}).catch(function(){});
+      form.reset();
+      setNotice(cfg.success||'접수가 완료되었습니다.','ok');
+    }).catch(function(){
+      setNotice('접수함 저장에 실패했습니다. 잠시 후 다시 시도해주세요.','error');
+    }).finally(function(){
+      if(submit)submit.disabled=false;
+    });
+  });
+})();
+</script>
+</body>
+</html>`;
+}

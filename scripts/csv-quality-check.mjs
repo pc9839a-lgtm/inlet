@@ -61,7 +61,7 @@ assert(csv.includes('"\'-SUM(1,1)"'), 'formula message should be neutralized');
 assert(csv.includes('"\'\t=cmd"'), 'tab-starting memo should be neutralized');
 assert(csv.includes('"예약일: 2026-05-22 / 예약시간: 10:30 / 관심 항목: A, B"'), 'answers should be flattened');
 assert(csv.includes('"reservationDate: 2026-05-22 / reservationTime: 10:30 / note: line1\nline2"'), 'values should preserve long text safely inside a quoted cell');
-assert(csv.includes('"전송실패"'), 'delivery status should be exported');
+assert(csv.includes('"실패"'), 'delivery status should be exported with the standardized operator label');
 assert(csv.includes('"webhook: failed: timeout: 2026-05-21T03:01:00.000Z / email: success: sent: idempotency=lead-formula:email: 2026-05-21T03:02:00.000Z"'), 'delivery logs should include targets, status, message, idempotency key, and time');
 
 const filtered = filterLeadsForCsv(sampleLeads, {

@@ -3,6 +3,7 @@ import { deliveryStatusClass, deliveryStatusLabel } from '../lib/leadIntegration
 import { leadKindLabel, leadPrimaryContact } from '../lib/leadModel.js';
 import { currentMonthValue } from '../lib/monthRange.js';
 import { PERIOD_OPTIONS, buildStats as buildStatsMetrics, countBy as countByMetrics, statLabel } from '../lib/statsMetrics.js';
+import { trafficChannelFromItem } from '../lib/trafficAttribution.js';
 import './StatsPanel.css';
 
 function hasPartialStatsData({ statsPartial, eventPageMeta, leadPageMeta }) {
@@ -16,7 +17,7 @@ function hasPartialStatsData({ statsPartial, eventPageMeta, leadPageMeta }) {
 }
 
 function channelKey(item = {}) {
-  return String(item.channel || item.sourceChannel || item.utmSource || item.source || '').trim().toLowerCase() || 'unknown';
+  return trafficChannelFromItem(item);
 }
 
 function filterByChannel(items = [], channel = 'all') {
@@ -38,7 +39,7 @@ function buildChannelOptions(events = [], leads = []) {
 }
 
 function stableChannelOptions(items = []) {
-  const defaults = ['direct', 'naver', 'google', 'kakao', 'instagram', 'referral'];
+  const defaults = ['direct', 'naver', 'google', 'kakao', 'instagram', 'meta', 'youtube'];
   const order = new Map(defaults.map((channel, index) => [channel, index]));
   const counts = new Map(defaults.map((channel) => [channel, 0]));
   items.forEach((item) => {
@@ -232,7 +233,7 @@ function StatsTrend({ data }) {
       </svg>
       {hover && (
         <div className="stats-chart-tooltip stats-chart-tooltip-wide" style={{ left: `${(hover.x / width) * 100}%`, top: `${hover.y}px` }}>
-          <span>{hover.row.label}</span>
+          <span>{hover.row.id || hover.row.label}</span>
           <strong>조회 {Number(hover.row.pv || 0).toLocaleString('ko-KR')}</strong>
           <em>클릭 {Number(hover.row.cta || 0).toLocaleString('ko-KR')} / 접수 {Number(hover.row.db || 0).toLocaleString('ko-KR')}</em>
         </div>
@@ -258,6 +259,38 @@ function StatCard({ title, data }) {
               <span>{statLabel(key)}</span>
               <div><i style={{ width: `${Math.max(4, Number(value || 0) / max * 100)}%` }} /></div>
               <b>{value}</b>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function recentDeliveryLogs(leads = []) {
+  return leads
+    .flatMap((lead) => (lead.delivery?.logs || []).map((log) => ({
+      ...log,
+      leadId: lead.id,
+      leadName: lead.name || leadPrimaryContact(lead) || '이름 없음',
+      at: log.at || lead.updatedAt || lead.createdAt || '',
+    })))
+    .sort((a, b) => new Date(b.at || 0).getTime() - new Date(a.at || 0).getTime())
+    .slice(0, 8);
+}
+
+function DeliveryLogCard({ logs = [] }) {
+  return (
+    <section className="card stat-card-v2 stats-delivery-log-card">
+      <div className="section-title"><h2>전송 로그</h2></div>
+      {!logs.length ? <div className="empty">전송 로그 없음</div> : (
+        <div className="stat-list stat-list-v2">
+          {logs.map((log, index) => (
+            <div className="stat-row stat-row-v2" key={`${log.leadId || log.target}-${log.at || index}`}>
+              <span>{log.target || log.provider || '외부 전송'}</span>
+              <div><i style={{ width: log.status === 'success' ? '100%' : '38%' }} /></div>
+              <b>{log.status === 'success' ? '준비됨' : log.status === 'failed' ? '실패' : '확인 필요'}</b>
+              <small>{log.leadName} · {fmtDateOnly(log.at)}</small>
             </div>
           ))}
         </div>
@@ -328,6 +361,7 @@ export default function StatsPanel({
     return buildStatsMetrics(scopedEvents, scopedLeads, period);
   }, [baseStats, period, scopedEvents, scopedLeads, serverMode]);
   const partialData = hasPartialStatsData({ statsPartial, eventPageMeta, leadPageMeta });
+  const deliveryLogs = useMemo(() => recentDeliveryLogs(stats.filteredLeads), [stats.filteredLeads]);
 
   useEffect(() => {
     if (channelFilter === 'all') return;
@@ -374,7 +408,7 @@ export default function StatsPanel({
 
       <section className="card stats-trend-card">
         <div className="section-title">
-          <h2>상세통계</h2>
+          <h2>방문·접수 통계</h2>
         </div>
         <StatsTrend data={stats.trend} />
       </section>
@@ -386,9 +420,10 @@ export default function StatsPanel({
 
       <section className="stats-columns stats-columns-v3 stats-columns-four">
         <StatCard title="외부 전송" data={stats.deliveryData} />
+        <DeliveryLogCard logs={deliveryLogs} />
         <StatCard title="CTA 클릭 위치" data={serverMode ? stats.ctaLabelData : ctaClickData(stats.filteredEvents, page)} />
         <StatCard title="유입 기기" data={serverMode ? stats.deviceData : countByMetrics(stats.filteredEvents, 'device')} />
-        <StatCard title="유입 채널" data={serverMode ? stats.channelData : countByMetrics(stats.filteredEvents, 'channel')} />
+        <StatCard title="유입 채널" data={serverMode ? stats.channelData : stats.channelData} />
       </section>
 
       <section className="card stats-lead-table-card stats-lead-table-card-v3">
@@ -403,7 +438,7 @@ export default function StatsPanel({
                 <span>{leadKindLabel(lead)}</span>
                 <b>{lead.name || '이름 없음'}</b>
                 <em>{leadPrimaryContact(lead)}</em>
-                <small>{fmtDateOnly(lead.createdAt)}</small>
+                <small title={fmtDateOnly(lead.createdAt)}>{fmtDateOnly(lead.createdAt)}</small>
                 <i className={`delivery-badge ${deliveryStatusClass(lead.delivery?.status)}`}>{deliveryStatusLabel(lead.delivery?.status)}</i>
               </div>
             ))}

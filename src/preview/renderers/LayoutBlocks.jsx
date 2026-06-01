@@ -71,13 +71,11 @@ export function RenderTopNav({ block, go }) {
     '--top-menu-hover': menuHover,
     '--top-menu-hover-text': menuHoverText,
   };
-  const renderMenuButton = (m, duplicate = false) => (
+  const renderMenuButton = (m) => (
     <button
       type="button"
-      key={`${duplicate ? 'copy-' : ''}${m.id}`}
-      tabIndex={duplicate ? -1 : undefined}
-      aria-hidden={duplicate ? 'true' : undefined}
-      onClick={duplicate ? undefined : () => go(m.target, m.url, m.label)}
+      key={m.id}
+      onClick={() => go(m.target, m.url, m.label)}
     >
       {m.label}
     </button>

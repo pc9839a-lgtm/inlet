@@ -3,6 +3,13 @@ import { BRAND_NAME } from '../config/brand.js';
 import { publicLandingUrl, runtimeConfig } from '../config/runtimeConfig.js';
 import { trackingConfig } from './conversionTracking.js';
 
+export const CONNECTION_STATUS = {
+  off: '꺼짐',
+  needsSetup: '설정 필요',
+  ready: '준비됨',
+  failed: '실패',
+};
+
 export function isValidUrl(value = '') {
   try {
     const url = new URL(String(value).trim());
@@ -24,96 +31,124 @@ export function serviceLabel(key = '') {
     make: 'Make',
     zapier: 'Zapier',
     n8n: 'n8n',
+    google_sheets: 'Google Sheets',
   }[key] || key;
 }
 
+function readyOrFailed(section = {}) {
+  return section.lastStatus === 'failed'
+    ? { tone: 'fail', text: CONNECTION_STATUS.failed }
+    : { tone: 'ok', text: CONNECTION_STATUS.ready };
+}
+
 export function connectionState(type, integrations) {
-  if (type === 'internal') return { tone: 'ok', text: '저장 중', hint: '기본 접수함' };
+  if (type === 'internal') return { tone: 'ok', text: CONNECTION_STATUS.ready, hint: '기본 접수 저장' };
 
   if (type === 'google') {
-    if (integrations.google.connected) return { tone: 'ok', text: '연결됨', hint: integrations.google.email || 'Google 연결 완료' };
-    return { tone: 'ready', text: '준비 중', hint: '서버 OAuth 연결 후 사용' };
+    if (integrations.google.connected) return { tone: 'ok', text: CONNECTION_STATUS.ready, hint: integrations.google.email || 'Google 연결 완료' };
+    return { tone: 'warn', text: CONNECTION_STATUS.needsSetup, hint: 'Google OAuth 설정 필요' };
   }
 
   if (type === 'email') {
-    if (!integrations.email.enabled) return { tone: 'off', text: '꺼짐', hint: '이메일 알림 미사용' };
-    if (!isValidEmail(integrations.email.to)) return { tone: 'warn', text: '확인 필요', hint: '받을 이메일 주소를 확인하세요' };
-    return { tone: 'ok', text: '준비됨', hint: integrations.email.to };
+    if (!integrations.email.enabled) return { tone: 'off', text: CONNECTION_STATUS.off, hint: '이메일 알림 꺼짐' };
+    if (!isValidEmail(integrations.email.to)) return { tone: 'warn', text: CONNECTION_STATUS.needsSetup, hint: '받을 이메일 주소 설정 필요' };
+    return { ...readyOrFailed(integrations.email), hint: integrations.email.to };
   }
 
   if (type === 'webhook') {
-    if (!integrations.webhook.enabled) return { tone: 'off', text: '꺼짐', hint: 'Webhook 미사용' };
-    if (!isValidUrl(integrations.webhook.url)) return { tone: 'warn', text: '확인 필요', hint: '전송 URL을 확인하세요' };
-    return { tone: 'ok', text: '준비됨', hint: integrations.webhook.url };
+    if (!integrations.webhook.enabled) return { tone: 'off', text: CONNECTION_STATUS.off, hint: 'Webhook 꺼짐' };
+    if (!isValidUrl(integrations.webhook.url)) return { tone: 'warn', text: CONNECTION_STATUS.needsSetup, hint: '전송 URL 설정 필요' };
+    return { ...readyOrFailed(integrations.webhook), hint: integrations.webhook.url };
   }
 
   if (type === 'automation') {
-    if (!integrations.automation.enabled) return { tone: 'off', text: '꺼짐', hint: '자동화 미사용' };
-    if (!isValidUrl(integrations.automation.url)) return { tone: 'warn', text: '확인 필요', hint: '자동화 URL을 확인하세요' };
-    return { tone: 'ok', text: '준비됨', hint: `${serviceLabel(integrations.automation.service || 'make')} 연결` };
+    if (!integrations.automation.enabled) return { tone: 'off', text: CONNECTION_STATUS.off, hint: 'Make/Zapier 꺼짐' };
+    if (!isValidUrl(integrations.automation.url)) return { tone: 'warn', text: CONNECTION_STATUS.needsSetup, hint: 'Make/Zapier Webhook URL 설정 필요' };
+    return { ...readyOrFailed(integrations.automation), hint: `${serviceLabel(integrations.automation.service || 'make')} 연결` };
+  }
+
+  if (type === 'sheets') {
+    if (!integrations.sheets.enabled) return { tone: 'off', text: CONNECTION_STATUS.off, hint: 'Google Sheets 꺼짐' };
+    if (!isValidUrl(integrations.sheets.url)) return { tone: 'warn', text: CONNECTION_STATUS.needsSetup, hint: 'Google Apps Script Web App URL 설정 필요' };
+    return { ...readyOrFailed(integrations.sheets), hint: integrations.sheets.sheetName || '접수함' };
   }
 
   if (type === 'calendar') {
-    if (integrations.calendar.connected) return { tone: 'ok', text: '연결됨', hint: integrations.calendar.calendarName || '캘린더 연결 완료' };
-    return { tone: 'ready', text: '준비 중', hint: 'Google Calendar OAuth 연결 후 사용' };
+    if (integrations.calendar.connected) return { tone: 'ok', text: CONNECTION_STATUS.ready, hint: integrations.calendar.calendarName || 'Google Calendar 연결 완료' };
+    return { tone: 'warn', text: CONNECTION_STATUS.needsSetup, hint: 'Google Calendar OAuth 설정 필요' };
   }
 
-  return { tone: 'off', text: '꺼짐', hint: '' };
+  return { tone: 'off', text: CONNECTION_STATUS.off, hint: '' };
 }
 
 export function connectionCounts(integrations) {
-  const keys = ['internal', 'google', 'email', 'webhook', 'automation', 'calendar'];
+  const keys = ['internal', 'google', 'email', 'webhook', 'automation', 'sheets', 'calendar'];
   const states = keys.map((key) => connectionState(key, integrations));
   return {
     ok: states.filter((state) => state.tone === 'ok').length,
     warn: states.filter((state) => state.tone === 'warn').length,
     ready: states.filter((state) => state.tone === 'ready').length,
+    failed: states.filter((state) => state.tone === 'fail').length,
   };
 }
 
 export async function runConnectionTest(type, page) {
   const integrations = normalizeIntegrations(page.integrations || {});
-  const lead = makeSampleLead(type === 'reservation' ? '방문 예약' : '상담 신청');
+  const lead = makeSampleLead();
   const payload = integrationPayload(lead, page);
 
-  if (type === 'internal') return { ok: true, message: '접수함 저장은 기본으로 활성화되어 있습니다.' };
-  if (type === 'google') return { ok: false, message: 'Google 연동은 서버 OAuth 연결 후 테스트할 수 있습니다.' };
+  if (type === 'internal') return { ok: true, status: CONNECTION_STATUS.ready, message: '접수 저장은 기본으로 준비되어 있습니다.' };
+  if (type === 'google' || type === 'calendar') return { ok: false, status: CONNECTION_STATUS.needsSetup, message: 'Google OAuth 설정이 필요합니다.' };
 
   if (type === 'email') {
-    if (!integrations.email.enabled) return { ok: false, message: '이메일 알림을 먼저 켜주세요.' };
-    if (!isValidEmail(integrations.email.to)) return { ok: false, message: '받을 이메일 주소를 확인해주세요.' };
-    return { ok: true, message: '이메일 설정은 정상입니다. 실제 발송은 서버 저장 접수에서 처리됩니다.' };
+    if (!integrations.email.enabled) return { ok: false, status: CONNECTION_STATUS.off, message: '이메일 알림이 꺼져 있습니다.' };
+    if (!isValidEmail(integrations.email.to)) return { ok: false, status: CONNECTION_STATUS.needsSetup, message: '받을 이메일 주소 설정이 필요합니다.' };
+    return { ok: true, status: CONNECTION_STATUS.ready, message: '이메일 설정 형식은 준비되었습니다. 실제 발송은 서버 접수에서 처리됩니다.' };
   }
 
   if (type === 'webhook') {
-    if (!integrations.webhook.enabled) return { ok: false, message: 'Webhook 사용을 먼저 켜주세요.' };
-    if (!isValidUrl(integrations.webhook.url)) return { ok: false, message: '전송 URL을 확인해주세요.' };
-    const res = await postIntegration(integrations.webhook.url, { ...payload, target: 'webhook', service: integrations.webhook.service || 'custom' }, { format: 'json' });
-    return { ok: !!res.ok, message: res.ok ? 'Webhook 테스트 전송이 완료되었습니다.' : `Webhook 응답을 확인해주세요. 상태: ${res.status || '확인 불가'}` };
+    if (!integrations.webhook.enabled) return { ok: false, status: CONNECTION_STATUS.off, message: 'Webhook이 꺼져 있습니다.' };
+    if (!isValidUrl(integrations.webhook.url)) return { ok: false, status: CONNECTION_STATUS.needsSetup, message: 'Webhook 전송 URL 설정이 필요합니다.' };
+    const res = await postIntegration(integrations.webhook.url, { ...payload, target: 'webhook', service: integrations.webhook.service || 'custom' }, { format: 'json', secret: integrations.webhook.secret || '' });
+    return { ok: !!res.ok, status: res.ok ? CONNECTION_STATUS.ready : CONNECTION_STATUS.failed, message: res.ok ? 'Webhook 테스트 전송이 완료되었습니다.' : `Webhook 응답 확인이 필요합니다. 상태: ${res.status || '확인 불가'}` };
   }
 
   if (type === 'automation') {
-    if (!integrations.automation.enabled) return { ok: false, message: '자동화 연결을 먼저 켜주세요.' };
-    if (!isValidUrl(integrations.automation.url)) return { ok: false, message: '자동화 URL을 확인해주세요.' };
-    const res = await postIntegration(integrations.automation.url, { ...payload, target: 'automation', service: integrations.automation.service || 'make' }, { format: 'json' });
-    return { ok: !!res.ok, message: res.ok ? '자동화 서비스 테스트 전송이 완료되었습니다.' : `자동화 서비스 응답을 확인해주세요. 상태: ${res.status || '확인 불가'}` };
+    if (!integrations.automation.enabled) return { ok: false, status: CONNECTION_STATUS.off, message: 'Make/Zapier 연결이 꺼져 있습니다.' };
+    if (!isValidUrl(integrations.automation.url)) return { ok: false, status: CONNECTION_STATUS.needsSetup, message: 'Make/Zapier Webhook URL 설정이 필요합니다.' };
+    const res = await postIntegration(integrations.automation.url, { ...payload, target: 'automation', service: integrations.automation.service || 'make' }, { format: 'json', secret: integrations.automation.secret || '' });
+    return { ok: !!res.ok, status: res.ok ? CONNECTION_STATUS.ready : CONNECTION_STATUS.failed, message: res.ok ? `${serviceLabel(integrations.automation.service || 'make')} 테스트 전송이 완료되었습니다.` : `Make/Zapier 응답 확인이 필요합니다. 상태: ${res.status || '확인 불가'}` };
   }
 
-  if (type === 'calendar') return { ok: false, message: '캘린더 연동은 Google Calendar OAuth 연결 후 테스트할 수 있습니다.' };
+  if (type === 'sheets') {
+    if (!integrations.sheets.enabled) return { ok: false, status: CONNECTION_STATUS.off, message: 'Google Sheets 연결이 꺼져 있습니다.' };
+    if (!isValidUrl(integrations.sheets.url)) return { ok: false, status: CONNECTION_STATUS.needsSetup, message: 'Google Apps Script Web App URL 설정이 필요합니다.' };
+    const res = await postIntegration(integrations.sheets.url, { ...payload, target: 'google_sheets', service: 'google_sheets', sheetName: integrations.sheets.sheetName || '접수함' }, { format: 'json', secret: integrations.sheets.secret || '' });
+    return { ok: !!res.ok, status: res.ok ? CONNECTION_STATUS.ready : CONNECTION_STATUS.failed, message: res.ok ? 'Google Sheets 테스트 전송이 완료되었습니다.' : `Google Sheets 응답 확인이 필요합니다. 상태: ${res.status || '확인 불가'}` };
+  }
 
-  return { ok: false, message: '확인할 수 없는 연결입니다.' };
+  return { ok: false, status: CONNECTION_STATUS.needsSetup, message: '확인할 수 없는 연결입니다.' };
 }
 
 export function integrationPayload(lead, page) {
+  const createdAt = lead.createdAt || new Date().toISOString();
   return {
     brand: BRAND_NAME,
+    schemaVersion: 'inlet.lead.v1',
+    event: 'lead.created',
+    source: 'inlet',
     page: {
       title: page.title,
       slug: page.slug,
       url: publicLandingUrl(page.slug || ''),
     },
     lead,
-    createdAt: lead.createdAt,
+    contact: {
+      name: lead.name || lead.values?.name || '',
+      phone: lead.phone || lead.values?.phone || '',
+      email: lead.email || lead.values?.email || '',
+    },
+    createdAt,
   };
 }
 
@@ -139,7 +174,7 @@ export async function postIntegration(url, payload, options = {}) {
     keepalive: true,
     headers: {
       'Content-Type': 'application/json',
-      ...(options.secret ? { 'X-Pagero-Secret': options.secret } : {}),
+      ...(options.secret ? { 'X-Inlet-Secret': options.secret } : {}),
     },
     body,
   }, timeoutMs);
@@ -169,7 +204,7 @@ export function sendConversionIntegrations(lead, page) {
   const config = trackingConfig(page);
   if (!config.enabled) return;
 
-  const eventName = lead.type === '방문 예약' ? 'reservation_submit' : 'lead_submit';
+  const eventName = lead.type === '방문 예약' || lead.type === '방문예약' ? 'reservation_submit' : 'lead_submit';
   const payload = {
     event: eventName,
     lead_type: lead.type,
@@ -203,13 +238,13 @@ export function sendConversionIntegrations(lead, page) {
 
 export function deliveryStatusLabel(status = 'none') {
   const map = {
-    pending: '전송 중',
-    success: '전송 완료',
-    failed: '전송 실패',
-    partial: '일부 실패',
-    none: '미연결',
+    pending: '확인 필요',
+    success: '준비됨',
+    failed: '실패',
+    partial: '확인 필요',
+    none: '꺼짐',
   };
-  return map[status] || '미연결';
+  return map[status] || CONNECTION_STATUS.off;
 }
 
 export function deliveryStatusClass(status = 'none') {
@@ -228,7 +263,7 @@ export function buildIntegrationJobs(integrations, payload) {
       label: 'Webhook',
       url: integrations.webhook.url,
       payload: { ...payload, target: 'webhook', service: integrations.webhook.service || 'custom' },
-      options: { format: 'json' },
+      options: { format: 'json', secret: integrations.webhook.secret || '' },
     });
   }
 
@@ -238,23 +273,24 @@ export function buildIntegrationJobs(integrations, payload) {
       label: `자동화 · ${serviceLabel(integrations.automation.service || 'make')}`,
       url: integrations.automation.url,
       payload: { ...payload, target: 'automation', service: integrations.automation.service || 'make' },
-      options: { format: 'json' },
+      options: { format: 'json', secret: integrations.automation.secret || '' },
     });
   }
 
   if (integrations.sheets.enabled && integrations.sheets.url) {
     jobs.push({
-      id: 'google_sheets_manual',
-      label: 'Google 시트',
+      id: 'google_sheets',
+      label: 'Google Sheets',
       url: integrations.sheets.url,
       payload: {
         ...payload,
         target: 'google_sheets',
+        service: 'google_sheets',
         sheetName: integrations.sheets.sheetName || '접수함',
         emailEnabled: !!integrations.sheets.emailEnabled,
         notifyEmail: integrations.sheets.notifyEmail || '',
       },
-      options: { format: 'nocors' },
+      options: { format: 'json', secret: integrations.sheets.secret || '' },
     });
   }
 
@@ -284,6 +320,7 @@ export async function sendLeadIntegrations(lead, page) {
     const res = await postIntegration(job.url, job.payload, job.options);
     return {
       target: job.label,
+      provider: job.id,
       status: res?.ok ? 'success' : 'failed',
       message: res?.ok ? '전송 완료' : `응답 확인 필요${res?.status ? ` · ${res.status}` : ''}`,
       at: new Date().toISOString(),
@@ -295,6 +332,7 @@ export async function sendLeadIntegrations(lead, page) {
     if (item.status === 'fulfilled') return item.value;
     return {
       target: job?.label || '외부 전송',
+      provider: job?.id || 'unknown',
       status: 'failed',
       message: String(item.reason?.message || item.reason || '전송 실패'),
       at: new Date().toISOString(),
@@ -319,9 +357,10 @@ export function makeSampleLead(type = '상담 신청') {
     address: '서울시 테스트구',
     message: '연동 테스트 접수입니다.',
     values: {
-      이름: '김테스트',
-      연락처: '010-0000-0000',
-      문의내용: '연동 테스트 접수입니다.',
+      name: '김테스트',
+      phone: '010-0000-0000',
+      email: 'test@example.com',
+      message: '연동 테스트 접수입니다.',
     },
     answers: [
       { id: 'name', label: '이름', type: 'name', value: '김테스트' },

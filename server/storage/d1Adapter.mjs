@@ -1,4 +1,6 @@
-﻿export const D1_SCHEMA_TABLES = [
+import { trafficAttributionFromUrl } from '../../src/lib/trafficAttribution.js';
+
+export const D1_SCHEMA_TABLES = [
   'accounts',
   'projects',
   'project_members',
@@ -469,6 +471,11 @@ export function decodeD1BlockedLeadSubmission(row = {}) {
 
 export function encodeD1Event(event = {}, context = {}) {
   const createdAt = String(event.createdAt || event.created_at || new Date().toISOString());
+  const sourceAttribution = trafficAttributionFromUrl(event.sourceUrl || event.source_url || event.url || '');
+  const utmSource = String(event.utmSource || event.utm_source || sourceAttribution.utmSource || '').trim().toLowerCase();
+  const utmMedium = String(event.utmMedium || event.utm_medium || sourceAttribution.utmMedium || '').trim().toLowerCase();
+  const utmCampaign = String(event.utmCampaign || event.utm_campaign || sourceAttribution.utmCampaign || '').trim().toLowerCase();
+  const explicitChannel = String(event.channel || event.sourceChannel || event.source || '').trim().toLowerCase();
   return {
     id: String(event.id || d1Id()),
     project_id: String(context.projectId || event.projectId || event.project?.projectId || ''),
@@ -478,9 +485,9 @@ export function encodeD1Event(event = {}, context = {}) {
     visitor_id: String(event.visitorId || event.visitor_id || ''),
     session_id: String(event.sessionId || event.session_id || ''),
     dedupe_key: String(event.dedupeKey || event.dedupe_key || ''),
-    channel: String(event.channel || event.source || event.utmSource || event.utm_source || 'direct').trim().toLowerCase() || 'direct',
+    channel: utmSource || explicitChannel || 'direct',
     device: String(event.device || event.deviceType || 'unknown').trim().toLowerCase() || 'unknown',
-    payload_json: encodeD1Json({ raw: event }),
+    payload_json: encodeD1Json({ raw: { ...event, utmSource, utmMedium, utmCampaign } }),
     created_month: d1CreatedMonth(event.createdMonth || createdAt),
     created_at: createdAt,
   };

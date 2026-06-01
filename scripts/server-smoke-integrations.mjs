@@ -9,6 +9,8 @@ await runSmoke('server-smoke-integrations', async ({ baseUrl }) => {
       slug: 'smoke-integrations',
       integrations: {
         webhook: { enabled: true, url: webhook.url, service: 'custom' },
+        automation: { enabled: true, url: webhook.url, service: 'make' },
+        sheets: { enabled: true, url: webhook.url, sheetName: 'Smoke Leads' },
       },
     };
 
@@ -24,9 +26,12 @@ await runSmoke('server-smoke-integrations', async ({ baseUrl }) => {
 
     const retry = await json({ baseUrl }, 'POST', '/api/leads/retry-failed', { project, page });
     assert(retry.res.ok && retry.data.retried === 1, 'webhook retry failed');
-    assert(webhook.received.length >= 1, 'webhook receiver did not receive payload');
+    assert(webhook.received.length >= 3, 'webhook receiver did not receive webhook/automation/sheets payloads');
     assert(webhook.received[0].body?.lead?.id === lead.id, 'webhook payload lead mismatch');
     assert(webhook.received[0].body?.idempotencyKey, 'webhook idempotency key missing');
+    assert(webhook.received.some((item) => item.body?.target === 'automation' && item.body?.service === 'make'), 'Make payload missing');
+    assert(webhook.received.some((item) => item.body?.target === 'google_sheets' && item.body?.sheetName === 'Smoke Leads'), 'Google Sheets payload missing');
+    assert(webhook.received.every((item) => item.body?.schemaVersion === 'inlet.lead.v1' || item.body?.target === 'webhook'), 'payload schema marker missing');
 
     const deliveryLogs = await json({ baseUrl }, 'GET', `/api/leads/delivery-logs?${new URLSearchParams(project).toString()}&leadId=${lead.id}`);
     assert(deliveryLogs.res.ok && deliveryLogs.data.total >= 1, 'delivery logs API failed');

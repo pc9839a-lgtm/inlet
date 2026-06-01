@@ -41,6 +41,7 @@ export async function fetchServerLeads(page, authUser = null, options = {}) {
     month: options.month || '',
     dateFrom: options.dateFrom || '',
     dateTo: options.dateTo || '',
+    channel: options.channel || '',
     deliveryStatus: options.deliveryStatus || '',
   });
   const res = await apiFetch(`/api/leads?${params.toString()}`, {
@@ -79,6 +80,7 @@ export async function fetchAllServerLeads(page, authUser = null, options = {}) {
       month: options.month || '',
       dateFrom: options.dateFrom || '',
       dateTo: options.dateTo || '',
+      channel: options.channel || '',
       deliveryStatus: options.deliveryStatus || '',
     });
     if (!pageResult) return null;

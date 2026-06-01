@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
-import { buildLeadDeliveryJobs, normalizeDeliveryPage } from '../functions/api/leads/_delivery.js';
+import { sendSesEmail } from '../functions/api/_ses.js';
+import { buildLeadDeliveryJobs, normalizeDeliveryPage, sendLeadDelivery } from '../functions/api/leads/_delivery.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -71,6 +72,61 @@ assert(storedDeliveryPage.integrations.email.enabled === true, 'public lead payl
 assert(storedDeliveryPage.integrations.email.to === 'pc9839a@naver.com', 'stored email alert recipient should remain authoritative');
 assert(storedDeliveryPage.integrations.conversion.dataLayer === true, 'public conversion settings can still merge from payload');
 assert(buildLeadDeliveryJobs(storedDeliveryPage, { id: 'lead-public-submit', type: 'consult' }).some((job) => job.type === 'email'), 'stored email settings should create a public submit delivery job');
+const externalDeliveryJobs = buildLeadDeliveryJobs({
+  title: 'External payload',
+  slug: 'external-payload',
+  integrations: {
+    webhook: { enabled: true, url: 'https://example.test/webhook', service: 'custom' },
+    automation: { enabled: true, url: 'https://example.test/make', service: 'make' },
+    sheets: { enabled: true, url: 'https://example.test/sheets', sheetName: 'Leads' },
+  },
+}, { id: 'lead-external-payload', type: 'consult', name: 'Payload QA', phone: '010-0000-0000', email: 'qa@example.test', createdAt: '2026-06-01T00:00:00.000Z' });
+assert(externalDeliveryJobs.some((job) => job.payload?.target === 'webhook' && job.payload?.schemaVersion === 'inlet.lead.v1'), 'Pages delivery should prepare webhook payload schema');
+assert(externalDeliveryJobs.some((job) => job.payload?.target === 'automation' && job.payload?.service === 'make'), 'Pages delivery should prepare Make/Zapier payload');
+assert(externalDeliveryJobs.some((job) => job.payload?.target === 'google_sheets' && job.payload?.sheetName === 'Leads'), 'Pages delivery should prepare Google Sheets payload');
+
+const missingKeyDelivery = await sendLeadDelivery({ id: 'lead-mail-missing-key', type: 'consult' }, storedDeliveryPage, {});
+assert(missingKeyDelivery.status === 'failed', 'missing SES key should create failed delivery status');
+assert(String(missingKeyDelivery.summary || '').includes('알림 전송 실패'), 'failed delivery should keep Korean summary');
+assert(missingKeyDelivery.logs?.[0]?.provider === 'ses', 'failed email delivery should keep SES provider log');
+assert(String(missingKeyDelivery.logs?.[0]?.message || '').includes('SES 키가 설정되지 않았습니다'), 'failed email delivery should keep Korean missing key message');
+
+async function expectSesError(label, setup, expectedCode) {
+  const originalFetch = globalThis.fetch;
+  try {
+    if (setup.fetch) globalThis.fetch = setup.fetch;
+    await sendSesEmail({
+      to: setup.to || 'receiver@example.test',
+      subject: 'SES QA',
+      text: 'SES QA',
+    }, {
+      AWS_SES_ACCESS_KEY_ID: setup.accessKeyId ?? 'AKIA_TEST',
+      AWS_SES_SECRET_ACCESS_KEY: setup.secretAccessKey ?? 'secret',
+      AWS_SES_REGION: 'ap-northeast-2',
+      INLET_LEAD_EMAIL_FROM: setup.from || '페이지로 <support@pagero.kr>',
+    });
+    throw new Error(`${label} should fail`);
+  } catch (error) {
+    assert(error.code === expectedCode, `${label} expected ${expectedCode}, got ${error.code || error.message}`);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}
+
+await expectSesError('SES missing key', { accessKeyId: '', secretAccessKey: '' }, 'EMAIL_SEND_KEY_MISSING');
+await expectSesError('SES invalid recipient', { to: 'bad-email' }, 'EMAIL_TO_INVALID');
+await expectSesError('SES sandbox rejected', {
+  fetch: async () => new Response(JSON.stringify({ message: 'Email address is not verified because account is in the sandbox' }), { status: 400 }),
+}, 'EMAIL_SEND_SANDBOX_REJECTED');
+await expectSesError('SES unverified recipient', {
+  fetch: async () => new Response(JSON.stringify({ message: 'Email address is not verified. The following identities failed the check: receiver@example.test' }), { status: 400 }),
+}, 'EMAIL_RECIPIENT_NOT_VERIFIED');
+await expectSesError('SES domain not verified', {
+  fetch: async () => new Response(JSON.stringify({ message: 'FromEmailAddress identity is not verified' }), { status: 400 }),
+}, 'EMAIL_DOMAIN_NOT_VERIFIED');
+await expectSesError('SES quota exceeded', {
+  fetch: async () => new Response(JSON.stringify({ message: 'Maximum sending rate exceeded' }), { status: 429 }),
+}, 'EMAIL_SEND_QUOTA_EXCEEDED');
 
 for (const token of [
   'export async function onRequest',
@@ -113,12 +169,12 @@ for (const token of [
 }
 
 for (const [name, source, tokens] of [
-  ['leads', leads, ['upsertD1Lead', 'listD1Leads', 'findD1LeadsByIntakeSignals', 'insertD1BlockedLeadSubmission', 'publicWrite: true', 'publicProjectShell(project)', "tab: 'inbox'", 'deliveryStatus', 'LEAD_RATE_LIMITED', 'meta: { source:']],
+  ['leads', leads, ['upsertD1Lead', 'listD1Leads', 'findD1LeadsByIntakeSignals', 'insertD1BlockedLeadSubmission', 'publicWrite: true', 'publicProjectShell(project)', "tab: 'inbox'", 'getD1PageBySlug', 'normalizeDeliveryPage(inputPage, storedPage || {}, project)', 'const delivery = await sendSavedLeadDelivery', 'deliveryStatus: delivery.status', 'LEAD_RATE_LIMITED', 'PUBLIC_POST_HEADERS', "'Access-Control-Allow-Origin': '*'", 'handlePublicPostError', 'meta: { source:', '중복 접수 정책', '접수는 저장됐지만 알림 전송에 실패했습니다.']],
   ['lead csv', leadCsv, ['listD1Leads', 'month is required for CSV export.', 'text/csv; charset=utf-8', "Content-Disposition", 'csvCell', "tab: 'inbox'"]],
   ['blocked history', blockedHistory, ['listD1BlockedLeadSubmissions', 'pageSlug', "source: 'd1'", "tab: 'inbox'"]],
   ['delivery logs', deliveryLogs, ['listD1DeliveryLogs', "type: 'delivery-logs'", "adapter: 'd1'", "tab: 'inbox'"]],
   ['retry queue', retryQueue, ['listD1DeliveryRetryQueue', "type: 'delivery-retry-queue'", 'deadLetter', "tab: 'inbox'"]],
-  ['lead deliver', leadDeliver, ['getD1Lead', 'upsertD1Lead', 'publicWrite: true', '알림 전송 설정 없음']],
+  ['lead deliver', leadDeliver, ['getD1Lead', 'upsertD1Lead', 'publicWrite: true', 'NO_DELIVERY_SETTINGS_MESSAGE', '접수를 찾을 수 없습니다.']],
   ['events', events, ['insertD1Event', 'listD1Events', 'publicWrite: true', 'publicProjectShell(project)', "tab: 'stats'", 'eventType', 'meta: { source:']],
   ['stats summary', statsSummary, ['aggregateD1Stats', "source: 'server'", "adapter: 'd1'", "tab: 'stats'"]],
   ['pages', pages, ['getD1PageBySlug', 'upsertD1Page', 'ensureD1ProjectShell', 'authorizeProject', 'PUBLIC_PAGE_CACHE_CONTROL', 'stale-while-revalidate=86400']],
@@ -219,7 +275,7 @@ for (const token of [
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 61,
+  checks: 71,
   functions: [
     'functions/api/health.js',
     'functions/api/leads.js',

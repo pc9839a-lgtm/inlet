@@ -3,9 +3,19 @@ import { deliveryReport, normalizeDeliveryPage, sendLeadDelivery } from './leads
 import { assertD1, authorizeProject, ensureD1ProjectShell, handleApiError, jsonResponse, monthFromRequest, optionsResponse, projectFromRequest, publicProjectShell, readJson } from './_shared.js';
 
 const METHODS = 'GET, POST, OPTIONS';
+const PUBLIC_POST_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': METHODS,
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Inlet-Api-Token, X-Inlet-Owner-Id, X-Inlet-Project-Id, X-Inlet-Session',
+  'Access-Control-Max-Age': '86400',
+};
 
 export async function onRequest({ request, env }) {
-  if (request.method === 'OPTIONS') return optionsResponse(request, env, METHODS);
+  if (request.method === 'OPTIONS') {
+    const requestedMethod = String(request.headers.get('Access-Control-Request-Method') || '').toUpperCase();
+    if (requestedMethod === 'POST') return new Response(null, { status: 204, headers: PUBLIC_POST_HEADERS });
+    return optionsResponse(request, env, METHODS);
+  }
 
   try {
     const url = new URL(request.url);
@@ -23,13 +33,13 @@ export async function onRequest({ request, env }) {
           projectId: project.projectId,
           pageSlug: body.page?.slug || project.slug || lead.pageSlug || '',
         });
-        return jsonResponse(request, env, 429, {
+        return publicPostJsonResponse(request, env, 429, {
           ok: false,
           code: 'LEAD_RATE_LIMITED',
           reason: duplicatePolicy.reason,
           message: '중복 접수 정책에 따라 이번 접수는 차단되었습니다.',
           retryAfter: 60,
-        }, METHODS);
+        });
       }
       let saved = await upsertD1Lead(db, {
         ...lead,
@@ -51,7 +61,7 @@ export async function onRequest({ request, env }) {
         pageId: saved.pageId || body.page?.id || lead.pageId || '',
         pageSlug: saved.pageSlug || body.page?.slug || project.slug || lead.pageSlug || '',
       });
-      return jsonResponse(request, env, 200, { ok: true, lead: saved }, METHODS);
+      return publicPostJsonResponse(request, env, 200, { ok: true, lead: saved });
     }
 
     if (request.method === 'GET') {
@@ -79,8 +89,20 @@ export async function onRequest({ request, env }) {
 
     return jsonResponse(request, env, 405, { ok: false, error: '허용되지 않는 요청 방식입니다.', message: '허용되지 않는 요청 방식입니다.' }, METHODS);
   } catch (error) {
+    if (request.method === 'POST') return handlePublicPostError(request, env, error);
     return handleApiError(request, env, error, METHODS);
   }
+}
+
+function publicPostJsonResponse(request, env, status, payload) {
+  return jsonResponse(request, env, status, payload, METHODS, { headers: PUBLIC_POST_HEADERS });
+}
+
+async function handlePublicPostError(request, env, error) {
+  const response = await handleApiError(request, env, error, METHODS);
+  const headers = new Headers(response.headers);
+  for (const [key, value] of Object.entries(PUBLIC_POST_HEADERS)) headers.set(key, value);
+  return new Response(response.body, { status: response.status, headers });
 }
 
 async function sendSavedLeadDelivery(db, lead = {}, inputPage = {}, project = {}, env = {}) {

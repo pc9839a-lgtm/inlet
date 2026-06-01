@@ -335,7 +335,7 @@ export default function SettingsPanel({
   const [expandedManagerMenuId, setExpandedManagerMenuId] = useState('');
   const [inviteLoading, setInviteLoading] = useState('');
   const [conversionLocked, setConversionLocked] = useState(() => !!(page.meta?.ads || page.meta?.pixel || page.meta?.naver || page.meta?.kakao));
-  const [openSection, setOpenSection] = useState('basic');
+  const [openSection, setOpenSection] = useState('account');
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [lockedSections, setLockedSections] = useState({ basic: false, managers: false, seo: false, tracking: false });
   const [duplicateOpen, setDuplicateOpen] = useState(false);
@@ -639,11 +639,11 @@ export default function SettingsPanel({
         <em>/{page.slug || 'page'}</em>
       </div>
 
-      <SettingsSection id="account" title="내 계정" description="이름, 휴대폰 번호, 비밀번호를 관리합니다." openSection={openSection} setOpenSection={setOpenSection} className="account-settings-section">
+      <SettingsSection id="account" title="내 계정" description="계정 정보와 비밀번호" openSection={openSection} setOpenSection={setOpenSection} className="account-settings-section">
         <AccountSettingsSection authUser={authUser} onAccountUpdate={onAccountUpdate} onLogout={onLogout} />
       </SettingsSection>
 
-      <SettingsSection id="basic" title="페이지 기본" description="페이지명과 공개 주소를 관리합니다." badge="필수" openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.basic} onSave={saveBasic} onEdit={() => editSection('basic')}>
+      <SettingsSection id="basic" title="페이지 기본" description="페이지명과 공개 주소" badge="필수" openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.basic} onSave={saveBasic} onEdit={() => editSection('basic')}>
         <div className="settings-grid">
           <Field label="페이지명" value={basicDraft.title} disabled={lockedSections.basic || clientAdminMode} onChange={(value) => setBasicDraft((draft) => ({ ...draft, title: value }))} />
           <Field label="페이지 주소" prefix="/" value={basicDraft.slug} disabled={lockedSections.basic || clientAdminMode} onChange={(value) => setBasicDraft((draft) => ({ ...draft, slug: value.replace(/[^a-zA-Z0-9-_]/g, '') }))} />
@@ -652,10 +652,10 @@ export default function SettingsPanel({
       </SettingsSection>
 
       {canManageProjectUsers && (
-        <SettingsSection id="managers" title="매니저 권한" description="초대 계정별로 편집, 접수함, 통계 접근 범위를 나눕니다." badge={`${managerDraft.length}명`} openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.managers} onSave={saveManagers} onEdit={editManagers} className="manager-access-card">
+        <SettingsSection id="managers" title="매니저 권한" description="초대와 메뉴 권한" badge={`${managerDraft.length}명`} openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.managers} onSave={saveManagers} onEdit={editManagers} className="manager-access-card">
           <div className="manager-section-tools">
             <div>
-              <p>기본 정보만 먼저 보이고, 상세 권한과 초대 링크는 매니저별로 열어서 관리합니다.</p>
+              <p>매니저별로 필요한 메뉴만 열어줍니다.</p>
             </div>
             <button type="button" disabled={lockedSections.managers} onClick={addManager}>매니저 추가</button>
           </div>
@@ -783,7 +783,7 @@ export default function SettingsPanel({
             <button type="button" className="settings-advanced-head" onClick={() => setAdvancedOpen(!advancedOpen)}>
               <span>
                 <strong>고급 설정</strong>
-                <small>SEO · 추적 코드 · 페이지 복제</small>
+                <small>SEO · 추적 · 페이지 복제</small>
               </span>
               <em>{advancedOpen ? '접기' : '열기'}</em>
             </button>
@@ -791,7 +791,7 @@ export default function SettingsPanel({
 
           {advancedOpen && (
             <div className="settings-advanced-list">
-              <SettingsSection id="seo" title="SEO 설정" description="검색 결과와 공유 링크에 보이는 정보를 설정합니다." openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.seo} onSave={saveSeo} onEdit={() => editSection('seo')}>
+              <SettingsSection id="seo" title="SEO 설정" description="검색과 공유 정보" openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.seo} onSave={saveSeo} onEdit={() => editSection('seo')}>
                 <div className="settings-grid">
                   <div className="settings-field-hint-wrap">
                     <Field label="메타 제목" value={seoDraft.title} disabled={lockedSections.seo} placeholder="강남 피부관리 상담 예약 | 브랜드명" onChange={(value) => setSeoDraft((draft) => ({ ...draft, title: value }))} />
@@ -816,7 +816,7 @@ export default function SettingsPanel({
                 </div>
               </SettingsSection>
 
-              <SettingsSection id="tracking" title="추적 코드" description="GTM, GA4, 광고 픽셀 기본 ID를 연결합니다." openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.tracking} onSave={saveTracking} onEdit={() => editSection('tracking')}>
+              <SettingsSection id="tracking" title="추적 코드" description="GTM, GA4, 픽셀 ID" openSection={openSection} setOpenSection={setOpenSection} locked={lockedSections.tracking} onSave={saveTracking} onEdit={() => editSection('tracking')}>
                 <div className="settings-grid">
                   <div className="settings-field-hint-wrap">
                     <Field label="GTM" value={trackingDraft.gtm} disabled={lockedSections.tracking} placeholder="GTM-XXXXXXX" onChange={(value) => setTrackingDraft((draft) => ({ ...draft, gtm: value }))} />
@@ -839,7 +839,7 @@ export default function SettingsPanel({
                 </div>
               </SettingsSection>
 
-              <SettingsSection id="conversion" title="전환 추적" description="상담 신청, 예약 완료 같은 전환 이벤트를 광고 채널로 전송합니다." openSection={openSection} setOpenSection={setOpenSection} className="settings-conversion-card">
+              <SettingsSection id="conversion" title="전환 추적" description="접수·예약 이벤트 전송" openSection={openSection} setOpenSection={setOpenSection} className="settings-conversion-card">
                 <div className="settings-conversion-grid">
                   <div className="settings-full settings-conversion-values" style={{ display: 'grid', gap: 10, minWidth: 0 }}>
                     <label style={{ display: 'grid', gap: 7, minWidth: 0 }}>
@@ -906,7 +906,7 @@ export default function SettingsPanel({
                 </div>
               </SettingsSection>
 
-              <SettingsSection id="duplicate" title="페이지 복제" description="현재 페이지를 다른 URL로 복사합니다. 접수 데이터와 통계는 복사하지 않습니다." badge="유료" openSection={openSection} setOpenSection={setOpenSection} className="page-duplicate-card">
+              <SettingsSection id="duplicate" title="페이지 복제" description="현재 페이지를 새 URL로 복사" badge="유료" openSection={openSection} setOpenSection={setOpenSection} className="page-duplicate-card">
                 <div className="page-duplicate-summary">
                   <div>
                     <strong>복제 범위</strong>
@@ -924,7 +924,7 @@ export default function SettingsPanel({
       )}
 
       {!clientAdminMode && (
-        <SettingsSection id="reset" title="초기화" description="저장된 페이지와 접수 데이터를 초기화합니다." badge="주의" openSection={openSection} setOpenSection={setOpenSection} className="danger-zone">
+        <SettingsSection id="reset" title="초기화" description="페이지와 접수 데이터 삭제" badge="주의" openSection={openSection} setOpenSection={setOpenSection} className="danger-zone">
           <button className="reset-danger" onClick={onReset}>전체 데이터 초기화</button>
         </SettingsSection>
       )}

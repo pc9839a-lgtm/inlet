@@ -86,4 +86,22 @@ await runSmoke('server-smoke-events', async ({ baseUrl }) => {
   assert(emptySummary.res.ok, 'empty month stats summary request failed');
   assert(emptySummary.data.totals?.events === 0 && emptySummary.data.totals?.leads === 0, 'empty month should return zero totals');
   assert(emptyStats.pv === 0 && emptyStats.cta === 0 && emptyStats.db === 0, 'empty month should not leak stale stats');
+
+  const utmProject = { projectId: 'smoke-events-utm', slug: 'smoke-events-utm' };
+  const utmQuery = new URLSearchParams(utmProject).toString();
+  const utmEvent = {
+    id: 'utm-event-1',
+    type: 'page_view',
+    label: 'utm landing',
+    channel: 'legacy-channel',
+    sourceUrl: 'https://example.com/?utm_source=naver&utm_medium=cpc&utm_campaign=summer',
+    device: 'mobile',
+    createdAt: '2026-05-10T03:00:00.000Z',
+  };
+  const utmSave = await json({ baseUrl }, 'POST', '/api/events', { project: utmProject, event: utmEvent });
+  assert(utmSave.res.ok, 'UTM event save failed');
+  assert(utmSave.data.event?.channel === 'naver', 'UTM source should override legacy channel');
+  assert(utmSave.data.event?.utmMedium === 'cpc' && utmSave.data.event?.utmCampaign === 'summer', 'UTM medium/campaign should be saved');
+  const utmSummary = await json({ baseUrl }, 'GET', `/api/stats/summary?${utmQuery}&month=2026-05&period=thisMonth&channel=naver`);
+  assert(utmSummary.data.summary?.pv === 1 && utmSummary.data.summary?.channelData?.naver === 1, 'UTM channel stats mismatch');
 }, { timeoutMs: 10000 });

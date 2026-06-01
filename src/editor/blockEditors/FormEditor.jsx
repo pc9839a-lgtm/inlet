@@ -222,7 +222,7 @@ export default function FormEditor({ s, set, page, generateStandaloneFormHtml })
           </div>
         </div>
 
-        {htmlOpen && <FormHtmlModal form={s} generateStandaloneFormHtml={generateStandaloneFormHtml} onClose={()=>setHtmlOpen(false)}/>}
+        {htmlOpen && <FormHtmlModal form={s} page={page} generateStandaloneFormHtml={generateStandaloneFormHtml} onClose={()=>setHtmlOpen(false)}/>}
       </Step>
     </EditorStack>
   );
@@ -241,8 +241,8 @@ function questionTypeLabel(type) {
   }[type] || '단답형');
 }
 
-function FormHtmlModal({ form, onClose, generateStandaloneFormHtml }) {
-  const code = useMemo(() => generateStandaloneFormHtml(form), [form]);
+function FormHtmlModal({ form, page, onClose, generateStandaloneFormHtml }) {
+  const code = useMemo(() => generateStandaloneFormHtml(form, page), [form, page, generateStandaloneFormHtml]);
   const [showCode, setShowCode] = useState(false);
   const dialogRef = useRef(null);
 
@@ -278,8 +278,8 @@ function FormHtmlModal({ form, onClose, generateStandaloneFormHtml }) {
         </div>
 
         <div className="inlet-code-notice">
-          <b>현재는 단독 실행형 코드</b>
-          <p>서버/CDN 없이도 붙여넣으면 바로 작동하도록 스타일과 스크립트를 포함합니다. 그래서 코드가 길어집니다. 추후 페이지로 공통 스크립트를 배포하면 짧은 임베드 코드로 전환할 수 있습니다.</p>
+          <b>접수함 연동 코드</b>
+          <p>현재 페이지 주소와 프로젝트 정보가 포함됩니다. 외부 사이트에 붙인 뒤 접수하면 이 페이지의 접수함으로 저장됩니다.</p>
         </div>
 
         {showCode && <textarea readOnly value={code}/>}

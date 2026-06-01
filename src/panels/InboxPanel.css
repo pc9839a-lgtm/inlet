@@ -759,3 +759,123 @@
     max-width: none !important;
   }
 }
+
+/* Inbox operator cleanup: dense controls, page-based duplicate policy, compact rows. */
+.inbox-panel {
+  gap: 10px !important;
+}
+
+.inbox-panel .inbox-policy-card,
+.inbox-panel .inbox-connect-card.v4,
+.inbox-panel .inbox-toolbar-card,
+.inbox-panel .inbox-list-card {
+  box-shadow: none !important;
+}
+
+.inbox-panel .inbox-policy-head,
+.inbox-panel .inbox-connect-card.v4 .inbox-connect-head {
+  min-height: 62px !important;
+  padding: 12px 14px !important;
+}
+
+.inbox-panel .inbox-policy-head small,
+.inbox-panel .inbox-connect-card.v4 .inbox-connect-head p,
+.inbox-panel .connection-row-main span,
+.inbox-panel .inbox-sync-note {
+  display: none !important;
+}
+
+.inbox-panel .inbox-policy-head em,
+.inbox-panel .connect-head-right b,
+.inbox-panel .connection-row-edit {
+  width: 66px !important;
+  min-width: 66px !important;
+  max-width: 66px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+}
+
+.inbox-panel .inbox-policy-body {
+  padding: 12px 14px 14px !important;
+  gap: 12px !important;
+}
+
+.inbox-panel .inbox-policy-switch,
+.inbox-panel .inbox-policy-select {
+  grid-template-columns: minmax(0, 1fr) 132px !important;
+  min-height: 58px !important;
+  padding: 10px 12px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+.inbox-panel .inbox-policy-switch span b,
+.inbox-panel .inbox-policy-select span b {
+  font-size: 14px !important;
+}
+
+.inbox-panel .inbox-policy-select select {
+  width: 132px !important;
+  max-width: 132px !important;
+}
+
+.inbox-panel .inbox-policy-history {
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+.inbox-panel .inbox-policy-history-head {
+  grid-template-columns: minmax(0, 1fr) auto !important;
+}
+
+.inbox-panel .inbox-policy-history-head div {
+  display: grid !important;
+  grid-template-columns: 138px 64px !important;
+}
+
+.inbox-panel .inbox-policy-history button {
+  padding: 0 !important;
+}
+
+.inbox-panel .lead-row-v3 {
+  grid-template-columns: minmax(0, 1fr) auto !important;
+}
+
+.inbox-panel .lead-row-main-v3 {
+  grid-template-columns: 76px minmax(0, .9fr) minmax(0, 1fr) !important;
+}
+
+.inbox-panel .lead-kind-pill {
+  justify-content: center !important;
+}
+
+.inbox-panel .lead-row-meta-v3 {
+  grid-template-columns: auto 92px 66px !important;
+}
+
+.inbox-panel .lead-row-meta-v3 .lead-status.hold {
+  display: none !important;
+}
+
+.inbox-panel .lead-row-meta-v3 button {
+  width: 66px !important;
+  min-width: 66px !important;
+}
+
+@media (max-width: 760px) {
+  .inbox-panel .inbox-policy-switch,
+  .inbox-panel .inbox-policy-select,
+  .inbox-panel .inbox-policy-history-head,
+  .inbox-panel .inbox-policy-history-head div,
+  .inbox-panel .lead-row-v3,
+  .inbox-panel .lead-row-main-v3,
+  .inbox-panel .lead-row-meta-v3 {
+    grid-template-columns: 1fr !important;
+  }
+
+  .inbox-panel .inbox-policy-select select,
+  .inbox-panel .lead-row-meta-v3 button {
+    width: 100% !important;
+    max-width: none !important;
+  }
+}

@@ -1,4 +1,5 @@
 import { headMetaConfig, installConversionTracking, installPageHeadMeta, trackingConfig } from '../src/lib/conversionTracking.js';
+import { sendConversionIntegrations } from '../src/lib/leadIntegrations.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -161,25 +162,40 @@ assert(adminDoc.nodes.size === 0, 'disabled/admin config should not insert scrip
 const noDomConfig = installConversionTracking(page, null, null);
 assert(noDomConfig.gtmId === 'GTM-ABC123', 'no-dom install should return parsed config without throwing');
 
+const originalWindow = globalThis.window;
+const eventWindow = { dataLayer: [], fbq: (...args) => eventWindow.fbqCalls.push(args), fbqCalls: [], gtag: (...args) => eventWindow.gtagCalls.push(args), gtagCalls: [], kakaoPixel: () => ({ completeRegistration: () => { eventWindow.kakaoComplete = true; } }), kakaoPixelId: '987654321', wcs: true, wcs_add: {}, wcs_do: () => { eventWindow.naverDone = true; } };
+globalThis.window = eventWindow;
+sendConversionIntegrations({ id: 'lead-conversion-1', type: '상담 신청' }, page);
+assert(eventWindow.dataLayer.some((item) => item.event === 'lead_submit'), 'dataLayer lead_submit event should be pushed');
+assert(eventWindow.fbqCalls.some((call) => call[0] === 'track' && call[1] === 'Lead'), 'Meta Lead event should be sent');
+assert(eventWindow.gtagCalls.some((call) => call[0] === 'event' && call[1] === 'conversion'), 'Google Ads conversion event should be sent');
+assert(eventWindow.kakaoComplete === true, 'Kakao conversion event should be sent');
+assert(eventWindow.naverDone === true, 'Naver conversion event should be sent');
+globalThis.window = originalWindow;
+
 const liveChecks = [
   {
     name: 'GTM preview/debug',
     status: 'skipped-live',
+    displayStatus: '설정 필요',
     reason: 'Requires a public preview page and GTM preview account access',
   },
   {
     name: 'Meta Pixel test events',
     status: 'skipped-live',
+    displayStatus: '설정 필요',
     reason: 'Requires Meta business account access and a configured pixel',
   },
   {
     name: 'Google Ads conversion ping',
     status: 'skipped-live',
+    displayStatus: '설정 필요',
     reason: 'Requires Google Ads account access and a configured conversion label',
   },
   {
     name: 'Naver/Kakao pixel diagnostics',
     status: 'skipped-live',
+    displayStatus: '설정 필요',
     reason: 'Requires platform account access and public-page diagnostics',
   },
 ];

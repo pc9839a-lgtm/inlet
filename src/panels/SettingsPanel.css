@@ -2215,3 +2215,94 @@
   flex-wrap: wrap !important;
   gap: 8px !important;
 }
+
+/* Operator settings cleanup: flatter sections, stable pills, no card-in-card feel. */
+.settings-panel {
+  gap: 10px !important;
+}
+
+.settings-panel .settings-compact-head {
+  min-height: 58px !important;
+  padding: 12px 14px !important;
+  box-shadow: none !important;
+}
+
+.settings-panel .settings-compact-head em {
+  max-width: 140px !important;
+  direction: ltr !important;
+}
+
+.settings-panel .settings-section,
+.settings-panel .settings-advanced-box {
+  box-shadow: none !important;
+}
+
+.settings-panel .settings-section-head,
+.settings-panel .settings-advanced-head {
+  grid-template-columns: minmax(0, 1fr) 66px !important;
+  min-height: 58px !important;
+  padding: 12px 14px !important;
+}
+
+.settings-panel .settings-section-state,
+.settings-panel .settings-advanced-head em {
+  width: 66px !important;
+  min-width: 66px !important;
+  max-width: 66px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+}
+
+.settings-panel .settings-section-body {
+  background: #fff !important;
+  gap: 10px !important;
+}
+
+.settings-panel .field,
+.settings-panel .image-input,
+.settings-panel .toggle,
+.settings-panel .account-settings-form,
+.settings-panel .account-password-form,
+.settings-panel .manager-owner-summary.compact,
+.settings-panel .manager-card,
+.settings-panel .ownership-transfer-box,
+.settings-panel .page-duplicate-summary {
+  box-shadow: none !important;
+  background: #fff !important;
+}
+
+.settings-panel .field,
+.settings-panel .image-input,
+.settings-panel .toggle {
+  border-color: #e5eaf2 !important;
+}
+
+.settings-panel .settings-section-copy small,
+.settings-panel .settings-advanced-head small,
+.settings-panel .manager-section-tools p,
+.settings-panel .manager-empty-state p,
+.settings-panel .ownership-transfer-box p,
+.settings-panel .page-duplicate-summary p {
+  display: none !important;
+}
+
+.settings-panel .manager-card-head,
+.settings-panel .manager-owner-summary.compact,
+.settings-panel .ownership-transfer-status {
+  overflow: visible !important;
+}
+
+.settings-panel .manager-title-row,
+.settings-panel .manager-card-summary,
+.settings-panel .ownership-transfer-status span,
+.settings-panel .ownership-transfer-status small {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.settings-panel .manager-card-actions button,
+.settings-panel .manager-detail-actions button,
+.settings-panel .manager-preset-row button {
+  min-width: 88px !important;
+  white-space: nowrap !important;
+}

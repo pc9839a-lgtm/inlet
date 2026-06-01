@@ -20,20 +20,20 @@ import { currentMonthValue, monthDateRange } from '../lib/monthRange.js';
 import './InboxPanel.css';
 
 const DUPLICATE_TEXT = {
-  title: '중복 차단',
-  subtitle: '같은 방문자의 반복 접수를 표시하거나 차단합니다.',
-  ip: 'IP 중복 차단',
-  ipDesc: '같은 IP에서 기준 횟수 이상 접수하면 차단합니다.',
-  cookie: '쿠키 중복 차단',
-  cookieDesc: '같은 브라우저에서 반복 접수하면 차단합니다.',
-  count: '차단 기준',
-  countDesc: '선택한 기간 안에서 몇 번째 접수부터 막을지 정합니다.',
-  window: '확인 기간',
-  windowDesc: '반복 접수를 검사할 기간입니다.',
+  title: '페이지 중복 차단',
+  subtitle: '이 페이지 접수 기준으로 관리합니다.',
+  ip: 'IP',
+  ipDesc: '같은 IP 제한',
+  cookie: '쿠키',
+  cookieDesc: '같은 브라우저 제한',
+  count: '횟수',
+  countDesc: '몇 번째 접수부터 막을지 선택',
+  window: '기간',
+  windowDesc: '중복 확인 기간',
   contact: '연락처/이메일',
-  contactDesc: '같은 연락처나 이메일이 다시 들어올 때 처리합니다.',
+  contactDesc: '같은 연락처 또는 이메일 처리',
   history: '차단 내역',
-  historyDesc: '차단된 접수만 월별로 확인합니다.',
+  historyDesc: '월별 조회',
   refresh: '조회',
   loading: '조회 중',
   empty: '차단 내역 없음',
@@ -74,11 +74,19 @@ const CONNECTION_COPY = {
   },
   email: {
     title: '이메일 알림',
-    summary: '새 접수가 들어오면 지정한 이메일로 알림을 보냅니다.',
+    summary: '새 접수를 이메일로 보냅니다.',
   },
   webhook: {
     title: 'Webhook 전송',
-    summary: 'Zapier, Make, CRM 같은 외부 도구로 접수 데이터를 보냅니다.',
+    summary: '외부 도구로 접수 데이터를 보냅니다.',
+  },
+  automation: {
+    title: 'Make / Zapier',
+    summary: 'Make, Zapier, n8n Webhook으로 같은 payload를 보냅니다.',
+  },
+  sheets: {
+    title: 'Google Sheets',
+    summary: 'Apps Script Web App URL로 접수 payload를 보내 시트 저장을 준비합니다.',
   },
 };
 
@@ -209,7 +217,7 @@ function IntakeDuplicatePolicyPanel({ page, authUser, updatePage }) {
   const policyChips = [
     settings.rejectIpDuplicate ? 'IP 차단' : 'IP 허용',
     settings.rejectCookieDuplicate ? '쿠키 차단' : '쿠키 허용',
-    settings.phoneEmailMode === 'block' ? '연락처 차단' : '중복 표시',
+    settings.phoneEmailMode === 'block' ? '연락처/이메일 차단' : '연락처/이메일 표시',
     `${windowLabel} 기준`,
   ];
 
@@ -300,6 +308,13 @@ function IntakeDuplicatePolicyPanel({ page, authUser, updatePage }) {
   );
 }
 
+function standardConnectionStateText(state = {}) {
+  if (state.tone === 'ok' || state.tone === 'ready') return '준비됨';
+  if (state.tone === 'warn') return '설정 필요';
+  if (state.tone === 'fail') return '실패';
+  return '꺼짐';
+}
+
 function ConnectionItem({ title, state, opened, onOpen, children, summary, description, actions }) {
   return (
     <div className={`connection-item connect-v4 ${opened ? 'open' : ''}`}>
@@ -309,7 +324,7 @@ function ConnectionItem({ title, state, opened, onOpen, children, summary, descr
           {description && <span>{description}</span>}
           {summary && <small>{summary}</small>}
         </button>
-        <ConnectionStatus state={{ ...state, text: compactConnectionState(state) }} />
+        <ConnectionStatus state={{ ...state, text: standardConnectionStateText(state) }} />
         <button type="button" className="connection-row-edit" onClick={onOpen}>{opened ? '닫기' : '설정'}</button>
       </div>
       {opened && (
@@ -360,7 +375,6 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
       <button className="inbox-connect-head" type="button" onClick={() => setOpen(!open)}>
         <div>
           <h2>알림 / 연동</h2>
-          <p>접수 저장, 이메일 알림, 외부 전송을 접수함에서 관리합니다.</p>
         </div>
         <div className="connect-head-right">
           <span>{counts.ok}개 켜짐</span>
@@ -600,7 +614,7 @@ export default function InboxPanel({ leads, page, authUser = null, updatePage, s
       <section className="card inbox-list-card inbox-list-v3">
         <div className="section-title inbox-list-title">
           <div>
-            <h2>접수 DB</h2>
+            <h2>접수 목록</h2>
             <p>{listSummary}{failedDeliveryCount ? ` · 전송 확인 ${failedDeliveryCount}건` : ''}</p>
           </div>
           <div className="inbox-list-actions">

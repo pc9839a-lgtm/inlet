@@ -24,6 +24,7 @@ import EditPanel from './editor/EditPanel.jsx';
 import TargetControl from './editor/TargetControl.jsx';
 import RichField from './editor/RichField.jsx';
 import { normalizeButtons } from './lib/blockButtons.js';
+import { currentTrafficAttribution } from './lib/trafficAttribution.js';
 import { canUseAdminSurface, canUseBuilderSurface, canWriteTab, isClientAdminMode, tabsForAccessMode, accessModeFor } from './lib/authContext.js';
 import { logoutAuthAccount, refreshAuthSession, updateAuthAccount } from './lib/authAccounts.js';
 import { normalizeAuthUser } from './lib/authIdentity.js';
@@ -815,7 +816,7 @@ function App() {
     setServerStatsSummary(null);
     Promise.all([
       fetchServerStatsSummary(page, authUser, { ...statsRange, channel: statsChannel === 'all' ? '' : statsChannel }),
-      fetchServerLeads(page, authUser, { limit: 8, withMeta: true, ...statsRange }),
+      fetchServerLeads(page, authUser, { limit: 8, withMeta: true, ...statsRange, channel: statsChannel === 'all' ? '' : statsChannel }),
     ])
       .then(([summaryResult, leadResult]) => {
         if (!alive) return;
@@ -989,11 +990,16 @@ function App() {
     });
   };
   const trackForPage = (targetPage, ev) => {
+    const traffic = currentTrafficAttribution();
     const event = {
     id: uid(),
     type: ev.type,
     label: ev.label || '',
-    channel: ev.channel || detectTrafficChannel(),
+    channel: ev.channel || traffic.channel,
+    utmSource: ev.utmSource || traffic.utmSource,
+    utmMedium: ev.utmMedium || traffic.utmMedium,
+    utmCampaign: ev.utmCampaign || traffic.utmCampaign,
+    sourceUrl: ev.sourceUrl || traffic.sourceUrl,
     device: ev.device || detectDeviceType(),
     createdAt: new Date().toISOString(),
     };
@@ -1032,13 +1038,17 @@ function App() {
     });
   };
   const addLeadForPage = (targetPage, lead) => {
+    const traffic = currentTrafficAttribution();
     const savedLead = normalizeLeadItem({
       id: uid(),
       status: '신규',
       memo: '',
       createdAt: new Date().toISOString(),
-      channel: lead.channel || detectTrafficChannel(),
-      sourceUrl: lead.sourceUrl || (typeof location !== 'undefined' ? location.href : ''),
+      channel: lead.channel || traffic.channel,
+      utmSource: lead.utmSource || traffic.utmSource,
+      utmMedium: lead.utmMedium || traffic.utmMedium,
+      utmCampaign: lead.utmCampaign || traffic.utmCampaign,
+      sourceUrl: lead.sourceUrl || traffic.sourceUrl,
       delivery: { status: 'pending', summary: '외부 전송 확인 중', logs: [] },
       ...lead
     });
@@ -2145,23 +2155,7 @@ function getTimerUrgency(diffMs = 0, done = false) {
   return 'normal';
 }
 function detectTrafficChannel() {
-  if (typeof location !== 'undefined') {
-    const params = new URLSearchParams(location.search);
-    const source = params.get('utm_source') || params.get('source') || params.get('channel');
-    if (source) return source.trim().toLowerCase();
-    if (params.get('gclid')) return 'google';
-    if (params.get('fbclid')) return 'meta';
-    if (params.get('n_media') || params.get('n_query')) return 'naver';
-    if (params.get('kakao_ad')) return 'kakao';
-  }
-  if (typeof document === 'undefined') return 'direct';
-  const ref = String(document.referrer || '').toLowerCase();
-  if (!ref) return 'direct';
-  if (ref.includes('naver.')) return 'naver';
-  if (ref.includes('google.')) return 'google';
-  if (ref.includes('kakao.')) return 'kakao';
-  if (ref.includes('instagram.')) return 'instagram';
-  return 'referral';
+  return currentTrafficAttribution().channel;
 }
 function detectDeviceType() {
   if (typeof navigator === 'undefined') return 'desktop';

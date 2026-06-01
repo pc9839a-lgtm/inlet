@@ -77,6 +77,7 @@ export async function fetchServerStatsSummary(page, authUser = null, options = {
   const context = projectContext(page, authUser);
   const params = contextParams(context, {
     month: options.month || '',
+    period: options.period || '',
     dateFrom: options.dateFrom || '',
     dateTo: options.dateTo || '',
     channel: options.channel || '',

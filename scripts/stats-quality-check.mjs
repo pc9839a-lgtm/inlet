@@ -17,8 +17,8 @@ const old = '2026-04-01T03:00:00.000Z';
 const events = [
   { id: 'pv-1', type: 'page_view', channel: 'naver', device: 'mobile', createdAt: today },
   { id: 'pv-1', type: 'page_view', channel: 'naver', device: 'mobile', createdAt: today },
-  { id: 'pv-2', type: 'page_view', channel: 'google', device: 'desktop', createdAt: today },
-  { id: 'cta-1', type: 'cta_click', label: 'hero', channel: 'naver', device: 'mobile', createdAt: today },
+  { id: 'pv-2', type: 'page_view', channel: 'direct', utmSource: 'google', utmMedium: 'cpc', utmCampaign: 'spring', sourceUrl: 'https://example.com/?utm_source=google&utm_medium=cpc&utm_campaign=spring', device: 'desktop', createdAt: today },
+  { id: 'cta-1', type: 'cta_click', label: 'hero', channel: 'direct', utmSource: 'naver', utmMedium: 'search', utmCampaign: 'brand', sourceUrl: 'https://example.com/?utm_source=naver&utm_medium=search&utm_campaign=brand', device: 'mobile', createdAt: today },
   { id: 'link-1', type: 'link_click', label: 'kakao', channel: 'kakao', device: 'mobile', createdAt: today },
   { id: 'form-start-1', type: 'form_start', label: '상담 폼', channel: 'naver', device: 'mobile', createdAt: today },
   { id: 'form-attempt-1', type: 'form_submit_attempt', label: '상담 폼', channel: 'naver', device: 'mobile', createdAt: today },
@@ -72,6 +72,9 @@ assert(todayStats.reservationCompletionRate === '100.0', `reservation completion
 assert(todayStats.funnel.pageViews === 2 && todayStats.funnel.ctaClicks === 2 && todayStats.funnel.linkClicks === 1, 'funnel traffic steps mismatch');
 assert(todayStats.funnel.formStarts === 1 && todayStats.funnel.submitAttempts === 1 && todayStats.funnel.submitSuccesses === 1, 'funnel form steps mismatch');
 assert(todayStats.funnel.reservationAttempts === 1 && todayStats.funnel.reservationSuccesses === 1, 'funnel reservation steps mismatch');
+assert(todayStats.channelData.google === 1 && todayStats.channelData.naver === 1, 'UTM source channel aggregation mismatch');
+assert(todayStats.channelData.direct >= 1, 'events without UTM source should be direct');
+assert(todayStats.ctaLabelData.hero === 1, 'CTA label aggregation mismatch');
 assert(todayStats.statusData['신규'] === 2 && todayStats.statusData['확인중'] === 1, 'status breakdown mismatch');
 assert(todayStats.deliveryData['전송완료'] === 2 && todayStats.deliveryData['전송실패'] === 1, 'delivery breakdown mismatch');
 assert(!todayStats.filteredEvents.some((event) => event.id === 'pv-before-kst' || event.id === 'pv-after-kst'), 'Seoul today should exclude adjacent UTC-day events');
@@ -100,11 +103,12 @@ assert(statsPanel.includes('onPeriodChange') && statsPanel.includes('controlledP
 assert(statsPanel.includes('PERIOD_OPTIONS') && statsPanel.includes('stats-range-tabs'), 'stats panel should expose 1/7/14/30 day period tabs');
 assert(statsPanel.includes('type="month"'), 'stats panel should expose month-only filter control');
 assert(statsPanel.includes('stats-line-chart') && statsPanel.includes('<polyline'), 'stats panel trend should render as a line chart');
-assert(statsPanel.includes('상세통계') && !statsPanel.includes('월간 추이') && !statsPanel.includes('방문·접수 흐름'), 'stats trend title should use compact service copy');
+assert(statsPanel.includes('방문·접수 통계') && !statsPanel.includes('월간 추이') && !statsPanel.includes('방문·접수 흐름'), 'stats trend title should use operator service copy');
 assert(!statsPanel.includes('마우스를 올리면'), 'stats trend should not render explanatory helper copy');
 assert(statsPanel.includes('stats-chart-tooltip') && statsPanel.includes('onMouseEnter'), 'stats line chart should expose hover details');
 assert(statsPanel.includes('fmtDateOnly') && !statsPanel.includes('fmtDate(lead.createdAt)'), 'recent leads should show date only without time');
 assert(statsPanel.includes('serverStats') && statsPanel.includes('normalizeServerStats'), 'stats panel should render server aggregate payloads');
+assert(statsPanel.includes('recentDeliveryLogs') && statsPanel.includes('DeliveryLogCard') && statsPanel.includes('전송 로그'), 'stats panel should expose recent delivery logs');
 
 const appSource = await readFile('src/App.jsx', 'utf8');
 assert(appSource.includes('fetchServerStatsSummary'), 'stats tab should load server aggregate summary');
@@ -121,6 +125,22 @@ assert(eventRepository.includes('withMeta') && eventRepository.includes("source:
 assert(leadRepository.includes('fetchAllServerLeads') && leadRepository.includes("source: 'server'"), 'lead repository should return full fetch meta');
 assert(eventRepository.includes('dateFrom') && eventRepository.includes('dateTo'), 'event repository should send date range filters for bounded stats queries');
 assert(leadRepository.includes('dateFrom') && leadRepository.includes('dateTo'), 'lead repository should send date range filters for bounded stats queries');
+assert(eventRepository.includes('period: options.period') && eventRepository.includes('channel: options.channel'), 'stats summary should send period and channel filters');
+assert(leadRepository.includes('channel: options.channel'), 'recent stats leads should support channel filtering');
+assert(appSource.includes('utmSource') && appSource.includes('utmMedium') && appSource.includes('utmCampaign'), 'events and leads should keep UTM fields');
+assert(appSource.includes('currentTrafficAttribution'), 'event tracking should use UTM-based attribution');
+
+const trafficAttribution = await readFile('src/lib/trafficAttribution.js', 'utf8');
+assert(trafficAttribution.includes('trafficAttributionFromUrl') && trafficAttribution.includes('utm_source'), 'traffic attribution should parse UTM source');
+assert(trafficAttribution.includes("channel: utmSource || 'direct'"), 'missing UTM source should classify as direct');
+
+const serverSource = await readFile('server/index.mjs', 'utf8');
+assert(serverSource.includes("channel: url.searchParams.get('channel')"), 'stats summary route should accept channel filter');
+assert(serverSource.includes('trafficChannelFromItem'), 'server JSONL stats should use shared UTM channel classification');
+
+const d1Source = await readFile('server/storage/d1Adapter.mjs', 'utf8');
+assert(d1Source.includes('trafficAttributionFromUrl') && d1Source.includes('utmMedium') && d1Source.includes('utmCampaign'), 'D1 events should preserve UTM fields in payload');
+assert(d1Source.includes('channel: utmSource ||') || d1Source.includes('channel: utmSource ||'), 'D1 event channel should be based on utm_source');
 
 const landingRenderer = await readFile('src/preview/LandingRenderer.jsx', 'utf8');
 const formBlocks = await readFile('src/preview/renderers/FormBlocks.jsx', 'utf8');
@@ -129,4 +149,4 @@ assert(formBlocks.includes("type: 'reservation_submit_attempt'"), 'reservation a
 assert(formBlocks.includes("type: 'reservation_submit_success'"), 'reservation success event should be produced');
 assert(formBlocks.includes('onFocusCapture={markReservationStart}'), 'reservation form should produce a start event');
 
-console.log(JSON.stringify({ ok: true, checks: 66 }, null, 2));
+console.log(JSON.stringify({ ok: true, checks: 78 }, null, 2));

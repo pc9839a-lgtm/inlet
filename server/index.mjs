@@ -9,6 +9,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { duplicateWindowMs as duplicatePolicyWindowMs, isReservationLead as isReservationLeadPolicy, normalizeLeadContact, sameLeadKind as sameLeadKindPolicy } from '../src/lib/leadDuplicatePolicy.js';
 import { buildStats as buildStatsSummary } from '../src/lib/statsMetrics.js';
+import { trafficAttributionFromUrl, trafficChannelFromItem } from '../src/lib/trafficAttribution.js';
 import { appendJsonlRecord, queryJsonlRecords, readJsonlRecords, writeJsonlRecords } from './storage/jsonlAdapter.mjs';
 import { createStorageRuntime, storageRuntimeCoverage, storageRuntimeHealth, storageRuntimePlan } from './storage/runtimeAdapter.mjs';
 import { aggregateD1Stats, deleteD1AiDraft, deleteD1Lead, findD1LeadsByContact, findD1LeadsByIntakeSignals, getD1AccountByEmail, getD1AccountByPhone, getD1Lead, getD1PageBySlug, getD1PageRevision, getD1ProjectAccess, insertD1AuditLog, insertD1BlockedLeadSubmission, insertD1Event, insertD1PageRevision, listD1AiDrafts, listD1BlockedLeadSubmissions, listD1DeliveryLogs, listD1DeliveryRetryQueue, listD1Events, listD1Leads, listD1OwnershipTransferRequests, listD1PageRevisions, replaceD1ProjectMembers, upsertD1Account, upsertD1AiDraft, upsertD1Invite, upsertD1Lead, upsertD1OwnershipTransferRequest, upsertD1Page, upsertD1Project, upsertD1ProjectMember } from './storage/d1Adapter.mjs';
@@ -383,6 +384,7 @@ const server = createServer(async (req, res) => {
         dateFrom: url.searchParams.get('dateFrom') || '',
         dateTo: url.searchParams.get('dateTo') || '',
         month: url.searchParams.get('month') || '',
+        channel: url.searchParams.get('channel') || '',
       });
       sendJson(res, 200, { ok: true, ...result });
       return;
@@ -2409,6 +2411,9 @@ function eventFingerprint(event = {}) {
     event.type,
     event.label,
     event.channel,
+    event.utmSource || event.utm_source,
+    event.utmMedium || event.utm_medium,
+    event.utmCampaign || event.utm_campaign,
     event.device,
   ].map((value) => String(value || '').trim().toLowerCase()).join('|');
 }
@@ -2439,12 +2444,23 @@ async function saveEvent(body = {}) {
   }
 
   const project = hasProject(body.project) ? normalizeProject(body.project) : {};
+  const sourceAttribution = trafficAttributionFromUrl(event.sourceUrl || event.source_url || event.url || '');
+  const attribution = {
+    ...sourceAttribution,
+    utmSource: event.utmSource || event.utm_source || sourceAttribution.utmSource,
+    utmMedium: event.utmMedium || event.utm_medium || sourceAttribution.utmMedium,
+    utmCampaign: event.utmCampaign || event.utm_campaign || sourceAttribution.utmCampaign,
+  };
   const saved = {
     ...event,
     id: event.id || randomId(),
     type: String(event.type || ''),
     label: String(event.label || ''),
-    channel: String(event.channel || 'direct'),
+    channel: String(attribution.utmSource || 'direct'),
+    utmSource: String(attribution.utmSource || ''),
+    utmMedium: String(attribution.utmMedium || ''),
+    utmCampaign: String(attribution.utmCampaign || ''),
+    sourceUrl: String(event.sourceUrl || event.source_url || event.url || ''),
     device: String(event.device || 'desktop'),
     createdAt: event.createdAt || new Date().toISOString(),
     ...(hasProject(project) ? { project } : {}),
@@ -2510,7 +2526,8 @@ function normalizeDateFilters(filters = {}) {
   const month = monthBounds(filters.month);
   const dateFrom = String(filters.dateFrom || month.dateFrom || '').trim();
   const dateTo = String(filters.dateTo || month.dateTo || '').trim();
-  return { ...filters, dateFrom, dateTo };
+  const channel = String(filters.channel || '').trim().toLowerCase();
+  return { ...filters, dateFrom, dateTo, channel };
 }
 
 function assertCsvDateRange(filters = {}) {
@@ -2544,7 +2561,14 @@ function dateFiltersFromQuery(url) {
     month: url.searchParams.get('month') || '',
     dateFrom: url.searchParams.get('dateFrom') || '',
     dateTo: url.searchParams.get('dateTo') || '',
+    channel: url.searchParams.get('channel') || '',
   });
+}
+
+function matchesStatsChannel(item = {}, channel = '') {
+  const safe = String(channel || '').trim().toLowerCase();
+  if (!safe || safe === 'all') return true;
+  return trafficChannelFromItem(item) === safe;
 }
 
 function dateRangeFilter(item = {}, filters = {}) {
@@ -2620,8 +2644,11 @@ async function listEventsPage(limit, project = {}, cursor = 0, filters = {}) {
       cursor,
       limit,
     });
+    const filteredRecords = dateFilters.channel
+      ? result.records.filter((event) => matchesStatsChannel(event, dateFilters.channel))
+      : result.records;
     return {
-      events: result.records,
+      events: filteredRecords,
       total: result.total,
       nextCursor: result.nextCursor,
       hasMore: result.hasMore,
@@ -2635,7 +2662,7 @@ async function listEventsPage(limit, project = {}, cursor = 0, filters = {}) {
     filters: dateFilters,
     limit,
     cursor,
-    filter: (event) => !(dateFilters.dateFrom || dateFilters.dateTo) || dateRangeFilter(event, dateFilters),
+    filter: (event) => (!(dateFilters.dateFrom || dateFilters.dateTo) || dateRangeFilter(event, dateFilters)) && matchesStatsChannel(event, dateFilters.channel),
     plan,
   });
   return {
@@ -2891,6 +2918,7 @@ function matchesLeadFilters(lead = {}, filters = {}) {
   const dateFrom = String(dateFilters.dateFrom || '').trim();
   const dateTo = String(dateFilters.dateTo || '').trim();
   if ((dateFrom || dateTo) && !dateRangeFilter(lead, { dateFrom, dateTo })) return false;
+  if (dateFilters.channel && !matchesStatsChannel(lead, dateFilters.channel)) return false;
   if (kind === 'reservation' && !isReservationLeadPolicy(lead)) return false;
   if (kind === 'consult' && isReservationLeadPolicy(lead)) return false;
   if (status && status !== 'all' && String(lead.status || '') !== status) return false;
@@ -2913,8 +2941,11 @@ async function listLeadsPage(limit, project = {}, cursor = 0, filters = {}) {
       cursor,
       limit,
     });
+    const records = dateFilters.channel
+      ? result.records.filter((lead) => matchesStatsChannel(lead, dateFilters.channel))
+      : result.records;
     return {
-      leads: result.records,
+      leads: records,
       total: result.total,
       nextCursor: result.nextCursor,
       hasMore: result.hasMore,
@@ -3018,6 +3049,7 @@ async function statsSummary(project = {}, filters = {}) {
       month: dateFilters.month,
       dateFrom: dateFilters.dateFrom || '',
       dateTo: dateFilters.dateTo || '',
+      channel: dateFilters.channel || '',
     });
     return {
       source: 'server',
@@ -3043,7 +3075,7 @@ async function statsSummary(project = {}, filters = {}) {
       limit: Number.MAX_SAFE_INTEGER,
       cursor: 0,
       reverse: false,
-      filter: (event) => !(dateFilters.dateFrom || dateFilters.dateTo) || dateRangeFilter(event, dateFilters),
+      filter: (event) => (!(dateFilters.dateFrom || dateFilters.dateTo) || dateRangeFilter(event, dateFilters)) && matchesStatsChannel(event, dateFilters.channel),
       plan: eventPlan,
     }),
     queryJsonlRecords(projectLeadsFile(project) || leadsFile, {
@@ -3058,7 +3090,10 @@ async function statsSummary(project = {}, filters = {}) {
   ]);
   const scopedEvents = eventsResult.records;
   const scopedLeads = leadsResult.records;
-  const stats = buildStatsSummary(scopedEvents, scopedLeads, period);
+  const statsNow = dateFilters.dateTo
+    ? new Date(`${dateFilters.dateTo}T12:00:00+09:00`)
+    : new Date();
+  const stats = buildStatsSummary(scopedEvents, scopedLeads, period, statsNow);
   const { filteredEvents: _events, filteredLeads: _leads, ...summary } = stats;
   return {
     source: 'server',
@@ -3621,12 +3656,20 @@ async function sendServerLeadIntegrations(lead, page = {}) {
 
 function buildServerIntegrationJobs(integrations = {}, lead = {}, page = {}) {
   const payload = {
+    schemaVersion: 'inlet.lead.v1',
+    event: 'lead.created',
+    source: 'inlet',
     brand: '페이지로',
     page: {
       title: page.title || '',
       slug: page.slug || '',
     },
     lead,
+    contact: {
+      name: lead.name || lead.values?.name || '',
+      phone: lead.phone || lead.values?.phone || '',
+      email: lead.email || lead.values?.email || '',
+    },
     createdAt: lead.createdAt || new Date().toISOString(),
   };
   const jobs = [];

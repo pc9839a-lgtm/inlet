@@ -1,10 +1,9 @@
 import { getD1Lead, getD1PageBySlug, upsertD1Lead } from '../../../../server/storage/d1Adapter.mjs';
 import { assertD1, authorizeProject, handleApiError, jsonResponse, optionsResponse, projectFromRequest, readJson } from '../../_shared.js';
-import { normalizeDeliveryPage, sendLeadDelivery } from '../_delivery.js';
+import { NO_DELIVERY_SETTINGS_MESSAGE, normalizeDeliveryPage, sendLeadDelivery } from '../_delivery.js';
 
 const METHODS = 'POST, OPTIONS';
 const TERMINAL_DELIVERY_STATUSES = new Set(['success', 'partial']);
-const NO_DELIVERY_SETTINGS_MESSAGE = '알림 전송 설정 없음';
 
 export async function onRequest({ request, env, params }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, METHODS);

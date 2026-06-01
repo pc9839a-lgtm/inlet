@@ -31,9 +31,14 @@ export async function sendSesEmail({ to, subject, text, html, from = '' } = {}, 
   const fromAddress = normalizeSesFromAddress(from || envFirst(env, ['INLET_LEAD_EMAIL_FROM', 'INLET_AUTH_EMAIL_FROM', 'AWS_SES_FROM'], '페이지로 <support@pagero.kr>'));
   const toAddress = normalizeEmailAddress(to);
 
-  if (!region || !accessKeyId || !secretAccessKey || !fromAddress) {
-    const error = new Error('메일 전송 설정이 필요합니다.');
+  if (!region || !fromAddress) {
+    const error = new Error('메일 발송 설정이 필요합니다.');
     error.code = 'EMAIL_SEND_NOT_CONFIGURED';
+    throw error;
+  }
+  if (!accessKeyId || !secretAccessKey) {
+    const error = new Error('SES 키가 설정되지 않았습니다.');
+    error.code = 'EMAIL_SEND_KEY_MISSING';
     throw error;
   }
   if (!isValidEmailAddress(toAddress)) {
@@ -93,7 +98,7 @@ export async function sendSesEmail({ to, subject, text, html, from = '' } = {}, 
       signal: AbortSignal.timeout(10000),
     });
   } catch {
-    const error = new Error('메일 전송 시간이 초과되었습니다.');
+    const error = new Error('메일 발송 시간이 초과되었습니다.');
     error.code = 'EMAIL_SEND_TIMEOUT';
     throw error;
   }
@@ -106,7 +111,7 @@ export async function sendSesEmail({ to, subject, text, html, from = '' } = {}, 
     responseData = {};
   }
   if (!res.ok) {
-    const error = new Error('메일 전송에 실패했습니다.');
+    const error = new Error('메일 발송에 실패했습니다.');
     error.code = classifySesError(responseData, res.status);
     error.httpStatus = res.status;
     error.providerMessage = String(responseData.message || responseData.Message || '').slice(0, 500);
@@ -123,8 +128,9 @@ export async function sendSesEmail({ to, subject, text, html, from = '' } = {}, 
 function classifySesError(responseData = {}, status = 500) {
   const raw = String(responseData.__type || responseData.message || responseData.Message || '').toLowerCase();
   if (raw.includes('sandbox')) return 'EMAIL_SEND_SANDBOX_REJECTED';
-  if (raw.includes('notverified') || raw.includes('identity')) return 'EMAIL_DOMAIN_NOT_VERIFIED';
-  if (status === 429 || raw.includes('throttl') || raw.includes('limit')) return 'EMAIL_SEND_QUOTA_EXCEEDED';
+  if (status === 429 || raw.includes('throttl') || raw.includes('limit') || raw.includes('quota') || raw.includes('maximum sending rate')) return 'EMAIL_SEND_QUOTA_EXCEEDED';
+  if (raw.includes('email address is not verified') || raw.includes('recipient') || raw.includes('destination')) return 'EMAIL_RECIPIENT_NOT_VERIFIED';
+  if (raw.includes('notverified') || raw.includes('identity') || raw.includes('fromemailaddress')) return 'EMAIL_DOMAIN_NOT_VERIFIED';
   return 'EMAIL_SEND_PROVIDER_ERROR';
 }
 

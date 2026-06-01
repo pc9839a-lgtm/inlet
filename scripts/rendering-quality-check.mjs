@@ -71,6 +71,7 @@ const files = {
   signal: await readFile('src/preview/renderers/SignalBlocks.jsx', 'utf8'),
   layout: await readFile('src/preview/renderers/LayoutBlocks.jsx', 'utf8'),
   utility: await readFile('src/preview/renderers/UtilityBlocks.jsx', 'utf8'),
+  formEmbed: await readFile('src/lib/formEmbed.js', 'utf8'),
   previewCss: (await Promise.all(previewCssFiles.map((file) => readFile(file, 'utf8')))).join('\n'),
   cssQa: await readFile('scripts/css-quality-check.mjs', 'utf8'),
   browserVisualQa: await readFile('scripts/browser-visual-quality-check.mjs', 'utf8'),
@@ -108,6 +109,7 @@ assert(files.landing.includes('publicView={publicView}'), 'public bottom bar sho
 assert(files.landing.includes('accent={page.theme.accent}'), 'public bottom bar should receive page accent variable');
 assert(files.landing.includes("'--accent': accent"), 'bottom bar should expose accent when rendered outside landing page');
 assert(files.landing.includes('public-bottom-bar'), 'public bottom bar should have a stable public-only class');
+assert(!files.layout.includes('top-menu-set-copy') && !files.layout.includes('aria-hidden={duplicate'), 'topnav renderer should not render duplicated loop menu items');
 assert(files.layout.includes('function topNavLogoTextColor') && files.layout.includes("if (logoStyle === 'badge')"), 'badge topnav logo text should use contrast-safe color logic');
 assert(files.layout.includes("savedText === logoColor") && files.layout.includes("isDarkHex(logoColor)"), 'badge topnav logo text should repair stale same-color values');
 
@@ -175,10 +177,12 @@ const visualGeometryContracts = [
   ['links cards protect text overflow', files.previewCss.includes('minmax(0,1fr)') && /overflow-wrap|text-overflow/.test(files.previewCss)],
   ['timer grid uses stable tracks', files.previewCss.includes('.timer-grid') && files.previewCss.includes('repeat(4')],
   ['bottom bar keeps fixed button count tracks', files.previewCss.includes('bottom-bar.count-3') && files.previewCss.includes('repeat(3')],
-  ['public landing bottom CTA is fixed inside 860 shell', files.previewCss.includes('.public-landing-viewport .public-bottom-bar') && files.previewCss.includes('position: fixed') && files.previewCss.includes('width: min(860px, calc(100vw - 24px))')],
+  ['public landing bottom CTA is fixed inside 860 shell', files.previewCss.includes('.public-landing-viewport .public-bottom-bar') && files.previewCss.includes('position: fixed') && files.previewCss.includes('width: min(860px, 100vw)') && files.previewCss.includes('max-width: 860px')],
   ['public landing bottom CTA uses editor button colors', files.previewCss.includes('.public-landing-viewport .public-bottom-bar button') && files.previewCss.includes('background: var(--bottom-button') && files.previewCss.includes('color: var(--bottom-button-text')],
   ['public landing bottom CTA does not add a white overlay', files.previewCss.includes('.public-landing-viewport .public-bottom-bar') && files.previewCss.includes('background: transparent !important') && files.previewCss.includes('box-shadow: none !important')],
-  ['public landing reserves bottom CTA space', files.previewCss.includes('.landing-page.public-render.has-bottom-bar .landing-content') && files.previewCss.includes('padding-bottom: 126px')],
+  ['public landing reserves bottom CTA space', files.previewCss.includes('.landing-page.public-render.has-bottom-bar .landing-content') && files.previewCss.includes('padding-bottom: calc(126px + env(safe-area-inset-bottom, 0px))')],
+  ['public landing topnav is fixed inside 860 shell', files.previewCss.includes('.public-landing-viewport .topnav.topnav-one-line') && files.previewCss.includes('position: fixed') && files.previewCss.includes('grid-template-columns: minmax(88px, max-content) minmax(0, 1fr)')],
+  ['public landing keeps topnav loop disabled', files.previewCss.includes('.public-landing-viewport .topnav-menu-loop .top-menu-track') && files.previewCss.includes('animation: none !important') && files.previewCss.includes('.public-landing-viewport .top-menu-set-copy')],
   ['map widget has bounded embed area', files.previewCss.includes('.inlet-map-section') && /min-height|aspect-ratio/.test(files.previewCss)],
   ['faq content has vertical spacing', files.previewCss.includes('.faq-widget') && files.previewCss.includes('gap:')],
   ['selected preview outline suppressed in template mode', files.previewCss.includes('.landing-page.template-preview') && files.previewCss.includes('outline: 0')],
@@ -215,6 +219,11 @@ assert(files.browserVisualQa.includes('realBrowserCommand'), 'browser visual QA 
 assert(files.browserVisualQa.includes('realBrowserPowerShellCommand'), 'browser visual QA skipped output should include a PowerShell real-browser command');
 assert(files.browserVisualQa.includes('local-chrome-cdp'), 'browser visual QA should support local Chrome/Edge CDP without Playwright');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_CHROME_PATH'), 'browser visual QA should allow a custom local Chrome/Edge path');
+assert(files.formEmbed.includes('https://pagero.kr/api/leads'), 'standalone form embed should submit to Pagero lead API');
+assert(files.formEmbed.includes('projectId: safePage.projectId'), 'standalone form embed should include the page project id');
+assert(files.formEmbed.includes('slug: safePage.slug'), 'standalone form embed should include the page slug');
+assert(files.formEmbed.includes('answers:extracted.answers'), 'standalone form embed should preserve structured answers');
+assert(files.formEmbed.includes('접수함 저장에 실패했습니다'), 'standalone form embed should show server save failure');
 assert(files.browserVisualQa.includes("INLET_BROWSER_QA_EXTRA_URLS=auto"), 'browser visual QA should document automatic footer/legal route coverage');
 assert(files.browserVisualQa.includes("'/privacy'") && files.browserVisualQa.includes("'/terms'"), 'browser visual QA auto routes should cover legal pages');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_STATE_PRESET'), 'browser visual QA should support authenticated state presets');

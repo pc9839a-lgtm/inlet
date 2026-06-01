@@ -147,41 +147,23 @@
   transform: translateY(-1px) !important;
 }
 
-.topnav-menu-loop .top-logo,
-.topnav-menu-loop:not(.topnav-logo-image) .top-logo {
-  max-width: 42% !important;
-}
-
 .topnav-menu-loop .top-menu {
-  justify-content: flex-start !important;
-  overflow: hidden !important;
+  justify-content: flex-end !important;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
 }
 
-.topnav-menu-loop .top-menu-track {
-  justify-content: flex-start !important;
-  min-width: max-content !important;
-  max-width: none !important;
-  margin-left: 0 !important;
-  gap: 18px !important;
-  animation: topMenuRoll 14s linear infinite !important;
+.topnav-menu-loop .top-menu-track,
+.topnav-menu-loop .top-menu-set {
+  justify-content: flex-end !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  transform: none !important;
+  animation: none !important;
 }
 
 .topnav-menu-loop .top-menu-set-copy {
-  display: flex !important;
-}
-
-.topnav-menu-loop .top-menu button[aria-hidden="true"] {
-  pointer-events: none !important;
-}
-
-.topnav-menu-loop .top-menu:hover .top-menu-track {
-  animation-play-state: paused !important;
-}
-
-@keyframes topMenuRoll {
-  to {
-    transform: translateX(calc(-50% - 9px));
-  }
+  display: none !important;
 }
 
 .top-menu-theme-row {

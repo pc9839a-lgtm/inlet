@@ -1,3 +1,5 @@
+import { trafficChannelFromItem } from './trafficAttribution.js';
+
 export const PERIOD_OPTIONS = [
   ['1d', '1일'],
   ['7d', '7일'],
@@ -8,6 +10,14 @@ export const PERIOD_OPTIONS = [
 export function countBy(items, key) {
   return (items || []).reduce((acc, item) => {
     const value = item?.[key] || 'unknown';
+    acc[value] = (acc[value] || 0) + 1;
+    return acc;
+  }, {});
+}
+
+export function countByValue(items, picker) {
+  return (items || []).reduce((acc, item) => {
+    const value = picker(item) || 'unknown';
     acc[value] = (acc[value] || 0) + 1;
     return acc;
   }, {});
@@ -34,6 +44,7 @@ export function statLabel(key) {
     kakao: '카카오',
     instagram: '인스타그램',
     facebook: '페이스북',
+    meta: '메타',
     youtube: '유튜브',
     mobile: '모바일',
     desktop: 'PC',
@@ -98,6 +109,7 @@ export function buildStats(events = [], leads = [], period = '7d', now = new Dat
   const statusData = {};
   const deliveryData = {};
   const typeData = { 상담: 0, 예약: 0 };
+  const ctaLabelData = {};
   let pv = 0;
   let cta = 0;
   let link = 0;
@@ -117,6 +129,7 @@ export function buildStats(events = [], leads = [], period = '7d', now = new Dat
       if (bucket) bucket.pv += 1;
     } else if (event.type === 'cta_click') {
       cta += 1;
+      ctaLabelData[event.label || 'unknown'] = (ctaLabelData[event.label || 'unknown'] || 0) + 1;
       if (bucket) bucket.cta += 1;
     } else if (event.type === 'link_click') {
       link += 1;
@@ -181,6 +194,9 @@ export function buildStats(events = [], leads = [], period = '7d', now = new Dat
     statusData,
     deliveryData,
     typeData,
+    channelData: countByValue(filteredEvents, trafficChannelFromItem),
+    deviceData: countBy(filteredEvents, 'device'),
+    ctaLabelData,
   };
 }
 
@@ -204,8 +220,10 @@ function statsDedupeKey(item = {}) {
   const name = item.name || '';
   const label = item.label || item.sourceBlockTitle || item.message || '';
   const channel = item.channel || '';
+  const utm = item.utmSource || item.utm_source || '';
+  const sourceUrl = item.sourceUrl || item.source_url || item.url || '';
   const device = item.device || '';
-  const signature = [createdAt, type, contact, name, label, channel, device]
+  const signature = [createdAt, type, contact, name, label, channel, utm, sourceUrl, device]
     .map((value) => String(value || '').trim().toLowerCase())
     .join('|');
   return signature.replace(/\|/g, '') ? `sig:${signature}` : '';
