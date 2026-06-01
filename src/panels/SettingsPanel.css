@@ -1981,3 +1981,97 @@
     max-width: 118px !important;
   }
 }
+
+/* Settings compact header final pass. Keep the builder column readable even after legacy CSS layers load. */
+.settings-panel .settings-section,
+.settings-panel .settings-advanced-box {
+  border-radius: 18px !important;
+  overflow: hidden !important;
+}
+
+.settings-panel .settings-section-head,
+.settings-panel .settings-advanced-head {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 62px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 56px !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 13px 14px !important;
+}
+
+.settings-panel .settings-section-copy,
+.settings-panel .settings-advanced-head > span {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  display: grid !important;
+  gap: 4px !important;
+}
+
+.settings-panel .settings-section-title-row {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  flex-wrap: nowrap !important;
+}
+
+.settings-panel .settings-section-title-row h2,
+.settings-panel .settings-advanced-head strong {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.settings-panel .settings-section-title-row em {
+  flex: 0 0 auto !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  padding: 0 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.settings-panel .settings-section-copy small,
+.settings-panel .settings-advanced-head small {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.settings-panel .settings-section-state,
+.settings-panel .settings-advanced-head em {
+  flex: 0 0 56px !important;
+  justify-self: end !important;
+  width: 56px !important;
+  min-width: 56px !important;
+  max-width: 56px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.settings-panel .settings-section-body {
+  min-width: 0 !important;
+  padding: 14px !important;
+}
+
+.settings-panel .settings-grid,
+.settings-panel .account-settings-grid,
+.settings-panel .duplicate-policy-grid,
+.settings-panel .settings-conversion-grid {
+  grid-template-columns: 1fr !important;
+}
