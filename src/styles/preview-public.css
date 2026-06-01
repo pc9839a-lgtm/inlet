@@ -83,18 +83,24 @@
 
 .public-landing-viewport .top-menu-track,
 .public-landing-viewport .top-menu-set {
-  width: max-content !important;
-  max-width: none !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
   display: flex !important;
   align-items: center !important;
+  justify-content: flex-end !important;
   gap: 8px !important;
   transform: none !important;
   animation: none !important;
 }
 
 .public-landing-viewport .top-menu button {
-  flex: 0 0 auto !important;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
   max-width: 150px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
 }
 
 .public-landing-viewport .topnav-menu-loop .top-menu-track {
@@ -104,6 +110,11 @@
 
 .public-landing-viewport .topnav-menu-set-copy {
   display: none !important;
+}
+
+.public-landing-viewport .topnav-menu-loop .top-menu {
+  justify-content: flex-end !important;
+  overflow-x: auto !important;
 }
 
 .public-landing-viewport .landing-content > .topnav:first-child + .hero-full,
@@ -172,10 +183,19 @@
   box-shadow: 0 16px 38px rgba(15, 23, 42, .18) !important;
 }
 
-.public-landing-viewport .public-bottom-bar.bottom-custom-color.color-light button {
-  background: var(--accent, #111827) !important;
-  border-color: var(--accent, #111827) !important;
-  color: #ffffff !important;
+.public-landing-viewport .public-bottom-bar.color-light button,
+.public-landing-viewport .public-bottom-bar.bottom-custom-color.color-light button,
+.public-landing-viewport .public-bottom-bar.color-accent button,
+.public-landing-viewport .public-bottom-bar.bottom-custom-color.color-accent button {
+  background: var(--bottom-button, var(--button, #111827)) !important;
+  border-color: var(--bottom-button, var(--button, #111827)) !important;
+  color: var(--bottom-button-text, var(--button-text, #ffffff)) !important;
+}
+
+.public-landing-viewport .public-bottom-bar.button-effect-shine button::after,
+.public-landing-viewport .public-bottom-bar.button-effect-burst button::after {
+  color: inherit !important;
+  pointer-events: none !important;
 }
 
 .public-landing-viewport .public-bottom-bar button b {
@@ -246,11 +266,17 @@
     left: 0 !important;
     width: 100vw !important;
     max-width: 100vw !important;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
   }
 
   .public-landing-viewport .topnav {
     left: 0 !important;
     width: 100vw !important;
     max-width: 100vw !important;
+  }
+
+  .public-landing-viewport .top-menu button {
+    max-width: none !important;
   }
 }
