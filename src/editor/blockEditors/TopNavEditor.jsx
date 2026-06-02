@@ -78,7 +78,7 @@ export default function TopNavEditor({ s, set, page, TargetControl }) {
 
   return (
     <EditorStack>
-      <Step title="기본" icon="1" open>
+      <Step title="기본" icon="1">
         <Choice label="타입" value={s.logoType} onChange={(v) => set({ logoType: v })} options={[['text', '텍스트'], ['image', '이미지']]} />
 
         {isImageLogo ? (
@@ -88,7 +88,7 @@ export default function TopNavEditor({ s, set, page, TargetControl }) {
         )}
       </Step>
 
-      <Step title="메뉴" icon="2" open>
+      <Step title="메뉴" icon="2">
         <div className="topnav-menu-count">
           <Choice
             label="메뉴 개수"

@@ -526,7 +526,7 @@ function App() {
   const [leadConflict, setLeadConflict] = useState(null);
   const [events, setEvents] = useState(() => load(EVENTS_KEY, []));
   const [tab, setTab] = useState(() => tabFromLocation('edit'));
-  const [openId, setOpenId] = useState(page.blocks[0]?.id || '');
+  const [openId, setOpenId] = useState('');
   const [addOpen, setAddOpen] = useState(false);
   const [dragId, setDragId] = useState('');
   const [saved, setSaved] = useState(false);
@@ -933,9 +933,7 @@ function App() {
   const removeBlock = (id) => {
     if (blockWrite('edit')) return;
     const idx = page.blocks.findIndex((b) => b.id === id);
-    const nextOpen = openId === id
-      ? (page.blocks[idx + 1]?.id || page.blocks[idx - 1]?.id || '')
-      : openId;
+    const nextOpen = openId === id ? '' : openId;
     setPage((p) => ({ ...p, blocks: ensureUniqueAnchors(p.blocks.filter((b) => b.id !== id)) }));
     setOpenId(nextOpen);
     setAddOpen(false);
@@ -967,7 +965,7 @@ function App() {
     setPage(nextPage);
     setLeads([]);
     setEvents([]);
-    setOpenId(nextPage.blocks?.find((block) => block.type === 'hero')?.id || nextPage.blocks?.[0]?.id || '');
+    setOpenId('');
     setTab('edit');
     replaceLocationTab('edit');
     saveLocalJson(START_MODE_KEY, 'manual', '시작 방식', { quietSuccess: true });
@@ -1743,7 +1741,7 @@ function App() {
       saveLocalJson(START_MODE_KEY, 'manual', '시작 선택', { quietSuccess: true });
       setStartMode('manual');
       setTab('edit');
-      setOpenId(next.blocks.find((block) => !['topnav', 'bottombar', 'footer'].includes(block.type))?.id || '');
+      setOpenId('');
       setCreateOpen(false);
       openWorkspace('manual');
     } catch (error) {
