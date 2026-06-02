@@ -261,6 +261,7 @@ function doPost(e) {
 function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
   const integrations = normalizeIntegrations(page.integrations || {});
   const [draftIntegrations, setDraftIntegrations] = useState(integrations);
+  const [draftDirty, setDraftDirty] = useState(false);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState('');
@@ -272,14 +273,15 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
   const webhookState = connectionState('webhook', draftIntegrations);
 
   useEffect(() => {
-    setDraftIntegrations(integrations);
-  }, [page.slug, page.updatedAt]);
+    if (!draftDirty) setDraftIntegrations(integrations);
+  }, [page.slug, page.updatedAt, draftDirty]);
 
   const draftPatch = (section, value) => {
     const currentSection = draftIntegrations?.[section] || {};
     const nextSection = { ...currentSection, ...value };
     const nextIntegrations = normalizeIntegrations({ ...draftIntegrations, [section]: nextSection });
     setDraftIntegrations(nextIntegrations);
+    setDraftDirty(true);
     return nextIntegrations;
   };
 
@@ -288,38 +290,47 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
     updateIntegrations?.(section, nextIntegrations[section]);
   };
 
+  const sheetPatch = (value) => {
+    const nextIntegrations = draftPatch('sheets', value);
+    updateIntegrations?.('sheets', nextIntegrations.sheets);
+    return nextIntegrations;
+  };
+
   const saveSheetsDraft = async () => {
     const currentSheets = draftIntegrations.sheets || {};
     const currentUrl = currentSheets.webhookUrl || currentSheets.url || '';
     const nextIntegrations = draftPatch('sheets', {
       ...currentSheets,
+      enabled: !!currentSheets.enabled,
       webhookUrl: currentUrl,
       url: currentUrl,
-      sheetName: currentSheets.sheetName || '접수함',
+      sheetName: currentSheets.sheetName || '\uC811\uC218\uD568',
     });
     updateIntegrations?.('sheets', nextIntegrations.sheets);
     setSaving(true);
     setResult('');
     try {
       await onSavePage?.({ ...page, integrations: nextIntegrations });
-      setResult('Google Sheets 설정을 저장했습니다.');
+      setDraftDirty(false);
+      setResult('Google Sheets \uC124\uC815 \uC800\uC7A5 \uC644\uB8CC');
     } catch (error) {
-      setResult(`Google Sheets 저장 실패: ${String(error?.message || error)}`);
+      setResult(`Google Sheets \uC800\uC7A5 \uC2E4\uD328: ${String(error?.message || error)}`);
     } finally {
       setSaving(false);
     }
   };
-  const resultOk = result === '저장됨' || result.includes('저장했습니다') || result.includes('완료') || result.includes('보냈습니다') || result.includes('복사했습니다');
+
+  const resultOk = result && !/(\uC2E4\uD328|error|failed)/i.test(result);
 
   const copySheetsScript = async () => {
     setResult('');
     try {
       await navigator.clipboard.writeText(GOOGLE_SHEETS_APPS_SCRIPT);
       setCopiedScript(true);
-      setResult('Google Sheets 샘플 코드를 복사했습니다.');
+      setResult('Google Sheets \uC0D8\uD50C \uCF54\uB4DC \uBCF5\uC0AC \uC644\uB8CC');
       window.setTimeout(() => setCopiedScript(false), 1800);
     } catch (error) {
-      setResult('브라우저 권한 때문에 자동 복사에 실패했습니다.');
+      setResult('\uBCF5\uC0AC \uC2E4\uD328');
     }
   };
 
@@ -328,12 +339,13 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
     setResult('');
     const currentSheets = draftIntegrations.sheets || {};
     const currentUrl = currentSheets.webhookUrl || currentSheets.url || '';
-    const currentSheetName = currentSheets.sheetName || '접수함';
+    const currentSheetName = currentSheets.sheetName || '\uC811\uC218\uD568';
     try {
       const testIntegrations = normalizeIntegrations({
         ...draftIntegrations,
         sheets: {
           ...currentSheets,
+          enabled: true,
           webhookUrl: currentUrl,
           url: currentUrl,
           sheetName: currentSheetName,
@@ -341,19 +353,19 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
       });
       const response = await runConnectionTest('sheets', { ...page, integrations: testIntegrations });
       const ok = !!response?.ok;
-      draftPatch('sheets', {
+      sheetPatch({
         webhookUrl: currentUrl,
         url: currentUrl,
         sheetName: currentSheetName,
         enabled: true,
         status: ok ? 'connected' : 'error',
         lastSyncAt: ok ? new Date().toISOString() : currentSheets.lastSyncAt,
-        lastError: ok ? '' : (response?.message || 'Google Sheets 연결 테스트 실패'),
+        lastError: ok ? '' : (response?.message || 'Google Sheets \uC5F0\uACB0 \uD14C\uC2A4\uD2B8 \uC2E4\uD328'),
       });
-      setResult(response?.message || (ok ? 'Google Sheets 테스트 완료' : 'Google Sheets 테스트 실패'));
+      setResult(response?.message || (ok ? 'Google Sheets \uD14C\uC2A4\uD2B8 \uC644\uB8CC' : 'Google Sheets \uD14C\uC2A4\uD2B8 \uC2E4\uD328'));
     } catch (error) {
-      const message = `Google Sheets 테스트 실패: ${String(error?.message || error || '접수 저장은 유지됩니다.')}`;
-      draftPatch('sheets', {
+      const message = `Google Sheets \uD14C\uC2A4\uD2B8 \uC2E4\uD328: ${String(error?.message || error || '\uC811\uC218 \uC800\uC7A5\uC740 \uC720\uC9C0\uB429\uB2C8\uB2E4.')}`;
+      sheetPatch({
         webhookUrl: currentUrl,
         url: currentUrl,
         sheetName: currentSheetName,
@@ -375,6 +387,7 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
         updateIntegrations?.(section, value);
       });
       await onSavePage?.({ ...page, integrations: draftIntegrations });
+      setDraftDirty(false);
       setResult('저장됨');
     } catch (error) {
       setResult(`저장 실패: ${String(error?.message || error)}`);
@@ -420,17 +433,17 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
           <div className="connection-item connect-v4 open">
             <div className="connection-row">
               <div className="connection-row-main"><strong>Google Sheets</strong><small>{sheetsState.text} · 접수 데이터를 자동 저장</small></div>
-              <InlineSwitch checked={!!draftIntegrations.sheets.enabled} onChange={(enabled) => draftPatch('sheets', { enabled, status: enabled ? draftIntegrations.sheets.status || 'disconnected' : 'disconnected' })} />
+              <InlineSwitch checked={!!draftIntegrations.sheets.enabled} onChange={(enabled) => sheetPatch({ enabled, status: enabled ? draftIntegrations.sheets.status || 'disconnected' : 'disconnected' })} />
             </div>
             {draftIntegrations.sheets.enabled && (
               <div className="connection-detail-box compact">
                 <label className="connection-inline-control">
                   <span>Webhook URL</span>
-                  <input value={draftIntegrations.sheets.webhookUrl || draftIntegrations.sheets.url || ''} placeholder="Google Apps Script Web App URL" onChange={(event) => draftPatch('sheets', { webhookUrl: event.target.value, url: event.target.value, status: 'disconnected' })} />
+                  <input value={draftIntegrations.sheets.webhookUrl || draftIntegrations.sheets.url || ''} placeholder="Google Apps Script Web App URL" onChange={(event) => sheetPatch({ webhookUrl: event.target.value, url: event.target.value, status: 'disconnected' })} />
                 </label>
                 <label className="connection-inline-control">
                   <span>시트명</span>
-                  <input value={draftIntegrations.sheets.sheetName || ''} placeholder="접수함" onChange={(event) => draftPatch('sheets', { sheetName: event.target.value })} />
+                  <input value={draftIntegrations.sheets.sheetName || ''} placeholder="접수함" onChange={(event) => sheetPatch({ sheetName: event.target.value })} />
                 </label>
                 <p className="connection-help-text">전송 실패 시에도 접수 데이터는 페이지로 접수함에 먼저 보관됩니다.</p>
                 {draftIntegrations.sheets.lastError && <div className="connection-result error"><span>{draftIntegrations.sheets.lastError}</span></div>}
