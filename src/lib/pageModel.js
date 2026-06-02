@@ -95,6 +95,26 @@ const defaultPage = {
 };
 
 function clone(obj) { return JSON.parse(JSON.stringify(obj)); }
+function cleanSerializable(value, seen = new WeakSet()) {
+  if (value == null) return value;
+  const type = typeof value;
+  if (type === 'string' || type === 'number' || type === 'boolean') return value;
+  if (type === 'function' || type === 'symbol' || type === 'bigint') return undefined;
+  if (type !== 'object') return undefined;
+  if (seen.has(value)) return undefined;
+  seen.add(value);
+  if (Array.isArray(value)) {
+    return value.map((item) => cleanSerializable(item, seen)).filter((item) => item !== undefined);
+  }
+  if (Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null) {
+    return undefined;
+  }
+  return Object.fromEntries(
+    Object.entries(value)
+      .map(([key, item]) => [key, cleanSerializable(item, seen)])
+      .filter(([, item]) => item !== undefined),
+  );
+}
 function slugifyAnchor(value, fallback = 'section') {
   const clean = String(value || '')
     .trim()
@@ -159,6 +179,10 @@ function normalizeIntegrations(integrations = {}) {
   next.sheets.url = next.sheets.webhookUrl;
   next.sheets.sheetName = String(next.sheets.sheetName || '접수함').trim() || '접수함';
   next.sheets.status = pickSafe(next.sheets.status || (next.sheets.enabled && next.sheets.webhookUrl ? 'connected' : 'disconnected'), ['disconnected','connected','error'], 'disconnected');
+  if (/postJson is not defined|not defined/i.test(String(next.sheets.lastError || ''))) {
+    next.sheets.lastError = '';
+    if (next.sheets.status === 'error') next.sheets.status = next.sheets.enabled && next.sheets.webhookUrl ? 'connected' : 'disconnected';
+  }
   next.sheets.emailEnabled = !!next.sheets.emailEnabled;
   next.conversion.enabled = next.conversion.enabled !== false;
 
@@ -480,7 +504,12 @@ function sanitizeBlock(block) {
     s.buttons = normalizeButtons(s.buttons, s.count);
   }
 
-  return { ...block, visible: block?.visible !== false, s };
+  return {
+    id: block?.id || uid(),
+    type: block?.type || 'text',
+    visible: block?.visible !== false,
+    s: cleanSerializable(s) || {},
+  };
 }
 
 function newBlock(type) {
