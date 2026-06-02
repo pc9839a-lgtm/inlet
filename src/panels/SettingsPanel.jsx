@@ -126,7 +126,7 @@ function SettingsSection({
   const open = openSection === id;
   return (
     <section className={`card settings-section ${open ? 'open' : ''} ${className}`}>
-      <button type="button" className="settings-section-head" onClick={() => setOpenSection(open ? '' : id)}>
+      <button type="button" className="settings-section-head" aria-expanded={open} aria-label={`${title} ${open ? '접기' : '열기'}`} onClick={() => setOpenSection(open ? '' : id)}>
         <span className="settings-section-copy">
           <span className="settings-section-title-row">
             <h2>{title}</h2>
@@ -134,7 +134,7 @@ function SettingsSection({
           </span>
           {description && <small>{description}</small>}
         </span>
-        <span className="settings-section-state">{open ? '접기' : '열기'}</span>
+        <span className="settings-section-state" aria-hidden="true">{open ? '−' : '+'}</span>
       </button>
       {open && (
         <div className="settings-section-body">
@@ -780,12 +780,12 @@ export default function SettingsPanel({
       {!clientAdminMode && (
         <>
           <div className={`settings-advanced-box ${advancedOpen ? 'open' : ''}`}>
-            <button type="button" className="settings-advanced-head" onClick={() => setAdvancedOpen(!advancedOpen)}>
+            <button type="button" className="settings-advanced-head" aria-expanded={advancedOpen} aria-label={`고급 설정 ${advancedOpen ? '접기' : '열기'}`} onClick={() => setAdvancedOpen(!advancedOpen)}>
               <span>
                 <strong>고급 설정</strong>
                 <small>SEO · 추적 · 페이지 복제</small>
               </span>
-              <em>{advancedOpen ? '접기' : '열기'}</em>
+              <em aria-hidden="true">{advancedOpen ? '−' : '+'}</em>
             </button>
           </div>
 
