@@ -174,6 +174,7 @@ assert(app.includes('canManageAdmin && !startMode') && app.includes('canManageAd
 assert(app.includes('adminRoute') && app.includes("return /^\\/(?:admin|[^/?#]+\\/admin)\\/?$/.test(routePath)") && app.includes('<AdminPanel'), 'admin panel must stay on a private /admin route');
 assert(app.includes('const canWriteTabKey = (key) => canWriteTab(accessMode, page, authUser, key)') && app.includes('blockWrite'), 'App must enforce manager write permissions before mutation');
 assert(app.includes('selectedBlockId={canUseBuilder ? openId : \'\'}') && app.includes('onSelectBlock={canUseBuilder ? selectPreviewBlock : undefined}'), 'client admin preview must not route into block editing');
+assert(/const openWorkspace = [\s\S]*?setOpenId\(''\);[\s\S]*?setAddOpen\(false\);[\s\S]*?if \(!canUseBuilder\)/.test(app), 'workspace entry must collapse any open editor block and add panel');
 assert(app.includes('class LazyEditorBoundary'), 'fixed block editors must isolate lazy chunk failures');
 assert(app.includes('<LazyEditorBoundary resetKey=') && app.includes('<Suspense fallback={<LazyEditorFallback />}'), 'fixed block editors must keep lazy loading fallback and boundary');
 assert(blockEditor.includes('class LazyEditorErrorBoundary'), 'BlockEditor must isolate lazy editor chunk failures');

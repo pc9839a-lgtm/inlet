@@ -1613,6 +1613,8 @@ function App() {
   };
 
   const openWorkspace = (fallbackMode = 'manual') => {
+    setOpenId('');
+    setAddOpen(false);
     if (!canUseBuilder) {
       setTab(allowedTabs[0] || 'inbox');
       saveLocalJson(DASHBOARD_KEY, { open: true }, '작업공간 상태', { quietSuccess: true });
