@@ -134,7 +134,7 @@ function SettingsSection({
           </span>
           {description && <small>{description}</small>}
         </span>
-        <span className="settings-section-state" aria-hidden="true">{open ? '−' : '+'}</span>
+        <span className="settings-section-state" aria-hidden="true">{open ? '접기' : '열기'}</span>
       </button>
       {open && (
         <div className="settings-section-body">
@@ -785,7 +785,7 @@ export default function SettingsPanel({
                 <strong>고급 설정</strong>
                 <small>SEO · 추적 · 페이지 복제</small>
               </span>
-              <em aria-hidden="true">{advancedOpen ? '−' : '+'}</em>
+              <em aria-hidden="true">{advancedOpen ? '접기' : '열기'}</em>
             </button>
           </div>
 

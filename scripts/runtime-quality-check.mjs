@@ -215,10 +215,11 @@ assert(stylePanel.includes('onPreviewThemeChange?.(draftTheme)') && app.includes
 assert(stylePanel.includes("!['topnav', 'bottombar', 'footer'].includes(block.type)") && stylePanel.includes('defaultStyleBlockId'), 'StylePanel must not auto-select fixed layout widgets on first entry');
 assert(inboxPanel.includes('ensureHeaders(sheet, Object.keys(fields))') && inboxPanel.includes('BASE_HEADERS.concat(customHeaders, [JSON_HEADER])'), 'Google Sheets sample code must create columns for actual form fields');
 assert(inboxPanel.includes('advancedOpen') && inboxPanel.includes('connection-advanced-toggle') && inboxPanel.includes('연동 전체 저장'), 'Inbox integrations should keep webhook inside an advanced section and label full save clearly');
-assert(settingsPanel.includes("<span className=\"settings-section-state\" aria-hidden=\"true\">{open ? '−' : '+'}</span>"), 'Settings sections must use compact icon-only open controls');
-assert(!/className="settings-section-state"[^>]*>\s*\{open\s*\?\s*'접기'\s*:\s*'열기'\}/.test(settingsPanel), 'Settings section controls must not render clipped text labels');
-assert(/grid-template-columns:\s*minmax\(0,\s*1fr\)\s*42px\s*!important/.test(settingsPanelCss), 'Settings section headers must reserve only icon-width action space');
-assert(/\.settings-panel \.settings-section-state,[\s\S]*?width:\s*40px\s*!important[\s\S]*?border-radius:\s*14px\s*!important/.test(settingsPanelCss), 'Settings section action controls must stay fixed-size and unclipped');
+assert(settingsPanel.includes("<span className=\"settings-section-state\" aria-hidden=\"true\">{open ? '접기' : '열기'}</span>"), 'Settings sections must render explicit open/close action labels');
+assert(settingsPanel.includes("<em aria-hidden=\"true\">{advancedOpen ? '접기' : '열기'}</em>"), 'Settings advanced section must render explicit open/close action labels');
+assert(/grid-template-columns:\s*minmax\(0,\s*1fr\)\s*58px\s*!important/.test(settingsPanelCss), 'Settings section headers must reserve readable action label space');
+assert(/\.settings-panel \.settings-section-state,[\s\S]*?width:\s*58px\s*!important[\s\S]*?writing-mode:\s*horizontal-tb\s*!important/.test(settingsPanelCss), 'Settings action controls must stay horizontal and unclipped');
+assert(/\.settings-panel \.settings-grid,[\s\S]*?\.settings-panel \.account-settings-grid[\s\S]*?grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)\s*!important/.test(settingsPanelCss), 'Settings forms must keep two-column desktop layout');
 assert(/\.settings-panel \.settings-section-title-row[\s\S]*?background:\s*transparent\s*!important[\s\S]*?box-shadow:\s*none\s*!important/.test(settingsPanelCss), 'Settings section titles must stay flat without nested pill styling');
 
 const stats = await Promise.all(sourceFiles.map((file) => stat(file)));

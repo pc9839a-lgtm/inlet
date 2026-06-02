@@ -2891,3 +2891,172 @@
     grid-template-columns: minmax(0, 1fr) 40px !important;
   }
 }
+
+/* Final settings layout guard: later patches kept reintroducing cramped 40px
+   open buttons and one-column desktop forms. Keep the settings surface readable. */
+.settings-panel .settings-compact-head {
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 12px !important;
+  padding: 14px 16px !important;
+  overflow: hidden !important;
+}
+
+.settings-panel .settings-compact-head em {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: clamp(96px, 32vw, 240px) !important;
+  height: 36px !important;
+  padding: 0 12px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.settings-panel .settings-section-head,
+.settings-panel .settings-advanced-head {
+  grid-template-columns: minmax(0, 1fr) 58px !important;
+  min-height: 64px !important;
+  padding: 13px 16px !important;
+  gap: 12px !important;
+  overflow: hidden !important;
+}
+
+.settings-panel .settings-section-title-row {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+.settings-panel .settings-section-title-row h2,
+.settings-panel .settings-advanced-head strong {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.settings-panel .settings-section-copy small,
+.settings-panel .settings-advanced-head small {
+  display: block !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.settings-panel .settings-section-state,
+.settings-panel .settings-advanced-head em {
+  width: 58px !important;
+  min-width: 58px !important;
+  max-width: 58px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 12px !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  letter-spacing: 0 !important;
+  writing-mode: horizontal-tb !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+}
+
+.settings-panel .settings-grid,
+.settings-panel .account-settings-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+.settings-panel .settings-section-body {
+  padding: 16px !important;
+  overflow: hidden !important;
+}
+
+.settings-panel .settings-section-actions {
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  margin-top: 14px !important;
+}
+
+.settings-panel .settings-section-actions button {
+  width: auto !important;
+  min-width: 92px !important;
+  min-height: 42px !important;
+  padding: 0 16px !important;
+  border-radius: 999px !important;
+}
+
+.settings-panel .manager-section-tools,
+.settings-panel .manager-card-head {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.settings-panel .manager-section-tools p {
+  margin: 0 !important;
+  color: #64748b !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+  font-weight: 850 !important;
+}
+
+.settings-panel .manager-section-tools button,
+.settings-panel .manager-card-actions button,
+.settings-panel .manager-detail-actions button {
+  width: auto !important;
+  white-space: nowrap !important;
+}
+
+.settings-panel .manager-card-actions {
+  display: flex !important;
+  justify-content: flex-end !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+}
+
+@media (max-width: 760px) {
+  .settings-panel .settings-compact-head,
+  .settings-panel .settings-grid,
+  .settings-panel .account-settings-grid,
+  .settings-panel .manager-section-tools,
+  .settings-panel .manager-card-head {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .settings-panel .settings-section-head,
+  .settings-panel .settings-advanced-head {
+    grid-template-columns: minmax(0, 1fr) 58px !important;
+  }
+
+  .settings-panel .settings-compact-head em {
+    justify-self: start !important;
+    max-width: 100% !important;
+  }
+
+  .settings-panel .manager-section-tools button,
+  .settings-panel .manager-card-actions button,
+  .settings-panel .manager-detail-actions button {
+    width: 100% !important;
+  }
+}
