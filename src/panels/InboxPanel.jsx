@@ -234,6 +234,20 @@ function InlineSwitch({ checked, onChange }) {
 }
 
 const GOOGLE_SHEETS_APPS_SCRIPT = `const SHEET_NAME = '\\uC811\\uC218\\uD568';
+const BASE_HEADERS = [
+  '\\uC811\\uC218\\uC77C\\uC2DC',
+  '\\uC774\\uB984',
+  '\\uC5F0\\uB77D\\uCC98',
+  '\\uC774\\uBA54\\uC77C',
+  '\\uBA54\\uC2DC\\uC9C0',
+  '\\uD398\\uC774\\uC9C0\\uBA85',
+  '\\uD398\\uC774\\uC9C0 URL',
+  'UTM Source',
+  'UTM Medium',
+  'UTM Campaign',
+  '\\uC720\\uC785 URL'
+];
+const JSON_HEADER = '\\uCD94\\uAC00 \\uC785\\uB825\\uAC12 JSON';
 
 function samplePayload() {
   return {
@@ -244,10 +258,13 @@ function samplePayload() {
       phone: '010-0000-0000',
       email: 'test@example.com',
       message: '\\uC218\\uB3D9 \\uC2E4\\uD589 \\uD14C\\uC2A4\\uD2B8',
-      fields: { '\\uAD00\\uC2EC\\uD56D\\uBAA9': '\\uD14C\\uC2A4\\uD2B8' }
+      fields: {
+        '\\uAD00\\uC2EC \\uD0C0\\uC785': '84A',
+        '\\uC608\\uC0B0\\uB300': '5\\uC5B5~7\\uC5B5'
+      }
     },
     page: { title: '\\uD398\\uC774\\uC9C0\\uB85C \\uD14C\\uC2A4\\uD2B8', url: '' },
-    source: {}
+    source: { utmSource: 'test', utmMedium: '', utmCampaign: '', sourceUrl: '' }
   };
 }
 
@@ -256,26 +273,52 @@ function parsePayload(e) {
   return JSON.parse(e.postData.contents || '{}');
 }
 
+function safeFieldMap(data) {
+  const fields = data && data.lead && data.lead.fields;
+  return fields && typeof fields === 'object' && !Array.isArray(fields) ? fields : {};
+}
+
 function appendLead(data) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheetName = data.sheetName || SHEET_NAME;
   const sheet = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName);
+  const fields = safeFieldMap(data);
+  const fieldHeaders = Object.keys(fields).filter(Boolean);
+  const headers = ensureHeaders(sheet, fieldHeaders);
+  const source = data.source || data.attribution || {};
+  const baseValues = {
+    '\\uC811\\uC218\\uC77C\\uC2DC': data.lead?.createdAt || data.createdAt || new Date().toISOString(),
+    '\\uC774\\uB984': data.lead?.name || '',
+    '\\uC5F0\\uB77D\\uCC98': data.lead?.phone || '',
+    '\\uC774\\uBA54\\uC77C': data.lead?.email || '',
+    '\\uBA54\\uC2DC\\uC9C0': data.lead?.message || '',
+    '\\uD398\\uC774\\uC9C0\\uBA85': data.page?.title || '',
+    '\\uD398\\uC774\\uC9C0 URL': data.page?.url || '',
+    'UTM Source': source.utmSource || '',
+    'UTM Medium': source.utmMedium || '',
+    'UTM Campaign': source.utmCampaign || '',
+    '\\uC720\\uC785 URL': source.sourceUrl || source.referrer || '',
+    [JSON_HEADER]: JSON.stringify(fields)
+  };
+  const row = headers.map((header) => fields[header] ?? baseValues[header] ?? '');
+  sheet.appendRow(row);
+}
+
+function ensureHeaders(sheet, fieldHeaders) {
+  const required = BASE_HEADERS.concat(fieldHeaders, [JSON_HEADER]);
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow(['\\uC811\\uC218\\uC77C\\uC2DC','\\uC774\\uB984','\\uC5F0\\uB77D\\uCC98','\\uC774\\uBA54\\uC77C','\\uBA54\\uC2DC\\uC9C0','\\uD398\\uC774\\uC9C0\\uBA85','\\uD398\\uC774\\uC9C0 URL','UTM Source','UTM Medium','UTM Campaign','\\uCD94\\uAC00 \\uC785\\uB825\\uAC12']);
+    sheet.appendRow(required);
+    return required;
   }
-  sheet.appendRow([
-    data.lead?.createdAt || data.createdAt || new Date().toISOString(),
-    data.lead?.name || '',
-    data.lead?.phone || '',
-    data.lead?.email || '',
-    data.lead?.message || '',
-    data.page?.title || '',
-    data.page?.url || '',
-    data.source?.utmSource || '',
-    data.source?.utmMedium || '',
-    data.source?.utmCampaign || '',
-    JSON.stringify(data.lead?.fields || {})
-  ]);
+  const lastColumn = Math.max(sheet.getLastColumn(), 1);
+  const current = sheet.getRange(1, 1, 1, lastColumn).getValues()[0].map((value) => String(value || '').trim());
+  const headers = current.filter(Boolean);
+  const missing = required.filter((header) => headers.indexOf(header) === -1);
+  if (missing.length) {
+    sheet.getRange(1, headers.length + 1, 1, missing.length).setValues([missing]);
+    return headers.concat(missing);
+  }
+  return headers;
 }
 
 function doPost(e) {

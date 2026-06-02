@@ -62,7 +62,7 @@ function sampleSheetsPayload(body = {}) {
   return {
     schemaVersion: 'pagero.lead.v1',
     event: 'lead.test',
-    source: 'pagero',
+    service: 'pagero',
     target: 'google_sheets',
     provider: 'google_sheets',
     mode: 'webhook',
@@ -74,11 +74,12 @@ function sampleSheetsPayload(body = {}) {
       email: '',
       message: 'Google Sheets 연동 테스트',
       createdAt: now,
-      fields: { 테스트: '성공 확인용' },
+      fields: { 테스트: '성공 확인용', '관심 타입': '84A', 예산대: '5억~7억' },
     },
     page: body.page || { title: '페이지로 테스트', slug: '', url: '' },
     project: body.project || {},
-    attribution: {},
+    source: { utmSource: 'connection_test', utmMedium: '', utmCampaign: '', referrer: '', sourceUrl: '' },
+    attribution: { utmSource: 'connection_test', utmMedium: '', utmCampaign: '', referrer: '', sourceUrl: '' },
     createdAt: now,
   };
 }

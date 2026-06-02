@@ -3783,15 +3783,18 @@ function deliveryIdempotencyKey(lead = {}, job = {}) {
 }
 
 function googleSheetsServerPayload(payload = {}, sheets = {}, page = {}, lead = {}) {
-  const fields = { ...(lead.values || {}) };
-  for (const answer of Array.isArray(lead.answers) ? lead.answers : []) {
-    const key = answer?.label || answer?.name || answer?.id;
-    if (key && fields[key] == null) fields[key] = answer?.value ?? answer?.text ?? '';
-  }
+  const fields = leadAnswerFields(lead);
+  const source = {
+    utmSource: lead.utmSource || lead.source?.utmSource || lead.attribution?.utmSource || '',
+    utmMedium: lead.utmMedium || lead.source?.utmMedium || lead.attribution?.utmMedium || '',
+    utmCampaign: lead.utmCampaign || lead.source?.utmCampaign || lead.attribution?.utmCampaign || '',
+    referrer: lead.referrer || lead.source?.referrer || lead.attribution?.referrer || '',
+    sourceUrl: lead.sourceUrl || lead.source?.sourceUrl || lead.attribution?.sourceUrl || lead.pageUrl || '',
+  };
   return {
     schemaVersion: payload.schemaVersion || 'inlet.lead.v1',
     event: payload.event || 'lead.created',
-    source: payload.source || 'pagero',
+    service: payload.source || 'pagero',
     target: 'google_sheets',
     provider: 'google_sheets',
     mode: sheets.mode || 'webhook',
@@ -3814,15 +3817,37 @@ function googleSheetsServerPayload(payload = {}, sheets = {}, page = {}, lead = 
     project: {
       id: page.projectId || page.id || '',
     },
-    source: {
-      utmSource: lead.utmSource || lead.source?.utmSource || '',
-      utmMedium: lead.utmMedium || lead.source?.utmMedium || '',
-      utmCampaign: lead.utmCampaign || lead.source?.utmCampaign || '',
-      referrer: lead.referrer || lead.source?.referrer || '',
-      sourceUrl: lead.sourceUrl || lead.pageUrl || '',
-    },
+    source,
+    attribution: source,
     createdAt: payload.createdAt || lead.createdAt || new Date().toISOString(),
   };
+}
+
+function leadAnswerFields(lead = {}) {
+  const fields = {};
+  const reservedKeys = new Set(['name', 'phone', 'email', 'message']);
+  const reservedLabels = new Set(['이름', '성함', '연락처', '전화번호', '핸드폰번호', '휴대폰번호', '이메일', '메일', '문의내용', '문의 내용', '메시지', '내용']);
+
+  for (const [rawKey, rawValue] of Object.entries(lead.values || {})) {
+    const key = String(rawKey || '').trim();
+    if (!key || reservedKeys.has(key.toLowerCase()) || reservedLabels.has(key)) continue;
+    fields[key] = normalizeSheetFieldValue(rawValue);
+  }
+
+  for (const answer of Array.isArray(lead.answers) ? lead.answers : []) {
+    const key = String(answer?.label || answer?.name || answer?.id || '').trim();
+    const type = String(answer?.type || '').trim().toLowerCase();
+    if (!key || reservedKeys.has(key.toLowerCase()) || reservedLabels.has(key) || reservedKeys.has(type)) continue;
+    fields[key] = normalizeSheetFieldValue(answer?.value ?? answer?.text ?? '');
+  }
+
+  return fields;
+}
+
+function normalizeSheetFieldValue(value) {
+  if (Array.isArray(value)) return value.join(', ');
+  if (value && typeof value === 'object') return JSON.stringify(value);
+  return String(value ?? '');
 }
 
 function jobHeaderValue(value = '') {
@@ -4448,7 +4473,7 @@ function sampleSheetsPayload(body = {}) {
   return {
     schemaVersion: 'pagero.lead.v1',
     event: 'lead.test',
-    source: 'pagero',
+    service: 'pagero',
     target: 'google_sheets',
     provider: 'google_sheets',
     mode: 'webhook',
@@ -4460,11 +4485,12 @@ function sampleSheetsPayload(body = {}) {
       email: '',
       message: 'Google Sheets 연결 테스트',
       createdAt: now,
-      fields: { 테스트: '성공 확인용' },
+      fields: { 테스트: '성공 확인용', '관심 타입': '84A', 예산대: '5억~7억' },
     },
     page: body.page || { title: '페이지로 테스트', slug: '', url: '' },
     project: body.project || {},
-    source: {},
+    source: { utmSource: 'connection_test', utmMedium: '', utmCampaign: '', referrer: '', sourceUrl: '' },
+    attribution: { utmSource: 'connection_test', utmMedium: '', utmCampaign: '', referrer: '', sourceUrl: '' },
     createdAt: now,
   };
 }
