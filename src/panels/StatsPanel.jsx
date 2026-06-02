@@ -107,10 +107,10 @@ function ChannelFilter({ channels, value, onChange }) {
   const visible = channels.slice(0, 8);
   return (
     <section className="card stats-channel-filter">
-      <div className="section-title"><h2>{'유입 채널'}</h2></div>
+      <div className="section-title"><h2>유입 채널</h2></div>
       <div className="stats-channel-filter-list">
         <button type="button" className={value === 'all' ? 'active' : ''} onClick={() => onChange('all')}>
-          <span>{'전체'}</span><b>{total}</b>
+          <span>전체</span><b>{total}</b>
         </button>
         {visible.map((item) => (
           <button type="button" key={item.channel} className={value === item.channel ? 'active' : ''} onClick={() => onChange(item.channel)}>
@@ -125,7 +125,7 @@ function ChannelFilter({ channels, value, onChange }) {
 function StatsTrend({ data }) {
   const [hover, setHover] = useState(null);
   const total = data.reduce((sum, row) => sum + Number(row.pv || 0) + Number(row.cta || 0) + Number(row.db || 0), 0);
-  if (!total) return <div className="stats-empty-chart">{'선택한 기간에 데이터가 없습니다.'}</div>;
+  if (!total) return <div className="stats-empty-chart">선택한 기간에 표시할 데이터가 없습니다.</div>;
   const max = Math.max(1, ...data.flatMap((row) => [row.pv, row.cta, row.db]));
   const width = 720;
   const height = 240;
@@ -142,7 +142,7 @@ function StatsTrend({ data }) {
   const hoverTop = (row) => Math.min(y(row.pv), y(row.cta), y(row.db));
 
   return (
-    <div className="stats-line-chart stats-trend-line stats-line-plot" role="img" aria-label={'조회, 클릭, 접수 흐름 차트'}>
+    <div className="stats-line-chart stats-trend-line stats-line-plot" role="img" aria-label="조회, 클릭, 접수 상세 통계">
       <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-hidden="true" onMouseLeave={() => setHover(null)}>
         {[0.25, 0.5, 0.75, 1].map((ratio) => (
           <line key={ratio} className="guide" x1={padX} x2={width - padX} y1={padTop + plotH * ratio} y2={padTop + plotH * ratio} />
@@ -171,8 +171,8 @@ function StatsTrend({ data }) {
       {hover && (
         <div className="stats-chart-tooltip stats-chart-tooltip-wide" style={{ left: `${(hover.x / width) * 100}%`, top: `${hover.y}px` }}>
           <span>{hover.row.id || hover.row.label}</span>
-          <strong>{'조회'} {Number(hover.row.pv || 0).toLocaleString('ko-KR')}</strong>
-          <em>{'클릭'} {Number(hover.row.cta || 0).toLocaleString('ko-KR')} / {'접수'} {Number(hover.row.db || 0).toLocaleString('ko-KR')}</em>
+          <strong>조회 {Number(hover.row.pv || 0).toLocaleString('ko-KR')}</strong>
+          <em>클릭 {Number(hover.row.cta || 0).toLocaleString('ko-KR')} / 접수 {Number(hover.row.db || 0).toLocaleString('ko-KR')}</em>
         </div>
       )}
       <div className="trend-legend">{series.map(([key, label]) => <b key={key}><i className={key} />{label}</b>)}</div>
@@ -186,7 +186,7 @@ function StatCard({ title, data }) {
   return (
     <section className="card stat-card-v2">
       <div className="section-title"><h2>{title}</h2></div>
-      {!entries.length ? <div className="empty">{'데이터 없음'}</div> : (
+      {!entries.length ? <div className="empty">데이터 없음</div> : (
         <div className="stat-list stat-list-v2">
           {entries.slice(0, 8).map(([key, value]) => (
             <div className="stat-row stat-row-v2" key={key}>
@@ -269,15 +269,15 @@ export default function StatsPanel({
   return (
     <div className="simple-panel stats-panel stats-v2 stats-v3">
       <section className="card period-card stats-period-card">
-        <div className="section-title"><h2>{'상세 통계'}</h2></div>
+        <div className="section-title"><h2>상세 통계</h2></div>
         <div className="stats-period-controls">
-          <div className="period-tabs period-tabs-v2 stats-range-tabs" aria-label={'통계 기간'}>
+          <div className="period-tabs period-tabs-v2 stats-range-tabs" aria-label="통계 기간">
             {PERIOD_OPTIONS.map(([value, label]) => (
               <button type="button" key={value} className={period === value ? 'active' : ''} onClick={() => setPeriod(value)}>{label}</button>
             ))}
           </div>
           <label className="stats-month-control">
-            <span>{'월 선택'}</span>
+            <span>월 선택</span>
             <input type="month" value={month} onChange={(event) => setMonth(event.target.value)} />
           </label>
         </div>
@@ -285,39 +285,39 @@ export default function StatsPanel({
 
       <ChannelFilter channels={channelOptions} value={channelFilter} onChange={setChannel} />
 
-      {partialData && <div className="stats-partial-notice" role="status">{'일부 데이터만 불러온 상태입니다. 서버 집계 기준으로 확인하세요.'}</div>}
+      {partialData && <div className="stats-partial-notice" role="status">일부 데이터만 불러온 상태입니다. 서버 집계 기준으로 확인하세요.</div>}
 
       <section className="stats-grid stats-summary stats-summary-v2 stats-summary-v3">
-        <Metric title={'조회'} value={stats.pv} sub={'방문'} />
-        <Metric title={'클릭'} value={stats.cta} sub={'버튼'} />
-        <Metric title={'상담'} value={stats.consultLeads} sub={'접수'} />
-        <Metric title={'예약'} value={stats.reservationLeads} sub={'접수'} />
-        <Metric title={'전환율'} value={`${stats.conversion}%`} sub={'방문 대비'} />
-        <Metric title={'CTA 전환'} value={`${stats.ctaConversion}%`} sub={'클릭 대비'} />
+        <Metric title="조회" value={stats.pv} sub="방문" />
+        <Metric title="클릭" value={stats.cta} sub="버튼" />
+        <Metric title="상담" value={stats.consultLeads} sub="접수" />
+        <Metric title="예약" value={stats.reservationLeads} sub="접수" />
+        <Metric title="전환율" value={`${stats.conversion}%`} sub="방문 대비" />
+        <Metric title="CTA 전환" value={`${stats.ctaConversion}%`} sub="클릭 대비" />
       </section>
 
       <section className="card stats-trend-card">
-        <div className="section-title"><h2>{'상세 통계'}</h2></div>
+        <div className="section-title"><h2>상세 통계</h2></div>
         <StatsTrend data={stats.trend} />
       </section>
 
       <section className="stats-columns stats-columns-v3">
-        <StatCard title={'접수 유형'} data={stats.typeData} />
-        <StatCard title={'접수 상태'} data={stats.statusData} />
+        <StatCard title="접수 유형" data={stats.typeData} />
+        <StatCard title="접수 상태" data={stats.statusData} />
       </section>
 
       <section className="stats-columns stats-columns-v3 stats-columns-four">
-        <StatCard title={'CTA 클릭 위치'} data={serverMode ? stats.ctaLabelData : ctaClickData(stats.filteredEvents, page)} />
-        <StatCard title={'유입 기기'} data={serverMode ? stats.deviceData : countByMetrics(stats.filteredEvents, 'device')} />
-        <StatCard title={'유입 채널'} data={serverMode ? stats.channelData : stats.channelData} />
+        <StatCard title="CTA 클릭 위치" data={serverMode ? stats.ctaLabelData : ctaClickData(stats.filteredEvents, page)} />
+        <StatCard title="유입 기기" data={serverMode ? stats.deviceData : countByMetrics(stats.filteredEvents, 'device')} />
+        <StatCard title="유입 채널" data={serverMode ? stats.channelData : stats.channelData} />
       </section>
 
       <section className="card stats-lead-table-card stats-lead-table-card-v3">
         <div className="section-title">
-          <h2>{'최근 접수'}</h2>
-          <p>{stats.filteredLeads.length}{'건'}</p>
+          <h2>최근 접수</h2>
+          <p>{stats.filteredLeads.length}건</p>
         </div>
-        {!stats.filteredLeads.length ? <div className="empty">{'접수 데이터 없음'}</div> : (
+        {!stats.filteredLeads.length ? <div className="empty">접수 데이터가 없습니다.</div> : (
           <div className="stats-lead-table stats-lead-table-v3">
             {stats.filteredLeads.slice(0, 8).map((lead) => (
               <div key={lead.id || lead.createdAt}>
