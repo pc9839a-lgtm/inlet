@@ -2347,3 +2347,305 @@
     max-width: 64px !important;
   }
 }
+
+/* Settings layout repair: keep action pills horizontal and stop nested headers from clipping. */
+.settings-panel {
+  align-content: start !important;
+}
+
+.settings-panel .settings-compact-head {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(86px, auto) !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 14px 16px !important;
+}
+
+.settings-panel .settings-compact-head strong {
+  display: block !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.settings-panel .settings-compact-head em {
+  justify-self: end !important;
+  max-width: 180px !important;
+  min-height: 36px !important;
+  padding: 0 12px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 999px !important;
+  writing-mode: horizontal-tb !important;
+}
+
+.settings-panel .settings-section,
+.settings-panel .settings-advanced-box {
+  border: 1px solid #dbe3ef !important;
+  border-radius: 18px !important;
+  background: #fff !important;
+  overflow: hidden !important;
+}
+
+.settings-panel .settings-section-head,
+.settings-panel .settings-advanced-head {
+  appearance: none !important;
+  width: 100% !important;
+  border: 0 !important;
+  background: #fff !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 76px !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-height: 66px !important;
+  padding: 14px 16px !important;
+  text-align: left !important;
+}
+
+.settings-panel .settings-section-copy,
+.settings-panel .settings-advanced-head > span {
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 5px !important;
+}
+
+.settings-panel .settings-section-title-row {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: nowrap !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.settings-panel .settings-section-title-row h2,
+.settings-panel .settings-advanced-head strong {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  color: #111827 !important;
+  font-size: 17px !important;
+  line-height: 1.2 !important;
+  font-weight: 950 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.settings-panel .settings-section-title-row em {
+  flex: 0 0 auto !important;
+  max-width: 72px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  padding: 0 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 999px !important;
+  background: #eef5ff !important;
+  color: #2563eb !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.settings-panel .settings-section-copy small,
+.settings-panel .settings-advanced-head small {
+  display: block !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  color: #64748b !important;
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+  font-weight: 850 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.settings-panel .settings-section-state,
+.settings-panel .settings-advanced-head em {
+  justify-self: end !important;
+  width: 76px !important;
+  min-width: 76px !important;
+  max-width: 76px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 !important;
+  border: 1px solid #dbe3ef !important;
+  border-radius: 999px !important;
+  background: #fff !important;
+  color: #111827 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 13px !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  overflow: hidden !important;
+}
+
+.settings-panel .settings-section.open .settings-section-state,
+.settings-panel .settings-advanced-box.open .settings-advanced-head em {
+  border-color: #111827 !important;
+  background: #111827 !important;
+  color: #fff !important;
+}
+
+.settings-panel .settings-section-body {
+  display: grid !important;
+  gap: 12px !important;
+  padding: 16px !important;
+  border-top: 1px solid #edf2f7 !important;
+  background: #fbfdff !important;
+  overflow: visible !important;
+}
+
+.settings-panel .settings-grid,
+.settings-panel .account-settings-grid,
+.settings-panel .settings-conversion-grid,
+.settings-panel .duplicate-policy-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+.settings-panel .settings-full,
+.settings-panel .settings-section-actions {
+  grid-column: 1 / -1 !important;
+}
+
+.settings-panel .field,
+.settings-panel .image-input,
+.settings-panel .toggle,
+.settings-panel .duplicate-policy-select {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  border-radius: 18px !important;
+}
+
+.settings-panel .field {
+  display: grid !important;
+  grid-template-columns: minmax(74px, .34fr) minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.settings-panel .field > span,
+.settings-panel .image-input > span,
+.settings-panel .toggle > span {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.settings-panel .field input,
+.settings-panel .field textarea,
+.settings-panel .field select,
+.settings-panel .field .prefix-field,
+.settings-panel .duplicate-policy-select select,
+.settings-panel .account-settings-grid input,
+.settings-panel .settings-url-form input {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.settings-panel .settings-section-actions {
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+}
+
+.settings-panel .settings-section-actions button {
+  width: auto !important;
+  min-width: 86px !important;
+  height: 42px !important;
+  border-radius: 999px !important;
+}
+
+.settings-panel .manager-section-tools,
+.settings-panel .manager-owner-summary.compact,
+.settings-panel .manager-card-head,
+.settings-panel .manager-detail-actions,
+.settings-panel .ownership-transfer-controls,
+.settings-panel .ownership-transfer-status,
+.settings-panel .manager-permission-row {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 10px !important;
+  overflow: visible !important;
+}
+
+.settings-panel .manager-card-actions,
+.settings-panel .manager-preset-row {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+}
+
+@media (max-width: 760px) {
+  .settings-panel .settings-grid,
+  .settings-panel .account-settings-grid,
+  .settings-panel .settings-conversion-grid,
+  .settings-panel .duplicate-policy-grid,
+  .settings-panel .manager-section-tools,
+  .settings-panel .manager-owner-summary.compact,
+  .settings-panel .manager-card-head,
+  .settings-panel .manager-detail-actions,
+  .settings-panel .ownership-transfer-controls,
+  .settings-panel .ownership-transfer-status,
+  .settings-panel .manager-permission-row {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .settings-panel .field {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .settings-panel .manager-card-actions,
+  .settings-panel .manager-preset-row {
+    justify-content: stretch !important;
+  }
+
+  .settings-panel .manager-card-actions button,
+  .settings-panel .manager-preset-row button,
+  .settings-panel .manager-detail-actions button {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .settings-panel .settings-section-head,
+  .settings-panel .settings-advanced-head {
+    grid-template-columns: minmax(0, 1fr) 68px !important;
+    padding: 12px 13px !important;
+  }
+
+  .settings-panel .settings-section-state,
+  .settings-panel .settings-advanced-head em {
+    width: 68px !important;
+    min-width: 68px !important;
+    max-width: 68px !important;
+  }
+}

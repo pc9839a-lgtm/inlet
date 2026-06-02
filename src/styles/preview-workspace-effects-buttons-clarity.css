@@ -1,0 +1,97 @@
+.landing-page.button-effect-fill .links .link-item,
+.landing-page.button-effect-fill .timer-cta,
+.landing-page.button-effect-fill .form button[type=submit],
+.landing-page.button-effect-fill .reservation button[type=submit],
+.landing-page.button-effect-fill .success button,
+.landing-page.button-effect-fill .bottom-bar .bottom-bar-buttons button,
+.bottom-bar.button-effect-fill .bottom-bar-buttons button {
+  transform: translateY(0) !important;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, .16) !important;
+}
+
+.landing-page.button-effect-shine .links .link-item::before,
+.landing-page.button-effect-shine .timer-cta::before,
+.landing-page.button-effect-shine .form button[type=submit]::before,
+.landing-page.button-effect-shine .reservation button[type=submit]::before,
+.landing-page.button-effect-shine .success button::before,
+.landing-page.button-effect-shine .bottom-bar .bottom-bar-buttons button::before,
+.bottom-bar.button-effect-shine .bottom-bar-buttons button::before {
+  animation: buttonShineIdle 3.8s cubic-bezier(.2, .8, .2, 1) infinite !important;
+  left: -72% !important;
+}
+
+.landing-page.button-effect-burst .links .link-item::after,
+.landing-page.button-effect-burst .timer-cta::after,
+.landing-page.button-effect-burst .form button[type=submit]::after,
+.landing-page.button-effect-burst .reservation button[type=submit]::after,
+.landing-page.button-effect-burst .success button::after,
+.landing-page.button-effect-burst .bottom-bar .bottom-bar-buttons button::after,
+.bottom-bar.button-effect-burst .bottom-bar-buttons button::after {
+  content: "" !important;
+  position: absolute !important;
+  z-index: 1 !important;
+  inset: 50% auto auto 50% !important;
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, .42) !important;
+  transform: translate(-50%, -50%) scale(1) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  animation: buttonBurstIdle 3.4s cubic-bezier(.2, .8, .2, 1) infinite !important;
+}
+
+@keyframes buttonShineIdle {
+  0%,
+  48% {
+    left: -72%;
+    opacity: 0;
+  }
+
+  58% {
+    opacity: .9;
+  }
+
+  78%,
+  100% {
+    left: 132%;
+    opacity: 0;
+  }
+}
+
+@keyframes buttonBurstIdle {
+  0%,
+  58% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  66% {
+    opacity: .42;
+  }
+
+  84%,
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(18);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-page.button-effect-shine .links .link-item::before,
+  .landing-page.button-effect-shine .timer-cta::before,
+  .landing-page.button-effect-shine .form button[type=submit]::before,
+  .landing-page.button-effect-shine .reservation button[type=submit]::before,
+  .landing-page.button-effect-shine .success button::before,
+  .landing-page.button-effect-shine .bottom-bar .bottom-bar-buttons button::before,
+  .bottom-bar.button-effect-shine .bottom-bar-buttons button::before,
+  .landing-page.button-effect-burst .links .link-item::after,
+  .landing-page.button-effect-burst .timer-cta::after,
+  .landing-page.button-effect-burst .form button[type=submit]::after,
+  .landing-page.button-effect-burst .reservation button[type=submit]::after,
+  .landing-page.button-effect-burst .success button::after,
+  .landing-page.button-effect-burst .bottom-bar .bottom-bar-buttons button::after,
+  .bottom-bar.button-effect-burst .bottom-bar-buttons button::after {
+    animation: none !important;
+  }
+}

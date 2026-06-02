@@ -110,6 +110,7 @@ const cssFiles = [
   'src/styles/preview-workspace-topnav-card.css',
   'src/styles/preview-workspace-effects.css',
   'src/styles/preview-workspace-effects-buttons.css',
+  'src/styles/preview-workspace-effects-buttons-clarity.css',
   'src/styles/preview-workspace-effects-bottom-editor.css',
   'src/styles/preview-workspace-effects-fonts.css',
   'src/styles/preview-workspace-effects-nav.css',
