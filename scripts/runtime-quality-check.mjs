@@ -143,6 +143,7 @@ const editorControls = await readFile('src/editor/controls.jsx', 'utf8');
 const richField = await readFile('src/editor/RichField.jsx', 'utf8');
 const previewUtils = await readFile('src/preview/renderers/previewUtils.jsx', 'utf8');
 const stylePanel = await readFile('src/panels/StylePanel.jsx', 'utf8');
+const inboxPanel = await readFile('src/panels/InboxPanel.jsx', 'utf8');
 const settingsPanel = await readFile('src/panels/SettingsPanel.jsx', 'utf8');
 const settingsPanelCss = await readFile('src/panels/SettingsPanel.css', 'utf8');
 const runtimeConfigSource = await readFile('src/config/runtimeConfig.js', 'utf8');
@@ -209,6 +210,7 @@ assert(!richField.includes('type="color"') && !richField.includes("document.exec
 assert(previewUtils.includes('dangerouslySetInnerHTML') && previewUtils.includes('style="color:${color}"') && previewUtils.includes('<u>${inner}</u>') && previewUtils.includes('<strong>${inner}</strong>'), 'preview rich text renderer must preserve color, underline, and bold markup');
 assert(stylePanel.includes('onPreviewThemeChange?.(draftTheme)') && app.includes('const [stylePreviewTheme, setStylePreviewTheme] = useState(null)'), 'StylePanel draft changes must keep live preview wiring');
 assert(stylePanel.includes("!['topnav', 'bottombar', 'footer'].includes(block.type)") && stylePanel.includes('defaultStyleBlockId'), 'StylePanel must not auto-select fixed layout widgets on first entry');
+assert(inboxPanel.includes('ensureHeaders(sheet, Object.keys(fields))') && inboxPanel.includes('BASE_HEADERS.concat(customHeaders, [JSON_HEADER])'), 'Google Sheets sample code must create columns for actual form fields');
 assert(settingsPanel.includes("<span className=\"settings-section-state\" aria-hidden=\"true\">{open ? '−' : '+'}</span>"), 'Settings sections must use compact icon-only open controls');
 assert(!/className="settings-section-state"[^>]*>\s*\{open\s*\?\s*'접기'\s*:\s*'열기'\}/.test(settingsPanel), 'Settings section controls must not render clipped text labels');
 assert(/grid-template-columns:\s*minmax\(0,\s*1fr\)\s*42px\s*!important/.test(settingsPanelCss), 'Settings section headers must reserve only icon-width action space');

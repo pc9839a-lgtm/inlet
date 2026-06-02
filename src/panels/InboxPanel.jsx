@@ -283,7 +283,7 @@ function appendLead(data) {
   const sheetName = data.sheetName || SHEET_NAME;
   const sheet = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName);
   const fields = safeFieldMap(data);
-  const headers = ensureHeaders(sheet);
+  const headers = ensureHeaders(sheet, Object.keys(fields));
   const source = data.source || data.attribution || {};
   const baseValues = {
     '접수일시': data.lead?.createdAt || data.createdAt || new Date().toISOString(),
@@ -303,8 +303,9 @@ function appendLead(data) {
   sheet.appendRow(row);
 }
 
-function ensureHeaders(sheet) {
-  const required = BASE_HEADERS.concat([JSON_HEADER]);
+function ensureHeaders(sheet, fieldHeaders) {
+  const customHeaders = (fieldHeaders || []).map((header) => String(header || '').trim()).filter(Boolean);
+  const required = BASE_HEADERS.concat(customHeaders, [JSON_HEADER]);
   if (sheet.getLastRow() === 0) {
     sheet.appendRow(required);
     return required;
