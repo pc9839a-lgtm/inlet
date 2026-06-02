@@ -3,21 +3,21 @@ import { assertD1, authorizeProject, handleApiError, optionsResponse, projectFro
 
 const METHODS = 'GET, OPTIONS';
 const CSV_HEADERS = [
-  '접수ID',
-  '접수일',
-  '접수유형',
-  '상태',
-  '이름',
-  '연락처',
-  '이메일',
-  '페이지주소',
-  '유입URL',
+  '\uC811\uC218 ID',
+  '\uC811\uC218\uC77C',
+  '\uC811\uC218 \uC720\uD615',
+  '\uC0C1\uD0DC',
+  '\uC774\uB984',
+  '\uC5F0\uB77D\uCC98',
+  '\uC774\uBA54\uC77C',
+  '\uD398\uC774\uC9C0 \uC8FC\uC18C',
+  '\uC720\uC785 URL',
   'UTM Source',
   'UTM Medium',
   'UTM Campaign',
-  '메모',
-  '답변 전체',
-  '입력값 전체',
+  '\uBA54\uBAA8',
+  '\uB2F5\uBCC0 \uC804\uCCB4',
+  '\uC785\uB825\uAC12 \uC804\uCCB4',
 ];
 
 const BASE_DYNAMIC_VALUE_KEYS = new Set([
@@ -116,7 +116,7 @@ function cleanFieldLabel(value = '') {
 }
 
 function dynamicFieldHeader(label = '') {
-  return `입력: ${cleanFieldLabel(label)}`;
+  return `\uC785\uB825: ${cleanFieldLabel(label)}`;
 }
 
 function flatValue(value) {
@@ -168,7 +168,7 @@ function dynamicFieldMap(lead = {}) {
 
 function answersText(answers = []) {
   return (Array.isArray(answers) ? answers : [])
-    .map((answer) => `${answer.label || answer.id || '답변'}: ${flatValue(answer.value)}`)
+    .map((answer) => `${answer.label || answer.id || '\uB2F5\uBCC0'}: ${flatValue(answer.value)}`)
     .filter(Boolean)
     .join(' / ');
 }
@@ -192,7 +192,7 @@ function dateOnly(value = '') {
 }
 
 function safeFileName(value = '') {
-  return String(value || 'pagero').replace(/[^a-zA-Z0-9가-힣_-]/g, '-').replace(/-+/g, '-').slice(0, 80) || 'pagero';
+  return String(value || 'pagero').replace(/[^a-zA-Z0-9\uAC00-\uD7A3-]/g, '-').replace(/-+/g, '-').slice(0, 80) || 'pagero';
 }
 
 function corsHeadersForCsv(request, env = {}) {

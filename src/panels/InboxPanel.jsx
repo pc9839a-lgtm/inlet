@@ -17,17 +17,17 @@ import { trafficSourceLabel } from '../lib/trafficAttribution.js';
 import './InboxPanel.css';
 
 const DUPLICATE_COUNTS = [
-  ['1', '1회부터 차단'],
-  ['2', '2회부터 차단'],
-  ['3', '3회부터 차단'],
-  ['5', '5회부터 차단'],
+  ['1', '같은 데이터 1개 이상이면 차단'],
+  ['2', '같은 데이터 2개 이상이면 차단'],
+  ['3', '같은 데이터 3개 이상이면 차단'],
+  ['5', '같은 데이터 5개 이상이면 차단'],
 ];
 
 const DUPLICATE_WINDOWS = [
-  ['1d', '1일'],
-  ['3d', '3일'],
-  ['7d', '7일'],
-  ['30d', '30일'],
+  ['1d', '1\uC77C'],
+  ['3d', '3\uC77C'],
+  ['7d', '7\uC77C'],
+  ['30d', '30\uC77C'],
 ];
 
 const CONTACT_OPTIONS = [
@@ -179,18 +179,18 @@ function IntakeDuplicatePolicyPanel({ page, authUser, updatePage }) {
       <button type="button" className="inbox-policy-head" onClick={() => setOpen(!open)}>
         <span>
           <strong>중복 차단</strong>
-          <small>IP, 쿠키, 연락처 기준을 정합니다.</small>
+          <small>IP, 쿠키, 연락처 기준으로 반복 접수를 정리합니다.</small>
         </span>
         <em>{open ? '접기' : '열기'}</em>
       </button>
       {open && (
         <div className="inbox-policy-body">
           <div className="inbox-policy-grid">
-            <DuplicatePolicySwitch label="IP 중복" checked={settings.rejectIpDuplicate} onChange={(value) => save({ rejectIpDuplicate: value })} />
-            <DuplicatePolicySwitch label="쿠키 중복" checked={settings.rejectCookieDuplicate} onChange={(value) => save({ rejectCookieDuplicate: value })} />
-            <DuplicatePolicySelect label="제한 횟수" value={settings.formDuplicateLimitCount} options={DUPLICATE_COUNTS} onChange={(value) => save({ formDuplicateLimitCount: value })} />
-            <DuplicatePolicySelect label="제한 기간" value={settings.formDuplicateLimitWindow} options={DUPLICATE_WINDOWS} onChange={(value) => save({ formDuplicateLimitWindow: value })} />
-            <DuplicatePolicySelect label="연락처/메일" value={settings.phoneEmailMode} options={CONTACT_OPTIONS} onChange={(value) => save({ phoneEmailMode: value })} />
+            <DuplicatePolicySwitch label="IP 중복 차단" checked={settings.rejectIpDuplicate} onChange={(value) => save({ rejectIpDuplicate: value })} />
+            <DuplicatePolicySwitch label="쿠키 중복 차단" checked={settings.rejectCookieDuplicate} onChange={(value) => save({ rejectCookieDuplicate: value })} />
+            <DuplicatePolicySelect label="중복 제한 개수" value={settings.formDuplicateLimitCount} options={DUPLICATE_COUNTS} onChange={(value) => save({ formDuplicateLimitCount: value })} />
+            <DuplicatePolicySelect label="중복 제한 기간" value={settings.formDuplicateLimitWindow} options={DUPLICATE_WINDOWS} onChange={(value) => save({ formDuplicateLimitWindow: value })} />
+            <DuplicatePolicySelect label="연락처/이메일 중복" value={settings.phoneEmailMode} options={CONTACT_OPTIONS} onChange={(value) => save({ phoneEmailMode: value })} />
           </div>
 
           <div className="inbox-policy-history">
@@ -329,6 +329,8 @@ function doPost(e) {
 function doGet() {
   return ContentService.createTextOutput('Pagero Google Sheets webhook is ready.');
 }`;
+
+
 
 function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
   const integrations = normalizeIntegrations(page.integrations || {});
@@ -471,7 +473,7 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
       });
       await onSavePage?.({ ...page, integrations: draftIntegrations });
       setDraftDirty(false);
-      setResult('저장됨');
+      setResult('저장 완료');
     } catch (error) {
       setResult(`저장 실패: ${String(error?.message || error)}`);
     } finally {
@@ -515,7 +517,7 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
           </div>
           <div className="connection-item connect-v4 open">
             <div className="connection-row">
-              <div className="connection-row-main"><strong>Google Sheets</strong><small>{sheetsState.text} · 접수 자동 저장</small></div>
+              <div className="connection-row-main"><strong>Google Sheets</strong><small>{sheetsState.text} - ?? ?? ??</small></div>
               <InlineSwitch checked={!!draftIntegrations.sheets.enabled} onChange={(enabled) => sheetPatch({ enabled, status: enabled ? draftIntegrations.sheets.status || 'disconnected' : 'disconnected', lastError: enabled ? '' : draftIntegrations.sheets.lastError })} />
             </div>
             {draftIntegrations.sheets.enabled && (
@@ -654,7 +656,7 @@ export default function InboxPanel({
   const loadedCount = normalized.length;
   const serverTotal = Number(totalLeads || loadedCount);
   const listSummary = serverTotal > loadedCount
-    ? `${filtered.length}건 표시 중 · 서버 ${serverTotal}건 중 ${loadedCount}건 로드`
+    ? `${filtered.length}? ?? ? - ?? ${serverTotal}? ? ${loadedCount}? ??`
     : `${filtered.length}건 표시 중`;
 
   return (

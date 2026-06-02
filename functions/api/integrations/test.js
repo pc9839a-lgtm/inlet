@@ -74,7 +74,7 @@ function sampleSheetsPayload(body = {}) {
       email: '',
       message: 'Google Sheets 연동 테스트',
       createdAt: now,
-      fields: { 테스트: '성공 확인용', '관심 타입': '84A', 예산대: '5억~7억' },
+      fields: { '테스트': '성공 확인용', '관심 타입': '84A', '예산대': '5억~7억' },
     },
     page: body.page || { title: '페이지로 테스트', slug: '', url: '' },
     project: body.project || {},
@@ -85,7 +85,7 @@ function sampleSheetsPayload(body = {}) {
 }
 
 function googleScriptErrorMessage(status, text = '') {
-  if (status === 401 || status === 403) return 'Apps Script 접근 권한을 확인해주세요. 웹 앱은 사용자 액세스 권한으로 배포되어야 합니다.';
+  if (status === 401 || status === 403) return 'Apps Script 접근 권한을 확인해주세요. 액세스는 전체 사용자 권한으로 배포되어야 합니다.';
   if (/not found|404/i.test(text)) return 'Apps Script 배포 URL이 잘못되었습니다. /exec URL을 다시 복사해주세요.';
   return `Google Apps Script 응답 실패: ${status}`;
 }
