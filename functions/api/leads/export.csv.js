@@ -12,6 +12,9 @@ const CSV_HEADERS = [
   '이메일',
   '페이지주소',
   '유입URL',
+  'UTM Source',
+  'UTM Medium',
+  'UTM Campaign',
   '메모',
   '답변 전체',
   '입력값 전체',
@@ -66,7 +69,7 @@ export async function onRequest({ request, env }) {
     }
 
     const csv = toCsv(leads);
-    const filename = `${safeFileName(project.slug || project.projectId || 'inlet')}-leads-${month}.csv`;
+    const filename = `${safeFileName(project.slug || project.projectId || 'pagero')}-leads-${month}.csv`;
     return new Response(`\ufeff${csv}`, {
       status: 200,
       headers: {
@@ -96,6 +99,9 @@ function toCsv(leads = []) {
       lead.email || lead.values?.email || '',
       lead.pageSlug || '',
       lead.sourceUrl || lead.values?.sourceUrl || '',
+      lead.utmSource || lead.source?.utmSource || '',
+      lead.utmMedium || lead.source?.utmMedium || '',
+      lead.utmCampaign || lead.source?.utmCampaign || '',
       lead.memo || lead.message || lead.values?.memo || '',
       answersText(lead.answers),
       valuesText(lead.values),
@@ -186,7 +192,7 @@ function dateOnly(value = '') {
 }
 
 function safeFileName(value = '') {
-  return String(value || 'inlet').replace(/[^a-zA-Z0-9가-힣_-]/g, '-').replace(/-+/g, '-').slice(0, 80) || 'inlet';
+  return String(value || 'pagero').replace(/[^a-zA-Z0-9가-힣_-]/g, '-').replace(/-+/g, '-').slice(0, 80) || 'pagero';
 }
 
 function corsHeadersForCsv(request, env = {}) {
