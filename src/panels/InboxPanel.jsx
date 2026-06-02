@@ -339,6 +339,7 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
   const [testing, setTesting] = useState('');
   const [result, setResult] = useState('');
   const [copiedScript, setCopiedScript] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const counts = useMemo(() => connectionCounts(draftIntegrations), [draftIntegrations]);
   const emailState = connectionState('email', draftIntegrations);
   const sheetsState = connectionState('sheets', draftIntegrations);
@@ -538,21 +539,27 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
               </div>
             )}
           </div>
-          <div className="connection-item connect-v4 open">
-            <div className="connection-row">
-              <div className="connection-row-main"><strong>Webhook</strong><small>{webhookState.text}</small></div>
-              <InlineSwitch checked={!!draftIntegrations.webhook.enabled} onChange={(enabled) => patch('webhook', { enabled })} />
-            </div>
-            {draftIntegrations.webhook.enabled && (
-              <div className="connection-detail-box compact">
-                <label className="connection-inline-control">
-                  <span>전송 URL</span>
-                  <input value={draftIntegrations.webhook.url || ''} placeholder="https://..." onChange={(event) => patch('webhook', { url: event.target.value })} />
-                </label>
+          <button type="button" className="connection-advanced-toggle" onClick={() => setAdvancedOpen(!advancedOpen)}>
+            <span>고급 연동</span>
+            <b>{draftIntegrations.webhook.enabled ? webhookState.text : '선택 사항'}</b>
+          </button>
+          {advancedOpen && (
+            <div className="connection-item connect-v4 open advanced">
+              <div className="connection-row">
+                <div className="connection-row-main"><strong>Webhook</strong><small>{webhookState.text}</small></div>
+                <InlineSwitch checked={!!draftIntegrations.webhook.enabled} onChange={(enabled) => patch('webhook', { enabled })} />
               </div>
-            )}
-          </div>
-          <button type="button" className="save-connection-btn" disabled={saving} onClick={save}>{saving ? '저장 중' : '저장'}</button>
+              {draftIntegrations.webhook.enabled && (
+                <div className="connection-detail-box compact">
+                  <label className="connection-inline-control">
+                    <span>전송 URL</span>
+                    <input value={draftIntegrations.webhook.url || ''} placeholder="https://..." onChange={(event) => patch('webhook', { url: event.target.value })} />
+                  </label>
+                </div>
+              )}
+            </div>
+          )}
+          <button type="button" className="save-connection-btn" disabled={saving} onClick={save}>{saving ? '저장 중' : '연동 전체 저장'}</button>
         </div>
       )}
     </section>

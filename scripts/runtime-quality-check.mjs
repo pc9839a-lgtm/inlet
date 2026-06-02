@@ -211,6 +211,7 @@ assert(previewUtils.includes('dangerouslySetInnerHTML') && previewUtils.includes
 assert(stylePanel.includes('onPreviewThemeChange?.(draftTheme)') && app.includes('const [stylePreviewTheme, setStylePreviewTheme] = useState(null)'), 'StylePanel draft changes must keep live preview wiring');
 assert(stylePanel.includes("!['topnav', 'bottombar', 'footer'].includes(block.type)") && stylePanel.includes('defaultStyleBlockId'), 'StylePanel must not auto-select fixed layout widgets on first entry');
 assert(inboxPanel.includes('ensureHeaders(sheet, Object.keys(fields))') && inboxPanel.includes('BASE_HEADERS.concat(customHeaders, [JSON_HEADER])'), 'Google Sheets sample code must create columns for actual form fields');
+assert(inboxPanel.includes('advancedOpen') && inboxPanel.includes('connection-advanced-toggle') && inboxPanel.includes('연동 전체 저장'), 'Inbox integrations should keep webhook inside an advanced section and label full save clearly');
 assert(settingsPanel.includes("<span className=\"settings-section-state\" aria-hidden=\"true\">{open ? '−' : '+'}</span>"), 'Settings sections must use compact icon-only open controls');
 assert(!/className="settings-section-state"[^>]*>\s*\{open\s*\?\s*'접기'\s*:\s*'열기'\}/.test(settingsPanel), 'Settings section controls must not render clipped text labels');
 assert(/grid-template-columns:\s*minmax\(0,\s*1fr\)\s*42px\s*!important/.test(settingsPanelCss), 'Settings section headers must reserve only icon-width action space');

@@ -728,6 +728,42 @@
   font-weight: 950 !important;
 }
 
+.inbox-panel .connection-advanced-toggle {
+  width: 100% !important;
+  min-height: 48px !important;
+  margin: 2px 0 0 !important;
+  padding: 0 14px !important;
+  border: 1px dashed #cbd5e1 !important;
+  border-radius: 16px !important;
+  background: #f8fafc !important;
+  color: #111827 !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 10px !important;
+  align-items: center !important;
+  text-align: left !important;
+}
+
+.inbox-panel .connection-advanced-toggle span {
+  font-size: 13px !important;
+  font-weight: 950 !important;
+}
+
+.inbox-panel .connection-advanced-toggle b {
+  padding: 7px 10px !important;
+  border-radius: 999px !important;
+  background: #fff !important;
+  color: #64748b !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  white-space: nowrap !important;
+}
+
+.inbox-panel .connection-item.advanced {
+  border-bottom: 0 !important;
+}
+
 .inbox-panel .lead-row-v3 {
   grid-template-columns: minmax(0, 1fr) auto !important;
 }
@@ -759,6 +795,7 @@
   .inbox-panel .inbox-policy-history-head,
   .inbox-panel .inbox-policy-history-head div,
   .inbox-panel .connection-inline-actions,
+  .inbox-panel .connection-advanced-toggle,
   .inbox-panel .lead-row-v3,
   .inbox-panel .lead-row-main-v3,
   .inbox-panel .lead-row-meta-v3 {
