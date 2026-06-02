@@ -289,6 +289,8 @@ for (const token of [
   'Hosted /api/pages/:slug authenticated D1 save v1',
   'Hosted /api/pages/:slug authenticated D1 save v2',
   'Hosted /api/pages/:slug authenticated D1 read',
+  'Hosted /api/pages/:slug public D1 read',
+  '?public=1',
   'Hosted /api/pages/:slug/revisions authenticated D1 list',
   'Hosted /api/pages/:slug/revisions/:id authenticated D1 read',
   'Hosted /api/pages/:slug/restore authenticated D1 write',

@@ -480,6 +480,23 @@ async function run() {
     failureReason: pageReadAuthed.data?.error || pageReadAuthed.data?.page?.title || '',
   });
 
+  const pageReadPublic = await jsonFetch(`/api/pages/${encodeURIComponent(project.slug)}?public=1`);
+  checks.push({
+    name: 'Hosted /api/pages/:slug public D1 read',
+    status: pageReadPublic.res.ok
+      && pageReadPublic.data?.page?.title === 'Hosted Page QA v2'
+      && pageReadPublic.data?.page?.integrations
+      && !pageReadPublic.data?.page?.integrations?.email
+      && !pageReadPublic.data?.page?.integrations?.sheets
+      ? 'ready'
+      : 'failed-live',
+    httpStatus: pageReadPublic.res.status,
+    failureReason: pageReadPublic.data?.error || JSON.stringify({
+      title: pageReadPublic.data?.page?.title,
+      integrationKeys: Object.keys(pageReadPublic.data?.page?.integrations || {}),
+    }),
+  });
+
   const revisionsList = await jsonFetch(`/api/pages/${encodeURIComponent(project.slug)}/revisions?projectId=${encodeURIComponent(project.projectId)}&limit=5`, {
     headers: { 'X-Inlet-Session': refreshedSession },
   });
