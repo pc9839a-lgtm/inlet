@@ -4220,6 +4220,67 @@ function csvValuesExport(values = {}) {
     .join(' / ');
 }
 
+const CSV_BASE_DYNAMIC_VALUE_KEYS = new Set([
+  'name',
+  'phone',
+  'email',
+  'address',
+  'message',
+  'memo',
+  'clientId',
+  'phoneNormalized',
+  'emailNormalized',
+]);
+
+function csvCleanFieldLabel(value = '') {
+  return String(value || '').trim().replace(/\s+/g, ' ');
+}
+
+function csvDynamicHeader(label = '') {
+  return `입력: ${csvCleanFieldLabel(label)}`;
+}
+
+function csvDynamicFieldHeaders(leads = []) {
+  const seen = new Set();
+  const headers = [];
+  for (const lead of leads || []) {
+    for (const answer of Array.isArray(lead.answers) ? lead.answers : []) {
+      const label = csvCleanFieldLabel(answer.label || answer.id || '');
+      if (!label) continue;
+      const header = csvDynamicHeader(label);
+      if (!seen.has(header)) {
+        seen.add(header);
+        headers.push(header);
+      }
+    }
+    for (const key of Object.keys(lead.values || {})) {
+      const label = csvCleanFieldLabel(key);
+      if (!label || CSV_BASE_DYNAMIC_VALUE_KEYS.has(label)) continue;
+      const header = csvDynamicHeader(label);
+      if (!seen.has(header)) {
+        seen.add(header);
+        headers.push(header);
+      }
+    }
+  }
+  return headers;
+}
+
+function csvDynamicFieldMap(lead = {}) {
+  const fields = {};
+  for (const [key, value] of Object.entries(lead.values || {})) {
+    const label = csvCleanFieldLabel(key);
+    if (!label || CSV_BASE_DYNAMIC_VALUE_KEYS.has(label)) continue;
+    fields[csvDynamicHeader(label)] = csvFlatValue(value);
+  }
+  for (const answer of Array.isArray(lead.answers) ? lead.answers : []) {
+    const label = csvCleanFieldLabel(answer.label || answer.id || '');
+    if (!label) continue;
+    fields[csvDynamicHeader(label)] = csvFlatValue(answer.value);
+  }
+  return fields;
+}
+
 function deliveryStatusExportText(status = 'none') {
   return {
     pending: '전송중',
@@ -4231,11 +4292,12 @@ function deliveryStatusExportText(status = 'none') {
 }
 
 function leadsToCsvExport(leads = []) {
+  const dynamicHeaders = csvDynamicFieldHeaders(leads);
   const headers = [
     '접수ID',
     '접수유형',
     '상태',
-    '접수일시',
+    '접수시간',
     '이름',
     '대표연락처',
     '연락처',
@@ -4248,37 +4310,44 @@ function leadsToCsvExport(leads = []) {
     '외부 전송 상태',
     '외부 전송 요약',
     '외부 전송 로그',
-    '답변',
-    '입력값',
+    'duplicate',
+    'duplicateReason',
+    'riskScore',
+    'submittedAt',
+    '답변 전체',
+    '입력값 전체',
+    ...dynamicHeaders,
   ];
-  headers.splice(headers.length - 2, 0, 'duplicate', 'duplicateReason', 'riskScore', 'submittedAt');
-  const rows = leads.map((lead) => [
-    lead.id || '',
-    lead.type || '',
-    lead.status || '',
-    formatCsvDate(lead.createdAt),
-    lead.name || '',
-    lead.phone || lead.email || lead.address || '',
-    lead.phone || '',
-    lead.email || '',
-    lead.address || '',
-    lead.message || '',
-    csvFieldByCleanLabel(lead, [/예약일|예약날짜|date/i]),
-    csvFieldByCleanLabel(lead, [/예약시간|시간|time/i]),
-    lead.memo || '',
-    deliveryStatusExportText(lead.delivery?.status),
-    lead.delivery?.summary || '',
-    csvDeliveryLogsExport(lead.delivery?.logs),
-    lead.duplicate ? 'yes' : 'no',
-    lead.duplicateReason || '',
-    lead.riskScore ?? '',
-    formatCsvDate(lead.submittedAt || lead.createdAt),
-    csvAnswersExport(lead.answers),
-    csvValuesExport(lead.values),
-  ]);
+  const rows = leads.map((lead) => {
+    const dynamicFields = csvDynamicFieldMap(lead);
+    return [
+      lead.id || '',
+      lead.type || '',
+      lead.status || '',
+      formatCsvDate(lead.createdAt),
+      lead.name || '',
+      lead.phone || lead.email || lead.address || '',
+      lead.phone || '',
+      lead.email || '',
+      lead.address || '',
+      lead.message || '',
+      csvFieldByCleanLabel(lead, [/reservationDate|date/i]),
+      csvFieldByCleanLabel(lead, [/reservationTime|time/i]),
+      lead.memo || '',
+      deliveryStatusExportText(lead.delivery?.status),
+      lead.delivery?.summary || '',
+      csvDeliveryLogsExport(lead.delivery?.logs),
+      lead.duplicate ? 'yes' : 'no',
+      lead.duplicateReason || '',
+      lead.riskScore ?? '',
+      formatCsvDate(lead.submittedAt || lead.createdAt),
+      csvAnswersExport(lead.answers),
+      csvValuesExport(lead.values),
+      ...dynamicHeaders.map((header) => dynamicFields[header] || ''),
+    ];
+  });
   return [headers, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n');
 }
-
 function startDeliveryRetryWorker() {
   if (!deliveryRetryConfig.enabled) return;
   setInterval(() => {

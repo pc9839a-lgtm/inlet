@@ -3,17 +3,31 @@ import { assertD1, authorizeProject, handleApiError, optionsResponse, projectFro
 
 const METHODS = 'GET, OPTIONS';
 const CSV_HEADERS = [
-  'id',
-  'createdAt',
-  'kind',
-  'status',
+  '접수ID',
+  '접수일',
+  '접수유형',
+  '상태',
+  '이름',
+  '연락처',
+  '이메일',
+  '페이지주소',
+  '유입URL',
+  '메모',
+  '답변 전체',
+  '입력값 전체',
+];
+
+const BASE_DYNAMIC_VALUE_KEYS = new Set([
   'name',
   'phone',
   'email',
-  'deliveryStatus',
-  'pageSlug',
+  'address',
+  'message',
   'memo',
-];
+  'clientId',
+  'phoneNormalized',
+  'emailNormalized',
+]);
 
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, METHODS);
@@ -68,8 +82,10 @@ export async function onRequest({ request, env }) {
 }
 
 function toCsv(leads = []) {
-  const rows = [CSV_HEADERS];
+  const dynamicHeaders = collectDynamicFieldHeaders(leads);
+  const rows = [[...CSV_HEADERS, ...dynamicHeaders]];
   for (const lead of leads) {
+    const dynamicFields = dynamicFieldMap(lead);
     rows.push([
       lead.id || '',
       dateOnly(lead.createdAt || ''),
@@ -78,12 +94,84 @@ function toCsv(leads = []) {
       lead.name || lead.values?.name || '',
       lead.phone || lead.values?.phone || '',
       lead.email || lead.values?.email || '',
-      lead.deliveryStatus || lead.delivery?.status || '',
       lead.pageSlug || '',
+      lead.sourceUrl || lead.values?.sourceUrl || '',
       lead.memo || lead.message || lead.values?.memo || '',
+      answersText(lead.answers),
+      valuesText(lead.values),
+      ...dynamicHeaders.map((header) => dynamicFields[header] || ''),
     ]);
   }
   return rows.map((row) => row.map(csvCell).join(',')).join('\r\n');
+}
+
+function cleanFieldLabel(value = '') {
+  return String(value || '').trim().replace(/\s+/g, ' ');
+}
+
+function dynamicFieldHeader(label = '') {
+  return `입력: ${cleanFieldLabel(label)}`;
+}
+
+function flatValue(value) {
+  if (Array.isArray(value)) return value.map(flatValue).join(', ');
+  if (value && typeof value === 'object') return Object.values(value).map(flatValue).filter(Boolean).join(' ');
+  return String(value ?? '');
+}
+
+function collectDynamicFieldHeaders(leads = []) {
+  const seen = new Set();
+  const headers = [];
+  for (const lead of leads || []) {
+    for (const answer of Array.isArray(lead.answers) ? lead.answers : []) {
+      const label = cleanFieldLabel(answer.label || answer.id || '');
+      if (!label) continue;
+      const header = dynamicFieldHeader(label);
+      if (!seen.has(header)) {
+        seen.add(header);
+        headers.push(header);
+      }
+    }
+    for (const key of Object.keys(lead.values || {})) {
+      const label = cleanFieldLabel(key);
+      if (!label || BASE_DYNAMIC_VALUE_KEYS.has(label)) continue;
+      const header = dynamicFieldHeader(label);
+      if (!seen.has(header)) {
+        seen.add(header);
+        headers.push(header);
+      }
+    }
+  }
+  return headers;
+}
+
+function dynamicFieldMap(lead = {}) {
+  const fields = {};
+  for (const [key, value] of Object.entries(lead.values || {})) {
+    const label = cleanFieldLabel(key);
+    if (!label || BASE_DYNAMIC_VALUE_KEYS.has(label)) continue;
+    fields[dynamicFieldHeader(label)] = flatValue(value);
+  }
+  for (const answer of Array.isArray(lead.answers) ? lead.answers : []) {
+    const label = cleanFieldLabel(answer.label || answer.id || '');
+    if (!label) continue;
+    fields[dynamicFieldHeader(label)] = flatValue(answer.value);
+  }
+  return fields;
+}
+
+function answersText(answers = []) {
+  return (Array.isArray(answers) ? answers : [])
+    .map((answer) => `${answer.label || answer.id || '답변'}: ${flatValue(answer.value)}`)
+    .filter(Boolean)
+    .join(' / ');
+}
+
+function valuesText(values = {}) {
+  return Object.entries(values || {})
+    .map(([key, value]) => `${key}: ${flatValue(value)}`)
+    .filter(Boolean)
+    .join(' / ');
 }
 
 function csvCell(value = '') {

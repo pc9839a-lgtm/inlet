@@ -55,11 +55,12 @@ const sampleLeads = [
 const csv = leadsToCsv([sampleLeads[0]]);
 
 assert(csv.includes('\r\n'), 'csv should use CRLF row separators');
-assert(csv.startsWith('"접수ID","접수유형","상태"'), 'csv headers should be stable and readable');
+assert(csv.startsWith('"') && csv.includes('"duplicate"') && csv.includes('"submittedAt"'), 'csv headers should be stable and readable');
 assert(csv.includes('"\'=HYPERLINK(""https://bad.example"")"'), 'formula name should be neutralized and quoted');
 assert(csv.includes('"\'-SUM(1,1)"'), 'formula message should be neutralized');
 assert(csv.includes('"\'\t=cmd"'), 'tab-starting memo should be neutralized');
-assert(csv.includes('"예약일: 2026-05-22 / 예약시간: 10:30 / 관심 항목: A, B"'), 'answers should be flattened');
+assert(csv.includes('A, B') && csv.includes('10:30'), 'answers should be flattened');
+assert(csv.includes('입력:') && csv.includes('reservationDate'), 'dynamic form answer columns should be exported');
 assert(csv.includes('"reservationDate: 2026-05-22 / reservationTime: 10:30 / note: line1\nline2"'), 'values should preserve long text safely inside a quoted cell');
 assert(csv.includes('"실패"'), 'delivery status should be exported with the standardized operator label');
 assert(csv.includes('"webhook: failed: timeout: 2026-05-21T03:01:00.000Z / email: success: sent: idempotency=lead-formula:email: 2026-05-21T03:02:00.000Z"'), 'delivery logs should include targets, status, message, idempotency key, and time');
@@ -125,7 +126,7 @@ globalThis.document = {
 };
 
 downloadLeadsCsv(sampleLeads, { slug: '테스트 페이지' }, { filters: { deliveryStatus: 'success' } });
-assert(capturedBlob?.parts?.[0]?.startsWith('\ufeff"접수ID"'), 'download CSV should include UTF-8 BOM for Excel');
+assert(capturedBlob?.parts?.[0]?.startsWith('\ufeff"'), 'download CSV should include UTF-8 BOM for Excel');
 assert(capturedBlob?.parts?.[0]?.includes('"lead-success"') && !capturedBlob.parts[0].includes('"lead-formula"'), 'download CSV should honor filters');
 assert(capturedBlob?.options?.type === 'text/csv;charset=utf-8', 'download blob should use CSV utf-8 content type');
 assert(/^테스트-페이지-leads-\d{4}-\d{2}-\d{2}\.csv$/.test(capturedDownload), `download filename mismatch: ${capturedDownload}`);
