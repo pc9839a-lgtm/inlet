@@ -66,6 +66,7 @@ const files = {
   landing: await readFile('src/preview/LandingRenderer.jsx', 'utf8'),
   content: await readFile('src/preview/renderers/ContentBlocks.jsx', 'utf8'),
   form: await readFile('src/preview/renderers/FormBlocks.jsx', 'utf8'),
+  formEditor: await readFile('src/editor/blockEditors/FormEditor.jsx', 'utf8'),
   info: await readFile('src/preview/renderers/InfoBlocks.jsx', 'utf8'),
   link: await readFile('src/preview/renderers/LinkBlocks.jsx', 'utf8'),
   media: await readFile('src/preview/renderers/MediaBlocks.jsx', 'utf8'),
@@ -241,6 +242,8 @@ assert(files.form.includes('function digitsOnly') && files.form.includes('inputM
 assert(files.publicFormEmbed.includes('data-pagero-phone="1"') && files.publicFormEmbed.includes('inputmode="numeric"') && files.publicFormEmbed.includes('digitsOnly(firstAnswer'), 'standalone form phone fields should force and submit numeric input');
 assert(files.publicFormEmbed.includes('접수 저장에 실패했습니다'), 'standalone form embed should show server save failure');
 assert(files.publicFormEmbed.includes('페이지로로 제작됨') && files.publicFormEmbed.includes('sourceLabel'), 'standalone form embed should show Pagero credit and preserve attribution');
+assert(files.formEditor.includes('Step title="디자인"') && files.formEditor.includes('buttonHover') && files.formEditor.includes('buttonColorMode') && files.formEditor.includes('buttonHoverColorMode'), 'form editor should expose form style, button effect, and button color controls');
+assert(files.previewCss.includes('.form-color-row') && files.previewCss.includes('.form-button-hover-fill') && files.previewCss.includes('.form-input-underline'), 'form design controls should have matching preview css contracts');
 assert(files.browserVisualQa.includes("INLET_BROWSER_QA_EXTRA_URLS=auto"), 'browser visual QA should document automatic footer/legal route coverage');
 assert(files.browserVisualQa.includes("'/privacy'") && files.browserVisualQa.includes("'/terms'"), 'browser visual QA auto routes should cover legal pages');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_STATE_PRESET'), 'browser visual QA should support authenticated state presets');

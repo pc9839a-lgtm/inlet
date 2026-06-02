@@ -1,6 +1,6 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Choice, EditorStack, Field, Step, Toggle } from '../controls.jsx';
+import { Choice, Color, EditorStack, Field, Step, Toggle } from '../controls.jsx';
 import { formQuestionOptions } from '../editorOptions.js';
 import RichField from '../RichField.jsx';
 import { uid } from '../../lib/pageModel.js';
@@ -166,7 +166,27 @@ export default function FormEditor({ s, set, page, blockId, generateStandaloneFo
         {!qs.length && <div className="empty">질문을 추가해주세요.</div>}
       </Step>
 
-      <Step title="고급" icon="3">
+      <Step title="디자인" icon="3">
+        <div className="form-design-grid">
+          <Choice label="폼 형태" value={s.style || 'card'} onChange={(v)=>set({style:v})} options={[['card','카드'],['line','라인'],['soft','소프트'],['minimal','미니멀']]}/>
+          <Choice label="입력칸" value={s.inputStyle || 'round'} onChange={(v)=>set({inputStyle:v})} options={[['round','라운드'],['box','박스'],['underline','밑줄']]}/>
+          <Choice label="버튼" value={s.buttonStyle || 'solid'} onChange={(v)=>set({buttonStyle:v})} options={[['solid','채움'],['round','둥근'],['line','라인']]}/>
+          <Choice label="버튼 효과" value={s.buttonHover || 'fill'} onChange={(v)=>set({buttonHover:v})} options={[['fill','채움'],['slide','슬라이드'],['zoom','확대']]}/>
+          <Choice label="간격" value={s.spacing || 'normal'} onChange={(v)=>set({spacing:v})} options={[['compact','좁게'],['normal','보통'],['wide','넓게']]}/>
+          <Choice label="모서리" value={s.radiusStyle || 'round'} onChange={(v)=>set({radiusStyle:v})} options={[['square','각진'],['round','둥근'],['pill','캡슐']]}/>
+          <Choice label="정렬" value={s.textAlign || 'left'} onChange={(v)=>set({textAlign:v})} options={[['left','왼쪽'],['center','중앙'],['right','오른쪽']]}/>
+        </div>
+
+        <div className="form-color-row">
+          <Choice label="버튼 색상" value={s.buttonColorMode || 'theme'} onChange={(v)=>set({buttonColorMode:v})} options={[['theme','테마'],['custom','직접']]}/>
+          {(s.buttonColorMode || 'theme') === 'custom' && <Color label="버튼 배경" value={s.buttonColor || '#111827'} onChange={(v)=>set({buttonColor:v})}/>}
+          <Color label="버튼 글자" value={s.buttonTextColor || '#ffffff'} onChange={(v)=>set({buttonTextColor:v})}/>
+          <Choice label="호버 색상" value={s.buttonHoverColorMode || 'theme'} onChange={(v)=>set({buttonHoverColorMode:v})} options={[['theme','테마'],['custom','직접']]}/>
+          {(s.buttonHoverColorMode || 'theme') === 'custom' && <Color label="호버 배경" value={s.buttonHoverColor || s.buttonColor || '#2563eb'} onChange={(v)=>set({buttonHoverColor:v})}/>}
+        </div>
+      </Step>
+
+      <Step title="고급" icon="4">
         <div className="form-advanced-group">
           <details className="form-advanced-item">
             <summary><strong>중복접수</strong><span>연락처/이메일 기준</span></summary>
