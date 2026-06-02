@@ -824,6 +824,12 @@ export async function getD1PageBySlug(db, { projectId, slug } = {}) {
   return row ? decodeD1Page(row) : null;
 }
 
+export async function getD1LatestPageByProject(db, { projectId } = {}) {
+  assertD1Binding(db);
+  const row = await db.prepare('SELECT * FROM pages WHERE project_id = ? ORDER BY updated_at DESC LIMIT 1').bind(String(projectId || '')).first();
+  return row ? decodeD1Page(row) : null;
+}
+
 export async function upsertD1Page(db, page = {}, context = {}) {
   assertD1Binding(db);
   const safeSlug = String(context.slug || page.slug || 'my-page').replace(/[^a-zA-Z0-9-_]/g, '') || 'my-page';

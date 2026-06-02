@@ -188,7 +188,7 @@ for (const token of [
 }
 
 for (const [name, source, tokens] of [
-  ['leads', leads, ['upsertD1Lead', 'listD1Leads', 'findD1LeadsByIntakeSignals', 'insertD1BlockedLeadSubmission', 'publicWrite: true', 'publicProjectShell(project)', "tab: 'inbox'", 'getD1PageBySlug', 'normalizeDeliveryPage(inputPage, storedPage || {}, project)', 'const delivery = await sendSavedLeadDelivery', 'deliveryStatus: delivery.status', 'LEAD_RATE_LIMITED', 'PUBLIC_POST_HEADERS', "'Access-Control-Allow-Origin': '*'", 'handlePublicPostError', 'meta: { source:', '중복 접수 정책', '접수는 저장됐지만 알림 전송에 실패했습니다.']],
+  ['leads', leads, ['upsertD1Lead', 'listD1Leads', 'findD1LeadsByIntakeSignals', 'insertD1BlockedLeadSubmission', 'publicWrite: true', 'publicProjectShell(project)', "tab: 'inbox'", 'getD1PageBySlug', 'getD1LatestPageByProject', 'storedPage = await getD1LatestPageByProject', 'normalizeDeliveryPage(inputPage, storedPage || {}, project)', 'const delivery = await sendSavedLeadDelivery', 'deliveryStatus: delivery.status', 'LEAD_RATE_LIMITED', 'PUBLIC_POST_HEADERS', "'Access-Control-Allow-Origin': '*'", 'handlePublicPostError', 'meta: { source:', '중복 접수 정책', '접수는 저장됐지만 알림 전송에 실패했습니다.']],
   ['lead csv', leadCsv, ['listD1Leads', 'month is required for CSV export.', 'text/csv; charset=utf-8', "Content-Disposition", 'csvCell', "tab: 'inbox'"]],
   ['blocked history', blockedHistory, ['listD1BlockedLeadSubmissions', 'pageSlug', "source: 'd1'", "tab: 'inbox'"]],
   ['delivery logs', deliveryLogs, ['listD1DeliveryLogs', "type: 'delivery-logs'", "adapter: 'd1'", "tab: 'inbox'"]],

@@ -33,6 +33,7 @@ import {
   getD1AccountByEmail,
   getD1AccountByPhone,
   getD1Lead,
+  getD1LatestPageByProject,
   getD1PageBySlug,
   getD1PageRevision,
   getD1ProjectAccess,
@@ -690,6 +691,10 @@ function fakeD1(options = {}) {
             const [projectId, slug] = this.params;
             return rows.pages.find((row) => row.project_id === projectId && row.slug === slug) || null;
           }
+          if (sql.includes('SELECT * FROM pages WHERE project_id = ? ORDER BY updated_at DESC LIMIT 1')) {
+            const [projectId] = this.params;
+            return rows.pages.filter((row) => row.project_id === projectId).sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')))[0] || null;
+          }
           if (sql.includes('SELECT id, project_id, slug, revision, created_at FROM pages WHERE project_id = ? AND slug = ?')) {
             const [projectId, slug] = this.params;
             const page = rows.pages.find((row) => row.project_id === projectId && row.slug === slug);
@@ -972,9 +977,11 @@ const pageBySlug = await getD1PageBySlug(db, { projectId: 'project-1', slug: 'la
 const pageRevisions = await listD1PageRevisions(db, { projectId: 'project-1', slug: 'landing' });
 const oneRevision = await getD1PageRevision(db, { projectId: 'project-1', slug: 'landing', id: pageRevisions[0]?.id });
 const renamedPageBySlug = await getD1PageBySlug(db, { projectId: 'project-1', slug: 'landing-renamed' });
+const latestPageByProject = await getD1LatestPageByProject(db, { projectId: 'project-1' });
 const renamedPageRevisions = await listD1PageRevisions(db, { projectId: 'project-1', slug: 'landing-renamed' });
 const renamedRevision = renamedPageRevisions.find((revision) => revision.page?.slug === 'landing-renamed');
 assert(!pageBySlug && renamedPageBySlug?.title === 'Landing Renamed' && renamedPageRevisions.length === 3 && renamedRevision, 'D1 page upsert and revisions should round-trip after slug rename');
+assert(latestPageByProject?.slug === 'landing-renamed' && latestPageByProject?.title === 'Landing Renamed', 'D1 latest page lookup should recover saved delivery settings after slug mismatch');
 await upsertD1AiDraft(db, decodeD1AiDraft(encodedAiDraft), { projectId: 'project-1' });
 await upsertD1AiDraft(db, { ...decodeD1AiDraft(encodedAiDraft), title: 'Draft v2' }, { projectId: 'project-1' });
 let aiDrafts = await listD1AiDrafts(db, { projectId: 'project-1' });

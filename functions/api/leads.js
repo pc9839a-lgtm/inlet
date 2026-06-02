@@ -1,4 +1,4 @@
-import { findD1LeadsByIntakeSignals, getD1PageBySlug, insertD1BlockedLeadSubmission, listD1Leads, upsertD1Lead } from '../../server/storage/d1Adapter.mjs';
+import { findD1LeadsByIntakeSignals, getD1LatestPageByProject, getD1PageBySlug, insertD1BlockedLeadSubmission, listD1Leads, upsertD1Lead } from '../../server/storage/d1Adapter.mjs';
 import { deliveryReport, normalizeDeliveryPage, sendLeadDelivery } from './leads/_delivery.js';
 import { assertD1, authorizeProject, ensureD1ProjectShell, handleApiError, jsonResponse, monthFromRequest, optionsResponse, projectFromRequest, publicProjectShell, readJson } from './_shared.js';
 
@@ -139,10 +139,13 @@ async function handlePublicPostError(request, env, error) {
 
 async function sendSavedLeadDelivery(db, lead = {}, inputPage = {}, project = {}, env = {}) {
   try {
-    const storedPage = await getD1PageBySlug(db, {
+    let storedPage = await getD1PageBySlug(db, {
       projectId: project.projectId,
       slug: inputPage.slug || lead.pageSlug || project.slug || '',
     });
+    if (!storedPage && project.projectId) {
+      storedPage = await getD1LatestPageByProject(db, { projectId: project.projectId });
+    }
     const deliveryPage = normalizeDeliveryPage(inputPage, storedPage || {}, project);
     return await sendLeadDelivery(lead, deliveryPage, env);
   } catch (error) {
