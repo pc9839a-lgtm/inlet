@@ -1732,12 +1732,25 @@ function App() {
     saveLocalJson(STORAGE_KEY, safePage, label);
     if (!isServerPageMode()) return { ok: true, mode: 'local' };
     try {
-      return await persistPage(safePage, authUser, { tab: 'edit' });
+      const result = await persistPage(safePage, authUser, { tab: 'edit' });
+      if (result?.page) {
+        const savedPage = normalizePageForSave(result.page);
+        saveLocalJson(STORAGE_KEY, savedPage, label, { quietSuccess: true });
+        return { ...result, page: savedPage };
+      }
+      return result;
     } catch (error) {
       showToast(`서버 저장에 실패했습니다. 공개 URL에 표시되지 않습니다. ${String(error?.message || error)}`, 'error');
       throw error;
     }
   };
+
+  const freshCreatedPage = (nextPage, context) => normalizePageForSave({
+    ...nextPage,
+    id: uid(),
+    projectId: context.projectId,
+    ownerId: context.ownerId,
+  });
 
   const createWithAi = async (draftInput = null) => {
     if (!canManageAdmin) return;
@@ -1749,19 +1762,17 @@ function App() {
         ...draftInput,
         slug: requestedSlug,
       });
-      const nextPage = normalizePageForSave({
+      const nextPage = freshCreatedPage({
         ...page,
         slug: requestedSlug,
-        projectId: nextContext.projectId,
-        ownerId: nextContext.ownerId,
         ai: {
           ...(page.ai || {}),
           draftInput: nextInput,
           updatedAt: new Date().toISOString(),
         },
-      });
-      setPage(nextPage);
-      await saveCreatedPageToServer(nextPage, '페이지');
+      }, nextContext);
+      const saved = await saveCreatedPageToServer(nextPage, '페이지');
+      setPage(saved?.page || nextPage);
     }
     setCreateOpen(false);
     saveLocalJson(START_MODE_KEY, 'ai', '시작 선택', { quietSuccess: true });
@@ -1780,30 +1791,26 @@ function App() {
     let nextPage = null;
     if (footerInfo && Object.keys(footerInfo).length) {
       const { slug: _slug, ...safeFooterInfo } = footerInfo || {};
-      nextPage = normalizePageForSave({
+      nextPage = freshCreatedPage({
         ...page,
         slug: nextSlug,
-        projectId: nextContext.projectId,
-        ownerId: nextContext.ownerId,
         blocks: page.blocks.map((block) => (
           block.type === 'footer'
             ? { ...block, s: { ...block.s, ...safeFooterInfo } }
             : block
         )),
-      });
+      }, nextContext);
     } else if (nextSlug !== page.slug || page.projectId !== nextContext.projectId) {
-      nextPage = normalizePageForSave({
+      nextPage = freshCreatedPage({
         ...page,
         slug: nextSlug,
-        projectId: nextContext.projectId,
-        ownerId: nextContext.ownerId,
-      });
+      }, nextContext);
     } else {
       nextPage = normalizePageForSave(page);
     }
     if (nextPage) {
-      setPage(nextPage);
-      await saveCreatedPageToServer(nextPage, '페이지');
+      const saved = await saveCreatedPageToServer(nextPage, '페이지');
+      setPage(saved?.page || nextPage);
     }
     setCreateOpen(false);
     saveLocalJson(START_MODE_KEY, 'manual', '시작 선택', { quietSuccess: true });
@@ -1819,14 +1826,12 @@ function App() {
       const templatePage = templates.createTemplatePage(templateId, page);
       const nextSlug = sanitizePageSlug(urlConfig?.slug || templatePage.slug || page.slug || 'my-page', 'my-page');
       const templateContext = projectContext({ slug: nextSlug }, authUser);
-      const next = normalizePageForSave({
+      const next = freshCreatedPage({
         ...templatePage,
         slug: nextSlug,
-        projectId: templateContext.projectId,
-        ownerId: templateContext.ownerId,
-      });
-      setPage(next);
-      await saveCreatedPageToServer(next, '페이지');
+      }, templateContext);
+      const saved = await saveCreatedPageToServer(next, '페이지');
+      setPage(saved?.page || next);
       saveLocalJson(START_MODE_KEY, 'manual', '시작 선택', { quietSuccess: true });
       setStartMode('manual');
       setTab('edit');
