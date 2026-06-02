@@ -777,7 +777,16 @@
 }
 
 .inbox-panel .lead-row-meta-v3 {
-  grid-template-columns: auto 92px 66px !important;
+  grid-template-columns: minmax(96px, 1fr) 64px 82px 66px !important;
+  align-items: center !important;
+}
+
+.inbox-panel .lead-source-label {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
 }
 
 .inbox-panel .lead-row-meta-v3 .lead-status.hold {

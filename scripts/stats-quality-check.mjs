@@ -105,6 +105,7 @@ assert(statsPeriodCss.includes('grid-template-columns: 58px minmax(96px, .8fr) m
 
 assert(!inboxPanel.includes('lead-delivery') && !inboxPanel.includes('\uC804\uC1A1 \uC0C1\uD0DC') && !inboxPanel.includes('\uC804\uC1A1 \uB85C\uADF8'), 'inbox detail should not render delivery status/log sections');
 assert(!inboxCss.includes('lead-delivery'), 'inbox CSS should not keep unused delivery status/detail styles');
+assert(inboxCss.includes('grid-template-columns: minmax(96px, 1fr) 64px 82px 66px') && inboxCss.includes('.lead-source-label'), 'inbox lead rows should reserve columns for source, status, date, and detail button');
 
 const appSource = await readFile('src/App.jsx', 'utf8');
 assert(appSource.includes('fetchServerStatsSummary'), 'stats tab should load server aggregate summary');
