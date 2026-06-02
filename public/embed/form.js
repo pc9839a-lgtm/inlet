@@ -4,6 +4,7 @@
   var HOME_URL = 'https://pagero.kr';
   var API_URL = HOME_URL + '/api/leads';
   var SCRIPT_SELECTOR = 'script[src*="/embed/form.js"]';
+  var CLIENT_ID_KEY = 'pagero_client_id';
 
   function css() {
     if (document.getElementById('pagero-form-style')) return;
@@ -25,6 +26,41 @@
 
   function digitsOnly(value) {
     return String(value || '').replace(/\D/g, '');
+  }
+
+  function randomId(prefix) {
+    return prefix + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+  }
+
+  function readCookie(name) {
+    var parts = String(document.cookie || '').split(';');
+    for (var i = 0; i < parts.length; i += 1) {
+      var item = parts[i].trim();
+      if (item.indexOf(name + '=') === 0) return decodeURIComponent(item.slice(name.length + 1));
+    }
+    return '';
+  }
+
+  function writeCookie(name, value) {
+    document.cookie = name + '=' + encodeURIComponent(value) + '; Max-Age=31536000; Path=/; SameSite=Lax';
+  }
+
+  function clientId() {
+    var id = '';
+    try {
+      id = localStorage.getItem(CLIENT_ID_KEY) || '';
+      if (!id) {
+        id = randomId('client');
+        localStorage.setItem(CLIENT_ID_KEY, id);
+      }
+    } catch (e) {
+      id = readCookie(CLIENT_ID_KEY);
+      if (!id) {
+        id = randomId('client');
+        writeCookie(CLIENT_ID_KEY, id);
+      }
+    }
+    return id;
   }
 
   function isPhoneQuestion(q) {
@@ -213,6 +249,14 @@
     return Promise.reject(new Error('missing config'));
   }
 
+  function configFromElement(el) {
+    var slug = el.getAttribute('data-pagero-page') || el.getAttribute('data-page') || el.getAttribute('data-slug') || '';
+    var formId = el.getAttribute('data-pagero-form-id') || el.getAttribute('data-form-id') || el.getAttribute('data-form') || '';
+    if (slug) return fetchPublicFormConfig(slug, formId);
+    if (el.getAttribute('data-pagero')) return Promise.resolve(decodeConfig(el.getAttribute('data-pagero')));
+    return Promise.reject(new Error('missing config'));
+  }
+
   function render(target, cfg) {
     css();
     cfg = cfg || {};
@@ -239,11 +283,14 @@
       submit.disabled = true;
       var extracted = valuesFromForm(form, cfg.questions);
       var now = new Date().toISOString();
+      var visitorId = clientId();
       var lead = Object.assign({
-        id: 'embed_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+        id: randomId('embed'),
         type: '상담',
         kind: 'consult',
         formId: cfg.formId || '',
+        pageSlug: (cfg.page && cfg.page.slug) || (cfg.project && cfg.project.slug) || '',
+        clientId: visitorId,
         source: 'embed',
         sourceBlockTitle: cfg.title || '',
         brand: cfg.brand || '페이지로',
@@ -252,12 +299,19 @@
         email: firstAnswer(extracted.answers, ['email'], /메일|email/i),
         address: firstAnswer(extracted.answers, ['address'], /주소|address/i),
         message: firstAnswer(extracted.answers, ['long'], /문의|내용|메시지|message/i),
-        values: extracted.values,
+        values: Object.assign({}, extracted.values, { clientId: visitorId }),
         answers: extracted.answers,
         createdAt: now,
         createdMonth: now.slice(0, 7)
       }, traffic());
-      var payload = { lead: lead, page: cfg.page || {}, project: cfg.project || {} };
+      var payload = {
+        lead: lead,
+        page: cfg.page || {},
+        project: Object.assign({}, cfg.project || {}, {
+          projectId: (cfg.project && cfg.project.projectId) || (cfg.page && cfg.page.projectId) || '',
+          slug: (cfg.project && cfg.project.slug) || (cfg.page && cfg.page.slug) || ''
+        })
+      };
       var hasProject = payload.project && payload.project.projectId && payload.project.slug;
       var request = hasProject ? postJson(API_URL, payload).then(function (res) {
         if (!res.ok) throw new Error('server ' + res.status);
@@ -287,7 +341,19 @@
     return target;
   }
 
+  function shouldInitScript(script) {
+    return !!(script && (
+      script.getAttribute('data-pagero')
+      || script.getAttribute('data-config')
+      || script.getAttribute('data-page')
+      || script.getAttribute('data-slug')
+      || script.getAttribute('data-form')
+      || script.getAttribute('data-target')
+    ));
+  }
+
   function init(script) {
+    if (!shouldInitScript(script)) return;
     var target = targetForScript(script);
     if (!target) return;
     target.textContent = '입력폼을 불러오는 중입니다.';
@@ -300,16 +366,31 @@
       });
   }
 
+  function initElement(el) {
+    if (!el || el.getAttribute('data-pagero-loaded') === '1') return;
+    el.setAttribute('data-pagero-loaded', '1');
+    el.textContent = '입력폼을 불러오는 중입니다.';
+    configFromElement(el)
+      .then(function (config) {
+        render(el, config);
+      })
+      .catch(function () {
+        el.textContent = '페이지로 입력폼을 불러오지 못했습니다.';
+      });
+  }
+
   function initAll() {
     var scripts = document.querySelectorAll(SCRIPT_SELECTOR);
     for (var i = 0; i < scripts.length; i += 1) {
-      if (scripts[i].getAttribute('data-pagero') || scripts[i].getAttribute('data-config') || scripts[i].getAttribute('data-page') || scripts[i].getAttribute('data-target')) {
+      if (shouldInitScript(scripts[i])) {
         init(scripts[i]);
       }
     }
+    var targets = document.querySelectorAll('[data-pagero-page], [data-pagero-form-embed]');
+    for (var j = 0; j < targets.length; j += 1) initElement(targets[j]);
   }
 
-  init(document.currentScript);
+  if (shouldInitScript(document.currentScript)) init(document.currentScript);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAll);
   else initAll();
 }());

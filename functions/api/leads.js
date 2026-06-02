@@ -26,7 +26,7 @@ export async function onRequest({ request, env }) {
       const project = projectFromRequest(url, body, request);
       await authorizeProject(request, env, project, { publicWrite: true });
       await ensureD1ProjectShell(db, publicProjectShell(project));
-      const lead = body.lead && typeof body.lead === 'object' ? body.lead : body;
+      const lead = withRequestIntakeSignals(body.lead && typeof body.lead === 'object' ? body.lead : body, request);
       const duplicatePolicy = await evaluateD1LeadDuplicatePolicy(db, project, body.page || {}, lead);
       if (duplicatePolicy.blocked) {
         await insertD1BlockedLeadSubmission(db, blockedLeadRecord(duplicatePolicy, lead, project, body.page || {}), {
@@ -154,6 +154,40 @@ function normalizedPhone(value = '') {
 
 function normalizedEmail(value = '') {
   return String(value || '').trim().toLowerCase();
+}
+
+function requestIp(request) {
+  return String(
+    request.headers.get('CF-Connecting-IP')
+    || request.headers.get('X-Forwarded-For')?.split(',')?.[0]
+    || request.headers.get('X-Real-IP')
+    || '',
+  ).trim();
+}
+
+function stableHash(value = '') {
+  let hash = 2166136261;
+  const input = String(value || '');
+  for (let i = 0; i < input.length; i += 1) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return input ? (hash >>> 0).toString(36).padStart(7, '0') : '';
+}
+
+function withRequestIntakeSignals(lead = {}, request) {
+  const ipHash = String(lead.ipHash || lead.values?.ipHash || stableHash(requestIp(request))).trim();
+  const clientId = String(lead.clientId || lead.values?.clientId || '').trim();
+  return {
+    ...lead,
+    ...(ipHash ? { ipHash } : {}),
+    ...(clientId ? { clientId } : {}),
+    values: {
+      ...(lead.values || {}),
+      ...(ipHash ? { ipHash } : {}),
+      ...(clientId ? { clientId } : {}),
+    },
+  };
 }
 
 function leadField(lead = {}, key) {

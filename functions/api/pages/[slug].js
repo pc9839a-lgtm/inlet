@@ -3,6 +3,12 @@ import { assertD1, authorizeProject, ensureD1ProjectShell, handleApiError, jsonR
 
 const METHODS = 'GET, POST, OPTIONS';
 const PUBLIC_PAGE_CACHE_CONTROL = 'no-store';
+const PUBLIC_PAGE_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': METHODS,
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Inlet-Api-Token, X-Inlet-Owner-Id, X-Inlet-Project-Id, X-Inlet-Session',
+  'Access-Control-Max-Age': '86400',
+};
 
 function safeSlug(value = '') {
   return String(value || 'my-page').replace(/[^a-zA-Z0-9-_]/g, '') || 'my-page';
@@ -54,6 +60,7 @@ export async function onRequest({ request, env, params }) {
         if (!page) return jsonResponse(request, env, 404, { ok: false, error: '페이지를 찾을 수 없습니다.', message: '페이지를 찾을 수 없습니다.' }, METHODS);
         return jsonResponse(request, env, 200, { ok: true, page: publicPagePayload(page, publicProject) }, METHODS, {
           cacheControl: PUBLIC_PAGE_CACHE_CONTROL,
+          headers: PUBLIC_PAGE_HEADERS,
         });
       }
       await authorizeProject(request, env, project);

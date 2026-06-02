@@ -39,6 +39,19 @@ function digitsOnly(value = '') {
   return String(value || '').replace(/\D/g, '');
 }
 
+function formClientId() {
+  const key = 'pagero_client_id';
+  const fallback = `client_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+  try {
+    const current = window.localStorage.getItem(key);
+    if (current) return current;
+    window.localStorage.setItem(key, fallback);
+    return fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 function sanitizeQuestionValue(q = {}, value = '') {
   if (q.type === 'phone') return digitsOnly(value);
   return value;
@@ -184,6 +197,7 @@ export function RenderForm({ block, addLead, track }) {
       type: '상담신청',
       formId: block.id,
       duplicateWindow: s.duplicateWindow || '24h',
+      clientId: formClientId(),
       name: String(formatAnswerValue(nameAnswer?.value || '')),
       phone,
       email,
