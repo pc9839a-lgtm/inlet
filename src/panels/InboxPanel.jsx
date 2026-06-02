@@ -334,6 +334,7 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
       webhookUrl: currentUrl,
       url: currentUrl,
       sheetName: currentSheets.sheetName || '\uC811\uC218\uD568',
+      lastError: '',
     });
     updateIntegrations?.('sheets', nextIntegrations.sheets);
     setSaving(true);
@@ -349,7 +350,7 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
     }
   };
 
-  const resultOk = result && !/(\uC2E4\uD328|실패|오류|error|failed|not defined|응답 실패|권한|URL)/i.test(result);
+  const resultOk = result && !/(??|??|error|failed|not defined|?? ??|??|URL)/i.test(result);
 
   const copySheetsScript = async () => {
     setResult('');
@@ -369,6 +370,13 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
     const currentSheets = draftIntegrations.sheets || {};
     const currentUrl = currentSheets.webhookUrl || currentSheets.url || '';
     const currentSheetName = currentSheets.sheetName || '\uC811\uC218\uD568';
+    sheetPatch({
+      webhookUrl: currentUrl,
+      url: currentUrl,
+      sheetName: currentSheetName,
+      enabled: true,
+      lastError: '',
+    });
     try {
       const testIntegrations = normalizeIntegrations({
         ...draftIntegrations,
