@@ -841,14 +841,11 @@ export async function upsertD1Page(db, page = {}, context = {}) {
   const safeSlug = String(context.slug || page.slug || 'my-page').replace(/[^a-zA-Z0-9-_]/g, '') || 'my-page';
   const projectId = String(context.projectId || page.projectId || '');
   const currentBySlug = await db.prepare('SELECT id, project_id, slug, revision, created_at FROM pages WHERE project_id = ? AND slug = ? LIMIT 1').bind(projectId, safeSlug).first();
-  const currentByProject = !currentBySlug && projectId
-    ? await db.prepare('SELECT id, project_id, slug, revision, created_at FROM pages WHERE project_id = ? ORDER BY updated_at DESC LIMIT 1').bind(projectId).first()
-    : null;
   const currentById = page.id
     ? await db.prepare('SELECT id, project_id, slug, revision, created_at FROM pages WHERE id = ? LIMIT 1').bind(String(page.id)).first()
     : null;
-  const currentByIdSamePage = currentById && String(currentById.project_id || '') === projectId && String(currentById.slug || '') === safeSlug;
-  const current = currentBySlug || currentByProject || (currentByIdSamePage ? currentById : null);
+  const currentByIdSameProject = currentById && String(currentById.project_id || '') === projectId;
+  const current = currentBySlug || (currentByIdSameProject ? currentById : null);
   const nextRevision = Math.max(1, Number(current?.revision || 0) + 1);
   const row = encodeD1Page({
     ...page,
