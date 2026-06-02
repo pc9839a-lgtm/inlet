@@ -20,7 +20,7 @@ export function normalizeLeadContact(value = '') {
 }
 
 export function normalizeLeadPhone(value = '') {
-  return String(value || '').replace(/[^0-9+]/g, '');
+  return String(value || '').replace(/\D/g, '');
 }
 
 export function duplicateStoreKey(formId) {

@@ -688,10 +688,15 @@ function fakeD1(options = {}) {
             const [projectId, slug] = this.params;
             return rows.pages.find((row) => row.project_id === projectId && row.slug === slug) || null;
           }
-          if (sql.includes('SELECT id, revision, created_at FROM pages')) {
+          if (sql.includes('SELECT id, project_id, slug, revision, created_at FROM pages WHERE project_id = ? AND slug = ?')) {
             const [projectId, slug] = this.params;
             const page = rows.pages.find((row) => row.project_id === projectId && row.slug === slug);
-            return page ? { id: page.id, revision: page.revision, created_at: page.created_at } : null;
+            return page ? { id: page.id, project_id: page.project_id, slug: page.slug, revision: page.revision, created_at: page.created_at } : null;
+          }
+          if (sql.includes('SELECT id, project_id, slug, revision, created_at FROM pages WHERE id = ?')) {
+            const [id] = this.params;
+            const page = rows.pages.find((row) => row.id === id);
+            return page ? { id: page.id, project_id: page.project_id, slug: page.slug, revision: page.revision, created_at: page.created_at } : null;
           }
           if (sql.includes('SELECT id FROM pages')) {
             const [projectId, slug] = this.params;

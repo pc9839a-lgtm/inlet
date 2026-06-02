@@ -1,4 +1,4 @@
-import { hexToRgb, pickSafe, rich } from './previewUtils.jsx';
+import { hexToRgb, pickSafe, rich, widgetBoxClass, widgetBoxVars } from './previewUtils.jsx';
 
 function HeroContent({ s }) {
   const badges = Array.isArray(s.badges) ? s.badges.filter(Boolean).slice(0, 3) : [];
@@ -88,7 +88,8 @@ export function RenderText({ block }) {
     <section
       id={`block-${block.id}`}
       data-text-layout={layout}
-      className={`landing-section text text-${layout} align-${align} text-size-${size} ${s.bold ? 'is-bold' : ''} ${s.underline ? 'is-underline' : ''}`}
+      className={`landing-section text text-${layout} align-${align} text-size-${size} ${s.bold ? 'is-bold' : ''} ${s.underline ? 'is-underline' : ''} ${widgetBoxClass(s)}`}
+      style={widgetBoxVars(s)}
     >
       {title ? <h2>{rich(title)}</h2> : null}
       {body ? <p>{rich(body)}</p> : null}
@@ -104,7 +105,7 @@ export function RenderCards({ block }) {
   const items = Array.isArray(s.items) ? s.items.slice(0, 8) : [];
   const columns = Math.max(1, Math.min(2, Number(s.columns || 2)));
   return (
-    <section id={`block-${block.id}`} className={`landing-section cards-widget cards-${layout} cards-${tone} cards-cols-${columns} align-${align}`} style={{ '--cards-columns': columns }}>
+    <section id={`block-${block.id}`} className={`landing-section cards-widget cards-${layout} cards-${tone} cards-cols-${columns} align-${align} ${widgetBoxClass(s)}`} style={{ '--cards-columns': columns, ...widgetBoxVars(s) }}>
       {s.title && <h2>{rich(s.title)}</h2>}
       {s.desc && <p className="cards-desc">{rich(s.desc)}</p>}
       <div className="cards-grid">

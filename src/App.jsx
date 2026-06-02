@@ -38,7 +38,7 @@ import { currentMonthValue, monthDateRange, statsDateRange } from './lib/monthRa
 import { fetchPublicServerPage, fetchServerPage, persistPage } from './lib/pageRepository.js';
 import { canUsePageDuplication, createDuplicatedPage } from './lib/pageDuplication.js';
 import { projectContext } from './lib/projectContext.js';
-import { createUniquePageSlug, shouldAutoReplaceSlug } from './lib/pageSlugs.js';
+import { createUniquePageSlug, pageSlugIssues, sanitizePageSlug, shouldAutoReplaceSlug } from './lib/pageSlugs.js';
 import { fetchLinkPreview, linkThumbnailFromUrl, normalizeExternalUrl } from './lib/linkPreview.js';
 import { isReservationLead, normalizeLeadItem } from './lib/leadModel.js';
 import { clone, defaultPage, ensureUniqueAnchors, newBlock, normalize, normalizeIntegrations, normalizePageForSave, sanitizeBlock, uid } from './lib/pageModel.js';
@@ -113,6 +113,12 @@ function publicLandingSlugFromLocation(path = '') {
   if (/^\/(?:login|signup|api|assets|embed)(?:\/|$)/.test(pathname)) return '';
   const slug = pathname.replace(/^\//, '').split('/')[0] || '';
   return /^[a-zA-Z0-9-_]+$/.test(slug) ? slug : '';
+}
+
+function localPreviewUrl(slug = '') {
+  const safeSlug = String(slug || '').replace(/^\/+/, '');
+  if (typeof location === 'undefined') return `/${safeSlug}`;
+  return `${location.origin}/${safeSlug}`;
 }
 
 function replaceLocationTab(nextTab) {
@@ -541,6 +547,7 @@ function App() {
   const sessionRefreshRef = useRef('');
   const accountPageLoadRef = useRef('');
   const templateModuleRef = useRef(null);
+  const editInitialCollapseRef = useRef('');
   const { toast, confirmDialog, setToast, setConfirmDialog, showToast, requestConfirm } = useBuilderFeedback();
   const [connectionsEditing, setConnectionsEditing] = useState(true);
   const [startMode, setStartMode] = useState(() => load(START_MODE_KEY, ''));
@@ -549,6 +556,7 @@ function App() {
   const [createOpen, setCreateOpen] = useState(false);
   const [authView, setAuthView] = useState('');
   const [stylePreviewTheme, setStylePreviewTheme] = useState(null);
+  const [stylePreviewBlocks, setStylePreviewBlocks] = useState(null);
   const [templateChoices, setTemplateChoices] = useState([]);
   const [publicServerPage, setPublicServerPage] = useState(null);
   const [publicPageLoading, setPublicPageLoading] = useState(false);
@@ -565,8 +573,11 @@ function App() {
     setStylePreviewTheme,
   });
   const hasPendingStyle = useMemo(
-    () => !!stylePreviewTheme && JSON.stringify(stylePreviewTheme) !== JSON.stringify(page.theme || {}),
-    [stylePreviewTheme, page.theme],
+    () => (
+      (!!stylePreviewTheme && JSON.stringify(stylePreviewTheme) !== JSON.stringify(page.theme || {}))
+      || (!!stylePreviewBlocks && JSON.stringify(stylePreviewBlocks) !== JSON.stringify(page.blocks || []))
+    ),
+    [stylePreviewTheme, stylePreviewBlocks, page.theme, page.blocks],
   );
   const ownerAdminModeEnabled = isOwnerAdminModeEnabled();
   const accessMode = useMemo(() => accessModeFor({ authUser, page, clientAdminEnabled: ownerAdminModeEnabled }), [authUser, ownerAdminModeEnabled, page]);
@@ -578,9 +589,13 @@ function App() {
   const canWriteCurrentTab = canWriteTabKey(tab);
   const mapSiteId = useMemo(() => projectContext(page, authUser).projectId, [page.slug, page.projectId, authUser]);
   const previewPage = useMemo(() => {
-    const nextPage = stylePreviewTheme ? { ...page, theme: { ...page.theme, ...stylePreviewTheme } } : page;
+    const nextPage = {
+      ...page,
+      theme: stylePreviewTheme ? { ...page.theme, ...stylePreviewTheme } : page.theme,
+      blocks: stylePreviewBlocks || page.blocks,
+    };
     return { ...nextPage, mapSiteId };
-  }, [page, stylePreviewTheme, mapSiteId]);
+  }, [page, stylePreviewTheme, stylePreviewBlocks, mapSiteId]);
   const inviteToken = useMemo(() => {
     const match = routePath.match(/^\/invite\/([^/?#]+)/);
     return match ? decodeURIComponent(match[1]) : '';
@@ -742,6 +757,15 @@ function App() {
     setPublicPageLoading(true);
     setPublicPageLoaded(false);
     setPublicPageError('');
+    if (!isServerPageMode()) {
+      const localPage = normalize(load(STORAGE_KEY, defaultPage));
+      const sameSlug = String(localPage.slug || '') === String(publicLandingSlug || '');
+      setPublicServerPage(sameSlug ? localPage : null);
+      setPublicPageError(sameSlug ? '' : '로컬 저장 페이지와 URL이 일치하지 않습니다.');
+      setPublicPageLoading(false);
+      setPublicPageLoaded(true);
+      return () => { alive = false; };
+    }
     fetchPublicServerPage(publicLandingSlug)
       .then((serverPage) => {
         if (!alive) return;
@@ -856,6 +880,14 @@ function App() {
     if (tab !== 'style') setStylePreviewTheme(null);
   }, [tab]);
   useEffect(() => {
+    if (!workspaceOpen || tab !== 'edit') return;
+    const collapseKey = `${page.projectId || ''}:${page.slug || ''}`;
+    if (editInitialCollapseRef.current === collapseKey) return;
+    editInitialCollapseRef.current = collapseKey;
+    setOpenId('');
+    setAddOpen(false);
+  }, [page.projectId, page.slug, tab, workspaceOpen]);
+  useEffect(() => {
     if (!authUser || canUseBuilder || workspaceOpen) return;
     saveLocalJson(DASHBOARD_KEY, { open: true }, '작업공간 상태', { quietSuccess: true });
     setWorkspaceOpen(true);
@@ -895,6 +927,10 @@ function App() {
   const updateTheme = (patch) => {
     if (blockWrite('style')) return;
     setPage((p) => ({ ...p, theme: { ...p.theme, ...patch } }));
+  };
+  const updateStyleBlocks = (blocks) => {
+    if (blockWrite('style')) return;
+    setPage((p) => normalizePageForSave({ ...p, blocks: Array.isArray(blocks) ? blocks : p.blocks }));
   };
   const updateMeta = (patch) => {
     if (blockWrite('settings')) return;
@@ -1377,11 +1413,16 @@ function App() {
 
   const clearPendingStyle = () => {
     if (hasPendingStyle) setStylePreviewTheme(null);
+    if (hasPendingStyle) setStylePreviewBlocks(null);
   };
 
   const persistStyleNow = async () => {
       if (blockWrite('style')) return;
-      const nextPage = normalizePageForSave({ ...page, theme: { ...page.theme, ...stylePreviewTheme } });
+      const nextPage = normalizePageForSave({
+        ...page,
+        theme: stylePreviewTheme ? { ...page.theme, ...stylePreviewTheme } : page.theme,
+        blocks: stylePreviewBlocks || page.blocks,
+      });
       setPage(nextPage);
       saveLocalJson(STORAGE_KEY, nextPage, '페이지');
       let result = null;
@@ -1396,6 +1437,7 @@ function App() {
         return;
       }
       setStylePreviewTheme(null);
+      setStylePreviewBlocks(null);
       setConnectionsEditing(false);
       setSaved(true);
       setTimeout(() => setSaved(false), 1000);
@@ -1456,7 +1498,7 @@ function App() {
     if (!confirmLeaveStyleChanges(run)) return;
     run();
   };
-  const previewUrl = publicLandingUrl(page.slug || '');
+  const previewUrl = isServerPageMode() ? publicLandingUrl(page.slug || '') : localPreviewUrl(page.slug || '');
   const loadTemplateModule = async () => {
     if (templateModuleRef.current) return templateModuleRef.current;
     const module = await import('./templates/landingTemplates.js');
@@ -1488,6 +1530,29 @@ function App() {
         message: '브라우저 권한 또는 보안 설정 때문에 자동 복사가 막혔습니다. 아래 주소를 선택해서 복사할 수 있습니다.',
       });
       showToast('자동 복사가 막혔습니다. 주소를 직접 복사해주세요.', 'warning');
+    }
+  };
+  const checkCreatePageUrl = async ({ slug } = {}) => {
+    const safeSlug = sanitizePageSlug(slug, '');
+    const issues = pageSlugIssues(safeSlug);
+    if (issues.length) return { ok: false, slug: safeSlug, message: issues[0] };
+    if (safeSlug === sanitizePageSlug(page.slug || '', '') && !shouldAutoReplaceSlug(page.slug || '')) {
+      return { ok: false, slug: safeSlug, message: '현재 페이지에서 사용 중인 URL입니다.' };
+    }
+    if (!isServerPageMode()) return { ok: true, slug: safeSlug };
+    const context = projectContext({ slug: safeSlug }, authUser);
+    try {
+      const existing = await fetchServerPage(safeSlug, context);
+      if (existing) return { ok: false, slug: safeSlug, message: '이미 사용 중인 URL입니다. 다른 URL을 입력해주세요.' };
+      return { ok: true, slug: safeSlug };
+    } catch (error) {
+      console.warn('Page URL availability check failed:', error);
+      return {
+        ok: true,
+        slug: safeSlug,
+        warning: true,
+        message: '서버 중복 확인이 불안정합니다. 저장 단계에서 다시 확인합니다.',
+      };
     }
   };
   const chooseStartMode = (mode) => {
@@ -1660,15 +1725,33 @@ function App() {
     setWorkspaceOpen(true);
   };
 
-  const createWithAi = (draftInput = null) => {
+  const saveCreatedPageToServer = async (nextPage, label = '페이지') => {
+    const safePage = normalizePageForSave(nextPage);
+    saveLocalJson(STORAGE_KEY, safePage, label);
+    if (!isServerPageMode()) return { ok: true, mode: 'local' };
+    try {
+      return await persistPage(safePage, authUser, { tab: 'edit' });
+    } catch (error) {
+      showToast(`서버 저장에 실패했습니다. 공개 URL에 표시되지 않습니다. ${String(error?.message || error)}`, 'error');
+      throw error;
+    }
+  };
+
+  const createWithAi = async (draftInput = null) => {
     if (!canManageAdmin) return;
+    const requestedSlug = sanitizePageSlug(draftInput?.slug || page.slug || defaultPage.slug || 'my-page', 'my-page');
+    const nextContext = projectContext({ slug: requestedSlug }, authUser);
     if (draftInput && typeof draftInput === 'object') {
       const nextInput = normalizeAiDraftInput({
         ...(page.ai?.draftInput || {}),
         ...draftInput,
+        slug: requestedSlug,
       });
       const nextPage = normalizePageForSave({
         ...page,
+        slug: requestedSlug,
+        projectId: nextContext.projectId,
+        ownerId: nextContext.ownerId,
         ai: {
           ...(page.ai || {}),
           draftInput: nextInput,
@@ -1676,45 +1759,49 @@ function App() {
         },
       });
       setPage(nextPage);
-      saveLocalJson(STORAGE_KEY, nextPage, '페이지');
+      await saveCreatedPageToServer(nextPage, '페이지');
     }
     setCreateOpen(false);
     saveLocalJson(START_MODE_KEY, 'ai', '시작 선택', { quietSuccess: true });
     setStartMode('ai');
     if (typeof location !== 'undefined') {
-      location.href = `/${page.slug || 'my-page'}/admin`;
+      location.href = `/${requestedSlug || 'my-page'}/admin`;
       return;
     }
     openWorkspace('manual');
   };
 
-  const createManual = (footerInfo = {}) => {
+  const createManual = async (footerInfo = {}) => {
     if (!canManageAdmin) return;
-    const nextSlug = shouldAutoReplaceSlug(page.slug) ? createUniquePageSlug(page.slug || 'page', authUser) : page.slug;
+    const nextSlug = sanitizePageSlug(footerInfo?.slug || page.slug || defaultPage.slug || 'my-page', 'my-page');
     const nextContext = projectContext({ slug: nextSlug }, authUser);
+    let nextPage = null;
     if (footerInfo && Object.keys(footerInfo).length) {
-      const nextPage = normalizePageForSave({
+      const { slug: _slug, ...safeFooterInfo } = footerInfo || {};
+      nextPage = normalizePageForSave({
         ...page,
         slug: nextSlug,
         projectId: nextContext.projectId,
         ownerId: nextContext.ownerId,
         blocks: page.blocks.map((block) => (
           block.type === 'footer'
-            ? { ...block, s: { ...block.s, ...footerInfo } }
+            ? { ...block, s: { ...block.s, ...safeFooterInfo } }
             : block
         )),
       });
-      setPage(nextPage);
-      saveLocalJson(STORAGE_KEY, nextPage, '페이지');
     } else if (nextSlug !== page.slug || page.projectId !== nextContext.projectId) {
-      const nextPage = normalizePageForSave({
+      nextPage = normalizePageForSave({
         ...page,
         slug: nextSlug,
         projectId: nextContext.projectId,
         ownerId: nextContext.ownerId,
       });
+    } else {
+      nextPage = normalizePageForSave(page);
+    }
+    if (nextPage) {
       setPage(nextPage);
-      saveLocalJson(STORAGE_KEY, nextPage, '페이지');
+      await saveCreatedPageToServer(nextPage, '페이지');
     }
     setCreateOpen(false);
     saveLocalJson(START_MODE_KEY, 'manual', '시작 선택', { quietSuccess: true });
@@ -1723,12 +1810,12 @@ function App() {
     openWorkspace('manual');
   };
 
-  const createFromTemplate = async (templateId) => {
+  const createFromTemplate = async (templateId, urlConfig = {}) => {
     if (!canUseBuilder) return;
     try {
       const templates = await loadTemplateModule();
       const templatePage = templates.createTemplatePage(templateId, page);
-      const nextSlug = createUniquePageSlug(templatePage.slug, authUser);
+      const nextSlug = sanitizePageSlug(urlConfig?.slug || templatePage.slug || page.slug || 'my-page', 'my-page');
       const templateContext = projectContext({ slug: nextSlug }, authUser);
       const next = normalizePageForSave({
         ...templatePage,
@@ -1737,7 +1824,7 @@ function App() {
         ownerId: templateContext.ownerId,
       });
       setPage(next);
-      saveLocalJson(STORAGE_KEY, normalizePageForSave(next), '페이지');
+      await saveCreatedPageToServer(next, '페이지');
       saveLocalJson(START_MODE_KEY, 'manual', '시작 선택', { quietSuccess: true });
       setStartMode('manual');
       setTab('edit');
@@ -1860,6 +1947,7 @@ function App() {
               onAi={createWithAi}
               onManual={createManual}
               onTemplate={createFromTemplate}
+              onCheckUrl={checkCreatePageUrl}
               templates={templateChoices}
               onEdit={openWorkspace}
               onPreview={openPreview}
@@ -1867,7 +1955,7 @@ function App() {
               onAccountUpdate={updateAccountProfile}
               TemplatesPanelComponent={TemplatesPanel}
             />
-            {canUseBuilder && createOpen && <CreateLandingModal page={page} onClose={()=>setCreateOpen(false)} onAi={createWithAi} onManual={createManual} onTemplate={createFromTemplate} templates={templateChoices} TemplatesPanelComponent={TemplatesPanel}/>}
+            {canUseBuilder && createOpen && <CreateLandingModal page={page} onClose={()=>setCreateOpen(false)} onAi={createWithAi} onManual={createManual} onTemplate={createFromTemplate} onCheckUrl={checkCreatePageUrl} templates={templateChoices} TemplatesPanelComponent={TemplatesPanel}/>}
           </Suspense>
         </LazyChunkBoundary>
       </>
@@ -1878,7 +1966,8 @@ function App() {
     <>
       <div className={`builder-shell${canUseBuilder && startMode === 'template' ? ' template-intro-shell' : ''}`}>
         {/* !tabDeepLink && <Suspense: keep authenticated tab deep links from opening the start overlay. */}
-        {canManageAdmin && !startMode && !tabDeepLink && <LazyChunkBoundary resetKey="start-mode"><Suspense fallback={<LazyPanelFallback />}><StartModeOverlay onManual={()=>chooseStartMode('manual')} onAi={()=>chooseStartMode('ai')} onTemplate={()=>chooseStartMode('template')} onClose={()=>setStartMode('manual')} templates={templateChoices}/></Suspense></LazyChunkBoundary>} 
+        {canManageAdmin && !startMode && !tabDeepLink && <LazyChunkBoundary resetKey="start-mode"><Suspense fallback={<LazyPanelFallback />}><StartModeOverlay onManual={()=>setCreateOpen(true)} onAi={()=>setCreateOpen(true)} onTemplate={()=>setCreateOpen(true)} onClose={()=>setCreateOpen(true)} templates={templateChoices}/></Suspense></LazyChunkBoundary>} 
+        {canUseBuilder && createOpen && <CreateLandingModal page={page} onClose={()=>setCreateOpen(false)} onAi={createWithAi} onManual={createManual} onTemplate={createFromTemplate} onCheckUrl={checkCreatePageUrl} templates={templateChoices} TemplatesPanelComponent={TemplatesPanel}/>}
         <aside className="left-workspace">
           <section className="work-panel">
             {canManageAdmin && startMode === 'template' ? (
@@ -1928,10 +2017,10 @@ function App() {
                 )} 
                 <LazyChunkBoundary resetKey={tab}>
                   <Suspense fallback={<LazyPanelFallback/>}>
-                  {canUseBuilder && tab === 'style' && <StylePanel page={page} updateTheme={updateTheme} onPreviewThemeChange={setStylePreviewTheme}/>}
+                  {canUseBuilder && tab === 'style' && <StylePanel page={page} updateTheme={updateTheme} updateBlocks={updateStyleBlocks} onPreviewThemeChange={setStylePreviewTheme} onPreviewBlocksChange={setStylePreviewBlocks}/>}
                   {tab === 'inbox' && <InboxPanel leads={leads} page={page} authUser={authUser} updatePage={updatePage} syncing={leadsSyncing} totalLeads={leadPageMeta.total} hasMoreLeads={leadPageMeta.hasMore} loadMoreLeads={loadMoreLeads} onFiltersChange={setInboxFilters} updateIntegrations={updateIntegrations} onSavePage={saveNow} connectionsEditing={connectionsEditing} setConnectionsEditing={setConnectionsEditing} updateLead={updateLead} deleteLead={deleteLead} retryLeadDelivery={retryLeadDelivery} retryFailedDeliveries={retryFailedDeliveries} exportLeadsCsv={exportLeadsCsv} leadConflict={leadConflict} onReloadLeadConflict={reloadLeadConflict} onRetryLeadConflict={retryLeadConflict} onDismissLeadConflict={() => setLeadConflict(null)} accessMode={accessMode}/>}
                   {tab === 'stats' && <StatsPanel events={events} leads={leads} page={page} eventPageMeta={statsEventPageMeta} leadPageMeta={statsLeadPageMeta} statsPartial={statsPartial} month={statsMonth} onMonthChange={setStatsMonth} period={statsPeriod} onPeriodChange={setStatsPeriod} serverStats={serverStatsSummary} channel={statsChannel} onChannelChange={setStatsChannel} accessMode={accessMode}/>}
-                  {tab === 'settings' && <SettingsPanel page={page} updatePage={updatePage} updateMeta={updateMeta} updateIntegrations={updateIntegrations} setPage={setNormalizedPage} onDuplicatePage={duplicatePageWithUrl} canDuplicatePage={canUsePageDuplication(page)} onReset={reset} authUser={authUser} accessMode={accessMode} onAccountUpdate={updateAccountProfile} onLogout={logout}/>}
+                  {tab === 'settings' && <SettingsPanel page={page} updatePage={updatePage} updateMeta={updateMeta} updateIntegrations={updateIntegrations} setPage={setNormalizedPage} onDuplicatePage={duplicatePageWithUrl} onCheckUrl={checkCreatePageUrl} canDuplicatePage={canUsePageDuplication(page)} onReset={reset} authUser={authUser} accessMode={accessMode} onAccountUpdate={updateAccountProfile} onLogout={logout}/>}
                   </Suspense>
                 </LazyChunkBoundary>
               </>
@@ -1992,15 +2081,7 @@ function PresetButtons({ value, onChange, options }) {
 }
 
 function WidgetDesignControls({ s, set, compact = false }) {
-  return (
-    <div className={`widget-design-controls widget-design-controls-v3 ${compact ? 'compact' : ''}`}>
-      <InlineOptionRow label="배경">
-        <InlineToggle checked={!!s.bgEnabled} onChange={(v)=>set({bgEnabled:v})}/>
-        {s.bgEnabled && <input className="mini-color-input" type="color" value={s.bgColor || '#FFFFFF'} onChange={(e)=>set({bgColor:e.target.value})}/>}
-      </InlineOptionRow>
-      <p className="widget-design-note">공통 디자인은 배경만 선택합니다. 간격과 라운드는 기본값으로 자동 정리됩니다.</p>
-    </div>
-  );
+  return null;
 }
 
 function questionTypeLabel(type){ return ({name:'이름',short:'단답형',long:'장문형',phone:'연락처',email:'이메일',address:'주소',select:'선택형',multi:'복수선택'}[type] || '단답형'); }

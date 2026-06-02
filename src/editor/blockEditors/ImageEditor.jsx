@@ -363,7 +363,7 @@ export default function ImageEditor({ s, set, block }) {
         </Step>
       )}
 
-      <Step title="디자인" icon="3">
+      <Step title="캡션" icon="3">
         <Field label="캡션" value={s.caption} onChange={(v)=>set({caption:v})}/>
       </Step>
     </EditorStack>

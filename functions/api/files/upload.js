@@ -1,6 +1,7 @@
 import {
   FILE_METHODS,
   assertAllowedFile,
+  assertProjectFileQuota,
   authorizeProject,
   fileBucket,
   handleApiError,
@@ -37,6 +38,7 @@ export async function onRequest({ request, env }) {
 
     const bucket = fileBucket(env);
     const meta = assertAllowedFile(file);
+    const quota = await assertProjectFileQuota(bucket, project, file.size || 0, env);
     const key = safeObjectKey(project, meta.extension);
 
     await bucket.put(key, file.stream(), {
@@ -59,6 +61,12 @@ export async function onRequest({ request, env }) {
       extension: meta.extension,
       size: file.size || 0,
       downloadUrl: publicDownloadUrl(request, key),
+      quota: {
+        usedBytes: quota.usage.bytes + Number(file.size || 0),
+        maxBytes: quota.limits.maxBytes,
+        usedFiles: quota.usage.count + 1,
+        maxFiles: quota.limits.maxFiles,
+      },
     }, FILE_METHODS);
   } catch (error) {
     return handleApiError(request, env, error, FILE_METHODS);

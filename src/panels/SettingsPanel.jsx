@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { isServerPageMode } from '../config/runtimeConfig.js';
 import { Field, ImageInput, Toggle } from '../editor/controls.jsx';
 import {
@@ -335,7 +335,7 @@ export default function SettingsPanel({
   const [expandedManagerMenuId, setExpandedManagerMenuId] = useState('');
   const [inviteLoading, setInviteLoading] = useState('');
   const [conversionLocked, setConversionLocked] = useState(() => !!(page.meta?.ads || page.meta?.pixel || page.meta?.naver || page.meta?.kakao));
-  const [openSection, setOpenSection] = useState('account');
+  const [openSection, setOpenSection] = useState('');
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [lockedSections, setLockedSections] = useState({ basic: false, managers: false, seo: false, tracking: false });
   const [duplicateOpen, setDuplicateOpen] = useState(false);

@@ -98,7 +98,6 @@ function BottomLinkCompact({ button, page, onChange }) {
 }
 
 export default function BottomBarEditor({ s, set, page }) {
-  const themeButtonColor = page?.theme?.accent || '#111827';
   const count = Math.max(1, Math.min(3, Number(s.count || 1)));
   const buttons = normalizeButtons(s.buttons, count);
 
@@ -136,16 +135,6 @@ export default function BottomBarEditor({ s, set, page }) {
 
       <Step title="타이머" icon="2">
         <Toggle label="타이머 표시" checked={!!s.timerEnabled} onChange={(v)=>set({timerEnabled:v})}/>
-      </Step>
-
-      <Step title="디자인" icon="3">
-        <div className="bottom-design-grid">
-          <Choice label="형태" value={s.style || 'pill'} onChange={(v)=>set({style:v})} options={[['pill','둥근'],['box','박스']]}/>
-          <div className="bottom-color-direct">
-            <label><span>버튼색</span><input type="color" value={s.buttonColorMode === 'custom' ? (s.buttonColor || themeButtonColor) : themeButtonColor} onChange={(e)=>set({buttonColor:e.target.value, buttonColorMode:'custom'})}/><button type="button" className="global-color-reset" onClick={()=>set({buttonColorMode:'theme'})}>전역</button></label>
-            <label><span>글자색</span><input type="color" value={s.buttonTextColor || '#ffffff'} onChange={(e)=>set({buttonTextColor:e.target.value})}/></label>
-          </div>
-        </div>
       </Step>
     </EditorStack>
   );

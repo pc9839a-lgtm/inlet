@@ -2306,3 +2306,44 @@
   min-width: 88px !important;
   white-space: nowrap !important;
 }
+
+/* Final guard: legacy panel rules were forcing short action labels into clipped vertical text. */
+.settings-panel .settings-section-head,
+.settings-panel .settings-advanced-head {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 72px !important;
+  align-items: center !important;
+}
+
+.settings-panel .settings-section-state,
+.settings-panel .settings-advanced-head em {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 72px !important;
+  min-width: 72px !important;
+  max-width: 72px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 0 !important;
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow: hidden !important;
+  line-height: 1 !important;
+}
+
+@media (max-width: 430px) {
+  .settings-panel .settings-section-head,
+  .settings-panel .settings-advanced-head {
+    grid-template-columns: minmax(0, 1fr) 64px !important;
+  }
+
+  .settings-panel .settings-section-state,
+  .settings-panel .settings-advanced-head em {
+    width: 64px !important;
+    min-width: 64px !important;
+    max-width: 64px !important;
+  }
+}

@@ -10,21 +10,16 @@ export default function TimerEditor({ s, set, page, TargetControl }) {
           <Field label="마감일" type="datetime-local" value={s.endAt} onChange={(v) => set({ endAt: v })} />
         )}
         {(s.repeatMode || 'fixed') === 'daily24' && (
-          <div className="timer-repeat-note modern">매일 24시간 기준으로 반복됩니다.</div>
+          <div className="timer-repeat-note modern">매일 24시간 기준으로 반복합니다.</div>
         )}
       </Step>
 
-      <Step title="디자인" icon="2">
-        <Choice label="스타일" value={s.timerTheme || 'modern'} onChange={(v) => set({ timerTheme: v })} options={[['modern', '모던'], ['glass', '글래스'], ['minimal', '미니멀'], ['accent', '임박강조']]} />
-        <Choice label="효과" value={s.urgentStyle || 'flip'} onChange={(v) => set({ urgentStyle: v })} options={[['flip', '숫자전환'], ['line', '게이지'], ['flow', '흐름'], ['none', '없음']]} />
-      </Step>
-
-      <Step title="하단 CTA 연동" icon="3">
+      <Step title="하단 CTA 연동" icon="2">
         <Toggle label="하단 CTA 표시" checked={!!s.floatOnBottom} onChange={(v) => set({ floatOnBottom: v })} />
         {s.floatOnBottom && <Field label="표시 문구" value={s.floatLabel || s.label || '오늘 마감까지'} onChange={(v) => set({ floatLabel: v })} />}
       </Step>
 
-      <Step title="CTA 연결" icon="4">
+      <Step title="CTA 연결" icon="3">
         <Toggle label="CTA" checked={s.cta} onChange={(v) => set({ cta: v })} />
         {s.cta && (
           <>

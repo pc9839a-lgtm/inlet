@@ -19,11 +19,10 @@ const dayOptions = [
 
 const weekdayDays = ['mon', 'tue', 'wed', 'thu', 'fri'];
 const everydayDays = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-
 const weekdayPresets = [
   ['weekday', '평일'],
   ['everyday', '연중무휴'],
-  ['custom', '상세요일'],
+  ['custom', '상세 선택'],
 ];
 
 function uid() {
@@ -51,8 +50,7 @@ function splitOptions(value) {
     .filter(Boolean);
 }
 
-export default function ReservationEditor({ s, set, page }) {
-  const themeButtonColor = page?.theme?.accent || '#111827';
+export default function ReservationEditor({ s, set }) {
   const [dragId, setDragId] = useState('');
   const [dragOverId, setDragOverId] = useState('');
   const [optionDrafts, setOptionDrafts] = useState({});
@@ -112,7 +110,7 @@ export default function ReservationEditor({ s, set, page }) {
       <Step title="기본" icon="1" open>
         <div className="reservation-basic-grid">
           <Field label="예약 제목" value={s.title} onChange={(value) => set({ title: value })} />
-          <Field label="완료 문구" value={s.success || '방문예약 신청이 접수되었습니다.'} onChange={(value) => set({ success: value })} />
+          <Field label="완료 문구" value={s.success || '방문예약 신청'} onChange={(value) => set({ success: value })} />
         </div>
         <Field label="설명" value={s.desc} onChange={(value) => set({ desc: value })} textarea />
       </Step>
@@ -121,7 +119,7 @@ export default function ReservationEditor({ s, set, page }) {
         <div className="reservation-weekday-panel">
           <Choice label="상담 가능 요일" value={weekdayMode} onChange={setWeekdayPreset} options={weekdayPresets} />
           <div className="reservation-day-detail">
-            <span>상세요일 선택</span>
+            <span>상세 요일 선택</span>
             <div>
               {dayOptions.map(([key, label]) => (
                 <button key={key} type="button" className={selectedDays.includes(key) ? 'active' : ''} onClick={() => toggleDay(key)}>
@@ -225,32 +223,6 @@ export default function ReservationEditor({ s, set, page }) {
         <div className="reservation-duplicate-grid">
           <Choice label="연락처 중복" value={s.duplicatePhone || 'block'} onChange={(value) => set({ duplicatePhone: value })} options={[['allow', '허용'], ['warn', '경고'], ['block', '차단']]} />
           <Choice label="기준 기간" value={s.duplicateWindow || '1d'} onChange={(value) => set({ duplicateWindow: value })} options={[['1d', '1일'], ['3d', '3일'], ['7d', '7일'], ['30d', '30일']]} />
-        </div>
-      </Step>
-
-      <Step title="디자인" icon="5">
-        <div className="form-design-panel form-design-panel-clean reservation-design-panel">
-          <Choice label="폼" value={s.style || 'card'} onChange={(value) => set({ style: value })} options={[['card', '카드'], ['line', '라인'], ['soft', '소프트'], ['minimal', '미니멀']]} />
-          <Choice label="입력창" value={s.inputStyle || 'round'} onChange={(value) => set({ inputStyle: value })} options={[['round', '둥근'], ['box', '박스'], ['underline', '밑줄']]} />
-
-          <div className="button-design-box">
-            <div className="button-design-title">
-              <strong>버튼 디자인과 효과</strong>
-            </div>
-            <Choice label="모양" value={s.buttonStyle || 'solid'} onChange={(value) => set({ buttonStyle: value })} options={[['solid', '채움'], ['round', '둥근'], ['line', '라인']]} />
-            <Choice label="효과" value={s.buttonHover || 'fill'} onChange={(value) => set({ buttonHover: value })} options={[['fill', '채움'], ['slide', '슬라이드'], ['zoom', '확대']]} />
-            <div className="form-hover-color-row compact">
-              <label><span>마우스오버</span><input type="color" value={s.buttonHoverColorMode === 'custom' ? (s.buttonHoverColor || themeButtonColor) : themeButtonColor} onChange={(event) => set({ buttonHoverColor: event.target.value, buttonHoverColorMode: 'custom' })} /><button type="button" className="global-color-reset" onClick={() => set({ buttonHoverColorMode: 'theme' })}>전역</button></label>
-              <label><span>버튼색</span><input type="color" value={s.buttonColorMode === 'custom' ? (s.buttonColor || themeButtonColor) : themeButtonColor} onChange={(event) => set({ buttonColor: event.target.value, buttonColorMode: 'custom' })} /><button type="button" className="global-color-reset" onClick={() => set({ buttonColorMode: 'theme' })}>전역</button></label>
-              <label><span>글자색</span><input type="color" value={s.buttonTextColor || '#ffffff'} onChange={(event) => set({ buttonTextColor: event.target.value })} /></label>
-            </div>
-          </div>
-
-          <div className="form-design-range">
-            <span>입력 간격</span>
-            <input type="range" min="6" max="24" step="1" value={Number(s.spacingPx ?? 12)} onChange={(event) => set({ spacingPx: Number(event.target.value) })} />
-            <b>{Number(s.spacingPx ?? 12)}px</b>
-          </div>
         </div>
       </Step>
     </EditorStack>

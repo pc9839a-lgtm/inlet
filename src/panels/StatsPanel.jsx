@@ -142,7 +142,7 @@ function StatsTrend({ data }) {
   const hoverTop = (row) => Math.min(y(row.pv), y(row.cta), y(row.db));
 
   return (
-    <div className="stats-line-chart stats-trend-line stats-line-plot" role="img" aria-label="방문, 클릭, 접수 흐름 차트">
+    <div className="stats-line-chart stats-trend-line stats-line-plot" role="img" aria-label="조회, 클릭, 접수 흐름 차트">
       <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-hidden="true" onMouseLeave={() => setHover(null)}>
         {[0.25, 0.5, 0.75, 1].map((ratio) => (
           <line key={ratio} className="guide" x1={padX} x2={width - padX} y1={padTop + plotH * ratio} y2={padTop + plotH * ratio} />
@@ -297,7 +297,7 @@ export default function StatsPanel({
       </section>
 
       <section className="card stats-trend-card">
-        <div className="section-title"><h2>방문·접수</h2></div>
+        <div className="section-title"><h2>상세 통계</h2></div>
         <StatsTrend data={stats.trend} />
       </section>
 

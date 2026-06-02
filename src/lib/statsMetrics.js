@@ -28,7 +28,7 @@ export function countByValue(items, picker) {
 
 export function statLabel(key) {
   return {
-    page_view: '페이지뷰',
+    page_view: '페이지 조회',
     cta_click: 'CTA 클릭',
     link_click: '링크 클릭',
     form_start: '폼 시작',
@@ -59,14 +59,14 @@ export function statLabel(key) {
     done: '완료',
     completed: '완료',
     hold: '보류',
-    신규: '신규',
-    확인중: '확인중',
-    연락완료: '연락완료',
-    예약완료: '예약완료',
-    보류: '보류',
-    종료: '종료',
-    상담: '상담',
-    예약: '예약',
+    '신규': '신규',
+    '확인중': '확인중',
+    '연락완료': '연락완료',
+    '예약완료': '예약완료',
+    '보류': '보류',
+    '종료': '종료',
+    '상담': '상담',
+    '예약': '예약',
   }[key] || key;
 }
 

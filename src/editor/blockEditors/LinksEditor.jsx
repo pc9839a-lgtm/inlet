@@ -1,6 +1,5 @@
 ﻿import { useRef, useState } from 'react';
 import { AddButton, Choice, EditorStack, Field, LineList, MiniDetail, Step, imageUploadError, storedImageInfo, warnImageStorageUse } from '../controls.jsx';
-import { alignOptions } from '../editorOptions.js';
 import { fetchLinkPreview, linkThumbnailFromUrl } from '../../lib/linkPreview.js';
 import { pickSafe, uid } from '../../lib/pageModel.js';
 import { notify } from '../../lib/uiFeedback.js';
@@ -166,10 +165,6 @@ export default function LinksEditor({ s, set, page, TargetControl }) {
         <AddButton onClick={()=>set({items:[...items,normalizeLinkItem({id:uid(),emoji:'🔗',iconMode:'emoji',label:'새 링크',target:'url',url:'https://'})]})}/>
       </Step>
 
-      <Step title="표시" icon="2">
-        <Choice label="표시" value={(s.layout === 'link' ? 'list' : (s.layout || 'list'))} onChange={(v)=>set({layout:v})} options={[['list','리스트'],['card','카드'],['carousel','캐러셀']]}/>
-        <Choice label="정렬" value={s.align || 'left'} onChange={(v)=>set({align:v})} options={alignOptions}/>
-      </Step>
     </EditorStack>
   );
 }

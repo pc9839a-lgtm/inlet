@@ -86,7 +86,7 @@ const defaultPage = {
       { id: uid(), label: '연락처', type: 'phone', required: true, options: [] },
       { id: uid(), label: '문의내용', type: 'long', required: false, options: [] },
     ] } },
-    { id: uid(), type: 'reservation', visible: true, s: { title: '방문상담 예약', desc: '희망 일정을 선택해주세요.', weekdayMode: 'weekday', weekdays: ['mon','tue','wed','thu','fri'], start: '10:00', end: '18:00', interval: 30, duplicatePhone: 'block', duplicateWindow: '1d', fields: { name: true, phone: true }, required: { name: true, phone: true }, customFields: [], style: 'card', success: '방문예약 신청이 접수되었습니다.', buttonColorMode: 'theme', buttonColor: '#111827', buttonTextColor: '#ffffff', buttonHoverColorMode: 'theme', buttonHoverColor: '#2563eb' } },
+    { id: uid(), type: 'reservation', visible: true, s: { title: '방문상담 예약', desc: '희망 일정을 선택해주세요.', weekdayMode: 'weekday', weekdays: ['mon','tue','wed','thu','fri'], start: '10:00', end: '18:00', interval: 30, duplicatePhone: 'block', duplicateWindow: '1d', fields: { name: true, phone: true }, required: { name: true, phone: true }, customFields: [], style: 'card', inputStyle: 'round', textAlign: 'left', titleSize: 'medium', bodySize: 'medium', buttonStyle: 'solid', buttonHover: 'fill', spacing: 'normal', radiusStyle: 'round', success: '방문예약 신청이 접수되었습니다.', buttonColorMode: 'theme', buttonColor: '#111827', buttonTextColor: '#ffffff', buttonHoverColorMode: 'theme', buttonHoverColor: '#2563eb' } },
     { id: uid(), type: 'bottombar', visible: true, s: { count: 2, style: 'pill', color: 'dark', mobileOnly: true, showAfter: false, buttonColorMode: 'theme', buttonColor: '#111827', buttonTextColor: '#ffffff', buttons: [
       { id: uid(), enabled: true, icon: '💬', label: '상담', target: 'form', url: '' }, { id: uid(), enabled: true, icon: '📅', label: '예약', target: 'reservation', url: '' }, { id: uid(), enabled: true, icon: '📞', label: '전화', target: 'phone', url: 'tel:01000000000' },
     ] } },
@@ -111,6 +111,7 @@ function cleanSerializable(value, seen = new WeakSet()) {
   }
   return Object.fromEntries(
     Object.entries(value)
+      .filter(([key]) => !key.startsWith('__react') && !['stateNode', 'constructor', '_owner', '_store'].includes(key))
       .map(([key, item]) => [key, cleanSerializable(item, seen)])
       .filter(([, item]) => item !== undefined),
   );
@@ -210,7 +211,7 @@ function normalize(page) {
 }
 
 function normalizePageForSave(page) {
-  return normalize(page);
+  return cleanSerializable(normalize(page));
 }
 const BLOCK_SAFE_OPTIONS = {
   topnav: { bg: ['white','transparent','dark'], align: ['left','center','right'], logoType: ['text','image'], logoStyle: ['plain','badge'], logoSize: ['small','medium','large'], menuStyle: ['pill','text','outline'], menuSize: ['small','medium','large'] },
@@ -228,7 +229,7 @@ const BLOCK_SAFE_OPTIONS = {
   code: { height: ['auto','small','medium','large'] },
   search: { layout: ['card','bar','minimal'] },
   form: { style: ['card','line','soft','minimal'], inputStyle: ['round','box','underline'], textAlign: ['left','center','right'], buttonStyle: ['solid','round','line'], buttonHover: ['fill','slide','zoom'], spacing: ['compact','normal','wide'], radiusStyle: ['square','round','pill'], duplicatePhone: ['allow','warn','block'], duplicateEmail: ['off','warn','block'], duplicateWindow: ['1d','3d','7d','30d'] },
-  reservation: { style: ['card','line','soft','minimal'], inputStyle: ['round','box','underline'], textAlign: ['left','center','right'], titleSize: ['small','medium','large'], bodySize: ['small','medium','large'], buttonStyle: ['solid','round','line'], buttonHover: ['fill','slide','zoom'], duplicatePhone: ['allow','warn','block'], duplicateWindow: ['1d','3d','7d','30d'] },
+  reservation: { style: ['card','line','soft','minimal'], inputStyle: ['round','box','underline'], textAlign: ['left','center','right'], titleSize: ['small','medium','large'], bodySize: ['small','medium','large'], buttonStyle: ['solid','round','line'], buttonHover: ['fill','slide','zoom'], spacing: ['compact','normal','wide'], radiusStyle: ['square','round','pill'], duplicatePhone: ['allow','warn','block'], duplicateWindow: ['1d','3d','7d','30d'] },
   bottombar: { style: ['pill','box'], color: ['dark','accent','light'] },
   footer: { align: ['left','center','right'], bg: ['plain','soft','dark'] },
 };
@@ -371,8 +372,8 @@ function sanitizeBlock(block) {
   }
 
   if (block?.type === 'download') {
-    s.title = s.title || '제안서 다운로드';
-    s.desc = s.desc || '필요한 자료를 바로 내려받으세요.';
+    s.title = s.title || '';
+    s.desc = s.desc || '';
     s.layout = pickSafe(s.layout || 'card', ['card','list'], 'card');
     s.align = pickSafe(s.align || 'left', ['left','center','right'], 'left');
     s.buttonLabel = s.buttonLabel || '다운로드';
@@ -445,8 +446,9 @@ function sanitizeBlock(block) {
 
   if (block?.type === 'form') {
     s.questions = Array.isArray(s.questions) ? s.questions : [];
-    s.spacingPx = Math.max(6, Math.min(24, Number(s.spacingPx ?? 12)));
-    s.radiusStyle = 'round';
+    const spacingDefault = { compact: 8, normal: 12, wide: 18 }[s.spacing] || 12;
+    s.spacingPx = spacingDefault;
+    s.radiusStyle = pickSafe(s.radiusStyle || 'round', ['square','round','pill'], 'round');
     s.textAlign = pickSafe(s.textAlign || s.titleAlign || 'left', ['left','center','right'], 'left');
     s.buttonHover = pickSafe(s.buttonHover || 'fill', ['fill','slide','zoom'], 'fill');
     migrateButtonColorMode(s);
@@ -481,7 +483,9 @@ function sanitizeBlock(block) {
     s.bodySize = pickSafe(s.bodySize || 'medium', ['small','medium','large'], 'medium');
     s.buttonStyle = pickSafe(s.buttonStyle || 'solid', ['solid','round','line'], 'solid');
     s.buttonHover = pickSafe(s.buttonHover || 'fill', ['fill','slide','zoom'], 'fill');
-    s.spacingPx = Math.max(6, Math.min(24, Number(s.spacingPx ?? 12)));
+    const reservationSpacingDefault = { compact: 8, normal: 12, wide: 18 }[s.spacing] || 12;
+    s.spacingPx = reservationSpacingDefault;
+    s.radiusStyle = pickSafe(s.radiusStyle || 'round', ['square','round','pill'], 'round');
     s.marginY = 12;
     migrateButtonColorMode(s);
     s.buttonColor = s.buttonColor || '#111827';
@@ -529,7 +533,7 @@ function newBlock(type) {
     ] } });
   }
   if (type === 'download') {
-    return sanitizeBlock({ id: uid(), type: 'download', visible: true, s: { title: '제안서 다운로드', desc: 'PDF, PPT, 엑셀 자료를 방문자가 바로 내려받을 수 있습니다.', layout: 'card', align: 'left', buttonLabel: '자료 다운로드', newWindow: true, items: [
+    return sanitizeBlock({ id: uid(), type: 'download', visible: true, s: { title: '', desc: '', layout: 'card', align: 'left', buttonLabel: '다운로드', newWindow: true, items: [
       { id: uid(), badge: 'PDF', title: '서비스 제안서', desc: '상품 소개와 견적 기준을 정리한 자료입니다.', fileName: 'proposal.pdf', fileUrl: '', extension: 'pdf', sizeLabel: '20MB 이하' },
     ] } });
   }

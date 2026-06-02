@@ -512,7 +512,7 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
           </div>
           <div className="connection-item connect-v4 open">
             <div className="connection-row">
-              <div className="connection-row-main"><strong>Google Sheets</strong><small>{sheetsState.text} · 접수 데이터를 자동 저장</small></div>
+              <div className="connection-row-main"><strong>Google Sheets</strong><small>{sheetsState.text} ? 준비됨 · 접수 데이터를 자동 저장</small></div>
               <InlineSwitch checked={!!draftIntegrations.sheets.enabled} onChange={(enabled) => sheetPatch({ enabled, status: enabled ? draftIntegrations.sheets.status || 'disconnected' : 'disconnected' })} />
             </div>
             {draftIntegrations.sheets.enabled && (

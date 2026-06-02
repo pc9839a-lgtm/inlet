@@ -19,7 +19,7 @@ function normalizeLinkItem(item = {}) {
     emoji: item.emoji ?? '🔗',
     iconMode: pickSafe(item.iconMode || 'emoji', ['none', 'emoji', 'thumb'], 'emoji'),
     thumb,
-    label: item.label || '새 링크',
+    label: item.label || '링크',
     target: item.target || 'url',
     url,
     lastWidgetTarget: item.lastWidgetTarget || '',
@@ -73,7 +73,7 @@ function renderLinkVisual(item, layout) {
 
 function linkSubLabel(item = {}) {
   if (item.target === 'phone') return '전화 연결';
-  if (item.target === 'widget' || String(item.target || '').startsWith('block:')) return '위젯 이동';
+  if (item.target === 'widget' || String(item.target || '').startsWith('block:')) return '영역 이동';
   if (item.target === 'form') return '';
   return linkHostLabel(item.url) || '';
 }
@@ -200,21 +200,13 @@ export function RenderLinks({ block, track, go }) {
 }
 
 function normalizeDownloadItem(item = {}, index = 0) {
-  const extension = String(item.extension || item.fileName?.split('.').pop() || 'pdf').replace(/^\./, '').toUpperCase();
   return {
     id: item.id || `download-${index}`,
-    badge: item.badge || extension,
     title: item.title || item.label || `자료 ${index + 1}`,
     desc: item.desc || item.body || '',
     fileName: item.fileName || '',
     fileUrl: item.fileUrl || item.url || '',
-    extension,
-    sizeLabel: item.sizeLabel || '',
   };
-}
-
-function downloadSubLabel(item = {}) {
-  return [item.fileName, item.sizeLabel].filter(Boolean).join(' · ');
 }
 
 function normalizeDownloadHref(raw = '') {
@@ -232,7 +224,7 @@ export function RenderDownload({ block, track }) {
   const buttonLabel = s.buttonLabel || '다운로드';
 
   return (
-    <section id={`block-${block.id}`} className={`landing-section download-widget download-${layout} align-${align}`}>
+    <section id={`block-${block.id}`} className={`landing-section download-widget download-${layout} align-${align} ${widgetBoxClass(s)}`} style={widgetBoxVars(s)}>
       {s.title && <h2>{s.title}</h2>}
       {s.desc && <p className="download-desc">{s.desc}</p>}
       <div className="download-items">
@@ -241,11 +233,9 @@ export function RenderDownload({ block, track }) {
           const disabled = !href;
           return (
             <article key={item.id} className={`download-item ${disabled ? 'is-disabled' : ''}`}>
-              <div className="download-file-icon" aria-hidden="true">{item.badge || item.extension}</div>
               <div className="download-body">
                 <strong>{item.title}</strong>
                 {item.desc && <p>{item.desc}</p>}
-                {downloadSubLabel(item) && <small>{downloadSubLabel(item)}</small>}
               </div>
               {disabled ? (
                 <span className="download-action is-disabled">준비중</span>

@@ -49,11 +49,11 @@ function normalizePage(page = {}) {
   };
 }
 
-export function generateStandaloneFormHtml(form = {}, page = {}) {
+function inlineConfig(form = {}, page = {}) {
   const safePage = normalizePage(page);
-  const config = {
+  return {
     brand: '페이지로',
-    formId: safeText(form.id || form.blockId || ''),
+    formId: safeText(form.blockId || form.id || form.formId || ''),
     title: safeText(form.title, '상담 신청'),
     desc: safeText(form.desc || ''),
     submit: safeText(form.submit, '접수하기'),
@@ -67,6 +67,13 @@ export function generateStandaloneFormHtml(form = {}, page = {}) {
     },
     questions: Array.isArray(form.questions) ? form.questions.map(normalizeQuestion) : [],
   };
+}
 
-  return `<script src="${DEFAULT_EMBED_SCRIPT_URL}" data-pagero="${escapeHtml(encodeConfig(config))}" defer></script>`;
+export function generateStandaloneFormHtml(form = {}, page = {}) {
+  const safePage = normalizePage(page);
+  const formId = safeText(form.blockId || form.id || form.formId || '');
+  if (safePage.slug && formId) {
+    return `<script src="${DEFAULT_EMBED_SCRIPT_URL}" data-page="${escapeHtml(safePage.slug)}" data-form="${escapeHtml(formId)}" defer></script>`;
+  }
+  return `<script src="${DEFAULT_EMBED_SCRIPT_URL}" data-pagero="${escapeHtml(encodeConfig(inlineConfig(form, page)))}" defer></script>`;
 }

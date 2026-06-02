@@ -194,7 +194,7 @@ export function RenderActivity({ block, leads = [] }) {
   }, [anim, rows.length]);
 
   return (
-    <section id={`block-${block.id}`} className={`landing-section activity-widget activity-stack-widget activity-${style} activity-mode-${mode} activity-anim-${anim} align-${align}`}>
+    <section id={`block-${block.id}`} className={`landing-section activity-widget activity-stack-widget activity-${style} activity-mode-${mode} activity-anim-${anim} align-${align} ${widgetBoxClass(s)}`} style={widgetBoxVars(s)}>
       <div className="activity-stack-head">
         <div>
           <span className="activity-live-dot"></span>

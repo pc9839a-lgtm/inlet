@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { BRAND_NAME } from '../../config/brand.js';
-import { checkDuplicateLead as checkDuplicateLeadPolicy, normalizeLeadPhone, rememberDuplicateLead as rememberDuplicateLeadPolicy } from '../../lib/leadDuplicatePolicy.js';
+import { checkDuplicateLead as checkDuplicateLeadPolicy, rememberDuplicateLead as rememberDuplicateLeadPolicy } from '../../lib/leadDuplicatePolicy.js';
 import { pickSafe, rich } from './previewUtils.jsx';
 
 function plainRichText(value) {
@@ -33,6 +33,15 @@ function formatAnswerValue(value) {
   if (Array.isArray(value)) return value.join(', ');
   if (value && typeof value === 'object') return value.full || [value.postcode, value.address, value.detail].filter(Boolean).join(' ');
   return String(value ?? '');
+}
+
+function digitsOnly(value = '') {
+  return String(value || '').replace(/\D/g, '');
+}
+
+function sanitizeQuestionValue(q = {}, value = '') {
+  if (q.type === 'phone') return digitsOnly(value);
+  return value;
 }
 
 function isEmptyAnswer(value) {
@@ -141,7 +150,7 @@ export function RenderForm({ block, addLead, track }) {
     setNotice(null);
     if (!allowDuplicate) setDuplicatePrompt(null);
 
-    const answers = qs.map((q) => ({ id: q.id, label: q.label, type: q.type, required: !!q.required, value: vals[q.id] ?? '' }));
+    const answers = qs.map((q) => ({ id: q.id, label: q.label, type: q.type, required: !!q.required, value: sanitizeQuestionValue(q, vals[q.id] ?? '') }));
     const missing = answers.find((a) => a.required && isEmptyAnswer(a.value));
     if (missing) {
       track?.({ type: 'form_required_missing', label: missing.label });
@@ -156,7 +165,7 @@ export function RenderForm({ block, addLead, track }) {
     const addressAnswer = answers.find((a) => a.type === 'address' || /주소|address/i.test(a.label));
     const messageAnswer = answers.find((a) => a.type === 'long' || /문의|내용|메모|message/i.test(a.label));
 
-    const phone = normalizeLeadPhone(phoneAnswer?.value || '');
+    const phone = digitsOnly(phoneAnswer?.value || '');
     const email = String(formatAnswerValue(emailAnswer?.value || '')).trim().toLowerCase();
 
     const duplicate = checkDuplicateLeadPolicy(block.id, { phone, email }, s);
@@ -219,17 +228,19 @@ export function RenderForm({ block, addLead, track }) {
   const buttonHover = pickSafe(s.buttonHover || 'fill', ['fill', 'slide', 'zoom'], 'fill');
   const textAlign = pickSafe(s.textAlign || 'left', ['left', 'center', 'right'], 'left');
   const spacing = pickSafe(s.spacing, ['compact', 'normal', 'wide'], 'normal');
+  const radiusStyle = pickSafe(s.radiusStyle, ['square', 'round', 'pill'], 'round');
+  const spacingGap = { compact: 8, normal: 12, wide: 18 }[spacing] || 12;
   const styleVars = {
     '--form-button': themeButtonColor(s),
     '--form-button-text': s.buttonTextColor || '#ffffff',
-    '--form-gap': `${Math.max(6, Math.min(24, Number(s.spacingPx ?? 12)))}px`,
+    '--form-gap': `${spacingGap}px`,
     '--form-button-hover': themeButtonHoverColor(s),
   };
   const formTitle = plainRichText(s.title || '상담 신청');
   const formDesc = s.desc || '';
 
   return (
-    <section id={`block-${block.id}`} className={`landing-section form form-${formStyle} form-input-${inputStyle} form-button-${buttonStyle} form-button-hover-${buttonHover} form-space-${spacing} form-radius-round`} style={styleVars}>
+    <section id={`block-${block.id}`} className={`landing-section form form-${formStyle} form-input-${inputStyle} form-button-${buttonStyle} form-button-hover-${buttonHover} form-space-${spacing} form-radius-${radiusStyle} form-align-${textAlign}`} style={styleVars}>
       <h2 className={`form-title-align-${textAlign}`}>{formTitle}</h2>
       {formDesc && <p className={`form-desc-align-${textAlign}`}>{rich(formDesc)}</p>}
       {done ? (
@@ -324,7 +335,16 @@ function Question({ q, value, setValue }) {
   if (q.type === 'phone') {
     return (
       <FormFieldShell q={q}>
-        <input type="tel" inputMode="tel" autoComplete="tel" required={q.required} placeholder={placeholder || '010-0000-0000'} value={value || ''} onChange={(e) => setValue(e.target.value)} />
+        <input
+          type="tel"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          autoComplete="tel"
+          required={q.required}
+          placeholder={placeholder || '01000000000'}
+          value={digitsOnly(value)}
+          onChange={(e) => setValue(digitsOnly(e.target.value))}
+        />
       </FormFieldShell>
     );
   }
@@ -458,6 +478,23 @@ function ReservationCustomField({ field, value, onChange }) {
     );
   }
 
+  if (type === 'phone') {
+    return (
+      <FormFieldShell q={q}>
+        <input
+          type="tel"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          autoComplete="tel"
+          required={q.required}
+          placeholder={`${q.label}을 입력해주세요`}
+          value={digitsOnly(value)}
+          onChange={(e) => onChange(digitsOnly(e.target.value))}
+        />
+      </FormFieldShell>
+    );
+  }
+
   return (
     <FormFieldShell q={q}>
       <input required={q.required} placeholder={`${q.label}을 입력해주세요`} value={value} onChange={(e) => onChange(e.target.value)} />
@@ -495,7 +532,7 @@ export function RenderReservation({ block, addLead, track }) {
       return;
     }
 
-    const phone = normalizeLeadPhone(f.phone);
+    const phone = digitsOnly(f.phone);
     if (required.name !== false && !String(f.name || '').trim()) {
       setError('이름을 입력해주세요.');
       return;
@@ -539,7 +576,7 @@ export function RenderReservation({ block, addLead, track }) {
       label: field.label || '추가 항목',
       type: field.type || 'short',
       required: !!field.required,
-      value: f.custom?.[field.id] || '',
+      value: sanitizeQuestionValue(field, f.custom?.[field.id] || ''),
     }));
     const customValues = Object.fromEntries(customAnswers.map((answer) => [answer.label, answer.value]));
 
@@ -603,16 +640,19 @@ export function RenderReservation({ block, addLead, track }) {
   const textAlign = pickSafe(s.textAlign || 'left', ['left', 'center', 'right'], 'left');
   const titleSize = pickSafe(s.titleSize || 'medium', ['small', 'medium', 'large'], 'medium');
   const bodySize = pickSafe(s.bodySize || 'medium', ['small', 'medium', 'large'], 'medium');
+  const spacing = pickSafe(s.spacing, ['compact', 'normal', 'wide'], 'normal');
+  const radiusStyle = pickSafe(s.radiusStyle, ['square', 'round', 'pill'], 'round');
+  const spacingGap = { compact: 8, normal: 12, wide: 18 }[spacing] || 12;
   const styleVars = {
     '--form-button': themeButtonColor(s),
     '--form-button-text': s.buttonTextColor || '#ffffff',
-    '--form-gap': `${Math.max(6, Math.min(24, Number(s.spacingPx ?? 12)))}px`,
+    '--form-gap': `${spacingGap}px`,
     '--form-button-hover': themeButtonHoverColor(s),
     '--block-margin': `${Math.max(0, Math.min(48, Number(s.marginY ?? 12)))}px`,
   };
 
   return (
-    <section id={`block-${block.id}`} className={`landing-section form reservation reservation-v2 form-${formStyle} form-input-${inputStyle} form-button-${buttonStyle} form-button-hover-${buttonHover} align-${textAlign} title-${titleSize} body-${bodySize}`} style={styleVars}>
+    <section id={`block-${block.id}`} className={`landing-section form reservation reservation-v2 form-${formStyle} form-input-${inputStyle} form-button-${buttonStyle} form-button-hover-${buttonHover} form-space-${spacing} form-radius-${radiusStyle} align-${textAlign} title-${titleSize} body-${bodySize}`} style={styleVars}>
       <h2>{rich(s.title)}</h2>
       {s.desc && <p>{rich(s.desc)}</p>}
 
@@ -639,7 +679,15 @@ export function RenderReservation({ block, addLead, track }) {
 
           {s.fields?.phone !== false && (
             <FormFieldShell q={{ label: '연락처', required: required.phone !== false, type: 'phone' }}>
-              <input type="tel" inputMode="tel" placeholder="010-0000-0000" required={required.phone !== false} value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />
+              <input
+                type="tel"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                placeholder="01000000000"
+                required={required.phone !== false}
+                value={digitsOnly(f.phone)}
+                onChange={(e) => setF({ ...f, phone: digitsOnly(e.target.value) })}
+              />
             </FormFieldShell>
           )}
 

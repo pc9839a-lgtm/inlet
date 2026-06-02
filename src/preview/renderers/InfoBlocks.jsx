@@ -1,4 +1,4 @@
-import { pickSafe, rich } from './previewUtils.jsx';
+import { pickSafe, rich, widgetBoxClass, widgetBoxVars } from './previewUtils.jsx';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -54,7 +54,8 @@ export function RenderMap({ block }) {
   return (
     <section
       id={`block-${block.id}`}
-      className={`landing-section inlet-map-section map-widget map-${layout} map-height-${height}`}
+      className={`landing-section inlet-map-section map-widget map-${layout} map-height-${height} ${widgetBoxClass(s)}`}
+      style={widgetBoxVars(s)}
     >
       {(s.title || s.placeName || address || s.phone || s.parkingText) && (
         <div className="map-widget-head">
@@ -125,8 +126,9 @@ export function RenderSchedule({ block }) {
   return (
     <section
       id={`block-${block.id}`}
-      className={`landing-section schedule-widget schedule-align-${align}`}
+      className={`landing-section schedule-widget schedule-align-${align} ${widgetBoxClass(s)}`}
       style={{
+        ...widgetBoxVars(s),
         '--schedule-accent': s.highlightColor || 'var(--accent)',
         '--schedule-card': s.cardBgColor || 'var(--card)',
         '--schedule-text': s.textColor || 'var(--text)',
@@ -162,7 +164,7 @@ export function RenderFaq({ block }) {
   const items = normalizeFaqItems(s.items);
 
   return (
-    <section id={`block-${block.id}`} className={`landing-section faq-widget faq-${layout}`}>
+    <section id={`block-${block.id}`} className={`landing-section faq-widget faq-${layout} ${widgetBoxClass(s)}`} style={widgetBoxVars(s)}>
       {s.title && <h2>{rich(s.title)}</h2>}
       <div className="faq-list">
         {items.map((item, index) => (

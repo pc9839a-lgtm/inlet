@@ -146,11 +146,11 @@ const jsonlFallbackPlan = {
 
 assert(appSource.includes('const INBOX_PAGE_SIZE = 10'), 'Inbox initial and load-more size should stay at 10');
 assert(appSource.includes('monthDateRange(inboxFilters.month)'), 'Inbox server fetch should be month-bounded');
-assert(appSource.includes("deliveryStatus: inboxFilters.deliveryStatus === 'all' ? '' : inboxFilters.deliveryStatus"), 'Inbox server fetch should include delivery status filtering');
+assert(appSource.includes("deliveryStatus: 'all'"), 'Inbox server fetch should keep delivery status out of the visible filter contract');
 assert(appSource.includes('statsDateRange(statsMonth'), 'Stats server fetch should be capped to selected month and day-range period');
 assert(inboxPanel.includes('type="month"'), 'Inbox UI should expose month selection');
-assert(inboxPanel.includes('deliveryStatus: deliveryFilter') && inboxPanel.includes('월 CSV'), 'Inbox UI should expose monthly CSV with delivery filter contract');
-assert(inboxPanel.includes('다음 10건') && inboxPanel.includes('서버 ${serverTotal}건 중 ${loadedCount}건 로드'), 'Inbox UI should clearly indicate partial server pagination');
+assert(inboxPanel.includes("deliveryStatus: 'all'") && inboxPanel.includes('\uC6D4 CSV'), 'Inbox UI should expose monthly CSV without delivery filter noise');
+assert(inboxPanel.includes('\uB354\uBCF4\uAE30') && inboxPanel.includes('\uC11C\uBC84 ${serverTotal}\uAC74 \uC911 ${loadedCount}\uAC74 \uB85C\uB4DC'), 'Inbox UI should clearly indicate partial server pagination');
 assert(leadRepository.includes('dateFrom') && leadRepository.includes('dateTo') && leadRepository.includes('deliveryStatus'), 'Lead repository should pass date/delivery filters');
 assert(eventRepository.includes('dateFrom') && eventRepository.includes('dateTo'), 'Event repository should pass date filters');
 assert(serverSource.includes('dateRangeFilter') && serverSource.includes('deliveryStatus'), 'Server should filter leads/events by date and delivery status');

@@ -227,12 +227,15 @@ assert(files.browserVisualQa.includes('realBrowserPowerShellCommand'), 'browser 
 assert(files.browserVisualQa.includes('local-chrome-cdp'), 'browser visual QA should support local Chrome/Edge CDP without Playwright');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_CHROME_PATH'), 'browser visual QA should allow a custom local Chrome/Edge path');
 assert(files.formEmbed.includes('https://pagero.kr/embed/form.js'), 'standalone form embed should use the compact Pagero loader');
-assert(files.formEmbed.includes('data-pagero=') && !files.formEmbed.includes('type="application/json"'), 'standalone form embed should be a single compact script tag');
-assert(files.publicFormEmbed.includes('https://pagero.kr/api/leads'), 'standalone form embed loader should submit to Pagero lead API');
-assert(files.publicFormEmbed.includes('decodeConfig') && files.publicFormEmbed.includes("script.getAttribute('data-pagero')"), 'standalone form embed loader should decode inline compact config');
+assert(files.formEmbed.includes('data-page=') && files.formEmbed.includes('data-form=') && !files.formEmbed.includes('type="application/json"'), 'standalone form embed should prefer a short page/form script tag');
+assert(files.publicFormEmbed.includes("var API_URL = HOME_URL + '/api/leads'") || files.publicFormEmbed.includes('https://pagero.kr/api/leads'), 'standalone form embed loader should submit to Pagero lead API');
+assert(files.publicFormEmbed.includes('decodeConfig') && files.publicFormEmbed.includes("script.getAttribute('data-pagero')"), 'standalone form embed loader should keep inline compact config compatibility');
+assert(files.publicFormEmbed.includes('fetchPublicFormConfig') && files.publicFormEmbed.includes("script.getAttribute('data-page')"), 'standalone form embed loader should fetch saved public page config from short embed attrs');
 assert(files.formEmbed.includes('projectId: safePage.projectId'), 'standalone form embed should include the page project id');
 assert(files.formEmbed.includes('slug: safePage.slug'), 'standalone form embed should include the page slug');
 assert(files.publicFormEmbed.includes('answers: extracted.answers'), 'standalone form embed should preserve structured answers');
+assert(files.form.includes('function digitsOnly') && files.form.includes('inputMode="numeric"') && files.form.includes('pattern="[0-9]*"'), 'preview form phone fields should force numeric input');
+assert(files.publicFormEmbed.includes('data-pagero-phone="1"') && files.publicFormEmbed.includes('inputmode="numeric"') && files.publicFormEmbed.includes('digitsOnly(firstAnswer'), 'standalone form phone fields should force and submit numeric input');
 assert(files.publicFormEmbed.includes('접수 저장에 실패했습니다'), 'standalone form embed should show server save failure');
 assert(files.publicFormEmbed.includes('페이지로로 제작됨') && files.publicFormEmbed.includes('sourceLabel'), 'standalone form embed should show Pagero credit and preserve attribution');
 assert(files.browserVisualQa.includes("INLET_BROWSER_QA_EXTRA_URLS=auto"), 'browser visual QA should document automatic footer/legal route coverage');

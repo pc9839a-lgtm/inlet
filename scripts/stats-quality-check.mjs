@@ -92,14 +92,14 @@ assert(statsPanel.includes('onPeriodChange') && statsPanel.includes('controlledP
 assert(statsPanel.includes('PERIOD_OPTIONS') && statsPanel.includes('stats-range-tabs'), 'stats panel should expose 1/7/14/30 day period tabs');
 assert(statsPanel.includes('type="month"'), 'stats panel should expose month-only filter control');
 assert(statsPanel.includes('stats-line-chart') && statsPanel.includes('<polyline'), 'stats panel trend should render as a line chart');
-assert(statsPanel.includes('방문·접수') && !statsPanel.includes('월간 추이'), 'stats trend title should use compact copy');
-assert(!statsPanel.includes('마우스를 올리면'), 'stats trend should not render explanatory helper copy');
+assert(statsPanel.includes('\uC0C1\uC138 \uD1B5\uACC4') && !statsPanel.includes('\uC6D4\uAC04 \uCD94\uC774') && !statsPanel.includes('\uBC29\uBB38\u00B7\uC811\uC218'), 'stats trend title should use compact copy');
+assert(!statsPanel.includes('\uB9C8\uC6B0\uC2A4\uB97C \uC62C\uB9AC\uBA74') && !statsPanel.includes('\uD750\uB984\uC744 \uD655\uC778'), 'stats trend should not render explanatory helper copy');
 assert(statsPanel.includes('stats-chart-tooltip') && statsPanel.includes('onMouseEnter'), 'stats line chart should expose hover details');
 assert(statsPanel.includes('fmtDateOnly') && !statsPanel.includes('fmtDate(lead.createdAt)'), 'recent leads should show date only without time');
 assert(statsPanel.includes('serverStats') && statsPanel.includes('normalizeServerStats'), 'stats panel should render server aggregate payloads');
-assert(!statsPanel.includes('DeliveryLogCard') && !statsPanel.includes('전송 로그') && !statsPanel.includes('외부 전송'), 'stats panel should not expose delivery log cards');
+assert(!statsPanel.includes('DeliveryLogCard') && !statsPanel.includes('\uC804\uC1A1 \uB85C\uADF8') && !statsPanel.includes('\uC678\uBD80 \uC804\uC1A1'), 'stats panel should not expose delivery log cards');
 
-assert(!inboxPanel.includes('lead-delivery') && !inboxPanel.includes('전송 상태') && !inboxPanel.includes('전송 로그'), 'inbox detail should not render delivery status/log sections');
+assert(!inboxPanel.includes('lead-delivery') && !inboxPanel.includes('\uC804\uC1A1 \uC0C1\uD0DC') && !inboxPanel.includes('\uC804\uC1A1 \uB85C\uADF8'), 'inbox detail should not render delivery status/log sections');
 assert(!inboxCss.includes('lead-delivery'), 'inbox CSS should not keep unused delivery status/detail styles');
 
 const appSource = await readFile('src/App.jsx', 'utf8');

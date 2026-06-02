@@ -8,7 +8,9 @@
     "INLET_EMAIL_PROVIDER": "ses",
     "AWS_SES_REGION": "ap-northeast-2",
     "INLET_AUTH_EMAIL_FROM": "페이지로 <no-reply@pagero.kr>",
-    "INLET_SUPPORT_EMAIL": "support@pagero.kr"
+    "INLET_SUPPORT_EMAIL": "support@pagero.kr",
+    "INLET_FILES_PROJECT_MAX_MB": "100",
+    "INLET_FILES_PROJECT_MAX_COUNT": "20"
   },
   "d1_databases": [
     {

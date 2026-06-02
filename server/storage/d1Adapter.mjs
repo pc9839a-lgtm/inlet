@@ -828,13 +828,20 @@ export async function upsertD1Page(db, page = {}, context = {}) {
   assertD1Binding(db);
   const safeSlug = String(context.slug || page.slug || 'my-page').replace(/[^a-zA-Z0-9-_]/g, '') || 'my-page';
   const projectId = String(context.projectId || page.projectId || '');
-  const currentBySlug = await db.prepare('SELECT id, revision, created_at FROM pages WHERE project_id = ? AND slug = ? LIMIT 1').bind(projectId, safeSlug).first();
+  const currentBySlug = await db.prepare('SELECT id, project_id, slug, revision, created_at FROM pages WHERE project_id = ? AND slug = ? LIMIT 1').bind(projectId, safeSlug).first();
   const currentById = page.id
-    ? await db.prepare('SELECT id, revision, created_at FROM pages WHERE id = ? LIMIT 1').bind(String(page.id)).first()
+    ? await db.prepare('SELECT id, project_id, slug, revision, created_at FROM pages WHERE id = ? LIMIT 1').bind(String(page.id)).first()
     : null;
-  const current = currentBySlug || currentById;
+  const currentByIdMatchesTarget = currentById
+    && String(currentById.project_id || '') === projectId
+    && String(currentById.slug || '') === safeSlug;
+  const current = currentBySlug || (currentByIdMatchesTarget ? currentById : null);
   const nextRevision = Math.max(1, Number(current?.revision || 0) + 1);
-  const row = encodeD1Page({ ...page, id: current?.id || page.id, createdAt: current?.created_at || page.createdAt }, { ...context, slug: safeSlug, revision: nextRevision });
+  const row = encodeD1Page({
+    ...page,
+    id: current?.id || context.pageId || '',
+    createdAt: current?.created_at || page.createdAt,
+  }, { ...context, slug: safeSlug, revision: nextRevision });
   await db.prepare(`
     INSERT INTO pages (
       id, project_id, slug, title, page_json, revision, published_at, created_at, updated_at

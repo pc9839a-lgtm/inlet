@@ -115,6 +115,7 @@ const cssFiles = [
   'src/styles/preview-workspace-effects-nav.css',
   'src/styles/preview-workspace-effects-widgets.css',
   'src/styles/preview-workspace-effects-map-faq.css',
+  'src/styles/preview-widget-style-options.css',
   'src/styles/base-wayzi-footer.css',
 ];
 const lazyCssOwners = {

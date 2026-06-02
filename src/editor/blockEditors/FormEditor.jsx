@@ -6,9 +6,8 @@ import RichField from '../RichField.jsx';
 import { uid } from '../../lib/pageModel.js';
 import { notify } from '../../lib/uiFeedback.js';
 
-export default function FormEditor({ s, set, page, generateStandaloneFormHtml }) {
+export default function FormEditor({ s, set, page, blockId, generateStandaloneFormHtml }) {
   const qs = s.questions || [];
-  const themeButtonColor = page?.theme?.accent || '#111827';
   const [openQ, setOpenQ] = useState(qs[0]?.id || '');
   const [htmlOpen, setHtmlOpen] = useState(false);
   const [dragQ, setDragQ] = useState('');
@@ -74,7 +73,6 @@ export default function FormEditor({ s, set, page, generateStandaloneFormHtml })
           <Field label="버튼 문구" value={s.submit} onChange={(v)=>set({submit:v})}/>
         </div>
         <RichField label="설명" value={s.desc} onChange={(v)=>set({desc:v})}/>
-        <Choice label="정렬" value={s.textAlign || 'left'} onChange={(v)=>set({textAlign:v})} options={[["left","≡"],["center","≣"],["right","≢"]]}/>
 
         <div className="form-basic-subgrid compact-lines">
           <details className="form-basic-detail form-inline-detail">
@@ -168,33 +166,7 @@ export default function FormEditor({ s, set, page, generateStandaloneFormHtml })
         {!qs.length && <div className="empty">질문을 추가해주세요.</div>}
       </Step>
 
-      <Step title="디자인" icon="3">
-        <div className="form-design-panel form-design-panel-clean">
-          <Choice label="폼" value={s.style || 'card'} onChange={(v)=>set({style:v})} options={[['card','▣'],['line','≣'],['soft','◧'],['minimal','□']]}/>
-          <Choice label="입력창" value={s.inputStyle || 'round'} onChange={(v)=>set({inputStyle:v})} options={[['round','◖'],['box','▢'],['underline','﹍']]}/>
-
-          <div className="button-design-box">
-            <div className="button-design-title">
-              <strong>버튼 디자인&효과</strong>
-            </div>
-            <Choice label="모양" value={s.buttonStyle || 'solid'} onChange={(v)=>set({buttonStyle:v})} options={[['solid','⬛'],['round','◉'],['line','▭']]}/>
-            <Choice label="효과" value={s.buttonHover || 'fill'} onChange={(v)=>set({buttonHover:v})} options={[['fill','●'],['slide','➜'],['zoom','⊕']]}/>
-            <div className="form-hover-color-row compact">
-              <label><span>마우스오버</span><input type="color" value={s.buttonHoverColorMode === 'custom' ? (s.buttonHoverColor || themeButtonColor) : themeButtonColor} onChange={(e)=>set({buttonHoverColor:e.target.value, buttonHoverColorMode:'custom'})}/><button type="button" className="global-color-reset" onClick={()=>set({buttonHoverColorMode:'theme'})}>전역</button></label>
-              <label><span>버튼색</span><input type="color" value={s.buttonColorMode === 'custom' ? (s.buttonColor || themeButtonColor) : themeButtonColor} onChange={(e)=>set({buttonColor:e.target.value, buttonColorMode:'custom'})}/><button type="button" className="global-color-reset" onClick={()=>set({buttonColorMode:'theme'})}>전역</button></label>
-              <label><span>글자색</span><input type="color" value={s.buttonTextColor || '#ffffff'} onChange={(e)=>set({buttonTextColor:e.target.value})}/></label>
-            </div>
-          </div>
-
-          <div className="form-design-range">
-            <span>입력 간격</span>
-            <input type="range" min="6" max="24" step="1" value={Number(s.spacingPx ?? 12)} onChange={(e)=>set({spacingPx:Number(e.target.value)})}/>
-            <b>{Number(s.spacingPx ?? 12)}px</b>
-          </div>
-        </div>
-      </Step>
-
-      <Step title="고급" icon="4">
+      <Step title="고급" icon="3">
         <div className="form-advanced-group">
           <details className="form-advanced-item">
             <summary><strong>중복접수</strong><span>연락처/이메일 기준</span></summary>
@@ -222,7 +194,7 @@ export default function FormEditor({ s, set, page, generateStandaloneFormHtml })
           </div>
         </div>
 
-        {htmlOpen && <FormHtmlModal form={s} page={page} generateStandaloneFormHtml={generateStandaloneFormHtml} onClose={()=>setHtmlOpen(false)}/>}
+        {htmlOpen && <FormHtmlModal form={{ ...s, blockId }} page={page} generateStandaloneFormHtml={generateStandaloneFormHtml} onClose={()=>setHtmlOpen(false)}/>}
       </Step>
     </EditorStack>
   );

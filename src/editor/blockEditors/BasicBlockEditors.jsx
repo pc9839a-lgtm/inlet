@@ -1,5 +1,4 @@
-import { Choice, EditorStack, Field, Step, Two } from '../controls.jsx';
-import { alignOptions } from '../editorOptions.js';
+import { Choice, EditorStack, Field, Step } from '../controls.jsx';
 
 export function ActivityEditor({ s, set }) {
   const dataSource = s.dataSource || 'sample';
@@ -8,20 +7,15 @@ export function ActivityEditor({ s, set }) {
   return (
     <EditorStack>
       <Step title="기본" icon="1" open>
-        <Field label="제목" value={s.title || '실시간 접수현황'} onChange={(v) => set({ title: v })} />
+        <Field label="제목" value={s.title || '접수현황'} onChange={(v) => set({ title: v })} />
         <Choice label="데이터" value={dataSource} onChange={(v) => set({ dataSource: v })} options={[['sample', '예시'], ['live', '실제 접수']]} />
         {dataSource === 'sample' && (
-          <Choice label="예시 유형" value={s.sampleKind || 'both'} onChange={(v) => set({ sampleKind: v })} options={[['consult', '상담'], ['reservation', '방문예약'], ['both', '전체']]} />
+          <Choice label="예시 유형" value={s.sampleKind || 'both'} onChange={(v) => set({ sampleKind: v })} options={[['consult', '상담'], ['reservation', '예약'], ['both', '전체']]} />
         )}
         <Choice label="표시" value={mode} onChange={(v) => set({ mode: v })} options={[['feed', '접수목록'], ['count', '숫자']]} />
         {mode === 'count' && dataSource === 'sample' && (
           <Field label="예시 숫자" type="number" value={s.baseCount ?? 12} onChange={(v) => set({ baseCount: Number(v) })} />
         )}
-      </Step>
-
-      <Step title="표시" icon="2">
-        <Choice label="스타일" value={s.style || 'glass'} onChange={(v) => set({ style: v })} options={[['minimal', '미니멀'], ['glass', '글래스'], ['dark', '다크']]} />
-        <Choice label="움직임" value={s.animation || 'stack'} onChange={(v) => set({ animation: v })} options={[['stack', '쌓임'], ['none', '없음']]} />
       </Step>
     </EditorStack>
   );
@@ -45,17 +39,6 @@ export function DividerEditor({ s, set }) {
   return (
     <EditorStack>
       <Step title="기본" icon="1" open>
-        <Choice label="스타일" value={s.style || 'solid'} onChange={(v) => set({ style: v })} options={[['solid', '실선'], ['dashed', '점선'], ['dotted', '도트']]} />
-        <Choice label="정렬" value={s.align || 'center'} onChange={(v) => set({ align: v })} options={alignOptions} />
-        <div className="divider-editor-grid">
-          <label>
-            <span>색상</span>
-            <input type="color" value={s.color || '#E2E8F0'} onChange={(e) => set({ color: e.target.value })} />
-          </label>
-        </div>
-      </Step>
-
-      <Step title="디자인" icon="2">
         <div className="spacer-editor-card">
           <span>길이</span>
           <input type="range" min="10" max="100" step="5" value={Number(s.width ?? 100)} onChange={(e) => set({ width: Number(e.target.value) })} />
@@ -65,11 +48,6 @@ export function DividerEditor({ s, set }) {
           <span>두께</span>
           <input type="range" min="1" max="8" step="1" value={Number(s.thickness ?? 1)} onChange={(e) => set({ thickness: Number(e.target.value) })} />
           <b>{Number(s.thickness ?? 1)}px</b>
-        </div>
-        <div className="spacer-editor-card">
-          <span>여백</span>
-          <input type="range" min="0" max="80" step="4" value={Number(s.marginY ?? 24)} onChange={(e) => set({ marginY: Number(e.target.value) })} />
-          <b>{Number(s.marginY ?? 24)}px</b>
         </div>
       </Step>
     </EditorStack>
@@ -92,12 +70,6 @@ export function FooterEditor({ s, set }) {
       <Step title="고급" icon="3">
         <Field label="개인정보처리방침" value={s.privacyUrl} onChange={(v) => set({ privacyUrl: v })} />
         <Field label="이용약관" value={s.termsUrl} onChange={(v) => set({ termsUrl: v })} />
-      </Step>
-      <Step title="디자인" icon="4">
-        <Two>
-          <Choice label="정렬" value={s.align} onChange={(v) => set({ align: v })} options={alignOptions} />
-          <Choice label="배경" value={s.bg} onChange={(v) => set({ bg: v })} options={[['plain', '기본'], ['soft', '밝게'], ['dark', '어둡게']]} />
-        </Two>
       </Step>
     </EditorStack>
   );

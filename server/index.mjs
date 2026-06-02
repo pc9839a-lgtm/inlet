@@ -445,7 +445,7 @@ const server = createServer(async (req, res) => {
       if (storageRuntime.active === 'd1' && hasProject(project) && canUseD1LeadList(csvFilters)) {
         const d1Leads = await listD1LeadsForExport(project, csvFilters);
         const filtered = ids.length ? d1Leads.filter((lead) => ids.includes(String(lead.id || ''))) : d1Leads;
-        sendCsv(res, csvFileName(project.slug || 'my-page'), leadsToCsvExport(filtered));
+        sendCsv(res, csvFileName(project.slug || 'my-page'), leadsToCsvExportClean(filtered));
         return;
       }
       const csvPlan = storageQueryPlan('leads', csvFilters);
@@ -458,7 +458,7 @@ const server = createServer(async (req, res) => {
         plan: csvPlan,
       });
       const filtered = ids.length ? csvResult.records.filter((lead) => ids.includes(String(lead.id || ''))) : csvResult.records;
-      sendCsv(res, csvFileName(project.slug || 'my-page'), leadsToCsvExport(filtered));
+      sendCsv(res, csvFileName(project.slug || 'my-page'), leadsToCsvExportClean(filtered));
       return;
     }
 
@@ -4344,6 +4344,129 @@ function leadsToCsvExport(leads = []) {
       csvAnswersExport(lead.answers),
       csvValuesExport(lead.values),
       ...dynamicHeaders.map((header) => dynamicFields[header] || ''),
+    ];
+  });
+  return [headers, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n');
+}
+
+const CSV_CLEAN_BASE_VALUE_KEYS = new Set([
+  'name',
+  'phone',
+  'email',
+  'address',
+  'message',
+  'memo',
+  'clientId',
+  'phoneNormalized',
+  'emailNormalized',
+]);
+
+function csvCleanUniqueHeader(base, used) {
+  let header = base || '입력값';
+  let index = 2;
+  while (used.has(header)) {
+    header = `${base} ${index}`;
+    index += 1;
+  }
+  used.add(header);
+  return header;
+}
+
+function csvCleanDynamicHeaders(leads = []) {
+  const keyToHeader = new Map();
+  const usedHeaders = new Set();
+  const add = (rawKey, rawLabel) => {
+    const key = csvCleanFieldLabel(rawKey);
+    const label = csvCleanFieldLabel(rawLabel || rawKey);
+    if (!key || CSV_CLEAN_BASE_VALUE_KEYS.has(key)) return;
+    if (keyToHeader.has(key)) return;
+    keyToHeader.set(key, csvCleanUniqueHeader(label, usedHeaders));
+  };
+  for (const lead of leads || []) {
+    for (const answer of Array.isArray(lead.answers) ? lead.answers : []) {
+      add(answer.id || answer.label, answer.label || answer.id);
+    }
+    for (const key of Object.keys(lead.values || {})) {
+      add(key, key);
+    }
+  }
+  return keyToHeader;
+}
+
+function csvCleanDynamicMap(lead = {}, dynamicHeaders = new Map()) {
+  const fields = {};
+  const set = (rawKey, value) => {
+    const key = csvCleanFieldLabel(rawKey);
+    const header = dynamicHeaders.get(key);
+    if (header) fields[header] = csvFlatValue(value);
+  };
+  for (const [key, value] of Object.entries(lead.values || {})) {
+    set(key, value);
+  }
+  for (const answer of Array.isArray(lead.answers) ? lead.answers : []) {
+    set(answer.id || answer.label, answer.value);
+  }
+  return fields;
+}
+
+function leadsToCsvExportClean(leads = []) {
+  const dynamicHeaders = csvCleanDynamicHeaders(leads);
+  const dynamicHeaderLabels = [...dynamicHeaders.values()];
+  const headers = [
+    '접수 ID',
+    '접수 유형',
+    '상태',
+    '접수일시',
+    '이름',
+    '대표 연락처',
+    '연락처',
+    '이메일',
+    '주소',
+    '문의 내용',
+    '예약일',
+    '예약시간',
+    '메모',
+    'duplicate',
+    'duplicateReason',
+    'riskScore',
+    'submittedAt',
+    '페이지명',
+    '페이지 URL',
+    '유입 URL',
+    'UTM Source',
+    'UTM Medium',
+    'UTM Campaign',
+    ...dynamicHeaderLabels,
+  ];
+  const rows = leads.map((lead) => {
+    const dynamicFields = csvCleanDynamicMap(lead, dynamicHeaders);
+    const source = lead.source || {};
+    const page = lead.page || lead.deliveryPage || {};
+    return [
+      lead.id || '',
+      lead.type || '',
+      lead.status || '',
+      formatCsvDate(lead.createdAt),
+      lead.name || '',
+      lead.phone || lead.email || lead.address || '',
+      lead.phone || '',
+      lead.email || '',
+      lead.address || '',
+      lead.message || '',
+      csvFieldByCleanLabel(lead, [/reservationDate|예약일|date/i]),
+      csvFieldByCleanLabel(lead, [/reservationTime|예약시간|time/i]),
+      lead.memo || '',
+      lead.duplicate ? 'yes' : 'no',
+      lead.duplicateReason || '',
+      lead.riskScore ?? '',
+      formatCsvDate(lead.submittedAt || lead.createdAt),
+      page.title || lead.pageTitle || '',
+      page.url || lead.pageUrl || '',
+      source.url || source.pageUrl || lead.sourceUrl || '',
+      source.utmSource || lead.utmSource || '',
+      source.utmMedium || lead.utmMedium || '',
+      source.utmCampaign || lead.utmCampaign || '',
+      ...dynamicHeaderLabels.map((header) => dynamicFields[header] || ''),
     ];
   });
   return [headers, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n');

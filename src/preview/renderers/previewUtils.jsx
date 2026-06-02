@@ -80,14 +80,20 @@ export function rich(text) {
 }
 
 export function widgetBoxVars(s = {}) {
+  const margin = Math.max(0, Math.min(48, Number(s.marginY ?? 24)));
+  const padding = Math.max(0, Math.min(44, Number(s.paddingY ?? 22)));
+  const radiusMap = { square: '8px', round: 'var(--radius)', pill: '999px' };
   return {
     '--widget-bg': s.bgColor || '#FFFFFF',
-    '--widget-padding': '22px',
-    '--widget-margin': '24px',
-    '--widget-radius': 'var(--radius)',
+    '--widget-padding': `${padding}px`,
+    '--widget-margin': `${margin}px`,
+    '--widget-radius': radiusMap[s.radiusStyle] || 'var(--radius)',
   };
 }
 
 export function widgetBoxClass(s = {}) {
-  return s.bgEnabled ? 'widget-bg-on' : '';
+  return [
+    s.bgEnabled ? 'widget-bg-on' : '',
+    s.shadowEnabled ? 'widget-shadow-on' : '',
+  ].filter(Boolean).join(' ');
 }

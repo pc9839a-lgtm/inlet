@@ -2,7 +2,21 @@ import { readdir, readFile, rm, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 const root = process.cwd();
-const distDir = path.resolve(root, 'dist');
+const args = process.argv.slice(2);
+
+function readArgValue(names) {
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i];
+    for (const name of names) {
+      if (arg === name) return args[i + 1] || '';
+      if (arg.startsWith(`${name}=`)) return arg.slice(name.length + 1);
+    }
+  }
+  return '';
+}
+
+const outDirArg = readArgValue(['--outDir', '--out-dir']);
+const distDir = path.resolve(root, outDirArg || 'dist');
 const assetsDir = path.join(distDir, 'assets');
 const indexFile = path.join(distDir, 'index.html');
 const textExtensions = new Set(['.css', '.html', '.js', '.json', '.map', '.svg', '.txt', '.xml']);

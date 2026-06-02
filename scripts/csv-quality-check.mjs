@@ -15,6 +15,16 @@ const sampleLeads = [
     email: '@bad.example',
     message: '-SUM(1,1)',
     memo: '\t=cmd',
+    page: {
+      title: '테스트 페이지',
+      url: 'https://pagero.kr/test-page',
+    },
+    source: {
+      url: 'https://pagero.kr/test-page?utm_source=naver',
+      utmSource: 'naver',
+      utmMedium: 'cpc',
+      utmCampaign: 'spring',
+    },
     delivery: {
       status: 'failed',
       summary: 'webhook failed',
@@ -24,9 +34,9 @@ const sampleLeads = [
       ],
     },
     answers: [
-      { label: '예약일', value: '2026-05-22' },
-      { label: '예약시간', value: '10:30' },
-      { label: '관심 항목', value: ['A', 'B'] },
+      { id: 'reservationDate', label: '예약일', value: '2026-05-22' },
+      { id: 'reservationTime', label: '예약시간', value: '10:30' },
+      { id: 'interest', label: '관심 항목', value: ['A', 'B'] },
     ],
     values: {
       reservationDate: '2026-05-22',
@@ -55,15 +65,14 @@ const sampleLeads = [
 const csv = leadsToCsv([sampleLeads[0]]);
 
 assert(csv.includes('\r\n'), 'csv should use CRLF row separators');
-assert(csv.startsWith('"') && csv.includes('"duplicate"') && csv.includes('"submittedAt"'), 'csv headers should be stable and readable');
+assert(csv.startsWith('"접수 ID"') && csv.includes('"페이지 URL"') && csv.includes('"UTM Source"'), 'csv headers should be readable and operational');
+assert(csv.includes('"예약일"') && csv.includes('"예약시간"') && csv.includes('"관심 항목"') && csv.includes('"note"'), 'dynamic form answer columns should be exported as separate columns');
 assert(csv.includes('"\'=HYPERLINK(""https://bad.example"")"'), 'formula name should be neutralized and quoted');
 assert(csv.includes('"\'-SUM(1,1)"'), 'formula message should be neutralized');
 assert(csv.includes('"\'\t=cmd"'), 'tab-starting memo should be neutralized');
-assert(csv.includes('A, B') && csv.includes('10:30'), 'answers should be flattened');
-assert(csv.includes('입력:') && csv.includes('reservationDate'), 'dynamic form answer columns should be exported');
-assert(csv.includes('"reservationDate: 2026-05-22 / reservationTime: 10:30 / note: line1\nline2"'), 'values should preserve long text safely inside a quoted cell');
-assert(csv.includes('"실패"'), 'delivery status should be exported with the standardized operator label');
-assert(csv.includes('"webhook: failed: timeout: 2026-05-21T03:01:00.000Z / email: success: sent: idempotency=lead-formula:email: 2026-05-21T03:02:00.000Z"'), 'delivery logs should include targets, status, message, idempotency key, and time');
+assert(csv.includes('"A, B"') && csv.includes('"10:30"') && csv.includes('"line1\nline2"'), 'form values should be flattened into their own cells');
+assert(csv.includes('"https://pagero.kr/test-page"') && csv.includes('"naver"') && csv.includes('"spring"'), 'page and source data should be exported');
+assert(!csv.includes('webhook failed') && !csv.includes('idempotency=') && !csv.includes('timeout'), 'delivery status and logs should not be exported in operator CSV');
 
 const filtered = filterLeadsForCsv(sampleLeads, {
   dateFrom: '2026-05-20',
@@ -136,4 +145,4 @@ globalThis.Blob = originalBlob;
 globalThis.URL = originalUrl;
 globalThis.document = originalDocument;
 
-console.log(JSON.stringify({ ok: true, checks: 21 }, null, 2));
+console.log(JSON.stringify({ ok: true, checks: 20 }, null, 2));

@@ -1,4 +1,4 @@
-import { AddButton, Choice, Danger, EditorStack, Field, MiniDetail, Step } from '../controls.jsx';
+import { AddButton, Danger, EditorStack, Field, MiniDetail, Step } from '../controls.jsx';
 import { uid } from '../../lib/pageModel.js';
 import RichField from '../RichField.jsx';
 
@@ -25,13 +25,6 @@ export default function CardsEditor({ s, set }) {
           </MiniDetail>
         ))}
         <AddButton onClick={addItem} />
-      </Step>
-
-      <Step title="디자인" icon="3">
-        <Choice label="형태" value={s.layout || 'grid'} onChange={(v) => set({ layout: v })} options={[['grid', '그리드'], ['stack', '목록'], ['steps', '단계']]} />
-        <Choice label="톤" value={s.tone || 'soft'} onChange={(v) => set({ tone: v })} options={[['soft', '소프트'], ['solid', '강조'], ['outline', '라인']]} />
-        <Choice label="정렬" value={s.align || 'left'} onChange={(v) => set({ align: v })} options={[['left', '왼쪽'], ['center', '중앙']]} />
-        <Choice label="열" value={String(Math.min(2, Number(s.columns || 2)))} onChange={(v) => set({ columns: Number(v) })} options={[['1', '1'], ['2', '2']]} />
       </Step>
     </EditorStack>
   );

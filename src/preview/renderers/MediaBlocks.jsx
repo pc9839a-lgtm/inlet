@@ -4,6 +4,7 @@ export function RenderImage({ block }) {
   const s = block.s || {};
   const gallery = s.gallery || [];
   const [idx, setIdx] = useState(0);
+  const [failedSrc, setFailedSrc] = useState('');
   const swipeRef = useRef(null);
 
   useEffect(() => {
@@ -17,7 +18,9 @@ export function RenderImage({ block }) {
     if (idx > Math.max(0, gallery.length - 1)) setIdx(0);
   }, [s.mode, gallery.length, idx]);
 
-  const src = s.mode === 'gallery' ? gallery[idx] : s.image;
+  const rawSrc = s.mode === 'gallery' ? gallery[idx] : s.image;
+  const fallbackSrc = s.imageFallback || '';
+  const src = rawSrc && rawSrc !== failedSrc ? rawSrc : fallbackSrc;
   const display = s.imageDisplay || 'original';
   const style = display === 'fill'
     ? { height: `${Number(s.imageHeightPx || 260)}px` }
@@ -75,7 +78,15 @@ export function RenderImage({ block }) {
           onPointerUp={onSwipeEnd}
           onPointerCancel={() => { swipeRef.current = null; }}
         >
-          <img src={src} alt="" style={imgStyle} draggable="false" />
+          <img
+            src={src}
+            alt=""
+            style={imgStyle}
+            draggable="false"
+            onError={() => {
+              if (src && src !== fallbackSrc) setFailedSrc(src);
+            }}
+          />
           {s.mode === 'gallery' && gallery.length > 1 && (
             <>
               {(s.galleryShowArrows ?? true) && (

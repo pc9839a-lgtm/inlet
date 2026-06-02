@@ -83,12 +83,26 @@ const externalDeliveryJobs = buildLeadDeliveryJobs({
     automation: { enabled: true, url: 'https://example.test/make', service: 'make' },
     sheets: { enabled: true, provider: 'google_sheets', mode: 'webhook', webhookUrl: 'https://example.test/sheets', sheetName: 'Leads' },
   },
-}, { id: 'lead-external-payload', type: 'consult', name: 'Payload QA', phone: '010-0000-0000', email: 'qa@example.test', createdAt: '2026-06-01T00:00:00.000Z' });
+}, {
+  id: 'lead-external-payload',
+  type: 'consult',
+  name: 'Payload QA',
+  phone: '010-0000-0000',
+  email: 'qa@example.test',
+  createdAt: '2026-06-01T00:00:00.000Z',
+  values: { name: 'Payload QA', phone: '010-0000-0000', '관심 타입': '84A' },
+  answers: [
+    { id: 'name', label: '이름', type: 'name', value: 'Payload QA' },
+    { id: 'phone', label: '연락처', type: 'phone', value: '010-0000-0000' },
+    { id: 'budget', label: '예산대', type: 'select', value: '5억~7억' },
+  ],
+});
 assert(externalDeliveryJobs.some((job) => job.payload?.target === 'webhook' && job.payload?.schemaVersion === 'inlet.lead.v1'), 'Pages delivery should prepare webhook payload schema');
 assert(externalDeliveryJobs.some((job) => job.payload?.target === 'automation' && job.payload?.service === 'make'), 'Pages delivery should prepare Make/Zapier payload');
 assert(externalDeliveryJobs.some((job) => job.payload?.target === 'google_sheets' && job.payload?.sheetName === 'Leads'), 'Pages delivery should prepare Google Sheets payload');
 assert(externalDeliveryJobs.some((job) => job.payload?.target === 'google_sheets' && job.payload?.provider === 'google_sheets' && job.payload?.mode === 'webhook'), 'Pages delivery should prepare Google Sheets provider/mode');
 assert(externalDeliveryJobs.some((job) => job.payload?.target === 'google_sheets' && job.payload?.lead?.fields && job.payload?.page?.slug === 'external-payload' && job.payload?.project && job.payload?.source), 'Pages delivery should prepare Google Sheets structured payload');
+assert(externalDeliveryJobs.some((job) => job.payload?.target === 'google_sheets' && job.payload?.lead?.fields?.['관심 타입'] === '84A' && job.payload?.lead?.fields?.['예산대'] === '5억~7억' && !job.payload?.lead?.fields?.['이름']), 'Pages delivery should keep custom form fields as sheet columns without duplicating base fields');
 
 const missingKeyDelivery = await sendLeadDelivery({ id: 'lead-mail-missing-key', type: 'consult' }, storedDeliveryPage, {});
 assert(missingKeyDelivery.status === 'failed', 'missing SES key should create failed delivery status');
@@ -186,8 +200,8 @@ for (const [name, source, tokens] of [
   ['page revisions', pageRevisions, ['listD1PageRevisions', "tab: 'edit'", 'revisions']],
   ['page revision', pageRevision, ['getD1PageRevision', "tab: 'edit'", 'revision.page']],
   ['page restore', pageRestore, ['getD1PageRevision', 'upsertD1Page', 'restore:', "tab: 'edit'"]],
-  ['files shared', filesShared, ['FILES_BUCKET', 'MAX_FILE_BYTES = 20 * 1024 * 1024', "['pdf', 'ppt', 'pptx', 'xls', 'xlsx']", 'safeObjectKey', 'validateObjectKey']],
-  ['files upload', filesUpload, ['request.formData()', 'authorizeProject(request, env, project, { write: true', 'fileBucket(env)', 'assertAllowedFile(file)', 'bucket.put', 'publicDownloadUrl']],
+  ['files shared', filesShared, ['FILES_BUCKET', 'MAX_FILE_BYTES = 20 * 1024 * 1024', 'DEFAULT_PROJECT_MAX_BYTES = 100 * 1024 * 1024', 'DEFAULT_PROJECT_MAX_FILES = 20', "['pdf', 'ppt', 'pptx', 'xls', 'xlsx']", 'safeObjectKey', 'validateObjectKey', 'assertProjectFileQuota']],
+  ['files upload', filesUpload, ['request.formData()', 'authorizeProject(request, env, project, { write: true', 'fileBucket(env)', 'assertAllowedFile(file)', 'assertProjectFileQuota(bucket, project', 'bucket.put', 'publicDownloadUrl']],
   ['files download', filesDownload, ['bucket.get(key)', 'Content-Disposition', "filename*=UTF-8''", 'Cache-Control', 'validateObjectKey']],
   ['auth shared', authShared, ['getD1AccountByEmail', 'getD1AccountByPhone', 'upsertD1Account', 'createSessionToken', 'verifySessionToken', 'issueEmailVerificationToken']],
   ['auth register', authRegister, ['registerAccount', 'createSessionToken', 'session', 'AUTH_METHODS']],
@@ -226,6 +240,8 @@ for (const token of [
   '"r2_buckets"',
   '"binding": "FILES_BUCKET"',
   '"bucket_name": "inlet-files"',
+  '"INLET_FILES_PROJECT_MAX_MB": "100"',
+  '"INLET_FILES_PROJECT_MAX_COUNT": "20"',
 ]) {
   assert(wrangler.includes(token), `wrangler Pages config missing ${token}`);
 }

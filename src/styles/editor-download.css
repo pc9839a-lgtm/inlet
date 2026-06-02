@@ -1,1 +1,98 @@
-.download-editor-item{display:grid!important;gap:8px!important}.download-editor-filemeta{padding:10px!important;border:1px solid #e2e8f0!important;border-radius:16px!important;background:#fff!important;display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:8px!important;align-items:center!important}.download-editor-filemeta button{min-height:38px!important;border:0!important;border-radius:999px!important;background:#111827!important;color:#fff!important;font-size:13px!important;font-weight:950!important}.download-editor-filemeta button:disabled{opacity:.55!important;cursor:wait!important}.download-editor-filemeta span{color:#64748b!important;font-size:12px!important;font-weight:850!important;white-space:nowrap!important}@media(max-width:1180px){.download-editor-filemeta{grid-template-columns:1fr!important}.download-editor-filemeta span{white-space:normal!important}}
+.download-simple-list {
+  display: grid !important;
+  gap: 12px !important;
+}
+
+.download-simple-card {
+  display: grid !important;
+  gap: 10px !important;
+  padding: 12px !important;
+  border: 1px solid #d7deea !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+}
+
+.download-simple-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+}
+
+.download-simple-head strong {
+  color: #111827 !important;
+  font-size: 14px !important;
+  font-weight: 950 !important;
+}
+
+.download-simple-head button,
+.download-remove-file {
+  border: 0 !important;
+  background: transparent !important;
+  color: #ef4444 !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+}
+
+.download-simple-head button:disabled {
+  opacity: .35 !important;
+}
+
+.download-upload-row {
+  display: grid !important;
+  gap: 6px !important;
+}
+
+.download-upload-row label {
+  color: #64748b !important;
+  font-size: 12px !important;
+  font-weight: 850 !important;
+}
+
+.download-upload-row label span {
+  color: #ef4444 !important;
+  margin-left: 2px !important;
+}
+
+.download-upload-control {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto auto !important;
+  gap: 8px !important;
+  align-items: center !important;
+  min-height: 46px !important;
+  border: 1px solid #aab5c5 !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  padding: 0 8px !important;
+}
+
+.download-upload-control > button:first-child {
+  min-width: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #2563eb !important;
+  font-size: 13px !important;
+  font-weight: 850 !important;
+  text-align: left !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.download-upload-control em {
+  color: #64748b !important;
+  font-size: 13px !important;
+  font-style: normal !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 1180px) {
+  .download-upload-control {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+  }
+
+  .download-upload-control em {
+    display: none !important;
+  }
+}

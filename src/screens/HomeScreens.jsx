@@ -1,5 +1,6 @@
 import React, { Suspense, useEffect, useRef, useState } from 'react';
 import { authAccountErrorMessage, changeAuthPassword, confirmEmailVerification, isValidAccountPassword, loginAuthAccount, normalizeAccountPhone, registerAuthAccount, requestEmailVerification } from '../lib/authAccounts.js';
+import { pageSlugIssues, sanitizePageSlug } from '../lib/pageSlugs.js';
 
 const demoHero = {
   title: '고객 상담을\n빠르게 연결',
@@ -1003,7 +1004,7 @@ function TemplatePanelSlot({ Component, page, templates, onApply }) {
   );
 }
 
-function Dashboard({ user, page, leads, onCreate, onEdit, onPreview, onLogout, onAccountUpdate, onAi, onManual, onTemplate, templates = [], TemplatesPanelComponent = null }) {
+function Dashboard({ user, page, leads, onCreate, onEdit, onPreview, onLogout, onAccountUpdate, onAi, onManual, onTemplate, onCheckUrl, templates = [], TemplatesPanelComponent = null }) {
   const hasPage = !!page?.title;
   const leadCount = Array.isArray(leads) ? leads.length : 0;
   const [createOpen, setCreateOpen] = useState(false);
@@ -1123,6 +1124,7 @@ function Dashboard({ user, page, leads, onCreate, onEdit, onPreview, onLogout, o
             onAi={onAi}
             onManual={onManual}
             onTemplate={onTemplate}
+            onCheckUrl={onCheckUrl}
             onClose={() => setCreateOpen(false)}
             TemplatesPanelComponent={TemplatesPanelComponent}
           />
@@ -1158,8 +1160,10 @@ function Dashboard({ user, page, leads, onCreate, onEdit, onPreview, onLogout, o
     </div>
   );
 }
-function DashboardCreateFlow({ page, templates = [], onAi, onManual, onTemplate, onClose, TemplatesPanelComponent = null }) {
+function DashboardCreateFlow({ page, templates = [], onAi, onManual, onTemplate, onCheckUrl, onClose, TemplatesPanelComponent = null }) {
   const [step, setStep] = useState('menu');
+  const [pendingMode, setPendingMode] = useState('');
+  const [confirmedUrl, setConfirmedUrl] = useState(null);
   const footerBlock = page?.blocks?.find((block) => block.type === 'footer');
   const [footer, setFooter] = useState({
     company: footerBlock?.s?.company || '',
@@ -1168,36 +1172,56 @@ function DashboardCreateFlow({ page, templates = [], onAi, onManual, onTemplate,
     address: footerBlock?.s?.address || '',
   });
   const setFooterField = (key, value) => setFooter((current) => ({ ...current, [key]: value }));
+  const startUrlStep = (mode) => {
+    setPendingMode(mode);
+    setConfirmedUrl(null);
+    setStep('url');
+  };
+  const modeLabel = pendingMode === 'ai' ? 'AI 만들기' : pendingMode === 'manual' ? '직접 만들기' : pendingMode === 'template' ? '템플릿 만들기' : '';
+  const withUrl = (payload = {}) => ({ ...payload, ...(confirmedUrl || {}) });
 
   return (
     <section className={`home-create-flow home-create-step-${step}`}>
       <div className="home-create-head">
         <div>
           <span>새 랜딩 만들기</span>
-          <h2>{step === 'menu' ? '시작 방식을 선택하세요.' : step === 'ai' ? 'AI로 초안을 만듭니다.' : step === 'manual' ? '기본 정보만 넣고 시작합니다.' : '템플릿을 선택하세요.'}</h2>
+          <h2>{step === 'menu' ? '시작 방식을 선택하세요.' : step === 'url' ? 'URL을 먼저 확인합니다.' : step === 'ai' ? 'AI로 초안을 만듭니다.' : step === 'manual' ? '기본 정보만 넣고 시작합니다.' : '템플릿을 선택하세요.'}</h2>
           <p>{step === 'menu' ? '아래 3가지 방식 중 하나를 선택하면 이 화면에서 다음 단계가 바로 열립니다.' : '필요한 정보만 입력하고 다음 단계로 진행합니다.'}</p>
         </div>
         <button type="button" onClick={onClose}>닫기</button>
       </div>
 
       <div className="home-create-options">
-        <button type="button" className={step === 'ai' ? 'active primary' : ''} onClick={() => setStep('ai')}>
+        <button type="button" className={pendingMode === 'ai' ? 'active primary' : ''} onClick={() => startUrlStep('ai')}>
           <strong>AI 만들기</strong>
           <span>AI 설정과 초안 입력 화면으로 시작합니다.</span>
         </button>
-        <button type="button" className={step === 'manual' ? 'active primary' : ''} onClick={() => setStep('manual')}>
+        <button type="button" className={pendingMode === 'manual' ? 'active primary' : ''} onClick={() => startUrlStep('manual')}>
           <strong>직접 만들기</strong>
           <span>푸터 기본정보만 입력하고 바로 편집합니다.</span>
         </button>
-        <button type="button" className={step === 'template' ? 'active primary' : ''} onClick={() => setStep('template')}>
+        <button type="button" className={pendingMode === 'template' ? 'active primary' : ''} onClick={() => startUrlStep('template')}>
           <strong>템플릿 만들기</strong>
           <span>실제 예시 화면을 슬라이드로 보고 선택합니다.</span>
         </button>
       </div>
 
+      {step === 'url' && (
+        <UrlStartStep
+          initialSlug={page?.slug || ''}
+          modeLabel={modeLabel}
+          onBack={() => setStep('menu')}
+          onConfirm={(url) => {
+            setConfirmedUrl(url);
+            setStep(pendingMode || 'menu');
+          }}
+          onCheckUrl={onCheckUrl}
+        />
+      )}
+
       {step === 'ai' && (
         <div className="home-create-ai-panel">
-          <AiStartBasics onStart={onAi}/>
+          <AiStartBasics onStart={(input) => onAi?.(withUrl(input))}/>
         </div>
       )}
 
@@ -1207,13 +1231,13 @@ function DashboardCreateFlow({ page, templates = [], onAi, onManual, onTemplate,
           <label><span>대표자</span><input value={footer.owner} onChange={(e) => setFooterField('owner', e.target.value)} placeholder="예: 홍길동" /></label>
           <label><span>연락처</span><input value={footer.phone} onChange={(e) => setFooterField('phone', e.target.value)} placeholder="010-0000-0000" /></label>
           <label><span>주소</span><input value={footer.address} onChange={(e) => setFooterField('address', e.target.value)} placeholder="사업장 주소" /></label>
-          <button type="button" onClick={() => onManual?.(footer)}>직접 만들기 시작</button>
+          <button type="button" onClick={() => onManual?.(withUrl(footer))}>직접 만들기 시작</button>
         </div>
       )}
 
       {step === 'template' && (
         <div className="home-create-template">
-          <TemplatePanelSlot Component={TemplatesPanelComponent} page={page} templates={templates} onApply={onTemplate} />
+          <TemplatePanelSlot Component={TemplatesPanelComponent} page={page} templates={templates} onApply={(templateId) => onTemplate?.(templateId, confirmedUrl)} />
         </div>
       )}
     </section>
@@ -1289,8 +1313,75 @@ function AiStartBasics({ onStart }) {
   );
 }
 
-function CreateLandingModal({ page, onClose, onAi, onManual, onTemplate, templates = [], TemplatesPanelComponent = null }) {
+function UrlStartStep({ initialSlug = '', modeLabel = '', onBack, onConfirm, onCheckUrl }) {
+  const [slug, setSlug] = useState(() => sanitizePageSlug(initialSlug || '', ''));
+  const [checking, setChecking] = useState(false);
+  const [status, setStatus] = useState(null);
+  const issues = pageSlugIssues(slug);
+  const canCheck = !issues.length && !checking;
+
+  const check = async () => {
+    if (issues.length) {
+      setStatus({ tone: 'error', text: issues[0] });
+      return;
+    }
+    setChecking(true);
+    setStatus({ tone: 'info', text: '중복 여부를 확인하는 중입니다.' });
+    try {
+      const safeSlug = sanitizePageSlug(slug, '');
+      const result = await onCheckUrl?.({ slug: safeSlug });
+      if (result?.ok) {
+        setStatus({
+          tone: result.warning ? 'info' : 'success',
+          text: result.message || '사용 가능한 URL입니다.',
+        });
+        onConfirm?.({ slug: result.slug || safeSlug });
+        return;
+      }
+      setStatus({ tone: 'error', text: result?.message || '이미 사용 중인 URL입니다.' });
+    } catch (error) {
+      setStatus({ tone: 'error', text: String(error?.message || error || 'URL 확인에 실패했습니다.') });
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  return (
+    <div className="create-step-panel create-url-step">
+      <div className="create-modal-title">
+        <span>URL 설정</span>
+        <h2 id="create-landing-title">페이지 주소를 먼저 정합니다.</h2>
+        <p>{modeLabel ? `${modeLabel} 전에 URL 중복 여부를 확인합니다.` : 'URL 중복 여부를 확인한 뒤 페이지를 만듭니다.'}</p>
+      </div>
+      <label className="create-url-field">
+        <span>기본 도메인 URL</span>
+        <div>
+          <em>/</em>
+          <input
+            value={slug}
+            onChange={(event) => {
+              setSlug(sanitizePageSlug(event.target.value, ''));
+              setStatus(null);
+            }}
+            placeholder="my-brand"
+            autoComplete="off"
+          />
+        </div>
+        <small>영문 소문자, 숫자, 하이픈만 사용합니다. 무료 사용자는 확정 후 기본 도메인 URL을 변경할 수 없습니다.</small>
+      </label>
+      {status && <p className={`create-url-status ${status.tone}`}>{status.text}</p>}
+      <div className="create-url-actions">
+        <button type="button" onClick={onBack}>이전</button>
+        <button type="button" className="primary" disabled={!canCheck} onClick={check}>{checking ? '확인 중' : '중복 확인 후 계속'}</button>
+      </div>
+    </div>
+  );
+}
+
+function CreateLandingModal({ page, onClose, onAi, onManual, onTemplate, onCheckUrl, templates = [], TemplatesPanelComponent = null }) {
   const [step, setStep] = useState('menu');
+  const [pendingMode, setPendingMode] = useState('');
+  const [confirmedUrl, setConfirmedUrl] = useState(null);
   const dialogRef = useRef(null);
   const [footer, setFooter] = useState({
     company: page?.blocks?.find((block) => block.type === 'footer')?.s?.company || '',
@@ -1299,6 +1390,17 @@ function CreateLandingModal({ page, onClose, onAi, onManual, onTemplate, templat
     address: page?.blocks?.find((block) => block.type === 'footer')?.s?.address || '',
   });
   const setFooterField = (key, value) => setFooter((current) => ({ ...current, [key]: value }));
+  const startUrlStep = (mode) => {
+    setPendingMode(mode);
+    setConfirmedUrl(null);
+    setStep('url');
+  };
+  const modeLabel = pendingMode === 'ai' ? 'AI 초안 생성' : pendingMode === 'manual' ? '직접 만들기' : pendingMode === 'template' ? '템플릿 선택' : '';
+  const continueAfterUrl = (url) => {
+    setConfirmedUrl(url);
+    setStep(pendingMode || 'menu');
+  };
+  const withUrl = (payload = {}) => ({ ...payload, ...(confirmedUrl || {}) });
 
   useEffect(() => {
     const focusable = dialogRef.current?.querySelector?.('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
@@ -1316,7 +1418,7 @@ function CreateLandingModal({ page, onClose, onAi, onManual, onTemplate, templat
         <button className="create-modal-close" type="button" onClick={onClose} aria-label="닫기">×</button>
 
         {step !== 'menu' && (
-          <button className="create-modal-back" type="button" onClick={() => setStep('menu')}>← 선택으로</button>
+          <button className="create-modal-back" type="button" onClick={() => setStep(step === 'url' ? 'menu' : 'url')}>← 이전</button>
         )}
 
         {step === 'menu' && (
@@ -1328,22 +1430,32 @@ function CreateLandingModal({ page, onClose, onAi, onManual, onTemplate, templat
             </div>
 
             <div className="create-options create-mode-options">
-              <button type="button" className="primary" onClick={() => setStep('ai')}>
+              <button type="button" className="primary" onClick={() => startUrlStep('ai')}>
                 <strong>AI 만들기</strong>
                 <span>AI 설정과 초안 입력 화면으로 시작합니다.</span>
               </button>
 
-              <button type="button" onClick={() => setStep('manual')}>
+              <button type="button" onClick={() => startUrlStep('manual')}>
                 <strong>직접 만들기</strong>
                 <span>푸터 기본정보만 입력하고 바로 편집합니다.</span>
               </button>
 
-              <button type="button" onClick={() => setStep('template')}>
+              <button type="button" onClick={() => startUrlStep('template')}>
                 <strong>템플릿 만들기</strong>
                 <span>실제 예시 화면을 넘겨보고 선택합니다.</span>
               </button>
             </div>
           </>
+        )}
+
+        {step === 'url' && (
+          <UrlStartStep
+            initialSlug={page?.slug || ''}
+            modeLabel={modeLabel}
+            onBack={() => setStep('menu')}
+            onConfirm={continueAfterUrl}
+            onCheckUrl={onCheckUrl}
+          />
         )}
 
         {step === 'ai' && (
@@ -1353,7 +1465,7 @@ function CreateLandingModal({ page, onClose, onAi, onManual, onTemplate, templat
               <h2 id="create-landing-title">기본 정보를 먼저 저장합니다.</h2>
               <p>API 키는 지금 입력하지 않습니다. 제작 방향만 저장하고 AI 설정 화면에서 나중에 연결합니다.</p>
             </div>
-            <AiStartBasics onStart={onAi}/>
+            <AiStartBasics onStart={(input) => onAi?.(withUrl(input))}/>
           </div>
         )}
 
@@ -1369,7 +1481,7 @@ function CreateLandingModal({ page, onClose, onAi, onManual, onTemplate, templat
               <label><span>대표자</span><input value={footer.owner} onChange={(e) => setFooterField('owner', e.target.value)} placeholder="예: 홍길동" /></label>
               <label><span>연락처</span><input value={footer.phone} onChange={(e) => setFooterField('phone', e.target.value)} placeholder="010-0000-0000" /></label>
               <label><span>주소</span><input value={footer.address} onChange={(e) => setFooterField('address', e.target.value)} placeholder="사업장 주소" /></label>
-              <button type="button" onClick={() => onManual?.(footer)}>직접 만들기 시작</button>
+              <button type="button" onClick={() => onManual?.(withUrl(footer))}>직접 만들기 시작</button>
             </div>
           </div>
         )}
@@ -1377,7 +1489,7 @@ function CreateLandingModal({ page, onClose, onAi, onManual, onTemplate, templat
         {step === 'template' && (
           <div className="create-template-step">
             <h2 id="create-landing-title" className="sr-only">템플릿을 선택하세요.</h2>
-            <TemplatePanelSlot Component={TemplatesPanelComponent} page={page} templates={templates} onApply={onTemplate} />
+            <TemplatePanelSlot Component={TemplatesPanelComponent} page={page} templates={templates} onApply={(templateId) => onTemplate?.(templateId, confirmedUrl)} />
           </div>
         )}
       </section>
