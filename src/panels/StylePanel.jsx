@@ -289,8 +289,13 @@ export default function StylePanel({ page, updateTheme, updateBlocks, onPreviewT
   const [draftTheme, setDraftTheme] = useState(page.theme || {});
   const [draftBlocks, setDraftBlocks] = useState(() => clone(page.blocks || []));
   const styleBlocks = useMemo(() => draftBlocks.filter((block) => STYLE_WIDGET_TYPES.has(block.type)), [draftBlocks]);
-  const [selectedBlockId, setSelectedBlockId] = useState(() => styleBlocks[0]?.id || '');
-  const selectedBlock = styleBlocks.find((block) => block.id === selectedBlockId) || styleBlocks[0] || null;
+  const defaultStyleBlockId = useMemo(() => (
+    styleBlocks.find((block) => !['topnav', 'bottombar', 'footer'].includes(block.type))?.id
+    || styleBlocks[0]?.id
+    || ''
+  ), [styleBlocks]);
+  const [selectedBlockId, setSelectedBlockId] = useState(() => defaultStyleBlockId);
+  const selectedBlock = styleBlocks.find((block) => block.id === selectedBlockId) || styleBlocks.find((block) => block.id === defaultStyleBlockId) || null;
   const bgPresets = ['#F5F7FA', '#FFFFFF', '#EEF2FF', '#F8F3EA', '#111827'];
   const bgMode = draftTheme.bgMode || 'solid';
   const dirty = useMemo(
@@ -304,8 +309,8 @@ export default function StylePanel({ page, updateTheme, updateBlocks, onPreviewT
   }, [page.theme, page.blocks]);
 
   useEffect(() => {
-    if (!selectedBlock && styleBlocks[0]?.id) setSelectedBlockId(styleBlocks[0].id);
-  }, [selectedBlock, styleBlocks]);
+    if (!selectedBlock && defaultStyleBlockId) setSelectedBlockId(defaultStyleBlockId);
+  }, [defaultStyleBlockId, selectedBlock]);
 
   useEffect(() => {
     onPreviewThemeChange?.(draftTheme);

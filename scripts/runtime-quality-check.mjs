@@ -208,6 +208,7 @@ assert(richField.includes('<textarea') && richField.includes('onChange={(event) 
 assert(!richField.includes('type="color"') && !richField.includes("document.execCommand('foreColor'"), 'RichField must not expose per-widget color formatting controls');
 assert(previewUtils.includes('dangerouslySetInnerHTML') && previewUtils.includes('style="color:${color}"') && previewUtils.includes('<u>${inner}</u>') && previewUtils.includes('<strong>${inner}</strong>'), 'preview rich text renderer must preserve color, underline, and bold markup');
 assert(stylePanel.includes('onPreviewThemeChange?.(draftTheme)') && app.includes('const [stylePreviewTheme, setStylePreviewTheme] = useState(null)'), 'StylePanel draft changes must keep live preview wiring');
+assert(stylePanel.includes("!['topnav', 'bottombar', 'footer'].includes(block.type)") && stylePanel.includes('defaultStyleBlockId'), 'StylePanel must not auto-select fixed layout widgets on first entry');
 assert(settingsPanel.includes("<span className=\"settings-section-state\" aria-hidden=\"true\">{open ? '−' : '+'}</span>"), 'Settings sections must use compact icon-only open controls');
 assert(!/className="settings-section-state"[^>]*>\s*\{open\s*\?\s*'접기'\s*:\s*'열기'\}/.test(settingsPanel), 'Settings section controls must not render clipped text labels');
 assert(/grid-template-columns:\s*minmax\(0,\s*1fr\)\s*42px\s*!important/.test(settingsPanelCss), 'Settings section headers must reserve only icon-width action space');
