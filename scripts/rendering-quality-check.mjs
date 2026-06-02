@@ -193,6 +193,7 @@ const visualGeometryContracts = [
   ['public landing keeps topnav loop disabled', files.previewCss.includes('.public-landing-viewport .topnav-menu-loop .top-menu-track') && files.previewCss.includes('animation: none !important') && files.previewCss.includes('.public-landing-viewport .top-menu-set-copy')],
   ['map widget has bounded embed area', files.previewCss.includes('.inlet-map-section') && /min-height|aspect-ratio/.test(files.previewCss)],
   ['faq content has vertical spacing', files.previewCss.includes('.faq-widget') && files.previewCss.includes('gap:')],
+  ['widget box options render visible background and shadow', files.previewCss.includes('background:var(--widget-bg') && files.previewCss.includes('.landing-section.widget-shadow-on') && !/\.landing-section\.widget-shadow-on\s*\{[^}]*box-shadow:\s*none/i.test(files.previewCss)],
   ['selected preview outline suppressed in template mode', files.previewCss.includes('.landing-page.template-preview') && files.previewCss.includes('outline: 0')],
 ];
 
