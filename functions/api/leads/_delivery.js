@@ -75,21 +75,14 @@ export function buildLeadDeliveryJobs(page = {}, lead = {}) {
     });
   }
 
-  if (integrations.sheets?.enabled && isValidHttpUrl(integrations.sheets.url)) {
+  if (integrations.sheets?.enabled && isValidHttpUrl(integrations.sheets.webhookUrl || integrations.sheets.url)) {
     jobs.push({
       type: 'webhook',
       provider: 'google_sheets',
       label: 'Google Sheets',
-      url: integrations.sheets.url,
+      url: integrations.sheets.webhookUrl || integrations.sheets.url,
       secret: integrations.sheets.secret || '',
-      payload: {
-        ...payload,
-        target: 'google_sheets',
-        service: 'google_sheets',
-        sheetName: integrations.sheets.sheetName || '접수함',
-        emailEnabled: !!integrations.sheets.emailEnabled,
-        notifyEmail: integrations.sheets.notifyEmail || '',
-      },
+      payload: googleSheetsPayload(payload, integrations.sheets, page, lead),
     });
   }
 
@@ -97,6 +90,49 @@ export function buildLeadDeliveryJobs(page = {}, lead = {}) {
     ...job,
     idempotencyKey: deliveryIdempotencyKey(lead, job),
   }));
+}
+
+function googleSheetsPayload(payload = {}, sheets = {}, page = {}, lead = {}) {
+  const fields = { ...(lead.values || {}) };
+  for (const answer of Array.isArray(lead.answers) ? lead.answers : []) {
+    const key = answer.label || answer.id;
+    if (key) fields[key] = Array.isArray(answer.value) ? answer.value.join(', ') : String(answer.value || '');
+  }
+  return {
+    schemaVersion: payload.schemaVersion || 'inlet.lead.v1',
+    event: payload.event || 'lead.created',
+    source: payload.source || 'pagero',
+    target: 'google_sheets',
+    provider: 'google_sheets',
+    mode: sheets.mode || 'webhook',
+    sheetName: sheets.sheetName || '접수함',
+    lead: {
+      id: lead.id || '',
+      name: lead.name || lead.values?.name || '',
+      phone: lead.phone || lead.values?.phone || '',
+      email: lead.email || lead.values?.email || '',
+      message: lead.message || '',
+      createdAt: lead.createdAt || payload.createdAt || new Date().toISOString(),
+      fields,
+    },
+    page: {
+      id: page.id || page.projectId || '',
+      title: page.title || '',
+      slug: page.slug || '',
+      url: page.publicUrl || page.url || '',
+    },
+    project: {
+      id: page.projectId || page.id || '',
+    },
+    attribution: {
+      utmSource: lead.utmSource || '',
+      utmMedium: lead.utmMedium || '',
+      utmCampaign: lead.utmCampaign || '',
+      referrer: lead.referrer || '',
+      sourceUrl: lead.sourceUrl || '',
+    },
+    createdAt: lead.createdAt || payload.createdAt || new Date().toISOString(),
+  };
 }
 
 function leadIntegrationPayload(lead = {}, page = {}) {

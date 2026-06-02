@@ -240,6 +240,20 @@ async function run() {
     httpStatus: protectedRevisions.res.status,
   });
 
+  const protectedUploadForm = new FormData();
+  protectedUploadForm.append('project', JSON.stringify(project));
+  protectedUploadForm.append('file', new Blob(['qa'], { type: 'application/pdf' }), 'qa.pdf');
+  const protectedUpload = await fetch(`${baseUrl}/api/files/upload`, {
+    method: 'POST',
+    body: protectedUploadForm,
+    signal: AbortSignal.timeout(10000),
+  });
+  checks.push({
+    name: 'Hosted /api/files/upload write protection',
+    status: protectedUpload.status === 403 ? 'ready' : 'failed-live',
+    httpStatus: protectedUpload.status,
+  });
+
   const authEmail = `hosted-route-qa-${stamp}@inlet.test`;
   const authPhone = `010${stamp.slice(-8)}`;
   const authPhoneNext = `011${stamp.slice(-8)}`;
@@ -501,6 +515,14 @@ async function run() {
     status: pageRestore.res.ok && pageRestore.data?.page?.title === 'Hosted Page QA v1' ? 'ready' : 'failed-live',
     httpStatus: pageRestore.res.status,
     failureReason: pageRestore.data?.error || pageRestore.data?.page?.title || '',
+  });
+
+  const missingFile = await jsonFetch('/api/files/download?key=missing/qa.pdf');
+  checks.push({
+    name: 'Hosted /api/files/download public route',
+    status: [404, 503].includes(missingFile.res.status) ? 'ready' : 'failed-live',
+    httpStatus: missingFile.res.status,
+    failureReason: missingFile.data?.error || missingFile.text?.slice(0, 160),
   });
 
   const passwordLegacyFlag = await jsonFetch('/api/auth/password', {

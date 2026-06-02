@@ -1,6 +1,9 @@
 (function () {
+  'use strict';
+
   var API_URL = 'https://pagero.kr/api/leads';
   var HOME_URL = 'https://pagero.kr';
+  var SCRIPT_SELECTOR = 'script[src*="/embed/form.js"]';
 
   function css() {
     if (document.getElementById('pagero-form-style')) return;
@@ -21,25 +24,27 @@
   }
 
   function fieldMarkup(q) {
-    var id = 'pagero-' + esc(q.id);
+    q = q || {};
+    var safeId = String(q.id || ('q_' + Math.random().toString(36).slice(2, 8)));
+    var id = 'pagero-' + esc(safeId);
     var required = q.required ? ' required' : '';
-    var label = esc(q.label) + (q.required ? '<b>*</b>' : '');
+    var label = esc(q.label || '질문') + (q.required ? '<b>*</b>' : '');
     var placeholder = esc(q.placeholder || q.label || '');
-    if (q.type === 'long') return '<label class="pagero-form-field" for="' + id + '"><span>' + label + '</span><textarea id="' + id + '" name="' + esc(q.id) + '" placeholder="' + placeholder + '"' + required + '></textarea></label>';
+    if (q.type === 'long') return '<label class="pagero-form-field" for="' + id + '"><span>' + label + '</span><textarea id="' + id + '" name="' + esc(safeId) + '" placeholder="' + placeholder + '"' + required + '></textarea></label>';
     if (q.type === 'select') {
       var selectOptions = (q.options && q.options.length ? q.options : ['선택 1', '선택 2']).map(function (option) {
         return '<option value="' + esc(option) + '">' + esc(option) + '</option>';
       }).join('');
-      return '<label class="pagero-form-field" for="' + id + '"><span>' + label + '</span><select id="' + id + '" name="' + esc(q.id) + '"' + required + '><option value="">선택</option>' + selectOptions + '</select></label>';
+      return '<label class="pagero-form-field" for="' + id + '"><span>' + label + '</span><select id="' + id + '" name="' + esc(safeId) + '"' + required + '><option value="">선택</option>' + selectOptions + '</select></label>';
     }
     if (q.type === 'multi') {
       var checks = (q.options && q.options.length ? q.options : ['선택 1', '선택 2']).map(function (option, index) {
-        return '<label><input type="checkbox" name="' + esc(q.id) + '" value="' + esc(option) + '"' + (index === 0 && q.required ? ' data-required-group="1"' : '') + '>' + esc(option) + '</label>';
+        return '<label><input type="checkbox" name="' + esc(safeId) + '" value="' + esc(option) + '"' + (index === 0 && q.required ? ' data-required-group="1"' : '') + '>' + esc(option) + '</label>';
       }).join('');
       return '<fieldset class="pagero-form-field pagero-form-checks"><legend>' + label + '</legend>' + checks + '</fieldset>';
     }
     var inputType = q.type === 'email' ? 'email' : q.type === 'phone' ? 'tel' : 'text';
-    return '<label class="pagero-form-field" for="' + id + '"><span>' + label + '</span><input id="' + id + '" type="' + inputType + '" name="' + esc(q.id) + '" placeholder="' + placeholder + '"' + required + '></label>';
+    return '<label class="pagero-form-field" for="' + id + '"><span>' + label + '</span><input id="' + id + '" type="' + inputType + '" name="' + esc(safeId) + '" placeholder="' + placeholder + '"' + required + '></label>';
   }
 
   function channelFromReferrer(referrer) {
@@ -129,6 +134,7 @@
 
   function render(target, cfg) {
     css();
+    cfg = cfg || {};
     cfg.questions = Array.isArray(cfg.questions) ? cfg.questions : [];
     target.innerHTML = '<div class="pagero-form-wrap"><form class="pagero-form-card" data-pagero-form><h2>' + esc(cfg.title || '상담 신청') + '</h2>' + (cfg.desc ? '<p>' + esc(cfg.desc) + '</p>' : '') + cfg.questions.map(fieldMarkup).join('') + (cfg.privacyRequired !== false ? '<label class="pagero-form-privacy"><input type="checkbox" name="privacy" required><span>' + esc(cfg.privacy || '개인정보 수집 및 이용에 동의합니다.') + '</span></label>' : '') + '<button class="pagero-form-submit" type="submit">' + esc(cfg.submit || '접수하기') + '</button><div class="pagero-form-notice" data-pagero-notice></div></form><a class="pagero-powered" href="' + HOME_URL + '" target="_blank" rel="noopener">페이지로로 제작됨</a></div>';
 
@@ -180,13 +186,22 @@
     });
   }
 
-  function init(script) {
+  function targetForScript(script) {
+    if (!script || script.getAttribute('data-pagero-loaded') === '1') return null;
     var targetId = script.getAttribute('data-target');
     var target = targetId ? document.getElementById(targetId) : null;
     if (!target) {
       target = document.createElement('div');
-      script.parentNode.insertBefore(target, script);
+      if (script.parentNode) script.parentNode.insertBefore(target, script);
+      else document.body.appendChild(target);
     }
+    script.setAttribute('data-pagero-loaded', '1');
+    return target;
+  }
+
+  function init(script) {
+    var target = targetForScript(script);
+    if (!target) return;
     try {
       var configEl = document.getElementById(script.getAttribute('data-config') || '');
       var config = script.getAttribute('data-pagero')
@@ -198,5 +213,16 @@
     }
   }
 
-  init(document.currentScript || document.querySelector('script[src*="/embed/form.js"][data-target]'));
+  function initAll() {
+    var scripts = document.querySelectorAll(SCRIPT_SELECTOR);
+    for (var i = 0; i < scripts.length; i += 1) {
+      if (scripts[i].getAttribute('data-pagero') || scripts[i].getAttribute('data-config') || scripts[i].getAttribute('data-target')) {
+        init(scripts[i]);
+      }
+    }
+  }
+
+  init(document.currentScript);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAll);
+  else initAll();
 }());

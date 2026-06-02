@@ -3704,15 +3704,15 @@ function buildServerIntegrationJobs(integrations = {}, lead = {}, page = {}) {
     });
   }
 
-  if (integrations.sheets?.enabled && isValidHttpUrl(integrations.sheets.url)) {
+  const sheetsUrl = integrations.sheets?.webhookUrl || integrations.sheets?.url || '';
+  if (integrations.sheets?.enabled && isValidHttpUrl(sheetsUrl)) {
     jobs.push({
       type: 'http',
       label: '구글 시트',
-      url: integrations.sheets.url,
+      url: sheetsUrl,
       payload: {
-        ...payload,
-        target: 'google_sheets',
-        sheetName: integrations.sheets.sheetName || '접수DB',
+        ...googleSheetsServerPayload(payload, integrations.sheets, page, lead),
+        sheetName: integrations.sheets.sheetName || '접수함',
       },
       secret: integrations.sheets.secret || '',
     });
@@ -3773,6 +3773,49 @@ function deliveryIdempotencyKey(lead = {}, job = {}) {
     .filter(Boolean)
     .join(':')
     .slice(0, 180);
+}
+
+function googleSheetsServerPayload(payload = {}, sheets = {}, page = {}, lead = {}) {
+  const fields = { ...(lead.values || {}) };
+  for (const answer of Array.isArray(lead.answers) ? lead.answers : []) {
+    const key = answer?.label || answer?.name || answer?.id;
+    if (key && fields[key] == null) fields[key] = answer?.value ?? answer?.text ?? '';
+  }
+  return {
+    schemaVersion: payload.schemaVersion || 'inlet.lead.v1',
+    event: payload.event || 'lead.created',
+    source: payload.source || 'pagero',
+    target: 'google_sheets',
+    provider: 'google_sheets',
+    mode: sheets.mode || 'webhook',
+    sheetName: sheets.sheetName || '접수함',
+    lead: {
+      id: lead.id || payload.lead?.id || '',
+      name: lead.name || lead.values?.name || payload.contact?.name || '',
+      phone: lead.phone || lead.values?.phone || payload.contact?.phone || '',
+      email: lead.email || lead.values?.email || payload.contact?.email || '',
+      message: lead.message || lead.values?.message || '',
+      createdAt: lead.createdAt || payload.createdAt || new Date().toISOString(),
+      fields,
+    },
+    page: {
+      id: page.id || page.projectId || '',
+      title: page.title || payload.page?.title || '',
+      slug: page.slug || payload.page?.slug || '',
+      url: page.publicUrl || page.url || '',
+    },
+    project: {
+      id: page.projectId || page.id || '',
+    },
+    source: {
+      utmSource: lead.utmSource || lead.source?.utmSource || '',
+      utmMedium: lead.utmMedium || lead.source?.utmMedium || '',
+      utmCampaign: lead.utmCampaign || lead.source?.utmCampaign || '',
+      referrer: lead.referrer || lead.source?.referrer || '',
+      sourceUrl: lead.sourceUrl || lead.pageUrl || '',
+    },
+    createdAt: payload.createdAt || lead.createdAt || new Date().toISOString(),
+  };
 }
 
 function jobHeaderValue(value = '') {

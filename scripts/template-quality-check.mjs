@@ -10,6 +10,7 @@ const EDITABLE_TYPES = new Set([
   'schedule',
   'faq',
   'links',
+  'download',
   'timer',
   'activity',
   'spacer',

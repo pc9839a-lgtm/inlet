@@ -3,6 +3,7 @@ import {
   isProductLink,
   linkHostLabel,
   linkThumbnailFromUrl,
+  normalizeExternalUrl,
 } from '../../lib/linkPreview.js';
 import { pickSafe, widgetBoxClass, widgetBoxVars } from './previewUtils.jsx';
 
@@ -193,6 +194,76 @@ export function RenderLinks({ block, track, go }) {
         onClickCapture={blockDragClick}
       >
         {items.map((item) => renderLinkItem(item, layout, track, go))}
+      </div>
+    </section>
+  );
+}
+
+function normalizeDownloadItem(item = {}, index = 0) {
+  const extension = String(item.extension || item.fileName?.split('.').pop() || 'pdf').replace(/^\./, '').toUpperCase();
+  return {
+    id: item.id || `download-${index}`,
+    badge: item.badge || extension,
+    title: item.title || item.label || `자료 ${index + 1}`,
+    desc: item.desc || item.body || '',
+    fileName: item.fileName || '',
+    fileUrl: item.fileUrl || item.url || '',
+    extension,
+    sizeLabel: item.sizeLabel || '',
+  };
+}
+
+function downloadSubLabel(item = {}) {
+  return [item.fileName, item.sizeLabel].filter(Boolean).join(' · ');
+}
+
+function normalizeDownloadHref(raw = '') {
+  const value = String(raw || '').trim();
+  if (!value) return '';
+  if (/^(\/|blob:|data:)/i.test(value)) return value;
+  return normalizeExternalUrl(value);
+}
+
+export function RenderDownload({ block, track }) {
+  const s = block.s || {};
+  const layout = pickSafe(s.layout || 'card', ['card', 'list'], 'card');
+  const align = pickSafe(s.align || 'left', ['left', 'center', 'right'], 'left');
+  const items = (Array.isArray(s.items) ? s.items : []).map(normalizeDownloadItem);
+  const buttonLabel = s.buttonLabel || '다운로드';
+
+  return (
+    <section id={`block-${block.id}`} className={`landing-section download-widget download-${layout} align-${align}`}>
+      {s.title && <h2>{s.title}</h2>}
+      {s.desc && <p className="download-desc">{s.desc}</p>}
+      <div className="download-items">
+        {items.map((item) => {
+          const href = normalizeDownloadHref(item.fileUrl);
+          const disabled = !href;
+          return (
+            <article key={item.id} className={`download-item ${disabled ? 'is-disabled' : ''}`}>
+              <div className="download-file-icon" aria-hidden="true">{item.badge || item.extension}</div>
+              <div className="download-body">
+                <strong>{item.title}</strong>
+                {item.desc && <p>{item.desc}</p>}
+                {downloadSubLabel(item) && <small>{downloadSubLabel(item)}</small>}
+              </div>
+              {disabled ? (
+                <span className="download-action is-disabled">준비중</span>
+              ) : (
+                <a
+                  className="download-action"
+                  href={href}
+                  target={s.newWindow === false ? undefined : '_blank'}
+                  rel={s.newWindow === false ? undefined : 'noopener noreferrer'}
+                  download={item.fileName || undefined}
+                  onClick={() => track?.({ type: 'file_download_click', label: item.title })}
+                >
+                  {buttonLabel}
+                </a>
+              )}
+            </article>
+          );
+        })}
       </div>
     </section>
   );

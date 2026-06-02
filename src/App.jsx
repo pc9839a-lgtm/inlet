@@ -58,6 +58,7 @@ const SearchEditor = lazy(() => import('./editor/blockEditors/UtilityEditors.jsx
 const HeroEditor = lazy(() => import('./editor/blockEditors/HeroEditor.jsx'));
 const ImageEditor = lazy(() => import('./editor/blockEditors/ImageEditor.jsx'));
 const LinksEditor = lazy(() => import('./editor/blockEditors/LinksEditor.jsx'));
+const DownloadEditor = lazy(() => import('./editor/blockEditors/DownloadEditor.jsx'));
 const FormEditor = lazy(() => import('./editor/blockEditors/FormEditor.jsx'));
 const ReservationEditor = lazy(() => import('./editor/blockEditors/ReservationEditor.jsx'));
 const BottomBarEditor = lazy(() => import('./editor/blockEditors/BottomBarEditor.jsx'));
@@ -75,6 +76,7 @@ const BLOCK_EDITORS = {
   map: MapEditor,
   faq: FaqEditor,
   links: LinksEditor,
+  download: DownloadEditor,
   schedule: ScheduleEditor,
   timer: TimerEditor,
   activity: ActivityEditor,
@@ -1405,7 +1407,7 @@ function App() {
       showToast('스타일 설정이 저장되었습니다.', 'success');
   };
 
-  const saveNow = async () => {
+  const saveNow = async (pageOverride = null) => {
     if (!allowedTabs.includes(tab)) {
       markSaveStatus('warning', '저장 차단', '현재 권한에서 저장할 수 없는 화면입니다.');
       return;
@@ -1425,7 +1427,7 @@ function App() {
       return;
     }
 
-    const nextPage = normalizePageForSave(page);
+    const nextPage = normalizePageForSave(pageOverride || page);
     saveLocalJson(STORAGE_KEY, nextPage, '페이지');
     let result = null;
     try {
@@ -1923,7 +1925,7 @@ function App() {
                     renderTopNavEditor={(block)=>renderLazyEditor(TopNavEditor, { s: block.s || {}, set: (patch)=>updateBlock(block.id, patch), page, TargetControl })}
                     renderBottomBarEditor={(block)=>renderLazyEditor(BottomBarEditor, { s: block.s || {}, set: (patch)=>updateBlock(block.id, patch), page })}
                     renderFooterEditor={(block)=>renderLazyEditor(FooterEditor, { s: block.s || {}, set: (patch)=>updateBlock(block.id, patch), page })}
-                    renderBlockEditor={(block)=><BlockEditor block={block} page={page} updateBlock={updateBlock} editors={BLOCK_EDITORS} editorDeps={{ Color, Range, RichField, TargetControl, WidgetDesignControls, generateStandaloneFormHtml }}/>}
+                    renderBlockEditor={(block)=><BlockEditor block={block} page={page} updateBlock={updateBlock} editors={BLOCK_EDITORS} editorDeps={{ Color, Range, RichField, TargetControl, WidgetDesignControls, generateStandaloneFormHtml, authUser }}/>}
                   />
                 )} 
                 <LazyChunkBoundary resetKey={tab}>

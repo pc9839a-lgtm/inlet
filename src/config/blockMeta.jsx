@@ -1,6 +1,7 @@
 import {
   CalendarDays,
   Code2,
+  Download,
   FileText,
   LayoutGrid,
   HelpCircle,
@@ -25,6 +26,7 @@ export const META = {
   text: { label: '텍스트', badge: 'TXT', icon: Type, category: 'content' },
   cards: { label: '카드', badge: 'CARD', icon: LayoutGrid, category: 'content' },
   links: { label: '링크', badge: 'LINK', icon: LinkIcon, category: 'conversion' },
+  download: { label: '자료 다운로드', badge: 'FILE', icon: Download, category: 'conversion' },
   map: { label: '지도', badge: 'MAP', icon: MapPin, category: 'info' },
   schedule: { label: '일정', badge: 'DATE', icon: CalendarDays, category: 'info' },
   faq: { label: 'FAQ', badge: 'FAQ', icon: HelpCircle, category: 'content' },

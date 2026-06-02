@@ -60,7 +60,7 @@ export default function FormEditor({ s, set, page, generateStandaloneFormHtml })
   const add = (type = 'short') => {
     const q = createQuestion({
       type,
-      label: ({name:'이름',phone:'연락처',email:'이메일',address:'주소',long:'문의내용',select:'선택 질문',multi:'복수 선택 질문'}[type] || '새 질문')
+      label: ({name:'이름',phone:'연락처',email:'이메일',address:'주소',long:'문의내용',select:'선택 질문',multi:'복수 선택 질문'}[type] || '새 질문'),
     });
     set({ questions: [...qs, q] });
     setOpenQ(q.id);

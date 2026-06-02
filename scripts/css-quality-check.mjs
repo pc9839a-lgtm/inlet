@@ -33,6 +33,7 @@ const cssFiles = [
   'src/styles/editor-wysiwyg.css',
   'src/styles/editor-dock.css',
   'src/styles/editor-widget-controls.css',
+  'src/styles/editor-download.css',
   'src/styles/editor-stack.css',
   'src/styles/editor-demo.css',
   'src/styles/panels.css',
@@ -90,6 +91,7 @@ const cssFiles = [
   'src/styles/preview-widgets-links-list.css',
   'src/styles/preview-widgets-links-carousel.css',
   'src/styles/preview-widgets-links-card.css',
+  'src/styles/preview-download.css',
   'src/styles/preview-workspace.css',
   'src/styles/preview-workspace-bottom-timer.css',
   'src/styles/preview-workspace-hero-media.css',
@@ -178,7 +180,7 @@ function findDuplicateRules(css) {
     const selector = match[1].trim().replace(/\s+/g, ' ');
     const body = match[2].trim().replace(/\s+/g, ' ');
     if (!selector || selector.includes('@')) continue;
-    if (selector === 'from' || selector === 'to' || /^\d+(?:\.\d+)?%$/.test(selector)) continue;
+    if (selector === 'from' || selector === 'to' || /^[\d.,%\s]+$/.test(selector)) continue;
     if (/^(media|supports|container|keyframes)\b/.test(selector)) continue;
     const key = `${selector}{${body}}`;
     if (seen.has(key)) duplicates.push({ key, start: match.index, end: rulePattern.lastIndex });
@@ -194,7 +196,7 @@ function removeDuplicateRules(css) {
     const selector = selectorRaw.trim().replace(/\s+/g, ' ');
     const body = bodyRaw.trim().replace(/\s+/g, ' ');
     if (!selector || selector.includes('@')) return full;
-    if (selector === 'from' || selector === 'to' || /^\d+(?:\.\d+)?%$/.test(selector)) return full;
+    if (selector === 'from' || selector === 'to' || /^[\d.,%\s]+$/.test(selector)) return full;
     if (/^(media|supports|container|keyframes)\b/.test(selector)) return full;
     const key = `${selector}{${body}}`;
     if (seen.has(key)) return '';

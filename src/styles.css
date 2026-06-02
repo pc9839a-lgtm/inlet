@@ -29,6 +29,7 @@
 @import './styles/editor-wysiwyg.css';
 @import './styles/editor-dock.css';
 @import './styles/editor-widget-controls.css';
+@import './styles/editor-download.css';
 @import './styles/editor-stack.css';
 @import './styles/editor-demo.css';
 @import './styles/editor-add-dock-fix.css';

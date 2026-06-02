@@ -20,6 +20,9 @@ const pages = await readFile('functions/api/pages/[slug].js', 'utf8');
 const pageRevisions = await readFile('functions/api/pages/[slug]/revisions.js', 'utf8');
 const pageRevision = await readFile('functions/api/pages/[slug]/revisions/[id].js', 'utf8');
 const pageRestore = await readFile('functions/api/pages/[slug]/restore.js', 'utf8');
+const filesShared = await readFile('functions/api/files/_files.js', 'utf8');
+const filesUpload = await readFile('functions/api/files/upload.js', 'utf8');
+const filesDownload = await readFile('functions/api/files/download.js', 'utf8');
 const authShared = await readFile('functions/api/auth/_auth.js', 'utf8');
 const authRegister = await readFile('functions/api/auth/register.js', 'utf8');
 const authLogin = await readFile('functions/api/auth/login.js', 'utf8');
@@ -78,12 +81,14 @@ const externalDeliveryJobs = buildLeadDeliveryJobs({
   integrations: {
     webhook: { enabled: true, url: 'https://example.test/webhook', service: 'custom' },
     automation: { enabled: true, url: 'https://example.test/make', service: 'make' },
-    sheets: { enabled: true, url: 'https://example.test/sheets', sheetName: 'Leads' },
+    sheets: { enabled: true, provider: 'google_sheets', mode: 'webhook', webhookUrl: 'https://example.test/sheets', sheetName: 'Leads' },
   },
 }, { id: 'lead-external-payload', type: 'consult', name: 'Payload QA', phone: '010-0000-0000', email: 'qa@example.test', createdAt: '2026-06-01T00:00:00.000Z' });
 assert(externalDeliveryJobs.some((job) => job.payload?.target === 'webhook' && job.payload?.schemaVersion === 'inlet.lead.v1'), 'Pages delivery should prepare webhook payload schema');
 assert(externalDeliveryJobs.some((job) => job.payload?.target === 'automation' && job.payload?.service === 'make'), 'Pages delivery should prepare Make/Zapier payload');
 assert(externalDeliveryJobs.some((job) => job.payload?.target === 'google_sheets' && job.payload?.sheetName === 'Leads'), 'Pages delivery should prepare Google Sheets payload');
+assert(externalDeliveryJobs.some((job) => job.payload?.target === 'google_sheets' && job.payload?.provider === 'google_sheets' && job.payload?.mode === 'webhook'), 'Pages delivery should prepare Google Sheets provider/mode');
+assert(externalDeliveryJobs.some((job) => job.payload?.target === 'google_sheets' && job.payload?.lead?.fields && job.payload?.page?.slug === 'external-payload' && job.payload?.project && job.payload?.source), 'Pages delivery should prepare Google Sheets structured payload');
 
 const missingKeyDelivery = await sendLeadDelivery({ id: 'lead-mail-missing-key', type: 'consult' }, storedDeliveryPage, {});
 assert(missingKeyDelivery.status === 'failed', 'missing SES key should create failed delivery status');
@@ -181,6 +186,9 @@ for (const [name, source, tokens] of [
   ['page revisions', pageRevisions, ['listD1PageRevisions', "tab: 'edit'", 'revisions']],
   ['page revision', pageRevision, ['getD1PageRevision', "tab: 'edit'", 'revision.page']],
   ['page restore', pageRestore, ['getD1PageRevision', 'upsertD1Page', 'restore:', "tab: 'edit'"]],
+  ['files shared', filesShared, ['FILES_BUCKET', 'MAX_FILE_BYTES = 20 * 1024 * 1024', "['pdf', 'ppt', 'pptx', 'xls', 'xlsx']", 'safeObjectKey', 'validateObjectKey']],
+  ['files upload', filesUpload, ['request.formData()', 'authorizeProject(request, env, project, { write: true', 'fileBucket(env)', 'assertAllowedFile(file)', 'bucket.put', 'publicDownloadUrl']],
+  ['files download', filesDownload, ['bucket.get(key)', 'Content-Disposition', "filename*=UTF-8''", 'Cache-Control', 'validateObjectKey']],
   ['auth shared', authShared, ['getD1AccountByEmail', 'getD1AccountByPhone', 'upsertD1Account', 'createSessionToken', 'verifySessionToken', 'issueEmailVerificationToken']],
   ['auth register', authRegister, ['registerAccount', 'createSessionToken', 'session', 'AUTH_METHODS']],
   ['auth login', authLogin, ['loginAccount', 'ok: true', 'AUTH_METHODS']],
@@ -215,6 +223,9 @@ for (const token of [
   '"d1_databases"',
   '"binding": "DB"',
   '"database_name": "inlet-prod"',
+  '"r2_buckets"',
+  '"binding": "FILES_BUCKET"',
+  '"bucket_name": "inlet-files"',
 ]) {
   assert(wrangler.includes(token), `wrangler Pages config missing ${token}`);
 }
@@ -237,6 +248,8 @@ for (const token of [
   '/api/events',
   '/api/stats/summary',
   '/api/pages',
+  '/api/files/upload',
+  '/api/files/download',
   '/api/auth/register',
   '/api/auth/login',
   '/api/auth/session',
@@ -286,10 +299,12 @@ console.log(JSON.stringify({
     'functions/api/leads/[id]/deliver.js',
     'functions/api/events.js',
     'functions/api/stats/summary.js',
-    'functions/api/pages/[slug].js',
-    'functions/api/pages/[slug]/revisions.js',
-    'functions/api/pages/[slug]/revisions/[id].js',
-    'functions/api/pages/[slug]/restore.js',
+  'functions/api/pages/[slug].js',
+  'functions/api/pages/[slug]/revisions.js',
+  'functions/api/pages/[slug]/revisions/[id].js',
+  'functions/api/pages/[slug]/restore.js',
+  'functions/api/files/upload.js',
+  'functions/api/files/download.js',
     'functions/api/auth/register.js',
     'functions/api/auth/login.js',
     'functions/api/auth/session.js',

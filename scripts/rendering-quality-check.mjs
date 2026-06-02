@@ -35,6 +35,7 @@ const previewCssFiles = [
   'src/styles/preview-widgets-links-list.css',
   'src/styles/preview-widgets-links-carousel.css',
   'src/styles/preview-widgets-links-card.css',
+  'src/styles/preview-download.css',
   'src/styles/preview-workspace.css',
   'src/styles/preview-workspace-bottom-timer.css',
   'src/styles/preview-workspace-hero-media.css',
@@ -78,6 +79,8 @@ const files = {
   browserVisualQa: await readFile('scripts/browser-visual-quality-check.mjs', 'utf8'),
 };
 
+new Function(files.publicFormEmbed);
+
 const requiredDispatch = [
   "block.type==='topnav'",
   "block.type==='hero'",
@@ -86,6 +89,7 @@ const requiredDispatch = [
   "block.type==='map'",
   "block.type==='faq'",
   "block.type==='links'",
+  "block.type==='download'",
   "block.type==='timer'",
   "block.type==='activity'",
   "block.type==='spacer'",
@@ -122,6 +126,7 @@ const rendererContracts = [
   [files.info, 'export function RenderMap', 'inlet-map-section'],
   [files.info, 'export function RenderFaq', 'faq-widget'],
   [files.link, 'export function RenderLinks', 'landing-section links'],
+  [files.link, 'export function RenderDownload', 'landing-section download-widget'],
   [files.media, 'export function RenderImage', 'landing-section image-sec'],
   [files.signal, 'export function RenderTimer', 'landing-section timer'],
   [files.signal, 'export function RenderActivity', 'landing-section activity'],
@@ -160,6 +165,7 @@ const cssContracts = [
   '.inlet-map-section',
   '.image-sec',
   '.links',
+  '.download-widget',
   '.timer',
   '.activity',
   '.landing-footer',

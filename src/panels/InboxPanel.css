@@ -705,6 +705,29 @@
   padding: 0 !important;
 }
 
+.inbox-panel .connection-help-text {
+  margin: 0 !important;
+  color: #64748b !important;
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+  font-weight: 850 !important;
+}
+
+.inbox-panel .connection-inline-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  justify-content: flex-end !important;
+}
+
+.inbox-panel .connection-inline-actions button {
+  min-height: 38px !important;
+  padding: 0 14px !important;
+  border-radius: 999px !important;
+  font-size: 12px !important;
+  font-weight: 950 !important;
+}
+
 .inbox-panel .lead-row-v3 {
   grid-template-columns: minmax(0, 1fr) auto !important;
 }
@@ -735,6 +758,7 @@
   .inbox-panel .inbox-policy-select,
   .inbox-panel .inbox-policy-history-head,
   .inbox-panel .inbox-policy-history-head div,
+  .inbox-panel .connection-inline-actions,
   .inbox-panel .lead-row-v3,
   .inbox-panel .lead-row-main-v3,
   .inbox-panel .lead-row-meta-v3 {

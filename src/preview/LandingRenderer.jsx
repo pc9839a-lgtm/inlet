@@ -5,7 +5,7 @@ import './LandingRenderer.css';
 import { RenderCards as ContentRenderCards, RenderHero as ContentRenderHero, RenderText as ContentRenderText } from './renderers/ContentBlocks.jsx';
 import { RenderForm as FormRenderForm, RenderReservation as FormRenderReservation } from './renderers/FormBlocks.jsx';
 import { RenderFaq as InfoRenderFaq, RenderMap as InfoRenderMap, RenderSchedule as InfoRenderSchedule } from './renderers/InfoBlocks.jsx';
-import { RenderLinks as LinkRenderLinks } from './renderers/LinkBlocks.jsx';
+import { RenderDownload as LinkRenderDownload, RenderLinks as LinkRenderLinks } from './renderers/LinkBlocks.jsx';
 import { RenderImage as MediaRenderImage } from './renderers/MediaBlocks.jsx';
 import {
   RenderActivity as SignalRenderActivity,
@@ -33,6 +33,7 @@ const PREVIEW_BLOCK_LABELS = {
   schedule: '일정',
   faq: 'FAQ',
   links: '링크',
+  download: '자료 다운로드',
   timer: '타이머',
   activity: '접수현황',
   spacer: '여백',
@@ -361,6 +362,7 @@ function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, g
   if(block.type==='schedule')return <InfoRenderSchedule block={block}/>;
   if(block.type==='faq')return <InfoRenderFaq block={block}/>;
   if(block.type==='links')return <LinkRenderLinks block={block} track={track} go={go}/>;
+  if(block.type==='download')return <LinkRenderDownload block={block} track={track}/>;
   if(block.type==='timer')return <SignalRenderTimer block={block} go={go}/>;
   if(block.type==='activity')return <SignalRenderActivity block={block} leads={leads}/>;
   if(block.type==='spacer')return <LayoutRenderSpacer block={block}/>;

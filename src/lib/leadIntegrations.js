@@ -69,7 +69,7 @@ export function connectionState(type, integrations) {
 
   if (type === 'sheets') {
     if (!integrations.sheets.enabled) return { tone: 'off', text: CONNECTION_STATUS.off, hint: 'Google Sheets 꺼짐' };
-    if (!isValidUrl(integrations.sheets.url)) return { tone: 'warn', text: CONNECTION_STATUS.needsSetup, hint: 'Google Apps Script Web App URL 설정 필요' };
+    if (!isValidUrl(integrations.sheets.webhookUrl || integrations.sheets.url)) return { tone: 'warn', text: CONNECTION_STATUS.needsSetup, hint: 'Google Sheets URL 설정 필요' };
     return { ...readyOrFailed(integrations.sheets), hint: integrations.sheets.sheetName || '접수함' };
   }
 
@@ -121,10 +121,11 @@ export async function runConnectionTest(type, page) {
   }
 
   if (type === 'sheets') {
+    const sheetsUrl = integrations.sheets.webhookUrl || integrations.sheets.url;
     if (!integrations.sheets.enabled) return { ok: false, status: CONNECTION_STATUS.off, message: 'Google Sheets 연결이 꺼져 있습니다.' };
-    if (!isValidUrl(integrations.sheets.url)) return { ok: false, status: CONNECTION_STATUS.needsSetup, message: 'Google Apps Script Web App URL 설정이 필요합니다.' };
-    const res = await postIntegration(integrations.sheets.url, { ...payload, target: 'google_sheets', service: 'google_sheets', sheetName: integrations.sheets.sheetName || '접수함' }, { format: 'json', secret: integrations.sheets.secret || '' });
-    return { ok: !!res.ok, status: res.ok ? CONNECTION_STATUS.ready : CONNECTION_STATUS.failed, message: res.ok ? 'Google Sheets 테스트 전송이 완료되었습니다.' : `Google Sheets 응답 확인이 필요합니다. 상태: ${res.status || '확인 불가'}` };
+    if (!isValidUrl(sheetsUrl)) return { ok: false, status: CONNECTION_STATUS.needsSetup, message: 'Google Sheets Webhook URL을 확인해주세요.' };
+    const res = await postIntegration(sheetsUrl, googleSheetsPayload(payload, integrations.sheets, page, lead), { format: 'nocors', secret: integrations.sheets.secret || '' });
+    return { ok: !!res.ok, status: res.ok ? CONNECTION_STATUS.ready : CONNECTION_STATUS.failed, message: res.ok ? 'Google Sheets 테스트 요청을 보냈습니다. 접수 저장은 실패해도 유지됩니다.' : `Google Sheets 테스트 실패: ${res.status || '응답 확인 필요'}` };
   }
 
   return { ok: false, status: CONNECTION_STATUS.needsSetup, message: '확인할 수 없는 연결입니다.' };
@@ -149,6 +150,50 @@ export function integrationPayload(lead, page) {
       email: lead.email || lead.values?.email || '',
     },
     createdAt,
+  };
+}
+
+export function googleSheetsPayload(payload = {}, sheets = {}, page = {}, lead = {}) {
+  const fields = { ...(lead.values || {}) };
+  for (const answer of Array.isArray(lead.answers) ? lead.answers : []) {
+    const key = answer.label || answer.id;
+    if (key) fields[key] = Array.isArray(answer.value) ? answer.value.join(', ') : String(answer.value || '');
+  }
+  const slug = page.slug || payload.page?.slug || '';
+  return {
+    schemaVersion: payload.schemaVersion || 'inlet.lead.v1',
+    event: payload.event || 'lead.created',
+    source: payload.source || 'pagero',
+    target: 'google_sheets',
+    provider: 'google_sheets',
+    mode: sheets.mode || 'webhook',
+    sheetName: sheets.sheetName || '접수함',
+    lead: {
+      id: lead.id || payload.lead?.id || '',
+      name: lead.name || payload.contact?.name || '',
+      phone: lead.phone || payload.contact?.phone || '',
+      email: lead.email || payload.contact?.email || '',
+      message: lead.message || '',
+      createdAt: lead.createdAt || payload.createdAt || new Date().toISOString(),
+      fields,
+    },
+    page: {
+      id: page.id || page.projectId || '',
+      title: page.title || payload.page?.title || '',
+      slug,
+      url: payload.page?.url || publicLandingUrl(slug),
+    },
+    project: {
+      id: page.projectId || page.id || '',
+    },
+    source: {
+      utmSource: lead.utmSource || '',
+      utmMedium: lead.utmMedium || '',
+      utmCampaign: lead.utmCampaign || '',
+      referrer: lead.referrer || '',
+      sourceUrl: lead.sourceUrl || '',
+    },
+    createdAt: lead.createdAt || payload.createdAt || new Date().toISOString(),
   };
 }
 
@@ -277,19 +322,12 @@ export function buildIntegrationJobs(integrations, payload) {
     });
   }
 
-  if (integrations.sheets.enabled && integrations.sheets.url) {
+  if (integrations.sheets.enabled && (integrations.sheets.webhookUrl || integrations.sheets.url)) {
     jobs.push({
       id: 'google_sheets',
       label: 'Google Sheets',
-      url: integrations.sheets.url,
-      payload: {
-        ...payload,
-        target: 'google_sheets',
-        service: 'google_sheets',
-        sheetName: integrations.sheets.sheetName || '접수함',
-        emailEnabled: !!integrations.sheets.emailEnabled,
-        notifyEmail: integrations.sheets.notifyEmail || '',
-      },
+      url: integrations.sheets.webhookUrl || integrations.sheets.url,
+      payload: googleSheetsPayload(payload, integrations.sheets, payload.page || {}, payload.lead || {}),
       options: { format: 'json', secret: integrations.sheets.secret || '' },
     });
   }

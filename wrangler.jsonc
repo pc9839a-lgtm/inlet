@@ -16,5 +16,11 @@
       "database_name": "inlet-prod",
       "database_id": "b68d3820-001f-4dbe-87cd-dc9fc0be17ee"
     }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "FILES_BUCKET",
+      "bucket_name": "inlet-files"
+    }
   ]
 }

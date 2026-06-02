@@ -11,6 +11,7 @@ const ANCHOR_BASE = {
   text: 'text',
   cards: 'cards',
   links: 'links',
+  download: 'download',
   schedule: 'schedule',
   map: 'map',
   faq: 'faq',
@@ -40,7 +41,21 @@ const defaultPage = {
     automation: { enabled: false, service: 'make', url: '' },
     sms: { enabled: false, adminPhone: '', customerNotice: false, reservationReminder: false },
     calendar: { enabled: false, provider: 'google', connected: false, calendarName: '' },
-    sheets: { enabled: false, url: '', sheetName: '접수함', notifyEmail: '', emailEnabled: false },
+    sheets: {
+      provider: 'google_sheets',
+      mode: 'webhook',
+      enabled: false,
+      status: 'disconnected',
+      url: '',
+      webhookUrl: '',
+      spreadsheetId: '',
+      sheetName: '접수함',
+      connectedEmail: '',
+      lastSyncAt: '',
+      lastError: '',
+      notifyEmail: '',
+      emailEnabled: false,
+    },
     conversion: { enabled: true, dataLayer: true, metaPixel: false, googleAds: false, naver: false, kakao: false },
   },
   blocks: [
@@ -138,6 +153,12 @@ function normalizeIntegrations(integrations = {}) {
   next.calendar.enabled = !!next.calendar.enabled;
   next.calendar.connected = !!next.calendar.connected;
   next.sheets.enabled = !!next.sheets.enabled;
+  next.sheets.provider = 'google_sheets';
+  next.sheets.mode = pickSafe(next.sheets.mode || 'webhook', ['webhook','oauth'], 'webhook');
+  next.sheets.webhookUrl = String(next.sheets.webhookUrl || next.sheets.url || '').trim();
+  next.sheets.url = next.sheets.webhookUrl;
+  next.sheets.sheetName = String(next.sheets.sheetName || '접수함').trim() || '접수함';
+  next.sheets.status = pickSafe(next.sheets.status || (next.sheets.enabled && next.sheets.webhookUrl ? 'connected' : 'disconnected'), ['disconnected','connected','error'], 'disconnected');
   next.sheets.emailEnabled = !!next.sheets.emailEnabled;
   next.conversion.enabled = next.conversion.enabled !== false;
 
@@ -176,6 +197,7 @@ const BLOCK_SAFE_OPTIONS = {
   map: { mapMode: ['google_embed','osm_fallback'] },
   faq: { layout: ['accordion','card','plain'] },
   links: { layout: ['list','card','carousel'], align: ['left','center','right'] },
+  download: { layout: ['card','list'], align: ['left','center','right'] },
   schedule: { align: ['left','center','right'] },
   timer: { style: ['plain','accent','card'], align: ['left','center','right'], repeatMode: ['fixed','daily24'], urgentStyle: ['flip','line','flow','none'], timerTheme: ['modern','glass','minimal','accent'] },
   activity: { style: ['minimal','glass','dark'], mode: ['feed','count'], dataSource: ['live','sample'], sampleKind: ['consult','reservation','both'], animation: ['stack','none'], align: ['left','center','right'] },
@@ -324,6 +346,44 @@ function sanitizeBlock(block) {
     s.shadow = !!s.shadow;
   }
 
+  if (block?.type === 'download') {
+    s.title = s.title || '제안서 다운로드';
+    s.desc = s.desc || '필요한 자료를 바로 내려받으세요.';
+    s.layout = pickSafe(s.layout || 'card', ['card','list'], 'card');
+    s.align = pickSafe(s.align || 'left', ['left','center','right'], 'left');
+    s.buttonLabel = s.buttonLabel || '다운로드';
+    s.newWindow = s.newWindow !== false;
+    const allowedExtensions = ['pdf','ppt','pptx','xls','xlsx'];
+    s.items = Array.isArray(s.items) ? s.items.map((item, index) => {
+      const extension = String(item.extension || item.ext || '').replace(/^\./, '').toLowerCase();
+      const fileName = String(item.fileName || '').slice(0, 140);
+      const detectedExtension = extension || String(fileName.split('.').pop() || '').toLowerCase();
+      const safeExtension = pickSafe(detectedExtension, allowedExtensions, 'pdf');
+      return {
+        id: item.id || uid(),
+        badge: String(item.badge || safeExtension.toUpperCase()).slice(0, 18),
+        title: String(item.title || item.label || `자료 ${index + 1}`).slice(0, 80),
+        desc: String(item.desc || item.body || '').slice(0, 180),
+        fileName,
+        fileUrl: String(item.fileUrl || item.url || '').trim().slice(0, 800),
+        extension: safeExtension,
+        sizeLabel: String(item.sizeLabel || '').slice(0, 24),
+      };
+    }).slice(0, 8) : [];
+    if (!s.items.length) {
+      s.items = [{
+        id: uid(),
+        badge: 'PDF',
+        title: '서비스 제안서',
+        desc: '상세 구성과 진행 절차를 확인할 수 있는 자료입니다.',
+        fileName: 'proposal.pdf',
+        fileUrl: '',
+        extension: 'pdf',
+        sizeLabel: '20MB 이하',
+      }];
+    }
+  }
+
   if (block?.type === 'image') {
     s.gallery = Array.isArray(s.gallery) ? s.gallery : [];
     s.imageHeightPx = Math.max(140, Math.min(520, Number(s.imageHeightPx || 260)));
@@ -437,6 +497,11 @@ function newBlock(type) {
     return sanitizeBlock({ id: uid(), type: 'cards', visible: true, s: { title: '카드 안내', desc: '', layout: 'grid', tone: 'soft', align: 'left', columns: 2, items: [
       { id: uid(), eyebrow: '01', title: '핵심 카드', body: '중요한 내용을 카드로 보여주세요.' },
       { id: uid(), eyebrow: '02', title: '보조 카드', body: '두 번째 내용을 입력하세요.' },
+    ] } });
+  }
+  if (type === 'download') {
+    return sanitizeBlock({ id: uid(), type: 'download', visible: true, s: { title: '제안서 다운로드', desc: 'PDF, PPT, 엑셀 자료를 방문자가 바로 내려받을 수 있습니다.', layout: 'card', align: 'left', buttonLabel: '자료 다운로드', newWindow: true, items: [
+      { id: uid(), badge: 'PDF', title: '서비스 제안서', desc: '상품 소개와 견적 기준을 정리한 자료입니다.', fileName: 'proposal.pdf', fileUrl: '', extension: 'pdf', sizeLabel: '20MB 이하' },
     ] } });
   }
   if (type === 'map') {
