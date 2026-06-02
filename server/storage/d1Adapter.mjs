@@ -832,10 +832,8 @@ export async function upsertD1Page(db, page = {}, context = {}) {
   const currentById = page.id
     ? await db.prepare('SELECT id, project_id, slug, revision, created_at FROM pages WHERE id = ? LIMIT 1').bind(String(page.id)).first()
     : null;
-  const currentByIdMatchesTarget = currentById
-    && String(currentById.project_id || '') === projectId
-    && String(currentById.slug || '') === safeSlug;
-  const current = currentBySlug || (currentByIdMatchesTarget ? currentById : null);
+  const currentByIdSameProject = currentById && String(currentById.project_id || '') === projectId;
+  const current = currentBySlug || (currentByIdSameProject ? currentById : null);
   const nextRevision = Math.max(1, Number(current?.revision || 0) + 1);
   const row = encodeD1Page({
     ...page,

@@ -226,7 +226,9 @@ function fakeD1(options = {}) {
               updated_at,
             ] = this.params;
             const next = { id, project_id, slug, title, page_json, revision, published_at, created_at, updated_at };
-            const index = rows.pages.findIndex((row) => row.project_id === project_id && row.slug === slug);
+            const idIndex = rows.pages.findIndex((row) => row.id === id);
+            const slugIndex = rows.pages.findIndex((row) => row.project_id === project_id && row.slug === slug);
+            const index = idIndex >= 0 ? idIndex : slugIndex;
             if (index >= 0) rows.pages[index] = { ...rows.pages[index], ...next, id: rows.pages[index].id };
             else rows.pages.push(next);
             return { success: true };
@@ -959,10 +961,15 @@ const transferPage = await listD1OwnershipTransferRequests(db, { projectId: 'pro
 assert(db.rows.ownership_transfer_requests.length === 1 && transferPage.records[0]?.billingClearanceStatus === 'active_subscription', 'ownership transfer upsert/list should preserve billing clearance state');
 await upsertD1Page(db, decodeD1Page(encodedPage), { projectId: 'project-1', slug: 'landing' });
 await upsertD1Page(db, { ...decodeD1Page(encodedPage), title: 'Landing v2' }, { projectId: 'project-1', slug: 'landing' });
+await upsertD1Page(db, { ...decodeD1Page(encodedPage), slug: 'landing-renamed', title: 'Landing Renamed' }, { projectId: 'project-1', slug: 'landing-renamed' });
+assert(db.rows.pages.length === 1 && db.rows.pages[0].id === encodedPage.id && db.rows.pages[0].slug === 'landing-renamed', 'D1 page upsert should treat same-project page id with changed slug as an update');
 const pageBySlug = await getD1PageBySlug(db, { projectId: 'project-1', slug: 'landing' });
 const pageRevisions = await listD1PageRevisions(db, { projectId: 'project-1', slug: 'landing' });
 const oneRevision = await getD1PageRevision(db, { projectId: 'project-1', slug: 'landing', id: pageRevisions[0]?.id });
-assert(pageBySlug?.title === 'Landing v2' && pageRevisions.length === 2 && oneRevision?.page?.slug === 'landing', 'D1 page upsert and revisions should round-trip');
+const renamedPageBySlug = await getD1PageBySlug(db, { projectId: 'project-1', slug: 'landing-renamed' });
+const renamedPageRevisions = await listD1PageRevisions(db, { projectId: 'project-1', slug: 'landing-renamed' });
+const renamedRevision = renamedPageRevisions.find((revision) => revision.page?.slug === 'landing-renamed');
+assert(!pageBySlug && renamedPageBySlug?.title === 'Landing Renamed' && renamedPageRevisions.length === 3 && renamedRevision, 'D1 page upsert and revisions should round-trip after slug rename');
 await upsertD1AiDraft(db, decodeD1AiDraft(encodedAiDraft), { projectId: 'project-1' });
 await upsertD1AiDraft(db, { ...decodeD1AiDraft(encodedAiDraft), title: 'Draft v2' }, { projectId: 'project-1' });
 let aiDrafts = await listD1AiDrafts(db, { projectId: 'project-1' });
