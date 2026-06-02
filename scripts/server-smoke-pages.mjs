@@ -23,6 +23,18 @@ await runSmoke('server-smoke-pages', async ({ baseUrl }) => {
   });
   assert(updated.res.ok && updated.data.page?.title === 'Smoke Page Updated', 'page update failed');
 
+  const secondSlug = `${smokeId}-second`;
+  const secondPath = `/api/pages/${encodeURIComponent(secondSlug)}`;
+  const second = await json({ baseUrl }, 'POST', secondPath, {
+    project: { ...project, slug: secondSlug },
+    page: { ...page, id: `${smokeId}-second-id`, slug: secondSlug, title: 'Smoke Page Second' },
+  });
+  assert(second.res.ok && second.data.page?.slug === secondSlug, 'second page save failed');
+  assert(second.data.page?.id !== updated.data.page?.id, 'second page should not overwrite the first page id');
+
+  const firstAfterSecond = await json({ baseUrl }, 'GET', `${pagePath}?${query}`);
+  assert(firstAfterSecond.res.ok && firstAfterSecond.data.page?.title === 'Smoke Page Updated', 'second page save should not overwrite the first page');
+
   const renamedSlug = `${smokeId}-renamed`;
   const renamedPath = `/api/pages/${encodeURIComponent(renamedSlug)}`;
   const renamed = await json({ baseUrl }, 'POST', renamedPath, {
