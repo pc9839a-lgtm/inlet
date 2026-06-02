@@ -234,73 +234,45 @@ function InlineSwitch({ checked, onChange }) {
 }
 
 const GOOGLE_SHEETS_APPS_SCRIPT = `const SHEET_NAME = '접수함';
-const BASE_HEADERS = [
-  '접수일시',
-  '이름',
-  '연락처',
-  '이메일',
-  '메시지',
-  '페이지명',
-  '페이지 URL',
-  'UTM Source',
-  'UTM Medium',
-  'UTM Campaign',
-  '유입 URL'
-];
+const BASE_HEADERS = ['접수일시','이름','연락처','이메일','메시지','페이지명','페이지 URL','UTM Source','UTM Medium','UTM Campaign','유입 URL'];
 const JSON_HEADER = '추가 입력값 JSON';
+const TEST_PAYLOAD = {
+  createdAt: new Date().toISOString(),
+  sheetName: SHEET_NAME,
+  lead: { name: '테스트', phone: '010-0000-0000', email: 'test@example.com', message: '수동 실행 테스트', fields: { '관심 타입': '84A', '예산대': '5억-7억' } },
+  page: { title: '페이지로 테스트', url: '' },
+  source: { utmSource: 'test', utmMedium: '', utmCampaign: '', sourceUrl: '' }
+};
 
-function samplePayload() {
-  return {
-    createdAt: new Date().toISOString(),
-    sheetName: SHEET_NAME,
-    lead: {
-      name: '테스트',
-      phone: '010-0000-0000',
-      email: 'test@example.com',
-      message: '수동 실행 테스트',
-      fields: {
-        '관심 타입': '84A',
-        '예산대': '5억-7억'
-      }
-    },
-    page: { title: '페이지로 테스트', url: '' },
-    source: { utmSource: 'test', utmMedium: '', utmCampaign: '', sourceUrl: '' }
-  };
-}
-
-function parsePayload(e) {
-  if (!e || !e.postData || !e.postData.contents) return samplePayload();
-  return JSON.parse(e.postData.contents || '{}');
-}
-
-function safeFieldMap(data) {
-  const fields = data && data.lead && data.lead.fields;
-  return fields && typeof fields === 'object' && !Array.isArray(fields) ? fields : {};
-}
-
-function appendLead(data) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheetName = data.sheetName || SHEET_NAME;
-  const sheet = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName);
-  const fields = safeFieldMap(data);
-  const headers = ensureHeaders(sheet, Object.keys(fields));
+function doPost(e) {
+  const data = e && e.postData && e.postData.contents ? JSON.parse(e.postData.contents) : TEST_PAYLOAD;
+  const lead = data.lead || {};
+  const page = data.page || {};
   const source = data.source || data.attribution || {};
-  const baseValues = {
-    '접수일시': data.lead?.createdAt || data.createdAt || new Date().toISOString(),
-    '이름': data.lead?.name || '',
-    '연락처': data.lead?.phone || '',
-    '이메일': data.lead?.email || '',
-    '메시지': data.lead?.message || '',
-    '페이지명': data.page?.title || '',
-    '페이지 URL': data.page?.url || '',
+  const fields = lead.fields && typeof lead.fields === 'object' && !Array.isArray(lead.fields) ? lead.fields : {};
+  const sheet = getSheet(data.sheetName || SHEET_NAME);
+  const headers = ensureHeaders(sheet, Object.keys(fields));
+  const values = {
+    '접수일시': lead.createdAt || data.createdAt || new Date().toISOString(),
+    '이름': lead.name || '',
+    '연락처': lead.phone || '',
+    '이메일': lead.email || '',
+    '메시지': lead.message || '',
+    '페이지명': page.title || '',
+    '페이지 URL': page.url || '',
     'UTM Source': source.utmSource || '',
     'UTM Medium': source.utmMedium || '',
     'UTM Campaign': source.utmCampaign || '',
     '유입 URL': source.sourceUrl || source.referrer || '',
     [JSON_HEADER]: JSON.stringify(fields)
   };
-  const row = headers.map((header) => fields[header] ?? baseValues[header] ?? '');
-  sheet.appendRow(row);
+  sheet.appendRow(headers.map((header) => fields[header] !== undefined ? fields[header] : (values[header] || '')));
+  return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function getSheet(name) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  return ss.getSheetByName(name) || ss.insertSheet(name);
 }
 
 function ensureHeaders(sheet, fieldHeaders) {
@@ -310,20 +282,10 @@ function ensureHeaders(sheet, fieldHeaders) {
     sheet.appendRow(required);
     return required;
   }
-  const lastColumn = Math.max(sheet.getLastColumn(), 1);
-  const current = sheet.getRange(1, 1, 1, lastColumn).getValues()[0].map((value) => String(value || '').trim());
-  const headers = current.filter(Boolean);
+  const headers = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0].map((value) => String(value || '').trim()).filter(Boolean);
   const missing = required.filter((header) => headers.indexOf(header) === -1);
-  if (missing.length) {
-    sheet.getRange(1, headers.length + 1, 1, missing.length).setValues([missing]);
-    return headers.concat(missing);
-  }
-  return headers;
-}
-
-function doPost(e) {
-  appendLead(parsePayload(e));
-  return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
+  if (missing.length) sheet.getRange(1, headers.length + 1, 1, missing.length).setValues([missing]);
+  return headers.concat(missing);
 }
 
 function doGet() {
