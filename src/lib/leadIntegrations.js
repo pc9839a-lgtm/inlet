@@ -43,34 +43,34 @@ function readyOrFailed(section = {}) {
 }
 
 export function connectionState(type, integrations) {
-  if (type === 'internal') return { tone: 'ok', text: CONNECTION_STATUS.ready, hint: '?? ?? ??' };
+  if (type === 'internal') return { tone: 'ok', text: CONNECTION_STATUS.ready, hint: '접수함 저장' };
   if (type === 'google') {
-    if (integrations.google.connected) return { tone: 'ok', text: CONNECTION_STATUS.ready, hint: integrations.google.email || 'Google ?? ??' };
-    return { tone: 'warn', text: CONNECTION_STATUS.needsSetup, hint: 'Google OAuth ?? ??' };
+    if (integrations.google.connected) return { tone: 'ok', text: CONNECTION_STATUS.ready, hint: integrations.google.email || 'Google 연결됨' };
+    return { tone: 'warn', text: CONNECTION_STATUS.needsSetup, hint: 'Google OAuth 준비 필요' };
   }
   if (type === 'email') {
-    if (!integrations.email.enabled) return { tone: 'off', text: CONNECTION_STATUS.off, hint: '??? ?? ??' };
-    if (!isValidEmail(integrations.email.to)) return { tone: 'warn', text: CONNECTION_STATUS.needsSetup, hint: '?? ??? ?? ?? ??' };
+    if (!integrations.email.enabled) return { tone: 'off', text: CONNECTION_STATUS.off, hint: '이메일 알림 꺼짐' };
+    if (!isValidEmail(integrations.email.to)) return { tone: 'warn', text: CONNECTION_STATUS.needsSetup, hint: '받을 이메일 확인 필요' };
     return { ...readyOrFailed(integrations.email), hint: integrations.email.to };
   }
   if (type === 'webhook') {
-    if (!integrations.webhook.enabled) return { tone: 'off', text: CONNECTION_STATUS.off, hint: 'Webhook ??' };
-    if (!isValidUrl(integrations.webhook.url)) return { tone: 'warn', text: CONNECTION_STATUS.needsSetup, hint: '?? URL ?? ??' };
+    if (!integrations.webhook.enabled) return { tone: 'off', text: CONNECTION_STATUS.off, hint: 'Webhook 꺼짐' };
+    if (!isValidUrl(integrations.webhook.url)) return { tone: 'warn', text: CONNECTION_STATUS.needsSetup, hint: '전송 URL 확인 필요' };
     return { ...readyOrFailed(integrations.webhook), hint: integrations.webhook.url };
   }
   if (type === 'automation') {
-    if (!integrations.automation.enabled) return { tone: 'off', text: CONNECTION_STATUS.off, hint: 'Make/Zapier ??' };
-    if (!isValidUrl(integrations.automation.url)) return { tone: 'warn', text: CONNECTION_STATUS.needsSetup, hint: 'Make/Zapier Webhook URL ?? ??' };
-    return { ...readyOrFailed(integrations.automation), hint: serviceLabel(integrations.automation.service || 'make') + ' ??' };
+    if (!integrations.automation.enabled) return { tone: 'off', text: CONNECTION_STATUS.off, hint: 'Make/Zapier 꺼짐' };
+    if (!isValidUrl(integrations.automation.url)) return { tone: 'warn', text: CONNECTION_STATUS.needsSetup, hint: 'Make/Zapier Webhook URL 확인 필요' };
+    return { ...readyOrFailed(integrations.automation), hint: serviceLabel(integrations.automation.service || 'make') + ' 연결' };
   }
   if (type === 'sheets') {
-    if (!integrations.sheets.enabled) return { tone: 'off', text: CONNECTION_STATUS.off, hint: 'Google Sheets ??' };
-    if (!isValidUrl(integrations.sheets.webhookUrl || integrations.sheets.url)) return { tone: 'warn', text: CONNECTION_STATUS.needsSetup, hint: 'Google Sheets URL ?? ??' };
-    return { ...readyOrFailed(integrations.sheets), hint: integrations.sheets.sheetName || '???' };
+    if (!integrations.sheets.enabled) return { tone: 'off', text: CONNECTION_STATUS.off, hint: 'Google Sheets 꺼짐' };
+    if (!isValidUrl(integrations.sheets.webhookUrl || integrations.sheets.url)) return { tone: 'warn', text: CONNECTION_STATUS.needsSetup, hint: 'Google Sheets URL 확인 필요' };
+    return { ...readyOrFailed(integrations.sheets), hint: integrations.sheets.sheetName || '접수함' };
   }
   if (type === 'calendar') {
-    if (integrations.calendar.connected) return { tone: 'ok', text: CONNECTION_STATUS.ready, hint: integrations.calendar.calendarName || 'Google Calendar ?? ??' };
-    return { tone: 'warn', text: CONNECTION_STATUS.needsSetup, hint: 'Google Calendar OAuth ?? ??' };
+    if (integrations.calendar.connected) return { tone: 'ok', text: CONNECTION_STATUS.ready, hint: integrations.calendar.calendarName || 'Google Calendar 연결됨' };
+    return { tone: 'warn', text: CONNECTION_STATUS.needsSetup, hint: 'Google Calendar OAuth 준비 필요' };
   }
   return { tone: 'off', text: CONNECTION_STATUS.off, hint: '' };
 }
@@ -90,45 +90,45 @@ export async function runConnectionTest(type, page) {
   const integrations = normalizeIntegrations(page.integrations || {});
   const lead = makeSampleLead();
   const payload = integrationPayload(lead, page);
-  if (type === 'internal') return { ok: true, status: CONNECTION_STATUS.ready, message: '?? ??? ???? ???? ????.' };
-  if (type === 'google' || type === 'calendar') return { ok: false, status: CONNECTION_STATUS.needsSetup, message: 'Google OAuth ??? ?????.' };
+  if (type === 'internal') return { ok: true, status: CONNECTION_STATUS.ready, message: '접수함 저장은 정상입니다.' };
+  if (type === 'google' || type === 'calendar') return { ok: false, status: CONNECTION_STATUS.needsSetup, message: 'Google OAuth 연결은 아직 준비 중입니다.' };
   if (type === 'email') {
-    if (!integrations.email.enabled) return { ok: false, status: CONNECTION_STATUS.off, message: '??? ??? ?? ????.' };
-    if (!isValidEmail(integrations.email.to)) return { ok: false, status: CONNECTION_STATUS.needsSetup, message: '?? ??? ?? ??? ?????.' };
-    return { ok: true, status: CONNECTION_STATUS.ready, message: '??? ?? ??? ??????. ?? ??? ?? ?? ? ???? ?????.' };
+    if (!integrations.email.enabled) return { ok: false, status: CONNECTION_STATUS.off, message: '이메일 알림이 꺼져 있습니다.' };
+    if (!isValidEmail(integrations.email.to)) return { ok: false, status: CONNECTION_STATUS.needsSetup, message: '받을 이메일을 확인해주세요.' };
+    return { ok: true, status: CONNECTION_STATUS.ready, message: '이메일 알림 설정이 준비되었습니다.' };
   }
   if (type === 'webhook') {
-    if (!integrations.webhook.enabled) return { ok: false, status: CONNECTION_STATUS.off, message: 'Webhook? ?? ????.' };
-    if (!isValidUrl(integrations.webhook.url)) return { ok: false, status: CONNECTION_STATUS.needsSetup, message: 'Webhook ?? URL ??? ?????.' };
+    if (!integrations.webhook.enabled) return { ok: false, status: CONNECTION_STATUS.off, message: 'Webhook이 꺼져 있습니다.' };
+    if (!isValidUrl(integrations.webhook.url)) return { ok: false, status: CONNECTION_STATUS.needsSetup, message: 'Webhook 전송 URL을 입력해주세요.' };
     const res = await postIntegration(integrations.webhook.url, { ...payload, target: 'webhook', service: integrations.webhook.service || 'custom' }, { format: 'json', secret: integrations.webhook.secret || '' });
-    return { ok: !!res.ok, status: res.ok ? CONNECTION_STATUS.ready : CONNECTION_STATUS.failed, message: res.ok ? 'Webhook ??? ?? ??' : 'Webhook ?? ??: ' + (res.status || '?? ?? ??') };
+    return { ok: !!res.ok, status: res.ok ? CONNECTION_STATUS.ready : CONNECTION_STATUS.failed, message: res.ok ? 'Webhook 테스트 전송 완료' : 'Webhook 전송 실패: ' + (res.status || '응답 실패') };
   }
   if (type === 'automation') {
-    if (!integrations.automation.enabled) return { ok: false, status: CONNECTION_STATUS.off, message: 'Make/Zapier ??? ?? ????.' };
-    if (!isValidUrl(integrations.automation.url)) return { ok: false, status: CONNECTION_STATUS.needsSetup, message: 'Make/Zapier Webhook URL ??? ?????.' };
+    if (!integrations.automation.enabled) return { ok: false, status: CONNECTION_STATUS.off, message: 'Make/Zapier 연동이 꺼져 있습니다.' };
+    if (!isValidUrl(integrations.automation.url)) return { ok: false, status: CONNECTION_STATUS.needsSetup, message: 'Make/Zapier Webhook URL을 입력해주세요.' };
     const res = await postIntegration(integrations.automation.url, { ...payload, target: 'automation', service: integrations.automation.service || 'make' }, { format: 'json', secret: integrations.automation.secret || '' });
-    return { ok: !!res.ok, status: res.ok ? CONNECTION_STATUS.ready : CONNECTION_STATUS.failed, message: res.ok ? serviceLabel(integrations.automation.service || 'make') + ' ??? ?? ??' : 'Make/Zapier ?? ??: ' + (res.status || '?? ?? ??') };
+    return { ok: !!res.ok, status: res.ok ? CONNECTION_STATUS.ready : CONNECTION_STATUS.failed, message: res.ok ? serviceLabel(integrations.automation.service || 'make') + ' 테스트 전송 완료' : 'Make/Zapier 전송 실패: ' + (res.status || '응답 실패') };
   }
   if (type === 'sheets') {
     const sheetsUrl = integrations.sheets.webhookUrl || integrations.sheets.url;
-    if (!integrations.sheets.enabled) return { ok: false, status: CONNECTION_STATUS.off, message: 'Google Sheets ??? ?? ????.' };
-    if (!isValidUrl(sheetsUrl)) return { ok: false, status: CONNECTION_STATUS.needsSetup, message: 'Google Sheets Webhook URL? ??????.' };
+    if (!integrations.sheets.enabled) return { ok: false, status: CONNECTION_STATUS.off, message: 'Google Sheets 연동이 꺼져 있습니다.' };
+    if (!isValidUrl(sheetsUrl)) return { ok: false, status: CONNECTION_STATUS.needsSetup, message: 'Google Sheets Webhook URL을 입력해주세요.' };
     const sheetsPayload = googleSheetsPayload(payload, integrations.sheets, page, lead);
     try {
       const res = await postJson('/api/integrations/test', {
         type: 'sheets',
         url: sheetsUrl,
-        sheetName: integrations.sheets.sheetName || '???',
+        sheetName: integrations.sheets.sheetName || '접수함',
         page: sheetsPayload.page,
         project: sheetsPayload.project,
         payload: sheetsPayload,
       });
-      return { ok: !!res.ok, status: res.ok ? CONNECTION_STATUS.ready : CONNECTION_STATUS.failed, message: res.message || 'Google Sheets? ??? ?? ?????. ??? ??????.' };
+      return { ok: !!res.ok, status: res.ok ? CONNECTION_STATUS.ready : CONNECTION_STATUS.failed, message: res.message || 'Google Sheets에 테스트 행을 보냈습니다. 시트를 확인해주세요.' };
     } catch (error) {
-      return { ok: false, status: CONNECTION_STATUS.failed, message: 'Google Sheets ??? ??: ' + String(error?.message || error) };
+      return { ok: false, status: CONNECTION_STATUS.failed, message: 'Google Sheets 테스트 실패: ' + String(error?.message || error) };
     }
   }
-  return { ok: false, status: CONNECTION_STATUS.needsSetup, message: '??? ? ?? ?????.' };
+  return { ok: false, status: CONNECTION_STATUS.needsSetup, message: '지원하지 않는 연동입니다.' };
 }
 export function integrationPayload(lead, page) {
   const createdAt = lead.createdAt || new Date().toISOString();
