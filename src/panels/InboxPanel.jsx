@@ -512,7 +512,7 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
           </div>
           <div className="connection-item connect-v4 open">
             <div className="connection-row">
-              <div className="connection-row-main"><strong>Google Sheets</strong><small>{sheetsState.text} ? 준비됨 · 접수 데이터를 자동 저장</small></div>
+              <div className="connection-row-main"><strong>Google Sheets</strong><small>{sheetsState.text} · 접수 자동 저장</small></div>
               <InlineSwitch checked={!!draftIntegrations.sheets.enabled} onChange={(enabled) => sheetPatch({ enabled, status: enabled ? draftIntegrations.sheets.status || 'disconnected' : 'disconnected' })} />
             </div>
             {draftIntegrations.sheets.enabled && (
@@ -694,13 +694,13 @@ export default function InboxPanel({
           </div>
           <div className="inbox-list-actions">
             {hasMoreLeads && <button type="button" disabled={syncing} onClick={loadMoreLeads}>{syncing ? '불러오는 중' : `더보기 ${loadedCount}/${serverTotal || loadedCount}`}</button>}
-            <button type="button" disabled={!filtered.length} title={`${month} 한 달 단위 CSV로 내보냅니니다 `} onClick={() => exportLeadsCsv?.(filtered, { month, kind: filter, status: statusFilter, deliveryStatus: 'all', q: query.trim() })}>월 CSV</button>
+            <button type="button" disabled={!filtered.length} title={`${month} 한 달 단위 CSV로 내보냅니다.`} onClick={() => exportLeadsCsv?.(filtered, { month, kind: filter, status: statusFilter, deliveryStatus: 'all', q: query.trim() })}>월 CSV</button>
             <button type="button" onClick={() => { setFilter('all'); setStatusFilter('all'); setQuery(''); }}>{'초기화'}</button>
           </div>
         </div>
 
         {syncing && <div className="inbox-sync-note">{'서버'} {'접수'} {'데이터를'} {'불러오는'} {'중입니다.'}</div>}
-        {hasMoreLeads && !syncing && <div className="inbox-sync-note">? ??? ??? ?????. ???? ??? ?? ??? ?????.</div>}
+        {hasMoreLeads && !syncing && <div className="inbox-sync-note">일부 접수만 표시 중입니다. 더보기로 이어서 불러올 수 있습니다.</div>}
 
         {!filtered.length ? <div className="empty">{'조건에'} {'맞는'} {'접수'} {'데이터가'} {'없습니다.'}</div> : (
           <div className="lead-list-v3">
