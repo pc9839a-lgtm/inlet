@@ -827,7 +827,12 @@ export async function getD1PageBySlug(db, { projectId, slug } = {}) {
 export async function upsertD1Page(db, page = {}, context = {}) {
   assertD1Binding(db);
   const safeSlug = String(context.slug || page.slug || 'my-page').replace(/[^a-zA-Z0-9-_]/g, '') || 'my-page';
-  const current = await db.prepare('SELECT id, revision, created_at FROM pages WHERE project_id = ? AND slug = ? LIMIT 1').bind(String(context.projectId || page.projectId || ''), safeSlug).first();
+  const projectId = String(context.projectId || page.projectId || '');
+  const currentBySlug = await db.prepare('SELECT id, revision, created_at FROM pages WHERE project_id = ? AND slug = ? LIMIT 1').bind(projectId, safeSlug).first();
+  const currentById = page.id
+    ? await db.prepare('SELECT id, revision, created_at FROM pages WHERE id = ? LIMIT 1').bind(String(page.id)).first()
+    : null;
+  const current = currentBySlug || currentById;
   const nextRevision = Math.max(1, Number(current?.revision || 0) + 1);
   const row = encodeD1Page({ ...page, id: current?.id || page.id, createdAt: current?.created_at || page.createdAt }, { ...context, slug: safeSlug, revision: nextRevision });
   await db.prepare(`
@@ -835,7 +840,9 @@ export async function upsertD1Page(db, page = {}, context = {}) {
       id, project_id, slug, title, page_json, revision, published_at, created_at, updated_at
     )
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(project_id, slug) DO UPDATE SET
+    ON CONFLICT(id) DO UPDATE SET
+      project_id = excluded.project_id,
+      slug = excluded.slug,
       title = excluded.title,
       page_json = excluded.page_json,
       revision = excluded.revision,
