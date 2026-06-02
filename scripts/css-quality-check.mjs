@@ -75,6 +75,7 @@ const cssFiles = [
   'src/styles/preview-forms-bottom-color.css',
   'src/styles/preview-forms-description.css',
   'src/styles/preview-forms-buttons.css',
+  'src/styles/preview-forms-button-effects.css',
   'src/styles/preview-forms-basic-grid.css',
   'src/styles/preview-reservation.css',
   'src/styles/preview-bottom.css',
