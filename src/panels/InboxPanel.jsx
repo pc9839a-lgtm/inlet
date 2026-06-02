@@ -349,7 +349,7 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
     }
   };
 
-  const resultOk = result && !/(\uC2E4\uD328|error|failed)/i.test(result);
+  const resultOk = result && !/(\uC2E4\uD328|실패|오류|error|failed|not defined|응답 실패|권한|URL)/i.test(result);
 
   const copySheetsScript = async () => {
     setResult('');

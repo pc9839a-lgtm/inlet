@@ -2,6 +2,7 @@
 import { BRAND_NAME } from '../config/brand.js';
 import { publicLandingUrl, runtimeConfig } from '../config/runtimeConfig.js';
 import { trackingConfig } from './conversionTracking.js';
+import { postJson } from './apiClient.js';
 
 export const CONNECTION_STATUS = {
   off: '꺼짐',
