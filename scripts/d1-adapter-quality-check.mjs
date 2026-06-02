@@ -695,6 +695,11 @@ function fakeD1(options = {}) {
             const page = rows.pages.find((row) => row.project_id === projectId && row.slug === slug);
             return page ? { id: page.id, project_id: page.project_id, slug: page.slug, revision: page.revision, created_at: page.created_at } : null;
           }
+          if (sql.includes('SELECT id, project_id, slug, revision, created_at FROM pages WHERE project_id = ? ORDER BY updated_at DESC LIMIT 1')) {
+            const [projectId] = this.params;
+            const page = rows.pages.filter((row) => row.project_id === projectId).sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')))[0];
+            return page ? { id: page.id, project_id: page.project_id, slug: page.slug, revision: page.revision, created_at: page.created_at } : null;
+          }
           if (sql.includes('SELECT id, project_id, slug, revision, created_at FROM pages WHERE id = ?')) {
             const [id] = this.params;
             const page = rows.pages.find((row) => row.id === id);

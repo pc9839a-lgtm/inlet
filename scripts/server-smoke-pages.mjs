@@ -23,34 +23,43 @@ await runSmoke('server-smoke-pages', async ({ baseUrl }) => {
   });
   assert(updated.res.ok && updated.data.page?.title === 'Smoke Page Updated', 'page update failed');
 
-  const guarded = await json({ baseUrl }, 'POST', pagePath, {
-    project,
-    expectedUpdatedAt: updated.data.page.updatedAt,
-    page: { ...page, title: 'Smoke Page Guarded' },
+  const renamedSlug = `${smokeId}-renamed`;
+  const renamedPath = `/api/pages/${encodeURIComponent(renamedSlug)}`;
+  const renamed = await json({ baseUrl }, 'POST', renamedPath, {
+    project: { ...project, slug: renamedSlug },
+    page: { ...updated.data.page, slug: renamedSlug, title: 'Smoke Page Renamed' },
+  });
+  assert(renamed.res.ok && renamed.data.page?.id === updated.data.page.id && renamed.data.page?.slug === renamedSlug, 'page slug rename should update the existing project page');
+
+  const guarded = await json({ baseUrl }, 'POST', renamedPath, {
+    project: { ...project, slug: renamedSlug },
+    expectedUpdatedAt: renamed.data.page.updatedAt,
+    page: { ...renamed.data.page, title: 'Smoke Page Guarded' },
   });
   assert(guarded.res.ok && guarded.data.page?.title === 'Smoke Page Guarded', 'page guarded update failed');
 
-  const conflict = await json({ baseUrl }, 'POST', pagePath, {
-    project,
+  const renamedQuery = new URLSearchParams({ ...project, slug: renamedSlug }).toString();
+  const conflict = await json({ baseUrl }, 'POST', renamedPath, {
+    project: { ...project, slug: renamedSlug },
     expectedUpdatedAt: updated.data.page.updatedAt,
-    page: { ...page, title: 'Smoke Page Stale' },
+    page: { ...renamed.data.page, title: 'Smoke Page Stale' },
   });
   assert(conflict.res.status === 409, `page conflict expected 409, got ${conflict.res.status}`);
   assert(conflict.data.code === 'PAGE_REVISION_CONFLICT', 'page conflict code missing');
   assert(conflict.data.latest?.updatedAt === guarded.data.page.updatedAt, 'page conflict latest metadata missing');
   assert(conflict.data.page?.title === 'Smoke Page Guarded', 'page conflict latest page missing');
 
-  const revisions = await json({ baseUrl }, 'GET', `${pagePath}/revisions?${query}`);
+  const revisions = await json({ baseUrl }, 'GET', `${renamedPath}/revisions?${renamedQuery}`);
   assert(revisions.res.ok && Array.isArray(revisions.data.revisions) && revisions.data.revisions.length >= 1, 'page revisions failed');
 
   const revisionId = revisions.data.revisions[0]?.id;
-  const revision = await json({ baseUrl }, 'GET', `${pagePath}/revisions/${encodeURIComponent(revisionId)}?${query}`);
+  const revision = await json({ baseUrl }, 'GET', `${renamedPath}/revisions/${encodeURIComponent(revisionId)}?${renamedQuery}`);
   assert(revision.res.ok && revision.data.revision?.id === revisionId, 'page revision read failed');
 
   const oldestRevision = revisions.data.revisions[revisions.data.revisions.length - 1]?.id;
-  const restored = await json({ baseUrl }, 'POST', `${pagePath}/restore`, { project, revisionId: oldestRevision });
-  assert(restored.res.ok && restored.data.page?.slug === smokeId, 'page restore failed');
+  const restored = await json({ baseUrl }, 'POST', `${renamedPath}/restore`, { project: { ...project, slug: renamedSlug }, revisionId: oldestRevision });
+  assert(restored.res.ok && restored.data.page?.slug === renamedSlug, 'page restore failed');
 
-  const afterRestore = await json({ baseUrl }, 'GET', `${pagePath}/revisions?${query}`);
+  const afterRestore = await json({ baseUrl }, 'GET', `${renamedPath}/revisions?${renamedQuery}`);
   assert(afterRestore.res.ok && afterRestore.data.revisions.length >= revisions.data.revisions.length + 2, 'page restore should keep backup and restored revisions');
 });
