@@ -12,7 +12,7 @@
 .landing-page .landing-content{position:relative;z-index:1}
 .bg-effect-layer{position:absolute;inset:0;z-index:3;pointer-events:none;opacity:var(--bg-effect-opacity,.45);overflow:hidden}
 .bg-effect-layer i{display:block;position:absolute;left:var(--x);top:var(--y);width:var(--s);height:var(--s);opacity:var(--o);animation:bgFall var(--d) linear infinite;animation-delay:var(--delay);will-change:transform,opacity;filter:blur(var(--blur,0))}
-.bottom-bar{z-index:5}
+.bottom-bar{z-index:80}
 .bg-effect-snow .bg-effect-layer{mix-blend-mode:screen}
 .bg-effect-snow .bg-effect-layer i{border-radius:999px;background:radial-gradient(circle,rgba(255,255,255,.98) 0 34%,rgba(255,255,255,.7) 58%,rgba(255,255,255,0) 76%);box-shadow:0 0 8px rgba(255,255,255,.32)}
 .bg-effect-petals .bg-effect-layer{opacity:calc(var(--bg-effect-opacity,.45)*.82)}
