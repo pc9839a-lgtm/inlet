@@ -307,7 +307,7 @@ const HOME_NAV_ITEMS = ['기능안내', '사례', '요금', '고객지원'];
 const HOME_KEYWORDS = ['랜딩페이지', '상담폼', '예약접수', '고객관리', '전환통계', '외부전송', '모바일페이지', '분양상담', '서비스문의'];
 const HOME_FEATURES = [
   ['접수', '상담 신청부터 예약까지 한 화면에'],
-  ['관리', '새 문의와 전송 상태를 바로 확인'],
+  ['관리', '새 문의와 유입 정보를 바로 확인'],
   ['분석', '유입 채널과 클릭 위치를 한눈에'],
   ['연동', '메일 알림과 외부 전송까지 연결'],
 ];
@@ -488,13 +488,13 @@ const PAGEROL_MOTION_ROWS = [
 const PAGEROL_FLOW = [
   ['01', '페이지 만들기', '상호명과 목적만 넣고 시작'],
   ['02', '폼 연결하기', '이름, 연락처, 관심 항목을 받기'],
-  ['03', '접수 확인하기', '문의와 전송 상태를 한곳에서'],
+  ['03', '접수 확인하기', '문의와 유입 경로를 한곳에서'],
   ['04', '유입 보기', '채널, 기기, 클릭 위치까지'],
 ];
 const PAGEROL_FEATURES = [
   ['상담폼', '필요한 질문만 골라 받기'],
   ['예약폼', '방문 시간과 희망 일자 받기'],
-  ['접수함', '새 문의, 중복, 전송 상태 관리'],
+  ['접수함', '새 문의, 중복, 유입 정보 관리'],
   ['통계', '유입 채널과 전환 흐름 확인'],
   ['메일 알림', '접수 즉시 담당자에게 전달'],
   ['외부 전송', '웹훅과 시트로 데이터 연결'],
@@ -504,7 +504,7 @@ const PAGEROL_FEATURES = [
 const PAGEROL_USE_CASES = ['분양 상담', '병원 예약', '법률 상담', '강의 신청', '방문 예약', '이벤트 접수', '가맹 문의', '서비스 견적', '채용 문의'];
 const PAGEROL_FAQS = [
   ['코딩 없이 만들 수 있나요?', '네. 블록을 고르고 문구만 바꾸면 바로 공개할 수 있습니다.'],
-  ['접수 데이터는 어디서 보나요?', '페이지로 접수함에서 신규 문의, 중복 여부, 알림 전송 상태를 확인합니다.'],
+  ['접수 데이터는 어디서 보나요?', '페이지로 접수함에서 신규 문의, 중복 여부, 유입 정보를 확인합니다.'],
   ['외부 사이트에도 붙일 수 있나요?', '폼 HTML 코드를 복사해 기존 홈페이지나 블로그에 붙일 수 있습니다.'],
   ['여러 페이지를 운영할 수 있나요?', '현장, 브랜드, 캠페인별로 페이지를 나눠 운영할 수 있습니다.'],
 ];
@@ -679,7 +679,7 @@ function PageroLittlyHome({ onLogin, onSignup }) {
           <div className="pagerol-phone-stage">
             <PageroBuildDemo />
             <div className="pagerol-chip chip-a"><span>오늘 접수</span><b>128</b></div>
-            <div className="pagerol-chip chip-b"><span>전송 상태</span><b>정상</b></div>
+            <div className="pagerol-chip chip-b"><span>유입 채널</span><b>네이버</b></div>
             <div className="pagerol-chip chip-c"><span>유입 1위</span><b>네이버</b></div>
           </div>
         </section>
@@ -747,12 +747,12 @@ function PageroLittlyHome({ onLogin, onSignup }) {
           <div className="pagerol-review-card">
             <span>운영자 화면</span>
             <h2>문의가 들어오면<br/>바로 보입니다</h2>
-            <p>이름, 연락처, 관심 항목, 유입 채널, 알림 전송 상태까지 접수함에서 확인합니다.</p>
+            <p>이름, 연락처, 관심 항목, 유입 채널을 접수함에서 확인합니다.</p>
           </div>
           <div className="pagerol-dashboard">
             <div><span>신규 접수</span><b>32</b></div>
             <div><span>CTA 클릭</span><b>87</b></div>
-            <div><span>메일 전송</span><b>정상</b></div>
+            <div><span>중복 차단</span><b>설정</b></div>
             <div><span>상위 채널</span><b>네이버</b></div>
           </div>
         </section>

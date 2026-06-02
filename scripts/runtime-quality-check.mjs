@@ -130,6 +130,7 @@ for (const [file, source] of sources) {
 
 const main = await readFile('src/main.jsx', 'utf8');
 const app = await readFile('src/App.jsx', 'utf8');
+const homeScreens = await readFile('src/screens/HomeScreens.jsx', 'utf8');
 const authContext = await readFile('src/lib/authContext.js', 'utf8');
 const appErrorBoundary = await readFile('src/components/AppErrorBoundary.jsx', 'utf8');
 const blockEditor = await readFile('src/editor/BlockEditor.jsx', 'utf8');
@@ -178,6 +179,7 @@ assert(app.includes('adminRoute') && app.includes("return /^\\/(?:admin|[^/?#]+\
 assert(app.includes('const canWriteTabKey = (key) => canWriteTab(accessMode, page, authUser, key)') && app.includes('blockWrite'), 'App must enforce manager write permissions before mutation');
 assert(app.includes('selectedBlockId={canUseBuilder ? openId : \'\'}') && app.includes('onSelectBlock={canUseBuilder ? selectPreviewBlock : undefined}'), 'client admin preview must not route into block editing');
 assert(app.includes("['topnav', 'bottombar', 'footer'].includes(target?.type)") && app.includes("setOpenId('');") && app.indexOf("['topnav', 'bottombar', 'footer'].includes(target?.type)") < app.indexOf('document.getElementById(`editor-block-${id}`)'), 'preview fixed layout clicks must not auto-open editor blocks');
+assert(!homeScreens.includes('전송 상태') && !homeScreens.includes('알림 전송 상태'), 'public home copy should not expose delivery status as an operator UI feature');
 assert(/const openWorkspace = [\s\S]*?setOpenId\(''\);[\s\S]*?setAddOpen\(false\);[\s\S]*?if \(!canUseBuilder\)/.test(app), 'workspace entry must collapse any open editor block and add panel');
 assert(app.includes('class LazyEditorBoundary'), 'fixed block editors must isolate lazy chunk failures');
 assert(app.includes('<LazyEditorBoundary resetKey=') && app.includes('<Suspense fallback={<LazyEditorFallback />}'), 'fixed block editors must keep lazy loading fallback and boundary');
