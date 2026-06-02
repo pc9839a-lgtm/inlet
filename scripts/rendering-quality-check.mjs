@@ -184,6 +184,7 @@ const visualGeometryContracts = [
   ['links cards protect text overflow', files.previewCss.includes('minmax(0,1fr)') && /overflow-wrap|text-overflow/.test(files.previewCss)],
   ['timer grid uses stable tracks', files.previewCss.includes('.timer-grid') && files.previewCss.includes('repeat(4')],
   ['bottom bar keeps fixed button count tracks', files.previewCss.includes('bottom-bar.count-3') && files.previewCss.includes('repeat(3')],
+  ['bottom bar count-3 is not overridden to two columns', !/\.bottom-bar\.count-3\s*\{[^}]*repeat\(2/i.test(files.previewCss)],
   ['public landing bottom CTA is fixed inside 860 shell', files.previewCss.includes('.public-landing-viewport .public-bottom-bar') && files.previewCss.includes('position: fixed') && files.previewCss.includes('width: min(860px, 100vw)') && files.previewCss.includes('max-width: 860px')],
   ['public landing bottom CTA uses editor button colors', files.previewCss.includes('.public-landing-viewport .public-bottom-bar button') && files.previewCss.includes('background: var(--bottom-button') && files.previewCss.includes('color: var(--bottom-button-text')],
   ['public landing bottom CTA does not add a white overlay', files.previewCss.includes('.public-landing-viewport .public-bottom-bar') && files.previewCss.includes('background: transparent !important') && files.previewCss.includes('box-shadow: none !important')],
