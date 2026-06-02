@@ -2,7 +2,7 @@ import { decodeD1Page, getD1PageBySlug, upsertD1Page } from '../../../server/sto
 import { assertD1, authorizeProject, ensureD1ProjectShell, handleApiError, jsonResponse, optionsResponse, projectFromRequest, readJson, sessionIdentity } from '../_shared.js';
 
 const METHODS = 'GET, POST, OPTIONS';
-const PUBLIC_PAGE_CACHE_CONTROL = 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400';
+const PUBLIC_PAGE_CACHE_CONTROL = 'no-store';
 
 function safeSlug(value = '') {
   return String(value || 'my-page').replace(/[^a-zA-Z0-9-_]/g, '') || 'my-page';

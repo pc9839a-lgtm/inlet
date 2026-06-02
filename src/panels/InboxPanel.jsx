@@ -233,37 +233,37 @@ function InlineSwitch({ checked, onChange }) {
   );
 }
 
-const GOOGLE_SHEETS_APPS_SCRIPT = `const SHEET_NAME = '\\uC811\\uC218\\uD568';
+const GOOGLE_SHEETS_APPS_SCRIPT = `const SHEET_NAME = '접수함';
 const BASE_HEADERS = [
-  '\\uC811\\uC218\\uC77C\\uC2DC',
-  '\\uC774\\uB984',
-  '\\uC5F0\\uB77D\\uCC98',
-  '\\uC774\\uBA54\\uC77C',
-  '\\uBA54\\uC2DC\\uC9C0',
-  '\\uD398\\uC774\\uC9C0\\uBA85',
-  '\\uD398\\uC774\\uC9C0 URL',
+  '접수일시',
+  '이름',
+  '연락처',
+  '이메일',
+  '메시지',
+  '페이지명',
+  '페이지 URL',
   'UTM Source',
   'UTM Medium',
   'UTM Campaign',
-  '\\uC720\\uC785 URL'
+  '유입 URL'
 ];
-const JSON_HEADER = '\\uCD94\\uAC00 \\uC785\\uB825\\uAC12 JSON';
+const JSON_HEADER = '추가 입력값 JSON';
 
 function samplePayload() {
   return {
     createdAt: new Date().toISOString(),
     sheetName: SHEET_NAME,
     lead: {
-      name: '\\uD14C\\uC2A4\\uD2B8',
+      name: '테스트',
       phone: '010-0000-0000',
       email: 'test@example.com',
-      message: '\\uC218\\uB3D9 \\uC2E4\\uD589 \\uD14C\\uC2A4\\uD2B8',
+      message: '수동 실행 테스트',
       fields: {
-        '\\uAD00\\uC2EC \\uD0C0\\uC785': '84A',
-        '\\uC608\\uC0B0\\uB300': '5\\uC5B5~7\\uC5B5'
+        '관심 타입': '84A',
+        '예산대': '5억~7억'
       }
     },
-    page: { title: '\\uD398\\uC774\\uC9C0\\uB85C \\uD14C\\uC2A4\\uD2B8', url: '' },
+    page: { title: '페이지로 테스트', url: '' },
     source: { utmSource: 'test', utmMedium: '', utmCampaign: '', sourceUrl: '' }
   };
 }
@@ -287,17 +287,17 @@ function appendLead(data) {
   const headers = ensureHeaders(sheet, fieldHeaders);
   const source = data.source || data.attribution || {};
   const baseValues = {
-    '\\uC811\\uC218\\uC77C\\uC2DC': data.lead?.createdAt || data.createdAt || new Date().toISOString(),
-    '\\uC774\\uB984': data.lead?.name || '',
-    '\\uC5F0\\uB77D\\uCC98': data.lead?.phone || '',
-    '\\uC774\\uBA54\\uC77C': data.lead?.email || '',
-    '\\uBA54\\uC2DC\\uC9C0': data.lead?.message || '',
-    '\\uD398\\uC774\\uC9C0\\uBA85': data.page?.title || '',
-    '\\uD398\\uC774\\uC9C0 URL': data.page?.url || '',
+    '접수일시': data.lead?.createdAt || data.createdAt || new Date().toISOString(),
+    '이름': data.lead?.name || '',
+    '연락처': data.lead?.phone || '',
+    '이메일': data.lead?.email || '',
+    '메시지': data.lead?.message || '',
+    '페이지명': data.page?.title || '',
+    '페이지 URL': data.page?.url || '',
     'UTM Source': source.utmSource || '',
     'UTM Medium': source.utmMedium || '',
     'UTM Campaign': source.utmCampaign || '',
-    '\\uC720\\uC785 URL': source.sourceUrl || source.referrer || '',
+    '유입 URL': source.sourceUrl || source.referrer || '',
     [JSON_HEADER]: JSON.stringify(fields)
   };
   const row = headers.map((header) => fields[header] ?? baseValues[header] ?? '');
@@ -376,7 +376,7 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
       enabled: !!currentSheets.enabled,
       webhookUrl: currentUrl,
       url: currentUrl,
-      sheetName: currentSheets.sheetName || '\uC811\uC218\uD568',
+      sheetName: currentSheets.sheetName || '접수함',
       lastError: '',
     });
     updateIntegrations?.('sheets', nextIntegrations.sheets);
@@ -385,9 +385,9 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
     try {
       await onSavePage?.({ ...page, integrations: nextIntegrations });
       setDraftDirty(false);
-      setResult('Google Sheets \uC124\uC815 \uC800\uC7A5 \uC644\uB8CC');
+      setResult('Google Sheets 설정 저장 완료');
     } catch (error) {
-      setResult(`Google Sheets \uC800\uC7A5 \uC2E4\uD328: ${String(error?.message || error)}`);
+      setResult(`Google Sheets 저장 실패: ${String(error?.message || error)}`);
     } finally {
       setSaving(false);
     }
@@ -400,10 +400,10 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
     try {
       await navigator.clipboard.writeText(GOOGLE_SHEETS_APPS_SCRIPT);
       setCopiedScript(true);
-      setResult('Google Sheets \uC0D8\uD50C \uCF54\uB4DC \uBCF5\uC0AC \uC644\uB8CC');
+      setResult('Google Sheets 샘플 코드 복사 완료');
       window.setTimeout(() => setCopiedScript(false), 1800);
     } catch (error) {
-      setResult('\uBCF5\uC0AC \uC2E4\uD328');
+      setResult('복사 실패');
     }
   };
 
@@ -412,7 +412,7 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
     setResult('');
     const currentSheets = draftIntegrations.sheets || {};
     const currentUrl = currentSheets.webhookUrl || currentSheets.url || '';
-    const currentSheetName = currentSheets.sheetName || '\uC811\uC218\uD568';
+    const currentSheetName = currentSheets.sheetName || '접수함';
     sheetPatch({
       webhookUrl: currentUrl,
       url: currentUrl,
@@ -440,11 +440,11 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
         enabled: true,
         status: ok ? 'connected' : 'error',
         lastSyncAt: ok ? new Date().toISOString() : currentSheets.lastSyncAt,
-        lastError: ok ? '' : (response?.message || 'Google Sheets \uC5F0\uACB0 \uD14C\uC2A4\uD2B8 \uC2E4\uD328'),
+        lastError: ok ? '' : (response?.message || 'Google Sheets 연결 테스트 실패'),
       });
-      setResult(response?.message || (ok ? 'Google Sheets \uD14C\uC2A4\uD2B8 \uC644\uB8CC' : 'Google Sheets \uD14C\uC2A4\uD2B8 \uC2E4\uD328'));
+      setResult(response?.message || (ok ? 'Google Sheets 테스트 완료' : 'Google Sheets 테스트 실패'));
     } catch (error) {
-      const message = `Google Sheets \uD14C\uC2A4\uD2B8 \uC2E4\uD328: ${String(error?.message || error || '\uC811\uC218 \uC800\uC7A5\uC740 \uC720\uC9C0\uB429\uB2C8\uB2E4.')}`;
+      const message = `Google Sheets 테스트 실패: ${String(error?.message || error || '접수 저장은 유지됩니다.')}`;
       sheetPatch({
         webhookUrl: currentUrl,
         url: currentUrl,
@@ -654,13 +654,13 @@ export default function InboxPanel({
 
       <section className="inbox-summary-v2 inbox-summary-v3">
         <button className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>
-          <span>전체</span><strong>{normalized.length}건</strong><small>신규 {newCount}건</small>
+          <span>{'전체'}</span><strong>{normalized.length}{'건'}</strong><small>{'신규'} {newCount}{'건'}</small>
         </button>
         <button className={filter === 'consult' ? 'active' : ''} onClick={() => setFilter('consult')}>
-          <span>상담</span><strong>{consultCount}건</strong><small>상담 접수</small>
+          <span>{'상담'}</span><strong>{consultCount}{'건'}</strong><small>{'상담'} {'접수'}</small>
         </button>
         <button className={filter === 'reservation' ? 'active' : ''} onClick={() => setFilter('reservation')}>
-          <span>예약</span><strong>{reservationCount}건</strong><small>방문 예약</small>
+          <span>{'예약'}</span><strong>{reservationCount}{'건'}</strong><small>{'방문'} {'예약'}</small>
         </button>
       </section>
 
@@ -669,17 +669,17 @@ export default function InboxPanel({
       <section className="card inbox-toolbar-card inbox-toolbar-v3">
         <div className="inbox-toolbar">
           <label className="inbox-search">
-            <span>검색</span>
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="이름, 연락처, 메모 검색" />
+            <span>{'검색'}</span>
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={'이름, 연락처, 메모 검색'} />
           </label>
           <label className="inbox-status-filter">
-            <span>월</span>
+            <span>{'월'}</span>
             <input type="month" value={month} onChange={(event) => setMonth(event.target.value || currentMonthValue())} />
           </label>
           <label className="inbox-status-filter">
-            <span>상태</span>
+            <span>{'상태'}</span>
             <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-              <option value="all">전체</option>
+              <option value="all">{'전체'}</option>
               {LEAD_STATUS.map((value) => <option key={value} value={value}>{value}</option>)}
             </select>
           </label>
@@ -689,20 +689,20 @@ export default function InboxPanel({
       <section className="card inbox-list-card inbox-list-v3">
         <div className="section-title inbox-list-title">
           <div>
-            <h2>접수 목록</h2>
+            <h2>{'접수'} {'목록'}</h2>
             <p>{listSummary}</p>
           </div>
           <div className="inbox-list-actions">
             {hasMoreLeads && <button type="button" disabled={syncing} onClick={loadMoreLeads}>{syncing ? '불러오는 중' : `더보기 ${loadedCount}/${serverTotal || loadedCount}`}</button>}
-            <button type="button" disabled={!filtered.length} title={`${month} 한 달 단위 CSV로 내보냅니다.`} onClick={() => exportLeadsCsv?.(filtered, { month, kind: filter, status: statusFilter, deliveryStatus: 'all', q: query.trim() })}>월 CSV</button>
-            <button type="button" onClick={() => { setFilter('all'); setStatusFilter('all'); setQuery(''); }}>초기화</button>
+            <button type="button" disabled={!filtered.length} title={`${month} 한 달 단위 CSV로 내보냅니니다 `} onClick={() => exportLeadsCsv?.(filtered, { month, kind: filter, status: statusFilter, deliveryStatus: 'all', q: query.trim() })}>월 CSV</button>
+            <button type="button" onClick={() => { setFilter('all'); setStatusFilter('all'); setQuery(''); }}>{'초기화'}</button>
           </div>
         </div>
 
-        {syncing && <div className="inbox-sync-note">서버 접수 데이터를 불러오는 중입니다.</div>}
-        {hasMoreLeads && !syncing && <div className="inbox-sync-note">첫 화면은 일부만 표시합니다. 더보기를 누르면 다음 접수를 불러옵니다.</div>}
+        {syncing && <div className="inbox-sync-note">{'서버'} {'접수'} {'데이터를'} {'불러오는'} {'중입니다.'}</div>}
+        {hasMoreLeads && !syncing && <div className="inbox-sync-note">? ??? ??? ?????. ???? ??? ?? ??? ?????.</div>}
 
-        {!filtered.length ? <div className="empty">조건에 맞는 접수 데이터가 없습니다.</div> : (
+        {!filtered.length ? <div className="empty">{'조건에'} {'맞는'} {'접수'} {'데이터가'} {'없습니다.'}</div> : (
           <div className="lead-list-v3">
             {filtered.map((lead, index) => {
               const opened = openId === lead.id;
@@ -718,8 +718,8 @@ export default function InboxPanel({
                     </button>
                     <div className="lead-row-meta-v3">
                       <LeadSource lead={lead} />
-                      {lead.duplicate && <b className="lead-status hold">중복</b>}
-                      {lead.duplicateReason?.includes('spam_suspected') && <b className="lead-status hold">스팸 의심</b>}
+                      {lead.duplicate && <b className="lead-status hold">{'중복'}</b>}
+                      {lead.duplicateReason?.includes('spam_suspected') && <b className="lead-status hold">{'스팸'} {'의심'}</b>}
                       <b className={`lead-status ${statusClass(lead.status)}`}>{lead.status}</b>
                       <small>{fmtDateOnly(lead.createdAt)}</small>
                       <button type="button" onClick={() => setOpenId(opened ? '' : lead.id)}>{opened ? '닫기' : '상세'}</button>
@@ -729,37 +729,37 @@ export default function InboxPanel({
                   {opened && (
                     <div className="lead-detail-v3">
                       <section className="lead-detail-section">
-                        <h3>고객 정보</h3>
+                        <h3>{'고객'} {'정보'}</h3>
                         <div className="lead-info-grid">
-                          <LeadInfoRow label="접수 유형" value={lead.type} />
-                          <LeadInfoRow label="접수 시간" value={fmtDate(lead.createdAt)} />
-                          <LeadInfoRow label="이름" value={lead.name || '-'} />
-                          <LeadInfoRow label="연락처" value={lead.phone || '-'} />
-                          <LeadInfoRow label="이메일" value={lead.email} />
-                          <LeadInfoRow label="주소" value={lead.address} />
+                          <LeadInfoRow label={'접수'} value={lead.type} />
+                          <LeadInfoRow label={'접수일시'} value={fmtDate(lead.createdAt)} />
+                          <LeadInfoRow label={'이름'} value={lead.name || '-'} />
+                          <LeadInfoRow label={'연락처'} value={lead.phone || '-'} />
+                          <LeadInfoRow label={'이메일'} value={lead.email} />
+                          <LeadInfoRow label={'주소'} value={lead.address} />
                         </div>
                       </section>
 
                       <section className="lead-detail-section">
-                        <h3>유입 정보</h3>
+                        <h3>{'유입'} {'정보'}</h3>
                         <div className="lead-info-grid">
-                          <LeadInfoRow label="유입" value={trafficSourceLabel(lead)} />
-                          <LeadInfoRow label="접수 URL" value={lead.sourceUrl || lead.pageUrl || '-'} />
-                          <LeadInfoRow label="이전 URL" value={lead.referrer || '-'} />
-                          <LeadInfoRow label="캠페인" value={lead.utmCampaign || '-'} />
+                          <LeadInfoRow label={'유입'} value={trafficSourceLabel(lead)} />
+                          <LeadInfoRow label={'접수 URL'} value={lead.sourceUrl || lead.pageUrl || '-'} />
+                          <LeadInfoRow label={'이전 URL'} value={lead.referrer || '-'} />
+                          <LeadInfoRow label={'캠페인'} value={lead.utmCampaign || '-'} />
                         </div>
                       </section>
 
                       {lead.message && (
                         <section className="lead-detail-section">
-                          <h3>문의 내용</h3>
+                          <h3>{'문의'} {'내용'}</h3>
                           <div className="lead-message-box">{lead.message}</div>
                         </section>
                       )}
 
                       {!!answers.length && (
                         <section className="lead-detail-section">
-                          <h3>질문 답변</h3>
+                          <h3>{'질문'} {'답변'}</h3>
                           <div className="lead-answer-list-v3">
                             {answers.map((answer) => (
                               <div key={answer.id || answer.label}>
@@ -772,23 +772,23 @@ export default function InboxPanel({
                       )}
 
                       <section className="lead-detail-section lead-manage-section">
-                        <h3>관리</h3>
+                        <h3>{'관리'}</h3>
                         <StatusPills value={lead.status} onChange={(status) => updateLeadSafe(lead.id, { status })} />
                         <label className="lead-memo-v3">
-                          <span>메모</span>
+                          <span>{'메모'}</span>
                           <DebouncedMemoInput value={lead.memo || ''} onCommit={(memo) => updateLeadSafe(lead.id, { memo })} />
                         </label>
-                        <button className="delete delete-v3" onClick={() => deleteLead?.(lead.id)}>삭제</button>
+                        <button className="delete delete-v3" onClick={() => deleteLead?.(lead.id)}>{'삭제'}</button>
                       </section>
 
                       {!!history.length && (
                         <section className="lead-detail-section">
-                          <h3>변경 이력</h3>
+                          <h3>{'변경'} {'이력'}</h3>
                           <div className="lead-history-list">
                             {history.slice(0, 8).map((item, idx) => (
                               <div key={item.id || `${item.at}-${idx}`}>
                                 <span>{item.type === 'status' ? '상태' : '메모'}</span>
-                                <b>{item.type === 'status' ? `${item.from || '-'} → ${item.to || '-'}` : '메모 수정'}</b>
+                                <b>{item.type === 'status' ? `${item.from || '-'} -> ${item.to || '-'}` : '메모 수정'}</b>
                                 <small>{fmtDate(item.at)}</small>
                               </div>
                             ))}

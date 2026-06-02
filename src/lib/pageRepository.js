@@ -53,7 +53,7 @@ export async function fetchServerPage(slug, context = {}) {
 
 export async function fetchPublicServerPage(slug) {
   const safeSlug = pageSlug(slug);
-  const res = await apiFetch(`/api/pages/${encodeURIComponent(safeSlug)}?public=1`);
+  const res = await apiFetch(`/api/pages/${encodeURIComponent(safeSlug)}?public=1&fresh=${Date.now()}`);
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(await readJsonError(res, `공개 페이지 불러오기 실패: ${res.status}`));
   const data = await res.json();
