@@ -10,7 +10,7 @@
     if (document.getElementById('pagero-form-style')) return;
     var style = document.createElement('style');
     style.id = 'pagero-form-style';
-    style.textContent = '*{box-sizing:border-box}.pagero-form-wrap{width:min(100%,520px);margin:0 auto;padding:20px;color:#101827;font-family:Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}.pagero-form-card{background:#fff;border:1px solid #d9e2ef;border-radius:22px;padding:24px;box-shadow:0 18px 42px rgba(15,23,42,.08)}.pagero-form-card h2{margin:0 0 8px;font-size:26px;line-height:1.2}.pagero-form-card p{margin:0 0 18px;color:#64748b;font-weight:700;line-height:1.55}.pagero-form-field{display:block;margin:0 0 14px}.pagero-form-field span,.pagero-form-checks legend{display:block;margin:0 0 8px;font-weight:900;font-size:14px}.pagero-form-field b{color:#2563eb;margin-left:4px}.pagero-form-field input,.pagero-form-field textarea,.pagero-form-field select{width:100%;border:1px solid #d8e2ef;border-radius:16px;background:#f8fbff;padding:15px 16px;font:inherit;font-weight:800;color:#101827;outline:none}.pagero-form-field textarea{min-height:112px;resize:vertical}.pagero-form-field input:focus,.pagero-form-field textarea:focus,.pagero-form-field select:focus{border-color:#2563eb;box-shadow:0 0 0 4px rgba(37,99,235,.12)}.pagero-form-checks{border:0;margin:0 0 14px;padding:0}.pagero-form-checks label{display:flex;gap:8px;align-items:center;margin:8px 0;font-weight:800}.pagero-form-privacy{display:flex;gap:10px;align-items:flex-start;margin:16px 0;color:#334155;font-size:13px;font-weight:800}.pagero-form-privacy input{margin-top:2px}.pagero-form-submit{width:100%;border:0;border-radius:18px;background:#101827;color:#fff;padding:16px;font:inherit;font-weight:900;cursor:pointer}.pagero-form-submit:disabled{opacity:.58;cursor:not-allowed}.pagero-form-notice{display:none;margin-top:14px;border-radius:14px;padding:13px 14px;font-weight:900;line-height:1.4}.pagero-form-notice.show{display:block}.pagero-form-notice.ok{background:#dcfce7;color:#047857}.pagero-form-notice.error{background:#fee2e2;color:#dc2626}.pagero-powered{display:block;margin:14px auto 0;text-align:center;color:#64748b;text-decoration:none;font-size:12px;font-weight:900}.pagero-powered:hover{color:#2563eb}';
+    style.textContent = '*{box-sizing:border-box}.pagero-form-wrap{width:min(100%,520px);margin:0 auto;padding:20px;color:#101827;font-family:Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}.pagero-form-card{background:#fff;border:1px solid #d9e2ef;border-radius:22px;padding:24px;box-shadow:0 18px 42px rgba(15,23,42,.08)}.pagero-form-card h2{margin:0 0 8px;font-size:26px;line-height:1.2}.pagero-form-card p{margin:0 0 18px;color:#64748b;font-weight:700;line-height:1.55}.pagero-form-field{display:block;margin:0 0 14px}.pagero-form-field span,.pagero-form-checks legend{display:block;margin:0 0 8px;font-weight:900;font-size:14px}.pagero-form-field b{color:#2563eb;margin-left:4px}.pagero-form-field input,.pagero-form-field textarea,.pagero-form-field select{width:100%;border:1px solid #d8e2ef;border-radius:16px;background:#f8fbff;padding:15px 16px;font:inherit;font-weight:800;color:#101827;outline:none}.pagero-form-field textarea{min-height:112px;resize:vertical}.pagero-form-field input:focus,.pagero-form-field textarea:focus,.pagero-form-field select:focus{border-color:#2563eb;box-shadow:0 0 0 4px rgba(37,99,235,.12)}.pagero-form-checks{border:0;margin:0 0 14px;padding:0}.pagero-form-checks label{display:flex;gap:8px;align-items:center;margin:8px 0;font-weight:800}.pagero-form-privacy{display:flex;gap:10px;align-items:flex-start;margin:16px 0;color:#334155;font-size:13px;font-weight:800}.pagero-form-submit{width:100%;border:0;border-radius:18px;background:#101827;color:#fff;padding:16px;font:inherit;font-weight:900;cursor:pointer}.pagero-form-submit:disabled{opacity:.58;cursor:not-allowed}.pagero-form-notice{display:none;margin-top:14px;border-radius:14px;padding:13px 14px;font-weight:900;line-height:1.4}.pagero-form-notice.show{display:block}.pagero-form-notice.ok{background:#dcfce7;color:#047857}.pagero-form-notice.error{background:#fee2e2;color:#dc2626}.pagero-powered{display:block;margin:14px auto 0;text-align:center;color:#64748b;text-decoration:none;font-size:12px;font-weight:900}.pagero-powered:hover{color:#2563eb}';
     document.head.appendChild(style);
   }
 
@@ -64,7 +64,7 @@
   }
 
   function isPhoneQuestion(q) {
-    return q && (q.type === 'phone' || /전화|연락|휴대|phone/i.test(String(q.label || '')));
+    return q && (q.type === 'phone' || /전화|연락|휴대폰|핸드폰|phone/i.test(String(q.label || '')));
   }
 
   function sanitizeQuestionValue(q, value) {
@@ -243,8 +243,8 @@
       var configEl = document.getElementById(configId);
       return Promise.resolve(JSON.parse(configEl ? configEl.textContent || '{}' : '{}'));
     }
-    var slug = script.getAttribute('data-page') || script.getAttribute('data-slug') || '';
-    var formId = script.getAttribute('data-form') || '';
+    var slug = script.getAttribute('data-pagero-page') || script.getAttribute('data-page') || script.getAttribute('data-slug') || '';
+    var formId = script.getAttribute('data-pagero-form-id') || script.getAttribute('data-form-id') || script.getAttribute('data-form') || '';
     if (slug) return fetchPublicFormConfig(slug, formId);
     return Promise.reject(new Error('missing config'));
   }
@@ -295,7 +295,7 @@
         sourceBlockTitle: cfg.title || '',
         brand: cfg.brand || '페이지로',
         name: firstAnswer(extracted.answers, ['name'], /이름|성함|name/i),
-        phone: digitsOnly(firstAnswer(extracted.answers, ['phone'], /전화|연락|휴대|phone/i)),
+        phone: digitsOnly(firstAnswer(extracted.answers, ['phone'], /전화|연락|휴대폰|핸드폰|phone/i)),
         email: firstAnswer(extracted.answers, ['email'], /메일|email/i),
         address: firstAnswer(extracted.answers, ['address'], /주소|address/i),
         message: firstAnswer(extracted.answers, ['long'], /문의|내용|메시지|message/i),
@@ -345,6 +345,7 @@
     return !!(script && (
       script.getAttribute('data-pagero')
       || script.getAttribute('data-config')
+      || script.getAttribute('data-pagero-page')
       || script.getAttribute('data-page')
       || script.getAttribute('data-slug')
       || script.getAttribute('data-form')
@@ -382,9 +383,7 @@
   function initAll() {
     var scripts = document.querySelectorAll(SCRIPT_SELECTOR);
     for (var i = 0; i < scripts.length; i += 1) {
-      if (shouldInitScript(scripts[i])) {
-        init(scripts[i]);
-      }
+      if (shouldInitScript(scripts[i])) init(scripts[i]);
     }
     var targets = document.querySelectorAll('[data-pagero-page], [data-pagero-form-embed]');
     for (var j = 0; j < targets.length; j += 1) initElement(targets[j]);

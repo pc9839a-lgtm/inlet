@@ -1,4 +1,4 @@
-import { assert, json, runSmoke } from './lib/serverSmokeHarness.mjs';
+import { assert, fetchWithTimeout, json, runSmoke } from './lib/serverSmokeHarness.mjs';
 
 await runSmoke('server-smoke-pages', async ({ baseUrl }) => {
   const smokeId = `smoke-page-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -37,6 +37,10 @@ await runSmoke('server-smoke-pages', async ({ baseUrl }) => {
     page: { ...renamed.data.page, title: 'Smoke Page Guarded' },
   });
   assert(guarded.res.ok && guarded.data.page?.title === 'Smoke Page Guarded', 'page guarded update failed');
+
+  const publicRead = await fetchWithTimeout(`${baseUrl}${renamedPath}?public=1`, {}, 5000);
+  const publicData = await publicRead.json();
+  assert(publicRead.ok && publicData.page?.title === 'Smoke Page Guarded', 'public page read should not require auth headers');
 
   const renamedQuery = new URLSearchParams({ ...project, slug: renamedSlug }).toString();
   const conflict = await json({ baseUrl }, 'POST', renamedPath, {

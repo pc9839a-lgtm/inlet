@@ -12,7 +12,7 @@ import { buildStats as buildStatsSummary } from '../src/lib/statsMetrics.js';
 import { trafficAttributionFromUrl, trafficChannelFromItem } from '../src/lib/trafficAttribution.js';
 import { appendJsonlRecord, queryJsonlRecords, readJsonlRecords, writeJsonlRecords } from './storage/jsonlAdapter.mjs';
 import { createStorageRuntime, storageRuntimeCoverage, storageRuntimeHealth, storageRuntimePlan } from './storage/runtimeAdapter.mjs';
-import { aggregateD1Stats, deleteD1AiDraft, deleteD1Lead, findD1LeadsByContact, findD1LeadsByIntakeSignals, getD1AccountByEmail, getD1AccountByPhone, getD1Lead, getD1PageBySlug, getD1PageRevision, getD1ProjectAccess, insertD1AuditLog, insertD1BlockedLeadSubmission, insertD1Event, insertD1PageRevision, listD1AiDrafts, listD1BlockedLeadSubmissions, listD1DeliveryLogs, listD1DeliveryRetryQueue, listD1Events, listD1Leads, listD1OwnershipTransferRequests, listD1PageRevisions, replaceD1ProjectMembers, upsertD1Account, upsertD1AiDraft, upsertD1Invite, upsertD1Lead, upsertD1OwnershipTransferRequest, upsertD1Page, upsertD1Project, upsertD1ProjectMember } from './storage/d1Adapter.mjs';
+import { aggregateD1Stats, deleteD1AiDraft, deleteD1Lead, findD1LeadsByContact, findD1LeadsByIntakeSignals, getD1AccountByEmail, getD1AccountByPhone, getD1Lead, getD1PageBySlug, getD1PageRevision, getD1ProjectAccess, getD1PublicPageBySlug, insertD1AuditLog, insertD1BlockedLeadSubmission, insertD1Event, insertD1PageRevision, listD1AiDrafts, listD1BlockedLeadSubmissions, listD1DeliveryLogs, listD1DeliveryRetryQueue, listD1Events, listD1Leads, listD1OwnershipTransferRequests, listD1PageRevisions, replaceD1ProjectMembers, upsertD1Account, upsertD1AiDraft, upsertD1Invite, upsertD1Lead, upsertD1OwnershipTransferRequest, upsertD1Page, upsertD1Project, upsertD1ProjectMember } from './storage/d1Adapter.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
@@ -353,7 +353,7 @@ const server = createServer(async (req, res) => {
 
     if (req.method === 'POST' && url.pathname === '/api/leads') {
       const body = await readJson(req);
-      body.project = await authorizeProjectAccess(req, body?.project || {}, { write: true, bootstrap: true, page: body?.page || {}, tab: 'inbox' });
+      body.project = await authorizeProjectAccess(req, body?.project || {}, { write: true, bootstrap: true, page: body?.page || {}, tab: 'inbox', publicSubmit: true });
       body.requestMeta = requestMetaFrom(req);
       const saved = await saveLead(body);
       sendJson(res, 200, { ok: true, lead: saved });
@@ -610,6 +610,15 @@ const server = createServer(async (req, res) => {
 
     const pageMatch = url.pathname.match(/^\/api\/pages\/([a-zA-Z0-9-_]+)$/);
     if (pageMatch && req.method === 'GET') {
+      if (isPublicPageRequest(url)) {
+        const page = await readPublicPage(pageMatch[1]);
+        if (!page) {
+          sendJson(res, 404, { ok: false, error: 'Page not found' });
+          return;
+        }
+        sendJson(res, 200, { ok: true, page });
+        return;
+      }
       const project = await authorizeProjectAccess(req, projectFromQuery(url), { tab: 'edit' });
       const page = await readPage(pageMatch[1], project);
       if (!page) {
@@ -742,6 +751,8 @@ function authorizeApiRequest(req, url) {
   if (!apiAuthConfig.token) return { ok: true };
   if (!url.pathname.startsWith('/api/')) return { ok: true };
   if (url.pathname === '/api/health') return { ok: true };
+  if (isPublicPageRequest(url)) return { ok: true };
+  if (url.pathname === '/api/leads' && req.method === 'POST') return { ok: true };
 
   const headerToken = String(req.headers['x-inlet-api-token'] || '').trim();
   const auth = String(req.headers.authorization || '').trim();
@@ -749,6 +760,10 @@ function authorizeApiRequest(req, url) {
   if (!headerToken && !bearer) return { ok: false, status: 401, error: 'Unauthorized' };
   if (headerToken === apiAuthConfig.token || bearer === apiAuthConfig.token) return { ok: true };
   return { ok: false, status: 403, error: 'Forbidden' };
+}
+
+function isPublicPageRequest(url) {
+  return /^\/api\/pages\/[a-zA-Z0-9-_]+$/.test(url.pathname) && url.searchParams.get('public') === '1';
 }
 
 function requestIdentity(req) {
@@ -5646,6 +5661,7 @@ async function syncD1ProjectAccess(project = {}, access = {}) {
 async function authorizeProjectAccess(req, project = {}, options = {}) {
   if (!projectAuthConfig.enforce || !hasProject(project)) return hasProject(project) ? normalizeProject(project) : {};
   const normalizedProject = normalizeProject(project);
+  if (options.publicSubmit) return normalizedProject;
   const identity = requestIdentity(req);
   if (!identity.ownerId) throw accessError('Project owner identity is required.', 'PROJECT_ACCESS_REQUIRED');
   const role = String(identity.role || '').trim().toLowerCase().replace(/[-\s]/g, '_');
@@ -6357,6 +6373,33 @@ async function readPage(slug, project = {}) {
   } catch {
     return null;
   }
+}
+
+async function readPublicPage(slug) {
+  const safe = safeSlug(slug);
+  if (!safe) return null;
+  if (storageRuntime.active === 'd1') {
+    return getD1PublicPageBySlug(storageRuntime.d1, { slug: safe });
+  }
+
+  const direct = await readPage(safe, {});
+  if (direct) return direct;
+
+  let projectDirs = [];
+  try {
+    projectDirs = await readdir(path.join(dataDir, 'projects'), { withFileTypes: true });
+  } catch {
+    return null;
+  }
+
+  for (const entry of projectDirs) {
+    if (!entry.isDirectory()) continue;
+    const file = path.join(dataDir, 'projects', entry.name, 'pages', `${safe}.json`);
+    try {
+      return JSON.parse(await readFile(file, 'utf8'));
+    } catch {}
+  }
+  return null;
 }
 
 async function readMapEmbedData(siteId = '') {
