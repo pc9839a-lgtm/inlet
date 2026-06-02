@@ -1,4 +1,5 @@
 import { downloadLeadsCsv, filterLeadsForCsv, leadsToCsv } from '../src/lib/leadCsv.js';
+import { readFile } from 'node:fs/promises';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -73,6 +74,10 @@ assert(csv.includes('"\'\t=cmd"'), 'tab-starting memo should be neutralized');
 assert(csv.includes('"A, B"') && csv.includes('"10:30"') && csv.includes('"line1\nline2"'), 'form values should be flattened into their own cells');
 assert(csv.includes('"https://pagero.kr/test-page"') && csv.includes('"naver"') && csv.includes('"spring"'), 'page and source data should be exported');
 assert(!csv.includes('webhook failed') && !csv.includes('idempotency=') && !csv.includes('timeout'), 'delivery status and logs should not be exported in operator CSV');
+
+const serverSource = await readFile('server/index.mjs', 'utf8');
+assert(!serverSource.includes('외부 전송 상태') && !serverSource.includes('외부 전송 로그'), 'server CSV exports should not expose delivery status/log columns');
+assert(!serverSource.includes('leadsToCsvV2') && !serverSource.includes('function leadsToCsvExport('), 'legacy server CSV exporters should be removed');
 
 const filtered = filterLeadsForCsv(sampleLeads, {
   dateFrom: '2026-05-20',
