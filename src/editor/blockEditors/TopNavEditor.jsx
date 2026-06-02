@@ -8,6 +8,7 @@ const makeMenu = (index) => ({ id: uid(), label: `메뉴 ${index + 1}`, target: 
 export default function TopNavEditor({ s, set, page, TargetControl }) {
   const [dragId, setDragId] = useState('');
   const [dragOverId, setDragOverId] = useState('');
+  const [openMenuId, setOpenMenuId] = useState('');
   const menus = Array.isArray(s.menus) ? s.menus.slice(0, MAX_MENU_COUNT) : [];
   const isImageLogo = s.logoType === 'image';
 
@@ -18,11 +19,13 @@ export default function TopNavEditor({ s, set, page, TargetControl }) {
     const next = [...menus];
     while (next.length < count) next.push(makeMenu(next.length));
     set({ menus: next.slice(0, count) });
+    setOpenMenuId('');
   };
 
   const removeMenu = (id) => {
     if (menus.length <= 1) return;
     set({ menus: menus.filter((menu) => menu.id !== id) });
+    if (openMenuId === id) setOpenMenuId('');
   };
 
   const moveMenu = (targetId) => {
@@ -60,7 +63,12 @@ export default function TopNavEditor({ s, set, page, TargetControl }) {
             <details
               key={menu.id}
               className={`topnav-menu-card ${dragId === menu.id ? 'dragging' : ''} ${dragOverId === menu.id ? 'drag-over' : ''}`}
+              open={openMenuId === menu.id}
               draggable
+              onToggle={(event) => {
+                if (event.currentTarget.open) setOpenMenuId(menu.id);
+                else if (openMenuId === menu.id) setOpenMenuId('');
+              }}
               onDragStart={(event) => {
                 setDragId(menu.id);
                 event.dataTransfer.setData('text/plain', menu.id);
@@ -81,9 +89,9 @@ export default function TopNavEditor({ s, set, page, TargetControl }) {
               }}
             >
               <summary>
-                <span className="topnav-menu-drag" title="드래그해서 순서 변경">⋮⋮</span>
+                <span className="topnav-menu-drag" title="드래그해서 순서 변경">↕</span>
                 <strong>{index + 1}. {menu.label || '메뉴'}</strong>
-                <span className="topnav-menu-toggle">설정</span>
+                <span className="topnav-menu-toggle">{openMenuId === menu.id ? '닫기' : '설정'}</span>
                 <button
                   type="button"
                   disabled={menus.length <= 1}

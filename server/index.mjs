@@ -4429,7 +4429,7 @@ function csvCleanDynamicMap(lead = {}, dynamicHeaders = new Map()) {
   return fields;
 }
 
-function leadsToCsvExportClean(leads = []) {
+function leadsToCsvExportCleanLegacy(leads = []) {
   const dynamicHeaders = csvCleanDynamicHeaders(leads);
   const dynamicHeaderLabels = [...dynamicHeaders.values()];
   const headers = [
@@ -4450,6 +4450,69 @@ function leadsToCsvExportClean(leads = []) {
     'duplicateReason',
     'riskScore',
     'submittedAt',
+    '페이지명',
+    '페이지 URL',
+    '유입 URL',
+    'UTM Source',
+    'UTM Medium',
+    'UTM Campaign',
+    ...dynamicHeaderLabels,
+  ];
+  const rows = leads.map((lead) => {
+    const dynamicFields = csvCleanDynamicMap(lead, dynamicHeaders);
+    const source = lead.source || {};
+    const page = lead.page || lead.deliveryPage || {};
+    return [
+      lead.id || '',
+      lead.type || '',
+      lead.status || '',
+      formatCsvDate(lead.createdAt),
+      lead.name || '',
+      lead.phone || lead.email || lead.address || '',
+      lead.phone || '',
+      lead.email || '',
+      lead.address || '',
+      lead.message || '',
+      csvFieldByCleanLabel(lead, [/reservationDate|예약일|date/i]),
+      csvFieldByCleanLabel(lead, [/reservationTime|예약시간|time/i]),
+      lead.memo || '',
+      lead.duplicate ? 'yes' : 'no',
+      lead.duplicateReason || '',
+      lead.riskScore ?? '',
+      formatCsvDate(lead.submittedAt || lead.createdAt),
+      page.title || lead.pageTitle || '',
+      page.url || lead.pageUrl || '',
+      source.url || source.pageUrl || lead.sourceUrl || '',
+      source.utmSource || lead.utmSource || '',
+      source.utmMedium || lead.utmMedium || '',
+      source.utmCampaign || lead.utmCampaign || '',
+      ...dynamicHeaderLabels.map((header) => dynamicFields[header] || ''),
+    ];
+  });
+  return [headers, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n');
+}
+
+function leadsToCsvExportClean(leads = []) {
+  const dynamicHeaders = csvCleanDynamicHeaders(leads);
+  const dynamicHeaderLabels = [...dynamicHeaders.values()];
+  const headers = [
+    '접수 ID',
+    '접수 유형',
+    '상태',
+    '접수일시',
+    '이름',
+    '대표 연락처',
+    '연락처',
+    '이메일',
+    '주소',
+    '문의 내용',
+    '예약일',
+    '예약시간',
+    '메모',
+    '중복 여부',
+    '중복 사유',
+    '위험 점수',
+    '제출일시',
     '페이지명',
     '페이지 URL',
     '유입 URL',
