@@ -1586,6 +1586,11 @@ function App() {
   const selectPreviewBlock = (id) => {
     if (!canUseBuilder) return;
     if (!id) return;
+    const target = page.blocks.find((block) => block.id === id);
+    if (['topnav', 'bottombar', 'footer'].includes(target?.type)) {
+      setOpenId('');
+      return;
+    }
     const run = () => {
       clearPendingStyle();
       setTab('edit');
