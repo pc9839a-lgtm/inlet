@@ -233,17 +233,38 @@ function InlineSwitch({ checked, onChange }) {
   );
 }
 
-const GOOGLE_SHEETS_APPS_SCRIPT = `const SHEET_NAME = '접수함';
+const GOOGLE_SHEETS_APPS_SCRIPT = `const SHEET_NAME = '\\uC811\\uC218\\uD568';
 
-function doPost(e) {
-  const data = JSON.parse(e.postData.contents || '{}');
+function samplePayload() {
+  return {
+    createdAt: new Date().toISOString(),
+    sheetName: SHEET_NAME,
+    lead: {
+      name: '\\uD14C\\uC2A4\\uD2B8',
+      phone: '010-0000-0000',
+      email: 'test@example.com',
+      message: '\\uC218\\uB3D9 \\uC2E4\\uD589 \\uD14C\\uC2A4\\uD2B8',
+      fields: { '\\uAD00\\uC2EC\\uD56D\\uBAA9': '\\uD14C\\uC2A4\\uD2B8' }
+    },
+    page: { title: '\\uD398\\uC774\\uC9C0\\uB85C \\uD14C\\uC2A4\\uD2B8', url: '' },
+    source: {}
+  };
+}
+
+function parsePayload(e) {
+  if (!e || !e.postData || !e.postData.contents) return samplePayload();
+  return JSON.parse(e.postData.contents || '{}');
+}
+
+function appendLead(data) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(data.sheetName || SHEET_NAME) || ss.insertSheet(data.sheetName || SHEET_NAME);
+  const sheetName = data.sheetName || SHEET_NAME;
+  const sheet = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName);
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow(['접수일시','이름','연락처','이메일','메시지','페이지명','페이지 URL','UTM Source','UTM Medium','UTM Campaign','추가 입력값']);
+    sheet.appendRow(['\\uC811\\uC218\\uC77C\\uC2DC','\\uC774\\uB984','\\uC5F0\\uB77D\\uCC98','\\uC774\\uBA54\\uC77C','\\uBA54\\uC2DC\\uC9C0','\\uD398\\uC774\\uC9C0\\uBA85','\\uD398\\uC774\\uC9C0 URL','UTM Source','UTM Medium','UTM Campaign','\\uCD94\\uAC00 \\uC785\\uB825\\uAC12']);
   }
   sheet.appendRow([
-    data.lead?.createdAt || data.createdAt || '',
+    data.lead?.createdAt || data.createdAt || new Date().toISOString(),
     data.lead?.name || '',
     data.lead?.phone || '',
     data.lead?.email || '',
@@ -255,7 +276,15 @@ function doPost(e) {
     data.source?.utmCampaign || '',
     JSON.stringify(data.lead?.fields || {})
   ]);
+}
+
+function doPost(e) {
+  appendLead(parsePayload(e));
   return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doGet() {
+  return ContentService.createTextOutput('Pagero Google Sheets webhook is ready.');
 }`;
 
 function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
