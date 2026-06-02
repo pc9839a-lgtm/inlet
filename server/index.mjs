@@ -2052,6 +2052,9 @@ async function saveLead(body = {}) {
 function normalizeServerLead(lead = {}, body = {}) {
   const delivery = lead.delivery || {};
   const requestMeta = body.requestMeta || {};
+  const source = lead.source && typeof lead.source === 'object' ? lead.source : {};
+  const page = body.page && typeof body.page === 'object' ? body.page : {};
+  const values = lead.values && typeof lead.values === 'object' ? lead.values : {};
   const phoneNormalized = normalizeLeadPhone(lead.phone || lead.values?.phone || '');
   const emailNormalized = normalizeLeadEmail(lead.email || lead.values?.email || '');
   const clientId = String(lead.clientId || body.clientId || lead.values?.clientId || lead.cookieId || lead.visitorId || '').trim();
@@ -2059,6 +2062,18 @@ function normalizeServerLead(lead = {}, body = {}) {
   return {
     ...lead,
     id: lead.id || randomId(),
+    pageSlug: lead.pageSlug || page.slug || body.project?.slug || '',
+    pageId: lead.pageId || page.id || '',
+    pageTitle: lead.pageTitle || page.title || '',
+    pageUrl: lead.pageUrl || page.url || source.pageUrl || '',
+    sourceUrl: lead.sourceUrl || source.sourceUrl || source.url || source.pageUrl || values.sourceUrl || '',
+    referrer: lead.referrer || source.referrer || values.referrer || '',
+    channel: lead.channel || source.channel || '',
+    sourceLabel: lead.sourceLabel || source.sourceLabel || '',
+    utmSource: lead.utmSource || lead.utm_source || source.utmSource || source.utm_source || '',
+    utmMedium: lead.utmMedium || lead.utm_medium || source.utmMedium || source.utm_medium || '',
+    utmCampaign: lead.utmCampaign || lead.utm_campaign || source.utmCampaign || source.utm_campaign || '',
+    source,
     type: isReservationLeadPolicy(lead) ? '방문예약' : '상담신청',
     status: ['신규', '확인중', '연락완료', '예약완료', '보류', '종료'].includes(lead.status) ? lead.status : '신규',
     memo: lead.memo || '',
@@ -2074,10 +2089,15 @@ function normalizeServerLead(lead = {}, body = {}) {
     riskScore: Math.max(0, Number(lead.riskScore || 0)),
     answers: Array.isArray(lead.answers) ? lead.answers : [],
     values: {
-      ...(lead.values || {}),
+      ...values,
       ...(clientId ? { clientId } : {}),
       ...(phoneNormalized ? { phoneNormalized } : {}),
       ...(emailNormalized ? { emailNormalized } : {}),
+      ...(source.sourceUrl || source.url || source.pageUrl || values.sourceUrl ? { sourceUrl: source.sourceUrl || source.url || source.pageUrl || values.sourceUrl } : {}),
+      ...(source.referrer || values.referrer ? { referrer: source.referrer || values.referrer } : {}),
+      ...(source.utmSource || source.utm_source || values.utmSource ? { utmSource: source.utmSource || source.utm_source || values.utmSource } : {}),
+      ...(source.utmMedium || source.utm_medium || values.utmMedium ? { utmMedium: source.utmMedium || source.utm_medium || values.utmMedium } : {}),
+      ...(source.utmCampaign || source.utm_campaign || values.utmCampaign ? { utmCampaign: source.utmCampaign || source.utm_campaign || values.utmCampaign } : {}),
     },
     delivery: {
       status: delivery.status || 'none',

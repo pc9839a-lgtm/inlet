@@ -28,6 +28,33 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
     assert(res.ok && data.lead?.id === lead.id, `lead save failed: ${lead.id}`);
   }
 
+  const attributedLead = await json({ baseUrl }, 'POST', '/api/leads', {
+    project,
+    page: { ...page, url: 'https://pagero.kr/smoke-leads' },
+    lead: {
+      id: 'lead-source',
+      type: 'consult',
+      status: 'new',
+      name: 'Source Lead',
+      phone: '010-0000-0099',
+      createdAt: '2026-05-24T03:00:00.000Z',
+      values: { '관심 유형': '상담', budget: '300만원' },
+      answers: [
+        { id: 'budget', label: '예산', value: '300만원' },
+      ],
+      source: {
+        sourceUrl: 'https://external.example/form?utm_source=naver&utm_medium=cpc&utm_campaign=smoke',
+        referrer: 'https://search.naver.com',
+        utmSource: 'naver',
+        utmMedium: 'cpc',
+        utmCampaign: 'smoke',
+      },
+    },
+  });
+  assert(attributedLead.res.ok, 'attributed public lead should save');
+  assert(attributedLead.data.lead?.sourceUrl?.includes('utm_source=naver'), 'public lead source URL should be normalized');
+  assert(attributedLead.data.lead?.utmSource === 'naver' && attributedLead.data.lead?.utmCampaign === 'smoke', 'public lead UTM should be normalized');
+
   const duplicateSaved = await json({ baseUrl }, 'POST', '/api/leads', {
     project,
     page,
@@ -93,7 +120,7 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
 
   const firstPage = await json({ baseUrl }, 'GET', `/api/leads?${query}&limit=2`);
   assert(firstPage.data.leads.length === 2, 'lead first page length mismatch');
-  assert(firstPage.data.total === 5 && firstPage.data.hasMore, 'lead pagination meta mismatch');
+  assert(firstPage.data.total === 6 && firstPage.data.hasMore, 'lead pagination meta mismatch');
 
   const secondPage = await json({ baseUrl }, 'GET', `/api/leads?${query}&limit=2&cursor=${firstPage.data.nextCursor}`);
   assert(secondPage.data.leads.length === 2 && secondPage.data.hasMore, 'lead second page mismatch');
@@ -123,6 +150,12 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
   const csvText = await csv.text();
   assert(csv.ok && csvText.includes('"\'=updated memo"') && !csvText.includes('alpha memo'), 'lead csv ids filter failed');
   assert(csvText.includes('reservationDate') && csvText.includes('2026-05-22') && csvText.includes('10:30'), 'lead csv reservation columns failed');
+
+  const sourceCsv = await fetchWithTimeout(`${baseUrl}/api/leads/export.csv?${query}&month=2026-05&ids=lead-source`, { headers: authHeaders() });
+  const sourceCsvText = await sourceCsv.text();
+  assert(sourceCsv.ok, 'source CSV export request failed');
+  assert(sourceCsvText.includes('https://external.example/form?utm_source=naver') && sourceCsvText.includes('naver') && sourceCsvText.includes('smoke'), 'source CSV should include URL and UTM fields');
+  assert(sourceCsvText.includes('예산') && sourceCsvText.includes('300만원'), 'source CSV should include actual form answer fields');
 
   const deleted = await json({ baseUrl }, 'DELETE', `/api/leads/lead-a?${query}`);
   assert(deleted.res.ok && deleted.data.id === 'lead-a', 'lead delete failed');

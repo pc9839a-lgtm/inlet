@@ -26,7 +26,10 @@ export async function onRequest({ request, env }) {
       const project = projectFromRequest(url, body, request);
       await authorizeProject(request, env, project, { publicWrite: true });
       await ensureD1ProjectShell(db, publicProjectShell(project));
-      const lead = withRequestIntakeSignals(body.lead && typeof body.lead === 'object' ? body.lead : body, request);
+      const lead = normalizePublicLeadPayload(
+        withRequestIntakeSignals(body.lead && typeof body.lead === 'object' ? body.lead : body, request),
+        body,
+      );
       const duplicatePolicy = await evaluateD1LeadDuplicatePolicy(db, project, body.page || {}, lead);
       if (duplicatePolicy.blocked) {
         await insertD1BlockedLeadSubmission(db, blockedLeadRecord(duplicatePolicy, lead, project, body.page || {}), {
@@ -96,6 +99,35 @@ export async function onRequest({ request, env }) {
 
 function publicPostJsonResponse(request, env, status, payload) {
   return jsonResponse(request, env, status, payload, METHODS, { headers: PUBLIC_POST_HEADERS });
+}
+
+function normalizePublicLeadPayload(lead = {}, body = {}) {
+  const source = lead.source && typeof lead.source === 'object' ? lead.source : {};
+  const page = body.page && typeof body.page === 'object' ? body.page : {};
+  const values = lead.values && typeof lead.values === 'object' ? lead.values : {};
+  return {
+    ...lead,
+    pageSlug: lead.pageSlug || page.slug || body.project?.slug || '',
+    pageId: lead.pageId || page.id || '',
+    pageTitle: lead.pageTitle || page.title || '',
+    pageUrl: lead.pageUrl || page.url || source.pageUrl || '',
+    sourceUrl: lead.sourceUrl || source.sourceUrl || source.url || source.pageUrl || values.sourceUrl || '',
+    referrer: lead.referrer || source.referrer || values.referrer || '',
+    channel: lead.channel || source.channel || '',
+    sourceLabel: lead.sourceLabel || source.sourceLabel || '',
+    utmSource: lead.utmSource || lead.utm_source || source.utmSource || source.utm_source || '',
+    utmMedium: lead.utmMedium || lead.utm_medium || source.utmMedium || source.utm_medium || '',
+    utmCampaign: lead.utmCampaign || lead.utm_campaign || source.utmCampaign || source.utm_campaign || '',
+    source,
+    values: {
+      ...values,
+      ...(source.sourceUrl || source.url || source.pageUrl || values.sourceUrl ? { sourceUrl: source.sourceUrl || source.url || source.pageUrl || values.sourceUrl } : {}),
+      ...(source.referrer || values.referrer ? { referrer: source.referrer || values.referrer } : {}),
+      ...(source.utmSource || source.utm_source || values.utmSource ? { utmSource: source.utmSource || source.utm_source || values.utmSource } : {}),
+      ...(source.utmMedium || source.utm_medium || values.utmMedium ? { utmMedium: source.utmMedium || source.utm_medium || values.utmMedium } : {}),
+      ...(source.utmCampaign || source.utm_campaign || values.utmCampaign ? { utmCampaign: source.utmCampaign || source.utm_campaign || values.utmCampaign } : {}),
+    },
+  };
 }
 
 async function handlePublicPostError(request, env, error) {
