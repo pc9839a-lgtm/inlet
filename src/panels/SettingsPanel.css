@@ -2728,3 +2728,166 @@
     max-width: 38px !important;
   }
 }
+
+/* Final settings layout guard: keep section headers compact and prevent clipped open controls. */
+.settings-panel {
+  min-width: 0 !important;
+  overflow-x: hidden !important;
+}
+
+.settings-panel .settings-compact-head {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(88px, max-content) !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.settings-panel .settings-compact-head > div,
+.settings-panel .settings-compact-head strong,
+.settings-panel .settings-compact-head em {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.settings-panel .settings-compact-head strong,
+.settings-panel .settings-compact-head em {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+}
+
+.settings-panel .settings-compact-head em {
+  justify-self: end !important;
+  max-width: clamp(88px, 28vw, 220px) !important;
+}
+
+.settings-panel .settings-section,
+.settings-panel .settings-advanced-box {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.settings-panel .settings-section-head,
+.settings-panel .settings-advanced-head {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 40px !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+.settings-panel .settings-section-copy,
+.settings-panel .settings-advanced-head > span {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+.settings-panel .settings-section-title-row {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+.settings-panel .settings-section-title-row h2,
+.settings-panel .settings-advanced-head strong {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.settings-panel .settings-section-title-row em {
+  flex: 0 0 auto !important;
+  max-width: 80px !important;
+}
+
+.settings-panel .settings-section-copy small,
+.settings-panel .settings-advanced-head small {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.settings-panel .settings-section-state,
+.settings-panel .settings-advanced-head em {
+  justify-self: end !important;
+  box-sizing: border-box !important;
+  width: 40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  font-size: 20px !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  writing-mode: horizontal-tb !important;
+}
+
+.settings-panel .settings-grid,
+.settings-panel .account-settings-grid,
+.settings-panel .settings-conversion-grid,
+.settings-panel .duplicate-policy-grid {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.settings-panel .field,
+.settings-panel .image-input,
+.settings-panel .toggle,
+.settings-panel .duplicate-policy-select {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.settings-panel .field input,
+.settings-panel .field textarea,
+.settings-panel .field select,
+.settings-panel .field .prefix-field,
+.settings-panel .image-input input,
+.settings-panel .duplicate-policy-select select,
+.settings-panel .account-settings-grid input,
+.settings-panel .settings-url-form input {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 760px) {
+  .settings-panel .settings-compact-head,
+  .settings-panel .settings-section-head,
+  .settings-panel .settings-advanced-head,
+  .settings-panel .settings-grid,
+  .settings-panel .account-settings-grid,
+  .settings-panel .settings-conversion-grid,
+  .settings-panel .duplicate-policy-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .settings-panel .settings-section-head,
+  .settings-panel .settings-advanced-head {
+    grid-template-columns: minmax(0, 1fr) 40px !important;
+  }
+}
