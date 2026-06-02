@@ -85,6 +85,7 @@ assert(yesterdayStats.pv === 2 && yesterdayStats.db === 2, 'yesterday period mis
 const statsPanel = await readFile('src/panels/StatsPanel.jsx', 'utf8');
 const inboxPanel = await readFile('src/panels/InboxPanel.jsx', 'utf8');
 const inboxCss = await readFile('src/panels/InboxPanel.css', 'utf8');
+const statsPeriodCss = await readFile('src/styles/panels-stats-period-line.css', 'utf8');
 assert(statsPanel.includes('eventPageMeta') && statsPanel.includes('leadPageMeta'), 'stats panel should accept pagination meta');
 assert(statsPanel.includes('statsPartial') && statsPanel.includes('stats-partial-notice'), 'stats panel should expose partial data notice contract');
 assert(statsPanel.includes('role="status"'), 'partial data notice should be announced as status');
@@ -98,6 +99,9 @@ assert(statsPanel.includes('stats-chart-tooltip') && statsPanel.includes('onMous
 assert(statsPanel.includes('fmtDateOnly') && !statsPanel.includes('fmtDate(lead.createdAt)'), 'recent leads should show date only without time');
 assert(statsPanel.includes('serverStats') && statsPanel.includes('normalizeServerStats'), 'stats panel should render server aggregate payloads');
 assert(!statsPanel.includes('DeliveryLogCard') && !statsPanel.includes('\uC804\uC1A1 \uB85C\uADF8') && !statsPanel.includes('\uC678\uBD80 \uC804\uC1A1'), 'stats panel should not expose delivery log cards');
+assert(statsPeriodCss.includes('grid-template-columns: minmax(0, 1fr) 184px'), 'stats month picker should have enough width for year/month text');
+assert(statsPeriodCss.includes('min-width: 168px'), 'stats month input should not collapse to year-only text');
+assert(statsPeriodCss.includes('grid-template-columns: 58px minmax(96px, .8fr) minmax(112px, 1fr) 132px'), 'recent lead rows should use four visible columns only');
 
 assert(!inboxPanel.includes('lead-delivery') && !inboxPanel.includes('\uC804\uC1A1 \uC0C1\uD0DC') && !inboxPanel.includes('\uC804\uC1A1 \uB85C\uADF8'), 'inbox detail should not render delivery status/log sections');
 assert(!inboxCss.includes('lead-delivery'), 'inbox CSS should not keep unused delivery status/detail styles');

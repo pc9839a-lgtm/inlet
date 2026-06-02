@@ -1,7 +1,7 @@
 .stats-period-controls {
   margin-top: 14px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 150px;
+  grid-template-columns: minmax(0, 1fr) 184px;
   gap: 10px;
   align-items: end;
 }
@@ -25,6 +25,7 @@
 
 .stats-month-control input {
   width: 100%;
+  min-width: 168px;
   min-height: 42px;
   border: 1px solid #dbe3ef;
   border-radius: 14px;
@@ -94,7 +95,7 @@
 }
 
 .stats-lead-table-v3 > div {
-  grid-template-columns: 58px minmax(96px, .8fr) minmax(112px, 1fr) 116px 78px !important;
+  grid-template-columns: 58px minmax(96px, .8fr) minmax(112px, 1fr) 132px !important;
   min-height: 62px !important;
   padding: 12px 14px !important;
   gap: 10px !important;
@@ -118,9 +119,10 @@
 .stats-lead-table-v3 small {
   color: #64748b !important;
   font-weight: 900 !important;
-  min-width: 116px !important;
+  min-width: 132px !important;
   overflow: visible !important;
   text-overflow: clip !important;
+  text-align: right !important;
 }
 
 .stats-lead-table-v3 .delivery-badge {
