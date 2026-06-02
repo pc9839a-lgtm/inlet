@@ -370,12 +370,14 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
   const saveSheetsDraft = async () => {
     const currentSheets = draftIntegrations.sheets || {};
     const currentUrl = currentSheets.webhookUrl || currentSheets.url || '';
+    const hasWebhook = !!String(currentUrl || '').trim();
     const nextIntegrations = draftPatch('sheets', {
       ...currentSheets,
-      enabled: !!currentSheets.enabled,
+      enabled: hasWebhook || !!currentSheets.enabled,
       webhookUrl: currentUrl,
       url: currentUrl,
       sheetName: currentSheets.sheetName || '접수함',
+      status: hasWebhook ? (currentSheets.status === 'error' ? 'connected' : currentSheets.status || 'connected') : 'disconnected',
       lastError: '',
     });
     updateIntegrations?.('sheets', nextIntegrations.sheets);
@@ -512,13 +514,13 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
           <div className="connection-item connect-v4 open">
             <div className="connection-row">
               <div className="connection-row-main"><strong>Google Sheets</strong><small>{sheetsState.text} · 접수 자동 저장</small></div>
-              <InlineSwitch checked={!!draftIntegrations.sheets.enabled} onChange={(enabled) => sheetPatch({ enabled, status: enabled ? draftIntegrations.sheets.status || 'disconnected' : 'disconnected' })} />
+              <InlineSwitch checked={!!draftIntegrations.sheets.enabled} onChange={(enabled) => sheetPatch({ enabled, status: enabled ? draftIntegrations.sheets.status || 'disconnected' : 'disconnected', lastError: enabled ? '' : draftIntegrations.sheets.lastError })} />
             </div>
             {draftIntegrations.sheets.enabled && (
               <div className="connection-detail-box compact">
                 <label className="connection-inline-control">
                   <span>Webhook URL</span>
-                  <input value={draftIntegrations.sheets.webhookUrl || draftIntegrations.sheets.url || ''} placeholder="Google Apps Script Web App URL" onChange={(event) => sheetPatch({ webhookUrl: event.target.value, url: event.target.value, status: 'disconnected' })} />
+                  <input value={draftIntegrations.sheets.webhookUrl || draftIntegrations.sheets.url || ''} placeholder="Google Apps Script Web App URL" onChange={(event) => sheetPatch({ webhookUrl: event.target.value, url: event.target.value, status: 'disconnected', lastError: '' })} />
                 </label>
                 <label className="connection-inline-control">
                   <span>시트명</span>
