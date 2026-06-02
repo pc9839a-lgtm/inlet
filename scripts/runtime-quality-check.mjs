@@ -143,6 +143,8 @@ const editorControls = await readFile('src/editor/controls.jsx', 'utf8');
 const richField = await readFile('src/editor/RichField.jsx', 'utf8');
 const previewUtils = await readFile('src/preview/renderers/previewUtils.jsx', 'utf8');
 const stylePanel = await readFile('src/panels/StylePanel.jsx', 'utf8');
+const settingsPanel = await readFile('src/panels/SettingsPanel.jsx', 'utf8');
+const settingsPanelCss = await readFile('src/panels/SettingsPanel.css', 'utf8');
 const runtimeConfigSource = await readFile('src/config/runtimeConfig.js', 'utf8');
 
 assert(main.includes('<AppErrorBoundary><Root /></AppErrorBoundary>'), 'root render must stay wrapped in AppErrorBoundary');
@@ -206,6 +208,11 @@ assert(richField.includes('<textarea') && richField.includes('onChange={(event) 
 assert(!richField.includes('type="color"') && !richField.includes("document.execCommand('foreColor'"), 'RichField must not expose per-widget color formatting controls');
 assert(previewUtils.includes('dangerouslySetInnerHTML') && previewUtils.includes('style="color:${color}"') && previewUtils.includes('<u>${inner}</u>') && previewUtils.includes('<strong>${inner}</strong>'), 'preview rich text renderer must preserve color, underline, and bold markup');
 assert(stylePanel.includes('onPreviewThemeChange?.(draftTheme)') && app.includes('const [stylePreviewTheme, setStylePreviewTheme] = useState(null)'), 'StylePanel draft changes must keep live preview wiring');
+assert(settingsPanel.includes("<span className=\"settings-section-state\" aria-hidden=\"true\">{open ? '−' : '+'}</span>"), 'Settings sections must use compact icon-only open controls');
+assert(!/className="settings-section-state"[^>]*>\s*\{open\s*\?\s*'접기'\s*:\s*'열기'\}/.test(settingsPanel), 'Settings section controls must not render clipped text labels');
+assert(/grid-template-columns:\s*minmax\(0,\s*1fr\)\s*42px\s*!important/.test(settingsPanelCss), 'Settings section headers must reserve only icon-width action space');
+assert(/\.settings-panel \.settings-section-state,[\s\S]*?width:\s*40px\s*!important[\s\S]*?border-radius:\s*14px\s*!important/.test(settingsPanelCss), 'Settings section action controls must stay fixed-size and unclipped');
+assert(/\.settings-panel \.settings-section-title-row[\s\S]*?background:\s*transparent\s*!important[\s\S]*?box-shadow:\s*none\s*!important/.test(settingsPanelCss), 'Settings section titles must stay flat without nested pill styling');
 
 const stats = await Promise.all(sourceFiles.map((file) => stat(file)));
 const totalSourceBytes = stats.reduce((sum, item) => sum + item.size, 0);

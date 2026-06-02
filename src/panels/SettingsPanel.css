@@ -2475,10 +2475,10 @@
   border: 0 !important;
   background: #fff !important;
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) 76px !important;
+  grid-template-columns: minmax(0, 1fr) 42px !important;
   align-items: center !important;
   gap: 12px !important;
-  min-height: 66px !important;
+  min-height: 64px !important;
   padding: 14px 16px !important;
   text-align: left !important;
 }
@@ -2553,20 +2553,20 @@
 .settings-panel .settings-section-state,
 .settings-panel .settings-advanced-head em {
   justify-self: end !important;
-  width: 76px !important;
-  min-width: 76px !important;
-  max-width: 76px !important;
+  width: 40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
   height: 40px !important;
   min-height: 40px !important;
   padding: 0 !important;
   border: 1px solid #dbe3ef !important;
-  border-radius: 999px !important;
+  border-radius: 14px !important;
   background: #fff !important;
   color: #111827 !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-size: 13px !important;
+  font-size: 22px !important;
   font-weight: 950 !important;
   line-height: 1 !important;
   text-align: center !important;
@@ -2717,14 +2717,14 @@
 @media (max-width: 430px) {
   .settings-panel .settings-section-head,
   .settings-panel .settings-advanced-head {
-    grid-template-columns: minmax(0, 1fr) 68px !important;
+    grid-template-columns: minmax(0, 1fr) 40px !important;
     padding: 12px 13px !important;
   }
 
   .settings-panel .settings-section-state,
   .settings-panel .settings-advanced-head em {
-    width: 68px !important;
-    min-width: 68px !important;
-    max-width: 68px !important;
+    width: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
   }
 }
