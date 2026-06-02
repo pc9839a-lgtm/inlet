@@ -550,6 +550,13 @@ const server = createServer(async (req, res) => {
       return;
     }
 
+    if (req.method === 'POST' && url.pathname === '/api/integrations/test') {
+      const body = await readJson(req);
+      const result = await testIntegration(body || {});
+      sendJson(res, result.ok ? 200 : 502, result);
+      return;
+    }
+
     const leadDeliverMatch = url.pathname.match(/^\/api\/leads\/([^/]+)\/deliver$/);
     if (leadDeliverMatch && req.method === 'POST') {
       const body = await readJson(req);
@@ -4396,6 +4403,76 @@ function projectFromQuery(url) {
   const ownerId = url.searchParams.get('ownerId') || '';
   if (!projectId && !ownerId) return {};
   return normalizeProject({ projectId, ownerId, slug: url.searchParams.get('slug') || 'my-page' });
+}
+
+async function testIntegration(body = {}) {
+  const type = String(body.type || '').trim();
+  if (type !== 'sheets') return { ok: false, error: '지원하지 않는 연동 테스트입니다.' };
+  const targetUrl = String(body.url || body.webhookUrl || '').trim();
+  if (!isGoogleAppsScriptUrl(targetUrl)) {
+    return { ok: false, error: 'Google Apps Script 웹 앱 URL(/exec)을 입력해주세요.' };
+  }
+  const payload = body.payload && typeof body.payload === 'object' ? body.payload : sampleSheetsPayload(body);
+  const response = await fetch(targetUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload),
+  });
+  const text = await response.text().catch(() => '');
+  if (!response.ok) {
+    return {
+      ok: false,
+      status: response.status,
+      error: googleScriptErrorMessage(response.status, text),
+    };
+  }
+  return {
+    ok: true,
+    status: response.status,
+    message: 'Google Sheets에 테스트 행을 보냈습니다. 시트를 확인해주세요.',
+    body: text.slice(0, 500),
+  };
+}
+
+function isGoogleAppsScriptUrl(value = '') {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === 'https:' && parsed.hostname === 'script.google.com' && /\/macros\/s\/.+\/exec$/.test(parsed.pathname);
+  } catch {
+    return false;
+  }
+}
+
+function sampleSheetsPayload(body = {}) {
+  const now = new Date().toISOString();
+  return {
+    schemaVersion: 'pagero.lead.v1',
+    event: 'lead.test',
+    source: 'pagero',
+    target: 'google_sheets',
+    provider: 'google_sheets',
+    mode: 'webhook',
+    sheetName: body.sheetName || '접수함',
+    lead: {
+      id: `test-${Date.now()}`,
+      name: '연결 테스트',
+      phone: '010-0000-0000',
+      email: '',
+      message: 'Google Sheets 연결 테스트',
+      createdAt: now,
+      fields: { 테스트: '성공 확인용' },
+    },
+    page: body.page || { title: '페이지로 테스트', slug: '', url: '' },
+    project: body.project || {},
+    source: {},
+    createdAt: now,
+  };
+}
+
+function googleScriptErrorMessage(status, text = '') {
+  if (status === 401 || status === 403) return 'Apps Script 웹 앱 접근 권한을 “모든 사용자”로 배포해야 합니다.';
+  if (/not found|404/i.test(text)) return 'Apps Script 배포 URL이 잘못됐습니다. /exec URL을 다시 복사해주세요.';
+  return `Google Apps Script 응답 실패: ${status}`;
 }
 
 function projectDir(project = {}) {
