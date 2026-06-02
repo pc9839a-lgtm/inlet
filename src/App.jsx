@@ -959,11 +959,11 @@ function App() {
     if (blockWrite('edit')) return;
     if (SINGLETON_BLOCK_TYPES.includes(type)) {
       const existing = page.blocks.find((b) => b.type === type);
-      if (existing) { setOpenId(existing.id); setAddOpen(false); return; }
+      if (existing) { setOpenId(''); setAddOpen(false); return; }
     }
     const b = newBlock(type);
     setPage((p) => ({ ...p, blocks: ensureUniqueAnchors([...p.blocks, b]) }));
-    setOpenId(b.id);
+    setOpenId('');
     setAddOpen(false);
   };
   const removeBlock = (id) => {
@@ -987,7 +987,7 @@ function App() {
       next.splice(idx + 1, 0, cp);
       return { ...p, blocks: ensureUniqueAnchors(next) };
     });
-    setOpenId(cp.id);
+    setOpenId('');
     setAddOpen(false);
   };
   const duplicatePageWithUrl = (urlConfig) => {

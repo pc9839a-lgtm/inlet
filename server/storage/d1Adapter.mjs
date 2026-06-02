@@ -223,14 +223,14 @@ export function encodeD1Page(page = {}, context = {}) {
   const now = new Date().toISOString();
   const slug = String(context.slug || page.slug || 'my-page').replace(/[^a-zA-Z0-9-_]/g, '') || 'my-page';
   const projectId = String(context.projectId || page.projectId || '');
-  const id = String(page.id || context.pageId || `${projectId}_${slug}_${stableD1Hash(`${projectId}:${slug}`)}`);
+  const id = String(context.pageId || page.id || `${projectId}_${slug}_${stableD1Hash(`${projectId}:${slug}`)}`);
   const updatedAt = String(page.updatedAt || page.updated_at || now);
   return {
     id,
     project_id: projectId,
     slug,
     title: String(page.title || ''),
-    page_json: encodeD1Json({ ...page, slug, projectId, updatedAt }, {}),
+    page_json: encodeD1Json({ ...page, id, slug, projectId, updatedAt }, {}),
     revision: Math.max(1, Number(context.revision || page.revision || 1)),
     published_at: page.publishedAt || page.published_at || null,
     created_at: String(page.createdAt || page.created_at || now),

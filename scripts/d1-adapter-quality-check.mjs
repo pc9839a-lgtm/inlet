@@ -896,6 +896,12 @@ const encodedPage = encodeD1Page({
 }, { projectId: 'project-1', slug: 'landing' });
 assert(encodedPage.project_id === 'project-1' && encodedPage.slug === 'landing', 'page should encode project and slug');
 assert(decodeD1Page(encodedPage).blocks.length === 1, 'page JSON should round-trip');
+const encodedPageWithContextId = encodeD1Page({
+  id: 'stale-page-id',
+  slug: 'landing-copy',
+  title: 'Landing Copy',
+}, { projectId: 'project-1', slug: 'landing-copy', pageId: 'current-page-id' });
+assert(encodedPageWithContextId.id === 'current-page-id' && decodeD1Page(encodedPageWithContextId).id === 'current-page-id', 'page encode should trust context page id over stale page payload id');
 
 const encodedPageRevision = encodeD1PageRevision({
   id: 'page-rev-1',
