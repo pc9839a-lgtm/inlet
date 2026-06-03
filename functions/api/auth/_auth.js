@@ -147,6 +147,7 @@ export async function issueEmailVerificationToken(input = {}, env = {}) {
   const purpose = String(input.purpose || 'signup').trim() || 'signup';
   if (!isValidEmail(email)) throw authError('Valid email is required.', 400, { code: 'AUTH_EMAIL_REQUIRED' });
   const now = Math.floor(Date.now() / 1000);
+  await assertEmailVerificationSendAllowed(env.DB, { email, purpose, now });
   const expiresAt = new Date((now + 60 * 30) * 1000).toISOString();
   const code = verificationCode();
   const stored = await storeEmailVerificationCode(env.DB, { email, purpose, code, expiresAt }, env);
@@ -164,6 +165,39 @@ export async function issueEmailVerificationToken(input = {}, env = {}) {
     delivery,
     ...(exposeToken ? { token } : {}),
   };
+}
+
+async function assertEmailVerificationSendAllowed(db, input = {}) {
+  if (!db?.prepare) return;
+  const nowMs = Number(input.now || Math.floor(Date.now() / 1000)) * 1000;
+  const cooldownAt = new Date(nowMs - 60 * 1000).toISOString();
+  const dailyAt = new Date(nowMs - 24 * 60 * 60 * 1000).toISOString();
+
+  const recent = await db.prepare(`
+    SELECT id, created_at
+    FROM auth_email_verifications
+    WHERE email = ? AND purpose = ? AND created_at >= ?
+    ORDER BY created_at DESC
+    LIMIT 1
+  `).bind(input.email, input.purpose, cooldownAt).first();
+  if (recent) {
+    throw authError('Verification email was requested too recently.', 429, {
+      code: 'EMAIL_VERIFICATION_COOLDOWN',
+      retryAfterSeconds: 60,
+    });
+  }
+
+  const daily = await db.prepare(`
+    SELECT COUNT(*) AS count
+    FROM auth_email_verifications
+    WHERE email = ? AND purpose = ? AND created_at >= ?
+  `).bind(input.email, input.purpose, dailyAt).first();
+  if (Number(daily?.count || 0) >= 20) {
+    throw authError('Too many verification emails were requested today.', 429, {
+      code: 'EMAIL_VERIFICATION_DAILY_LIMIT',
+      retryAfterSeconds: 60 * 60,
+    });
+  }
 }
 
 export async function confirmEmailVerificationToken(input = {}, env = {}) {

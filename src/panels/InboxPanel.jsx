@@ -292,9 +292,35 @@ function doGet() {
   return ContentService.createTextOutput('Pagero Google Sheets webhook is ready.');
 }`;
 
-function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
+function isFreeEmailLocked(page = {}, authUser = null) {
+  const accountEmail = String(authUser?.email || '').trim().toLowerCase();
+  const plan = String(page?.plan || page?.billingPlan || page?.billing?.plan || authUser?.plan || authUser?.billingPlan || 'free').trim().toLowerCase();
+  const paidPlans = ['paid', 'pro', 'premium', 'business', 'agency', 'enterprise'];
+  return !!accountEmail && !paidPlans.includes(plan);
+}
+
+function lockedAccountEmail(authUser = null) {
+  return String(authUser?.email || '').trim().toLowerCase();
+}
+
+function enforceFreeEmailIntegration(integrations = {}, page = {}, authUser = null) {
+  const normalized = normalizeIntegrations(integrations || {});
+  if (!isFreeEmailLocked(page, authUser)) return normalized;
+  return normalizeIntegrations({
+    ...normalized,
+    email: {
+      ...(normalized.email || {}),
+      to: lockedAccountEmail(authUser),
+      lockedToAccount: true,
+    },
+  });
+}
+
+function InboxConnectionsPanel({ page, authUser = null, updateIntegrations, onSavePage }) {
   const integrations = normalizeIntegrations(page.integrations || {});
-  const [draftIntegrations, setDraftIntegrations] = useState(integrations);
+  const emailLocked = isFreeEmailLocked(page, authUser);
+  const accountEmail = lockedAccountEmail(authUser);
+  const [draftIntegrations, setDraftIntegrations] = useState(() => enforceFreeEmailIntegration(integrations, page, authUser));
   const [draftDirty, setDraftDirty] = useState(false);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -308,13 +334,22 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
   const webhookState = connectionState('webhook', draftIntegrations);
 
   useEffect(() => {
-    if (!draftDirty) setDraftIntegrations(integrations);
-  }, [page.slug, page.updatedAt, draftDirty]);
+    if (!draftDirty) setDraftIntegrations(enforceFreeEmailIntegration(integrations, page, authUser));
+  }, [page.slug, page.updatedAt, authUser?.email, draftDirty]);
+
+  useEffect(() => {
+    if (!emailLocked) return;
+    setDraftIntegrations((current) => {
+      const next = enforceFreeEmailIntegration(current, page, authUser);
+      if ((current.email?.to || '') === (next.email?.to || '') && current.email?.lockedToAccount === true) return current;
+      return next;
+    });
+  }, [emailLocked, accountEmail, page.slug]);
 
   const draftPatch = (section, value) => {
     const currentSection = draftIntegrations?.[section] || {};
     const nextSection = { ...currentSection, ...value };
-    const nextIntegrations = normalizeIntegrations({ ...draftIntegrations, [section]: nextSection });
+    const nextIntegrations = enforceFreeEmailIntegration({ ...draftIntegrations, [section]: nextSection }, page, authUser);
     setDraftIntegrations(nextIntegrations);
     setDraftDirty(true);
     return nextIntegrations;
@@ -429,9 +464,9 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
     setResult('');
     try {
       Object.entries(draftIntegrations).forEach(([section, value]) => {
-        updateIntegrations?.(section, value);
+        updateIntegrations?.(section, enforceFreeEmailIntegration({ ...draftIntegrations, [section]: value }, page, authUser)[section]);
       });
-      await onSavePage?.({ ...page, integrations: draftIntegrations });
+      await onSavePage?.({ ...page, integrations: enforceFreeEmailIntegration(draftIntegrations, page, authUser) });
       setDraftDirty(false);
       setResult('저장 완료');
     } catch (error) {
@@ -457,14 +492,15 @@ function InboxConnectionsPanel({ page, updateIntegrations, onSavePage }) {
           <div className="connection-item connect-v4 open">
             <div className="connection-row">
               <div className="connection-row-main"><strong>이메일 알림</strong><small>{emailState.text}</small></div>
-              <InlineSwitch checked={!!draftIntegrations.email.enabled} onChange={(enabled) => patch('email', { enabled })} />
+              <InlineSwitch checked={!!draftIntegrations.email.enabled} onChange={(enabled) => patch('email', { enabled, ...(emailLocked ? { to: accountEmail, lockedToAccount: true } : {}) })} />
             </div>
             {draftIntegrations.email.enabled && (
               <div className="connection-detail-box compact">
                 <label className="connection-inline-control">
                   <span>받을 이메일</span>
-                  <input value={draftIntegrations.email.to || ''} placeholder="example@email.com" onChange={(event) => patch('email', { to: event.target.value })} />
+                  <input value={emailLocked ? accountEmail : (draftIntegrations.email.to || '')} placeholder="example@email.com" disabled={emailLocked} onChange={(event) => patch('email', { to: event.target.value })} />
                 </label>
+                {emailLocked && <p className="connection-help-text">무료 플랜은 계정 이메일로 알림을 받습니다.</p>}
                 <div className="connection-inline-control">
                   <span>알림 대상</span>
                   <div className="inline-chip-row">
@@ -777,7 +813,7 @@ export default function InboxPanel({
         )}
       </section>
 
-      <InboxConnectionsPanel page={page} updateIntegrations={updateIntegrations} onSavePage={onSavePage} />
+      <InboxConnectionsPanel page={page} authUser={authUser} updateIntegrations={updateIntegrations} onSavePage={onSavePage} />
     </div>
   );
 }

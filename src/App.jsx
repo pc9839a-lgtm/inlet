@@ -940,9 +940,27 @@ function App() {
     if (blockWrite('admin')) return;
     setPage((p) => ({ ...p, ai: { ...(p.ai || {}), ...patch } }));
   };
+  const normalizeFreeEmailIntegrations = (sourcePage) => {
+    const accountEmail = String(authUser?.email || '').trim().toLowerCase();
+    const plan = String(sourcePage?.plan || sourcePage?.billingPlan || sourcePage?.billing?.plan || authUser?.plan || authUser?.billingPlan || 'free').trim().toLowerCase();
+    const isFreePlan = !['paid', 'pro', 'premium', 'business', 'agency', 'enterprise'].includes(plan);
+    if (!isFreePlan || !accountEmail) return sourcePage;
+    const integrations = normalizeIntegrations(sourcePage?.integrations || {});
+    return {
+      ...sourcePage,
+      integrations: normalizeIntegrations({
+        ...integrations,
+        email: {
+          ...(integrations.email || {}),
+          to: accountEmail,
+          lockedToAccount: true,
+        },
+      }),
+    };
+  };
   const updateIntegrations = (section, patch) => {
     if (blockWrite(tab === 'inbox' ? 'inbox' : 'settings')) return;
-    setPage((p) => ({ ...p, integrations: normalizeIntegrations({ ...(p.integrations || {}), [section]: { ...(p.integrations?.[section] || {}), ...patch } }) }));
+    setPage((p) => normalizeFreeEmailIntegrations({ ...p, integrations: normalizeIntegrations({ ...(p.integrations || {}), [section]: { ...(p.integrations?.[section] || {}), ...patch } }) }));
   };
   const updateBlock = (id, patch) => {
     if (blockWrite('edit')) return;
@@ -1467,7 +1485,7 @@ function App() {
       return;
     }
 
-    const nextPage = normalizePageForSave(pageOverride || page);
+    const nextPage = normalizePageForSave(normalizeFreeEmailIntegrations(pageOverride || page));
     saveLocalJson(STORAGE_KEY, nextPage, '페이지');
     let result = null;
     try {

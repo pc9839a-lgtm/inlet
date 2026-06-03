@@ -24,6 +24,8 @@ export function authAccountErrorMessage(error) {
   if (code === 'EMAIL_VERIFICATION_TOKEN_REQUIRED') return '이메일 인증 코드를 입력해주세요.';
   if (code === 'EMAIL_VERIFICATION_INVALID') return '이메일 인증 코드가 올바르지 않습니다.';
   if (code === 'EMAIL_VERIFICATION_EXPIRED') return '이메일 인증 시간이 만료되었습니다. 다시 인증해주세요.';
+  if (code === 'EMAIL_VERIFICATION_COOLDOWN') return '인증 메일을 이미 보냈습니다. 잠시 후 다시 시도해주세요.';
+  if (code === 'EMAIL_VERIFICATION_DAILY_LIMIT') return '오늘 인증 메일 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.';
   if (code === 'AUTH_LOGIN_INVALID') return '이메일 또는 비밀번호가 올바르지 않습니다.';
   if (code === 'AUTH_LOGIN_REQUIRED') return '이메일과 비밀번호를 입력해주세요.';
   if (code === 'AUTH_SESSION_INVALID') return '로그인 세션이 만료되었습니다. 다시 로그인해주세요.';
@@ -43,6 +45,8 @@ export function authAccountErrorMessage(error) {
   if (code === 'EMAIL_VERIFICATION_TOKEN_REQUIRED') return '이메일 인증 코드를 입력해주세요.';
   if (code === 'EMAIL_VERIFICATION_INVALID') return '이메일 인증 코드가 올바르지 않습니다.';
   if (code === 'EMAIL_VERIFICATION_EXPIRED') return '이메일 인증 시간이 만료되었습니다. 다시 인증해주세요.';
+  if (code === 'EMAIL_VERIFICATION_COOLDOWN') return '인증 메일을 이미 보냈습니다. 잠시 후 다시 시도해주세요.';
+  if (code === 'EMAIL_VERIFICATION_DAILY_LIMIT') return '오늘 인증 메일 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.';
   if (code === 'AUTH_LOGIN_INVALID') return '이메일 또는 비밀번호가 올바르지 않습니다.';
   if (code === 'AUTH_LOGIN_REQUIRED') return '이메일과 비밀번호를 입력해주세요.';
   if (code === 'AUTH_SESSION_INVALID') return '로그인 세션이 만료되었습니다. 다시 로그인해주세요.';

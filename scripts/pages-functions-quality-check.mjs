@@ -71,6 +71,7 @@ const storedDeliveryPage = normalizeDeliveryPage(
   },
   { slug: 'public-page' },
 );
+assert(pages.includes('function enforceFreeEmailAlertRecipient') && pages.includes('lockedToAccount: true') && pages.includes('identity?.email'), 'hosted page saves must enforce free plan email alert recipient from the signed account');
 assert(storedDeliveryPage.integrations.email.enabled === true, 'public lead payload must not disable stored email alerts');
 assert(storedDeliveryPage.integrations.email.to === 'pc9839a@naver.com', 'stored email alert recipient should remain authoritative');
 assert(storedDeliveryPage.integrations.conversion.dataLayer === true, 'public conversion settings can still merge from payload');

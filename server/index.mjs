@@ -5430,8 +5430,8 @@ async function syncD1ProjectAccess(project = {}, access = {}) {
 async function authorizeProjectAccess(req, project = {}, options = {}) {
   if (!projectAuthConfig.enforce || !hasProject(project)) return hasProject(project) ? normalizeProject(project) : {};
   const normalizedProject = normalizeProject(project);
-  if (options.publicSubmit) return normalizedProject;
   const identity = requestIdentity(req);
+  if (options.publicSubmit && !identity.ownerId) return normalizedProject;
   if (!identity.ownerId) throw accessError('Project owner identity is required.', 'PROJECT_ACCESS_REQUIRED');
   const role = String(identity.role || '').trim().toLowerCase().replace(/[-\s]/g, '_');
   const masterRole = ['master', 'owner', 'builder'].includes(role);

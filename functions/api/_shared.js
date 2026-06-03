@@ -177,11 +177,11 @@ export async function authorizeProject(request, env = {}, project = {}, options 
     error.status = 400;
     throw error;
   }
-  if (options.publicWrite === true && request.method === 'POST') return { project, identity: null };
   if (apiTokenAuthorized(request, env)) return { project, identity: { source: 'api-token' } };
 
   const enforce = String(env.INLET_PROJECT_AUTH_ENFORCE || '1') !== '0';
   const identity = await sessionIdentity(request, env);
+  if (options.publicWrite === true && request.method === 'POST' && !identity) return { project, identity: null };
   if (!enforce) return { project, identity };
   const role = normalizeRole(identity?.role);
 

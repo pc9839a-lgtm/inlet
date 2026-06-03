@@ -27,6 +27,31 @@ function publicPagePayload(page = {}, project = {}) {
   };
 }
 
+function isFreePlan(value = '') {
+  const plan = String(value || 'free').trim().toLowerCase();
+  return !['paid', 'pro', 'premium', 'business', 'agency', 'enterprise'].includes(plan);
+}
+
+function enforceFreeEmailAlertRecipient(page = {}, project = {}, identity = null) {
+  const email = String(identity?.email || '').trim().toLowerCase();
+  if (!email) return page;
+  const plan = page.plan || page.billingPlan || page.billing?.plan || project.plan || project.billingPlan || 'free';
+  if (!isFreePlan(plan)) return page;
+  const integrations = page.integrations && typeof page.integrations === 'object' ? page.integrations : {};
+  const emailIntegration = integrations.email && typeof integrations.email === 'object' ? integrations.email : {};
+  return {
+    ...page,
+    integrations: {
+      ...integrations,
+      email: {
+        ...emailIntegration,
+        to: email,
+        lockedToAccount: true,
+      },
+    },
+  };
+}
+
 async function getPublicPageBySlug(db, slug) {
   const row = await db.prepare(`
     SELECT pages.*
@@ -77,7 +102,8 @@ export async function onRequest({ request, env, params }) {
       await ensureD1ProjectShell(db, project);
       const identity = await sessionIdentity(request, env);
       const incoming = body.page && typeof body.page === 'object' ? body.page : body;
-      const saved = await upsertD1Page(db, { ...incoming, slug }, {
+      const pageForSave = enforceFreeEmailAlertRecipient({ ...incoming, slug }, project, identity);
+      const saved = await upsertD1Page(db, pageForSave, {
         projectId: project.projectId,
         slug,
         createdByAccountId: identity?.ownerId || project.ownerId || null,
