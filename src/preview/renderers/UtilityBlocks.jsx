@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { runtimeConfig } from '../../config/runtimeConfig.js';
-import { pickSafe, rich } from './previewUtils.jsx';
+import { pickSafe, rich, widgetBoxClass, widgetBoxVars } from './previewUtils.jsx';
 
 const ALLOWED_HTML_TAGS = new Set([
   'a','abbr','article','aside','audio','b','blockquote','br','button','caption','cite','code','col','colgroup',
@@ -130,7 +130,7 @@ export function RenderCode({ block }) {
   }, [block.id, s.js, s.runJs]);
 
   return (
-    <section id={`block-${block.id}`} ref={rootRef} className={`landing-section code-widget code-height-${height}`}>
+    <section id={`block-${block.id}`} ref={rootRef} className={`landing-section code-widget code-height-${height} ${widgetBoxClass(s)}`} style={widgetBoxVars(s)}>
       {s.css && <style>{String(s.css)}</style>}
       {safeHtml ? (
         <div className="custom-code-body" dangerouslySetInnerHTML={{ __html: safeHtml }} />
@@ -183,7 +183,7 @@ export function RenderPageSearch({ block }) {
   };
 
   return (
-    <section id={`block-${block.id}`} ref={rootRef} className={`landing-section page-search-widget page-search-${layout}`}>
+    <section id={`block-${block.id}`} ref={rootRef} className={`landing-section page-search-widget page-search-${layout} ${widgetBoxClass(s)}`} style={widgetBoxVars(s)}>
       {s.title && <h2>{rich(s.title)}</h2>}
       <div className="page-search-row">
         <input

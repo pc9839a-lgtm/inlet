@@ -5,7 +5,7 @@ import { confirmAction, notify } from '../lib/uiFeedback.js';
 import './StylePanel.css';
 
 const BLOCK_LABELS = {
-  topnav: '상단메뉴',
+  topnav: '상단 메뉴',
   hero: '히어로',
   image: '이미지',
   text: '텍스트',
@@ -16,14 +16,14 @@ const BLOCK_LABELS = {
   schedule: '일정',
   faq: 'FAQ',
   timer: '타이머',
-  activity: '접수현황',
+  activity: '접수 현황',
   spacer: '여백',
   divider: '구분선',
   code: '코드',
   search: '검색',
   form: '상담폼',
   reservation: '예약폼',
-  bottombar: '하단버튼',
+  bottombar: '하단 버튼',
   footer: '푸터',
 };
 
@@ -43,9 +43,11 @@ const STYLE_WIDGET_TYPES = new Set([
   'bottombar',
   'spacer',
   'divider',
+  'code',
+  'search',
 ]);
 
-const ALIGN_WIDGET_TYPES = new Set(['hero', 'text', 'cards', 'links', 'download', 'schedule', 'timer']);
+const ALIGN_WIDGET_TYPES = new Set(['hero', 'text', 'cards', 'links', 'download', 'schedule', 'timer', 'search']);
 
 const WIDGET_STYLE_CONFIG = {
   topnav: {
@@ -124,6 +126,10 @@ const WIDGET_STYLE_CONFIG = {
   divider: {
     width: { key: 'width', value: 100, min: 10, max: 100, suffix: '%' },
     thickness: { key: 'thickness', value: 1, min: 1, max: 8, suffix: 'px' },
+  },
+  code: {},
+  search: {
+    variant: { key: 'layout', value: 'card', options: [['card', '카드'], ['bar', '바'], ['minimal', '미니멀']] },
   },
 };
 
