@@ -119,6 +119,24 @@
   }
 }
 
+.settings-panel .settings-section-head,
+.settings-panel .settings-advanced-head {
+  grid-template-columns: minmax(0, 1fr) 72px !important;
+  padding-right: 18px !important;
+}
+
+.settings-panel .settings-section-state,
+.settings-panel .settings-advanced-head em {
+  inline-size: 64px !important;
+  width: 64px !important;
+  min-width: 64px !important;
+  max-width: 64px !important;
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  word-break: keep-all !important;
+  white-space: nowrap !important;
+}
+
 .settings-compact-head {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

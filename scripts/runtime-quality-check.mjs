@@ -224,7 +224,7 @@ assert(inboxPanel.includes('advancedOpen') && inboxPanel.includes('connection-ad
 assert(settingsPanel.includes("<span className=\"settings-section-state\" aria-hidden=\"true\">{open ? '접기' : '열기'}</span>"), 'Settings sections must render explicit open/close action labels');
 assert(settingsPanel.includes("<em aria-hidden=\"true\">{advancedOpen ? '접기' : '열기'}</em>"), 'Settings advanced section must render explicit open/close action labels');
 assert(/grid-template-columns:\s*minmax\(0,\s*1fr\)\s*58px\s*!important/.test(settingsPanelCss), 'Settings section headers must reserve readable action label space');
-assert(/\.settings-panel \.settings-section-state,[\s\S]*?width:\s*58px\s*!important[\s\S]*?writing-mode:\s*horizontal-tb\s*!important/.test(settingsPanelCss), 'Settings action controls must stay horizontal and unclipped');
+assert(/\.settings-panel \.settings-section-state,[\s\S]*?width:\s*64px\s*!important[\s\S]*?writing-mode:\s*horizontal-tb\s*!important/.test(settingsPanelCss), 'Settings action controls must stay horizontal and unclipped');
 assert(/\.settings-panel \.settings-grid,[\s\S]*?\.settings-panel \.account-settings-grid[\s\S]*?grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)\s*!important/.test(settingsPanelCss), 'Settings forms must keep two-column desktop layout');
 assert(/\.settings-panel \.settings-section-title-row[\s\S]*?background:\s*transparent\s*!important[\s\S]*?box-shadow:\s*none\s*!important/.test(settingsPanelCss), 'Settings section titles must stay flat without nested pill styling');
 
