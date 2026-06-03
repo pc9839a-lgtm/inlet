@@ -64,6 +64,8 @@ const previewCssFiles = [
 
 const files = {
   landing: await readFile('src/preview/LandingRenderer.jsx', 'utf8'),
+  app: await readFile('src/App.jsx', 'utf8'),
+  editPanel: await readFile('src/editor/EditPanel.jsx', 'utf8'),
   content: await readFile('src/preview/renderers/ContentBlocks.jsx', 'utf8'),
   form: await readFile('src/preview/renderers/FormBlocks.jsx', 'utf8'),
   formEditor: await readFile('src/editor/blockEditors/FormEditor.jsx', 'utf8'),
@@ -259,6 +261,9 @@ assert(files.browserVisualQa.includes('INLET_BROWSER_QA_EXPECT_TEXT'), 'browser 
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_FORBID_TEXT'), 'browser visual QA should assert forbidden text is absent');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_VIEWPORTS'), 'browser visual QA should allow desktop-only authenticated checks');
 assert(files.browserVisualQa.includes('--window-size=1280,900'), 'local Chrome visual QA should launch with a desktop-sized window');
+assert(files.app.includes("if (['topnav', 'bottombar', 'footer'].includes(target?.type))") && files.app.includes("setOpenId('');\n      return;"), 'preview fixed blocks should not auto-open editor panels');
+assert(files.app.includes("setOpenId('');\n    setAddOpen(false);") && files.editPanel.includes("openId===topNavBlock.id?'접기':'열기'"), 'edit entry should keep fixed block panels closed until explicitly opened');
+assert(!/[�]|占|獄|揆|\?몄|\?꾩|蹂듭|遺덈|紐|釉|湲|肄/.test(files.editPanel), 'edit panel source should not contain mojibake labels');
 const productionBrowserQa = await readFile('scripts/production-browser-quality-check.mjs', 'utf8');
 assert(productionBrowserQa.includes('owner style text color live preview'), 'production browser QA should cover style text color live preview');
 assert(productionBrowserQa.includes('owner style font tone live preview') && productionBrowserQa.includes('.landing-page.font-bold.font-family-serif'), 'production browser QA should cover style font/tone live preview');
@@ -266,7 +271,7 @@ assert(productionBrowserQa.includes('owner rich text bold underline toolbar') &&
 
 console.log(JSON.stringify({
   ok: true,
-  checks: requiredDispatch.length + rendererContracts.length * 2 + cssContracts.length + visualGeometryContracts.length + viewportContracts.length + previewSourceEntries.length * 2 + 30,
+  checks: requiredDispatch.length + rendererContracts.length * 2 + cssContracts.length + visualGeometryContracts.length + viewportContracts.length + previewSourceEntries.length * 2 + 33,
   visualGeometryChecks: visualGeometryContracts.length,
   viewportContracts: viewportContracts.length,
 }, null, 2));
