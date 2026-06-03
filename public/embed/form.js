@@ -222,14 +222,29 @@
     return forms[0] || null;
   }
 
-  function fetchPublicFormConfig(slug, formId, projectId) {
+  function publicPageUrl(slug, projectId) {
     var query = '?public=1';
     if (projectId) query += '&projectId=' + encodeURIComponent(projectId);
-    return fetch(HOME_URL + '/api/pages/' + encodeURIComponent(slug) + query)
+    return HOME_URL + '/api/pages/' + encodeURIComponent(slug) + query;
+  }
+
+  function fetchPublicPage(slug, projectId) {
+    return fetch(publicPageUrl(slug, projectId))
       .then(function (res) {
-        if (!res.ok) throw new Error('page ' + res.status);
-        return res.json();
-      })
+        if (res.ok) return res.json();
+        if (projectId) {
+          return fetch(publicPageUrl(slug, ''))
+            .then(function (fallbackRes) {
+              if (!fallbackRes.ok) throw new Error('page ' + fallbackRes.status);
+              return fallbackRes.json();
+            });
+        }
+        throw new Error('page ' + res.status);
+      });
+  }
+
+  function fetchPublicFormConfig(slug, formId, projectId) {
+    return fetchPublicPage(slug, projectId)
       .then(function (data) {
         var page = data && data.page ? data.page : null;
         var block = findFormBlock(page, formId);

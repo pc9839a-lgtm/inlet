@@ -238,6 +238,7 @@ assert(files.formEmbed.includes('<script src="${DEFAULT_EMBED_SCRIPT_URL}" data-
 assert(files.publicFormEmbed.includes("var API_URL = HOME_URL + '/api/leads'") || files.publicFormEmbed.includes('https://pagero.kr/api/leads'), 'standalone form embed loader should submit to Pagero lead API');
 assert(files.publicFormEmbed.includes('decodeConfig') && files.publicFormEmbed.includes("script.getAttribute('data-pagero')"), 'standalone form embed loader should keep inline compact config compatibility');
 assert(files.publicFormEmbed.includes('fetchPublicFormConfig') && files.publicFormEmbed.includes("script.getAttribute('data-page')") && files.publicFormEmbed.includes("script.getAttribute('data-pagero-project-id')"), 'standalone form embed loader should fetch saved public page config from short embed attrs');
+assert(files.publicFormEmbed.includes('function fetchPublicPage') && files.publicFormEmbed.includes("fetch(publicPageUrl(slug, ''))"), 'standalone form embed loader should fall back to slug-only public page lookup');
 assert(files.publicFormEmbed.includes('data-pagero-page') && files.publicFormEmbed.includes('data-pagero-project-id') && files.publicFormEmbed.includes('initElement'), 'standalone form embed loader should support div + script embed targets with project identity');
 assert(files.formEmbed.includes('projectId: safePage.projectId'), 'standalone form embed should include the page project id');
 assert(files.formEmbed.includes('slug: safePage.slug'), 'standalone form embed should include the page slug');
