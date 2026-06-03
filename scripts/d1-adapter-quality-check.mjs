@@ -976,6 +976,9 @@ assert(db.rows.pages.length === 1 && db.rows.pages[0].id === encodedPage.id && d
 await upsertD1Page(db, { ...decodeD1Page(encodedPage), title: 'Other Project Copy' }, { projectId: 'project-2', slug: 'landing-copy' });
 const copiedPage = await getD1PageBySlug(db, { projectId: 'project-2', slug: 'landing-copy' });
 assert(copiedPage?.id && copiedPage.id !== encodedPage.id && copiedPage.title === 'Other Project Copy', 'D1 page upsert should regenerate stale cross-project page ids');
+await upsertD1Page(db, { ...copiedPage, id: 'stale-client-page-id', title: 'Other Project Copy Saved Again' }, { projectId: 'project-2', slug: 'landing-copy' });
+const copiedPageSavedAgain = await getD1PageBySlug(db, { projectId: 'project-2', slug: 'landing-copy' });
+assert(db.rows.pages.filter((row) => row.project_id === 'project-2' && row.slug === 'landing-copy').length === 1 && copiedPageSavedAgain?.title === 'Other Project Copy Saved Again', 'D1 page upsert should absorb duplicate project slug saves with stale page ids');
 const pageBySlug = await getD1PageBySlug(db, { projectId: 'project-1', slug: 'landing' });
 const pageRevisions = await listD1PageRevisions(db, { projectId: 'project-1', slug: 'landing' });
 const oneRevision = await getD1PageRevision(db, { projectId: 'project-1', slug: 'landing', id: pageRevisions[0]?.id });

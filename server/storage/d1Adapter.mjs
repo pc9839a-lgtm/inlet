@@ -868,6 +868,12 @@ export async function upsertD1Page(db, page = {}, context = {}) {
       revision = excluded.revision,
       published_at = excluded.published_at,
       updated_at = excluded.updated_at
+    ON CONFLICT(project_id, slug) DO UPDATE SET
+      title = excluded.title,
+      page_json = excluded.page_json,
+      revision = excluded.revision,
+      published_at = excluded.published_at,
+      updated_at = excluded.updated_at
   `).bind(
     row.id,
     row.project_id,
