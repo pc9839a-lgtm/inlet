@@ -641,7 +641,8 @@ const server = createServer(async (req, res) => {
       const pageToSave = existingPage
         ? { ...incomingPage, ownership: existingPage.ownership || {} }
         : incomingPage;
-      const saved = await savePage(pageMatch[1], pageToSave, project, {
+      const enforcedPage = enforceFreeEmailAlertRecipient(pageToSave, project, identity);
+      const saved = await savePage(pageMatch[1], enforcedPage, project, {
         expectedUpdatedAt: body?.expectedUpdatedAt || body?.page?.expectedUpdatedAt || body?.page?.__expectedUpdatedAt || '',
       });
       if (!access || identity.ownerId === safeId(access.ownerId, '')) {
@@ -774,6 +775,7 @@ function requestIdentity(req) {
   return {
     ownerId: safeId(req.headers['x-inlet-owner-id'] || '', ''),
     projectId: safeId(req.headers['x-inlet-project-id'] || '', ''),
+    email: normalizeEmail(req.headers['x-inlet-email'] || req.headers['x-inlet-user-email'] || ''),
     source: 'dev-header',
   };
 }
@@ -4479,6 +4481,31 @@ function isValidHttpUrl(value = '') {
 
 function isValidEmail(value = '') {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
+}
+
+function isFreePlan(value = '') {
+  const plan = String(value || 'free').trim().toLowerCase();
+  return !['paid', 'pro', 'premium', 'business', 'agency', 'enterprise'].includes(plan);
+}
+
+function enforceFreeEmailAlertRecipient(page = {}, project = {}, identity = null) {
+  const email = normalizeEmail(identity?.email || '');
+  if (!email) return page;
+  const plan = page.plan || page.billingPlan || page.billing?.plan || project.plan || project.billingPlan || 'free';
+  if (!isFreePlan(plan)) return page;
+  const integrations = page.integrations && typeof page.integrations === 'object' ? page.integrations : {};
+  const emailIntegration = integrations.email && typeof integrations.email === 'object' ? integrations.email : {};
+  return {
+    ...page,
+    integrations: {
+      ...integrations,
+      email: {
+        ...emailIntegration,
+        to: email,
+        lockedToAccount: true,
+      },
+    },
+  };
 }
 
 function serviceLabel(key = '') {

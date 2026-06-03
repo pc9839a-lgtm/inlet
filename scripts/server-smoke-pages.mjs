@@ -1,4 +1,4 @@
-import { assert, fetchWithTimeout, json, runSmoke } from './lib/serverSmokeHarness.mjs';
+import { assert, authHeaders, fetchWithTimeout, json, runSmoke } from './lib/serverSmokeHarness.mjs';
 
 await runSmoke('server-smoke-pages', async ({ baseUrl }) => {
   const smokeId = `smoke-page-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -14,8 +14,30 @@ await runSmoke('server-smoke-pages', async ({ baseUrl }) => {
   const saved = await json({ baseUrl }, 'POST', pagePath, { project, page });
   assert(saved.res.ok && saved.data.page?.slug === smokeId, 'page save failed');
 
+  const emailLocked = await fetchWithTimeout(`${baseUrl}${pagePath}`, {
+    method: 'POST',
+    headers: authHeaders({
+      'Content-Type': 'application/json',
+      'X-Inlet-Email': 'owner@example.test',
+    }),
+    body: JSON.stringify({
+      project,
+      page: {
+        ...page,
+        plan: 'free',
+        integrations: {
+          email: { enabled: true, to: 'other@example.test', consult: true, reservation: true },
+        },
+      },
+    }),
+  }, 5000);
+  const emailLockedData = await emailLocked.json();
+  assert(emailLocked.ok, 'free page email lock save failed');
+  assert(emailLockedData.page?.integrations?.email?.to === 'owner@example.test', 'free page email alert recipient should be forced to account email');
+  assert(emailLockedData.page?.integrations?.email?.lockedToAccount === true, 'free page email alert should be marked locked to account');
+
   const read = await json({ baseUrl }, 'GET', `${pagePath}?${query}`);
-  assert(read.res.ok && read.data.page?.title === 'Smoke Page', 'page read failed');
+  assert(read.res.ok && read.data.page?.integrations?.email?.to === 'owner@example.test', 'page read failed or email lock was not persisted');
 
   const updated = await json({ baseUrl }, 'POST', pagePath, {
     project,
