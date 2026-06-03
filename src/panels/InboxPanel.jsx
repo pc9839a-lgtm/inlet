@@ -293,11 +293,9 @@ function doGet() {
 }`;
 
 function isFreeEmailLocked(page = {}, authUser = null) {
-  const integrations = normalizeIntegrations(page.integrations || {});
-  const accountEmail = lockedAccountEmail(authUser, page, integrations);
   const plan = String(page?.plan || page?.billingPlan || page?.billing?.plan || authUser?.plan || authUser?.billingPlan || 'free').trim().toLowerCase();
   const paidPlans = ['paid', 'pro', 'premium', 'business', 'agency', 'enterprise'];
-  return !!accountEmail && !paidPlans.includes(plan);
+  return !paidPlans.includes(plan);
 }
 
 function lockedAccountEmail(authUser = null, page = {}, integrations = null) {
@@ -315,11 +313,12 @@ function lockedAccountEmail(authUser = null, page = {}, integrations = null) {
 function enforceFreeEmailIntegration(integrations = {}, page = {}, authUser = null) {
   const normalized = normalizeIntegrations(integrations || {});
   if (!isFreeEmailLocked(page, authUser)) return normalized;
+  const accountEmail = lockedAccountEmail(authUser, page, normalized);
   return normalizeIntegrations({
     ...normalized,
     email: {
       ...(normalized.email || {}),
-      to: lockedAccountEmail(authUser),
+      to: accountEmail || '',
       lockedToAccount: true,
     },
   });
@@ -505,10 +504,10 @@ function InboxConnectionsPanel({ page, authUser = null, updateIntegrations, onSa
             </div>
             {draftIntegrations.email.enabled && (
               <div className="connection-detail-box compact">
-                <label className="connection-inline-control">
-                  <span>받을 이메일</span>
+                <label className="connection-inline-control email-recipient-control">
+                  <span>\uBC1B\uC744 \uC774\uBA54\uC77C</span>
                   {emailLocked ? (
-                    <strong className="locked-email-value" aria-label="계정 이메일로 고정됨">{accountEmail}</strong>
+                    <strong className="locked-email-value" aria-label="\uACC4\uC815 \uC774\uBA54\uC77C\uB85C \uACE0\uC815\uB428">{accountEmail || '\uACC4\uC815 \uC774\uBA54\uC77C \uC5C6\uC74C'}</strong>
                   ) : (
                     <input
                       value={draftIntegrations.email.to || ''}
@@ -517,7 +516,7 @@ function InboxConnectionsPanel({ page, authUser = null, updateIntegrations, onSa
                     />
                   )}
                 </label>
-                {emailLocked && <p className="connection-help-text">무료 플랜은 계정 이메일로 알림을 받습니다.</p>}
+                {emailLocked && <p className="connection-help-text">\uBB34\uB8CC \uC0AC\uC6A9\uC790\uB294 \uACC4\uC815 \uC774\uBA54\uC77C\uB85C \uC54C\uB9BC\uC744 \uBC1B\uC2B5\uB2C8\uB2E4.</p>}
                 <div className="connection-inline-control">
                   <span>알림 대상</span>
                   <div className="inline-chip-row">
