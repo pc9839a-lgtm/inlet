@@ -169,7 +169,9 @@ export function googleSheetsPayload(payload = {}, sheets = {}, page = {}, lead =
     target: 'google_sheets',
     provider: 'google_sheets',
     mode: sheets.mode || 'webhook',
+    spreadsheetId: sheets.spreadsheetId || '',
     sheetName: sheets.sheetName || '접수함',
+    connectedEmail: sheets.connectedEmail || '',
     lead: {
       id: lead.id || payload.lead?.id || '',
       name: lead.name || payload.contact?.name || '',
@@ -190,6 +192,13 @@ export function googleSheetsPayload(payload = {}, sheets = {}, page = {}, lead =
     },
     source,
     attribution: source,
+    integration: {
+      provider: 'google_sheets',
+      mode: sheets.mode || 'webhook',
+      spreadsheetId: sheets.spreadsheetId || '',
+      connectedEmail: sheets.connectedEmail || '',
+      status: sheets.status || '',
+    },
     createdAt: lead.createdAt || payload.createdAt || new Date().toISOString(),
   };
 }

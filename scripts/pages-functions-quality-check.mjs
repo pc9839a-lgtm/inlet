@@ -81,7 +81,7 @@ const externalDeliveryJobs = buildLeadDeliveryJobs({
   integrations: {
     webhook: { enabled: true, url: 'https://example.test/webhook', service: 'custom' },
     automation: { enabled: true, url: 'https://example.test/make', service: 'make' },
-    sheets: { enabled: true, provider: 'google_sheets', mode: 'webhook', webhookUrl: 'https://example.test/sheets', sheetName: 'Leads' },
+    sheets: { enabled: true, provider: 'google_sheets', mode: 'webhook', webhookUrl: 'https://example.test/sheets', spreadsheetId: 'sheet-pages', sheetName: 'Leads', connectedEmail: 'owner@example.test', status: 'connected' },
   },
 }, {
   id: 'lead-external-payload',
@@ -101,6 +101,7 @@ assert(externalDeliveryJobs.some((job) => job.payload?.target === 'webhook' && j
 assert(externalDeliveryJobs.some((job) => job.payload?.target === 'automation' && job.payload?.service === 'make'), 'Pages delivery should prepare Make/Zapier payload');
 assert(externalDeliveryJobs.some((job) => job.payload?.target === 'google_sheets' && job.payload?.sheetName === 'Leads'), 'Pages delivery should prepare Google Sheets payload');
 assert(externalDeliveryJobs.some((job) => job.payload?.target === 'google_sheets' && job.payload?.provider === 'google_sheets' && job.payload?.mode === 'webhook'), 'Pages delivery should prepare Google Sheets provider/mode');
+assert(externalDeliveryJobs.some((job) => job.payload?.target === 'google_sheets' && job.payload?.spreadsheetId === 'sheet-pages' && job.payload?.connectedEmail === 'owner@example.test' && job.payload?.integration?.status === 'connected'), 'Pages delivery should keep Google Sheets OAuth-ready metadata');
 assert(externalDeliveryJobs.some((job) => job.payload?.target === 'google_sheets' && job.payload?.lead?.fields && job.payload?.page?.slug === 'external-payload' && job.payload?.project && job.payload?.source), 'Pages delivery should prepare Google Sheets structured payload');
 assert(externalDeliveryJobs.some((job) => job.payload?.target === 'google_sheets' && job.payload?.lead?.fields?.['관심 타입'] === '84A' && job.payload?.lead?.fields?.['예산대'] === '5억~7억' && !job.payload?.lead?.fields?.['이름']), 'Pages delivery should keep custom form fields as sheet columns without duplicating base fields');
 

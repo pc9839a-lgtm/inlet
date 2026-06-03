@@ -3833,7 +3833,9 @@ function googleSheetsServerPayload(payload = {}, sheets = {}, page = {}, lead = 
     target: 'google_sheets',
     provider: 'google_sheets',
     mode: sheets.mode || 'webhook',
+    spreadsheetId: sheets.spreadsheetId || '',
     sheetName: sheets.sheetName || '접수함',
+    connectedEmail: sheets.connectedEmail || '',
     lead: {
       id: lead.id || payload.lead?.id || '',
       name: lead.name || lead.values?.name || payload.contact?.name || '',
@@ -3854,6 +3856,13 @@ function googleSheetsServerPayload(payload = {}, sheets = {}, page = {}, lead = 
     },
     source,
     attribution: source,
+    integration: {
+      provider: 'google_sheets',
+      mode: sheets.mode || 'webhook',
+      spreadsheetId: sheets.spreadsheetId || '',
+      connectedEmail: sheets.connectedEmail || '',
+      status: sheets.status || '',
+    },
     createdAt: payload.createdAt || lead.createdAt || new Date().toISOString(),
   };
 }
@@ -4525,7 +4534,9 @@ function sampleSheetsPayload(body = {}) {
     target: 'google_sheets',
     provider: 'google_sheets',
     mode: 'webhook',
+    spreadsheetId: body.spreadsheetId || '',
     sheetName: body.sheetName || '접수함',
+    connectedEmail: body.connectedEmail || '',
     lead: {
       id: `test-${Date.now()}`,
       name: '연결 테스트',

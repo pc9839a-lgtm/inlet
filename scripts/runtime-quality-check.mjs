@@ -145,6 +145,8 @@ const richField = await readFile('src/editor/RichField.jsx', 'utf8');
 const previewUtils = await readFile('src/preview/renderers/previewUtils.jsx', 'utf8');
 const stylePanel = await readFile('src/panels/StylePanel.jsx', 'utf8');
 const inboxPanel = await readFile('src/panels/InboxPanel.jsx', 'utf8');
+const pageModel = await readFile('src/lib/pageModel.js', 'utf8');
+const leadIntegrations = await readFile('src/lib/leadIntegrations.js', 'utf8');
 const settingsPanel = await readFile('src/panels/SettingsPanel.jsx', 'utf8');
 const settingsPanelCss = await readFile('src/panels/SettingsPanel.css', 'utf8');
 const runtimeConfigSource = await readFile('src/config/runtimeConfig.js', 'utf8');
@@ -216,6 +218,8 @@ assert(stylePanel.includes("!['topnav', 'bottombar', 'footer'].includes(block.ty
 assert(stylePanel.includes("topnav: '상단 메뉴'") && stylePanel.includes("bottombar: '하단 버튼'") && stylePanel.includes("search: '검색'"), 'StylePanel block labels must stay readable Korean text');
 assert(stylePanel.includes("'code',") && stylePanel.includes("'search',") && stylePanel.includes("search: {") && stylePanel.includes("options: [['card', '카드'], ['bar', '바'], ['minimal', '미니멀']]"), 'StylePanel must expose code/search widgets and readable search layout options');
 assert(inboxPanel.includes('ensureHeaders(sheet, Object.keys(fields))') && inboxPanel.includes('BASE_HEADERS.concat(customHeaders, [JSON_HEADER])'), 'Google Sheets sample code must create columns for actual form fields');
+assert(pageModel.includes("provider: 'google_sheets'") && pageModel.includes("mode: 'webhook'") && pageModel.includes('spreadsheetId') && pageModel.includes('connectedEmail'), 'Google Sheets settings must keep OAuth-ready metadata without changing the webhook MVP');
+assert(leadIntegrations.includes("integration: {") && leadIntegrations.includes("provider: 'google_sheets'") && leadIntegrations.includes('spreadsheetId: sheets.spreadsheetId') && leadIntegrations.includes('connectedEmail: sheets.connectedEmail'), 'Google Sheets payload must keep provider/mode/account metadata for future OAuth expansion');
 assert(inboxPanel.includes('advancedOpen') && inboxPanel.includes('connection-advanced-toggle') && inboxPanel.includes('연동 전체 저장'), 'Inbox integrations should keep webhook inside an advanced section and label full save clearly');
 assert(settingsPanel.includes("<span className=\"settings-section-state\" aria-hidden=\"true\">{open ? '접기' : '열기'}</span>"), 'Settings sections must render explicit open/close action labels');
 assert(settingsPanel.includes("<em aria-hidden=\"true\">{advancedOpen ? '접기' : '열기'}</em>"), 'Settings advanced section must render explicit open/close action labels');

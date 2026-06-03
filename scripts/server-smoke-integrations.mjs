@@ -10,7 +10,7 @@ await runSmoke('server-smoke-integrations', async ({ baseUrl }) => {
       integrations: {
         webhook: { enabled: true, url: webhook.url, service: 'custom' },
         automation: { enabled: true, url: webhook.url, service: 'make' },
-        sheets: { enabled: true, provider: 'google_sheets', mode: 'webhook', webhookUrl: webhook.url, sheetName: 'Smoke Leads' },
+        sheets: { enabled: true, provider: 'google_sheets', mode: 'webhook', webhookUrl: webhook.url, spreadsheetId: 'sheet-smoke', sheetName: 'Smoke Leads', connectedEmail: 'owner@example.test', status: 'connected' },
       },
     };
 
@@ -32,6 +32,7 @@ await runSmoke('server-smoke-integrations', async ({ baseUrl }) => {
     assert(webhook.received.some((item) => item.body?.target === 'automation' && item.body?.service === 'make'), 'Make payload missing');
     assert(webhook.received.some((item) => item.body?.target === 'google_sheets' && item.body?.sheetName === 'Smoke Leads'), 'Google Sheets payload missing');
     assert(webhook.received.some((item) => item.body?.target === 'google_sheets' && item.body?.provider === 'google_sheets' && item.body?.mode === 'webhook'), 'Google Sheets provider/mode missing');
+    assert(webhook.received.some((item) => item.body?.target === 'google_sheets' && item.body?.spreadsheetId === 'sheet-smoke' && item.body?.connectedEmail === 'owner@example.test' && item.body?.integration?.status === 'connected'), 'Google Sheets OAuth-ready metadata missing');
     assert(webhook.received.some((item) => item.body?.target === 'google_sheets' && item.body?.lead?.id === lead.id && item.body?.page?.slug === page.slug && item.body?.project), 'Google Sheets structured lead/page/project payload missing');
     assert(webhook.received.every((item) => item.body?.schemaVersion === 'inlet.lead.v1' || item.body?.target === 'webhook'), 'payload schema marker missing');
 

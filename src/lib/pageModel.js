@@ -178,12 +178,16 @@ function normalizeIntegrations(integrations = {}) {
   next.sheets.mode = pickSafe(next.sheets.mode || 'webhook', ['webhook','oauth'], 'webhook');
   next.sheets.webhookUrl = String(next.sheets.webhookUrl || next.sheets.url || '').trim();
   next.sheets.url = next.sheets.webhookUrl;
+  next.sheets.spreadsheetId = String(next.sheets.spreadsheetId || '').trim();
   next.sheets.sheetName = String(next.sheets.sheetName || '접수함').trim() || '접수함';
+  next.sheets.connectedEmail = String(next.sheets.connectedEmail || '').trim();
   next.sheets.status = pickSafe(next.sheets.status || (next.sheets.enabled && next.sheets.webhookUrl ? 'connected' : 'disconnected'), ['disconnected','connected','error'], 'disconnected');
   if (/postJson is not defined|not defined/i.test(String(next.sheets.lastError || ''))) {
     next.sheets.lastError = '';
     if (next.sheets.status === 'error') next.sheets.status = next.sheets.enabled && next.sheets.webhookUrl ? 'connected' : 'disconnected';
   }
+  next.sheets.lastSyncAt = String(next.sheets.lastSyncAt || '').trim();
+  next.sheets.lastError = String(next.sheets.lastError || '').trim();
   next.sheets.emailEnabled = !!next.sheets.emailEnabled;
   next.conversion.enabled = next.conversion.enabled !== false;
 
