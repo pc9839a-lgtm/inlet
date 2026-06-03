@@ -6,14 +6,6 @@
   var SCRIPT_SELECTOR = 'script[src*="/embed/form.js"]';
   var CLIENT_ID_KEY = 'pagero_client_id';
 
-  function css() {
-    if (document.getElementById('pagero-form-style')) return;
-    var style = document.createElement('style');
-    style.id = 'pagero-form-style';
-    style.textContent = '*{box-sizing:border-box}.pagero-form-wrap{width:min(100%,520px);margin:0 auto;padding:20px;color:#101827;font-family:Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}.pagero-form-card{background:#fff;border:1px solid #d9e2ef;border-radius:22px;padding:24px;box-shadow:0 18px 42px rgba(15,23,42,.08)}.pagero-form-card h2{margin:0 0 8px;font-size:26px;line-height:1.2}.pagero-form-card p{margin:0 0 18px;color:#64748b;font-weight:700;line-height:1.55}.pagero-form-field{display:block;margin:0 0 14px}.pagero-form-field span,.pagero-form-checks legend{display:block;margin:0 0 8px;font-weight:900;font-size:14px}.pagero-form-field b{color:#2563eb;margin-left:4px}.pagero-form-field input,.pagero-form-field textarea,.pagero-form-field select{width:100%;border:1px solid #d8e2ef;border-radius:16px;background:#f8fbff;padding:15px 16px;font:inherit;font-weight:800;color:#101827;outline:none}.pagero-form-field textarea{min-height:112px;resize:vertical}.pagero-form-field input:focus,.pagero-form-field textarea:focus,.pagero-form-field select:focus{border-color:#2563eb;box-shadow:0 0 0 4px rgba(37,99,235,.12)}.pagero-form-checks{border:0;margin:0 0 14px;padding:0}.pagero-form-checks label{display:flex;gap:8px;align-items:center;margin:8px 0;font-weight:800}.pagero-form-privacy{display:flex;gap:10px;align-items:flex-start;margin:16px 0;color:#334155;font-size:13px;font-weight:800}.pagero-form-submit{width:100%;border:0;border-radius:18px;background:#101827;color:#fff;padding:16px;font:inherit;font-weight:900;cursor:pointer}.pagero-form-submit:disabled{opacity:.58;cursor:not-allowed}.pagero-form-notice{display:none;margin-top:14px;border-radius:14px;padding:13px 14px;font-weight:900;line-height:1.4}.pagero-form-notice.show{display:block}.pagero-form-notice.ok{background:#dcfce7;color:#047857}.pagero-form-notice.error{background:#fee2e2;color:#dc2626}.pagero-powered{display:block;margin:14px auto 0;text-align:center;color:#64748b;text-decoration:none;font-size:12px;font-weight:900}.pagero-powered:hover{color:#2563eb}';
-    document.head.appendChild(style);
-  }
-
   function esc(value) {
     return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
       return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch];
@@ -32,6 +24,37 @@
     return prefix + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
   }
 
+  function css() {
+    if (document.getElementById('pagero-form-style')) return;
+    var style = document.createElement('style');
+    style.id = 'pagero-form-style';
+    style.textContent = [
+      '*{box-sizing:border-box}',
+      '.pagero-form-wrap{width:min(100%,520px);margin:0 auto;padding:18px;color:#101827;font-family:Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}',
+      '.pagero-form-card{background:#fff;border:1px solid #d9e2ef;border-radius:22px;padding:24px;box-shadow:0 18px 42px rgba(15,23,42,.08)}',
+      '.pagero-form-card h2{margin:0 0 8px;font-size:26px;line-height:1.2;font-weight:900}',
+      '.pagero-form-card p{margin:0 0 18px;color:#64748b;font-weight:700;line-height:1.55}',
+      '.pagero-form-field{display:block;margin:0 0 14px}',
+      '.pagero-form-field span,.pagero-form-checks legend{display:block;margin:0 0 8px;font-weight:900;font-size:14px}',
+      '.pagero-form-field b{color:#2563eb;margin-left:4px}',
+      '.pagero-form-field input,.pagero-form-field textarea,.pagero-form-field select{width:100%;border:1px solid #d8e2ef;border-radius:16px;background:#f8fbff;padding:15px 16px;font:inherit;font-weight:800;color:#101827;outline:none}',
+      '.pagero-form-field textarea{min-height:112px;resize:vertical}',
+      '.pagero-form-field input:focus,.pagero-form-field textarea:focus,.pagero-form-field select:focus{border-color:#2563eb;box-shadow:0 0 0 4px rgba(37,99,235,.12)}',
+      '.pagero-form-checks{border:0;margin:0 0 14px;padding:0}',
+      '.pagero-form-checks label{display:flex;gap:8px;align-items:center;margin:8px 0;font-weight:800}',
+      '.pagero-form-privacy{display:flex;gap:10px;align-items:flex-start;margin:16px 0;color:#334155;font-size:13px;font-weight:800}',
+      '.pagero-form-submit{width:100%;border:0;border-radius:18px;background:#101827;color:#fff;padding:16px;font:inherit;font-weight:900;cursor:pointer}',
+      '.pagero-form-submit:disabled{opacity:.58;cursor:not-allowed}',
+      '.pagero-form-notice{display:none;margin-top:14px;border-radius:14px;padding:13px 14px;font-weight:900;line-height:1.4}',
+      '.pagero-form-notice.show{display:block}',
+      '.pagero-form-notice.ok{background:#dcfce7;color:#047857}',
+      '.pagero-form-notice.error{background:#fee2e2;color:#dc2626}',
+      '.pagero-powered{display:block;margin:14px auto 0;text-align:center;color:#64748b;text-decoration:none;font-size:12px;font-weight:900}',
+      '.pagero-powered:hover{color:#2563eb}'
+    ].join('');
+    document.head.appendChild(style);
+  }
+
   function readCookie(name) {
     var parts = String(document.cookie || '').split(';');
     for (var i = 0; i < parts.length; i += 1) {
@@ -46,29 +69,23 @@
   }
 
   function clientId() {
-    var id = '';
     try {
-      id = localStorage.getItem(CLIENT_ID_KEY) || '';
-      if (!id) {
-        id = randomId('client');
-        localStorage.setItem(CLIENT_ID_KEY, id);
-      }
+      var stored = localStorage.getItem(CLIENT_ID_KEY) || '';
+      if (stored) return stored;
+      stored = randomId('client');
+      localStorage.setItem(CLIENT_ID_KEY, stored);
+      return stored;
     } catch (e) {
-      id = readCookie(CLIENT_ID_KEY);
-      if (!id) {
-        id = randomId('client');
-        writeCookie(CLIENT_ID_KEY, id);
-      }
+      var cookie = readCookie(CLIENT_ID_KEY);
+      if (cookie) return cookie;
+      cookie = randomId('client');
+      writeCookie(CLIENT_ID_KEY, cookie);
+      return cookie;
     }
-    return id;
   }
 
   function isPhoneQuestion(q) {
-    return q && (q.type === 'phone' || /전화|연락|휴대폰|핸드폰|phone/i.test(String(q.label || '')));
-  }
-
-  function sanitizeQuestionValue(q, value) {
-    return isPhoneQuestion(q) ? digitsOnly(value) : value;
+    return !!q && (q.type === 'phone' || /전화|연락|휴대|핸드|phone/i.test(String(q.label || '')));
   }
 
   function fieldMarkup(q) {
@@ -78,7 +95,9 @@
     var required = q.required ? ' required' : '';
     var label = esc(q.label || '질문') + (q.required ? '<b>*</b>' : '');
     var placeholder = esc(q.placeholder || q.label || '');
-    if (q.type === 'long') return '<label class="pagero-form-field" for="' + id + '"><span>' + label + '</span><textarea id="' + id + '" name="' + esc(safeId) + '" placeholder="' + placeholder + '"' + required + '></textarea></label>';
+    if (q.type === 'long') {
+      return '<label class="pagero-form-field" for="' + id + '"><span>' + label + '</span><textarea id="' + id + '" name="' + esc(safeId) + '" placeholder="' + placeholder + '"' + required + '></textarea></label>';
+    }
     if (q.type === 'select') {
       var selectOptions = (q.options && q.options.length ? q.options : ['선택 1', '선택 2']).map(function (option) {
         return '<option value="' + esc(option) + '">' + esc(option) + '</option>';
@@ -118,16 +137,7 @@
     var utmCampaign = String(params.get('utm_campaign') || '').trim();
     var referrer = document.referrer || '';
     var channel = utmSource || channelFromReferrer(referrer);
-    var labels = {
-      direct: '직접 유입',
-      referral: '외부 링크',
-      naver: '네이버',
-      google: '구글',
-      kakao: '카카오',
-      instagram: '인스타그램',
-      meta: '페이스북/메타',
-      youtube: '유튜브'
-    };
+    var labels = { direct: '직접 유입', referral: '외부 링크', naver: '네이버', google: '구글', kakao: '카카오', instagram: '인스타그램', meta: '페이스북/메타', youtube: '유튜브' };
     return {
       channel: channel,
       utmSource: utmSource,
@@ -145,7 +155,7 @@
     var answers = [];
     questions.forEach(function (q) {
       var value = q.type === 'multi' ? data.getAll(q.id).filter(Boolean) : data.get(q.id);
-      value = sanitizeQuestionValue(q, value);
+      if (isPhoneQuestion(q)) value = digitsOnly(value);
       values[q.label] = value;
       values[q.id] = value;
       answers.push({ id: q.id, label: q.label, type: q.type, required: !!q.required, value: value });
@@ -193,16 +203,8 @@
       success: s.success || '접수가 완료되었습니다. 확인 후 연락드리겠습니다.',
       privacy: s.privacy || '개인정보 수집 및 이용에 동의합니다.',
       privacyRequired: s.privacyRequired !== false,
-      page: {
-        id: page.id || '',
-        projectId: page.projectId || '',
-        slug: page.slug || '',
-        title: page.title || ''
-      },
-      project: {
-        projectId: page.projectId || '',
-        slug: page.slug || ''
-      },
+      page: { id: page.id || '', projectId: page.projectId || '', slug: page.slug || '', title: page.title || '' },
+      project: { projectId: page.projectId || '', slug: page.slug || '' },
       questions: Array.isArray(s.questions) ? s.questions : []
     };
   }
@@ -235,9 +237,7 @@
   }
 
   function configFromScript(script) {
-    if (script.getAttribute('data-pagero')) {
-      return Promise.resolve(decodeConfig(script.getAttribute('data-pagero')));
-    }
+    if (script.getAttribute('data-pagero')) return Promise.resolve(decodeConfig(script.getAttribute('data-pagero')));
     var configId = script.getAttribute('data-config') || '';
     if (configId) {
       var configEl = document.getElementById(configId);
@@ -295,7 +295,7 @@
         sourceBlockTitle: cfg.title || '',
         brand: cfg.brand || '페이지로',
         name: firstAnswer(extracted.answers, ['name'], /이름|성함|name/i),
-        phone: digitsOnly(firstAnswer(extracted.answers, ['phone'], /전화|연락|휴대폰|핸드폰|phone/i)),
+        phone: digitsOnly(firstAnswer(extracted.answers, ['phone'], /전화|연락|휴대|핸드|phone/i)),
         email: firstAnswer(extracted.answers, ['email'], /메일|email/i),
         address: firstAnswer(extracted.answers, ['address'], /주소|address/i),
         message: firstAnswer(extracted.answers, ['long'], /문의|내용|메시지|message/i),
@@ -312,19 +312,26 @@
           slug: (cfg.project && cfg.project.slug) || (cfg.page && cfg.page.slug) || ''
         })
       };
-      var hasProject = payload.project && payload.project.projectId && payload.project.slug;
-      var request = hasProject ? postJson(API_URL, payload).then(function (res) {
-        if (!res.ok) throw new Error('server ' + res.status);
-        return res.json().catch(function () { return {}; });
-      }) : Promise.reject(new Error('missing project'));
-      request.then(function () {
-        form.reset();
-        setNotice(cfg.success || '접수가 완료되었습니다.', 'ok');
-      }).catch(function () {
-        setNotice('접수 저장에 실패했습니다. 잠시 후 다시 시도해주세요.', 'error');
-      }).finally(function () {
+      if (!payload.project.projectId || !payload.project.slug) {
+        setNotice('페이지 정보를 확인할 수 없습니다.', 'error');
         submit.disabled = false;
-      });
+        return;
+      }
+      postJson(API_URL, payload)
+        .then(function (res) {
+          if (!res.ok) throw new Error('server ' + res.status);
+          return res.json().catch(function () { return {}; });
+        })
+        .then(function () {
+          form.reset();
+          setNotice(cfg.success || '접수가 완료되었습니다.', 'ok');
+        })
+        .catch(function () {
+          setNotice('접수 저장에 실패했습니다. 잠시 후 다시 시도해주세요.', 'error');
+        })
+        .finally(function () {
+          submit.disabled = false;
+        });
     });
   }
 
@@ -358,26 +365,22 @@
     var target = targetForScript(script);
     if (!target) return;
     target.textContent = '입력폼을 불러오는 중입니다.';
-    configFromScript(script)
-      .then(function (config) {
-        render(target, config);
-      })
-      .catch(function () {
-        target.textContent = '페이지로 입력폼을 불러오지 못했습니다.';
-      });
+    configFromScript(script).then(function (config) {
+      render(target, config);
+    }).catch(function () {
+      target.textContent = '페이지로 입력폼을 불러오지 못했습니다.';
+    });
   }
 
   function initElement(el) {
     if (!el || el.getAttribute('data-pagero-loaded') === '1') return;
     el.setAttribute('data-pagero-loaded', '1');
     el.textContent = '입력폼을 불러오는 중입니다.';
-    configFromElement(el)
-      .then(function (config) {
-        render(el, config);
-      })
-      .catch(function () {
-        el.textContent = '페이지로 입력폼을 불러오지 못했습니다.';
-      });
+    configFromElement(el).then(function (config) {
+      render(el, config);
+    }).catch(function () {
+      el.textContent = '페이지로 입력폼을 불러오지 못했습니다.';
+    });
   }
 
   function initAll() {
