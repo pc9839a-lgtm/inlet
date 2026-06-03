@@ -85,7 +85,7 @@
   }
 
   function isPhoneQuestion(q) {
-    return !!q && (q.type === 'phone' || /전화|연락|휴대|핸드|phone/i.test(String(q.label || '')));
+    return !!q && (q.type === 'phone' || /\uC804\uD654|\uC5F0\uB77D|\uD734\uB300|\uD578\uB4DC|phone/i.test(String(q.label || '')));
   }
 
   function fieldMarkup(q) {
@@ -93,19 +93,19 @@
     var safeId = String(q.id || ('q_' + Math.random().toString(36).slice(2, 8)));
     var id = 'pagero-' + esc(safeId);
     var required = q.required ? ' required' : '';
-    var label = esc(q.label || '질문') + (q.required ? '<b>*</b>' : '');
+    var label = esc(q.label || '\uC9C8\uBB38') + (q.required ? '<b>*</b>' : '');
     var placeholder = esc(q.placeholder || q.label || '');
     if (q.type === 'long') {
       return '<label class="pagero-form-field" for="' + id + '"><span>' + label + '</span><textarea id="' + id + '" name="' + esc(safeId) + '" placeholder="' + placeholder + '"' + required + '></textarea></label>';
     }
     if (q.type === 'select') {
-      var selectOptions = (q.options && q.options.length ? q.options : ['선택 1', '선택 2']).map(function (option) {
+      var selectOptions = (q.options && q.options.length ? q.options : ['\uC120\uD0DD 1', '\uC120\uD0DD 2']).map(function (option) {
         return '<option value="' + esc(option) + '">' + esc(option) + '</option>';
       }).join('');
-      return '<label class="pagero-form-field" for="' + id + '"><span>' + label + '</span><select id="' + id + '" name="' + esc(safeId) + '"' + required + '><option value="">선택</option>' + selectOptions + '</select></label>';
+      return '<label class="pagero-form-field" for="' + id + '"><span>' + label + '</span><select id="' + id + '" name="' + esc(safeId) + '"' + required + '><option value="">\uC120\uD0DD</option>' + selectOptions + '</select></label>';
     }
     if (q.type === 'multi') {
-      var checks = (q.options && q.options.length ? q.options : ['선택 1', '선택 2']).map(function (option, index) {
+      var checks = (q.options && q.options.length ? q.options : ['\uC120\uD0DD 1', '\uC120\uD0DD 2']).map(function (option, index) {
         return '<label><input type="checkbox" name="' + esc(safeId) + '" value="' + esc(option) + '"' + (index === 0 && q.required ? ' data-required-group="1"' : '') + '>' + esc(option) + '</label>';
       }).join('');
       return '<fieldset class="pagero-form-field pagero-form-checks"><legend>' + label + '</legend>' + checks + '</fieldset>';
@@ -137,7 +137,7 @@
     var utmCampaign = String(params.get('utm_campaign') || '').trim();
     var referrer = document.referrer || '';
     var channel = utmSource || channelFromReferrer(referrer);
-    var labels = { direct: '직접 유입', referral: '외부 링크', naver: '네이버', google: '구글', kakao: '카카오', instagram: '인스타그램', meta: '페이스북/메타', youtube: '유튜브' };
+    var labels = { direct: '\uC9C1\uC811 \uC720\uC785', referral: '\uC678\uBD80 \uB9C1\uD06C', naver: '\uB124\uC774\uBC84', google: '\uAD6C\uAE00', kakao: '\uCE74\uCE74\uC624', instagram: '\uC778\uC2A4\uD0C0\uADF8\uB7A8', meta: '\uD398\uC774\uC2A4\uBD81/\uBA54\uD0C0', youtube: '\uC720\uD29C\uBE0C' };
     return {
       channel: channel,
       utmSource: utmSource,
@@ -145,7 +145,7 @@
       utmCampaign: utmCampaign,
       sourceUrl: location.href,
       referrer: referrer,
-      sourceLabel: (labels[channel] || channel || '직접 유입') + (utmCampaign ? ' · ' + utmCampaign : '')
+      sourceLabel: (labels[channel] || channel || '\uC9C1\uC811 \uC720\uC785') + (utmCampaign ? ' \u00B7 ' + utmCampaign : '')
     };
   }
 
@@ -189,10 +189,10 @@
   function submitErrorMessage(error) {
     var status = Number(error && error.status || 0);
     var code = String(error && error.code || '');
-    if (status === 429 || code === 'LEAD_RATE_LIMITED') return '반복 접수로 제한되었습니다. 잠시 후 다시 시도해주세요.';
-    if (status === 409 || code.indexOf('DUPLICATE') >= 0) return '이미 접수된 정보입니다.';
-    if (status === 404 || code === 'PUBLIC_PROJECT_NOT_FOUND') return '페이지 정보를 확인할 수 없습니다.';
-    return '접수 저장에 실패했습니다. 잠시 후 다시 시도해주세요.';
+    if (status === 429 || code === 'LEAD_RATE_LIMITED') return '\uBC18\uBCF5 \uC811\uC218\uB85C \uC81C\uD55C\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574\uC8FC\uC138\uC694.';
+    if (status === 409 || code.indexOf('DUPLICATE') >= 0) return '\uC774\uBBF8 \uC811\uC218\uB41C \uC815\uBCF4\uC785\uB2C8\uB2E4.';
+    if (status === 404 || code === 'PUBLIC_PROJECT_NOT_FOUND') return '\uD398\uC774\uC9C0 \uC815\uBCF4\uB97C \uD655\uC778\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.';
+    return '\uC811\uC218 \uC800\uC7A5\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574\uC8FC\uC138\uC694.';
   }
 
   function decodeConfig(raw) {
@@ -215,13 +215,13 @@
   function normalizeFormConfig(block, page) {
     var s = block && block.s ? block.s : {};
     return {
-      brand: '페이지로',
+      brand: '\uD398\uC774\uC9C0\uB85C',
       formId: block.id || '',
-      title: s.title || '상담 신청',
+      title: s.title || '\uC0C1\uB2F4 \uC2E0\uCCAD',
       desc: s.desc || '',
-      submit: s.submit || '접수하기',
-      success: s.success || '접수가 완료되었습니다. 확인 후 연락드리겠습니다.',
-      privacy: s.privacy || '개인정보 수집 및 이용에 동의합니다.',
+      submit: s.submit || '\uC811\uC218\uD558\uAE30',
+      success: s.success || '\uC811\uC218\uAC00 \uC644\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uD655\uC778 \uD6C4 \uC5F0\uB77D\uB4DC\uB9AC\uACA0\uC2B5\uB2C8\uB2E4.',
+      privacy: s.privacy || '\uAC1C\uC778\uC815\uBCF4 \uC218\uC9D1 \uBC0F \uC774\uC6A9\uC5D0 \uB3D9\uC758\uD569\uB2C8\uB2E4.',
       privacyRequired: s.privacyRequired !== false,
       page: { id: page.id || '', projectId: page.projectId || '', slug: page.slug || '', title: page.title || '' },
       project: { projectId: page.projectId || '', slug: page.slug || '' },
@@ -300,7 +300,7 @@
     css();
     cfg = cfg || {};
     cfg.questions = Array.isArray(cfg.questions) ? cfg.questions : [];
-    target.innerHTML = '<div class="pagero-form-wrap"><form class="pagero-form-card" data-pagero-form><h2>' + esc(cfg.title || '상담 신청') + '</h2>' + (cfg.desc ? '<p>' + esc(cfg.desc) + '</p>' : '') + cfg.questions.map(fieldMarkup).join('') + (cfg.privacyRequired !== false ? '<label class="pagero-form-privacy"><input type="checkbox" name="privacy" required><span>' + esc(cfg.privacy || '개인정보 수집 및 이용에 동의합니다.') + '</span></label>' : '') + '<button class="pagero-form-submit" type="submit">' + esc(cfg.submit || '접수하기') + '</button><div class="pagero-form-notice" data-pagero-notice></div></form><a class="pagero-powered" href="' + HOME_URL + '" target="_blank" rel="noopener">페이지로로 제작됨</a></div>';
+    target.innerHTML = '<div class="pagero-form-wrap"><form class="pagero-form-card" data-pagero-form><h2>' + esc(cfg.title || '\uC0C1\uB2F4 \uC2E0\uCCAD') + '</h2>' + (cfg.desc ? '<p>' + esc(cfg.desc) + '</p>' : '') + cfg.questions.map(fieldMarkup).join('') + (cfg.privacyRequired !== false ? '<label class="pagero-form-privacy"><input type="checkbox" name="privacy" required><span>' + esc(cfg.privacy || '\uAC1C\uC778\uC815\uBCF4 \uC218\uC9D1 \uBC0F \uC774\uC6A9\uC5D0 \uB3D9\uC758\uD569\uB2C8\uB2E4.') + '</span></label>' : '') + '<button class="pagero-form-submit" type="submit">' + esc(cfg.submit || '\uC811\uC218\uD558\uAE30') + '</button><div class="pagero-form-notice" data-pagero-notice></div></form><a class="pagero-powered" href="' + HOME_URL + '" target="_blank" rel="noopener">\uD398\uC774\uC9C0\uB85C\uB85C \uC81C\uC791</a></div>';
 
     var form = target.querySelector('[data-pagero-form]');
     var notice = target.querySelector('[data-pagero-notice]');
@@ -325,19 +325,19 @@
       var visitorId = clientId();
       var lead = Object.assign({
         id: randomId('embed'),
-        type: '상담',
+        type: '\uC0C1\uB2F4',
         kind: 'consult',
         formId: cfg.formId || '',
         pageSlug: (cfg.page && cfg.page.slug) || (cfg.project && cfg.project.slug) || '',
         clientId: visitorId,
         source: 'embed',
         sourceBlockTitle: cfg.title || '',
-        brand: cfg.brand || '페이지로',
-        name: firstAnswer(extracted.answers, ['name'], /이름|성함|name/i),
-        phone: digitsOnly(firstAnswer(extracted.answers, ['phone'], /전화|연락|휴대|핸드|phone/i)),
-        email: firstAnswer(extracted.answers, ['email'], /메일|email/i),
-        address: firstAnswer(extracted.answers, ['address'], /주소|address/i),
-        message: firstAnswer(extracted.answers, ['long'], /문의|내용|메시지|message/i),
+        brand: cfg.brand || '\uD398\uC774\uC9C0\uB85C',
+        name: firstAnswer(extracted.answers, ['name'], /\uC774\uB984|\uC131\uD568|name/i),
+        phone: digitsOnly(firstAnswer(extracted.answers, ['phone'], /\uC804\uD654|\uC5F0\uB77D|\uD734\uB300|\uD578\uB4DC|phone/i)),
+        email: firstAnswer(extracted.answers, ['email'], /\uBA54\uC77C|email/i),
+        address: firstAnswer(extracted.answers, ['address'], /\uC8FC\uC18C|address/i),
+        message: firstAnswer(extracted.answers, ['long'], /\uBB38\uC758|\uB0B4\uC6A9|\uBA54\uC2DC\uC9C0|message/i),
         values: Object.assign({}, extracted.values, { clientId: visitorId }),
         answers: extracted.answers,
         createdAt: now,
@@ -352,7 +352,7 @@
         })
       };
       if (!payload.project.projectId || !payload.project.slug) {
-        setNotice('페이지 정보를 확인할 수 없습니다.', 'error');
+        setNotice('\uD398\uC774\uC9C0 \uC815\uBCF4\uB97C \uD655\uC778\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.', 'error');
         submit.disabled = false;
         return;
       }
@@ -368,7 +368,7 @@
         })
         .then(function () {
           form.reset();
-          setNotice(cfg.success || '접수가 완료되었습니다.', 'ok');
+          setNotice(cfg.success || '\uC811\uC218\uAC00 \uC644\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4.', 'ok');
         })
         .catch(function (error) {
           setNotice(submitErrorMessage(error), 'error');
@@ -409,22 +409,22 @@
     if (!shouldInitScript(script)) return;
     var target = targetForScript(script);
     if (!target) return;
-    target.textContent = '입력폼을 불러오는 중입니다.';
+    target.textContent = '\uC785\uB825\uD3FC\uC744 \uBD88\uB7EC\uC624\uB294 \uC911\uC785\uB2C8\uB2E4.';
     configFromScript(script).then(function (config) {
       render(target, config);
     }).catch(function () {
-      target.textContent = '페이지로 입력폼을 불러오지 못했습니다.';
+      target.textContent = '\uD398\uC774\uC9C0\uB85C \uC785\uB825\uD3FC\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.';
     });
   }
 
   function initElement(el) {
     if (!el || el.getAttribute('data-pagero-loaded') === '1') return;
     el.setAttribute('data-pagero-loaded', '1');
-    el.textContent = '입력폼을 불러오는 중입니다.';
+    el.textContent = '\uC785\uB825\uD3FC\uC744 \uBD88\uB7EC\uC624\uB294 \uC911\uC785\uB2C8\uB2E4.';
     configFromElement(el).then(function (config) {
       render(el, config);
     }).catch(function () {
-      el.textContent = '페이지로 입력폼을 불러오지 못했습니다.';
+      el.textContent = '\uD398\uC774\uC9C0\uB85C \uC785\uB825\uD3FC\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.';
     });
   }
 
@@ -441,3 +441,4 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAll);
   else initAll();
 }());
+

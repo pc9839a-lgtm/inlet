@@ -243,11 +243,12 @@ assert(files.publicFormEmbed.includes('data-pagero-page') && files.publicFormEmb
 assert(files.formEmbed.includes('projectId: safePage.projectId'), 'standalone form embed should include the page project id');
 assert(files.formEmbed.includes('slug: safePage.slug'), 'standalone form embed should include the page slug');
 assert(files.publicFormEmbed.includes('answers: extracted.answers'), 'standalone form embed should preserve structured answers');
-assert(files.publicFormEmbed.includes('function readJsonSafe') && files.publicFormEmbed.includes('function submitErrorMessage') && files.publicFormEmbed.includes('반복 접수로 제한되었습니다'), 'standalone form embed should map submit failures to user-safe messages');
+assert(files.publicFormEmbed.includes('function readJsonSafe') && files.publicFormEmbed.includes('function submitErrorMessage') && files.publicFormEmbed.includes('\\uBC18\\uBCF5 \\uC811\\uC218\\uB85C'), 'standalone form embed should map submit failures to user-safe messages');
+assert(!/\?\?/.test(files.publicFormEmbed), 'standalone form embed should not contain mojibake fallback question marks');
 assert(files.form.includes('function digitsOnly') && files.form.includes('inputMode="numeric"') && files.form.includes('pattern="[0-9]*"'), 'preview form phone fields should force numeric input');
 assert(files.publicFormEmbed.includes('data-pagero-phone="1"') && files.publicFormEmbed.includes('inputmode="numeric"') && files.publicFormEmbed.includes('digitsOnly(firstAnswer'), 'standalone form phone fields should force and submit numeric input');
-assert(files.publicFormEmbed.includes('접수 저장에 실패했습니다'), 'standalone form embed should show server save failure');
-assert(files.publicFormEmbed.includes('페이지로로 제작됨') && files.publicFormEmbed.includes('sourceLabel'), 'standalone form embed should show Pagero credit and preserve attribution');
+assert(files.publicFormEmbed.includes('\\uC811\\uC218 \\uC800\\uC7A5\\uC5D0 \\uC2E4\\uD328'), 'standalone form embed should show server save failure');
+assert(files.publicFormEmbed.includes('\\uD398\\uC774\\uC9C0\\uB85C\\uB85C \\uC81C\\uC791') && files.publicFormEmbed.includes('sourceLabel'), 'standalone form embed should show Pagero credit and preserve attribution');
 assert(files.formEditor.includes('Step title="디자인"') && files.formEditor.includes('buttonHover') && files.formEditor.includes('buttonColorMode') && files.formEditor.includes('buttonHoverColorMode'), 'form editor should expose form style, button effect, and button color controls');
 assert(files.previewCss.includes('.form-color-row') && files.previewCss.includes('.form-button-hover-fill') && files.previewCss.includes('.form-input-underline'), 'form design controls should have matching preview css contracts');
 assert(!files.previewCss.includes('form-button-anim-') && !files.previewCss.includes('form-button-overlay'), 'form button effects should use the single buttonHover contract');
