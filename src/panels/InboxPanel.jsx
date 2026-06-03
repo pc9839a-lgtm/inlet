@@ -507,22 +507,15 @@ function InboxConnectionsPanel({ page, authUser = null, updateIntegrations, onSa
               <div className="connection-detail-box compact">
                 <label className="connection-inline-control">
                   <span>받을 이메일</span>
-                  <input
-                    value={emailLocked ? accountEmail : (draftIntegrations.email.to || '')}
-                    placeholder="example@email.com"
-                    disabled={emailLocked}
-                    readOnly={emailLocked}
-                    aria-readonly={emailLocked}
-                    onBeforeInput={(event) => {
-                      if (emailLocked) event.preventDefault();
-                    }}
-                    onPaste={(event) => {
-                      if (emailLocked) event.preventDefault();
-                    }}
-                    onChange={(event) => {
-                      if (!emailLocked) patch('email', { to: event.target.value });
-                    }}
-                  />
+                  {emailLocked ? (
+                    <strong className="locked-email-value" aria-label="계정 이메일로 고정됨">{accountEmail}</strong>
+                  ) : (
+                    <input
+                      value={draftIntegrations.email.to || ''}
+                      placeholder="example@email.com"
+                      onChange={(event) => patch('email', { to: event.target.value })}
+                    />
+                  )}
                 </label>
                 {emailLocked && <p className="connection-help-text">무료 플랜은 계정 이메일로 알림을 받습니다.</p>}
                 <div className="connection-inline-control">
