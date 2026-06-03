@@ -222,8 +222,10 @@
     return forms[0] || null;
   }
 
-  function fetchPublicFormConfig(slug, formId) {
-    return fetch(HOME_URL + '/api/pages/' + encodeURIComponent(slug) + '?public=1')
+  function fetchPublicFormConfig(slug, formId, projectId) {
+    var query = '?public=1';
+    if (projectId) query += '&projectId=' + encodeURIComponent(projectId);
+    return fetch(HOME_URL + '/api/pages/' + encodeURIComponent(slug) + query)
       .then(function (res) {
         if (!res.ok) throw new Error('page ' + res.status);
         return res.json();
@@ -245,14 +247,16 @@
     }
     var slug = script.getAttribute('data-pagero-page') || script.getAttribute('data-page') || script.getAttribute('data-slug') || '';
     var formId = script.getAttribute('data-pagero-form-id') || script.getAttribute('data-form-id') || script.getAttribute('data-form') || '';
-    if (slug) return fetchPublicFormConfig(slug, formId);
+    var projectId = script.getAttribute('data-pagero-project-id') || script.getAttribute('data-project-id') || script.getAttribute('data-project') || '';
+    if (slug) return fetchPublicFormConfig(slug, formId, projectId);
     return Promise.reject(new Error('missing config'));
   }
 
   function configFromElement(el) {
     var slug = el.getAttribute('data-pagero-page') || el.getAttribute('data-page') || el.getAttribute('data-slug') || '';
     var formId = el.getAttribute('data-pagero-form-id') || el.getAttribute('data-form-id') || el.getAttribute('data-form') || '';
-    if (slug) return fetchPublicFormConfig(slug, formId);
+    var projectId = el.getAttribute('data-pagero-project-id') || el.getAttribute('data-project-id') || el.getAttribute('data-project') || '';
+    if (slug) return fetchPublicFormConfig(slug, formId, projectId);
     if (el.getAttribute('data-pagero')) return Promise.resolve(decodeConfig(el.getAttribute('data-pagero')));
     return Promise.reject(new Error('missing config'));
   }
@@ -353,6 +357,7 @@
       script.getAttribute('data-pagero')
       || script.getAttribute('data-config')
       || script.getAttribute('data-pagero-page')
+      || script.getAttribute('data-pagero-project-id')
       || script.getAttribute('data-page')
       || script.getAttribute('data-slug')
       || script.getAttribute('data-form')
@@ -388,7 +393,7 @@
     for (var i = 0; i < scripts.length; i += 1) {
       if (shouldInitScript(scripts[i])) init(scripts[i]);
     }
-    var targets = document.querySelectorAll('[data-pagero-page], [data-pagero-form-embed]');
+    var targets = document.querySelectorAll('[data-pagero-page], [data-pagero-project-id], [data-pagero-form-embed]');
     for (var j = 0; j < targets.length; j += 1) initElement(targets[j]);
   }
 

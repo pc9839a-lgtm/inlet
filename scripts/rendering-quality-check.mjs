@@ -233,12 +233,12 @@ assert(files.browserVisualQa.includes('realBrowserPowerShellCommand'), 'browser 
 assert(files.browserVisualQa.includes('local-chrome-cdp'), 'browser visual QA should support local Chrome/Edge CDP without Playwright');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_CHROME_PATH'), 'browser visual QA should allow a custom local Chrome/Edge path');
 assert(files.formEmbed.includes('https://pagero.kr/embed/form.js'), 'standalone form embed should use the compact Pagero loader');
-assert(files.formEmbed.includes('data-pagero-page=') && files.formEmbed.includes('data-pagero-form-id=') && !files.formEmbed.includes('type="application/json"'), 'standalone form embed should prefer a short page/form loader');
+assert(files.formEmbed.includes('data-pagero-page=') && files.formEmbed.includes('data-pagero-form-id=') && files.formEmbed.includes('data-pagero-project-id=') && !files.formEmbed.includes('type="application/json"'), 'standalone form embed should prefer a short page/form loader with project identity');
 assert(files.formEmbed.includes('<script src="${DEFAULT_EMBED_SCRIPT_URL}" data-pagero-page=') && !files.formEmbed.includes('<div data-pagero-page='), 'standalone form embed should generate a single short script tag');
 assert(files.publicFormEmbed.includes("var API_URL = HOME_URL + '/api/leads'") || files.publicFormEmbed.includes('https://pagero.kr/api/leads'), 'standalone form embed loader should submit to Pagero lead API');
 assert(files.publicFormEmbed.includes('decodeConfig') && files.publicFormEmbed.includes("script.getAttribute('data-pagero')"), 'standalone form embed loader should keep inline compact config compatibility');
-assert(files.publicFormEmbed.includes('fetchPublicFormConfig') && files.publicFormEmbed.includes("script.getAttribute('data-page')"), 'standalone form embed loader should fetch saved public page config from short embed attrs');
-assert(files.publicFormEmbed.includes('data-pagero-page') && files.publicFormEmbed.includes('initElement'), 'standalone form embed loader should support div + script embed targets');
+assert(files.publicFormEmbed.includes('fetchPublicFormConfig') && files.publicFormEmbed.includes("script.getAttribute('data-page')") && files.publicFormEmbed.includes("script.getAttribute('data-pagero-project-id')"), 'standalone form embed loader should fetch saved public page config from short embed attrs');
+assert(files.publicFormEmbed.includes('data-pagero-page') && files.publicFormEmbed.includes('data-pagero-project-id') && files.publicFormEmbed.includes('initElement'), 'standalone form embed loader should support div + script embed targets with project identity');
 assert(files.formEmbed.includes('projectId: safePage.projectId'), 'standalone form embed should include the page project id');
 assert(files.formEmbed.includes('slug: safePage.slug'), 'standalone form embed should include the page slug');
 assert(files.publicFormEmbed.includes('answers: extracted.answers'), 'standalone form embed should preserve structured answers');
