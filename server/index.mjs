@@ -2074,6 +2074,13 @@ function normalizeServerLead(lead = {}, body = {}) {
   const emailNormalized = normalizeLeadEmail(lead.email || lead.values?.email || '');
   const clientId = String(lead.clientId || body.clientId || lead.values?.clientId || lead.cookieId || lead.visitorId || '').trim();
   const submittedAt = lead.submittedAt || lead.createdAt || lead.savedAt || new Date().toISOString();
+  const sourceUrl = lead.sourceUrl || source.sourceUrl || source.url || source.pageUrl || values.sourceUrl || '';
+  const sourceAttribution = trafficAttributionFromUrl(sourceUrl);
+  const utmSource = lead.utmSource || lead.utm_source || source.utmSource || source.utm_source || values.utmSource || values.utm_source || sourceAttribution.utmSource || '';
+  const utmMedium = lead.utmMedium || lead.utm_medium || source.utmMedium || source.utm_medium || values.utmMedium || values.utm_medium || sourceAttribution.utmMedium || '';
+  const utmCampaign = lead.utmCampaign || lead.utm_campaign || source.utmCampaign || source.utm_campaign || values.utmCampaign || values.utm_campaign || sourceAttribution.utmCampaign || '';
+  const channel = lead.channel || source.channel || values.channel || (sourceUrl ? sourceAttribution.channel : '') || '';
+  const sourceLabel = lead.sourceLabel || source.sourceLabel || values.sourceLabel || channel || '';
   return {
     ...lead,
     id: lead.id || randomId(),
@@ -2081,13 +2088,13 @@ function normalizeServerLead(lead = {}, body = {}) {
     pageId: lead.pageId || page.id || '',
     pageTitle: lead.pageTitle || page.title || '',
     pageUrl: lead.pageUrl || page.url || source.pageUrl || '',
-    sourceUrl: lead.sourceUrl || source.sourceUrl || source.url || source.pageUrl || values.sourceUrl || '',
+    sourceUrl,
     referrer: lead.referrer || source.referrer || values.referrer || '',
-    channel: lead.channel || source.channel || '',
-    sourceLabel: lead.sourceLabel || source.sourceLabel || '',
-    utmSource: lead.utmSource || lead.utm_source || source.utmSource || source.utm_source || '',
-    utmMedium: lead.utmMedium || lead.utm_medium || source.utmMedium || source.utm_medium || '',
-    utmCampaign: lead.utmCampaign || lead.utm_campaign || source.utmCampaign || source.utm_campaign || '',
+    channel,
+    sourceLabel,
+    utmSource,
+    utmMedium,
+    utmCampaign,
     source,
     type: isReservationLeadPolicy(lead) ? '방문예약' : '상담신청',
     status: ['신규', '확인중', '연락완료', '예약완료', '보류', '종료'].includes(lead.status) ? lead.status : '신규',
@@ -2108,11 +2115,13 @@ function normalizeServerLead(lead = {}, body = {}) {
       ...(clientId ? { clientId } : {}),
       ...(phoneNormalized ? { phoneNormalized } : {}),
       ...(emailNormalized ? { emailNormalized } : {}),
-      ...(source.sourceUrl || source.url || source.pageUrl || values.sourceUrl ? { sourceUrl: source.sourceUrl || source.url || source.pageUrl || values.sourceUrl } : {}),
+      ...(sourceUrl ? { sourceUrl } : {}),
       ...(source.referrer || values.referrer ? { referrer: source.referrer || values.referrer } : {}),
-      ...(source.utmSource || source.utm_source || values.utmSource ? { utmSource: source.utmSource || source.utm_source || values.utmSource } : {}),
-      ...(source.utmMedium || source.utm_medium || values.utmMedium ? { utmMedium: source.utmMedium || source.utm_medium || values.utmMedium } : {}),
-      ...(source.utmCampaign || source.utm_campaign || values.utmCampaign ? { utmCampaign: source.utmCampaign || source.utm_campaign || values.utmCampaign } : {}),
+      ...(channel ? { channel } : {}),
+      ...(sourceLabel ? { sourceLabel } : {}),
+      ...(utmSource ? { utmSource } : {}),
+      ...(utmMedium ? { utmMedium } : {}),
+      ...(utmCampaign ? { utmCampaign } : {}),
     },
     delivery: {
       status: delivery.status || 'none',

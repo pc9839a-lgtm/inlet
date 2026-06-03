@@ -101,31 +101,55 @@ function publicPostJsonResponse(request, env, status, payload) {
   return jsonResponse(request, env, status, payload, METHODS, { headers: PUBLIC_POST_HEADERS });
 }
 
+function trafficAttributionFromSourceUrl(value = '') {
+  const text = String(value || '').trim();
+  if (!text) return { utmSource: '', utmMedium: '', utmCampaign: '', channel: '' };
+  try {
+    const parsed = new URL(text, 'https://pagero.local');
+    const normalize = (input = '') => String(input || '').trim().toLowerCase().replace(/[^a-z0-9._-]/g, '').slice(0, 80);
+    const utmSource = normalize(parsed.searchParams.get('utm_source'));
+    const utmMedium = normalize(parsed.searchParams.get('utm_medium'));
+    const utmCampaign = normalize(parsed.searchParams.get('utm_campaign'));
+    return { utmSource, utmMedium, utmCampaign, channel: utmSource || '' };
+  } catch {
+    return { utmSource: '', utmMedium: '', utmCampaign: '', channel: '' };
+  }
+}
+
 function normalizePublicLeadPayload(lead = {}, body = {}) {
   const source = lead.source && typeof lead.source === 'object' ? lead.source : {};
   const page = body.page && typeof body.page === 'object' ? body.page : {};
   const values = lead.values && typeof lead.values === 'object' ? lead.values : {};
+  const sourceUrl = lead.sourceUrl || source.sourceUrl || source.url || source.pageUrl || values.sourceUrl || '';
+  const sourceAttribution = trafficAttributionFromSourceUrl(sourceUrl);
+  const utmSource = lead.utmSource || lead.utm_source || source.utmSource || source.utm_source || values.utmSource || values.utm_source || sourceAttribution.utmSource || '';
+  const utmMedium = lead.utmMedium || lead.utm_medium || source.utmMedium || source.utm_medium || values.utmMedium || values.utm_medium || sourceAttribution.utmMedium || '';
+  const utmCampaign = lead.utmCampaign || lead.utm_campaign || source.utmCampaign || source.utm_campaign || values.utmCampaign || values.utm_campaign || sourceAttribution.utmCampaign || '';
+  const channel = lead.channel || source.channel || values.channel || sourceAttribution.channel || '';
+  const sourceLabel = lead.sourceLabel || source.sourceLabel || values.sourceLabel || channel || '';
   return {
     ...lead,
     pageSlug: lead.pageSlug || page.slug || body.project?.slug || '',
     pageId: lead.pageId || page.id || '',
     pageTitle: lead.pageTitle || page.title || '',
     pageUrl: lead.pageUrl || page.url || source.pageUrl || '',
-    sourceUrl: lead.sourceUrl || source.sourceUrl || source.url || source.pageUrl || values.sourceUrl || '',
+    sourceUrl,
     referrer: lead.referrer || source.referrer || values.referrer || '',
-    channel: lead.channel || source.channel || '',
-    sourceLabel: lead.sourceLabel || source.sourceLabel || '',
-    utmSource: lead.utmSource || lead.utm_source || source.utmSource || source.utm_source || '',
-    utmMedium: lead.utmMedium || lead.utm_medium || source.utmMedium || source.utm_medium || '',
-    utmCampaign: lead.utmCampaign || lead.utm_campaign || source.utmCampaign || source.utm_campaign || '',
+    channel,
+    sourceLabel,
+    utmSource,
+    utmMedium,
+    utmCampaign,
     source,
     values: {
       ...values,
-      ...(source.sourceUrl || source.url || source.pageUrl || values.sourceUrl ? { sourceUrl: source.sourceUrl || source.url || source.pageUrl || values.sourceUrl } : {}),
+      ...(sourceUrl ? { sourceUrl } : {}),
       ...(source.referrer || values.referrer ? { referrer: source.referrer || values.referrer } : {}),
-      ...(source.utmSource || source.utm_source || values.utmSource ? { utmSource: source.utmSource || source.utm_source || values.utmSource } : {}),
-      ...(source.utmMedium || source.utm_medium || values.utmMedium ? { utmMedium: source.utmMedium || source.utm_medium || values.utmMedium } : {}),
-      ...(source.utmCampaign || source.utm_campaign || values.utmCampaign ? { utmCampaign: source.utmCampaign || source.utm_campaign || values.utmCampaign } : {}),
+      ...(channel ? { channel } : {}),
+      ...(sourceLabel ? { sourceLabel } : {}),
+      ...(utmSource ? { utmSource } : {}),
+      ...(utmMedium ? { utmMedium } : {}),
+      ...(utmCampaign ? { utmCampaign } : {}),
     },
   };
 }

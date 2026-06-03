@@ -55,6 +55,28 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
   assert(attributedLead.data.lead?.sourceUrl?.includes('utm_source=naver'), 'public lead source URL should be normalized');
   assert(attributedLead.data.lead?.utmSource === 'naver' && attributedLead.data.lead?.utmCampaign === 'smoke', 'public lead UTM should be normalized');
 
+  const urlOnlyAttributionLead = await json({ baseUrl }, 'POST', '/api/leads', {
+    project,
+    page: { ...page, url: 'https://pagero.kr/smoke-leads' },
+    lead: {
+      id: 'lead-source-url-only',
+      type: 'consult',
+      status: 'new',
+      name: 'URL Only Source',
+      phone: '010-0000-0100',
+      createdAt: '2026-05-24T04:00:00.000Z',
+      source: {
+        sourceUrl: 'https://external.example/form?utm_source=kakao&utm_medium=social&utm_campaign=url-only',
+        referrer: 'https://talk.kakao.com',
+      },
+    },
+  });
+  assert(urlOnlyAttributionLead.res.ok, 'URL-only attributed public lead should save');
+  assert(urlOnlyAttributionLead.data.lead?.utmSource === 'kakao', 'UTM source should be derived from sourceUrl');
+  assert(urlOnlyAttributionLead.data.lead?.utmMedium === 'social', 'UTM medium should be derived from sourceUrl');
+  assert(urlOnlyAttributionLead.data.lead?.utmCampaign === 'url-only', 'UTM campaign should be derived from sourceUrl');
+  assert(urlOnlyAttributionLead.data.lead?.channel === 'kakao', 'lead channel should follow URL UTM source');
+
   const duplicateSaved = await json({ baseUrl }, 'POST', '/api/leads', {
     project,
     page,
@@ -120,7 +142,7 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
 
   const firstPage = await json({ baseUrl }, 'GET', `/api/leads?${query}&limit=2`);
   assert(firstPage.data.leads.length === 2, 'lead first page length mismatch');
-  assert(firstPage.data.total === 6 && firstPage.data.hasMore, 'lead pagination meta mismatch');
+  assert(firstPage.data.total === 7 && firstPage.data.hasMore, 'lead pagination meta mismatch');
 
   const secondPage = await json({ baseUrl }, 'GET', `/api/leads?${query}&limit=2&cursor=${firstPage.data.nextCursor}`);
   assert(secondPage.data.leads.length === 2 && secondPage.data.hasMore, 'lead second page mismatch');
