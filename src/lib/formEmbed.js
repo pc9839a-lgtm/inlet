@@ -73,7 +73,7 @@ export function generateStandaloneFormHtml(form = {}, page = {}) {
   const safePage = normalizePage(page);
   const formId = safeText(form.blockId || form.id || form.formId || '');
   if (safePage.slug && formId) {
-    return `<div data-pagero-page="${escapeHtml(safePage.slug)}" data-pagero-form-id="${escapeHtml(formId)}"></div><script src="${DEFAULT_EMBED_SCRIPT_URL}" defer></script>`;
+    return `<script src="${DEFAULT_EMBED_SCRIPT_URL}" data-pagero-page="${escapeHtml(safePage.slug)}" data-pagero-form-id="${escapeHtml(formId)}" defer></script>`;
   }
   return `<script src="${DEFAULT_EMBED_SCRIPT_URL}" data-pagero="${escapeHtml(encodeConfig(inlineConfig(form, page)))}" defer></script>`;
 }
