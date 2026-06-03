@@ -1,7 +1,7 @@
 import { isValidEmailAddress, sendSesEmail } from '../_ses.js';
 
 const SUPPORT_EMAIL = 'support@pagero.kr';
-export const NO_DELIVERY_SETTINGS_MESSAGE = '전송 설정 없음';
+export const NO_DELIVERY_SETTINGS_MESSAGE = '\uC804\uC1A1 \uC124\uC815 \uC5C6\uC74C';
 
 export function deliveryReport(status = 'none', summary = NO_DELIVERY_SETTINGS_MESSAGE, logs = []) {
   return { status, summary, logs };
@@ -45,9 +45,9 @@ export function buildLeadDeliveryJobs(page = {}, lead = {}) {
     jobs.push({
       type: 'email',
       provider: 'ses',
-      label: '이메일 알림',
+      label: '\uC774\uBA54\uC77C \uC54C\uB9BC',
       to: email.to,
-      subject: `[${page.title || '페이지로'}] 새 접수가 들어왔습니다`,
+      subject: `[${page.title || '\uD398\uC774\uC9C0\uB85C'}] \uC0C8 \uC811\uC218\uAC00 \uB4E4\uC5B4\uC654\uC2B5\uB2C8\uB2E4`,
       text: leadEmailText(lead, page),
       html: leadEmailHtml(lead, page),
     });
@@ -109,7 +109,7 @@ function googleSheetsPayload(payload = {}, sheets = {}, page = {}, lead = {}) {
     provider: 'google_sheets',
     mode: sheets.mode || 'webhook',
     spreadsheetId: sheets.spreadsheetId || '',
-    sheetName: sheets.sheetName || '접수함',
+    sheetName: sheets.sheetName || '\uC811\uC218\uD568',
     connectedEmail: sheets.connectedEmail || '',
     lead: {
       id: lead.id || '',
@@ -145,7 +145,7 @@ function googleSheetsPayload(payload = {}, sheets = {}, page = {}, lead = {}) {
 function leadAnswerFields(lead = {}) {
   const fields = {};
   const reservedKeys = new Set(['name', 'phone', 'email', 'message']);
-  const reservedLabels = new Set(['이름', '성함', '연락처', '전화번호', '핸드폰번호', '휴대폰번호', '이메일', '메일', '문의내용', '문의 내용', '메시지', '내용']);
+  const reservedLabels = new Set(['\uC774\uB984', '\uC131\uD568', '\uC5F0\uB77D\uCC98', '\uC804\uD654\uBC88\uD638', '\uD734\uB300\uD3F0\uBC88\uD638', '\uD578\uB4DC\uD3F0\uBC88\uD638', '\uC774\uBA54\uC77C', '\uBA54\uC77C', '\uBB38\uC758\uB0B4\uC6A9', '\uBB38\uC758 \uB0B4\uC6A9', '\uBA54\uC2DC\uC9C0', '\uB0B4\uC6A9']);
 
   for (const [rawKey, rawValue] of Object.entries(lead.values || {})) {
     const key = String(rawKey || '').trim();
@@ -172,7 +172,7 @@ function normalizeSheetFieldValue(value) {
 function leadIntegrationPayload(lead = {}, page = {}) {
   const createdAt = lead.createdAt || new Date().toISOString();
   return {
-    brand: '페이지로',
+    brand: '\uD398\uC774\uC9C0\uB85C',
     schemaVersion: 'pagero.lead.v1',
     event: 'lead.created',
     source: 'pagero',
@@ -201,7 +201,7 @@ export async function sendLeadDelivery(lead = {}, page = {}, env = {}) {
       target: job.label,
       provider: job.provider || (job.type === 'email' ? 'ses' : 'webhook'),
       status: result.ok ? 'success' : 'failed',
-      message: result.message || (result.ok ? '전송 완료' : '전송 실패'),
+      message: result.message || (result.ok ? '\uC804\uC1A1 \uC644\uB8CC' : '\uC804\uC1A1 \uC2E4\uD328'),
       idempotencyKey: job.idempotencyKey || '',
       at: new Date().toISOString(),
     };
@@ -211,7 +211,7 @@ export async function sendLeadDelivery(lead = {}, page = {}, env = {}) {
     const job = jobs[index] || {};
     if (item.status === 'fulfilled') return item.value;
     return {
-      target: job.label || '알림 전송',
+      target: job.label || '\uC54C\uB9BC \uC804\uC1A1',
       provider: job.provider || (job.type === 'email' ? 'ses' : 'webhook'),
       status: 'failed',
       message: safeDeliveryErrorMessage(item.reason),
@@ -231,7 +231,7 @@ async function runDeliveryJob(job = {}, env = {}) {
       text: job.text,
       html: job.html,
     }, env);
-    return { ok: true, message: result.messageId ? `전송 완료 ${result.messageId}` : '전송 완료' };
+    return { ok: true, message: result.messageId ? `\uC804\uC1A1 \uC644\uB8CC ${result.messageId}` : '\uC804\uC1A1 \uC644\uB8CC' };
   }
 
   const res = await fetch(job.url, {
@@ -245,20 +245,20 @@ async function runDeliveryJob(job = {}, env = {}) {
     signal: AbortSignal.timeout(10000),
   });
 
-  return { ok: res.ok, message: res.ok ? '전송 완료' : `응답 확인 필요 ${res.status}` };
+  return { ok: res.ok, message: res.ok ? '\uC804\uC1A1 \uC644\uB8CC' : `\uC751\uB2F5 \uD655\uC778 \uD544\uC694 ${res.status}` };
 }
 
 function summarizeDelivery(logs = []) {
   const success = logs.filter((log) => log.status === 'success').length;
   const failed = logs.filter((log) => log.status === 'failed').length;
-  if (success && !failed) return deliveryReport('success', `${success}개 알림 전송 완료`, logs);
-  if (success && failed) return deliveryReport('partial', `${success}개 성공, ${failed}개 실패`, logs);
-  return deliveryReport('failed', `${failed || logs.length}개 알림 전송 실패`, logs);
+  if (success && !failed) return deliveryReport('success', `${success}\uAC1C \uC54C\uB9BC \uC804\uC1A1 \uC644\uB8CC`, logs);
+  if (success && failed) return deliveryReport('partial', `${success}\uAC1C \uC131\uACF5, ${failed}\uAC1C \uC2E4\uD328`, logs);
+  return deliveryReport('failed', `${failed || logs.length}\uAC1C \uC54C\uB9BC \uC804\uC1A1 \uC2E4\uD328`, logs);
 }
 
 function shouldSendEmailForLead(email = {}, lead = {}) {
   const type = String(lead.type || lead.kind || '');
-  if (/예약|방문|reservation|booking|reserve/i.test(type)) return email.reservation !== false;
+  if (/\uC608\uC57D|\uBC29\uBB38|reservation|booking|reserve/i.test(type)) return email.reservation !== false;
   return email.consult !== false;
 }
 
@@ -266,42 +266,42 @@ function leadEmailText(lead = {}, page = {}) {
   const answers = Array.isArray(lead.answers) ? lead.answers : [];
   const answerLines = answers.map((answer) => {
     const value = Array.isArray(answer.value) ? answer.value.join(', ') : String(answer.value || '-');
-    return `- ${answer.label || answer.id || '항목'}: ${value}`;
+    return `- ${answer.label || answer.id || '\uD56D\uBAA9'}: ${value}`;
   });
 
   return [
-    `${page.title || page.slug || '페이지'}에 새 접수가 들어왔습니다.`,
+    `${page.title || page.slug || '\uD398\uC774\uC9C0'}\uC5D0 \uC0C8 \uC811\uC218\uAC00 \uB4E4\uC5B4\uC654\uC2B5\uB2C8\uB2E4.`,
     '',
-    `접수 유형: ${lead.type || lead.kind || '-'}`,
-    `접수 시간: ${formatKoreanDateTime(lead.createdAt || lead.submittedAt)}`,
-    `이름: ${lead.name || '-'}`,
-    `연락처: ${lead.phone || '-'}`,
-    `이메일: ${lead.email || '-'}`,
-    `주소: ${lead.address || '-'}`,
-    `문의 내용: ${lead.message || '-'}`,
+    `\uC811\uC218 \uC720\uD615: ${lead.type || lead.kind || '-'}`,
+    `\uC811\uC218 \uC2DC\uAC04: ${formatKoreanDateTime(lead.createdAt || lead.submittedAt)}`,
+    `\uC774\uB984: ${lead.name || '-'}`,
+    `\uC5F0\uB77D\uCC98: ${lead.phone || '-'}`,
+    `\uC774\uBA54\uC77C: ${lead.email || '-'}`,
+    `\uC8FC\uC18C: ${lead.address || '-'}`,
+    `\uBB38\uC758 \uB0B4\uC6A9: ${lead.message || '-'}`,
     '',
-    '[입력 내용]',
-    ...(answerLines.length ? answerLines : ['- 추가 입력 없음']),
+    '[\uC785\uB825 \uB0B4\uC6A9]',
+    ...(answerLines.length ? answerLines : ['- \uCD94\uAC00 \uC785\uB825 \uC5C6\uC74C']),
     '',
-    '이 메일은 페이지로 접수 알림 설정에 따라 발송되었습니다.',
-    `본인이 요청하지 않았다면 고객센터로 문의해주세요. 고객센터: ${SUPPORT_EMAIL}`,
+    '\uBCF8 \uBA54\uC77C\uC740 \uD398\uC774\uC9C0\uB85C \uC811\uC218 \uC54C\uB9BC \uC124\uC815\uC5D0 \uB530\uB77C \uBC1C\uC1A1\uB418\uC5C8\uC2B5\uB2C8\uB2E4.',
+    `\uBCF8\uC778\uC774 \uC694\uCCAD\uD558\uC9C0 \uC54A\uC558\uB2E4\uBA74 \uACE0\uAC1D\uC13C\uD130\uB85C \uBB38\uC758\uD574\uC8FC\uC138\uC694. \uACE0\uAC1D\uC13C\uD130: ${SUPPORT_EMAIL}`,
   ].join('\n');
 }
 
 function leadEmailHtml(lead = {}, page = {}) {
   const rows = [
-    ['접수 유형', lead.type || lead.kind || '-'],
-    ['접수 시간', formatKoreanDateTime(lead.createdAt || lead.submittedAt)],
-    ['이름', lead.name || '-'],
-    ['연락처', lead.phone || '-'],
-    ['이메일', lead.email || '-'],
-    ['주소', lead.address || '-'],
-    ['문의 내용', lead.message || '-'],
+    ['\uC811\uC218 \uC720\uD615', lead.type || lead.kind || '-'],
+    ['\uC811\uC218 \uC2DC\uAC04', formatKoreanDateTime(lead.createdAt || lead.submittedAt)],
+    ['\uC774\uB984', lead.name || '-'],
+    ['\uC5F0\uB77D\uCC98', lead.phone || '-'],
+    ['\uC774\uBA54\uC77C', lead.email || '-'],
+    ['\uC8FC\uC18C', lead.address || '-'],
+    ['\uBB38\uC758 \uB0B4\uC6A9', lead.message || '-'],
   ];
   const answers = Array.isArray(lead.answers) ? lead.answers : [];
   const answerRows = answers.length
-    ? answers.map((answer) => [answer.label || answer.id || '항목', Array.isArray(answer.value) ? answer.value.join(', ') : String(answer.value || '-')])
-    : [['추가 입력', '없음']];
+    ? answers.map((answer) => [answer.label || answer.id || '\uD56D\uBAA9', Array.isArray(answer.value) ? answer.value.join(', ') : String(answer.value || '-')])
+    : [['\uCD94\uAC00 \uC785\uB825', '\uC5C6\uC74C']];
   const renderRows = (items) => items.map(([label, value]) => `
     <tr>
       <th style="width:116px;padding:12px 14px;background:#f8fafc;border-bottom:1px solid #e5edf6;color:#64748b;font-size:13px;text-align:left;vertical-align:top;">${escapeHtml(label)}</th>
@@ -314,15 +314,15 @@ function leadEmailHtml(lead = {}, page = {}) {
 <body style="margin:0;background:#f3f6fb;padding:28px 16px;font-family:Arial,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:#111827;">
   <div style="max-width:640px;margin:0 auto;background:#fff;border:1px solid #dbe4f0;border-radius:24px;overflow:hidden;box-shadow:0 16px 44px rgba(15,23,42,.10);">
     <div style="padding:24px 26px;background:#0f172a;color:#fff;">
-      <div style="display:inline-block;padding:8px 12px;border-radius:999px;background:#2563eb;color:#fff;font-size:13px;font-weight:900;letter-spacing:.02em;">페이지로</div>
-      <h1 style="margin:16px 0 0;font-size:24px;line-height:1.25;">새 접수가 들어왔습니다</h1>
-      <p style="margin:8px 0 0;color:#dbeafe;font-size:14px;line-height:1.5;">${escapeHtml(page.title || page.slug || '랜딩페이지')}</p>
+      <div style="display:inline-block;padding:8px 12px;border-radius:999px;background:#2563eb;color:#fff;font-size:13px;font-weight:900;letter-spacing:.02em;">\uD398\uC774\uC9C0\uB85C</div>
+      <h1 style="margin:16px 0 0;font-size:24px;line-height:1.25;">\uC0C8 \uC811\uC218\uAC00 \uB4E4\uC5B4\uC654\uC2B5\uB2C8\uB2E4</h1>
+      <p style="margin:8px 0 0;color:#dbeafe;font-size:14px;line-height:1.5;">${escapeHtml(page.title || page.slug || '\uB79C\uB529\uD398\uC774\uC9C0')}</p>
     </div>
     <div style="padding:24px 26px;">
       <table style="width:100%;border-collapse:collapse;border:1px solid #e5edf6;border-radius:16px;overflow:hidden;">${renderRows(rows)}</table>
-      <h2 style="margin:22px 0 10px;font-size:16px;">입력 내용</h2>
+      <h2 style="margin:22px 0 10px;font-size:16px;">\uC785\uB825 \uB0B4\uC6A9</h2>
       <table style="width:100%;border-collapse:collapse;border:1px solid #e5edf6;border-radius:16px;overflow:hidden;">${renderRows(answerRows)}</table>
-      <p style="margin:20px 0 0;color:#64748b;font-size:12px;line-height:1.7;">이 메일은 페이지로 접수 알림 설정에 따라 발송되었습니다. 본인이 요청하지 않았다면 <a href="mailto:${SUPPORT_EMAIL}" style="color:#2563eb;text-decoration:none;">${SUPPORT_EMAIL}</a>로 문의해주세요.</p>
+      <p style="margin:20px 0 0;color:#64748b;font-size:12px;line-height:1.7;">\uBCF8 \uBA54\uC77C\uC740 \uD398\uC774\uC9C0\uB85C \uC811\uC218 \uC54C\uB9BC \uC124\uC815\uC5D0 \uB530\uB77C \uBC1C\uC1A1\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uBCF8\uC778\uC774 \uC694\uCCAD\uD558\uC9C0 \uC54A\uC558\uB2E4\uBA74 <a href="mailto:${SUPPORT_EMAIL}" style="color:#2563eb;text-decoration:none;">${SUPPORT_EMAIL}</a>\uB85C \uBB38\uC758\uD574\uC8FC\uC138\uC694.</p>
     </div>
   </div>
 </body>
