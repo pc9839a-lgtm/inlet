@@ -12,6 +12,8 @@ const CSV_HEADERS = [
   '\uC774\uBA54\uC77C',
   '\uD398\uC774\uC9C0 \uC8FC\uC18C',
   '\uC720\uC785 URL',
+  'Referrer',
+  '\uC720\uC785 \uCC44\uB110',
   'UTM Source',
   'UTM Medium',
   'UTM Campaign',
@@ -30,6 +32,28 @@ const BASE_DYNAMIC_VALUE_KEYS = new Set([
   'clientId',
   'phoneNormalized',
   'emailNormalized',
+  'sourceUrl',
+  'referrer',
+  'channel',
+  'sourceLabel',
+  'utmSource',
+  'utmMedium',
+  'utmCampaign',
+  'utm_source',
+  'utm_medium',
+  'utm_campaign',
+  '\uC774\uB984',
+  '\uC131\uD568',
+  '\uC5F0\uB77D\uCC98',
+  '\uC804\uD654\uBC88\uD638',
+  '\uD734\uB300\uD3F0\uBC88\uD638',
+  '\uD578\uB4DC\uD3F0\uBC88\uD638',
+  '\uC774\uBA54\uC77C',
+  '\uBA54\uC77C',
+  '\uC8FC\uC18C',
+  '\uBB38\uC758 \uB0B4\uC6A9',
+  '\uBB38\uC758\uB0B4\uC6A9',
+  '\uBA54\uC2DC\uC9C0',
 ]);
 
 export async function onRequest({ request, env }) {
@@ -89,6 +113,7 @@ function toCsv(leads = []) {
   const rows = [[...CSV_HEADERS, ...dynamicHeaders]];
   for (const lead of leads) {
     const dynamicFields = dynamicFieldMap(lead);
+    const source = lead.source || {};
     rows.push([
       lead.id || '',
       dateOnly(lead.createdAt || ''),
@@ -98,10 +123,12 @@ function toCsv(leads = []) {
       lead.phone || lead.values?.phone || '',
       lead.email || lead.values?.email || '',
       lead.pageSlug || '',
-      lead.sourceUrl || lead.values?.sourceUrl || '',
-      lead.utmSource || lead.source?.utmSource || '',
-      lead.utmMedium || lead.source?.utmMedium || '',
-      lead.utmCampaign || lead.source?.utmCampaign || '',
+      lead.sourceUrl || source.sourceUrl || source.url || source.pageUrl || lead.values?.sourceUrl || '',
+      lead.referrer || source.referrer || lead.values?.referrer || '',
+      lead.channel || source.channel || lead.sourceLabel || source.sourceLabel || '',
+      lead.utmSource || lead.utm_source || source.utmSource || source.utm_source || lead.values?.utmSource || '',
+      lead.utmMedium || lead.utm_medium || source.utmMedium || source.utm_medium || lead.values?.utmMedium || '',
+      lead.utmCampaign || lead.utm_campaign || source.utmCampaign || source.utm_campaign || lead.values?.utmCampaign || '',
       lead.memo || lead.message || lead.values?.memo || '',
       answersText(lead.answers),
       valuesText(lead.values),
@@ -116,7 +143,7 @@ function cleanFieldLabel(value = '') {
 }
 
 function dynamicFieldHeader(label = '') {
-  return `\uC785\uB825: ${cleanFieldLabel(label)}`;
+  return cleanFieldLabel(label) || '\uC785\uB825\uAC12';
 }
 
 function flatValue(value) {

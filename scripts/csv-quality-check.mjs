@@ -35,6 +35,8 @@ const sampleLeads = [
       ],
     },
     answers: [
+      { id: 'name', label: '이름', value: '=HYPERLINK("https://bad.example")' },
+      { id: 'phone', label: '연락처', value: '010-9999-9999' },
       { id: 'reservationDate', label: '예약일', value: '2026-05-22' },
       { id: 'reservationTime', label: '예약시간', value: '10:30' },
       { id: 'interest', label: '관심 항목', value: ['A', 'B'] },
@@ -68,6 +70,7 @@ const csv = leadsToCsv([sampleLeads[0]]);
 assert(csv.includes('\r\n'), 'csv should use CRLF row separators');
 assert(csv.startsWith('"접수 ID"') && csv.includes('"페이지 URL"') && csv.includes('"UTM Source"'), 'csv headers should be readable and operational');
 assert(csv.includes('"예약일"') && csv.includes('"예약시간"') && csv.includes('"관심 항목"') && csv.includes('"note"'), 'dynamic form answer columns should be exported as separate columns');
+assert((csv.match(/"이름"/g) || []).length === 1 && (csv.match(/"연락처"/g) || []).length === 1, 'base customer fields should not be duplicated as dynamic form columns');
 assert(csv.includes('"\'=HYPERLINK(""https://bad.example"")"'), 'formula name should be neutralized and quoted');
 assert(csv.includes('"\'-SUM(1,1)"'), 'formula message should be neutralized');
 assert(csv.includes('"\'\t=cmd"'), 'tab-starting memo should be neutralized');
