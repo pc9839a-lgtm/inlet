@@ -175,7 +175,7 @@ function leadIntegrationPayload(lead = {}, page = {}) {
     brand: '페이지로',
     schemaVersion: 'inlet.lead.v1',
     event: 'lead.created',
-    source: 'inlet',
+    source: 'pagero',
     page: {
       title: page.title || '',
       slug: page.slug || '',

@@ -678,7 +678,7 @@ export default function InboxPanel({
   const loadedCount = normalized.length;
   const serverTotal = Number(totalLeads || loadedCount);
   const listSummary = serverTotal > loadedCount
-    ? `${filtered.length}건 표시 중 · 전체 ${serverTotal}건 중 ${loadedCount}건 로드`
+    ? `${filtered.length}건 표시 중 · 서버 ${serverTotal}건 중 ${loadedCount}건 로드`
     : `${filtered.length}건 표시 중`;
 
   return (

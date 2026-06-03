@@ -3700,7 +3700,7 @@ function buildServerIntegrationJobs(integrations = {}, lead = {}, page = {}) {
   const payload = {
     schemaVersion: 'inlet.lead.v1',
     event: 'lead.created',
-    source: 'inlet',
+    source: 'pagero',
     brand: '페이지로',
     page: {
       title: page.title || '',

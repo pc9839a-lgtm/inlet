@@ -136,7 +136,7 @@ export function integrationPayload(lead, page) {
     brand: BRAND_NAME,
     schemaVersion: 'inlet.lead.v1',
     event: 'lead.created',
-    source: 'inlet',
+    source: 'pagero',
     page: {
       title: page.title,
       slug: page.slug,

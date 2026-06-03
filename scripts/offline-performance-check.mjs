@@ -16,7 +16,7 @@ function fixtureLeads(count = 10000) {
   return Array.from({ length: count }, (_, index) => ({
     id: `lead-${index}`,
     type: index % 5 === 0 ? 'reservation' : 'consult',
-    status: index % 7 === 0 ? '?덉빟?꾨즺' : '?좉퇋',
+    status: index % 7 === 0 ? '예약완료' : '신규',
     name: `Lead ${index}`,
     phone: `010-${String(index).padStart(4, '0')}-0000`,
     createdAt: index % 4 === 0 ? `2026-04-${String((index % 28) + 1).padStart(2, '0')}T03:00:00.000Z` : iso((index % 28) + 1, index % 1440),
@@ -190,4 +190,3 @@ console.log(JSON.stringify({
   },
   checks: 32,
 }, null, 2));
-
