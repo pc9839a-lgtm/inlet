@@ -175,6 +175,26 @@
     return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
   }
 
+  function readJsonSafe(res) {
+    return res.text().then(function (raw) {
+      if (!raw) return {};
+      try {
+        return JSON.parse(raw);
+      } catch (e) {
+        return {};
+      }
+    });
+  }
+
+  function submitErrorMessage(error) {
+    var status = Number(error && error.status || 0);
+    var code = String(error && error.code || '');
+    if (status === 429 || code === 'LEAD_RATE_LIMITED') return '반복 접수로 제한되었습니다. 잠시 후 다시 시도해주세요.';
+    if (status === 409 || code.indexOf('DUPLICATE') >= 0) return '이미 접수된 정보입니다.';
+    if (status === 404 || code === 'PUBLIC_PROJECT_NOT_FOUND') return '페이지 정보를 확인할 수 없습니다.';
+    return '접수 저장에 실패했습니다. 잠시 후 다시 시도해주세요.';
+  }
+
   function decodeConfig(raw) {
     if (!raw) return {};
     try {
@@ -338,15 +358,20 @@
       }
       postJson(API_URL, payload)
         .then(function (res) {
-          if (!res.ok) throw new Error('server ' + res.status);
-          return res.json().catch(function () { return {}; });
+          return readJsonSafe(res).then(function (data) {
+            if (res.ok) return data;
+            var error = new Error('server ' + res.status);
+            error.status = res.status;
+            error.code = data && (data.code || data.reason || '');
+            throw error;
+          });
         })
         .then(function () {
           form.reset();
           setNotice(cfg.success || '접수가 완료되었습니다.', 'ok');
         })
-        .catch(function () {
-          setNotice('접수 저장에 실패했습니다. 잠시 후 다시 시도해주세요.', 'error');
+        .catch(function (error) {
+          setNotice(submitErrorMessage(error), 'error');
         })
         .finally(function () {
           submit.disabled = false;

@@ -243,6 +243,7 @@ assert(files.publicFormEmbed.includes('data-pagero-page') && files.publicFormEmb
 assert(files.formEmbed.includes('projectId: safePage.projectId'), 'standalone form embed should include the page project id');
 assert(files.formEmbed.includes('slug: safePage.slug'), 'standalone form embed should include the page slug');
 assert(files.publicFormEmbed.includes('answers: extracted.answers'), 'standalone form embed should preserve structured answers');
+assert(files.publicFormEmbed.includes('function readJsonSafe') && files.publicFormEmbed.includes('function submitErrorMessage') && files.publicFormEmbed.includes('반복 접수로 제한되었습니다'), 'standalone form embed should map submit failures to user-safe messages');
 assert(files.form.includes('function digitsOnly') && files.form.includes('inputMode="numeric"') && files.form.includes('pattern="[0-9]*"'), 'preview form phone fields should force numeric input');
 assert(files.publicFormEmbed.includes('data-pagero-phone="1"') && files.publicFormEmbed.includes('inputmode="numeric"') && files.publicFormEmbed.includes('digitsOnly(firstAnswer'), 'standalone form phone fields should force and submit numeric input');
 assert(files.publicFormEmbed.includes('접수 저장에 실패했습니다'), 'standalone form embed should show server save failure');
