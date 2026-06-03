@@ -102,7 +102,7 @@ function googleSheetsPayload(payload = {}, sheets = {}, page = {}, lead = {}) {
     sourceUrl: lead.sourceUrl || lead.source?.sourceUrl || lead.attribution?.sourceUrl || '',
   };
   return {
-    schemaVersion: payload.schemaVersion || 'inlet.lead.v1',
+    schemaVersion: payload.schemaVersion || 'pagero.lead.v1',
     event: payload.event || 'lead.created',
     service: payload.source || 'pagero',
     target: 'google_sheets',
@@ -173,7 +173,7 @@ function leadIntegrationPayload(lead = {}, page = {}) {
   const createdAt = lead.createdAt || new Date().toISOString();
   return {
     brand: '페이지로',
-    schemaVersion: 'inlet.lead.v1',
+    schemaVersion: 'pagero.lead.v1',
     event: 'lead.created',
     source: 'pagero',
     page: {

@@ -3698,7 +3698,7 @@ async function sendServerLeadIntegrations(lead, page = {}) {
 
 function buildServerIntegrationJobs(integrations = {}, lead = {}, page = {}) {
   const payload = {
-    schemaVersion: 'inlet.lead.v1',
+    schemaVersion: 'pagero.lead.v1',
     event: 'lead.created',
     source: 'pagero',
     brand: '페이지로',
@@ -3827,7 +3827,7 @@ function googleSheetsServerPayload(payload = {}, sheets = {}, page = {}, lead = 
     sourceUrl: lead.sourceUrl || lead.source?.sourceUrl || lead.attribution?.sourceUrl || lead.pageUrl || '',
   };
   return {
-    schemaVersion: payload.schemaVersion || 'inlet.lead.v1',
+    schemaVersion: payload.schemaVersion || 'pagero.lead.v1',
     event: payload.event || 'lead.created',
     service: payload.source || 'pagero',
     target: 'google_sheets',

@@ -34,7 +34,7 @@ await runSmoke('server-smoke-integrations', async ({ baseUrl }) => {
     assert(webhook.received.some((item) => item.body?.target === 'google_sheets' && item.body?.provider === 'google_sheets' && item.body?.mode === 'webhook'), 'Google Sheets provider/mode missing');
     assert(webhook.received.some((item) => item.body?.target === 'google_sheets' && item.body?.spreadsheetId === 'sheet-smoke' && item.body?.connectedEmail === 'owner@example.test' && item.body?.integration?.status === 'connected'), 'Google Sheets OAuth-ready metadata missing');
     assert(webhook.received.some((item) => item.body?.target === 'google_sheets' && item.body?.lead?.id === lead.id && item.body?.page?.slug === page.slug && item.body?.project), 'Google Sheets structured lead/page/project payload missing');
-    assert(webhook.received.every((item) => item.body?.schemaVersion === 'inlet.lead.v1' || item.body?.target === 'webhook'), 'payload schema marker missing');
+    assert(webhook.received.every((item) => item.body?.schemaVersion === 'pagero.lead.v1'), 'payload schema marker missing');
 
     const deliveryLogs = await json({ baseUrl }, 'GET', `/api/leads/delivery-logs?${new URLSearchParams(project).toString()}&leadId=${lead.id}`);
     assert(deliveryLogs.res.ok && deliveryLogs.data.total >= 1, 'delivery logs API failed');

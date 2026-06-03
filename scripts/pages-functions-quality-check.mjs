@@ -99,7 +99,7 @@ const externalDeliveryJobs = buildLeadDeliveryJobs({
     { id: 'budget', label: '예산대', type: 'select', value: '5억~7억' },
   ],
 });
-assert(externalDeliveryJobs.some((job) => job.payload?.target === 'webhook' && job.payload?.schemaVersion === 'inlet.lead.v1'), 'Pages delivery should prepare webhook payload schema');
+assert(externalDeliveryJobs.some((job) => job.payload?.target === 'webhook' && job.payload?.schemaVersion === 'pagero.lead.v1'), 'Pages delivery should prepare webhook payload schema');
 assert(externalDeliveryJobs.some((job) => job.payload?.target === 'automation' && job.payload?.service === 'make'), 'Pages delivery should prepare Make/Zapier payload');
 assert(externalDeliveryJobs.some((job) => job.payload?.target === 'google_sheets' && job.payload?.sheetName === 'Leads'), 'Pages delivery should prepare Google Sheets payload');
 assert(externalDeliveryJobs.some((job) => job.payload?.target === 'google_sheets' && job.payload?.provider === 'google_sheets' && job.payload?.mode === 'webhook'), 'Pages delivery should prepare Google Sheets provider/mode');
