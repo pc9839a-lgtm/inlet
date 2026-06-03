@@ -14,6 +14,7 @@ const blockedHistory = await readFile('functions/api/leads/blocked-history.js', 
 const deliveryLogs = await readFile('functions/api/leads/delivery-logs.js', 'utf8');
 const retryQueue = await readFile('functions/api/leads/retry-queue.js', 'utf8');
 const leadDeliver = await readFile('functions/api/leads/[id]/deliver.js', 'utf8');
+const integrationsTest = await readFile('functions/api/integrations/test.js', 'utf8');
 const events = await readFile('functions/api/events.js', 'utf8');
 const statsSummary = await readFile('functions/api/stats/summary.js', 'utf8');
 const pages = await readFile('functions/api/pages/[slug].js', 'utf8');
@@ -197,6 +198,7 @@ for (const [name, source, tokens] of [
   ['delivery logs', deliveryLogs, ['listD1DeliveryLogs', "type: 'delivery-logs'", "adapter: 'd1'", "tab: 'inbox'"]],
   ['retry queue', retryQueue, ['listD1DeliveryRetryQueue', "type: 'delivery-retry-queue'", 'deadLetter', "tab: 'inbox'"]],
   ['lead deliver', leadDeliver, ['getD1Lead', 'upsertD1Lead', 'publicWrite: true', 'NO_DELIVERY_SETTINGS_MESSAGE', '접수를 찾을 수 없습니다.']],
+  ['integrations test', integrationsTest, ['type !== \'sheets\'', 'isGoogleAppsScriptUrl', 'text/plain;charset=utf-8', 'Google Apps Script', 'pagero.lead.v1', "event: 'lead.test'", "service: 'pagero'", "target: 'google_sheets'", "provider: 'google_sheets'", "mode: 'webhook'", "sheetName: body.sheetName", "utmSource: 'connection_test'"]],
   ['events', events, ['insertD1Event', 'listD1Events', 'publicWrite: true', 'publicProjectShell(project)', "tab: 'stats'", 'eventType', 'meta: { source:']],
   ['stats summary', statsSummary, ['aggregateD1Stats', "source: 'server'", "adapter: 'd1'", "tab: 'stats'"]],
   ['pages', pages, ['getD1PageBySlug', 'upsertD1Page', 'ensureD1ProjectShell', 'authorizeProject', 'PUBLIC_PAGE_CACHE_CONTROL', 'no-store']],
@@ -318,6 +320,7 @@ console.log(JSON.stringify({
     'functions/api/leads/delivery-logs.js',
     'functions/api/leads/retry-queue.js',
     'functions/api/leads/[id]/deliver.js',
+    'functions/api/integrations/test.js',
     'functions/api/events.js',
     'functions/api/stats/summary.js',
   'functions/api/pages/[slug].js',

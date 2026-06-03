@@ -74,7 +74,7 @@ function sampleSheetsPayload(body = {}) {
       email: '',
       message: 'Google Sheets 연동 테스트',
       createdAt: now,
-      fields: { '테스트': '성공 확인용', '관심 타입': '84A', '예산대': '5억~7억' },
+      fields: { 테스트: '성공 확인', '관심 타입': '84A', 예산대: '5억~7억' },
     },
     page: body.page || { title: '페이지로 테스트', slug: '', url: '' },
     project: body.project || {},
