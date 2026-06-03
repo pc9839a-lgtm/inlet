@@ -4753,17 +4753,27 @@ async function deliverEmailVerification(record = {}) {
 
 async function issueEmailVerification(emailInput = '', purposeInput = 'signup') {
   const email = normalizeEmail(emailInput);
+  const purpose = String(purposeInput || 'signup').trim() || 'signup';
   if (!isValidEmail(email)) {
     const error = new Error('Valid email is required.');
     error.status = 400;
     error.details = { code: 'AUTH_EMAIL_REQUIRED' };
     throw error;
   }
+  if (purpose === 'signup') {
+    const accounts = await readUserAccounts();
+    if (accounts.some((account) => normalizeEmail(account.email || '') === email)) {
+      const error = new Error('Email is already registered.');
+      error.status = 409;
+      error.details = { code: 'AUTH_EMAIL_DUPLICATE', field: 'email' };
+      throw error;
+    }
+  }
   const now = new Date().toISOString();
   const record = {
     id: randomBytes(12).toString('base64url'),
     email,
-    purpose: String(purposeInput || 'signup').trim() || 'signup',
+    purpose,
     token: randomBytes(18).toString('base64url'),
     status: 'pending',
     createdAt: now,

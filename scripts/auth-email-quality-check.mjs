@@ -53,6 +53,8 @@ for (const token of [
   'assertEmailVerificationSendAllowed',
   'EMAIL_VERIFICATION_COOLDOWN',
   'EMAIL_VERIFICATION_DAILY_LIMIT',
+  'AUTH_EMAIL_DUPLICATE',
+  'Email is already registered.',
   'retryAfterSeconds: 60',
   'Number(record.attempts || 0) >= 5',
   'EMAIL_SEND_SANDBOX_REJECTED',

@@ -146,6 +146,9 @@ export async function issueEmailVerificationToken(input = {}, env = {}) {
   const email = normalizeEmail(input.email || '');
   const purpose = String(input.purpose || 'signup').trim() || 'signup';
   if (!isValidEmail(email)) throw authError('Valid email is required.', 400, { code: 'AUTH_EMAIL_REQUIRED' });
+  if (purpose === 'signup' && env.DB?.prepare && await getD1AccountByEmail(env.DB, email)) {
+    throw authError('Email is already registered.', 409, { code: 'AUTH_EMAIL_DUPLICATE', field: 'email' });
+  }
   const now = Math.floor(Date.now() / 1000);
   await assertEmailVerificationSendAllowed(env.DB, { email, purpose, now });
   const expiresAt = new Date((now + 60 * 30) * 1000).toISOString();

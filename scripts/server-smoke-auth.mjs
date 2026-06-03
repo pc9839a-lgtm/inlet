@@ -123,19 +123,27 @@ await runSmoke('server-smoke-auth', async ({ baseUrl }) => {
   const privatePreviewUrl = await fetchWithTimeout(`${baseUrl}/api/link-preview?url=${encodeURIComponent('http://127.0.0.1/')}`, { headers: authHeaders() });
   assert(privatePreviewUrl.status === 400, `link preview private url expected 400, got ${privatePreviewUrl.status}`);
 
+  const billingSignupToken = await issueSignupVerification(baseUrl, 'billing@example.test');
   const account = await fetchWithTimeout(`${baseUrl}/api/auth/register`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ user: { name: 'Billing User', email: 'billing@example.test', phone: '010-1000-2000', password: 'secret1', token: await issueSignupVerification(baseUrl, 'billing@example.test') } }),
+    body: JSON.stringify({ user: { name: 'Billing User', email: 'billing@example.test', phone: '010-1000-2000', password: 'secret1', token: billingSignupToken } }),
   });
   assert(account.status === 200, `account register expected 200, got ${account.status}`);
   const accountData = await account.json();
   assert(accountData.user?.email === 'billing@example.test' && accountData.user?.phone === '01010002000', 'account register should normalize email and phone');
 
+  const duplicateVerificationIssue = await fetchWithTimeout(`${baseUrl}/api/auth/email-verification`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ email: 'billing@example.test', purpose: 'signup' }),
+  });
+  assert(duplicateVerificationIssue.status === 409, `duplicate signup verification issue expected 409, got ${duplicateVerificationIssue.status}`);
+
   const duplicateEmail = await fetchWithTimeout(`${baseUrl}/api/auth/register`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ user: { name: 'Duplicate Email', email: 'billing@example.test', phone: '010-1000-2001', password: 'secret1', token: await issueSignupVerification(baseUrl, 'billing@example.test') } }),
+    body: JSON.stringify({ user: { name: 'Duplicate Email', email: 'billing@example.test', phone: '010-1000-2001', password: 'secret1', token: billingSignupToken } }),
   });
   assert(duplicateEmail.status === 409, `duplicate account email expected 409, got ${duplicateEmail.status}`);
 
@@ -241,10 +249,11 @@ await runSmoke('server-smoke-auth', async ({ baseUrl }) => {
   });
   assert(accountDuplicatePhone.status === 409, `account duplicate phone update expected 409, got ${accountDuplicatePhone.status}`);
 
+  const statusSignupToken = await issueSignupVerification(baseUrl, 'status-user@example.test');
   const statusAccount = await fetchWithTimeout(`${baseUrl}/api/auth/register`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ user: { name: 'Status User', email: 'status-user@example.test', phone: '010-1234-5678', password: 'secret1', token: await issueSignupVerification(baseUrl, 'status-user@example.test') } }),
+    body: JSON.stringify({ user: { name: 'Status User', email: 'status-user@example.test', phone: '010-1234-5678', password: 'secret1', token: statusSignupToken } }),
   });
   assert(statusAccount.status === 200, `status account register expected 200, got ${statusAccount.status}`);
 
@@ -282,7 +291,7 @@ await runSmoke('server-smoke-auth', async ({ baseUrl }) => {
   const deletedDuplicateEmail = await fetchWithTimeout(`${baseUrl}/api/auth/register`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ user: { name: 'Deleted Duplicate', email: 'status-user@example.test', phone: '010-1234-5679', password: 'secret1', token: await issueSignupVerification(baseUrl, 'status-user@example.test') } }),
+    body: JSON.stringify({ user: { name: 'Deleted Duplicate', email: 'status-user@example.test', phone: '010-1234-5679', password: 'secret1', token: statusSignupToken } }),
   });
   assert(deletedDuplicateEmail.status === 409, `soft-deleted account duplicate email expected 409, got ${deletedDuplicateEmail.status}`);
 
