@@ -348,15 +348,16 @@ function isValidHttpUrl(value = '') {
 
 export function safeDeliveryErrorMessage(error) {
   const code = String(error?.code || '').trim();
-  if (code === 'EMAIL_SEND_NOT_CONFIGURED') return '메일 발송 설정이 필요합니다. 발신 주소와 SES 리전을 확인해주세요.';
-  if (code === 'EMAIL_SEND_KEY_MISSING') return 'SES 키가 설정되지 않았습니다. AWS SES Access Key와 Secret Key를 확인해주세요.';
+  if (code === 'EMAIL_SEND_NOT_CONFIGURED') return '메일 발송 설정을 확인해주세요.';
+  if (code === 'EMAIL_SEND_KEY_MISSING') return '메일 발송 설정을 확인해주세요.';
   if (code === 'EMAIL_TO_INVALID') return '받을 이메일 주소 형식이 올바르지 않습니다.';
-  if (code === 'EMAIL_SEND_TIMEOUT') return '메일 발송 시간이 초과되었습니다. SES 네트워크 상태를 확인해주세요.';
-  if (code === 'EMAIL_SEND_SANDBOX_REJECTED') return 'SES 샌드박스 상태입니다. 검증된 수신자에게만 보낼 수 있으니 SES 샌드박스 해제를 요청해주세요.';
-  if (code === 'EMAIL_RECIPIENT_NOT_VERIFIED') return 'SES에서 수신자 이메일이 검증되지 않았습니다. 샌드박스 상태라면 수신자 인증이 필요합니다.';
-  if (code === 'EMAIL_DOMAIN_NOT_VERIFIED') return 'SES 발신 도메인 또는 발신 이메일 인증이 완료되지 않았습니다.';
-  if (code === 'EMAIL_SEND_QUOTA_EXCEEDED') return 'SES 발송 한도 또는 초당 발송량을 초과했습니다. 쿼터를 확인해주세요.';
-  return String(error?.providerMessage || error?.message || error || '전송 실패');
+  if (code === 'EMAIL_SEND_TIMEOUT') return '메일 발송 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.';
+  if (code === 'EMAIL_SEND_SANDBOX_REJECTED') return '메일 발송 권한을 확인해주세요.';
+  if (code === 'EMAIL_RECIPIENT_NOT_VERIFIED') return '받을 이메일 주소를 확인해주세요.';
+  if (code === 'EMAIL_DOMAIN_NOT_VERIFIED') return '발신 이메일 설정을 확인해주세요.';
+  if (code === 'EMAIL_SEND_QUOTA_EXCEEDED') return '메일 발송량이 일시적으로 많습니다. 잠시 후 다시 시도해주세요.';
+  if (code.startsWith('EMAIL_')) return '메일 발송에 실패했습니다. 설정을 확인해주세요.';
+  return '전송 실패';
 }
 
 function formatKoreanDateTime(value) {

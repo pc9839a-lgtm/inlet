@@ -109,7 +109,8 @@ const missingKeyDelivery = await sendLeadDelivery({ id: 'lead-mail-missing-key',
 assert(missingKeyDelivery.status === 'failed', 'missing SES key should create failed delivery status');
 assert(String(missingKeyDelivery.summary || '').includes('알림 전송 실패'), 'failed delivery should keep Korean summary');
 assert(missingKeyDelivery.logs?.[0]?.provider === 'ses', 'failed email delivery should keep SES provider log');
-assert(String(missingKeyDelivery.logs?.[0]?.message || '').includes('SES 키가 설정되지 않았습니다'), 'failed email delivery should keep Korean missing key message');
+assert(String(missingKeyDelivery.logs?.[0]?.message || '') === '메일 발송 설정을 확인해주세요.', 'failed email delivery should keep user-safe Korean message');
+assert(!/AWS|SES|quota|sandbox|access key|secret/i.test(String(missingKeyDelivery.logs?.[0]?.message || '')), 'failed email delivery UI message must not expose provider/internal terms');
 
 async function expectSesError(label, setup, expectedCode) {
   const originalFetch = globalThis.fetch;
