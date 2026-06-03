@@ -973,6 +973,9 @@ await upsertD1Page(db, decodeD1Page(encodedPage), { projectId: 'project-1', slug
 await upsertD1Page(db, { ...decodeD1Page(encodedPage), title: 'Landing v2' }, { projectId: 'project-1', slug: 'landing' });
 await upsertD1Page(db, { ...decodeD1Page(encodedPage), slug: 'landing-renamed', title: 'Landing Renamed' }, { projectId: 'project-1', slug: 'landing-renamed' });
 assert(db.rows.pages.length === 1 && db.rows.pages[0].id === encodedPage.id && db.rows.pages[0].slug === 'landing-renamed', 'D1 page upsert should treat same-project page id with changed slug as an update');
+await upsertD1Page(db, { ...decodeD1Page(encodedPage), title: 'Other Project Copy' }, { projectId: 'project-2', slug: 'landing-copy' });
+const copiedPage = await getD1PageBySlug(db, { projectId: 'project-2', slug: 'landing-copy' });
+assert(copiedPage?.id && copiedPage.id !== encodedPage.id && copiedPage.title === 'Other Project Copy', 'D1 page upsert should regenerate stale cross-project page ids');
 const pageBySlug = await getD1PageBySlug(db, { projectId: 'project-1', slug: 'landing' });
 const pageRevisions = await listD1PageRevisions(db, { projectId: 'project-1', slug: 'landing' });
 const oneRevision = await getD1PageRevision(db, { projectId: 'project-1', slug: 'landing', id: pageRevisions[0]?.id });
@@ -1089,7 +1092,7 @@ assert(readyCoverage.some((item) => item.key === 'leads' && item.adapter === 'd1
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 56,
+  checks: 57,
   accounts: db.rows.accounts.length,
   projects: db.rows.projects.length,
   invites: db.rows.invites.length,

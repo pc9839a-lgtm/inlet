@@ -846,11 +846,14 @@ export async function upsertD1Page(db, page = {}, context = {}) {
     : null;
   const currentByIdSameProject = currentById && String(currentById.project_id || '') === projectId;
   const current = currentBySlug || (currentByIdSameProject ? currentById : null);
+  const pageForRow = currentById && !currentByIdSameProject && !currentBySlug
+    ? { ...page, id: '' }
+    : page;
   const nextRevision = Math.max(1, Number(current?.revision || 0) + 1);
   const row = encodeD1Page({
-    ...page,
+    ...pageForRow,
     id: current?.id || context.pageId || '',
-    createdAt: current?.created_at || page.createdAt,
+    createdAt: current?.created_at || pageForRow.createdAt,
   }, { ...context, slug: safeSlug, revision: nextRevision });
   await db.prepare(`
     INSERT INTO pages (
