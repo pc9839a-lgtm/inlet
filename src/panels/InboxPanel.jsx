@@ -618,6 +618,7 @@ export default function InboxPanel({
   totalLeads = 0,
   hasMoreLeads = false,
   loadMoreLeads,
+  onReloadLeads,
   onFiltersChange,
   updateIntegrations,
   onSavePage,
@@ -636,6 +637,9 @@ export default function InboxPanel({
   const [openId, setOpenId] = useState('');
   const selectedMonthRange = useMemo(() => monthDateRange(month), [month]);
   const updateLeadSafe = updateLead || (() => {});
+  const reloadLeads = onReloadLeads || onReloadLeadConflict || (() => {});
+  const retryLeadSave = onRetryLeadConflict || (() => {});
+  const loadMore = loadMoreLeads || (() => {});
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -669,159 +673,186 @@ export default function InboxPanel({
 
   const loadedCount = normalized.length;
   const serverTotal = Number(totalLeads || loadedCount);
-  const listSummary = serverTotal > loadedCount
-    ? `${filtered.length}건 표시 중 · 서버 ${serverTotal}건 중 ${loadedCount}건 로드`
-    : `${filtered.length}건 표시 중`;
+  const displaySummary = serverTotal > loadedCount
+    ? `${filtered.length}건 표시 · 전체 ${serverTotal}건 중 ${loadedCount}건 로드`
+    : `${filtered.length}건 표시`;
+
+  const copyLead = async (lead) => {
+    const answers = Array.isArray(lead.answers)
+      ? lead.answers.map((item) => `${item.label || item.name || '질문'}: ${item.value || '-'}`).join('\n')
+      : '';
+    const text = [
+      `이름: ${lead.name || '-'}`,
+      `연락처: ${leadPrimaryContact(lead) || '-'}`,
+      lead.email ? `이메일: ${lead.email}` : '',
+      lead.message ? `문의: ${lead.message}` : '',
+      answers,
+    ].filter(Boolean).join('\n');
+
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      window.prompt('접수 내용을 복사하세요', text);
+    }
+  };
 
   return (
-    <div className="simple-panel inbox-panel inbox-v2 inbox-v3">
+    <div className="simple-panel inbox-panel inbox-v2 inbox-v3 inbox-service">
       <IntakeDuplicatePolicyPanel page={page} authUser={authUser} updatePage={updatePage} />
-
       <section className="inbox-summary-v2 inbox-summary-v3">
-        <button className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>
-          <span>전체</span><strong>{normalized.length}건</strong><small>신규 {newCount}건</small>
-        </button>
-        <button className={filter === 'consult' ? 'active' : ''} onClick={() => setFilter('consult')}>
-          <span>상담</span><strong>{consultCount}건</strong><small>상담 접수</small>
-        </button>
-        <button className={filter === 'reservation' ? 'active' : ''} onClick={() => setFilter('reservation')}>
-          <span>예약</span><strong>{reservationCount}건</strong><small>방문 예약</small>
-        </button>
+        <article>
+          <span>전체 접수</span>
+          <strong>{loadedCount}</strong>
+        </article>
+        <article>
+          <span>상담</span>
+          <strong>{consultCount}</strong>
+        </article>
+        <article>
+          <span>예약</span>
+          <strong>{reservationCount}</strong>
+        </article>
+        <article>
+          <span>신규</span>
+          <strong>{newCount}</strong>
+        </article>
       </section>
 
-      <LeadConflictNotice conflict={leadConflict} onReload={onReloadLeadConflict} onRetry={onRetryLeadConflict} onDismiss={onDismissLeadConflict} />
+      <LeadConflictNotice
+        conflict={leadConflict}
+        onReload={reloadLeads}
+        onRetry={retryLeadSave}
+        onDismiss={onDismissLeadConflict}
+      />
 
       <section className="card inbox-toolbar-card inbox-toolbar-v3">
+        <div className="section-title">
+          <span>접수 검색</span>
+          <b>{displaySummary}</b>
+        </div>
         <div className="inbox-toolbar">
-          <label className="inbox-search">
+          <label>
             <span>검색</span>
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="이름, 연락처, 메모 검색" />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="이름, 연락처, 문의 내용"
+            />
           </label>
-          <label className="inbox-status-filter">
+          <label>
             <span>월</span>
-            <input type="month" value={month} onChange={(event) => setMonth(event.target.value || currentMonthValue())} />
+            <input type="month" value={month} onChange={(event) => setMonth(event.target.value)} />
           </label>
-          <label className="inbox-status-filter">
+          <label>
+            <span>유형</span>
+            <select value={filter} onChange={(event) => setFilter(event.target.value)}>
+              <option value="all">전체</option>
+              <option value="consult">상담</option>
+              <option value="reservation">예약</option>
+            </select>
+          </label>
+          <label>
             <span>상태</span>
             <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
               <option value="all">전체</option>
-              {LEAD_STATUS.map((value) => <option key={value} value={value}>{value}</option>)}
+              {LEAD_STATUS.map((item) => (
+                <option key={typeof item === 'string' ? item : item.value} value={typeof item === 'string' ? item : item.value}>{typeof item === 'string' ? item : item.label}</option>
+              ))}
             </select>
           </label>
+          <button type="button" className="btn secondary" onClick={reloadLeads} disabled={syncing}>
+            새로고침
+          </button>
         </div>
       </section>
 
       <section className="card inbox-list-card inbox-list-v3">
         <div className="section-title inbox-list-title">
-          <div>
-            <h2>접수 목록</h2>
-            <p>{listSummary}</p>
-          </div>
+          <span>접수 목록</span>
           <div className="inbox-list-actions">
-            {hasMoreLeads && <button type="button" disabled={syncing} onClick={loadMoreLeads}>{syncing ? '불러오는 중' : `더보기 ${loadedCount}/${serverTotal || loadedCount}`}</button>}
-            <button type="button" disabled={!filtered.length} title={`${month} 한 달 단위 CSV로 내보냅니다.`} onClick={() => exportLeadsCsv?.(filtered, { month, kind: filter, status: statusFilter, deliveryStatus: 'all', q: query.trim() })}>월 CSV</button>
-            <button type="button" onClick={() => { setFilter('all'); setStatusFilter('all'); setQuery(''); }}>초기화</button>
+            {hasMoreLeads ? (
+              <button type="button" className="btn secondary" onClick={loadMore} disabled={syncing}>
+                50개 더보기
+              </button>
+            ) : null}
           </div>
         </div>
 
-        {syncing && <div className="inbox-sync-note">서버 접수 데이터를 불러오는 중입니다.</div>}
-        {hasMoreLeads && !syncing && <div className="inbox-sync-note">일부 접수만 표시 중입니다. 더보기로 이어서 불러올 수 있습니다.</div>}
-
-        {!filtered.length ? <div className="empty">조건에 맞는 접수 데이터가 없습니다.</div> : (
-          <div className="lead-list-v3">
+        {syncing ? <div className="inbox-sync-note">접수함을 불러오는 중입니다.</div> : null}
+        {!filtered.length ? (
+          <div className="empty-state">조건에 맞는 접수가 없습니다.</div>
+        ) : (
+          <div className="lead-list-v3 lead-list-service">
+            <div className="lead-table-head" aria-hidden="true">
+              <span>번호</span>
+              <span>유형</span>
+              <span>이름</span>
+              <span>연락처</span>
+              <span>날짜</span>
+              <span>상세</span>
+            </div>
             {filtered.map((lead, index) => {
               const opened = openId === lead.id;
               const answers = Array.isArray(lead.answers) ? lead.answers : [];
-              const history = Array.isArray(lead.history) ? lead.history.slice().reverse() : [];
               return (
-                <article className={`lead-card-v3 ${opened ? 'open' : ''}`} key={lead.id}>
-                  <div className="lead-row-v3">
-                    <button className="lead-row-main-v3" type="button" onClick={() => setOpenId(opened ? '' : lead.id)}>
-                      <span className={`lead-kind-pill ${leadKind(lead)}`}>#{index + 1} {leadKindLabel(lead)}</span>
-                      <strong>{lead.name || '이름 없음'}</strong>
-                      <em>{leadPrimaryContact(lead)}</em>
+                <article className={`lead-card-v3 lead-card-service ${opened ? 'open' : ''}`} key={lead.id}>
+                  <div className="lead-row-service">
+                    <span>#{index + 1}</span>
+                    <b>{leadKindLabel(lead)}</b>
+                    <strong>{lead.name || '이름 없음'}</strong>
+                    <em>{leadPrimaryContact(lead) || '-'}</em>
+                    <small>{fmtDateOnly(lead.createdAt)}</small>
+                    <button type="button" onClick={() => setOpenId(opened ? '' : lead.id)}>
+                      {opened ? '닫기' : '상세'}
                     </button>
-                    <div className="lead-row-meta-v3">
-                      <LeadSource lead={lead} />
-                      {lead.duplicate && <b className="lead-status hold">중복</b>}
-                      {lead.duplicateReason?.includes('spam_suspected') && <b className="lead-status hold">스팸 의심</b>}
-                      <b className={`lead-status ${statusClass(lead.status)}`}>{lead.status}</b>
-                      <small>{fmtDateOnly(lead.createdAt)}</small>
-                      <button type="button" onClick={() => setOpenId(opened ? '' : lead.id)}>{opened ? '닫기' : '상세'}</button>
-                    </div>
                   </div>
 
-                  {opened && (
-                    <div className="lead-detail-v3">
-                      <section className="lead-detail-section">
-                        <h3>고객 정보</h3>
-                        <div className="lead-info-grid">
-                          <LeadInfoRow label="접수 유형" value={lead.type} />
-                          <LeadInfoRow label="접수 일시" value={fmtDate(lead.createdAt)} />
-                          <LeadInfoRow label="이름" value={lead.name || '-'} />
-                          <LeadInfoRow label="연락처" value={lead.phone || '-'} />
-                          <LeadInfoRow label="이메일" value={lead.email} />
-                          <LeadInfoRow label="주소" value={lead.address} />
-                        </div>
+                  {opened ? (
+                    <div className="lead-detail-service">
+                      <section>
+                        <h4>고객 정보</h4>
+                        <LeadInfoRow label="접수 유형" value={leadKindLabel(lead)} />
+                        <LeadInfoRow label="접수 일시" value={fmtDate(lead.createdAt)} />
+                        <LeadInfoRow label="이름" value={lead.name} />
+                        <LeadInfoRow label="연락처" value={leadPrimaryContact(lead)} />
+                        <LeadInfoRow label="이메일" value={lead.email} />
                       </section>
 
-                      <section className="lead-detail-section">
-                        <h3>유입 정보</h3>
-                        <div className="lead-info-grid">
-                          <LeadInfoRow label="유입" value={trafficSourceLabel(lead)} />
-                          <LeadInfoRow label="접수 URL" value={lead.sourceUrl || lead.pageUrl || '-'} />
-                          <LeadInfoRow label="이전 URL" value={lead.referrer || '-'} />
-                          <LeadInfoRow label="캠페인" value={lead.utmCampaign || '-'} />
-                        </div>
-                      </section>
-
-                      {lead.message && (
-                        <section className="lead-detail-section">
-                          <h3>문의 내용</h3>
-                          <div className="lead-message-box">{lead.message}</div>
+                      {lead.message ? (
+                        <section>
+                          <h4>문의 내용</h4>
+                          <p>{lead.message}</p>
                         </section>
-                      )}
+                      ) : null}
 
-                      {!!answers.length && (
-                        <section className="lead-detail-section">
-                          <h3>질문 답변</h3>
-                          <div className="lead-answer-list-v3">
-                            {answers.map((answer) => (
-                              <div key={answer.id || answer.label}>
-                                <span>{answer.label}</span>
-                                <b>{Array.isArray(answer.value) ? answer.value.join(', ') : String(answer.value || '-')}</b>
-                              </div>
+                      {answers.length ? (
+                        <section>
+                          <h4>질문 답변</h4>
+                          <div className="lead-answer-list">
+                            {answers.map((item, answerIndex) => (
+                              <LeadInfoRow
+                                key={`${lead.id}-answer-${answerIndex}`}
+                                label={item.label || item.name || `질문 ${answerIndex + 1}`}
+                                value={item.value}
+                              />
                             ))}
                           </div>
                         </section>
-                      )}
+                      ) : null}
 
-                      <section className="lead-detail-section lead-manage-section">
-                        <h3>관리</h3>
-                        <StatusPills value={lead.status} onChange={(status) => updateLeadSafe(lead.id, { status })} />
-                        <label className="lead-memo-v3">
-                          <span>메모</span>
-                          <DebouncedMemoInput value={lead.memo || ''} onCommit={(memo) => updateLeadSafe(lead.id, { memo })} />
-                        </label>
-                        <button className="delete delete-v3" onClick={() => deleteLead?.(lead.id)}>삭제</button>
+                      <section>
+                        <h4>유입 정보</h4>
+                        <LeadSource lead={lead} />
+                        <LeadInfoRow label="페이지" value={lead.pageSlug || lead.project} />
+                        <LeadInfoRow label="기기" value={lead.deviceType} />
                       </section>
 
-                      {!!history.length && (
-                        <section className="lead-detail-section">
-                          <h3>변경 이력</h3>
-                          <div className="lead-history-list">
-                            {history.slice(0, 8).map((item, idx) => (
-                              <div key={item.id || `${item.at}-${idx}`}>
-                                <span>{item.type === 'status' ? '상태' : '메모'}</span>
-                                <b>{item.type === 'status' ? `${item.from || '-'} -> ${item.to || '-'}` : '메모 수정'}</b>
-                                <small>{fmtDate(item.at)}</small>
-                              </div>
-                            ))}
-                          </div>
-                        </section>
-                      )}
+                      <div className="lead-detail-actions-service">
+                        <button type="button" className="btn secondary" onClick={() => copyLead(lead)}>복사</button>
+                        <button type="button" className="btn primary" onClick={() => setOpenId('')}>닫기</button>
+                      </div>
                     </div>
-                  )}
+                  ) : null}
                 </article>
               );
             })}
