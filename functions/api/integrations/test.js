@@ -37,7 +37,7 @@ export async function onRequestPost({ request, env }) {
     return jsonResponse(request, env, 200, {
       ok: true,
       status: response.status,
-      message: 'Google Sheets 테스트 요청을 보냈습니다. 시트를 확인해주세요.',
+      message: 'Google Sheets 테스트 행을 보냈습니다. 시트를 확인해주세요.',
       body: text.slice(0, 500),
     }, METHODS);
   } catch (error) {
@@ -72,9 +72,13 @@ function sampleSheetsPayload(body = {}) {
       name: '연동 테스트',
       phone: '010-0000-0000',
       email: '',
-      message: 'Google Sheets 연동 테스트',
+      message: 'Google Sheets 연동 테스트입니다.',
       createdAt: now,
-      fields: { 테스트: '성공 확인', '관심 타입': '84A', 예산대: '5억~7억' },
+      fields: {
+        테스트: '성공 확인',
+        '관심 타입': '84A',
+        예산대: '5억-7억',
+      },
     },
     page: body.page || { title: '페이지로 테스트', slug: '', url: '' },
     project: body.project || {},
@@ -85,7 +89,7 @@ function sampleSheetsPayload(body = {}) {
 }
 
 function googleScriptErrorMessage(status, text = '') {
-  if (status === 401 || status === 403) return 'Apps Script 접근 권한을 확인해주세요. 액세스는 전체 사용자 권한으로 배포되어야 합니다.';
+  if (status === 401 || status === 403) return 'Apps Script 접근 권한을 확인해주세요. 배포 권한은 전체 사용자 접근으로 설정해야 합니다.';
   if (/not found|404/i.test(text)) return 'Apps Script 배포 URL이 잘못되었습니다. /exec URL을 다시 복사해주세요.';
   return `Google Apps Script 응답 실패: ${status}`;
 }

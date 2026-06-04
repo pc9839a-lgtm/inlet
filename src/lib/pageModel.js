@@ -51,6 +51,8 @@ const defaultPage = {
       spreadsheetId: '',
       sheetName: '접수함',
       connectedEmail: '',
+      accessTokenRef: '',
+      refreshTokenRef: '',
       lastSyncAt: '',
       lastError: '',
       notifyEmail: '',
@@ -175,13 +177,18 @@ function normalizeIntegrations(integrations = {}) {
   next.calendar.connected = !!next.calendar.connected;
   next.sheets.enabled = !!next.sheets.enabled;
   next.sheets.provider = 'google_sheets';
-  next.sheets.mode = pickSafe(next.sheets.mode || 'webhook', ['webhook','oauth'], 'webhook');
+  next.sheets.mode = pickSafe(next.sheets.mode || (next.sheets.webhookUrl || next.sheets.url ? 'webhook' : 'oauth'), ['webhook','oauth'], 'oauth');
   next.sheets.webhookUrl = String(next.sheets.webhookUrl || next.sheets.url || '').trim();
   next.sheets.url = next.sheets.webhookUrl;
   next.sheets.spreadsheetId = String(next.sheets.spreadsheetId || '').trim();
   next.sheets.sheetName = String(next.sheets.sheetName || '접수함').trim() || '접수함';
   next.sheets.connectedEmail = String(next.sheets.connectedEmail || '').trim();
-  next.sheets.status = pickSafe(next.sheets.status || (next.sheets.enabled && next.sheets.webhookUrl ? 'connected' : 'disconnected'), ['disconnected','connected','error'], 'disconnected');
+  next.sheets.accessTokenRef = String(next.sheets.accessTokenRef || '').trim();
+  next.sheets.refreshTokenRef = String(next.sheets.refreshTokenRef || '').trim();
+  const sheetsConnected = next.sheets.mode === 'oauth'
+    ? !!(next.sheets.connectedEmail && next.sheets.spreadsheetId)
+    : !!next.sheets.webhookUrl;
+  next.sheets.status = pickSafe(next.sheets.status || (next.sheets.enabled && sheetsConnected ? 'connected' : 'disconnected'), ['disconnected','connected','error'], 'disconnected');
   if (/postJson is not defined|not defined/i.test(String(next.sheets.lastError || ''))) {
     next.sheets.lastError = '';
     if (next.sheets.status === 'error') next.sheets.status = next.sheets.enabled && next.sheets.webhookUrl ? 'connected' : 'disconnected';

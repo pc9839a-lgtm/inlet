@@ -65,6 +65,12 @@ export function connectionState(type, integrations) {
   }
   if (type === 'sheets') {
     if (!integrations.sheets.enabled) return { tone: 'off', text: CONNECTION_STATUS.off, hint: 'Google Sheets 꺼짐' };
+    if (integrations.sheets.mode === 'oauth') {
+      if (!integrations.sheets.connectedEmail || !integrations.sheets.spreadsheetId) {
+        return { tone: 'warn', text: CONNECTION_STATUS.needsSetup, hint: 'Google 계정 연결 필요' };
+      }
+      return { ...readyOrFailed(integrations.sheets), hint: integrations.sheets.connectedEmail };
+    }
     if (!isValidUrl(integrations.sheets.webhookUrl || integrations.sheets.url)) return { tone: 'warn', text: CONNECTION_STATUS.needsSetup, hint: 'Google Sheets URL 확인 필요' };
     return { ...readyOrFailed(integrations.sheets), hint: integrations.sheets.sheetName || '접수함' };
   }
@@ -91,7 +97,7 @@ export async function runConnectionTest(type, page) {
   const lead = makeSampleLead();
   const payload = integrationPayload(lead, page);
   if (type === 'internal') return { ok: true, status: CONNECTION_STATUS.ready, message: '접수함 저장은 정상입니다.' };
-  if (type === 'google' || type === 'calendar') return { ok: false, status: CONNECTION_STATUS.needsSetup, message: 'Google OAuth 연결은 아직 준비 중입니다.' };
+  if (type === 'google' || type === 'calendar') return { ok: false, status: CONNECTION_STATUS.needsSetup, message: 'Google 계정 연결 준비가 필요합니다.' };
   if (type === 'email') {
     if (!integrations.email.enabled) return { ok: false, status: CONNECTION_STATUS.off, message: '이메일 알림이 꺼져 있습니다.' };
     if (!isValidEmail(integrations.email.to)) return { ok: false, status: CONNECTION_STATUS.needsSetup, message: '받을 이메일을 확인해주세요.' };
@@ -112,6 +118,12 @@ export async function runConnectionTest(type, page) {
   if (type === 'sheets') {
     const sheetsUrl = integrations.sheets.webhookUrl || integrations.sheets.url;
     if (!integrations.sheets.enabled) return { ok: false, status: CONNECTION_STATUS.off, message: 'Google Sheets 연동이 꺼져 있습니다.' };
+    if (integrations.sheets.mode === 'oauth') {
+      if (!integrations.sheets.connectedEmail || !integrations.sheets.spreadsheetId) {
+        return { ok: false, status: CONNECTION_STATUS.needsSetup, message: 'Google 계정을 연결한 뒤 시트를 선택해주세요.' };
+      }
+      return { ok: true, status: CONNECTION_STATUS.ready, message: 'Google Sheets 연결 정보가 준비되었습니다.' };
+    }
     if (!isValidUrl(sheetsUrl)) return { ok: false, status: CONNECTION_STATUS.needsSetup, message: 'Google Sheets Webhook URL을 입력해주세요.' };
     const sheetsPayload = googleSheetsPayload(payload, integrations.sheets, page, lead);
     try {
