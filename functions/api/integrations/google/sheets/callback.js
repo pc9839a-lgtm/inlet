@@ -1,10 +1,12 @@
 import { assertD1 } from '../../../_shared.js';
 import {
+  createGoogleSpreadsheet,
   exchangeGoogleOAuthCode,
   fetchGoogleProfile,
   googleClientId,
   googleClientSecret,
   googleRedirectUri,
+  initializeGoogleSheetColumns,
   saveGoogleSheetsIntegration,
   verifyOAuthState,
 } from './_oauth.js';
@@ -29,13 +31,27 @@ export async function onRequestGet({ request, env }) {
       redirectUri: googleRedirectUri(request, env),
     });
     const profile = await fetchGoogleProfile(tokens.access_token || '');
+    const sheetName = 'Leads';
+    const spreadsheet = await createGoogleSpreadsheet(tokens.access_token || '', {
+      title: `Pagero Leads - ${payload.slug || payload.projectId}`,
+      sheetName,
+    });
+    await initializeGoogleSheetColumns({
+      accessToken: tokens.access_token || '',
+      spreadsheetId: spreadsheet.spreadsheetId || '',
+      sheetName,
+    });
     await saveGoogleSheetsIntegration(env.DB, {
       projectId: payload.projectId,
       connectedEmail: profile.email || '',
-      externalId: profile.sub || '',
+      externalId: spreadsheet.spreadsheetId || '',
       settings: {
         slug: payload.slug || '',
         ownerId: payload.ownerId || '',
+        googleUserId: profile.sub || '',
+        spreadsheetId: spreadsheet.spreadsheetId || '',
+        spreadsheetUrl: spreadsheet.spreadsheetUrl || '',
+        sheetName,
       },
       tokens: {
         accessToken: tokens.access_token || '',

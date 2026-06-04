@@ -6,6 +6,20 @@ const GOOGLE_SHEETS_SCOPES = [
   'https://www.googleapis.com/auth/drive.file',
 ];
 
+export const GOOGLE_SHEETS_COLUMNS = [
+  '접수일시',
+  '이름',
+  '연락처',
+  '이메일',
+  '메시지',
+  '페이지명',
+  '페이지 URL',
+  'UTM Source',
+  'UTM Medium',
+  'UTM Campaign',
+  '추가 입력값 JSON',
+];
+
 export function googleClientId(env = {}) {
   return String(env.GOOGLE_OAUTH_CLIENT_ID || env.GOOGLE_CLIENT_ID || '').trim();
 }
@@ -87,6 +101,30 @@ export async function fetchGoogleProfile(accessToken = '') {
   return data;
 }
 
+export async function createGoogleSpreadsheet(accessToken = '', input = {}) {
+  const title = String(input.title || 'Pagero Leads').trim() || 'Pagero Leads';
+  const sheetName = String(input.sheetName || 'Leads').trim() || 'Leads';
+  const response = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      properties: { title },
+      sheets: [{ properties: { title: sheetName } }],
+    }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.spreadsheetId) {
+    const error = new Error('Google Sheets spreadsheet create failed.');
+    error.status = 502;
+    error.details = data;
+    throw error;
+  }
+  return data;
+}
+
 export async function saveGoogleSheetsIntegration(db, input = {}) {
   const projectId = String(input.projectId || '').trim();
   if (!db?.prepare || !projectId) return false;
@@ -120,6 +158,164 @@ export async function saveGoogleSheetsIntegration(db, input = {}) {
     now,
   ).run();
   return true;
+}
+
+export async function getGoogleSheetsIntegration(db, projectId = '') {
+  const id = String(projectId || '').trim();
+  if (!db?.prepare || !id) return null;
+  const row = await db.prepare(`
+    SELECT project_id, provider, mode, status, connected_email, external_id,
+      settings_json, token_json, last_sync_at, last_error
+    FROM project_integrations
+    WHERE project_id = ? AND provider = 'google_sheets'
+    LIMIT 1
+  `).bind(id).first();
+  if (!row) return null;
+  return {
+    projectId: row.project_id || '',
+    provider: row.provider || 'google_sheets',
+    mode: row.mode || 'oauth',
+    status: row.status || 'disconnected',
+    connectedEmail: row.connected_email || '',
+    externalId: row.external_id || '',
+    settings: parseJson(row.settings_json, {}),
+    tokens: parseJson(row.token_json, {}),
+    lastSyncAt: row.last_sync_at || '',
+    lastError: row.last_error || '',
+  };
+}
+
+export async function updateGoogleSheetsIntegrationStatus(db, projectId = '', patch = {}) {
+  const id = String(projectId || '').trim();
+  if (!db?.prepare || !id) return false;
+  const sets = [];
+  const values = [];
+  if (Object.prototype.hasOwnProperty.call(patch, 'status')) {
+    sets.push('status = ?');
+    values.push(String(patch.status || 'connected'));
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, 'lastSyncAt')) {
+    sets.push('last_sync_at = ?');
+    values.push(String(patch.lastSyncAt || ''));
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, 'lastError')) {
+    sets.push('last_error = ?');
+    values.push(String(patch.lastError || ''));
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, 'tokens')) {
+    sets.push('token_json = ?');
+    values.push(JSON.stringify(patch.tokens || {}));
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, 'settings')) {
+    sets.push('settings_json = ?');
+    values.push(JSON.stringify(patch.settings || {}));
+  }
+  if (!sets.length) return true;
+  sets.push('updated_at = ?');
+  values.push(new Date().toISOString());
+  values.push(id);
+  await db.prepare(`
+    UPDATE project_integrations
+    SET ${sets.join(', ')}
+    WHERE project_id = ? AND provider = 'google_sheets'
+  `).bind(...values).run();
+  return true;
+}
+
+export async function refreshGoogleAccessToken({ refreshToken, clientId, clientSecret } = {}) {
+  const body = new URLSearchParams({
+    refresh_token: String(refreshToken || ''),
+    client_id: String(clientId || ''),
+    client_secret: String(clientSecret || ''),
+    grant_type: 'refresh_token',
+  });
+  const response = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body,
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.access_token) {
+    const error = new Error('Google access token refresh failed.');
+    error.status = 502;
+    error.details = data;
+    throw error;
+  }
+  return data;
+}
+
+export async function appendGoogleSheetRow({ accessToken, spreadsheetId, sheetName, row } = {}) {
+  const id = String(spreadsheetId || '').trim();
+  const tab = String(sheetName || 'Leads').trim() || 'Leads';
+  if (!id) {
+    const error = new Error('Google Sheets spreadsheet is not selected.');
+    error.status = 400;
+    throw error;
+  }
+  const range = encodeURIComponent(`${tab}!A:K`);
+  const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${range}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ values: [row] }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(`Google Sheets append failed: ${response.status}`);
+    error.status = response.status;
+    error.details = data;
+    throw error;
+  }
+  return data;
+}
+
+export async function initializeGoogleSheetColumns({ accessToken, spreadsheetId, sheetName } = {}) {
+  return appendGoogleSheetRow({
+    accessToken,
+    spreadsheetId,
+    sheetName,
+    row: GOOGLE_SHEETS_COLUMNS,
+  });
+}
+
+export function googleSheetsPayloadRow(payload = {}) {
+  const lead = payload.lead || {};
+  const page = payload.page || {};
+  const source = payload.source || payload.attribution || {};
+  return [
+    lead.createdAt || payload.createdAt || new Date().toISOString(),
+    lead.name || '',
+    lead.phone || '',
+    lead.email || '',
+    lead.message || '',
+    page.title || '',
+    page.url || '',
+    source.utmSource || '',
+    source.utmMedium || '',
+    source.utmCampaign || '',
+    JSON.stringify(lead.fields || {}),
+  ];
+}
+
+export function mergeGoogleTokens(previous = {}, refreshed = {}) {
+  return {
+    ...previous,
+    accessToken: refreshed.access_token || previous.accessToken || '',
+    expiresIn: refreshed.expires_in || previous.expiresIn || 0,
+    tokenType: refreshed.token_type || previous.tokenType || '',
+    scope: refreshed.scope || previous.scope || '',
+    refreshedAt: new Date().toISOString(),
+  };
+}
+
+function parseJson(value, fallback) {
+  try {
+    return value ? JSON.parse(value) : fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 function oauthSecret(env = {}) {

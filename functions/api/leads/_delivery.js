@@ -1,4 +1,14 @@
 import { isValidEmailAddress, sendSesEmail } from '../_ses.js';
+import {
+  appendGoogleSheetRow,
+  getGoogleSheetsIntegration,
+  googleClientId,
+  googleClientSecret,
+  googleSheetsPayloadRow,
+  mergeGoogleTokens,
+  refreshGoogleAccessToken,
+  updateGoogleSheetsIntegrationStatus,
+} from '../integrations/google/sheets/_oauth.js';
 
 const SUPPORT_EMAIL = 'support@pagero.kr';
 export const NO_DELIVERY_SETTINGS_MESSAGE = '\uC804\uC1A1 \uC124\uC815 \uC5C6\uC74C';
@@ -75,7 +85,17 @@ export function buildLeadDeliveryJobs(page = {}, lead = {}) {
     });
   }
 
-  if (integrations.sheets?.enabled && isValidHttpUrl(integrations.sheets.webhookUrl || integrations.sheets.url)) {
+  if (integrations.sheets?.enabled && String(integrations.sheets.mode || '').toLowerCase() === 'oauth') {
+    jobs.push({
+      type: 'google_sheets_oauth',
+      provider: 'google_sheets',
+      label: 'Google Sheets',
+      projectId: page.projectId || page.id || '',
+      spreadsheetId: integrations.sheets.spreadsheetId || '',
+      sheetName: integrations.sheets.sheetName || 'Leads',
+      payload: googleSheetsPayload(payload, integrations.sheets, page, lead),
+    });
+  } else if (integrations.sheets?.enabled && isValidHttpUrl(integrations.sheets.webhookUrl || integrations.sheets.url)) {
     jobs.push({
       type: 'webhook',
       provider: 'google_sheets',
@@ -234,6 +254,10 @@ async function runDeliveryJob(job = {}, env = {}) {
     return { ok: true, message: result.messageId ? `\uC804\uC1A1 \uC644\uB8CC ${result.messageId}` : '\uC804\uC1A1 \uC644\uB8CC' };
   }
 
+  if (job.type === 'google_sheets_oauth') {
+    return sendGoogleSheetsOAuthJob(job, env);
+  }
+
   const res = await fetch(job.url, {
     method: 'POST',
     headers: {
@@ -246,6 +270,74 @@ async function runDeliveryJob(job = {}, env = {}) {
   });
 
   return { ok: res.ok, message: res.ok ? '\uC804\uC1A1 \uC644\uB8CC' : `\uC751\uB2F5 \uD655\uC778 \uD544\uC694 ${res.status}` };
+}
+
+async function sendGoogleSheetsOAuthJob(job = {}, env = {}) {
+  const projectId = String(job.projectId || job.payload?.project?.id || '').trim();
+  if (!env.DB?.prepare || !projectId) return { ok: false, message: 'Google Sheets connection required' };
+
+  const integration = await getGoogleSheetsIntegration(env.DB, projectId);
+  if (!integration || integration.status !== 'connected') {
+    return { ok: false, message: 'Google Sheets connection required' };
+  }
+
+  const settings = integration.settings || {};
+  let tokens = integration.tokens || {};
+  const spreadsheetId = String(job.spreadsheetId || settings.spreadsheetId || integration.externalId || '').trim();
+  const sheetName = String(job.sheetName || settings.sheetName || 'Leads').trim() || 'Leads';
+  let accessToken = String(tokens.accessToken || '').trim();
+
+  try {
+    if (!accessToken && tokens.refreshToken) {
+      tokens = mergeGoogleTokens(tokens, await refreshGoogleAccessToken({
+        refreshToken: tokens.refreshToken,
+        clientId: googleClientId(env),
+        clientSecret: googleClientSecret(env),
+      }));
+      accessToken = tokens.accessToken || '';
+      await updateGoogleSheetsIntegrationStatus(env.DB, projectId, { tokens });
+    }
+
+    const row = googleSheetsPayloadRow(job.payload || {});
+    try {
+      await appendGoogleSheetRow({ accessToken, spreadsheetId, sheetName, row });
+    } catch (error) {
+      if (error?.status !== 401 || !tokens.refreshToken) throw error;
+      tokens = mergeGoogleTokens(tokens, await refreshGoogleAccessToken({
+        refreshToken: tokens.refreshToken,
+        clientId: googleClientId(env),
+        clientSecret: googleClientSecret(env),
+      }));
+      accessToken = tokens.accessToken || '';
+      await appendGoogleSheetRow({ accessToken, spreadsheetId, sheetName, row });
+      await updateGoogleSheetsIntegrationStatus(env.DB, projectId, { tokens });
+    }
+
+    await updateGoogleSheetsIntegrationStatus(env.DB, projectId, {
+      status: 'connected',
+      lastSyncAt: new Date().toISOString(),
+      lastError: '',
+      settings: { ...settings, spreadsheetId, sheetName },
+      tokens,
+    });
+    return { ok: true, message: 'Google Sheets sent' };
+  } catch (error) {
+    const message = safeGoogleSheetsMessage(error);
+    await updateGoogleSheetsIntegrationStatus(env.DB, projectId, {
+      status: 'error',
+      lastError: message,
+    });
+    return { ok: false, message };
+  }
+}
+
+function safeGoogleSheetsMessage(error) {
+  const status = Number(error?.status || 0);
+  if (status === 401) return 'Google Sheets authorization expired';
+  if (status === 403) return 'Google Sheets permission denied';
+  if (status === 404) return 'Google Sheets file not found';
+  if (status === 400) return 'Google Sheets setup required';
+  return 'Google Sheets send failed';
 }
 
 function summarizeDelivery(logs = []) {
