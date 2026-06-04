@@ -64,7 +64,7 @@ export async function onRequest({ request, env }) {
         pageId: saved.pageId || body.page?.id || lead.pageId || '',
         pageSlug: saved.pageSlug || body.page?.slug || project.slug || lead.pageSlug || '',
       });
-      return publicPostJsonResponse(request, env, 200, { ok: true, lead: saved });
+      return publicPostJsonResponse(request, env, 200, { ok: true, lead: saved, delivery: saved.delivery || delivery });
     }
 
     if (request.method === 'GET') {
