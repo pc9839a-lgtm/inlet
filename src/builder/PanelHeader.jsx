@@ -33,11 +33,11 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
         )}
       </div>
       <div className="panel-actions">
-        <button className="ghost-btn" onClick={onDashboard}>메인</button>
-        <button className="ghost-btn start-choice-btn" onClick={onStartChoice}>시작 선택</button>
-        <button className="ghost-btn" onClick={onPreview} title={previewUrl}>미리보기</button>
-        <button className="primary-btn" onClick={onSave}>
-          <Save size={15}/>{saved ? '저장됨' : '저장'}
+        <button className="ghost-btn" type="button" onClick={onDashboard}>메인</button>
+        <button className="ghost-btn start-choice-btn" type="button" onClick={onStartChoice}>시작 선택</button>
+        <button className="ghost-btn" type="button" onClick={onPreview} title={previewUrl}>미리보기</button>
+        <button className="primary-btn" type="button" onClick={onSave}>
+          <Save size={15} />{saved ? '저장됨' : '저장'}
         </button>
       </div>
     </header>

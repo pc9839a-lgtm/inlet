@@ -1121,15 +1121,15 @@ function App() {
     setLeadPageMeta((meta) => ({ ...meta, total: Number(meta.total || 0) + 1 }));
     trackForPage(targetPage, { type: isReservationLead(savedLead) ? 'reservation_submit' : 'form_submit', label: savedLead.type });
 
-    persistLead(savedLead, targetPage, authUser)
+    const savePromise = persistLead(savedLead, targetPage, authUser)
       .then((persistedLead) => {
         const leadForDelivery = normalizeLeadItem({ ...savedLead, ...(persistedLead || {}) });
         const leadIds = [savedLead.id, leadForDelivery.id].filter(Boolean).map(String);
         upsertVisibleLead(leadForDelivery);
         if (isServerLeadMode() && persistedLead?.delivery) {
-          return { report: persistedLead.delivery, leadIds };
+          return { report: persistedLead.delivery, leadIds, lead: leadForDelivery };
         }
-        return runLeadDeliveryForPage(leadForDelivery, targetPage).then((report) => ({ report, leadIds })).catch((error) => {
+        return runLeadDeliveryForPage(leadForDelivery, targetPage).then((report) => ({ report, leadIds, lead: leadForDelivery })).catch((error) => {
           console.warn('Lead delivery failed after save:', error);
           return {
             report: {
@@ -1138,24 +1138,26 @@ function App() {
               logs: [{ target: '알림 전송', status: 'failed', message: String(error?.message || error), at: new Date().toISOString() }],
             },
             leadIds,
+            lead: leadForDelivery,
           };
         });
       })
-      .then(({ report, leadIds } = {}) => {
-        if (!report) return;
+      .then(({ report, leadIds, lead: persistedLead } = {}) => {
+        if (!report) return persistedLead || savedLead;
         const ids = Array.isArray(leadIds) && leadIds.length ? leadIds : [savedLead.id];
         setLeads((list)=>list.map((item)=>ids.includes(String(item.id)) ? { ...item, delivery: report, deliveryStatus: report.status } : item));
         if (!isServerLeadMode()) syncLeadPatch(savedLead.id, { delivery: report, deliveryStatus: report.status });
+        return persistedLead || savedLead;
       })
       .catch((error)=>{
         console.warn('Lead save or delivery failed:', error);
         if (isServerLeadMode()) {
           setLeads((list)=>list.filter((item)=>item.id !== savedLead.id));
           setLeadPageMeta((meta) => ({ ...meta, total: Math.max(0, Number(meta.total || 0) - 1) }));
-          showToast(Number(error?.status || 0) === 409
+          showToast([409, 429].includes(Number(error?.status || 0))
             ? '이미 접수된 연락처 또는 이메일입니다. 중복 접수 기준을 확인하세요.'
             : `접수 저장에 실패했습니다. ${String(error?.message || error)}`, 'error');
-          return;
+          throw error;
         }
         const delivery = {
           status: 'failed',
@@ -1167,7 +1169,10 @@ function App() {
           delivery
         } : item));
         syncLeadPatch(savedLead.id, { delivery });
+        return savedLead;
       });
+
+    return savePromise;
   };
   const addLead = (lead) => addLeadForPage(page, lead);
   const retryLeadDelivery = (lead) => {

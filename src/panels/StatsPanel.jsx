@@ -285,7 +285,7 @@ export default function StatsPanel({
 
       <ChannelFilter channels={channelOptions} value={channelFilter} onChange={setChannel} />
 
-      {partialData && <div className="stats-partial-notice" role="status">일부 데이터만 불러온 상태입니다. 서버 집계 기준으로 확인하세요.</div>}
+      {partialData && <div className="stats-partial-notice" role="status">일부 데이터만 표시 중입니다.</div>}
 
       <section className="stats-grid stats-summary stats-summary-v2 stats-summary-v3">
         <Metric title="조회" value={stats.pv} sub="방문" />

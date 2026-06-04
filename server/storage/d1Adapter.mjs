@@ -1058,7 +1058,7 @@ export async function listD1Leads(db, { projectId, month, status = '', kind = ''
     filters.push('status = ?');
     params.push(status);
   }
-  if (kind) {
+  if (kind && kind !== 'all') {
     filters.push('kind = ?');
     params.push(kind);
   }

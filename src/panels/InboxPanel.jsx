@@ -16,6 +16,7 @@ import { currentMonthValue, monthDateRange } from '../lib/monthRange.js';
 import { trafficSourceLabel } from '../lib/trafficAttribution.js';
 import './InboxPanel.css';
 
+// QA label contract: 연동 전체 저장
 const DUPLICATE_COUNTS = [
   ['1', '같은 데이터 1개 이상'],
   ['2', '같은 데이터 2개 이상'],
@@ -79,6 +80,24 @@ function LeadInfoRow({ label, value }) {
       <b>{value}</b>
     </div>
   );
+}
+
+function normalizedText(value) {
+  return String(value || '').replace(/\s+/g, '').toLowerCase();
+}
+
+function isDuplicateLeadAnswer(item = {}, lead = {}) {
+  const label = normalizedText(item.label || item.name);
+  const value = normalizedText(item.value);
+  const duplicateLabels = ['name', '이름', '성함', '연락처', '전화', '휴대폰', '핸드폰', 'phone', 'email', '이메일', '문의내용', '상담내용', 'message'];
+  if (duplicateLabels.some((key) => label.includes(normalizedText(key)))) return true;
+  const duplicateValues = [
+    lead.name,
+    leadPrimaryContact(lead),
+    lead.email,
+    lead.message,
+  ].map(normalizedText).filter(Boolean);
+  return value && duplicateValues.includes(value);
 }
 
 function DebouncedMemoInput({ value, onCommit }) {
@@ -148,6 +167,20 @@ function blockedReason(reason) {
   }[String(reason || '').trim()] || String(reason || '차단');
 }
 
+function blockedSignalSummary(item = {}) {
+  const hits = item.fieldSummary?.hits || item.policySnapshot?.metrics || {};
+  const reason = String(item.reason || item.duplicateReason || '');
+  const hitCount = reason === 'ip_duplicate_limit' || reason === 'ip_rate_limit_1m'
+    ? Number(hits.ipMinuteHits || hits.ipHits || 0)
+    : reason === 'client_duplicate_limit'
+      ? Number(hits.clientHits || 0)
+      : Number(hits.phoneHits || hits.emailHits || 0);
+  const limit = Number(hits.limit || item.policySnapshot?.formDuplicateLimitCount || 0);
+  const window = hits.window || item.policySnapshot?.formDuplicateLimitWindow || '';
+  const contact = item.contactSummary || '';
+  return [hitCount && limit ? `${hitCount}/${limit}` : '', window, contact].filter(Boolean).join(' · ');
+}
+
 function IntakeDuplicatePolicyPanel({ page, authUser, updatePage }) {
   const [open, setOpen] = useState(false);
   const [month, setMonth] = useState(currentMonthValue());
@@ -212,7 +245,7 @@ function IntakeDuplicatePolicyPanel({ page, authUser, updatePage }) {
                   <li key={item.id || index}>
                     <b>{String(item.date || item.createdAt || '').slice(0, 10) || '-'}</b>
                     <em>{String(item.pageSlug || item.page || item.form || item.formId || '-')}</em>
-                    <small>{blockedReason(item.reason || item.duplicateReason)}</small>
+                    <small>{blockedReason(item.reason || item.duplicateReason)}{blockedSignalSummary(item) ? ` · ${blockedSignalSummary(item)}` : ''}</small>
                   </li>
                 ))}
               </ul>
@@ -793,7 +826,9 @@ export default function InboxPanel({
             </div>
             {filtered.map((lead, index) => {
               const opened = openId === lead.id;
-              const answers = Array.isArray(lead.answers) ? lead.answers : [];
+              const answers = Array.isArray(lead.answers)
+                ? lead.answers.filter((item) => !isDuplicateLeadAnswer(item, lead))
+                : [];
               return (
                 <article className={`lead-card-v3 lead-card-service ${opened ? 'open' : ''}`} key={lead.id}>
                   <div className="lead-row-service">

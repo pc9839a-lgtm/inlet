@@ -410,7 +410,7 @@ const server = createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/api/leads/blocked-history') {
       const limit = Math.max(1, Math.min(200, Number(url.searchParams.get('limit') || 50)));
       const cursor = Math.max(0, Number(url.searchParams.get('cursor') || 0));
-      const project = await authorizeProjectAccess(req, projectFromQuery(url), { tab: 'settings' });
+      const project = await authorizeProjectAccess(req, projectFromQuery(url), { tab: 'inbox' });
       const result = await listBlockedLeadSubmissions(project, {
         pageSlug: url.searchParams.get('pageSlug') || url.searchParams.get('slug') || '',
         month: url.searchParams.get('month') || '',

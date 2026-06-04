@@ -43,10 +43,16 @@ function formClientId() {
   const key = 'pagero_client_id';
   const fallback = `client_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
   try {
-    const current = window.localStorage.getItem(key);
-    if (current) return current;
-    window.localStorage.setItem(key, fallback);
-    return fallback;
+    const cookieCurrent = document.cookie
+      .split(';')
+      .map((item) => item.trim())
+      .find((item) => item.startsWith(`${key}=`))
+      ?.slice(key.length + 1);
+    const current = cookieCurrent ? decodeURIComponent(cookieCurrent) : window.localStorage.getItem(key);
+    const next = current || fallback;
+    window.localStorage.setItem(key, next);
+    document.cookie = `${key}=${encodeURIComponent(next)}; Max-Age=31536000; Path=/; SameSite=Lax`;
+    return next;
   } catch {
     return fallback;
   }
@@ -142,6 +148,7 @@ export function RenderForm({ block, addLead, track }) {
   const [started, setStarted] = useState(false);
   const [notice, setNotice] = useState(null);
   const [duplicatePrompt, setDuplicatePrompt] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
   const formRef = useRef(null);
   const allowDuplicateSubmit = useRef(false);
   const qs = s.questions || [];
@@ -158,7 +165,8 @@ export function RenderForm({ block, addLead, track }) {
     track?.({ type: 'form_start', label: s.title || '상담 폼' });
   };
 
-  const submitLead = ({ allowDuplicate = false } = {}) => {
+  const submitLead = async ({ allowDuplicate = false } = {}) => {
+    if (submitting) return;
     track?.({ type: 'form_submit_attempt', label: s.title || '상담 폼' });
     setNotice(null);
     if (!allowDuplicate) setDuplicatePrompt(null);
@@ -209,7 +217,18 @@ export function RenderForm({ block, addLead, track }) {
       brand: BRAND_NAME,
     };
 
-    addLead(lead);
+    setSubmitting(true);
+    try {
+      await Promise.resolve(addLead(lead));
+    } catch (error) {
+      const isDuplicate = [409, 429].includes(Number(error?.status || 0));
+      setNotice({
+        tone: 'error',
+        message: isDuplicate ? '이미 접수된 정보입니다. 다른 연락처로 다시 시도해주세요.' : '접수 저장에 실패했습니다. 잠시 후 다시 시도해주세요.',
+      });
+      setSubmitting(false);
+      return;
+    }
     rememberDuplicateLeadPolicy(block.id, { phone, email }, s);
     track?.({ type: 'form_submit_success', label: s.title || '상담 폼' });
     fireInletConversion({ formId: block.id, title: s.title || '상담 폼', lead });
@@ -218,6 +237,7 @@ export function RenderForm({ block, addLead, track }) {
     setStarted(false);
     setNotice(null);
     setDuplicatePrompt(null);
+    setSubmitting(false);
   };
 
   const submit = (e) => {
@@ -298,7 +318,7 @@ export function RenderForm({ block, addLead, track }) {
             actionLabel="다시 접수"
             onAction={requestDuplicateSubmit}
           />
-          <button type="submit">{s.submit || '신청하기'}</button>
+          <button type="submit" disabled={submitting}>{submitting ? '접수 중' : (s.submit || '신청하기')}</button>
         </form>
       )}
     </section>
@@ -521,6 +541,7 @@ export function RenderReservation({ block, addLead, track }) {
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
   const [duplicatePrompt, setDuplicatePrompt] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const formRef = useRef(null);
   const allowDuplicateSubmit = useRef(false);
   const reservationStarted = useRef(false);
@@ -536,7 +557,8 @@ export function RenderReservation({ block, addLead, track }) {
     setF((prev) => ({ ...prev, custom: { ...(prev.custom || {}), [id]: value } }));
   };
 
-  const submitReservation = ({ allowDuplicate = false } = {}) => {
+  const submitReservation = async ({ allowDuplicate = false } = {}) => {
+    if (submitting) return;
     setError('');
     if (!allowDuplicate) setDuplicatePrompt('');
     track?.({ type: 'reservation_submit_attempt', label: s.title || '방문 예약' });
@@ -594,10 +616,11 @@ export function RenderReservation({ block, addLead, track }) {
     }));
     const customValues = Object.fromEntries(customAnswers.map((answer) => [answer.label, answer.value]));
 
-    addLead({
+    const lead = {
       type: '방문예약',
       formId: block.id,
       duplicateWindow: duplicateSettings.duplicateWindow,
+      clientId: formClientId(),
       name: f.name,
       phone,
       message: `${f.date} ${f.time}`,
@@ -617,12 +640,22 @@ export function RenderReservation({ block, addLead, track }) {
       ],
       sourceBlockTitle: s.title || '방문예약',
       brand: BRAND_NAME,
-    });
+    };
+    setSubmitting(true);
+    try {
+      await Promise.resolve(addLead(lead));
+    } catch (submitError) {
+      const isDuplicate = [409, 429].includes(Number(submitError?.status || 0));
+      setError(isDuplicate ? '이미 접수된 정보입니다. 다른 연락처로 다시 시도해주세요.' : '예약 저장에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      setSubmitting(false);
+      return;
+    }
     track?.({ type: 'reservation_submit_success', label: s.title || '방문 예약' });
     rememberDuplicateLeadPolicy(block.id, { phone, email: '' }, duplicateSettings);
     setDone(true);
     setDuplicatePrompt('');
     setF({ name: '', phone: '', date: '', time: '', custom: {} });
+    setSubmitting(false);
   };
 
   const submit = (e) => {
@@ -749,7 +782,7 @@ export function RenderReservation({ block, addLead, track }) {
             onAction={requestDuplicateSubmit}
           />
 
-          <button type="submit" disabled={!available}>{s.submit || '방문예약 신청하기'}</button>
+          <button type="submit" disabled={!available || submitting}>{submitting ? '접수 중' : (s.submit || '방문예약 신청하기')}</button>
         </form>
       )}
     </section>

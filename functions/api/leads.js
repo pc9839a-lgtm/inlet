@@ -185,16 +185,17 @@ async function sendSavedLeadDelivery(db, lead = {}, inputPage = {}, project = {}
 
 function normalizeDuplicateSettings(page = {}) {
   const source = page.leadDuplicateSettings || page.duplicateCollectionSettings || {};
+  const rawCount = Number(source.formDuplicateLimitCount ?? source.fieldDuplicateLimitCount ?? source.duplicateLimitCount ?? 3);
+  const windowKey = String(source.formDuplicateLimitWindow || source.fieldDuplicateLimitPeriod || source.duplicateWindow || source.duplicateWindowKey || '1d');
+  const phoneEmailMode = String(source.phoneEmailMode || source.phoneEmailDuplicateMode || source.contactDuplicateMode || 'mark').trim();
   return {
-    rejectIpDuplicate: !!source.rejectIpDuplicate,
-    rejectCookieDuplicate: source.rejectCookieDuplicate !== false,
-    formDuplicateLimitCount: Math.max(1, Math.min(5, Number(source.formDuplicateLimitCount || 3))),
-    formDuplicateLimitWindow: ['1d', '3d', '7d', '30d'].includes(String(source.formDuplicateLimitWindow || ''))
-      ? String(source.formDuplicateLimitWindow)
+    rejectIpDuplicate: !!(source.rejectIpDuplicate ?? source.ipDuplicateRejectEnabled ?? false),
+    rejectCookieDuplicate: (source.rejectCookieDuplicate ?? source.cookieDuplicateRejectEnabled ?? true) !== false,
+    formDuplicateLimitCount: Math.max(1, Math.min(100, Number.isFinite(rawCount) ? rawCount : 3)),
+    formDuplicateLimitWindow: ['1d', '3d', '7d', '30d'].includes(windowKey)
+      ? windowKey
       : '1d',
-    phoneEmailMode: ['mark', 'warn', 'block'].includes(String(source.phoneEmailMode || ''))
-      ? String(source.phoneEmailMode)
-      : 'mark',
+    phoneEmailMode: ['block', 'reject', 'deny'].includes(phoneEmailMode) ? 'block' : 'mark',
   };
 }
 
@@ -237,14 +238,17 @@ function stableHash(value = '') {
 function withRequestIntakeSignals(lead = {}, request) {
   const ipHash = String(lead.ipHash || lead.values?.ipHash || stableHash(requestIp(request))).trim();
   const clientId = String(lead.clientId || lead.values?.clientId || '').trim();
+  const userAgentHash = String(lead.userAgentHash || lead.values?.userAgentHash || stableHash(request.headers.get('User-Agent') || '')).trim();
   return {
     ...lead,
     ...(ipHash ? { ipHash } : {}),
     ...(clientId ? { clientId } : {}),
+    ...(userAgentHash ? { userAgentHash } : {}),
     values: {
       ...(lead.values || {}),
       ...(ipHash ? { ipHash } : {}),
       ...(clientId ? { clientId } : {}),
+      ...(userAgentHash ? { userAgentHash } : {}),
     },
   };
 }
@@ -270,6 +274,23 @@ function sameRecentLead(item = {}, lead = {}, nowMs, windowMs) {
   );
 }
 
+function previousPolicyMonth(month = '') {
+  const match = /^(\d{4})-(\d{2})$/.exec(String(month || ''));
+  if (!match) return '';
+  const date = new Date(Number(match[1]), Number(match[2]) - 2, 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function uniqueLeads(leads = []) {
+  const seen = new Set();
+  return leads.filter((lead) => {
+    const key = String(lead.id || `${lead.createdAt}:${lead.phone}:${lead.email}`);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 async function evaluateD1LeadDuplicatePolicy(db, project = {}, page = {}, lead = {}) {
   const settings = normalizeDuplicateSettings(page);
   const month = monthFromLead(lead);
@@ -279,16 +300,17 @@ async function evaluateD1LeadDuplicatePolicy(db, project = {}, page = {}, lead =
   const ipHash = String(lead.ipHash || lead.values?.ipHash || '').trim();
   if (!phone && !email && !clientId && !ipHash) return { blocked: false };
 
-  const recent = await findD1LeadsByIntakeSignals(db, {
+  const months = [month, previousPolicyMonth(month)].filter(Boolean);
+  const recent = uniqueLeads((await Promise.all(months.map((itemMonth) => findD1LeadsByIntakeSignals(db, {
     projectId: project.projectId,
-    month,
+    month: itemMonth,
     pageSlug: page.slug || project.slug || lead.pageSlug || '',
     phone,
     email,
     clientId,
     ipHash,
-    limit: 200,
-  });
+    limit: 300,
+  })))).flat()).filter((item) => String(item.id || '') !== String(lead.id || ''));
   const nowMs = Date.now();
   const windowMs = duplicateWindowMs(settings.formDuplicateLimitWindow);
   const inWindow = recent.filter((item) => sameRecentLead(item, lead, nowMs, windowMs));
@@ -296,12 +318,27 @@ async function evaluateD1LeadDuplicatePolicy(db, project = {}, page = {}, lead =
   const emailHit = !!email && inWindow.some((item) => normalizedEmail(item.emailNormalized || item.email || item.values?.email || '') === email);
   const clientHits = clientId ? inWindow.filter((item) => String(item.clientId || item.values?.clientId || '') === clientId).length : 0;
   const ipHits = ipHash ? inWindow.filter((item) => String(item.ipHash || '') === ipHash).length : 0;
+  const ipMinuteHits = ipHash ? recent.filter((item) => {
+    const createdMs = Date.parse(item.createdAt || item.submittedAt || '');
+    if (!Number.isFinite(createdMs)) return false;
+    return String(item.ipHash || '') === ipHash && nowMs - createdMs >= 0 && nowMs - createdMs <= 60000;
+  }).length : 0;
+  const metrics = {
+    window: settings.formDuplicateLimitWindow,
+    limit: settings.formDuplicateLimitCount,
+    phoneHits: phoneHit ? 1 : 0,
+    emailHits: emailHit ? 1 : 0,
+    clientHits,
+    ipHits,
+    ipMinuteHits,
+  };
 
-  if (settings.phoneEmailMode === 'block' && phoneHit) return { blocked: true, reason: 'phone_duplicate', policySnapshot: settings };
-  if (settings.phoneEmailMode === 'block' && emailHit) return { blocked: true, reason: 'email_duplicate', policySnapshot: settings };
-  if (settings.rejectCookieDuplicate && clientHits >= settings.formDuplicateLimitCount) return { blocked: true, reason: 'client_duplicate_limit', policySnapshot: settings };
-  if (settings.rejectIpDuplicate && ipHits >= settings.formDuplicateLimitCount) return { blocked: true, reason: 'ip_duplicate_limit', policySnapshot: settings };
-  return { blocked: false };
+  if (settings.phoneEmailMode === 'block' && phoneHit) return { blocked: true, reason: 'phone_duplicate', retryAfter: Math.ceil(windowMs / 1000), metrics, policySnapshot: { ...settings, metrics } };
+  if (settings.phoneEmailMode === 'block' && emailHit) return { blocked: true, reason: 'email_duplicate', retryAfter: Math.ceil(windowMs / 1000), metrics, policySnapshot: { ...settings, metrics } };
+  if (settings.rejectCookieDuplicate && clientId && clientHits >= settings.formDuplicateLimitCount) return { blocked: true, reason: 'client_duplicate_limit', retryAfter: Math.ceil(windowMs / 1000), metrics, policySnapshot: { ...settings, metrics } };
+  if (settings.rejectIpDuplicate && ipHash && ipHits >= settings.formDuplicateLimitCount) return { blocked: true, reason: 'ip_duplicate_limit', retryAfter: Math.ceil(windowMs / 1000), metrics, policySnapshot: { ...settings, metrics } };
+  if (ipHash && ipMinuteHits >= 3) return { blocked: true, reason: 'ip_rate_limit_1m', retryAfter: 60, metrics, policySnapshot: { ...settings, metrics } };
+  return { blocked: false, metrics, policySnapshot: { ...settings, metrics } };
 }
 
 function monthFromLead(lead = {}) {
@@ -337,6 +374,8 @@ function blockedLeadRecord(policy = {}, lead = {}, project = {}, page = {}) {
       type: String(lead.type || lead.kind || '').slice(0, 40),
       phoneTail: phone ? phone.slice(-4) : '',
       emailDomain: email.includes('@') ? email.split('@').pop() : '',
+      blockedBy: String(policy.reason || 'rate_limited'),
+      hits: policy.metrics || policy.policySnapshot?.metrics || {},
     },
     createdMonth: monthFromLead(lead),
     createdAt: lead.createdAt || new Date().toISOString(),

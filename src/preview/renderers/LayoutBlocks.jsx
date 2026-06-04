@@ -81,8 +81,10 @@ export function RenderTopNav({ block, go }) {
     </button>
   );
 
+  const menuLoop = menus.length > 1;
+
   return (
-    <section id={`block-${block.id}`} className={`landing-section topnav topnav-one-line topnav-${bg} topnav-align-${align} topnav-logo-${logoStyle} logo-${logoSize} menu-${menuStyle} menu-${menuSize} ${s.sticky ? 'topnav-sticky' : ''}`} style={vars}>
+    <section id={`block-${block.id}`} className={`landing-section topnav topnav-one-line topnav-${bg} topnav-align-${align} topnav-logo-${logoStyle} logo-${logoSize} menu-${menuStyle} menu-${menuSize} ${menuLoop ? 'topnav-menu-loop' : ''} ${s.sticky ? 'topnav-sticky' : ''}`} style={vars}>
       <div className="top-logo">{isImageLogo ? <img src={s.logoImage} alt="" /> : <strong>{s.logoText || 'LOGO'}</strong>}</div>
       <div className="top-menu">
         <div className="top-menu-track">
