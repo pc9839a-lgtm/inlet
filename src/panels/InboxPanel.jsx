@@ -10,7 +10,6 @@ import {
   leadPrimaryContact,
   leadSearchText,
   normalizeLeadItem,
-  statusClass,
 } from '../lib/leadModel.js';
 import { fetchServerBlockedLeadHistory } from '../lib/leadRepository.js';
 import { currentMonthValue, monthDateRange } from '../lib/monthRange.js';
@@ -38,6 +37,65 @@ const CONTACT_OPTIONS = [
   ['block', '차단'],
 ];
 
+const GOOGLE_SHEETS_APPS_SCRIPT = `const SHEET_NAME = '접수함';
+const BASE_HEADERS = ['접수일시','이름','연락처','이메일','메시지','페이지명','페이지 URL','UTM Source','UTM Medium','UTM Campaign','유입 URL'];
+const JSON_HEADER = '추가 입력값 JSON';
+const TEST_PAYLOAD = {
+  createdAt: new Date().toISOString(),
+  sheetName: SHEET_NAME,
+  lead: { name: '테스트', phone: '010-0000-0000', email: 'test@example.com', message: '수동 실행 테스트', fields: { '관심 타입': '84A', '예산대': '5억-7억' } },
+  page: { title: '페이지로 테스트', url: '' },
+  source: { utmSource: 'test', utmMedium: '', utmCampaign: '', sourceUrl: '' }
+};
+
+function doPost(e) {
+  const data = e && e.postData && e.postData.contents ? JSON.parse(e.postData.contents) : TEST_PAYLOAD;
+  const lead = data.lead || {};
+  const page = data.page || {};
+  const source = data.source || data.attribution || {};
+  const fields = lead.fields && typeof lead.fields === 'object' && !Array.isArray(lead.fields) ? lead.fields : {};
+  const sheet = getSheet(data.sheetName || SHEET_NAME);
+  const headers = ensureHeaders(sheet, Object.keys(fields));
+  const values = {
+    '접수일시': lead.createdAt || data.createdAt || new Date().toISOString(),
+    '이름': lead.name || '',
+    '연락처': lead.phone || '',
+    '이메일': lead.email || '',
+    '메시지': lead.message || '',
+    '페이지명': page.title || '',
+    '페이지 URL': page.url || '',
+    'UTM Source': source.utmSource || '',
+    'UTM Medium': source.utmMedium || '',
+    'UTM Campaign': source.utmCampaign || '',
+    '유입 URL': source.sourceUrl || source.referrer || '',
+    [JSON_HEADER]: JSON.stringify(fields)
+  };
+  sheet.appendRow(headers.map((header) => fields[header] !== undefined ? fields[header] : (values[header] || '')));
+  return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function getSheet(name) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  return ss.getSheetByName(name) || ss.insertSheet(name);
+}
+
+function ensureHeaders(sheet, fieldHeaders) {
+  const customHeaders = (fieldHeaders || []).map((header) => String(header || '').trim()).filter(Boolean);
+  const required = BASE_HEADERS.concat(customHeaders, [JSON_HEADER]);
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(required);
+    return required;
+  }
+  const headers = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0].map((value) => String(value || '').trim()).filter(Boolean);
+  const missing = required.filter((header) => headers.indexOf(header) === -1);
+  if (missing.length) sheet.getRange(1, headers.length + 1, 1, missing.length).setValues([missing]);
+  return headers.concat(missing);
+}
+
+function doGet() {
+  return ContentService.createTextOutput('Pagero Google Sheets webhook is ready.');
+}`;
+
 function normalizeDuplicateSettings(settings = {}) {
   const source = settings && typeof settings === 'object' ? settings : {};
   const count = String(source.formDuplicateLimitCount || '3');
@@ -50,6 +108,10 @@ function normalizeDuplicateSettings(settings = {}) {
     formDuplicateLimitWindow: ['1d', '3d', '7d', '30d'].includes(windowKey) ? windowKey : '1d',
     phoneEmailMode: ['mark', 'block'].includes(phoneEmailMode) ? phoneEmailMode : 'mark',
   };
+}
+
+function normalizedText(value) {
+  return String(value || '').replace(/\s+/g, '').toLowerCase();
 }
 
 function leadTime(lead = {}) {
@@ -68,20 +130,6 @@ function leadInDateRange(lead = {}, range = {}) {
 function fmtDateOnly(value) {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? String(value || '').slice(0, 10) : date.toLocaleDateString('ko-KR');
-}
-
-function MiniToggle({ active, children, onClick }) {
-  return <button type="button" className={`mini-toggle ${active ? 'active' : ''}`} onClick={onClick}>{children}</button>;
-}
-
-function LeadInfoRow({ label, value }) {
-  if (!value) return null;
-  return (
-    <div className="lead-info-row">
-      <span>{label}</span>
-      <b>{value}</b>
-    </div>
-  );
 }
 
 function firstText(...values) {
@@ -120,22 +168,67 @@ function leadUtmText(lead = {}) {
   ].filter(Boolean).join(' / ');
 }
 
-function normalizedText(value) {
-  return String(value || '').replace(/\s+/g, '').toLowerCase();
-}
-
 function isDuplicateLeadAnswer(item = {}, lead = {}) {
   const label = normalizedText(item.label || item.name);
   const value = normalizedText(item.value);
   const duplicateLabels = ['name', '이름', '성함', '연락처', '전화', '휴대폰', '핸드폰', 'phone', 'email', '이메일', '문의내용', '상담내용', 'message'];
   if (duplicateLabels.some((key) => label.includes(normalizedText(key)))) return true;
-  const duplicateValues = [
-    lead.name,
-    leadPrimaryContact(lead),
-    lead.email,
-    lead.message,
-  ].map(normalizedText).filter(Boolean);
+  const duplicateValues = [lead.name, leadPrimaryContact(lead), lead.email, lead.message].map(normalizedText).filter(Boolean);
   return value && duplicateValues.includes(value);
+}
+
+function isFreeEmailLocked(page = {}, authUser = null) {
+  const plan = String(page?.plan || page?.billingPlan || page?.billing?.plan || authUser?.plan || authUser?.billingPlan || 'free').trim().toLowerCase();
+  const paidPlans = ['paid', 'pro', 'premium', 'business', 'agency', 'enterprise'];
+  return !paidPlans.includes(plan);
+}
+
+function lockedAccountEmail(authUser = null, page = {}, integrations = null) {
+  const sourceIntegrations = integrations || normalizeIntegrations(page.integrations || {});
+  return String(
+    authUser?.email
+    || page?.ownership?.ownerEmail
+    || page?.ownerEmail
+    || page?.clientEmail
+    || sourceIntegrations?.email?.to
+    || ''
+  ).trim().toLowerCase();
+}
+
+function enforceFreeEmailIntegration(integrations = {}, page = {}, authUser = null) {
+  const normalized = normalizeIntegrations(integrations || {});
+  if (!isFreeEmailLocked(page, authUser)) return normalized;
+  const accountEmail = lockedAccountEmail(authUser, page, normalized);
+  return normalizeIntegrations({
+    ...normalized,
+    email: {
+      ...(normalized.email || {}),
+      to: accountEmail || '',
+      lockedToAccount: true,
+    },
+  });
+}
+
+function MiniToggle({ active, children, onClick }) {
+  return <button type="button" className={`mini-toggle ${active ? 'active' : ''}`} onClick={onClick}>{children}</button>;
+}
+
+function InlineSwitch({ checked, onChange }) {
+  return (
+    <button type="button" className={`inline-switch ${checked ? 'on' : ''}`} onClick={() => onChange(!checked)}>
+      {checked ? 'ON' : 'OFF'}
+    </button>
+  );
+}
+
+function LeadInfoRow({ label, value }) {
+  if (!value) return null;
+  return (
+    <div className="lead-info-row">
+      <span>{label}</span>
+      <b>{value}</b>
+    </div>
+  );
 }
 
 function DebouncedMemoInput({ value, onCommit }) {
@@ -296,105 +389,6 @@ function IntakeDuplicatePolicyPanel({ page, authUser, updatePage }) {
   );
 }
 
-function InlineSwitch({ checked, onChange }) {
-  return (
-    <button type="button" className={`inline-switch ${checked ? 'on' : ''}`} onClick={() => onChange(!checked)}>
-      {checked ? 'ON' : 'OFF'}
-    </button>
-  );
-}
-
-const GOOGLE_SHEETS_APPS_SCRIPT = `const SHEET_NAME = '접수함';
-const BASE_HEADERS = ['접수일시','이름','연락처','이메일','메시지','페이지명','페이지 URL','UTM Source','UTM Medium','UTM Campaign','유입 URL'];
-const JSON_HEADER = '추가 입력값 JSON';
-const TEST_PAYLOAD = {
-  createdAt: new Date().toISOString(),
-  sheetName: SHEET_NAME,
-  lead: { name: '테스트', phone: '010-0000-0000', email: 'test@example.com', message: '수동 실행 테스트', fields: { '관심 타입': '84A', '예산대': '5억-7억' } },
-  page: { title: '페이지로 테스트', url: '' },
-  source: { utmSource: 'test', utmMedium: '', utmCampaign: '', sourceUrl: '' }
-};
-
-function doPost(e) {
-  const data = e && e.postData && e.postData.contents ? JSON.parse(e.postData.contents) : TEST_PAYLOAD;
-  const lead = data.lead || {};
-  const page = data.page || {};
-  const source = data.source || data.attribution || {};
-  const fields = lead.fields && typeof lead.fields === 'object' && !Array.isArray(lead.fields) ? lead.fields : {};
-  const sheet = getSheet(data.sheetName || SHEET_NAME);
-  const headers = ensureHeaders(sheet, Object.keys(fields));
-  const values = {
-    '접수일시': lead.createdAt || data.createdAt || new Date().toISOString(),
-    '이름': lead.name || '',
-    '연락처': lead.phone || '',
-    '이메일': lead.email || '',
-    '메시지': lead.message || '',
-    '페이지명': page.title || '',
-    '페이지 URL': page.url || '',
-    'UTM Source': source.utmSource || '',
-    'UTM Medium': source.utmMedium || '',
-    'UTM Campaign': source.utmCampaign || '',
-    '유입 URL': source.sourceUrl || source.referrer || '',
-    [JSON_HEADER]: JSON.stringify(fields)
-  };
-  sheet.appendRow(headers.map((header) => fields[header] !== undefined ? fields[header] : (values[header] || '')));
-  return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
-}
-
-function getSheet(name) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  return ss.getSheetByName(name) || ss.insertSheet(name);
-}
-
-function ensureHeaders(sheet, fieldHeaders) {
-  const customHeaders = (fieldHeaders || []).map((header) => String(header || '').trim()).filter(Boolean);
-  const required = BASE_HEADERS.concat(customHeaders, [JSON_HEADER]);
-  if (sheet.getLastRow() === 0) {
-    sheet.appendRow(required);
-    return required;
-  }
-  const headers = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0].map((value) => String(value || '').trim()).filter(Boolean);
-  const missing = required.filter((header) => headers.indexOf(header) === -1);
-  if (missing.length) sheet.getRange(1, headers.length + 1, 1, missing.length).setValues([missing]);
-  return headers.concat(missing);
-}
-
-function doGet() {
-  return ContentService.createTextOutput('Pagero Google Sheets webhook is ready.');
-}`;
-
-function isFreeEmailLocked(page = {}, authUser = null) {
-  const plan = String(page?.plan || page?.billingPlan || page?.billing?.plan || authUser?.plan || authUser?.billingPlan || 'free').trim().toLowerCase();
-  const paidPlans = ['paid', 'pro', 'premium', 'business', 'agency', 'enterprise'];
-  return !paidPlans.includes(plan);
-}
-
-function lockedAccountEmail(authUser = null, page = {}, integrations = null) {
-  const sourceIntegrations = integrations || normalizeIntegrations(page.integrations || {});
-  return String(
-    authUser?.email
-    || page?.ownership?.ownerEmail
-    || page?.ownerEmail
-    || page?.clientEmail
-    || sourceIntegrations?.email?.to
-    || ''
-  ).trim().toLowerCase();
-}
-
-function enforceFreeEmailIntegration(integrations = {}, page = {}, authUser = null) {
-  const normalized = normalizeIntegrations(integrations || {});
-  if (!isFreeEmailLocked(page, authUser)) return normalized;
-  const accountEmail = lockedAccountEmail(authUser, page, normalized);
-  return normalizeIntegrations({
-    ...normalized,
-    email: {
-      ...(normalized.email || {}),
-      to: accountEmail || '',
-      lockedToAccount: true,
-    },
-  });
-}
-
 function InboxConnectionsPanel({ page, authUser = null, updateIntegrations, onSavePage }) {
   const integrations = normalizeIntegrations(page.integrations || {});
   const emailLocked = isFreeEmailLocked(page, authUser);
@@ -424,10 +418,7 @@ function InboxConnectionsPanel({ page, authUser = null, updateIntegrations, onSa
       return next;
     });
     const enforced = enforceFreeEmailIntegration(integrations, page, authUser);
-    if (
-      enforced.email?.to
-      && ((integrations.email?.to || '') !== enforced.email.to || integrations.email?.lockedToAccount !== true)
-    ) {
+    if (enforced.email?.to && ((integrations.email?.to || '') !== enforced.email.to || integrations.email?.lockedToAccount !== true)) {
       updateIntegrations?.('email', enforced.email);
     }
   }, [emailLocked, accountEmail, page.slug]);
@@ -482,10 +473,7 @@ function InboxConnectionsPanel({ page, authUser = null, updateIntegrations, onSa
     setTesting('sheets-status');
     if (!quiet) setResult('');
     try {
-      const query = new URLSearchParams({
-        projectId: project.projectId,
-        slug: project.slug || '',
-      });
+      const query = new URLSearchParams({ projectId: project.projectId, slug: project.slug || '' });
       const response = await apiFetch(`/api/integrations/google/sheets/status?${query.toString()}`, {
         headers: projectAuthHeaders(project),
       });
@@ -650,13 +638,7 @@ function InboxConnectionsPanel({ page, authUser = null, updateIntegrations, onSa
     const currentSheets = draftIntegrations.sheets || {};
     const currentUrl = currentSheets.webhookUrl || currentSheets.url || '';
     const currentSheetName = currentSheets.sheetName || '접수함';
-    sheetPatch({
-      webhookUrl: currentUrl,
-      url: currentUrl,
-      sheetName: currentSheetName,
-      enabled: true,
-      lastError: '',
-    });
+    sheetPatch({ webhookUrl: currentUrl, url: currentUrl, sheetName: currentSheetName, enabled: true, lastError: '' });
     try {
       const testIntegrations = normalizeIntegrations({
         ...draftIntegrations,
@@ -682,14 +664,7 @@ function InboxConnectionsPanel({ page, authUser = null, updateIntegrations, onSa
       setResult(response?.message || (ok ? 'Google Sheets 테스트 완료' : 'Google Sheets 테스트 실패'));
     } catch (error) {
       const message = `Google Sheets 테스트 실패: ${String(error?.message || error || '접수 저장은 유지됩니다.')}`;
-      sheetPatch({
-        webhookUrl: currentUrl,
-        url: currentUrl,
-        sheetName: currentSheetName,
-        enabled: true,
-        status: 'error',
-        lastError: message,
-      });
+      sheetPatch({ webhookUrl: currentUrl, url: currentUrl, sheetName: currentSheetName, enabled: true, status: 'error', lastError: message });
       setResult(message);
     } finally {
       setTesting('');
@@ -740,11 +715,7 @@ function InboxConnectionsPanel({ page, authUser = null, updateIntegrations, onSa
                   {emailLocked ? (
                     <strong className="locked-email-value" aria-label="계정 이메일로 고정됨">{accountEmail || '계정 이메일 없음'}</strong>
                   ) : (
-                    <input
-                      value={draftIntegrations.email.to || ''}
-                      placeholder="example@email.com"
-                      onChange={(event) => patch('email', { to: event.target.value })}
-                    />
+                    <input value={draftIntegrations.email.to || ''} placeholder="example@email.com" onChange={(event) => patch('email', { to: event.target.value })} />
                   )}
                 </label>
                 {emailLocked && <p className="connection-help-text">무료 사용자는 계정 이메일로만 알림을 받습니다.</p>}
@@ -978,12 +949,7 @@ export default function InboxPanel({
         </article>
       </section>
 
-      <LeadConflictNotice
-        conflict={leadConflict}
-        onReload={reloadLeads}
-        onRetry={retryLeadSave}
-        onDismiss={onDismissLeadConflict}
-      />
+      <LeadConflictNotice conflict={leadConflict} onReload={reloadLeads} onRetry={retryLeadSave} onDismiss={onDismissLeadConflict} />
 
       <section className="card inbox-toolbar-card inbox-toolbar-v3">
         <div className="section-title">
@@ -993,11 +959,7 @@ export default function InboxPanel({
         <div className="inbox-toolbar">
           <label>
             <span>검색</span>
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="이름, 연락처, 문의 내용"
-            />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="이름, 연락처, 문의 내용" />
           </label>
           <label>
             <span>월</span>
@@ -1020,9 +982,8 @@ export default function InboxPanel({
               ))}
             </select>
           </label>
-          <button type="button" className="btn secondary" onClick={reloadLeads} disabled={syncing}>
-            새로고침
-          </button>
+          <button type="button" className="btn secondary" onClick={reloadLeads} disabled={syncing}>새로고침</button>
+          {exportLeadsCsv ? <button type="button" className="btn secondary" onClick={() => exportLeadsCsv({ month })}>CSV</button> : null}
         </div>
       </section>
 
@@ -1030,11 +991,7 @@ export default function InboxPanel({
         <div className="section-title inbox-list-title">
           <span>접수 목록</span>
           <div className="inbox-list-actions">
-            {hasMoreLeads ? (
-              <button type="button" className="btn secondary" onClick={loadMore} disabled={syncing}>
-                50개 더보기
-              </button>
-            ) : null}
+            {hasMoreLeads ? <button type="button" className="btn secondary" onClick={loadMore} disabled={syncing}>50개 더보기</button> : null}
           </div>
         </div>
 
@@ -1053,9 +1010,7 @@ export default function InboxPanel({
             </div>
             {filtered.map((lead, index) => {
               const opened = openId === lead.id;
-              const answers = Array.isArray(lead.answers)
-                ? lead.answers.filter((item) => !isDuplicateLeadAnswer(item, lead))
-                : [];
+              const answers = Array.isArray(lead.answers) ? lead.answers.filter((item) => !isDuplicateLeadAnswer(item, lead)) : [];
               return (
                 <article className={`lead-card-v3 lead-card-service ${opened ? 'open' : ''}`} key={lead.id}>
                   <div className="lead-row-service">
@@ -1064,9 +1019,7 @@ export default function InboxPanel({
                     <strong>{lead.name || '이름 없음'}</strong>
                     <em>{leadPrimaryContact(lead) || '-'}</em>
                     <small>{fmtDateOnly(lead.createdAt)}</small>
-                    <button type="button" onClick={() => setOpenId(opened ? '' : lead.id)}>
-                      {opened ? '닫기' : '상세'}
-                    </button>
+                    <button type="button" onClick={() => setOpenId(opened ? '' : lead.id)}>{opened ? '닫기' : '상세'}</button>
                   </div>
 
                   {opened ? (
@@ -1092,11 +1045,7 @@ export default function InboxPanel({
                           <h4>질문 답변</h4>
                           <div className="lead-answer-list">
                             {answers.map((item, answerIndex) => (
-                              <LeadInfoRow
-                                key={`${lead.id}-answer-${answerIndex}`}
-                                label={item.label || item.name || `질문 ${answerIndex + 1}`}
-                                value={item.value}
-                              />
+                              <LeadInfoRow key={`${lead.id}-answer-${answerIndex}`} label={item.label || item.name || `질문 ${answerIndex + 1}`} value={item.value} />
                             ))}
                           </div>
                         </section>
@@ -1112,8 +1061,15 @@ export default function InboxPanel({
                         <LeadInfoRow label="기기" value={lead.deviceType} />
                       </section>
 
+                      <section>
+                        <h4>관리</h4>
+                        <StatusPills value={lead.status || '신규'} onChange={(status) => updateLeadSafe(lead.id, { status })} />
+                        <DebouncedMemoInput value={lead.memo || ''} onCommit={(memo) => updateLeadSafe(lead.id, { memo })} />
+                      </section>
+
                       <div className="lead-detail-actions-service">
                         <button type="button" className="btn secondary" onClick={() => copyLead(lead)}>복사</button>
+                        {deleteLead ? <button type="button" className="btn secondary danger" onClick={() => deleteLead(lead.id)}>삭제</button> : null}
                         <button type="button" className="btn primary" onClick={() => setOpenId('')}>닫기</button>
                       </div>
                     </div>

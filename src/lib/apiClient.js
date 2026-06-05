@@ -54,7 +54,7 @@ function userFacingApiMessage(message = '', status = 0) {
     return '로그인 세션이 없습니다. 다시 로그인한 뒤 저장해주세요.';
   }
   if (/Project identity does not match/i.test(text)) {
-    return '현재 로그인 세션이 다른 페이지에 연결되어 있습니다. 새로고침 후 다시 저장해주세요.';
+    return '현재 로그인 세션이 다른 페이지와 연결되어 있습니다. 새로고침 후 다시 저장해주세요.';
   }
   if (/Project access is required|Project access has not been granted|Project access denied/i.test(text)) {
     return '현재 계정에는 이 페이지 접근 권한이 없습니다. 다시 로그인하거나 페이지 소유 계정을 확인해주세요.';
