@@ -56,10 +56,11 @@ function cleanFieldLabel(value = '') {
 }
 
 function uniqueHeader(base, used) {
-  let header = base || '입력값';
+  const safeBase = base || '입력값';
+  let header = safeBase;
   let index = 2;
   while (used.has(header)) {
-    header = `${base} ${index}`;
+    header = `${safeBase} ${index}`;
     index += 1;
   }
   used.add(header);
@@ -185,8 +186,8 @@ export function leadsToCsv(leads = [], options = {}) {
       item.email,
       item.address,
       item.message,
-      fieldByLabel(item, [/reservationDate|예약일|date/i]),
-      fieldByLabel(item, [/reservationTime|예약시간|time/i]),
+      fieldByLabel(item, [/reservationDate|예약일|예약날짜|방문일|date/i]),
+      fieldByLabel(item, [/reservationTime|예약시간|방문시간|time/i]),
       item.memo,
       item.duplicate ? '예' : '아니오',
       item.duplicateReason || '',
@@ -207,7 +208,7 @@ export function leadsToCsv(leads = [], options = {}) {
 
 export function downloadLeadsCsv(leads = [], page = {}, options = {}) {
   const csv = `\ufeff${leadsToCsv(leads, options)}`;
-  const slug = String(page.slug || 'my-page').replace(/[^\w\uAC00-\uD7A3-]/g, '-') || 'my-page';
+  const slug = String(page.slug || 'my-page').replace(/[^\w가-힣-]/g, '-') || 'my-page';
   const date = new Date().toISOString().slice(0, 10);
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
