@@ -102,6 +102,13 @@ export async function onRequest({ request, env, params }) {
       await authorizeProject(request, env, project, { write: true, tab: writeTab });
       const identity = await sessionIdentity(request, env);
       const incoming = body.page && typeof body.page === 'object' ? body.page : body;
+      const publicExisting = await getPublicPageBySlug(db, slug);
+      if (publicExisting.page && String(publicExisting.page.projectId || '') !== String(project.projectId || '')) {
+        const error = new Error('Page URL is already in use.');
+        error.status = 409;
+        error.details = { code: 'PAGE_SLUG_CONFLICT', slug };
+        throw error;
+      }
       const pageForSave = enforceFreeEmailAlertRecipient({ ...incoming, slug }, project, identity);
       const saved = await upsertD1Page(db, pageForSave, {
         projectId: project.projectId,

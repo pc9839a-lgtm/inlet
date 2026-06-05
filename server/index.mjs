@@ -642,6 +642,13 @@ const server = createServer(async (req, res) => {
         ? { ...incomingPage, ownership: existingPage.ownership || {} }
         : incomingPage;
       const enforcedPage = enforceFreeEmailAlertRecipient(pageToSave, project, identity);
+      const publicExisting = await readPublicPage(pageMatch[1]);
+      if (publicExisting?.projectId && hasProject(project) && String(publicExisting.projectId) !== String(project.projectId || '')) {
+        const error = new Error('Page URL is already in use.');
+        error.status = 409;
+        error.details = { code: 'PAGE_SLUG_CONFLICT', slug: safeSlug(pageMatch[1]) };
+        throw error;
+      }
       const saved = await savePage(pageMatch[1], enforcedPage, project, {
         expectedUpdatedAt: body?.expectedUpdatedAt || body?.page?.expectedUpdatedAt || body?.page?.__expectedUpdatedAt || '',
       });

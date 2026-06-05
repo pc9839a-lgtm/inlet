@@ -47,6 +47,9 @@ function runtimeApiToken() {
 
 function userFacingApiMessage(message = '', status = 0) {
   const text = String(message || '').trim();
+  if (/PAGE_SLUG_CONFLICT|Page URL is already in use/i.test(text)) {
+    return '이미 사용 중인 URL입니다. 다른 URL을 입력해주세요.';
+  }
   if (/Project owner identity is required|AUTH_SESSION_MISSING|Session is invalid|Session account was not found/i.test(text)) {
     return '로그인 세션이 없습니다. 다시 로그인한 뒤 저장해주세요.';
   }
@@ -81,6 +84,9 @@ async function readApiError(res) {
 
   try {
     const json = JSON.parse(raw);
+    if (json?.code === 'PAGE_SLUG_CONFLICT') {
+      return { message: '이미 사용 중인 URL입니다. 다른 URL을 입력해주세요.', details: json };
+    }
     const message = json?.message || json?.error?.message || json?.error || raw;
     return { message: userFacingApiMessage(message, res.status), details: json };
   } catch {

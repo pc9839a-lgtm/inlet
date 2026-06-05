@@ -57,6 +57,13 @@ await runSmoke('server-smoke-pages', async ({ baseUrl }) => {
   const firstAfterSecond = await json({ baseUrl }, 'GET', `${pagePath}?${query}`);
   assert(firstAfterSecond.res.ok && firstAfterSecond.data.page?.title === 'Smoke Page Updated', 'second page save should not overwrite the first page');
 
+  const globalSlugConflict = await json({ baseUrl }, 'POST', pagePath, {
+    project: { projectId: `${project.projectId}-other`, ownerId: 'local-user', slug: smokeId },
+    page: { ...page, id: `${smokeId}-duplicate-id`, title: 'Smoke Page Duplicate Slug' },
+  });
+  assert(globalSlugConflict.res.status === 409, `global page slug conflict expected 409, got ${globalSlugConflict.res.status}`);
+  assert(globalSlugConflict.data.code === 'PAGE_SLUG_CONFLICT', 'global page slug conflict code missing');
+
   const renamedSlug = `${smokeId}-renamed`;
   const renamedPath = `/api/pages/${encodeURIComponent(renamedSlug)}`;
   const renamed = await json({ baseUrl }, 'POST', renamedPath, {
