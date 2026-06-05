@@ -1,18 +1,54 @@
 import { assert, authHeaders, fetchWithTimeout, json, runSmoke } from './lib/serverSmokeHarness.mjs';
 
+function stablePublicStringify(value) {
+  if (Array.isArray(value)) return `[${value.map(stablePublicStringify).join(',')}]`;
+  if (value && typeof value === 'object') {
+    return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stablePublicStringify(value[key])}`).join(',')}}`;
+  }
+  return JSON.stringify(value ?? null);
+}
+
+function publicRenderFingerprint(page = {}) {
+  return stablePublicStringify({
+    title: page.title || '',
+    slug: page.slug || '',
+    theme: page.theme || {},
+    blocks: Array.isArray(page.blocks) ? page.blocks : [],
+    settings: page.settings || {},
+  });
+}
+
+async function assertPublicPageMatches(ctx, pagePath, expectedPage, message) {
+  const publicRead = await fetchWithTimeout(`${ctx.baseUrl}${pagePath}?public=1&fresh=${Date.now()}`, {}, 5000);
+  const publicData = await publicRead.json();
+  assert(publicRead.ok, `${message}: public page read failed`);
+  assert(
+    publicRenderFingerprint(publicData.page) === publicRenderFingerprint(expectedPage),
+    `${message}: public page content does not match saved page`,
+  );
+  return publicData.page;
+}
+
 await runSmoke('server-smoke-pages', async ({ baseUrl }) => {
+  const ctx = { baseUrl };
   const smokeId = `smoke-page-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const project = { projectId: `smoke-pages-${smokeId}`, slug: smokeId };
   const query = new URLSearchParams(project).toString();
   const page = {
     title: 'Smoke Page',
     slug: smokeId,
-    blocks: [{ id: 'hero', type: 'hero', visible: true, s: { title: 'Smoke', body: 'Page' } }],
+    theme: { accent: '#2563eb', bg: '#f8fafc', text: '#111827' },
+    settings: { topNavFixed: true, bottomBarFixed: true },
+    blocks: [
+      { id: 'hero', type: 'hero', visible: true, s: { title: 'Smoke', body: 'Page' } },
+      { id: 'form', type: 'form', visible: true, s: { title: '문의', submit: '접수' } },
+    ],
   };
 
   const pagePath = `/api/pages/${encodeURIComponent(smokeId)}`;
   const saved = await json({ baseUrl }, 'POST', pagePath, { project, page });
   assert(saved.res.ok && saved.data.page?.slug === smokeId, 'page save failed');
+  await assertPublicPageMatches(ctx, pagePath, saved.data.page, 'initial page save');
 
   const emailLocked = await fetchWithTimeout(`${baseUrl}${pagePath}`, {
     method: 'POST',
@@ -41,9 +77,19 @@ await runSmoke('server-smoke-pages', async ({ baseUrl }) => {
 
   const updated = await json({ baseUrl }, 'POST', pagePath, {
     project,
-    page: { ...page, title: 'Smoke Page Updated' },
+    page: {
+      ...page,
+      title: 'Smoke Page Updated',
+      theme: { ...page.theme, accent: '#f97316' },
+      blocks: page.blocks.map((block) => (
+        block.id === 'hero'
+          ? { ...block, s: { ...block.s, title: 'Smoke Updated', body: 'Updated public page' } }
+          : block
+      )),
+    },
   });
   assert(updated.res.ok && updated.data.page?.title === 'Smoke Page Updated', 'page update failed');
+  await assertPublicPageMatches(ctx, pagePath, updated.data.page, 'page update save');
 
   const secondSlug = `${smokeId}-second`;
   const secondPath = `/api/pages/${encodeURIComponent(secondSlug)}`;
@@ -79,9 +125,8 @@ await runSmoke('server-smoke-pages', async ({ baseUrl }) => {
   });
   assert(guarded.res.ok && guarded.data.page?.title === 'Smoke Page Guarded', 'page guarded update failed');
 
-  const publicRead = await fetchWithTimeout(`${baseUrl}${renamedPath}?public=1`, {}, 5000);
-  const publicData = await publicRead.json();
-  assert(publicRead.ok && publicData.page?.title === 'Smoke Page Guarded', 'public page read should not require auth headers');
+  const publicPage = await assertPublicPageMatches(ctx, renamedPath, guarded.data.page, 'guarded page save');
+  assert(publicPage?.title === 'Smoke Page Guarded', 'public page read should not require auth headers');
 
   const renamedQuery = new URLSearchParams({ ...project, slug: renamedSlug }).toString();
   const conflict = await json({ baseUrl }, 'POST', renamedPath, {

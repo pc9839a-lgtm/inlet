@@ -140,6 +140,7 @@ const leadModel = await readFile('src/lib/leadModel.js', 'utf8');
 const statsMetrics = await readFile('src/lib/statsMetrics.js', 'utf8');
 const utilityBlocks = await readFile('src/preview/renderers/UtilityBlocks.jsx', 'utf8');
 const builderFeedback = await readFile('src/builder/BuilderFeedback.jsx', 'utf8');
+const conflictUtils = await readFile('src/builder/conflictUtils.js', 'utf8');
 const editorControls = await readFile('src/editor/controls.jsx', 'utf8');
 const richField = await readFile('src/editor/RichField.jsx', 'utf8');
 const previewUtils = await readFile('src/preview/renderers/previewUtils.jsx', 'utf8');
@@ -210,6 +211,7 @@ assert(utilityBlocks.includes("return typeof cleanup === 'function' ? cleanup : 
 assert(builderFeedback.includes('role="dialog"') && builderFeedback.includes('aria-modal="true"'), 'modals must keep dialog semantics');
 assert(builderFeedback.includes("event.key === 'Escape'") && builderFeedback.includes("querySelector?.('button"), 'modals must keep Escape close and initial focus behavior');
 assert(builderFeedback.includes('aria-label="닫기"'), 'icon close buttons must keep accessible names');
+assert(conflictUtils.includes("'PAGE_PUBLIC_VERIFY_FAILED'") && conflictUtils.includes("'PAGE_SLUG_CONFLICT'") && conflictUtils.includes("code === 'PAGE_REVISION_CONFLICT'"), 'Page conflict handling must not treat public verification or URL conflicts as revision conflicts');
 assert(editorControls.includes('aria-label={`${label} 수정`}') && editorControls.includes('aria-label={`${label} 삭제`}') && editorControls.includes('aria-label={`${label} 업로드`}'), 'image icon buttons must keep accessible names');
 assert(editorControls.includes('aria-label={`${label} 색상 추출`}') && stylePanel.includes('aria-label={`${label} 색상 추출`}'), 'eyedropper icon buttons must keep accessible names');
 
