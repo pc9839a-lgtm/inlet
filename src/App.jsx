@@ -166,6 +166,22 @@ function replaceWithFreshRuntime() {
   window.location.replace(url.toString());
 }
 
+function resetChunkReloadAttempts() {
+  if (typeof window === 'undefined') return;
+  try {
+    Object.keys(window.sessionStorage || {})
+      .filter((key) => key.startsWith(`${CHUNK_RELOAD_KEY}:`))
+      .forEach((key) => window.sessionStorage.removeItem(key));
+  } catch {}
+}
+
+function forceFreshRuntime() {
+  resetChunkReloadAttempts();
+  clearBrowserRuntimeCaches().finally(() => {
+    replaceWithFreshRuntime();
+  });
+}
+
 function chunkReloadScope() {
   if (typeof window === 'undefined') return '';
   const url = new URL(window.location.href);
@@ -224,7 +240,7 @@ class LazyChunkBoundary extends Component {
             <h2>최신 화면으로 이동합니다.</h2>
             <p>배포 후 남은 캐시를 정리했습니다.</p>
           </div>
-          <button type="button" className="save-connection-btn" onClick={replaceWithFreshRuntime}>최신 화면 열기</button>
+          <button type="button" className="save-connection-btn" onClick={forceFreshRuntime}>최신 화면 열기</button>
         </section>
       );
     }
