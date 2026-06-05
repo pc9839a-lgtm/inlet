@@ -142,7 +142,8 @@ const Dashboard = lazy(() => import('./screens/HomeScreens.jsx').then((module) =
 const PublicHome = lazy(() => import('./screens/HomeScreens.jsx').then((module) => ({ default: module.PublicHome })));
 const StartModeOverlay = lazy(() => import('./screens/HomeScreens.jsx').then((module) => ({ default: module.StartModeOverlay })));
 const INBOX_PAGE_SIZE = 10;
-const CHUNK_RELOAD_KEY = 'inlet-chunk-reload-v2';
+const CHUNK_RELOAD_KEY = 'inlet-chunk-reload-v3';
+const CHUNK_RELOAD_LIMIT = 3;
 
 function isLazyChunkLoadError(error) {
   const message = String(error?.message || error || '');
@@ -158,18 +159,24 @@ async function clearBrowserRuntimeCaches() {
   }
 }
 
+function replaceWithFreshRuntime() {
+  if (typeof window === 'undefined') return;
+  const url = new URL(window.location.href);
+  url.searchParams.set('__fresh', String(Date.now()));
+  window.location.replace(url.toString());
+}
+
 function recoverLazyChunkLoad(error) {
   if (!isLazyChunkLoadError(error)) return false;
   if (typeof window === 'undefined') return false;
   const reloadKey = `${CHUNK_RELOAD_KEY}:${window.location.pathname}${window.location.search}`;
-  if (window.sessionStorage?.getItem(reloadKey) === '1') return false;
+  const attempts = Number(window.sessionStorage?.getItem(reloadKey) || 0);
+  if (attempts >= CHUNK_RELOAD_LIMIT) return false;
   try {
-    window.sessionStorage?.setItem(reloadKey, '1');
+    window.sessionStorage?.setItem(reloadKey, String(attempts + 1));
   } catch {}
   clearBrowserRuntimeCaches().finally(() => {
-    const url = new URL(window.location.href);
-    url.searchParams.set('__fresh', String(Date.now()));
-    window.location.replace(url.toString());
+    replaceWithFreshRuntime();
   });
   return true;
 }
@@ -207,10 +214,10 @@ class LazyChunkBoundary extends Component {
       return (
         <section className="card">
           <div className="section-title">
-            <h2>화면을 다시 불러와야 합니다.</h2>
-            <p>배포 후 남은 캐시를 정리했습니다. 다시 열기를 눌러 최신 화면으로 이동하세요.</p>
+            <h2>최신 화면으로 이동합니다.</h2>
+            <p>배포 후 남은 캐시를 정리했습니다.</p>
           </div>
-          <button type="button" className="save-connection-btn" onClick={() => window.location.reload()}>다시 열기</button>
+          <button type="button" className="save-connection-btn" onClick={replaceWithFreshRuntime}>최신 화면 열기</button>
         </section>
       );
     }
