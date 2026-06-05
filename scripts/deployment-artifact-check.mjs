@@ -44,6 +44,10 @@ async function collectReferencedAssets() {
   const indexPath = path.join(targetDir, 'index.html');
 
   assert(await exists(indexPath), `deployment artifact missing index.html: ${targetDir}`);
+  const redirectsPath = path.join(targetDir, '_redirects');
+  assert(await exists(redirectsPath), `deployment artifact missing SPA fallback _redirects: ${targetDir}`);
+  const redirects = await readFile(redirectsPath, 'utf8');
+  assert(/^\s*\/\*\s+\/index\.html\s+200\s*$/m.test(redirects), 'deployment artifact must route direct landing URLs to index.html');
   const html = await readFile(indexPath, 'utf8');
 
   for (const match of html.matchAll(/(?:src|href)=["']([^"']+\.(?:js|css)(?:[?#][^"']*)?)["']/g)) {
