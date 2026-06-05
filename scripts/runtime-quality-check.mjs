@@ -163,6 +163,9 @@ assert(app.includes("const AdminPanel = lazy(() => import('./panels/AdminPanel.j
 assert(app.includes("const TemplatesPanel = lazy(() => import('./panels/TemplatesPanel'))"), 'TemplatesPanel must stay lazy-loaded');
 assert(app.includes("await import('./templates/landingTemplates')") || app.includes("await import('./templates/landingTemplates.js')"), 'landing templates must stay dynamically imported');
 assert(!/import\s+\{?\s*LANDING_TEMPLATES\b/.test(app), 'landing templates must not be statically imported');
+assert(app.includes('const authForTargetPage = (targetPage = {})') && app.includes('publicLandingSlug && targetPage?.projectId ? null : authUser'), 'public landing lead/event writes must not use the signed-in builder project context');
+assert(app.includes('persistEvent(event, targetPage, authForTargetPage(targetPage))'), 'public landing event writes should use the target page project context');
+assert(app.includes('const targetAuthUser = authForTargetPage(targetPage)') && app.includes('persistLead(savedLead, targetPage, targetAuthUser)'), 'public landing lead writes should use the target page project context');
 assert(!/import\s+(?:InboxPanel|StatsPanel|StylePanel|SettingsPanel|TemplatesPanel|AdminPanel|AiPanel)\b/.test(app), 'heavy panels and AI panel must not be statically imported into App');
 assert(!/import\s+(?:\{[^}]*Editor[^}]*\}|[A-Z][A-Za-z]+Editor)\s+from\s+['"]\.\/editor\/blockEditors\//.test(app), 'block editors must not be statically imported into App');
 assert(app.includes('function LazyEditorFallback()') && app.includes('class LazyEditorBoundary extends Component'), 'fixed block editor controls must keep lazy fallback and error boundary');

@@ -1081,6 +1081,9 @@ function App() {
       return { ...p, blocks: ensureUniqueAnchors([...nextNormal, ...fixed]) };
     });
   };
+  const authForTargetPage = (targetPage = {}) => (
+    publicLandingSlug && targetPage?.projectId ? null : authUser
+  );
   const trackForPage = (targetPage, ev) => {
     const traffic = currentTrafficAttribution();
     const event = {
@@ -1098,7 +1101,7 @@ function App() {
     createdAt: new Date().toISOString(),
     };
     setEvents((list) => [event, ...list].slice(0, 1000));
-    persistEvent(event, targetPage, authUser).catch((error) => {
+    persistEvent(event, targetPage, authForTargetPage(targetPage)).catch((error) => {
       console.warn('Server event save failed:', error);
     });
   };
@@ -1118,9 +1121,9 @@ function App() {
       ? deliverServerLead(lead, page, authUser)
       : sendLeadIntegrations(lead, page)
   );
-  const runLeadDeliveryForPage = (lead, targetPage) => (
+  const runLeadDeliveryForPage = (lead, targetPage, targetAuthUser = authUser) => (
     isServerLeadMode()
-      ? deliverServerLead(lead, targetPage, authUser)
+      ? deliverServerLead(lead, targetPage, targetAuthUser)
       : sendLeadIntegrations(lead, targetPage)
   );
   const upsertVisibleLead = (nextLead) => {
@@ -1152,7 +1155,8 @@ function App() {
     setLeadPageMeta((meta) => ({ ...meta, total: Number(meta.total || 0) + 1 }));
     trackForPage(targetPage, { type: isReservationLead(savedLead) ? 'reservation_submit' : 'form_submit', label: savedLead.type });
 
-    const savePromise = persistLead(savedLead, targetPage, authUser)
+    const targetAuthUser = authForTargetPage(targetPage);
+    const savePromise = persistLead(savedLead, targetPage, targetAuthUser)
       .then((persistedLead) => {
         const leadForDelivery = normalizeLeadItem({ ...savedLead, ...(persistedLead || {}) });
         const leadIds = [savedLead.id, leadForDelivery.id].filter(Boolean).map(String);
@@ -1160,7 +1164,7 @@ function App() {
         if (isServerLeadMode() && persistedLead?.delivery) {
           return { report: persistedLead.delivery, leadIds, lead: leadForDelivery };
         }
-        return runLeadDeliveryForPage(leadForDelivery, targetPage).then((report) => ({ report, leadIds, lead: leadForDelivery })).catch((error) => {
+        return runLeadDeliveryForPage(leadForDelivery, targetPage, targetAuthUser).then((report) => ({ report, leadIds, lead: leadForDelivery })).catch((error) => {
           console.warn('Lead delivery failed after save:', error);
           return {
             report: {
