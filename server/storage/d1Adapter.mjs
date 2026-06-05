@@ -826,7 +826,7 @@ export async function getD1PageBySlug(db, { projectId, slug } = {}) {
 
 export async function getD1PublicPageBySlug(db, { slug } = {}) {
   assertD1Binding(db);
-  const row = await db.prepare('SELECT * FROM pages WHERE slug = ? ORDER BY updated_at DESC LIMIT 1').bind(String(slug || '')).first();
+  const row = await db.prepare('SELECT * FROM pages WHERE slug = ? ORDER BY updated_at DESC, revision DESC, id DESC LIMIT 1').bind(String(slug || '')).first();
   return row ? decodeD1Page(row) : null;
 }
 
@@ -850,10 +850,13 @@ export async function upsertD1Page(db, page = {}, context = {}) {
     ? { ...page, id: '' }
     : page;
   const nextRevision = Math.max(1, Number(current?.revision || 0) + 1);
+  const savedAt = new Date().toISOString();
   const row = encodeD1Page({
     ...pageForRow,
     id: current?.id || context.pageId || '',
     createdAt: current?.created_at || pageForRow.createdAt,
+    publishedAt: pageForRow.publishedAt || pageForRow.published_at || savedAt,
+    updatedAt: savedAt,
   }, { ...context, slug: safeSlug, revision: nextRevision });
   if (current?.id) {
     await db.prepare(`

@@ -59,7 +59,7 @@ async function getPublicPageBySlug(db, slug) {
     LEFT JOIN projects ON projects.id = pages.project_id
     WHERE pages.slug = ?
       AND COALESCE(projects.status, 'active') <> 'archived'
-    ORDER BY pages.updated_at DESC, projects.updated_at DESC
+    ORDER BY pages.updated_at DESC, pages.revision DESC, projects.updated_at DESC, pages.id DESC
     LIMIT 1
   `).bind(slug).first();
   if (!row) return { page: null, project: null };

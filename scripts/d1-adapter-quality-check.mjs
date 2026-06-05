@@ -36,6 +36,7 @@ import {
   getD1LatestPageByProject,
   getD1PageBySlug,
   getD1PageRevision,
+  getD1PublicPageBySlug,
   getD1ProjectAccess,
   getD1ProjectById,
   getD1ProjectBySlug,
@@ -717,6 +718,18 @@ function fakeD1(options = {}) {
             const [projectId, slug] = this.params;
             return rows.pages.find((row) => row.project_id === projectId && row.slug === slug) || null;
           }
+          if (sql.includes('SELECT * FROM pages WHERE slug = ? ORDER BY updated_at DESC')) {
+            const [slug] = this.params;
+            return rows.pages
+              .filter((row) => row.slug === slug)
+              .sort((a, b) => {
+                const updated = String(b.updated_at || '').localeCompare(String(a.updated_at || ''));
+                if (updated) return updated;
+                const revision = Number(b.revision || 0) - Number(a.revision || 0);
+                if (revision) return revision;
+                return String(b.id || '').localeCompare(String(a.id || ''));
+              })[0] || null;
+          }
           if (sql.includes('SELECT * FROM pages WHERE project_id = ? ORDER BY updated_at DESC LIMIT 1')) {
             const [projectId] = this.params;
             return rows.pages.filter((row) => row.project_id === projectId).sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')))[0] || null;
@@ -1005,6 +1018,11 @@ assert(copiedPage?.id && copiedPage.id !== encodedPage.id && copiedPage.title ==
 await upsertD1Page(db, { ...copiedPage, id: 'stale-client-page-id', title: 'Other Project Copy Saved Again' }, { projectId: 'project-2', slug: 'landing-copy' });
 const copiedPageSavedAgain = await getD1PageBySlug(db, { projectId: 'project-2', slug: 'landing-copy' });
 assert(db.rows.pages.filter((row) => row.project_id === 'project-2' && row.slug === 'landing-copy').length === 1 && copiedPageSavedAgain?.title === 'Other Project Copy Saved Again', 'D1 page upsert should absorb duplicate project slug saves with stale page ids');
+await upsertD1Page(db, { ...decodeD1Page(encodedPage), id: '', slug: 'shared-public', title: 'Older Public Slug', updatedAt: '2020-01-01T00:00:00.000Z' }, { projectId: 'project-public-old', slug: 'shared-public' });
+const publicSlugWinner = await upsertD1Page(db, { ...decodeD1Page(encodedPage), id: '', slug: 'shared-public', title: 'Latest Public Slug', updatedAt: '2020-01-01T00:00:00.000Z' }, { projectId: 'project-public-new', slug: 'shared-public' });
+const publicBySlug = await getD1PublicPageBySlug(db, { slug: 'shared-public' });
+assert(publicBySlug?.projectId === publicSlugWinner.projectId && publicBySlug?.title === 'Latest Public Slug', 'D1 public page lookup should return the last server-saved page for a shared slug');
+assert(publicSlugWinner.updatedAt && publicSlugWinner.updatedAt !== '2020-01-01T00:00:00.000Z', 'D1 page save should stamp server updatedAt instead of reusing stale client timestamps');
 const pageBySlug = await getD1PageBySlug(db, { projectId: 'project-1', slug: 'landing' });
 const pageRevisions = await listD1PageRevisions(db, { projectId: 'project-1', slug: 'landing' });
 const oneRevision = await getD1PageRevision(db, { projectId: 'project-1', slug: 'landing', id: pageRevisions[0]?.id });
