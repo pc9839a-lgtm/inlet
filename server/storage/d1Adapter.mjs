@@ -855,36 +855,53 @@ export async function upsertD1Page(db, page = {}, context = {}) {
     id: current?.id || context.pageId || '',
     createdAt: current?.created_at || pageForRow.createdAt,
   }, { ...context, slug: safeSlug, revision: nextRevision });
-  await db.prepare(`
-    INSERT INTO pages (
-      id, project_id, slug, title, page_json, revision, published_at, created_at, updated_at
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(id) DO UPDATE SET
-      project_id = excluded.project_id,
-      slug = excluded.slug,
-      title = excluded.title,
-      page_json = excluded.page_json,
-      revision = excluded.revision,
-      published_at = excluded.published_at,
-      updated_at = excluded.updated_at
-    ON CONFLICT(project_id, slug) DO UPDATE SET
-      title = excluded.title,
-      page_json = excluded.page_json,
-      revision = excluded.revision,
-      published_at = excluded.published_at,
-      updated_at = excluded.updated_at
-  `).bind(
-    row.id,
-    row.project_id,
-    row.slug,
-    row.title,
-    row.page_json,
-    row.revision,
-    row.published_at,
-    row.created_at,
-    row.updated_at,
-  ).run();
+  if (current?.id) {
+    await db.prepare(`
+      UPDATE pages
+      SET project_id = ?, slug = ?, title = ?, page_json = ?, revision = ?, published_at = ?, updated_at = ?
+      WHERE id = ?
+    `).bind(
+      row.project_id,
+      row.slug,
+      row.title,
+      row.page_json,
+      row.revision,
+      row.published_at,
+      row.updated_at,
+      row.id,
+    ).run();
+  } else {
+    await db.prepare(`
+      INSERT INTO pages (
+        id, project_id, slug, title, page_json, revision, published_at, created_at, updated_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        project_id = excluded.project_id,
+        slug = excluded.slug,
+        title = excluded.title,
+        page_json = excluded.page_json,
+        revision = excluded.revision,
+        published_at = excluded.published_at,
+        updated_at = excluded.updated_at
+      ON CONFLICT(project_id, slug) DO UPDATE SET
+        title = excluded.title,
+        page_json = excluded.page_json,
+        revision = excluded.revision,
+        published_at = excluded.published_at,
+        updated_at = excluded.updated_at
+    `).bind(
+      row.id,
+      row.project_id,
+      row.slug,
+      row.title,
+      row.page_json,
+      row.revision,
+      row.published_at,
+      row.created_at,
+      row.updated_at,
+    ).run();
+  }
   await insertD1PageRevision(db, { page: decodeD1Page(row), reason: context.reason || page.revisionReason || '' }, {
     pageId: row.id,
     projectId: row.project_id,

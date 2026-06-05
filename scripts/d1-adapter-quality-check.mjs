@@ -214,6 +214,32 @@ function fakeD1(options = {}) {
             else rows.ownership_transfer_requests.push(next);
             return { success: true };
           }
+          if (sql.includes('UPDATE pages')) {
+            const [
+              project_id,
+              slug,
+              title,
+              page_json,
+              revision,
+              published_at,
+              updated_at,
+              id,
+            ] = this.params;
+            const index = rows.pages.findIndex((row) => row.id === id);
+            if (index >= 0) {
+              rows.pages[index] = {
+                ...rows.pages[index],
+                project_id,
+                slug,
+                title,
+                page_json,
+                revision,
+                published_at,
+                updated_at,
+              };
+            }
+            return { success: true, meta: { changes: index >= 0 ? 1 : 0 } };
+          }
           if (sql.includes('INSERT INTO pages')) {
             const [
               id,
