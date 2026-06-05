@@ -355,6 +355,7 @@ const server = createServer(async (req, res) => {
 
     if (req.method === 'POST' && url.pathname === '/api/leads') {
       const body = await readJson(req);
+      await normalizePublicLeadPageContext(body);
       body.project = await authorizeProjectAccess(req, body?.project || {}, { write: true, bootstrap: true, page: body?.page || {}, tab: 'inbox', publicSubmit: true });
       body.requestMeta = requestMetaFrom(req);
       let saved = await saveLead(body);
@@ -2074,6 +2075,39 @@ async function saveLead(body = {}) {
     }
     return saved;
   });
+}
+
+async function normalizePublicLeadPageContext(body = {}) {
+  const inputPage = body.page && typeof body.page === 'object' ? body.page : {};
+  const inputProject = hasProject(body.project) ? normalizeProject(body.project) : {};
+  const slug = safeSlug(inputPage.slug || body.lead?.pageSlug || inputProject.slug || '');
+  if (!slug) return body;
+
+  const publicPage = await readPublicPage(slug);
+  if (!publicPage?.projectId) {
+    body.page = { ...inputPage, slug };
+    body.project = { ...inputProject, slug: inputProject.slug || slug };
+    return body;
+  }
+
+  body.project = normalizeProject({
+    ...inputProject,
+    projectId: publicPage.projectId,
+    id: publicPage.projectId,
+    slug: publicPage.slug || slug,
+    title: publicPage.title || inputProject.title || '',
+  });
+  body.page = {
+    ...inputPage,
+    projectId: publicPage.projectId,
+    id: publicPage.id || inputPage.id || '',
+    slug: publicPage.slug || slug,
+    title: inputPage.title || publicPage.title || '',
+    integrations: publicPage.integrations || inputPage.integrations || {},
+    leadDuplicateSettings: publicPage.leadDuplicateSettings || inputPage.leadDuplicateSettings || {},
+    duplicateCollectionSettings: publicPage.duplicateCollectionSettings || inputPage.duplicateCollectionSettings || {},
+  };
+  return body;
 }
 
 async function deliverSavedLeadAfterSave(saved = {}, body = {}) {

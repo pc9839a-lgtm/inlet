@@ -64,6 +64,43 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
   assert(emailAlertLead.data.delivery?.status === 'success', `email alert delivery expected success: ${JSON.stringify(emailAlertLead.data.delivery)}`);
   assert(emailAlertLead.data.delivery?.logs?.some((log) => log.provider === 'ses' && log.status === 'success'), 'email alert lead should send through SES delivery provider');
 
+  const publicEmailProject = { projectId: 'smoke-leads-public-email-owner', slug: 'smoke-public-email' };
+  const publicEmailPage = {
+    title: 'Smoke Public Email Alerts',
+    slug: publicEmailProject.slug,
+    integrations: {
+      email: {
+        enabled: true,
+        to: 'public-owner@example.test',
+        consult: true,
+        reservation: true,
+      },
+    },
+  };
+  const savedPublicEmailPage = await json({ baseUrl }, 'POST', `/api/pages/${encodeURIComponent(publicEmailProject.slug)}`, {
+    project: publicEmailProject,
+    page: publicEmailPage,
+  });
+  assert(savedPublicEmailPage.res.ok, 'public email alert page save failed');
+  const stalePublicLead = await json({ baseUrl }, 'POST', '/api/leads', {
+    project: { projectId: 'stale-public-project-id', slug: publicEmailProject.slug },
+    page: { slug: publicEmailProject.slug },
+    lead: {
+      id: 'lead-public-stale-project',
+      type: 'consult',
+      status: 'new',
+      name: 'Public Stale Project Lead',
+      phone: '010-0000-1101',
+      createdAt: '2026-05-24T05:10:00.000Z',
+    },
+  });
+  assert(stalePublicLead.res.ok, 'public lead with stale project id should save');
+  assert(stalePublicLead.data.delivery?.logs?.some((log) => log.provider === 'ses' && log.status === 'success'), 'public lead should use stored slug page email settings');
+  const publicOwnerLeads = await json({ baseUrl }, 'GET', `/api/leads?projectId=${encodeURIComponent(publicEmailProject.projectId)}&slug=${encodeURIComponent(publicEmailProject.slug)}&month=2026-05&limit=10`);
+  assert(publicOwnerLeads.data.leads?.some((lead) => lead.id === 'lead-public-stale-project'), 'public lead should be stored under slug-owned project id');
+  const staleProjectLeads = await json({ baseUrl }, 'GET', `/api/leads?projectId=stale-public-project-id&slug=${encodeURIComponent(publicEmailProject.slug)}&month=2026-05&limit=10`);
+  assert(staleProjectLeads.data.total === 0, 'public lead must not remain under stale payload project id');
+
   const attributedLead = await json({ baseUrl }, 'POST', '/api/leads', {
     project,
     page: { ...page, url: 'https://pagero.kr/smoke-leads' },

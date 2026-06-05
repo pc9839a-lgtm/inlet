@@ -1,4 +1,4 @@
-import { findD1LeadsByIntakeSignals, getD1LatestPageByProject, getD1PageBySlug, insertD1BlockedLeadSubmission, listD1Leads, upsertD1Lead } from '../../server/storage/d1Adapter.mjs';
+import { findD1LeadsByIntakeSignals, getD1LatestPageByProject, getD1PageBySlug, getD1PublicPageBySlug, insertD1BlockedLeadSubmission, listD1Leads, upsertD1Lead } from '../../server/storage/d1Adapter.mjs';
 import { deliveryReport, normalizeDeliveryPage, sendLeadDelivery } from './leads/_delivery.js';
 import { assertD1, authorizeProject, ensureD1ProjectShell, handleApiError, jsonResponse, monthFromRequest, optionsResponse, projectFromRequest, publicProjectShell, readJson } from './_shared.js';
 
@@ -23,7 +23,11 @@ export async function onRequest({ request, env }) {
 
     if (request.method === 'POST') {
       const body = await readJson(request);
-      const project = projectFromRequest(url, body, request);
+      const initialProject = projectFromRequest(url, body, request);
+      const publicContext = await publicLeadPageContext(db, body, initialProject);
+      const project = publicContext.project;
+      body.page = publicContext.page;
+      body.project = project;
       await authorizeProject(request, env, project, { publicWrite: true });
       await ensureD1ProjectShell(db, publicProjectShell(project));
       const lead = normalizePublicLeadPayload(
@@ -159,6 +163,45 @@ async function handlePublicPostError(request, env, error) {
   const headers = new Headers(response.headers);
   for (const [key, value] of Object.entries(PUBLIC_POST_HEADERS)) headers.set(key, value);
   return new Response(response.body, { status: response.status, headers });
+}
+
+async function publicLeadPageContext(db, body = {}, project = {}) {
+  const inputPage = body.page && typeof body.page === 'object' ? body.page : {};
+  const inputSlug = String(inputPage.slug || body.lead?.pageSlug || project.slug || '').replace(/[^a-zA-Z0-9-_]/g, '');
+  if (!inputSlug) {
+    return {
+      project,
+      page: inputPage,
+    };
+  }
+
+  const publicPage = await getD1PublicPageBySlug(db, { slug: inputSlug });
+  if (!publicPage?.projectId) {
+    return {
+      project: { ...project, slug: project.slug || inputSlug },
+      page: { ...inputPage, slug: inputSlug },
+    };
+  }
+
+  return {
+    project: {
+      ...project,
+      projectId: publicPage.projectId,
+      id: publicPage.projectId,
+      slug: publicPage.slug || inputSlug,
+      title: publicPage.title || project.title || '',
+    },
+    page: {
+      ...inputPage,
+      projectId: publicPage.projectId,
+      id: publicPage.id || inputPage.id || '',
+      slug: publicPage.slug || inputSlug,
+      title: inputPage.title || publicPage.title || '',
+      integrations: publicPage.integrations || inputPage.integrations || {},
+      leadDuplicateSettings: publicPage.leadDuplicateSettings || inputPage.leadDuplicateSettings || {},
+      duplicateCollectionSettings: publicPage.duplicateCollectionSettings || inputPage.duplicateCollectionSettings || {},
+    },
+  };
 }
 
 async function sendSavedLeadDelivery(db, lead = {}, inputPage = {}, project = {}, env = {}) {

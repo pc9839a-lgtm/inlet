@@ -186,6 +186,9 @@ for (const token of [
   "INLET_STORAGE_ADAPTER: env.INLET_STORAGE_ADAPTER || 'd1'",
   'INLET_SESSION_SECRET',
   'Access-Control-Allow-Origin',
+  'Access key ID',
+  'Secret access key',
+  'INLET_LEAD_EMAIL_FROM',
 ]) {
   assert(health.includes(token), `Pages health function missing ${token}`);
 }
@@ -217,7 +220,7 @@ for (const token of [
 }
 
 for (const [name, source, tokens] of [
-  ['leads', leads, ['upsertD1Lead', 'listD1Leads', 'findD1LeadsByIntakeSignals', 'insertD1BlockedLeadSubmission', 'publicWrite: true', 'publicProjectShell(project)', "tab: 'inbox'", 'getD1PageBySlug', 'getD1LatestPageByProject', 'storedPage = await getD1LatestPageByProject', 'normalizeDeliveryPage(inputPage, storedPage || {}, project)', 'const delivery = await sendSavedLeadDelivery', 'deliveryStatus: delivery.status', 'delivery: saved.delivery || delivery', 'LEAD_RATE_LIMITED', 'PUBLIC_POST_HEADERS', "'Access-Control-Allow-Origin': '*'", 'handlePublicPostError', 'trafficAttributionFromSourceUrl', 'utm_source', 'meta: { source:', '중복 접수 정책', '접수는 저장됐지만 알림 전송에 실패했습니다.']],
+  ['leads', leads, ['upsertD1Lead', 'listD1Leads', 'findD1LeadsByIntakeSignals', 'insertD1BlockedLeadSubmission', 'publicWrite: true', 'publicProjectShell(project)', "tab: 'inbox'", 'getD1PageBySlug', 'getD1LatestPageByProject', 'getD1PublicPageBySlug', 'publicLeadPageContext', 'body.project = project', 'storedPage = await getD1LatestPageByProject', 'normalizeDeliveryPage(inputPage, storedPage || {}, project)', 'const delivery = await sendSavedLeadDelivery', 'deliveryStatus: delivery.status', 'delivery: saved.delivery || delivery', 'LEAD_RATE_LIMITED', 'PUBLIC_POST_HEADERS', "'Access-Control-Allow-Origin': '*'", 'handlePublicPostError', 'trafficAttributionFromSourceUrl', 'utm_source', 'meta: { source:', '중복 접수 정책', '접수는 저장됐지만 알림 전송에 실패했습니다.']],
   ['lead csv', leadCsv, ['listD1Leads', 'month is required for CSV export.', 'text/csv; charset=utf-8', "Content-Disposition", 'csvCell', "tab: 'inbox'", "'Referrer'", "'\\uC720\\uC785 \\uCC44\\uB110'", 'source.sourceUrl || source.url || source.pageUrl', 'source.utm_source', "return cleanFieldLabel(label) || '\\uC785\\uB825\\uAC12'", "'\\uC774\\uB984'"]],
   ['blocked history', blockedHistory, ['listD1BlockedLeadSubmissions', 'pageSlug', "source: 'd1'", "tab: 'inbox'"]],
   ['delivery logs', deliveryLogs, ['listD1DeliveryLogs', "type: 'delivery-logs'", "adapter: 'd1'", "tab: 'inbox'"]],
