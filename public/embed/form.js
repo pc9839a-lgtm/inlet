@@ -263,12 +263,19 @@
       });
   }
 
+  function embedLoadError(code, message) {
+    var error = new Error(message || code);
+    error.code = code;
+    return error;
+  }
+
   function fetchPublicFormConfig(slug, formId, projectId) {
     return fetchPublicPage(slug, projectId)
       .then(function (data) {
         var page = data && data.page ? data.page : null;
+        if (!page) throw embedLoadError('PAGE_NOT_FOUND', 'public page not found');
         var block = findFormBlock(page, formId);
-        if (!page || !block) throw new Error('form not found');
+        if (!block) throw embedLoadError('FORM_NOT_FOUND', 'form block not found');
         return normalizeFormConfig(block, page);
       });
   }
@@ -412,7 +419,8 @@
     target.textContent = '\uC785\uB825\uD3FC\uC744 \uBD88\uB7EC\uC624\uB294 \uC911\uC785\uB2C8\uB2E4.';
     configFromScript(script).then(function (config) {
       render(target, config);
-    }).catch(function () {
+    }).catch(function (error) {
+      console.warn('Pagero form embed failed:', error && (error.code || error.message || error));
       target.textContent = '\uD398\uC774\uC9C0\uB85C \uC785\uB825\uD3FC\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.';
     });
   }
@@ -423,7 +431,8 @@
     el.textContent = '\uC785\uB825\uD3FC\uC744 \uBD88\uB7EC\uC624\uB294 \uC911\uC785\uB2C8\uB2E4.';
     configFromElement(el).then(function (config) {
       render(el, config);
-    }).catch(function () {
+    }).catch(function (error) {
+      console.warn('Pagero form embed failed:', error && (error.code || error.message || error));
       el.textContent = '\uD398\uC774\uC9C0\uB85C \uC785\uB825\uD3FC\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.';
     });
   }
@@ -441,4 +450,3 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAll);
   else initAll();
 }());
-
