@@ -423,6 +423,13 @@ function InboxConnectionsPanel({ page, authUser = null, updateIntegrations, onSa
       if ((current.email?.to || '') === (next.email?.to || '') && current.email?.lockedToAccount === true) return current;
       return next;
     });
+    const enforced = enforceFreeEmailIntegration(integrations, page, authUser);
+    if (
+      enforced.email?.to
+      && ((integrations.email?.to || '') !== enforced.email.to || integrations.email?.lockedToAccount !== true)
+    ) {
+      updateIntegrations?.('email', enforced.email);
+    }
   }, [emailLocked, accountEmail, page.slug]);
 
   const draftPatch = (section, value) => {
