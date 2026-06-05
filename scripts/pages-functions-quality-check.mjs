@@ -15,6 +15,7 @@ function assert(condition, message) {
 const health = await readFile('functions/api/health.js', 'utf8');
 const shared = await readFile('functions/api/_shared.js', 'utf8');
 const leads = await readFile('functions/api/leads.js', 'utf8');
+const leadDelivery = await readFile('functions/api/leads/_delivery.js', 'utf8');
 const leadCsv = await readFile('functions/api/leads/export.csv.js', 'utf8');
 const blockedHistory = await readFile('functions/api/leads/blocked-history.js', 'utf8');
 const deliveryLogs = await readFile('functions/api/leads/delivery-logs.js', 'utf8');
@@ -117,6 +118,9 @@ assert(externalDeliveryJobs.some((job) => job.payload?.target === 'google_sheets
 assert(externalDeliveryJobs.some((job) => job.payload?.target === 'google_sheets' && job.payload?.spreadsheetId === 'sheet-pages' && job.payload?.connectedEmail === 'owner@example.test' && job.payload?.integration?.status === 'connected'), 'Pages delivery should keep Google Sheets OAuth-ready metadata');
 assert(externalDeliveryJobs.some((job) => job.payload?.target === 'google_sheets' && job.payload?.lead?.fields && job.payload?.page?.slug === 'external-payload' && job.payload?.project && job.payload?.source), 'Pages delivery should prepare Google Sheets structured payload');
 assert(externalDeliveryJobs.some((job) => job.payload?.target === 'google_sheets' && job.payload?.lead?.fields?.['관심 타입'] === '84A' && job.payload?.lead?.fields?.['예산대'] === '5억~7억' && !job.payload?.lead?.fields?.['이름']), 'Pages delivery should keep custom form fields as sheet columns without duplicating base fields');
+assert(googleSheetsOauth.includes("input.sheetName || '접수함'") && googleSheetsOauth.includes("String(sheetName || '접수함').trim() || '접수함'"), 'Google Sheets OAuth should create and append to the Korean default sheet tab');
+assert(googleSheetsCallback.includes("const sheetName = '접수함'") && googleSheetsCallback.includes('Pagero 접수함'), 'Google Sheets OAuth callback should create Korean-named sheets by default');
+assert(googleSheetsStatus.includes("settings.sheetName || '접수함'") && leadDelivery.includes("sheetName: integrations.sheets.sheetName || '접수함'"), 'Google Sheets status and delivery should keep Korean sheet defaults');
 
 const missingKeyDelivery = await sendLeadDelivery({ id: 'lead-mail-missing-key', type: 'consult' }, storedDeliveryPage, {});
 assert(missingKeyDelivery.status === 'failed', 'missing SES key should create failed delivery status');
