@@ -68,6 +68,9 @@ function userFacingApiMessage(message = '', status = 0) {
   if (/Invalid JSON body/i.test(text)) {
     return '요청 데이터 형식이 올바르지 않습니다.';
   }
+  if (/UNIQUE constraint failed: pages\.id/i.test(text)) {
+    return '페이지 저장 중 주소 충돌이 발생했습니다. 새로고침 후 다시 저장해주세요.';
+  }
   if (!text) return `요청 실패: ${status}`;
   return text;
 }
