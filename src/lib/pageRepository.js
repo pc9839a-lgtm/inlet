@@ -95,7 +95,26 @@ function publicPageMatchesSaved(publicPage = null, savedPage = {}) {
   const publicUpdatedAt = String(publicPage.updatedAt || '').trim();
   const savedUpdatedAt = String(savedPage.updatedAt || '').trim();
   if (publicUpdatedAt && savedUpdatedAt && publicUpdatedAt !== savedUpdatedAt) return false;
+  if (publicPageRenderFingerprint(publicPage) !== publicPageRenderFingerprint(savedPage)) return false;
   return true;
+}
+
+function publicPageRenderFingerprint(page = {}) {
+  return stablePublicStringify({
+    title: page.title || '',
+    slug: page.slug || '',
+    theme: page.theme || {},
+    blocks: Array.isArray(page.blocks) ? page.blocks : [],
+    settings: page.settings || {},
+  });
+}
+
+function stablePublicStringify(value) {
+  if (Array.isArray(value)) return `[${value.map(stablePublicStringify).join(',')}]`;
+  if (value && typeof value === 'object') {
+    return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stablePublicStringify(value[key])}`).join(',')}}`;
+  }
+  return JSON.stringify(value ?? null);
 }
 
 async function verifyPublicPageSave(savedPage = {}) {
@@ -109,6 +128,8 @@ async function verifyPublicPageSave(savedPage = {}) {
     publicRevision: publicPage?.revision || 0,
     savedUpdatedAt: savedPage.updatedAt || '',
     publicUpdatedAt: publicPage?.updatedAt || '',
+    savedFingerprint: publicPageRenderFingerprint(savedPage),
+    publicFingerprint: publicPage ? publicPageRenderFingerprint(publicPage) : '',
   });
 }
 
