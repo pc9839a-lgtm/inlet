@@ -1,6 +1,9 @@
 const baseUrl = String(process.env.INLET_PUBLIC_API_URL || '').trim().replace(/\/+$/, '');
 const requireHosted = process.env.INLET_HOSTED_ROUTE_QA_REQUIRE === '1';
 const allowWrites = process.env.INLET_HOSTED_ROUTE_QA_WRITE === '1';
+const manualSignupCode = String(process.env.INLET_HOSTED_ROUTE_QA_VERIFICATION_CODE || '').trim();
+const manualPasswordCode = String(process.env.INLET_HOSTED_ROUTE_QA_PASSWORD_CODE || '').trim();
+const manualManagerCode = String(process.env.INLET_HOSTED_ROUTE_QA_MANAGER_CODE || '').trim();
 
 function summarize(checks = []) {
   return checks.reduce((acc, check) => {
@@ -271,12 +274,16 @@ async function run() {
     method: 'POST',
     body: JSON.stringify({ email: authEmail, purpose: 'signup' }),
   });
-  const verificationToken = String(verificationIssue.data?.verification?.token || '').trim();
+  const verificationToken = String(verificationIssue.data?.verification?.token || manualSignupCode || '').trim();
   checks.push({
     name: 'Hosted /api/auth/email-verification issue',
     status: verificationIssue.res.ok ? 'ready' : 'failed-live',
     httpStatus: verificationIssue.res.status,
-    failureReason: verificationToken ? 'mock verification token exposed for route QA' : 'live email mode hides verification code from API response',
+    failureReason: verificationIssue.data?.verification?.token
+      ? 'mock verification token exposed for route QA'
+      : verificationToken
+        ? 'manual live verification code supplied'
+        : 'live email mode hides verification code from API response',
   });
 
   const legacySignupFlag = await jsonFetch('/api/auth/register', {
@@ -337,7 +344,7 @@ async function run() {
       'Hosted /api/admin/ownership-transfer billing wait',
       'Hosted /api/admin/ownership-transfer billing block',
       'Hosted /api/admin/ownership-transfer complete',
-    ], 'Live SES mode sends the code by email and does not expose it to QA automation.');
+    ], 'Live SES mode sends the code by email and does not expose it to QA automation. Set INLET_HOSTED_ROUTE_QA_VERIFICATION_CODE to continue authenticated route QA.');
     const missingFile = await jsonFetch('/api/files/download?key=missing/qa.pdf');
     checks.push({
       name: 'Hosted /api/files/download public route',
@@ -634,22 +641,27 @@ async function run() {
     method: 'POST',
     body: JSON.stringify({ email: authEmail, purpose: 'password-reset' }),
   });
-  const passwordVerificationToken = String(passwordVerificationIssue.data?.verification?.token || '').trim();
+  const passwordVerificationToken = String(passwordVerificationIssue.data?.verification?.token || manualPasswordCode || '').trim();
   checks.push({
     name: 'Hosted /api/auth/password verification issue',
-    status: passwordVerificationIssue.res.ok && passwordVerificationToken ? 'ready' : 'failed-live',
+    status: passwordVerificationIssue.res.ok ? 'ready' : 'failed-live',
     httpStatus: passwordVerificationIssue.res.status,
+    failureReason: passwordVerificationToken ? 'password verification code available for QA' : 'live email mode hides password reset code from API response',
   });
 
-  const passwordChange = await jsonFetch('/api/auth/password', {
-    method: 'POST',
-    body: JSON.stringify({ email: authEmail, password: 'secret2', token: passwordVerificationToken }),
-  });
-  checks.push({
-    name: 'Hosted /api/auth/password verified change',
-    status: passwordChange.res.ok && passwordChange.data?.user?.email === authEmail ? 'ready' : 'failed-live',
-    httpStatus: passwordChange.res.status,
-  });
+  if (passwordVerificationToken) {
+    const passwordChange = await jsonFetch('/api/auth/password', {
+      method: 'POST',
+      body: JSON.stringify({ email: authEmail, password: 'secret2', token: passwordVerificationToken }),
+    });
+    checks.push({
+      name: 'Hosted /api/auth/password verified change',
+      status: passwordChange.res.ok && passwordChange.data?.user?.email === authEmail ? 'ready' : 'failed-live',
+      httpStatus: passwordChange.res.status,
+    });
+  } else {
+    pushSkippedLive(checks, ['Hosted /api/auth/password verified change'], 'Set INLET_HOSTED_ROUTE_QA_PASSWORD_CODE to verify live password reset.');
+  }
 
   const logout = await jsonFetch('/api/auth/logout', {
     method: 'POST',
@@ -698,29 +710,34 @@ async function run() {
     method: 'POST',
     body: JSON.stringify({ email: managerEmail, purpose: 'signup' }),
   });
-  const managerVerificationToken = String(managerVerificationIssue.data?.verification?.token || '').trim();
+  const managerVerificationToken = String(managerVerificationIssue.data?.verification?.token || manualManagerCode || '').trim();
   checks.push({
     name: 'Hosted /api/projects/invites signup verification issue',
-    status: managerVerificationIssue.res.ok && managerVerificationToken ? 'ready' : 'failed-live',
+    status: managerVerificationIssue.res.ok ? 'ready' : 'failed-live',
     httpStatus: managerVerificationIssue.res.status,
+    failureReason: managerVerificationToken ? 'manager signup verification code available for QA' : 'live email mode hides manager signup code from API response',
   });
 
-  const inviteAccept = await jsonFetch(`/api/projects/invites/${encodeURIComponent(inviteToken)}/accept`, {
-    method: 'POST',
-    body: JSON.stringify({
-      authMode: 'signup',
-      name: 'Hosted Manager QA',
-      email: managerEmail,
-      phone: managerPhone,
-      password: 'secret3',
-      token: managerVerificationToken,
-    }),
-  });
-  checks.push({
-    name: 'Hosted /api/projects/invites/:token accept',
-    status: inviteAccept.res.ok && inviteAccept.data?.manager?.email === managerEmail && inviteAccept.data?.session ? 'ready' : 'failed-live',
-    httpStatus: inviteAccept.res.status,
-  });
+  if (managerVerificationToken) {
+    const inviteAccept = await jsonFetch(`/api/projects/invites/${encodeURIComponent(inviteToken)}/accept`, {
+      method: 'POST',
+      body: JSON.stringify({
+        authMode: 'signup',
+        name: 'Hosted Manager QA',
+        email: managerEmail,
+        phone: managerPhone,
+        password: 'secret3',
+        token: managerVerificationToken,
+      }),
+    });
+    checks.push({
+      name: 'Hosted /api/projects/invites/:token accept',
+      status: inviteAccept.res.ok && inviteAccept.data?.manager?.email === managerEmail && inviteAccept.data?.session ? 'ready' : 'failed-live',
+      httpStatus: inviteAccept.res.status,
+    });
+  } else {
+    pushSkippedLive(checks, ['Hosted /api/projects/invites/:token accept'], 'Set INLET_HOSTED_ROUTE_QA_MANAGER_CODE to verify live manager signup invite acceptance.');
+  }
 
   const aiKeyMissing = await jsonFetch(`/api/ai/key?projectId=${encodeURIComponent(project.projectId)}&ownerId=${encodeURIComponent(accountPatch.data?.user?.ownerId || login.data?.user?.ownerId || '')}`, {
     headers: { 'X-Inlet-Session': refreshedSession },
