@@ -142,7 +142,7 @@ const Dashboard = lazy(() => import('./screens/HomeScreens.jsx').then((module) =
 const PublicHome = lazy(() => import('./screens/HomeScreens.jsx').then((module) => ({ default: module.PublicHome })));
 const StartModeOverlay = lazy(() => import('./screens/HomeScreens.jsx').then((module) => ({ default: module.StartModeOverlay })));
 const INBOX_PAGE_SIZE = 10;
-const CHUNK_RELOAD_KEY = 'inlet-chunk-reload-v3';
+const CHUNK_RELOAD_KEY = 'inlet-chunk-reload-v4';
 const CHUNK_RELOAD_LIMIT = 3;
 
 function isLazyChunkLoadError(error) {
@@ -166,10 +166,17 @@ function replaceWithFreshRuntime() {
   window.location.replace(url.toString());
 }
 
+function chunkReloadScope() {
+  if (typeof window === 'undefined') return '';
+  const url = new URL(window.location.href);
+  url.searchParams.delete('__fresh');
+  return `${url.pathname}${url.search}`;
+}
+
 function recoverLazyChunkLoad(error) {
   if (!isLazyChunkLoadError(error)) return false;
   if (typeof window === 'undefined') return false;
-  const reloadKey = `${CHUNK_RELOAD_KEY}:${window.location.pathname}${window.location.search}`;
+  const reloadKey = `${CHUNK_RELOAD_KEY}:${chunkReloadScope()}`;
   const attempts = Number(window.sessionStorage?.getItem(reloadKey) || 0);
   if (attempts >= CHUNK_RELOAD_LIMIT) return false;
   try {
