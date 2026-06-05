@@ -82,6 +82,42 @@ function LeadInfoRow({ label, value }) {
   );
 }
 
+function firstText(...values) {
+  return values.map((value) => String(value || '').trim()).find(Boolean) || '';
+}
+
+function leadSourceUrl(lead = {}) {
+  return firstText(
+    lead.sourceUrl,
+    lead.source?.sourceUrl,
+    lead.source?.url,
+    lead.source?.pageUrl,
+    lead.attribution?.sourceUrl,
+    lead.values?.sourceUrl,
+    lead.pageUrl,
+  );
+}
+
+function leadReferrer(lead = {}) {
+  return firstText(
+    lead.referrer,
+    lead.source?.referrer,
+    lead.attribution?.referrer,
+    lead.values?.referrer,
+  );
+}
+
+function leadUtmText(lead = {}) {
+  const source = firstText(lead.utmSource, lead.utm_source, lead.source?.utmSource, lead.source?.utm_source, lead.attribution?.utmSource, lead.values?.utmSource, lead.values?.utm_source);
+  const medium = firstText(lead.utmMedium, lead.utm_medium, lead.source?.utmMedium, lead.source?.utm_medium, lead.attribution?.utmMedium, lead.values?.utmMedium, lead.values?.utm_medium);
+  const campaign = firstText(lead.utmCampaign, lead.utm_campaign, lead.source?.utmCampaign, lead.source?.utm_campaign, lead.attribution?.utmCampaign, lead.values?.utmCampaign, lead.values?.utm_campaign);
+  return [
+    source ? `source=${source}` : '',
+    medium ? `medium=${medium}` : '',
+    campaign ? `campaign=${campaign}` : '',
+  ].filter(Boolean).join(' / ');
+}
+
 function normalizedText(value) {
   return String(value || '').replace(/\s+/g, '').toLowerCase();
 }
@@ -619,7 +655,7 @@ function InboxConnectionsPanel({ page, authUser = null, updateIntegrations, onSa
 
 function LeadSource({ lead }) {
   const label = trafficSourceLabel(lead);
-  const url = lead.sourceUrl || lead.pageUrl || '';
+  const url = leadSourceUrl(lead);
   return (
     <span className="lead-source-label" title={url || label}>
       유입: {label}
@@ -721,6 +757,10 @@ export default function InboxPanel({
       `연락처: ${leadPrimaryContact(lead) || '-'}`,
       lead.email ? `이메일: ${lead.email}` : '',
       lead.message ? `문의: ${lead.message}` : '',
+      `유입 채널: ${trafficSourceLabel(lead)}`,
+      leadSourceUrl(lead) ? `유입 URL: ${leadSourceUrl(lead)}` : '',
+      leadReferrer(lead) ? `Referrer: ${leadReferrer(lead)}` : '',
+      leadUtmText(lead) ? `UTM: ${leadUtmText(lead)}` : '',
       answers,
     ].filter(Boolean).join('\n');
 
@@ -880,6 +920,9 @@ export default function InboxPanel({
                       <section>
                         <h4>유입 정보</h4>
                         <LeadSource lead={lead} />
+                        <LeadInfoRow label="유입 URL" value={leadSourceUrl(lead)} />
+                        <LeadInfoRow label="Referrer" value={leadReferrer(lead)} />
+                        <LeadInfoRow label="UTM" value={leadUtmText(lead)} />
                         <LeadInfoRow label="페이지" value={lead.pageSlug || lead.project} />
                         <LeadInfoRow label="기기" value={lead.deviceType} />
                       </section>
