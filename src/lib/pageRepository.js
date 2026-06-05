@@ -16,6 +16,31 @@ function pageContextParams(context = {}) {
   return params;
 }
 
+function canRetryWithAccountProject(error, authUser = null) {
+  const status = Number(error?.status || 0);
+  const code = String(error?.details?.code || error?.details?.errorCode || '').trim();
+  const role = String(authUser?.role || authUser?.accessMode || 'master').trim().toLowerCase();
+  const masterLike = !role || ['master', 'owner', 'builder'].includes(role);
+  const message = String(error?.message || error || '');
+  return masterLike
+    && (status === 403 || code === 'PROJECT_ACCESS_REQUIRED' || code === 'PROJECT_ACCESS_DENIED')
+    && !/Email verification|account is suspended|account is deleted/i.test(message);
+}
+
+function accountOwnedPageForRetry(page = {}, authUser = null) {
+  const slug = pageSlug(page);
+  const context = projectContext({ slug }, authUser ? { ...authUser, projectId: '' } : authUser);
+  return {
+    page: {
+      ...page,
+      slug,
+      projectId: context.projectId,
+      ownerId: context.ownerId,
+    },
+    context,
+  };
+}
+
 async function readJsonError(res, fallback) {
   const raw = await res.text().catch(() => '');
   if (!raw) return fallback;
@@ -71,12 +96,25 @@ export async function persistPage(page, authUser = null, options = {}) {
   if (!context.session) {
     throw new ApiError('로그인 세션이 없습니다. 다시 로그인해주세요.', 401, { code: 'AUTH_SESSION_MISSING' });
   }
-  return postJson(`/api/pages/${encodeURIComponent(slug)}`, {
+  const payload = {
     page: safePage,
     project: context,
     tab: options.tab || '',
     ...(options.expectedUpdatedAt ? { expectedUpdatedAt: options.expectedUpdatedAt } : {}),
-  }, { headers: projectAuthHeaders(context) });
+  };
+  try {
+    return await postJson(`/api/pages/${encodeURIComponent(slug)}`, payload, { headers: projectAuthHeaders(context) });
+  } catch (error) {
+    if (!canRetryWithAccountProject(error, authUser)) throw error;
+    const retry = accountOwnedPageForRetry(safePage, authUser);
+    if (!retry.context.projectId || retry.context.projectId === context.projectId) throw error;
+    return postJson(`/api/pages/${encodeURIComponent(retry.page.slug)}`, {
+      ...payload,
+      page: retry.page,
+      project: retry.context,
+      recoveredProjectAccess: true,
+    }, { headers: projectAuthHeaders(retry.context) });
+  }
 }
 
 export async function fetchPageRevisions(page, authUser = null) {

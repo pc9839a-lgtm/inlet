@@ -1476,6 +1476,11 @@ function App() {
       setStylePreviewTheme(null);
       setStylePreviewBlocks(null);
       setConnectionsEditing(false);
+      if (result?.page) {
+        const savedPage = normalizePageForSave(result.page);
+        setPage(savedPage);
+        saveLocalJson(STORAGE_KEY, savedPage, '페이지');
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 1000);
       const saveModeLabel = result?.mode === 'local' ? '로컬 저장됨' : '서버 저장됨';
@@ -1518,6 +1523,11 @@ function App() {
       return;
     }
     setConnectionsEditing(false);
+    if (result?.page) {
+      const savedPage = normalizePageForSave(result.page);
+      setPage(savedPage);
+      saveLocalJson(STORAGE_KEY, savedPage, '페이지');
+    }
     setSaved(true);
     setTimeout(() => setSaved(false), 1000);
     const saveModeLabel = result?.mode === 'local' ? '로컬 저장됨' : '서버 저장됨';
