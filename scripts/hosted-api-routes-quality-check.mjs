@@ -33,6 +33,16 @@ function normalizeCheckOutput(checks = []) {
   });
 }
 
+function pushSkippedLive(checks, names = [], reason = '') {
+  names.forEach((name) => {
+    checks.push({
+      name,
+      status: 'skipped-live',
+      reason,
+    });
+  });
+}
+
 async function jsonFetch(path, options = {}) {
   const res = await fetch(`${baseUrl}${path}`, {
     ...options,
@@ -264,18 +274,9 @@ async function run() {
   const verificationToken = String(verificationIssue.data?.verification?.token || '').trim();
   checks.push({
     name: 'Hosted /api/auth/email-verification issue',
-    status: verificationIssue.res.ok && verificationToken ? 'ready' : 'failed-live',
+    status: verificationIssue.res.ok ? 'ready' : 'failed-live',
     httpStatus: verificationIssue.res.status,
-  });
-
-  const verificationConfirm = await jsonFetch('/api/auth/email-verification/confirm', {
-    method: 'POST',
-    body: JSON.stringify({ email: authEmail, token: verificationToken }),
-  });
-  checks.push({
-    name: 'Hosted /api/auth/email-verification confirm',
-    status: verificationConfirm.res.ok && verificationConfirm.data?.verification?.status === 'confirmed' ? 'ready' : 'failed-live',
-    httpStatus: verificationConfirm.res.status,
+    failureReason: verificationToken ? 'mock verification token exposed for route QA' : 'live email mode hides verification code from API response',
   });
 
   const legacySignupFlag = await jsonFetch('/api/auth/register', {
@@ -295,6 +296,82 @@ async function run() {
     status: legacySignupFlag.res.status === 403 ? 'ready' : 'failed-live',
     httpStatus: legacySignupFlag.res.status,
     failureReason: legacySignupFlag.data?.code || legacySignupFlag.data?.error || '',
+  });
+
+  if (!verificationToken) {
+    pushSkippedLive(checks, [
+      'Hosted /api/auth/email-verification confirm',
+      'Hosted /api/auth/register',
+      'Hosted /api/auth/register duplicate protection',
+      'Hosted /api/auth login/session',
+      'Hosted /api/auth/session refresh',
+      'Hosted /api/auth/account patch',
+      'Hosted /api/leads authenticated D1 list',
+      'Hosted /api/stats/summary authenticated D1 aggregate',
+      'Hosted /api/leads/export.csv authenticated D1 month export',
+      'Hosted /api/leads/delivery-logs authenticated D1 list',
+      'Hosted /api/leads/blocked-history authenticated D1 list',
+      'Hosted /api/leads/retry-queue authenticated D1 list',
+      'Hosted /api/pages/:slug authenticated D1 save v1',
+      'Hosted /api/pages/:slug authenticated D1 save v2',
+      'Hosted /api/pages/:slug authenticated D1 read',
+      'Hosted /api/pages/:slug public D1 read',
+      'Hosted /api/pages/:slug/revisions authenticated D1 list',
+      'Hosted /api/pages/:slug/revisions/:id authenticated D1 read',
+      'Hosted /api/pages/:slug/restore authenticated D1 write',
+      'Hosted /api/auth/password verification issue',
+      'Hosted /api/auth/password verified change',
+      'Hosted /api/projects/invites create',
+      'Hosted /api/projects/invites/:token read',
+      'Hosted /api/projects/invites signup verification issue',
+      'Hosted /api/projects/invites/:token accept',
+      'Hosted /api/ai/key missing status',
+      'Hosted /api/ai/key invalid protection',
+      'Hosted /api/ai/key save',
+      'Hosted /api/ai/drafts save',
+      'Hosted /api/ai/drafts list',
+      'Hosted /api/ai/drafts delete',
+      'Hosted /api/ai/key delete',
+      'Hosted /api/projects/ownership-transfer create',
+      'Hosted /api/projects/ownership-transfer list',
+      'Hosted /api/admin/ownership-transfer billing wait',
+      'Hosted /api/admin/ownership-transfer billing block',
+      'Hosted /api/admin/ownership-transfer complete',
+    ], 'Live SES mode sends the code by email and does not expose it to QA automation.');
+    const missingFile = await jsonFetch('/api/files/download?key=missing/qa.pdf');
+    checks.push({
+      name: 'Hosted /api/files/download public route',
+      status: [404, 503].includes(missingFile.res.status) ? 'ready' : 'failed-live',
+      httpStatus: missingFile.res.status,
+      failureReason: missingFile.data?.error || missingFile.text?.slice(0, 160),
+    });
+    const aiKeyTestInvalid = await jsonFetch('/api/ai/test', {
+      method: 'POST',
+      body: JSON.stringify({ apiKey: 'bad-key' }),
+    });
+    checks.push({
+      name: 'Hosted /api/ai/test invalid key classification',
+      status: aiKeyTestInvalid.res.status === 400 && aiKeyTestInvalid.data?.keyTest?.status === 'invalid' ? 'ready' : 'failed-live',
+      httpStatus: aiKeyTestInvalid.res.status,
+      failureReason: aiKeyTestInvalid.data?.error || '',
+    });
+    const outputChecks = normalizeCheckOutput(checks);
+    return {
+      ok: outputChecks.every((check) => check.status === 'ready' || check.status === 'skipped-live'),
+      liveSummary: summarize(outputChecks),
+      projectId: project.projectId,
+      checks: outputChecks,
+    };
+  }
+
+  const verificationConfirm = await jsonFetch('/api/auth/email-verification/confirm', {
+    method: 'POST',
+    body: JSON.stringify({ email: authEmail, token: verificationToken }),
+  });
+  checks.push({
+    name: 'Hosted /api/auth/email-verification confirm',
+    status: verificationConfirm.res.ok && verificationConfirm.data?.verification?.status === 'confirmed' ? 'ready' : 'failed-live',
+    httpStatus: verificationConfirm.res.status,
   });
 
   const register = await jsonFetch('/api/auth/register', {

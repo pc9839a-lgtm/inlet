@@ -1,7 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-const roots = ['src', 'server'];
+const roots = ['src', 'server', 'functions'];
 const extensions = new Set(['.js', '.jsx', '.mjs', '.css', '.html']);
 const ignoredFiles = new Set([
   'src/styles/base-wayzi-footer.css',
@@ -40,6 +40,7 @@ async function collectFiles(dir) {
 
 const files = [];
 for (const root of roots) files.push(...await collectFiles(root));
+files.push('wrangler.jsonc');
 
 const findings = [];
 for (const file of files) {
