@@ -135,21 +135,23 @@ export async function fetchServerBlockedLeadHistory(page, authUser = null, optio
 export async function persistLead(lead, page, authUser = null) {
   if (!isServerLeadMode()) return { ok: true, mode: 'local', lead };
 
+  const context = projectContext(page, authUser);
   const data = await postJson('/api/leads', {
     lead,
     page,
-    project: projectContext(page, authUser),
-  }, { headers: projectAuthHeaders(projectContext(page, authUser)) });
+    project: context,
+  }, { headers: projectAuthHeaders(context) });
   return data?.lead || lead;
 }
 
 export async function updateServerLead(id, patch, page, authUser = null) {
   if (!isServerLeadMode()) return null;
 
+  const context = projectContext(page, authUser);
   const data = await postJson(`/api/leads/${encodeURIComponent(id)}`, {
     patch,
-    project: projectContext(page, authUser),
-  }, { method: 'PATCH', headers: projectAuthHeaders(projectContext(page, authUser)) });
+    project: context,
+  }, { method: 'PATCH', headers: projectAuthHeaders(context) });
   return data?.lead || null;
 }
 
