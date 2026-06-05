@@ -900,13 +900,14 @@ function App() {
     setWorkspaceOpen(true);
   }, [authUser, canUseBuilder, workspaceOpen]);
   useEffect(() => {
+    if (!authUser) return;
     if (!routeUsesWorkspaceTabs) return;
     if (allowedTabs.includes(tab)) return;
     clearPendingStyle();
     const nextTab = allowedTabs[0] || 'inbox';
     replaceLocationTab(nextTab);
     setTab(nextTab);
-  }, [allowedTabs, routeUsesWorkspaceTabs, tab]);
+  }, [allowedTabs, authUser, routeUsesWorkspaceTabs, tab]);
   useEffect(() => {
     if (!hasPendingStyle) return undefined;
     const handleBeforeUnload = (event) => {
@@ -1937,7 +1938,7 @@ function App() {
     );
   }
 
-  if (mobileBlocked) return withWayziFooter(<div className="mobile-block"><div><Smartphone size={42}/><h1>편집은 PC에서 이용해주세요.</h1><p>결과물은 모바일 화면으로 최적화됩니다.</p></div></div>);
+  if (mobileBlocked && authUser && workspaceOpen) return withWayziFooter(<div className="mobile-block"><div><Smartphone size={42}/><h1>편집은 PC에서 이용해주세요.</h1><p>모바일에서는 회원가입, 로그인, 미리보기와 접수 확인을 사용할 수 있습니다.</p></div></div>);
 
   if (authUser && inviteToken) {
     return withWayziFooter(

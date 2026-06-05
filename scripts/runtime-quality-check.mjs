@@ -181,6 +181,8 @@ assert(app.includes('canManageAdmin && !startMode') && app.includes('canManageAd
 assert(app.includes('adminRoute') && app.includes("return /^\\/(?:admin|[^/?#]+\\/admin)\\/?$/.test(routePath)") && app.includes('<AdminPanel'), 'admin panel must stay on a private /admin route');
 assert(app.includes('const canWriteTabKey = (key) => canWriteTab(accessMode, page, authUser, key)') && app.includes('blockWrite'), 'App must enforce manager write permissions before mutation');
 assert(app.includes('selectedBlockId={canUseBuilder ? openId : \'\'}') && app.includes('onSelectBlock={canUseBuilder ? selectPreviewBlock : undefined}'), 'client admin preview must not route into block editing');
+assert(app.includes('if (!authUser) return;') && app.includes('if (!routeUsesWorkspaceTabs) return;'), 'workspace tab redirect must not run before login or on public routes');
+assert(app.includes('if (mobileBlocked && authUser && workspaceOpen)') && app.includes('모바일에서는 회원가입, 로그인, 미리보기와 접수 확인을 사용할 수 있습니다.'), 'mobile block screen must only hide the authenticated editor workspace');
 assert(app.includes("['topnav', 'bottombar', 'footer'].includes(target?.type)") && app.includes("setOpenId('');") && app.indexOf("['topnav', 'bottombar', 'footer'].includes(target?.type)") < app.indexOf('document.getElementById(`editor-block-${id}`)'), 'preview fixed layout clicks must not auto-open editor blocks');
 assert(!homeScreens.includes('전송 상태') && !homeScreens.includes('알림 전송 상태'), 'public home copy should not expose delivery status as an operator UI feature');
 assert(/const openWorkspace = [\s\S]*?setOpenId\(''\);[\s\S]*?setAddOpen\(false\);[\s\S]*?if \(!canUseBuilder\)/.test(app), 'workspace entry must collapse any open editor block and add panel');
