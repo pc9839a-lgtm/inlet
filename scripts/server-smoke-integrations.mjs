@@ -36,6 +36,23 @@ await runSmoke('server-smoke-integrations', async ({ baseUrl }) => {
     assert(webhook.received.some((item) => item.body?.target === 'google_sheets' && item.body?.lead?.id === lead.id && item.body?.page?.slug === page.slug && item.body?.project), 'Google Sheets structured lead/page/project payload missing');
     assert(webhook.received.every((item) => item.body?.schemaVersion === 'pagero.lead.v1'), 'payload schema marker missing');
 
+    const oauthProject = { projectId: 'smoke-integrations-oauth', slug: 'smoke-integrations-oauth' };
+    const oauthPage = {
+      title: 'Smoke OAuth Sheets',
+      slug: oauthProject.slug,
+      integrations: {
+        sheets: { enabled: true, provider: 'google_sheets', mode: 'oauth', spreadsheetId: 'sheet-oauth-smoke', sheetName: 'OAuth Leads', connectedEmail: 'owner@example.test', status: 'connected' },
+      },
+    };
+    const oauthSaved = await json({ baseUrl }, 'POST', '/api/leads', {
+      project: oauthProject,
+      page: oauthPage,
+      lead: { id: 'lead-google-oauth', type: 'consult', status: 'new', name: 'OAuth Sheets' },
+    });
+    assert(oauthSaved.res.ok && oauthSaved.data.lead?.id === 'lead-google-oauth', 'Google Sheets OAuth lead save failed');
+    assert(oauthSaved.data.delivery?.logs?.some((log) => log.provider === 'google_sheets'), 'Google Sheets OAuth delivery log should be created');
+    assert(!webhook.received.some((item) => item.body?.lead?.id === 'lead-google-oauth'), 'Google Sheets OAuth mode should not fall back to webhook POST');
+
     const deliveryLogs = await json({ baseUrl }, 'GET', `/api/leads/delivery-logs?${new URLSearchParams(project).toString()}&leadId=${lead.id}`);
     assert(deliveryLogs.res.ok && deliveryLogs.data.total >= 1, 'delivery logs API failed');
     assert(deliveryLogs.data.logs[0]?.leadId === lead.id, 'delivery logs lead filter failed');

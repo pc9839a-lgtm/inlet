@@ -14,6 +14,7 @@ import { appendJsonlRecord, queryJsonlRecords, readJsonlRecords, writeJsonlRecor
 import { createStorageRuntime, storageRuntimeCoverage, storageRuntimeHealth, storageRuntimePlan } from './storage/runtimeAdapter.mjs';
 import { aggregateD1Stats, deleteD1AiDraft, deleteD1Lead, findD1LeadsByContact, findD1LeadsByIntakeSignals, getD1AccountByEmail, getD1AccountByPhone, getD1Lead, getD1PageBySlug, getD1PageRevision, getD1ProjectAccess, getD1PublicPageBySlug, insertD1AuditLog, insertD1BlockedLeadSubmission, insertD1Event, insertD1PageRevision, listD1AiDrafts, listD1BlockedLeadSubmissions, listD1DeliveryLogs, listD1DeliveryRetryQueue, listD1Events, listD1Leads, listD1OwnershipTransferRequests, listD1PageRevisions, replaceD1ProjectMembers, upsertD1Account, upsertD1AiDraft, upsertD1Invite, upsertD1Lead, upsertD1OwnershipTransferRequest, upsertD1Page, upsertD1Project, upsertD1ProjectMember } from './storage/d1Adapter.mjs';
 import { sendSesEmail } from '../functions/api/_ses.js';
+import { appendGoogleSheetRow, getGoogleSheetsIntegration, googleClientId, googleClientSecret, googleSheetsPayloadRow, mergeGoogleTokens, refreshGoogleAccessToken, updateGoogleSheetsIntegrationStatus } from '../functions/api/integrations/google/sheets/_oauth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
@@ -2083,6 +2084,7 @@ async function deliverSavedLeadAfterSave(saved = {}, body = {}) {
   const deliveryPage = deliveryPageFrom({
     ...(body.page || {}),
     ...(storedPage || {}),
+    projectId: storedPage?.projectId || body.page?.projectId || project.projectId || '',
     integrations: storedPage?.integrations || body.page?.integrations || {},
   });
   const delivery = await sendServerLeadIntegrations(saved, deliveryPage);
@@ -3725,8 +3727,12 @@ async function migrateAllLeadFiles() {
 
 function deliveryPageFrom(page = {}) {
   return {
+    id: page.id || '',
+    projectId: page.projectId || page.project?.projectId || '',
     title: page.title || '',
     slug: page.slug || '',
+    url: page.publicUrl || page.url || '',
+    publicUrl: page.publicUrl || page.url || '',
     integrations: page.integrations || {},
   };
 }
@@ -3823,7 +3829,17 @@ function buildServerIntegrationJobs(integrations = {}, lead = {}, page = {}) {
   }
 
   const sheetsUrl = integrations.sheets?.webhookUrl || integrations.sheets?.url || '';
-  if (integrations.sheets?.enabled && isValidHttpUrl(sheetsUrl)) {
+  if (integrations.sheets?.enabled && String(integrations.sheets.mode || '').toLowerCase() === 'oauth') {
+    jobs.push({
+      type: 'google_sheets_oauth',
+      provider: 'google_sheets',
+      label: 'Google Sheets',
+      projectId: page.projectId || page.id || '',
+      spreadsheetId: integrations.sheets.spreadsheetId || '',
+      sheetName: integrations.sheets.sheetName || '접수함',
+      payload: googleSheetsServerPayload(payload, integrations.sheets, page, lead),
+    });
+  } else if (integrations.sheets?.enabled && isValidHttpUrl(sheetsUrl)) {
     jobs.push({
       type: 'http',
       provider: 'google_sheets',
@@ -3845,10 +3861,81 @@ function buildServerIntegrationJobs(integrations = {}, lead = {}, page = {}) {
 
 async function runServerIntegrationJob(job) {
   if (job.type === 'email') return sendEmailNotification(job);
+  if (job.type === 'google_sheets_oauth') return sendServerGoogleSheetsOAuthJob(job);
   return postServerIntegration(job.url, {
     ...(job.payload || {}),
     idempotencyKey: job.idempotencyKey || '',
   }, job.secret, job.idempotencyKey);
+}
+
+async function sendServerGoogleSheetsOAuthJob(job = {}) {
+  const projectId = String(job.projectId || job.payload?.project?.id || '').trim();
+  if (!storageRuntime.d1?.prepare || !projectId) {
+    return { ok: false, message: 'Google Sheets 연결 필요' };
+  }
+
+  const integration = await getGoogleSheetsIntegration(storageRuntime.d1, projectId);
+  if (!integration || integration.status !== 'connected') {
+    return { ok: false, message: 'Google Sheets 연결 필요' };
+  }
+
+  const settings = integration.settings || {};
+  let tokens = integration.tokens || {};
+  const spreadsheetId = String(job.spreadsheetId || settings.spreadsheetId || integration.externalId || '').trim();
+  const sheetName = String(job.sheetName || settings.sheetName || '접수함').trim() || '접수함';
+  let accessToken = String(tokens.accessToken || '').trim();
+
+  try {
+    if (!accessToken && tokens.refreshToken) {
+      tokens = mergeGoogleTokens(tokens, await refreshGoogleAccessToken({
+        refreshToken: tokens.refreshToken,
+        clientId: googleClientId(env),
+        clientSecret: googleClientSecret(env),
+      }));
+      accessToken = tokens.accessToken || '';
+      await updateGoogleSheetsIntegrationStatus(storageRuntime.d1, projectId, { tokens });
+    }
+
+    const row = googleSheetsPayloadRow(job.payload || {});
+    try {
+      await appendGoogleSheetRow({ accessToken, spreadsheetId, sheetName, row });
+    } catch (error) {
+      if (Number(error?.status || 0) !== 401 || !tokens.refreshToken) throw error;
+      tokens = mergeGoogleTokens(tokens, await refreshGoogleAccessToken({
+        refreshToken: tokens.refreshToken,
+        clientId: googleClientId(env),
+        clientSecret: googleClientSecret(env),
+      }));
+      accessToken = tokens.accessToken || '';
+      await appendGoogleSheetRow({ accessToken, spreadsheetId, sheetName, row });
+      await updateGoogleSheetsIntegrationStatus(storageRuntime.d1, projectId, { tokens });
+    }
+
+    await updateGoogleSheetsIntegrationStatus(storageRuntime.d1, projectId, {
+      status: 'connected',
+      lastSyncAt: new Date().toISOString(),
+      lastError: '',
+      settings: { ...settings, spreadsheetId, sheetName },
+      tokens,
+    });
+    return { ok: true, message: 'Google Sheets 전송 완료' };
+  } catch (error) {
+    const message = safeGoogleSheetsSendMessage(error);
+    await updateGoogleSheetsIntegrationStatus(storageRuntime.d1, projectId, {
+      status: 'error',
+      lastError: message,
+    }).catch(() => {});
+    return { ok: false, message };
+  }
+}
+
+function safeGoogleSheetsSendMessage(error) {
+  const status = Number(error?.status || 0);
+  if (status === 401) return 'Google Sheets 인증 만료';
+  if (status === 403) return 'Google Sheets 권한 없음';
+  if (status === 404) return 'Google Sheets 파일 없음';
+  if (status === 400) return 'Google Sheets 설정 필요';
+  return 'Google Sheets 전송 실패';
 }
 
 async function postServerIntegration(url, payload, secret = '', idempotencyKey = '') {
