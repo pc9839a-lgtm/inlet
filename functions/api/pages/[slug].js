@@ -98,8 +98,8 @@ export async function onRequest({ request, env, params }) {
       const body = await readJson(request);
       const project = projectFromRequest(url, body, request);
       const writeTab = String(body.tab || body.saveTab || 'edit').trim() || 'edit';
-      await authorizeProject(request, env, project, { write: true, tab: writeTab });
       await ensureD1ProjectShell(db, project);
+      await authorizeProject(request, env, project, { write: true, tab: writeTab });
       const identity = await sessionIdentity(request, env);
       const incoming = body.page && typeof body.page === 'object' ? body.page : body;
       const pageForSave = enforceFreeEmailAlertRecipient({ ...incoming, slug }, project, identity);
