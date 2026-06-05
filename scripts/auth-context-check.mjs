@@ -23,6 +23,22 @@ const contextB = projectContext(page, userB);
 const staleLocalContext = projectContext({ slug: 'campaign', projectId: 'local-user_campaign', ownerId: 'local-user' }, userA1);
 const staleOtherOwnerContext = projectContext({ slug: 'campaign', projectId: 'user_other_campaign', ownerId: 'user_other' }, userA1);
 const ownedExistingContext = projectContext({ slug: 'campaign', projectId: contextA.projectId, ownerId: contextA.ownerId }, userA1);
+const refreshedSessionUser = normalizeAuthUser({
+  ...userA1,
+  ownerId: contextA.ownerId,
+  projectId: contextA.projectId,
+  session: 'session-current-page',
+});
+const refreshedSameSlugContext = projectContext({ slug: 'campaign', projectId: contextA.projectId, ownerId: contextA.ownerId }, refreshedSessionUser);
+const refreshedNewSlugContext = projectContext({ slug: 'new-campaign' }, refreshedSessionUser);
+const invitedProjectUser = normalizeAuthUser({
+  ...userA1,
+  ownerId: 'project-owner',
+  projectId: 'invited-project-id',
+  session: 'session-invited-project',
+  defaultProject: { projectId: 'invited-project-id', slug: 'invited-page' },
+});
+const invitedProjectContext = projectContext({ slug: 'invited-page' }, invitedProjectUser);
 const publicServerContext = projectContext({ slug: 'campaign', projectId: 'server_project_123' }, null);
 
 assert(contextA.projectId === contextA2.projectId, 'same user should map to same project');
@@ -32,6 +48,9 @@ assert(contextA.legacyProjectId.includes('ownerexamplecom'), 'legacy project fal
 assert(staleLocalContext.projectId === contextA.projectId, 'authenticated context should drop stale local project ids');
 assert(staleOtherOwnerContext.projectId === contextA.projectId, 'authenticated context should drop another owner project id');
 assert(ownedExistingContext.projectId === contextA.projectId, 'authenticated context should preserve owned project id');
+assert(refreshedSameSlugContext.projectId === contextA.projectId, 'refreshed session should preserve the current owned page project id');
+assert(refreshedNewSlugContext.projectId !== contextA.projectId && refreshedNewSlugContext.projectId.endsWith('_new-campaign'), 'new slug creation should not reuse a refreshed session project id from another page');
+assert(invitedProjectContext.projectId === 'invited-project-id', 'invited manager/client sessions should keep the default project id for the invited slug');
 assert(publicServerContext.projectId === 'server_project_123', 'public landing submissions should use the stored server project id');
 assert(publicServerContext.ownerId === '', 'public landing submissions should not invent a visitor owner id');
 

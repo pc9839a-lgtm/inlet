@@ -21,9 +21,12 @@ export function projectContext(page = {}, authUser = null) {
   if (authUser?.projectId && authUser?.ownerId) {
     const slug = safeId(sanitizePageSlug(page.slug || authUser.slug, 'my-page'), 'my-page');
     const ownerId = safeId(authUser.ownerId, 'local-user');
+    const defaultProjectSlug = safeId(sanitizePageSlug(authUser.defaultProject?.slug || authUser.slug || '', ''), '');
+    const defaultProjectId = defaultProjectSlug && defaultProjectSlug === slug ? safeId(authUser.defaultProject?.projectId || authUser.projectId, '') : '';
+    const sessionProjectId = defaultProjectSlug && defaultProjectSlug === slug ? safeId(authUser.projectId, '') : '';
     return {
       ownerId,
-      projectId: safeId(pageProjectIdForOwner(page, ownerId) || authUser.projectId, authUser.projectId),
+      projectId: safeId(pageProjectIdForOwner(page, ownerId) || defaultProjectId || sessionProjectId || `${ownerId}_${slug}`, `${ownerId}_${slug}`),
       slug,
       session: authUser.session || '',
       legacyOwnerId: safeId(authUser.legacyOwnerId || '', ''),
