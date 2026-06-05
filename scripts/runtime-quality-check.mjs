@@ -146,6 +146,7 @@ const previewUtils = await readFile('src/preview/renderers/previewUtils.jsx', 'u
 const stylePanel = await readFile('src/panels/StylePanel.jsx', 'utf8');
 const inboxPanel = await readFile('src/panels/InboxPanel.jsx', 'utf8');
 const pageModel = await readFile('src/lib/pageModel.js', 'utf8');
+const pageRepository = await readFile('src/lib/pageRepository.js', 'utf8');
 const leadIntegrations = await readFile('src/lib/leadIntegrations.js', 'utf8');
 const settingsPanel = await readFile('src/panels/SettingsPanel.jsx', 'utf8');
 const settingsPanelCss = await readFile('src/panels/SettingsPanel.css', 'utf8');
@@ -220,6 +221,7 @@ assert(stylePanel.includes("'code',") && stylePanel.includes("'search',") && sty
 assert(inboxPanel.includes('ensureHeaders(sheet, Object.keys(fields))') && inboxPanel.includes('BASE_HEADERS.concat(customHeaders, [JSON_HEADER])'), 'Google Sheets sample code must create columns for actual form fields');
 assert(inboxPanel.includes('function enforceFreeEmailIntegration') && inboxPanel.includes('lockedAccountEmail(authUser, page, normalized)') && inboxPanel.includes('locked-email-value') && inboxPanel.includes('email-recipient-control') && inboxPanel.includes('lockedToAccount: true'), 'Free plan email alerts must render a non-editable account email in the Inbox UI');
 assert(app.includes('const normalizeFreeEmailIntegrations') && app.includes('sourceIntegrations?.email?.to') && app.includes('lockedToAccount: true') && app.includes('to: accountEmail'), 'App saves must enforce free plan email alert recipient from the account email');
+assert(pageRepository.includes('verifyPublicPageSave') && pageRepository.includes('PAGE_PUBLIC_VERIFY_FAILED') && pageRepository.includes('options.verifyPublic !== false'), 'Page saves must verify the public landing route after server save');
 assert(pageModel.includes("provider: 'google_sheets'") && pageModel.includes("mode: 'webhook'") && pageModel.includes('spreadsheetId') && pageModel.includes('connectedEmail'), 'Google Sheets settings must keep OAuth-ready metadata without changing the webhook MVP');
 assert(leadIntegrations.includes("integration: {") && leadIntegrations.includes("provider: 'google_sheets'") && leadIntegrations.includes('spreadsheetId: sheets.spreadsheetId') && leadIntegrations.includes('connectedEmail: sheets.connectedEmail'), 'Google Sheets payload must keep provider/mode/account metadata for future OAuth expansion');
 assert(inboxPanel.includes('advancedOpen') && inboxPanel.includes('connection-advanced-toggle') && inboxPanel.includes('연동 전체 저장'), 'Inbox integrations should keep webhook inside an advanced section and label full save clearly');
@@ -239,4 +241,3 @@ console.log(JSON.stringify({
   sourceBytes: totalSourceBytes,
   checks: sources.size * 3 + 40,
 }, null, 2));
-

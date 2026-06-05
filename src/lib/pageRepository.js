@@ -85,6 +85,33 @@ export async function fetchPublicServerPage(slug) {
   return data?.page || null;
 }
 
+function publicPageMatchesSaved(publicPage = null, savedPage = {}) {
+  if (!publicPage || !savedPage) return false;
+  if (String(publicPage.slug || '') !== String(savedPage.slug || '')) return false;
+  if (String(publicPage.projectId || '') !== String(savedPage.projectId || '')) return false;
+  const publicRevision = Number(publicPage.revision || 0);
+  const savedRevision = Number(savedPage.revision || 0);
+  if (publicRevision && savedRevision && publicRevision < savedRevision) return false;
+  const publicUpdatedAt = String(publicPage.updatedAt || '').trim();
+  const savedUpdatedAt = String(savedPage.updatedAt || '').trim();
+  if (publicUpdatedAt && savedUpdatedAt && publicUpdatedAt !== savedUpdatedAt) return false;
+  return true;
+}
+
+async function verifyPublicPageSave(savedPage = {}) {
+  const slug = pageSlug(savedPage);
+  const publicPage = await fetchPublicServerPage(slug);
+  if (publicPageMatchesSaved(publicPage, savedPage)) return publicPage;
+  throw new ApiError('서버 저장 후 공개 페이지 확인에 실패했습니다. 다시 저장해주세요.', 409, {
+    code: 'PAGE_PUBLIC_VERIFY_FAILED',
+    slug,
+    savedRevision: savedPage.revision || 0,
+    publicRevision: publicPage?.revision || 0,
+    savedUpdatedAt: savedPage.updatedAt || '',
+    publicUpdatedAt: publicPage?.updatedAt || '',
+  });
+}
+
 export async function persistPage(page, authUser = null, options = {}) {
   const safePage = normalizePageForSave(page);
   if (!isServerPageMode()) {
@@ -103,17 +130,21 @@ export async function persistPage(page, authUser = null, options = {}) {
     ...(options.expectedUpdatedAt ? { expectedUpdatedAt: options.expectedUpdatedAt } : {}),
   };
   try {
-    return await postJson(`/api/pages/${encodeURIComponent(slug)}`, payload, { headers: projectAuthHeaders(context) });
+    const result = await postJson(`/api/pages/${encodeURIComponent(slug)}`, payload, { headers: projectAuthHeaders(context) });
+    if (result?.page && options.verifyPublic !== false) await verifyPublicPageSave(result.page);
+    return result;
   } catch (error) {
     if (!canRetryWithAccountProject(error, authUser)) throw error;
     const retry = accountOwnedPageForRetry(safePage, authUser);
     if (!retry.context.projectId || retry.context.projectId === context.projectId) throw error;
-    return postJson(`/api/pages/${encodeURIComponent(retry.page.slug)}`, {
+    const result = await postJson(`/api/pages/${encodeURIComponent(retry.page.slug)}`, {
       ...payload,
       page: retry.page,
       project: retry.context,
       recoveredProjectAccess: true,
     }, { headers: projectAuthHeaders(retry.context) });
+    if (result?.page && options.verifyPublic !== false) await verifyPublicPageSave(result.page);
+    return result;
   }
 }
 

@@ -109,6 +109,24 @@ export async function onRequest({ request, env, params }) {
         error.details = { code: 'PAGE_SLUG_CONFLICT', slug };
         throw error;
       }
+      const expectedUpdatedAt = String(body.expectedUpdatedAt || incoming.expectedUpdatedAt || incoming.__expectedUpdatedAt || '').trim();
+      const current = await getD1PageBySlug(db, { projectId: project.projectId, slug });
+      const currentUpdatedAt = String(current?.updatedAt || '').trim();
+      if (expectedUpdatedAt && currentUpdatedAt && expectedUpdatedAt !== currentUpdatedAt) {
+        const error = new Error('Page revision conflict');
+        error.status = 409;
+        error.details = {
+          code: 'PAGE_REVISION_CONFLICT',
+          latest: current ? {
+            slug: current.slug || slug,
+            title: current.title || '',
+            updatedAt: current.updatedAt || '',
+            blocks: Array.isArray(current.blocks) ? current.blocks.length : 0,
+          } : null,
+          page: current || null,
+        };
+        throw error;
+      }
       const pageForSave = enforceFreeEmailAlertRecipient({ ...incoming, slug }, project, identity);
       const saved = await upsertD1Page(db, pageForSave, {
         projectId: project.projectId,

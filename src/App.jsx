@@ -1460,11 +1460,12 @@ function App() {
         theme: stylePreviewTheme ? { ...page.theme, ...stylePreviewTheme } : page.theme,
         blocks: stylePreviewBlocks || page.blocks,
       });
+      const expectedUpdatedAt = page.updatedAt || page.savedAt || page.createdAt || '';
       setPage(nextPage);
       saveLocalJson(STORAGE_KEY, nextPage, '페이지');
       let result = null;
       try {
-        result = await persistPage(nextPage, authUser, { tab: 'style' });
+        result = await persistPage(nextPage, authUser, { tab: 'style', expectedUpdatedAt });
       } catch (error) {
         const handled = await handlePageSaveError(error, nextPage);
         markSaveStatus(handled ? 'warning' : 'error', handled ? '저장 충돌' : '서버 저장 실패', handled
@@ -1509,11 +1510,13 @@ function App() {
       return;
     }
 
-    const nextPage = normalizePageForSave(normalizeFreeEmailIntegrations(pageOverride || page));
+    const sourcePage = pageOverride || page;
+    const expectedUpdatedAt = sourcePage.updatedAt || sourcePage.savedAt || sourcePage.createdAt || '';
+    const nextPage = normalizePageForSave(normalizeFreeEmailIntegrations(sourcePage));
     saveLocalJson(STORAGE_KEY, nextPage, '페이지');
     let result = null;
     try {
-      result = await persistPage(nextPage, authUser, { tab });
+      result = await persistPage(nextPage, authUser, { tab, expectedUpdatedAt });
     } catch (error) {
       const handled = await handlePageSaveError(error, nextPage);
       markSaveStatus(handled ? 'warning' : 'error', handled ? '저장 충돌' : '서버 저장 실패', handled
