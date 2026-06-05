@@ -152,6 +152,8 @@ const leadIntegrations = await readFile('src/lib/leadIntegrations.js', 'utf8');
 const settingsPanel = await readFile('src/panels/SettingsPanel.jsx', 'utf8');
 const settingsPanelCss = await readFile('src/panels/SettingsPanel.css', 'utf8');
 const runtimeConfigSource = await readFile('src/config/runtimeConfig.js', 'utf8');
+const publicEmbedForm = await readFile('public/embed/form.js', 'utf8');
+const formEmbedSource = await readFile('src/lib/formEmbed.js', 'utf8');
 
 assert(main.includes('<AppErrorBoundary><Root /></AppErrorBoundary>'), 'root render must stay wrapped in AppErrorBoundary');
 assert(app.includes("const InboxPanel = lazy(() => import('./panels/InboxPanel.jsx'))"), 'InboxPanel must stay lazy-loaded');
@@ -186,6 +188,10 @@ assert(app.includes('if (!authUser) return;') && app.includes('if (!routeUsesWor
 assert(app.includes('if (mobileBlocked && authUser && workspaceOpen)') && app.includes('모바일에서는 회원가입, 로그인, 미리보기와 접수 확인을 사용할 수 있습니다.'), 'mobile block screen must only hide the authenticated editor workspace');
 assert(app.includes("['topnav', 'bottombar', 'footer'].includes(target?.type)") && app.includes("setOpenId('');") && app.indexOf("['topnav', 'bottombar', 'footer'].includes(target?.type)") < app.indexOf('document.getElementById(`editor-block-${id}`)'), 'preview fixed layout clicks must not auto-open editor blocks');
 assert(!homeScreens.includes('전송 상태') && !homeScreens.includes('알림 전송 상태'), 'public home copy should not expose delivery status as an operator UI feature');
+assert(formEmbedSource.includes('DEFAULT_EMBED_SCRIPT_URL = \'https://pagero.kr/embed/form.js\'') && formEmbedSource.includes('data-pagero-page') && formEmbedSource.includes('data-pagero-form-id') && formEmbedSource.includes('data-pagero-project-id'), 'form embed snippets must stay compact, hosted, and project-aware');
+assert(publicEmbedForm.includes('fetchPublicFormConfig') && publicEmbedForm.includes('/api/pages/') && publicEmbedForm.includes('postJson(API_URL, payload)'), 'embedded forms must load public page form config and submit to the lead API');
+assert(publicEmbedForm.includes('pagero-powered') && publicEmbedForm.includes('HOME_URL') && publicEmbedForm.includes('\\uD398\\uC774\\uC9C0\\uB85C\\uB85C \\uC81C\\uC791'), 'free embedded forms must keep Pagero powered branding');
+assert(publicEmbedForm.includes('utm_source') && publicEmbedForm.includes('sourceUrl') && publicEmbedForm.includes('referrer'), 'embedded form submissions must keep traffic attribution fields');
 assert(/const openWorkspace = [\s\S]*?setOpenId\(''\);[\s\S]*?setAddOpen\(false\);[\s\S]*?if \(!canUseBuilder\)/.test(app), 'workspace entry must collapse any open editor block and add panel');
 assert(app.includes('class LazyEditorBoundary'), 'fixed block editors must isolate lazy chunk failures');
 assert(app.includes('<LazyEditorBoundary resetKey=') && app.includes('<Suspense fallback={<LazyEditorFallback />}'), 'fixed block editors must keep lazy loading fallback and boundary');

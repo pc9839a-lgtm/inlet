@@ -28,6 +28,42 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
     assert(res.ok && data.lead?.id === lead.id, `lead save failed: ${lead.id}`);
   }
 
+  const emailProject = { projectId: 'smoke-leads-email', slug: 'smoke-email' };
+  const emailPage = {
+    title: 'Smoke Email Alerts',
+    slug: emailProject.slug,
+    integrations: {
+      email: {
+        enabled: true,
+        to: 'owner@example.test',
+        consult: true,
+        reservation: true,
+      },
+    },
+  };
+  const savedEmailPage = await json({ baseUrl }, 'POST', `/api/pages/${encodeURIComponent(emailProject.slug)}`, {
+    project: emailProject,
+    page: emailPage,
+  });
+  assert(savedEmailPage.res.ok, 'email alert page save failed');
+  assert(savedEmailPage.data.page?.integrations?.email?.to === 'owner@example.test', 'email alert recipient should be persisted on the page');
+
+  const emailAlertLead = await json({ baseUrl }, 'POST', '/api/leads', {
+    project: emailProject,
+    page: { slug: emailProject.slug },
+    lead: {
+      id: 'lead-email-alert',
+      type: 'consult',
+      status: 'new',
+      name: 'Email Alert Lead',
+      phone: '010-0000-1100',
+      createdAt: '2026-05-24T05:00:00.000Z',
+    },
+  });
+  assert(emailAlertLead.res.ok, 'email alert lead should save');
+  assert(emailAlertLead.data.delivery?.status === 'success', `email alert delivery expected success: ${JSON.stringify(emailAlertLead.data.delivery)}`);
+  assert(emailAlertLead.data.delivery?.logs?.some((log) => log.provider === 'ses' && log.status === 'success'), 'email alert lead should send through SES delivery provider');
+
   const attributedLead = await json({ baseUrl }, 'POST', '/api/leads', {
     project,
     page: { ...page, url: 'https://pagero.kr/smoke-leads' },

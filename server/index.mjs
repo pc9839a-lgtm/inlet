@@ -13,6 +13,7 @@ import { trafficAttributionFromUrl, trafficChannelFromItem } from '../src/lib/tr
 import { appendJsonlRecord, queryJsonlRecords, readJsonlRecords, writeJsonlRecords } from './storage/jsonlAdapter.mjs';
 import { createStorageRuntime, storageRuntimeCoverage, storageRuntimeHealth, storageRuntimePlan } from './storage/runtimeAdapter.mjs';
 import { aggregateD1Stats, deleteD1AiDraft, deleteD1Lead, findD1LeadsByContact, findD1LeadsByIntakeSignals, getD1AccountByEmail, getD1AccountByPhone, getD1Lead, getD1PageBySlug, getD1PageRevision, getD1ProjectAccess, getD1PublicPageBySlug, insertD1AuditLog, insertD1BlockedLeadSubmission, insertD1Event, insertD1PageRevision, listD1AiDrafts, listD1BlockedLeadSubmissions, listD1DeliveryLogs, listD1DeliveryRetryQueue, listD1Events, listD1Leads, listD1OwnershipTransferRequests, listD1PageRevisions, replaceD1ProjectMembers, upsertD1Account, upsertD1AiDraft, upsertD1Invite, upsertD1Lead, upsertD1OwnershipTransferRequest, upsertD1Page, upsertD1Project, upsertD1ProjectMember } from './storage/d1Adapter.mjs';
+import { sendSesEmail } from '../functions/api/_ses.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
@@ -355,8 +356,9 @@ const server = createServer(async (req, res) => {
       const body = await readJson(req);
       body.project = await authorizeProjectAccess(req, body?.project || {}, { write: true, bootstrap: true, page: body?.page || {}, tab: 'inbox', publicSubmit: true });
       body.requestMeta = requestMetaFrom(req);
-      const saved = await saveLead(body);
-      sendJson(res, 200, { ok: true, lead: saved });
+      let saved = await saveLead(body);
+      saved = await deliverSavedLeadAfterSave(saved, body);
+      sendJson(res, 200, { ok: true, lead: saved, delivery: saved.delivery });
       return;
     }
 
@@ -2071,6 +2073,33 @@ async function saveLead(body = {}) {
     }
     return saved;
   });
+}
+
+async function deliverSavedLeadAfterSave(saved = {}, body = {}) {
+  if (!saved || typeof saved !== 'object') return saved;
+  const project = hasProject(body.project) ? normalizeProject(body.project) : {};
+  const pageSlug = safeSlug(body.page?.slug || saved.pageSlug || project.slug || '');
+  const storedPage = pageSlug ? await readPage(pageSlug, project) : null;
+  const deliveryPage = deliveryPageFrom({
+    ...(body.page || {}),
+    ...(storedPage || {}),
+    integrations: storedPage?.integrations || body.page?.integrations || {},
+  });
+  const delivery = await sendServerLeadIntegrations(saved, deliveryPage);
+  if (delivery.status === 'none' && saved.delivery?.status) {
+    return saved;
+  }
+  const patch = {
+    delivery,
+    deliveryStatus: delivery.status,
+    deliveryPage,
+  };
+  if (!saved.id) return { ...saved, ...patch };
+  try {
+    return await updateLead(saved.id, patch, project);
+  } catch {
+    return { ...saved, ...patch };
+  }
 }
 
 function normalizeServerLead(lead = {}, body = {}) {
@@ -3947,6 +3976,25 @@ function jobHeaderValue(value = '') {
 }
 
 async function sendEmailNotification(job) {
+  const provider = String(env.INLET_EMAIL_PROVIDER || env.INLET_LEAD_EMAIL_PROVIDER || '').trim().toLowerCase();
+  if (provider === 'mock') {
+    return { ok: true, provider: 'mock', message: 'mock email sent' };
+  }
+
+  if (provider === 'ses' || env.AWS_SES_ACCESS_KEY_ID || env.INLET_AWS_SES_ACCESS_KEY_ID) {
+    try {
+      await sendSesEmail({
+        to: job.to,
+        from: env.INLET_LEAD_EMAIL_FROM || env.INLET_AUTH_EMAIL_FROM || env.AWS_SES_FROM || '',
+        subject: job.subject,
+        text: job.text,
+        html: job.html || '',
+      }, env);
+      return { ok: true, provider: 'ses' };
+    } catch (error) {
+      return { ok: false, message: String(error?.providerMessage || error?.message || error) };
+    }
+  }
   if (!smtpConfig.host || !smtpConfig.from) {
     return { ok: false, message: 'SMTP 설정 필요' };
   }
