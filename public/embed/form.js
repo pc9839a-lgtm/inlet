@@ -358,7 +358,7 @@
           slug: (cfg.project && cfg.project.slug) || (cfg.page && cfg.page.slug) || ''
         })
       };
-      if (!payload.project.projectId || !payload.project.slug) {
+      if (!payload.project.slug) {
         setNotice('\uD398\uC774\uC9C0 \uC815\uBCF4\uB97C \uD655\uC778\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.', 'error');
         submit.disabled = false;
         return;

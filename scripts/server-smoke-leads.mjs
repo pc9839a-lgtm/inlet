@@ -100,6 +100,22 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
   assert(publicOwnerLeads.data.leads?.some((lead) => lead.id === 'lead-public-stale-project'), 'public lead should be stored under slug-owned project id');
   const staleProjectLeads = await json({ baseUrl }, 'GET', `/api/leads?projectId=stale-public-project-id&slug=${encodeURIComponent(publicEmailProject.slug)}&month=2026-05&limit=10`);
   assert(staleProjectLeads.data.total === 0, 'public lead must not remain under stale payload project id');
+  const slugOnlyPublicLead = await json({ baseUrl }, 'POST', '/api/leads', {
+    project: { slug: publicEmailProject.slug },
+    page: { slug: publicEmailProject.slug },
+    lead: {
+      id: 'lead-public-slug-only',
+      type: 'consult',
+      status: 'new',
+      name: 'Public Slug Only Lead',
+      phone: '010-0000-1102',
+      createdAt: '2026-05-24T05:20:00.000Z',
+    },
+  });
+  assert(slugOnlyPublicLead.res.ok, 'public embed lead with slug only should save');
+  assert(slugOnlyPublicLead.data.delivery?.logs?.some((log) => log.provider === 'ses' && log.status === 'success'), 'public slug-only lead should use stored page email settings');
+  const slugOnlyOwnerLeads = await json({ baseUrl }, 'GET', `/api/leads?projectId=${encodeURIComponent(publicEmailProject.projectId)}&slug=${encodeURIComponent(publicEmailProject.slug)}&month=2026-05&limit=10`);
+  assert(slugOnlyOwnerLeads.data.leads?.some((lead) => lead.id === 'lead-public-slug-only'), 'public slug-only lead should be stored under slug-owned project id');
 
   const attributedLead = await json({ baseUrl }, 'POST', '/api/leads', {
     project,

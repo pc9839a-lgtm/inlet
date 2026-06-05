@@ -240,6 +240,7 @@ assert(files.publicFormEmbed.includes('decodeConfig') && files.publicFormEmbed.i
 assert(files.publicFormEmbed.includes('fetchPublicFormConfig') && files.publicFormEmbed.includes("script.getAttribute('data-page')") && files.publicFormEmbed.includes("script.getAttribute('data-pagero-project-id')"), 'standalone form embed loader should fetch saved public page config from short embed attrs and keep legacy project attrs optional');
 assert(files.publicFormEmbed.includes('function fetchPublicPage') && files.publicFormEmbed.includes("fetch(publicPageUrl(slug, ''))"), 'standalone form embed loader should fall back to slug-only public page lookup');
 assert(files.publicFormEmbed.includes('data-pagero-page') && files.publicFormEmbed.includes('data-pagero-project-id') && files.publicFormEmbed.includes('initElement'), 'standalone form embed loader should support div + script embed targets with optional project identity');
+assert(!files.publicFormEmbed.includes('!payload.project.projectId || !payload.project.slug'), 'standalone form embed submit should not require project id when a slug is available');
 assert(files.formEmbed.includes('projectId: safePage.projectId'), 'standalone form embed should include the page project id');
 assert(files.formEmbed.includes('slug: safePage.slug'), 'standalone form embed should include the page slug');
 assert(files.publicFormEmbed.includes('answers: extracted.answers'), 'standalone form embed should preserve structured answers');
