@@ -92,7 +92,7 @@ export function buildLeadDeliveryJobs(page = {}, lead = {}) {
       label: 'Google Sheets',
       projectId: page.projectId || page.id || '',
       spreadsheetId: integrations.sheets.spreadsheetId || '',
-      sheetName: integrations.sheets.sheetName || 'Leads',
+      sheetName: integrations.sheets.sheetName || '접수함',
       payload: googleSheetsPayload(payload, integrations.sheets, page, lead),
     });
   } else if (integrations.sheets?.enabled && isValidHttpUrl(integrations.sheets.webhookUrl || integrations.sheets.url)) {
@@ -291,17 +291,17 @@ async function runDeliveryJob(job = {}, env = {}) {
 
 async function sendGoogleSheetsOAuthJob(job = {}, env = {}) {
   const projectId = String(job.projectId || job.payload?.project?.id || '').trim();
-  if (!env.DB?.prepare || !projectId) return { ok: false, message: 'Google Sheets connection required' };
+  if (!env.DB?.prepare || !projectId) return { ok: false, message: 'Google Sheets 연결 필요' };
 
   const integration = await getGoogleSheetsIntegration(env.DB, projectId);
   if (!integration || integration.status !== 'connected') {
-    return { ok: false, message: 'Google Sheets connection required' };
+    return { ok: false, message: 'Google Sheets 연결 필요' };
   }
 
   const settings = integration.settings || {};
   let tokens = integration.tokens || {};
   const spreadsheetId = String(job.spreadsheetId || settings.spreadsheetId || integration.externalId || '').trim();
-  const sheetName = String(job.sheetName || settings.sheetName || 'Leads').trim() || 'Leads';
+  const sheetName = String(job.sheetName || settings.sheetName || '접수함').trim() || '접수함';
   let accessToken = String(tokens.accessToken || '').trim();
 
   try {
@@ -337,7 +337,7 @@ async function sendGoogleSheetsOAuthJob(job = {}, env = {}) {
       settings: { ...settings, spreadsheetId, sheetName },
       tokens,
     });
-    return { ok: true, message: 'Google Sheets sent' };
+    return { ok: true, message: 'Google Sheets 전송 완료' };
   } catch (error) {
     const message = safeGoogleSheetsMessage(error);
     await updateGoogleSheetsIntegrationStatus(env.DB, projectId, {
@@ -350,11 +350,11 @@ async function sendGoogleSheetsOAuthJob(job = {}, env = {}) {
 
 function safeGoogleSheetsMessage(error) {
   const status = Number(error?.status || 0);
-  if (status === 401) return 'Google Sheets authorization expired';
-  if (status === 403) return 'Google Sheets permission denied';
-  if (status === 404) return 'Google Sheets file not found';
-  if (status === 400) return 'Google Sheets setup required';
-  return 'Google Sheets send failed';
+  if (status === 401) return 'Google Sheets 인증 만료';
+  if (status === 403) return 'Google Sheets 권한 없음';
+  if (status === 404) return 'Google Sheets 파일 없음';
+  if (status === 400) return 'Google Sheets 설정 필요';
+  return 'Google Sheets 전송 실패';
 }
 
 export function summarizeDelivery(logs = []) {

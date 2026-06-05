@@ -22,7 +22,7 @@ export async function onRequestGet({ request, env }) {
 
     const clientId = googleClientId(env);
     const clientSecret = googleClientSecret(env);
-    if (!clientId || !clientSecret) return html('Google 연결 실패', 'Google OAuth 클라이언트 설정이 필요합니다.');
+    if (!clientId || !clientSecret) return html('Google 연결 실패', 'Google OAuth 설정이 필요합니다.');
 
     const tokens = await exchangeGoogleOAuthCode({
       code,
@@ -31,9 +31,9 @@ export async function onRequestGet({ request, env }) {
       redirectUri: googleRedirectUri(request, env),
     });
     const profile = await fetchGoogleProfile(tokens.access_token || '');
-    const sheetName = 'Leads';
+    const sheetName = '접수함';
     const spreadsheet = await createGoogleSpreadsheet(tokens.access_token || '', {
-      title: `Pagero Leads - ${payload.slug || payload.projectId}`,
+      title: `Pagero 접수함 - ${payload.slug || payload.projectId}`,
       sheetName,
     });
     await initializeGoogleSheetColumns({

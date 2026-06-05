@@ -41,7 +41,7 @@ export async function onRequestGet({ request, env }) {
       connectedEmail: integration.connectedEmail || '',
       spreadsheetId: settings.spreadsheetId || integration.externalId || '',
       spreadsheetUrl: settings.spreadsheetUrl || '',
-      sheetName: settings.sheetName || 'Leads',
+      sheetName: settings.sheetName || '접수함',
       lastSyncAt: integration.lastSyncAt || '',
       hasError: !!integration.lastError,
     }, METHODS);

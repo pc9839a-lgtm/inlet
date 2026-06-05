@@ -102,8 +102,8 @@ export async function fetchGoogleProfile(accessToken = '') {
 }
 
 export async function createGoogleSpreadsheet(accessToken = '', input = {}) {
-  const title = String(input.title || 'Pagero Leads').trim() || 'Pagero Leads';
-  const sheetName = String(input.sheetName || 'Leads').trim() || 'Leads';
+  const title = String(input.title || 'Pagero 접수함').trim() || 'Pagero 접수함';
+  const sheetName = String(input.sheetName || '접수함').trim() || '접수함';
   const response = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
     method: 'POST',
     headers: {
@@ -117,7 +117,7 @@ export async function createGoogleSpreadsheet(accessToken = '', input = {}) {
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok || !data.spreadsheetId) {
-    const error = new Error('Google Sheets spreadsheet create failed.');
+    const error = new Error('Google Sheets 파일 생성에 실패했습니다.');
     error.status = 502;
     error.details = data;
     throw error;
@@ -256,9 +256,9 @@ export async function refreshGoogleAccessToken({ refreshToken, clientId, clientS
 
 export async function appendGoogleSheetRow({ accessToken, spreadsheetId, sheetName, row } = {}) {
   const id = String(spreadsheetId || '').trim();
-  const tab = String(sheetName || 'Leads').trim() || 'Leads';
+  const tab = String(sheetName || '접수함').trim() || '접수함';
   if (!id) {
-    const error = new Error('Google Sheets spreadsheet is not selected.');
+    const error = new Error('Google Sheets 파일이 선택되지 않았습니다.');
     error.status = 400;
     throw error;
   }
