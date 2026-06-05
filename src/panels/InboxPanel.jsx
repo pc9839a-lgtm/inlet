@@ -538,6 +538,44 @@ function InboxConnectionsPanel({ page, authUser = null, updateIntegrations, onSa
     }
   };
 
+  const disconnectGoogleSheetsOAuth = async () => {
+    const project = googleSheetsProject();
+    setTesting('sheets-disconnect');
+    setResult('');
+    try {
+      if (project.projectId) {
+        await postJson('/api/integrations/google/sheets/disconnect', {
+          projectId: project.projectId,
+          ownerId: project.ownerId,
+          slug: project.slug,
+          project,
+        }, {
+          headers: projectAuthHeaders(project),
+        });
+      }
+      const nextIntegrations = sheetPatch({
+        enabled: false,
+        mode: 'oauth',
+        status: 'disconnected',
+        connectedEmail: '',
+        spreadsheetId: '',
+        spreadsheetUrl: '',
+        lastError: '',
+      });
+      try {
+        await onSavePage?.({ ...page, integrations: nextIntegrations });
+        setDraftDirty(false);
+      } catch {
+        setDraftDirty(true);
+      }
+      setResult('Google Sheets 연결 해제 완료');
+    } catch (error) {
+      setResult(`Google 연결 해제 실패: ${String(error?.message || error)}`);
+    } finally {
+      setTesting('');
+    }
+  };
+
   const saveSheetsDraft = async () => {
     const currentSheets = draftIntegrations.sheets || {};
     const currentUrl = currentSheets.webhookUrl || currentSheets.url || '';
@@ -720,7 +758,7 @@ function InboxConnectionsPanel({ page, authUser = null, updateIntegrations, onSa
                     <div className="connection-inline-actions">
                       <button type="button" className="save-connection-btn" disabled={testing === 'sheets-oauth'} onClick={connectGoogleSheetsOAuth}>{testing === 'sheets-oauth' ? '연결 중' : 'Google로 연결'}</button>
                       <button type="button" className="test-connection-btn" disabled={testing === 'sheets-status'} onClick={refreshGoogleSheetsOAuthStatus}>{testing === 'sheets-status' ? '확인 중' : '상태 확인'}</button>
-                      <button type="button" className="test-connection-btn" onClick={() => sheetPatch({ enabled: false, mode: 'oauth', status: 'disconnected', connectedEmail: '', spreadsheetId: '', spreadsheetUrl: '', lastError: '' })}>연결 해제</button>
+                      <button type="button" className="test-connection-btn" disabled={testing === 'sheets-disconnect'} onClick={disconnectGoogleSheetsOAuth}>{testing === 'sheets-disconnect' ? '해제 중' : '연결 해제'}</button>
                     </div>
                   </>
                 ) : (

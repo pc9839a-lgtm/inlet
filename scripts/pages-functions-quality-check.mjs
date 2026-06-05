@@ -15,6 +15,10 @@ const deliveryLogs = await readFile('functions/api/leads/delivery-logs.js', 'utf
 const retryQueue = await readFile('functions/api/leads/retry-queue.js', 'utf8');
 const leadDeliver = await readFile('functions/api/leads/[id]/deliver.js', 'utf8');
 const integrationsTest = await readFile('functions/api/integrations/test.js', 'utf8');
+const googleSheetsOauth = await readFile('functions/api/integrations/google/sheets/_oauth.js', 'utf8');
+const googleSheetsOauthUrl = await readFile('functions/api/integrations/google/sheets/oauth-url.js', 'utf8');
+const googleSheetsStatus = await readFile('functions/api/integrations/google/sheets/status.js', 'utf8');
+const googleSheetsDisconnect = await readFile('functions/api/integrations/google/sheets/disconnect.js', 'utf8');
 const events = await readFile('functions/api/events.js', 'utf8');
 const statsSummary = await readFile('functions/api/stats/summary.js', 'utf8');
 const pages = await readFile('functions/api/pages/[slug].js', 'utf8');
@@ -199,6 +203,10 @@ for (const [name, source, tokens] of [
   ['retry queue', retryQueue, ['listD1DeliveryRetryQueue', "type: 'delivery-retry-queue'", 'deadLetter', "tab: 'inbox'"]],
   ['lead deliver', leadDeliver, ['getD1Lead', 'upsertD1Lead', 'publicWrite: true', 'NO_DELIVERY_SETTINGS_MESSAGE', '접수를 찾을 수 없습니다.']],
   ['integrations test', integrationsTest, ['type !== \'sheets\'', 'isGoogleAppsScriptUrl', 'text/plain;charset=utf-8', 'Google Apps Script', 'pagero.lead.v1', "event: 'lead.test'", "service: 'pagero'", "target: 'google_sheets'", "provider: 'google_sheets'", "mode: 'webhook'", "sheetName: body.sheetName", "utmSource: 'connection_test'"]],
+  ['google sheets oauth shared', googleSheetsOauth, ['project_integrations', 'saveGoogleSheetsIntegration', 'getGoogleSheetsIntegration', 'deleteGoogleSheetsIntegration', 'refreshGoogleAccessToken', 'appendGoogleSheetRow']],
+  ['google sheets oauth url', googleSheetsOauthUrl, ['googleSheetsAuthUrl', 'signedOAuthState', 'authorizeProject', "write: true", "tab: 'inbox'"]],
+  ['google sheets status', googleSheetsStatus, ['getGoogleSheetsIntegration', 'authorizeProject', "tab: 'inbox'"]],
+  ['google sheets disconnect', googleSheetsDisconnect, ['deleteGoogleSheetsIntegration', 'authorizeProject', "write: true", "tab: 'inbox'"]],
   ['events', events, ['insertD1Event', 'listD1Events', 'publicWrite: true', 'publicProjectShell(project)', "tab: 'stats'", 'eventType', 'meta: { source:']],
   ['stats summary', statsSummary, ['aggregateD1Stats', "source: 'server'", "adapter: 'd1'", "tab: 'stats'"]],
   ['pages', pages, ['getD1PageBySlug', 'upsertD1Page', 'ensureD1ProjectShell', 'authorizeProject', 'PUBLIC_PAGE_CACHE_CONTROL', 'no-store']],
@@ -311,7 +319,7 @@ for (const token of [
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 71,
+  checks: 75,
   functions: [
     'functions/api/health.js',
     'functions/api/leads.js',
@@ -321,6 +329,10 @@ console.log(JSON.stringify({
     'functions/api/leads/retry-queue.js',
     'functions/api/leads/[id]/deliver.js',
     'functions/api/integrations/test.js',
+    'functions/api/integrations/google/sheets/_oauth.js',
+    'functions/api/integrations/google/sheets/oauth-url.js',
+    'functions/api/integrations/google/sheets/status.js',
+    'functions/api/integrations/google/sheets/disconnect.js',
     'functions/api/events.js',
     'functions/api/stats/summary.js',
   'functions/api/pages/[slug].js',

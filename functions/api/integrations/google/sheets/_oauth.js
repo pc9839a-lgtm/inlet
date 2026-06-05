@@ -185,6 +185,16 @@ export async function getGoogleSheetsIntegration(db, projectId = '') {
   };
 }
 
+export async function deleteGoogleSheetsIntegration(db, projectId = '') {
+  const id = String(projectId || '').trim();
+  if (!db?.prepare || !id) return false;
+  await db.prepare(`
+    DELETE FROM project_integrations
+    WHERE project_id = ? AND provider = 'google_sheets'
+  `).bind(id).run();
+  return true;
+}
+
 export async function updateGoogleSheetsIntegrationStatus(db, projectId = '', patch = {}) {
   const id = String(projectId || '').trim();
   if (!db?.prepare || !id) return false;
