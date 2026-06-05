@@ -83,7 +83,7 @@ for (const token of [
 }
 
 assert(adapter.includes('ON CONFLICT(id) DO UPDATE SET'), 'D1 lead upsert should be idempotent');
-assert(adapter.includes('ON CONFLICT(project_id, slug) DO UPDATE SET'), 'D1 page upsert should absorb duplicate project slug saves');
+assert(adapter.includes('currentBySlug') && adapter.includes('currentByIdSameProject'), 'D1 page upsert should pre-resolve page id and project slug collisions before insert');
 assert(adapter.includes('INSERT OR IGNORE INTO events'), 'D1 event insert should dedupe repeated event ids');
 assert(adapter.includes('created_month'), 'D1 adapter should preserve month index field');
 assert(adapter.includes('contact_key'), 'D1 adapter should preserve lead dedupe key');

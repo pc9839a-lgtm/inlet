@@ -721,14 +721,15 @@ function fakeD1(options = {}) {
           if (sql.includes('SELECT * FROM pages WHERE slug = ? ORDER BY updated_at DESC')) {
             const [slug] = this.params;
             return rows.pages
-              .filter((row) => row.slug === slug)
+              .map((row, index) => ({ row, index }))
+              .filter((entry) => entry.row.slug === slug)
               .sort((a, b) => {
-                const updated = String(b.updated_at || '').localeCompare(String(a.updated_at || ''));
+                const updated = String(b.row.updated_at || '').localeCompare(String(a.row.updated_at || ''));
                 if (updated) return updated;
-                const revision = Number(b.revision || 0) - Number(a.revision || 0);
+                const revision = Number(b.row.revision || 0) - Number(a.row.revision || 0);
                 if (revision) return revision;
-                return String(b.id || '').localeCompare(String(a.id || ''));
-              })[0] || null;
+                return b.index - a.index;
+              })[0]?.row || null;
           }
           if (sql.includes('SELECT * FROM pages WHERE project_id = ? ORDER BY updated_at DESC LIMIT 1')) {
             const [projectId] = this.params;
