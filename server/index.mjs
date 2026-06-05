@@ -3291,7 +3291,12 @@ async function deliverLead(id, body = {}) {
     }
     const baseLead = { ...current, ...(body.lead || {}) };
     const deliveryPage = deliveryPageFrom(body.page || baseLead.deliveryPage || baseLead.page || {});
-    const delivery = await sendServerLeadIntegrations(baseLead, deliveryPage);
+    const currentDelivery = baseLead.delivery || {};
+    const providers = currentDelivery.status === 'partial' ? failedServerDeliveryProviders(currentDelivery) : [];
+    const retryDelivery = await sendServerLeadIntegrations(baseLead, deliveryPage, { providers });
+    const delivery = currentDelivery.status === 'partial'
+      ? mergeServerDeliveryReports(currentDelivery, retryDelivery)
+      : retryDelivery;
     return upsertD1Lead(storageRuntime.d1, {
       ...baseLead,
       delivery,
@@ -3315,7 +3320,12 @@ async function deliverLead(id, body = {}) {
 
     const baseLead = { ...leads[index], ...(body.lead || {}) };
     const deliveryPage = deliveryPageFrom(body.page || baseLead.deliveryPage || baseLead.page || {});
-    const delivery = await sendServerLeadIntegrations(baseLead, deliveryPage);
+    const currentDelivery = baseLead.delivery || {};
+    const providers = currentDelivery.status === 'partial' ? failedServerDeliveryProviders(currentDelivery) : [];
+    const retryDelivery = await sendServerLeadIntegrations(baseLead, deliveryPage, { providers });
+    const delivery = currentDelivery.status === 'partial'
+      ? mergeServerDeliveryReports(currentDelivery, retryDelivery)
+      : retryDelivery;
     leads[index] = { ...baseLead, delivery, deliveryPage, updatedAt: new Date().toISOString() };
     await writeLeadList(leads, project);
     return leads[index];
@@ -3342,7 +3352,12 @@ async function retryFailedLeads(body = {}) {
       continue;
     }
     const deliveryPage = deliveryPageFrom(body.page || leads[i].deliveryPage || leads[i].page || {});
-    const delivery = await sendServerLeadIntegrations(leads[i], deliveryPage);
+    const currentDelivery = leads[i].delivery || {};
+    const providers = currentDelivery.status === 'partial' ? failedServerDeliveryProviders(currentDelivery) : [];
+    const retryDelivery = await sendServerLeadIntegrations(leads[i], deliveryPage, { providers });
+    const delivery = currentDelivery.status === 'partial'
+      ? mergeServerDeliveryReports(currentDelivery, retryDelivery)
+      : retryDelivery;
     const previousRetry = leads[i].delivery?.retry || {};
     const attempts = Number(previousRetry.attempts || 0) + 1;
     const deadLetter = delivery.status !== 'success' && attempts >= deliveryRetryConfig.maxAttempts;
@@ -3401,7 +3416,12 @@ async function retryFailedD1Leads(body = {}, project = {}) {
       continue;
     }
     const deliveryPage = deliveryPageFrom(body.page || lead.deliveryPage || lead.page || {});
-    const delivery = await sendServerLeadIntegrations(lead, deliveryPage);
+    const currentDelivery = lead.delivery || {};
+    const providers = currentDelivery.status === 'partial' ? failedServerDeliveryProviders(currentDelivery) : [];
+    const retryDelivery = await sendServerLeadIntegrations(lead, deliveryPage, { providers });
+    const delivery = currentDelivery.status === 'partial'
+      ? mergeServerDeliveryReports(currentDelivery, retryDelivery)
+      : retryDelivery;
     const previousRetry = lead.delivery?.retry || {};
     const attempts = Number(previousRetry.attempts || 0) + 1;
     const deadLetter = delivery.status !== 'success' && attempts >= deliveryRetryConfig.maxAttempts;
@@ -3682,8 +3702,12 @@ function deliveryPageFrom(page = {}) {
   };
 }
 
-async function sendServerLeadIntegrations(lead, page = {}) {
-  const jobs = buildServerIntegrationJobs(page.integrations || {}, lead, page);
+async function sendServerLeadIntegrations(lead, page = {}, options = {}) {
+  let jobs = buildServerIntegrationJobs(page.integrations || {}, lead, page);
+  const retryProviders = new Set((options.providers || []).map((provider) => String(provider || '').trim()).filter(Boolean));
+  if (retryProviders.size) {
+    jobs = jobs.filter((job) => retryProviders.has(String(job.provider || '').trim()));
+  }
   if (!jobs.length) {
     return { status: 'none', summary: '외부 전송 없음', logs: [] };
   }
@@ -3692,6 +3716,7 @@ async function sendServerLeadIntegrations(lead, page = {}) {
     const res = await runServerIntegrationJob(job);
     return {
       target: job.label,
+      provider: job.provider || job.type || '',
       status: res.ok ? 'success' : 'failed',
       message: res.ok ? '전송 완료' : (res.message || `응답 확인 필요${res.status ? ` · ${res.status}` : ''}`),
       idempotencyKey: job.idempotencyKey || '',
@@ -3704,6 +3729,7 @@ async function sendServerLeadIntegrations(lead, page = {}) {
     if (item.status === 'fulfilled') return item.value;
     return {
       target: job?.label || '외부 전송',
+      provider: job?.provider || job?.type || '',
       status: 'failed',
       message: String(item.reason?.message || item.reason || '전송 실패'),
       idempotencyKey: job?.idempotencyKey || '',
@@ -3737,6 +3763,7 @@ function buildServerIntegrationJobs(integrations = {}, lead = {}, page = {}) {
   if (integrations.email?.enabled && isValidEmail(integrations.email.to) && shouldSendEmailForLead(integrations.email, lead)) {
     jobs.push({
       type: 'email',
+      provider: 'ses',
       label: '이메일 알림',
       to: integrations.email.to,
       subject: `[${page.title || '랜딩페이지'}] ${lead.type || '상담신청'} 접수`,
@@ -3747,6 +3774,7 @@ function buildServerIntegrationJobs(integrations = {}, lead = {}, page = {}) {
   if (integrations.webhook?.enabled && isValidHttpUrl(integrations.webhook.url)) {
     jobs.push({
       type: 'http',
+      provider: 'webhook',
       label: 'Webhook',
       url: integrations.webhook.url,
       payload: { ...payload, target: 'webhook', service: integrations.webhook.service || 'custom' },
@@ -3757,6 +3785,7 @@ function buildServerIntegrationJobs(integrations = {}, lead = {}, page = {}) {
   if (integrations.automation?.enabled && isValidHttpUrl(integrations.automation.url)) {
     jobs.push({
       type: 'http',
+      provider: 'automation',
       label: `자동화 · ${serviceLabel(integrations.automation.service || 'make')}`,
       url: integrations.automation.url,
       payload: { ...payload, target: 'automation', service: integrations.automation.service || 'make' },
@@ -3768,6 +3797,7 @@ function buildServerIntegrationJobs(integrations = {}, lead = {}, page = {}) {
   if (integrations.sheets?.enabled && isValidHttpUrl(sheetsUrl)) {
     jobs.push({
       type: 'http',
+      provider: 'google_sheets',
       label: '구글 시트',
       url: sheetsUrl,
       payload: {
@@ -4122,6 +4152,19 @@ function summarizeServerDelivery(logs = []) {
   return { status: 'failed', summary: `${fail}개 연결 전송 실패`, logs: safeLogs };
 }
 
+function failedServerDeliveryProviders(delivery = {}) {
+  return Array.from(new Set((delivery.logs || [])
+    .filter((log) => log?.status === 'failed')
+    .map((log) => String(log.provider || '').trim())
+    .filter(Boolean)));
+}
+
+function mergeServerDeliveryReports(previous = {}, retry = {}) {
+  const retriedProviders = new Set((retry.logs || []).map((log) => String(log.provider || '').trim()).filter(Boolean));
+  const keptLogs = (previous.logs || []).filter((log) => !retriedProviders.has(String(log.provider || '').trim()));
+  return summarizeServerDelivery([...keptLogs, ...(retry.logs || [])]);
+}
+
 function csvCell(value) {
   const text = neutralizeCsvFormula(value == null ? '' : String(value));
   return `"${text.replace(/"/g, '""')}"`;
@@ -4428,7 +4471,12 @@ async function retryFailedLeadsInFile(file, project = {}) {
   for (let i = 0; i < leads.length; i += 1) {
     if (!shouldAutoRetryLead(leads[i])) continue;
     const deliveryPage = deliveryPageFrom(leads[i].deliveryPage || leads[i].page || {});
-    const delivery = await sendServerLeadIntegrations(leads[i], deliveryPage);
+    const currentDelivery = leads[i].delivery || {};
+    const providers = currentDelivery.status === 'partial' ? failedServerDeliveryProviders(currentDelivery) : [];
+    const retryDelivery = await sendServerLeadIntegrations(leads[i], deliveryPage, { providers });
+    const delivery = currentDelivery.status === 'partial'
+      ? mergeServerDeliveryReports(currentDelivery, retryDelivery)
+      : retryDelivery;
     const previousRetry = leads[i].delivery?.retry || {};
     const attempts = Number(previousRetry.attempts || 0) + 1;
     const deadLetter = delivery.status !== 'success' && attempts >= deliveryRetryConfig.maxAttempts;

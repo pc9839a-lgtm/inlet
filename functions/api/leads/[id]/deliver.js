@@ -1,9 +1,15 @@
-import { getD1Lead, getD1PageBySlug, upsertD1Lead } from '../../../../server/storage/d1Adapter.mjs';
+import { getD1LatestPageByProject, getD1Lead, getD1PageBySlug, upsertD1Lead } from '../../../../server/storage/d1Adapter.mjs';
 import { assertD1, authorizeProject, handleApiError, jsonResponse, optionsResponse, projectFromRequest, readJson } from '../../_shared.js';
-import { NO_DELIVERY_SETTINGS_MESSAGE, normalizeDeliveryPage, sendLeadDelivery } from '../_delivery.js';
+import {
+  failedDeliveryProviders,
+  mergeDeliveryReports,
+  NO_DELIVERY_SETTINGS_MESSAGE,
+  normalizeDeliveryPage,
+  sendLeadDelivery,
+} from '../_delivery.js';
 
 const METHODS = 'POST, OPTIONS';
-const TERMINAL_DELIVERY_STATUSES = new Set(['success', 'partial']);
+const TERMINAL_DELIVERY_STATUSES = new Set(['success']);
 
 export async function onRequest({ request, env, params }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, METHODS);
@@ -27,12 +33,19 @@ export async function onRequest({ request, env, params }) {
       return jsonResponse(request, env, 200, { ok: true, lead: current, delivery: current.delivery || { status: 'none', summary: NO_DELIVERY_SETTINGS_MESSAGE, logs: [] } }, METHODS);
     }
 
-    const storedPage = await getD1PageBySlug(db, {
+    let storedPage = await getD1PageBySlug(db, {
       projectId: project.projectId,
       slug: input.page?.slug || current.pageSlug || project.slug || '',
     });
+    if (!storedPage) storedPage = await getD1LatestPageByProject(db, project.projectId);
     const deliveryPage = normalizeDeliveryPage(input.page || {}, storedPage || {}, project);
-    const delivery = await sendLeadDelivery(current, deliveryPage, env);
+    const currentDelivery = current.delivery || {};
+    const currentStatus = String(currentDelivery.status || current.deliveryStatus || '');
+    const providers = currentStatus === 'partial' ? failedDeliveryProviders(currentDelivery) : [];
+    const retryDelivery = await sendLeadDelivery(current, deliveryPage, env, { providers });
+    const delivery = currentStatus === 'partial'
+      ? mergeDeliveryReports(currentDelivery, retryDelivery)
+      : retryDelivery;
     const saved = await upsertD1Lead(db, {
       ...current,
       delivery,

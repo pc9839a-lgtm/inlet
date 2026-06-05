@@ -1,6 +1,12 @@
 import { readFile } from 'node:fs/promises';
 import { sendSesEmail } from '../functions/api/_ses.js';
-import { buildLeadDeliveryJobs, normalizeDeliveryPage, sendLeadDelivery } from '../functions/api/leads/_delivery.js';
+import {
+  buildLeadDeliveryJobs,
+  failedDeliveryProviders,
+  mergeDeliveryReports,
+  normalizeDeliveryPage,
+  sendLeadDelivery,
+} from '../functions/api/leads/_delivery.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -119,6 +125,20 @@ assert(missingKeyDelivery.logs?.[0]?.provider === 'ses', 'failed email delivery 
 assert(String(missingKeyDelivery.logs?.[0]?.message || '') === '메일 발송 설정을 확인해주세요.', 'failed email delivery should keep user-safe Korean message');
 assert(!/AWS|SES|quota|sandbox|access key|secret/i.test(String(missingKeyDelivery.logs?.[0]?.message || '')), 'failed email delivery UI message must not expose provider/internal terms');
 
+const partialDelivery = {
+  status: 'partial',
+  logs: [
+    { provider: 'google_sheets', status: 'success', message: 'sent' },
+    { provider: 'ses', status: 'failed', message: 'failed' },
+  ],
+};
+assert(failedDeliveryProviders(partialDelivery).join(',') === 'ses', 'partial retry should target only failed providers');
+const mergedDelivery = mergeDeliveryReports(partialDelivery, {
+  status: 'success',
+  logs: [{ provider: 'ses', status: 'success', message: 'resent' }],
+});
+assert(mergedDelivery.status === 'success' && mergedDelivery.logs.length === 2, 'partial retry should preserve existing successes and replace failed providers');
+
 async function expectSesError(label, setup, expectedCode) {
   const originalFetch = globalThis.fetch;
   try {
@@ -202,7 +222,7 @@ for (const [name, source, tokens] of [
   ['blocked history', blockedHistory, ['listD1BlockedLeadSubmissions', 'pageSlug', "source: 'd1'", "tab: 'inbox'"]],
   ['delivery logs', deliveryLogs, ['listD1DeliveryLogs', "type: 'delivery-logs'", "adapter: 'd1'", "tab: 'inbox'"]],
   ['retry queue', retryQueue, ['listD1DeliveryRetryQueue', "type: 'delivery-retry-queue'", 'deadLetter', "tab: 'inbox'"]],
-  ['lead deliver', leadDeliver, ['getD1Lead', 'upsertD1Lead', 'publicWrite: true', 'NO_DELIVERY_SETTINGS_MESSAGE', '접수를 찾을 수 없습니다.']],
+  ['lead deliver', leadDeliver, ['getD1Lead', 'getD1LatestPageByProject', 'upsertD1Lead', 'publicWrite: true', 'NO_DELIVERY_SETTINGS_MESSAGE', 'failedDeliveryProviders', 'mergeDeliveryReports', '접수를 찾을 수 없습니다.']],
   ['integrations test', integrationsTest, ['type !== \'sheets\'', 'isGoogleAppsScriptUrl', 'text/plain;charset=utf-8', 'Google Apps Script', 'pagero.lead.v1', "event: 'lead.test'", "service: 'pagero'", "target: 'google_sheets'", "provider: 'google_sheets'", "mode: 'webhook'", "sheetName: body.sheetName", "utmSource: 'connection_test'"]],
   ['google sheets oauth shared', googleSheetsOauth, ['project_integrations', 'saveGoogleSheetsIntegration', 'getGoogleSheetsIntegration', 'deleteGoogleSheetsIntegration', 'refreshGoogleAccessToken', 'appendGoogleSheetRow']],
   ['google sheets oauth url', googleSheetsOauthUrl, ['googleSheetsAuthUrl', 'signedOAuthState', 'authorizeProject', "write: true", "tab: 'inbox'"]],

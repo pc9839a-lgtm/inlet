@@ -211,8 +211,12 @@ function leadIntegrationPayload(lead = {}, page = {}) {
   };
 }
 
-export async function sendLeadDelivery(lead = {}, page = {}, env = {}) {
-  const jobs = buildLeadDeliveryJobs(page, lead);
+export async function sendLeadDelivery(lead = {}, page = {}, env = {}, options = {}) {
+  let jobs = buildLeadDeliveryJobs(page, lead);
+  const retryProviders = new Set((options.providers || []).map((provider) => String(provider || '').trim()).filter(Boolean));
+  if (retryProviders.size) {
+    jobs = jobs.filter((job) => retryProviders.has(String(job.provider || '').trim()));
+  }
   if (!jobs.length) return deliveryReport();
 
   const settled = await Promise.allSettled(jobs.map(async (job) => {
@@ -241,6 +245,19 @@ export async function sendLeadDelivery(lead = {}, page = {}, env = {}) {
   });
 
   return summarizeDelivery(logs);
+}
+
+export function failedDeliveryProviders(delivery = {}) {
+  return Array.from(new Set((delivery.logs || [])
+    .filter((log) => log?.status === 'failed')
+    .map((log) => String(log.provider || '').trim())
+    .filter(Boolean)));
+}
+
+export function mergeDeliveryReports(previous = {}, retry = {}) {
+  const retriedProviders = new Set((retry.logs || []).map((log) => String(log.provider || '').trim()).filter(Boolean));
+  const keptLogs = (previous.logs || []).filter((log) => !retriedProviders.has(String(log.provider || '').trim()));
+  return summarizeDelivery([...keptLogs, ...(retry.logs || [])]);
 }
 
 async function runDeliveryJob(job = {}, env = {}) {
@@ -340,7 +357,7 @@ function safeGoogleSheetsMessage(error) {
   return 'Google Sheets send failed';
 }
 
-function summarizeDelivery(logs = []) {
+export function summarizeDelivery(logs = []) {
   const success = logs.filter((log) => log.status === 'success').length;
   const failed = logs.filter((log) => log.status === 'failed').length;
   if (success && !failed) return deliveryReport('success', `${success}\uAC1C \uC54C\uB9BC \uC804\uC1A1 \uC644\uB8CC`, logs);

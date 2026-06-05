@@ -44,6 +44,27 @@ await runSmoke('server-smoke-integrations', async ({ baseUrl }) => {
     assert(deliveryLogs.data.queryPlan?.recommendedIndex && Array.isArray(deliveryLogs.data.queryPlan?.activeIndexFields), 'delivery logs index migration plan missing');
     assert(deliveryLogs.data.queryPlan?.indexKey === deliveryLogs.data.queryPlan?.recommendedIndex && deliveryLogs.data.queryPlan?.migrationPriority, 'delivery logs migration priority missing');
 
+    const partialLead = { id: 'lead-partial-retry', type: 'consult', status: 'new', name: 'Partial Retry' };
+    await json({ baseUrl }, 'POST', '/api/leads', { project, page, lead: partialLead });
+    await json({ baseUrl }, 'PATCH', `/api/leads/${partialLead.id}`, {
+      project,
+      patch: {
+        delivery: {
+          status: 'partial',
+          summary: 'partial seed',
+          logs: [
+            { provider: 'google_sheets', target: 'Google Sheets', status: 'success', message: 'sent' },
+            { provider: 'webhook', target: 'Webhook', status: 'failed', message: 'failed' },
+          ],
+        },
+      },
+    });
+    const beforePartialRetry = webhook.received.length;
+    const partialRetry = await json({ baseUrl }, 'POST', `/api/leads/${partialLead.id}/deliver`, { project, page });
+    assert(partialRetry.res.ok && partialRetry.data.delivery?.status === 'success', 'partial provider retry should recover to success');
+    assert(webhook.received.length === beforePartialRetry + 1, 'partial provider retry should resend only the failed provider');
+    assert(webhook.received.at(-1)?.body?.target === 'webhook', 'partial provider retry should not duplicate Google Sheets rows');
+
     const compactDryRun = await json({ baseUrl }, 'POST', '/api/leads/compact', { project, dryRun: true });
     assert(compactDryRun.res.ok && compactDryRun.data.dryRun === true, 'lead compact dry-run failed');
 
