@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { normalizeIntegrations } from '../lib/pageModel.js';
 import { connectionCounts, connectionState, runConnectionTest } from '../lib/leadIntegrations.js';
+import { apiFetch, postJson, projectAuthHeaders } from '../lib/apiClient.js';
 import {
   fmtDate,
   LEAD_STATUS,
@@ -13,6 +14,7 @@ import {
 } from '../lib/leadModel.js';
 import { fetchServerBlockedLeadHistory } from '../lib/leadRepository.js';
 import { currentMonthValue, monthDateRange } from '../lib/monthRange.js';
+import { projectContext } from '../lib/projectContext.js';
 import { trafficSourceLabel } from '../lib/trafficAttribution.js';
 import './InboxPanel.css';
 
@@ -443,6 +445,99 @@ function InboxConnectionsPanel({ page, authUser = null, updateIntegrations, onSa
     return nextIntegrations;
   };
 
+  const googleSheetsProject = () => {
+    const context = projectContext(page, authUser);
+    return {
+      ...context,
+      id: context.projectId,
+      title: page.title || '',
+    };
+  };
+
+  const switchSheetsMode = (mode) => {
+    const nextMode = mode === 'webhook' ? 'webhook' : 'oauth';
+    sheetPatch({
+      enabled: true,
+      mode: nextMode,
+      status: nextMode === 'oauth'
+        ? (draftIntegrations.sheets.connectedEmail && draftIntegrations.sheets.spreadsheetId ? 'connected' : 'disconnected')
+        : (draftIntegrations.sheets.webhookUrl || draftIntegrations.sheets.url ? draftIntegrations.sheets.status || 'connected' : 'disconnected'),
+      lastError: '',
+    });
+  };
+
+  const connectGoogleSheetsOAuth = async () => {
+    const project = googleSheetsProject();
+    if (!project.projectId) {
+      setResult('페이지를 먼저 저장한 뒤 Google Sheets를 연결해주세요.');
+      return;
+    }
+    setTesting('sheets-oauth');
+    setResult('');
+    try {
+      const response = await postJson('/api/integrations/google/sheets/oauth-url', {
+        projectId: project.projectId,
+        ownerId: project.ownerId,
+        slug: project.slug,
+        project,
+      }, {
+        headers: projectAuthHeaders(project),
+      });
+      if (!response?.authUrl) throw new Error(response?.message || 'Google 연결 URL을 만들지 못했습니다.');
+      sheetPatch({ enabled: true, mode: 'oauth', status: 'disconnected', lastError: '' });
+      window.open(response.authUrl, '_blank', 'noopener,noreferrer');
+      setResult('Google 연결 창을 열었습니다. 완료 후 상태 확인을 눌러주세요.');
+    } catch (error) {
+      setResult(`Google 연결 실패: ${String(error?.message || error)}`);
+    } finally {
+      setTesting('');
+    }
+  };
+
+  const refreshGoogleSheetsOAuthStatus = async () => {
+    const project = googleSheetsProject();
+    if (!project.projectId) {
+      setResult('페이지를 먼저 저장한 뒤 상태를 확인해주세요.');
+      return;
+    }
+    setTesting('sheets-status');
+    setResult('');
+    try {
+      const query = new URLSearchParams({
+        projectId: project.projectId,
+        slug: project.slug || '',
+      });
+      const response = await apiFetch(`/api/integrations/google/sheets/status?${query.toString()}`, {
+        headers: projectAuthHeaders(project),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.message || data?.error || `상태 확인 실패: ${response.status}`);
+      const nextIntegrations = sheetPatch({
+        enabled: true,
+        mode: 'oauth',
+        status: data.connected ? 'connected' : 'disconnected',
+        connectedEmail: data.connectedEmail || '',
+        spreadsheetId: data.spreadsheetId || '',
+        spreadsheetUrl: data.spreadsheetUrl || '',
+        sheetName: data.sheetName || draftIntegrations.sheets.sheetName || '접수함',
+        lastError: data.hasError ? (draftIntegrations.sheets.lastError || 'Google Sheets 연결 확인이 필요합니다.') : '',
+      });
+      if (data.connected) {
+        try {
+          await onSavePage?.({ ...page, integrations: nextIntegrations });
+          setDraftDirty(false);
+        } catch {
+          setDraftDirty(true);
+        }
+      }
+      setResult(data.connected ? 'Google Sheets 연결 완료' : 'Google 연결이 아직 완료되지 않았습니다.');
+    } catch (error) {
+      setResult(`Google 상태 확인 실패: ${String(error?.message || error)}`);
+    } finally {
+      setTesting('');
+    }
+  };
+
   const saveSheetsDraft = async () => {
     const currentSheets = draftIntegrations.sheets || {};
     const currentUrl = currentSheets.webhookUrl || currentSheets.url || '';
@@ -606,22 +701,47 @@ function InboxConnectionsPanel({ page, authUser = null, updateIntegrations, onSa
             </div>
             {draftIntegrations.sheets.enabled && (
               <div className="connection-detail-box compact">
-                <label className="connection-inline-control">
-                  <span>Webhook URL</span>
-                  <input value={draftIntegrations.sheets.webhookUrl || draftIntegrations.sheets.url || ''} placeholder="Google Apps Script Web App URL" onChange={(event) => sheetPatch({ webhookUrl: event.target.value, url: event.target.value, status: 'disconnected', lastError: '' })} />
-                </label>
-                <label className="connection-inline-control">
-                  <span>시트명</span>
-                  <input value={draftIntegrations.sheets.sheetName || ''} placeholder="접수함" onChange={(event) => sheetPatch({ sheetName: event.target.value })} />
-                </label>
-                <p className="connection-help-text">전송 실패 시에도 접수 데이터는 페이지로 접수함에 먼저 보관됩니다.</p>
-                {draftIntegrations.sheets.lastError && <div className="connection-result error"><span>{draftIntegrations.sheets.lastError}</span></div>}
-                <div className="connection-inline-actions">
-                  <button type="button" className="test-connection-btn" onClick={copySheetsScript}>{copiedScript ? '복사됨' : '샘플 코드 복사'}</button>
-                  <button type="button" className="test-connection-btn" disabled={testing === 'sheets'} onClick={testSheets}>{testing === 'sheets' ? '테스트 중' : '연결 테스트'}</button>
-                  <button type="button" className="save-connection-btn" disabled={saving} onClick={saveSheetsDraft}>연동 저장</button>
-                  <button type="button" className="test-connection-btn" onClick={() => patch('sheets', { enabled: false, status: 'disconnected', webhookUrl: '', url: '', lastError: '' })}>연결 해제</button>
+                <div className="connection-inline-control">
+                  <span>연결 방식</span>
+                  <div className="inline-chip-row">
+                    <MiniToggle active={(draftIntegrations.sheets.mode || 'oauth') === 'oauth'} onClick={() => switchSheetsMode('oauth')}>Google 연결</MiniToggle>
+                    <MiniToggle active={draftIntegrations.sheets.mode === 'webhook'} onClick={() => switchSheetsMode('webhook')}>직접 URL</MiniToggle>
+                  </div>
                 </div>
+                {(draftIntegrations.sheets.mode || 'oauth') === 'oauth' ? (
+                  <>
+                    <div className="connection-inline-control">
+                      <span>연결 계정</span>
+                      <strong className="locked-email-value">{draftIntegrations.sheets.connectedEmail || '연결 필요'}</strong>
+                    </div>
+                    {draftIntegrations.sheets.spreadsheetUrl && (
+                      <a className="test-connection-btn" href={draftIntegrations.sheets.spreadsheetUrl} target="_blank" rel="noreferrer">시트 열기</a>
+                    )}
+                    <div className="connection-inline-actions">
+                      <button type="button" className="save-connection-btn" disabled={testing === 'sheets-oauth'} onClick={connectGoogleSheetsOAuth}>{testing === 'sheets-oauth' ? '연결 중' : 'Google로 연결'}</button>
+                      <button type="button" className="test-connection-btn" disabled={testing === 'sheets-status'} onClick={refreshGoogleSheetsOAuthStatus}>{testing === 'sheets-status' ? '확인 중' : '상태 확인'}</button>
+                      <button type="button" className="test-connection-btn" onClick={() => sheetPatch({ enabled: false, mode: 'oauth', status: 'disconnected', connectedEmail: '', spreadsheetId: '', spreadsheetUrl: '', lastError: '' })}>연결 해제</button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <label className="connection-inline-control">
+                      <span>Webhook URL</span>
+                      <input value={draftIntegrations.sheets.webhookUrl || draftIntegrations.sheets.url || ''} placeholder="Google Apps Script Web App URL" onChange={(event) => sheetPatch({ webhookUrl: event.target.value, url: event.target.value, status: 'disconnected', lastError: '' })} />
+                    </label>
+                    <label className="connection-inline-control">
+                      <span>시트명</span>
+                      <input value={draftIntegrations.sheets.sheetName || ''} placeholder="접수함" onChange={(event) => sheetPatch({ sheetName: event.target.value })} />
+                    </label>
+                    <div className="connection-inline-actions">
+                      <button type="button" className="test-connection-btn" onClick={copySheetsScript}>{copiedScript ? '복사됨' : '샘플 코드 복사'}</button>
+                      <button type="button" className="test-connection-btn" disabled={testing === 'sheets'} onClick={testSheets}>{testing === 'sheets' ? '테스트 중' : '연결 테스트'}</button>
+                      <button type="button" className="save-connection-btn" disabled={saving} onClick={saveSheetsDraft}>연동 저장</button>
+                      <button type="button" className="test-connection-btn" onClick={() => patch('sheets', { enabled: false, status: 'disconnected', webhookUrl: '', url: '', lastError: '' })}>연결 해제</button>
+                    </div>
+                  </>
+                )}
+                {draftIntegrations.sheets.lastError && <div className="connection-result error"><span>{draftIntegrations.sheets.lastError}</span></div>}
               </div>
             )}
           </div>

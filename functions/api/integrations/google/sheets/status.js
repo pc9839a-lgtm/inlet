@@ -1,4 +1,4 @@
-import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../../../_shared.js';
+import { assertD1, authorizeProject, handleApiError, jsonResponse, optionsResponse, projectFromRequest } from '../../../_shared.js';
 import { getGoogleSheetsIntegration } from './_oauth.js';
 
 const METHODS = 'GET, OPTIONS';
@@ -11,12 +11,14 @@ export async function onRequestGet({ request, env }) {
   try {
     assertD1(env);
     const url = new URL(request.url);
+    const project = projectFromRequest(url, {}, request);
     const projectId = String(url.searchParams.get('projectId') || '').trim();
     if (!projectId) {
       const error = new Error('projectId is required');
       error.status = 400;
       throw error;
     }
+    await authorizeProject(request, env, { ...project, projectId }, { tab: 'inbox' });
 
     const integration = await getGoogleSheetsIntegration(env.DB, projectId);
     if (!integration) {
