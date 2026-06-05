@@ -56,7 +56,7 @@ function cleanFieldLabel(value = '') {
 }
 
 function uniqueHeader(base, used) {
-  let header = base || '\uC785\uB825\uAC12';
+  let header = base || '입력값';
   let index = 2;
   while (used.has(header)) {
     header = `${base} ${index}`;
@@ -144,26 +144,26 @@ export function leadsToCsv(leads = [], options = {}) {
   const dynamicHeaders = collectDynamicFieldHeaders(source);
   const dynamicHeaderLabels = [...dynamicHeaders.values()];
   const headers = [
-    '\uC811\uC218 ID',
-    '\uC811\uC218 \uC720\uD615',
-    '\uC0C1\uD0DC',
-    '\uC811\uC218\uC77C\uC2DC',
-    '\uC774\uB984',
-    '\uB300\uD45C \uC5F0\uB77D\uCC98',
-    '\uC5F0\uB77D\uCC98',
-    '\uC774\uBA54\uC77C',
-    '\uC8FC\uC18C',
-    '\uBB38\uC758 \uB0B4\uC6A9',
-    '\uC608\uC57D\uC77C',
-    '\uC608\uC57D\uC2DC\uAC04',
-    '\uBA54\uBAA8',
-    '\uC911\uBCF5 \uC5EC\uBD80',
-    '\uC911\uBCF5 \uC0AC\uC720',
-    '\uC704\uD5D8 \uC810\uC218',
-    '\uC81C\uCD9C\uC77C\uC2DC',
-    '\uD398\uC774\uC9C0\uBA85',
-    '\uD398\uC774\uC9C0 URL',
-    '\uC720\uC785 URL',
+    '접수 ID',
+    '접수 유형',
+    '상태',
+    '접수일시',
+    '이름',
+    '대표 연락처',
+    '연락처',
+    '이메일',
+    '주소',
+    '문의 내용',
+    '예약일',
+    '예약시간',
+    '메모',
+    '중복 여부',
+    '중복 사유',
+    '위험 점수',
+    '제출일시',
+    '페이지명',
+    '페이지 URL',
+    '유입 URL',
     'UTM Source',
     'UTM Medium',
     'UTM Campaign',
@@ -172,7 +172,7 @@ export function leadsToCsv(leads = [], options = {}) {
 
   const rows = source.map((item) => {
     const dynamicFields = dynamicFieldMap(item, dynamicHeaders);
-    const source = item.source || {};
+    const sourceInfo = item.source || {};
     const page = item.page || item.deliveryPage || {};
     return [
       item.id,
@@ -185,19 +185,19 @@ export function leadsToCsv(leads = [], options = {}) {
       item.email,
       item.address,
       item.message,
-      fieldByLabel(item, [/reservationDate|\uC608\uC57D\uC77C|date/i]),
-      fieldByLabel(item, [/reservationTime|\uC608\uC57D\uC2DC\uAC04|time/i]),
+      fieldByLabel(item, [/reservationDate|예약일|date/i]),
+      fieldByLabel(item, [/reservationTime|예약시간|time/i]),
       item.memo,
-      item.duplicate ? '\uC608' : '\uC544\uB2C8\uC624',
+      item.duplicate ? '예' : '아니오',
       item.duplicateReason || '',
       item.riskScore ?? '',
       fmtDate(item.submittedAt || item.createdAt),
       page.title || item.pageTitle || '',
       page.url || item.pageUrl || '',
-      source.url || source.pageUrl || item.sourceUrl || '',
-      source.utmSource || item.utmSource || '',
-      source.utmMedium || item.utmMedium || '',
-      source.utmCampaign || item.utmCampaign || '',
+      sourceInfo.url || sourceInfo.pageUrl || item.sourceUrl || '',
+      sourceInfo.utmSource || item.utmSource || '',
+      sourceInfo.utmMedium || item.utmMedium || '',
+      sourceInfo.utmCampaign || item.utmCampaign || '',
       ...dynamicHeaderLabels.map((header) => dynamicFields[header] || ''),
     ];
   });
