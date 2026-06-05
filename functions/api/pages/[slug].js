@@ -1,4 +1,4 @@
-import { decodeD1Page, getD1PageBySlug, upsertD1Page } from '../../../server/storage/d1Adapter.mjs';
+import { decodeD1Page, getD1PageBySlug, getD1ProjectById, upsertD1Page } from '../../../server/storage/d1Adapter.mjs';
 import { assertD1, authorizeProject, ensureD1ProjectShell, handleApiError, jsonResponse, optionsResponse, projectFromRequest, readJson, sessionIdentity } from '../_shared.js';
 
 const METHODS = 'GET, POST, OPTIONS';
@@ -32,8 +32,23 @@ function isFreePlan(value = '') {
   return !['paid', 'pro', 'premium', 'business', 'agency', 'enterprise'].includes(plan);
 }
 
-function enforceFreeEmailAlertRecipient(page = {}, project = {}, identity = null) {
-  const email = String(identity?.email || '').trim().toLowerCase();
+function normalizeEmail(value = '') {
+  return String(value || '').trim().toLowerCase();
+}
+
+async function fallbackFreeEmailAlertRecipient(db, project = {}) {
+  const projectId = String(project.projectId || project.id || '').trim();
+  const projectRow = projectId ? await getD1ProjectById(db, projectId) : null;
+  const ownerId = String(project.ownerId || project.ownerAccountId || projectRow?.ownerId || projectRow?.ownerAccountId || '').trim();
+  const clientEmail = normalizeEmail(project.clientEmail || projectRow?.clientEmail || '');
+  if (clientEmail) return clientEmail;
+  if (!ownerId) return '';
+  const account = await db.prepare('SELECT email FROM accounts WHERE id = ? LIMIT 1').bind(ownerId).first();
+  return normalizeEmail(account?.email || '');
+}
+
+function enforceFreeEmailAlertRecipient(page = {}, project = {}, identity = null, fallbackEmail = '') {
+  const email = normalizeEmail(identity?.email || fallbackEmail);
   if (!email) return page;
   const plan = page.plan || page.billingPlan || page.billing?.plan || project.plan || project.billingPlan || 'free';
   if (!isFreePlan(plan)) return page;
@@ -127,7 +142,8 @@ export async function onRequest({ request, env, params }) {
         };
         throw error;
       }
-      const pageForSave = enforceFreeEmailAlertRecipient({ ...incoming, slug }, project, identity);
+      const fallbackEmail = await fallbackFreeEmailAlertRecipient(db, project);
+      const pageForSave = enforceFreeEmailAlertRecipient({ ...incoming, slug }, project, identity, fallbackEmail);
       const saved = await upsertD1Page(db, pageForSave, {
         projectId: project.projectId,
         slug,

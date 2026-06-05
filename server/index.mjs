@@ -645,7 +645,8 @@ const server = createServer(async (req, res) => {
       const pageToSave = existingPage
         ? { ...incomingPage, ownership: existingPage.ownership || {} }
         : incomingPage;
-      const enforcedPage = enforceFreeEmailAlertRecipient(pageToSave, project, identity);
+      const fallbackEmail = await fallbackFreeEmailAlertRecipient(project, access);
+      const enforcedPage = enforceFreeEmailAlertRecipient(pageToSave, project, identity, fallbackEmail);
       const publicExisting = await readPublicPage(pageMatch[1]);
       if (publicExisting?.projectId && hasProject(project) && String(publicExisting.projectId) !== String(project.projectId || '')) {
         const error = new Error('Page URL is already in use.');
@@ -4712,8 +4713,8 @@ function isFreePlan(value = '') {
   return !['paid', 'pro', 'premium', 'business', 'agency', 'enterprise'].includes(plan);
 }
 
-function enforceFreeEmailAlertRecipient(page = {}, project = {}, identity = null) {
-  const email = normalizeEmail(identity?.email || '');
+function enforceFreeEmailAlertRecipient(page = {}, project = {}, identity = null, fallbackEmail = '') {
+  const email = normalizeEmail(identity?.email || fallbackEmail || page?.ownership?.ownerEmail || page?.ownerEmail || project?.clientEmail || '');
   if (!email) return page;
   const plan = page.plan || page.billingPlan || page.billing?.plan || project.plan || project.billingPlan || 'free';
   if (!isFreePlan(plan)) return page;
@@ -4730,6 +4731,25 @@ function enforceFreeEmailAlertRecipient(page = {}, project = {}, identity = null
       },
     },
   };
+}
+
+async function fallbackFreeEmailAlertRecipient(project = {}, access = null) {
+  const fromAccess = normalizeEmail(access?.ownerEmail || access?.clientEmail || '');
+  if (fromAccess) return fromAccess;
+  if (storageRuntime.active !== 'd1' || !storageRuntime.d1 || !hasProject(project)) return '';
+  try {
+    const normalizedProject = normalizeProject(project);
+    const row = await storageRuntime.d1.prepare(`
+      SELECT accounts.email AS owner_email, projects.client_email AS client_email
+      FROM projects
+      LEFT JOIN accounts ON accounts.id = projects.owner_account_id
+      WHERE projects.id = ?
+      LIMIT 1
+    `).bind(normalizedProject.projectId).first();
+    return normalizeEmail(row?.client_email || row?.owner_email || '');
+  } catch {
+    return '';
+  }
 }
 
 function serviceLabel(key = '') {
