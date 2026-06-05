@@ -503,11 +503,13 @@ function InboxConnectionsPanel({ page, authUser = null, updateIntegrations, onSa
   const save = async () => {
     setSaving(true);
     setResult('');
+    const nextIntegrations = enforceFreeEmailIntegration(draftIntegrations, page, authUser);
     try {
-      Object.entries(draftIntegrations).forEach(([section, value]) => {
-        updateIntegrations?.(section, enforceFreeEmailIntegration({ ...draftIntegrations, [section]: value }, page, authUser)[section]);
+      Object.entries(nextIntegrations).forEach(([section, value]) => {
+        updateIntegrations?.(section, value);
       });
-      await onSavePage?.({ ...page, integrations: enforceFreeEmailIntegration(draftIntegrations, page, authUser) });
+      await onSavePage?.({ ...page, integrations: nextIntegrations });
+      setDraftIntegrations(nextIntegrations);
       setDraftDirty(false);
       setResult('저장 완료');
     } catch (error) {
@@ -538,9 +540,9 @@ function InboxConnectionsPanel({ page, authUser = null, updateIntegrations, onSa
             {draftIntegrations.email.enabled && (
               <div className="connection-detail-box compact">
                 <label className="connection-inline-control email-recipient-control">
-                  <span>\uBC1B\uC744 \uC774\uBA54\uC77C</span>
+                  <span>받을 이메일</span>
                   {emailLocked ? (
-                    <strong className="locked-email-value" aria-label="\uACC4\uC815 \uC774\uBA54\uC77C\uB85C \uACE0\uC815\uB428">{accountEmail || '\uACC4\uC815 \uC774\uBA54\uC77C \uC5C6\uC74C'}</strong>
+                    <strong className="locked-email-value" aria-label="계정 이메일로 고정됨">{accountEmail || '계정 이메일 없음'}</strong>
                   ) : (
                     <input
                       value={draftIntegrations.email.to || ''}
@@ -549,7 +551,7 @@ function InboxConnectionsPanel({ page, authUser = null, updateIntegrations, onSa
                     />
                   )}
                 </label>
-                {emailLocked && <p className="connection-help-text">\uBB34\uB8CC \uC0AC\uC6A9\uC790\uB294 \uACC4\uC815 \uC774\uBA54\uC77C\uB85C \uC54C\uB9BC\uC744 \uBC1B\uC2B5\uB2C8\uB2E4.</p>}
+                {emailLocked && <p className="connection-help-text">무료 사용자는 계정 이메일로만 알림을 받습니다.</p>}
                 <div className="connection-inline-control">
                   <span>알림 대상</span>
                   <div className="inline-chip-row">
