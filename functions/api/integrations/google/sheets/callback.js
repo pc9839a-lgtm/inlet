@@ -63,13 +63,22 @@ export async function onRequestGet({ request, env }) {
       },
     });
 
-    return html('Google Sheets 연결 완료', '페이지로 화면으로 돌아가 연결 상태를 확인해주세요.');
+    return html('Google Sheets 연결 완료', '페이지로 화면에 연결 상태를 반영하고 있습니다.', { projectId: payload.projectId });
   } catch (error) {
     return html('Google 연결 실패', String(error?.message || error || '잠시 후 다시 시도해주세요.'));
   }
 }
 
-function html(title = '', message = '') {
+function html(title = '', message = '', payload = null) {
+  const completeScript = payload?.projectId ? `
+  <script>
+    try {
+      if (window.opener) {
+        window.opener.postMessage({ type: 'pagero:google-sheets-connected', projectId: ${JSON.stringify(String(payload.projectId || ''))} }, '*');
+      }
+      window.setTimeout(function(){ window.close(); }, 900);
+    } catch (_) {}
+  </script>` : '';
   return new Response(`<!doctype html>
 <html lang="ko">
 <head>
@@ -84,6 +93,7 @@ function html(title = '', message = '') {
     <p style="margin:0;color:#64748b;font-size:14px;line-height:1.7;">${escapeHtml(message)}</p>
     <button type="button" onclick="window.close()" style="margin-top:24px;width:100%;height:48px;border:0;border-radius:14px;background:#111827;color:#fff;font-weight:900;">닫기</button>
   </main>
+  ${completeScript}
 </body>
 </html>`, {
     status: 200,

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { normalizeIntegrations } from '../lib/pageModel.js';
 import { connectionCounts, connectionState, runConnectionTest } from '../lib/leadIntegrations.js';
 import { apiFetch, postJson, projectAuthHeaders } from '../lib/apiClient.js';
@@ -473,42 +473,14 @@ function InboxConnectionsPanel({ page, authUser = null, updateIntegrations, onSa
     });
   };
 
-  const connectGoogleSheetsOAuth = async () => {
+  const refreshGoogleSheetsOAuthStatus = useCallback(async ({ quiet = false } = {}) => {
     const project = googleSheetsProject();
     if (!project.projectId) {
-      setResult('페이지를 먼저 저장한 뒤 Google Sheets를 연결해주세요.');
-      return;
-    }
-    setTesting('sheets-oauth');
-    setResult('');
-    try {
-      const response = await postJson('/api/integrations/google/sheets/oauth-url', {
-        projectId: project.projectId,
-        ownerId: project.ownerId,
-        slug: project.slug,
-        project,
-      }, {
-        headers: projectAuthHeaders(project),
-      });
-      if (!response?.authUrl) throw new Error(response?.message || 'Google 연결 URL을 만들지 못했습니다.');
-      sheetPatch({ enabled: true, mode: 'oauth', status: 'disconnected', lastError: '' });
-      window.open(response.authUrl, '_blank', 'noopener,noreferrer');
-      setResult('Google 연결 창을 열었습니다. 완료 후 상태 확인을 눌러주세요.');
-    } catch (error) {
-      setResult(`Google 연결 실패: ${String(error?.message || error)}`);
-    } finally {
-      setTesting('');
-    }
-  };
-
-  const refreshGoogleSheetsOAuthStatus = async () => {
-    const project = googleSheetsProject();
-    if (!project.projectId) {
-      setResult('페이지를 먼저 저장한 뒤 상태를 확인해주세요.');
+      if (!quiet) setResult('페이지를 먼저 저장한 뒤 상태를 확인해주세요.');
       return;
     }
     setTesting('sheets-status');
-    setResult('');
+    if (!quiet) setResult('');
     try {
       const query = new URLSearchParams({
         projectId: project.projectId,
@@ -537,9 +509,57 @@ function InboxConnectionsPanel({ page, authUser = null, updateIntegrations, onSa
           setDraftDirty(true);
         }
       }
-      setResult(data.connected ? 'Google Sheets 연결 완료' : 'Google 연결이 아직 완료되지 않았습니다.');
+      if (!quiet || data.connected) setResult(data.connected ? 'Google Sheets 연결 완료' : 'Google 연결이 아직 완료되지 않았습니다.');
     } catch (error) {
-      setResult(`Google 상태 확인 실패: ${String(error?.message || error)}`);
+      if (!quiet) setResult(`Google 상태 확인 실패: ${String(error?.message || error)}`);
+    } finally {
+      setTesting('');
+    }
+  }, [page, authUser?.email, draftIntegrations, onSavePage]);
+
+  useEffect(() => {
+    const onGoogleSheetsConnected = (event) => {
+      const data = event?.data || {};
+      if (data?.type !== 'pagero:google-sheets-connected') return;
+      const project = googleSheetsProject();
+      if (data.projectId && project.projectId && data.projectId !== project.projectId) return;
+      refreshGoogleSheetsOAuthStatus({ quiet: false });
+    };
+    window.addEventListener('message', onGoogleSheetsConnected);
+    return () => window.removeEventListener('message', onGoogleSheetsConnected);
+  }, [refreshGoogleSheetsOAuthStatus, page.slug, authUser?.email]);
+
+  const connectGoogleSheetsOAuth = async () => {
+    const project = googleSheetsProject();
+    if (!project.projectId) {
+      setResult('페이지를 먼저 저장한 뒤 Google Sheets를 연결해주세요.');
+      return;
+    }
+    setTesting('sheets-oauth');
+    setResult('');
+    try {
+      const response = await postJson('/api/integrations/google/sheets/oauth-url', {
+        projectId: project.projectId,
+        ownerId: project.ownerId,
+        slug: project.slug,
+        project,
+      }, {
+        headers: projectAuthHeaders(project),
+      });
+      if (!response?.authUrl) throw new Error(response?.message || 'Google 연결 URL을 만들지 못했습니다.');
+      sheetPatch({ enabled: true, mode: 'oauth', status: 'disconnected', lastError: '' });
+      const popup = window.open(response.authUrl, '_blank', 'noopener,noreferrer');
+      setResult('Google 연결 창을 열었습니다. 완료되면 자동으로 상태를 확인합니다.');
+      if (popup) {
+        const startedAt = Date.now();
+        const timer = window.setInterval(() => {
+          if (!popup.closed && Date.now() - startedAt < 120000) return;
+          window.clearInterval(timer);
+          refreshGoogleSheetsOAuthStatus({ quiet: true });
+        }, 900);
+      }
+    } catch (error) {
+      setResult(`Google 연결 실패: ${String(error?.message || error)}`);
     } finally {
       setTesting('');
     }

@@ -17,6 +17,7 @@ const leadDeliver = await readFile('functions/api/leads/[id]/deliver.js', 'utf8'
 const integrationsTest = await readFile('functions/api/integrations/test.js', 'utf8');
 const googleSheetsOauth = await readFile('functions/api/integrations/google/sheets/_oauth.js', 'utf8');
 const googleSheetsOauthUrl = await readFile('functions/api/integrations/google/sheets/oauth-url.js', 'utf8');
+const googleSheetsCallback = await readFile('functions/api/integrations/google/sheets/callback.js', 'utf8');
 const googleSheetsStatus = await readFile('functions/api/integrations/google/sheets/status.js', 'utf8');
 const googleSheetsDisconnect = await readFile('functions/api/integrations/google/sheets/disconnect.js', 'utf8');
 const events = await readFile('functions/api/events.js', 'utf8');
@@ -205,6 +206,7 @@ for (const [name, source, tokens] of [
   ['integrations test', integrationsTest, ['type !== \'sheets\'', 'isGoogleAppsScriptUrl', 'text/plain;charset=utf-8', 'Google Apps Script', 'pagero.lead.v1', "event: 'lead.test'", "service: 'pagero'", "target: 'google_sheets'", "provider: 'google_sheets'", "mode: 'webhook'", "sheetName: body.sheetName", "utmSource: 'connection_test'"]],
   ['google sheets oauth shared', googleSheetsOauth, ['project_integrations', 'saveGoogleSheetsIntegration', 'getGoogleSheetsIntegration', 'deleteGoogleSheetsIntegration', 'refreshGoogleAccessToken', 'appendGoogleSheetRow']],
   ['google sheets oauth url', googleSheetsOauthUrl, ['googleSheetsAuthUrl', 'signedOAuthState', 'authorizeProject', "write: true", "tab: 'inbox'"]],
+  ['google sheets callback', googleSheetsCallback, ['verifyOAuthState', 'exchangeGoogleOAuthCode', 'createGoogleSpreadsheet', 'initializeGoogleSheetColumns', 'saveGoogleSheetsIntegration', 'pagero:google-sheets-connected']],
   ['google sheets status', googleSheetsStatus, ['getGoogleSheetsIntegration', 'authorizeProject', "tab: 'inbox'"]],
   ['google sheets disconnect', googleSheetsDisconnect, ['deleteGoogleSheetsIntegration', 'authorizeProject', "write: true", "tab: 'inbox'"]],
   ['events', events, ['insertD1Event', 'listD1Events', 'publicWrite: true', 'publicProjectShell(project)', "tab: 'stats'", 'eventType', 'meta: { source:']],
@@ -331,6 +333,7 @@ console.log(JSON.stringify({
     'functions/api/integrations/test.js',
     'functions/api/integrations/google/sheets/_oauth.js',
     'functions/api/integrations/google/sheets/oauth-url.js',
+    'functions/api/integrations/google/sheets/callback.js',
     'functions/api/integrations/google/sheets/status.js',
     'functions/api/integrations/google/sheets/disconnect.js',
     'functions/api/events.js',
