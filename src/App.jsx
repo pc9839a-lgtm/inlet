@@ -1573,6 +1573,10 @@ function App() {
       clearPendingStyle();
       replaceLocationTab(nextTab);
       setTab(nextTab);
+      if (nextTab === 'edit') {
+        setOpenId('');
+        setAddOpen(false);
+      }
     };
     if (!confirmLeaveStyleChanges(run)) return;
     run();
