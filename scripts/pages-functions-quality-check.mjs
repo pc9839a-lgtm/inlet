@@ -65,9 +65,12 @@ const hostedQa = await readFile('scripts/hosted-api-quality-check.mjs', 'utf8');
 assert(
   shared.includes('UNIQUE constraint failed: pages\\.id')
     && shared.includes('UNIQUE constraint failed: pages\\.project_id, pages\\.slug')
-    && shared.includes('이미 사용 중인 URL입니다. 다른 URL을 입력해주세요.'),
+    && shared.includes('이미 사용 중인 페이지 주소입니다. 다른 주소를 입력해주세요.')
+    && shared.includes('현재 계정에 이 페이지 접근 권한이 없습니다.')
+    && shared.includes('요청 처리 실패'),
   'Functions shared API errors should map D1 page unique constraint failures to operator-readable Korean messages',
 );
+assert(!/[�]|諛|獄|揆|濡쒓렇|沅뚰븳|\?꾩|\?섏|\?붿|\?대\?/.test(shared), 'Functions shared API errors must not contain mojibake text');
 const hostedRoutesQa = await readFile('scripts/hosted-api-routes-quality-check.mjs', 'utf8');
 
 const storedDeliveryPage = normalizeDeliveryPage(
@@ -112,11 +115,11 @@ const externalDeliveryJobs = buildLeadDeliveryJobs({
   phone: '010-0000-0000',
   email: 'qa@example.test',
   createdAt: '2026-06-01T00:00:00.000Z',
-  values: { name: 'Payload QA', phone: '010-0000-0000', '관심 타입': '84A' },
+  values: { name: 'Payload QA', phone: '010-0000-0000', '관심타입': '84A' },
   answers: [
     { id: 'name', label: '이름', type: 'name', value: 'Payload QA' },
     { id: 'phone', label: '연락처', type: 'phone', value: '010-0000-0000' },
-    { id: 'budget', label: '예산대', type: 'select', value: '5억~7억' },
+    { id: 'budget', label: '예산대', type: 'select', value: '5억-7억' },
   ],
 });
 assert(externalDeliveryJobs.some((job) => job.payload?.target === 'webhook' && job.payload?.schemaVersion === 'pagero.lead.v1'), 'Pages delivery should prepare webhook payload schema');
@@ -125,7 +128,7 @@ assert(externalDeliveryJobs.some((job) => job.payload?.target === 'google_sheets
 assert(externalDeliveryJobs.some((job) => job.payload?.target === 'google_sheets' && job.payload?.provider === 'google_sheets' && job.payload?.mode === 'webhook'), 'Pages delivery should prepare Google Sheets provider/mode');
 assert(externalDeliveryJobs.some((job) => job.payload?.target === 'google_sheets' && job.payload?.spreadsheetId === 'sheet-pages' && job.payload?.connectedEmail === 'owner@example.test' && job.payload?.integration?.status === 'connected'), 'Pages delivery should keep Google Sheets OAuth-ready metadata');
 assert(externalDeliveryJobs.some((job) => job.payload?.target === 'google_sheets' && job.payload?.lead?.fields && job.payload?.page?.slug === 'external-payload' && job.payload?.project && job.payload?.source), 'Pages delivery should prepare Google Sheets structured payload');
-assert(externalDeliveryJobs.some((job) => job.payload?.target === 'google_sheets' && job.payload?.lead?.fields?.['관심 타입'] === '84A' && job.payload?.lead?.fields?.['예산대'] === '5억~7억' && !job.payload?.lead?.fields?.['이름']), 'Pages delivery should keep custom form fields as sheet columns without duplicating base fields');
+assert(externalDeliveryJobs.some((job) => job.payload?.target === 'google_sheets' && job.payload?.lead?.fields?.['관심타입'] === '84A' && job.payload?.lead?.fields?.['예산대'] === '5억-7억' && !job.payload?.lead?.fields?.['이름']), 'Pages delivery should keep custom form fields as sheet columns without duplicating base fields');
 assert(googleSheetsOauth.includes("input.sheetName || '접수함'") && googleSheetsOauth.includes("String(sheetName || '접수함').trim() || '접수함'"), 'Google Sheets OAuth should create and append to the Korean default sheet tab');
 assert(googleSheetsCallback.includes("const sheetName = '접수함'") && googleSheetsCallback.includes('Pagero 접수함'), 'Google Sheets OAuth callback should create Korean-named sheets by default');
 assert(googleSheetsStatus.includes("settings.sheetName || '접수함'") && leadDelivery.includes("sheetName: integrations.sheets.sheetName || '접수함'"), 'Google Sheets status and delivery should keep Korean sheet defaults');
