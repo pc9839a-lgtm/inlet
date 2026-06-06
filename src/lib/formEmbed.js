@@ -72,8 +72,9 @@ function inlineConfig(form = {}, page = {}) {
 export function generateStandaloneFormHtml(form = {}, page = {}) {
   const safePage = normalizePage(page);
   const formId = safeText(form.blockId || form.id || form.formId || '');
-  if (safePage.slug && formId) {
-    return `<script src="${DEFAULT_EMBED_SCRIPT_URL}" data-pagero-page="${escapeHtml(safePage.slug)}" data-pagero-form-id="${escapeHtml(formId)}" defer></script>`;
+  if (safePage.slug) {
+    const formAttr = formId ? ` data-pagero-form-id="${escapeHtml(formId)}"` : '';
+    return `<script src="${DEFAULT_EMBED_SCRIPT_URL}" data-pagero-page="${escapeHtml(safePage.slug)}"${formAttr} defer></script>`;
   }
   return `<script src="${DEFAULT_EMBED_SCRIPT_URL}" data-pagero="${escapeHtml(encodeConfig(inlineConfig(form, page)))}" defer></script>`;
 }
