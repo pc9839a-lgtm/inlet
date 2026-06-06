@@ -68,6 +68,22 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
   const publicEmailPage = {
     title: 'Smoke Public Email Alerts',
     slug: publicEmailProject.slug,
+    blocks: [
+      {
+        id: 'embed-smoke-form',
+        type: 'form',
+        visible: true,
+        s: {
+          title: '외부 입력폼',
+          submit: '접수',
+          questions: [
+            { id: 'name', label: '이름', type: 'short', required: true },
+            { id: 'phone', label: '연락처', type: 'phone', required: true },
+            { id: 'budget', label: '예산대', type: 'select', options: ['1천만원 이하', '1천만원 이상'] },
+          ],
+        },
+      },
+    ],
     integrations: {
       email: {
         enabled: true,
@@ -116,6 +132,71 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
   assert(slugOnlyPublicLead.data.delivery?.logs?.some((log) => log.provider === 'ses' && log.status === 'success'), 'public slug-only lead should use stored page email settings');
   const slugOnlyOwnerLeads = await json({ baseUrl }, 'GET', `/api/leads?projectId=${encodeURIComponent(publicEmailProject.projectId)}&slug=${encodeURIComponent(publicEmailProject.slug)}&month=2026-05&limit=10`);
   assert(slugOnlyOwnerLeads.data.leads?.some((lead) => lead.id === 'lead-public-slug-only'), 'public slug-only lead should be stored under slug-owned project id');
+
+  const publicFormConfigRead = await fetchWithTimeout(`${baseUrl}/api/pages/${encodeURIComponent(publicEmailProject.slug)}?public=1&fresh=${Date.now()}`, {
+    method: 'GET',
+    headers: { Origin: 'https://external-form.example' },
+  }, 5000);
+  const publicFormConfig = await publicFormConfigRead.json();
+  assert(publicFormConfigRead.ok, 'public embed form config should load from slug');
+  assert(publicFormConfigRead.headers.get('access-control-allow-origin') === '*', 'public embed form config should allow external origins');
+  const publicFormPage = publicFormConfig.page || {};
+  const publicFormBlock = (publicFormPage.blocks || []).find((block) => block.id === 'embed-smoke-form');
+  assert(publicFormPage.projectId === publicEmailProject.projectId, 'public embed page config must include owning project id');
+  assert(publicFormBlock?.type === 'form', 'public embed form block should be available');
+
+  const embedPayload = {
+    page: {
+      id: publicFormPage.id || '',
+      projectId: publicFormPage.projectId || '',
+      slug: publicFormPage.slug || '',
+      title: publicFormPage.title || '',
+    },
+    project: {
+      projectId: publicFormPage.projectId || '',
+      slug: publicFormPage.slug || '',
+    },
+    lead: {
+      id: 'lead-public-hosted-embed-form',
+      type: '상담',
+      kind: 'consult',
+      formId: publicFormBlock.id,
+      pageSlug: publicFormPage.slug,
+      clientId: 'embed-client-smoke',
+      source: 'embed',
+      name: 'Hosted Embed Lead',
+      phone: '01000001103',
+      values: {
+        name: 'Hosted Embed Lead',
+        phone: '01000001103',
+        budget: '1천만원 이상',
+        sourceUrl: 'https://external-form.example/pagero?utm_source=blog&utm_medium=embed&utm_campaign=lead',
+      },
+      answers: [
+        { id: 'name', label: '이름', value: 'Hosted Embed Lead' },
+        { id: 'phone', label: '연락처', value: '01000001103' },
+        { id: 'budget', label: '예산대', value: '1천만원 이상' },
+      ],
+      createdAt: '2026-05-24T05:30:00.000Z',
+      createdMonth: '2026-05',
+    },
+  };
+  const embedLeadRes = await fetchWithTimeout(`${baseUrl}/api/leads`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Origin: 'https://external-form.example',
+    },
+    body: JSON.stringify(embedPayload),
+  }, 5000);
+  const embedLead = await embedLeadRes.json();
+  assert(embedLeadRes.ok, `hosted embedded form lead should save: ${JSON.stringify(embedLead)}`);
+  assert(embedLeadRes.headers.get('access-control-allow-origin') === '*', 'hosted embedded form lead post should allow external origins');
+  assert((embedLead.lead?.projectId || embedLead.lead?.project?.projectId) === publicEmailProject.projectId, 'hosted embedded form lead should be stored under owning project id');
+  assert(embedLead.lead?.pageSlug === publicEmailProject.slug, 'hosted embedded form lead should keep page slug');
+  assert(embedLead.lead?.values?.budget === '1천만원 이상', 'hosted embedded form lead should keep dynamic form values');
+  const embedOwnerLeads = await json({ baseUrl }, 'GET', `/api/leads?projectId=${encodeURIComponent(publicEmailProject.projectId)}&slug=${encodeURIComponent(publicEmailProject.slug)}&month=2026-05&limit=20`);
+  assert(embedOwnerLeads.data.leads?.some((lead) => lead.id === 'lead-public-hosted-embed-form'), 'hosted embedded form lead should appear in owner inbox query');
 
   const attributedLead = await json({ baseUrl }, 'POST', '/api/leads', {
     project,

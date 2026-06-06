@@ -52,6 +52,9 @@ export function normalizeLeadType(lead = {}) {
 
 export function normalizeLeadItem(lead = {}) {
   const delivery = lead.delivery || {};
+  const source = lead.source || {};
+  const attribution = lead.attribution || {};
+  const values = lead.values || {};
   return {
     ...lead,
     id: lead.id || uid(),
@@ -64,15 +67,15 @@ export function normalizeLeadItem(lead = {}) {
     email: lead.email || '',
     address: lead.address || '',
     message: lead.message || '',
-    sourceUrl: lead.sourceUrl || lead.pageUrl || lead.url || lead.source?.sourceUrl || lead.source?.url || '',
-    referrer: lead.referrer || lead.source?.referrer || '',
-    channel: lead.channel || lead.source?.channel || '',
-    sourceLabel: lead.sourceLabel || lead.source?.sourceLabel || '',
-    utmSource: lead.utmSource || lead.utm_source || lead.source?.utmSource || '',
-    utmMedium: lead.utmMedium || lead.utm_medium || lead.source?.utmMedium || '',
-    utmCampaign: lead.utmCampaign || lead.utm_campaign || lead.source?.utmCampaign || '',
+    sourceUrl: lead.sourceUrl || lead.pageUrl || lead.url || source.sourceUrl || source.url || source.pageUrl || attribution.sourceUrl || values.sourceUrl || '',
+    referrer: lead.referrer || source.referrer || attribution.referrer || values.referrer || '',
+    channel: lead.channel || source.channel || attribution.channel || values.channel || '',
+    sourceLabel: lead.sourceLabel || source.sourceLabel || attribution.sourceLabel || values.sourceLabel || '',
+    utmSource: lead.utmSource || lead.utm_source || source.utmSource || source.utm_source || attribution.utmSource || attribution.utm_source || values.utmSource || values.utm_source || '',
+    utmMedium: lead.utmMedium || lead.utm_medium || source.utmMedium || source.utm_medium || attribution.utmMedium || attribution.utm_medium || values.utmMedium || values.utm_medium || '',
+    utmCampaign: lead.utmCampaign || lead.utm_campaign || source.utmCampaign || source.utm_campaign || attribution.utmCampaign || attribution.utm_campaign || values.utmCampaign || values.utm_campaign || '',
     answers: Array.isArray(lead.answers) ? lead.answers : [],
-    values: lead.values || {},
+    values,
     history: Array.isArray(lead.history) ? lead.history : [],
     delivery: {
       status: delivery.status || lead.deliveryStatus || 'none',

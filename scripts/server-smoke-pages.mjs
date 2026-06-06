@@ -75,6 +75,28 @@ await runSmoke('server-smoke-pages', async ({ baseUrl }) => {
   const read = await json({ baseUrl }, 'GET', `${pagePath}?${query}`);
   assert(read.res.ok && read.data.page?.integrations?.email?.to === 'owner@example.test', 'page read failed or email lock was not persisted');
 
+  const emailRelock = await fetchWithTimeout(`${baseUrl}${pagePath}`, {
+    method: 'POST',
+    headers: authHeaders({
+      'Content-Type': 'application/json',
+      'X-Inlet-Email': 'owner@example.test',
+    }),
+    body: JSON.stringify({
+      project,
+      page: {
+        ...read.data.page,
+        integrations: {
+          ...(read.data.page?.integrations || {}),
+          email: { ...(read.data.page?.integrations?.email || {}), enabled: true, to: 'changed@example.test', lockedToAccount: false },
+        },
+      },
+    }),
+  }, 5000);
+  const emailRelockData = await emailRelock.json();
+  assert(emailRelock.ok, 'free page email relock save failed');
+  assert(emailRelockData.page?.integrations?.email?.to === 'owner@example.test', 'free page email alert recipient should not be editable after initial lock');
+  assert(emailRelockData.page?.integrations?.email?.lockedToAccount === true, 'free page email alert relock should keep locked marker');
+
   const updated = await json({ baseUrl }, 'POST', pagePath, {
     project,
     page: {
