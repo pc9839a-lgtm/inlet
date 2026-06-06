@@ -862,6 +862,7 @@ export default function InboxPanel({
   const [query, setQuery] = useState('');
   const [month, setMonth] = useState(currentMonthValue());
   const [openId, setOpenId] = useState('');
+  const [copyFallback, setCopyFallback] = useState(null);
   const selectedMonthRange = useMemo(() => monthDateRange(month), [month]);
   const updateLeadSafe = updateLead || (() => {});
   const reloadLeads = onReloadLeads || onReloadLeadConflict || (() => {});
@@ -922,8 +923,9 @@ export default function InboxPanel({
 
     try {
       await navigator.clipboard.writeText(text);
+      setCopyFallback(null);
     } catch {
-      window.prompt('접수 내용을 복사하세요', text);
+      setCopyFallback({ id: lead.id, text });
     }
   };
 
@@ -1072,6 +1074,12 @@ export default function InboxPanel({
                         {deleteLead ? <button type="button" className="btn secondary danger" onClick={() => deleteLead(lead.id)}>삭제</button> : null}
                         <button type="button" className="btn primary" onClick={() => setOpenId('')}>닫기</button>
                       </div>
+                      {copyFallback?.id === lead.id ? (
+                        <section className="lead-copy-fallback" aria-live="polite">
+                          <h4>복사할 내용</h4>
+                          <textarea readOnly value={copyFallback.text} onFocus={(event) => event.currentTarget.select()} />
+                        </section>
+                      ) : null}
                     </div>
                   ) : null}
                 </article>
