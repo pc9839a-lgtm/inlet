@@ -61,6 +61,13 @@ const aiDrafts = await readFile('functions/api/ai/drafts.js', 'utf8');
 const aiDraftDelete = await readFile('functions/api/ai/drafts/[id].js', 'utf8');
 const wrangler = await readFile('wrangler.jsonc', 'utf8');
 const hostedQa = await readFile('scripts/hosted-api-quality-check.mjs', 'utf8');
+
+assert(
+  shared.includes('UNIQUE constraint failed: pages\\.id')
+    && shared.includes('UNIQUE constraint failed: pages\\.project_id, pages\\.slug')
+    && shared.includes('이미 사용 중인 URL입니다. 다른 URL을 입력해주세요.'),
+  'Functions shared API errors should map D1 page unique constraint failures to operator-readable Korean messages',
+);
 const hostedRoutesQa = await readFile('scripts/hosted-api-routes-quality-check.mjs', 'utf8');
 
 const storedDeliveryPage = normalizeDeliveryPage(

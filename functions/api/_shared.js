@@ -338,6 +338,8 @@ export async function handleApiError(request, env, error, methods) {
 
 function userFacingApiError(message = '', status = 0) {
   const text = String(message || '').trim();
+  if (/Page URL is already in use|PAGE_SLUG_CONFLICT|UNIQUE constraint failed: pages\.project_id, pages\.slug/i.test(text)) return '이미 사용 중인 URL입니다. 다른 URL을 입력해주세요.';
+  if (/UNIQUE constraint failed: pages\.id/i.test(text)) return '페이지 저장 중 주소 충돌이 발생했습니다. 새로고침 후 다시 저장해주세요.';
   if (/Project write access denied/i.test(text)) return '현재 계정에 이 페이지 저장 권한이 없습니다. 마스터 계정 또는 편집 권한을 확인해주세요.';
   if (/Project access is required|Project access has not been granted|Project access denied/i.test(text)) return '현재 계정에 이 페이지 접근 권한이 없습니다. 다시 로그인하거나 페이지 소유 계정을 확인해주세요.';
   if (/projectId is required/i.test(text)) return '프로젝트 정보가 누락되었습니다.';
