@@ -1541,6 +1541,7 @@ function App() {
     const sourcePage = pageOverride || page;
     const expectedUpdatedAt = sourcePage.updatedAt || sourcePage.savedAt || sourcePage.createdAt || '';
     const nextPage = normalizePageForSave(normalizeFreeEmailIntegrations(sourcePage));
+    setPage(nextPage);
     saveLocalJson(STORAGE_KEY, nextPage, '페이지');
     let result = null;
     try {
