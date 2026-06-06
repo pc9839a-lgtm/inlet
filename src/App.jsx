@@ -133,7 +133,7 @@ const InboxPanel = lazy(() => import('./panels/InboxPanel.jsx'));
 const StatsPanel = lazy(() => import('./panels/StatsPanel.jsx'));
 const StylePanel = lazy(() => import('./panels/StylePanel.jsx'));
 const SettingsPanel = lazy(() => import('./panels/SettingsPanel.jsx'));
-const AdminPanel = lazy(() => import('./panels/AdminPanel.jsx'));
+const AdminPanel = lazy(() => import('./panels/MasterAdminPanel.jsx'));
 const TemplatesPanel = lazy(() => import('./panels/TemplatesPanel'));
 const InviteAcceptScreen = lazy(() => import('./screens/InviteAcceptScreen.jsx'));
 const AuthScreen = lazy(() => import('./screens/HomeScreens.jsx').then((module) => ({ default: module.AuthScreen })));
@@ -142,8 +142,15 @@ const Dashboard = lazy(() => import('./screens/HomeScreens.jsx').then((module) =
 const PublicHome = lazy(() => import('./screens/HomeScreens.jsx').then((module) => ({ default: module.PublicHome })));
 const StartModeOverlay = lazy(() => import('./screens/HomeScreens.jsx').then((module) => ({ default: module.StartModeOverlay })));
 const INBOX_PAGE_SIZE = 10;
-const CHUNK_RELOAD_KEY = 'inlet-chunk-reload-v4';
-const CHUNK_RELOAD_LIMIT = 3;
+const CHUNK_RELOAD_KEY = 'pagero-chunk-reload-v5';
+const CHUNK_RELOAD_LIMIT = 5;
+const PLATFORM_MASTER_EMAILS = ['admin@pagero.kr'];
+
+function isPlatformMasterUser(user = null) {
+  const email = String(user?.email || '').trim().toLowerCase();
+  const role = String(user?.platformRole || user?.role || user?.accessMode || '').trim().toLowerCase().replace(/[-_\s]/g, '');
+  return PLATFORM_MASTER_EMAILS.includes(email) || ['platformmaster', 'superadmin', 'serviceadmin'].includes(role);
+}
 
 function isLazyChunkLoadError(error) {
   const message = String(error?.message || error || '');
@@ -251,7 +258,7 @@ class LazyChunkBoundary extends Component {
 const WAYZI_STATIC_PAGES = {
   '/about': {
     eyebrow: '사이트 소개',
-    title: 'WAYZI 소개',
+    title: '페이지로 소개',
     updatedAt: '2026.05.26',
     links: [
       ['홈으로', '/'],
@@ -260,7 +267,7 @@ const WAYZI_STATIC_PAGES = {
       ['문의하기', '/contact'],
     ],
     intro: [
-      'WAYZI는 랜딩페이지 제작, 문의 접수, 전환 통계, 관리자 운영을 한 곳에서 처리할 수 있도록 만든 웹 기반 제작·운영 서비스입니다.',
+      '페이지로는 랜딩페이지 제작, 문의 접수, 전환 통계, 관리자 운영을 한 곳에서 처리할 수 있도록 만든 웹 기반 제작·운영 서비스입니다.',
     ],
     sections: [
       {
@@ -275,7 +282,7 @@ const WAYZI_STATIC_PAGES = {
       },
       {
         title: '서비스 운영 방향',
-        body: ['WAYZI는 단순히 화면을 만드는 도구가 아니라, 광고 유입 이후 문의 접수와 운영 관리까지 이어지는 흐름을 빠르게 만들 수 있도록 설계되었습니다. 사용자는 페이지 문구, 이미지, 폼 항목, 연결 설정을 직접 수정할 수 있고 운영자는 접수 데이터와 통계를 확인할 수 있습니다.'],
+        body: ['페이지로는 단순히 화면을 만드는 도구가 아니라, 광고 유입 이후 문의 접수와 운영 관리까지 이어지는 흐름을 빠르게 만들 수 있도록 설계되었습니다. 사용자는 페이지 문구, 이미지, 폼 항목, 연결 설정을 직접 수정할 수 있고 운영자는 접수 데이터와 통계를 확인할 수 있습니다.'],
       },
       {
         title: '안내',
@@ -298,7 +305,7 @@ const WAYZI_STATIC_PAGES = {
       ['이용약관', '/terms'],
     ],
     intro: [
-      'WAYZI 서비스 이용, 랜딩페이지 제작, 접수함·통계·권한 관리 설정과 관련해 궁금한 점이 있다면 아래 안내를 참고해 문의해주세요.',
+      '페이지로 서비스 이용, 랜딩페이지 제작, 접수함·통계·권한 관리 설정과 관련해 궁금한 점이 있다면 아래 안내를 참고해 문의해주세요.',
     ],
     sections: [
       {
@@ -326,7 +333,7 @@ const WAYZI_STATIC_PAGES = {
       ['문의하기', '/contact'],
     ],
     intro: [
-      'WAYZI는 서비스 제공, 문의 접수, 계정 관리, 운영 지원을 위해 필요한 범위의 개인정보를 수집·이용합니다. 본 페이지는 이용자에게 개인정보 수집, 이용, 보관, 파기 기준을 안내하기 위해 작성되었습니다.',
+      '페이지로는 서비스 제공, 문의 접수, 계정 관리, 운영 지원을 위해 필요한 범위의 개인정보를 수집·이용합니다. 본 페이지는 이용자에게 개인정보 수집, 이용, 보관, 파기 기준을 안내하기 위해 작성되었습니다.',
     ],
     sections: [
       {
@@ -343,7 +350,7 @@ const WAYZI_STATIC_PAGES = {
       },
       {
         title: '4. 제3자 제공',
-        body: ['WAYZI는 원칙적으로 이용자의 개인정보를 외부에 제공하지 않습니다. 다만, 이용자의 별도 동의가 있거나 법령에 따라 제공이 필요한 경우는 예외로 합니다.'],
+        body: ['페이지로는 원칙적으로 이용자의 개인정보를 외부에 제공하지 않습니다. 다만, 이용자의 별도 동의가 있거나 법령에 따라 제공이 필요한 경우는 예외로 합니다.'],
       },
       {
         title: '5. 개인정보 처리 위탁',
@@ -370,12 +377,12 @@ const WAYZI_STATIC_PAGES = {
       ['문의하기', '/contact'],
     ],
     intro: [
-      '본 약관은 WAYZI 서비스 이용과 관련하여 서비스 제공자와 이용자 간의 기본적인 권리와 의무를 정리한 문서입니다.',
+      '본 약관은 페이지로 서비스 이용과 관련하여 서비스 제공자와 이용자 간의 기본적인 권리와 의무를 정리한 문서입니다.',
     ],
     sections: [
       {
         title: '1. 서비스 목적',
-        body: ['WAYZI는 랜딩페이지 제작, 폼 접수, 리드 관리, 통계 확인, 권한 관리, 외부 연동 설정 등 온라인 마케팅 운영에 필요한 기능 제공을 목적으로 운영됩니다.'],
+        body: ['페이지로는 랜딩페이지 제작, 폼 접수, 리드 관리, 통계 확인, 권한 관리, 외부 연동 설정 등 온라인 마케팅 운영에 필요한 기능 제공을 목적으로 운영됩니다.'],
       },
       {
         title: '2. 제공 정보의 성격',
@@ -387,7 +394,7 @@ const WAYZI_STATIC_PAGES = {
       },
       {
         title: '4. 저작권',
-        body: ['서비스 내 UI, 코드, 템플릿, 디자인 구성 등 자체 제작 콘텐츠의 저작권은 WAYZI 또는 정당한 권리자에게 있습니다. 이용자가 업로드한 문구, 이미지, 고객 데이터의 권리와 책임은 해당 이용자에게 있습니다.'],
+        body: ['서비스 내 UI, 코드, 템플릿, 디자인 구성 등 자체 제작 콘텐츠의 저작권은 페이지로 또는 정당한 권리자에게 있습니다. 이용자가 업로드한 문구, 이미지, 고객 데이터의 권리와 책임은 해당 이용자에게 있습니다.'],
       },
       {
         title: '5. 외부 링크 및 제휴 안내',
@@ -395,7 +402,7 @@ const WAYZI_STATIC_PAGES = {
       },
       {
         title: '6. 면책 조항',
-        body: ['WAYZI는 안정적인 서비스 제공을 위해 노력하지만, 외부 서비스 장애, 네트워크 문제, 이용자 설정 오류, 브라우저 또는 기기 환경에 따라 일부 기능 이용이 제한될 수 있습니다. 이용자는 공개 전 페이지 내용, 폼 항목, 개인정보 고지, 광고 추적 설정을 직접 확인해야 합니다.'],
+        body: ['페이지로는 안정적인 서비스 제공을 위해 노력하지만, 외부 서비스 장애, 네트워크 문제, 이용자 설정 오류, 브라우저 또는 기기 환경에 따라 일부 기능 이용이 제한될 수 있습니다. 이용자는 공개 전 페이지 내용, 폼 항목, 개인정보 고지, 광고 추적 설정을 직접 확인해야 합니다.'],
       },
       {
         title: '7. 문의처',
@@ -613,6 +620,7 @@ function App() {
   const accessMode = useMemo(() => accessModeFor({ authUser, page, clientAdminEnabled: ownerAdminModeEnabled }), [authUser, ownerAdminModeEnabled, page]);
   const canUseBuilder = canUseBuilderSurface(accessMode, page, authUser);
   const canManageAdmin = canUseAdminSurface(accessMode);
+  const canManageMasterAdmin = isPlatformMasterUser(authUser);
   const clientAdminMode = isClientAdminMode(accessMode);
   const allowedTabs = useMemo(() => tabsForAccessMode(accessMode, page, authUser), [accessMode, page, authUser]);
   const canWriteTabKey = (key) => canWriteTab(accessMode, page, authUser, key);
@@ -2005,7 +2013,7 @@ function App() {
   }
 
   if (adminRoute) {
-    if (!canManageAdmin) {
+    if (!canManageMasterAdmin) {
       return withWayziFooter(
         <div className="mobile-block">
           <div>
@@ -2021,6 +2029,8 @@ function App() {
         <Suspense fallback={<LazyPanelFallback />}>
           <AdminPanel
             page={page}
+            leads={leads}
+            events={events}
             updatePage={updatePage}
             updateAi={updateAi}
             setPage={setNormalizedPage}

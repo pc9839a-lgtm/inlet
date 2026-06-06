@@ -459,7 +459,7 @@ function blockedLeadRecord(policy = {}, lead = {}, project = {}, page = {}) {
     contactSummary: [phone ? maskContact(phone) : '', email ? maskContact(email) : ''].filter(Boolean).join(' / '),
     fieldSummary: {
       name: String(leadField(lead, 'name')).slice(0, 80),
-      type: String(lead.type || lead.kind || '').slice(0, 40),
+      type: String(lead.type || lead.kind || lead.category || '').slice(0, 40),
       phoneTail: phone ? phone.slice(-4) : '',
       emailDomain: email.includes('@') ? email.split('@').pop() : '',
       blockedBy: String(policy.reason || 'rate_limited'),

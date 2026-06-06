@@ -243,17 +243,23 @@
   }
 
   function publicPageUrl(slug, projectId) {
-    var query = '?public=1';
+    var query = '?public=1&fresh=' + Date.now();
     if (projectId) query += '&projectId=' + encodeURIComponent(projectId);
     return HOME_URL + '/api/pages/' + encodeURIComponent(slug) + query;
   }
 
+  function publicPageFetchOptions() {
+    return {
+      cache: 'no-store'
+    };
+  }
+
   function fetchPublicPage(slug, projectId) {
-    return fetch(publicPageUrl(slug, projectId))
+    return fetch(publicPageUrl(slug, projectId), publicPageFetchOptions())
       .then(function (res) {
         if (res.ok) return res.json();
         if (projectId) {
-          return fetch(publicPageUrl(slug, ''))
+          return fetch(publicPageUrl(slug, ''), publicPageFetchOptions())
             .then(function (fallbackRes) {
               if (!fallbackRes.ok) throw new Error('page ' + fallbackRes.status);
               return fallbackRes.json();

@@ -171,7 +171,7 @@ function leadUtmText(lead = {}) {
 function isDuplicateLeadAnswer(item = {}, lead = {}) {
   const label = normalizedText(item.label || item.name);
   const value = normalizedText(item.value);
-  const duplicateLabels = ['name', '이름', '성함', '연락처', '전화', '휴대폰', '핸드폰', 'phone', 'email', '이메일', '문의내용', '상담내용', 'message'];
+  const duplicateLabels = ['name', '이름', '성함', '연락처', '전화', '휴대폰', '핸드폰', 'phone', 'email', '이메일', '메일', '문의내용', '상담내용', '메시지', 'message'];
   if (duplicateLabels.some((key) => label.includes(normalizedText(key)))) return true;
   const duplicateValues = [lead.name, leadPrimaryContact(lead), lead.email, lead.message].map(normalizedText).filter(Boolean);
   return value && duplicateValues.includes(value);
@@ -902,7 +902,7 @@ export default function InboxPanel({
   const loadedCount = normalized.length;
   const serverTotal = Number(totalLeads || loadedCount);
   const displaySummary = serverTotal > loadedCount
-    ? `${filtered.length}건 표시 · 전체 ${serverTotal}건 중 ${loadedCount}건 로드`
+    ? `${filtered.length}건 표시 · 서버 ${serverTotal}건 중 ${loadedCount}건 로드`
     : `${filtered.length}건 표시`;
 
   const copyLead = async (lead) => {
@@ -985,7 +985,7 @@ export default function InboxPanel({
             </select>
           </label>
           <button type="button" className="btn secondary" onClick={reloadLeads} disabled={syncing}>새로고침</button>
-          {exportLeadsCsv ? <button type="button" className="btn secondary" onClick={() => exportLeadsCsv({ month })}>CSV</button> : null}
+          {exportLeadsCsv ? <button type="button" className="btn secondary" onClick={() => exportLeadsCsv({ month })}>월 CSV</button> : null}
         </div>
       </section>
 
@@ -993,7 +993,7 @@ export default function InboxPanel({
         <div className="section-title inbox-list-title">
           <span>접수 목록</span>
           <div className="inbox-list-actions">
-            {hasMoreLeads ? <button type="button" className="btn secondary" onClick={loadMore} disabled={syncing}>50개 더보기</button> : null}
+            {hasMoreLeads ? <button type="button" className="btn secondary" onClick={loadMore} disabled={syncing}>더보기</button> : null}
           </div>
         </div>
 

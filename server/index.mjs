@@ -143,6 +143,18 @@ const server = createServer(async (req, res) => {
       return;
     }
 
+    if (req.method === 'GET' && url.pathname === '/api/admin/summary') {
+      assertPlatformMaster(req);
+      const snapshot = await buildMasterAdminSummary();
+      sendJson(res, 200, {
+        ok: true,
+        mode: storageRuntime.active === 'd1' ? 'live' : 'local',
+        generatedAt: new Date().toISOString(),
+        ...snapshot,
+      });
+      return;
+    }
+
     if (req.method === 'POST' && url.pathname === '/api/auth/register') {
       const body = await readJson(req);
       const user = await registerUserAccount(body?.user || body || {}, { source: 'signup' });
@@ -246,7 +258,7 @@ const server = createServer(async (req, res) => {
     }
 
     const adminTransferMatch = url.pathname.match(/^\/api\/admin\/ownership-transfer\/([^/]+)$/);
-    if (adminTransferMatch && req.method === 'PATCH') {
+    if (adminTransferMatch && (req.method === 'PATCH' || req.method === 'POST')) {
       const body = await readJson(req);
       const project = await authorizeProjectAccess(req, body?.project || {}, { write: true, tab: 'settings' });
       await assertProjectMaster(req, project, 'approve ownership transfer');
@@ -620,7 +632,7 @@ const server = createServer(async (req, res) => {
           sendJson(res, 404, { ok: false, error: 'Page not found' });
           return;
         }
-        sendJson(res, 200, { ok: true, page });
+        sendJson(res, 200, { ok: true, page }, { 'Cache-Control': 'no-store' });
         return;
       }
       const project = await authorizeProjectAccess(req, projectFromQuery(url), { tab: 'edit' });
@@ -792,6 +804,21 @@ function requestIdentity(req) {
   };
 }
 
+function assertPlatformMaster(req) {
+  const identity = requestIdentity(req);
+  const email = normalizeEmail(identity?.email || '');
+  const role = String(identity?.role || '').trim().toLowerCase().replace(/[-\s]/g, '_');
+  const configured = String(env.INLET_PLATFORM_MASTER_EMAILS || '')
+    .split(',')
+    .map((item) => normalizeEmail(item))
+    .filter(Boolean);
+  const allowedEmails = configured.length ? configured : ['admin@pagero.kr'];
+  if (allowedEmails.includes(email) || ['platformmaster', 'platform_master', 'superadmin', 'serviceadmin'].includes(role)) {
+    return identity;
+  }
+  throw accessError('전체 관리자 권한이 필요합니다.', 'PLATFORM_MASTER_REQUIRED');
+}
+
 function normalizeSessionAuthMode(value = '') {
   const mode = String(value || '').trim().toLowerCase();
   if (['strict', 'signed', 'production'].includes(mode)) return 'strict';
@@ -869,8 +896,8 @@ function accessError(message, code = 'PROJECT_ACCESS_FORBIDDEN') {
   return error;
 }
 
-function sendJson(res, status, payload) {
-  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
+function sendJson(res, status, payload, headers = {}) {
+  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', ...(headers || {}) });
   if (status === 204) {
     res.end();
     return;
@@ -2428,7 +2455,7 @@ function blockedLeadSubmissionRecord(policy = {}, lead = {}, project = {}) {
     contactSummary: [phone ? maskContactValue(phone) : '', email ? maskContactValue(email) : ''].filter(Boolean).join(' / '),
     fieldSummary: {
       name: String(lead.name || lead.values?.name || '').slice(0, 80),
-      type: String(lead.type || lead.kind || '').slice(0, 40),
+      type: String(lead.type || lead.kind || lead.category || '').slice(0, 40),
       phoneTail: phone ? phone.slice(-4) : '',
       emailDomain: email.includes('@') ? email.split('@').pop() : '',
     },
@@ -4155,7 +4182,8 @@ async function sendEmailNotification(job) {
 }
 
 function shouldSendEmailForLead(email = {}, lead = {}) {
-  if (lead.type === '방문예약') return email.reservation !== false;
+  const type = String(lead.type || lead.kind || lead.category || '').trim();
+  if (/예약|방문|reservation|booking|reserve/i.test(type)) return email.reservation !== false;
   return email.consult !== false;
 }
 
@@ -6320,6 +6348,260 @@ async function updateOwnershipTransferRequest(req, project = {}, id = '', input 
     await applyOwnershipTransferCompletion(normalizedProject, nextRequest, { ...access, transferRequest: nextRequest, transferRequests: nextRequests }, now);
   }
   return publicOwnershipTransferRequest(nextRequest);
+}
+
+async function buildMasterAdminSummary() {
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  const month = today.slice(0, 7);
+  const users = await readUserAccounts().catch(() => []);
+  const accessEntries = await allProjectAccessEntries();
+  const rootPages = await fallbackRootPages();
+  const projects = [];
+
+  for (const entry of accessEntries) {
+    const project = normalizeProject(entry.project || {});
+    const access = entry.access || {};
+    const pages = await readProjectPages(project);
+    const primaryPage = pages[0] || {};
+    const leads = await readLeadList(project).catch(() => []);
+    const events = await readJsonlRecords(projectEventsFile(project) || path.join(dataDir, 'events.jsonl')).then((result) => result.records).catch(() => []);
+    const blocked = await readJsonlRecords(projectBlockedLeadsFile(project) || path.join(dataDir, 'blocked-leads.jsonl')).then((result) => result.records).catch(() => []);
+    const owner = users.find((user) => safeId(user.ownerId || user.id, '') === safeId(access.ownerId || project.ownerId, '')) || {};
+    const usage = pages.reduce((sum, pageItem) => mergeFileUsage(sum, fileUsageFromPage(pageItem)), { fileCount: 0, fileBytes: 0, usesFileWidget: false });
+    const pageViews = events.filter((event) => event.type === 'page_view' || event.eventType === 'page_view').length;
+    const ctaClicks = events.filter((event) => event.type === 'cta_click' || event.eventType === 'cta_click').length;
+    const downloadCount = events.filter((event) => event.type === 'file_download_click' || event.eventType === 'file_download_click').length;
+    projects.push({
+      id: project.projectId,
+      slug: access.slug || project.slug || primaryPage.slug || '',
+      title: primaryPage.title || access.title || access.slug || project.slug || project.projectId,
+      ownerId: access.ownerId || project.ownerId || '',
+      ownerEmail: publicOwnerLabel(owner.email || access.ownerEmail || access.clientEmail || primaryPage.clientEmail || ''),
+      plan: primaryPage.plan || access.plan || 'free',
+      billingStatus: primaryPage.billingStatus || access.billingStatus || 'trial',
+      status: primaryPage.status || access.status || 'active',
+      pageCount: Math.max(1, pages.length),
+      totalLeads: leads.length,
+      todayLeads: leads.filter((lead) => dateKey(lead.createdAt || lead.savedAt) === today).length,
+      monthLeads: leads.filter((lead) => dateKey(lead.createdAt || lead.savedAt).slice(0, 7) === month).length,
+      blockedLeads: blocked.length,
+      lastLeadAt: leads.map((lead) => String(lead.createdAt || lead.savedAt || '')).sort().pop() || '',
+      pageViews,
+      ctaClicks,
+      fileCount: usage.fileCount,
+      fileBytes: usage.fileBytes,
+      downloadCount,
+      usesFileWidget: usage.usesFileWidget,
+      uploadAllowed: isPaidMasterProject({ plan: primaryPage.plan || access.plan, billingStatus: primaryPage.billingStatus || access.billingStatus }),
+      createdAt: primaryPage.createdAt || access.createdAt || '',
+      updatedAt: primaryPage.updatedAt || primaryPage.lastSavedAt || access.updatedAt || '',
+    });
+  }
+
+  for (const pageItem of rootPages) {
+    if (projects.some((project) => project.slug && project.slug === pageItem.slug)) continue;
+    const usage = fileUsageFromPage(pageItem);
+    projects.push({
+      id: pageItem.projectId || pageItem.slug || 'root-page',
+      slug: pageItem.slug || '',
+      title: pageItem.title || pageItem.slug || '랜딩페이지',
+      ownerEmail: publicOwnerLabel(pageItem.clientEmail || ''),
+      plan: pageItem.plan || 'free',
+      billingStatus: pageItem.billingStatus || 'trial',
+      status: pageItem.status || 'active',
+      pageCount: 1,
+      totalLeads: 0,
+      todayLeads: 0,
+      monthLeads: 0,
+      blockedLeads: 0,
+      pageViews: 0,
+      ctaClicks: 0,
+      fileCount: usage.fileCount,
+      fileBytes: usage.fileBytes,
+      downloadCount: 0,
+      usesFileWidget: usage.usesFileWidget,
+      uploadAllowed: isPaidMasterProject(pageItem),
+      createdAt: pageItem.createdAt || '',
+      updatedAt: pageItem.updatedAt || pageItem.lastSavedAt || '',
+    });
+  }
+
+  const accounts = buildMasterAccounts(users, projects);
+  const files = projects.filter((project) => project.usesFileWidget || Number(project.fileCount || 0) > 0);
+  const paidProjects = projects.filter(isPaidMasterProject).length;
+  const paidAccounts = accounts.filter((account) => Number(account.paidProjectCount || 0) > 0 || isPaidMasterProject(account)).length;
+
+  return {
+    summary: {
+      accounts: accounts.length,
+      paidAccounts,
+      freeAccounts: Math.max(0, accounts.length - paidAccounts),
+      projects: projects.length,
+      activeProjects: projects.filter((project) => String(project.status || '') !== 'archived').length,
+      paidProjects,
+      freeProjects: Math.max(0, projects.length - paidProjects),
+      leads: projects.reduce((sum, project) => sum + Number(project.totalLeads || 0), 0),
+      todayLeads: projects.reduce((sum, project) => sum + Number(project.todayLeads || 0), 0),
+      monthLeads: projects.reduce((sum, project) => sum + Number(project.monthLeads || 0), 0),
+      blockedLeads: projects.reduce((sum, project) => sum + Number(project.blockedLeads || 0), 0),
+      pageViews: projects.reduce((sum, project) => sum + Number(project.pageViews || 0), 0),
+      ctaClicks: projects.reduce((sum, project) => sum + Number(project.ctaClicks || 0), 0),
+      filePages: files.length,
+      fileBytes: files.reduce((sum, project) => sum + Number(project.fileBytes || 0), 0),
+      fileDownloads: files.reduce((sum, project) => sum + Number(project.downloadCount || 0), 0),
+    },
+    accounts,
+    projects: projects.sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''))).slice(0, 200),
+    leadSummary: projects
+      .map((project) => ({
+        id: project.id,
+        slug: project.slug,
+        title: project.title,
+        ownerEmail: project.ownerEmail,
+        totalLeads: project.totalLeads,
+        todayLeads: project.todayLeads,
+        monthLeads: project.monthLeads,
+        blockedLeads: project.blockedLeads,
+        lastLeadAt: project.lastLeadAt,
+      }))
+      .sort((a, b) => Number(b.monthLeads || b.totalLeads || 0) - Number(a.monthLeads || a.totalLeads || 0)),
+    files: files.sort((a, b) => Number(b.fileBytes || 0) - Number(a.fileBytes || 0)),
+  };
+}
+
+function buildMasterAccounts(users = [], projects = []) {
+  const byEmail = new Map();
+  for (const user of users) {
+    const email = normalizeEmail(user.email || '');
+    if (isPublicShellEmail(email)) continue;
+    if (!email) continue;
+    byEmail.set(email, {
+      id: safeId(user.ownerId || user.id, ''),
+      email,
+      name: String(user.name || user.email || '').trim(),
+      status: user.status || 'active',
+      plan: user.plan || 'free',
+      billingStatus: user.billingStatus || 'trial',
+      projectCount: 0,
+      paidProjectCount: 0,
+      fileBytes: 0,
+      createdAt: user.createdAt || '',
+      updatedAt: user.updatedAt || '',
+      lastActiveAt: user.updatedAt || user.createdAt || '',
+    });
+  }
+  for (const project of projects) {
+    const email = normalizeEmail(project.ownerEmail || '');
+    if (!email.includes('@') || isPublicShellEmail(email)) continue;
+    if (!email) continue;
+    if (!byEmail.has(email)) {
+      byEmail.set(email, {
+        id: `external_${stableHash(email)}`,
+        email,
+        name: email,
+        status: 'active',
+        plan: 'free',
+        billingStatus: 'trial',
+        projectCount: 0,
+        paidProjectCount: 0,
+        fileBytes: 0,
+        createdAt: '',
+        updatedAt: '',
+        lastActiveAt: '',
+      });
+    }
+    const account = byEmail.get(email);
+    account.projectCount += 1;
+    account.fileBytes += Number(project.fileBytes || 0);
+    if (isPaidMasterProject(project)) {
+      account.paidProjectCount += 1;
+      account.plan = project.plan || 'paid';
+      account.billingStatus = project.billingStatus || 'active';
+    }
+    if (String(project.updatedAt || '') > String(account.lastActiveAt || '')) account.lastActiveAt = project.updatedAt;
+  }
+  return [...byEmail.values()].sort((a, b) => String(b.lastActiveAt || '').localeCompare(String(a.lastActiveAt || '')));
+}
+
+async function readProjectPages(project = {}) {
+  const base = projectDir(project);
+  if (!base) return [];
+  const dir = path.join(base, 'pages');
+  let entries = [];
+  try {
+    entries = await readdir(dir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  const pages = [];
+  for (const entry of entries) {
+    if (!entry.isFile() || !entry.name.endsWith('.json')) continue;
+    try {
+      pages.push(JSON.parse(await readFile(path.join(dir, entry.name), 'utf8')));
+    } catch {}
+  }
+  return pages;
+}
+
+async function fallbackRootPages() {
+  let entries = [];
+  try {
+    entries = await readdir(pagesDir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  const pages = [];
+  for (const entry of entries) {
+    if (!entry.isFile() || !entry.name.endsWith('.json')) continue;
+    try {
+      pages.push(JSON.parse(await readFile(path.join(pagesDir, entry.name), 'utf8')));
+    } catch {}
+  }
+  return pages;
+}
+
+function fileUsageFromPage(page = {}) {
+  let fileCount = 0;
+  let fileBytes = 0;
+  let usesFileWidget = false;
+  for (const block of Array.isArray(page.blocks) ? page.blocks : []) {
+    if (block?.type !== 'download') continue;
+    usesFileWidget = true;
+    for (const item of Array.isArray(block.s?.items) ? block.s.items : []) {
+      if (!item?.fileUrl) continue;
+      fileCount += 1;
+      fileBytes += Number(item.fileBytes || item.size || item.bytes || 0);
+    }
+  }
+  return { fileCount, fileBytes, usesFileWidget };
+}
+
+function mergeFileUsage(left, right) {
+  return {
+    fileCount: Number(left.fileCount || 0) + Number(right.fileCount || 0),
+    fileBytes: Number(left.fileBytes || 0) + Number(right.fileBytes || 0),
+    usesFileWidget: !!left.usesFileWidget || !!right.usesFileWidget,
+  };
+}
+
+function dateKey(value = '') {
+  return String(value || '').slice(0, 10);
+}
+
+function isPaidMasterProject(project = {}) {
+  const plan = String(project.plan || project.billingPlan || '').trim().toLowerCase();
+  const billing = String(project.billingStatus || project.billing_status || '').trim().toLowerCase();
+  return billing === 'active' || (plan && !['free', 'trial'].includes(plan));
+}
+
+function isPublicShellEmail(email = '') {
+  return String(email || '').trim().toLowerCase().endsWith('@public.inlet.local');
+}
+
+function publicOwnerLabel(email = '') {
+  const value = normalizeEmail(email || '');
+  return isPublicShellEmail(value) ? '소유자 미확인' : value;
 }
 
 async function allProjectAccessEntries() {

@@ -3,7 +3,7 @@ import { OWNERSHIP_METHODS, updateD1OwnershipTransferRequest } from '../../proje
 
 export async function onRequest({ request, env, params }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, OWNERSHIP_METHODS);
-  if (request.method !== 'POST') return jsonResponse(request, env, 405, { ok: false, error: 'Method not allowed.' }, OWNERSHIP_METHODS);
+  if (request.method !== 'POST' && request.method !== 'PATCH') return jsonResponse(request, env, 405, { ok: false, error: 'Method not allowed.' }, OWNERSHIP_METHODS);
   try {
     const db = assertD1(env);
     const body = await readJson(request);

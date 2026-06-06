@@ -37,6 +37,7 @@ const leads = [
   { id: 'lead-1', type: '상담신청', status: '신규', createdAt: today },
   { id: 'lead-1', type: '상담신청', status: '신규', createdAt: today },
   { id: 'lead-2', type: '방문예약', status: '확인중', createdAt: today },
+  { id: 'lead-category-booking', category: 'booking', status: '신규', createdAt: today },
   { type: '상담신청', name: '로컬중복', phone: '010-0000-0000', status: '신규', createdAt: today },
   { type: '상담신청', name: '로컬중복', phone: '010-0000-0000', status: '신규', createdAt: today },
   { id: 'lead-before-kst', type: '상담신청', status: '신규', createdAt: beforeKstToday },
@@ -58,24 +59,24 @@ assert(todayStats.submitAttempt === 1, `submit attempt mismatch: ${todayStats.su
 assert(todayStats.submitSuccess === 1, `submit success mismatch: ${todayStats.submitSuccess}`);
 assert(todayStats.reservationAttempt === 1, `reservation attempt mismatch: ${todayStats.reservationAttempt}`);
 assert(todayStats.reservationSuccess === 1, `reservation success mismatch: ${todayStats.reservationSuccess}`);
-assert(todayStats.db === 3, `today db mismatch: ${todayStats.db}`);
+assert(todayStats.db === 4, `today db mismatch: ${todayStats.db}`);
 assert(todayStats.filteredEvents.length === 10, 'duplicate events and Seoul boundary events should be ignored');
-assert(todayStats.filteredLeads.length === 3, 'duplicate leads and Seoul boundary leads should be ignored');
+assert(todayStats.filteredLeads.length === 4, 'duplicate leads and Seoul boundary leads should be ignored');
 assert(todayStats.consultLeads === 2, `consult lead mismatch: ${todayStats.consultLeads}`);
-assert(todayStats.reservationLeads === 1, `reservation lead mismatch: ${todayStats.reservationLeads}`);
-assert(todayStats.conversion === '150.0', `conversion mismatch: ${todayStats.conversion}`);
-assert(todayStats.ctaConversion === '150.0', `cta conversion mismatch: ${todayStats.ctaConversion}`);
+assert(todayStats.reservationLeads === 2, `reservation lead mismatch: ${todayStats.reservationLeads}`);
+assert(todayStats.conversion === '200.0', `conversion mismatch: ${todayStats.conversion}`);
+assert(todayStats.ctaConversion === '200.0', `cta conversion mismatch: ${todayStats.ctaConversion}`);
 assert(todayStats.channelData.google === 1 && todayStats.channelData.naver >= 1, 'UTM source channel aggregation mismatch');
 assert(todayStats.channelData.direct >= 1, 'events without UTM source should be direct');
 assert(todayStats.ctaLabelData.hero === 1, 'CTA label aggregation mismatch');
-assert(todayStats.statusData['신규'] === 2 && todayStats.statusData['확인중'] === 1, 'status breakdown mismatch');
+assert(todayStats.statusData['신규'] === 3 && todayStats.statusData['확인중'] === 1, 'status breakdown mismatch');
 assert(!('deliveryData' in todayStats), 'delivery stats should be removed from visible stats model');
 assert(!todayStats.filteredEvents.some((event) => event.id === 'pv-before-kst' || event.id === 'pv-after-kst'), 'Seoul today should exclude adjacent UTC-day events');
 assert(!todayStats.filteredLeads.some((lead) => lead.id === 'lead-before-kst' || lead.id === 'lead-after-kst'), 'Seoul today should exclude adjacent UTC-day leads');
 
 const sevenDayStats = buildStats(events, leads, '7d', now);
 assert(sevenDayStats.pv === 4, `7d pv mismatch: ${sevenDayStats.pv}`);
-assert(sevenDayStats.db === 5, `7d db mismatch: ${sevenDayStats.db}`);
+assert(sevenDayStats.db === 6, `7d db mismatch: ${sevenDayStats.db}`);
 assert(sevenDayStats.trend.length === 7, `7d trend bucket mismatch: ${sevenDayStats.trend.length}`);
 assert(sevenDayStats.trend.at(-1).id === '2026-05-21', `Seoul trend last bucket mismatch: ${sevenDayStats.trend.at(-1).id}`);
 

@@ -10,7 +10,7 @@ export function trafficAttributionFromUrl(url = '') {
   const text = String(url || '').trim();
   if (!text) return { utmSource: '', utmMedium: '', utmCampaign: '', channel: 'direct' };
   try {
-    const parsed = new URL(text, 'https://inlet.local');
+    const parsed = new URL(text, 'https://pagero.local');
     const utmSource = normalizeUtmValue(parsed.searchParams.get('utm_source'));
     const utmMedium = normalizeUtmValue(parsed.searchParams.get('utm_medium'));
     const utmCampaign = normalizeUtmValue(parsed.searchParams.get('utm_campaign'));

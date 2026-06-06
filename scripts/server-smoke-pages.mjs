@@ -22,6 +22,7 @@ async function assertPublicPageMatches(ctx, pagePath, expectedPage, message) {
   const publicRead = await fetchWithTimeout(`${ctx.baseUrl}${pagePath}?public=1&fresh=${Date.now()}`, {}, 5000);
   const publicData = await publicRead.json();
   assert(publicRead.ok, `${message}: public page read failed`);
+  assert(/no-store/i.test(publicRead.headers.get('cache-control') || ''), `${message}: public page read must bypass cached content`);
   assert(
     publicRenderFingerprint(publicData.page) === publicRenderFingerprint(expectedPage),
     `${message}: public page content does not match saved page`,

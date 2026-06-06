@@ -371,8 +371,12 @@ requireAll(serverIndex, [
 ], 'server customer-owned AI key storage contract');
 
 const app = await read('src/App.jsx');
+assert(
+  app.includes("const AdminPanel = lazy(() => import('./panels/AdminPanel.jsx'))")
+    || app.includes("const AdminPanel = lazy(() => import('./panels/MasterAdminPanel.jsx'))"),
+  'builder admin panel contract missing lazy AdminPanel import',
+);
 requireAll(app, [
-  "const AdminPanel = lazy(() => import('./panels/AdminPanel.jsx'))",
   "const InviteAcceptScreen = lazy(() => import('./screens/InviteAcceptScreen.jsx'))",
   'function WayziFooter()',
   'WAYZI_STATIC_PAGES',

@@ -1,0 +1,3787 @@
+.pagerol-home-v2 {
+  --ink: #101828;
+  --muted: #667085;
+  --line: rgba(16, 24, 40, .09);
+  --soft: #f6f8fb;
+  --blue: #2f6bff;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(47, 107, 255, .12), transparent 36%),
+    linear-gradient(180deg, #fbfcff 0%, #f3f6fb 54%, #ffffff 100%);
+  color: var(--ink);
+  font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+}
+
+.pagerol-home-v2 button {
+  font: inherit;
+}
+
+.pagerol-home-v2 .pagerol-nav {
+  position: fixed;
+  top: 22px;
+  left: 50%;
+  z-index: 80;
+  width: min(980px, calc(100% - 40px));
+  min-height: 64px;
+  padding: 0 12px 0 20px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(16, 24, 40, .08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .76);
+  box-shadow: 0 18px 50px rgba(16, 24, 40, .08);
+  backdrop-filter: blur(22px);
+}
+
+.pagerol-home-v2 .pagerol-logo {
+  color: var(--ink);
+  font-size: 24px;
+  font-weight: 950;
+  letter-spacing: -.055em;
+}
+
+.pagerol-home-v2 .pagerol-nav nav {
+  gap: 2px;
+}
+
+.pagerol-home-v2 .pagerol-nav nav a {
+  height: 38px;
+  color: #475467;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.pagerol-home-v2 .pagerol-nav nav a:hover {
+  background: #f2f4f7;
+  color: var(--ink);
+}
+
+.pagerol-home-v2 .pagerol-actions {
+  gap: 4px;
+}
+
+.pagerol-home-v2 .pagerol-actions button {
+  height: 40px;
+  border-radius: 999px;
+  border: 0;
+  padding: 0 14px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.pagerol-home-v2 .pagerol-actions button:last-child {
+  background: var(--ink);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(16, 24, 40, .16);
+}
+
+.pagerol-home-v2 .pagerol-main {
+  overflow: hidden;
+}
+
+.pagerol-home-v2 .pagerol-hero {
+  min-height: auto;
+  padding: 124px 24px 58px;
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-items: center;
+  align-items: start;
+  gap: 24px;
+}
+
+.pagerol-home-v2 .pagerol-hero:before {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .2), rgba(255, 255, 255, 0)),
+    radial-gradient(circle at 50% 24%, rgba(47, 107, 255, .18), transparent 35%);
+}
+
+.pagerol-home-v2 .pagerol-motion-lanes {
+  display: none;
+}
+
+.pagerol-home-v2 .pagerol-motion-row span {
+  height: 36px;
+  border-color: rgba(16, 24, 40, .07);
+  background: rgba(255, 255, 255, .68);
+  color: #98a2b3;
+  font-size: 13px;
+}
+
+.pagerol-home-v2 .pagerol-hero-copy {
+  position: relative;
+  z-index: 2;
+  width: min(920px, 100%);
+  justify-self: center;
+  text-align: center;
+}
+
+.pagerol-home-v2 .pagerol-hero-copy p {
+  height: 34px;
+  margin: 0 auto 18px;
+  border: 1px solid rgba(47, 107, 255, .16);
+  background: rgba(255, 255, 255, .82);
+  color: var(--blue);
+  font-size: 13px;
+}
+
+.pagerol-home-v2 .pagerol-hero-copy h1 {
+  max-width: 820px;
+  margin: 0 auto;
+  color: var(--ink);
+  font-size: clamp(58px, 7.4vw, 108px);
+  line-height: .92;
+  letter-spacing: -.1em;
+  font-weight: 950;
+}
+
+.pagerol-home-v2 .pagerol-hero-copy strong {
+  display: block;
+  width: min(760px, 100%);
+  margin: 20px auto 0;
+  color: #344054;
+  font-size: clamp(18px, 1.75vw, 27px);
+  line-height: 1.34;
+  letter-spacing: -.045em;
+  font-weight: 900;
+}
+
+.pagerol-hero-proof {
+  margin: 20px auto 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.pagerol-hero-proof span {
+  min-height: 38px;
+  border-radius: 999px;
+  border: 1px solid rgba(16, 24, 40, .08);
+  background: #fff;
+  padding: 0 15px;
+  display: inline-flex;
+  align-items: center;
+  color: #182230;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.pagerol-home-v2 .pagerol-hero-copy > span {
+  display: none;
+}
+
+.pagerol-home-v2 .pagerol-hero-copy button {
+  display: none;
+}
+
+.pagerol-home-v2 .pagerol-phone-stage {
+  position: relative;
+  z-index: 2;
+  width: min(560px, 100%);
+  min-height: 420px;
+}
+
+.pagerol-phone-stack {
+  position: relative;
+  width: 100%;
+  min-height: 420px;
+}
+
+.pagerol-phone-card {
+  position: absolute;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: rgba(255, 255, 255, .9);
+  box-shadow: 0 30px 90px rgba(16, 24, 40, .14);
+}
+
+.pagerol-phone-card.phone-primary {
+  left: 50%;
+  top: 0;
+  z-index: 3;
+  width: min(338px, 100%);
+  height: 420px;
+  padding: 16px;
+  transform: translateX(-50%);
+  border: 9px solid #111827;
+  border-radius: 42px;
+}
+
+.pagerol-phone-card.phone-secondary,
+.pagerol-phone-card.phone-tertiary {
+  display: none;
+}
+
+.pagerol-home-v2 .pagerol-hero-copy,
+.pagerol-home-v2 .pagerol-phone-stage,
+.pagerol-home-v2 .pagerol-stats,
+.pagerol-home-v2 .pagerol-build,
+.pagerol-home-v2 .pagerol-features,
+.pagerol-home-v2 .pagerol-cases,
+.pagerol-home-v2 .pagerol-review,
+.pagerol-home-v2 .pagerol-templates,
+.pagerol-home-v2 .pagerol-device,
+.pagerol-home-v2 .pagerol-faq {
+  animation: pageroRise .72s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.pagerol-home-v2 .pagerol-phone-stage {
+  animation-delay: .08s;
+}
+
+.pagerol-home-v2 .pagerol-stats,
+.pagerol-home-v2 .pagerol-build,
+.pagerol-home-v2 .pagerol-features {
+  animation-delay: .12s;
+}
+
+.pagerol-home-v2 .pagerol-cases,
+.pagerol-home-v2 .pagerol-review,
+.pagerol-home-v2 .pagerol-templates {
+  animation-delay: .16s;
+}
+
+.pagerol-phone-card.phone-secondary {
+  left: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .88), rgba(255, 255, 255, .96)),
+    radial-gradient(circle at 80% 12%, rgba(47, 107, 255, .24), transparent 38%);
+}
+
+.pagerol-phone-card.phone-tertiary {
+  right: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .88), rgba(255, 255, 255, .96)),
+    radial-gradient(circle at 18% 12%, rgba(20, 184, 166, .24), transparent 38%);
+}
+
+.pagerol-phone-card b {
+  color: var(--ink);
+  font-size: 25px;
+  line-height: 1.08;
+  letter-spacing: -.055em;
+  font-weight: 950;
+}
+
+.pagerol-phone-card span {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 800;
+}
+
+.phone-hero-gradient {
+  min-height: 146px;
+  border-radius: 26px;
+  padding: 20px;
+  display: grid;
+  align-content: end;
+  gap: 12px;
+  background:
+    linear-gradient(180deg, rgba(16, 24, 40, .06), rgba(16, 24, 40, .72)),
+    radial-gradient(circle at 26% 16%, rgba(255, 255, 255, .52), transparent 20%),
+    linear-gradient(135deg, #66a6ff, #12d18e);
+}
+
+.phone-hero-gradient small {
+  width: max-content;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .18);
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.phone-hero-gradient b {
+  color: #fff;
+  font-size: 26px;
+}
+
+.phone-pill-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.phone-pill-row span {
+  height: 38px;
+  border-radius: 999px;
+  background: #111827;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.phone-form-preview {
+  border: 1px solid #e4e7ec;
+  border-radius: 28px;
+  padding: 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.phone-form-preview strong {
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.phone-form-preview i {
+  height: 36px;
+  border-radius: 14px;
+  background: #f2f4f7;
+  color: #98a2b3;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  font-style: normal;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.pagerol-home-v2 .pagerol-stats,
+.pagerol-home-v2 .pagerol-build,
+.pagerol-home-v2 .pagerol-features,
+.pagerol-home-v2 .pagerol-cases,
+.pagerol-home-v2 .pagerol-review,
+.pagerol-home-v2 .pagerol-faq,
+.pagerol-home-v2 .pagerol-templates,
+.pagerol-home-v2 .pagerol-device {
+  width: min(1120px, calc(100% - 44px));
+  margin: 90px auto 0;
+  text-align: center;
+}
+
+.pagerol-home-v2 .pagerol-stats,
+.pagerol-home-v2 .pagerol-review,
+.pagerol-home-v2 .pagerol-faq {
+  grid-template-columns: 1fr;
+  justify-items: center;
+}
+
+.pagerol-home-v2 .pagerol-stats h2,
+.pagerol-home-v2 .pagerol-section-title h2,
+.pagerol-home-v2 .pagerol-faq h2,
+.pagerol-device h2 {
+  color: var(--ink);
+  font-size: clamp(42px, 5.2vw, 76px);
+  line-height: .98;
+  letter-spacing: -.075em;
+}
+
+.pagerol-home-v2 .pagerol-section-title {
+  margin-bottom: 28px;
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+
+.pagerol-home-v2 .pagerol-section-title p {
+  width: min(470px, 100%);
+  margin: 10px auto 0;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.pagerol-home-v2 .pagerol-stat-grid article,
+.pagerol-home-v2 .pagerol-feature-grid article,
+.pagerol-home-v2 .pagerol-case-grid article,
+.pagerol-home-v2 .pagerol-review-card,
+.pagerol-home-v2 .pagerol-dashboard,
+.pagerol-home-v2 .pagerol-faq article,
+.pagerol-template-strip article,
+.pagerol-device {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, .9);
+  box-shadow: none;
+}
+
+.pagerol-home-v2 .pagerol-stat-grid article,
+.pagerol-home-v2 .pagerol-feature-grid article {
+  min-height: 138px;
+  border-radius: 28px;
+  text-align: left;
+  align-content: start;
+  gap: 10px;
+}
+
+.pagerol-home-v2 .pagerol-stat-grid strong {
+  color: var(--ink);
+  font-size: clamp(24px, 2vw, 32px);
+  line-height: 1.08;
+  letter-spacing: -.055em;
+}
+
+.pagerol-home-v2 .pagerol-flow {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0 auto;
+}
+
+.pagerol-home-v2 .pagerol-flow article {
+  min-height: 178px;
+  padding: 24px 22px;
+  border: 1px solid var(--line);
+  border-radius: 32px;
+  background: #fff;
+  color: var(--ink);
+  box-shadow: none;
+  text-align: left;
+  align-content: start;
+  gap: 14px;
+}
+
+.pagerol-home-v2 .pagerol-flow article:nth-child(1) {
+  background: #111827;
+  color: #fff;
+}
+
+.pagerol-home-v2 .pagerol-flow article:nth-child(2),
+.pagerol-home-v2 .pagerol-flow article:nth-child(3),
+.pagerol-home-v2 .pagerol-flow article:nth-child(4) {
+  background: #fff;
+  color: var(--ink);
+}
+
+.pagerol-home-v2 .pagerol-flow article:nth-child(1) span {
+  color: rgba(255, 255, 255, .72);
+}
+
+.pagerol-home-v2 .pagerol-flow article:nth-child(n+2) span {
+  color: var(--muted);
+}
+
+.pagerol-home-v2 .pagerol-flow strong,
+.pagerol-case-grid-v2 strong {
+  font-size: clamp(21px, 1.8vw, 28px);
+  line-height: 1.1;
+  letter-spacing: -.065em;
+}
+
+.pagerol-home-v2 .pagerol-flow span,
+.pagerol-case-grid-v2 span {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.pagerol-block-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 22px;
+  justify-content: center;
+}
+
+.pagerol-block-cloud span {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  color: #344054;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.pagerol-home-v2 .pagerol-feature-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.pagerol-home-v2 .pagerol-marquee {
+  margin-top: 108px;
+  background: #111827;
+}
+
+.pagerol-home-v2 .pagerol-marquee div {
+  padding: 18px 0;
+}
+
+.pagerol-home-v2 .pagerol-marquee span {
+  height: 42px;
+  font-size: 15px;
+}
+
+.pagerol-case-grid-v2 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0 auto;
+}
+
+.pagerol-case-grid-v2 article {
+  min-height: 212px;
+  padding: 24px 22px;
+  border-radius: 32px;
+  text-align: left;
+  align-content: space-between;
+  gap: 16px;
+}
+
+.pagerol-case-grid-v2 article:first-child {
+  background: #111827;
+  color: #fff;
+}
+
+.pagerol-case-grid-v2 article:nth-child(2) {
+  background: #2f6bff;
+  color: #fff;
+}
+
+.pagerol-case-grid-v2 article:nth-child(3) {
+  background: #0f766e;
+  color: #fff;
+}
+
+.pagerol-case-grid-v2 article:nth-child(4) {
+  background: #fff;
+  color: var(--ink);
+}
+
+.pagerol-home-v2 .pagerol-review-card,
+.pagerol-home-v2 .pagerol-dashboard {
+  border-radius: 36px;
+  text-align: left;
+}
+
+.pagerol-home-v2 .pagerol-review-card span {
+  background: #eff4ff;
+  color: #2f6bff;
+}
+
+.pagerol-home-v2 .pagerol-dashboard div {
+  background: #f8fafc;
+}
+
+.pagerol-template-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.pagerol-template-strip article {
+  position: relative;
+  min-height: 320px;
+  border-radius: 34px;
+  padding: 24px;
+  display: grid;
+  align-content: space-between;
+  overflow: hidden;
+  text-align: left;
+}
+
+.pagerol-template-strip article:before {
+  content: "";
+  position: absolute;
+  inset: 24px 24px auto;
+  height: 140px;
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgba(17, 24, 39, .08), rgba(17, 24, 39, .52)),
+    linear-gradient(135deg, #93c5fd, #22c55e);
+}
+
+.pagerol-template-strip article:nth-child(2):before {
+  background:
+    linear-gradient(180deg, rgba(17, 24, 39, .08), rgba(17, 24, 39, .48)),
+    linear-gradient(135deg, #67e8f9, #2f6bff);
+}
+
+.pagerol-template-strip article:nth-child(3):before {
+  background:
+    linear-gradient(180deg, rgba(17, 24, 39, .08), rgba(17, 24, 39, .48)),
+    linear-gradient(135deg, #fdba74, #f43f5e);
+}
+
+.pagerol-template-strip article > div,
+.pagerol-template-strip article > p {
+  position: relative;
+  z-index: 1;
+}
+
+.pagerol-template-strip article > div {
+  padding-top: 168px;
+  display: grid;
+  gap: 12px;
+}
+
+.pagerol-template-strip small {
+  width: max-content;
+  border-radius: 999px;
+  background: #111827;
+  color: #fff;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.pagerol-template-strip b {
+  color: var(--ink);
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: -.065em;
+  font-weight: 950;
+}
+
+.pagerol-template-strip p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 800;
+}
+
+.pagerol-device {
+  border-radius: 36px;
+  padding: 34px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 28px;
+  align-items: center;
+  box-sizing: border-box;
+  justify-items: center;
+}
+
+.pagerol-device small {
+  color: var(--blue);
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.pagerol-device h2 {
+  margin: 12px 0 0;
+}
+
+.pagerol-device ul {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  width: min(680px, 100%);
+  gap: 12px;
+  list-style: none;
+}
+
+.pagerol-device li {
+  border-radius: 24px;
+  background: #f8fafc;
+  padding: 18px;
+  display: grid;
+  gap: 6px;
+  text-align: left;
+}
+
+.pagerol-device b {
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.pagerol-device span {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.pagerol-home-v2 .pagerol-faq article {
+  border-radius: 24px;
+  text-align: left;
+}
+
+@keyframes pageroRise {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(.985);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .pagerol-home-v2 .pagerol-stats,
+  .pagerol-home-v2 .pagerol-build,
+  .pagerol-home-v2 .pagerol-features,
+  .pagerol-home-v2 .pagerol-cases,
+  .pagerol-home-v2 .pagerol-review,
+  .pagerol-home-v2 .pagerol-templates,
+  .pagerol-home-v2 .pagerol-device,
+  .pagerol-home-v2 .pagerol-faq {
+    animation: pageroRise linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 26%;
+  }
+
+  .pagerol-home-v2 .pagerol-stat-grid article,
+  .pagerol-home-v2 .pagerol-flow article,
+  .pagerol-home-v2 .pagerol-feature-grid article,
+  .pagerol-case-grid-v2 article,
+  .pagerol-template-strip article,
+  .pagerol-home-v2 .pagerol-faq article {
+    animation: pageroRise linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 22%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pagerol-home-v2 *,
+  .pagerol-home-v2 *:before,
+  .pagerol-home-v2 *:after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.pagerol-home-v2 .pagerol-home-footer {
+  width: min(1120px, calc(100% - 44px));
+  margin: 86px auto 0;
+}
+
+@media (max-width: 980px) {
+  .pagerol-home-v2 .pagerol-nav {
+    position: sticky;
+    top: 10px;
+    left: auto;
+    width: calc(100% - 20px);
+    margin: 10px auto 0;
+    transform: none;
+  }
+
+  .pagerol-home-v2 .pagerol-nav nav {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .pagerol-home-v2 .pagerol-hero {
+    padding: 76px 18px 54px;
+  }
+
+  .pagerol-home-v2 .pagerol-phone-stage {
+    min-height: 430px;
+  }
+
+  .pagerol-phone-card.phone-secondary,
+  .pagerol-phone-card.phone-tertiary {
+    display: none;
+  }
+
+  .pagerol-phone-card.phone-primary {
+    width: min(350px, 100%);
+    height: 430px;
+  }
+
+  .pagerol-home-v2 .pagerol-stats,
+  .pagerol-home-v2 .pagerol-review,
+  .pagerol-home-v2 .pagerol-faq,
+  .pagerol-device,
+  .pagerol-home-v2 .pagerol-flow,
+  .pagerol-home-v2 .pagerol-feature-grid,
+  .pagerol-case-grid-v2,
+  .pagerol-template-strip {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .pagerol-home-v2 .pagerol-nav {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    border-radius: 26px;
+    padding: 12px 14px;
+  }
+
+  .pagerol-home-v2 .pagerol-actions button:first-child {
+    display: none;
+  }
+
+  .pagerol-home-v2 .pagerol-hero {
+    padding: 50px 14px 48px;
+  }
+
+  .pagerol-home-v2 .pagerol-hero-copy h1 {
+    font-size: clamp(45px, 14vw, 68px);
+  }
+
+  .pagerol-home-v2 .pagerol-hero-copy > span {
+    font-size: 16px;
+  }
+
+  .pagerol-home-v2 .pagerol-phone-stage {
+    min-height: 405px;
+  }
+
+  .pagerol-phone-card.phone-primary {
+    height: 405px;
+    border-width: 8px;
+    border-radius: 34px;
+  }
+
+  .phone-hero-gradient {
+    min-height: 142px;
+  }
+
+  .pagerol-home-v2 .pagerol-stats,
+  .pagerol-home-v2 .pagerol-build,
+  .pagerol-home-v2 .pagerol-features,
+  .pagerol-home-v2 .pagerol-cases,
+  .pagerol-home-v2 .pagerol-review,
+  .pagerol-home-v2 .pagerol-faq,
+  .pagerol-home-v2 .pagerol-templates,
+  .pagerol-home-v2 .pagerol-device,
+  .pagerol-home-v2 .pagerol-home-footer {
+    width: calc(100% - 24px);
+    margin-top: 76px;
+  }
+
+  .pagerol-template-strip article {
+    min-height: 312px;
+  }
+}
+
+.pagerol-home-simple {
+  --simple-bg: #f4f7ff;
+  background:
+    radial-gradient(circle at 50% 4%, rgba(47, 107, 255, .16), transparent 30%),
+    linear-gradient(180deg, #f7faff 0%, #eef4ff 48%, #ffffff 100%);
+}
+
+.pagerol-home-simple .pagerol-nav {
+  width: min(940px, calc(100% - 40px));
+}
+
+.pagerol-home-simple .pagerol-simple-hero {
+  min-height: auto;
+  padding: 136px 24px 88px;
+  gap: 44px;
+}
+
+.pagerol-home-simple .pagerol-hero-copy {
+  width: min(920px, 100%);
+}
+
+.pagerol-home-simple .pagerol-hero-copy p {
+  width: max-content;
+  padding: 0 16px;
+}
+
+.pagerol-home-simple .pagerol-hero-copy h1 {
+  max-width: 900px;
+  font-size: clamp(64px, 9.4vw, 138px);
+}
+
+.pagerol-home-simple .pagerol-hero-copy strong {
+  width: min(620px, 100%);
+  margin-top: 22px;
+  font-size: clamp(22px, 2.6vw, 36px);
+}
+
+.pagerol-mobile-gallery {
+  width: min(820px, 100%);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: .84fr 1fr .84fr;
+  align-items: end;
+  justify-items: center;
+  gap: 18px;
+}
+
+.pagerol-sample-card {
+  position: relative;
+  width: min(238px, 100%);
+  aspect-ratio: 9 / 16;
+  border: 8px solid #111827;
+  border-radius: 34px;
+  padding: 18px;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  overflow: hidden;
+  color: #fff;
+  background: #111827;
+  box-shadow: 0 30px 90px rgba(16, 24, 40, .18);
+  animation: pageroRise .72s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.pagerol-sample-card:nth-child(2) {
+  width: min(276px, 100%);
+  transform: translateY(20px);
+  animation-delay: .08s;
+}
+
+.pagerol-sample-card:nth-child(3) {
+  animation-delay: .14s;
+}
+
+.pagerol-sample-card:before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 18%, rgba(255, 255, 255, .26), transparent 20%),
+    linear-gradient(180deg, rgba(255, 255, 255, .05), rgba(0, 0, 0, .28));
+}
+
+.pagerol-sample-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.sample-dark {
+  background: linear-gradient(145deg, #0b1220, #1f2937);
+}
+
+.sample-blue {
+  background: linear-gradient(145deg, #1d4ed8, #38bdf8);
+}
+
+.sample-green {
+  background: linear-gradient(145deg, #0f766e, #22c55e);
+}
+
+.sample-topbar {
+  height: 22px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.sample-topbar span {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .72);
+}
+
+.pagerol-sample-card small {
+  width: max-content;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .16);
+  padding: 8px 10px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.pagerol-sample-card b {
+  max-width: 190px;
+  color: #fff;
+  font-size: clamp(26px, 2.4vw, 36px);
+  line-height: 1;
+  letter-spacing: -.075em;
+  font-weight: 950;
+}
+
+.sample-fields {
+  margin-top: auto;
+  display: grid;
+  gap: 8px;
+}
+
+.sample-fields i {
+  height: 34px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .9);
+  color: #101828;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.pagerol-sample-card button {
+  height: 44px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  color: #101828;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.pagerol-sample-card em {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(16, 24, 40, .36);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.pagerol-simple-section,
+.pagerol-simple-final {
+  width: min(980px, calc(100% - 44px));
+  margin: 92px auto 0;
+  text-align: center;
+  animation: pageroRise .72s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.pagerol-simple-section h2,
+.pagerol-simple-final h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(42px, 5.2vw, 72px);
+  line-height: .98;
+  letter-spacing: -.075em;
+  font-weight: 950;
+}
+
+.pagerol-simple-steps > div {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.pagerol-simple-steps article {
+  min-height: 132px;
+  border: 1px solid rgba(16, 24, 40, .08);
+  border-radius: 30px;
+  background: #fff;
+  padding: 22px;
+  display: grid;
+  align-content: space-between;
+  text-align: left;
+}
+
+.pagerol-simple-steps article:first-child {
+  background: #111827;
+  color: #fff;
+}
+
+.pagerol-simple-steps span {
+  color: #2f6bff;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.pagerol-simple-steps article:first-child span {
+  color: #fff;
+}
+
+.pagerol-simple-steps b {
+  font-size: 24px;
+  line-height: 1.05;
+  letter-spacing: -.06em;
+  font-weight: 950;
+}
+
+.pagerol-simple-chips,
+.pagerol-simple-blocks {
+  margin-top: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.pagerol-simple-chips span,
+.pagerol-simple-blocks span {
+  min-height: 54px;
+  border: 1px solid rgba(16, 24, 40, .08);
+  border-radius: 999px;
+  background: #fff;
+  padding: 0 22px;
+  display: inline-flex;
+  align-items: center;
+  color: #101828;
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.pagerol-simple-blocks span {
+  min-width: 120px;
+  justify-content: center;
+  border-radius: 24px;
+}
+
+.pagerol-simple-final {
+  border-radius: 42px;
+  background: #101828;
+  padding: 54px 24px;
+  color: #fff;
+}
+
+.pagerol-simple-final h2 {
+  color: #fff;
+}
+
+.pagerol-simple-final button {
+  height: 52px;
+  margin-top: 28px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  color: #101828;
+  padding: 0 28px;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.pagerol-home-simple .pagerol-home-footer {
+  margin-top: 54px;
+  padding-bottom: 44px;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  color: #667085;
+}
+
+.pagerol-home-simple .pagerol-home-footer strong {
+  color: #101828;
+  font-size: 22px;
+  font-weight: 950;
+}
+
+@media (max-width: 760px) {
+  .pagerol-home-simple .pagerol-simple-hero {
+    padding: 52px 16px 58px;
+    gap: 30px;
+  }
+
+  .pagerol-home-simple .pagerol-hero-copy h1 {
+    font-size: clamp(48px, 15vw, 76px);
+  }
+
+  .pagerol-mobile-gallery {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .pagerol-sample-card,
+  .pagerol-sample-card:nth-child(2) {
+    width: min(300px, 100%);
+    transform: none;
+  }
+
+  .pagerol-simple-section,
+  .pagerol-simple-final {
+    width: calc(100% - 24px);
+    margin-top: 70px;
+  }
+
+  .pagerol-simple-steps > div {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 460px) {
+  .pagerol-home-simple .pagerol-nav nav {
+    display: none;
+  }
+
+  .pagerol-simple-steps > div {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pagerol-home-v2 .pagerol-hero-cta {
+  margin: 22px auto 0;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.pagerol-home-v2 .pagerol-hero-copy .pagerol-hero-cta button {
+  display: inline-flex;
+  min-width: 136px;
+  height: 48px;
+  border: 0;
+  border-radius: 999px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 22px;
+  background: #111827;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.pagerol-home-v2 .pagerol-hero-copy .pagerol-hero-cta button:last-child {
+  border: 1px solid rgba(16, 24, 40, .1);
+  background: #fff;
+  color: var(--ink);
+}
+
+.pagerol-home-v2 .pagerol-benefits {
+  width: min(1120px, calc(100% - 44px));
+  margin: 90px auto 0;
+  text-align: center;
+}
+
+.pagerol-home-v2 .pagerol-product-system {
+  width: min(1120px, calc(100% - 44px));
+  margin: 92px auto 0;
+  text-align: center;
+}
+
+.pagerol-home-v2 .pagerol-product-board {
+  position: relative;
+  display: grid;
+  grid-template-columns: .95fr 1.1fr .95fr;
+  gap: 16px;
+  align-items: stretch;
+  margin-top: 28px;
+  padding: 18px;
+  border: 1px solid rgba(16, 24, 40, .08);
+  border-radius: 34px;
+  background:
+    linear-gradient(135deg, rgba(43, 148, 253, .12), rgba(255, 255, 255, .72) 42%, rgba(17, 24, 39, .07)),
+    #fff;
+}
+
+.pagerol-home-v2 .pagerol-url-card,
+.pagerol-home-v2 .pagerol-inbox-card,
+.pagerol-home-v2 .pagerol-page-card {
+  min-height: 260px;
+  border-radius: 26px;
+  box-sizing: border-box;
+}
+
+.pagerol-home-v2 .pagerol-url-card,
+.pagerol-home-v2 .pagerol-inbox-card {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 12px;
+  padding: 28px;
+  text-align: left;
+  background: rgba(255, 255, 255, .82);
+  border: 1px solid rgba(16, 24, 40, .08);
+}
+
+.pagerol-home-v2 .pagerol-url-card span,
+.pagerol-home-v2 .pagerol-inbox-card span {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: #111827;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.pagerol-home-v2 .pagerol-url-card strong,
+.pagerol-home-v2 .pagerol-inbox-card strong {
+  color: var(--ink);
+  font-size: clamp(24px, 2.5vw, 34px);
+  line-height: 1.05;
+  letter-spacing: -.055em;
+  font-weight: 950;
+}
+
+.pagerol-home-v2 .pagerol-url-card p,
+.pagerol-home-v2 .pagerol-inbox-card p {
+  margin: 0;
+  color: #667085;
+  font-size: 15px;
+  line-height: 1.55;
+  font-weight: 850;
+}
+
+.pagerol-home-v2 .pagerol-page-card {
+  display: grid;
+  place-items: center;
+  background: #111827;
+  padding: 22px;
+}
+
+.pagerol-home-v2 .pagerol-page-preview {
+  width: min(230px, 100%);
+  min-height: 300px;
+  border-radius: 30px;
+  padding: 18px;
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  box-sizing: border-box;
+  background: #f8fbff;
+  box-shadow: inset 0 0 0 6px rgba(255, 255, 255, .54);
+}
+
+.pagerol-home-v2 .pagerol-page-preview b {
+  min-height: 92px;
+  border-radius: 22px;
+  display: grid;
+  place-items: end start;
+  padding: 18px;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #2b94fd, #111827);
+  color: #fff;
+  font-size: 20px;
+  line-height: 1.15;
+  letter-spacing: -.05em;
+  font-weight: 950;
+}
+
+.pagerol-home-v2 .pagerol-page-preview i {
+  min-height: 48px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  color: var(--ink);
+  font-style: normal;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.pagerol-home-v2 .pagerol-product-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.pagerol-home-v2 .pagerol-product-steps article {
+  min-height: 130px;
+  border: 1px solid rgba(16, 24, 40, .08);
+  border-radius: 24px;
+  padding: 22px;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  text-align: left;
+  background: #fff;
+}
+
+.pagerol-home-v2 .pagerol-product-steps small {
+  color: #2b94fd;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.pagerol-home-v2 .pagerol-product-steps strong {
+  color: var(--ink);
+  font-size: 20px;
+  line-height: 1.15;
+  letter-spacing: -.045em;
+  font-weight: 950;
+}
+
+.pagerol-home-v2 .pagerol-product-steps p {
+  margin: 0;
+  color: #667085;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 800;
+}
+
+.pagerol-home-v2 .pagerol-benefit-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.pagerol-home-v2 .pagerol-benefit-card {
+  display: grid;
+  gap: 18px;
+  text-align: center;
+}
+
+.pagerol-home-v2 .pagerol-benefit-visual {
+  min-height: 300px;
+  border-radius: 34px;
+  background: #f2f4f7;
+  display: grid;
+  place-items: center;
+  padding: 34px;
+  box-sizing: border-box;
+}
+
+.pagerol-home-v2 .pagerol-benefit-card h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 27px;
+  line-height: 1;
+  letter-spacing: -.06em;
+  font-weight: 950;
+}
+
+.pagerol-home-v2 .pagerol-benefit-card p {
+  margin: -8px 0 0;
+  color: #667085;
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.pagerol-home-v2 .pagerol-benefit-card .mini-link,
+.pagerol-home-v2 .pagerol-benefit-card .mini-block {
+  width: min(250px, 100%);
+  min-height: 70px;
+  border-radius: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 23px;
+  font-weight: 950;
+}
+
+.pagerol-home-v2 .pagerol-benefit-card .mini-link {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 18px 45px rgba(16, 24, 40, .08);
+}
+
+.pagerol-home-v2 .pagerol-benefit-card .mini-link:before {
+  content: "↗";
+  width: 42px;
+  height: 42px;
+  margin-right: 14px;
+  border-radius: 12px;
+  background: #3df26d;
+  display: grid;
+  place-items: center;
+  color: #111827;
+  font-size: 22px;
+}
+
+.pagerol-home-v2 .pagerol-benefit-card .mini-block {
+  margin-top: 14px;
+  background: #000;
+  color: #fff;
+}
+
+.pagerol-home-v2 .pagerol-benefit-card.free .pagerol-benefit-visual strong {
+  color: #000;
+  font-size: clamp(88px, 9vw, 142px);
+  line-height: .8;
+  letter-spacing: -.08em;
+  font-weight: 950;
+}
+
+.pagerol-home-v2 .pagerol-benefit-card.free .pagerol-benefit-visual strong:after {
+  content: "원";
+  margin-left: 6px;
+  font-size: .34em;
+  letter-spacing: -.08em;
+}
+
+.pagerol-home-v2 .mini-chart {
+  width: min(250px, 100%);
+  min-height: 190px;
+  border-radius: 26px;
+  background: #fff;
+  padding: 26px;
+  display: grid;
+  align-content: center;
+  gap: 18px;
+  box-shadow: 0 18px 45px rgba(16, 24, 40, .08);
+}
+
+.pagerol-home-v2 .mini-chart span {
+  color: #111827;
+  font-size: 18px;
+  font-weight: 950;
+  text-align: left;
+}
+
+.pagerol-home-v2 .mini-chart svg {
+  width: 100%;
+  height: 96px;
+}
+
+.pagerol-home-v2 .mini-chart path {
+  fill: none;
+  stroke: #1272ff;
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+
+.pagerol-home-v2 .pagerol-stat-grid article {
+  text-align: center;
+  justify-items: center;
+}
+
+.pagerol-home-v2 .pagerol-review {
+  display: grid;
+  justify-items: center;
+}
+
+.pagerol-home-v2 .pagerol-dashboard {
+  width: min(920px, 100%);
+  text-align: center;
+}
+
+.pagerol-home-v2 .pagerol-dashboard div {
+  min-height: 112px;
+  border-radius: 26px;
+  display: grid;
+  gap: 8px;
+  align-content: center;
+  justify-items: center;
+}
+
+.pagerol-home-v2 .pagerol-dashboard b {
+  color: var(--ink);
+  font-size: clamp(18px, 1.6vw, 24px);
+  line-height: 1.1;
+  letter-spacing: -.045em;
+  font-weight: 950;
+}
+
+.pagerol-home-v2 .pagerol-use-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.pagerol-home-v2 .pagerol-use-grid article {
+  min-height: 118px;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.pagerol-home-v2 .pagerol-use-grid span {
+  color: var(--ink);
+  font-size: 22px;
+  letter-spacing: -.055em;
+  font-weight: 950;
+}
+
+@media (max-width: 980px) {
+  .pagerol-home-v2 .pagerol-benefit-grid,
+  .pagerol-home-v2 .pagerol-product-board,
+  .pagerol-home-v2 .pagerol-product-steps,
+  .pagerol-home-v2 .pagerol-use-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .pagerol-home-v2 .pagerol-benefits {
+    width: calc(100% - 24px);
+    margin-top: 76px;
+  }
+
+  .pagerol-home-v2 .pagerol-product-system {
+    width: calc(100% - 24px);
+    margin-top: 76px;
+  }
+
+  .pagerol-home-v2 .pagerol-hero-cta {
+    flex-direction: column;
+    align-items: stretch;
+    width: min(320px, 100%);
+  }
+
+  .pagerol-home-v2 .pagerol-benefit-visual {
+    min-height: 240px;
+  }
+
+  .pagerol-home-v2 .pagerol-url-card,
+  .pagerol-home-v2 .pagerol-inbox-card,
+  .pagerol-home-v2 .pagerol-page-card {
+    min-height: auto;
+  }
+
+  .pagerol-home-v2 .pagerol-product-board {
+    padding: 12px;
+    border-radius: 28px;
+  }
+
+  .pagerol-home-v2 .pagerol-page-preview {
+    min-height: 240px;
+  }
+}
+
+/* Focused public home: hero + one complete section only. */
+.pagerol-home-v2 .pagerol-nav {
+  width: min(920px, calc(100% - 32px));
+}
+
+.pagerol-home-v2 .pagerol-main {
+  min-height: 100vh;
+}
+
+.pagerol-home-v2 .pagerol-hero {
+  width: min(1160px, calc(100% - 44px));
+  min-height: 780px;
+  margin: 0 auto;
+  padding: 132px 0 74px;
+  grid-template-columns: minmax(0, .95fr) minmax(360px, 1.05fr);
+  justify-items: stretch;
+  align-items: center;
+  gap: clamp(36px, 6vw, 82px);
+  background:
+    radial-gradient(circle at 82% 42%, rgba(47, 107, 255, .16), transparent 31%),
+    radial-gradient(circle at 10% 18%, rgba(16, 24, 40, .06), transparent 32%);
+}
+
+.pagerol-home-v2 .pagerol-hero-copy p {
+  width: fit-content;
+  margin-left: 0;
+  padding: 0 15px;
+}
+
+.pagerol-home-v2 .pagerol-hero-copy h1 {
+  max-width: 560px;
+  margin-left: 0;
+  font-size: clamp(56px, 6.2vw, 92px);
+  text-align: left;
+}
+
+.pagerol-home-v2 .pagerol-hero-copy strong {
+  display: none;
+}
+
+.pagerol-home-v2 .pagerol-hero-proof {
+  justify-content: flex-start;
+  margin: 26px 0 0;
+}
+
+.pagerol-home-v2 .pagerol-hero-proof span {
+  min-height: 42px;
+  padding: 0 18px;
+  border-color: rgba(47, 107, 255, .14);
+  background: rgba(255, 255, 255, .92);
+  box-shadow: 0 12px 34px rgba(16, 24, 40, .06);
+}
+
+.pagerol-home-v2 .pagerol-hero-cta {
+  justify-content: flex-start;
+  margin-left: 0;
+}
+
+.pagerol-home-v2 .pagerol-hero-demo {
+  position: relative;
+  min-height: 610px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(16, 24, 40, .08);
+  border-radius: 48px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, .9), rgba(242, 247, 255, .78)),
+    #fff;
+  box-shadow: 0 34px 100px rgba(16, 24, 40, .12);
+  overflow: hidden;
+}
+
+.pagerol-home-v2 .pagerol-hero-demo:before {
+  content: "";
+  position: absolute;
+  inset: 34px;
+  border-radius: 40px;
+  background:
+    radial-gradient(circle at 20% 22%, rgba(47, 107, 255, .2), transparent 28%),
+    radial-gradient(circle at 90% 78%, rgba(16, 24, 40, .12), transparent 34%);
+  pointer-events: none;
+}
+
+.pagerol-home-v2 .pagerol-build-demo {
+  position: relative;
+  z-index: 2;
+  width: min(390px, 92%);
+  transform: translateY(2px);
+}
+
+.pagerol-home-v2 .live-phone {
+  width: 100%;
+  height: 540px;
+  border: 10px solid #111827;
+  border-radius: 46px;
+  background: #edf4ff;
+  overflow: hidden;
+  box-shadow: 0 26px 70px rgba(16, 24, 40, .2);
+}
+
+.pagerol-home-v2 .live-phone-top {
+  height: 48px;
+  padding: 0 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #111827;
+  color: #fff;
+}
+
+.pagerol-home-v2 .live-phone-top span {
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.pagerol-home-v2 .live-phone-top b,
+.pagerol-home-v2 .live-step-badge {
+  border-radius: 999px;
+  background: #2f6bff;
+  color: #fff;
+  padding: 5px 9px;
+  font-size: 10px;
+  font-weight: 950;
+}
+
+.pagerol-home-v2 .live-canvas {
+  height: calc(100% - 48px);
+  padding: 18px;
+  overflow: hidden;
+  scroll-behavior: smooth;
+}
+
+.pagerol-home-v2 .live-step-badge {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  width: fit-content;
+  margin: 0 0 10px auto;
+  box-shadow: 0 10px 28px rgba(47, 107, 255, .25);
+}
+
+.pagerol-home-v2 .live-empty-canvas,
+.pagerol-home-v2 .live-widget,
+.pagerol-home-v2 .live-button-list {
+  border-radius: 26px;
+  background: #fff;
+  border: 1px solid rgba(16, 24, 40, .08);
+  box-shadow: 0 12px 34px rgba(16, 24, 40, .07);
+}
+
+.pagerol-home-v2 .live-empty-canvas {
+  min-height: 250px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: #667085;
+  font-weight: 900;
+}
+
+.pagerol-home-v2 .live-empty-canvas i {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background: #111827;
+  color: #fff;
+  font-size: 30px;
+  font-style: normal;
+}
+
+.pagerol-home-v2 .live-widget {
+  margin-top: 12px;
+  padding: 18px;
+}
+
+.pagerol-home-v2 .live-hero-widget {
+  min-height: 178px;
+  display: grid;
+  align-content: end;
+  background:
+    linear-gradient(135deg, rgba(47, 107, 255, .94), rgba(16, 24, 40, .95)),
+    #111827;
+  color: #fff;
+}
+
+.pagerol-home-v2 .live-hero-widget small {
+  color: rgba(255, 255, 255, .76);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.pagerol-home-v2 .live-hero-widget h2 {
+  white-space: pre-line;
+  margin: 8px 0;
+  font-size: 30px;
+  line-height: 1.05;
+  letter-spacing: -.07em;
+}
+
+.pagerol-home-v2 .live-hero-widget p,
+.pagerol-home-v2 .live-image-widget span,
+.pagerol-home-v2 .live-link-item em,
+.pagerol-home-v2 .live-form-widget span,
+.pagerol-home-v2 .live-inbox-widget span {
+  margin: 0;
+  color: #667085;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.pagerol-home-v2 .live-hero-widget p {
+  color: rgba(255, 255, 255, .82);
+}
+
+.pagerol-home-v2 .live-image-widget div {
+  height: 126px;
+  border-radius: 20px;
+  background:
+    linear-gradient(135deg, rgba(47, 107, 255, .22), rgba(16, 24, 40, .08)),
+    #eaf2ff;
+}
+
+.pagerol-home-v2 .live-image-widget strong,
+.pagerol-home-v2 .live-link-item strong,
+.pagerol-home-v2 .live-form-widget strong,
+.pagerol-home-v2 .live-inbox-widget strong {
+  display: block;
+  margin-top: 10px;
+  color: #101828;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.pagerol-home-v2 .live-link-widget {
+  display: grid;
+  gap: 10px;
+}
+
+.pagerol-home-v2 .live-link-item {
+  min-height: 64px;
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 12px;
+  align-items: center;
+  border-radius: 18px;
+  background: #f8fbff;
+  padding: 10px;
+}
+
+.pagerol-home-v2 .live-link-item i {
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  font-style: normal;
+}
+
+.pagerol-home-v2 .live-link-item .thumb b {
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  display: block;
+  background: #2f6bff;
+}
+
+.pagerol-home-v2 .live-button-list {
+  margin-top: 12px;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.pagerol-home-v2 .live-button-list button {
+  min-height: 48px;
+  border: 0;
+  border-radius: 999px;
+  background: #111827;
+  color: #fff;
+  font-weight: 950;
+}
+
+.pagerol-home-v2 .live-timer-widget {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+  background: linear-gradient(135deg, #2b1b16, #8b2c1b);
+  color: #fff;
+}
+
+.pagerol-home-v2 .live-timer-widget strong,
+.pagerol-home-v2 .live-timer-widget span {
+  display: block;
+  color: #fff;
+}
+
+.pagerol-home-v2 .live-timer-widget b {
+  font-size: 24px;
+}
+
+.pagerol-home-v2 .live-timer-widget i {
+  grid-column: 1 / -1;
+  height: 5px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #2f6bff, #ffb020);
+}
+
+.pagerol-home-v2 .live-form-widget,
+.pagerol-home-v2 .live-inbox-widget {
+  display: grid;
+  gap: 10px;
+}
+
+.pagerol-home-v2 .live-form-widget i,
+.pagerol-home-v2 .live-inbox-widget i {
+  height: 34px;
+  border-radius: 12px;
+  background: #f2f4f7;
+}
+
+.pagerol-home-v2 .live-saved-toast {
+  position: sticky;
+  bottom: 12px;
+  margin: 12px auto 0;
+  width: fit-content;
+  border-radius: 999px;
+  background: #111827;
+  color: #fff;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.pagerol-home-v2 .phone-hero-gradient {
+  min-height: 178px;
+  border-radius: 30px;
+  background:
+    linear-gradient(135deg, rgba(47, 107, 255, .94), rgba(16, 24, 40, .96)),
+    #111827;
+}
+
+.pagerol-home-v2 .phone-hero-gradient b {
+  font-size: 31px;
+  line-height: 1.04;
+}
+
+.pagerol-home-v2 .phone-form-preview {
+  padding: 18px;
+  gap: 10px;
+}
+
+.pagerol-home-v2 .phone-form-preview i {
+  height: 42px;
+}
+
+.pagerol-home-v2 .pagerol-stats {
+  width: min(1040px, calc(100% - 44px));
+  margin: 0 auto;
+  padding: 78px 0 110px;
+}
+
+.pagerol-home-v2 .pagerol-stats h2 {
+  margin: 0 auto 30px;
+  max-width: 720px;
+  font-size: clamp(42px, 5.1vw, 78px);
+  text-align: center;
+}
+
+.pagerol-home-v2 .pagerol-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.pagerol-home-v2 .pagerol-stat-grid article {
+  min-height: 180px;
+  padding: 26px 24px;
+  border-radius: 34px;
+  display: grid;
+  align-content: space-between;
+  text-align: left;
+  background: #fff;
+}
+
+.pagerol-home-v2 .pagerol-stat-grid article:first-child {
+  background: #111827;
+  color: #fff;
+}
+
+.pagerol-home-v2 .pagerol-stat-grid article:first-child strong,
+.pagerol-home-v2 .pagerol-stat-grid article:first-child p {
+  color: #fff;
+}
+
+.pagerol-home-v2 .pagerol-stat-grid strong {
+  font-size: clamp(25px, 2vw, 32px);
+}
+
+.pagerol-home-v2 .pagerol-stat-grid p {
+  margin: 0;
+  color: #667085;
+  font-size: 15px;
+  line-height: 1.55;
+  font-weight: 850;
+}
+
+.pagerol-home-v2 .pagerol-home-footer {
+  width: min(1040px, calc(100% - 44px));
+  margin-top: 0;
+}
+
+@media (max-width: 900px) {
+  .pagerol-home-v2 .pagerol-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .pagerol-home-v2 .pagerol-nav nav {
+    display: none;
+  }
+
+  .pagerol-home-v2 .pagerol-hero {
+    min-height: auto;
+    padding: 112px 16px 54px;
+  }
+
+  .pagerol-home-v2 .pagerol-hero-copy h1 {
+    font-size: clamp(46px, 15vw, 68px);
+  }
+
+  .pagerol-home-v2 .pagerol-phone-stage,
+  .pagerol-home-v2 .pagerol-phone-stack {
+    min-height: 430px;
+  }
+
+  .pagerol-home-v2 .pagerol-phone-card.phone-primary {
+    height: 430px;
+    border-width: 7px;
+  }
+
+  .pagerol-home-v2 .phone-hero-gradient {
+    min-height: 142px;
+  }
+
+  .pagerol-home-v2 .phone-hero-gradient b {
+    font-size: 25px;
+  }
+
+  .pagerol-home-v2 .pagerol-stats {
+    width: calc(100% - 28px);
+    padding: 56px 0 80px;
+  }
+
+  .pagerol-home-v2 .pagerol-stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pagerol-home-v2 .pagerol-stat-grid article {
+    min-height: 132px;
+  }
+}
+
+/* Hero v3: edit panel + live mobile preview. */
+.pagerol-home-v2 .pagerol-hero {
+  width: min(1180px, calc(100% - 48px));
+  min-height: 820px;
+  padding: 128px 0 86px;
+  grid-template-columns: 1fr;
+  justify-items: center;
+  gap: 42px;
+  background:
+    radial-gradient(circle at 50% 46%, rgba(47, 107, 255, .1), transparent 34%),
+    linear-gradient(180deg, #fff 0%, #f8fbff 100%);
+}
+
+.pagerol-home-v2 .pagerol-hero-copy {
+  width: min(780px, 100%);
+  text-align: center;
+}
+
+.pagerol-home-v2 .pagerol-hero-copy p {
+  margin: 0 auto 18px;
+}
+
+.pagerol-home-v2 .pagerol-hero-copy h1 {
+  max-width: 720px;
+  margin: 0 auto;
+  text-align: center;
+  font-size: clamp(54px, 6vw, 88px);
+  line-height: .96;
+  letter-spacing: -.08em;
+}
+
+.pagerol-home-v2 .pagerol-hero-proof {
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.pagerol-home-v2 .pagerol-hero-cta {
+  display: none;
+}
+
+.pagerol-home-v2 .pagerol-hero-demo {
+  width: min(1040px, 100%);
+  min-height: 520px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.pagerol-home-v2 .pagerol-hero-demo:before {
+  display: none;
+}
+
+.pagerol-workbench {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(280px, .86fr) 72px minmax(320px, 1fr);
+  align-items: center;
+  gap: 18px;
+}
+
+.pagerol-editor-card {
+  min-height: 390px;
+  border: 1px solid rgba(16, 24, 40, .08);
+  border-radius: 34px;
+  background: rgba(255, 255, 255, .94);
+  box-shadow: 0 30px 80px rgba(16, 24, 40, .1);
+  padding: 22px;
+  box-sizing: border-box;
+}
+
+.pagerol-editor-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.pagerol-editor-top span {
+  color: #101828;
+  font-size: 18px;
+  font-weight: 950;
+  letter-spacing: -.04em;
+}
+
+.pagerol-editor-top b {
+  border-radius: 999px;
+  background: #eff4ff;
+  color: #2f6bff;
+  padding: 8px 11px;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.pagerol-editor-list {
+  display: grid;
+  gap: 12px;
+}
+
+.pagerol-editor-block {
+  min-height: 72px;
+  border: 1px solid rgba(16, 24, 40, .08);
+  border-radius: 22px;
+  background: #f8fafc;
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  opacity: .5;
+  transform: translateY(0);
+  transition: opacity .28s ease, transform .28s ease, background .28s ease, border-color .28s ease;
+}
+
+.pagerol-editor-block.is-on {
+  opacity: 1;
+  background: #fff;
+}
+
+.pagerol-editor-block.is-active {
+  border-color: rgba(47, 107, 255, .34);
+  transform: translateY(-2px);
+  box-shadow: 0 18px 38px rgba(47, 107, 255, .12);
+}
+
+.pagerol-editor-block i {
+  width: 42px;
+  height: 42px;
+  border-radius: 15px;
+  display: grid;
+  place-items: center;
+  background: #111827;
+  color: #fff;
+  font-style: normal;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.pagerol-editor-block span {
+  display: grid;
+  gap: 3px;
+}
+
+.pagerol-editor-block strong {
+  color: #101828;
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.pagerol-editor-block em {
+  color: #667085;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.pagerol-sync-arrow {
+  width: 58px;
+  height: 58px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  background: #111827;
+  color: #fff;
+  font-size: 24px;
+  font-weight: 950;
+  box-shadow: 0 22px 54px rgba(16, 24, 40, .18);
+}
+
+.pagerol-preview-phone {
+  width: min(390px, 100%);
+  min-height: 520px;
+  justify-self: center;
+  border: 10px solid #111827;
+  border-radius: 46px;
+  background: #eaf2ff;
+  box-shadow: 0 34px 90px rgba(16, 24, 40, .18);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.pagerol-preview-screen {
+  height: 100%;
+  padding: 18px;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, #f8fbff 0%, #edf4ff 100%);
+}
+
+.pagerol-preview-hero {
+  min-height: 168px;
+  border-radius: 30px;
+  padding: 22px;
+  display: grid;
+  align-content: end;
+  background:
+    linear-gradient(135deg, rgba(47, 107, 255, .94), rgba(16, 24, 40, .96)),
+    #111827;
+  color: #fff;
+}
+
+.pagerol-preview-hero small {
+  color: rgba(255, 255, 255, .7);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.pagerol-preview-hero strong {
+  margin-top: 8px;
+  font-size: 31px;
+  line-height: 1.04;
+  letter-spacing: -.07em;
+  font-weight: 950;
+}
+
+.pagerol-preview-stack {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.pagerol-preview-block {
+  min-height: 66px;
+  border: 1px solid rgba(16, 24, 40, .08);
+  border-radius: 20px;
+  background: #fff;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  padding: 14px 16px;
+  box-shadow: 0 12px 28px rgba(16, 24, 40, .06);
+  animation: pageroBlockIn .32s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.pagerol-preview-block span {
+  color: #667085;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.pagerol-preview-block b {
+  color: #101828;
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.pagerol-preview-block.block-button {
+  background: #111827;
+}
+
+.pagerol-preview-block.block-button span,
+.pagerol-preview-block.block-button b {
+  color: #fff;
+}
+
+.pagerol-preview-block.block-form {
+  border-color: rgba(47, 107, 255, .24);
+}
+
+@keyframes pageroBlockIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 900px) {
+  .pagerol-workbench {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .pagerol-sync-arrow {
+    transform: rotate(90deg);
+  }
+
+  .pagerol-editor-card {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 620px) {
+  .pagerol-home-v2 .pagerol-hero {
+    width: calc(100% - 28px);
+    padding: 112px 0 54px;
+    gap: 30px;
+  }
+
+  .pagerol-home-v2 .pagerol-hero-copy h1 {
+    font-size: clamp(44px, 13.8vw, 64px);
+  }
+
+  .pagerol-home-v2 .pagerol-hero-demo {
+    min-height: auto;
+  }
+
+  .pagerol-editor-card {
+    padding: 16px;
+    border-radius: 28px;
+  }
+
+  .pagerol-preview-phone {
+    min-height: 460px;
+    border-width: 7px;
+    border-radius: 38px;
+  }
+
+  .pagerol-preview-hero {
+    min-height: 138px;
+  }
+}
+
+/* Hero v4: simple copy, CTA, original editor animation, floating widget samples. */
+.pagerol-home-v2 .pagerol-hero {
+  position: relative;
+  width: min(1220px, calc(100% - 48px));
+  min-height: 900px;
+  margin: 0 auto;
+  padding: 128px 0 96px;
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-items: center;
+  align-items: start;
+  gap: 32px;
+  overflow: visible;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(47, 107, 255, .11), transparent 34%),
+    linear-gradient(180deg, #fff 0%, #f7fbff 100%);
+}
+
+.pagerol-home-v2 .pagerol-hero-copy {
+  position: relative;
+  z-index: 3;
+  width: min(760px, 100%);
+  text-align: center;
+}
+
+.pagerol-home-v2 .pagerol-hero-copy p {
+  margin: 0 auto 18px;
+  width: fit-content;
+}
+
+.pagerol-home-v2 .pagerol-hero-copy h1 {
+  max-width: 720px;
+  margin: 0 auto;
+  text-align: center;
+  font-size: clamp(54px, 6vw, 88px);
+  line-height: .96;
+  letter-spacing: -.08em;
+}
+
+.pagerol-home-v2 .pagerol-hero-start {
+  margin: 26px auto 0;
+  min-width: 174px;
+  height: 56px;
+  border: 0;
+  border-radius: 999px;
+  background: #111827;
+  color: #fff;
+  box-shadow: 0 18px 44px rgba(16, 24, 40, .18);
+  font-size: 16px;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.pagerol-home-v2 .pagerol-hero-start:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 24px 56px rgba(16, 24, 40, .22);
+}
+
+.pagerol-home-v2 .pagerol-hero-cta,
+.pagerol-home-v2 .pagerol-hero-proof {
+  display: none;
+}
+
+.pagerol-home-v2 .pagerol-hero-demo {
+  position: relative;
+  z-index: 2;
+  width: min(460px, 92vw);
+  min-height: auto;
+  margin-top: 12px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.pagerol-home-v2 .pagerol-hero-demo:before {
+  display: none;
+}
+
+.pagerol-home-v2 .pagerol-build-demo {
+  width: min(420px, 100%);
+}
+
+.pagerol-home-v2 .pagerol-hero-demo .live-phone {
+  height: 560px;
+  border-width: 10px;
+  border-radius: 48px;
+  transform: translateY(0);
+}
+
+.pagerol-floating-widgets {
+  position: absolute;
+  inset: 126px 0 90px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.pagerol-floating-widget {
+  position: absolute;
+  min-width: 142px;
+  min-height: 84px;
+  border: 1px solid rgba(16, 24, 40, .08);
+  border-radius: 26px;
+  display: grid;
+  align-content: center;
+  gap: 6px;
+  padding: 16px 18px;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, .88);
+  box-shadow: 0 24px 64px rgba(16, 24, 40, .1);
+  backdrop-filter: blur(14px);
+  animation: pageroFloat 6s ease-in-out infinite;
+}
+
+.pagerol-floating-widget span {
+  color: #667085;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.pagerol-floating-widget strong {
+  color: #101828;
+  font-size: 17px;
+  letter-spacing: -.04em;
+  font-weight: 950;
+}
+
+.pagerol-floating-widget.widget-1 {
+  left: 4%;
+  top: 26%;
+  animation-delay: -.4s;
+}
+
+.pagerol-floating-widget.widget-2 {
+  right: 7%;
+  top: 22%;
+  animation-delay: -1.6s;
+}
+
+.pagerol-floating-widget.widget-3 {
+  left: 11%;
+  bottom: 20%;
+  animation-delay: -2.2s;
+}
+
+.pagerol-floating-widget.widget-4 {
+  right: 10%;
+  bottom: 28%;
+  animation-delay: -3s;
+}
+
+.pagerol-floating-widget.widget-5 {
+  left: 25%;
+  bottom: 6%;
+  animation-delay: -4s;
+}
+
+.pagerol-floating-widget.widget-6 {
+  right: 25%;
+  bottom: 8%;
+  animation-delay: -5s;
+}
+
+@keyframes pageroFloat {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(-1deg);
+  }
+  50% {
+    transform: translate3d(0, -14px, 0) rotate(1deg);
+  }
+}
+
+.pagerol-home-v2 .pagerol-workbench-section {
+  width: min(1120px, calc(100% - 44px));
+  margin: 20px auto 0;
+  padding: 72px 0 24px;
+  text-align: center;
+}
+
+.pagerol-home-v2 .pagerol-workbench-section .pagerol-workbench {
+  margin-top: 28px;
+}
+
+@media (max-width: 980px) {
+  .pagerol-floating-widget.widget-1,
+  .pagerol-floating-widget.widget-2 {
+    top: 36%;
+  }
+
+  .pagerol-floating-widget.widget-3,
+  .pagerol-floating-widget.widget-4 {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .pagerol-home-v2 .pagerol-hero {
+    width: calc(100% - 28px);
+    min-height: auto;
+    padding: 112px 0 64px;
+  }
+
+  .pagerol-home-v2 .pagerol-hero-copy h1 {
+    font-size: clamp(44px, 13.6vw, 64px);
+  }
+
+  .pagerol-floating-widgets {
+    inset: 108px 0 70px;
+  }
+
+  .pagerol-floating-widget {
+    min-width: 118px;
+    min-height: 70px;
+    padding: 12px 14px;
+    border-radius: 22px;
+  }
+
+  .pagerol-floating-widget strong {
+    font-size: 14px;
+  }
+
+  .pagerol-floating-widget.widget-1 {
+    left: 0;
+    top: 42%;
+  }
+
+  .pagerol-floating-widget.widget-2 {
+    right: 0;
+    top: 50%;
+  }
+
+  .pagerol-floating-widget.widget-5,
+  .pagerol-floating-widget.widget-6 {
+    display: none;
+  }
+
+  .pagerol-home-v2 .pagerol-hero-demo {
+    width: min(360px, 100%);
+  }
+
+  .pagerol-home-v2 .pagerol-hero-demo .live-phone {
+    height: 500px;
+    border-width: 7px;
+  }
+
+  .pagerol-home-v2 .pagerol-workbench-section {
+    width: calc(100% - 28px);
+    padding-top: 52px;
+  }
+}
+
+/* Hero v5: keep the whole hero inside the first viewport and use full width. */
+.pagerol-home-v2 .pagerol-main {
+  width: 100%;
+}
+
+.pagerol-home-v2 .pagerol-hero {
+  width: 100%;
+  max-width: none;
+  min-height: calc(100svh - 74px);
+  margin: 0;
+  padding: clamp(54px, 6vh, 82px) clamp(36px, 5vw, 86px) clamp(36px, 5vh, 64px);
+  grid-template-columns: minmax(520px, .95fr) minmax(420px, 1.05fr);
+  justify-items: stretch;
+  align-items: center;
+  column-gap: clamp(28px, 5vw, 92px);
+  row-gap: 24px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.pagerol-home-v2 .pagerol-hero-copy {
+  width: 100%;
+  max-width: 760px;
+  justify-self: end;
+  text-align: left;
+}
+
+.pagerol-home-v2 .pagerol-hero-copy p {
+  margin: 0 0 18px;
+}
+
+.pagerol-home-v2 .pagerol-hero-copy h1 {
+  max-width: 760px;
+  margin: 0;
+  text-align: left;
+  font-size: clamp(58px, 5.7vw, 92px);
+  line-height: .94;
+  letter-spacing: -.075em;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+
+.pagerol-home-v2 .pagerol-hero-start {
+  margin: 30px 0 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 4;
+}
+
+.pagerol-home-v2 .pagerol-hero-copy .pagerol-hero-start {
+  display: inline-flex;
+}
+
+/* Hero v6: rebuild from scratch as one centered service intro screen. */
+.pagerol-home-v2 .pagerol-hero {
+  width: 100%;
+  max-width: none;
+  min-height: calc(100svh - 74px);
+  margin: 0;
+  padding: clamp(42px, 5vh, 62px) clamp(20px, 4vw, 72px) clamp(28px, 4vh, 48px);
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto minmax(390px, 1fr);
+  justify-items: center;
+  align-items: start;
+  gap: clamp(24px, 3.4vh, 36px);
+  overflow: hidden;
+  box-sizing: border-box;
+  background:
+    radial-gradient(circle at 20% 34%, rgba(47, 107, 255, .13), transparent 28%),
+    radial-gradient(circle at 78% 42%, rgba(16, 24, 40, .08), transparent 30%),
+    linear-gradient(180deg, #fff 0%, #f5f9ff 100%);
+}
+
+.pagerol-home-v2 .pagerol-hero-copy {
+  width: min(860px, 100%);
+  max-width: none;
+  justify-self: center;
+  text-align: center;
+  z-index: 5;
+}
+
+.pagerol-home-v2 .pagerol-hero-copy p {
+  margin: 0 auto 16px;
+  width: fit-content;
+}
+
+.pagerol-home-v2 .pagerol-hero-copy h1 {
+  max-width: 860px;
+  margin: 0 auto;
+  text-align: center;
+  font-size: clamp(52px, 6.2vw, 94px);
+  line-height: .92;
+  letter-spacing: -.08em;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+
+.pagerol-home-v2 .pagerol-hero-copy .pagerol-hero-start {
+  margin: clamp(18px, 2.4vh, 26px) auto 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 174px;
+  height: 54px;
+  border-radius: 999px;
+  background: #101828;
+  color: #fff;
+  box-shadow: 0 18px 48px rgba(16, 24, 40, .18);
+}
+
+.pagerol-home-v2 .pagerol-hero-demo {
+  position: relative;
+  z-index: 3;
+  width: min(520px, 42vw);
+  min-width: 360px;
+  margin: 0 auto;
+  justify-self: center;
+  align-self: start;
+  display: grid;
+  place-items: center;
+  transform: translateY(-4px);
+}
+
+.pagerol-home-v2 .pagerol-build-demo {
+  width: min(430px, 100%);
+}
+
+.pagerol-home-v2 .pagerol-hero-demo .live-phone {
+  width: min(330px, 100%);
+  height: min(500px, calc(100svh - 360px));
+  min-height: 390px;
+  border-width: 9px;
+  border-radius: 42px;
+  box-shadow: 0 36px 80px rgba(16, 24, 40, .18);
+}
+
+.pagerol-floating-widgets {
+  position: absolute;
+  inset: clamp(230px, 29vh, 280px) clamp(22px, 5vw, 88px) clamp(34px, 5vh, 62px);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.pagerol-floating-widget {
+  min-width: clamp(134px, 12vw, 188px);
+  min-height: 78px;
+  border-radius: 28px;
+  padding: 16px 18px;
+  background: rgba(255, 255, 255, .9);
+  box-shadow: 0 22px 70px rgba(16, 24, 40, .12);
+  animation: pageroFloat 5.8s ease-in-out infinite;
+}
+
+.pagerol-floating-widget span {
+  font-size: 12px;
+}
+
+.pagerol-floating-widget strong {
+  font-size: clamp(15px, 1.15vw, 18px);
+}
+
+.pagerol-floating-widget.widget-1 {
+  left: 8%;
+  top: 2%;
+}
+
+.pagerol-floating-widget.widget-2 {
+  right: 8%;
+  top: 4%;
+}
+
+.pagerol-floating-widget.widget-3 {
+  left: 3%;
+  top: 44%;
+}
+
+.pagerol-floating-widget.widget-4 {
+  right: 3%;
+  top: 46%;
+}
+
+.pagerol-floating-widget.widget-5 {
+  left: 18%;
+  bottom: 0;
+}
+
+.pagerol-floating-widget.widget-6 {
+  right: 18%;
+  bottom: 2%;
+}
+
+@media (max-width: 1080px) {
+  .pagerol-home-v2 .pagerol-hero-copy h1 {
+    font-size: clamp(48px, 8vw, 76px);
+  }
+
+  .pagerol-home-v2 .pagerol-hero-demo {
+    width: min(440px, 48vw);
+    min-width: 320px;
+  }
+
+  .pagerol-floating-widget.widget-3,
+  .pagerol-floating-widget.widget-4 {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .pagerol-home-v2 .pagerol-hero {
+    min-height: auto;
+    padding: 82px 18px 48px;
+    grid-template-rows: auto auto;
+  }
+
+  .pagerol-home-v2 .pagerol-hero-copy h1 {
+    font-size: clamp(42px, 13vw, 62px);
+  }
+
+  .pagerol-home-v2 .pagerol-hero-demo {
+    width: min(340px, 92vw);
+    min-width: 0;
+  }
+
+  .pagerol-home-v2 .pagerol-hero-demo .live-phone {
+    width: min(300px, 86vw);
+    height: 430px;
+    min-height: 0;
+    border-width: 7px;
+  }
+
+  .pagerol-floating-widgets {
+    inset: 210px 12px 40px;
+  }
+
+  .pagerol-floating-widget {
+    min-width: 112px;
+    min-height: 64px;
+    padding: 11px 13px;
+    border-radius: 20px;
+  }
+
+  .pagerol-floating-widget.widget-1 {
+    left: 0;
+    top: 26%;
+  }
+
+  .pagerol-floating-widget.widget-2 {
+    right: 0;
+    top: 35%;
+  }
+
+  .pagerol-floating-widget.widget-5,
+  .pagerol-floating-widget.widget-6 {
+    display: none;
+  }
+}
+
+.pagerol-home-v2 .pagerol-hero-demo {
+  width: min(620px, 100%);
+  justify-self: start;
+  margin: 0;
+}
+
+.pagerol-home-v2 .pagerol-build-demo {
+  width: min(560px, 100%);
+}
+
+.pagerol-home-v2 .pagerol-hero-demo .live-phone {
+  width: min(430px, 76%);
+  height: min(620px, calc(100svh - 190px));
+  min-height: 430px;
+  margin: 0 auto;
+}
+
+.pagerol-floating-widgets {
+  inset: 88px clamp(18px, 3vw, 54px) 42px;
+}
+
+.pagerol-floating-widget {
+  min-width: 132px;
+  min-height: 76px;
+  border-radius: 24px;
+}
+
+.pagerol-floating-widget.widget-1 {
+  left: 2.5%;
+  top: 24%;
+}
+
+.pagerol-floating-widget.widget-2 {
+  right: 4%;
+  top: 14%;
+}
+
+.pagerol-floating-widget.widget-3 {
+  left: 44%;
+  top: 17%;
+}
+
+.pagerol-floating-widget.widget-4 {
+  right: 6%;
+  bottom: 14%;
+}
+
+.pagerol-floating-widget.widget-5 {
+  left: 8%;
+  bottom: 13%;
+}
+
+.pagerol-floating-widget.widget-6 {
+  left: 47%;
+  bottom: 7%;
+}
+
+.pagerol-home-v2 .pagerol-workbench-section {
+  margin-top: 0;
+}
+
+@media (max-width: 1120px) {
+  .pagerol-home-v2 .pagerol-hero {
+    grid-template-columns: 1fr 1fr;
+    padding-inline: 34px;
+    column-gap: 28px;
+  }
+
+  .pagerol-home-v2 .pagerol-hero-copy h1 {
+    font-size: clamp(56px, 7vw, 88px);
+  }
+
+  .pagerol-home-v2 .pagerol-hero-demo .live-phone {
+    width: min(390px, 86%);
+  }
+
+  .pagerol-floating-widget.widget-3,
+  .pagerol-floating-widget.widget-6 {
+    display: none;
+  }
+}
+
+@media (max-width: 820px) {
+  .pagerol-home-v2 .pagerol-hero {
+    min-height: auto;
+    padding: 86px 18px 52px;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .pagerol-home-v2 .pagerol-hero-copy {
+    max-width: 620px;
+    justify-self: center;
+    text-align: center;
+  }
+
+  .pagerol-home-v2 .pagerol-hero-copy p,
+  .pagerol-home-v2 .pagerol-hero-start {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .pagerol-home-v2 .pagerol-hero-copy h1 {
+    margin: 0 auto;
+    text-align: center;
+    font-size: clamp(46px, 13vw, 68px);
+  }
+
+  .pagerol-home-v2 .pagerol-hero-demo {
+    width: min(390px, 100%);
+    justify-self: center;
+  }
+
+  .pagerol-home-v2 .pagerol-hero-demo .live-phone {
+    width: min(330px, 84vw);
+    height: 470px;
+    min-height: 0;
+  }
+
+  .pagerol-floating-widget.widget-1,
+  .pagerol-floating-widget.widget-2,
+  .pagerol-floating-widget.widget-4,
+  .pagerol-floating-widget.widget-5 {
+    display: none;
+  }
+}
+
+/* Hero final: must be the last homepage hero rule. */
+.pagerol-home-v2 .pagerol-hero {
+  width: 100%;
+  max-width: none;
+  height: calc(100svh - 74px);
+  min-height: 720px;
+  max-height: 900px;
+  margin: 0;
+  padding: clamp(42px, 5vh, 58px) clamp(20px, 5vw, 76px) clamp(24px, 4vh, 40px);
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr;
+  justify-items: center;
+  align-items: start;
+  gap: clamp(20px, 3vh, 30px);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-hero-copy {
+  width: min(860px, 100%);
+  max-width: none;
+  justify-self: center;
+  text-align: center;
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-hero-copy p {
+  margin: 0 auto 14px;
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-hero-copy h1 {
+  max-width: 860px;
+  margin: 0 auto;
+  text-align: center;
+  font-size: clamp(50px, 6vw, 86px);
+  line-height: .92;
+  letter-spacing: -.08em;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-hero-copy .pagerol-hero-start {
+  display: inline-flex;
+  margin: clamp(16px, 2vh, 22px) auto 0;
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-hero-demo {
+  width: min(430px, 38vw);
+  min-width: 320px;
+  justify-self: center;
+  align-self: start;
+  margin: 0 auto;
+  transform: none;
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-build-demo {
+  width: min(390px, 100%);
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-hero-demo .live-phone {
+  width: min(300px, 100%) !important;
+  height: min(400px, calc(100svh - 460px)) !important;
+  min-height: 330px !important;
+  margin: 0 auto;
+  border-width: 8px;
+  border-radius: 38px;
+  transform: translateY(-110px) !important;
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-floating-widgets {
+  inset: clamp(238px, 30vh, 282px) clamp(24px, 5vw, 92px) clamp(34px, 5vh, 58px);
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-floating-widget {
+  min-width: clamp(128px, 11vw, 176px);
+  min-height: 72px;
+  padding: 14px 16px;
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-floating-widget.widget-1 {
+  left: 7%;
+  top: 2%;
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-floating-widget.widget-2 {
+  right: 7%;
+  top: 4%;
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-floating-widget.widget-3 {
+  left: 5%;
+  top: 43%;
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-floating-widget.widget-4 {
+  right: 5%;
+  top: 45%;
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-floating-widget.widget-5 {
+  left: 18%;
+  bottom: 2%;
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-floating-widget.widget-6 {
+  right: 18%;
+  bottom: 4%;
+}
+
+@media (max-width: 1080px) {
+  .pagerol-home-v2 .pagerol-hero .pagerol-floating-widget.widget-3,
+  .pagerol-home-v2 .pagerol-hero .pagerol-floating-widget.widget-4 {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .pagerol-home-v2 .pagerol-hero {
+    height: auto;
+    min-height: auto;
+    max-height: none;
+    padding: 82px 18px 48px;
+  }
+
+  .pagerol-home-v2 .pagerol-hero .pagerol-hero-copy h1 {
+    font-size: clamp(42px, 13vw, 62px);
+  }
+
+  .pagerol-home-v2 .pagerol-hero .pagerol-hero-demo {
+    width: min(340px, 92vw);
+    min-width: 0;
+  }
+
+  .pagerol-home-v2 .pagerol-hero .pagerol-hero-demo .live-phone {
+    width: min(292px, 86vw) !important;
+    height: 420px !important;
+    min-height: 0 !important;
+  }
+
+  .pagerol-home-v2 .pagerol-hero .pagerol-floating-widget.widget-1 {
+    left: 0;
+    top: 28%;
+  }
+
+  .pagerol-home-v2 .pagerol-hero .pagerol-floating-widget.widget-2 {
+    right: 0;
+    top: 36%;
+  }
+
+  .pagerol-home-v2 .pagerol-hero .pagerol-floating-widget.widget-5,
+  .pagerol-home-v2 .pagerol-hero .pagerol-floating-widget.widget-6 {
+    display: none;
+  }
+}
+
+/* Hero v7: reference-style centered intro with finished mobile samples. */
+.pagerol-home-v2 .pagerol-hero {
+  height: auto;
+  min-height: calc(100svh - 74px);
+  max-height: none;
+  padding: clamp(48px, 7vh, 74px) clamp(20px, 5vw, 80px) clamp(42px, 6vh, 72px);
+  grid-template-rows: auto auto;
+  gap: clamp(28px, 4vh, 46px);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 20% 55%, rgba(47, 107, 255, .13), transparent 26%),
+    radial-gradient(circle at 78% 42%, rgba(0, 0, 0, .055), transparent 28%),
+    linear-gradient(180deg, #fff 0%, #f6f9ff 100%);
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-floating-widgets {
+  display: none;
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-hero-copy {
+  width: min(860px, 100%);
+  text-align: center;
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-hero-copy p {
+  margin: 0 auto 14px;
+  padding: 9px 16px;
+  border: 1px solid rgba(47, 107, 255, .18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .82);
+  color: #2f6bff;
+  font-size: 14px;
+  font-weight: 950;
+  box-shadow: 0 10px 32px rgba(47, 107, 255, .09);
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-hero-copy h1 {
+  max-width: 820px;
+  font-size: clamp(56px, 6.8vw, 104px);
+  line-height: .9;
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-hero-copy .pagerol-hero-start {
+  min-width: 188px;
+  height: 58px;
+  margin-top: 24px;
+  border-radius: 999px;
+  background: #05070b;
+  box-shadow: 0 18px 48px rgba(5, 7, 11, .22);
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-hero-demo {
+  width: min(1060px, 100%);
+  min-width: 0;
+  height: clamp(330px, 41vh, 430px);
+  margin: 0 auto;
+  display: block;
+  transform: none;
+}
+
+.pagerol-hero-showcase {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  isolation: isolate;
+}
+
+.pagerol-showcase-card {
+  position: absolute;
+  width: clamp(178px, 18vw, 246px);
+  min-height: clamp(250px, 30vh, 330px);
+  border: 1px solid rgba(16, 24, 40, .08);
+  border-radius: 32px;
+  padding: 12px;
+  background: rgba(255, 255, 255, .92);
+  box-shadow: 0 28px 80px rgba(16, 24, 40, .14);
+  box-sizing: border-box;
+  animation: pageroCardFloat 7s ease-in-out infinite;
+  overflow: hidden;
+}
+
+.pagerol-showcase-card.layout-profile,
+.pagerol-showcase-card.layout-invite {
+  padding: 0;
+}
+
+.pagerol-showcase-card.layout-profile .pagerol-showcase-visual,
+.pagerol-showcase-card.layout-invite .pagerol-showcase-visual {
+  border-radius: 32px 32px 24px 24px;
+}
+
+.pagerol-showcase-card.card-1 {
+  left: 50%;
+  top: 0;
+  z-index: 5;
+  width: clamp(214px, 21vw, 286px);
+  min-height: clamp(300px, 36vh, 390px);
+  transform: translateX(-50%);
+}
+
+.pagerol-showcase-card.card-2 {
+  left: 17%;
+  top: 62px;
+  z-index: 3;
+  transform: rotate(-4deg);
+  animation-delay: -1.1s;
+}
+
+.pagerol-showcase-card.card-3 {
+  right: 16%;
+  top: 72px;
+  z-index: 3;
+  transform: rotate(4deg);
+  animation-delay: -2.2s;
+}
+
+.pagerol-showcase-card.card-4 {
+  left: 2%;
+  top: 108px;
+  z-index: 1;
+  transform: rotate(-7deg);
+  opacity: .92;
+  animation-delay: -3.4s;
+}
+
+.pagerol-showcase-card.card-5 {
+  right: 2%;
+  top: 112px;
+  z-index: 1;
+  transform: rotate(7deg);
+  opacity: .92;
+  animation-delay: -4.6s;
+}
+
+.pagerol-showcase-visual {
+  min-height: clamp(168px, 20vh, 230px);
+  border-radius: 26px;
+  padding: 22px 20px;
+  display: grid;
+  align-content: end;
+  gap: 13px;
+  color: #fff;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+  background-image:
+    linear-gradient(180deg, rgba(6, 13, 31, .12) 0%, rgba(6, 13, 31, .42) 48%, rgba(6, 13, 31, .86) 100%),
+    var(--showcase-image);
+  background-size: cover;
+  background-position: center;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16);
+}
+
+.pagerol-showcase-visual::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 22% 16%, rgba(255, 255, 255, .34), transparent 28%),
+    linear-gradient(135deg, rgba(255, 255, 255, .08), transparent 46%);
+  pointer-events: none;
+}
+
+.pagerol-showcase-visual > * {
+  position: relative;
+  z-index: 1;
+}
+
+.pagerol-showcase-visual span {
+  width: fit-content;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .22);
+  backdrop-filter: blur(10px);
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.pagerol-showcase-visual strong {
+  white-space: pre-line;
+  font-size: clamp(24px, 2.4vw, 34px);
+  line-height: 1.02;
+  letter-spacing: -.07em;
+  font-weight: 950;
+}
+
+.pagerol-showcase-visual button {
+  width: 100%;
+  height: 44px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .94);
+  color: #101828;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.pagerol-showcase-list {
+  display: grid;
+  gap: 8px;
+  padding: 12px 4px 2px;
+}
+
+.pagerol-showcase-list i {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+  border: 1px solid rgba(16, 24, 40, .06);
+  color: #344054;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 850;
+}
+
+.layout-consult .pagerol-showcase-list i {
+  position: relative;
+  padding-left: 34px;
+}
+
+.layout-consult .pagerol-showcase-list i::before {
+  content: "";
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #2f6bff;
+  transform: translateY(-50%);
+}
+
+.layout-booking .pagerol-showcase-list {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+}
+
+.layout-booking .pagerol-showcase-list i {
+  min-height: 58px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 18px;
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.layout-booking .pagerol-showcase-list i:nth-child(2) {
+  background: #111827;
+  color: #fff;
+  box-shadow: 0 12px 24px rgba(17, 24, 39, .22);
+}
+
+.layout-event .pagerol-showcase-list {
+  grid-template-columns: 1.1fr .9fr;
+}
+
+.layout-event .pagerol-showcase-list i {
+  min-height: 48px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.layout-event .pagerol-showcase-list i:first-child {
+  grid-row: span 2;
+  min-height: 104px;
+  background: #064e3b;
+  color: #fff;
+  font-size: 22px;
+}
+
+.layout-profile .pagerol-showcase-list {
+  padding: 13px 14px 16px;
+}
+
+.layout-profile .pagerol-showcase-list i {
+  border-radius: 999px;
+  background: #101828;
+  color: #fff;
+  text-align: center;
+}
+
+.layout-invite .pagerol-showcase-list {
+  grid-template-columns: repeat(3, 1fr);
+  padding: 13px 14px 16px;
+}
+
+.layout-invite .pagerol-showcase-list i {
+  min-height: 50px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: #fff1f2;
+  color: #9f1239;
+}
+
+.layout-invite .pagerol-showcase-list i:first-child {
+  grid-column: span 3;
+  min-height: 42px;
+  border-radius: 999px;
+  background: #9f1239;
+  color: #fff;
+}
+
+.tone-blue .pagerol-showcase-visual {
+  background-image:
+    linear-gradient(180deg, rgba(47, 107, 255, .05) 0%, rgba(6, 20, 47, .5) 48%, rgba(6, 20, 47, .92) 100%),
+    var(--showcase-image);
+}
+
+.tone-cream .pagerol-showcase-visual {
+  background-image:
+    linear-gradient(180deg, rgba(246, 215, 168, .02) 0%, rgba(153, 87, 43, .44) 48%, rgba(111, 54, 24, .9) 100%),
+    var(--showcase-image);
+}
+
+.tone-green .pagerol-showcase-visual {
+  background-image:
+    linear-gradient(180deg, rgba(18, 132, 118, .06) 0%, rgba(6, 43, 39, .46) 48%, rgba(6, 43, 39, .92) 100%),
+    var(--showcase-image);
+}
+
+.tone-dark .pagerol-showcase-visual {
+  background-image:
+    linear-gradient(180deg, rgba(16, 24, 40, .04) 0%, rgba(3, 7, 18, .52) 48%, rgba(3, 7, 18, .92) 100%),
+    var(--showcase-image);
+}
+
+.tone-rose .pagerol-showcase-visual {
+  background-image:
+    linear-gradient(180deg, rgba(255, 122, 144, .04) 0%, rgba(143, 36, 67, .48) 48%, rgba(91, 19, 44, .92) 100%),
+    var(--showcase-image);
+}
+
+.layout-consult .pagerol-showcase-visual {
+  min-height: clamp(176px, 21vh, 240px);
+}
+
+.layout-booking .pagerol-showcase-visual {
+  min-height: clamp(154px, 18vh, 205px);
+  align-content: center;
+  text-align: center;
+}
+
+.layout-booking .pagerol-showcase-visual span {
+  margin: 0 auto;
+}
+
+.layout-booking .pagerol-showcase-visual button {
+  width: 78%;
+  margin: 0 auto;
+}
+
+.layout-event .pagerol-showcase-visual {
+  min-height: clamp(188px, 22vh, 252px);
+  align-content: start;
+}
+
+.layout-event .pagerol-showcase-visual button {
+  margin-top: auto;
+}
+
+.layout-profile .pagerol-showcase-visual {
+  min-height: clamp(214px, 25vh, 285px);
+  text-align: center;
+  align-content: end;
+}
+
+.layout-profile .pagerol-showcase-visual span {
+  margin: 0 auto;
+}
+
+.layout-profile .pagerol-showcase-visual strong {
+  font-size: clamp(22px, 2vw, 30px);
+}
+
+.layout-profile .pagerol-showcase-visual button {
+  width: 64%;
+  margin: 0 auto;
+}
+
+.layout-invite .pagerol-showcase-visual {
+  min-height: clamp(198px, 23vh, 265px);
+  align-content: center;
+  text-align: center;
+}
+
+.layout-invite .pagerol-showcase-visual span {
+  margin: 0 auto;
+  order: 2;
+}
+
+.layout-invite .pagerol-showcase-visual strong {
+  order: 1;
+}
+
+.layout-invite .pagerol-showcase-visual button {
+  order: 3;
+  width: 74%;
+  margin: 0 auto;
+}
+
+@keyframes pageroCardFloat {
+  0%, 100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -14px;
+  }
+}
+
+@media (max-width: 980px) {
+  .pagerol-showcase-card.card-4,
+  .pagerol-showcase-card.card-5 {
+    display: none;
+  }
+
+  .pagerol-showcase-card.card-2 {
+    left: 4%;
+  }
+
+  .pagerol-showcase-card.card-3 {
+    right: 4%;
+  }
+}
+
+@media (max-width: 760px) {
+  .pagerol-home-v2 .pagerol-hero {
+    padding: 82px 18px 46px;
+    gap: 30px;
+  }
+
+  .pagerol-home-v2 .pagerol-hero .pagerol-hero-copy h1 {
+    font-size: clamp(43px, 13vw, 62px);
+  }
+
+  .pagerol-home-v2 .pagerol-hero .pagerol-hero-demo {
+    height: 380px;
+    width: 100%;
+  }
+
+  .pagerol-showcase-card {
+    width: 190px;
+    min-height: 280px;
+  }
+
+  .pagerol-showcase-card.card-1 {
+    width: 220px;
+    min-height: 330px;
+  }
+
+  .pagerol-showcase-card.card-2 {
+    left: -42px;
+    top: 58px;
+  }
+
+  .pagerol-showcase-card.card-3 {
+    right: -42px;
+    top: 68px;
+  }
+}
+
+/* Home final motion pass: keep the hero clear of the fixed menu and reveal sections on scroll. */
+.pagerol-home-v2 .pagerol-hero {
+  padding-top: clamp(128px, 15vh, 156px);
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-hero-copy h1 {
+  max-width: 760px;
+  font-size: clamp(46px, 5.7vw, 86px);
+  line-height: .94;
+  letter-spacing: -.078em;
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-hero-copy .pagerol-hero-start {
+  margin-top: 18px;
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-hero-demo {
+  margin-top: 8px;
+}
+
+.pagerol-home-v2 .pagerol-workbench-section,
+.pagerol-home-v2 .pagerol-stats,
+.pagerol-home-v2 .pagerol-home-footer {
+  will-change: transform, opacity, filter;
+}
+
+@keyframes pageroRevealUpStrong {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 82px, 0) scale(.97);
+    filter: blur(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes pageroRevealLeftStrong {
+  from {
+    opacity: 0;
+    transform: translate3d(-96px, 42px, 0) rotate(-2deg);
+    filter: blur(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes pageroRevealRightStrong {
+  from {
+    opacity: 0;
+    transform: translate3d(96px, 42px, 0) rotate(2deg);
+    filter: blur(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(0);
+    filter: blur(0);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .pagerol-home-v2 .pagerol-workbench-section {
+    animation: pageroRevealUpStrong both cubic-bezier(.18, 1, .32, 1);
+    animation-timeline: view();
+    animation-range: entry 0% cover 38%;
+  }
+
+  .pagerol-home-v2 .pagerol-stats {
+    animation: pageroRevealLeftStrong both cubic-bezier(.18, 1, .32, 1);
+    animation-timeline: view();
+    animation-range: entry 0% cover 42%;
+  }
+
+  .pagerol-home-v2 .pagerol-home-footer {
+    animation: pageroRevealUpStrong both cubic-bezier(.18, 1, .32, 1);
+    animation-timeline: view();
+    animation-range: entry 0% cover 34%;
+  }
+
+  .pagerol-home-v2 .pagerol-stat-grid article:nth-child(odd) {
+    animation: pageroRevealLeftStrong both cubic-bezier(.18, 1, .32, 1);
+    animation-timeline: view();
+    animation-range: entry 0% cover 34%;
+  }
+
+  .pagerol-home-v2 .pagerol-stat-grid article:nth-child(even) {
+    animation: pageroRevealRightStrong both cubic-bezier(.18, 1, .32, 1);
+    animation-timeline: view();
+    animation-range: entry 0% cover 34%;
+  }
+}
+
+@supports not (animation-timeline: view()) {
+  .pagerol-home-v2 .pagerol-workbench-section,
+  .pagerol-home-v2 .pagerol-stats,
+  .pagerol-home-v2 .pagerol-home-footer {
+    animation: pageroRevealUpStrong .9s cubic-bezier(.18, 1, .32, 1) both;
+  }
+}
+
+@media (max-width: 760px) {
+  .pagerol-home-v2 .pagerol-hero {
+    padding-top: 108px;
+  }
+
+  .pagerol-home-v2 .pagerol-hero .pagerol-hero-copy h1 {
+    font-size: clamp(38px, 11.4vw, 56px);
+    line-height: .96;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pagerol-home-v2 .pagerol-workbench-section,
+  .pagerol-home-v2 .pagerol-stats,
+  .pagerol-home-v2 .pagerol-home-footer,
+  .pagerol-home-v2 .pagerol-stat-grid article {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+  }
+}

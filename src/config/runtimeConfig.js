@@ -17,7 +17,7 @@ const defaultDataMode = isLocalBrowser ? 'local' : 'server';
 const publicLandingBaseUrl = normalizeBaseUrl(envValue('VITE_INLET_PUBLIC_BASE_URL') || (isLocalBrowser ? location.origin : 'https://pagero.kr'));
 const mapEmbedBaseUrl = normalizeBaseUrl(
   envValue('VITE_INLET_MAP_EMBED_BASE')
-    || (isLocalBrowser ? `${location.origin}/embed` : 'https://map.inlet.page/embed'),
+    || (isLocalBrowser ? `${location.origin}/embed` : 'https://pagero.kr/embed'),
 );
 const leadIntegrationTimeoutMs = envMs('VITE_INLET_INTEGRATION_TIMEOUT_MS', 10000);
 

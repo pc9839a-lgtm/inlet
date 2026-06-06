@@ -199,6 +199,13 @@ async function run() {
     httpStatus: protectedStats.res.status,
   });
 
+  const protectedAdminSummary = await jsonFetch('/api/admin/summary');
+  checks.push({
+    name: 'Hosted /api/admin/summary read protection',
+    status: [401, 403].includes(protectedAdminSummary.res.status) ? 'ready' : 'failed-live',
+    httpStatus: protectedAdminSummary.res.status,
+  });
+
   const protectedCsv = await fetch(`${baseUrl}/api/leads/export.csv?projectId=${encodeURIComponent(project.projectId)}&month=${month}`, {
     signal: AbortSignal.timeout(10000),
   });

@@ -49,6 +49,7 @@ function FileUploadRow({ item, page, authUser, onChange }) {
       extension,
       badge: extension.toUpperCase(),
       sizeLabel: formatFileSize(file.size),
+      fileBytes: file.size,
       title: item.title && item.title !== '새 자료' ? item.title : file.name.replace(/\.[^.]+$/, ''),
     };
     onChange(patch);
@@ -56,7 +57,7 @@ function FileUploadRow({ item, page, authUser, onChange }) {
 
     try {
       const result = await uploadDownloadFile(file, page, authUser);
-      onChange({ ...patch, fileUrl: result.downloadUrl || result.url || '' });
+      onChange({ ...patch, fileUrl: result.downloadUrl || result.url || '', fileBytes: Number(result.size || file.size || 0) });
       notify('업로드 완료', 'success');
     } catch (error) {
       console.warn('Download file upload failed:', error);

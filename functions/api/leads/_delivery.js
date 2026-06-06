@@ -366,7 +366,7 @@ export function summarizeDelivery(logs = []) {
 }
 
 function shouldSendEmailForLead(email = {}, lead = {}) {
-  const type = String(lead.type || lead.kind || '');
+  const type = String(lead.type || lead.kind || lead.category || '');
   if (/\uC608\uC57D|\uBC29\uBB38|reservation|booking|reserve/i.test(type)) return email.reservation !== false;
   return email.consult !== false;
 }

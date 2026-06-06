@@ -53,6 +53,7 @@ const inviteAccept = await readFile('functions/api/projects/invites/[token]/acce
 const ownershipShared = await readFile('functions/api/projects/_ownership.js', 'utf8');
 const ownershipProject = await readFile('functions/api/projects/ownership-transfer.js', 'utf8');
 const ownershipAdmin = await readFile('functions/api/admin/ownership-transfer/[id].js', 'utf8');
+const adminSummary = await readFile('functions/api/admin/summary.js', 'utf8');
 const aiShared = await readFile('functions/api/ai/_ai.js', 'utf8');
 const aiKey = await readFile('functions/api/ai/key.js', 'utf8');
 const aiTest = await readFile('functions/api/ai/test.js', 'utf8');
@@ -273,6 +274,7 @@ for (const [name, source, tokens] of [
   ['ownership shared', ownershipShared, ['upsertD1OwnershipTransferRequest', 'listD1OwnershipTransferRequests', 'completeD1OwnershipTransfer', 'OWNERSHIP_TRANSFER_BILLING_NOT_CLEAR']],
   ['ownership project', ownershipProject, ['createD1OwnershipTransferRequest', 'listD1OwnershipTransfers', "tab: 'settings'", 'masterOnly']],
   ['ownership admin', ownershipAdmin, ['updateD1OwnershipTransferRequest', 'params.id', 'masterOnly: true']],
+  ['admin summary', adminSummary, ['buildD1MasterSummary', 'assertPlatformMaster', 'accounts', 'projects', 'leads', 'events', 'payments', 'subscriptions', 'lead_blocked_submissions', 'fileUsageFromPageJson', 'listR2FileUsage', 'projectDownloadsPrefix', 'listProjectPaymentSummary']],
   ['ai shared', aiShared, ['ai_keys', 'encryptSecret', 'resolveAiKey', 'listD1AiDrafts', 'upsertD1AiDraft', 'deleteD1AiDraft']],
   ['ai key', aiKey, ['readAiKeyStatus', 'saveAiKey', 'deleteAiKey']],
   ['ai test', aiTest, ['testOpenAiKey', 'classifyAiKeyTestError', 'keyTest']],
@@ -325,6 +327,7 @@ for (const token of [
   '/api/auth/email-verification',
   '/api/projects/invites',
   '/api/projects/ownership-transfer',
+  '/api/admin/summary',
   '/api/admin/ownership-transfer',
   '/api/ai/key',
   '/api/ai/drafts',
@@ -395,6 +398,7 @@ console.log(JSON.stringify({
     'functions/api/projects/invites/[token].js',
     'functions/api/projects/invites/[token]/accept.js',
     'functions/api/projects/ownership-transfer.js',
+    'functions/api/admin/summary.js',
     'functions/api/admin/ownership-transfer/[id].js',
     'functions/api/ai/key.js',
     'functions/api/ai/test.js',

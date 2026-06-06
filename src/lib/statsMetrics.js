@@ -235,7 +235,7 @@ function normalizeStatsLead(lead = {}) {
 function statsLeadKind(lead = {}) {
   const values = lead.values && typeof lead.values === 'object' ? Object.keys(lead.values).join(' ') : '';
   const answers = Array.isArray(lead.answers) ? lead.answers.map((answer) => answer.label || '').join(' ') : '';
-  const text = [lead.type, lead.sourceBlockTitle, lead.message, values, answers].join(' ').toLowerCase();
+  const text = [lead.type, lead.kind, lead.category, lead.sourceBlockTitle, lead.message, values, answers].join(' ').toLowerCase();
   return /예약|방문|방문예약|reservation|booking|reserve/.test(text) ? 'reservation' : 'consult';
 }
 

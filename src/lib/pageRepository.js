@@ -16,6 +16,14 @@ function pageContextParams(context = {}) {
   return params;
 }
 
+function noStoreHeaders(headers = {}) {
+  return {
+    'Cache-Control': 'no-cache, no-store',
+    Pragma: 'no-cache',
+    ...(headers || {}),
+  };
+}
+
 function canRetryWithAccountProject(error, authUser = null) {
   const status = Number(error?.status || 0);
   const code = String(error?.details?.code || error?.details?.errorCode || '').trim();
@@ -56,7 +64,8 @@ async function fetchPageWithContext(safeSlug, context = {}) {
   const params = pageContextParams(context);
   const query = params.toString() ? `?${params.toString()}` : '';
   const res = await apiFetch(`/api/pages/${encodeURIComponent(safeSlug)}${query}`, {
-    headers: projectAuthHeaders(context),
+    cache: 'no-store',
+    headers: noStoreHeaders(projectAuthHeaders(context)),
   });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(await readJsonError(res, `페이지 불러오기 실패: ${res.status}`));
@@ -78,7 +87,10 @@ export async function fetchServerPage(slug, context = {}) {
 
 export async function fetchPublicServerPage(slug) {
   const safeSlug = pageSlug(slug);
-  const res = await apiFetch(`/api/pages/${encodeURIComponent(safeSlug)}?public=1&fresh=${Date.now()}`);
+  const res = await apiFetch(`/api/pages/${encodeURIComponent(safeSlug)}?public=1&fresh=${Date.now()}`, {
+    cache: 'no-store',
+    headers: noStoreHeaders(),
+  });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(await readJsonError(res, `공개 페이지 불러오기 실패: ${res.status}`));
   const data = await res.json();
@@ -117,10 +129,18 @@ function stablePublicStringify(value) {
   return JSON.stringify(value ?? null);
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function verifyPublicPageSave(savedPage = {}) {
   const slug = pageSlug(savedPage);
-  const publicPage = await fetchPublicServerPage(slug);
-  if (publicPageMatchesSaved(publicPage, savedPage)) return publicPage;
+  let publicPage = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    publicPage = await fetchPublicServerPage(slug);
+    if (publicPageMatchesSaved(publicPage, savedPage)) return publicPage;
+    if (attempt < 2) await sleep(250 * (attempt + 1));
+  }
   throw new ApiError('서버 저장 후 공개 페이지 확인에 실패했습니다. 다시 저장해주세요.', 409, {
     code: 'PAGE_PUBLIC_VERIFY_FAILED',
     slug,

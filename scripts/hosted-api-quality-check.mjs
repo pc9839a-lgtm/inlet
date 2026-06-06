@@ -17,7 +17,7 @@ function skipped(missing = []) {
       name: 'Hosted API runtime',
       status: 'skipped-live',
       missing,
-      manualCheck: 'Set INLET_PUBLIC_API_URL and INLET_HOSTED_API_QA_REQUIRE=1 before launch to verify /api/health is a real API runtime, not the static Pages app.',
+      manualCheck: 'Set INLET_PUBLIC_API_URL and INLET_HOSTED_API_QA_REQUIRE=1 before launch to verify /api/health and /api/admin/summary are real API routes, not the static Pages app.',
     }],
   };
 }

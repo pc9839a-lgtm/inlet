@@ -64,6 +64,42 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
   assert(emailAlertLead.data.delivery?.status === 'success', `email alert delivery expected success: ${JSON.stringify(emailAlertLead.data.delivery)}`);
   assert(emailAlertLead.data.delivery?.logs?.some((log) => log.provider === 'ses' && log.status === 'success'), 'email alert lead should send through SES delivery provider');
 
+  const reservationOnlyProject = { projectId: 'smoke-leads-email-reservation-kind', slug: 'smoke-email-reservation-kind' };
+  const reservationOnlyPage = {
+    title: 'Smoke Reservation Kind Alerts',
+    slug: reservationOnlyProject.slug,
+    integrations: {
+      email: {
+        enabled: true,
+        to: 'reservation-owner@example.test',
+        consult: false,
+        reservation: true,
+      },
+    },
+  };
+  const savedReservationOnlyPage = await json({ baseUrl }, 'POST', `/api/pages/${encodeURIComponent(reservationOnlyProject.slug)}`, {
+    project: reservationOnlyProject,
+    page: reservationOnlyPage,
+  });
+  assert(savedReservationOnlyPage.res.ok, 'reservation-only email page save failed');
+  const reservationKindLead = await json({ baseUrl }, 'POST', '/api/leads', {
+    project: reservationOnlyProject,
+    page: { slug: reservationOnlyProject.slug },
+    lead: {
+      id: 'lead-email-reservation-kind',
+      kind: 'booking',
+      status: 'new',
+      name: 'Reservation Kind Lead',
+      phone: '010-0000-1108',
+      createdAt: '2026-05-24T05:03:00.000Z',
+    },
+  });
+  assert(reservationKindLead.res.ok, 'reservation kind lead should save');
+  assert(
+    reservationKindLead.data.delivery?.logs?.some((log) => log.provider === 'ses' && log.status === 'success'),
+    `reservation kind lead should send through reservation email path: ${JSON.stringify(reservationKindLead.data.delivery)}`,
+  );
+
   const fallbackEmailProject = {
     projectId: 'smoke-leads-email-fallback',
     slug: 'smoke-email-fallback',
