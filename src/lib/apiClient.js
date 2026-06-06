@@ -48,7 +48,7 @@ function runtimeApiToken() {
 function userFacingApiMessage(message = '', status = 0) {
   const text = String(message || '').trim();
   if (/PAGE_SLUG_CONFLICT|Page URL is already in use/i.test(text)) {
-    return '이미 사용 중인 URL입니다. 다른 URL을 입력해주세요.';
+    return '이미 사용 중인 페이지 주소입니다. 다른 주소를 입력해주세요.';
   }
   if (/Project owner identity is required|AUTH_SESSION_MISSING|Session is invalid|Session account was not found/i.test(text)) {
     return '로그인 세션이 없습니다. 다시 로그인한 뒤 저장해주세요.';
@@ -57,10 +57,10 @@ function userFacingApiMessage(message = '', status = 0) {
     return '현재 로그인 세션이 다른 페이지와 연결되어 있습니다. 새로고침 후 다시 저장해주세요.';
   }
   if (/Project access is required|Project access has not been granted|Project access denied/i.test(text)) {
-    return '현재 계정에는 이 페이지 접근 권한이 없습니다. 다시 로그인하거나 페이지 소유 계정을 확인해주세요.';
+    return '현재 계정에 이 페이지 접근 권한이 없습니다. 다시 로그인하거나 페이지 소유 계정을 확인해주세요.';
   }
   if (/Project write access denied/i.test(text)) {
-    return '현재 계정에는 이 페이지 저장 권한이 없습니다. 마스터 계정 또는 편집 권한을 확인해주세요.';
+    return '현재 계정에 이 페이지 저장 권한이 없습니다. 마스터 계정 또는 편집 권한을 확인해주세요.';
   }
   if (/projectId is required/i.test(text)) {
     return '프로젝트 정보가 누락되었습니다. 페이지를 다시 저장하거나 새로고침 후 다시 시도해주세요.';
@@ -85,7 +85,7 @@ async function readApiError(res) {
   try {
     const json = JSON.parse(raw);
     if (json?.code === 'PAGE_SLUG_CONFLICT') {
-      return { message: '이미 사용 중인 URL입니다. 다른 URL을 입력해주세요.', details: json };
+      return { message: '이미 사용 중인 페이지 주소입니다. 다른 주소를 입력해주세요.', details: json };
     }
     const message = json?.message || json?.error?.message || json?.error || raw;
     return { message: userFacingApiMessage(message, res.status), details: json };

@@ -149,6 +149,7 @@ const inboxPanel = await readFile('src/panels/InboxPanel.jsx', 'utf8');
 const pageModel = await readFile('src/lib/pageModel.js', 'utf8');
 const pageRepository = await readFile('src/lib/pageRepository.js', 'utf8');
 const leadIntegrations = await readFile('src/lib/leadIntegrations.js', 'utf8');
+const apiClientSource = await readFile('src/lib/apiClient.js', 'utf8');
 const settingsPanel = await readFile('src/panels/SettingsPanel.jsx', 'utf8');
 const settingsPanelCss = await readFile('src/panels/SettingsPanel.css', 'utf8');
 const runtimeConfigSource = await readFile('src/config/runtimeConfig.js', 'utf8');
@@ -240,6 +241,8 @@ assert(inboxPanel.includes('ensureHeaders(sheet, Object.keys(fields))') && inbox
 assert(inboxPanel.includes('function enforceFreeEmailIntegration') && inboxPanel.includes('lockedAccountEmail(authUser, page, normalized)') && inboxPanel.includes('locked-email-value') && inboxPanel.includes('email-recipient-control') && inboxPanel.includes('lockedToAccount: true'), 'Free plan email alerts must render a non-editable account email in the Inbox UI');
 assert(app.includes('const normalizeFreeEmailIntegrations') && app.includes('sourceIntegrations?.email?.to') && app.includes('lockedToAccount: true') && app.includes('to: accountEmail'), 'App saves must enforce free plan email alert recipient from the account email');
 assert(/const saveNow = async[\s\S]*?const nextPage = normalizePageForSave\(normalizeFreeEmailIntegrations\(sourcePage\)\);[\s\S]*?setPage\(nextPage\);[\s\S]*?saveLocalJson\(STORAGE_KEY, nextPage, '페이지'\);/.test(app), 'App saveNow must update the visible page and local snapshot from the same normalized object before server persistence');
+assert(apiClientSource.includes('이미 사용 중인 페이지 주소입니다.') && apiClientSource.includes('현재 계정에 이 페이지 접근 권한이 없습니다.') && apiClientSource.includes('요청 실패'), 'API client must keep readable Korean user-facing error messages');
+assert(!/[�]|諛|獄|揆|濡쒓렇|沅뚰븳|\?꾩|\?섏|\?붿|\?대\?/.test(apiClientSource), 'API client user-facing errors must not contain mojibake text');
 assert(pageRepository.includes('verifyPublicPageSave') && pageRepository.includes('PAGE_PUBLIC_VERIFY_FAILED') && pageRepository.includes('options.verifyPublic !== false') && pageRepository.includes('publicPageRenderFingerprint'), 'Page saves must verify the public landing route and render fingerprint after server save');
 assert(pageModel.includes("provider: 'google_sheets'") && pageModel.includes("mode: 'webhook'") && pageModel.includes('spreadsheetId') && pageModel.includes('connectedEmail'), 'Google Sheets settings must keep OAuth-ready metadata without changing the webhook MVP');
 assert(leadIntegrations.includes("integration: {") && leadIntegrations.includes("provider: 'google_sheets'") && leadIntegrations.includes('spreadsheetId: sheets.spreadsheetId') && leadIntegrations.includes('connectedEmail: sheets.connectedEmail'), 'Google Sheets payload must keep provider/mode/account metadata for future OAuth expansion');
