@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { issueEmailVerificationToken } from '../functions/api/auth/_auth.js';
+import { authAccountErrorMessage } from '../src/lib/authAccounts.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -23,6 +24,11 @@ const mockVerification = await issueEmailVerificationToken({
   email: 'auth-email-qa@example.test',
   purpose: 'password-reset',
 }, {});
+
+assert(authAccountErrorMessage({ message: 'Email is already registered.' }) === '이미 가입된 이메일입니다. 로그인해주세요.', 'duplicate email account errors should render in Korean');
+assert(authAccountErrorMessage({ message: 'Phone number is already registered.' }) === '이미 가입된 휴대폰번호입니다. 다른 번호를 확인해주세요.', 'duplicate phone account errors should render in Korean');
+assert(authAccountErrorMessage({ message: 'Verification email was requested too recently.' }) === '인증 메일을 이미 보냈습니다. 잠시 후 다시 시도해주세요.', 'verification cooldown errors should render in Korean');
+assert(authAccountErrorMessage({ message: 'Password must include letters and numbers and be at least 6 characters.' }) === '비밀번호는 영문과 숫자를 포함해 6자리 이상으로 입력해주세요.', 'password policy errors should render in Korean');
 
 assert(mockVerification.delivery?.mode === 'mock', 'mock auth email mode should stay available for offline QA');
 assert(mockVerification.token, 'mock auth email mode should expose token for offline QA');
