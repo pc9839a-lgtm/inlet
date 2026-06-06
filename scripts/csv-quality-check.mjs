@@ -142,11 +142,11 @@ globalThis.document = {
   },
 };
 
-downloadLeadsCsv(sampleLeads, { slug: '테스트 페이지' }, { filters: { deliveryStatus: 'success' } });
+downloadLeadsCsv(sampleLeads, { slug: '테스트 페이지' }, { filters: { deliveryStatus: 'success', month: '2026-05' } });
 assert(capturedBlob?.parts?.[0]?.startsWith('\ufeff"'), 'download CSV should include UTF-8 BOM for Excel');
 assert(capturedBlob?.parts?.[0]?.includes('"lead-success"') && !capturedBlob.parts[0].includes('"lead-formula"'), 'download CSV should honor filters');
 assert(capturedBlob?.options?.type === 'text/csv;charset=utf-8', 'download blob should use CSV utf-8 content type');
-assert(/^테스트-페이지-leads-\d{4}-\d{2}-\d{2}\.csv$/.test(capturedDownload), `download filename mismatch: ${capturedDownload}`);
+assert(capturedDownload === '테스트-페이지-leads-2026-05.csv', `download filename should use selected month: ${capturedDownload}`);
 assert(revokedUrl === 'blob:csv', 'download object URL should be revoked');
 
 globalThis.Blob = originalBlob;

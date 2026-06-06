@@ -209,7 +209,9 @@ export function leadsToCsv(leads = [], options = {}) {
 export function downloadLeadsCsv(leads = [], page = {}, options = {}) {
   const csv = `\ufeff${leadsToCsv(leads, options)}`;
   const slug = String(page.slug || 'my-page').replace(/[^\w가-힣-]/g, '-') || 'my-page';
-  const date = new Date().toISOString().slice(0, 10);
+  const date = String(options.filters?.month || '').match(/^\d{4}-\d{2}$/)
+    ? options.filters.month
+    : new Date().toISOString().slice(0, 10);
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
