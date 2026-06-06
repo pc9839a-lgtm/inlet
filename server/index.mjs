@@ -2116,12 +2116,12 @@ async function deliverSavedLeadAfterSave(saved = {}, body = {}) {
   const project = hasProject(body.project) ? normalizeProject(body.project) : {};
   const pageSlug = safeSlug(body.page?.slug || saved.pageSlug || project.slug || '');
   const storedPage = pageSlug ? await readPage(pageSlug, project) : null;
-  const deliveryPage = deliveryPageFrom({
+  const deliveryPage = await ensureServerDeliveryEmailRecipient(deliveryPageFrom({
     ...(body.page || {}),
     ...(storedPage || {}),
     projectId: storedPage?.projectId || body.page?.projectId || project.projectId || '',
     integrations: storedPage?.integrations || body.page?.integrations || {},
-  });
+  }), project);
   const delivery = await sendServerLeadIntegrations(saved, deliveryPage);
   if (delivery.status === 'none' && saved.delivery?.status) {
     return saved;
@@ -2137,6 +2137,26 @@ async function deliverSavedLeadAfterSave(saved = {}, body = {}) {
   } catch {
     return { ...saved, ...patch };
   }
+}
+
+async function ensureServerDeliveryEmailRecipient(page = {}, project = {}) {
+  const integrations = page.integrations && typeof page.integrations === 'object' ? page.integrations : {};
+  const email = integrations.email && typeof integrations.email === 'object' ? integrations.email : {};
+  if (!email.enabled || isValidEmail(email.to)) return page;
+
+  const fallback = await serverDeliveryEmailFallback(project);
+  if (!fallback) return page;
+  return {
+    ...page,
+    integrations: {
+      ...integrations,
+      email: {
+        ...email,
+        to: fallback,
+        lockedToAccount: email.lockedToAccount !== false,
+      },
+    },
+  };
 }
 
 function normalizeServerLead(lead = {}, body = {}) {
@@ -4752,6 +4772,26 @@ async function fallbackFreeEmailAlertRecipient(project = {}, access = null) {
   }
 }
 
+async function serverDeliveryEmailFallback(project = {}) {
+  const fromProject = normalizeEmail(project.clientEmail || '');
+  if (fromProject && !fromProject.endsWith('@public.inlet.local')) return fromProject;
+  if (storageRuntime.active !== 'd1' || !storageRuntime.d1 || !hasProject(project)) return '';
+  try {
+    const normalizedProject = normalizeProject(project);
+    const row = await storageRuntime.d1.prepare(`
+      SELECT accounts.email AS owner_email, projects.client_email AS client_email
+      FROM projects
+      LEFT JOIN accounts ON accounts.id = projects.owner_account_id
+      WHERE projects.id = ?
+      LIMIT 1
+    `).bind(normalizedProject.projectId).first();
+    const email = normalizeEmail(row?.client_email || row?.owner_email || '');
+    return email && !email.endsWith('@public.inlet.local') ? email : '';
+  } catch {
+    return '';
+  }
+}
+
 function serviceLabel(key = '') {
   return {
     custom: '직접',
@@ -4775,7 +4815,15 @@ function normalizeProject(project = {}) {
   const ownerId = safeId(project.ownerId, 'local-user');
   const projectId = safeId(project.projectId, `${ownerId}-my-page`);
   const slug = safeSlug(project.slug || 'my-page');
-  return { ownerId, projectId, slug };
+  return {
+    ownerId,
+    projectId,
+    slug,
+    clientEmail: normalizeEmail(project.clientEmail || ''),
+    ownerAccountId: safeId(project.ownerAccountId || project.ownerId || ownerId, ''),
+    plan: String(project.plan || project.billingPlan || '').trim(),
+    billingPlan: String(project.billingPlan || project.plan || '').trim(),
+  };
 }
 
 function hasProject(project = {}) {

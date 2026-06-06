@@ -1,4 +1,4 @@
-import { findD1LeadsByIntakeSignals, getD1LatestPageByProject, getD1PageBySlug, getD1PublicPageBySlug, insertD1BlockedLeadSubmission, listD1Leads, upsertD1Lead } from '../../server/storage/d1Adapter.mjs';
+import { findD1LeadsByIntakeSignals, getD1LatestPageByProject, getD1PageBySlug, getD1ProjectById, getD1PublicPageBySlug, insertD1BlockedLeadSubmission, listD1Leads, upsertD1Lead } from '../../server/storage/d1Adapter.mjs';
 import { deliveryReport, normalizeDeliveryPage, sendLeadDelivery } from './leads/_delivery.js';
 import { assertD1, authorizeProject, ensureD1ProjectShell, handleApiError, jsonResponse, monthFromRequest, optionsResponse, projectFromRequest, publicProjectShell, readJson } from './_shared.js';
 
@@ -213,7 +213,7 @@ async function sendSavedLeadDelivery(db, lead = {}, inputPage = {}, project = {}
     if (!storedPage && project.projectId) {
       storedPage = await getD1LatestPageByProject(db, { projectId: project.projectId });
     }
-    const deliveryPage = normalizeDeliveryPage(inputPage, storedPage || {}, project);
+    const deliveryPage = await ensureDeliveryEmailRecipient(db, normalizeDeliveryPage(inputPage, storedPage || {}, project), project);
     return await sendLeadDelivery(lead, deliveryPage, env);
   } catch (error) {
     return deliveryReport('failed', '접수는 저장됐지만 알림 전송에 실패했습니다.', [{
@@ -224,6 +224,51 @@ async function sendSavedLeadDelivery(db, lead = {}, inputPage = {}, project = {}
       at: new Date().toISOString(),
     }]);
   }
+}
+
+async function ensureDeliveryEmailRecipient(db, page = {}, project = {}) {
+  const integrations = page.integrations && typeof page.integrations === 'object' ? page.integrations : {};
+  const email = integrations.email && typeof integrations.email === 'object' ? integrations.email : {};
+  if (!email.enabled || isValidEmail(email.to)) return page;
+
+  const fallback = await deliveryEmailFallback(db, project);
+  if (!fallback) return page;
+  return {
+    ...page,
+    integrations: {
+      ...integrations,
+      email: {
+        ...email,
+        to: fallback,
+        lockedToAccount: email.lockedToAccount !== false,
+      },
+    },
+  };
+}
+
+async function deliveryEmailFallback(db, project = {}) {
+  const projectId = String(project.projectId || project.id || '').trim();
+  const projectRow = projectId ? await getD1ProjectById(db, projectId) : null;
+  const ownerId = String(project.ownerId || project.ownerAccountId || projectRow?.ownerId || projectRow?.ownerAccountId || '').trim();
+  const ownerEmail = ownerId
+    ? await db.prepare('SELECT email FROM accounts WHERE id = ? LIMIT 1').bind(ownerId).first().then((row) => usableDeliveryEmail(row?.email || '')).catch(() => '')
+    : '';
+  return ownerEmail || usableDeliveryEmail(project.clientEmail || projectRow?.clientEmail || '');
+}
+
+function normalizeEmail(value = '') {
+  return String(value || '').trim().toLowerCase();
+}
+
+function usableDeliveryEmail(value = '') {
+  const email = normalizeEmail(value);
+  if (!isValidEmail(email)) return '';
+  if (email.endsWith('@public.inlet.local')) return '';
+  return email;
+}
+
+function isValidEmail(value = '') {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
 }
 
 function normalizeDuplicateSettings(page = {}) {

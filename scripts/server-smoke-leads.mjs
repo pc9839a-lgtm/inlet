@@ -64,6 +64,48 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
   assert(emailAlertLead.data.delivery?.status === 'success', `email alert delivery expected success: ${JSON.stringify(emailAlertLead.data.delivery)}`);
   assert(emailAlertLead.data.delivery?.logs?.some((log) => log.provider === 'ses' && log.status === 'success'), 'email alert lead should send through SES delivery provider');
 
+  const fallbackEmailProject = {
+    projectId: 'smoke-leads-email-fallback',
+    slug: 'smoke-email-fallback',
+    clientEmail: 'fallback-owner@example.test',
+    plan: 'paid',
+  };
+  const fallbackEmailPage = {
+    title: 'Smoke Email Fallback Alerts',
+    slug: fallbackEmailProject.slug,
+    integrations: {
+      email: {
+        enabled: true,
+        to: '',
+        consult: true,
+        reservation: true,
+      },
+    },
+  };
+  const savedFallbackEmailPage = await json({ baseUrl }, 'POST', `/api/pages/${encodeURIComponent(fallbackEmailProject.slug)}`, {
+    project: fallbackEmailProject,
+    page: fallbackEmailPage,
+  });
+  assert(savedFallbackEmailPage.res.ok, 'email fallback alert page save failed');
+  assert(!savedFallbackEmailPage.data.page?.integrations?.email?.to, 'paid email fallback page should preserve blank recipient before delivery');
+  const fallbackEmailLead = await json({ baseUrl }, 'POST', '/api/leads', {
+    project: fallbackEmailProject,
+    page: { slug: fallbackEmailProject.slug },
+    lead: {
+      id: 'lead-email-fallback-alert',
+      type: 'consult',
+      status: 'new',
+      name: 'Email Fallback Lead',
+      phone: '010-0000-1109',
+      createdAt: '2026-05-24T05:05:00.000Z',
+    },
+  });
+  assert(fallbackEmailLead.res.ok, 'email fallback lead should save');
+  assert(
+    fallbackEmailLead.data.delivery?.logs?.some((log) => log.provider === 'ses' && log.status === 'success'),
+    `email fallback lead should send through SES using project email fallback: ${JSON.stringify(fallbackEmailLead.data.delivery)}`,
+  );
+
   const publicEmailProject = { projectId: 'smoke-leads-public-email-owner', slug: 'smoke-public-email' };
   const publicEmailPage = {
     title: 'Smoke Public Email Alerts',
