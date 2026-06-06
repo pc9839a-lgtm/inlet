@@ -79,7 +79,9 @@ assert(csv.includes('"https://pagero.kr/test-page"') && csv.includes('"naver"') 
 assert(!csv.includes('webhook failed') && !csv.includes('idempotency=') && !csv.includes('timeout'), 'delivery status and logs should not be exported in operator CSV');
 
 const serverSource = await readFile('server/index.mjs', 'utf8');
+const functionsCsvSource = await readFile('functions/api/leads/export.csv.js', 'utf8');
 assert(!serverSource.includes('외부 전송 상태') && !serverSource.includes('외부 전송 로그'), 'server CSV exports should not expose delivery status/log columns');
+assert(!functionsCsvSource.includes('답변 전체') && !functionsCsvSource.includes('입력값 전체') && !functionsCsvSource.includes('answersText(lead.answers)') && !functionsCsvSource.includes('valuesText(lead.values)'), 'functions CSV exports should expose form fields as columns instead of bundled answer/value text');
 assert(!serverSource.includes('leadsToCsvV2') && !serverSource.includes('function leadsToCsvExport('), 'legacy server CSV exporters should be removed');
 
 const filtered = filterLeadsForCsv(sampleLeads, {

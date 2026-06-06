@@ -18,8 +18,6 @@ const CSV_HEADERS = [
   'UTM Medium',
   'UTM Campaign',
   '\uBA54\uBAA8',
-  '\uB2F5\uBCC0 \uC804\uCCB4',
-  '\uC785\uB825\uAC12 \uC804\uCCB4',
 ];
 
 const BASE_DYNAMIC_VALUE_KEYS = new Set([
@@ -130,8 +128,6 @@ function toCsv(leads = []) {
       lead.utmMedium || lead.utm_medium || source.utmMedium || source.utm_medium || lead.values?.utmMedium || '',
       lead.utmCampaign || lead.utm_campaign || source.utmCampaign || source.utm_campaign || lead.values?.utmCampaign || '',
       lead.memo || lead.message || lead.values?.memo || '',
-      answersText(lead.answers),
-      valuesText(lead.values),
       ...dynamicHeaders.map((header) => dynamicFields[header] || ''),
     ]);
   }
@@ -191,20 +187,6 @@ function dynamicFieldMap(lead = {}) {
     fields[dynamicFieldHeader(label)] = flatValue(answer.value);
   }
   return fields;
-}
-
-function answersText(answers = []) {
-  return (Array.isArray(answers) ? answers : [])
-    .map((answer) => `${answer.label || answer.id || '\uB2F5\uBCC0'}: ${flatValue(answer.value)}`)
-    .filter(Boolean)
-    .join(' / ');
-}
-
-function valuesText(values = {}) {
-  return Object.entries(values || {})
-    .map(([key, value]) => `${key}: ${flatValue(value)}`)
-    .filter(Boolean)
-    .join(' / ');
 }
 
 function csvCell(value = '') {
