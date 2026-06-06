@@ -166,6 +166,7 @@ assert(!/import\s+\{?\s*LANDING_TEMPLATES\b/.test(app), 'landing templates must 
 assert(app.includes('const authForTargetPage = (targetPage = {})') && app.includes('publicLandingSlug && targetPage?.projectId ? null : authUser'), 'public landing lead/event writes must not use the signed-in builder project context');
 assert(app.includes('persistEvent(event, targetPage, authForTargetPage(targetPage))'), 'public landing event writes should use the target page project context');
 assert(app.includes('const targetAuthUser = authForTargetPage(targetPage)') && app.includes('persistLead(savedLead, targetPage, targetAuthUser)'), 'public landing lead writes should use the target page project context');
+assert(/<PreviewRenderer[\s\S]*?page=\{publicPage\}[\s\S]*?addLead=\{\(lead\) => addLeadForPage\(publicPage, lead\)\}[\s\S]*?track=\{\(event\) => trackForPage\(publicPage, event\)\}/.test(app), 'public landing renderer must submit leads and stats events against the public page context');
 assert(!/import\s+(?:InboxPanel|StatsPanel|StylePanel|SettingsPanel|TemplatesPanel|AdminPanel|AiPanel)\b/.test(app), 'heavy panels and AI panel must not be statically imported into App');
 assert(!/import\s+(?:\{[^}]*Editor[^}]*\}|[A-Z][A-Za-z]+Editor)\s+from\s+['"]\.\/editor\/blockEditors\//.test(app), 'block editors must not be statically imported into App');
 assert(app.includes('function LazyEditorFallback()') && app.includes('class LazyEditorBoundary extends Component'), 'fixed block editor controls must keep lazy fallback and error boundary');
@@ -205,6 +206,8 @@ assert(blockEditor.includes('<Suspense fallback=') && blockEditor.includes('data
 assert(blockEditor.includes('role="alert"') && blockEditor.includes('data-lazy-editor-error="true"') && blockEditor.includes('LAZY_EDITOR_ERROR_TEXT'), 'BlockEditor must show a useful lazy editor failure state');
 assert(blockEditor.includes('componentDidUpdate(prevProps)') && blockEditor.includes('this.setState({ error: null })'), 'BlockEditor lazy error boundary must reset when the selected block/type changes');
 assert(appErrorBoundary.includes('className="error-screen error-screen-v2"'), 'AppErrorBoundary must keep the app recovery screen');
+assert(appErrorBoundary.includes('recoverRootChunkLoad(error)') && appErrorBoundary.includes('clearBrowserRuntimeCaches().finally(replaceWithFreshRuntime)'), 'AppErrorBoundary must auto-recover once from stale deployment chunk failures');
+assert(appErrorBoundary.includes('ROOT_CHUNK_RELOAD_LIMIT = 1') && appErrorBoundary.includes("url.searchParams.set('__fresh'"), 'AppErrorBoundary stale chunk recovery must be bounded and use a fresh URL');
 assert(appErrorBoundary.includes('화면을 불러오는 중 오류가 발생했습니다.'), 'AppErrorBoundary must keep readable Korean error text');
 assert(appErrorBoundary.includes('페이지 설정만 초기화') && appErrorBoundary.includes('전체 초기화'), 'AppErrorBoundary recovery actions must keep readable Korean labels');
 assert(!/[�]|諛|獄|揆|\?ㅼ|\?섏|\?꾩|珥덇린/.test(appErrorBoundary), 'AppErrorBoundary must not contain mojibake recovery text');
