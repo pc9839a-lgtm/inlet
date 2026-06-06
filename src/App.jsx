@@ -1484,7 +1484,7 @@ function App() {
   const persistStyleNow = async () => {
       if (blockWrite('style')) return;
       const nextPage = normalizePageForSave({
-        ...page,
+        ...normalizeFreeEmailIntegrations(page),
         theme: stylePreviewTheme ? { ...page.theme, ...stylePreviewTheme } : page.theme,
         blocks: stylePreviewBlocks || page.blocks,
       });
