@@ -212,6 +212,7 @@ for (const token of [
   'Access key ID',
   'Secret access key',
   'INLET_LEAD_EMAIL_FROM',
+  "authEmailModeInput === 'api' || authEmailModeInput === 'ses'",
 ]) {
   assert(health.includes(token), `Pages health function missing ${token}`);
 }
@@ -264,7 +265,7 @@ for (const [name, source, tokens] of [
   ['files shared', filesShared, ['FILES_BUCKET', 'MAX_FILE_BYTES = 20 * 1024 * 1024', 'DEFAULT_PROJECT_MAX_BYTES = 100 * 1024 * 1024', 'DEFAULT_PROJECT_MAX_FILES = 20', "['pdf', 'ppt', 'pptx', 'xls', 'xlsx']", 'safeObjectKey', 'validateObjectKey', 'assertProjectFileQuota']],
   ['files upload', filesUpload, ['request.formData()', 'authorizeProject(request, env, project, { write: true', 'fileBucket(env)', 'assertAllowedFile(file)', 'assertProjectFileQuota(bucket, project', 'bucket.put', 'publicDownloadUrl']],
   ['files download', filesDownload, ['bucket.get(key)', 'Content-Disposition', "filename*=UTF-8''", 'Cache-Control', 'validateObjectKey']],
-  ['auth shared', authShared, ['getD1AccountByEmail', 'getD1AccountByPhone', 'upsertD1Account', 'createSessionToken', 'verifySessionToken', 'issueEmailVerificationToken', 'AUTH_EMAIL_DUPLICATE']],
+  ['auth shared', authShared, ['getD1AccountByEmail', 'getD1AccountByPhone', 'upsertD1Account', 'createSessionToken', 'verifySessionToken', 'issueEmailVerificationToken', 'AUTH_EMAIL_DUPLICATE', "mode === 'api' || mode === 'ses'"]],
   ['auth register', authRegister, ['registerAccount', 'createSessionToken', 'session', 'AUTH_METHODS']],
   ['auth login', authLogin, ['loginAccount', 'ok: true', 'AUTH_METHODS']],
   ['auth session', authSession, ['getSessionAccount', 'expiresInSeconds', 'createSessionToken']],

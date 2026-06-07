@@ -394,7 +394,7 @@ function base64UrlDecode(value = '') {
 
 function emailProvider(env = {}) {
   const mode = String(env.INLET_AUTH_EMAIL_MODE || 'mock').trim().toLowerCase();
-  if (mode === 'api') return String(env.INLET_EMAIL_PROVIDER || 'ses').trim().toLowerCase();
+  if (mode === 'api' || mode === 'ses') return String(env.INLET_EMAIL_PROVIDER || 'ses').trim().toLowerCase();
   return 'mock';
 }
 

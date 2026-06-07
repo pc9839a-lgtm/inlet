@@ -79,7 +79,7 @@ export async function onRequest({ request, env }) {
   });
   const auth = sessionSource(env.INLET_SESSION_AUTH_MODE || 'production');
   const authEmailModeInput = String(env.INLET_AUTH_EMAIL_MODE || 'mock').trim().toLowerCase();
-  const authEmailMode = authEmailModeInput === 'api' ? 'api' : 'mock';
+  const authEmailMode = authEmailModeInput === 'api' || authEmailModeInput === 'ses' ? 'api' : 'mock';
   const authEmailProvider = authEmailMode === 'api' ? String(env.INLET_EMAIL_PROVIDER || 'ses').trim().toLowerCase() : 'mock';
   const sesRegion = envFirst(env, ['AWS_SES_REGION', 'INLET_AWS_SES_REGION', 'AWS_REGION'], 'ap-northeast-2');
   const sesAccessKey = envFirst(env, ['AWS_SES_ACCESS_KEY_ID', 'INLET_AWS_SES_ACCESS_KEY_ID', 'AWS_ACCESS_KEY_ID', 'SES_ACCESS_KEY_ID', 'Access key ID']);
