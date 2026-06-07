@@ -64,6 +64,12 @@ const authEmailConfig = {
   mode: String(env.INLET_AUTH_EMAIL_MODE || 'mock').trim().toLowerCase() === 'smtp' ? 'smtp' : 'mock',
   exposeToken: env.INLET_AUTH_EMAIL_EXPOSE_TOKEN === '1' || !env.INLET_AUTH_EMAIL_MODE || String(env.INLET_AUTH_EMAIL_MODE).trim().toLowerCase() === 'mock',
 };
+const emailVerificationConfig = {
+  expiresMs: 30 * 60 * 1000,
+  cooldownMs: 60 * 1000,
+  dailyLimit: 20,
+  maxAttempts: 5,
+};
 const eventRetentionConfig = {
   maxRecords: Math.max(1000, Number(env.INLET_EVENTS_MAX_RECORDS || 20000)),
   dedupeMs: Math.max(0, Number(env.INLET_EVENTS_DEDUPE_MS || 15000)),
@@ -5062,6 +5068,32 @@ async function readEmailVerifications() {
   }
 }
 
+function emailVerificationCode() {
+  return String(randomBytes(4).readUInt32BE(0) % 1000000).padStart(6, '0');
+}
+
+async function assertLocalEmailVerificationSendAllowed(email = '', purpose = 'signup') {
+  const records = await readEmailVerifications();
+  const now = Date.now();
+  const cooldownAt = now - emailVerificationConfig.cooldownMs;
+  const dailyAt = now - 24 * 60 * 60 * 1000;
+  const matching = records.filter((record) => normalizeEmail(record.email || '') === email && String(record.purpose || 'signup') === purpose);
+  const recent = matching.find((record) => Date.parse(record.createdAt || '') >= cooldownAt);
+  if (recent) {
+    const error = new Error('Verification email was requested too recently.');
+    error.status = 429;
+    error.details = { code: 'EMAIL_VERIFICATION_COOLDOWN', retryAfterSeconds: Math.ceil(emailVerificationConfig.cooldownMs / 1000) };
+    throw error;
+  }
+  const dailyCount = matching.filter((record) => Date.parse(record.createdAt || '') >= dailyAt).length;
+  if (dailyCount >= emailVerificationConfig.dailyLimit) {
+    const error = new Error('Too many verification emails were requested today.');
+    error.status = 429;
+    error.details = { code: 'EMAIL_VERIFICATION_DAILY_LIMIT', retryAfterSeconds: 60 * 60 };
+    throw error;
+  }
+}
+
 function publicEmailVerification(record = {}) {
   const delivery = record.delivery && typeof record.delivery === 'object'
     ? record.delivery
@@ -5133,15 +5165,17 @@ async function issueEmailVerification(emailInput = '', purposeInput = 'signup') 
       throw error;
     }
   }
+  await assertLocalEmailVerificationSendAllowed(email, purpose);
   const now = new Date().toISOString();
   const record = {
     id: randomBytes(12).toString('base64url'),
     email,
     purpose,
-    token: randomBytes(18).toString('base64url'),
+    token: emailVerificationCode(),
     status: 'pending',
+    attempts: 0,
     createdAt: now,
-    expiresAt: new Date(Date.now() + 1000 * 60 * 15).toISOString(),
+    expiresAt: new Date(Date.now() + emailVerificationConfig.expiresMs).toISOString(),
   };
   record.delivery = await deliverEmailVerification(record);
   await appendJsonlRecord(emailVerificationsFile, record);
@@ -5165,29 +5199,44 @@ async function confirmEmailVerification(input = {}) {
   }
   return withFileLock(emailVerificationsFile, async () => {
     const records = await readEmailVerifications();
-    const index = records.findIndex((record) => normalizeEmail(record.email) === email && String(record.token || '') === token);
-    if (index < 0) {
-      const error = new Error('Email verification token is invalid.');
-      error.status = 403;
-      error.details = { code: 'EMAIL_VERIFICATION_INVALID' };
-      throw error;
+    const candidates = records
+      .map((record, index) => ({ record, index }))
+      .filter(({ record }) => normalizeEmail(record.email) === email && ['pending', 'confirmed'].includes(String(record.status || 'pending')))
+      .sort((left, right) => Date.parse(right.record.createdAt || '') - Date.parse(left.record.createdAt || ''));
+    let mutated = false;
+    let latestPending = null;
+    for (const { record, index } of candidates) {
+      const expiresAt = Date.parse(record.expiresAt || '');
+      if (expiresAt && expiresAt < Date.now()) {
+        records[index] = { ...record, status: 'expired', confirmedAt: '' };
+        mutated = true;
+        continue;
+      }
+      if (Number(record.attempts || 0) >= emailVerificationConfig.maxAttempts) {
+        records[index] = { ...record, status: 'blocked' };
+        mutated = true;
+        continue;
+      }
+      if (!latestPending && String(record.status || 'pending') === 'pending') latestPending = { record, index };
+      if (String(record.token || '') !== token) continue;
+      if (String(record.status || '') === 'confirmed') return publicEmailVerification({ ...record, token: '' });
+      const confirmed = { ...record, status: 'confirmed', confirmedAt: new Date().toISOString() };
+      records[index] = confirmed;
+      await writeJsonlRecords(emailVerificationsFile, records);
+      return publicEmailVerification({ ...confirmed, token: '' });
     }
-    const current = records[index];
-    if (current.expiresAt && Date.parse(current.expiresAt) < Date.now()) {
-      const nextExpired = { ...current, status: 'expired', confirmedAt: '' };
-      const nextRecords = records.slice();
-      nextRecords[index] = nextExpired;
-      await writeJsonlRecords(emailVerificationsFile, nextRecords);
-      const error = new Error('Email verification token has expired.');
-      error.status = 410;
-      error.details = { code: 'EMAIL_VERIFICATION_EXPIRED' };
-      throw error;
+    if (latestPending) {
+      records[latestPending.index] = {
+        ...latestPending.record,
+        attempts: Number(latestPending.record.attempts || 0) + 1,
+      };
+      mutated = true;
     }
-    const confirmed = { ...current, status: 'confirmed', confirmedAt: new Date().toISOString() };
-    const nextRecords = records.slice();
-    nextRecords[index] = confirmed;
-    await writeJsonlRecords(emailVerificationsFile, nextRecords);
-    return publicEmailVerification({ ...confirmed, token: '' });
+    if (mutated) await writeJsonlRecords(emailVerificationsFile, records);
+    const error = new Error('Email verification token is invalid.');
+    error.status = 403;
+    error.details = { code: 'EMAIL_VERIFICATION_INVALID' };
+    throw error;
   });
 }
 

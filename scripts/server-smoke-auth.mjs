@@ -38,6 +38,7 @@ async function issueSignupVerification(baseUrl, email) {
   const data = await issue.json();
   const token = data.verification?.token || '';
   assert(token, `signup verification for ${email} should expose mock token for offline QA`);
+  assert(/^\d{6}$/.test(token), `signup verification for ${email} should expose a 6 digit code`);
   const confirm = await fetchWithTimeout(`${baseUrl}/api/auth/email-verification/confirm`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
@@ -176,6 +177,21 @@ await runSmoke('server-smoke-auth', async ({ baseUrl }) => {
   assert(verificationIssue.status === 200, `email verification issue expected 200, got ${verificationIssue.status}`);
   const verificationIssueData = await verificationIssue.json();
   assert(verificationIssueData.verification?.token, 'email verification issue should expose mock token for offline QA');
+  assert(/^\d{6}$/.test(verificationIssueData.verification.token), 'email verification token should be a 6 digit code');
+
+  const verificationCooldown = await fetchWithTimeout(`${baseUrl}/api/auth/email-verification`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ email: 'verified-signup@example.test', purpose: 'signup' }),
+  });
+  assert(verificationCooldown.status === 429, `email verification cooldown expected 429, got ${verificationCooldown.status}`);
+
+  const verificationWrongCode = await fetchWithTimeout(`${baseUrl}/api/auth/email-verification/confirm`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ email: 'verified-signup@example.test', token: '000000' }),
+  });
+  assert(verificationWrongCode.status === 403, `email verification wrong code expected 403, got ${verificationWrongCode.status}`);
 
   const verificationConfirm = await fetchWithTimeout(`${baseUrl}/api/auth/email-verification/confirm`, {
     method: 'POST',
@@ -206,6 +222,7 @@ await runSmoke('server-smoke-auth', async ({ baseUrl }) => {
   assert(passwordVerificationIssue.status === 200, `password reset verification issue expected 200, got ${passwordVerificationIssue.status}`);
   const passwordVerificationIssueData = await passwordVerificationIssue.json();
   assert(passwordVerificationIssueData.verification?.token, 'password reset verification should expose mock token for offline QA');
+  assert(/^\d{6}$/.test(passwordVerificationIssueData.verification.token), 'password reset verification token should be a 6 digit code');
 
   const passwordChanged = await fetchWithTimeout(`${baseUrl}/api/auth/password`, {
     method: 'POST',
@@ -628,10 +645,25 @@ await runSmoke('server-smoke-manager-invite-session', async ({ baseUrl, dataDir 
   assert(signupInviteRes.status === 200, `signup manager invite create expected 200, got ${signupInviteRes.status}`);
   const signupInviteData = await signupInviteRes.json();
 
-  const signupMissingPhone = await fetchWithTimeout(`${baseUrl}/api/projects/invites/${encodeURIComponent(signupInviteData.invite.token)}/accept`, {
+  const missingPhoneInviteRes = await fetchWithTimeout(`${baseUrl}/api/projects/invites`, {
+    method: 'POST',
+    headers: ownerHeaders,
+    body: JSON.stringify({
+      project,
+      manager: {
+        name: 'Signup Missing Phone',
+        email: 'signup-manager-missing-phone@example.test',
+        access: { stats: { read: true, write: false } },
+      },
+    }),
+  });
+  assert(missingPhoneInviteRes.status === 200, `signup missing phone invite create expected 200, got ${missingPhoneInviteRes.status}`);
+  const missingPhoneInviteData = await missingPhoneInviteRes.json();
+
+  const signupMissingPhone = await fetchWithTimeout(`${baseUrl}/api/projects/invites/${encodeURIComponent(missingPhoneInviteData.invite.token)}/accept`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ email: 'signup-manager@example.test', name: 'Signup Manager', authMode: 'signup', token: await issueSignupVerification(baseUrl, 'signup-manager@example.test'), password: 'secret1' }),
+    body: JSON.stringify({ email: 'signup-manager-missing-phone@example.test', name: 'Signup Missing Phone', authMode: 'signup', token: await issueSignupVerification(baseUrl, 'signup-manager-missing-phone@example.test'), password: 'secret1' }),
   });
   assert(signupMissingPhone.status === 400, `signup invite without phone expected 400, got ${signupMissingPhone.status}`);
 
