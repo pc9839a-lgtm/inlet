@@ -281,7 +281,7 @@ for (const [name, source, tokens] of [
   ['ownership shared', ownershipShared, ['upsertD1OwnershipTransferRequest', 'listD1OwnershipTransferRequests', 'completeD1OwnershipTransfer', 'OWNERSHIP_TRANSFER_BILLING_NOT_CLEAR']],
   ['ownership project', ownershipProject, ['createD1OwnershipTransferRequest', 'listD1OwnershipTransfers', "tab: 'settings'", 'masterOnly']],
   ['ownership admin', ownershipAdmin, ['updateD1OwnershipTransferRequest', 'params.id', 'masterOnly: true']],
-  ['admin summary', adminSummary, ['buildD1MasterSummary', 'assertPlatformMaster', 'accounts', 'projects', 'leads', 'events', 'payments', 'subscriptions', 'lead_blocked_submissions', 'fileUsageFromPageJson', 'listR2FileUsage', 'projectDownloadsPrefix', 'listProjectPaymentSummary', 'isOperationalAccount', 'isOperationalProject', 'isTestProjectSlug', 'knownProjectIds']],
+  ['admin summary', adminSummary, ['buildD1MasterSummary', 'assertPlatformMaster', 'accounts', 'projects', 'leads', 'events', 'payments', 'subscriptions', 'lead_blocked_submissions', 'fileUsageFromPageJson', 'listR2FileUsage', 'projectDownloadsPrefix', 'listProjectPaymentSummary', 'isOperationalAccount', 'isOperationalProject', 'isTestProjectSlug', 'knownProjectIds', 'listOpsSummary', 'domainInfoFromPageJson', 'managerMembers', 'pendingInvites', 'failedDeliveries', 'activeAiKeys', 'pendingOwnershipTransfers', 'auditLogs']],
   ['ai shared', aiShared, ['ai_keys', 'encryptSecret', 'resolveAiKey', 'listD1AiDrafts', 'upsertD1AiDraft', 'deleteD1AiDraft']],
   ['ai key', aiKey, ['readAiKeyStatus', 'saveAiKey', 'deleteAiKey']],
   ['ai test', aiTest, ['testOpenAiKey', 'classifyAiKeyTestError', 'keyTest']],
