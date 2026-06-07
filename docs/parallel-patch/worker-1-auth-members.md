@@ -150,7 +150,7 @@ Required SES configuration:
 - `AWS_SES_ACCESS_KEY_ID`
 - `AWS_SES_SECRET_ACCESS_KEY`
 - `INLET_AUTH_EMAIL_FROM`, for example `WAYZI <no-reply@your-domain>`
-- `INLET_AUTH_EMAIL_MODE=api`
+- `INLET_AUTH_EMAIL_MODE=api` or `ses`
 - `INLET_EMAIL_PROVIDER=ses`
 
 Required DNS/domain setup:

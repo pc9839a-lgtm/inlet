@@ -55,7 +55,7 @@ Do not mark a launch candidate live-ready until each enabled integration has eit
 | Integration | Required Inputs | Command | Manual Evidence |
 | --- | --- | --- | --- |
 | AI generation | `OPENAI_API_KEY`, `INLET_AI_QA_LIVE=1`, server URL if not localhost | `npm run ai:qa` | One short prompt returns editable hero, form/reservation, and CTA blocks. Failures must be recorded as `server-unreachable`, `missing-key`, `request-failed`, or `bad-model-response`. |
-| AWS SES auth email | `INLET_AUTH_EMAIL_MODE=api`, `INLET_EMAIL_PROVIDER=ses`, `AWS_SES_REGION`, `AWS_SES_ACCESS_KEY_ID`, `AWS_SES_SECRET_ACCESS_KEY`, `INLET_AUTH_EMAIL_FROM` | `npm run server:smoke:auth` then hosted auth email QA with SES credentials | Signup/password-reset verification email is delivered and the browser response does not expose the token. |
+| AWS SES auth email | `INLET_AUTH_EMAIL_MODE=api` or `ses`, `INLET_EMAIL_PROVIDER=ses`, `AWS_SES_REGION`, `AWS_SES_ACCESS_KEY_ID`, `AWS_SES_SECRET_ACCESS_KEY`, `INLET_AUTH_EMAIL_FROM` | `npm run server:smoke:auth` then hosted auth email QA with SES credentials | Signup/password-reset verification email is delivered and the browser response does not expose the token. |
 | External webhook | Real CRM/test endpoint URL and timeout policy | `npm run server:smoke:integrations` | CRM receives one payload; repeated retry keeps one idempotency key record. |
 | OAuth | Client ID, client secret, redirect URL, operator test account | `npm run integration:mock:qa` | Consent succeeds, one event is created, revoke state is captured before re-consent. |
 | Conversion tracking | Public URL plus GTM/Meta/Ads/Naver/Kakao account access | `npm run conversion:qa` | Platform diagnostics see public-page events and no editor/template-preview events. |

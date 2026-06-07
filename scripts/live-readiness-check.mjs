@@ -92,7 +92,7 @@ async function hostedApiHealthCheck() {
   }
 }
 
-const sesKeys = ['INLET_AUTH_EMAIL_MODE=api', 'INLET_EMAIL_PROVIDER=ses', 'AWS_SES_REGION', 'AWS_SES_ACCESS_KEY_ID', 'AWS_SES_SECRET_ACCESS_KEY', 'INLET_AUTH_EMAIL_FROM'];
+const sesKeys = ['INLET_AUTH_EMAIL_MODE=api or ses', 'INLET_EMAIL_PROVIDER=ses', 'AWS_SES_REGION', 'AWS_SES_ACCESS_KEY_ID', 'AWS_SES_SECRET_ACCESS_KEY', 'INLET_AUTH_EMAIL_FROM'];
 const oauthKeys = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'];
 const apiKeys = ['INLET_PUBLIC_API_URL'];
 const checks = [
@@ -116,9 +116,9 @@ const checks = [
   ),
   status(
     'AWS SES auth email delivery',
-    env.INLET_AUTH_EMAIL_MODE === 'api' && env.INLET_EMAIL_PROVIDER === 'ses' && hasAll(['AWS_SES_REGION', 'AWS_SES_ACCESS_KEY_ID', 'AWS_SES_SECRET_ACCESS_KEY', 'INLET_AUTH_EMAIL_FROM']),
+    ['api', 'ses'].includes(env.INLET_AUTH_EMAIL_MODE) && env.INLET_EMAIL_PROVIDER === 'ses' && hasAll(['AWS_SES_REGION', 'AWS_SES_ACCESS_KEY_ID', 'AWS_SES_SECRET_ACCESS_KEY', 'INLET_AUTH_EMAIL_FROM']),
     sesKeys.filter((key) => {
-      if (key === 'INLET_AUTH_EMAIL_MODE=api') return env.INLET_AUTH_EMAIL_MODE !== 'api';
+      if (key === 'INLET_AUTH_EMAIL_MODE=api or ses') return !['api', 'ses'].includes(env.INLET_AUTH_EMAIL_MODE);
       if (key === 'INLET_EMAIL_PROVIDER=ses') return env.INLET_EMAIL_PROVIDER !== 'ses';
       return !String(env[key] || '').trim();
     }),
