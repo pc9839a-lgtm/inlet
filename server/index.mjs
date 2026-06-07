@@ -60,8 +60,15 @@ const smtpConfig = {
   pass: String(env.INLET_SMTP_PASS || '').trim(),
   from: String(env.INLET_SMTP_FROM || env.INLET_SMTP_USER || '').trim(),
 };
+const authEmailMode = normalizeAuthEmailMode(env.INLET_AUTH_EMAIL_MODE || 'mock');
+const sesEmailConfig = {
+  provider: String(env.INLET_EMAIL_PROVIDER || 'ses').trim().toLowerCase(),
+  from: String(env.INLET_AUTH_EMAIL_FROM || env.INLET_LEAD_EMAIL_FROM || env.AWS_SES_FROM || '').trim(),
+  accessKeyId: String(env.AWS_SES_ACCESS_KEY_ID || env.INLET_AWS_SES_ACCESS_KEY_ID || env.AWS_ACCESS_KEY_ID || env.SES_ACCESS_KEY_ID || '').trim(),
+  secretAccessKey: String(env.AWS_SES_SECRET_ACCESS_KEY || env.INLET_AWS_SES_SECRET_ACCESS_KEY || env.AWS_SECRET_ACCESS_KEY || env.SES_SECRET_ACCESS_KEY || '').trim(),
+};
 const authEmailConfig = {
-  mode: String(env.INLET_AUTH_EMAIL_MODE || 'mock').trim().toLowerCase() === 'smtp' ? 'smtp' : 'mock',
+  mode: authEmailMode,
   exposeToken: env.INLET_AUTH_EMAIL_EXPOSE_TOKEN === '1' || !env.INLET_AUTH_EMAIL_MODE || String(env.INLET_AUTH_EMAIL_MODE).trim().toLowerCase() === 'mock',
 };
 const emailVerificationConfig = {
@@ -121,7 +128,7 @@ const server = createServer(async (req, res) => {
           signedSessionReady: !!sessionAuthConfig.secret,
           devHeadersAccepted: sessionAuthConfig.mode === 'dev-headers',
           emailDeliveryMode: authEmailConfig.mode,
-          emailDeliveryReady: authEmailConfig.mode === 'mock' || (!!smtpConfig.host && !!smtpConfig.from),
+          emailDeliveryReady: isLocalAuthEmailReady(),
         },
         storage: {
           ...storageRuntimeHealth(storageRuntime),
@@ -739,6 +746,25 @@ function parseAllowedOrigins(value = '') {
     .filter(Boolean);
 }
 
+function normalizeAuthEmailMode(value = '') {
+  const mode = String(value || '').trim().toLowerCase();
+  if (mode === 'api' || mode === 'ses') return 'api';
+  if (mode === 'smtp') return 'smtp';
+  return 'mock';
+}
+
+function isLocalAuthEmailReady() {
+  if (authEmailConfig.mode === 'mock') return true;
+  if (authEmailConfig.mode === 'smtp') return !!smtpConfig.host && !!smtpConfig.from;
+  if (authEmailConfig.mode === 'api') {
+    return sesEmailConfig.provider === 'ses'
+      && !!sesEmailConfig.from
+      && !!sesEmailConfig.accessKeyId
+      && !!sesEmailConfig.secretAccessKey;
+  }
+  return false;
+}
+
 function requestOrigin(req) {
   return String(req?.headers?.origin || '').trim().replace(/\/+$/, '');
 }
@@ -757,6 +783,16 @@ function requestIp(req) {
 function stableRequestHash(value = '') {
   const text = String(value || '').trim();
   return text ? createHash('sha256').update(text).digest('hex').slice(0, 32) : '';
+}
+
+function escapeHtml(value = '') {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }[char]));
 }
 
 function requestMetaFrom(req) {
@@ -5109,12 +5145,52 @@ function publicEmailVerification(record = {}) {
 }
 
 async function deliverEmailVerification(record = {}) {
-  if (authEmailConfig.mode !== 'smtp') {
+  if (authEmailConfig.mode === 'mock') {
     return {
       mode: 'mock',
       status: 'issued',
       message: 'Offline QA mode returns the verification token in the API response.',
     };
+  }
+
+  if (authEmailConfig.mode === 'api') {
+    if (sesEmailConfig.provider !== 'ses') {
+      const error = new Error('Email verification provider is not supported.');
+      error.status = 503;
+      error.details = { code: 'EMAIL_SEND_PROVIDER_UNSUPPORTED', provider: sesEmailConfig.provider };
+      throw error;
+    }
+    if (!isLocalAuthEmailReady()) {
+      const error = new Error('Email verification delivery is not configured.');
+      error.status = 503;
+      error.details = { code: 'EMAIL_SEND_NOT_CONFIGURED', provider: 'ses' };
+      throw error;
+    }
+    const purpose = authEmailPurposeLabel(record.purpose);
+    try {
+      const result = await sendSesEmail({
+        to: record.email,
+        from: sesEmailConfig.from,
+        subject: `[페이지로] ${purpose} 이메일 인증 코드`,
+        text: authEmailVerificationText(record, purpose),
+        html: authEmailVerificationHtml(record, purpose),
+      }, env);
+      return {
+        mode: 'api',
+        provider: 'ses',
+        status: 'sent',
+        ...(result.messageId ? { messageId: result.messageId } : {}),
+      };
+    } catch (sendError) {
+      const error = new Error('Email verification delivery failed.');
+      error.status = 503;
+      error.details = {
+        code: sendError?.code || 'EMAIL_SEND_FAILED',
+        provider: 'ses',
+        ...(sendError?.httpStatus ? { httpStatus: sendError.httpStatus } : {}),
+      };
+      throw error;
+    }
   }
 
   if (!smtpConfig.host || !smtpConfig.from) {
@@ -5126,18 +5202,11 @@ async function deliverEmailVerification(record = {}) {
     };
   }
 
-  const purpose = String(record.purpose || 'signup') === 'password-reset' ? '비밀번호 변경' : '회원가입';
+  const purpose = authEmailPurposeLabel(record.purpose);
   const result = await sendEmailNotification({
     to: record.email,
     subject: `[페이지로] ${purpose} 이메일 인증 코드`,
-    text: [
-      '페이지로 이메일 인증 코드입니다.',
-      '',
-      `인증 코드: ${record.token}`,
-      `만료 시간: ${record.expiresAt || '-'}`,
-      '',
-      '본인이 요청하지 않았다면 이 메일을 무시해주세요.',
-    ].join('\n'),
+    text: authEmailVerificationText(record, purpose),
   });
 
   return {
@@ -5145,6 +5214,70 @@ async function deliverEmailVerification(record = {}) {
     status: result.ok ? 'sent' : 'failed',
     ...(result.message ? { message: result.message } : {}),
   };
+}
+
+function authEmailPurposeLabel(purpose = '') {
+  return String(purpose || 'signup') === 'password-reset' ? '비밀번호 변경' : '회원가입';
+}
+
+function authEmailVerificationText(record = {}, purpose = authEmailPurposeLabel(record.purpose)) {
+  return [
+    '페이지로 이메일 인증 코드입니다.',
+    '',
+    `용도: ${purpose}`,
+    `확인 코드: ${record.token}`,
+    `만료 시간: ${record.expiresAt || '-'}`,
+    '',
+    '본인이 요청하지 않았다면 고객센터에 문의해주세요.',
+    `고객센터: ${env.INLET_SUPPORT_EMAIL || 'support@pagero.kr'}`,
+    '',
+    '페이지로',
+    '대표 김도윤 · 사업자번호 538-42-01450',
+  ].join('\n');
+}
+
+function authEmailVerificationHtml(record = {}, purpose = authEmailPurposeLabel(record.purpose)) {
+  const code = String(record.token || '').replace(/[^\d]/g, '').slice(0, 6);
+  const expiresAt = escapeHtml(record.expiresAt || '-');
+  const supportEmail = escapeHtml(env.INLET_SUPPORT_EMAIL || 'support@pagero.kr');
+  return `<!doctype html>
+<html lang="ko">
+  <body style="margin:0;background:#f3f7fb;font-family:Arial,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;color:#101827;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f7fb;padding:32px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px;background:#ffffff;border:1px solid #dbe6f3;border-radius:24px;overflow:hidden;">
+            <tr>
+              <td style="padding:28px 28px 18px;">
+                <div style="font-size:22px;font-weight:900;letter-spacing:-.02em;">페이지로</div>
+                <p style="margin:18px 0 6px;color:#2563eb;font-size:13px;font-weight:900;">${escapeHtml(purpose)} 이메일 인증</p>
+                <h1 style="margin:0;color:#101827;font-size:26px;line-height:1.25;letter-spacing:-.04em;">확인 코드를 입력해주세요.</h1>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:8px 28px 24px;">
+                <div style="display:inline-block;min-width:240px;padding:22px 28px;border-radius:22px;background:#f8fbff;border:1px solid #dbe6f3;">
+                  <div style="font-size:13px;font-weight:900;color:#64748b;">확인 코드</div>
+                  <div style="margin-top:8px;font-size:46px;line-height:1;font-weight:900;letter-spacing:.12em;color:#101827;">${escapeHtml(code)}</div>
+                </div>
+                <p style="margin:18px 0 0;color:#64748b;font-size:14px;font-weight:700;">이 코드는 전송 후 30분이 지나면 만료됩니다.</p>
+                <p style="margin:8px 0 0;color:#94a3b8;font-size:12px;">만료 시간: ${expiresAt}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:20px 28px 28px;border-top:1px solid #edf2f7;color:#64748b;font-size:13px;line-height:1.7;">
+                본인이 요청하지 않았다면 고객센터에 문의해주세요.<br>
+                고객센터: <a href="mailto:${supportEmail}" style="color:#2563eb;text-decoration:none;font-weight:800;">${supportEmail}</a><br><br>
+                페이지로<br>
+                대표 김도윤 · 사업자번호 538-42-01450
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
 }
 
 async function issueEmailVerification(emailInput = '', purposeInput = 'signup') {

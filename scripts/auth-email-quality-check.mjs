@@ -45,6 +45,7 @@ await expectAuthEmailError({
 }, 'EMAIL_SEND_PROVIDER_UNSUPPORTED');
 
 const authSource = await readFile('functions/api/auth/_auth.js', 'utf8');
+const localServerSource = await readFile('server/index.mjs', 'utf8');
 for (const token of [
   '[페이지로] 비밀번호 변경 인증 코드',
   '[페이지로] 이메일 인증 코드',
@@ -75,10 +76,14 @@ for (const token of [
 }
 
 assert(!/[�]|占|몄|蹂대궡|硫붿씪|踰덊샇|뚯썝/.test(authSource), 'auth email source must not contain known mojibake tokens');
+assert(localServerSource.includes('normalizeAuthEmailMode') && localServerSource.includes("if (mode === 'api' || mode === 'ses') return 'api'"), 'local auth email mode must support api/ses delivery mode');
+assert(localServerSource.includes('sendSesEmail({') && localServerSource.includes("provider: 'ses'") && localServerSource.includes('authEmailVerificationHtml'), 'local auth email delivery must support SES HTML verification mail');
+assert(localServerSource.includes('emailDeliveryReady: isLocalAuthEmailReady()'), 'local health endpoint must report auth email SES readiness');
+assert(localServerSource.includes('EMAIL_SEND_NOT_CONFIGURED') && localServerSource.includes('EMAIL_SEND_PROVIDER_UNSUPPORTED'), 'local auth email delivery must expose stable failure codes');
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 18,
+  checks: 22,
   contracts: [
     'mock-token-exposed-only-offline',
     'ses-missing-config-generic-error',
