@@ -73,6 +73,45 @@ export class AppErrorBoundary extends React.Component {
       );
     }
     if (!this.state.error) return this.props.children;
+    const cleanMessage = String(this.state.error?.message || this.state.error || '알 수 없는 오류');
+
+    return (
+      <div className="error-screen error-screen-v2">
+        <div>
+          <h1>화면을 불러오는 중 오류가 발생했습니다.</h1>
+          <p>{cleanMessage}</p>
+          <div className="error-actions">
+            <button type="button" onClick={() => location.reload()}>다시 열기</button>
+            <button type="button" onClick={() => { localStorage.removeItem(STORAGE_KEY); location.reload(); }}>페이지 설정만 초기화</button>
+            <button
+              type="button"
+              className="danger"
+              onClick={() => {
+                localStorage.removeItem(STORAGE_KEY);
+                localStorage.removeItem(LEADS_KEY);
+                localStorage.removeItem(EVENTS_KEY);
+                localStorage.removeItem(START_MODE_KEY);
+                location.reload();
+              }}
+            >
+              전체 초기화
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+
+    if (this.state.recovering) {
+      return (
+        <div className="error-screen error-screen-v2">
+          <div>
+            <h1>최신 화면으로 이동합니다.</h1>
+            <p>배포 후 남은 캐시를 정리하고 있습니다.</p>
+          </div>
+        </div>
+      );
+    }
+    if (!this.state.error) return this.props.children;
     const message = String(this.state.error?.message || this.state.error || '알 수 없는 오류');
 
     return (
