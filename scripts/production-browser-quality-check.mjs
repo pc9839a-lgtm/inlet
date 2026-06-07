@@ -21,14 +21,14 @@ const cases = [
     name: 'public home desktop',
     url: `${baseUrl}/`,
     viewports: 'desktop',
-    expectedText: '페이지로,고객이 들어오는,무료로 시작하기,WAYZI',
+    expectedText: '페이지로,모바일 랜딩페이지 제작 도구,모바일 페이지를,바로 시작하기,WAYZI',
     forbiddenText: forbiddenErrorText,
   },
   {
-    name: 'public home mobile guard',
+    name: 'public home mobile',
     url: `${baseUrl}/`,
     viewports: 'mobile',
-    expectedText: '편집은 PC에서 이용해주세요,WAYZI',
+    expectedText: '페이지로,모바일 랜딩페이지 제작 도구,모바일 페이지를,바로 시작하기,WAYZI',
     forbiddenText: forbiddenErrorText,
   },
   {

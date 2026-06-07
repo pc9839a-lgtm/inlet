@@ -52,12 +52,13 @@ async function buildD1MasterSummary(db, env = {}) {
   const now = new Date();
   const today = now.toISOString().slice(0, 10);
   const month = today.slice(0, 7);
-  const [accounts, projects, leadSummary, eventSummary, blockedSummary] = await Promise.all([
+  const [accounts, projects, leadSummary, eventSummary, blockedSummary, opsSummary] = await Promise.all([
     listAccounts(db),
     listProjects(db, month, today),
     listLeadSummary(db, month, today),
     listEventSummary(db, month),
     listBlockedSummary(db, month, today),
+    listOpsSummary(db),
   ]);
 
   const fileUsage = await listFileUsage(db, env, projects.map((project) => project.id));
@@ -117,6 +118,7 @@ async function buildD1MasterSummary(db, env = {}) {
       paidAmount: enrichedProjects.reduce((sum, project) => sum + Number(project.paidAmount || 0), 0),
       activeSubscriptions: enrichedProjects.filter((project) => String(project.billingStatus || '').toLowerCase() === 'active').length,
       pastDueSubscriptions: enrichedProjects.filter((project) => String(project.billingStatus || '').toLowerCase() === 'past_due').length,
+      ...opsSummary,
     },
     accounts: accountStats.slice(0, 100),
     projects: enrichedProjects.slice(0, 200),
@@ -181,7 +183,14 @@ async function listProjects(db, month, today) {
       projects.created_at AS createdAt,
       projects.updated_at AS updatedAt,
       accounts.email AS ownerEmail,
-      COUNT(DISTINCT pages.id) AS pageCount
+      COUNT(DISTINCT pages.id) AS pageCount,
+      (
+        SELECT latest_pages.page_json
+        FROM pages AS latest_pages
+        WHERE latest_pages.project_id = projects.id
+        ORDER BY latest_pages.updated_at DESC, latest_pages.revision DESC, latest_pages.id DESC
+        LIMIT 1
+      ) AS pageJson
     FROM projects
     LEFT JOIN accounts ON accounts.id = projects.owner_account_id
     LEFT JOIN pages ON pages.project_id = projects.id
@@ -193,20 +202,63 @@ async function listProjects(db, month, today) {
   `).all();
   return (result.results || [])
     .map((row) => ({
-    id: row.id,
-    slug: row.slug || '',
-    title: row.title || row.slug || row.id,
-    ownerEmail: publicOwnerLabel(row.ownerEmail || ''),
-    plan: row.plan || 'free',
-    billingStatus: row.billingStatus || 'trial',
-    status: row.status || 'active',
-    createdAt: row.createdAt || '',
-    updatedAt: row.updatedAt || '',
-    pageCount: Number(row.pageCount || 0),
-    month,
-    today,
-  }))
+      id: row.id,
+      slug: row.slug || '',
+      title: row.title || row.slug || row.id,
+      ownerEmail: publicOwnerLabel(row.ownerEmail || ''),
+      plan: row.plan || 'free',
+      billingStatus: row.billingStatus || 'trial',
+      status: row.status || 'active',
+      createdAt: row.createdAt || '',
+      updatedAt: row.updatedAt || '',
+      pageCount: Number(row.pageCount || 0),
+      month,
+      today,
+      ...domainInfoFromPageJson(row.pageJson || ''),
+    }))
     .filter(isOperationalProject);
+}
+
+async function listOpsSummary(db) {
+  const empty = {
+    managerMembers: 0,
+    pendingInvites: 0,
+    failedDeliveries: 0,
+    retryableDeliveries: 0,
+    activeAiKeys: 0,
+    aiDrafts: 0,
+    pendingOwnershipTransfers: 0,
+    auditLogs: 0,
+  };
+  try {
+    const [
+      managerMembers,
+      pendingInvites,
+      failedDeliveries,
+      retryableDeliveries,
+      activeAiKeys,
+      aiDrafts,
+      pendingOwnershipTransfers,
+      auditLogs,
+    ] = await Promise.all([
+      countTable(db, `SELECT COUNT(*) AS count FROM project_members LEFT JOIN projects ON projects.id = project_members.project_id WHERE ${OPERATIONAL_PROJECT_WHERE} AND project_members.status IN ('active', 'pending')`),
+      countTable(db, `SELECT COUNT(*) AS count FROM invites LEFT JOIN projects ON projects.id = invites.project_id WHERE ${OPERATIONAL_PROJECT_WHERE} AND invites.status = 'pending'`),
+      countTable(db, `SELECT COUNT(*) AS count FROM delivery_logs LEFT JOIN projects ON projects.id = delivery_logs.project_id WHERE ${OPERATIONAL_PROJECT_WHERE} AND delivery_logs.status IN ('failed', 'timeout', 'dead-letter')`),
+      countTable(db, `SELECT COUNT(*) AS count FROM delivery_logs LEFT JOIN projects ON projects.id = delivery_logs.project_id WHERE ${OPERATIONAL_PROJECT_WHERE} AND delivery_logs.retryable = 1`),
+      countTable(db, `SELECT COUNT(*) AS count FROM ai_keys LEFT JOIN projects ON projects.id = ai_keys.project_id WHERE (ai_keys.project_id IS NULL OR ${OPERATIONAL_PROJECT_WHERE}) AND ai_keys.status = 'connected' AND ai_keys.deleted_at IS NULL`),
+      countTable(db, `SELECT COUNT(*) AS count FROM ai_drafts LEFT JOIN projects ON projects.id = ai_drafts.project_id WHERE ${OPERATIONAL_PROJECT_WHERE} AND ai_drafts.status <> 'deleted'`),
+      countTable(db, `SELECT COUNT(*) AS count FROM ownership_transfer_requests LEFT JOIN projects ON projects.id = ownership_transfer_requests.project_id WHERE ${OPERATIONAL_PROJECT_WHERE} AND ownership_transfer_requests.status IN ('requested', 'waiting_billing_clearance', 'approved')`),
+      countTable(db, `SELECT COUNT(*) AS count FROM audit_logs LEFT JOIN projects ON projects.id = audit_logs.project_id WHERE audit_logs.project_id IS NULL OR ${OPERATIONAL_PROJECT_WHERE}`),
+    ]);
+    return { managerMembers, pendingInvites, failedDeliveries, retryableDeliveries, activeAiKeys, aiDrafts, pendingOwnershipTransfers, auditLogs };
+  } catch {
+    return empty;
+  }
+}
+
+async function countTable(db, sql) {
+  const row = await db.prepare(sql).first();
+  return Number(row?.count || 0);
 }
 
 async function listLeadSummary(db, month, today) {
@@ -381,6 +433,21 @@ function fileUsageFromPageJson(pageJson = '') {
   } catch {
     return { fileCount: 0, fileBytes: 0, usesFileWidget: false };
   }
+}
+
+function domainInfoFromPageJson(pageJson = '') {
+  try {
+    return domainInfoFromPage(JSON.parse(pageJson || '{}'));
+  } catch {
+    return domainInfoFromPage({});
+  }
+}
+
+function domainInfoFromPage(page = {}) {
+  const customDomain = String(page.customDomain || page.url?.customDomain || page.domain?.customDomain || '').trim().toLowerCase();
+  const domainType = String(page.domainType || page.url?.domainType || (customDomain ? 'custom' : 'default')).trim().toLowerCase() || 'default';
+  const domainStatus = String(page.domainStatus || page.url?.domainStatus || (customDomain ? 'pending_dns' : 'ready')).trim().toLowerCase() || 'ready';
+  return { domainType, customDomain, domainStatus };
 }
 
 function accountRollup(accounts, projects) {

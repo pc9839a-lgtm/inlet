@@ -151,6 +151,14 @@ export default function MasterAdminPanel({ page, leads = [], events = [], update
       filePages: metricFromSnapshot(snapshot, fileRows.filter((row) => row.usesFileWidget || Number(row.fileCount || 0) > 0).length, 'filePages'),
       fileBytes: metricFromSnapshot(snapshot, fileBytes, 'fileBytes'),
       fileDownloads: metricFromSnapshot(snapshot, downloads, 'fileDownloads'),
+      managerMembers: metricFromSnapshot(snapshot, 0, 'managerMembers'),
+      pendingInvites: metricFromSnapshot(snapshot, 0, 'pendingInvites'),
+      failedDeliveries: metricFromSnapshot(snapshot, 0, 'failedDeliveries'),
+      retryableDeliveries: metricFromSnapshot(snapshot, 0, 'retryableDeliveries'),
+      activeAiKeys: metricFromSnapshot(snapshot, 0, 'activeAiKeys'),
+      aiDrafts: metricFromSnapshot(snapshot, 0, 'aiDrafts'),
+      pendingOwnershipTransfers: metricFromSnapshot(snapshot, 0, 'pendingOwnershipTransfers'),
+      auditLogs: metricFromSnapshot(snapshot, 0, 'auditLogs'),
     };
   }, [accounts, events, fileRows, leadSummaryRows, leads.length, projects, snapshot]);
 
@@ -266,6 +274,7 @@ export default function MasterAdminPanel({ page, leads = [], events = [], update
           transferBusyId={transferBusyId}
           loadTransferQueue={loadTransferQueue}
           updateTransferStatus={updateTransferStatus}
+          summary={summary}
           resetStartMode={() => {
             localStorage.removeItem(START_MODE_KEY);
             setStartMode('');
@@ -339,9 +348,10 @@ function ProjectsView({ projects, updatePage, currentProjectId }) {
   return (
     <section className="admin-master-card">
       <CardTitle title="페이지 관리" desc="페이지별 소유자, 플랜, 접수량, 파일 사용 여부와 최근 수정일을 봅니다." />
-      <SimpleTable columns={['페이지', 'URL', '소유 회원', '플랜', '상태', '접수', '파일', '최근 수정']} rows={projects.map((project) => [
+      <SimpleTable columns={['페이지', 'URL', '도메인', '소유 회원', '플랜', '상태', '접수', '파일', '최근 수정']} rows={projects.map((project) => [
         project.title || project.slug || project.id,
         `/${project.slug || '-'}`,
+        project.customDomain || (project.domainType === 'custom' ? 'DNS 대기' : 'pagero.kr'),
         project.ownerEmail || project.owner_email || project.owner_account_email || '-',
         isPaidProject(project) ? '유료' : '무료',
         compactStatus(project.status),
@@ -439,9 +449,17 @@ function RisksView({ risks }) {
   );
 }
 
-function OpsView({ transferQueue, transferLoading, transferBusyId, loadTransferQueue, updateTransferStatus, resetStartMode }) {
+function OpsView({ transferQueue, transferLoading, transferBusyId, loadTransferQueue, updateTransferStatus, summary, resetStartMode }) {
   return (
     <div className="admin-master-grid">
+      <Metric label="매니저" value={summary.managerMembers || 0} />
+      <Metric label="대기 초대" value={summary.pendingInvites || 0} tone={summary.pendingInvites ? 'warn' : ''} />
+      <Metric label="전송 실패" value={summary.failedDeliveries || 0} tone={summary.failedDeliveries ? 'warn' : ''} />
+      <Metric label="AI 키" value={summary.activeAiKeys || 0} />
+      <Metric label="AI 초안" value={summary.aiDrafts || 0} />
+      <Metric label="소유권 이전" value={summary.pendingOwnershipTransfers || 0} tone={summary.pendingOwnershipTransfers ? 'warn' : ''} />
+      <Metric label="재시도 큐" value={summary.retryableDeliveries || 0} tone={summary.retryableDeliveries ? 'warn' : ''} />
+      <Metric label="감사 로그" value={summary.auditLogs || 0} />
       <section className="admin-master-card span-2">
         <CardTitle title="운영 도구" desc="전체 운영자가 직접 실행하는 최소 조치만 둡니다." />
         <div className="admin-tool-list">

@@ -6390,6 +6390,7 @@ async function buildMasterAdminSummary() {
       plan: primaryPage.plan || access.plan || 'free',
       billingStatus: primaryPage.billingStatus || access.billingStatus || 'trial',
       status: primaryPage.status || access.status || 'active',
+      ...domainInfoFromPage(primaryPage),
       pageCount: Math.max(1, pages.length),
       totalLeads: leads.length,
       todayLeads: leads.filter((lead) => dateKey(lead.createdAt || lead.savedAt) === today).length,
@@ -6420,6 +6421,7 @@ async function buildMasterAdminSummary() {
       plan: pageItem.plan || 'free',
       billingStatus: pageItem.billingStatus || 'trial',
       status: pageItem.status || 'active',
+      ...domainInfoFromPage(pageItem),
       pageCount: 1,
       totalLeads: 0,
       todayLeads: 0,
@@ -6461,6 +6463,14 @@ async function buildMasterAdminSummary() {
       filePages: files.length,
       fileBytes: files.reduce((sum, project) => sum + Number(project.fileBytes || 0), 0),
       fileDownloads: files.reduce((sum, project) => sum + Number(project.downloadCount || 0), 0),
+      managerMembers: accounts.reduce((sum, account) => sum + Number(account.managerCount || 0), 0),
+      pendingInvites: transferQueueCount(operationalProjects, 'pendingInvites'),
+      failedDeliveries: transferQueueCount(operationalProjects, 'failedDeliveries'),
+      retryableDeliveries: transferQueueCount(operationalProjects, 'retryableDeliveries'),
+      activeAiKeys: 0,
+      aiDrafts: 0,
+      pendingOwnershipTransfers: 0,
+      auditLogs: 0,
     },
     accounts,
     projects: operationalProjects.sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''))).slice(0, 200),
@@ -6586,6 +6596,17 @@ function fileUsageFromPage(page = {}) {
     }
   }
   return { fileCount, fileBytes, usesFileWidget };
+}
+
+function domainInfoFromPage(page = {}) {
+  const customDomain = String(page.customDomain || page.url?.customDomain || page.domain?.customDomain || '').trim().toLowerCase();
+  const domainType = String(page.domainType || page.url?.domainType || (customDomain ? 'custom' : 'default')).trim().toLowerCase() || 'default';
+  const domainStatus = String(page.domainStatus || page.url?.domainStatus || (customDomain ? 'pending_dns' : 'ready')).trim().toLowerCase() || 'ready';
+  return { domainType, customDomain, domainStatus };
+}
+
+function transferQueueCount(rows = [], key = '') {
+  return rows.reduce((sum, row) => sum + Number(row?.[key] || 0), 0);
 }
 
 function mergeFileUsage(left, right) {
