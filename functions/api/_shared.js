@@ -327,7 +327,8 @@ async function claimD1ProjectShell(db, project = {}, identity = {}, access = {})
 
 export async function handleApiError(request, env, error, methods) {
   const status = Number(error?.status || 500);
-  const message = cleanUserFacingApiError(error?.message || error, status);
+  const rawMessage = [error?.code || error?.details?.code || '', error?.message || error].filter(Boolean).join(' ');
+  const message = cleanUserFacingApiError(rawMessage, status);
   return jsonResponse(request, env, status, {
     ok: false,
     error: message,
@@ -351,6 +352,7 @@ function cleanUserFacingApiError(message = '', status = 0) {
   if (/AUTH_ACCOUNT_NOT_FOUND|Account was not found/i.test(text)) return '계정을 찾을 수 없습니다.';
   if (/AUTH_ACCOUNT_SUSPENDED|Account is suspended/i.test(text)) return '정지된 계정입니다. 고객센터에 문의해주세요.';
   if (/AUTH_ACCOUNT_DELETED|Account is deleted/i.test(text)) return '삭제 대기 중인 계정입니다. 고객센터에 문의해주세요.';
+  if (/EMAIL_SEND_|EMAIL_DOMAIN_NOT_VERIFIED/i.test(text)) return '메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.';
   if (/Page URL is already in use|PAGE_SLUG_CONFLICT|UNIQUE constraint failed: pages\.project_id, pages\.slug/i.test(text)) return '이미 사용 중인 페이지 주소입니다. 다른 주소를 입력해주세요.';
   if (/UNIQUE constraint failed: pages\.id/i.test(text)) return '페이지 저장 중 주소 충돌이 발생했습니다. 새로고침 후 다시 저장해주세요.';
   if (/Project write access denied/i.test(text)) return '현재 계정에 이 페이지 저장 권한이 없습니다. 마스터 계정 또는 편집 권한을 확인해주세요.';

@@ -411,6 +411,29 @@ function envFirst(env = {}, keys = [], fallback = '') {
   return fallback;
 }
 
+function normalizeSesFromAddress(value = '') {
+  const from = String(value || '').trim();
+  if (!from) return '';
+  const match = from.match(/^(.+?)<([^<>]+)>$/);
+  if (!match) {
+    const email = normalizeEmail(from);
+    return isValidEmail(email) ? email : '';
+  }
+  const displayName = match[1].trim().replace(/^["']|["']$/g, '');
+  const email = normalizeEmail(match[2]);
+  if (!isValidEmail(email)) return '';
+  if (!displayName) return email;
+  if (/^[\x20-\x7E]+$/.test(displayName)) return `${displayName} <${email}>`;
+  return `${mimeBase64Word(displayName)} <${email}>`;
+}
+
+function mimeBase64Word(value = '') {
+  const bytes = new TextEncoder().encode(String(value || ''));
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return `=?UTF-8?B?${btoa(binary)}?=`;
+}
+
 async function deliverAuthEmail(message = {}, env = {}) {
   const provider = emailProvider(env);
   const nextMessage = {
@@ -436,19 +459,19 @@ async function sendSesAuthEmail(message = {}, env = {}) {
   const region = envFirst(env, ['AWS_SES_REGION', 'INLET_AWS_SES_REGION', 'AWS_REGION'], 'ap-northeast-2');
   const accessKeyId = envFirst(env, ['AWS_SES_ACCESS_KEY_ID', 'INLET_AWS_SES_ACCESS_KEY_ID', 'AWS_ACCESS_KEY_ID', 'SES_ACCESS_KEY_ID', 'Access key ID']);
   const secretAccessKey = envFirst(env, ['AWS_SES_SECRET_ACCESS_KEY', 'INLET_AWS_SES_SECRET_ACCESS_KEY', 'AWS_SECRET_ACCESS_KEY', 'SES_SECRET_ACCESS_KEY', 'Secret access key']);
-  const from = normalizeSesFromAddress(envFirst(env, ['INLET_AUTH_EMAIL_FROM', 'INLET_LEAD_EMAIL_FROM', 'AWS_SES_FROM'], '페이지로 <support@pagero.kr>'));
-  if (!region || !accessKeyId || !secretAccessKey || !from) {
+  const sender = normalizeSesFromAddress(envFirst(env, ['INLET_AUTH_EMAIL_FROM', 'INLET_LEAD_EMAIL_FROM', 'AWS_SES_FROM'], '페이지로 <support@pagero.kr>'));
+  if (!region || !accessKeyId || !secretAccessKey || !sender) {
     throw authError('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 503, {
       code: 'EMAIL_SEND_NOT_CONFIGURED',
       provider: 'ses',
     });
   }
 
-  const subject = authEmailSubject(message.purpose);
-  const text = authEmailText(message);
-  const html = authEmailHtml(message);
+  const subject = cleanAuthEmailSubject(message.purpose);
+  const text = cleanAuthEmailText(message);
+  const html = cleanAuthEmailHtml(message);
   const body = JSON.stringify({
-    FromEmailAddress: from,
+    FromEmailAddress: sender,
     Destination: { ToAddresses: [message.email] },
     Content: {
       Simple: {
@@ -545,43 +568,26 @@ async function sendSesAuthEmail(message = {}, env = {}) {
   };
 }
 
-function authEmailSubject(purpose = 'signup') {
+function cleanAuthEmailSubject(purpose = 'signup') {
   return String(purpose || '') === 'password-reset'
     ? '[페이지로] 비밀번호 변경 인증 코드'
     : '[페이지로] 이메일 인증 코드';
 }
 
-function normalizeSesFromAddress(value = '') {
-  const from = String(value || '').trim();
-  const match = from.match(/^(.+?)<([^<>]+)>$/);
-  if (!match) return from;
-  const displayName = match[1].trim().replace(/^["']|["']$/g, '');
-  const email = match[2].trim();
-  if (!displayName || /^[\x20-\x7E]+$/.test(displayName)) return `${displayName} <${email}>`;
-  return `${mimeBase64Word(displayName)} <${email}>`;
-}
-
-function mimeBase64Word(value = '') {
-  const bytes = new TextEncoder().encode(String(value || ''));
-  let binary = '';
-  for (const byte of bytes) binary += String.fromCharCode(byte);
-  return `=?UTF-8?B?${btoa(binary)}?=`;
-}
-
-function authEmailText(message = {}) {
+function cleanAuthEmailText(message = {}) {
   const supportEmail = String(message.supportEmail || 'support@pagero.kr').trim();
-  const purposeText = String(message.purpose || '') === 'password-reset' ? '비밀번호 변경' : '회원가입';
+  const purposeText = String(message.purpose || '') === 'password-reset' ? '비밀번호 변경' : '이메일 인증';
   return [
-    `페이지로 ${purposeText} 인증입니다.`,
+    `페이지로 ${purposeText} 코드입니다.`,
     '',
-    '아래 확인 코드를 화면에 입력해주세요.',
+    '아래 6자리 코드를 인증 화면에 입력해주세요.',
     '',
-    message.token,
+    String(message.token || ''),
     '',
     '이 코드는 전송 후 30분이 지나면 만료됩니다.',
     `만료 시간: ${message.expiresAt || '-'}`,
     '',
-    `본인이 요청하지 않았다면 고객센터(${supportEmail})에 문의해주세요.`,
+    `본인이 요청하지 않았다면 고객센터(${supportEmail})로 문의해주세요.`,
     '',
     '페이지로',
     '대표 김도윤 · 사업자번호 538-42-01450',
@@ -589,17 +595,17 @@ function authEmailText(message = {}) {
   ].join('\n');
 }
 
-function authEmailHtml(message = {}) {
+function cleanAuthEmailHtml(message = {}) {
   const supportEmail = escapeHtml(String(message.supportEmail || 'support@pagero.kr').trim());
-  const purposeText = String(message.purpose || '') === 'password-reset' ? '비밀번호 변경' : '회원가입';
+  const purposeText = String(message.purpose || '') === 'password-reset' ? '비밀번호 변경' : '이메일 인증';
   const token = escapeHtml(message.token || '');
   return `<!doctype html>
 <html lang="ko">
 <body style="margin:0;background:#f3f6fb;padding:32px 16px;font-family:Arial,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:#101828;">
   <div style="max-width:520px;margin:0 auto;background:#ffffff;border:1px solid #dbe4f0;border-radius:24px;box-shadow:0 18px 50px rgba(15,23,42,.10);overflow:hidden;">
     <div style="padding:30px 30px 18px;text-align:center;">
-      <div style="display:inline-block;margin-bottom:14px;padding:7px 12px;border-radius:999px;background:#eef4ff;color:#1d4ed8;font-size:13px;font-weight:800;">페이지로 이메일 인증</div>
-      <h1 style="margin:0;font-size:24px;line-height:1.3;font-weight:900;color:#0f172a;">${escapeHtml(purposeText)} 확인 코드</h1>
+      <div style="display:inline-block;margin-bottom:14px;padding:7px 12px;border-radius:999px;background:#eef4ff;color:#1d4ed8;font-size:13px;font-weight:800;">페이지로 인증 메일</div>
+      <h1 style="margin:0;font-size:24px;line-height:1.3;font-weight:900;color:#0f172a;">${escapeHtml(purposeText)} 인증 코드</h1>
       <p style="margin:10px 0 0;font-size:15px;line-height:1.6;color:#667085;">아래 6자리 코드를 인증 화면에 입력해주세요.</p>
     </div>
     <div style="margin:0 30px 22px;padding:24px 16px;border-radius:20px;background:#f8fafc;border:1px solid #e2e8f0;text-align:center;">
@@ -608,7 +614,7 @@ function authEmailHtml(message = {}) {
       <div style="margin-top:14px;font-size:13px;font-weight:800;color:#64748b;">30분 후 만료됩니다.</div>
     </div>
     <div style="padding:0 30px 28px;text-align:center;">
-      <p style="margin:0;font-size:13px;line-height:1.7;color:#64748b;">본인이 요청하지 않았다면 고객센터(<a href="mailto:${supportEmail}" style="color:#2563eb;text-decoration:none;font-weight:800;">${supportEmail}</a>)에 문의해주세요.<br>보안을 위해 이 코드를 다른 사람에게 알려주지 마세요.</p>
+      <p style="margin:0;font-size:13px;line-height:1.7;color:#64748b;">본인이 요청하지 않았다면 고객센터(<a href="mailto:${supportEmail}" style="color:#2563eb;text-decoration:none;font-weight:800;">${supportEmail}</a>)로 문의해주세요.<br>인증 코드는 계정 보안을 위해 다른 사람에게 공유하지 마세요.</p>
     </div>
     <div style="padding:18px 30px;background:#0f172a;color:#cbd5e1;text-align:center;font-size:12px;line-height:1.6;">
       <strong style="display:block;color:#ffffff;font-size:14px;letter-spacing:.4px;">페이지로</strong>
@@ -619,6 +625,7 @@ function authEmailHtml(message = {}) {
 </body>
 </html>`;
 }
+
 function escapeHtml(value = '') {
   return String(value || '')
     .replace(/&/g, '&amp;')

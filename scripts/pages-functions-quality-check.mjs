@@ -77,7 +77,8 @@ assert(
     && shared.includes('이미 사용 중인 페이지 주소입니다. 다른 주소를 입력해주세요.')
     && shared.includes('현재 계정에 이 페이지 저장 권한이 없습니다.')
     && shared.includes('이미 가입된 이메일입니다.')
-    && shared.includes('인증 코드가 올바르지 않습니다.'),
+    && shared.includes('인증 코드가 올바르지 않습니다.')
+    && shared.includes('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.'),
   'Functions shared API errors should route user-facing failures through readable Korean messages',
 );
 const hostedRoutesQa = await readFile('scripts/hosted-api-routes-quality-check.mjs', 'utf8');

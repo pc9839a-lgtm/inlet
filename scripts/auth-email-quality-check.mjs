@@ -75,7 +75,7 @@ for (const token of [
   assert(authSource.includes(token), `auth email source missing ${token}`);
 }
 
-assert(!/[�]|占|몄|蹂대궡|硫붿씪|踰덊샇|뚯썝/.test(authSource), 'auth email source must not contain known mojibake tokens');
+assert(!/[�]|占|몄|蹂대궡|硫붿씪|踰덊샇|뚯썝|\?꾩|\?섏|\?붿|\?대\?|\?\?\?\?/.test(authSource), 'auth email source must not contain known mojibake tokens');
 assert(localServerSource.includes('normalizeAuthEmailMode') && localServerSource.includes("if (mode === 'api' || mode === 'ses') return 'api'"), 'local auth email mode must support api/ses delivery mode');
 assert(localServerSource.includes('sendSesEmail({') && localServerSource.includes("provider: 'ses'") && localServerSource.includes('authEmailVerificationHtml'), 'local auth email delivery must support SES HTML verification mail');
 assert(localServerSource.includes('emailDeliveryReady: isLocalAuthEmailReady()'), 'local health endpoint must report auth email SES readiness');

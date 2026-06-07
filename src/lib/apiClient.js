@@ -60,6 +60,7 @@ function cleanUserFacingApiMessage(message = '', status = 0) {
   if (/AUTH_ACCOUNT_NOT_FOUND|Account was not found/i.test(text)) return '계정을 찾을 수 없습니다.';
   if (/AUTH_ACCOUNT_SUSPENDED|Account is suspended/i.test(text)) return '정지된 계정입니다. 고객센터에 문의해주세요.';
   if (/AUTH_ACCOUNT_DELETED|Account is deleted/i.test(text)) return '삭제 대기 중인 계정입니다. 고객센터에 문의해주세요.';
+  if (/EMAIL_SEND_|EMAIL_DOMAIN_NOT_VERIFIED/i.test(text)) return '메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.';
   if (/PAGE_SLUG_CONFLICT|Page URL is already in use/i.test(text)) return '이미 사용 중인 페이지 주소입니다. 다른 주소를 입력해주세요.';
   if (/Project owner identity is required|AUTH_SESSION_MISSING|Session is invalid|Session account was not found/i.test(text)) return '로그인 세션이 없습니다. 다시 로그인한 뒤 저장해주세요.';
   if (/Project identity does not match/i.test(text)) return '현재 로그인 세션이 다른 페이지와 연결되어 있습니다. 새로고침 후 다시 저장해주세요.';
@@ -113,7 +114,8 @@ async function readApiError(res) {
     const json = JSON.parse(raw);
     if (json?.code === 'PAGE_SLUG_CONFLICT') return { message: cleanUserFacingApiMessage('PAGE_SLUG_CONFLICT', res.status), details: json };
     const message = json?.message || json?.error?.message || json?.error || raw;
-    return { message: cleanUserFacingApiMessage(message, res.status), details: json };
+    const codedMessage = [json?.code || '', message].filter(Boolean).join(' ');
+    return { message: cleanUserFacingApiMessage(codedMessage, res.status), details: json };
   } catch {
     return { message: cleanUserFacingApiMessage(raw, res.status), details: null };
   }
