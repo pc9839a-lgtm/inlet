@@ -9,6 +9,7 @@ const OPERATIONAL_PROJECT_WHERE = `
   AND lower(COALESCE(projects.slug, '')) NOT LIKE 'route-qa-%'
   AND lower(COALESCE(projects.slug, '')) NOT LIKE 'live-%-qa-%'
   AND lower(COALESCE(projects.slug, '')) NOT LIKE 'live-public-stability-%'
+  AND lower(COALESCE(projects.slug, '')) NOT LIKE '%-smoke-%'
   AND lower(COALESCE(projects.slug, '')) NOT LIKE 'smoke-%'
   AND lower(COALESCE(projects.slug, '')) NOT LIKE 'test-%'
 `;
@@ -509,7 +510,7 @@ function isTestEmail(email = '') {
 
 function isTestProjectSlug(value = '') {
   const text = String(value || '').trim().toLowerCase();
-  return /^(hosted-route-qa-|route-qa-|live-[a-z0-9-]*qa-|live-public-stability-|smoke-|test-)/.test(text);
+  return /^(hosted-route-qa-|route-qa-|live-[a-z0-9-]*qa-|live-public-stability-|smoke-|test-)/.test(text) || text.includes('-smoke-');
 }
 
 function publicOwnerLabel(email = '') {

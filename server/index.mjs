@@ -6638,7 +6638,7 @@ function isTestEmail(email = '') {
 
 function isTestProjectSlug(value = '') {
   const text = String(value || '').trim().toLowerCase();
-  return /^(hosted-route-qa-|route-qa-|live-[a-z0-9-]*qa-|live-public-stability-|smoke-|test-)/.test(text);
+  return /^(hosted-route-qa-|route-qa-|live-[a-z0-9-]*qa-|live-public-stability-|smoke-|test-)/.test(text) || text.includes('-smoke-');
 }
 
 function isOperationalMasterProject(value = '') {
