@@ -153,6 +153,7 @@ const apiClientSource = await readFile('src/lib/apiClient.js', 'utf8');
 const settingsPanel = await readFile('src/panels/SettingsPanel.jsx', 'utf8');
 const settingsPanelCss = await readFile('src/panels/SettingsPanel.css', 'utf8');
 const runtimeConfigSource = await readFile('src/config/runtimeConfig.js', 'utf8');
+const previewFormBlocks = await readFile('src/preview/renderers/FormBlocks.jsx', 'utf8');
 const publicEmbedForm = await readFile('public/embed/form.js', 'utf8');
 const formEmbedSource = await readFile('src/lib/formEmbed.js', 'utf8');
 const localServer = await readFile('server/index.mjs', 'utf8');
@@ -201,6 +202,8 @@ assert(formEmbedSource.includes("brand: '페이지로'") && formEmbedSource.incl
 assert(publicEmbedForm.includes('fetchPublicFormConfig') && publicEmbedForm.includes('/api/pages/') && publicEmbedForm.includes('postJson(API_URL, payload)'), 'embedded forms must load public page form config and submit to the lead API');
 assert(publicEmbedForm.includes('pagero-powered') && publicEmbedForm.includes('HOME_URL') && publicEmbedForm.includes('\\uD398\\uC774\\uC9C0\\uB85C\\uB85C \\uC81C\\uC791'), 'free embedded forms must keep Pagero powered branding');
 assert(publicEmbedForm.includes('utm_source') && publicEmbedForm.includes('sourceUrl') && publicEmbedForm.includes('referrer'), 'embedded form submissions must keep traffic attribution fields');
+assert(publicEmbedForm.includes('var trafficInfo = traffic()') && publicEmbedForm.includes('utmCampaign: trafficInfo.utmCampaign') && publicEmbedForm.includes('sourceLabel: trafficInfo.sourceLabel'), 'embedded form submissions must store traffic attribution both on the lead and in values');
+assert(previewFormBlocks.includes('currentTrafficAttribution()') && previewFormBlocks.includes('sourceUrl: traffic.sourceUrl') && previewFormBlocks.includes('utmCampaign: traffic.utmCampaign') && previewFormBlocks.includes('sourceLabel: traffic.sourceLabel'), 'public landing form submissions must store source URL, UTM, referrer, and source label fields');
 assert(inboxPanel.includes('function isFreeEmailLocked') && inboxPanel.includes('locked-email-value') && inboxPanel.includes('aria-label="계정 이메일로 고정됨"') && inboxPanel.includes('무료 사용자는 계정 이메일로만 알림을 받습니다.'), 'free plan email alerts must render a locked account email instead of an editable recipient input');
 assert(/const openWorkspace = [\s\S]*?setOpenId\(''\);[\s\S]*?setAddOpen\(false\);[\s\S]*?if \(!canUseBuilder\)/.test(app), 'workspace entry must collapse any open editor block and add panel');
 assert(app.includes('class LazyEditorBoundary'), 'fixed block editors must isolate lazy chunk failures');

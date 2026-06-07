@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { BRAND_NAME } from '../../config/brand.js';
 import { checkDuplicateLead as checkDuplicateLeadPolicy, rememberDuplicateLead as rememberDuplicateLeadPolicy } from '../../lib/leadDuplicatePolicy.js';
+import { currentTrafficAttribution } from '../../lib/trafficAttribution.js';
 import { pickSafe, rich } from './previewUtils.jsx';
 
 function plainRichText(value) {
@@ -201,6 +202,17 @@ export function RenderForm({ block, addLead, track }) {
       return;
     }
 
+    const traffic = currentTrafficAttribution();
+    const leadValues = {
+      ...byLabel,
+      ...(traffic.sourceUrl ? { sourceUrl: traffic.sourceUrl } : {}),
+      ...(traffic.referrer ? { referrer: traffic.referrer } : {}),
+      ...(traffic.utmSource ? { utmSource: traffic.utmSource } : {}),
+      ...(traffic.utmMedium ? { utmMedium: traffic.utmMedium } : {}),
+      ...(traffic.utmCampaign ? { utmCampaign: traffic.utmCampaign } : {}),
+      ...(traffic.sourceLabel ? { sourceLabel: traffic.sourceLabel } : {}),
+    };
+
     const lead = {
       type: '상담신청',
       formId: block.id,
@@ -211,10 +223,26 @@ export function RenderForm({ block, addLead, track }) {
       email,
       address: String(formatAnswerValue(addressAnswer?.value || '')),
       message: String(formatAnswerValue(messageAnswer?.value || '')),
-      values: byLabel,
+      values: leadValues,
       answers,
       sourceBlockTitle: s.title || '상담 폼',
       brand: BRAND_NAME,
+      channel: traffic.channel,
+      utmSource: traffic.utmSource,
+      utmMedium: traffic.utmMedium,
+      utmCampaign: traffic.utmCampaign,
+      sourceUrl: traffic.sourceUrl,
+      referrer: traffic.referrer,
+      sourceLabel: traffic.sourceLabel,
+      source: {
+        channel: traffic.channel,
+        utmSource: traffic.utmSource,
+        utmMedium: traffic.utmMedium,
+        utmCampaign: traffic.utmCampaign,
+        sourceUrl: traffic.sourceUrl,
+        referrer: traffic.referrer,
+        sourceLabel: traffic.sourceLabel,
+      },
     };
 
     setSubmitting(true);
@@ -615,6 +643,7 @@ export function RenderReservation({ block, addLead, track }) {
       value: sanitizeQuestionValue(field, f.custom?.[field.id] || ''),
     }));
     const customValues = Object.fromEntries(customAnswers.map((answer) => [answer.label, answer.value]));
+    const traffic = currentTrafficAttribution();
 
     const lead = {
       type: '방문예약',
@@ -630,6 +659,12 @@ export function RenderReservation({ block, addLead, track }) {
         이름: f.name,
         연락처: phone,
         ...customValues,
+        ...(traffic.sourceUrl ? { sourceUrl: traffic.sourceUrl } : {}),
+        ...(traffic.referrer ? { referrer: traffic.referrer } : {}),
+        ...(traffic.utmSource ? { utmSource: traffic.utmSource } : {}),
+        ...(traffic.utmMedium ? { utmMedium: traffic.utmMedium } : {}),
+        ...(traffic.utmCampaign ? { utmCampaign: traffic.utmCampaign } : {}),
+        ...(traffic.sourceLabel ? { sourceLabel: traffic.sourceLabel } : {}),
       },
       answers: [
         { id: 'reserve-date', label: '예약일', type: 'date', required: true, value: f.date },
@@ -640,6 +675,22 @@ export function RenderReservation({ block, addLead, track }) {
       ],
       sourceBlockTitle: s.title || '방문예약',
       brand: BRAND_NAME,
+      channel: traffic.channel,
+      utmSource: traffic.utmSource,
+      utmMedium: traffic.utmMedium,
+      utmCampaign: traffic.utmCampaign,
+      sourceUrl: traffic.sourceUrl,
+      referrer: traffic.referrer,
+      sourceLabel: traffic.sourceLabel,
+      source: {
+        channel: traffic.channel,
+        utmSource: traffic.utmSource,
+        utmMedium: traffic.utmMedium,
+        utmCampaign: traffic.utmCampaign,
+        sourceUrl: traffic.sourceUrl,
+        referrer: traffic.referrer,
+        sourceLabel: traffic.sourceLabel,
+      },
     };
     setSubmitting(true);
     try {

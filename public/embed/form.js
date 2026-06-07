@@ -336,6 +336,7 @@
       var extracted = valuesFromForm(form, cfg.questions);
       var now = new Date().toISOString();
       var visitorId = clientId();
+      var trafficInfo = traffic();
       var lead = Object.assign({
         id: randomId('embed'),
         type: '\uC0C1\uB2F4',
@@ -351,11 +352,19 @@
         email: firstAnswer(extracted.answers, ['email'], /\uBA54\uC77C|email/i),
         address: firstAnswer(extracted.answers, ['address'], /\uC8FC\uC18C|address/i),
         message: firstAnswer(extracted.answers, ['long'], /\uBB38\uC758|\uB0B4\uC6A9|\uBA54\uC2DC\uC9C0|message/i),
-        values: Object.assign({}, extracted.values, { clientId: visitorId }),
+        values: Object.assign({}, extracted.values, {
+          clientId: visitorId,
+          sourceUrl: trafficInfo.sourceUrl || '',
+          referrer: trafficInfo.referrer || '',
+          utmSource: trafficInfo.utmSource || '',
+          utmMedium: trafficInfo.utmMedium || '',
+          utmCampaign: trafficInfo.utmCampaign || '',
+          sourceLabel: trafficInfo.sourceLabel || ''
+        }),
         answers: extracted.answers,
         createdAt: now,
         createdMonth: now.slice(0, 7)
-      }, traffic());
+      }, trafficInfo);
       var payload = {
         lead: lead,
         page: cfg.page || {},
