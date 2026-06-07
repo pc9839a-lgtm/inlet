@@ -327,13 +327,25 @@ async function claimD1ProjectShell(db, project = {}, identity = {}, access = {})
 
 export async function handleApiError(request, env, error, methods) {
   const status = Number(error?.status || 500);
-  const message = userFacingApiError(error?.message || error, status);
+  const message = cleanUserFacingApiError(error?.message || error, status);
   return jsonResponse(request, env, status, {
     ok: false,
     error: message,
     message,
     code: error?.code || error?.details?.code || '',
   }, methods);
+}
+
+function cleanUserFacingApiError(message = '', status = 0) {
+  const text = String(message || '').trim();
+  if (/Page URL is already in use|PAGE_SLUG_CONFLICT|UNIQUE constraint failed: pages\.project_id, pages\.slug/i.test(text)) return '이미 사용 중인 페이지 주소입니다. 다른 주소를 입력해주세요.';
+  if (/UNIQUE constraint failed: pages\.id/i.test(text)) return '페이지 저장 중 주소 충돌이 발생했습니다. 새로고침 후 다시 저장해주세요.';
+  if (/Project write access denied/i.test(text)) return '현재 계정에 이 페이지 저장 권한이 없습니다. 마스터 계정 또는 편집 권한을 확인해주세요.';
+  if (/Project access is required|Project access has not been granted|Project access denied/i.test(text)) return '현재 계정에 이 페이지 접근 권한이 없습니다. 다시 로그인하거나 페이지 소유 계정을 확인해주세요.';
+  if (/projectId is required/i.test(text)) return '프로젝트 정보가 누락되었습니다.';
+  if (/D1 binding is not configured/i.test(text)) return '서버 데이터베이스 연결이 준비되지 않았습니다.';
+  if (/Invalid JSON body/i.test(text)) return '요청 데이터 형식이 올바르지 않습니다.';
+  return text || `요청 처리 실패: ${status}`;
 }
 
 function userFacingApiError(message = '', status = 0) {

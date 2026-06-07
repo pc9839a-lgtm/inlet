@@ -72,6 +72,12 @@ assert(
   'Functions shared API errors should map D1 page unique constraint failures to operator-readable Korean messages',
 );
 assert(!/[�]|諛|獄|揆|濡쒓렇|沅뚰븳|\?꾩|\?섏|\?붿|\?대\?/.test(shared), 'Functions shared API errors must not contain mojibake text');
+assert(
+  shared.includes('cleanUserFacingApiError')
+    && shared.includes('이미 사용 중인 페이지 주소입니다. 다른 주소를 입력해주세요.')
+    && shared.includes('현재 계정에 이 페이지 저장 권한이 없습니다.'),
+  'Functions shared API errors should route user-facing failures through readable Korean messages',
+);
 const hostedRoutesQa = await readFile('scripts/hosted-api-routes-quality-check.mjs', 'utf8');
 
 const storedDeliveryPage = normalizeDeliveryPage(
