@@ -507,68 +507,53 @@ function PageroHeroWorkbench() {
 }
 
 function PageroHeroShowcase() {
-  const samples = [
-    {
-      tone: 'blue',
-      layout: 'consult',
-      eyebrow: '상담 랜딩',
-      title: '무료 상담을\n바로 신청하세요',
-      action: '상담 신청',
-      image: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=720&q=80',
-      items: ['혜택 안내', '문의 접수', '접수 확인'],
-    },
-    {
-      tone: 'cream',
-      layout: 'booking',
-      eyebrow: '방문 예약',
-      title: '원하는 시간에\n예약을 남겨요',
-      action: '예약하기',
-      image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=720&q=80',
-      items: ['월', '화', '수'],
-    },
-    {
-      tone: 'green',
-      layout: 'event',
-      eyebrow: '이벤트 접수',
-      title: '신청자를\n빠르게 모으세요',
-      action: '신청하기',
-      image: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=720&q=80',
-      items: ['D-3', '선착순', '쿠폰'],
-    },
-    {
-      tone: 'dark',
-      layout: 'profile',
-      eyebrow: '프로필 링크',
-      title: '필요한 링크를\n한 곳에 모으세요',
-      action: '바로가기',
-      image: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=720&q=80',
-      items: ['소개', '예약', '문의'],
-    },
-    {
-      tone: 'rose',
-      layout: 'invite',
-      eyebrow: '초대장',
-      title: '소식을 예쁘게\n공유하세요',
-      action: '참석 응답',
-      image: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=720&q=80',
-      items: ['날짜', '장소', '메시지'],
-    },
+  const blocks = [
+    { label: '이미지', value: '첫 화면', icon: '▧', slot: 'image' },
+    { label: '문의', value: '카카오·전화', icon: '◉', slot: 'contact' },
+    { label: '예약', value: '날짜 선택', icon: '▦', slot: 'booking' },
+    { label: '지도', value: '오시는 길', icon: '⌖', slot: 'map' },
+    { label: 'FAQ', value: '질문 답변', icon: '?', slot: 'faq' },
+    { label: '하단 버튼', value: '바로 연결', icon: '→', slot: 'cta' },
   ];
 
   return (
-    <div className="pagerol-hero-showcase" aria-label="페이지로 모바일 페이지 예시">
-      {samples.map((sample, index) => (
-        <article className={`pagerol-showcase-card card-${index + 1} tone-${sample.tone} layout-${sample.layout}`} key={sample.eyebrow}>
-          <div className="pagerol-showcase-visual" style={{ '--showcase-image': `url(${sample.image})` }}>
-            <span>{sample.eyebrow}</span>
-            <strong>{sample.title}</strong>
-            <button type="button" tabIndex={-1}>{sample.action}</button>
+    <div className="pagerol-hero-builder" aria-label="블록으로 완성되는 모바일 페이지">
+      <div className="pagerol-builder-orbit" aria-hidden="true">
+        {blocks.map((block) => (
+          <div className={`pagerol-builder-chip chip-${block.slot}`} key={block.slot}>
+            <i>{block.icon}</i>
+            <span>{block.label}</span>
+            <b>{block.value}</b>
           </div>
-          <div className="pagerol-showcase-list">
-            {sample.items.map((item) => <i key={item}>{item}</i>)}
-          </div>
-        </article>
       ))}
+      </div>
+
+      <div className="pagerol-builder-phone">
+        <div className="pagerol-builder-screen">
+          <section className="builder-hero-block">
+            <small>모바일 페이지</small>
+            <strong>방문 전 상담을<br />빠르게 받습니다</strong>
+            <button type="button" tabIndex={-1}>상담 신청</button>
+          </section>
+          <section className="builder-card-block">
+            <span>빠른 문의</span>
+            <div><i />카카오 문의</div>
+            <div><i />전화 연결</div>
+          </section>
+          <section className="builder-form-block">
+            <span>신청 정보</span>
+            <em>이름</em>
+            <em>연락처</em>
+            <em>희망 일정</em>
+          </section>
+        </div>
+      </div>
+
+      <div className="pagerol-builder-flow" aria-hidden="true">
+        {blocks.slice(0, 4).map((block) => (
+          <span key={block.slot}>{block.label}</span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -614,6 +599,7 @@ function PageroLandingHomeV2({ onLogin, onSignup }) {
           <div className="pagerol-hero-copy">
             <p>모바일 랜딩페이지 제작 도구</p>
             <h1>모바일 페이지를<br/>빠르게 만드세요</h1>
+            <span className="pagerol-hero-subcopy">필요한 블록을 넣고 바로 공유합니다.</span>
             <button type="button" className="pagerol-hero-start" onClick={onSignup}>바로 시작하기</button>
           </div>
           <div className="pagerol-hero-demo" aria-label="모바일 페이지 예시">

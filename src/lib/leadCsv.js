@@ -31,6 +31,7 @@ const BASE_DYNAMIC_VALUE_KEYS = new Set([
   '주소',
   '문의 내용',
   '문의내용',
+  '상담내용',
   '메시지',
 ]);
 

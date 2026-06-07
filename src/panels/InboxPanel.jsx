@@ -965,7 +965,7 @@ export default function InboxPanel({
           </label>
           <label>
             <span>월</span>
-            <input type="month" value={month} onChange={(event) => setMonth(event.target.value)} />
+            <input type="month" value={month} onChange={(event) => setMonth(event.target.value || currentMonthValue())} />
           </label>
           <label>
             <span>유형</span>

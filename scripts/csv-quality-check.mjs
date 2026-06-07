@@ -1,5 +1,5 @@
-import { downloadLeadsCsv, filterLeadsForCsv, leadsToCsv } from '../src/lib/leadCsv.js';
 import { readFile } from 'node:fs/promises';
+import { downloadLeadsCsv, filterLeadsForCsv, leadsToCsv } from '../src/lib/leadCsv.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -144,7 +144,7 @@ globalThis.document = {
   },
 };
 
-downloadLeadsCsv(sampleLeads, { slug: '테스트 페이지' }, { filters: { deliveryStatus: 'success', month: '2026-05' } });
+downloadLeadsCsv(sampleLeads, { slug: '테스트-페이지' }, { filters: { deliveryStatus: 'success', month: '2026-05' } });
 assert(capturedBlob?.parts?.[0]?.startsWith('\ufeff"'), 'download CSV should include UTF-8 BOM for Excel');
 assert(capturedBlob?.parts?.[0]?.includes('"lead-success"') && !capturedBlob.parts[0].includes('"lead-formula"'), 'download CSV should honor filters');
 assert(capturedBlob?.options?.type === 'text/csv;charset=utf-8', 'download blob should use CSV utf-8 content type');

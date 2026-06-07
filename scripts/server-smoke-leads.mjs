@@ -99,6 +99,23 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
     reservationKindLead.data.delivery?.logs?.some((log) => log.provider === 'ses' && log.status === 'success'),
     `reservation kind lead should send through reservation email path: ${JSON.stringify(reservationKindLead.data.delivery)}`,
   );
+  const unknownKindLead = await json({ baseUrl }, 'POST', '/api/leads', {
+    project: reservationOnlyProject,
+    page: { slug: reservationOnlyProject.slug },
+    lead: {
+      id: 'lead-email-unknown-kind',
+      type: '',
+      status: 'new',
+      name: 'Unknown Email Lead',
+      phone: '010-0000-0999',
+      createdAt: '2026-05-22T03:08:00.000Z',
+    },
+  });
+  assert(unknownKindLead.res.ok, 'unknown kind lead should save');
+  assert(
+    unknownKindLead.data.delivery?.logs?.some((log) => log.provider === 'ses' && log.status === 'success'),
+    `unknown kind lead should not silently skip enabled email alerts: ${JSON.stringify(unknownKindLead.data.delivery)}`,
+  );
 
   const fallbackEmailProject = {
     projectId: 'smoke-leads-email-fallback',
@@ -419,6 +436,7 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
   const csv = await fetchWithTimeout(`${baseUrl}/api/leads/export.csv?${query}&month=2026-05&ids=lead-b`, { headers: authHeaders() });
   const csvText = await csv.text();
   assert(csv.ok && csvText.includes('"\'=updated memo"') && !csvText.includes('alpha memo'), 'lead csv ids filter failed');
+  assert(csv.headers.get('content-disposition')?.includes('leads-2026-05.csv'), 'lead csv filename should use selected month');
   assert(csvText.includes('reservationDate') && csvText.includes('2026-05-22') && csvText.includes('10:30'), 'lead csv reservation columns failed');
 
   const sourceCsv = await fetchWithTimeout(`${baseUrl}/api/leads/export.csv?${query}&month=2026-05&ids=lead-source`, { headers: authHeaders() });

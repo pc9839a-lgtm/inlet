@@ -512,7 +512,17 @@ requireAll(statsPanel, [
 const eventRepository = await read('src/lib/eventRepository.js');
 const leadRepository = await read('src/lib/leadRepository.js');
 requireAll(eventRepository, ['withMeta', "source: 'server'", 'dateFrom', 'dateTo'], 'event repository');
-requireAll(leadRepository, ['fetchAllServerLeads', 'withMeta', "source: 'server'", 'dateFrom', 'dateTo', 'deliveryStatus'], 'lead repository');
+requireAll(leadRepository, ['fetchAllServerLeads', 'withMeta', "source: 'server'", 'dateFrom', 'dateTo', 'deliveryStatus', 'currentMonthValue', 'exportMonth', 'const date = exportMonth'], 'lead repository');
+
+const inboxPanel = await read('src/panels/InboxPanel.jsx');
+requireAll(inboxPanel, [
+  'const [month, setMonth] = useState(currentMonthValue())',
+  'monthDateRange(month)',
+  'setMonth(event.target.value || currentMonthValue())',
+  'loadMoreLeads',
+  'hasMoreLeads',
+  'exportLeadsCsv({ month })',
+], 'inbox month and pagination contract');
 
 const formBlocks = await read('src/preview/renderers/FormBlocks.jsx');
 requireAll(formBlocks, [

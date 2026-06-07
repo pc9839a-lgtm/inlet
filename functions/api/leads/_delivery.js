@@ -366,9 +366,15 @@ export function summarizeDelivery(logs = []) {
 }
 
 function shouldSendEmailForLead(email = {}, lead = {}) {
-  const type = String(lead.type || lead.kind || lead.category || '');
-  if (/\uC608\uC57D|\uBC29\uBB38|reservation|booking|reserve/i.test(type)) return email.reservation !== false;
-  return email.consult !== false;
+  const inputType = Object.prototype.hasOwnProperty.call(lead, 'rawType')
+    ? lead.rawType
+    : lead.type || lead.kind || lead.category || '';
+  const type = String(inputType || '').trim();
+  const consultEnabled = email.consult !== false;
+  const reservationEnabled = email.reservation !== false;
+  if (/\uC608\uC57D|\uBC29\uBB38|reservation|booking|reserve/i.test(type)) return reservationEnabled;
+  if (!type || /unknown|custom|lead|submit|form/i.test(type)) return consultEnabled || reservationEnabled;
+  return consultEnabled;
 }
 
 function leadEmailText(lead = {}, page = {}) {

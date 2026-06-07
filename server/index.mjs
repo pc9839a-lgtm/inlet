@@ -461,7 +461,7 @@ const server = createServer(async (req, res) => {
       if (storageRuntime.active === 'd1' && hasProject(project) && canUseD1LeadList(csvFilters)) {
         const d1Leads = await listD1LeadsForExport(project, csvFilters);
         const filtered = ids.length ? d1Leads.filter((lead) => ids.includes(String(lead.id || ''))) : d1Leads;
-        sendCsv(res, csvFileName(project.slug || 'my-page'), leadsToCsvExportClean(filtered));
+        sendCsv(res, csvFileName(project.slug || 'my-page', exportDateFilters.month), leadsToCsvExportClean(filtered));
         return;
       }
       const csvPlan = storageQueryPlan('leads', csvFilters);
@@ -474,7 +474,7 @@ const server = createServer(async (req, res) => {
         plan: csvPlan,
       });
       const filtered = ids.length ? csvResult.records.filter((lead) => ids.includes(String(lead.id || ''))) : csvResult.records;
-      sendCsv(res, csvFileName(project.slug || 'my-page'), leadsToCsvExportClean(filtered));
+      sendCsv(res, csvFileName(project.slug || 'my-page', exportDateFilters.month), leadsToCsvExportClean(filtered));
       return;
     }
 
@@ -2197,6 +2197,7 @@ function normalizeServerLead(lead = {}, body = {}) {
   const clientId = String(lead.clientId || body.clientId || lead.values?.clientId || lead.cookieId || lead.visitorId || '').trim();
   const submittedAt = lead.submittedAt || lead.createdAt || lead.savedAt || new Date().toISOString();
   const sourceUrl = lead.sourceUrl || source.sourceUrl || source.url || source.pageUrl || values.sourceUrl || '';
+  const rawLeadType = String(lead.type || lead.kind || lead.category || '').trim();
   const sourceAttribution = trafficAttributionFromUrl(sourceUrl);
   const utmSource = lead.utmSource || lead.utm_source || source.utmSource || source.utm_source || values.utmSource || values.utm_source || sourceAttribution.utmSource || '';
   const utmMedium = lead.utmMedium || lead.utm_medium || source.utmMedium || source.utm_medium || values.utmMedium || values.utm_medium || sourceAttribution.utmMedium || '';
@@ -2218,6 +2219,7 @@ function normalizeServerLead(lead = {}, body = {}) {
     utmMedium,
     utmCampaign,
     source,
+    rawType: rawLeadType,
     type: isReservationLeadPolicy(lead) ? '방문예약' : '상담신청',
     status: ['신규', '확인중', '연락완료', '예약완료', '보류', '종료'].includes(lead.status) ? lead.status : '신규',
     memo: lead.memo || '',
@@ -4182,9 +4184,15 @@ async function sendEmailNotification(job) {
 }
 
 function shouldSendEmailForLead(email = {}, lead = {}) {
-  const type = String(lead.type || lead.kind || lead.category || '').trim();
-  if (/예약|방문|reservation|booking|reserve/i.test(type)) return email.reservation !== false;
-  return email.consult !== false;
+  const inputType = Object.prototype.hasOwnProperty.call(lead, 'rawType')
+    ? lead.rawType
+    : lead.type || lead.kind || lead.category || '';
+  const type = String(inputType || '').trim();
+  const consultEnabled = email.consult !== false;
+  const reservationEnabled = email.reservation !== false;
+  if (/예약|방문|reservation|booking|reserve/i.test(type)) return reservationEnabled;
+  if (!type || /unknown|custom|lead|submit|form/i.test(type)) return consultEnabled || reservationEnabled;
+  return consultEnabled;
 }
 
 function buildLeadEmailText(lead = {}, page = {}) {
@@ -4399,9 +4407,9 @@ function formatCsvDate(value = '') {
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString('ko-KR');
 }
 
-function csvFileName(slug = 'my-page') {
+function csvFileName(slug = 'my-page', month = '') {
   const safeSlug = safeSlugForFile(slug || 'my-page');
-  const date = new Date().toISOString().slice(0, 10);
+  const date = /^\d{4}-\d{2}$/.test(String(month || '')) ? String(month) : new Date().toISOString().slice(0, 10);
   return `${safeSlug}-leads-${date}.csv`;
 }
 
@@ -6362,6 +6370,7 @@ async function buildMasterAdminSummary() {
   for (const entry of accessEntries) {
     const project = normalizeProject(entry.project || {});
     const access = entry.access || {};
+    if (!isOperationalMasterProject(access.slug || project.slug || project.projectId)) continue;
     const pages = await readProjectPages(project);
     const primaryPage = pages[0] || {};
     const leads = await readLeadList(project).catch(() => []);
@@ -6401,6 +6410,7 @@ async function buildMasterAdminSummary() {
 
   for (const pageItem of rootPages) {
     if (projects.some((project) => project.slug && project.slug === pageItem.slug)) continue;
+    if (!isOperationalMasterProject(pageItem.slug || pageItem.projectId || pageItem.title)) continue;
     const usage = fileUsageFromPage(pageItem);
     projects.push({
       id: pageItem.projectId || pageItem.slug || 'root-page',
@@ -6427,9 +6437,10 @@ async function buildMasterAdminSummary() {
     });
   }
 
-  const accounts = buildMasterAccounts(users, projects);
-  const files = projects.filter((project) => project.usesFileWidget || Number(project.fileCount || 0) > 0);
-  const paidProjects = projects.filter(isPaidMasterProject).length;
+  const operationalProjects = projects.filter((project) => isOperationalMasterProject(project.slug || project.id || project.title));
+  const accounts = buildMasterAccounts(users, operationalProjects);
+  const files = operationalProjects.filter((project) => project.usesFileWidget || Number(project.fileCount || 0) > 0);
+  const paidProjects = operationalProjects.filter(isPaidMasterProject).length;
   const paidAccounts = accounts.filter((account) => Number(account.paidProjectCount || 0) > 0 || isPaidMasterProject(account)).length;
 
   return {
@@ -6437,23 +6448,23 @@ async function buildMasterAdminSummary() {
       accounts: accounts.length,
       paidAccounts,
       freeAccounts: Math.max(0, accounts.length - paidAccounts),
-      projects: projects.length,
-      activeProjects: projects.filter((project) => String(project.status || '') !== 'archived').length,
+      projects: operationalProjects.length,
+      activeProjects: operationalProjects.filter((project) => String(project.status || '') !== 'archived').length,
       paidProjects,
-      freeProjects: Math.max(0, projects.length - paidProjects),
-      leads: projects.reduce((sum, project) => sum + Number(project.totalLeads || 0), 0),
-      todayLeads: projects.reduce((sum, project) => sum + Number(project.todayLeads || 0), 0),
-      monthLeads: projects.reduce((sum, project) => sum + Number(project.monthLeads || 0), 0),
-      blockedLeads: projects.reduce((sum, project) => sum + Number(project.blockedLeads || 0), 0),
-      pageViews: projects.reduce((sum, project) => sum + Number(project.pageViews || 0), 0),
-      ctaClicks: projects.reduce((sum, project) => sum + Number(project.ctaClicks || 0), 0),
+      freeProjects: Math.max(0, operationalProjects.length - paidProjects),
+      leads: operationalProjects.reduce((sum, project) => sum + Number(project.totalLeads || 0), 0),
+      todayLeads: operationalProjects.reduce((sum, project) => sum + Number(project.todayLeads || 0), 0),
+      monthLeads: operationalProjects.reduce((sum, project) => sum + Number(project.monthLeads || 0), 0),
+      blockedLeads: operationalProjects.reduce((sum, project) => sum + Number(project.blockedLeads || 0), 0),
+      pageViews: operationalProjects.reduce((sum, project) => sum + Number(project.pageViews || 0), 0),
+      ctaClicks: operationalProjects.reduce((sum, project) => sum + Number(project.ctaClicks || 0), 0),
       filePages: files.length,
       fileBytes: files.reduce((sum, project) => sum + Number(project.fileBytes || 0), 0),
       fileDownloads: files.reduce((sum, project) => sum + Number(project.downloadCount || 0), 0),
     },
     accounts,
-    projects: projects.sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''))).slice(0, 200),
-    leadSummary: projects
+    projects: operationalProjects.sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''))).slice(0, 200),
+    leadSummary: operationalProjects
       .map((project) => ({
         id: project.id,
         slug: project.slug,
@@ -6474,7 +6485,7 @@ function buildMasterAccounts(users = [], projects = []) {
   const byEmail = new Map();
   for (const user of users) {
     const email = normalizeEmail(user.email || '');
-    if (isPublicShellEmail(email)) continue;
+    if (isPublicShellEmail(email) || isTestEmail(email)) continue;
     if (!email) continue;
     byEmail.set(email, {
       id: safeId(user.ownerId || user.id, ''),
@@ -6493,7 +6504,7 @@ function buildMasterAccounts(users = [], projects = []) {
   }
   for (const project of projects) {
     const email = normalizeEmail(project.ownerEmail || '');
-    if (!email.includes('@') || isPublicShellEmail(email)) continue;
+    if (!email.includes('@') || isPublicShellEmail(email) || isTestEmail(email)) continue;
     if (!email) continue;
     if (!byEmail.has(email)) {
       byEmail.set(email, {
@@ -6597,6 +6608,21 @@ function isPaidMasterProject(project = {}) {
 
 function isPublicShellEmail(email = '') {
   return String(email || '').trim().toLowerCase().endsWith('@public.inlet.local');
+}
+
+function isTestEmail(email = '') {
+  const value = String(email || '').trim().toLowerCase();
+  return value.endsWith('@inlet.test') || value.startsWith('hosted-');
+}
+
+function isTestProjectSlug(value = '') {
+  const text = String(value || '').trim().toLowerCase();
+  return /^(hosted-route-qa-|route-qa-|live-[a-z0-9-]*qa-|live-public-stability-|smoke-|test-)/.test(text);
+}
+
+function isOperationalMasterProject(value = '') {
+  const text = String(value || '').trim();
+  return !!text && !isTestProjectSlug(text);
 }
 
 function publicOwnerLabel(email = '') {

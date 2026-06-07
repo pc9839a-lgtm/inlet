@@ -1,6 +1,7 @@
 import { isServerLeadMode } from '../config/runtimeConfig.js';
 import { ApiError, apiFetch, postJson, projectAuthHeaders } from './apiClient.js';
 import { downloadLeadsCsv } from './leadCsv.js';
+import { currentMonthValue } from './monthRange.js';
 import { projectContext } from './projectContext.js';
 
 export function contextParams(context = {}, extra = {}) {
@@ -190,14 +191,25 @@ export async function retryFailedServerLeads(page, authUser = null) {
 }
 
 export async function downloadServerLeadsCsv(page, authUser = null, fallbackLeads = [], options = {}) {
+  const exportMonth = String(options.month || options.filters?.month || currentMonthValue()).slice(0, 7);
   if (!isServerLeadMode()) {
-    downloadLeadsCsv(fallbackLeads, page);
+    downloadLeadsCsv(fallbackLeads, page, {
+      filters: {
+        ...(options.filters || {}),
+        month: exportMonth,
+        dateFrom: options.dateFrom || options.filters?.dateFrom || '',
+        dateTo: options.dateTo || options.filters?.dateTo || '',
+        kind: options.kind || options.filters?.kind || '',
+        status: options.status || options.filters?.status || '',
+        deliveryStatus: options.deliveryStatus || options.filters?.deliveryStatus || '',
+      },
+    });
     return;
   }
 
   const context = projectContext(page, authUser);
   const params = contextParams(context, {
-    month: options.month || '',
+    month: exportMonth,
     dateFrom: options.dateFrom || '',
     dateTo: options.dateTo || '',
     kind: options.kind && options.kind !== 'all' ? options.kind : '',
@@ -213,7 +225,7 @@ export async function downloadServerLeadsCsv(page, authUser = null, fallbackLead
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);
   const slug = String(page?.slug || context.slug || 'my-page').replace(/[^\w가-힣-]/g, '-') || 'my-page';
-  const date = options.month || new Date().toISOString().slice(0, 10);
+  const date = exportMonth || new Date().toISOString().slice(0, 10);
   const a = document.createElement('a');
   a.href = url;
   a.download = `${slug}-leads-${date}.csv`;

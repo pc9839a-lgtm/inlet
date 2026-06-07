@@ -101,6 +101,13 @@ assert(storedDeliveryPage.integrations.email.enabled === true, 'public lead payl
 assert(storedDeliveryPage.integrations.email.to === 'pc9839a@naver.com', 'stored email alert recipient should remain authoritative');
 assert(storedDeliveryPage.integrations.conversion.dataLayer === true, 'public conversion settings can still merge from payload');
 assert(buildLeadDeliveryJobs(storedDeliveryPage, { id: 'lead-public-submit', type: 'consult' }).some((job) => job.type === 'email'), 'stored email settings should create a public submit delivery job');
+assert(buildLeadDeliveryJobs({
+  ...storedDeliveryPage,
+  integrations: {
+    ...storedDeliveryPage.integrations,
+    email: { enabled: true, to: 'pc9839a@naver.com', consult: false, reservation: true },
+  },
+}, { id: 'lead-public-unknown-submit', type: '' }).some((job) => job.type === 'email'), 'unknown/custom public submit types should not silently skip enabled email alerts');
 const externalDeliveryJobs = buildLeadDeliveryJobs({
   title: 'External payload',
   slug: 'external-payload',
@@ -274,7 +281,7 @@ for (const [name, source, tokens] of [
   ['ownership shared', ownershipShared, ['upsertD1OwnershipTransferRequest', 'listD1OwnershipTransferRequests', 'completeD1OwnershipTransfer', 'OWNERSHIP_TRANSFER_BILLING_NOT_CLEAR']],
   ['ownership project', ownershipProject, ['createD1OwnershipTransferRequest', 'listD1OwnershipTransfers', "tab: 'settings'", 'masterOnly']],
   ['ownership admin', ownershipAdmin, ['updateD1OwnershipTransferRequest', 'params.id', 'masterOnly: true']],
-  ['admin summary', adminSummary, ['buildD1MasterSummary', 'assertPlatformMaster', 'accounts', 'projects', 'leads', 'events', 'payments', 'subscriptions', 'lead_blocked_submissions', 'fileUsageFromPageJson', 'listR2FileUsage', 'projectDownloadsPrefix', 'listProjectPaymentSummary']],
+  ['admin summary', adminSummary, ['buildD1MasterSummary', 'assertPlatformMaster', 'accounts', 'projects', 'leads', 'events', 'payments', 'subscriptions', 'lead_blocked_submissions', 'fileUsageFromPageJson', 'listR2FileUsage', 'projectDownloadsPrefix', 'listProjectPaymentSummary', 'isOperationalAccount', 'isOperationalProject', 'isTestProjectSlug', 'knownProjectIds']],
   ['ai shared', aiShared, ['ai_keys', 'encryptSecret', 'resolveAiKey', 'listD1AiDrafts', 'upsertD1AiDraft', 'deleteD1AiDraft']],
   ['ai key', aiKey, ['readAiKeyStatus', 'saveAiKey', 'deleteAiKey']],
   ['ai test', aiTest, ['testOpenAiKey', 'classifyAiKeyTestError', 'keyTest']],

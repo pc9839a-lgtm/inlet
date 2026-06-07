@@ -3,6 +3,15 @@ import { projectDownloadsPrefix } from '../files/_files.js';
 
 const ADMIN_METHODS = 'GET, OPTIONS';
 const DEFAULT_MASTER_EMAILS = ['admin@pagero.kr'];
+const OPERATIONAL_PROJECT_WHERE = `
+  COALESCE(projects.status, 'active') <> 'deleted'
+  AND lower(COALESCE(projects.slug, '')) NOT LIKE 'hosted-route-qa-%'
+  AND lower(COALESCE(projects.slug, '')) NOT LIKE 'route-qa-%'
+  AND lower(COALESCE(projects.slug, '')) NOT LIKE 'live-%-qa-%'
+  AND lower(COALESCE(projects.slug, '')) NOT LIKE 'live-public-stability-%'
+  AND lower(COALESCE(projects.slug, '')) NOT LIKE 'smoke-%'
+  AND lower(COALESCE(projects.slug, '')) NOT LIKE 'test-%'
+`;
 
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, ADMIN_METHODS);
@@ -43,13 +52,11 @@ async function buildD1MasterSummary(db, env = {}) {
   const now = new Date();
   const today = now.toISOString().slice(0, 10);
   const month = today.slice(0, 7);
-  const [accounts, projects, leadSummary, eventSummary, paymentSummary, subscriptionSummary, blockedSummary] = await Promise.all([
+  const [accounts, projects, leadSummary, eventSummary, blockedSummary] = await Promise.all([
     listAccounts(db),
     listProjects(db, month, today),
     listLeadSummary(db, month, today),
     listEventSummary(db, month),
-    listPaymentSummary(db),
-    listSubscriptionSummary(db),
     listBlockedSummary(db, month, today),
   ]);
 
@@ -106,10 +113,10 @@ async function buildD1MasterSummary(db, env = {}) {
       filePages: files.length,
       fileBytes: files.reduce((sum, project) => sum + Number(project.fileBytes || 0), 0),
       fileDownloads: files.reduce((sum, project) => sum + Number(project.downloadCount || 0), 0),
-      paidPayments: Number(paymentSummary.paidPayments || 0),
-      paidAmount: Number(paymentSummary.paidAmount || 0),
-      activeSubscriptions: Number(subscriptionSummary.activeSubscriptions || 0),
-      pastDueSubscriptions: Number(subscriptionSummary.pastDueSubscriptions || 0),
+      paidPayments: enrichedProjects.reduce((sum, project) => sum + Number(project.paidPayments || 0), 0),
+      paidAmount: enrichedProjects.reduce((sum, project) => sum + Number(project.paidAmount || 0), 0),
+      activeSubscriptions: enrichedProjects.filter((project) => String(project.billingStatus || '').toLowerCase() === 'active').length,
+      pastDueSubscriptions: enrichedProjects.filter((project) => String(project.billingStatus || '').toLowerCase() === 'past_due').length,
     },
     accounts: accountStats.slice(0, 100),
     projects: enrichedProjects.slice(0, 200),
@@ -136,17 +143,21 @@ async function listAccounts(db) {
     FROM accounts
     WHERE COALESCE(status, 'active') <> 'deleted'
       AND lower(email) NOT LIKE '%@public.inlet.local'
+      AND lower(email) NOT LIKE '%@inlet.test'
+      AND lower(email) NOT LIKE 'hosted-%'
     ORDER BY created_at DESC
     LIMIT 500
   `).all();
-  return (result.results || []).map((row) => ({
+  return (result.results || [])
+    .map((row) => ({
     id: row.id,
     email: row.email || '',
     name: row.name || '',
     status: row.status || 'active',
     createdAt: row.createdAt || '',
     updatedAt: row.updatedAt || '',
-  }));
+  }))
+    .filter(isOperationalAccount);
 }
 
 async function listProjects(db, month, today) {
@@ -175,12 +186,13 @@ async function listProjects(db, month, today) {
     LEFT JOIN accounts ON accounts.id = projects.owner_account_id
     LEFT JOIN pages ON pages.project_id = projects.id
     LEFT JOIN subscriptions ON subscriptions.project_id = projects.id
-    WHERE COALESCE(projects.status, 'active') <> 'deleted'
+    WHERE ${OPERATIONAL_PROJECT_WHERE}
     GROUP BY projects.id
     ORDER BY projects.updated_at DESC
     LIMIT 500
   `).all();
-  return (result.results || []).map((row) => ({
+  return (result.results || [])
+    .map((row) => ({
     id: row.id,
     slug: row.slug || '',
     title: row.title || row.slug || row.id,
@@ -193,7 +205,8 @@ async function listProjects(db, month, today) {
     pageCount: Number(row.pageCount || 0),
     month,
     today,
-  }));
+  }))
+    .filter(isOperationalProject);
 }
 
 async function listLeadSummary(db, month, today) {
@@ -206,6 +219,7 @@ async function listLeadSummary(db, month, today) {
       MAX(leads.created_at) AS lastLeadAt
     FROM projects
     LEFT JOIN leads ON leads.project_id = projects.id
+    WHERE ${OPERATIONAL_PROJECT_WHERE}
     GROUP BY projects.id
   `).bind(today, month).all();
   return (result.results || []).map(numberRow);
@@ -220,6 +234,7 @@ async function listEventSummary(db, month) {
       SUM(CASE WHEN events.event_type = 'file_download_click' AND events.created_month = ? THEN 1 ELSE 0 END) AS downloadCount
     FROM projects
     LEFT JOIN events ON events.project_id = projects.id
+    WHERE ${OPERATIONAL_PROJECT_WHERE}
     GROUP BY projects.id
   `).bind(month, month, month).all();
   return (result.results || []).map(numberRow);
@@ -235,6 +250,7 @@ async function listBlockedSummary(db, month, today) {
         SUM(CASE WHEN lead_blocked_submissions.created_month = ? THEN 1 ELSE 0 END) AS monthBlockedLeads
       FROM projects
       LEFT JOIN lead_blocked_submissions ON lead_blocked_submissions.project_id = projects.id
+      WHERE ${OPERATIONAL_PROJECT_WHERE}
       GROUP BY projects.id
     `).bind(today, month).all();
     return (result.results || []).map(numberRow);
@@ -267,6 +283,7 @@ async function listProjectPaymentSummary(db) {
         MAX(CASE WHEN payments.status = 'paid' THEN COALESCE(payments.paid_at, payments.created_at) ELSE NULL END) AS lastPaymentAt
       FROM projects
       LEFT JOIN payments ON payments.project_id = projects.id
+      WHERE ${OPERATIONAL_PROJECT_WHERE}
       GROUP BY projects.id
     `).all();
     return (result.results || []).map(numberRow);
@@ -290,15 +307,18 @@ async function listSubscriptionSummary(db) {
 }
 
 async function listFileUsage(db, env = {}, projectIds = []) {
+  const knownProjectIds = new Set(projectIds.filter(Boolean));
   const result = await db.prepare(`
     SELECT projects.id, pages.page_json AS pageJson
     FROM projects
     LEFT JOIN pages ON pages.project_id = projects.id
+    WHERE ${OPERATIONAL_PROJECT_WHERE}
     ORDER BY pages.updated_at DESC
     LIMIT 1000
   `).all();
   const byProject = new Map();
   for (const row of result.results || []) {
+    if (knownProjectIds.size && !knownProjectIds.has(row.id)) continue;
     const usage = fileUsageFromPageJson(row.pageJson || '');
     if (!usage.usesFileWidget && !usage.fileCount) continue;
     const current = byProject.get(row.id) || { id: row.id, fileCount: 0, fileBytes: 0, usesFileWidget: false };
@@ -375,7 +395,7 @@ function accountRollup(accounts, projects) {
   }]));
   for (const project of projects) {
     const ownerEmail = String(project.ownerEmail || '').toLowerCase();
-    if (!ownerEmail.includes('@') || isPublicShellEmail(ownerEmail)) continue;
+    if (!ownerEmail.includes('@') || isPublicShellEmail(ownerEmail) || isTestEmail(ownerEmail)) continue;
     const account = [...byOwner.values()].find((item) => String(item.email || '').toLowerCase() === ownerEmail);
     if (!account) continue;
     account.projectCount += 1;
@@ -404,6 +424,25 @@ function isPaidAccount(account = {}) {
 
 function isPublicShellEmail(email = '') {
   return String(email || '').trim().toLowerCase().endsWith('@public.inlet.local');
+}
+
+function isOperationalAccount(account = {}) {
+  const email = String(account.email || '').trim().toLowerCase();
+  return !!email && !isPublicShellEmail(email) && !isTestEmail(email);
+}
+
+function isOperationalProject(project = {}) {
+  return !isTestProjectSlug(project.slug || project.id || project.title);
+}
+
+function isTestEmail(email = '') {
+  const value = String(email || '').trim().toLowerCase();
+  return value.endsWith('@inlet.test') || value.startsWith('hosted-');
+}
+
+function isTestProjectSlug(value = '') {
+  const text = String(value || '').trim().toLowerCase();
+  return /^(hosted-route-qa-|route-qa-|live-[a-z0-9-]*qa-|live-public-stability-|smoke-|test-)/.test(text);
 }
 
 function publicOwnerLabel(email = '') {

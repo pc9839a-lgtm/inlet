@@ -51,6 +51,7 @@ const BASE_DYNAMIC_VALUE_KEYS = new Set([
   '\uC8FC\uC18C',
   '\uBB38\uC758 \uB0B4\uC6A9',
   '\uBB38\uC758\uB0B4\uC6A9',
+  '\uC0C1\uB2F4\uB0B4\uC6A9',
   '\uBA54\uC2DC\uC9C0',
 ]);
 

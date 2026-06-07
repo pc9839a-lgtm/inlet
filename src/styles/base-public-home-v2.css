@@ -3785,3 +3785,522 @@
     filter: none !important;
   }
 }
+
+/* Hero v8: block-to-mobile-page builder scene. */
+.pagerol-home-v2 {
+  --pagero-blue: #246bfe;
+  --pagero-ink: #111827;
+  --pagero-surface: rgba(255, 255, 255, .86);
+}
+
+.pagerol-home-v2 .pagerol-hero {
+  min-height: 100svh;
+  padding: clamp(118px, 14vh, 144px) 24px 54px;
+  gap: clamp(24px, 3.4vh, 34px);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 16%, rgba(36, 107, 254, .13), transparent 34%),
+    radial-gradient(circle at 12% 76%, rgba(90, 196, 255, .12), transparent 32%),
+    linear-gradient(180deg, #fff 0%, #f6f9ff 100%);
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-hero-copy {
+  max-width: min(920px, 100%);
+  margin: 0 auto;
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-hero-copy p {
+  height: 32px;
+  margin: 0 auto 14px;
+  padding: 0 15px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(36, 107, 254, .16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .78);
+  color: #246bfe;
+  font-size: 13px;
+  font-weight: 950;
+  box-shadow: 0 18px 50px rgba(36, 107, 254, .08);
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-hero-copy h1 {
+  max-width: 760px;
+  margin: 0 auto;
+  color: var(--pagero-ink);
+  font-size: clamp(48px, 5.9vw, 86px);
+  line-height: .94;
+  letter-spacing: -.082em;
+  font-weight: 950;
+}
+
+.pagerol-hero-subcopy {
+  margin-top: 16px;
+  color: #475467;
+  font-size: clamp(15px, 1.4vw, 19px);
+  line-height: 1.45;
+  font-weight: 850;
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-hero-copy .pagerol-hero-start {
+  min-width: 184px;
+  height: 56px;
+  margin-top: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #050816;
+  color: #fff;
+  box-shadow: 0 22px 54px rgba(5, 8, 22, .22);
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-hero-demo {
+  width: min(1160px, 100%);
+  height: clamp(360px, 43vh, 470px);
+  margin: 6px auto 0;
+}
+
+.pagerol-hero-builder {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+}
+
+.pagerol-builder-phone {
+  position: relative;
+  z-index: 4;
+  width: clamp(238px, 21vw, 322px);
+  height: clamp(342px, 41vh, 438px);
+  border: 10px solid #101828;
+  border-radius: 42px;
+  background: #101828;
+  box-shadow:
+    0 34px 88px rgba(16, 24, 40, .24),
+    0 0 0 12px rgba(255, 255, 255, .72);
+  overflow: hidden;
+  animation: pageroPhoneLand .92s cubic-bezier(.16, 1, .3, 1) .62s both;
+}
+
+.pagerol-builder-screen {
+  height: 100%;
+  border-radius: 30px;
+  background: linear-gradient(180deg, #eff6ff 0%, #fff 44%, #f8fafc 100%);
+  overflow: hidden;
+  display: grid;
+  align-content: start;
+}
+
+.builder-hero-block {
+  min-height: 44%;
+  padding: 22px 20px;
+  display: grid;
+  align-content: end;
+  gap: 10px;
+  color: #fff;
+  background:
+    linear-gradient(180deg, rgba(7, 13, 31, .1) 0%, rgba(7, 13, 31, .86) 100%),
+    url("https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=720&q=80") center/cover;
+}
+
+.builder-hero-block small {
+  width: fit-content;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .22);
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.builder-hero-block strong {
+  font-size: clamp(24px, 2.5vw, 34px);
+  line-height: 1.02;
+  letter-spacing: -.07em;
+  font-weight: 950;
+}
+
+.builder-hero-block button {
+  height: 42px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  color: #101828;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.builder-card-block,
+.builder-form-block {
+  margin: 12px 14px 0;
+  padding: 14px;
+  border: 1px solid rgba(16, 24, 40, .08);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, .92);
+  box-shadow: 0 14px 32px rgba(16, 24, 40, .08);
+}
+
+.builder-card-block span,
+.builder-form-block span {
+  display: block;
+  margin-bottom: 9px;
+  color: #101828;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.builder-card-block div {
+  height: 38px;
+  margin-top: 8px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border-radius: 16px;
+  background: #f8fafc;
+  color: #344054;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.builder-card-block i {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #246bfe, #67e8f9);
+}
+
+.builder-form-block {
+  display: grid;
+  gap: 8px;
+}
+
+.builder-form-block em {
+  height: 34px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  border-radius: 14px;
+  background: #f1f5f9;
+  color: #667085;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 850;
+}
+
+.pagerol-builder-orbit {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.pagerol-builder-chip {
+  position: absolute;
+  min-width: 154px;
+  min-height: 70px;
+  padding: 13px 16px;
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  align-items: center;
+  column-gap: 10px;
+  border: 1px solid rgba(16, 24, 40, .08);
+  border-radius: 24px;
+  background: var(--pagero-surface);
+  box-shadow: 0 22px 58px rgba(16, 24, 40, .13);
+  backdrop-filter: blur(14px);
+  box-sizing: border-box;
+}
+
+.pagerol-builder-chip i {
+  grid-row: span 2;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: #eef4ff;
+  color: #246bfe;
+  font-size: 17px;
+  font-style: normal;
+  font-weight: 950;
+}
+
+.pagerol-builder-chip span {
+  color: #101828;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.pagerol-builder-chip b {
+  color: #667085;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.chip-image {
+  left: 6%;
+  top: 14%;
+}
+
+.chip-contact {
+  right: 8%;
+  top: 11%;
+}
+
+.chip-booking {
+  left: 15%;
+  bottom: 22%;
+}
+
+.chip-map {
+  right: 14%;
+  bottom: 23%;
+}
+
+.chip-faq {
+  left: 30%;
+  bottom: 4%;
+}
+
+.chip-cta {
+  right: 29%;
+  bottom: 5%;
+}
+
+.pagerol-builder-flow {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid rgba(16, 24, 40, .08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .86);
+  box-shadow: 0 18px 52px rgba(16, 24, 40, .12);
+  transform: translateX(-50%);
+}
+
+.pagerol-builder-flow span {
+  min-width: 64px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #f2f4f7;
+  color: #344054;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.pagerol-builder-flow span:first-child {
+  background: #101828;
+  color: #fff;
+}
+
+.pagerol-home-v2 .pagerol-nav {
+  animation: pageroBuilderNav .7s cubic-bezier(.18, 1, .32, 1) .05s both;
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-hero-copy p {
+  animation: pageroBuilderBadge .66s cubic-bezier(.18, 1, .32, 1) .14s both;
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-hero-copy h1 {
+  animation: pageroBuilderTitle .78s cubic-bezier(.16, 1, .3, 1) .24s both;
+}
+
+.pagerol-hero-subcopy {
+  animation: pageroBuilderText .68s cubic-bezier(.18, 1, .32, 1) .38s both;
+}
+
+.pagerol-home-v2 .pagerol-hero .pagerol-hero-copy .pagerol-hero-start {
+  animation: pageroBuilderButton .7s cubic-bezier(.18, 1, .32, 1) .5s both;
+}
+
+.chip-image {
+  animation: pageroChipInLeft .86s cubic-bezier(.16, 1, .3, 1) .86s both, pageroChipFloat 6.4s ease-in-out 1.9s infinite;
+}
+
+.chip-contact {
+  animation: pageroChipInRight .86s cubic-bezier(.16, 1, .3, 1) .96s both, pageroChipFloat 6.8s ease-in-out 2s infinite;
+}
+
+.chip-booking {
+  animation: pageroChipInLeft .9s cubic-bezier(.16, 1, .3, 1) 1.06s both, pageroChipFloat 7.2s ease-in-out 2.1s infinite;
+}
+
+.chip-map {
+  animation: pageroChipInRight .9s cubic-bezier(.16, 1, .3, 1) 1.16s both, pageroChipFloat 7s ease-in-out 2.2s infinite;
+}
+
+.chip-faq,
+.chip-cta {
+  animation: pageroChipInUp .9s cubic-bezier(.16, 1, .3, 1) 1.26s both, pageroChipFloat 7.4s ease-in-out 2.35s infinite;
+}
+
+.pagerol-builder-flow {
+  animation: pageroBuilderFlowIn .76s cubic-bezier(.18, 1, .32, 1) 1.34s both;
+}
+
+@keyframes pageroBuilderNav {
+  from { opacity: 0; transform: translate3d(-50%, -24px, 0) scale(.97); filter: blur(10px); }
+  to { opacity: 1; transform: translate3d(-50%, 0, 0) scale(1); filter: blur(0); }
+}
+
+@keyframes pageroBuilderBadge {
+  from { opacity: 0; transform: translate3d(0, -14px, 0) scale(.96); filter: blur(10px); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0); }
+}
+
+@keyframes pageroBuilderTitle {
+  from { opacity: 0; transform: translate3d(0, 34px, 0) scale(.96); filter: blur(18px); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0); }
+}
+
+@keyframes pageroBuilderText {
+  from { opacity: 0; transform: translate3d(0, 18px, 0); filter: blur(8px); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0); }
+}
+
+@keyframes pageroBuilderButton {
+  from { opacity: 0; transform: translate3d(0, 24px, 0) scale(.9); filter: blur(10px); }
+  72% { opacity: 1; transform: translate3d(0, -3px, 0) scale(1.025); filter: blur(0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0); }
+}
+
+@keyframes pageroPhoneLand {
+  from { opacity: 0; transform: translate3d(0, 92px, 0) rotateX(10deg) scale(.82); filter: blur(20px); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) rotateX(0) scale(1); filter: blur(0); }
+}
+
+@keyframes pageroChipInLeft {
+  from { opacity: 0; transform: translate3d(-140px, 60px, 0) rotate(-8deg) scale(.78); filter: blur(16px); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) rotate(0) scale(1); filter: blur(0); }
+}
+
+@keyframes pageroChipInRight {
+  from { opacity: 0; transform: translate3d(140px, 60px, 0) rotate(8deg) scale(.78); filter: blur(16px); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) rotate(0) scale(1); filter: blur(0); }
+}
+
+@keyframes pageroChipInUp {
+  from { opacity: 0; transform: translate3d(0, 92px, 0) scale(.8); filter: blur(16px); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0); }
+}
+
+@keyframes pageroChipFloat {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -12px; }
+}
+
+@keyframes pageroBuilderFlowIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(28px) scale(.94); filter: blur(10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); filter: blur(0); }
+}
+
+@media (max-width: 980px) {
+  .pagerol-home-v2 .pagerol-hero .pagerol-hero-demo {
+    height: 480px;
+  }
+
+  .pagerol-builder-chip {
+    min-width: 132px;
+    min-height: 62px;
+    padding: 10px 12px;
+  }
+
+  .chip-image { left: 1%; top: 8%; }
+  .chip-contact { right: 1%; top: 8%; }
+  .chip-booking { left: 0; bottom: 24%; }
+  .chip-map { right: 0; bottom: 24%; }
+  .chip-faq,
+  .chip-cta { display: none; }
+}
+
+@media (max-width: 760px) {
+  .pagerol-home-v2 .pagerol-hero {
+    min-height: auto;
+    padding: 104px 16px 44px;
+  }
+
+  .pagerol-home-v2 .pagerol-hero .pagerol-hero-copy h1 {
+    font-size: clamp(38px, 11.5vw, 58px);
+  }
+
+  .pagerol-home-v2 .pagerol-hero .pagerol-hero-demo {
+    height: 500px;
+  }
+
+  .pagerol-builder-phone {
+    width: min(270px, 74vw);
+    height: 398px;
+  }
+
+  .pagerol-builder-chip {
+    min-width: 118px;
+    grid-template-columns: 30px 1fr;
+    border-radius: 20px;
+  }
+
+  .pagerol-builder-chip i {
+    width: 30px;
+    height: 30px;
+  }
+
+  .pagerol-builder-chip b {
+    display: none;
+  }
+
+  .chip-image { left: -12px; top: 20px; }
+  .chip-contact { right: -12px; top: 52px; }
+  .chip-booking { left: -10px; bottom: 96px; }
+  .chip-map { right: -10px; bottom: 118px; }
+
+  .pagerol-builder-flow {
+    bottom: 4px;
+    width: calc(100% - 32px);
+    justify-content: center;
+  }
+
+  .pagerol-builder-flow span {
+    min-width: 0;
+    flex: 1;
+  }
+}
+
+@media (max-width: 460px) {
+  .pagerol-builder-chip {
+    transform-origin: center;
+  }
+
+  .chip-image,
+  .chip-contact,
+  .chip-booking,
+  .chip-map {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pagerol-home-v2 .pagerol-nav,
+  .pagerol-home-v2 .pagerol-hero .pagerol-hero-copy p,
+  .pagerol-home-v2 .pagerol-hero .pagerol-hero-copy h1,
+  .pagerol-hero-subcopy,
+  .pagerol-home-v2 .pagerol-hero .pagerol-hero-copy .pagerol-hero-start,
+  .pagerol-builder-phone,
+  .pagerol-builder-chip,
+  .pagerol-builder-flow {
+    animation: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+  }
+}
