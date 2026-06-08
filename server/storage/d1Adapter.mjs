@@ -834,7 +834,15 @@ export async function getD1PageBySlug(db, { projectId, slug } = {}) {
 
 export async function getD1PublicPageBySlug(db, { slug } = {}) {
   assertD1Binding(db);
-  const row = await db.prepare('SELECT * FROM pages WHERE slug = ? ORDER BY updated_at DESC, revision DESC, id DESC LIMIT 1').bind(String(slug || '')).first();
+  const row = await db.prepare(`
+    SELECT pages.*
+    FROM pages
+    LEFT JOIN projects ON projects.id = pages.project_id
+    WHERE pages.slug = ?
+      AND COALESCE(projects.status, 'active') <> 'archived'
+    ORDER BY pages.updated_at DESC, pages.revision DESC, pages.id DESC
+    LIMIT 1
+  `).bind(String(slug || '')).first();
   return row ? decodeD1Page(row) : null;
 }
 
