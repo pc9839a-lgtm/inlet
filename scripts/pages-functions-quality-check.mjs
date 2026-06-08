@@ -212,7 +212,7 @@ for (const token of [
   'export async function onRequest',
   'createStorageRuntime',
   'storageRuntimeCoverage',
-  "service: 'inlet-api'",
+  "service: 'pagero-api'",
   "mode: 'pages-functions'",
   "sourceOfTruth: 'signed-session'",
   "INLET_STORAGE_ADAPTER: env.INLET_STORAGE_ADAPTER || 'd1'",
@@ -319,7 +319,7 @@ for (const token of [
 }
 
 for (const token of [
-  "payload?.service === 'inlet-api'",
+  "payload?.service === 'pagero-api'",
   "storageActive === 'd1'",
   'static-pages-html-fallback',
 ]) {

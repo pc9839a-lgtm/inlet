@@ -45,7 +45,7 @@ async function run() {
     }
 
     const htmlFallback = /<!doctype html|<html[\s>]/i.test(text);
-    const apiOk = res.ok && payload?.ok === true && payload?.service === 'inlet-api';
+    const apiOk = res.ok && payload?.ok === true && payload?.service === 'pagero-api';
     const authOk = payload?.auth?.sourceOfTruth === 'signed-session';
     const storageActive = payload?.storage?.active || '';
     const storageOk = expectD1 ? storageActive === 'd1' : ['d1', 'jsonl'].includes(storageActive);

@@ -118,7 +118,7 @@ const server = createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/api/health') {
       sendJson(res, 200, {
         ok: true,
-        service: 'inlet-api',
+        service: 'pagero-api',
         mode: 'local',
         auth: {
           projectEnforced: projectAuthConfig.enforce,

@@ -570,7 +570,7 @@ requireAll(apiContainerQa, [
 requireAll(pagesFunctionsQa, [
   'functions/api/health.js',
   'pages-functions',
-  'inlet-api',
+  'pagero-api',
   'sourceOfTruth',
   'signed-session',
   "storageActive === 'd1'",
@@ -721,7 +721,7 @@ requireAll(qaAll, [
   'server:smoke:auth',
   'server:smoke:integrations',
   'build',
-  'deployment:qa',
+  'build:deploy',
   'worker3:qa',
   'integration:qa',
   'cleanGeneratedArtifacts',

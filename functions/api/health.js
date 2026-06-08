@@ -94,7 +94,7 @@ export async function onRequest({ request, env }) {
 
   return json(request, env, 200, {
     ok: true,
-    service: 'inlet-api',
+    service: 'pagero-api',
     mode: 'pages-functions',
     auth: {
       projectEnforced: env.INLET_PROJECT_AUTH_ENFORCE !== '0',
