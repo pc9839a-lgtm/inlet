@@ -286,6 +286,33 @@
       });
   }
 
+  function slugFromNode(node) {
+    if (!node) return '';
+    return node.getAttribute('data-pagero-page')
+      || node.getAttribute('data-pagero-slug')
+      || node.getAttribute('data-page-slug')
+      || node.getAttribute('data-page')
+      || node.getAttribute('data-slug')
+      || node.getAttribute('data-pagero-form-embed')
+      || '';
+  }
+
+  function formIdFromNode(node) {
+    if (!node) return '';
+    return node.getAttribute('data-pagero-form-id')
+      || node.getAttribute('data-form-id')
+      || node.getAttribute('data-form')
+      || '';
+  }
+
+  function projectIdFromNode(node) {
+    if (!node) return '';
+    return node.getAttribute('data-pagero-project-id')
+      || node.getAttribute('data-project-id')
+      || node.getAttribute('data-project')
+      || '';
+  }
+
   function configFromScript(script) {
     if (script.getAttribute('data-pagero')) return Promise.resolve(decodeConfig(script.getAttribute('data-pagero')));
     var configId = script.getAttribute('data-config') || '';
@@ -293,17 +320,17 @@
       var configEl = document.getElementById(configId);
       return Promise.resolve(JSON.parse(configEl ? configEl.textContent || '{}' : '{}'));
     }
-    var slug = script.getAttribute('data-pagero-page') || script.getAttribute('data-page') || script.getAttribute('data-slug') || '';
-    var formId = script.getAttribute('data-pagero-form-id') || script.getAttribute('data-form-id') || script.getAttribute('data-form') || '';
-    var projectId = script.getAttribute('data-pagero-project-id') || script.getAttribute('data-project-id') || script.getAttribute('data-project') || '';
+    var slug = slugFromNode(script);
+    var formId = formIdFromNode(script);
+    var projectId = projectIdFromNode(script);
     if (slug) return fetchPublicFormConfig(slug, formId, projectId);
     return Promise.reject(new Error('missing config'));
   }
 
   function configFromElement(el) {
-    var slug = el.getAttribute('data-pagero-page') || el.getAttribute('data-page') || el.getAttribute('data-slug') || '';
-    var formId = el.getAttribute('data-pagero-form-id') || el.getAttribute('data-form-id') || el.getAttribute('data-form') || '';
-    var projectId = el.getAttribute('data-pagero-project-id') || el.getAttribute('data-project-id') || el.getAttribute('data-project') || '';
+    var slug = slugFromNode(el);
+    var formId = formIdFromNode(el);
+    var projectId = projectIdFromNode(el);
     if (slug) return fetchPublicFormConfig(slug, formId, projectId);
     if (el.getAttribute('data-pagero')) return Promise.resolve(decodeConfig(el.getAttribute('data-pagero')));
     return Promise.reject(new Error('missing config'));
@@ -419,6 +446,8 @@
       script.getAttribute('data-pagero')
       || script.getAttribute('data-config')
       || script.getAttribute('data-pagero-page')
+      || script.getAttribute('data-pagero-slug')
+      || script.getAttribute('data-page-slug')
       || script.getAttribute('data-pagero-project-id')
       || script.getAttribute('data-page')
       || script.getAttribute('data-slug')
@@ -457,7 +486,7 @@
     for (var i = 0; i < scripts.length; i += 1) {
       if (shouldInitScript(scripts[i])) init(scripts[i]);
     }
-    var targets = document.querySelectorAll('[data-pagero-page], [data-pagero-project-id], [data-pagero-form-embed]');
+    var targets = document.querySelectorAll('[data-pagero-page], [data-pagero-slug], [data-page-slug], [data-pagero-project-id], [data-pagero-form-embed]');
     for (var j = 0; j < targets.length; j += 1) initElement(targets[j]);
   }
 
