@@ -720,6 +720,7 @@ requireAll(qaAll, [
   'templates:qa',
   'server:smoke:auth',
   'server:smoke:integrations',
+  'api:security:qa',
   'build',
   'build:deploy',
   'worker3:qa',
