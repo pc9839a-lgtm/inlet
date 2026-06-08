@@ -43,6 +43,43 @@ function hostedQaCleanupReadiness() {
   );
 }
 
+function isHostedSesReady(hostedApiCheck) {
+  return hostedApiCheck?.status === 'ready'
+    && ['api', 'ses'].includes(hostedApiCheck?.health?.emailDeliveryMode)
+    && hostedApiCheck?.health?.emailDeliveryProvider === 'ses'
+    && hostedApiCheck?.health?.emailDeliveryReady === true;
+}
+
+function sesAuthEmailDeliveryReadiness(hostedApiCheck) {
+  if (isHostedSesReady(hostedApiCheck)) {
+    return status(
+      'AWS SES auth email delivery',
+      true,
+      [],
+      'Hosted /api/health reports SES auth email delivery ready. Send one signup/password-reset email only when changing SES credentials or templates.',
+      {
+        source: 'hosted-api-health',
+        emailDeliveryMode: hostedApiCheck.health.emailDeliveryMode,
+        emailDeliveryProvider: hostedApiCheck.health.emailDeliveryProvider,
+      },
+    );
+  }
+
+  return status(
+    'AWS SES auth email delivery',
+    ['api', 'ses'].includes(env.INLET_AUTH_EMAIL_MODE) && env.INLET_EMAIL_PROVIDER === 'ses' && hasAll(['AWS_SES_REGION', 'AWS_SES_ACCESS_KEY_ID', 'AWS_SES_SECRET_ACCESS_KEY', 'INLET_AUTH_EMAIL_FROM']),
+    sesKeys.filter((key) => {
+      if (key === 'INLET_AUTH_EMAIL_MODE=api or ses') return !['api', 'ses'].includes(env.INLET_AUTH_EMAIL_MODE);
+      if (key === 'INLET_EMAIL_PROVIDER=ses') return env.INLET_EMAIL_PROVIDER !== 'ses';
+      return !String(env[key] || '').trim();
+    }),
+    'Send one auth verification email through SES and confirm no verification token is exposed in the browser response.',
+    {
+      source: 'local-env',
+    },
+  );
+}
+
 async function hostedApiHealthCheck() {
   const missing = apiKeys.filter((key) => !String(env[key] || '').trim());
   const baseUrl = normalizeBaseUrl(env.INLET_PUBLIC_API_URL || '');
@@ -76,6 +113,9 @@ async function hostedApiHealthCheck() {
       health: {
         ok: payload?.ok === true,
         authSource: payload?.auth?.sourceOfTruth || '',
+        emailDeliveryMode: payload?.auth?.emailDeliveryMode || '',
+        emailDeliveryProvider: payload?.auth?.emailDeliveryProvider || '',
+        emailDeliveryReady: payload?.auth?.emailDeliveryReady === true,
         storageActive: payload?.storage?.active || '',
         coverageCount: Array.isArray(payload?.storage?.coverage) ? payload.storage.coverage.length : 0,
       },
@@ -95,8 +135,9 @@ async function hostedApiHealthCheck() {
 const sesKeys = ['INLET_AUTH_EMAIL_MODE=api or ses', 'INLET_EMAIL_PROVIDER=ses', 'AWS_SES_REGION', 'AWS_SES_ACCESS_KEY_ID', 'AWS_SES_SECRET_ACCESS_KEY', 'INLET_AUTH_EMAIL_FROM'];
 const oauthKeys = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'];
 const apiKeys = ['INLET_PUBLIC_API_URL'];
+const hostedApiCheck = await hostedApiHealthCheck();
 const checks = [
-  await hostedApiHealthCheck(),
+  hostedApiCheck,
   status(
     'Cloudflare D1 live schema',
     env.INLET_D1_LIVE_QA === '1' && hasAll(['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN']),
@@ -114,16 +155,7 @@ const checks = [
     ['INLET_AI_QA_LIVE=1', 'OPENAI_API_KEY'].filter((key) => key.includes('=') ? env.INLET_AI_QA_LIVE !== '1' : !String(env[key] || '').trim()),
     'Generate one short prompt and confirm editable blocks.',
   ),
-  status(
-    'AWS SES auth email delivery',
-    ['api', 'ses'].includes(env.INLET_AUTH_EMAIL_MODE) && env.INLET_EMAIL_PROVIDER === 'ses' && hasAll(['AWS_SES_REGION', 'AWS_SES_ACCESS_KEY_ID', 'AWS_SES_SECRET_ACCESS_KEY', 'INLET_AUTH_EMAIL_FROM']),
-    sesKeys.filter((key) => {
-      if (key === 'INLET_AUTH_EMAIL_MODE=api or ses') return !['api', 'ses'].includes(env.INLET_AUTH_EMAIL_MODE);
-      if (key === 'INLET_EMAIL_PROVIDER=ses') return env.INLET_EMAIL_PROVIDER !== 'ses';
-      return !String(env[key] || '').trim();
-    }),
-    'Send one auth verification email through SES and confirm no verification token is exposed in the browser response.',
-  ),
+  sesAuthEmailDeliveryReadiness(hostedApiCheck),
   status(
     'Google OAuth consent',
     hasAll(oauthKeys),
