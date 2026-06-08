@@ -24,13 +24,40 @@ async function wranglerDatabaseId() {
   return match ? match[1] : '';
 }
 
-async function d1Query(sql, params = []) {
-  const accountId = String(process.env.CLOUDFLARE_ACCOUNT_ID || process.env.CF_ACCOUNT_ID || '').trim();
-  const token = String(process.env.CLOUDFLARE_API_TOKEN || process.env.CF_API_TOKEN || '').trim();
-  const databaseId = await wranglerDatabaseId();
-  if (!accountId || !token || !databaseId) {
-    throw new Error('CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN, and INLET_D1_DATABASE_ID or wrangler database_id are required.');
+function cloudflareToken() {
+  return String(process.env.CLOUDFLARE_API_TOKEN || process.env.CF_API_TOKEN || '').trim();
+}
+
+async function resolveCloudflareAccountId(token) {
+  const explicit = String(process.env.CLOUDFLARE_ACCOUNT_ID || process.env.CF_ACCOUNT_ID || '').trim();
+  if (explicit) return { accountId: explicit, source: 'env' };
+  if (!token) return { accountId: '', source: 'missing' };
+  const res = await fetch('https://api.cloudflare.com/client/v4/accounts?per_page=2', {
+    headers: { Authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(10000),
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok || data?.success === false) {
+    const message = data?.errors?.map((error) => error.message).join('; ') || `HTTP ${res.status}`;
+    throw new Error(`Cloudflare account lookup failed: ${message}`);
   }
+  const accounts = Array.isArray(data?.result) ? data.result : [];
+  if (accounts.length === 1 && accounts[0]?.id) return { accountId: String(accounts[0].id), source: 'api-single-account' };
+  return { accountId: '', source: accounts.length > 1 ? 'multiple-accounts' : 'not-found', accountCount: accounts.length };
+}
+
+async function cleanupContext() {
+  const token = cloudflareToken();
+  const account = await resolveCloudflareAccountId(token);
+  const databaseId = await wranglerDatabaseId();
+  if (!account.accountId || !token || !databaseId) {
+    throw new Error('CLOUDFLARE_ACCOUNT_ID or single-account CLOUDFLARE_API_TOKEN, CLOUDFLARE_API_TOKEN, and INLET_D1_DATABASE_ID or wrangler database_id are required.');
+  }
+  return { accountId: account.accountId, token, databaseId, accountIdSource: account.source };
+}
+
+async function d1Query(sql, params = []) {
+  const { accountId, token, databaseId } = await cleanupContext();
   const res = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/d1/database/${databaseId}/query`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -145,11 +172,15 @@ const targets = [
 ];
 
 async function run() {
-  const accountId = String(process.env.CLOUDFLARE_ACCOUNT_ID || process.env.CF_ACCOUNT_ID || '').trim();
-  const token = String(process.env.CLOUDFLARE_API_TOKEN || process.env.CF_API_TOKEN || '').trim();
+  const explicitAccountId = String(process.env.CLOUDFLARE_ACCOUNT_ID || process.env.CF_ACCOUNT_ID || '').trim();
+  const token = cloudflareToken();
   const databaseId = await wranglerDatabaseId();
+  let account = { accountId: explicitAccountId, source: explicitAccountId ? 'env' : 'missing' };
+  if (token && !account.accountId) {
+    account = await resolveCloudflareAccountId(token);
+  }
   const missing = [
-    accountId ? '' : 'CLOUDFLARE_ACCOUNT_ID',
+    account.accountId ? '' : 'CLOUDFLARE_ACCOUNT_ID or single-account CLOUDFLARE_API_TOKEN',
     token ? '' : 'CLOUDFLARE_API_TOKEN',
     databaseId ? '' : 'INLET_D1_DATABASE_ID or wrangler DB database_id',
   ].filter(Boolean);
@@ -162,6 +193,8 @@ async function run() {
         mode: 'plan-only',
         projectPrefix,
         emailDomain,
+        accountIdSource: account.source,
+        accountCount: account.accountCount,
       })],
     };
   }

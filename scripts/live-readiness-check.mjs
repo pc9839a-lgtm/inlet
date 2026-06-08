@@ -26,7 +26,12 @@ function normalizeBaseUrl(value = '') {
 }
 
 function hostedQaCleanupReadiness() {
-  const missing = ['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN'].filter((key) => !String(env[key] || '').trim());
+  const hasToken = !!String(env.CLOUDFLARE_API_TOKEN || env.CF_API_TOKEN || '').trim();
+  const hasAccount = !!String(env.CLOUDFLARE_ACCOUNT_ID || env.CF_ACCOUNT_ID || '').trim();
+  const missing = [
+    hasAccount || hasToken ? '' : 'CLOUDFLARE_ACCOUNT_ID or single-account CLOUDFLARE_API_TOKEN',
+    hasToken ? '' : 'CLOUDFLARE_API_TOKEN',
+  ].filter(Boolean);
   const writeRequested = env.INLET_D1_QA_CLEANUP_WRITE === '1';
   const approvalOk = env.INLET_D1_QA_CLEANUP_APPROVAL === 'I_APPROVE_HOSTED_QA_CLEANUP';
   return status(
@@ -136,17 +141,19 @@ const sesKeys = ['INLET_AUTH_EMAIL_MODE=api or ses', 'INLET_EMAIL_PROVIDER=ses',
 const oauthKeys = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'];
 const apiKeys = ['INLET_PUBLIC_API_URL'];
 const hostedApiCheck = await hostedApiHealthCheck();
+const hasCloudflareToken = !!String(env.CLOUDFLARE_API_TOKEN || env.CF_API_TOKEN || '').trim();
+const hasCloudflareAccount = !!String(env.CLOUDFLARE_ACCOUNT_ID || env.CF_ACCOUNT_ID || '').trim();
 const checks = [
   hostedApiCheck,
   status(
     'Cloudflare D1 live schema',
-    env.INLET_D1_LIVE_QA === '1' && hasAll(['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN']),
+    env.INLET_D1_LIVE_QA === '1' && hasCloudflareToken && (hasCloudflareAccount || hasCloudflareToken),
     [
       env.INLET_D1_LIVE_QA === '1' ? '' : 'INLET_D1_LIVE_QA=1',
-      env.CLOUDFLARE_ACCOUNT_ID ? '' : 'CLOUDFLARE_ACCOUNT_ID',
-      env.CLOUDFLARE_API_TOKEN ? '' : 'CLOUDFLARE_API_TOKEN',
+      hasCloudflareAccount || hasCloudflareToken ? '' : 'CLOUDFLARE_ACCOUNT_ID or single-account CLOUDFLARE_API_TOKEN',
+      hasCloudflareToken ? '' : 'CLOUDFLARE_API_TOKEN',
     ].filter(Boolean),
-    'Run npm run d1:live:qa to confirm inlet-prod table schema and basic counts through the Cloudflare D1 API.',
+    'Run npm run d1:live:qa to confirm inlet-prod table schema and basic counts through the Cloudflare D1 API. If the token can see exactly one account, the script auto-resolves the account id.',
   ),
   hostedQaCleanupReadiness(),
   status(
