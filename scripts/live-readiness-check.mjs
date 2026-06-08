@@ -25,12 +25,36 @@ function normalizeBaseUrl(value = '') {
   return String(value || '').trim().replace(/\/+$/, '');
 }
 
-function hostedQaCleanupReadiness() {
-  const hasToken = !!String(env.CLOUDFLARE_API_TOKEN || env.CF_API_TOKEN || '').trim();
-  const hasAccount = !!String(env.CLOUDFLARE_ACCOUNT_ID || env.CF_ACCOUNT_ID || '').trim();
+async function resolveCloudflareAccountMeta() {
+  const accountId = String(env.CLOUDFLARE_ACCOUNT_ID || env.CF_ACCOUNT_ID || '').trim();
+  const token = String(env.CLOUDFLARE_API_TOKEN || env.CF_API_TOKEN || '').trim();
+  if (accountId) return { accountId, token, source: 'env', accountCount: 1, error: '' };
+  if (!token) return { accountId: '', token: '', source: 'missing', accountCount: 0, error: '' };
+  try {
+    const res = await fetch('https://api.cloudflare.com/client/v4/accounts?per_page=2', {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(5000),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || data?.success === false) {
+      const message = data?.errors?.map((error) => error.message).join('; ') || `HTTP ${res.status}`;
+      return { accountId: '', token, source: 'lookup-failed', accountCount: 0, error: message };
+    }
+    const accounts = Array.isArray(data?.result) ? data.result : [];
+    if (accounts.length === 1 && accounts[0]?.id) return { accountId: String(accounts[0].id), token, source: 'api-single-account', accountCount: 1, error: '' };
+    return { accountId: '', token, source: accounts.length > 1 ? 'multiple-accounts' : 'not-found', accountCount: accounts.length, error: '' };
+  } catch (error) {
+    return { accountId: '', token, source: 'lookup-failed', accountCount: 0, error: error?.message || String(error) };
+  }
+}
+
+function hostedQaCleanupReadiness(cloudflareAccount) {
+  const hasToken = !!cloudflareAccount?.token;
+  const hasAccount = !!cloudflareAccount?.accountId;
   const missing = [
     hasAccount || hasToken ? '' : 'CLOUDFLARE_ACCOUNT_ID or single-account CLOUDFLARE_API_TOKEN',
     hasToken ? '' : 'CLOUDFLARE_API_TOKEN',
+    hasToken && !hasAccount ? 'Cloudflare account lookup must return exactly one account' : '',
   ].filter(Boolean);
   const writeRequested = env.INLET_D1_QA_CLEANUP_WRITE === '1';
   const approvalOk = env.INLET_D1_QA_CLEANUP_APPROVAL === 'I_APPROVE_HOSTED_QA_CLEANUP';
@@ -44,6 +68,9 @@ function hostedQaCleanupReadiness() {
       projectPrefix: 'hosted-route-qa-',
       emailDomain: 'inlet.test',
       writeGuard: 'INLET_D1_QA_CLEANUP_WRITE=1 + INLET_D1_QA_CLEANUP_APPROVAL=I_APPROVE_HOSTED_QA_CLEANUP',
+      accountIdSource: cloudflareAccount?.source || 'missing',
+      accountCount: cloudflareAccount?.accountCount,
+      accountLookupError: cloudflareAccount?.error || '',
     },
   );
 }
@@ -141,21 +168,28 @@ const sesKeys = ['INLET_AUTH_EMAIL_MODE=api or ses', 'INLET_EMAIL_PROVIDER=ses',
 const oauthKeys = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'];
 const apiKeys = ['INLET_PUBLIC_API_URL'];
 const hostedApiCheck = await hostedApiHealthCheck();
-const hasCloudflareToken = !!String(env.CLOUDFLARE_API_TOKEN || env.CF_API_TOKEN || '').trim();
-const hasCloudflareAccount = !!String(env.CLOUDFLARE_ACCOUNT_ID || env.CF_ACCOUNT_ID || '').trim();
+const cloudflareAccount = await resolveCloudflareAccountMeta();
+const hasCloudflareToken = !!cloudflareAccount.token;
+const hasCloudflareAccount = !!cloudflareAccount.accountId;
 const checks = [
   hostedApiCheck,
   status(
     'Cloudflare D1 live schema',
-    env.INLET_D1_LIVE_QA === '1' && hasCloudflareToken && (hasCloudflareAccount || hasCloudflareToken),
+    env.INLET_D1_LIVE_QA === '1' && hasCloudflareToken && hasCloudflareAccount,
     [
       env.INLET_D1_LIVE_QA === '1' ? '' : 'INLET_D1_LIVE_QA=1',
       hasCloudflareAccount || hasCloudflareToken ? '' : 'CLOUDFLARE_ACCOUNT_ID or single-account CLOUDFLARE_API_TOKEN',
       hasCloudflareToken ? '' : 'CLOUDFLARE_API_TOKEN',
+      hasCloudflareToken && !hasCloudflareAccount ? 'Cloudflare account lookup must return exactly one account' : '',
     ].filter(Boolean),
     'Run npm run d1:live:qa to confirm inlet-prod table schema and basic counts through the Cloudflare D1 API. If the token can see exactly one account, the script auto-resolves the account id.',
+    {
+      accountIdSource: cloudflareAccount.source,
+      accountCount: cloudflareAccount.accountCount,
+      accountLookupError: cloudflareAccount.error,
+    },
   ),
-  hostedQaCleanupReadiness(),
+  hostedQaCleanupReadiness(cloudflareAccount),
   status(
     'AI live generation',
     env.INLET_AI_QA_LIVE === '1' && !!String(env.OPENAI_API_KEY || '').trim(),
