@@ -707,7 +707,7 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(port, () => {
-  console.log(`Inlet API server listening on http://localhost:${port}`);
+  console.log(`Pagero API server listening on http://localhost:${port}`);
   runLeadMigrationOnStart();
   startDeliveryRetryWorker();
 });
@@ -1117,7 +1117,7 @@ async function fetchPreviewHtml(startUrl) {
         signal: controller.signal,
         headers: {
           Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'User-Agent': 'InletLinkPreview/1.0',
+          'User-Agent': 'PageroLinkPreview/1.0',
         },
       });
     } finally {
