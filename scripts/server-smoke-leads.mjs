@@ -63,6 +63,23 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
   assert(emailAlertLead.res.ok, 'email alert lead should save');
   assert(emailAlertLead.data.delivery?.status === 'success', `email alert delivery expected success: ${JSON.stringify(emailAlertLead.data.delivery)}`);
   assert(emailAlertLead.data.delivery?.logs?.some((log) => log.provider === 'ses' && log.status === 'success'), 'email alert lead should send through SES delivery provider');
+  const duplicateEmailAlertLead = await json({ baseUrl }, 'POST', '/api/leads', {
+    project: emailProject,
+    page: { slug: emailProject.slug },
+    lead: {
+      id: 'lead-email-alert',
+      type: 'consult',
+      status: 'new',
+      name: 'Email Alert Lead Duplicate',
+      phone: '010-0000-1100',
+      createdAt: '2026-05-24T05:00:00.000Z',
+    },
+  });
+  assert(duplicateEmailAlertLead.res.ok, 'duplicate email alert lead should save without failing');
+  assert(
+    duplicateEmailAlertLead.data.delivery?.logs?.some((log) => log.provider === 'ses' && log.skippedDuplicate === true && log.message === '이미 전송 완료'),
+    'duplicate email alert lead should not send the same SES notification twice',
+  );
 
   const reservationOnlyProject = { projectId: 'smoke-leads-email-reservation-kind', slug: 'smoke-email-reservation-kind' };
   const reservationOnlyPage = {

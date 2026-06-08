@@ -383,7 +383,11 @@ const server = createServer(async (req, res) => {
       await normalizePublicLeadPageContext(body);
       body.project = await authorizeProjectAccess(req, body?.project || {}, { write: true, bootstrap: true, page: body?.page || {}, tab: 'inbox', publicSubmit: true });
       body.requestMeta = requestMetaFrom(req);
+      const previousLead = await readExistingLeadForDelivery(body.project, body.lead || body);
       let saved = await saveLead(body);
+      if (previousLead?.delivery?.logs?.length && !saved.delivery?.logs?.length) {
+        saved = { ...saved, delivery: previousLead.delivery };
+      }
       saved = await deliverSavedLeadAfterSave(saved, body);
       sendJson(res, 200, { ok: true, lead: saved, delivery: saved.delivery });
       return;
@@ -2142,6 +2146,7 @@ async function saveLead(body = {}) {
     if (index >= 0) {
       leads[index] = { ...leads[index], ...saved, updatedAt: new Date().toISOString() };
       await writeLeadList(leads, project);
+      return leads[index];
     } else {
       await appendJsonlRecord(targetFile, saved);
     }
@@ -2193,7 +2198,8 @@ async function deliverSavedLeadAfterSave(saved = {}, body = {}) {
     projectId: storedPage?.projectId || body.page?.projectId || project.projectId || '',
     integrations: storedPage?.integrations || body.page?.integrations || {},
   }), project);
-  const delivery = await sendServerLeadIntegrations(saved, deliveryPage);
+  const sentKeys = await successfulDeliveryKeysForLead(project, saved);
+  const delivery = await sendServerLeadIntegrations(saved, deliveryPage, { skipSuccessfulIdempotencyKeys: sentKeys });
   if (delivery.status === 'none' && saved.delivery?.status) {
     return saved;
   }
@@ -2207,6 +2213,40 @@ async function deliverSavedLeadAfterSave(saved = {}, body = {}) {
     return await updateLead(saved.id, patch, project);
   } catch {
     return { ...saved, ...patch };
+  }
+}
+
+async function readExistingLeadForDelivery(project = {}, lead = {}) {
+  const id = String(lead?.id || '').trim();
+  if (!id) return null;
+  const targetProject = hasProject(project) ? normalizeProject(project) : {};
+  try {
+    if (storageRuntime.active === 'd1' && hasProject(targetProject)) {
+      return getD1Lead(storageRuntime.d1, { projectId: targetProject.projectId, id });
+    }
+    const leads = await readLeadList(targetProject);
+    return leads.find((item) => String(item.id || '') === id) || null;
+  } catch {
+    return null;
+  }
+}
+
+async function successfulDeliveryKeysForLead(project = {}, lead = {}) {
+  const embeddedKeys = (lead.delivery?.logs || [])
+    .filter((log) => log?.status === 'success')
+    .map((log) => log.idempotencyKey)
+    .filter(Boolean);
+  if (storageRuntime.active !== 'd1' || !storageRuntime.d1?.prepare || !hasProject(project) || !lead?.id) return embeddedKeys;
+  try {
+    const result = await listD1DeliveryLogs(storageRuntime.d1, {
+      projectId: project.projectId,
+      leadId: lead.id,
+      status: 'success',
+      limit: 100,
+    });
+    return Array.from(new Set([...embeddedKeys, ...(result.records || []).map((log) => log.idempotencyKey).filter(Boolean)]));
+  } catch {
+    return embeddedKeys;
   }
 }
 
@@ -2363,12 +2403,12 @@ function previousPolicyMonth(month = '') {
 
 function uniqueLeads(leads = []) {
   const seen = new Set();
-  return leads.filter((lead) => {
+  return leads.slice().reverse().filter((lead) => {
     const key = String(lead.id || `${lead.createdAt}:${lead.phone}:${lead.email}`);
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
-  });
+  }).reverse();
 }
 
 async function leadPolicyCandidates(lead = {}, project = {}, options = {}) {
@@ -2896,7 +2936,7 @@ async function listEventsPage(limit, project = {}, cursor = 0, filters = {}) {
 async function readLeadList(project = {}) {
   const targetFile = projectLeadsFile(project) || leadsFile;
   const parsed = await readJsonlFile(targetFile);
-  return parsed.records;
+  return uniqueLeads(parsed.records);
 }
 
 async function writeLeadList(leads, project = {}) {
@@ -3352,7 +3392,7 @@ async function updateLead(id, patch = {}, project = {}) {
     }
     assertLeadVersion(current, patch, id);
     const safePatch = sanitizedLeadPatch(patch);
-    const nextLead = { ...current, ...safePatch, updatedAt: new Date().toISOString() };
+    const nextLead = normalizeDeliveryStatusField({ ...current, ...safePatch, updatedAt: new Date().toISOString() });
     return upsertD1Lead(storageRuntime.d1, nextLead, {
       projectId: targetProject.projectId,
       pageSlug: targetProject.slug || current.pageSlug || '',
@@ -3371,7 +3411,7 @@ async function updateLead(id, patch = {}, project = {}) {
 
     assertLeadVersion(leads[index], patch, id);
     const safePatch = sanitizedLeadPatch(patch);
-    leads[index] = { ...leads[index], ...safePatch, updatedAt: new Date().toISOString() };
+    leads[index] = normalizeDeliveryStatusField({ ...leads[index], ...safePatch, updatedAt: new Date().toISOString() });
     await writeLeadList(leads, targetProject);
     return leads[index];
   });
@@ -3404,6 +3444,11 @@ function sanitizedLeadPatch(patch = {}) {
   delete safePatch.__expectedUpdatedAt;
   delete safePatch.expectedUpdatedAt;
   return safePatch;
+}
+
+function normalizeDeliveryStatusField(lead = {}) {
+  const deliveryStatus = String(lead.delivery?.status || '').trim();
+  return deliveryStatus ? { ...lead, deliveryStatus } : lead;
 }
 
 async function deleteLead(id, project = {}) {
@@ -3529,7 +3574,7 @@ async function retryFailedLeads(body = {}) {
         : new Date(Date.now() + deliveryRetryConfig.intervalMs).toISOString(),
       ...(deadLetter ? { deadLetter: true, deadLetterAt: new Date().toISOString() } : {}),
     };
-    leads[i] = {
+    leads[i] = normalizeDeliveryStatusField({
       ...leads[i],
       delivery: {
         ...delivery,
@@ -3537,7 +3582,7 @@ async function retryFailedLeads(body = {}) {
       },
       deliveryPage,
       updatedAt: new Date().toISOString(),
-    };
+    });
     if (delivery.status === 'success') summary.success += 1;
     else if (delivery.status === 'partial') summary.partial += 1;
     else summary.failed += 1;
@@ -3593,12 +3638,12 @@ async function retryFailedD1Leads(body = {}, project = {}) {
         : new Date(Date.now() + deliveryRetryConfig.intervalMs).toISOString(),
       ...(deadLetter ? { deadLetter: true, deadLetterAt: new Date().toISOString() } : {}),
     };
-    const saved = await upsertD1Lead(storageRuntime.d1, {
+    const saved = await upsertD1Lead(storageRuntime.d1, normalizeDeliveryStatusField({
       ...lead,
       delivery: { ...delivery, retry },
       deliveryPage,
       updatedAt: new Date().toISOString(),
-    }, {
+    }), {
       projectId: project.projectId,
       pageSlug: project.slug || lead.pageSlug || '',
     });
@@ -3871,8 +3916,20 @@ async function sendServerLeadIntegrations(lead, page = {}, options = {}) {
   if (retryProviders.size) {
     jobs = jobs.filter((job) => retryProviders.has(String(job.provider || '').trim()));
   }
+  const skipKeys = new Set((options.skipSuccessfulIdempotencyKeys || []).map((key) => String(key || '').trim()).filter(Boolean));
+  const skippedJobs = skipKeys.size ? jobs.filter((job) => skipKeys.has(String(job.idempotencyKey || '').trim())) : [];
+  jobs = skipKeys.size ? jobs.filter((job) => !skipKeys.has(String(job.idempotencyKey || '').trim())) : jobs;
+  const skippedLogs = skippedJobs.map((job) => ({
+    target: job.label,
+    provider: job.provider || job.type || '',
+    status: 'success',
+    message: '이미 전송 완료',
+    idempotencyKey: job.idempotencyKey || '',
+    skippedDuplicate: true,
+    at: new Date().toISOString(),
+  }));
   if (!jobs.length) {
-    return { status: 'none', summary: '외부 전송 없음', logs: [] };
+    return skippedLogs.length ? summarizeServerDelivery(skippedLogs) : { status: 'none', summary: '외부 전송 없음', logs: [] };
   }
 
   const settled = await Promise.allSettled(jobs.map(async (job) => {
@@ -3900,7 +3957,7 @@ async function sendServerLeadIntegrations(lead, page = {}, options = {}) {
     };
   });
 
-  return summarizeServerDelivery(logs);
+  return summarizeServerDelivery([...skippedLogs, ...logs]);
 }
 
 function buildServerIntegrationJobs(integrations = {}, lead = {}, page = {}) {
@@ -4097,10 +4154,10 @@ async function postServerIntegration(url, payload, secret = '', idempotencyKey =
 }
 
 function deliveryIdempotencyKey(lead = {}, job = {}) {
+  const leadKey = lead.id || lead.contactKey || lead.phoneNormalized || lead.emailNormalized || lead.createdAt || lead.submittedAt || '';
   return [
-    lead.id || '',
-    lead.updatedAt || lead.savedAt || lead.createdAt || '',
-    job.type || '',
+    leadKey,
+    job.provider || job.type || '',
     job.label || '',
   ]
     .map((value) => String(value || '').replace(/[^a-zA-Z0-9_.:-]/g, '-'))
@@ -4750,7 +4807,7 @@ async function retryFailedLeadsInFile(file, project = {}) {
     const previousRetry = leads[i].delivery?.retry || {};
     const attempts = Number(previousRetry.attempts || 0) + 1;
     const deadLetter = delivery.status !== 'success' && attempts >= deliveryRetryConfig.maxAttempts;
-    leads[i] = {
+    leads[i] = normalizeDeliveryStatusField({
       ...leads[i],
       delivery: {
         ...delivery,
@@ -4767,7 +4824,7 @@ async function retryFailedLeadsInFile(file, project = {}) {
       },
       deliveryPage,
       updatedAt: new Date().toISOString(),
-    };
+    });
     changed = true;
   }
 

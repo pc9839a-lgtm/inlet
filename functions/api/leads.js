@@ -1,4 +1,4 @@
-import { findD1LeadsByIntakeSignals, getD1LatestPageByProject, getD1PageBySlug, getD1ProjectById, getD1PublicPageBySlug, insertD1BlockedLeadSubmission, listD1Leads, upsertD1Lead } from '../../server/storage/d1Adapter.mjs';
+import { findD1LeadsByIntakeSignals, getD1LatestPageByProject, getD1PageBySlug, getD1ProjectById, getD1PublicPageBySlug, insertD1BlockedLeadSubmission, listD1DeliveryLogs, listD1Leads, upsertD1Lead } from '../../server/storage/d1Adapter.mjs';
 import { deliveryReport, normalizeDeliveryPage, sendLeadDelivery } from './leads/_delivery.js';
 import { assertD1, authorizeProject, ensureD1ProjectShell, handleApiError, jsonResponse, monthFromRequest, optionsResponse, projectFromRequest, publicProjectShell, readJson } from './_shared.js';
 
@@ -217,7 +217,18 @@ async function sendSavedLeadDelivery(db, lead = {}, inputPage = {}, project = {}
       storedPage = await getD1LatestPageByProject(db, { projectId: project.projectId });
     }
     const deliveryPage = await ensureDeliveryEmailRecipient(db, normalizeDeliveryPage(inputPage, storedPage || {}, project), project);
-    return await sendLeadDelivery(lead, deliveryPage, env);
+    const embeddedKeys = (lead.delivery?.logs || [])
+      .filter((log) => log?.status === 'success')
+      .map((log) => log.idempotencyKey)
+      .filter(Boolean);
+    const sentLogs = await listD1DeliveryLogs(db, {
+      projectId: project.projectId,
+      leadId: lead.id || '',
+      status: 'success',
+      limit: 100,
+    }).catch(() => ({ records: [] }));
+    const sentKeys = Array.from(new Set([...embeddedKeys, ...(sentLogs.records || []).map((log) => log.idempotencyKey).filter(Boolean)]));
+    return await sendLeadDelivery(lead, deliveryPage, env, { skipSuccessfulIdempotencyKeys: sentKeys });
   } catch (error) {
     return deliveryReport('failed', '접수는 저장됐지만 알림 전송에 실패했습니다.', [{
       target: '알림 전송',

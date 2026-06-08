@@ -102,6 +102,7 @@ await runSmoke('server-smoke-integrations', async ({ baseUrl }) => {
     assert(slowRetry.res.ok && slowRetry.data.retried === 1, 'slow webhook retry mismatch');
     assert(slowRetry.data.failed === 1 && slowRetry.data.queue?.retryable >= 1, 'retry summary observability missing');
     assert(slowResult?.delivery?.status === 'failed', 'slow webhook should remain failed');
+    assert(slowResult?.deliveryStatus === 'failed', 'slow webhook top-level deliveryStatus should match delivery status');
     assert(slowResult.delivery.retry?.attempts === 1, 'manual retry attempt metadata missing');
     assert(slowResult.delivery.logs?.[0]?.message?.includes('timed out'), 'slow webhook timeout message missing');
 

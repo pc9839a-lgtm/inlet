@@ -217,7 +217,19 @@ export async function sendLeadDelivery(lead = {}, page = {}, env = {}, options =
   if (retryProviders.size) {
     jobs = jobs.filter((job) => retryProviders.has(String(job.provider || '').trim()));
   }
-  if (!jobs.length) return deliveryReport();
+  const skipKeys = new Set((options.skipSuccessfulIdempotencyKeys || []).map((key) => String(key || '').trim()).filter(Boolean));
+  const skippedJobs = skipKeys.size ? jobs.filter((job) => skipKeys.has(String(job.idempotencyKey || '').trim())) : [];
+  jobs = skipKeys.size ? jobs.filter((job) => !skipKeys.has(String(job.idempotencyKey || '').trim())) : jobs;
+  const skippedLogs = skippedJobs.map((job) => ({
+    target: job.label,
+    provider: job.provider || (job.type === 'email' ? 'ses' : 'webhook'),
+    status: 'success',
+    message: '이미 전송 완료',
+    idempotencyKey: job.idempotencyKey || '',
+    skippedDuplicate: true,
+    at: new Date().toISOString(),
+  }));
+  if (!jobs.length) return skippedLogs.length ? summarizeDelivery(skippedLogs) : deliveryReport();
 
   const settled = await Promise.allSettled(jobs.map(async (job) => {
     const result = await runDeliveryJob(job, env);
@@ -244,7 +256,7 @@ export async function sendLeadDelivery(lead = {}, page = {}, env = {}, options =
     };
   });
 
-  return summarizeDelivery(logs);
+  return summarizeDelivery([...skippedLogs, ...logs]);
 }
 
 export function failedDeliveryProviders(delivery = {}) {
@@ -445,7 +457,8 @@ function leadEmailHtml(lead = {}, page = {}) {
 }
 
 function deliveryIdempotencyKey(lead = {}, job = {}) {
-  return [lead.id, lead.updatedAt || lead.createdAt || lead.submittedAt, job.type, job.label]
+  const leadKey = lead.id || lead.contactKey || lead.phoneNormalized || lead.emailNormalized || lead.createdAt || lead.submittedAt || '';
+  return [leadKey, job.provider || job.type, job.label]
     .map((value) => String(value || '').replace(/[^a-zA-Z0-9_.:-]/g, '-'))
     .filter(Boolean)
     .join(':')
