@@ -459,6 +459,7 @@ const server = createServer(async (req, res) => {
         month: url.searchParams.get('month') || '',
         dateFrom: url.searchParams.get('dateFrom') || '',
         dateTo: url.searchParams.get('dateTo') || '',
+        channel: url.searchParams.get('channel') || '',
       });
       assertCsvDateRange(exportDateFilters);
       const ids = String(url.searchParams.get('ids') || '')

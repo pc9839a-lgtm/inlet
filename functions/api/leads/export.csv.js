@@ -80,6 +80,9 @@ export async function onRequest({ request, env }) {
       const page = await listD1Leads(db, {
         projectId: project.projectId,
         month,
+        dateFrom: url.searchParams.get('dateFrom') || '',
+        dateTo: url.searchParams.get('dateTo') || '',
+        channel: url.searchParams.get('channel') || '',
         status: url.searchParams.get('status') || '',
         kind: url.searchParams.get('kind') || '',
         deliveryStatus: url.searchParams.get('deliveryStatus') || '',

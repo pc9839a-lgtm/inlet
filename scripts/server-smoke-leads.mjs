@@ -524,6 +524,41 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
   assert(!comboCsvText.includes('Month Lead 0') && !comboCsvText.includes('Month Lead 20'), 'month combined CSV export should exclude adjacent month and non-matching May leads');
   assert(!comboCsvText.includes('2026-04-'), 'month combined CSV export should not include April leads');
 
+  const channelProject = { projectId: 'smoke-leads-channel-csv', slug: 'smoke-channel-csv' };
+  const channelQuery = new URLSearchParams(channelProject).toString();
+  const channelPage = { title: 'Channel CSV', slug: channelProject.slug };
+  const naverLead = await json({ baseUrl }, 'POST', '/api/leads', {
+    project: channelProject,
+    page: channelPage,
+    lead: {
+      id: 'csv-naver',
+      type: 'consult',
+      status: 'new',
+      name: 'CSV Naver',
+      phone: '010-7777-0001',
+      sourceUrl: 'https://example.com/?utm_source=naver&utm_medium=cpc',
+      createdAt: '2026-05-15T03:00:00.000Z',
+    },
+  });
+  assert(naverLead.res.ok, 'channel CSV naver lead save failed');
+  const directLead = await json({ baseUrl }, 'POST', '/api/leads', {
+    project: channelProject,
+    page: channelPage,
+    lead: {
+      id: 'csv-direct',
+      type: 'consult',
+      status: 'new',
+      name: 'CSV Direct',
+      phone: '010-7777-0002',
+      sourceUrl: 'https://example.com/direct',
+      createdAt: '2026-05-16T03:00:00.000Z',
+    },
+  });
+  assert(directLead.res.ok, 'channel CSV direct lead save failed');
+  const channelCsv = await fetchWithTimeout(`${baseUrl}/api/leads/export.csv?${channelQuery}&month=2026-05&channel=naver`, { headers: authHeaders() });
+  const channelCsvText = await channelCsv.text();
+  assert(channelCsv.ok && channelCsvText.includes('CSV Naver') && !channelCsvText.includes('CSV Direct'), 'channel CSV export should honor selected channel');
+
   const statsSummary = await json({ baseUrl }, 'GET', `/api/stats/summary?${monthQuery}&month=2026-05&period=thisMonth`);
   assert(statsSummary.res.ok && statsSummary.data.source === 'server', 'stats summary source mismatch');
   assert(statsSummary.data.totals?.leads === 60 && !('filteredLeads' in (statsSummary.data.summary || {})), 'stats summary should aggregate without raw lead arrays');

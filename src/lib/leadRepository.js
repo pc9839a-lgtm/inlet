@@ -202,6 +202,7 @@ export async function downloadServerLeadsCsv(page, authUser = null, fallbackLead
         kind: options.kind || options.filters?.kind || '',
         status: options.status || options.filters?.status || '',
         deliveryStatus: options.deliveryStatus || options.filters?.deliveryStatus || '',
+        channel: options.channel || options.filters?.channel || '',
       },
     });
     return;
@@ -215,6 +216,7 @@ export async function downloadServerLeadsCsv(page, authUser = null, fallbackLead
     kind: options.kind && options.kind !== 'all' ? options.kind : '',
     status: options.status && options.status !== 'all' ? options.status : '',
     deliveryStatus: options.deliveryStatus && options.deliveryStatus !== 'all' ? options.deliveryStatus : '',
+    channel: options.channel && options.channel !== 'all' ? options.channel : '',
     q: options.q || '',
   });
   const res = await apiFetch(`/api/leads/export.csv?${params.toString()}`, {
