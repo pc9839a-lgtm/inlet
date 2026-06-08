@@ -44,6 +44,48 @@ function normalizeEmail(value = '') {
   return String(value || '').trim().toLowerCase();
 }
 
+function stableHash(value = '') {
+  let hash = 2166136261;
+  for (const char of String(value)) {
+    hash ^= char.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36).padStart(7, '0');
+}
+
+function safeProjectId(value = '') {
+  return String(value || '').replace(/[^a-zA-Z0-9-_]/g, '');
+}
+
+function identityOwnerId(identity = {}) {
+  const explicit = safeProjectId(identity?.ownerId || '');
+  if (explicit) return explicit;
+  const email = normalizeEmail(identity?.email || '');
+  return email ? `user_${stableHash(email)}` : '';
+}
+
+function canRecoverPageSaveProject(error = {}, identity = {}) {
+  const status = Number(error?.status || 0);
+  const role = String(identity?.role || 'master').trim().toLowerCase();
+  if (!['master', 'owner', 'builder'].includes(role)) return false;
+  if (!identityOwnerId(identity)) return false;
+  return status === 403 || /Project access|PROJECT_ACCESS/i.test(String(error?.message || error || ''));
+}
+
+function accountOwnedProjectForSave(project = {}, identity = {}, slug = '') {
+  const ownerId = identityOwnerId(identity);
+  const safeSlug = safeProjectId(slug || project.slug || 'my-page') || 'my-page';
+  return {
+    ...project,
+    projectId: `${ownerId}_${safeSlug}`,
+    id: `${ownerId}_${safeSlug}`,
+    ownerId,
+    ownerAccountId: ownerId,
+    slug: safeSlug,
+    title: project.title || safeSlug,
+  };
+}
+
 async function fallbackFreeEmailAlertRecipient(db, project = {}) {
   const projectId = String(project.projectId || project.id || '').trim();
   const projectRow = projectId ? await getD1ProjectById(db, projectId) : null;
@@ -121,12 +163,19 @@ export async function onRequest({ request, env, params }) {
 
     if (request.method === 'POST') {
       const body = await readJson(request);
-      const project = projectFromRequest(url, body, request);
+      let project = projectFromRequest(url, body, request);
       const writeTab = String(body.tab || body.saveTab || 'edit').trim() || 'edit';
-      await ensureD1ProjectShell(db, project);
-      await authorizeProject(request, env, project, { write: true, tab: writeTab });
       const identity = await sessionIdentity(request, env);
       const incoming = body.page && typeof body.page === 'object' ? body.page : body;
+      try {
+        await ensureD1ProjectShell(db, project);
+        await authorizeProject(request, env, project, { write: true, tab: writeTab });
+      } catch (error) {
+        if (!canRecoverPageSaveProject(error, identity)) throw error;
+        project = accountOwnedProjectForSave(project, identity, slug);
+        await ensureD1ProjectShell(db, project);
+        await authorizeProject(request, env, project, { write: true, tab: writeTab });
+      }
       const publicExisting = await getPublicPageBySlug(db, slug);
       if (publicExisting.page && String(publicExisting.page.projectId || '') !== String(project.projectId || '')) {
         const error = new Error('Page URL is already in use.');
