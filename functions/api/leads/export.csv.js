@@ -121,9 +121,10 @@ function parseCsvIds(value = '') {
 
 function toCsv(leads = []) {
   const dynamicHeaders = collectDynamicFieldHeaders(leads);
-  const rows = [[...CSV_HEADERS, ...dynamicHeaders]];
+  const dynamicHeaderLabels = [...dynamicHeaders.values()];
+  const rows = [[...CSV_HEADERS, ...dynamicHeaderLabels]];
   for (const lead of leads) {
-    const dynamicFields = dynamicFieldMap(lead);
+    const dynamicFields = dynamicFieldMap(lead, dynamicHeaders);
     const source = lead.source || {};
     rows.push([
       lead.id || '',
@@ -141,7 +142,7 @@ function toCsv(leads = []) {
       lead.utmMedium || lead.utm_medium || source.utmMedium || source.utm_medium || lead.values?.utmMedium || '',
       lead.utmCampaign || lead.utm_campaign || source.utmCampaign || source.utm_campaign || lead.values?.utmCampaign || '',
       lead.memo || lead.message || lead.values?.memo || '',
-      ...dynamicHeaders.map((header) => dynamicFields[header] || ''),
+      ...dynamicHeaderLabels.map((header) => dynamicFields[header] || ''),
     ]);
   }
   return rows.map((row) => row.map(csvCell).join(',')).join('\r\n');
@@ -162,50 +163,59 @@ function flatValue(value) {
 }
 
 function collectDynamicFieldHeaders(leads = []) {
-  const seen = new Set();
-  const headers = [];
+  const keyToHeader = new Map();
+  const usedHeaders = new Set();
+  const add = (rawKey, rawLabel) => {
+    const key = cleanFieldLabel(rawKey);
+    const label = cleanFieldLabel(rawLabel || rawKey);
+    if (!key || BASE_DYNAMIC_VALUE_KEYS.has(key) || BASE_DYNAMIC_VALUE_KEYS.has(label)) return;
+    if (keyToHeader.has(key)) return;
+    keyToHeader.set(key, uniqueHeader(dynamicFieldHeader(label), usedHeaders));
+  };
   for (const lead of leads || []) {
     for (const answer of Array.isArray(lead.answers) ? lead.answers : []) {
-      const label = cleanFieldLabel(answer.label || answer.id || '');
-      if (!label) continue;
-      const header = dynamicFieldHeader(label);
-      if (!seen.has(header)) {
-        seen.add(header);
-        headers.push(header);
-      }
+      add(answer.id || answer.label, answer.label || answer.id);
     }
     for (const key of Object.keys(lead.values || {})) {
-      const label = cleanFieldLabel(key);
-      if (!label || BASE_DYNAMIC_VALUE_KEYS.has(label)) continue;
-      const header = dynamicFieldHeader(label);
-      if (!seen.has(header)) {
-        seen.add(header);
-        headers.push(header);
-      }
+      add(key, key);
     }
   }
-  return headers;
+  return keyToHeader;
 }
 
-function dynamicFieldMap(lead = {}) {
+function dynamicFieldMap(lead = {}, dynamicHeaders = new Map()) {
   const fields = {};
   for (const [key, value] of Object.entries(lead.values || {})) {
     const label = cleanFieldLabel(key);
     if (!label || BASE_DYNAMIC_VALUE_KEYS.has(label)) continue;
-    fields[dynamicFieldHeader(label)] = flatValue(value);
+    const header = dynamicHeaders.get(label);
+    if (header) fields[header] = flatValue(value);
   }
   for (const answer of Array.isArray(lead.answers) ? lead.answers : []) {
-    const label = cleanFieldLabel(answer.label || answer.id || '');
-    if (!label) continue;
-    fields[dynamicFieldHeader(label)] = flatValue(answer.value);
+    const key = cleanFieldLabel(answer.id || answer.label || '');
+    const header = dynamicHeaders.get(key);
+    if (header) fields[header] = flatValue(answer.value);
   }
   return fields;
 }
 
 function csvCell(value = '') {
-  const text = String(value ?? '');
-  const safe = /^[=+\-@]/.test(text) ? `'${text}` : text;
+  const text = String(value ?? '').replace(/\0/g, '');
+  const visibleStart = text.replace(/^[\s\uFEFF]+/, '');
+  const safe = /^[=+\-@]/.test(visibleStart) || /^[\t\r\n]/.test(text) ? `'${text}` : text;
   return `"${safe.replace(/"/g, '""')}"`;
+}
+
+function uniqueHeader(base, used) {
+  const safeBase = base || '\uC785\uB825\uAC12';
+  let header = safeBase;
+  let index = 2;
+  while (used.has(header)) {
+    header = `${safeBase} ${index}`;
+    index += 1;
+  }
+  used.add(header);
+  return header;
 }
 
 function dateOnly(value = '') {
