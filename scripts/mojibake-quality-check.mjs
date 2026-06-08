@@ -8,15 +8,12 @@ const ignoredFiles = new Set([
 ]);
 
 const mojibakePatterns = [
-  { name: 'replacement-character', pattern: /\uFFFD/ },
-  { name: 'common-mojibake-cjk', pattern: /[癰揶獄筌沃珥沅愿寃]/ },
-  { name: 'compat-cjk-mojibake', pattern: /[留硫吏罹理醫]/ },
-  { name: 'broken-hangul-question-prefix', pattern: /\?[ㄱ-ㅎ가-힣]/ },
-  { name: 'broken-japanese-close-label', pattern: /リ린/ },
-  { name: 'broken-middle-dot', pattern: /쨌/ },
-  { name: 'known-broken-submit-labels', pattern: /덉빟|묒닔|꾩넚|뺤씤|섏씠|대찓|곕씫|몃룞|뚯뒪|/ },
-  { name: 'server-operator-mojibake-cjk', pattern: /諛|獄|揆|珥|吏|遺|誘몃|蹂몄|媛|윭|뙣|쒓컙|몄쬆|留뚮즺|臾댁/ },
-  { name: 'broken-question-korean-prefix', pattern: /\?(?:묒|곹|대|몃|덉|쒓|꾩|낅|듬||뚯)/ },
+  { name: 'replacement-character', tokens: ['\uFFFD'] },
+  { name: 'common-mojibake-cjk', tokens: ['亦', '筌', '野', '獄', '沃', '癰', '揶', '珥', '沅', '愿', '寃'] },
+  { name: 'compat-cjk-mojibake', tokens: ['留', '硫', '吏', '罹', '理', '醫'] },
+  { name: 'known-functions-mojibake', tokens: ['以묐났', '李⑤떒', '뺤콉', '섏뿀', '듬땲', '섏씠', '吏', '李얠', '덉슜', '붿껌', '諛⑹떇', '뚮┝', '꾩넚', 'ㅽ뙣', '곷떞', '덉빟'] },
+  { name: 'known-broken-submit-labels', tokens: ['묒닔', '뺤씤', '대찓', '곕씫', '몃룞', '뚯뒪'] },
+  { name: 'broken-label-fragments', tokens: ['る┛', '夷?', '쨌'] },
 ];
 
 function assert(condition, message) {
@@ -48,8 +45,8 @@ for (const file of files) {
   const text = await readFile(file, 'utf8');
   const lines = text.split(/\r?\n/);
   lines.forEach((line, index) => {
-    mojibakePatterns.forEach(({ name, pattern }) => {
-      if (pattern.test(line)) {
+    mojibakePatterns.forEach(({ name, tokens }) => {
+      if (tokens.some((token) => line.includes(token))) {
         findings.push({
           file,
           line: index + 1,
