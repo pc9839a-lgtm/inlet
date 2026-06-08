@@ -141,7 +141,10 @@ async function verifyPublicPageSave(savedPage = {}) {
     if (publicPageMatchesSaved(publicPage, savedPage)) return publicPage;
     if (attempt < 2) await sleep(250 * (attempt + 1));
   }
-  throw new ApiError('서버 저장 후 공개 페이지 확인에 실패했습니다. 다시 저장해주세요.', 409, {
+  const detail = publicPage
+    ? '공개 URL의 내용이 방금 저장한 내용과 다릅니다.'
+    : '공개 URL에서 저장한 페이지를 찾지 못했습니다.';
+  throw new ApiError(`서버 저장 후 공개 페이지 반영 확인에 실패했습니다. ${detail} 다시 저장해주세요.`, 409, {
     code: 'PAGE_PUBLIC_VERIFY_FAILED',
     slug,
     savedRevision: savedPage.revision || 0,
