@@ -33,7 +33,7 @@ const steps = [
   ['css:qa', ['scripts/css-quality-check.mjs']],
   ['build', ['scripts/build.mjs']],
   ['bundle:qa', ['scripts/bundle-quality-check.mjs']],
-  ['deployment:qa', ['scripts/deployment-artifact-check.mjs']],
+  ['build:deploy', ['scripts/build-deploy-artifact.mjs']],
   ['accessibility:qa', ['scripts/accessibility-quality-check.mjs']],
   ['artifact:qa', ['scripts/artifact-quality-check.mjs']],
   ['worker3:qa', ['scripts/worker3-quality-check.mjs']],
