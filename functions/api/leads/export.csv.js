@@ -73,6 +73,7 @@ export async function onRequest({ request, env }) {
     const project = projectFromRequest(url, {}, request);
     await authorizeProject(request, env, project, { tab: 'inbox' });
 
+    const ids = parseCsvIds(url.searchParams.get('ids') || '');
     const leads = [];
     let cursor = 0;
     for (let guard = 0; guard < 50; guard += 1) {
@@ -91,7 +92,8 @@ export async function onRequest({ request, env }) {
       cursor = page.nextCursor;
     }
 
-    const csv = toCsv(leads);
+    const exportLeads = ids.size ? leads.filter((lead) => ids.has(String(lead.id || ''))) : leads;
+    const csv = toCsv(exportLeads);
     const filename = `${safeFileName(project.slug || project.projectId || 'pagero')}-leads-${month}.csv`;
     return new Response(`\ufeff${csv}`, {
       status: 200,
@@ -105,6 +107,13 @@ export async function onRequest({ request, env }) {
   } catch (error) {
     return handleApiError(request, env, error, METHODS);
   }
+}
+
+function parseCsvIds(value = '') {
+  return new Set(String(value || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean));
 }
 
 function toCsv(leads = []) {
