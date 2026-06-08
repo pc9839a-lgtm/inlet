@@ -359,6 +359,7 @@ export function decodeD1OwnershipTransferRequest(row = {}) {
 
 export function encodeD1Lead(lead = {}, context = {}) {
   const createdAt = String(lead.createdAt || lead.savedAt || lead.created_at || new Date().toISOString());
+  const deliveryStatus = String(lead.delivery?.status || lead.deliveryStatus || 'pending');
   const values = {
     answers: Array.isArray(lead.answers) ? lead.answers : [],
     values: lead.values || {},
@@ -386,7 +387,7 @@ export function encodeD1Lead(lead = {}, context = {}) {
     risk_score: Math.max(0, Number(lead.riskScore || 0)),
     submitted_at: String(lead.submittedAt || createdAt),
     values_json: encodeD1Json(values),
-    delivery_status: String(lead.deliveryStatus || lead.delivery?.status || 'pending'),
+    delivery_status: deliveryStatus,
     source_url: String(lead.sourceUrl || lead.url || ''),
     created_month: d1CreatedMonth(lead.createdMonth || createdAt),
     created_at: createdAt,
@@ -397,6 +398,8 @@ export function encodeD1Lead(lead = {}, context = {}) {
 export function decodeD1Lead(row = {}) {
   const values = decodeD1Json(row.values_json, {});
   const raw = values.raw && typeof values.raw === 'object' ? values.raw : {};
+  const deliveryStatus = row.delivery_status || raw.delivery?.status || raw.deliveryStatus || 'pending';
+  const rawDelivery = raw.delivery && typeof raw.delivery === 'object' ? raw.delivery : {};
   return {
     ...raw,
     id: row.id,
@@ -421,8 +424,13 @@ export function decodeD1Lead(row = {}) {
     submittedAt: row.submitted_at || raw.submittedAt || row.created_at || raw.createdAt || '',
     values: values.values || raw.values || {},
     answers: Array.isArray(values.answers) ? values.answers : (Array.isArray(raw.answers) ? raw.answers : []),
-    deliveryStatus: row.delivery_status || raw.deliveryStatus || raw.delivery?.status || 'pending',
-    delivery: raw.delivery || { status: row.delivery_status || raw.deliveryStatus || 'pending', summary: '', logs: [] },
+    deliveryStatus,
+    delivery: {
+      ...rawDelivery,
+      status: deliveryStatus,
+      summary: rawDelivery.summary || '',
+      logs: Array.isArray(rawDelivery.logs) ? rawDelivery.logs : [],
+    },
     sourceUrl: row.source_url || raw.sourceUrl || '',
     createdMonth: row.created_month || d1CreatedMonth(row.created_at),
     createdAt: row.created_at || raw.createdAt || '',

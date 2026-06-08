@@ -899,6 +899,14 @@ assert(encodedLead.contact_key === '01011112222', 'lead contact key should prefe
 assert(encodedLead.phone_normalized === '01011112222' && encodedLead.duplicate === 1, 'lead dedupe metadata should encode');
 assert(decodeD1Lead(encodedLead).answers.length === 1, 'lead answers should round-trip');
 assert(decodeD1Lead(encodedLead).duplicateReason === 'phone_30d' && decodeD1Lead(encodedLead).clientId === 'client-1', 'lead dedupe metadata should round-trip');
+const encodedDeliveryStatusLead = encodeD1Lead({
+  ...sampleLead,
+  id: 'lead-delivery-status',
+  deliveryStatus: 'success',
+  delivery: { status: 'failed', summary: 'failed', logs: [] },
+}, { projectId: 'project-1', pageSlug: 'landing' });
+assert(encodedDeliveryStatusLead.delivery_status === 'failed', 'D1 lead delivery status should prefer nested delivery status over stale top-level status');
+assert(decodeD1Lead({ ...encodedDeliveryStatusLead, delivery_status: 'partial' }).delivery.status === 'partial', 'D1 decoded delivery status should follow row delivery_status');
 const encodedCategoryLead = encodeD1Lead({ ...sampleLead, id: 'lead-category', type: '', kind: '', category: 'booking' }, { projectId: 'project-1', pageSlug: 'landing' });
 assert(encodedCategoryLead.kind === 'booking' && decodeD1Lead(encodedCategoryLead).kind === 'booking', 'lead category should fallback into D1 kind');
 
