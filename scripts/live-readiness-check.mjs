@@ -164,15 +164,81 @@ async function hostedApiHealthCheck() {
   }
 }
 
+async function publicPageLiveCheck() {
+  const baseUrl = normalizeBaseUrl(env.INLET_PUBLIC_API_URL || env.INLET_PUBLIC_QA_URL || '');
+  const slug = String(env.INLET_PUBLIC_PAGE_SLUG || env.INLET_PAGE_SLUG || '').trim().replace(/^\/+|\/+$/g, '');
+  if (!baseUrl || !slug) {
+    return status(
+      'Public landing saved page',
+      false,
+      [
+        baseUrl ? '' : 'INLET_PUBLIC_API_URL',
+        slug ? '' : 'INLET_PUBLIC_PAGE_SLUG',
+      ].filter(Boolean),
+      'Set INLET_PUBLIC_API_URL and INLET_PUBLIC_PAGE_SLUG, then run npm run public:page:live or npm run live:qa to verify the deployed slug exists in the public API.',
+    );
+  }
+
+  const fresh = Date.now();
+  const landingUrl = `${baseUrl}/${encodeURIComponent(slug)}?__fresh=${fresh}`;
+  const apiUrl = `${baseUrl}/api/pages/${encodeURIComponent(slug)}?public=1&fresh=${fresh}`;
+  try {
+    const landing = await fetch(landingUrl, {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache, no-store', Pragma: 'no-cache' },
+      signal: AbortSignal.timeout(5000),
+    });
+    const landingOk = landing.ok && /text\/html/i.test(landing.headers.get('content-type') || '');
+    const api = await fetch(apiUrl, {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache, no-store', Pragma: 'no-cache' },
+      signal: AbortSignal.timeout(5000),
+    });
+    const payload = await api.json().catch(() => null);
+    const page = payload?.page || null;
+    const ready = landingOk && api.ok && String(page?.slug || '') === slug;
+    return {
+      name: 'Public landing saved page',
+      status: ready ? 'ready' : 'failed-live',
+      missing: [],
+      manualCheck: 'The public route must serve HTML and /api/pages/:slug?public=1 must return the saved page from live storage.',
+      landingUrl,
+      apiUrl,
+      landingStatus: landing.status,
+      apiStatus: api.status,
+      page: page ? {
+        slug: page.slug || '',
+        title: page.title || '',
+        projectId: page.projectId || '',
+        updatedAt: page.updatedAt || '',
+        revision: page.revision || 0,
+      } : null,
+      diagnosis: ready ? '' : (landingOk ? 'Route is live, but the saved page was not found in the public API.' : 'Public route is not serving the app HTML.'),
+    };
+  } catch (error) {
+    return {
+      name: 'Public landing saved page',
+      status: 'failed-live',
+      missing: [],
+      manualCheck: 'Public landing route or public page API is unreachable.',
+      landingUrl,
+      apiUrl,
+      error: error?.message || String(error),
+    };
+  }
+}
+
 const sesKeys = ['INLET_AUTH_EMAIL_MODE=api or ses', 'INLET_EMAIL_PROVIDER=ses', 'AWS_SES_REGION', 'AWS_SES_ACCESS_KEY_ID', 'AWS_SES_SECRET_ACCESS_KEY', 'INLET_AUTH_EMAIL_FROM'];
 const oauthKeys = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'];
 const apiKeys = ['INLET_PUBLIC_API_URL'];
 const hostedApiCheck = await hostedApiHealthCheck();
+const publicPageCheck = await publicPageLiveCheck();
 const cloudflareAccount = await resolveCloudflareAccountMeta();
 const hasCloudflareToken = !!cloudflareAccount.token;
 const hasCloudflareAccount = !!cloudflareAccount.accountId;
 const checks = [
   hostedApiCheck,
+  publicPageCheck,
   status(
     'Cloudflare D1 live schema',
     env.INLET_D1_LIVE_QA === '1' && hasCloudflareToken && hasCloudflareAccount,
@@ -216,10 +282,14 @@ const checks = [
     'Run desktop/mobile screenshots with INLET_BROWSER_QA_REQUIRE=1 when browser dependency exists.',
   ),
 ];
+const liveSummary = summarize(checks);
+if (Number(liveSummary['failed-live'] || 0) > 0) {
+  process.exitCode = 1;
+}
 
 console.log(JSON.stringify({
-  ok: true,
-  liveSummary: summarize(checks),
+  ok: Number(liveSummary['failed-live'] || 0) === 0,
+  liveSummary,
   checks,
   commands: {
     ai: 'INLET_AI_QA_LIVE=1 npm run ai:qa',
@@ -227,6 +297,7 @@ console.log(JSON.stringify({
     hostedApi: 'INLET_PUBLIC_API_URL=https://api.example.com INLET_HOSTED_API_QA_REQUIRE=1 npm run api:hosted:qa',
     d1: 'INLET_D1_LIVE_QA=1 npm run d1:live:qa',
     hostedQaCleanup: 'npm run d1:hosted-qa:cleanup',
+    publicPage: 'INLET_PUBLIC_API_URL=https://pagero.kr INLET_PUBLIC_PAGE_SLUG=my-slug npm run public:page:live',
     browser: 'INLET_BROWSER_QA_URL=http://localhost:5173 INLET_BROWSER_QA_REQUIRE=1 npm run browser:visual:qa',
     mock: 'npm run integration:mock:qa',
     conversion: 'npm run conversion:qa',
