@@ -81,6 +81,9 @@ export async function onRequest({ request, env }) {
         kind: url.searchParams.get('kind') || '',
         deliveryStatus: url.searchParams.get('deliveryStatus') || '',
         q: url.searchParams.get('q') || '',
+        dateFrom: url.searchParams.get('dateFrom') || '',
+        dateTo: url.searchParams.get('dateTo') || '',
+        channel: url.searchParams.get('channel') || '',
         cursor: Number(url.searchParams.get('cursor') || 0),
         limit: Number(url.searchParams.get('limit') || 50),
       });

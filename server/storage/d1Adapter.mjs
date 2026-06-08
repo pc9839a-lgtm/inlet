@@ -1062,12 +1062,29 @@ export async function listD1OwnershipTransferRequests(db, { projectId, status = 
   };
 }
 
-export async function listD1Leads(db, { projectId, month, status = '', kind = '', deliveryStatus = '', q = '', cursor = 0, limit = 50 } = {}) {
+export async function listD1Leads(db, { projectId, month, status = '', kind = '', deliveryStatus = '', q = '', dateFrom = '', dateTo = '', channel = '', cursor = 0, limit = 50 } = {}) {
   assertD1Binding(db);
   const safeLimit = Math.max(1, Math.min(100, Number(limit || 50)));
   const safeCursor = Math.max(0, Number(cursor || 0));
   const filters = ['project_id = ?', 'created_month = ?'];
   const params = [projectId, month];
+  if (dateFrom) {
+    filters.push('created_at >= ?');
+    params.push(d1DateBoundary(dateFrom, 'start'));
+  }
+  if (dateTo) {
+    filters.push('created_at <= ?');
+    params.push(d1DateBoundary(dateTo, 'end'));
+  }
+  const safeChannel = normalizeD1ChannelFilter(channel);
+  if (safeChannel) {
+    if (safeChannel === 'direct' || safeChannel === 'unknown') {
+      filters.push("(source_url IS NULL OR source_url = '' OR source_url NOT LIKE '%utm_source=%')");
+    } else {
+      filters.push('source_url LIKE ?');
+      params.push(`%utm_source=${safeChannel}%`);
+    }
+  }
   if (status) {
     filters.push('status = ?');
     params.push(status);

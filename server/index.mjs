@@ -430,6 +430,7 @@ const server = createServer(async (req, res) => {
         month: url.searchParams.get('month') || '',
         dateFrom: url.searchParams.get('dateFrom') || '',
         dateTo: url.searchParams.get('dateTo') || '',
+        channel: url.searchParams.get('channel') || '',
         deliveryStatus: url.searchParams.get('deliveryStatus') || '',
       });
       sendJson(res, 200, { ok: true, ...result });
@@ -3155,14 +3156,14 @@ async function listLeadsPage(limit, project = {}, cursor = 0, filters = {}) {
       kind: d1LeadKindFilter(filters.kind),
       deliveryStatus: d1LeadDeliveryStatusFilter(filters.deliveryStatus),
       q: String(filters.q || '').trim(),
+      dateFrom: dateFilters.dateFrom,
+      dateTo: dateFilters.dateTo,
+      channel: dateFilters.channel,
       cursor,
       limit,
     });
-    const records = dateFilters.channel
-      ? result.records.filter((lead) => matchesStatsChannel(lead, dateFilters.channel))
-      : result.records;
     return {
-      leads: records,
+      leads: result.records,
       total: result.total,
       nextCursor: result.nextCursor,
       hasMore: result.hasMore,

@@ -102,6 +102,24 @@ await runSmoke('server-smoke-events', async ({ baseUrl }) => {
   assert(utmSave.res.ok, 'UTM event save failed');
   assert(utmSave.data.event?.channel === 'naver', 'UTM source should override legacy channel');
   assert(utmSave.data.event?.utmMedium === 'cpc' && utmSave.data.event?.utmCampaign === 'summer', 'UTM medium/campaign should be saved');
+  const utmLead = await json({ baseUrl }, 'POST', '/api/leads', {
+    project: utmProject,
+    page: { title: 'UTM Stats', slug: utmProject.slug },
+    lead: {
+      id: 'utm-lead-1',
+      type: 'consult',
+      status: 'new',
+      name: 'UTM Lead',
+      phone: '010-9000-1100',
+      sourceUrl: 'https://example.com/form?utm_source=naver&utm_medium=cpc&utm_campaign=summer',
+      createdAt: '2026-05-10T03:30:00.000Z',
+    },
+  });
+  assert(utmLead.res.ok, 'UTM lead save failed');
+  const utmLeadList = await json({ baseUrl }, 'GET', `/api/leads?${utmQuery}&month=2026-05&channel=naver&limit=10`);
+  assert(utmLeadList.data.leads?.some((lead) => lead.id === 'utm-lead-1'), 'UTM channel lead list should include matching leads');
+  const directLeadList = await json({ baseUrl }, 'GET', `/api/leads?${utmQuery}&month=2026-05&channel=direct&limit=10`);
+  assert(!directLeadList.data.leads?.some((lead) => lead.id === 'utm-lead-1'), 'direct channel lead list should exclude UTM leads');
   const utmSummary = await json({ baseUrl }, 'GET', `/api/stats/summary?${utmQuery}&month=2026-05&period=thisMonth&channel=naver`);
-  assert(utmSummary.data.summary?.pv === 1 && utmSummary.data.summary?.channelData?.naver === 1, 'UTM channel stats mismatch');
+  assert(utmSummary.data.summary?.pv === 1 && utmSummary.data.summary?.db === 1 && utmSummary.data.summary?.channelData?.naver === 1, 'UTM channel stats mismatch');
 }, { timeoutMs: 10000 });

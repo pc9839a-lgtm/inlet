@@ -663,6 +663,13 @@ function fakeD1(options = {}) {
             let paramIndex = 0;
             const projectId = this.params[paramIndex++];
             const month = this.params[paramIndex++];
+            const hasDateFrom = sql.includes('created_at >= ?');
+            const dateFrom = hasDateFrom ? this.params[paramIndex++] : '';
+            const hasDateTo = sql.includes('created_at <= ?');
+            const dateTo = hasDateTo ? this.params[paramIndex++] : '';
+            const hasChannel = sql.includes('source_url LIKE ?');
+            const channel = hasChannel ? String(this.params[paramIndex++]).replace(/%/g, '').replace(/^utm_source=/, '').toLowerCase() : '';
+            const directChannel = sql.includes("source_url NOT LIKE '%utm_source=%'");
             const hasStatus = sql.includes('status = ?');
             const status = hasStatus ? this.params[paramIndex++] : '';
             const hasKind = sql.includes('kind = ?');
@@ -676,6 +683,9 @@ function fakeD1(options = {}) {
             const offset = Number(this.params[paramIndex++]);
             const filtered = rows.leads
               .filter((row) => row.project_id === projectId && row.created_month === month)
+              .filter((row) => inFakeDateRange(row, dateFrom, dateTo))
+              .filter((row) => !directChannel || !String(row.source_url || '').includes('utm_source='))
+              .filter((row) => !channel || String(row.source_url || '').toLowerCase().includes(`utm_source=${channel}`))
               .filter((row) => !status || row.status === status)
               .filter((row) => !kind || row.kind === kind)
               .filter((row) => !deliveryStatus || row.delivery_status === deliveryStatus)
@@ -800,6 +810,13 @@ function fakeD1(options = {}) {
             let paramIndex = 0;
             const projectId = this.params[paramIndex++];
             const month = this.params[paramIndex++];
+            const hasDateFrom = sql.includes('created_at >= ?');
+            const dateFrom = hasDateFrom ? this.params[paramIndex++] : '';
+            const hasDateTo = sql.includes('created_at <= ?');
+            const dateTo = hasDateTo ? this.params[paramIndex++] : '';
+            const hasChannel = sql.includes('source_url LIKE ?');
+            const channel = hasChannel ? String(this.params[paramIndex++]).replace(/%/g, '').replace(/^utm_source=/, '').toLowerCase() : '';
+            const directChannel = sql.includes("source_url NOT LIKE '%utm_source=%'");
             const hasStatus = sql.includes('status = ?');
             const status = hasStatus ? this.params[paramIndex++] : '';
             const hasKind = sql.includes('kind = ?');
@@ -811,6 +828,9 @@ function fakeD1(options = {}) {
             return {
               total: rows.leads
                 .filter((row) => row.project_id === projectId && row.created_month === month)
+                .filter((row) => inFakeDateRange(row, dateFrom, dateTo))
+                .filter((row) => !directChannel || !String(row.source_url || '').includes('utm_source='))
+                .filter((row) => !channel || String(row.source_url || '').toLowerCase().includes(`utm_source=${channel}`))
                 .filter((row) => !hasStatus || row.status === status)
                 .filter((row) => !hasKind || row.kind === kind)
                 .filter((row) => !hasDeliveryStatus || row.delivery_status === deliveryStatus)
@@ -1054,6 +1074,27 @@ assert(
 assert(leadPage.records[0].phone === '010-1111-2222', 'lead list should decode original lead');
 const filteredLeadPage = await listD1Leads(db, { projectId: 'project-1', month: '2026-05', status: 'checked', kind: 'consult', deliveryStatus: 'pending', limit: 10 });
 assert(filteredLeadPage.records.length === 1 && filteredLeadPage.total === 1, 'lead list should filter by status, kind, and delivery status');
+await upsertD1Lead(db, {
+  ...sampleLead,
+  id: 'lead-channel-naver',
+  sourceUrl: 'https://example.com/?utm_source=naver&utm_medium=cpc&utm_campaign=lead',
+  createdAt: '2026-05-11T01:00:00.000Z',
+}, { projectId: 'project-1', pageSlug: 'landing' });
+await upsertD1Lead(db, {
+  ...sampleLead,
+  id: 'lead-channel-direct',
+  phone: '010-3333-4444',
+  sourceUrl: 'https://example.com/direct',
+  createdAt: '2026-05-12T01:00:00.000Z',
+}, { projectId: 'project-1', pageSlug: 'landing' });
+const naverLeadPage = await listD1Leads(db, { projectId: 'project-1', month: '2026-05', channel: 'naver', limit: 10 });
+assert(naverLeadPage.records.length === 1 && naverLeadPage.records[0].id === 'lead-channel-naver', 'lead list should filter by UTM source channel');
+const directLeadPage = await listD1Leads(db, { projectId: 'project-1', month: '2026-05', channel: 'direct', limit: 10 });
+assert(directLeadPage.records.some((lead) => lead.id === 'lead-channel-direct') && !directLeadPage.records.some((lead) => lead.id === 'lead-channel-naver'), 'lead list direct channel should exclude UTM-sourced leads');
+const dateLeadPage = await listD1Leads(db, { projectId: 'project-1', month: '2026-05', dateFrom: '2026-05-11', dateTo: '2026-05-11', limit: 10 });
+assert(dateLeadPage.records.length === 1 && dateLeadPage.records[0].id === 'lead-channel-naver', 'lead list should honor date range filters');
+await deleteD1Lead(db, { projectId: 'project-1', id: 'lead-channel-naver' });
+await deleteD1Lead(db, { projectId: 'project-1', id: 'lead-channel-direct' });
 const searchedLeadPage = await listD1Leads(db, { projectId: 'project-1', month: '2026-05', q: 'kim', limit: 10 });
 assert(searchedLeadPage.records.length === 1 && searchedLeadPage.total === 1, 'lead list should filter by search text');
 const contactLeads = await findD1LeadsByContact(db, { projectId: 'project-1', month: '2026-05', phone: '01011112222' });
