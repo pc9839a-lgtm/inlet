@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { isServerPageMode } from '../config/runtimeConfig.js';
 import { Field, ImageInput, Toggle } from '../editor/controls.jsx';
 import {
@@ -21,6 +21,7 @@ import { createLocalManagerInvite, createServerManagerInvite, createServerOwners
 import { ownershipTransferBillingLabel, ownershipTransferStatusCopy, ownershipTransferStatusLabel } from '../lib/ownershipTransfer.js';
 import { normalizePageDuplicateUrl, pageDuplicateUrlIssues, sanitizeDuplicateSlug } from '../lib/pageDuplication.js';
 import { normalizeIntegrations } from '../lib/pageModel.js';
+import { sanitizePageSlug } from '../lib/pageSlugs.js';
 import { confirmAction, notify } from '../lib/uiFeedback.js';
 import './SettingsPanel.css';
 
@@ -344,6 +345,7 @@ export default function SettingsPanel({
     slug: `${sanitizeDuplicateSlug(page.slug || 'my-page') || 'my-page'}-copy`,
   }));
   const [basicDraft, setBasicDraft] = useState(() => ({ title: page.title || '', slug: page.slug || '' }));
+  const basicSourceRef = useRef({ title: page.title || '', slug: page.slug || '' });
   const [seoDraft, setSeoDraft] = useState(() => ({
     title: page.meta.title || '',
     desc: page.meta.desc || '',
@@ -370,8 +372,21 @@ export default function SettingsPanel({
   const showConversionToggles = conversionLocked && hasConversionValue;
   const lockSection = (id) => setLockedSections((state) => ({ ...state, [id]: true }));
   const editSection = (id) => setLockedSections((state) => ({ ...state, [id]: false }));
+  useEffect(() => {
+    const nextSource = { title: page.title || '', slug: page.slug || '' };
+    setBasicDraft((draft) => {
+      const previousSource = basicSourceRef.current || { title: '', slug: '' };
+      const draftDirty = draft.title !== previousSource.title || draft.slug !== previousSource.slug;
+      basicSourceRef.current = nextSource;
+      if (openSection === 'basic' && !lockedSections.basic && draftDirty) return draft;
+      return nextSource;
+    });
+  }, [page.title, page.slug, openSection, lockedSections.basic]);
   const saveBasic = () => {
-    updatePage({ title: basicDraft.title, slug: String(basicDraft.slug || '').replace(/[^a-zA-Z0-9-_]/g, '') });
+    const slug = sanitizePageSlug(basicDraft.slug, page.slug || 'my-page');
+    updatePage({ title: basicDraft.title, slug });
+    basicSourceRef.current = { title: basicDraft.title || '', slug };
+    setBasicDraft({ title: basicDraft.title || '', slug });
     lockSection('basic');
     notify('페이지 기본 설정을 저장했습니다.', 'success');
   };

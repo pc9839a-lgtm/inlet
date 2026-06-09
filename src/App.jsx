@@ -758,7 +758,7 @@ function App() {
     if (publicLandingSlug || !authUser) return undefined;
     let alive = true;
     const slug = page.slug || defaultPage.slug || 'my-page';
-    const context = projectContext({ slug }, authUser);
+    const context = projectContext(page, authUser);
     const loadKey = `${context.projectId}:${context.slug}:${authUser?.session || authUser?.workspaceId || authUser?.email || ''}`;
     if (accountPageLoadRef.current === loadKey) return undefined;
     accountPageLoadRef.current = loadKey;
@@ -771,10 +771,11 @@ function App() {
         }
         setPage((current) => {
           const currentSlug = current.slug || slug;
-          const nextSlug = current.projectId && current.projectId === projectContext({ slug: currentSlug }, authUser).projectId
+          const currentContext = projectContext(current, authUser);
+          const nextSlug = current.projectId && current.projectId === currentContext.projectId
             ? currentSlug
             : (shouldAutoReplaceSlug(currentSlug) ? createUniquePageSlug(currentSlug, authUser) : currentSlug);
-          const nextContext = projectContext({ slug: nextSlug }, authUser);
+          const nextContext = projectContext({ ...current, slug: nextSlug }, authUser);
           if (current.projectId === nextContext.projectId) return current;
           return normalizePageForSave({
             ...current,
@@ -788,7 +789,7 @@ function App() {
         console.warn('Server page load failed:', error);
       });
     return () => { alive = false; };
-  }, [publicLandingSlug, authUser?.session, authUser?.workspaceId, authUser?.email]);
+  }, [publicLandingSlug, authUser?.session, authUser?.workspaceId, authUser?.email, page.slug, page.projectId, page.ownerId]);
   useEffect(() => {
     if (!publicLandingSlug) return undefined;
     let alive = true;

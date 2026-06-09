@@ -31,6 +31,7 @@ const refreshedSessionUser = normalizeAuthUser({
 });
 const refreshedSameSlugContext = projectContext({ slug: 'campaign', projectId: contextA.projectId, ownerId: contextA.ownerId }, refreshedSessionUser);
 const refreshedNewSlugContext = projectContext({ slug: 'new-campaign' }, refreshedSessionUser);
+const renamedOwnedPageContext = projectContext({ slug: 'renamed-campaign', projectId: contextA.projectId, ownerId: contextA.ownerId }, refreshedSessionUser);
 const invitedProjectUser = normalizeAuthUser({
   ...userA1,
   ownerId: 'project-owner',
@@ -50,6 +51,7 @@ assert(staleOtherOwnerContext.projectId === contextA.projectId, 'authenticated c
 assert(ownedExistingContext.projectId === contextA.projectId, 'authenticated context should preserve owned project id');
 assert(refreshedSameSlugContext.projectId === contextA.projectId, 'refreshed session should preserve the current owned page project id');
 assert(refreshedNewSlugContext.projectId !== contextA.projectId && refreshedNewSlugContext.projectId.endsWith('_new-campaign'), 'new slug creation should not reuse a refreshed session project id from another page');
+assert(renamedOwnedPageContext.projectId === contextA.projectId && renamedOwnedPageContext.slug === 'renamed-campaign', 'renaming an owned page should keep the existing project id');
 assert(invitedProjectContext.projectId === 'invited-project-id', 'invited manager/client sessions should keep the default project id for the invited slug');
 assert(publicServerContext.projectId === 'server_project_123', 'public landing submissions should use the stored server project id');
 assert(publicServerContext.ownerId === '', 'public landing submissions should not invent a visitor owner id');
