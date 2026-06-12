@@ -774,8 +774,23 @@ function App() {
     fetchServerPage(slug, context)
       .then((serverPage) => {
         if (!alive) return;
+        if (accountPageLoadRef.current !== loadKey) return;
         if (serverPage) {
-          setPage(normalize(serverPage));
+          if (shouldAutoReplaceSlug(serverPage.slug || slug)) {
+            const nextSlug = createUniquePageSlug(serverPage.slug || slug, authUser);
+            const nextContext = projectContext({ ...serverPage, slug: nextSlug }, authUser);
+            setPage(normalizePageForSave({
+              ...serverPage,
+              slug: nextSlug,
+              projectId: nextContext.projectId,
+              ownerId: nextContext.ownerId,
+            }));
+            return;
+          }
+          setPage((current) => {
+            if ((current.slug || '') !== slug || (current.projectId || '') !== (context.projectId || '')) return current;
+            return normalize(serverPage);
+          });
           return;
         }
         setPage((current) => {
