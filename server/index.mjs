@@ -186,8 +186,18 @@ const server = createServer(async (req, res) => {
       return;
     }
 
+    if (req.method === 'GET' && url.pathname === '/api/auth/login') {
+      await handleGoogleAccountCallback(req, res);
+      return;
+    }
+
     if (req.method === 'POST' && url.pathname === '/api/auth/login') {
       const body = await readJson(req);
+      if (String(body?.provider || '').toLowerCase() === 'google' || String(body?.action || '').toLowerCase() === 'google-oauth-url') {
+        const googleUrl = await buildGoogleAccountLoginUrl(req, body || {});
+        sendJson(res, 200, { ok: true, url: googleUrl });
+        return;
+      }
       const result = await loginUserAccount(body?.user || body || {});
       sendJson(res, 200, { ok: true, ...result });
       return;
@@ -5583,6 +5593,268 @@ async function loginUserAccount(input = {}) {
       email: publicUser.email,
     }),
   };
+}
+
+async function buildGoogleAccountLoginUrl(req, input = {}) {
+  const clientId = googleAccountClientId();
+  if (!clientId) {
+    const error = new Error('Google login is not configured.');
+    error.status = 503;
+    error.details = { code: 'GOOGLE_AUTH_NOT_CONFIGURED' };
+    throw error;
+  }
+  const state = signGoogleAccountState({
+    projectId: safeId(input.projectId || '', ''),
+    next: safeGoogleAccountNext(input.next || '/'),
+  });
+  const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+  url.searchParams.set('client_id', clientId);
+  url.searchParams.set('redirect_uri', googleAccountRedirectUri(req));
+  url.searchParams.set('response_type', 'code');
+  url.searchParams.set('scope', 'openid email profile');
+  url.searchParams.set('prompt', 'select_account');
+  url.searchParams.set('state', state);
+  return url.toString();
+}
+
+async function handleGoogleAccountCallback(req, res) {
+  try {
+    const url = new URL(req.url, googleRequestOrigin(req));
+    const code = String(url.searchParams.get('code') || '').trim();
+    const state = String(url.searchParams.get('state') || '').trim();
+    if (!code || !state) {
+      sendJson(res, 405, { ok: false, error: 'Method not allowed.' });
+      return;
+    }
+    const result = await loginGoogleAccountFromCode(req, { code, state });
+    sendGoogleAuthSuccessHtml(res, result);
+  } catch (error) {
+    sendGoogleAuthFailureHtml(res, error);
+  }
+}
+
+async function loginGoogleAccountFromCode(req, input = {}) {
+  const statePayload = verifyGoogleAccountState(input.state || '');
+  if (!input.code || !statePayload) {
+    const error = new Error('Google login request is invalid.');
+    error.status = 400;
+    error.details = { code: 'GOOGLE_AUTH_INVALID' };
+    throw error;
+  }
+  const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      code: input.code,
+      client_id: googleAccountClientId(),
+      client_secret: googleAccountClientSecret(),
+      redirect_uri: googleAccountRedirectUri(req),
+      grant_type: 'authorization_code',
+    }),
+  });
+  const token = await tokenResponse.json().catch(() => ({}));
+  if (!tokenResponse.ok || !token.access_token) {
+    const error = new Error(token.error_description || token.error || 'Google token exchange failed.');
+    error.status = 502;
+    error.details = { code: 'GOOGLE_TOKEN_EXCHANGE_FAILED' };
+    throw error;
+  }
+  const profileResponse = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
+    headers: { Authorization: `Bearer ${token.access_token}` },
+  });
+  const profile = await profileResponse.json().catch(() => ({}));
+  if (!profileResponse.ok) {
+    const error = new Error(profile.error_description || profile.error || 'Google profile request failed.');
+    error.status = 502;
+    error.details = { code: 'GOOGLE_PROFILE_FAILED' };
+    throw error;
+  }
+  const email = normalizeEmail(profile.email || '');
+  if (!isValidEmail(email) || profile.email_verified === false) {
+    const error = new Error('Google account email is not verified.');
+    error.status = 403;
+    error.details = { code: 'GOOGLE_EMAIL_NOT_VERIFIED' };
+    throw error;
+  }
+  const user = await upsertGoogleAccountUser({
+    email,
+    name: String(profile.name || profile.given_name || email).trim(),
+  });
+  const publicUser = authUserPublic(user);
+  return {
+    user: publicUser,
+    session: createSessionToken({
+      ownerId: publicUser.ownerId,
+      projectId: safeId(statePayload.projectId || '', ''),
+      role: 'master',
+      email: publicUser.email,
+    }),
+    next: safeGoogleAccountNext(statePayload.next || '/'),
+  };
+}
+
+async function upsertGoogleAccountUser(profile = {}) {
+  const email = normalizeEmail(profile.email || '');
+  const now = new Date().toISOString();
+  if (storageRuntime.active === 'd1') {
+    let user = await getD1AccountByEmail(storageRuntime.d1, email);
+    if (user) {
+      assertAccountActive(user, 'google login');
+      if (user.emailVerified !== true || !user.name) {
+        user = await upsertD1Account(storageRuntime.d1, {
+          ...user,
+          email,
+          name: user.name || profile.name || email,
+          emailVerified: true,
+          emailVerifiedAt: now,
+          updatedAt: now,
+        });
+      }
+      return user;
+    }
+    const ownerId = ownerIdForEmail(email);
+    return upsertD1Account(storageRuntime.d1, {
+      id: ownerId,
+      ownerId,
+      name: profile.name || email,
+      email,
+      phone: '',
+      phoneVerified: false,
+      emailVerified: true,
+      passwordHash: '',
+      status: 'active',
+      source: 'google',
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+
+  return withJsonlMutex(usersFile, async () => {
+    const users = await readUserAccounts();
+    const index = users.findIndex((user) => normalizeEmail(user.email) === email);
+    if (index >= 0) {
+      assertAccountActive(users[index], 'google login');
+      const nextUser = {
+        ...users[index],
+        name: users[index].name || profile.name || email,
+        emailVerified: true,
+        emailVerifiedAt: users[index].emailVerifiedAt || now,
+        updatedAt: now,
+      };
+      users[index] = nextUser;
+      await writeJsonlRecords(usersFile, users);
+      return nextUser;
+    }
+    const ownerId = ownerIdForEmail(email);
+    const user = {
+      id: ownerId,
+      ownerId,
+      name: profile.name || email,
+      email,
+      phone: '',
+      phoneVerified: false,
+      emailVerified: true,
+      emailVerifiedAt: now,
+      passwordHash: '',
+      status: 'active',
+      source: 'google',
+      createdAt: now,
+      updatedAt: now,
+    };
+    await appendJsonlRecord(usersFile, user);
+    return user;
+  });
+}
+
+function googleAccountClientId() {
+  return String(env.GOOGLE_AUTH_CLIENT_ID || env.GOOGLE_OAUTH_CLIENT_ID || env.GOOGLE_CLIENT_ID || '').trim();
+}
+
+function googleAccountClientSecret() {
+  return String(env.GOOGLE_AUTH_CLIENT_SECRET || env.GOOGLE_OAUTH_CLIENT_SECRET || env.GOOGLE_CLIENT_SECRET || '').trim();
+}
+
+function googleAccountRedirectUri(req) {
+  const configured = String(env.GOOGLE_AUTH_REDIRECT_URI || '').trim();
+  if (configured) return configured;
+  return new URL('/api/auth/login', googleRequestOrigin(req)).toString();
+}
+
+function signGoogleAccountState(payload = {}) {
+  const body = Buffer.from(JSON.stringify({
+    ...payload,
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + 10 * 60,
+  })).toString('base64url');
+  return `${body}.${createHmac('sha256', sessionAuthConfig.secret || 'pagero-dev-session').update(body).digest('base64url')}`;
+}
+
+function verifyGoogleAccountState(state = '') {
+  const [body, signature] = String(state || '').split('.');
+  if (!body || !signature) return null;
+  const expected = createHmac('sha256', sessionAuthConfig.secret || 'pagero-dev-session').update(body).digest('base64url');
+  if (!safeEqual(signature, expected)) return null;
+  try {
+    const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
+    if (payload.exp && Number(payload.exp) < Math.floor(Date.now() / 1000)) return null;
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+function sendGoogleAuthSuccessHtml(res, result = {}) {
+  const authUser = {
+    ...(result.user || {}),
+    session: result.session || '',
+    role: 'master',
+    signedAt: new Date().toISOString(),
+  };
+  const next = safeGoogleAccountNext(result.next || '/');
+  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+  res.end(`<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Google 로그인 완료</title></head>
+<body>
+<script>
+try {
+  localStorage.setItem('inlet-auth-v1', ${JSON.stringify(JSON.stringify(authUser))});
+  location.replace(${JSON.stringify(next)});
+} catch (error) {
+  location.replace('/');
+}
+</script>
+</body>
+</html>`);
+}
+
+function sendGoogleAuthFailureHtml(res, error) {
+  const message = escapeHtml(String(error?.message || error || 'Google 로그인에 실패했습니다.'));
+  res.writeHead(Number(error?.status || 400), { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+  res.end(`<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Google 로그인 실패</title></head>
+<body style="margin:0;background:#f3f6fb;font-family:Arial,'Malgun Gothic',sans-serif;color:#101828;display:grid;min-height:100vh;place-items:center;">
+  <section style="width:min(440px,calc(100% - 32px));background:#fff;border:1px solid #dbe4f0;border-radius:24px;padding:28px;box-shadow:0 18px 50px rgba(15,23,42,.12);text-align:center;">
+    <strong style="display:inline-block;padding:7px 12px;border-radius:999px;background:#eef4ff;color:#2563eb;font-size:13px;">페이지로</strong>
+    <h1 style="margin:18px 0 8px;font-size:26px;">Google 로그인 실패</h1>
+    <p style="margin:0 0 20px;color:#475569;font-size:14px;line-height:1.6;">${message}</p>
+    <a href="/login" style="display:block;height:48px;line-height:48px;border-radius:14px;background:#111827;color:#fff;text-decoration:none;font-weight:900;">로그인으로 돌아가기</a>
+  </section>
+</body>
+</html>`);
+}
+
+function safeGoogleAccountNext(value = '/') {
+  const pathValue = String(value || '/').trim();
+  if (!pathValue || !pathValue.startsWith('/') || pathValue.startsWith('//') || /^\/api(?:\/|$)/.test(pathValue)) return '/';
+  return pathValue;
+}
+
+function googleRequestOrigin(req) {
+  const host = String(req.headers['x-forwarded-host'] || req.headers.host || 'localhost').trim();
+  const proto = String(req.headers['x-forwarded-proto'] || (host.includes('localhost') ? 'http' : 'https')).trim();
+  return `${proto}://${host}`;
 }
 
 async function refreshUserSession(req, input = {}) {
