@@ -1,5 +1,5 @@
 import { assertD1, authorizeProject, handleApiError, jsonResponse, optionsResponse, projectFromRequest, readJson } from '../../../_shared.js';
-import { googleClientId, googleRedirectUri, googleSheetsAuthUrl, signedOAuthState } from './_oauth.js';
+import { googleClientId, googleClientSecret, googleRedirectUri, googleSheetsAuthUrl, signedOAuthState } from './_oauth.js';
 
 const METHODS = 'POST, OPTIONS';
 
@@ -21,12 +21,13 @@ export async function onRequestPost({ request, env }) {
     await authorizeProject(request, env, { ...project, projectId }, { write: true, tab: 'inbox' });
 
     const clientId = googleClientId(env);
-    if (!clientId) {
+    const clientSecret = googleClientSecret(env);
+    if (!clientId || !clientSecret) {
       return jsonResponse(request, env, 503, {
         ok: false,
         status: 'not_configured',
-        message: 'Google OAuth 클라이언트 설정이 필요합니다.',
-        required: ['GOOGLE_OAUTH_CLIENT_ID', 'GOOGLE_OAUTH_CLIENT_SECRET'],
+        message: 'Google OAuth 설정이 필요합니다.',
+        required: ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'],
       }, METHODS);
     }
 
