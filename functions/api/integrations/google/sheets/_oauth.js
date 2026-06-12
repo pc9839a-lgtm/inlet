@@ -8,15 +8,6 @@ const GOOGLE_SHEETS_SCOPES = [
 
 export const GOOGLE_SHEETS_COLUMNS = [
   '접수일시',
-  '이름',
-  '연락처',
-  '이메일',
-  '메시지',
-  '페이지명',
-  '페이지 URL',
-  'UTM Source',
-  'UTM Medium',
-  'UTM Campaign',
 ];
 
 export function googleClientId(env = {}) {
@@ -359,22 +350,17 @@ export function googleSheetsPayloadRow(payload = {}) {
 
 export function googleSheetsPayloadTable(payload = {}) {
   const lead = payload.lead || {};
-  const page = payload.page || {};
-  const source = payload.source || payload.attribution || {};
   const fields = normalizeFieldMap(lead.fields || {});
-  const headers = mergeHeaders(GOOGLE_SHEETS_COLUMNS, Object.keys(fields));
+  const submittedFields = {};
+  if (hasSheetValue(lead.name)) submittedFields['이름'] = normalizeSheetCellValue(lead.name);
+  if (hasSheetValue(lead.phone)) submittedFields['연락처'] = normalizeSheetCellValue(lead.phone);
+  if (hasSheetValue(lead.email)) submittedFields['이메일'] = normalizeSheetCellValue(lead.email);
+  if (hasSheetValue(lead.message)) submittedFields['문의내용'] = normalizeSheetCellValue(lead.message);
+  Object.assign(submittedFields, fields);
+  const headers = mergeHeaders(GOOGLE_SHEETS_COLUMNS, Object.keys(submittedFields));
   const valuesByHeader = {
     접수일시: lead.createdAt || payload.createdAt || new Date().toISOString(),
-    이름: lead.name || '',
-    연락처: lead.phone || '',
-    이메일: lead.email || '',
-    메시지: lead.message || '',
-    페이지명: page.title || '',
-    '페이지 URL': page.url || '',
-    'UTM Source': source.utmSource || '',
-    'UTM Medium': source.utmMedium || '',
-    'UTM Campaign': source.utmCampaign || '',
-    ...fields,
+    ...submittedFields,
   };
   return { headers, valuesByHeader };
 }
@@ -412,6 +398,12 @@ function normalizeSheetCellValue(value) {
   if (Array.isArray(value)) return value.map((item) => String(item ?? '').trim()).filter(Boolean).join(', ');
   if (value && typeof value === 'object') return JSON.stringify(value);
   return String(value ?? '');
+}
+
+function hasSheetValue(value) {
+  if (Array.isArray(value)) return value.some((item) => String(item ?? '').trim());
+  if (value && typeof value === 'object') return Object.keys(value).length > 0;
+  return String(value ?? '').trim() !== '';
 }
 
 function normalizeHeaderValues(headers = []) {
@@ -456,6 +448,12 @@ function columnName(index = 1) {
 function isGoogleSheetSystemField(key = '') {
   const normalized = String(key || '').trim();
   return normalized === '추가 입력값 JSON'
+    || normalized === '페이지명'
+    || normalized === '페이지 URL'
+    || normalized === '메시지'
+    || normalized === 'UTM Source'
+    || normalized === 'UTM Medium'
+    || normalized === 'UTM Campaign'
     || /json/i.test(normalized)
     || /^(sourceUrl|source_url|referrer|referer|utmSource|utm_source|utmMedium|utm_medium|utmCampaign|utm_campaign|utmTerm|utm_term|utmContent|utm_content|pageUrl|page_url|landingUrl|landing_url|submittedAt|createdAt)$/i.test(normalized);
 }
