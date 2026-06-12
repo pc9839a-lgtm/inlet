@@ -318,8 +318,7 @@ export async function ensureGoogleSheetHeaders({ accessToken, spreadsheetId, she
     throw error;
   }
   const currentRaw = normalizeHeaderValues(readData.values?.[0] || []);
-  const current = normalizeHeaders(currentRaw);
-  const merged = mergeHeaders(current, requested);
+  const merged = requested;
   if (!sameHeaders(currentRaw, merged)) {
     const writeWidth = Math.max(currentRaw.length, merged.length);
     const writeRow = merged.concat(Array(Math.max(writeWidth - merged.length, 0)).fill(''));
