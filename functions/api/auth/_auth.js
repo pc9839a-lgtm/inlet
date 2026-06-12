@@ -411,6 +411,159 @@ function envFirst(env = {}, keys = [], fallback = '') {
   return fallback;
 }
 
+export function googleAuthRedirectUri(request, env = {}) {
+  const configured = String(env.GOOGLE_AUTH_REDIRECT_URI || '').trim();
+  if (configured) return configured;
+  return new URL('/api/auth/google/callback', request.url).toString();
+}
+
+export async function googleLoginAuthUrl(request, env = {}, input = {}) {
+  const clientId = googleAuthClientId(env);
+  if (!clientId) throw authError('Google login is not configured.', 503, { code: 'GOOGLE_AUTH_NOT_CONFIGURED' });
+  const state = await signedGoogleAuthState({
+    projectId: String(input.projectId || ''),
+    next: safeGoogleAuthNext(input.next || '/'),
+  }, env);
+  const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+  url.searchParams.set('client_id', clientId);
+  url.searchParams.set('redirect_uri', googleAuthRedirectUri(request, env));
+  url.searchParams.set('response_type', 'code');
+  url.searchParams.set('scope', 'openid email profile');
+  url.searchParams.set('prompt', 'select_account');
+  url.searchParams.set('state', state);
+  return url.toString();
+}
+
+export async function loginGoogleAccount(input = {}, env = {}) {
+  const code = String(input.code || '').trim();
+  const state = String(input.state || '').trim();
+  const statePayload = await verifyGoogleAuthState(state, env);
+  if (!code || !statePayload) throw authError('Google login request is invalid.', 400, { code: 'GOOGLE_AUTH_INVALID' });
+
+  const token = await exchangeGoogleAuthCode({
+    code,
+    clientId: googleAuthClientId(env),
+    clientSecret: googleAuthClientSecret(env),
+    redirectUri: input.redirectUri || '',
+  });
+  const profile = await fetchGoogleAuthProfile(token.access_token || '');
+  const email = normalizeEmail(profile.email || '');
+  if (!isValidEmail(email) || profile.email_verified === false) {
+    throw authError('Google account email is not verified.', 403, { code: 'GOOGLE_EMAIL_NOT_VERIFIED' });
+  }
+
+  const now = new Date().toISOString();
+  let user = await getD1AccountByEmail(env.DB, email);
+  if (user) {
+    assertAccountActive(user, 'google login');
+    if (user.emailVerified !== true) {
+      user = await upsertD1Account(env.DB, {
+        ...user,
+        email,
+        name: user.name || profile.name || email,
+        emailVerified: true,
+        emailVerifiedAt: now,
+        updatedAt: now,
+      });
+    }
+  } else {
+    user = await upsertD1Account(env.DB, {
+      id: ownerIdForEmail(email),
+      ownerId: ownerIdForEmail(email),
+      name: String(profile.name || profile.given_name || email).trim(),
+      email,
+      phone: '',
+      phoneVerified: false,
+      emailVerified: true,
+      passwordHash: '',
+      status: 'active',
+      source: 'google',
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+
+  const publicUser = authUserPublic(user);
+  const session = await createSessionToken({
+    ownerId: publicUser.ownerId,
+    projectId: String(statePayload.projectId || input.projectId || ''),
+    role: 'master',
+    email: publicUser.email,
+  }, env);
+  return {
+    user: publicUser,
+    session,
+    next: safeGoogleAuthNext(statePayload.next || '/'),
+  };
+}
+
+function googleAuthClientId(env = {}) {
+  return String(env.GOOGLE_AUTH_CLIENT_ID || env.GOOGLE_OAUTH_CLIENT_ID || env.GOOGLE_CLIENT_ID || '').trim();
+}
+
+function googleAuthClientSecret(env = {}) {
+  return String(env.GOOGLE_AUTH_CLIENT_SECRET || env.GOOGLE_OAUTH_CLIENT_SECRET || env.GOOGLE_CLIENT_SECRET || '').trim();
+}
+
+async function signedGoogleAuthState(payload = {}, env = {}) {
+  const body = base64UrlEncode(JSON.stringify({
+    ...payload,
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + 10 * 60,
+  }));
+  return `${body}.${await hmacBase64Url(body, authSecret(env))}`;
+}
+
+async function verifyGoogleAuthState(state = '', env = {}) {
+  const [body, signature] = String(state || '').split('.');
+  if (!body || !signature) return null;
+  if (await hmacBase64Url(body, authSecret(env)) !== signature) return null;
+  try {
+    const payload = JSON.parse(base64UrlDecode(body));
+    if (payload.exp && Number(payload.exp) < Math.floor(Date.now() / 1000)) return null;
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+async function exchangeGoogleAuthCode({ code, clientId, clientSecret, redirectUri } = {}) {
+  if (!clientId || !clientSecret || !redirectUri) {
+    throw authError('Google login is not configured.', 503, { code: 'GOOGLE_AUTH_NOT_CONFIGURED' });
+  }
+  const response = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      code,
+      client_id: clientId,
+      client_secret: clientSecret,
+      redirect_uri: redirectUri,
+      grant_type: 'authorization_code',
+    }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.access_token) {
+    throw authError('Google login failed.', 502, { code: 'GOOGLE_AUTH_EXCHANGE_FAILED' });
+  }
+  return data;
+}
+
+async function fetchGoogleAuthProfile(accessToken = '') {
+  const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw authError('Google profile request failed.', 502, { code: 'GOOGLE_PROFILE_FAILED' });
+  return data;
+}
+
+function safeGoogleAuthNext(value = '/') {
+  const next = String(value || '/').trim();
+  if (!next || !next.startsWith('/') || next.startsWith('//') || /^\/api(?:\/|$)/.test(next)) return '/';
+  return next;
+}
+
 function normalizeSesFromAddress(value = '') {
   const from = String(value || '').trim();
   if (!from) return '';

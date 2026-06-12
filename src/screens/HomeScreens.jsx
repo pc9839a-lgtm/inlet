@@ -1,6 +1,7 @@
 import React, { Suspense, useEffect, useRef, useState } from 'react';
-import { authAccountErrorMessage, changeAuthPassword, confirmEmailVerification, isValidAccountPassword, loginAuthAccount, normalizeAccountPhone, registerAuthAccount, requestEmailVerification } from '../lib/authAccounts.js';
+import { authAccountErrorMessage, changeAuthPassword, confirmEmailVerification, isValidAccountPassword, loginAuthAccount, normalizeAccountPhone, registerAuthAccount, requestEmailVerification, startGoogleAuthLogin } from '../lib/authAccounts.js';
 import { pageSlugIssues, sanitizePageSlug } from '../lib/pageSlugs.js';
+import PageroRestoredHome from './PageroRestoredHome.jsx';
 
 const demoHero = {
   title: '고객 상담을\n빠르게 연결',
@@ -448,6 +449,183 @@ const HERO_WORKBENCH_STEPS = [
   { key: 'map', label: '지도', title: '오시는 길', desc: '방문 위치를 안내합니다.' },
 ];
 
+const FEATURE_SCREENS = [
+  {
+    no: '01',
+    title: '구글시트 연동',
+    sub: '새 접수를 시트에 자동 저장',
+    body: '상담 신청이 들어오면 이름, 연락처, 문의 내용이 지정한 시트에 자동으로 쌓입니다.',
+    tone: 'green',
+    icon: '▦',
+    tech: ['Google Sheets', 'OAuth 연결', '자동 행 추가', '테스트 전송'],
+    graphic: 'sheet',
+  },
+  {
+    no: '02',
+    title: '입력폼 임베드',
+    sub: '외부 페이지에도 쉽게 삽입',
+    body: '기존 홈페이지나 상세 페이지에 접수폼만 붙여도 같은 접수함으로 모입니다.',
+    tone: 'orange',
+    icon: '</>',
+    tech: ['Embed Script', 'form_id', '외부 삽입', '제출 이벤트'],
+    graphic: 'embed',
+  },
+  {
+    no: '03',
+    title: '이메일 알림',
+    sub: '접수 즉시 담당자에게 알림',
+    body: '고객이 신청하는 순간 담당자에게 알림을 보내 빠르게 응대할 수 있게 합니다.',
+    tone: 'red',
+    icon: '@',
+    tech: ['AWS SES', '수신자 설정', '재전송 큐', '발송 로그'],
+    graphic: 'mail',
+  },
+  {
+    no: '04',
+    title: '웹훅 전송',
+    sub: '외부 도구로 접수 전달',
+    body: '접수 데이터를 CRM, 자동화 도구, 사내 시스템으로 바로 전달할 수 있습니다.',
+    tone: 'coral',
+    icon: '⌘',
+    tech: ['Webhook URL', 'POST 200', 'Payload', '전송 로그'],
+    graphic: 'webhook',
+  },
+  {
+    no: '05',
+    title: '전환 추적',
+    sub: '방문, 클릭, 신청 기록',
+    body: '방문부터 버튼 클릭, 신청 완료까지 고객 행동 흐름을 이벤트로 기록합니다.',
+    tone: 'blue',
+    icon: '↗',
+    tech: ['CTA Click', 'UTM 저장', 'GA4', 'Meta Pixel'],
+    graphic: 'tracking',
+  },
+  {
+    no: '06',
+    title: '중복 차단',
+    sub: '반복 접수 감지',
+    body: '연락처, IP, 쿠키 기준으로 반복 접수와 허수 접수를 줄입니다.',
+    tone: 'amber',
+    icon: '✓',
+    tech: ['연락처 기준', 'IP 기준', '쿠키 기준', '차단 이력'],
+    graphic: 'block',
+  },
+];
+
+function PageroFeatureGraphic({ type }) {
+  if (type === 'webhook') {
+    return (
+      <div className="pagerol-feature-graphic graphic-webhook" aria-hidden="true">
+        <span>FORM</span>
+        <i />
+        <span>API</span>
+        <i />
+        <span>CRM</span>
+        <b>POST 200 <em>delivery success</em></b>
+      </div>
+    );
+  }
+
+  if (type === 'sheet') {
+    return (
+      <div className="pagerol-feature-graphic graphic-sheet" aria-hidden="true">
+        <div className="sheet-top"><span /><span /><span /><b>auto sync</b></div>
+        <div className="sheet-grid">
+          {Array.from({ length: 24 }).map((_, index) => <i className={(index + 2) % 5 === 0 ? 'is-on' : ''} key={index} />)}
+        </div>
+      </div>
+    );
+  }
+
+  if (type === 'embed') {
+    return (
+      <div className="pagerol-feature-graphic graphic-embed" aria-hidden="true">
+        <div className="code-panel"><i /><i /><i /></div>
+        <div className="form-panel"><b>문의 폼</b><span /><span /><strong>삽입 완료</strong></div>
+      </div>
+    );
+  }
+
+  if (type === 'mail') {
+    return (
+      <div className="pagerol-feature-graphic graphic-mail" aria-hidden="true">
+        <div className="mail-card"><b>새 접수</b><span>담당자 알림</span></div>
+        <div className="mail-stack"><i /><i /><i /></div>
+      </div>
+    );
+  }
+
+  if (type === 'tracking') {
+    return (
+      <div className="pagerol-feature-graphic graphic-tracking" aria-hidden="true">
+        {[42, 68, 50, 82, 60, 90].map((height, index) => <i style={{ height: `${height}%` }} key={index} />)}
+      </div>
+    );
+  }
+
+  return (
+    <div className="pagerol-feature-graphic graphic-block" aria-hidden="true">
+      <div><b>연락처 기준</b><span>ON</span></div>
+      <div><b>IP 기준</b><span>선택</span></div>
+      <div><b>차단 이력</b><span>확인</span></div>
+    </div>
+  );
+}
+
+function PageroFeatureShowcase() {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const active = FEATURE_SCREENS[activeIndex];
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setActiveIndex((current) => (current + 1) % FEATURE_SCREENS.length);
+    }, 1900);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
+  return (
+    <section className="pagerol-feature-section" id="features" aria-label="페이지로 주요 기능">
+      <div className="pagerol-section-title">
+        <span>주요 기능</span>
+        <h2>연결하고<br />자동으로 받기</h2>
+      </div>
+      <div className="pagerol-feature-showcase">
+        <article className={`pagerol-feature-screen tone-${active.tone}`} key={active.no}>
+          <div className="feature-browser-bar">
+            <i /><i /><i />
+            <b>ON</b>
+          </div>
+          <div className="feature-screen-head">
+            <div className="feature-screen-icon">{active.icon}</div>
+            <div>
+              <em>{active.no} · 주요 기능</em>
+              <h3>{active.title}</h3>
+              <p>{active.sub}</p>
+            </div>
+          </div>
+          <strong className="feature-screen-body">{active.body}</strong>
+          <PageroFeatureGraphic type={active.graphic} />
+        </article>
+
+        <div className="pagerol-feature-tech" aria-label="기능 기술 목록">
+          {FEATURE_SCREENS.map((item, index) => (
+            <button
+              className={activeIndex === index ? 'is-active' : ''}
+              key={item.title}
+              type="button"
+              onClick={() => setActiveIndex(index)}
+            >
+              <strong>{item.title}</strong>
+              <span>{item.tech.join(' · ')}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function PageroHeroWorkbench() {
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -593,6 +771,7 @@ function PageroLandingHomeV2({ onLogin, onSignup }) {
       <header className="pagerol-nav">
         <a href="/" className="pagerol-logo" aria-label="페이지로 홈">페이지로</a>
         <nav aria-label="메인 메뉴">
+          <a href="#features">기능</a>
           <a href="#pages">활용</a>
         </nav>
         <div className="pagerol-actions">
@@ -627,6 +806,8 @@ function PageroLandingHomeV2({ onLogin, onSignup }) {
           </div>
           <PageroHeroWorkbench />
         </section>
+
+        <PageroFeatureShowcase />
 
         <section className="pagerol-stats" id="pages">
           <h2>필요한 페이지를<br/>바로 만드세요</h2>
@@ -747,7 +928,7 @@ function PageroLandingHomeSimple({ onLogin, onSignup }) {
 }
 
 function PublicHome({ onLogin, onSignup }) {
-  return <PageroLandingHomeV2 onLogin={onLogin} onSignup={onSignup} />;
+  return <PageroRestoredHome onLogin={onLogin} onSignup={onSignup} />;
 
   return (
     <div className="public-home-shell">
@@ -1235,6 +1416,18 @@ function AuthScreen({ onAuth, initialMode = 'login', onBack }) {
     }
   };
 
+  const googleLogin = async () => {
+    setError('');
+    setNotice('');
+    setSaving(true);
+    try {
+      await startGoogleAuthLogin({ next: '/' });
+    } catch (err) {
+      setError(authAccountErrorMessage(err));
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="auth-shell">
       <section className="auth-card">
@@ -1250,6 +1443,12 @@ function AuthScreen({ onAuth, initialMode = 'login', onBack }) {
         </div>
 
         <form className="auth-form" onSubmit={submit}>
+          <button className="auth-google-btn" type="button" onClick={googleLogin} disabled={saving}>
+            Google로 계속하기
+          </button>
+
+          <div className="auth-divider"><span>또는</span></div>
+
           {mode === 'signup' && (
             <label>
               <span>이름</span>

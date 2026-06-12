@@ -74,6 +74,16 @@ export async function loginAuthAccount(input = {}) {
   return data?.user ? { ...data.user, session: data.session || '' } : null;
 }
 
+export async function startGoogleAuthLogin(input = {}) {
+  const data = await postJson('/api/auth/google/oauth-url', {
+    projectId: input.projectId || '',
+    next: input.next || '/',
+  });
+  const url = String(data?.url || '').trim();
+  if (!url) throw new Error('Google 로그인 주소를 만들지 못했습니다.');
+  window.location.assign(url);
+}
+
 export async function refreshAuthSession(input = {}) {
   const data = await postJson('/api/auth/session', {
     session: input.session || '',
