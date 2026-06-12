@@ -163,7 +163,32 @@ function googleSheetsPayload(payload = {}, sheets = {}, page = {}, lead = {}) {
 
 function leadAnswerFields(lead = {}) {
   const fields = {};
-  const reservedKeys = new Set(['name', 'phone', 'email', 'message']);
+  const reservedKeys = new Set([
+    'name',
+    'phone',
+    'email',
+    'message',
+    'sourceurl',
+    'source_url',
+    'referrer',
+    'referer',
+    'utmsource',
+    'utm_source',
+    'utmmedium',
+    'utm_medium',
+    'utmcampaign',
+    'utm_campaign',
+    'utmterm',
+    'utm_term',
+    'utmcontent',
+    'utm_content',
+    'pageurl',
+    'page_url',
+    'landingurl',
+    'landing_url',
+    'submittedat',
+    'createdat',
+  ]);
   const reservedLabels = new Set(['\uC774\uB984', '\uC131\uD568', '\uC5F0\uB77D\uCC98', '\uC804\uD654\uBC88\uD638', '\uD734\uB300\uD3F0\uBC88\uD638', '\uD578\uB4DC\uD3F0\uBC88\uD638', '\uC774\uBA54\uC77C', '\uBA54\uC77C', '\uBB38\uC758\uB0B4\uC6A9', '\uBB38\uC758 \uB0B4\uC6A9', '\uBA54\uC2DC\uC9C0', '\uB0B4\uC6A9']);
 
   for (const [rawKey, rawValue] of Object.entries(lead.values || {})) {

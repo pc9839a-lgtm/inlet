@@ -326,17 +326,20 @@ export async function ensureGoogleSheetHeaders({ accessToken, spreadsheetId, she
     error.details = readData;
     throw error;
   }
-  const current = normalizeHeaders(readData.values?.[0] || []);
+  const currentRaw = normalizeHeaderValues(readData.values?.[0] || []);
+  const current = normalizeHeaders(currentRaw);
   const merged = mergeHeaders(current, requested);
-  if (!sameHeaders(current, merged)) {
-    const writeRange = encodeURIComponent(`${tab}!A1:${columnName(merged.length)}1`);
+  if (!sameHeaders(currentRaw, merged)) {
+    const writeWidth = Math.max(currentRaw.length, merged.length);
+    const writeRow = merged.concat(Array(Math.max(writeWidth - merged.length, 0)).fill(''));
+    const writeRange = encodeURIComponent(`${tab}!A1:${columnName(writeWidth)}1`);
     const writeResponse = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${writeRange}?valueInputOption=USER_ENTERED`, {
       method: 'PUT',
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ values: [merged] }),
+      body: JSON.stringify({ values: [writeRow] }),
     });
     const writeData = await writeResponse.json().catch(() => ({}));
     if (!writeResponse.ok) {
@@ -399,7 +402,7 @@ function normalizeFieldMap(fields = {}) {
   const normalized = {};
   for (const [rawKey, rawValue] of Object.entries(fields || {})) {
     const key = String(rawKey || '').trim();
-    if (!key || GOOGLE_SHEETS_COLUMNS.includes(key)) continue;
+    if (!key || GOOGLE_SHEETS_COLUMNS.includes(key) || isGoogleSheetSystemField(key)) continue;
     normalized[key] = normalizeSheetCellValue(rawValue);
   }
   return normalized;
@@ -411,10 +414,15 @@ function normalizeSheetCellValue(value) {
   return String(value ?? '');
 }
 
-function normalizeHeaders(headers = []) {
+function normalizeHeaderValues(headers = []) {
   return headers
     .map((header) => String(header || '').trim())
-    .filter((header) => header && header !== '추가 입력값 JSON');
+    .filter(Boolean);
+}
+
+function normalizeHeaders(headers = []) {
+  return normalizeHeaderValues(headers)
+    .filter((header) => !isGoogleSheetSystemField(header));
 }
 
 function mergeHeaders(base = [], extra = []) {
@@ -443,6 +451,13 @@ function columnName(index = 1) {
     n = Math.floor(n / 26);
   }
   return name;
+}
+
+function isGoogleSheetSystemField(key = '') {
+  const normalized = String(key || '').trim();
+  return normalized === '추가 입력값 JSON'
+    || /json/i.test(normalized)
+    || /^(sourceUrl|source_url|referrer|referer|utmSource|utm_source|utmMedium|utm_medium|utmCampaign|utm_campaign|utmTerm|utm_term|utmContent|utm_content|pageUrl|page_url|landingUrl|landing_url|submittedAt|createdAt)$/i.test(normalized);
 }
 
 function oauthSecret(env = {}) {
