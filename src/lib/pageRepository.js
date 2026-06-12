@@ -164,11 +164,17 @@ export async function persistPage(page, authUser = null, options = {}) {
 
   const slug = pageSlug(safePage);
   const context = projectContext(safePage, authUser);
+  const pageWithContext = normalizePageForSave({
+    ...safePage,
+    slug,
+    projectId: context.projectId,
+    ownerId: context.ownerId,
+  });
   if (!context.session) {
     throw new ApiError('로그인 세션이 없습니다. 다시 로그인해주세요.', 401, { code: 'AUTH_SESSION_MISSING' });
   }
   const payload = {
-    page: safePage,
+    page: pageWithContext,
     project: context,
     tab: options.tab || '',
     ...(options.expectedUpdatedAt ? { expectedUpdatedAt: options.expectedUpdatedAt } : {}),
@@ -179,7 +185,7 @@ export async function persistPage(page, authUser = null, options = {}) {
     return result;
   } catch (error) {
     if (!canRetryWithAccountProject(error, authUser)) throw error;
-    const retry = accountOwnedPageForRetry(safePage, authUser);
+    const retry = accountOwnedPageForRetry(pageWithContext, authUser);
     if (!retry.context.projectId || retry.context.projectId === context.projectId) throw error;
     const result = await postJson(`/api/pages/${encodeURIComponent(retry.page.slug)}`, {
       ...payload,

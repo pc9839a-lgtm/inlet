@@ -780,12 +780,13 @@ function App() {
         }
         setPage((current) => {
           const currentSlug = current.slug || slug;
-          const currentContext = projectContext(current, authUser);
-          const nextSlug = current.projectId && current.projectId === currentContext.projectId
-            ? currentSlug
-            : (shouldAutoReplaceSlug(currentSlug) ? createUniquePageSlug(currentSlug, authUser) : currentSlug);
-          const nextContext = projectContext({ ...current, slug: nextSlug }, authUser);
-          if (current.projectId === nextContext.projectId) return current;
+          const replaceStarterSlug = shouldAutoReplaceSlug(currentSlug);
+          const nextSlug = replaceStarterSlug ? createUniquePageSlug(currentSlug, authUser) : currentSlug;
+          const nextContextSeed = replaceStarterSlug
+            ? { ...current, slug: nextSlug, projectId: '', ownerId: '' }
+            : { ...current, slug: nextSlug };
+          const nextContext = projectContext(nextContextSeed, authUser);
+          if (current.slug === nextSlug && current.projectId === nextContext.projectId && current.ownerId === nextContext.ownerId) return current;
           return normalizePageForSave({
             ...current,
             slug: nextSlug,
@@ -1499,10 +1500,24 @@ function App() {
     if (hasPendingStyle) setStylePreviewBlocks(null);
   };
 
+  const pageForAccountSave = (sourcePage = page) => {
+    const normalized = normalizePageForSave(normalizeFreeEmailIntegrations(sourcePage));
+    const currentSlug = normalized.slug || defaultPage.slug || 'my-page';
+    if (!authUser || !shouldAutoReplaceSlug(currentSlug)) return normalized;
+    const nextSlug = createUniquePageSlug(currentSlug, authUser);
+    const context = projectContext({ slug: nextSlug }, authUser);
+    return normalizePageForSave({
+      ...normalized,
+      slug: nextSlug,
+      projectId: context.projectId,
+      ownerId: context.ownerId,
+    });
+  };
+
   const persistStyleNow = async () => {
       if (blockWrite('style')) return;
-      const nextPage = normalizePageForSave({
-        ...normalizeFreeEmailIntegrations(page),
+      const nextPage = pageForAccountSave({
+        ...page,
         theme: stylePreviewTheme ? { ...page.theme, ...stylePreviewTheme } : page.theme,
         blocks: stylePreviewBlocks || page.blocks,
       });
@@ -1558,7 +1573,7 @@ function App() {
 
     const sourcePage = pageOverride || page;
     const expectedUpdatedAt = sourcePage.updatedAt || sourcePage.savedAt || sourcePage.createdAt || '';
-    const nextPage = normalizePageForSave(normalizeFreeEmailIntegrations(sourcePage));
+    const nextPage = pageForAccountSave(sourcePage);
     setPage(nextPage);
     saveLocalJson(STORAGE_KEY, nextPage, '페이지');
     let result = null;
