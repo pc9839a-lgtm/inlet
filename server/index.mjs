@@ -14,7 +14,7 @@ import { appendJsonlRecord, queryJsonlRecords, readJsonlRecords, writeJsonlRecor
 import { createStorageRuntime, storageRuntimeCoverage, storageRuntimeHealth, storageRuntimePlan } from './storage/runtimeAdapter.mjs';
 import { aggregateD1Stats, deleteD1AiDraft, deleteD1Lead, findD1LeadsByContact, findD1LeadsByIntakeSignals, getD1AccountByEmail, getD1AccountByPhone, getD1Lead, getD1PageBySlug, getD1PageRevision, getD1ProjectAccess, getD1PublicPageBySlug, insertD1AuditLog, insertD1BlockedLeadSubmission, insertD1Event, insertD1PageRevision, listD1AiDrafts, listD1BlockedLeadSubmissions, listD1DeliveryLogs, listD1DeliveryRetryQueue, listD1Events, listD1Leads, listD1OwnershipTransferRequests, listD1PageRevisions, replaceD1ProjectMembers, upsertD1Account, upsertD1AiDraft, upsertD1Invite, upsertD1Lead, upsertD1OwnershipTransferRequest, upsertD1Page, upsertD1Project, upsertD1ProjectMember } from './storage/d1Adapter.mjs';
 import { sendSesEmail } from '../functions/api/_ses.js';
-import { appendGoogleSheetRow, getGoogleSheetsIntegration, googleClientId, googleClientSecret, googleSheetsPayloadRow, mergeGoogleTokens, refreshGoogleAccessToken, updateGoogleSheetsIntegrationStatus } from '../functions/api/integrations/google/sheets/_oauth.js';
+import { appendGoogleSheetPayload, getGoogleSheetsIntegration, googleClientId, googleClientSecret, mergeGoogleTokens, refreshGoogleAccessToken, updateGoogleSheetsIntegrationStatus } from '../functions/api/integrations/google/sheets/_oauth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
@@ -4081,9 +4081,8 @@ async function sendServerGoogleSheetsOAuthJob(job = {}) {
       await updateGoogleSheetsIntegrationStatus(storageRuntime.d1, projectId, { tokens });
     }
 
-    const row = googleSheetsPayloadRow(job.payload || {});
     try {
-      await appendGoogleSheetRow({ accessToken, spreadsheetId, sheetName, row });
+      await appendGoogleSheetPayload({ accessToken, spreadsheetId, sheetName, payload: job.payload || {} });
     } catch (error) {
       if (Number(error?.status || 0) !== 401 || !tokens.refreshToken) throw error;
       tokens = mergeGoogleTokens(tokens, await refreshGoogleAccessToken({
@@ -4092,7 +4091,7 @@ async function sendServerGoogleSheetsOAuthJob(job = {}) {
         clientSecret: googleClientSecret(env),
       }));
       accessToken = tokens.accessToken || '';
-      await appendGoogleSheetRow({ accessToken, spreadsheetId, sheetName, row });
+      await appendGoogleSheetPayload({ accessToken, spreadsheetId, sheetName, payload: job.payload || {} });
       await updateGoogleSheetsIntegrationStatus(storageRuntime.d1, projectId, { tokens });
     }
 

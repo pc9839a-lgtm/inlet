@@ -1,10 +1,9 @@
 import { isValidEmailAddress, sendSesEmail } from '../_ses.js';
 import {
-  appendGoogleSheetRow,
+  appendGoogleSheetPayload,
   getGoogleSheetsIntegration,
   googleClientId,
   googleClientSecret,
-  googleSheetsPayloadRow,
   mergeGoogleTokens,
   refreshGoogleAccessToken,
   updateGoogleSheetsIntegrationStatus,
@@ -327,9 +326,8 @@ async function sendGoogleSheetsOAuthJob(job = {}, env = {}) {
       await updateGoogleSheetsIntegrationStatus(env.DB, projectId, { tokens });
     }
 
-    const row = googleSheetsPayloadRow(job.payload || {});
     try {
-      await appendGoogleSheetRow({ accessToken, spreadsheetId, sheetName, row });
+      await appendGoogleSheetPayload({ accessToken, spreadsheetId, sheetName, payload: job.payload || {} });
     } catch (error) {
       if (error?.status !== 401 || !tokens.refreshToken) throw error;
       tokens = mergeGoogleTokens(tokens, await refreshGoogleAccessToken({
@@ -338,7 +336,7 @@ async function sendGoogleSheetsOAuthJob(job = {}, env = {}) {
         clientSecret: googleClientSecret(env),
       }));
       accessToken = tokens.accessToken || '';
-      await appendGoogleSheetRow({ accessToken, spreadsheetId, sheetName, row });
+      await appendGoogleSheetPayload({ accessToken, spreadsheetId, sheetName, payload: job.payload || {} });
       await updateGoogleSheetsIntegrationStatus(env.DB, projectId, { tokens });
     }
 

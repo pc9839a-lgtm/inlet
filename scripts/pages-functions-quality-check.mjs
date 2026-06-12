@@ -260,7 +260,7 @@ for (const [name, source, tokens] of [
   ['retry queue', retryQueue, ['listD1DeliveryRetryQueue', "type: 'delivery-retry-queue'", 'deadLetter', "tab: 'inbox'"]],
   ['lead deliver', leadDeliver, ['getD1Lead', 'getD1LatestPageByProject', 'upsertD1Lead', 'publicWrite: true', 'NO_DELIVERY_SETTINGS_MESSAGE', 'failedDeliveryProviders', 'mergeDeliveryReports', '접수를 찾을 수 없습니다.']],
   ['integrations test', integrationsTest, ['type !== \'sheets\'', 'isGoogleAppsScriptUrl', 'text/plain;charset=utf-8', 'Google Apps Script', 'pagero.lead.v1', "event: 'lead.test'", "service: 'pagero'", "target: 'google_sheets'", "provider: 'google_sheets'", "mode: 'webhook'", "sheetName: body.sheetName", "utmSource: 'connection_test'"]],
-  ['google sheets oauth shared', googleSheetsOauth, ['project_integrations', 'saveGoogleSheetsIntegration', 'getGoogleSheetsIntegration', 'deleteGoogleSheetsIntegration', 'refreshGoogleAccessToken', 'appendGoogleSheetRow']],
+  ['google sheets oauth shared', googleSheetsOauth, ['project_integrations', 'saveGoogleSheetsIntegration', 'getGoogleSheetsIntegration', 'deleteGoogleSheetsIntegration', 'refreshGoogleAccessToken', 'appendGoogleSheetRow', 'appendGoogleSheetPayload', 'ensureGoogleSheetHeaders', 'googleSheetsPayloadTable']],
   ['google sheets oauth url', googleSheetsOauthUrl, ['googleSheetsAuthUrl', 'signedOAuthState', 'authorizeProject', "write: true", "tab: 'inbox'"]],
   ['google sheets callback', googleSheetsCallback, ['verifyOAuthState', 'exchangeGoogleOAuthCode', 'createGoogleSpreadsheet', 'initializeGoogleSheetColumns', 'saveGoogleSheetsIntegration', 'pagero:google-sheets-connected']],
   ['google sheets status', googleSheetsStatus, ['getGoogleSheetsIntegration', 'authorizeProject', "tab: 'inbox'"]],

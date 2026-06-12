@@ -17,7 +17,6 @@ export const GOOGLE_SHEETS_COLUMNS = [
   'UTM Source',
   'UTM Medium',
   'UTM Campaign',
-  '추가 입력값 JSON',
 ];
 
 export function googleClientId(env = {}) {
@@ -262,7 +261,7 @@ export async function appendGoogleSheetRow({ accessToken, spreadsheetId, sheetNa
     error.status = 400;
     throw error;
   }
-  const range = encodeURIComponent(`${tab}!A:K`);
+  const range = encodeURIComponent(`${tab}!A:${columnName(Math.max(Array.isArray(row) ? row.length : 1, 1))}`);
   const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${range}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`, {
     method: 'POST',
     headers: {
@@ -282,31 +281,99 @@ export async function appendGoogleSheetRow({ accessToken, spreadsheetId, sheetNa
 }
 
 export async function initializeGoogleSheetColumns({ accessToken, spreadsheetId, sheetName } = {}) {
+  return ensureGoogleSheetHeaders({
+    accessToken,
+    spreadsheetId,
+    sheetName,
+    headers: GOOGLE_SHEETS_COLUMNS,
+  });
+}
+
+export async function appendGoogleSheetPayload({ accessToken, spreadsheetId, sheetName, payload } = {}) {
+  const table = googleSheetsPayloadTable(payload || {});
+  const headers = await ensureGoogleSheetHeaders({
+    accessToken,
+    spreadsheetId,
+    sheetName,
+    headers: table.headers,
+  });
+  const values = table.valuesByHeader || {};
   return appendGoogleSheetRow({
     accessToken,
     spreadsheetId,
     sheetName,
-    row: GOOGLE_SHEETS_COLUMNS,
+    row: headers.map((header) => values[header] ?? ''),
   });
 }
 
+export async function ensureGoogleSheetHeaders({ accessToken, spreadsheetId, sheetName, headers } = {}) {
+  const id = String(spreadsheetId || '').trim();
+  const tab = String(sheetName || '접수함').trim() || '접수함';
+  const requested = normalizeHeaders(headers);
+  if (!id) {
+    const error = new Error('Google Sheets 파일이 선택되지 않았습니다.');
+    error.status = 400;
+    throw error;
+  }
+  const readRange = encodeURIComponent(`${tab}!1:1`);
+  const readResponse = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${readRange}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  const readData = await readResponse.json().catch(() => ({}));
+  if (!readResponse.ok && readResponse.status !== 404) {
+    const error = new Error(`Google Sheets header read failed: ${readResponse.status}`);
+    error.status = readResponse.status;
+    error.details = readData;
+    throw error;
+  }
+  const current = normalizeHeaders(readData.values?.[0] || []);
+  const merged = mergeHeaders(current, requested);
+  if (!sameHeaders(current, merged)) {
+    const writeRange = encodeURIComponent(`${tab}!A1:${columnName(merged.length)}1`);
+    const writeResponse = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${writeRange}?valueInputOption=USER_ENTERED`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ values: [merged] }),
+    });
+    const writeData = await writeResponse.json().catch(() => ({}));
+    if (!writeResponse.ok) {
+      const error = new Error(`Google Sheets header update failed: ${writeResponse.status}`);
+      error.status = writeResponse.status;
+      error.details = writeData;
+      throw error;
+    }
+  }
+  return merged;
+}
+
 export function googleSheetsPayloadRow(payload = {}) {
+  const table = googleSheetsPayloadTable(payload);
+  return table.headers.map((header) => table.valuesByHeader[header] ?? '');
+}
+
+export function googleSheetsPayloadTable(payload = {}) {
   const lead = payload.lead || {};
   const page = payload.page || {};
   const source = payload.source || payload.attribution || {};
-  return [
-    lead.createdAt || payload.createdAt || new Date().toISOString(),
-    lead.name || '',
-    lead.phone || '',
-    lead.email || '',
-    lead.message || '',
-    page.title || '',
-    page.url || '',
-    source.utmSource || '',
-    source.utmMedium || '',
-    source.utmCampaign || '',
-    JSON.stringify(lead.fields || {}),
-  ];
+  const fields = normalizeFieldMap(lead.fields || {});
+  const headers = mergeHeaders(GOOGLE_SHEETS_COLUMNS, Object.keys(fields));
+  const valuesByHeader = {
+    접수일시: lead.createdAt || payload.createdAt || new Date().toISOString(),
+    이름: lead.name || '',
+    연락처: lead.phone || '',
+    이메일: lead.email || '',
+    메시지: lead.message || '',
+    페이지명: page.title || '',
+    '페이지 URL': page.url || '',
+    'UTM Source': source.utmSource || '',
+    'UTM Medium': source.utmMedium || '',
+    'UTM Campaign': source.utmCampaign || '',
+    ...fields,
+  };
+  return { headers, valuesByHeader };
 }
 
 export function mergeGoogleTokens(previous = {}, refreshed = {}) {
@@ -326,6 +393,56 @@ function parseJson(value, fallback) {
   } catch {
     return fallback;
   }
+}
+
+function normalizeFieldMap(fields = {}) {
+  const normalized = {};
+  for (const [rawKey, rawValue] of Object.entries(fields || {})) {
+    const key = String(rawKey || '').trim();
+    if (!key || GOOGLE_SHEETS_COLUMNS.includes(key)) continue;
+    normalized[key] = normalizeSheetCellValue(rawValue);
+  }
+  return normalized;
+}
+
+function normalizeSheetCellValue(value) {
+  if (Array.isArray(value)) return value.map((item) => String(item ?? '').trim()).filter(Boolean).join(', ');
+  if (value && typeof value === 'object') return JSON.stringify(value);
+  return String(value ?? '');
+}
+
+function normalizeHeaders(headers = []) {
+  return headers
+    .map((header) => String(header || '').trim())
+    .filter((header) => header && header !== '추가 입력값 JSON');
+}
+
+function mergeHeaders(base = [], extra = []) {
+  const seen = new Set();
+  const merged = [];
+  for (const header of [...normalizeHeaders(base), ...normalizeHeaders(extra)]) {
+    if (seen.has(header)) continue;
+    seen.add(header);
+    merged.push(header);
+  }
+  return merged;
+}
+
+function sameHeaders(a = [], b = []) {
+  const left = normalizeHeaders(a);
+  const right = normalizeHeaders(b);
+  return left.length === right.length && left.every((item, index) => item === right[index]);
+}
+
+function columnName(index = 1) {
+  let n = Math.max(Number(index) || 1, 1);
+  let name = '';
+  while (n > 0) {
+    n -= 1;
+    name = String.fromCharCode(65 + (n % 26)) + name;
+    n = Math.floor(n / 26);
+  }
+  return name;
 }
 
 function oauthSecret(env = {}) {
