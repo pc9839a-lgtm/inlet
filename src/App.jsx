@@ -38,7 +38,7 @@ import { currentMonthValue, monthDateRange, statsDateRange } from './lib/monthRa
 import { fetchPublicServerPage, fetchServerPage, persistPage } from './lib/pageRepository.js';
 import { canUsePageDuplication, createDuplicatedPage } from './lib/pageDuplication.js';
 import { projectContext } from './lib/projectContext.js';
-import { createUniquePageSlug, pageSlugIssues, sanitizePageSlug, shouldAutoReplaceSlug } from './lib/pageSlugs.js';
+import { pageSlugIssues, sanitizePageSlug, shouldAutoReplaceSlug } from './lib/pageSlugs.js';
 import { fetchLinkPreview, linkThumbnailFromUrl, normalizeExternalUrl } from './lib/linkPreview.js';
 import { isReservationLead, normalizeLeadItem } from './lib/leadModel.js';
 import { clone, defaultPage, ensureUniqueAnchors, newBlock, normalize, normalizeIntegrations, normalizePageForSave, sanitizeBlock, uid } from './lib/pageModel.js';
@@ -776,17 +776,6 @@ function App() {
         if (!alive) return;
         if (accountPageLoadRef.current !== loadKey) return;
         if (serverPage) {
-          if (shouldAutoReplaceSlug(serverPage.slug || slug)) {
-            const nextSlug = createUniquePageSlug(serverPage.slug || slug, authUser);
-            const nextContext = projectContext({ ...serverPage, slug: nextSlug }, authUser);
-            setPage(normalizePageForSave({
-              ...serverPage,
-              slug: nextSlug,
-              projectId: nextContext.projectId,
-              ownerId: nextContext.ownerId,
-            }));
-            return;
-          }
           setPage((current) => {
             if ((current.slug || '') !== slug || (current.projectId || '') !== (context.projectId || '')) return current;
             return normalize(serverPage);
@@ -795,16 +784,11 @@ function App() {
         }
         setPage((current) => {
           const currentSlug = current.slug || slug;
-          const replaceStarterSlug = shouldAutoReplaceSlug(currentSlug);
-          const nextSlug = replaceStarterSlug ? createUniquePageSlug(currentSlug, authUser) : currentSlug;
-          const nextContextSeed = replaceStarterSlug
-            ? { ...current, slug: nextSlug, projectId: '', ownerId: '' }
-            : { ...current, slug: nextSlug };
-          const nextContext = projectContext(nextContextSeed, authUser);
-          if (current.slug === nextSlug && current.projectId === nextContext.projectId && current.ownerId === nextContext.ownerId) return current;
+          const nextContext = projectContext({ ...current, slug: currentSlug }, authUser);
+          if (current.slug === currentSlug && current.projectId === nextContext.projectId && current.ownerId === nextContext.ownerId) return current;
           return normalizePageForSave({
             ...current,
-            slug: nextSlug,
+            slug: currentSlug,
             projectId: nextContext.projectId,
             ownerId: nextContext.ownerId,
           });
@@ -1518,12 +1502,11 @@ function App() {
   const pageForAccountSave = (sourcePage = page) => {
     const normalized = normalizePageForSave(normalizeFreeEmailIntegrations(sourcePage));
     const currentSlug = normalized.slug || defaultPage.slug || 'my-page';
-    if (!authUser || !shouldAutoReplaceSlug(currentSlug)) return normalized;
-    const nextSlug = createUniquePageSlug(currentSlug, authUser);
-    const context = projectContext({ slug: nextSlug }, authUser);
+    if (!authUser) return normalizePageForSave({ ...normalized, slug: currentSlug });
+    const context = projectContext({ ...normalized, slug: currentSlug }, authUser);
     return normalizePageForSave({
       ...normalized,
-      slug: nextSlug,
+      slug: currentSlug,
       projectId: context.projectId,
       ownerId: context.ownerId,
     });
