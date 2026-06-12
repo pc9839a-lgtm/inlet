@@ -38,7 +38,7 @@ import { currentMonthValue, monthDateRange, statsDateRange } from './lib/monthRa
 import { fetchPublicServerPage, fetchServerPage, persistPage } from './lib/pageRepository.js';
 import { canUsePageDuplication, createDuplicatedPage } from './lib/pageDuplication.js';
 import { projectContext } from './lib/projectContext.js';
-import { pageSlugIssues, sanitizePageSlug, shouldAutoReplaceSlug } from './lib/pageSlugs.js';
+import { pageSlugIssues, sanitizePageSlug } from './lib/pageSlugs.js';
 import { fetchLinkPreview, linkThumbnailFromUrl, normalizeExternalUrl } from './lib/linkPreview.js';
 import { isReservationLead, normalizeLeadItem } from './lib/leadModel.js';
 import { clone, defaultPage, ensureUniqueAnchors, newBlock, normalize, normalizeIntegrations, normalizePageForSave, sanitizeBlock, uid } from './lib/pageModel.js';
@@ -1668,8 +1668,8 @@ function App() {
     const safeSlug = sanitizePageSlug(slug, '');
     const issues = pageSlugIssues(safeSlug);
     if (issues.length) return { ok: false, slug: safeSlug, message: issues[0] };
-    if (safeSlug === sanitizePageSlug(page.slug || '', '') && !shouldAutoReplaceSlug(page.slug || '')) {
-      return { ok: false, slug: safeSlug, message: '현재 페이지에서 사용 중인 URL입니다.' };
+    if (safeSlug === sanitizePageSlug(page.slug || '', '')) {
+      return { ok: true, slug: safeSlug, message: '현재 페이지 주소를 그대로 사용합니다.' };
     }
     if (!isServerPageMode()) return { ok: true, slug: safeSlug };
     const context = projectContext({ slug: safeSlug }, authUser);

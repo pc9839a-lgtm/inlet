@@ -1,10 +1,3 @@
-const TEMPLATE_BASE_SLUGS = new Set([
-  'my-page',
-  'restart-law-care',
-  'our-wedding-day',
-  'lumiere-riverpark',
-]);
-
 export const RESERVED_PAGE_SLUGS = new Set(['admin', 'api', 'invite', 'login', 'signup', 'terms', 'privacy', 'contact']);
 
 export function sanitizePageSlug(value = '', fallback = 'page') {
@@ -33,23 +26,10 @@ export function shortStableSlugHash(value = '') {
   return (hash >>> 0).toString(36).padStart(6, '0').slice(0, 6);
 }
 
-export function randomSlugSuffix() {
-  const time = Date.now().toString(36).slice(-4);
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    const bytes = new Uint8Array(2);
-    crypto.getRandomValues(bytes);
-    return `${time}${Array.from(bytes, (byte) => byte.toString(36).padStart(2, '0')).join('').slice(0, 4)}`;
-  }
-  return `${time}${Math.random().toString(36).slice(2, 6)}`;
-}
-
 export function createUniquePageSlug(base = 'page', authUser = null) {
-  const safeBase = sanitizePageSlug(base, 'page').slice(0, 42);
-  const identity = authUser?.workspaceId || authUser?.email || authUser?.id || '';
-  const ownerPart = shortStableSlugHash(identity || randomSlugSuffix());
-  return sanitizePageSlug(`${safeBase}-${ownerPart}-${randomSlugSuffix()}`, 'page');
+  return sanitizePageSlug(base || authUser?.slug || 'page', 'page').slice(0, 48);
 }
 
 export function shouldAutoReplaceSlug(slug = '') {
-  return TEMPLATE_BASE_SLUGS.has(sanitizePageSlug(slug, 'my-page'));
+  return false;
 }
