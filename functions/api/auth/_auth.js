@@ -414,7 +414,7 @@ function envFirst(env = {}, keys = [], fallback = '') {
 export function googleAuthRedirectUri(request, env = {}) {
   const configured = String(env.GOOGLE_AUTH_REDIRECT_URI || '').trim();
   if (configured) return configured;
-  return new URL('/api/auth/google-callback', request.url).toString();
+  return new URL('/api/auth/login', request.url).toString();
 }
 
 export async function googleLoginAuthUrl(request, env = {}, input = {}) {
