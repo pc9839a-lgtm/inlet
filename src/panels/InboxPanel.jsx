@@ -750,10 +750,11 @@ function InboxConnectionsPanel({ page, authUser = null, updateIntegrations, onSa
                       <span>연결 계정</span>
                       <strong className="locked-email-value">{draftIntegrations.sheets.connectedEmail || '연결 필요'}</strong>
                     </div>
-                    {draftIntegrations.sheets.spreadsheetUrl && (
-                      <a className="test-connection-btn" href={draftIntegrations.sheets.spreadsheetUrl} target="_blank" rel="noreferrer">시트 열기</a>
-                    )}
+                    <p className="connection-help-text">첫 접수가 들어오면 입력폼 항목대로 시트 컬럼이 자동 생성됩니다.</p>
                     <div className="connection-inline-actions">
+                      {draftIntegrations.sheets.spreadsheetUrl && (
+                        <a className="test-connection-btn sheet-open-btn" href={draftIntegrations.sheets.spreadsheetUrl} target="_blank" rel="noreferrer">시트 열기</a>
+                      )}
                       <button type="button" className="save-connection-btn" disabled={testing === 'sheets-oauth'} onClick={connectGoogleSheetsOAuth}>{testing === 'sheets-oauth' ? '연결 중' : 'Google로 연결'}</button>
                       <button type="button" className="test-connection-btn" disabled={testing === 'sheets-status'} onClick={refreshGoogleSheetsOAuthStatus}>{testing === 'sheets-status' ? '확인 중' : '상태 확인'}</button>
                       <button type="button" className="test-connection-btn" disabled={testing === 'sheets-disconnect'} onClick={disconnectGoogleSheetsOAuth}>{testing === 'sheets-disconnect' ? '해제 중' : '연결 해제'}</button>

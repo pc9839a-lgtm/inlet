@@ -262,7 +262,7 @@ for (const [name, source, tokens] of [
   ['integrations test', integrationsTest, ['type !== \'sheets\'', 'isGoogleAppsScriptUrl', 'text/plain;charset=utf-8', 'Google Apps Script', 'pagero.lead.v1', "event: 'lead.test'", "service: 'pagero'", "target: 'google_sheets'", "provider: 'google_sheets'", "mode: 'webhook'", "sheetName: body.sheetName", "utmSource: 'connection_test'"]],
   ['google sheets oauth shared', googleSheetsOauth, ['project_integrations', 'saveGoogleSheetsIntegration', 'getGoogleSheetsIntegration', 'deleteGoogleSheetsIntegration', 'refreshGoogleAccessToken', 'appendGoogleSheetRow', 'appendGoogleSheetPayload', 'ensureGoogleSheetHeaders', 'googleSheetsPayloadTable']],
   ['google sheets oauth url', googleSheetsOauthUrl, ['googleSheetsAuthUrl', 'signedOAuthState', 'authorizeProject', "write: true", "tab: 'inbox'"]],
-  ['google sheets callback', googleSheetsCallback, ['verifyOAuthState', 'exchangeGoogleOAuthCode', 'createGoogleSpreadsheet', 'initializeGoogleSheetColumns', 'saveGoogleSheetsIntegration', 'pagero:google-sheets-connected']],
+  ['google sheets callback', googleSheetsCallback, ['verifyOAuthState', 'exchangeGoogleOAuthCode', 'createGoogleSpreadsheet', 'saveGoogleSheetsIntegration', 'pagero:google-sheets-connected']],
   ['google sheets status', googleSheetsStatus, ['getGoogleSheetsIntegration', 'authorizeProject', "tab: 'inbox'"]],
   ['google sheets disconnect', googleSheetsDisconnect, ['deleteGoogleSheetsIntegration', 'authorizeProject', "write: true", "tab: 'inbox'"]],
   ['events', events, ['insertD1Event', 'listD1Events', 'publicWrite: true', 'publicProjectShell(project)', "tab: 'stats'", 'eventType', 'meta: { source:']],
