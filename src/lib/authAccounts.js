@@ -75,7 +75,7 @@ export async function loginAuthAccount(input = {}) {
 }
 
 export async function startGoogleAuthLogin(input = {}) {
-  const data = await postJson('/api/auth/google/oauth-url', {
+  const data = await postJson('/api/auth/google-oauth-url', {
     projectId: input.projectId || '',
     next: input.next || '/',
   });
