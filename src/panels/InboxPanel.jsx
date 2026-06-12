@@ -452,6 +452,8 @@ function InboxConnectionsPanel({ page, authUser = null, updateIntegrations, onSa
     };
   };
 
+  const googleSheetsHeaders = () => collectGoogleSheetHeaders(page);
+
   const switchSheetsMode = (mode) => {
     const nextMode = mode === 'webhook' ? 'webhook' : 'oauth';
     sheetPatch({
@@ -531,6 +533,7 @@ function InboxConnectionsPanel({ page, authUser = null, updateIntegrations, onSa
         ownerId: project.ownerId,
         slug: project.slug,
         project,
+        sheetHeaders: googleSheetsHeaders(),
       }, {
         headers: projectAuthHeaders(project),
       });
@@ -750,7 +753,7 @@ function InboxConnectionsPanel({ page, authUser = null, updateIntegrations, onSa
                       <span>연결 계정</span>
                       <strong className="locked-email-value">{draftIntegrations.sheets.connectedEmail || '연결 필요'}</strong>
                     </div>
-                    <p className="connection-help-text">첫 접수가 들어오면 입력폼 항목대로 시트 컬럼이 자동 생성됩니다.</p>
+                    <p className="connection-help-text">연결하면 현재 입력폼 항목대로 시트 컬럼이 바로 생성됩니다.</p>
                     <div className="connection-inline-actions">
                       {draftIntegrations.sheets.spreadsheetUrl && (
                         <a className="test-connection-btn sheet-open-btn" href={draftIntegrations.sheets.spreadsheetUrl} target="_blank" rel="noreferrer">시트 열기</a>
@@ -1093,4 +1096,34 @@ export default function InboxPanel({
       <InboxConnectionsPanel page={page} authUser={authUser} updateIntegrations={updateIntegrations} onSavePage={onSavePage} />
     </div>
   );
+}
+
+function collectGoogleSheetHeaders(page = {}) {
+  const headers = [];
+  const add = (value) => {
+    const label = String(value || '').trim();
+    if (!label || headers.includes(label)) return;
+    headers.push(label);
+  };
+
+  for (const block of Array.isArray(page.blocks) ? page.blocks : []) {
+    if (block?.visible === false) continue;
+    const settings = block.s || block.settings || {};
+    if (block.type === 'form') {
+      for (const question of Array.isArray(settings.questions) ? settings.questions : []) {
+        if (question?.enabled === false) continue;
+        add(question?.label);
+      }
+    }
+    if (block.type === 'reservation') {
+      if (settings.fields?.name !== false) add('이름');
+      if (settings.fields?.phone !== false) add('연락처');
+      for (const field of Array.isArray(settings.customFields) ? settings.customFields : []) {
+        if (field?.enabled === false) continue;
+        add(field?.label);
+      }
+    }
+  }
+
+  return headers.slice(0, 40);
 }

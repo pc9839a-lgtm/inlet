@@ -36,6 +36,7 @@ export async function onRequestPost({ request, env }) {
       projectId,
       ownerId: String(project.ownerId || body.ownerId || body.project?.ownerId || ''),
       slug: String(project.slug || body.slug || body.project?.slug || ''),
+      sheetHeaders: normalizeSheetHeaders(body.sheetHeaders),
     }, env);
 
     return jsonResponse(request, env, 200, {
@@ -48,4 +49,18 @@ export async function onRequestPost({ request, env }) {
   } catch (error) {
     return handleApiError(request, env, error, METHODS);
   }
+}
+
+function normalizeSheetHeaders(headers = []) {
+  if (!Array.isArray(headers)) return [];
+  const seen = new Set();
+  const normalized = [];
+  for (const raw of headers) {
+    const header = String(raw || '').trim();
+    if (!header || seen.has(header)) continue;
+    seen.add(header);
+    normalized.push(header);
+    if (normalized.length >= 40) break;
+  }
+  return normalized;
 }

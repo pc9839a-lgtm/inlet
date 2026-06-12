@@ -6,6 +6,7 @@ import {
   googleClientId,
   googleClientSecret,
   googleRedirectUri,
+  initializeGoogleSheetColumns,
   saveGoogleSheetsIntegration,
   verifyOAuthState,
 } from './_oauth.js';
@@ -35,6 +36,12 @@ export async function onRequestGet({ request, env }) {
       title: `Pagero 접수함 - ${payload.slug || payload.projectId}`,
       sheetName,
     });
+    await initializeGoogleSheetColumns({
+      accessToken: tokens.access_token || '',
+      spreadsheetId: spreadsheet.spreadsheetId || '',
+      sheetName,
+      headers: payload.sheetHeaders,
+    });
 
     await saveGoogleSheetsIntegration(env.DB, {
       projectId: payload.projectId,
@@ -58,7 +65,7 @@ export async function onRequestGet({ request, env }) {
       },
     });
 
-    return html('Google Sheets 연결 완료', '첫 접수가 들어오면 입력폼 항목대로 시트 컬럼이 자동 생성됩니다.', { projectId: payload.projectId });
+    return html('Google Sheets 연결 완료', '현재 입력폼 항목대로 시트 컬럼을 만들었습니다.', { projectId: payload.projectId });
   } catch (error) {
     return html('Google 연결 실패', String(error?.message || error || '잠시 후 다시 시도해주세요.'));
   }

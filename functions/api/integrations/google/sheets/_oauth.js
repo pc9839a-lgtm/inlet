@@ -270,12 +270,12 @@ export async function appendGoogleSheetRow({ accessToken, spreadsheetId, sheetNa
   return data;
 }
 
-export async function initializeGoogleSheetColumns({ accessToken, spreadsheetId, sheetName } = {}) {
+export async function initializeGoogleSheetColumns({ accessToken, spreadsheetId, sheetName, headers } = {}) {
   return ensureGoogleSheetHeaders({
     accessToken,
     spreadsheetId,
     sheetName,
-    headers: GOOGLE_SHEETS_COLUMNS,
+    headers: mergeHeaders(GOOGLE_SHEETS_COLUMNS, headers),
   });
 }
 
