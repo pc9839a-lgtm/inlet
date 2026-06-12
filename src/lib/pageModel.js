@@ -249,6 +249,12 @@ function pickSafe(value, list, fallback) {
   return list.includes(value) ? value : fallback;
 }
 
+function clampNumber(value, min, max, fallback) {
+  const number = Number(value);
+  const safeNumber = Number.isFinite(number) ? number : fallback;
+  return Math.max(min, Math.min(max, safeNumber));
+}
+
 function migrateButtonColorMode(s, defaultButton = '#111827', defaultHover = '#2563eb') {
   s.buttonColorMode = pickSafe(
     s.buttonColorMode || (s.buttonColor && s.buttonColor !== defaultButton ? 'custom' : 'theme'),
@@ -346,13 +352,14 @@ function sanitizeBlock(block) {
 
   if (block?.type === 'text') {
     s.layout = pickSafe(s.layout || 'plain', ['plain','card','notice'], 'plain');
-    s.bgEnabled = false;
-    s.padding = 14;
-    s.marginY = 12;
-    s.radius = 18;
-    s.shadow = false;
-    s.spacingPreset = 'normal';
-    s.radiusPreset = 'medium';
+    s.bgEnabled = !!s.bgEnabled;
+    s.bgColor = s.bgColor || '#FFFFFF';
+    s.padding = clampNumber(s.padding, 0, 48, 14);
+    s.marginY = clampNumber(s.marginY, 0, 48, 12);
+    s.radius = clampNumber(s.radius, 0, 36, 18);
+    s.shadow = !!s.shadow;
+    s.spacingPreset = pickSafe(s.spacingPreset || 'normal', ['compact','normal','wide'], 'normal');
+    s.radiusPreset = pickSafe(s.radiusPreset || 'medium', ['none','small','medium','large','pill','square','round'], 'medium');
   }
 
   if (block?.type === 'cards') {
@@ -425,7 +432,7 @@ function sanitizeBlock(block) {
     s.imageHeightPx = Math.max(140, Math.min(520, Number(s.imageHeightPx || 260)));
     s.imageX = Math.max(0, Math.min(100, Number(s.imageX ?? 50)));
     s.imageY = Math.max(0, Math.min(100, Number(s.imageY ?? 50)));
-    s.marginY = 12;
+    s.marginY = clampNumber(s.marginY, 0, 48, 12);
   }
 
   if (block?.type === 'map') {
@@ -497,7 +504,7 @@ function sanitizeBlock(block) {
     const reservationSpacingDefault = { compact: 8, normal: 12, wide: 18 }[s.spacing] || 12;
     s.spacingPx = reservationSpacingDefault;
     s.radiusStyle = pickSafe(s.radiusStyle || 'round', ['square','round','pill'], 'round');
-    s.marginY = 12;
+    s.marginY = clampNumber(s.marginY, 0, 48, 12);
     migrateButtonColorMode(s);
     s.buttonColor = s.buttonColor || '#111827';
     s.buttonTextColor = s.buttonTextColor || '#ffffff';

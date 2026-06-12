@@ -42,6 +42,41 @@ await runSmoke('server-smoke-pages', async ({ baseUrl }) => {
     settings: { topNavFixed: true, bottomBarFixed: true },
     blocks: [
       { id: 'hero', type: 'hero', visible: true, s: { title: 'Smoke', body: 'Page' } },
+      {
+        id: 'text-style',
+        type: 'text',
+        visible: true,
+        s: {
+          title: 'Styled Text',
+          body: 'Text widget style must survive save.',
+          layout: 'card',
+          bgEnabled: true,
+          bgColor: '#fff7ed',
+          padding: 28,
+          marginY: 30,
+          radius: 26,
+          shadow: true,
+          spacingPreset: 'wide',
+          radiusPreset: 'pill',
+        },
+      },
+      { id: 'image-style', type: 'image', visible: true, s: { mode: 'single', image: '', marginY: 34, imageHeightPx: 300, imageX: 63, imageY: 42 } },
+      {
+        id: 'reservation-style',
+        type: 'reservation',
+        visible: true,
+        s: {
+          title: 'Reserve',
+          desc: 'Reserve smoke',
+          marginY: 27,
+          buttonHover: 'zoom',
+          buttonColorMode: 'custom',
+          buttonColor: '#f97316',
+          buttonTextColor: '#ffffff',
+          duplicatePhone: 'block',
+          duplicateWindow: '7d',
+        },
+      },
       { id: 'form', type: 'form', visible: true, s: { title: '문의', submit: '접수' } },
     ],
   };
@@ -49,6 +84,12 @@ await runSmoke('server-smoke-pages', async ({ baseUrl }) => {
   const pagePath = `/api/pages/${encodeURIComponent(smokeId)}`;
   const saved = await json({ baseUrl }, 'POST', pagePath, { project, page });
   assert(saved.res.ok && saved.data.page?.slug === smokeId, 'page save failed');
+  const savedText = saved.data.page?.blocks?.find((block) => block.id === 'text-style');
+  assert(savedText?.s?.bgEnabled === true && savedText?.s?.padding === 28 && savedText?.s?.marginY === 30 && savedText?.s?.shadow === true && savedText?.s?.spacingPreset === 'wide' && savedText?.s?.radiusPreset === 'pill', 'text widget style settings should survive page save');
+  const savedImage = saved.data.page?.blocks?.find((block) => block.id === 'image-style');
+  assert(savedImage?.s?.marginY === 34 && savedImage?.s?.imageHeightPx === 300 && savedImage?.s?.imageX === 63 && savedImage?.s?.imageY === 42, 'image widget position/style settings should survive page save');
+  const savedReservation = saved.data.page?.blocks?.find((block) => block.id === 'reservation-style');
+  assert(savedReservation?.s?.marginY === 27 && savedReservation?.s?.buttonHover === 'zoom' && savedReservation?.s?.buttonColorMode === 'custom' && savedReservation?.s?.buttonColor === '#f97316', 'reservation widget style settings should survive page save');
   await assertPublicPageMatches(ctx, pagePath, saved.data.page, 'initial page save');
 
   const emailLocked = await fetchWithTimeout(`${baseUrl}${pagePath}`, {

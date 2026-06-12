@@ -1512,6 +1512,24 @@ function App() {
     });
   };
 
+  const savedPageFromResult = (localPage, serverPage = null) => {
+    if (!serverPage) return normalizePageForSave(localPage);
+    return normalizePageForSave({
+      ...localPage,
+      id: serverPage.id || localPage.id,
+      projectId: serverPage.projectId || localPage.projectId,
+      ownerId: serverPage.ownerId || localPage.ownerId,
+      revision: serverPage.revision ?? localPage.revision,
+      createdAt: serverPage.createdAt || localPage.createdAt,
+      updatedAt: serverPage.updatedAt || localPage.updatedAt,
+      savedAt: serverPage.savedAt || localPage.savedAt,
+      publishedAt: serverPage.publishedAt || localPage.publishedAt,
+      integrations: serverPage.integrations || localPage.integrations,
+      ownership: serverPage.ownership || localPage.ownership,
+      managers: serverPage.managers || localPage.managers,
+    });
+  };
+
   const persistStyleNow = async () => {
       if (blockWrite('style')) return;
       const nextPage = pageForAccountSave({
@@ -1537,7 +1555,7 @@ function App() {
       setStylePreviewBlocks(null);
       setConnectionsEditing(false);
       if (result?.page) {
-        const savedPage = normalizePageForSave(result.page);
+        const savedPage = savedPageFromResult(nextPage, result.page);
         setPage(savedPage);
         saveLocalJson(STORAGE_KEY, savedPage, '페이지');
       }
@@ -1587,7 +1605,7 @@ function App() {
     }
     setConnectionsEditing(false);
     if (result?.page) {
-      const savedPage = normalizePageForSave(result.page);
+      const savedPage = savedPageFromResult(nextPage, result.page);
       setPage(savedPage);
       saveLocalJson(STORAGE_KEY, savedPage, '페이지');
     }
@@ -1857,7 +1875,7 @@ function App() {
     try {
       const result = await persistPage(safePage, authUser, { tab: 'edit' });
       if (result?.page) {
-        const savedPage = normalizePageForSave(result.page);
+        const savedPage = savedPageFromResult(safePage, result.page);
         saveLocalJson(STORAGE_KEY, savedPage, label, { quietSuccess: true });
         return { ...result, page: savedPage };
       }
