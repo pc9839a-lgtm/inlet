@@ -1,7 +1,7 @@
 import React, { Suspense, useEffect, useRef, useState } from 'react';
 import { authAccountErrorMessage, changeAuthPassword, confirmEmailVerification, isValidAccountPassword, loginAuthAccount, normalizeAccountPhone, registerAuthAccount, requestEmailVerification, startGoogleAuthLogin } from '../lib/authAccounts.js';
 import { pageSlugIssues, sanitizePageSlug } from '../lib/pageSlugs.js';
-import PageroRestoredHome from './PageroRestoredHome.jsx';
+import PageroExactHome from './PageroExactHome.jsx';
 
 const demoHero = {
   title: '고객 상담을\n빠르게 연결',
@@ -928,7 +928,7 @@ function PageroLandingHomeSimple({ onLogin, onSignup }) {
 }
 
 function PublicHome({ onLogin, onSignup }) {
-  return <PageroRestoredHome onLogin={onLogin} onSignup={onSignup} />;
+  return <PageroExactHome onLogin={onLogin} onSignup={onSignup} />;
 
   return (
     <div className="public-home-shell">
