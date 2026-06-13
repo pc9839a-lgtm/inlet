@@ -709,6 +709,7 @@ function App() {
   }, []);
   useEffect(() => {
     if (publicLandingSlug) return;
+    if (isServerPageMode()) return;
     saveLocalJson(STORAGE_KEY, normalizePageForSave(page), '페이지');
   }, [page, publicLandingSlug]);
   useEffect(() => {
