@@ -312,6 +312,7 @@ export default function SettingsPanel({
   updatePage,
   updateMeta,
   updateIntegrations,
+  onSavePage,
   onDuplicatePage,
   canDuplicatePage = false,
   onReset,
@@ -382,13 +383,17 @@ export default function SettingsPanel({
       return nextSource;
     });
   }, [page.title, page.slug, openSection, lockedSections.basic]);
-  const saveBasic = () => {
+  const saveBasic = async () => {
     const slug = sanitizePageSlug(basicDraft.slug, page.slug || 'my-page');
-    updatePage({ title: basicDraft.title, slug });
-    basicSourceRef.current = { title: basicDraft.title || '', slug };
-    setBasicDraft({ title: basicDraft.title || '', slug });
+    const title = basicDraft.title || '';
+    const nextPage = { ...page, title, slug };
+    updatePage({ title, slug });
+    basicSourceRef.current = { title, slug };
+    setBasicDraft({ title, slug });
     lockSection('basic');
-    notify('페이지 기본 설정을 저장했습니다.', 'success');
+    const result = await onSavePage?.(nextPage);
+    if (result && result.ok === false) return;
+    notify('\uD398\uC774\uC9C0 \uAE30\uBCF8 \uC124\uC815\uC744 \uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4.', 'success');
   };
   const setDuplicateField = (key, value) => {
     setDuplicateDraft((draft) => normalizePageDuplicateUrl({ ...draft, [key]: value }));

@@ -592,6 +592,8 @@ function App() {
   const saveErrorNoticeRef = useRef('');
   const sessionRefreshRef = useRef('');
   const accountPageLoadRef = useRef('');
+  const latestPageRef = useRef(page);
+  const localPageMutationRef = useRef(0);
   const templateModuleRef = useRef(null);
   const editInitialCollapseRef = useRef('');
   const { toast, confirmDialog, setToast, setConfirmDialog, showToast, requestConfirm } = useBuilderFeedback();
@@ -723,6 +725,10 @@ function App() {
   }, [authUser]);
 
   useEffect(() => {
+    latestPageRef.current = page;
+  }, [page]);
+
+  useEffect(() => {
     if (publicLandingSlug || !authUser || !isServerPageMode()) return;
     if (String(authUser.session || '').trim()) return;
     localStorage.removeItem(AUTH_KEY);
@@ -769,16 +775,20 @@ function App() {
     const slug = page.slug || defaultPage.slug || 'my-page';
     const context = projectContext(page, authUser);
     const loadKey = `${context.projectId}:${context.slug}:${authUser?.session || authUser?.workspaceId || authUser?.email || ''}`;
+    const loadMutation = localPageMutationRef.current;
     if (accountPageLoadRef.current === loadKey) return undefined;
     accountPageLoadRef.current = loadKey;
     fetchServerPage(slug, context)
       .then((serverPage) => {
         if (!alive) return;
         if (accountPageLoadRef.current !== loadKey) return;
+        if (localPageMutationRef.current !== loadMutation) return;
         if (serverPage) {
           setPage((current) => {
             if ((current.slug || '') !== slug || (current.projectId || '') !== (context.projectId || '')) return current;
-            return normalize(serverPage);
+            const nextPage = normalize(serverPage);
+            latestPageRef.current = nextPage;
+            return nextPage;
           });
           return;
         }
@@ -965,29 +975,38 @@ function App() {
     markSaveStatus('warning', '권한 없음', '마스터가 부여한 쓰기 권한이 필요합니다.');
     return true;
   };
+  const markLocalPageMutation = () => {
+    localPageMutationRef.current += 1;
+  };
+  const commitLocalPageDraft = (nextPage) => {
+    const normalized = normalizePageForSave(nextPage);
+    latestPageRef.current = normalized;
+    markLocalPageMutation();
+    return normalized;
+  };
   const setNormalizedPage = (updater) => {
     if (blockWrite(tab)) return;
-    setPage((prev) => normalizePageForSave(typeof updater === 'function' ? updater(prev) : updater));
+    setPage((prev) => commitLocalPageDraft(typeof updater === 'function' ? updater(prev) : updater));
   };
   const updatePage = (patch) => {
     if (blockWrite(tab)) return;
-    setPage((p) => normalizePageForSave({ ...p, ...patch }));
+    setPage((p) => commitLocalPageDraft({ ...p, ...patch }));
   };
   const updateTheme = (patch) => {
     if (blockWrite('style')) return;
-    setPage((p) => ({ ...p, theme: { ...p.theme, ...patch } }));
+    setPage((p) => commitLocalPageDraft({ ...p, theme: { ...p.theme, ...patch } }));
   };
   const updateStyleBlocks = (blocks) => {
     if (blockWrite('style')) return;
-    setPage((p) => normalizePageForSave({ ...p, blocks: Array.isArray(blocks) ? blocks : p.blocks }));
+    setPage((p) => commitLocalPageDraft({ ...p, blocks: Array.isArray(blocks) ? blocks : p.blocks }));
   };
   const updateMeta = (patch) => {
     if (blockWrite('settings')) return;
-    setPage((p) => ({ ...p, meta: { ...p.meta, ...patch } }));
+    setPage((p) => commitLocalPageDraft({ ...p, meta: { ...p.meta, ...patch } }));
   };
   const updateAi = (patch) => {
     if (blockWrite('admin')) return;
-    setPage((p) => ({ ...p, ai: { ...(p.ai || {}), ...patch } }));
+    setPage((p) => commitLocalPageDraft({ ...p, ai: { ...(p.ai || {}), ...patch } }));
   };
   const normalizeFreeEmailIntegrations = (sourcePage) => {
     const sourceIntegrations = normalizeIntegrations(sourcePage?.integrations || {});
@@ -1016,18 +1035,18 @@ function App() {
   };
   const updateIntegrations = (section, patch) => {
     if (blockWrite(tab === 'inbox' ? 'inbox' : 'settings')) return;
-    setPage((p) => normalizeFreeEmailIntegrations({ ...p, integrations: normalizeIntegrations({ ...(p.integrations || {}), [section]: { ...(p.integrations?.[section] || {}), ...patch } }) }));
+    setPage((p) => commitLocalPageDraft(normalizeFreeEmailIntegrations({ ...p, integrations: normalizeIntegrations({ ...(p.integrations || {}), [section]: { ...(p.integrations?.[section] || {}), ...patch } }) })));
   };
   const updateBlock = (id, patch) => {
     if (blockWrite('edit')) return;
-    setPage((p) => ({
+    setPage((p) => commitLocalPageDraft({
       ...p,
       blocks: ensureUniqueAnchors(p.blocks.map((b) => b.id === id ? sanitizeBlock({ ...b, s: { ...b.s, ...patch } }) : b)),
     }));
   };
   const toggleVisible = (id) => {
     if (blockWrite('edit')) return;
-    setPage((p) => ({ ...p, blocks: p.blocks.map((b) => b.id === id ? { ...b, visible: !b.visible } : b) }));
+    setPage((p) => commitLocalPageDraft({ ...p, blocks: p.blocks.map((b) => b.id === id ? { ...b, visible: !b.visible } : b) }));
   };
   const addBlock = (type) => {
     if (blockWrite('edit')) return;
@@ -1036,7 +1055,7 @@ function App() {
       if (existing) { setOpenId(''); setAddOpen(false); return; }
     }
     const b = newBlock(type);
-    setPage((p) => ({ ...p, blocks: ensureUniqueAnchors([...p.blocks, b]) }));
+    setPage((p) => commitLocalPageDraft({ ...p, blocks: ensureUniqueAnchors([...p.blocks, b]) }));
     setOpenId('');
     setAddOpen(false);
   };
@@ -1044,7 +1063,7 @@ function App() {
     if (blockWrite('edit')) return;
     const idx = page.blocks.findIndex((b) => b.id === id);
     const nextOpen = openId === id ? '' : openId;
-    setPage((p) => ({ ...p, blocks: ensureUniqueAnchors(p.blocks.filter((b) => b.id !== id)) }));
+    setPage((p) => commitLocalPageDraft({ ...p, blocks: ensureUniqueAnchors(p.blocks.filter((b) => b.id !== id)) }));
     setOpenId(nextOpen);
     setAddOpen(false);
   };
@@ -1059,7 +1078,7 @@ function App() {
       if (idx < 0 || SINGLETON_BLOCK_TYPES.includes(p.blocks[idx].type)) return p;
       const next = [...p.blocks];
       next.splice(idx + 1, 0, cp);
-      return { ...p, blocks: ensureUniqueAnchors(next) };
+      return commitLocalPageDraft({ ...p, blocks: ensureUniqueAnchors(next) });
     });
     setOpenId('');
     setAddOpen(false);
@@ -1072,6 +1091,8 @@ function App() {
       return { ok: false, locked: true, message: '페이지 복제는 유료 기능입니다. 결제 연동 후 사용할 수 있습니다.' };
     }
     const nextPage = createDuplicatedPage(page, urlConfig);
+    latestPageRef.current = nextPage;
+    markLocalPageMutation();
     setPage(nextPage);
     setLeads([]);
     setEvents([]);
@@ -1096,7 +1117,7 @@ function App() {
       const adjustedIndex = from < requestedIndex ? requestedIndex - 1 : requestedIndex;
       const safeIndex = Math.max(0, Math.min(adjustedIndex, nextNormal.length));
       nextNormal.splice(safeIndex, 0, moved);
-      return { ...p, blocks: ensureUniqueAnchors([...nextNormal, ...fixed]) };
+      return commitLocalPageDraft({ ...p, blocks: ensureUniqueAnchors([...nextNormal, ...fixed]) });
     });
   };
   const authForTargetPage = (targetPage = {}) => (
@@ -1499,8 +1520,9 @@ function App() {
     if (hasPendingStyle) setStylePreviewBlocks(null);
   };
 
-  const pageForAccountSave = (sourcePage = page) => {
-    const normalized = normalizePageForSave(normalizeFreeEmailIntegrations(sourcePage));
+  const pageForAccountSave = (sourcePage = null) => {
+    const basePage = sourcePage || latestPageRef.current || page;
+    const normalized = normalizePageForSave(normalizeFreeEmailIntegrations(basePage));
     const currentSlug = normalized.slug || defaultPage.slug || 'my-page';
     if (!authUser) return normalizePageForSave({ ...normalized, slug: currentSlug });
     const context = projectContext({ ...normalized, slug: currentSlug }, authUser);
@@ -1533,11 +1555,12 @@ function App() {
   const persistStyleNow = async () => {
       if (blockWrite('style')) return;
       const nextPage = pageForAccountSave({
-        ...page,
-        theme: stylePreviewTheme ? { ...page.theme, ...stylePreviewTheme } : page.theme,
-        blocks: stylePreviewBlocks || page.blocks,
+        ...(latestPageRef.current || page),
+        theme: stylePreviewTheme ? { ...(latestPageRef.current || page).theme, ...stylePreviewTheme } : (latestPageRef.current || page).theme,
+        blocks: stylePreviewBlocks || (latestPageRef.current || page).blocks,
       });
       const expectedUpdatedAt = page.updatedAt || page.savedAt || page.createdAt || '';
+      latestPageRef.current = nextPage;
       setPage(nextPage);
       saveLocalJson(STORAGE_KEY, nextPage, '페이지');
       let result = null;
@@ -1556,6 +1579,7 @@ function App() {
       setConnectionsEditing(false);
       if (result?.page) {
         const savedPage = savedPageFromResult(nextPage, result.page);
+        latestPageRef.current = savedPage;
         setPage(savedPage);
         saveLocalJson(STORAGE_KEY, savedPage, '페이지');
       }
@@ -1570,12 +1594,12 @@ function App() {
   const saveNow = async (pageOverride = null) => {
     if (!allowedTabs.includes(tab)) {
       markSaveStatus('warning', '저장 차단', '현재 권한에서 저장할 수 없는 화면입니다.');
-      return;
+      return { ok: false, reason: 'tab-blocked' };
     }
     if (!canWriteCurrentTab) {
       markSaveStatus('warning', '권한 없음', '마스터가 부여한 쓰기 권한이 필요합니다.');
       showToast('현재 계정에는 이 화면을 저장할 권한이 없습니다.', 'warning');
-      return;
+      return { ok: false, reason: 'write-blocked' };
     }
     if (tab === 'style' && hasPendingStyle) {
       requestConfirm({
@@ -1584,12 +1608,15 @@ function App() {
         confirmLabel: '저장',
         onConfirm: persistStyleNow,
       });
-      return;
+      return { ok: false, reason: 'style-confirm-required' };
     }
 
-    const sourcePage = pageOverride || page;
+    const sourcePage = pageOverride
+      ? normalizePageForSave({ ...(latestPageRef.current || page), ...pageOverride })
+      : (latestPageRef.current || page);
     const expectedUpdatedAt = sourcePage.updatedAt || sourcePage.savedAt || sourcePage.createdAt || '';
     const nextPage = pageForAccountSave(sourcePage);
+    latestPageRef.current = nextPage;
     setPage(nextPage);
     saveLocalJson(STORAGE_KEY, nextPage, '페이지');
     let result = null;
@@ -1601,11 +1628,13 @@ function App() {
         ? '다른 곳에서 먼저 저장된 페이지가 있어 확인이 필요합니다.'
         : `로컬에는 남았지만 서버 저장에 실패했습니다. ${String(error?.message || error)}`);
       if (!handled) showToast(`서버 저장에 실패했습니다. ${String(error?.message || error)}`, 'error');
-      return;
+      return { ok: false, error };
     }
     setConnectionsEditing(false);
+    let savedPage = nextPage;
     if (result?.page) {
-      const savedPage = savedPageFromResult(nextPage, result.page);
+      savedPage = savedPageFromResult(nextPage, result.page);
+      latestPageRef.current = savedPage;
       setPage(savedPage);
       saveLocalJson(STORAGE_KEY, savedPage, '페이지');
     }
@@ -1614,6 +1643,7 @@ function App() {
     const saveModeLabel = result?.mode === 'local' ? '로컬 저장됨' : '서버 저장됨';
     const saveModeDetail = result?.mode === 'local' ? '페이지가 브라우저에 저장되었습니다.' : '페이지가 서버에 저장되었습니다.';
     markSaveStatus('ok', saveModeLabel, saveModeDetail);
+    return { ok: true, page: savedPage, result };
   };
   const changeTab = (nextTab) => {
     if (!allowedTabs.includes(nextTab)) return;
@@ -2170,7 +2200,7 @@ function App() {
                   {canUseBuilder && tab === 'style' && <StylePanel page={page} updateTheme={updateTheme} updateBlocks={updateStyleBlocks} onPreviewThemeChange={setStylePreviewTheme} onPreviewBlocksChange={setStylePreviewBlocks}/>}
                   {tab === 'inbox' && <InboxPanel leads={leads} page={page} authUser={authUser} updatePage={updatePage} syncing={leadsSyncing} totalLeads={leadPageMeta.total} hasMoreLeads={leadPageMeta.hasMore} loadMoreLeads={loadMoreLeads} onReloadLeads={() => refreshServerLeads({ quiet: false })} onFiltersChange={setInboxFilters} updateIntegrations={updateIntegrations} onSavePage={saveNow} connectionsEditing={connectionsEditing} setConnectionsEditing={setConnectionsEditing} updateLead={updateLead} deleteLead={deleteLead} retryLeadDelivery={retryLeadDelivery} retryFailedDeliveries={retryFailedDeliveries} exportLeadsCsv={exportLeadsCsv} leadConflict={leadConflict} onReloadLeadConflict={reloadLeadConflict} onRetryLeadConflict={retryLeadConflict} onDismissLeadConflict={() => setLeadConflict(null)} accessMode={accessMode}/>}
                   {tab === 'stats' && <StatsPanel events={events} leads={leads} page={page} eventPageMeta={statsEventPageMeta} leadPageMeta={statsLeadPageMeta} statsPartial={statsPartial} month={statsMonth} onMonthChange={setStatsMonth} period={statsPeriod} onPeriodChange={setStatsPeriod} serverStats={serverStatsSummary} channel={statsChannel} onChannelChange={setStatsChannel} accessMode={accessMode}/>}
-                  {tab === 'settings' && <SettingsPanel page={page} updatePage={updatePage} updateMeta={updateMeta} updateIntegrations={updateIntegrations} setPage={setNormalizedPage} onDuplicatePage={duplicatePageWithUrl} onCheckUrl={checkCreatePageUrl} canDuplicatePage={canUsePageDuplication(page)} onReset={reset} authUser={authUser} accessMode={accessMode} onAccountUpdate={updateAccountProfile} onLogout={logout}/>}
+                  {tab === 'settings' && <SettingsPanel page={page} updatePage={updatePage} updateMeta={updateMeta} updateIntegrations={updateIntegrations} setPage={setNormalizedPage} onSavePage={saveNow} onDuplicatePage={duplicatePageWithUrl} onCheckUrl={checkCreatePageUrl} canDuplicatePage={canUsePageDuplication(page)} onReset={reset} authUser={authUser} accessMode={accessMode} onAccountUpdate={updateAccountProfile} onLogout={logout}/>}
                   </Suspense>
                 </LazyChunkBoundary>
               </>
