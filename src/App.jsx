@@ -1616,9 +1616,6 @@ function App() {
       : (latestPageRef.current || page);
     const expectedUpdatedAt = sourcePage.updatedAt || sourcePage.savedAt || sourcePage.createdAt || '';
     const nextPage = pageForAccountSave(sourcePage);
-    latestPageRef.current = nextPage;
-    setPage(nextPage);
-    saveLocalJson(STORAGE_KEY, nextPage, '페이지');
     let result = null;
     try {
       result = await persistPage(nextPage, authUser, { tab, expectedUpdatedAt });
@@ -1631,13 +1628,10 @@ function App() {
       return { ok: false, error };
     }
     setConnectionsEditing(false);
-    let savedPage = nextPage;
-    if (result?.page) {
-      savedPage = savedPageFromResult(nextPage, result.page);
-      latestPageRef.current = savedPage;
-      setPage(savedPage);
-      saveLocalJson(STORAGE_KEY, savedPage, '페이지');
-    }
+    const savedPage = result?.page ? savedPageFromResult(nextPage, result.page) : nextPage;
+    latestPageRef.current = savedPage;
+    setPage(savedPage);
+    saveLocalJson(STORAGE_KEY, savedPage, '페이지');
     setSaved(true);
     setTimeout(() => setSaved(false), 1000);
     const saveModeLabel = result?.mode === 'local' ? '로컬 저장됨' : '서버 저장됨';
