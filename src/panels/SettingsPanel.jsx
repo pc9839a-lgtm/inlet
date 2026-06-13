@@ -314,6 +314,7 @@ export default function SettingsPanel({
   updateIntegrations,
   onSavePage,
   onDuplicatePage,
+  onCheckUrl,
   canDuplicatePage = false,
   onReset,
   authUser = null,
@@ -384,15 +385,30 @@ export default function SettingsPanel({
     });
   }, [page.title, page.slug, openSection, lockedSections.basic]);
   const saveBasic = async () => {
+    const currentBasic = { title: page.title || '', slug: page.slug || '' };
     const slug = sanitizePageSlug(basicDraft.slug, page.slug || 'my-page');
     const title = basicDraft.title || '';
+    if (slug !== currentBasic.slug) {
+      const check = await onCheckUrl?.({ slug });
+      if (check && !check.ok) {
+        setBasicDraft(currentBasic);
+        basicSourceRef.current = currentBasic;
+        notify(check.message || '이미 사용 중인 페이지 주소입니다.', 'error');
+        return;
+      }
+    }
     const nextPage = { ...page, title, slug };
+    const result = await onSavePage?.(nextPage);
+    if (result && result.ok === false) {
+      setBasicDraft(currentBasic);
+      basicSourceRef.current = currentBasic;
+      updatePage(currentBasic);
+      return;
+    }
     updatePage({ title, slug });
     basicSourceRef.current = { title, slug };
     setBasicDraft({ title, slug });
     lockSection('basic');
-    const result = await onSavePage?.(nextPage);
-    if (result && result.ok === false) return;
     notify('\uD398\uC774\uC9C0 \uAE30\uBCF8 \uC124\uC815\uC744 \uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4.', 'success');
   };
   const setDuplicateField = (key, value) => {
