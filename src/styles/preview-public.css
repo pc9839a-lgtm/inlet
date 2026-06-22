@@ -294,3 +294,26 @@
     padding-right: 14px !important;
   }
 }
+
+/* Final top menu offset for public pages and builder preview. */
+.phone-frame .landing-content > .topnav-one-line:first-child,
+.preview-workspace .landing-content > .topnav-one-line:first-child,
+.landing-page .landing-content > .topnav-one-line:first-child {
+  margin-top: 16px !important;
+  margin-bottom: 18px !important;
+}
+
+.phone-frame .landing-content > .topnav:first-child,
+.preview-workspace .landing-content > .topnav:first-child,
+.landing-page .landing-content > .topnav:first-child {
+  top: 10px !important;
+}
+
+.public-landing-viewport .landing-content:has(> .topnav:first-child) {
+  padding-top: 108px !important;
+}
+
+.public-landing-viewport .topnav.topnav-one-line,
+.public-landing-viewport .topnav {
+  top: 16px !important;
+}
