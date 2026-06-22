@@ -22,8 +22,13 @@
 .landing-content > .hero:first-child + .topnav,
 .landing-content > .hero-full:first-child + .topnav {
   position: sticky !important;
-  top: 0 !important;
+  top: 10px !important;
   z-index: 80 !important;
+}
+
+.landing-page .landing-content > .topnav-one-line:first-child {
+  margin-top: 16px !important;
+  margin-bottom: 18px !important;
 }
 
 .topnav-one-line .top-logo {
