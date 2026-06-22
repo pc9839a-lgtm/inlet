@@ -652,12 +652,18 @@ function App() {
   const adminRoute = useMemo(() => {
     return /^\/(?:admin|[^/?#]+\/admin)\/?$/.test(routePath);
   }, [routePath]);
+  const authRouteMode = useMemo(() => {
+    const pathname = routePath.replace(/\/+$/, '') || '/';
+    if (pathname === '/login') return 'login';
+    if (pathname === '/signup') return 'signup';
+    return '';
+  }, [routePath]);
   const staticPage = useMemo(() => {
     const pathname = routePath.replace(/\/+$/, '') || '/';
     return WAYZI_STATIC_PAGES[pathname] || null;
   }, [routePath]);
   const publicLandingSlug = useMemo(() => publicLandingSlugFromLocation(routePath), [routePath]);
-  const routeUsesWorkspaceTabs = !publicLandingSlug && !staticPage && !inviteToken && !adminRoute;
+  const routeUsesWorkspaceTabs = !publicLandingSlug && !staticPage && !inviteToken && !adminRoute && !authRouteMode;
 
   const markSaveStatus = (tone, label, detail = '') => {
     setSaveStatus({ tone, label, detail, at: new Date().toISOString() });
@@ -2071,8 +2077,18 @@ function App() {
     if (adminRoute) {
       return withWayziFooter(<Suspense fallback={<LazyPanelFallback />}><AuthScreen initialMode="login" onBack={()=>{ history.replaceState(null, '', '/'); setAuthView(''); }} onAuth={acceptAuth}/></Suspense>);
     }
-    if (authView) {
-      return withWayziFooter(<Suspense fallback={<LazyPanelFallback />}><AuthScreen initialMode={authView} onBack={()=>setAuthView('')} onAuth={acceptAuth}/></Suspense>);
+    const requestedAuthView = authRouteMode || authView;
+    if (requestedAuthView) {
+      return withWayziFooter(
+        <Suspense fallback={<LazyPanelFallback />}>
+          <AuthScreen
+            key={requestedAuthView}
+            initialMode={requestedAuthView}
+            onBack={()=>{ history.replaceState(null, '', '/'); setAuthView(''); }}
+            onAuth={acceptAuth}
+          />
+        </Suspense>
+      );
     }
 
     return withWayziFooter(<Suspense fallback={<LazyPanelFallback />}><PublicHome onLogin={()=>setAuthView('login')} onSignup={()=>setAuthView('signup')}/></Suspense>);

@@ -23,6 +23,27 @@ const C63_HOME_HTML = `<!doctype html>
     #root > .pagero-exact-home ~ .pagero-exact-home {
       display: none !important;
     }
+    .pagero-exact-home .c63-login-btn {
+      border: 1px solid rgba(15, 23, 42, .16);
+      background: rgba(255, 255, 255, .9);
+      color: #0f172a;
+      border-radius: 999px;
+      min-height: 44px;
+      padding: 0 18px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .pagero-exact-home .nav > .c63-login-btn {
+      margin-left: auto;
+    }
+    .pagero-exact-home .nav > .c63-login-btn + .header-btn {
+      margin-left: 8px;
+    }
+    .pagero-exact-home .fixed-inner > .c63-login-btn {
+      min-width: 96px;
+    }
   </style>
 </head>
 <body>
@@ -44,12 +65,62 @@ const C63_HOME_HTML = `<!doctype html>
         const homes = Array.from(root.children).filter((node) => node.classList?.contains('pagero-exact-home'));
         homes.slice(1).forEach((node) => node.remove());
       };
+      const goLogin = () => {
+        window.location.assign('/login');
+      };
+      const isLoginTarget = (node) => {
+        if (!node) return false;
+        const text = (node.textContent || '').replace(/\\s+/g, ' ').trim();
+        return node.classList?.contains('c63-login-btn')
+          || text === '로그인'
+          || text === '바로 시작하기'
+          || text === '무료 시작'
+          || text === '무료로 시작하기';
+      };
+      const makeLoginButton = (variant) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'c63-login-btn c63-login-btn-' + variant;
+        button.textContent = '로그인';
+        button.setAttribute('aria-label', '로그인');
+        return button;
+      };
+      const installLoginBridge = () => {
+        const root = document.getElementById('root');
+        if (!root) return;
+        if (!root.__pageroC63LoginBridgeInstalled) {
+          Object.defineProperty(root, '__pageroC63LoginBridgeInstalled', { value: true });
+          root.addEventListener('click', (event) => {
+            const target = event.target?.closest?.('button, a');
+            if (!isLoginTarget(target)) return;
+            event.preventDefault();
+            event.stopPropagation();
+            goLogin();
+          }, true);
+        }
+        const nav = root.querySelector('.pagero-exact-home .header .nav');
+        if (nav && !nav.querySelector('.c63-login-btn-header')) {
+          const startButton = nav.querySelector('.header-btn');
+          const loginButton = makeLoginButton('header');
+          nav.insertBefore(loginButton, startButton || null);
+        }
+        const fixedInner = root.querySelector('.pagero-exact-home .fixed-cta .fixed-inner');
+        if (fixedInner && !fixedInner.querySelector('.c63-login-btn-fixed')) {
+          const fixedButton = fixedInner.querySelector('.fixed-btn');
+          const loginButton = makeLoginButton('fixed');
+          fixedInner.insertBefore(loginButton, fixedButton || null);
+        }
+      };
       const installHomeGuard = () => {
         const root = document.getElementById('root');
         if (!root || root.__pageroC63HomeGuardInstalled) return;
         Object.defineProperty(root, '__pageroC63HomeGuardInstalled', { value: true });
-        new MutationObserver(removeDuplicateHomes).observe(root, { childList: true });
+        new MutationObserver(() => {
+          removeDuplicateHomes();
+          installLoginBridge();
+        }).observe(root, { childList: true, subtree: true });
         removeDuplicateHomes();
+        installLoginBridge();
       };
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', installHomeGuard, { once: true });
