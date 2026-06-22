@@ -310,10 +310,17 @@
 }
 
 .public-landing-viewport .landing-content:has(> .topnav:first-child) {
-  padding-top: 108px !important;
+  padding-top: 0 !important;
 }
 
 .public-landing-viewport .topnav.topnav-one-line,
 .public-landing-viewport .topnav {
+  position: sticky !important;
   top: 16px !important;
+  left: auto !important;
+  right: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 16px 0 18px !important;
+  transform: none !important;
 }
