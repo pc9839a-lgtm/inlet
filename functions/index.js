@@ -41,9 +41,6 @@ const C63_HOME_HTML = `<!doctype html>
     .pagero-exact-home .nav > .c63-login-btn + .header-btn {
       margin-left: 8px;
     }
-    .pagero-exact-home .fixed-inner > .c63-login-btn {
-      min-width: 96px;
-    }
   </style>
 </head>
 <body>
@@ -64,6 +61,14 @@ const C63_HOME_HTML = `<!doctype html>
         if (!root) return;
         const homes = Array.from(root.children).filter((node) => node.classList?.contains('pagero-exact-home'));
         homes.slice(1).forEach((node) => node.remove());
+      };
+      const removeDuplicateFooters = () => {
+        const root = document.getElementById('root');
+        if (!root) return;
+        const home = root.querySelector('.pagero-exact-home');
+        if (!home) return;
+        const footers = Array.from(home.querySelectorAll('footer'));
+        footers.slice(0, -1).forEach((node) => node.remove());
       };
       const goLogin = () => {
         window.location.assign('/login');
@@ -104,12 +109,6 @@ const C63_HOME_HTML = `<!doctype html>
           const loginButton = makeLoginButton('header');
           nav.insertBefore(loginButton, startButton || null);
         }
-        const fixedInner = root.querySelector('.pagero-exact-home .fixed-cta .fixed-inner');
-        if (fixedInner && !fixedInner.querySelector('.c63-login-btn-fixed')) {
-          const fixedButton = fixedInner.querySelector('.fixed-btn');
-          const loginButton = makeLoginButton('fixed');
-          fixedInner.insertBefore(loginButton, fixedButton || null);
-        }
       };
       const installHomeGuard = () => {
         const root = document.getElementById('root');
@@ -117,9 +116,11 @@ const C63_HOME_HTML = `<!doctype html>
         Object.defineProperty(root, '__pageroC63HomeGuardInstalled', { value: true });
         new MutationObserver(() => {
           removeDuplicateHomes();
+          removeDuplicateFooters();
           installLoginBridge();
         }).observe(root, { childList: true, subtree: true });
         removeDuplicateHomes();
+        removeDuplicateFooters();
         installLoginBridge();
       };
       if (document.readyState === 'loading') {
