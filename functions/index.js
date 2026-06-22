@@ -23,6 +23,36 @@ const C63_HOME_HTML = `<!doctype html>
     #root > .pagero-exact-home ~ .pagero-exact-home {
       display: none !important;
     }
+    .pagero-exact-home .header .nav {
+      display: flex !important;
+      align-items: center !important;
+      gap: 0 !important;
+      width: 100% !important;
+      min-width: 0 !important;
+    }
+    .pagero-exact-home .header .logo {
+      flex: 0 0 auto !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 10px !important;
+      margin-right: 34px !important;
+      white-space: nowrap !important;
+    }
+    .pagero-exact-home .header .menu {
+      flex: 0 1 auto !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 28px !important;
+      min-width: 0 !important;
+      margin: 0 !important;
+    }
+    .pagero-exact-home .header .menu a {
+      display: inline-flex !important;
+      align-items: center !important;
+      white-space: nowrap !important;
+      line-height: 1 !important;
+      padding: 0 !important;
+    }
     .pagero-exact-home .c63-login-btn {
       border: 1px solid rgba(15, 23, 42, .16);
       background: rgba(255, 255, 255, .9);
@@ -36,10 +66,20 @@ const C63_HOME_HTML = `<!doctype html>
       white-space: nowrap;
     }
     .pagero-exact-home .nav > .c63-login-btn {
-      margin-left: auto;
+      flex: 0 0 auto !important;
+      margin-left: auto !important;
     }
     .pagero-exact-home .nav > .c63-login-btn + .header-btn {
-      margin-left: 8px;
+      flex: 0 0 auto !important;
+      margin-left: 8px !important;
+    }
+    @media (max-width: 760px) {
+      .pagero-exact-home .header .logo {
+        margin-right: 18px !important;
+      }
+      .pagero-exact-home .header .menu {
+        display: none !important;
+      }
     }
   </style>
 </head>
