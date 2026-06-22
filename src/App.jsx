@@ -1679,22 +1679,19 @@ function App() {
       showToast(`템플릿을 불러오지 못했습니다. ${String(error?.message || error)}`, 'error');
     });
   }, [canUseBuilder, createOpen, startMode, tab, workspaceOpen]);
-  const openPreview = async () => {
-    try {
-      if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
-        throw new Error('Clipboard API unavailable');
-      }
-      await navigator.clipboard.writeText(previewUrl);
+  const openPreview = () => {
+    if (typeof window === 'undefined') return;
+    const opened = window.open(previewUrl, '_blank', 'noopener,noreferrer');
+    if (opened) {
+      opened.opener = null;
       setPreviewCopyIssue(null);
-      showToast(`미리보기 주소를 복사했습니다. ${previewUrl}`, 'success');
-    } catch (error) {
-      console.warn('Preview URL copy failed:', error);
-      setPreviewCopyIssue({
-        url: previewUrl,
-        message: '브라우저 권한 또는 보안 설정 때문에 자동 복사가 막혔습니다. 아래 주소를 선택해서 복사할 수 있습니다.',
-      });
-      showToast('자동 복사가 막혔습니다. 주소를 직접 복사해주세요.', 'warning');
+      return;
     }
+    setPreviewCopyIssue({
+      url: previewUrl,
+      message: '브라우저에서 새 창 열기를 차단했습니다. 아래 주소를 직접 열어주세요.',
+    });
+    showToast('새 창 열기가 차단됐습니다. 주소를 직접 열어주세요.', 'warning');
   };
   const checkCreatePageUrl = async ({ slug } = {}) => {
     const safeSlug = sanitizePageSlug(slug, '');
