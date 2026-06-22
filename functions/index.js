@@ -113,7 +113,7 @@ const C63_HOME_HTML = `<!doctype html>
         footers.slice(0, -1).forEach((node) => node.remove());
       };
       const goLogin = () => {
-        window.location.assign('/login');
+        window.location.replace('/login');
       };
       const isLoginTarget = (node) => {
         if (!node) return false;

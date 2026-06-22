@@ -108,6 +108,7 @@ function publicLandingSlugFromLocation(path = '') {
   const pathname = String(path || location.pathname || '/').replace(/\/+$/, '') || '/';
   if (pathname === '/') return '';
   if (WAYZI_STATIC_PAGES[pathname]) return '';
+  if (/^\/(?:dashboard|app|account)(?:\/|$)/.test(pathname)) return '';
   if (/^\/invite\/[^/?#]+/.test(pathname)) return '';
   if (/^\/(?:admin|[^/?#]+\/admin)$/.test(pathname)) return '';
   if (/^\/(?:login|signup|api|assets|embed)(?:\/|$)/.test(pathname)) return '';
