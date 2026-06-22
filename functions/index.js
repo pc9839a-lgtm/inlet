@@ -27,7 +27,9 @@ const C63_HOME_HTML = `<!doctype html>
       display: flex !important;
       align-items: center !important;
       gap: 0 !important;
-      width: 100% !important;
+      width: min(1180px, calc(100% - 48px)) !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
       min-width: 0 !important;
     }
     .pagero-exact-home .header .logo {
@@ -35,14 +37,14 @@ const C63_HOME_HTML = `<!doctype html>
       display: inline-flex !important;
       align-items: center !important;
       gap: 10px !important;
-      margin-right: 34px !important;
+      margin-right: 24px !important;
       white-space: nowrap !important;
     }
     .pagero-exact-home .header .menu {
       flex: 0 1 auto !important;
       display: flex !important;
       align-items: center !important;
-      gap: 28px !important;
+      gap: 22px !important;
       min-width: 0 !important;
       margin: 0 !important;
     }
