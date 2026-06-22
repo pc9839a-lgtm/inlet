@@ -11,6 +11,10 @@
   Cache-Control: public, max-age=300, must-revalidate
   X-Content-Type-Options: nosniff
 
+/c63-assets/*
+  Cache-Control: public, max-age=300, must-revalidate
+  X-Content-Type-Options: nosniff
+
 /embed/form.js
   Cache-Control: no-cache, no-store, must-revalidate
   X-Content-Type-Options: nosniff
