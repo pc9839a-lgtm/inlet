@@ -11,10 +11,7 @@
 @import './styles/base-public-screen-order.css';
 @import './styles/base-public-screen-toggle.css';
 @import './styles/base-public-add-dock.css';
-@import './styles/base-public-home.css';
 @import './styles/base-public-home-v2.css';
-@import './styles/base-public-home-header.css';
-@import './styles/base-public-home-flow.css';
 @import './styles/base-public-live.css';
 @import './styles/base-public-live-inbox.css';
 @import './styles/base-public-live-ghost.css';
