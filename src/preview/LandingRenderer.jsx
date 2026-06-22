@@ -123,8 +123,8 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
   const heroBlock = normalRaw.find((b)=>b.type === 'hero');
   const topNavBlock = normalRaw.find((b)=>b.type === 'topnav');
   const normal = [
-    ...(heroBlock ? [heroBlock] : []),
     ...(topNavBlock ? [topNavBlock] : []),
+    ...(heroBlock ? [heroBlock] : []),
     ...normalRaw.filter((b)=>b.id !== heroBlock?.id && b.id !== topNavBlock?.id),
   ];
   const pageRef = useRef(null);
