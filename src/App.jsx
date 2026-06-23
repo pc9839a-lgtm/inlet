@@ -146,7 +146,7 @@ const InviteAcceptScreen = lazy(() => import('./screens/InviteAcceptScreen.jsx')
 const AuthScreen = lazy(() => import('./screens/HomeScreens.jsx').then((module) => ({ default: module.AuthScreen })));
 const CreateLandingModal = lazy(() => import('./screens/HomeScreens.jsx').then((module) => ({ default: module.CreateLandingModal })));
 const Dashboard = lazy(() => import('./screens/HomeScreens.jsx').then((module) => ({ default: module.Dashboard })));
-const PublicHome = lazy(() => import('./screens/HomeScreens.jsx').then((module) => ({ default: module.PublicHome })));
+const PublicHome = lazy(() => import('./screens/PublicHomeRoute.jsx'));
 const StartModeOverlay = lazy(() => import('./screens/HomeScreens.jsx').then((module) => ({ default: module.StartModeOverlay })));
 const INBOX_PAGE_SIZE = 10;
 const CHUNK_RELOAD_KEY = 'pagero-chunk-reload-v5';
@@ -724,10 +724,7 @@ function App() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (authUser || !protectedWorkspacePath) return;
-    window.history.replaceState(null, '', '/');
-    setRoutePath('/');
-    setAuthView('');
-    setWorkspaceOpen(false);
+    window.location.replace('/');
   }, [authUser, protectedWorkspacePath]);
   useEffect(() => {
     if (publicLandingSlug) return;
@@ -1834,8 +1831,7 @@ function App() {
     setAuthView('');
     setWorkspaceOpen(false);
     if (typeof window !== 'undefined') {
-      window.history.replaceState(null, '', '/');
-      setRoutePath('/');
+      window.location.replace('/');
     }
   };
 
