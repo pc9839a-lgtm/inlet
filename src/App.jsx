@@ -116,6 +116,12 @@ function publicLandingSlugFromLocation(path = '') {
   return /^[a-zA-Z0-9-_]+$/.test(slug) ? slug : '';
 }
 
+function isProtectedWorkspacePath(path = '') {
+  if (typeof location === 'undefined' && !path) return false;
+  const pathname = String(path || location.pathname || '/').replace(/\/+$/, '') || '/';
+  return /^\/(?:dashboard|app|account)(?:\/|$)/.test(pathname);
+}
+
 function localPreviewUrl(slug = '') {
   const safeSlug = String(slug || '').replace(/^\/+/, '');
   if (typeof location === 'undefined') return `/${safeSlug}`;
@@ -664,6 +670,7 @@ function App() {
     return WAYZI_STATIC_PAGES[pathname] || null;
   }, [routePath]);
   const publicLandingSlug = useMemo(() => publicLandingSlugFromLocation(routePath), [routePath]);
+  const protectedWorkspacePath = useMemo(() => isProtectedWorkspacePath(routePath), [routePath]);
   const routeUsesWorkspaceTabs = !publicLandingSlug && !staticPage && !inviteToken && !adminRoute && !authRouteMode;
 
   const markSaveStatus = (tone, label, detail = '') => {
@@ -714,6 +721,14 @@ function App() {
       window.removeEventListener('hashchange', syncRoute);
     };
   }, []);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (authUser || !protectedWorkspacePath) return;
+    window.history.replaceState(null, '', '/');
+    setRoutePath('/');
+    setAuthView('');
+    setWorkspaceOpen(false);
+  }, [authUser, protectedWorkspacePath]);
   useEffect(() => {
     if (publicLandingSlug) return;
     if (isServerPageMode()) return;
@@ -1816,7 +1831,12 @@ function App() {
     localStorage.removeItem(AUTH_KEY);
     saveLocalJson(DASHBOARD_KEY, { open: false }, '작업공간 상태', { quietSuccess: true });
     setAuthUser(null);
+    setAuthView('');
     setWorkspaceOpen(false);
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', '/');
+      setRoutePath('/');
+    }
   };
 
   const acceptAuth = (user) => {
