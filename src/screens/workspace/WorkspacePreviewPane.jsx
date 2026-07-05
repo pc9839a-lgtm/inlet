@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import { LazyChunkBoundary } from '../../runtime/LazyRuntimeBoundary.jsx';
-import { PreviewRenderer } from '../../runtime/lazySurfaces.jsx';
+import { PreviewRenderer } from './workspaceLazySurfaces.jsx';
 
 export function WorkspacePreviewPane({
   page,

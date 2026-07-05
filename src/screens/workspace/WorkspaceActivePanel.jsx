@@ -6,7 +6,7 @@ import {
   SettingsPanel,
   StatsPanel,
   StylePanel,
-} from '../../runtime/lazySurfaces.jsx';
+} from './workspaceLazySurfaces.jsx';
 
 export function WorkspaceActivePanel({
   canUseBuilder,

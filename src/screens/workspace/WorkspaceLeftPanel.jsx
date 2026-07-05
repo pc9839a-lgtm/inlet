@@ -1,7 +1,7 @@
 import React, { Suspense } from 'react';
 import PanelHeader from '../../builder/PanelHeader.jsx';
 import { LazyChunkBoundary, LazyPanelFallback } from '../../runtime/LazyRuntimeBoundary.jsx';
-import { TemplatesPanel } from '../../runtime/lazySurfaces.jsx';
+import { TemplatesPanel } from './workspaceLazySurfaces.jsx';
 import { ClientAdminHeader } from './ClientAdminHeader.jsx';
 import { WorkspaceActivePanel } from './WorkspaceActivePanel.jsx';
 import { WorkspaceTabs } from './WorkspaceTabs.jsx';
