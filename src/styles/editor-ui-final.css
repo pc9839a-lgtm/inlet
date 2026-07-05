@@ -1,0 +1,86 @@
+/* editor-ui-final: shared editor primitives only. Component-specific rows live in editor-panel-cleanup.css. */
+.builder-shell :is(button, input, textarea, select) {
+  font-family: inherit !important;
+  letter-spacing: 0 !important;
+}
+
+.builder-shell :is(.panel-header, .top-tabs, .card, .edit-layout .block-item, .edit-layout .screen-order-card, .edit-layout .step, .edit-layout .field, .edit-layout .choice, .edit-layout .toggle, .edit-layout .range, .edit-layout .color) {
+  box-shadow: none !important;
+}
+
+.builder-shell :is(.ghost-btn, .primary-btn, .panel-actions button, .top-tabs button, .settings-panel button, .inbox-panel button, .stats-panel button, .style-panel button),
+.builder-shell .edit-layout :is(.add-line, .danger-btn, .anchor-control button, .choice button, .edit-animation-options button) {
+  min-width: 0 !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: #dbe3ef !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+  color: #111827 !important;
+  box-shadow: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  font-size: 13px !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+}
+
+.builder-shell :is(.primary-btn, .panel-actions .primary-btn, .top-tabs button.active, .choice button.active, .choice-clean button.active, .edit-animation-options button.active) {
+  border-color: #111827 !important;
+  background: #111827 !important;
+  color: #fff !important;
+}
+
+.builder-shell :is(input, textarea, select),
+.builder-shell .edit-layout :is(input, textarea, select),
+.builder-shell .settings-panel :is(input, textarea, select),
+.builder-shell .inbox-panel :is(input, textarea, select),
+.builder-shell .stats-panel :is(input, textarea, select) {
+  width: 100% !important;
+  min-width: 0 !important;
+  border: 1px solid #d4dfec !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+  color: #111827 !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  font-weight: 850 !important;
+}
+
+.builder-shell :is(input, select),
+.builder-shell .edit-layout :is(input, select),
+.builder-shell .settings-panel :is(input, select) {
+  min-height: 44px !important;
+  padding: 0 12px !important;
+}
+
+.builder-shell :is(textarea),
+.builder-shell .edit-layout textarea,
+.builder-shell .settings-panel textarea {
+  min-height: 76px !important;
+  padding: 12px !important;
+  line-height: 1.45 !important;
+}
+
+.builder-shell :is(input, textarea, select):focus {
+  border-color: #2563eb !important;
+  outline: 0 !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, .12) !important;
+}
+
+.builder-shell .edit-layout :is(.field, .choice, .toggle, .range, .color, .weekday, .image-input, .rich-field-simple) {
+  border: 1px solid #dbe3ef !important;
+  border-radius: 16px !important;
+  background: #fff !important;
+}
+
+@media (max-width: 720px) {
+  .builder-shell .panel-actions,
+  .builder-shell .top-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}

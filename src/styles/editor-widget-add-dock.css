@@ -1,0 +1,128 @@
+/* Widget add dock and add-menu controls. */
+.edit-layout .fixed-add-dock {
+  display: block !important;
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 180 !important;
+  margin-top: 14px !important;
+  padding: 14px 0 10px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: linear-gradient(180deg, rgba(245, 247, 250, 0), #f5f7fa 26%, #f5f7fa 100%) !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+.edit-layout .fixed-add-dock .add-toggle {
+  appearance: none !important;
+  width: 100% !important;
+  min-height: 62px !important;
+  padding: 0 16px !important;
+  border: 0 !important;
+  border-radius: 22px !important;
+  background: #111827 !important;
+  color: #fff !important;
+  display: grid !important;
+  grid-template-columns: 28px minmax(0, 1fr) auto !important;
+  gap: 10px !important;
+  align-items: center !important;
+  font-family: inherit !important;
+  font-weight: 950 !important;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, .16) !important;
+}
+
+.edit-layout .fixed-add-dock .add-toggle strong {
+  min-width: 0 !important;
+  font-size: 15px !important;
+  white-space: nowrap !important;
+}
+
+.edit-layout .fixed-add-dock .add-toggle span {
+  min-width: 52px !important;
+  height: 32px !important;
+  padding: 0 10px !important;
+  border: 1px solid rgba(255, 255, 255, .28) !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, .12) !important;
+  color: #fff !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.edit-layout .fixed-add-dock.open .add-panel {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  margin-top: 8px !important;
+  padding: 12px !important;
+  border: 1px solid #dbe3ef !important;
+  border-radius: 22px !important;
+  background: #fff !important;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, .08) !important;
+}
+
+.edit-layout .widget-group-grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 12px !important;
+}
+
+.edit-layout .widget-group {
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 8px !important;
+  padding: 10px !important;
+  border: 1px solid #e1e8f0 !important;
+  border-radius: 18px !important;
+  background: #f8fafc !important;
+}
+
+.edit-layout .widget-group > b {
+  color: #64748b !important;
+  font-size: 11px !important;
+  font-weight: 950 !important;
+}
+
+.edit-layout .widget-group > div {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.edit-layout .widget-group button {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 44px !important;
+  border: 1px solid #dbe3ef !important;
+  border-radius: 14px !important;
+  padding: 0 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  background: #fff !important;
+  color: #111827 !important;
+  text-align: left !important;
+  font-size: 12px !important;
+  font-weight: 950 !important;
+  overflow: hidden !important;
+}
+
+.edit-layout .widget-group button svg {
+  flex: 0 0 auto !important;
+  width: 26px !important;
+  height: 26px !important;
+  padding: 6px !important;
+  border-radius: 10px !important;
+  background: #eef2ff !important;
+}
+
+.edit-layout .widget-group button strong {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}

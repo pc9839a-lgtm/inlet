@@ -3078,3 +3078,378 @@
     width: 100% !important;
   }
 }
+
+/* settings-panel-final-clean-20260627-v2 */
+.settings-panel {
+  width: 100% !important;
+  max-width: 100% !important;
+  display: grid !important;
+  gap: 12px !important;
+  text-align: left !important;
+}
+
+.settings-panel .settings-compact-head,
+.settings-panel .settings-section,
+.settings-panel .settings-advanced-box {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  border: 1px solid #dbe3ef !important;
+  border-radius: 20px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+.settings-panel .settings-compact-head {
+  min-height: 68px !important;
+  padding: 14px 16px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.settings-panel .settings-section-head,
+.settings-panel .settings-advanced-head {
+  width: 100% !important;
+  min-height: 64px !important;
+  padding: 12px 16px !important;
+  border: 0 !important;
+  background: #fff !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 58px !important;
+  align-items: center !important;
+  gap: 12px !important;
+  text-align: left !important;
+}
+
+.settings-panel .settings-section-copy,
+.settings-panel .settings-advanced-head > span,
+.settings-panel .settings-compact-head > div {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  display: grid !important;
+  justify-items: start !important;
+  gap: 4px !important;
+  text-align: left !important;
+  overflow: hidden !important;
+}
+
+.settings-panel .settings-section-title-row {
+  width: 100% !important;
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  text-align: left !important;
+  overflow: hidden !important;
+}
+
+.settings-panel .settings-section-title-row h2,
+.settings-panel .settings-advanced-head strong,
+.settings-panel .settings-compact-head strong {
+  margin: 0 !important;
+  min-width: 0 !important;
+  color: #111827 !important;
+  font-size: 16px !important;
+  line-height: 1.2 !important;
+  font-weight: 950 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  text-align: left !important;
+}
+
+.settings-panel .settings-section-copy small,
+.settings-panel .settings-advanced-head small,
+.settings-panel .settings-compact-head span,
+.settings-panel .settings-compact-head small {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  color: #64748b !important;
+  font-size: 11px !important;
+  line-height: 1.35 !important;
+  font-weight: 850 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  text-align: left !important;
+}
+
+.settings-panel .settings-section-title-row em,
+.settings-panel .settings-section-state,
+.settings-panel .settings-advanced-head em,
+.settings-panel .settings-compact-head em {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 48px !important;
+  max-width: 96px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 12px !important;
+  border: 1px solid #dbe3ef !important;
+  border-radius: 999px !important;
+  background: #fff !important;
+  color: #111827 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  font-style: normal !important;
+  font-weight: 950 !important;
+  white-space: nowrap !important;
+  writing-mode: horizontal-tb !important;
+}
+
+.settings-panel .settings-section.open .settings-section-state,
+.settings-panel .settings-advanced-box.open .settings-advanced-head em {
+  border-color: #111827 !important;
+  background: #111827 !important;
+  color: #fff !important;
+}
+
+.settings-panel .settings-section-title-row em,
+.settings-panel .settings-compact-head em {
+  min-width: 0 !important;
+  background: #eff6ff !important;
+  border-color: #eff6ff !important;
+  color: #2563eb !important;
+}
+
+.settings-panel .settings-section-body,
+.settings-panel .settings-advanced-list {
+  padding: 16px !important;
+  background: #fbfdff !important;
+  display: grid !important;
+  gap: 12px !important;
+  text-align: left !important;
+  overflow: hidden !important;
+}
+
+.settings-panel .settings-grid,
+.settings-panel .account-settings-grid,
+.settings-panel .settings-conversion-grid {
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+.settings-panel :is(.field, .image-input, .toggle, .settings-field-hint-wrap, label) {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  text-align: left !important;
+}
+
+.settings-panel :is(input, textarea, select, .prefix-field) {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.settings-panel .settings-section-actions {
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  margin-top: 2px !important;
+}
+
+.settings-panel .settings-section-actions button,
+.settings-panel .settings-advanced-list button,
+.settings-panel .manager-section-tools button,
+.settings-panel .manager-card-actions button,
+.settings-panel .manager-detail-actions button {
+  width: auto !important;
+  min-width: 76px !important;
+  min-height: 40px !important;
+  padding: 0 14px !important;
+  border-radius: 999px !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 760px) {
+  .settings-panel .settings-compact-head,
+  .settings-panel .settings-grid,
+  .settings-panel .account-settings-grid,
+  .settings-panel .settings-conversion-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .settings-panel .settings-section-head,
+  .settings-panel .settings-advanced-head {
+    grid-template-columns: minmax(0, 1fr) 58px !important;
+  }
+}
+
+
+/* settings-panel-owner-align-20260627 */
+.settings-panel.simple-panel,
+.settings-panel .settings-overview-card,
+.settings-panel .settings-section,
+.settings-panel .settings-section-head,
+.settings-panel .settings-section-body,
+.settings-panel .settings-advanced,
+.settings-panel .settings-advanced-head,
+.settings-panel .settings-advanced-body,
+.settings-panel .account-settings-section,
+.settings-panel .account-settings-card {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  justify-self: stretch !important;
+  align-self: stretch !important;
+  text-align: left !important;
+  box-sizing: border-box !important;
+}
+
+.settings-panel .settings-section,
+.settings-panel .settings-advanced,
+.settings-panel .account-settings-card {
+  display: grid !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border-radius: 20px !important;
+}
+
+.settings-panel .settings-section-head,
+.settings-panel .settings-advanced-head {
+  min-height: 72px !important;
+  padding: 16px 18px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 14px !important;
+  border: 0 !important;
+  background: #fff !important;
+}
+
+.settings-panel .settings-section-title-row,
+.settings-panel .settings-advanced-head > span {
+  min-width: 0 !important;
+  display: grid !important;
+  grid-template-columns: auto auto !important;
+  justify-content: start !important;
+  align-items: center !important;
+  column-gap: 8px !important;
+  row-gap: 4px !important;
+}
+
+.settings-panel .settings-section-title-row h2,
+.settings-panel .settings-advanced-head strong {
+  margin: 0 !important;
+  color: #0f172a !important;
+  font-size: 17px !important;
+  line-height: 1.15 !important;
+  font-weight: 950 !important;
+  text-align: left !important;
+}
+
+.settings-panel .settings-section-copy,
+.settings-panel .settings-advanced-head small,
+.settings-panel .settings-overview-card p {
+  grid-column: 1 / -1 !important;
+  margin: 0 !important;
+  color: #64748b !important;
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+  font-weight: 800 !important;
+  text-align: left !important;
+}
+
+.settings-panel .settings-section-state,
+.settings-panel .settings-advanced-head em,
+.settings-panel .settings-section-head > button,
+.settings-panel .settings-advanced-head > button {
+  width: auto !important;
+  min-width: 58px !important;
+  max-width: 86px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 0 14px !important;
+  border: 1px solid #dbe5f2 !important;
+  border-radius: 999px !important;
+  background: #fff !important;
+  color: #0f172a !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 13px !important;
+  font-style: normal !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+}
+
+.settings-panel .settings-section-head.open .settings-section-state,
+.settings-panel .settings-advanced-head.open em,
+.settings-panel .settings-section-head[aria-expanded='true'] .settings-section-state {
+  border-color: #0f172a !important;
+  background: #0f172a !important;
+  color: #fff !important;
+}
+
+.settings-panel .settings-section-body,
+.settings-panel .settings-advanced-body,
+.settings-panel .account-settings-body {
+  padding: 16px 18px 18px !important;
+  border-top: 1px solid #edf2f7 !important;
+  display: grid !important;
+  gap: 14px !important;
+  justify-items: stretch !important;
+  align-items: stretch !important;
+  background: #fbfdff !important;
+}
+
+.settings-panel .settings-grid,
+.settings-panel .settings-conversion-grid,
+.settings-panel .account-settings-grid {
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  justify-items: stretch !important;
+}
+
+.settings-panel :is(.field, .image-input, .toggle, label, input, textarea, select, button) {
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 760px) {
+  .settings-panel .settings-grid,
+  .settings-panel .settings-conversion-grid,
+  .settings-panel .account-settings-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* pagero-settings-align-final-20260627 */
+.settings-panel .settings-section-head,
+.settings-panel .settings-advanced-head {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-height: 64px !important;
+  padding: 0 16px !important;
+  text-align: left !important;
+}
+
+.settings-panel .settings-section-head > div,
+.settings-panel .settings-section-title-row,
+.settings-panel .settings-section-copy {
+  min-width: 0 !important;
+  justify-content: flex-start !important;
+  text-align: left !important;
+}

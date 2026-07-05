@@ -1,0 +1,21 @@
+/* Animation widget editor controls. */
+.edit-layout .edit-animation-options {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.edit-layout .edit-animation-options button {
+  min-height: 42px !important;
+  border: 1px solid #dbe3ef !important;
+  border-radius: 15px !important;
+  background: #fff !important;
+  color: #64748b !important;
+  font-weight: 950 !important;
+}
+
+.edit-layout .edit-animation-options button.active {
+  background: #111827 !important;
+  border-color: #111827 !important;
+  color: #fff !important;
+}

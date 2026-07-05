@@ -1,0 +1,22 @@
+import { lazy } from 'react';
+
+export const ActivityEditor = lazy(() => import('./blockEditors/ActivityEditor.jsx'));
+export const DividerEditor = lazy(() => import('./blockEditors/DividerEditor.jsx'));
+export const FooterEditor = lazy(() => import('./blockEditors/FooterEditor.jsx'));
+export const SpacerEditor = lazy(() => import('./blockEditors/SpacerEditor.jsx'));
+export const FaqEditor = lazy(() => import('./blockEditors/FaqEditor.jsx'));
+export const MapEditor = lazy(() => import('./blockEditors/MapEditor.jsx'));
+export const ScheduleEditor = lazy(() => import('./blockEditors/ScheduleEditor.jsx'));
+export const CodeEditor = lazy(() => import('./blockEditors/CodeEditor.jsx'));
+export const SearchEditor = lazy(() => import('./blockEditors/SearchEditor.jsx'));
+export const HeroEditor = lazy(() => import('./blockEditors/HeroEditor.jsx'));
+export const ImageEditor = lazy(() => import('./blockEditors/ImageEditor.jsx'));
+export const LinksEditor = lazy(() => import('./blockEditors/LinksEditor.jsx'));
+export const DownloadEditor = lazy(() => import('./blockEditors/DownloadEditor.jsx'));
+export const FormEditor = lazy(() => import('./blockEditors/FormEditor.jsx'));
+export const ReservationEditor = lazy(() => import('./blockEditors/ReservationEditor.jsx'));
+export const BottomBarEditor = lazy(() => import('./blockEditors/BottomBarEditor.jsx'));
+export const TextEditor = lazy(() => import('./blockEditors/TextEditor.jsx'));
+export const CardsEditor = lazy(() => import('./blockEditors/CardsEditor.jsx'));
+export const TimerEditor = lazy(() => import('./blockEditors/TimerEditor.jsx'));
+export const TopNavEditor = lazy(() => import('./blockEditors/TopNavEditor.jsx'));

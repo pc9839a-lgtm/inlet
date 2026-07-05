@@ -1,13 +1,13 @@
-export const alignOptions = [['left', '왼쪽'], ['center', '중앙'], ['right', '오른쪽']];
+export const alignOptions = [['left', '\uc67c\ucabd'], ['center', '\uac00\uc6b4\ub370'], ['right', '\uc624\ub978\ucabd']];
 export const sizeOptions = [['small', 'S'], ['medium', 'M'], ['large', 'L']];
 export const formQuestionOptions = [
-  ['name', '이름'],
-  ['phone', '연락처'],
-  ['email', '이메일'],
-  ['address', '주소'],
-  ['short', '단답'],
-  ['long', '장문'],
-  ['select', '선택'],
-  ['multi', '복수선택'],
+  ['name', '\uc774\ub984'],
+  ['phone', '\uc5f0\ub77d\ucc98'],
+  ['email', '\uc774\uba54\uc77c'],
+  ['address', '\uc8fc\uc18c'],
+  ['short', '\uc9e7\uc740 \ub2f5\ubcc0'],
+  ['long', '\uae34 \ub2f5\ubcc0'],
+  ['select', '\uc120\ud0dd'],
+  ['multi', '\ubcf5\uc218 \uc120\ud0dd'],
 ];
 export const questionOptions = formQuestionOptions;

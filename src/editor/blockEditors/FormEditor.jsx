@@ -1,307 +1,42 @@
-﻿import { useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Choice, Color, EditorStack, Field, Step, Toggle } from '../controls.jsx';
-import { formQuestionOptions } from '../editorOptions.js';
-import RichField from '../RichField.jsx';
-import { uid } from '../../lib/pageModel.js';
-import { notify } from '../../lib/uiFeedback.js';
+import { useState } from 'react';
+import { EditorStack } from '../controls.jsx';
+import FormBasicSection from './FormBasicSection.jsx';
+import FormExternalSection from './FormExternalSection.jsx';
+import FormFieldsSection from './FormFieldsSection.jsx';
+import { useFormQuestions } from './useFormQuestions.js';
 
 export default function FormEditor({ s, set, page, blockId, generateStandaloneFormHtml }) {
-  const qs = s.questions || [];
-  const [openQ, setOpenQ] = useState(qs[0]?.id || '');
+  const questions = Array.isArray(s.questions) ? s.questions : [];
   const [htmlOpen, setHtmlOpen] = useState(false);
-  const [dragQ, setDragQ] = useState('');
-  const [dragOverQ, setDragOverQ] = useState('');
-
-  const createQuestion = (patch = {}) => ({
-    id: uid(),
-    label: patch.label || '새 질문',
-    type: patch.type || 'short',
-    required: patch.required ?? false,
-    placeholder: patch.placeholder || '',
-    options: patch.options || [],
-  });
-
-  const update = (id, patch) => set({ questions: qs.map((q)=>q.id===id?{...q,...patch}:q) });
-  const remove = (id) => {
-    const next = qs.filter((q)=>q.id!==id);
-    set({ questions: next });
-    if (openQ === id) setOpenQ(next[0]?.id || '');
-  };
-  const duplicate = (q) => {
-    const idx = qs.findIndex((x)=>x.id===q.id);
-    const copy = { ...q, id: uid(), label: `${q.label || '질문'} 복사` };
-    const next = [...qs];
-    next.splice(idx + 1, 0, copy);
-    set({ questions: next });
-    setOpenQ(copy.id);
-  };
-  const moveByDrag = (targetId) => {
-    if (!dragQ || dragQ === targetId) return;
-    const from = qs.findIndex((q)=>q.id===dragQ);
-    const to = qs.findIndex((q)=>q.id===targetId);
-    if (from < 0 || to < 0) return;
-    const next = [...qs];
-    const [item] = next.splice(from, 1);
-    next.splice(to, 0, item);
-    set({ questions: next });
-    setDragOverQ(targetId);
-  };
-  const move = (id, dir) => {
-    const idx = qs.findIndex((q)=>q.id===id);
-    const nextIdx = idx + dir;
-    if (idx < 0 || nextIdx < 0 || nextIdx >= qs.length) return;
-    const next = [...qs];
-    const [item] = next.splice(idx, 1);
-    next.splice(nextIdx, 0, item);
-    set({ questions: next });
-  };
-  const add = (type = 'short') => {
-    const q = createQuestion({
-      type,
-      label: ({name:'이름',phone:'연락처',email:'이메일',address:'주소',long:'문의내용',select:'선택 질문',multi:'복수 선택 질문'}[type] || '새 질문'),
-    });
-    set({ questions: [...qs, q] });
-    setOpenQ(q.id);
-  };
+  const questionState = useFormQuestions({ questions, set });
 
   return (
     <EditorStack>
-      <Step title="기본" icon="1" open>
-        <div className="form-basic-grid">
-          <Field label="폼 제목" value={s.title} onChange={(v)=>set({title:v})}/>
-          <Field label="버튼 문구" value={s.submit} onChange={(v)=>set({submit:v})}/>
-        </div>
-        <RichField label="설명" value={s.desc} onChange={(v)=>set({desc:v})}/>
-
-        <div className="form-basic-subgrid compact-lines">
-          <details className="form-basic-detail form-inline-detail">
-            <summary><strong>완료 화면</strong><span>제출 후 문구</span></summary>
-            <div className="form-one-line-panel">
-              <Field label="완료 제목" value={s.successTitle || '상담 신청 완료'} onChange={(v)=>set({successTitle:v})}/>
-              <Field label="제출 후 문구" textarea value={s.success} onChange={(v)=>set({success:v})}/>
-            </div>
-          </details>
-
-          <details className="form-basic-detail form-inline-detail">
-            <summary><strong>개인정보</strong><span>동의/약관</span></summary>
-            <div className="privacy-compact-panel">
-              <div className="privacy-inline-top compact-row">
-                <span>필수 동의</span>
-                <button type="button" className={s.privacyRequired ?? true ? 'active' : ''} onClick={()=>set({privacyRequired:!(s.privacyRequired ?? true)})}>
-                  {(s.privacyRequired ?? true) ? 'ON' : 'OFF'}
-                </button>
-              </div>
-              <Field label="동의 문구" textarea value={s.privacy} onChange={(v)=>set({privacy:v})}/>
-              <Field label="자세히 보기" textarea value={s.privacyDetail || ''} onChange={(v)=>set({privacyDetail:v})}/>
-            </div>
-          </details>
-        </div>
-      </Step>
-
-      <Step title="입력 항목" icon="2">
-        <div className="form-question-tools inlet-question-tools">
-          {[
-            ['name','이름'],['phone','연락처'],['email','이메일'],['address','주소'],
-            ['short','단답'],['long','장문'],['select','선택'],['multi','복수'],
-          ].map(([type,label]) => (
-            <button type="button" key={type} onClick={()=>add(type)}>+ {label}</button>
-          ))}
-        </div>
-
-        <div className="form-question-list form-question-sortable">
-          {qs.map((q, i) => (
-            <div
-              key={q.id}
-              draggable
-              onDragStart={()=>{setDragQ(q.id); setDragOverQ(q.id);}}
-              onDragOver={(e)=>e.preventDefault()}
-              onDragEnter={()=>moveByDrag(q.id)}
-              onDrop={(e)=>{e.preventDefault(); setDragOverQ('');}}
-              onDragEnd={()=>{setDragQ(''); setDragOverQ('');}}
-              className={`form-question-card ${openQ===q.id?'open':''} ${dragQ===q.id?'dragging':''} ${dragOverQ===q.id?'drag-over':''}`}
-            >
-              <div className="form-question-head-row">
-                <button type="button" className="drag-handle" title="드래그">⋮⋮</button>
-                <button type="button" className="form-question-title" onClick={()=>setOpenQ(openQ===q.id?'':q.id)}>
-                  <span>{i+1}</span>
-                  <strong>{q.label || '질문명 없음'}</strong>
-                  <em>{q.required ? '필수' : '선택'}</em>
-                  <b>{questionTypeLabel(q.type)}</b>
-                </button>
-                <button type="button" onClick={()=>duplicate(q)} title="복제">⧉</button>
-                <button type="button" className="danger" onClick={()=>remove(q.id)} title="삭제">×</button>
-              </div>
-
-              {openQ===q.id && (
-                <div className="form-question-body">
-                  <Field label="질문명" value={q.label} onChange={(v)=>update(q.id,{label:v})}/>
-                  <div className="question-compact-row">
-                    <label>
-                      <span>유형</span>
-                      <select value={q.type} onChange={(e)=>update(q.id,{type:e.target.value,options:['select','multi'].includes(e.target.value) ? (q.options?.length?q.options:['선택 1','선택 2']) : []})}>
-                        {formQuestionOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
-                      </select>
-                    </label>
-                    <label className="required-inline">
-                      <span>필수</span>
-                      <button type="button" className={q.required ? 'active' : ''} onClick={()=>update(q.id,{required:!q.required})}>
-                        {q.required ? 'ON' : 'OFF'}
-                      </button>
-                    </label>
-                  </div>
-                  <Field label="안내문구" value={q.placeholder || ''} onChange={(v)=>update(q.id,{placeholder:v})}/>
-                  {['select','multi'].includes(q.type) && (
-                    <OptionEditor options={q.options || []} onChange={(options)=>update(q.id,{options})}/>
-                  )}
-                  <div className="form-question-actions">
-                    <button type="button" onClick={()=>move(q.id,-1)} disabled={i===0}>↑</button>
-                    <button type="button" onClick={()=>move(q.id,1)} disabled={i===qs.length-1}>↓</button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-        {!qs.length && <div className="empty">질문을 추가해주세요.</div>}
-      </Step>
-
-      <Step title="디자인" icon="3">
-        <div className="form-design-grid">
-          <Choice label="폼 형태" value={s.style || 'card'} onChange={(v)=>set({style:v})} options={[['card','카드'],['line','라인'],['soft','소프트'],['minimal','미니멀']]}/>
-          <Choice label="입력칸" value={s.inputStyle || 'round'} onChange={(v)=>set({inputStyle:v})} options={[['round','라운드'],['box','박스'],['underline','밑줄']]}/>
-          <Choice label="버튼" value={s.buttonStyle || 'solid'} onChange={(v)=>set({buttonStyle:v})} options={[['solid','채움'],['round','둥근'],['line','라인']]}/>
-          <Choice label="버튼 효과" value={s.buttonHover || 'fill'} onChange={(v)=>set({buttonHover:v})} options={[['fill','채움'],['slide','슬라이드'],['zoom','확대']]}/>
-          <Choice label="간격" value={s.spacing || 'normal'} onChange={(v)=>set({spacing:v})} options={[['compact','좁게'],['normal','보통'],['wide','넓게']]}/>
-          <Choice label="모서리" value={s.radiusStyle || 'round'} onChange={(v)=>set({radiusStyle:v})} options={[['square','각진'],['round','둥근'],['pill','캡슐']]}/>
-          <Choice label="정렬" value={s.textAlign || 'left'} onChange={(v)=>set({textAlign:v})} options={[['left','왼쪽'],['center','중앙'],['right','오른쪽']]}/>
-        </div>
-
-        <div className="form-color-row">
-          <Choice label="버튼 색상" value={s.buttonColorMode || 'theme'} onChange={(v)=>set({buttonColorMode:v})} options={[['theme','테마'],['custom','직접']]}/>
-          {(s.buttonColorMode || 'theme') === 'custom' && <Color label="버튼 배경" value={s.buttonColor || '#111827'} onChange={(v)=>set({buttonColor:v})}/>}
-          <Color label="버튼 글자" value={s.buttonTextColor || '#ffffff'} onChange={(v)=>set({buttonTextColor:v})}/>
-          <Choice label="호버 색상" value={s.buttonHoverColorMode || 'theme'} onChange={(v)=>set({buttonHoverColorMode:v})} options={[['theme','테마'],['custom','직접']]}/>
-          {(s.buttonHoverColorMode || 'theme') === 'custom' && <Color label="호버 배경" value={s.buttonHoverColor || s.buttonColor || '#2563eb'} onChange={(v)=>set({buttonHoverColor:v})}/>}
-        </div>
-      </Step>
-
-      <Step title="고급" icon="4">
-        <div className="form-advanced-group">
-          <details className="form-advanced-item">
-            <summary><strong>중복접수</strong><span>연락처/이메일 기준</span></summary>
-            <div>
-              <div className="form-design-grid">
-                <Choice label="연락처" value={s.duplicatePhone || 'allow'} onChange={(v)=>set({duplicatePhone:v})} options={[['allow','허용'],['warn','경고'],['block','차단']]}/>
-                <Choice label="이메일" value={s.duplicateEmail || 'off'} onChange={(v)=>set({duplicateEmail:v})} options={[['off','끔'],['warn','경고'],['block','차단']]}/>
-              </div>
-              <Choice label="기준 기간" value={s.duplicateWindow || '24h'} onChange={(v)=>set({duplicateWindow:v})} options={[['1d','1일'],['3d','3일'],['7d','7일'],['30d','30일']]}/>
-              <div className="form-advanced-note">IP 중복처리는 서버/API 연동 후 정확히 처리할 수 있습니다.</div>
-            </div>
-          </details>
-
-          <details className="form-advanced-item">
-            <summary><strong>전환추적</strong><span>접수 성공 이벤트</span></summary>
-            <div>
-              <div className="form-advanced-note">접수 성공 시 내부 통계와 dataLayer 이벤트 <b>inlet_form_submit</b>이 기록됩니다. Google Ads, Meta Pixel, GTM 연동은 이후 설정 화면에서 확장합니다.</div>
-            </div>
-          </details>
-
-          <div className="inlet-export-card compact">
-            <strong>HTML 추출</strong>
-            <p>다른 페이지에 붙여 쓸 수 있는 상담폼 단독 코드를 생성합니다.</p>
-            <button type="button" onClick={()=>setHtmlOpen(true)}>코드 복사/보기</button>
-          </div>
-        </div>
-
-        {htmlOpen && <FormHtmlModal form={{ ...s, blockId }} page={page} generateStandaloneFormHtml={generateStandaloneFormHtml} onClose={()=>setHtmlOpen(false)}/>}
-      </Step>
+      <FormBasicSection s={s} set={set} />
+      <FormFieldsSection
+        questions={questions}
+        openQuestionId={questionState.openQuestionId}
+        dragQuestionId={questionState.dragQuestionId}
+        dragOverQuestionId={questionState.dragOverQuestionId}
+        onAdd={questionState.addQuestion}
+        onUpdate={questionState.updateQuestion}
+        onRemove={questionState.removeQuestion}
+        onDuplicate={questionState.duplicateQuestion}
+        onMove={questionState.moveQuestion}
+        onToggleOpen={questionState.toggleQuestionOpen}
+        onMoveByDrag={questionState.moveQuestionByDrag}
+        onDragStart={questionState.startQuestionDrag}
+        onDrop={questionState.dropQuestion}
+        onDragEnd={questionState.endQuestionDrag}
+      />
+      <FormExternalSection
+        s={s}
+        page={page}
+        blockId={blockId}
+        htmlOpen={htmlOpen}
+        setHtmlOpen={setHtmlOpen}
+        generateStandaloneFormHtml={generateStandaloneFormHtml}
+      />
     </EditorStack>
   );
 }
-
-function questionTypeLabel(type) {
-  return ({
-    name: '이름',
-    short: '단답형',
-    long: '장문형',
-    phone: '연락처',
-    email: '이메일',
-    address: '주소',
-    select: '선택형',
-    multi: '복수선택',
-  }[type] || '단답형');
-}
-
-function FormHtmlModal({ form, page, onClose, generateStandaloneFormHtml }) {
-  const code = useMemo(() => generateStandaloneFormHtml(form, page), [form, page, generateStandaloneFormHtml]);
-  const [showCode, setShowCode] = useState(false);
-  const dialogRef = useRef(null);
-
-  useEffect(() => {
-    const focusable = dialogRef.current?.querySelector?.('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-    focusable?.focus?.();
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape') onClose?.();
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onClose]);
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(code);
-      notify('HTML 코드를 복사했습니다.', 'success');
-    } catch {
-      notify('복사에 실패했습니다. 직접 선택해서 복사해주세요.', 'error');
-      setShowCode(true);
-    }
-  };
-
-  return createPortal(
-    <div className="inlet-html-modal-backdrop" role="presentation">
-      <div ref={dialogRef} className="inlet-html-modal compact" role="dialog" aria-modal="true" aria-labelledby="inlet-html-modal-title">
-        <div className="inlet-html-head">
-          <div>
-            <strong id="inlet-html-modal-title">페이지로 Form HTML</strong>
-            <span>주소검색까지 포함된 단독 실행 코드입니다.</span>
-          </div>
-          <button type="button" onClick={onClose} aria-label="닫기">×</button>
-        </div>
-
-        <div className="inlet-code-notice">
-          <b>접수함 연동 코드</b>
-          <p>현재 페이지 주소와 프로젝트 정보가 포함됩니다. 외부 사이트에 붙인 뒤 접수하면 이 페이지의 접수함으로 저장됩니다.</p>
-        </div>
-
-        {showCode && <textarea readOnly value={code}/>}
-
-        <div className="inlet-html-actions">
-          <button type="button" onClick={()=>setShowCode(!showCode)}>{showCode ? '코드 숨기기' : '코드 보기'}</button>
-          <button type="button" onClick={onClose}>닫기</button>
-          <button type="button" className="primary" onClick={copy}>코드 복사</button>
-        </div>
-      </div>
-    </div>,
-    document.body
-  );
-}
-
-function OptionEditor({ options = [], onChange }) {
-  const list = options.length ? options : ['선택 1', '선택 2'];
-  const update = (idx, value) => onChange(list.map((item, i)=>i===idx?value:item).filter((item)=>String(item).trim()));
-  const remove = (idx) => onChange(list.filter((_, i)=>i!==idx));
-  return (
-    <div className="option-editor">
-      <span>선택지</span>
-      {list.map((option, idx)=>(
-        <div key={idx}>
-          <input value={option} onChange={(e)=>update(idx,e.target.value)} />
-          <button type="button" onClick={()=>remove(idx)}>×</button>
-        </div>
-      ))}
-      <button type="button" onClick={()=>onChange([...list, `선택 ${list.length + 1}`])}>선택지 추가</button>
-    </div>
-  );
-}
-

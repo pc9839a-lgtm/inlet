@@ -866,3 +866,182 @@
     max-width: none !important;
   }
 }
+
+/* inbox-policy-final-compact: final two-column owner for duplicate policy controls */
+.inbox-panel .inbox-policy-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;align-items:stretch!important;}
+.inbox-panel .inbox-policy-switch,.inbox-panel .inbox-policy-select{box-sizing:border-box!important;min-width:0!important;min-height:54px!important;padding:9px 12px!important;display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:10px!important;align-items:center!important;border:1px solid #dbe3ef!important;border-radius:16px!important;background:#fff!important;box-shadow:none!important;}
+.inbox-panel .inbox-policy-switch span,.inbox-panel .inbox-policy-select span{min-width:0!important;display:block!important;text-align:left!important;}
+.inbox-panel .inbox-policy-switch span b,.inbox-panel .inbox-policy-select span b{display:block!important;font-size:13px!important;font-weight:950!important;line-height:1.15!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+.inbox-panel .inbox-policy-switch span small,.inbox-panel .inbox-policy-select span small{display:none!important;}
+.inbox-panel .inbox-policy-switch>b{justify-self:end!important;width:62px!important;min-width:62px!important;height:32px!important;min-height:32px!important;border-radius:999px!important;font-size:12px!important;font-weight:950!important;display:grid!important;place-items:center!important;}
+.inbox-panel .inbox-policy-select select{justify-self:end!important;width:124px!important;max-width:124px!important;height:34px!important;min-height:34px!important;padding:0 10px!important;border-radius:12px!important;font-size:12px!important;font-weight:900!important;}
+.inbox-panel .inbox-policy-history{grid-column:1 / -1!important;margin-top:2px!important;}
+@media (max-width:720px){.inbox-panel .inbox-policy-grid{grid-template-columns:1fr!important;}}
+
+
+/* inbox-panel-owner-align-20260627 */
+.inbox-panel.simple-panel,
+.inbox-panel .card,
+.inbox-panel .inbox-policy-card,
+.inbox-panel .inbox-summary-v3,
+.inbox-panel .inbox-toolbar-card,
+.inbox-panel .inbox-list-card,
+.inbox-panel .inbox-connect-card {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  justify-self: stretch !important;
+}
+
+.inbox-panel .inbox-policy-head,
+.inbox-panel .inbox-connect-head,
+.inbox-panel .section-title {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  text-align: left !important;
+}
+
+.inbox-panel .inbox-policy-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  align-items: stretch !important;
+}
+
+.inbox-panel .inbox-policy-switch,
+.inbox-panel .inbox-policy-select {
+  min-height: 58px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 10px 12px !important;
+  border-radius: 16px !important;
+  background: #fff !important;
+}
+
+.inbox-panel .inbox-policy-switch span,
+.inbox-panel .inbox-policy-select span {
+  display: block !important;
+  min-width: 0 !important;
+}
+
+.inbox-panel .inbox-policy-switch small,
+.inbox-panel .inbox-policy-select small {
+  display: none !important;
+}
+
+.inbox-panel .inbox-policy-switch span b,
+.inbox-panel .inbox-policy-select span b {
+  display: block !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.inbox-panel .inbox-policy-select select {
+  width: 132px !important;
+  max-width: 36vw !important;
+  min-height: 38px !important;
+  border-radius: 13px !important;
+}
+
+.inbox-panel .inbox-policy-switch > b {
+  width: 58px !important;
+  min-width: 58px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  border-radius: 999px !important;
+}
+
+.inbox-panel .inbox-summary-v3 {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
+.inbox-panel .lead-card-service,
+.inbox-panel .lead-row-service {
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 760px) {
+  .inbox-panel .inbox-policy-grid,
+  .inbox-panel .inbox-summary-v3 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* pagero-inbox-policy-final-20260627: two-column compact owner */
+.inbox-panel .inbox-policy-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  align-items: stretch !important;
+}
+
+.inbox-panel .inbox-policy-switch,
+.inbox-panel .inbox-policy-select {
+  min-width: 0 !important;
+  min-height: 54px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 9px 12px !important;
+  border: 1px solid #dbe3ef !important;
+  border-radius: 16px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+.inbox-panel .inbox-policy-switch span,
+.inbox-panel .inbox-policy-select span {
+  min-width: 0 !important;
+  text-align: left !important;
+}
+
+.inbox-panel .inbox-policy-switch span b,
+.inbox-panel .inbox-policy-select span b {
+  display: block !important;
+  overflow: hidden !important;
+  color: #0f172a !important;
+  font-size: 13px !important;
+  line-height: 1.15 !important;
+  font-weight: 950 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.inbox-panel .inbox-policy-switch span small,
+.inbox-panel .inbox-policy-select span small {
+  display: none !important;
+}
+
+.inbox-panel .inbox-policy-switch > b {
+  justify-self: end !important;
+  min-width: 58px !important;
+  height: 30px !important;
+  border-radius: 999px !important;
+  display: grid !important;
+  place-items: center !important;
+  font-size: 12px !important;
+  font-weight: 950 !important;
+}
+
+.inbox-panel .inbox-policy-select select {
+  justify-self: end !important;
+  width: 124px !important;
+  max-width: 124px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  border-radius: 12px !important;
+}
+
+@media (max-width: 720px) {
+  .inbox-panel .inbox-policy-grid { grid-template-columns: 1fr !important; }
+}

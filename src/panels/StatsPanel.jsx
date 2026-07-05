@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { leadKindLabel, leadPrimaryContact } from '../lib/leadModel.js';
 import { currentMonthValue } from '../lib/monthRange.js';
 import { PERIOD_OPTIONS, buildStats as buildStatsMetrics, countBy as countByMetrics, statLabel } from '../lib/statsMetrics.js';
@@ -109,11 +109,11 @@ function ChannelFilter({ channels, value, onChange }) {
     <section className="card stats-channel-filter">
       <div className="section-title"><h2>유입 채널</h2></div>
       <div className="stats-channel-filter-list">
-        <button type="button" className={value === 'all' ? 'active' : ''} onClick={() => onChange('all')}>
+        <button type="button" className={value === 'all' ? 'active' : ''} aria-pressed={value === 'all'} onClick={() => onChange('all')}>
           <span>전체</span><b>{total}</b>
         </button>
         {visible.map((item) => (
-          <button type="button" key={item.channel} className={value === item.channel ? 'active' : ''} onClick={() => onChange(item.channel)}>
+          <button type="button" key={item.channel} className={value === item.channel ? 'active' : ''} aria-pressed={value === item.channel} onClick={() => onChange(item.channel)}>
             <span>{statLabel(item.channel)}</span><b>{item.count}</b>
           </button>
         ))}
@@ -135,21 +135,21 @@ function StatsTrend({ data }) {
   const plotW = width - padX * 2;
   const plotH = height - padTop - padBottom;
   const x = (index) => padX + (data.length <= 1 ? plotW / 2 : (index / (data.length - 1)) * plotW);
-  const y = (value) => padTop + plotH - (Number(value || 0) / max) * plotH;
-  const points = (key) => data.map((row, index) => `${x(index).toFixed(1)},${y(row[key]).toFixed(1)}`).join(' ');
+  const y = (v) => padTop + plotH - (Number(v || 0) / max) * plotH;
+  const points = (key) => data.map((row, index) => x(index).toFixed(1) + ',' + y(row[key]).toFixed(1)).join(' ');
   const labelEvery = data.length <= 14 ? 1 : Math.ceil(data.length / 8);
   const series = [['pv', '조회'], ['cta', '클릭'], ['db', '접수']];
   const hoverTop = (row) => Math.min(y(row.pv), y(row.cta), y(row.db));
 
   return (
     <div className="stats-line-chart stats-trend-line stats-line-plot" role="img" aria-label="상세 통계">
-      <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-hidden="true" onMouseLeave={() => setHover(null)}>
+      <svg viewBox={'0 0 ' + width + ' ' + height} preserveAspectRatio="none" aria-hidden="true" onMouseLeave={() => setHover(null)}>
         {[0.25, 0.5, 0.75, 1].map((ratio) => (
           <line key={ratio} className="guide" x1={padX} x2={width - padX} y1={padTop + plotH * ratio} y2={padTop + plotH * ratio} />
         ))}
-        {series.map(([key]) => <polyline key={key} className={`line ${key}`} points={points(key)} />)}
+        {series.map(([key]) => <polyline key={key} className={'line ' + key} points={points(key)} />)}
         {series.map(([key]) => data.map((row, index) => (
-          <circle key={`${key}-${row.id || index}`} className={`dot ${key}`} cx={x(index)} cy={y(row[key])} r="4" />
+          <circle key={key + '-' + (row.id || index)} className={'dot ' + key} cx={x(index)} cy={y(row[key])} r="4" />
         )))}
         {data.map((row, index) => {
           const show = index === 0 || index === data.length - 1 || index % labelEvery === 0;
@@ -157,7 +157,7 @@ function StatsTrend({ data }) {
         })}
         {data.map((row, index) => (
           <rect
-            key={`hit-${row.id || row.label || index}`}
+            key={'hit-' + (row.id || row.label || index)}
             className="hit"
             x={Math.max(0, x(index) - Math.max(16, plotW / Math.max(1, data.length - 1) / 2))}
             y="0"
@@ -169,7 +169,7 @@ function StatsTrend({ data }) {
         ))}
       </svg>
       {hover && (
-        <div className="stats-chart-tooltip stats-chart-tooltip-wide" style={{ left: `${(hover.x / width) * 100}%`, top: `${hover.y}px` }}>
+        <div className="stats-chart-tooltip stats-chart-tooltip-wide" style={{ left: String((hover.x / width) * 100) + '%', top: String(hover.y) + 'px' }}>
           <span>{hover.row.id || hover.row.label}</span>
           <strong>조회 {Number(hover.row.pv || 0).toLocaleString('ko-KR')}</strong>
           <em>클릭 {Number(hover.row.cta || 0).toLocaleString('ko-KR')} / 접수 {Number(hover.row.db || 0).toLocaleString('ko-KR')}</em>
@@ -191,7 +191,7 @@ function StatCard({ title, data }) {
           {entries.slice(0, 8).map(([key, value]) => (
             <div className="stat-row stat-row-v2" key={key}>
               <span>{statLabel(key)}</span>
-              <div><i style={{ width: `${Math.max(4, Number(value || 0) / max * 100)}%` }} /></div>
+              <div><i style={{ width: String(Math.max(4, Number(value || 0) / max * 100)) + '%' }} /></div>
               <b>{value}</b>
             </div>
           ))}
@@ -273,7 +273,7 @@ export default function StatsPanel({
         <div className="stats-period-controls">
           <div className="period-tabs period-tabs-v2 stats-range-tabs" aria-label="통계 기간">
             {PERIOD_OPTIONS.map(([value, label]) => (
-              <button type="button" key={value} className={period === value ? 'active' : ''} onClick={() => setPeriod(value)}>{label}</button>
+              <button type="button" key={value} className={period === value ? 'active' : ''} aria-pressed={period === value} onClick={() => setPeriod(value)}>{label}</button>
             ))}
           </div>
           <label className="stats-month-control">
@@ -292,12 +292,12 @@ export default function StatsPanel({
         <Metric title="클릭" value={stats.cta} sub="버튼" />
         <Metric title="상담" value={stats.consultLeads} sub="접수" />
         <Metric title="예약" value={stats.reservationLeads} sub="접수" />
-        <Metric title="전환율" value={`${stats.conversion}%`} sub="방문 대비" />
-        <Metric title="CTA 전환" value={`${stats.ctaConversion}%`} sub="클릭 대비" />
+        <Metric title="전환율" value={stats.conversion + '%'} sub="방문 대비" />
+        <Metric title="CTA 전환" value={stats.ctaConversion + '%'} sub="클릭 대비" />
       </section>
 
       <section className="card stats-trend-card">
-        <div className="section-title"><h2>상세 통계</h2></div>
+        <div className="section-title"><h2>방문·접수 흐름</h2></div>
         <StatsTrend data={stats.trend} />
       </section>
 

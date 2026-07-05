@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { START_MODE_KEY } from '../config/storageKeys.js';
 import { apiFetch, postJson, projectAuthHeaders } from '../lib/apiClient.js';
 import { ownershipTransferBillingLabel, ownershipTransferStatusCopy, ownershipTransferStatusLabel } from '../lib/ownershipTransfer.js';
+import { normalizedPlanKey } from '../lib/planPolicy.js';
 import { projectContext } from '../lib/projectContext.js';
 import { notify } from '../lib/uiFeedback.js';
 import './AdminPanel.css';
@@ -29,9 +30,8 @@ const safeArray = (value) => (Array.isArray(value) ? value : []);
 const dateText = (value) => (value ? String(value).slice(0, 10) : '-');
 const compactStatus = (value = '') => String(value || 'unknown').replace(/_/g, ' ');
 const isPaidProject = (project = {}) => {
-  const plan = String(project.plan || project.billingPlan || '').toLowerCase();
   const billing = String(project.billingStatus || project.billing_status || '').toLowerCase();
-  return billing === 'active' || (plan && !['free', 'trial'].includes(plan));
+  return billing === 'active' || normalizedPlanKey(project.plan || project.billingPlan) !== 'free';
 };
 const projectLeadCount = (project = {}) => Number(project.leadCount || project.totalLeads || project.leads || 0);
 
@@ -128,9 +128,8 @@ export default function MasterAdminPanel({ page, leads = [], events = [], update
     const activeProjects = projects.filter((project) => compactStatus(project.status) !== 'archived').length;
     const paidProjects = projects.filter(isPaidProject).length;
     const paidAccounts = accounts.filter((account) => {
-      const plan = String(account.plan || account.billingPlan || '').toLowerCase();
       const billing = String(account.billingStatus || account.billing_status || '').toLowerCase();
-      return billing === 'active' || Number(account.paidProjectCount || 0) > 0 || (plan && !['free', 'trial'].includes(plan));
+      return billing === 'active' || Number(account.paidProjectCount || 0) > 0 || normalizedPlanKey(account.plan || account.billingPlan) !== 'free';
     }).length;
     const fileBytes = fileRows.reduce((sum, row) => sum + Number(row.fileBytes || 0), 0);
     const downloads = fileRows.reduce((sum, row) => sum + Number(row.downloadCount || 0), 0);

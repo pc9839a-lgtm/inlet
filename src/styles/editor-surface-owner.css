@@ -1,0 +1,490 @@
+
+body:has(.builder-shell),
+#root:has(.builder-shell) {
+  width: 100%;
+  height: 100dvh !important;
+  overflow: hidden !important;
+}
+
+.builder-shell {
+  --left: clamp(700px, 42vw, 780px);
+  --panel: min(100%, 720px);
+  --preview: clamp(500px, 35vw, 580px);
+  --line: #d8e3f1;
+  --soft: #f8fafc;
+  --muted: #64748b;
+  --text: #0f172a;
+  --active: #0f172a;
+  --green: #22c55e;
+  display: grid !important;
+  grid-template-columns: var(--left) minmax(560px, 1fr) !important;
+  width: 100% !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+  background: #eef2f7 !important;
+}
+
+.builder-shell * { box-sizing: border-box; }
+
+.left-workspace {
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  scrollbar-gutter: stable !important;
+  border-right: 1px solid #d6deea !important;
+}
+
+.work-panel {
+  width: 100% !important;
+  max-width: var(--panel) !important;
+  margin: 0 auto !important;
+  padding: 28px 24px 64px !important;
+  overflow: visible !important;
+}
+
+.preview-workspace {
+  width: 100% !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: flex-start !important;
+  padding: 28px clamp(22px, 3vw, 56px) !important;
+}
+
+.preview-sticky {
+  width: var(--preview) !important;
+  max-width: 100% !important;
+  height: calc(100dvh - 56px) !important;
+  max-height: calc(100dvh - 56px) !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+}
+
+.phone-frame {
+  width: 100% !important;
+  max-width: 540px !important;
+  height: calc(100dvh - 144px) !important;
+  min-height: 720px !important;
+  max-height: 820px !important;
+  margin: 0 auto !important;
+  flex: 1 1 auto !important;
+}
+
+.phone-frame .landing-page {
+  width: 100% !important;
+  height: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+.builder-shell :is(.panel-header, .top-tabs, .edit-layout, .settings-panel, .inbox-panel, .stats-panel, .style-panel) {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+.builder-shell :is(.edit-layout, .settings-panel, .inbox-panel, .stats-panel, .style-panel) {
+  display: grid !important;
+  gap: 14px !important;
+}
+
+.builder-shell :is(.panel-header, .top-tabs, .edit-layout .card, .edit-layout .step, .settings-section, .settings-advanced, .inbox-policy-card, .stats-panel .card, .stats-columns, .stats-grid) {
+  width: 100% !important;
+  min-width: 0 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 22px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+.builder-shell :is(button, input, select, textarea) {
+  font: inherit !important;
+  letter-spacing: 0 !important;
+}
+
+.builder-shell button { cursor: pointer !important; }
+
+.builder-shell :is(input, select, textarea) {
+  min-width: 0 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 16px !important;
+  background: #fff !important;
+  color: var(--text) !important;
+  font-weight: 850 !important;
+  outline: none !important;
+}
+
+.builder-shell :is(input, select) {
+  height: 46px !important;
+  padding: 0 14px !important;
+}
+
+.builder-shell textarea {
+  min-height: 86px !important;
+  padding: 12px 14px !important;
+  resize: vertical !important;
+}
+
+
+
+.builder-shell :is(.image-input, .style-photo-upload, .style-photo-box, .gallery-edit) {
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.builder-shell :is(.image-box, .image-box.single-plus, .image-preview, .stored-image-preview, .style-photo-upload .image-box.single-plus, .gallery-edit .image-box.single-plus) {
+  width: 100% !important;
+  aspect-ratio: 16 / 9 !important;
+  min-height: 0 !important;
+  max-height: 220px !important;
+  overflow: hidden !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 16px !important;
+  background: var(--soft) !important;
+}
+
+.builder-shell :is(.image-box, .image-box.single-plus, .image-preview, .stored-image-preview, .style-photo-upload .image-box.single-plus, .gallery-edit .image-box.single-plus) > img,
+.builder-shell :is(.image-input, .style-photo-upload, .gallery-edit) img {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 220px !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  background: var(--soft) !important;
+}
+
+
+.builder-shell .edit-layout :is(.widget-design-controls, .widget-design-controls-v2, .widget-design-controls-v3, .form-design-panel, .form-design-panel-clean, .form-design-grid, .form-color-row, .form-advanced-note, .button-design-box, .form-design-range) {
+  display: none !important;
+}
+
+
+.builder-shell .inbox-policy-head small { display: none !important; }
+
+
+
+
+@media (max-width: 1440px) {
+  .builder-shell {
+    --left: 700px;
+    --panel: 660px;
+    --preview: min(540px, calc(100vw - 748px));
+  }
+  .work-panel {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+}
+
+@media (max-width: 1280px) {
+  .builder-shell {
+    --left: 660px;
+    grid-template-columns: var(--left) minmax(500px, 1fr) !important;
+  }
+  .builder-shell .inbox-policy-grid { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 1180px) {
+  body:has(.builder-shell),
+  #root:has(.builder-shell) {
+    height: auto !important;
+    overflow: auto !important;
+  }
+  .builder-shell {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    grid-template-columns: 1fr !important;
+  }
+  .left-workspace,
+  .preview-workspace,
+  .preview-sticky {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .work-panel {
+    max-width: 760px !important;
+    min-height: 0 !important;
+    padding: 18px 14px 28px !important;
+  }
+  .preview-workspace { padding: 0 14px 28px !important; }
+  .preview-sticky {
+    width: min(460px, 100%) !important;
+    margin: 0 auto !important;
+  }
+}
+
+
+
+
+body:has(.builder-shell) {
+  overflow: hidden !important;
+}
+
+.builder-shell {
+  --left: clamp(640px, 39vw, 720px) !important;
+  --panel: 680px !important;
+  --preview: clamp(520px, 38vw, 620px) !important;
+  grid-template-columns: var(--left) minmax(620px, 1fr) !important;
+  align-items: stretch !important;
+}
+
+.left-workspace {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+.left-workspace > .work-panel,
+.work-panel {
+  height: auto !important;
+  min-height: 100dvh !important;
+  overflow: visible !important;
+  max-width: var(--panel) !important;
+}
+
+.preview-workspace {
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.preview-sticky {
+  width: var(--preview) !important;
+  min-width: 520px !important;
+}
+
+.preview-top {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.phone-frame {
+  width: min(100%, 560px) !important;
+  min-width: 420px !important;
+  max-width: 560px !important;
+}
+
+
+@media (max-width: 1440px) {
+  .builder-shell {
+    --left: 660px !important;
+    --panel: 640px !important;
+    --preview: clamp(500px, 39vw, 580px) !important;
+    grid-template-columns: var(--left) minmax(560px, 1fr) !important;
+  }
+  .preview-sticky { min-width: 500px !important; }
+  .phone-frame { min-width: 400px !important; }
+}
+
+@media (max-width: 1280px) {
+  .builder-shell {
+    --left: 620px !important;
+    --panel: 596px !important;
+    --preview: 500px !important;
+    grid-template-columns: var(--left) minmax(500px, 1fr) !important;
+  }
+}
+
+
+.builder-shell .inbox-policy-card {
+  border-radius: 20px !important;
+  overflow: hidden !important;
+}
+
+.builder-shell .inbox-policy-head {
+  min-height: 68px !important;
+  padding: 14px 16px !important;
+}
+
+.builder-shell .inbox-policy-body {
+  gap: 12px !important;
+  padding: 14px 16px 16px !important;
+}
+
+
+.builder-shell :is(.inbox-policy-switch.compact, .inbox-policy-select.compact) {
+  min-height: 54px !important;
+  padding: 0 12px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 10px !important;
+  border: 1px solid #dbe3ef !important;
+  border-radius: 16px !important;
+  background: #fff !important;
+}
+
+.builder-shell :is(.inbox-policy-switch.compact span, .inbox-policy-select.compact span) {
+  display: block !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-align: left !important;
+}
+
+.builder-shell :is(.inbox-policy-switch.compact span b, .inbox-policy-select.compact span b) {
+  display: block !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  font-size: 13px !important;
+  font-weight: 950 !important;
+}
+
+.builder-shell .inbox-policy-switch.compact > b {
+  min-width: 52px !important;
+  height: 30px !important;
+  border-radius: 999px !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  font-size: 12px !important;
+  font-weight: 950 !important;
+  background: #e8eef7 !important;
+  color: #64748b !important;
+}
+
+.builder-shell .inbox-policy-switch.compact.on > b {
+  background: #22c55e !important;
+  color: #fff !important;
+}
+
+.builder-shell .inbox-policy-select.compact select {
+  width: 132px !important;
+  max-width: 132px !important;
+  min-height: 38px !important;
+  border-radius: 13px !important;
+  font-size: 12px !important;
+}
+
+.builder-shell .inbox-policy-history {
+  padding: 12px !important;
+  border-radius: 16px !important;
+}
+
+.builder-shell .inbox-policy-history-head {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 10px !important;
+}
+
+.builder-shell .inbox-policy-history-head div {
+  display: grid !important;
+  grid-template-columns: 138px 64px !important;
+  gap: 8px !important;
+}
+
+.builder-shell .stats-panel .stats-period-controls {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 168px !important;
+  gap: 10px !important;
+  align-items: end !important;
+}
+
+.builder-shell .stats-panel .stats-range-tabs,
+.builder-shell .stats-panel .stats-channel-filter-list {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.builder-shell .stats-panel :is(.stats-range-tabs button, .stats-channel-filter-list button) {
+  min-height: 42px !important;
+  border: 1px solid #dbe3ef !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+  color: #111827 !important;
+  font-size: 13px !important;
+  font-weight: 950 !important;
+  box-shadow: none !important;
+}
+
+.builder-shell .stats-panel .stats-channel-filter-list button {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 0 12px !important;
+  text-align: left !important;
+}
+
+.builder-shell .stats-panel .stats-channel-filter-list button span {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.builder-shell .stats-panel :is(.stats-range-tabs button.active, .stats-range-tabs button[aria-pressed="true"], .stats-channel-filter-list button.active, .stats-channel-filter-list button[aria-pressed="true"]) {
+  border-color: #111827 !important;
+  background: #111827 !important;
+  color: #fff !important;
+}
+
+.builder-shell .stats-panel .stats-channel-filter-list button b {
+  min-width: 24px !important;
+  height: 22px !important;
+  padding: 0 7px !important;
+  border-radius: 999px !important;
+  background: #eef2f7 !important;
+  color: #64748b !important;
+  display: grid !important;
+  place-items: center !important;
+  font-size: 11px !important;
+}
+
+.builder-shell .stats-panel .stats-channel-filter-list button:is(.active, [aria-pressed="true"]) b {
+  background: rgba(255, 255, 255, .18) !important;
+  color: #fff !important;
+}
+
+.builder-shell .stats-panel :is(.empty, .stats-empty-chart) {
+  min-height: 74px !important;
+  border: 1px dashed #cbd5e1 !important;
+  border-radius: 16px !important;
+  background: #f8fafc !important;
+  display: grid !important;
+  place-items: center !important;
+  color: #94a3b8 !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  text-align: center !important;
+}
+
+@media (max-width: 1280px) {
+  .builder-shell .inbox-policy-grid,
+  .builder-shell .stats-panel .stats-period-controls,
+  .builder-shell .stats-panel .stats-range-tabs,
+  .builder-shell .stats-panel .stats-channel-filter-list {
+    grid-template-columns: 1fr !important;
+  }
+
+  .builder-shell .inbox-policy-history-head,
+  .builder-shell .inbox-policy-history-head div {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+body .builder-shell :is(.edit-layout,.inbox-panel,.stats-panel,.settings-panel,.style-panel) {
+  --ux-line: #dbe5f1;
+  --ux-soft: #f8fbff;
+  --ux-ink: #0f172a;
+  --ux-muted: #64748b;
+  --ux-green: #22c55e;
+}
+
+body .builder-shell :is(.edit-layout,.inbox-panel,.stats-panel,.settings-panel,.style-panel) :is(button,input,select,textarea) {
+  box-sizing: border-box !important;
+  font-family: inherit !important;
+  letter-spacing: 0 !important;
+  outline: 0 !important;
+}
+
+
+
