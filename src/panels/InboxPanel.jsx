@@ -242,7 +242,7 @@ export default function InboxPanel({
             </select>
           </label>
           <button type="button" className="btn secondary" onClick={reloadLeads} disabled={syncing}>새로고침</button>
-          {exportLeadsCsv ? <button type="button" className="btn secondary" onClick={() => exportLeadsCsv({ month })}>월 CSV</button> : null}
+          {exportLeadsCsv ? <button type="button" className="btn secondary" onClick={() => exportLeadsCsv({ month })}>CSV 내보내기</button> : null}
         </div>
       </section>
 
