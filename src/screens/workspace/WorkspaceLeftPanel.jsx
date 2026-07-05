@@ -18,6 +18,7 @@ export function WorkspaceLeftPanel({
   onSave,
   onPreview,
   onDashboard,
+  onStartChoice,
   previewUrl,
   templates,
   createFromTemplate,
@@ -53,6 +54,7 @@ export function WorkspaceLeftPanel({
                 onSave={onSave}
                 onPreview={onPreview}
                 onDashboard={onDashboard}
+                onStartChoice={onStartChoice}
                 previewUrl={previewUrl}
               />
             )}

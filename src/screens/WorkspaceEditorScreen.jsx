@@ -17,6 +17,7 @@ export default function WorkspaceEditorScreen({
   onSave,
   onPreview,
   onDashboard,
+  onStartChoice,
   previewUrl,
   createWithAi,
   createManual,
@@ -66,6 +67,7 @@ export default function WorkspaceEditorScreen({
         onSave={onSave}
         onPreview={onPreview}
         onDashboard={onDashboard}
+        onStartChoice={onStartChoice}
         previewUrl={previewUrl}
         templates={templates}
         createFromTemplate={createFromTemplate}

@@ -14,6 +14,8 @@ import { isLeadConflictError, leadConflictMessage } from './builder/conflictUtil
 import { NAV } from './builder/navigation.js';
 import { useBuilderFeedback } from './builder/useBuilderFeedback.js';
 import { usePageConflict } from './builder/usePageConflict.js';
+import { createWorkspacePanelProps } from './runtime/createWorkspacePanelProps.js';
+import WorkspaceEditorScreen from './screens/WorkspaceEditorScreen.jsx';
 import { BRAND_KO, BRAND_NAME } from './config/brand.js';
 import { META, SINGLETON_BLOCK_TYPES } from './config/blockMeta.jsx';
 import { AUTH_KEY, DASHBOARD_KEY, EVENTS_KEY, LEADS_KEY, START_MODE_KEY, STORAGE_KEY } from './config/storageKeys.js';
@@ -2166,6 +2168,150 @@ function App() {
       </>
     );
   }
+
+  const editPanelProps = {
+    page,
+    openId,
+    setOpenId,
+    addOpen,
+    setAddOpen,
+    dragId,
+    setDragId,
+    updateTheme,
+    toggleVisible,
+    addBlock,
+    removeBlock,
+    duplicateBlock,
+    reorderToIndex,
+    renderTopNavEditor: (block) => renderLazyEditor(TopNavEditor, { s: block.s || {}, set: (patch) => updateBlock(block.id, patch), page, TargetControl }),
+    renderBottomBarEditor: (block) => renderLazyEditor(BottomBarEditor, { s: block.s || {}, set: (patch) => updateBlock(block.id, patch), page }),
+    renderFooterEditor: (block) => renderLazyEditor(FooterEditor, { s: block.s || {}, set: (patch) => updateBlock(block.id, patch), page }),
+    renderBlockEditor: (block) => <BlockEditor block={block} page={page} updateBlock={updateBlock} editors={BLOCK_EDITORS} editorDeps={{ Color, Range, RichField, TargetControl, WidgetDesignControls, generateStandaloneFormHtml, authUser }} />,
+  };
+
+  const {
+    stylePanelProps,
+    inboxPanelProps,
+    statsPanelProps,
+    settingsPanelProps,
+  } = createWorkspacePanelProps({
+    page,
+    authUser,
+    updateTheme,
+    updateStyleBlocks,
+    setStylePreviewTheme,
+    leads,
+    updatePage,
+    leadsSyncing,
+    leadPageMeta,
+    loadMoreLeads,
+    refreshServerLeads,
+    setInboxFilters,
+    updateIntegrations,
+    saveNow,
+    connectionsEditing,
+    setConnectionsEditing,
+    updateLead,
+    deleteLead,
+    retryLeadDelivery,
+    retryFailedDeliveries,
+    exportLeadsCsv,
+    leadConflict,
+    reloadLeadConflict,
+    retryLeadConflict,
+    setLeadConflict,
+    accessMode,
+    events,
+    statsEventPageMeta,
+    statsLeadPageMeta,
+    statsPartial,
+    statsMonth,
+    setStatsMonth,
+    statsPeriod,
+    setStatsPeriod,
+    serverStatsSummary,
+    statsChannel,
+    setStatsChannel,
+    updateMeta,
+    setNormalizedPage,
+    duplicatePageWithUrl,
+    checkCreatePageUrl,
+    reset,
+    updateAccountProfile,
+    logout,
+  });
+
+  return (
+    <>
+      {canManageAdmin && !startMode && !tabDeepLink && (
+        <LazyChunkBoundary resetKey="start-mode">
+          <Suspense fallback={<LazyPanelFallback />}>
+            <StartModeOverlay onManual={() => setCreateOpen(true)} onAi={() => setCreateOpen(true)} onTemplate={() => setCreateOpen(true)} onClose={() => setCreateOpen(true)} templates={templateChoices} />
+          </Suspense>
+        </LazyChunkBoundary>
+      )}
+      <WorkspaceEditorScreen
+        canUseBuilder={canUseBuilder}
+        canManageAdmin={canManageAdmin}
+        clientAdminMode={clientAdminMode}
+        startMode={startMode}
+        createOpen={createOpen}
+        onCloseCreate={() => setCreateOpen(false)}
+        page={page}
+        tab={tab}
+        saved={saved}
+        saveStatus={saveStatus}
+        onSave={saveNow}
+        onPreview={openPreview}
+        onDashboard={closeWorkspace}
+        onStartChoice={reopenStartChoice}
+        previewUrl={previewUrl}
+        createWithAi={createWithAi}
+        createManual={createManual}
+        createFromTemplate={createFromTemplate}
+        onCheckUrl={checkCreatePageUrl}
+        defaultSlug={page.slug}
+        templates={templateChoices}
+        allowedTabs={allowedTabs}
+        changeTab={changeTab}
+        editPanelProps={editPanelProps}
+        stylePanelProps={stylePanelProps}
+        inboxPanelProps={inboxPanelProps}
+        statsPanelProps={statsPanelProps}
+        settingsPanelProps={settingsPanelProps}
+        previewPage={previewPage}
+        leads={leads}
+        addLead={addLead}
+        track={track}
+        selectedBlockId={canUseBuilder ? openId : ''}
+        onSelectPreviewBlock={canUseBuilder ? selectPreviewBlock : undefined}
+      />
+      {pageConflict && (
+        <PageConflictModal
+          conflict={pageConflict}
+          onClose={() => setPageConflict(null)}
+          onUseLatest={useLatestServerPage}
+          onKeepDraft={keepLocalPageDraft}
+          onForceSave={forceSaveLocalPage}
+        />
+      )}
+      {confirmDialog && (
+        <ConfirmModal
+          dialog={confirmDialog}
+          onClose={() => setConfirmDialog(null)}
+        />
+      )}
+      {previewCopyIssue && (
+        <PreviewCopyModal
+          issue={previewCopyIssue}
+          onClose={() => setPreviewCopyIssue(null)}
+          onRetry={openPreview}
+        />
+      )}
+      {toast && <ToastNotice toast={toast} onClose={() => setToast(null)} />}
+      <WayziFooter />
+    </>
+  );
 
   return (
     <>

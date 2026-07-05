@@ -4,6 +4,7 @@ export function createWorkspacePanelProps({
   page,
   authUser,
   updateTheme,
+  updateStyleBlocks,
   setStylePreviewTheme,
   leads,
   updatePage,
@@ -49,6 +50,7 @@ export function createWorkspacePanelProps({
     stylePanelProps: {
       page,
       updateTheme,
+      updateBlocks: updateStyleBlocks,
       onPreviewThemeChange: setStylePreviewTheme,
     },
     inboxPanelProps: {
