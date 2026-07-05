@@ -52,7 +52,7 @@ export function createManagerDraftHandlers({
   const saveManagers = () => {
     updateOwnership({ managers: normalizeManagerDrafts(managerDraft) });
     lockSection('managers');
-    notify('留ㅻ땲? 沅뚰븳????ν뻽?듬땲??', 'success');
+    notify('매니저 권한을 저장했습니다.', 'success');
   };
 
   const editManagers = () => {
@@ -65,7 +65,7 @@ export function createManagerDraftHandlers({
     updateManagerDrafts([...managerDraft, manager]);
     editSection('managers');
     setExpandedManagerId(manager.id);
-    notify('留ㅻ땲? ?낅젰 移몄쓣 異붽??덉뒿?덈떎.', 'success');
+    notify('매니저 입력 칸을 추가했습니다.', 'success');
   };
 
   const disableManager = (index) => {
@@ -75,10 +75,10 @@ export function createManagerDraftHandlers({
   const removeManager = async (index) => {
     const manager = managerDraft[index];
     const ok = await confirmAction({
-      title: '留ㅻ땲? ??젣',
-      message: `${managerLabel(manager)}???섏씠吏 ?묎렐 沅뚰븳???쒓굅?⑸땲?? ??ν븯硫??쒕쾭 ?묎렐??李⑤떒?⑸땲??`,
-      confirmLabel: '??젣',
-      cancelLabel: '痍⑥냼',
+      title: '매니저 삭제',
+      message: `${managerLabel(manager)} 매니저 권한을 삭제할까요? 삭제하면 해당 매니저는 더 이상 이 페이지를 관리할 수 없습니다.`,
+      confirmLabel: '삭제',
+      cancelLabel: '취소',
       tone: 'danger',
     });
     if (!ok) return;
