@@ -19,6 +19,7 @@ import { useInboxLeadActions } from './runtime/useInboxLeadActions.js';
 import { useInboxLeadSync } from './runtime/useInboxLeadSync.js';
 import { useLeadDeliveryRetryActions } from './runtime/useLeadDeliveryRetryActions.js';
 import { useLeadMutationActions } from './runtime/useLeadMutationActions.js';
+import { useLandingTemplates } from './runtime/useLandingTemplates.js';
 import { usePreviewWindow } from './runtime/usePreviewWindow.js';
 import { useStatsSummarySync } from './runtime/useStatsSummarySync.js';
 import { useWorkspaceEditorEffects } from './runtime/useWorkspaceEditorEffects.js';
@@ -609,7 +610,6 @@ function App() {
   const accountPageLoadRef = useRef('');
   const latestPageRef = useRef(page);
   const localPageMutationRef = useRef(0);
-  const templateModuleRef = useRef(null);
   const editInitialCollapseRef = useRef('');
   const { toast, confirmDialog, setToast, setConfirmDialog, showToast, requestConfirm } = useBuilderFeedback();
   const [connectionsEditing, setConnectionsEditing] = useState(true);
@@ -620,7 +620,6 @@ function App() {
   const [authView, setAuthView] = useState('');
   const [stylePreviewTheme, setStylePreviewTheme] = useState(null);
   const [stylePreviewBlocks, setStylePreviewBlocks] = useState(null);
-  const [templateChoices, setTemplateChoices] = useState([]);
   const [publicServerPage, setPublicServerPage] = useState(null);
   const [publicPageLoading, setPublicPageLoading] = useState(false);
   const [publicPageLoaded, setPublicPageLoaded] = useState(false);
@@ -1401,22 +1400,14 @@ function App() {
     run();
   };
   const previewUrl = isServerPageMode() ? publicLandingUrl(page.slug || '') : localPreviewUrl(page.slug || '');
-  const loadTemplateModule = async () => {
-    if (templateModuleRef.current) return templateModuleRef.current;
-    const module = await import('./templates/landingTemplates.js');
-    templateModuleRef.current = module;
-    setTemplateChoices(module.LANDING_TEMPLATES.map((template) => module.getLandingTemplate(template.id)));
-    return module;
-  };
-
-  useEffect(() => {
-    if (!canUseBuilder) return;
-    if (workspaceOpen && !createOpen && startMode !== 'template' && tab !== 'templates') return;
-    loadTemplateModule().catch((error) => {
-      console.warn('Template module load failed:', error);
-      showToast(`템플릿을 불러오지 못했습니다. ${String(error?.message || error)}`, 'error');
-    });
-  }, [canUseBuilder, createOpen, startMode, tab, workspaceOpen]);
+  const { templateChoices, loadTemplateModule } = useLandingTemplates({
+    enabled: canUseBuilder,
+    createOpen,
+    startMode,
+    tab,
+    workspaceOpen,
+    showToast,
+  });
   const { openPreview } = usePreviewWindow({
     previewUrl,
     setPreviewCopyIssue,
