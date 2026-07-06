@@ -14,6 +14,7 @@ import { isLeadConflictError } from './builder/conflictUtils.js';
 import { NAV } from './builder/navigation.js';
 import { useBuilderFeedback } from './builder/useBuilderFeedback.js';
 import { usePageConflict } from './builder/usePageConflict.js';
+import { usePageSaveHelpers } from './runtime/usePageSaveHelpers.js';
 import { createWorkspacePanelProps } from './runtime/createWorkspacePanelProps.js';
 import { useCreatePageActions } from './runtime/useCreatePageActions.js';
 import { useCreatePageUrlCheck } from './runtime/useCreatePageUrlCheck.js';
@@ -1220,37 +1221,15 @@ function App() {
     if (hasPendingStyle) setStylePreviewBlocks(null);
   };
 
-  const pageForAccountSave = (sourcePage = null) => {
-    const basePage = sourcePage || latestPageRef.current || page;
-    const normalized = normalizePageForSave(normalizeFreeEmailIntegrations(basePage));
-    const currentSlug = normalized.slug || defaultPage.slug || 'my-page';
-    if (!authUser) return normalizePageForSave({ ...normalized, slug: currentSlug });
-    const context = projectContext({ ...normalized, slug: currentSlug }, authUser);
-    return normalizePageForSave({
-      ...normalized,
-      slug: currentSlug,
-      projectId: context.projectId,
-      ownerId: context.ownerId,
-    });
-  };
-
-  const savedPageFromResult = (localPage, serverPage = null) => {
-    if (!serverPage) return normalizePageForSave(localPage);
-    return normalizePageForSave({
-      ...localPage,
-      id: serverPage.id || localPage.id,
-      projectId: serverPage.projectId || localPage.projectId,
-      ownerId: serverPage.ownerId || localPage.ownerId,
-      revision: serverPage.revision ?? localPage.revision,
-      createdAt: serverPage.createdAt || localPage.createdAt,
-      updatedAt: serverPage.updatedAt || localPage.updatedAt,
-      savedAt: serverPage.savedAt || localPage.savedAt,
-      publishedAt: serverPage.publishedAt || localPage.publishedAt,
-      integrations: serverPage.integrations || localPage.integrations,
-      ownership: serverPage.ownership || localPage.ownership,
-      managers: serverPage.managers || localPage.managers,
-    });
-  };
+  const {
+    pageForAccountSave,
+    savedPageFromResult,
+  } = usePageSaveHelpers({
+    page,
+    authUser,
+    latestPageRef,
+    normalizeFreeEmailIntegrations,
+  });
 
   const persistStyleNow = async () => {
       if (blockWrite('style')) return;
