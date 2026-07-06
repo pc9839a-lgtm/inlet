@@ -16,6 +16,7 @@ import { useBuilderFeedback } from './builder/useBuilderFeedback.js';
 import { usePageConflict } from './builder/usePageConflict.js';
 import { createWorkspacePanelProps } from './runtime/createWorkspacePanelProps.js';
 import { useCreatePageUrlCheck } from './runtime/useCreatePageUrlCheck.js';
+import { useEditorBlockActions } from './runtime/useEditorBlockActions.js';
 import { useInboxLeadActions } from './runtime/useInboxLeadActions.js';
 import { useInboxLeadSync } from './runtime/useInboxLeadSync.js';
 import { useLeadDeliveryRetryActions } from './runtime/useLeadDeliveryRetryActions.js';
@@ -26,7 +27,7 @@ import { useStatsSummarySync } from './runtime/useStatsSummarySync.js';
 import { useWorkspaceEditorEffects } from './runtime/useWorkspaceEditorEffects.js';
 import WorkspaceEditorScreen from './screens/WorkspaceEditorScreen.jsx';
 import { BRAND_KO, BRAND_NAME } from './config/brand.js';
-import { META, SINGLETON_BLOCK_TYPES } from './config/blockMeta.jsx';
+import { META } from './config/blockMeta.jsx';
 import { AUTH_KEY, DASHBOARD_KEY, EVENTS_KEY, LEADS_KEY, START_MODE_KEY, STORAGE_KEY } from './config/storageKeys.js';
 import BlockEditor from './editor/BlockEditor.jsx';
 import { Color, Range } from './editor/compactControls.jsx';
@@ -51,7 +52,7 @@ import { projectContext } from './lib/projectContext.js';
 import { sanitizePageSlug } from './lib/pageSlugs.js';
 import { fetchLinkPreview, linkThumbnailFromUrl, normalizeExternalUrl } from './lib/linkPreview.js';
 import { isReservationLead, normalizeLeadItem } from './lib/leadModel.js';
-import { clone, defaultPage, ensureUniqueAnchors, newBlock, normalize, normalizeIntegrations, normalizePageForSave, sanitizeBlock, uid } from './lib/pageModel.js';
+import { defaultPage, normalize, normalizeIntegrations, normalizePageForSave, uid } from './lib/pageModel.js';
 import { load, save as saveJson, storageErrorMessage } from './lib/storage.js';
 import { normalizeAiDraftInput } from './ai/aiDraftSchema.js';
 
@@ -1003,52 +1004,22 @@ function App() {
     if (blockWrite(tab === 'inbox' ? 'inbox' : 'settings')) return;
     setPage((p) => commitLocalPageDraft(normalizeFreeEmailIntegrations({ ...p, integrations: normalizeIntegrations({ ...(p.integrations || {}), [section]: { ...(p.integrations?.[section] || {}), ...patch } }) })));
   };
-  const updateBlock = (id, patch) => {
-    if (blockWrite('edit')) return;
-    setPage((p) => commitLocalPageDraft({
-      ...p,
-      blocks: ensureUniqueAnchors(p.blocks.map((b) => b.id === id ? sanitizeBlock({ ...b, s: { ...b.s, ...patch } }) : b)),
-    }));
-  };
-  const toggleVisible = (id) => {
-    if (blockWrite('edit')) return;
-    setPage((p) => commitLocalPageDraft({ ...p, blocks: p.blocks.map((b) => b.id === id ? { ...b, visible: !b.visible } : b) }));
-  };
-  const addBlock = (type) => {
-    if (blockWrite('edit')) return;
-    if (SINGLETON_BLOCK_TYPES.includes(type)) {
-      const existing = page.blocks.find((b) => b.type === type);
-      if (existing) { setOpenId(''); setAddOpen(false); return; }
-    }
-    const b = newBlock(type);
-    setPage((p) => commitLocalPageDraft({ ...p, blocks: ensureUniqueAnchors([...p.blocks, b]) }));
-    setOpenId('');
-    setAddOpen(false);
-  };
-  const removeBlock = (id) => {
-    if (blockWrite('edit')) return;
-    const idx = page.blocks.findIndex((b) => b.id === id);
-    const nextOpen = openId === id ? '' : openId;
-    setPage((p) => commitLocalPageDraft({ ...p, blocks: ensureUniqueAnchors(p.blocks.filter((b) => b.id !== id)) }));
-    setOpenId(nextOpen);
-    setAddOpen(false);
-  };
-  const duplicateBlock = (id) => {
-    if (blockWrite('edit')) return;
-    const source = page.blocks.find((b) => b.id === id);
-    if (!source || SINGLETON_BLOCK_TYPES.includes(source.type)) return;
-    const cp = clone(source);
-    cp.id = uid();
-    setPage((p) => {
-      const idx = p.blocks.findIndex((b) => b.id === id);
-      if (idx < 0 || SINGLETON_BLOCK_TYPES.includes(p.blocks[idx].type)) return p;
-      const next = [...p.blocks];
-      next.splice(idx + 1, 0, cp);
-      return commitLocalPageDraft({ ...p, blocks: ensureUniqueAnchors(next) });
-    });
-    setOpenId('');
-    setAddOpen(false);
-  };
+  const {
+    updateBlock,
+    toggleVisible,
+    addBlock,
+    removeBlock,
+    duplicateBlock,
+    reorderToIndex,
+  } = useEditorBlockActions({
+    page,
+    openId,
+    blockWrite,
+    setPage,
+    commitLocalPageDraft,
+    setOpenId,
+    setAddOpen,
+  });
   const duplicatePageWithUrl = (urlConfig) => {
     if (blockWrite('settings')) {
       return { ok: false, message: '설정 편집 권한이 없습니다.' };
@@ -1068,23 +1039,6 @@ function App() {
     saveLocalJson(START_MODE_KEY, 'manual', '시작 방식', { quietSuccess: true });
     showToast(`페이지를 복제했습니다. 새 URL: /${nextPage.slug}`, 'success');
     return { ok: true, page: nextPage };
-  };
-  const reorderToIndex = (fromId, targetIndex) => {
-    if (blockWrite('edit')) return;
-    if (!fromId && fromId !== 0) return;
-    setPage((p) => {
-      const normal = p.blocks.filter((b)=>!['topnav','bottombar','footer'].includes(b.type));
-      const fixed = p.blocks.filter((b)=>['topnav','bottombar','footer'].includes(b.type));
-      const from = normal.findIndex((b)=>b.id === fromId);
-      if (from < 0) return p;
-      const nextNormal = [...normal];
-      const [moved] = nextNormal.splice(from, 1);
-      const requestedIndex = Number(targetIndex);
-      const adjustedIndex = from < requestedIndex ? requestedIndex - 1 : requestedIndex;
-      const safeIndex = Math.max(0, Math.min(adjustedIndex, nextNormal.length));
-      nextNormal.splice(safeIndex, 0, moved);
-      return commitLocalPageDraft({ ...p, blocks: ensureUniqueAnchors([...nextNormal, ...fixed]) });
-    });
   };
   const authForTargetPage = (targetPage = {}) => (
     publicLandingSlug && targetPage?.projectId ? null : authUser
