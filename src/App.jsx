@@ -15,6 +15,9 @@ import { NAV } from './builder/navigation.js';
 import { useBuilderFeedback } from './builder/useBuilderFeedback.js';
 import { usePageConflict } from './builder/usePageConflict.js';
 import { createWorkspacePanelProps } from './runtime/createWorkspacePanelProps.js';
+import { useInboxLeadSync } from './runtime/useInboxLeadSync.js';
+import { useStatsSummarySync } from './runtime/useStatsSummarySync.js';
+import { useWorkspaceEditorEffects } from './runtime/useWorkspaceEditorEffects.js';
 import WorkspaceEditorScreen from './screens/WorkspaceEditorScreen.jsx';
 import { BRAND_KO, BRAND_NAME } from './config/brand.js';
 import { META, SINGLETON_BLOCK_TYPES } from './config/blockMeta.jsx';
@@ -31,12 +34,12 @@ import { canUseAdminSurface, canUseBuilderSurface, canWriteTab, isClientAdminMod
 import { logoutAuthAccount, refreshAuthSession, updateAuthAccount } from './lib/authAccounts.js';
 import { normalizeAuthUser } from './lib/authIdentity.js';
 import { generateStandaloneFormHtml } from './lib/formEmbed.js';
-import { fetchServerStatsSummary, persistEvent } from './lib/eventRepository.js';
+import { persistEvent } from './lib/eventRepository.js';
 import { sendLeadIntegrations } from './lib/leadIntegrations.js';
 import { deleteServerLead, deliverServerLead, downloadServerLeadsCsv, fetchServerLeads, persistLead, retryFailedServerLeads, updateServerLead } from './lib/leadRepository.js';
 import { isOwnerAdminModeEnabled, isServerLeadMode, isServerPageMode, publicLandingUrl } from './config/runtimeConfig.js';
 import { downloadLeadsCsv } from './lib/leadCsv.js';
-import { currentMonthValue, monthDateRange, statsDateRange } from './lib/monthRange.js';
+import { currentMonthValue, monthDateRange } from './lib/monthRange.js';
 import { fetchPublicServerPage, fetchServerPage, persistPage } from './lib/pageRepository.js';
 import { canUsePageDuplication, createDuplicatedPage } from './lib/pageDuplication.js';
 import { projectContext } from './lib/projectContext.js';
@@ -868,105 +871,43 @@ function App() {
       });
     return () => { alive = false; };
   }, [publicLandingSlug]);
-  useEffect(() => {
-    if (tab !== 'inbox' || !isServerLeadMode()) return undefined;
-    let alive = true;
-    const monthRange = monthDateRange(inboxFilters.month);
-    setLeadsSyncing(true);
-    fetchServerLeads(page, authUser, {
-      limit: INBOX_PAGE_SIZE,
-      withMeta: true,
-      kind: inboxFilters.kind === 'all' ? '' : inboxFilters.kind,
-      status: inboxFilters.status === 'all' ? '' : inboxFilters.status,
-      deliveryStatus: inboxFilters.deliveryStatus === 'all' ? '' : inboxFilters.deliveryStatus,
-      q: inboxFilters.q,
-      month: monthRange.month,
-      dateFrom: monthRange.dateFrom,
-      dateTo: monthRange.dateTo,
-    })
-      .then((result) => {
-        if (!alive || !result) return;
-        const serverLeads = Array.isArray(result) ? result : result.leads;
-        setLeads((serverLeads || []).map(normalizeLeadItem));
-        if (Array.isArray(result)) {
-          setLeadPageMeta({ total: result.length, nextCursor: null, hasMore: false });
-        } else {
-          setLeadPageMeta({
-            total: Number(result.total || 0),
-            nextCursor: result.nextCursor ?? null,
-            hasMore: !!result.hasMore,
-          });
-        }
-      })
-      .catch((error) => {
-        console.warn('Server leads load failed:', error);
-        setLeadPageMeta({ total: 0, nextCursor: null, hasMore: false });
-      })
-      .finally(() => {
-        if (alive) setLeadsSyncing(false);
-      });
-    return () => { alive = false; };
-  }, [tab, page.slug, page.projectId, authUser, inboxFilters.kind, inboxFilters.month, inboxFilters.status, inboxFilters.deliveryStatus, inboxFilters.q]);
-  useEffect(() => {
-    if (tab !== 'stats') return undefined;
-    if (!isServerLeadMode()) {
-      setStatsEventPageMeta({ total: events.length, nextCursor: null, hasMore: false, source: 'local' });
-      setStatsLeadPageMeta({ total: leads.length, nextCursor: null, hasMore: false, source: 'local' });
-      setStatsPartial(false);
-      setServerStatsSummary(null);
-      return undefined;
-    }
-    let alive = true;
-    const statsRange = statsDateRange(statsMonth || currentMonthValue(), statsPeriod || '30d');
-    setStatsPartial(false);
-    setServerStatsSummary(null);
-    Promise.all([
-      fetchServerStatsSummary(page, authUser, { ...statsRange, channel: statsChannel === 'all' ? '' : statsChannel }),
-      fetchServerLeads(page, authUser, { limit: 8, withMeta: true, ...statsRange, channel: statsChannel === 'all' ? '' : statsChannel }),
-    ])
-      .then(([summaryResult, leadResult]) => {
-        if (!alive) return;
-        setServerStatsSummary(summaryResult || null);
-        setEvents([]);
-        if (summaryResult) {
-          setStatsEventPageMeta({
-            total: Number(summaryResult?.totals?.events || 0),
-            nextCursor: null,
-            hasMore: false,
-            source: summaryResult.source || 'server',
-          });
-        }
-        if (leadResult) {
-          setLeads((leadResult.leads || []).map(normalizeLeadItem));
-          setStatsLeadPageMeta({
-            total: Number(leadResult.total || 0),
-            nextCursor: leadResult.nextCursor ?? null,
-            hasMore: !!leadResult.hasMore,
-            source: leadResult.source || 'server',
-          });
-        }
-        setStatsPartial(false);
-      })
-      .catch((error) => {
-        console.warn('Server stats data load failed:', error);
-        if (alive) {
-          setStatsPartial(true);
-          setServerStatsSummary(null);
-        }
-      });
-    return () => { alive = false; };
-  }, [tab, page.slug, page.projectId, authUser, statsMonth, statsPeriod, statsChannel]);
-  useEffect(() => {
-    if (tab !== 'style') setStylePreviewTheme(null);
-  }, [tab]);
-  useEffect(() => {
-    if (!workspaceOpen || tab !== 'edit') return;
-    const collapseKey = `${page.projectId || ''}:${page.slug || ''}`;
-    if (editInitialCollapseRef.current === collapseKey) return;
-    editInitialCollapseRef.current = collapseKey;
-    setOpenId('');
-    setAddOpen(false);
-  }, [page.projectId, page.slug, tab, workspaceOpen]);
+  useInboxLeadSync({
+    tab,
+    page,
+    authUser,
+    inboxFilters,
+    pageSize: INBOX_PAGE_SIZE,
+    setLeads,
+    setLeadPageMeta,
+    setLeadsSyncing,
+  });
+
+  useStatsSummarySync({
+    tab,
+    page,
+    authUser,
+    events,
+    leads,
+    statsMonth,
+    statsPeriod,
+    statsChannel,
+    setEvents,
+    setLeads,
+    setStatsEventPageMeta,
+    setStatsLeadPageMeta,
+    setStatsPartial,
+    setServerStatsSummary,
+  });
+
+  useWorkspaceEditorEffects({
+    tab,
+    page,
+    workspaceOpen,
+    editInitialCollapseRef,
+    setStylePreviewTheme,
+    setOpenId,
+    setAddOpen,
+  });
   useEffect(() => {
     if (!authUser || canUseBuilder || workspaceOpen) return;
     saveLocalJson(DASHBOARD_KEY, { open: true }, '작업공간 상태', { quietSuccess: true });
