@@ -15,6 +15,7 @@ import { NAV } from './builder/navigation.js';
 import { useBuilderFeedback } from './builder/useBuilderFeedback.js';
 import { usePageConflict } from './builder/usePageConflict.js';
 import { createWorkspacePanelProps } from './runtime/createWorkspacePanelProps.js';
+import { useInboxLeadActions } from './runtime/useInboxLeadActions.js';
 import { useInboxLeadSync } from './runtime/useInboxLeadSync.js';
 import { useStatsSummarySync } from './runtime/useStatsSummarySync.js';
 import { useWorkspaceEditorEffects } from './runtime/useWorkspaceEditorEffects.js';
@@ -36,10 +37,9 @@ import { normalizeAuthUser } from './lib/authIdentity.js';
 import { generateStandaloneFormHtml } from './lib/formEmbed.js';
 import { persistEvent } from './lib/eventRepository.js';
 import { sendLeadIntegrations } from './lib/leadIntegrations.js';
-import { deleteServerLead, deliverServerLead, downloadServerLeadsCsv, fetchServerLeads, persistLead, retryFailedServerLeads, updateServerLead } from './lib/leadRepository.js';
+import { deleteServerLead, deliverServerLead, persistLead, retryFailedServerLeads, updateServerLead } from './lib/leadRepository.js';
 import { isOwnerAdminModeEnabled, isServerLeadMode, isServerPageMode, publicLandingUrl } from './config/runtimeConfig.js';
-import { downloadLeadsCsv } from './lib/leadCsv.js';
-import { currentMonthValue, monthDateRange } from './lib/monthRange.js';
+import { currentMonthValue } from './lib/monthRange.js';
 import { fetchPublicServerPage, fetchServerPage, persistPage } from './lib/pageRepository.js';
 import { canUsePageDuplication, createDuplicatedPage } from './lib/pageDuplication.js';
 import { projectContext } from './lib/projectContext.js';
@@ -1253,95 +1253,19 @@ function App() {
 
     failed.forEach((lead)=>retryLeadDelivery(lead));
   };
-  const exportLeadsCsv = async (visibleLeads = [], exportFilters = {}) => {
-    const monthRange = monthDateRange(exportFilters.month || inboxFilters.month);
-    const filters = {
-      ...exportFilters,
-      month: monthRange.month,
-      dateFrom: monthRange.dateFrom,
-      dateTo: monthRange.dateTo,
-      kind: exportFilters.kind || inboxFilters.kind,
-      status: exportFilters.status || inboxFilters.status,
-      deliveryStatus: exportFilters.deliveryStatus || inboxFilters.deliveryStatus,
-      q: exportFilters.q ?? inboxFilters.q,
-    };
-    try {
-      if (isServerLeadMode()) {
-        await downloadServerLeadsCsv(page, authUser, visibleLeads, filters);
-        return;
-      }
-      downloadLeadsCsv(leads, page, { filters });
-    } catch (error) {
-      console.warn('Lead CSV export failed:', error);
-      showToast(`CSV 내보내기에 실패했습니다. ${String(error?.message || error)}`, 'error');
-    }
-  };
-  const refreshServerLeads = async ({ quiet = false } = {}) => {
-    if (!isServerLeadMode()) return null;
-    const monthRange = monthDateRange(inboxFilters.month);
-    setLeadsSyncing(true);
-    try {
-      const result = await fetchServerLeads(page, authUser, {
-        limit: INBOX_PAGE_SIZE,
-        withMeta: true,
-        kind: inboxFilters.kind === 'all' ? '' : inboxFilters.kind,
-        status: inboxFilters.status === 'all' ? '' : inboxFilters.status,
-        deliveryStatus: inboxFilters.deliveryStatus === 'all' ? '' : inboxFilters.deliveryStatus,
-        q: inboxFilters.q,
-        month: monthRange.month,
-        dateFrom: monthRange.dateFrom,
-        dateTo: monthRange.dateTo,
-      });
-      const serverLeads = (result?.leads || []).map(normalizeLeadItem);
-      setLeads(serverLeads);
-      setLeadPageMeta({
-        total: Number(result?.total || 0),
-        nextCursor: result?.nextCursor ?? null,
-        hasMore: !!result?.hasMore,
-      });
-      if (!quiet) showToast('최신 접수 데이터를 불러왔습니다.', 'success');
-      return { ...result, leads: serverLeads };
-    } catch (error) {
-      console.warn('Server leads refresh failed:', error);
-      if (!quiet) showToast(`접수 데이터 새로고침에 실패했습니다. ${String(error?.message || error)}`, 'error');
-      return null;
-    } finally {
-      setLeadsSyncing(false);
-    }
-  };
-  const loadMoreLeads = async () => {
-    if (!leadPageMeta.hasMore || leadPageMeta.nextCursor == null || leadsSyncing) return;
-    const monthRange = monthDateRange(inboxFilters.month);
-    setLeadsSyncing(true);
-    try {
-      const result = await fetchServerLeads(page, authUser, {
-        limit: INBOX_PAGE_SIZE,
-        cursor: leadPageMeta.nextCursor,
-        withMeta: true,
-        kind: inboxFilters.kind === 'all' ? '' : inboxFilters.kind,
-        status: inboxFilters.status === 'all' ? '' : inboxFilters.status,
-        deliveryStatus: inboxFilters.deliveryStatus === 'all' ? '' : inboxFilters.deliveryStatus,
-        q: inboxFilters.q,
-        month: monthRange.month,
-        dateFrom: monthRange.dateFrom,
-        dateTo: monthRange.dateTo,
-      });
-      const more = (result?.leads || []).map(normalizeLeadItem);
-      setLeads((list) => {
-        const seen = new Set(list.map((lead) => String(lead.id)));
-        return [...list, ...more.filter((lead) => !seen.has(String(lead.id)))];
-      });
-      setLeadPageMeta({
-        total: Number(result?.total || 0),
-        nextCursor: result?.nextCursor ?? null,
-        hasMore: !!result?.hasMore,
-      });
-    } catch (error) {
-      console.warn('Server more leads load failed:', error);
-    } finally {
-      setLeadsSyncing(false);
-    }
-  };
+  const { exportLeadsCsv, loadMoreLeads, refreshServerLeads } = useInboxLeadActions({
+    authUser,
+    inboxFilters,
+    leadPageMeta,
+    leads,
+    leadsSyncing,
+    page,
+    pageSize: INBOX_PAGE_SIZE,
+    setLeadPageMeta,
+    setLeads,
+    setLeadsSyncing,
+    showToast,
+  });
   const updateLead = (id, patch) => {
     if (blockWrite('inbox')) return;
     const previous = leads.find((lead) => lead.id === id) || null;
