@@ -15,6 +15,7 @@ import { NAV } from './builder/navigation.js';
 import { useBuilderFeedback } from './builder/useBuilderFeedback.js';
 import { usePageConflict } from './builder/usePageConflict.js';
 import { createWorkspacePanelProps } from './runtime/createWorkspacePanelProps.js';
+import { useCreatePageActions } from './runtime/useCreatePageActions.js';
 import { useCreatePageUrlCheck } from './runtime/useCreatePageUrlCheck.js';
 import { useEditorBlockActions } from './runtime/useEditorBlockActions.js';
 import { useInboxLeadActions } from './runtime/useInboxLeadActions.js';
@@ -50,12 +51,10 @@ import { currentMonthValue } from './lib/monthRange.js';
 import { fetchPublicServerPage, fetchServerPage, persistPage } from './lib/pageRepository.js';
 import { canUsePageDuplication, createDuplicatedPage } from './lib/pageDuplication.js';
 import { projectContext } from './lib/projectContext.js';
-import { sanitizePageSlug } from './lib/pageSlugs.js';
 import { fetchLinkPreview, linkThumbnailFromUrl, normalizeExternalUrl } from './lib/linkPreview.js';
 import { isReservationLead, normalizeLeadItem } from './lib/leadModel.js';
 import { defaultPage, normalize, normalizeIntegrations, normalizePageForSave, uid } from './lib/pageModel.js';
 import { load, save as saveJson, storageErrorMessage } from './lib/storage.js';
-import { normalizeAiDraftInput } from './ai/aiDraftSchema.js';
 
 const PreviewRenderer = lazy(() => import('./preview/LandingRenderer.jsx'));
 const ActivityEditor = lazy(() => import('./editor/blockEditors/BasicBlockEditors.jsx').then((module) => ({ default: module.ActivityEditor })));
@@ -1504,122 +1503,26 @@ function App() {
     setWorkspaceOpen(true);
   };
 
-  const saveCreatedPageToServer = async (nextPage, label = '페이지') => {
-    const safePage = normalizePageForSave(nextPage);
-    saveLocalJson(STORAGE_KEY, safePage, label);
-    if (!isServerPageMode()) return { ok: true, mode: 'local' };
-    try {
-      const result = await persistPage(safePage, authUser, { tab: 'edit' });
-      if (result?.page) {
-        const savedPage = savedPageFromResult(safePage, result.page);
-        saveLocalJson(STORAGE_KEY, savedPage, label, { quietSuccess: true });
-        return { ...result, page: savedPage };
-      }
-      return result;
-    } catch (error) {
-      showToast(`서버 저장에 실패했습니다. 공개 URL에 표시되지 않습니다. ${String(error?.message || error)}`, 'error');
-      throw error;
-    }
-  };
-
-  const freshCreatedPage = (nextPage, context) => normalizePageForSave({
-    ...nextPage,
-    id: uid(),
-    projectId: context.projectId,
-    ownerId: context.ownerId,
+  const {
+    createWithAi,
+    createManual,
+    createFromTemplate,
+  } = useCreatePageActions({
+    page,
+    authUser,
+    canManageAdmin,
+    canUseBuilder,
+    loadTemplateModule,
+    savedPageFromResult,
+    saveLocalJson,
+    showToast,
+    setPage,
+    setCreateOpen,
+    setStartMode,
+    setTab,
+    setOpenId,
+    openWorkspace,
   });
-
-  const createWithAi = async (draftInput = null) => {
-    if (!canManageAdmin) return;
-    const requestedSlug = sanitizePageSlug(draftInput?.slug || page.slug || defaultPage.slug || 'my-page', 'my-page');
-    const nextContext = projectContext({ slug: requestedSlug }, authUser);
-    if (draftInput && typeof draftInput === 'object') {
-      const nextInput = normalizeAiDraftInput({
-        ...(page.ai?.draftInput || {}),
-        ...draftInput,
-        slug: requestedSlug,
-      });
-      const nextPage = freshCreatedPage({
-        ...page,
-        slug: requestedSlug,
-        ai: {
-          ...(page.ai || {}),
-          draftInput: nextInput,
-          updatedAt: new Date().toISOString(),
-        },
-      }, nextContext);
-      const saved = await saveCreatedPageToServer(nextPage, '페이지');
-      setPage(saved?.page || nextPage);
-    }
-    setCreateOpen(false);
-    saveLocalJson(START_MODE_KEY, 'ai', '시작 선택', { quietSuccess: true });
-    setStartMode('ai');
-    if (typeof location !== 'undefined') {
-      location.href = `/${requestedSlug || 'my-page'}/admin`;
-      return;
-    }
-    openWorkspace('manual');
-  };
-
-  const createManual = async (footerInfo = {}) => {
-    if (!canManageAdmin) return;
-    const nextSlug = sanitizePageSlug(footerInfo?.slug || page.slug || defaultPage.slug || 'my-page', 'my-page');
-    const nextContext = projectContext({ slug: nextSlug }, authUser);
-    let nextPage = null;
-    if (footerInfo && Object.keys(footerInfo).length) {
-      const { slug: _slug, ...safeFooterInfo } = footerInfo || {};
-      nextPage = freshCreatedPage({
-        ...page,
-        slug: nextSlug,
-        blocks: page.blocks.map((block) => (
-          block.type === 'footer'
-            ? { ...block, s: { ...block.s, ...safeFooterInfo } }
-            : block
-        )),
-      }, nextContext);
-    } else if (nextSlug !== page.slug || page.projectId !== nextContext.projectId) {
-      nextPage = freshCreatedPage({
-        ...page,
-        slug: nextSlug,
-      }, nextContext);
-    } else {
-      nextPage = normalizePageForSave(page);
-    }
-    if (nextPage) {
-      const saved = await saveCreatedPageToServer(nextPage, '페이지');
-      setPage(saved?.page || nextPage);
-    }
-    setCreateOpen(false);
-    saveLocalJson(START_MODE_KEY, 'manual', '시작 선택', { quietSuccess: true });
-    setStartMode('manual');
-    setTab('edit');
-    openWorkspace('manual');
-  };
-
-  const createFromTemplate = async (templateId, urlConfig = {}) => {
-    if (!canUseBuilder) return;
-    try {
-      const templates = await loadTemplateModule();
-      const templatePage = templates.createTemplatePage(templateId, page);
-      const nextSlug = sanitizePageSlug(urlConfig?.slug || templatePage.slug || page.slug || 'my-page', 'my-page');
-      const templateContext = projectContext({ slug: nextSlug }, authUser);
-      const next = freshCreatedPage({
-        ...templatePage,
-        slug: nextSlug,
-      }, templateContext);
-      const saved = await saveCreatedPageToServer(next, '페이지');
-      setPage(saved?.page || next);
-      saveLocalJson(START_MODE_KEY, 'manual', '시작 선택', { quietSuccess: true });
-      setStartMode('manual');
-      setTab('edit');
-      setOpenId('');
-      setCreateOpen(false);
-      openWorkspace('manual');
-    } catch (error) {
-      console.warn('Template apply failed:', error);
-      showToast(`템플릿 적용에 실패했습니다. ${String(error?.message || error)}`, 'error');
-    }
-  };
 
   if (staticPage) return withWayziFooter(<WayziStaticPage page={staticPage} />);
 
