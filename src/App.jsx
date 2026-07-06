@@ -17,6 +17,7 @@ import { usePageConflict } from './builder/usePageConflict.js';
 import { createWorkspacePanelProps } from './runtime/createWorkspacePanelProps.js';
 import { useInboxLeadActions } from './runtime/useInboxLeadActions.js';
 import { useInboxLeadSync } from './runtime/useInboxLeadSync.js';
+import { useLeadDeliveryRetryActions } from './runtime/useLeadDeliveryRetryActions.js';
 import { useLeadMutationActions } from './runtime/useLeadMutationActions.js';
 import { useStatsSummarySync } from './runtime/useStatsSummarySync.js';
 import { useWorkspaceEditorEffects } from './runtime/useWorkspaceEditorEffects.js';
@@ -38,7 +39,7 @@ import { normalizeAuthUser } from './lib/authIdentity.js';
 import { generateStandaloneFormHtml } from './lib/formEmbed.js';
 import { persistEvent } from './lib/eventRepository.js';
 import { sendLeadIntegrations } from './lib/leadIntegrations.js';
-import { deliverServerLead, persistLead, retryFailedServerLeads, updateServerLead } from './lib/leadRepository.js';
+import { deliverServerLead, persistLead, updateServerLead } from './lib/leadRepository.js';
 import { isOwnerAdminModeEnabled, isServerLeadMode, isServerPageMode, publicLandingUrl } from './config/runtimeConfig.js';
 import { currentMonthValue } from './lib/monthRange.js';
 import { fetchPublicServerPage, fetchServerPage, persistPage } from './lib/pageRepository.js';
@@ -1213,47 +1214,15 @@ function App() {
     return savePromise;
   };
   const addLead = (lead) => addLeadForPage(page, lead);
-  const retryLeadDelivery = (lead) => {
-    const pending = { status: 'pending', summary: '외부 전송 재시도 중', logs: lead.delivery?.logs || [] };
-    setLeads((list)=>list.map((item)=>item.id === lead.id ? { ...item, delivery: pending } : item));
-    syncLeadPatch(lead.id, { delivery: pending });
+  const { retryFailedDeliveries, retryLeadDelivery } = useLeadDeliveryRetryActions({
+    authUser,
+    leads,
+    page,
+    runLeadDelivery,
+    setLeads,
+    syncLeadPatch,
+  });
 
-    runLeadDelivery({ ...lead, delivery: pending })
-      .then((report) => {
-        if (!report) return;
-        setLeads((list)=>list.map((item)=>item.id === lead.id ? { ...item, delivery: report } : item));
-        if (!isServerLeadMode()) syncLeadPatch(lead.id, { delivery: report });
-      })
-      .catch((error) => {
-        console.warn('Integration retry failed:', error);
-        const delivery = {
-          status: 'failed',
-          summary: '외부 전송 재시도 실패',
-          logs: [
-            ...(lead.delivery?.logs || []),
-            { target: '외부 전송', status: 'failed', message: String(error?.message || error), at: new Date().toISOString() },
-          ],
-        };
-        setLeads((list)=>list.map((item)=>item.id === lead.id ? { ...item, delivery } : item));
-        syncLeadPatch(lead.id, { delivery });
-      });
-  };
-  const retryFailedDeliveries = async () => {
-    const failed = leads.filter((lead)=>['failed','partial'].includes(lead.delivery?.status));
-    if (!failed.length) return;
-
-    if (isServerLeadMode()) {
-      try {
-        const result = await retryFailedServerLeads(page, authUser);
-        if (result?.leads?.length) setLeads(result.leads.map(normalizeLeadItem));
-      } catch (error) {
-        console.warn('Server failed deliveries retry failed:', error);
-      }
-      return;
-    }
-
-    failed.forEach((lead)=>retryLeadDelivery(lead));
-  };
   const { exportLeadsCsv, loadMoreLeads, refreshServerLeads } = useInboxLeadActions({
     authUser,
     inboxFilters,
