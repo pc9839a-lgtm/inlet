@@ -1,5 +1,6 @@
 import { STORAGE_KEY } from '../config/storageKeys.js';
 import { persistPage } from '../lib/pageRepository.js';
+import { attachExistingPageIdentity } from './savePageIdentity.js';
 
 export function usePersistStyleSaveAction({
   page,
@@ -23,18 +24,23 @@ export function usePersistStyleSaveAction({
   const persistStyleNow = async () => {
     if (blockWrite('style')) return;
     const basePage = latestPageRef.current || page;
-    const nextPage = pageForAccountSave({
+    const styleSourcePage = await attachExistingPageIdentity({
       ...basePage,
       theme: stylePreviewTheme ? { ...basePage.theme, ...stylePreviewTheme } : basePage.theme,
       blocks: stylePreviewBlocks || basePage.blocks,
+    }, {
+      authUser,
+      latestPage: latestPageRef.current,
+      currentPage: page,
     });
-    const expectedUpdatedAt = page.updatedAt || page.savedAt || page.createdAt || '';
+    const nextPage = pageForAccountSave(styleSourcePage);
+    const expectedUpdatedAt = styleSourcePage.updatedAt || styleSourcePage.savedAt || styleSourcePage.createdAt || page.updatedAt || page.savedAt || page.createdAt || '';
     latestPageRef.current = nextPage;
     setPage(nextPage);
     saveLocalJson(STORAGE_KEY, nextPage, '페이지');
     let result = null;
     try {
-      result = await persistPage(nextPage, authUser, { tab: 'style', expectedUpdatedAt });
+      result = await persistPage(nextPage, authUser, { tab: 'style', expectedUpdatedAt, saveMode: 'update-existing' });
     } catch (error) {
       const handled = await handlePageSaveError(error, nextPage);
       markSaveStatus(handled ? 'warning' : 'error', handled ? '저장 충돌' : '서버 저장 실패', handled

@@ -1,6 +1,7 @@
 import { STORAGE_KEY } from '../config/storageKeys.js';
 import { persistPage } from '../lib/pageRepository.js';
 import { normalizePageForSave } from '../lib/pageModel.js';
+import { attachExistingPageIdentity } from './savePageIdentity.js';
 
 export function usePageSaveAction({
   allowedTabs,
@@ -45,11 +46,16 @@ export function usePageSaveAction({
     const sourcePage = pageOverride
       ? normalizePageForSave({ ...(latestPageRef.current || page), ...pageOverride })
       : (latestPageRef.current || page);
-    const expectedUpdatedAt = sourcePage.updatedAt || sourcePage.savedAt || sourcePage.createdAt || '';
-    const nextPage = pageForAccountSave(sourcePage);
+    const saveSourcePage = await attachExistingPageIdentity(sourcePage, {
+      authUser,
+      latestPage: latestPageRef.current,
+      currentPage: page,
+    });
+    const expectedUpdatedAt = saveSourcePage.updatedAt || saveSourcePage.savedAt || saveSourcePage.createdAt || sourcePage.updatedAt || sourcePage.savedAt || sourcePage.createdAt || '';
+    const nextPage = pageForAccountSave(saveSourcePage);
     let result = null;
     try {
-      result = await persistPage(nextPage, authUser, { tab, expectedUpdatedAt });
+      result = await persistPage(nextPage, authUser, { tab, expectedUpdatedAt, saveMode: 'update-existing' });
     } catch (error) {
       const handled = await handlePageSaveError(error, nextPage);
       markSaveStatus(handled ? 'warning' : 'error', handled ? '저장 충돌' : '서버 저장 실패', handled

@@ -12,10 +12,15 @@ export function useCreatePageUrlCheck({ page, authUser }) {
       return { ok: true, slug: safeSlug, message: '현재 페이지 주소를 그대로 사용합니다.' };
     }
     if (!isServerPageMode()) return { ok: true, slug: safeSlug };
-    const context = projectContext({ slug: safeSlug }, authUser);
+    const context = projectContext({ ...page, slug: safeSlug }, authUser);
     try {
       const publicExisting = await fetchPublicServerPage(safeSlug);
-      if (publicExisting && String(publicExisting.projectId || '') !== String(context.projectId || '')) {
+      const currentPageId = String(page.id || '').trim();
+      const currentProjectId = String(page.projectId || '').trim();
+      const publicPageId = String(publicExisting?.id || '').trim();
+      const publicProjectId = String(publicExisting?.projectId || '').trim();
+      const publicIsCurrentPage = !!publicExisting && ((currentPageId && publicPageId === currentPageId) || (currentProjectId && publicProjectId === currentProjectId));
+      if (publicExisting && !publicIsCurrentPage && publicProjectId !== String(context.projectId || '')) {
         return { ok: false, slug: safeSlug, message: '이미 사용 중인 URL입니다. 다른 URL을 입력해주세요.' };
       }
       const existing = await fetchServerPage(safeSlug, context);
