@@ -27,6 +27,31 @@ function publicPagePayload(page = {}, project = {}) {
   };
 }
 
+function isUpdateExistingSave(body = {}) {
+  return String(body.saveMode || body.mode || '').trim() === 'update-existing';
+}
+
+function sameExistingPageId(incoming = {}, existingPage = {}) {
+  const incomingId = String(incoming.id || '').trim();
+  const existingId = String(existingPage.id || '').trim();
+  return !!incomingId && !!existingId && incomingId === existingId;
+}
+
+async function projectForExistingPageUpdate({ db, request, env, publicPage, incoming, project, body, writeTab }) {
+  if (!publicPage || !isUpdateExistingSave(body) || !sameExistingPageId(incoming, publicPage)) return null;
+  const existingProject = await getD1ProjectById(db, publicPage.projectId || '');
+  if (!existingProject?.projectId) return null;
+  const targetProject = {
+    ...project,
+    ...existingProject,
+    id: existingProject.projectId,
+    projectId: existingProject.projectId,
+    ownerId: existingProject.ownerId || project.ownerId || '',
+    slug: publicPage.slug || existingProject.slug || project.slug || '',
+  };
+  await authorizeProject(request, env, targetProject, { write: true, tab: writeTab });
+  return targetProject;
+}
 function pageNotFoundResponse(request, env) {
   return jsonResponse(request, env, 404, { ok: false, error: '페이지를 찾을 수 없습니다.', message: '페이지를 찾을 수 없습니다.' }, METHODS);
 }
@@ -176,10 +201,15 @@ export async function onRequest({ request, env, params }) {
       }
       const publicExisting = await getPublicPageBySlug(db, slug);
       if (publicExisting.page && String(publicExisting.page.projectId || '') !== String(project.projectId || '')) {
-        const error = new Error('Page URL is already in use.');
-        error.status = 409;
-        error.details = { code: 'PAGE_SLUG_CONFLICT', slug };
-        throw error;
+        const targetProject = await projectForExistingPageUpdate({ db, request, env, publicPage: publicExisting.page, incoming, project, body, writeTab });
+        if (targetProject) {
+          project = targetProject;
+        } else {
+          const error = new Error('Page URL is already in use.');
+          error.status = 409;
+          error.details = { code: 'PAGE_SLUG_CONFLICT', slug };
+          throw error;
+        }
       }
       const expectedUpdatedAt = String(body.expectedUpdatedAt || incoming.expectedUpdatedAt || incoming.__expectedUpdatedAt || '').trim();
       const current = await getD1PageBySlug(db, { projectId: project.projectId, slug });
