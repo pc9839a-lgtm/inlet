@@ -68,7 +68,12 @@ export function usePageConflict({
     try {
       const latestUpdatedAt = pageConflict.serverPage.updatedAt || pageConflict.serverPage.savedAt || '';
       const nextPage = normalizePageForSave(pageConflict.localPage);
-      const result = await persistPage(nextPage, authUser, { expectedUpdatedAt: latestUpdatedAt });
+      const result = await persistPage(nextPage, authUser, {
+        tab: 'edit',
+        expectedUpdatedAt: latestUpdatedAt,
+        saveMode: 'update-existing',
+        verifyPublic: true,
+      });
       const savedPage = normalizePageForSave(result?.page || nextPage);
       setPage(savedPage);
       saveJson(STORAGE_KEY, savedPage);
