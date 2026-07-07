@@ -178,6 +178,7 @@ export async function persistPage(page, authUser = null, options = {}) {
     project: context,
     tab: options.tab || '',
     ...(options.expectedUpdatedAt ? { expectedUpdatedAt: options.expectedUpdatedAt } : {}),
+    ...(options.saveMode ? { saveMode: options.saveMode } : {}),
   };
   try {
     const result = await postJson(`/api/pages/${encodeURIComponent(slug)}`, payload, { headers: projectAuthHeaders(context) });

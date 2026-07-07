@@ -1,6 +1,7 @@
 import { fetchPublicServerPage } from '../lib/pageRepository.js';
 import { normalizePageForSave } from '../lib/pageModel.js';
 import { sanitizePageSlug } from '../lib/pageSlugs.js';
+import { projectContext } from '../lib/projectContext.js';
 
 function hasServerIdentity(page = {}) {
   return !!(page?.id && page?.projectId);
@@ -12,11 +13,27 @@ function sameSlug(a = {}, b = {}) {
   return !!left && left === right;
 }
 
+function ownerId(page = {}) {
+  return String(page?.ownerId || page?.ownerAccountId || '').trim();
+}
+
+function sameProject(page = {}, projectId = '') {
+  const expected = String(projectId || '').trim();
+  const current = String(page?.projectId || page?.id || '').trim();
+  return !!expected && !!current && current === expected;
+}
+
 function sameOwner(page = {}, authUser = null) {
   const authOwner = String(authUser?.ownerId || '').trim();
-  const pageOwner = String(page?.ownerId || page?.ownerAccountId || '').trim();
-  if (!authOwner || !pageOwner) return true;
-  return authOwner === pageOwner;
+  const pageOwner = ownerId(page);
+  return !!authOwner && !!pageOwner && authOwner === pageOwner;
+}
+
+function matchesSaveContext(identityPage = {}, sourcePage = {}, context = {}, authUser = null) {
+  if (!hasServerIdentity(identityPage) || !sameSlug(sourcePage, identityPage)) return false;
+  if (sameProject(identityPage, context.projectId)) return true;
+  if (sameProject(identityPage, context.legacyProjectId)) return true;
+  return sameOwner(identityPage, authUser);
 }
 
 function mergeServerIdentity(sourcePage = {}, identityPage = {}) {
@@ -41,16 +58,19 @@ export async function attachExistingPageIdentity(sourcePage = {}, {
   if (!authUser || hasServerIdentity(sourcePage)) return sourcePage;
 
   const localIdentity = latestPage || currentPage;
-  if (hasServerIdentity(localIdentity) && sameSlug(sourcePage, localIdentity) && sameOwner(localIdentity, authUser)) {
-    return mergeServerIdentity(sourcePage, localIdentity);
-  }
-
   const slug = sanitizePageSlug(sourcePage?.slug || localIdentity?.slug || '', '');
   if (!slug) return sourcePage;
 
+  const sourceWithSlug = { ...sourcePage, slug };
+  const context = projectContext(sourceWithSlug, authUser);
+
+  if (matchesSaveContext(localIdentity, sourceWithSlug, context, authUser)) {
+    return mergeServerIdentity(sourcePage, localIdentity);
+  }
+
   try {
     const publicPage = await fetchPublicServerPage(slug);
-    if (publicPage && sameOwner(publicPage, authUser)) {
+    if (matchesSaveContext(publicPage, sourceWithSlug, context, authUser)) {
       return mergeServerIdentity(sourcePage, publicPage);
     }
   } catch (error) {
