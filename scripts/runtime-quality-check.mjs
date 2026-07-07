@@ -174,6 +174,10 @@ const createPageUrlCheck = await readFile('src/runtime/useCreatePageUrlCheck.js'
 const settingsDraftActions = await readFile('src/panels/settings/settingsDraftActions.js', 'utf8');
 const settingsAdvancedGroup = await readFile('src/panels/settings/AdvancedSettingsGroup.jsx', 'utf8');
 const settingsSection = await readFile('src/panels/settings/SettingsSection.jsx', 'utf8');
+const workspaceActivePanel = await readFile('src/screens/workspace/WorkspaceActivePanel.jsx', 'utf8');
+const workspaceTabs = await readFile('src/screens/workspace/WorkspaceTabs.jsx', 'utf8');
+const workspaceLeftPanel = await readFile('src/screens/workspace/WorkspaceLeftPanel.jsx', 'utf8');
+const workspacePreviewPane = await readFile('src/screens/workspace/WorkspacePreviewPane.jsx', 'utf8');
 const pageSaveAction = await readFile('src/runtime/usePageSaveAction.js', 'utf8');
 const persistStyleSaveAction = await readFile('src/runtime/usePersistStyleSaveAction.js', 'utf8');
 
@@ -204,14 +208,14 @@ assert(authContext.includes('ACCESS_MODES.UNAUTHORIZED'), 'missing auth/project 
 assert(authContext.includes('clientAdminEnabled = false') && authContext.includes('clientAdminEnabled && ownership.clientAccess'), 'client admin mode must stay behind the internal flag until server enforcement exists');
 assert(runtimeConfigSource.includes('VITE_INLET_ENABLE_OWNER_ADMIN_MODE') && runtimeConfigSource.includes('ownerAdminModeEnabled'), 'owner admin internal runtime flag must be explicit');
 assert(app.includes('isOwnerAdminModeEnabled') && app.includes('clientAdminEnabled: ownerAdminModeEnabled'), 'App must derive client admin access from the internal runtime flag');
-assert(app.includes('canUseBuilder && tab === \'edit\'') && app.includes('canUseBuilder && tab === \'style\''), 'builder-only editor and style tabs must stay permission gated');
-assert(app.includes('NAV.filter(([key]) => allowedTabs.includes(key))'), 'navigation must render only allowed tabs');
+assert(workspaceActivePanel.includes("canUseBuilder && tab === 'edit'") && workspaceActivePanel.includes("canUseBuilder && tab === 'style'"), 'builder-only editor and style tabs must stay permission gated');
+assert(workspaceTabs.includes('NAV.filter(([key]) => allowedTabs.includes(key))'), 'navigation must render only allowed tabs');
 assert(app.includes('function tabFromLocation') && app.includes('function hasTabDeepLink') && app.includes("new URLSearchParams(location.search).get('tab')") && app.includes('replaceLocationTab(nextTab)'), 'App must support tab query deep links for authenticated visual QA and operator URLs');
-assert(app.includes('!tabDeepLink && <Suspense') && app.includes('<StartModeOverlay'), 'tab deep links must bypass the start mode overlay');
-assert(app.includes('canManageAdmin && !startMode') && app.includes('canManageAdmin && startMode === \'template\''), 'template/start controls must stay master-admin-only');
+assert(app.includes('canManageAdmin && !startMode && !tabDeepLink') && app.includes('<StartModeOverlay'), 'tab deep links must bypass the start mode overlay');
+assert(app.includes('canManageAdmin && !startMode') && workspaceLeftPanel.includes("canManageAdmin && startMode === 'template'"), 'template/start controls must stay master-admin-only');
 assert(app.includes('adminRoute') && app.includes("return /^\\/(?:admin|[^/?#]+\\/admin)\\/?$/.test(routePath)") && app.includes('<AdminPanel'), 'admin panel must stay on a private /admin route');
 assert(app.includes('const canWriteTabKey = (key) => canWriteTab(accessMode, page, authUser, key)') && app.includes('blockWrite'), 'App must enforce manager write permissions before mutation');
-assert(app.includes('selectedBlockId={canUseBuilder ? openId : \'\'}') && app.includes('onSelectBlock={canUseBuilder ? selectPreviewBlock : undefined}'), 'client admin preview must not route into block editing');
+assert(app.includes("selectedBlockId={canUseBuilder ? openId : ''}") && app.includes('onSelectPreviewBlock={canUseBuilder ? selectPreviewBlock : undefined}') && workspacePreviewPane.includes('selectedBlockId={selectedBlockId}') && workspacePreviewPane.includes('onSelectBlock={onSelectPreviewBlock}'), 'client admin preview must not route into block editing');
 assert(app.includes('if (!authUser) return;') && app.includes('if (!routeUsesWorkspaceTabs) return;'), 'workspace tab redirect must not run before login or on public routes');
 assert(app.includes('if (mobileBlocked && authUser && workspaceOpen)') && app.includes('모바일에서는 회원가입, 로그인, 미리보기와 접수 확인을 사용할 수 있습니다.'), 'mobile block screen must only hide the authenticated editor workspace');
 assert(
