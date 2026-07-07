@@ -38,3 +38,8 @@
 @import './styles/base-wayzi-footer.css';
 @import './styles/base-header-fix.css';
 @import './styles/service-polish.css';
+@import './styles/editor-layout-final.css';
+@import './styles/editor-shared-ui.css';
+@import './styles/editor-screen-order-polish.css';
+@import './styles/editor-widget-add-dock.css';
+@import './styles/editor-final-clean.css';
