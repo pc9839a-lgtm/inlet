@@ -1,5 +1,5 @@
 import { fetchPublicServerPage } from '../lib/pageRepository.js';
-import { normalizePageForSave } from '../lib/pageModel.js';
+import { defaultPage, normalizePageForSave } from '../lib/pageModel.js';
 import { sanitizePageSlug } from '../lib/pageSlugs.js';
 import { projectContext } from '../lib/projectContext.js';
 
@@ -78,4 +78,42 @@ export async function attachExistingPageIdentity(sourcePage = {}, {
   }
 
   return sourcePage;
+}
+
+export function pageForAccountSave({
+  sourcePage = null,
+  currentPage = null,
+  latestPage = null,
+  authUser = null,
+  normalizeFreeEmailIntegrations = (value) => value,
+} = {}) {
+  const basePage = sourcePage || latestPage || currentPage;
+  const normalized = normalizePageForSave(normalizeFreeEmailIntegrations(basePage));
+  const currentSlug = normalized.slug || defaultPage.slug || 'my-page';
+  if (!authUser) return normalizePageForSave({ ...normalized, slug: currentSlug });
+  const context = projectContext({ ...normalized, slug: currentSlug }, authUser);
+  return normalizePageForSave({
+    ...normalized,
+    slug: currentSlug,
+    projectId: context.projectId,
+    ownerId: context.ownerId,
+  });
+}
+
+export function savedPageFromResult(localPage, serverPage = null) {
+  if (!serverPage) return normalizePageForSave(localPage);
+  return normalizePageForSave({
+    ...localPage,
+    id: serverPage.id || localPage.id,
+    projectId: serverPage.projectId || localPage.projectId,
+    ownerId: serverPage.ownerId || localPage.ownerId,
+    revision: serverPage.revision ?? localPage.revision,
+    createdAt: serverPage.createdAt || localPage.createdAt,
+    updatedAt: serverPage.updatedAt || localPage.updatedAt,
+    savedAt: serverPage.savedAt || localPage.savedAt,
+    publishedAt: serverPage.publishedAt || localPage.publishedAt,
+    integrations: serverPage.integrations || localPage.integrations,
+    ownership: serverPage.ownership || localPage.ownership,
+    managers: serverPage.managers || localPage.managers,
+  });
 }
