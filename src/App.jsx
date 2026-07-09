@@ -1,4 +1,4 @@
-﻿import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { Component, Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import {
   CheckCircle2,
   Eye,
@@ -7,7 +7,6 @@ import {
   Smartphone,
   Upload,
 } from 'lucide-react';
-import { Component } from 'react';
 import PanelHeader from './builder/PanelHeader.jsx';
 import { ConfirmModal, PageConflictModal, PreviewCopyModal, ToastNotice } from './builder/BuilderFeedback.jsx';
 import { isLeadConflictError } from './builder/conflictUtils.js';
@@ -35,9 +34,11 @@ import { BRAND_KO, BRAND_NAME } from './config/brand.js';
 import { META } from './config/blockMeta.jsx';
 import { AUTH_KEY, DASHBOARD_KEY, EVENTS_KEY, LEADS_KEY, START_MODE_KEY, STORAGE_KEY } from './config/storageKeys.js';
 import BlockEditor from './editor/BlockEditor.jsx';
+import { BLOCK_EDITORS } from './editor/blockEditorRegistry.jsx';
 import { Color, Range } from './editor/compactControls.jsx';
 import { alignOptions, formQuestionOptions, questionOptions, sizeOptions } from './editor/editorOptions.js';
 import EditPanel from './editor/EditPanel.jsx';
+import { createFixedBlockRenderers } from './editor/fixedBlockRenderers.jsx';
 import TargetControl from './editor/TargetControl.jsx';
 import RichField from './editor/RichField.jsx';
 import { normalizeButtons } from './lib/blockButtons.js';
@@ -60,49 +61,6 @@ import { defaultPage, normalize, normalizeIntegrations, normalizePageForSave, ui
 import { load, save as saveJson, storageErrorMessage } from './lib/storage.js';
 
 const PreviewRenderer = lazy(() => import('./preview/LandingRenderer.jsx'));
-const ActivityEditor = lazy(() => import('./editor/blockEditors/BasicBlockEditors.jsx').then((module) => ({ default: module.ActivityEditor })));
-const DividerEditor = lazy(() => import('./editor/blockEditors/BasicBlockEditors.jsx').then((module) => ({ default: module.DividerEditor })));
-const FooterEditor = lazy(() => import('./editor/blockEditors/BasicBlockEditors.jsx').then((module) => ({ default: module.FooterEditor })));
-const SpacerEditor = lazy(() => import('./editor/blockEditors/BasicBlockEditors.jsx').then((module) => ({ default: module.SpacerEditor })));
-const FaqEditor = lazy(() => import('./editor/blockEditors/InfoEditors.jsx').then((module) => ({ default: module.FaqEditor })));
-const MapEditor = lazy(() => import('./editor/blockEditors/InfoEditors.jsx').then((module) => ({ default: module.MapEditor })));
-const ScheduleEditor = lazy(() => import('./editor/blockEditors/InfoEditors.jsx').then((module) => ({ default: module.ScheduleEditor })));
-const CodeEditor = lazy(() => import('./editor/blockEditors/UtilityEditors.jsx').then((module) => ({ default: module.CodeEditor })));
-const SearchEditor = lazy(() => import('./editor/blockEditors/UtilityEditors.jsx').then((module) => ({ default: module.SearchEditor })));
-const HeroEditor = lazy(() => import('./editor/blockEditors/HeroEditor.jsx'));
-const ImageEditor = lazy(() => import('./editor/blockEditors/ImageEditor.jsx'));
-const LinksEditor = lazy(() => import('./editor/blockEditors/LinksEditor.jsx'));
-const DownloadEditor = lazy(() => import('./editor/blockEditors/DownloadEditor.jsx'));
-const FormEditor = lazy(() => import('./editor/blockEditors/FormEditor.jsx'));
-const ReservationEditor = lazy(() => import('./editor/blockEditors/ReservationEditor.jsx'));
-const BottomBarEditor = lazy(() => import('./editor/blockEditors/BottomBarEditor.jsx'));
-const TextEditor = lazy(() => import('./editor/blockEditors/TextEditor.jsx'));
-const CardsEditor = lazy(() => import('./editor/blockEditors/CardsEditor.jsx'));
-const TimerEditor = lazy(() => import('./editor/blockEditors/TimerEditor.jsx'));
-const TopNavEditor = lazy(() => import('./editor/blockEditors/TopNavEditor.jsx'));
-
-const BLOCK_EDITORS = {
-  topnav: TopNavEditor,
-  hero: HeroEditor,
-  image: ImageEditor,
-  text: TextEditor,
-  cards: CardsEditor,
-  map: MapEditor,
-  faq: FaqEditor,
-  links: LinksEditor,
-  download: DownloadEditor,
-  schedule: ScheduleEditor,
-  timer: TimerEditor,
-  activity: ActivityEditor,
-  spacer: SpacerEditor,
-  divider: DividerEditor,
-  code: CodeEditor,
-  search: SearchEditor,
-  form: FormEditor,
-  reservation: ReservationEditor,
-  bottombar: BottomBarEditor,
-  footer: FooterEditor,
-};
 
 const TAB_KEYS = new Set(NAV.map(([key]) => key));
 
@@ -501,54 +459,6 @@ function withWayziFooter(content) {
       <WayziFooter />
     </>
   );
-}
-
-function LazyEditorFallback() {
-  return <div className="muted small">편집기를 불러오는 중입니다.</div>;
-}
-
-function renderLazyEditor(Editor, props) {
-  return (
-    <LazyEditorBoundary resetKey={props?.s?.anchorId || props?.s?.title || ''}>
-      <Suspense fallback={<LazyEditorFallback />}>
-        <Editor {...props} />
-      </Suspense>
-    </LazyEditorBoundary>
-  );
-}
-
-class LazyEditorBoundary extends Component {
-  state = { error: null };
-
-  static getDerivedStateFromError(error) {
-    return { error };
-  }
-
-  componentDidCatch(error) {
-    if (recoverLazyChunkLoad(error)) {
-      this.setState({ error: null });
-      return;
-    }
-    console.warn('Fixed block editor load failed:', error);
-  }
-
-  componentDidUpdate(prevProps) {
-    if (prevProps.resetKey !== this.props.resetKey && this.state.error) {
-      this.setState({ error: null });
-    }
-  }
-
-  render() {
-    if (this.state.error) {
-      return (
-        <div className="muted small" role="alert">
-          편집기를 불러오지 못했습니다. 블록을 다시 열거나 새로고침해 주세요.
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
 }
 
 const TEMP_LEAD_IDS = ['temp-lead-20260502', 'temp-lead-20260508', 'temp-lead-20260514', 'temp-lead-20260520', 'temp-lead-20260526'];
@@ -1595,6 +1505,8 @@ function App() {
     );
   }
 
+  const fixedBlockRenderers = createFixedBlockRenderers({ page, updateBlock });
+
   const editPanelProps = {
     page,
     openId,
@@ -1609,9 +1521,7 @@ function App() {
     removeBlock,
     duplicateBlock,
     reorderToIndex,
-    renderTopNavEditor: (block) => renderLazyEditor(TopNavEditor, { s: block.s || {}, set: (patch) => updateBlock(block.id, patch), page, TargetControl }),
-    renderBottomBarEditor: (block) => renderLazyEditor(BottomBarEditor, { s: block.s || {}, set: (patch) => updateBlock(block.id, patch), page }),
-    renderFooterEditor: (block) => renderLazyEditor(FooterEditor, { s: block.s || {}, set: (patch) => updateBlock(block.id, patch), page }),
+    ...fixedBlockRenderers,
     renderBlockEditor: (block) => <BlockEditor block={block} page={page} updateBlock={updateBlock} editors={BLOCK_EDITORS} editorDeps={{ Color, Range, RichField, TargetControl, WidgetDesignControls, generateStandaloneFormHtml, authUser }} />,
   };
 

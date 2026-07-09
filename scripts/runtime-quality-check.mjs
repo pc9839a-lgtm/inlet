@@ -180,6 +180,9 @@ const workspaceLeftPanel = await readFile('src/screens/workspace/WorkspaceLeftPa
 const workspacePreviewPane = await readFile('src/screens/workspace/WorkspacePreviewPane.jsx', 'utf8');
 const pageSaveAction = await readFile('src/runtime/usePageSaveAction.js', 'utf8');
 const persistStyleSaveAction = await readFile('src/runtime/usePersistStyleSaveAction.js', 'utf8');
+const lazyRuntimeBoundary = await readFile('src/runtime/LazyRuntimeBoundary.jsx', 'utf8');
+const fixedBlockRenderers = await readFile('src/editor/fixedBlockRenderers.jsx', 'utf8');
+const blockEditorRegistry = await readFile('src/editor/blockEditorRegistry.jsx', 'utf8');
 
 assert(main.includes('root.render(<AppErrorBoundary><MapEmbedApp /></AppErrorBoundary>)'), 'embed root render must stay wrapped in AppErrorBoundary');
 assert(main.includes('root.render(<AppErrorBoundary><PublicHomeEntry /></AppErrorBoundary>)'), 'public home root render must stay wrapped in AppErrorBoundary');
@@ -197,8 +200,10 @@ assert(app.includes('const targetAuthUser = authForTargetPage(targetPage)') && a
 assert(/<PreviewRenderer[\s\S]*?page=\{publicPage\}[\s\S]*?addLead=\{\(lead\) => addLeadForPage\(publicPage, lead\)\}[\s\S]*?track=\{\(event\) => trackForPage\(publicPage, event\)\}/.test(app), 'public landing renderer must submit leads and stats events against the public page context');
 assert(!/import\s+(?:InboxPanel|StatsPanel|StylePanel|SettingsPanel|TemplatesPanel|AdminPanel|AiPanel)\b/.test(app), 'heavy panels and AI panel must not be statically imported into App');
 assert(!/import\s+(?:\{[^}]*Editor[^}]*\}|[A-Z][A-Za-z]+Editor)\s+from\s+['"]\.\/editor\/blockEditors\//.test(app), 'block editors must not be statically imported into App');
-assert(app.includes('function LazyEditorFallback()') && app.includes('class LazyEditorBoundary extends Component'), 'fixed block editor controls must keep lazy fallback and error boundary');
-assert(app.includes('componentDidUpdate(prevProps)') && app.includes('this.setState({ error: null })'), 'lazy editor boundaries must reset after selection changes');
+assert(lazyRuntimeBoundary.includes('function LazyEditorFallback()') && lazyRuntimeBoundary.includes('class LazyEditorBoundary extends Component'), 'fixed block editor controls must keep lazy fallback and error boundary');
+assert(lazyRuntimeBoundary.includes('componentDidUpdate(prevProps)') && lazyRuntimeBoundary.includes('this.setState({ error: null })'), 'lazy editor boundaries must reset after selection changes');
+assert(fixedBlockRenderers.includes('renderLazyEditor') && fixedBlockRenderers.includes('createFixedBlockRenderers'), 'fixed block editor renderers must stay split from App');
+assert(blockEditorRegistry.includes('export const BLOCK_EDITORS'), 'block editor registry must stay split from App');
 assert(authContext.includes("CLIENT_ADMIN: 'clientAdmin'") && authContext.includes("BUILDER: 'builder'") && authContext.includes("MANAGER: 'manager'"), 'access modes must include builder, manager, and client admin');
 assert(authContext.includes("export const CLIENT_ADMIN_TABS = ['inbox', 'stats', 'settings']"), 'client admin tabs must stay limited to inbox/stats/settings');
 assert(authContext.includes("export const BUILDER_TABS = ['edit', 'style', 'inbox', 'stats', 'settings']"), 'builder tabs must keep admin out of the public workspace navigation');
@@ -236,8 +241,8 @@ assert(publicEmbedForm.includes('var trafficInfo = traffic()') && publicEmbedFor
 assert(previewFormBlocks.includes('currentTrafficAttribution()') && previewFormBlocks.includes('sourceUrl: traffic.sourceUrl') && previewFormBlocks.includes('utmCampaign: traffic.utmCampaign') && previewFormBlocks.includes('sourceLabel: traffic.sourceLabel'), 'public landing form submissions must store source URL, UTM, referrer, and source label fields');
 assert(inboxLeadHelpers.includes('function isFreeEmailLocked') && inboxConnectionsPanel.includes('locked-email-value') && inboxConnectionsPanel.includes('aria-label="계정 이메일로 고정됨"') && inboxConnectionsPanel.includes('무료 사용자는 계정 이메일로만 알림을 받습니다.'), 'free plan email alerts must render a locked account email instead of an editable recipient input');
 assert(/const openWorkspace = [\s\S]*?setOpenId\(''\);[\s\S]*?setAddOpen\(false\);[\s\S]*?if \(!canUseBuilder\)/.test(app) || /const openWorkspace = [\s\S]*?setOpenId\(''\);[\s\S]*?setAddOpen\(false\);[\s\S]*?if \(!canUseBuilder\)/.test(workspaceShellActions), 'workspace entry must collapse any open editor block and add panel');
-assert(app.includes('class LazyEditorBoundary'), 'fixed block editors must isolate lazy chunk failures');
-assert(app.includes('<LazyEditorBoundary resetKey=') && app.includes('<Suspense fallback={<LazyEditorFallback />}'), 'fixed block editors must keep lazy loading fallback and boundary');
+assert(lazyRuntimeBoundary.includes('class LazyEditorBoundary'), 'fixed block editors must isolate lazy chunk failures');
+assert(fixedBlockRenderers.includes('renderLazyEditor') && lazyRuntimeBoundary.includes('<LazyEditorBoundary resetKey=') && lazyRuntimeBoundary.includes('<Suspense fallback={<LazyEditorFallback />}'), 'fixed block editors must keep lazy loading fallback and boundary');
 assert(blockEditor.includes('LazyEditorBoundary') && lazyEditorBoundary.includes('class LazyEditorErrorBoundary'), 'BlockEditor must isolate lazy editor chunk failures');
 assert(lazyEditorBoundary.includes('<Suspense fallback=') && lazyEditorBoundary.includes('data-lazy-editor-fallback="true"') && lazyEditorBoundary.includes('LAZY_EDITOR_FALLBACK_TEXT'), 'BlockEditor must keep a stable lazy editor loading fallback');
 assert(lazyEditorBoundary.includes('role="alert"') && lazyEditorBoundary.includes('data-lazy-editor-error="true"') && lazyEditorBoundary.includes('LAZY_EDITOR_ERROR_TEXT'), 'BlockEditor must show a useful lazy editor failure state');
