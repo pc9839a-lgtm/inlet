@@ -1,7 +1,8 @@
 import { STORAGE_KEY } from '../config/storageKeys.js';
 import { persistPage } from '../lib/pageRepository.js';
 import { attachExistingPageIdentity } from './savePageIdentity.js';
-import { PAGE_SAVE_LABEL, STYLE_SAVED_TOAST, pageSaveErrorFeedback, pageSaveSuccessFeedback } from './pageSaveFeedback.js';
+import { PAGE_SAVE_LABEL, STYLE_SAVED_TOAST } from './pageSaveFeedback.js';
+import { commitSavedPageResult, handlePagePersistError } from './pagePersistFlow.js';
 
 export function usePersistStyleSaveAction({
   page,
@@ -43,25 +44,23 @@ export function usePersistStyleSaveAction({
     try {
       result = await persistPage(nextPage, authUser, { tab: 'style', expectedUpdatedAt, saveMode: 'update-existing' });
     } catch (error) {
-      const handled = await handlePageSaveError(error, nextPage);
-      const feedback = pageSaveErrorFeedback(error, handled);
-      markSaveStatus(feedback.level, feedback.title, feedback.message);
-      if (feedback.toast) showToast(feedback.toast, feedback.level);
+      await handlePagePersistError({ error, page: nextPage, handlePageSaveError, markSaveStatus, showToast });
       return;
     }
     setStylePreviewTheme(null);
     setStylePreviewBlocks(null);
     setConnectionsEditing(false);
-    if (result?.page) {
-      const savedPage = savedPageFromResult(nextPage, result.page);
-      latestPageRef.current = savedPage;
-      setPage(savedPage);
-      saveLocalJson(STORAGE_KEY, savedPage, PAGE_SAVE_LABEL);
-    }
-    setSaved(true);
-    setTimeout(() => setSaved(false), 1000);
-    const feedback = pageSaveSuccessFeedback(result, 'style');
-    markSaveStatus(feedback.level, feedback.title, feedback.message);
+    commitSavedPageResult({
+      result,
+      nextPage,
+      scope: 'style',
+      latestPageRef,
+      savedPageFromResult,
+      saveLocalJson,
+      setPage,
+      setSaved,
+      markSaveStatus,
+    });
     showToast(STYLE_SAVED_TOAST, 'success');
   };
 

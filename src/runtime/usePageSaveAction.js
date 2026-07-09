@@ -1,15 +1,12 @@
-import { STORAGE_KEY } from '../config/storageKeys.js';
 import { persistPage } from '../lib/pageRepository.js';
 import { normalizePageForSave } from '../lib/pageModel.js';
 import { attachExistingPageIdentity } from './savePageIdentity.js';
 import {
-  PAGE_SAVE_LABEL,
   SAVE_BLOCKED_FEEDBACK,
   STYLE_CONFIRM_FEEDBACK,
   WRITE_BLOCKED_FEEDBACK,
-  pageSaveErrorFeedback,
-  pageSaveSuccessFeedback,
 } from './pageSaveFeedback.js';
+import { commitSavedPageResult, handlePagePersistError } from './pagePersistFlow.js';
 
 export function usePageSaveAction({
   allowedTabs,
@@ -65,21 +62,21 @@ export function usePageSaveAction({
     try {
       result = await persistPage(nextPage, authUser, { tab, expectedUpdatedAt, saveMode: 'update-existing' });
     } catch (error) {
-      const handled = await handlePageSaveError(error, nextPage);
-      const feedback = pageSaveErrorFeedback(error, handled);
-      markSaveStatus(feedback.level, feedback.title, feedback.message);
-      if (feedback.toast) showToast(feedback.toast, feedback.level);
+      await handlePagePersistError({ error, page: nextPage, handlePageSaveError, markSaveStatus, showToast });
       return { ok: false, error };
     }
     setConnectionsEditing(false);
-    const savedPage = result?.page ? savedPageFromResult(nextPage, result.page) : nextPage;
-    latestPageRef.current = savedPage;
-    setPage(savedPage);
-    saveLocalJson(STORAGE_KEY, savedPage, PAGE_SAVE_LABEL);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 1000);
-    const feedback = pageSaveSuccessFeedback(result, 'page');
-    markSaveStatus(feedback.level, feedback.title, feedback.message);
+    const savedPage = commitSavedPageResult({
+      result,
+      nextPage,
+      scope: 'page',
+      latestPageRef,
+      savedPageFromResult,
+      saveLocalJson,
+      setPage,
+      setSaved,
+      markSaveStatus,
+    });
     return { ok: true, page: savedPage, result };
   };
 
