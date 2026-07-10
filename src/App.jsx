@@ -16,6 +16,7 @@ import { usePageConflict } from './builder/usePageConflict.js';
 import { usePageSaveAction } from './runtime/usePageSaveAction.js';
 import { usePageSaveHelpers } from './runtime/usePageSaveHelpers.js';
 import { usePersistStyleSaveAction } from './runtime/usePersistStyleSaveAction.js';
+import { usePendingStyleBeforeUnload } from './runtime/usePendingStyleBeforeUnload.js';
 import { createWorkspacePanelProps } from './runtime/createWorkspacePanelProps.js';
 import { useCreatePageActions } from './runtime/useCreatePageActions.js';
 import { useCreatePageUrlCheck } from './runtime/useCreatePageUrlCheck.js';
@@ -30,6 +31,7 @@ import { usePreviewWindow } from './runtime/usePreviewWindow.js';
 import { useProtectedWorkspaceRedirect } from './runtime/useProtectedWorkspaceRedirect.js';
 import { isProtectedWorkspacePath, routeUsesWorkspaceTabs as shouldUseWorkspaceTabs } from './runtime/workspaceRouteGuards.js';
 import { hasTabDeepLink, replaceLocationTab, tabFromLocation } from './runtime/workspaceTabLocation.js';
+import { shouldShowStartModeOverlay } from './runtime/workspaceStartMode.js';
 import { useStatsSummarySync } from './runtime/useStatsSummarySync.js';
 import { useWorkspaceShellActions } from './runtime/useWorkspaceShellActions.js';
 import { useWorkspaceAutoOpen } from './runtime/useWorkspaceAutoOpen.js';
@@ -516,8 +518,7 @@ function App() {
   const [publicPageError, setPublicPageError] = useState('');
   const [routePath, setRoutePath] = useState(() => (typeof location === 'undefined' ? '/' : location.pathname));
   const mobileBlocked = useMemo(() => typeof window !== 'undefined' && window.innerWidth < 900, []);
-  const tabDeepLink = useMemo(() => hasTabDeepLink(TAB_KEYS), []);
-  const { handlePageSaveError, useLatestServerPage, keepLocalPageDraft, forceSaveLocalPage } = usePageConflict({
+  const tabDeepLink = useMemo(() => hasTabDeepLink(TAB_KEYS), []);  const { handlePageSaveError, useLatestServerPage, keepLocalPageDraft, forceSaveLocalPage } = usePageConflict({
     authUser,
     pageConflict,
     setPageConflict,
@@ -535,6 +536,7 @@ function App() {
   const accessMode = useMemo(() => accessModeFor({ authUser, page, clientAdminEnabled: ownerAdminModeEnabled }), [authUser, ownerAdminModeEnabled, page]);
   const canUseBuilder = canUseBuilderSurface(accessMode, page, authUser);
   const canManageAdmin = canUseAdminSurface(accessMode);
+  const showStartModeOverlay = shouldShowStartModeOverlay({ canManageAdmin, startMode, tabDeepLink });
   const canManageMasterAdmin = isPlatformMasterUser(authUser);
   const clientAdminMode = isClientAdminMode(accessMode);
   const allowedTabs = useMemo(() => tabsForAccessMode(accessMode, page, authUser), [accessMode, page, authUser]);
@@ -810,15 +812,7 @@ function App() {
     clearPendingStyle,
     setTab,
   });
-  useEffect(() => {
-    if (!hasPendingStyle) return undefined;
-    const handleBeforeUnload = (event) => {
-      event.preventDefault();
-      event.returnValue = '';
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [hasPendingStyle]);
+  usePendingStyleBeforeUnload(hasPendingStyle);
 
   const blockWrite = (targetTab = tab) => {
     if (canWriteTabKey(targetTab)) return false;
@@ -1550,7 +1544,7 @@ function App() {
 
   return (
     <>
-      {canManageAdmin && !startMode && !tabDeepLink && (
+      {showStartModeOverlay && (
         <LazyChunkBoundary resetKey="start-mode">
           <Suspense fallback={<LazyPanelFallback />}>
             <StartModeOverlay onManual={() => setCreateOpen(true)} onAi={() => setCreateOpen(true)} onTemplate={() => setCreateOpen(true)} onClose={() => setCreateOpen(true)} templates={templateChoices} />

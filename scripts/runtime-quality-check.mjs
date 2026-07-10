@@ -187,6 +187,8 @@ const workspaceTabLocation = await readFile('src/runtime/workspaceTabLocation.js
 const workspaceTabFallback = await readFile('src/runtime/useWorkspaceTabFallback.js', 'utf8');
 const protectedWorkspaceRedirect = await readFile('src/runtime/useProtectedWorkspaceRedirect.js', 'utf8');
 const workspaceAutoOpen = await readFile('src/runtime/useWorkspaceAutoOpen.js', 'utf8');
+const pendingStyleBeforeUnload = await readFile('src/runtime/usePendingStyleBeforeUnload.js', 'utf8');
+const workspaceStartMode = await readFile('src/runtime/workspaceStartMode.js', 'utf8');
 const pageSaveFeedback = await readFile('src/runtime/pageSaveFeedback.js', 'utf8');
 const pagePersistFlow = await readFile('src/runtime/pagePersistFlow.js', 'utf8');
 const lazyRuntimeBoundary = await readFile('src/runtime/LazyRuntimeBoundary.jsx', 'utf8');
@@ -238,8 +240,9 @@ assert(workspaceActivePanel.includes("canUseBuilder && tab === 'edit'") && works
 assert(workspaceTabs.includes('NAV.filter(([key]) => allowedTabs.includes(key))'), 'navigation must render only allowed tabs');
 assert(workspaceTabLocation.includes('export function tabFromLocation') && workspaceTabLocation.includes('export function hasTabDeepLink') && workspaceTabLocation.includes("new URLSearchParams(location.search).get('tab')") && workspaceTabLocation.includes('export function replaceLocationTab'), 'workspace tab query helpers must stay split from App for authenticated visual QA and operator URLs');
 assert(app.includes('tabFromLocation(TAB_KEYS') && app.includes('hasTabDeepLink(TAB_KEYS)') && app.includes('replaceLocationTab(TAB_KEYS,'), 'App must use shared workspace tab location helpers');
-assert(app.includes('canManageAdmin && !startMode && !tabDeepLink') && app.includes('<StartModeOverlay'), 'tab deep links must bypass the start mode overlay');
-assert(app.includes('canManageAdmin && !startMode') && workspaceLeftPanel.includes("canManageAdmin && startMode === 'template'"), 'template/start controls must stay master-admin-only');
+assert(workspaceStartMode.includes('export function shouldShowStartModeOverlay') && workspaceStartMode.includes('canManageAdmin && !startMode && !tabDeepLink'), 'tab deep links must bypass the start mode overlay through the shared helper');
+assert(app.includes('const showStartModeOverlay = shouldShowStartModeOverlay({ canManageAdmin, startMode, tabDeepLink })') && app.includes('{showStartModeOverlay && (') && app.includes('<StartModeOverlay'), 'App must delegate start mode overlay visibility to the shared helper');
+assert(workspaceStartMode.includes('canManageAdmin && !startMode') && workspaceLeftPanel.includes("canManageAdmin && startMode === 'template'"), 'template/start controls must stay master-admin-only');
 assert(app.includes('adminRoute') && app.includes("return /^\\/(?:admin|[^/?#]+\\/admin)\\/?$/.test(routePath)") && app.includes('<AdminPanel'), 'admin panel must stay on a private /admin route');
 assert(app.includes('const canWriteTabKey = (key) => canWriteTab(accessMode, page, authUser, key)') && app.includes('blockWrite'), 'App must enforce manager write permissions before mutation');
 assert(app.includes("selectedBlockId={canUseBuilder ? openId : ''}") && app.includes('onSelectPreviewBlock={canUseBuilder ? selectPreviewBlock : undefined}') && workspacePreviewPane.includes('selectedBlockId={selectedBlockId}') && workspacePreviewPane.includes('onSelectBlock={onSelectPreviewBlock}'), 'client admin preview must not route into block editing');
@@ -247,6 +250,9 @@ assert(workspaceTabFallback.includes('if (!authUser) return;') && workspaceTabFa
 assert(app.includes('useWorkspaceTabFallback({') && app.includes('tabKeys: TAB_KEYS'), 'App must delegate workspace tab fallback routing to the shared hook');
 assert(workspaceAutoOpen.includes('if (!authUser || canUseBuilder || workspaceOpen) return;') && workspaceAutoOpen.includes('persistOpenState(true)') && workspaceAutoOpen.includes('setWorkspaceOpen(true)'), 'workspace auto-open must remain limited to authenticated non-builder workspace sessions');
 assert(app.includes('useWorkspaceAutoOpen({') && app.includes('persistOpenState: (open) => saveLocalJson(DASHBOARD_KEY, { open }'), 'App must delegate workspace auto-open state to the shared hook');
+assert(pendingStyleBeforeUnload.includes('if (!hasPendingStyle) return undefined;') && pendingStyleBeforeUnload.includes("window.addEventListener('beforeunload', handleBeforeUnload)") && pendingStyleBeforeUnload.includes("window.removeEventListener('beforeunload', handleBeforeUnload)"), 'pending style beforeunload guard must stay isolated from App');
+assert(app.includes('usePendingStyleBeforeUnload(hasPendingStyle)'), 'App must delegate pending style beforeunload handling to the shared hook');
+assert(['useProtectedWorkspaceRedirect({ authUser, protectedWorkspacePath })', 'useWorkspaceAutoOpen({', 'useWorkspaceTabFallback({', 'usePendingStyleBeforeUnload(hasPendingStyle)'].every((needle) => app.includes(needle)), 'workspace session effects must stay delegated out of App');
 assert(app.includes('if (mobileBlocked && authUser && workspaceOpen)') && app.includes('모바일에서는 회원가입, 로그인, 미리보기와 접수 확인을 사용할 수 있습니다.'), 'mobile block screen must only hide the authenticated editor workspace');
 assert(
   (app.includes("['topnav', 'bottombar', 'footer'].includes(target?.type)") && app.includes("setOpenId('');") && app.indexOf("['topnav', 'bottombar', 'footer'].includes(target?.type)") < app.indexOf('document.getElementById(`editor-block-${id}`)'))
