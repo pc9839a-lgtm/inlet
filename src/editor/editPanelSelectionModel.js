@@ -11,7 +11,7 @@ export function resolveSelectedNormalId({ normalBlocks, openId, selectedNormalId
 
   return selectedNormalIdIsValid
     ? selectedNormalId
-    : (openIdIsNormalBlock ? openId : normalBlocks[0]?.id || '');
+    : (openIdIsNormalBlock ? openId : '');
 }
 
 export function findSelectedNormalBlock(normalBlocks, normalSelectedId) {

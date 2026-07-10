@@ -1,4 +1,4 @@
-﻿.edit-layout {
+.edit-layout {
   --editor-ink: #0f172a;
   --editor-muted: #64748b;
   --editor-line: #d9e4f2;
@@ -266,6 +266,17 @@
 .edit-layout .screen-order-item.block-item:focus-visible {
   border-color: var(--editor-blue) !important;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, .14) !important;
+}
+
+.edit-layout .screen-order-inline-editor {
+  cursor: default !important;
+  padding: 14px !important;
+  border-top: 1px solid var(--editor-line) !important;
+  background: #fbfdff !important;
+}
+
+.edit-layout .screen-order-inline-editor .selected-block-settings-body {
+  margin: 0 !important;
 }
 
 .edit-layout .screen-order-head.block-head {

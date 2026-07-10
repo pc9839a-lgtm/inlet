@@ -44,9 +44,6 @@ export default function EditPanel({
   });
 
   return (
-    <EditPanelLayout
-      {...sectionProps}
-      selectedSettingsRef={selection.selectedSettingsRef}
-    />
+    <EditPanelLayout {...sectionProps} />
   );
 }

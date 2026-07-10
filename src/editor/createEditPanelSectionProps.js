@@ -1,7 +1,6 @@
 import { createAddBlockDockProps } from './editPanelSectionProps/addBlockDockProps.js';
 import { createPageGlobalOptionsProps } from './editPanelSectionProps/pageGlobalOptionsProps.js';
 import { createScreenOrderListProps } from './editPanelSectionProps/screenOrderListProps.js';
-import { createSelectedBlockSettingsProps } from './editPanelSectionProps/selectedBlockSettingsProps.js';
 
 export function createEditPanelSectionProps({
   page,
@@ -40,9 +39,6 @@ export function createEditPanelSectionProps({
       duplicateBlock,
       removeBlock,
       reorderToIndex,
-    }),
-    selectedBlockSettingsProps: createSelectedBlockSettingsProps({
-      selection,
       renderBlockEditor,
     }),
     addBlockDockProps: createAddBlockDockProps({

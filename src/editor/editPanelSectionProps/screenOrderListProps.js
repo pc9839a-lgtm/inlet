@@ -1,4 +1,4 @@
-export function createScreenOrderListProps({ selection, dragId, setDragId, toggleVisible, duplicateBlock, removeBlock, reorderToIndex }) {
+export function createScreenOrderListProps({ selection, dragId, setDragId, toggleVisible, duplicateBlock, removeBlock, reorderToIndex, renderBlockEditor }) {
   return {
     normalBlocks: selection.normalBlocks,
     selectedId: selection.normalSelectedId,
@@ -10,5 +10,6 @@ export function createScreenOrderListProps({ selection, dragId, setDragId, toggl
     duplicateBlock,
     removeBlock,
     reorderToIndex,
+    renderBlockEditor,
   };
 }

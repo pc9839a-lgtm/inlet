@@ -3,6 +3,8 @@ import { ScreenOrderRowActions } from './ScreenOrderRowActions.jsx';
 import { ScreenOrderRowIdentity } from './ScreenOrderRowIdentity.jsx';
 import { ScreenOrderRowVisibility } from './ScreenOrderRowVisibility.jsx';
 import { createScreenOrderRowInteraction } from './screenOrderRowInteraction.js';
+import { SelectedBlockSettingsBody } from './SelectedBlockSettingsBody.jsx';
+import { stop } from './editorEvents.js';
 
 export function ScreenOrderRow({
   block,
@@ -21,6 +23,7 @@ export function ScreenOrderRow({
   onRemove,
   onDragStart,
   onDragEnd,
+  renderBlockEditor,
 }) {
   const { selectRow, selectRowByKey } = createScreenOrderRowInteraction({ onSelectRow });
 
@@ -29,20 +32,18 @@ export function ScreenOrderRow({
       id={`editor-block-${block.id}`}
       className={`block-item screen-order-item ${open ? 'open selected' : ''} ${!block.visible ? 'muted' : ''} ${dragId === block.id ? 'dragging' : ''}`}
       data-order={index + 1}
-      aria-selected={open}
       data-selected={open ? 'true' : 'false'}
-      role="button"
-      tabIndex={0}
-      onClick={selectRow}
-      onKeyDown={selectRowByKey}
     >
-      <div className="block-head screen-order-head">
+      <div className="block-head screen-order-head" onClick={selectRow}>
         <ScreenOrderRowIdentity
           block={block}
           index={index}
           meta={meta}
+          open={open}
           onDragStart={onDragStart}
           onDragEnd={onDragEnd}
+          onSelectRow={selectRow}
+          onSelectRowByKey={selectRowByKey}
         />
 
         <ScreenOrderRowVisibility visible={block.visible} onToggleVisible={onToggleVisible} />
@@ -59,6 +60,11 @@ export function ScreenOrderRow({
           onRemove={onRemove}
         />
       </div>
+      {open && (
+        <div className="screen-order-inline-editor" onClick={stop} onKeyDown={stop}>
+          <SelectedBlockSettingsBody block={block} renderBlockEditor={renderBlockEditor} />
+        </div>
+      )}
     </div>
   );
 }

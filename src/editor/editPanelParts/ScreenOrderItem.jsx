@@ -16,6 +16,7 @@ export function ScreenOrderItem({
   duplicateBlock,
   removeBlock,
   reorderToIndex,
+  renderBlockEditor,
 }) {
   const { meta, controls, isLast } = createScreenOrderItemModel({
     block,
@@ -45,6 +46,7 @@ export function ScreenOrderItem({
         onRemove={() => removeBlock(block.id)}
         onDragStart={controls.dragStart}
         onDragEnd={controls.dragEnd}
+        renderBlockEditor={renderBlockEditor}
       />
     </ScreenOrderItemDropTargets>
   );

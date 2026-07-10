@@ -9,7 +9,6 @@ export function useNormalBlockSelection({
   openId,
   setOpenId,
   setAddOpen,
-  scrollToSelectedSettings,
 }) {
   const [selectedNormalId, setSelectedNormalId] = React.useState('');
   const openIdIsNormalBlock = isSelectedOpenIdNormalBlock(normalBlocks, openId);
@@ -20,15 +19,14 @@ export function useNormalBlockSelection({
     setSelectedNormalId(openId);
   }, [openId, openIdIsNormalBlock, selectedNormalId]);
 
-  const selectBlock = React.useCallback((blockId, options = {}) => {
+  const selectBlock = React.useCallback((blockId) => {
     setAddOpen(false);
     setSelectedNormalId(blockId);
     setOpenId(blockId);
-    if (options.scroll) scrollToSelectedSettings();
-  }, [scrollToSelectedSettings, setAddOpen, setOpenId]);
+  }, [setAddOpen, setOpenId]);
 
   const openBlockSettings = React.useCallback((blockId) => {
-    selectBlock(blockId, { scroll: true });
+    selectBlock(blockId);
   }, [selectBlock]);
 
   return { normalSelectedId, selectBlock, openBlockSettings };
