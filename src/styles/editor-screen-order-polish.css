@@ -278,6 +278,24 @@
 .edit-layout .screen-order-inline-editor .selected-block-settings-body {
   margin: 0 !important;
 }
+.edit-layout .lazy-editor-error {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+}
+
+.edit-layout .lazy-editor-error button {
+  min-height: 36px !important;
+  padding: 0 12px !important;
+  border: 1px solid var(--editor-line) !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  color: var(--editor-ink) !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
+}
 
 .edit-layout .screen-order-head.block-head {
   display: grid !important;

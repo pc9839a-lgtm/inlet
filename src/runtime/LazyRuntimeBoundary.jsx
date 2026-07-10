@@ -47,7 +47,7 @@ function chunkReloadScope() {
   return `${url.pathname}${url.search}`;
 }
 
-function recoverLazyChunkLoad(error) {
+export function recoverLazyChunkLoad(error) {
   if (!isLazyChunkLoadError(error)) return false;
   if (typeof window === 'undefined') return false;
   const reloadKey = `${CHUNK_RELOAD_KEY}:${chunkReloadScope()}`;
@@ -133,27 +133,35 @@ export function renderLazyEditor(Editor, props) {
 }
 
 export class LazyEditorBoundary extends Component {
-  state = { error: null };
+  state = { error: null, recovering: false };
 
   static getDerivedStateFromError(error) {
     return { error };
   }
 
   componentDidCatch(error) {
+    if (recoverLazyChunkLoad(error)) {
+      this.setState({ recovering: true });
+      return;
+    }
     console.warn('Fixed block editor load failed:', error);
   }
 
   componentDidUpdate(prevProps) {
     if (prevProps.resetKey !== this.props.resetKey && this.state.error) {
-      this.setState({ error: null });
+      this.setState({ error: null, recovering: false });
     }
   }
 
   render() {
+    if (this.state.recovering) {
+      return <div className="muted small" role="status">최신 편집기를 다시 불러오는 중입니다.</div>;
+    }
     if (this.state.error) {
       return (
-        <div className="muted small" role="alert">
-          Could not load the editor. Reopen the block or refresh the page.
+        <div className="muted small lazy-editor-error" role="alert">
+          <span>편집기를 불러오지 못했습니다.</span>
+          <button type="button" onClick={forceCanonicalRuntime}>다시 불러오기</button>
         </div>
       );
     }
