@@ -1261,12 +1261,24 @@ function App() {
     logout,
   });
 
+  const dismissStartModeOverlay = (mode = 'manual', { openCreate = false } = {}) => {
+    saveLocalJson(START_MODE_KEY, mode, 'start mode', { quietSuccess: true });
+    setStartMode(mode);
+    setCreateOpen(openCreate);
+  };
+
   return (
     <>
       {showStartModeOverlay && (
         <LazyChunkBoundary resetKey="start-mode">
           <Suspense fallback={<LazyPanelFallback />}>
-            <StartModeOverlay onManual={() => setCreateOpen(true)} onAi={() => setCreateOpen(true)} onTemplate={() => setCreateOpen(true)} onClose={() => { saveLocalJson(START_MODE_KEY, 'manual', 'start mode', { quietSuccess: true }); setStartMode('manual'); setCreateOpen(false); }} templates={templateChoices} />
+            <StartModeOverlay
+              onManual={() => dismissStartModeOverlay('manual', { openCreate: true })}
+              onAi={() => dismissStartModeOverlay('ai', { openCreate: true })}
+              onTemplate={() => dismissStartModeOverlay('template', { openCreate: true })}
+              onClose={() => dismissStartModeOverlay('manual')}
+              templates={templateChoices}
+            />
           </Suspense>
         </LazyChunkBoundary>
       )}

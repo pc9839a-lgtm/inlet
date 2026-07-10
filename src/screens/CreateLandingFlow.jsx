@@ -506,10 +506,18 @@ function CreateLandingModal({ page, onClose, onAi, onManual, onTemplate, onCheck
 }
 
 function StartModeOverlay({ onManual, onAi, onTemplate, onClose, templates = [] }) {
+  const [dismissed, setDismissed] = useState(false);
+  if (dismissed) return null;
+
+  const dismiss = (handler, value) => {
+    setDismissed(true);
+    handler?.(value);
+  };
+
   return (
     <div className="start-mode-overlay">
       <div className="start-mode-card">
-        <button type="button" className="start-mode-close" aria-label="시작 방식 선택 닫기" onClick={onClose}>
+        <button type="button" className="start-mode-close" aria-label="시작 방식 선택 닫기" onClick={() => dismiss(onClose)}>
           ×
         </button>
         <div className="start-mode-title">
@@ -519,15 +527,15 @@ function StartModeOverlay({ onManual, onAi, onTemplate, onClose, templates = [] 
         </div>
 
         <div className="start-mode-actions">
-          <button type="button" className="primary" onClick={() => onAi?.('ai')}>
+          <button type="button" className="primary" onClick={() => dismiss(onAi, 'ai')}>
             <strong>AI 초안으로 시작</strong>
             <span>설정의 AI 생성 화면으로 이동해서 기본 화면을 먼저 만듭니다.</span>
           </button>
-          <button type="button" onClick={() => onManual?.('manual')}>
+          <button type="button" onClick={() => dismiss(onManual, 'manual')}>
             <strong>직접 만들기</strong>
             <span>현재 편집 화면에서 바로 수동으로 구성합니다.</span>
           </button>
-          <button type="button" onClick={() => onTemplate?.('template')}>
+          <button type="button" onClick={() => dismiss(onTemplate, 'template')}>
             <strong>템플릿으로 시작</strong>
             <span>목적에 맞는 기본 화면을 먼저 만든 뒤 수정합니다.</span>
           </button>
