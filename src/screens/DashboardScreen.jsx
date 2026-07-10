@@ -3,15 +3,17 @@ import { authAccountErrorMessage } from '../lib/authAccounts.js';
 
 function DashboardPolished({ user, page, leads, onCreate, onEdit, onPreview, onLogout, onAccountUpdate }) {
   const leadCount = Array.isArray(leads) ? leads.length : 0;
-  const hasPage = !!page?.title;
+  const hasPage = Boolean(page?.title || page?.slug);
   const [accountOpen, setAccountOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [draft, setDraft] = useState({ name: user?.name || '', phone: user?.phone || '' });
+
   const accountName = user?.name || user?.email || '사용자';
   const accessMode = user?.accessMode || user?.role || 'master';
   const modeLabel = accessMode === 'manager' ? '매니저' : accessMode === 'clientAdmin' ? '관리자' : '마스터';
   const planLabel = user?.plan || page?.billing?.plan || '기본';
+  const pageSlug = page?.slug || 'my-page';
 
   useEffect(() => {
     setDraft({ name: user?.name || '', phone: user?.phone || '' });
@@ -41,22 +43,24 @@ function DashboardPolished({ user, page, leads, onCreate, onEdit, onPreview, onL
         </div>
         <div className="service-header-actions">
           <span className="service-plan-badge">{planLabel}</span>
-          <button type="button" onClick={() => setAccountOpen((open) => !open)}>{accountOpen ? '닫기' : '계정'}</button>
-          <button type="button" onClick={onLogout}>로그아웃</button>
+          <button className="ghost-btn" type="button" onClick={() => setAccountOpen((open) => !open)}>
+            {accountOpen ? '닫기' : '계정'}
+          </button>
+          <button className="ghost-btn" type="button" onClick={onLogout}>로그아웃</button>
         </div>
       </header>
 
       <main className="home-main service-dashboard">
         <section className="service-dashboard-hero">
           <div>
-            <span>PAGEGO</span>
+            <span>PAGERO</span>
             <h1>페이지로</h1>
             <p>랜딩 제작, 접수 확인, 통계를 한 화면에서 관리합니다.</p>
           </div>
-          <button type="button" onClick={onCreate}>새 랜딩 만들기</button>
+          <button className="primary-btn" type="button" onClick={onCreate}>새 랜딩 만들기</button>
         </section>
 
-        <section className="service-summary-grid">
+        <section className="service-summary-grid" aria-label="계정과 랜딩 상태">
           <article>
             <span>계정</span>
             <strong>{accountName}</strong>
@@ -70,7 +74,7 @@ function DashboardPolished({ user, page, leads, onCreate, onEdit, onPreview, onL
           <article>
             <span>랜딩</span>
             <strong>{hasPage ? '1개' : '없음'}</strong>
-            <small>{page?.slug ? `/${page.slug}` : 'URL 미설정'}</small>
+            <small>{hasPage ? `/${pageSlug}` : 'URL 미설정'}</small>
           </article>
           <article>
             <span>접수</span>
@@ -82,7 +86,7 @@ function DashboardPolished({ user, page, leads, onCreate, onEdit, onPreview, onL
         {accountOpen && (
           <section className="home-section service-account-edit">
             <div className="home-section-title">
-              <h2>내 계정</h2>
+              <h2>계정 설정</h2>
             </div>
             <form className="home-account-form" onSubmit={saveAccount}>
               <label>
@@ -98,7 +102,7 @@ function DashboardPolished({ user, page, leads, onCreate, onEdit, onPreview, onL
                 <input value={draft.phone} onChange={(event) => setDraft((current) => ({ ...current, phone: event.target.value }))} placeholder="010-0000-0000" />
               </label>
               {error && <strong className="auth-error">{error}</strong>}
-              <button type="submit" disabled={saving}>{saving ? '저장 중' : '저장'}</button>
+              <button className="primary-btn" type="submit" disabled={saving}>{saving ? '저장 중' : '저장'}</button>
             </form>
           </section>
         )}
@@ -106,24 +110,24 @@ function DashboardPolished({ user, page, leads, onCreate, onEdit, onPreview, onL
         <section className="home-section service-page-list">
           <div className="home-section-title">
             <h2>내 랜딩페이지</h2>
-            <button type="button" onClick={onCreate}>새로 만들기</button>
+            <button className="primary-btn" type="button" onClick={onCreate}>새로 만들기</button>
           </div>
           {hasPage ? (
             <article className="landing-card service-landing-card">
               <div>
                 <strong>{page.title || '랜딩페이지'}</strong>
-                <span>/{page.slug || 'my-page'} · 접수 {leadCount}건</span>
+                <span>/{pageSlug} · 접수 {leadCount}건</span>
               </div>
               <div className="landing-card-actions">
-                <button type="button" onClick={onEdit}>편집</button>
-                <button type="button" onClick={onPreview}>미리보기</button>
+                <button className="primary-btn" type="button" onClick={onEdit}>편집</button>
+                <button className="ghost-btn" type="button" onClick={onPreview}>미리보기</button>
               </div>
             </article>
           ) : (
             <div className="empty-landing">
               <strong>랜딩페이지가 없습니다.</strong>
               <p>새 랜딩을 만들어 시작하세요.</p>
-              <button type="button" onClick={onCreate}>새 랜딩 만들기</button>
+              <button className="primary-btn" type="button" onClick={onCreate}>새 랜딩 만들기</button>
             </div>
           )}
         </section>
