@@ -720,6 +720,10 @@ function App() {
     setOpenId,
     setAddOpen,
   });
+  useEffect(() => {
+    if (!workspaceOpen || !createOpen) return;
+    setCreateOpen(false);
+  }, [createOpen, workspaceOpen]);
   useWorkspaceAutoOpen({
     authUser,
     canUseBuilder,

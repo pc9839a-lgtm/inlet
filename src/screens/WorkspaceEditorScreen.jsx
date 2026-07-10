@@ -1,5 +1,4 @@
 import React from 'react';
-import { WorkspaceCreateModalLayer } from './workspace/WorkspaceCreateModalLayer.jsx';
 import { WorkspaceLeftPanel } from './workspace/WorkspaceLeftPanel.jsx';
 import { WorkspacePreviewPane } from './workspace/WorkspacePreviewPane.jsx';
 
@@ -39,21 +38,9 @@ export default function WorkspaceEditorScreen({
   selectedBlockId,
   onSelectPreviewBlock,
 }) {
-  const showCreateModal = canUseBuilder && createOpen;
 
   return (
     <div className={`builder-shell${canUseBuilder && startMode === 'template' ? ' template-intro-shell' : ''}`}>
-      <WorkspaceCreateModalLayer
-        show={showCreateModal}
-        page={page}
-        onClose={onCloseCreate}
-        createWithAi={createWithAi}
-        createManual={createManual}
-        createFromTemplate={createFromTemplate}
-        onCheckUrl={onCheckUrl}
-        defaultSlug={defaultSlug}
-        templates={templates}
-      />
 
       <WorkspaceLeftPanel
         canUseBuilder={canUseBuilder}
