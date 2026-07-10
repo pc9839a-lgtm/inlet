@@ -232,6 +232,7 @@ assert(!/import\s+(?:InboxPanel|StatsPanel|StylePanel|SettingsPanel|TemplatesPan
 assert(!/import\s+(?:\{[^}]*Editor[^}]*\}|[A-Z][A-Za-z]+Editor)\s+from\s+['"]\.\/editor\/blockEditors\//.test(app), 'block editors must not be statically imported into App');
 assert(lazyRuntimeBoundary.includes('function LazyEditorFallback()') && lazyRuntimeBoundary.includes('class LazyEditorBoundary extends Component'), 'fixed block editor controls must keep lazy fallback and error boundary');
 assert(lazyRuntimeBoundary.includes('componentDidUpdate(prevProps)') && lazyRuntimeBoundary.includes('this.setState({ error: null })'), 'lazy editor boundaries must reset after selection changes');
+assert(lazyRuntimeBoundary.includes("this.props.variant !== 'preview' && recoverLazyChunkLoad(error)") && !/class LazyEditorBoundary[\s\S]*?recoverLazyChunkLoad\(error\)/.test(lazyRuntimeBoundary), 'workspace preview and editor lazy errors must not redirect the whole editor runtime');
 assert(fixedBlockRenderers.includes('renderLazyEditor') && fixedBlockRenderers.includes('createFixedBlockRenderers'), 'fixed block editor renderers must stay split from App');
 assert(blockEditorRegistry.includes('export const BLOCK_EDITORS'), 'block editor registry must stay split from App');
 assert(authContext.includes("CLIENT_ADMIN: 'clientAdmin'") && authContext.includes("BUILDER: 'builder'") && authContext.includes("MANAGER: 'manager'"), 'access modes must include builder, manager, and client admin');

@@ -83,7 +83,7 @@ export class LazyChunkBoundary extends Component {
   }
 
   componentDidCatch(error) {
-    if (recoverLazyChunkLoad(error)) {
+    if (this.props.variant !== 'preview' && recoverLazyChunkLoad(error)) {
       this.setState({ recovering: true });
       return;
     }
@@ -140,10 +140,6 @@ export class LazyEditorBoundary extends Component {
   }
 
   componentDidCatch(error) {
-    if (recoverLazyChunkLoad(error)) {
-      this.setState({ error: null });
-      return;
-    }
     console.warn('Fixed block editor load failed:', error);
   }
 
