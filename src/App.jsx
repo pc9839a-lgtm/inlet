@@ -28,6 +28,7 @@ import { useLandingTemplates } from './runtime/useLandingTemplates.js';
 import { createPreviewPage, previewUrlForPage } from './runtime/previewTarget.js';
 import { usePreviewWindow } from './runtime/usePreviewWindow.js';
 import { isProtectedWorkspacePath } from './runtime/workspaceRouteGuards.js';
+import { hasTabDeepLink, replaceLocationTab, tabFromLocation } from './runtime/workspaceTabLocation.js';
 import { useStatsSummarySync } from './runtime/useStatsSummarySync.js';
 import { useWorkspaceShellActions } from './runtime/useWorkspaceShellActions.js';
 import { useWorkspaceEditorEffects } from './runtime/useWorkspaceEditorEffects.js';
@@ -66,17 +67,6 @@ const PreviewRenderer = lazy(() => import('./preview/LandingRenderer.jsx'));
 
 const TAB_KEYS = new Set(NAV.map(([key]) => key));
 
-function tabFromLocation(fallback = 'edit') {
-  if (typeof location === 'undefined') return fallback;
-  const requested = new URLSearchParams(location.search).get('tab') || '';
-  return TAB_KEYS.has(requested) ? requested : fallback;
-}
-
-function hasTabDeepLink() {
-  if (typeof location === 'undefined') return false;
-  return TAB_KEYS.has(new URLSearchParams(location.search).get('tab') || '');
-}
-
 function publicLandingSlugFromLocation(path = '') {
   if (typeof location === 'undefined' && !path) return '';
   const pathname = String(path || location.pathname || '/').replace(/\/+$/, '') || '/';
@@ -88,14 +78,6 @@ function publicLandingSlugFromLocation(path = '') {
   if (/^\/(?:login|signup|api|assets|embed)(?:\/|$)/.test(pathname)) return '';
   const slug = pathname.replace(/^\//, '').split('/')[0] || '';
   return /^[a-zA-Z0-9-_]+$/.test(slug) ? slug : '';
-}
-
-function replaceLocationTab(nextTab) {
-  if (typeof location === 'undefined' || typeof history === 'undefined') return;
-  if (!TAB_KEYS.has(nextTab)) return;
-  const url = new URL(location.href);
-  url.searchParams.set('tab', nextTab);
-  history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
 }
 
 const InboxPanel = lazy(() => import('./panels/InboxPanel.jsx'));
@@ -498,7 +480,7 @@ function App() {
   const [serverStatsSummary, setServerStatsSummary] = useState(null);
   const [leadConflict, setLeadConflict] = useState(null);
   const [events, setEvents] = useState(() => load(EVENTS_KEY, []));
-  const [tab, setTab] = useState(() => tabFromLocation('edit'));
+  const [tab, setTab] = useState(() => tabFromLocation(TAB_KEYS, 'edit'));
   const [openId, setOpenId] = useState('');
   const [addOpen, setAddOpen] = useState(false);
   const [dragId, setDragId] = useState('');
@@ -531,7 +513,7 @@ function App() {
   const [publicPageError, setPublicPageError] = useState('');
   const [routePath, setRoutePath] = useState(() => (typeof location === 'undefined' ? '/' : location.pathname));
   const mobileBlocked = useMemo(() => typeof window !== 'undefined' && window.innerWidth < 900, []);
-  const tabDeepLink = useMemo(() => hasTabDeepLink(), []);
+  const tabDeepLink = useMemo(() => hasTabDeepLink(TAB_KEYS), []);
   const { handlePageSaveError, useLatestServerPage, keepLocalPageDraft, forceSaveLocalPage } = usePageConflict({
     authUser,
     pageConflict,
@@ -824,7 +806,7 @@ function App() {
     if (allowedTabs.includes(tab)) return;
     clearPendingStyle();
     const nextTab = allowedTabs[0] || 'inbox';
-    replaceLocationTab(nextTab);
+    replaceLocationTab(TAB_KEYS, nextTab);
     setTab(nextTab);
   }, [allowedTabs, authUser, routeUsesWorkspaceTabs, tab]);
   useEffect(() => {
@@ -936,7 +918,7 @@ function App() {
     setEvents([]);
     setOpenId('');
     setTab('edit');
-    replaceLocationTab('edit');
+    replaceLocationTab(TAB_KEYS, 'edit');
     saveLocalJson(START_MODE_KEY, 'manual', '시작 방식', { quietSuccess: true });
     showToast(`페이지를 복제했습니다. 새 URL: /${nextPage.slug}`, 'success');
     return { ok: true, page: nextPage };
@@ -1176,7 +1158,7 @@ function App() {
     if (nextTab === tab) return;
     const run = () => {
       clearPendingStyle();
-      replaceLocationTab(nextTab);
+      replaceLocationTab(TAB_KEYS, nextTab);
       setTab(nextTab);
       if (nextTab === 'edit') {
         setOpenId('');

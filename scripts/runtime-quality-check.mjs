@@ -183,6 +183,7 @@ const pageSaveAction = await readFile('src/runtime/usePageSaveAction.js', 'utf8'
 const persistStyleSaveAction = await readFile('src/runtime/usePersistStyleSaveAction.js', 'utf8');
 const previewTarget = await readFile('src/runtime/previewTarget.js', 'utf8');
 const workspaceRouteGuards = await readFile('src/runtime/workspaceRouteGuards.js', 'utf8');
+const workspaceTabLocation = await readFile('src/runtime/workspaceTabLocation.js', 'utf8');
 const pageSaveFeedback = await readFile('src/runtime/pageSaveFeedback.js', 'utf8');
 const pagePersistFlow = await readFile('src/runtime/pagePersistFlow.js', 'utf8');
 const lazyRuntimeBoundary = await readFile('src/runtime/LazyRuntimeBoundary.jsx', 'utf8');
@@ -228,7 +229,8 @@ assert(pageSaveAction.includes('commitSavedPageResult') && persistStyleSaveActio
 assert(app.includes('isOwnerAdminModeEnabled') && app.includes('clientAdminEnabled: ownerAdminModeEnabled'), 'App must derive client admin access from the internal runtime flag');
 assert(workspaceActivePanel.includes("canUseBuilder && tab === 'edit'") && workspaceActivePanel.includes("canUseBuilder && tab === 'style'"), 'builder-only editor and style tabs must stay permission gated');
 assert(workspaceTabs.includes('NAV.filter(([key]) => allowedTabs.includes(key))'), 'navigation must render only allowed tabs');
-assert(app.includes('function tabFromLocation') && app.includes('function hasTabDeepLink') && app.includes("new URLSearchParams(location.search).get('tab')") && app.includes('replaceLocationTab(nextTab)'), 'App must support tab query deep links for authenticated visual QA and operator URLs');
+assert(workspaceTabLocation.includes('export function tabFromLocation') && workspaceTabLocation.includes('export function hasTabDeepLink') && workspaceTabLocation.includes("new URLSearchParams(location.search).get('tab')") && workspaceTabLocation.includes('export function replaceLocationTab'), 'workspace tab query helpers must stay split from App for authenticated visual QA and operator URLs');
+assert(app.includes('tabFromLocation(TAB_KEYS') && app.includes('hasTabDeepLink(TAB_KEYS)') && app.includes('replaceLocationTab(TAB_KEYS,'), 'App must use shared workspace tab location helpers');
 assert(app.includes('canManageAdmin && !startMode && !tabDeepLink') && app.includes('<StartModeOverlay'), 'tab deep links must bypass the start mode overlay');
 assert(app.includes('canManageAdmin && !startMode') && workspaceLeftPanel.includes("canManageAdmin && startMode === 'template'"), 'template/start controls must stay master-admin-only');
 assert(app.includes('adminRoute') && app.includes("return /^\\/(?:admin|[^/?#]+\\/admin)\\/?$/.test(routePath)") && app.includes('<AdminPanel'), 'admin panel must stay on a private /admin route');
