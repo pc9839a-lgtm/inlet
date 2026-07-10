@@ -543,6 +543,10 @@ function App() {
     ),
     [stylePreviewTheme, stylePreviewBlocks, page.theme, page.blocks],
   );
+  const clearPendingStyle = () => {
+    if (hasPendingStyle) setStylePreviewTheme(null);
+    if (hasPendingStyle) setStylePreviewBlocks(null);
+  };
   const ownerAdminModeEnabled = isOwnerAdminModeEnabled();
   const accessMode = useMemo(() => accessModeFor({ authUser, page, clientAdminEnabled: ownerAdminModeEnabled }), [authUser, ownerAdminModeEnabled, page]);
   const canUseBuilder = canUseBuilderSurface(accessMode, page, authUser);
@@ -895,11 +899,6 @@ function App() {
       onConfirm,
     });
     return false;
-  };
-
-  const clearPendingStyle = () => {
-    if (hasPendingStyle) setStylePreviewTheme(null);
-    if (hasPendingStyle) setStylePreviewBlocks(null);
   };
 
   const {
