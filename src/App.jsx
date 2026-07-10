@@ -27,6 +27,7 @@ import { useLeadMutationActions } from './runtime/useLeadMutationActions.js';
 import { useLandingTemplates } from './runtime/useLandingTemplates.js';
 import { createPreviewPage, previewUrlForPage } from './runtime/previewTarget.js';
 import { usePreviewWindow } from './runtime/usePreviewWindow.js';
+import { isProtectedWorkspacePath } from './runtime/workspaceRouteGuards.js';
 import { useStatsSummarySync } from './runtime/useStatsSummarySync.js';
 import { useWorkspaceShellActions } from './runtime/useWorkspaceShellActions.js';
 import { useWorkspaceEditorEffects } from './runtime/useWorkspaceEditorEffects.js';
@@ -88,13 +89,6 @@ function publicLandingSlugFromLocation(path = '') {
   const slug = pathname.replace(/^\//, '').split('/')[0] || '';
   return /^[a-zA-Z0-9-_]+$/.test(slug) ? slug : '';
 }
-
-function isProtectedWorkspacePath(path = '') {
-  if (typeof location === 'undefined' && !path) return false;
-  const pathname = String(path || location.pathname || '/').replace(/\/+$/, '') || '/';
-  return /^\/(?:dashboard|app|account)(?:\/|$)/.test(pathname);
-}
-
 
 function replaceLocationTab(nextTab) {
   if (typeof location === 'undefined' || typeof history === 'undefined') return;

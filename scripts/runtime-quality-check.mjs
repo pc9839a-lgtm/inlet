@@ -182,6 +182,7 @@ const workspacePreviewPane = await readFile('src/screens/workspace/WorkspacePrev
 const pageSaveAction = await readFile('src/runtime/usePageSaveAction.js', 'utf8');
 const persistStyleSaveAction = await readFile('src/runtime/usePersistStyleSaveAction.js', 'utf8');
 const previewTarget = await readFile('src/runtime/previewTarget.js', 'utf8');
+const workspaceRouteGuards = await readFile('src/runtime/workspaceRouteGuards.js', 'utf8');
 const pageSaveFeedback = await readFile('src/runtime/pageSaveFeedback.js', 'utf8');
 const pagePersistFlow = await readFile('src/runtime/pagePersistFlow.js', 'utf8');
 const lazyRuntimeBoundary = await readFile('src/runtime/LazyRuntimeBoundary.jsx', 'utf8');
@@ -221,6 +222,8 @@ assert(pagePersistFlow.includes('pageSaveErrorFeedback') && pagePersistFlow.incl
 assert(pagePersistFlow.includes('handlePagePersistError') && pagePersistFlow.includes('commitSavedPageResult'), 'page persist flow must stay centralized');
 assert(previewTarget.includes('previewUrlForPage') && previewTarget.includes('createPreviewPage'), 'preview URL calculation must stay split from App');
 assert(app.includes('const previewUrl = previewUrlForPage(page)') && app.includes('createPreviewPage({'), 'App must use the shared preview target helpers');
+assert(workspaceRouteGuards.includes('export function isProtectedWorkspacePath') && workspaceRouteGuards.includes('/^\\/(?:dashboard|app|account)(?:\\/|$)/'), 'workspace route protection must stay split from App and limited to internal workspace paths');
+assert(app.includes("import { isProtectedWorkspacePath } from './runtime/workspaceRouteGuards.js'"), 'App must use the shared workspace route guard');
 assert(pageSaveAction.includes('commitSavedPageResult') && persistStyleSaveAction.includes('commitSavedPageResult'), 'page and style saves must share persisted page commit flow');
 assert(app.includes('isOwnerAdminModeEnabled') && app.includes('clientAdminEnabled: ownerAdminModeEnabled'), 'App must derive client admin access from the internal runtime flag');
 assert(workspaceActivePanel.includes("canUseBuilder && tab === 'edit'") && workspaceActivePanel.includes("canUseBuilder && tab === 'style'"), 'builder-only editor and style tabs must stay permission gated');
