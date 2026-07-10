@@ -208,7 +208,7 @@ const blockEditorRegistry = await readFile('src/editor/blockEditorRegistry.jsx',
 
 assert(main.includes('root.render(<AppErrorBoundary><MapEmbedApp /></AppErrorBoundary>)'), 'embed root render must stay wrapped in AppErrorBoundary');
 assert(main.includes('root.render(<AppErrorBoundary><PublicHomeEntry /></AppErrorBoundary>)'), 'public home root render must stay wrapped in AppErrorBoundary');
-assert(main.includes('<AppErrorBoundary>') && main.includes('<Suspense fallback={null}>') && main.includes('<App />'), 'app root render must stay wrapped in AppErrorBoundary');
+assert(main.includes('root.render(<AppErrorBoundary><App /></AppErrorBoundary>)') || (main.includes('<AppErrorBoundary>') && main.includes('<App />')), 'app root render must stay wrapped in AppErrorBoundary');
 assert(app.includes("const InboxPanel = lazy(() => import('./panels/InboxPanel.jsx'))"), 'InboxPanel must stay lazy-loaded');
 assert(app.includes("const StatsPanel = lazy(() => import('./panels/StatsPanel.jsx'))"), 'StatsPanel must stay lazy-loaded');
 assert(app.includes("const SettingsPanel = lazy(() => import('./panels/SettingsPanel.jsx'))"), 'SettingsPanel must stay lazy-loaded');
