@@ -185,6 +185,7 @@ const previewTarget = await readFile('src/runtime/previewTarget.js', 'utf8');
 const workspaceRouteGuards = await readFile('src/runtime/workspaceRouteGuards.js', 'utf8');
 const workspaceTabLocation = await readFile('src/runtime/workspaceTabLocation.js', 'utf8');
 const workspaceTabFallback = await readFile('src/runtime/useWorkspaceTabFallback.js', 'utf8');
+const protectedWorkspaceRedirect = await readFile('src/runtime/useProtectedWorkspaceRedirect.js', 'utf8');
 const pageSaveFeedback = await readFile('src/runtime/pageSaveFeedback.js', 'utf8');
 const pagePersistFlow = await readFile('src/runtime/pagePersistFlow.js', 'utf8');
 const lazyRuntimeBoundary = await readFile('src/runtime/LazyRuntimeBoundary.jsx', 'utf8');
@@ -226,6 +227,8 @@ assert(previewTarget.includes('previewUrlForPage') && previewTarget.includes('cr
 assert(app.includes('const previewUrl = previewUrlForPage(page)') && app.includes('createPreviewPage({'), 'App must use the shared preview target helpers');
 assert(workspaceRouteGuards.includes('export function isProtectedWorkspacePath') && workspaceRouteGuards.includes('/^\\/(?:dashboard|app|account)(?:\\/|$)/'), 'workspace route protection must stay split from App and limited to internal workspace paths');
 assert(workspaceRouteGuards.includes('export function routeUsesWorkspaceTabs') && workspaceRouteGuards.includes('!publicLandingSlug && !staticPage && !inviteToken && !adminRoute && !authRouteMode'), 'workspace tab route gating must stay split from App and keep public/auth/admin routes excluded');
+assert(protectedWorkspaceRedirect.includes('if (authUser || !protectedWorkspacePath) return;') && protectedWorkspaceRedirect.includes("window.location.replace('/')"), 'protected workspace redirect must stay isolated from public home routing');
+assert(app.includes('useProtectedWorkspaceRedirect({ authUser, protectedWorkspacePath })'), 'App must delegate protected workspace redirect to the shared hook');
 assert(app.includes("import { isProtectedWorkspacePath, routeUsesWorkspaceTabs as shouldUseWorkspaceTabs } from './runtime/workspaceRouteGuards.js'"), 'App must use the shared workspace route guards');
 assert(app.includes('const routeUsesWorkspaceTabs = shouldUseWorkspaceTabs({ publicLandingSlug, staticPage, inviteToken, adminRoute, authRouteMode })'), 'App must derive workspace tab routing through the shared guard');
 assert(pageSaveAction.includes('commitSavedPageResult') && persistStyleSaveAction.includes('commitSavedPageResult'), 'page and style saves must share persisted page commit flow');

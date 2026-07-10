@@ -27,6 +27,7 @@ import { useLeadMutationActions } from './runtime/useLeadMutationActions.js';
 import { useLandingTemplates } from './runtime/useLandingTemplates.js';
 import { createPreviewPage, previewUrlForPage } from './runtime/previewTarget.js';
 import { usePreviewWindow } from './runtime/usePreviewWindow.js';
+import { useProtectedWorkspaceRedirect } from './runtime/useProtectedWorkspaceRedirect.js';
 import { isProtectedWorkspacePath, routeUsesWorkspaceTabs as shouldUseWorkspaceTabs } from './runtime/workspaceRouteGuards.js';
 import { hasTabDeepLink, replaceLocationTab, tabFromLocation } from './runtime/workspaceTabLocation.js';
 import { useStatsSummarySync } from './runtime/useStatsSummarySync.js';
@@ -614,11 +615,7 @@ function App() {
       window.removeEventListener('hashchange', syncRoute);
     };
   }, []);
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (authUser || !protectedWorkspacePath) return;
-    window.location.replace('/');
-  }, [authUser, protectedWorkspacePath]);
+  useProtectedWorkspaceRedirect({ authUser, protectedWorkspacePath });
   useEffect(() => {
     if (publicLandingSlug) return;
     if (isServerPageMode()) return;
