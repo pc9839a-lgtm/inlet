@@ -32,6 +32,7 @@ import { isProtectedWorkspacePath, routeUsesWorkspaceTabs as shouldUseWorkspaceT
 import { hasTabDeepLink, replaceLocationTab, tabFromLocation } from './runtime/workspaceTabLocation.js';
 import { useStatsSummarySync } from './runtime/useStatsSummarySync.js';
 import { useWorkspaceShellActions } from './runtime/useWorkspaceShellActions.js';
+import { useWorkspaceAutoOpen } from './runtime/useWorkspaceAutoOpen.js';
 import { useWorkspaceTabFallback } from './runtime/useWorkspaceTabFallback.js';
 import { useWorkspaceEditorEffects } from './runtime/useWorkspaceEditorEffects.js';
 import WorkspaceEditorScreen from './screens/WorkspaceEditorScreen.jsx';
@@ -793,11 +794,13 @@ function App() {
     setOpenId,
     setAddOpen,
   });
-  useEffect(() => {
-    if (!authUser || canUseBuilder || workspaceOpen) return;
-    saveLocalJson(DASHBOARD_KEY, { open: true }, '작업공간 상태', { quietSuccess: true });
-    setWorkspaceOpen(true);
-  }, [authUser, canUseBuilder, workspaceOpen]);
+  useWorkspaceAutoOpen({
+    authUser,
+    canUseBuilder,
+    workspaceOpen,
+    persistOpenState: (open) => saveLocalJson(DASHBOARD_KEY, { open }, '작업공간 상태', { quietSuccess: true }),
+    setWorkspaceOpen,
+  });
   useWorkspaceTabFallback({
     authUser,
     routeUsesWorkspaceTabs,

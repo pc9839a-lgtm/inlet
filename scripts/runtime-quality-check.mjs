@@ -186,6 +186,7 @@ const workspaceRouteGuards = await readFile('src/runtime/workspaceRouteGuards.js
 const workspaceTabLocation = await readFile('src/runtime/workspaceTabLocation.js', 'utf8');
 const workspaceTabFallback = await readFile('src/runtime/useWorkspaceTabFallback.js', 'utf8');
 const protectedWorkspaceRedirect = await readFile('src/runtime/useProtectedWorkspaceRedirect.js', 'utf8');
+const workspaceAutoOpen = await readFile('src/runtime/useWorkspaceAutoOpen.js', 'utf8');
 const pageSaveFeedback = await readFile('src/runtime/pageSaveFeedback.js', 'utf8');
 const pagePersistFlow = await readFile('src/runtime/pagePersistFlow.js', 'utf8');
 const lazyRuntimeBoundary = await readFile('src/runtime/LazyRuntimeBoundary.jsx', 'utf8');
@@ -244,6 +245,8 @@ assert(app.includes('const canWriteTabKey = (key) => canWriteTab(accessMode, pag
 assert(app.includes("selectedBlockId={canUseBuilder ? openId : ''}") && app.includes('onSelectPreviewBlock={canUseBuilder ? selectPreviewBlock : undefined}') && workspacePreviewPane.includes('selectedBlockId={selectedBlockId}') && workspacePreviewPane.includes('onSelectBlock={onSelectPreviewBlock}'), 'client admin preview must not route into block editing');
 assert(workspaceTabFallback.includes('if (!authUser) return;') && workspaceTabFallback.includes('if (!routeUsesWorkspaceTabs) return;') && workspaceTabFallback.includes("const nextTab = allowedTabs[0] || 'inbox'") && workspaceTabFallback.includes('replaceLocationTab(tabKeys, nextTab)'), 'workspace tab redirect must not run before login or on public routes');
 assert(app.includes('useWorkspaceTabFallback({') && app.includes('tabKeys: TAB_KEYS'), 'App must delegate workspace tab fallback routing to the shared hook');
+assert(workspaceAutoOpen.includes('if (!authUser || canUseBuilder || workspaceOpen) return;') && workspaceAutoOpen.includes('persistOpenState(true)') && workspaceAutoOpen.includes('setWorkspaceOpen(true)'), 'workspace auto-open must remain limited to authenticated non-builder workspace sessions');
+assert(app.includes('useWorkspaceAutoOpen({') && app.includes('persistOpenState: (open) => saveLocalJson(DASHBOARD_KEY, { open }'), 'App must delegate workspace auto-open state to the shared hook');
 assert(app.includes('if (mobileBlocked && authUser && workspaceOpen)') && app.includes('모바일에서는 회원가입, 로그인, 미리보기와 접수 확인을 사용할 수 있습니다.'), 'mobile block screen must only hide the authenticated editor workspace');
 assert(
   (app.includes("['topnav', 'bottombar', 'footer'].includes(target?.type)") && app.includes("setOpenId('');") && app.indexOf("['topnav', 'bottombar', 'footer'].includes(target?.type)") < app.indexOf('document.getElementById(`editor-block-${id}`)'))
