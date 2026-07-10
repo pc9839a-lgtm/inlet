@@ -35,6 +35,7 @@ import { useLandingTemplates } from './runtime/useLandingTemplates.js';
 import { createLeadCaptureAction, createLeadDeliveryActions, createVisibleLeadUpdater } from './runtime/leadCaptureActions.js';
 import { createPreviewPage, previewUrlForPage } from './runtime/previewTarget.js';
 import { createLeadPatchSync, createPageEventTracker } from './runtime/publicPageRuntimeActions.js';
+import { createAuthAccountActions } from './runtime/useAuthAccountActions.js';
 import { useAuthSessionEffects } from './runtime/useAuthSessionEffects.js';
 import { useAccountWorkspacePage } from './runtime/useAccountWorkspacePage.js';
 import { usePreviewWindow } from './runtime/usePreviewWindow.js';
@@ -62,7 +63,7 @@ import RichField from './editor/RichField.jsx';
 import { normalizeButtons } from './lib/blockButtons.js';
 import { currentTrafficAttribution } from './lib/trafficAttribution.js';
 import { canUseAdminSurface, canUseBuilderSurface, canWriteTab, isClientAdminMode, tabsForAccessMode, accessModeFor } from './lib/authContext.js';
-import { logoutAuthAccount, updateAuthAccount } from './lib/authAccounts.js';
+import { logoutAuthAccount } from './lib/authAccounts.js';
 import { normalizeAuthUser } from './lib/authIdentity.js';
 import { generateStandaloneFormHtml } from './lib/formEmbed.js';
 import { persistEvent } from './lib/eventRepository.js';
@@ -70,7 +71,7 @@ import { sendLeadIntegrations } from './lib/leadIntegrations.js';
 import { deliverServerLead, persistLead, updateServerLead } from './lib/leadRepository.js';
 import { isOwnerAdminModeEnabled, isServerLeadMode, isServerPageMode } from './config/runtimeConfig.js';
 import { currentMonthValue } from './lib/monthRange.js';
-import { fetchPublicServerPage, fetchServerPage } from './lib/pageRepository.js';
+import { fetchPublicServerPage } from './lib/pageRepository.js';
 import { canUsePageDuplication, createDuplicatedPage } from './lib/pageDuplication.js';
 import { projectContext } from './lib/projectContext.js';
 import { fetchLinkPreview, linkThumbnailFromUrl, normalizeExternalUrl } from './lib/linkPreview.js';
@@ -1048,83 +1049,16 @@ function App() {
     }
   };
 
-  const acceptAuth = (user) => {
-    const normalized = normalizeAuthUser(user);
-    saveLocalJson(AUTH_KEY, normalized, '로그인 정보', { quietSuccess: true });
-    setAuthUser(normalized);
-    setAuthView('');
-  };
-
-  const updateAccountProfile = async (patch = {}) => {
-    const session = String(authUser?.session || '').trim();
-    if (!session) {
-      showToast('로그인 세션이 없습니다. 다시 로그인해주세요.', 'error');
-      throw new Error('Missing session');
-    }
-    const updated = await updateAuthAccount({
-      ...patch,
-      session,
-      projectId: page.projectId || '',
-    });
-    const normalized = normalizeAuthUser({
-      ...authUser,
-      ...updated,
-      session: updated?.session || session,
-      signedAt: new Date().toISOString(),
-    });
-    saveLocalJson(AUTH_KEY, normalized, '로그인 정보', { quietSuccess: true });
-    setAuthUser(normalized);
-    showToast('계정 정보가 저장되었습니다.', 'ok');
-    return normalized;
-  };
-
-  const acceptInviteAuth = async (result = {}) => {
-    const manager = result.manager || {};
-    const project = result.project || {};
-    const normalized = normalizeAuthUser({
-      name: manager.name || manager.email || '매니저',
-      email: manager.email || '',
-      workspaceId: manager.ownerId || '',
-      role: 'manager',
-      accessMode: 'manager',
-      session: result.session || '',
-      defaultProject: project,
-      signedAt: new Date().toISOString(),
-    });
-    saveLocalJson(AUTH_KEY, normalized, '로그인 정보', { quietSuccess: true });
-    setAuthUser(normalized);
-    setAuthView('');
-    if (typeof history !== 'undefined') history.replaceState(null, '', '/');
-
-    const projectSlug = project.slug || page.slug;
-    const projectContextForInvite = {
-      projectId: project.projectId || page.projectId,
-      ownerId: project.ownerId || '',
-      slug: projectSlug,
-      session: result.session || '',
-    };
-    try {
-      const serverPage = await fetchServerPage(projectSlug, projectContextForInvite);
-      if (serverPage) {
-        setPage(normalize(serverPage));
-      } else {
-        setPage((current) => normalizePageForSave({
-          ...current,
-          slug: projectSlug,
-          projectId: project.projectId || current.projectId,
-        }));
-      }
-    } catch (error) {
-      console.warn('Invite project page load failed:', error);
-      setPage((current) => normalizePageForSave({
-        ...current,
-        slug: projectSlug,
-        projectId: project.projectId || current.projectId,
-      }));
-    }
-    saveLocalJson(DASHBOARD_KEY, { open: true }, '작업공간 상태', { quietSuccess: true });
-    setWorkspaceOpen(true);
-  };
+  const { acceptAuth, acceptInviteAuth, updateAccountProfile } = createAuthAccountActions({
+    authUser,
+    page,
+    saveLocalJson,
+    setAuthUser,
+    setAuthView,
+    setPage,
+    setWorkspaceOpen,
+    showToast,
+  });
 
   const {
     createWithAi,

@@ -189,6 +189,7 @@ const duplicatePageAction = await readFile('src/runtime/createDuplicatePageActio
 const publicPageRuntimeActions = await readFile('src/runtime/publicPageRuntimeActions.js', 'utf8');
 const leadCaptureActions = await readFile('src/runtime/leadCaptureActions.js', 'utf8');
 const authSessionEffects = await readFile('src/runtime/useAuthSessionEffects.js', 'utf8');
+const authAccountActions = await readFile('src/runtime/useAuthAccountActions.js', 'utf8');
 const persistStyleSaveAction = await readFile('src/runtime/usePersistStyleSaveAction.js', 'utf8');
 const previewTarget = await readFile('src/runtime/previewTarget.js', 'utf8');
 const workspaceRouteGuards = await readFile('src/runtime/workspaceRouteGuards.js', 'utf8');
@@ -222,6 +223,7 @@ assert(leadCaptureActions.includes('export function createLeadCaptureAction') &&
 assert(app.includes('const addLeadForPage = createLeadCaptureAction({') && app.includes('runLeadDeliveryForPage,') && app.includes('authForTargetPage,'), 'App must delegate lead capture actions without losing public page context');
 assert(authSessionEffects.includes('export function useAuthSessionEffects') && authSessionEffects.includes('refreshAuthSession({ session, projectId: pageProjectId') && app.includes('useAuthSessionEffects({'), 'App must delegate auth session refresh effects out of App');
 assert(accountWorkspacePage.includes('export function useAccountWorkspacePage') && accountWorkspacePage.includes('fetchServerPage(slug, context)') && accountWorkspacePage.includes('localPageMutationRef.current !== loadMutation') && app.includes('useAccountWorkspacePage({'), 'App must delegate account workspace page loading without losing mutation guards');
+assert(authAccountActions.includes('export function createAuthAccountActions') && authAccountActions.includes('updateAuthAccount({') && authAccountActions.includes('fetchServerPage(projectSlug, projectContextForInvite)') && app.includes('createAuthAccountActions({'), 'App must delegate auth account actions without route helper dependencies');
 assert(publicPageRuntimeActions.includes('export function createLeadPatchSync') && publicPageRuntimeActions.includes('__expectedUpdatedAt') && publicPageRuntimeActions.includes('isLeadConflictError(error)'), 'lead patch sync conflict handling must stay centralized');
 assert(/<PreviewRenderer[\s\S]*?page=\{publicPage\}[\s\S]*?addLead=\{\(lead\) => addLeadForPage\(publicPage, lead\)\}[\s\S]*?track=\{\(event\) => trackForPage\(publicPage, event\)\}/.test(app), 'public landing renderer must submit leads and stats events against the public page context');
 assert(!/import\s+(?:InboxPanel|StatsPanel|StylePanel|SettingsPanel|TemplatesPanel|AdminPanel|AiPanel)\b/.test(app), 'heavy panels and AI panel must not be statically imported into App');
