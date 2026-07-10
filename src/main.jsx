@@ -1,11 +1,11 @@
-import React from 'react';
+import { lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { AppErrorBoundary } from './components/AppErrorBoundary.jsx';
 import MapEmbedApp from './map/MapEmbedApp.jsx';
-import App from './App.jsx';
 import PublicHomeRoute from './screens/PublicHomeRoute.jsx';
 import './styles.css';
 
+const App = lazy(() => import('./App.jsx'));
 const APP_QUERY_PARAMS = ['auth', 'code', 'state', 'session', 'token', 'provider', 'tab', 'mode', 'invite', 'admin'];
 
 function isRootPublicHomeLocation(locationObject = window.location) {
@@ -75,5 +75,11 @@ if (window.location.pathname.startsWith('/embed/')) {
 } else if (isRootPublicHomeLocation(window.location)) {
   root.render(<AppErrorBoundary><PublicHomeEntry /></AppErrorBoundary>);
 } else {
-  root.render(<AppErrorBoundary><App /></AppErrorBoundary>);
+  root.render(
+    <AppErrorBoundary>
+      <Suspense fallback={null}>
+        <App />
+      </Suspense>
+    </AppErrorBoundary>,
+  );
 }

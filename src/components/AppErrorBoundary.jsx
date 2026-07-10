@@ -6,7 +6,7 @@ const ROOT_CHUNK_RELOAD_LIMIT = 1;
 
 function isLazyChunkLoadError(error) {
   const message = String(error?.message || error || '');
-  return /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Loading chunk|ChunkLoadError/i.test(message);
+  return /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Loading chunk|ChunkLoadError|Unexpected token '<'|Failed to load module script|MIME type/i.test(message);
 }
 
 async function clearBrowserRuntimeCaches() {
@@ -85,44 +85,6 @@ export class AppErrorBoundary extends React.Component {
             <button type="button" onClick={() => { localStorage.removeItem(STORAGE_KEY); location.reload(); }}>페이지 설정만 초기화</button>
             <button
               type="button"
-              className="danger"
-              onClick={() => {
-                localStorage.removeItem(STORAGE_KEY);
-                localStorage.removeItem(LEADS_KEY);
-                localStorage.removeItem(EVENTS_KEY);
-                localStorage.removeItem(START_MODE_KEY);
-                location.reload();
-              }}
-            >
-              전체 초기화
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-
-    if (this.state.recovering) {
-      return (
-        <div className="error-screen error-screen-v2">
-          <div>
-            <h1>최신 화면으로 이동합니다.</h1>
-            <p>배포 후 남은 캐시를 정리하고 있습니다.</p>
-          </div>
-        </div>
-      );
-    }
-    if (!this.state.error) return this.props.children;
-    const message = String(this.state.error?.message || this.state.error || '알 수 없는 오류');
-
-    return (
-      <div className="error-screen error-screen-v2">
-        <div>
-          <h1>화면을 불러오는 중 오류가 발생했습니다.</h1>
-          <p>{message}</p>
-          <div className="error-actions">
-            <button onClick={() => location.reload()}>다시 열기</button>
-            <button onClick={() => { localStorage.removeItem(STORAGE_KEY); location.reload(); }}>페이지 설정만 초기화</button>
-            <button
               className="danger"
               onClick={() => {
                 localStorage.removeItem(STORAGE_KEY);
