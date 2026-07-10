@@ -224,7 +224,9 @@ assert(pagePersistFlow.includes('handlePagePersistError') && pagePersistFlow.inc
 assert(previewTarget.includes('previewUrlForPage') && previewTarget.includes('createPreviewPage'), 'preview URL calculation must stay split from App');
 assert(app.includes('const previewUrl = previewUrlForPage(page)') && app.includes('createPreviewPage({'), 'App must use the shared preview target helpers');
 assert(workspaceRouteGuards.includes('export function isProtectedWorkspacePath') && workspaceRouteGuards.includes('/^\\/(?:dashboard|app|account)(?:\\/|$)/'), 'workspace route protection must stay split from App and limited to internal workspace paths');
-assert(app.includes("import { isProtectedWorkspacePath } from './runtime/workspaceRouteGuards.js'"), 'App must use the shared workspace route guard');
+assert(workspaceRouteGuards.includes('export function routeUsesWorkspaceTabs') && workspaceRouteGuards.includes('!publicLandingSlug && !staticPage && !inviteToken && !adminRoute && !authRouteMode'), 'workspace tab route gating must stay split from App and keep public/auth/admin routes excluded');
+assert(app.includes("import { isProtectedWorkspacePath, routeUsesWorkspaceTabs as shouldUseWorkspaceTabs } from './runtime/workspaceRouteGuards.js'"), 'App must use the shared workspace route guards');
+assert(app.includes('const routeUsesWorkspaceTabs = shouldUseWorkspaceTabs({ publicLandingSlug, staticPage, inviteToken, adminRoute, authRouteMode })'), 'App must derive workspace tab routing through the shared guard');
 assert(pageSaveAction.includes('commitSavedPageResult') && persistStyleSaveAction.includes('commitSavedPageResult'), 'page and style saves must share persisted page commit flow');
 assert(app.includes('isOwnerAdminModeEnabled') && app.includes('clientAdminEnabled: ownerAdminModeEnabled'), 'App must derive client admin access from the internal runtime flag');
 assert(workspaceActivePanel.includes("canUseBuilder && tab === 'edit'") && workspaceActivePanel.includes("canUseBuilder && tab === 'style'"), 'builder-only editor and style tabs must stay permission gated');

@@ -3,3 +3,7 @@ export function isProtectedWorkspacePath(path = '') {
   const pathname = String(path || location.pathname || '/').replace(/\/+$/, '') || '/';
   return /^\/(?:dashboard|app|account)(?:\/|$)/.test(pathname);
 }
+
+export function routeUsesWorkspaceTabs({ publicLandingSlug, staticPage, inviteToken, adminRoute, authRouteMode } = {}) {
+  return !publicLandingSlug && !staticPage && !inviteToken && !adminRoute && !authRouteMode;
+}

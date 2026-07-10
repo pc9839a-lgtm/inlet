@@ -27,7 +27,7 @@ import { useLeadMutationActions } from './runtime/useLeadMutationActions.js';
 import { useLandingTemplates } from './runtime/useLandingTemplates.js';
 import { createPreviewPage, previewUrlForPage } from './runtime/previewTarget.js';
 import { usePreviewWindow } from './runtime/usePreviewWindow.js';
-import { isProtectedWorkspacePath } from './runtime/workspaceRouteGuards.js';
+import { isProtectedWorkspacePath, routeUsesWorkspaceTabs as shouldUseWorkspaceTabs } from './runtime/workspaceRouteGuards.js';
 import { hasTabDeepLink, replaceLocationTab, tabFromLocation } from './runtime/workspaceTabLocation.js';
 import { useStatsSummarySync } from './runtime/useStatsSummarySync.js';
 import { useWorkspaceShellActions } from './runtime/useWorkspaceShellActions.js';
@@ -563,7 +563,7 @@ function App() {
   }, [routePath]);
   const publicLandingSlug = useMemo(() => publicLandingSlugFromLocation(routePath), [routePath]);
   const protectedWorkspacePath = useMemo(() => isProtectedWorkspacePath(routePath), [routePath]);
-  const routeUsesWorkspaceTabs = !publicLandingSlug && !staticPage && !inviteToken && !adminRoute && !authRouteMode;
+  const routeUsesWorkspaceTabs = shouldUseWorkspaceTabs({ publicLandingSlug, staticPage, inviteToken, adminRoute, authRouteMode });
 
   const markSaveStatus = (tone, label, detail = '') => {
     setSaveStatus({ tone, label, detail, at: new Date().toISOString() });
