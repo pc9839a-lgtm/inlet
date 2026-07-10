@@ -35,6 +35,7 @@ import { useLandingTemplates } from './runtime/useLandingTemplates.js';
 import { createLeadCaptureAction, createLeadDeliveryActions, createVisibleLeadUpdater } from './runtime/leadCaptureActions.js';
 import { createPreviewPage, previewUrlForPage } from './runtime/previewTarget.js';
 import { createLeadPatchSync, createPageEventTracker } from './runtime/publicPageRuntimeActions.js';
+import { useAuthSessionEffects } from './runtime/useAuthSessionEffects.js';
 import { usePreviewWindow } from './runtime/usePreviewWindow.js';
 import { useProtectedWorkspaceRedirect } from './runtime/useProtectedWorkspaceRedirect.js';
 import { isProtectedWorkspacePath, routeUsesWorkspaceTabs as shouldUseWorkspaceTabs } from './runtime/workspaceRouteGuards.js';
@@ -60,7 +61,7 @@ import RichField from './editor/RichField.jsx';
 import { normalizeButtons } from './lib/blockButtons.js';
 import { currentTrafficAttribution } from './lib/trafficAttribution.js';
 import { canUseAdminSurface, canUseBuilderSurface, canWriteTab, isClientAdminMode, tabsForAccessMode, accessModeFor } from './lib/authContext.js';
-import { logoutAuthAccount, refreshAuthSession, updateAuthAccount } from './lib/authAccounts.js';
+import { logoutAuthAccount, updateAuthAccount } from './lib/authAccounts.js';
 import { normalizeAuthUser } from './lib/authIdentity.js';
 import { generateStandaloneFormHtml } from './lib/formEmbed.js';
 import { persistEvent } from './lib/eventRepository.js';
@@ -633,47 +634,17 @@ function App() {
     latestPageRef.current = page;
   }, [page]);
 
-  useEffect(() => {
-    if (publicLandingSlug || !authUser || !isServerPageMode()) return;
-    if (String(authUser.session || '').trim()) return;
-    localStorage.removeItem(AUTH_KEY);
-    saveLocalJson(DASHBOARD_KEY, { open: false }, '작업공간 상태', { quietSuccess: true });
-    setAuthUser(null);
-    setWorkspaceOpen(false);
-    setAuthView('login');
-    showToast('로그인 세션이 없어 다시 로그인해야 합니다.', 'error');
-  }, [authUser?.email, authUser?.session, publicLandingSlug]);
-
-  useEffect(() => {
-    const session = String(authUser?.session || '').trim();
-    if (!session || sessionRefreshRef.current === session) return;
-    sessionRefreshRef.current = session;
-    let alive = true;
-    refreshAuthSession({ session, projectId: page.projectId || '' })
-      .then((nextUser) => {
-        if (!alive || !nextUser) return;
-        const normalized = normalizeAuthUser({
-          ...authUser,
-          ...nextUser,
-          session: nextUser.session || session,
-          signedAt: new Date().toISOString(),
-        });
-        sessionRefreshRef.current = String(normalized.session || session);
-        saveLocalJson(AUTH_KEY, normalized, '로그인 정보', { quietSuccess: true });
-        setAuthUser(normalized);
-      })
-      .catch((error) => {
-        if (!alive) return;
-        const status = Number(error?.status || 0);
-        if (status === 401 || status === 403 || status === 404) {
-          localStorage.removeItem(AUTH_KEY);
-          setAuthUser(null);
-          setWorkspaceOpen(false);
-          showToast('로그인 세션이 만료되었습니다. 다시 로그인해주세요.', 'error');
-        }
-      });
-    return () => { alive = false; };
-  }, [authUser?.session, page.projectId]);
+  useAuthSessionEffects({
+    authUser,
+    pageProjectId: page.projectId,
+    publicLandingSlug,
+    sessionRefreshRef,
+    saveLocalJson,
+    setAuthUser,
+    setWorkspaceOpen,
+    setAuthView,
+    showToast,
+  });
   useEffect(() => {
     if (publicLandingSlug || !authUser) return undefined;
     let alive = true;
