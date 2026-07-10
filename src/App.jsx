@@ -103,7 +103,6 @@ const AdminPanel = lazy(() => import('./panels/MasterAdminPanel.jsx'));
 const TemplatesPanel = lazy(() => import('./panels/TemplatesPanel'));
 const InviteAcceptScreen = lazy(() => import('./screens/InviteAcceptScreen.jsx'));
 const AuthScreen = lazy(() => import('./screens/HomeScreens.jsx').then((module) => ({ default: module.AuthScreen })));
-const CreateLandingModal = lazy(() => import('./screens/HomeScreens.jsx').then((module) => ({ default: module.CreateLandingModal })));
 const Dashboard = lazy(() => import('./screens/HomeScreens.jsx').then((module) => ({ default: module.Dashboard })));
 const PublicHome = lazy(() => import('./screens/PublicHomeRoute.jsx'));
 const INBOX_PAGE_SIZE = 10;
@@ -1183,7 +1182,6 @@ function App() {
               onAccountUpdate={updateAccountProfile}
               TemplatesPanelComponent={TemplatesPanel}
             />
-            {canUseBuilder && createOpen && <CreateLandingModal page={page} onClose={()=>setCreateOpen(false)} onAi={createWithAi} onManual={createManual} onTemplate={createFromTemplate} onCheckUrl={checkCreatePageUrl} templates={templateChoices} TemplatesPanelComponent={TemplatesPanel}/>}
           </Suspense>
         </LazyChunkBoundary>
       </>
