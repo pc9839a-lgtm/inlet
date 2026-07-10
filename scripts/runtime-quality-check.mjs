@@ -186,6 +186,7 @@ const pageEditMutations = await readFile('src/runtime/pageEditMutations.js', 'ut
 const pageIntegrationMutations = await readFile('src/runtime/pageIntegrationMutations.js', 'utf8');
 const saveStatusActions = await readFile('src/runtime/saveStatusActions.js', 'utf8');
 const duplicatePageAction = await readFile('src/runtime/createDuplicatePageAction.js', 'utf8');
+const publicPageRuntimeActions = await readFile('src/runtime/publicPageRuntimeActions.js', 'utf8');
 const persistStyleSaveAction = await readFile('src/runtime/usePersistStyleSaveAction.js', 'utf8');
 const previewTarget = await readFile('src/runtime/previewTarget.js', 'utf8');
 const workspaceRouteGuards = await readFile('src/runtime/workspaceRouteGuards.js', 'utf8');
@@ -211,9 +212,11 @@ assert(app.includes("const AdminPanel = lazy(() => import('./panels/AdminPanel.j
 assert(app.includes("const TemplatesPanel = lazy(() => import('./panels/TemplatesPanel'))"), 'TemplatesPanel must stay lazy-loaded');
 assert(app.includes("await import('./templates/landingTemplates')") || app.includes("await import('./templates/landingTemplates.js')") || landingTemplatesHook.includes("await import('../templates/landingTemplates.js')"), 'landing templates must stay dynamically imported');
 assert(!/import\s+\{?\s*LANDING_TEMPLATES\b/.test(app), 'landing templates must not be statically imported');
-assert(app.includes('const authForTargetPage = (targetPage = {})') && app.includes('publicLandingSlug && targetPage?.projectId ? null : authUser'), 'public landing lead/event writes must not use the signed-in builder project context');
-assert(app.includes('persistEvent(event, targetPage, authForTargetPage(targetPage))'), 'public landing event writes should use the target page project context');
+assert(publicPageRuntimeActions.includes('export function authForTargetPage') && publicPageRuntimeActions.includes('publicLandingSlug && targetPage?.projectId ? null : authUser'), 'public landing lead/event writes must not use the signed-in builder project context');
+assert(publicPageRuntimeActions.includes('persistEvent(event, targetPage, authForPage(targetPage))'), 'public landing event writes should use the target page project context');
+assert(app.includes('createPageEventTracker({') && app.includes('publicLandingSlug,') && app.includes('persistEvent,'), 'App must delegate public page event tracking context');
 assert(app.includes('const targetAuthUser = authForTargetPage(targetPage)') && app.includes('persistLead(savedLead, targetPage, targetAuthUser)'), 'public landing lead writes should use the target page project context');
+assert(publicPageRuntimeActions.includes('export function createLeadPatchSync') && publicPageRuntimeActions.includes('__expectedUpdatedAt') && publicPageRuntimeActions.includes('isLeadConflictError(error)'), 'lead patch sync conflict handling must stay centralized');
 assert(/<PreviewRenderer[\s\S]*?page=\{publicPage\}[\s\S]*?addLead=\{\(lead\) => addLeadForPage\(publicPage, lead\)\}[\s\S]*?track=\{\(event\) => trackForPage\(publicPage, event\)\}/.test(app), 'public landing renderer must submit leads and stats events against the public page context');
 assert(!/import\s+(?:InboxPanel|StatsPanel|StylePanel|SettingsPanel|TemplatesPanel|AdminPanel|AiPanel)\b/.test(app), 'heavy panels and AI panel must not be statically imported into App');
 assert(!/import\s+(?:\{[^}]*Editor[^}]*\}|[A-Z][A-Za-z]+Editor)\s+from\s+['"]\.\/editor\/blockEditors\//.test(app), 'block editors must not be statically imported into App');
