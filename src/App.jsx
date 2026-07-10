@@ -9,11 +9,15 @@ import {
 } from 'lucide-react';
 import PanelHeader from './builder/PanelHeader.jsx';
 import { ConfirmModal, PageConflictModal, PreviewCopyModal, ToastNotice } from './builder/BuilderFeedback.jsx';
+import { createBlockWriteGuard } from './runtime/createBlockWriteGuard.js';
 import { isLeadConflictError } from './builder/conflictUtils.js';
 import { NAV } from './builder/navigation.js';
 import { useBuilderFeedback } from './builder/useBuilderFeedback.js';
 import { usePageConflict } from './builder/usePageConflict.js';
 import { usePageSaveAction } from './runtime/usePageSaveAction.js';
+import { commitLocalPageDraft as commitLocalPageDraftValue, markLocalPageMutation as markLocalPageMutationValue } from './runtime/pageDraftMutations.js';
+import { createPageEditMutations } from './runtime/pageEditMutations.js';
+import { normalizeFreeEmailIntegrations as normalizeFreeEmailIntegrationsForAccount } from './runtime/pageIntegrationMutations.js';
 import { usePageSaveHelpers } from './runtime/usePageSaveHelpers.js';
 import { usePersistStyleSaveAction } from './runtime/usePersistStyleSaveAction.js';
 import { usePendingStyleBeforeUnload } from './runtime/usePendingStyleBeforeUnload.js';
@@ -814,74 +818,44 @@ function App() {
   });
   usePendingStyleBeforeUnload(hasPendingStyle);
 
-  const blockWrite = (targetTab = tab) => {
-    if (canWriteTabKey(targetTab)) return false;
-    showToast('현재 계정에는 이 화면을 수정할 권한이 없습니다.', 'warning');
-    markSaveStatus('warning', '권한 없음', '마스터가 부여한 쓰기 권한이 필요합니다.');
-    return true;
-  };
-  const markLocalPageMutation = () => {
-    localPageMutationRef.current += 1;
-  };
-  const commitLocalPageDraft = (nextPage) => {
-    const normalized = normalizePageForSave(nextPage);
-    latestPageRef.current = normalized;
-    markLocalPageMutation();
-    return normalized;
-  };
-  const setNormalizedPage = (updater) => {
-    if (blockWrite(tab)) return;
-    setPage((prev) => commitLocalPageDraft(typeof updater === 'function' ? updater(prev) : updater));
-  };
-  const updatePage = (patch) => {
-    if (blockWrite(tab)) return;
-    setPage((p) => commitLocalPageDraft({ ...p, ...patch }));
-  };
-  const updateTheme = (patch) => {
-    if (blockWrite('style')) return;
-    setPage((p) => commitLocalPageDraft({ ...p, theme: { ...p.theme, ...patch } }));
-  };
-  const updateStyleBlocks = (blocks) => {
-    if (blockWrite('style')) return;
-    setPage((p) => commitLocalPageDraft({ ...p, blocks: Array.isArray(blocks) ? blocks : p.blocks }));
-  };
-  const updateMeta = (patch) => {
-    if (blockWrite('settings')) return;
-    setPage((p) => commitLocalPageDraft({ ...p, meta: { ...p.meta, ...patch } }));
-  };
-  const updateAi = (patch) => {
-    if (blockWrite('admin')) return;
-    setPage((p) => commitLocalPageDraft({ ...p, ai: { ...(p.ai || {}), ...patch } }));
-  };
-  const normalizeFreeEmailIntegrations = (sourcePage) => {
-    const sourceIntegrations = normalizeIntegrations(sourcePage?.integrations || {});
-    const accountEmail = String(
-      authUser?.email
-      || sourcePage?.ownership?.ownerEmail
-      || sourcePage?.ownerEmail
-      || sourcePage?.clientEmail
-      || sourceIntegrations?.email?.to
-      || ''
-    ).trim().toLowerCase();
-    const plan = String(sourcePage?.plan || sourcePage?.billingPlan || sourcePage?.billing?.plan || authUser?.plan || authUser?.billingPlan || 'free').trim().toLowerCase();
-    const isFreePlan = !['paid', 'pro', 'premium', 'business', 'agency', 'enterprise'].includes(plan);
-    if (!isFreePlan || !accountEmail) return sourcePage;
-    return {
-      ...sourcePage,
-      integrations: normalizeIntegrations({
-        ...sourceIntegrations,
-        email: {
-          ...(sourceIntegrations.email || {}),
-          to: accountEmail,
-          lockedToAccount: true,
-        },
-      }),
-    };
-  };
-  const updateIntegrations = (section, patch) => {
-    if (blockWrite(tab === 'inbox' ? 'inbox' : 'settings')) return;
-    setPage((p) => commitLocalPageDraft(normalizeFreeEmailIntegrations({ ...p, integrations: normalizeIntegrations({ ...(p.integrations || {}), [section]: { ...(p.integrations?.[section] || {}), ...patch } }) })));
-  };
+  const blockWrite = createBlockWriteGuard({
+    canWriteTabKey,
+    showToast,
+    markSaveStatus,
+    messages: {
+      toast: '\uD604\uC7AC \uACC4\uC815\uC5D0\uB294 \uC774 \uD654\uBA74\uC744 \uC218\uC815\uD560 \uAD8C\uD55C\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.',
+      statusLabel: '\uAD8C\uD55C \uC5C6\uC74C',
+      statusDetail: '\uB9C8\uC2A4\uD130\uAC00 \uBD80\uC5EC\uD55C \uC4F0\uAE30 \uAD8C\uD55C\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.',
+    },
+  });
+  const markLocalPageMutation = () => markLocalPageMutationValue(localPageMutationRef);
+  const commitLocalPageDraft = (nextPage) => commitLocalPageDraftValue({
+    nextPage,
+    normalizePageForSave,
+    latestPageRef,
+    markLocalPageMutation,
+  });
+  const normalizeFreeEmailIntegrations = (sourcePage) => normalizeFreeEmailIntegrationsForAccount({
+    sourcePage,
+    authUser,
+    normalizeIntegrations,
+  });
+  const {
+    setNormalizedPage,
+    updatePage,
+    updateTheme,
+    updateStyleBlocks,
+    updateMeta,
+    updateAi,
+    updateIntegrations,
+  } = createPageEditMutations({
+    tab,
+    blockWrite,
+    setPage,
+    commitLocalPageDraft,
+    normalizeIntegrations,
+    normalizeFreeEmailIntegrations,
+  });
   const {
     updateBlock,
     toggleVisible,

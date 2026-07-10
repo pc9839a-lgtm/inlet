@@ -180,6 +180,10 @@ const workspaceTabs = await readFile('src/screens/workspace/WorkspaceTabs.jsx', 
 const workspaceLeftPanel = await readFile('src/screens/workspace/WorkspaceLeftPanel.jsx', 'utf8');
 const workspacePreviewPane = await readFile('src/screens/workspace/WorkspacePreviewPane.jsx', 'utf8');
 const pageSaveAction = await readFile('src/runtime/usePageSaveAction.js', 'utf8');
+const blockWriteGuard = await readFile('src/runtime/createBlockWriteGuard.js', 'utf8');
+const pageDraftMutations = await readFile('src/runtime/pageDraftMutations.js', 'utf8');
+const pageEditMutations = await readFile('src/runtime/pageEditMutations.js', 'utf8');
+const pageIntegrationMutations = await readFile('src/runtime/pageIntegrationMutations.js', 'utf8');
 const persistStyleSaveAction = await readFile('src/runtime/usePersistStyleSaveAction.js', 'utf8');
 const previewTarget = await readFile('src/runtime/previewTarget.js', 'utf8');
 const workspaceRouteGuards = await readFile('src/runtime/workspaceRouteGuards.js', 'utf8');
@@ -244,7 +248,11 @@ assert(workspaceStartMode.includes('export function shouldShowStartModeOverlay')
 assert(app.includes('const showStartModeOverlay = shouldShowStartModeOverlay({ canManageAdmin, startMode, tabDeepLink })') && app.includes('{showStartModeOverlay && (') && app.includes('<StartModeOverlay'), 'App must delegate start mode overlay visibility to the shared helper');
 assert(workspaceStartMode.includes('canManageAdmin && !startMode') && workspaceLeftPanel.includes("canManageAdmin && startMode === 'template'"), 'template/start controls must stay master-admin-only');
 assert(app.includes('adminRoute') && app.includes("return /^\\/(?:admin|[^/?#]+\\/admin)\\/?$/.test(routePath)") && app.includes('<AdminPanel'), 'admin panel must stay on a private /admin route');
-assert(app.includes('const canWriteTabKey = (key) => canWriteTab(accessMode, page, authUser, key)') && app.includes('blockWrite'), 'App must enforce manager write permissions before mutation');
+assert(app.includes('const canWriteTabKey = (key) => canWriteTab(accessMode, page, authUser, key)') && app.includes('createBlockWriteGuard({'), 'App must enforce manager write permissions before mutation');
+assert(blockWriteGuard.includes('canWriteTabKey(targetTab)') && blockWriteGuard.includes('markSaveStatus') && blockWriteGuard.includes('showToast'), 'block write permission feedback must stay centralized');
+assert(pageDraftMutations.includes('latestPageRef.current = normalized') && pageDraftMutations.includes('markLocalPageMutation()'), 'local page draft commits must update latest page and mutation refs centrally');
+assert(pageEditMutations.includes('export function createPageEditMutations') && pageEditMutations.includes('updateTheme') && pageEditMutations.includes('updateIntegrations'), 'page edit mutation actions must stay centralized');
+assert(pageIntegrationMutations.includes('lockedToAccount: true') && pageIntegrationMutations.includes('authUser?.email'), 'free email integration normalization must stay centralized');
 assert(app.includes("selectedBlockId={canUseBuilder ? openId : ''}") && app.includes('onSelectPreviewBlock={canUseBuilder ? selectPreviewBlock : undefined}') && workspacePreviewPane.includes('selectedBlockId={selectedBlockId}') && workspacePreviewPane.includes('onSelectBlock={onSelectPreviewBlock}'), 'client admin preview must not route into block editing');
 assert(workspaceTabFallback.includes('if (!authUser) return;') && workspaceTabFallback.includes('if (!routeUsesWorkspaceTabs) return;') && workspaceTabFallback.includes("const nextTab = allowedTabs[0] || 'inbox'") && workspaceTabFallback.includes('replaceLocationTab(tabKeys, nextTab)'), 'workspace tab redirect must not run before login or on public routes');
 assert(app.includes('useWorkspaceTabFallback({') && app.includes('tabKeys: TAB_KEYS'), 'App must delegate workspace tab fallback routing to the shared hook');
