@@ -184,6 +184,8 @@ const blockWriteGuard = await readFile('src/runtime/createBlockWriteGuard.js', '
 const pageDraftMutations = await readFile('src/runtime/pageDraftMutations.js', 'utf8');
 const pageEditMutations = await readFile('src/runtime/pageEditMutations.js', 'utf8');
 const pageIntegrationMutations = await readFile('src/runtime/pageIntegrationMutations.js', 'utf8');
+const saveStatusActions = await readFile('src/runtime/saveStatusActions.js', 'utf8');
+const duplicatePageAction = await readFile('src/runtime/createDuplicatePageAction.js', 'utf8');
 const persistStyleSaveAction = await readFile('src/runtime/usePersistStyleSaveAction.js', 'utf8');
 const previewTarget = await readFile('src/runtime/previewTarget.js', 'utf8');
 const workspaceRouteGuards = await readFile('src/runtime/workspaceRouteGuards.js', 'utf8');
@@ -232,6 +234,10 @@ assert(pagePersistFlow.includes('pageSaveErrorFeedback') && pagePersistFlow.incl
 assert(pagePersistFlow.includes('handlePagePersistError') && pagePersistFlow.includes('commitSavedPageResult'), 'page persist flow must stay centralized');
 assert(previewTarget.includes('previewUrlForPage') && previewTarget.includes('createPreviewPage'), 'preview URL calculation must stay split from App');
 assert(app.includes('const previewUrl = previewUrlForPage(page)') && app.includes('createPreviewPage({'), 'App must use the shared preview target helpers');
+assert(saveStatusActions.includes('export function createSaveStatusMarker') && saveStatusActions.includes('export function createLocalJsonSaver') && saveStatusActions.includes('saveErrorNoticeRef.current'), 'save status and local json feedback must stay centralized');
+assert(app.includes('const markSaveStatus = createSaveStatusMarker(setSaveStatus)') && app.includes('const saveLocalJson = createLocalJsonSaver({'), 'App must delegate local save status handling');
+assert(duplicatePageAction.includes('export function createDuplicatePageAction') && duplicatePageAction.includes("replaceLocationTab(tabKeys, 'edit')") && duplicatePageAction.includes('setLeads([])') && duplicatePageAction.includes('setEvents([])'), 'duplicate page post-processing must stay centralized');
+assert(app.includes('const duplicatePageWithUrl = createDuplicatePageAction({') && app.includes('tabKeys: TAB_KEYS') && app.includes('startModeKey: START_MODE_KEY'), 'App must delegate duplicate page post-processing');
 assert(workspaceRouteGuards.includes('export function isProtectedWorkspacePath') && workspaceRouteGuards.includes('/^\\/(?:dashboard|app|account)(?:\\/|$)/'), 'workspace route protection must stay split from App and limited to internal workspace paths');
 assert(workspaceRouteGuards.includes('export function routeUsesWorkspaceTabs') && workspaceRouteGuards.includes('!publicLandingSlug && !staticPage && !inviteToken && !adminRoute && !authRouteMode'), 'workspace tab route gating must stay split from App and keep public/auth/admin routes excluded');
 assert(protectedWorkspaceRedirect.includes('if (authUser || !protectedWorkspacePath) return;') && protectedWorkspaceRedirect.includes("window.location.replace('/')"), 'protected workspace redirect must stay isolated from public home routing');

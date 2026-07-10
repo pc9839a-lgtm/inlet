@@ -10,6 +10,7 @@ import {
 import PanelHeader from './builder/PanelHeader.jsx';
 import { ConfirmModal, PageConflictModal, PreviewCopyModal, ToastNotice } from './builder/BuilderFeedback.jsx';
 import { createBlockWriteGuard } from './runtime/createBlockWriteGuard.js';
+import { createDuplicatePageAction } from './runtime/createDuplicatePageAction.js';
 import { isLeadConflictError } from './builder/conflictUtils.js';
 import { NAV } from './builder/navigation.js';
 import { useBuilderFeedback } from './builder/useBuilderFeedback.js';
@@ -20,6 +21,7 @@ import { createPageEditMutations } from './runtime/pageEditMutations.js';
 import { normalizeFreeEmailIntegrations as normalizeFreeEmailIntegrationsForAccount } from './runtime/pageIntegrationMutations.js';
 import { usePageSaveHelpers } from './runtime/usePageSaveHelpers.js';
 import { usePersistStyleSaveAction } from './runtime/usePersistStyleSaveAction.js';
+import { createLocalJsonSaver, createSaveStatusMarker } from './runtime/saveStatusActions.js';
 import { usePendingStyleBeforeUnload } from './runtime/usePendingStyleBeforeUnload.js';
 import { createWorkspacePanelProps } from './runtime/createWorkspacePanelProps.js';
 import { useCreatePageActions } from './runtime/useCreatePageActions.js';
@@ -574,30 +576,14 @@ function App() {
   const protectedWorkspacePath = useMemo(() => isProtectedWorkspacePath(routePath), [routePath]);
   const routeUsesWorkspaceTabs = shouldUseWorkspaceTabs({ publicLandingSlug, staticPage, inviteToken, adminRoute, authRouteMode });
 
-  const markSaveStatus = (tone, label, detail = '') => {
-    setSaveStatus({ tone, label, detail, at: new Date().toISOString() });
-  };
-
-  const saveLocalJson = (key, value, label, options = {}) => {
-    const result = saveJson(key, value);
-    if (result?.ok) {
-      if (!options.quietSuccess && (!saveErrorNoticeRef.current || saveErrorNoticeRef.current.startsWith(`${key}:`))) {
-        saveErrorNoticeRef.current = '';
-        markSaveStatus('ok', '로컬 저장됨', `${label} 저장 완료`);
-      }
-      return result;
-    }
-
-    const message = `${label} 로컬 저장 실패: ${storageErrorMessage(result?.error)}`;
-    const signature = `${key}:${result?.reason || 'unknown'}:${String(result?.error?.message || result?.error || '')}`;
-    markSaveStatus('error', '로컬 저장 실패', message);
-    if (saveErrorNoticeRef.current !== signature) {
-      saveErrorNoticeRef.current = signature;
-      showToast(message, 'error');
-    }
-    return result;
-  };
-
+  const markSaveStatus = createSaveStatusMarker(setSaveStatus);
+  const saveLocalJson = createLocalJsonSaver({
+    saveJson,
+    storageErrorMessage,
+    saveErrorNoticeRef,
+    markSaveStatus,
+    showToast,
+  });
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
     const syncRoute = () => setRoutePath(window.location.pathname || '/');
@@ -872,26 +858,24 @@ function App() {
     setOpenId,
     setAddOpen,
   });
-  const duplicatePageWithUrl = (urlConfig) => {
-    if (blockWrite('settings')) {
-      return { ok: false, message: '설정 편집 권한이 없습니다.' };
-    }
-    if (!canUsePageDuplication(page)) {
-      return { ok: false, locked: true, message: '페이지 복제는 유료 기능입니다. 결제 연동 후 사용할 수 있습니다.' };
-    }
-    const nextPage = createDuplicatedPage(page, urlConfig);
-    latestPageRef.current = nextPage;
-    markLocalPageMutation();
-    setPage(nextPage);
-    setLeads([]);
-    setEvents([]);
-    setOpenId('');
-    setTab('edit');
-    replaceLocationTab(TAB_KEYS, 'edit');
-    saveLocalJson(START_MODE_KEY, 'manual', '시작 방식', { quietSuccess: true });
-    showToast(`페이지를 복제했습니다. 새 URL: /${nextPage.slug}`, 'success');
-    return { ok: true, page: nextPage };
-  };
+  const duplicatePageWithUrl = createDuplicatePageAction({
+    page,
+    blockWrite,
+    canUsePageDuplication,
+    createDuplicatedPage,
+    latestPageRef,
+    markLocalPageMutation,
+    setPage,
+    setLeads,
+    setEvents,
+    setOpenId,
+    setTab,
+    replaceLocationTab,
+    tabKeys: TAB_KEYS,
+    saveLocalJson,
+    startModeKey: START_MODE_KEY,
+    showToast,
+  });
   const authForTargetPage = (targetPage = {}) => (
     publicLandingSlug && targetPage?.projectId ? null : authUser
   );
