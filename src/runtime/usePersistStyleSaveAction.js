@@ -1,7 +1,6 @@
-import { STORAGE_KEY } from '../config/storageKeys.js';
 import { persistPage } from '../lib/pageRepository.js';
 import { attachExistingPageIdentity } from './savePageIdentity.js';
-import { PAGE_SAVE_LABEL, STYLE_SAVED_TOAST } from './pageSaveFeedback.js';
+import { STYLE_SAVED_TOAST } from './pageSaveFeedback.js';
 import { commitSavedPageResult, handlePagePersistError } from './pagePersistFlow.js';
 
 export function usePersistStyleSaveAction({
@@ -37,9 +36,6 @@ export function usePersistStyleSaveAction({
     });
     const nextPage = pageForAccountSave(styleSourcePage);
     const expectedUpdatedAt = styleSourcePage.updatedAt || styleSourcePage.savedAt || styleSourcePage.createdAt || page.updatedAt || page.savedAt || page.createdAt || '';
-    latestPageRef.current = nextPage;
-    setPage(nextPage);
-    saveLocalJson(STORAGE_KEY, nextPage, PAGE_SAVE_LABEL);
     let result = null;
     try {
       result = await persistPage(nextPage, authUser, { tab: 'style', expectedUpdatedAt, saveMode: 'update-existing' });
