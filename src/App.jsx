@@ -43,7 +43,6 @@ import { usePreviewWindow } from './runtime/usePreviewWindow.js';
 import { useProtectedWorkspaceRedirect } from './runtime/useProtectedWorkspaceRedirect.js';
 import { isProtectedWorkspacePath, routeUsesWorkspaceTabs as shouldUseWorkspaceTabs } from './runtime/workspaceRouteGuards.js';
 import { hasTabDeepLink, replaceLocationTab, tabFromLocation } from './runtime/workspaceTabLocation.js';
-import { shouldShowStartModeOverlay } from './runtime/workspaceStartMode.js';
 import { useStatsSummarySync } from './runtime/useStatsSummarySync.js';
 import { useWorkspaceShellActions } from './runtime/useWorkspaceShellActions.js';
 import { useWorkspaceAutoOpen } from './runtime/useWorkspaceAutoOpen.js';
@@ -107,7 +106,6 @@ const AuthScreen = lazy(() => import('./screens/HomeScreens.jsx').then((module) 
 const CreateLandingModal = lazy(() => import('./screens/HomeScreens.jsx').then((module) => ({ default: module.CreateLandingModal })));
 const Dashboard = lazy(() => import('./screens/HomeScreens.jsx').then((module) => ({ default: module.Dashboard })));
 const PublicHome = lazy(() => import('./screens/PublicHomeRoute.jsx'));
-const StartModeOverlay = lazy(() => import('./screens/HomeScreens.jsx').then((module) => ({ default: module.StartModeOverlay })));
 const INBOX_PAGE_SIZE = 10;
 const CHUNK_RELOAD_KEY = 'pagero-chunk-reload-v5';
 const CHUNK_RELOAD_LIMIT = 5;
@@ -551,7 +549,6 @@ function App() {
   const accessMode = useMemo(() => accessModeFor({ authUser, page, clientAdminEnabled: ownerAdminModeEnabled }), [authUser, ownerAdminModeEnabled, page]);
   const canUseBuilder = canUseBuilderSurface(accessMode, page, authUser);
   const canManageAdmin = canUseAdminSurface(accessMode);
-  const showStartModeOverlay = shouldShowStartModeOverlay({ canManageAdmin, startMode, tabDeepLink });
   const canManageMasterAdmin = isPlatformMasterUser(authUser);
   const clientAdminMode = isClientAdminMode(accessMode);
   const allowedTabs = useMemo(() => tabsForAccessMode(accessMode, page, authUser), [accessMode, page, authUser]);
@@ -1261,27 +1258,9 @@ function App() {
     logout,
   });
 
-  const dismissStartModeOverlay = (mode = 'manual', { openCreate = false } = {}) => {
-    saveLocalJson(START_MODE_KEY, mode, 'start mode', { quietSuccess: true });
-    setStartMode(mode);
-    setCreateOpen(openCreate);
-  };
 
   return (
     <>
-      {showStartModeOverlay && (
-        <LazyChunkBoundary resetKey="start-mode">
-          <Suspense fallback={<LazyPanelFallback />}>
-            <StartModeOverlay
-              onManual={() => dismissStartModeOverlay('manual', { openCreate: true })}
-              onAi={() => dismissStartModeOverlay('ai', { openCreate: true })}
-              onTemplate={() => dismissStartModeOverlay('template', { openCreate: true })}
-              onClose={() => dismissStartModeOverlay('manual')}
-              templates={templateChoices}
-            />
-          </Suspense>
-        </LazyChunkBoundary>
-      )}
       <WorkspaceEditorScreen
         canUseBuilder={canUseBuilder}
         canManageAdmin={canManageAdmin}
