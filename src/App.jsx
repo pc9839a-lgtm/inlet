@@ -30,6 +30,7 @@ import { useEditorBlockActions } from './runtime/useEditorBlockActions.js';
 import { useInboxLeadActions } from './runtime/useInboxLeadActions.js';
 import { useInboxLeadSync } from './runtime/useInboxLeadSync.js';
 import { useLeadDeliveryRetryActions } from './runtime/useLeadDeliveryRetryActions.js';
+import { useLocalWorkspacePersistence } from './runtime/useLocalWorkspacePersistence.js';
 import { useLeadMutationActions } from './runtime/useLeadMutationActions.js';
 import { useLandingTemplates } from './runtime/useLandingTemplates.js';
 import { createLeadCaptureAction, createLeadDeliveryActions, createVisibleLeadUpdater } from './runtime/leadCaptureActions.js';
@@ -613,27 +614,16 @@ function App() {
     };
   }, []);
   useProtectedWorkspaceRedirect({ authUser, protectedWorkspacePath });
-  useEffect(() => {
-    if (publicLandingSlug) return;
-    if (isServerPageMode()) return;
-    saveLocalJson(STORAGE_KEY, normalizePageForSave(page), '페이지');
-  }, [page, publicLandingSlug]);
-  useEffect(() => {
-    saveLocalJson(LEADS_KEY, leads, '접수 데이터', { quietSuccess: true });
-  }, [leads]);
-  useEffect(() => {
-    saveLocalJson(EVENTS_KEY, events, '통계 이벤트', { quietSuccess: true });
-  }, [events]);
-  useEffect(() => {
-    if (!authUser) return;
-    const normalized = normalizeAuthUser(authUser);
-    saveLocalJson(AUTH_KEY, normalized, '로그인 정보', { quietSuccess: true });
-    if (JSON.stringify(normalized) !== JSON.stringify(authUser)) setAuthUser(normalized);
-  }, [authUser]);
-
-  useEffect(() => {
-    latestPageRef.current = page;
-  }, [page]);
+  useLocalWorkspacePersistence({
+    authUser,
+    events,
+    latestPageRef,
+    leads,
+    page,
+    publicLandingSlug,
+    saveLocalJson,
+    setAuthUser,
+  });
 
   useAuthSessionEffects({
     authUser,
