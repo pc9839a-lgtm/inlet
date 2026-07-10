@@ -63,7 +63,6 @@ import RichField from './editor/RichField.jsx';
 import { normalizeButtons } from './lib/blockButtons.js';
 import { currentTrafficAttribution } from './lib/trafficAttribution.js';
 import { canUseAdminSurface, canUseBuilderSurface, canWriteTab, isClientAdminMode, tabsForAccessMode, accessModeFor } from './lib/authContext.js';
-import { logoutAuthAccount } from './lib/authAccounts.js';
 import { normalizeAuthUser } from './lib/authIdentity.js';
 import { generateStandaloneFormHtml } from './lib/formEmbed.js';
 import { persistEvent } from './lib/eventRepository.js';
@@ -1032,24 +1031,7 @@ function App() {
       },
     });
   };
-  const logout = () => {
-    const session = String(authUser?.session || '').trim();
-    if (session) {
-      logoutAuthAccount({ session }).catch((error) => {
-        console.warn('Session logout request failed:', error);
-      });
-    }
-    localStorage.removeItem(AUTH_KEY);
-    saveLocalJson(DASHBOARD_KEY, { open: false }, '작업공간 상태', { quietSuccess: true });
-    setAuthUser(null);
-    setAuthView('');
-    setWorkspaceOpen(false);
-    if (typeof window !== 'undefined') {
-      window.location.replace('/');
-    }
-  };
-
-  const { acceptAuth, acceptInviteAuth, updateAccountProfile } = createAuthAccountActions({
+  const { acceptAuth, acceptInviteAuth, logout, updateAccountProfile } = createAuthAccountActions({
     authUser,
     page,
     saveLocalJson,

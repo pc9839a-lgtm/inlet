@@ -1,5 +1,5 @@
 import { AUTH_KEY, DASHBOARD_KEY } from '../config/storageKeys.js';
-import { updateAuthAccount } from '../lib/authAccounts.js';
+import { logoutAuthAccount, updateAuthAccount } from '../lib/authAccounts.js';
 import { normalizeAuthUser } from '../lib/authIdentity.js';
 import { fetchServerPage } from '../lib/pageRepository.js';
 import { normalize, normalizePageForSave } from '../lib/pageModel.js';
@@ -14,6 +14,23 @@ export function createAuthAccountActions({
   setWorkspaceOpen,
   showToast,
 }) {
+  const logout = () => {
+    const session = String(authUser?.session || '').trim();
+    if (session) {
+      logoutAuthAccount({ session }).catch((error) => {
+        console.warn('Session logout request failed:', error);
+      });
+    }
+    localStorage.removeItem(AUTH_KEY);
+    saveLocalJson(DASHBOARD_KEY, { open: false }, '\uC791\uC5C5\uACF5\uAC04 \uC0C1\uD0DC', { quietSuccess: true });
+    setAuthUser(null);
+    setAuthView('');
+    setWorkspaceOpen(false);
+    if (typeof window !== 'undefined') {
+      window.location.replace('/');
+    }
+  };
+
   const acceptAuth = (user) => {
     const normalized = normalizeAuthUser(user);
     saveLocalJson(AUTH_KEY, normalized, '\uB85C\uADF8\uC778 \uC815\uBCF4', { quietSuccess: true });
@@ -92,5 +109,5 @@ export function createAuthAccountActions({
     setWorkspaceOpen(true);
   };
 
-  return { acceptAuth, acceptInviteAuth, updateAccountProfile };
+  return { acceptAuth, acceptInviteAuth, logout, updateAccountProfile };
 }
