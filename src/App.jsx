@@ -1,4 +1,4 @@
-﻿import React, { Component, Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Component, Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import {
   CheckCircle2,
   Eye,
@@ -1267,7 +1267,7 @@ function App() {
       {showStartModeOverlay && (
         <LazyChunkBoundary resetKey="start-mode">
           <Suspense fallback={<LazyPanelFallback />}>
-            <StartModeOverlay onManual={() => setCreateOpen(true)} onAi={() => setCreateOpen(true)} onTemplate={() => setCreateOpen(true)} onClose={() => setCreateOpen(true)} templates={templateChoices} />
+            <StartModeOverlay onManual={() => setCreateOpen(true)} onAi={() => setCreateOpen(true)} onTemplate={() => setCreateOpen(true)} onClose={() => { saveLocalJson(START_MODE_KEY, 'manual', 'start mode', { quietSuccess: true }); setStartMode('manual'); setCreateOpen(false); }} templates={templateChoices} />
           </Suspense>
         </LazyChunkBoundary>
       )}
