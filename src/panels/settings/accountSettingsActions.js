@@ -30,7 +30,7 @@ export function createAccountSettingsActions({
         name: profileDraft.name,
         phone: normalizeAccountPhone(profileDraft.phone),
       });
-      setNotice('?? ??? ???????.');
+      setNotice('계정 정보를 저장했습니다.');
     } catch (err) {
       setError(authAccountErrorMessage(err));
     } finally {
@@ -40,14 +40,14 @@ export function createAccountSettingsActions({
 
   const sendPasswordCode = async () => {
     if (!email) {
-      setError('?? ???? ??? ? ????.');
+      setError('계정 이메일을 확인할 수 없습니다.');
       return;
     }
     setVerifying(true);
     resetMessage();
     try {
       const verification = await requestEmailVerification(email, 'password-reset');
-      setNotice(verification?.token ? '?? ??? ???: ' + verification.token : '?? ??? ?????.');
+      setNotice(verification?.token ? '개발용 인증 코드: ' + verification.token : '인증 코드를 전송했습니다.');
     } catch (err) {
       setError(authAccountErrorMessage(err));
     } finally {
@@ -58,19 +58,19 @@ export function createAccountSettingsActions({
   const changePassword = async (event) => {
     event.preventDefault();
     if (!email) {
-      setError('?? ???? ??? ? ????.');
+      setError('계정 이메일을 확인할 수 없습니다.');
       return;
     }
     if (!passwordDraft.code.trim()) {
-      setError('?? ??? ?????.');
+      setError('인증 코드를 입력해주세요.');
       return;
     }
     if (!isValidAccountPassword(passwordDraft.password)) {
-      setError('????? ??? ??? ??? 6?? ????? ???.');
+      setError('비밀번호는 영문과 숫자를 포함해 6자 이상 입력해주세요.');
       return;
     }
     if (passwordDraft.password !== passwordDraft.password2) {
-      setError('? ????? ?? ????.');
+      setError('새 비밀번호가 서로 다릅니다.');
       return;
     }
     setChanging(true);
@@ -79,7 +79,7 @@ export function createAccountSettingsActions({
       await confirmEmailVerification({ email, token: passwordDraft.code.trim() });
       await changeAuthPassword({ email, password: passwordDraft.password, token: passwordDraft.code.trim() });
       setPasswordDraft({ code: '', password: '', password2: '' });
-      setNotice('????? ???????. ?? ????? ? ????? ?????.');
+      setNotice('비밀번호를 변경했습니다. 새 비밀번호로 다시 로그인해주세요.');
     } catch (err) {
       setError(authAccountErrorMessage(err));
     } finally {

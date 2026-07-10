@@ -7,7 +7,7 @@ export default function AccountSettingsSection({ authUser, onAccountUpdate, onLo
   const account = useAccountSettings({ authUser, onAccountUpdate });
 
   if (!account.authUser) {
-    return <p className="account-settings-empty">???? ??? ????.</p>;
+    return <p className="account-settings-empty">로그인된 계정 정보가 없습니다.</p>;
   }
 
   return (
