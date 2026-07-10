@@ -187,6 +187,7 @@ const pageIntegrationMutations = await readFile('src/runtime/pageIntegrationMuta
 const saveStatusActions = await readFile('src/runtime/saveStatusActions.js', 'utf8');
 const duplicatePageAction = await readFile('src/runtime/createDuplicatePageAction.js', 'utf8');
 const publicPageRuntimeActions = await readFile('src/runtime/publicPageRuntimeActions.js', 'utf8');
+const leadCaptureActions = await readFile('src/runtime/leadCaptureActions.js', 'utf8');
 const persistStyleSaveAction = await readFile('src/runtime/usePersistStyleSaveAction.js', 'utf8');
 const previewTarget = await readFile('src/runtime/previewTarget.js', 'utf8');
 const workspaceRouteGuards = await readFile('src/runtime/workspaceRouteGuards.js', 'utf8');
@@ -215,7 +216,9 @@ assert(!/import\s+\{?\s*LANDING_TEMPLATES\b/.test(app), 'landing templates must 
 assert(publicPageRuntimeActions.includes('export function authForTargetPage') && publicPageRuntimeActions.includes('publicLandingSlug && targetPage?.projectId ? null : authUser'), 'public landing lead/event writes must not use the signed-in builder project context');
 assert(publicPageRuntimeActions.includes('persistEvent(event, targetPage, authForPage(targetPage))'), 'public landing event writes should use the target page project context');
 assert(app.includes('createPageEventTracker({') && app.includes('publicLandingSlug,') && app.includes('persistEvent,'), 'App must delegate public page event tracking context');
-assert(app.includes('const targetAuthUser = authForTargetPage(targetPage)') && app.includes('persistLead(savedLead, targetPage, targetAuthUser)'), 'public landing lead writes should use the target page project context');
+assert(leadCaptureActions.includes('const targetAuthUser = authForTargetPage(targetPage)') && leadCaptureActions.includes('persistLead(savedLead, targetPage, targetAuthUser)'), 'public landing lead writes should use the target page project context');
+assert(leadCaptureActions.includes('export function createLeadCaptureAction') && leadCaptureActions.includes('trackForPage(targetPage') && leadCaptureActions.includes('syncLeadPatch(savedLead.id'), 'lead capture writes and patch sync must stay centralized');
+assert(app.includes('const addLeadForPage = createLeadCaptureAction({') && app.includes('runLeadDeliveryForPage,') && app.includes('authForTargetPage,'), 'App must delegate lead capture actions without losing public page context');
 assert(publicPageRuntimeActions.includes('export function createLeadPatchSync') && publicPageRuntimeActions.includes('__expectedUpdatedAt') && publicPageRuntimeActions.includes('isLeadConflictError(error)'), 'lead patch sync conflict handling must stay centralized');
 assert(/<PreviewRenderer[\s\S]*?page=\{publicPage\}[\s\S]*?addLead=\{\(lead\) => addLeadForPage\(publicPage, lead\)\}[\s\S]*?track=\{\(event\) => trackForPage\(publicPage, event\)\}/.test(app), 'public landing renderer must submit leads and stats events against the public page context');
 assert(!/import\s+(?:InboxPanel|StatsPanel|StylePanel|SettingsPanel|TemplatesPanel|AdminPanel|AiPanel)\b/.test(app), 'heavy panels and AI panel must not be statically imported into App');
