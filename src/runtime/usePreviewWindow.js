@@ -9,9 +9,9 @@ export function usePreviewWindow({ previewUrl, setPreviewCopyIssue, showToast })
     }
     setPreviewCopyIssue({
       url: previewUrl,
-      message: '브라우저에서 새 창 열기를 차단했습니다. 아래 주소를 직접 열어주세요.',
+      message: 'The browser blocked the preview window. Open the URL below directly.',
     });
-    showToast('새 창 열기가 차단됐습니다. 주소를 직접 열어주세요.', 'warning');
+    showToast('The preview window was blocked. Open the URL directly.', 'warning');
   };
 
   return { openPreview };

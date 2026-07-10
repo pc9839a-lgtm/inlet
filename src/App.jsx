@@ -25,6 +25,7 @@ import { useInboxLeadSync } from './runtime/useInboxLeadSync.js';
 import { useLeadDeliveryRetryActions } from './runtime/useLeadDeliveryRetryActions.js';
 import { useLeadMutationActions } from './runtime/useLeadMutationActions.js';
 import { useLandingTemplates } from './runtime/useLandingTemplates.js';
+import { createPreviewPage, previewUrlForPage } from './runtime/previewTarget.js';
 import { usePreviewWindow } from './runtime/usePreviewWindow.js';
 import { useStatsSummarySync } from './runtime/useStatsSummarySync.js';
 import { useWorkspaceShellActions } from './runtime/useWorkspaceShellActions.js';
@@ -50,7 +51,7 @@ import { generateStandaloneFormHtml } from './lib/formEmbed.js';
 import { persistEvent } from './lib/eventRepository.js';
 import { sendLeadIntegrations } from './lib/leadIntegrations.js';
 import { deliverServerLead, persistLead, updateServerLead } from './lib/leadRepository.js';
-import { isOwnerAdminModeEnabled, isServerLeadMode, isServerPageMode, publicLandingUrl } from './config/runtimeConfig.js';
+import { isOwnerAdminModeEnabled, isServerLeadMode, isServerPageMode } from './config/runtimeConfig.js';
 import { currentMonthValue } from './lib/monthRange.js';
 import { fetchPublicServerPage, fetchServerPage } from './lib/pageRepository.js';
 import { canUsePageDuplication, createDuplicatedPage } from './lib/pageDuplication.js';
@@ -94,11 +95,6 @@ function isProtectedWorkspacePath(path = '') {
   return /^\/(?:dashboard|app|account)(?:\/|$)/.test(pathname);
 }
 
-function localPreviewUrl(slug = '') {
-  const safeSlug = String(slug || '').replace(/^\/+/, '');
-  if (typeof location === 'undefined') return `/${safeSlug}`;
-  return `${location.origin}/${safeSlug}`;
-}
 
 function replaceLocationTab(nextTab) {
   if (typeof location === 'undefined' || typeof history === 'undefined') return;
@@ -566,14 +562,12 @@ function App() {
   const canWriteTabKey = (key) => canWriteTab(accessMode, page, authUser, key);
   const canWriteCurrentTab = canWriteTabKey(tab);
   const mapSiteId = useMemo(() => projectContext(page, authUser).projectId, [page.slug, page.projectId, authUser]);
-  const previewPage = useMemo(() => {
-    const nextPage = {
-      ...page,
-      theme: stylePreviewTheme ? { ...page.theme, ...stylePreviewTheme } : page.theme,
-      blocks: stylePreviewBlocks || page.blocks,
-    };
-    return { ...nextPage, mapSiteId };
-  }, [page, stylePreviewTheme, stylePreviewBlocks, mapSiteId]);
+  const previewPage = useMemo(() => createPreviewPage({
+    page,
+    stylePreviewTheme,
+    stylePreviewBlocks,
+    mapSiteId,
+  }), [page, stylePreviewTheme, stylePreviewBlocks, mapSiteId]);
   const inviteToken = useMemo(() => {
     const match = routePath.match(/^\/invite\/([^/?#]+)/);
     return match ? decodeURIComponent(match[1]) : '';
@@ -1198,7 +1192,7 @@ function App() {
     if (!confirmLeaveStyleChanges(run)) return;
     run();
   };
-  const previewUrl = isServerPageMode() ? publicLandingUrl(page.slug || '') : localPreviewUrl(page.slug || '');
+  const previewUrl = previewUrlForPage(page);
   const { templateChoices, loadTemplateModule } = useLandingTemplates({
     enabled: canUseBuilder,
     createOpen,
