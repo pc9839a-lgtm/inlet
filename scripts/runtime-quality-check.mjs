@@ -184,6 +184,7 @@ const persistStyleSaveAction = await readFile('src/runtime/usePersistStyleSaveAc
 const previewTarget = await readFile('src/runtime/previewTarget.js', 'utf8');
 const workspaceRouteGuards = await readFile('src/runtime/workspaceRouteGuards.js', 'utf8');
 const workspaceTabLocation = await readFile('src/runtime/workspaceTabLocation.js', 'utf8');
+const workspaceTabFallback = await readFile('src/runtime/useWorkspaceTabFallback.js', 'utf8');
 const pageSaveFeedback = await readFile('src/runtime/pageSaveFeedback.js', 'utf8');
 const pagePersistFlow = await readFile('src/runtime/pagePersistFlow.js', 'utf8');
 const lazyRuntimeBoundary = await readFile('src/runtime/LazyRuntimeBoundary.jsx', 'utf8');
@@ -238,7 +239,8 @@ assert(app.includes('canManageAdmin && !startMode') && workspaceLeftPanel.includ
 assert(app.includes('adminRoute') && app.includes("return /^\\/(?:admin|[^/?#]+\\/admin)\\/?$/.test(routePath)") && app.includes('<AdminPanel'), 'admin panel must stay on a private /admin route');
 assert(app.includes('const canWriteTabKey = (key) => canWriteTab(accessMode, page, authUser, key)') && app.includes('blockWrite'), 'App must enforce manager write permissions before mutation');
 assert(app.includes("selectedBlockId={canUseBuilder ? openId : ''}") && app.includes('onSelectPreviewBlock={canUseBuilder ? selectPreviewBlock : undefined}') && workspacePreviewPane.includes('selectedBlockId={selectedBlockId}') && workspacePreviewPane.includes('onSelectBlock={onSelectPreviewBlock}'), 'client admin preview must not route into block editing');
-assert(app.includes('if (!authUser) return;') && app.includes('if (!routeUsesWorkspaceTabs) return;'), 'workspace tab redirect must not run before login or on public routes');
+assert(workspaceTabFallback.includes('if (!authUser) return;') && workspaceTabFallback.includes('if (!routeUsesWorkspaceTabs) return;') && workspaceTabFallback.includes("const nextTab = allowedTabs[0] || 'inbox'") && workspaceTabFallback.includes('replaceLocationTab(tabKeys, nextTab)'), 'workspace tab redirect must not run before login or on public routes');
+assert(app.includes('useWorkspaceTabFallback({') && app.includes('tabKeys: TAB_KEYS'), 'App must delegate workspace tab fallback routing to the shared hook');
 assert(app.includes('if (mobileBlocked && authUser && workspaceOpen)') && app.includes('모바일에서는 회원가입, 로그인, 미리보기와 접수 확인을 사용할 수 있습니다.'), 'mobile block screen must only hide the authenticated editor workspace');
 assert(
   (app.includes("['topnav', 'bottombar', 'footer'].includes(target?.type)") && app.includes("setOpenId('');") && app.indexOf("['topnav', 'bottombar', 'footer'].includes(target?.type)") < app.indexOf('document.getElementById(`editor-block-${id}`)'))

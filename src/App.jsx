@@ -31,6 +31,7 @@ import { isProtectedWorkspacePath, routeUsesWorkspaceTabs as shouldUseWorkspaceT
 import { hasTabDeepLink, replaceLocationTab, tabFromLocation } from './runtime/workspaceTabLocation.js';
 import { useStatsSummarySync } from './runtime/useStatsSummarySync.js';
 import { useWorkspaceShellActions } from './runtime/useWorkspaceShellActions.js';
+import { useWorkspaceTabFallback } from './runtime/useWorkspaceTabFallback.js';
 import { useWorkspaceEditorEffects } from './runtime/useWorkspaceEditorEffects.js';
 import WorkspaceEditorScreen from './screens/WorkspaceEditorScreen.jsx';
 import { BRAND_KO, BRAND_NAME } from './config/brand.js';
@@ -800,15 +801,15 @@ function App() {
     saveLocalJson(DASHBOARD_KEY, { open: true }, '작업공간 상태', { quietSuccess: true });
     setWorkspaceOpen(true);
   }, [authUser, canUseBuilder, workspaceOpen]);
-  useEffect(() => {
-    if (!authUser) return;
-    if (!routeUsesWorkspaceTabs) return;
-    if (allowedTabs.includes(tab)) return;
-    clearPendingStyle();
-    const nextTab = allowedTabs[0] || 'inbox';
-    replaceLocationTab(TAB_KEYS, nextTab);
-    setTab(nextTab);
-  }, [allowedTabs, authUser, routeUsesWorkspaceTabs, tab]);
+  useWorkspaceTabFallback({
+    authUser,
+    routeUsesWorkspaceTabs,
+    allowedTabs,
+    tab,
+    tabKeys: TAB_KEYS,
+    clearPendingStyle,
+    setTab,
+  });
   useEffect(() => {
     if (!hasPendingStyle) return undefined;
     const handleBeforeUnload = (event) => {
