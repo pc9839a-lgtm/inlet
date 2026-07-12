@@ -1,6 +1,7 @@
 import React from 'react';
 import { WorkspaceLeftPanel } from './workspace/WorkspaceLeftPanel.jsx';
 import { WorkspacePreviewPane } from './workspace/WorkspacePreviewPane.jsx';
+import '../styles/editor-workspace-v2.css';
 
 export default function WorkspaceEditorScreen({
   canUseBuilder,

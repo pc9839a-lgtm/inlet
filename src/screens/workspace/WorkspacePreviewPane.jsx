@@ -1,6 +1,5 @@
-import React, { Suspense } from 'react';
-import { LazyChunkBoundary } from '../../runtime/LazyRuntimeBoundary.jsx';
-import { PreviewRenderer } from './workspaceLazySurfaces.jsx';
+import React from 'react';
+import PreviewRenderer from '../../preview/LandingRenderer.jsx';
 
 export function WorkspacePreviewPane({
   page,
@@ -23,18 +22,14 @@ export function WorkspacePreviewPane({
           <a className="preview-link" href={previewUrl} target="_blank" rel="noreferrer">{previewUrl}</a>
         </div>
         <div className="phone-frame">
-          <LazyChunkBoundary resetKey="preview" variant="preview">
-            <Suspense fallback={<div className="muted small">미리보기를 불러오는 중입니다.</div>}>
-              <PreviewRenderer
-                page={previewPage}
-                leads={leads}
-                addLead={addLead}
-                track={track}
-                selectedBlockId={selectedBlockId}
-                onSelectBlock={onSelectPreviewBlock}
-              />
-            </Suspense>
-          </LazyChunkBoundary>
+          <PreviewRenderer
+            page={previewPage}
+            leads={leads}
+            addLead={addLead}
+            track={track}
+            selectedBlockId={selectedBlockId}
+            onSelectBlock={onSelectPreviewBlock}
+          />
         </div>
       </div>
     </main>

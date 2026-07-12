@@ -49,6 +49,7 @@ import { useWorkspaceTabFallback } from './runtime/useWorkspaceTabFallback.js';
 import { useWorkspaceEditorEffects } from './runtime/useWorkspaceEditorEffects.js';
 import { useMobileWorkspaceMode } from './runtime/useMobileWorkspaceMode.js';
 import WorkspaceEditorScreen from './screens/WorkspaceEditorScreen.jsx';
+import PreviewRenderer from './preview/LandingRenderer.jsx';
 import { BRAND_KO, BRAND_NAME } from './config/brand.js';
 import { META } from './config/blockMeta.jsx';
 import { AUTH_KEY, DASHBOARD_KEY, EVENTS_KEY, LEADS_KEY, START_MODE_KEY, STORAGE_KEY } from './config/storageKeys.js';
@@ -78,7 +79,6 @@ import { isReservationLead, normalizeLeadItem } from './lib/leadModel.js';
 import { defaultPage, normalize, normalizeIntegrations, normalizePageForSave, uid } from './lib/pageModel.js';
 import { load, save as saveJson, storageErrorMessage } from './lib/storage.js';
 
-const PreviewRenderer = lazy(() => import('./preview/LandingRenderer.jsx'));
 
 const TAB_KEYS = new Set(NAV.map(([key]) => key));
 
