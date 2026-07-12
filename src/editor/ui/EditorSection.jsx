@@ -1,7 +1,7 @@
 import { useId, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 
-export function EditorSection({ id, title, description = '', icon: Icon, defaultOpen = false, tone = 'default', children }) {
+export function EditorSection({ id, title, icon: Icon, defaultOpen = false, tone = 'default', children }) {
   const generatedId = useId();
   const panelId = `editor-section-${id || generatedId}`;
   const [open, setOpen] = useState(defaultOpen);
@@ -22,7 +22,6 @@ export function EditorSection({ id, title, description = '', icon: Icon, default
         )}
         <span className="editor-section-v2-copy">
           <strong>{title}</strong>
-          {description && <small>{description}</small>}
         </span>
         <ChevronDown className="editor-section-v2-chevron" size={18} aria-hidden="true" />
       </button>

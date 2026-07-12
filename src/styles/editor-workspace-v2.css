@@ -311,3 +311,48 @@ html body #root .builder-shell .preview-workspace .phone-frame {
     max-width: 640px !important;
   }
 }
+
+body .builder-shell .edit-layout .block-editor-v2-header {
+  grid-template-columns: 34px minmax(0, 1fr) !important;
+  gap: 9px !important;
+  padding: 10px 12px !important;
+}
+
+body .builder-shell .edit-layout :is(.block-editor-v2-icon, .editor-section-v2-icon) {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 8px !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2-heading strong {
+  font-size: 14px !important;
+  letter-spacing: 0 !important;
+}
+
+body .builder-shell .edit-layout .editor-section-v2-trigger {
+  grid-template-columns: 32px minmax(0, 1fr) 28px !important;
+  min-height: 52px !important;
+  gap: 9px !important;
+  padding: 9px 11px !important;
+}
+
+body .builder-shell .edit-layout .editor-section-v2-copy strong,
+body .builder-shell .edit-layout .editor-control-v2-copy strong {
+  font-size: 13px !important;
+  letter-spacing: 0 !important;
+}
+
+body .builder-shell .edit-layout .editor-section-v2-body {
+  gap: 12px !important;
+  padding: 12px !important;
+}
+
+body .builder-shell .edit-layout :is(.editor-toggle-row-v2, .editor-segmented-v2) {
+  gap: 8px !important;
+  padding: 10px !important;
+  border-radius: 8px !important;
+}
+
+body .builder-shell .edit-layout .editor-field-v2 {
+  gap: 5px !important;
+}
