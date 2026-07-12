@@ -534,3 +534,125 @@ body .builder-shell .settings-panel :is(.settings-section-actions, .account-sett
   border-radius: 8px !important;
   font-size: 12px !important;
 }
+/* Settings geometry lock */
+html body #root .builder-shell .settings-panel :is(.settings-section, .settings-advanced-box) {
+  display: block !important;
+  min-height: 0 !important;
+  height: auto !important;
+  align-content: initial !important;
+}
+
+html body #root .builder-shell .settings-panel :is(.settings-section:not(.open), .settings-advanced-box:not(.open)) {
+  min-height: 56px !important;
+  height: 56px !important;
+  max-height: 56px !important;
+}
+
+html body #root .builder-shell .settings-panel :is(.settings-section-head, .settings-advanced-head) {
+  box-sizing: border-box !important;
+  min-height: 54px !important;
+  height: 54px !important;
+  max-height: 54px !important;
+  padding: 0 12px !important;
+  align-items: center !important;
+  place-items: center stretch !important;
+}
+
+html body #root .builder-shell .settings-panel :is(.settings-section-copy, .settings-advanced-head > span) {
+  align-self: center !important;
+  min-height: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+html body #root .builder-shell .settings-panel .settings-section-title-row {
+  align-self: center !important;
+  min-height: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+html body #root .builder-shell .settings-panel :is(.settings-section-state, .settings-advanced-head em) {
+  align-self: center !important;
+  justify-self: end !important;
+  margin: 0 !important;
+}
+
+html body #root .builder-shell .settings-panel .settings-section-body {
+  min-height: 0 !important;
+  padding: 12px !important;
+  gap: 10px !important;
+}
+
+html body #root .builder-shell .settings-panel .settings-grid {
+  align-items: center !important;
+  gap: 10px 12px !important;
+}
+
+html body #root .builder-shell .settings-panel .settings-grid > .field {
+  grid-template-columns: 76px minmax(0, 1fr) !important;
+  align-items: center !important;
+  align-content: center !important;
+  min-height: 42px !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+html body #root .builder-shell .settings-panel .settings-grid > .field > span {
+  align-self: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell .settings-panel .settings-grid > .field > div {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+html body #root .builder-shell .settings-panel .settings-grid .prefix-field {
+  position: static !important;
+  display: grid !important;
+  grid-template-columns: 18px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 6px !important;
+  min-height: 42px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+html body #root .builder-shell .settings-panel .settings-grid .prefix-field > em {
+  position: static !important;
+  inset: auto !important;
+  display: block !important;
+  width: 18px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: var(--workspace-ink) !important;
+  font-size: 14px !important;
+  font-style: normal !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  transform: none !important;
+}
+
+html body #root .builder-shell .settings-panel .settings-grid .prefix-field > input {
+  grid-column: 2 !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+html body #root .builder-shell .settings-panel .settings-section-actions {
+  min-height: 38px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
