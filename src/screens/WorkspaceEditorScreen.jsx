@@ -4,6 +4,7 @@ import { WorkspacePreviewPane } from './workspace/WorkspacePreviewPane.jsx';
 
 export default function WorkspaceEditorScreen({
   canUseBuilder,
+  mobileOperationsOnly,
   canManageAdmin,
   clientAdminMode,
   startMode,
@@ -40,10 +41,11 @@ export default function WorkspaceEditorScreen({
 }) {
 
   return (
-    <div className={`builder-shell${canUseBuilder && startMode === 'template' ? ' template-intro-shell' : ''}`}>
+    <div className={`builder-shell${canUseBuilder && startMode === 'template' && !mobileOperationsOnly ? ' template-intro-shell' : ''}${mobileOperationsOnly ? ' mobile-operations-shell' : ''}`}>
 
       <WorkspaceLeftPanel
         canUseBuilder={canUseBuilder}
+        mobileOperationsOnly={mobileOperationsOnly}
         canManageAdmin={canManageAdmin}
         clientAdminMode={clientAdminMode}
         startMode={startMode}
@@ -67,7 +69,7 @@ export default function WorkspaceEditorScreen({
         settingsPanelProps={settingsPanelProps}
       />
 
-      <WorkspacePreviewPane
+      {!mobileOperationsOnly && <WorkspacePreviewPane
         page={page}
         previewUrl={previewUrl}
         previewPage={previewPage}
@@ -76,7 +78,7 @@ export default function WorkspaceEditorScreen({
         track={track}
         selectedBlockId={selectedBlockId}
         onSelectPreviewBlock={onSelectPreviewBlock}
-      />
+      />}
     </div>
   );
 }

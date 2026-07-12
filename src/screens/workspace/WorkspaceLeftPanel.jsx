@@ -3,11 +3,13 @@ import PanelHeader from '../../builder/PanelHeader.jsx';
 import { LazyChunkBoundary, LazyPanelFallback } from '../../runtime/LazyRuntimeBoundary.jsx';
 import { TemplatesPanel } from './workspaceLazySurfaces.jsx';
 import { ClientAdminHeader } from './ClientAdminHeader.jsx';
+import { MobileOperationsHeader } from './MobileOperationsHeader.jsx';
 import { WorkspaceActivePanel } from './WorkspaceActivePanel.jsx';
 import { WorkspaceTabs } from './WorkspaceTabs.jsx';
 
 export function WorkspaceLeftPanel({
   canUseBuilder,
+  mobileOperationsOnly,
   canManageAdmin,
   clientAdminMode,
   startMode,
@@ -30,7 +32,7 @@ export function WorkspaceLeftPanel({
   statsPanelProps,
   settingsPanelProps,
 }) {
-  const showTemplateIntro = canManageAdmin && startMode === 'template';
+  const showTemplateIntro = !mobileOperationsOnly && canManageAdmin && startMode === 'template';
 
   return (
     <aside className="left-workspace">
@@ -43,7 +45,9 @@ export function WorkspaceLeftPanel({
           </LazyChunkBoundary>
         ) : (
           <>
-            {clientAdminMode ? (
+            {mobileOperationsOnly ? (
+              <MobileOperationsHeader page={page} />
+            ) : clientAdminMode ? (
               <ClientAdminHeader page={page} onDashboard={onDashboard} onPreview={onPreview} previewUrl={previewUrl} />
             ) : (
               <PanelHeader
@@ -63,6 +67,7 @@ export function WorkspaceLeftPanel({
 
             <WorkspaceActivePanel
               canUseBuilder={canUseBuilder}
+              mobileOperationsOnly={mobileOperationsOnly}
               tab={tab}
               editPanelProps={editPanelProps}
               stylePanelProps={stylePanelProps}

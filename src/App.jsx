@@ -4,7 +4,6 @@ import {
   Eye,
   EyeOff,
   RotateCcw,
-  Smartphone,
   Upload,
 } from 'lucide-react';
 import PanelHeader from './builder/PanelHeader.jsx';
@@ -48,6 +47,7 @@ import { useWorkspaceShellActions } from './runtime/useWorkspaceShellActions.js'
 import { useWorkspaceAutoOpen } from './runtime/useWorkspaceAutoOpen.js';
 import { useWorkspaceTabFallback } from './runtime/useWorkspaceTabFallback.js';
 import { useWorkspaceEditorEffects } from './runtime/useWorkspaceEditorEffects.js';
+import { useMobileWorkspaceMode } from './runtime/useMobileWorkspaceMode.js';
 import WorkspaceEditorScreen from './screens/WorkspaceEditorScreen.jsx';
 import { BRAND_KO, BRAND_NAME } from './config/brand.js';
 import { META } from './config/blockMeta.jsx';
@@ -525,7 +525,7 @@ function App() {
   const [publicPageLoaded, setPublicPageLoaded] = useState(false);
   const [publicPageError, setPublicPageError] = useState('');
   const [routePath, setRoutePath] = useState(() => (typeof location === 'undefined' ? '/' : location.pathname));
-  const mobileBlocked = useMemo(() => typeof window !== 'undefined' && window.innerWidth < 900, []);
+  const mobileWorkspace = useMobileWorkspaceMode();
   const tabDeepLink = useMemo(() => hasTabDeepLink(TAB_KEYS), []);  const { handlePageSaveError, useLatestServerPage, keepLocalPageDraft, forceSaveLocalPage } = usePageConflict({
     authUser,
     pageConflict,
@@ -550,7 +550,12 @@ function App() {
   const canManageAdmin = canUseAdminSurface(accessMode);
   const canManageMasterAdmin = isPlatformMasterUser(authUser);
   const clientAdminMode = isClientAdminMode(accessMode);
-  const allowedTabs = useMemo(() => tabsForAccessMode(accessMode, page, authUser), [accessMode, page, authUser]);
+  const accountAllowedTabs = useMemo(() => tabsForAccessMode(accessMode, page, authUser), [accessMode, page, authUser]);
+  const allowedTabs = useMemo(
+    () => mobileWorkspace ? accountAllowedTabs.filter((key) => key === 'inbox' || key === 'stats') : accountAllowedTabs,
+    [accountAllowedTabs, mobileWorkspace],
+  );
+  const activeWorkspaceTab = mobileWorkspace && !allowedTabs.includes(tab) ? (allowedTabs[0] || '') : tab;
   const canWriteTabKey = (key) => canWriteTab(accessMode, page, authUser, key);
   const canWriteCurrentTab = canWriteTabKey(tab);
   const mapSiteId = useMemo(() => projectContext(page, authUser).projectId, [page.slug, page.projectId, authUser]);
@@ -725,7 +730,7 @@ function App() {
   }, [createOpen, workspaceOpen]);
   useWorkspaceAutoOpen({
     authUser,
-    canUseBuilder,
+    canUseBuilder: canUseBuilder && !mobileWorkspace,
     workspaceOpen,
     persistOpenState: (open) => saveLocalJson(DASHBOARD_KEY, { open }, '작업공간 상태', { quietSuccess: true }),
     setWorkspaceOpen,
@@ -1086,8 +1091,6 @@ function App() {
     );
   }
 
-  if (mobileBlocked && authUser && workspaceOpen) return withWayziFooter(<div className="mobile-block"><div><Smartphone size={42}/><h1>편집은 PC에서 이용해주세요.</h1><p>모바일에서는 회원가입, 로그인, 미리보기와 접수 확인을 사용할 수 있습니다.</p></div></div>);
-
   if (authUser && inviteToken) {
     return withWayziFooter(
       <Suspense fallback={<LazyPanelFallback />}>
@@ -1161,7 +1164,7 @@ function App() {
     );
   }
 
-  if (!workspaceOpen && canUseBuilder) {
+  if (!workspaceOpen && canUseBuilder && !mobileWorkspace) {
     return withWayziFooter(
       <>
         <LazyChunkBoundary resetKey="dashboard">
@@ -1265,13 +1268,14 @@ function App() {
     <>
       <WorkspaceEditorScreen
         canUseBuilder={canUseBuilder}
+        mobileOperationsOnly={mobileWorkspace}
         canManageAdmin={canManageAdmin}
         clientAdminMode={clientAdminMode}
         startMode={startMode}
         createOpen={createOpen}
         onCloseCreate={() => setCreateOpen(false)}
         page={page}
-        tab={tab}
+        tab={activeWorkspaceTab}
         saved={saved}
         saveStatus={saveStatus}
         onSave={saveNow}

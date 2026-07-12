@@ -193,3 +193,124 @@ body:has(.builder-shell),
     max-height: none !important;
   }
 }
+@media (max-width: 899px) {
+  body:has(.mobile-operations-shell),
+  #root:has(.mobile-operations-shell) {
+    height: auto !important;
+    min-height: 100dvh !important;
+    overflow: auto !important;
+  }
+
+  .builder-shell.mobile-operations-shell {
+    display: block !important;
+    width: 100% !important;
+    min-height: 100dvh !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .mobile-operations-shell .left-workspace {
+    width: 100% !important;
+    min-height: 100dvh !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    border-right: 0 !important;
+  }
+
+  .mobile-operations-shell .work-panel {
+    width: 100% !important;
+    max-width: 760px !important;
+    min-height: 100dvh !important;
+    padding: 12px 12px 32px !important;
+  }
+
+  .mobile-operations-header {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+    padding: 16px;
+    border: 1px solid #dbe5f1;
+    border-radius: 18px;
+    background: #fff;
+  }
+
+  .mobile-operations-icon {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 13px;
+    background: #0f172a;
+    color: #fff;
+  }
+
+  .mobile-operations-header p,
+  .mobile-operations-header h1,
+  .mobile-operations-header span {
+    margin: 0;
+    letter-spacing: 0;
+  }
+
+  .mobile-operations-header p {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 850;
+  }
+
+  .mobile-operations-header h1 {
+    margin-top: 2px;
+    color: #0f172a;
+    font-size: 21px;
+    line-height: 1.2;
+  }
+
+  .mobile-operations-header div > span {
+    display: block;
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 750;
+  }
+
+  .mobile-operations-empty {
+    display: grid;
+    gap: 6px;
+    padding: 24px 18px;
+    border: 1px dashed #cbd8e8;
+    border-radius: 18px;
+    background: #f8fafc;
+    text-align: center;
+  }
+
+  .mobile-operations-empty h2,
+  .mobile-operations-empty p {
+    margin: 0;
+    letter-spacing: 0;
+  }
+
+  .mobile-operations-empty h2 {
+    color: #0f172a;
+    font-size: 17px;
+  }
+
+  .mobile-operations-empty p {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 750;
+  }
+
+  .mobile-operations-shell .top-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    margin-bottom: 10px !important;
+    padding: 6px !important;
+    background: rgba(255,255,255,.96) !important;
+    backdrop-filter: blur(12px);
+  }
+}

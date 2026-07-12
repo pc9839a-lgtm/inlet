@@ -10,6 +10,7 @@ import {
 
 export function WorkspaceActivePanel({
   canUseBuilder,
+  mobileOperationsOnly,
   tab,
   editPanelProps,
   stylePanelProps,
@@ -17,16 +18,27 @@ export function WorkspaceActivePanel({
   statsPanelProps,
   settingsPanelProps,
 }) {
+  const canRenderBuilder = canUseBuilder && !mobileOperationsOnly;
+
+  if (mobileOperationsOnly && !['inbox', 'stats'].includes(tab)) {
+    return (
+      <section className="mobile-operations-empty">
+        <h2>모바일 운영 권한이 없습니다.</h2>
+        <p>접수함 또는 통계 읽기 권한이 필요합니다.</p>
+      </section>
+    );
+  }
+
   return (
     <>
-      {canUseBuilder && tab === 'edit' && <EditPanel {...editPanelProps} />}
+      {canRenderBuilder && tab === 'edit' && <EditPanel {...editPanelProps} />}
 
       <LazyChunkBoundary resetKey={tab}>
         <Suspense fallback={<LazyPanelFallback />}>
-          {canUseBuilder && tab === 'style' && <StylePanel {...stylePanelProps} />}
+          {canRenderBuilder && tab === 'style' && <StylePanel {...stylePanelProps} />}
           {tab === 'inbox' && <InboxPanel {...inboxPanelProps} />}
           {tab === 'stats' && <StatsPanel {...statsPanelProps} />}
-          {tab === 'settings' && <SettingsPanel {...settingsPanelProps} />}
+          {!mobileOperationsOnly && tab === 'settings' && <SettingsPanel {...settingsPanelProps} />}
         </Suspense>
       </LazyChunkBoundary>
     </>

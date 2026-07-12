@@ -7,7 +7,8 @@ export function useWorkspaceTabFallback({ authUser, routeUsesWorkspaceTabs, allo
     if (!routeUsesWorkspaceTabs) return;
     if (allowedTabs.includes(tab)) return;
     clearPendingStyle();
-    const nextTab = allowedTabs[0] || 'inbox';
+    const nextTab = allowedTabs[0];
+    if (!nextTab) return;
     replaceLocationTab(tabKeys, nextTab);
     setTab(nextTab);
   }, [allowedTabs, authUser, clearPendingStyle, routeUsesWorkspaceTabs, setTab, tab, tabKeys]);
