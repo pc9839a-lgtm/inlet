@@ -356,3 +356,181 @@ body .builder-shell .edit-layout :is(.editor-toggle-row-v2, .editor-segmented-v2
 body .builder-shell .edit-layout .editor-field-v2 {
   gap: 5px !important;
 }
+/* Settings panel final owner */
+body .builder-shell .settings-panel {
+  gap: 8px !important;
+}
+
+body .builder-shell .settings-panel .settings-compact-head {
+  min-height: 58px !important;
+  padding: 10px 12px !important;
+  gap: 10px !important;
+  border: 1px solid var(--workspace-line) !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell .settings-panel .settings-compact-head > div > span {
+  display: none !important;
+}
+
+body .builder-shell .settings-panel .settings-compact-head strong {
+  font-size: 15px !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0 !important;
+}
+
+body .builder-shell .settings-panel .settings-compact-head em {
+  min-height: 30px !important;
+  padding: 0 10px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+}
+
+body .builder-shell .settings-panel :is(.settings-section, .settings-advanced-box) {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 1px solid var(--workspace-line) !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+body .builder-shell .settings-panel :is(.settings-section-head, .settings-advanced-head) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 52px !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-height: 54px !important;
+  padding: 8px 10px !important;
+  border: 0 !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  text-align: left !important;
+}
+
+body .builder-shell .settings-panel :is(.settings-section-copy, .settings-advanced-head > span) {
+  display: block !important;
+  min-width: 0 !important;
+}
+
+body .builder-shell .settings-panel :is(.settings-section-copy > small, .settings-advanced-head small, .settings-group-label) {
+  display: none !important;
+}
+
+body .builder-shell .settings-panel .settings-section-title-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  min-width: 0 !important;
+}
+
+body .builder-shell .settings-panel :is(.settings-section-title-row h2, .settings-advanced-head strong) {
+  margin: 0 !important;
+  color: var(--workspace-ink) !important;
+  font-size: 14px !important;
+  line-height: 1.25 !important;
+  font-weight: 850 !important;
+  letter-spacing: 0 !important;
+}
+
+body .builder-shell .settings-panel .settings-section-title-row em {
+  min-height: 20px !important;
+  padding: 0 7px !important;
+  border-radius: 999px !important;
+  background: #eef4ff !important;
+  color: var(--workspace-accent) !important;
+  font-size: 10px !important;
+  line-height: 20px !important;
+}
+
+body .builder-shell .settings-panel :is(.settings-section-state, .settings-advanced-head em) {
+  justify-self: end !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 48px !important;
+  min-width: 48px !important;
+  max-width: 48px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 0 !important;
+  border: 1px solid var(--workspace-line) !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  color: var(--workspace-ink) !important;
+  font-size: 11px !important;
+  font-style: normal !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+}
+
+body .builder-shell .settings-panel :is(.settings-section.open .settings-section-state, .settings-advanced-box.open .settings-advanced-head em) {
+  border-color: var(--workspace-ink) !important;
+  background: var(--workspace-ink) !important;
+  color: #fff !important;
+}
+
+body .builder-shell .settings-panel :is(.settings-section-body, .settings-advanced-list) {
+  display: grid !important;
+  gap: 10px !important;
+  padding: 12px !important;
+  border-top: 1px solid var(--workspace-line) !important;
+  background: var(--workspace-soft) !important;
+}
+
+body .builder-shell .settings-panel :is(.settings-grid, .settings-conversion-grid, .account-settings-grid) {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
+body .builder-shell .settings-panel .settings-grid > .field,
+body .builder-shell .settings-panel .account-settings-grid > label {
+  display: grid !important;
+  grid-template-columns: 76px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: 48px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+body .builder-shell .settings-panel .settings-grid > .field > span,
+body .builder-shell .settings-panel .account-settings-grid > label > span {
+  color: var(--workspace-ink) !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0 !important;
+}
+
+body .builder-shell .settings-panel :is(input, select, textarea) {
+  min-height: 42px !important;
+  padding: 9px 11px !important;
+  border: 1px solid var(--workspace-line) !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell .settings-panel :is(.settings-section-actions, .account-settings-actions, .manager-section-tools) {
+  display: flex !important;
+  grid-column: 1 / -1 !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 0 !important;
+}
+
+body .builder-shell .settings-panel :is(.settings-section-actions, .account-settings-actions, .manager-section-tools) button {
+  width: auto !important;
+  min-width: 72px !important;
+  min-height: 38px !important;
+  padding: 0 13px !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+}

@@ -35,7 +35,6 @@ export default function AdvancedSettingsGroup({
         <button type="button" className="settings-advanced-head" aria-expanded={advancedOpen} aria-label={`고급 설정 ${advancedOpen ? '접기' : '열기'}`} onClick={() => setAdvancedOpen(!advancedOpen)}>
           <span>
             <strong>고급 설정</strong>
-            <small>SEO · 추적 · 페이지 복제</small>
           </span>
           <em aria-hidden="true">{advancedOpen ? '접기' : '열기'}</em>
         </button>

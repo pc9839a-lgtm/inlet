@@ -1,7 +1,6 @@
-﻿export default function SettingsSection({
+export default function SettingsSection({
   id,
   title,
-  description = '',
   badge = '',
   openSection,
   setOpenSection,
@@ -28,7 +27,6 @@
             <h2>{title}</h2>
             {badge && <em>{badge}</em>}
           </span>
-          {description && <small>{description}</small>}
         </span>
         <span className="settings-section-state" aria-hidden="true">{stateLabel}</span>
       </button>
