@@ -656,3 +656,42 @@ html body #root .builder-shell .settings-panel .settings-section-actions {
   margin: 0 !important;
   padding: 0 !important;
 }
+/* Settings action rail lock */
+html body #root .builder-shell .settings-panel :is(.settings-section, .settings-advanced-box) {
+  position: relative !important;
+}
+
+html body #root .builder-shell .settings-panel :is(.settings-section-head, .settings-advanced-head) {
+  position: relative !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+  padding: 0 72px 0 12px !important;
+}
+
+html body #root .builder-shell .settings-panel :is(.settings-section-copy, .settings-advanced-head > span) {
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  min-height: 54px !important;
+}
+
+html body #root .builder-shell .settings-panel :is(.settings-section-state, .settings-advanced-head em) {
+  position: absolute !important;
+  top: 11px !important;
+  right: 12px !important;
+  left: auto !important;
+  bottom: auto !important;
+  width: 48px !important;
+  min-width: 48px !important;
+  max-width: 48px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  margin: 0 !important;
+}
+
+html body #root .builder-shell .settings-panel .settings-section-title-row {
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+}
