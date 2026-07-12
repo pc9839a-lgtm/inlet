@@ -1,11 +1,14 @@
-import { Danger, Field } from '../controls.jsx';
+import { EditorField } from '../ui/index.js';
 
-export default function FaqItemFields({ item, onChange, onRemove }) {
+export default function FaqItemFields({ item, onChange }) {
   return (
     <>
-      <Field label="질문" value={item.q} onChange={(v) => onChange({ q: v })} />
-      <Field label="답변" textarea value={item.a} onChange={(v) => onChange({ a: v })} />
-      <Danger onClick={onRemove} />
+      <EditorField label="질문">
+        <input value={item.q || ''} onChange={(event) => onChange({ q: event.target.value })} />
+      </EditorField>
+      <EditorField label="답변">
+        <textarea value={item.a || ''} onChange={(event) => onChange({ a: event.target.value })} />
+      </EditorField>
     </>
   );
 }

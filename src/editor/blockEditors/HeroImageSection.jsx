@@ -1,35 +1,37 @@
-﻿import { Choice, ImageInput, Step } from '../controls.jsx';
+import { ImageInput } from '../controls.jsx';
+import { SegmentedControl } from '../ui/index.js';
 
 export default function HeroImageSection({ s, set, Range }) {
   const mode = s.imageMode === 'full' ? 'full' : 'top';
 
   return (
-    <Step title="이미지" icon="2" open>
-      <Choice
-        label="표시"
+    <>
+      <SegmentedControl
+        label="이미지 배치"
+        description="일반은 이미지와 문구를 분리하고, 전체 이미지는 배경처럼 사용합니다."
         value={mode}
-        onChange={(v) => set({ imageMode: v, imageFit: v === 'full' ? 'cover' : 'contain' })}
+        onChange={(value) => set({ imageMode: value, imageFit: value === 'full' ? 'cover' : 'contain' })}
         options={[
-          ['top', '일반'],
-          ['full', '전체 이미지'],
+          { value: 'top', label: '일반' },
+          { value: 'full', label: '전체 이미지' },
         ]}
       />
-      <ImageInput label="히어로 이미지" value={s.image} onChange={(v) => set({ image: v })} />
+      <ImageInput label="히어로 이미지" value={s.image} onChange={(value) => set({ image: value })} />
       {mode === 'full' && (
-        <Choice
-          label="확장"
+        <SegmentedControl
+          label="이미지 확장"
           value={s.heroBleed || 'content'}
-          onChange={(v) => set({ heroBleed: v, imageFit: 'cover' })}
+          onChange={(value) => set({ heroBleed: value, imageFit: 'cover' })}
           options={[
-            ['content', '기본'],
-            ['page', '배경까지'],
+            { value: 'content', label: '콘텐츠 영역' },
+            { value: 'page', label: '페이지 배경까지' },
           ]}
         />
       )}
-      <Range label="이미지 높이" value={s.imageHeightPx ?? 320} min={180} max={720} onChange={(v) => set({ imageHeightPx: Number(v) })} />
+      <Range label="이미지 높이" value={s.imageHeightPx ?? 320} min={180} max={720} onChange={(value) => set({ imageHeightPx: Number(value) })} />
       {mode === 'full' && (
-        <Range label="오버레이" value={s.overlayOpacity ?? 38} min={0} max={85} onChange={(v) => set({ overlay: true, overlayOpacity: Number(v) })} />
+        <Range label="오버레이" value={s.overlayOpacity ?? 38} min={0} max={85} onChange={(value) => set({ overlay: true, overlayOpacity: Number(value) })} />
       )}
-    </Step>
+    </>
   );
 }

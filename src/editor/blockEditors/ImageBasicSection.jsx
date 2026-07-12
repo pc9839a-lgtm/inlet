@@ -1,47 +1,42 @@
-import { Choice, ImageInput, Step } from '../controls.jsx';
-import ImageDisplayControls from './ImageDisplayControls.jsx';
+import { ImageInput } from '../controls.jsx';
+import { SegmentedControl } from '../ui/index.js';
 import ImageGalleryEditor from './ImageGalleryEditor.jsx';
 import { StoredImageCleanup } from './StoredImageCleanup.jsx';
 
 export default function ImageBasicSection({
   s,
   set,
-  block,
   gallery,
-  display,
-  editSrc,
   storageSummary,
-  cropOpen,
-  setCropOpen,
   updateGallery,
   removeGallery,
   updateSingleImage,
-  changeDisplay,
 }) {
+  const mode = s.mode === 'gallery' ? 'gallery' : 'single';
+
   return (
-    <Step title="기본" icon="1" open>
-      <Choice label="표시" value={s.mode} onChange={(value) => set({ mode: value })} options={[["single", "단일"], ["gallery", "갤러리"]]} />
+    <>
+      <SegmentedControl
+        label="이미지 구성"
+        description="한 장을 크게 표시하거나 여러 장을 갤러리로 보여줍니다."
+        value={mode}
+        onChange={(value) => set({ mode: value })}
+        options={[
+          { value: 'single', label: '단일 이미지' },
+          { value: 'gallery', label: '갤러리' },
+        ]}
+      />
       <StoredImageCleanup
         summary={storageSummary}
-        mode={s.mode}
+        mode={mode}
         onRemoveSingle={() => updateSingleImage('')}
         onRemoveGallery={removeGallery}
       />
-      {s.mode === 'gallery' ? (
+      {mode === 'gallery' ? (
         <ImageGalleryEditor gallery={gallery} set={set} updateGallery={updateGallery} removeGallery={removeGallery} />
       ) : (
         <ImageInput label="이미지" value={s.image} onChange={updateSingleImage} />
       )}
-      <ImageDisplayControls
-        display={display}
-        s={s}
-        set={set}
-        editSrc={editSrc}
-        blockId={block?.id}
-        cropOpen={cropOpen}
-        setCropOpen={setCropOpen}
-        changeDisplay={changeDisplay}
-      />
-    </Step>
+    </>
   );
 }
