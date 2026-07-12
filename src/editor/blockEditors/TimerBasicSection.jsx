@@ -1,17 +1,21 @@
-﻿import { Choice, Field, Step } from '../controls.jsx';
+import { EditorField, SegmentedControl } from '../ui/index.js';
 import { TIMER_REPEAT_OPTIONS, timerRepeatMode } from './timerEditorModel.js';
 
 export default function TimerBasicSection({ s, set }) {
   const repeatMode = timerRepeatMode(s);
 
   return (
-    <Step title="기본" icon="1" open>
-      <Field label="문구" value={s.label} onChange={(v) => set({ label: v })} />
-      <Choice label="방식" value={repeatMode} onChange={(v) => set({ repeatMode: v })} options={TIMER_REPEAT_OPTIONS} />
+    <>
+      <EditorField label="문구" description="타이머 위에 표시할 안내 문구입니다.">
+        <input value={s.label || ''} onChange={(event) => set({ label: event.target.value })} />
+      </EditorField>
+      <SegmentedControl label="반복 방식" value={repeatMode} onChange={(value) => set({ repeatMode: value })} options={TIMER_REPEAT_OPTIONS.map(([value, label]) => ({ value, label }))} />
       {repeatMode === 'fixed' && (
-        <Field label="마감일" type="datetime-local" value={s.endAt} onChange={(v) => set({ endAt: v })} />
+        <EditorField label="마감일">
+          <input type="datetime-local" value={s.endAt || ''} onChange={(event) => set({ endAt: event.target.value })} />
+        </EditorField>
       )}
-      {repeatMode === 'daily24' && <div className="timer-repeat-note modern">매일 24시간 기준으로 반복됩니다.</div>}
-    </Step>
+      {repeatMode === 'daily24' && <p className="timer-repeat-note modern">매일 24시간 기준으로 반복됩니다.</p>}
+    </>
   );
 }

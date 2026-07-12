@@ -25,7 +25,7 @@
 | Download, TopNav, BottomBar | 완료 | 공통 섹션 및 고정 블록 shell 적용 |
 | Form, Reservation | 완료 | 기존 질문·예약 hook을 유지하고 상위 구조 전환 |
 | Map, Schedule, Search, Activity | 완료 | 내용과 표시 방식 분리 |
-| Timer, Footer, Spacer, Divider, Code | 대기 | 마지막 편집기 전환 묶음 |
+| Timer, Footer, Spacer, Divider, Code | 완료 | 공통 섹션 UI와 고급 동작 분리, 기존 데이터 계약 유지 |
 | 모바일 접수함·통계 전용 처리 | 대기 | 모바일 편집 컴포넌트 미마운트 필요 |
 
 현재 검증:

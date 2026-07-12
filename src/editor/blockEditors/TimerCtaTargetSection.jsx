@@ -1,24 +1,24 @@
-﻿import { Field, Step, Toggle } from '../controls.jsx';
+import { EditorField, ToggleRow } from '../ui/index.js';
 
 export default function TimerCtaTargetSection({ s, set, page, TargetControl }) {
   return (
-    <Step title="CTA 연결" icon="3">
-      <Toggle label="CTA" checked={!!s.cta} onChange={(v) => set({ cta: v })} />
+    <>
+      <ToggleRow label="CTA 버튼" description="타이머 아래에 행동 버튼을 표시합니다." checked={Boolean(s.cta)} onChange={(value) => set({ cta: value })} />
       {s.cta && (
         <>
-          <Field label="문구" value={s.ctaLabel} onChange={(v) => set({ ctaLabel: v })} />
+          <EditorField label="버튼 문구">
+            <input value={s.ctaLabel || ''} onChange={(event) => set({ ctaLabel: event.target.value })} />
+          </EditorField>
           <TargetControl
             label="이동"
             target={s.ctaTarget}
             url={s.ctaUrl}
             lastWidgetTarget={s.ctaLastWidgetTarget}
             page={page}
-            onChange={(patch) =>
-              set({ ctaTarget: patch.target, ctaUrl: patch.url, ctaLastWidgetTarget: patch.lastWidgetTarget })
-            }
+            onChange={(patch) => set({ ctaTarget: patch.target, ctaUrl: patch.url, ctaLastWidgetTarget: patch.lastWidgetTarget })}
           />
         </>
       )}
-    </Step>
+    </>
   );
 }
