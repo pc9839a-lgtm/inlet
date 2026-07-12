@@ -1,0 +1,313 @@
+/* Final owner for the authenticated desktop workspace. */
+body .builder-shell:not(.mobile-operations-shell) {
+  --workspace-line: #d9e2ec;
+  --workspace-soft: #f6f8fb;
+  --workspace-ink: #111827;
+  --workspace-muted: #667085;
+  --workspace-accent: #2563eb;
+  grid-template-columns: minmax(680px, 720px) minmax(520px, 1fr) !important;
+  background: #eef2f6 !important;
+}
+
+body .builder-shell:not(.mobile-operations-shell) .work-panel {
+  max-width: 700px !important;
+  padding: 20px 18px 48px !important;
+}
+
+body .builder-shell .panel-header {
+  padding: 16px !important;
+  border: 1px solid var(--workspace-line) !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell .panel-title h1 {
+  margin-top: 3px !important;
+  font-size: 26px !important;
+  line-height: 1.12 !important;
+  letter-spacing: 0 !important;
+}
+
+body .builder-shell .panel-save-status {
+  display: grid !important;
+  gap: 2px !important;
+  margin-top: 7px !important;
+}
+
+body .builder-shell .panel-save-status :is(strong, small) {
+  font-size: 11px !important;
+  line-height: 1.35 !important;
+}
+
+body .builder-shell .panel-actions button {
+  min-height: 40px !important;
+  padding: 0 13px !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell .top-tabs {
+  min-height: 56px !important;
+  margin: 10px 0 12px !important;
+  padding: 4px !important;
+  gap: 4px !important;
+  border: 1px solid var(--workspace-line) !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell .top-tabs button {
+  min-height: 46px !important;
+  padding: 0 8px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: var(--workspace-muted) !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  letter-spacing: 0 !important;
+}
+
+body .builder-shell .top-tabs button.active {
+  background: var(--workspace-ink) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell .edit-layout {
+  display: grid !important;
+  gap: 12px !important;
+}
+
+body .builder-shell .edit-layout :is(.page-global-options-card, .screen-order-card) {
+  padding: 16px !important;
+  border: 1px solid var(--workspace-line) !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell .edit-layout :is(.page-global-options-title, .screen-order-title) {
+  margin: 0 0 10px !important;
+}
+
+body .builder-shell .edit-layout :is(.page-global-options-title, .screen-order-title) h2 {
+  font-size: 16px !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0 !important;
+}
+
+body .builder-shell .edit-layout .screen-order-title p {
+  margin-top: 3px !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+}
+
+body .builder-shell .edit-layout .page-global-options-list {
+  display: grid !important;
+  gap: 8px !important;
+}
+
+body .builder-shell .edit-layout .page-global-options-card :is(.edit-animation-card, .fixed-block-card) {
+  margin: 0 !important;
+  border: 1px solid var(--workspace-line) !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+body .builder-shell .edit-layout .page-global-options-card :is(.fixed-block-head, .edit-animation-head) {
+  min-height: 54px !important;
+  padding: 8px 10px !important;
+  gap: 8px !important;
+  grid-template-columns: minmax(0, 1fr) 46px 36px !important;
+  border: 0 !important;
+  background: #fff !important;
+}
+
+body .builder-shell .edit-layout .page-global-options-card .edit-animation-head {
+  grid-template-columns: minmax(0, 1fr) 46px !important;
+}
+
+body .builder-shell .edit-layout .page-global-options-card :is(.fixed-block-copy strong, .edit-animation-head b) {
+  font-size: 14px !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0 !important;
+}
+
+body .builder-shell .edit-layout .fixed-block-copy em {
+  max-width: 210px !important;
+  padding: 3px 7px !important;
+  border-radius: 999px !important;
+  background: #eef4ff !important;
+  color: #52647a !important;
+  font-size: 10px !important;
+  letter-spacing: 0 !important;
+}
+
+body .builder-shell .edit-layout .switch-clean {
+  width: 44px !important;
+  min-width: 44px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: #cbd5e1 !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell .edit-layout .switch-clean > i {
+  top: 3px !important;
+  left: 3px !important;
+  width: 18px !important;
+  min-width: 18px !important;
+  height: 18px !important;
+  min-height: 18px !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, .24) !important;
+}
+
+body .builder-shell .edit-layout .switch-clean.active {
+  background: #16a34a !important;
+}
+
+body .builder-shell .edit-layout .switch-clean.active > i {
+  transform: translateX(20px) !important;
+}
+
+body .builder-shell .edit-layout :is(.fixed-open-button, .screen-icon-action, .screen-drag-handle) {
+  width: 36px !important;
+  min-width: 36px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  border: 1px solid var(--workspace-line) !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell .edit-layout .fixed-block-editor {
+  padding: 12px !important;
+  border-top: 1px solid var(--workspace-line) !important;
+  background: var(--workspace-soft) !important;
+}
+
+body .builder-shell .edit-layout .screen-order-list {
+  gap: 8px !important;
+}
+
+body .builder-shell .edit-layout .screen-order-item.block-item {
+  border: 1px solid var(--workspace-line) !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+body .builder-shell .edit-layout .screen-order-item.block-item:is(.open, [data-selected='true']) {
+  border-color: #9cb8df !important;
+  background: #fff !important;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, .1) !important;
+}
+
+body .builder-shell .edit-layout .screen-order-head.block-head {
+  min-height: 56px !important;
+  padding: 8px 9px !important;
+  grid-template-columns: 36px minmax(0, 1fr) 48px 36px !important;
+  gap: 7px !important;
+  background: #fff !important;
+}
+
+body .builder-shell .edit-layout .screen-order-inline-editor {
+  padding: 12px !important;
+  border-top: 1px solid var(--workspace-line) !important;
+  background: var(--workspace-soft) !important;
+}
+
+body .builder-shell .edit-layout .screen-order-number {
+  width: 26px !important;
+  min-width: 26px !important;
+  height: 26px !important;
+  min-height: 26px !important;
+  background: #eef4ff !important;
+  font-size: 12px !important;
+}
+
+body .builder-shell .edit-layout .screen-title-wrap strong {
+  font-size: 14px !important;
+  letter-spacing: 0 !important;
+}
+
+body .builder-shell .edit-layout .fixed-add-dock {
+  position: relative !important;
+  bottom: auto !important;
+  z-index: 1 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+body .builder-shell .edit-layout .fixed-add-dock .add-toggle {
+  min-height: 50px !important;
+  padding: 0 14px !important;
+  border-radius: 8px !important;
+  background: var(--workspace-ink) !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell .edit-layout .fixed-add-dock .add-toggle span {
+  height: 28px !important;
+  min-width: 46px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+}
+
+body .builder-shell .edit-layout .fixed-add-dock.open .add-panel {
+  margin-top: 8px !important;
+  padding: 10px !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+html body #root .builder-shell .preview-workspace {
+  padding: 20px 24px !important;
+  background: #eef2f6 !important;
+}
+
+html body #root .builder-shell .preview-workspace .preview-sticky {
+  width: min(430px, 100%) !important;
+  height: calc(100dvh - 40px) !important;
+  max-height: calc(100dvh - 40px) !important;
+  gap: 10px !important;
+}
+
+html body #root .builder-shell .preview-workspace .preview-top {
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+html body #root .builder-shell .preview-workspace .phone-frame {
+  width: 430px !important;
+  max-width: 100% !important;
+  height: calc(100dvh - 116px) !important;
+  min-height: 620px !important;
+  max-height: 820px !important;
+  margin: 0 auto !important;
+  border: 8px solid #111827 !important;
+  border-radius: 28px !important;
+  background: #fff !important;
+  box-shadow: 0 22px 60px rgba(15, 23, 42, .18) !important;
+  overflow: hidden !important;
+}
+
+@media (max-width: 1280px) {
+  body .builder-shell:not(.mobile-operations-shell) {
+    grid-template-columns: minmax(620px, 660px) minmax(460px, 1fr) !important;
+  }
+
+  body .builder-shell:not(.mobile-operations-shell) .work-panel {
+    max-width: 640px !important;
+  }
+}
