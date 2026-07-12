@@ -1,4 +1,5 @@
-import { Choice, Field, Step } from '../controls.jsx';
+import { Field } from '../controls.jsx';
+import { SegmentedControl } from '../ui/index.js';
 import { dayOptions, T, weekdayPresets } from './reservationEditorModel.js';
 import { useReservationWeekdays } from './useReservationWeekdays.js';
 
@@ -6,9 +7,14 @@ export default function ReservationTimeSection({ s, set }) {
   const { selectedDays, weekdayMode, toggleDay, setWeekdayPreset } = useReservationWeekdays({ s, set });
 
   return (
-    <Step title={T.time} icon="2">
+    <>
       <div className="reservation-weekday-panel">
-        <Choice label={T.availableDay} value={weekdayMode} onChange={setWeekdayPreset} options={weekdayPresets} />
+        <SegmentedControl
+          label={T.availableDay}
+          value={weekdayMode}
+          onChange={setWeekdayPreset}
+          options={weekdayPresets.map(([value, label]) => ({ value, label }))}
+        />
         <div className="reservation-day-detail">
           <span>{T.daySelect}</span>
           <div>
@@ -24,7 +30,15 @@ export default function ReservationTimeSection({ s, set }) {
         <Field label={T.start} type="time" value={s.start} onChange={(value) => set({ start: value })} />
         <Field label={T.end} type="time" value={s.end} onChange={(value) => set({ end: value })} />
       </div>
-      <Choice label={T.interval} value={String(s.interval || 30)} onChange={(value) => set({ interval: Number(value) })} options={[["30", T.min30], ["60", T.hour1]]} />
-    </Step>
+      <SegmentedControl
+        label={T.interval}
+        value={String(s.interval || 30)}
+        onChange={(value) => set({ interval: Number(value) })}
+        options={[
+          { value: '30', label: T.min30 },
+          { value: '60', label: T.hour1 },
+        ]}
+      />
+    </>
   );
 }

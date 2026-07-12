@@ -1,22 +1,25 @@
-import { Choice, Field, ImageInput, Step } from '../controls.jsx';
+import { ImageInput } from '../controls.jsx';
+import { EditorField, SegmentedControl } from '../ui/index.js';
 
 export default function TopNavBasicSection({ s, set, isImageLogo }) {
   return (
-    <Step title="기본" icon="1">
-      <Choice
-        label="타입"
+    <>
+      <SegmentedControl
+        label="로고 방식"
         value={s.logoType || 'text'}
-        onChange={(v) => set({ logoType: v })}
+        onChange={(value) => set({ logoType: value })}
         options={[
-          ['text', '텍스트'],
-          ['image', '이미지'],
+          { value: 'text', label: '텍스트' },
+          { value: 'image', label: '이미지' },
         ]}
       />
       {isImageLogo ? (
-        <ImageInput label="로고 이미지" value={s.logoImage} onChange={(v) => set({ logoImage: v })} />
+        <ImageInput label="로고 이미지" value={s.logoImage} onChange={(value) => set({ logoImage: value })} />
       ) : (
-        <Field label="로고 텍스트" value={s.logoText} onChange={(v) => set({ logoText: v })} />
+        <EditorField label="로고 텍스트" description="페이지 상단에 표시할 짧은 이름입니다.">
+          <input value={s.logoText || ''} onChange={(event) => set({ logoText: event.target.value })} />
+        </EditorField>
       )}
-    </Step>
+    </>
   );
 }

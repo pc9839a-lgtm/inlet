@@ -1,14 +1,20 @@
-import { Field, Step } from '../controls.jsx';
+import { EditorField } from '../ui/index.js';
 import { T } from './reservationEditorModel.js';
 
 export default function ReservationBasicSection({ s, set }) {
   return (
-    <Step title={T.basic} icon="1" open>
+    <>
       <div className="reservation-basic-grid">
-        <Field label={T.reservationTitle} value={s.title} onChange={(value) => set({ title: value })} />
-        <Field label={T.successText} value={s.success || T.defaultSuccess} onChange={(value) => set({ success: value })} />
+        <EditorField label={T.reservationTitle}>
+          <input value={s.title || ''} onChange={(event) => set({ title: event.target.value })} />
+        </EditorField>
+        <EditorField label={T.successText} description="예약 접수 후 표시할 문구입니다.">
+          <input value={s.success || T.defaultSuccess} onChange={(event) => set({ success: event.target.value })} />
+        </EditorField>
       </div>
-      <Field label={T.guideText} value={s.desc} onChange={(value) => set({ desc: value })} textarea />
-    </Step>
+      <EditorField label={T.guideText} description="예약 입력 항목 위에 표시할 안내입니다.">
+        <textarea value={s.desc || ''} onChange={(event) => set({ desc: event.target.value })} />
+      </EditorField>
+    </>
   );
 }

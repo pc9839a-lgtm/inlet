@@ -29,9 +29,13 @@
 
 .editor-list-item-v2-header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 40px;
+  grid-template-columns: minmax(0, 1fr);
   align-items: stretch;
   gap: 0;
+}
+
+.editor-list-item-v2-header.has-remove {
+  grid-template-columns: minmax(0, 1fr) 40px;
 }
 
 body .builder-shell .edit-layout .block-editor-v2 .editor-list-item-v2-trigger {

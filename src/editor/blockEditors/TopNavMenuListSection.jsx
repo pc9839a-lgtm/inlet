@@ -1,4 +1,3 @@
-import { Step } from '../controls.jsx';
 import TopNavMenuCountControl from './TopNavMenuCountControl.jsx';
 import TopNavMenuItemsList from './TopNavMenuItemsList.jsx';
 
@@ -18,7 +17,7 @@ export default function TopNavMenuListSection({
   moveMenu,
 }) {
   return (
-    <Step title="메뉴" icon="2">
+    <div className="editor-v2-control-list">
       <TopNavMenuCountControl count={menus.length || 1} onChange={setMenuCount} />
       <TopNavMenuItemsList
         menus={menus}
@@ -34,6 +33,6 @@ export default function TopNavMenuListSection({
         removeMenu={removeMenu}
         moveMenu={moveMenu}
       />
-    </Step>
+    </div>
   );
 }

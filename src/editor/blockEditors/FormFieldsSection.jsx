@@ -1,8 +1,6 @@
-import { Step } from '../controls.jsx';
 import FormQuestionEmptyState from './FormQuestionEmptyState.jsx';
 import FormQuestionList from './FormQuestionList.jsx';
 import FormQuestionQuickAdd from './FormQuestionQuickAdd.jsx';
-import { T } from './formEditorModel.js';
 
 export default function FormFieldsSection({
   questions,
@@ -21,7 +19,7 @@ export default function FormFieldsSection({
   onDrop,
 }) {
   return (
-    <Step title={T.fields} icon="2" open>
+    <div className="editor-v2-control-list">
       <FormQuestionQuickAdd onAdd={onAdd} />
       <FormQuestionList
         questions={questions}
@@ -39,6 +37,6 @@ export default function FormFieldsSection({
         onDragEnd={onDragEnd}
       />
       <FormQuestionEmptyState show={!questions.length} />
-    </Step>
+    </div>
   );
 }

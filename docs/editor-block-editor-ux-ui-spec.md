@@ -22,9 +22,10 @@
 | Cards | 완료 | 공통 반복 목록 적용 |
 | FAQ | 완료 | 공통 반복 목록 적용 |
 | Links | 완료 | 공통 반복 목록 적용 |
-| Download, TopNav, BottomBar | 대기 | 다음 반복 항목 전환 묶음 |
-| Form, Reservation | 대기 | 반복 목록 검증 후 진행 |
-| 나머지 정보·유틸리티 블록 | 대기 | 공통 섹션 전환 필요 |
+| Download, TopNav, BottomBar | 완료 | 공통 섹션 및 고정 블록 shell 적용 |
+| Form, Reservation | 완료 | 기존 질문·예약 hook을 유지하고 상위 구조 전환 |
+| Map, Schedule, Search, Activity | 완료 | 내용과 표시 방식 분리 |
+| Timer, Footer, Spacer, Divider, Code | 대기 | 마지막 편집기 전환 묶음 |
 | 모바일 접수함·통계 전용 처리 | 대기 | 모바일 편집 컴포넌트 미마운트 필요 |
 
 현재 검증:
@@ -37,6 +38,7 @@
 - `css:qa`: 보호 영역인 `base-public-home.css` import 계약 불일치로 중단
 
 위 세 QA 실패를 해결하기 위해 공개 홈, form 또는 runtime을 이번 체크포인트에 임의 포함하지 않는다.
+
 ## 1. 문서 목적
 
 이 문서는 Pagero 워크스페이스에서 화면 블록을 선택했을 때 열리는 편집기 내부 UX/UI를 개편하기 위한 구현 명세다.

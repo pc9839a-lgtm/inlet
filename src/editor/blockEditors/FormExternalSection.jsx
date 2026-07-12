@@ -1,10 +1,9 @@
-﻿import { Step } from '../controls.jsx';
 import { FormHtmlModal } from './FormHtmlModal.jsx';
 import { T } from './formEditorModel.js';
 
 export default function FormExternalSection({ s, page, blockId, htmlOpen, setHtmlOpen, generateStandaloneFormHtml }) {
   return (
-    <Step title={T.external} icon="3">
+    <>
       <div className="form-advanced-group">
         <div className="inlet-export-card compact">
           <strong>{T.formCode}</strong>
@@ -12,7 +11,6 @@ export default function FormExternalSection({ s, page, blockId, htmlOpen, setHtm
           <button type="button" onClick={() => setHtmlOpen(true)}>{T.openCode}</button>
         </div>
       </div>
-
       {htmlOpen && (
         <FormHtmlModal
           form={{ ...s, blockId }}
@@ -21,6 +19,6 @@ export default function FormExternalSection({ s, page, blockId, htmlOpen, setHtm
           onClose={() => setHtmlOpen(false)}
         />
       )}
-    </Step>
+    </>
   );
 }

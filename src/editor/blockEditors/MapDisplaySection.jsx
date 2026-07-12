@@ -1,27 +1,10 @@
-import { Choice, Step } from '../controls.jsx';
+import { SegmentedControl } from '../ui/index.js';
 
 export default function MapDisplaySection({ s, set }) {
   return (
-    <Step title="지도" icon="2">
-      <Choice
-        label="지도 방식"
-        value={s.mapMode || 'google_embed'}
-        onChange={(v) => set({ mapMode: v })}
-        options={[
-          ['google_embed', 'Google 지도'],
-          ['osm_fallback', '링크만 표시'],
-        ]}
-      />
-      <Choice
-        label="지도 높이"
-        value={s.height || 'medium'}
-        onChange={(v) => set({ height: v })}
-        options={[
-          ['small', '작게'],
-          ['medium', '기본'],
-          ['large', '크게'],
-        ]}
-      />
-    </Step>
+    <>
+      <SegmentedControl label="지도 방식" value={s.mapMode || 'google_embed'} onChange={(value) => set({ mapMode: value })} options={[{ value: 'google_embed', label: 'Google 지도' }, { value: 'osm_fallback', label: '링크만 표시' }]} />
+      <SegmentedControl label="지도 높이" value={s.height || 'medium'} onChange={(value) => set({ height: value })} options={[{ value: 'small', label: '작게' }, { value: 'medium', label: '기본' }, { value: 'large', label: '크게' }]} />
+    </>
   );
 }
