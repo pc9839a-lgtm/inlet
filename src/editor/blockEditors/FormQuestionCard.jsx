@@ -31,6 +31,7 @@ export default function FormQuestionCard({
       <FormQuestionHeader
         question={question}
         index={index}
+        isOpen={isOpen}
         onToggleOpen={onToggleOpen}
         onDuplicate={onDuplicate}
         onRemove={onRemove}

@@ -1,25 +1,30 @@
+import { EditorField, ToggleRow } from '../ui/index.js';
 import { BottomEmojiPicker } from './BottomEmojiPicker.jsx';
 import { BottomLinkCompact } from './BottomLinkCompact.jsx';
 
+const VISIBLE_LABEL = '\uBC84\uD2BC \uD45C\uC2DC';
+const ICON_LABEL = '\uC544\uC774\uCF58';
+const TEXT_LABEL = '\uBC84\uD2BC \uBB38\uAD6C';
+const BUTTON_LABEL = '\uBC84\uD2BC';
+
 export default function BottomBarButtonCard({ button, index, page, onChange }) {
   return (
-    <div className={`bottom-button-card compact ${button.enabled === false ? 'off' : ''}`}>
-      <div className="bottom-button-main-row">
-        <button
-          type="button"
-          className={`mini-on ${button.enabled !== false ? 'active' : ''}`}
-          onClick={() => onChange({ enabled: !(button.enabled !== false) })}
-        >
-          {button.enabled !== false ? 'ON' : 'OFF'}
-        </button>
+    <div className="bottom-button-editor-body editor-v2-control-list">
+      <ToggleRow
+        label={VISIBLE_LABEL}
+        checked={button.enabled !== false}
+        onChange={(enabled) => onChange({ enabled })}
+      />
+      <EditorField label={ICON_LABEL}>
         <BottomEmojiPicker value={button.icon || ''} onChange={(icon) => onChange({ icon })} />
+      </EditorField>
+      <EditorField label={TEXT_LABEL}>
         <input
-          className="bottom-label-input"
           value={button.label || ''}
           onChange={(event) => onChange({ label: event.target.value })}
-          placeholder={`버튼 ${index + 1}`}
+          placeholder={`${BUTTON_LABEL} ${index + 1}`}
         />
-      </div>
+      </EditorField>
       <BottomLinkCompact button={button} page={page} onChange={onChange} />
     </div>
   );

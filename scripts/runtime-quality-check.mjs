@@ -205,7 +205,38 @@ const pagePersistFlow = await readFile('src/runtime/pagePersistFlow.js', 'utf8')
 const lazyRuntimeBoundary = await readFile('src/runtime/LazyRuntimeBoundary.jsx', 'utf8');
 const fixedBlockRenderers = await readFile('src/editor/fixedBlockRenderers.jsx', 'utf8');
 const blockEditorRegistry = await readFile('src/editor/blockEditorRegistry.jsx', 'utf8');
-
+const imageGalleryEditor = await readFile('src/editor/blockEditors/ImageGalleryEditor.jsx', 'utf8');
+const formOptionEditor = await readFile('src/editor/blockEditors/FormOptionEditor.jsx', 'utf8');
+const baseComponentsOptionsCss = await readFile('src/styles/base-components-options.css', 'utf8');
+const editorAnimationCss = await readFile('src/styles/editor-animation.css', 'utf8');
+const editorScreenOrderPolishCss = await readFile('src/styles/editor-screen-order-polish.css', 'utf8');
+const editorFinalCleanCss = await readFile('src/styles/editor-final-clean.css', 'utf8');
+const editorBlockListsCss = await readFile('src/styles/editor-block-lists.css', 'utf8');
+const previewWorkspaceReservationCss = await readFile('src/styles/preview-workspace-reservation.css', 'utf8');
+const previewFormsCss = await readFile('src/styles/preview-forms.css', 'utf8');
+const previewFormsSpacingCss = await readFile('src/styles/preview-forms-spacing.css', 'utf8');
+const previewFormsQuestionsCss = await readFile('src/styles/preview-forms-questions.css', 'utf8');
+const formEditorSource = await readFile('src/editor/blockEditors/FormEditor.jsx', 'utf8');
+const formEditorCss = await readFile('src/editor/blockEditors/FormEditor.css', 'utf8');
+const legacyFormEditorCss = (await Promise.all([
+  'base-components-html.css',
+  'base-components-options.css',
+  'base-components-rich.css',
+  'preview-forms-advanced.css',
+  'preview-forms-basic.css',
+  'preview-forms-bottom-color.css',
+  'preview-forms-basic-grid.css',
+  'preview-forms-buttons.css',
+  'preview-forms-controls.css',
+  'preview-forms-design.css',
+  'preview-forms-questions.css',
+  'preview-forms-render.css',
+  'preview-forms-spacing.css',
+  'preview-forms.css',
+  'preview-widgets-forms.css',
+  'preview-widgets-links.css',
+  'preview-widgets.css',
+].map((file) => readFile(`src/styles/${file}`, 'utf8')))).join('\n');
 assert(main.includes('root.render(<AppErrorBoundary><MapEmbedApp /></AppErrorBoundary>)'), 'embed root render must stay wrapped in AppErrorBoundary');
 assert(main.includes('root.render(<AppErrorBoundary><PublicHomeEntry /></AppErrorBoundary>)'), 'public home root render must stay wrapped in AppErrorBoundary');
 assert(main.includes('root.render(<AppErrorBoundary><App /></AppErrorBoundary>)') || (main.includes('<AppErrorBoundary>') && main.includes('<App />')), 'app root render must stay wrapped in AppErrorBoundary');
@@ -231,10 +262,22 @@ assert(/<PreviewRenderer[\s\S]*?page=\{publicPage\}[\s\S]*?addLead=\{\(lead\) =>
 assert(!/import\s+(?:InboxPanel|StatsPanel|StylePanel|SettingsPanel|TemplatesPanel|AdminPanel|AiPanel)\b/.test(app), 'heavy panels and AI panel must not be statically imported into App');
 assert(!/import\s+(?:\{[^}]*Editor[^}]*\}|[A-Z][A-Za-z]+Editor)\s+from\s+['"]\.\/editor\/blockEditors\//.test(app), 'block editors must not be statically imported into App');
 assert(lazyRuntimeBoundary.includes('function LazyEditorFallback()') && lazyRuntimeBoundary.includes('class LazyEditorBoundary extends Component'), 'fixed block editor controls must keep lazy fallback and error boundary');
-assert(lazyRuntimeBoundary.includes('componentDidUpdate(prevProps)') && lazyRuntimeBoundary.includes('this.setState({ error: null })'), 'lazy editor boundaries must reset after selection changes');
+assert(lazyRuntimeBoundary.includes('componentDidUpdate(prevProps)') && /this\.setState\(\{\s*error:\s*null(?:,\s*recovering:\s*false)?\s*\}\)/.test(lazyRuntimeBoundary), 'lazy editor boundaries must reset after selection changes');
 assert(lazyRuntimeBoundary.includes("this.props.variant !== 'preview' && recoverLazyChunkLoad(error)") && !/class LazyEditorBoundary[\s\S]*?recoverLazyChunkLoad\(error\)/.test(lazyRuntimeBoundary), 'workspace preview and editor lazy errors must not redirect the whole editor runtime');
 assert(fixedBlockRenderers.includes('renderLazyEditor') && fixedBlockRenderers.includes('createFixedBlockRenderers'), 'fixed block editor renderers must stay split from App');
 assert(blockEditorRegistry.includes('export const BLOCK_EDITORS'), 'block editor registry must stay split from App');
+assert(imageGalleryEditor.includes("import { EditorList } from '../ui/index.js'") && imageGalleryEditor.includes('<GalleryMultiUpload'), 'image gallery editor must keep multi-upload and use the shared item list');
+assert(imageGalleryEditor.includes("onAdd={gallery.length < 10 ?") && imageGalleryEditor.includes('onRemove={(item) => removeGallery(item.index)}'), 'image gallery item list must preserve its ten-image limit and removal callback');
+assert(formOptionEditor.includes("import { Plus, Trash2 } from 'lucide-react'") && formOptionEditor.includes('className="option-editor-row"'), 'form options must use compact labeled rows and icon actions');
+assert(formOptionEditor.includes('if (list.length <= 1) return') && formOptionEditor.includes('disabled={list.length <= 1}') && !formOptionEditor.includes('.filter((item) => String(item).trim())'), 'form option editing must preserve in-progress text and keep at least one choice');
+assert(!baseComponentsOptionsCss.includes('.option-editor{') && !editorScreenOrderPolishCss.includes('.option-editor') && editorBlockListsCss.includes('.option-editor-row'), 'form option styles must have one active owner');
+assert(!editorAnimationCss.includes('gallery-edit') && !editorScreenOrderPolishCss.includes('gallery-edit') && !editorFinalCleanCss.includes('gallery-edit'), 'imported editor styles must not retain the removed gallery editor wrapper');
+assert(!previewWorkspaceReservationCss.includes('reservation-custom-card') && editorBlockListsCss.includes('.reservation-custom-head-row') && editorBlockListsCss.includes('.reservation-custom-body'), 'reservation custom-field styles must stay owned by the editor stylesheet');
+assert(!previewFormsCss.includes('form-question-') && !previewFormsSpacingCss.includes('form-question-') && !previewFormsQuestionsCss.includes('form-question-') && editorBlockListsCss.includes('.form-question-tools') && editorBlockListsCss.includes('.form-question-actions'), 'form question styles must stay owned by the editor stylesheet');
+assert(formEditorSource.includes("import './FormEditor.css'") && formEditorCss.includes('.form-basic-grid') && formEditorCss.includes('.form-advanced-group') && formEditorCss.includes('.question-compact-row'), 'FormEditor must own its active layout styles in its lazy chunk');
+assert(!/(?:form-basic-grid|form-advanced-group|form-advanced-item|form-design-panel-clean|form-design-range|form-color-row|question-compact-row|required-inline|inlet-question-tools)/.test(legacyFormEditorCss), 'shared and preview styles must not retain FormEditor-only selectors');
+assert(formEditorCss.includes('.form-basic-detail') && formEditorCss.includes('.privacy-compact-panel') && formEditorCss.includes('.form-one-line-panel') && formEditorCss.includes('.inlet-export-card') && formEditorCss.includes('.inlet-html-modal-backdrop') && formEditorCss.includes('.inlet-html-actions'), 'FormEditor lazy CSS must own its collapsible settings, export card, and HTML modal');
+assert(!/(?:inlet-html-|inlet-code-notice|inlet-export-card|form-basic-subgrid|form-basic-detail|form-inline-detail|form-one-line-panel|privacy-compact-panel|form-design-panel|form-design-grid|form-advanced-note|form-hover-color-row|privacy-inline-top)/.test(legacyFormEditorCss + editorAnimationCss + editorScreenOrderPolishCss), 'shared editor and preview styles must not retain Form-only settings or modal selectors');
 assert(authContext.includes("CLIENT_ADMIN: 'clientAdmin'") && authContext.includes("BUILDER: 'builder'") && authContext.includes("MANAGER: 'manager'"), 'access modes must include builder, manager, and client admin');
 assert(authContext.includes("export const CLIENT_ADMIN_TABS = ['inbox', 'stats', 'settings']"), 'client admin tabs must stay limited to inbox/stats/settings');
 assert(authContext.includes("export const BUILDER_TABS = ['edit', 'style', 'inbox', 'stats', 'settings']"), 'builder tabs must keep admin out of the public workspace navigation');
@@ -261,13 +304,13 @@ assert(app.includes('const routeUsesWorkspaceTabs = shouldUseWorkspaceTabs({ pub
 assert(pageSaveAction.includes('commitSavedPageResult') && persistStyleSaveAction.includes('commitSavedPageResult'), 'page and style saves must share persisted page commit flow');
 assert(!persistStyleSaveAction.includes('latestPageRef.current = nextPage') && !persistStyleSaveAction.includes('setPage(nextPage)') && /result = await persistPage\(nextPage, authUser, \{ tab: 'style', expectedUpdatedAt, saveMode: 'update-existing' \}\);[\s\S]*?commitSavedPageResult\(\{/.test(persistStyleSaveAction), 'style saves must update visible page only after successful persistence');
 assert(app.includes('isOwnerAdminModeEnabled') && app.includes('clientAdminEnabled: ownerAdminModeEnabled'), 'App must derive client admin access from the internal runtime flag');
-assert(workspaceActivePanel.includes("canUseBuilder && tab === 'edit'") && workspaceActivePanel.includes("canUseBuilder && tab === 'style'"), 'builder-only editor and style tabs must stay permission gated');
+assert(workspaceActivePanel.includes('const canRenderBuilder = canUseBuilder && !mobileOperationsOnly') && workspaceActivePanel.includes("canRenderBuilder && tab === 'edit'") && workspaceActivePanel.includes("canRenderBuilder && tab === 'style'"), 'builder-only editor and style tabs must stay permission gated');
 assert(workspaceTabs.includes('NAV.filter(([key]) => allowedTabs.includes(key))'), 'navigation must render only allowed tabs');
 assert(workspaceTabLocation.includes('export function tabFromLocation') && workspaceTabLocation.includes('export function hasTabDeepLink') && workspaceTabLocation.includes("new URLSearchParams(location.search).get('tab')") && workspaceTabLocation.includes('export function replaceLocationTab'), 'workspace tab query helpers must stay split from App for authenticated visual QA and operator URLs');
 assert(app.includes('tabFromLocation(TAB_KEYS') && app.includes('hasTabDeepLink(TAB_KEYS)') && app.includes('replaceLocationTab(TAB_KEYS,'), 'App must use shared workspace tab location helpers');
-assert(workspaceStartMode.includes('export function shouldShowStartModeOverlay') && workspaceStartMode.includes('canManageAdmin && !startMode && !tabDeepLink'), 'tab deep links must bypass the start mode overlay through the shared helper');
-assert(app.includes('const showStartModeOverlay = shouldShowStartModeOverlay({ canManageAdmin, startMode, tabDeepLink })') && app.includes('{showStartModeOverlay && (') && app.includes('<StartModeOverlay'), 'App must delegate start mode overlay visibility to the shared helper');
-assert(workspaceStartMode.includes('canManageAdmin && !startMode') && workspaceLeftPanel.includes("canManageAdmin && startMode === 'template'"), 'template/start controls must stay master-admin-only');
+assert(workspaceStartMode.includes('export function shouldShowStartModeOverlay()') && workspaceStartMode.includes('return false;'), 'workspace start mode overlay must stay disabled after the repeated modal regression');
+assert(!app.includes('<StartModeOverlay') && !app.includes('showStartModeOverlay'), 'App must not render the disabled start mode overlay');
+assert(workspaceLeftPanel.includes("const showTemplateIntro = !mobileOperationsOnly && canManageAdmin && startMode === 'template'"), 'template controls must stay desktop and master-admin-only');
 assert(app.includes('adminRoute') && app.includes("return /^\\/(?:admin|[^/?#]+\\/admin)\\/?$/.test(routePath)") && app.includes('<AdminPanel'), 'admin panel must stay on a private /admin route');
 assert(app.includes('const canWriteTabKey = (key) => canWriteTab(accessMode, page, authUser, key)') && app.includes('createBlockWriteGuard({'), 'App must enforce manager write permissions before mutation');
 assert(blockWriteGuard.includes('canWriteTabKey(targetTab)') && blockWriteGuard.includes('markSaveStatus') && blockWriteGuard.includes('showToast'), 'block write permission feedback must stay centralized');
@@ -307,7 +350,7 @@ assert(fixedBlockRenderers.includes('renderLazyEditor') && lazyRuntimeBoundary.i
 assert(blockEditor.includes('LazyEditorBoundary') && lazyEditorBoundary.includes('class LazyEditorErrorBoundary'), 'BlockEditor must isolate lazy editor chunk failures');
 assert(lazyEditorBoundary.includes('<Suspense fallback=') && lazyEditorBoundary.includes('data-lazy-editor-fallback="true"') && lazyEditorBoundary.includes('LAZY_EDITOR_FALLBACK_TEXT'), 'BlockEditor must keep a stable lazy editor loading fallback');
 assert(lazyEditorBoundary.includes('role="alert"') && lazyEditorBoundary.includes('data-lazy-editor-error="true"') && lazyEditorBoundary.includes('LAZY_EDITOR_ERROR_TEXT'), 'BlockEditor must show a useful lazy editor failure state');
-assert(lazyEditorBoundary.includes('componentDidUpdate(prevProps)') && lazyEditorBoundary.includes('this.setState({ error: null })'), 'BlockEditor lazy error boundary must reset when the selected block/type changes');
+assert(lazyEditorBoundary.includes('componentDidUpdate(prevProps)') && /this\.setState\(\{\s*error:\s*null(?:,\s*recovering:\s*false)?\s*\}\)/.test(lazyEditorBoundary), 'BlockEditor lazy error boundary must reset when the selected block/type changes');
 assert(appErrorBoundary.includes('className="error-screen error-screen-v2"'), 'AppErrorBoundary must keep the app recovery screen');
 assert(appErrorBoundary.includes('recoverRootChunkLoad(error)') && appErrorBoundary.includes('clearBrowserRuntimeCaches().finally(replaceWithFreshRuntime)'), 'AppErrorBoundary must auto-recover once from stale deployment chunk failures');
 assert(appErrorBoundary.includes('ROOT_CHUNK_RELOAD_LIMIT = 1') && appErrorBoundary.includes("url.searchParams.set('__fresh'"), 'AppErrorBoundary stale chunk recovery must be bounded and use a fresh URL');
@@ -382,5 +425,5 @@ console.log(JSON.stringify({
   ok: true,
   filesChecked: sources.size,
   sourceBytes: totalSourceBytes,
-  checks: sources.size * 3 + 40,
+  checks: sources.size * 3 + 52,
 }, null, 2));

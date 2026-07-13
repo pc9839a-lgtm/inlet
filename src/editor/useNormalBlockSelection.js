@@ -21,9 +21,16 @@ export function useNormalBlockSelection({
 
   const selectBlock = React.useCallback((blockId) => {
     setAddOpen(false);
+
+    if (normalSelectedId === blockId) {
+      setSelectedNormalId('');
+      setOpenId('');
+      return;
+    }
+
     setSelectedNormalId(blockId);
     setOpenId(blockId);
-  }, [setAddOpen, setOpenId]);
+  }, [normalSelectedId, setAddOpen, setOpenId]);
 
   const openBlockSettings = React.useCallback((blockId) => {
     selectBlock(blockId);

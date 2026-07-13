@@ -1,7 +1,7 @@
 .editor-list-v2,
 .editor-list-v2-items {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .editor-list-v2-empty {
@@ -21,10 +21,12 @@
   border: 1px solid var(--editor-v2-line);
   border-radius: 8px;
   background: #fff;
+  transition: border-color .18s ease, box-shadow .18s ease;
 }
 
 .editor-list-item-v2.is-open {
-  border-color: #b9cbea;
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 1px rgba(148, 163, 184, .14);
 }
 
 .editor-list-item-v2-header {
@@ -51,6 +53,12 @@ body .builder-shell .edit-layout .block-editor-v2 .editor-list-item-v2-trigger {
   background: #fff !important;
   color: var(--editor-v2-text) !important;
   box-shadow: none !important;
+  transition: background .18s ease !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .editor-list-item-v2-trigger:hover,
+body .builder-shell .edit-layout .block-editor-v2 .editor-list-item-v2.is-open .editor-list-item-v2-trigger {
+  background: #f8fafc !important;
 }
 
 .editor-list-item-v2-trigger strong {
@@ -116,9 +124,13 @@ body .builder-shell .edit-layout .block-editor-v2 .editor-list-item-v2-remove:ho
 .editor-list-item-v2-body {
   display: grid;
   gap: 14px;
-  padding: 14px;
+  padding: 16px 14px 18px;
   border-top: 1px solid var(--editor-v2-line);
-  background: var(--editor-v2-soft);
+  background: #f6f8fb;
+}
+
+.editor-list-item-v2-body > .editor-v2-control-list {
+  gap: 16px;
 }
 
 body .builder-shell .edit-layout .block-editor-v2 .editor-list-v2-add {
@@ -139,6 +151,530 @@ body .builder-shell .edit-layout .block-editor-v2 .editor-list-v2-add {
 }
 
 body .builder-shell .edit-layout .block-editor-v2 .editor-list-v2-add:hover {
+  border-color: var(--editor-v2-primary) !important;
+  background: var(--editor-v2-primary-soft) !important;
+  color: var(--editor-v2-primary) !important;
+}
+/* Form questions use the same row/body hierarchy as link and card item lists. */
+.block-editor-v2 .form-question-list {
+  display: grid;
+  gap: 8px;
+}
+
+.block-editor-v2 .form-question-card {
+  overflow: hidden;
+  border: 1px solid var(--editor-v2-line) !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.block-editor-v2 .form-question-card.open {
+  border-color: #94a3b8 !important;
+  box-shadow: 0 0 0 1px rgba(148, 163, 184, .14) !important;
+}
+
+.block-editor-v2 .form-question-card.drag-over {
+  border-color: var(--editor-v2-primary) !important;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, .16) !important;
+}
+
+.block-editor-v2 .form-question-card.dragging {
+  opacity: .55;
+}
+
+.block-editor-v2 .form-question-head-row {
+  display: grid !important;
+  grid-template-columns: 36px minmax(0, 1fr) 40px 40px !important;
+  align-items: center !important;
+  gap: 6px !important;
+  min-height: 56px !important;
+  padding: 7px 8px !important;
+  background: #fff !important;
+}
+
+.block-editor-v2 .form-question-card.open .form-question-head-row {
+  background: #f8fafc !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .form-question-head-row > button {
+  min-width: 0 !important;
+  min-height: 40px !important;
+  height: 40px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .form-question-head-row > .drag-handle,
+body .builder-shell .edit-layout .block-editor-v2 .form-question-head-row > .icon-only {
+  display: grid !important;
+  place-items: center !important;
+  width: 36px !important;
+  border: 1px solid var(--editor-v2-line) !important;
+  background: #fff !important;
+  color: var(--editor-v2-muted) !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .form-question-head-row > .icon-only.danger:hover {
+  border-color: #fecaca !important;
+  background: #fff5f5 !important;
+  color: var(--editor-v2-danger) !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .form-question-title {
+  display: grid !important;
+  grid-template-columns: 28px minmax(0, 1fr) auto auto 20px !important;
+  align-items: center !important;
+  gap: 7px !important;
+  width: 100% !important;
+  text-align: left !important;
+}
+
+.block-editor-v2 .form-question-title strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.block-editor-v2 .form-question-chevron {
+  color: var(--editor-v2-muted);
+  transition: transform .18s ease;
+}
+
+.block-editor-v2 .form-question-title[aria-expanded='true'] .form-question-chevron {
+  transform: rotate(180deg);
+}
+
+.block-editor-v2 .form-question-body {
+  display: grid !important;
+  gap: 14px !important;
+  padding: 16px 14px 18px !important;
+  border-top: 1px solid var(--editor-v2-line) !important;
+  background: #f6f8fb !important;
+}
+
+@media (max-width: 1180px) {
+  body .builder-shell .edit-layout .block-editor-v2 .form-question-title {
+    grid-template-columns: 28px minmax(0, 1fr) 20px !important;
+  }
+
+  .block-editor-v2 .form-question-title :is(em, b) {
+    display: none !important;
+  }
+}
+/* Form question creation, status, and move actions belong to the editor surface. */
+.block-editor-v2 .form-question-tools {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .form-question-tools > button {
+  min-width: 0 !important;
+  min-height: 40px !important;
+  padding: 0 10px !important;
+  border: 1px solid var(--editor-v2-line) !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  color: var(--editor-v2-text) !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  white-space: nowrap;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .form-question-tools > button:hover {
+  border-color: var(--editor-v2-primary) !important;
+  background: var(--editor-v2-primary-soft) !important;
+  color: var(--editor-v2-primary) !important;
+}
+
+.block-editor-v2 .form-question-head-row > .drag-handle {
+  cursor: grab !important;
+}
+
+.block-editor-v2 .form-question-head-row > .drag-handle:active {
+  cursor: grabbing !important;
+}
+
+.block-editor-v2 .form-question-title > span {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--editor-v2-primary-soft);
+  color: var(--editor-v2-primary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.block-editor-v2 .form-question-title :is(em, b) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--editor-v2-soft);
+  color: var(--editor-v2-muted);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.block-editor-v2 .form-question-title em {
+  background: var(--editor-v2-primary-soft);
+  color: var(--editor-v2-primary);
+}
+
+.block-editor-v2 .form-question-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .form-question-actions > button {
+  min-height: 38px !important;
+  padding: 0 12px !important;
+  border: 1px solid var(--editor-v2-line) !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  color: var(--editor-v2-text) !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .form-question-actions > button:not(:disabled):hover {
+  border-color: var(--editor-v2-primary) !important;
+  color: var(--editor-v2-primary) !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .form-question-actions > button:disabled {
+  opacity: .35 !important;
+  cursor: not-allowed !important;
+}
+
+@media (max-width: 1180px) {
+  .block-editor-v2 .form-question-tools {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+/* Top navigation items follow the shared compact list hierarchy. */
+.block-editor-v2 .topnav-menu-list {
+  display: grid !important;
+  gap: 8px !important;
+}
+
+.block-editor-v2 .topnav-menu-card {
+  overflow: hidden !important;
+  border: 1px solid var(--editor-v2-line) !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: border-color .18s ease, box-shadow .18s ease !important;
+}
+
+.block-editor-v2 .topnav-menu-card:hover {
+  border-color: #cbd5e1 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.block-editor-v2 .topnav-menu-card[open] {
+  border-color: #94a3b8 !important;
+  background: #fff !important;
+  box-shadow: 0 0 0 1px rgba(148, 163, 184, .14) !important;
+}
+
+.block-editor-v2 .topnav-menu-card.drag-over {
+  border-color: var(--editor-v2-primary) !important;
+  outline: 0 !important;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, .16) !important;
+}
+
+.block-editor-v2 .topnav-menu-card > summary {
+  display: grid !important;
+  grid-template-columns: 36px minmax(0, 1fr) 20px 40px !important;
+  align-items: center !important;
+  gap: 7px !important;
+  min-height: 56px !important;
+  padding: 7px 8px !important;
+  background: #fff !important;
+  list-style: none !important;
+}
+
+.block-editor-v2 .topnav-menu-card[open] > summary {
+  background: #f8fafc !important;
+}
+
+.block-editor-v2 .topnav-menu-card > summary::-webkit-details-marker {
+  display: none !important;
+}
+
+.block-editor-v2 .topnav-menu-drag {
+  display: grid !important;
+  place-items: center !important;
+  width: 36px !important;
+  height: 40px !important;
+  border: 1px solid var(--editor-v2-line) !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  color: var(--editor-v2-muted) !important;
+  cursor: grab !important;
+}
+
+.block-editor-v2 .topnav-menu-drag:active {
+  cursor: grabbing !important;
+}
+
+.block-editor-v2 .topnav-menu-card > summary > strong {
+  display: flex !important;
+  align-items: center !important;
+  gap: 9px !important;
+  min-width: 0 !important;
+  color: var(--editor-v2-text) !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+}
+
+.block-editor-v2 .topnav-menu-card > summary > strong > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.block-editor-v2 .topnav-menu-index {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--editor-v2-primary-soft);
+  color: var(--editor-v2-primary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.block-editor-v2 .topnav-menu-chevron {
+  color: var(--editor-v2-muted);
+  transition: transform .18s ease;
+}
+
+.block-editor-v2 .topnav-menu-card[open] .topnav-menu-chevron {
+  transform: rotate(180deg);
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .topnav-menu-card > summary > button {
+  display: grid !important;
+  place-items: center !important;
+  width: 40px !important;
+  min-width: 40px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 !important;
+  border: 1px solid var(--editor-v2-line) !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  color: #94a3b8 !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .topnav-menu-card > summary > button:not(:disabled):hover {
+  border-color: #fecaca !important;
+  background: #fff5f5 !important;
+  color: var(--editor-v2-danger) !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .topnav-menu-card > summary > button:disabled {
+  opacity: .38 !important;
+  cursor: not-allowed !important;
+}
+
+.block-editor-v2 .topnav-menu-card > .topnav-menu-editor-body {
+  display: grid !important;
+  gap: 16px !important;
+  padding: 16px 14px 18px !important;
+  border-top: 1px solid var(--editor-v2-line) !important;
+  background: #f6f8fb !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .topnav-menu-editor-body > .target-control {
+  display: grid !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+/* Bottom bar buttons use the same collapsible item list without a nested card. */
+.block-editor-v2 .bottom-button-editor-body {
+  display: grid;
+  gap: 16px;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .bottom-button-editor-body .bottom-link-compact {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  align-items: stretch !important;
+  gap: 8px !important;
+  min-height: 0 !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .bottom-button-editor-body .bottom-link-controls {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 8px !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .bottom-button-editor-body .bottom-emoji-trigger {
+  min-height: 42px !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .bottom-button-editor-body :is(.bottom-link-modes button, .bottom-link-controls input, .bottom-link-controls select) {
+  min-height: 40px !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+/* Reservation custom fields share the compact question row and control system. */
+.block-editor-v2 .reservation-custom-head-row {
+  grid-template-columns: 36px minmax(0, 1fr) 40px !important;
+}
+
+.block-editor-v2 .reservation-custom-body {
+  gap: 16px !important;
+}
+
+.block-editor-v2 .reservation-custom-body .editor-segmented-v2-options {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+body .builder-shell .edit-layout .block-editor-v2 .reservation-custom-body .editor-field-v2 textarea {
+  min-height: 88px !important;
+  max-height: 160px !important;
+}
+
+/* Form options stay visible as compact editable rows instead of nested cards. */
+body .builder-shell .edit-layout .block-editor-v2 .option-editor {
+  display: grid !important;
+  gap: 8px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+.block-editor-v2 .option-editor > .option-editor-heading {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 28px;
+  color: var(--editor-v2-text);
+}
+
+.block-editor-v2 .option-editor-heading strong {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.block-editor-v2 .option-editor-heading em {
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: var(--editor-v2-primary-soft);
+  color: var(--editor-v2-primary);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.block-editor-v2 .option-editor > .option-editor-row {
+  display: grid !important;
+  grid-template-columns: 32px minmax(0, 1fr) 40px !important;
+  align-items: center;
+  gap: 8px !important;
+  min-height: 52px;
+  padding: 5px 6px 5px 8px;
+  border: 1px solid var(--editor-v2-line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.block-editor-v2 .option-editor-index {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--editor-v2-primary-soft);
+  color: var(--editor-v2-primary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .option-editor-row input {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 40px !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .option-editor-row .option-editor-remove {
+  display: grid !important;
+  place-items: center !important;
+  width: 40px !important;
+  min-width: 40px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 !important;
+  border: 1px solid var(--editor-v2-line) !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  color: #94a3b8 !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .option-editor-row .option-editor-remove:not(:disabled):hover {
+  border-color: #fecaca !important;
+  background: #fff5f5 !important;
+  color: var(--editor-v2-danger) !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .option-editor-row .option-editor-remove:disabled {
+  opacity: .35 !important;
+  cursor: not-allowed !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .option-editor > .option-editor-add {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  width: 100% !important;
+  min-height: 42px !important;
+  padding: 0 12px !important;
+  border: 1px dashed #aabbd0 !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  color: var(--editor-v2-text) !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .option-editor > .option-editor-add:hover {
   border-color: var(--editor-v2-primary) !important;
   background: var(--editor-v2-primary-soft) !important;
   color: var(--editor-v2-primary) !important;

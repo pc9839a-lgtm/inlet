@@ -1,5 +1,5 @@
 import React from 'react';
-import { GripVertical } from 'lucide-react';
+import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
 import { T } from './editorLabels.js';
 import { stop } from './editorEvents.js';
 
@@ -29,6 +29,9 @@ export function ScreenOrderRowIdentity({ block, index, meta, open, onDragStart, 
         <span className="screen-order-number">{index + 1}</span>
         <Icon size={17} />
         <strong>{meta.label}</strong>
+        <span className="screen-row-chevron" aria-hidden="true">
+          {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </span>
       </div>
     </>
   );

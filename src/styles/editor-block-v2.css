@@ -8,9 +8,10 @@
   --editor-v2-primary-soft: #eff6ff;
   --editor-v2-danger: #dc2626;
   display: grid;
-  gap: 14px;
+  gap: 0;
   min-width: 0;
   color: var(--editor-v2-text);
+  background: var(--editor-v2-surface);
 }
 
 .block-editor-v2-header {
@@ -27,11 +28,11 @@
 .editor-section-v2-icon {
   display: inline-grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background: var(--editor-v2-primary-soft);
-  color: var(--editor-v2-primary);
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--editor-v2-muted);
 }
 
 .block-editor-v2-heading,
@@ -70,25 +71,26 @@
 
 .block-editor-v2-content {
   display: grid;
-  gap: 12px;
+  gap: 0;
   min-width: 0;
 }
 
 .editor-section-v2 {
   overflow: hidden;
-  border: 1px solid var(--editor-v2-line);
-  border-radius: 8px;
+  border: 0;
+  border-bottom: 1px solid var(--editor-v2-line);
+  border-radius: 0;
   background: var(--editor-v2-surface);
 }
 
 body .builder-shell .edit-layout .block-editor-v2 .editor-section-v2-trigger {
   display: grid !important;
-  grid-template-columns: 40px minmax(0, 1fr) 32px !important;
+  grid-template-columns: 24px minmax(0, 1fr) 24px !important;
   align-items: center !important;
-  gap: 12px !important;
+  gap: 10px !important;
   width: 100% !important;
-  min-height: 68px !important;
-  padding: 12px 14px !important;
+  min-height: 52px !important;
+  padding: 0 4px !important;
   border: 0 !important;
   border-radius: 0 !important;
   background: #fff !important;
@@ -116,9 +118,9 @@ body .builder-shell .edit-layout .block-editor-v2 .editor-section-v2-trigger {
 .editor-section-v2-body {
   display: grid;
   gap: 16px;
-  padding: 16px;
+  padding: 16px 4px 20px;
   border-top: 1px solid var(--editor-v2-line);
-  background: var(--editor-v2-soft);
+  background: var(--editor-v2-surface);
 }
 
 .editor-field-v2 {
@@ -157,7 +159,7 @@ body .builder-shell .edit-layout .block-editor-v2 .editor-section-v2-trigger {
 body .builder-shell .edit-layout .block-editor-v2 .editor-field-v2 :is(input, textarea, select) {
   width: 100% !important;
   min-width: 0 !important;
-  min-height: 44px !important;
+  min-height: 42px !important;
   padding: 10px 12px !important;
   border: 1px solid #cdd8e6 !important;
   border-radius: 8px !important;
@@ -190,9 +192,9 @@ body .builder-shell .edit-layout .block-editor-v2 .editor-field-v2 :is(input, te
 .editor-toggle-row-v2 {
   display: grid;
   gap: 10px;
-  padding: 12px;
-  border: 1px solid var(--editor-v2-line);
-  border-radius: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
   background: #fff;
 }
 
@@ -263,4 +265,60 @@ body .builder-shell .edit-layout .block-editor-v2 .editor-toggle-row-v2 > button
 .editor-v2-control-list {
   display: grid;
   gap: 10px;
+}
+
+.editor-tabs-v2 {
+  min-width: 0;
+  background: #fff;
+}
+
+.editor-tabs-v2-list {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  gap: 22px;
+  min-height: 46px;
+  padding: 0 4px;
+  border-bottom: 1px solid var(--editor-v2-line);
+  background: #fff;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .editor-tabs-v2-list > button {
+  position: relative !important;
+  min-width: 0 !important;
+  min-height: 46px !important;
+  padding: 0 2px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--editor-v2-muted) !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .editor-tabs-v2-list > button[aria-selected='true'] {
+  color: var(--editor-v2-text) !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .editor-tabs-v2-list > button[aria-selected='true']::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  background: var(--editor-v2-text);
+}
+
+.editor-tabs-v2-panel {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  padding: 18px 4px 22px;
+}
+
+.editor-tabs-v2-panel > :is(.editor-field-v2, .field, .range, .color, .choice, .choice-clean, .toggle, .toggle-clean, .weekday, .anchor-control) {
+  margin: 0;
 }

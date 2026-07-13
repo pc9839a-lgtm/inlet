@@ -1,4 +1,4 @@
-﻿import { readFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -66,9 +66,14 @@ const files = {
   landing: await readFile('src/preview/LandingRenderer.jsx', 'utf8'),
   app: await readFile('src/App.jsx', 'utf8'),
   editPanel: await readFile('src/editor/EditPanel.jsx', 'utf8'),
+  workspaceShellActions: await readFile('src/runtime/useWorkspaceShellActions.js', 'utf8'),
+  fixedBlockSelection: await readFile('src/editor/useFixedBlockSelection.js', 'utf8'),
+  pageGlobalOptionsProps: await readFile('src/editor/editPanelSectionProps/pageGlobalOptionsProps.js', 'utf8'),
   content: await readFile('src/preview/renderers/ContentBlocks.jsx', 'utf8'),
   form: await readFile('src/preview/renderers/FormBlocks.jsx', 'utf8'),
   formEditor: await readFile('src/editor/blockEditors/FormEditor.jsx', 'utf8'),
+  formDesign: await readFile('src/editor/blockEditors/FormDesignSection.jsx', 'utf8'),
+  formSubmission: await readFile('src/editor/blockEditors/FormSubmissionSection.jsx', 'utf8'),
   info: await readFile('src/preview/renderers/InfoBlocks.jsx', 'utf8'),
   link: await readFile('src/preview/renderers/LinkBlocks.jsx', 'utf8'),
   media: await readFile('src/preview/renderers/MediaBlocks.jsx', 'utf8'),
@@ -256,8 +261,9 @@ assert(files.form.includes('function digitsOnly') && files.form.includes('inputM
 assert(files.publicFormEmbed.includes('data-pagero-phone="1"') && files.publicFormEmbed.includes('inputmode="numeric"') && files.publicFormEmbed.includes('digitsOnly(firstAnswer'), 'standalone form phone fields should force and submit numeric input');
 assert(files.publicFormEmbed.includes('\\uC811\\uC218 \\uC800\\uC7A5\\uC5D0 \\uC2E4\\uD328'), 'standalone form embed should show server save failure');
 assert(files.publicFormEmbed.includes('\\uD398\\uC774\\uC9C0\\uB85C\\uB85C \\uC81C\\uC791') && files.publicFormEmbed.includes('sourceLabel'), 'standalone form embed should show Pagero credit and preserve attribution');
-assert(files.formEditor.includes('Step title="디자인"') && files.formEditor.includes('buttonHover') && files.formEditor.includes('buttonColorMode') && files.formEditor.includes('buttonHoverColorMode'), 'form editor should expose form style, button effect, and button color controls');
-assert(files.previewCss.includes('.form-color-row') && files.previewCss.includes('.form-button-hover-fill') && files.previewCss.includes('.form-input-underline'), 'form design controls should have matching preview css contracts');
+assert(files.formEditor.includes("label: '스타일'") && files.formDesign.includes('buttonHover') && files.formDesign.includes('buttonColorMode') && files.formDesign.includes('buttonHoverColorMode'), 'form editor should expose form style, button effect, and button color controls');
+assert(files.formEditor.includes("label: '제출'") && files.formSubmission.includes('duplicatePhone') && files.formSubmission.includes('duplicateEmail') && files.formSubmission.includes('duplicateWindow'), 'form editor should expose submission duplicate policies after the component split');
+assert(files.form.includes("'--form-button': themeButtonColor(s)") && files.form.includes("'--form-button-hover': themeButtonHoverColor(s)") && files.previewCss.includes('.form-button-hover-fill') && files.previewCss.includes('.form-input-underline'), 'form design controls should map button colors, hover effects, and input styles into preview contracts');
 assert(!files.previewCss.includes('form-button-anim-') && !files.previewCss.includes('form-button-overlay'), 'form button effects should use the single buttonHover contract');
 assert(files.browserVisualQa.includes("INLET_BROWSER_QA_EXTRA_URLS=auto"), 'browser visual QA should document automatic footer/legal route coverage');
 assert(files.browserVisualQa.includes("'/privacy'") && files.browserVisualQa.includes("'/terms'"), 'browser visual QA auto routes should cover legal pages');
@@ -272,8 +278,8 @@ assert(files.browserVisualQa.includes('INLET_BROWSER_QA_EXPECT_TEXT'), 'browser 
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_FORBID_TEXT'), 'browser visual QA should assert forbidden text is absent');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_VIEWPORTS'), 'browser visual QA should allow desktop-only authenticated checks');
 assert(files.browserVisualQa.includes('--window-size=1280,900'), 'local Chrome visual QA should launch with a desktop-sized window');
-assert(files.app.includes("if (['topnav', 'bottombar', 'footer'].includes(target?.type))") && files.app.includes("setOpenId('');\n      return;"), 'preview fixed blocks should not auto-open editor panels');
-assert(files.app.includes("setOpenId('');\n    setAddOpen(false);") && files.editPanel.includes("openId===topNavBlock.id?'접기':'열기'"), 'edit entry should keep fixed block panels closed until explicitly opened');
+assert(files.workspaceShellActions.includes("if (['topnav', 'bottombar', 'footer'].includes(target?.type))") && files.workspaceShellActions.includes("setOpenId('');\n      return;"), 'preview fixed blocks should not auto-open editor panels');
+assert(files.workspaceShellActions.includes("setOpenId('');\n    setAddOpen(false);") && files.fixedBlockSelection.includes("React.useState('')") && files.pageGlobalOptionsProps.includes('openId: selection.fixedOpenId'), 'edit entry should keep fixed block panels closed until explicitly opened');
 assert(!/[�]|占|獄|揆|\?몄|\?꾩|蹂듭|遺덈|紐|釉|湲|肄/.test(files.editPanel), 'edit panel source should not contain mojibake labels');
 const productionBrowserQa = await readFile('scripts/production-browser-quality-check.mjs', 'utf8');
 assert(productionBrowserQa.includes('owner style text color live preview'), 'production browser QA should cover style text color live preview');

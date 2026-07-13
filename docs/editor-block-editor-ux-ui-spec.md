@@ -1,5 +1,7 @@
 # Pagero 블록 편집기 UX/UI 통합 명세
 
+> **2026-07-13 개정 안내**
+> 화면 순서 행의 직접 조작, 재클릭 닫기, 평평한 탭/구분선 UI는 `docs/editor-block-editor-modernization-v2.md`를 최우선 구현 기준으로 사용한다. 이 문서와 v2가 충돌하면 v2를 따른다.
 - 문서 상태: 구현 기준안
 - 작성일: 2026-07-12
 - 기준 브랜치: `integrate/pagero-internal-page-split-safe`
@@ -8,7 +10,7 @@
 
 ## 구현 진행 현황
 
-2026-07-12 기준:
+2026-07-13 기준:
 
 | 영역 | 상태 | 비고 |
 |---|---|---|
@@ -18,26 +20,29 @@
 | `EditorList` | 완료 | 한 항목 펼침, 새 항목 자동 열기, 추가·삭제·빈 상태 |
 | Text | 완료 | 내용과 고급 설정 분리 |
 | Hero | 완료 | 내용과 이미지 디자인 분리 |
-| Image | 완료 | 이미지·캡션과 표시 방식 분리 |
+| Image | 완료 | 이미지·캡션·표시 방식 분리, 갤러리 항목 공통 목록 적용 |
 | Cards | 완료 | 공통 반복 목록 적용 |
 | FAQ | 완료 | 공통 반복 목록 적용 |
 | Links | 완료 | 공통 반복 목록 적용 |
 | Download, TopNav, BottomBar | 완료 | 공통 섹션 및 고정 블록 shell 적용 |
-| Form, Reservation | 완료 | 기존 질문·예약 hook을 유지하고 상위 구조 전환 |
+| Form, Reservation | 완료 | 기존 hook 유지, 질문·선택지·예약 추가 필드 공통 행 구조 적용 |
 | Map, Schedule, Search, Activity | 완료 | 내용과 표시 방식 분리 |
 | Timer, Footer, Spacer, Divider, Code | 완료 | 공통 섹션 UI와 고급 동작 분리, 기존 데이터 계약 유지 |
 | 모바일 접수함·통계 전용 처리 | 완료 | 접수함·통계만 허용, 편집·스타일·설정·템플릿·미리보기 미마운트 |
 
 현재 검증:
 
-- `npm run mojibake:qa`: 통과
-- `npm run build`: 통과
-- 브라우저 QA: 신규 shell과 고급 설정 렌더링 확인 후 기존 phone-frame 폭 기준에서 중단
-- `runtime:qa`: 기존 `LazyRuntimeBoundary` selection-reset 계약 불일치로 중단
-- `rendering:qa`: 기존 form 디자인 옵션 계약 불일치로 중단
-- `css:qa`: 보호 영역인 `base-public-home.css` import 계약 불일치로 중단
+- `npm run mojibake:qa`: 통과, 685개 파일·6개 검사
+- `npm run runtime:qa`: 통과, 519개 파일·1,609개 검사
+- `npm run rendering:qa`: 통과, 163개 렌더링·19개 시각 기하·6개 뷰포트 계약
+- `npm run build`: 통과, 2,150개 모듈·블록 편집기 lazy chunk 20개
+- CSS 예산: 393,801 / 430,000 bytes(91.6%), FormEditor 설정·외부 코드·HTML 모달 CSS를 6.07 kB lazy 청크로 분리 완료
+- 보호 파일 diff: 없음
+- 인증된 데스크톱 편집기 브라우저 QA: 미완료
+- `integration:qa`: 분리된 SettingsPanel의 기존 manager 권한 계약 갱신 필요
+- `css:qa`: 보호 영역인 public home CSS import 계약과 분리해 별도 판단 필요
 
-위 세 QA 실패를 해결하기 위해 공개 홈, form 또는 runtime을 이번 체크포인트에 임의 포함하지 않는다.
+내부 편집기 검증 실패를 공개 홈, route, runtime router, functions, server 또는 `base-public*.css` 변경으로 우회하지 않는다.
 
 ## 1. 문서 목적
 

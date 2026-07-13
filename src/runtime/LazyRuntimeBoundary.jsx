@@ -139,10 +139,6 @@ export class LazyEditorBoundary extends Component {
   }
 
   componentDidCatch(error) {
-    if (recoverLazyChunkLoad(error)) {
-      this.setState({ recovering: true });
-      return;
-    }
     console.warn('Fixed block editor load failed:', error);
   }
 

@@ -38,7 +38,6 @@ export function ScreenOrderItem({
         canMoveUp={controls.canMoveUp}
         canMoveDown={controls.canMoveDown}
         onSelectRow={() => selectBlock(block.id)}
-        onOpenSettings={() => openBlockSettings(block.id)}
         onToggleVisible={() => toggleVisible(block.id)}
         onMoveUp={controls.moveUp}
         onMoveDown={controls.moveDown}

@@ -299,7 +299,7 @@
 
 .edit-layout .screen-order-head.block-head {
   display: grid !important;
-  grid-template-columns: 42px minmax(0, 1fr) 58px 40px !important;
+  grid-template-columns: 42px minmax(0, 1fr) 50px auto !important;
   align-items: center !important;
   gap: 8px !important;
   min-height: 58px !important;
@@ -344,6 +344,7 @@
 }
 
 .edit-layout .screen-title-wrap strong {
+  flex: 1 1 auto !important;
   min-width: 0 !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
@@ -358,6 +359,13 @@
   color: var(--editor-ink) !important;
 }
 
+.edit-layout .screen-row-chevron {
+  display: inline-grid !important;
+  flex: 0 0 auto !important;
+  place-items: center !important;
+  color: var(--editor-muted) !important;
+}
+
 .edit-layout .screen-row-visibility,
 .edit-layout .screen-row-actions {
   display: grid !important;
@@ -367,6 +375,26 @@
 
 .edit-layout .screen-row-actions {
   position: relative !important;
+  display: inline-flex !important;
+  gap: 4px !important;
+}
+
+.edit-layout .screen-row-actions .screen-icon-action {
+  width: 34px !important;
+  min-width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+}
+
+.edit-layout .screen-row-actions .screen-icon-action:disabled {
+  opacity: .32 !important;
+  cursor: not-allowed !important;
+}
+
+.edit-layout .screen-row-actions .screen-delete-action:is(:hover, :focus-visible) {
+  border-color: #fecaca !important;
+  background: #fff7f7 !important;
+  color: #dc2626 !important;
 }
 
 .edit-layout .screen-row-action-menu {
@@ -506,16 +534,30 @@
   background: #fff !important;
 }
 
-.edit-layout .selected-block-settings-body :is(.field, .range, .color, .choice, .choice-clean, .toggle, .toggle-clean, .weekday, .anchor-control) {
+.edit-layout .selected-block-settings-body :is(.field, .range, .color, .choice, .choice-clean, .weekday, .anchor-control) {
   display: grid !important;
-  grid-template-columns: 108px minmax(0, 1fr) !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  align-items: stretch !important;
+  gap: 6px !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+}
+
+.edit-layout .selected-block-settings-body :is(.toggle, .toggle-clean) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: center !important;
-  gap: 10px !important;
-  min-height: 52px !important;
-  padding: 10px 12px !important;
-  border: 1px solid var(--editor-line) !important;
-  border-radius: 16px !important;
-  background: #fff !important;
+  gap: 12px !important;
+  min-height: 48px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
   box-shadow: none !important;
   outline: 0 !important;
 }
@@ -564,7 +606,7 @@
   gap: 10px !important;
 }
 
-.edit-layout .selected-block-settings-body :is(.mini-detail, .form-question-card, .privacy-compact-panel, .form-one-line-panel, .inlet-export-card, .option-editor) {
+.edit-layout .selected-block-settings-body :is(.mini-detail, .form-question-card) {
   border: 1px solid var(--editor-line) !important;
   border-radius: 16px !important;
   background: #fff !important;
@@ -579,7 +621,7 @@
   gap: 8px !important;
 }
 
-.edit-layout .selected-block-settings-body :is(.form-question-body, .mini-body, .privacy-compact-panel, .form-one-line-panel, .option-editor) {
+.edit-layout .selected-block-settings-body :is(.form-question-body, .mini-body) {
   display: grid !important;
   gap: 10px !important;
   padding: 12px !important;
@@ -598,17 +640,17 @@
   padding: 0 !important;
 }
 
-.edit-layout .selected-block-settings-body :is(.image-input, .style-photo-upload, .gallery-edit) {
+.edit-layout .selected-block-settings-body :is(.image-input, .style-photo-upload) {
   display: grid !important;
   grid-template-columns: 1fr !important;
   gap: 10px !important;
-  padding: 12px !important;
-  border: 1px solid var(--editor-line) !important;
-  border-radius: 16px !important;
-  background: #fff !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
 }
 
-.edit-layout .selected-block-settings-body :is(.image-box, .image-box.single-plus, .image-preview, .stored-image-preview, .style-photo-upload .image-box.single-plus, .gallery-edit .image-box.single-plus) {
+.edit-layout .selected-block-settings-body :is(.image-box, .image-box.single-plus, .image-preview, .stored-image-preview, .style-photo-upload .image-box.single-plus) {
   position: relative !important;
   display: grid !important;
   place-items: center !important;
@@ -622,8 +664,8 @@
   overflow: hidden !important;
 }
 
-.edit-layout .selected-block-settings-body :is(.image-box, .image-box.single-plus, .image-preview, .stored-image-preview, .style-photo-upload .image-box.single-plus, .gallery-edit .image-box.single-plus) > img,
-.edit-layout .selected-block-settings-body :is(.image-input, .style-photo-upload, .gallery-edit) img {
+.edit-layout .selected-block-settings-body :is(.image-box, .image-box.single-plus, .image-preview, .stored-image-preview, .style-photo-upload .image-box.single-plus) > img,
+.edit-layout .selected-block-settings-body :is(.image-input, .style-photo-upload) img {
   display: block !important;
   width: 100% !important;
   height: 100% !important;
@@ -639,7 +681,7 @@
   gap: 6px !important;
 }
 
-.edit-layout .selected-block-settings-body :is(.anchor-control button, .image-actions button, .image-empty-button, .add-line-clean, .danger-btn-clean, .eyedropper, .mini-detail > summary, .mini-list button, .option-editor button, .form-question-head-row button, .form-question-actions button) {
+.edit-layout .selected-block-settings-body :is(.anchor-control button, .image-actions button, .image-empty-button, .add-line-clean, .danger-btn-clean, .eyedropper, .mini-detail > summary, .mini-list button, .form-question-head-row button, .form-question-actions button) {
   min-height: 38px !important;
   min-width: 0 !important;
   padding: 0 12px !important;
@@ -654,7 +696,7 @@
   line-height: 1 !important;
 }
 
-.edit-layout .selected-block-settings-body :is(.anchor-control button, .image-actions button, .image-empty-button, .add-line-clean, .danger-btn-clean, .eyedropper, .mini-detail > summary, .mini-list button, .option-editor button, .form-question-head-row button, .form-question-actions button):is(:hover, :focus-visible) {
+.edit-layout .selected-block-settings-body :is(.anchor-control button, .image-actions button, .image-empty-button, .add-line-clean, .danger-btn-clean, .eyedropper, .mini-detail > summary, .mini-list button, .form-question-head-row button, .form-question-actions button):is(:hover, :focus-visible) {
   border-color: #b9cbe1 !important;
   background: #f8fbff !important;
 }
@@ -676,7 +718,7 @@
 
 @media (max-width: 720px) {
   .edit-layout .screen-order-head.block-head {
-    grid-template-columns: 40px minmax(0, 1fr) 54px 38px !important;
+    grid-template-columns: 40px minmax(0, 1fr) 48px auto !important;
     gap: 7px !important;
     padding: 8px !important;
   }

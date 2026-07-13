@@ -4,12 +4,14 @@ import ReservationCustomFieldHeader from './ReservationCustomFieldHeader.jsx';
 export default function ReservationCustomFieldCard({
   field,
   index,
+  isOpen,
   isDragging,
   isDragOver,
   optionDraft,
   onUpdate,
   onUpdateOptions,
   onRemove,
+  onToggleOpen,
   onDragStart,
   onDragOver,
   onDrop,
@@ -17,7 +19,7 @@ export default function ReservationCustomFieldCard({
 }) {
   return (
     <div
-      className={`form-question-card reservation-custom-card ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
+      className={`form-question-card reservation-custom-card ${isOpen ? 'open' : ''} ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
       draggable
       onDragStart={onDragStart}
       onDragOver={onDragOver}
@@ -25,16 +27,20 @@ export default function ReservationCustomFieldCard({
       onDragEnd={onDragEnd}
     >
       <ReservationCustomFieldHeader
+        field={field}
         index={index}
-        label={field.label}
+        isOpen={isOpen}
+        onToggleOpen={onToggleOpen}
         onRemove={onRemove}
       />
-      <ReservationCustomFieldBody
-        field={field}
-        optionDraft={optionDraft}
-        onUpdate={onUpdate}
-        onUpdateOptions={onUpdateOptions}
-      />
+      {isOpen && (
+        <ReservationCustomFieldBody
+          field={field}
+          optionDraft={optionDraft}
+          onUpdate={onUpdate}
+          onUpdateOptions={onUpdateOptions}
+        />
+      )}
     </div>
   );
 }

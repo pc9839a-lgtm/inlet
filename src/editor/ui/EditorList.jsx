@@ -45,10 +45,12 @@ export function EditorList({ items = [], getTitle, getIcon, getBadge, renderItem
           );
         })}
       </div>
-      <button type="button" className="editor-list-v2-add" onClick={onAdd}>
-        <Plus size={17} aria-hidden="true" />
-        <span>{addLabel}</span>
-      </button>
+      {onAdd && (
+        <button type="button" className="editor-list-v2-add" onClick={onAdd}>
+          <Plus size={17} aria-hidden="true" />
+          <span>{addLabel}</span>
+        </button>
+      )}
     </div>
   );
 }

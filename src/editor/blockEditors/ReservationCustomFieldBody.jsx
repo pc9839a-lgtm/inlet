@@ -1,4 +1,4 @@
-import { Choice, Field, Toggle } from '../controls.jsx';
+import { EditorField, SegmentedControl, ToggleRow } from '../ui/index.js';
 import { customFieldTypes, T } from './reservationEditorModel.js';
 
 export default function ReservationCustomFieldBody({ field, optionDraft, onUpdate, onUpdateOptions }) {
@@ -10,24 +10,25 @@ export default function ReservationCustomFieldBody({ field, optionDraft, onUpdat
   };
 
   return (
-    <div className="mini-body">
-      <Field label={T.itemName} value={field.label} onChange={(value) => onUpdate({ label: value })} />
-      <Choice
+    <div className="form-question-body reservation-custom-body">
+      <EditorField label={T.itemName}>
+        <input value={field.label} onChange={(event) => onUpdate({ label: event.target.value })} />
+      </EditorField>
+      <SegmentedControl
         label={T.inputType}
         value={field.type || 'short'}
         onChange={updateType}
-        options={customFieldTypes}
+        options={customFieldTypes.map(([value, label]) => ({ value, label }))}
       />
-      <Toggle label={T.required} checked={!!field.required} onChange={(value) => onUpdate({ required: value })} />
+      <ToggleRow label={T.required} checked={!!field.required} onChange={(value) => onUpdate({ required: value })} />
       {field.type === 'select' && (
-        <label className="field field-content">
-          <span>{T.options}</span>
+        <EditorField label={T.options}>
           <textarea
             placeholder={T.placeholder}
             value={optionDraft ?? (field.options || []).join(', ')}
             onChange={(event) => onUpdateOptions(event.target.value)}
           />
-        </label>
+        </EditorField>
       )}
     </div>
   );

@@ -1,4 +1,4 @@
-﻿/* Pagero editor stable workspace owner */
+/* Pagero editor stable workspace owner */
 body:has(.builder-shell),
 #root:has(.builder-shell) {
   width: 100% !important;
@@ -593,16 +593,29 @@ body .builder-shell .edit-layout .selected-block-settings-body .step-body {
   border-top: 1px solid #eef3f9 !important;
 }
 
-body .builder-shell .edit-layout .selected-block-settings-body :is(.field, .range, .color, .choice, .choice-clean, .toggle, .toggle-clean, .weekday, .anchor-control) {
+body .builder-shell .edit-layout .selected-block-settings-body :is(.field, .range, .color, .choice, .choice-clean, .weekday, .anchor-control) {
   display: grid !important;
-  grid-template-columns: 104px minmax(0, 1fr) !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  align-items: stretch !important;
+  gap: 6px !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell .edit-layout .selected-block-settings-body :is(.toggle, .toggle-clean) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: center !important;
-  gap: 10px !important;
-  min-height: 54px !important;
-  padding: 10px !important;
-  border: 1px solid #e3ebf5 !important;
-  border-radius: 16px !important;
-  background: #fbfdff !important;
+  gap: 12px !important;
+  min-height: 48px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
   box-shadow: none !important;
 }
 
@@ -644,14 +657,14 @@ body .builder-shell .edit-layout .selected-block-settings-body :is(.choice, .cho
   gap: 8px !important;
 }
 
-body .builder-shell .edit-layout .selected-block-settings-body :is(.image-input, .style-photo-upload, .gallery-edit) {
+body .builder-shell .edit-layout .selected-block-settings-body :is(.image-input, .style-photo-upload) {
   display: grid !important;
   grid-template-columns: 1fr !important;
   gap: 8px !important;
-  padding: 10px !important;
-  border: 1px solid #e3ebf5 !important;
-  border-radius: 16px !important;
-  background: #fbfdff !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
 }
 
 body .builder-shell .edit-layout .selected-block-settings-body :is(.image-box, .image-box.single-plus, .image-preview, .stored-image-preview) {

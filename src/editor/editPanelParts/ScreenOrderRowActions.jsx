@@ -1,48 +1,55 @@
-import { MoreHorizontal } from 'lucide-react';
+import { ArrowDown, ArrowUp, Copy, Trash2 } from 'lucide-react';
 import { canDuplicateScreenOrderBlock } from './screenOrderActionPolicy.js';
-import { ScreenOrderRowActionMenu } from './ScreenOrderRowActionMenu.jsx';
-import { useScreenOrderRowMenu } from './useScreenOrderRowMenu.js';
 import { T } from './editorLabels.js';
 import { IconAction } from './editorControls.jsx';
+import { stop } from './editorEvents.js';
 
 export function ScreenOrderRowActions({
   block,
   meta,
   canMoveUp,
   canMoveDown,
-  onOpenSettings,
   onMoveUp,
   onMoveDown,
   onDuplicate,
   onRemove,
 }) {
   const canDuplicate = canDuplicateScreenOrderBlock(block);
-  const { menuOpen, runAction, toggleMenu, stop } = useScreenOrderRowMenu();
 
   return (
     <div className="screen-row-actions" onClick={stop}>
       <IconAction
-        className="screen-more-action"
-        onClick={toggleMenu}
-        title={T.more}
-        aria-label={`${meta.label} ${T.more}`}
-        aria-expanded={menuOpen}
+        onClick={onMoveUp}
+        title={T.moveUp}
+        aria-label={`${meta.label} ${T.moveUp}`}
+        disabled={!canMoveUp}
       >
-        <MoreHorizontal size={16} />
+        <ArrowUp size={16} />
       </IconAction>
-      {menuOpen && (
-        <ScreenOrderRowActionMenu
-          canMoveUp={canMoveUp}
-          canMoveDown={canMoveDown}
-          canDuplicate={canDuplicate}
-          onAction={runAction}
-          onOpenSettings={onOpenSettings}
-          onMoveUp={onMoveUp}
-          onMoveDown={onMoveDown}
-          onDuplicate={onDuplicate}
-          onRemove={onRemove}
-        />
-      )}
+      <IconAction
+        onClick={onMoveDown}
+        title={T.moveDown}
+        aria-label={`${meta.label} ${T.moveDown}`}
+        disabled={!canMoveDown}
+      >
+        <ArrowDown size={16} />
+      </IconAction>
+      <IconAction
+        onClick={onDuplicate}
+        title={T.copy}
+        aria-label={`${meta.label} ${T.copy}`}
+        disabled={!canDuplicate}
+      >
+        <Copy size={16} />
+      </IconAction>
+      <IconAction
+        className="screen-delete-action"
+        onClick={onRemove}
+        title={T.delete}
+        aria-label={`${meta.label} ${T.delete}`}
+      >
+        <Trash2 size={16} />
+      </IconAction>
     </div>
   );
 }

@@ -1,8 +1,15 @@
-import { AddButton, Danger, ImageInput } from '../controls.jsx';
+import { ImageIcon } from 'lucide-react';
+import { ImageInput } from '../controls.jsx';
+import { EditorList } from '../ui/index.js';
 import { GalleryMultiUpload } from './GalleryMultiUpload.jsx';
 
 export default function ImageGalleryEditor({ gallery, set, updateGallery, removeGallery }) {
   const filledGallery = gallery.filter(Boolean);
+  const items = gallery.map((src, index) => ({
+    id: `gallery-image-${index}`,
+    src,
+    index,
+  }));
 
   return (
     <>
@@ -11,15 +18,22 @@ export default function ImageGalleryEditor({ gallery, set, updateGallery, remove
         max={10}
         onAdd={(images) => set({ gallery: [...filledGallery, ...images].slice(0, 10) })}
       />
-      <div className="gallery-edit">
-        {gallery.map((img, index) => (
-          <div key={index}>
-            <ImageInput label={`${index + 1}`} value={img} onChange={(value) => updateGallery(index, value)} />
-            <Danger onClick={() => removeGallery(index)} />
-          </div>
-        ))}
-      </div>
-      {gallery.length < 10 && <AddButton onClick={() => set({ gallery: [...gallery, ''] })} />}
+      <EditorList
+        items={items}
+        getIcon={() => <ImageIcon size={16} aria-hidden="true" />}
+        getTitle={(item) => `이미지 ${item.index + 1}`}
+        getBadge={(item) => (item.src ? '등록됨' : '비어 있음')}
+        renderItem={(item) => (
+          <ImageInput
+            label="이미지"
+            value={item.src}
+            onChange={(value) => updateGallery(item.index, value)}
+          />
+        )}
+        onAdd={gallery.length < 10 ? () => set({ gallery: [...gallery, ''] }) : undefined}
+        addLabel="이미지 추가"
+        onRemove={(item) => removeGallery(item.index)}
+      />
     </>
   );
 }

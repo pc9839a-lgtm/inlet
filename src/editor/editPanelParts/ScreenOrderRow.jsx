@@ -15,7 +15,6 @@ export function ScreenOrderRow({
   canMoveUp,
   canMoveDown,
   onSelectRow,
-  onOpenSettings,
   onToggleVisible,
   onMoveUp,
   onMoveDown,
@@ -53,7 +52,6 @@ export function ScreenOrderRow({
           meta={meta}
           canMoveUp={canMoveUp}
           canMoveDown={canMoveDown}
-          onOpenSettings={onOpenSettings}
           onMoveUp={onMoveUp}
           onMoveDown={onMoveDown}
           onDuplicate={onDuplicate}

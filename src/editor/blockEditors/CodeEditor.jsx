@@ -14,9 +14,13 @@ export default function CodeEditor({ s, set }) {
 
   return (
     <>
-      <EditorSection id="code" title="사용자 코드" description="코드는 페이지 표시와 보안에 영향을 줄 수 있습니다. 내용을 확인한 뒤 적용하세요." icon={Code2} tone="warning" defaultOpen>
-        <CodeEditorBox draft={draft} onDraftChange={setDraft} onOpenModal={() => setModalOpen(true)} onApply={apply} />
-      </EditorSection>
+      <EditorTabs
+        tabs={[{
+          id: 'code',
+          label: '코드',
+          content: <CodeEditorBox draft={draft} onDraftChange={setDraft} onOpenModal={() => setModalOpen(true)} onApply={apply} />,
+        }]}
+      />
       {modalOpen && <CodeEditorModal draft={draft} onDraftChange={setDraft} onClose={() => setModalOpen(false)} onApply={apply} />}
     </>
   );

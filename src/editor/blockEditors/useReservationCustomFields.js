@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   appendCustomField,
   moveCustomFieldList,
@@ -10,7 +10,14 @@ import {
 export function useReservationCustomFields(customFields, setCustomFields) {
   const [dragId, setDragId] = useState('');
   const [dragOverId, setDragOverId] = useState('');
+  const [openId, setOpenId] = useState(customFields[0]?.id || '');
   const [optionDrafts, setOptionDrafts] = useState({});
+
+  useEffect(() => {
+    if (openId && !customFields.some((field) => field.id === openId)) {
+      setOpenId(customFields[0]?.id || '');
+    }
+  }, [customFields, openId]);
 
   const updateCustom = (id, patch) => {
     setCustomFields(updateCustomFieldList(customFields, id, patch));
@@ -26,7 +33,9 @@ export function useReservationCustomFields(customFields, setCustomFields) {
   };
 
   const addCustom = () => {
-    setCustomFields(appendCustomField(customFields));
+    const next = appendCustomField(customFields);
+    setCustomFields(next);
+    setOpenId(next.at(-1)?.id || '');
   };
 
   const moveCustom = (targetId) => {
@@ -35,9 +44,11 @@ export function useReservationCustomFields(customFields, setCustomFields) {
   };
 
   const createFieldProps = (field) => ({
+    isOpen: openId === field.id,
     isDragging: dragId === field.id,
     isDragOver: dragOverId === field.id,
     optionDraft: optionDrafts[field.id],
+    onToggleOpen: () => setOpenId((current) => (current === field.id ? '' : field.id)),
     onUpdate: (patch) => updateCustom(field.id, patch),
     onUpdateOptions: (value) => updateOptions(field.id, value),
     onRemove: () => removeCustom(field.id),
