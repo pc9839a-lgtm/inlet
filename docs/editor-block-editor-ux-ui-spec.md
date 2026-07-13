@@ -5,7 +5,7 @@
 - 문서 상태: 구현 기준안
 - 작성일: 2026-07-12
 - 기준 브랜치: `integrate/pagero-internal-page-split-safe`
-- 기준 커밋: `bf8a3e2`
+- 기준 커밋: `5c34d0b`
 - 최우선 목표: 데스크톱 블록 편집기 내부의 정보 구조, 입력 방식, 상태 표현을 하나의 제품 언어로 통일한다.
 
 ## 구현 진행 현황
@@ -38,9 +38,9 @@
 - `npm run build`: 통과, 2,150개 모듈·블록 편집기 lazy chunk 20개
 - CSS 예산: 393,801 / 430,000 bytes(91.6%), FormEditor 설정·외부 코드·HTML 모달 CSS를 6.07 kB lazy 청크로 분리 완료
 - 보호 파일 diff: 없음
-- 인증된 데스크톱 편집기 브라우저 QA: 미완료
-- `integration:qa`: 분리된 SettingsPanel의 기존 manager 권한 계약 갱신 필요
-- `css:qa`: 보호 영역인 public home CSS import 계약과 분리해 별도 판단 필요
+- 데스크톱 편집기 브라우저 QA: 로컬 합성 인증 상태에서 기본 편집기와 Form 편집기 통과; 실제 서버 로그인 상태 확인은 운영 전 잔여
+- `integration:qa`: 통과, SettingsPanel 분리 경계·lazy editor 복구·화면 순서 직접 조작 계약 포함
+- `css:qa`: 통과, 112개 활성 CSS·536,617 / 550,000 bytes; frozen public home은 별도 예산으로 감시
 
 내부 편집기 검증 실패를 공개 홈, route, runtime router, functions, server 또는 `base-public*.css` 변경으로 우회하지 않는다.
 
@@ -1490,14 +1490,14 @@ npm run build
 
 - [ ] 변경 파일이 담당 범위 안에 있다.
 - [ ] `git diff --check`를 통과했다.
-- [ ] `mojibake:qa`를 통과했다.
-- [ ] `runtime:qa`를 통과했다.
-- [ ] `rendering:qa`를 통과했다.
-- [ ] `css:qa`를 통과했다.
-- [ ] `npm run build`를 통과했다.
+- [x] `mojibake:qa`를 통과했다.
+- [x] `runtime:qa`를 통과했다.
+- [x] `rendering:qa`를 통과했다.
+- [x] `css:qa`를 통과했다.
+- [x] `npm run build`를 통과했다.
 - [ ] 데스크톱 편집 브라우저 검증을 완료했다.
 - [ ] 모바일 접수함·통계 전용 범위 검증을 완료했다.
-- [ ] 보호 파일 diff가 비어 있다.
+- [x] 보호 파일 diff가 비어 있다.
 - [ ] 운영 배포 여부를 별도 승인받았다.
 
 ## 22. 첫 구현 권장 범위
