@@ -411,16 +411,49 @@ requireAll(authContext, [
 const settingsPanel = await read('src/panels/SettingsPanel.jsx');
 requireAll(settingsPanel, [
   'normalizeOwnershipSettings',
-  'MANAGER_PERMISSION_TABS',
-  'createServerManagerInvite',
-  'managerInviteUrl',
-  'manager-access-card',
-  'manager-permission-grid',
-  'copyInvite',
-  '복사 중',
   'canManageProjectUsers',
+  'useManagerSettings',
+  '<SettingsPanelBody',
 ], 'SettingsPanel manager permission contract');
 assert(!settingsPanel.includes('AiPanel') && !settingsPanel.includes('START_MODE_KEY'), 'SettingsPanel must not contain internal-only AI/start controls');
+
+const settingsManagerAccessSection = await read('src/panels/settings/SettingsManagerAccessSection.jsx');
+requireAll(settingsManagerAccessSection, [
+  'if (!canManageProjectUsers) return null',
+  'copyInvite',
+  'createInvite',
+  '<ManagerSettingsSection',
+], 'SettingsPanel manager access boundary contract');
+
+const managerSettingsSection = await read('src/panels/settings/ManagerSettingsSection.jsx');
+requireAll(managerSettingsSection, [
+  'manager-access-card',
+  '<ManagerOwnershipTransfer',
+  '<ManagerList',
+], 'SettingsPanel manager section contract');
+
+const managerPermissionPanel = await read('src/panels/settings/ManagerPermissionPanel.jsx');
+requireAll(managerPermissionPanel, [
+  'MANAGER_PERMISSION_TABS',
+  'manager-permission-grid',
+  'setManagerPermissionMode',
+], 'SettingsPanel manager permission controls contract');
+
+const managerInviteActions = await read('src/panels/settings/managerInviteActions.js');
+requireAll(managerInviteActions, [
+  'createServerManagerInvite',
+  'managerInviteUrl',
+  'copyInvite',
+  'setInviteLoading',
+], 'SettingsPanel manager invite actions contract');
+
+const managerDetailActions = await read('src/panels/settings/ManagerDetailActions.jsx');
+requireAll(managerDetailActions, [
+  'inviteLabel',
+  'loading',
+  'copyInvite',
+  'createInvite',
+], 'SettingsPanel manager invite controls contract');
 
 const adminPanel = await read('src/panels/AdminPanel.jsx');
 requireAll(adminPanel, [
@@ -488,11 +521,17 @@ assert(!/import\s+(?:\{[^}]*Editor[^}]*\}|[A-Z][A-Za-z]+Editor)\s+from\s+['"]\.\
 
 const blockEditor = await read('src/editor/BlockEditor.jsx');
 requireAll(blockEditor, [
+  '<LazyEditorBoundary',
+  'resetKey={`${block.id}:${block.type}`}',
+], 'block editor lazy boundary wiring contract');
+
+const lazyEditorBoundary = await read('src/editor/LazyEditorBoundary.jsx');
+requireAll(lazyEditorBoundary, [
   'data-lazy-editor-fallback="true"',
   'data-lazy-editor-error="true"',
   'class LazyEditorErrorBoundary',
   'componentDidUpdate(prevProps)',
-], 'lazy block editor contract');
+], 'lazy block editor recovery contract');
 
 const bundleQa = await read('scripts/bundle-quality-check.mjs');
 requireAll(bundleQa, [
