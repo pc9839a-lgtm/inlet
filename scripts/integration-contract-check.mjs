@@ -533,6 +533,33 @@ requireAll(lazyEditorBoundary, [
   'componentDidUpdate(prevProps)',
 ], 'lazy block editor recovery contract');
 
+const normalBlockSelection = await read('src/editor/useNormalBlockSelection.js');
+requireAll(normalBlockSelection, [
+  'normalSelectedId === blockId',
+  "setSelectedNormalId('')",
+  "setOpenId('')",
+  'setOpenId(blockId)',
+], 'screen order row reselect close contract');
+
+const screenOrderRow = await read('src/editor/editPanelParts/ScreenOrderRow.jsx');
+requireAll(screenOrderRow, [
+  '<ScreenOrderRowActions',
+  "data-selected={open ? 'true' : 'false'}",
+  'onClick={selectRow}',
+  '{open && (',
+], 'screen order direct action row contract');
+assert(!screenOrderRow.includes('ScreenOrderRowActionMenu'), 'screen order row must not restore the legacy overflow action menu');
+
+const screenOrderRowActions = await read('src/editor/editPanelParts/ScreenOrderRowActions.jsx');
+requireAll(screenOrderRowActions, [
+  'ArrowDown',
+  'ArrowUp',
+  'Copy',
+  'Trash2',
+  'onClick={stop}',
+  'disabled={!canDuplicate}',
+], 'screen order direct action controls contract');
+
 const bundleQa = await read('scripts/bundle-quality-check.mjs');
 requireAll(bundleQa, [
   'initialJsNames',
