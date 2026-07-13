@@ -19,9 +19,8 @@ async function clearBrowserRuntimeCaches() {
 function replaceWithCanonicalRuntime() {
   if (typeof window === 'undefined') return;
   const url = new URL(window.location.href);
-  url.searchParams.delete('__fresh');
-  const next = `${url.pathname}${url.search}${url.hash}`;
-  window.location.replace(next || '/');
+  url.searchParams.set('__fresh', String(Date.now()));
+  window.location.replace(url.toString());
 }
 
 function resetChunkReloadAttempts() {

@@ -8,7 +8,7 @@
   Cache-Control: no-cache, no-store, must-revalidate
 
 /assets/*
-  Cache-Control: public, max-age=300, must-revalidate
+  Cache-Control: no-cache, no-store, must-revalidate
   X-Content-Type-Options: nosniff
 
 /c63-assets/*

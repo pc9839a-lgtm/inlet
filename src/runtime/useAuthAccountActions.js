@@ -36,6 +36,7 @@ export function createAuthAccountActions({
     saveLocalJson(AUTH_KEY, normalized, '\uB85C\uADF8\uC778 \uC815\uBCF4', { quietSuccess: true });
     setAuthUser(normalized);
     setAuthView('');
+    if (typeof history !== 'undefined') history.replaceState(null, '', '/app');
   };
 
   const updateAccountProfile = async (patch = {}) => {
@@ -77,7 +78,7 @@ export function createAuthAccountActions({
     saveLocalJson(AUTH_KEY, normalized, '\uB85C\uADF8\uC778 \uC815\uBCF4', { quietSuccess: true });
     setAuthUser(normalized);
     setAuthView('');
-    if (typeof history !== 'undefined') history.replaceState(null, '', '/');
+    if (typeof history !== 'undefined') history.replaceState(null, '', '/app');
 
     const projectSlug = project.slug || page.slug;
     const projectContextForInvite = {

@@ -64,6 +64,7 @@ export function useWorkspaceShellActions({
   };
 
   const openWorkspace = (fallbackMode = 'manual') => {
+    if (typeof history !== 'undefined') history.replaceState(null, '', '/app');
     setOpenId('');
     setAddOpen(false);
     if (!canUseBuilder) {
@@ -82,6 +83,7 @@ export function useWorkspaceShellActions({
 
   const closeWorkspace = () => {
     if (!confirmLeaveStyleChanges()) return;
+    if (typeof history !== 'undefined') history.replaceState(null, '', '/dashboard');
     clearPendingStyle();
     saveLocalJson(DASHBOARD_KEY, { open: false }, '작업공간 상태', { quietSuccess: true });
     setWorkspaceOpen(false);
