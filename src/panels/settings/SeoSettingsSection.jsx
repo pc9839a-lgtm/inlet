@@ -11,7 +11,7 @@ export default function SeoSettingsSection({
   setSeoDraft,
 }) {
   return (
-    <SettingsSection id="seo" title="SEO 설정" description="검색과 공유 정보" openSection={openSection} setOpenSection={setOpenSection} locked={locked} onSave={onSave} onEdit={onEdit}>
+    <SettingsSection id="seo" title="SEO 설정" description="검색과 공유 정보" openSection={openSection} setOpenSection={setOpenSection} locked={locked} onSave={onSave} onEdit={onEdit} className="settings-seo-card">
       <div className="settings-grid">
         <div className="settings-field-hint-wrap">
           <Field label="메타 제목" value={seoDraft.title} disabled={locked} placeholder="강남 피부관리 상담 예약 | 브랜드명" onChange={(value) => setSeoDraft((draft) => ({ ...draft, title: value }))} />

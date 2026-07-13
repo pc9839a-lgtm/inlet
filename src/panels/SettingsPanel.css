@@ -3524,3 +3524,20 @@
     grid-template-columns: minmax(0, 1fr) 54px !important;
   }
 }
+
+/* settings-detail-clarity-20260713 */
+.settings-panel .settings-seo-card .settings-grid{align-items:stretch!important}
+.settings-panel .settings-seo-card .settings-field-hint-wrap,.settings-panel .settings-conversion-field{display:grid!important;grid-template-columns:minmax(0,1fr)!important;align-content:start!important;gap:8px!important;min-width:0!important;padding:14px!important;border:1px solid #dbe5f2!important;border-radius:12px!important;background:#fff!important}
+.settings-panel .settings-seo-card :is(.field,.image-input){display:grid!important;grid-template-columns:minmax(0,1fr)!important;align-content:start!important;gap:8px!important;overflow:visible!important}
+.settings-panel .settings-seo-card :is(.field,.image-input)>span,.settings-panel .settings-conversion-field>span,.settings-panel .account-password-form label>span{color:#334155!important;font-size:12px!important;line-height:1.3!important;font-weight:900!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important}
+.settings-panel .settings-seo-card .settings-field-hint{margin:0!important;color:#64748b!important;font-size:11px!important;font-weight:750!important}
+.settings-panel .settings-conversion-values{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
+.settings-panel .settings-conversion-field:first-child,.settings-panel .settings-conversion-actions{grid-column:1/-1!important}
+.settings-panel .settings-conversion-field :is(input,textarea){min-height:44px!important;margin:0!important;border-radius:9px!important;background:#f8fafc!important}
+.settings-panel .account-password-form{display:grid!important;gap:14px!important;padding:16px!important;border:1px solid #dbe5f2!important;border-radius:14px!important;background:#fff!important}
+.settings-panel .account-password-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important}
+.settings-panel .account-password-form .account-settings-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:end!important}
+.settings-panel .account-password-form label{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:7px!important;min-width:0!important}
+.settings-panel .account-password-code,.settings-panel .account-settings-actions{grid-column:1/-1!important}
+.settings-panel .account-settings-actions{display:flex!important;justify-content:flex-end!important}
+@media(max-width:760px){.settings-panel .settings-conversion-values,.settings-panel .account-password-form .account-settings-grid{grid-template-columns:minmax(0,1fr)!important}.settings-panel .settings-conversion-field:first-child,.settings-panel .settings-conversion-actions,.settings-panel .account-password-code,.settings-panel .account-settings-actions{grid-column:auto!important}}

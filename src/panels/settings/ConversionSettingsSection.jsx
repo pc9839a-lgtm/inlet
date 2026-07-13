@@ -19,8 +19,8 @@ export default function ConversionSettingsSection({
   return (
     <SettingsSection
       id="conversion"
-      title="\uC804\uD658 \uC124\uC815"
-      description="\uC811\uC218\uC640 \uC608\uC57D \uC644\uB8CC \uAE30\uC900"
+      title="전환 설정"
+      description="접수와 예약 완료 기준"
       openSection={openSection}
       setOpenSection={setOpenSection}
       className="settings-conversion-card"
