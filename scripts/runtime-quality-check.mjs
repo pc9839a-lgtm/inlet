@@ -134,6 +134,7 @@ const homeScreens = await readFile('src/screens/HomeScreens.jsx', 'utf8');
 const authContext = await readFile('src/lib/authContext.js', 'utf8');
 const appErrorBoundary = await readFile('src/components/AppErrorBoundary.jsx', 'utf8');
 const blockEditor = await readFile('src/editor/BlockEditor.jsx', 'utf8');
+const scheduleEditor = await readFile('src/editor/blockEditors/ScheduleEditor.jsx', 'utf8');
 const lazyEditorBoundary = await readFile('src/editor/LazyEditorBoundary.jsx', 'utf8');
 const landingRenderer = await readFile('src/preview/LandingRenderer.jsx', 'utf8');
 const leadDuplicatePolicy = await readFile('src/lib/leadDuplicatePolicy.js', 'utf8');
@@ -348,6 +349,9 @@ assert(/const openWorkspace = [\s\S]*?setOpenId\(''\);[\s\S]*?setAddOpen\(false\
 assert(lazyRuntimeBoundary.includes('class LazyEditorBoundary'), 'fixed block editors must isolate lazy chunk failures');
 assert(fixedBlockRenderers.includes('renderLazyEditor') && lazyRuntimeBoundary.includes('<LazyEditorBoundary resetKey=') && lazyRuntimeBoundary.includes('<Suspense fallback={<LazyEditorFallback />}'), 'fixed block editors must keep lazy loading fallback and boundary');
 assert(blockEditor.includes('LazyEditorBoundary') && lazyEditorBoundary.includes('class LazyEditorErrorBoundary'), 'BlockEditor must isolate lazy editor chunk failures');
+assert(blockEditor.includes('<AnchorControl') && blockEditor.indexOf('<AnchorControl') < blockEditor.indexOf('<LazyEditorBoundary') && !blockEditor.includes('id=\"advanced\"'), 'BlockEditor must keep widget code at the top without the redundant advanced section');
+assert(fixedBlockRenderers.includes('<AnchorControl') && fixedBlockRenderers.indexOf('<AnchorControl') < fixedBlockRenderers.indexOf('renderLazyEditor(Editor') && !fixedBlockRenderers.includes('id=\"advanced\"'), 'fixed block editors must keep widget code at the top without the redundant advanced section');
+assert(scheduleEditor.includes("import { EditorTabs } from '../ui/index.js'") && scheduleEditor.includes('<EditorTabs'), 'ScheduleEditor must import and render EditorTabs inside its lazy chunk');
 assert(lazyEditorBoundary.includes('<Suspense fallback=') && lazyEditorBoundary.includes('data-lazy-editor-fallback="true"') && lazyEditorBoundary.includes('LAZY_EDITOR_FALLBACK_TEXT'), 'BlockEditor must keep a stable lazy editor loading fallback');
 assert(lazyEditorBoundary.includes('role="alert"') && lazyEditorBoundary.includes('data-lazy-editor-error="true"') && lazyEditorBoundary.includes('LAZY_EDITOR_ERROR_TEXT'), 'BlockEditor must show a useful lazy editor failure state');
 assert(lazyEditorBoundary.includes('componentDidUpdate(prevProps)') && /this\.setState\(\{\s*error:\s*null(?:,\s*recovering:\s*false)?\s*\}\)/.test(lazyEditorBoundary), 'BlockEditor lazy error boundary must reset when the selected block/type changes');

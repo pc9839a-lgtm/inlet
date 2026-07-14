@@ -954,3 +954,65 @@ body .builder-shell .edit-layout .selected-block-settings-body .editor-section-v
   padding: 16px !important;
   background: #fff !important;
 }
+/* pagero block editor anchor bar */
+body .builder-shell .edit-layout .block-editor-v2-content > .block-editor-anchor-control {
+  order: -1 !important;
+  display: grid !important;
+  grid-template-columns: 92px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 12px !important;
+  margin: 0 !important;
+  padding: 12px 14px !important;
+  border: 0 !important;
+  border-bottom: 1px solid #dfe6ef !important;
+  border-radius: 0 !important;
+  background: #f8fafc !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2-content > .block-editor-anchor-control > span {
+  margin: 0 !important;
+  color: #475467 !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2-content > .block-editor-anchor-control > div {
+  display: grid !important;
+  grid-template-columns: 34px minmax(0, 1fr) 54px !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2-content > .block-editor-anchor-control b {
+  min-width: 34px !important;
+  min-height: 36px !important;
+  border-radius: 8px !important;
+  background: #eef2f6 !important;
+  color: #667085 !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2-content > .block-editor-anchor-control input {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 36px !important;
+  height: 36px !important;
+  padding: 0 10px !important;
+  border: 1px solid #cdd8e6 !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2-content > .block-editor-anchor-control button {
+  min-width: 54px !important;
+  min-height: 36px !important;
+  height: 36px !important;
+  padding: 0 10px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: #111827 !important;
+  color: #fff !important;
+}

@@ -5,7 +5,7 @@ export function AnchorControl({ block, value, set }) {
   const changeAnchor = (nextValue) => set(anchorPatch(nextValue, block.type));
 
   return (
-    <div className="anchor-control">
+    <div className="anchor-control block-editor-anchor-control">
       <span>위젯 코드</span>
       <div>
         <b>#</b>

@@ -1,5 +1,4 @@
-import { CalendarDays } from 'lucide-react';
-import { EditorSection } from '../ui/index.js';
+import { EditorTabs } from '../ui/index.js';
 import ScheduleBasicSection from './ScheduleBasicSection.jsx';
 
 export default function ScheduleEditor({ s, set }) {
