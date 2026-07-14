@@ -7,6 +7,17 @@ const C63_HOME_HTML = `<!doctype html>
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <title>페이지로</title>
+  <script>
+    (() => {
+      try {
+        const auth = JSON.parse(localStorage.getItem('inlet-auth-v1') || 'null');
+        if (auth && (auth.session || auth.email)) {
+          document.documentElement.style.visibility = 'hidden';
+          window.location.replace('/app');
+        }
+      } catch {}
+    })();
+  </script>
   <script type="module" crossorigin src="/c63-assets/index-pagero-main-fix-20260615.js"></script>
   <link rel="modulepreload" crossorigin href="/c63-assets/jsx-runtime-BHwPObl3.js">
   <link rel="modulepreload" crossorigin href="/c63-assets/createLucideIcon-Bx4O1Xry.js">
