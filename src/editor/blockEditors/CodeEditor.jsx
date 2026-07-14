@@ -9,7 +9,7 @@ export default function CodeEditor({ s, set }) {
   const { draft, setDraft, modalOpen, setModalOpen } = useCodeDraft(s.html);
 
   const apply = () => {
-    set({ html: draft, css: '', js: '', runJs: false, height: 'auto' });
+    set({ html: draft, css: '', js: '', runJs: false });
     setModalOpen(false);
   };
 

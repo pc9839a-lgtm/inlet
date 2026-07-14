@@ -39,7 +39,7 @@ export function TextStylePanel({ s, set }) {
 
 export function CardsStylePanel({ s, set }) {
   return <>
-    <SegmentedControl label="배치" value={s.layout || 'grid'} onChange={(value) => set({ layout: value })} options={[{ value: 'grid', label: '격자' }, { value: 'stack', label: '목록' }, { value: 'steps', label: '순서' }]} />
+    <SegmentedControl label="배치" value={s.layout || 'grid'} onChange={(value) => set({ layout: value })} options={[{ value: 'grid', label: '격자' }, { value: 'stack', label: '목록' }]} />
     <SegmentedControl label="표현" value={s.tone || 'soft'} onChange={(value) => set({ tone: value })} options={[{ value: 'soft', label: '소프트' }, { value: 'solid', label: '채움' }, { value: 'outline', label: '라인' }]} />
     {(s.layout || 'grid') === 'grid' && <SegmentedControl label="열 개수" value={String(s.columns || 2)} onChange={(value) => set({ columns: Number(value) })} options={[{ value: '1', label: '1열' }, { value: '2', label: '2열' }]} />}
     <AlignmentControl s={s} set={set} options={ALIGN_NO_RIGHT} />
