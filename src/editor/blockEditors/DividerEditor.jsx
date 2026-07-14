@@ -14,7 +14,9 @@ export default function DividerEditor({ s, set }) {
         content: (
           <>
             <SegmentedControl label="선 모양" value={s.style || 'solid'} onChange={(value) => set({ style: value })} options={[{ value: 'solid', label: '실선' }, { value: 'dashed', label: '긴 점선' }, { value: 'dotted', label: '점선' }]} />
-            <SegmentedControl label="정렬" value={s.align || 'center'} onChange={(value) => set({ align: value })} options={[{ value: 'left', label: '왼쪽' }, { value: 'center', label: '가운데' }, { value: 'right', label: '오른쪽' }]} />
+            {width < 100 && (
+              <SegmentedControl label="정렬" value={s.align || 'center'} onChange={(value) => set({ align: value })} options={[{ value: 'left', label: '왼쪽' }, { value: 'center', label: '가운데' }, { value: 'right', label: '오른쪽' }]} />
+            )}
             <div className="spacer-editor-card">
               <span>길이</span>
               <input type="range" min="10" max="100" step="5" value={width} onChange={(event) => set({ width: Number(event.target.value) })} />

@@ -8,7 +8,6 @@ export default function HeroImageSection({ s, set, Range }) {
     <>
       <SegmentedControl
         label="이미지 배치"
-        description="일반은 이미지와 문구를 분리하고, 전체 이미지는 배경처럼 사용합니다."
         value={mode}
         onChange={(value) => set({ imageMode: value, imageFit: value === 'full' ? 'cover' : 'contain' })}
         options={[

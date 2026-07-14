@@ -22,8 +22,6 @@ export function HeroStylePanel({ s, set }) {
     <SegmentedControl label="정렬" value={s.align || 'left'} onChange={(value) => set({ align: value })} options={ALIGN} />
     <SegmentedControl label="제목 크기" value={s.titleSize || 'large'} onChange={(value) => set({ titleSize: value })} options={SIZES} />
     <SegmentedControl label="설명 크기" value={s.bodySize || 'medium'} onChange={(value) => set({ bodySize: value })} options={SIZES} />
-    <ToggleRow label="제목 굵게" checked={Boolean(s.bold)} onChange={(value) => set({ bold: value })} />
-    <ToggleRow label="제목 밑줄" checked={Boolean(s.underline)} onChange={(value) => set({ underline: value })} />
   </div>;
 }
 
@@ -31,8 +29,6 @@ export function TextStylePanel({ s, set }) {
   return <>
     <SegmentedControl label="형태" value={s.layout || 'plain'} onChange={(value) => set({ layout: value })} options={[{ value: 'plain', label: '기본' }, { value: 'card', label: '카드' }, { value: 'notice', label: '강조' }]} />
     <SegmentedControl label="글자 크기" value={s.size || 'medium'} onChange={(value) => set({ size: value })} options={SIZES} />
-    <ToggleRow label="굵게" checked={Boolean(s.bold)} onChange={(value) => set({ bold: value })} />
-    <ToggleRow label="밑줄" checked={Boolean(s.underline)} onChange={(value) => set({ underline: value })} />
     <AlignmentControl s={s} set={set} />
   </>;
 }
@@ -126,7 +122,7 @@ export function BottomBarStylePanel({ s, set }) {
   const colorMode = s.buttonColorMode || 'theme';
   return <div className="editor-v2-control-list">
     <SegmentedControl label="형태" value={s.style || 'pill'} onChange={(value) => set({ style: value })} options={[{ value: 'pill', label: '캡슐' }, { value: 'box', label: '박스' }]} />
-    <SegmentedControl label="색상 방식" value={colorMode} onChange={(value) => set({ buttonColorMode: value })} options={[{ value: 'theme', label: '프리셋' }, { value: 'custom', label: '직접 지정' }]} />
+    <ToggleRow label="직접 색상" checked={colorMode === 'custom'} onChange={(value) => set({ buttonColorMode: value ? 'custom' : 'theme' })} />
     {colorMode === 'theme' ? (
       <SegmentedControl label="프리셋" value={s.color || 'dark'} onChange={(value) => set({ color: value })} options={[{ value: 'dark', label: '다크' }, { value: 'accent', label: '강조' }, { value: 'light', label: '라이트' }]} />
     ) : (
