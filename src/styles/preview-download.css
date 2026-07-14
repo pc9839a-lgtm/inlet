@@ -110,3 +110,27 @@
 .download-widget.align-right .download-body {
   text-align: right;
 }
+
+.download-widget.download-list .download-item {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.download-widget.download-list .download-body {
+  text-align: left;
+}
+
+.download-widget.download-list .download-action {
+  width: auto;
+  min-width: 104px;
+}
+
+@media (max-width: 420px) {
+  .download-widget.download-list .download-item {
+    grid-template-columns: 1fr;
+  }
+
+  .download-widget.download-list .download-action {
+    width: 100%;
+  }
+}

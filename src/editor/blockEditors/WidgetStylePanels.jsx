@@ -53,7 +53,6 @@ export function HeroStylePanel({ s, set }) {
     <SegmentedControl label="정렬" value={s.align || 'left'} onChange={(value) => set({ align: value })} options={ALIGN} />
     <SegmentedControl label="제목 크기" value={s.titleSize || 'large'} onChange={(value) => set({ titleSize: value })} options={SIZES} />
     <SegmentedControl label="설명 크기" value={s.bodySize || 'medium'} onChange={(value) => set({ bodySize: value })} options={SIZES} />
-    <SegmentedControl label="영역 높이" value={s.height || 'medium'} onChange={(value) => set({ height: value })} options={SIZES} />
     <ToggleRow label="제목 굵게" checked={Boolean(s.bold)} onChange={(value) => set({ bold: value })} />
     <ToggleRow label="제목 밑줄" checked={Boolean(s.underline)} onChange={(value) => set({ underline: value })} />
   </div>;

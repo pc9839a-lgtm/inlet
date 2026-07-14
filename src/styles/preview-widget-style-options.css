@@ -1,10 +1,14 @@
 .landing-section.text,
 .landing-section.cards-widget,
+.landing-section.links,
+.landing-section.timer,
 .landing-section.activity-widget,
 .landing-section.download-widget,
 .landing-section.inlet-map-section,
 .landing-section.schedule-widget,
-.landing-section.faq-widget {
+.landing-section.faq-widget,
+.landing-section.page-search-widget,
+.landing-section.code-widget {
   margin-top: var(--widget-margin, 24px) !important;
   margin-bottom: var(--widget-margin, 24px) !important;
   border-radius: var(--widget-radius, var(--radius)) !important;
@@ -12,32 +16,44 @@
 
 .landing-section.text.widget-bg-on,
 .landing-section.cards-widget.widget-bg-on,
+.landing-section.links.widget-bg-on,
+.landing-section.timer.widget-bg-on,
 .landing-section.activity-widget.widget-bg-on,
 .landing-section.download-widget.widget-bg-on,
 .landing-section.inlet-map-section.widget-bg-on,
 .landing-section.schedule-widget.widget-bg-on,
-.landing-section.faq-widget.widget-bg-on {
+.landing-section.faq-widget.widget-bg-on,
+.landing-section.page-search-widget.widget-bg-on,
+.landing-section.code-widget.widget-bg-on {
   background: var(--widget-bg, #fff) !important;
   padding: var(--widget-padding, 22px) !important;
 }
 
 .landing-section.text.widget-shadow-on,
 .landing-section.cards-widget.widget-shadow-on,
+.landing-section.links.widget-shadow-on,
+.landing-section.timer.widget-shadow-on,
 .landing-section.activity-widget.widget-shadow-on,
 .landing-section.download-widget.widget-shadow-on,
 .landing-section.inlet-map-section.widget-shadow-on,
 .landing-section.schedule-widget.widget-shadow-on,
-.landing-section.faq-widget.widget-shadow-on {
+.landing-section.faq-widget.widget-shadow-on,
+.landing-section.page-search-widget.widget-shadow-on,
+.landing-section.code-widget.widget-shadow-on {
   box-shadow: 0 18px 44px rgba(15, 23, 42, .10) !important;
 }
 
 .landing-section.text:not(.widget-bg-on),
 .landing-section.cards-widget:not(.widget-bg-on),
+.landing-section.links:not(.widget-bg-on),
+.landing-section.timer:not(.widget-bg-on),
 .landing-section.activity-widget:not(.widget-bg-on),
 .landing-section.download-widget:not(.widget-bg-on),
 .landing-section.inlet-map-section:not(.widget-bg-on),
 .landing-section.schedule-widget:not(.widget-bg-on),
-.landing-section.faq-widget:not(.widget-bg-on) {
+.landing-section.faq-widget:not(.widget-bg-on),
+.landing-section.page-search-widget:not(.widget-bg-on),
+.landing-section.code-widget:not(.widget-bg-on) {
   padding-top: var(--widget-padding, 0) !important;
   padding-bottom: var(--widget-padding, 0) !important;
 }

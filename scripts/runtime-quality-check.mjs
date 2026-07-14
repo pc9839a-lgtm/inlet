@@ -136,6 +136,8 @@ const appErrorBoundary = await readFile('src/components/AppErrorBoundary.jsx', '
 const blockEditor = await readFile('src/editor/BlockEditor.jsx', 'utf8');
 const scheduleEditor = await readFile('src/editor/blockEditors/ScheduleEditor.jsx', 'utf8');
 const widgetStylePanels = await readFile('src/editor/blockEditors/WidgetStylePanels.jsx', 'utf8');
+const widgetStyleOptionsCss = await readFile('src/styles/preview-widget-style-options.css', 'utf8');
+const previewDownloadCss = await readFile('src/styles/preview-download.css', 'utf8');
 const widgetStyleEditorFiles = [
   'ActivityEditor.jsx',
   'BottomBarEditor.jsx',
@@ -378,6 +380,11 @@ assert(fixedBlockRenderers.includes('<AnchorControl') && fixedBlockRenderers.ind
 assert(scheduleEditor.includes("import { EditorTabs } from '../ui/index.js'") && scheduleEditor.includes('<EditorTabs'), 'ScheduleEditor must import and render EditorTabs inside its lazy chunk');
 assert(widgetStyleEditors.every((source) => source.includes("label: '스타일'")), 'every registered widget editor must expose an explicit style tab');
 assert(widgetStylePanels.includes('WidgetSurfaceControls') && widgetStylePanels.includes('bgEnabled') && widgetStylePanels.includes('shadowEnabled'), 'widget style tabs must share the persisted surface controls');
+assert(['.landing-section.links', '.landing-section.timer', '.landing-section.page-search-widget', '.landing-section.code-widget'].every((selector) => widgetStyleOptionsCss.includes(selector)), 'every widget exposing shared surface controls must consume them in preview CSS');
+assert(previewDownloadCss.includes('.download-widget.download-list .download-item') && previewDownloadCss.includes('grid-template-columns: minmax(0, 1fr) auto'), 'download list style must render differently from the card style');
+const heroStylePanelSource = widgetStylePanels.slice(widgetStylePanels.indexOf('export function HeroStylePanel'), widgetStylePanels.indexOf('export function TextStylePanel'));
+assert(!heroStylePanelSource.includes("value={s.height || 'medium'}"), 'hero style must not expose a height control overridden by the image height control');
+assert(!widgetStyleEditors.find((source) => source.includes('export default function TimerEditor'))?.includes('TimerFloatingCtaSection'), 'timer editor must not expose the unused floatOnBottom control');
 assert(lazyEditorBoundary.includes('<Suspense fallback=') && lazyEditorBoundary.includes('data-lazy-editor-fallback="true"') && lazyEditorBoundary.includes('LAZY_EDITOR_FALLBACK_TEXT'), 'BlockEditor must keep a stable lazy editor loading fallback');
 assert(lazyEditorBoundary.includes('role="alert"') && lazyEditorBoundary.includes('data-lazy-editor-error="true"') && lazyEditorBoundary.includes('LAZY_EDITOR_ERROR_TEXT'), 'BlockEditor must show a useful lazy editor failure state');
 assert(lazyEditorBoundary.includes('componentDidUpdate(prevProps)') && /this\.setState\(\{\s*error:\s*null(?:,\s*recovering:\s*false)?\s*\}\)/.test(lazyEditorBoundary), 'BlockEditor lazy error boundary must reset when the selected block/type changes');
