@@ -233,9 +233,9 @@ body .builder-shell .edit-layout .screen-order-item.block-item {
 }
 
 body .builder-shell .edit-layout .screen-order-item.block-item:is(.open, [data-selected='true']) {
-  border-color: #9cb8df !important;
+  border-color: #111827 !important;
   background: #fff !important;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, .1) !important;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, .12) !important;
 }
 
 body .builder-shell .edit-layout .screen-order-head.block-head {
@@ -247,9 +247,9 @@ body .builder-shell .edit-layout .screen-order-head.block-head {
 }
 
 body .builder-shell .edit-layout .screen-order-inline-editor {
-  padding: 12px !important;
-  border-top: 1px solid var(--workspace-line) !important;
-  background: var(--workspace-soft) !important;
+  padding: 0 !important;
+  border-top: 0 !important;
+  background: #f3f5f8 !important;
 }
 
 body .builder-shell .edit-layout .screen-order-number {
@@ -792,4 +792,145 @@ html body #root .builder-shell .settings-panel .settings-section-title-row {
   display: flex !important;
   align-items: center !important;
   width: 100% !important;
+}
+
+/* pagero selected block inspector */
+body .builder-shell .edit-layout .screen-order-item.block-item.open > .screen-order-head {
+  background: #111827 !important;
+  border-radius: 7px 7px 0 0 !important;
+}
+
+body .builder-shell .edit-layout .screen-order-item.block-item.open > .screen-order-head .screen-title-wrap :is(strong, svg, .screen-row-chevron) {
+  color: #fff !important;
+}
+
+body .builder-shell .edit-layout .screen-order-item.block-item.open > .screen-order-head .screen-order-number {
+  background: #fff !important;
+  color: #111827 !important;
+}
+
+body .builder-shell .edit-layout .screen-order-item.block-item.open > .screen-order-head :is(.screen-drag-handle, .screen-icon-action) {
+  border-color: #3a4558 !important;
+  background: #202b3d !important;
+  color: #fff !important;
+}
+
+body .builder-shell .edit-layout .screen-order-item.block-item.open > .screen-order-head .screen-icon-action:not(:disabled):is(:hover, :focus-visible) {
+  border-color: #64748b !important;
+  background: #344155 !important;
+}
+
+body .builder-shell .edit-layout .screen-order-item.block-item.open > .screen-order-head .screen-delete-action:not(:disabled):is(:hover, :focus-visible) {
+  border-color: #ef4444 !important;
+  background: #7f1d1d !important;
+  color: #fff !important;
+}
+
+body .builder-shell .edit-layout .screen-order-item.block-item.open > .screen-order-head .screen-icon-action:disabled {
+  opacity: .28 !important;
+}
+
+body .builder-shell .edit-layout .selected-block-settings-body.block-editor {
+  padding: 0 !important;
+  border: 0 !important;
+  background: #f3f5f8 !important;
+}
+
+body .builder-shell .edit-layout .selected-block-settings-body .block-editor-v2 {
+  background: transparent !important;
+}
+
+body .builder-shell .edit-layout .selected-block-settings-body .editor-tabs-v2 {
+  padding: 14px !important;
+  background: transparent !important;
+}
+
+body .builder-shell .edit-layout .selected-block-settings-body .editor-tabs-v2-list {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 5 !important;
+  display: grid !important;
+  grid-auto-flow: column !important;
+  grid-auto-columns: minmax(0, 1fr) !important;
+  gap: 4px !important;
+  min-height: 0 !important;
+  padding: 4px !important;
+  border: 1px solid #dfe4eb !important;
+  border-radius: 8px !important;
+  background: #e9edf2 !important;
+}
+
+body .builder-shell .edit-layout .selected-block-settings-body .editor-tabs-v2-list > button {
+  min-height: 36px !important;
+  padding: 0 12px !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+  background: transparent !important;
+  color: #667085 !important;
+  font-size: 13px !important;
+  font-weight: 850 !important;
+}
+
+body .builder-shell .edit-layout .selected-block-settings-body .editor-tabs-v2-list > button[aria-selected='true'] {
+  background: #fff !important;
+  color: #111827 !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, .12) !important;
+}
+
+body .builder-shell .edit-layout .selected-block-settings-body .editor-tabs-v2-list > button[aria-selected='true']::after {
+  display: none !important;
+}
+
+body .builder-shell .edit-layout .selected-block-settings-body .editor-tabs-v2-panel {
+  display: grid !important;
+  gap: 18px !important;
+  margin-top: 12px !important;
+  padding: 18px !important;
+  border: 1px solid #dfe4eb !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+}
+
+body .builder-shell .edit-layout .selected-block-settings-body .editor-tabs-v2-panel > .editor-field-v2 + .editor-field-v2 {
+  padding-top: 18px !important;
+  border-top: 1px solid #edf0f4 !important;
+}
+
+body .builder-shell .edit-layout .selected-block-settings-body .editor-field-v2 {
+  gap: 8px !important;
+}
+
+body .builder-shell .edit-layout .selected-block-settings-body .editor-field-v2-label strong {
+  color: #111827 !important;
+  font-size: 13px !important;
+  font-weight: 850 !important;
+}
+
+body .builder-shell .edit-layout .selected-block-settings-body .editor-field-v2 :is(input, textarea, select) {
+  border-color: #cfd6df !important;
+  border-radius: 7px !important;
+  background: #fff !important;
+  font-weight: 650 !important;
+}
+
+body .builder-shell .edit-layout .selected-block-settings-body .editor-field-v2 textarea {
+  min-height: 104px !important;
+}
+
+body .builder-shell .edit-layout .selected-block-settings-body .editor-section-v2 {
+  margin: 0 14px 14px !important;
+  border: 1px solid #dfe4eb !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+}
+
+body .builder-shell .edit-layout .selected-block-settings-body .editor-section-v2-trigger {
+  min-height: 48px !important;
+  padding: 0 12px !important;
+  border-radius: 8px !important;
+}
+
+body .builder-shell .edit-layout .selected-block-settings-body .editor-section-v2-body {
+  padding: 16px !important;
+  background: #fff !important;
 }
