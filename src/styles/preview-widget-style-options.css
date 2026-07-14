@@ -95,3 +95,6 @@
 .landing-section.links.align-left :is(.link-list-body, .link-card-body) { text-align: left; }
 .landing-section.links.align-center :is(.link-list-body, .link-card-body) { text-align: center; }
 .landing-section.links.align-right :is(.link-list-body, .link-card-body) { text-align: right; }
+
+.landing-section.download-widget.download-list.align-center .download-body { text-align: center; }
+.landing-section.download-widget.download-list.align-right .download-body { text-align: right; }

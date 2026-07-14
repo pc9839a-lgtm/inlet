@@ -138,6 +138,7 @@ const scheduleEditor = await readFile('src/editor/blockEditors/ScheduleEditor.js
 const widgetStylePanels = await readFile('src/editor/blockEditors/WidgetStylePanels.jsx', 'utf8');
 const widgetStyleOptionsCss = await readFile('src/styles/preview-widget-style-options.css', 'utf8');
 const previewDownloadCss = await readFile('src/styles/preview-download.css', 'utf8');
+const previewScheduleCss = await readFile('src/styles/preview-schedule.css', 'utf8');
 const widgetStyleEditorFiles = [
   'ActivityEditor.jsx',
   'BottomBarEditor.jsx',
@@ -413,6 +414,8 @@ const cardsStylePanelSource = widgetStylePanels.slice(widgetStylePanels.indexOf(
 assert(cardsStylePanelSource.includes("(s.layout || 'grid') === 'grid' && <SegmentedControl label=\"열 개수\""), 'card column control must only appear for the grid layout where it has an effect');
 assert(widgetStyleOptionsCss.includes('.landing-section.links.align-center :is(.link-list-body, .link-card-body)') && widgetStyleOptionsCss.includes('.landing-section.links.align-right :is(.link-list-body, .link-card-body)'), 'link alignment control must affect list, card, and carousel item copy');
 assert(previewDownloadCss.includes('.download-widget.download-list .download-item') && previewDownloadCss.includes('grid-template-columns: minmax(0, 1fr) auto'), 'download list style must render differently from the card style');
+assert(widgetStyleOptionsCss.includes('.landing-section.download-widget.download-list.align-center .download-body') && widgetStyleOptionsCss.includes('.landing-section.download-widget.download-list.align-right .download-body'), 'download list alignment must affect item copy as well as the heading');
+assert(previewScheduleCss.includes('var(--schedule-accent)') && previewScheduleCss.includes('var(--schedule-card)') && previewScheduleCss.includes('var(--schedule-text)'), 'schedule color controls must reach final preview CSS variables');
 const heroStylePanelSource = widgetStylePanels.slice(widgetStylePanels.indexOf('export function HeroStylePanel'), widgetStylePanels.indexOf('export function TextStylePanel'));
 assert(!heroStylePanelSource.includes("value={s.height || 'medium'}"), 'hero style must not expose a height control overridden by the image height control');
 assert(!widgetStyleEditors.find((source) => source.includes('export default function TimerEditor'))?.includes('TimerFloatingCtaSection'), 'timer editor must not expose the unused floatOnBottom control');
