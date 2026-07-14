@@ -82,14 +82,23 @@
 .landing-section.text.text-size-medium p { font-size: 15px; }
 .landing-section.text.text-size-large p { font-size: 17px; }
 
+.landing-page .landing-section.hero.is-bold h1 {
+  font-weight: 950 !important;
+}
+
+.landing-page .landing-section.hero.is-underline h1 {
+  text-decoration: underline !important;
+  text-underline-offset: 5px;
+}
+
 .landing-section.text.is-bold h2,
 .landing-section.text.is-bold p {
-  font-weight: 950;
+  font-weight: 950 !important;
 }
 
 .landing-section.text.is-underline h2,
 .landing-section.text.is-underline p {
-  text-decoration: underline;
+  text-decoration: underline !important;
   text-underline-offset: 5px;
 }
 .landing-section.links.align-left :is(.link-list-body, .link-card-body) { text-align: left; }
