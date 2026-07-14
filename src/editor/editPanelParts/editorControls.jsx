@@ -16,7 +16,7 @@ export function Switch({ checked, onChange, label }) {
         onChange?.({ target: { checked: !active } });
       }}
     >
-      <i />
+      <span className="switch-clean-thumb" aria-hidden="true" />
     </button>
   );
 }

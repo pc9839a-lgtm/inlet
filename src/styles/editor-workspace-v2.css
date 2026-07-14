@@ -174,33 +174,53 @@ body .builder-shell .edit-layout .page-global-options-card .edit-animation-optio
   background: #f8fafc !important;
 }
 
-body .builder-shell .edit-layout .switch-clean {
-  width: 44px !important;
-  min-width: 44px !important;
+body .builder-shell .edit-layout .page-global-options-card .switch-clean {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: 42px !important;
+  min-width: 42px !important;
+  max-width: 42px !important;
   height: 24px !important;
   min-height: 24px !important;
-  border: 0 !important;
+  max-height: 24px !important;
+  padding: 3px !important;
+  border: 1px solid #7c899c !important;
   border-radius: 999px !important;
-  background: #cbd5e1 !important;
-  box-shadow: none !important;
+  background: #94a3b8 !important;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, .16) !important;
+  overflow: hidden !important;
+  transition: border-color .16s ease, background-color .16s ease, box-shadow .16s ease !important;
 }
 
-body .builder-shell .edit-layout .switch-clean > i {
-  top: 3px !important;
-  left: 3px !important;
+body .builder-shell .edit-layout .page-global-options-card .switch-clean > .switch-clean-thumb {
+  position: static !important;
+  display: block !important;
   width: 18px !important;
   min-width: 18px !important;
   height: 18px !important;
   min-height: 18px !important;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, .24) !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: #fff !important;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, .28) !important;
+  transform: translateX(0) !important;
+  transition: transform .16s ease !important;
 }
 
-body .builder-shell .edit-layout .switch-clean.active {
+body .builder-shell .edit-layout .page-global-options-card .switch-clean.active {
+  border-color: #15803d !important;
   background: #16a34a !important;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, .12) !important;
 }
 
-body .builder-shell .edit-layout .switch-clean.active > i {
-  transform: translateX(20px) !important;
+body .builder-shell .edit-layout .page-global-options-card .switch-clean.active > .switch-clean-thumb {
+  transform: translateX(18px) !important;
+}
+
+body .builder-shell .edit-layout .page-global-options-card .switch-clean:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, .2) !important;
+  outline-offset: 2px !important;
 }
 
 body .builder-shell .edit-layout :is(.fixed-open-button, .screen-icon-action, .screen-drag-handle) {
