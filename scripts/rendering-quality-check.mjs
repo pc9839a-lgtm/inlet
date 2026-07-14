@@ -206,6 +206,8 @@ const visualGeometryContracts = [
   ['theme-owned widgets ignore redundant shared surface values', files.content.includes('widgetBoxClass(s, { background: false, shadow: false })') && (files.info.match(/background: false, shadow: false/g) || []).length === 3 && (files.signal.match(/background: false, shadow: false/g) || []).length === 2],
   ['timer and activity omit dead alignment classes', !files.signal.includes('align-${align}')],
   ['widget spacing and corner options reach final CSS', files.previewCss.includes('margin-top: var(--widget-margin') && files.previewCss.includes('margin-bottom: var(--widget-margin') && files.previewCss.includes('border-radius: var(--widget-radius')],
+  ['hero and text typography sizes reach final CSS', files.previewCss.includes('.landing-section.hero.title-large h1') && files.previewCss.includes('.landing-section.hero.body-large p') && files.previewCss.includes('.landing-section.text.text-size-large h2') && files.previewCss.includes('.landing-section.text.text-size-large p')],
+  ['text emphasis controls affect title and body', files.previewCss.includes('.landing-section.text.is-bold p') && files.previewCss.includes('.landing-section.text.is-underline p')],
   ['utility widgets keep geometry without misleading surface overrides', (files.utility.match(/widgetBoxClass\(s, \{ background: false, shadow: false \}\)/g) || []).length === 2 && files.utility.includes('widgetBoxVars(s)') && files.utility.includes('page-search-widget')],
   ['selected preview outline suppressed in template mode', files.previewCss.includes('.landing-page.template-preview') && files.previewCss.includes('outline: 0')],
 ];
