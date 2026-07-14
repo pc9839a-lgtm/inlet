@@ -4,8 +4,6 @@ const C63_HOME_HTML = `<!doctype html>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="google" content="notranslate" />
-  <meta name="google-adsense-account" content="ca-pub-1906196934401001" />
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1906196934401001" crossorigin="anonymous"></script>
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <title>페이지로</title>
