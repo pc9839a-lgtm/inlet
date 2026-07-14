@@ -18,7 +18,6 @@ export default function ImageBasicSection({
     <>
       <SegmentedControl
         label="이미지 구성"
-        description="한 장을 크게 표시하거나 여러 장을 갤러리로 보여줍니다."
         value={mode}
         onChange={(value) => set({ mode: value })}
         options={[

@@ -16,7 +16,7 @@ export default function TopNavBasicSection({ s, set, isImageLogo }) {
       {isImageLogo ? (
         <ImageInput label="로고 이미지" value={s.logoImage} onChange={(value) => set({ logoImage: value })} />
       ) : (
-        <EditorField label="로고 텍스트" description="페이지 상단에 표시할 짧은 이름입니다.">
+        <EditorField label="로고 텍스트">
           <input value={s.logoText || ''} onChange={(event) => set({ logoText: event.target.value })} />
         </EditorField>
       )}

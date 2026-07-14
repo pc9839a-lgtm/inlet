@@ -85,7 +85,7 @@ export function MapStylePanel({ s, set }) {
 
 export function FaqStylePanel({ s, set }) {
   return <>
-    <SegmentedControl label="형태" value={s.layout || 'card'} onChange={(value) => set({ layout: value })} options={[{ value: 'accordion', label: '접기' }, { value: 'card', label: '카드' }, { value: 'plain', label: '기본' }]} />
+    <SegmentedControl label="형태" value={s.layout || 'accordion'} onChange={(value) => set({ layout: value })} options={[{ value: 'accordion', label: '접기' }, { value: 'card', label: '카드' }, { value: 'plain', label: '기본' }]} />
   </>;
 }
 

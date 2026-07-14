@@ -3,7 +3,7 @@ import { EditorField, ToggleRow } from '../ui/index.js';
 export default function TimerCtaTargetSection({ s, set, page, TargetControl }) {
   return (
     <>
-      <ToggleRow label="CTA 버튼" description="타이머 아래에 행동 버튼을 표시합니다." checked={Boolean(s.cta)} onChange={(value) => set({ cta: value })} />
+      <ToggleRow label="CTA 버튼" checked={Boolean(s.cta)} onChange={(value) => set({ cta: value })} />
       {s.cta && (
         <>
           <EditorField label="버튼 문구">
