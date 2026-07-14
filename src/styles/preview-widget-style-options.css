@@ -92,3 +92,6 @@
   text-decoration: underline;
   text-underline-offset: 5px;
 }
+.landing-section.links.align-left :is(.link-list-body, .link-card-body) { text-align: left; }
+.landing-section.links.align-center :is(.link-list-body, .link-card-body) { text-align: center; }
+.landing-section.links.align-right :is(.link-list-body, .link-card-body) { text-align: right; }

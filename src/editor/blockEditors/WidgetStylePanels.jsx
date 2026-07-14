@@ -80,7 +80,7 @@ export function CardsStylePanel({ s, set }) {
   return <>
     <SegmentedControl label="배치" value={s.layout || 'grid'} onChange={(value) => set({ layout: value })} options={[{ value: 'grid', label: '격자' }, { value: 'stack', label: '목록' }, { value: 'steps', label: '순서' }]} />
     <SegmentedControl label="표현" value={s.tone || 'soft'} onChange={(value) => set({ tone: value })} options={[{ value: 'soft', label: '소프트' }, { value: 'solid', label: '채움' }, { value: 'outline', label: '라인' }]} />
-    <SegmentedControl label="열 개수" value={String(s.columns || 2)} onChange={(value) => set({ columns: Number(value) })} options={[{ value: '1', label: '1열' }, { value: '2', label: '2열' }]} />
+    {(s.layout || 'grid') === 'grid' && <SegmentedControl label="열 개수" value={String(s.columns || 2)} onChange={(value) => set({ columns: Number(value) })} options={[{ value: '1', label: '1열' }, { value: '2', label: '2열' }]} />}
     <WidgetSurfaceControls s={s} set={set} alignOptions={ALIGN_NO_RIGHT} showBackground={false} showShadow={false} />
   </>;
 }

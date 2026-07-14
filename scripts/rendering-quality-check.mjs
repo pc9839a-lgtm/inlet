@@ -35,6 +35,7 @@ const previewCssFiles = [
   'src/styles/preview-widgets-links-list.css',
   'src/styles/preview-widgets-links-carousel.css',
   'src/styles/preview-widgets-links-card.css',
+  'src/styles/preview-cards.css',
   'src/styles/preview-download.css',
   'src/styles/preview-workspace.css',
   'src/styles/preview-workspace-bottom-timer.css',
@@ -208,6 +209,8 @@ const visualGeometryContracts = [
   ['widget spacing and corner options reach final CSS', files.previewCss.includes('margin-top: var(--widget-margin') && files.previewCss.includes('margin-bottom: var(--widget-margin') && files.previewCss.includes('border-radius: var(--widget-radius')],
   ['hero and text typography sizes reach final CSS', files.previewCss.includes('.landing-section.hero.title-large h1') && files.previewCss.includes('.landing-section.hero.body-large p') && files.previewCss.includes('.landing-section.text.text-size-large h2') && files.previewCss.includes('.landing-section.text.text-size-large p')],
   ['text emphasis controls affect title and body', files.previewCss.includes('.landing-section.text.is-bold p') && files.previewCss.includes('.landing-section.text.is-underline p')],
+  ['card layouts and tones have distinct final CSS', files.previewCss.includes('.cards-stack .cards-grid') && files.previewCss.includes('.cards-steps .cards-item') && files.previewCss.includes('.cards-solid') && files.previewCss.includes('.cards-outline')],
+  ['link alignment reaches item copy', files.previewCss.includes('.landing-section.links.align-center :is(.link-list-body, .link-card-body)') && files.previewCss.includes('.landing-section.links.align-right :is(.link-list-body, .link-card-body)')],
   ['utility widgets keep geometry without misleading surface overrides', (files.utility.match(/widgetBoxClass\(s, \{ background: false, shadow: false \}\)/g) || []).length === 2 && files.utility.includes('widgetBoxVars(s)') && files.utility.includes('page-search-widget')],
   ['selected preview outline suppressed in template mode', files.previewCss.includes('.landing-page.template-preview') && files.previewCss.includes('outline: 0')],
 ];
