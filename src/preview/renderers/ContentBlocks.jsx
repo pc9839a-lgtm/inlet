@@ -105,7 +105,7 @@ export function RenderCards({ block }) {
   const items = Array.isArray(s.items) ? s.items.slice(0, 8) : [];
   const columns = Math.max(1, Math.min(2, Number(s.columns || 2)));
   return (
-    <section id={`block-${block.id}`} className={`landing-section cards-widget cards-${layout} cards-${tone} cards-cols-${columns} align-${align} ${widgetBoxClass(s)}`} style={{ '--cards-columns': columns, ...widgetBoxVars(s) }}>
+    <section id={`block-${block.id}`} className={`landing-section cards-widget cards-${layout} cards-${tone} cards-cols-${columns} align-${align} ${widgetBoxClass(s, { background: false, shadow: false })}`} style={{ '--cards-columns': columns, ...widgetBoxVars(s) }}>
       {s.title && <h2>{rich(s.title)}</h2>}
       {s.desc && <p className="cards-desc">{rich(s.desc)}</p>}
       <div className="cards-grid">

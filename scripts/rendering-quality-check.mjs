@@ -202,7 +202,8 @@ const visualGeometryContracts = [
   ['map widget has bounded embed area', files.previewCss.includes('.inlet-map-section') && /min-height|aspect-ratio/.test(files.previewCss)],
   ['faq content has vertical spacing', files.previewCss.includes('.faq-widget') && files.previewCss.includes('gap:')],
   ['widget box options render visible background and shadow', files.previewCss.includes('background:var(--widget-bg') && files.previewCss.includes('.landing-section.widget-shadow-on') && !/\.landing-section\.widget-shadow-on\s*\{[^}]*box-shadow:\s*none/i.test(files.previewCss)],
-  ['utility widgets use shared widget box options', files.utility.includes('widgetBoxClass(s)') && files.utility.includes('widgetBoxVars(s)') && files.utility.includes('page-search-widget')],
+  ['theme-owned widgets ignore redundant shared surface values', files.content.includes('widgetBoxClass(s, { background: false, shadow: false })') && (files.info.match(/background: false, shadow: false/g) || []).length === 3 && (files.signal.match(/background: false, shadow: false/g) || []).length === 2],
+  ['utility widgets keep geometry without misleading surface overrides', (files.utility.match(/widgetBoxClass\(s, \{ background: false, shadow: false \}\)/g) || []).length === 2 && files.utility.includes('widgetBoxVars(s)') && files.utility.includes('page-search-widget')],
   ['selected preview outline suppressed in template mode', files.previewCss.includes('.landing-page.template-preview') && files.previewCss.includes('outline: 0')],
 ];
 

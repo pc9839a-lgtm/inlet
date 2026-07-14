@@ -54,7 +54,7 @@ export function RenderMap({ block }) {
   return (
     <section
       id={`block-${block.id}`}
-      className={`landing-section inlet-map-section map-widget map-${layout} map-height-${height} ${widgetBoxClass(s)}`}
+      className={`landing-section inlet-map-section map-widget map-${layout} map-height-${height} ${widgetBoxClass(s, { background: false, shadow: false })}`}
       style={widgetBoxVars(s)}
     >
       {(s.title || s.placeName || address || s.phone || s.parkingText) && (
@@ -126,7 +126,7 @@ export function RenderSchedule({ block }) {
   return (
     <section
       id={`block-${block.id}`}
-      className={`landing-section schedule-widget schedule-align-${align} ${widgetBoxClass(s)}`}
+      className={`landing-section schedule-widget schedule-align-${align} ${widgetBoxClass(s, { background: false, shadow: false })}`}
       style={{
         ...widgetBoxVars(s),
         '--schedule-accent': s.highlightColor || 'var(--accent)',
@@ -164,7 +164,7 @@ export function RenderFaq({ block }) {
   const items = normalizeFaqItems(s.items);
 
   return (
-    <section id={`block-${block.id}`} className={`landing-section faq-widget faq-${layout} ${widgetBoxClass(s)}`} style={widgetBoxVars(s)}>
+    <section id={`block-${block.id}`} className={`landing-section faq-widget faq-${layout} ${widgetBoxClass(s, { background: false, shadow: false })}`} style={widgetBoxVars(s)}>
       {s.title && <h2>{rich(s.title)}</h2>}
       <div className="faq-list">
         {items.map((item, index) => (

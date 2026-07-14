@@ -130,7 +130,7 @@ export function RenderCode({ block }) {
   }, [block.id, s.js, s.runJs]);
 
   return (
-    <section id={`block-${block.id}`} ref={rootRef} className={`landing-section code-widget code-height-${height} ${widgetBoxClass(s)}`} style={widgetBoxVars(s)}>
+    <section id={`block-${block.id}`} ref={rootRef} className={`landing-section code-widget code-height-${height} ${widgetBoxClass(s, { background: false, shadow: false })}`} style={widgetBoxVars(s)}>
       {s.css && <style>{String(s.css)}</style>}
       {safeHtml ? (
         <div className="custom-code-body" dangerouslySetInnerHTML={{ __html: safeHtml }} />
@@ -183,7 +183,7 @@ export function RenderPageSearch({ block }) {
   };
 
   return (
-    <section id={`block-${block.id}`} ref={rootRef} className={`landing-section page-search-widget page-search-${layout} ${widgetBoxClass(s)}`} style={widgetBoxVars(s)}>
+    <section id={`block-${block.id}`} ref={rootRef} className={`landing-section page-search-widget page-search-${layout} ${widgetBoxClass(s, { background: false, shadow: false })}`} style={widgetBoxVars(s)}>
       {s.title && <h2>{rich(s.title)}</h2>}
       <div className="page-search-row">
         <input

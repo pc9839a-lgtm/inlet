@@ -20,7 +20,15 @@ function spacingPreset(value) {
   return 'normal';
 }
 
-function WidgetSurfaceControls({ s, set, align = true, alignOptions = ALIGN, defaultAlign = 'left' }) {
+function WidgetSurfaceControls({
+  s,
+  set,
+  align = true,
+  alignOptions = ALIGN,
+  defaultAlign = 'left',
+  showBackground = true,
+  showShadow = true,
+}) {
   return (
     <div className="editor-v2-control-list">
       {align && <SegmentedControl label="정렬" value={s.align || defaultAlign} onChange={(value) => set({ align: value })} options={alignOptions} />}
@@ -30,8 +38,8 @@ function WidgetSurfaceControls({ s, set, align = true, alignOptions = ALIGN, def
         onChange={(value) => set({ marginY: { compact: 12, normal: 24, wide: 36 }[value] })}
         options={[{ value: 'compact', label: '좁게' }, { value: 'normal', label: '기본' }, { value: 'wide', label: '넓게' }]}
       />
-      <ToggleRow label="배경" checked={Boolean(s.bgEnabled)} onChange={(value) => set({ bgEnabled: value })} />
-      {s.bgEnabled && (
+      {showBackground && <ToggleRow label="배경 직접 지정" checked={Boolean(s.bgEnabled)} onChange={(value) => set({ bgEnabled: value })} />}
+      {showBackground && s.bgEnabled && (
         <>
           <Color label="배경색" value={s.bgColor || '#FFFFFF'} onChange={(value) => set({ bgColor: value })} />
           <SegmentedControl
@@ -43,7 +51,7 @@ function WidgetSurfaceControls({ s, set, align = true, alignOptions = ALIGN, def
         </>
       )}
       <SegmentedControl label="모서리" value={s.radiusStyle || 'round'} onChange={(value) => set({ radiusStyle: value })} options={[{ value: 'square', label: '각지게' }, { value: 'round', label: '둥글게' }]} />
-      <ToggleRow label="그림자" checked={Boolean(s.shadowEnabled)} onChange={(value) => set({ shadowEnabled: value })} />
+      {showShadow && <ToggleRow label="그림자 추가" checked={Boolean(s.shadowEnabled)} onChange={(value) => set({ shadowEnabled: value })} />}
     </div>
   );
 }
@@ -73,7 +81,7 @@ export function CardsStylePanel({ s, set }) {
     <SegmentedControl label="배치" value={s.layout || 'grid'} onChange={(value) => set({ layout: value })} options={[{ value: 'grid', label: '격자' }, { value: 'stack', label: '목록' }, { value: 'steps', label: '순서' }]} />
     <SegmentedControl label="표현" value={s.tone || 'soft'} onChange={(value) => set({ tone: value })} options={[{ value: 'soft', label: '소프트' }, { value: 'solid', label: '채움' }, { value: 'outline', label: '라인' }]} />
     <SegmentedControl label="열 개수" value={String(s.columns || 2)} onChange={(value) => set({ columns: Number(value) })} options={[{ value: '1', label: '1열' }, { value: '2', label: '2열' }]} />
-    <WidgetSurfaceControls s={s} set={set} alignOptions={ALIGN_NO_RIGHT} />
+    <WidgetSurfaceControls s={s} set={set} alignOptions={ALIGN_NO_RIGHT} showBackground={false} showShadow={false} />
   </>;
 }
 
@@ -96,7 +104,7 @@ export function ScheduleStylePanel({ s, set }) {
     <Color label="강조색" value={s.highlightColor || '#8AA2C8'} onChange={(value) => set({ highlightColor: value })} />
     <Color label="카드 배경" value={s.cardBgColor || '#FFFFFF'} onChange={(value) => set({ cardBgColor: value })} />
     <Color label="글자색" value={s.textColor || '#111827'} onChange={(value) => set({ textColor: value })} />
-    <WidgetSurfaceControls s={s} set={set} defaultAlign="center" />
+    <WidgetSurfaceControls s={s} set={set} defaultAlign="center" showBackground={false} showShadow={false} />
   </>;
 }
 
@@ -104,7 +112,7 @@ export function TimerStylePanel({ s, set }) {
   return <>
     <SegmentedControl label="테마" value={s.timerTheme || 'modern'} onChange={(value) => set({ timerTheme: value })} options={[{ value: 'modern', label: '모던' }, { value: 'glass', label: '글라스' }, { value: 'minimal', label: '미니멀' }, { value: 'accent', label: '강조' }]} />
     <SegmentedControl label="마감 효과" value={s.urgentStyle || 'flip'} onChange={(value) => set({ urgentStyle: value })} options={[{ value: 'flip', label: '플립' }, { value: 'line', label: '라인' }, { value: 'flow', label: '흐름' }, { value: 'none', label: '없음' }]} />
-    <WidgetSurfaceControls s={s} set={set} defaultAlign="center" />
+    <WidgetSurfaceControls s={s} set={set} defaultAlign="center" showBackground={false} showShadow={false} />
   </>;
 }
 
@@ -112,35 +120,35 @@ export function ActivityStylePanel({ s, set }) {
   return <>
     <SegmentedControl label="테마" value={s.style || 'glass'} onChange={(value) => set({ style: value })} options={[{ value: 'minimal', label: '미니멀' }, { value: 'glass', label: '글라스' }, { value: 'dark', label: '다크' }]} />
     <SegmentedControl label="움직임" value={s.animation || 'stack'} onChange={(value) => set({ animation: value })} options={[{ value: 'stack', label: '쌓기' }, { value: 'none', label: '없음' }]} />
-    <WidgetSurfaceControls s={s} set={set} />
+    <WidgetSurfaceControls s={s} set={set} showBackground={false} showShadow={false} />
   </>;
 }
 
 export function MapStylePanel({ s, set }) {
   return <>
     <SegmentedControl label="지도 높이" value={s.height || 'medium'} onChange={(value) => set({ height: value })} options={SIZES} />
-    <WidgetSurfaceControls s={s} set={set} align={false} />
+    <WidgetSurfaceControls s={s} set={set} align={false} showBackground={false} showShadow={false} />
   </>;
 }
 
 export function FaqStylePanel({ s, set }) {
   return <>
     <SegmentedControl label="형태" value={s.layout || 'card'} onChange={(value) => set({ layout: value })} options={[{ value: 'accordion', label: '접기' }, { value: 'card', label: '카드' }, { value: 'plain', label: '기본' }]} />
-    <WidgetSurfaceControls s={s} set={set} align={false} />
+    <WidgetSurfaceControls s={s} set={set} align={false} showBackground={false} showShadow={false} />
   </>;
 }
 
 export function SearchStylePanel({ s, set }) {
   return <>
     <SegmentedControl label="형태" value={s.layout || 'card'} onChange={(value) => set({ layout: value })} options={[{ value: 'card', label: '카드' }, { value: 'bar', label: '바' }, { value: 'minimal', label: '심플' }]} />
-    <WidgetSurfaceControls s={s} set={set} align={false} />
+    <WidgetSurfaceControls s={s} set={set} align={false} showBackground={false} showShadow={false} />
   </>;
 }
 
 export function CodeStylePanel({ s, set }) {
   return <>
     <SegmentedControl label="영역 높이" value={s.height || 'auto'} onChange={(value) => set({ height: value })} options={[{ value: 'auto', label: '자동' }, ...SIZES]} />
-    <WidgetSurfaceControls s={s} set={set} align={false} />
+    <WidgetSurfaceControls s={s} set={set} align={false} showBackground={false} showShadow={false} />
   </>;
 }
 

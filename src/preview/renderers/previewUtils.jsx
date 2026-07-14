@@ -91,9 +91,9 @@ export function widgetBoxVars(s = {}) {
   };
 }
 
-export function widgetBoxClass(s = {}) {
+export function widgetBoxClass(s = {}, { background = true, shadow = true } = {}) {
   return [
-    s.bgEnabled ? 'widget-bg-on' : '',
-    s.shadowEnabled ? 'widget-shadow-on' : '',
+    background && s.bgEnabled ? 'widget-bg-on' : '',
+    shadow && s.shadowEnabled ? 'widget-shadow-on' : '',
   ].filter(Boolean).join(' ');
 }
