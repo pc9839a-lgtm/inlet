@@ -14,12 +14,9 @@ export default function FormDesignSection({ s, set }) {
 
       <EditorSection id="form-button" title="제출 버튼" icon={MousePointer2}>
         <Choice label="버튼 모양" value={s.buttonStyle || 'solid'} onChange={(value) => set({ buttonStyle: value })} options={[[ 'solid', '기본' ], [ 'round', '캡슐' ], [ 'line', '테두리' ]]} />
-        <Choice label="마우스 효과" value={s.buttonHover || 'fill'} onChange={(value) => set({ buttonHover: value })} options={[[ 'fill', '채움' ], [ 'slide', '슬라이드' ], [ 'zoom', '확대' ]]} />
         <Choice label="버튼 색상" value={s.buttonColorMode || 'theme'} onChange={(value) => set({ buttonColorMode: value })} options={[[ 'theme', '테마' ], [ 'custom', '직접 지정' ]]} />
         {(s.buttonColorMode || 'theme') === 'custom' && <Color label="버튼 배경" value={s.buttonColor || '#111827'} onChange={(value) => set({ buttonColor: value })} />}
         <Color label="버튼 글자" value={s.buttonTextColor || '#ffffff'} onChange={(value) => set({ buttonTextColor: value })} />
-        <Choice label="마우스 색상" value={s.buttonHoverColorMode || 'theme'} onChange={(value) => set({ buttonHoverColorMode: value })} options={[[ 'theme', '테마' ], [ 'custom', '직접 지정' ]]} />
-        {(s.buttonHoverColorMode || 'theme') === 'custom' && <Color label="마우스 배경" value={s.buttonHoverColor || s.buttonColor || '#2563eb'} onChange={(value) => set({ buttonHoverColor: value })} />}
       </EditorSection>
     </>
   );
