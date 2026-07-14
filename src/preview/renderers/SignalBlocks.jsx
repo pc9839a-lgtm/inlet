@@ -78,7 +78,6 @@ export function RenderTimer({ block, go }) {
   const s = block.s || {};
   const t = useCountdown(s);
   const urgency = getTimerUrgency(t.diffMs, t.done);
-  const align = pickSafe(s.align, ['left', 'center', 'right'], 'center');
   const theme = pickSafe(s.timerTheme || 'modern', ['modern', 'glass', 'minimal', 'accent'], 'modern');
   const effect = pickSafe(s.urgentStyle || 'flip', ['flip', 'line', 'flow', 'none'], 'flip');
   const showProgress = effect !== 'none';
@@ -87,7 +86,7 @@ export function RenderTimer({ block, go }) {
   return (
     <section
       id={`block-${block.id}`}
-      className={`landing-section timer timer-modern-wrap align-${align} timer-theme-${theme} timer-effect-${effect} timer-urgency-${urgency} ${showDays ? 'timer-has-days' : 'timer-no-days'} ${urgency !== 'normal' && urgency !== 'ended' ? 'timer-is-imminent' : ''} ${widgetBoxClass(s, { background: false, shadow: false })}`}
+      className={`landing-section timer timer-modern-wrap timer-theme-${theme} timer-effect-${effect} timer-urgency-${urgency} ${showDays ? 'timer-has-days' : 'timer-no-days'} ${urgency !== 'normal' && urgency !== 'ended' ? 'timer-is-imminent' : ''} ${widgetBoxClass(s, { background: false, shadow: false })}`}
       style={widgetBoxVars(s)}
     >
       <div className="timer-headline">
@@ -174,7 +173,6 @@ export function RenderActivity({ block, leads = [] }) {
   const mode = pickSafe(s.mode || 'feed', ['feed', 'count'], 'feed');
   const style = pickSafe(s.style || 'glass', ['minimal', 'glass', 'dark'], 'glass');
   const anim = pickSafe(s.animation || 'stack', ['stack', 'none'], 'stack');
-  const align = pickSafe(s.align || 'left', ['left', 'center', 'right'], 'left');
   const sampleKind = pickSafe(s.sampleKind || 'both', ['consult', 'reservation', 'both'], 'both');
   const live = activityLiveSummary(leads);
 
@@ -194,7 +192,7 @@ export function RenderActivity({ block, leads = [] }) {
   }, [anim, rows.length]);
 
   return (
-    <section id={`block-${block.id}`} className={`landing-section activity-widget activity-stack-widget activity-${style} activity-mode-${mode} activity-anim-${anim} align-${align} ${widgetBoxClass(s, { background: false, shadow: false })}`} style={widgetBoxVars(s)}>
+    <section id={`block-${block.id}`} className={`landing-section activity-widget activity-stack-widget activity-${style} activity-mode-${mode} activity-anim-${anim} ${widgetBoxClass(s, { background: false, shadow: false })}`} style={widgetBoxVars(s)}>
       <div className="activity-stack-head">
         <div>
           <span className="activity-live-dot"></span>

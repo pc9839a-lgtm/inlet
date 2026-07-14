@@ -112,7 +112,7 @@ export function TimerStylePanel({ s, set }) {
   return <>
     <SegmentedControl label="테마" value={s.timerTheme || 'modern'} onChange={(value) => set({ timerTheme: value })} options={[{ value: 'modern', label: '모던' }, { value: 'glass', label: '글라스' }, { value: 'minimal', label: '미니멀' }, { value: 'accent', label: '강조' }]} />
     <SegmentedControl label="마감 효과" value={s.urgentStyle || 'flip'} onChange={(value) => set({ urgentStyle: value })} options={[{ value: 'flip', label: '플립' }, { value: 'line', label: '라인' }, { value: 'flow', label: '흐름' }, { value: 'none', label: '없음' }]} />
-    <WidgetSurfaceControls s={s} set={set} defaultAlign="center" showBackground={false} showShadow={false} />
+    <WidgetSurfaceControls s={s} set={set} align={false} showBackground={false} showShadow={false} />
   </>;
 }
 
@@ -120,7 +120,7 @@ export function ActivityStylePanel({ s, set }) {
   return <>
     <SegmentedControl label="테마" value={s.style || 'glass'} onChange={(value) => set({ style: value })} options={[{ value: 'minimal', label: '미니멀' }, { value: 'glass', label: '글라스' }, { value: 'dark', label: '다크' }]} />
     <SegmentedControl label="움직임" value={s.animation || 'stack'} onChange={(value) => set({ animation: value })} options={[{ value: 'stack', label: '쌓기' }, { value: 'none', label: '없음' }]} />
-    <WidgetSurfaceControls s={s} set={set} showBackground={false} showShadow={false} />
+    <WidgetSurfaceControls s={s} set={set} align={false} showBackground={false} showShadow={false} />
   </>;
 }
 
