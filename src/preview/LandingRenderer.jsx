@@ -390,6 +390,7 @@ function RenderBottom({ block, blocks = [], accent = '#111827', buttonEffect = '
   if(!btns.length && !showTimer) return null;
   const style = pickSafe(s.style, ['pill','box'], 'pill');
   const color = pickSafe(s.color, ['dark','accent','light'], 'dark');
+  const customButtonColor = s.buttonColorMode === 'custom';
   const barStyle = {
     '--accent': accent || '#111827',
     '--bottom-button': themeButtonColor(s),
@@ -400,7 +401,7 @@ function RenderBottom({ block, blocks = [], accent = '#111827', buttonEffect = '
   };
 
   return (
-    <div className={`bottom-bar ${publicView ? 'public-bottom-bar' : ''} count-${btns.length || 1} bottom-${style} color-${color} bottom-custom-color button-effect-${buttonEffect}`} data-public-bottom={publicView ? 'true' : undefined} style={barStyle}>
+    <div className={`bottom-bar ${publicView ? 'public-bottom-bar' : ''} count-${btns.length || 1} bottom-${style} color-${color} ${customButtonColor ? 'bottom-custom-color' : ''} button-effect-${buttonEffect}`} data-public-bottom={publicView ? 'true' : undefined} style={barStyle}>
       {showTimer && <RenderBottomTimer s={timerSource}/>}
       <div className="bottom-bar-buttons">
         {btns.map(b=>(

@@ -298,6 +298,7 @@ function sanitizeBlock(block) {
     s.menuTextColor = s.menuTextColor || (s.menuStyle === 'pill' ? '#111827' : (s.bg === 'dark' ? '#ffffff' : ''));
     s.menuHoverColor = s.menuHoverColor || '';
     s.menuHoverTextColor = s.menuHoverTextColor || '';
+    s.sticky = s.sticky !== false;
     s.menus = Array.isArray(s.menus) ? s.menus.slice(0, 5) : [];
   }
 

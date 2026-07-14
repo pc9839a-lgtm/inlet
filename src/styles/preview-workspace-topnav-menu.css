@@ -5,8 +5,8 @@
 }
 
 .topnav-one-line {
-  position: sticky !important;
-  top: 0 !important;
+  position: relative !important;
+  top: auto !important;
   z-index: 80 !important;
   display: flex !important;
   align-items: center !important;
@@ -18,9 +18,9 @@
   overflow: visible !important;
 }
 
-.landing-content > .topnav:first-child,
-.landing-content > .hero:first-child + .topnav,
-.landing-content > .hero-full:first-child + .topnav {
+.landing-content > .topnav.topnav-sticky:first-child,
+.landing-content > .hero:first-child + .topnav.topnav-sticky,
+.landing-content > .hero-full:first-child + .topnav.topnav-sticky {
   position: sticky !important;
   top: 10px !important;
   z-index: 80 !important;
@@ -377,4 +377,17 @@
   .topnav-one-line .top-menu-set {
     flex: 1 1 auto !important;
   }
+}
+.topnav-one-line.topnav-align-left .top-menu {
+  flex: 1 1 auto !important;
+}
+
+.topnav-one-line.topnav-align-center .top-menu,
+.topnav-one-line.topnav-align-right .top-menu {
+  flex: 0 1 auto !important;
+}
+
+.topnav-one-line.topnav-align-center .top-menu-track,
+.topnav-one-line.topnav-align-center .top-menu-set {
+  justify-content: center !important;
 }

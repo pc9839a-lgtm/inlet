@@ -170,10 +170,18 @@ export function FooterStylePanel({ s, set }) {
 }
 
 export function BottomBarStylePanel({ s, set }) {
+  const colorMode = s.buttonColorMode || 'theme';
   return <div className="editor-v2-control-list">
     <SegmentedControl label="형태" value={s.style || 'pill'} onChange={(value) => set({ style: value })} options={[{ value: 'pill', label: '캡슐' }, { value: 'box', label: '박스' }]} />
-    <SegmentedControl label="색상" value={s.color || 'dark'} onChange={(value) => set({ color: value })} options={[{ value: 'dark', label: '다크' }, { value: 'accent', label: '강조' }, { value: 'light', label: '라이트' }]} />
-    <Color label="버튼 글자" value={s.buttonTextColor || '#FFFFFF'} onChange={(value) => set({ buttonTextColor: value })} />
+    <SegmentedControl label="색상 방식" value={colorMode} onChange={(value) => set({ buttonColorMode: value })} options={[{ value: 'theme', label: '프리셋' }, { value: 'custom', label: '직접 지정' }]} />
+    {colorMode === 'theme' ? (
+      <SegmentedControl label="프리셋" value={s.color || 'dark'} onChange={(value) => set({ color: value })} options={[{ value: 'dark', label: '다크' }, { value: 'accent', label: '강조' }, { value: 'light', label: '라이트' }]} />
+    ) : (
+      <>
+        <Color label="버튼 배경" value={s.buttonColor || '#111827'} onChange={(value) => set({ buttonColor: value })} />
+        <Color label="버튼 글자" value={s.buttonTextColor || '#FFFFFF'} onChange={(value) => set({ buttonTextColor: value })} />
+      </>
+    )}
   </div>;
 }
 
