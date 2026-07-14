@@ -237,6 +237,9 @@ const imageDisplayControls = await readFile('src/editor/blockEditors/ImageDispla
 const imageEditorModel = await readFile('src/editor/blockEditors/imageEditorModel.js', 'utf8');
 const mediaBlocks = await readFile('src/preview/renderers/MediaBlocks.jsx', 'utf8');
 const baseComponentsImageCss = await readFile('src/styles/base-components-image.css', 'utf8');
+const dividerEditorSource = await readFile('src/editor/blockEditors/DividerEditor.jsx', 'utf8');
+const spacerEditorSource = await readFile('src/editor/blockEditors/SpacerEditor.jsx', 'utf8');
+const layoutBlocksSource = await readFile('src/preview/renderers/LayoutBlocks.jsx', 'utf8');
 const formOptionEditor = await readFile('src/editor/blockEditors/FormOptionEditor.jsx', 'utf8');
 const baseComponentsOptionsCss = await readFile('src/styles/base-components-options.css', 'utf8');
 const editorAnimationCss = await readFile('src/styles/editor-animation.css', 'utf8');
@@ -305,6 +308,11 @@ assert(imageDisplayControls.includes('<ToggleRow label="모서리 둥글게"') &
 assert(imageDisplayControls.includes("display === 'fill'") && imageDisplayControls.includes('위치·높이 조정') && imageEditorModel.includes("imageDisplay: 'fill'") && imageEditorModel.includes('imageHeightPx') && imageEditorModel.includes('imageX') && imageEditorModel.includes('imageY'), 'fill mode must keep its height and focal-position editor contract');
 assert(mediaBlocks.includes('objectPosition:') && mediaBlocks.includes('s.imageX ?? 50') && mediaBlocks.includes('s.imageY ?? 50') && mediaBlocks.includes('s.imageHeightPx || 260') && mediaBlocks.includes("s.rounded ? 'rounded' : ''"), 'image renderer must consume crop height, focal position, and rounded state');
 assert(baseComponentsImageCss.includes('.crop-modal .crop-preview{max-height:none!important}'), 'image crop preview must not cap heights below the renderer maximum');
+assert(dividerEditorSource.includes('label="선 모양"') && dividerEditorSource.includes("value: 'solid'") && dividerEditorSource.includes("value: 'dashed'") && dividerEditorSource.includes("value: 'dotted'"), 'divider editor must expose every renderer-supported line style');
+assert(dividerEditorSource.includes('label="정렬"') && dividerEditorSource.includes('marginY') && dividerEditorSource.includes('<Color label="선 색상"'), 'divider editor must expose alignment, vertical spacing, and color controls');
+assert(layoutBlocksSource.includes('s.width ?? 100') && layoutBlocksSource.includes('s.thickness ?? 1') && layoutBlocksSource.includes('s.marginY ?? 24') && layoutBlocksSource.includes("s.color || '#E2E8F0'") && layoutBlocksSource.includes("s.align || 'center'"), 'divider renderer must consume every exposed style control');
+assert(spacerEditorSource.includes('<span>여백 높이</span>') && spacerEditorSource.includes('min="8" max="200" step="4"') && !spacerEditorSource.includes('SegmentedControl'), 'spacer editor must use one exact height control without misleading presets');
+assert(layoutBlocksSource.includes('Math.max(8, Math.min(200, Number(block.s?.height ?? 40)))') && layoutBlocksSource.includes('style={{ height:') && layoutBlocksSource.includes('height}px'), 'spacer renderer must preserve the editor height range exactly');
 assert(imageGalleryEditor.includes("onAdd={gallery.length < 10 ?") && imageGalleryEditor.includes('onRemove={(item) => removeGallery(item.index)}'), 'image gallery item list must preserve its ten-image limit and removal callback');
 assert(formOptionEditor.includes("import { Plus, Trash2 } from 'lucide-react'") && formOptionEditor.includes('className="option-editor-row"'), 'form options must use compact labeled rows and icon actions');
 assert(formOptionEditor.includes('if (list.length <= 1) return') && formOptionEditor.includes('disabled={list.length <= 1}') && !formOptionEditor.includes('.filter((item) => String(item).trim())'), 'form option editing must preserve in-progress text and keep at least one choice');
