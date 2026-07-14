@@ -233,6 +233,10 @@ const lazyRuntimeBoundary = await readFile('src/runtime/LazyRuntimeBoundary.jsx'
 const fixedBlockRenderers = await readFile('src/editor/fixedBlockRenderers.jsx', 'utf8');
 const blockEditorRegistry = await readFile('src/editor/blockEditorRegistry.jsx', 'utf8');
 const imageGalleryEditor = await readFile('src/editor/blockEditors/ImageGalleryEditor.jsx', 'utf8');
+const imageDisplayControls = await readFile('src/editor/blockEditors/ImageDisplayControls.jsx', 'utf8');
+const imageEditorModel = await readFile('src/editor/blockEditors/imageEditorModel.js', 'utf8');
+const mediaBlocks = await readFile('src/preview/renderers/MediaBlocks.jsx', 'utf8');
+const baseComponentsImageCss = await readFile('src/styles/base-components-image.css', 'utf8');
 const formOptionEditor = await readFile('src/editor/blockEditors/FormOptionEditor.jsx', 'utf8');
 const baseComponentsOptionsCss = await readFile('src/styles/base-components-options.css', 'utf8');
 const editorAnimationCss = await readFile('src/styles/editor-animation.css', 'utf8');
@@ -296,6 +300,11 @@ assert(lazyRuntimeBoundary.includes("this.props.variant !== 'preview' && recover
 assert(fixedBlockRenderers.includes('renderLazyEditor') && fixedBlockRenderers.includes('createFixedBlockRenderers'), 'fixed block editor renderers must stay split from App');
 assert(blockEditorRegistry.includes('export const BLOCK_EDITORS'), 'block editor registry must stay split from App');
 assert(imageGalleryEditor.includes("import { EditorList } from '../ui/index.js'") && imageGalleryEditor.includes('<GalleryMultiUpload'), 'image gallery editor must keep multi-upload and use the shared item list');
+assert(imageDisplayControls.includes('<SegmentedControl') && imageDisplayControls.includes('label="표시 방식"') && imageDisplayControls.includes("value: 'original'") && imageDisplayControls.includes("value: 'fill'"), 'image display controls must expose original and fill as one explicit mode choice');
+assert(imageDisplayControls.includes('<ToggleRow label="모서리 둥글게"') && !imageDisplayControls.includes('image-mode-toolbar'), 'image corner rounding must stay separate from image display mode');
+assert(imageDisplayControls.includes("display === 'fill'") && imageDisplayControls.includes('위치·높이 조정') && imageEditorModel.includes("imageDisplay: 'fill'") && imageEditorModel.includes('imageHeightPx') && imageEditorModel.includes('imageX') && imageEditorModel.includes('imageY'), 'fill mode must keep its height and focal-position editor contract');
+assert(mediaBlocks.includes('objectPosition:') && mediaBlocks.includes('s.imageX ?? 50') && mediaBlocks.includes('s.imageY ?? 50') && mediaBlocks.includes('s.imageHeightPx || 260') && mediaBlocks.includes("s.rounded ? 'rounded' : ''"), 'image renderer must consume crop height, focal position, and rounded state');
+assert(baseComponentsImageCss.includes('.crop-modal .crop-preview{max-height:none!important}'), 'image crop preview must not cap heights below the renderer maximum');
 assert(imageGalleryEditor.includes("onAdd={gallery.length < 10 ?") && imageGalleryEditor.includes('onRemove={(item) => removeGallery(item.index)}'), 'image gallery item list must preserve its ten-image limit and removal callback');
 assert(formOptionEditor.includes("import { Plus, Trash2 } from 'lucide-react'") && formOptionEditor.includes('className="option-editor-row"'), 'form options must use compact labeled rows and icon actions');
 assert(formOptionEditor.includes('if (list.length <= 1) return') && formOptionEditor.includes('disabled={list.length <= 1}') && !formOptionEditor.includes('.filter((item) => String(item).trim())'), 'form option editing must preserve in-progress text and keep at least one choice');
