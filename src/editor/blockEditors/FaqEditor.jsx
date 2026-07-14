@@ -1,6 +1,7 @@
 import { EditorField, EditorList, EditorTabs } from '../ui/index.js';
 import FaqItemFields from './FaqItemFields.jsx';
 import useFaqItems from './useFaqItems.js';
+import { FaqStylePanel } from './WidgetStylePanels.jsx';
 
 export default function FaqEditor({ s, set }) {
   const { items, updateItem, removeItem, addItem } = useFaqItems({ s, set });
@@ -32,6 +33,11 @@ export default function FaqEditor({ s, set }) {
               emptyText="질문이 없습니다."
             />
           ),
+        },
+        {
+          id: 'style',
+          label: '스타일',
+          content: <FaqStylePanel s={s} set={set} />,
         },
       ]}
     />

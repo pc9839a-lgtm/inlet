@@ -1,6 +1,7 @@
 import { EditorTabs } from '../ui/index.js';
 import SearchBasicSection from './SearchBasicSection.jsx';
 import SearchDisplaySection from './SearchDisplaySection.jsx';
+import { SearchStylePanel } from './WidgetStylePanels.jsx';
 
 export default function SearchEditor({ s, set }) {
   return (
@@ -15,6 +16,11 @@ export default function SearchEditor({ s, set }) {
           id: 'display',
           label: '표시',
           content: <SearchDisplaySection s={s} set={set} />,
+        },
+        {
+          id: 'style',
+          label: '스타일',
+          content: <SearchStylePanel s={s} set={set} />,
         },
       ]}
     />

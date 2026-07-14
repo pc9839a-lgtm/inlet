@@ -2,6 +2,7 @@ import { EditorTabs } from '../ui/index.js';
 import ReservationBasicSection from './ReservationBasicSection.jsx';
 import ReservationFieldsStep from './ReservationFieldsStep.jsx';
 import ReservationTimeSection from './ReservationTimeSection.jsx';
+import FormDesignSection from './FormDesignSection.jsx';
 
 export default function ReservationEditor({ s, set }) {
   return (
@@ -21,6 +22,11 @@ export default function ReservationEditor({ s, set }) {
           id: 'items',
           label: '입력 항목',
           content: <ReservationFieldsStep s={s} set={set} />,
+        },
+        {
+          id: 'style',
+          label: '스타일',
+          content: <FormDesignSection s={s} set={set} />,
         },
       ]}
     />

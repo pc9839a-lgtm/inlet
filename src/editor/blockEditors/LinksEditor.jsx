@@ -2,6 +2,7 @@ import { EditorField, EditorList, EditorTabs } from '../ui/index.js';
 import { getLinkBadge, getLinkIcon } from './LinkItemDisplay.jsx';
 import LinkItemFields from './LinkItemFields.jsx';
 import useLinksItems from './useLinksItems.js';
+import { LinksStylePanel } from './WidgetStylePanels.jsx';
 
 export default function LinksEditor({ s, set, page, TargetControl }) {
   const { items, updateItem, removeItem, addItem } = useLinksItems({ s, set });
@@ -34,6 +35,11 @@ export default function LinksEditor({ s, set, page, TargetControl }) {
               emptyText="링크가 없습니다."
             />
           ),
+        },
+        {
+          id: 'style',
+          label: '스타일',
+          content: <LinksStylePanel s={s} set={set} />,
         },
       ]}
     />

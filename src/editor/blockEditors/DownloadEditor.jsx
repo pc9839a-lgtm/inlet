@@ -2,6 +2,7 @@ import { EditorList, EditorTabs } from '../ui/index.js';
 import DownloadFileUploadRow from './DownloadFileUploadRow.jsx';
 import DownloadItemFields from './DownloadItemFields.jsx';
 import { useDownloadItems } from './useDownloadItems.js';
+import { DownloadStylePanel } from './WidgetStylePanels.jsx';
 
 export default function DownloadEditor({ s, set, page, authUser }) {
   const { items, updateItem, removeItem, addItem } = useDownloadItems(s, set);
@@ -30,6 +31,11 @@ export default function DownloadEditor({ s, set, page, authUser }) {
               emptyText="파일이 없습니다."
             />
           ),
+        },
+        {
+          id: 'style',
+          label: '스타일',
+          content: <DownloadStylePanel s={s} set={set} />,
         },
       ]}
     />

@@ -1,5 +1,6 @@
 import RichField from '../RichField.jsx';
 import { EditorTabs } from '../ui/index.js';
+import { TextStylePanel } from './WidgetStylePanels.jsx';
 
 export default function TextEditor({ s, set }) {
   return (
@@ -26,6 +27,11 @@ export default function TextEditor({ s, set }) {
               />
             </>
           ),
+        },
+        {
+          id: 'style',
+          label: '스타일',
+          content: <TextStylePanel s={s} set={set} />,
         },
       ]}
     />

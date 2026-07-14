@@ -135,6 +135,30 @@ const authContext = await readFile('src/lib/authContext.js', 'utf8');
 const appErrorBoundary = await readFile('src/components/AppErrorBoundary.jsx', 'utf8');
 const blockEditor = await readFile('src/editor/BlockEditor.jsx', 'utf8');
 const scheduleEditor = await readFile('src/editor/blockEditors/ScheduleEditor.jsx', 'utf8');
+const widgetStylePanels = await readFile('src/editor/blockEditors/WidgetStylePanels.jsx', 'utf8');
+const widgetStyleEditorFiles = [
+  'ActivityEditor.jsx',
+  'BottomBarEditor.jsx',
+  'CardsEditor.jsx',
+  'CodeEditor.jsx',
+  'DividerEditor.jsx',
+  'DownloadEditor.jsx',
+  'FaqEditor.jsx',
+  'FooterEditor.jsx',
+  'FormEditor.jsx',
+  'HeroEditor.jsx',
+  'ImageEditor.jsx',
+  'LinksEditor.jsx',
+  'MapEditor.jsx',
+  'ReservationEditor.jsx',
+  'ScheduleEditor.jsx',
+  'SearchEditor.jsx',
+  'SpacerEditor.jsx',
+  'TextEditor.jsx',
+  'TimerEditor.jsx',
+  'TopNavEditor.jsx',
+];
+const widgetStyleEditors = await Promise.all(widgetStyleEditorFiles.map((file) => readFile('src/editor/blockEditors/' + file, 'utf8')));
 const lazyEditorBoundary = await readFile('src/editor/LazyEditorBoundary.jsx', 'utf8');
 const landingRenderer = await readFile('src/preview/LandingRenderer.jsx', 'utf8');
 const leadDuplicatePolicy = await readFile('src/lib/leadDuplicatePolicy.js', 'utf8');
@@ -352,6 +376,8 @@ assert(blockEditor.includes('LazyEditorBoundary') && lazyEditorBoundary.includes
 assert(blockEditor.includes('<AnchorControl') && blockEditor.indexOf('<AnchorControl') < blockEditor.indexOf('<LazyEditorBoundary') && !blockEditor.includes('id=\"advanced\"'), 'BlockEditor must keep widget code at the top without the redundant advanced section');
 assert(fixedBlockRenderers.includes('<AnchorControl') && fixedBlockRenderers.indexOf('<AnchorControl') < fixedBlockRenderers.indexOf('renderLazyEditor(Editor') && !fixedBlockRenderers.includes('id=\"advanced\"'), 'fixed block editors must keep widget code at the top without the redundant advanced section');
 assert(scheduleEditor.includes("import { EditorTabs } from '../ui/index.js'") && scheduleEditor.includes('<EditorTabs'), 'ScheduleEditor must import and render EditorTabs inside its lazy chunk');
+assert(widgetStyleEditors.every((source) => source.includes("label: '스타일'")), 'every registered widget editor must expose an explicit style tab');
+assert(widgetStylePanels.includes('WidgetSurfaceControls') && widgetStylePanels.includes('bgEnabled') && widgetStylePanels.includes('shadowEnabled'), 'widget style tabs must share the persisted surface controls');
 assert(lazyEditorBoundary.includes('<Suspense fallback=') && lazyEditorBoundary.includes('data-lazy-editor-fallback="true"') && lazyEditorBoundary.includes('LAZY_EDITOR_FALLBACK_TEXT'), 'BlockEditor must keep a stable lazy editor loading fallback');
 assert(lazyEditorBoundary.includes('role="alert"') && lazyEditorBoundary.includes('data-lazy-editor-error="true"') && lazyEditorBoundary.includes('LAZY_EDITOR_ERROR_TEXT'), 'BlockEditor must show a useful lazy editor failure state');
 assert(lazyEditorBoundary.includes('componentDidUpdate(prevProps)') && /this\.setState\(\{\s*error:\s*null(?:,\s*recovering:\s*false)?\s*\}\)/.test(lazyEditorBoundary), 'BlockEditor lazy error boundary must reset when the selected block/type changes');

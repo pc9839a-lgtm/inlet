@@ -1,5 +1,5 @@
 import { Minus } from 'lucide-react';
-import { EditorSection } from '../ui/index.js';
+import { EditorSection, EditorTabs } from '../ui/index.js';
 
 export default function DividerEditor({ s, set }) {
   const width = Number(s.width ?? 100);
@@ -9,7 +9,7 @@ export default function DividerEditor({ s, set }) {
     <EditorTabs
       tabs={[{
         id: 'design',
-        label: '구분선',
+        label: '스타일',
         content: (
           <>
             <div className="spacer-editor-card">

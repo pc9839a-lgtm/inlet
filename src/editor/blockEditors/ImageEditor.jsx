@@ -30,8 +30,8 @@ export default function ImageEditor({ s, set, block }) {
           ),
         },
         {
-          id: 'layout',
-          label: '레이아웃',
+          id: 'style',
+          label: '스타일',
           content: (
             <>
               <ImageDisplayControls

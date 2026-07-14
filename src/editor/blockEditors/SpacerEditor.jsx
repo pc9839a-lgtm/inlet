@@ -1,5 +1,5 @@
 import { MoveVertical } from 'lucide-react';
-import { EditorSection, SegmentedControl } from '../ui/index.js';
+import { EditorSection, EditorTabs, SegmentedControl } from '../ui/index.js';
 
 const preset = (height) => height <= 24 ? 'small' : height >= 80 ? 'large' : 'medium';
 const heights = { small: 16, medium: 40, large: 96 };
@@ -11,7 +11,7 @@ export default function SpacerEditor({ s, set }) {
     <EditorTabs
       tabs={[{
         id: 'design',
-        label: '여백',
+        label: '스타일',
         content: (
           <>
             <SegmentedControl label="크기" value={preset(height)} onChange={(value) => set({ height: heights[value] })} options={[{ value: 'small', label: '작게' }, { value: 'medium', label: '보통' }, { value: 'large', label: '크게' }]} />

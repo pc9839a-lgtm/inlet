@@ -2,6 +2,7 @@ import { EditorList, EditorTabs } from '../ui/index.js';
 import CardsBasicSection from './CardsBasicSection.jsx';
 import CardsItemFields from './CardsItemFields.jsx';
 import useCardsItems from './useCardsItems.js';
+import { CardsStylePanel } from './WidgetStylePanels.jsx';
 
 export default function CardsEditor({ s, set }) {
   const { items, changeItem, deleteItem, addItem } = useCardsItems({ s, set });
@@ -29,6 +30,11 @@ export default function CardsEditor({ s, set }) {
               emptyText="카드가 없습니다."
             />
           ),
+        },
+        {
+          id: 'style',
+          label: '스타일',
+          content: <CardsStylePanel s={s} set={set} />,
         },
       ]}
     />

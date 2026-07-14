@@ -1,6 +1,7 @@
 import { EditorTabs } from '../ui/index.js';
 import ActivityBasicSection from './ActivityBasicSection.jsx';
 import ActivityDisplaySection from './ActivityDisplaySection.jsx';
+import { ActivityStylePanel } from './WidgetStylePanels.jsx';
 
 export default function ActivityEditor({ s, set }) {
   const dataSource = s.dataSource || 'sample';
@@ -18,6 +19,11 @@ export default function ActivityEditor({ s, set }) {
           id: 'display',
           label: '표시',
           content: <ActivityDisplaySection s={s} set={set} dataSource={dataSource} mode={mode} />,
+        },
+        {
+          id: 'style',
+          label: '스타일',
+          content: <ActivityStylePanel s={s} set={set} />,
         },
       ]}
     />

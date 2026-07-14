@@ -1,4 +1,4 @@
-﻿import { SINGLETON_BLOCK_TYPES } from '../config/blockTypes.js';
+import { SINGLETON_BLOCK_TYPES } from '../config/blockTypes.js';
 import { isClientAiKeyStorageEnabled } from '../config/runtimeConfig.js';
 import { normalizeButtons } from './blockButtons.js';
 import { linkThumbnailFromUrl } from './linkPreview.js';
@@ -230,7 +230,7 @@ const BLOCK_SAFE_OPTIONS = {
   text: { layout: ['plain','card','notice'], align: ['left','center','right'], size: ['small','medium','large'] },
   cards: { layout: ['grid','stack','steps'], tone: ['soft','solid','outline'], align: ['left','center'] },
   image: { mode: ['single','gallery'], imageDisplay: ['original','fill'] },
-  map: { mapMode: ['google_embed','osm_fallback'] },
+  map: { mapMode: ['google_embed','osm_fallback'], height: ['small','medium','large'] },
   faq: { layout: ['accordion','card','plain'] },
   links: { layout: ['list','card','carousel'], align: ['left','center','right'] },
   download: { layout: ['card','list'], align: ['left','center','right'] },
@@ -276,6 +276,14 @@ function sanitizeBlock(block) {
   Object.entries(opts).forEach(([key, list]) => {
     s[key] = pickSafe(s[key], list, defaults[key] ?? list[0]);
   });
+  if (['text','cards','map','faq','links','download','schedule','timer','activity','code','search'].includes(block?.type)) {
+    s.bgEnabled = !!s.bgEnabled;
+    s.bgColor = s.bgColor || '#FFFFFF';
+    s.paddingY = clampNumber(s.paddingY, 0, 44, 22);
+    s.marginY = clampNumber(s.marginY, 0, 48, 24);
+    s.radiusStyle = pickSafe(s.radiusStyle || 'round', ['square','round'], 'round');
+    s.shadowEnabled = !!s.shadowEnabled;
+  }
 
   if (block?.type === 'topnav') {
     s.logoType = pickSafe(s.logoType || 'text', ['text','image'], 'text');
