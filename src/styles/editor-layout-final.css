@@ -202,6 +202,11 @@ body:has(.builder-shell),
   }
 
   .builder-shell.mobile-operations-shell {
+    --workspace-line: #d9e2ec;
+    --workspace-soft: #f6f8fb;
+    --workspace-ink: #111827;
+    --workspace-muted: #667085;
+    --workspace-accent: #2563eb;
     display: block !important;
     width: 100% !important;
     min-height: 100dvh !important;
@@ -303,7 +308,7 @@ body:has(.builder-shell),
     font-weight: 750;
   }
 
-  .mobile-operations-shell .top-tabs {
+  body .builder-shell.mobile-operations-shell .top-tabs {
     position: sticky;
     top: 0;
     z-index: 20;
