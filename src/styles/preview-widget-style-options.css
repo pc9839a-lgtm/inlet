@@ -107,3 +107,28 @@
 
 .landing-section.download-widget.download-list.align-center .download-body { text-align: center; }
 .landing-section.download-widget.download-list.align-right .download-body { text-align: right; }
+
+.reservation-v2.form-button-hover-fill button[type="submit"]:hover,
+.reservation-v2.form-button-hover-slide button[type="submit"]:hover {
+  color: var(--form-button-text, #fff) !important;
+}
+
+.reservation-v2.form-button-hover-zoom button[type="submit"]:hover {
+  background: var(--form-button-hover, #2563eb) !important;
+  border-color: var(--form-button-hover, #2563eb) !important;
+  color: var(--form-button-text, #fff) !important;
+}
+
+.timer-effect-none::after {
+  animation: none !important;
+  display: none !important;
+}
+
+.activity-anim-none .activity-live-dot,
+.activity-anim-none .activity-feed-row {
+  animation: none !important;
+}
+
+.activity-anim-none .activity-live-dot {
+  box-shadow: none !important;
+}

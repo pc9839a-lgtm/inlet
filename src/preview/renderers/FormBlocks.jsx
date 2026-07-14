@@ -750,7 +750,7 @@ export function RenderReservation({ block, addLead, track }) {
   };
 
   return (
-    <section id={`block-${block.id}`} className={`landing-section form reservation reservation-v2 form-${formStyle} form-input-${inputStyle} form-button-${buttonStyle} form-button-hover-${buttonHover} form-space-${spacing} form-radius-${radiusStyle} align-${textAlign} title-${titleSize} body-${bodySize}`} style={styleVars}>
+    <section id={`block-${block.id}`} className={`landing-section form reservation reservation-v2 form-${formStyle} form-input-${inputStyle} form-button-${buttonStyle} form-button-hover-${buttonHover} form-space-${spacing} form-radius-${radiusStyle} form-align-${textAlign} align-${textAlign} title-${titleSize} body-${bodySize}`} style={styleVars}>
       <h2>{rich(s.title)}</h2>
       {s.desc && <p>{rich(s.desc)}</p>}
 

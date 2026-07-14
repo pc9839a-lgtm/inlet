@@ -77,6 +77,8 @@ const files = {
   formEditor: await readFile('src/editor/blockEditors/FormEditor.jsx', 'utf8'),
   formDesign: await readFile('src/editor/blockEditors/FormDesignSection.jsx', 'utf8'),
   formSubmission: await readFile('src/editor/blockEditors/FormSubmissionSection.jsx', 'utf8'),
+  imageDisplay: await readFile('src/editor/blockEditors/ImageDisplayControls.jsx', 'utf8'),
+  imageGallery: await readFile('src/editor/blockEditors/ImageGalleryDisplaySection.jsx', 'utf8'),
   info: await readFile('src/preview/renderers/InfoBlocks.jsx', 'utf8'),
   link: await readFile('src/preview/renderers/LinkBlocks.jsx', 'utf8'),
   media: await readFile('src/preview/renderers/MediaBlocks.jsx', 'utf8'),
@@ -288,6 +290,13 @@ assert(files.publicFormEmbed.includes('\\uD398\\uC774\\uC9C0\\uB85C\\uB85C \\uC8
 assert(files.formEditor.includes("label: '스타일'") && files.formDesign.includes('buttonHover') && files.formDesign.includes('buttonColorMode') && files.formDesign.includes('buttonHoverColorMode'), 'form editor should expose form style, button effect, and button color controls');
 assert(files.formEditor.includes("label: '제출'") && files.formSubmission.includes('duplicatePhone') && files.formSubmission.includes('duplicateEmail') && files.formSubmission.includes('duplicateWindow'), 'form editor should expose submission duplicate policies after the component split');
 assert(files.form.includes("'--form-button': themeButtonColor(s)") && files.form.includes("'--form-button-hover': themeButtonHoverColor(s)") && files.previewCss.includes('.form-button-hover-fill') && files.previewCss.includes('.form-input-underline'), 'form design controls should map button colors, hover effects, and input styles into preview contracts');
+assert(files.form.includes('form-align-${textAlign} align-${textAlign}') && files.previewCss.includes('.reservation-v2.form-button-hover-zoom') && files.previewCss.includes('color: var(--form-button-text, #fff)'), 'reservation styles should preserve shared alignment and custom hover color contracts');
+assert(files.imageDisplay.includes("value: 'original'") && files.imageDisplay.includes("value: 'fill'") && files.imageDisplay.includes('rounded'), 'image editor should expose original, fill, and rounded display controls');
+assert(files.imageGallery.includes('galleryShowArrows') && files.imageGallery.includes('galleryShowDots') && files.imageGallery.includes('interval'), 'gallery editor should expose navigation and autoplay timing controls');
+assert(files.media.includes('image-${display}') && files.media.includes('galleryShowArrows') && files.media.includes('galleryShowDots') && files.media.includes("'--block-margin'"), 'image renderer should consume display, gallery navigation, and spacing settings');
+assert(files.previewCss.includes('.image-sec .image-wrap.image-original img') && files.previewCss.includes('.image-sec .image-wrap.image-fill img') && files.previewCss.includes('.gallery-arrows') && files.previewCss.includes('.dots'), 'image and gallery CSS should consume renderer display and navigation classes');
+assert(files.widgetStyles.includes('timerTheme') && files.widgetStyles.includes('urgentStyle') && files.signal.includes('timer-theme-${theme}') && files.signal.includes('timer-effect-${effect}'), 'timer style controls should map to renderer theme and effect classes');
+assert(files.widgetStyles.includes("value={s.animation || 'stack'}") && files.signal.includes('activity-anim-${anim}') && files.previewCss.includes('.activity-anim-none .activity-live-dot'), 'activity movement controls should map to renderer classes and fully stop animation');
 assert(!files.previewCss.includes('form-button-anim-') && !files.previewCss.includes('form-button-overlay'), 'form button effects should use the single buttonHover contract');
 assert(files.browserVisualQa.includes("INLET_BROWSER_QA_EXTRA_URLS=auto"), 'browser visual QA should document automatic footer/legal route coverage');
 assert(files.browserVisualQa.includes("'/privacy'") && files.browserVisualQa.includes("'/terms'"), 'browser visual QA auto routes should cover legal pages');
