@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { fetchServerBlockedLeadHistory } from '../../lib/leadRepository.js';
 import { currentMonthValue } from '../../lib/monthRange.js';
 
@@ -85,32 +85,71 @@ function blockedSignalSummary(item = {}) {
 export default function IntakeDuplicatePolicyPanel({ page, authUser, updatePage }) {
   const [open, setOpen] = useState(false);
   const [month, setMonth] = useState(currentMonthValue());
-  const [history, setHistory] = useState({ records: [], total: 0, loading: false, loaded: false, error: '' });
+  const [visibleCount, setVisibleCount] = useState(8);
+  const [history, setHistory] = useState({ records: [], total: 0, nextCursor: null, hasMore: false, loading: false, loaded: false, error: '' });
+  const historyRequestRef = useRef(0);
   const settings = normalizeDuplicateSettings(page.leadDuplicateSettings || page.duplicateCollectionSettings || {});
   const localHistory = Array.isArray(page.leadDuplicateSettings?.blockedHistory) ? page.leadDuplicateSettings.blockedHistory : [];
   const visibleHistory = history.loaded ? history.records : localHistory;
+  const displayedHistory = visibleHistory.slice(0, visibleCount);
+  const hiddenLoadedHistory = visibleHistory.length > visibleCount;
+  const historyKey = page.id || page.slug || page.url || '';
 
   const save = (patch) => {
     updatePage?.({ leadDuplicateSettings: normalizeDuplicateSettings({ ...settings, ...patch }) });
   };
 
-  const loadHistory = async () => {
+  const loadHistory = async ({ append = false } = {}) => {
+    const requestId = ++historyRequestRef.current;
+    const cursor = append ? history.nextCursor : 0;
+    if (append && cursor == null) return;
+
     setHistory((current) => ({ ...current, loading: true, error: '' }));
     try {
-      const result = await fetchServerBlockedLeadHistory(page, authUser, { month, limit: 50 });
+      const result = await fetchServerBlockedLeadHistory(page, authUser, { month, limit: 50, cursor });
+      if (requestId !== historyRequestRef.current) return;
       if (!result) {
-        setHistory({ records: localHistory, total: localHistory.length, loading: false, loaded: true, error: '' });
+        setHistory({ records: localHistory, total: localHistory.length, nextCursor: null, hasMore: false, loading: false, loaded: true, error: '' });
         return;
       }
-      setHistory({ records: result.records || [], total: Number(result.total || 0), loading: false, loaded: true, error: '' });
+      setHistory((current) => ({
+        records: append ? [...current.records, ...(result.records || [])] : (result.records || []),
+        total: Number(result.total || 0),
+        nextCursor: result.nextCursor ?? null,
+        hasMore: !!result.hasMore,
+        loading: false,
+        loaded: true,
+        error: '',
+      }));
     } catch (error) {
-      setHistory({ records: [], total: 0, loading: false, loaded: true, error: String(error?.message || error || '') });
+      if (requestId !== historyRequestRef.current) return;
+      setHistory((current) => ({
+        ...current,
+        records: append ? current.records : [],
+        total: append ? current.total : 0,
+        loading: false,
+        loaded: true,
+        error: String(error?.message || error || ''),
+      }));
+    }
+  };
+
+  const showMoreHistory = async () => {
+    if (hiddenLoadedHistory) {
+      setVisibleCount((count) => count + 8);
+      return;
+    }
+    if (history.hasMore) {
+      await loadHistory({ append: true });
+      setVisibleCount((count) => count + 8);
     }
   };
 
   useEffect(() => {
-    if (open) loadHistory();
-  }, [open, month]);
+    if (!open) return;
+    setVisibleCount(8);
+    loadHistory();
+  }, [open, month, historyKey]);
 
   return (
     <section className={'card inbox-policy-card ' + (open ? 'open' : '')}>
@@ -136,7 +175,7 @@ export default function IntakeDuplicatePolicyPanel({ page, authUser, updatePage 
               <strong>차단 내역</strong>
               <div>
                 <input type="month" value={month} onChange={(event) => setMonth(event.target.value || currentMonthValue())} />
-                <button type="button" disabled={history.loading} onClick={loadHistory}>{history.loading ? '조회 중' : '조회'}</button>
+                <button type="button" disabled={history.loading} onClick={() => loadHistory()}>{history.loading ? '조회 중' : '조회'}</button>
               </div>
             </div>
             {history.error && <span className="inbox-policy-error">{history.error}</span>}
@@ -146,7 +185,7 @@ export default function IntakeDuplicatePolicyPanel({ page, authUser, updatePage 
               <span className="inbox-policy-empty">차단 내역 없음</span>
             ) : (
               <ul>
-                {visibleHistory.slice(0, 8).map((item, index) => (
+                {displayedHistory.map((item, index) => (
                   <li key={item.id || index}>
                     <b>{String(item.date || item.createdAt || '').slice(0, 10) || '-'}</b>
                     <em>{String(item.pageSlug || item.page || item.form || item.formId || '-')}</em>
@@ -155,7 +194,16 @@ export default function IntakeDuplicatePolicyPanel({ page, authUser, updatePage 
                 ))}
               </ul>
             )}
-            {history.total > visibleHistory.length && <small className="inbox-policy-more">전체 {history.total}건 중 최근 {visibleHistory.length}건</small>}
+            {history.loaded && visibleHistory.length > 0 && (
+              <div className="inbox-policy-history-footer">
+                <small className="inbox-policy-more">전체 {history.total || visibleHistory.length}건 · {displayedHistory.length}건 표시</small>
+                {(hiddenLoadedHistory || history.hasMore) && (
+                  <button type="button" className="inbox-policy-more-button" disabled={history.loading} onClick={showMoreHistory}>
+                    {history.loading ? '조회 중' : '더보기'}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

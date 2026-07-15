@@ -596,7 +596,10 @@ requireAll(duplicatePolicyPanel, [
   'loaded: false',
   'history.loaded ? history.records : localHistory',
   'if (!result)',
-  'records: [], total: 0, loading: false, loaded: true',
+  'records: append ? current.records : []',
+  'nextCursor: result.nextCursor ?? null',
+  'history.hasMore',
+  'displayedHistory.map',
 ], 'server blocked history panel contract');
 
 const formBlocks = await read('src/preview/renderers/FormBlocks.jsx');
