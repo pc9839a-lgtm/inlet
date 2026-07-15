@@ -89,6 +89,7 @@ const inboxCss = await readFile('src/panels/InboxPanel.css', 'utf8');
 const statsPeriodCss = await readFile('src/styles/panels-stats-period-line.css', 'utf8');
 assert(statsPanel.includes('eventPageMeta') && statsPanel.includes('leadPageMeta'), 'stats panel should accept pagination meta');
 assert(statsPanel.includes('statsPartial') && statsPanel.includes('stats-partial-notice'), 'stats panel should expose partial data notice contract');
+assert(statsPanel.includes('!serverMode && hasPartialStatsData') && statsPanel.includes('recentLeadTotal'), 'server aggregate stats should stay complete while recent lead rows disclose their limited count');
 assert(statsPanel.includes('role="status"'), 'partial data notice should be announced as status');
 assert(statsPanel.includes('onPeriodChange') && statsPanel.includes('controlledPeriod'), 'stats panel should notify App when the selected period changes');
 assert(statsPanel.includes('PERIOD_OPTIONS') && statsPanel.includes('stats-range-tabs'), 'stats panel should expose 1/7/14/30 day period tabs');
@@ -108,15 +109,19 @@ assert(!inboxPanel.includes('lead-delivery') && !inboxPanel.includes('\uC804\uC1
 assert(!inboxCss.includes('lead-delivery'), 'inbox CSS should not keep unused delivery status/detail styles');
 assert(inboxCss.includes('grid-template-columns: minmax(96px, 1fr) 64px 82px 66px') && inboxCss.includes('.lead-source-label'), 'inbox lead rows should reserve columns for source, status, date, and detail button');
 
-const appSource = await readFile('src/App.jsx', 'utf8');
-assert(appSource.includes('fetchServerStatsSummary'), 'stats tab should load server aggregate summary');
-assert(appSource.includes('fetchServerLeads(page, authUser, { limit: 8'), 'stats tab should only load recent lead rows for the table');
-assert(appSource.includes('eventPageMeta={statsEventPageMeta}') && appSource.includes('leadPageMeta={statsLeadPageMeta}'), 'stats panel should receive pagination meta from App');
-assert(appSource.includes('utmSource') && appSource.includes('utmMedium') && appSource.includes('utmCampaign'), 'events and leads should keep UTM fields');
-assert(appSource.includes('referrer') && appSource.includes('sourceLabel'), 'events and leads should keep automatic source labels');
+const leadCaptureActions = await readFile('src/runtime/leadCaptureActions.js', 'utf8');
+const publicPageRuntimeActions = await readFile('src/runtime/publicPageRuntimeActions.js', 'utf8');
+const statsSummarySync = await readFile('src/runtime/useStatsSummarySync.js', 'utf8');
+const workspacePanelProps = await readFile('src/runtime/createWorkspacePanelProps.js', 'utf8');
+assert(statsSummarySync.includes('fetchServerStatsSummary') && statsSummarySync.includes('fetchServerLeads(page, authUser, { limit: 8'), 'split stats sync should load server aggregates and only recent lead rows');
+
+assert(workspacePanelProps.includes('eventPageMeta: statsEventPageMeta') && workspacePanelProps.includes('leadPageMeta: statsLeadPageMeta'), 'workspace panel props should pass stats pagination metadata');
+assert(leadCaptureActions.includes('utmSource') && leadCaptureActions.includes('utmMedium') && leadCaptureActions.includes('utmCampaign'), 'lead capture should keep UTM fields');
+assert(publicPageRuntimeActions.includes('utmSource') && publicPageRuntimeActions.includes('utmMedium') && publicPageRuntimeActions.includes('utmCampaign'), 'public events should keep UTM fields');
+assert(leadCaptureActions.includes('referrer') && leadCaptureActions.includes('sourceLabel') && publicPageRuntimeActions.includes('referrer') && publicPageRuntimeActions.includes('sourceLabel'), 'split lead and event actions should keep automatic source labels');
 
 const trafficAttribution = await readFile('src/lib/trafficAttribution.js', 'utf8');
 assert(trafficAttribution.includes('trafficAttributionFromUrl') && trafficAttribution.includes('utm_source'), 'traffic attribution should parse UTM source');
 assert(trafficAttribution.includes('trafficChannelFromReferrer') && trafficAttribution.includes('sourceLabel'), 'traffic attribution should fall back to referrer and source label');
 
-console.log(JSON.stringify({ ok: true, checks: 60 }, null, 2));
+console.log(JSON.stringify({ ok: true, checks: 62 }, null, 2));

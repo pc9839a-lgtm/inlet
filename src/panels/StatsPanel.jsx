@@ -260,7 +260,8 @@ export default function StatsPanel({
     if (serverMode) return baseStats;
     return buildStatsMetrics(scopedEvents, scopedLeads, period);
   }, [baseStats, period, scopedEvents, scopedLeads, serverMode]);
-  const partialData = hasPartialStatsData({ statsPartial, eventPageMeta, leadPageMeta });
+  const partialData = statsPartial || (!serverMode && hasPartialStatsData({ statsPartial, eventPageMeta, leadPageMeta }));
+  const recentLeadTotal = Number(leadPageMeta?.total || stats.filteredLeads.length);
 
   useEffect(() => {
     if (channelFilter !== 'all' && !channelOptions.some((item) => item.channel === channelFilter)) setChannel('all');
@@ -297,7 +298,7 @@ export default function StatsPanel({
       </section>
 
       <section className="card stats-trend-card">
-        <div className="section-title"><h2>방문·접수 흐름</h2></div>
+        <div className="section-title"><h2>성과 흐름</h2></div>
         <StatsTrend data={stats.trend} />
       </section>
 
@@ -315,7 +316,7 @@ export default function StatsPanel({
       <section className="card stats-lead-table-card stats-lead-table-card-v3">
         <div className="section-title">
           <h2>최근 접수</h2>
-          <p>{stats.filteredLeads.length}건</p>
+          <p>{recentLeadTotal > stats.filteredLeads.length ? `전체 ${recentLeadTotal}건 중 최근 ${stats.filteredLeads.length}건` : `${stats.filteredLeads.length}건`}</p>
         </div>
         {!stats.filteredLeads.length ? <div className="empty">접수 데이터가 없습니다.</div> : (
           <div className="stats-lead-table stats-lead-table-v3">
