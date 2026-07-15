@@ -57,3 +57,16 @@
 @import '../styles/preview-workspace-effects-map-faq.css';
 @import '../styles/preview-widget-style-options.css';
 @import '../styles/preview-public.css';
+
+/* Global page typography consumers. */
+.landing-page .landing-content > :is(
+  .hero:not(.hero-background):not(.hero-full),
+  .text,
+  .cards-widget:not(.cards-solid),
+  .links,
+  .download-widget,
+  .faq-widget,
+  .page-search
+) :is(h1, h2, h3, p) {
+  color: var(--text) !important;
+}

@@ -199,9 +199,7 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
       return;
     }
 
-    requestAnimationFrame(() => {
-      targets.forEach((el) => el.classList.add('anim-ready'));
-    });
+    targets.forEach((el) => el.classList.add('anim-ready'));
 
     const reveal = (el) => {
       el.classList.add('is-visible');
@@ -218,7 +216,10 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
       });
     };
 
-    revealVisibleNow();
+    // Let the hidden state paint before visible sections are revealed.
+    let revealFrame = window.requestAnimationFrame(() => {
+      revealFrame = window.requestAnimationFrame(revealVisibleNow);
+    });
 
     // Safety 2: reveal sections as they enter the viewport.
     const observer = new IntersectionObserver((entries) => {
@@ -249,6 +250,7 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
 
     return () => {
       observer.disconnect();
+      window.cancelAnimationFrame(revealFrame);
       window.clearTimeout(fallback);
       scrollParents.forEach((target) => target.removeEventListener?.('scroll', revealVisibleNow));
     };
@@ -353,25 +355,29 @@ function RenderBlock(props) {
 }
 
 function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, go }) {
-  if(block.type==='topnav')return <LayoutRenderTopNav block={block} blocks={blocks} go={go}/>;
-  if(block.type==='hero')return <ContentRenderHero block={block}/>;
-  if(block.type==='image')return <MediaRenderImage block={block}/>;
-  if(block.type==='text')return <ContentRenderText block={block}/>;
-  if(block.type==='cards')return <ContentRenderCards block={block}/>;
-  if(block.type==='map')return <InfoRenderMap block={block} page={page}/>;
-  if(block.type==='schedule')return <InfoRenderSchedule block={block}/>;
-  if(block.type==='faq')return <InfoRenderFaq block={block}/>;
-  if(block.type==='links')return <LinkRenderLinks block={block} track={track} go={go}/>;
-  if(block.type==='download')return <LinkRenderDownload block={block} track={track}/>;
-  if(block.type==='timer')return <SignalRenderTimer block={block} go={go}/>;
-  if(block.type==='activity')return <SignalRenderActivity block={block} leads={leads}/>;
-  if(block.type==='spacer')return <LayoutRenderSpacer block={block}/>;
-  if(block.type==='divider')return <LayoutRenderDivider block={block}/>;
-  if(block.type==='code')return <UtilityRenderCode block={block}/>;
-  if(block.type==='search')return <UtilityRenderPageSearch block={block}/>;
-  if(block.type==='form')return <FormRenderForm block={block} addLead={addLead} track={track}/>;
-  if(block.type==='reservation')return <FormRenderReservation block={block} addLead={addLead} track={track}/>;
-  if(block.type==='footer')return <LayoutRenderFooter block={block}/>;
+  const globalAlign = pickSafe(page?.theme?.globalAlign, ['left','center','right'], '');
+  const renderBlock = globalAlign
+    ? { ...block, s: { ...(block.s || {}), align: block.s?.align || globalAlign, textAlign: block.s?.textAlign || globalAlign } }
+    : block;
+  if(block.type==='topnav')return <LayoutRenderTopNav block={renderBlock} blocks={blocks} go={go}/>;
+  if(block.type==='hero')return <ContentRenderHero block={renderBlock}/>;
+  if(block.type==='image')return <MediaRenderImage block={renderBlock}/>;
+  if(block.type==='text')return <ContentRenderText block={renderBlock}/>;
+  if(block.type==='cards')return <ContentRenderCards block={renderBlock}/>;
+  if(block.type==='map')return <InfoRenderMap block={renderBlock} page={page}/>;
+  if(block.type==='schedule')return <InfoRenderSchedule block={renderBlock}/>;
+  if(block.type==='faq')return <InfoRenderFaq block={renderBlock}/>;
+  if(block.type==='links')return <LinkRenderLinks block={renderBlock} track={track} go={go}/>;
+  if(block.type==='download')return <LinkRenderDownload block={renderBlock} track={track}/>;
+  if(block.type==='timer')return <SignalRenderTimer block={renderBlock} go={go}/>;
+  if(block.type==='activity')return <SignalRenderActivity block={renderBlock} leads={leads}/>;
+  if(block.type==='spacer')return <LayoutRenderSpacer block={renderBlock}/>;
+  if(block.type==='divider')return <LayoutRenderDivider block={renderBlock}/>;
+  if(block.type==='code')return <UtilityRenderCode block={renderBlock}/>;
+  if(block.type==='search')return <UtilityRenderPageSearch block={renderBlock}/>;
+  if(block.type==='form')return <FormRenderForm block={renderBlock} addLead={addLead} track={track}/>;
+  if(block.type==='reservation')return <FormRenderReservation block={renderBlock} addLead={addLead} track={track}/>;
+  if(block.type==='footer')return <LayoutRenderFooter block={renderBlock}/>;
   return <section className="landing-section block-render-fallback"><strong>지원하지 않는 블록</strong></section>;
 }
 function safeCssId(value = '') {
