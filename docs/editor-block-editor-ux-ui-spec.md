@@ -1529,3 +1529,51 @@ npm run build
 - 서버 저장 상태 반영
 
 이 기준 샘플이 완성되기 전에는 20개 블록에 동일한 마크업을 복사하지 않는다.
+
+## 23. 2026-07-15 종료 검증
+
+이 절이 문서 앞부분의 2026-07-13 진행 수치보다 최신이다.
+
+### 23.1 저장 및 공개 확인
+
+- 로컬 편집 저장 요청과 공개 페이지 재조회가 서로 다른 포트에서 실행될 때 발생하던 거짓 저장 실패 원인을 확인했다.
+- 저장 POST 자체는 성공했지만 공개 재검증 GET의 Cache-Control, Pragma 헤더가 CORS preflight 허용 목록에 없어 브라우저가 Failed to fetch로 처리했다.
+- server/index.mjs의 허용 헤더에 Cache-Control, Pragma만 추가했다.
+- server-smoke-auth에 실제 OPTIONS 계약 검사를 추가해 같은 문제가 다시 생기면 QA가 실패한다.
+
+### 23.2 브라우저 QA 확장
+
+- 외부 인증 세션과 workspace ID를 환경 변수로 주입할 수 있다. 세션 값은 결과 JSON에 출력하지 않는다.
+- 입력 변경 뒤 저장 또는 적용 버튼을 누르는 post-click selector 단계를 추가했다.
+- 실제 Chrome CDP에서 편집 화면 진입 후 설정 탭 post-click, settings panel 렌더링, 오류 화면 부재를 확인했다.
+
+### 23.3 최신 검증 결과
+
+- mojibake:qa 통과: 686개 파일, 6개 검사
+- runtime:qa 통과: 520개 파일, 1,612개 검사
+- rendering:qa 통과: 208개 검사, 시각 기하 45개, 뷰포트 계약 6개
+- integration:qa 통과: 37개 검사, 20개 스크립트
+- server:smoke:auth 통과
+- css:qa 통과: 112개 활성 CSS, 540,446 / 550,000 bytes
+- npm run build 통과: 2,150개 모듈, 블록 편집기 lazy chunk 20개
+- 초기 CSS 번들은 400,924 / 430,000 bytes로 경고 구간이지만 예산 안이다.
+
+### 23.4 보호 범위와 예외
+
+- App, main, route, public home, base-public CSS, LandingRenderer는 변경하지 않았다.
+- 보호 목록 중 server/index.mjs만 변경됐으며 내용은 내부 저장 공개 재검증에 필요한 CORS 허용 헤더 한 줄이다.
+- 빈 editor CSS 3개와 빈 preview form CSS 2개는 import 소유자가 전역 또는 공개 렌더러 보호 파일이어서 이번 작업에서 삭제하거나 import를 제거하지 않았다.
+- 기존 untracked 파일은 삭제, 수정, staging하지 않는다.
+
+### 23.5 종료 조건과 다음 작업
+
+현재 editor, panel, workspace 분리 작업은 로컬 QA와 빌드 기준으로 종료 가능하다. 다음 단계는 새 코드를 staging에만 배포한 뒤 아래를 확인하는 것이다.
+
+1. staging 로그인 및 workspace 진입
+2. 편집 입력 변경 후 저장 버튼 post-click
+3. 저장 완료 표시와 공개 URL 재조회
+4. 편집, 스타일, 접수함, 통계, 설정 전환
+5. 콘솔의 lazy import, 초기화, CORS 오류 부재
+6. 운영 메인에는 배포하지 않았는지 확인
+
+운영 배포와 main 병합은 별도 승인 전까지 금지한다.

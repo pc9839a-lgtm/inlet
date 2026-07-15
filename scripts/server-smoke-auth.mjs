@@ -107,6 +107,18 @@ await runSmoke('server-smoke-auth', async ({ baseUrl }) => {
   assert(healthData.storage?.active === 'jsonl', 'default storage should stay on jsonl');
   assert(healthData.storage?.d1Ready === false, 'default Node smoke should not report D1 ready');
 
+  const corsPreflight = await fetchWithTimeout(`${baseUrl}/api/pages/smoke`, {
+    method: 'OPTIONS',
+    headers: {
+      Origin: 'http://localhost:4177',
+      'Access-Control-Request-Method': 'GET',
+      'Access-Control-Request-Headers': 'cache-control,pragma,x-inlet-session',
+    },
+  });
+  assert(corsPreflight.status === 204, `CORS preflight expected 204, got ${corsPreflight.status}`);
+  const allowedHeaders = String(corsPreflight.headers.get('access-control-allow-headers') || '').toLowerCase();
+  assert(allowedHeaders.includes('cache-control') && allowedHeaders.includes('pragma'), 'CORS preflight should allow cache-busting public verification headers');
+
   const favicon = await fetchWithTimeout(`${baseUrl}/favicon.ico`);
   assert(favicon.status === 204, `favicon expected 204, got ${favicon.status}`);
 

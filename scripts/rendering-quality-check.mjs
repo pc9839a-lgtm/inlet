@@ -331,9 +331,11 @@ assert(!files.previewCss.includes('form-button-anim-') && !files.previewCss.incl
 assert(files.browserVisualQa.includes("INLET_BROWSER_QA_EXTRA_URLS=auto"), 'browser visual QA should document automatic footer/legal route coverage');
 assert(files.browserVisualQa.includes("'/privacy'") && files.browserVisualQa.includes("'/terms'"), 'browser visual QA auto routes should cover legal pages');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_STATE_PRESET'), 'browser visual QA should support authenticated state presets');
+assert(files.browserVisualQa.includes('INLET_BROWSER_QA_AUTH_SESSION') && files.browserVisualQa.includes('INLET_BROWSER_QA_AUTH_WORKSPACE_ID'), 'browser visual QA should support an external authenticated session without hardcoded credentials');
 assert(files.browserVisualQa.includes('owner-settings') && files.browserVisualQa.includes('client-settings') && files.browserVisualQa.includes('manager-limited'), 'browser visual QA should include owner, client admin, and manager authenticated presets');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_CLICK_TEXT'), 'browser visual QA should support post-navigation interaction checks');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_CLICK_SELECTOR'), 'browser visual QA should support precise selector interaction checks');
+assert(files.browserVisualQa.includes('INLET_BROWSER_QA_POST_CLICK_SELECTOR'), 'browser visual QA should support submit/save clicks after input mutation');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_SET_INPUT'), 'browser visual QA should support input mutation checks');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_RICH_FORMAT'), 'browser visual QA should support rich text toolbar formatting checks');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_EXPECT_COMPUTED'), 'browser visual QA should support computed-style checks');
@@ -348,6 +350,7 @@ const productionBrowserQa = await readFile('scripts/production-browser-quality-c
 assert(productionBrowserQa.includes('owner style text color live preview'), 'production browser QA should cover style text color live preview');
 assert(productionBrowserQa.includes('owner style font tone live preview') && productionBrowserQa.includes('.landing-page.font-bold.font-family-serif'), 'production browser QA should cover style font/tone live preview');
 assert(productionBrowserQa.includes('owner rich text bold underline toolbar') && productionBrowserQa.includes('INLET_BROWSER_QA_RICH_FORMAT'), 'production browser QA should cover rich text bold/underline toolbar formatting');
+assert(productionBrowserQa.includes('owner server save round trip') && productionBrowserQa.includes('INLET_PRODUCTION_QA_SAVE_POST_CLICK_SELECTOR'), 'staging browser QA should support an explicit authenticated save round trip');
 
 console.log(JSON.stringify({
   ok: true,

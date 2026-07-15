@@ -6,6 +6,10 @@ const includeAuthenticatedCases = process.env.INLET_PRODUCTION_QA_INCLUDE_AUTHEN
 const includeMockCases = process.env.INLET_PRODUCTION_QA_INCLUDE_MOCKS === '1';
 const includeNextSettingsCases = process.env.INLET_PRODUCTION_QA_INCLUDE_NEXT_SETTINGS === '1';
 const publicSlug = String(process.env.INLET_PRODUCTION_QA_PUBLIC_SLUG || '').trim();
+const serverSaveSetInput = String(process.env.INLET_PRODUCTION_QA_SAVE_SET_INPUT || '').trim();
+const serverSavePostClickSelector = String(process.env.INLET_PRODUCTION_QA_SAVE_POST_CLICK_SELECTOR || '').trim();
+const serverSaveExpectedText = String(process.env.INLET_PRODUCTION_QA_SAVE_EXPECT_TEXT || '서버 저장됨').trim();
+const includeServerSaveCase = Boolean(serverSaveSetInput && serverSavePostClickSelector);
 
 const forbiddenErrorText = [
   '\uD654\uBA74\uC744 \uBD88\uB7EC\uC624\uB294 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4',
@@ -39,7 +43,18 @@ const cases = [
   { name: 'manager invite acceptance', mocked: true, url: `${baseUrl}/invite/qa-visual-invite`, statePreset: 'invite-acceptance', expectedText: 'manager@example.test', expectedSelector: '.auth-shell,.auth-card,.auth-form', forbiddenText: forbiddenErrorText },
   { name: 'owner inbox duplicate policy', authenticated: true, nextReleaseOnly: true, url: `${baseUrl}/?tab=inbox`, statePreset: 'owner-settings', viewports: 'desktop', clickSelector: '.inbox-policy-head', expectedSelector: '.inbox-policy-card,.inbox-policy-grid,.inbox-policy-select,.inbox-policy-history', forbiddenText: '\uD654\uBA74\uC744 \uBD88\uB7EC\uC624\uB294 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4,ApiError is not defined' },
   { name: 'owner settings page duplication modal', authenticated: true, nextReleaseOnly: true, url: `${baseUrl}/?tab=settings`, statePreset: 'owner-settings', viewports: 'desktop', clickSelector: '.page-duplicate-summary button', expectedSelector: '.settings-panel,.page-duplicate-summary button,.settings-url-modal', forbiddenText: '\uD654\uBA74\uC744 \uBD88\uB7EC\uC624\uB294 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4,ApiError is not defined' },
-  ...(publicSlug ? [{ name: 'public landing direct route', url: `${baseUrl}/${publicSlug}`, viewports: 'desktop,mobile', expectedSelector: '.public-landing-shell,.public-landing-viewport,.landing-page.public-render,.landing-section.hero', forbiddenText: '\uD398\uC774\uC9C0\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4,\uD654\uBA74\uC744 \uBD88\uB7EC\uC624\uB294 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4,ApiError is not defined,Project access is required' }] : []),
+  ...(includeServerSaveCase ? [{
+    name: 'owner server save round trip',
+    authenticated: true,
+    url: baseUrl + '/?tab=edit',
+    statePreset: 'owner-settings',
+    viewports: 'desktop',
+    setInput: serverSaveSetInput,
+    postClickSelector: serverSavePostClickSelector,
+    expectedText: serverSaveExpectedText,
+    expectedSelector: '.top-tabs,.editor-list,.phone-frame',
+    forbiddenText: forbiddenErrorText,
+  }] : []),  ...(publicSlug ? [{ name: 'public landing direct route', url: `${baseUrl}/${publicSlug}`, viewports: 'desktop,mobile', expectedSelector: '.public-landing-shell,.public-landing-viewport,.landing-page.public-render,.landing-section.hero', forbiddenText: '\uD398\uC774\uC9C0\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4,\uD654\uBA74\uC744 \uBD88\uB7EC\uC624\uB294 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4,ApiError is not defined,Project access is required' }] : []),
 ];
 
 function safeCaseName(name) {
@@ -89,6 +104,7 @@ function runCase(testCase) {
     if (testCase.clickText) env.INLET_BROWSER_QA_CLICK_TEXT = testCase.clickText;
     if (testCase.clickSelector) env.INLET_BROWSER_QA_CLICK_SELECTOR = testCase.clickSelector;
     if (testCase.setInput) env.INLET_BROWSER_QA_SET_INPUT = testCase.setInput;
+    if (testCase.postClickSelector) env.INLET_BROWSER_QA_POST_CLICK_SELECTOR = testCase.postClickSelector;
     if (testCase.richFormat) env.INLET_BROWSER_QA_RICH_FORMAT = testCase.richFormat;
     if (testCase.expectedComputed) env.INLET_BROWSER_QA_EXPECT_COMPUTED = testCase.expectedComputed;
 
@@ -142,6 +158,7 @@ console.log(JSON.stringify({
   includeAuthenticatedCases,
   includeMockCases,
   includeNextSettingsCases,
+  includeServerSaveCase,
   publicSlug,
   activeCases: activeCases.length,
   skippedCases,

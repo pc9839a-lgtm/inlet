@@ -826,7 +826,7 @@ function setCors(req, res) {
   if (allowedOrigin) res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Inlet-Api-Token,X-Inlet-Owner-Id,X-Inlet-Project-Id,X-Inlet-Session');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,Cache-Control,Pragma,X-Inlet-Api-Token,X-Inlet-Owner-Id,X-Inlet-Project-Id,X-Inlet-Session');
   res.setHeader('Access-Control-Max-Age', '86400');
 }
 

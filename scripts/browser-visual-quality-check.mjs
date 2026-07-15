@@ -31,6 +31,14 @@ const clickSelectors = String(process.env.INLET_BROWSER_QA_CLICK_SELECTOR || '')
   .split(',')
   .map((selector) => selector.trim())
   .filter(Boolean);
+const postClickSelectors = String(process.env.INLET_BROWSER_QA_POST_CLICK_SELECTOR || '')
+  .split(',')
+  .map((selector) => selector.trim())
+  .filter(Boolean);
+const qaAuthSession = String(process.env.INLET_BROWSER_QA_AUTH_SESSION || '').trim();
+const qaAuthWorkspaceId = String(process.env.INLET_BROWSER_QA_AUTH_WORKSPACE_ID || '').trim();
+const qaAuthEmail = String(process.env.INLET_BROWSER_QA_AUTH_EMAIL || '').trim();
+const qaAuthName = String(process.env.INLET_BROWSER_QA_AUTH_NAME || '').trim();
 const setInputs = String(process.env.INLET_BROWSER_QA_SET_INPUT || '')
   .split(',')
   .map((entry) => entry.trim())
@@ -290,6 +298,15 @@ function authStatePresetData(name) {
 function statePresetInitScript(name) {
   const data = authStatePresetData(name);
   if (!data) return '';
+  if (data.auth && qaAuthSession) {
+    data.auth = {
+      ...data.auth,
+      session: qaAuthSession,
+      workspaceId: qaAuthWorkspaceId || data.auth.workspaceId,
+      email: qaAuthEmail || data.auth.email,
+      name: qaAuthName || data.auth.name,
+    };
+  }
   return `(() => {
     const data = ${JSON.stringify(data)};
     if (data.auth) localStorage.setItem(${JSON.stringify(AUTH_KEY)}, JSON.stringify(data.auth));
@@ -398,6 +415,11 @@ async function runPlaywrightLikeActions(page) {
     await setInputInPlaywrightLikePage(page, selector, value);
     if (typeof page.waitForTimeout === 'function') await page.waitForTimeout(350);
     else await wait(350);
+  }
+  for (const selector of postClickSelectors) {
+    await clickSelectorInPlaywrightLikePage(page, selector);
+    if (typeof page.waitForTimeout === 'function') await page.waitForTimeout(700);
+    else await wait(700);
   }
   for (const { fieldSelector, buttonSelector, expectedHtml } of richFormatChecks) {
     await applyRichFormatInPlaywrightLikePage(page, fieldSelector, buttonSelector, expectedHtml);
@@ -570,6 +592,10 @@ async function runCdpActions(client) {
   for (const { selector, value } of setInputs) {
     await setInputInCdp(client, selector, value);
     await wait(350);
+  }
+  for (const selector of postClickSelectors) {
+    await clickSelectorInCdp(client, selector);
+    await wait(700);
   }
   for (const { fieldSelector, buttonSelector, expectedHtml } of richFormatChecks) {
     await applyRichFormatInCdp(client, fieldSelector, buttonSelector, expectedHtml);
@@ -828,6 +854,7 @@ if (!targetUrl) {
     templateRoutes,
     statePreset,
     clickSelectors,
+    postClickSelectors,
     clickTexts,
     setInputs,
     richFormatChecks,
@@ -914,7 +941,7 @@ if (!targetUrl) {
   }
 
   assert(results.length === targets.length * viewports.length, `expected ${targets.length * viewports.length} screenshots, got ${results.length}`);
-  console.log(JSON.stringify({ ok: true, engine: 'playwright', targetUrl, extraUrls, templateRoutes, statePreset, clickSelectors, clickTexts, setInputs, richFormatChecks, expectedTexts, forbiddenTexts, expectedSelectors, expectedComputedStyles, screenshotDir, cleanupArtifact: screenshotDir.startsWith('.tmp-'), results }, null, 2));
+  console.log(JSON.stringify({ ok: true, engine: 'playwright', targetUrl, extraUrls, templateRoutes, statePreset, clickSelectors, postClickSelectors, clickTexts, setInputs, richFormatChecks, expectedTexts, forbiddenTexts, expectedSelectors, expectedComputedStyles, screenshotDir, cleanupArtifact: screenshotDir.startsWith('.tmp-'), results }, null, 2));
 } else if (hasPuppeteer) {
   const puppeteer = await import('puppeteer');
   const browser = await puppeteer.default.launch({ headless: 'new' });
@@ -985,7 +1012,7 @@ if (!targetUrl) {
   }
 
   assert(results.length === targets.length * viewports.length, `expected ${targets.length * viewports.length} screenshots, got ${results.length}`);
-  console.log(JSON.stringify({ ok: true, engine: 'puppeteer', targetUrl, extraUrls, templateRoutes, statePreset, clickSelectors, clickTexts, setInputs, richFormatChecks, expectedTexts, forbiddenTexts, expectedSelectors, expectedComputedStyles, screenshotDir, cleanupArtifact: screenshotDir.startsWith('.tmp-'), results }, null, 2));
+  console.log(JSON.stringify({ ok: true, engine: 'puppeteer', targetUrl, extraUrls, templateRoutes, statePreset, clickSelectors, postClickSelectors, clickTexts, setInputs, richFormatChecks, expectedTexts, forbiddenTexts, expectedSelectors, expectedComputedStyles, screenshotDir, cleanupArtifact: screenshotDir.startsWith('.tmp-'), results }, null, 2));
 } else if (chromeExecutable) {
   const browserUserDataDir = await mkdtemp(path.join(tmpdir(), 'inlet-browser-qa-'));
   await mkdir(screenshotDir, { recursive: true });
@@ -1062,7 +1089,7 @@ if (!targetUrl) {
   }
 
   assert(results.length === targets.length * viewports.length, `expected ${targets.length * viewports.length} screenshots, got ${results.length}`);
-  console.log(JSON.stringify({ ok: true, engine: 'local-chrome-cdp', chromeExecutable, targetUrl, extraUrls, templateRoutes, statePreset, clickSelectors, clickTexts, setInputs, richFormatChecks, expectedTexts, forbiddenTexts, expectedSelectors, expectedComputedStyles, screenshotDir, cleanupArtifact: screenshotDir.startsWith('.tmp-'), results }, null, 2));
+  console.log(JSON.stringify({ ok: true, engine: 'local-chrome-cdp', chromeExecutable, targetUrl, extraUrls, templateRoutes, statePreset, clickSelectors, postClickSelectors, clickTexts, setInputs, richFormatChecks, expectedTexts, forbiddenTexts, expectedSelectors, expectedComputedStyles, screenshotDir, cleanupArtifact: screenshotDir.startsWith('.tmp-'), results }, null, 2));
 } else {
   assert(!requireRealBrowser, 'INLET_BROWSER_QA_REQUIRE=1 requires Playwright, Puppeteer, or local Chrome/Edge. Set INLET_BROWSER_QA_CHROME_PATH if Chrome is installed in a custom path.');
   console.log(JSON.stringify({
@@ -1074,6 +1101,7 @@ if (!targetUrl) {
     templateRoutes,
     statePreset,
     clickSelectors,
+    postClickSelectors,
     clickTexts,
     setInputs,
     richFormatChecks,
