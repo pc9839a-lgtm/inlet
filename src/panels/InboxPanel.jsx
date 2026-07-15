@@ -287,7 +287,7 @@ export default function InboxPanel({
               알림 실패 재시도
             </button>
           ) : null}
-          {exportLeadsCsv ? <button type="button" className="btn secondary" onClick={() => exportLeadsCsv({ month })}>CSV 내보내기</button> : null}
+          {exportLeadsCsv ? <button type="button" className="btn secondary" onClick={() => exportLeadsCsv(filtered, { month })}>CSV 내보내기</button> : null}
         </div>
       </section>
 

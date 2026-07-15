@@ -587,7 +587,7 @@ requireAll(inboxPanel, [
   'setMonth(event.target.value || currentMonthValue())',
   'loadMoreLeads',
   'hasMoreLeads',
-  'exportLeadsCsv({ month })',
+  'exportLeadsCsv(filtered, { month })',
   'const hasPartialLeadList = serverTotal > loadedCount',
   '<strong>{serverTotal}</strong>',
   'totalSummaryLabel',
