@@ -74,6 +74,14 @@ function normalizeServerStats(serverStats, leads = []) {
     reservationLeads: Number(summary.reservationLeads || 0),
     conversion: String(summary.conversion ?? '0.0'),
     ctaConversion: String(summary.ctaConversion ?? '0.0'),
+    formStart: Number(summary.formStart || 0),
+    submitAttempt: Number(summary.submitAttempt || 0),
+    submitSuccess: Number(summary.submitSuccess || 0),
+    reservationAttempt: Number(summary.reservationAttempt || 0),
+    reservationSuccess: Number(summary.reservationSuccess || 0),
+    formStartRate: String(summary.formStartRate ?? '0.0'),
+    formCompletionRate: String(summary.formCompletionRate ?? '0.0'),
+    reservationCompletionRate: String(summary.reservationCompletionRate ?? '0.0'),
     trend: Array.isArray(summary.trend) ? summary.trend : [],
     statusData: summary.statusData || {},
     typeData: summary.typeData || {},
@@ -92,6 +100,18 @@ function Metric({ title, value, sub }) {
       <span>{title}</span>
       <strong>{value}</strong>
       {sub && <small>{sub}</small>}
+    </div>
+  );
+}
+
+function FunnelRow({ title, startLabel, startValue, endLabel, endValue, rate }) {
+  return (
+    <div className="stats-funnel-row">
+      <strong>{title}</strong>
+      <span>{startLabel}<b>{Number(startValue || 0).toLocaleString('ko-KR')}</b></span>
+      <i aria-hidden="true">→</i>
+      <span>{endLabel}<b>{Number(endValue || 0).toLocaleString('ko-KR')}</b></span>
+      <em>{rate}%</em>
     </div>
   );
 }
@@ -295,6 +315,15 @@ export default function StatsPanel({
         <Metric title="예약" value={stats.reservationLeads} sub="접수" />
         <Metric title="전환율" value={stats.conversion + '%'} sub="방문 대비" />
         <Metric title="CTA 전환" value={stats.ctaConversion + '%'} sub="클릭 대비" />
+      </section>
+
+      <section className="card stats-funnel-card">
+        <div className="section-title"><h2>전환 단계</h2></div>
+        <div className="stats-funnel-list">
+          <FunnelRow title="상담 시작" startLabel="조회" startValue={stats.pv} endLabel="폼 시작" endValue={stats.formStart} rate={stats.formStartRate} />
+          <FunnelRow title="상담 제출" startLabel="제출 시도" startValue={stats.submitAttempt} endLabel="제출 완료" endValue={stats.submitSuccess} rate={stats.formCompletionRate} />
+          <FunnelRow title="방문 예약" startLabel="제출 시도" startValue={stats.reservationAttempt} endLabel="예약 완료" endValue={stats.reservationSuccess} rate={stats.reservationCompletionRate} />
+        </div>
       </section>
 
       <section className="card stats-trend-card">

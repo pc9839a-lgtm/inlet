@@ -100,6 +100,7 @@ assert(!statsPanel.includes('\uB9C8\uC6B0\uC2A4\uB97C \uC62C\uB9AC\uBA74') && !s
 assert(statsPanel.includes('stats-chart-tooltip') && statsPanel.includes('onMouseEnter'), 'stats line chart should expose hover details');
 assert(statsPanel.includes('fmtDateOnly') && !statsPanel.includes('fmtDate(lead.createdAt)'), 'recent leads should show date only without time');
 assert(statsPanel.includes('serverStats') && statsPanel.includes('normalizeServerStats'), 'stats panel should render server aggregate payloads');
+assert(statsPanel.includes('stats-funnel-card') && statsPanel.includes('formStartRate') && statsPanel.includes('formCompletionRate') && statsPanel.includes('reservationCompletionRate'), 'stats panel should expose server-backed form and reservation funnel completion');
 assert(!statsPanel.includes('DeliveryLogCard') && !statsPanel.includes('\uC804\uC1A1 \uB85C\uADF8') && !statsPanel.includes('\uC678\uBD80 \uC804\uC1A1'), 'stats panel should not expose delivery log cards');
 assert(statsPeriodCss.includes('grid-template-columns: minmax(0, 1fr) 184px'), 'stats month picker should have enough width for year/month text');
 assert(statsPeriodCss.includes('min-width: 168px'), 'stats month input should not collapse to year-only text');
