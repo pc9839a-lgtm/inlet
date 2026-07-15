@@ -5,6 +5,7 @@ const C63_HOME_HTML = `<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="google" content="notranslate" />
   <meta name="google-adsense-account" content="ca-pub-1906196934401001" />
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1906196934401001" crossorigin="anonymous"></script>
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <title>페이지로</title>
@@ -31,6 +32,8 @@ const C63_HOME_HTML = `<!doctype html>
   <link rel="modulepreload" crossorigin href="/c63-assets/pageModel-DiUX99-Q.js">
   <link rel="modulepreload" crossorigin href="/c63-assets/monthRange-D959kZuv.js">
   <link rel="stylesheet" crossorigin href="/c63-assets/index-B0Q5rFVf.css">
+  <link rel="stylesheet" href="/c63-life-bridge.css">
+  <script defer src="/c63-life-bridge.js"></script>
   <style>
     #root > .pagero-exact-home ~ .pagero-exact-home {
       display: none !important;

@@ -1,0 +1,150 @@
+.pagero-exact-home .c63-life-nav-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.pagero-exact-home .c63-life-bridge {
+  background: #f7f9fc;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 84px 24px;
+}
+
+.pagero-exact-home .c63-life-inner {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+}
+
+.pagero-exact-home .c63-life-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.pagero-exact-home .c63-life-eyebrow {
+  display: block;
+  color: #1677ff;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: 0;
+  margin-bottom: 10px;
+}
+
+.pagero-exact-home .c63-life-head h2 {
+  color: #111827;
+  font-size: clamp(30px, 3.4vw, 46px);
+  line-height: 1.12;
+  letter-spacing: -0.055em;
+  margin: 0;
+}
+
+.pagero-exact-home .c63-life-head p {
+  color: #667085;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.6;
+  margin: 12px 0 0;
+}
+
+.pagero-exact-home .c63-life-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-height: 46px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: #111827;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.pagero-exact-home .c63-life-posts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.pagero-exact-home .c63-life-post {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  min-height: 84px;
+  padding: 16px 18px;
+  border: 1px solid #e1e8f0;
+  border-radius: 20px;
+  background: #fff;
+  color: #111827;
+  text-decoration: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.pagero-exact-home .c63-life-post:hover {
+  border-color: #b8cdf3;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+  transform: translateY(-2px);
+}
+
+.pagero-exact-home .c63-life-post span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #eef5ff;
+  color: #1677ff;
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.pagero-exact-home .c63-life-post strong {
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.45;
+  letter-spacing: -0.025em;
+}
+
+.pagero-exact-home .c63-life-post b {
+  color: #94a3b8;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+@media (max-width: 760px) {
+  .pagero-exact-home .c63-life-bridge {
+    padding: 60px 20px;
+  }
+
+  .pagero-exact-home .c63-life-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .pagero-exact-home .c63-life-head h2 {
+    font-size: 31px;
+  }
+
+  .pagero-exact-home .c63-life-more {
+    width: 100%;
+  }
+
+  .pagero-exact-home .c63-life-posts {
+    grid-template-columns: 1fr;
+  }
+
+  .pagero-exact-home .c63-life-post {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .pagero-exact-home .c63-life-post span {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
