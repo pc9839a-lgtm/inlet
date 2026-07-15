@@ -69,6 +69,7 @@ const files = {
   landing: await readFile('src/preview/LandingRenderer.jsx', 'utf8'),
   landingCss: await readFile('src/preview/LandingRenderer.css', 'utf8'),
   animationCard: await readFile('src/editor/editPanelParts/AnimationOptionsCard.jsx', 'utf8'),
+  animationPlayback: await readFile('src/editor/editPanelParts/AnimationPlaybackOptions.jsx', 'utf8'),
   fixedBlockBody: await readFile('src/editor/editPanelParts/FixedBlockCardBody.jsx', 'utf8'),
   pageModel: await readFile('src/lib/pageModel.js', 'utf8'),
   editorWorkspaceCss: await readFile('src/styles/editor-workspace-v2.css', 'utf8'),
@@ -150,11 +151,12 @@ assert(files.landing.includes('if (templatePreview) return;'), 'template preview
 assert(files.landing.includes('hideBottomForForm'), 'bottom bar should hide when form is visible');
 assert(files.landing.includes('publicView={publicView}'), 'public bottom bar should receive public rendering mode');
 assert(files.landing.includes('accent={page.theme.accent}'), 'public bottom bar should receive page accent variable');
-assert(!files.animationCard.includes('AnimationPlaybackOptions') && !files.animationCard.includes('animPlayback'), 'page animation editor must remain a load-once effect without repeat controls');
-assert(files.pageModel.includes("animPlayback: 'once'"), 'new and legacy pages must keep once as the animation playback default');
-assert(!files.landing.includes("page.theme.animPlayback === 'loop'") && !files.landingCss.includes('pagero-loop-'), 'public renderer must ignore stale repeat settings and animate only once');
+assert(files.animationCard.includes('updateTheme({ animPlayback })'), 'animation editor must persist the selected playback mode');
+assert(files.animationPlayback.includes('ANIMATION_PLAYBACK_OPTIONS') && files.animationPlayback.includes('aria-pressed={value === key}'), 'animation playback control must expose once and loop as accessible choices');
+assert(files.pageModel.includes("animPlayback: 'once'"), 'new and legacy pages must default animation playback to once');
+assert(files.landing.includes("page.theme.animPlayback === 'loop'") && files.landing.includes('window.setInterval') && files.landing.includes('replaying.add(el)'), 'loop mode must visibly replay the selected entrance effect while once mode does not schedule replay');
 assert(files.fixedBlockBody.includes('fixed-block-editor selected-block-settings-body block-editor'), 'fixed page widgets must share the selected widget editor shell');
-assert(files.editorWorkspaceCss.includes('width: 50px !important'), 'page option rows must share the screen-order control sizing');
+assert(files.editorWorkspaceCss.includes('.edit-animation-playback-options') && files.editorWorkspaceCss.includes('width: 50px !important'), 'animation playback and page option controls must keep their intended layout');
 
 assert(files.landing.includes("'--accent': accent"), 'bottom bar should expose accent when rendered outside landing page');
 assert(files.landing.includes('public-bottom-bar'), 'public bottom bar should have a stable public-only class');

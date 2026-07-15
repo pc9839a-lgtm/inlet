@@ -188,6 +188,8 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
     if (!root) return;
 
     const targets = Array.from(root.querySelectorAll('.landing-section, .landing-footer'));
+    const replaying = new Set();
+    const replayTimers = new Set();
 
     targets.forEach((el) => {
       el.classList.remove('is-visible');
@@ -204,12 +206,14 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
     const reveal = (el) => {
       el.classList.add('is-visible');
       el.classList.remove('anim-ready');
+      replaying.delete(el);
     };
 
     // Safety 1: reveal sections already visible in the current viewport.
     const revealVisibleNow = () => {
       const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
       targets.forEach((el) => {
+        if (replaying.has(el)) return;
         const rect = el.getBoundingClientRect();
         const visible = rect.top < viewportHeight * 0.92 && rect.bottom > viewportHeight * 0.08;
         if (visible) reveal(el);
@@ -227,17 +231,42 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
     // Safety 2: reveal sections as they enter the viewport.
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
+        if (!entry.isIntersecting || replaying.has(entry.target)) return;
         reveal(entry.target);
         observer.unobserve(entry.target);
       });
     }, { root: null, threshold: 0.08, rootMargin: '0px 0px -6% 0px' });
 
+    // Loop mode deliberately replays the selected entrance effect.
+    let replayInterval = null;
+    if (page.theme.animPlayback === 'loop') {
+      replayInterval = window.setInterval(() => {
+        const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+        const visibleTargets = targets.filter((el) => {
+          const rect = el.getBoundingClientRect();
+          return rect.top < viewportHeight * 0.92 && rect.bottom > viewportHeight * 0.08;
+        });
+
+        visibleTargets.forEach((el, index) => {
+          replaying.add(el);
+          el.classList.add('anim-ready');
+          el.classList.remove('is-visible');
+
+          const timer = window.setTimeout(() => {
+            replayTimers.delete(timer);
+            reveal(el);
+          }, 520 + index * 80);
+          replayTimers.add(timer);
+        });
+      }, 3600);
+    }
 
     // Safety 3: force reveal if scroll/observer detection fails.
     const fallback = window.setTimeout(() => {
       targets.forEach((el, idx) => {
-        window.setTimeout(() => reveal(el), idx * 45);
+        window.setTimeout(() => {
+          if (!replaying.has(el)) reveal(el);
+        }, idx * 45);
       });
     }, 8000);
 
@@ -254,9 +283,13 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
       observer.disconnect();
       window.cancelAnimationFrame(revealFrame);
       window.clearTimeout(fallback);
+      if (replayInterval) window.clearInterval(replayInterval);
+      replayTimers.forEach((timer) => window.clearTimeout(timer));
       scrollParents.forEach((target) => target.removeEventListener?.('scroll', revealVisibleNow));
     };
-  }, [page.theme.animOn, page.theme.animType, blocks.length]);
+  }, [page.theme.animOn, page.theme.animType, page.theme.animPlayback, blocks.length]);
+
+
 
   useEffect(() => {
     const root = pageRef.current;
@@ -301,7 +334,7 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
   const bottomNode = bottomActive && !shouldHideBottom ? <RenderBottom block={bottom} blocks={blocks} accent={page.theme.accent} buttonEffect={buttonEffect} go={go} publicView={publicView}/> : null;
 
   const pageNode = (
-    <div ref={pageRef} onClickCapture={templatePreview || publicView ? undefined : handlePreviewSelect} className={`landing-page font-${page.theme.font} font-family-${page.theme.fontFamily || 'pretendard'} ${globalAlign ? `global-align-${globalAlign}` : ''} bgmode-${page.theme.bgMode || 'solid'} bg-effect-${bgEffect} button-effect-${buttonEffect} ${publicView ? 'public-render' : ''} ${templatePreview ? 'template-preview' : ''} ${bottomActive ? 'has-bottom-bar' : ''} ${page.theme.animOn ? `anim-on anim-${page.theme.animType || 'fade'}` : ''}`} style={{'--accent':page.theme.accent,'--button':page.theme.accent,'--button-text':'#ffffff','--bg':pageBg,'--card':page.theme.card,'--text':page.theme.text,'--radius':`${page.theme.radius}px`,'--bg-effect-opacity':bgEffectOpacity,background:pageBg,color:page.theme.text,backgroundSize:bgSize,backgroundPosition:bgPosition,backgroundRepeat:'no-repeat'}}>
+    <div ref={pageRef} onClickCapture={templatePreview || publicView ? undefined : handlePreviewSelect} className={`landing-page font-${page.theme.font} font-family-${page.theme.fontFamily || 'pretendard'} ${globalAlign ? `global-align-${globalAlign}` : ''} bgmode-${page.theme.bgMode || 'solid'} bg-effect-${bgEffect} button-effect-${buttonEffect} ${publicView ? 'public-render' : ''} ${templatePreview ? 'template-preview' : ''} ${bottomActive ? 'has-bottom-bar' : ''} ${page.theme.animOn ? `anim-on anim-${page.theme.animType || 'fade'} anim-${page.theme.animPlayback === 'loop' ? 'loop' : 'once'}` : ''}`} style={{'--accent':page.theme.accent,'--button':page.theme.accent,'--button-text':'#ffffff','--bg':pageBg,'--card':page.theme.card,'--text':page.theme.text,'--radius':`${page.theme.radius}px`,'--bg-effect-opacity':bgEffectOpacity,background:pageBg,color:page.theme.text,backgroundSize:bgSize,backgroundPosition:bgPosition,backgroundRepeat:'no-repeat'}}>
       <div className="landing-content">{normal.map(b=><RenderBlock key={b.id} page={page} block={b} blocks={blocks} leads={leads} addLead={addLead} track={track} go={go}/>)}</div>
       <BgEffectLayer effect={bgEffect} />
       {!publicView && bottomNode}
