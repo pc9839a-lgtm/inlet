@@ -1098,3 +1098,28 @@
   border-color: #fecaca !important;
   background: #fff7f7 !important;
 }
+.inbox-panel .lead-delivery-badge {
+  flex: 0 0 auto !important;
+  padding: 3px 7px !important;
+  border-radius: 999px !important;
+  background: #fee2e2 !important;
+  color: #b91c1c !important;
+  font-size: 10px !important;
+  font-style: normal !important;
+  font-weight: 950 !important;
+  line-height: 1.2 !important;
+}
+
+.inbox-panel .lead-delivery-detail {
+  border-color: #fecaca !important;
+  background: #fff7f7 !important;
+}
+
+.inbox-panel .lead-delivery-detail > button {
+  margin-top: 10px !important;
+}
+
+.inbox-panel .inbox-retry-all {
+  border-color: #fecaca !important;
+  color: #b91c1c !important;
+}

@@ -57,6 +57,15 @@ function leadRiskInfo(lead = {}) {
   };
 }
 
+function leadDeliveryInfo(lead = {}) {
+  const status = String(lead.delivery?.status || lead.deliveryStatus || 'none');
+  if (!['failed', 'partial'].includes(status)) return null;
+  return {
+    label: status === 'failed' ? '알림 실패' : '일부 실패',
+    summary: lead.delivery?.summary || '연결된 알림 전송을 확인해주세요.',
+  };
+}
+
 function DebouncedMemoInput({ value, onCommit }) {
   const [draft, setDraft] = useState(value || '');
 
@@ -133,6 +142,8 @@ export default function InboxPanel({
   onSavePage,
   updateLead,
   deleteLead,
+  retryLeadDelivery,
+  retryFailedDeliveries,
   exportLeadsCsv,
   leadConflict,
   onReloadLeadConflict,
@@ -182,6 +193,7 @@ export default function InboxPanel({
   }, [filter, leads, query, selectedMonthRange, statusFilter]);
 
   const loadedCount = normalized.length;
+  const failedDeliveryCount = normalized.filter((lead) => leadDeliveryInfo(lead)).length;
   const serverTotal = Number(totalLeads || loadedCount);
   const hasPartialLeadList = serverTotal > loadedCount;
   const totalSummaryLabel = filter === 'all' && statusFilter === 'all' && !query.trim() ? '전체 접수' : '조회 결과';
@@ -270,6 +282,11 @@ export default function InboxPanel({
             </select>
           </label>
           <button type="button" className="btn secondary" onClick={reloadLeads} disabled={syncing}>새로고침</button>
+          {failedDeliveryCount > 0 && retryFailedDeliveries ? (
+            <button type="button" className="btn secondary inbox-retry-all" onClick={retryFailedDeliveries} disabled={syncing}>
+              알림 실패 재시도
+            </button>
+          ) : null}
           {exportLeadsCsv ? <button type="button" className="btn secondary" onClick={() => exportLeadsCsv({ month })}>CSV 내보내기</button> : null}
         </div>
       </section>
@@ -299,6 +316,7 @@ export default function InboxPanel({
               const opened = openId === lead.id;
               const answers = Array.isArray(lead.answers) ? lead.answers.filter((item) => !isDuplicateLeadAnswer(item, lead)) : [];
               const riskInfo = leadRiskInfo(lead);
+              const deliveryInfo = leadDeliveryInfo(lead);
               return (
                 <article className={`lead-card-v3 lead-card-service ${opened ? 'open' : ''}`} key={lead.id}>
                   <div className="lead-row-service">
@@ -307,6 +325,7 @@ export default function InboxPanel({
                     <strong className="lead-name-cell">
                       {lead.name || '이름 없음'}
                       {riskInfo ? <i className={`lead-risk-badge ${riskInfo.level}`}>{riskInfo.badge}</i> : null}
+                      {deliveryInfo ? <i className="lead-delivery-badge">{deliveryInfo.label}</i> : null}
                     </strong>
                     <em>{leadPrimaryContact(lead) || '-'}</em>
                     <small>{fmtDateOnly(lead.createdAt)}</small>
@@ -348,6 +367,17 @@ export default function InboxPanel({
                           <LeadInfoRow label="판정" value={riskInfo.badge} />
                           <LeadInfoRow label="사유" value={riskInfo.reasons.join(', ') || '중복 접수로 표시됨'} />
                           <LeadInfoRow label="위험 점수" value={`${riskInfo.score}점`} />
+                        </section>
+                      ) : null}
+
+                      {deliveryInfo ? (
+                        <section className="lead-delivery-detail">
+                          <h4>알림 전송</h4>
+                          <LeadInfoRow label="상태" value={deliveryInfo.label} />
+                          <LeadInfoRow label="결과" value={deliveryInfo.summary} />
+                          {retryLeadDelivery ? (
+                            <button type="button" className="btn secondary" onClick={() => retryLeadDelivery(lead)}>다시 보내기</button>
+                          ) : null}
                         </section>
                       ) : null}
 

@@ -597,6 +597,12 @@ requireAll(inboxPanel, [
   '중복·위험 신호',
   'riskInfo.reasons.join',
   'riskInfo.score',
+  'retryLeadDelivery',
+  'retryFailedDeliveries',
+  'failedDeliveryCount',
+  'lead-delivery-badge',
+  '알림 실패',
+  '다시 보내기',
 ], 'inbox month and pagination contract');
 
 const duplicatePolicyPanel = await read('src/panels/inbox/DuplicatePolicyPanel.jsx');
