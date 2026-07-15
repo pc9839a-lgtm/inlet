@@ -588,6 +588,10 @@ requireAll(inboxPanel, [
   'loadMoreLeads',
   'hasMoreLeads',
   'exportLeadsCsv({ month })',
+  'const hasPartialLeadList = serverTotal > loadedCount',
+  '<strong>{serverTotal}</strong>',
+  'totalSummaryLabel',
+  'loadedScopeLabel',
 ], 'inbox month and pagination contract');
 
 const duplicatePolicyPanel = await read('src/panels/inbox/DuplicatePolicyPanel.jsx');

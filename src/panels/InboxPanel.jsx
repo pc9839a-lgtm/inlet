@@ -158,6 +158,9 @@ export default function InboxPanel({
 
   const loadedCount = normalized.length;
   const serverTotal = Number(totalLeads || loadedCount);
+  const hasPartialLeadList = serverTotal > loadedCount;
+  const totalSummaryLabel = filter === 'all' && statusFilter === 'all' && !query.trim() ? '전체 접수' : '조회 결과';
+  const loadedScopeLabel = hasPartialLeadList ? '현재 ' : '';
   const displaySummary = serverTotal > loadedCount
     ? `${filtered.length}건 표시 · 서버 ${serverTotal}건 중 ${loadedCount}건 로드`
     : `${filtered.length}건 표시`;
@@ -191,19 +194,19 @@ export default function InboxPanel({
       <IntakeDuplicatePolicyPanel page={page} authUser={authUser} updatePage={updatePage} />
       <section className="inbox-summary-v2 inbox-summary-v3">
         <article>
-          <span>전체 접수</span>
-          <strong>{loadedCount}</strong>
+          <span>{totalSummaryLabel}</span>
+          <strong>{serverTotal}</strong>
         </article>
         <article>
-          <span>상담</span>
+          <span>{loadedScopeLabel}상담</span>
           <strong>{consultCount}</strong>
         </article>
         <article>
-          <span>예약</span>
+          <span>{loadedScopeLabel}예약</span>
           <strong>{reservationCount}</strong>
         </article>
         <article>
-          <span>신규</span>
+          <span>{loadedScopeLabel}신규</span>
           <strong>{newCount}</strong>
         </article>
       </section>
