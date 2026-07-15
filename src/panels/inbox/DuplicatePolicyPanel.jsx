@@ -85,10 +85,10 @@ function blockedSignalSummary(item = {}) {
 export default function IntakeDuplicatePolicyPanel({ page, authUser, updatePage }) {
   const [open, setOpen] = useState(false);
   const [month, setMonth] = useState(currentMonthValue());
-  const [history, setHistory] = useState({ records: [], total: 0, loading: false, error: '' });
+  const [history, setHistory] = useState({ records: [], total: 0, loading: false, loaded: false, error: '' });
   const settings = normalizeDuplicateSettings(page.leadDuplicateSettings || page.duplicateCollectionSettings || {});
   const localHistory = Array.isArray(page.leadDuplicateSettings?.blockedHistory) ? page.leadDuplicateSettings.blockedHistory : [];
-  const visibleHistory = history.records.length || history.error || history.loading ? history.records : localHistory;
+  const visibleHistory = history.loaded ? history.records : localHistory;
 
   const save = (patch) => {
     updatePage?.({ leadDuplicateSettings: normalizeDuplicateSettings({ ...settings, ...patch }) });
@@ -98,9 +98,13 @@ export default function IntakeDuplicatePolicyPanel({ page, authUser, updatePage 
     setHistory((current) => ({ ...current, loading: true, error: '' }));
     try {
       const result = await fetchServerBlockedLeadHistory(page, authUser, { month, limit: 50 });
-      setHistory({ records: result?.records || [], total: Number(result?.total || 0), loading: false, error: '' });
+      if (!result) {
+        setHistory({ records: localHistory, total: localHistory.length, loading: false, loaded: true, error: '' });
+        return;
+      }
+      setHistory({ records: result.records || [], total: Number(result.total || 0), loading: false, loaded: true, error: '' });
     } catch (error) {
-      setHistory({ records: localHistory, total: localHistory.length, loading: false, error: String(error?.message || error || '') });
+      setHistory({ records: [], total: 0, loading: false, loaded: true, error: String(error?.message || error || '') });
     }
   };
 

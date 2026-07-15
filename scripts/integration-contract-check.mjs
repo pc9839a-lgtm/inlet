@@ -590,6 +590,15 @@ requireAll(inboxPanel, [
   'exportLeadsCsv({ month })',
 ], 'inbox month and pagination contract');
 
+const duplicatePolicyPanel = await read('src/panels/inbox/DuplicatePolicyPanel.jsx');
+requireAll(duplicatePolicyPanel, [
+  'fetchServerBlockedLeadHistory',
+  'loaded: false',
+  'history.loaded ? history.records : localHistory',
+  'if (!result)',
+  'records: [], total: 0, loading: false, loaded: true',
+], 'server blocked history panel contract');
+
 const formBlocks = await read('src/preview/renderers/FormBlocks.jsx');
 requireAll(formBlocks, [
   "type: 'form_start'",
