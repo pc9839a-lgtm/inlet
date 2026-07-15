@@ -32,6 +32,31 @@ function LeadInfoRow({ label, value }) {
   );
 }
 
+const DUPLICATE_REASON_LABELS = {
+  phone_30d: '연락처 중복',
+  email_30d: '이메일 중복',
+  client_repeat_30m: '반복 제출',
+  spam_suspected: '과다 제출 의심',
+};
+
+function leadRiskInfo(lead = {}) {
+  const score = Math.max(0, Number(lead.riskScore || 0));
+  const reasons = String(lead.duplicateReason || '')
+    .split(',')
+    .map((reason) => reason.trim())
+    .filter(Boolean)
+    .map((reason) => DUPLICATE_REASON_LABELS[reason] || '기타 중복 신호');
+  const uniqueReasons = [...new Set(reasons)];
+  const flagged = !!lead.duplicate || score > 0 || uniqueReasons.length > 0;
+  if (!flagged) return null;
+  return {
+    score,
+    reasons: uniqueReasons,
+    level: score >= 70 ? 'danger' : 'warning',
+    badge: score >= 70 ? '주의' : '중복',
+  };
+}
+
 function DebouncedMemoInput({ value, onCommit }) {
   const [draft, setDraft] = useState(value || '');
 
@@ -273,12 +298,16 @@ export default function InboxPanel({
             {filtered.map((lead, index) => {
               const opened = openId === lead.id;
               const answers = Array.isArray(lead.answers) ? lead.answers.filter((item) => !isDuplicateLeadAnswer(item, lead)) : [];
+              const riskInfo = leadRiskInfo(lead);
               return (
                 <article className={`lead-card-v3 lead-card-service ${opened ? 'open' : ''}`} key={lead.id}>
                   <div className="lead-row-service">
                     <span>#{index + 1}</span>
                     <b>{leadKindLabel(lead)}</b>
-                    <strong>{lead.name || '이름 없음'}</strong>
+                    <strong className="lead-name-cell">
+                      {lead.name || '이름 없음'}
+                      {riskInfo ? <i className={`lead-risk-badge ${riskInfo.level}`}>{riskInfo.badge}</i> : null}
+                    </strong>
                     <em>{leadPrimaryContact(lead) || '-'}</em>
                     <small>{fmtDateOnly(lead.createdAt)}</small>
                     <button type="button" onClick={() => setOpenId(opened ? '' : lead.id)}>{opened ? '닫기' : '상세'}</button>
@@ -310,6 +339,15 @@ export default function InboxPanel({
                               <LeadInfoRow key={`${lead.id}-answer-${answerIndex}`} label={item.label || item.name || `질문 ${answerIndex + 1}`} value={item.value} />
                             ))}
                           </div>
+                        </section>
+                      ) : null}
+
+                      {riskInfo ? (
+                        <section className={`lead-risk-detail ${riskInfo.level}`}>
+                          <h4>중복·위험 신호</h4>
+                          <LeadInfoRow label="판정" value={riskInfo.badge} />
+                          <LeadInfoRow label="사유" value={riskInfo.reasons.join(', ') || '중복 접수로 표시됨'} />
+                          <LeadInfoRow label="위험 점수" value={`${riskInfo.score}점`} />
                         </section>
                       ) : null}
 

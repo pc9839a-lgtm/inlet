@@ -1062,3 +1062,39 @@
 @media (max-width: 720px) {
   .inbox-panel .inbox-policy-grid { grid-template-columns: 1fr !important; }
 }
+/* pagero-inbox-risk-signal-20260715: surface only actionable duplicate signals */
+.inbox-panel .lead-name-cell {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+}
+
+.inbox-panel .lead-risk-badge {
+  flex: 0 0 auto !important;
+  padding: 3px 7px !important;
+  border-radius: 999px !important;
+  font-size: 10px !important;
+  font-style: normal !important;
+  font-weight: 950 !important;
+  line-height: 1.2 !important;
+}
+
+.inbox-panel .lead-risk-badge.warning {
+  background: #fff7d6 !important;
+  color: #92400e !important;
+}
+
+.inbox-panel .lead-risk-badge.danger {
+  background: #fee2e2 !important;
+  color: #b91c1c !important;
+}
+
+.inbox-panel .lead-risk-detail {
+  border-color: #f3d27a !important;
+  background: #fffbeb !important;
+}
+
+.inbox-panel .lead-risk-detail.danger {
+  border-color: #fecaca !important;
+  background: #fff7f7 !important;
+}

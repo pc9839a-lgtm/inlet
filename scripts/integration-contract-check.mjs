@@ -592,6 +592,11 @@ requireAll(inboxPanel, [
   '<strong>{serverTotal}</strong>',
   'totalSummaryLabel',
   'loadedScopeLabel',
+  'leadRiskInfo(lead)',
+  'lead-risk-badge',
+  '중복·위험 신호',
+  'riskInfo.reasons.join',
+  'riskInfo.score',
 ], 'inbox month and pagination contract');
 
 const duplicatePolicyPanel = await read('src/panels/inbox/DuplicatePolicyPanel.jsx');
