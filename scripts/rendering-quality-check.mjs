@@ -341,8 +341,8 @@ assert(files.browserVisualQa.includes('INLET_BROWSER_QA_EXPECT_TEXT'), 'browser 
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_FORBID_TEXT'), 'browser visual QA should assert forbidden text is absent');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_VIEWPORTS'), 'browser visual QA should allow desktop-only authenticated checks');
 assert(files.browserVisualQa.includes('--window-size=1280,900'), 'local Chrome visual QA should launch with a desktop-sized window');
-assert(files.workspaceShellActions.includes("if (['topnav', 'bottombar', 'footer'].includes(target?.type))") && files.workspaceShellActions.includes("setOpenId('');\n      return;"), 'preview fixed blocks should not auto-open editor panels');
-assert(files.workspaceShellActions.includes("setOpenId('');\n    setAddOpen(false);") && files.fixedBlockSelection.includes("React.useState('')") && files.pageGlobalOptionsProps.includes('openId: selection.fixedOpenId'), 'edit entry should keep fixed block panels closed until explicitly opened');
+assert(files.workspaceShellActions.includes("if (['topnav', 'bottombar', 'footer'].includes(target?.type))") && /setOpenId\(''\);\r?\n\s+return;/.test(files.workspaceShellActions), 'preview fixed blocks should not auto-open editor panels');
+assert(/setOpenId\(''\);\r?\n\s+setAddOpen\(false\);/.test(files.workspaceShellActions) && files.fixedBlockSelection.includes("React.useState('')") && files.pageGlobalOptionsProps.includes('openId: selection.fixedOpenId'), 'edit entry should keep fixed block panels closed until explicitly opened');
 assert(!/[�]|占|獄|揆|\?몄|\?꾩|蹂듭|遺덈|紐|釉|湲|肄/.test(files.editPanel), 'edit panel source should not contain mojibake labels');
 const productionBrowserQa = await readFile('scripts/production-browser-quality-check.mjs', 'utf8');
 assert(productionBrowserQa.includes('owner style text color live preview'), 'production browser QA should cover style text color live preview');
