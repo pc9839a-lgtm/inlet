@@ -218,7 +218,10 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
 
     // Let the hidden state paint before visible sections are revealed.
     let revealFrame = window.requestAnimationFrame(() => {
-      revealFrame = window.requestAnimationFrame(revealVisibleNow);
+      revealFrame = window.requestAnimationFrame(() => {
+        revealVisibleNow();
+        targets.forEach((el) => observer.observe(el));
+      });
     });
 
     // Safety 2: reveal sections as they enter the viewport.
@@ -230,7 +233,6 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
       });
     }, { root: null, threshold: 0.08, rootMargin: '0px 0px -6% 0px' });
 
-    targets.forEach((el) => observer.observe(el));
 
     // Safety 3: force reveal if scroll/observer detection fails.
     const fallback = window.setTimeout(() => {
