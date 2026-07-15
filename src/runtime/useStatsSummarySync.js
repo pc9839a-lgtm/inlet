@@ -56,9 +56,13 @@ export function useStatsSummarySync({
   setStatsPartial,
   setServerStatsSummary,
 }) {
+  const serverMode = isServerLeadMode();
+  const localEventCount = serverMode ? 0 : events.length;
+  const localLeadCount = serverMode ? 0 : leads.length;
+
   useEffect(() => {
     if (tab !== 'stats') return undefined;
-    if (!isServerLeadMode()) {
+    if (!serverMode) {
       setStatsEventPageMeta({ total: events.length, nextCursor: null, hasMore: false, source: 'local' });
       setStatsLeadPageMeta({ total: leads.length, nextCursor: null, hasMore: false, source: 'local' });
       setStatsPartial(false);
@@ -127,5 +131,5 @@ export function useStatsSummarySync({
         }
       });
     return () => { alive = false; };
-  }, [tab, page, page?.slug, page?.projectId, authUser, events.length, leads.length, statsMonth, statsPeriod, statsChannel, setEvents, setLeads, setStatsEventPageMeta, setStatsLeadPageMeta, setStatsPartial, setServerStatsSummary]);
+  }, [tab, page, page?.slug, page?.projectId, authUser, localEventCount, localLeadCount, serverMode, statsMonth, statsPeriod, statsChannel, setEvents, setLeads, setStatsEventPageMeta, setStatsLeadPageMeta, setStatsPartial, setServerStatsSummary]);
 }

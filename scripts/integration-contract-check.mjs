@@ -567,6 +567,13 @@ requireAll(bundleQa, [
   'block editor chunks must not be referenced as initial JS assets',
 ], 'bundle lazy asset contract');
 
+const statsSummarySync = await read('src/runtime/useStatsSummarySync.js');
+requireAll(statsSummarySync, [
+  'const serverMode = isServerLeadMode()',
+  'const localEventCount = serverMode ? 0 : events.length',
+  'const localLeadCount = serverMode ? 0 : leads.length',
+], 'server stats request stability contract');
+
 const statsPanel = await read('src/panels/StatsPanel.jsx');
 requireAll(statsPanel, [
   'eventPageMeta',
