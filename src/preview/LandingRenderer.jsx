@@ -239,7 +239,7 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
       targets.forEach((el, idx) => {
         window.setTimeout(() => reveal(el), idx * 45);
       });
-    }, 450);
+    }, 8000);
 
     const scrollParents = [
       window,
