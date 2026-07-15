@@ -51,6 +51,34 @@ export function statsDateRange(month = currentMonthValue(), period = '30d', now 
   };
 }
 
+export function previousStatsDateRanges(range = {}) {
+  const currentStart = parseDateOnly(range.dateFrom);
+  const currentEnd = parseDateOnly(range.dateTo);
+  if (!Number.isFinite(currentStart.getTime()) || !Number.isFinite(currentEnd.getTime()) || currentStart > currentEnd) return [];
+
+  const dayCount = Math.round((currentEnd.getTime() - currentStart.getTime()) / 86400000) + 1;
+  const previousEnd = new Date(currentStart);
+  previousEnd.setDate(previousEnd.getDate() - 1);
+  const previousStart = new Date(previousEnd);
+  previousStart.setDate(previousStart.getDate() - dayCount + 1);
+
+  const ranges = [];
+  const cursor = new Date(previousStart);
+  while (cursor <= previousEnd) {
+    const monthEnd = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
+    const segmentEnd = monthEnd < previousEnd ? monthEnd : previousEnd;
+    ranges.push({
+      month: `${cursor.getFullYear()}-${pad(cursor.getMonth() + 1)}`,
+      period: String(range.period || ''),
+      dateFrom: toDateOnly(cursor),
+      dateTo: toDateOnly(segmentEnd),
+    });
+    cursor.setTime(segmentEnd.getTime());
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return ranges;
+}
+
 function parseDateOnly(value = '') {
   const [year, month, day] = String(value || '').slice(0, 10).split('-').map(Number);
   return new Date(year, month - 1, day);

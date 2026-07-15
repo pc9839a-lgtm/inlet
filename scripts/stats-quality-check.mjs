@@ -1,5 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { buildStats, getPeriodRange } from '../src/lib/statsMetrics.js';
+import { previousStatsDateRanges } from '../src/lib/monthRange.js';
+import { mergeStatsSummaryResults } from '../src/runtime/useStatsSummarySync.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -83,6 +85,19 @@ assert(sevenDayStats.trend.at(-1).id === '2026-05-21', `Seoul trend last bucket 
 const yesterdayStats = buildStats(events, leads, 'yesterday', now);
 assert(yesterdayStats.pv === 2 && yesterdayStats.db === 2, 'yesterday period mismatch');
 
+const previousSevenDay = previousStatsDateRanges({ period: '7d', dateFrom: '2026-05-15', dateTo: '2026-05-21' });
+assert(previousSevenDay.length === 1 && previousSevenDay[0].month === '2026-05' && previousSevenDay[0].dateFrom === '2026-05-08' && previousSevenDay[0].dateTo === '2026-05-14', 'previous stats range should use the immediately preceding equal-length period');
+
+const previousMonthBoundary = previousStatsDateRanges({ period: '7d', dateFrom: '2026-05-01', dateTo: '2026-05-07' });
+assert(previousMonthBoundary.length === 1 && previousMonthBoundary[0].month === '2026-04' && previousMonthBoundary[0].dateFrom === '2026-04-24' && previousMonthBoundary[0].dateTo === '2026-04-30', 'previous stats range should cross month boundaries without losing days');
+
+const mergedComparison = mergeStatsSummaryResults([
+  { summary: { pv: 10, cta: 4, db: 2, formStart: 3, submitAttempt: 2, submitSuccess: 1 } },
+  { summary: { pv: 5, cta: 1, db: 1, formStart: 2, submitAttempt: 1, submitSuccess: 1 } },
+]);
+assert(mergedComparison.pv === 15 && mergedComparison.db === 3 && mergedComparison.conversion === '20.0', 'previous stats summaries should merge counts and recalculate conversion');
+assert(mergedComparison.formStartRate === '33.3' && mergedComparison.formCompletionRate === '66.7', 'previous stats summaries should recalculate funnel rates');
+
 const statsPanel = await readFile('src/panels/StatsPanel.jsx', 'utf8');
 const inboxPanel = await readFile('src/panels/InboxPanel.jsx', 'utf8');
 const inboxCss = await readFile('src/panels/InboxPanel.css', 'utf8');
@@ -101,6 +116,7 @@ assert(statsPanel.includes('stats-chart-tooltip') && statsPanel.includes('onMous
 assert(statsPanel.includes('fmtDateOnly') && !statsPanel.includes('fmtDate(lead.createdAt)'), 'recent leads should show date only without time');
 assert(statsPanel.includes('serverStats') && statsPanel.includes('normalizeServerStats'), 'stats panel should render server aggregate payloads');
 assert(statsPanel.includes('stats-funnel-card') && statsPanel.includes('formStartRate') && statsPanel.includes('formCompletionRate') && statsPanel.includes('reservationCompletionRate'), 'stats panel should expose server-backed form and reservation funnel completion');
+assert(statsPanel.includes('stats-comparison-label') && statsPanel.includes('countMetricChange') && statsPanel.includes('rateMetricChange'), 'stats panel should show previous-period changes on summary metrics');
 assert(!statsPanel.includes('DeliveryLogCard') && !statsPanel.includes('\uC804\uC1A1 \uB85C\uADF8') && !statsPanel.includes('\uC678\uBD80 \uC804\uC1A1'), 'stats panel should not expose delivery log cards');
 assert(statsPeriodCss.includes('grid-template-columns: minmax(0, 1fr) 184px'), 'stats month picker should have enough width for year/month text');
 assert(statsPeriodCss.includes('min-width: 168px'), 'stats month input should not collapse to year-only text');
@@ -115,6 +131,7 @@ const publicPageRuntimeActions = await readFile('src/runtime/publicPageRuntimeAc
 const statsSummarySync = await readFile('src/runtime/useStatsSummarySync.js', 'utf8');
 const workspacePanelProps = await readFile('src/runtime/createWorkspacePanelProps.js', 'utf8');
 assert(statsSummarySync.includes('fetchServerStatsSummary') && statsSummarySync.includes('fetchServerLeads(page, authUser, { limit: 8'), 'split stats sync should load server aggregates and only recent lead rows');
+assert(statsSummarySync.includes('previousStatsDateRanges') && statsSummarySync.includes('mergeStatsSummaryResults') && statsSummarySync.includes('comparisonPromise'), 'split stats sync should load an isolated previous-period aggregate comparison');
 
 assert(workspacePanelProps.includes('eventPageMeta: statsEventPageMeta') && workspacePanelProps.includes('leadPageMeta: statsLeadPageMeta'), 'workspace panel props should pass stats pagination metadata');
 assert(leadCaptureActions.includes('utmSource') && leadCaptureActions.includes('utmMedium') && leadCaptureActions.includes('utmCampaign'), 'lead capture should keep UTM fields');

@@ -82,6 +82,7 @@ function normalizeServerStats(serverStats, leads = []) {
     formStartRate: String(summary.formStartRate ?? '0.0'),
     formCompletionRate: String(summary.formCompletionRate ?? '0.0'),
     reservationCompletionRate: String(summary.reservationCompletionRate ?? '0.0'),
+    comparison: serverStats?.comparison?.summary || null,
     trend: Array.isArray(summary.trend) ? summary.trend : [],
     statusData: summary.statusData || {},
     typeData: summary.typeData || {},
@@ -94,12 +95,34 @@ function normalizeServerStats(serverStats, leads = []) {
   };
 }
 
-function Metric({ title, value, sub }) {
+function countMetricChange(current, previous) {
+  if (previous == null) return null;
+  const currentValue = Number(current || 0);
+  const previousValue = Number(previous || 0);
+  if (!previousValue) return currentValue ? { label: '신규', tone: 'up' } : { label: '0%', tone: 'flat' };
+  const change = ((currentValue - previousValue) / previousValue) * 100;
+  return {
+    label: (change > 0 ? '+' : '') + change.toFixed(1) + '%',
+    tone: change > 0 ? 'up' : change < 0 ? 'down' : 'flat',
+  };
+}
+
+function rateMetricChange(current, previous) {
+  if (previous == null) return null;
+  const change = Number(current || 0) - Number(previous || 0);
+  return {
+    label: (change > 0 ? '+' : '') + change.toFixed(1) + '%p',
+    tone: change > 0 ? 'up' : change < 0 ? 'down' : 'flat',
+  };
+}
+
+function Metric({ title, value, sub, change = null }) {
   return (
     <div className="metric metric-v2">
       <span>{title}</span>
       <strong>{value}</strong>
       {sub && <small>{sub}</small>}
+      {change && <em className={'stats-change ' + change.tone}>{change.label}</em>}
     </div>
   );
 }
@@ -308,13 +331,15 @@ export default function StatsPanel({
 
       {partialData && <div className="stats-partial-notice" role="status">일부 데이터만 표시 중입니다.</div>}
 
+      {stats.comparison && <div className="stats-comparison-label">직전 동일 기간 대비</div>}
+
       <section className="stats-grid stats-summary stats-summary-v2 stats-summary-v3">
-        <Metric title="조회" value={stats.pv} sub="방문" />
-        <Metric title="클릭" value={stats.cta} sub="버튼" />
-        <Metric title="상담" value={stats.consultLeads} sub="접수" />
-        <Metric title="예약" value={stats.reservationLeads} sub="접수" />
-        <Metric title="전환율" value={stats.conversion + '%'} sub="방문 대비" />
-        <Metric title="CTA 전환" value={stats.ctaConversion + '%'} sub="클릭 대비" />
+        <Metric title="조회" value={stats.pv} sub="방문" change={countMetricChange(stats.pv, stats.comparison?.pv)} />
+        <Metric title="클릭" value={stats.cta} sub="버튼" change={countMetricChange(stats.cta, stats.comparison?.cta)} />
+        <Metric title="상담" value={stats.consultLeads} sub="접수" change={countMetricChange(stats.consultLeads, stats.comparison?.consultLeads)} />
+        <Metric title="예약" value={stats.reservationLeads} sub="접수" change={countMetricChange(stats.reservationLeads, stats.comparison?.reservationLeads)} />
+        <Metric title="전환율" value={stats.conversion + '%'} sub="방문 대비" change={rateMetricChange(stats.conversion, stats.comparison?.conversion)} />
+        <Metric title="CTA 전환" value={stats.ctaConversion + '%'} sub="클릭 대비" change={rateMetricChange(stats.ctaConversion, stats.comparison?.ctaConversion)} />
       </section>
 
       <section className="card stats-funnel-card">

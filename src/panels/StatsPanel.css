@@ -240,3 +240,41 @@
     grid-row: 1;
   }
 }
+
+.stats-panel .stats-comparison-label {
+  margin: 0 2px -8px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 900;
+  text-align: right;
+}
+
+.stats-panel .metric-v2 {
+  position: relative;
+}
+
+.stats-panel .metric-v2 .stats-change {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  min-width: 46px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 950;
+  line-height: 1;
+  text-align: center;
+}
+
+.stats-panel .metric-v2 .stats-change.up {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.stats-panel .metric-v2 .stats-change.down {
+  background: #fef2f2;
+  color: #b91c1c;
+}
