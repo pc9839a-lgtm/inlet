@@ -181,15 +181,6 @@ export async function deliverServerLead(lead, page, authUser = null) {
   return data?.delivery || data?.lead?.delivery || null;
 }
 
-export async function retryFailedServerLeads(page, authUser = null) {
-  if (!isServerLeadMode()) return null;
-
-  const context = projectContext(page, authUser);
-  return postJson('/api/leads/retry-failed', {
-    project: context,
-  }, { headers: projectAuthHeaders(context) });
-}
-
 export async function downloadServerLeadsCsv(page, authUser = null, fallbackLeads = [], options = {}) {
   const exportMonth = String(options.month || options.filters?.month || currentMonthValue()).slice(0, 7);
   if (!isServerLeadMode()) {

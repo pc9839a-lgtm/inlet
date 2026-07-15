@@ -585,6 +585,14 @@ requireAll(inboxLeadActions, [
   'downloadLeadsCsv(visibleLeads, page, { filters })',
 ], 'inbox CSV visible rows contract');
 
+const leadDeliveryRetryActions = await read('src/runtime/useLeadDeliveryRetryActions.js');
+requireAll(leadDeliveryRetryActions, [
+  "['failed', 'partial'].includes(lead.delivery?.status)",
+  'if (!isServerLeadMode()) syncLeadPatch(lead.id, { delivery: pending })',
+  'failed.forEach((lead) => retryLeadDelivery(lead))',
+], 'Pages-compatible lead delivery retry contract');
+assert(!leadDeliveryRetryActions.includes('retryFailedServerLeads'), 'client retry must not call the missing Pages bulk retry route');
+
 const inboxPanel = await read('src/panels/InboxPanel.jsx');
 requireAll(inboxPanel, [
   'const [month, setMonth] = useState(currentMonthValue())',
