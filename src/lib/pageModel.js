@@ -30,7 +30,7 @@ const ANCHOR_BASE = {
 const defaultPage = {
   title: '상담 DB 랜딩페이지',
   slug: 'my-page',
-  theme: { accent: '#111827', bg: '#F5F7FA', bgSolid: '#F5F7FA', gradientFrom: '#F5F7FA', gradientTo: '#EAF2FF', gradientRatio: 50, card: '#FFFFFF', text: '#111827', radius: 24, font: 'modern', fontFamily: 'pretendard', bgMode: 'solid', bgPreset: 'gray', bgGradient: 'custom', bgImage: '', bgImageFit: 'cover', bgImagePosition: 'center', bgOverlay: true, bgOverlayColor: '#F5F7FA', bgOverlayOpacity: 72, bgEffect: 'none', bgEffectOpacity: 45, buttonEffect: 'fill', animOn: false, animType: 'fade', animSpeed: 'normal', animDelay: 'none' },
+  theme: { accent: '#111827', bg: '#F5F7FA', bgSolid: '#F5F7FA', gradientFrom: '#F5F7FA', gradientTo: '#EAF2FF', gradientRatio: 50, card: '#FFFFFF', text: '#111827', radius: 24, font: 'modern', fontFamily: 'pretendard', bgMode: 'solid', bgPreset: 'gray', bgGradient: 'custom', bgImage: '', bgImageFit: 'cover', bgImagePosition: 'center', bgOverlay: true, bgOverlayColor: '#F5F7FA', bgOverlayOpacity: 72, bgEffect: 'none', bgEffectOpacity: 45, buttonEffect: 'fill', animOn: false, animType: 'fade', animPlayback: 'once', animSpeed: 'normal', animDelay: 'none' },
   meta: { title: '', desc: '', favicon: '', og: '', gtm: '', ga4: '', googleAdsTag: '', pixel: '', naver: '', kakao: '', console: '', ads: '', naverWebmaster: '' },
   ai: { enabled: false, apiKey: '', model: 'gpt-4o-mini', lastTestStatus: 'idle', lastTestMessage: '', updatedAt: '', draftInput: null },
   integrations: {

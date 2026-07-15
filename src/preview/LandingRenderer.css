@@ -123,6 +123,32 @@
     filter .72s cubic-bezier(.16, 1, .3, 1) !important;
 }
 
+.landing-page.anim-on.anim-loop.anim-fade :is(.landing-section, .landing-footer).is-visible {
+  animation: pagero-loop-fade 3.2s ease-in-out .8s infinite !important;
+}
+
+.landing-page.anim-on.anim-loop.anim-up :is(.landing-section, .landing-footer).is-visible {
+  animation: pagero-loop-up 3.2s cubic-bezier(.16, 1, .3, 1) .8s infinite !important;
+}
+
+.landing-page.anim-on.anim-loop.anim-scale :is(.landing-section, .landing-footer).is-visible {
+  animation: pagero-loop-scale 3.2s ease-in-out .8s infinite !important;
+}
+
+@keyframes pagero-loop-fade {
+  0%, 58%, 100% { opacity: 1; filter: none; transform: translateY(0) scale(1); }
+  72% { opacity: .3; filter: blur(3px); transform: translateY(14px) scale(1); }
+}
+
+@keyframes pagero-loop-up {
+  0%, 58%, 100% { opacity: 1; filter: none; transform: translateY(0) scale(1); }
+  72% { opacity: .24; filter: blur(3px); transform: translateY(42px) scale(1); }
+}
+
+@keyframes pagero-loop-scale {
+  0%, 58%, 100% { opacity: 1; filter: none; transform: translateY(0) scale(1); }
+  72% { opacity: .32; filter: blur(3px); transform: translateY(12px) scale(.9); }
+}
 @media (prefers-reduced-motion: reduce) {
   .landing-page.anim-on .landing-section,
   .landing-page.anim-on .landing-footer {
@@ -130,5 +156,6 @@
     filter: none !important;
     transform: none !important;
     transition: none !important;
+    animation: none !important;
   }
 }

@@ -5,7 +5,7 @@ export function AnimationTypeOptions({ value = 'fade', onSelect }) {
   return (
     <div className="edit-animation-options">
       {ANIMATION_OPTIONS.map(([key, label]) => (
-        <button key={key} type="button" className={value === key ? 'active' : ''} onClick={() => onSelect(key)}>
+        <button key={key} type="button" className={value === key ? 'active' : ''} aria-pressed={value === key} onClick={() => onSelect(key)}>
           {label}
         </button>
       ))}

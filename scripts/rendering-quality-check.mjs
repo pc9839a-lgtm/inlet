@@ -67,6 +67,11 @@ const previewCssFiles = [
 
 const files = {
   landing: await readFile('src/preview/LandingRenderer.jsx', 'utf8'),
+  landingCss: await readFile('src/preview/LandingRenderer.css', 'utf8'),
+  animationCard: await readFile('src/editor/editPanelParts/AnimationOptionsCard.jsx', 'utf8'),
+  animationPlayback: await readFile('src/editor/editPanelParts/AnimationPlaybackOptions.jsx', 'utf8'),
+  pageModel: await readFile('src/lib/pageModel.js', 'utf8'),
+  editorWorkspaceCss: await readFile('src/styles/editor-workspace-v2.css', 'utf8'),
   app: await readFile('src/App.jsx', 'utf8'),
   editPanel: await readFile('src/editor/EditPanel.jsx', 'utf8'),
   workspaceShellActions: await readFile('src/runtime/useWorkspaceShellActions.js', 'utf8'),
@@ -145,6 +150,12 @@ assert(files.landing.includes('if (templatePreview) return;'), 'template preview
 assert(files.landing.includes('hideBottomForForm'), 'bottom bar should hide when form is visible');
 assert(files.landing.includes('publicView={publicView}'), 'public bottom bar should receive public rendering mode');
 assert(files.landing.includes('accent={page.theme.accent}'), 'public bottom bar should receive page accent variable');
+assert(files.animationCard.includes('updateTheme({ animPlayback })'), 'animation editor must persist the selected playback mode');
+assert(files.animationPlayback.includes('ANIMATION_PLAYBACK_OPTIONS') && files.animationPlayback.includes('aria-pressed={value === key}'), 'animation playback control must expose once/loop as accessible choices');
+assert(files.pageModel.includes("animPlayback: 'once'"), 'new and legacy pages must default animation playback to once');
+assert(files.landing.includes("page.theme.animPlayback === 'loop'"), 'public renderer must emit a stable animation playback class');
+assert(files.landingCss.includes('@keyframes pagero-loop-fade') && files.landingCss.includes('.anim-loop.anim-scale'), 'public renderer CSS must implement repeated animation effects');
+assert(files.editorWorkspaceCss.includes('.edit-animation-playback-options') && files.editorWorkspaceCss.includes('width: 50px !important'), 'page option rows must share the screen-order control sizing');
 assert(files.landing.includes("'--accent': accent"), 'bottom bar should expose accent when rendered outside landing page');
 assert(files.landing.includes('public-bottom-bar'), 'public bottom bar should have a stable public-only class');
 assert(!files.layout.includes('top-menu-set-copy') && !files.layout.includes('aria-hidden={duplicate'), 'topnav renderer should not render duplicated loop menu items');

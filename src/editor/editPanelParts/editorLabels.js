@@ -16,6 +16,10 @@ export const T = {
   hide: '\uC228\uAE40',
   animation: '\uC560\uB2C8\uBA54\uC774\uC158',
   animationUse: '\uC560\uB2C8\uBA54\uC774\uC158 \uC0AC\uC6A9',
+  animationEffect: '\uD6A8\uACFC',
+  animationPlayback: '\uC7AC\uC0DD',
+  animationOnce: '\uD55C \uBC88\uB9CC',
+  animationLoop: '\uACC4\uC18D \uBC18\uBCF5',
   topMenu: '\uC0C1\uB2E8 \uBA54\uB274',
   topMenuBadge: '\uD654\uBA74 \uC0C1\uB2E8 \uACE0\uC815 \uD45C\uC2DC',
   bottomCta: '\uD558\uB2E8 \uACE0\uC815 \uBC84\uD2BC',
@@ -45,4 +49,9 @@ export const ANIMATION_OPTIONS = [
   ['fade', T.fade],
   ['up', T.up],
   ['scale', T.scale],
+];
+
+export const ANIMATION_PLAYBACK_OPTIONS = [
+  ['once', T.animationOnce],
+  ['loop', T.animationLoop],
 ];
