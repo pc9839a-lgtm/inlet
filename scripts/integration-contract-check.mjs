@@ -580,6 +580,11 @@ const leadRepository = await read('src/lib/leadRepository.js');
 requireAll(eventRepository, ['withMeta', "source: 'server'", 'dateFrom', 'dateTo'], 'event repository');
 requireAll(leadRepository, ['fetchAllServerLeads', 'withMeta', "source: 'server'", 'dateFrom', 'dateTo', 'deliveryStatus', 'currentMonthValue', 'exportMonth', 'const date = exportMonth'], 'lead repository');
 
+const inboxLeadActions = await read('src/runtime/useInboxLeadActions.js');
+requireAll(inboxLeadActions, [
+  'downloadLeadsCsv(visibleLeads, page, { filters })',
+], 'inbox CSV visible rows contract');
+
 const inboxPanel = await read('src/panels/InboxPanel.jsx');
 requireAll(inboxPanel, [
   'const [month, setMonth] = useState(currentMonthValue())',

@@ -51,7 +51,7 @@ export function useInboxLeadActions({
         await downloadServerLeadsCsv(page, authUser, visibleLeads, filters);
         return;
       }
-      downloadLeadsCsv(leads, page, { filters });
+      downloadLeadsCsv(visibleLeads, page, { filters });
     } catch (error) {
       console.warn('Lead CSV export failed:', error);
       showToast(`CSV 내보내기에 실패했습니다. ${String(error?.message || error)}`, 'error');
