@@ -154,7 +154,7 @@ assert(files.landing.includes('accent={page.theme.accent}'), 'public bottom bar 
 assert(files.animationCard.includes('updateTheme({ animPlayback })'), 'animation editor must persist the selected playback mode');
 assert(files.animationPlayback.includes('ANIMATION_PLAYBACK_OPTIONS') && files.animationPlayback.includes('aria-pressed={value === key}'), 'animation playback control must expose once and loop as accessible choices');
 assert(files.pageModel.includes("animPlayback: 'once'"), 'new and legacy pages must default animation playback to once');
-assert(files.landing.includes("page.theme.animPlayback === 'loop'") && files.landing.includes('window.setInterval') && files.landing.includes('replaying.add(el)'), 'loop mode must visibly replay the selected entrance effect while once mode does not schedule replay');
+assert(files.landing.includes("page.theme.animPlayback === 'loop'") && files.landing.includes('prepareForReentry') && files.landing.includes('if (!replayOnReentry) observer.unobserve(entry.target)') && !files.landing.includes('window.setInterval'), 'loop mode must replay on viewport re-entry while once mode stops observing after the first reveal');
 assert(files.fixedBlockBody.includes('fixed-block-editor selected-block-settings-body block-editor'), 'fixed page widgets must share the selected widget editor shell');
 assert(files.editorWorkspaceCss.includes('.edit-animation-playback-options') && files.editorWorkspaceCss.includes('width: 50px !important'), 'animation playback and page option controls must keep their intended layout');
 
