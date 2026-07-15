@@ -256,7 +256,7 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
       window.clearTimeout(fallback);
       scrollParents.forEach((target) => target.removeEventListener?.('scroll', revealVisibleNow));
     };
-  }, [page.theme.animOn, page.theme.animType, page.theme.animPlayback, blocks.length]);
+  }, [page.theme.animOn, page.theme.animType, blocks.length]);
 
   useEffect(() => {
     const root = pageRef.current;
@@ -301,7 +301,7 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
   const bottomNode = bottomActive && !shouldHideBottom ? <RenderBottom block={bottom} blocks={blocks} accent={page.theme.accent} buttonEffect={buttonEffect} go={go} publicView={publicView}/> : null;
 
   const pageNode = (
-    <div ref={pageRef} onClickCapture={templatePreview || publicView ? undefined : handlePreviewSelect} className={`landing-page font-${page.theme.font} font-family-${page.theme.fontFamily || 'pretendard'} ${globalAlign ? `global-align-${globalAlign}` : ''} bgmode-${page.theme.bgMode || 'solid'} bg-effect-${bgEffect} button-effect-${buttonEffect} ${publicView ? 'public-render' : ''} ${templatePreview ? 'template-preview' : ''} ${bottomActive ? 'has-bottom-bar' : ''} ${page.theme.animOn ? `anim-on anim-${page.theme.animType || 'fade'} anim-${page.theme.animPlayback === 'loop' ? 'loop' : 'once'}` : ''}`} style={{'--accent':page.theme.accent,'--button':page.theme.accent,'--button-text':'#ffffff','--bg':pageBg,'--card':page.theme.card,'--text':page.theme.text,'--radius':`${page.theme.radius}px`,'--bg-effect-opacity':bgEffectOpacity,background:pageBg,color:page.theme.text,backgroundSize:bgSize,backgroundPosition:bgPosition,backgroundRepeat:'no-repeat'}}>
+    <div ref={pageRef} onClickCapture={templatePreview || publicView ? undefined : handlePreviewSelect} className={`landing-page font-${page.theme.font} font-family-${page.theme.fontFamily || 'pretendard'} ${globalAlign ? `global-align-${globalAlign}` : ''} bgmode-${page.theme.bgMode || 'solid'} bg-effect-${bgEffect} button-effect-${buttonEffect} ${publicView ? 'public-render' : ''} ${templatePreview ? 'template-preview' : ''} ${bottomActive ? 'has-bottom-bar' : ''} ${page.theme.animOn ? `anim-on anim-${page.theme.animType || 'fade'}` : ''}`} style={{'--accent':page.theme.accent,'--button':page.theme.accent,'--button-text':'#ffffff','--bg':pageBg,'--card':page.theme.card,'--text':page.theme.text,'--radius':`${page.theme.radius}px`,'--bg-effect-opacity':bgEffectOpacity,background:pageBg,color:page.theme.text,backgroundSize:bgSize,backgroundPosition:bgPosition,backgroundRepeat:'no-repeat'}}>
       <div className="landing-content">{normal.map(b=><RenderBlock key={b.id} page={page} block={b} blocks={blocks} leads={leads} addLead={addLead} track={track} go={go}/>)}</div>
       <BgEffectLayer effect={bgEffect} />
       {!publicView && bottomNode}

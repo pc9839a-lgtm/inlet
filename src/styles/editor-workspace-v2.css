@@ -188,9 +188,6 @@ body .builder-shell .edit-layout .page-global-options-card .edit-animation-optio
   background: transparent !important;
 }
 
-body .builder-shell .edit-layout .page-global-options-card .edit-animation-playback-options {
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-}
 
 body .builder-shell .edit-layout .page-global-options-card .switch-clean {
   display: inline-flex !important;
