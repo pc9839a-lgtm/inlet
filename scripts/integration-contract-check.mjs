@@ -617,6 +617,8 @@ requireAll(inboxPanel, [
 const duplicatePolicyPanel = await read('src/panels/inbox/DuplicatePolicyPanel.jsx');
 requireAll(duplicatePolicyPanel, [
   'fetchServerBlockedLeadHistory',
+  'const serverHistory = isServerLeadMode()',
+  'const localHistory = !serverHistory',
   'loaded: false',
   'history.loaded ? history.records : localHistory',
   'if (!result)',

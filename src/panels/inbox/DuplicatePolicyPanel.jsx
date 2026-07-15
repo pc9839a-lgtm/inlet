@@ -1,4 +1,5 @@
 ﻿import { useEffect, useRef, useState } from 'react';
+import { isServerLeadMode } from '../../config/runtimeConfig.js';
 import { fetchServerBlockedLeadHistory } from '../../lib/leadRepository.js';
 import { currentMonthValue } from '../../lib/monthRange.js';
 
@@ -89,7 +90,10 @@ export default function IntakeDuplicatePolicyPanel({ page, authUser, updatePage 
   const [history, setHistory] = useState({ records: [], total: 0, nextCursor: null, hasMore: false, loading: false, loaded: false, error: '' });
   const historyRequestRef = useRef(0);
   const settings = normalizeDuplicateSettings(page.leadDuplicateSettings || page.duplicateCollectionSettings || {});
-  const localHistory = Array.isArray(page.leadDuplicateSettings?.blockedHistory) ? page.leadDuplicateSettings.blockedHistory : [];
+  const serverHistory = isServerLeadMode();
+  const localHistory = !serverHistory && Array.isArray(page.leadDuplicateSettings?.blockedHistory)
+    ? page.leadDuplicateSettings.blockedHistory
+    : [];
   const visibleHistory = history.loaded ? history.records : localHistory;
   const displayedHistory = visibleHistory.slice(0, visibleCount);
   const hiddenLoadedHistory = visibleHistory.length > visibleCount;
