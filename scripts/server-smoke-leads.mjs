@@ -422,6 +422,33 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
   assert(blockedHistory.res.ok && blockedHistory.data.records?.length >= 1, 'blocked history should expose rate limited submissions');
   assert(blockedHistory.data.records.some((record) => record.reason === policyBlocked.data.reason), 'blocked history should include block reason');
 
+  const policyOffProject = { projectId: 'smoke-leads-policy-off', slug: 'smoke-policy-off' };
+  const policyOffPage = {
+    ...page,
+    slug: policyOffProject.slug,
+    leadDuplicateSettings: {
+      rejectIpDuplicate: false,
+      rejectCookieDuplicate: false,
+      formDuplicateLimitCount: 1,
+      formDuplicateLimitWindow: '1mo',
+      phoneEmailMode: 'mark',
+    },
+  };
+  const policyOffSeed = await json({ baseUrl }, 'POST', '/api/leads', {
+    project: policyOffProject,
+    page: policyOffPage,
+    lead: { id: 'policy-off-seed', type: 'consult', status: 'new', name: 'Policy Off Seed', phone: '010-7777-0101', clientId: 'policy-off-client', ipHash: 'ip-policy-off', createdAt: '2026-05-21T03:10:00.000Z' },
+  });
+  assert(policyOffSeed.res.ok, 'disabled duplicate policy seed should save');
+  const policyOffRepeat = await json({ baseUrl }, 'POST', '/api/leads', {
+    project: policyOffProject,
+    page: policyOffPage,
+    lead: { id: 'policy-off-repeat', type: 'consult', status: 'new', name: 'Policy Off Repeat', phone: '010-7777-0102', clientId: 'policy-off-client', ipHash: 'ip-policy-off', createdAt: '2026-05-21T03:10:04.000Z' },
+  });
+  assert(policyOffRepeat.res.ok, 'IP and cookie duplicate rejection should stay disabled');
+  assert(policyOffRepeat.data.lead?.duplicate, 'disabled rejection should still retain duplicate metadata');
+  assert(String(policyOffRepeat.data.lead?.duplicateReason || '').includes('client_repeat_30m'), 'disabled rejection should record the repeat signal');
+
   const firstPage = await json({ baseUrl }, 'GET', `/api/leads?${query}&limit=2`);
   assert(firstPage.data.leads.length === 2, 'lead first page length mismatch');
   assert(firstPage.data.total === 7 && firstPage.data.hasMore, 'lead pagination meta mismatch');
