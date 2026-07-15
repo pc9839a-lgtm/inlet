@@ -295,12 +295,13 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
   const buttonEffect = pickSafe(normalizeButtonEffect(page.theme.buttonEffect), ['fill','shine','burst'], 'fill');
   const bgEffect = pickSafe(page.theme.bgEffect || 'none', ['none','snow','petals','sparkle'], 'none');
   const bgEffectOpacity = Math.max(0.1, Math.min(0.9, Number(page.theme.bgEffectOpacity ?? 45) / 100));
+  const globalAlign = pickSafe(page.theme.globalAlign, ['left','center','right'], '');
 
   const shouldHideBottom = !publicView && hideBottomForForm;
   const bottomNode = bottomActive && !shouldHideBottom ? <RenderBottom block={bottom} blocks={blocks} accent={page.theme.accent} buttonEffect={buttonEffect} go={go} publicView={publicView}/> : null;
 
   const pageNode = (
-    <div ref={pageRef} onClickCapture={templatePreview || publicView ? undefined : handlePreviewSelect} className={`landing-page font-${page.theme.font} font-family-${page.theme.fontFamily || 'pretendard'} bgmode-${page.theme.bgMode || 'solid'} bg-effect-${bgEffect} button-effect-${buttonEffect} ${publicView ? 'public-render' : ''} ${templatePreview ? 'template-preview' : ''} ${bottomActive ? 'has-bottom-bar' : ''} ${page.theme.animOn ? `anim-on anim-${page.theme.animType || 'fade'}` : ''}`} style={{'--accent':page.theme.accent,'--button':page.theme.accent,'--button-text':'#ffffff','--bg':pageBg,'--card':page.theme.card,'--text':page.theme.text,'--radius':`${page.theme.radius}px`,'--bg-effect-opacity':bgEffectOpacity,background:pageBg,color:page.theme.text,backgroundSize:bgSize,backgroundPosition:bgPosition,backgroundRepeat:'no-repeat'}}>
+    <div ref={pageRef} onClickCapture={templatePreview || publicView ? undefined : handlePreviewSelect} className={`landing-page font-${page.theme.font} font-family-${page.theme.fontFamily || 'pretendard'} ${globalAlign ? `global-align-${globalAlign}` : ''} bgmode-${page.theme.bgMode || 'solid'} bg-effect-${bgEffect} button-effect-${buttonEffect} ${publicView ? 'public-render' : ''} ${templatePreview ? 'template-preview' : ''} ${bottomActive ? 'has-bottom-bar' : ''} ${page.theme.animOn ? `anim-on anim-${page.theme.animType || 'fade'}` : ''}`} style={{'--accent':page.theme.accent,'--button':page.theme.accent,'--button-text':'#ffffff','--bg':pageBg,'--card':page.theme.card,'--text':page.theme.text,'--radius':`${page.theme.radius}px`,'--bg-effect-opacity':bgEffectOpacity,background:pageBg,color:page.theme.text,backgroundSize:bgSize,backgroundPosition:bgPosition,backgroundRepeat:'no-repeat'}}>
       <div className="landing-content">{normal.map(b=><RenderBlock key={b.id} page={page} block={b} blocks={blocks} leads={leads} addLead={addLead} track={track} go={go}/>)}</div>
       <BgEffectLayer effect={bgEffect} />
       {!publicView && bottomNode}
@@ -359,7 +360,7 @@ function RenderBlock(props) {
 function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, go }) {
   const globalAlign = pickSafe(page?.theme?.globalAlign, ['left','center','right'], '');
   const renderBlock = globalAlign
-    ? { ...block, s: { ...(block.s || {}), align: block.s?.align || globalAlign, textAlign: block.s?.textAlign || globalAlign } }
+    ? { ...block, s: { ...(block.s || {}), align: globalAlign, textAlign: globalAlign } }
     : block;
   if(block.type==='topnav')return <LayoutRenderTopNav block={renderBlock} blocks={blocks} go={go}/>;
   if(block.type==='hero')return <ContentRenderHero block={renderBlock}/>;
