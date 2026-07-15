@@ -27,7 +27,7 @@ const cases = [
   { name: 'public contact route', url: `${baseUrl}/contact`, viewports: 'desktop', expectedText: 'WAYZI', expectedSelector: '.wayzi-global-footer', forbiddenText: forbiddenErrorText },
   { name: 'public privacy route', url: `${baseUrl}/privacy`, viewports: 'desktop', expectedText: 'WAYZI', expectedSelector: '.wayzi-global-footer', forbiddenText: forbiddenErrorText },
   { name: 'public terms route', url: `${baseUrl}/terms`, viewports: 'desktop', expectedText: 'WAYZI', expectedSelector: '.wayzi-global-footer', forbiddenText: forbiddenErrorText },
-  { name: 'owner edit cards', authenticated: true, url: `${baseUrl}/?tab=edit`, statePreset: 'owner-settings', expectedSelector: '.top-tabs,.editor-list,.phone-frame', forbiddenText: forbiddenErrorText },
+  { name: 'owner edit cards', authenticated: true, url: `${baseUrl}/?tab=edit`, statePreset: 'owner-settings', expectedSelector: '.top-tabs,.screen-order-list,.phone-frame', forbiddenText: forbiddenErrorText },
   { name: 'owner start modal', authenticated: true, url: `${baseUrl}/`, statePreset: 'owner-start-modal', expectedSelector: '.start-choice-modal,.start-choice-card', forbiddenText: '\uD654\uBA74\uC744 \uBD88\uB7EC\uC624\uB294 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4,Failed to fetch dynamically imported module,ApiError is not defined' },
   { name: 'template debt first viewport', authenticated: true, url: `${baseUrl}/?tab=edit`, statePreset: 'template-preview:debt-relief-consult', expectedSelector: '.landing-page,.landing-section.topnav,.landing-section.hero,.landing-section.form', forbiddenText: forbiddenErrorText },
   { name: 'template wedding first viewport', authenticated: true, url: `${baseUrl}/?tab=edit`, statePreset: 'template-preview:wedding-invitation', expectedSelector: '.landing-page,.landing-section.hero,.landing-section.form', forbiddenText: forbiddenErrorText },
@@ -52,7 +52,7 @@ const cases = [
     setInput: serverSaveSetInput,
     postClickSelector: serverSavePostClickSelector,
     expectedText: serverSaveExpectedText,
-    expectedSelector: '.top-tabs,.editor-list,.phone-frame',
+    expectedSelector: '.top-tabs,.screen-order-list,.phone-frame',
     forbiddenText: forbiddenErrorText,
   }] : []),  ...(publicSlug ? [{ name: 'public landing direct route', url: `${baseUrl}/${publicSlug}`, viewports: 'desktop,mobile', expectedSelector: '.public-landing-shell,.public-landing-viewport,.landing-page.public-render,.landing-section.hero', forbiddenText: '\uD398\uC774\uC9C0\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4,\uD654\uBA74\uC744 \uBD88\uB7EC\uC624\uB294 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4,ApiError is not defined,Project access is required' }] : []),
 ];
