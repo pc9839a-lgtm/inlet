@@ -24,3 +24,53 @@
 
 /favicon.svg
   Cache-Control: public, max-age=86400
+
+/robots.txt
+  Content-Type: text/plain; charset=utf-8
+  Cache-Control: public, max-age=3600
+
+/sitemap.xml
+  Content-Type: application/xml; charset=utf-8
+  Cache-Control: public, max-age=3600
+
+/login
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/signup
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/app
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/app/*
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/dashboard
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/dashboard/*
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/account
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/account/*
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/admin
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/*/admin
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/invite
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/invite/*
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/embed
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/embed/*
+  X-Robots-Tag: noindex, nofollow, noarchive
