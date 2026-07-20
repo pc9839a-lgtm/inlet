@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Search, X } from 'lucide-react';
 import { START_MODE_KEY } from '../config/storageKeys.js';
 import { apiFetch, postJson, projectAuthHeaders } from '../lib/apiClient.js';
 import { ownershipTransferBillingLabel, ownershipTransferStatusCopy, ownershipTransferStatusLabel } from '../lib/ownershipTransfer.js';
@@ -344,10 +345,76 @@ function AccountsView({ accounts }) {
 }
 
 function ProjectsView({ projects, updatePage, currentProjectId }) {
+  const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [planFilter, setPlanFilter] = useState('all');
+
+  const statusOptions = useMemo(() => (
+    [...new Set(projects.map((project) => compactStatus(project.status)).filter(Boolean))].sort()
+  ), [projects]);
+
+  const filteredProjects = useMemo(() => {
+    const normalizedQuery = query.trim().toLocaleLowerCase('ko-KR');
+    return projects.filter((project) => {
+      const status = compactStatus(project.status);
+      const paid = isPaidProject(project);
+      const searchText = [
+        project.title,
+        project.slug,
+        project.id,
+        project.customDomain,
+        project.ownerEmail,
+        project.owner_email,
+        project.owner_account_email,
+      ].filter(Boolean).join(' ').toLocaleLowerCase('ko-KR');
+
+      if (normalizedQuery && !searchText.includes(normalizedQuery)) return false;
+      if (statusFilter !== 'all' && status !== statusFilter) return false;
+      if (planFilter === 'paid' && !paid) return false;
+      if (planFilter === 'free' && paid) return false;
+      return true;
+    });
+  }, [planFilter, projects, query, statusFilter]);
+
+  const hasFilters = query || statusFilter !== 'all' || planFilter !== 'all';
+  const resetFilters = () => {
+    setQuery('');
+    setStatusFilter('all');
+    setPlanFilter('all');
+  };
+
   return (
     <section className="admin-master-card">
       <CardTitle title="페이지 관리" desc="페이지별 소유자, 플랜, 접수량, 파일 사용 여부와 최근 수정일을 봅니다." />
-      <SimpleTable columns={['페이지', 'URL', '도메인', '소유 회원', '플랜', '상태', '접수', '파일', '최근 수정']} rows={projects.map((project) => [
+      <div className="admin-list-toolbar" role="search" aria-label="페이지 검색 및 필터">
+        <label className="admin-search-field">
+          <Search size={18} aria-hidden="true" />
+          <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="페이지명, 주소, 소유자 검색" aria-label="페이지 검색" />
+        </label>
+        <label className="admin-filter-field">
+          <span>상태</span>
+          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+            <option value="all">전체</option>
+            {statusOptions.map((status) => <option key={status} value={status}>{status}</option>)}
+          </select>
+        </label>
+        <label className="admin-filter-field">
+          <span>플랜</span>
+          <select value={planFilter} onChange={(event) => setPlanFilter(event.target.value)}>
+            <option value="all">전체</option>
+            <option value="paid">유료</option>
+            <option value="free">무료</option>
+          </select>
+        </label>
+        <div className="admin-filter-summary" aria-live="polite"><strong>{filteredProjects.length}</strong><span>개 페이지</span></div>
+        {hasFilters && (
+          <button type="button" className="admin-filter-reset" onClick={resetFilters} aria-label="검색과 필터 초기화">
+            <X size={16} aria-hidden="true" />
+            초기화
+          </button>
+        )}
+      </div>
+      <SimpleTable columns={['페이지', 'URL', '도메인', '소유 회원', '플랜', '상태', '접수', '파일', '최근 수정']} rows={filteredProjects.map((project) => [
         project.title || project.slug || project.id,
         `/${project.slug || '-'}`,
         project.customDomain || (project.domainType === 'custom' ? 'DNS 대기' : 'pagero.kr'),
@@ -361,7 +428,6 @@ function ProjectsView({ projects, updatePage, currentProjectId }) {
     </section>
   );
 }
-
 function LeadSummaryView({ rows }) {
   return (
     <section className="admin-master-card">
