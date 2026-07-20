@@ -16,7 +16,7 @@ function fixtureLeads(count = 10000) {
   return Array.from({ length: count }, (_, index) => ({
     id: `lead-${index}`,
     type: index % 5 === 0 ? 'reservation' : 'consult',
-    status: index % 7 === 0 ? '예약완료' : '신규',
+    status: index % 7 === 0 ? '?덉빟?꾨즺' : '?좉퇋',
     name: `Lead ${index}`,
     phone: `010-${String(index).padStart(4, '0')}-0000`,
     createdAt: index % 4 === 0 ? `2026-04-${String((index % 28) + 1).padStart(2, '0')}T03:00:00.000Z` : iso((index % 28) + 1, index % 1440),
@@ -132,6 +132,8 @@ const appSource = await readFile('src/App.jsx', 'utf8');
 const leadRepository = await readFile('src/lib/leadRepository.js', 'utf8');
 const eventRepository = await readFile('src/lib/eventRepository.js', 'utf8');
 const inboxPanel = await readFile('src/panels/InboxPanel.jsx', 'utf8');
+const inboxLeadSync = await readFile('src/runtime/useInboxLeadSync.js', 'utf8');
+const statsSummarySync = await readFile('src/runtime/useStatsSummarySync.js', 'utf8');
 const serverSource = await readFile('server/index.mjs', 'utf8');
 const d1Adapter = await readFile('server/storage/d1Adapter.mjs', 'utf8');
 
@@ -145,11 +147,11 @@ const jsonlFallbackPlan = {
 };
 
 assert(appSource.includes('const INBOX_PAGE_SIZE = 10'), 'Inbox initial and load-more size should stay at 10');
-assert(appSource.includes('monthDateRange(inboxFilters.month)'), 'Inbox server fetch should be month-bounded');
+assert(inboxLeadSync.includes('monthDateRange(inboxFilters.month)'), 'Inbox server fetch should be month-bounded');
 assert(appSource.includes("deliveryStatus: 'all'"), 'Inbox server fetch should keep delivery status out of the visible filter contract');
-assert(appSource.includes('statsDateRange(statsMonth'), 'Stats server fetch should be capped to selected month and day-range period');
+assert(statsSummarySync.includes('statsDateRange(statsMonth'), 'Stats server fetch should be capped to selected month and day-range period');
 assert(inboxPanel.includes('type="month"'), 'Inbox UI should expose month selection');
-assert(inboxPanel.includes("deliveryStatus: 'all'") && inboxPanel.includes('\uC6D4 CSV'), 'Inbox UI should expose monthly CSV without delivery filter noise');
+assert(inboxPanel.includes("deliveryStatus: 'all'") && inboxPanel.includes('CSV \uB0B4\uBCF4\uB0B4\uAE30'), 'Inbox UI should expose monthly CSV without delivery filter noise');
 assert(inboxPanel.includes('\uB354\uBCF4\uAE30') && inboxPanel.includes('\uC11C\uBC84 ${serverTotal}\uAC74 \uC911 ${loadedCount}\uAC74 \uB85C\uB4DC'), 'Inbox UI should clearly indicate partial server pagination');
 assert(leadRepository.includes('dateFrom') && leadRepository.includes('dateTo') && leadRepository.includes('deliveryStatus'), 'Lead repository should pass date/delivery filters');
 assert(eventRepository.includes('dateFrom') && eventRepository.includes('dateTo'), 'Event repository should pass date filters');

@@ -6,9 +6,22 @@ function assert(condition, message) {
 
 const files = {
   feedback: await readFile('src/builder/BuilderFeedback.jsx', 'utf8'),
-  home: await readFile('src/screens/HomeScreens.jsx', 'utf8'),
-  formEditor: await readFile('src/editor/blockEditors/FormEditor.jsx', 'utf8'),
-  imageEditor: await readFile('src/editor/blockEditors/ImageEditor.jsx', 'utf8'),
+  home: (await Promise.all([
+    readFile('src/screens/HomeScreens.jsx', 'utf8'),
+    readFile('src/screens/CreateLandingFlow.jsx', 'utf8'),
+  ])).join('\n'),
+  formEditor: (await Promise.all([
+    readFile('src/editor/blockEditors/FormEditor.jsx', 'utf8'),
+    readFile('src/editor/blockEditors/FormHtmlModal.jsx', 'utf8'),
+    readFile('src/editor/blockEditors/FormHtmlModalHeader.jsx', 'utf8'),
+    readFile('src/editor/blockEditors/useFormHtmlModal.js', 'utf8'),
+  ])).join('\n'),
+  imageEditor: (await Promise.all([
+    readFile('src/editor/blockEditors/ImageEditor.jsx', 'utf8'),
+    readFile('src/editor/blockEditors/ImageCropModal.jsx', 'utf8'),
+    readFile('src/editor/blockEditors/ImageCropHeader.jsx', 'utf8'),
+    readFile('src/editor/blockEditors/useImageCropDialog.js', 'utf8'),
+  ])).join('\n'),
   statsPanel: await readFile('src/panels/StatsPanel.jsx', 'utf8'),
   createModalCss: await readFile('src/styles/panels-create-modal.css', 'utf8'),
   stylesEntry: await readFile('src/styles.css', 'utf8'),
@@ -29,7 +42,7 @@ const dialogContracts = [
   [files.formEditor, 'HTML modal uses dialog role', 'role="dialog"'],
   [files.formEditor, 'HTML modal uses aria-modal', 'aria-modal="true"'],
   [files.formEditor, 'HTML modal has accessible title', 'aria-labelledby="inlet-html-modal-title"'],
-  [files.formEditor, 'HTML modal close button is labelled', 'aria-label="닫기"'],
+  [files.formEditor, 'HTML modal close button is labelled', 'aria-label={closeLabel}'],
   [files.formEditor, 'HTML modal supports Escape close', "event.key === 'Escape'"],
   [files.imageEditor, 'image crop modal uses dialog role', 'role="dialog"'],
   [files.imageEditor, 'image crop modal uses aria-modal', 'aria-modal="true"'],

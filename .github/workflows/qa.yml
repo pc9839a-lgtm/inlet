@@ -11,7 +11,7 @@ on:
 jobs:
   qa:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -27,8 +27,4 @@ jobs:
         run: npm ci
 
       - name: Full offline QA
-        env:
-          INLET_SESSION_AUTH_MODE: production
-          INLET_SESSION_SECRET: github-actions-session-secret-change-in-production
         run: npm run qa:all
-

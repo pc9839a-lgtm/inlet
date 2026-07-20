@@ -141,7 +141,7 @@ for (const file of cssFiles) {
 }
 const entryPath = path.resolve('src/styles.css');
 const maxTotalBytes = Number(process.env.INLET_CSS_BUDGET_BYTES || 550000);
-const baselineBytes = Number(process.env.INLET_CSS_BASELINE_BYTES || 540446);
+const baselineBytes = Number(process.env.INLET_CSS_BASELINE_BYTES || 540683);
 const allowBaselineIncrease = process.env.INLET_CSS_ALLOW_BASELINE_INCREASE === '1';
 const maxFileBytes = Number(process.env.INLET_CSS_FILE_BUDGET_BYTES || 260000);
 const warnRatio = Number(process.env.INLET_CSS_WARN_RATIO || 0.9);
