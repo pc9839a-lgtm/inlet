@@ -870,7 +870,7 @@ function assertPlatformMaster(req) {
     .split(',')
     .map((item) => normalizeEmail(item))
     .filter(Boolean);
-  const allowedEmails = configured.length ? configured : ['admin@pagero.kr'];
+  const allowedEmails = configured.length ? configured : ['admin@pagero.kr', 'roadfor@kakao.com'];
   if (allowedEmails.includes(email) || ['platformmaster', 'platform_master', 'superadmin', 'serviceadmin'].includes(role)) {
     return identity;
   }
