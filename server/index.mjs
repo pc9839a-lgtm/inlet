@@ -3852,7 +3852,7 @@ async function compactLeads(project = {}, options = {}) {
   const targetFile = projectLeadsFile(targetProject) || leadsFile;
   const dryRun = options.dryRun !== false;
   return withFileLock(targetFile, async () => {
-    const leads = await readLeadList(targetProject);
+    const { records: leads } = await readJsonlFile(targetFile);
     const latestById = new Map();
     const withoutId = [];
 

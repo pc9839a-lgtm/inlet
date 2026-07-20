@@ -35,7 +35,7 @@ await runSmoke('jsonl-ops-quality-check', async ({ baseUrl, dataDir }) => {
   assert(secondPage.res.ok && secondPage.data.leads.length === 2 && !secondPage.data.hasMore, `cursor second page failed: ${JSON.stringify({ status: secondPage.res.status, count: secondPage.data.leads?.length, hasMore: secondPage.data.hasMore, error: secondPage.data.error })}`);
 
   const dryRun = await json({ baseUrl }, 'POST', '/api/leads/compact', { project, dryRun: true });
-  assert(dryRun.res.ok && dryRun.data.dryRun === true && dryRun.data.removed === 1, 'compact dry-run contract failed');
+  assert(dryRun.res.ok && dryRun.data.dryRun === true && dryRun.data.removed === 1, 'compact dry-run contract failed: ' + JSON.stringify({ status: dryRun.res.status, data: dryRun.data }));
   assert(await backupCount(dataDir, project.projectId) === 0, 'compact dry-run must not create backup');
 
   const compact = await json({ baseUrl }, 'POST', '/api/leads/compact', { project, dryRun: false });
