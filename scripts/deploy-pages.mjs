@@ -31,4 +31,5 @@ await run(process.execPath, ['scripts/deployment-artifact-check.mjs'], {
   shell: false,
   env: { INLET_DEPLOY_QA_DIR: artifactDir },
 });
-await run('wrangler', ['pages', 'deploy', artifactDir, '--project-name', 'inlet', '--branch', branch], { shell: true });
+const wranglerCli = path.resolve(root, 'node_modules/wrangler/bin/wrangler.js');
+await run(process.execPath, [wranglerCli, 'pages', 'deploy', artifactDir, '--project-name', 'inlet', '--branch', branch]);
