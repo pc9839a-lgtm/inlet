@@ -111,7 +111,31 @@ async function inspectAssets() {
   };
 }
 
+async function inspectSeoFiles() {
+  const robotsPath = path.join(targetDir, 'robots.txt');
+  const sitemapPath = path.join(targetDir, 'sitemap.xml');
+
+  assert(await exists(robotsPath), `deployment artifact missing robots.txt: ${targetDir}`);
+  assert(await exists(sitemapPath), `deployment artifact missing sitemap.xml: ${targetDir}`);
+
+  const robots = await readFile(robotsPath, 'utf8');
+  const sitemap = await readFile(sitemapPath, 'utf8');
+
+  assert(!/<(?:!doctype|html|head|body)\b/i.test(robots), 'robots.txt must not contain SPA HTML');
+  assert(/^\s*User-agent:\s*\*/m.test(robots), 'robots.txt must define the public crawler policy');
+  assert(/^\s*Sitemap:\s*https:\/\/pagero\.kr\/sitemap\.xml\s*$/m.test(robots), 'robots.txt must advertise the Pagero sitemap');
+  assert(/^<\?xml\s+version="1\.0"\s+encoding="UTF-8"\?>/.test(sitemap.trim()), 'sitemap.xml must be XML, not the SPA fallback');
+  assert(/<urlset\s+xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/.test(sitemap), 'sitemap.xml must use the sitemap protocol namespace');
+  assert(!/<(?:!doctype|html|head|body)\b/i.test(sitemap), 'sitemap.xml must not contain SPA HTML');
+
+  return {
+    robotsBytes: Buffer.byteLength(robots),
+    sitemapBytes: Buffer.byteLength(sitemap),
+  };
+}
+
 const report = await inspectAssets();
+const seoFiles = await inspectSeoFiles();
 
 assert(report.assets.length > 0, 'deployment artifact has no JS/CSS assets');
 assert(report.stale.length === 0, `deployment artifact has stale assets: ${report.stale.map((asset) => asset.relative).join(', ')}`);
@@ -125,4 +149,6 @@ console.log(JSON.stringify({
   assetCount: report.assets.length,
   largestJs: report.largestJs?.bytes || 0,
   largestCss: report.largestCss?.bytes || 0,
+  robotsBytes: seoFiles.robotsBytes,
+  sitemapBytes: seoFiles.sitemapBytes,
 }, null, 2));
