@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://pagero.kr/</loc></url>
-  <url><loc>https://pagero.kr/about</loc></url>
-  <url><loc>https://pagero.kr/contact</loc></url>
-  <url><loc>https://pagero.kr/privacy</loc></url>
-  <url><loc>https://pagero.kr/terms</loc></url>
+  <url><loc>https://pagero.kr/</loc><lastmod>2026-07-21</lastmod></url>
+  <url><loc>https://pagero.kr/about</loc><lastmod>2026-07-21</lastmod></url>
+  <url><loc>https://pagero.kr/contact</loc><lastmod>2026-07-21</lastmod></url>
+  <url><loc>https://pagero.kr/privacy</loc><lastmod>2026-07-21</lastmod></url>
+  <url><loc>https://pagero.kr/terms</loc><lastmod>2026-07-21</lastmod></url>
 </urlset>
