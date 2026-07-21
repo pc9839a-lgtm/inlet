@@ -328,13 +328,85 @@ function Overview({ summary, leadSummaryRows, risks }) {
 }
 
 function AccountsView({ accounts }) {
+  const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [planFilter, setPlanFilter] = useState('all');
+
+  const statusOptions = useMemo(() => (
+    [...new Set(accounts.map((account) => compactStatus(account.status)).filter(Boolean))].sort()
+  ), [accounts]);
+
+  const filteredAccounts = useMemo(() => {
+    const normalizedQuery = query.trim().toLocaleLowerCase('ko-KR');
+    return accounts.filter((account) => {
+      const status = compactStatus(account.status);
+      const billing = String(account.billingStatus || account.billing_status || '').toLowerCase();
+      const paid = billing === 'active'
+        || Number(account.paidProjectCount || account.paidProjects || 0) > 0
+        || normalizedPlanKey(account.plan || account.billingPlan) !== 'free';
+      const searchText = [
+        account.name,
+        account.email,
+        account.id,
+        account.ownerId,
+        account.phone,
+        account.mobile,
+        account.contact,
+        account.company,
+        account.organization,
+      ].filter(Boolean).join(' ').toLocaleLowerCase('ko-KR');
+
+      if (normalizedQuery && !searchText.includes(normalizedQuery)) return false;
+      if (statusFilter !== 'all' && status !== statusFilter) return false;
+      if (planFilter === 'paid' && !paid) return false;
+      if (planFilter === 'free' && paid) return false;
+      return true;
+    });
+  }, [accounts, planFilter, query, statusFilter]);
+
+  const hasFilters = query || statusFilter !== 'all' || planFilter !== 'all';
+  const resetFilters = () => {
+    setQuery('');
+    setStatusFilter('all');
+    setPlanFilter('all');
+  };
+
   return (
     <section className="admin-master-card">
       <CardTitle title="회원 관리" desc="회원별 보유 페이지, 유료 페이지, 플랜과 최근 활동만 확인합니다." />
-      <SimpleTable columns={['회원', '이메일', '플랜', '보유 페이지', '유료 페이지', '파일 사용량', '최근 활동']} rows={accounts.map((account) => [
+      <div className="admin-list-toolbar" role="search" aria-label="회원 검색 및 필터">
+        <label className="admin-search-field">
+          <Search size={18} aria-hidden="true" />
+          <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="이름, 이메일, 연락처 검색" aria-label="회원 검색" />
+        </label>
+        <label className="admin-filter-field">
+          <span>상태</span>
+          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+            <option value="all">전체</option>
+            {statusOptions.map((status) => <option key={status} value={status}>{status}</option>)}
+          </select>
+        </label>
+        <label className="admin-filter-field">
+          <span>플랜</span>
+          <select value={planFilter} onChange={(event) => setPlanFilter(event.target.value)}>
+            <option value="all">전체</option>
+            <option value="paid">유료</option>
+            <option value="free">무료</option>
+          </select>
+        </label>
+        <div className="admin-filter-summary" aria-live="polite"><strong>{filteredAccounts.length}</strong><span>명 회원</span></div>
+        {hasFilters && (
+          <button type="button" className="admin-filter-reset" onClick={resetFilters} aria-label="검색과 필터 초기화">
+            <X size={16} aria-hidden="true" />
+            초기화
+          </button>
+        )}
+      </div>
+      <SimpleTable columns={['회원', '이메일', '플랜', '상태', '보유 페이지', '유료 페이지', '파일 사용량', '최근 활동']} rows={filteredAccounts.map((account) => [
         account.name || '-',
         account.email || '-',
         account.plan || account.billingPlan || 'free',
+        compactStatus(account.status),
         formatNumber(account.projectCount || account.projects || 0),
         formatNumber(account.paidProjectCount || account.paidProjects || 0),
         formatMb(account.fileBytes || account.storageBytes || 0),

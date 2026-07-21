@@ -1,5 +1,14 @@
 # AGENTS.md
 
+## Required Korean Handoff
+
+Before modifying or deploying Pagero, read:
+
+- `docs/PAGERO_MAINTENANCE_HANDOFF_KO.md`
+
+The production root source of truth is `functions/index.js`, not a file named
+`functions/frozenHome.js` and not the local Vite home alone.
+
 ## Production Home Lock - Highest Priority
 
 The current production root at `https://pagero.kr/` is the canonical Pagero
@@ -33,8 +42,8 @@ side effect of unrelated work. Protected scope includes:
 * root/home routing in `src/App.jsx`
 * public-home, landing, hero, and home screen components
 * public-home CSS and frozen C63 assets
-* `functions/frozenHome.js`
-* root/home handling in `functions/index.js` and `server/index.mjs`
+* `functions/index.js`
+* root/home handling in `server/index.mjs`
 * `public/c63-life-bridge.js` and `public/c63-life-bridge.css`
 
 SEO-only changes may update `public/robots.txt`, `public/sitemap.xml`,
