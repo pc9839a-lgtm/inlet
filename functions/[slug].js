@@ -14,11 +14,7 @@ export async function onRequest(context) {
   const page = await findPublicPageBySlug(env, slug).catch(() => null);
   if (!page) return context.next();
 
-  const shellUrl = new URL('/index.html', request.url);
-  const shellRequest = new Request(shellUrl, request);
-  const response = env.ASSETS?.fetch
-    ? await env.ASSETS.fetch(shellRequest)
-    : await context.next();
+  const response = await context.next();
   if (!response.ok) return response;
 
   const html = await response.text();
