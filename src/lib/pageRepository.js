@@ -1,6 +1,7 @@
 import { isServerPageMode } from '../config/runtimeConfig.js';
 import { ApiError, apiFetch, postJson, projectAuthHeaders } from './apiClient.js';
 import { normalizePageForSave } from './pageModel.js';
+import { optimizePageForServerSave } from './pageSaveOptimizer.js';
 import { projectContext } from './projectContext.js';
 
 function pageSlug(pageOrSlug) {
@@ -157,7 +158,8 @@ async function verifyPublicPageSave(savedPage = {}) {
 }
 
 export async function persistPage(page, authUser = null, options = {}) {
-  const safePage = normalizePageForSave(page);
+  const optimizedPage = await optimizePageForServerSave(page);
+  const safePage = normalizePageForSave(optimizedPage);
   if (!isServerPageMode()) {
     return { ok: true, mode: 'local' };
   }
@@ -183,7 +185,7 @@ export async function persistPage(page, authUser = null, options = {}) {
   try {
     const result = await postJson(`/api/pages/${encodeURIComponent(slug)}`, payload, { headers: projectAuthHeaders(context) });
     if (result?.page && options.verifyPublic !== false) await verifyPublicPageSave(result.page);
-    return result;
+    return { ...result, clientPage: pageWithContext };
   } catch (error) {
     if (!canRetryWithAccountProject(error, authUser)) throw error;
     const retry = accountOwnedPageForRetry(pageWithContext, authUser);
@@ -195,7 +197,7 @@ export async function persistPage(page, authUser = null, options = {}) {
       recoveredProjectAccess: true,
     }, { headers: projectAuthHeaders(retry.context) });
     if (result?.page && options.verifyPublic !== false) await verifyPublicPageSave(result.page);
-    return result;
+    return { ...result, clientPage: retry.page };
   }
 }
 

@@ -5,6 +5,10 @@ const C63_HOME_HTML = `<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="google" content="notranslate" />
   <meta name="google-adsense-account" content="ca-pub-1906196934401001" />
+  <meta name="naver-site-verification" content="2b53120b247214ee096be40c7c15795e42a8a24c" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="description" content="페이지로에서 모바일 랜딩페이지를 만들고 접수와 통계를 한곳에서 관리하세요." />
+  <link rel="canonical" href="https://pagero.kr/" />
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1906196934401001" crossorigin="anonymous"></script>
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />

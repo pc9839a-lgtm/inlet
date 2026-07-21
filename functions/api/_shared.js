@@ -326,7 +326,8 @@ async function claimD1ProjectShell(db, project = {}, identity = {}, access = {})
 }
 
 export async function handleApiError(request, env, error, methods) {
-  const status = Number(error?.status || 500);
+  const tooLarge = /SQLITE_TOOBIG|string or blob too big|PAGE_DATA_TOO_LARGE/i.test(String(error?.message || error || ''));
+  const status = tooLarge ? 413 : Number(error?.status || 500);
   const rawMessage = [error?.code || error?.details?.code || '', error?.message || error].filter(Boolean).join(' ');
   const message = cleanUserFacingApiError(rawMessage, status);
   return jsonResponse(request, env, status, {
@@ -360,6 +361,7 @@ function cleanUserFacingApiError(message = '', status = 0) {
   if (/projectId is required/i.test(text)) return '프로젝트 정보가 누락되었습니다.';
   if (/D1 binding is not configured/i.test(text)) return '서버 데이터베이스 연결이 준비되지 않았습니다.';
   if (/Invalid JSON body/i.test(text)) return '요청 데이터 형식이 올바르지 않습니다.';
+  if (/SQLITE_TOOBIG|string or blob too big|PAGE_DATA_TOO_LARGE/i.test(text)) return '페이지 이미지 용량이 서버 저장 한도를 초과했습니다. 큰 이미지나 갤러리 이미지를 줄인 뒤 다시 저장해주세요.';
   return text || `요청 처리 실패: ${status}`;
 }
 
@@ -372,6 +374,7 @@ function userFacingApiError(message = '', status = 0) {
   if (/projectId is required/i.test(text)) return '프로젝트 정보가 누락되었습니다.';
   if (/D1 binding is not configured/i.test(text)) return '서버 데이터베이스 연결이 준비되지 않았습니다.';
   if (/Invalid JSON body/i.test(text)) return '요청 데이터 형식이 올바르지 않습니다.';
+  if (/SQLITE_TOOBIG|string or blob too big|PAGE_DATA_TOO_LARGE/i.test(text)) return '페이지 이미지 용량이 서버 저장 한도를 초과했습니다. 큰 이미지나 갤러리 이미지를 줄인 뒤 다시 저장해주세요.';
   return text || `요청 처리 실패: ${status}`;
 }
 async function hmacBase64Url(payloadPart, secret) {

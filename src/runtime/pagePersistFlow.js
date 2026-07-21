@@ -26,7 +26,8 @@ export function commitSavedPageResult({
   setSaved,
   markSaveStatus,
 }) {
-  const savedPage = result?.page ? savedPageFromResult(nextPage, result.page) : nextPage;
+  const persistedClientPage = result?.clientPage || nextPage;
+  const savedPage = result?.page ? savedPageFromResult(persistedClientPage, result.page) : persistedClientPage;
   latestPageRef.current = savedPage;
   setPage(savedPage);
   saveLocalJson(STORAGE_KEY, savedPage, PAGE_SAVE_LABEL);
