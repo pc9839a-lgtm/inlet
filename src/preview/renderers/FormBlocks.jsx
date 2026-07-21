@@ -298,7 +298,7 @@ export function RenderForm({ block, addLead, track }) {
     '--form-gap': `${spacingGap}px`,
     '--form-button-hover': themeButtonHoverColor(s),
   };
-  const formTitle = plainRichText(s.title || '상담 신청');
+  const formTitle = plainRichText(s.title ?? '상담 신청');
   const formDesc = s.desc || '';
 
   return (
@@ -308,7 +308,7 @@ export function RenderForm({ block, addLead, track }) {
       {done ? (
         <div className="success">
           <CheckCircle2 size={24} />
-          <h3>{s.successTitle || '상담 신청 완료'}</h3>
+          <h3>{s.successTitle ?? '상담 신청 완료'}</h3>
           <p>{s.success}</p>
           <button type="button" onClick={() => setDone(false)}>다시 작성</button>
         </div>
@@ -764,7 +764,7 @@ export function RenderReservation({ block, addLead, track }) {
       {done ? (
         <div className="success">
           <CheckCircle2 size={24} />
-          <h3>{s.success || '방문예약 신청이 접수되었습니다.'}</h3>
+          <h3>{s.success ?? '방문예약 신청이 접수되었습니다.'}</h3>
           <button type="button" onClick={() => setDone(false)}>다시 예약</button>
         </div>
       ) : (

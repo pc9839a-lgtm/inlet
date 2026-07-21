@@ -196,7 +196,7 @@ export function RenderActivity({ block, leads = [] }) {
       <div className="activity-stack-head">
         <div>
           <span className="activity-live-dot"></span>
-          <strong>{s.title || '실시간 접수현황'}</strong>
+          <strong>{s.title ?? '실시간 접수현황'}</strong>
         </div>
       </div>
 

@@ -3541,3 +3541,27 @@
 .settings-panel .account-password-code,.settings-panel .account-settings-actions{grid-column:1/-1!important}
 .settings-panel .account-settings-actions{display:flex!important;justify-content:flex-end!important}
 @media(max-width:760px){.settings-panel .settings-conversion-values,.settings-panel .account-password-form .account-settings-grid{grid-template-columns:minmax(0,1fr)!important}.settings-panel .settings-conversion-field:first-child,.settings-panel .settings-conversion-actions,.settings-panel .account-password-code,.settings-panel .account-settings-actions{grid-column:auto!important}}
+/* seo-media-preview-20260722 */
+.settings-panel .settings-seo-card .settings-seo-favicon .image-box.single-plus {
+  width: 88px !important;
+  max-width: 88px !important;
+  aspect-ratio: 1 / 1 !important;
+  min-height: 88px !important;
+  overflow: hidden !important;
+}
+.settings-panel .settings-seo-card .settings-seo-og-image { grid-column: 1 / -1 !important; }
+.settings-panel .settings-seo-card .settings-seo-og-image .image-box.single-plus {
+  width: min(100%, 520px) !important;
+  max-width: 520px !important;
+  aspect-ratio: 1200 / 630 !important;
+  min-height: 0 !important;
+  max-height: 273px !important;
+  overflow: hidden !important;
+  background: #f8fafc !important;
+}
+.settings-panel .settings-seo-card :is(.settings-seo-favicon, .settings-seo-og-image) .image-box.single-plus > img {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none !important;
+  object-fit: cover !important;
+}

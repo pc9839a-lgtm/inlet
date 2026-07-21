@@ -47,8 +47,11 @@ export async function persistBasicDraft({
   notify('페이지 기본 설정을 저장했습니다.', 'success');
 }
 
-export function persistSeoDraft({ lockSection, seoDraft, updateMeta }) {
-  updateMeta(seoDraft);
+export async function persistSeoDraft({ lockSection, onSavePage, page, seoDraft, updateMeta }) {
+  const nextPage = { ...page, meta: { ...(page.meta || {}), ...seoDraft } };
+  const result = await onSavePage?.(nextPage);
+  if (result && result.ok === false) return;
+  if (!result?.page) updateMeta(seoDraft);
   lockSection('seo');
   notify('SEO 설정을 저장했습니다.', 'success');
 }

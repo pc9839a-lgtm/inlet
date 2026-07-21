@@ -85,7 +85,7 @@ export function RenderTopNav({ block, go }) {
 
   return (
     <section id={`block-${block.id}`} className={`landing-section topnav topnav-one-line topnav-${bg} topnav-align-${align} topnav-logo-${logoStyle} logo-${logoSize} menu-${menuStyle} menu-${menuSize} ${menuLoop ? 'topnav-menu-loop' : ''} ${s.sticky !== false ? 'topnav-sticky' : ''}`} style={vars}>
-      <div className="top-logo">{isImageLogo ? <img src={s.logoImage} alt="" /> : <strong>{s.logoText || 'LOGO'}</strong>}</div>
+      <div className="top-logo">{isImageLogo ? <img src={s.logoImage} alt="" /> : <strong>{s.logoText ?? 'LOGO'}</strong>}</div>
       <div className="top-menu">
         <div className="top-menu-track">
           <div className="top-menu-set">{menus.map((m) => renderMenuButton(m))}</div>

@@ -52,7 +52,7 @@ export function RenderHero({ block }) {
           </div>
         ) : (
           <div className="hero-full-empty">
-            <h1>{rich(s.title || '이미지를 업로드하세요')}</h1>
+            <h1>{rich(s.title ?? '이미지를 업로드하세요')}</h1>
             <p>히어로 영역에 사용할 대표 이미지를 넣어주세요.</p>
           </div>
         )}

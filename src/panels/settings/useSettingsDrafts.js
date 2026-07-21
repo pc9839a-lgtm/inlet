@@ -61,7 +61,7 @@ export default function useSettingsDrafts({
     updatePage,
   });
 
-  const saveSeo = () => persistSeoDraft({ lockSection, seoDraft, updateMeta });
+  const saveSeo = () => persistSeoDraft({ lockSection, onSavePage, page, seoDraft, updateMeta });
   const saveTracking = () => persistTrackingDraft({ lockSection, trackingDraft, updateMeta });
   const updateConversionMeta = (patch) => updateConversionDraft({ patch, setConversionLocked, updateMeta });
   const saveConversionValues = () => persistConversionValues({ hasConversionValue, setConversionLocked });

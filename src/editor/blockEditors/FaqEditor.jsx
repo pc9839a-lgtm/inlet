@@ -14,7 +14,7 @@ export default function FaqEditor({ s, set }) {
           label: '내용',
           content: (
             <EditorField label="제목">
-              <input value={s.title || '자주 묻는 질문'} onChange={(event) => set({ title: event.target.value })} />
+              <input value={s.title ?? '자주 묻는 질문'} onChange={(event) => set({ title: event.target.value })} />
             </EditorField>
           ),
         },

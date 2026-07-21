@@ -19,11 +19,11 @@ export default function SeoSettingsSection({
         <div className="settings-field-hint-wrap">
           <Field label="메타 설명" textarea value={seoDraft.desc} disabled={locked} placeholder="무료 상담, 방문 예약, 혜택을 80자 안팎으로 요약" onChange={(value) => setSeoDraft((draft) => ({ ...draft, desc: value }))} />
         </div>
-        <div className="settings-field-hint-wrap">
+        <div className="settings-field-hint-wrap settings-seo-favicon">
           <ImageInput label="파비콘" value={seoDraft.favicon} disabled={locked} onChange={(value) => setSeoDraft((draft) => ({ ...draft, favicon: value }))} />
           <small className="settings-field-hint">32x32 PNG/ICO</small>
         </div>
-        <div className="settings-field-hint-wrap">
+        <div className="settings-field-hint-wrap settings-seo-og-image">
           <ImageInput label="공유 이미지" value={seoDraft.og} disabled={locked} onChange={(value) => setSeoDraft((draft) => ({ ...draft, og: value }))} />
           <small className="settings-field-hint">1200x630 JPG/PNG/WebP</small>
         </div>
