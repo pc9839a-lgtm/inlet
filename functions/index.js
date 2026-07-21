@@ -1,6 +1,7 @@
 const C63_HOME_HTML = `<!doctype html>
 <html lang="ko" translate="no">
 <head>
+  <!-- deploy-trigger: 2026-07-21 -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="google" content="notranslate" />
