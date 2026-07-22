@@ -386,8 +386,6 @@ function UrlStartStep({ initialSlug = '', modeLabel = '', onBack, onConfirm, onC
 }
 
 function CreateLandingModal({ page, onClose, onAi, onManual, onTemplate, onCheckUrl, templates = [], TemplatesPanelComponent = null, canCreateLanding = true, createLandingStatus = '' }) {
-  return null;
-
   const [step, setStep] = useState('menu');
   const [pendingMode, setPendingMode] = useState('');
   const [confirmedUrl, setConfirmedUrl] = useState(null);

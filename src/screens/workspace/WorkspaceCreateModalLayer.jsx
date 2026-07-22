@@ -1,5 +1,6 @@
 import React from 'react';
-import { CreateLandingModal, TemplatesPanel } from './workspaceLazySurfaces.jsx';
+import { CreateLandingModal } from '../CreateLandingFlow.jsx';
+import { TemplatesPanel } from './workspaceLazySurfaces.jsx';
 
 export function WorkspaceCreateModalLayer({
   show,
