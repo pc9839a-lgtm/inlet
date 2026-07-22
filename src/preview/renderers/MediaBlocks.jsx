@@ -4,6 +4,8 @@ export function RenderImage({ block }) {
   const s = block.s || {};
   const gallery = (Array.isArray(s.gallery) ? s.gallery : []).filter(Boolean).slice(0, 4);
   const isGridGallery = s.mode === 'gallery' && s.galleryLayout === 'grid';
+  const gridCount = Number(s.galleryGridCount) === 2 ? 2 : 4;
+  const visibleGallery = isGridGallery ? gallery.slice(0, gridCount) : gallery;
   const [idx, setIdx] = useState(0);
   const [failedSrc, setFailedSrc] = useState('');
   const swipeRef = useRef(null);
@@ -70,9 +72,9 @@ export function RenderImage({ block }) {
 
   return (
     <section id={`block-${block.id}`} className="landing-section image-sec" style={blockStyle}>
-      {isGridGallery && gallery.length ? (
-        <div className={`image-gallery-grid image-gallery-grid-${gallery.length} ${s.rounded ? 'rounded' : ''}`}>
-          {gallery.map((gallerySrc, index) => (
+      {isGridGallery && visibleGallery.length ? (
+        <div className={`image-gallery-grid image-gallery-grid-${visibleGallery.length} ${s.rounded ? 'rounded' : ''}`}>
+          {visibleGallery.map((gallerySrc, index) => (
             <div className="image-gallery-grid-item" key={`${gallerySrc}-${index}`}>
               <img src={gallerySrc} alt="" draggable="false" />
             </div>

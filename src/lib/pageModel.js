@@ -76,7 +76,7 @@ const defaultPage = {
       { id: uid(), eyebrow: '01', title: '첫 번째 카드', body: '핵심 내용을 짧게 입력하세요.' },
       { id: uid(), eyebrow: '02', title: '두 번째 카드', body: '사용자가 바로 이해할 수 있게 정리하세요.' },
     ] } },
-    { id: uid(), type: 'image', visible: true, s: { mode: 'single', image: '', gallery: [], galleryLayout: 'slide', imageDisplay: 'original', imageHeightPx: 260, imageX: 50, imageY: 50, rounded: true, autoplay: false, interval: 5, galleryShowArrows: true, galleryShowDots: true, caption: '' } },
+    { id: uid(), type: 'image', visible: true, s: { mode: 'single', image: '', gallery: [], galleryLayout: 'slide', galleryGridCount: 4, imageDisplay: 'original', imageHeightPx: 260, imageX: 50, imageY: 50, rounded: true, autoplay: false, interval: 5, galleryShowArrows: true, galleryShowDots: true, caption: '' } },
     { id: uid(), type: 'links', visible: true, s: { title: '빠른 문의', layout: 'list', align: 'left', newWindow: true, items: [
       { id: uid(), emoji: '💬', iconMode: 'emoji', thumb: linkThumbnailFromUrl('https://open.kakao.com/'), label: '카카오톡 문의', target: 'url', url: 'https://open.kakao.com/' },
       { id: uid(), emoji: '📞', iconMode: 'emoji', thumb: '', label: '전화 문의', target: 'phone', url: 'tel:01000000000' },
@@ -439,6 +439,7 @@ function sanitizeBlock(block) {
   if (block?.type === 'image') {
     s.gallery = Array.isArray(s.gallery) ? s.gallery.slice(0, 4) : [];
     s.galleryLayout = pickSafe(s.galleryLayout || 'slide', ['slide','grid'], 'slide');
+    s.galleryGridCount = Number(s.galleryGridCount) === 2 ? 2 : 4;
     s.imageHeightPx = Math.max(140, Math.min(520, Number(s.imageHeightPx || 260)));
     s.imageX = Math.max(0, Math.min(100, Number(s.imageX ?? 50)));
     s.imageY = Math.max(0, Math.min(100, Number(s.imageY ?? 50)));

@@ -4,6 +4,7 @@ export default function ImageGalleryDisplaySection({ s, set }) {
   if (s.mode !== 'gallery') return null;
 
   const layout = s.galleryLayout === 'grid' ? 'grid' : 'slide';
+  const gridCount = Number(s.galleryGridCount) === 2 ? '2' : '4';
 
   return (
     <div className="image-slide-options editor-v2-control-list">
@@ -47,7 +48,15 @@ export default function ImageGalleryDisplaySection({ s, set }) {
           />
         </>
       ) : (
-        <p className="image-mode-note compact">최대 4장을 한 화면에 배치합니다.</p>
+        <SegmentedControl
+          label="그리드 이미지 수"
+          value={gridCount}
+          onChange={(value) => set({ galleryGridCount: Number(value) })}
+          options={[
+            { value: '2', label: '2개' },
+            { value: '4', label: '4개' },
+          ]}
+        />
       )}
     </div>
   );
