@@ -1,8 +1,10 @@
 import {
   assertD1,
+  authorizeProject,
   handleApiError,
   jsonResponse,
   optionsResponse,
+  projectFromRequest,
 } from '../_shared.js';
 import {
   requireCallLinkDevice,
@@ -19,8 +21,17 @@ export async function onRequest({ request, env }) {
   }
   try {
     const db = assertD1(env);
-    const device = await requireCallLinkDevice(request, env);
-    const wallet = await walletBalance(db, device.projectId);
+    const authorization = String(request.headers.get('Authorization') || '').trim();
+    let projectId = '';
+    if (authorization.toLowerCase().startsWith('bearer cl_')) {
+      const device = await requireCallLinkDevice(request, env);
+      projectId = device.projectId;
+    } else {
+      const project = projectFromRequest(new URL(request.url), {}, request);
+      await authorizeProject(request, env, project, { write: false, tab: 'settings' });
+      projectId = project.projectId;
+    }
+    const wallet = await walletBalance(db, projectId);
     let provider = null;
     let providerAvailable = true;
     try {
