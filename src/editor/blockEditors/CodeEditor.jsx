@@ -1,4 +1,5 @@
 import { Code2 } from 'lucide-react';
+import './CodeEditor.css';
 import { EditorSection, EditorTabs } from '../ui/index.js';
 import { CodeStylePanel } from './WidgetStylePanels.jsx';
 import CodeEditorBox from './CodeEditorBox.jsx';
