@@ -1,0 +1,4 @@
+.code-editor-box,.code-editor-modal-card{min-width:0;max-width:100%;box-sizing:border-box;overflow:hidden}
+.code-editor-box textarea,.code-editor-modal-card textarea{display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;overflow:auto}
+.code-editor-modal-head,.code-editor-modal-actions,.code-editor-actions{min-width:0;flex-wrap:wrap}
+@media(max-width:720px){.code-editor-modal{padding:12px}.code-editor-modal-card{width:100%;height:calc(100dvh - 24px);max-height:calc(100dvh - 24px);padding:12px}.code-editor-modal-card textarea{min-height:0}}

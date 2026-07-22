@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { fetchServerPage } from '../lib/pageRepository.js';
 import { projectContext } from '../lib/projectContext.js';
 import { defaultPage, normalize, normalizePageForSave } from '../lib/pageModel.js';
@@ -12,11 +12,25 @@ export function useAccountWorkspacePage({
   latestPageRef,
   localPageMutationRef,
 }) {
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (publicLandingSlug || !authUser) return undefined;
     let alive = true;
     const slug = page.slug || defaultPage.slug || 'my-page';
     const context = projectContext(page, authUser);
+    const pageOwnerId = String(page.ownerId || page.ownerAccountId || '').trim();
+    const pageProjectId = String(page.projectId || '').trim();
+    const belongsToAccount = (!pageOwnerId || pageOwnerId === context.ownerId)
+      && (!pageProjectId || pageProjectId === context.projectId || pageProjectId === context.legacyProjectId);
+    if (!belongsToAccount) {
+      const isolatedPage = normalizePageForSave({
+        ...defaultPage,
+        slug,
+        projectId: context.projectId,
+        ownerId: context.ownerId,
+      });
+      latestPageRef.current = isolatedPage;
+      setPage(isolatedPage);
+    }
     const loadKey = `${context.projectId}:${context.slug}:${authUser?.session || authUser?.workspaceId || authUser?.email || ''}`;
     const loadMutation = localPageMutationRef.current;
     if (accountPageLoadRef.current === loadKey) return undefined;

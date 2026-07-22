@@ -55,7 +55,7 @@ export async function attachExistingPageIdentity(sourcePage = {}, {
   latestPage = null,
   currentPage = null,
 } = {}) {
-  if (!authUser || hasServerIdentity(sourcePage)) return sourcePage;
+  if (!authUser) return sourcePage;
 
   const localIdentity = latestPage || currentPage;
   const slug = sanitizePageSlug(sourcePage?.slug || localIdentity?.slug || '', '');
@@ -63,6 +63,14 @@ export async function attachExistingPageIdentity(sourcePage = {}, {
 
   const sourceWithSlug = { ...sourcePage, slug };
   const context = projectContext(sourceWithSlug, authUser);
+
+  if (hasServerIdentity(sourcePage)) {
+    if (matchesSaveContext(sourcePage, sourceWithSlug, context, authUser)) return sourcePage;
+    const error = new Error('다른 계정의 페이지는 편집하거나 저장할 수 없습니다. 페이지 소유 계정으로 로그인해주세요.');
+    error.status = 403;
+    error.details = { code: 'PAGE_ACCOUNT_MISMATCH' };
+    throw error;
+  }
 
   if (matchesSaveContext(localIdentity, sourceWithSlug, context, authUser)) {
     return mergeServerIdentity(sourcePage, localIdentity);
