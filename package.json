@@ -37,6 +37,7 @@
     "api:container:qa": "node scripts/api-container-quality-check.mjs",
     "api:functions:qa": "node scripts/pages-functions-quality-check.mjs",
     "api:security:qa": "node scripts/api-security-quality-check.mjs",
+    "calllink:qa": "node scripts/calllink-quality-check.mjs",
     "rendering:qa": "node scripts/rendering-quality-check.mjs",
     "artifact:qa": "node scripts/artifact-quality-check.mjs",
     "artifact:clean": "node scripts/artifact-cleanup.mjs",
