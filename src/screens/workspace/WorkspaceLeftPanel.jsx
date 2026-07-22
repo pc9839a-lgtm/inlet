@@ -48,7 +48,15 @@ export function WorkspaceLeftPanel({
             {mobileOperationsOnly ? (
               <MobileOperationsHeader page={page} />
             ) : clientAdminMode ? (
-              <ClientAdminHeader page={page} onDashboard={onDashboard} onPreview={onPreview} previewUrl={previewUrl} />
+              <ClientAdminHeader
+                page={page}
+                saved={saved}
+                saveStatus={saveStatus}
+                onSave={onSave}
+                onDashboard={onDashboard}
+                onPreview={onPreview}
+                previewUrl={previewUrl}
+              />
             ) : (
               <PanelHeader
                 page={page}
