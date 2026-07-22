@@ -36,6 +36,7 @@ export function RenderMap({ block }) {
   const s = block.s || {};
   const layout = pickSafe(s.layout || 'default', ['default', 'full', 'minimal'], 'default');
   const height = pickSafe(s.height || 'medium', ['small', 'medium', 'large'], 'medium');
+  const align = pickSafe(s.align || 'left', ['left', 'center', 'right'], 'left');
   const src = s.mapMode === 'osm_fallback' ? '' : googleMapSrc(s);
   const address = compactAddress(s);
   const query = mapQuery(s);
@@ -63,7 +64,7 @@ export function RenderMap({ block }) {
     <section
       id={`block-${block.id}`}
       className={`landing-section inlet-map-section map-widget location-guide map-${layout} map-height-${height} ${widgetBoxClass(s, { background: false, shadow: false })}`}
-      style={widgetBoxVars(s)}
+      style={{ ...widgetBoxVars(s), '--map-align': align, '--map-justify': align === 'left' ? 'start' : align === 'right' ? 'end' : 'center' }}
     >
       <header className="location-guide-heading">
         {s.eyebrow && <span>{s.eyebrow}</span>}

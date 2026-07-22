@@ -2,7 +2,7 @@ import { assertD1, handleApiError, jsonResponse, optionsResponse, sessionIdentit
 import { projectDownloadsPrefix } from '../files/_files.js';
 
 const ADMIN_METHODS = 'GET, OPTIONS';
-const DEFAULT_MASTER_EMAILS = ['admin@pagero.kr', 'roadfor@kakao.com'];
+const DEFAULT_MASTER_EMAILS = ['admin@pagero.kr', 'roadfor@kakao.com', 'pc9839a@naver.com'];
 const OPERATIONAL_PROJECT_WHERE = `
   COALESCE(projects.status, 'active') <> 'deleted'
   AND lower(COALESCE(projects.slug, '')) NOT LIKE 'hosted-route-qa-%'

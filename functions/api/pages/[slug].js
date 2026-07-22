@@ -62,7 +62,7 @@ function methodNotAllowedResponse(request, env) {
 
 function isFreePlan(value = '') {
   const plan = String(value || 'free').trim().toLowerCase();
-  return !['paid', 'pro', 'premium', 'business', 'agency', 'enterprise'].includes(plan);
+  return !['paid', 'pro', 'premium', 'business', 'agency', 'enterprise', 'platform', 'unlimited'].includes(plan);
 }
 
 function normalizeEmail(value = '') {

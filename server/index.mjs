@@ -870,7 +870,7 @@ function assertPlatformMaster(req) {
     .split(',')
     .map((item) => normalizeEmail(item))
     .filter(Boolean);
-  const allowedEmails = configured.length ? configured : ['admin@pagero.kr', 'roadfor@kakao.com'];
+  const allowedEmails = configured.length ? configured : ['admin@pagero.kr', 'roadfor@kakao.com', 'pc9839a@naver.com'];
   if (allowedEmails.includes(email) || ['platformmaster', 'platform_master', 'superadmin', 'serviceadmin'].includes(role)) {
     return identity;
   }
@@ -4876,7 +4876,7 @@ function isValidEmail(value = '') {
 
 function isFreePlan(value = '') {
   const plan = String(value || 'free').trim().toLowerCase();
-  return !['paid', 'pro', 'premium', 'business', 'agency', 'enterprise'].includes(plan);
+  return !['paid', 'pro', 'premium', 'business', 'agency', 'enterprise', 'platform', 'unlimited'].includes(plan);
 }
 
 function enforceFreeEmailAlertRecipient(page = {}, project = {}, identity = null, fallbackEmail = '') {

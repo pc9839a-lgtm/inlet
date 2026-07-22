@@ -10,6 +10,8 @@ const PLAN_ALIASES = {
   business: 'pro',
   agency: 'pro',
   enterprise: 'pro',
+  platform: 'unlimited',
+  unlimited: 'unlimited',
   pro: 'pro',
 };
 
@@ -37,6 +39,14 @@ const PLAN_FEATURES = {
     leadRetentionDays: null,
     paidPageLimit: 3,
     totalPageLimit: 4,
+  },
+  unlimited: {
+    pageDuplication: true,
+    customDomain: true,
+    editableEmailRecipient: true,
+    leadRetentionDays: null,
+    paidPageLimit: Number.MAX_SAFE_INTEGER,
+    totalPageLimit: Number.MAX_SAFE_INTEGER,
   },
 };
 
@@ -79,7 +89,11 @@ export function isFreePlan(page = {}, authUser = null) {
   return projectPlanKey(page, authUser) === 'free';
 }
 
+const UNLIMITED_ACCOUNT_EMAILS = new Set(['pc9839a@naver.com']);
+
 export function planFeatures(page = {}, authUser = null) {
+  const email = String(authUser?.email || page?.ownerEmail || '').trim().toLowerCase();
+  if (UNLIMITED_ACCOUNT_EMAILS.has(email)) return PLAN_FEATURES.unlimited;
   return PLAN_FEATURES[projectPlanKey(page, authUser)] || PLAN_FEATURES.free;
 }
 

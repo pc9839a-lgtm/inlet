@@ -229,6 +229,7 @@ function authStatePresetData(name) {
           showMapLinks: true,
           showEmbedMap: true,
           mapMode: 'google_embed',
+          align: 'center',
           showSubway: true,
           subwayText: '1·4호선 서울역',
           showBus: false,

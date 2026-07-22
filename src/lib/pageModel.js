@@ -466,6 +466,7 @@ function sanitizeBlock(block) {
     s.showMapLinks = typeof s.showMapLinks === 'boolean' ? s.showMapLinks : true;
     s.showEmbedMap = typeof s.showEmbedMap === 'boolean' ? s.showEmbedMap : true;
     s.mapMode = pickSafe(s.mapMode || 'google_embed', ['google_embed','osm_fallback'], 'google_embed');
+    s.align = pickSafe(s.align || 'left', ['left','center','right'], 'left');
   }
 
   if (block?.type === 'faq') {
@@ -579,7 +580,7 @@ function newBlock(type) {
     ] } });
   }
   if (type === 'map') {
-    return sanitizeBlock({ id: uid(), type: 'map', visible: true, s: { eyebrow: 'LOCATION', sectionTitle: '오시는 길', placeName: '서울역', title: '서울역', address: '서울특별시 용산구 한강대로 405', detailAddress: '', phone: '', subwayText: '', busText: '', parkingText: '', showSubway: false, showBus: false, showParking: false, tmapUrl: '', naverMapUrl: '', kakaoMapUrl: '', showMapLinks: true, showEmbedMap: true, mapMode: 'google_embed', layout: 'default', height: 'medium' } });
+    return sanitizeBlock({ id: uid(), type: 'map', visible: true, s: { eyebrow: 'LOCATION', sectionTitle: '오시는 길', placeName: '서울역', title: '서울역', address: '서울특별시 용산구 한강대로 405', detailAddress: '', phone: '', subwayText: '', busText: '', parkingText: '', showSubway: false, showBus: false, showParking: false, tmapUrl: '', naverMapUrl: '', kakaoMapUrl: '', showMapLinks: true, showEmbedMap: true, mapMode: 'google_embed', align: 'left', layout: 'default', height: 'medium' } });
   }
   if (type === 'schedule') {
     return sanitizeBlock({ id: uid(), type: 'schedule', visible: true, s: { title: '일정 안내', date: '2026-10-24', body: '상세 일정을 입력하세요', monthLabel: '', highlightColor: '#8AA2C8', cardBgColor: '', textColor: '', align: 'center' } });

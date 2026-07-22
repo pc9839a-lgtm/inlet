@@ -108,7 +108,7 @@ const PublicHome = lazy(() => import('./screens/PublicHomeRoute.jsx'));
 const INBOX_PAGE_SIZE = 10;
 const CHUNK_RELOAD_KEY = 'pagero-chunk-reload-v5';
 const CHUNK_RELOAD_LIMIT = 5;
-const PLATFORM_MASTER_EMAILS = ['admin@pagero.kr', 'roadfor@kakao.com'];
+const PLATFORM_MASTER_EMAILS = ['admin@pagero.kr', 'roadfor@kakao.com', 'pc9839a@naver.com'];
 
 function isPlatformMasterUser(user = null) {
   const email = String(user?.email || '').trim().toLowerCase();
