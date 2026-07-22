@@ -256,8 +256,10 @@ function identityOwnerAliases(identity = {}) {
   const aliases = new Set();
   const ownerId = String(identity.ownerId || '').trim();
   const email = String(identity.email || '').trim().toLowerCase();
+  const legacyEmailOwnerId = email.replace(/[^a-zA-Z0-9-_]/g, '');
   if (ownerId) aliases.add(ownerId);
   if (email) aliases.add(`user_${stableHash(email)}`);
+  if (legacyEmailOwnerId) aliases.add(legacyEmailOwnerId);
   return aliases;
 }
 

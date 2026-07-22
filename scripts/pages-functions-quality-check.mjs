@@ -237,6 +237,7 @@ for (const token of [
   'canUseProjectAccess',
   'sameOwnerIdentity',
   'identityOwnerAliases',
+  'legacyEmailOwnerId',
   'masterOnly',
   'CLIENT_ADMIN_TABS',
   'MANAGER_TABS',

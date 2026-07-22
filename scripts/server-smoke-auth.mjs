@@ -564,6 +564,40 @@ await runSmoke('server-smoke-auth', async ({ baseUrl }) => {
   assert(newOwnerAfterTransferData.page?.ownership?.ownerEmail !== 'hacker@example.test', 'manager page write must not overwrite ownership metadata');
 }, { env: { INLET_SESSION_SECRET: 'smoke-session-secret' } });
 
+await runSmoke('server-smoke-legacy-email-owner-save', async ({ baseUrl }) => {
+  const secret = 'smoke-session-secret';
+  const email = 'legacy.owner@example.test';
+  const legacyOwnerId = email.replace(/[^a-zA-Z0-9-_]/g, '');
+  const project = {
+    projectId: `${legacyOwnerId}-legacy-save`,
+    ownerId: legacyOwnerId,
+    slug: 'legacy-owner-save',
+  };
+  const session = signedSession({
+    ownerId: `user_${stableHash(email)}`,
+    projectId: project.projectId,
+    role: 'master',
+    email,
+  }, secret);
+
+  const saved = await fetchWithTimeout(`${baseUrl}/api/pages/${project.slug}`, {
+    method: 'POST',
+    headers: authHeaders({
+      'Content-Type': 'application/json',
+      'X-Inlet-Session': session,
+    }),
+    body: JSON.stringify({
+      project,
+      page: {
+        slug: project.slug,
+        title: 'Legacy owner save compatibility',
+        blocks: [],
+      },
+    }),
+  });
+  assert(saved.status === 200, `legacy email owner page save expected 200, got ${saved.status}`);
+}, { env: { INLET_SESSION_SECRET: 'smoke-session-secret' } });
+
 await runSmoke('server-smoke-manager-invite-session', async ({ baseUrl, dataDir }) => {
   const secret = 'smoke-session-secret';
   const project = { projectId: 'smoke-invite-project', ownerId: 'local-user', slug: 'smoke-invite-page' };

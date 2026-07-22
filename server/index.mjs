@@ -6232,8 +6232,10 @@ function identityOwnerAliases(identity = {}) {
   const aliases = new Set();
   const ownerId = safeId(identity.ownerId || '', '');
   const emailOwnerId = ownerIdForEmail(identity.email || '');
+  const legacyEmailOwnerId = safeId(normalizeEmail(identity.email || ''), '');
   if (ownerId) aliases.add(ownerId);
   if (emailOwnerId) aliases.add(emailOwnerId);
+  if (legacyEmailOwnerId) aliases.add(legacyEmailOwnerId);
   return aliases;
 }
 
