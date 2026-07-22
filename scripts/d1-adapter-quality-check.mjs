@@ -1018,7 +1018,7 @@ assert(db.rows.invites.length === 1 && db.rows.invites[0].status === 'accepted',
 await upsertD1ProjectMember(db, decodeD1ProjectMember(encodedMember), { projectId: 'project-1', accountId: 'manager-owner', invitedByAccountId: 'owner-1' });
 await upsertD1ProjectMember(db, { ...decodeD1ProjectMember(encodedMember), status: 'active' }, { projectId: 'project-1', accountId: 'manager-owner', invitedByAccountId: 'owner-1' });
 assert(db.rows.project_members.length === 1 && db.rows.project_members[0].account_id === 'manager-owner', 'project member upsert should preserve unique project account member');
-await upsertD1ProjectMember(db, { id: 'master-member', ownerId: 'owner-1', role: 'master', access: {}, status: 'active' }, { projectId: 'project-1', accountId: 'owner-1' });
+await upsertD1ProjectMember(db, { id: 'master-member', ownerId: 'stale-master', role: 'master', access: {}, status: 'active' }, { projectId: 'project-1', accountId: 'stale-master' });
 await upsertD1ProjectMember(db, { id: 'client-member', ownerId: 'client-owner', role: 'client_admin', access: {}, status: 'active' }, { projectId: 'project-1', accountId: 'client-owner' });
 await replaceD1ProjectMembers(db, {
   projectId: 'project-1',
@@ -1041,7 +1041,7 @@ const d1ProjectBySlug = await getD1ProjectBySlug(db, 'landing');
 const d1Members = await listD1ProjectMembers(db, { projectId: 'project-1' });
 const d1Access = await getD1ProjectAccess(db, { projectId: 'project-1' });
 assert(d1ProjectById?.projectId === 'project-1' && d1ProjectBySlug?.slug === 'landing', 'D1 project lookup should decode by id and slug');
-assert(d1Members.length === 3 && d1Access?.ownerId === 'owner-1' && d1Access.clientOwnerIds.includes('client-owner'), 'D1 project access should derive owner/client/manager ids');
+assert(d1Members.length === 3 && d1Access?.ownerId === 'owner-1' && d1Access.clientOwnerIds.includes('client-owner'), 'D1 project access should keep the project owner authoritative over stale master members');
 await upsertD1OwnershipTransferRequest(db, decodeD1OwnershipTransferRequest(encodedTransfer), { projectId: 'project-1' });
 await upsertD1OwnershipTransferRequest(db, { ...decodeD1OwnershipTransferRequest(encodedTransfer), status: 'waiting_billing_clearance', billingClearanceStatus: 'active_subscription' }, { projectId: 'project-1' });
 const transferPage = await listD1OwnershipTransferRequests(db, { projectId: 'project-1', status: 'waiting_billing_clearance', limit: 10 });

@@ -653,7 +653,7 @@ export async function getD1ProjectAccess(db, { projectId } = {}) {
   const masters = members.filter((member) => member.role === 'master');
   const clients = members.filter((member) => member.role === 'client_admin');
   const managers = members.filter((member) => member.role === 'manager');
-  const ownerId = masters[0]?.ownerId || project.ownerId || '';
+  const ownerId = project.ownerId || masters[0]?.ownerId || '';
   return {
     projectId: project.projectId,
     ownerId,
