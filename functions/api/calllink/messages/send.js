@@ -18,6 +18,7 @@ import {
 
 const METHODS = 'POST, OPTIONS';
 const MAX_MESSAGES = 100;
+const MAX_SCHEDULE_MILLIS = 183 * 24 * 60 * 60 * 1000;
 const SUPPORTED_CHANNELS = new Set(['sms', 'lms', 'alimtalk']);
 
 export async function onRequest({ request, env }) {
@@ -40,6 +41,7 @@ export async function onRequest({ request, env }) {
       error.status = 400;
       throw error;
     }
+    const scheduledDate = normalizeScheduledDate(body.scheduledDate);
 
     const config = await channelConfig(db, projectId);
     if (!config.solapiEnabled || config.status !== 'active' || !config.senderNumber) {
@@ -80,6 +82,7 @@ export async function onRequest({ request, env }) {
       JSON.stringify({
         channel,
         count: messages.length,
+        scheduledDate,
         templateId: channel === 'alimtalk' ? config.kakaoTemplateId : '',
         fallbackSmsEnabled: channel === 'alimtalk' ? config.fallbackSmsEnabled : false,
       }),
@@ -93,22 +96,31 @@ export async function onRequest({ request, env }) {
       error.status = 402;
       throw error;
     }
-    await debitWallet(db, projectId, estimatedCost, logId, `${channel} ${messages.length}건 예상비용`);
+    await debitWallet(
+      db,
+      projectId,
+      estimatedCost,
+      logId,
+      `${channel} ${messages.length}건${scheduledDate ? ' 예약' : ''} 예상비용`,
+    );
     debited = estimatedCost;
+
+    const providerBody = {
+      messages,
+      strict: false,
+      allowDuplicates: false,
+      showMessageList: true,
+      agent: {
+        appId: 'pagero-calllink',
+        sdkVersion: 'cloudflare-pages-v1',
+        osPlatform: 'cloudflare',
+      },
+    };
+    if (scheduledDate) providerBody.scheduledDate = scheduledDate;
 
     const providerResponse = await solapiRequest(env, '/messages/v4/send-many/detail', {
       method: 'POST',
-      body: JSON.stringify({
-        messages,
-        strict: false,
-        allowDuplicates: false,
-        showMessageList: true,
-        agent: {
-          appId: 'pagero-calllink',
-          sdkVersion: 'cloudflare-pages-v1',
-          osPlatform: 'cloudflare',
-        },
-      }),
+      body: JSON.stringify(providerBody),
     });
 
     const failedCount = Number(providerResponse?.errorCount || 0);
@@ -139,6 +151,7 @@ export async function onRequest({ request, env }) {
       ok: true,
       messageLogId: logId,
       channel,
+      scheduledDate,
       acceptedCount,
       failedCount,
       estimatedCost,
@@ -172,6 +185,24 @@ export async function onRequest({ request, env }) {
     }
     return handleApiError(request, env, error, METHODS);
   }
+}
+
+function normalizeScheduledDate(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  const timestamp = Date.parse(raw);
+  if (!Number.isFinite(timestamp)) {
+    const error = new Error('CALLLINK_SCHEDULE_DATE_INVALID');
+    error.status = 400;
+    throw error;
+  }
+  const now = Date.now();
+  if (timestamp <= now + 60 * 1000 || timestamp > now + MAX_SCHEDULE_MILLIS) {
+    const error = new Error('CALLLINK_SCHEDULE_DATE_OUT_OF_RANGE');
+    error.status = 400;
+    throw error;
+  }
+  return new Date(timestamp).toISOString();
 }
 
 function normalizeMessage(item = {}, channel, config) {
@@ -217,6 +248,7 @@ function minimalProviderResponse(payload = {}) {
   const resultList = Array.isArray(payload.resultList) ? payload.resultList : [];
   return {
     groupId: payload?.groupInfo?.groupId || payload?.groupId || '',
+    scheduledDate: payload?.groupInfo?.scheduledDate || payload?.scheduledDate || '',
     errorCount: Number(payload?.errorCount || 0),
     resultList: resultList.slice(0, 100).map((item) => ({
       messageId: item.messageId || '',
