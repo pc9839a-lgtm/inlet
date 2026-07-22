@@ -1,0 +1,271 @@
+.calllink-settings {
+  display: grid;
+  gap: 16px;
+}
+
+.calllink-settings .settings-section__heading-row,
+.calllink-settings .settings-card__title-row,
+.calllink-settings .calllink-provider-balance,
+.calllink-settings .button-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.calllink-settings .settings-section__heading-row {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.calllink-settings .settings-section__heading-row h3,
+.calllink-settings .settings-section__heading-row p,
+.calllink-settings .settings-card p {
+  margin: 0;
+}
+
+.calllink-settings .settings-section__heading-row p,
+.calllink-settings .settings-card__description {
+  margin-top: 6px;
+  color: var(--muted, #667085);
+  line-height: 1.55;
+}
+
+.calllink-settings .settings-grid-two {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.calllink-settings .settings-card {
+  border: 1px solid var(--line, #e4e7ec);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(16, 24, 40, 0.04);
+}
+
+.calllink-settings .settings-card--compact,
+.calllink-settings > .settings-card {
+  padding: 18px;
+}
+
+.calllink-settings .settings-card__title-row {
+  color: var(--text, #101828);
+}
+
+.calllink-settings .settings-card__title-row .settings-status-pill {
+  margin-left: auto;
+}
+
+.calllink-settings .settings-status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #f2f4f7;
+  color: #667085;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.calllink-settings .settings-status-pill.is-active {
+  background: #ecfdf3;
+  color: #067647;
+}
+
+.calllink-settings .calllink-code {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 12px;
+  padding: 15px 14px;
+  border: 1px solid #c7d7fe;
+  border-radius: 14px;
+  background: #f5f8ff;
+}
+
+.calllink-settings .calllink-code span {
+  color: #173a9b;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.calllink-settings .calllink-code small {
+  color: #3563e9;
+  font-weight: 700;
+}
+
+.calllink-settings .calllink-code button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 10px;
+  background: #fff;
+  color: #3563e9;
+  cursor: pointer;
+}
+
+.calllink-settings .calllink-code.is-expired {
+  border-color: #fecdca;
+  background: #fff6f5;
+}
+
+.calllink-settings .calllink-code.is-expired span,
+.calllink-settings .calllink-code.is-expired small {
+  color: #b42318;
+}
+
+.calllink-settings .calllink-balance-value {
+  margin-top: 14px;
+  color: #101828;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.calllink-settings .calllink-provider-balance {
+  justify-content: space-between;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #eaecf0;
+  color: #667085;
+  font-size: 13px;
+}
+
+.calllink-settings .calllink-provider-balance strong {
+  color: #344054;
+}
+
+.calllink-settings .calllink-price-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.calllink-settings .calllink-price-list span {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #475467;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.calllink-settings .field {
+  display: grid;
+  gap: 7px;
+  margin-top: 14px;
+}
+
+.calllink-settings .field > span {
+  color: #344054;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.calllink-settings .field input[type='text'],
+.calllink-settings .field input[type='tel'] {
+  width: 100%;
+  min-height: 46px;
+  box-sizing: border-box;
+  border: 1px solid #d0d5dd;
+  border-radius: 12px;
+  padding: 0 13px;
+  background: #fff;
+  color: #101828;
+  outline: none;
+}
+
+.calllink-settings .field input:focus {
+  border-color: #3563e9;
+  box-shadow: 0 0 0 3px rgba(53, 99, 233, 0.12);
+}
+
+.calllink-settings .field--checkbox {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.calllink-settings .field--checkbox input {
+  width: 18px;
+  height: 18px;
+}
+
+.calllink-settings .settings-inline-message {
+  margin: 0;
+  padding: 11px 13px;
+  border-radius: 12px;
+  background: #eef3ff;
+  color: #173a9b;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.calllink-settings .settings-inline-message.is-error {
+  background: #fff1f0;
+  color: #b42318;
+}
+
+.calllink-settings .settings-inline-message.is-warning {
+  margin-top: 14px;
+  background: #fffaeb;
+  color: #b54708;
+}
+
+.calllink-settings .primary-button,
+.calllink-settings .secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 42px;
+  border-radius: 12px;
+  padding: 0 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.calllink-settings .primary-button {
+  border: 1px solid #3563e9;
+  background: #3563e9;
+  color: #fff;
+}
+
+.calllink-settings .secondary-button {
+  border: 1px solid #d0d5dd;
+  background: #fff;
+  color: #344054;
+}
+
+.calllink-settings button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.calllink-settings .button-row {
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+@media (max-width: 760px) {
+  .calllink-settings .settings-grid-two {
+    grid-template-columns: 1fr;
+  }
+
+  .calllink-settings .calllink-code {
+    grid-template-columns: 1fr auto;
+  }
+
+  .calllink-settings .calllink-code small {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
