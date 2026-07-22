@@ -168,9 +168,9 @@ assert(files.layout.includes('function topNavLogoTextColor') && files.layout.inc
 assert(files.layout.includes("savedText === logoColor") && files.layout.includes("isDarkHex(logoColor)"), 'badge topnav logo text should repair stale same-color values');
 
 assert(files.mapEditor.includes("label: '교통'") && files.mapEditor.includes('MapTransitSection'), 'map editor must expose a dedicated transit tab');
-assert(files.mapTransit.includes('subwayText') && files.mapTransit.includes('busText') && files.mapTransit.includes('naverMapUrl'), 'map transit editor must expose transit details and provider URLs');
+assert(files.mapTransit.includes('showSubway') && files.mapTransit.includes('showBus') && files.mapTransit.includes('showParking') && files.mapTransit.includes('naverMapUrl'), 'map transit editor must expose selectable transit details and provider URLs');
 assert(files.info.includes('location-guide-actions') && files.info.includes("id: 'tmap'") && files.info.includes('location-guide-transit'), 'map renderer must expose provider actions and transit sections');
-assert(files.pageModel.includes("showEmbedMap: false") && files.pageModel.includes("sectionTitle: '오시는 길'"), 'new map blocks must default to the location-guide presentation');
+assert(files.pageModel.includes("placeName: '서울역'") && files.pageModel.includes("showEmbedMap: true") && files.pageModel.includes("mapMode: 'google_embed'"), 'new map blocks must default to the Seoul Station Google map example');
 assert(files.previewCss.includes('.location-guide-actions') && files.previewCss.includes('.location-guide-transit'), 'location guide presentation styles must be bundled');
 
 const rendererContracts = [

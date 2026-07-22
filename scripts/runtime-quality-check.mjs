@@ -456,7 +456,7 @@ assert(conflictUtils.includes("'PAGE_PUBLIC_VERIFY_FAILED'") && conflictUtils.in
 assert(imageInputPreview.includes('aria-label={`${label} 수정`}') && imageInputPreview.includes('aria-label={`${label} 삭제`}') && imageInputPreview.includes('aria-label={`${label} 업로드`}'), 'image icon buttons must keep accessible names');
 assert(colorControl.includes('aria-label={`${label} 색상 추출`}') && stylePanel.includes('aria-label={`${label} 색상 추출`}'), 'eyedropper icon buttons must keep accessible names');
 
-assert(richField.includes('<textarea') && richField.includes('onChange={(event) => onChange(textToHtml(event.target.value))}'), 'RichField must use a simple textarea and save content edits immediately');
+assert(richField.includes('<textarea') && richField.includes("querySelectorAll('br')") && richField.includes("replaceWith('\\n')") && richField.includes('onChange={(event) => onChange(textToHtml(event.target.value))}'), 'RichField must preserve textarea line breaks and save content edits immediately');
 assert(!richField.includes('type="color"') && !richField.includes("document.execCommand('foreColor'"), 'RichField must not expose per-widget color formatting controls');
 assert(previewUtils.includes('dangerouslySetInnerHTML') && previewUtils.includes('style="color:${color}"') && previewUtils.includes('<u>${inner}</u>') && previewUtils.includes('<strong>${inner}</strong>'), 'preview rich text renderer must preserve color, underline, and bold markup');
 assert(stylePanel.includes('onPreviewThemeChange?.(draftTheme)') && app.includes('const [stylePreviewTheme, setStylePreviewTheme] = useState(null)'), 'StylePanel draft changes must keep live preview wiring');

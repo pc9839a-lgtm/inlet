@@ -54,10 +54,10 @@ export function RenderMap({ block }) {
     { id: 'kakao', label: '카카오맵', href: safeMapUrl(s.kakaoMapUrl, `https://map.kakao.com/link/search/${encodedQuery}`) },
   ];
   const transitRows = [
-    { id: 'subway', title: '지하철 이용 시', body: s.subwayText },
-    { id: 'bus', title: '버스 이용 시', body: s.busText },
-    { id: 'parking', title: '주차 안내', body: s.parkingText },
-  ].filter((item) => String(item.body || '').trim());
+    { id: 'subway', title: '지하철 이용 시', body: s.subwayText, visible: s.showSubway !== false },
+    { id: 'bus', title: '버스 이용 시', body: s.busText, visible: s.showBus !== false },
+    { id: 'parking', title: '주차 안내', body: s.parkingText, visible: s.showParking !== false },
+  ].filter((item) => item.visible && String(item.body || '').trim());
 
   return (
     <section

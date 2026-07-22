@@ -2,6 +2,7 @@ import { EditorField } from './ui/EditorField.jsx';
 
 function htmlToText(html) {
   const doc = new DOMParser().parseFromString(`<div>${String(html || '')}</div>`, 'text/html');
+  doc.querySelectorAll('br').forEach((node) => node.replaceWith('\n'));
   return doc.body.textContent || '';
 }
 
