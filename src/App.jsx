@@ -176,7 +176,7 @@ function recoverLazyChunkLoad(error) {
 }
 
 function LazyPanelFallback() {
-  return <section className="card"><div className="section-title"><h2>패널을 불러오는 중입니다.</h2></div></section>;
+  return null;
 }
 
 class LazyChunkBoundary extends Component {

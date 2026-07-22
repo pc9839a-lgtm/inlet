@@ -62,14 +62,15 @@ export function recoverLazyChunkLoad(error) {
 }
 
 export function LazyPanelFallback() {
-  return <section className="card"><div className="section-title"><h2>Loading screen...</h2></div></section>;
+  return null;
 }
 
 export function LazyPreviewFallback({ recovering = false }) {
+  if (recovering) return null;
   return (
     <div className="preview-runtime-fallback">
-      <strong>{recovering ? 'Moving to the latest screen.' : 'Loading the screen failed.'}</strong>
-      {!recovering && <button type="button" onClick={forceCanonicalRuntime}>Open latest screen</button>}
+      <strong>Loading the screen failed.</strong>
+      <button type="button" onClick={forceCanonicalRuntime}>Open latest screen</button>
     </div>
   );
 }
@@ -118,7 +119,7 @@ export class LazyChunkBoundary extends Component {
 }
 
 export function LazyEditorFallback() {
-  return <div className="muted small">Loading editor...</div>;
+  return null;
 }
 
 export function renderLazyEditor(Editor, props) {
@@ -150,7 +151,7 @@ export class LazyEditorBoundary extends Component {
 
   render() {
     if (this.state.recovering) {
-      return <div className="muted small" role="status">최신 편집기를 다시 불러오는 중입니다.</div>;
+      return null;
     }
     if (this.state.error) {
       return (

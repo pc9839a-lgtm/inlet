@@ -25,7 +25,7 @@ export {
   warnImageStorageUse,
 };
 
-export function ImageInput({ label, value, onChange, disabled = false }) {
+export function ImageInput({ label, value, onChange, disabled = false, onRequestEdit }) {
   const storageInfo = storedImageInfo(value);
   const { ref, pick, openPicker, clearImage } = useImageInputPicker({ label, onChange, disabled });
 
@@ -39,6 +39,7 @@ export function ImageInput({ label, value, onChange, disabled = false }) {
         disabled={disabled}
         onEdit={openPicker}
         onClear={clearImage}
+        onRequestEdit={onRequestEdit}
       />
       <ImageStorageNote storageInfo={storageInfo} />
     </div>

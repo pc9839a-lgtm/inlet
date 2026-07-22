@@ -527,11 +527,12 @@ requireAll(blockEditor, [
 
 const lazyEditorBoundary = await read('src/editor/LazyEditorBoundary.jsx');
 requireAll(lazyEditorBoundary, [
-  'data-lazy-editor-fallback="true"',
+  '<Suspense fallback={null}>',
   'data-lazy-editor-error="true"',
   'class LazyEditorErrorBoundary',
   'componentDidUpdate(prevProps)',
 ], 'lazy block editor recovery contract');
+assert(!lazyEditorBoundary.includes('편집기를 불러오는 중입니다.'), 'lazy block editor loading state must remain visually silent');
 
 const normalBlockSelection = await read('src/editor/useNormalBlockSelection.js');
 requireAll(normalBlockSelection, [

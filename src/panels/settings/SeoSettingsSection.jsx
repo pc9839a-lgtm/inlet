@@ -24,7 +24,7 @@ export default function SeoSettingsSection({
           <small className="settings-field-hint">32x32 PNG/ICO</small>
         </div>
         <div className="settings-field-hint-wrap settings-seo-og-image">
-          <ImageInput label="공유 이미지" value={seoDraft.og} disabled={locked} onChange={(value) => setSeoDraft((draft) => ({ ...draft, og: value }))} />
+          <ImageInput label="공유 이미지" value={seoDraft.og} disabled={locked} onRequestEdit={onEdit} onChange={(value) => setSeoDraft((draft) => ({ ...draft, og: value }))} />
           <small className="settings-field-hint">1200x630 JPG/PNG/WebP</small>
         </div>
         <div className="settings-field-hint-wrap">

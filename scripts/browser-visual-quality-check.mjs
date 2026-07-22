@@ -176,6 +176,7 @@ function authStatePresetData(name) {
   const basePage = {
     title: '브라우저 QA 페이지',
     slug: 'browser-qa',
+    meta: { og: 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%221200%22 height=%22630%22%3E%3Crect width=%221200%22 height=%22630%22 fill=%22%23dbeafe%22/%3E%3C/svg%3E' },
     blocks: [
       {
         id: 'qa-code',
