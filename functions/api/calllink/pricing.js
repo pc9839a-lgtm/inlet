@@ -1,7 +1,9 @@
 import {
+  authorizeProject,
   handleApiError,
   jsonResponse,
   optionsResponse,
+  projectFromRequest,
 } from '../_shared.js';
 import { requireCallLinkDevice } from './_shared.js';
 
@@ -13,7 +15,13 @@ export async function onRequest({ request, env }) {
     return jsonResponse(request, env, 405, { ok: false, message: '허용되지 않는 요청 방식입니다.' }, METHODS);
   }
   try {
-    await requireCallLinkDevice(request, env);
+    const authorization = String(request.headers.get('Authorization') || '').trim();
+    if (authorization.toLowerCase().startsWith('bearer cl_')) {
+      await requireCallLinkDevice(request, env);
+    } else {
+      const project = projectFromRequest(new URL(request.url), {}, request);
+      await authorizeProject(request, env, project, { write: false, tab: 'settings' });
+    }
     return jsonResponse(request, env, 200, {
       ok: true,
       currency: 'KRW',
