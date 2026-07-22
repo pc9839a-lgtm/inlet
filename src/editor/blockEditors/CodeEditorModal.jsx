@@ -7,6 +7,7 @@ export default function CodeEditorModal({ draft, onDraftChange, onClose, onApply
           <button type="button" onClick={onClose}>닫기</button>
         </div>
         <textarea
+          wrap="soft"
           value={draft}
           onChange={(event) => onDraftChange(event.target.value)}
           placeholder="HTML 코드를 입력하세요"

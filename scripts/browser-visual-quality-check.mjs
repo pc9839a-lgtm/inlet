@@ -178,6 +178,12 @@ function authStatePresetData(name) {
     slug: 'browser-qa',
     blocks: [
       {
+        id: 'qa-code',
+        type: 'code',
+        visible: true,
+        s: { html: '<section><img src="https://example.com/very/long/path/to/an/image-file.webp?width=1600&quality=90"><p>Long code editor overflow regression fixture</p></section>' },
+      },
+      {
         id: 'qa-hero',
         type: 'hero',
         visible: true,

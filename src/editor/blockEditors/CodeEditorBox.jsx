@@ -6,6 +6,7 @@ export default function CodeEditorBox({ draft, onDraftChange, onOpenModal, onApp
         <button type="button" onClick={onOpenModal}>크게 편집</button>
       </div>
       <textarea
+        wrap="soft"
         value={draft}
         onChange={(event) => onDraftChange(event.target.value)}
         placeholder="HTML 코드를 입력하세요"
