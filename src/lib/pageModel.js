@@ -230,7 +230,7 @@ const BLOCK_SAFE_OPTIONS = {
   text: { layout: ['plain','card','notice'], align: ['left','center','right'], size: ['small','medium','large'] },
   cards: { layout: ['grid','stack','steps'], tone: ['soft','solid','outline'], align: ['left','center'] },
   image: { mode: ['single','gallery'], galleryLayout: ['slide','grid'], imageDisplay: ['original','fill'] },
-  map: { mapMode: ['google_embed','osm_fallback'], height: ['small','medium','large'] },
+  map: { mapMode: ['google_embed','osm_fallback'], layout: ['default','full','minimal'], height: ['small','medium','large'] },
   faq: { layout: ['accordion','card','plain'] },
   links: { layout: ['list','card','carousel'], align: ['left','center','right'] },
   download: { layout: ['card','list'], align: ['left','center','right'] },
@@ -452,7 +452,16 @@ function sanitizeBlock(block) {
     s.address = s.address || '';
     s.detailAddress = s.detailAddress || '';
     s.phone = s.phone || '';
+    s.eyebrow = s.eyebrow ?? 'LOCATION';
+    s.sectionTitle = s.sectionTitle || '오시는 길';
+    s.subwayText = s.subwayText || '';
+    s.busText = s.busText || '';
     s.parkingText = s.parkingText || '';
+    s.tmapUrl = s.tmapUrl || '';
+    s.naverMapUrl = s.naverMapUrl || '';
+    s.kakaoMapUrl = s.kakaoMapUrl || '';
+    s.showMapLinks = typeof s.showMapLinks === 'boolean' ? s.showMapLinks : true;
+    s.showEmbedMap = typeof s.showEmbedMap === 'boolean' ? s.showEmbedMap : false;
     s.mapMode = pickSafe(s.mapMode || 'google_embed', ['google_embed','osm_fallback'], 'google_embed');
   }
 
@@ -567,7 +576,7 @@ function newBlock(type) {
     ] } });
   }
   if (type === 'map') {
-    return sanitizeBlock({ id: uid(), type: 'map', visible: true, s: { placeName: '오시는 길', title: '오시는 길', address: '', detailAddress: '', phone: '', parkingText: '', mapMode: 'google_embed' } });
+    return sanitizeBlock({ id: uid(), type: 'map', visible: true, s: { eyebrow: 'LOCATION', sectionTitle: '오시는 길', placeName: '장소명을 입력해 주세요', title: '장소명을 입력해 주세요', address: '', detailAddress: '', phone: '', subwayText: '', busText: '', parkingText: '', tmapUrl: '', naverMapUrl: '', kakaoMapUrl: '', showMapLinks: true, showEmbedMap: false, mapMode: 'google_embed', layout: 'default', height: 'medium' } });
   }
   if (type === 'schedule') {
     return sanitizeBlock({ id: uid(), type: 'schedule', visible: true, s: { title: '일정 안내', date: '2026-10-24', body: '상세 일정을 입력하세요', monthLabel: '', highlightColor: '#8AA2C8', cardBgColor: '', textColor: '', align: 'center' } });
