@@ -494,7 +494,7 @@ export function aiDraftToBlocks(draft) {
 
     if (item.type === 'spacer') return block('spacer', { height: Number(item.height || 32) });
     if (item.type === 'divider') return block('divider', { style: 'solid', width: 100, thickness: 1, color: '#E2E8F0', marginY: 24, align: 'center' });
-    if (item.type === 'image') return block('image', { mode: 'single', image: item.image || '', gallery: item.gallery || [], imageDisplay: 'original', imageHeightPx: 260, imageX: 50, imageY: 50, rounded: true, autoplay: false, interval: 5, galleryShowArrows: true, galleryShowDots: true, caption: item.caption || '' });
+    if (item.type === 'image') return block('image', { mode: 'single', image: item.image || '', gallery: (item.gallery || []).slice(0, 4), galleryLayout: 'slide', imageDisplay: 'original', imageHeightPx: 260, imageX: 50, imageY: 50, rounded: true, autoplay: false, interval: 5, galleryShowArrows: true, galleryShowDots: true, caption: item.caption || '' });
 
     return block('text', { title: '섹션', body: '', layout: 'card', align: 'left', size: 'medium' });
   });

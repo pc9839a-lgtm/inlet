@@ -15,8 +15,8 @@ export default function ImageGalleryEditor({ gallery, set, updateGallery, remove
     <>
       <GalleryMultiUpload
         count={filledGallery.length}
-        max={10}
-        onAdd={(images) => set({ gallery: [...filledGallery, ...images].slice(0, 10) })}
+        max={4}
+        onAdd={(images) => set({ gallery: [...filledGallery, ...images].slice(0, 4) })}
       />
       <EditorList
         items={items}
@@ -30,7 +30,7 @@ export default function ImageGalleryEditor({ gallery, set, updateGallery, remove
             onChange={(value) => updateGallery(item.index, value)}
           />
         )}
-        onAdd={gallery.length < 10 ? () => set({ gallery: [...gallery, ''] }) : undefined}
+        onAdd={gallery.length < 4 ? () => set({ gallery: [...gallery, ''] }) : undefined}
         addLabel="이미지 추가"
         onRemove={(item) => removeGallery(item.index)}
       />

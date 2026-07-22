@@ -6,6 +6,7 @@ function assert(condition, message) {
 
 const previewCssFiles = [
   'src/styles/base-components.css',
+  'src/styles/base-components-image.css',
   'src/styles/preview-core.css',
   'src/styles/preview-forms.css',
   'src/styles/preview-forms-visibility.css',
@@ -332,10 +333,10 @@ assert(files.formEditor.includes("label: '제출'") && files.formSubmission.incl
 assert(files.form.includes("'--form-button': themeButtonColor(s)") && files.form.includes("'--form-button-hover': themeButtonHoverColor(s)") && files.previewCss.includes('.form-button-hover-fill') && files.previewCss.includes('.form-input-underline'), 'form design controls should map button colors, hover effects, and input styles into preview contracts');
 assert(files.form.includes('form-align-${textAlign} align-${textAlign}') && files.previewCss.includes('.reservation-v2.form-button-hover-zoom') && files.previewCss.includes('color: var(--form-button-text, #fff)'), 'reservation styles should preserve shared alignment and custom hover color contracts');
 assert(files.imageDisplay.includes("value: 'original'") && files.imageDisplay.includes("value: 'fill'") && files.imageDisplay.includes('rounded'), 'image editor should expose original, fill, and rounded display controls');
-assert(files.imageGallery.includes('galleryShowArrows') && files.imageGallery.includes('galleryShowDots') && files.imageGallery.includes('interval'), 'gallery editor should expose navigation and autoplay timing controls');
+assert(files.imageGallery.includes("value: 'grid'") && files.imageGallery.includes('galleryShowArrows') && files.imageGallery.includes('galleryShowDots') && files.imageGallery.includes('interval'), 'gallery editor should expose grid layout plus slide navigation and autoplay timing controls');
 assert(!files.imageGallery.includes('description='), 'gallery style controls should stay concise without redundant helper copy');
-assert(files.media.includes('image-${display}') && files.media.includes('galleryShowArrows') && files.media.includes('galleryShowDots') && files.media.includes("'--block-margin'"), 'image renderer should consume display, gallery navigation, and spacing settings');
-assert(files.previewCss.includes('.image-sec .image-wrap.image-original img') && files.previewCss.includes('.image-sec .image-wrap.image-fill img') && files.previewCss.includes('.gallery-arrows') && files.previewCss.includes('.dots'), 'image and gallery CSS should consume renderer display and navigation classes');
+assert(files.media.includes('image-${display}') && files.media.includes('image-gallery-grid-${gallery.length}') && files.media.includes('galleryShowArrows') && files.media.includes('galleryShowDots') && files.media.includes("'--block-margin'"), 'image renderer should consume grid or slide display, gallery navigation, and spacing settings');
+assert(files.previewCss.includes('.image-sec .image-wrap.image-original img') && files.previewCss.includes('.image-sec .image-wrap.image-fill img') && files.previewCss.includes('.image-gallery-grid-3') && files.previewCss.includes('.image-gallery-grid-4') && files.previewCss.includes('.gallery-arrows') && files.previewCss.includes('.dots'), 'image and gallery CSS should consume grid, slide display, and navigation classes');
 assert(files.widgetStyles.includes('timerTheme') && files.widgetStyles.includes('label="움직임"') && files.widgetStyles.includes("urgentStyle: value ? 'flow' : 'none'") && files.signal.includes('timer-theme-${theme}') && files.signal.includes('timer-effect-${effect}'), 'timer style controls should expose only the working flow animation toggle while preserving renderer compatibility');
 assert(files.widgetStyles.includes('label="목록 움직임"') && files.widgetStyles.includes("animation: value ? 'stack' : 'none'") && files.signal.includes('activity-anim-${anim}') && files.previewCss.includes('.activity-anim-none .activity-live-dot'), 'activity movement toggle should map to renderer classes and fully stop animation');
 assert(files.widgetStyles.includes('<Color label="강조색"') && !files.widgetStyles.includes('<Color label="카드 배경"') && !files.widgetStyles.includes('<Color label="글자색"'), 'schedule style controls should keep the useful accent color while inheriting card and text colors from the page theme');
