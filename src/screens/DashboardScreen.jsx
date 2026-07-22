@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { authAccountErrorMessage } from '../lib/authAccounts.js';
+import { WorkspaceCreateModalLayer } from './workspace/WorkspaceCreateModalLayer.jsx';
 
-function DashboardPolished({ user, page, leads, onCreate, onEdit, onPreview, onLogout, onAccountUpdate }) {
+function DashboardPolished({ user, page, leads, onEdit, onPreview, onLogout, onAccountUpdate, onAi, onManual, onTemplate, onCheckUrl, templates = [] }) {
   const leadCount = Array.isArray(leads) ? leads.length : 0;
   const hasPage = Boolean(page?.title || page?.slug);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [draft, setDraft] = useState({ name: user?.name || '', phone: user?.phone || '' });
@@ -57,7 +59,7 @@ function DashboardPolished({ user, page, leads, onCreate, onEdit, onPreview, onL
             <h1>페이지로</h1>
             <p>랜딩 제작, 접수 확인, 통계를 한 화면에서 관리합니다.</p>
           </div>
-          <button className="primary-btn" type="button" onClick={onCreate}>새 랜딩 만들기</button>
+          <button className="primary-btn" type="button" onClick={() => setCreateOpen(true)}>새 랜딩 만들기</button>
         </section>
 
         <section className="service-summary-grid" aria-label="계정과 랜딩 상태">
@@ -110,7 +112,7 @@ function DashboardPolished({ user, page, leads, onCreate, onEdit, onPreview, onL
         <section className="home-section service-page-list">
           <div className="home-section-title">
             <h2>내 랜딩페이지</h2>
-            <button className="primary-btn" type="button" onClick={onCreate}>새로 만들기</button>
+            <button className="primary-btn" type="button" onClick={() => setCreateOpen(true)}>새로 만들기</button>
           </div>
           {hasPage ? (
             <article className="landing-card service-landing-card">
@@ -127,11 +129,24 @@ function DashboardPolished({ user, page, leads, onCreate, onEdit, onPreview, onL
             <div className="empty-landing">
               <strong>랜딩페이지가 없습니다.</strong>
               <p>새 랜딩을 만들어 시작하세요.</p>
-              <button className="primary-btn" type="button" onClick={onCreate}>새 랜딩 만들기</button>
+              <button className="primary-btn" type="button" onClick={() => setCreateOpen(true)}>새 랜딩 만들기</button>
             </div>
           )}
         </section>
       </main>
+      <Suspense fallback={null}>
+        <WorkspaceCreateModalLayer
+          show={createOpen}
+          page={page}
+          onClose={() => setCreateOpen(false)}
+          createWithAi={onAi}
+          createManual={onManual}
+          createFromTemplate={onTemplate}
+          onCheckUrl={onCheckUrl}
+          defaultSlug={pageSlug}
+          templates={templates}
+        />
+      </Suspense>
     </div>
   );
 }

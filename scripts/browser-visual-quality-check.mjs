@@ -265,6 +265,14 @@ function authStatePresetData(name) {
       },
     },
   };
+  if (name === 'owner-dashboard') {
+    return {
+      auth: { role: 'master', accessMode: 'builder', name: 'Dashboard QA', email: 'owner@example.test', workspaceId: 'qa-owner', session: '' },
+      page: basePage,
+      dashboard: { open: false },
+      startMode: 'manual',
+    };
+  }
   if (name === 'owner-settings') {
     return {
       auth: { role: 'master', accessMode: 'builder', name: '마스터', email: 'owner@example.test', workspaceId: 'qa-owner', session: '' },
