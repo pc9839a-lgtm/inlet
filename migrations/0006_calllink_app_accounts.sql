@@ -14,10 +14,10 @@ CREATE INDEX IF NOT EXISTS idx_calllink_profiles_phone
 
 CREATE TABLE IF NOT EXISTS calllink_entitlements (
   owner_id TEXT PRIMARY KEY,
-  status TEXT NOT NULL DEFAULT 'pending_payment',
-  plan_code TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'active',
+  plan_code TEXT NOT NULL DEFAULT 'beta_free',
   paid_until TEXT NOT NULL DEFAULT '',
-  source TEXT NOT NULL DEFAULT '',
+  source TEXT NOT NULL DEFAULT 'beta',
   payment_customer_id TEXT NOT NULL DEFAULT '',
   note TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
