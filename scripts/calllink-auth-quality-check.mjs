@@ -45,14 +45,19 @@ assertIncludes('functions/api/call/register.js', [
 ]);
 assertIncludes('functions/api/call/login.js', ['loginAccount', 'entitlementPublic']);
 assertIncludes('functions/api/call/session.js', ['callSession']);
-assertIncludes('functions/api/call/admin/entitlement.js', [
+assertIncludes('functions/api/call/_shared.js', [
   'X-CallLink-Admin',
   'CALLLINK_ADMIN_TOKEN',
+  'assertCallAdmin',
+]);
+assertIncludes('functions/api/call/admin/entitlement.js', [
+  'assertCallAdmin',
   'paymentCustomerId',
+  'calllink_entitlements',
 ]);
 assertIncludes('functions/_middleware.js', [
   "url.hostname !== 'call.pagero.kr'",
-  "context.env.ASSETS.fetch",
+  'context.env.ASSETS.fetch',
   "'/privacy'",
   "'/subscribe'",
 ]);
