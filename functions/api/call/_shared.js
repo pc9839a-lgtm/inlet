@@ -1,6 +1,7 @@
 import { getSessionAccount } from '../auth/_auth.js';
 
 export const CALL_METHODS = 'GET, POST, PATCH, OPTIONS';
+export const CALLLINK_BETA_PLAN = 'beta_free';
 
 export function callError(message, status = 400, details = {}) {
   const error = new Error(message);
@@ -17,20 +18,20 @@ export function normalizeEntitlementStatus(value = '') {
   const status = String(value || '').trim().toLowerCase();
   return ['pending_payment', 'active', 'expired', 'suspended'].includes(status)
     ? status
-    : 'pending_payment';
+    : 'active';
 }
 
 export function entitlementPublic(row = null) {
-  const status = normalizeEntitlementStatus(row?.status || 'pending_payment');
+  const status = normalizeEntitlementStatus(row?.status || 'active');
   const paidUntil = String(row?.paid_until || row?.paidUntil || '');
   const paidUntilMs = paidUntil ? Date.parse(paidUntil) : 0;
   const active = status === 'active' && (!paidUntilMs || paidUntilMs > Date.now());
   return {
     active,
     status: active ? 'active' : (status === 'active' ? 'expired' : status),
-    planCode: String(row?.plan_code || row?.planCode || ''),
+    planCode: String(row?.plan_code || row?.planCode || CALLLINK_BETA_PLAN),
     paidUntil,
-    source: String(row?.source || ''),
+    source: String(row?.source || 'beta'),
     updatedAt: String(row?.updated_at || row?.updatedAt || ''),
   };
 }
@@ -47,8 +48,41 @@ export function profilePublic(row = null, user = {}) {
   };
 }
 
+export async function ensureCalllinkSchema(db) {
+  if (!db?.prepare) {
+    throw callError('Database is not configured.', 503, { code: 'CALL_DB_REQUIRED' });
+  }
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS calllink_profiles (
+      owner_id TEXT PRIMARY KEY,
+      email TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL DEFAULT '',
+      phone TEXT NOT NULL DEFAULT '',
+      brand_name TEXT NOT NULL DEFAULT '',
+      industry TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+  await db.prepare(`CREATE INDEX IF NOT EXISTS idx_calllink_profiles_phone ON calllink_profiles(phone)`).run();
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS calllink_entitlements (
+      owner_id TEXT PRIMARY KEY,
+      status TEXT NOT NULL DEFAULT 'active',
+      plan_code TEXT NOT NULL DEFAULT 'beta_free',
+      paid_until TEXT NOT NULL DEFAULT '',
+      source TEXT NOT NULL DEFAULT 'beta',
+      payment_customer_id TEXT NOT NULL DEFAULT '',
+      note TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+  await db.prepare(`CREATE INDEX IF NOT EXISTS idx_calllink_entitlements_status ON calllink_entitlements(status)`).run();
+}
+
 export async function upsertCallProfile(db, input = {}) {
-  if (!db?.prepare) throw callError('Database is not configured.', 503, { code: 'CALL_DB_REQUIRED' });
+  await ensureCalllinkSchema(db);
   const ownerId = String(input.ownerId || '').trim();
   const email = String(input.email || '').trim().toLowerCase();
   const name = normalizeText(input.name, 80);
@@ -72,18 +106,43 @@ export async function upsertCallProfile(db, input = {}) {
   return getCallProfile(db, ownerId);
 }
 
+/**
+ * Login-first beta policy: every verified account receives full access.
+ * Suspended accounts remain suspended so abuse can still be blocked.
+ * Payment enforcement can later reuse the same entitlement table.
+ */
 export async function ensurePendingEntitlement(db, ownerId = '') {
-  if (!db?.prepare || !ownerId) return null;
+  await ensureCalllinkSchema(db);
+  if (!ownerId) return null;
   await db.prepare(`
-    INSERT INTO calllink_entitlements (owner_id, status, created_at, updated_at)
-    VALUES (?, 'pending_payment', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-    ON CONFLICT(owner_id) DO NOTHING
-  `).bind(ownerId).run();
+    INSERT INTO calllink_entitlements (
+      owner_id, status, plan_code, paid_until, source, created_at, updated_at
+    ) VALUES (?, 'active', ?, '', 'beta', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    ON CONFLICT(owner_id) DO UPDATE SET
+      status = CASE
+        WHEN calllink_entitlements.status = 'suspended' THEN 'suspended'
+        ELSE 'active'
+      END,
+      plan_code = CASE
+        WHEN calllink_entitlements.status = 'suspended' THEN calllink_entitlements.plan_code
+        ELSE excluded.plan_code
+      END,
+      paid_until = CASE
+        WHEN calllink_entitlements.status = 'suspended' THEN calllink_entitlements.paid_until
+        ELSE ''
+      END,
+      source = CASE
+        WHEN calllink_entitlements.status = 'suspended' THEN calllink_entitlements.source
+        ELSE 'beta'
+      END,
+      updated_at = CURRENT_TIMESTAMP
+  `).bind(ownerId, CALLLINK_BETA_PLAN).run();
   return getCallEntitlement(db, ownerId);
 }
 
 export async function getCallProfile(db, ownerId = '') {
-  if (!db?.prepare || !ownerId) return null;
+  await ensureCalllinkSchema(db);
+  if (!ownerId) return null;
   return db.prepare(`
     SELECT owner_id, email, name, phone, brand_name, industry, created_at, updated_at
     FROM calllink_profiles WHERE owner_id = ? LIMIT 1
@@ -91,7 +150,8 @@ export async function getCallProfile(db, ownerId = '') {
 }
 
 export async function getCallEntitlement(db, ownerId = '') {
-  if (!db?.prepare || !ownerId) return null;
+  await ensureCalllinkSchema(db);
+  if (!ownerId) return null;
   return db.prepare(`
     SELECT owner_id, status, plan_code, paid_until, source, payment_customer_id, note, created_at, updated_at
     FROM calllink_entitlements WHERE owner_id = ? LIMIT 1
