@@ -21,7 +21,7 @@
 - 비밀번호
 - 이메일 인증번호
 
-이메일 인증은 기존 `/api/auth/email-verification`을 사용한다. 인증 목적은 회원가입 시 `signup`, 비밀번호 변경 시 `password_reset`이다. 인증을 완료하지 않은 회원가입 요청은 거부한다.
+이메일 인증은 기존 `/api/auth/email-verification`을 사용한다. 인증 목적은 회원가입 시 `signup`, 비밀번호 변경 시 `password-reset`이다. 인증을 완료하지 않은 회원가입 요청은 거부한다.
 
 ## API
 
