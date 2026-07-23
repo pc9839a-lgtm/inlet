@@ -33,7 +33,7 @@ assertIncludes('migrations/0006_calllink_app_accounts.sql', [
   'brand_name',
   'industry',
   'calllink_entitlements',
-  'pending_payment',
+  'beta_free',
   'paid_until',
 ]);
 assertIncludes('functions/api/call/register.js', [
@@ -49,6 +49,8 @@ assertIncludes('functions/api/call/_shared.js', [
   'X-CallLink-Admin',
   'CALLLINK_ADMIN_TOKEN',
   'assertCallAdmin',
+  'CALLLINK_BETA_PLAN',
+  'ensureCalllinkSchema',
   'input.session',
   'session,',
 ]);
@@ -72,6 +74,7 @@ assertIncludes('public/call/index.html', [
   '/api/auth/password',
   "purpose:'password-reset'",
   "data.session||current",
+  '베타 기간 전체 기능',
 ]);
 assertIncludes('public/call/privacy/index.html', [
   '이름, 휴대폰번호, 이메일주소',
@@ -91,7 +94,7 @@ for (const file of jsFiles) {
 
 console.log(JSON.stringify({
   ok: true,
-  feature: 'calllink-auth-entitlement',
+  feature: 'calllink-auth-beta',
   files: requiredFiles.length,
   syntaxChecked: jsFiles.length,
 }, null, 2));
