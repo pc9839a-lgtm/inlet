@@ -11,6 +11,7 @@ const steps = [
   ['revision:qa', ['scripts/revision-quality-check.mjs']],
   ['auth:qa', ['scripts/auth-quality-check.mjs']],
   ['auth:email:qa', ['scripts/auth-email-quality-check.mjs']],
+  ['calllink:auth:qa', ['scripts/calllink-auth-quality-check.mjs']],
   ['server:smoke:auth', ['scripts/server-smoke-auth.mjs']],
   ['server:smoke:leads', ['scripts/server-smoke-leads.mjs']],
   ['server:smoke:events', ['scripts/server-smoke-events.mjs']],
