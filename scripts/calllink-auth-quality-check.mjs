@@ -49,6 +49,8 @@ assertIncludes('functions/api/call/_shared.js', [
   'X-CallLink-Admin',
   'CALLLINK_ADMIN_TOKEN',
   'assertCallAdmin',
+  'input.session',
+  'session,',
 ]);
 assertIncludes('functions/api/call/admin/entitlement.js', [
   'assertCallAdmin',
@@ -68,6 +70,8 @@ assertIncludes('public/call/index.html', [
   '/api/call/register',
   '/api/call/login',
   '/api/auth/password',
+  "purpose:'password-reset'",
+  "data.session||current",
 ]);
 assertIncludes('public/call/privacy/index.html', [
   '이름, 휴대폰번호, 이메일주소',
