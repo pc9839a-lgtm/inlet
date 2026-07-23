@@ -103,11 +103,19 @@ export async function callSession(request, env, input = {}) {
   const ownerId = String(user.ownerId || user.id || payload.ownerId || '');
   const profile = await getCallProfile(env.DB, ownerId);
   const entitlement = await ensurePendingEntitlement(env.DB, ownerId);
+  const authorization = String(request.headers.get('Authorization') || '');
+  const session = String(
+    input.session
+      || request.headers.get('X-Inlet-Session')
+      || authorization.replace(/^Bearer\s+/i, '')
+      || ''
+  ).trim();
   return {
     user,
     ownerId,
     profile: profilePublic(profile, user),
     entitlement: entitlementPublic(entitlement),
+    session,
   };
 }
 
