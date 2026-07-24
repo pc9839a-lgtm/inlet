@@ -38,23 +38,39 @@ jobs:
       - name: Deploy assets and Pages Functions
         id: cloudflare_deploy
         continue-on-error: true
-        run: >-
-          npx wrangler pages deploy dist
-          --project-name inlet
-          --branch main
-          --commit-hash "$GITHUB_SHA"
-          --commit-message "Deploy $GITHUB_SHA"
+        shell: bash
+        run: |
+          set -o pipefail
+          npx wrangler pages deploy dist \
+            --project-name inlet \
+            --branch main \
+            --commit-hash "$GITHUB_SHA" \
+            --commit-message "Deploy $GITHUB_SHA" \
+            2>&1 | tee /tmp/cloudflare-deploy.log
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Record deployment result
         if: always()
+        shell: bash
         run: |
+          reason="none"
+          if [ "${{ steps.cloudflare_deploy.outcome }}" != "success" ]; then
+            reason="deploy_command_failed"
+            if grep -Eqi "CLOUDFLARE_API_TOKEN|CLOUDFLARE_ACCOUNT_ID|non-interactive environment|not set" /tmp/cloudflare-deploy.log 2>/dev/null; then
+              reason="missing_cloudflare_credentials"
+            elif grep -Eqi "authentication error|invalid api token|code[=: ]+10000|unauthorized|forbidden" /tmp/cloudflare-deploy.log 2>/dev/null; then
+              reason="cloudflare_auth_failed"
+            elif grep -Eqi "project.*not found|unknown project|inlet.*not found" /tmp/cloudflare-deploy.log 2>/dev/null; then
+              reason="cloudflare_project_not_found"
+            fi
+          fi
           mkdir -p .deployment
-          printf '{\n  "sourceSha": "%s",\n  "outcome": "%s",\n  "recordedAt": "%s"\n}\n' \
+          printf '{\n  "sourceSha": "%s",\n  "outcome": "%s",\n  "reason": "%s",\n  "recordedAt": "%s"\n}\n' \
             "$GITHUB_SHA" \
             "${{ steps.cloudflare_deploy.outcome }}" \
+            "$reason" \
             "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             > .deployment/cloudflare-status.json
           git config user.name "github-actions[bot]"
