@@ -1,8 +1,15 @@
 
  ⛅️ wrangler 4.95.0
 ───────────────────
+✨ Compiled Worker successfully
+Uploading... (126/131)
+Uploading... (127/131)
+Uploading... (129/131)
+Uploading... (131/131)
+✨ Success! Uploaded 5 files (126 already uploaded) (1.17 sec)
 
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNot logged in.[0m
-
-
-🪵  Logs were written to "/home/runner/.config/.wrangler/logs/wrangler-2026-07-24_02-57-28_823.log"
+✨ Uploading _headers
+✨ Uploading _redirects
+✨ Uploading Functions bundle
+🌎 Deploying...
+✨ Deployment complete! Take a peek over at https://0eaa2175.inlet-8mr.pages.dev
