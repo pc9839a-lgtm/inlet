@@ -7,6 +7,24 @@
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <title>페이지로</title>
+  <script>
+    (() => {
+      if (location.hostname !== 'call.pagero.kr' || location.pathname.startsWith('/api/')) return;
+      const clean = location.pathname.replace(/\/+$/, '') || '/';
+      const routes = {
+        '/': '/call/index.html',
+        '/login': '/call/index.html',
+        '/signup': '/call/index.html',
+        '/privacy': '/call/privacy/index.html',
+        '/terms': '/call/terms/index.html',
+        '/subscribe': '/call/subscribe/index.html',
+      };
+      const target = routes[clean];
+      if (target && location.pathname !== target) {
+        location.replace(`${target}${location.search}${location.hash}`);
+      }
+    })();
+  </script>
 </head>
 <body>
   <div id="root"></div>
