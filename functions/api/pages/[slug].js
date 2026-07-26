@@ -1,7 +1,7 @@
 import { decodeD1Page, getD1PageBySlug, getD1ProjectById, upsertD1Page } from '../../../server/storage/d1Adapter.mjs';
 import { assertD1, authorizeProject, ensureD1ProjectShell, handleApiError, jsonResponse, optionsResponse, projectFromRequest, readJson, sessionIdentity } from '../_shared.js';
 
-const METHODS = 'GET, POST, OPTIONS';
+const METHODS = 'GET, POST, DELETE, OPTIONS';
 const PUBLIC_PAGE_CACHE_CONTROL = 'no-store';
 const PUBLIC_PAGE_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -182,6 +182,29 @@ export async function onRequest({ request, env, params }) {
       const page = await getD1PageBySlug(db, { projectId: project.projectId, slug });
       if (!page) return pageNotFoundResponse(request, env);
       return jsonResponse(request, env, 200, { ok: true, page }, METHODS);
+    }
+
+    if (request.method === 'DELETE') {
+      const project = projectFromRequest(url, {}, request);
+      await authorizeProject(request, env, project, { write: true, tab: 'settings' });
+      const page = await getD1PageBySlug(db, { projectId: project.projectId, slug });
+      if (!page) return pageNotFoundResponse(request, env);
+
+      const archivedAt = new Date().toISOString();
+      await db.prepare(`
+        UPDATE projects
+        SET status = 'archived', updated_at = ?
+        WHERE id = ?
+      `).bind(archivedAt, project.projectId).run();
+
+      return jsonResponse(request, env, 200, {
+        ok: true,
+        deleted: {
+          projectId: project.projectId,
+          slug,
+          archivedAt,
+        },
+      }, METHODS);
     }
 
     if (request.method === 'POST') {

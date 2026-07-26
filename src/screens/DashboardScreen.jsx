@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { authAccountErrorMessage } from '../lib/authAccounts.js';
-import { fetchAccountPages } from '../lib/pageRepository.js';
+import { deleteAccountPage, fetchAccountPages } from '../lib/pageRepository.js';
 import { WorkspaceCreateModalLayer } from './workspace/WorkspaceCreateModalLayer.jsx';
 
 function DashboardPolished({ user, page, leads, onLogout, onAccountUpdate, onAi, onManual, onTemplate, onCheckUrl, templates = [] }) {
@@ -12,6 +12,9 @@ function DashboardPolished({ user, page, leads, onLogout, onAccountUpdate, onAi,
   const [error, setError] = useState('');
   const [accountPages, setAccountPages] = useState([]);
   const [pagesLoading, setPagesLoading] = useState(true);
+  const [pagesLoaded, setPagesLoaded] = useState(false);
+  const [pageListError, setPageListError] = useState('');
+  const [deletingProjectId, setDeletingProjectId] = useState('');
   const [draft, setDraft] = useState({ name: user?.name || '', phone: user?.phone || '' });
 
   const accountName = user?.name || user?.email || '사용자';
@@ -26,12 +29,19 @@ function DashboardPolished({ user, page, leads, onLogout, onAccountUpdate, onAi,
   useEffect(() => {
     let alive = true;
     setPagesLoading(true);
+    setPagesLoaded(false);
+    setAccountPages([]);
     fetchAccountPages(user)
       .then((pages) => {
-        if (alive) setAccountPages(pages);
+        if (alive) {
+          setAccountPages(pages);
+          setPagesLoaded(true);
+          setPageListError('');
+        }
       })
       .catch((loadError) => {
         console.warn('Account page list load failed:', loadError);
+        if (alive) setPageListError('페이지 목록을 불러오지 못했습니다.');
       })
       .finally(() => {
         if (alive) setPagesLoading(false);
@@ -40,10 +50,9 @@ function DashboardPolished({ user, page, leads, onLogout, onAccountUpdate, onAi,
   }, [user?.session]);
 
   const visiblePages = useMemo(() => {
-    if (accountPages.length) return accountPages;
-    if (!pagesLoading && !hasCurrentPage) return [];
+    if (pagesLoaded) return accountPages;
     return hasCurrentPage ? [{ ...page, leadCount: currentLeadCount }] : [];
-  }, [accountPages, currentLeadCount, hasCurrentPage, page, pagesLoading]);
+  }, [accountPages, currentLeadCount, hasCurrentPage, page, pagesLoaded]);
 
   const totalLeadCount = visiblePages.reduce((sum, item) => sum + Number(item.leadCount || 0), 0);
 
@@ -68,6 +77,26 @@ function DashboardPolished({ user, page, leads, onLogout, onAccountUpdate, onAi,
 
   const openPreview = (item) => {
     window.location.href = `/${item.slug}`;
+  };
+
+  const deletePage = async (item) => {
+    const title = item.title || item.slug || '이 페이지';
+    if (!window.confirm(`"${title}" 페이지를 삭제할까요?\n삭제하면 공개 주소에서도 보이지 않습니다.`)) return;
+    const deleteKey = item.projectId || item.id || item.slug;
+    setDeletingProjectId(deleteKey);
+    setPageListError('');
+    try {
+      await deleteAccountPage(item, user);
+      setAccountPages((current) => current.filter((candidate) => (
+        (candidate.projectId || candidate.id || candidate.slug) !== deleteKey
+      )));
+      setPagesLoaded(true);
+    } catch (deleteError) {
+      console.warn('Account page delete failed:', deleteError);
+      setPageListError(deleteError?.message || '페이지를 삭제하지 못했습니다.');
+    } finally {
+      setDeletingProjectId('');
+    }
   };
 
   return (
@@ -138,11 +167,12 @@ function DashboardPolished({ user, page, leads, onLogout, onAccountUpdate, onAi,
           </section>
         )}
 
-        <section className="home-section service-page-list">
+        <section className="home-section service-page-list" aria-busy={pagesLoading}>
           <div className="home-section-title">
             <h2>내 랜딩페이지</h2>
             <button className="primary-btn" type="button" onClick={() => setCreateOpen(true)}>새로 만들기</button>
           </div>
+          {pageListError && <strong className="service-page-list-error" role="alert">{pageListError}</strong>}
           {visiblePages.length ? visiblePages.map((item) => (
             <article className="landing-card service-landing-card" key={`${item.projectId || ''}:${item.id || item.slug}`}>
               <div>
@@ -152,6 +182,14 @@ function DashboardPolished({ user, page, leads, onLogout, onAccountUpdate, onAi,
               <div className="landing-card-actions">
                 <button className="primary-btn" type="button" onClick={() => openEditor(item)}>편집</button>
                 <button className="ghost-btn" type="button" onClick={() => openPreview(item)}>미리보기</button>
+                <button
+                  className="danger-btn landing-delete-btn"
+                  type="button"
+                  disabled={deletingProjectId === (item.projectId || item.id || item.slug)}
+                  onClick={() => deletePage(item)}
+                >
+                  {deletingProjectId === (item.projectId || item.id || item.slug) ? '삭제 중' : '삭제'}
+                </button>
               </div>
             </article>
           )) : (
