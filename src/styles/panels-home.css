@@ -80,6 +80,32 @@
   color: #111827;
 }
 
+.landing-card-actions .landing-delete-btn {
+  border: 1px solid #fecaca;
+  background: #fff;
+  color: #dc2626;
+}
+
+.landing-card-actions .landing-delete-btn:hover {
+  border-color: #ef4444;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.landing-card-actions .landing-delete-btn:disabled {
+  opacity: .55;
+  cursor: wait;
+  transform: none;
+}
+
+.service-page-list-error {
+  display: block;
+  margin-top: 12px;
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 900;
+}
+
 @media (max-width:900px){
   .landing-card{
     align-items:flex-start;
@@ -89,6 +115,6 @@
   .landing-card-actions{
     width:100%;
     display:grid;
-    grid-template-columns:1fr 1fr;
+    grid-template-columns:repeat(3,1fr);
   }
 }

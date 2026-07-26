@@ -108,6 +108,21 @@ export async function fetchAccountPages(authUser = null) {
   const data = await res.json();
   return Array.isArray(data?.pages) ? data.pages : [];
 }
+export async function deleteAccountPage(page, authUser = null) {
+  if (!isServerPageMode()) return { ok: true, mode: 'local' };
+  const slug = pageSlug(page);
+  const context = projectContext(page, authUser);
+  const params = pageContextParams(context);
+  const query = params.toString() ? `?${params.toString()}` : '';
+  const res = await apiFetch(`/api/pages/${encodeURIComponent(slug)}${query}`, {
+    method: 'DELETE',
+    cache: 'no-store',
+    headers: noStoreHeaders(projectAuthHeaders(context)),
+  });
+  if (!res.ok) throw new Error(await readJsonError(res, `Page delete failed: ${res.status}`));
+  return res.json();
+}
+
 function publicPageMatchesSaved(publicPage = null, savedPage = {}) {
   if (!publicPage || !savedPage) return false;
   if (String(publicPage.slug || '') !== String(savedPage.slug || '')) return false;
