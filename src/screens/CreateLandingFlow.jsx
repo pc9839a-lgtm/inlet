@@ -215,7 +215,7 @@ function DashboardCreateFlow({ page, templates = [], onAi, onManual, onTemplate,
 
       {step === 'url' && (
         <UrlStartStep
-          initialSlug={page?.slug || ''}
+          initialSlug={''}
           modeLabel={modeLabel}
           onBack={() => setStep('menu')}
           onConfirm={(url) => {
@@ -391,10 +391,10 @@ function CreateLandingModal({ page, onClose, onAi, onManual, onTemplate, onCheck
   const [confirmedUrl, setConfirmedUrl] = useState(null);
   const dialogRef = useRef(null);
   const [footer, setFooter] = useState({
-    company: page?.blocks?.find((block) => block.type === 'footer')?.s?.company || '',
-    owner: page?.blocks?.find((block) => block.type === 'footer')?.s?.owner || '',
-    phone: page?.blocks?.find((block) => block.type === 'footer')?.s?.phone || '',
-    address: page?.blocks?.find((block) => block.type === 'footer')?.s?.address || '',
+    company: '',
+    owner: '',
+    phone: '',
+    address: '',
   });
   const setFooterField = (key, value) => setFooter((current) => ({ ...current, [key]: value }));
   const startUrlStep = (mode) => {
@@ -458,7 +458,7 @@ function CreateLandingModal({ page, onClose, onAi, onManual, onTemplate, onCheck
 
         {step === 'url' && (
           <UrlStartStep
-            initialSlug={page?.slug || ''}
+            initialSlug={''}
             modeLabel={modeLabel}
             onBack={() => setStep('menu')}
             onConfirm={continueAfterUrl}
