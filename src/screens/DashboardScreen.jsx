@@ -1,25 +1,51 @@
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { authAccountErrorMessage } from '../lib/authAccounts.js';
+import { fetchAccountPages } from '../lib/pageRepository.js';
 import { WorkspaceCreateModalLayer } from './workspace/WorkspaceCreateModalLayer.jsx';
 
-function DashboardPolished({ user, page, leads, onEdit, onPreview, onLogout, onAccountUpdate, onAi, onManual, onTemplate, onCheckUrl, templates = [] }) {
-  const leadCount = Array.isArray(leads) ? leads.length : 0;
-  const hasPage = Boolean(page?.title || page?.slug);
+function DashboardPolished({ user, page, leads, onLogout, onAccountUpdate, onAi, onManual, onTemplate, onCheckUrl, templates = [] }) {
+  const currentLeadCount = Array.isArray(leads) ? leads.length : 0;
+  const hasCurrentPage = Boolean(page?.title || page?.slug);
   const [accountOpen, setAccountOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [accountPages, setAccountPages] = useState([]);
+  const [pagesLoading, setPagesLoading] = useState(true);
   const [draft, setDraft] = useState({ name: user?.name || '', phone: user?.phone || '' });
 
   const accountName = user?.name || user?.email || '사용자';
   const accessMode = user?.accessMode || user?.role || 'master';
   const modeLabel = accessMode === 'manager' ? '매니저' : accessMode === 'clientAdmin' ? '관리자' : '마스터';
   const planLabel = user?.plan || page?.billing?.plan || '기본';
-  const pageSlug = page?.slug || 'my-page';
 
   useEffect(() => {
     setDraft({ name: user?.name || '', phone: user?.phone || '' });
   }, [user?.name, user?.phone]);
+
+  useEffect(() => {
+    let alive = true;
+    setPagesLoading(true);
+    fetchAccountPages(user)
+      .then((pages) => {
+        if (alive) setAccountPages(pages);
+      })
+      .catch((loadError) => {
+        console.warn('Account page list load failed:', loadError);
+      })
+      .finally(() => {
+        if (alive) setPagesLoading(false);
+      });
+    return () => { alive = false; };
+  }, [user?.session]);
+
+  const visiblePages = useMemo(() => {
+    if (accountPages.length) return accountPages;
+    if (!pagesLoading && !hasCurrentPage) return [];
+    return hasCurrentPage ? [{ ...page, leadCount: currentLeadCount }] : [];
+  }, [accountPages, currentLeadCount, hasCurrentPage, page, pagesLoading]);
+
+  const totalLeadCount = visiblePages.reduce((sum, item) => sum + Number(item.leadCount || 0), 0);
 
   const saveAccount = async (event) => {
     event.preventDefault();
@@ -34,6 +60,14 @@ function DashboardPolished({ user, page, leads, onEdit, onPreview, onLogout, onA
     } finally {
       setSaving(false);
     }
+  };
+
+  const openEditor = (item) => {
+    window.location.href = `/${item.slug}/admin`;
+  };
+
+  const openPreview = (item) => {
+    window.location.href = `/${item.slug}`;
   };
 
   return (
@@ -75,30 +109,25 @@ function DashboardPolished({ user, page, leads, onEdit, onPreview, onLogout, onA
           </article>
           <article>
             <span>랜딩</span>
-            <strong>{hasPage ? '1개' : '없음'}</strong>
-            <small>{hasPage ? `/${pageSlug}` : 'URL 미설정'}</small>
+            <strong>{visiblePages.length ? `${visiblePages.length}개` : '없음'}</strong>
+            <small>{visiblePages.length ? `/${visiblePages[0].slug}` : 'URL 미설정'}</small>
           </article>
           <article>
             <span>접수</span>
-            <strong>{leadCount}건</strong>
-            <small>최근 접수 기준</small>
+            <strong>{totalLeadCount}건</strong>
+            <small>전체 랜딩 기준</small>
           </article>
         </section>
 
         {accountOpen && (
           <section className="home-section service-account-edit">
-            <div className="home-section-title">
-              <h2>계정 설정</h2>
-            </div>
+            <div className="home-section-title"><h2>계정 설정</h2></div>
             <form className="home-account-form" onSubmit={saveAccount}>
               <label>
                 <span>이름</span>
                 <input value={draft.name} onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} placeholder="이름" />
               </label>
-              <label>
-                <span>이메일</span>
-                <input value={user?.email || ''} disabled />
-              </label>
+              <label><span>이메일</span><input value={user?.email || ''} disabled /></label>
               <label>
                 <span>연락처</span>
                 <input value={draft.phone} onChange={(event) => setDraft((current) => ({ ...current, phone: event.target.value }))} placeholder="010-0000-0000" />
@@ -114,26 +143,26 @@ function DashboardPolished({ user, page, leads, onEdit, onPreview, onLogout, onA
             <h2>내 랜딩페이지</h2>
             <button className="primary-btn" type="button" onClick={() => setCreateOpen(true)}>새로 만들기</button>
           </div>
-          {hasPage ? (
-            <article className="landing-card service-landing-card">
+          {visiblePages.length ? visiblePages.map((item) => (
+            <article className="landing-card service-landing-card" key={`${item.projectId || ''}:${item.id || item.slug}`}>
               <div>
-                <strong>{page.title || '랜딩페이지'}</strong>
-                <span>/{pageSlug} · 접수 {leadCount}건</span>
+                <strong>{item.title || '랜딩페이지'}</strong>
+                <span>/{item.slug} · 접수 {Number(item.leadCount || 0)}건</span>
               </div>
               <div className="landing-card-actions">
-                <button className="primary-btn" type="button" onClick={onEdit}>편집</button>
-                <button className="ghost-btn" type="button" onClick={onPreview}>미리보기</button>
+                <button className="primary-btn" type="button" onClick={() => openEditor(item)}>편집</button>
+                <button className="ghost-btn" type="button" onClick={() => openPreview(item)}>미리보기</button>
               </div>
             </article>
-          ) : (
+          )) : (
             <div className="empty-landing">
               <strong>랜딩페이지가 없습니다.</strong>
-              <p>새 랜딩을 만들어 시작하세요.</p>
               <button className="primary-btn" type="button" onClick={() => setCreateOpen(true)}>새 랜딩 만들기</button>
             </div>
           )}
         </section>
       </main>
+
       <Suspense fallback={null}>
         <WorkspaceCreateModalLayer
           show={createOpen}
@@ -143,7 +172,7 @@ function DashboardPolished({ user, page, leads, onEdit, onPreview, onLogout, onA
           createManual={onManual}
           createFromTemplate={onTemplate}
           onCheckUrl={onCheckUrl}
-          defaultSlug={pageSlug}
+          defaultSlug=""
           templates={templates}
         />
       </Suspense>

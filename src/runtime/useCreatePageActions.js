@@ -49,19 +49,19 @@ export function useCreatePageActions({
 
   const createWithAi = async (draftInput = null) => {
     if (!canManageAdmin) return;
-    const requestedSlug = sanitizePageSlug(draftInput?.slug || page.slug || defaultPage.slug || 'my-page', 'my-page');
+    const requestedSlug = sanitizePageSlug(draftInput?.slug || defaultPage.slug || 'my-page', 'my-page');
     const nextContext = projectContext({ slug: requestedSlug }, authUser);
     if (draftInput && typeof draftInput === 'object') {
       const nextInput = normalizeAiDraftInput({
-        ...(page.ai?.draftInput || {}),
+        ...(defaultPage.ai?.draftInput || {}),
         ...draftInput,
         slug: requestedSlug,
       });
       const nextPage = freshCreatedPage({
-        ...page,
+        ...defaultPage,
         slug: requestedSlug,
         ai: {
-          ...(page.ai || {}),
+          ...(defaultPage.ai || {}),
           draftInput: nextInput,
           updatedAt: new Date().toISOString(),
         },
@@ -81,27 +81,26 @@ export function useCreatePageActions({
 
   const createManual = async (footerInfo = {}) => {
     if (!canManageAdmin) return;
-    const nextSlug = sanitizePageSlug(footerInfo?.slug || page.slug || defaultPage.slug || 'my-page', 'my-page');
+    const nextSlug = sanitizePageSlug(footerInfo?.slug || defaultPage.slug || 'my-page', 'my-page');
     const nextContext = projectContext({ slug: nextSlug }, authUser);
+    const basePage = normalizePageForSave({ ...defaultPage, slug: nextSlug });
     let nextPage = null;
     if (footerInfo && Object.keys(footerInfo).length) {
       const { slug: _slug, ...safeFooterInfo } = footerInfo || {};
       nextPage = freshCreatedPage({
-        ...page,
+        ...basePage,
         slug: nextSlug,
-        blocks: page.blocks.map((block) => (
+        blocks: basePage.blocks.map((block) => (
           block.type === 'footer'
             ? { ...block, s: { ...block.s, ...safeFooterInfo } }
             : block
         )),
       }, nextContext);
-    } else if (nextSlug !== page.slug || page.projectId !== nextContext.projectId) {
+    } else {
       nextPage = freshCreatedPage({
-        ...page,
+        ...basePage,
         slug: nextSlug,
       }, nextContext);
-    } else {
-      nextPage = normalizePageForSave(page);
     }
     if (nextPage) {
       const saved = await saveCreatedPageToServer(nextPage, '페이지');
@@ -118,8 +117,8 @@ export function useCreatePageActions({
     if (!canUseBuilder) return;
     try {
       const templates = await loadTemplateModule();
-      const templatePage = templates.createTemplatePage(templateId, page);
-      const nextSlug = sanitizePageSlug(urlConfig?.slug || templatePage.slug || page.slug || 'my-page', 'my-page');
+      const templatePage = templates.createTemplatePage(templateId, defaultPage);
+      const nextSlug = sanitizePageSlug(urlConfig?.slug || templatePage.slug || defaultPage.slug || 'my-page', 'my-page');
       const templateContext = projectContext({ slug: nextSlug }, authUser);
       const next = freshCreatedPage({
         ...templatePage,

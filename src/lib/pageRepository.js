@@ -98,6 +98,16 @@ export async function fetchPublicServerPage(slug) {
   return data?.page || null;
 }
 
+export async function fetchAccountPages(authUser = null) {
+  if (!isServerPageMode() || !authUser?.session) return [];
+  const res = await apiFetch('/api/projects', {
+    cache: 'no-store',
+    headers: noStoreHeaders({ 'X-Inlet-Session': authUser.session }),
+  });
+  if (!res.ok) throw new Error(await readJsonError(res, `Page list load failed: ${res.status}`));
+  const data = await res.json();
+  return Array.isArray(data?.pages) ? data.pages : [];
+}
 function publicPageMatchesSaved(publicPage = null, savedPage = {}) {
   if (!publicPage || !savedPage) return false;
   if (String(publicPage.slug || '') !== String(savedPage.slug || '')) return false;
