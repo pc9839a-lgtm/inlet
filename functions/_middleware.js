@@ -31,6 +31,7 @@ export async function onRequest(context) {
 
   let html = await response.text();
   html = html
+    .replace(/페이지로\s+(?!콜링크)[가-힣]{2,4}(?=입니다|`|'|"|\n)/g, '페이지로')
     .replace('</head>', '<link rel="stylesheet" href="/call/preview/v105.css?v=105"></head>')
     .replace('</body>', '<script src="/call/preview/v105.js?v=105"></script></body>');
 
