@@ -123,6 +123,7 @@ assert(statsPanel.includes('Math.min(85, Math.max(15') && statsPanel.includes('h
 assert(statsPanel.includes("tooltipBelow ? ' is-below' : ''"), 'chart tooltip should expose its below-point placement state');
 assert(statsPanelCss.includes('.stats-chart-tooltip-wide.is-below') && statsPanelCss.includes('translate(-50%, 12px)'), 'chart tooltip CSS should render high-point details below the point');
 assert(statsPanelCss.includes('.stat-list-v2') && statsPanelCss.includes('margin-top: 16px') && statsPanelCss.includes('min-height: 30px'), 'stat cards should keep consistent title, list, and row spacing');
+assert(statsPanelCss.includes('overflow-anchor: none'), 'stats filter refreshes should not trigger browser scroll anchoring');
 assert(statsPeriodCss.includes('grid-template-columns: minmax(0, 1fr) 184px'), 'stats month picker should have enough width for year/month text');
 assert(statsPeriodCss.includes('min-width: 168px'), 'stats month input should not collapse to year-only text');
 assert(statsPeriodCss.includes('grid-template-columns: 58px minmax(96px, .8fr) minmax(112px, 1fr) 132px'), 'recent lead rows should use four visible columns only');
@@ -150,4 +151,4 @@ const trafficAttribution = await readFile('src/lib/trafficAttribution.js', 'utf8
 assert(trafficAttribution.includes('trafficAttributionFromUrl') && trafficAttribution.includes('utm_source'), 'traffic attribution should parse UTM source');
 assert(trafficAttribution.includes('trafficChannelFromReferrer') && trafficAttribution.includes('sourceLabel'), 'traffic attribution should fall back to referrer and source label');
 
-console.log(JSON.stringify({ ok: true, checks: 69 }, null, 2));
+console.log(JSON.stringify({ ok: true, checks: 70 }, null, 2));

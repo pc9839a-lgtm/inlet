@@ -3,6 +3,9 @@
 @import '../styles/panels-stats-v2-detail.css';
 @import '../styles/panels-stats-period-line.css';
 
+.stats-panel {
+  overflow-anchor: none !important;
+}
 /* stats-panel-final-clean-20260627-v2 */
 .stats-panel .stats-period-controls {
   display: grid !important;
