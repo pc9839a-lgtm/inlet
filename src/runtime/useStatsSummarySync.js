@@ -80,7 +80,6 @@ export function useStatsSummarySync({
       return [];
     });
     setStatsPartial(false);
-    setServerStatsSummary(null);
     Promise.all([
       fetchServerStatsSummary(page, authUser, { ...statsRange, channel }),
       fetchServerLeads(page, authUser, { limit: 8, withMeta: true, ...statsRange, channel }),
@@ -127,7 +126,6 @@ export function useStatsSummarySync({
         console.warn('Server stats data load failed:', error);
         if (alive) {
           setStatsPartial(true);
-          setServerStatsSummary(null);
         }
       });
     return () => { alive = false; };
