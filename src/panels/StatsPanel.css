@@ -3,7 +3,7 @@
 @import '../styles/panels-stats-v2-detail.css';
 @import '../styles/panels-stats-period-line.css';
 
-.left-workspace:has(.stats-panel) {
+body .builder-shell .left-workspace:has(.stats-panel) {
   overflow-x: clip !important;
   overflow-y: clip !important;
   overflow-anchor: none !important;
