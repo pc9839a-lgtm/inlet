@@ -14,6 +14,7 @@ export default function WorkspaceEditorScreen({
   page,
   tab,
   saved,
+  saving,
   saveStatus,
   onSave,
   onPreview,
@@ -53,6 +54,7 @@ export default function WorkspaceEditorScreen({
         page={page}
         tab={tab}
         saved={saved}
+        saving={saving}
         saveStatus={saveStatus}
         onSave={onSave}
         onPreview={onPreview}

@@ -92,7 +92,7 @@ export async function optimizePageForServerSave(page = {}) {
 
   const images = [...dataImageValues(page)];
   if (!images.length) {
-    const error = new Error('페이지 데이터가 서버 저장 한도를 초과했습니다. 불필요한 위젯 내용을 줄인 뒤 다시 저장해주세요.');
+    const error = new Error('\uD398\uC774\uC9C0 \uB370\uC774\uD130\uAC00 \uC11C\uBC84 \uC800\uC7A5 \uD55C\uB3C4\uB97C \uCD08\uACFC\uD588\uC2B5\uB2C8\uB2E4. \uBD88\uD544\uC694\uD55C \uC704\uC82F \uB0B4\uC6A9\uC744 \uC904\uC778 \uB4A4 \uB2E4\uC2DC \uC800\uC7A5\uD574\uC8FC\uC138\uC694.');
     error.status = 413;
     error.details = { code: 'PAGE_DATA_TOO_LARGE', bytes: pageJsonBytes(page) };
     throw error;
@@ -114,7 +114,7 @@ export async function optimizePageForServerSave(page = {}) {
   const optimized = replaceDataImages(page, replacements);
   const bytes = pageJsonBytes(optimized);
   if (bytes > D1_PAGE_JSON_SAFE_BYTES) {
-    const error = new Error('이미지 용량이 서버 저장 한도를 초과했습니다. 큰 이미지나 갤러리 이미지를 줄인 뒤 다시 저장해주세요.');
+    const error = new Error('\uC774\uBBF8\uC9C0 \uC6A9\uB7C9\uC774 \uC11C\uBC84 \uC800\uC7A5 \uD55C\uB3C4\uB97C \uCD08\uACFC\uD588\uC2B5\uB2C8\uB2E4. \uD070 \uC774\uBBF8\uC9C0\uB098 \uAC24\uB7EC\uB9AC \uC774\uBBF8\uC9C0\uB97C \uC904\uC778 \uB4A4 \uB2E4\uC2DC \uC800\uC7A5\uD574\uC8FC\uC138\uC694.');
     error.status = 413;
     error.details = { code: 'PAGE_DATA_TOO_LARGE', bytes };
     throw error;

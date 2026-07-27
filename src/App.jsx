@@ -936,7 +936,7 @@ function App() {
     setSaved,
   });
 
-  const { saveNow } = usePageSaveAction({
+  const { saveNow, saving: pageSaving } = usePageSaveAction({
     allowedTabs,
     tab,
     canWriteCurrentTab,
@@ -1299,6 +1299,7 @@ function App() {
         page={page}
         tab={activeWorkspaceTab}
         saved={saved}
+        saving={pageSaving}
         saveStatus={saveStatus}
         onSave={saveNow}
         onPreview={openPreview}

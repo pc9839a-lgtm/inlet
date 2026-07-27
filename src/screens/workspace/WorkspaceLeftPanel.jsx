@@ -16,6 +16,7 @@ export function WorkspaceLeftPanel({
   page,
   tab,
   saved,
+  saving,
   saveStatus,
   onSave,
   onPreview,
@@ -51,6 +52,7 @@ export function WorkspaceLeftPanel({
               <ClientAdminHeader
                 page={page}
                 saved={saved}
+                saving={saving}
                 saveStatus={saveStatus}
                 onSave={onSave}
                 onDashboard={onDashboard}
@@ -62,6 +64,7 @@ export function WorkspaceLeftPanel({
                 page={page}
                 tab={tab}
                 saved={saved}
+                saving={saving}
                 saveStatus={saveStatus}
                 onSave={onSave}
                 onPreview={onPreview}
