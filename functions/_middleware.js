@@ -20,6 +20,8 @@ export async function onRequest(context) {
     '/call/preview-v105': '/call/preview/index.html',
     '/preview-v106': '/call/preview-v106/index.html',
     '/call/preview-v106': '/call/preview-v106/index.html',
+    '/preview-v107': '/call/preview-v106/index.html',
+    '/call/preview-v107': '/call/preview-v106/index.html',
   };
   const mapped = routes[clean];
   if (!mapped) return context.next();
@@ -35,7 +37,7 @@ export async function onRequest(context) {
   headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
   headers.set('Pragma', 'no-cache');
   headers.set('Expires', '0');
-  headers.set('X-CallLink-Preview-Version', '1.0.6');
+  headers.set('X-CallLink-Preview-Version', '1.0.7');
 
   if (mapped === '/call/preview-v106/index.html') {
     return new Response(response.body, {
@@ -48,8 +50,8 @@ export async function onRequest(context) {
   let html = await response.text();
   html = html
     .replace(/페이지로\s+(?!콜링크)[가-힣]{2,4}(?=입니다|`|'|"|\n)/g, '페이지로')
-    .replace('</head>', '<link rel="stylesheet" href="/call/preview/v106.css?v=106"></head>')
-    .replace('</body>', '<script src="/call/preview/v106.js?v=106"></script></body>');
+    .replace('</head>', '<link rel="stylesheet" href="/call/preview/v106.css?v=107"></head>')
+    .replace('</body>', '<script src="/call/preview/v106.js?v=107"></script></body>');
 
   headers.set('Content-Type', 'text/html; charset=utf-8');
   headers.delete('Content-Length');
