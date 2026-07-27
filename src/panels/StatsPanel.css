@@ -3,7 +3,11 @@
 @import '../styles/panels-stats-v2-detail.css';
 @import '../styles/panels-stats-period-line.css';
 
-.left-workspace,
+.left-workspace {
+  overflow: clip !important;
+  overflow-anchor: none !important;
+}
+
 .stats-panel {
   overflow-anchor: none !important;
 }
