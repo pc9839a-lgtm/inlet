@@ -1011,6 +1011,28 @@ function App() {
     setWorkspaceOpen,
   });
 
+  const openDashboardPage = (item = {}) => {
+    const slug = String(item.slug || '').trim();
+    const projectId = String(item.projectId || '').trim();
+    if (!slug || !projectId) {
+      showToast('편집할 페이지 정보를 찾지 못했습니다. 목록을 새로고침해 주세요.', 'error');
+      return;
+    }
+    const targetPage = normalizePageForSave({
+      ...defaultPage,
+      id: item.id || uid(),
+      title: item.title || defaultPage.title,
+      slug,
+      projectId,
+      ownerId: item.ownerId || authUser?.ownerId || '',
+    });
+    accountPageLoadRef.current = '';
+    latestPageRef.current = targetPage;
+    setPage(targetPage);
+    setTab('edit');
+    openWorkspace('manual');
+  };
+
   const reset = () => {
     requestConfirm({
       title: '저장된 페이지와 접수 데이터를 초기화할까요?',
@@ -1179,7 +1201,7 @@ function App() {
               onTemplate={createFromTemplate}
               onCheckUrl={checkCreatePageUrl}
               templates={templateChoices}
-              onEdit={openWorkspace}
+              onEdit={openDashboardPage}
               onPreview={openPreview}
               onLogout={logout}
               onAccountUpdate={updateAccountProfile}
