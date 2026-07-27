@@ -10,6 +10,7 @@
   });
 
   let messageStartMode = 'choice';
+  let messagePreviewOpen = false;
   const previousMoreHtml = moreHtml;
   moreHtml = () => previousMoreHtml().replace('<div class="avatar">김</div>', '<div class="avatar">P</div>');
 
@@ -45,7 +46,8 @@
         <div class="switch-row"><span>${d.switchText}</span><div class="small-toggle"></div></div>
         <div class="field"><label>문자 내용</label><textarea class="input" id="messageText">${d.text}</textarea></div>
         <div class="field"><label>연결할 페이지 주소</label><input class="input" value="https://pagero.kr/demo"></div>
-        <div class="card preview"><b>${d.title} 미리보기</b>\n\n<span id="messagePreview">${d.text}</span>\n\nhttps://pagero.kr/demo</div>
+        <button class="message-preview-toggle" id="toggleMessagePreview"><span>${d.title} 미리보기</span><span id="messagePreviewArrow">${messagePreviewOpen ? '▴' : '▾'}</span></button>
+        <div class="card preview message-preview-panel ${messagePreviewOpen ? 'open' : ''}" id="messagePreviewPanel"><span id="messagePreview">${d.text}</span>\n\nhttps://pagero.kr/demo</div>
         <button class="primary save" id="saveMessage">현재 메시지 저장</button>
       </div>`;
   };
@@ -55,19 +57,27 @@
     $$('[data-open]').forEach(button => button.onclick = () => openDetail(button.dataset.open));
     $$('[data-message]').forEach(button => button.onclick = () => {
       messageTab = button.dataset.message;
+      messagePreviewOpen = false;
       setTab('messages');
     });
     if ($('#startTemplate')) $('#startTemplate').onclick = openSituationList;
     if ($('#startFree')) $('#startFree').onclick = () => {
       messageStartMode = 'editor';
+      messagePreviewOpen = false;
       setTab('messages');
     };
     if ($('#changeMessageStart')) $('#changeMessageStart').onclick = () => {
       messageStartMode = 'choice';
+      messagePreviewOpen = false;
       setTab('messages');
     };
     if ($('#messageText')) $('#messageText').oninput = event => {
       $('#messagePreview').textContent = event.target.value;
+    };
+    if ($('#toggleMessagePreview')) $('#toggleMessagePreview').onclick = () => {
+      messagePreviewOpen = !messagePreviewOpen;
+      $('#messagePreviewPanel').classList.toggle('open', messagePreviewOpen);
+      $('#messagePreviewArrow').textContent = messagePreviewOpen ? '▴' : '▾';
     };
     if ($('#saveMessage')) $('#saveMessage').onclick = () => toast('현재 메시지를 저장했습니다.');
   };
@@ -117,6 +127,7 @@
       }
       selected.forEach(key => { messages[key].text = selectedTemplate[key]; });
       messageStartMode = 'editor';
+      messagePreviewOpen = false;
       closeModal();
       setTab('messages');
       toast(`${selectedTemplate.title} 문구를 적용했습니다.`);
