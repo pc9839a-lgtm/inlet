@@ -11,6 +11,7 @@
 
   let messageStartMode = 'choice';
   let messagePreviewOpen = false;
+  let selectedPreviewImage = '';
   const previousMoreHtml = moreHtml;
   moreHtml = () => previousMoreHtml().replace('<div class="avatar">김</div>', '<div class="avatar">P</div>');
 
@@ -35,6 +36,9 @@
     }
 
     const d = messages[messageTab];
+    const selectedImageHtml = selectedPreviewImage
+      ? `<div class="selected-image-row"><span class="selected-image-thumb">▧</span><div class="grow"><strong>${selectedPreviewImage}</strong><small>이미지문자로 우선 발송</small></div><button id="removeMessageImage">제거</button></div>`
+      : '';
     return `<button class="start-back" id="changeMessageStart">‹ 작성 방식 다시 선택</button>
       <div class="tabs">
         <button class="tab ${messageTab === 'answered' ? 'active' : ''}" data-message="answered">받은 전화</button>
@@ -46,8 +50,14 @@
         <div class="switch-row"><span>${d.switchText}</span><div class="small-toggle"></div></div>
         <div class="field"><label>문자 내용</label><textarea class="input" id="messageText">${d.text}</textarea></div>
         <div class="field"><label>연결할 페이지 주소</label><input class="input" value="https://pagero.kr/demo"></div>
+        <div class="image-attach-card">
+          <strong>이미지 첨부</strong>
+          <p>문자와 함께 보낼 대표 이미지를 갤러리에서 추가할 수 있습니다.</p>
+          <button class="image-add-button" id="addMessageImage">${selectedPreviewImage ? '이미지 변경' : '＋  갤러리에서 이미지 추가'}</button>
+          ${selectedImageHtml}
+        </div>
         <button class="message-preview-toggle" id="toggleMessagePreview"><span>${d.title} 미리보기</span><span id="messagePreviewArrow">${messagePreviewOpen ? '▴' : '▾'}</span></button>
-        <div class="card preview message-preview-panel ${messagePreviewOpen ? 'open' : ''}" id="messagePreviewPanel"><span id="messagePreview">${d.text}</span>\n\nhttps://pagero.kr/demo</div>
+        <div class="card preview message-preview-panel ${messagePreviewOpen ? 'open' : ''}" id="messagePreviewPanel"><span id="messagePreview">${d.text}</span>\n\nhttps://pagero.kr/demo${selectedPreviewImage ? `\n\n[첨부 이미지] ${selectedPreviewImage}` : ''}</div>
         <button class="primary save" id="saveMessage">현재 메시지 저장</button>
       </div>`;
   };
@@ -74,6 +84,13 @@
     if ($('#messageText')) $('#messageText').oninput = event => {
       $('#messagePreview').textContent = event.target.value;
     };
+    if ($('#addMessageImage')) $('#addMessageImage').onclick = openGalleryPermissionPreview;
+    if ($('#removeMessageImage')) $('#removeMessageImage').onclick = () => {
+      selectedPreviewImage = '';
+      messagePreviewOpen = false;
+      setTab('messages');
+      toast('첨부 이미지를 제거했습니다.');
+    };
     if ($('#toggleMessagePreview')) $('#toggleMessagePreview').onclick = () => {
       messagePreviewOpen = !messagePreviewOpen;
       $('#messagePreviewPanel').classList.toggle('open', messagePreviewOpen);
@@ -81,6 +98,37 @@
     };
     if ($('#saveMessage')) $('#saveMessage').onclick = () => toast('현재 메시지를 저장했습니다.');
   };
+
+  function openGalleryPermissionPreview() {
+    openModal(
+      '사진 접근 권한',
+      `<div class="permission-copy"><strong>갤러리에서 이미지를 선택할까요?</strong><p>문자에 첨부할 사진을 불러오기 위해 사진 접근 권한을 요청합니다. 권한을 허용하지 않아도 선택한 사진 한 장만 사용할 수 있습니다.</p></div>`,
+      `<div class="permission-actions"><button class="secondary" id="useSelectedPhoto">선택한 사진만 사용</button><button class="primary" id="allowPhotoPermission">권한 허용</button></div>`);
+    $('#useSelectedPhoto').onclick = openMockGallery;
+    $('#allowPhotoPermission').onclick = () => {
+      toast('사진 접근 권한을 허용한 예시입니다.');
+      openMockGallery();
+    };
+  }
+
+  function openMockGallery() {
+    $('#sheetTitle').textContent = '갤러리에서 선택';
+    $('#sheetBody').innerHTML = `<p class="hint" style="margin-top:0">문자에 첨부할 이미지 한 장을 선택하세요.</p><div class="mock-gallery">
+      <button data-gallery-name="상담안내.jpg"><span>상담 안내</span></button>
+      <button data-gallery-name="상품소개.jpg"><span>상품 소개</span></button>
+      <button data-gallery-name="예약안내.jpg"><span>예약 안내</span></button>
+    </div>`;
+    $('#sheetActions').innerHTML = '';
+    $$('[data-gallery-name]').forEach(button => {
+      button.onclick = () => {
+        selectedPreviewImage = button.dataset.galleryName;
+        closeModal();
+        messagePreviewOpen = false;
+        setTab('messages');
+        toast('이미지를 추가했습니다.');
+      };
+    });
+  }
 
   templatePreviewBlock = function (key, label, text) {
     return `<div class="template-item">
@@ -206,5 +254,25 @@
       toast('고객을 추가했습니다.');
       renderCustomers();
     };
+  };
+
+  const loginInputs = $$('.login-card .input');
+  if (loginInputs[0] && loginInputs[1]) {
+    loginInputs[0].addEventListener('keydown', event => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      loginInputs[1].focus();
+    });
+    loginInputs[1].addEventListener('keydown', event => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      loginInputs[1].blur();
+      $('#loginBtn').click();
+    });
+  }
+  const originalLoginClick = $('#loginBtn').onclick;
+  $('#loginBtn').onclick = event => {
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    if (typeof originalLoginClick === 'function') originalLoginClick.call($('#loginBtn'), event);
   };
 })();
