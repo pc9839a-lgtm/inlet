@@ -1050,3 +1050,32 @@ body .builder-shell .edit-layout .block-editor-v2-content > .block-editor-anchor
   background: #111827 !important;
   color: #fff !important;
 }
+
+/* Keep the save header outside the scrolling editor content. */
+body .builder-shell:not(.template-intro-shell) .left-workspace {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  overflow: hidden !important;
+}
+body .builder-shell:not(.template-intro-shell) .workspace-persistent-header {
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 20px 18px 0 !important;
+  background: #eef2f6 !important;
+  z-index: 90 !important;
+}
+body .builder-shell:not(.template-intro-shell) .workspace-persistent-header .panel-header {
+  position: relative !important;
+  top: auto !important;
+  z-index: 1 !important;
+  margin: 0 !important;
+}
+body .builder-shell:not(.template-intro-shell) .work-panel {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding-top: 10px !important;
+  scrollbar-gutter: stable !important;
+}

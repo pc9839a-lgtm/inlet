@@ -33,9 +33,28 @@ export function WorkspaceLeftPanel({
   settingsPanelProps,
 }) {
   const showTemplateIntro = !mobileOperationsOnly && canManageAdmin && startMode === 'template';
+  const header = mobileOperationsOnly ? (
+    <MobileOperationsHeader page={page} />
+  ) : clientAdminMode ? (
+    <ClientAdminHeader page={page} onDashboard={onDashboard} onPreview={onPreview} previewUrl={previewUrl} />
+  ) : (
+    <PanelHeader
+      page={page}
+      tab={tab}
+      saved={saved}
+      saveStatus={saveStatus}
+      onSave={onSave}
+      onPreview={onPreview}
+      onDashboard={onDashboard}
+      onStartChoice={onStartChoice}
+      previewUrl={previewUrl}
+    />
+  );
 
   return (
     <aside className="left-workspace">
+      {!showTemplateIntro && <div className="workspace-persistent-header">{header}</div>}
+
       <section className="work-panel">
         {showTemplateIntro ? (
           <LazyChunkBoundary resetKey="templates">
@@ -45,24 +64,6 @@ export function WorkspaceLeftPanel({
           </LazyChunkBoundary>
         ) : (
           <>
-            {mobileOperationsOnly ? (
-              <MobileOperationsHeader page={page} />
-            ) : clientAdminMode ? (
-              <ClientAdminHeader page={page} onDashboard={onDashboard} onPreview={onPreview} previewUrl={previewUrl} />
-            ) : (
-              <PanelHeader
-                page={page}
-                tab={tab}
-                saved={saved}
-                saveStatus={saveStatus}
-                onSave={onSave}
-                onPreview={onPreview}
-                onDashboard={onDashboard}
-                onStartChoice={onStartChoice}
-                previewUrl={previewUrl}
-              />
-            )}
-
             <WorkspaceTabs allowedTabs={allowedTabs} tab={tab} changeTab={changeTab} />
 
             <WorkspaceActivePanel
