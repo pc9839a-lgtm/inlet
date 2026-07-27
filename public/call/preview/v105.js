@@ -1,5 +1,6 @@
 (() => {
-  const removePersonalName = value => String(value || '').replaceAll('페이지로 김도윤', '페이지로');
+  const removePersonalName = value => String(value || '')
+    .replace(/페이지로\s+(?!콜링크)[가-힣]{2,4}(?=입니다|$|\n)/g, '페이지로');
   Object.values(messages).forEach(item => { item.text = removePersonalName(item.text); });
   situationTemplates.forEach(item => {
     item.answered = removePersonalName(item.answered);
