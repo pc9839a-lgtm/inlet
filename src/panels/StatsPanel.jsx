@@ -31,7 +31,7 @@ function stableChannelOptions(items = []) {
   return Array.from(counts.entries())
     .map(([channel, count]) => ({ channel, count }))
     .filter((item) => item.count > 0 || defaults.includes(item.channel))
-    .sort((a, b) => (b.count - a.count) || ((order.get(a.channel) ?? 99) - (order.get(b.channel) ?? 99)));
+    .sort((a, b) => (order.get(a.channel) ?? 99) - (order.get(b.channel) ?? 99));
 }
 
 function collectPageCtaLabels(page = {}) {
@@ -152,11 +152,11 @@ function ChannelFilter({ channels, value, onChange }) {
     <section className="card stats-channel-filter">
       <div className="section-title"><h2>유입 채널</h2></div>
       <div className="stats-channel-filter-list">
-        <button type="button" className={value === 'all' ? 'active' : ''} aria-pressed={value === 'all'} onClick={() => onChange('all')}>
+        <button type="button" className={value === 'all' ? 'active' : ''} aria-pressed={value === 'all'} onClick={() => value !== 'all' && onChange('all')}>
           <span>전체</span><b>{total}</b>
         </button>
         {visible.map((item) => (
-          <button type="button" key={item.channel} className={value === item.channel ? 'active' : ''} aria-pressed={value === item.channel} onClick={() => onChange(item.channel)}>
+          <button type="button" key={item.channel} className={value === item.channel ? 'active' : ''} aria-pressed={value === item.channel} onClick={() => value !== item.channel && onChange(item.channel)}>
             <span>{statLabel(item.channel)}</span><b>{item.count}</b>
           </button>
         ))}

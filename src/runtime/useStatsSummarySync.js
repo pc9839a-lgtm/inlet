@@ -73,35 +73,30 @@ export function useStatsSummarySync({
     const statsRange = statsDateRange(statsMonth || currentMonthValue(), statsPeriod || '30d');
     const channel = statsChannel === 'all' ? '' : statsChannel;
     const previousRanges = previousStatsDateRanges(statsRange);
-    const comparisonPromise = Promise.all(
-      previousRanges.map((range) => fetchServerStatsSummary(page, authUser, { ...range, channel })),
-    ).catch((error) => {
-      console.warn('Previous stats comparison load failed:', error);
-      return [];
-    });
     setStatsPartial(false);
     Promise.all([
       fetchServerStatsSummary(page, authUser, { ...statsRange, channel }),
       fetchServerLeads(page, authUser, { limit: 8, withMeta: true, ...statsRange, channel }),
+      Promise.all(
+        previousRanges.map((range) => fetchServerStatsSummary(page, authUser, { ...range, channel })),
+      ).catch((error) => {
+        console.warn('Previous stats comparison load failed:', error);
+        return [];
+      }),
     ])
-      .then(([summaryResult, leadResult]) => {
+      .then(([summaryResult, leadResult, comparisonResults]) => {
         if (!alive) return;
-        setServerStatsSummary(summaryResult || null);
-        if (summaryResult) {
-          comparisonPromise.then((comparisonResults) => {
-            if (!alive) return;
-            const comparisonSummary = mergeStatsSummaryResults(comparisonResults);
-            if (!comparisonSummary) return;
-            setServerStatsSummary((current) => current ? {
-              ...current,
-              comparison: {
-                dateFrom: previousRanges[0]?.dateFrom || '',
-                dateTo: previousRanges[previousRanges.length - 1]?.dateTo || '',
-                summary: comparisonSummary,
-              },
-            } : current);
-          });
-        }
+        const comparisonSummary = mergeStatsSummaryResults(comparisonResults);
+        setServerStatsSummary(summaryResult ? {
+          ...summaryResult,
+          ...(comparisonSummary ? {
+            comparison: {
+              dateFrom: previousRanges[0]?.dateFrom || '',
+              dateTo: previousRanges[previousRanges.length - 1]?.dateTo || '',
+              summary: comparisonSummary,
+            },
+          } : {}),
+        } : null);
         setEvents([]);
         if (summaryResult) {
           setStatsEventPageMeta({

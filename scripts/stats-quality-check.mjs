@@ -136,8 +136,10 @@ const publicPageRuntimeActions = await readFile('src/runtime/publicPageRuntimeAc
 const statsSummarySync = await readFile('src/runtime/useStatsSummarySync.js', 'utf8');
 const workspacePanelProps = await readFile('src/runtime/createWorkspacePanelProps.js', 'utf8');
 assert(statsSummarySync.includes('fetchServerStatsSummary') && statsSummarySync.includes('fetchServerLeads(page, authUser, { limit: 8'), 'split stats sync should load server aggregates and only recent lead rows');
-assert(statsSummarySync.includes('previousStatsDateRanges') && statsSummarySync.includes('mergeStatsSummaryResults') && statsSummarySync.includes('comparisonPromise'), 'split stats sync should load an isolated previous-period aggregate comparison');
+assert(statsSummarySync.includes('previousStatsDateRanges') && statsSummarySync.includes('mergeStatsSummaryResults') && statsSummarySync.includes('.then(([summaryResult, leadResult, comparisonResults])'), 'split stats sync should apply current and comparison aggregates in one render');
 assert(!/setStatsPartial\(false\);\s*setServerStatsSummary\(null\);\s*Promise\.all/.test(statsSummarySync), 'server stats filters should retain the previous summary while the next filtered result loads');
+assert(statsPanel.includes(".sort((a, b) => (order.get(a.channel) ?? 99) - (order.get(b.channel) ?? 99))"), 'channel filters should keep a stable position while aggregate counts refresh');
+assert(statsPanel.includes("value !== item.channel && onChange(item.channel)") && statsPanel.includes("value !== 'all' && onChange('all')"), 'channel filters should not refetch the active channel');
 
 assert(workspacePanelProps.includes('eventPageMeta: statsEventPageMeta') && workspacePanelProps.includes('leadPageMeta: statsLeadPageMeta'), 'workspace panel props should pass stats pagination metadata');
 assert(leadCaptureActions.includes('utmSource') && leadCaptureActions.includes('utmMedium') && leadCaptureActions.includes('utmCampaign'), 'lead capture should keep UTM fields');
@@ -148,4 +150,4 @@ const trafficAttribution = await readFile('src/lib/trafficAttribution.js', 'utf8
 assert(trafficAttribution.includes('trafficAttributionFromUrl') && trafficAttribution.includes('utm_source'), 'traffic attribution should parse UTM source');
 assert(trafficAttribution.includes('trafficChannelFromReferrer') && trafficAttribution.includes('sourceLabel'), 'traffic attribution should fall back to referrer and source label');
 
-console.log(JSON.stringify({ ok: true, checks: 67 }, null, 2));
+console.log(JSON.stringify({ ok: true, checks: 69 }, null, 2));
