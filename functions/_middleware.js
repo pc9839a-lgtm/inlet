@@ -12,6 +12,8 @@ export async function onRequest(context) {
     '/privacy': '/call/privacy/index.html',
     '/terms': '/call/terms/index.html',
     '/subscribe': '/call/subscribe/index.html',
+    '/preview': '/call/preview/index.html',
+    '/call/preview': '/call/preview/index.html',
   };
   const mapped = routes[clean];
   if (!mapped) return context.next();
