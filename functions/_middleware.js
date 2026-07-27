@@ -16,6 +16,8 @@ export async function onRequest(context) {
     '/call/preview': '/call/preview/index.html',
     '/preview-v104': '/call/preview/index.html',
     '/call/preview-v104': '/call/preview/index.html',
+    '/preview-v105': '/call/preview/index.html',
+    '/call/preview-v105': '/call/preview/index.html',
   };
   const mapped = routes[clean];
   if (!mapped) return context.next();
@@ -27,12 +29,19 @@ export async function onRequest(context) {
 
   if (!clean.includes('preview')) return response;
 
+  let html = await response.text();
+  html = html
+    .replace('</head>', '<link rel="stylesheet" href="/call/preview/v105.css?v=105"></head>')
+    .replace('</body>', '<script src="/call/preview/v105.js?v=105"></script></body>');
+
   const headers = new Headers(response.headers);
+  headers.set('Content-Type', 'text/html; charset=utf-8');
   headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
   headers.set('Pragma', 'no-cache');
   headers.set('Expires', '0');
-  headers.set('X-CallLink-Preview-Version', '1.0.4');
-  return new Response(response.body, {
+  headers.set('X-CallLink-Preview-Version', '1.0.5');
+  headers.delete('Content-Length');
+  return new Response(html, {
     status: response.status,
     statusText: response.statusText,
     headers,
