@@ -287,6 +287,8 @@ for (const [label, ok] of visualGeometryContracts) {
 
 const viewportContracts = [
   ['desktop phone frame is bounded', files.previewCss.includes('.phone-frame') && /width:\s*4[0-9]{2}px/.test(files.previewCss) && /height:\s*7[0-9]{2}px/.test(files.previewCss)],
+  ['editor phone frame exposes an exact 414px content canvas', /width:\s*430px\s*!important/.test(files.editorWorkspaceCss) && /border:\s*8px\s+solid[^;]*!important/.test(files.editorWorkspaceCss)],
+  ['public landing uses the same exact 414px content canvas', files.previewCss.includes('.public-landing-viewport') && /width:\s*min\(414px,\s*100vw\)/.test(files.previewCss) && /max-width:\s*414px/.test(files.previewCss)],
   ['preview root scrolls inside frame', files.previewCss.includes('.phone-frame .landing-page') && /overflow:\s*auto/.test(files.previewCss)],
   ['preview top link is ellipsized', files.previewCss.includes('.preview-link') && files.previewCss.includes('text-overflow: ellipsis')],
   ['mobile navigation protects horizontal overflow', files.previewCss.includes('.top-menu') && /overflow-x:\s*auto/.test(files.previewCss)],
@@ -296,6 +298,25 @@ const viewportContracts = [
 
 for (const [label, ok] of viewportContracts) {
   assert(ok, `viewport/browser smoke contract failed: ${label}`);
+}
+
+const styleConsumerContracts = [
+  ['hero alignment and typography', files.widgetStyles.includes('set({ align: value })') && files.widgetStyles.includes('set({ titleSize: value })') && files.widgetStyles.includes('set({ bodySize: value })') && files.content.includes('align-${align} title-${titleSize} body-${bodySize}')],
+  ['text layout, size, and alignment', files.widgetStyles.includes("set({ layout: value })") && files.widgetStyles.includes("set({ size: value })") && files.content.includes('text-${layout} align-${align} text-size-${size}')],
+  ['card layout, tone, columns, and alignment', files.widgetStyles.includes('set({ columns: Number(value) })') && files.content.includes('cards-${layout} cards-${tone} cards-cols-${columns} align-${align}')],
+  ['link and download layout and alignment', files.link.includes('links-${layout} align-${align}') && files.link.includes('download-${layout} align-${align}')],
+  ['schedule alignment and accent color', files.info.includes('schedule-align-${align}') && files.info.includes("'--schedule-accent': s.highlightColor") && files.previewCss.includes('var(--schedule-accent)')],
+  ['timer theme and movement', files.widgetStyles.includes('set({ timerTheme: value })') && files.widgetStyles.includes("urgentStyle: value ? 'flow' : 'none'") && files.signal.includes('timer-theme-${theme} timer-effect-${effect}')],
+  ['activity theme and movement', files.widgetStyles.includes('set({ style: value })') && files.widgetStyles.includes("animation: value ? 'stack' : 'none'") && files.signal.includes('activity-${style}') && files.signal.includes('activity-anim-${anim}')],
+  ['map layout, height, and alignment', files.widgetStyles.includes('MapStylePanel') && files.info.includes('map-${layout} map-height-${height}') && files.previewCss.includes('.map-height-small iframe') && files.previewCss.includes('.map-height-large iframe')],
+  ['top navigation visual controls', files.widgetStyles.includes('set({ logoSize: value })') && files.widgetStyles.includes('set({ menuStyle: value })') && files.widgetStyles.includes('set({ sticky: value })') && files.layout.includes('topnav-${bg} topnav-align-${align}')],
+  ['footer alignment and background', files.widgetStyles.includes('FooterStylePanel') && files.layout.includes('landing-footer footer-${bg} align-${align}')],
+  ['bottom bar shape and color mode', files.widgetStyles.includes('BottomBarStylePanel') && files.widgetStyles.includes("buttonColorMode: value ? 'custom' : 'theme'") && files.landing.includes("s.buttonColorMode === 'custom'")],
+  ['image grid count and navigation', files.imageGallery.includes('galleryGridCount') && files.media.includes('gallery.slice(0, gridCount)') && files.media.includes('galleryShowArrows') && files.media.includes('galleryShowDots')],
+];
+
+for (const [label, ok] of styleConsumerContracts) {
+  assert(ok, `style consumer contract failed: ${label}`);
 }
 
 const mobileRules = (files.previewCss.match(/@media\s*\(max-width:\s*(760|820|900)px\)/g) || []).length;
@@ -376,7 +397,8 @@ assert(productionBrowserQa.includes('owner server save round trip') && productio
 
 console.log(JSON.stringify({
   ok: true,
-  checks: requiredDispatch.length + rendererContracts.length * 2 + cssContracts.length + visualGeometryContracts.length + viewportContracts.length + previewSourceEntries.length * 2 + 33,
+  checks: requiredDispatch.length + rendererContracts.length * 2 + cssContracts.length + visualGeometryContracts.length + viewportContracts.length + styleConsumerContracts.length + previewSourceEntries.length * 2 + 33,
   visualGeometryChecks: visualGeometryContracts.length,
   viewportContracts: viewportContracts.length,
+  styleConsumerContracts: styleConsumerContracts.length,
 }, null, 2));
