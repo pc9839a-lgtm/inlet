@@ -123,7 +123,7 @@ assert(statsPanel.includes('Math.min(85, Math.max(15') && statsPanel.includes('h
 assert(statsPanel.includes("tooltipBelow ? ' is-below' : ''"), 'chart tooltip should expose its below-point placement state');
 assert(statsPanelCss.includes('.stats-chart-tooltip-wide.is-below') && statsPanelCss.includes('translate(-50%, 12px)'), 'chart tooltip CSS should render high-point details below the point');
 assert(statsPanelCss.includes('.stat-list-v2') && statsPanelCss.includes('margin-top: 16px') && statsPanelCss.includes('min-height: 30px'), 'stat cards should keep consistent title, list, and row spacing');
-assert(statsPanelCss.includes('.left-workspace') && statsPanelCss.includes('overflow: clip') && statsPanelCss.includes('overflow-anchor: none'), 'stats filters should prevent the outer workspace from becoming a second scroll container');
+assert(statsPanelCss.includes('.left-workspace:has(.stats-panel)') && statsPanelCss.includes('overflow-x: clip') && statsPanelCss.includes('overflow-y: clip') && statsPanelCss.includes('overflow-anchor: none'), 'stats filters should prevent the outer workspace from becoming a second scroll container');
 assert(statsPeriodCss.includes('grid-template-columns: minmax(0, 1fr) 184px'), 'stats month picker should have enough width for year/month text');
 assert(statsPeriodCss.includes('min-width: 168px'), 'stats month input should not collapse to year-only text');
 assert(statsPeriodCss.includes('grid-template-columns: 58px minmax(96px, .8fr) minmax(112px, 1fr) 132px'), 'recent lead rows should use four visible columns only');
