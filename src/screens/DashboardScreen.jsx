@@ -3,7 +3,7 @@ import { authAccountErrorMessage } from '../lib/authAccounts.js';
 import { deleteAccountPage, fetchAccountPages } from '../lib/pageRepository.js';
 import { WorkspaceCreateModalLayer } from './workspace/WorkspaceCreateModalLayer.jsx';
 
-function DashboardPolished({ user, page, leads, onLogout, onAccountUpdate, onAi, onManual, onTemplate, onCheckUrl, templates = [] }) {
+function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdate, onAi, onManual, onTemplate, onCheckUrl, templates = [] }) {
   const currentLeadCount = Array.isArray(leads) ? leads.length : 0;
   const hasCurrentPage = Boolean(page?.title || page?.slug);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -72,7 +72,11 @@ function DashboardPolished({ user, page, leads, onLogout, onAccountUpdate, onAi,
   };
 
   const openEditor = (item) => {
-    window.location.href = `/${item.slug}/admin`;
+    if (typeof onEdit === 'function') {
+      onEdit(item);
+      return;
+    }
+    window.location.href = `/app?slug=${encodeURIComponent(item.slug || '')}`;
   };
 
   const openPreview = (item) => {

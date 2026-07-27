@@ -72,10 +72,7 @@ export function useCreatePageActions({
     setCreateOpen(false);
     saveLocalJson(START_MODE_KEY, 'ai', '시작 선택', { quietSuccess: true });
     setStartMode('ai');
-    if (typeof location !== 'undefined') {
-      location.href = `/${requestedSlug || 'my-page'}/admin`;
-      return;
-    }
+    setTab('edit');
     openWorkspace('manual');
   };
 

@@ -25,8 +25,7 @@ export function useWorkspaceShellActions({
     saveLocalJson(START_MODE_KEY, mode, '시작 선택', { quietSuccess: true });
     setStartMode(mode);
     if (mode === 'ai') {
-      if (typeof history !== 'undefined') history.pushState(null, '', `/${page.slug || 'my-page'}/admin`);
-      location.reload();
+      setTab('edit');
       return;
     }
     setTab('edit');
