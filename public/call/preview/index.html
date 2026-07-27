@@ -7,80 +7,194 @@
   <meta name="theme-color" content="#111214">
   <title>페이지로 콜링크 UI 미리보기</title>
   <style>
-    :root{color-scheme:dark;font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--bg:#111214;--surface:#1d1f22;--surface2:#25282c;--line:#34373c;--text:#f5f6f7;--sub:#a7abb2;--muted:#747982;--blue:#4389ff;--danger:#ff858d;--safe:max(12px,env(safe-area-inset-bottom))}
-    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;min-height:100%;background:#08090a;color:var(--text)}body{display:grid;place-items:center;padding:16px}button,input,textarea,select{font:inherit}button{border:0;color:inherit;cursor:pointer}h1,h2,h3,p{margin:0}.phone{position:relative;width:min(420px,100%);height:min(880px,calc(100dvh - 32px));min-height:640px;background:var(--bg);overflow:hidden;border:1px solid #292c31;border-radius:34px;box-shadow:0 30px 90px rgba(0,0,0,.48)}.screen{position:absolute;inset:0;display:none;background:var(--bg)}.screen.active{display:flex;flex-direction:column}.scroll{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:18px 20px 106px;scrollbar-width:none}.scroll::-webkit-scrollbar{display:none}.preview-chip{position:absolute;z-index:80;right:14px;top:14px;padding:7px 10px;border-radius:999px;background:rgba(0,0,0,.62);font-size:10px;color:#d8dadd;pointer-events:none;white-space:nowrap}.preview-chip.hidden{display:none}.appbar{height:66px;flex:none;display:grid;grid-template-columns:48px minmax(0,1fr) 48px;align-items:center;padding:0 8px;border-bottom:1px solid rgba(52,55,60,.72);background:rgba(17,18,20,.98)}.appbar.root{grid-template-columns:minmax(0,1fr) auto;padding:0 20px}.appbar-title{font-size:22px;font-weight:850;letter-spacing:-.035em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.icon-btn{width:48px;height:48px;background:transparent;display:grid;place-items:center;border-radius:12px;font-size:28px}.icon-btn svg,.nav-btn svg,.search svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.icon-btn svg{width:27px;height:27px}.card{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:15px}.primary,.secondary{height:54px;border-radius:11px;font-weight:850}.primary{background:var(--blue);color:#fff}.secondary{background:var(--surface2);color:var(--text)}.input{width:100%;height:54px;border:1px solid var(--line);border-radius:11px;background:var(--surface2);padding:0 15px;color:var(--text);outline:none}.input:focus{border-color:var(--blue)}textarea.input{height:128px;padding-top:14px;resize:none}.eyebrow{margin-bottom:8px;color:var(--sub);font-size:13px}.desc{margin-top:10px;color:var(--sub);font-size:14px;line-height:1.55}.section-label{margin:28px 0 12px;font-size:18px;font-weight:850}.chev{margin-left:auto;color:var(--muted);font-size:24px}.badge,.pill{height:25px;padding:0 8px;border-radius:7px;background:rgba(67,137,255,.15);color:#82b1ff;font-size:11px;font-weight:800;display:inline-flex;align-items:center;white-space:nowrap}.muted-pill{background:#2a2d31;color:#adb1b7}.bottom-nav{position:absolute;left:0;right:0;bottom:0;height:82px;padding-bottom:var(--safe);display:grid;grid-template-columns:repeat(4,1fr);background:rgba(24,25,28,.99);border-top:1px solid var(--line);z-index:20}.nav-btn{background:transparent;color:var(--muted);font-size:12px;font-weight:700;padding-top:9px}.nav-btn.active{color:var(--text)}.nav-btn svg{display:block;width:28px;height:28px;margin:0 auto 4px}.row{width:100%;min-height:68px;padding:0 16px;display:flex;align-items:center;gap:12px;background:transparent;text-align:left}.row+.row{border-top:1px solid var(--line)}.row-main{flex:1;min-width:0}.row-title{font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.row-sub{margin-top:5px;color:var(--sub);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.list-card{overflow:hidden}
-    .login{padding:20px 22px 34px;overflow:auto}.login-wrap{margin:auto 0;width:100%}.login-brand{display:grid;justify-items:center;text-align:center}.brand{width:74px;height:74px;border-radius:22px;background:var(--blue);display:grid;place-items:center;font-size:38px;font-weight:900;margin-bottom:24px}.login-brand h1{font-size:31px;letter-spacing:-.045em}.login-brand p{margin-top:12px;color:var(--sub);font-size:14px;font-weight:700}.auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:32px;padding:10px;background:var(--surface);border:1px solid var(--line);border-radius:22px}.auth-tab{height:58px;border-radius:16px;background:transparent;color:var(--blue);font-weight:850;font-size:16px}.auth-tab.active{background:var(--blue);color:#fff}.login-card{margin-top:14px;padding:20px 18px 22px}.login-form{display:grid;gap:12px}.forgot{margin-top:16px;width:100%;height:44px;background:transparent;color:var(--blue);font-weight:800}.login-note{margin-top:14px;text-align:center;color:var(--muted);font-size:11px;line-height:1.5}
-    .hero{display:flex;gap:14px;align-items:flex-start}.hero h1{flex:1;font-size:28px;line-height:1.25;letter-spacing:-.04em}.toggle{width:50px;height:30px;border-radius:18px;background:var(--blue);position:relative;flex:none}.toggle:after{content:"";position:absolute;width:24px;height:24px;border-radius:50%;background:#fff;right:3px;top:3px}.line-link{margin-top:14px;background:transparent;color:var(--sub);padding:0;display:flex;align-items:center;gap:8px}.dot{width:9px;height:9px;border-radius:50%;background:var(--blue)}.stats{display:grid;grid-template-columns:repeat(3,1fr);margin-top:28px;padding:18px 0}.stat{text-align:center}.stat+.stat{border-left:1px solid var(--line)}.stat b{display:block;font-size:23px;margin-bottom:6px}.stat span{font-size:12px;color:var(--sub)}.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.quick button{height:82px;background:var(--surface);border:1px solid var(--line);border-radius:13px;font-weight:750;line-height:1.6}.quick-icon{display:block;font-size:21px;color:var(--blue)}
-    .tabs,.filters,.mode-tabs{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.tab,.filter,.mode-tab{height:44px;border-radius:10px;background:var(--surface2);color:var(--sub);font-size:13px;font-weight:800;white-space:nowrap}.tab.active,.filter.active,.mode-tab.active{background:var(--blue);color:#fff}.editor-title{margin:24px 0 12px;font-size:18px;font-weight:850}.editor-card{padding:16px}.switch-row{height:50px;display:flex;align-items:center;gap:12px}.switch-row span{flex:1;font-size:15px;font-weight:800}.small-toggle{width:44px;height:26px;border-radius:14px;background:var(--blue);position:relative}.small-toggle:after{content:"";position:absolute;right:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff}.mode-tabs{grid-template-columns:1fr 1fr;margin-top:12px}.field{margin-top:14px}.field label{display:block;margin-bottom:8px;color:var(--sub);font-size:13px;font-weight:800}.preview-box{margin-top:14px;padding:16px;min-height:110px;line-height:1.65;color:var(--sub);font-size:13px}.save-btn{width:100%;margin-top:12px}.hint{margin-top:7px;color:var(--muted);font-size:11px;line-height:1.5}
-    .search{position:relative}.search svg{position:absolute;left:15px;top:16px;width:21px;height:21px;color:var(--muted)}.search input{padding-left:46px}.filters{margin-top:10px}.count{margin:16px 0 9px;color:var(--sub);font-size:13px;font-weight:800}.customer-list{overflow:hidden}.customer{width:100%;min-height:86px;padding:14px 16px;display:flex;align-items:center;gap:12px;background:transparent;text-align:left}.customer+.customer{border-top:1px solid var(--line)}.customer-main{flex:1;min-width:0}.customer-head{display:flex;align-items:center;gap:8px}.customer-name{flex:1;font-size:16px;font-weight:850}.phone-no{margin-top:4px;color:var(--sub);font-size:14px}.customer-note{margin-top:6px;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.detail-form{display:grid;gap:16px}.detail-form .field{margin-top:0}.bottom-action{height:82px;flex:none;padding:12px 20px max(12px,env(safe-area-inset-bottom));display:grid;grid-template-columns:1fr 2fr;gap:10px;background:var(--surface);border-top:1px solid var(--line)}.bottom-action button{height:54px}.menu-label{margin:27px 0 10px;color:var(--sub);font-size:13px;font-weight:800}.profile{padding:17px 16px;display:flex;align-items:center;gap:13px}.avatar{width:42px;height:42px;border-radius:13px;background:var(--blue);display:grid;place-items:center;font-weight:900}.status-line{display:flex;align-items:center;gap:10px}.status-dot{width:8px;height:8px;border-radius:50%;background:var(--blue)}.toast{position:absolute;left:20px;right:20px;bottom:98px;z-index:70;padding:14px 16px;border-radius:13px;background:#25282c;border:1px solid var(--line);text-align:center;font-size:13px;font-weight:750;opacity:0;transform:translateY(8px);pointer-events:none;transition:.2s}.toast.show{opacity:1;transform:none}
-    @media(max-width:540px){body{padding:0;background:var(--bg)}.phone{width:100%;height:100dvh;min-height:620px;border:0;border-radius:0;box-shadow:none}.preview-chip{top:10px;right:10px}}
+    :root{color-scheme:dark;font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--bg:#111214;--surface:#1d1f22;--surface2:#25282c;--line:#34373c;--text:#f5f6f7;--sub:#a7abb2;--muted:#747982;--blue:#4389ff;--danger:#ff8585}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;min-height:100%;background:#08090a;color:var(--text)}body{display:grid;place-items:center;padding:16px}button,input,textarea,select{font:inherit}button{border:0;color:inherit;cursor:pointer}.phone{position:relative;width:min(420px,100%);height:min(880px,calc(100dvh - 32px));min-height:640px;background:var(--bg);overflow:hidden;border:1px solid #292c31;border-radius:34px;box-shadow:0 30px 90px rgba(0,0,0,.48)}.screen{position:absolute;inset:0;display:none;background:var(--bg)}.screen.active{display:flex;flex-direction:column}.scroll{flex:1;min-height:0;overflow:auto;padding:18px 20px 106px;scrollbar-width:none}.scroll::-webkit-scrollbar{display:none}.login{padding:28px 24px;justify-content:center}.logo{width:72px;height:72px;border-radius:22px;background:var(--blue);display:grid;place-items:center;font-size:36px;font-weight:900;margin:0 auto 28px}.login h1{text-align:center;font-size:34px;margin:0;letter-spacing:-.05em}.login .lead{text-align:center;color:var(--sub);font-size:14px;margin:13px 0 30px}.auth-tabs{display:grid;grid-template-columns:1fr 1fr;padding:5px;background:var(--surface);border:1px solid var(--line);border-radius:18px}.auth-tabs button{height:58px;border-radius:14px;background:transparent;color:var(--blue);font-weight:850}.auth-tabs .active{background:var(--blue);color:white}.login-card{margin-top:22px;padding:20px;background:var(--surface);border:1px solid var(--line);border-radius:20px}.input{width:100%;min-height:52px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);padding:13px 15px;color:var(--text);outline:none}.input+.input{margin-top:10px}textarea.input{height:160px;resize:none;line-height:1.55}.primary,.secondary{height:54px;border-radius:12px;font-weight:850}.primary{background:var(--blue);color:white}.secondary{background:var(--surface2);color:var(--text);border:1px solid var(--line)}.login-card .primary{width:100%;margin-top:12px}.forgot{display:block;margin:18px auto 0;background:transparent;color:var(--blue);font-weight:750}.note{text-align:center;color:var(--muted);font-size:12px;margin-top:15px}.appbar{height:66px;flex:none;display:grid;grid-template-columns:48px minmax(0,1fr) 48px;align-items:center;padding:0 8px;border-bottom:1px solid var(--line);background:var(--bg)}.appbar.root{grid-template-columns:1fr;padding:0 20px}.title{font-size:22px;font-weight:900;letter-spacing:-.04em}.icon-btn{width:48px;height:48px;background:transparent;font-size:30px}.bottom-nav{position:absolute;left:0;right:0;bottom:0;height:82px;display:grid;grid-template-columns:repeat(4,1fr);background:#18191c;border-top:1px solid var(--line);z-index:10}.nav{background:transparent;color:var(--muted);font-size:12px;font-weight:750;padding-top:9px}.nav.active{color:white}.nav span{display:block;font-size:25px;margin-bottom:4px}.eyebrow{color:var(--sub);font-size:13px;margin:0 0 8px}.hero{display:flex;gap:14px}.hero h2{font-size:28px;line-height:1.25;margin:0;flex:1}.toggle{width:50px;height:30px;border-radius:18px;background:var(--blue);position:relative}.toggle:after{content:"";position:absolute;width:24px;height:24px;border-radius:50%;background:white;right:3px;top:3px}.line{margin:15px 0 0;color:var(--sub)}.card{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:15px}.stats{display:grid;grid-template-columns:repeat(3,1fr);margin-top:26px;padding:18px 0}.stat{text-align:center}.stat+.stat{border-left:1px solid var(--line)}.stat b{display:block;font-size:23px}.stat small{color:var(--sub)}.section-title{font-size:18px;font-weight:900;margin:27px 0 12px}.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.quick button{height:82px;background:transparent;border-radius:12px;font-weight:750}.quick span{display:block;font-size:24px;margin-bottom:7px}.list{overflow:hidden}.row{width:100%;min-height:68px;padding:0 16px;display:flex;align-items:center;gap:12px;background:transparent;text-align:left}.row+.row{border-top:1px solid var(--line)}.grow{flex:1;min-width:0}.row strong{display:block;font-size:15px}.sub{display:block;color:var(--sub);font-size:12px;margin-top:5px}.badge{padding:5px 8px;border-radius:7px;background:rgba(67,137,255,.15);color:#82b1ff;font-size:11px;font-weight:850}.chev{font-size:24px;color:var(--muted)}.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.tab{height:44px;border-radius:10px;background:var(--surface2);color:var(--sub);font-size:13px;font-weight:850}.tab.active{background:var(--blue);color:white}.template-open{width:100%;height:50px;margin-bottom:10px;padding:0 15px;border-radius:12px;background:var(--surface2);border:1px solid var(--line);text-align:left;font-weight:850}.editor-title{font-size:18px;font-weight:900;margin:24px 0 12px}.editor{padding:16px}.switch-row{display:flex;align-items:center;min-height:50px}.switch-row span{flex:1;font-weight:800}.small-toggle{width:44px;height:26px;border-radius:15px;background:var(--blue);position:relative}.small-toggle:after{content:"";position:absolute;width:20px;height:20px;border-radius:50%;background:white;right:3px;top:3px}.field{margin-top:15px}.field label{display:block;color:var(--sub);font-size:13px;font-weight:800;margin-bottom:8px}.preview{margin-top:14px;padding:15px;line-height:1.6;white-space:pre-wrap}.save{width:100%;margin-top:14px}.hint{color:var(--muted);font-size:12px;line-height:1.5;margin-top:12px}.menu-label{color:var(--sub);font-size:13px;font-weight:850;margin:25px 0 10px}.profile{display:flex;align-items:center;gap:12px;padding:16px}.avatar{width:42px;height:42px;border-radius:13px;background:var(--blue);display:grid;place-items:center;font-weight:900}.search{margin-bottom:10px}.filters{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.filter{height:44px;border-radius:10px;background:var(--surface2);color:var(--sub);font-weight:850}.filter.active{background:var(--blue);color:white}.customer{padding:14px 16px;min-height:86px}.customer-name{font-size:16px;font-weight:900}.phone-no{color:var(--sub);font-size:14px;margin-top:4px}.customer-note{color:var(--muted);font-size:12px;margin-top:6px}.bottom-action{height:78px;padding:12px 20px;display:grid;grid-template-columns:1fr 2fr;gap:10px;background:var(--surface);border-top:1px solid var(--line)}.modal{position:absolute;inset:0;background:rgba(0,0,0,.72);z-index:30;display:none;align-items:flex-end}.modal.show{display:flex}.sheet{width:100%;max-height:88%;background:var(--bg);border-radius:24px 24px 0 0;border-top:1px solid var(--line);display:flex;flex-direction:column}.sheet-head{height:64px;padding:0 20px;display:flex;align-items:center;border-bottom:1px solid var(--line)}.sheet-head h3{margin:0;flex:1;font-size:20px}.close{background:transparent;font-size:26px}.sheet-body{padding:16px 20px 24px;overflow:auto}.situation{width:100%;padding:16px;text-align:left;margin-bottom:10px}.situation strong{display:block;font-size:16px}.situation small{display:block;color:var(--sub);margin-top:6px;line-height:1.45}.checkline{display:flex;align-items:center;gap:8px;font-weight:850;margin:16px 0 8px}.template-card{padding:15px;line-height:1.55;white-space:pre-wrap;color:var(--sub)}.sheet-actions{padding:12px 20px 18px;border-top:1px solid var(--line)}.sheet-actions .primary{width:100%}.back-link{background:transparent;color:var(--blue);font-weight:800;margin-bottom:13px}.toast{position:absolute;left:20px;right:20px;bottom:96px;background:#26292d;border:1px solid var(--line);padding:13px 15px;border-radius:12px;z-index:50;opacity:0;transform:translateY(15px);pointer-events:none;transition:.2s}.toast.show{opacity:1;transform:none}
+    @media(max-width:540px){body{padding:0;background:var(--bg)}.phone{width:100%;height:100dvh;min-height:620px;border:0;border-radius:0;box-shadow:none}}
   </style>
 </head>
 <body>
 <div class="phone">
-  <div class="preview-chip" id="previewChip">UI 미리보기 · 실제 기능 없음</div>
-  <div class="toast" id="toast"></div>
-
-  <section class="screen login active" id="loginScreen">
-    <div class="login-wrap">
-      <div class="login-brand"><div class="brand">P</div><h1>페이지로 콜링크</h1><p>통화가 끝난 뒤 고객 안내문자를 놓치지 마세요</p></div>
-      <div class="auth-tabs"><button class="auth-tab active">로그인</button><button class="auth-tab">회원가입</button></div>
-      <div class="card login-card">
-        <div class="login-form">
-          <input class="input" value="demo@pagero.kr" aria-label="이메일">
-          <input class="input" type="password" value="12345678" aria-label="비밀번호">
-          <button class="primary" id="demoLogin">미리보기 로그인</button>
-        </div>
-        <button class="forgot">비밀번호를 잊으셨나요?</button>
-      </div>
-      <p class="login-note">입력한 내용은 전송되지 않습니다. 화면 확인 전용입니다.</p>
-    </div>
+  <section class="screen login active" id="login">
+    <div class="logo">P</div><h1>페이지로 콜링크</h1><p class="lead">통화가 끝난 뒤 고객 안내문자를 놓치지 마세요</p>
+    <div class="auth-tabs"><button class="active">로그인</button><button>회원가입</button></div>
+    <div class="login-card"><input class="input" value="demo@pagero.kr"><input class="input" type="password" value="12345678"><button class="primary" id="loginBtn">로그인</button><button class="forgot">비밀번호를 잊으셨나요?</button></div><p class="note">UI 미리보기 · 입력 내용은 전송되지 않습니다.</p>
   </section>
-
-  <section class="screen" id="appScreen">
-    <header class="appbar root" id="rootHeader"><div class="appbar-title">콜링크</div></header>
-    <main class="scroll" id="mainScroll"></main>
+  <section class="screen" id="app">
+    <header class="appbar root"><div class="title" id="rootTitle">콜링크</div></header>
+    <main class="scroll" id="main"></main>
     <nav class="bottom-nav">
-      <button class="nav-btn active" data-tab="home"><svg viewBox="0 0 24 24"><path d="M3 11 12 3l9 8v9h-6v-7H9v7H3Z"/></svg>홈</button>
-      <button class="nav-btn" data-tab="messages"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4Z"/><path d="M8 9h8M8 12h6"/></svg>메시지</button>
-      <button class="nav-btn" data-tab="history"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>발송내역</button>
-      <button class="nav-btn" data-tab="more"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>전체</button>
+      <button class="nav active" data-tab="home"><span>⌂</span>홈</button>
+      <button class="nav" data-tab="messages"><span>▤</span>메시지</button>
+      <button class="nav" data-tab="history"><span>◷</span>발송내역</button>
+      <button class="nav" data-tab="more"><span>•••</span>전체</button>
     </nav>
   </section>
-
-  <section class="screen" id="detailScreen">
-    <header class="appbar"><button class="icon-btn" id="detailBack"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button><div class="appbar-title" id="detailTitle">상세</div><button class="icon-btn" id="detailAction"></button></header>
-    <main class="scroll" id="detailContent" style="padding-bottom:30px"></main><div id="detailBottom"></div>
+  <section class="screen" id="detail">
+    <header class="appbar"><button class="icon-btn" id="back">‹</button><div class="title" id="detailTitle">상세</div><button class="icon-btn" id="detailAction"></button></header>
+    <main class="scroll" id="detailBody" style="padding-bottom:30px"></main><div id="detailBottom"></div>
   </section>
+  <div class="modal" id="modal"><div class="sheet"><div class="sheet-head"><h3 id="sheetTitle">상황별 기본문구</h3><button class="close" id="closeModal">×</button></div><div class="sheet-body" id="sheetBody"></div><div class="sheet-actions" id="sheetActions"></div></div></div>
+  <div class="toast" id="toast"></div>
 </div>
 <script>
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-const screens={login:$('#loginScreen'),app:$('#appScreen'),detail:$('#detailScreen')};
-let activeTab='home',lastTab='home',messageTab='answered',customerFilter='all';
-const customers=[
-{name:'김민수',phone:'010-1234-5678',group:'신규 문의',memo:'오늘 오후 재통화 예정',status:'발송 가능'},
-{name:'박지현',phone:'010-8821-3490',group:'기존 고객',memo:'크루즈 상품 상담',status:'발송 가능'},
-{name:'이서준',phone:'010-4402-1187',group:'VIP',memo:'견적서 전달 완료',status:'발송 가능'},
-{name:'최유진',phone:'010-9301-6624',group:'미지정',memo:'수신거부 요청',status:'수신거부'},
-{name:'정하늘',phone:'010-7281-0049',group:'신규 문의',memo:'예약 일정 확인 필요',status:'발송 가능'}
-];
-const messageData={
-answered:{title:'통화 완료 메시지',switchText:'통화 완료 후 발송',text:'안녕하세요. 방금 상담드린 내용은 아래 페이지에서 확인하실 수 있습니다.',badge:'자동 발송'},
-missed:{title:'부재중·거절 메시지',switchText:'부재중·거절 후 발송',text:'전화를 받지 못했습니다. 확인 후 다시 연락드리겠습니다.',badge:'자동 발송'},
-outgoing:{title:'발신 통화 메시지',switchText:'발신 통화 후 발송',text:'방금 전화드린 페이지로입니다. 상담 내용은 아래 링크에서 확인해주세요.',badge:'수동 확인'}
+const screens={login:$('#login'),app:$('#app'),detail:$('#detail')};
+let currentTab='home',messageTab='answered',customerFilter='all';
+const messages={
+ answered:{title:'통화 완료 메시지',switchText:'통화 완료 후 발송',text:'안녕하세요. 페이지로 김도윤입니다.\n\n오늘 통화해 주셔서 감사합니다. 상담 중 말씀드린 내용을 다시 확인하실 수 있도록 안내드립니다.\n\n확인하시다가 궁금한 점이 생기면 이 문자에 그대로 답장해 주세요.\n\n감사합니다.\n페이지로 김도윤'},
+ missed:{title:'부재중·거절 메시지',switchText:'부재중·거절 후 발송',text:'안녕하세요. 페이지로 김도윤입니다.\n\n방금 전화를 주셨는데 다른 상담 중이라 받지 못해 문자드립니다. 가능한 시간에 순서대로 다시 연락드리겠습니다.\n\n문의 내용을 미리 남겨주시면 확인 후 정확하게 안내드리겠습니다.\n\n감사합니다.\n페이지로 김도윤'},
+ outgoing:{title:'발신 통화 메시지',switchText:'발신 통화 후 발송',text:'안녕하세요. 페이지로 김도윤입니다.\n\n남겨주신 문의와 관련해 방금 연락드렸습니다. 통화 가능한 날짜와 시간을 문자로 남겨주시면 다시 연락드리겠습니다.\n\n감사합니다.\n페이지로 김도윤'}
 };
-function show(name){Object.values(screens).forEach(x=>x.classList.remove('active'));screens[name].classList.add('active')}
-function toast(text){const t=$('#toast');t.textContent=text;t.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>t.classList.remove('show'),1500)}
-function setTab(tab){activeTab=lastTab=tab;show('app');$$('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));const h=$('#rootHeader'),m=$('#mainScroll');h.innerHTML=`<div class="appbar-title">${tab==='home'?'콜링크':tab==='messages'?'메시지':tab==='history'?'발송내역':'전체'}</div>`;m.innerHTML=tab==='home'?homeHtml():tab==='messages'?messagesHtml():tab==='history'?historyHtml():moreHtml();m.scrollTop=0;bindRoot(tab)}
-function homeHtml(){return `<p class="eyebrow">오늘의 콜링크</p><div class="hero"><h1>자동문자가 정상<br>작동 중이에요</h1><div class="toggle"></div></div><button class="line-link"><span class="dot"></span><b>SKT</b> 010-12**-56** <span class="chev">›</span></button><div class="card stats"><div class="stat"><b>12</b><span>발송 완료</span></div><div class="stat"><b>0</b><span>실패</span></div><div class="stat"><b>2</b><span>수동 대기</span></div></div><div class="section-label">빠른 메뉴</div><div class="quick"><button data-tabgo="messages"><span class="quick-icon">▤</span>메시지</button><button data-open="customers"><span class="quick-icon">♙</span>고객</button><button data-open="bulk"><span class="quick-icon">▦</span>단체문자</button></div><div class="section-label">최근 활동</div><div class="card list-card"><button class="row"><div class="row-main"><div class="row-title">김민수 · 통화 완료 문자</div><div class="row-sub">방금 전 · 발송 완료</div></div><span class="badge">완료</span><span class="chev">›</span></button><button class="row"><div class="row-main"><div class="row-title">박지현 · 부재중 문자</div><div class="row-sub">오늘 18:21 · 발송 완료</div></div><span class="badge">완료</span><span class="chev">›</span></button><button class="row"><div class="row-main"><div class="row-title">이서준 · 발신 통화 문자</div><div class="row-sub">오늘 17:42 · 수동 확인 대기</div></div><span class="pill muted-pill">대기</span><span class="chev">›</span></button></div>`}
-function messagesHtml(){const d=messageData[messageTab];return `<div class="tabs"><button class="tab ${messageTab==='answered'?'active':''}" data-message="answered">받은 전화</button><button class="tab ${messageTab==='missed'?'active':''}" data-message="missed">부재중·거절</button><button class="tab ${messageTab==='outgoing'?'active':''}" data-message="outgoing">내가 건 전화</button></div><div class="editor-title">${d.title}</div><div class="card editor-card"><div class="switch-row"><span>${d.switchText}</span><div class="small-toggle"></div></div>${messageTab==='outgoing'?`<div class="mode-tabs"><button class="mode-tab">자동 발송</button><button class="mode-tab active">수동 확인</button></div>`:''}<div class="field"><label>문자 내용</label><textarea class="input" id="messageText">${d.text}</textarea></div><div class="field"><label>연결할 페이지 주소</label><input class="input" value="https://pagero.kr/demo"></div><div class="card preview-box"><b>${d.title} 미리보기</b><br><br><span id="messagePreview">${d.text}</span><br><br>https://pagero.kr/demo</div><button class="primary save-btn" id="saveMessage">현재 메시지 저장</button></div><p class="hint">미리보기에서는 화면만 변경되며 실제 문자 설정은 저장되지 않습니다.</p>`}
-function historyHtml(){return `<div class="status-line"><span class="status-dot"></span><b>오늘 발송 기록</b></div><div class="section-label" style="margin-top:18px">전체 12건</div><div class="card list-card"><button class="row" data-open="historyDetail"><div class="row-main"><div class="row-title">김민수 · 통화 완료</div><div class="row-sub">오늘 19:42 · 자동 발송</div></div><span class="badge">완료</span><span class="chev">›</span></button><button class="row" data-open="historyDetail"><div class="row-main"><div class="row-title">박지현 · 부재중</div><div class="row-sub">오늘 18:21 · 자동 발송</div></div><span class="badge">완료</span><span class="chev">›</span></button><button class="row" data-open="historyDetail"><div class="row-main"><div class="row-title">이서준 · 발신 통화</div><div class="row-sub">오늘 17:42 · 수동 확인</div></div><span class="pill muted-pill">대기</span><span class="chev">›</span></button><button class="row" data-open="historyDetail"><div class="row-main"><div class="row-title">정하늘 · 통화 완료</div><div class="row-sub">오늘 16:05 · 자동 발송</div></div><span class="badge">완료</span><span class="chev">›</span></button></div>`}
-function moreHtml(){return `<div class="card profile"><div class="avatar">김</div><div class="row-main"><div class="row-title">페이지로 콜링크</div><div class="row-sub">계정·기기·발송 기능 관리</div></div><span class="chev">›</span></div><div class="menu-label">고객 관리</div><div class="card list-card"><button class="row" data-open="customers"><div class="row-main"><div class="row-title">고객 목록</div></div><span class="chev">›</span></button><button class="row" data-open="groups"><div class="row-main"><div class="row-title">고객 그룹</div></div><span class="chev">›</span></button><button class="row" data-open="exclusions"><div class="row-main"><div class="row-title">발송 제외번호</div></div><span class="chev">›</span></button></div><div class="menu-label">발송 서비스</div><div class="card list-card"><button class="row" data-open="bulk"><div class="row-main"><div class="row-title">단체문자 보내기</div></div><span class="chev">›</span></button><button class="row" data-tabgo="history"><div class="row-main"><div class="row-title">전체 발송 기록</div></div><span class="chev">›</span></button><button class="row" data-tabgo="messages"><div class="row-main"><div class="row-title">저장된 템플릿</div></div><span class="chev">›</span></button></div><div class="menu-label">앱 설정</div><div class="card list-card"><button class="row" data-open="settings"><div class="row-main"><div class="row-title">자동문자·업무시간·중복방지</div></div><span class="chev">›</span></button><button class="row" data-open="permissions"><div class="row-main"><div class="row-title">전화·통화기록·문자 권한</div></div><span class="badge">정상</span><span class="chev">›</span></button><button class="row"><div class="row-main"><div class="row-title">로그아웃</div></div><span class="chev">›</span></button></div>`}
-function bindRoot(tab){$$('[data-tabgo]').forEach(b=>b.onclick=()=>setTab(b.dataset.tabgo));$$('[data-open]').forEach(b=>b.onclick=()=>openDetail(b.dataset.open));if(tab==='messages'){$$('[data-message]').forEach(b=>b.onclick=()=>{messageTab=b.dataset.message;setTab('messages')});const text=$('#messageText'),preview=$('#messagePreview');if(text&&preview)text.oninput=()=>preview.textContent=text.value;const save=$('#saveMessage');if(save)save.onclick=()=>toast('미리보기에서 저장한 화면입니다.')}}
-function customerRows(){const visible=customers.filter(c=>customerFilter==='all'||(customerFilter==='send'&&c.status==='발송 가능')||(customerFilter==='block'&&c.status==='수신거부'));return visible.map((c,i)=>`<button class="customer" data-customer="${customers.indexOf(c)}"><div class="customer-main"><div class="customer-head"><div class="customer-name">${c.name}</div><span class="pill ${c.status==='수신거부'?'muted-pill':''}">${c.status}</span></div><div class="phone-no">${c.phone}</div><div class="customer-note">${c.group} · ${c.memo}</div></div><span class="chev">›</span></button>`).join('')}
-function openDetail(type,index=-1){show('detail');const title=$('#detailTitle'),content=$('#detailContent'),action=$('#detailAction'),bottom=$('#detailBottom');action.innerHTML='';action.onclick=null;bottom.innerHTML='';content.scrollTop=0;if(type==='customers'){title.textContent='고객';action.textContent='＋';action.onclick=()=>openDetail('customerEdit',-1);content.innerHTML=`<div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input class="input" placeholder="이름 또는 전화번호 검색"></div><div class="filters"><button class="filter ${customerFilter==='all'?'active':''}" data-filter="all">전체</button><button class="filter ${customerFilter==='send'?'active':''}" data-filter="send">발송 가능</button><button class="filter ${customerFilter==='block'?'active':''}" data-filter="block">수신거부</button></div><div class="count">전체 고객 ${customers.length}명</div><div class="card customer-list">${customerRows()}</div>`;$$('[data-filter]').forEach(b=>b.onclick=()=>{customerFilter=b.dataset.filter;openDetail('customers')});$$('[data-customer]').forEach(b=>b.onclick=()=>openDetail('customerEdit',Number(b.dataset.customer)));return}if(type==='customerEdit'){const edit=index>=0,c=edit?customers[index]:{name:'',phone:'',group:'미지정',memo:'',status:'발송 가능'};title.textContent=edit?'고객 정보':'고객 추가';content.innerHTML=`<div class="detail-form"><div class="field"><label>고객명</label><input class="input" id="customerName" value="${c.name}" placeholder="이름 입력"></div><div class="field"><label>전화번호</label><input class="input" id="customerPhone" value="${c.phone}" placeholder="010-0000-0000"></div><div class="field"><label>고객 그룹</label><select class="input" id="customerGroup"><option>${c.group}</option><option>신규 문의</option><option>기존 고객</option><option>VIP</option><option>미지정</option></select></div><div class="field"><label>메모</label><textarea class="input" id="customerMemo" placeholder="고객 메모">${c.memo}</textarea></div><div class="card switch-row"><span>문자 발송 가능</span><div class="small-toggle"></div></div></div>`;bottom.innerHTML=`<div class="bottom-action"><button class="secondary" id="deleteCustomer">${edit?'삭제':'취소'}</button><button class="primary" id="saveCustomer">저장</button></div>`;$('#deleteCustomer').onclick=()=>openDetail('customers');$('#saveCustomer').onclick=()=>{const name=$('#customerName').value.trim()||'새 고객',phone=$('#customerPhone').value.trim()||'010-0000-0000',group=$('#customerGroup').value,memo=$('#customerMemo').value.trim();if(edit)customers[index]={...customers[index],name,phone,group,memo};else customers.unshift({name,phone,group,memo,status:'발송 가능'});toast('고객 정보를 저장했습니다.');openDetail('customers')};return}if(type==='historyDetail'){title.textContent='발송 상세';content.innerHTML=`<div class="card" style="padding:18px"><div class="row-title">김민수 · 통화 완료 문자</div><div class="row-sub">오늘 19:42 · 자동 발송 완료</div></div><div class="menu-label">발송 정보</div><div class="card list-card"><div class="row"><div class="row-main"><div class="row-title">전화번호</div><div class="row-sub">010-1234-5678</div></div></div><div class="row"><div class="row-main"><div class="row-title">발송 회선</div><div class="row-sub">SKT 010-12**-56**</div></div></div><div class="row"><div class="row-main"><div class="row-title">발송 유형</div><div class="row-sub">SMS · 자동 발송</div></div></div></div><div class="menu-label">실제 발송 문구</div><div class="card preview-box">안녕하세요. 방금 상담드린 내용은 아래 페이지에서 확인하실 수 있습니다.<br><br>https://pagero.kr/demo</div>`;return}const titles={bulk:'단체문자',groups:'고객 그룹',exclusions:'발송 제외번호',settings:'자동문자 설정',permissions:'권한 확인'};title.textContent=titles[type]||'상세';content.innerHTML=placeholderHtml(type)}
-function placeholderHtml(type){if(type==='bulk')return `<div class="field" style="margin-top:0"><label>받는 고객</label><div class="card row"><div class="row-main"><div class="row-title">신규 문의 그룹</div><div class="row-sub">24명 선택됨</div></div><span class="chev">›</span></div></div><div class="field"><label>문자 내용</label><textarea class="input">안녕하세요. 요청하신 안내 내용을 보내드립니다.</textarea></div><button class="primary save-btn" onclick="toast('미리보기 발송 화면입니다.')">24명에게 발송</button>`;if(type==='permissions')return `<div class="card list-card"><div class="row"><div class="row-main"><div class="row-title">전화 상태</div><div class="row-sub">통화 시작·종료 확인</div></div><span class="badge">허용됨</span></div><div class="row"><div class="row-main"><div class="row-title">통화기록</div><div class="row-sub">수신·발신·부재중 구분</div></div><span class="badge">허용됨</span></div><div class="row"><div class="row-main"><div class="row-title">문자 발송</div><div class="row-sub">설정한 안내문자 전송</div></div><span class="badge">허용됨</span></div><div class="row"><div class="row-main"><div class="row-title">배터리 제한</div><div class="row-sub">백그라운드 동작 유지</div></div><span class="badge">해제됨</span></div></div>`;return `<div class="card list-card"><div class="row"><div class="row-main"><div class="row-title">${type==='groups'?'신규 문의':'설정 항목 1'}</div><div class="row-sub">미리보기용 화면입니다.</div></div><span class="chev">›</span></div><div class="row"><div class="row-main"><div class="row-title">${type==='exclusions'?'010-9301-6624':'설정 항목 2'}</div><div class="row-sub">실제 데이터는 변경되지 않습니다.</div></div><span class="chev">›</span></div></div>`}
-$('#demoLogin').onclick=()=>{$('#previewChip').classList.add('hidden');setTab('home')};$$('.auth-tab').forEach((b,i)=>b.onclick=()=>{$$('.auth-tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');toast(i===0?'로그인 화면':'회원가입 화면은 실제 앱에서 확인할 수 있습니다.')});$$('.nav-btn').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));$('#detailBack').onclick=()=>setTab(lastTab);setTab('home');show('login');
+const customers=[{name:'김민수',phone:'010-1234-5678',memo:'신규 문의 · 오늘 오후 재통화 예정',status:'발송 가능'},{name:'박지현',phone:'010-8821-3490',memo:'기존 고객 · 크루즈 상품 상담',status:'발송 가능'},{name:'이서준',phone:'010-4402-1187',memo:'VIP · 견적서 전달 완료',status:'발송 가능'},{name:'최유진',phone:'010-9301-6624',memo:'미지정 · 수신거부 요청',status:'수신거부'},{name:'정하늘',phone:'010-7281-0049',memo:'신규 문의 · 예약 일정 확인 필요',status:'발송 가능'}];
+const situationTemplates=[
+ {title:'신규 문의 응대',desc:'처음 전화하거나 문의한 고객에게 보내는 기본 후속문자',answered:`안녕하세요. 페이지로 김도윤입니다.
+
+오늘 문의해 주신 내용은 잘 확인했습니다. 통화 중 말씀드린 내용과 진행 방법을 다시 확인하실 수 있도록 안내드립니다.
+
+관련 안내와 참고 자료는 문자 아래 링크에서 확인하실 수 있습니다.
+
+확인하시다가 궁금한 점이나 추가로 상담받고 싶은 내용이 생기면 이 문자에 그대로 답장해 주세요. 내용을 확인한 뒤 고객님 상황에 맞춰 이어서 자세히 안내드리겠습니다.
+
+감사합니다.
+페이지로 김도윤`,missed:`안녕하세요. 페이지로 김도윤입니다.
+
+방금 전화를 주셨는데 다른 상담 중이라 받지 못해 문자드립니다. 연락 주신 번호는 확인했으며 가능한 시간에 순서대로 다시 연락드리겠습니다.
+
+먼저 전달하실 내용이 있거나 급하게 확인이 필요한 사항이 있다면 성함과 문의 내용을 문자로 남겨주세요. 내용을 미리 확인한 뒤 보다 정확하게 안내드리겠습니다.
+
+감사합니다.
+페이지로 김도윤`,outgoing:`안녕하세요. 페이지로 김도윤입니다.
+
+남겨주신 문의와 관련해 방금 연락드렸으나 통화 연결이 되지 않아 문자드립니다. 상담에 필요한 안내사항과 먼저 확인드릴 내용이 있어 연락드렸습니다.
+
+통화 가능한 날짜와 시간을 문자로 남겨주시거나 편하실 때 이 번호로 연락 주시면 확인 후 이어서 안내드리겠습니다.
+
+감사합니다.
+페이지로 김도윤`},
+ {title:'상담 후 안내',desc:'통화가 끝난 뒤 상담 내용을 다시 정리해 전달하는 문자',answered:`안녕하세요. 페이지로 김도윤입니다.
+
+오늘 통화해 주셔서 감사합니다. 상담 중 말씀드린 내용은 검토하실 때 참고하실 수 있도록 다시 안내드립니다.
+
+관련 안내와 참고 자료는 문자 아래 링크에서 확인하실 수 있습니다.
+
+통화 내용 중 빠진 부분이 있거나 이해가 어려운 내용이 있다면 이 문자에 편하게 답장해 주세요. 확인 후 필요한 설명을 추가로 드리겠습니다.
+
+감사합니다.
+페이지로 김도윤`,missed:`안녕하세요. 페이지로 김도윤입니다.
+
+이전에 상담드린 내용과 관련해 추가로 확인드릴 사항이 있어 연락드렸으나 통화가 연결되지 않아 문자드립니다. 급한 내용은 아니므로 편하실 때 확인해 주세요.
+
+추가로 궁금한 점이나 확인이 필요한 부분을 문자로 남겨주시면 내용을 정리해 답변드리겠습니다. 통화가 편한 시간도 함께 남겨주시면 맞춰서 연락드리겠습니다.
+
+감사합니다.
+페이지로 김도윤`,outgoing:`안녕하세요. 페이지로 김도윤입니다.
+
+오늘 상담에 응해 주셔서 감사합니다. 방금 통화에서 안내드린 주요 내용과 다음 진행 방법을 다시 확인하실 수 있도록 문자드립니다.
+
+관련 안내와 참고 자료는 문자 아래 링크에서 확인하실 수 있습니다.
+
+검토 중 추가 설명이 필요하거나 조건을 다시 확인하고 싶은 부분이 있다면 이 문자로 남겨주세요. 확인 후 필요한 내용을 정리해 다시 안내드리겠습니다.
+
+감사합니다.
+페이지로 김도윤`},
+ {title:'견적·제안 전달',desc:'견적서, 상품안내, 매물, 일정표 등 자료를 전달하는 문자',answered:`안녕하세요. 페이지로 김도윤입니다.
+
+오늘 상담드린 내용을 기준으로 견적과 제안 내용을 확인하실 수 있도록 안내드립니다. 실제 금액과 진행 범위는 선택하시는 조건과 일정에 따라 달라질 수 있습니다.
+
+관련 안내와 참고 자료는 문자 아래 링크에서 확인하실 수 있습니다.
+
+자료를 보신 뒤 비교가 필요한 항목이나 변경을 원하는 조건이 있다면 문자로 남겨주세요. 확인 후 수정된 내용이나 추가 자료를 준비해 다시 안내드리겠습니다.
+
+감사합니다.
+페이지로 김도윤`,missed:`안녕하세요. 페이지로 김도윤입니다.
+
+요청하신 견적과 제안 내용을 설명드리기 위해 연락드렸으나 통화가 연결되지 않아 문자드립니다. 안내 자료는 준비되어 있으며 세부 조건을 확인한 뒤 정확하게 설명드릴 예정입니다.
+
+관련 안내와 참고 자료는 문자 아래 링크에서 확인하실 수 있습니다.
+
+통화 가능한 시간이나 먼저 확인하고 싶은 항목을 문자로 남겨주시면 내용을 준비해 연락드리겠습니다.
+
+감사합니다.
+페이지로 김도윤`,outgoing:`안녕하세요. 페이지로 김도윤입니다.
+
+방금 통화에서 설명드린 견적과 제안 내용을 검토하실 수 있도록 다시 안내드립니다. 금액뿐 아니라 포함 범위, 일정, 추가 비용 발생 조건을 함께 확인해 주세요.
+
+관련 안내와 참고 자료는 문자 아래 링크에서 확인하실 수 있습니다.
+
+조건을 변경하거나 다른 구성으로 비교해 보고 싶으시면 원하는 내용을 문자로 남겨주세요. 확인 후 고객님께 맞는 방향으로 다시 정리해 드리겠습니다.
+
+감사합니다.
+페이지로 김도윤`},
+ {title:'예약·방문 조율',desc:'상담 예약, 방문, 미팅, 시승, 현장 확인 일정을 잡는 문자',answered:`안녕하세요. 페이지로 김도윤입니다.
+
+오늘 통화에서 말씀드린 예약 또는 방문 일정을 확인하기 위해 문자드립니다. 현재 안내드린 시간은 최종 확정 전 일정이므로 변경이 필요하면 미리 알려주세요.
+
+관련 안내와 참고 자료는 문자 아래 링크에서 확인하실 수 있습니다.
+
+희망 날짜와 시간, 방문 인원 또는 준비가 필요한 내용을 문자로 남겨주시면 확인 후 최종 일정을 안내드리겠습니다. 확정 안내를 받기 전에는 방문 일정을 최종 확정으로 보지 않으셔도 됩니다.
+
+감사합니다.
+페이지로 김도윤`,missed:`안녕하세요. 페이지로 김도윤입니다.
+
+예약 또는 방문 일정을 조율하기 위해 연락드렸으나 통화가 연결되지 않아 문자드립니다. 원하시는 날짜와 시간을 확인해야 정확한 일정을 잡을 수 있습니다.
+
+가능한 날짜와 시간을 두세 가지 정도 문자로 남겨주시면 확인 후 가능한 일정으로 안내드리겠습니다. 방문 전 최종 확정 문자를 꼭 확인해 주세요.
+
+감사합니다.
+페이지로 김도윤`,outgoing:`안녕하세요. 페이지로 김도윤입니다.
+
+방금 통화에서 말씀드린 예약 또는 방문 일정은 우선 확인된 내용이며 최종 확정 여부를 다시 안내드릴 예정입니다. 일정과 준비사항을 한 번 더 확인해 주세요.
+
+관련 안내와 참고 자료는 문자 아래 링크에서 확인하실 수 있습니다.
+
+시간 변경이나 추가 요청사항이 있으면 이 문자에 답장해 주세요. 확인 후 최종 일정과 필요한 안내를 정리해 드리겠습니다.
+
+감사합니다.
+페이지로 김도윤`},
+ {title:'후속 상담·재접촉',desc:'이전 상담 후 검토 중인 고객에게 부담 없이 다시 연락하는 문자',answered:`안녕하세요. 페이지로 김도윤입니다.
+
+다시 연락 주셔서 감사합니다. 이전에 상담드린 내용은 그대로 이어서 확인할 수 있으며, 검토 중 막히는 부분이나 추가로 비교하고 싶은 내용이 있다면 편하게 말씀해 주세요.
+
+관련 안내와 참고 자료는 문자 아래 링크에서 확인하실 수 있습니다.
+
+결정을 서두르실 필요는 없습니다. 필요한 정보만 확인하신 뒤 궁금한 점이 생기면 이 문자에 남겨주시면 현재 상황에 맞춰 다시 안내드리겠습니다.
+
+감사합니다.
+페이지로 김도윤`,missed:`안녕하세요. 페이지로 김도윤입니다.
+
+이전에 상담드린 내용의 진행 여부와 추가로 필요한 안내가 있는지 확인하기 위해 연락드렸으나 통화가 연결되지 않아 문자드립니다. 부담을 드리기 위한 연락은 아니니 편하실 때 확인해 주세요.
+
+아직 검토 중이시면 궁금한 내용을 남겨주시고, 더 이상 안내가 필요하지 않다면 그 내용도 편하게 알려주세요. 고객님의 의사에 맞춰 이후 연락을 정리하겠습니다.
+
+감사합니다.
+페이지로 김도윤`,outgoing:`안녕하세요. 페이지로 김도윤입니다.
+
+오늘 후속 상담에 응해 주셔서 감사합니다. 이전에 안내드린 내용은 충분히 검토해 보신 뒤 결정하셔도 되며, 추가 설명이나 비교 자료가 필요하면 언제든 요청해 주세요.
+
+관련 안내와 참고 자료는 문자 아래 링크에서 확인하실 수 있습니다.
+
+추가 상담을 잠시 보류하거나 문의를 종료하고 싶은 경우에도 이 문자로 알려주시면 요청하신 방향에 맞춰 처리하겠습니다.
+
+감사합니다.
+페이지로 김도윤`}
+];
+function showScreen(name){Object.values(screens).forEach(v=>v.classList.remove('active'));screens[name].classList.add('active')}
+function toast(text){const t=$('#toast');t.textContent=text;t.classList.add('show');clearTimeout(window.tt);window.tt=setTimeout(()=>t.classList.remove('show'),1700)}
+function setTab(tab){currentTab=tab;showScreen('app');$$('.nav').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));$('#rootTitle').textContent=tab==='home'?'콜링크':tab==='messages'?'메시지':tab==='history'?'발송내역':'전체';$('#main').innerHTML=tab==='home'?homeHtml():tab==='messages'?messagesHtml():tab==='history'?historyHtml():moreHtml();$('#main').scrollTop=0;bindRoot()}
+function homeHtml(){return `<p class="eyebrow">오늘의 콜링크</p><div class="hero"><h2>자동문자가 정상<br>작동 중이에요</h2><div class="toggle"></div></div><p class="line">● SKT 010-12**-56**</p><div class="card stats"><div class="stat"><b>12</b><small>발송 완료</small></div><div class="stat"><b>0</b><small>실패</small></div><div class="stat"><b>2</b><small>수동 대기</small></div></div><div class="section-title">빠른 메뉴</div><div class="quick"><button data-go="messages"><span>▤</span>메시지</button><button data-open="customers"><span>♙</span>고객</button><button data-open="bulk"><span>▦</span>단체문자</button></div><div class="section-title">최근 활동</div><div class="card list"><button class="row"><div class="grow"><strong>김민수 · 통화 완료 문자</strong><span class="sub">방금 전 · 발송 완료</span></div><span class="badge">완료</span><span class="chev">›</span></button><button class="row"><div class="grow"><strong>박지현 · 부재중 문자</strong><span class="sub">오늘 18:21 · 발송 완료</span></div><span class="badge">완료</span><span class="chev">›</span></button></div>`}
+function messagesHtml(){const d=messages[messageTab];return `<button class="template-open" id="openTemplates">상황별 기본문구 불러오기  ›</button><div class="tabs"><button class="tab ${messageTab==='answered'?'active':''}" data-message="answered">받은 전화</button><button class="tab ${messageTab==='missed'?'active':''}" data-message="missed">부재중·거절</button><button class="tab ${messageTab==='outgoing'?'active':''}" data-message="outgoing">내가 건 전화</button></div><div class="editor-title">${d.title}</div><div class="card editor"><div class="switch-row"><span>${d.switchText}</span><div class="small-toggle"></div></div><div class="field"><label>문자 내용</label><textarea class="input" id="messageText">${d.text}</textarea></div><div class="field"><label>연결할 페이지 주소</label><input class="input" value="https://pagero.kr/demo"></div><div class="card preview"><b>${d.title} 미리보기</b>\n\n<span id="messagePreview">${d.text}</span>\n\nhttps://pagero.kr/demo</div><button class="primary save" id="saveMessage">현재 메시지 저장</button></div><p class="hint">기본문구 적용 전 기존 문구는 저장된 템플릿 보관함에 자동 백업됩니다.</p>`}
+function historyHtml(){return `<div class="section-title" style="margin-top:0">오늘 발송 기록 12건</div><div class="card list"><button class="row" data-open="history"><div class="grow"><strong>김민수 · 통화 완료</strong><span class="sub">오늘 19:42 · 자동 발송</span></div><span class="badge">완료</span><span class="chev">›</span></button><button class="row" data-open="history"><div class="grow"><strong>박지현 · 부재중</strong><span class="sub">오늘 18:21 · 자동 발송</span></div><span class="badge">완료</span><span class="chev">›</span></button><button class="row"><div class="grow"><strong>이서준 · 발신 통화</strong><span class="sub">오늘 17:42 · 수동 확인 대기</span></div><span class="chev">›</span></button></div>`}
+function moreHtml(){return `<div class="card profile"><div class="avatar">김</div><div class="grow"><strong>페이지로 콜링크</strong><span class="sub">계정·기기·발송 기능 관리</span></div><span class="chev">›</span></div><div class="menu-label">고객 관리</div><div class="card list"><button class="row" data-open="customers"><div class="grow"><strong>고객 목록</strong></div><span class="chev">›</span></button><button class="row"><div class="grow"><strong>고객 그룹</strong></div><span class="chev">›</span></button><button class="row"><div class="grow"><strong>발송 제외번호</strong></div><span class="chev">›</span></button></div><div class="menu-label">발송 서비스</div><div class="card list"><button class="row" data-open="bulk"><div class="grow"><strong>단체문자 보내기</strong></div><span class="chev">›</span></button><button class="row" data-go="history"><div class="grow"><strong>전체 발송 기록</strong></div><span class="chev">›</span></button><button class="row" data-go="messages"><div class="grow"><strong>메시지 설정</strong></div><span class="chev">›</span></button></div><div class="menu-label">앱 설정</div><div class="card list"><button class="row"><div class="grow"><strong>자동문자·업무시간·중복방지</strong></div><span class="chev">›</span></button><button class="row"><div class="grow"><strong>전화·통화기록·문자 권한</strong></div><span class="badge">정상</span><span class="chev">›</span></button></div>`}
+function bindRoot(){$$('[data-go]').forEach(b=>b.onclick=()=>setTab(b.dataset.go));$$('[data-open]').forEach(b=>b.onclick=()=>openDetail(b.dataset.open));$$('[data-message]').forEach(b=>b.onclick=()=>{messageTab=b.dataset.message;setTab('messages')});if($('#openTemplates'))$('#openTemplates').onclick=openSituationList;if($('#messageText'))$('#messageText').oninput=e=>$('#messagePreview').textContent=e.target.value;if($('#saveMessage'))$('#saveMessage').onclick=()=>toast('현재 메시지를 저장했습니다.')}
+function openSituationList(){openModal('상황별 기본문구',situationTemplates.map((s,i)=>`<button class="card situation" data-situation="${i}"><strong>${s.title}</strong><small>${s.desc}</small></button>`).join(''),'');$$('[data-situation]').forEach(b=>b.onclick=()=>openSituationPreview(Number(b.dataset.situation)))}
+function openSituationPreview(index){const s=situationTemplates[index];$('#sheetTitle').textContent=s.title;$('#sheetBody').innerHTML=`<button class="back-link" id="backSituations">‹ 상황 다시 선택</button><p class="hint" style="margin:0 0 12px">${s.desc}</p>${templatePreviewBlock('answered','받은 전화 후 문구 적용',s.answered)}${templatePreviewBlock('missed','부재중·거절 문구 적용',s.missed)}${templatePreviewBlock('outgoing','내가 건 전화 후 문구 적용',s.outgoing)}<p class="hint">적용 전 현재 문구는 저장된 템플릿 보관함에 자동 백업됩니다.</p>`;$('#sheetActions').innerHTML=`<button class="primary" id="applyTemplates">선택한 문구 적용</button>`;$('#backSituations').onclick=openSituationList;$('#applyTemplates').onclick=()=>{const selected=['answered','missed','outgoing'].filter(k=>$(`#check-${k}`).checked);if(!selected.length){toast('적용할 문구를 하나 이상 선택해주세요.');return}selected.forEach(k=>messages[k].text=s[k]);closeModal();setTab('messages');toast(`${s.title} 문구를 적용했습니다.`)}}
+function templatePreviewBlock(key,label,text){return `<label class="checkline"><input type="checkbox" id="check-${key}" checked>${label}</label><div class="card template-card">${text}</div>`}
+function openModal(title,body,actions){$('#sheetTitle').textContent=title;$('#sheetBody').innerHTML=body;$('#sheetActions').innerHTML=actions;$('#modal').classList.add('show')}
+function closeModal(){$('#modal').classList.remove('show')}
+function openDetail(type){showScreen('detail');$('#detailAction').textContent='';$('#detailBottom').innerHTML='';if(type==='customers'){renderCustomers();return}if(type==='customerAdd'){renderCustomerAdd();return}$('#detailTitle').textContent=type==='bulk'?'단체문자':'발송 상세';$('#detailBody').innerHTML=type==='bulk'?`<div class="field" style="margin-top:0"><label>받는 고객</label><div class="card row"><div class="grow"><strong>신규 문의 그룹</strong><span class="sub">24명 선택됨</span></div><span class="chev">›</span></div></div><div class="field"><label>문자 내용</label><textarea class="input">안녕하세요. 요청하신 안내 내용을 보내드립니다.</textarea></div><button class="primary save">24명에게 발송</button>`:`<div class="card preview"><b>김민수 · 통화 완료 문자</b>\n\n오늘 19:42 · 자동 발송 완료\n\n안녕하세요. 오늘 상담드린 내용을 다시 안내드립니다.</div>`}
+function renderCustomers(){$('#detailTitle').textContent='고객';$('#detailAction').textContent='＋';$('#detailAction').onclick=()=>openDetail('customerAdd');const visible=customers.filter(c=>customerFilter==='all'||(customerFilter==='send'&&c.status==='발송 가능')||(customerFilter==='block'&&c.status==='수신거부'));$('#detailBody').innerHTML=`<input class="input search" placeholder="이름 또는 전화번호 검색"><div class="filters"><button class="filter ${customerFilter==='all'?'active':''}" data-filter="all">전체</button><button class="filter ${customerFilter==='send'?'active':''}" data-filter="send">발송 가능</button><button class="filter ${customerFilter==='block'?'active':''}" data-filter="block">수신거부</button></div><div class="menu-label">전체 고객 ${visible.length}명</div><div class="card list">${visible.map(c=>`<button class="row customer"><div class="grow"><div class="customer-name">${c.name}</div><div class="phone-no">${c.phone}</div><div class="customer-note">${c.memo}</div></div><span class="badge">${c.status}</span><span class="chev">›</span></button>`).join('')}</div>`;$$('[data-filter]').forEach(b=>b.onclick=()=>{customerFilter=b.dataset.filter;renderCustomers()})}
+function renderCustomerAdd(){$('#detailTitle').textContent='고객 추가';$('#detailAction').textContent='';$('#detailBody').innerHTML=`<div class="field" style="margin-top:0"><label>고객명</label><input class="input" id="newName" placeholder="이름 입력"></div><div class="field"><label>전화번호</label><input class="input" id="newPhone" placeholder="010-0000-0000"></div><div class="field"><label>고객 그룹</label><select class="input"><option>신규 문의</option><option>기존 고객</option><option>VIP</option></select></div><div class="field"><label>메모</label><textarea class="input" style="height:110px"></textarea></div>`;$('#detailBottom').innerHTML=`<div class="bottom-action"><button class="secondary" id="cancelAdd">취소</button><button class="primary" id="saveAdd">저장</button></div>`;$('#cancelAdd').onclick=renderCustomers;$('#saveAdd').onclick=()=>{customers.unshift({name:$('#newName').value||'새 고객',phone:$('#newPhone').value||'010-0000-0000',memo:'신규 문의',status:'발송 가능'});toast('고객을 추가했습니다.');renderCustomers()}}
+$('#loginBtn').onclick=()=>setTab('home');$$('.nav').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));$('#back').onclick=()=>setTab(currentTab);$('#closeModal').onclick=closeModal;$('#modal').onclick=e=>{if(e.target===$('#modal'))closeModal()};
 </script>
 </body>
 </html>
