@@ -278,3 +278,67 @@
   background: #fef2f2;
   color: #b91c1c;
 }
+
+/* Stats spacing and chart overlay containment. */
+.stats-panel .stats-trend-card,
+.stats-panel .stat-card-v2 {
+  padding: 20px !important;
+}
+
+.stats-panel .stats-trend-card .section-title,
+.stats-panel .stat-card-v2 .section-title {
+  min-height: 22px !important;
+  margin: 0 !important;
+}
+
+.stats-panel .stats-trend-line {
+  margin-top: 16px !important;
+  gap: 14px !important;
+}
+
+.stats-panel .stats-trend-line svg {
+  box-sizing: border-box !important;
+  padding: 12px 10px 8px !important;
+}
+
+.stats-panel .stats-trend-line .trend-legend {
+  margin: 0 !important;
+  min-height: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 14px !important;
+}
+
+.stats-panel .stats-chart-tooltip-wide {
+  max-width: calc(100% - 24px) !important;
+}
+
+.stats-panel .stats-chart-tooltip-wide.is-below {
+  transform: translate(-50%, 12px) !important;
+}
+
+.stats-panel .stat-list-v2 {
+  margin-top: 16px !important;
+  gap: 8px !important;
+}
+
+.stats-panel .stat-row-v2 {
+  min-height: 30px !important;
+  gap: 12px !important;
+}
+
+.stats-panel .stat-row-v2 div {
+  align-self: center !important;
+}
+
+@media (max-width: 760px) {
+  .stats-panel .stats-trend-card,
+  .stats-panel .stat-card-v2 {
+    padding: 16px !important;
+  }
+
+  .stats-panel .stats-chart-tooltip-wide {
+    max-width: calc(100% - 16px) !important;
+  }
+}

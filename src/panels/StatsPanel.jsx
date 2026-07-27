@@ -183,6 +183,8 @@ function StatsTrend({ data }) {
   const labelEvery = data.length <= 14 ? 1 : Math.ceil(data.length / 8);
   const series = [['pv', '조회'], ['cta', '클릭'], ['db', '접수']];
   const hoverTop = (row) => Math.min(y(row.pv), y(row.cta), y(row.db));
+  const tooltipLeft = hover ? Math.min(85, Math.max(15, (hover.x / width) * 100)) : 50;
+  const tooltipBelow = Boolean(hover && hover.y < 78);
 
   return (
     <div className="stats-line-chart stats-trend-line stats-line-plot" role="img" aria-label="상세 통계">
@@ -212,7 +214,10 @@ function StatsTrend({ data }) {
         ))}
       </svg>
       {hover && (
-        <div className="stats-chart-tooltip stats-chart-tooltip-wide" style={{ left: String((hover.x / width) * 100) + '%', top: String(hover.y) + 'px' }}>
+        <div
+          className={'stats-chart-tooltip stats-chart-tooltip-wide' + (tooltipBelow ? ' is-below' : '')}
+          style={{ left: String(tooltipLeft) + '%', top: String(hover.y) + 'px' }}
+        >
           <span>{hover.row.id || hover.row.label}</span>
           <strong>조회 {Number(hover.row.pv || 0).toLocaleString('ko-KR')}</strong>
           <em>클릭 {Number(hover.row.cta || 0).toLocaleString('ko-KR')} / 접수 {Number(hover.row.db || 0).toLocaleString('ko-KR')}</em>

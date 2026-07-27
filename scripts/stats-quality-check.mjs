@@ -101,6 +101,7 @@ assert(mergedComparison.formStartRate === '33.3' && mergedComparison.formComplet
 const statsPanel = await readFile('src/panels/StatsPanel.jsx', 'utf8');
 const inboxPanel = await readFile('src/panels/InboxPanel.jsx', 'utf8');
 const inboxCss = await readFile('src/panels/InboxPanel.css', 'utf8');
+const statsPanelCss = await readFile('src/panels/StatsPanel.css', 'utf8');
 const statsPeriodCss = await readFile('src/styles/panels-stats-period-line.css', 'utf8');
 assert(statsPanel.includes('eventPageMeta') && statsPanel.includes('leadPageMeta'), 'stats panel should accept pagination meta');
 assert(statsPanel.includes('statsPartial') && statsPanel.includes('stats-partial-notice'), 'stats panel should expose partial data notice contract');
@@ -118,6 +119,10 @@ assert(statsPanel.includes('serverStats') && statsPanel.includes('normalizeServe
 assert(statsPanel.includes('stats-funnel-card') && statsPanel.includes('formStartRate') && statsPanel.includes('formCompletionRate') && statsPanel.includes('reservationCompletionRate'), 'stats panel should expose server-backed form and reservation funnel completion');
 assert(statsPanel.includes('stats-comparison-label') && statsPanel.includes('countMetricChange') && statsPanel.includes('rateMetricChange'), 'stats panel should show previous-period changes on summary metrics');
 assert(!statsPanel.includes('DeliveryLogCard') && !statsPanel.includes('\uC804\uC1A1 \uB85C\uADF8') && !statsPanel.includes('\uC678\uBD80 \uC804\uC1A1'), 'stats panel should not expose delivery log cards');
+assert(statsPanel.includes('Math.min(85, Math.max(15') && statsPanel.includes('hover.y < 78'), 'chart tooltip should stay inside the card and flip below high points');
+assert(statsPanel.includes("tooltipBelow ? ' is-below' : ''"), 'chart tooltip should expose its below-point placement state');
+assert(statsPanelCss.includes('.stats-chart-tooltip-wide.is-below') && statsPanelCss.includes('translate(-50%, 12px)'), 'chart tooltip CSS should render high-point details below the point');
+assert(statsPanelCss.includes('.stat-list-v2') && statsPanelCss.includes('margin-top: 16px') && statsPanelCss.includes('min-height: 30px'), 'stat cards should keep consistent title, list, and row spacing');
 assert(statsPeriodCss.includes('grid-template-columns: minmax(0, 1fr) 184px'), 'stats month picker should have enough width for year/month text');
 assert(statsPeriodCss.includes('min-width: 168px'), 'stats month input should not collapse to year-only text');
 assert(statsPeriodCss.includes('grid-template-columns: 58px minmax(96px, .8fr) minmax(112px, 1fr) 132px'), 'recent lead rows should use four visible columns only');
@@ -143,4 +148,4 @@ const trafficAttribution = await readFile('src/lib/trafficAttribution.js', 'utf8
 assert(trafficAttribution.includes('trafficAttributionFromUrl') && trafficAttribution.includes('utm_source'), 'traffic attribution should parse UTM source');
 assert(trafficAttribution.includes('trafficChannelFromReferrer') && trafficAttribution.includes('sourceLabel'), 'traffic attribution should fall back to referrer and source label');
 
-console.log(JSON.stringify({ ok: true, checks: 63 }, null, 2));
+console.log(JSON.stringify({ ok: true, checks: 67 }, null, 2));
