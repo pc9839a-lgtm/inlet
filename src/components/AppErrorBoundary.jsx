@@ -6,7 +6,7 @@ const ROOT_CHUNK_RELOAD_LIMIT = 1;
 
 function isLazyChunkLoadError(error) {
   const message = String(error?.message || error || '');
-  return /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Loading chunk|ChunkLoadError|Unexpected token '<'|Failed to load module script|MIME type/i.test(message);
+  return /Unable to preload CSS|Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Loading chunk|ChunkLoadError|Unexpected token '<'|Failed to load module script|MIME type/i.test(message);
 }
 
 async function clearBrowserRuntimeCaches() {
@@ -63,14 +63,7 @@ export class AppErrorBoundary extends React.Component {
 
   render() {
     if (this.state.recovering) {
-      return (
-        <div className="error-screen error-screen-v2">
-          <div>
-            <h1>최신 화면으로 이동합니다.</h1>
-            <p>배포 후 남은 캐시를 정리하고 있습니다.</p>
-          </div>
-        </div>
-      );
+      return null;
     }
     if (!this.state.error) return this.props.children;
     const cleanMessage = String(this.state.error?.message || this.state.error || '알 수 없는 오류');

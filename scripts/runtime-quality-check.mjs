@@ -432,6 +432,7 @@ assert(lazyEditorBoundary.includes('role="alert"') && lazyEditorBoundary.include
 assert(lazyEditorBoundary.includes('componentDidUpdate(prevProps)') && /this\.setState\(\{\s*error:\s*null(?:,\s*recovering:\s*false)?\s*\}\)/.test(lazyEditorBoundary), 'BlockEditor lazy error boundary must reset when the selected block/type changes');
 assert(appErrorBoundary.includes('className="error-screen error-screen-v2"'), 'AppErrorBoundary must keep the app recovery screen');
 assert(appErrorBoundary.includes('recoverRootChunkLoad(error)') && appErrorBoundary.includes('clearBrowserRuntimeCaches().finally(replaceWithFreshRuntime)'), 'AppErrorBoundary must auto-recover once from stale deployment chunk failures');
+assert(appErrorBoundary.includes('Unable to preload CSS') && appErrorBoundary.includes('if (this.state.recovering)') && appErrorBoundary.includes('return null;'), 'CSS preload failures must recover silently without rendering a loading screen');
 assert(appErrorBoundary.includes('ROOT_CHUNK_RELOAD_LIMIT = 1') && appErrorBoundary.includes("url.searchParams.set('__fresh'"), 'AppErrorBoundary stale chunk recovery must be bounded and use a fresh URL');
 assert(appErrorBoundary.includes('화면을 불러오는 중 오류가 발생했습니다.'), 'AppErrorBoundary must keep readable Korean error text');
 assert(appErrorBoundary.includes('페이지 설정만 초기화') && appErrorBoundary.includes('전체 초기화'), 'AppErrorBoundary recovery actions must keep readable Korean labels');

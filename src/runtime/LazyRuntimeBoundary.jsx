@@ -4,7 +4,7 @@ const CHUNK_RELOAD_KEY = 'pagero-chunk-reload-v6';
 const CHUNK_RELOAD_LIMIT = 5;
 function isLazyChunkLoadError(error) {
   const message = String(error?.message || error || '');
-  return /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Loading chunk|ChunkLoadError|Unexpected token '<'|Failed to load module script|MIME type/i.test(message);
+  return /Unable to preload CSS|Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Loading chunk|ChunkLoadError|Unexpected token '<'|Failed to load module script|MIME type/i.test(message);
 }
 
 async function clearBrowserRuntimeCaches() {
