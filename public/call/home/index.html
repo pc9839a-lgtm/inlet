@@ -1,63 +1,711 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="robots" content="index,follow,max-image-preview:large">
-<meta name="description" content="통화가 끝나면 예약, 위치, 견적, 링크 등 고객에게 필요한 안내문자를 자동으로 보내는 Android 전용 서비스, 페이지로 콜링크입니다.">
-<meta name="theme-color" content="#ffffff">
-<link rel="canonical" href="https://call.pagero.kr/">
-<link rel="icon" href="/favicon.ico" sizes="any">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<meta property="og:type" content="website">
-<meta property="og:locale" content="ko_KR">
-<meta property="og:title" content="페이지로 콜링크 | 통화 후 안내문자 자동 발송">
-<meta property="og:description" content="통화가 끝난 뒤 직접 보내던 예약, 위치, 견적, 링크 문자를 자동으로 보내세요.">
-<meta property="og:url" content="https://call.pagero.kr/">
-<title>페이지로 콜링크 | 통화 후 안내문자 자동 발송</title>
-<style>
-:root{color-scheme:light;--ink:#111827;--blue:#2563eb;--paper:#fff;--soft:#f3f5f9;--line:rgba(17,24,39,.11);--sub:#667085;--muted:#98a2b3;font-family:Pretendard,Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:var(--paper);word-break:keep-all;-webkit-font-smoothing:antialiased}a{color:inherit;text-decoration:none}button{font:inherit}.shell{width:min(1180px,calc(100% - 48px));margin:0 auto}.skip{position:fixed;left:16px;top:-60px;z-index:1000;padding:12px 16px;border-radius:12px;background:var(--ink);color:#fff;font-weight:800}.skip:focus{top:16px}
-.site-header{position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(17,24,39,.07);background:rgba(255,255,255,.88);backdrop-filter:blur(18px)}.header-inner{min-height:76px;display:flex;align-items:center;gap:28px}.brand{display:inline-flex;align-items:center;gap:11px;flex:0 0 auto;font-size:19px;font-weight:950;letter-spacing:-.04em}.brand-mark{position:relative;width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:var(--ink);color:#fff;font-size:18px;font-weight:950}.brand-mark:after{content:"";position:absolute;right:6px;bottom:6px;width:7px;height:7px;border-radius:50%;background:var(--blue)}.brand small{color:var(--muted);font-size:11px;font-weight:850}.desktop-nav{display:flex;align-items:center;gap:24px;margin-left:18px;color:#475467;font-size:14px;font-weight:780}.header-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
-.btn{min-height:48px;padding:0 20px;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:999px;font-size:14px;font-weight:900;transition:.18s}.btn:hover{transform:translateY(-1px)}.btn-dark{color:#fff;background:var(--ink);box-shadow:0 12px 28px rgba(17,24,39,.16)}.btn-line{color:var(--ink);background:#fff;border-color:var(--line)}
-.hero{position:relative;overflow:hidden;padding:94px 0 104px;background:radial-gradient(circle at 78% 28%,rgba(37,99,235,.13),transparent 24%),linear-gradient(180deg,#fff 0%,#f7f9fc 100%);border-bottom:1px solid var(--line)}.hero-grid{display:grid;grid-template-columns:minmax(0,1.03fr) minmax(390px,.97fr);align-items:center;gap:68px}.eyebrow{display:inline-flex;align-items:center;gap:9px;margin:0 0 22px;color:var(--blue);font-size:13px;font-weight:900}.eyebrow:before{content:"";width:9px;height:9px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 6px rgba(37,99,235,.11)}.hero h1{margin:0;font-size:clamp(48px,6.2vw,82px);line-height:1.02;letter-spacing:-.075em;font-weight:950}.hero h1 span{color:var(--blue)}.hero-lead{max-width:580px;margin:28px 0 0;color:#475467;font-size:clamp(17px,1.7vw,21px);line-height:1.72;letter-spacing:-.025em}.hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:34px}.hero-actions .btn{min-height:56px;padding:0 25px;font-size:16px}.hero-points{display:flex;flex-wrap:wrap;gap:9px 18px;margin:27px 0 0;padding:0;list-style:none;color:var(--sub);font-size:13px;font-weight:760}.hero-points li{display:inline-flex;align-items:center;gap:7px}.hero-points li:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ink)}
-.visual-stage{position:relative;min-height:650px;display:grid;place-items:center}.visual-ring{position:absolute;width:500px;height:500px;border:1px solid rgba(37,99,235,.18);border-radius:50%}.visual-ring:before,.visual-ring:after{content:"";position:absolute;inset:48px;border:1px solid rgba(37,99,235,.13);border-radius:inherit}.visual-ring:after{inset:105px}.phone{position:relative;z-index:2;width:334px;height:650px;padding:12px;border-radius:48px;background:var(--ink);box-shadow:0 44px 90px rgba(17,24,39,.28);transform:rotate(2.2deg)}.phone-screen{position:relative;height:100%;overflow:hidden;border-radius:38px;background:#f7f8fa}.phone-top{height:31px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;font-size:11px;font-weight:850}.phone-head{padding:16px 19px 15px;border-bottom:1px solid rgba(17,24,39,.08);background:#fff}.phone-head small{color:var(--sub);font-size:11px;font-weight:800}.phone-head h2{margin:5px 0 0;font-size:25px;letter-spacing:-.055em}.phone-body{padding:17px 16px 92px}.auto-state{min-height:68px;display:flex;align-items:center;gap:12px;padding:14px;border-radius:18px;color:#fff;background:var(--ink)}.auto-icon{width:38px;height:38px;display:grid;place-items:center;border-radius:13px;background:var(--blue);font-size:19px}.auto-state strong{display:block;font-size:14px}.auto-state span{display:block;margin-top:4px;color:rgba(255,255,255,.63);font-size:10px}.switch{position:relative;width:42px;height:25px;margin-left:auto;border-radius:20px;background:var(--blue)}.switch:after{content:"";position:absolute;right:3px;top:3px;width:19px;height:19px;border-radius:50%;background:#fff}.phone-label{margin:20px 2px 9px;color:var(--sub);font-size:11px;font-weight:850}.message-card{border:1px solid rgba(17,24,39,.09);border-radius:20px;background:#fff;box-shadow:0 13px 30px rgba(17,24,39,.06)}.message-meta{display:flex;align-items:center;gap:9px;padding:13px 14px;border-bottom:1px solid rgba(17,24,39,.07)}.message-avatar{width:34px;height:34px;display:grid;place-items:center;border-radius:11px;color:#fff;background:var(--ink);font-size:13px;font-weight:900}.message-meta strong{display:block;font-size:12px}.message-meta small{display:block;margin-top:3px;color:var(--muted);font-size:9px}.message-badge{margin-left:auto;padding:5px 8px;border-radius:999px;color:var(--blue);background:rgba(37,99,235,.09);font-size:9px;font-weight:900}.message-text{min-height:174px;padding:16px;color:#344054;font-size:11px;line-height:1.72;white-space:pre-line}.demo-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:11px}.demo-tab{min-height:39px;border:1px solid rgba(17,24,39,.08);border-radius:11px;color:var(--sub);background:#fff;font-size:10px;font-weight:850;cursor:pointer}.demo-tab.active{border-color:var(--ink);color:#fff;background:var(--ink)}.phone-nav{position:absolute;left:0;right:0;bottom:0;height:72px;display:grid;grid-template-columns:repeat(4,1fr);padding:8px;border-top:1px solid rgba(17,24,39,.08);background:rgba(255,255,255,.94)}.phone-nav div{display:grid;place-items:center;align-content:center;gap:4px;color:var(--muted);font-size:8px;font-weight:850}.phone-nav div:before{content:"";width:17px;height:17px;border:2px solid currentColor;border-radius:6px}.phone-nav .active{color:var(--ink)}.phone-nav .active:before{background:var(--blue);border-color:var(--blue)}.floating-note{position:absolute;z-index:4;display:flex;align-items:center;gap:11px;padding:14px 16px;border:1px solid rgba(17,24,39,.08);border-radius:18px;background:rgba(255,255,255,.94);box-shadow:0 18px 46px rgba(17,24,39,.13)}.floating-note b{width:34px;height:34px;display:grid;place-items:center;border-radius:12px;color:#fff;background:var(--blue)}.floating-note strong{display:block;font-size:12px}.floating-note span{display:block;margin-top:3px;color:var(--sub);font-size:10px}.note-a{left:-6px;top:165px}.note-b{right:-5px;bottom:122px}
-.story-section{min-height:460px;display:grid;place-items:center;padding:86px 0;text-align:center;border-bottom:1px solid var(--line)}.story-section.short{min-height:350px}.story-section.dark{color:#fff;background:var(--ink)}.story-section.blue{color:#fff;background:var(--blue)}.story-section.soft{background:var(--soft)}.story-kicker{margin:0 0 18px;color:var(--blue);font-size:13px;font-weight:950}.dark .story-kicker,.blue .story-kicker{color:rgba(255,255,255,.64)}.story-title{max-width:1000px;margin:0 auto;font-size:clamp(43px,6.4vw,82px);line-height:1.05;letter-spacing:-.074em;font-weight:950}.story-title.medium{font-size:clamp(39px,5.2vw,66px)}.story-sub{max-width:690px;margin:24px auto 0;color:var(--sub);font-size:clamp(16px,1.75vw,20px);line-height:1.6;font-weight:730}.dark .story-sub,.blue .story-sub{color:rgba(255,255,255,.72)}.accent{color:var(--blue)}.dark .accent,.blue .accent{color:#fff}.todo-row,.industry-row{display:flex;flex-wrap:wrap;justify-content:center;gap:9px;margin-top:31px}.pill{padding:12px 17px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:14px;font-weight:900}.dark .pill,.blue .pill{border-color:rgba(255,255,255,.25);color:#fff;background:rgba(255,255,255,.09)}
-.customer-lines{display:grid;gap:14px;max-width:760px;margin:36px auto 0;text-align:left}.customer-line{padding:19px 22px;border:1px solid var(--line);border-radius:18px;background:#fff;font-size:clamp(17px,2vw,22px);font-weight:880;letter-spacing:-.035em}.customer-line:nth-child(2){margin-left:56px}.customer-line:nth-child(3){margin-left:112px}.flow-grid{display:grid;grid-template-columns:repeat(3,1fr);max-width:900px;margin:38px auto 0;border:1px solid var(--line);border-radius:24px;overflow:hidden;background:#fff}.flow-step{padding:30px 20px}.flow-step+.flow-step{border-left:1px solid var(--line)}.flow-step b{width:34px;height:34px;display:grid;place-items:center;margin:0 auto 13px;border-radius:50%;color:#fff;background:var(--ink);font-size:12px}.flow-step strong{font-size:18px;letter-spacing:-.04em}.message-examples{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:36px;text-align:left}.example{min-height:250px;padding:24px;border:1px solid rgba(255,255,255,.18);border-radius:22px;background:rgba(255,255,255,.08)}.example-label{color:rgba(255,255,255,.62);font-size:12px;font-weight:900}.example p{margin:22px 0 0;font-size:16px;line-height:1.7;font-weight:720}
-.before-after{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line)}.compare-pane{min-height:460px;display:grid;place-items:center;padding:70px 40px;text-align:center}.compare-pane+.compare-pane{border-left:1px solid var(--line)}.compare-pane:last-child{background:var(--soft)}.compare-label{display:block;margin-bottom:22px;color:var(--blue);font-size:13px;font-weight:950}.compare-pane h2{margin:0;font-size:clamp(40px,5vw,64px);line-height:1.1;letter-spacing:-.07em;font-weight:950}.compare-pane p{margin:22px 0 0;color:var(--sub);font-size:17px;line-height:1.7;font-weight:730}.benefit-grid{display:grid;grid-template-columns:repeat(4,1fr);max-width:1050px;margin:38px auto 0;border-top:1px solid rgba(255,255,255,.16);border-bottom:1px solid rgba(255,255,255,.16)}.benefit{padding:31px 18px;color:rgba(255,255,255,.82);font-size:16px;font-weight:850}.benefit+.benefit{border-left:1px solid rgba(255,255,255,.16)}.trust-row{display:grid;grid-template-columns:repeat(3,1fr);max-width:920px;margin:34px auto 0;border-top:1px solid rgba(255,255,255,.15)}.trust-item{padding:26px 18px;color:rgba(255,255,255,.78);font-size:15px;font-weight:850}.trust-item+.trust-item{border-left:1px solid rgba(255,255,255,.15)}.final-actions{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin-top:34px}.final-actions .btn{min-height:56px;padding:0 26px;font-size:16px}.blue .final-actions .btn-dark{background:var(--ink)}.blue .final-actions .btn-line{color:#fff;border-color:rgba(255,255,255,.35);background:rgba(255,255,255,.12)}
-.site-footer{padding:44px 0 100px}.footer-row{display:flex;align-items:center;justify-content:space-between;gap:28px}.footer-links{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px 20px;color:var(--sub);font-size:12px;font-weight:760}.copyright{margin-top:24px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:11px}.mobile-cta{display:none}
-@media(max-width:1020px){.desktop-nav{display:none}.hero{padding-top:72px}.hero-grid{grid-template-columns:1fr;gap:38px}.hero-copy{text-align:center}.hero-lead{margin-left:auto;margin-right:auto}.hero-actions,.hero-points{justify-content:center}.visual-stage{min-height:660px}.note-a{left:calc(50% - 245px)}.note-b{right:calc(50% - 250px)}.message-examples{grid-template-columns:1fr;max-width:680px;margin-left:auto;margin-right:auto}.example{min-height:0}.benefit-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:720px){.shell{width:min(calc(100% - 32px),620px)}.site-header{position:relative}.header-inner{min-height:66px}.brand{font-size:17px}.brand small{display:none}.brand-mark{width:35px;height:35px}.header-actions .btn-line{display:none}.header-actions .btn-dark{min-height:42px;padding:0 15px;font-size:13px}.hero{padding:58px 0 74px}.hero-grid{gap:28px}.hero h1{font-size:clamp(43px,13.2vw,64px)}.hero-lead{margin-top:21px;font-size:16px}.hero-actions{margin-top:27px}.hero-actions .btn{width:100%;min-height:54px}.hero-points{display:grid;grid-template-columns:1fr;justify-items:start;width:fit-content;margin:22px auto 0}.visual-stage{min-height:590px;transform:scale(.9);transform-origin:top center;margin-bottom:-55px}.phone{width:318px;height:620px}.visual-ring{width:430px;height:430px}.floating-note{display:none}.story-section{min-height:380px;padding:64px 0}.story-section.short{min-height:310px}.story-title{font-size:42px}.story-title.medium{font-size:37px}.story-sub{font-size:16px}.customer-line:nth-child(2),.customer-line:nth-child(3){margin-left:0}.flow-grid{grid-template-columns:1fr}.flow-step+.flow-step{border-left:0;border-top:1px solid var(--line)}.message-examples{gap:10px}.before-after{grid-template-columns:1fr}.compare-pane{min-height:330px;padding:56px 24px}.compare-pane+.compare-pane{border-left:0;border-top:1px solid var(--line)}.compare-pane h2{font-size:42px}.benefit-grid,.trust-row{grid-template-columns:1fr}.benefit+.benefit,.trust-item+.trust-item{border-left:0;border-top:1px solid rgba(255,255,255,.16)}.final-actions{display:grid;grid-template-columns:1fr}.footer-row{display:block}.footer-links{justify-content:flex-start;margin-top:26px}.site-footer{padding-bottom:120px}.mobile-cta{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:90;display:grid;grid-template-columns:1fr 1.45fr;gap:8px;padding:8px;border:1px solid rgba(17,24,39,.11);border-radius:20px;background:rgba(255,255,255,.92);box-shadow:0 18px 45px rgba(17,24,39,.18);backdrop-filter:blur(18px)}.mobile-cta .btn{min-height:48px;padding:0 12px}}
-</style>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"페이지로 콜링크","applicationCategory":"BusinessApplication","operatingSystem":"Android","url":"https://call.pagero.kr/","description":"통화가 끝나면 고객에게 필요한 안내문자를 자동으로 발송하는 Android 전용 서비스"}</script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <meta name="description" content="통화가 끝나면 예약, 위치, 견적, 링크 등 고객에게 필요한 안내문자를 자동으로 보내는 Android 전용 서비스, 페이지로 콜링크입니다.">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="canonical" href="https://call.pagero.kr/">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ko_KR">
+  <meta property="og:title" content="페이지로 콜링크 | 통화 후 안내문자 자동 발송">
+  <meta property="og:description" content="통화가 끝난 뒤 직접 보내던 고객 안내문자를 자동으로 보내세요.">
+  <meta property="og:url" content="https://call.pagero.kr/">
+  <title>페이지로 콜링크 | 통화 후 안내문자 자동 발송</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #111827;
+      --blue: #2563eb;
+      --paper: #ffffff;
+      --soft: #f4f6fa;
+      --line: rgba(17, 24, 39, .11);
+      --sub: #667085;
+      --muted: #98a2b3;
+      font-family: Pretendard, Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      word-break: keep-all;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; }
+    .shell { width: min(1180px, calc(100% - 48px)); margin: 0 auto; }
+    .skip {
+      position: fixed;
+      left: 16px;
+      top: -60px;
+      z-index: 1000;
+      padding: 12px 16px;
+      border-radius: 12px;
+      color: #fff;
+      background: var(--ink);
+      font-weight: 800;
+    }
+    .skip:focus { top: 16px; }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid rgba(17, 24, 39, .07);
+      background: rgba(255, 255, 255, .9);
+      backdrop-filter: blur(18px);
+    }
+    .header-inner {
+      min-height: 76px;
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      flex: 0 0 auto;
+      font-size: 19px;
+      font-weight: 950;
+      letter-spacing: -.04em;
+    }
+    .brand-mark {
+      position: relative;
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      color: #fff;
+      background: var(--ink);
+      font-size: 18px;
+      font-weight: 950;
+    }
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      right: 6px;
+      bottom: 6px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--blue);
+    }
+    .brand small { color: var(--muted); font-size: 11px; font-weight: 850; }
+    .desktop-nav {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-left: 18px;
+      color: #475467;
+      font-size: 14px;
+      font-weight: 780;
+    }
+    .header-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+
+    .btn {
+      min-height: 48px;
+      padding: 0 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 900;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-dark { color: #fff; background: var(--ink); box-shadow: 0 12px 28px rgba(17, 24, 39, .16); }
+    .btn-line { color: var(--ink); background: #fff; border-color: var(--line); }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 112px 0 126px;
+      border-bottom: 1px solid var(--line);
+      background:
+        radial-gradient(circle at 78% 28%, rgba(37, 99, 235, .13), transparent 24%),
+        linear-gradient(180deg, #fff 0%, #f7f9fc 100%);
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.03fr) minmax(390px, .97fr);
+      align-items: center;
+      gap: 76px;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0 0 22px;
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .eyebrow::before {
+      content: "";
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--blue);
+      box-shadow: 0 0 0 6px rgba(37, 99, 235, .11);
+    }
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(48px, 6.2vw, 82px);
+      line-height: 1.02;
+      letter-spacing: -.075em;
+      font-weight: 950;
+    }
+    .hero h1 span { color: var(--blue); }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 40px; }
+    .hero-actions .btn { min-height: 56px; padding: 0 25px; font-size: 16px; }
+    .hero-points {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px 18px;
+      margin: 25px 0 0;
+      padding: 0;
+      list-style: none;
+      color: var(--sub);
+      font-size: 13px;
+      font-weight: 760;
+    }
+    .hero-points li { display: inline-flex; align-items: center; gap: 7px; }
+    .hero-points li::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--ink); }
+
+    .visual-stage { position: relative; min-height: 650px; display: grid; place-items: center; }
+    .visual-ring {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      border: 1px solid rgba(37, 99, 235, .18);
+      border-radius: 50%;
+      animation: ring-breathe 5.5s ease-in-out infinite;
+    }
+    .visual-ring::before,
+    .visual-ring::after {
+      content: "";
+      position: absolute;
+      inset: 48px;
+      border: 1px solid rgba(37, 99, 235, .13);
+      border-radius: inherit;
+    }
+    .visual-ring::after { inset: 105px; }
+
+    .phone {
+      position: relative;
+      z-index: 2;
+      width: 334px;
+      height: 650px;
+      padding: 12px;
+      border-radius: 48px;
+      background: var(--ink);
+      box-shadow: 0 44px 90px rgba(17, 24, 39, .28);
+      transform: rotate(2.2deg);
+      animation: phone-float 5s ease-in-out infinite;
+    }
+    .phone-screen { position: relative; height: 100%; overflow: hidden; border-radius: 38px; background: #f7f8fa; }
+    .phone-top { height: 31px; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; font-size: 11px; font-weight: 850; }
+    .phone-head { padding: 16px 19px 15px; border-bottom: 1px solid rgba(17, 24, 39, .08); background: #fff; }
+    .phone-head small { color: var(--sub); font-size: 11px; font-weight: 800; }
+    .phone-head h2 { margin: 5px 0 0; font-size: 25px; letter-spacing: -.055em; }
+    .phone-body { padding: 17px 16px 92px; }
+    .auto-state { min-height: 68px; display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 18px; color: #fff; background: var(--ink); }
+    .auto-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 13px; background: var(--blue); font-size: 19px; }
+    .auto-state strong { display: block; font-size: 14px; }
+    .auto-state span { display: block; margin-top: 4px; color: rgba(255,255,255,.63); font-size: 10px; }
+    .switch { position: relative; width: 42px; height: 25px; margin-left: auto; border-radius: 20px; background: var(--blue); }
+    .switch::after { content: ""; position: absolute; right: 3px; top: 3px; width: 19px; height: 19px; border-radius: 50%; background: #fff; }
+    .phone-label { margin: 20px 2px 9px; color: var(--sub); font-size: 11px; font-weight: 850; }
+    .message-card { border: 1px solid rgba(17, 24, 39, .09); border-radius: 20px; background: #fff; box-shadow: 0 13px 30px rgba(17, 24, 39, .06); }
+    .message-meta { display: flex; align-items: center; gap: 9px; padding: 13px 14px; border-bottom: 1px solid rgba(17, 24, 39, .07); }
+    .message-avatar { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 11px; color: #fff; background: var(--ink); font-size: 13px; font-weight: 900; }
+    .message-meta strong { display: block; font-size: 12px; }
+    .message-meta small { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; }
+    .message-badge { margin-left: auto; padding: 5px 8px; border-radius: 999px; color: var(--blue); background: rgba(37, 99, 235, .09); font-size: 9px; font-weight: 900; }
+    .message-text { min-height: 174px; padding: 16px; color: #344054; font-size: 11px; line-height: 1.72; white-space: pre-line; }
+    .demo-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 11px; }
+    .demo-tab { min-height: 39px; border: 1px solid rgba(17, 24, 39, .08); border-radius: 11px; color: var(--sub); background: #fff; font-size: 10px; font-weight: 850; cursor: pointer; }
+    .demo-tab.active { border-color: var(--ink); color: #fff; background: var(--ink); }
+    .phone-nav { position: absolute; left: 0; right: 0; bottom: 0; height: 72px; display: grid; grid-template-columns: repeat(4, 1fr); padding: 8px; border-top: 1px solid rgba(17, 24, 39, .08); background: rgba(255,255,255,.94); }
+    .phone-nav div { display: grid; place-items: center; align-content: center; gap: 4px; color: var(--muted); font-size: 8px; font-weight: 850; }
+    .phone-nav div::before { content: ""; width: 17px; height: 17px; border: 2px solid currentColor; border-radius: 6px; }
+    .phone-nav .active { color: var(--ink); }
+    .phone-nav .active::before { background: var(--blue); border-color: var(--blue); }
+    .floating-note { position: absolute; z-index: 4; display: flex; align-items: center; gap: 11px; padding: 14px 16px; border: 1px solid rgba(17, 24, 39, .08); border-radius: 18px; background: rgba(255,255,255,.94); box-shadow: 0 18px 46px rgba(17,24,39,.13); }
+    .floating-note b { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 12px; color: #fff; background: var(--blue); }
+    .floating-note strong { display: block; font-size: 12px; }
+    .floating-note span { display: block; margin-top: 3px; color: var(--sub); font-size: 10px; }
+    .note-a { left: -6px; top: 165px; animation: note-drift-a 4.8s ease-in-out infinite; }
+    .note-b { right: -5px; bottom: 122px; animation: note-drift-b 5.2s ease-in-out infinite; }
+
+    .story-section {
+      min-height: 680px;
+      display: grid;
+      place-items: center;
+      padding: 140px 0;
+      text-align: center;
+      border-bottom: 1px solid var(--line);
+      overflow: hidden;
+    }
+    .story-section.short { min-height: 560px; padding: 120px 0; }
+    .story-section.dark { color: #fff; background: var(--ink); }
+    .story-section.blue { color: #fff; background: var(--blue); }
+    .story-section.soft { background: var(--soft); }
+    .story-kicker { margin: 0 0 20px; color: var(--blue); font-size: 13px; font-weight: 950; }
+    .dark .story-kicker, .blue .story-kicker { color: rgba(255,255,255,.64); }
+    .story-title { max-width: 1000px; margin: 0 auto; font-size: clamp(43px, 6.4vw, 82px); line-height: 1.05; letter-spacing: -.074em; font-weight: 950; }
+    .story-title.medium { font-size: clamp(39px, 5.2vw, 66px); }
+    .story-sub { max-width: 690px; margin: 26px auto 0; color: var(--sub); font-size: clamp(16px, 1.75vw, 20px); line-height: 1.65; font-weight: 730; }
+    .dark .story-sub, .blue .story-sub { color: rgba(255,255,255,.72); }
+    .accent { color: var(--blue); }
+    .dark .accent, .blue .accent { color: #fff; }
+
+    .todo-row, .industry-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 38px; }
+    .pill { padding: 13px 18px; border: 1px solid var(--line); border-radius: 999px; background: #fff; font-size: 14px; font-weight: 900; }
+    .dark .pill, .blue .pill { border-color: rgba(255,255,255,.25); color: #fff; background: rgba(255,255,255,.09); }
+
+    .task-visual {
+      width: min(860px, 100%);
+      margin: 64px auto 0;
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 18px;
+      text-align: left;
+    }
+    .task-panel, .call-panel {
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: #fff;
+      box-shadow: 0 24px 60px rgba(17,24,39,.08);
+    }
+    .task-panel { padding: 28px; }
+    .panel-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .panel-top strong { font-size: 18px; letter-spacing: -.04em; }
+    .panel-top span { color: var(--muted); font-size: 12px; font-weight: 800; }
+    .task-list { display: grid; gap: 11px; }
+    .task-item { display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: 16px; background: var(--soft); font-weight: 850; }
+    .task-item i { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 7px; color: #fff; background: var(--blue); font-size: 11px; font-style: normal; }
+    .call-panel { padding: 30px; display: grid; align-content: center; justify-items: center; text-align: center; background: var(--ink); color: #fff; }
+    .call-avatar { width: 78px; height: 78px; display: grid; place-items: center; border-radius: 50%; background: rgba(255,255,255,.12); font-size: 28px; font-weight: 950; }
+    .call-panel h3 { margin: 18px 0 6px; font-size: 24px; }
+    .call-panel p { margin: 0; color: rgba(255,255,255,.6); font-size: 13px; }
+    .call-end { margin-top: 28px; padding: 12px 22px; border-radius: 999px; background: #ef4444; font-size: 13px; font-weight: 900; }
+
+    .customer-lines { display: grid; gap: 16px; max-width: 760px; margin: 46px auto 0; text-align: left; }
+    .customer-line { padding: 21px 24px; border: 1px solid var(--line); border-radius: 20px; background: #fff; font-size: clamp(17px, 2vw, 22px); font-weight: 880; letter-spacing: -.035em; box-shadow: 0 14px 34px rgba(17,24,39,.05); }
+    .customer-line:nth-child(2) { margin-left: 56px; }
+    .customer-line:nth-child(3) { margin-left: 112px; }
+
+    .chat-phone {
+      width: min(390px, 100%);
+      margin: 64px auto 0;
+      padding: 12px;
+      border-radius: 38px;
+      background: var(--ink);
+      box-shadow: 0 28px 70px rgba(17,24,39,.2);
+    }
+    .chat-screen { overflow: hidden; border-radius: 29px; background: #eef1f6; text-align: left; }
+    .chat-head { padding: 18px 20px; background: #fff; font-weight: 900; border-bottom: 1px solid var(--line); }
+    .chat-body { padding: 24px 18px 30px; display: grid; gap: 14px; }
+    .bubble { max-width: 84%; padding: 14px 16px; border-radius: 18px; font-size: 14px; line-height: 1.55; box-shadow: 0 8px 20px rgba(17,24,39,.05); }
+    .bubble.in { justify-self: start; background: #fff; border-bottom-left-radius: 5px; }
+    .bubble.out { justify-self: end; color: #fff; background: var(--blue); border-bottom-right-radius: 5px; }
+    .bubble small { display: block; margin-top: 8px; opacity: .65; font-size: 10px; }
+
+    .screen-showcase {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 22px;
+      margin-top: 68px;
+      text-align: left;
+    }
+    .mini-screen {
+      min-height: 470px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 30px;
+      background: #fff;
+      box-shadow: 0 24px 60px rgba(0,0,0,.18);
+      color: var(--ink);
+    }
+    .mini-screen:nth-child(2) { transform: translateY(26px); }
+    .mini-screen:nth-child(3) { transform: translateY(52px); }
+    .mini-top { padding: 18px 20px; border-bottom: 1px solid var(--line); background: #fff; }
+    .mini-top small { color: var(--muted); font-size: 11px; font-weight: 800; }
+    .mini-top strong { display: block; margin-top: 5px; font-size: 20px; letter-spacing: -.045em; }
+    .mini-body { padding: 20px; }
+    .template-box { padding: 18px; border-radius: 18px; background: var(--soft); font-size: 13px; line-height: 1.65; }
+    .setting-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+    .setting-row strong { font-size: 14px; }
+    .setting-row span { color: var(--muted); font-size: 11px; }
+    .mini-toggle { width: 44px; height: 26px; position: relative; border-radius: 20px; background: var(--blue); }
+    .mini-toggle::after { content: ""; position: absolute; right: 3px; top: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; }
+    .history-list { display: grid; gap: 10px; }
+    .history-item { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 15px; }
+    .history-dot { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 11px; color: #fff; background: var(--ink); font-size: 11px; font-weight: 900; }
+    .history-item strong { display: block; font-size: 12px; }
+    .history-item small { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; }
+    .history-ok { color: var(--blue); font-size: 10px; font-weight: 900; }
+
+    .flow-grid { display: grid; grid-template-columns: repeat(3, 1fr); max-width: 900px; margin: 50px auto 0; border: 1px solid var(--line); border-radius: 24px; overflow: hidden; background: #fff; }
+    .flow-step { padding: 34px 20px; }
+    .flow-step + .flow-step { border-left: 1px solid var(--line); }
+    .flow-step b { width: 36px; height: 36px; display: grid; place-items: center; margin: 0 auto 15px; border-radius: 50%; color: #fff; background: var(--ink); font-size: 12px; }
+    .flow-step strong { font-size: 18px; letter-spacing: -.04em; }
+
+    .before-after { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--line); }
+    .compare-pane { min-height: 620px; display: grid; place-items: center; padding: 110px 44px; text-align: center; overflow: hidden; }
+    .compare-pane + .compare-pane { border-left: 1px solid var(--line); }
+    .compare-pane:last-child { background: var(--soft); }
+    .compare-label { display: block; margin-bottom: 22px; color: var(--blue); font-size: 13px; font-weight: 950; }
+    .compare-pane h2 { margin: 0; font-size: clamp(40px, 5vw, 64px); line-height: 1.1; letter-spacing: -.07em; font-weight: 950; }
+    .compare-pane p { margin: 24px 0 0; color: var(--sub); font-size: 17px; line-height: 1.7; font-weight: 730; }
+    .compare-device { width: min(330px, 100%); margin: 42px auto 0; padding: 18px; border: 1px solid var(--line); border-radius: 24px; background: #fff; box-shadow: 0 20px 50px rgba(17,24,39,.09); text-align: left; }
+    .compare-device strong { display: block; font-size: 13px; }
+    .compare-device span { display: block; margin-top: 7px; color: var(--muted); font-size: 11px; }
+    .compare-device.done { color: #fff; background: var(--ink); }
+    .compare-device.done span { color: rgba(255,255,255,.6); }
+
+    .benefit-grid { display: grid; grid-template-columns: repeat(4, 1fr); max-width: 1050px; margin: 50px auto 0; border-top: 1px solid rgba(255,255,255,.16); border-bottom: 1px solid rgba(255,255,255,.16); }
+    .benefit { padding: 34px 18px; color: rgba(255,255,255,.82); font-size: 16px; font-weight: 850; }
+    .benefit + .benefit { border-left: 1px solid rgba(255,255,255,.16); }
+    .trust-row { display: grid; grid-template-columns: repeat(3, 1fr); max-width: 920px; margin: 42px auto 0; border-top: 1px solid rgba(255,255,255,.15); }
+    .trust-item { padding: 28px 18px; color: rgba(255,255,255,.78); font-size: 15px; font-weight: 850; }
+    .trust-item + .trust-item { border-left: 1px solid rgba(255,255,255,.15); }
+    .final-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 38px; }
+    .final-actions .btn { min-height: 56px; padding: 0 26px; font-size: 16px; }
+    .blue .final-actions .btn-dark { background: var(--ink); }
+    .blue .final-actions .btn-line { color: #fff; border-color: rgba(255,255,255,.35); background: rgba(255,255,255,.12); }
+
+    .site-footer { padding: 48px 0 100px; }
+    .footer-row { display: flex; align-items: center; justify-content: space-between; gap: 28px; }
+    .footer-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px 20px; color: var(--sub); font-size: 12px; font-weight: 760; }
+    .copyright { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+    .mobile-cta { display: none; }
+
+    .reveal { opacity: 0; transform: translateY(54px); transition: opacity .8s cubic-bezier(.2,.8,.2,1), transform .8s cubic-bezier(.2,.8,.2,1); }
+    .reveal.slide-left { transform: translateX(-64px); }
+    .reveal.slide-right { transform: translateX(64px); }
+    .reveal.scale-in { transform: scale(.92); }
+    .reveal.is-visible { opacity: 1; transform: none; }
+    .stagger > * { opacity: 0; transform: translateY(28px); transition: opacity .65s ease, transform .65s ease; }
+    .is-visible .stagger > * { opacity: 1; transform: none; }
+    .is-visible .stagger > *:nth-child(2) { transition-delay: .1s; }
+    .is-visible .stagger > *:nth-child(3) { transition-delay: .2s; }
+    .is-visible .stagger > *:nth-child(4) { transition-delay: .3s; }
+    .send-pulse { position: relative; }
+    .send-pulse::after { content: ""; position: absolute; inset: -6px; border: 2px solid rgba(37,99,235,.35); border-radius: inherit; opacity: 0; }
+    .is-visible .send-pulse::after { animation: send-pulse 1.8s ease-out .5s 2; }
+
+    @keyframes phone-float { 0%,100% { transform: rotate(2.2deg) translateY(0); } 50% { transform: rotate(1deg) translateY(-12px); } }
+    @keyframes ring-breathe { 0%,100% { transform: scale(.96); opacity: .65; } 50% { transform: scale(1.04); opacity: 1; } }
+    @keyframes note-drift-a { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-8px,-9px); } }
+    @keyframes note-drift-b { 0%,100% { transform: translate(0,0); } 50% { transform: translate(8px,10px); } }
+    @keyframes send-pulse { 0% { transform: scale(.9); opacity: 0; } 35% { opacity: 1; } 100% { transform: scale(1.12); opacity: 0; } }
+
+    @media (max-width: 1020px) {
+      .desktop-nav { display: none; }
+      .hero-grid { grid-template-columns: 1fr; gap: 46px; }
+      .hero-copy { text-align: center; }
+      .hero-actions, .hero-points { justify-content: center; }
+      .visual-stage { min-height: 660px; }
+      .task-visual { grid-template-columns: 1fr; max-width: 660px; }
+      .screen-showcase { grid-template-columns: repeat(2, 1fr); }
+      .mini-screen:nth-child(3) { grid-column: 1 / -1; width: calc(50% - 11px); justify-self: center; transform: none; }
+    }
+
+    @media (max-width: 720px) {
+      .shell { width: min(calc(100% - 32px), 620px); }
+      .site-header { position: relative; }
+      .header-inner { min-height: 66px; }
+      .brand { font-size: 17px; }
+      .brand small { display: none; }
+      .brand-mark { width: 35px; height: 35px; }
+      .header-actions .btn-line { display: none; }
+      .header-actions .btn-dark { min-height: 42px; padding: 0 15px; font-size: 13px; }
+      .hero { padding: 72px 0 92px; }
+      .hero-grid { gap: 36px; }
+      .hero h1 { font-size: clamp(43px, 13.2vw, 64px); }
+      .hero-actions { margin-top: 32px; }
+      .hero-actions .btn { width: 100%; min-height: 54px; }
+      .hero-points { display: grid; grid-template-columns: 1fr; justify-items: start; width: fit-content; margin: 22px auto 0; }
+      .visual-stage { min-height: 590px; transform: scale(.9); transform-origin: top center; margin-bottom: -55px; }
+      .phone { width: 318px; height: 620px; }
+      .visual-ring { width: 430px; height: 430px; }
+      .floating-note { display: none; }
+      .story-section { min-height: 560px; padding: 96px 0; }
+      .story-section.short { min-height: 470px; padding: 86px 0; }
+      .story-title { font-size: 42px; }
+      .story-title.medium { font-size: 37px; }
+      .story-sub { font-size: 16px; }
+      .task-visual { margin-top: 48px; }
+      .task-panel, .call-panel { border-radius: 22px; }
+      .customer-line:nth-child(2), .customer-line:nth-child(3) { margin-left: 0; }
+      .chat-phone { margin-top: 50px; }
+      .screen-showcase { grid-template-columns: 1fr; gap: 18px; margin-top: 50px; }
+      .mini-screen, .mini-screen:nth-child(2), .mini-screen:nth-child(3) { width: 100%; grid-column: auto; min-height: 430px; transform: none; }
+      .flow-grid { grid-template-columns: 1fr; }
+      .flow-step + .flow-step { border-left: 0; border-top: 1px solid var(--line); }
+      .before-after { grid-template-columns: 1fr; }
+      .compare-pane { min-height: 520px; padding: 88px 24px; }
+      .compare-pane + .compare-pane { border-left: 0; border-top: 1px solid var(--line); }
+      .compare-pane h2 { font-size: 42px; }
+      .benefit-grid, .trust-row { grid-template-columns: 1fr; }
+      .benefit + .benefit, .trust-item + .trust-item { border-left: 0; border-top: 1px solid rgba(255,255,255,.16); }
+      .final-actions { display: grid; grid-template-columns: 1fr; }
+      .footer-row { display: block; }
+      .footer-links { justify-content: flex-start; margin-top: 26px; }
+      .site-footer { padding-bottom: 120px; }
+      .mobile-cta {
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        bottom: calc(12px + env(safe-area-inset-bottom));
+        z-index: 90;
+        display: grid;
+        grid-template-columns: 1fr 1.45fr;
+        gap: 8px;
+        padding: 8px;
+        border: 1px solid rgba(17,24,39,.11);
+        border-radius: 20px;
+        background: rgba(255,255,255,.92);
+        box-shadow: 0 18px 45px rgba(17,24,39,.18);
+        backdrop-filter: blur(18px);
+      }
+      .mobile-cta .btn { min-height: 48px; padding: 0 12px; }
+      .reveal.slide-left, .reveal.slide-right { transform: translateY(48px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+      .reveal, .stagger > * { opacity: 1 !important; transform: none !important; }
+    }
+  </style>
+  <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"SoftwareApplication","name":"페이지로 콜링크","applicationCategory":"BusinessApplication","operatingSystem":"Android","url":"https://call.pagero.kr/","description":"통화가 끝나면 고객에게 필요한 안내문자를 자동으로 발송하는 Android 전용 서비스"}
+  </script>
 </head>
 <body>
-<a class="skip" href="#main">본문으로 바로가기</a>
-<header class="site-header"><div class="shell header-inner"><a class="brand" href="/" aria-label="페이지로 콜링크 홈"><span class="brand-mark">P</span><span>페이지로 콜링크</span><small>CALL LINK</small></a><nav class="desktop-nav" aria-label="주요 메뉴"><a href="#why">왜 필요한가</a><a href="#how">사용방법</a><a href="#easy">편해지는 점</a></nav><div class="header-actions"><a class="btn btn-line" href="/preview">앱 미리보기</a><a class="btn btn-dark" href="/login">로그인</a></div></div></header>
-<main id="main">
-<section class="hero"><div class="shell hero-grid"><div class="hero-copy"><p class="eyebrow">통화 후 자동문자 서비스</p><h1>전화를 끊으면,<br><span>안내문자가 갑니다.</span></h1><p class="hero-lead">상담이 끝날 때마다 다시 쓰던 예약 안내, 위치, 견적, 링크 문자를 한 번 설정하고 자동으로 보내세요.</p><div class="hero-actions"><a class="btn btn-dark" href="/signup">무료로 시작하기 <span aria-hidden="true">→</span></a><a class="btn btn-line" href="/preview">앱 화면 미리보기</a></div><ul class="hero-points"><li>Android 전용</li><li>내 휴대폰 문자로 발송</li><li>통화내용 녹음 없음</li></ul></div><div class="visual-stage" aria-label="페이지로 콜링크 앱 화면 예시"><div class="visual-ring"></div><div class="floating-note note-a"><b>1</b><div><strong>통화 종료 감지</strong><span>받은 전화가 끝나면</span></div></div><div class="floating-note note-b"><b>2</b><div><strong>안내문자 자동 발송</strong><span>설정한 문구 그대로</span></div></div><div class="phone"><div class="phone-screen"><div class="phone-top"><span>10:28</span><span>● ▰</span></div><div class="phone-head"><small>페이지로 콜링크</small><h2>메시지 설정</h2></div><div class="phone-body"><div class="auto-state"><div class="auto-icon">↗</div><div><strong id="demoTitle">통화 완료 후 발송</strong><span>자동문자 사용 중</span></div><span class="switch"></span></div><p class="phone-label">고객에게 보이는 메시지</p><div class="message-card"><div class="message-meta"><span class="message-avatar">P</span><div><strong>페이지로</strong><small>문자 메시지</small></div><span class="message-badge" id="demoBadge">통화 완료</span></div><div class="message-text" id="demoMessage">안녕하세요. 오늘 통화해 주셔서 감사합니다.
+  <a class="skip" href="#main">본문으로 바로가기</a>
+
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="brand" href="/" aria-label="페이지로 콜링크 홈">
+        <span class="brand-mark">P</span><span>페이지로 콜링크</span><small>CALL LINK</small>
+      </a>
+      <nav class="desktop-nav" aria-label="주요 메뉴">
+        <a href="#why">왜 필요한가</a><a href="#how">사용방법</a><a href="#easy">편해지는 점</a>
+      </nav>
+      <div class="header-actions"><a class="btn btn-line" href="/preview">앱 미리보기</a><a class="btn btn-dark" href="/login">로그인</a></div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <div class="shell hero-grid">
+        <div class="hero-copy reveal slide-left">
+          <p class="eyebrow">통화 후 자동문자 서비스</p>
+          <h1>전화를 끊으면,<br><span>안내문자가 갑니다.</span></h1>
+          <div class="hero-actions"><a class="btn btn-dark" href="/signup">무료로 시작하기 <span aria-hidden="true">→</span></a><a class="btn btn-line" href="/preview">앱 화면 미리보기</a></div>
+          <ul class="hero-points"><li>Android 전용</li><li>내 휴대폰 문자로 발송</li></ul>
+        </div>
+
+        <div class="visual-stage reveal scale-in" aria-label="페이지로 콜링크 앱 화면 예시">
+          <div class="visual-ring" aria-hidden="true"></div>
+          <div class="floating-note note-a"><b>1</b><div><strong>통화 종료 감지</strong><span>받은 전화가 끝나면</span></div></div>
+          <div class="floating-note note-b"><b>2</b><div><strong>안내문자 자동 발송</strong><span>설정한 문구 그대로</span></div></div>
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="phone-top"><span>10:28</span><span>● ▰</span></div>
+              <div class="phone-head"><small>페이지로 콜링크</small><h2>메시지 설정</h2></div>
+              <div class="phone-body">
+                <div class="auto-state"><div class="auto-icon">↗</div><div><strong id="demoTitle">통화 완료 후 발송</strong><span>자동문자 사용 중</span></div><span class="switch"></span></div>
+                <p class="phone-label">고객에게 보이는 메시지</p>
+                <div class="message-card">
+                  <div class="message-meta"><span class="message-avatar">P</span><div><strong>페이지로</strong><small>문자 메시지</small></div><span class="message-badge" id="demoBadge">통화 완료</span></div>
+                  <div class="message-text" id="demoMessage">안녕하세요. 오늘 통화해 주셔서 감사합니다.
 
 상담 중 말씀드린 내용은 아래 링크에서 다시 확인하실 수 있습니다.
 
-궁금한 점이 있으면 이 문자에 그대로 답장해 주세요.</div></div><div class="demo-tabs"><button class="demo-tab active" data-demo="answered">통화 완료</button><button class="demo-tab" data-demo="missed">부재중</button><button class="demo-tab" data-demo="outgoing">발신 통화</button></div></div><div class="phone-nav"><div>홈</div><div class="active">메시지</div><div>발송내역</div><div>전체</div></div></div></div></div></div></section>
-<section class="story-section" id="why"><div class="shell"><p class="story-kicker">통화가 끝난 뒤</p><h2 class="story-title">전화는 끝났는데,<br><span class="accent">또 할 일이 남습니다.</span></h2><div class="todo-row"><span class="pill">주소 보내기</span><span class="pill">예약시간 보내기</span><span class="pill">상품 링크 보내기</span><span class="pill">견적 보내기</span></div></div></section>
-<section class="story-section dark short"><div class="shell"><p class="story-kicker">바쁜 순간</p><h2 class="story-title medium">다른 전화가 오는 순간,<br>방금 보낼 문자는 밀립니다.</h2><p class="story-sub">깜빡한 한 통이 고객에게는 기다리던 안내일 수 있습니다.</p></div></section>
-<section class="story-section soft"><div class="shell"><p class="story-kicker">고객이 다시 묻는 말</p><h2 class="story-title medium">통화할 때 들었어도,<br>결국 문자를 다시 찾습니다.</h2><div class="customer-lines"><div class="customer-line">“아까 말씀하신 주소가 어디였죠?”</div><div class="customer-line">“예약시간이 몇 시였죠?”</div><div class="customer-line">“상품 링크 다시 보내주세요.”</div></div></div></section>
-<section class="story-section blue"><div class="shell"><p class="story-kicker">페이지로 콜링크란?</p><h2 class="story-title">통화가 끝나면<br>필요한 문자를 보내는 서비스.</h2><p class="story-sub">문구는 한 번만 설정하세요. 그다음부터는 평소처럼 통화하면 됩니다.</p></div></section>
-<section class="story-section short"><div class="shell"><p class="story-kicker">왜 필요한가</p><h2 class="story-title medium">고객은 문자를 보고<br><span class="accent">다음 행동을 합니다.</span></h2><p class="story-sub">위치를 찾고, 예약을 확인하고, 상품과 견적을 다시 봅니다.</p></div></section>
-<section class="story-section dark"><div class="shell"><p class="story-kicker">실제로 이렇게 보냅니다</p><h2 class="story-title medium">말로 끝난 상담을<br>고객 손에 남겨주세요.</h2><div class="message-examples"><article class="example"><span class="example-label">예약 안내</span><p>오늘 상담 감사합니다.<br><br>예약일은 8월 3일 오후 2시입니다. 위치와 주차 안내를 확인해주세요.</p></article><article class="example"><span class="example-label">견적·상품 안내</span><p>통화 중 안내드린 견적과 상품 내용을 보내드립니다.<br><br>궁금한 점은 편하게 답장해주세요.</p></article><article class="example"><span class="example-label">부재중 안내</span><p>방금 전화를 주셨는데 통화하지 못했습니다.<br><br>문의 내용을 남겨주시면 확인 후 연락드리겠습니다.</p></article></div></div></section>
-<section class="story-section" id="how"><div class="shell"><p class="story-kicker">사용방법</p><h2 class="story-title medium">문자를 만들고,<br>자동발송을 켜면 끝.</h2><div class="flow-grid"><div class="flow-step"><b>1</b><strong>문자 작성</strong></div><div class="flow-step"><b>2</b><strong>평소처럼 통화</strong></div><div class="flow-step"><b>3</b><strong>자동 발송</strong></div></div></div></section>
-<section class="before-after" id="easy"><div class="compare-pane"><div><span class="compare-label">사용 전</span><h2>“문자<br>보냈던가?”</h2><p>번호 찾기 · 문구 복사 · 링크 찾기 · 발송 확인</p></div></div><div class="compare-pane"><div><span class="compare-label">사용 후</span><h2>통화 종료.<br><span class="accent">발송 완료.</span></h2><p>고객과 통화하는 일에만 집중하세요.</p></div></div></section>
-<section class="story-section dark short"><div class="shell"><p class="story-kicker">쓰면 편해지는 것</p><h2 class="story-title medium">반복은 줄고,<br>고객 안내는 빠지지 않습니다.</h2><div class="benefit-grid"><div class="benefit">매번 다시 쓰지 않기</div><div class="benefit">깜빡하지 않기</div><div class="benefit">같은 내용으로 안내</div><div class="benefit">발송내역 확인</div></div></div></section>
-<section class="story-section soft short"><div class="shell"><p class="story-kicker">누구에게 필요한가</p><h2 class="story-title medium">통화 후 보내는 문자가 있다면,<br><span class="accent">이미 필요한 서비스입니다.</span></h2><div class="industry-row"><span class="pill">병원</span><span class="pill">미용실</span><span class="pill">부동산</span><span class="pill">보험</span><span class="pill">자동차</span><span class="pill">학원</span><span class="pill">법무</span><span class="pill">쇼핑몰</span><span class="pill">예약매장</span></div></div></section>
-<section class="story-section dark short"><div class="shell"><p class="story-kicker">안심하고 사용</p><h2 class="story-title medium">통화내용을 듣거나<br>녹음하지 않습니다.</h2><div class="trust-row"><div class="trust-item">내 휴대폰 번호로 발송</div><div class="trust-item">필요한 Android 권한만 사용</div><div class="trust-item">권한은 직접 관리</div></div></div></section>
-<section class="story-section blue"><div class="shell"><p class="story-kicker">다음 통화부터</p><h2 class="story-title">안내문자를<br>직접 보내지 마세요.</h2><p class="story-sub">통화 뒤에 남는 반복 업무는 콜링크가 이어서 처리합니다.</p><div class="final-actions"><a class="btn btn-dark" href="/signup">무료로 시작하기</a><a class="btn btn-line" href="/preview">앱 화면 먼저 보기</a></div></div></section>
-</main>
-<footer class="site-footer"><div class="shell"><div class="footer-row"><a class="brand" href="/"><span class="brand-mark">P</span><span>페이지로 콜링크</span></a><nav class="footer-links"><a href="/login">로그인</a><a href="/signup">회원가입</a><a href="/preview">미리보기</a><a href="/privacy">개인정보처리방침</a><a href="/terms">이용약관</a><a href="mailto:admin@pagero.kr">문의</a></nav></div><div class="copyright">© 2026 Pagero · Android 전용</div></div></footer>
-<div class="mobile-cta"><a class="btn btn-line" href="/preview">미리보기</a><a class="btn btn-dark" href="/signup">무료로 시작하기</a></div>
-<script>
-const demoData={answered:{title:'통화 완료 후 발송',badge:'통화 완료',message:'안녕하세요. 오늘 통화해 주셔서 감사합니다.\n\n상담 중 말씀드린 내용은 아래 링크에서 다시 확인하실 수 있습니다.\n\n궁금한 점이 있으면 이 문자에 그대로 답장해 주세요.'},missed:{title:'부재중·거절 후 발송',badge:'부재중',message:'안녕하세요. 방금 전화를 주셨는데 통화하지 못해 문자드립니다.\n\n문의 내용을 남겨주시면 확인 후 가능한 시간에 다시 연락드리겠습니다.'},outgoing:{title:'발신 통화 후 발송',badge:'발신 통화',message:'안녕하세요. 남겨주신 문의와 관련해 방금 연락드렸습니다.\n\n통화 가능한 날짜와 시간을 문자로 남겨주시면 다시 연락드리겠습니다.'}};
-const title=document.getElementById('demoTitle'),badge=document.getElementById('demoBadge'),message=document.getElementById('demoMessage'),tabs=[...document.querySelectorAll('.demo-tab')];tabs.forEach(tab=>tab.addEventListener('click',()=>{const data=demoData[tab.dataset.demo];if(!data)return;tabs.forEach(item=>item.classList.toggle('active',item===tab));title.textContent=data.title;badge.textContent=data.badge;message.textContent=data.message}));
-</script>
+궁금한 점이 있으면 이 문자에 그대로 답장해 주세요.</div>
+                </div>
+                <div class="demo-tabs"><button class="demo-tab active" type="button" data-demo="answered">통화 완료</button><button class="demo-tab" type="button" data-demo="missed">부재중</button><button class="demo-tab" type="button" data-demo="outgoing">발신 통화</button></div>
+              </div>
+              <div class="phone-nav"><div>홈</div><div class="active">메시지</div><div>발송내역</div><div>전체</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="story-section" id="why">
+      <div class="shell reveal">
+        <p class="story-kicker">통화가 끝난 뒤</p>
+        <h2 class="story-title">전화는 끝났는데,<br><span class="accent">또 할 일이 남습니다.</span></h2>
+        <div class="todo-row stagger"><span class="pill">주소 보내기</span><span class="pill">예약시간 보내기</span><span class="pill">상품 링크 보내기</span><span class="pill">견적 보내기</span></div>
+        <div class="task-visual">
+          <div class="task-panel reveal slide-left">
+            <div class="panel-top"><strong>통화 후 할 일</strong><span>방금 전 고객</span></div>
+            <div class="task-list stagger"><div class="task-item"><i>1</i>주소 문자 보내기</div><div class="task-item"><i>2</i>예약시간 다시 안내하기</div><div class="task-item"><i>3</i>견적 링크 찾아 보내기</div></div>
+          </div>
+          <div class="call-panel reveal slide-right"><div class="call-avatar">김</div><h3>다음 고객 전화</h3><p>새로운 통화가 시작되었습니다.</p><div class="call-end">통화 중</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="story-section dark short">
+      <div class="shell reveal scale-in">
+        <p class="story-kicker">바쁜 순간</p>
+        <h2 class="story-title medium">다른 전화가 오는 순간,<br>방금 보낼 문자는 밀립니다.</h2>
+        <p class="story-sub">깜빡한 한 통이 고객에게는 기다리던 안내일 수 있습니다.</p>
+      </div>
+    </section>
+
+    <section class="story-section soft">
+      <div class="shell reveal">
+        <p class="story-kicker">고객이 다시 묻는 말</p>
+        <h2 class="story-title medium">통화할 때 들었어도,<br>결국 문자를 다시 찾습니다.</h2>
+        <div class="customer-lines stagger"><div class="customer-line">“아까 말씀하신 주소가 어디였죠?”</div><div class="customer-line">“예약시간이 몇 시였죠?”</div><div class="customer-line">“상품 링크 다시 보내주세요.”</div></div>
+      </div>
+    </section>
+
+    <section class="story-section blue">
+      <div class="shell reveal">
+        <p class="story-kicker">페이지로 콜링크란?</p>
+        <h2 class="story-title">통화가 끝나면<br>필요한 문자를 보내는 서비스.</h2>
+        <p class="story-sub">문구는 한 번만 설정하세요. 그다음부터는 평소처럼 통화하면 됩니다.</p>
+        <div class="chat-phone reveal scale-in send-pulse">
+          <div class="chat-screen"><div class="chat-head">페이지로 고객 안내</div><div class="chat-body"><div class="bubble in">안녕하세요. 아까 상담한 고객입니다.<small>오후 2:18</small></div><div class="bubble out">오늘 상담 감사합니다. 예약시간과 위치를 보내드립니다.<small>자동 발송 · 오후 2:18</small></div><div class="bubble in">확인했습니다. 감사합니다!<small>오후 2:19</small></div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="story-section short">
+      <div class="shell reveal slide-right">
+        <p class="story-kicker">왜 필요한가</p>
+        <h2 class="story-title medium">고객은 문자를 보고<br><span class="accent">다음 행동을 합니다.</span></h2>
+        <p class="story-sub">위치를 찾고, 예약을 확인하고, 상품과 견적을 다시 봅니다.</p>
+      </div>
+    </section>
+
+    <section class="story-section dark">
+      <div class="shell reveal">
+        <p class="story-kicker">실제 화면</p>
+        <h2 class="story-title medium">설정하고, 켜고,<br>발송내역까지 확인.</h2>
+        <div class="screen-showcase stagger">
+          <article class="mini-screen">
+            <div class="mini-top"><small>01 · 문자 작성</small><strong>예약 안내문자</strong></div>
+            <div class="mini-body"><div class="template-box">오늘 상담 감사합니다.<br><br>예약일은 8월 3일 오후 2시입니다. 아래에서 위치와 주차 안내를 확인해주세요.</div><div class="setting-row"><div><strong>링크 추가</strong><span>지도·예약·상품 주소</span></div><b>＋</b></div><div class="setting-row"><div><strong>사진 추가</strong><span>안내 이미지 첨부</span></div><b>＋</b></div></div>
+          </article>
+          <article class="mini-screen">
+            <div class="mini-top"><small>02 · 자동발송</small><strong>상황별 설정</strong></div>
+            <div class="mini-body"><div class="setting-row"><div><strong>통화 완료</strong><span>받은 전화 종료 후</span></div><i class="mini-toggle"></i></div><div class="setting-row"><div><strong>부재중</strong><span>받지 못한 전화</span></div><i class="mini-toggle"></i></div><div class="setting-row"><div><strong>발신 통화</strong><span>내가 건 전화 종료 후</span></div><i class="mini-toggle"></i></div></div>
+          </article>
+          <article class="mini-screen">
+            <div class="mini-top"><small>03 · 발송 확인</small><strong>오늘 발송내역</strong></div>
+            <div class="mini-body"><div class="history-list"><div class="history-item"><span class="history-dot">김</span><div><strong>010-12**-34**</strong><small>예약 안내 · 오후 2:18</small></div><span class="history-ok">발송완료</span></div><div class="history-item"><span class="history-dot">이</span><div><strong>010-56**-78**</strong><small>부재중 안내 · 오후 1:42</small></div><span class="history-ok">발송완료</span></div><div class="history-item"><span class="history-dot">박</span><div><strong>010-90**-12**</strong><small>견적 안내 · 오전 11:06</small></div><span class="history-ok">발송완료</span></div></div></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="story-section" id="how">
+      <div class="shell reveal">
+        <p class="story-kicker">사용방법</p>
+        <h2 class="story-title medium">문자를 만들고,<br>자동발송을 켜면 끝.</h2>
+        <div class="flow-grid stagger"><div class="flow-step"><b>1</b><strong>문자 작성</strong></div><div class="flow-step"><b>2</b><strong>평소처럼 통화</strong></div><div class="flow-step"><b>3</b><strong>자동 발송</strong></div></div>
+      </div>
+    </section>
+
+    <section class="before-after" id="easy">
+      <div class="compare-pane reveal slide-left"><div><span class="compare-label">사용 전</span><h2>“문자<br>보냈던가?”</h2><p>번호 찾기 · 문구 복사 · 링크 찾기 · 발송 확인</p><div class="compare-device"><strong>할 일 4개 남음</strong><span>주소 · 예약시간 · 견적 · 링크</span></div></div></div>
+      <div class="compare-pane reveal slide-right"><div><span class="compare-label">사용 후</span><h2>통화 종료.<br><span class="accent">발송 완료.</span></h2><p>고객과 통화하는 일에만 집중하세요.</p><div class="compare-device done send-pulse"><strong>안내문자 발송 완료</strong><span>오후 2:18 · 고객 확인 가능</span></div></div></div>
+    </section>
+
+    <section class="story-section dark short">
+      <div class="shell reveal scale-in">
+        <p class="story-kicker">쓰면 편해지는 것</p>
+        <h2 class="story-title medium">반복은 줄고,<br>고객 안내는 빠지지 않습니다.</h2>
+        <div class="benefit-grid stagger"><div class="benefit">매번 다시 쓰지 않기</div><div class="benefit">깜빡하지 않기</div><div class="benefit">같은 내용으로 안내</div><div class="benefit">발송내역 확인</div></div>
+      </div>
+    </section>
+
+    <section class="story-section soft short">
+      <div class="shell reveal">
+        <p class="story-kicker">누구에게 필요한가</p>
+        <h2 class="story-title medium">통화 후 보내는 문자가 있다면,<br><span class="accent">이미 필요한 서비스입니다.</span></h2>
+        <div class="industry-row stagger"><span class="pill">병원</span><span class="pill">미용실</span><span class="pill">부동산</span><span class="pill">보험</span><span class="pill">자동차</span><span class="pill">학원</span><span class="pill">법무</span><span class="pill">쇼핑몰</span><span class="pill">예약매장</span></div>
+      </div>
+    </section>
+
+    <section class="story-section dark short">
+      <div class="shell reveal slide-left">
+        <p class="story-kicker">안심하고 사용</p>
+        <h2 class="story-title medium">통화내용을 듣거나<br>녹음하지 않습니다.</h2>
+        <div class="trust-row stagger"><div class="trust-item">내 휴대폰 번호로 발송</div><div class="trust-item">필요한 Android 권한만 사용</div><div class="trust-item">권한은 직접 관리</div></div>
+      </div>
+    </section>
+
+    <section class="story-section blue">
+      <div class="shell reveal scale-in">
+        <p class="story-kicker">다음 통화부터</p>
+        <h2 class="story-title">안내문자를<br>직접 보내지 마세요.</h2>
+        <p class="story-sub">통화 뒤에 남는 반복 업무는 콜링크가 이어서 처리합니다.</p>
+        <div class="final-actions"><a class="btn btn-dark" href="/signup">무료로 시작하기</a><a class="btn btn-line" href="/preview">앱 화면 먼저 보기</a></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell"><div class="footer-row"><a class="brand" href="/"><span class="brand-mark">P</span><span>페이지로 콜링크</span></a><nav class="footer-links"><a href="/login">로그인</a><a href="/signup">회원가입</a><a href="/preview">미리보기</a><a href="/privacy">개인정보처리방침</a><a href="/terms">이용약관</a><a href="mailto:admin@pagero.kr">문의</a></nav></div><div class="copyright">© 2026 Pagero · Android 전용</div></div>
+  </footer>
+
+  <div class="mobile-cta"><a class="btn btn-line" href="/preview">미리보기</a><a class="btn btn-dark" href="/signup">무료로 시작하기</a></div>
+
+  <script>
+    const demoData = {
+      answered: { title: '통화 완료 후 발송', badge: '통화 완료', message: '안녕하세요. 오늘 통화해 주셔서 감사합니다.\n\n상담 중 말씀드린 내용은 아래 링크에서 다시 확인하실 수 있습니다.\n\n궁금한 점이 있으면 이 문자에 그대로 답장해 주세요.' },
+      missed: { title: '부재중·거절 후 발송', badge: '부재중', message: '안녕하세요. 방금 전화를 주셨는데 통화하지 못해 문자드립니다.\n\n문의 내용을 남겨주시면 확인 후 가능한 시간에 다시 연락드리겠습니다.' },
+      outgoing: { title: '발신 통화 후 발송', badge: '발신 통화', message: '안녕하세요. 남겨주신 문의와 관련해 방금 연락드렸습니다.\n\n통화 가능한 날짜와 시간을 문자로 남겨주시면 다시 연락드리겠습니다.' }
+    };
+    const title = document.getElementById('demoTitle');
+    const badge = document.getElementById('demoBadge');
+    const message = document.getElementById('demoMessage');
+    const tabs = [...document.querySelectorAll('.demo-tab')];
+    tabs.forEach((tab) => tab.addEventListener('click', () => {
+      const data = demoData[tab.dataset.demo];
+      if (!data) return;
+      tabs.forEach((item) => item.classList.toggle('active', item === tab));
+      title.textContent = data.title;
+      badge.textContent = data.badge;
+      message.textContent = data.message;
+    }));
+
+    const revealItems = [...document.querySelectorAll('.reveal')];
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        });
+      }, { threshold: .14, rootMargin: '0px 0px -8% 0px' });
+      revealItems.forEach((item) => observer.observe(item));
+    } else {
+      revealItems.forEach((item) => item.classList.add('is-visible'));
+    }
+  </script>
 </body>
 </html>
