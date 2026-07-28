@@ -1,0 +1,1069 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <meta name="description" content="통화가 끝나면 설정한 고객 안내문자를 자동으로 발송하는 Android 전용 서비스, 페이지로 콜링크입니다.">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="canonical" href="https://call.pagero.kr/">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ko_KR">
+  <meta property="og:title" content="페이지로 콜링크 | 통화 후 안내문자 자동 발송">
+  <meta property="og:description" content="전화를 끊을 때마다 반복해서 보내던 안내문자, 이제 자동으로 보내세요.">
+  <meta property="og:url" content="https://call.pagero.kr/">
+  <title>페이지로 콜링크 | 통화 후 안내문자 자동 발송</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #111827;
+      --blue: #2563eb;
+      --paper: #ffffff;
+      --soft: #f3f5f9;
+      --soft-2: #e9edf4;
+      --line: rgba(17, 24, 39, .11);
+      --sub: #667085;
+      --muted: #98a2b3;
+      font-family: Pretendard, Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      word-break: keep-all;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; }
+    img, svg { display: block; }
+
+    .skip {
+      position: fixed;
+      left: 16px;
+      top: -60px;
+      z-index: 1000;
+      padding: 12px 16px;
+      border-radius: 12px;
+      background: var(--ink);
+      color: #fff;
+      font-weight: 800;
+    }
+    .skip:focus { top: 16px; }
+
+    .shell {
+      width: min(1180px, calc(100% - 48px));
+      margin: 0 auto;
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid rgba(17, 24, 39, .07);
+      background: rgba(255, 255, 255, .88);
+      backdrop-filter: blur(18px);
+    }
+    .header-inner {
+      min-height: 76px;
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      flex: 0 0 auto;
+      font-size: 19px;
+      font-weight: 950;
+      letter-spacing: -.04em;
+    }
+    .brand-mark {
+      position: relative;
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: var(--ink);
+      color: #fff;
+      font-size: 18px;
+      font-weight: 950;
+    }
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      right: 6px;
+      bottom: 6px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--blue);
+    }
+    .brand small {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+      letter-spacing: 0;
+    }
+    .desktop-nav {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-left: 18px;
+      color: #475467;
+      font-size: 14px;
+      font-weight: 780;
+    }
+    .desktop-nav a:hover { color: var(--ink); }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+    }
+
+    .btn {
+      min-height: 48px;
+      padding: 0 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 900;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-dark {
+      color: #fff;
+      background: var(--ink);
+      box-shadow: 0 12px 28px rgba(17, 24, 39, .16);
+    }
+    .btn-dark:hover { box-shadow: 0 16px 36px rgba(17, 24, 39, .22); }
+    .btn-line {
+      color: var(--ink);
+      background: #fff;
+      border-color: var(--line);
+    }
+    .btn-blue {
+      color: #fff;
+      background: var(--blue);
+      box-shadow: 0 12px 30px rgba(37, 99, 235, .25);
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 94px 0 104px;
+      background:
+        radial-gradient(circle at 78% 28%, rgba(37, 99, 235, .13), transparent 24%),
+        linear-gradient(180deg, #fff 0%, #f7f9fc 100%);
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 1px;
+      background: var(--line);
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.03fr) minmax(390px, .97fr);
+      align-items: center;
+      gap: 68px;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0 0 22px;
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: -.01em;
+    }
+    .eyebrow::before {
+      content: "";
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--blue);
+      box-shadow: 0 0 0 6px rgba(37, 99, 235, .11);
+    }
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(48px, 6.2vw, 82px);
+      line-height: 1.02;
+      letter-spacing: -.075em;
+      font-weight: 950;
+    }
+    .hero h1 span { color: var(--blue); }
+    .hero-lead {
+      max-width: 580px;
+      margin: 28px 0 0;
+      color: #475467;
+      font-size: clamp(17px, 1.7vw, 21px);
+      line-height: 1.72;
+      letter-spacing: -.025em;
+    }
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 34px;
+    }
+    .hero-actions .btn { min-height: 56px; padding: 0 25px; font-size: 16px; }
+    .hero-points {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px 18px;
+      margin: 27px 0 0;
+      padding: 0;
+      list-style: none;
+      color: var(--sub);
+      font-size: 13px;
+      font-weight: 760;
+    }
+    .hero-points li {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .hero-points li::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--ink);
+    }
+
+    .visual-stage {
+      position: relative;
+      min-height: 650px;
+      display: grid;
+      place-items: center;
+    }
+    .visual-ring {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      border: 1px solid rgba(37, 99, 235, .18);
+      border-radius: 50%;
+    }
+    .visual-ring::before,
+    .visual-ring::after {
+      content: "";
+      position: absolute;
+      inset: 48px;
+      border: 1px solid rgba(37, 99, 235, .13);
+      border-radius: inherit;
+    }
+    .visual-ring::after { inset: 105px; }
+
+    .phone {
+      position: relative;
+      z-index: 2;
+      width: 334px;
+      height: 650px;
+      padding: 12px;
+      border-radius: 48px;
+      background: var(--ink);
+      box-shadow: 0 44px 90px rgba(17, 24, 39, .28);
+      transform: rotate(2.2deg);
+    }
+    .phone-screen {
+      position: relative;
+      height: 100%;
+      overflow: hidden;
+      border-radius: 38px;
+      background: #f7f8fa;
+    }
+    .phone-top {
+      height: 31px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+      color: var(--ink);
+      font-size: 11px;
+      font-weight: 850;
+    }
+    .phone-sensors { display: flex; gap: 5px; align-items: center; }
+    .phone-sensors i { display: block; border-radius: 3px; background: var(--ink); }
+    .phone-sensors i:nth-child(1) { width: 13px; height: 7px; }
+    .phone-sensors i:nth-child(2) { width: 8px; height: 8px; border-radius: 50%; }
+    .phone-sensors i:nth-child(3) { width: 16px; height: 8px; }
+    .phone-head {
+      padding: 16px 19px 15px;
+      border-bottom: 1px solid rgba(17, 24, 39, .08);
+      background: #fff;
+    }
+    .phone-head small { color: var(--sub); font-size: 11px; font-weight: 800; }
+    .phone-head h2 {
+      margin: 5px 0 0;
+      font-size: 25px;
+      letter-spacing: -.055em;
+    }
+    .phone-body { padding: 17px 16px 92px; }
+    .auto-state {
+      min-height: 68px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 18px;
+      color: #fff;
+      background: var(--ink);
+    }
+    .auto-icon {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 13px;
+      background: var(--blue);
+      font-size: 19px;
+    }
+    .auto-state strong { display: block; font-size: 14px; }
+    .auto-state span { display: block; margin-top: 4px; color: rgba(255,255,255,.63); font-size: 10px; }
+    .switch {
+      position: relative;
+      width: 42px;
+      height: 25px;
+      flex: 0 0 auto;
+      margin-left: auto;
+      border-radius: 20px;
+      background: var(--blue);
+    }
+    .switch::after {
+      content: "";
+      position: absolute;
+      right: 3px;
+      top: 3px;
+      width: 19px;
+      height: 19px;
+      border-radius: 50%;
+      background: #fff;
+    }
+    .phone-label {
+      margin: 20px 2px 9px;
+      color: var(--sub);
+      font-size: 11px;
+      font-weight: 850;
+    }
+    .message-card {
+      border: 1px solid rgba(17, 24, 39, .09);
+      border-radius: 20px;
+      background: #fff;
+      box-shadow: 0 13px 30px rgba(17, 24, 39, .06);
+    }
+    .message-meta {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 13px 14px;
+      border-bottom: 1px solid rgba(17, 24, 39, .07);
+    }
+    .message-avatar {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 11px;
+      color: #fff;
+      background: var(--ink);
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .message-meta strong { display: block; font-size: 12px; }
+    .message-meta span { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; }
+    .message-badge {
+      margin-left: auto;
+      padding: 5px 8px;
+      border-radius: 999px;
+      color: var(--blue);
+      background: rgba(37, 99, 235, .09);
+      font-size: 9px;
+      font-weight: 900;
+    }
+    .message-text {
+      min-height: 174px;
+      padding: 16px;
+      color: #344054;
+      font-size: 11px;
+      line-height: 1.72;
+      white-space: pre-line;
+    }
+    .demo-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-top: 11px;
+    }
+    .demo-tab {
+      min-height: 39px;
+      border: 1px solid rgba(17, 24, 39, .08);
+      border-radius: 11px;
+      color: var(--sub);
+      background: #fff;
+      font-size: 10px;
+      font-weight: 850;
+      cursor: pointer;
+    }
+    .demo-tab.active {
+      border-color: var(--ink);
+      color: #fff;
+      background: var(--ink);
+    }
+    .phone-nav {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 72px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 8px 8px 7px;
+      border-top: 1px solid rgba(17, 24, 39, .08);
+      background: rgba(255,255,255,.94);
+      backdrop-filter: blur(15px);
+    }
+    .phone-nav div {
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 4px;
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 850;
+    }
+    .phone-nav div::before {
+      content: "";
+      width: 17px;
+      height: 17px;
+      border: 2px solid currentColor;
+      border-radius: 6px;
+    }
+    .phone-nav .active { color: var(--ink); }
+    .phone-nav .active::before { background: var(--blue); border-color: var(--blue); }
+
+    .floating-note {
+      position: absolute;
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 14px 16px;
+      border: 1px solid rgba(17, 24, 39, .08);
+      border-radius: 18px;
+      background: rgba(255,255,255,.94);
+      box-shadow: 0 18px 46px rgba(17, 24, 39, .13);
+      backdrop-filter: blur(14px);
+    }
+    .floating-note b {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      color: #fff;
+      background: var(--blue);
+    }
+    .floating-note strong { display: block; font-size: 12px; }
+    .floating-note span { display: block; margin-top: 3px; color: var(--sub); font-size: 10px; }
+    .note-a { left: -6px; top: 165px; }
+    .note-b { right: -5px; bottom: 122px; }
+
+    .section { padding: 112px 0; }
+    .section-soft { background: var(--soft); }
+    .section-dark { color: #fff; background: var(--ink); }
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 36px;
+      margin-bottom: 56px;
+    }
+    .section-kicker {
+      margin: 0 0 14px;
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .section h2 {
+      margin: 0;
+      font-size: clamp(38px, 4.5vw, 62px);
+      line-height: 1.08;
+      letter-spacing: -.065em;
+      font-weight: 950;
+    }
+    .section-head > p {
+      max-width: 430px;
+      margin: 0;
+      color: var(--sub);
+      font-size: 16px;
+      line-height: 1.75;
+    }
+    .section-dark .section-head > p { color: rgba(255,255,255,.62); }
+
+    .flow-line {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+    .flow-item {
+      position: relative;
+      min-height: 276px;
+      padding: 34px 30px 32px 0;
+    }
+    .flow-item + .flow-item {
+      padding-left: 34px;
+      border-left: 1px solid var(--line);
+    }
+    .flow-num {
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 950;
+    }
+    .flow-item h3 {
+      margin: 72px 0 13px;
+      font-size: 25px;
+      letter-spacing: -.045em;
+    }
+    .flow-item p {
+      margin: 0;
+      color: var(--sub);
+      font-size: 15px;
+      line-height: 1.68;
+    }
+
+    .feature-split {
+      display: grid;
+      grid-template-columns: .88fr 1.12fr;
+      gap: 72px;
+      align-items: start;
+    }
+    .feature-sticky {
+      position: sticky;
+      top: 122px;
+    }
+    .feature-sticky p {
+      max-width: 410px;
+      margin: 22px 0 0;
+      color: var(--sub);
+      font-size: 17px;
+      line-height: 1.78;
+    }
+    .feature-list { border-top: 1px solid var(--line); }
+    .feature-row {
+      display: grid;
+      grid-template-columns: 56px minmax(0, 1fr) 28px;
+      align-items: start;
+      gap: 18px;
+      padding: 29px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: 16px;
+      color: #fff;
+      background: var(--ink);
+      font-size: 20px;
+    }
+    .feature-row h3 {
+      margin: 1px 0 8px;
+      font-size: 20px;
+      letter-spacing: -.04em;
+    }
+    .feature-row p {
+      margin: 0;
+      color: var(--sub);
+      font-size: 14px;
+      line-height: 1.66;
+    }
+    .feature-arrow {
+      color: var(--blue);
+      font-size: 25px;
+      line-height: 1;
+    }
+
+    .use-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .use-item {
+      min-height: 210px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: #fff;
+      transition: transform .18s ease, border-color .18s ease;
+    }
+    .use-item:hover { transform: translateY(-4px); border-color: rgba(37, 99, 235, .45); }
+    .use-item b {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      color: #fff;
+      background: var(--blue);
+      font-size: 13px;
+    }
+    .use-item h3 { margin: 30px 0 8px; font-size: 19px; letter-spacing: -.04em; }
+    .use-item p { margin: 0; color: var(--sub); font-size: 13px; line-height: 1.58; }
+
+    .trust-grid {
+      display: grid;
+      grid-template-columns: 1.08fr .92fr;
+      gap: 74px;
+      align-items: center;
+    }
+    .trust-copy h2 { max-width: 650px; }
+    .trust-copy > p {
+      max-width: 620px;
+      margin: 24px 0 0;
+      color: rgba(255,255,255,.63);
+      font-size: 17px;
+      line-height: 1.75;
+    }
+    .trust-list { border-top: 1px solid rgba(255,255,255,.14); }
+    .trust-item {
+      display: grid;
+      grid-template-columns: 38px 1fr;
+      gap: 17px;
+      padding: 23px 0;
+      border-bottom: 1px solid rgba(255,255,255,.14);
+    }
+    .trust-item b {
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: var(--ink);
+      background: #fff;
+      font-size: 13px;
+    }
+    .trust-item strong { display: block; font-size: 17px; }
+    .trust-item span { display: block; margin-top: 7px; color: rgba(255,255,255,.57); font-size: 13px; line-height: 1.55; }
+
+    .start-panel {
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 40px;
+      padding: 64px;
+      border-radius: 36px;
+      color: #fff;
+      background: var(--blue);
+    }
+    .start-panel::before {
+      content: "";
+      position: absolute;
+      width: 420px;
+      height: 420px;
+      right: -180px;
+      top: -210px;
+      border: 1px solid rgba(255,255,255,.24);
+      border-radius: 50%;
+      box-shadow: 0 0 0 70px rgba(255,255,255,.04), 0 0 0 140px rgba(255,255,255,.03);
+    }
+    .start-panel > * { position: relative; z-index: 1; }
+    .start-panel h2 {
+      max-width: 720px;
+      font-size: clamp(38px, 4.6vw, 62px);
+    }
+    .start-panel p {
+      margin: 18px 0 0;
+      color: rgba(255,255,255,.76);
+      font-size: 16px;
+      line-height: 1.65;
+    }
+    .start-actions { display: flex; gap: 9px; flex-wrap: wrap; justify-content: flex-end; }
+    .start-actions .btn { min-height: 54px; }
+    .start-actions .btn-dark { background: var(--ink); }
+    .start-actions .btn-line { border-color: rgba(255,255,255,.34); color: #fff; background: rgba(255,255,255,.11); }
+
+    .site-footer {
+      padding: 54px 0 96px;
+      border-top: 1px solid var(--line);
+      background: #fff;
+    }
+    .footer-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 30px;
+    }
+    .footer-copy { max-width: 420px; }
+    .footer-copy p { margin: 14px 0 0; color: var(--sub); font-size: 13px; line-height: 1.65; }
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 10px 22px;
+      color: var(--sub);
+      font-size: 13px;
+      font-weight: 760;
+    }
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      margin-top: 42px;
+      padding-top: 22px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .mobile-cta { display: none; }
+
+    @media (max-width: 1020px) {
+      .desktop-nav { display: none; }
+      .hero { padding-top: 72px; }
+      .hero-grid { grid-template-columns: 1fr; gap: 38px; }
+      .hero-copy { text-align: center; }
+      .hero-lead { margin-left: auto; margin-right: auto; }
+      .hero-actions, .hero-points { justify-content: center; }
+      .visual-stage { min-height: 660px; }
+      .note-a { left: calc(50% - 245px); }
+      .note-b { right: calc(50% - 250px); }
+      .feature-split, .trust-grid { grid-template-columns: 1fr; gap: 44px; }
+      .feature-sticky { position: static; }
+      .use-grid { grid-template-columns: repeat(2, 1fr); }
+      .start-panel { grid-template-columns: 1fr; padding: 52px; }
+      .start-actions { justify-content: flex-start; }
+    }
+
+    @media (max-width: 720px) {
+      .shell { width: min(100% - 32px, 620px); }
+      .site-header { position: relative; }
+      .header-inner { min-height: 66px; }
+      .brand { font-size: 17px; }
+      .brand small { display: none; }
+      .brand-mark { width: 35px; height: 35px; border-radius: 11px; }
+      .header-actions .btn-line { display: none; }
+      .header-actions .btn-dark { min-height: 42px; padding: 0 15px; font-size: 13px; }
+      .hero { padding: 58px 0 74px; }
+      .hero-grid { gap: 28px; }
+      .hero h1 { font-size: clamp(43px, 13.2vw, 64px); }
+      .hero-lead { margin-top: 21px; font-size: 16px; line-height: 1.65; }
+      .hero-actions { margin-top: 27px; }
+      .hero-actions .btn { width: 100%; min-height: 54px; }
+      .hero-points { display: grid; grid-template-columns: 1fr; justify-items: start; width: fit-content; margin: 22px auto 0; }
+      .visual-stage { min-height: 590px; transform: scale(.9); transform-origin: top center; margin-bottom: -55px; }
+      .phone { width: 318px; height: 620px; }
+      .visual-ring { width: 430px; height: 430px; }
+      .floating-note { display: none; }
+      .section { padding: 82px 0; }
+      .section-head { display: block; margin-bottom: 38px; }
+      .section-head > p { margin-top: 18px; }
+      .section h2 { font-size: 38px; }
+      .flow-line { grid-template-columns: 1fr; }
+      .flow-item { min-height: 0; padding: 28px 0 30px; }
+      .flow-item + .flow-item { padding-left: 0; border-left: 0; border-top: 1px solid var(--line); }
+      .flow-item h3 { margin-top: 35px; }
+      .feature-row { grid-template-columns: 48px minmax(0, 1fr); gap: 13px; }
+      .feature-arrow { display: none; }
+      .use-grid { grid-template-columns: 1fr; }
+      .use-item { min-height: 180px; }
+      .start-panel { padding: 38px 26px; border-radius: 28px; }
+      .start-actions { display: grid; grid-template-columns: 1fr; }
+      .footer-top, .footer-bottom { display: block; }
+      .footer-links { justify-content: flex-start; margin-top: 27px; }
+      .footer-bottom span { display: block; margin-top: 7px; }
+      .site-footer { padding-bottom: 120px; }
+      .mobile-cta {
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        bottom: calc(12px + env(safe-area-inset-bottom));
+        z-index: 90;
+        display: grid;
+        grid-template-columns: 1fr 1.45fr;
+        gap: 8px;
+        padding: 8px;
+        border: 1px solid rgba(17,24,39,.11);
+        border-radius: 20px;
+        background: rgba(255,255,255,.92);
+        box-shadow: 0 18px 45px rgba(17,24,39,.18);
+        backdrop-filter: blur(18px);
+      }
+      .mobile-cta .btn { min-height: 48px; padding: 0 12px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition: none !important; }
+    }
+  </style>
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "페이지로 콜링크",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Android",
+      "url": "https://call.pagero.kr/",
+      "description": "통화가 끝나면 설정한 고객 안내문자를 자동으로 발송하는 Android 전용 서비스"
+    }
+  </script>
+</head>
+<body>
+  <a class="skip" href="#main">본문으로 바로가기</a>
+
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="brand" href="/" aria-label="페이지로 콜링크 홈">
+        <span class="brand-mark">P</span>
+        <span>페이지로 콜링크</span>
+        <small>CALL LINK</small>
+      </a>
+      <nav class="desktop-nav" aria-label="주요 메뉴">
+        <a href="#how">사용방법</a>
+        <a href="#features">주요기능</a>
+        <a href="#business">활용업종</a>
+        <a href="#safety">안전안내</a>
+      </nav>
+      <div class="header-actions">
+        <a class="btn btn-line" href="/preview">앱 미리보기</a>
+        <a class="btn btn-dark" href="/login">로그인</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <div class="shell hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">통화 후 자동문자 서비스</p>
+          <h1>전화를 끊으면,<br><span>안내문자가 갑니다.</span></h1>
+          <p class="hero-lead">상담이 끝날 때마다 다시 쓰던 예약 안내, 위치, 견적, 링크 문자를 한 번 설정하고 자동으로 보내세요.</p>
+          <div class="hero-actions">
+            <a class="btn btn-dark" href="/signup">무료로 시작하기 <span aria-hidden="true">→</span></a>
+            <a class="btn btn-line" href="/preview">앱 화면 미리보기</a>
+          </div>
+          <ul class="hero-points" aria-label="서비스 특징">
+            <li>Android 전용</li>
+            <li>내 휴대폰 문자로 발송</li>
+            <li>통화내용 녹음 없음</li>
+          </ul>
+        </div>
+
+        <div class="visual-stage" aria-label="페이지로 콜링크 앱 화면 예시">
+          <div class="visual-ring" aria-hidden="true"></div>
+          <div class="floating-note note-a" aria-hidden="true">
+            <b>1</b>
+            <div><strong>통화 종료 감지</strong><span>받은 전화가 끝나면</span></div>
+          </div>
+          <div class="floating-note note-b" aria-hidden="true">
+            <b>2</b>
+            <div><strong>안내문자 자동 발송</strong><span>설정한 문구 그대로</span></div>
+          </div>
+
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="phone-top"><span>10:28</span><span class="phone-sensors"><i></i><i></i><i></i></span></div>
+              <div class="phone-head"><small>페이지로 콜링크</small><h2>메시지 설정</h2></div>
+              <div class="phone-body">
+                <div class="auto-state">
+                  <div class="auto-icon">↗</div>
+                  <div><strong id="demoTitle">통화 완료 후 발송</strong><span>자동문자 사용 중</span></div>
+                  <span class="switch" aria-hidden="true"></span>
+                </div>
+                <p class="phone-label">고객에게 보이는 메시지</p>
+                <div class="message-card">
+                  <div class="message-meta">
+                    <span class="message-avatar">P</span>
+                    <div><strong>페이지로</strong><span>문자 메시지</span></div>
+                    <span class="message-badge" id="demoBadge">통화 완료</span>
+                  </div>
+                  <div class="message-text" id="demoMessage">안녕하세요. 오늘 통화해 주셔서 감사합니다.
+
+상담 중 말씀드린 내용은 아래 링크에서 다시 확인하실 수 있습니다.
+
+궁금한 점이 있으면 이 문자에 그대로 답장해 주세요.</div>
+                </div>
+                <div class="demo-tabs" role="tablist" aria-label="상황별 문자 예시">
+                  <button class="demo-tab active" type="button" data-demo="answered" role="tab" aria-selected="true">통화 완료</button>
+                  <button class="demo-tab" type="button" data-demo="missed" role="tab" aria-selected="false">부재중</button>
+                  <button class="demo-tab" type="button" data-demo="outgoing" role="tab" aria-selected="false">발신 통화</button>
+                </div>
+              </div>
+              <div class="phone-nav" aria-hidden="true"><div>홈</div><div class="active">메시지</div><div>발송내역</div><div>전체</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="how">
+      <div class="shell">
+        <div class="section-head">
+          <div><p class="section-kicker">사용방법</p><h2>설정은 한 번,<br>발송은 자동으로.</h2></div>
+          <p>복잡한 자동화 도구를 연결하지 않아도 됩니다. 안내문자를 작성하고 기능을 켜두면 통화 뒤 반복 업무가 줄어듭니다.</p>
+        </div>
+        <div class="flow-line">
+          <article class="flow-item"><span class="flow-num">01</span><h3>안내문자를 작성합니다</h3><p>통화 완료, 부재중, 발신 통화 상황에 맞춰 보낼 문구를 각각 설정합니다.</p></article>
+          <article class="flow-item"><span class="flow-num">02</span><h3>평소처럼 통화합니다</h3><p>삼성전화, T전화 등 기존에 사용하던 전화 앱을 그대로 이용합니다.</p></article>
+          <article class="flow-item"><span class="flow-num">03</span><h3>문자가 자동으로 갑니다</h3><p>통화가 끝나면 설정한 안내문자가 고객에게 발송되고 기록이 남습니다.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-soft" id="features">
+      <div class="shell feature-split">
+        <div class="feature-sticky">
+          <p class="section-kicker">주요기능</p>
+          <h2>전화 뒤에 필요한 일만 남겼습니다.</h2>
+          <p>기능을 복잡하게 늘리기보다 실제 상담 현장에서 반복되는 문자 작성과 고객 확인을 빠르게 처리하도록 구성했습니다.</p>
+        </div>
+        <div class="feature-list">
+          <article class="feature-row"><div class="feature-icon">↗</div><div><h3>상황별 자동문자</h3><p>통화 완료, 부재중·거절, 발신 통화에 서로 다른 안내문자를 설정할 수 있습니다.</p></div><span class="feature-arrow">→</span></article>
+          <article class="feature-row"><div class="feature-icon">T</div><div><h3>템플릿 또는 자유 작성</h3><p>처음에는 준비된 문구로 시작하고, 필요한 경우 우리 매장에 맞게 직접 작성합니다.</p></div><span class="feature-arrow">→</span></article>
+          <article class="feature-row"><div class="feature-icon">＋</div><div><h3>연락처에서 고객 선택</h3><p>번호를 다시 입력하지 않고 휴대폰 연락처에서 고객을 불러와 관리할 수 있습니다.</p></div><span class="feature-arrow">→</span></article>
+          <article class="feature-row"><div class="feature-icon">◷</div><div><h3>발송내역 확인</h3><p>누구에게 어떤 문자가 발송됐는지 성공·실패 기록을 확인할 수 있습니다.</p></div><span class="feature-arrow">→</span></article>
+          <article class="feature-row"><div class="feature-icon">⌁</div><div><h3>중복발송과 시간 제한</h3><p>같은 고객에게 반복 발송되는 것을 막고, 문자를 보낼 시간대를 지정할 수 있습니다.</p></div><span class="feature-arrow">→</span></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="business">
+      <div class="shell">
+        <div class="section-head">
+          <div><p class="section-kicker">활용업종</p><h2>통화 뒤 안내가 필요한 곳이라면.</h2></div>
+          <p>예약, 위치, 견적, 상담자료처럼 통화 후 다시 전달해야 하는 정보가 있는 업종에서 바로 활용할 수 있습니다.</p>
+        </div>
+        <div class="use-grid">
+          <article class="use-item"><b>01</b><div><h3>병원·의원</h3><p>예약일, 위치, 준비사항 안내</p></div></article>
+          <article class="use-item"><b>02</b><div><h3>미용·예약 매장</h3><p>예약 확인, 주차, 방문 전 안내</p></div></article>
+          <article class="use-item"><b>03</b><div><h3>부동산</h3><p>매물 링크, 주소, 방문 일정 전달</p></div></article>
+          <article class="use-item"><b>04</b><div><h3>보험·법무</h3><p>상담자료, 필요서류, 담당자 안내</p></div></article>
+          <article class="use-item"><b>05</b><div><h3>자동차 영업</h3><p>견적, 차량정보, 방문 예약 전달</p></div></article>
+          <article class="use-item"><b>06</b><div><h3>쇼핑몰 상담</h3><p>상품 링크, 주문, 교환 절차 안내</p></div></article>
+          <article class="use-item"><b>07</b><div><h3>학원·교육</h3><p>수업 일정, 위치, 준비물 전달</p></div></article>
+          <article class="use-item"><b>08</b><div><h3>출장 서비스</h3><p>방문시간, 담당자, 이용방법 안내</p></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-dark" id="safety">
+      <div class="shell trust-grid">
+        <div class="trust-copy">
+          <p class="section-kicker">권한과 개인정보</p>
+          <h2>필요한 기능만 사용하고, 통화내용은 다루지 않습니다.</h2>
+          <p>콜링크는 통화 종료를 확인하고 설정한 문자를 보내기 위해 필요한 Android 권한을 사용합니다. 자동문자는 사용 중인 휴대폰의 기본 문자 회선으로 발송됩니다.</p>
+        </div>
+        <div class="trust-list">
+          <div class="trust-item"><b>1</b><div><strong>통화내용을 녹음하지 않습니다</strong><span>통화 상태와 발송에 필요한 최근 기록만 확인합니다.</span></div></div>
+          <div class="trust-item"><b>2</b><div><strong>주소록 전체를 임의 업로드하지 않습니다</strong><span>고객을 추가할 때 사용자가 선택한 연락처만 이용합니다.</span></div></div>
+          <div class="trust-item"><b>3</b><div><strong>권한은 언제든 해제할 수 있습니다</strong><span>Android 앱 설정에서 전화·통화기록·문자 권한을 직접 관리합니다.</span></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="shell">
+        <div class="start-panel">
+          <div>
+            <h2>전화 후 반복되는 안내문자, 이제 직접 보내지 마세요.</h2>
+            <p>회원가입 후 앱 화면과 사용방법을 확인할 수 있습니다. 현재 Android 휴대폰에서 이용할 수 있습니다.</p>
+          </div>
+          <div class="start-actions">
+            <a class="btn btn-dark" href="/signup">회원가입</a>
+            <a class="btn btn-line" href="/preview">미리보기</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell">
+      <div class="footer-top">
+        <div class="footer-copy">
+          <a class="brand" href="/"><span class="brand-mark">P</span><span>페이지로 콜링크</span></a>
+          <p>통화가 끝난 뒤 고객 안내문자를 놓치지 않도록 돕는 Android 전용 자동문자 서비스입니다.</p>
+        </div>
+        <nav class="footer-links" aria-label="하단 메뉴">
+          <a href="/login">로그인</a>
+          <a href="/signup">회원가입</a>
+          <a href="/preview">앱 미리보기</a>
+          <a href="/privacy">개인정보처리방침</a>
+          <a href="/terms">이용약관</a>
+          <a href="mailto:admin@pagero.kr">문의</a>
+        </nav>
+      </div>
+      <div class="footer-bottom"><span>© 2026 Pagero. All rights reserved.</span><span>Android 전용 · 문자 요금은 사용 중인 통신사 요금제에 따릅니다.</span></div>
+    </div>
+  </footer>
+
+  <div class="mobile-cta" aria-label="빠른 실행">
+    <a class="btn btn-line" href="/preview">미리보기</a>
+    <a class="btn btn-dark" href="/signup">무료로 시작하기</a>
+  </div>
+
+  <script>
+    const demoData = {
+      answered: {
+        title: '통화 완료 후 발송',
+        badge: '통화 완료',
+        message: '안녕하세요. 오늘 통화해 주셔서 감사합니다.\n\n상담 중 말씀드린 내용은 아래 링크에서 다시 확인하실 수 있습니다.\n\n궁금한 점이 있으면 이 문자에 그대로 답장해 주세요.'
+      },
+      missed: {
+        title: '부재중·거절 후 발송',
+        badge: '부재중',
+        message: '안녕하세요. 방금 전화를 주셨는데 통화하지 못해 문자드립니다.\n\n문의 내용을 남겨주시면 확인 후 가능한 시간에 다시 연락드리겠습니다.'
+      },
+      outgoing: {
+        title: '발신 통화 후 발송',
+        badge: '발신 통화',
+        message: '안녕하세요. 남겨주신 문의와 관련해 방금 연락드렸습니다.\n\n통화 가능한 날짜와 시간을 문자로 남겨주시면 다시 연락드리겠습니다.'
+      }
+    };
+
+    const title = document.getElementById('demoTitle');
+    const badge = document.getElementById('demoBadge');
+    const message = document.getElementById('demoMessage');
+    const tabs = [...document.querySelectorAll('.demo-tab')];
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        const data = demoData[tab.dataset.demo];
+        if (!data) return;
+        tabs.forEach((item) => {
+          const active = item === tab;
+          item.classList.toggle('active', active);
+          item.setAttribute('aria-selected', String(active));
+        });
+        title.textContent = data.title;
+        badge.textContent = data.badge;
+        message.textContent = data.message;
+      });
+    });
+  </script>
+</body>
+</html>
