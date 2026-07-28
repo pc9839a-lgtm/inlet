@@ -12,12 +12,14 @@
       if (location.hostname !== 'call.pagero.kr' || location.pathname.startsWith('/api/')) return;
       const clean = location.pathname.replace(/\/+$/, '') || '/';
       const routes = {
-        '/': '/call/index.html',
+        '/': '/call/home/index.html',
+        '/home': '/call/home/index.html',
         '/login': '/call/index.html',
         '/signup': '/call/index.html',
         '/privacy': '/call/privacy/index.html',
         '/terms': '/call/terms/index.html',
         '/subscribe': '/call/subscribe/index.html',
+        '/preview': '/call/preview/index.html',
       };
       const target = routes[clean];
       if (target && location.pathname !== target) {
