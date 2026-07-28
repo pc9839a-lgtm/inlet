@@ -17,7 +17,7 @@ function hasSpecificMapQuery(map = {}) {
   const address = compactAddress(map);
   const place = String(map.placeName || map.title || '').trim();
   if (address) return true;
-  return !!place && !['오시는 길', '지도', '지도 정보', '위치'].includes(place);
+  return !!place && !['오시는 길', '지도', '지도 정보', '위치', '장소명을 입력해 주세요'].includes(place);
 }
 
 function googleMapSrc(map = {}) {
@@ -32,47 +32,69 @@ function googleMapSrc(map = {}) {
   return `https://maps.google.com/maps?${params.toString()}`;
 }
 
-function mapOpenUrl(map = {}) {
-  const query = mapQuery(map);
-  if (!query) return 'https://www.google.com/maps';
-  if (map.mapMode === 'osm_fallback') {
-    return `https://www.openstreetmap.org/search?query=${encodeURIComponent(query)}`;
-  }
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
-}
-
 export function RenderMap({ block }) {
   const s = block.s || {};
   const layout = pickSafe(s.layout || 'default', ['default', 'full', 'minimal'], 'default');
   const height = pickSafe(s.height || 'medium', ['small', 'medium', 'large'], 'medium');
+  const align = pickSafe(s.align || 'left', ['left', 'center', 'right'], 'left');
   const src = s.mapMode === 'osm_fallback' ? '' : googleMapSrc(s);
-  const openUrl = mapOpenUrl(s);
   const address = compactAddress(s);
-  const hasQuery = !!mapQuery(s);
+  const query = mapQuery(s);
+  const hasQuery = !!query;
   const specificQuery = hasSpecificMapQuery(s);
+  const showEmbedMap = s.showEmbedMap !== false;
+  const showMapLinks = s.showMapLinks !== false && specificQuery;
+  const safeMapUrl = (value, fallback) => {
+    const url = String(value || '').trim();
+    return /^(https?:\/\/|tmap:\/\/)/i.test(url) ? url : fallback;
+  };
+  const encodedQuery = encodeURIComponent(query);
+  const mapLinks = [
+    { id: 'tmap', label: '티맵', href: safeMapUrl(s.tmapUrl, `tmap://search?name=${encodedQuery}`) },
+    { id: 'naver', label: '네이버 지도', href: safeMapUrl(s.naverMapUrl, `https://map.naver.com/p/search/${encodedQuery}`) },
+    { id: 'kakao', label: '카카오맵', href: safeMapUrl(s.kakaoMapUrl, `https://map.kakao.com/link/search/${encodedQuery}`) },
+  ];
+  const transitRows = [
+    { id: 'subway', title: '지하철 이용 시', body: s.subwayText, visible: s.showSubway !== false },
+    { id: 'bus', title: '버스 이용 시', body: s.busText, visible: s.showBus !== false },
+    { id: 'parking', title: '주차 안내', body: s.parkingText, visible: s.showParking !== false },
+  ].filter((item) => item.visible && String(item.body || '').trim());
 
   return (
     <section
       id={`block-${block.id}`}
-      className={`landing-section inlet-map-section map-widget map-${layout} map-height-${height} ${widgetBoxClass(s, { background: false, shadow: false })}`}
-      style={widgetBoxVars(s)}
+      className={`landing-section inlet-map-section map-widget location-guide map-${layout} map-height-${height} ${widgetBoxClass(s, { background: false, shadow: false })}`}
+      style={{ ...widgetBoxVars(s), '--map-align': align, '--map-justify': align === 'left' ? 'start' : align === 'right' ? 'end' : 'center' }}
     >
-      {(s.title || s.placeName || address || s.phone || s.parkingText) && (
-        <div className="map-widget-head">
-          {(s.title || s.placeName) && <h2>{rich(s.title || s.placeName)}</h2>}
+      <header className="location-guide-heading">
+        {s.eyebrow && <span>{s.eyebrow}</span>}
+        <h2>{rich(s.sectionTitle || '오시는 길')}</h2>
+      </header>
+
+      {(s.placeName || address || s.phone) && (
+        <div className="location-guide-place">
+          {s.placeName && <strong>{rich(s.placeName)}</strong>}
           {address && <p>{address}</p>}
-          {s.phone && <p>{s.phone}</p>}
-          {s.parkingText && <p>{s.parkingText}</p>}
+          {s.phone && <a href={`tel:${String(s.phone).replace(/[^\d+]/g, '')}`}>{s.phone}</a>}
         </div>
       )}
 
-      {src ? (
+      {showMapLinks && (
+        <nav className="location-guide-actions" aria-label="지도 앱에서 장소 열기">
+          {mapLinks.map((item) => (
+            <a key={item.id} className={`map-provider-${item.id}`} href={item.href} target="_blank" rel="noreferrer">
+              {item.label}
+            </a>
+          ))}
+        </nav>
+      )}
+
+      {showEmbedMap && (src ? (
         <iframe
           title={s.placeName || s.title || '지도'}
           src={src}
           width="100%"
           height="380"
-          style={{ border: 0, borderRadius: 20, overflow: 'hidden' }}
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
           allowFullScreen
@@ -80,14 +102,19 @@ export function RenderMap({ block }) {
       ) : (
         <div className="map-placeholder">
           <strong>{s.placeName || s.title || '지도 정보'}</strong>
-          <span>{hasQuery ? '지도 미리보기가 제한될 수 있어 새 창에서 확인할 수 있습니다.' : '장소명 또는 주소를 입력해주세요.'}</span>
+          <span>{hasQuery ? '지도 미리보기가 제한되어 지도 앱에서 확인할 수 있습니다.' : '장소명 또는 주소를 입력해 주세요.'}</span>
         </div>
-      )}
+      ))}
 
-      {hasQuery && (
-        <a className="map-open-link" href={openUrl} target="_blank" rel="noreferrer">
-          {specificQuery ? '지도 새창으로 보기' : '장소명을 더 구체적으로 입력하기'}
-        </a>
+      {!!transitRows.length && (
+        <div className="location-guide-transit">
+          {transitRows.map((item) => (
+            <section key={item.id} className={`location-guide-transit-${item.id}`}>
+              <h3>{item.title}</h3>
+              <p>{item.body}</p>
+            </section>
+          ))}
+        </div>
       )}
     </section>
   );

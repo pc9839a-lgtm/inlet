@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { pickSafe, widgetBoxClass, widgetBoxVars } from './previewUtils.jsx';
 
 const TIMER_URGENCY_LABELS = {
-  normal: '진행 중',
+  normal: '',
   six: '6시간 이내',
   three: '3시간 이내',
   two: '2시간 이내',
@@ -82,6 +82,7 @@ export function RenderTimer({ block, go }) {
   const effect = pickSafe(s.urgentStyle || 'flip', ['flip', 'line', 'flow', 'none'], 'flip');
   const showProgress = effect !== 'none';
   const showDays = Number(t.d) > 0;
+  const urgencyLabel = TIMER_URGENCY_LABELS[urgency] || '';
 
   return (
     <section
@@ -91,7 +92,7 @@ export function RenderTimer({ block, go }) {
     >
       <div className="timer-headline">
         <span>{s.label || '혜택 마감까지'}</span>
-        <em>{TIMER_URGENCY_LABELS[urgency] || '진행 중'}</em>
+        {urgencyLabel ? <em>{urgencyLabel}</em> : null}
       </div>
 
       {t.done ? (

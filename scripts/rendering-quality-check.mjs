@@ -6,6 +6,7 @@ function assert(condition, message) {
 
 const previewCssFiles = [
   'src/styles/base-components.css',
+  'src/styles/base-components-image.css',
   'src/styles/preview-core.css',
   'src/styles/preview-forms.css',
   'src/styles/preview-forms-visibility.css',
@@ -88,6 +89,8 @@ const files = {
   codeEditor: await readFile('src/editor/blockEditors/CodeEditor.jsx', 'utf8'),
   searchDisplay: await readFile('src/editor/blockEditors/SearchDisplaySection.jsx', 'utf8'),
   info: await readFile('src/preview/renderers/InfoBlocks.jsx', 'utf8'),
+  mapEditor: await readFile('src/editor/blockEditors/MapEditor.jsx', 'utf8'),
+  mapTransit: await readFile('src/editor/blockEditors/MapTransitSection.jsx', 'utf8'),
   link: await readFile('src/preview/renderers/LinkBlocks.jsx', 'utf8'),
   media: await readFile('src/preview/renderers/MediaBlocks.jsx', 'utf8'),
   signal: await readFile('src/preview/renderers/SignalBlocks.jsx', 'utf8'),
@@ -163,6 +166,12 @@ assert(files.landing.includes('public-bottom-bar'), 'public bottom bar should ha
 assert(!files.layout.includes('top-menu-set-copy') && !files.layout.includes('aria-hidden={duplicate'), 'topnav renderer should not render duplicated loop menu items');
 assert(files.layout.includes('function topNavLogoTextColor') && files.layout.includes("if (logoStyle === 'badge')"), 'badge topnav logo text should use contrast-safe color logic');
 assert(files.layout.includes("savedText === logoColor") && files.layout.includes("isDarkHex(logoColor)"), 'badge topnav logo text should repair stale same-color values');
+
+assert(files.mapEditor.includes("label: '교통'") && files.mapEditor.includes('MapTransitSection'), 'map editor must expose a dedicated transit tab');
+assert(files.mapTransit.includes('showSubway') && files.mapTransit.includes('showBus') && files.mapTransit.includes('showParking') && files.mapTransit.includes('naverMapUrl'), 'map transit editor must expose selectable transit details and provider URLs');
+assert(files.info.includes('location-guide-actions') && files.info.includes("id: 'tmap'") && files.info.includes('location-guide-transit'), 'map renderer must expose provider actions and transit sections');
+assert(files.pageModel.includes("placeName: '서울역'") && files.pageModel.includes("showEmbedMap: true") && files.pageModel.includes("mapMode: 'google_embed'"), 'new map blocks must default to the Seoul Station Google map example');
+assert(files.previewCss.includes('.location-guide-actions') && files.previewCss.includes('.location-guide-transit'), 'location guide presentation styles must be bundled');
 
 const rendererContracts = [
   [files.content, 'export function RenderHero', 'landing-section hero'],
@@ -278,6 +287,8 @@ for (const [label, ok] of visualGeometryContracts) {
 
 const viewportContracts = [
   ['desktop phone frame is bounded', files.previewCss.includes('.phone-frame') && /width:\s*4[0-9]{2}px/.test(files.previewCss) && /height:\s*7[0-9]{2}px/.test(files.previewCss)],
+  ['editor phone frame exposes an exact 414px content canvas', /width:\s*430px\s*!important/.test(files.editorWorkspaceCss) && /border:\s*8px\s+solid[^;]*!important/.test(files.editorWorkspaceCss)],
+  ['public landing uses the same exact 414px content canvas', files.previewCss.includes('.public-landing-viewport') && /width:\s*min\(414px,\s*100vw\)/.test(files.previewCss) && /max-width:\s*414px/.test(files.previewCss)],
   ['preview root scrolls inside frame', files.previewCss.includes('.phone-frame .landing-page') && /overflow:\s*auto/.test(files.previewCss)],
   ['preview top link is ellipsized', files.previewCss.includes('.preview-link') && files.previewCss.includes('text-overflow: ellipsis')],
   ['mobile navigation protects horizontal overflow', files.previewCss.includes('.top-menu') && /overflow-x:\s*auto/.test(files.previewCss)],
@@ -287,6 +298,25 @@ const viewportContracts = [
 
 for (const [label, ok] of viewportContracts) {
   assert(ok, `viewport/browser smoke contract failed: ${label}`);
+}
+
+const styleConsumerContracts = [
+  ['hero alignment and typography', files.widgetStyles.includes('set({ align: value })') && files.widgetStyles.includes('set({ titleSize: value })') && files.widgetStyles.includes('set({ bodySize: value })') && files.content.includes('align-${align} title-${titleSize} body-${bodySize}')],
+  ['text layout, size, and alignment', files.widgetStyles.includes("set({ layout: value })") && files.widgetStyles.includes("set({ size: value })") && files.content.includes('text-${layout} align-${align} text-size-${size}')],
+  ['card layout, tone, columns, and alignment', files.widgetStyles.includes('set({ columns: Number(value) })') && files.content.includes('cards-${layout} cards-${tone} cards-cols-${columns} align-${align}')],
+  ['link and download layout and alignment', files.link.includes('links-${layout} align-${align}') && files.link.includes('download-${layout} align-${align}')],
+  ['schedule alignment and accent color', files.info.includes('schedule-align-${align}') && files.info.includes("'--schedule-accent': s.highlightColor") && files.previewCss.includes('var(--schedule-accent)')],
+  ['timer theme and movement', files.widgetStyles.includes('set({ timerTheme: value })') && files.widgetStyles.includes("urgentStyle: value ? 'flow' : 'none'") && files.signal.includes('timer-theme-${theme} timer-effect-${effect}')],
+  ['activity theme and movement', files.widgetStyles.includes('set({ style: value })') && files.widgetStyles.includes("animation: value ? 'stack' : 'none'") && files.signal.includes('activity-${style}') && files.signal.includes('activity-anim-${anim}')],
+  ['map layout, height, and alignment', files.widgetStyles.includes('MapStylePanel') && files.info.includes('map-${layout} map-height-${height}') && files.previewCss.includes('.map-height-small iframe') && files.previewCss.includes('.map-height-large iframe')],
+  ['top navigation visual controls', files.widgetStyles.includes('set({ logoSize: value })') && files.widgetStyles.includes('set({ menuStyle: value })') && files.widgetStyles.includes('set({ sticky: value })') && files.layout.includes('topnav-${bg} topnav-align-${align}')],
+  ['footer alignment and background', files.widgetStyles.includes('FooterStylePanel') && files.layout.includes('landing-footer footer-${bg} align-${align}')],
+  ['bottom bar shape and color mode', files.widgetStyles.includes('BottomBarStylePanel') && files.widgetStyles.includes("buttonColorMode: value ? 'custom' : 'theme'") && files.landing.includes("s.buttonColorMode === 'custom'")],
+  ['image grid count and navigation', files.imageGallery.includes('galleryGridCount') && files.media.includes('gallery.slice(0, gridCount)') && files.media.includes('galleryShowArrows') && files.media.includes('galleryShowDots')],
+];
+
+for (const [label, ok] of styleConsumerContracts) {
+  assert(ok, `style consumer contract failed: ${label}`);
 }
 
 const mobileRules = (files.previewCss.match(/@media\s*\(max-width:\s*(760|820|900)px\)/g) || []).length;
@@ -332,10 +362,10 @@ assert(files.formEditor.includes("label: '제출'") && files.formSubmission.incl
 assert(files.form.includes("'--form-button': themeButtonColor(s)") && files.form.includes("'--form-button-hover': themeButtonHoverColor(s)") && files.previewCss.includes('.form-button-hover-fill') && files.previewCss.includes('.form-input-underline'), 'form design controls should map button colors, hover effects, and input styles into preview contracts');
 assert(files.form.includes('form-align-${textAlign} align-${textAlign}') && files.previewCss.includes('.reservation-v2.form-button-hover-zoom') && files.previewCss.includes('color: var(--form-button-text, #fff)'), 'reservation styles should preserve shared alignment and custom hover color contracts');
 assert(files.imageDisplay.includes("value: 'original'") && files.imageDisplay.includes("value: 'fill'") && files.imageDisplay.includes('rounded'), 'image editor should expose original, fill, and rounded display controls');
-assert(files.imageGallery.includes('galleryShowArrows') && files.imageGallery.includes('galleryShowDots') && files.imageGallery.includes('interval'), 'gallery editor should expose navigation and autoplay timing controls');
+assert(files.imageGallery.includes("value: 'grid'") && files.imageGallery.includes('galleryGridCount') && files.imageGallery.includes("value: '2'") && files.imageGallery.includes("value: '4'") && files.imageGallery.includes('galleryShowArrows') && files.imageGallery.includes('galleryShowDots') && files.imageGallery.includes('interval'), 'gallery editor should expose grid 2/4 count plus slide navigation and autoplay timing controls');
 assert(!files.imageGallery.includes('description='), 'gallery style controls should stay concise without redundant helper copy');
-assert(files.media.includes('image-${display}') && files.media.includes('galleryShowArrows') && files.media.includes('galleryShowDots') && files.media.includes("'--block-margin'"), 'image renderer should consume display, gallery navigation, and spacing settings');
-assert(files.previewCss.includes('.image-sec .image-wrap.image-original img') && files.previewCss.includes('.image-sec .image-wrap.image-fill img') && files.previewCss.includes('.gallery-arrows') && files.previewCss.includes('.dots'), 'image and gallery CSS should consume renderer display and navigation classes');
+assert(files.media.includes('image-${display}') && files.media.includes('gallery.slice(0, gridCount)') && files.media.includes('image-gallery-grid-${visibleGallery.length}') && files.media.includes('galleryShowArrows') && files.media.includes('galleryShowDots') && files.media.includes("'--block-margin'"), 'image renderer should consume the selected 2/4 grid count, slide navigation, and spacing settings');
+assert(files.previewCss.includes('.image-sec .image-wrap.image-original img') && files.previewCss.includes('.image-sec .image-wrap.image-fill img') && files.previewCss.includes('.image-gallery-grid-3') && files.previewCss.includes('.image-gallery-grid-4') && files.previewCss.includes('.gallery-arrows') && files.previewCss.includes('.dots'), 'image and gallery CSS should consume grid, slide display, and navigation classes');
 assert(files.widgetStyles.includes('timerTheme') && files.widgetStyles.includes('label="움직임"') && files.widgetStyles.includes("urgentStyle: value ? 'flow' : 'none'") && files.signal.includes('timer-theme-${theme}') && files.signal.includes('timer-effect-${effect}'), 'timer style controls should expose only the working flow animation toggle while preserving renderer compatibility');
 assert(files.widgetStyles.includes('label="목록 움직임"') && files.widgetStyles.includes("animation: value ? 'stack' : 'none'") && files.signal.includes('activity-anim-${anim}') && files.previewCss.includes('.activity-anim-none .activity-live-dot'), 'activity movement toggle should map to renderer classes and fully stop animation');
 assert(files.widgetStyles.includes('<Color label="강조색"') && !files.widgetStyles.includes('<Color label="카드 배경"') && !files.widgetStyles.includes('<Color label="글자색"'), 'schedule style controls should keep the useful accent color while inheriting card and text colors from the page theme');
@@ -367,7 +397,8 @@ assert(productionBrowserQa.includes('owner server save round trip') && productio
 
 console.log(JSON.stringify({
   ok: true,
-  checks: requiredDispatch.length + rendererContracts.length * 2 + cssContracts.length + visualGeometryContracts.length + viewportContracts.length + previewSourceEntries.length * 2 + 33,
+  checks: requiredDispatch.length + rendererContracts.length * 2 + cssContracts.length + visualGeometryContracts.length + viewportContracts.length + styleConsumerContracts.length + previewSourceEntries.length * 2 + 33,
   visualGeometryChecks: visualGeometryContracts.length,
   viewportContracts: viewportContracts.length,
+  styleConsumerContracts: styleConsumerContracts.length,
 }, null, 2));

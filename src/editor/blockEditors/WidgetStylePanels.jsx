@@ -79,7 +79,9 @@ export function ActivityStylePanel({ s, set }) {
 
 export function MapStylePanel({ s, set }) {
   return <>
-    <SegmentedControl label="지도 높이" value={s.height || 'medium'} onChange={(value) => set({ height: value })} options={SIZES} />
+    <AlignmentControl s={s} set={set} />
+    <SegmentedControl label="레이아웃" value={s.layout || 'default'} onChange={(value) => set({ layout: value })} options={[{ value: 'default', label: '기본' }, { value: 'full', label: '넓게' }, { value: 'minimal', label: '심플' }]} />
+    {s.showEmbedMap !== false && <SegmentedControl label="지도 높이" value={s.height || 'medium'} onChange={(value) => set({ height: value })} options={SIZES} />}
   </>;
 }
 
