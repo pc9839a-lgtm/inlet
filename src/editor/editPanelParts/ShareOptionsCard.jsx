@@ -1,31 +1,53 @@
 import React from 'react';
 import { Share2 } from 'lucide-react';
+import { SegmentedControl } from '../ui/index.js';
 import { Switch } from './editorControls.jsx';
+
+const SHARE_POSITION_OPTIONS = [
+  { value: 'top-left', label: '좌측 상단' },
+  { value: 'top-right', label: '우측 상단' },
+  { value: 'bottom-left', label: '좌측 하단' },
+  { value: 'bottom-right', label: '우측 하단' },
+];
+
+function safeSharePosition(value) {
+  return SHARE_POSITION_OPTIONS.some((option) => option.value === value) ? value : 'top-right';
+}
 
 export function ShareOptionsCard({ page, updatePage }) {
   const enabled = page.share?.enabled !== false;
+  const position = safeSharePosition(page.share?.position);
+  const updateShare = (patch) => updatePage({
+    share: {
+      ...(page.share || {}),
+      position,
+      display: 'icon',
+      ...patch,
+    },
+  });
 
   return (
     <section className="edit-animation-card share-options-card">
       <div className="block-head fixed-block-head edit-animation-head share-options-head">
         <div className="fixed-block-copy">
           <Share2 size={17} aria-hidden="true" />
-          <strong>{'\uACF5\uC720'}</strong>
-          <em>{'\uD398\uC774\uC9C0 \uC6B0\uCE21 \uC0C1\uB2E8 \uD45C\uC2DC'}</em>
+          <strong>공유</strong>
+          <em>공개 페이지 공유 버튼</em>
         </div>
         <Switch
           checked={enabled}
-          onChange={(event) => updatePage({
-            share: {
-              ...(page.share || {}),
-              enabled: event.target.checked,
-              position: 'top-right',
-              display: 'icon',
-            },
-          })}
-          label={'\uACF5\uC720 \uBC84\uD2BC \uD45C\uC2DC'}
+          onChange={(event) => updateShare({ enabled: event.target.checked })}
+          label="공유 버튼 표시"
         />
       </div>
+      {enabled && (
+        <SegmentedControl
+          label="위치"
+          value={position}
+          onChange={(value) => updateShare({ position: safeSharePosition(value) })}
+          options={SHARE_POSITION_OPTIONS}
+        />
+      )}
     </section>
   );
 }
