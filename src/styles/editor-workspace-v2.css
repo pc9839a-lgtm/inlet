@@ -1052,6 +1052,15 @@ body .builder-shell .edit-layout .block-editor-v2-content > .block-editor-anchor
 }
 
 /* Keep the save header outside the scrolling editor content. */
+body .builder-shell:not(.template-intro-shell) {
+  height: 100dvh !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  padding-bottom: 0 !important;
+}
+body .builder-shell:not(.template-intro-shell) ~ .wayzi-global-footer {
+  display: none !important;
+}
 body .builder-shell:not(.template-intro-shell) .left-workspace {
   position: relative !important;
   display: grid !important;
