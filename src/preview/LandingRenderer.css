@@ -62,6 +62,7 @@
 @import '../styles/preview-workspace-topnav-balance.css';
 @import '../styles/preview-bottom-share.css';
 @import '../styles/preview-form-focus-fixed-ui.css';
+@import '../styles/preview-workspace-bottom-timer-effects.css';
 
 /* Global page typography consumers. */
 .landing-page .landing-content > :is(
