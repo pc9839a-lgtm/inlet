@@ -40,7 +40,7 @@ import { useAuthSessionEffects } from './runtime/useAuthSessionEffects.js';
 import { useAccountWorkspacePage } from './runtime/useAccountWorkspacePage.js';
 import { usePreviewWindow } from './runtime/usePreviewWindow.js';
 import { useProtectedWorkspaceRedirect } from './runtime/useProtectedWorkspaceRedirect.js';
-import { isProtectedWorkspacePath, routeUsesWorkspaceTabs as shouldUseWorkspaceTabs } from './runtime/workspaceRouteGuards.js';
+import { initialWorkspaceOpen, isProtectedWorkspacePath, routeUsesWorkspaceTabs as shouldUseWorkspaceTabs } from './runtime/workspaceRouteGuards.js';
 import { hasTabDeepLink, replaceLocationTab, tabFromLocation } from './runtime/workspaceTabLocation.js';
 import { useStatsSummarySync } from './runtime/useStatsSummarySync.js';
 import { useWorkspaceShellActions } from './runtime/useWorkspaceShellActions.js';
@@ -515,7 +515,10 @@ function App() {
   const [connectionsEditing, setConnectionsEditing] = useState(true);
   const [startMode, setStartMode] = useState(() => load(START_MODE_KEY, ''));
   const [authUser, setAuthUser] = useState(() => normalizeAuthUser(load(AUTH_KEY, null)));
-  const [workspaceOpen, setWorkspaceOpen] = useState(() => load(DASHBOARD_KEY, { open: false })?.open || false);
+  const [workspaceOpen, setWorkspaceOpen] = useState(() => initialWorkspaceOpen(
+    typeof location === 'undefined' ? '/' : location.pathname,
+    load(DASHBOARD_KEY, { open: false })?.open || false,
+  ));
   const [createOpen, setCreateOpen] = useState(false);
   const [authView, setAuthView] = useState('');
   const [stylePreviewTheme, setStylePreviewTheme] = useState(null);
