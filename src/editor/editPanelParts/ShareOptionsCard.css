@@ -1,0 +1,76 @@
+body .builder-shell .share-options-card .share-position-control {
+  padding: 0 12px 12px;
+  border-top: 1px solid var(--workspace-line, #d9e2ec);
+  background: #f8fafc;
+}
+
+body .builder-shell .share-options-card .share-position-control .editor-segmented-v2 {
+  display: grid !important;
+  gap: 8px !important;
+  padding: 12px 0 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+body .builder-shell .share-options-card .share-position-control .editor-control-v2-copy {
+  min-width: 0;
+}
+
+body .builder-shell .share-options-card .share-position-control .editor-control-v2-copy strong {
+  color: #475467 !important;
+  font-size: 12px !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0 !important;
+}
+
+body .builder-shell .share-options-card .share-position-control .editor-segmented-v2-options {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 2px !important;
+  width: 100% !important;
+  padding: 3px !important;
+  border: 1px solid var(--workspace-line, #d9e2ec) !important;
+  border-radius: 10px !important;
+  background: #eef2f6 !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+body .builder-shell .share-options-card .share-position-control .editor-segmented-v2-options button {
+  min-width: 0 !important;
+  min-height: 38px !important;
+  padding: 0 6px !important;
+  border: 0 !important;
+  border-radius: 7px !important;
+  background: transparent !important;
+  color: #667085 !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0 !important;
+  white-space: nowrap !important;
+  transition: background-color .14s ease, color .14s ease !important;
+}
+
+body .builder-shell .share-options-card .share-position-control .editor-segmented-v2-options button:hover:not([aria-pressed='true']) {
+  background: #fff !important;
+  color: #111827 !important;
+}
+
+body .builder-shell .share-options-card .share-position-control .editor-segmented-v2-options button[aria-pressed='true'] {
+  background: #111827 !important;
+  color: #fff !important;
+}
+
+body .builder-shell .share-options-card .share-position-control .editor-segmented-v2-options button:focus-visible {
+  outline: 2px solid #2563eb !important;
+  outline-offset: -2px !important;
+}
+
+@media (max-width: 720px) {
+  body .builder-shell .share-options-card .share-position-control .editor-segmented-v2-options button {
+    padding-inline: 3px !important;
+    font-size: 11px !important;
+  }
+}
