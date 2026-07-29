@@ -1,0 +1,37 @@
+.landing-content > .topnav.topnav-sticky,
+.page-share-button,
+.bottom-bar {
+  transition: opacity .18s ease, transform .18s ease, visibility .18s ease !important;
+}
+
+.landing-page.is-form-input-active .landing-content > .topnav.topnav-sticky,
+.landing-page.is-form-input-active .page-share-button,
+.bottom-bar.is-form-input-hidden {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+.landing-page.is-form-input-active .landing-content > .topnav.topnav-sticky {
+  transform: translateY(-12px) !important;
+}
+
+.landing-page.is-form-input-active .page-share-button {
+  transform: scale(.94) !important;
+}
+
+.bottom-bar.is-form-input-hidden:not(.public-bottom-bar) {
+  transform: translateY(calc(100% + 18px)) !important;
+}
+
+.public-bottom-bar.is-form-input-hidden {
+  transform: translate(-50%, calc(100% + 18px)) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-content > .topnav.topnav-sticky,
+  .page-share-button,
+  .bottom-bar {
+    transition: none !important;
+  }
+}
