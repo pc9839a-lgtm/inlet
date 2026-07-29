@@ -7,6 +7,17 @@
 /*.html
   Cache-Control: no-cache, no-store, must-revalidate
 
+/call/home/*
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
+
+/home
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+
+/home-v4
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+
 /assets/*
   Cache-Control: no-cache, no-store, must-revalidate
   X-Content-Type-Options: nosniff
