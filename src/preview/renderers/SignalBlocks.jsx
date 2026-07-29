@@ -4,6 +4,7 @@ import { pickSafe, widgetBoxClass, widgetBoxVars } from './previewUtils.jsx';
 const TIMER_BASE_CLASS = 'timer-theme-minimal timer-effect-none';
 const TIMER_VARIANTS = ['clean', 'cards', 'promo'];
 const TIMER_PALETTES = ['ink', 'blue', 'green', 'coral', 'accent'];
+const TIMER_EFFECTS = ['none', 'slide', 'flip', 'pulse', 'fire'];
 
 function TimerUnit({ value, label, effect = 'none' }) {
   const safeValue = value == null || value === '' ? '00' : String(value);
@@ -36,6 +37,16 @@ function timerVariant(settings = {}) {
 
 function timerPalette(settings = {}) {
   return pickSafe(settings.timerPalette || 'ink', TIMER_PALETTES, 'ink');
+}
+
+function timerEffect(settings = {}) {
+  const legacyUrgencyEffect = {
+    flip: 'flip',
+    flow: 'slide',
+    line: 'pulse',
+  }[settings.urgentStyle];
+  const legacyMotionEffect = settings.timerMotion ? 'slide' : '';
+  return pickSafe(settings.timerEffect || legacyUrgencyEffect || legacyMotionEffect || 'none', TIMER_EFFECTS, 'none');
 }
 
 export function getTimerTarget(settings = {}) {
@@ -84,27 +95,32 @@ export function RenderTimer({ block }) {
   const showDays = Number(t.d) > 0;
   const variant = timerVariant(s);
   const palette = timerPalette(s);
-  const motion = s.timerMotion ? 'on' : 'off';
+  const effect = timerEffect(s);
+  const motion = effect === 'none' ? 'off' : 'on';
+  const label = String(s.label ?? '혜택 마감까지').slice(0, 40);
+  const promoBadge = String(s.promoBadge ?? '마감 임박').slice(0, 16);
 
   return (
     <section
       id={`block-${block.id}`}
-      className={`landing-section timer timer-modern-wrap ${TIMER_BASE_CLASS} timer-variant-${variant} timer-palette-${palette} timer-motion-${motion} ${showDays ? 'timer-has-days' : 'timer-no-days'} ${widgetBoxClass(s, { background: false, shadow: false })}`}
+      className={`landing-section timer timer-modern-wrap ${TIMER_BASE_CLASS} timer-variant-${variant} timer-palette-${palette} timer-effect-${effect} timer-motion-${motion} ${showDays ? 'timer-has-days' : 'timer-no-days'} ${widgetBoxClass(s, { background: false, shadow: false })}`}
       style={widgetBoxVars(s)}
     >
       {t.done ? (
         <strong className="timer-ended">{s.ended || '종료되었습니다.'}</strong>
       ) : (
         <>
-          <div className="timer-topline">
-            <span>{s.label || '혜택 마감까지'}</span>
-            <em>마감 임박</em>
-          </div>
+          {(label || (variant === 'promo' && promoBadge)) && (
+            <div className="timer-topline">
+              {label && <span>{label}</span>}
+              {variant === 'promo' && promoBadge && <em>{promoBadge}</em>}
+            </div>
+          )}
           <div className="timer-grid timer-grid-modern">
-            {showDays ? <TimerUnit value={t.d} label="일" effect="none" /> : null}
-            <TimerUnit value={t.h} label="시" effect="none" />
-            <TimerUnit value={t.m} label="분" effect="none" />
-            <TimerUnit value={t.s} label="초" effect="none" />
+            {showDays ? <TimerUnit value={t.d} label="일" effect={effect} /> : null}
+            <TimerUnit value={t.h} label="시" effect={effect} />
+            <TimerUnit value={t.m} label="분" effect={effect} />
+            <TimerUnit value={t.s} label="초" effect={effect} />
           </div>
           <div className="timer-progress-solid" aria-hidden="true">
             <i style={{ width: `${t.progress}%` }} />
