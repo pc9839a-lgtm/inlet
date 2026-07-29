@@ -1,4 +1,4 @@
-import { fetchPublicServerPage } from '../lib/pageRepository.js';
+import { fetchAccountPages, fetchPublicServerPage } from '../lib/pageRepository.js';
 import { defaultPage, normalizePageForSave } from '../lib/pageModel.js';
 import { sanitizePageSlug } from '../lib/pageSlugs.js';
 import { projectContext } from '../lib/projectContext.js';
@@ -34,6 +34,11 @@ function matchesSaveContext(identityPage = {}, sourcePage = {}, context = {}, au
   if (sameProject(identityPage, context.projectId)) return true;
   if (sameProject(identityPage, context.legacyProjectId)) return true;
   return sameOwner(identityPage, authUser);
+}
+
+function accountPageForSlug(pages = [], sourcePage = {}) {
+  if (!Array.isArray(pages)) return null;
+  return pages.find((candidate) => hasServerIdentity(candidate) && sameSlug(candidate, sourcePage)) || null;
 }
 
 function mergeServerIdentity(sourcePage = {}, identityPage = {}) {
@@ -74,6 +79,14 @@ export async function attachExistingPageIdentity(sourcePage = {}, {
 
   if (matchesSaveContext(localIdentity, sourceWithSlug, context, authUser)) {
     return mergeServerIdentity(sourcePage, localIdentity);
+  }
+
+  try {
+    const accountPages = await fetchAccountPages(authUser);
+    const accountPage = accountPageForSlug(accountPages, sourceWithSlug);
+    if (accountPage) return mergeServerIdentity(sourcePage, accountPage);
+  } catch (error) {
+    console.warn('Account page identity lookup failed:', error);
   }
 
   try {
