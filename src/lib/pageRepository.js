@@ -1,4 +1,5 @@
 import { isServerPageMode } from '../config/runtimeConfig.js';
+import { hasAccountProjectAccess } from './accountProjectAccess.js';
 import { ApiError, apiFetch, postJson, projectAuthHeaders } from './apiClient.js';
 import { normalizePageForSave } from './pageModel.js';
 import { optimizePageForServerSave } from './pageSaveOptimizer.js';
@@ -25,7 +26,8 @@ function noStoreHeaders(headers = {}) {
   };
 }
 
-function canRetryWithAccountProject(error, authUser = null) {
+function canRetryWithAccountProject(error, authUser = null, page = null) {
+  if (hasAccountProjectAccess(page)) return false;
   const status = Number(error?.status || 0);
   const code = String(error?.details?.code || error?.details?.errorCode || '').trim();
   const role = String(authUser?.role || authUser?.accessMode || 'master').trim().toLowerCase();
@@ -34,6 +36,12 @@ function canRetryWithAccountProject(error, authUser = null) {
   return masterLike
     && (status === 403 || code === 'PROJECT_ACCESS_REQUIRED' || code === 'PROJECT_ACCESS_DENIED')
     && !/Email verification|account is suspended|account is deleted/i.test(message);
+}
+
+function pageForServerWrite(page = {}) {
+  const serverPage = { ...page };
+  delete serverPage.__accountProjectAccess;
+  return serverPage;
 }
 
 function accountOwnedPageForRetry(page = {}, authUser = null) {
@@ -201,7 +209,7 @@ export async function persistPage(page, authUser = null, options = {}) {
     throw new ApiError('로그인 세션이 없습니다. 다시 로그인해주세요.', 401, { code: 'AUTH_SESSION_MISSING' });
   }
   const payload = {
-    page: pageWithContext,
+    page: pageForServerWrite(pageWithContext),
     project: context,
     tab: options.tab || '',
     ...(options.expectedUpdatedAt ? { expectedUpdatedAt: options.expectedUpdatedAt } : {}),
@@ -212,12 +220,12 @@ export async function persistPage(page, authUser = null, options = {}) {
     if (result?.page && options.verifyPublic !== false) await verifyPublicPageSave(result.page);
     return { ...result, clientPage: pageWithContext };
   } catch (error) {
-    if (!canRetryWithAccountProject(error, authUser)) throw error;
+    if (!canRetryWithAccountProject(error, authUser, pageWithContext)) throw error;
     const retry = accountOwnedPageForRetry(pageWithContext, authUser);
     if (!retry.context.projectId || retry.context.projectId === context.projectId) throw error;
     const result = await postJson(`/api/pages/${encodeURIComponent(retry.page.slug)}`, {
       ...payload,
-      page: retry.page,
+      page: pageForServerWrite(retry.page),
       project: retry.context,
       recoveredProjectAccess: true,
     }, { headers: projectAuthHeaders(retry.context) });

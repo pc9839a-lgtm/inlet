@@ -1,4 +1,5 @@
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import { rememberAccountProjectAccess } from '../lib/accountProjectAccess.js';
 import { authAccountErrorMessage } from '../lib/authAccounts.js';
 import { deleteAccountPage, fetchAccountPages } from '../lib/pageRepository.js';
 import { WorkspaceCreateModalLayer } from './workspace/WorkspaceCreateModalLayer.jsx';
@@ -73,8 +74,9 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
   };
 
   const openEditor = (item) => {
+    rememberAccountProjectAccess(item);
     if (typeof onEdit === 'function') {
-      onEdit(item);
+      onEdit({ ...item, __accountProjectAccess: true });
       return;
     }
     window.location.href = `/app?slug=${encodeURIComponent(item.slug || '')}`;

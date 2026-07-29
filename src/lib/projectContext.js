@@ -1,3 +1,4 @@
+import { hasAccountProjectAccess } from './accountProjectAccess.js';
 import { readOrCreateWorkspaceId, workspaceIdForAuthUser } from './authIdentity.js';
 import { sanitizePageSlug } from './pageSlugs.js';
 
@@ -10,6 +11,7 @@ function pageProjectIdForOwner(page = {}, ownerId = '') {
   const current = safeId(page.projectId || page.id || '', '');
   const currentOwner = safeId(page.ownerId || page.ownerAccountId || '', '');
   if (!current) return '';
+  if (hasAccountProjectAccess(page)) return current;
   if (!ownerId) return current;
   if (currentOwner && currentOwner !== ownerId) return '';
   if (current.startsWith(`${ownerId}_`)) return current;
@@ -20,7 +22,10 @@ function pageProjectIdForOwner(page = {}, ownerId = '') {
 export function projectContext(page = {}, authUser = null) {
   if (authUser?.projectId && authUser?.ownerId) {
     const slug = safeId(sanitizePageSlug(page.slug || authUser.slug, 'my-page'), 'my-page');
-    const ownerId = safeId(authUser.ownerId, 'local-user');
+    const authOwnerId = safeId(authUser.ownerId, 'local-user');
+    const ownerId = hasAccountProjectAccess(page)
+      ? safeId(page.ownerId || page.ownerAccountId, authOwnerId)
+      : authOwnerId;
     const defaultProjectSlug = safeId(sanitizePageSlug(authUser.defaultProject?.slug || authUser.slug || '', ''), '');
     const defaultProjectId = defaultProjectSlug && defaultProjectSlug === slug ? safeId(authUser.defaultProject?.projectId || authUser.projectId, '') : '';
     const sessionProjectId = defaultProjectSlug && defaultProjectSlug === slug ? safeId(authUser.projectId, '') : '';
@@ -50,7 +55,10 @@ export function projectContext(page = {}, authUser = null) {
   const workspaceId = authUser ? '' : readOrCreateWorkspaceId();
   const legacyOwnerId = safeId(authUser?.email || authUser?.id || authUser?.name || '', '');
   const ownerSource = authUser ? workspaceIdForAuthUser(authUser) : workspaceId;
-  const ownerId = safeId(ownerSource, 'local-user');
+  const authOwnerId = safeId(ownerSource, 'local-user');
+  const ownerId = hasAccountProjectAccess(page)
+    ? safeId(page.ownerId || page.ownerAccountId, authOwnerId)
+    : authOwnerId;
   const projectId = safeId(pageProjectIdForOwner(page, ownerId) || `${ownerId}_${slug}`, `${ownerId}_${slug}`);
 
   return {

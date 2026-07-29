@@ -40,6 +40,12 @@ const invitedProjectUser = normalizeAuthUser({
   defaultProject: { projectId: 'invited-project-id', slug: 'invited-page' },
 });
 const invitedProjectContext = projectContext({ slug: 'invited-page' }, invitedProjectUser);
+const delegatedProjectContext = projectContext({
+  slug: 'shared-campaign',
+  projectId: 'shared-project-id',
+  ownerId: 'shared-owner',
+  __accountProjectAccess: true,
+}, refreshedSessionUser);
 const publicServerContext = projectContext({ slug: 'campaign', projectId: 'server_project_123' }, null);
 
 assert(contextA.projectId === contextA2.projectId, 'same user should map to same project');
@@ -53,6 +59,7 @@ assert(refreshedSameSlugContext.projectId === contextA.projectId, 'refreshed ses
 assert(refreshedNewSlugContext.projectId !== contextA.projectId && refreshedNewSlugContext.projectId.endsWith('_new-campaign'), 'new slug creation should not reuse a refreshed session project id from another page');
 assert(renamedOwnedPageContext.projectId === contextA.projectId && renamedOwnedPageContext.slug === 'renamed-campaign', 'renaming an owned page should keep the existing project id');
 assert(invitedProjectContext.projectId === 'invited-project-id', 'invited manager/client sessions should keep the default project id for the invited slug');
+assert(delegatedProjectContext.projectId === 'shared-project-id' && delegatedProjectContext.ownerId === 'shared-owner', 'authorized dashboard pages should preserve their server project and owner context');
 assert(publicServerContext.projectId === 'server_project_123', 'public landing submissions should use the stored server project id');
 assert(publicServerContext.ownerId === '', 'public landing submissions should not invent a visitor owner id');
 
@@ -163,4 +170,4 @@ for (const [code, expected] of authErrorMessages) {
   assert(!/[占�]/.test(message), `${code} message should not contain mojibake or replacement characters`);
 }
 
-console.log(JSON.stringify({ ok: true, checks: 46 }, null, 2));
+console.log(JSON.stringify({ ok: true, checks: 47 }, null, 2));

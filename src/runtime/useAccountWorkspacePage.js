@@ -2,6 +2,7 @@ import { useLayoutEffect } from 'react';
 import { fetchServerPage } from '../lib/pageRepository.js';
 import { projectContext } from '../lib/projectContext.js';
 import { defaultPage, normalize, normalizePageForSave } from '../lib/pageModel.js';
+import { hasAccountProjectAccess } from '../lib/accountProjectAccess.js';
 
 export function useAccountWorkspacePage({
   publicLandingSlug,
@@ -19,8 +20,9 @@ export function useAccountWorkspacePage({
     const context = projectContext(page, authUser);
     const pageOwnerId = String(page.ownerId || page.ownerAccountId || '').trim();
     const pageProjectId = String(page.projectId || '').trim();
-    const belongsToAccount = (!pageOwnerId || pageOwnerId === context.ownerId)
-      && (!pageProjectId || pageProjectId === context.projectId || pageProjectId === context.legacyProjectId);
+    const accountProjectAccess = hasAccountProjectAccess(page);
+    const belongsToAccount = accountProjectAccess || ((!pageOwnerId || pageOwnerId === context.ownerId)
+      && (!pageProjectId || pageProjectId === context.projectId || pageProjectId === context.legacyProjectId));
     if (!belongsToAccount) {
       const isolatedPage = normalizePageForSave({
         ...defaultPage,
@@ -43,7 +45,7 @@ export function useAccountWorkspacePage({
         if (serverPage) {
           setPage((current) => {
             if ((current.slug || '') !== slug || (current.projectId || '') !== (context.projectId || '')) return current;
-            const nextPage = normalize(serverPage);
+            const nextPage = normalize({ ...serverPage, __accountProjectAccess: accountProjectAccess });
             latestPageRef.current = nextPage;
             return nextPage;
           });
