@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { pickSafe, widgetBoxClass, widgetBoxVars } from './previewUtils.jsx';
 
+const TIMER_BASE_CLASS = 'timer-theme-minimal timer-effect-none';
+const TIMER_VARIANTS = ['minimal', 'flat', 'block', 'line', 'point'];
+const TIMER_PALETTES = ['ink', 'blue', 'green', 'coral', 'accent'];
+
 function TimerUnit({ value, label, effect = 'none' }) {
   const safeValue = value == null || value === '' ? '00' : String(value);
   const displayValue = label === '일' ? safeValue : safeValue.padStart(2, '0');
@@ -11,6 +15,19 @@ function TimerUnit({ value, label, effect = 'none' }) {
       <span>{label}</span>
     </div>
   );
+}
+
+function timerVariant(settings = {}) {
+  const legacyVariant = {
+    modern: 'flat',
+    glass: 'block',
+    accent: 'point',
+  }[settings.timerTheme];
+  return pickSafe(settings.timerVariant || legacyVariant || 'minimal', TIMER_VARIANTS, 'minimal');
+}
+
+function timerPalette(settings = {}) {
+  return pickSafe(settings.timerPalette || 'ink', TIMER_PALETTES, 'ink');
 }
 
 export function getTimerTarget(settings = {}) {
@@ -57,22 +74,30 @@ export function RenderTimer({ block }) {
   const s = block.s || {};
   const t = useCountdown(s);
   const showDays = Number(t.d) > 0;
+  const variant = timerVariant(s);
+  const palette = timerPalette(s);
+  const motion = s.timerMotion ? 'on' : 'off';
 
   return (
     <section
       id={`block-${block.id}`}
-      className={`landing-section timer timer-modern-wrap timer-theme-minimal timer-effect-none ${showDays ? 'timer-has-days' : 'timer-no-days'} ${widgetBoxClass(s, { background: false, shadow: false })}`}
+      className={`landing-section timer timer-modern-wrap ${TIMER_BASE_CLASS} timer-variant-${variant} timer-palette-${palette} timer-motion-${motion} ${showDays ? 'timer-has-days' : 'timer-no-days'} ${widgetBoxClass(s, { background: false, shadow: false })}`}
       style={widgetBoxVars(s)}
     >
       {t.done ? (
         <strong className="timer-ended">{s.ended || '종료되었습니다.'}</strong>
       ) : (
-        <div className="timer-grid timer-grid-modern">
-          {showDays ? <TimerUnit value={t.d} label="일" effect="none" /> : null}
-          <TimerUnit value={t.h} label="시" effect="none" />
-          <TimerUnit value={t.m} label="분" effect="none" />
-          <TimerUnit value={t.s} label="초" effect="none" />
-        </div>
+        <>
+          <div className="timer-grid timer-grid-modern">
+            {showDays ? <TimerUnit value={t.d} label="일" effect="none" /> : null}
+            <TimerUnit value={t.h} label="시" effect="none" />
+            <TimerUnit value={t.m} label="분" effect="none" />
+            <TimerUnit value={t.s} label="초" effect="none" />
+          </div>
+          <div className="timer-progress-solid" aria-hidden="true">
+            <i style={{ width: `${t.progress}%` }} />
+          </div>
+        </>
       )}
     </section>
   );
