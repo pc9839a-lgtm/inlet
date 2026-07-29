@@ -1,0 +1,342 @@
+/* Compact bottom countdown inherits the main timer copy, palette, variant and effect. */
+.bottom-bar .bottom-timer {
+  --bottom-timer-accent: #111827;
+  --bottom-timer-surface: #ffffff;
+  --bottom-timer-soft: #f1f5f9;
+  --bottom-timer-ink: #111827;
+  position: relative !important;
+  isolation: isolate !important;
+  width: 100% !important;
+  min-height: 54px !important;
+  padding: 9px 12px 11px !important;
+  border: 1px solid color-mix(in srgb, var(--bottom-timer-accent) 18%, #dbe3ec) !important;
+  border-radius: 16px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 8px !important;
+  overflow: visible !important;
+  background: var(--bottom-timer-surface) !important;
+  color: var(--bottom-timer-ink) !important;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, .08) !important;
+}
+
+.bottom-bar .bottom-timer::before {
+  content: attr(data-timer-label) !important;
+  min-width: 0 !important;
+  display: block !important;
+  overflow: hidden !important;
+  color: inherit !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  line-height: 1.25 !important;
+  letter-spacing: -.025em !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+  opacity: .78 !important;
+}
+
+.bottom-bar .bottom-timer::after {
+  content: "" !important;
+  position: absolute !important;
+  z-index: 2 !important;
+  left: 10px !important;
+  bottom: 4px !important;
+  width: var(--bottom-timer-progress, 0%) !important;
+  max-width: calc(100% - 20px) !important;
+  height: 3px !important;
+  display: block !important;
+  border-radius: 999px !important;
+  background: var(--bottom-timer-accent) !important;
+  pointer-events: none !important;
+  transition: width .6s linear !important;
+}
+
+.bottom-bar .bottom-timer .bottom-timer-main {
+  position: relative !important;
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 6px !important;
+}
+
+.bottom-bar .bottom-timer .bottom-timer-main::before {
+  content: attr(data-timer-badge) !important;
+  display: none !important;
+}
+
+.bottom-bar .bottom-timer .bottom-timer-main::after {
+  content: "" !important;
+  display: none !important;
+}
+
+.bottom-bar .bottom-timer .bottom-timer-main strong {
+  min-width: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 6px !important;
+  color: inherit !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.bottom-bar .bottom-timer .bottom-timer-main strong > em {
+  min-height: 24px !important;
+  padding: 0 7px !important;
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: color-mix(in srgb, var(--bottom-timer-accent) 12%, transparent) !important;
+  color: var(--bottom-timer-accent) !important;
+  font-size: 10px !important;
+  font-style: normal !important;
+  font-weight: 950 !important;
+  white-space: nowrap !important;
+}
+
+.bottom-bar .bottom-timer .bottom-timer-main b {
+  display: inline-block !important;
+  color: inherit !important;
+  font-size: 18px !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  letter-spacing: .01em !important;
+  white-space: nowrap !important;
+  text-shadow: none !important;
+  transform-origin: 50% 50% !important;
+  backface-visibility: hidden !important;
+}
+
+.bottom-bar .bottom-timer-palette-ink {
+  --bottom-timer-accent: #111827;
+  --bottom-timer-soft: #f1f5f9;
+}
+
+.bottom-bar .bottom-timer-palette-blue {
+  --bottom-timer-accent: #2563eb;
+  --bottom-timer-soft: #eff6ff;
+}
+
+.bottom-bar .bottom-timer-palette-green {
+  --bottom-timer-accent: #15803d;
+  --bottom-timer-soft: #f0fdf4;
+}
+
+.bottom-bar .bottom-timer-palette-coral {
+  --bottom-timer-accent: #e85d4a;
+  --bottom-timer-soft: #fff3f0;
+}
+
+.bottom-bar .bottom-timer-palette-accent {
+  --bottom-timer-accent: var(--accent, #111827);
+  --bottom-timer-soft: color-mix(in srgb, var(--accent, #111827) 9%, #ffffff);
+}
+
+.bottom-bar .bottom-timer-variant-clean {
+  --bottom-timer-surface: #ffffff;
+  background: #ffffff !important;
+  box-shadow: none !important;
+}
+
+.bottom-bar .bottom-timer-variant-clean .bottom-timer-main b {
+  color: var(--bottom-timer-accent) !important;
+}
+
+.bottom-bar .bottom-timer-variant-cards {
+  --bottom-timer-surface: var(--bottom-timer-soft);
+  background: var(--bottom-timer-soft) !important;
+  border-color: color-mix(in srgb, var(--bottom-timer-accent) 22%, #dbe3ec) !important;
+}
+
+.bottom-bar .bottom-timer-variant-cards .bottom-timer-main strong {
+  min-height: 34px !important;
+  padding: 0 10px !important;
+  border: 1px solid color-mix(in srgb, var(--bottom-timer-accent) 18%, #dbe3ec) !important;
+  border-radius: 11px !important;
+  background: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, .06) !important;
+}
+
+.bottom-bar .bottom-timer-variant-promo {
+  --bottom-timer-surface: var(--bottom-timer-accent);
+  --bottom-timer-ink: #ffffff;
+  padding-top: 11px !important;
+  border-color: transparent !important;
+  background: var(--bottom-timer-accent) !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--bottom-timer-accent) 28%, transparent) !important;
+}
+
+.bottom-bar .bottom-timer-variant-promo::before {
+  padding-right: 58px !important;
+  color: #ffffff !important;
+  opacity: .9 !important;
+}
+
+.bottom-bar .bottom-timer-variant-promo::after {
+  background: #ffffff !important;
+  opacity: .88 !important;
+}
+
+.bottom-bar .bottom-timer-variant-promo .bottom-timer-main::before {
+  position: absolute !important;
+  top: -20px !important;
+  right: 0 !important;
+  min-height: 18px !important;
+  padding: 0 6px !important;
+  border-radius: 999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(255, 255, 255, .18) !important;
+  color: #ffffff !important;
+  font-size: 9px !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.bottom-bar .bottom-timer-variant-promo .bottom-timer-main strong > em {
+  background: rgba(255, 255, 255, .16) !important;
+  color: #ffffff !important;
+}
+
+.bottom-bar .bottom-timer-ended {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.bottom-bar .bottom-timer-ended::before {
+  text-align: center !important;
+  opacity: 1 !important;
+}
+
+.bottom-bar .bottom-timer-ended .bottom-timer-main {
+  display: none !important;
+}
+
+.bottom-bar .bottom-timer-ended::after {
+  width: calc(100% - 20px) !important;
+}
+
+@keyframes bottomTimerSlideIn {
+  0% { opacity: .2; transform: translateY(8px); }
+  65% { opacity: 1; transform: translateY(-1px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bottomTimerFlipIn {
+  0% { opacity: .15; transform: perspective(420px) rotateX(-88deg); }
+  62% { opacity: 1; transform: perspective(420px) rotateX(8deg); }
+  100% { opacity: 1; transform: perspective(420px) rotateX(0); }
+}
+
+@keyframes bottomTimerPulseIn {
+  0% { opacity: .45; transform: scale(.82); }
+  55% { opacity: 1; transform: scale(1.12); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes bottomTimerFireDigit {
+  0% { opacity: .45; transform: translateY(5px) scale(.86); filter: brightness(1); }
+  48% { opacity: 1; transform: translateY(-2px) scale(1.12); filter: brightness(1.35); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: brightness(1); }
+}
+
+@keyframes bottomTimerFireShell {
+  0%, 100% { box-shadow: 0 10px 26px rgba(249, 115, 22, .16), 0 0 0 1px rgba(249, 115, 22, .18); }
+  50% { box-shadow: 0 12px 30px rgba(239, 68, 68, .28), 0 0 0 2px rgba(249, 115, 22, .34); }
+}
+
+@keyframes bottomTimerFireFloat {
+  0% { transform: translateY(1px) rotate(-5deg) scale(.92); }
+  100% { transform: translateY(-2px) rotate(5deg) scale(1.08); }
+}
+
+.bottom-bar .bottom-timer-effect-slide.is-bottom-timer-tick .bottom-timer-main b {
+  animation: bottomTimerSlideIn .42s cubic-bezier(.16, 1, .3, 1) both !important;
+}
+
+.bottom-bar .bottom-timer-effect-flip .bottom-timer-main {
+  perspective: 520px !important;
+}
+
+.bottom-bar .bottom-timer-effect-flip.is-bottom-timer-tick .bottom-timer-main b {
+  animation: bottomTimerFlipIn .56s cubic-bezier(.2, .8, .2, 1) both !important;
+}
+
+.bottom-bar .bottom-timer-effect-pulse.is-bottom-timer-tick .bottom-timer-main b {
+  animation: bottomTimerPulseIn .5s cubic-bezier(.2, .9, .25, 1.2) both !important;
+}
+
+.bottom-bar .bottom-timer-effect-pulse .bottom-timer-main strong {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--bottom-timer-accent) 14%, transparent) !important;
+}
+
+.bottom-bar .bottom-timer-effect-fire {
+  --bottom-timer-accent: #f97316;
+  border-color: rgba(249, 115, 22, .48) !important;
+  animation: bottomTimerFireShell .95s ease-in-out infinite !important;
+}
+
+.bottom-bar .bottom-timer-effect-fire .bottom-timer-main::after {
+  content: "🔥" !important;
+  position: absolute !important;
+  top: -15px !important;
+  right: -5px !important;
+  z-index: 3 !important;
+  display: block !important;
+  font-size: 15px !important;
+  line-height: 1 !important;
+  animation: bottomTimerFireFloat .58s ease-in-out infinite alternate !important;
+}
+
+.bottom-bar .bottom-timer-effect-fire.is-bottom-timer-tick .bottom-timer-main b {
+  color: #f97316 !important;
+  text-shadow: 0 0 12px rgba(249, 115, 22, .5) !important;
+  animation: bottomTimerFireDigit .62s cubic-bezier(.16, 1, .3, 1) both !important;
+}
+
+.bottom-bar .bottom-timer-effect-fire.bottom-timer-variant-promo .bottom-timer-main b {
+  color: #ffffff !important;
+}
+
+@media (max-width: 430px) {
+  .bottom-bar .bottom-timer {
+    min-height: 50px !important;
+    padding: 8px 10px 10px !important;
+    gap: 6px !important;
+    border-radius: 14px !important;
+  }
+
+  .bottom-bar .bottom-timer::before {
+    max-width: 142px !important;
+    font-size: 10px !important;
+  }
+
+  .bottom-bar .bottom-timer .bottom-timer-main b {
+    font-size: 16px !important;
+  }
+
+  .bottom-bar .bottom-timer .bottom-timer-main strong > em {
+    min-height: 22px !important;
+    padding-inline: 6px !important;
+    font-size: 9px !important;
+  }
+
+  .bottom-bar .bottom-timer-variant-cards .bottom-timer-main strong {
+    min-height: 31px !important;
+    padding-inline: 8px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bottom-bar .bottom-timer,
+  .bottom-bar .bottom-timer::after,
+  .bottom-bar .bottom-timer .bottom-timer-main b,
+  .bottom-bar .bottom-timer .bottom-timer-main::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
