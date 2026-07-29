@@ -75,7 +75,7 @@ const defaultPage = {
     { id: uid(), type: 'text', visible: true, s: { title: '제목과 내용만 넣어도 충분합니다.', body: '디자인 옵션은 필요할 때만 열어서 바꿀 수 있습니다.', layout: 'card', align: 'left', size: 'medium', bold: false, underline: false } },
     { id: uid(), type: 'cards', visible: true, s: { title: '핵심 안내', desc: '중요한 내용을 카드로 정리합니다.', layout: 'grid', tone: 'soft', columns: 2, items: [
       { id: uid(), eyebrow: '01', title: '첫 번째 카드', body: '핵심 내용을 짧게 입력하세요.' },
-      { id: uid(), eyebrow: '02', title: '두 번째 카드', body: '두 번째 내용을 입력하세요.' },
+      { id: uid(), eyebrow: '02', title: '두 번째 카드', body: '사용자가 바로 이해할 수 있게 정리하세요.' },
     ] } },
     { id: uid(), type: 'image', visible: true, s: { mode: 'single', image: '', gallery: [], galleryLayout: 'slide', galleryGridCount: 4, imageDisplay: 'original', imageHeightPx: 260, imageX: 50, imageY: 50, rounded: true, autoplay: false, interval: 5, galleryShowArrows: true, galleryShowDots: true, caption: '' } },
     { id: uid(), type: 'links', visible: true, s: { title: '빠른 문의', layout: 'list', align: 'left', newWindow: true, items: [
