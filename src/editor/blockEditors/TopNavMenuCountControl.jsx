@@ -6,6 +6,9 @@ const menuCountOptions = [
   ['3', '3개'],
   ['4', '4개'],
   ['5', '5개'],
+  ['6', '6개'],
+  ['7', '7개'],
+  ['8', '8개'],
 ];
 
 export default function TopNavMenuCountControl({ count, onChange }) {
