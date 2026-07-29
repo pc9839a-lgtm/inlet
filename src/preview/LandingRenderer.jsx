@@ -307,20 +307,20 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
   const syncedTimer = getSyncedTimerSettings(blocks);
   const bottomHasButtons = !!bottom && normalizeButtons(bottom.s?.buttons, bottom.s?.count).slice(0, Number(bottom.s?.count || 1)).some((b)=>b.enabled!==false);
   const bottomHasTimer = !!bottom?.s?.timerEnabled && !!syncedTimer;
-  const bottomHasShare = !!bottom && bottom.s?.shareEnabled !== false;
-  const bottomActive = !!bottom && (bottomHasButtons || bottomHasTimer || bottomHasShare);
+  const bottomActive = !!bottom && (bottomHasButtons || bottomHasTimer);
   const buttonEffect = pickSafe(normalizeButtonEffect(page.theme.buttonEffect), ['fill','shine','burst'], 'fill');
   const bgEffect = pickSafe(page.theme.bgEffect || 'none', ['none','snow','petals','sparkle'], 'none');
   const bgEffectOpacity = Math.max(0.1, Math.min(0.9, Number(page.theme.bgEffectOpacity ?? 45) / 100));
   const globalAlign = pickSafe(page.theme.globalAlign, ['left','center','right'], '');
 
   const shouldHideBottom = !publicView && hideBottomForForm;
-  const bottomNode = bottomActive && !shouldHideBottom ? <RenderBottom page={page} block={bottom} blocks={blocks} accent={page.theme.accent} buttonEffect={buttonEffect} go={go} publicView={publicView}/> : null;
+  const bottomNode = bottomActive && !shouldHideBottom ? <RenderBottom block={bottom} blocks={blocks} accent={page.theme.accent} buttonEffect={buttonEffect} go={go} publicView={publicView}/> : null;
 
   const pageNode = (
     <div ref={pageRef} onClickCapture={templatePreview || publicView ? undefined : handlePreviewSelect} className={`landing-page font-${page.theme.font} font-family-${page.theme.fontFamily || 'pretendard'} ${globalAlign ? `global-align-${globalAlign}` : ''} bgmode-${page.theme.bgMode || 'solid'} bg-effect-${bgEffect} button-effect-${buttonEffect} ${publicView ? 'public-render' : ''} ${templatePreview ? 'template-preview' : ''} ${bottomActive ? 'has-bottom-bar' : ''} ${page.theme.animOn ? `anim-on anim-${page.theme.animType || 'fade'} anim-${page.theme.animPlayback === 'loop' ? 'loop' : 'once'}` : ''}`} style={{'--accent':page.theme.accent,'--button':page.theme.accent,'--button-text':'#ffffff','--bg':pageBg,'--card':page.theme.card,'--text':page.theme.text,'--radius':`${page.theme.radius}px`,'--bg-effect-opacity':bgEffectOpacity,background:pageBg,color:page.theme.text,backgroundSize:bgSize,backgroundPosition:bgPosition,backgroundRepeat:'no-repeat'}}>
       <div className="landing-content">{normal.map(b=><RenderBlock key={b.id} page={page} block={b} blocks={blocks} leads={leads} addLead={addLead} track={track} go={go}/>)}</div>
       <BgEffectLayer effect={bgEffect} />
+      {page.share?.enabled !== false && <PageShareButton page={page} publicView={publicView} hasTopNav={!!topNavBlock} />}
       {!publicView && bottomNode}
     </div>
   );
@@ -408,24 +408,16 @@ function getSyncedTimerSettings(blocks = []) {
   return timer?.s || null;
 }
 
-function RenderBottom({ page, block, blocks = [], accent = '#111827', buttonEffect = 'fill', go, publicView = false }) {
-  const s=block.s || {};
-  const [shareFeedback, setShareFeedback] = useState('');
-  const shareEnabled = s.shareEnabled !== false;
-  const btns=normalizeButtons(s.buttons,s.count).slice(0,Number(s.count||1)).filter((b)=>b.enabled!==false);
-  const timerSource = getSyncedTimerSettings(blocks);
-  const showTimer = !!s.timerEnabled && !!timerSource;
-  if(!btns.length && !showTimer && !shareEnabled) return null;
-  const style = pickSafe(s.style, ['pill','box'], 'pill');
-  const color = pickSafe(s.color, ['dark','accent','light'], 'dark');
-  const customButtonColor = s.buttonColorMode === 'custom';
+function PageShareButton({ page, publicView = false, hasTopNav = false }) {
+  const [feedback, setFeedback] = useState('');
+
   const handleShare = async () => {
     const slug = String(page?.slug || '').replace(/^\/+|\/+$/g, '');
     const url = slug ? `${window.location.origin}/${encodeURIComponent(slug)}` : window.location.href;
-    const title = String(page?.meta?.title || page?.title || document.title || '페이지 공유');
-    const mobileShare = typeof navigator.share === 'function' && window.matchMedia?.('(max-width: 768px)').matches;
+    const title = String(page?.meta?.title || page?.title || document.title || '\uD398C\uC774\uC9C0 \uACF5\uC720');
+    const canUseNativeShare = typeof navigator.share === 'function' && window.matchMedia?.('(max-width: 768px)').matches;
 
-    if (mobileShare) {
+    if (canUseNativeShare) {
       try {
         await navigator.share({ title, url });
         return;
@@ -456,14 +448,36 @@ function RenderBottom({ page, block, blocks = [], accent = '#111827', buttonEffe
         textarea.remove();
       }
       if (!copied) throw new Error('COPY_FAILED');
-      setShareFeedback('복사됨');
-      window.setTimeout(() => setShareFeedback(''), 1600);
+      setFeedback('\uBCF5\uC0AC\uB428');
     } catch {
-      setShareFeedback('복사 실패');
-      window.setTimeout(() => setShareFeedback(''), 1600);
+      setFeedback('\uBCF5\uC0AC \uC2E4\uD328');
     }
+    window.setTimeout(() => setFeedback(''), 1600);
   };
 
+  return (
+    <button
+      type="button"
+      className={`page-share-button ${publicView ? 'public-share-button' : 'preview-share-button'} ${hasTopNav ? 'has-top-nav' : ''} ${feedback ? 'has-feedback' : ''}`.trim()}
+      title={'\uACF5\uC720\uD558\uAE30'}
+      aria-label={feedback || '\uACF5\uC720\uD558\uAE30'}
+      onClick={handleShare}
+    >
+      <Share2 size={19} aria-hidden="true" />
+      {feedback && <b>{feedback}</b>}
+    </button>
+  );
+}
+
+function RenderBottom({ block, blocks = [], accent = '#111827', buttonEffect = 'fill', go, publicView = false }) {
+  const s=block.s || {};
+  const btns=normalizeButtons(s.buttons,s.count).slice(0,Number(s.count||1)).filter((b)=>b.enabled!==false);
+  const timerSource = getSyncedTimerSettings(blocks);
+  const showTimer = !!s.timerEnabled && !!timerSource;
+  if(!btns.length && !showTimer) return null;
+  const style = pickSafe(s.style, ['pill','box'], 'pill');
+  const color = pickSafe(s.color, ['dark','accent','light'], 'dark');
+  const customButtonColor = s.buttonColorMode === 'custom';
   const barStyle = {
     '--accent': accent || '#111827',
     '--bottom-button': themeButtonColor(s),
@@ -476,26 +490,19 @@ function RenderBottom({ page, block, blocks = [], accent = '#111827', buttonEffe
   return (
     <div className={`bottom-bar ${publicView ? 'public-bottom-bar' : ''} count-${btns.length || 1} bottom-${style} color-${color} ${customButtonColor ? 'bottom-custom-color' : ''} button-effect-${buttonEffect}`} data-public-bottom={publicView ? 'true' : undefined} style={barStyle}>
       {showTimer && <RenderBottomTimer s={timerSource}/>}
-      <div className={`bottom-bar-actions ${shareEnabled ? 'has-share' : ''}`}>
+      <div className="bottom-bar-actions">
         <div className="bottom-bar-buttons">
           {btns.map(b=>(
-            <button key={b.id} type="button" className={b.icon ? '' : 'no-icon'} title={b.label || '버튼'} onClick={()=>go(b.target,b.url,b.label)}>
+            <button key={b.id} type="button" className={b.icon ? '' : 'no-icon'} title={b.label || '\uBC84\uD2BC'} onClick={()=>go(b.target,b.url,b.label)}>
               {b.icon && <span>{b.icon}</span>}
               <b>{b.label}</b>
             </button>
           ))}
         </div>
-        {shareEnabled && (
-          <button type="button" className="bottom-share-button" title="공유하기" aria-label="공유하기" onClick={handleShare}>
-            <Share2 size={17} aria-hidden="true" />
-            <b>{shareFeedback || '공유'}</b>
-          </button>
-        )}
       </div>
     </div>
   );
 }
-
 function RenderBottomTimer({ s }) {
   const t = useCountdown(s || {});
   const hasDays = Number(t.d) > 0;

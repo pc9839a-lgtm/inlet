@@ -1226,6 +1226,7 @@ function App() {
     setAddOpen,
     dragId,
     setDragId,
+    updatePage,
     updateTheme,
     toggleVisible,
     addBlock,

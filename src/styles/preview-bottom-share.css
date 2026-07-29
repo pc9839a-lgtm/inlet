@@ -1,61 +1,63 @@
-.bottom-bar-actions {
-  width: 100%;
-  min-width: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 8px;
-  align-items: stretch;
-  pointer-events: none;
+.landing-page {
+  position: relative;
 }
 
-.bottom-bar-actions.has-share {
-  grid-template-columns: minmax(0, 1fr) 76px;
+.page-share-button {
+  position: absolute;
+  z-index: 80;
+  top: 14px;
+  right: 14px;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid rgba(148, 163, 184, .34);
+  border-radius: 50%;
+  background: #ffffff;
+  color: #111827;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, .14);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: width .16s ease, border-color .16s ease, box-shadow .16s ease;
 }
 
-.bottom-bar-actions .bottom-bar-buttons {
-  min-width: 0;
-  pointer-events: auto;
+.page-share-button.has-top-nav {
+  top: 76px;
 }
 
-.bottom-bar .bottom-share-button {
-  width: 76px !important;
-  min-width: 76px !important;
-  min-height: 54px !important;
-  padding: 0 10px !important;
-  border: 1px solid #dbe3ef !important;
-  border-radius: 18px !important;
-  background: #fff !important;
-  color: #111827 !important;
-  box-shadow: 0 12px 28px rgba(15, 23, 42, .12) !important;
-  pointer-events: auto;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 6px !important;
+.page-share-button.public-share-button {
+  position: fixed;
+  right: max(14px, calc((100vw - 414px) / 2 + 14px));
 }
 
-.bottom-bar .bottom-share-button svg {
-  flex: 0 0 auto;
-  stroke: currentColor;
+.page-share-button.has-feedback {
+  width: 94px;
+  padding: 0 12px;
+  border-radius: 22px;
 }
 
-.bottom-bar .bottom-share-button b {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.page-share-button b {
+  color: inherit;
+  font-size: 12px;
+  font-weight: 800;
   white-space: nowrap;
-  color: inherit !important;
-  font-size: 12px !important;
 }
 
-@media (max-width: 360px) {
-  .bottom-bar-actions.has-share {
-    grid-template-columns: minmax(0, 1fr) 64px;
-  }
+.page-share-button:hover {
+  border-color: rgba(37, 99, 235, .45);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, .18);
+}
 
-  .bottom-bar .bottom-share-button {
-    width: 64px !important;
-    min-width: 64px !important;
-    padding: 0 7px !important;
+.page-share-button:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, .24);
+  outline-offset: 2px;
+}
+
+@media (max-width: 414px) {
+  .page-share-button.public-share-button {
+    right: max(14px, env(safe-area-inset-right));
   }
 }

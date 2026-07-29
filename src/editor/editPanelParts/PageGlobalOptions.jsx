@@ -10,6 +10,7 @@ export function PageGlobalOptions({
   hideTopNavControl,
   openId,
   updateTheme,
+  updatePage,
   toggleVisible,
   toggleBlockOpen,
   renderTopNavEditor,
@@ -27,6 +28,7 @@ export function PageGlobalOptions({
         hideTopNavControl={hideTopNavControl}
         openId={openId}
         updateTheme={updateTheme}
+        updatePage={updatePage}
         toggleVisible={toggleVisible}
         toggleBlockOpen={toggleBlockOpen}
         renderTopNavEditor={renderTopNavEditor}

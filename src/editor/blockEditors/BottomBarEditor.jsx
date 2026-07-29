@@ -13,7 +13,7 @@ export default function BottomBarEditor({ s, set, page }) {
         {
           id: 'buttons',
           label: '버튼',
-          content: <BottomBarBasicSection count={count} buttons={buttons} page={page} shareEnabled={s.shareEnabled} onCountChange={setCount} onButtonChange={updateButton} onShareChange={(shareEnabled) => set({ shareEnabled })} />,
+          content: <BottomBarBasicSection count={count} buttons={buttons} page={page} onCountChange={setCount} onButtonChange={updateButton} />,
         },
         {
           id: 'timer',

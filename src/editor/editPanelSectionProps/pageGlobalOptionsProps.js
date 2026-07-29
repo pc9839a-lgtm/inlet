@@ -1,4 +1,4 @@
-export function createPageGlobalOptionsProps({ page, selection, updateTheme, toggleVisible, renderTopNavEditor, renderBottomBarEditor, renderFooterEditor }) {
+export function createPageGlobalOptionsProps({ page, selection, updatePage, updateTheme, toggleVisible, renderTopNavEditor, renderBottomBarEditor, renderFooterEditor }) {
   return {
     page,
     topNavBlock: selection.topNavBlock,
@@ -7,6 +7,7 @@ export function createPageGlobalOptionsProps({ page, selection, updateTheme, tog
     hideTopNavControl: selection.hideTopNavControl,
     openId: selection.fixedOpenId,
     updateTheme,
+    updatePage,
     toggleVisible,
     toggleBlockOpen: selection.toggleBlockOpen,
     renderTopNavEditor,

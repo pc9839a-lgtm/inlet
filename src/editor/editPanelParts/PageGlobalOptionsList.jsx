@@ -1,6 +1,7 @@
 import React from 'react';
 import { AnimationOptionsCard } from './AnimationOptionsCard.jsx';
 import { GlobalFixedBlocks } from './GlobalFixedBlocks.jsx';
+import { ShareOptionsCard } from './ShareOptionsCard.jsx';
 
 export function PageGlobalOptionsList({
   page,
@@ -10,6 +11,7 @@ export function PageGlobalOptionsList({
   hideTopNavControl,
   openId,
   updateTheme,
+  updatePage,
   toggleVisible,
   toggleBlockOpen,
   renderTopNavEditor,
@@ -19,6 +21,7 @@ export function PageGlobalOptionsList({
   return (
     <div className="page-global-options-list page-global-grid">
       <AnimationOptionsCard page={page} updateTheme={updateTheme} />
+      <ShareOptionsCard page={page} updatePage={updatePage} />
 
       <GlobalFixedBlocks
         topNavBlock={topNavBlock}

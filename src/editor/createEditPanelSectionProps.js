@@ -7,6 +7,7 @@ export function createEditPanelSectionProps({
   selection,
   dragId,
   setDragId,
+  updatePage,
   updateTheme,
   toggleVisible,
   addBlock,
@@ -25,6 +26,7 @@ export function createEditPanelSectionProps({
     pageGlobalOptionsProps: createPageGlobalOptionsProps({
       page,
       selection,
+      updatePage,
       updateTheme,
       toggleVisible,
       renderTopNavEditor,

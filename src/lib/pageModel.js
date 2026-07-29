@@ -29,6 +29,7 @@ const ANCHOR_BASE = {
 
 const defaultPage = {
   title: '상담 DB 랜딩페이지',
+  share: { enabled: true, position: 'top-right', display: 'icon' },
   slug: 'my-page',
   theme: { accent: '#111827', bg: '#F5F7FA', bgSolid: '#F5F7FA', gradientFrom: '#F5F7FA', gradientTo: '#EAF2FF', gradientRatio: 50, card: '#FFFFFF', text: '#111827', radius: 24, font: 'modern', fontFamily: 'pretendard', bgMode: 'solid', bgPreset: 'gray', bgGradient: 'custom', bgImage: '', bgImageFit: 'cover', bgImagePosition: 'center', bgOverlay: true, bgOverlayColor: '#F5F7FA', bgOverlayOpacity: 72, bgEffect: 'none', bgEffectOpacity: 45, buttonEffect: 'fill', animOn: false, animType: 'fade', animPlayback: 'once', animSpeed: 'normal', animDelay: 'none' },
   meta: { title: '', desc: '', favicon: '', og: '', gtm: '', ga4: '', googleAdsTag: '', pixel: '', naver: '', kakao: '', console: '', ads: '', naverWebmaster: '' },
@@ -89,7 +90,7 @@ const defaultPage = {
       { id: uid(), label: '문의내용', type: 'long', required: false, options: [] },
     ] } },
     { id: uid(), type: 'reservation', visible: true, s: { title: '방문상담 예약', desc: '희망 일정을 선택해주세요.', weekdayMode: 'weekday', weekdays: ['mon','tue','wed','thu','fri'], start: '10:00', end: '18:00', interval: 30, duplicatePhone: 'block', duplicateWindow: '1d', fields: { name: true, phone: true }, required: { name: true, phone: true }, customFields: [], style: 'card', inputStyle: 'round', textAlign: 'left', titleSize: 'medium', bodySize: 'medium', buttonStyle: 'solid', buttonHover: 'fill', spacing: 'normal', radiusStyle: 'round', success: '방문예약 신청이 접수되었습니다.', buttonColorMode: 'theme', buttonColor: '#111827', buttonTextColor: '#ffffff', buttonHoverColorMode: 'theme', buttonHoverColor: '#2563eb' } },
-    { id: uid(), type: 'bottombar', visible: true, s: { count: 2, style: 'pill', color: 'dark', mobileOnly: true, showAfter: false, shareEnabled: true, buttonColorMode: 'theme', buttonColor: '#111827', buttonTextColor: '#ffffff', buttons: [
+    { id: uid(), type: 'bottombar', visible: true, s: { count: 2, style: 'pill', color: 'dark', mobileOnly: true, showAfter: false, buttonColorMode: 'theme', buttonColor: '#111827', buttonTextColor: '#ffffff', buttons: [
       { id: uid(), enabled: true, icon: '💬', label: '상담', target: 'form', url: '' }, { id: uid(), enabled: true, icon: '📅', label: '예약', target: 'reservation', url: '' }, { id: uid(), enabled: true, icon: '📞', label: '전화', target: 'phone', url: 'tel:01000000000' },
     ] } },
     { id: uid(), type: 'footer', visible: true, s: { company: '샘플컴퍼니', owner: '대표자명', phone: '010-0000-0000', email: '', address: '', biz: '', privacyUrl: '', termsUrl: '', align: 'center', bg: 'plain' } },
@@ -203,6 +204,14 @@ function normalizeIntegrations(integrations = {}) {
 
 function normalize(page) {
   const p = { ...clone(defaultPage), ...(page || {}) };
+  const legacyShareEnabled = page?.blocks?.find((block) => block?.type === 'bottombar')?.s?.shareEnabled;
+  p.share = {
+    ...defaultPage.share,
+    ...(page?.share || {}),
+    enabled: page?.share?.enabled ?? (legacyShareEnabled !== false),
+  };
+  p.share.position = pickSafe(p.share.position, ['top-right'], 'top-right');
+  p.share.display = pickSafe(p.share.display, ['icon'], 'icon');
   p.theme = { ...defaultPage.theme, ...(page?.theme || {}) };
   p.meta = { ...defaultPage.meta, ...(page?.meta || {}) };
   p.ai = { ...defaultPage.ai, ...(page?.ai || {}) };
@@ -542,7 +551,7 @@ function sanitizeBlock(block) {
     migrateButtonColorMode(s);
     s.buttonColor = s.buttonColor || '#111827';
     s.buttonTextColor = s.buttonTextColor || '#ffffff';
-    s.shareEnabled = s.shareEnabled !== false;
+    delete s.shareEnabled;
     s.timerEnabled = !!s.timerEnabled;
     s.timerLabel = s.timerLabel || '오늘 마감까지';
     s.timerMode = pickSafe(s.timerMode || 'daily24', ['fixed','daily24'], 'daily24');
