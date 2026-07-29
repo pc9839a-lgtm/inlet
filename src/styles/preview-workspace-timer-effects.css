@@ -1,0 +1,241 @@
+/* Distinct countdown transitions. Loaded after the timer layout styles. */
+.landing-section.timer.timer-modern-wrap .timer-unit b {
+  transform-origin: 50% 50%;
+  backface-visibility: hidden;
+}
+
+.landing-section.timer.timer-effect-none .timer-unit b {
+  animation: none !important;
+}
+
+.landing-section.timer.timer-effect-slide .timer-unit b {
+  animation: timer-digit-slide .44s cubic-bezier(.16, 1, .3, 1) both !important;
+}
+
+.landing-section.timer.timer-effect-flip .timer-unit {
+  perspective: 640px;
+}
+
+.landing-section.timer.timer-effect-flip .timer-unit b {
+  animation: timer-digit-flip .58s cubic-bezier(.2, .8, .2, 1) both !important;
+  transform-style: preserve-3d;
+}
+
+.landing-section.timer.timer-effect-flip.timer-variant-cards .timer-unit::after,
+.landing-section.timer.timer-effect-flip.timer-variant-promo .timer-unit::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  right: 7px;
+  top: 50%;
+  height: 1px;
+  background: currentColor;
+  opacity: .1;
+  pointer-events: none;
+}
+
+.landing-section.timer.timer-effect-pulse .timer-unit b {
+  animation: timer-digit-pulse .54s cubic-bezier(.2, .9, .25, 1.2) both !important;
+}
+
+.landing-section.timer.timer-effect-pulse .timer-unit.is-second {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--timer-accent) 16%, transparent) !important;
+}
+
+.landing-section.timer.timer-effect-fire {
+  position: relative;
+  isolation: isolate;
+  box-shadow:
+    0 14px 34px rgba(15, 23, 42, .1),
+    0 0 0 2px rgba(249, 115, 22, .18),
+    0 0 28px rgba(249, 115, 22, .18) !important;
+}
+
+.landing-section.timer.timer-effect-fire > * {
+  position: relative;
+  z-index: 1;
+}
+
+.landing-section.timer.timer-effect-fire::before,
+.landing-section.timer.timer-effect-fire::after {
+  content: "🔥" !important;
+  position: absolute;
+  z-index: 2;
+  top: 8px;
+  display: block !important;
+  width: auto;
+  height: auto;
+  color: initial;
+  font-size: 18px;
+  line-height: 1;
+  opacity: .86;
+  pointer-events: none;
+  filter: none;
+  animation: timer-fire-float .8s ease-in-out infinite alternate !important;
+}
+
+.landing-section.timer.timer-effect-fire::before {
+  left: 10px;
+  transform-origin: 50% 100%;
+}
+
+.landing-section.timer.timer-effect-fire::after {
+  right: 10px;
+  animation-delay: -.38s !important;
+  transform-origin: 50% 100%;
+}
+
+.landing-section.timer.timer-effect-fire .timer-unit b {
+  animation: timer-digit-fire .68s cubic-bezier(.16, 1, .3, 1) both !important;
+}
+
+.landing-section.timer.timer-effect-fire .timer-unit.is-second {
+  border-color: #fb923c !important;
+  box-shadow:
+    0 0 0 2px rgba(249, 115, 22, .2),
+    0 0 22px rgba(249, 115, 22, .3) !important;
+}
+
+.landing-section.timer.timer-effect-fire .timer-unit.is-second::before {
+  content: "🔥";
+  position: absolute;
+  top: -10px;
+  right: -5px;
+  z-index: 2;
+  font-size: 16px;
+  line-height: 1;
+  animation: timer-fire-spark .72s ease-in-out infinite alternate !important;
+  pointer-events: none;
+}
+
+.landing-section.timer.timer-effect-fire .timer-progress-solid i {
+  background: #f97316 !important;
+  animation: timer-fire-bar .72s ease-in-out infinite alternate !important;
+}
+
+@keyframes timer-digit-slide {
+  0% {
+    transform: translateY(-14px);
+    opacity: 0;
+    filter: blur(4px);
+  }
+  65% {
+    transform: translateY(2px);
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes timer-digit-flip {
+  0% {
+    transform: rotateX(88deg) scale(.92);
+    opacity: .12;
+  }
+  58% {
+    transform: rotateX(-10deg) scale(1.02);
+    opacity: 1;
+  }
+  100% {
+    transform: rotateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes timer-digit-pulse {
+  0% {
+    transform: scale(.68);
+    opacity: .2;
+  }
+  62% {
+    transform: scale(1.14);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes timer-digit-fire {
+  0% {
+    transform: translateY(8px) scale(.78);
+    opacity: .18;
+    text-shadow: 0 8px 18px rgba(239, 68, 68, .8);
+  }
+  58% {
+    transform: translateY(-2px) scale(1.1);
+    opacity: 1;
+    text-shadow: 0 0 12px rgba(249, 115, 22, .9), 0 0 24px rgba(239, 68, 68, .45);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    text-shadow: 0 0 7px rgba(249, 115, 22, .45);
+  }
+}
+
+@keyframes timer-fire-float {
+  0% {
+    transform: translateY(2px) rotate(-5deg) scale(.9);
+    opacity: .62;
+  }
+  100% {
+    transform: translateY(-3px) rotate(5deg) scale(1.08);
+    opacity: 1;
+  }
+}
+
+@keyframes timer-fire-spark {
+  0% {
+    transform: translateY(2px) rotate(-8deg) scale(.82);
+    opacity: .55;
+  }
+  100% {
+    transform: translateY(-4px) rotate(7deg) scale(1.12);
+    opacity: 1;
+  }
+}
+
+@keyframes timer-fire-bar {
+  from {
+    opacity: .7;
+    box-shadow: 0 0 4px rgba(249, 115, 22, .35);
+  }
+  to {
+    opacity: 1;
+    box-shadow: 0 0 12px rgba(249, 115, 22, .75);
+  }
+}
+
+@media (max-width: 430px) {
+  .landing-section.timer.timer-effect-fire::before,
+  .landing-section.timer.timer-effect-fire::after {
+    top: 7px;
+    font-size: 15px;
+  }
+
+  .landing-section.timer.timer-effect-fire::before {
+    left: 7px;
+  }
+
+  .landing-section.timer.timer-effect-fire::after {
+    right: 7px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-section.timer.timer-modern-wrap .timer-unit b,
+  .landing-section.timer.timer-effect-fire::before,
+  .landing-section.timer.timer-effect-fire::after,
+  .landing-section.timer.timer-effect-fire .timer-unit.is-second::before,
+  .landing-section.timer.timer-effect-fire .timer-progress-solid i {
+    animation: none !important;
+    transform: none !important;
+    filter: none !important;
+  }
+}
