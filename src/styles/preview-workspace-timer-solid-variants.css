@@ -4,6 +4,7 @@
   --timer-text: #111827;
   --timer-muted: #64748b;
   --timer-border: #e5e7eb;
+  --timer-on-accent: #ffffff;
 }
 
 .landing-section.timer.timer-palette-ink {
@@ -46,7 +47,41 @@
   --timer-border: #dbe3ef;
 }
 
+.landing-section.timer.timer-modern-wrap .timer-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 13px;
+}
+
+.landing-section.timer.timer-modern-wrap .timer-topline span {
+  min-width: 0;
+  color: var(--timer-text);
+  font-size: 13px;
+  line-height: 1.2;
+  font-weight: 900;
+  letter-spacing: -.03em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.landing-section.timer.timer-modern-wrap .timer-topline em {
+  display: none;
+  flex: 0 0 auto;
+  min-height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  line-height: 24px;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: -.02em;
+}
+
 .landing-section.timer.timer-modern-wrap .timer-unit {
+  position: relative;
   border-color: var(--timer-border) !important;
   color: var(--timer-text) !important;
 }
@@ -72,110 +107,198 @@
   transition: width .4s linear;
 }
 
-.landing-section.timer.timer-variant-minimal {
-  border-color: var(--timer-border) !important;
-}
-
-.landing-section.timer.timer-variant-minimal .timer-progress-solid {
-  display: none;
-}
-
-.landing-section.timer.timer-variant-flat {
-  padding: 12px !important;
+/* Clean: compact text-first countdown inspired by modern launch pages. */
+.landing-section.timer.timer-variant-clean {
+  padding: 16px 6px 14px !important;
   border: 0 !important;
-  border-radius: 16px !important;
-  background: var(--timer-soft) !important;
-}
-
-.landing-section.timer.timer-variant-flat .timer-unit {
-  min-height: 68px !important;
-  border: 0 !important;
-  border-radius: 10px !important;
-  background: #ffffff !important;
-}
-
-.landing-section.timer.timer-variant-flat .timer-progress-solid {
-  margin-top: 8px;
-  background: #ffffff;
-}
-
-.landing-section.timer.timer-variant-block {
-  border: 0 !important;
-  background: var(--timer-accent) !important;
-}
-
-.landing-section.timer.timer-variant-block .timer-unit {
-  border: 1px solid rgba(255, 255, 255, .42) !important;
-  background: rgba(255, 255, 255, .94) !important;
-  color: var(--timer-text) !important;
-}
-
-.landing-section.timer.timer-variant-block .timer-progress-solid {
-  background: rgba(255, 255, 255, .36);
-}
-
-.landing-section.timer.timer-variant-block .timer-progress-solid i {
-  background: #ffffff;
-}
-
-.landing-section.timer.timer-variant-line {
-  padding: 14px 6px !important;
-  border-width: 1px 0 !important;
   border-radius: 0 !important;
-  border-color: var(--timer-border) !important;
   background: transparent !important;
+  box-shadow: none !important;
 }
 
-.landing-section.timer.timer-variant-line .timer-grid-modern {
+.landing-section.timer.timer-variant-clean .timer-topline {
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.landing-section.timer.timer-variant-clean .timer-topline span {
+  color: var(--timer-muted);
+  font-size: 11px;
+  letter-spacing: .02em;
+}
+
+.landing-section.timer.timer-variant-clean .timer-grid-modern {
   gap: 0 !important;
 }
 
-.landing-section.timer.timer-variant-line .timer-unit {
-  min-height: 66px !important;
+.landing-section.timer.timer-variant-clean .timer-unit {
+  min-height: 76px !important;
+  padding: 8px 10px !important;
   border: 0 !important;
-  border-right: 1px solid var(--timer-border) !important;
   border-radius: 0 !important;
   background: transparent !important;
+  overflow: visible !important;
 }
 
-.landing-section.timer.timer-variant-line .timer-unit:last-child {
-  border-right: 0 !important;
+.landing-section.timer.timer-variant-clean .timer-unit:not(:last-child)::after {
+  content: ":";
+  position: absolute;
+  top: 18px;
+  right: -3px;
+  color: var(--timer-border);
+  font-size: 24px;
+  line-height: 1;
+  font-weight: 700;
 }
 
-.landing-section.timer.timer-variant-line .timer-progress-solid {
-  height: 2px;
-  margin: 9px 8px 0;
-  width: calc(100% - 16px);
+.landing-section.timer.timer-variant-clean .timer-unit b {
+  color: var(--timer-text) !important;
+  font-size: clamp(28px, 8vw, 36px) !important;
+  font-weight: 850 !important;
+  letter-spacing: -.04em !important;
 }
 
-.landing-section.timer.timer-variant-point {
-  border-color: var(--timer-border) !important;
+.landing-section.timer.timer-variant-clean .timer-unit span {
+  color: var(--timer-muted) !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+}
+
+.landing-section.timer.timer-variant-clean .timer-progress-solid {
+  display: none;
+}
+
+/* Cards: light elevated cells with strong numeric hierarchy. */
+.landing-section.timer.timer-variant-cards {
+  padding: 16px !important;
+  border: 1px solid var(--timer-border) !important;
+  border-radius: 22px !important;
+  background: #ffffff !important;
+  box-shadow: 0 12px 34px rgba(15, 23, 42, .07) !important;
+}
+
+.landing-section.timer.timer-variant-cards .timer-topline span {
+  color: var(--timer-text);
+}
+
+.landing-section.timer.timer-variant-cards .timer-grid-modern {
+  gap: 8px !important;
+}
+
+.landing-section.timer.timer-variant-cards .timer-unit {
+  min-height: 78px !important;
+  padding: 11px 5px !important;
+  border: 1px solid var(--timer-border) !important;
+  border-radius: 16px !important;
+  background: var(--timer-soft) !important;
+  box-shadow: none !important;
+}
+
+.landing-section.timer.timer-variant-cards .timer-unit b {
+  color: var(--timer-accent) !important;
+  font-size: clamp(23px, 6.5vw, 29px) !important;
+  font-weight: 900 !important;
+  letter-spacing: -.035em !important;
+}
+
+.landing-section.timer.timer-variant-cards .timer-unit span {
+  color: var(--timer-muted) !important;
+}
+
+.landing-section.timer.timer-variant-cards .timer-progress-solid {
+  height: 3px;
+  margin-top: 11px;
+  background: var(--timer-soft);
+}
+
+/* Promo: solid campaign panel with one high-contrast urgency cell. */
+.landing-section.timer.timer-variant-promo {
+  padding: 18px !important;
+  border: 0 !important;
+  border-radius: 22px !important;
+  background: var(--timer-accent) !important;
+  color: var(--timer-on-accent) !important;
+  box-shadow: 0 16px 38px rgba(15, 23, 42, .16) !important;
+}
+
+.landing-section.timer.timer-variant-promo .timer-topline {
+  margin-bottom: 14px;
+}
+
+.landing-section.timer.timer-variant-promo .timer-topline span {
+  color: var(--timer-on-accent);
+  font-size: 14px;
+}
+
+.landing-section.timer.timer-variant-promo .timer-topline em {
+  display: inline-flex;
+  align-items: center;
+  color: var(--timer-on-accent);
+  background: rgba(255, 255, 255, .16);
+}
+
+.landing-section.timer.timer-variant-promo .timer-grid-modern {
+  gap: 7px !important;
+}
+
+.landing-section.timer.timer-variant-promo .timer-unit {
+  min-height: 80px !important;
+  padding: 11px 5px !important;
+  border: 1px solid rgba(255, 255, 255, .2) !important;
+  border-radius: 16px !important;
+  background: rgba(255, 255, 255, .11) !important;
+  color: var(--timer-on-accent) !important;
+  box-shadow: none !important;
+}
+
+.landing-section.timer.timer-variant-promo .timer-unit b {
+  color: var(--timer-on-accent) !important;
+  font-size: clamp(24px, 6.7vw, 30px) !important;
+  font-weight: 900 !important;
+  letter-spacing: -.04em !important;
+}
+
+.landing-section.timer.timer-variant-promo .timer-unit span {
+  color: rgba(255, 255, 255, .7) !important;
+}
+
+.landing-section.timer.timer-variant-promo .timer-unit.is-second {
+  border-color: #ffffff !important;
   background: #ffffff !important;
 }
 
-.landing-section.timer.timer-variant-point .timer-unit {
-  border: 0 !important;
-  border-radius: 12px !important;
-  background: var(--timer-soft) !important;
+.landing-section.timer.timer-variant-promo .timer-unit.is-second b {
+  color: var(--timer-accent) !important;
 }
 
-.landing-section.timer.timer-variant-point .timer-unit.is-second {
-  background: var(--timer-accent) !important;
-  color: #ffffff !important;
+.landing-section.timer.timer-variant-promo .timer-unit.is-second span {
+  color: var(--timer-accent) !important;
+  opacity: .75 !important;
 }
 
-.landing-section.timer.timer-variant-point .timer-unit.is-second span {
-  color: #ffffff !important;
+.landing-section.timer.timer-variant-promo .timer-progress-solid {
+  height: 3px;
+  margin-top: 12px;
+  background: rgba(255, 255, 255, .22);
+}
+
+.landing-section.timer.timer-variant-promo .timer-progress-solid i {
+  background: #ffffff;
+}
+
+.landing-section.timer.timer-variant-promo .timer-ended {
+  background: #ffffff !important;
+  color: var(--timer-accent) !important;
 }
 
 .landing-section.timer.timer-motion-on .timer-unit.is-second b {
-  animation: timer-second-pulse .72s ease-out;
+  animation: timer-second-shift .42s cubic-bezier(.2, .8, .2, 1);
 }
 
-@keyframes timer-second-pulse {
+@keyframes timer-second-shift {
   0% {
-    transform: translateY(5px);
-    opacity: .45;
+    transform: translateY(7px);
+    opacity: .2;
   }
 
   100% {
@@ -185,21 +308,45 @@
 }
 
 @media (max-width: 430px) {
-  .landing-section.timer.timer-modern-wrap .timer-grid-modern {
+  .landing-section.timer.timer-modern-wrap .timer-topline {
+    margin-bottom: 10px;
+  }
+
+  .landing-section.timer.timer-variant-clean {
+    padding-inline: 2px !important;
+  }
+
+  .landing-section.timer.timer-variant-clean .timer-unit {
+    min-height: 66px !important;
+    padding-inline: 6px !important;
+  }
+
+  .landing-section.timer.timer-variant-clean .timer-unit:not(:last-child)::after {
+    top: 15px;
+    right: -2px;
+    font-size: 21px;
+  }
+
+  .landing-section.timer.timer-variant-cards,
+  .landing-section.timer.timer-variant-promo {
+    padding: 14px !important;
+    border-radius: 19px !important;
+  }
+
+  .landing-section.timer.timer-variant-cards .timer-grid-modern,
+  .landing-section.timer.timer-variant-promo .timer-grid-modern {
     gap: 6px !important;
   }
 
-  .landing-section.timer.timer-modern-wrap .timer-unit {
-    min-height: 62px !important;
+  .landing-section.timer.timer-variant-cards .timer-unit,
+  .landing-section.timer.timer-variant-promo .timer-unit {
+    min-height: 70px !important;
+    border-radius: 14px !important;
     padding-inline: 3px !important;
   }
 
-  .landing-section.timer.timer-modern-wrap .timer-unit b {
-    font-size: clamp(19px, 6vw, 22px) !important;
-  }
-
-  .landing-section.timer.timer-variant-line .timer-grid-modern {
-    gap: 0 !important;
+  .landing-section.timer.timer-variant-promo .timer-topline span {
+    font-size: 13px;
   }
 }
 

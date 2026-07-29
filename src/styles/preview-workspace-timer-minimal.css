@@ -84,6 +84,21 @@
   text-align: center !important;
 }
 
+/* Legacy class contracts remain valid while the renderer maps them to three polished layouts. */
+.landing-section.timer.timer-variant-minimal,
+.landing-section.timer.timer-variant-line {
+  --timer-legacy-layout: clean;
+}
+
+.landing-section.timer.timer-variant-flat,
+.landing-section.timer.timer-variant-point {
+  --timer-legacy-layout: cards;
+}
+
+.landing-section.timer.timer-variant-block {
+  --timer-legacy-layout: promo;
+}
+
 @media (max-width: 430px) {
   .landing-section.timer.timer-modern-wrap {
     padding: 15px !important;
