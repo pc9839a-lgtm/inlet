@@ -1,179 +1,72 @@
-.topnav-one-line {
-  --top-menu-count: 1;
-  --top-menu-gap: clamp(3px, .9vw, 6px);
-  --top-menu-single-max: clamp(112px, 34vw, 168px);
+/* Final owner for the public and editor top navigation layout. */
+.topnav-one-line,
+.public-landing-viewport .topnav.topnav-one-line {
+  --top-menu-columns: 1;
+  --top-menu-gap: 4px;
   display: grid !important;
-  grid-template-columns: minmax(0, max-content) minmax(0, 1fr) !important;
-  column-gap: clamp(7px, 1.8vw, 10px) !important;
+  grid-template-columns: 56px minmax(0, 1fr) !important;
+  column-gap: 8px !important;
   align-items: center !important;
   width: 100% !important;
   max-width: 100% !important;
   box-sizing: border-box !important;
+  overflow: visible !important;
 }
 
-.topnav-one-line.topnav-logo-image {
-  grid-template-columns: 42px minmax(0, 1fr) !important;
-}
-
-.topnav-one-line.topnav-menu-count-5:not(.topnav-logo-image) {
-  grid-template-columns: minmax(52px, 72px) minmax(0, 1fr) !important;
-}
-
-.topnav-one-line .top-logo {
-  width: max-content !important;
-  min-width: 0 !important;
-  max-width: 120px !important;
+.topnav-one-line .top-logo,
+.public-landing-viewport .topnav.topnav-one-line .top-logo {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 56px !important;
+  min-width: 56px !important;
+  max-width: 56px !important;
   overflow: hidden !important;
 }
 
-.topnav-one-line.topnav-logo-image .top-logo {
-  width: 42px !important;
-  max-width: 42px !important;
+.topnav-one-line .top-logo strong,
+.public-landing-viewport .topnav.topnav-one-line .top-logo strong {
+  display: inline-flex !important;
+  align-items: center !important;
   justify-content: center !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  min-height: 44px !important;
+  height: 44px !important;
+  padding: 0 4px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
 }
 
-.topnav-one-line.topnav-logo-image .top-logo img {
+.topnav-one-line.topnav-logo-image .top-logo img,
+.public-landing-viewport .topnav.topnav-one-line.topnav-logo-image .top-logo img {
   width: auto !important;
   max-width: 100% !important;
-  max-height: 32px !important;
+  max-height: 36px !important;
+  object-fit: contain !important;
 }
 
 .topnav-one-line .top-menu,
 .topnav-one-line.topnav-menu-loop .top-menu,
+.topnav-one-line.topnav-align-left .top-menu,
 .topnav-one-line.topnav-align-center .top-menu,
-.topnav-one-line.topnav-align-right .top-menu {
+.topnav-one-line.topnav-align-right .top-menu,
+.public-landing-viewport .topnav.topnav-one-line .top-menu,
+.public-landing-viewport .topnav.topnav-one-line.topnav-menu-loop .top-menu {
+  display: block !important;
   width: 100% !important;
   min-width: 0 !important;
   max-width: 100% !important;
-  overflow: hidden !important;
-  display: block !important;
+  overflow: visible !important;
+  scrollbar-width: none !important;
 }
 
 .topnav-one-line .top-menu-track,
-.topnav-one-line.topnav-menu-loop .top-menu-track {
-  display: block !important;
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: 100% !important;
-  margin: 0 !important;
-  overflow: hidden !important;
-  transform: none !important;
-  animation: none !important;
-}
-
-.topnav-one-line .top-menu-set,
-.topnav-one-line.topnav-menu-loop .top-menu-set {
-  display: grid !important;
-  grid-template-columns: repeat(var(--top-menu-count), minmax(0, 1fr)) !important;
-  gap: var(--top-menu-gap) !important;
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: 100% !important;
-  margin: 0 !important;
-  align-items: stretch !important;
-  justify-content: stretch !important;
-  overflow: hidden !important;
-  transform: none !important;
-  animation: none !important;
-}
-
-.topnav-one-line.topnav-menu-count-1 .top-menu-set {
-  grid-template-columns: minmax(96px, var(--top-menu-single-max)) !important;
-}
-
-.topnav-one-line.topnav-menu-count-1.topnav-align-left .top-menu-set {
-  justify-content: start !important;
-}
-
-.topnav-one-line.topnav-menu-count-1.topnav-align-center .top-menu-set {
-  justify-content: center !important;
-}
-
-.topnav-one-line.topnav-menu-count-1.topnav-align-right .top-menu-set {
-  justify-content: end !important;
-}
-
-.topnav-one-line .top-menu button,
-.topnav-one-line.topnav-menu-loop .top-menu button {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: none !important;
-  min-height: 44px !important;
-  padding: 0 clamp(5px, 1.2vw, 10px) !important;
-  overflow: hidden !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  text-overflow: clip !important;
-  white-space: nowrap !important;
-}
-
-.topnav-one-line.topnav-menu-count-5 .top-menu button {
-  padding-inline: 3px !important;
-  font-size: 11px !important;
-  letter-spacing: -.025em !important;
-}
-
-.topnav-one-line.topnav-menu-count-1 .top-menu button {
-  padding-inline: 14px !important;
-}
-
-.top-menu-label-window {
-  display: block !important;
-  width: 100% !important;
-  min-width: 0 !important;
-  overflow: hidden !important;
-  line-height: 1.15 !important;
-  text-align: center !important;
-}
-
-.top-menu-label {
-  display: inline-block !important;
-  min-width: max-content !important;
-  white-space: nowrap !important;
-  transform: translateX(0);
-  will-change: transform;
-}
-
-.top-menu-label.is-overflowing {
-  animation: top-menu-label-roll 5.8s ease-in-out .8s infinite alternate;
-}
-
-@keyframes top-menu-label-roll {
-  0%, 18% {
-    transform: translateX(0);
-  }
-
-  82%, 100% {
-    transform: translateX(calc(var(--top-menu-roll-distance, 0px) * -1));
-  }
-}
-
-/* preview-public.css previously changed the menu back to a flex row.
-   These final public rules keep the same exact grid contract. */
-.public-landing-viewport .topnav.topnav-one-line {
-  display: grid !important;
-  grid-template-columns: minmax(0, max-content) minmax(0, 1fr) !important;
-  column-gap: 8px !important;
-}
-
-.public-landing-viewport .topnav.topnav-one-line.topnav-logo-image {
-  grid-template-columns: 42px minmax(0, 1fr) !important;
-}
-
-.public-landing-viewport .topnav.topnav-one-line.topnav-menu-count-5:not(.topnav-logo-image) {
-  grid-template-columns: minmax(52px, 72px) minmax(0, 1fr) !important;
-}
-
-.public-landing-viewport .topnav.topnav-one-line .top-menu,
-.public-landing-viewport .topnav.topnav-one-line.topnav-menu-loop .top-menu {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: 100% !important;
-  overflow: hidden !important;
-  display: block !important;
-}
-
+.topnav-one-line.topnav-menu-loop .top-menu-track,
 .public-landing-viewport .topnav.topnav-one-line .top-menu-track,
 .public-landing-viewport .topnav.topnav-one-line.topnav-menu-loop .top-menu-track {
   display: block !important;
@@ -181,90 +74,132 @@
   min-width: 0 !important;
   max-width: 100% !important;
   margin: 0 !important;
-  overflow: hidden !important;
+  overflow: visible !important;
+  transform: none !important;
+  animation: none !important;
 }
 
+.topnav-one-line .top-menu-set,
+.topnav-one-line.topnav-menu-loop .top-menu-set,
 .public-landing-viewport .topnav.topnav-one-line .top-menu-set,
 .public-landing-viewport .topnav.topnav-one-line.topnav-menu-loop .top-menu-set {
   display: grid !important;
-  grid-template-columns: repeat(var(--top-menu-count), minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(var(--top-menu-columns), minmax(0, 1fr)) !important;
+  grid-auto-flow: row !important;
+  grid-auto-rows: minmax(44px, auto) !important;
   gap: var(--top-menu-gap) !important;
   width: 100% !important;
   min-width: 0 !important;
   max-width: 100% !important;
   margin: 0 !important;
+  align-items: stretch !important;
   justify-content: stretch !important;
-  overflow: hidden !important;
+  overflow: visible !important;
+  transform: none !important;
+  animation: none !important;
 }
 
+.topnav-one-line .top-menu button,
+.topnav-one-line.topnav-menu-loop .top-menu button,
 .public-landing-viewport .topnav.topnav-one-line .top-menu button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   width: 100% !important;
   min-width: 0 !important;
   max-width: none !important;
-  flex: none !important;
   min-height: 44px !important;
-  padding-inline: 4px !important;
-  overflow: hidden !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 7px 5px !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
   text-overflow: clip !important;
+  white-space: normal !important;
+  line-height: 1.2 !important;
+  word-break: keep-all !important;
+  overflow-wrap: anywhere !important;
+}
+
+.topnav-one-line .top-menu-label,
+.public-landing-viewport .topnav.topnav-one-line .top-menu-label {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+  text-align: center !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  line-height: 1.2 !important;
+  word-break: keep-all !important;
+  overflow-wrap: anywhere !important;
+  transform: none !important;
+  animation: none !important;
+  will-change: auto !important;
+}
+
+.topnav-one-line .top-menu-set-copy,
+.public-landing-viewport .topnav.topnav-one-line .top-menu-set-copy {
+  display: none !important;
 }
 
 @media (max-width: 520px) {
-  .topnav-one-line {
-    --top-menu-gap: 2px;
-    --top-menu-single-max: clamp(104px, 38vw, 148px);
-    grid-template-columns: minmax(0, max-content) minmax(0, 1fr) !important;
-    column-gap: 6px !important;
-    padding: 9px 10px !important;
+  .topnav-one-line,
+  .public-landing-viewport .topnav.topnav-one-line {
+    --top-menu-gap: 3px;
+    grid-template-columns: 44px minmax(0, 1fr) !important;
+    column-gap: 5px !important;
+    padding: 9px 8px !important;
   }
 
-  .topnav-one-line.topnav-logo-image {
-    grid-template-columns: 36px minmax(0, 1fr) !important;
+  .topnav-one-line .top-logo,
+  .public-landing-viewport .topnav.topnav-one-line .top-logo {
+    width: 44px !important;
+    min-width: 44px !important;
+    max-width: 44px !important;
   }
 
-  .topnav-one-line.topnav-menu-count-5:not(.topnav-logo-image) {
-    grid-template-columns: 48px minmax(0, 1fr) !important;
-  }
-
-  .topnav-one-line.topnav-logo-image .top-logo {
-    width: 36px !important;
-    max-width: 36px !important;
-  }
-
-  .topnav-one-line .top-menu button {
+  .topnav-one-line .top-logo strong,
+  .public-landing-viewport .topnav.topnav-one-line .top-logo strong {
     min-height: 44px !important;
-    padding-inline: 4px !important;
-    font-size: 11px !important;
-  }
-
-  .topnav-one-line.topnav-menu-count-5 .top-menu button {
+    height: 44px !important;
     padding-inline: 2px !important;
-    font-size: 10px !important;
-    letter-spacing: -.035em !important;
-  }
-
-  .topnav-one-line.topnav-menu-count-1 .top-menu button {
-    padding-inline: 13px !important;
     font-size: 12px !important;
   }
 
-  .public-landing-viewport .topnav.topnav-one-line {
-    grid-template-columns: minmax(0, max-content) minmax(0, 1fr) !important;
-    column-gap: 6px !important;
-    padding: 12px 10px !important;
+  .topnav-one-line.topnav-logo-image .top-logo img,
+  .public-landing-viewport .topnav.topnav-one-line.topnav-logo-image .top-logo img {
+    max-height: 32px !important;
   }
 
-  .public-landing-viewport .topnav.topnav-one-line.topnav-logo-image {
-    grid-template-columns: 36px minmax(0, 1fr) !important;
-  }
-
-  .public-landing-viewport .topnav.topnav-one-line.topnav-menu-count-5:not(.topnav-logo-image) {
-    grid-template-columns: 48px minmax(0, 1fr) !important;
+  .topnav-one-line .top-menu button,
+  .public-landing-viewport .topnav.topnav-one-line .top-menu button {
+    min-height: 44px !important;
+    padding: 6px 3px !important;
+    font-size: 11px !important;
+    letter-spacing: -.02em !important;
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .top-menu-label.is-overflowing {
-    animation: none !important;
-    transform: none !important;
+@media (max-width: 370px) {
+  .topnav-one-line,
+  .public-landing-viewport .topnav.topnav-one-line {
+    grid-template-columns: 40px minmax(0, 1fr) !important;
+    column-gap: 4px !important;
+    padding-inline: 7px !important;
+  }
+
+  .topnav-one-line .top-logo,
+  .public-landing-viewport .topnav.topnav-one-line .top-logo {
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+  }
+
+  .topnav-one-line .top-menu button,
+  .public-landing-viewport .topnav.topnav-one-line .top-menu button {
+    padding-inline: 2px !important;
+    font-size: 10.5px !important;
   }
 }
