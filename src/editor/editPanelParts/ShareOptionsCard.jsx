@@ -2,6 +2,7 @@ import React from 'react';
 import { Share2 } from 'lucide-react';
 import { SegmentedControl } from '../ui/index.js';
 import { Switch } from './editorControls.jsx';
+import './ShareOptionsCard.css';
 
 const SHARE_POSITION_OPTIONS = [
   { value: 'top-left', label: '좌측 상단' },
@@ -41,12 +42,14 @@ export function ShareOptionsCard({ page, updatePage }) {
         />
       </div>
       {enabled && (
-        <SegmentedControl
-          label="위치"
-          value={position}
-          onChange={(value) => updateShare({ position: safeSharePosition(value) })}
-          options={SHARE_POSITION_OPTIONS}
-        />
+        <div className="share-position-control">
+          <SegmentedControl
+            label="위치"
+            value={position}
+            onChange={(value) => updateShare({ position: safeSharePosition(value) })}
+            options={SHARE_POSITION_OPTIONS}
+          />
+        </div>
       )}
     </section>
   );
