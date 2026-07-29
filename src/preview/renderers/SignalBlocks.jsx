@@ -5,6 +5,13 @@ const TIMER_BASE_CLASS = 'timer-theme-minimal timer-effect-none';
 const TIMER_VARIANTS = ['clean', 'cards', 'promo'];
 const TIMER_PALETTES = ['ink', 'blue', 'green', 'coral', 'accent'];
 const TIMER_EFFECTS = ['none', 'slide', 'flip', 'pulse', 'fire'];
+const BOTTOM_TIMER_PRESENTATION_CLASSES = [
+  ...TIMER_VARIANTS.map((value) => `bottom-timer-variant-${value}`),
+  ...TIMER_PALETTES.map((value) => `bottom-timer-palette-${value}`),
+  ...TIMER_EFFECTS.map((value) => `bottom-timer-effect-${value}`),
+  'bottom-timer-ended',
+  'is-bottom-timer-tick',
+];
 
 function TimerUnit({ value, label, effect = 'none' }) {
   const safeValue = value == null || value === '' ? '00' : String(value);
@@ -49,6 +56,49 @@ function timerEffect(settings = {}) {
   return pickSafe(settings.timerEffect || legacyUrgencyEffect || legacyMotionEffect || 'none', TIMER_EFFECTS, 'none');
 }
 
+function syncBottomTimerPresentation(settings = {}, countdown = {}) {
+  if (typeof document === 'undefined') return undefined;
+  const variant = timerVariant(settings);
+  const palette = timerPalette(settings);
+  const effect = timerEffect(settings);
+  const label = String(settings.label ?? '혜택 마감까지').slice(0, 40);
+  const promoBadge = String(settings.promoBadge ?? '마감 임박').slice(0, 16);
+  const endedLabel = String(settings.ended || '이벤트가 종료되었습니다.').slice(0, 40);
+  const tickKey = `${countdown.d}-${countdown.h}-${countdown.m}-${countdown.s}`;
+  let frame = window.requestAnimationFrame(() => {
+    const nodes = document.querySelectorAll('.bottom-timer');
+    nodes.forEach((node) => {
+      node.classList.remove(...BOTTOM_TIMER_PRESENTATION_CLASSES);
+      node.classList.add(
+        `bottom-timer-variant-${variant}`,
+        `bottom-timer-palette-${palette}`,
+        `bottom-timer-effect-${effect}`,
+      );
+      if (countdown.done) node.classList.add('bottom-timer-ended');
+      node.dataset.timerLabel = countdown.done ? endedLabel : label;
+      node.dataset.timerBadge = variant === 'promo' && !countdown.done ? promoBadge : '';
+      node.style.setProperty('--bottom-timer-progress', `${Math.max(0, Math.min(100, Number(countdown.progress || 0)))}%`);
+
+      const main = node.querySelector('.bottom-timer-main');
+      if (main) main.dataset.timerBadge = node.dataset.timerBadge;
+
+      if (effect === 'none' || countdown.done) {
+        node.dataset.timerTick = tickKey;
+        return;
+      }
+      if (node.dataset.timerTick === tickKey) {
+        node.classList.add('is-bottom-timer-tick');
+        return;
+      }
+      node.dataset.timerTick = tickKey;
+      node.classList.remove('is-bottom-timer-tick');
+      void node.offsetWidth;
+      node.classList.add('is-bottom-timer-tick');
+    });
+  });
+  return () => window.cancelAnimationFrame(frame);
+}
+
 export function getTimerTarget(settings = {}) {
   const mode = settings.repeatMode || settings.timerMode || 'fixed';
   if (mode === 'daily24') {
@@ -77,8 +127,7 @@ export function useCountdown(input) {
   const progress = data.repeat
     ? Math.max(0, Math.min(100, 100 - (diff / data.cycle) * 100))
     : Math.max(0, Math.min(100, 100 - (diff / (data.cycle || 1)) * 100));
-
-  return {
+  const countdown = {
     done: !data.repeat && diff <= 0,
     d: Math.floor(diff / (1000 * 60 * 60 * 24)),
     h: String(Math.floor((diff / (1000 * 60 * 60)) % 24)).padStart(2, '0'),
@@ -87,6 +136,19 @@ export function useCountdown(input) {
     progress,
     diffMs: diff,
   };
+  const variant = timerVariant(settings);
+  const palette = timerPalette(settings);
+  const effect = timerEffect(settings);
+  const label = String(settings.label ?? '혜택 마감까지').slice(0, 40);
+  const promoBadge = String(settings.promoBadge ?? '마감 임박').slice(0, 16);
+  const ended = String(settings.ended || '이벤트가 종료되었습니다.').slice(0, 40);
+
+  useEffect(
+    () => syncBottomTimerPresentation(settings, countdown),
+    [variant, palette, effect, label, promoBadge, ended, countdown.done, countdown.d, countdown.h, countdown.m, countdown.s, countdown.progress],
+  );
+
+  return countdown;
 }
 
 export function RenderTimer({ block }) {
