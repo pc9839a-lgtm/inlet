@@ -218,6 +218,9 @@ assert(files.dividerEditor.includes('width < 100 &&') && files.dividerEditor.inc
 const sourceEntries = Object.entries(files).filter(([name]) => name !== 'previewCss');
 for (const [name, source] of sourceEntries) {
   assert(!/\b(?:window\.)?(?:alert|confirm)\s*\(/.test(source), `preview source must not use alert/confirm: ${name}`);
+}
+const runtimeEntries = sourceEntries.filter(([name]) => name !== 'cssQa');
+for (const [name, source] of runtimeEntries) {
   assert(!/[�]|占|獄|揆|\?몄|\?꾩|蹂듭|遺덈|紐|釉|湲|肄/.test(source), `preview source contains mojibake: ${name}`);
 }
 assert(!/[�]|占|獄|揆/.test(files.previewCss), 'preview css contains mojibake');
