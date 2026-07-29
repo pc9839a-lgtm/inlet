@@ -83,7 +83,7 @@ const defaultPage = {
       { id: uid(), emoji: '📞', iconMode: 'emoji', thumb: '', label: '전화 문의', target: 'phone', url: 'tel:01000000000' },
     ] } },
     { id: uid(), type: 'schedule', visible: true, s: { title: '일정 안내', date: '2026-10-24', body: '오후 12시 30분\n라움 아트센터 2층 마제스틱홀', monthLabel: '', highlightColor: '#8AA2C8', cardBgColor: '', textColor: '', align: 'center' } },
-    { id: uid(), type: 'timer', visible: true, s: { label: '혜택 마감까지', endAt: '', repeatMode: 'fixed', urgentStyle: 'none', timerTheme: 'minimal', style: 'accent', align: 'center', ended: '이벤트가 종료되었습니다.', cta: false, ctaLabel: '상담 신청', ctaTarget: 'form', ctaUrl: '' } },
+    { id: uid(), type: 'timer', visible: true, s: { label: '혜택 마감까지', endAt: '', repeatMode: 'fixed', urgentStyle: 'none', timerTheme: 'minimal', timerVariant: 'minimal', timerPalette: 'ink', timerMotion: false, style: 'accent', align: 'center', ended: '이벤트가 종료되었습니다.', cta: false, ctaLabel: '상담 신청', ctaTarget: 'form', ctaUrl: '' } },
     { id: uid(), type: 'form', visible: true, s: { title: '상담 신청', desc: '정보를 남겨주시면 확인 후 연락드립니다.', style: 'card', submit: '신청하기', successTitle: '상담 신청 완료', success: '상담 신청이 접수되었습니다.', privacy: '개인정보 수집 및 이용에 동의합니다.', privacyRequired: true, privacyDetail: '수집 항목: 이름, 연락처, 문의내용\n이용 목적: 상담 안내 및 문의 응대\n보관 기간: 상담 종료 후 내부 기준에 따라 보관', inputStyle: 'round', buttonStyle: 'solid', spacing: 'normal', radiusStyle: 'round', buttonColorMode: 'theme', buttonColor: '#111827', buttonTextColor: '#ffffff', buttonHoverColorMode: 'theme', buttonHoverColor: '#2563eb', duplicatePhone: 'allow', duplicateEmail: 'off', duplicateWindow: '1d', questions: [
       { id: uid(), label: '이름', type: 'short', required: true, options: [] },
       { id: uid(), label: '연락처', type: 'phone', required: true, options: [] },
@@ -210,7 +210,7 @@ function normalize(page) {
     ...(page?.share || {}),
     enabled: page?.share?.enabled ?? (legacyShareEnabled !== false),
   };
-  p.share.position = pickSafe(p.share.position, ['top-right'], 'top-right');
+  p.share.position = pickSafe(p.share.position, ['top-left','top-right','bottom-left','bottom-right'], 'top-right');
   p.share.display = pickSafe(p.share.display, ['icon'], 'icon');
   p.theme = { ...defaultPage.theme, ...(page?.theme || {}) };
   p.meta = { ...defaultPage.meta, ...(page?.meta || {}) };
@@ -244,7 +244,7 @@ const BLOCK_SAFE_OPTIONS = {
   links: { layout: ['list','card','carousel'], align: ['left','center','right'] },
   download: { layout: ['card','list'], align: ['left','center','right'] },
   schedule: { align: ['left','center','right'] },
-  timer: { style: ['plain','accent','card'], align: ['left','center','right'], repeatMode: ['fixed','daily24'], urgentStyle: ['flip','line','flow','none'], timerTheme: ['modern','glass','minimal','accent'] },
+  timer: { style: ['plain','accent','card'], align: ['left','center','right'], repeatMode: ['fixed','daily24'], urgentStyle: ['flip','line','flow','none'], timerTheme: ['modern','glass','minimal','accent'], timerVariant: ['minimal','flat','block','line','point'], timerPalette: ['ink','blue','green','coral','accent'] },
   activity: { style: ['minimal','glass','dark'], mode: ['feed','count'], dataSource: ['live','sample'], sampleKind: ['consult','reservation','both'], animation: ['stack','none'], align: ['left','center','right'] },
   code: { height: ['auto','small','medium','large'] },
   search: { layout: ['card','bar','minimal'] },
@@ -337,6 +337,10 @@ function sanitizeBlock(block) {
     s.repeatMode = pickSafe(s.repeatMode || 'fixed', ['fixed','daily24'], 'fixed');
     s.urgentStyle = pickSafe(s.urgentStyle || 'none', ['flip','line','flow','none'], 'none');
     s.timerTheme = pickSafe(s.timerTheme || 'minimal', ['modern','glass','minimal','accent'], 'minimal');
+    const legacyTimerVariant = { modern: 'flat', glass: 'block', accent: 'point' }[s.timerTheme];
+    s.timerVariant = pickSafe(s.timerVariant || legacyTimerVariant || 'minimal', ['minimal','flat','block','line','point'], 'minimal');
+    s.timerPalette = pickSafe(s.timerPalette || 'ink', ['ink','blue','green','coral','accent'], 'ink');
+    s.timerMotion = !!s.timerMotion;
     s.floatOnBottom = !!s.floatOnBottom;
     s.floatLabel = s.floatLabel || s.label || '오늘 마감까지';
   }
@@ -627,5 +631,3 @@ function newBlock(type) {
 }
 
 export { BLOCK_SAFE_OPTIONS, clone, defaultPage, ensureUniqueAnchors, newBlock, normalize, normalizeIntegrations, normalizePageForSave, pickSafe, sanitizeBlock, slugifyAnchor, uid };
-
-

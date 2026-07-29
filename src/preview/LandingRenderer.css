@@ -41,6 +41,7 @@
 @import '../styles/preview-workspace-timer-minimal.css';
 @import '../styles/preview-workspace-timer-urgency.css';
 @import '../styles/preview-workspace-timer-bottom.css';
+@import '../styles/preview-workspace-timer-solid-variants.css';
 @import '../styles/preview-workspace-reservation.css';
 @import '../styles/preview-workspace-hero-full.css';
 @import '../styles/preview-workspace-hero-content.css';
@@ -53,11 +54,13 @@
 @import '../styles/preview-workspace-effects-bottom-editor.css';
 @import '../styles/preview-workspace-effects-fonts.css';
 @import '../styles/preview-workspace-effects-nav.css';
+@import '../styles/preview-workspace-topnav-balance.css';
 @import '../styles/preview-workspace-effects-widgets.css';
 @import '../styles/preview-workspace-effects-map-faq.css';
 @import '../styles/preview-widget-style-options.css';
 @import '../styles/preview-public.css';
 @import '../styles/preview-bottom-share.css';
+@import '../styles/preview-form-focus-fixed-ui.css';
 
 /* Global page typography consumers. */
 .landing-page .landing-content > :is(

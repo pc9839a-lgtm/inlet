@@ -5,8 +5,6 @@
 .page-share-button {
   position: absolute;
   z-index: 80;
-  top: 14px;
-  right: 14px;
   width: 44px;
   min-width: 44px;
   height: 44px;
@@ -21,16 +19,45 @@
   justify-content: center;
   gap: 6px;
   cursor: pointer;
-  transition: width .16s ease, border-color .16s ease, box-shadow .16s ease;
+  transition: width .16s ease, border-color .16s ease, box-shadow .16s ease, opacity .16s ease, transform .16s ease;
 }
 
-.page-share-button.has-top-nav {
-  top: 76px;
+.page-share-button.position-top-left,
+.page-share-button.position-top-right {
+  top: calc(max(12px, env(safe-area-inset-top)) + var(--page-fixed-top-height, 0px));
+  bottom: auto;
+}
+
+.page-share-button.position-bottom-left,
+.page-share-button.position-bottom-right {
+  top: auto;
+  bottom: calc(max(12px, env(safe-area-inset-bottom)) + var(--page-fixed-bottom-height, 0px));
+}
+
+.page-share-button.position-top-left,
+.page-share-button.position-bottom-left {
+  left: max(14px, env(safe-area-inset-left));
+  right: auto;
+}
+
+.page-share-button.position-top-right,
+.page-share-button.position-bottom-right {
+  left: auto;
+  right: max(14px, env(safe-area-inset-right));
 }
 
 .page-share-button.public-share-button {
   position: fixed;
-  right: max(14px, calc((100vw - 414px) / 2 + 14px));
+}
+
+.page-share-button.public-share-button.position-top-left,
+.page-share-button.public-share-button.position-bottom-left {
+  left: max(14px, calc((100vw - 414px) / 2 + 14px), env(safe-area-inset-left));
+}
+
+.page-share-button.public-share-button.position-top-right,
+.page-share-button.public-share-button.position-bottom-right {
+  right: max(14px, calc((100vw - 414px) / 2 + 14px), env(safe-area-inset-right));
 }
 
 .page-share-button.has-feedback {
@@ -54,10 +81,4 @@
 .page-share-button:focus-visible {
   outline: 3px solid rgba(37, 99, 235, .24);
   outline-offset: 2px;
-}
-
-@media (max-width: 414px) {
-  .page-share-button.public-share-button {
-    right: max(14px, env(safe-area-inset-right));
-  }
 }

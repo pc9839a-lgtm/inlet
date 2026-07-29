@@ -1,0 +1,152 @@
+.topnav-one-line {
+  --top-menu-count: 1;
+  --top-menu-gap: clamp(4px, 1.2vw, 7px);
+  --top-menu-single-max: clamp(112px, 32vw, 168px);
+  gap: clamp(8px, 2vw, 12px) !important;
+}
+
+.topnav-one-line .top-logo {
+  flex: 0 1 clamp(72px, 24%, 150px) !important;
+  max-width: 34% !important;
+}
+
+.topnav-one-line.topnav-menu-count-5 .top-logo {
+  flex-basis: clamp(58px, 18%, 104px) !important;
+  max-width: 24% !important;
+}
+
+.topnav-one-line .top-menu,
+.topnav-one-line.topnav-menu-loop .top-menu {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  overflow: hidden !important;
+}
+
+.topnav-one-line .top-menu-track,
+.topnav-one-line .top-menu-set,
+.topnav-one-line.topnav-menu-loop .top-menu-track,
+.topnav-one-line.topnav-menu-loop .top-menu-set {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+.topnav-one-line .top-menu-set,
+.topnav-one-line.topnav-menu-loop .top-menu-set {
+  display: grid !important;
+  grid-template-columns: repeat(var(--top-menu-count), minmax(0, 1fr)) !important;
+  gap: var(--top-menu-gap) !important;
+  align-items: stretch !important;
+  transform: none !important;
+  animation: none !important;
+}
+
+.topnav-one-line.topnav-menu-count-1 .top-menu-set {
+  grid-template-columns: minmax(96px, var(--top-menu-single-max)) !important;
+}
+
+.topnav-one-line.topnav-menu-count-1.topnav-align-left .top-menu-set {
+  justify-content: start !important;
+}
+
+.topnav-one-line.topnav-menu-count-1.topnav-align-center .top-menu-set {
+  justify-content: center !important;
+}
+
+.topnav-one-line.topnav-menu-count-1.topnav-align-right .top-menu-set {
+  justify-content: end !important;
+}
+
+.topnav-one-line .top-menu button {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  min-height: 44px !important;
+  padding: 0 clamp(7px, 1.5vw, 12px) !important;
+  overflow: hidden !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+}
+
+.topnav-one-line.topnav-menu-count-1 .top-menu button {
+  padding-inline: 14px !important;
+}
+
+.top-menu-label-window {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  line-height: 1.15 !important;
+  text-align: center !important;
+}
+
+.top-menu-label {
+  display: inline-block !important;
+  min-width: max-content !important;
+  white-space: nowrap !important;
+  transform: translateX(0);
+  will-change: transform;
+}
+
+.top-menu-label.is-overflowing {
+  animation: top-menu-label-roll 5.8s ease-in-out 0.8s infinite alternate;
+}
+
+@keyframes top-menu-label-roll {
+  0%, 18% {
+    transform: translateX(0);
+  }
+
+  82%, 100% {
+    transform: translateX(calc(var(--top-menu-roll-distance, 0px) * -1));
+  }
+}
+
+@media (max-width: 520px) {
+  .topnav-one-line {
+    --top-menu-gap: 4px;
+    --top-menu-single-max: clamp(104px, 38vw, 148px);
+    gap: 7px !important;
+    padding: 9px 10px !important;
+  }
+
+  .topnav-one-line .top-logo {
+    flex-basis: clamp(64px, 22%, 108px) !important;
+    max-width: 30% !important;
+  }
+
+  .topnav-one-line.topnav-menu-count-5 .top-logo {
+    flex-basis: clamp(54px, 17%, 76px) !important;
+    max-width: 20% !important;
+  }
+
+  .topnav-one-line .top-menu button {
+    min-height: 44px !important;
+    padding-inline: 6px !important;
+    font-size: 11px !important;
+  }
+
+  .topnav-one-line.topnav-menu-count-5 .top-menu button {
+    padding-inline: 4px !important;
+    font-size: 10px !important;
+    letter-spacing: -0.03em !important;
+  }
+
+  .topnav-one-line.topnav-menu-count-1 .top-menu button {
+    padding-inline: 13px !important;
+    font-size: 12px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .top-menu-label.is-overflowing {
+    animation: none !important;
+    transform: none !important;
+  }
+}

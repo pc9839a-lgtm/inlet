@@ -5,6 +5,7 @@
 Before modifying or deploying Pagero, read:
 
 - `docs/PAGERO_MAINTENANCE_HANDOFF_KO.md`
+- `docs/PAGERO_EDITOR_INTERACTION_PATCH_HANDOFF_KO.md` for editor, top navigation, sharing, form-focus, and timer follow-up work.
 
 The production root source of truth is `functions/index.js`, not a file named
 `functions/frozenHome.js` and not the local Vite home alone.
