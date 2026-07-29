@@ -1,13 +1,12 @@
 import { Component, Suspense } from 'react';
 import { forceCanonicalRuntime } from '../runtime/LazyRuntimeBoundary.jsx';
 
-const LAZY_EDITOR_FALLBACK_TEXT = '편집기를 불러오는 중입니다.';
 const LAZY_EDITOR_ERROR_TEXT = '편집기를 불러오지 못했습니다. 블록을 다시 열거나 새로고침해 주세요.';
 
 export function LazyEditorBoundary({ resetKey, children }) {
   return (
     <LazyEditorErrorBoundary resetKey={resetKey}>
-      <Suspense fallback={<div className="muted small" data-lazy-editor-fallback="true">{LAZY_EDITOR_FALLBACK_TEXT}</div>}>
+      <Suspense fallback={<div className="lazy-editor-fallback" data-lazy-editor-fallback="true" aria-hidden="true" />}>
         {children}
       </Suspense>
     </LazyEditorErrorBoundary>
@@ -33,7 +32,7 @@ class LazyEditorErrorBoundary extends Component {
 
   render() {
     if (this.state.recovering) {
-      return <div className="muted small" role="status">최신 편집기를 다시 불러오는 중입니다.</div>;
+      return <div className="lazy-editor-fallback" aria-hidden="true" />;
     }
     if (this.state.error) {
       return (

@@ -308,6 +308,10 @@ assert(/<PreviewRenderer[\s\S]*?page=\{publicPage\}[\s\S]*?addLead=\{\(lead\) =>
 assert(!/import\s+(?:InboxPanel|StatsPanel|StylePanel|SettingsPanel|TemplatesPanel|AdminPanel|AiPanel)\b/.test(app), 'heavy panels and AI panel must not be statically imported into App');
 assert(!/import\s+(?:\{[^}]*Editor[^}]*\}|[A-Z][A-Za-z]+Editor)\s+from\s+['"]\.\/editor\/blockEditors\//.test(app), 'block editors must not be statically imported into App');
 assert(lazyRuntimeBoundary.includes('function LazyEditorFallback()') && lazyRuntimeBoundary.includes('class LazyEditorBoundary extends Component'), 'fixed block editor controls must keep lazy fallback and error boundary');
+assert(app.includes('const CHUNK_RELOAD_LIMIT = 1') && lazyRuntimeBoundary.includes('const CHUNK_RELOAD_LIMIT = 1'), 'lazy chunk recovery must reload at most once per route');
+assert(app.includes('Unable to preload CSS') && lazyRuntimeBoundary.includes('Unable to preload CSS'), 'lazy chunk recovery must cover stale CSS preload failures');
+assert(app.includes('className="lazy-surface-fallback"') && lazyRuntimeBoundary.includes('className="lazy-surface-fallback"'), 'panel lazy fallbacks must remain visually silent');
+assert(!app.includes('패널을 불러오는 중입니다.') && !lazyRuntimeBoundary.includes('Loading screen...') && !lazyRuntimeBoundary.includes('Loading editor...') && !lazyEditorBoundary.includes('편집기를 불러오는 중입니다.'), 'lazy fallbacks must not expose loading copy');
 assert(lazyRuntimeBoundary.includes('componentDidUpdate(prevProps)') && /this\.setState\(\{\s*error:\s*null(?:,\s*recovering:\s*false)?\s*\}\)/.test(lazyRuntimeBoundary), 'lazy editor boundaries must reset after selection changes');
 assert(lazyRuntimeBoundary.includes("this.props.variant !== 'preview' && recoverLazyChunkLoad(error)") && !/class LazyEditorBoundary[\s\S]*?recoverLazyChunkLoad\(error\)/.test(lazyRuntimeBoundary), 'workspace preview and editor lazy errors must not redirect the whole editor runtime');
 assert(fixedBlockRenderers.includes('renderLazyEditor') && fixedBlockRenderers.includes('createFixedBlockRenderers'), 'fixed block editor renderers must stay split from App');
@@ -438,7 +442,7 @@ assert(!heroStylePanelSource.includes("value={s.height || 'medium'}"), 'hero sty
 const faqStylePanelSource = widgetStylePanels.slice(widgetStylePanels.indexOf('export function FaqStylePanel'), widgetStylePanels.indexOf('export function SearchStylePanel'));
 assert(faqStylePanelSource.includes("value={s.layout || 'accordion'}"), 'FAQ style editor default must match the page model and renderer accordion default');
 assert(!widgetStyleEditors.find((source) => source.includes('export default function TimerEditor'))?.includes('TimerFloatingCtaSection'), 'timer editor must not expose the unused floatOnBottom control');
-assert(lazyEditorBoundary.includes('<Suspense fallback=') && lazyEditorBoundary.includes('data-lazy-editor-fallback="true"') && lazyEditorBoundary.includes('LAZY_EDITOR_FALLBACK_TEXT'), 'BlockEditor must keep a stable lazy editor loading fallback');
+assert(lazyEditorBoundary.includes('<Suspense fallback=') && lazyEditorBoundary.includes('data-lazy-editor-fallback="true"') && lazyEditorBoundary.includes('className="lazy-editor-fallback"') && lazyEditorBoundary.includes('aria-hidden="true"'), 'BlockEditor must keep a stable silent lazy editor fallback');
 assert(lazyEditorBoundary.includes('role="alert"') && lazyEditorBoundary.includes('data-lazy-editor-error="true"') && lazyEditorBoundary.includes('LAZY_EDITOR_ERROR_TEXT'), 'BlockEditor must show a useful lazy editor failure state');
 assert(lazyEditorBoundary.includes('componentDidUpdate(prevProps)') && /this\.setState\(\{\s*error:\s*null(?:,\s*recovering:\s*false)?\s*\}\)/.test(lazyEditorBoundary), 'BlockEditor lazy error boundary must reset when the selected block/type changes');
 assert(appErrorBoundary.includes('className="error-screen error-screen-v2"'), 'AppErrorBoundary must keep the app recovery screen');

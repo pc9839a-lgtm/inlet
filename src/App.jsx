@@ -107,7 +107,7 @@ const Dashboard = lazy(() => import('./screens/HomeScreens.jsx').then((module) =
 const PublicHome = lazy(() => import('./screens/PublicHomeRoute.jsx'));
 const INBOX_PAGE_SIZE = 10;
 const CHUNK_RELOAD_KEY = 'pagero-chunk-reload-v5';
-const CHUNK_RELOAD_LIMIT = 5;
+const CHUNK_RELOAD_LIMIT = 1;
 const PLATFORM_MASTER_EMAILS = ['admin@pagero.kr', 'roadfor@kakao.com'];
 
 function isPlatformMasterUser(user = null) {
@@ -118,7 +118,7 @@ function isPlatformMasterUser(user = null) {
 
 function isLazyChunkLoadError(error) {
   const message = String(error?.message || error || '');
-  return /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Loading chunk|ChunkLoadError/i.test(message);
+  return /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Loading chunk|ChunkLoadError|Unable to preload CSS|Failed to load module script|MIME type/i.test(message);
 }
 
 async function clearBrowserRuntimeCaches() {
@@ -176,7 +176,7 @@ function recoverLazyChunkLoad(error) {
 }
 
 function LazyPanelFallback() {
-  return <section className="card"><div className="section-title"><h2>패널을 불러오는 중입니다.</h2></div></section>;
+  return <div className="lazy-surface-fallback" aria-hidden="true" />;
 }
 
 class LazyChunkBoundary extends Component {

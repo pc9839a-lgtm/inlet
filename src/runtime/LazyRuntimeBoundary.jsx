@@ -1,10 +1,10 @@
 import { Component, Suspense } from 'react';
 
 const CHUNK_RELOAD_KEY = 'pagero-chunk-reload-v6';
-const CHUNK_RELOAD_LIMIT = 5;
+const CHUNK_RELOAD_LIMIT = 1;
 function isLazyChunkLoadError(error) {
   const message = String(error?.message || error || '');
-  return /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Loading chunk|ChunkLoadError|Unexpected token '<'|Failed to load module script|MIME type/i.test(message);
+  return /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Loading chunk|ChunkLoadError|Unexpected token '<'|Unable to preload CSS|Failed to load module script|MIME type/i.test(message);
 }
 
 async function clearBrowserRuntimeCaches() {
@@ -62,7 +62,7 @@ export function recoverLazyChunkLoad(error) {
 }
 
 export function LazyPanelFallback() {
-  return <section className="card"><div className="section-title"><h2>Loading screen...</h2></div></section>;
+  return <div className="lazy-surface-fallback" aria-hidden="true" />;
 }
 
 export function LazyPreviewFallback({ recovering = false }) {
@@ -97,7 +97,7 @@ export class LazyChunkBoundary extends Component {
 
   render() {
     if (this.state.recovering) {
-      return this.props.variant === 'preview' ? <LazyPreviewFallback recovering /> : <LazyPanelFallback />;
+      return <LazyPanelFallback />;
     }
     if (this.state.error) {
       if (this.props.variant === 'preview') {
@@ -118,7 +118,7 @@ export class LazyChunkBoundary extends Component {
 }
 
 export function LazyEditorFallback() {
-  return <div className="muted small">Loading editor...</div>;
+  return <div className="lazy-editor-fallback" aria-hidden="true" />;
 }
 
 export function renderLazyEditor(Editor, props) {
@@ -150,7 +150,7 @@ export class LazyEditorBoundary extends Component {
 
   render() {
     if (this.state.recovering) {
-      return <div className="muted small" role="status">최신 편집기를 다시 불러오는 중입니다.</div>;
+      return <LazyEditorFallback />;
     }
     if (this.state.error) {
       return (
