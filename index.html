@@ -12,10 +12,11 @@
       if (location.hostname !== 'call.pagero.kr' || location.pathname.startsWith('/api/')) return;
       const clean = location.pathname.replace(/\/+$/, '') || '/';
       const routes = {
-        '/': '/call/home/index.html?v=20260729-benefit-fit-v5',
-        '/home': '/call/home/index.html?v=20260729-benefit-fit-v5',
-        '/home-v4': '/call/home/index.html?v=20260729-benefit-fit-v5',
-        '/home-v5': '/call/home/index.html?v=20260729-benefit-fit-v5',
+        '/': '/home-v6',
+        '/home': '/home-v6',
+        '/home-v4': '/home-v6',
+        '/home-v5': '/home-v6',
+        '/home-v6': '/home-v6',
         '/login': '/call/index.html',
         '/signup': '/call/index.html',
         '/privacy': '/call/privacy/index.html',
@@ -24,7 +25,7 @@
         '/preview': '/call/preview/index.html',
       };
       const target = routes[clean];
-      if (target) {
+      if (target && location.pathname !== target) {
         location.replace(`${target}${location.hash}`);
       }
     })();
