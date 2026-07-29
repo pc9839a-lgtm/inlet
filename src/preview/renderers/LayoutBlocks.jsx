@@ -53,7 +53,8 @@ export function RenderTopNav({ block, go }) {
   const menuStyle = pickSafe(s.menuStyle || 'pill', ['pill','text','outline'], 'pill');
   const menuSize = pickSafe(s.menuSize || 'medium', ['small','medium','large'], 'medium');
   const align = pickSafe(s.align || 'left', ['left','center','right'], 'left');
-  const menus = Array.isArray(s.menus) ? s.menus.slice(0, 8) : [];
+  const storedMenus = Array.isArray(s.menusV2) && s.menusV2.length ? s.menusV2 : s.menus;
+  const menus = Array.isArray(storedMenus) ? storedMenus.slice(0, 8) : [];
   const menuCount = Math.max(1, menus.length);
   const menuColumns = Math.min(4, menuCount);
   const isPillMenu = menuStyle === 'pill';
