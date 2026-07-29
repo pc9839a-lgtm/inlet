@@ -1,1 +1,93 @@
-.landing-page .topnav-one-line .top-menu button{box-shadow:none!important;filter:none!important}.landing-page .topnav-one-line.menu-pill .top-menu button{background:var(--top-menu-bg,var(--card))!important;border-color:var(--top-menu-bg,var(--card))!important;color:var(--top-menu-text,var(--text))!important}.landing-page .topnav-one-line.menu-outline .top-menu button{background:transparent!important;border-color:var(--top-menu-bg,var(--card))!important;color:var(--top-menu-text,var(--text))!important}.landing-page .topnav-one-line.menu-text .top-menu button{background:transparent!important;border-color:transparent!important;color:var(--top-menu-text,var(--text))!important}.landing-page.button-effect-shine .topnav-one-line .top-menu button::before{content:none!important}.landing-page .topnav-one-line.menu-pill .top-menu button:hover,.landing-page .topnav-one-line.menu-pill .top-menu button:focus-visible{background:var(--top-menu-hover,var(--accent))!important;border-color:var(--top-menu-hover,var(--accent))!important;color:var(--top-menu-hover-text,#ffffff)!important;transform:translateY(-1px)!important;box-shadow:0 8px 18px rgba(15,23,42,.14)!important}.landing-page .topnav-one-line.menu-outline .top-menu button:hover,.landing-page .topnav-one-line.menu-outline .top-menu button:focus-visible,.landing-page .topnav-one-line.menu-text .top-menu button:hover,.landing-page .topnav-one-line.menu-text .top-menu button:focus-visible{background:var(--top-menu-hover,rgba(17,24,39,.08))!important;border-color:var(--top-menu-hover-text,var(--top-menu-text,var(--text)))!important;color:var(--top-menu-hover-text,var(--top-menu-text,var(--text)))!important;transform:translateY(-1px)!important;box-shadow:none!important}.landing-page .bottom-bar.bottom-custom-color .bottom-bar-buttons button,.landing-page.button-effect-fill .bottom-bar.bottom-custom-color .bottom-bar-buttons button,.landing-page.button-effect-shine .bottom-bar.bottom-custom-color .bottom-bar-buttons button,.landing-page.button-effect-burst .bottom-bar.bottom-custom-color .bottom-bar-buttons button{background:var(--bottom-button,var(--accent))!important;border-color:var(--bottom-button,var(--accent))!important;color:var(--bottom-button-text,#ffffff)!important}.landing-page .bottom-bar.bottom-custom-color .bottom-bar-buttons button b,.landing-page .bottom-bar.bottom-custom-color .bottom-bar-buttons button span{color:var(--bottom-button-text,#ffffff)!important}.landing-page .bottom-bar .bottom-bar-buttons button.no-icon{gap:0!important}.landing-page .bottom-bar .bottom-bar-buttons button.no-icon b{width:100%!important;text-align:center!important}
+.landing-page .topnav-one-line .top-menu,
+.landing-page .topnav-one-line .top-menu-track,
+.landing-page .topnav-one-line .top-menu-set,
+.landing-page .topnav-one-line .top-menu button,
+.public-landing-viewport .topnav.topnav-one-line .top-menu,
+.public-landing-viewport .topnav.topnav-one-line .top-menu-track,
+.public-landing-viewport .topnav.topnav-one-line .top-menu-set,
+.public-landing-viewport .topnav.topnav-one-line .top-menu button {
+  -webkit-mask: none !important;
+  mask: none !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+  clip-path: none !important;
+}
+
+.landing-page .topnav-one-line .top-menu button,
+.public-landing-viewport .topnav.topnav-one-line .top-menu button {
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+.landing-page .topnav-one-line.menu-pill .top-menu button {
+  background: var(--top-menu-bg, var(--card)) !important;
+  border-color: var(--top-menu-bg, var(--card)) !important;
+  color: var(--top-menu-text, var(--text)) !important;
+}
+
+.landing-page .topnav-one-line.menu-outline .top-menu button {
+  background: transparent !important;
+  border-color: var(--top-menu-bg, var(--card)) !important;
+  color: var(--top-menu-text, var(--text)) !important;
+}
+
+.landing-page .topnav-one-line.menu-text .top-menu button {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: var(--top-menu-text, var(--text)) !important;
+}
+
+.landing-page.button-effect-shine .topnav-one-line .top-menu button::before {
+  content: none !important;
+}
+
+.landing-page .topnav-one-line.menu-pill .top-menu button:hover,
+.landing-page .topnav-one-line.menu-pill .top-menu button:focus-visible,
+.public-landing-viewport .topnav.topnav-one-line.menu-pill .top-menu button:hover,
+.public-landing-viewport .topnav.topnav-one-line.menu-pill .top-menu button:focus-visible {
+  background: var(--top-menu-hover, var(--accent)) !important;
+  border-color: var(--top-menu-hover, var(--accent)) !important;
+  color: var(--top-menu-hover-text, #ffffff) !important;
+  transform: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+.landing-page .topnav-one-line.menu-outline .top-menu button:hover,
+.landing-page .topnav-one-line.menu-outline .top-menu button:focus-visible,
+.landing-page .topnav-one-line.menu-text .top-menu button:hover,
+.landing-page .topnav-one-line.menu-text .top-menu button:focus-visible,
+.public-landing-viewport .topnav.topnav-one-line.menu-outline .top-menu button:hover,
+.public-landing-viewport .topnav.topnav-one-line.menu-outline .top-menu button:focus-visible,
+.public-landing-viewport .topnav.topnav-one-line.menu-text .top-menu button:hover,
+.public-landing-viewport .topnav.topnav-one-line.menu-text .top-menu button:focus-visible {
+  background: var(--top-menu-hover, rgba(17, 24, 39, 0.08)) !important;
+  border-color: var(--top-menu-hover-text, var(--top-menu-text, var(--text))) !important;
+  color: var(--top-menu-hover-text, var(--top-menu-text, var(--text))) !important;
+  transform: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+.landing-page .bottom-bar.bottom-custom-color .bottom-bar-buttons button,
+.landing-page.button-effect-fill .bottom-bar.bottom-custom-color .bottom-bar-buttons button,
+.landing-page.button-effect-shine .bottom-bar.bottom-custom-color .bottom-bar-buttons button,
+.landing-page.button-effect-burst .bottom-bar.bottom-custom-color .bottom-bar-buttons button {
+  background: var(--bottom-button, var(--accent)) !important;
+  border-color: var(--bottom-button, var(--accent)) !important;
+  color: var(--bottom-button-text, #ffffff) !important;
+}
+
+.landing-page .bottom-bar.bottom-custom-color .bottom-bar-buttons button b,
+.landing-page .bottom-bar.bottom-custom-color .bottom-bar-buttons button span {
+  color: var(--bottom-button-text, #ffffff) !important;
+}
+
+.landing-page .bottom-bar .bottom-bar-buttons button.no-icon {
+  gap: 0 !important;
+}
+
+.landing-page .bottom-bar .bottom-bar-buttons button.no-icon b {
+  width: 100% !important;
+  text-align: center !important;
+}
