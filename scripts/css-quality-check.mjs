@@ -95,7 +95,7 @@ const cssFiles = [
   'src/styles/preview-workspace-topnav-override.css',
   'src/styles/preview-workspace-empty.css',
   'src/styles/preview-workspace-template.css',
-  'src/styles/preview-workspace-timer.css',
+  'src/styles/preview-workspace-timer-minimal.css',
   'src/styles/preview-workspace-timer-urgency.css',
   'src/styles/preview-workspace-timer-bottom.css',
   'src/styles/preview-workspace-reservation.css',

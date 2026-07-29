@@ -46,7 +46,7 @@ const previewCssFiles = [
   'src/styles/preview-workspace-topnav-override.css',
   'src/styles/preview-workspace-empty.css',
   'src/styles/preview-workspace-template.css',
-  'src/styles/preview-workspace-timer.css',
+  'src/styles/preview-workspace-timer-minimal.css',
   'src/styles/preview-workspace-timer-urgency.css',
   'src/styles/preview-workspace-timer-bottom.css',
   'src/styles/preview-workspace-reservation.css',
@@ -371,6 +371,7 @@ assert(!files.imageGallery.includes('description='), 'gallery style controls sho
 assert(files.media.includes('image-${display}') && files.media.includes('gallery.slice(0, gridCount)') && files.media.includes('image-gallery-grid-${visibleGallery.length}') && files.media.includes('galleryShowArrows') && files.media.includes('galleryShowDots') && files.media.includes("'--block-margin'"), 'image renderer should consume the selected 2/4 grid count, slide navigation, and spacing settings');
 assert(files.previewCss.includes('.image-sec .image-wrap.image-original img') && files.previewCss.includes('.image-sec .image-wrap.image-fill img') && files.previewCss.includes('.image-gallery-grid-3') && files.previewCss.includes('.image-gallery-grid-4') && files.previewCss.includes('.gallery-arrows') && files.previewCss.includes('.dots'), 'image and gallery CSS should consume grid, slide display, and navigation classes');
 assert(!files.widgetStyles.includes('TimerStylePanel') && files.signal.includes('timer-theme-minimal timer-effect-none') && !files.signal.includes('timer-progress-modern') && !files.landing.includes('bottom-timer-track') && !files.landing.includes('floatLabel'), 'timer rendering should use one fixed base design and the bottom timer should render numbers only');
+assert(files.landingCss.includes('preview-workspace-timer-minimal.css') && !files.landingCss.includes('preview-workspace-timer.css'), 'landing renderer should import the minimal timer stylesheet instead of the legacy timer stylesheet');
 assert(files.widgetStyles.includes('label="목록 움직임"') && files.widgetStyles.includes("animation: value ? 'stack' : 'none'") && files.signal.includes('activity-anim-${anim}') && files.previewCss.includes('.activity-anim-none .activity-live-dot'), 'activity movement toggle should map to renderer classes and fully stop animation');
 assert(files.widgetStyles.includes('<Color label="강조색"') && !files.widgetStyles.includes('<Color label="카드 배경"') && !files.widgetStyles.includes('<Color label="글자색"'), 'schedule style controls should keep the useful accent color while inheriting card and text colors from the page theme');
 assert(!files.widgetStyles.includes('WidgetSurfaceControls') && !files.widgetStyles.includes('label="위아래 여백"') && !files.widgetStyles.includes('label="모서리"') && !files.widgetStyles.includes('label="그림자 추가"'), 'widget style panels should keep only widget-specific controls and content alignment');
