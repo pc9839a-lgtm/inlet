@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { pickSafe, widgetBoxClass, widgetBoxVars } from './previewUtils.jsx';
 
 const TIMER_BASE_CLASS = 'timer-theme-minimal timer-effect-none';
-const TIMER_VARIANTS = ['minimal', 'flat', 'block', 'line', 'point'];
+const TIMER_VARIANTS = ['clean', 'cards', 'promo'];
 const TIMER_PALETTES = ['ink', 'blue', 'green', 'coral', 'accent'];
 
 function TimerUnit({ value, label, effect = 'none' }) {
@@ -18,12 +18,20 @@ function TimerUnit({ value, label, effect = 'none' }) {
 }
 
 function timerVariant(settings = {}) {
-  const legacyVariant = {
-    modern: 'flat',
-    glass: 'block',
-    accent: 'point',
+  const legacyThemeVariant = {
+    modern: 'cards',
+    glass: 'promo',
+    accent: 'promo',
+    minimal: 'clean',
   }[settings.timerTheme];
-  return pickSafe(settings.timerVariant || legacyVariant || 'minimal', TIMER_VARIANTS, 'minimal');
+  const legacyVariant = {
+    minimal: 'clean',
+    line: 'clean',
+    flat: 'cards',
+    point: 'cards',
+    block: 'promo',
+  }[settings.timerVariant];
+  return pickSafe(legacyVariant || settings.timerVariant || legacyThemeVariant || 'clean', TIMER_VARIANTS, 'clean');
 }
 
 function timerPalette(settings = {}) {
@@ -88,6 +96,10 @@ export function RenderTimer({ block }) {
         <strong className="timer-ended">{s.ended || '종료되었습니다.'}</strong>
       ) : (
         <>
+          <div className="timer-topline">
+            <span>{s.label || '혜택 마감까지'}</span>
+            <em>마감 임박</em>
+          </div>
           <div className="timer-grid timer-grid-modern">
             {showDays ? <TimerUnit value={t.d} label="일" effect="none" /> : null}
             <TimerUnit value={t.h} label="시" effect="none" />
@@ -169,7 +181,6 @@ export function RenderActivity({ block, leads = [] }) {
   const baseRows = source === 'live'
     ? activityRowsFromLeads(leads)
     : sampleActivityRows(sampleKind);
-
   const fallbackRows = sampleActivityRows(sampleKind).slice(0, 4);
   const rows = baseRows.length ? baseRows : fallbackRows;
   const rotated = rows.map((_, i) => rows[(i + tick) % rows.length]).slice(0, 4);
