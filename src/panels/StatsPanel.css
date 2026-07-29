@@ -278,3 +278,31 @@
   background: #fef2f2;
   color: #b91c1c;
 }
+
+
+/* Keep filter interaction and chart geometry stable while server data refreshes. */
+.stats-panel .stats-channel-filter-list button {
+  transition: none !important;
+}
+
+.stats-panel .stats-trend-card {
+  overflow: visible !important;
+}
+
+.stats-panel .stats-line-plot {
+  margin-top: 14px !important;
+}
+
+.stats-panel .stats-line-chart .trend-legend {
+  min-height: 20px !important;
+  margin-top: 10px !important;
+  align-items: center !important;
+}
+
+.stats-panel .stat-card-v2 .section-title {
+  margin-bottom: 16px !important;
+}
+
+.stats-panel .stat-row-v2 {
+  min-height: 32px !important;
+}

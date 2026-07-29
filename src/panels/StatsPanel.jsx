@@ -212,7 +212,7 @@ function StatsTrend({ data }) {
         ))}
       </svg>
       {hover && (
-        <div className="stats-chart-tooltip stats-chart-tooltip-wide" style={{ left: String((hover.x / width) * 100) + '%', top: String(hover.y) + 'px' }}>
+        <div className="stats-chart-tooltip stats-chart-tooltip-wide" style={{ left: String((hover.x / width) * 100) + '%', top: String(Math.max(86, hover.y)) + 'px' }}>
           <span>{hover.row.id || hover.row.label}</span>
           <strong>조회 {Number(hover.row.pv || 0).toLocaleString('ko-KR')}</strong>
           <em>클릭 {Number(hover.row.cta || 0).toLocaleString('ko-KR')} / 접수 {Number(hover.row.db || 0).toLocaleString('ko-KR')}</em>

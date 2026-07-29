@@ -132,6 +132,8 @@ const statsSummarySync = await readFile('src/runtime/useStatsSummarySync.js', 'u
 const workspacePanelProps = await readFile('src/runtime/createWorkspacePanelProps.js', 'utf8');
 assert(statsSummarySync.includes('fetchServerStatsSummary') && statsSummarySync.includes('fetchServerLeads(page, authUser, { limit: 8'), 'split stats sync should load server aggregates and only recent lead rows');
 assert(statsSummarySync.includes('previousStatsDateRanges') && statsSummarySync.includes('mergeStatsSummaryResults') && statsSummarySync.includes('comparisonPromise'), 'split stats sync should load an isolated previous-period aggregate comparison');
+assert(!/setStatsPartial\(false\);\s*setServerStatsSummary\(null\);\s*Promise\.all/.test(statsSummarySync) && !/setStatsPartial\(true\);\s*setServerStatsSummary\(null\)/.test(statsSummarySync), 'stats channel refresh must preserve the previous server summary instead of flashing through local mode');
+assert(statsPanel.includes('Math.max(86, hover.y)'), 'stats chart tooltip should keep enough top clearance for high data points');
 
 assert(workspacePanelProps.includes('eventPageMeta: statsEventPageMeta') && workspacePanelProps.includes('leadPageMeta: statsLeadPageMeta'), 'workspace panel props should pass stats pagination metadata');
 assert(leadCaptureActions.includes('utmSource') && leadCaptureActions.includes('utmMedium') && leadCaptureActions.includes('utmCampaign'), 'lead capture should keep UTM fields');
@@ -142,4 +144,4 @@ const trafficAttribution = await readFile('src/lib/trafficAttribution.js', 'utf8
 assert(trafficAttribution.includes('trafficAttributionFromUrl') && trafficAttribution.includes('utm_source'), 'traffic attribution should parse UTM source');
 assert(trafficAttribution.includes('trafficChannelFromReferrer') && trafficAttribution.includes('sourceLabel'), 'traffic attribution should fall back to referrer and source label');
 
-console.log(JSON.stringify({ ok: true, checks: 62 }, null, 2));
+console.log(JSON.stringify({ ok: true, checks: 64 }, null, 2));
