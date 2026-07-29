@@ -101,6 +101,10 @@ const files = {
   timerEditor: await readFile('src/editor/blockEditors/TimerEditor.jsx', 'utf8'),
   timerBasic: await readFile('src/editor/blockEditors/TimerBasicSection.jsx', 'utf8'),
   layout: await readFile('src/preview/renderers/LayoutBlocks.jsx', 'utf8'),
+  topNavEditorModel: await readFile('src/editor/blockEditors/topNavEditorModel.js', 'utf8'),
+  topNavMenuCount: await readFile('src/editor/blockEditors/TopNavMenuCountControl.jsx', 'utf8'),
+  topNavMenuController: await readFile('src/editor/blockEditors/useTopNavMenuController.js', 'utf8'),
+  topNavBalanceCss: await readFile('src/styles/preview-workspace-topnav-balance.css', 'utf8'),
   widgetStyles: await readFile('src/editor/blockEditors/WidgetStylePanels.jsx', 'utf8'),
   heroImage: await readFile('src/editor/blockEditors/HeroImageSection.jsx', 'utf8'),
   dividerEditor: await readFile('src/editor/blockEditors/DividerEditor.jsx', 'utf8'),
@@ -152,11 +156,15 @@ assert(files.landing.includes('installConversionTracking(page)') && files.landin
 assert(files.landing.includes("page.theme.animPlayback === 'loop'") && files.landing.includes('prepareForReentry'), 'animation loop should replay on viewport re-entry');
 assert(files.animationCard.includes('updateTheme({ animPlayback })') && files.animationPlayback.includes('ANIMATION_PLAYBACK_OPTIONS'), 'animation playback editor contract missing');
 
-assert(files.layout.includes('RollingMenuLabel') && files.layout.includes('s.menus.slice(0, 5)'), 'topnav should cap five menus and measure rolling labels');
-assert(files.layout.includes("'--top-menu-count': String(menuCount)"), 'topnav should expose menu count to CSS');
-assert(files.previewCss.includes('grid-template-columns: repeat(var(--top-menu-count), minmax(0, 1fr))'), 'topnav should distribute available width evenly');
-assert(files.previewCss.includes('.topnav-one-line.topnav-menu-count-1') && files.previewCss.includes('.topnav-one-line.topnav-menu-count-5'), 'topnav should have one/five item balance rules');
-assert(files.previewCss.includes('.top-menu-label.is-overflowing') && files.previewCss.includes('@keyframes top-menu-label-roll'), 'long topnav labels should roll only when overflowing');
+assert(files.topNavEditorModel.includes('MAX_MENU_COUNT = 8') && files.topNavEditorModel.includes('menusV2'), 'topnav editor should preserve up to eight menus');
+assert(files.topNavMenuCount.includes("['8', '8개']"), 'topnav editor should expose eight menu choices');
+assert(files.topNavMenuController.includes('normalizedTopNavMenus(s.menus, s.menusV2)') && files.topNavMenuController.includes('topNavMenuStorage(nextMenus)'), 'topnav controller should read and save canonical eight-menu data');
+assert(files.layout.includes('storedMenus') && files.layout.includes('storedMenus.slice(0, 8)') && files.layout.includes('Math.min(4, menuCount)'), 'topnav renderer should cap eight menus at four columns');
+assert(files.layout.includes("'--top-menu-columns': String(menuColumns)"), 'topnav should expose menu column count to CSS');
+assert(files.topNavBalanceCss.includes('grid-template-columns: repeat(var(--top-menu-columns), minmax(0, 1fr))'), 'topnav should distribute available width into at most four equal columns');
+assert(files.topNavBalanceCss.includes('grid-auto-flow: row') && files.topNavBalanceCss.includes('min-height: 44px'), 'topnav should wrap into rows with accessible touch height');
+assert(files.topNavBalanceCss.includes('white-space: normal') && files.topNavBalanceCss.includes('overflow-wrap: anywhere'), 'topnav labels should wrap without ellipsis');
+assert(!files.topNavBalanceCss.includes('overflow-x: auto') && !files.topNavBalanceCss.includes('@keyframes top-menu-label-roll'), 'topnav final layout must not scroll or roll labels');
 
 assert(files.landing.includes("typeof navigator.share === 'function'"), 'native share capability check missing');
 assert(files.landing.includes('navigator.canShare(payload)') && files.landing.includes("if (error?.name === 'AbortError') return"), 'native share support/cancel handling missing');
