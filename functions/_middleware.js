@@ -8,6 +8,7 @@ export async function onRequest(context) {
   const routes = {
     '/': '/call/home/index.html',
     '/home': '/call/home/index.html',
+    '/home-v4': '/call/home/index.html',
     '/login': '/call/index.html',
     '/signup': '/call/index.html',
     '/privacy': '/call/privacy/index.html',
@@ -29,10 +30,26 @@ export async function onRequest(context) {
   const mapped = routes[clean];
   if (!mapped) return context.next();
 
+  const isHome = clean === '/' || clean === '/home' || clean === '/home-v4';
   const assetUrl = new URL(context.request.url);
   assetUrl.pathname = mapped;
-  assetUrl.search = '';
+  assetUrl.search = isHome ? '?v=20260729-visual-motion-v4' : '';
   const response = await context.env.ASSETS.fetch(assetUrl);
+
+  if (isHome) {
+    const homeHeaders = new Headers(response.headers);
+    homeHeaders.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    homeHeaders.set('CDN-Cache-Control', 'no-store');
+    homeHeaders.set('Cloudflare-CDN-Cache-Control', 'no-store');
+    homeHeaders.set('Pragma', 'no-cache');
+    homeHeaders.set('Expires', '0');
+    homeHeaders.set('X-CallLink-Home-Version', 'visual-motion-v4');
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: homeHeaders,
+    });
+  }
 
   if (!clean.includes('preview')) return response;
 
