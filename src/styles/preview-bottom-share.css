@@ -1,0 +1,61 @@
+.bottom-bar-actions {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  align-items: stretch;
+  pointer-events: none;
+}
+
+.bottom-bar-actions.has-share {
+  grid-template-columns: minmax(0, 1fr) 76px;
+}
+
+.bottom-bar-actions .bottom-bar-buttons {
+  min-width: 0;
+  pointer-events: auto;
+}
+
+.bottom-bar .bottom-share-button {
+  width: 76px !important;
+  min-width: 76px !important;
+  min-height: 54px !important;
+  padding: 0 10px !important;
+  border: 1px solid #dbe3ef !important;
+  border-radius: 18px !important;
+  background: #fff !important;
+  color: #111827 !important;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, .12) !important;
+  pointer-events: auto;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+}
+
+.bottom-bar .bottom-share-button svg {
+  flex: 0 0 auto;
+  stroke: currentColor;
+}
+
+.bottom-bar .bottom-share-button b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: inherit !important;
+  font-size: 12px !important;
+}
+
+@media (max-width: 360px) {
+  .bottom-bar-actions.has-share {
+    grid-template-columns: minmax(0, 1fr) 64px;
+  }
+
+  .bottom-bar .bottom-share-button {
+    width: 64px !important;
+    min-width: 64px !important;
+    padding: 0 7px !important;
+  }
+}

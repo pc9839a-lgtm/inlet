@@ -1,4 +1,5 @@
 ﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Share2 } from 'lucide-react';
 import { installConversionTracking, installPageHeadMeta } from '../lib/conversionTracking.js';
 import { normalizeExternalUrl } from '../lib/linkPreview.js';
 import './LandingRenderer.css';
@@ -306,14 +307,15 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
   const syncedTimer = getSyncedTimerSettings(blocks);
   const bottomHasButtons = !!bottom && normalizeButtons(bottom.s?.buttons, bottom.s?.count).slice(0, Number(bottom.s?.count || 1)).some((b)=>b.enabled!==false);
   const bottomHasTimer = !!bottom?.s?.timerEnabled && !!syncedTimer;
-  const bottomActive = !!bottom && (bottomHasButtons || bottomHasTimer);
+  const bottomHasShare = !!bottom && bottom.s?.shareEnabled !== false;
+  const bottomActive = !!bottom && (bottomHasButtons || bottomHasTimer || bottomHasShare);
   const buttonEffect = pickSafe(normalizeButtonEffect(page.theme.buttonEffect), ['fill','shine','burst'], 'fill');
   const bgEffect = pickSafe(page.theme.bgEffect || 'none', ['none','snow','petals','sparkle'], 'none');
   const bgEffectOpacity = Math.max(0.1, Math.min(0.9, Number(page.theme.bgEffectOpacity ?? 45) / 100));
   const globalAlign = pickSafe(page.theme.globalAlign, ['left','center','right'], '');
 
   const shouldHideBottom = !publicView && hideBottomForForm;
-  const bottomNode = bottomActive && !shouldHideBottom ? <RenderBottom block={bottom} blocks={blocks} accent={page.theme.accent} buttonEffect={buttonEffect} go={go} publicView={publicView}/> : null;
+  const bottomNode = bottomActive && !shouldHideBottom ? <RenderBottom page={page} block={bottom} blocks={blocks} accent={page.theme.accent} buttonEffect={buttonEffect} go={go} publicView={publicView}/> : null;
 
   const pageNode = (
     <div ref={pageRef} onClickCapture={templatePreview || publicView ? undefined : handlePreviewSelect} className={`landing-page font-${page.theme.font} font-family-${page.theme.fontFamily || 'pretendard'} ${globalAlign ? `global-align-${globalAlign}` : ''} bgmode-${page.theme.bgMode || 'solid'} bg-effect-${bgEffect} button-effect-${buttonEffect} ${publicView ? 'public-render' : ''} ${templatePreview ? 'template-preview' : ''} ${bottomActive ? 'has-bottom-bar' : ''} ${page.theme.animOn ? `anim-on anim-${page.theme.animType || 'fade'} anim-${page.theme.animPlayback === 'loop' ? 'loop' : 'once'}` : ''}`} style={{'--accent':page.theme.accent,'--button':page.theme.accent,'--button-text':'#ffffff','--bg':pageBg,'--card':page.theme.card,'--text':page.theme.text,'--radius':`${page.theme.radius}px`,'--bg-effect-opacity':bgEffectOpacity,background:pageBg,color:page.theme.text,backgroundSize:bgSize,backgroundPosition:bgPosition,backgroundRepeat:'no-repeat'}}>
@@ -406,15 +408,62 @@ function getSyncedTimerSettings(blocks = []) {
   return timer?.s || null;
 }
 
-function RenderBottom({ block, blocks = [], accent = '#111827', buttonEffect = 'fill', go, publicView = false }) {
+function RenderBottom({ page, block, blocks = [], accent = '#111827', buttonEffect = 'fill', go, publicView = false }) {
   const s=block.s || {};
+  const [shareFeedback, setShareFeedback] = useState('');
+  const shareEnabled = s.shareEnabled !== false;
   const btns=normalizeButtons(s.buttons,s.count).slice(0,Number(s.count||1)).filter((b)=>b.enabled!==false);
   const timerSource = getSyncedTimerSettings(blocks);
   const showTimer = !!s.timerEnabled && !!timerSource;
-  if(!btns.length && !showTimer) return null;
+  if(!btns.length && !showTimer && !shareEnabled) return null;
   const style = pickSafe(s.style, ['pill','box'], 'pill');
   const color = pickSafe(s.color, ['dark','accent','light'], 'dark');
   const customButtonColor = s.buttonColorMode === 'custom';
+  const handleShare = async () => {
+    const slug = String(page?.slug || '').replace(/^\/+|\/+$/g, '');
+    const url = slug ? `${window.location.origin}/${encodeURIComponent(slug)}` : window.location.href;
+    const title = String(page?.meta?.title || page?.title || document.title || '페이지 공유');
+    const mobileShare = typeof navigator.share === 'function' && window.matchMedia?.('(max-width: 768px)').matches;
+
+    if (mobileShare) {
+      try {
+        await navigator.share({ title, url });
+        return;
+      } catch (error) {
+        if (error?.name === 'AbortError') return;
+      }
+    }
+
+    try {
+      let copied = false;
+      if (navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(url);
+          copied = true;
+        } catch {
+          copied = false;
+        }
+      }
+      if (!copied) {
+        const textarea = document.createElement('textarea');
+        textarea.value = url;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        copied = document.execCommand('copy');
+        textarea.remove();
+      }
+      if (!copied) throw new Error('COPY_FAILED');
+      setShareFeedback('복사됨');
+      window.setTimeout(() => setShareFeedback(''), 1600);
+    } catch {
+      setShareFeedback('복사 실패');
+      window.setTimeout(() => setShareFeedback(''), 1600);
+    }
+  };
+
   const barStyle = {
     '--accent': accent || '#111827',
     '--bottom-button': themeButtonColor(s),
@@ -427,13 +476,21 @@ function RenderBottom({ block, blocks = [], accent = '#111827', buttonEffect = '
   return (
     <div className={`bottom-bar ${publicView ? 'public-bottom-bar' : ''} count-${btns.length || 1} bottom-${style} color-${color} ${customButtonColor ? 'bottom-custom-color' : ''} button-effect-${buttonEffect}`} data-public-bottom={publicView ? 'true' : undefined} style={barStyle}>
       {showTimer && <RenderBottomTimer s={timerSource}/>}
-      <div className="bottom-bar-buttons">
-        {btns.map(b=>(
-          <button key={b.id} type="button" className={b.icon ? '' : 'no-icon'} title={b.label || '버튼'} onClick={()=>go(b.target,b.url,b.label)}>
-            {b.icon && <span>{b.icon}</span>}
-            <b>{b.label}</b>
+      <div className={`bottom-bar-actions ${shareEnabled ? 'has-share' : ''}`}>
+        <div className="bottom-bar-buttons">
+          {btns.map(b=>(
+            <button key={b.id} type="button" className={b.icon ? '' : 'no-icon'} title={b.label || '버튼'} onClick={()=>go(b.target,b.url,b.label)}>
+              {b.icon && <span>{b.icon}</span>}
+              <b>{b.label}</b>
+            </button>
+          ))}
+        </div>
+        {shareEnabled && (
+          <button type="button" className="bottom-share-button" title="공유하기" aria-label="공유하기" onClick={handleShare}>
+            <Share2 size={17} aria-hidden="true" />
+            <b>{shareFeedback || '공유'}</b>
           </button>
-        ))}
+        )}
       </div>
     </div>
   );

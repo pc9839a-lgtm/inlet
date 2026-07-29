@@ -89,7 +89,7 @@ const defaultPage = {
       { id: uid(), label: '문의내용', type: 'long', required: false, options: [] },
     ] } },
     { id: uid(), type: 'reservation', visible: true, s: { title: '방문상담 예약', desc: '희망 일정을 선택해주세요.', weekdayMode: 'weekday', weekdays: ['mon','tue','wed','thu','fri'], start: '10:00', end: '18:00', interval: 30, duplicatePhone: 'block', duplicateWindow: '1d', fields: { name: true, phone: true }, required: { name: true, phone: true }, customFields: [], style: 'card', inputStyle: 'round', textAlign: 'left', titleSize: 'medium', bodySize: 'medium', buttonStyle: 'solid', buttonHover: 'fill', spacing: 'normal', radiusStyle: 'round', success: '방문예약 신청이 접수되었습니다.', buttonColorMode: 'theme', buttonColor: '#111827', buttonTextColor: '#ffffff', buttonHoverColorMode: 'theme', buttonHoverColor: '#2563eb' } },
-    { id: uid(), type: 'bottombar', visible: true, s: { count: 2, style: 'pill', color: 'dark', mobileOnly: true, showAfter: false, buttonColorMode: 'theme', buttonColor: '#111827', buttonTextColor: '#ffffff', buttons: [
+    { id: uid(), type: 'bottombar', visible: true, s: { count: 2, style: 'pill', color: 'dark', mobileOnly: true, showAfter: false, shareEnabled: true, buttonColorMode: 'theme', buttonColor: '#111827', buttonTextColor: '#ffffff', buttons: [
       { id: uid(), enabled: true, icon: '💬', label: '상담', target: 'form', url: '' }, { id: uid(), enabled: true, icon: '📅', label: '예약', target: 'reservation', url: '' }, { id: uid(), enabled: true, icon: '📞', label: '전화', target: 'phone', url: 'tel:01000000000' },
     ] } },
     { id: uid(), type: 'footer', visible: true, s: { company: '샘플컴퍼니', owner: '대표자명', phone: '010-0000-0000', email: '', address: '', biz: '', privacyUrl: '', termsUrl: '', align: 'center', bg: 'plain' } },
@@ -542,6 +542,7 @@ function sanitizeBlock(block) {
     migrateButtonColorMode(s);
     s.buttonColor = s.buttonColor || '#111827';
     s.buttonTextColor = s.buttonTextColor || '#ffffff';
+    s.shareEnabled = s.shareEnabled !== false;
     s.timerEnabled = !!s.timerEnabled;
     s.timerLabel = s.timerLabel || '오늘 마감까지';
     s.timerMode = pickSafe(s.timerMode || 'daily24', ['fixed','daily24'], 'daily24');

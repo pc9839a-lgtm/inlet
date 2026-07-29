@@ -57,6 +57,7 @@
 @import '../styles/preview-workspace-effects-map-faq.css';
 @import '../styles/preview-widget-style-options.css';
 @import '../styles/preview-public.css';
+@import '../styles/preview-bottom-share.css';
 
 /* Global page typography consumers. */
 .landing-page .landing-content > :is(
