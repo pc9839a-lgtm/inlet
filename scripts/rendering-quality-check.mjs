@@ -107,6 +107,7 @@ const files = {
   utility: await readFile('src/preview/renderers/UtilityBlocks.jsx', 'utf8'),
   formEmbed: await readFile('src/lib/formEmbed.js', 'utf8'),
   publicFormEmbed: await readFile('public/embed/form.js', 'utf8'),
+  timerVariantCss: await readFile('src/styles/preview-workspace-timer-solid-variants.css', 'utf8'),
   previewCss: (await Promise.all(previewCssFiles.map((file) => readFile(file, 'utf8')))).join('\n'),
   cssQa: await readFile('scripts/css-quality-check.mjs', 'utf8'),
   browserVisualQa: await readFile('scripts/browser-visual-quality-check.mjs', 'utf8'),
@@ -176,7 +177,7 @@ assert(files.pageModel.includes("timerVariant: ['minimal','flat','block','line',
 for (const variant of ['minimal', 'flat', 'block', 'line', 'point']) {
   assert(files.previewCss.includes(`.landing-section.timer.timer-variant-${variant}`), `timer CSS missing ${variant} variant`);
 }
-assert(!files.previewCss.includes('linear-gradient') || !files.previewCss.includes('timer-variant'), 'timer variant stylesheet should remain solid-color');
+assert(!files.timerVariantCss.includes('linear-gradient'), 'timer variant stylesheet should remain solid-color');
 assert(files.previewCss.includes('@media (prefers-reduced-motion: reduce)') && files.previewCss.includes('timer-motion-on'), 'timer motion should respect reduced motion');
 
 const cssContracts = [
