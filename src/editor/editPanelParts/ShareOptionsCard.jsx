@@ -11,7 +11,7 @@ export function ShareOptionsCard({ page, updatePage }) {
         <div className="fixed-block-copy">
           <Share2 size={17} aria-hidden="true" />
           <strong>{'\uACF5\uC720'}</strong>
-          <em>{'\uD398C\uC774\uC9C0 \uC6B0\uCE21 \uC0C1\uB2E8 \uD45C\uC2DC'}</em>
+          <em>{'\uD398\uC774\uC9C0 \uC6B0\uCE21 \uC0C1\uB2E8 \uD45C\uC2DC'}</em>
         </div>
         <Switch
           checked={enabled}

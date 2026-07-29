@@ -414,7 +414,7 @@ function PageShareButton({ page, publicView = false, hasTopNav = false }) {
   const handleShare = async () => {
     const slug = String(page?.slug || '').replace(/^\/+|\/+$/g, '');
     const url = slug ? `${window.location.origin}/${encodeURIComponent(slug)}` : window.location.href;
-    const title = String(page?.meta?.title || page?.title || document.title || '\uD398C\uC774\uC9C0 \uACF5\uC720');
+    const title = String(page?.meta?.title || page?.title || document.title || '\uD398\uC774\uC9C0 \uACF5\uC720');
     const canUseNativeShare = typeof navigator.share === 'function' && window.matchMedia?.('(max-width: 768px)').matches;
 
     if (canUseNativeShare) {
