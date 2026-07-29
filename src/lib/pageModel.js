@@ -351,7 +351,7 @@ function sanitizeBlock(block) {
   }
 
   if (block?.type === 'search') {
-    s.title = s.title || '페이지 검색';
+    s.title = s.title ?? '페이지 검색';
     s.placeholder = s.placeholder || '찾을 내용을 입력하세요';
     s.buttonLabel = s.buttonLabel || '검색';
     s.emptyText = s.emptyText || '일치하는 내용이 없습니다.';
@@ -372,7 +372,7 @@ function sanitizeBlock(block) {
   }
 
   if (block?.type === 'cards') {
-    s.title = s.title || '카드 안내';
+    s.title = s.title ?? '카드 안내';
     s.desc = s.desc || '';
     s.layout = pickSafe(s.layout || 'grid', ['grid','stack','steps'], 'grid');
     s.tone = pickSafe(s.tone || 'soft', ['soft','solid','outline'], 'soft');
@@ -470,7 +470,7 @@ function sanitizeBlock(block) {
   }
 
   if (block?.type === 'faq') {
-    s.title = s.title || '자주 묻는 질문';
+    s.title = s.title ?? '자주 묻는 질문';
     s.items = Array.isArray(s.items) ? s.items.map((item) => ({
       id: item.id || uid(),
       q: item.q || item.question || '질문을 입력하세요',

@@ -135,6 +135,7 @@ const authContext = await readFile('src/lib/authContext.js', 'utf8');
 const appErrorBoundary = await readFile('src/components/AppErrorBoundary.jsx', 'utf8');
 const blockEditor = await readFile('src/editor/BlockEditor.jsx', 'utf8');
 const scheduleEditor = await readFile('src/editor/blockEditors/ScheduleEditor.jsx', 'utf8');
+const scheduleBasicSection = await readFile('src/editor/blockEditors/ScheduleBasicSection.jsx', 'utf8');
 const widgetStylePanels = await readFile('src/editor/blockEditors/WidgetStylePanels.jsx', 'utf8');
 const widgetStyleOptionsCss = await readFile('src/styles/preview-widget-style-options.css', 'utf8');
 const previewDownloadCss = await readFile('src/styles/preview-download.css', 'utf8');
@@ -331,7 +332,8 @@ assert(spacerEditorSource.includes('<span>여백 높이</span>') && spacerEditor
 assert(layoutBlocksSource.includes('Math.max(8, Math.min(200, Number(block.s?.height ?? 40)))') && layoutBlocksSource.includes('style={{ height:') && layoutBlocksSource.includes('height}px'), 'spacer renderer must preserve the editor height range exactly');
 assert(imageGalleryEditor.includes('max={4}') && imageGalleryEditor.includes('.slice(0, 4)') && imageGalleryEditor.includes("onAdd={gallery.length < 4 ?") && imageGalleryEditor.includes('onRemove={(item) => removeGallery(item.index)}'), 'image gallery item list must enforce its four-image limit and removal callback');
 assert(mediaBlocks.includes("s.galleryLayout === 'grid'") && mediaBlocks.includes('gallery.slice(0, gridCount)') && mediaBlocks.includes('image-gallery-grid-${visibleGallery.length}') && pageModel.includes("galleryLayout: ['slide','grid']") && pageModel.includes('s.galleryGridCount = Number(s.galleryGridCount) === 2 ? 2 : 4'), 'image gallery grid mode and 2/4 item count must be sanitized and consumed by the public renderer');
-assert(pageModel.includes("s.title = s.title ?? '일정 안내'"), 'schedule title sanitization must preserve an explicitly cleared value');
+assert(pageModel.includes("s.title = s.title ?? '일정 안내'") && scheduleBasicSection.includes("value={s.title ?? '일정 안내'}"), 'schedule title editing and sanitization must preserve an explicitly cleared value');
+assert(pageModel.includes("s.title = s.title ?? '페이지 검색'") && pageModel.includes("s.title = s.title ?? '카드 안내'") && pageModel.includes("s.title = s.title ?? '자주 묻는 질문'"), 'optional widget titles must preserve explicitly cleared values');
 assert(formOptionEditor.includes("import { Plus, Trash2 } from 'lucide-react'") && formOptionEditor.includes('className="option-editor-row"'), 'form options must use compact labeled rows and icon actions');
 assert(formOptionEditor.includes('if (list.length <= 1) return') && formOptionEditor.includes('disabled={list.length <= 1}') && !formOptionEditor.includes('.filter((item) => String(item).trim())'), 'form option editing must preserve in-progress text and keep at least one choice');
 assert(!baseComponentsOptionsCss.includes('.option-editor{') && !editorScreenOrderPolishCss.includes('.option-editor') && editorBlockListsCss.includes('.option-editor-row'), 'form option styles must have one active owner');
