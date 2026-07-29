@@ -1053,16 +1053,25 @@ body .builder-shell .edit-layout .block-editor-v2-content > .block-editor-anchor
 
 /* Keep the save header outside the scrolling editor content. */
 body .builder-shell:not(.template-intro-shell) .left-workspace {
+  position: relative !important;
   display: grid !important;
   grid-template-rows: auto minmax(0, 1fr) !important;
+  height: 100dvh !important;
+  min-height: 0 !important;
+  max-height: 100dvh !important;
   overflow: hidden !important;
 }
 body .builder-shell:not(.template-intro-shell) .workspace-persistent-header {
+  position: sticky !important;
+  top: 0 !important;
+  grid-row: 1 !important;
+  align-self: start !important;
   width: 100% !important;
   min-width: 0 !important;
+  flex: 0 0 auto !important;
   padding: 20px 18px 0 !important;
   background: #eef2f6 !important;
-  z-index: 90 !important;
+  z-index: 120 !important;
 }
 body .builder-shell:not(.template-intro-shell) .workspace-persistent-header .panel-header {
   position: relative !important;
@@ -1071,6 +1080,7 @@ body .builder-shell:not(.template-intro-shell) .workspace-persistent-header .pan
   margin: 0 !important;
 }
 body .builder-shell:not(.template-intro-shell) .work-panel {
+  grid-row: 2 !important;
   height: auto !important;
   min-height: 0 !important;
   max-height: none !important;

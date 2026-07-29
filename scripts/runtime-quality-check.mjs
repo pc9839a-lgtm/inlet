@@ -249,6 +249,7 @@ const baseComponentsOptionsCss = await readFile('src/styles/base-components-opti
 const editorAnimationCss = await readFile('src/styles/editor-animation.css', 'utf8');
 const editorScreenOrderPolishCss = await readFile('src/styles/editor-screen-order-polish.css', 'utf8');
 const editorFinalCleanCss = await readFile('src/styles/editor-final-clean.css', 'utf8');
+const editorWorkspaceCss = await readFile('src/styles/editor-workspace-v2.css', 'utf8');
 const editorBlockListsCss = await readFile('src/styles/editor-block-lists.css', 'utf8');
 const previewWorkspaceReservationCss = await readFile('src/styles/preview-workspace-reservation.css', 'utf8');
 const previewFormsCss = await readFile('src/styles/preview-forms.css', 'utf8');
@@ -371,6 +372,10 @@ assert(app.includes('tabFromLocation(TAB_KEYS') && app.includes('hasTabDeepLink(
 assert(workspaceStartMode.includes('export function shouldShowStartModeOverlay()') && workspaceStartMode.includes('return false;'), 'workspace start mode overlay must stay disabled after the repeated modal regression');
 assert(!app.includes('<StartModeOverlay') && !app.includes('showStartModeOverlay'), 'App must not render the disabled start mode overlay');
 assert(workspaceLeftPanel.includes("const showTemplateIntro = !mobileOperationsOnly && canManageAdmin && startMode === 'template'"), 'template controls must stay desktop and master-admin-only');
+assert(workspaceLeftPanel.includes('workspace-persistent-header'), 'workspace save header must remain outside the scrolling panel');
+assert(/\.left-workspace\s*\{[\s\S]*?grid-template-rows:\s*auto minmax\(0, 1fr\)[\s\S]*?overflow:\s*hidden/.test(editorWorkspaceCss), 'workspace left column must keep the save header outside the scroll container');
+assert(/\.workspace-persistent-header\s*\{[\s\S]*?position:\s*sticky[\s\S]*?grid-row:\s*1/.test(editorWorkspaceCss), 'workspace save header must stay pinned in the first grid row');
+assert(/\.work-panel\s*\{[\s\S]*?grid-row:\s*2[\s\S]*?overflow-y:\s*auto/.test(editorWorkspaceCss), 'workspace panel content must own vertical scrolling');
 assert(app.includes('adminRoute') && app.includes("return /^\\/(?:admin|[^/?#]+\\/admin)\\/?$/.test(routePath)") && app.includes('<AdminPanel'), 'admin panel must stay on a private /admin route');
 assert(app.includes('const canWriteTabKey = (key) => canWriteTab(accessMode, page, authUser, key)') && app.includes('createBlockWriteGuard({'), 'App must enforce manager write permissions before mutation');
 assert(blockWriteGuard.includes('canWriteTabKey(targetTab)') && blockWriteGuard.includes('markSaveStatus') && blockWriteGuard.includes('showToast'), 'block write permission feedback must stay centralized');
