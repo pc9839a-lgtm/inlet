@@ -6,9 +6,6 @@ export default function TimerBasicSection({ s, set }) {
 
   return (
     <>
-      <EditorField label="문구">
-        <input value={s.label || ''} onChange={(event) => set({ label: event.target.value })} />
-      </EditorField>
       <SegmentedControl label="반복 방식" value={repeatMode} onChange={(value) => set({ repeatMode: value })} options={TIMER_REPEAT_OPTIONS.map(([value, label]) => ({ value, label }))} />
       {repeatMode === 'fixed' && (
         <EditorField label="마감일">

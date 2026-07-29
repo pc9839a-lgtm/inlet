@@ -53,7 +53,7 @@ export function useCountdown(input) {
   };
 }
 
-export function RenderTimer({ block, go }) {
+export function RenderTimer({ block }) {
   const s = block.s || {};
   const t = useCountdown(s);
   const showDays = Number(t.d) > 0;
@@ -64,10 +64,6 @@ export function RenderTimer({ block, go }) {
       className={`landing-section timer timer-modern-wrap timer-theme-minimal timer-effect-none ${showDays ? 'timer-has-days' : 'timer-no-days'} ${widgetBoxClass(s, { background: false, shadow: false })}`}
       style={widgetBoxVars(s)}
     >
-      <div className="timer-headline">
-        <span>{s.label || '타이머'}</span>
-      </div>
-
       {t.done ? (
         <strong className="timer-ended">{s.ended || '종료되었습니다.'}</strong>
       ) : (
@@ -78,8 +74,6 @@ export function RenderTimer({ block, go }) {
           <TimerUnit value={t.s} label="초" effect="none" />
         </div>
       )}
-
-      {s.cta ? <button className="timer-cta" onClick={() => go?.(s.ctaTarget, s.ctaUrl, s.ctaLabel)}>{s.ctaLabel || '상담 신청'}</button> : null}
     </section>
   );
 }
