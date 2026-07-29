@@ -352,9 +352,9 @@ function sanitizeBlock(block) {
 
   if (block?.type === 'search') {
     s.title = s.title ?? '페이지 검색';
-    s.placeholder = s.placeholder || '찾을 내용을 입력하세요';
+    s.placeholder = s.placeholder ?? '찾을 내용을 입력하세요';
     s.buttonLabel = s.buttonLabel || '검색';
-    s.emptyText = s.emptyText || '일치하는 내용이 없습니다.';
+    s.emptyText = s.emptyText ?? '일치하는 내용이 없습니다.';
     s.layout = pickSafe(s.layout || 'card', ['card','bar','minimal'], 'card');
     s.live = s.live !== false;
   }

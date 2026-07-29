@@ -189,7 +189,7 @@ export function RenderPageSearch({ block }) {
         <input
           type="search"
           value={query}
-          placeholder={s.placeholder || '찾을 내용을 입력하세요'}
+          placeholder={s.placeholder ?? '찾을 내용을 입력하세요'}
           onChange={(event) => updateQuery(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === 'Enter') runSearch();
@@ -204,7 +204,7 @@ export function RenderPageSearch({ block }) {
               <strong>{item.title}</strong>
               <span>{item.excerpt}</span>
             </button>
-          )) : <p>{s.emptyText || '일치하는 내용이 없습니다.'}</p>}
+          )) : <p>{s.emptyText ?? '일치하는 내용이 없습니다.'}</p>}
         </div>
       )}
     </section>

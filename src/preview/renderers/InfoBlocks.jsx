@@ -146,7 +146,7 @@ export function RenderSchedule({ block }) {
   const date = parseScheduleDate(s.date);
   const selectedDay = date?.getDate();
   const days = calendarDays(date);
-  const title = s.title || '일정 안내';
+  const title = s.title ?? '일정 안내';
   const monthLabel = s.monthLabel || (date ? `${date.getMonth() + 1}월` : '');
   const align = pickSafe(s.align || 'center', ['left', 'center', 'right'], 'center');
 

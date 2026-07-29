@@ -169,6 +169,10 @@ const leadDuplicatePolicy = await readFile('src/lib/leadDuplicatePolicy.js', 'ut
 const leadModel = await readFile('src/lib/leadModel.js', 'utf8');
 const statsMetrics = await readFile('src/lib/statsMetrics.js', 'utf8');
 const utilityBlocks = await readFile('src/preview/renderers/UtilityBlocks.jsx', 'utf8');
+const infoBlocks = await readFile('src/preview/renderers/InfoBlocks.jsx', 'utf8');
+const searchBasicSection = await readFile('src/editor/blockEditors/SearchBasicSection.jsx', 'utf8');
+const formSuccessSettings = await readFile('src/editor/blockEditors/FormSuccessSettings.jsx', 'utf8');
+const reservationBasicSection = await readFile('src/editor/blockEditors/ReservationBasicSection.jsx', 'utf8');
 const builderFeedback = await readFile('src/builder/BuilderFeedback.jsx', 'utf8');
 const conflictUtils = await readFile('src/builder/conflictUtils.js', 'utf8');
 const editorControls = await readFile('src/editor/controls.jsx', 'utf8');
@@ -334,6 +338,9 @@ assert(imageGalleryEditor.includes('max={4}') && imageGalleryEditor.includes('.s
 assert(mediaBlocks.includes("s.galleryLayout === 'grid'") && mediaBlocks.includes('gallery.slice(0, gridCount)') && mediaBlocks.includes('image-gallery-grid-${visibleGallery.length}') && pageModel.includes("galleryLayout: ['slide','grid']") && pageModel.includes('s.galleryGridCount = Number(s.galleryGridCount) === 2 ? 2 : 4'), 'image gallery grid mode and 2/4 item count must be sanitized and consumed by the public renderer');
 assert(pageModel.includes("s.title = s.title ?? '일정 안내'") && scheduleBasicSection.includes("value={s.title ?? '일정 안내'}"), 'schedule title editing and sanitization must preserve an explicitly cleared value');
 assert(pageModel.includes("s.title = s.title ?? '페이지 검색'") && pageModel.includes("s.title = s.title ?? '카드 안내'") && pageModel.includes("s.title = s.title ?? '자주 묻는 질문'"), 'optional widget titles must preserve explicitly cleared values');
+assert(infoBlocks.includes("const title = s.title ?? '일정 안내'"), 'schedule renderer must preserve an explicitly cleared title');
+assert(searchBasicSection.includes("s.placeholder ?? '찾을 내용을 입력하세요'") && searchBasicSection.includes("s.emptyText ?? '일치하는 내용이 없습니다.'") && pageModel.includes("s.placeholder = s.placeholder ?? '찾을 내용을 입력하세요'") && pageModel.includes("s.emptyText = s.emptyText ?? '일치하는 내용이 없습니다.'") && utilityBlocks.includes("s.placeholder ?? '찾을 내용을 입력하세요'") && utilityBlocks.includes("s.emptyText ?? '일치하는 내용이 없습니다.'"), 'search copy must preserve explicitly cleared values across editor, model, and renderer');
+assert(formSuccessSettings.includes('s.successTitle ?? T.defaultSuccess') && reservationBasicSection.includes('s.success ?? T.defaultSuccess') && previewFormBlocks.includes("plainRichText(s.title ?? '상담 신청')") && previewFormBlocks.includes("s.successTitle ?? '상담 신청 완료'") && previewFormBlocks.includes("s.success ?? '방문예약 신청이 접수되었습니다.'"), 'form and reservation titles must preserve explicitly cleared values');
 assert(formOptionEditor.includes("import { Plus, Trash2 } from 'lucide-react'") && formOptionEditor.includes('className="option-editor-row"'), 'form options must use compact labeled rows and icon actions');
 assert(formOptionEditor.includes('if (list.length <= 1) return') && formOptionEditor.includes('disabled={list.length <= 1}') && !formOptionEditor.includes('.filter((item) => String(item).trim())'), 'form option editing must preserve in-progress text and keep at least one choice');
 assert(!baseComponentsOptionsCss.includes('.option-editor{') && !editorScreenOrderPolishCss.includes('.option-editor') && editorBlockListsCss.includes('.option-editor-row'), 'form option styles must have one active owner');

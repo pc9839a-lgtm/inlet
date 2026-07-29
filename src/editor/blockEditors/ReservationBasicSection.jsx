@@ -9,7 +9,7 @@ export default function ReservationBasicSection({ s, set }) {
           <input value={s.title || ''} onChange={(event) => set({ title: event.target.value })} />
         </EditorField>
         <EditorField label={T.successText}>
-          <input value={s.success || T.defaultSuccess} onChange={(event) => set({ success: event.target.value })} />
+          <input value={s.success ?? T.defaultSuccess} onChange={(event) => set({ success: event.target.value })} />
         </EditorField>
       </div>
       <EditorField label={T.guideText}>
