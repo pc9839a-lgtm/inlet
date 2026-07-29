@@ -40,6 +40,7 @@ export async function onRequest({ request, env }) {
             WHERE project_members.project_id = projects.id
               AND project_members.account_id = ?
               AND project_members.status = 'active'
+              AND project_members.role IN ('manager', 'client_admin')
           )
         )
       ORDER BY pages.updated_at DESC, projects.updated_at DESC
