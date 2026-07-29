@@ -173,6 +173,9 @@ const infoBlocks = await readFile('src/preview/renderers/InfoBlocks.jsx', 'utf8'
 const searchBasicSection = await readFile('src/editor/blockEditors/SearchBasicSection.jsx', 'utf8');
 const formSuccessSettings = await readFile('src/editor/blockEditors/FormSuccessSettings.jsx', 'utf8');
 const reservationBasicSection = await readFile('src/editor/blockEditors/ReservationBasicSection.jsx', 'utf8');
+const contentBlocks = await readFile('src/preview/renderers/ContentBlocks.jsx', 'utf8');
+const signalBlocks = await readFile('src/preview/renderers/SignalBlocks.jsx', 'utf8');
+const faqEditorModel = await readFile('src/editor/blockEditors/faqEditorModel.js', 'utf8');
 const builderFeedback = await readFile('src/builder/BuilderFeedback.jsx', 'utf8');
 const conflictUtils = await readFile('src/builder/conflictUtils.js', 'utf8');
 const editorControls = await readFile('src/editor/controls.jsx', 'utf8');
@@ -341,6 +344,9 @@ assert(pageModel.includes("s.title = s.title ?? '페이지 검색'") && pageMode
 assert(infoBlocks.includes("const title = s.title ?? '일정 안내'"), 'schedule renderer must preserve an explicitly cleared title');
 assert(searchBasicSection.includes("s.placeholder ?? '찾을 내용을 입력하세요'") && searchBasicSection.includes("s.emptyText ?? '일치하는 내용이 없습니다.'") && pageModel.includes("s.placeholder = s.placeholder ?? '찾을 내용을 입력하세요'") && pageModel.includes("s.emptyText = s.emptyText ?? '일치하는 내용이 없습니다.'") && utilityBlocks.includes("s.placeholder ?? '찾을 내용을 입력하세요'") && utilityBlocks.includes("s.emptyText ?? '일치하는 내용이 없습니다.'"), 'search copy must preserve explicitly cleared values across editor, model, and renderer');
 assert(formSuccessSettings.includes('s.successTitle ?? T.defaultSuccess') && reservationBasicSection.includes('s.success ?? T.defaultSuccess') && previewFormBlocks.includes("plainRichText(s.title ?? '상담 신청')") && previewFormBlocks.includes("s.successTitle ?? '상담 신청 완료'") && previewFormBlocks.includes("s.success ?? '방문예약 신청이 접수되었습니다.'"), 'form and reservation titles must preserve explicitly cleared values');
+assert(pageModel.includes('item.eyebrow ??') && pageModel.includes('item.title ??') && contentBlocks.includes('item.eyebrow ??') && contentBlocks.includes('item.title &&'), 'card item labels and titles must preserve explicitly cleared values through model and renderer');
+assert(pageModel.includes('item.q ?? item.question ??') && pageModel.includes('item.a ?? item.answer ??') && faqEditorModel.includes('item.q ?? item.question ??') && faqEditorModel.includes('item.a ?? item.answer ??') && infoBlocks.includes('item.q ?? item.question ??') && infoBlocks.includes('item.a ?? item.answer ??'), 'FAQ questions and answers must preserve explicitly cleared values through editor, model, and renderer');
+assert(signalBlocks.includes("(s.title ?? '실시간 접수현황') &&"), 'activity renderer must not restore an explicitly cleared title');
 assert(formOptionEditor.includes("import { Plus, Trash2 } from 'lucide-react'") && formOptionEditor.includes('className="option-editor-row"'), 'form options must use compact labeled rows and icon actions');
 assert(formOptionEditor.includes('if (list.length <= 1) return') && formOptionEditor.includes('disabled={list.length <= 1}') && !formOptionEditor.includes('.filter((item) => String(item).trim())'), 'form option editing must preserve in-progress text and keep at least one choice');
 assert(!baseComponentsOptionsCss.includes('.option-editor{') && !editorScreenOrderPolishCss.includes('.option-editor') && editorBlockListsCss.includes('.option-editor-row'), 'form option styles must have one active owner');

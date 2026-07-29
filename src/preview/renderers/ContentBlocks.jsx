@@ -111,8 +111,8 @@ export function RenderCards({ block }) {
       <div className="cards-grid">
         {items.map((item, index) => (
           <article key={item.id || index} className="cards-item">
-            <span>{item.eyebrow || String(index + 1).padStart(2, '0')}</span>
-            <strong>{rich(item.title)}</strong>
+            {(item.eyebrow ?? String(index + 1).padStart(2, '0')) && <span>{item.eyebrow ?? String(index + 1).padStart(2, '0')}</span>}
+            {item.title && <strong>{rich(item.title)}</strong>}
             {item.body && <p>{rich(item.body)}</p>}
           </article>
         ))}

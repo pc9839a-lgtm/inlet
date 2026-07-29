@@ -158,12 +158,12 @@ export function RenderActivity({ block, leads = [] }) {
 
   return (
     <section id={`block-${block.id}`} className={`landing-section activity-widget activity-stack-widget activity-${style} activity-mode-${mode} activity-anim-${anim} ${widgetBoxClass(s, { background: false, shadow: false })}`} style={widgetBoxVars(s)}>
-      <div className="activity-stack-head">
+      {(s.title ?? '실시간 접수현황') && <div className="activity-stack-head">
         <div>
           <span className="activity-live-dot"></span>
-          <strong>{s.title || '실시간 접수현황'}</strong>
+          <strong>{s.title ?? '실시간 접수현황'}</strong>
         </div>
-      </div>
+      </div>}
 
       {mode === 'count' ? (
         <div className="activity-count-simple">

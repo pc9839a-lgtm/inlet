@@ -179,10 +179,10 @@ function normalizeFaqItems(items = []) {
   return (Array.isArray(items) ? items : [])
     .map((item) => ({
       id: item.id || `${item.q || item.question || ''}-${item.a || item.answer || ''}`,
-      q: item.q || item.question || '',
-      a: item.a || item.answer || '',
+      q: item.q ?? item.question ?? '',
+      a: item.a ?? item.answer ?? '',
     }))
-    .filter((item) => item.q || item.a);
+    .filter((item) => item.q);
 }
 
 export function RenderFaq({ block }) {
@@ -196,8 +196,8 @@ export function RenderFaq({ block }) {
       <div className="faq-list">
         {items.map((item, index) => (
           <details key={item.id || index} open={index === 0 && s.firstOpen !== false}>
-            <summary>{rich(item.q || `질문 ${index + 1}`)}</summary>
-            <p>{rich(item.a)}</p>
+            <summary>{rich(item.q)}</summary>
+            {item.a && <p>{rich(item.a)}</p>}
           </details>
         ))}
       </div>

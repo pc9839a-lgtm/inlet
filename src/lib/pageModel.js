@@ -380,8 +380,8 @@ function sanitizeBlock(block) {
     s.columns = Math.max(1, Math.min(2, Number(s.columns || 2)));
     s.items = Array.isArray(s.items) ? s.items.map((item, index) => ({
       id: item.id || uid(),
-      eyebrow: String(item.eyebrow || `${index + 1}`).slice(0, 24),
-      title: item.title || '카드 제목',
+      eyebrow: String(item.eyebrow ?? `${index + 1}`).slice(0, 24),
+      title: item.title ?? '카드 제목',
       body: item.body || '',
     })).slice(0, 8) : [];
     if (!s.items.length) {
@@ -473,8 +473,8 @@ function sanitizeBlock(block) {
     s.title = s.title ?? '자주 묻는 질문';
     s.items = Array.isArray(s.items) ? s.items.map((item) => ({
       id: item.id || uid(),
-      q: item.q || item.question || '질문을 입력하세요',
-      a: item.a || item.answer || '답변을 입력하세요',
+      q: item.q ?? item.question ?? '질문을 입력하세요',
+      a: item.a ?? item.answer ?? '답변을 입력하세요',
     })).slice(0, 12) : [];
     if (!s.items.length) {
       s.items = [
