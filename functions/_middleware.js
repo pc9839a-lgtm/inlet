@@ -10,6 +10,7 @@ export async function onRequest(context) {
     '/home': '/call/home/index.html',
     '/home-v4': '/call/home/index.html',
     '/home-v5': '/call/home/index.html',
+    '/home-v6': '/call/home/index.html',
     '/login': '/call/index.html',
     '/signup': '/call/index.html',
     '/privacy': '/call/privacy/index.html',
@@ -31,10 +32,10 @@ export async function onRequest(context) {
   const mapped = routes[clean];
   if (!mapped) return context.next();
 
-  const isHome = clean === '/' || clean === '/home' || clean === '/home-v4' || clean === '/home-v5';
+  const isHome = clean === '/' || clean === '/home' || clean === '/home-v4' || clean === '/home-v5' || clean === '/home-v6';
   const assetUrl = new URL(context.request.url);
   assetUrl.pathname = mapped;
-  assetUrl.search = isHome ? '?v=20260729-benefit-fit-v5' : '';
+  assetUrl.search = isHome ? '?v=20260729-copy-fix-v6' : '';
   const response = await context.env.ASSETS.fetch(assetUrl);
 
   if (isHome) {
@@ -44,8 +45,16 @@ export async function onRequest(context) {
     homeHeaders.set('Cloudflare-CDN-Cache-Control', 'no-store');
     homeHeaders.set('Pragma', 'no-cache');
     homeHeaders.set('Expires', '0');
-    homeHeaders.set('X-CallLink-Home-Version', 'benefit-fit-v5');
-    return new Response(response.body, {
+    homeHeaders.set('X-CallLink-Home-Version', 'copy-fix-v6');
+
+    let html = await response.text();
+    html = html
+      .replace('</head>', '<link rel="stylesheet" href="/call/home/v6.css?v=20260729-1"></head>')
+      .replace('</body>', '<script src="/call/home/v6.js?v=20260729-1"></script></body>');
+
+    homeHeaders.set('Content-Type', 'text/html; charset=utf-8');
+    homeHeaders.delete('Content-Length');
+    return new Response(html, {
       status: response.status,
       statusText: response.statusText,
       headers: homeHeaders,
