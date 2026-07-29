@@ -198,6 +198,7 @@ const leadIntegrations = await readFile('src/lib/leadIntegrations.js', 'utf8');
 const apiClientSource = await readFile('src/lib/apiClient.js', 'utf8');
 const settingsPanel = await readFile('src/panels/SettingsPanel.jsx', 'utf8');
 const settingsPanelCss = await readFile('src/panels/SettingsPanel.css', 'utf8');
+const baseCss = await readFile('src/styles/base.css', 'utf8');
 const runtimeConfigSource = await readFile('src/config/runtimeConfig.js', 'utf8');
 const previewFormBlocks = await readFile('src/preview/renderers/FormBlocks.jsx', 'utf8');
 const publicEmbedForm = await readFile('public/embed/form.js', 'utf8');
@@ -400,6 +401,7 @@ assert(workspaceLeftPanel.includes('workspace-persistent-header'), 'workspace sa
 assert(/\.left-workspace\s*\{[\s\S]*?grid-template-rows:\s*auto minmax\(0, 1fr\)[\s\S]*?overflow:\s*hidden/.test(editorWorkspaceCss), 'workspace left column must keep the save header outside the scroll container');
 assert(/\.workspace-persistent-header\s*\{[\s\S]*?position:\s*sticky[\s\S]*?grid-row:\s*1/.test(editorWorkspaceCss), 'workspace save header must stay pinned in the first grid row');
 assert(/\.work-panel\s*\{[\s\S]*?grid-row:\s*2[\s\S]*?overflow-y:\s*auto/.test(editorWorkspaceCss), 'workspace panel content must own vertical scrolling');
+assert(baseCss.includes('.panel-header{position:sticky!important;top:0!important;z-index:80!important') && !baseCss.includes('.panel-header{position:relative!important;top:auto!important'), 'editor panel header must remain sticky so the save action stays visible while scrolling');
 assert(app.includes('adminRoute') && app.includes("return /^\\/(?:admin|[^/?#]+\\/admin)\\/?$/.test(routePath)") && app.includes('<AdminPanel'), 'admin panel must stay on a private /admin route');
 assert(app.includes('const canWriteTabKey = (key) => canWriteTab(accessMode, page, authUser, key)') && app.includes('createBlockWriteGuard({'), 'App must enforce manager write permissions before mutation');
 assert(blockWriteGuard.includes('canWriteTabKey(targetTab)') && blockWriteGuard.includes('markSaveStatus') && blockWriteGuard.includes('showToast'), 'block write permission feedback must stay centralized');
