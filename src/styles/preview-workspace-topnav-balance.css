@@ -1,36 +1,64 @@
 .topnav-one-line {
   --top-menu-count: 1;
-  --top-menu-gap: clamp(4px, 1.2vw, 7px);
-  --top-menu-single-max: clamp(112px, 32vw, 168px);
-  gap: clamp(8px, 2vw, 12px) !important;
+  --top-menu-gap: clamp(3px, .9vw, 6px);
+  --top-menu-single-max: clamp(112px, 34vw, 168px);
+  display: grid !important;
+  grid-template-columns: minmax(0, max-content) minmax(0, 1fr) !important;
+  column-gap: clamp(7px, 1.8vw, 10px) !important;
+  align-items: center !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.topnav-one-line.topnav-logo-image {
+  grid-template-columns: 42px minmax(0, 1fr) !important;
+}
+
+.topnav-one-line.topnav-menu-count-5:not(.topnav-logo-image) {
+  grid-template-columns: minmax(52px, 72px) minmax(0, 1fr) !important;
 }
 
 .topnav-one-line .top-logo {
-  flex: 0 1 clamp(72px, 24%, 150px) !important;
-  max-width: 34% !important;
-}
-
-.topnav-one-line.topnav-menu-count-5 .top-logo {
-  flex-basis: clamp(58px, 18%, 104px) !important;
-  max-width: 24% !important;
-}
-
-.topnav-one-line .top-menu,
-.topnav-one-line.topnav-menu-loop .top-menu {
-  flex: 1 1 0 !important;
+  width: max-content !important;
   min-width: 0 !important;
-  max-width: none !important;
+  max-width: 120px !important;
   overflow: hidden !important;
 }
 
-.topnav-one-line .top-menu-track,
-.topnav-one-line .top-menu-set,
-.topnav-one-line.topnav-menu-loop .top-menu-track,
-.topnav-one-line.topnav-menu-loop .top-menu-set {
+.topnav-one-line.topnav-logo-image .top-logo {
+  width: 42px !important;
+  max-width: 42px !important;
+  justify-content: center !important;
+}
+
+.topnav-one-line.topnav-logo-image .top-logo img {
+  width: auto !important;
+  max-width: 100% !important;
+  max-height: 32px !important;
+}
+
+.topnav-one-line .top-menu,
+.topnav-one-line.topnav-menu-loop .top-menu,
+.topnav-one-line.topnav-align-center .top-menu,
+.topnav-one-line.topnav-align-right .top-menu {
   width: 100% !important;
   min-width: 0 !important;
   max-width: 100% !important;
   overflow: hidden !important;
+  display: block !important;
+}
+
+.topnav-one-line .top-menu-track,
+.topnav-one-line.topnav-menu-loop .top-menu-track {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  transform: none !important;
+  animation: none !important;
 }
 
 .topnav-one-line .top-menu-set,
@@ -38,7 +66,13 @@
   display: grid !important;
   grid-template-columns: repeat(var(--top-menu-count), minmax(0, 1fr)) !important;
   gap: var(--top-menu-gap) !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0 !important;
   align-items: stretch !important;
+  justify-content: stretch !important;
+  overflow: hidden !important;
   transform: none !important;
   animation: none !important;
 }
@@ -59,18 +93,25 @@
   justify-content: end !important;
 }
 
-.topnav-one-line .top-menu button {
+.topnav-one-line .top-menu button,
+.topnav-one-line.topnav-menu-loop .top-menu button {
   width: 100% !important;
   min-width: 0 !important;
   max-width: none !important;
   min-height: 44px !important;
-  padding: 0 clamp(7px, 1.5vw, 12px) !important;
+  padding: 0 clamp(5px, 1.2vw, 10px) !important;
   overflow: hidden !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   text-overflow: clip !important;
   white-space: nowrap !important;
+}
+
+.topnav-one-line.topnav-menu-count-5 .top-menu button {
+  padding-inline: 3px !important;
+  font-size: 11px !important;
+  letter-spacing: -.025em !important;
 }
 
 .topnav-one-line.topnav-menu-count-1 .top-menu button {
@@ -95,7 +136,7 @@
 }
 
 .top-menu-label.is-overflowing {
-  animation: top-menu-label-roll 5.8s ease-in-out 0.8s infinite alternate;
+  animation: top-menu-label-roll 5.8s ease-in-out .8s infinite alternate;
 }
 
 @keyframes top-menu-label-roll {
@@ -108,39 +149,116 @@
   }
 }
 
+/* preview-public.css previously changed the menu back to a flex row.
+   These final public rules keep the same exact grid contract. */
+.public-landing-viewport .topnav.topnav-one-line {
+  display: grid !important;
+  grid-template-columns: minmax(0, max-content) minmax(0, 1fr) !important;
+  column-gap: 8px !important;
+}
+
+.public-landing-viewport .topnav.topnav-one-line.topnav-logo-image {
+  grid-template-columns: 42px minmax(0, 1fr) !important;
+}
+
+.public-landing-viewport .topnav.topnav-one-line.topnav-menu-count-5:not(.topnav-logo-image) {
+  grid-template-columns: minmax(52px, 72px) minmax(0, 1fr) !important;
+}
+
+.public-landing-viewport .topnav.topnav-one-line .top-menu,
+.public-landing-viewport .topnav.topnav-one-line.topnav-menu-loop .top-menu {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  display: block !important;
+}
+
+.public-landing-viewport .topnav.topnav-one-line .top-menu-track,
+.public-landing-viewport .topnav.topnav-one-line.topnav-menu-loop .top-menu-track {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+}
+
+.public-landing-viewport .topnav.topnav-one-line .top-menu-set,
+.public-landing-viewport .topnav.topnav-one-line.topnav-menu-loop .top-menu-set {
+  display: grid !important;
+  grid-template-columns: repeat(var(--top-menu-count), minmax(0, 1fr)) !important;
+  gap: var(--top-menu-gap) !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  justify-content: stretch !important;
+  overflow: hidden !important;
+}
+
+.public-landing-viewport .topnav.topnav-one-line .top-menu button {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  flex: none !important;
+  min-height: 44px !important;
+  padding-inline: 4px !important;
+  overflow: hidden !important;
+  text-overflow: clip !important;
+}
+
 @media (max-width: 520px) {
   .topnav-one-line {
-    --top-menu-gap: 4px;
+    --top-menu-gap: 2px;
     --top-menu-single-max: clamp(104px, 38vw, 148px);
-    gap: 7px !important;
+    grid-template-columns: minmax(0, max-content) minmax(0, 1fr) !important;
+    column-gap: 6px !important;
     padding: 9px 10px !important;
   }
 
-  .topnav-one-line .top-logo {
-    flex-basis: clamp(64px, 22%, 108px) !important;
-    max-width: 30% !important;
+  .topnav-one-line.topnav-logo-image {
+    grid-template-columns: 36px minmax(0, 1fr) !important;
   }
 
-  .topnav-one-line.topnav-menu-count-5 .top-logo {
-    flex-basis: clamp(54px, 17%, 76px) !important;
-    max-width: 20% !important;
+  .topnav-one-line.topnav-menu-count-5:not(.topnav-logo-image) {
+    grid-template-columns: 48px minmax(0, 1fr) !important;
+  }
+
+  .topnav-one-line.topnav-logo-image .top-logo {
+    width: 36px !important;
+    max-width: 36px !important;
   }
 
   .topnav-one-line .top-menu button {
     min-height: 44px !important;
-    padding-inline: 6px !important;
+    padding-inline: 4px !important;
     font-size: 11px !important;
   }
 
   .topnav-one-line.topnav-menu-count-5 .top-menu button {
-    padding-inline: 4px !important;
+    padding-inline: 2px !important;
     font-size: 10px !important;
-    letter-spacing: -0.03em !important;
+    letter-spacing: -.035em !important;
   }
 
   .topnav-one-line.topnav-menu-count-1 .top-menu button {
     padding-inline: 13px !important;
     font-size: 12px !important;
+  }
+
+  .public-landing-viewport .topnav.topnav-one-line {
+    grid-template-columns: minmax(0, max-content) minmax(0, 1fr) !important;
+    column-gap: 6px !important;
+    padding: 12px 10px !important;
+  }
+
+  .public-landing-viewport .topnav.topnav-one-line.topnav-logo-image {
+    grid-template-columns: 36px minmax(0, 1fr) !important;
+  }
+
+  .public-landing-viewport .topnav.topnav-one-line.topnav-menu-count-5:not(.topnav-logo-image) {
+    grid-template-columns: 48px minmax(0, 1fr) !important;
   }
 }
 
