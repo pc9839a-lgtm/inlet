@@ -2,9 +2,9 @@ import { EditorField, SegmentedControl } from '../ui/index.js';
 import { TIMER_REPEAT_OPTIONS, timerRepeatMode } from './timerEditorModel.js';
 
 const TIMER_VARIANT_OPTIONS = [
-  { value: 'clean', label: '클린' },
-  { value: 'cards', label: '카드' },
-  { value: 'promo', label: '프로모션' },
+  { value: 'minimal', label: '클린' },
+  { value: 'flat', label: '카드' },
+  { value: 'block', label: '프로모션' },
 ];
 
 const TIMER_PALETTE_OPTIONS = [
@@ -16,11 +16,11 @@ const TIMER_PALETTE_OPTIONS = [
 ];
 
 const LEGACY_TIMER_VARIANTS = {
-  minimal: 'clean',
-  line: 'clean',
-  flat: 'cards',
-  point: 'cards',
-  block: 'promo',
+  clean: 'minimal',
+  cards: 'flat',
+  promo: 'block',
+  line: 'minimal',
+  point: 'flat',
 };
 
 function safeValue(value, options, fallback) {
@@ -28,7 +28,7 @@ function safeValue(value, options, fallback) {
 }
 
 function safeTimerVariant(value) {
-  return safeValue(LEGACY_TIMER_VARIANTS[value] || value, TIMER_VARIANT_OPTIONS, 'clean');
+  return safeValue(LEGACY_TIMER_VARIANTS[value] || value, TIMER_VARIANT_OPTIONS, 'minimal');
 }
 
 export default function TimerBasicSection({ s, set }) {
