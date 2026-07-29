@@ -17,8 +17,8 @@ export async function onRequest(context) {
     '/privacy': '/call/privacy/index.html',
     '/terms': '/call/terms/index.html',
     '/subscribe': '/call/subscribe/index.html',
-    '/preview': '/call/preview/index.html',
-    '/call/preview': '/call/preview/index.html',
+    '/preview': '/call/preview-v110/index.html',
+    '/call/preview': '/call/preview-v110/index.html',
     '/preview-v104': '/call/preview/index.html',
     '/call/preview-v104': '/call/preview/index.html',
     '/preview-v105': '/call/preview/index.html',
@@ -29,6 +29,10 @@ export async function onRequest(context) {
     '/call/preview-v107': '/call/preview-v106/index.html',
     '/preview-v108': '/call/preview-v108/index.html',
     '/call/preview-v108': '/call/preview-v108/index.html',
+    '/preview-v109': '/call/preview-v110/index.html',
+    '/call/preview-v109': '/call/preview-v110/index.html',
+    '/preview-v110': '/call/preview-v110/index.html',
+    '/call/preview-v110': '/call/preview-v110/index.html',
   };
   const mapped = routes[clean];
   if (!mapped) return context.next();
@@ -64,12 +68,15 @@ export async function onRequest(context) {
 
   const headers = new Headers(response.headers);
   headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  headers.set('CDN-Cache-Control', 'no-store');
+  headers.set('Cloudflare-CDN-Cache-Control', 'no-store');
   headers.set('Pragma', 'no-cache');
   headers.set('Expires', '0');
-  headers.set('X-CallLink-Preview-Version', '1.0.8');
+  headers.set('X-CallLink-Preview-Version', '1.0.10');
 
   if (mapped === '/call/preview-v106/index.html'
-          || mapped === '/call/preview-v108/index.html') {
+          || mapped === '/call/preview-v108/index.html'
+          || mapped === '/call/preview-v110/index.html') {
     return new Response(response.body, {
       status: response.status,
       statusText: response.statusText,
@@ -80,8 +87,8 @@ export async function onRequest(context) {
   let html = await response.text();
   html = html
     .replace(/페이지로\s+(?!콜링크)[가-힣]{2,4}(?=입니다|`|'|"|\n)/g, '페이지로')
-    .replace('</head>', '<link rel="stylesheet" href="/call/preview/v106.css?v=108"></head>')
-    .replace('</body>', '<script src="/call/preview/v106.js?v=108"></script></body>');
+    .replace('</head>', '<link rel="stylesheet" href="/call/preview/v106.css?v=110"><link rel="stylesheet" href="/call/preview/v110.css?v=110"></head>')
+    .replace('</body>', '<script src="/call/preview/v106.js?v=110"></script><script src="/call/preview/v110.js?v=110"></script></body>');
 
   headers.set('Content-Type', 'text/html; charset=utf-8');
   headers.delete('Content-Length');
