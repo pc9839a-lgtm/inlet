@@ -269,6 +269,18 @@ export function encodeD1PageRevision(revision = {}, context = {}) {
   };
 }
 
+const D1_PAGE_JSON_MAX_BYTES = 1_000_000;
+
+function assertD1PageJsonSize(pageJson = '') {
+  const bytes = new TextEncoder().encode(String(pageJson || '')).length;
+  if (bytes <= D1_PAGE_JSON_MAX_BYTES) return;
+  const error = new Error('PAGE_DATA_TOO_LARGE');
+  error.status = 413;
+  error.code = 'PAGE_DATA_TOO_LARGE';
+  error.details = { code: 'PAGE_DATA_TOO_LARGE', bytes, maxBytes: D1_PAGE_JSON_MAX_BYTES };
+  throw error;
+}
+
 export function decodeD1PageRevision(row = {}) {
   const page = decodeD1Json(row.page_json, {});
   return {
@@ -874,6 +886,7 @@ export async function upsertD1Page(db, page = {}, context = {}) {
     publishedAt: pageForRow.publishedAt || pageForRow.published_at || savedAt,
     updatedAt: savedAt,
   }, { ...context, slug: safeSlug, revision: nextRevision });
+  assertD1PageJsonSize(row.page_json);
   if (current?.id) {
     await db.prepare(`
       UPDATE pages
@@ -927,6 +940,7 @@ export async function upsertD1Page(db, page = {}, context = {}) {
 export async function insertD1PageRevision(db, revision = {}, context = {}) {
   assertD1Binding(db);
   const row = encodeD1PageRevision(revision, context);
+  assertD1PageJsonSize(row.page_json);
   await db.prepare(`
     INSERT OR IGNORE INTO page_revisions (
       id, page_id, project_id, revision, page_json, reason, created_by_account_id, created_at

@@ -2,7 +2,7 @@ import { assertD1, handleApiError, jsonResponse, optionsResponse, sessionIdentit
 import { projectDownloadsPrefix } from '../files/_files.js';
 
 const ADMIN_METHODS = 'GET, OPTIONS';
-const DEFAULT_MASTER_EMAILS = ['admin@pagero.kr', 'roadfor@kakao.com'];
+const DEFAULT_MASTER_EMAILS = ['admin@pagero.kr', 'roadfor@kakao.com', 'pc9839a@naver.com'];
 const OPERATIONAL_PROJECT_WHERE = `
   COALESCE(projects.status, 'active') <> 'deleted'
   AND lower(COALESCE(projects.slug, '')) NOT LIKE 'hosted-route-qa-%'
@@ -41,7 +41,7 @@ function assertPlatformMaster(identity = null, env = {}) {
     .split(',')
     .map((item) => item.trim().toLowerCase())
     .filter(Boolean);
-  const allowedEmails = emails.length ? emails : DEFAULT_MASTER_EMAILS;
+  const allowedEmails = [...new Set([...DEFAULT_MASTER_EMAILS, ...emails])];
   if (allowedEmails.includes(email) || ['platformmaster', 'platform_master', 'superadmin', 'serviceadmin'].includes(role)) return true;
   const error = new Error('전체 관리자 권한이 필요합니다.');
   error.status = identity ? 403 : 401;

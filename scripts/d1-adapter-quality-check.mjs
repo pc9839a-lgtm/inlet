@@ -1047,6 +1047,13 @@ await upsertD1OwnershipTransferRequest(db, { ...decodeD1OwnershipTransferRequest
 const transferPage = await listD1OwnershipTransferRequests(db, { projectId: 'project-1', status: 'waiting_billing_clearance', limit: 10 });
 assert(db.rows.ownership_transfer_requests.length === 1 && transferPage.records[0]?.billingClearanceStatus === 'active_subscription', 'ownership transfer upsert/list should preserve billing clearance state');
 await upsertD1Page(db, decodeD1Page(encodedPage), { projectId: 'project-1', slug: 'landing' });
+let oversizedPageError = null;
+try {
+  await upsertD1Page(db, { ...decodeD1Page(encodedPage), content: 'x'.repeat(1_000_100) }, { projectId: 'project-1', slug: 'landing' });
+} catch (error) {
+  oversizedPageError = error;
+}
+assert(oversizedPageError?.status === 413 && oversizedPageError?.code === 'PAGE_DATA_TOO_LARGE', 'D1 page writes must reject oversized JSON before SQLite reports SQLITE_TOOBIG');
 await upsertD1Page(db, { ...decodeD1Page(encodedPage), title: 'Landing v2' }, { projectId: 'project-1', slug: 'landing' });
 await upsertD1Page(db, { ...decodeD1Page(encodedPage), slug: 'landing-renamed', title: 'Landing Renamed' }, { projectId: 'project-1', slug: 'landing-renamed' });
 assert(db.rows.pages.length === 1 && db.rows.pages[0].id === encodedPage.id && db.rows.pages[0].slug === 'landing-renamed', 'D1 page upsert should treat same-project page id with changed slug as an update');
@@ -1200,7 +1207,7 @@ assert(readyCoverage.some((item) => item.key === 'leads' && item.adapter === 'd1
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 57,
+  checks: 58,
   accounts: db.rows.accounts.length,
   projects: db.rows.projects.length,
   invites: db.rows.invites.length,
