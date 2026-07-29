@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Share2 } from 'lucide-react';
 import { installConversionTracking, installPageHeadMeta } from '../lib/conversionTracking.js';
 import { normalizeExternalUrl } from '../lib/linkPreview.js';
@@ -22,6 +22,7 @@ import {
 import { RenderCode as UtilityRenderCode, RenderPageSearch as UtilityRenderPageSearch } from './renderers/UtilityBlocks.jsx';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
+const SHARE_POSITIONS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
 
 const PREVIEW_BLOCK_LABELS = {
   topnav: '상단 메뉴',
@@ -60,6 +61,21 @@ function normalizeButtonEffect(value) {
 
 function themeButtonColor(s = {}) {
   return s.buttonColorMode === 'custom' ? (s.buttonColor || 'var(--accent)') : 'var(--accent)';
+}
+
+function isFormInputControl(target, root) {
+  if (!target || !root || typeof Element === 'undefined' || !(target instanceof Element)) return false;
+  if (!root.contains(target) || !target.closest('.landing-section.form')) return false;
+  return target.matches('input, textarea, select, [contenteditable]:not([contenteditable="false"])');
+}
+
+function normalizedSharePosition(value) {
+  return pickSafe(value, SHARE_POSITIONS, 'top-right');
+}
+
+function canonicalPageUrl(page = {}) {
+  const slug = String(page.slug || '').trim().replace(/^\/+|\/+$/g, '');
+  return slug ? `https://pagero.kr/${encodeURIComponent(slug)}` : 'https://pagero.kr/';
 }
 
 function makeParticles(effect = 'none') {
@@ -128,7 +144,12 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
     ...normalRaw.filter((b)=>b.id !== heroBlock?.id && b.id !== topNavBlock?.id),
   ];
   const pageRef = useRef(null);
-  const [hideBottomForForm, setHideBottomForForm] = useState(false);
+  const [formInputActive, setFormInputActive] = useState(false);
+  const [fixedUiHeights, setFixedUiHeights] = useState({ top: 0, bottom: 0 });
+  const syncedTimer = getSyncedTimerSettings(blocks);
+  const bottomHasButtons = !!bottom && normalizeButtons(bottom.s?.buttons, bottom.s?.count).slice(0, Number(bottom.s?.count || 1)).some((b)=>b.enabled!==false);
+  const bottomHasTimer = !!bottom?.s?.timerEnabled && !!syncedTimer;
+  const bottomActive = !!bottom && (bottomHasButtons || bottomHasTimer);
 
   useEffect(()=>{track?.({type:'page_view',label:'페이지뷰'});},[]);
 
@@ -147,41 +168,74 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
   }, [normal.length]);
 
   useEffect(() => {
-    if (publicView) {
-      setHideBottomForForm(false);
-      return;
-    }
-
     const root = pageRef.current;
-    if (!root) return;
+    if (!root) return undefined;
+    let blurTimer = 0;
 
-    const forms = Array.from(root.querySelectorAll('.landing-section.form'));
-    if (!forms.length) {
-      setHideBottomForForm(false);
-      return;
-    }
-
-    const check = () => {
-      const rootRect = root.getBoundingClientRect();
-      const hide = forms.some((el) => {
-        const rect = el.getBoundingClientRect();
-        const visibleTop = Math.max(rect.top, rootRect.top);
-        const visibleBottom = Math.min(rect.bottom, rootRect.bottom);
-        const visibleHeight = Math.max(0, visibleBottom - visibleTop);
-        return visibleHeight > Math.min(180, rect.height * 0.22);
-      });
-      setHideBottomForForm(hide);
+    const syncFromActiveElement = () => {
+      setFormInputActive(isFormInputControl(document.activeElement, root));
+    };
+    const handleFocusIn = (event) => {
+      window.clearTimeout(blurTimer);
+      if (isFormInputControl(event.target, root)) setFormInputActive(true);
+    };
+    const handleFocusOut = () => {
+      window.clearTimeout(blurTimer);
+      blurTimer = window.setTimeout(syncFromActiveElement, 140);
     };
 
-    check();
-    root.addEventListener('scroll', check, { passive: true });
-    window.addEventListener('resize', check);
+    root.addEventListener('focusin', handleFocusIn);
+    root.addEventListener('focusout', handleFocusOut);
+    window.visualViewport?.addEventListener('resize', syncFromActiveElement);
 
     return () => {
-      root.removeEventListener('scroll', check);
-      window.removeEventListener('resize', check);
+      window.clearTimeout(blurTimer);
+      root.removeEventListener('focusin', handleFocusIn);
+      root.removeEventListener('focusout', handleFocusOut);
+      window.visualViewport?.removeEventListener('resize', syncFromActiveElement);
     };
-  }, [normal.length, publicView]);
+  }, [normal.length]);
+
+  useEffect(() => {
+    const root = pageRef.current;
+    if (!root) return undefined;
+    let frame = 0;
+
+    const findBottom = () => (
+      publicView
+        ? document.querySelector('.public-bottom-bar[data-public-bottom="true"]')
+        : root.querySelector('.bottom-bar')
+    );
+    const measure = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        const top = root.querySelector('.landing-section.topnav.topnav-sticky');
+        const bottomBar = findBottom();
+        const next = {
+          top: top ? Math.ceil(top.getBoundingClientRect().height) : 0,
+          bottom: bottomBar ? Math.ceil(bottomBar.getBoundingClientRect().height) : 0,
+        };
+        setFixedUiHeights((current) => (
+          current.top === next.top && current.bottom === next.bottom ? current : next
+        ));
+      });
+    };
+
+    const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(measure) : null;
+    resizeObserver?.observe(root);
+    const top = root.querySelector('.landing-section.topnav.topnav-sticky');
+    const bottomBar = findBottom();
+    if (top) resizeObserver?.observe(top);
+    if (bottomBar) resizeObserver?.observe(bottomBar);
+    measure();
+    window.addEventListener('resize', measure, { passive: true });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  }, [normal.length, bottomActive, publicView]);
 
   useEffect(() => {
     const root = pageRef.current;
@@ -272,8 +326,6 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
     };
   }, [page.theme.animOn, page.theme.animType, page.theme.animPlayback, blocks.length]);
 
-
-
   useEffect(() => {
     const root = pageRef.current;
     if (!root) return;
@@ -303,24 +355,18 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
   const pageBg = getPageBg(page.theme);
   const bgSize = page.theme.bgMode === 'image' ? (page.theme.bgImageFit === 'contain' ? 'contain' : page.theme.bgImageFit === 'auto' ? 'auto' : 'cover') : 'cover';
   const bgPosition = page.theme.bgImagePosition || 'center';
-
-  const syncedTimer = getSyncedTimerSettings(blocks);
-  const bottomHasButtons = !!bottom && normalizeButtons(bottom.s?.buttons, bottom.s?.count).slice(0, Number(bottom.s?.count || 1)).some((b)=>b.enabled!==false);
-  const bottomHasTimer = !!bottom?.s?.timerEnabled && !!syncedTimer;
-  const bottomActive = !!bottom && (bottomHasButtons || bottomHasTimer);
   const buttonEffect = pickSafe(normalizeButtonEffect(page.theme.buttonEffect), ['fill','shine','burst'], 'fill');
   const bgEffect = pickSafe(page.theme.bgEffect || 'none', ['none','snow','petals','sparkle'], 'none');
   const bgEffectOpacity = Math.max(0.1, Math.min(0.9, Number(page.theme.bgEffectOpacity ?? 45) / 100));
   const globalAlign = pickSafe(page.theme.globalAlign, ['left','center','right'], '');
-
-  const shouldHideBottom = !publicView && hideBottomForForm;
-  const bottomNode = bottomActive && !shouldHideBottom ? <RenderBottom block={bottom} blocks={blocks} accent={page.theme.accent} buttonEffect={buttonEffect} go={go} publicView={publicView}/> : null;
+  const bottomNode = bottomActive ? <RenderBottom block={bottom} blocks={blocks} accent={page.theme.accent} buttonEffect={buttonEffect} go={go} publicView={publicView} hiddenForForm={formInputActive}/> : null;
+  const pageClassName = `landing-page font-${page.theme.font} font-family-${page.theme.fontFamily || 'pretendard'} ${globalAlign ? `global-align-${globalAlign}` : ''} bgmode-${page.theme.bgMode || 'solid'} bg-effect-${bgEffect} button-effect-${buttonEffect} ${publicView ? 'public-render' : ''} ${templatePreview ? 'template-preview' : ''} ${bottomActive ? 'has-bottom-bar' : ''} ${formInputActive ? 'is-form-input-active' : ''} ${page.theme.animOn ? `anim-on anim-${page.theme.animType || 'fade'} anim-${page.theme.animPlayback === 'loop' ? 'loop' : 'once'}` : ''}`;
 
   const pageNode = (
-    <div ref={pageRef} onClickCapture={templatePreview || publicView ? undefined : handlePreviewSelect} className={`landing-page font-${page.theme.font} font-family-${page.theme.fontFamily || 'pretendard'} ${globalAlign ? `global-align-${globalAlign}` : ''} bgmode-${page.theme.bgMode || 'solid'} bg-effect-${bgEffect} button-effect-${buttonEffect} ${publicView ? 'public-render' : ''} ${templatePreview ? 'template-preview' : ''} ${bottomActive ? 'has-bottom-bar' : ''} ${page.theme.animOn ? `anim-on anim-${page.theme.animType || 'fade'} anim-${page.theme.animPlayback === 'loop' ? 'loop' : 'once'}` : ''}`} style={{'--accent':page.theme.accent,'--button':page.theme.accent,'--button-text':'#ffffff','--bg':pageBg,'--card':page.theme.card,'--text':page.theme.text,'--radius':`${page.theme.radius}px`,'--bg-effect-opacity':bgEffectOpacity,background:pageBg,color:page.theme.text,backgroundSize:bgSize,backgroundPosition:bgPosition,backgroundRepeat:'no-repeat'}}>
+    <div ref={pageRef} onClickCapture={templatePreview || publicView ? undefined : handlePreviewSelect} className={pageClassName} style={{'--accent':page.theme.accent,'--button':page.theme.accent,'--button-text':'#ffffff','--bg':pageBg,'--card':page.theme.card,'--text':page.theme.text,'--radius':`${page.theme.radius}px`,'--bg-effect-opacity':bgEffectOpacity,'--page-fixed-top-height':`${fixedUiHeights.top}px`,'--page-fixed-bottom-height':`${fixedUiHeights.bottom}px`,background:pageBg,color:page.theme.text,backgroundSize:bgSize,backgroundPosition:bgPosition,backgroundRepeat:'no-repeat'}}>
       <div className="landing-content">{normal.map(b=><RenderBlock key={b.id} page={page} block={b} blocks={blocks} leads={leads} addLead={addLead} track={track} go={go}/>)}</div>
       <BgEffectLayer effect={bgEffect} />
-      {page.share?.enabled !== false && <PageShareButton page={page} publicView={publicView} hasTopNav={!!topNavBlock} />}
+      {page.share?.enabled !== false && <PageShareButton page={page} publicView={publicView} />}
       {!publicView && bottomNode}
     </div>
   );
@@ -408,21 +454,42 @@ function getSyncedTimerSettings(blocks = []) {
   return timer?.s || null;
 }
 
-function PageShareButton({ page, publicView = false, hasTopNav = false }) {
+function PageShareButton({ page, publicView = false }) {
   const [feedback, setFeedback] = useState('');
+  const feedbackTimerRef = useRef(0);
+  const position = normalizedSharePosition(page?.share?.position);
+
+  useEffect(() => () => window.clearTimeout(feedbackTimerRef.current), []);
+
+  const showFeedback = (message) => {
+    window.clearTimeout(feedbackTimerRef.current);
+    setFeedback(message);
+    feedbackTimerRef.current = window.setTimeout(() => setFeedback(''), 1600);
+  };
 
   const handleShare = async () => {
-    const slug = String(page?.slug || '').replace(/^\/+|\/+$/g, '');
-    const url = slug ? `${window.location.origin}/${encodeURIComponent(slug)}` : window.location.href;
-    const title = String(page?.meta?.title || page?.title || document.title || '\uD398\uC774\uC9C0 \uACF5\uC720');
-    const canUseNativeShare = typeof navigator.share === 'function' && window.matchMedia?.('(max-width: 768px)').matches;
+    const url = canonicalPageUrl(page);
+    const title = String(page?.seo?.title || page?.meta?.title || page?.title || document.title || '페이지 공유');
+    const text = String(page?.seo?.description || page?.meta?.desc || page?.title || title);
+    const payload = { title, text, url };
+    let canUseNativeShare = typeof navigator.share === 'function';
+
+    if (canUseNativeShare && typeof navigator.canShare === 'function') {
+      try {
+        canUseNativeShare = navigator.canShare(payload);
+      } catch {
+        canUseNativeShare = false;
+      }
+    }
 
     if (canUseNativeShare) {
       try {
-        await navigator.share({ title, url });
+        await navigator.share(payload);
         return;
       } catch (error) {
         if (error?.name === 'AbortError') return;
+        showFeedback('공유 실패');
+        return;
       }
     }
 
@@ -448,19 +515,18 @@ function PageShareButton({ page, publicView = false, hasTopNav = false }) {
         textarea.remove();
       }
       if (!copied) throw new Error('COPY_FAILED');
-      setFeedback('\uBCF5\uC0AC\uB428');
+      showFeedback('복사됨');
     } catch {
-      setFeedback('\uBCF5\uC0AC \uC2E4\uD328');
+      showFeedback('복사 실패');
     }
-    window.setTimeout(() => setFeedback(''), 1600);
   };
 
   return (
     <button
       type="button"
-      className={`page-share-button ${publicView ? 'public-share-button' : 'preview-share-button'} ${hasTopNav ? 'has-top-nav' : ''} ${feedback ? 'has-feedback' : ''}`.trim()}
-      title={'\uACF5\uC720\uD558\uAE30'}
-      aria-label={feedback || '\uACF5\uC720\uD558\uAE30'}
+      className={`page-share-button position-${position} ${publicView ? 'public-share-button' : 'preview-share-button'} ${feedback ? 'has-feedback' : ''}`.trim()}
+      title="공유하기"
+      aria-label={feedback || '공유하기'}
       onClick={handleShare}
     >
       <Share2 size={19} aria-hidden="true" />
@@ -469,7 +535,7 @@ function PageShareButton({ page, publicView = false, hasTopNav = false }) {
   );
 }
 
-function RenderBottom({ block, blocks = [], accent = '#111827', buttonEffect = 'fill', go, publicView = false }) {
+function RenderBottom({ block, blocks = [], accent = '#111827', buttonEffect = 'fill', go, publicView = false, hiddenForForm = false }) {
   const s=block.s || {};
   const btns=normalizeButtons(s.buttons,s.count).slice(0,Number(s.count||1)).filter((b)=>b.enabled!==false);
   const timerSource = getSyncedTimerSettings(blocks);
@@ -488,12 +554,12 @@ function RenderBottom({ block, blocks = [], accent = '#111827', buttonEffect = '
   };
 
   return (
-    <div className={`bottom-bar ${publicView ? 'public-bottom-bar' : ''} count-${btns.length || 1} bottom-${style} color-${color} ${customButtonColor ? 'bottom-custom-color' : ''} button-effect-${buttonEffect}`} data-public-bottom={publicView ? 'true' : undefined} style={barStyle}>
+    <div className={`bottom-bar ${publicView ? 'public-bottom-bar' : ''} ${hiddenForForm ? 'is-form-input-hidden' : ''} count-${btns.length || 1} bottom-${style} color-${color} ${customButtonColor ? 'bottom-custom-color' : ''} button-effect-${buttonEffect}`} data-public-bottom={publicView ? 'true' : undefined} style={barStyle}>
       {showTimer && <RenderBottomTimer s={timerSource}/>}
       <div className="bottom-bar-actions">
         <div className="bottom-bar-buttons">
           {btns.map(b=>(
-            <button key={b.id} type="button" className={b.icon ? '' : 'no-icon'} title={b.label || '\uBC84\uD2BC'} onClick={()=>go(b.target,b.url,b.label)}>
+            <button key={b.id} type="button" className={b.icon ? '' : 'no-icon'} title={b.label || '버튼'} onClick={()=>go(b.target,b.url,b.label)}>
               {b.icon && <span>{b.icon}</span>}
               <b>{b.label}</b>
             </button>
@@ -561,5 +627,3 @@ function normalizeButtons(buttons=[],count=1){
   }));
 }
 export default LandingRenderer;
-
-
