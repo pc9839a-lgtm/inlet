@@ -1,17 +1,7 @@
 import { useEffect, useState } from 'react';
 import { pickSafe, widgetBoxClass, widgetBoxVars } from './previewUtils.jsx';
 
-const TIMER_URGENCY_LABELS = {
-  normal: '',
-  six: '6시간 이내',
-  three: '3시간 이내',
-  two: '2시간 이내',
-  one: '1시간 이내',
-  critical: '마감 임박',
-  ended: '종료',
-};
-
-function TimerUnit({ value, label, effect = 'flip' }) {
+function TimerUnit({ value, label, effect = 'none' }) {
   const safeValue = value == null || value === '' ? '00' : String(value);
   const displayValue = label === '일' ? safeValue : safeValue.padStart(2, '0');
   const isSecond = label === '초';
@@ -63,50 +53,30 @@ export function useCountdown(input) {
   };
 }
 
-export function getTimerUrgency(diffMs = 0, done = false) {
-  if (done) return 'ended';
-  const min = diffMs / 60000;
-  if (min <= 10) return 'critical';
-  if (min <= 60) return 'one';
-  if (min <= 120) return 'two';
-  if (min <= 180) return 'three';
-  if (min <= 360) return 'six';
-  return 'normal';
-}
-
 export function RenderTimer({ block, go }) {
   const s = block.s || {};
   const t = useCountdown(s);
-  const urgency = getTimerUrgency(t.diffMs, t.done);
-  const theme = pickSafe(s.timerTheme || 'modern', ['modern', 'glass', 'minimal', 'accent'], 'modern');
-  const effect = pickSafe(s.urgentStyle || 'flip', ['flip', 'line', 'flow', 'none'], 'flip');
-  const showProgress = effect !== 'none';
   const showDays = Number(t.d) > 0;
-  const urgencyLabel = TIMER_URGENCY_LABELS[urgency] || '';
 
   return (
     <section
       id={`block-${block.id}`}
-      className={`landing-section timer timer-modern-wrap timer-theme-${theme} timer-effect-${effect} timer-urgency-${urgency} ${showDays ? 'timer-has-days' : 'timer-no-days'} ${urgency !== 'normal' && urgency !== 'ended' ? 'timer-is-imminent' : ''} ${widgetBoxClass(s, { background: false, shadow: false })}`}
+      className={`landing-section timer timer-modern-wrap timer-theme-minimal timer-effect-none ${showDays ? 'timer-has-days' : 'timer-no-days'} ${widgetBoxClass(s, { background: false, shadow: false })}`}
       style={widgetBoxVars(s)}
     >
       <div className="timer-headline">
-        <span>{s.label || '혜택 마감까지'}</span>
-        {urgencyLabel ? <em>{urgencyLabel}</em> : null}
+        <span>{s.label || '타이머'}</span>
       </div>
 
       {t.done ? (
-        <strong className="timer-ended">{s.ended || '종료되었습니다'}</strong>
+        <strong className="timer-ended">{s.ended || '종료되었습니다.'}</strong>
       ) : (
-        <>
-          <div className="timer-grid timer-grid-modern">
-            {showDays ? <TimerUnit value={t.d} label="일" effect={effect} /> : null}
-            <TimerUnit value={t.h} label="시" effect={effect} />
-            <TimerUnit value={t.m} label="분" effect={effect} />
-            <TimerUnit value={t.s} label="초" effect={effect} />
-          </div>
-          {showProgress ? <div className="timer-progress-modern"><em style={{ width: `${t.progress}%` }}></em></div> : null}
-        </>
+        <div className="timer-grid timer-grid-modern">
+          {showDays ? <TimerUnit value={t.d} label="일" effect="none" /> : null}
+          <TimerUnit value={t.h} label="시" effect="none" />
+          <TimerUnit value={t.m} label="분" effect="none" />
+          <TimerUnit value={t.s} label="초" effect="none" />
+        </div>
       )}
 
       {s.cta ? <button className="timer-cta" onClick={() => go?.(s.ctaTarget, s.ctaUrl, s.ctaLabel)}>{s.ctaLabel || '상담 신청'}</button> : null}

@@ -63,13 +63,6 @@ export function ScheduleStylePanel({ s, set }) {
   </>;
 }
 
-export function TimerStylePanel({ s, set }) {
-  return <>
-    <SegmentedControl label="테마" value={s.timerTheme || 'modern'} onChange={(value) => set({ timerTheme: value })} options={[{ value: 'modern', label: '모던' }, { value: 'glass', label: '글라스' }, { value: 'minimal', label: '미니멀' }, { value: 'accent', label: '강조' }]} />
-    <ToggleRow label="움직임" checked={(s.urgentStyle || 'flow') !== 'none'} onChange={(value) => set({ urgentStyle: value ? 'flow' : 'none' })} />
-  </>;
-}
-
 export function ActivityStylePanel({ s, set }) {
   return <>
     <SegmentedControl label="테마" value={s.style || 'glass'} onChange={(value) => set({ style: value })} options={[{ value: 'minimal', label: '미니멀' }, { value: 'glass', label: '글라스' }, { value: 'dark', label: '다크' }]} />

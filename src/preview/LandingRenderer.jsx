@@ -10,7 +10,6 @@ import { RenderImage as MediaRenderImage } from './renderers/MediaBlocks.jsx';
 import {
   RenderActivity as SignalRenderActivity,
   RenderTimer as SignalRenderTimer,
-  getTimerUrgency,
   useCountdown,
 } from './renderers/SignalBlocks.jsx';
 import {
@@ -442,20 +441,16 @@ function RenderBottom({ block, blocks = [], accent = '#111827', buttonEffect = '
 
 function RenderBottomTimer({ s }) {
   const t = useCountdown(s || {});
-  const theme = pickSafe(s?.timerTheme || 'modern', ['modern','glass','minimal','accent'], 'modern');
-  const urgency = getTimerUrgency(t.diffMs, t.done);
   const hasDays = Number(t.d) > 0;
 
   return (
-    <div className={`bottom-timer bottom-timer-${theme} bottom-timer-urgency-${urgency} ${hasDays ? 'bottom-timer-has-days' : 'bottom-timer-no-days'} ${urgency !== 'normal' && urgency !== 'ended' ? 'bottom-timer-imminent' : ''}`}>
+    <div className={`bottom-timer bottom-timer-minimal ${hasDays ? 'bottom-timer-has-days' : 'bottom-timer-no-days'}`}>
       <div className="bottom-timer-main">
-        <span>{s?.floatLabel || s?.label || '마감까지'}</span>
         <strong>
           {hasDays ? <em>D-{t.d}</em> : null}
           <b>{t.h}:{t.m}:{t.s}</b>
         </strong>
       </div>
-      <div className="bottom-timer-track"><i style={{width:`${t.progress}%`}}></i></div>
     </div>
   );
 }
