@@ -1,5 +1,3 @@
-import { useEffect, useRef, useState } from 'react';
-
 function pickSafe(value, list, fallback) {
   return list.includes(value) ? value : fallback;
 }
@@ -34,55 +32,6 @@ function topNavLogoTextColor(s = {}, logoStyle = 'plain', bg = 'white') {
   return s.logoTextColor || (bg === 'dark' ? '#ffffff' : 'var(--text)');
 }
 
-function RollingMenuLabel({ children }) {
-  const viewportRef = useRef(null);
-  const labelRef = useRef(null);
-  const [roll, setRoll] = useState({ overflow: false, distance: 0 });
-
-  useEffect(() => {
-    const viewport = viewportRef.current;
-    const label = labelRef.current;
-    if (!viewport || !label) return undefined;
-
-    const measure = () => {
-      const distance = Math.max(0, Math.ceil(label.scrollWidth - viewport.clientWidth));
-      const overflow = distance > 2;
-      setRoll((current) => (
-        current.overflow === overflow && current.distance === distance
-          ? current
-          : { overflow, distance }
-      ));
-    };
-
-    measure();
-    document.fonts?.ready?.then(measure).catch?.(() => {});
-
-    const resizeObserver = typeof ResizeObserver === 'function'
-      ? new ResizeObserver(measure)
-      : null;
-    resizeObserver?.observe(viewport);
-    resizeObserver?.observe(label);
-    window.addEventListener('resize', measure, { passive: true });
-
-    return () => {
-      resizeObserver?.disconnect();
-      window.removeEventListener('resize', measure);
-    };
-  }, [children]);
-
-  return (
-    <span ref={viewportRef} className="top-menu-label-window">
-      <span
-        ref={labelRef}
-        className={`top-menu-label ${roll.overflow ? 'is-overflowing' : ''}`.trim()}
-        style={roll.overflow ? { '--top-menu-roll-distance': `${roll.distance}px` } : undefined}
-      >
-        {children}
-      </span>
-    </span>
-  );
-}
-
 export function RenderSpacer({ block }) {
   const height = Math.max(8, Math.min(200, Number(block.s?.height ?? 40)));
   return (
@@ -104,8 +53,9 @@ export function RenderTopNav({ block, go }) {
   const menuStyle = pickSafe(s.menuStyle || 'pill', ['pill','text','outline'], 'pill');
   const menuSize = pickSafe(s.menuSize || 'medium', ['small','medium','large'], 'medium');
   const align = pickSafe(s.align || 'left', ['left','center','right'], 'left');
-  const menus = Array.isArray(s.menus) ? s.menus.slice(0, 5) : [];
+  const menus = Array.isArray(s.menus) ? s.menus.slice(0, 8) : [];
   const menuCount = Math.max(1, menus.length);
+  const menuColumns = Math.min(4, menuCount);
   const isPillMenu = menuStyle === 'pill';
   const menuBg = s.menuBgColor && s.menuBgColor !== '#F1F5F9' ? s.menuBgColor : (isPillMenu && bg === 'dark' ? '#ffffff' : 'var(--card)');
   const logoText = topNavLogoTextColor(s, logoStyle, bg);
@@ -123,26 +73,30 @@ export function RenderTopNav({ block, go }) {
     '--top-menu-hover': menuHover,
     '--top-menu-hover-text': menuHoverText,
     '--top-menu-count': String(menuCount),
+    '--top-menu-columns': String(menuColumns),
   };
-  const renderMenuButton = (m) => (
-    <button
-      type="button"
-      key={m.id}
-      title={m.label || '메뉴'}
-      onClick={() => go(m.target, m.url, m.label)}
-    >
-      <RollingMenuLabel>{m.label || '메뉴'}</RollingMenuLabel>
-    </button>
-  );
-
-  const menuLoop = menus.length > 1;
 
   return (
-    <section id={`block-${block.id}`} className={`landing-section topnav topnav-one-line topnav-${bg} topnav-align-${align} topnav-logo-${logoStyle} logo-${logoSize} menu-${menuStyle} menu-${menuSize} topnav-menu-count-${menuCount} ${menuLoop ? 'topnav-menu-loop' : ''} ${s.sticky !== false ? 'topnav-sticky' : ''}`} style={vars}>
+    <section
+      id={`block-${block.id}`}
+      className={`landing-section topnav topnav-one-line topnav-${bg} topnav-align-${align} topnav-logo-${logoStyle} logo-${logoSize} menu-${menuStyle} menu-${menuSize} topnav-menu-count-${menuCount} ${menuCount > 4 ? 'topnav-menu-two-row' : ''} ${s.sticky !== false ? 'topnav-sticky' : ''}`}
+      style={vars}
+    >
       <div className="top-logo">{isImageLogo ? <img src={s.logoImage} alt="" /> : <strong>{s.logoText || 'LOGO'}</strong>}</div>
       <div className="top-menu">
         <div className="top-menu-track">
-          <div className="top-menu-set">{menus.map((m) => renderMenuButton(m))}</div>
+          <div className="top-menu-set">
+            {menus.map((menu) => (
+              <button
+                type="button"
+                key={menu.id}
+                title={menu.label || '메뉴'}
+                onClick={() => go(menu.target, menu.url, menu.label)}
+              >
+                <span className="top-menu-label">{menu.label || '메뉴'}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </section>
