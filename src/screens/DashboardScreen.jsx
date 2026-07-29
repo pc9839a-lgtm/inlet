@@ -50,9 +50,10 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
   }, [user?.session]);
 
   const visiblePages = useMemo(() => {
+    if (user?.session) return accountPages;
     if (pagesLoaded) return accountPages;
     return hasCurrentPage ? [{ ...page, leadCount: currentLeadCount }] : [];
-  }, [accountPages, currentLeadCount, hasCurrentPage, page, pagesLoaded]);
+  }, [accountPages, currentLeadCount, hasCurrentPage, page, pagesLoaded, user?.session]);
 
   const totalLeadCount = visiblePages.reduce((sum, item) => sum + Number(item.leadCount || 0), 0);
 
