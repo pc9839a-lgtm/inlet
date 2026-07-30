@@ -127,8 +127,7 @@
   padding-bottom: calc(max(112px, var(--page-fixed-bottom-height, 0px)) + 16px) !important;
 }
 
-.phone-frame .bottom-bar,
-.public-landing-viewport .public-bottom-bar {
+.phone-frame .bottom-bar {
   width: 100% !important;
   max-width: 100% !important;
   box-sizing: border-box !important;
@@ -136,6 +135,26 @@
   gap: 8px !important;
   background: transparent !important;
   box-shadow: none !important;
+}
+
+.public-landing-viewport .public-bottom-bar {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  padding: 12px 14px max(14px, env(safe-area-inset-bottom, 0px)) !important;
+  gap: 8px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.public-landing-viewport .public-bottom-bar.is-form-input-hidden {
+  transform: translateY(calc(100% + 18px)) !important;
 }
 
 .phone-frame .bottom-bar .bottom-bar-actions,
