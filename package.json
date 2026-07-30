@@ -18,6 +18,7 @@
     "page:save:qa": "node scripts/page-save-identity-quality-check.mjs",
     "preview:parity:qa": "node scripts/preview-public-parity-quality-check.mjs",
     "bottom:fixed:qa": "node scripts/bottom-fixed-ui-quality-check.mjs",
+    "timer:workflow:qa": "node scripts/timer-settings-workflow-quality-check.mjs",
     "conversion:qa": "node scripts/conversion-quality-check.mjs",
     "csv:qa": "node scripts/csv-quality-check.mjs",
     "runtime:qa": "node scripts/runtime-quality-check.mjs",
