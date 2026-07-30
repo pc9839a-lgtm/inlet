@@ -62,12 +62,11 @@ export function usePageSaveAction({
     const nextPage = pageForAccountSave(saveSourcePage);
     let result = null;
     try {
-      result = await persistPage(nextPage, authUser, {
-        tab,
-        expectedUpdatedAt,
-        expectedRevision,
-        saveMode,
-      });
+      if (saveMode === 'update-existing') {
+        result = await persistPage(nextPage, authUser, { tab, expectedUpdatedAt, saveMode: 'update-existing' });
+      } else {
+        result = await persistPage(nextPage, authUser, { tab, expectedUpdatedAt, expectedRevision, saveMode: 'create-new' });
+      }
     } catch (error) {
       await handlePagePersistError({ error, page: nextPage, handlePageSaveError, markSaveStatus, showToast });
       return { ok: false, error };
