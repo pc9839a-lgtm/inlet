@@ -6,26 +6,34 @@
 
 .landing-page.is-form-input-active .landing-content > .topnav.topnav-sticky,
 .landing-page.is-form-input-active .page-share-button,
-.bottom-bar.is-form-input-hidden {
+.bottom-bar.is-form-input-hidden,
+.landing-page:has(.landing-section.form :is(input, textarea, select, [contenteditable]:not([contenteditable="false"])):focus) .landing-content > .topnav.topnav-sticky,
+.landing-page:has(.landing-section.form :is(input, textarea, select, [contenteditable]:not([contenteditable="false"])):focus) .page-share-button,
+.landing-page:has(.landing-section.form :is(input, textarea, select, [contenteditable]:not([contenteditable="false"])):focus) .bottom-bar,
+.public-landing-viewport:has(.landing-section.form :is(input, textarea, select, [contenteditable]:not([contenteditable="false"])):focus) .public-bottom-bar {
   opacity: 0 !important;
   pointer-events: none !important;
   visibility: hidden !important;
 }
 
-.landing-page.is-form-input-active .landing-content > .topnav.topnav-sticky {
+.landing-page.is-form-input-active .landing-content > .topnav.topnav-sticky,
+.landing-page:has(.landing-section.form :is(input, textarea, select, [contenteditable]:not([contenteditable="false"])):focus) .landing-content > .topnav.topnav-sticky {
   transform: translateY(-12px) !important;
 }
 
-.landing-page.is-form-input-active .page-share-button {
+.landing-page.is-form-input-active .page-share-button,
+.landing-page:has(.landing-section.form :is(input, textarea, select, [contenteditable]:not([contenteditable="false"])):focus) .page-share-button {
   transform: scale(.94) !important;
 }
 
-.bottom-bar.is-form-input-hidden:not(.public-bottom-bar) {
+.bottom-bar.is-form-input-hidden:not(.public-bottom-bar),
+.landing-page:has(.landing-section.form :is(input, textarea, select, [contenteditable]:not([contenteditable="false"])):focus) .bottom-bar:not(.public-bottom-bar) {
   transform: translateY(calc(100% + 18px)) !important;
 }
 
-.public-bottom-bar.is-form-input-hidden {
-  transform: translate(-50%, calc(100% + 18px)) !important;
+.public-bottom-bar.is-form-input-hidden,
+.public-landing-viewport:has(.landing-section.form :is(input, textarea, select, [contenteditable]:not([contenteditable="false"])):focus) .public-bottom-bar {
+  transform: translateY(calc(100% + 18px)) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
