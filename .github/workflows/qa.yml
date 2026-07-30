@@ -76,7 +76,18 @@ jobs:
         env:
           INLET_BROWSER_QA_ORIGIN: http://127.0.0.1:4173
           INLET_BROWSER_QA_SCREENSHOT_DIR: .tmp-landing-browser-regression
-        run: npm run browser:landing:qa
+        run: |
+          for attempt in 1 2; do
+            echo "Browser regression attempt ${attempt}/2"
+            if npm run browser:landing:qa; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 1 ]; then
+              echo "Retrying once in case Chrome failed to open its debugging endpoint."
+              sleep 2
+            fi
+          done
+          exit 1
 
       - name: Upload browser regression screenshots
         if: always()
