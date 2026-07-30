@@ -203,3 +203,38 @@
     font-size: 10.5px !important;
   }
 }
+
+/* Balance every wrapped row instead of leaving a narrow final row. */
+.topnav-one-line.topnav-menu-count-5 .top-menu-set,
+.topnav-one-line.topnav-menu-count-6 .top-menu-set {
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+}
+
+.topnav-one-line.topnav-menu-count-7 .top-menu-set,
+.topnav-one-line.topnav-menu-count-8 .top-menu-set {
+  grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+}
+
+.topnav-one-line.topnav-menu-count-5 .top-menu-set > button {
+  grid-column: span 2 !important;
+}
+
+.topnav-one-line.topnav-menu-count-5 .top-menu-set > button:nth-child(n + 4) {
+  grid-column: span 3 !important;
+}
+
+.topnav-one-line.topnav-menu-count-6 .top-menu-set > button {
+  grid-column: span 2 !important;
+}
+
+.topnav-one-line.topnav-menu-count-7 .top-menu-set > button {
+  grid-column: span 3 !important;
+}
+
+.topnav-one-line.topnav-menu-count-7 .top-menu-set > button:nth-child(n + 5) {
+  grid-column: span 4 !important;
+}
+
+.topnav-one-line.topnav-menu-count-8 .top-menu-set > button {
+  grid-column: span 3 !important;
+}

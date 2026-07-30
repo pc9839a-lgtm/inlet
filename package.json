@@ -20,6 +20,7 @@
     "bottom:fixed:qa": "node scripts/bottom-fixed-ui-quality-check.mjs",
     "root:entry:qa": "node scripts/root-app-entry-quality-check.mjs",
     "timer:workflow:qa": "node scripts/timer-settings-workflow-quality-check.mjs",
+    "topnav:balance:qa": "node scripts/topnav-row-balance-quality-check.mjs",
     "conversion:qa": "node scripts/conversion-quality-check.mjs",
     "csv:qa": "node scripts/csv-quality-check.mjs",
     "runtime:qa": "node scripts/runtime-quality-check.mjs",
