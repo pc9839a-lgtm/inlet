@@ -42,6 +42,7 @@
     "artifact:qa": "node scripts/artifact-quality-check.mjs",
     "artifact:clean": "node scripts/artifact-cleanup.mjs",
     "deployment:qa": "node scripts/deployment-artifact-check.mjs",
+    "deployment:live:qa": "node scripts/deployment-live-asset-check.mjs",
     "bundle:qa": "node scripts/bundle-quality-check.mjs",
     "worker3:qa": "node scripts/worker3-quality-check.mjs",
     "css:qa": "node scripts/css-quality-check.mjs",

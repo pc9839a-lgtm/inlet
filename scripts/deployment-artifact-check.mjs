@@ -39,6 +39,7 @@ function addAssetRef(refs, currentRel, rawRef) {
 
 async function collectReferencedAssets() {
   const refs = new Set();
+  const missing = new Set();
   const queue = [];
   const seenJs = new Set();
   const indexPath = path.join(targetDir, 'index.html');
@@ -64,7 +65,10 @@ async function collectReferencedAssets() {
     if (seenJs.has(currentRel)) continue;
     seenJs.add(currentRel);
     const sourcePath = path.join(targetDir, ...currentRel.split('/'));
-    if (!await exists(sourcePath)) continue;
+    if (!await exists(sourcePath)) {
+      missing.add(currentRel);
+      continue;
+    }
     const source = await readFile(sourcePath, 'utf8');
     for (const match of source.matchAll(/["']((?:\.{1,2}\/|\/?assets\/)[^"']+\.(?:js|css)(?:[?#][^"']*)?)["']/g)) {
       const before = refs.size;
@@ -76,12 +80,17 @@ async function collectReferencedAssets() {
     }
   }
 
-  return refs;
+  for (const rel of refs) {
+    const sourcePath = path.join(targetDir, ...rel.split('/'));
+    if (!await exists(sourcePath)) missing.add(rel);
+  }
+
+  return { refs, missing };
 }
 
 async function inspectAssets() {
   assert(await exists(targetDir), `deployment artifact directory does not exist: ${targetDir}`);
-  const referenced = await collectReferencedAssets();
+  const { refs: referenced, missing } = await collectReferencedAssets();
   const assetsDir = path.join(targetDir, 'assets');
   assert(await exists(assetsDir), `deployment artifact missing assets directory: ${assetsDir}`);
 
@@ -106,9 +115,22 @@ async function inspectAssets() {
   return {
     assets,
     stale,
+    missing: [...missing].sort(),
     largestJs: jsAssets.toSorted((a, b) => b.bytes - a.bytes)[0] || null,
     largestCss: cssAssets.toSorted((a, b) => b.bytes - a.bytes)[0] || null,
   };
+}
+
+async function inspectCacheHeaders() {
+  const headersPath = path.join(targetDir, '_headers');
+  assert(await exists(headersPath), `deployment artifact missing _headers: ${targetDir}`);
+  const headers = await readFile(headersPath, 'utf8');
+
+  assert(/(?:^|\n)\/\s*\n\s+Cache-Control:\s*[^\n]*(?:no-cache|no-store)[^\n]*\n/i.test(headers), 'root HTML must not be cached across deployments');
+  assert(/(?:^|\n)\/index\.html\s*\n\s+Cache-Control:\s*[^\n]*no-store[^\n]*\n/i.test(headers), 'index.html must use no-store');
+  assert(/(?:^|\n)\/assets\/\*\s*\n\s+Cache-Control:\s*public,\s*max-age=31536000,\s*immutable\s*\n/i.test(headers), 'hashed /assets files must use one-year immutable caching');
+
+  return { headersBytes: Buffer.byteLength(headers) };
 }
 
 async function inspectSeoFiles() {
@@ -135,9 +157,11 @@ async function inspectSeoFiles() {
 }
 
 const report = await inspectAssets();
+const cacheHeaders = await inspectCacheHeaders();
 const seoFiles = await inspectSeoFiles();
 
 assert(report.assets.length > 0, 'deployment artifact has no JS/CSS assets');
+assert(report.missing.length === 0, `deployment artifact references missing assets: ${report.missing.join(', ')}`);
 assert(report.stale.length === 0, `deployment artifact has stale assets: ${report.stale.map((asset) => asset.relative).join(', ')}`);
 assert(report.largestJs?.bytes <= 430000, `deployment JS budget exceeded: ${report.largestJs?.bytes || 0}`);
 assert(report.largestCss?.bytes <= 430000, `deployment CSS budget exceeded: ${report.largestCss?.bytes || 0}`);
@@ -145,10 +169,12 @@ assert(report.largestCss?.bytes <= 430000, `deployment CSS budget exceeded: ${re
 console.log(JSON.stringify({
   ok: true,
   targetDir: targetDir.replaceAll(path.sep, '/'),
+  missingAssetCount: report.missing.length,
   staleAssetCount: report.stale.length,
   assetCount: report.assets.length,
   largestJs: report.largestJs?.bytes || 0,
   largestCss: report.largestCss?.bytes || 0,
+  headersBytes: cacheHeaders.headersBytes,
   robotsBytes: seoFiles.robotsBytes,
   sitemapBytes: seoFiles.sitemapBytes,
 }, null, 2));
