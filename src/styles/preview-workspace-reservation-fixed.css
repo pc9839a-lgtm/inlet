@@ -1,0 +1,11 @@
+/* Fixed and custom reservation field controls. */
+.reservation-fixed-fields{display:grid!important;gap:10px!important}
+.reservation-fixed-field{min-height:52px!important;padding:10px 12px!important;border:1px solid #e1e8f0!important;border-radius:16px!important;background:#fff!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important}
+.reservation-fixed-field>strong{font-size:13px!important;font-weight:950!important;letter-spacing:-.03em!important}
+.reservation-fixed-field>span{height:28px!important;padding:0 10px!important;border-radius:999px!important;display:inline-grid!important;place-items:center!important;background:#eef2ff!important;color:#3730a3!important;font-size:11px!important;font-weight:950!important}
+.reservation-fixed-field .toggle{width:auto!important;min-width:92px!important;padding:0!important;border:0!important;background:transparent!important;display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:8px!important}
+.reservation-fixed-field .toggle>span{margin:0!important}
+.reservation-custom-head{margin-top:12px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important}
+.reservation-custom-head strong{font-size:13px!important;font-weight:950!important}
+.reservation-custom-head button{min-height:36px!important;padding:0 12px!important;border:0!important;border-radius:12px!important;background:#111827!important;color:#fff!important;font-size:12px!important;font-weight:950!important}
+.reservation-custom-list{display:grid!important;gap:10px!important}
