@@ -20,6 +20,7 @@ const steps = [
   ['page:save:qa', ['scripts/page-save-identity-quality-check.mjs']],
   ['preview:parity:qa', ['scripts/preview-public-parity-quality-check.mjs']],
   ['bottom:fixed:qa', ['scripts/bottom-fixed-ui-quality-check.mjs']],
+  ['timer:workflow:qa', ['scripts/timer-settings-workflow-quality-check.mjs']],
   ['conversion:qa', ['scripts/conversion-quality-check.mjs']],
   ['csv:qa', ['scripts/csv-quality-check.mjs']],
   ['runtime:qa', ['scripts/runtime-quality-check.mjs']],
