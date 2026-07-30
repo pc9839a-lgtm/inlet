@@ -32,6 +32,7 @@
 @import '../styles/preview-cards.css';
 @import '../styles/preview-download.css';
 @import '../styles/preview-workspace.css';
+@import '../styles/preview-workspace-bottom-timer.css';
 @import '../styles/preview-workspace-hero-media.css';
 @import '../styles/preview-workspace-bottom-card.css';
 @import '../styles/preview-workspace-topnav-override.css';
@@ -39,6 +40,7 @@
 @import '../styles/preview-workspace-template.css';
 @import '../styles/preview-workspace-timer-minimal.css';
 @import '../styles/preview-workspace-timer-urgency.css';
+@import '../styles/preview-workspace-timer-bottom.css';
 @import '../styles/preview-workspace-timer-solid-variants.css';
 @import '../styles/preview-workspace-timer-effects.css';
 @import '../styles/preview-workspace-reservation.css';
