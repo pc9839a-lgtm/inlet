@@ -1,0 +1,441 @@
+.timer-workflow-stack {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.timer-workflow-intro {
+  display: grid;
+  gap: 5px;
+  padding: 14px 15px;
+  border: 1px solid #dfe6ef;
+  border-radius: 17px;
+  background: linear-gradient(145deg, #ffffff, #f7f9fc);
+}
+
+.timer-workflow-intro strong {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 950;
+  letter-spacing: -.025em;
+}
+
+.timer-workflow-intro span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.45;
+  word-break: keep-all;
+}
+
+.timer-workflow-divider {
+  height: 1px;
+  margin: 2px 0;
+  background: #e7ecf3;
+}
+
+.timer-workflow-note {
+  margin: 0;
+  padding: 11px 13px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.45;
+  word-break: keep-all;
+}
+
+.timer-workflow-note.is-warning {
+  border-color: #fed7aa;
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.timer-workflow-control {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.timer-workflow-control-head {
+  display: grid;
+  gap: 3px;
+}
+
+.timer-workflow-control-head strong {
+  color: #111827;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.timer-workflow-control-head span {
+  min-height: 17px;
+  color: #7c8799;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.timer-workflow-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+
+.timer-workflow-effect .timer-workflow-choice-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.timer-workflow-choice {
+  min-width: 0;
+  min-height: 116px;
+  padding: 9px;
+  border: 1px solid #dce3ed;
+  border-radius: 16px;
+  display: grid;
+  grid-template-rows: 48px auto auto;
+  align-items: center;
+  gap: 5px;
+  background: #ffffff;
+  color: #111827;
+  text-align: left;
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.timer-workflow-choice:hover {
+  border-color: #9aa7b8;
+  transform: translateY(-1px);
+}
+
+.timer-workflow-choice[aria-pressed="true"] {
+  border-color: #111827;
+  box-shadow: 0 0 0 2px #111827, 0 10px 24px rgba(15, 23, 42, .1);
+}
+
+.timer-workflow-choice > strong {
+  display: block;
+  min-width: 0;
+  color: #111827;
+  font-size: 12px;
+  font-weight: 950;
+  text-align: center;
+}
+
+.timer-workflow-choice > small {
+  display: block;
+  min-height: 29px;
+  color: #7c8799;
+  font-size: 10px;
+  font-weight: 750;
+  line-height: 1.35;
+  text-align: center;
+  word-break: keep-all;
+}
+
+.timer-workflow-choice-preview {
+  position: relative;
+  width: 100%;
+  height: 48px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #f1f5f9;
+  color: #111827;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-workflow-choice-preview > b {
+  font-size: 12px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.timer-workflow-choice-preview > i {
+  width: 100%;
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-style: normal;
+}
+
+.timer-workflow-choice-preview > i > b {
+  min-width: 24px;
+  min-height: 25px;
+  padding: 0 4px;
+  border: 1px solid #dbe3ed;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  background: #ffffff;
+  font-size: 10px;
+  font-weight: 950;
+}
+
+.timer-workflow-choice.choice-block .timer-workflow-choice-preview {
+  background: #111827;
+  color: #ffffff;
+}
+
+.timer-workflow-choice.choice-block .timer-workflow-choice-preview > i {
+  display: grid;
+  gap: 3px;
+  text-align: center;
+}
+
+.timer-workflow-choice.choice-block .timer-workflow-choice-preview em {
+  color: #fbbf24;
+  font-size: 7px;
+  font-style: normal;
+  font-weight: 950;
+}
+
+.timer-workflow-choice.choice-block .timer-workflow-choice-preview b {
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.timer-workflow-choice.is-effect {
+  min-height: 105px;
+  grid-template-rows: 42px auto auto;
+}
+
+.timer-workflow-choice.is-effect .timer-workflow-choice-preview {
+  height: 42px;
+  background: #111827;
+  color: #ffffff;
+}
+
+.timer-workflow-choice.is-effect .timer-workflow-choice-preview b {
+  font-size: 19px;
+  letter-spacing: .03em;
+}
+
+.timer-workflow-choice.choice-fire .timer-workflow-choice-preview {
+  overflow: visible;
+  background: linear-gradient(135deg, #7c2d12, #111827 68%);
+  box-shadow: inset 0 0 0 1px rgba(249, 115, 22, .42);
+}
+
+.timer-workflow-choice.choice-fire .timer-workflow-choice-preview::after {
+  content: "🔥";
+  position: absolute;
+  right: 7px;
+  top: 5px;
+  font-size: 13px;
+  animation: timerWorkflowFire .7s ease-in-out infinite alternate;
+}
+
+.timer-workflow-choice.choice-slide .timer-workflow-choice-preview b {
+  animation: timerWorkflowSlide 1.25s cubic-bezier(.16, 1, .3, 1) infinite;
+}
+
+.timer-workflow-choice.choice-flip .timer-workflow-choice-preview {
+  perspective: 300px;
+}
+
+.timer-workflow-choice.choice-flip .timer-workflow-choice-preview b {
+  animation: timerWorkflowFlip 1.35s cubic-bezier(.2, .8, .2, 1) infinite;
+}
+
+.timer-workflow-choice.choice-pulse .timer-workflow-choice-preview b {
+  animation: timerWorkflowPulse 1.05s ease-in-out infinite;
+}
+
+.timer-workflow-choice.choice-fire .timer-workflow-choice-preview b {
+  color: #fdba74;
+  text-shadow: 0 0 12px rgba(249, 115, 22, .76);
+  animation: timerWorkflowFireDigit .8s ease-in-out infinite;
+}
+
+.timer-workflow-palette-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.timer-workflow-palette-grid button {
+  min-width: 0;
+  min-height: 66px;
+  padding: 8px 4px 7px;
+  border: 1px solid #dce3ed;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 6px;
+  background: #ffffff;
+  color: #64748b;
+}
+
+.timer-workflow-palette-grid button[aria-pressed="true"] {
+  border-color: #111827;
+  box-shadow: 0 0 0 2px #111827;
+  color: #111827;
+}
+
+.timer-workflow-palette-grid button i {
+  width: 26px;
+  height: 26px;
+  border: 3px solid #ffffff;
+  border-radius: 999px;
+  display: block;
+  background: var(--timer-palette-swatch);
+  box-shadow: 0 0 0 1px #d8e0ea, 0 5px 12px rgba(15, 23, 42, .12);
+}
+
+.timer-workflow-palette-grid button span {
+  min-width: 0;
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.timer-bottom-link-preview {
+  padding: 13px;
+  border: 1px solid #dce3ed;
+  border-radius: 18px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  background: #ffffff;
+}
+
+.timer-bottom-link-preview > div:not(.timer-bottom-mini) {
+  min-width: 0;
+  padding: 10px;
+  border-radius: 13px;
+  background: #f7f9fc;
+}
+
+.timer-bottom-link-preview span,
+.timer-bottom-link-preview strong {
+  display: block;
+  min-width: 0;
+}
+
+.timer-bottom-link-preview span {
+  color: #7c8799;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.timer-bottom-link-preview strong {
+  margin-top: 3px;
+  overflow: hidden;
+  color: #111827;
+  font-size: 12px;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timer-bottom-link-preview.is-on > div:first-child strong {
+  color: #15803d;
+}
+
+.timer-bottom-mini {
+  grid-column: 1 / -1;
+  min-height: 52px;
+  padding: 9px 11px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: #111827;
+  color: #ffffff;
+}
+
+.timer-bottom-mini span {
+  max-width: 55%;
+  overflow: hidden;
+  color: rgba(255, 255, 255, .75);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timer-bottom-mini b {
+  flex: 0 0 auto;
+  font-size: 16px;
+  font-weight: 950;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-bottom-mini-flat b {
+  padding: 8px 9px;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #111827;
+}
+
+.timer-bottom-mini-block {
+  background: linear-gradient(135deg, #ea580c, #111827 76%);
+}
+
+.timer-bottom-mini-effect-fire b {
+  color: #fdba74;
+  text-shadow: 0 0 12px rgba(249, 115, 22, .75);
+  animation: timerWorkflowPulse .9s ease-in-out infinite;
+}
+
+.timer-bottom-mini-effect-slide b {
+  animation: timerWorkflowSlide 1.25s cubic-bezier(.16, 1, .3, 1) infinite;
+}
+
+.timer-bottom-mini-effect-flip b {
+  animation: timerWorkflowFlip 1.35s cubic-bezier(.2, .8, .2, 1) infinite;
+}
+
+.timer-bottom-mini-effect-pulse b {
+  animation: timerWorkflowPulse 1.05s ease-in-out infinite;
+}
+
+@keyframes timerWorkflowSlide {
+  0%, 20% { opacity: .25; transform: translateY(8px); }
+  45%, 100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes timerWorkflowFlip {
+  0%, 18% { opacity: .2; transform: rotateX(-86deg); }
+  46%, 100% { opacity: 1; transform: rotateX(0); }
+}
+
+@keyframes timerWorkflowPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.14); }
+}
+
+@keyframes timerWorkflowFire {
+  from { transform: translateY(1px) rotate(-5deg) scale(.92); }
+  to { transform: translateY(-2px) rotate(5deg) scale(1.08); }
+}
+
+@keyframes timerWorkflowFireDigit {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.12); filter: brightness(1.3); }
+}
+
+@media (max-width: 1180px) {
+  .timer-workflow-choice-grid,
+  .timer-workflow-effect .timer-workflow-choice-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .timer-workflow-palette-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timer-workflow-choice-preview *,
+  .timer-workflow-choice-preview::after,
+  .timer-bottom-mini * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
