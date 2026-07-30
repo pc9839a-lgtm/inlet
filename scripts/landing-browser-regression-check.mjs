@@ -10,8 +10,7 @@ const targetUrl = `${origin}/visual-regression`;
 const screenshotDir = process.env.INLET_BROWSER_QA_SCREENSHOT_DIR || '.tmp-landing-browser-regression';
 const debugPort = Number(process.env.INLET_BROWSER_QA_CHROME_PORT || 9337);
 const chromeInput = String(process.env.INLET_BROWSER_QA_CHROME_PATH || '').trim();
-
-const VIEWPORTS = [
+const viewports = [
   { name: 'desktop', width: 1440, height: 1000, mobile: false },
   { name: 'mobile-360', width: 360, height: 800, mobile: true },
   { name: 'mobile-390', width: 390, height: 844, mobile: true },
@@ -22,12 +21,10 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-function wait(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-function chromePath() {
-  const candidates = [
+function resolveChrome() {
+  return [
     chromeInput,
     process.env.CHROME_PATH,
     process.env.GOOGLE_CHROME_BIN,
@@ -39,11 +36,10 @@ function chromePath() {
     process.env['ProgramFiles(x86)'] && path.join(process.env['ProgramFiles(x86)'], 'Google/Chrome/Application/chrome.exe'),
     process.env.LocalAppData && path.join(process.env.LocalAppData, 'Google/Chrome/Application/chrome.exe'),
     process.env.ProgramFiles && path.join(process.env.ProgramFiles, 'Microsoft/Edge/Application/msedge.exe'),
-  ].filter(Boolean);
-  return candidates.find((candidate) => existsSync(candidate)) || '';
+  ].filter(Boolean).find((candidate) => existsSync(candidate)) || '';
 }
 
-async function json(url, init = {}) {
+async function fetchJson(url, init = {}) {
   const response = await fetch(url, init);
   if (!response.ok) throw new Error(`HTTP ${response.status}: ${url}`);
   return response.json();
@@ -52,22 +48,22 @@ async function json(url, init = {}) {
 async function waitForChrome(port) {
   const started = Date.now();
   let lastError = null;
-  while (Date.now() - started < 15000) {
+  while (Date.now() - started < 20000) {
     try {
-      return await json(`http://127.0.0.1:${port}/json/version`);
+      return await fetchJson(`http://127.0.0.1:${port}/json/version`);
     } catch (error) {
       lastError = error;
-      await wait(200);
+      await wait(250);
     }
   }
   throw new Error(`Chrome debugging endpoint did not start: ${lastError?.message || 'unknown error'}`);
 }
 
-function cdp(webSocketUrl) {
+function createCdp(webSocketUrl) {
   const socket = new WebSocket(webSocketUrl);
   const pending = new Map();
   const listeners = new Map();
-  let id = 1;
+  let nextId = 1;
   const opened = new Promise((resolve, reject) => {
     socket.addEventListener('open', resolve, { once: true });
     socket.addEventListener('error', reject, { once: true });
@@ -95,13 +91,13 @@ function cdp(webSocketUrl) {
   return {
     async send(method, params = {}) {
       await opened;
-      const requestId = id++;
-      const response = new Promise((resolve, reject) => pending.set(requestId, { resolve, reject }));
-      socket.send(JSON.stringify({ id: requestId, method, params }));
+      const id = nextId++;
+      const response = new Promise((resolve, reject) => pending.set(id, { resolve, reject }));
+      socket.send(JSON.stringify({ id, method, params }));
       return response;
     },
-    on(method, callback) {
-      listeners.set(method, [...(listeners.get(method) || []), callback]);
+    on(method, listener) {
+      listeners.set(method, [...(listeners.get(method) || []), listener]);
     },
     async close() {
       await opened.catch(() => {});
@@ -110,7 +106,7 @@ function cdp(webSocketUrl) {
   };
 }
 
-function qaPage() {
+function createQaPage() {
   const menus = Array.from({ length: 7 }, (_, index) => ({
     id: `visual-menu-${index + 1}`,
     label: index === 5 ? '상담 신청 안내' : `메뉴 ${index + 1}`,
@@ -246,107 +242,103 @@ function qaPage() {
 }
 
 function initScript() {
-  const page = qaPage();
-  return `(() => {
-    const visualPage = ${JSON.stringify(page)};
-    localStorage.setItem(${JSON.stringify(STORAGE_KEY)}, JSON.stringify(visualPage));
-  })();`;
+  return `localStorage.setItem(${JSON.stringify(STORAGE_KEY)}, JSON.stringify(${JSON.stringify(createQaPage())}));`;
+}
+
+async function evaluate(client, expression) {
+  const result = await client.send('Runtime.evaluate', { expression, returnByValue: true });
+  return result.result?.value;
 }
 
 async function waitForLanding(client) {
   const started = Date.now();
   let last = null;
   while (Date.now() - started < 15000) {
-    const response = await client.send('Runtime.evaluate', {
-      expression: `(() => ({
-        ready: !!document.querySelector('.public-landing-viewport .landing-page')
-          && !!document.querySelector('.public-landing-viewport .topnav')
-          && !!document.querySelector('.public-bottom-bar'),
-        text: (document.body?.innerText || '').slice(0, 300),
-      }))()`,
-      returnByValue: true,
-    });
-    last = response.result?.value || null;
+    last = await evaluate(client, `(() => ({
+      ready: !!document.querySelector('.public-landing-viewport .landing-page')
+        && !!document.querySelector('.public-landing-viewport .topnav')
+        && !!document.querySelector('.public-bottom-bar'),
+      text: (document.body?.innerText || '').slice(0, 300),
+    }))()`);
     if (last?.ready) return;
     await wait(250);
   }
   throw new Error(`Landing page did not become ready: ${JSON.stringify(last)}`);
 }
 
-async function metrics(client) {
-  const response = await client.send('Runtime.evaluate', {
-    expression: String.raw`(() => {
-      const rect = (element) => {
-        if (!element) return null;
-        const box = element.getBoundingClientRect();
-        return { left: box.left, right: box.right, top: box.top, bottom: box.bottom, width: box.width, height: box.height };
-      };
-      const state = (element) => {
-        if (!element) return null;
-        const style = getComputedStyle(element);
-        return { opacity: Number(style.opacity || 1), visibility: style.visibility, pointerEvents: style.pointerEvents, display: style.display };
-      };
-      const viewport = document.querySelector('.public-landing-viewport');
-      const landing = document.querySelector('.public-landing-viewport .landing-page');
-      const topnav = document.querySelector('.public-landing-viewport .topnav');
-      const menuSet = document.querySelector('.public-landing-viewport .top-menu-set');
-      const buttons = Array.from(document.querySelectorAll('.public-landing-viewport .top-menu-set > button'));
-      const timer = document.querySelector('.public-landing-viewport .landing-section.timer');
-      const share = document.querySelector('.public-landing-viewport .page-share-button');
-      const bottom = document.querySelector('.public-bottom-bar');
-      const input = document.querySelector('.public-landing-viewport .landing-section.form input[type="text"], .public-landing-viewport .landing-section.form input:not([type])');
-      const rows = [];
-      for (const button of buttons) {
-        const box = button.getBoundingClientRect();
-        let row = rows.find((item) => Math.abs(item.top - box.top) <= 3);
-        if (!row) {
-          row = { top: box.top, widths: [] };
-          rows.push(row);
-        }
-        row.widths.push(box.width);
+async function collectMetrics(client) {
+  return evaluate(client, String.raw`(() => {
+    const rect = (element) => {
+      if (!element) return null;
+      const box = element.getBoundingClientRect();
+      return { left: box.left, right: box.right, top: box.top, bottom: box.bottom, width: box.width, height: box.height };
+    };
+    const state = (element) => {
+      if (!element) return null;
+      const style = getComputedStyle(element);
+      return { opacity: Number(style.opacity || 1), visibility: style.visibility, pointerEvents: style.pointerEvents, display: style.display };
+    };
+    const viewport = document.querySelector('.public-landing-viewport');
+    const landing = document.querySelector('.public-landing-viewport .landing-page');
+    const topnav = document.querySelector('.public-landing-viewport .topnav');
+    const menuSet = document.querySelector('.public-landing-viewport .top-menu-set');
+    const buttons = Array.from(document.querySelectorAll('.public-landing-viewport .top-menu-set > button'));
+    const timer = document.querySelector('.public-landing-viewport .landing-section.timer');
+    const share = document.querySelector('.public-landing-viewport .page-share-button');
+    const bottom = document.querySelector('.public-bottom-bar');
+    const active = document.activeElement;
+    const rows = [];
+    for (const button of buttons) {
+      const box = button.getBoundingClientRect();
+      let row = rows.find((item) => Math.abs(item.top - box.top) <= 3);
+      if (!row) {
+        row = { top: box.top, widths: [] };
+        rows.push(row);
       }
-      rows.sort((a, b) => a.top - b.top);
-      return {
-        bodyScrollWidth: document.body?.scrollWidth || 0,
-        documentScrollWidth: document.documentElement?.scrollWidth || 0,
-        viewport: rect(viewport),
-        landing: rect(landing),
-        topnav: rect(topnav),
-        menuSet: rect(menuSet),
-        timer: rect(timer),
-        share: rect(share),
-        bottom: rect(bottom),
-        menuButtons: buttons.map(rect),
-        menuRows: rows.map((row) => row.widths.length),
-        menuWidthSpreads: rows.map((row) => Math.max(...row.widths) - Math.min(...row.widths)),
-        topnavState: state(topnav),
-        shareState: state(share),
-        bottomState: state(bottom),
-        inputExists: !!input,
-        appError: /화면을 불러오는 중 오류가 발생했습니다|페이지를 찾을 수 없습니다|로컬 저장 페이지와 URL이 일치하지 않습니다/.test(document.body?.innerText || ''),
-        fallback: !!document.querySelector('.block-render-fallback, .app-error-screen, .error-screen'),
-      };
-    })()`,
-    returnByValue: true,
-  });
-  return response.result?.value || {};
+      row.widths.push(box.width);
+    }
+    rows.sort((a, b) => a.top - b.top);
+    return {
+      bodyScrollWidth: document.body?.scrollWidth || 0,
+      documentScrollWidth: document.documentElement?.scrollWidth || 0,
+      viewport: rect(viewport),
+      landing: rect(landing),
+      topnav: rect(topnav),
+      menuSet: rect(menuSet),
+      timer: rect(timer),
+      share: rect(share),
+      bottom: rect(bottom),
+      menuButtons: buttons.map(rect),
+      menuRows: rows.map((row) => row.widths.length),
+      menuWidthSpreads: rows.map((row) => Math.max(...row.widths) - Math.min(...row.widths)),
+      topnavState: state(topnav),
+      shareState: state(share),
+      bottomState: state(bottom),
+      activeTag: active?.tagName || '',
+      activeType: active?.getAttribute?.('type') || '',
+      activeWithinForm: !!active?.closest?.('.landing-section.form'),
+      formFocusWithin: !!document.querySelector('.landing-section.form:focus-within'),
+      landingClass: landing?.className || '',
+      inputExists: !!document.querySelector('.public-landing-viewport .landing-section.form input'),
+      appError: /화면을 불러오는 중 오류가 발생했습니다|페이지를 찾을 수 없습니다|로컬 저장 페이지와 URL이 일치하지 않습니다/.test(document.body?.innerText || ''),
+      fallback: !!document.querySelector('.block-render-fallback, .app-error-screen, .error-screen'),
+    };
+  })()`);
 }
 
-function inside(child, parent, label, tolerance = 3) {
+function assertInside(child, parent, label, tolerance = 3) {
   assert(child && parent, `${label} bounds are missing`);
   assert(child.left >= parent.left - tolerance, `${label} spills left: ${JSON.stringify({ child, parent })}`);
   assert(child.right <= parent.right + tolerance, `${label} spills right: ${JSON.stringify({ child, parent })}`);
 }
 
-function visible(state, label) {
-  assert(state, `${label} state is missing`);
-  assert(state.display !== 'none' && state.visibility !== 'hidden' && state.opacity > 0.5, `${label} is not visible: ${JSON.stringify(state)}`);
+function assertVisible(state, label) {
+  assert(state?.display !== 'none' && state?.visibility !== 'hidden' && state?.opacity > 0.5, `${label} is not visible: ${JSON.stringify(state)}`);
 }
 
-function hidden(state, label) {
-  assert(state, `${label} state is missing`);
-  const isHidden = state.display === 'none' || state.visibility === 'hidden' || state.opacity <= 0.05;
-  assert(isHidden, `${label} must hide during form input: ${JSON.stringify(state)}`);
+function assertHidden(state, label, details) {
+  const hidden = state && (state.display === 'none' || state.visibility === 'hidden' || state.opacity <= 0.05);
+  assert(hidden, `${label} must hide during form input: ${JSON.stringify({ state, details })}`);
   assert(state.pointerEvents === 'none' || state.display === 'none', `${label} must not receive pointer events while hidden`);
 }
 
@@ -357,38 +349,60 @@ function assertBaseline(data, viewport) {
   assert(data.documentScrollWidth <= viewport.width + 3, `${viewport.name} document overflow: ${data.documentScrollWidth} > ${viewport.width}`);
   assert(data.viewport?.width <= 414.5, `${viewport.name} public viewport exceeded 414px: ${data.viewport?.width}`);
   assert(data.viewport?.width <= viewport.width + 1, `${viewport.name} public viewport exceeded browser width`);
-  inside(data.landing, data.viewport, `${viewport.name} landing`);
-  inside(data.topnav, data.landing, `${viewport.name} top navigation`);
-  inside(data.timer, data.landing, `${viewport.name} timer`);
-  inside(data.bottom, data.viewport, `${viewport.name} bottom bar`);
-  inside(data.menuSet, data.topnav, `${viewport.name} menu set`, 6);
+  assertInside(data.landing, data.viewport, `${viewport.name} landing`);
+  assertInside(data.topnav, data.landing, `${viewport.name} top navigation`);
+  assertInside(data.timer, data.landing, `${viewport.name} timer`);
+  assertInside(data.bottom, data.viewport, `${viewport.name} bottom bar`);
+  assertInside(data.menuSet, data.topnav, `${viewport.name} menu set`, 6);
   assert(data.menuButtons?.length === 7, `${viewport.name} expected 7 menu buttons, got ${data.menuButtons?.length || 0}`);
-  for (const [index, button] of (data.menuButtons || []).entries()) {
-    inside(button, data.menuSet, `${viewport.name} menu button ${index + 1}`, 4);
+  for (const [index, button] of data.menuButtons.entries()) {
+    assertInside(button, data.menuSet, `${viewport.name} menu button ${index + 1}`, 4);
     assert(button.height >= 43, `${viewport.name} menu button ${index + 1} touch height is below 44px: ${button.height}`);
   }
   assert(JSON.stringify(data.menuRows) === JSON.stringify([4, 3]), `${viewport.name} menu rows must be 4+3, got ${JSON.stringify(data.menuRows)}`);
-  assert((data.menuWidthSpreads || []).every((spread) => spread <= 3), `${viewport.name} menu widths are uneven: ${JSON.stringify(data.menuWidthSpreads)}`);
-  visible(data.topnavState, `${viewport.name} top navigation`);
-  visible(data.shareState, `${viewport.name} share button`);
-  visible(data.bottomState, `${viewport.name} bottom bar`);
-  assert(data.share && data.bottom && data.share.bottom <= data.bottom.top - 4, `${viewport.name} share button overlaps bottom bar`);
+  assert(data.menuWidthSpreads.every((spread) => spread <= 3), `${viewport.name} menu widths are uneven: ${JSON.stringify(data.menuWidthSpreads)}`);
+  assertVisible(data.topnavState, `${viewport.name} top navigation`);
+  assertVisible(data.shareState, `${viewport.name} share button`);
+  assertVisible(data.bottomState, `${viewport.name} bottom bar`);
+  assert(data.share?.bottom <= data.bottom?.top - 4, `${viewport.name} share button overlaps bottom bar`);
   assert(data.inputExists, `${viewport.name} form input is missing`);
 }
 
-async function focusInput(client) {
-  const response = await client.send('Runtime.evaluate', {
-    expression: `(() => {
-      const input = document.querySelector('.public-landing-viewport .landing-section.form input[type="text"], .public-landing-viewport .landing-section.form input:not([type])');
-      if (!input) return false;
-      input.scrollIntoView({ block: 'center' });
-      input.focus();
-      return document.activeElement === input;
-    })()`,
-    returnByValue: true,
-  });
-  assert(response.result?.value === true, 'Could not focus the visual regression form input');
-  await wait(350);
+async function clickFormInput(client) {
+  const selector = '.public-landing-viewport .landing-section.form input[type="text"], .public-landing-viewport .landing-section.form input:not([type])';
+  const prepared = await evaluate(client, `(() => {
+    const input = document.querySelector(${JSON.stringify(selector)});
+    if (!input) return null;
+    input.scrollIntoView({ block: 'center', inline: 'center' });
+    return true;
+  })()`);
+  assert(prepared, 'Could not locate the form input for pointer focus');
+  await wait(250);
+
+  const point = await evaluate(client, `(() => {
+    const input = document.querySelector(${JSON.stringify(selector)});
+    if (!input) return null;
+    const rect = input.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, width: rect.width, height: rect.height };
+  })()`);
+  assert(point && point.width > 0 && point.height > 0, `Form input has invalid click bounds: ${JSON.stringify(point)}`);
+
+  await client.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: point.x, y: point.y });
+  await client.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', buttons: 1, clickCount: 1 });
+  await client.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', buttons: 0, clickCount: 1 });
+  await wait(400);
+
+  const focus = await evaluate(client, `(() => {
+    const active = document.activeElement;
+    return {
+      tag: active?.tagName || '',
+      type: active?.getAttribute?.('type') || '',
+      withinForm: !!active?.closest?.('.landing-section.form'),
+      focusWithin: !!document.querySelector('.landing-section.form:focus-within'),
+    };
+  })()`);
+  assert(focus?.withinForm && focus?.focusWithin, `Real pointer click did not focus the form input: ${JSON.stringify({ point, focus })}`);
+  return focus;
 }
 
 async function capture(client, file) {
@@ -399,8 +413,8 @@ async function capture(client, file) {
 }
 
 async function openPage(port, viewport, errors) {
-  const target = await json(`http://127.0.0.1:${port}/json/new?${encodeURIComponent('about:blank')}`, { method: 'PUT' });
-  const client = cdp(target.webSocketDebuggerUrl);
+  const target = await fetchJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent('about:blank')}`, { method: 'PUT' });
+  const client = createCdp(target.webSocketDebuggerUrl);
   client.on('Runtime.consoleAPICalled', (params) => {
     if (params.type === 'error') errors.push((params.args || []).map((arg) => arg.value || arg.description || '').join(' '));
   });
@@ -427,8 +441,9 @@ async function closePage(port, target, client) {
   await fetch(`http://127.0.0.1:${port}/json/close/${target.id}`).catch(() => {});
 }
 
-const executable = chromePath();
+const executable = resolveChrome();
 assert(executable, 'Chrome/Chromium executable not found. Set INLET_BROWSER_QA_CHROME_PATH.');
+await rm(screenshotDir, { recursive: true, force: true }).catch(() => {});
 await mkdir(screenshotDir, { recursive: true });
 const profileDir = await mkdtemp(path.join(tmpdir(), 'inlet-landing-browser-'));
 const chromeErrors = [];
@@ -440,6 +455,7 @@ const browser = spawn(executable, [
   '--no-first-run',
   '--no-default-browser-check',
   '--hide-scrollbars',
+  '--remote-debugging-address=127.0.0.1',
   `--remote-debugging-port=${debugPort}`,
   `--user-data-dir=${profileDir}`,
   'about:blank',
@@ -452,14 +468,14 @@ browser.stderr?.on('data', (chunk) => {
 const results = [];
 try {
   await waitForChrome(debugPort).catch((error) => {
-    throw new Error(`${error.message}; chrome stderr: ${chromeErrors.slice(-6).join(' | ')}`);
+    throw new Error(`${error.message}; chrome stderr: ${chromeErrors.slice(-8).join(' | ')}`);
   });
 
-  for (const viewport of VIEWPORTS) {
+  for (const viewport of viewports) {
     const errors = [];
     const { target, client } = await openPage(debugPort, viewport, errors);
     try {
-      const baseline = await metrics(client);
+      const baseline = await collectMetrics(client);
       assert(!errors.length, `${viewport.name} console/runtime errors: ${errors.join(' | ')}`);
       assertBaseline(baseline, viewport);
       const baselineFile = path.join(screenshotDir, `${viewport.name}-baseline.png`);
@@ -467,11 +483,12 @@ try {
       results.push({ scenario: 'baseline', viewport: viewport.name, file: baselineFile, data: baseline });
 
       if (viewport.name === 'mobile-390') {
-        await focusInput(client);
-        const focused = await metrics(client);
-        hidden(focused.topnavState, 'focused top navigation');
-        hidden(focused.shareState, 'focused share button');
-        hidden(focused.bottomState, 'focused bottom bar');
+        const focus = await clickFormInput(client);
+        const focused = await collectMetrics(client);
+        assert(focused.activeWithinForm && focused.formFocusWithin, `Focused form state was lost before measurement: ${JSON.stringify({ focus, focused })}`);
+        assertHidden(focused.topnavState, 'focused top navigation', focused);
+        assertHidden(focused.shareState, 'focused share button', focused);
+        assertHidden(focused.bottomState, 'focused bottom bar', focused);
         const focusFile = path.join(screenshotDir, `${viewport.name}-form-focus.png`);
         await capture(client, focusFile);
         results.push({ scenario: 'form-focus', viewport: viewport.name, file: focusFile, data: focused });
@@ -487,7 +504,7 @@ try {
   await rm(profileDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }).catch(() => {});
 }
 
-assert(results.length === VIEWPORTS.length + 1, `Expected ${VIEWPORTS.length + 1} visual results, got ${results.length}`);
+assert(results.length === viewports.length + 1, `Expected ${viewports.length + 1} visual results, got ${results.length}`);
 console.log(JSON.stringify({
   ok: true,
   engine: 'chrome-cdp',
@@ -502,5 +519,6 @@ console.log(JSON.stringify({
     publicViewportWidth: data.viewport?.width,
     landingWidth: data.landing?.width,
     bottomWidth: data.bottom?.width,
+    activeWithinForm: data.activeWithinForm,
   })),
 }, null, 2));
