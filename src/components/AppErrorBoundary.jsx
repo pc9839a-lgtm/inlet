@@ -137,8 +137,23 @@ export class AppErrorBoundary extends React.Component {
       );
     }
     if (!this.state.error) return this.props.children;
-    const cleanMessage = String(this.state.error?.message || this.state.error || '알 수 없는 오류');
 
+    const chunkError = isLazyChunkLoadError(this.state.error);
+    if (chunkError) {
+      return (
+        <div className="error-screen error-screen-v2">
+          <div>
+            <h1>새 버전으로 다시 연결합니다.</h1>
+            <p>이전 배포 파일이 만료되었습니다. 페이지 데이터는 삭제하지 않습니다.</p>
+            <div className="error-actions">
+              <button type="button" onClick={forceFreshRuntime}>최신 화면 다시 열기</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const cleanMessage = String(this.state.error?.message || this.state.error || '알 수 없는 오류');
     return (
       <div className="error-screen error-screen-v2">
         <div>

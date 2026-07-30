@@ -3,6 +3,10 @@ import path from 'node:path';
 
 const root = process.cwd();
 const targetDir = path.resolve(process.env.INLET_DEPLOY_QA_DIR || path.join(root, 'dist'));
+const ALLOWED_UNREFERENCED_ASSETS = new Set([
+  'assets/App-CoeQq7xJ.js',
+  'assets/App-DrlN22f5.js',
+]);
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -108,13 +112,15 @@ async function inspectAssets() {
     });
   }
 
-  const stale = assets.filter((asset) => !asset.referenced);
+  const rescueAssets = assets.filter((asset) => ALLOWED_UNREFERENCED_ASSETS.has(asset.relative));
+  const stale = assets.filter((asset) => !asset.referenced && !ALLOWED_UNREFERENCED_ASSETS.has(asset.relative));
   const jsAssets = assets.filter((asset) => asset.ext === '.js' && asset.referenced);
   const cssAssets = assets.filter((asset) => asset.ext === '.css' && asset.referenced);
 
   return {
     assets,
     stale,
+    rescueAssets,
     missing: [...missing].sort(),
     largestJs: jsAssets.toSorted((a, b) => b.bytes - a.bytes)[0] || null,
     largestCss: cssAssets.toSorted((a, b) => b.bytes - a.bytes)[0] || null,
@@ -163,6 +169,7 @@ const seoFiles = await inspectSeoFiles();
 assert(report.assets.length > 0, 'deployment artifact has no JS/CSS assets');
 assert(report.missing.length === 0, `deployment artifact references missing assets: ${report.missing.join(', ')}`);
 assert(report.stale.length === 0, `deployment artifact has stale assets: ${report.stale.map((asset) => asset.relative).join(', ')}`);
+assert(report.rescueAssets.length === ALLOWED_UNREFERENCED_ASSETS.size, 'deployment artifact must retain every explicit stale-session rescue module');
 assert(report.largestJs?.bytes <= 430000, `deployment JS budget exceeded: ${report.largestJs?.bytes || 0}`);
 assert(report.largestCss?.bytes <= 430000, `deployment CSS budget exceeded: ${report.largestCss?.bytes || 0}`);
 
@@ -171,6 +178,7 @@ console.log(JSON.stringify({
   targetDir: targetDir.replaceAll(path.sep, '/'),
   missingAssetCount: report.missing.length,
   staleAssetCount: report.stale.length,
+  rescueAssetCount: report.rescueAssets.length,
   assetCount: report.assets.length,
   largestJs: report.largestJs?.bytes || 0,
   largestCss: report.largestCss?.bytes || 0,

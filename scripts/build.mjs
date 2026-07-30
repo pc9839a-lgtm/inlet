@@ -58,6 +58,7 @@ if (buildsDefaultDist) {
 await run(process.execPath, [viteCli, 'build', '--emptyOutDir', 'false', ...args]);
 
 await run(process.execPath, ['scripts/bundle-quality-check.mjs', '--outDir', outDir]);
+await run(process.execPath, ['scripts/root-app-entry-quality-check.mjs', '--outDir', outDir]);
 
 if (buildsDefaultDist) {
   await run(process.execPath, ['scripts/prune-dist-assets.mjs']);
