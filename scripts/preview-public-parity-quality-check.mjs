@@ -6,6 +6,7 @@ function assert(condition, message) {
 
 const rendererCss = await readFile('src/preview/LandingRenderer.css', 'utf8');
 const parityCss = await readFile('src/styles/preview-runtime-parity.css', 'utf8');
+const fixedUiCss = await readFile('src/styles/preview-fixed-ui-contract.css', 'utf8');
 const workspacePreview = await readFile('src/screens/workspace/WorkspacePreviewPane.jsx', 'utf8');
 const app = await readFile('src/App.jsx', 'utf8');
 const baseCss = await readFile('src/styles/base.css', 'utf8');
@@ -13,11 +14,14 @@ const editorWorkspaceCss = await readFile('src/styles/editor-workspace-v2.css', 
 const publicCss = await readFile('src/styles/preview-public.css', 'utf8');
 
 const parityImport = "@import '../styles/preview-runtime-parity.css';";
+const fixedUiImport = "@import '../styles/preview-fixed-ui-contract.css';";
 const parityImportIndex = rendererCss.indexOf(parityImport);
+const fixedUiImportIndex = rendererCss.indexOf(fixedUiImport);
 const lastImportIndex = rendererCss.lastIndexOf('@import ');
 
 assert(parityImportIndex >= 0, 'LandingRenderer must load the preview/public parity stylesheet');
-assert(parityImportIndex === lastImportIndex, 'Preview/public parity stylesheet must be the final imported preview stylesheet');
+assert(fixedUiImportIndex > parityImportIndex, 'Fixed UI collision rules must load after the base parity stylesheet');
+assert(fixedUiImportIndex === lastImportIndex, 'Fixed UI collision contract must be the final imported preview stylesheet');
 assert(workspacePreview.includes("import PreviewRenderer from '../../preview/LandingRenderer.jsx'"), 'Editor preview must use LandingRenderer');
 assert(app.includes("import PreviewRenderer from './preview/LandingRenderer.jsx'"), 'Public landing route must use LandingRenderer');
 assert(workspacePreview.includes('className="phone-frame"'), 'Editor preview must keep the phone-frame runtime host');
@@ -55,7 +59,8 @@ assert(parityCss.includes('.public-landing-viewport .public-bottom-bar.is-form-i
 
 assert(parityCss.includes('grid-template-columns: 44px minmax(0, 1fr) !important'), '414px runtime containers must receive the mobile top navigation layout');
 assert(parityCss.includes('grid-template-columns: repeat(var(--bottom-button-count, 2), minmax(0, 1fr)) !important'), 'Preview and public bottom actions must use the same button grid');
-assert(parityCss.includes('padding-bottom: calc(max(112px, var(--page-fixed-bottom-height, 0px)) + 16px) !important'), 'Both runtimes must reserve the same fixed action space');
+assert(fixedUiCss.includes('padding-bottom: calc(max(88px, var(--page-fixed-bottom-height, 0px)) + 14px) !important'), 'Final fixed UI contract must prefer measured bottom height over the legacy fixed reserve');
+assert(fixedUiCss.includes('scroll-padding-bottom: calc(max(88px, var(--page-fixed-bottom-height, 0px)) + 14px) !important'), 'Anchor scrolling must reserve measured fixed action space');
 assert(!parityCss.includes('@media (max-width: 420px)'), 'Runtime parity must use container width instead of the browser viewport width');
 
 console.log(JSON.stringify({
@@ -64,4 +69,5 @@ console.log(JSON.stringify({
   runtimeWidth: 414,
   usesContainerQueries: true,
   publicBottomContained: true,
+  fixedUiContractLoadedLast: true,
 }, null, 2));
