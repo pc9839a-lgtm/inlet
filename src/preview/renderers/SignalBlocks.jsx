@@ -61,8 +61,10 @@ function syncBottomTimerPresentation(settings = {}, countdown = {}) {
   const variant = timerVariant(settings);
   const palette = timerPalette(settings);
   const effect = timerEffect(settings);
-  const label = String(settings.label ?? '혜택 마감까지').slice(0, 40);
-  const promoBadge = String(settings.promoBadge ?? '마감 임박').slice(0, 16);
+  const rawLabel = String(settings.label ?? '').trim();
+  const label = (rawLabel || '혜택 마감까지').slice(0, 40);
+  const promoBadge = String(settings.promoBadge ?? '마감 임박').trim().slice(0, 16);
+  const compactLabel = variant === 'promo' && promoBadge ? `${promoBadge} · ${label}` : label;
   const endedLabel = String(settings.ended || '이벤트가 종료되었습니다.').slice(0, 40);
   const tickKey = `${countdown.d}-${countdown.h}-${countdown.m}-${countdown.s}`;
   let frame = window.requestAnimationFrame(() => {
@@ -75,12 +77,12 @@ function syncBottomTimerPresentation(settings = {}, countdown = {}) {
         `bottom-timer-effect-${effect}`,
       );
       if (countdown.done) node.classList.add('bottom-timer-ended');
-      node.dataset.timerLabel = countdown.done ? endedLabel : label;
-      node.dataset.timerBadge = variant === 'promo' && !countdown.done ? promoBadge : '';
+      node.dataset.timerLabel = countdown.done ? endedLabel : compactLabel;
+      node.dataset.timerBadge = '';
       node.style.setProperty('--bottom-timer-progress', `${Math.max(0, Math.min(100, Number(countdown.progress || 0)))}%`);
 
       const main = node.querySelector('.bottom-timer-main');
-      if (main) main.dataset.timerBadge = node.dataset.timerBadge;
+      if (main) main.dataset.timerBadge = '';
 
       if (effect === 'none' || countdown.done) {
         node.dataset.timerTick = tickKey;

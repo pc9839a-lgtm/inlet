@@ -59,8 +59,8 @@ assert(parityCss.includes('.public-landing-viewport .public-bottom-bar.is-form-i
 
 assert(parityCss.includes('grid-template-columns: 44px minmax(0, 1fr) !important'), '414px runtime containers must receive the mobile top navigation layout');
 assert(parityCss.includes('grid-template-columns: repeat(var(--bottom-button-count, 2), minmax(0, 1fr)) !important'), 'Preview and public bottom actions must use the same button grid');
-assert(fixedUiCss.includes('padding-bottom: calc(max(88px, var(--page-fixed-bottom-height, 0px)) + 14px) !important'), 'Final fixed UI contract must prefer measured bottom height over the legacy fixed reserve');
-assert(fixedUiCss.includes('scroll-padding-bottom: calc(max(88px, var(--page-fixed-bottom-height, 0px)) + 14px) !important'), 'Anchor scrolling must reserve measured fixed action space');
+assert(fixedUiCss.includes('padding-bottom: calc(max(88px, var(--page-fixed-bottom-height, 0px)) + 10px) !important'), 'Final fixed UI contract must prefer measured bottom height with a compact reserve');
+assert(fixedUiCss.includes('scroll-padding-bottom: calc(max(88px, var(--page-fixed-bottom-height, 0px)) + 10px) !important'), 'Anchor scrolling must reserve measured fixed action space without excess padding');
 assert(!parityCss.includes('@media (max-width: 420px)'), 'Runtime parity must use container width instead of the browser viewport width');
 
 console.log(JSON.stringify({
@@ -70,4 +70,5 @@ console.log(JSON.stringify({
   usesContainerQueries: true,
   publicBottomContained: true,
   fixedUiContractLoadedLast: true,
+  measuredBottomReserveExtra: 10,
 }, null, 2));
