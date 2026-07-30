@@ -72,6 +72,18 @@ function timestamp(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function sameDraftPage(left = {}, right = {}) {
+  const leftId = text(left.id || left.pageId || left.slug);
+  const rightId = text(right.id || right.pageId || right.slug);
+  const leftProject = text(left.projectId);
+  const rightProject = text(right.projectId);
+  const leftOwner = text(left.ownerId || left.ownerAccountId);
+  const rightOwner = text(right.ownerId || right.ownerAccountId);
+  return !!leftId && leftId === rightId
+    && (!leftProject || !rightProject || leftProject === rightProject)
+    && (!leftOwner || !rightOwner || leftOwner === rightOwner);
+}
+
 export function pageDraftContentSignature(page) {
   const normalized = sanitizeValue(normalizePageForSave(page || {}));
   const comparable = { ...(normalized || {}) };
@@ -88,10 +100,11 @@ function pruneDrafts(drafts, now = Date.now()) {
 }
 
 export function pageDraftIdentity(page = {}, authUser = {}) {
-  const owner = text(page.ownerId || page.ownerAccountId || authUser.ownerId || authUser.accountId || authUser.email || 'account');
+  const pageOwner = text(page.ownerId || page.ownerAccountId || 'owner');
+  const account = text(authUser.ownerId || authUser.accountId || authUser.email || pageOwner || 'account');
   const project = text(page.projectId || authUser.workspaceId || authUser.projectId || 'project');
   const pageKey = text(page.id || page.pageId || page.slug || 'page');
-  return [owner, project, pageKey].map((part) => encodeURIComponent(part)).join(':');
+  return [account, pageOwner, project, pageKey].map((part) => encodeURIComponent(part)).join(':');
 }
 
 export function savePageDraft({ page, authUser, editedAt = Date.now(), storage } = {}) {
@@ -118,8 +131,15 @@ export function readPageDraft({ page, authUser, storage } = {}) {
 export function clearPageDraft({ page, authUser, storage } = {}) {
   const identity = pageDraftIdentity(page, authUser);
   const envelope = readEnvelope(storage);
-  if (!envelope.drafts[identity]) return true;
-  delete envelope.drafts[identity];
+  let changed = false;
+  for (const [key, draft] of Object.entries(envelope.drafts)) {
+    const exactMatch = key === identity;
+    const pageMatchWithoutAuth = !authUser && sameDraftPage(draft?.page || {}, page || {});
+    if (!exactMatch && !pageMatchWithoutAuth) continue;
+    delete envelope.drafts[key];
+    changed = true;
+  }
+  if (!changed) return true;
   envelope.drafts = pruneDrafts(envelope.drafts);
   return writeEnvelope(envelope, storage);
 }
