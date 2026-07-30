@@ -23,12 +23,13 @@ export function useLocalWorkspacePersistence({
   const serverDraftDirtyRef = useRef(false);
 
   useEffect(() => {
-    if (publicLandingSlug) return undefined;
-    if (!isServerPageMode()) {
-      saveLocalJson(STORAGE_KEY, normalizePageForSave(page), '페이지');
-      return undefined;
-    }
-    if (!authUser) return undefined;
+    if (publicLandingSlug) return;
+    if (isServerPageMode()) return;
+    saveLocalJson(STORAGE_KEY, normalizePageForSave(page), '페이지');
+  }, [page, publicLandingSlug]);
+
+  useEffect(() => {
+    if (!isServerPageMode() || !authUser || publicLandingSlug) return undefined;
 
     const normalized = normalizePageForSave(page);
     const identity = pageDraftIdentity(normalized, authUser);
