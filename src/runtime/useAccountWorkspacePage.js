@@ -12,9 +12,13 @@ export function useAccountWorkspacePage({
   accountPageLoadRef,
   latestPageRef,
   localPageMutationRef,
+  setAccountPageReadyKey,
 }) {
   useLayoutEffect(() => {
-    if (publicLandingSlug || !authUser) return undefined;
+    if (publicLandingSlug || !authUser) {
+      setAccountPageReadyKey?.('');
+      return undefined;
+    }
     let alive = true;
     const slug = page.slug || defaultPage.slug || 'my-page';
     const context = projectContext(page, authUser);
@@ -37,6 +41,7 @@ export function useAccountWorkspacePage({
     const loadMutation = localPageMutationRef.current;
     if (accountPageLoadRef.current === loadKey) return undefined;
     accountPageLoadRef.current = loadKey;
+    setAccountPageReadyKey?.('');
     fetchServerPage(slug, context)
       .then((serverPage) => {
         if (!alive) return;
@@ -65,6 +70,11 @@ export function useAccountWorkspacePage({
       })
       .catch((error) => {
         console.warn('Server page load failed:', error);
+      })
+      .finally(() => {
+        if (!alive) return;
+        if (accountPageLoadRef.current !== loadKey) return;
+        setAccountPageReadyKey?.(loadKey);
       });
     return () => { alive = false; };
   }, [publicLandingSlug, authUser?.session, authUser?.workspaceId, authUser?.email, page.slug, page.projectId, page.ownerId]);
