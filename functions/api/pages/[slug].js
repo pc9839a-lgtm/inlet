@@ -9,6 +9,10 @@ import { assertD1, authorizeProject, ensureD1ProjectShell, handleApiError, jsonR
 
 const METHODS = 'GET, POST, DELETE, OPTIONS';
 const PUBLIC_PAGE_CACHE_CONTROL = 'no-store';
+const PAGE_SAVE_CONFLICT_CODES = Object.freeze({
+  slug: 'PAGE_SLUG_CONFLICT',
+  revision: 'PAGE_REVISION_CONFLICT',
+});
 const PUBLIC_PAGE_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': METHODS,
@@ -303,6 +307,7 @@ export async function onRequest({ request, env, params }) {
         saveMode,
         saveRequestId: body.saveRequestId || '',
         page: saved,
+        conflictCodes: PAGE_SAVE_CONFLICT_CODES,
       }, METHODS);
     }
 
