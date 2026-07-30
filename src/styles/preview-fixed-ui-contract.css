@@ -21,24 +21,6 @@
   padding: 4px 10px max(8px, env(safe-area-inset-bottom, 0px)) !important;
 }
 
-.phone-frame .bottom-bar:has(.bottom-timer) .bottom-timer,
-.public-landing-viewport .public-bottom-bar:has(.bottom-timer) .bottom-timer {
-  min-height: 42px !important;
-  padding: 6px 10px 8px !important;
-  border-radius: 12px !important;
-}
-
-.phone-frame .bottom-bar:has(.bottom-timer) .bottom-timer::before,
-.public-landing-viewport .public-bottom-bar:has(.bottom-timer) .bottom-timer::before {
-  max-width: 58% !important;
-  font-size: 10px !important;
-}
-
-.phone-frame .bottom-bar:has(.bottom-timer) .bottom-timer .bottom-timer-main b,
-.public-landing-viewport .public-bottom-bar:has(.bottom-timer) .bottom-timer .bottom-timer-main b {
-  font-size: 17px !important;
-}
-
 .phone-frame .bottom-bar:has(.bottom-timer) .bottom-bar-buttons,
 .public-landing-viewport .public-bottom-bar:has(.bottom-timer) .bottom-bar-buttons {
   gap: 8px !important;
@@ -132,21 +114,5 @@
   .public-bottom-bar:has(.bottom-timer) {
     gap: 3px !important;
     padding-top: 3px !important;
-  }
-
-  .bottom-bar:has(.bottom-timer) .bottom-timer,
-  .public-bottom-bar:has(.bottom-timer) .bottom-timer {
-    min-height: 40px !important;
-    padding: 5px 9px 7px !important;
-  }
-
-  .bottom-bar:has(.bottom-timer) .bottom-timer::before,
-  .public-bottom-bar:has(.bottom-timer) .bottom-timer::before {
-    max-width: 56% !important;
-  }
-
-  .bottom-bar:has(.bottom-timer) .bottom-timer .bottom-timer-main b,
-  .public-bottom-bar:has(.bottom-timer) .bottom-timer .bottom-timer-main b {
-    font-size: 16px !important;
   }
 }

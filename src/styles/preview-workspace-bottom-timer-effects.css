@@ -1,54 +1,55 @@
-/* Compact bottom countdown inherits the main timer copy, palette, variant and effect. */
+/* Single runtime owner for the countdown inside the fixed bottom action bar. */
 .bottom-bar .bottom-timer {
   --bottom-timer-accent: #111827;
   --bottom-timer-surface: #ffffff;
   --bottom-timer-soft: #f1f5f9;
   --bottom-timer-ink: #111827;
   position: relative !important;
-  isolation: isolate !important;
+  isolation: isolate;
   width: 100% !important;
-  min-height: 54px !important;
-  padding: 9px 12px 11px !important;
-  border: 1px solid color-mix(in srgb, var(--bottom-timer-accent) 18%, #dbe3ec) !important;
-  border-radius: 16px !important;
+  min-height: 42px !important;
+  padding: 6px 10px 8px !important;
+  border: 1px solid color-mix(in srgb, var(--bottom-timer-accent) 16%, #dbe3ec) !important;
+  border-radius: 12px !important;
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: center !important;
   gap: 8px !important;
-  overflow: visible !important;
+  overflow: hidden !important;
   background: var(--bottom-timer-surface) !important;
   color: var(--bottom-timer-ink) !important;
-  box-shadow: 0 8px 22px rgba(15, 23, 42, .08) !important;
+  box-shadow: none !important;
 }
 
 .bottom-bar .bottom-timer::before {
   content: attr(data-timer-label) !important;
-  min-width: 0 !important;
+  min-width: 0;
   display: block !important;
   overflow: hidden !important;
   color: inherit !important;
-  font-size: 11px !important;
-  font-weight: 900 !important;
-  line-height: 1.25 !important;
-  letter-spacing: -.025em !important;
+  font-size: 10px !important;
+  font-weight: 850 !important;
+  line-height: 1.15 !important;
+  letter-spacing: -.02em !important;
   white-space: nowrap !important;
   text-overflow: ellipsis !important;
-  opacity: .78 !important;
+  opacity: .88 !important;
 }
 
 .bottom-bar .bottom-timer::after {
   content: "" !important;
   position: absolute !important;
-  z-index: 2 !important;
+  z-index: 2;
   left: 10px !important;
   bottom: 4px !important;
   width: var(--bottom-timer-progress, 0%) !important;
   max-width: calc(100% - 20px) !important;
-  height: 3px !important;
+  height: 2px !important;
   display: block !important;
   border-radius: 999px !important;
   background: var(--bottom-timer-accent) !important;
-  pointer-events: none !important;
+  pointer-events: none;
+  opacity: .82 !important;
   transition: width .6s linear !important;
 }
 
@@ -58,39 +59,42 @@
   display: flex !important;
   align-items: center !important;
   justify-content: flex-end !important;
-  gap: 6px !important;
+  gap: 4px !important;
 }
 
-.bottom-bar .bottom-timer .bottom-timer-main::before {
-  content: attr(data-timer-badge) !important;
-  display: none !important;
-}
-
+/* Promo copy is merged into data-timer-label by the renderer; no floating badge remains. */
+.bottom-bar .bottom-timer .bottom-timer-main::before,
 .bottom-bar .bottom-timer .bottom-timer-main::after {
-  content: "" !important;
+  content: none !important;
   display: none !important;
 }
 
 .bottom-bar .bottom-timer .bottom-timer-main strong {
   min-width: 0 !important;
+  min-height: 26px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: flex-end !important;
-  gap: 6px !important;
+  gap: 5px !important;
+  background: transparent !important;
   color: inherit !important;
-  font-variant-numeric: tabular-nums !important;
+  box-shadow: none !important;
+  font-variant-numeric: tabular-nums;
 }
 
 .bottom-bar .bottom-timer .bottom-timer-main strong > em {
-  min-height: 24px !important;
-  padding: 0 7px !important;
-  border-radius: 8px !important;
+  min-height: 20px !important;
+  padding: 0 6px !important;
+  border-radius: 7px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   background: color-mix(in srgb, var(--bottom-timer-accent) 12%, transparent) !important;
   color: var(--bottom-timer-accent) !important;
-  font-size: 10px !important;
+  font-size: 9px !important;
   font-style: normal !important;
   font-weight: 950 !important;
   white-space: nowrap !important;
@@ -99,14 +103,14 @@
 .bottom-bar .bottom-timer .bottom-timer-main b {
   display: inline-block !important;
   color: inherit !important;
-  font-size: 18px !important;
-  font-weight: 950 !important;
+  font-size: 17px !important;
+  font-weight: 900 !important;
   line-height: 1 !important;
-  letter-spacing: .01em !important;
+  letter-spacing: -.015em !important;
   white-space: nowrap !important;
   text-shadow: none !important;
-  transform-origin: 50% 50% !important;
-  backface-visibility: hidden !important;
+  transform-origin: 50% 50%;
+  backface-visibility: hidden;
 }
 
 .bottom-bar .bottom-timer-palette-ink {
@@ -137,7 +141,6 @@
 .bottom-bar .bottom-timer-variant-clean {
   --bottom-timer-surface: #ffffff;
   background: #ffffff !important;
-  box-shadow: none !important;
 }
 
 .bottom-bar .bottom-timer-variant-clean .bottom-timer-main b {
@@ -150,27 +153,15 @@
   border-color: color-mix(in srgb, var(--bottom-timer-accent) 22%, #dbe3ec) !important;
 }
 
-.bottom-bar .bottom-timer-variant-cards .bottom-timer-main strong {
-  min-height: 34px !important;
-  padding: 0 10px !important;
-  border: 1px solid color-mix(in srgb, var(--bottom-timer-accent) 18%, #dbe3ec) !important;
-  border-radius: 11px !important;
-  background: #ffffff !important;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, .06) !important;
-}
-
 .bottom-bar .bottom-timer-variant-promo {
   --bottom-timer-surface: var(--bottom-timer-accent);
   --bottom-timer-ink: #ffffff;
-  padding-top: 11px !important;
   border-color: transparent !important;
   background: var(--bottom-timer-accent) !important;
   color: #ffffff !important;
-  box-shadow: 0 10px 26px color-mix(in srgb, var(--bottom-timer-accent) 28%, transparent) !important;
 }
 
 .bottom-bar .bottom-timer-variant-promo::before {
-  padding-right: 58px !important;
   color: #ffffff !important;
   opacity: .9 !important;
 }
@@ -178,24 +169,6 @@
 .bottom-bar .bottom-timer-variant-promo::after {
   background: #ffffff !important;
   opacity: .88 !important;
-}
-
-.bottom-bar .bottom-timer-variant-promo .bottom-timer-main::before {
-  position: absolute !important;
-  top: -20px !important;
-  right: 0 !important;
-  min-height: 18px !important;
-  padding: 0 6px !important;
-  border-radius: 999px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background: rgba(255, 255, 255, .18) !important;
-  color: #ffffff !important;
-  font-size: 9px !important;
-  font-weight: 950 !important;
-  line-height: 1 !important;
-  white-space: nowrap !important;
 }
 
 .bottom-bar .bottom-timer-variant-promo .bottom-timer-main strong > em {
@@ -245,8 +218,8 @@
 }
 
 @keyframes bottomTimerFireShell {
-  0%, 100% { box-shadow: 0 10px 26px rgba(249, 115, 22, .16), 0 0 0 1px rgba(249, 115, 22, .18); }
-  50% { box-shadow: 0 12px 30px rgba(239, 68, 68, .28), 0 0 0 2px rgba(249, 115, 22, .34); }
+  0%, 100% { box-shadow: 0 6px 18px rgba(249, 115, 22, .12), 0 0 0 1px rgba(249, 115, 22, .16); }
+  50% { box-shadow: 0 8px 22px rgba(239, 68, 68, .24), 0 0 0 2px rgba(249, 115, 22, .28); }
 }
 
 @keyframes bottomTimerFireFloat {
@@ -259,7 +232,7 @@
 }
 
 .bottom-bar .bottom-timer-effect-flip .bottom-timer-main {
-  perspective: 520px !important;
+  perspective: 520px;
 }
 
 .bottom-bar .bottom-timer-effect-flip.is-bottom-timer-tick .bottom-timer-main b {
@@ -270,31 +243,27 @@
   animation: bottomTimerPulseIn .5s cubic-bezier(.2, .9, .25, 1.2) both !important;
 }
 
-.bottom-bar .bottom-timer-effect-pulse .bottom-timer-main strong {
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--bottom-timer-accent) 14%, transparent) !important;
-}
-
 .bottom-bar .bottom-timer-effect-fire {
   --bottom-timer-accent: #f97316;
-  border-color: rgba(249, 115, 22, .48) !important;
+  border-color: rgba(249, 115, 22, .42) !important;
   animation: bottomTimerFireShell .95s ease-in-out infinite !important;
 }
 
 .bottom-bar .bottom-timer-effect-fire .bottom-timer-main::after {
   content: "🔥" !important;
   position: absolute !important;
-  top: -15px !important;
-  right: -5px !important;
-  z-index: 3 !important;
+  top: -7px !important;
+  right: -3px !important;
+  z-index: 3;
   display: block !important;
-  font-size: 15px !important;
+  font-size: 13px !important;
   line-height: 1 !important;
   animation: bottomTimerFireFloat .58s ease-in-out infinite alternate !important;
 }
 
 .bottom-bar .bottom-timer-effect-fire.is-bottom-timer-tick .bottom-timer-main b {
   color: #f97316 !important;
-  text-shadow: 0 0 12px rgba(249, 115, 22, .5) !important;
+  text-shadow: 0 0 10px rgba(249, 115, 22, .46) !important;
   animation: bottomTimerFireDigit .62s cubic-bezier(.16, 1, .3, 1) both !important;
 }
 
@@ -302,32 +271,20 @@
   color: #ffffff !important;
 }
 
-@media (max-width: 430px) {
+@container pagero-landing (max-width: 370px) {
   .bottom-bar .bottom-timer {
-    min-height: 50px !important;
-    padding: 8px 10px 10px !important;
+    min-height: 40px !important;
+    padding: 5px 9px 7px !important;
     gap: 6px !important;
-    border-radius: 14px !important;
+    border-radius: 11px !important;
   }
 
   .bottom-bar .bottom-timer::before {
-    max-width: 142px !important;
-    font-size: 10px !important;
+    font-size: 9.5px !important;
   }
 
   .bottom-bar .bottom-timer .bottom-timer-main b {
     font-size: 16px !important;
-  }
-
-  .bottom-bar .bottom-timer .bottom-timer-main strong > em {
-    min-height: 22px !important;
-    padding-inline: 6px !important;
-    font-size: 9px !important;
-  }
-
-  .bottom-bar .bottom-timer-variant-cards .bottom-timer-main strong {
-    min-height: 31px !important;
-    padding-inline: 8px !important;
   }
 }
 
