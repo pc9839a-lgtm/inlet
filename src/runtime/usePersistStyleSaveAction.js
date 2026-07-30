@@ -40,12 +40,11 @@ export function usePersistStyleSaveAction({
     const expectedRevision = Number(styleSourcePage.revision || 0);
     let result = null;
     try {
-      result = await persistPage(nextPage, authUser, {
-        tab: 'style',
-        expectedUpdatedAt,
-        expectedRevision,
-        saveMode,
-      });
+      if (saveMode === 'update-existing') {
+        result = await persistPage(nextPage, authUser, { tab: 'style', expectedUpdatedAt, saveMode: 'update-existing' });
+      } else {
+        result = await persistPage(nextPage, authUser, { tab: 'style', expectedUpdatedAt, expectedRevision, saveMode: 'create-new' });
+      }
     } catch (error) {
       await handlePagePersistError({ error, page: nextPage, handlePageSaveError, markSaveStatus, showToast });
       return;
