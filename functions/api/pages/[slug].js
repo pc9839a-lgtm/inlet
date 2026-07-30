@@ -1,4 +1,10 @@
 import { decodeD1Page, getD1PageBySlug, getD1ProjectById, upsertD1Page } from '../../../server/storage/d1Adapter.mjs';
+import {
+  assertExpectedPageVersion,
+  assertTargetSlugAvailable,
+  assertUpdatePageIdentity,
+  pageSaveIdentity,
+} from '../../../server/pageSavePolicy.mjs';
 import { assertD1, authorizeProject, ensureD1ProjectShell, handleApiError, jsonResponse, optionsResponse, projectFromRequest, readJson, sessionIdentity } from '../_shared.js';
 
 const METHODS = 'GET, POST, DELETE, OPTIONS';
@@ -27,31 +33,6 @@ function publicPagePayload(page = {}, project = {}) {
   };
 }
 
-function isUpdateExistingSave(body = {}) {
-  return String(body.saveMode || body.mode || '').trim() === 'update-existing';
-}
-
-function sameExistingPageId(incoming = {}, existingPage = {}) {
-  const incomingId = String(incoming.id || '').trim();
-  const existingId = String(existingPage.id || '').trim();
-  return !!incomingId && !!existingId && incomingId === existingId;
-}
-
-async function projectForExistingPageUpdate({ db, request, env, publicPage, incoming, project, body, writeTab }) {
-  if (!publicPage || !isUpdateExistingSave(body) || !sameExistingPageId(incoming, publicPage)) return null;
-  const existingProject = await getD1ProjectById(db, publicPage.projectId || '');
-  if (!existingProject?.projectId) return null;
-  const targetProject = {
-    ...project,
-    ...existingProject,
-    id: existingProject.projectId,
-    projectId: existingProject.projectId,
-    ownerId: existingProject.ownerId || project.ownerId || '',
-    slug: publicPage.slug || existingProject.slug || project.slug || '',
-  };
-  await authorizeProject(request, env, targetProject, { write: true, tab: writeTab });
-  return targetProject;
-}
 function pageNotFoundResponse(request, env) {
   return jsonResponse(request, env, 404, { ok: false, error: '페이지를 찾을 수 없습니다.', message: '페이지를 찾을 수 없습니다.' }, METHODS);
 }
@@ -99,15 +80,15 @@ function canRecoverPageSaveProject(error = {}, identity = {}) {
 
 function accountOwnedProjectForSave(project = {}, identity = {}, slug = '') {
   const ownerId = identityOwnerId(identity);
-  const safeSlug = safeProjectId(slug || project.slug || 'my-page') || 'my-page';
+  const safeSlugValue = safeProjectId(slug || project.slug || 'my-page') || 'my-page';
   return {
     ...project,
-    projectId: `${ownerId}_${safeSlug}`,
-    id: `${ownerId}_${safeSlug}`,
+    projectId: `${ownerId}_${safeSlugValue}`,
+    id: `${ownerId}_${safeSlugValue}`,
     ownerId,
     ownerAccountId: ownerId,
-    slug: safeSlug,
-    title: project.title || safeSlug,
+    slug: safeSlugValue,
+    title: project.title || safeSlugValue,
   };
 }
 
@@ -155,6 +136,47 @@ async function getPublicPageBySlug(db, slug) {
   if (!row) return { page: null, project: null };
   const page = decodeD1Page(row);
   return { page, project: { projectId: page.projectId, slug: page.slug } };
+}
+
+async function getPageById(db, pageId = '') {
+  const safePageId = String(pageId || '').trim();
+  if (!safePageId) return null;
+  const row = await db.prepare('SELECT * FROM pages WHERE id = ? LIMIT 1').bind(safePageId).first();
+  return row ? decodeD1Page(row) : null;
+}
+
+async function authorizeNewPageProject({ db, request, env, project, identity, slug, writeTab }) {
+  let targetProject = project;
+  try {
+    await ensureD1ProjectShell(db, targetProject);
+    await authorizeProject(request, env, targetProject, { write: true, tab: writeTab });
+  } catch (error) {
+    if (!canRecoverPageSaveProject(error, identity)) throw error;
+    targetProject = accountOwnedProjectForSave(targetProject, identity, slug);
+    await ensureD1ProjectShell(db, targetProject);
+    await authorizeProject(request, env, targetProject, { write: true, tab: writeTab });
+  }
+  return targetProject;
+}
+
+async function authorizeExistingPageProject({ db, request, env, currentPage, fallbackProject, writeTab }) {
+  const existingProject = await getD1ProjectById(db, currentPage?.projectId || '');
+  if (!existingProject?.projectId) {
+    const error = new Error('Existing page project could not be found.');
+    error.status = 409;
+    error.details = { code: 'PAGE_SAVE_IDENTITY_REQUIRED', pageId: currentPage?.id || '' };
+    throw error;
+  }
+  const targetProject = {
+    ...fallbackProject,
+    ...existingProject,
+    id: existingProject.projectId,
+    projectId: existingProject.projectId,
+    ownerId: existingProject.ownerId || fallbackProject.ownerId || '',
+    slug: currentPage.slug || existingProject.slug || fallbackProject.slug || '',
+  };
+  await authorizeProject(request, env, targetProject, { write: true, tab: writeTab });
+  return targetProject;
 }
 
 export async function onRequest({ request, env, params }) {
@@ -211,56 +233,77 @@ export async function onRequest({ request, env, params }) {
       const body = await readJson(request);
       let project = projectFromRequest(url, body, request);
       const writeTab = String(body.tab || body.saveTab || 'edit').trim() || 'edit';
-      const identity = await sessionIdentity(request, env);
+      const session = await sessionIdentity(request, env);
       const incoming = body.page && typeof body.page === 'object' ? body.page : body;
-      try {
-        await ensureD1ProjectShell(db, project);
-        await authorizeProject(request, env, project, { write: true, tab: writeTab });
-      } catch (error) {
-        if (!canRecoverPageSaveProject(error, identity)) throw error;
-        project = accountOwnedProjectForSave(project, identity, slug);
-        await ensureD1ProjectShell(db, project);
-        await authorizeProject(request, env, project, { write: true, tab: writeTab });
+      const saveIdentity = pageSaveIdentity(body, incoming, project, slug);
+      const saveMode = saveIdentity.mode;
+      const currentById = saveIdentity.pageId ? await getPageById(db, saveIdentity.pageId) : null;
+
+      assertUpdatePageIdentity({ mode: saveMode, identity: saveIdentity, currentById });
+
+      if (saveMode === 'update-existing') {
+        project = await authorizeExistingPageProject({
+          db,
+          request,
+          env,
+          currentPage: currentById,
+          fallbackProject: project,
+          writeTab,
+        });
+      } else {
+        project = await authorizeNewPageProject({ db, request, env, project, identity: session, slug, writeTab });
       }
+
       const publicExisting = await getPublicPageBySlug(db, slug);
-      if (publicExisting.page && String(publicExisting.page.projectId || '') !== String(project.projectId || '')) {
-        const targetProject = await projectForExistingPageUpdate({ db, request, env, publicPage: publicExisting.page, incoming, project, body, writeTab });
-        if (targetProject) {
-          project = targetProject;
-        } else {
-          const error = new Error('Page URL is already in use.');
-          error.status = 409;
-          error.details = { code: 'PAGE_SLUG_CONFLICT', slug };
-          throw error;
-        }
+      const targetState = assertTargetSlugAvailable({
+        mode: saveMode,
+        identity: { ...saveIdentity, slug },
+        existingPage: publicExisting.page,
+        targetProjectId: project.projectId,
+      });
+
+      if (targetState.replayed && targetState.page) {
+        return jsonResponse(request, env, 200, {
+          ok: true,
+          replayed: true,
+          saveMode,
+          saveRequestId: body.saveRequestId || '',
+          page: targetState.page,
+        }, METHODS);
       }
-      const expectedUpdatedAt = String(body.expectedUpdatedAt || incoming.expectedUpdatedAt || incoming.__expectedUpdatedAt || '').trim();
-      const current = await getD1PageBySlug(db, { projectId: project.projectId, slug });
-      const currentUpdatedAt = String(current?.updatedAt || '').trim();
-      if (expectedUpdatedAt && currentUpdatedAt && expectedUpdatedAt !== currentUpdatedAt) {
-        const error = new Error('Page revision conflict');
-        error.status = 409;
-        error.details = {
-          code: 'PAGE_REVISION_CONFLICT',
-          latest: current ? {
-            slug: current.slug || slug,
-            title: current.title || '',
-            updatedAt: current.updatedAt || '',
-            blocks: Array.isArray(current.blocks) ? current.blocks.length : 0,
-          } : null,
-          page: current || null,
-        };
-        throw error;
-      }
+
+      const current = saveMode === 'update-existing'
+        ? currentById
+        : await getD1PageBySlug(db, { projectId: project.projectId, slug });
+      assertExpectedPageVersion({
+        expectedUpdatedAt: body.expectedUpdatedAt || incoming.expectedUpdatedAt || incoming.__expectedUpdatedAt || '',
+        expectedRevision: body.expectedRevision || body.identity?.revision || incoming.expectedRevision || 0,
+        currentPage: current,
+        slug,
+      });
+
       const fallbackEmail = await fallbackFreeEmailAlertRecipient(db, project);
-      const pageForSave = enforceFreeEmailAlertRecipient({ ...incoming, slug }, project, identity, fallbackEmail);
+      const pageForSave = enforceFreeEmailAlertRecipient({
+        ...incoming,
+        id: currentById?.id || incoming.id || saveIdentity.pageId || '',
+        projectId: project.projectId,
+        ownerId: project.ownerId || incoming.ownerId || '',
+        slug,
+      }, project, session, fallbackEmail);
       const saved = await upsertD1Page(db, pageForSave, {
+        pageId: currentById?.id || saveIdentity.pageId || '',
         projectId: project.projectId,
         slug,
-        createdByAccountId: identity?.ownerId || project.ownerId || null,
+        createdByAccountId: session?.ownerId || project.ownerId || null,
         reason: body.reason || body.revisionReason || '',
       });
-      return jsonResponse(request, env, 200, { ok: true, page: saved }, METHODS);
+      return jsonResponse(request, env, 200, {
+        ok: true,
+        replayed: false,
+        saveMode,
+        saveRequestId: body.saveRequestId || '',
+        page: saved,
+      }, METHODS);
     }
 
     return methodNotAllowedResponse(request, env);
