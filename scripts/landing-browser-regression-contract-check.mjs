@@ -18,14 +18,14 @@ for (const token of [
   assert(visual.includes(token), `real browser viewport contract missing: ${token}`);
 }
 
-assert(visual.includes("slug: 'visual-regression'") && visual.includes("url.pathname === '/api/pages/visual-regression'"), 'visual QA must render a mocked public landing through the real public route');
+assert(visual.includes("slug: 'visual-regression'") && visual.includes("localStorage.setItem(${JSON.stringify(STORAGE_KEY)}"), 'visual QA must seed the same-slug local page before the real public route starts');
 assert(visual.includes("JSON.stringify([4, 3])"), 'seven-menu browser QA must enforce a 4+3 row split');
 assert(visual.includes('menu button ${index + 1} touch height is below 44px'), 'browser QA must enforce 44px menu touch targets');
 assert(visual.includes('share button overlaps bottom bar'), 'browser QA must reject share/bottom-bar overlap');
 assert(visual.includes('public viewport exceeded 414px'), 'browser QA must reject desktop public viewport spill');
 assert(visual.includes("viewport.name === 'mobile-390'"), 'form focus browser scenario must run at 390px');
-assert(visual.includes("assertHiddenState(focusedMetrics.topnavState") && visual.includes("assertHiddenState(focusedMetrics.bottomState"), 'form focus browser QA must enforce hidden fixed UI');
-assert(visual.includes("Page.captureScreenshot") && visual.includes("-baseline.png") && visual.includes("-form-focus.png"), 'browser QA must emit baseline and focused screenshots');
+assert(visual.includes("hidden(focused.topnavState") && visual.includes("hidden(focused.bottomState"), 'form focus browser QA must enforce hidden fixed UI');
+assert(visual.includes('Page.captureScreenshot') && visual.includes('-baseline.png') && visual.includes('-form-focus.png'), 'browser QA must emit baseline and focused screenshots');
 assert(visual.includes("'/usr/bin/google-chrome'") && visual.includes("'/usr/bin/chromium'"), 'browser QA must resolve Linux Chrome/Chromium');
 
 assert(packageJson.scripts?.['browser:landing:qa'] === 'node scripts/landing-browser-regression-check.mjs', 'package script browser:landing:qa missing');
