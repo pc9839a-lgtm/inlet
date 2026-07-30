@@ -9,7 +9,7 @@ export default function BlockEditor({ block, page, updateBlock, editors, editorD
 
   if (!Editor) return null;
 
-  const props = { s, set, page, blockId: block.id, blockType: block.type, ...editorDeps };
+  const props = { s, set, page, updateBlock, blockId: block.id, blockType: block.type, ...editorDeps };
   if (block.type === 'image') props.block = block;
 
   return (
