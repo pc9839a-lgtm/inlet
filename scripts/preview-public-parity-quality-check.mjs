@@ -37,13 +37,21 @@ for (const token of [
   '.public-landing-viewport .landing-content',
   '.phone-frame .landing-content > .topnav.topnav-sticky,',
   '.public-landing-viewport .landing-content > .topnav.topnav-sticky',
-  '.phone-frame .bottom-bar,',
-  '.public-landing-viewport .public-bottom-bar',
+  '.phone-frame .bottom-bar {',
+  '.public-landing-viewport .public-bottom-bar {',
   '@container pagero-landing (max-width: 420px)',
   '@container pagero-landing (max-width: 370px)',
 ]) {
   assert(parityCss.includes(token), `Preview/public parity stylesheet missing ${token}`);
 }
+
+const publicBottomRule = parityCss.match(/\.public-landing-viewport \.public-bottom-bar \{([\s\S]*?)\}/)?.[1] || '';
+assert(publicBottomRule.includes('position: absolute !important'), 'Public bottom bar must be positioned against the 414px public landing viewport');
+assert(publicBottomRule.includes('left: 0 !important') && publicBottomRule.includes('right: 0 !important'), 'Public bottom bar must be pinned to both sides of the public landing viewport');
+assert(publicBottomRule.includes('bottom: 0 !important'), 'Public bottom bar must stay pinned to the bottom of the public landing viewport');
+assert(publicBottomRule.includes('width: 100% !important') && publicBottomRule.includes('max-width: 100% !important'), 'Public bottom bar width must resolve inside the public landing viewport');
+assert(!publicBottomRule.includes('position: fixed'), 'Public bottom bar must not resolve 100% width against the desktop browser viewport');
+assert(parityCss.includes('.public-landing-viewport .public-bottom-bar.is-form-input-hidden') && parityCss.includes('transform: translateY(calc(100% + 18px)) !important'), 'Public bottom bar form-focus hiding must preserve the contained positioning model');
 
 assert(parityCss.includes('grid-template-columns: 44px minmax(0, 1fr) !important'), '414px runtime containers must receive the mobile top navigation layout');
 assert(parityCss.includes('grid-template-columns: repeat(var(--bottom-button-count, 2), minmax(0, 1fr)) !important'), 'Preview and public bottom actions must use the same button grid');
@@ -55,4 +63,5 @@ console.log(JSON.stringify({
   check: 'preview-public-css-parity',
   runtimeWidth: 414,
   usesContainerQueries: true,
+  publicBottomContained: true,
 }, null, 2));
