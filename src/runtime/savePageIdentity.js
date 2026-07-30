@@ -8,7 +8,8 @@ export function hasServerIdentity(page = {}) {
 }
 
 export function pageSaveMode(page = {}) {
-  return hasServerIdentity(page) ? 'update-existing' : 'create-new';
+  const hasPersistedVersion = Number(page?.revision || 0) > 0 || !!String(page?.updatedAt || page?.savedAt || page?.publishedAt || '').trim();
+  return hasServerIdentity(page) && hasPersistedVersion ? 'update-existing' : 'create-new';
 }
 
 function sameSlug(a = {}, b = {}) {
