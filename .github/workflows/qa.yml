@@ -96,6 +96,7 @@ jobs:
           name: landing-browser-regression-${{ github.run_id }}
           path: .tmp-landing-browser-regression
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 14
 
       - name: Stop production preview
