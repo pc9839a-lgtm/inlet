@@ -32,7 +32,6 @@
 @import '../styles/preview-cards.css';
 @import '../styles/preview-download.css';
 @import '../styles/preview-workspace.css';
-@import '../styles/preview-workspace-bottom-timer.css';
 @import '../styles/preview-workspace-hero-media.css';
 @import '../styles/preview-workspace-bottom-card.css';
 @import '../styles/preview-workspace-topnav-override.css';
@@ -40,10 +39,10 @@
 @import '../styles/preview-workspace-template.css';
 @import '../styles/preview-workspace-timer-minimal.css';
 @import '../styles/preview-workspace-timer-urgency.css';
-@import '../styles/preview-workspace-timer-bottom.css';
 @import '../styles/preview-workspace-timer-solid-variants.css';
 @import '../styles/preview-workspace-timer-effects.css';
 @import '../styles/preview-workspace-reservation.css';
+@import '../styles/preview-workspace-reservation-fixed.css';
 @import '../styles/preview-workspace-hero-full.css';
 @import '../styles/preview-workspace-hero-content.css';
 @import '../styles/preview-workspace-topnav-menu.css';
@@ -65,7 +64,6 @@
 @import '../styles/preview-workspace-bottom-timer-effects.css';
 @import '../styles/preview-runtime-parity.css';
 @import '../styles/preview-topnav-runtime-contract.css';
-@import '../styles/preview-bottom-timer-compact.css';
 @import '../styles/preview-fixed-ui-contract.css';
 
 /* Global page typography consumers. */
