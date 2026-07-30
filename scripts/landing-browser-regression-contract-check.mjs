@@ -10,7 +10,10 @@ const packageJson = JSON.parse(await readFile('package.json', 'utf8'));
 const qaAll = await readFile('scripts/qa-all.mjs', 'utf8');
 const landingCss = await readFile('src/preview/LandingRenderer.css', 'utf8');
 const topnavRuntimeCss = await readFile('src/styles/preview-topnav-runtime-contract.css', 'utf8');
-const compactTimerCss = await readFile('src/styles/preview-bottom-timer-compact.css', 'utf8');
+const bottomTimerCss = await readFile('src/styles/preview-workspace-bottom-timer-effects.css', 'utf8');
+const legacyBottomTimerCss = await readFile('src/styles/preview-workspace-bottom-timer.css', 'utf8');
+const legacyTimerBottomCss = await readFile('src/styles/preview-workspace-timer-bottom.css', 'utf8');
+const timerUrgencyCss = await readFile('src/styles/preview-workspace-timer-urgency.css', 'utf8');
 const fixedUiCss = await readFile('src/styles/preview-fixed-ui-contract.css', 'utf8');
 const focusCss = await readFile('src/styles/preview-form-focus-fixed-ui.css', 'utf8');
 const signalBlocks = await readFile('src/preview/renderers/SignalBlocks.jsx', 'utf8');
@@ -37,14 +40,17 @@ assert(visual.includes("'/usr/bin/google-chrome'") && visual.includes("'/usr/bin
 
 const parityImport = "@import '../styles/preview-runtime-parity.css';";
 const topnavImport = "@import '../styles/preview-topnav-runtime-contract.css';";
-const compactTimerImport = "@import '../styles/preview-bottom-timer-compact.css';";
+const bottomTimerImport = "@import '../styles/preview-workspace-bottom-timer-effects.css';";
+const removedCompactImport = "@import '../styles/preview-bottom-timer-compact.css';";
 const fixedImport = "@import '../styles/preview-fixed-ui-contract.css';";
 assert(landingCss.includes(topnavImport), 'LandingRenderer must import the final topnav runtime contract');
-assert(landingCss.includes(compactTimerImport), 'LandingRenderer must import the compact bottom timer contract');
+assert(landingCss.includes(bottomTimerImport), 'LandingRenderer must import the consolidated bottom timer contract');
+assert(!landingCss.includes(removedCompactImport), 'LandingRenderer must not import the deleted compact override layer');
+assert(landingCss.lastIndexOf(bottomTimerImport) < landingCss.lastIndexOf(parityImport), 'bottom timer owner must load before shared runtime containment CSS');
 assert(landingCss.lastIndexOf(topnavImport) > landingCss.lastIndexOf(parityImport), 'topnav runtime contract must load after parity CSS');
-assert(landingCss.lastIndexOf(compactTimerImport) > landingCss.lastIndexOf(topnavImport), 'compact bottom timer contract must load after parity/topnav CSS');
-assert(landingCss.lastIndexOf(fixedImport) > landingCss.lastIndexOf(compactTimerImport), 'fixed UI contract must remain the final imported stylesheet');
+assert(landingCss.lastIndexOf(fixedImport) > landingCss.lastIndexOf(topnavImport), 'fixed UI contract must remain the final imported stylesheet');
 assert(landingCss.lastIndexOf(fixedImport) === landingCss.lastIndexOf('@import '), 'no stylesheet may load after the fixed UI contract');
+
 for (const count of [5, 6, 7, 8]) {
   assert(topnavRuntimeCss.includes(`topnav-menu-count-${count}`), `final runtime CSS missing ${count}-menu contract`);
 }
@@ -58,9 +64,16 @@ for (const token of [
   'height: 2px !important',
   'content: none !important',
   'box-shadow: none !important',
+  '@container pagero-landing (max-width: 370px)',
 ]) {
-  assert(compactTimerCss.includes(token), `compact bottom timer CSS missing ${token}`);
+  assert(bottomTimerCss.includes(token), `consolidated bottom timer CSS missing ${token}`);
 }
+assert(!bottomTimerCss.includes('data-timer-badge'), 'consolidated bottom timer CSS must not restore the floating promo badge');
+assert(!bottomTimerCss.includes('@media (max-width: 430px)'), 'bottom timer sizing must use the landing container instead of browser viewport width');
+assert(!legacyBottomTimerCss.includes('.bottom-timer'), 'legacy bottom timer manifest stub must not contain runtime selectors');
+assert(!legacyTimerBottomCss.includes('.bottom-timer'), 'legacy timer-bottom manifest stub must not contain runtime selectors');
+assert(!timerUrgencyCss.includes('.bottom-timer'), 'main timer urgency CSS must not style the fixed bottom timer');
+assert(!fixedUiCss.includes(':has(.bottom-timer) .bottom-timer'), 'fixed collision CSS must not own bottom timer geometry');
 assert(signalBlocks.includes("const compactLabel = variant === 'promo' && promoBadge ? `${promoBadge} · ${label}` : label;"), 'bottom timer must merge the promotional badge into the editable left copy');
 assert(signalBlocks.includes("node.dataset.timerBadge = ''") && signalBlocks.includes("main.dataset.timerBadge = ''"), 'bottom timer must not render a floating promotional badge');
 assert(signalBlocks.includes("const label = (rawLabel || '혜택 마감까지').slice(0, 40);"), 'bottom timer must keep a visible fallback label when the editable copy is empty');
@@ -80,4 +93,15 @@ assert(workflow.includes('actions/upload-artifact@v4'), 'browser screenshots mus
 assert(workflow.includes('.tmp-landing-browser-regression'), 'browser screenshot artifact path missing');
 assert(workflow.includes('include-hidden-files: true'), 'hidden browser screenshot directory must be included in the artifact');
 
-console.log(JSON.stringify({ ok: true, viewports: ['desktop', 'mobile-360', 'mobile-390', 'mobile-430'], scenarios: ['baseline', 'form-focus'], inputMethod: 'real-pointer', finalTopnavCss: 'preview-topnav-runtime-contract.css', compactBottomTimerCss: 'preview-bottom-timer-compact.css', finalStylesheet: 'preview-fixed-ui-contract.css', focusFallback: true, artifactIncludesHiddenFiles: true }, null, 2));
+console.log(JSON.stringify({
+  ok: true,
+  viewports: ['desktop', 'mobile-360', 'mobile-390', 'mobile-430'],
+  scenarios: ['baseline', 'form-focus'],
+  inputMethod: 'real-pointer',
+  finalTopnavCss: 'preview-topnav-runtime-contract.css',
+  bottomTimerOwner: 'preview-workspace-bottom-timer-effects.css',
+  removedOverrideLayer: 'preview-bottom-timer-compact.css',
+  finalStylesheet: 'preview-fixed-ui-contract.css',
+  focusFallback: true,
+  artifactIncludesHiddenFiles: true,
+}, null, 2));
