@@ -58,13 +58,13 @@ function mergeDraftValue(serverValue, draftValue) {
   if (Array.isArray(draftValue)) return draftValue.map((item) => mergeDraftValue(undefined, item));
   if (!draftValue || typeof draftValue !== 'object') return draftValue;
   const serverObject = serverValue && typeof serverValue === 'object' && !Array.isArray(serverValue) ? serverValue : {};
-  return Object.fromEntries(
-    new Set([...Object.keys(serverObject), ...Object.keys(draftValue)])
-      .values()
-      .map((key) => [key, Object.prototype.hasOwnProperty.call(draftValue, key)
-        ? mergeDraftValue(serverObject[key], draftValue[key])
-        : serverObject[key]]),
-  );
+  const keys = [...new Set([...Object.keys(serverObject), ...Object.keys(draftValue)])];
+  return Object.fromEntries(keys.map((key) => [
+    key,
+    Object.prototype.hasOwnProperty.call(draftValue, key)
+      ? mergeDraftValue(serverObject[key], draftValue[key])
+      : serverObject[key],
+  ]));
 }
 
 function timestamp(value) {
