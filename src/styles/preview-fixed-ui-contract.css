@@ -1,0 +1,116 @@
+/* Final owner for fixed navigation, sharing and bottom action collision rules. */
+.phone-frame > .landing-page,
+.public-landing-viewport .landing-page {
+  scroll-padding-top: calc(var(--page-fixed-top-height, 0px) + 16px) !important;
+  scroll-padding-bottom: calc(max(88px, var(--page-fixed-bottom-height, 0px)) + 14px) !important;
+}
+
+.phone-frame .landing-page.has-bottom-bar .landing-content,
+.public-landing-viewport .landing-page.has-bottom-bar .landing-content {
+  padding-bottom: calc(max(88px, var(--page-fixed-bottom-height, 0px)) + 14px) !important;
+}
+
+.landing-page.has-bottom-bar .page-share-button.position-bottom-left,
+.landing-page.has-bottom-bar .page-share-button.position-bottom-right {
+  bottom: calc(max(88px, var(--page-fixed-bottom-height, 0px)) + 12px) !important;
+}
+
+.phone-frame .bottom-bar:has(.bottom-timer),
+.public-landing-viewport .public-bottom-bar:has(.bottom-timer) {
+  gap: 6px !important;
+  padding-top: 8px !important;
+}
+
+.phone-frame .bottom-bar:has(.bottom-timer) .bottom-timer,
+.public-landing-viewport .public-bottom-bar:has(.bottom-timer) .bottom-timer {
+  min-height: 48px !important;
+  padding: 7px 10px 9px !important;
+  border-radius: 14px !important;
+}
+
+.phone-frame .bottom-bar:has(.bottom-timer) .bottom-timer::before,
+.public-landing-viewport .public-bottom-bar:has(.bottom-timer) .bottom-timer::before {
+  max-width: 48% !important;
+  font-size: 10px !important;
+}
+
+.phone-frame .bottom-bar:has(.bottom-timer) .bottom-timer .bottom-timer-main b,
+.public-landing-viewport .public-bottom-bar:has(.bottom-timer) .bottom-timer .bottom-timer-main b {
+  font-size: 16px !important;
+}
+
+.phone-frame .bottom-bar.count-3 .bottom-bar-buttons,
+.public-landing-viewport .public-bottom-bar.count-3 .bottom-bar-buttons {
+  gap: 6px !important;
+}
+
+.phone-frame .bottom-bar.count-3 .bottom-bar-buttons button,
+.public-landing-viewport .public-bottom-bar.count-3 .bottom-bar-buttons button {
+  min-height: 50px !important;
+  padding-inline: 8px !important;
+  gap: 4px !important;
+}
+
+.phone-frame .bottom-bar.count-3 .bottom-bar-buttons button b,
+.public-landing-viewport .public-bottom-bar.count-3 .bottom-bar-buttons button b {
+  font-size: 12px !important;
+}
+
+.phone-frame .bottom-bar.count-3 .bottom-bar-buttons button span,
+.public-landing-viewport .public-bottom-bar.count-3 .bottom-bar-buttons button span {
+  font-size: 13px !important;
+}
+
+@container pagero-landing (max-width: 370px) {
+  .landing-page.has-bottom-bar .landing-content {
+    padding-bottom: calc(max(82px, var(--page-fixed-bottom-height, 0px)) + 12px) !important;
+  }
+
+  .landing-page.has-bottom-bar .page-share-button.position-bottom-left,
+  .landing-page.has-bottom-bar .page-share-button.position-bottom-right {
+    bottom: calc(max(82px, var(--page-fixed-bottom-height, 0px)) + 10px) !important;
+  }
+
+  .bottom-bar,
+  .public-bottom-bar {
+    padding: 8px 10px max(10px, env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .bottom-bar .bottom-bar-buttons,
+  .public-bottom-bar .bottom-bar-buttons {
+    gap: 6px !important;
+  }
+
+  .bottom-bar .bottom-bar-buttons button,
+  .public-bottom-bar .bottom-bar-buttons button {
+    min-height: 48px !important;
+    padding-inline: 8px !important;
+  }
+
+  .bottom-bar.count-3 .bottom-bar-buttons button,
+  .public-bottom-bar.count-3 .bottom-bar-buttons button {
+    min-height: 46px !important;
+    padding-inline: 5px !important;
+  }
+
+  .bottom-bar.count-3 .bottom-bar-buttons button b,
+  .public-bottom-bar.count-3 .bottom-bar-buttons button b {
+    font-size: 11px !important;
+  }
+
+  .bottom-bar:has(.bottom-timer) .bottom-timer,
+  .public-bottom-bar:has(.bottom-timer) .bottom-timer {
+    min-height: 46px !important;
+    padding: 6px 8px 8px !important;
+  }
+
+  .bottom-bar:has(.bottom-timer) .bottom-timer::before,
+  .public-bottom-bar:has(.bottom-timer) .bottom-timer::before {
+    max-width: 42% !important;
+  }
+
+  .bottom-bar:has(.bottom-timer) .bottom-timer .bottom-timer-main b,
+  .public-bottom-bar:has(.bottom-timer) .bottom-timer .bottom-timer-main b {
+    font-size: 15px !important;
+  }
+}
