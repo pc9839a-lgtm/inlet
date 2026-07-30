@@ -27,7 +27,8 @@ assert(visual.includes('menu button ${index + 1} touch height is below 44px'), '
 assert(visual.includes('share button overlaps bottom bar'), 'browser QA must reject share/bottom-bar overlap');
 assert(visual.includes('public viewport exceeded 414px'), 'browser QA must reject desktop public viewport spill');
 assert(visual.includes("viewport.name === 'mobile-390'"), 'form focus browser scenario must run at 390px');
-assert(visual.includes('hidden(focused.topnavState') && visual.includes('hidden(focused.bottomState'), 'form focus browser QA must enforce hidden fixed UI');
+assert(visual.includes("Input.dispatchMouseEvent") && visual.includes("Real pointer click did not focus the form input"), 'form focus scenario must use a real pointer click and verify the active control');
+assert(visual.includes('assertHidden(focused.topnavState') && visual.includes('assertHidden(focused.bottomState'), 'form focus browser QA must enforce hidden fixed UI');
 assert(visual.includes('Page.captureScreenshot') && visual.includes('-baseline.png') && visual.includes('-form-focus.png'), 'browser QA must emit baseline and focused screenshots');
 assert(visual.includes("'/usr/bin/google-chrome'") && visual.includes("'/usr/bin/chromium'"), 'browser QA must resolve Linux Chrome/Chromium');
 
@@ -57,4 +58,4 @@ assert(workflow.includes('npm run browser:landing:qa'), 'browser regression job 
 assert(workflow.includes('actions/upload-artifact@v4'), 'browser screenshots must be uploaded as a workflow artifact');
 assert(workflow.includes('.tmp-landing-browser-regression'), 'browser screenshot artifact path missing');
 
-console.log(JSON.stringify({ ok: true, viewports: ['desktop', 'mobile-360', 'mobile-390', 'mobile-430'], scenarios: ['baseline', 'form-focus'], finalTopnavCss: 'preview-topnav-runtime-contract.css', finalStylesheet: 'preview-fixed-ui-contract.css', focusFallback: true }, null, 2));
+console.log(JSON.stringify({ ok: true, viewports: ['desktop', 'mobile-360', 'mobile-390', 'mobile-430'], scenarios: ['baseline', 'form-focus'], inputMethod: 'real-pointer', finalTopnavCss: 'preview-topnav-runtime-contract.css', finalStylesheet: 'preview-fixed-ui-contract.css', focusFallback: true }, null, 2));
