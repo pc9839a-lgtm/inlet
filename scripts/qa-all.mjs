@@ -21,6 +21,7 @@ const steps = [
   ['preview:parity:qa', ['scripts/preview-public-parity-quality-check.mjs']],
   ['bottom:fixed:qa', ['scripts/bottom-fixed-ui-quality-check.mjs']],
   ['root:entry:qa', ['scripts/root-app-entry-quality-check.mjs']],
+  ['timer:workflow:qa', ['scripts/timer-settings-workflow-quality-check.mjs']],
   ['conversion:qa', ['scripts/conversion-quality-check.mjs']],
   ['csv:qa', ['scripts/csv-quality-check.mjs']],
   ['runtime:qa', ['scripts/runtime-quality-check.mjs']],
