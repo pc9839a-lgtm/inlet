@@ -1,5 +1,5 @@
 import { persistPage } from '../lib/pageRepository.js';
-import { attachExistingPageIdentity } from './savePageIdentity.js';
+import { attachExistingPageIdentity, pageSaveMode } from './savePageIdentity.js';
 import { STYLE_SAVED_TOAST } from './pageSaveFeedback.js';
 import { commitSavedPageResult, handlePagePersistError } from './pagePersistFlow.js';
 
@@ -34,11 +34,17 @@ export function usePersistStyleSaveAction({
       latestPage: latestPageRef.current,
       currentPage: page,
     });
+    const saveMode = pageSaveMode(styleSourcePage);
     const nextPage = pageForAccountSave(styleSourcePage);
     const expectedUpdatedAt = styleSourcePage.updatedAt || styleSourcePage.savedAt || styleSourcePage.createdAt || page.updatedAt || page.savedAt || page.createdAt || '';
+    const expectedRevision = Number(styleSourcePage.revision || 0);
     let result = null;
     try {
-      result = await persistPage(nextPage, authUser, { tab: 'style', expectedUpdatedAt, saveMode: 'update-existing' });
+      if (saveMode === 'update-existing') {
+        result = await persistPage(nextPage, authUser, { tab: 'style', expectedUpdatedAt, saveMode: 'update-existing' });
+      } else {
+        result = await persistPage(nextPage, authUser, { tab: 'style', expectedUpdatedAt, expectedRevision, saveMode: 'create-new' });
+      }
     } catch (error) {
       await handlePagePersistError({ error, page: nextPage, handlePageSaveError, markSaveStatus, showToast });
       return;

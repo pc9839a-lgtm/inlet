@@ -17,6 +17,7 @@ const steps = [
   ['server:smoke:events', ['scripts/server-smoke-events.mjs']],
   ['server:smoke:pages', ['scripts/server-smoke-pages.mjs']],
   ['server:smoke:integrations', ['scripts/server-smoke-integrations.mjs']],
+  ['page:save:qa', ['scripts/page-save-identity-quality-check.mjs']],
   ['conversion:qa', ['scripts/conversion-quality-check.mjs']],
   ['csv:qa', ['scripts/csv-quality-check.mjs']],
   ['runtime:qa', ['scripts/runtime-quality-check.mjs']],

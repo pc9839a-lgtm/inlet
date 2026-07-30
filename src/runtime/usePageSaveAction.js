@@ -1,6 +1,6 @@
 import { persistPage } from '../lib/pageRepository.js';
 import { normalizePageForSave } from '../lib/pageModel.js';
-import { attachExistingPageIdentity } from './savePageIdentity.js';
+import { attachExistingPageIdentity, pageSaveMode } from './savePageIdentity.js';
 import {
   SAVE_BLOCKED_FEEDBACK,
   STYLE_CONFIRM_FEEDBACK,
@@ -56,11 +56,17 @@ export function usePageSaveAction({
       latestPage: latestPageRef.current,
       currentPage: page,
     });
+    const saveMode = pageSaveMode(saveSourcePage);
     const expectedUpdatedAt = saveSourcePage.updatedAt || saveSourcePage.savedAt || saveSourcePage.createdAt || sourcePage.updatedAt || sourcePage.savedAt || sourcePage.createdAt || '';
+    const expectedRevision = Number(saveSourcePage.revision || 0);
     const nextPage = pageForAccountSave(saveSourcePage);
     let result = null;
     try {
-      result = await persistPage(nextPage, authUser, { tab, expectedUpdatedAt, saveMode: 'update-existing' });
+      if (saveMode === 'update-existing') {
+        result = await persistPage(nextPage, authUser, { tab, expectedUpdatedAt, saveMode: 'update-existing' });
+      } else {
+        result = await persistPage(nextPage, authUser, { tab, expectedUpdatedAt, expectedRevision, saveMode: 'create-new' });
+      }
     } catch (error) {
       await handlePagePersistError({ error, page: nextPage, handlePageSaveError, markSaveStatus, showToast });
       return { ok: false, error };
