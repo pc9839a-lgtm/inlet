@@ -18,6 +18,33 @@ function pageContextParams(context = {}) {
   return params;
 }
 
+function normalizePageSaveMode(value = '', page = {}) {
+  const explicit = String(value || '').trim();
+  if (['create-new', 'update-existing'].includes(explicit)) return explicit;
+  return page?.revision || page?.updatedAt || page?.savedAt ? 'update-existing' : 'create-new';
+}
+
+function pageSaveIdentity(page = {}, context = {}, saveMode = 'create-new') {
+  return {
+    mode: saveMode,
+    pageId: String(page.id || '').trim(),
+    projectId: String(page.projectId || context.projectId || '').trim(),
+    ownerId: String(page.ownerId || context.ownerId || '').trim(),
+    revision: Math.max(0, Number(page.revision || 0)),
+    slug: pageSlug(page),
+  };
+}
+
+function pageSaveRequestId(identity = {}, expectedRevision = 0) {
+  return [
+    identity.mode || 'create-new',
+    identity.projectId || 'project',
+    identity.pageId || 'page',
+    identity.slug || 'my-page',
+    Math.max(0, Number(expectedRevision || 0)),
+  ].join(':');
+}
+
 function noStoreHeaders(headers = {}) {
   return {
     'Cache-Control': 'no-cache, no-store',
@@ -208,25 +235,35 @@ export async function persistPage(page, authUser = null, options = {}) {
   if (!context.session) {
     throw new ApiError('로그인 세션이 없습니다. 다시 로그인해주세요.', 401, { code: 'AUTH_SESSION_MISSING' });
   }
+  const saveMode = normalizePageSaveMode(options.saveMode, page);
+  const expectedRevision = Math.max(0, Number(options.expectedRevision ?? pageWithContext.revision ?? 0));
+  const identity = pageSaveIdentity(pageWithContext, context, saveMode);
   const payload = {
     page: pageForServerWrite(pageWithContext),
     project: context,
+    identity,
+    saveMode,
+    saveRequestId: String(options.saveRequestId || pageSaveRequestId(identity, expectedRevision)),
     tab: options.tab || '',
     ...(options.expectedUpdatedAt ? { expectedUpdatedAt: options.expectedUpdatedAt } : {}),
-    ...(options.saveMode ? { saveMode: options.saveMode } : {}),
+    ...(expectedRevision ? { expectedRevision } : {}),
   };
   try {
     const result = await postJson(`/api/pages/${encodeURIComponent(slug)}`, payload, { headers: projectAuthHeaders(context) });
     if (result?.page && options.verifyPublic !== false) await verifyPublicPageSave(result.page);
     return { ...result, clientPage: pageWithContext };
   } catch (error) {
+    if (saveMode === 'update-existing') throw error;
     if (!canRetryWithAccountProject(error, authUser, pageWithContext)) throw error;
     const retry = accountOwnedPageForRetry(pageWithContext, authUser);
     if (!retry.context.projectId || retry.context.projectId === context.projectId) throw error;
+    const retryIdentity = pageSaveIdentity(retry.page, retry.context, saveMode);
     const result = await postJson(`/api/pages/${encodeURIComponent(retry.page.slug)}`, {
       ...payload,
       page: pageForServerWrite(retry.page),
       project: retry.context,
+      identity: retryIdentity,
+      saveRequestId: pageSaveRequestId(retryIdentity, expectedRevision),
       recoveredProjectAccess: true,
     }, { headers: projectAuthHeaders(retry.context) });
     if (result?.page && options.verifyPublic !== false) await verifyPublicPageSave(result.page);
