@@ -72,7 +72,8 @@ const restored = restorePageDraft({ draft, serverPage });
 assert(restored.title === '저장 전 편집본', 'restored page must contain unsaved edits');
 assert(restored.meta?.desc === '브라우저에서 수정한 설명', 'restored page must contain nested unsaved edits');
 assert(restored.revision === serverPage.revision && restored.updatedAt === serverPage.updatedAt, 'restored page must retain server revision identity');
-assert(restored.ai?.apiKey === 'server-secret-key', 'redacted API keys must be preserved from the server page');
+assert(restored.ai?.apiKey !== 'draft-secret-key', 'draft recovery must never reintroduce a locally supplied API key');
+assert(restored.ai?.apiKey === serverPage.ai?.apiKey, 'draft recovery must preserve the existing client AI key policy');
 assert(restored.integrations?.sheets?.accessTokenRef === 'server-token-ref', 'redacted token references must be preserved from the server page');
 
 const newerServer = { ...serverPage, revision: 5, updatedAt: '2026-07-30T10:10:00.000Z' };
@@ -106,6 +107,7 @@ console.log(JSON.stringify({
   baselineStabilizeMs: 1200,
   expiryDays: 7,
   sensitiveFieldsRedacted: true,
+  clientAiKeyPolicyPreserved: true,
   serverRevisionGuard: true,
   pageSwitchGuard: true,
   clearAfterSave: true,
