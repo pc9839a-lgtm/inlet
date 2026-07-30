@@ -5,3 +5,4 @@ export const START_MODE_KEY = 'mobile-db-landing-v12-start-mode-v2';
 export const AUTH_KEY = 'inlet-auth-v1';
 export const DASHBOARD_KEY = 'inlet-dashboard-v1';
 export const WORKSPACE_KEY = 'inlet-workspace-v1';
+export const PAGE_DRAFTS_KEY = 'inlet-page-drafts-v1';
