@@ -30,10 +30,13 @@ assert(visual.includes('hidden(focused.topnavState') && visual.includes('hidden(
 assert(visual.includes('Page.captureScreenshot') && visual.includes('-baseline.png') && visual.includes('-form-focus.png'), 'browser QA must emit baseline and focused screenshots');
 assert(visual.includes("'/usr/bin/google-chrome'") && visual.includes("'/usr/bin/chromium'"), 'browser QA must resolve Linux Chrome/Chromium');
 
-const runtimeImport = "@import '../styles/preview-topnav-runtime-contract.css';";
-assert(landingCss.includes(runtimeImport), 'LandingRenderer must import the final topnav runtime contract');
-assert(landingCss.lastIndexOf(runtimeImport) > landingCss.lastIndexOf("@import '../styles/preview-runtime-parity.css';"), 'topnav runtime contract must load after parity CSS');
-assert(landingCss.lastIndexOf(runtimeImport) > landingCss.lastIndexOf("@import '../styles/preview-fixed-ui-contract.css';"), 'topnav runtime contract must load after fixed UI CSS');
+const parityImport = "@import '../styles/preview-runtime-parity.css';";
+const topnavImport = "@import '../styles/preview-topnav-runtime-contract.css';";
+const fixedImport = "@import '../styles/preview-fixed-ui-contract.css';";
+assert(landingCss.includes(topnavImport), 'LandingRenderer must import the final topnav runtime contract');
+assert(landingCss.lastIndexOf(topnavImport) > landingCss.lastIndexOf(parityImport), 'topnav runtime contract must load after parity CSS');
+assert(landingCss.lastIndexOf(fixedImport) > landingCss.lastIndexOf(topnavImport), 'fixed UI contract must remain the final imported stylesheet');
+assert(landingCss.lastIndexOf(fixedImport) === landingCss.lastIndexOf('@import '), 'no stylesheet may load after the fixed UI contract');
 for (const count of [5, 6, 7, 8]) {
   assert(topnavRuntimeCss.includes(`topnav-menu-count-${count}`), `final runtime CSS missing ${count}-menu contract`);
 }
@@ -51,4 +54,4 @@ assert(workflow.includes('npm run browser:landing:qa'), 'browser regression job 
 assert(workflow.includes('actions/upload-artifact@v4'), 'browser screenshots must be uploaded as a workflow artifact');
 assert(workflow.includes('.tmp-landing-browser-regression'), 'browser screenshot artifact path missing');
 
-console.log(JSON.stringify({ ok: true, viewports: ['desktop', 'mobile-360', 'mobile-390', 'mobile-430'], scenarios: ['baseline', 'form-focus'], finalCss: 'preview-topnav-runtime-contract.css' }, null, 2));
+console.log(JSON.stringify({ ok: true, viewports: ['desktop', 'mobile-360', 'mobile-390', 'mobile-430'], scenarios: ['baseline', 'form-focus'], finalTopnavCss: 'preview-topnav-runtime-contract.css', finalStylesheet: 'preview-fixed-ui-contract.css' }, null, 2));
