@@ -3,8 +3,12 @@ import { defaultPage, normalizePageForSave } from '../lib/pageModel.js';
 import { sanitizePageSlug } from '../lib/pageSlugs.js';
 import { projectContext } from '../lib/projectContext.js';
 
-function hasServerIdentity(page = {}) {
-  return !!(page?.id && page?.projectId);
+export function hasServerIdentity(page = {}) {
+  return !!(String(page?.id || '').trim() && String(page?.projectId || '').trim());
+}
+
+export function pageSaveMode(page = {}) {
+  return hasServerIdentity(page) ? 'update-existing' : 'create-new';
 }
 
 function sameSlug(a = {}, b = {}) {
@@ -17,9 +21,23 @@ function ownerId(page = {}) {
   return String(page?.ownerId || page?.ownerAccountId || '').trim();
 }
 
-function sameProject(page = {}, projectId = '') {
-  const expected = String(projectId || '').trim();
-  const current = String(page?.projectId || page?.id || '').trim();
+function pageId(page = {}) {
+  return String(page?.id || '').trim();
+}
+
+function projectId(page = {}) {
+  return String(page?.projectId || '').trim();
+}
+
+function samePageId(a = {}, b = {}) {
+  const left = pageId(a);
+  const right = pageId(b);
+  return !!left && !!right && left === right;
+}
+
+function sameProject(page = {}, expectedProjectId = '') {
+  const expected = String(expectedProjectId || '').trim();
+  const current = projectId(page);
   return !!expected && !!current && current === expected;
 }
 
@@ -29,15 +47,31 @@ function sameOwner(page = {}, authUser = null) {
   return !!authOwner && !!pageOwner && authOwner === pageOwner;
 }
 
-function matchesSaveContext(identityPage = {}, sourcePage = {}, context = {}, authUser = null) {
-  if (!hasServerIdentity(identityPage) || !sameSlug(sourcePage, identityPage)) return false;
+function matchesSaveContext(identityPage = {}, sourcePage = {}, context = {}, authUser = null, { requireSlug = false } = {}) {
+  if (!hasServerIdentity(identityPage)) return false;
+  if (requireSlug && !sameSlug(sourcePage, identityPage)) return false;
   if (sameProject(identityPage, context.projectId)) return true;
   if (sameProject(identityPage, context.legacyProjectId)) return true;
   return sameOwner(identityPage, authUser);
 }
 
-function accountPageForSlug(pages = [], sourcePage = {}) {
+function accountPageForSave(pages = [], sourcePage = {}, localIdentity = null) {
   if (!Array.isArray(pages)) return null;
+  const sourceId = pageId(sourcePage);
+  const localId = pageId(localIdentity);
+  if (sourceId) {
+    const bySourceId = pages.find((candidate) => hasServerIdentity(candidate) && pageId(candidate) === sourceId);
+    if (bySourceId) return bySourceId;
+  }
+  if (localId) {
+    const byLocalId = pages.find((candidate) => hasServerIdentity(candidate) && pageId(candidate) === localId);
+    if (byLocalId) return byLocalId;
+  }
+  const sourceProjectId = projectId(sourcePage) || projectId(localIdentity);
+  if (sourceProjectId) {
+    const byProject = pages.find((candidate) => hasServerIdentity(candidate) && projectId(candidate) === sourceProjectId);
+    if (byProject) return byProject;
+  }
   return pages.find((candidate) => hasServerIdentity(candidate) && sameSlug(candidate, sourcePage)) || null;
 }
 
@@ -53,6 +87,11 @@ function mergeServerIdentity(sourcePage = {}, identityPage = {}) {
     savedAt: identityPage.savedAt || sourcePage.savedAt,
     publishedAt: identityPage.publishedAt || sourcePage.publishedAt,
   });
+}
+
+function stableNewPageId(context = {}, slug = '') {
+  const raw = `page_${context.projectId || context.ownerId || 'local'}_${slug || 'my-page'}`;
+  return raw.replace(/[^a-zA-Z0-9-_]/g, '').slice(0, 180) || `page_${Date.now()}`;
 }
 
 export async function attachExistingPageIdentity(sourcePage = {}, {
@@ -77,21 +116,26 @@ export async function attachExistingPageIdentity(sourcePage = {}, {
     throw error;
   }
 
-  if (matchesSaveContext(localIdentity, sourceWithSlug, context, authUser)) {
+  if (
+    hasServerIdentity(localIdentity)
+    && (samePageId(localIdentity, sourceWithSlug) || matchesSaveContext(localIdentity, sourceWithSlug, context, authUser))
+  ) {
     return mergeServerIdentity(sourcePage, localIdentity);
   }
 
   try {
     const accountPages = await fetchAccountPages(authUser);
-    const accountPage = accountPageForSlug(accountPages, sourceWithSlug);
-    if (accountPage) return mergeServerIdentity(sourcePage, accountPage);
+    const accountPage = accountPageForSave(accountPages, sourceWithSlug, localIdentity);
+    if (accountPage && matchesSaveContext(accountPage, sourceWithSlug, context, authUser)) {
+      return mergeServerIdentity(sourcePage, accountPage);
+    }
   } catch (error) {
     console.warn('Account page identity lookup failed:', error);
   }
 
   try {
     const publicPage = await fetchPublicServerPage(slug);
-    if (matchesSaveContext(publicPage, sourceWithSlug, context, authUser)) {
+    if (matchesSaveContext(publicPage, sourceWithSlug, context, authUser, { requireSlug: true })) {
       return mergeServerIdentity(sourcePage, publicPage);
     }
   } catch (error) {
@@ -115,6 +159,7 @@ export function pageForAccountSave({
   const context = projectContext({ ...normalized, slug: currentSlug }, authUser);
   return normalizePageForSave({
     ...normalized,
+    id: normalized.id || stableNewPageId(context, currentSlug),
     slug: currentSlug,
     projectId: context.projectId,
     ownerId: context.ownerId,
