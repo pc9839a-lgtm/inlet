@@ -84,19 +84,19 @@ export function useAccountWorkspacePage({
         if (accountPageLoadRef.current !== loadKey) return;
         if (localPageMutationRef.current !== loadMutation) return;
         if (serverPage) {
+          const current = latestPageRef.current || page;
+          if ((current.slug || '') !== slug || (current.projectId || '') !== (context.projectId || '')) return;
           const nextPage = normalize({ ...serverPage, __accountProjectAccess: accountProjectAccess });
           latestPageRef.current = nextPage;
-          setPage((current) => {
-            if ((current.slug || '') !== slug || (current.projectId || '') !== (context.projectId || '')) return current;
-            return nextPage;
-          });
+          setPage(nextPage);
           offerPageDraftRecovery({ serverPage: nextPage, authUser, latestPageRef, localPageMutationRef, setPage });
           return;
         }
         const current = latestPageRef.current || page;
         const currentSlug = current.slug || slug;
         const nextContext = projectContext({ ...current, slug: currentSlug }, authUser);
-        const nextPage = current.slug === currentSlug && current.projectId === nextContext.projectId && current.ownerId === nextContext.ownerId
+        if (currentSlug !== slug || nextContext.projectId !== context.projectId) return;
+        const nextPage = current.projectId === nextContext.projectId && current.ownerId === nextContext.ownerId
           ? normalizePageForSave(current)
           : normalizePageForSave({
             ...current,
