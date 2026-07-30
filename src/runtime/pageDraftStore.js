@@ -72,9 +72,9 @@ function timestamp(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function contentSignature(page) {
-  const normalized = normalizePageForSave(page || {});
-  const comparable = { ...normalized };
+export function pageDraftContentSignature(page) {
+  const normalized = sanitizeValue(normalizePageForSave(page || {}));
+  const comparable = { ...(normalized || {}) };
   for (const key of ['revision', 'updatedAt', 'savedAt', 'createdAt', '__accountProjectAccess']) delete comparable[key];
   return JSON.stringify(comparable);
 }
@@ -134,7 +134,7 @@ export function evaluatePageDraft({ draft, serverPage, now = Date.now() } = {}) 
   if (draft.baseUpdatedAt && serverUpdatedAt && draft.baseUpdatedAt !== serverUpdatedAt) {
     return { action: 'discard', reason: 'server-timestamp-changed' };
   }
-  if (contentSignature(draft.page) === contentSignature(serverPage)) return { action: 'discard', reason: 'same-content' };
+  if (pageDraftContentSignature(draft.page) === pageDraftContentSignature(serverPage)) return { action: 'discard', reason: 'same-content' };
   if (serverUpdatedAt && Number(draft.editedAt || 0) <= timestamp(serverUpdatedAt)) return { action: 'discard', reason: 'server-newer' };
   return { action: 'restore', reason: 'newer-local-draft' };
 }
