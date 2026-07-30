@@ -1,0 +1,112 @@
+/* Final compact visual contract for the timer inside the fixed bottom action bar. */
+.bottom-bar .bottom-timer {
+  min-height: 42px !important;
+  padding: 6px 10px 8px !important;
+  border-width: 0 !important;
+  border-radius: 12px !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 8px !important;
+  overflow: hidden !important;
+  box-shadow: none !important;
+}
+
+.bottom-bar .bottom-timer::before {
+  max-width: none !important;
+  color: inherit !important;
+  font-size: 10px !important;
+  font-weight: 850 !important;
+  line-height: 1.15 !important;
+  letter-spacing: -.02em !important;
+  opacity: .88 !important;
+}
+
+.bottom-bar .bottom-timer::after {
+  left: 10px !important;
+  bottom: 4px !important;
+  max-width: calc(100% - 20px) !important;
+  height: 2px !important;
+  opacity: .82 !important;
+}
+
+.bottom-bar .bottom-timer .bottom-timer-main {
+  min-width: 0 !important;
+  gap: 4px !important;
+}
+
+/* The promotional badge is merged into the left copy by the renderer sync logic. */
+.bottom-bar .bottom-timer .bottom-timer-main::before,
+.bottom-bar .bottom-timer .bottom-timer-main::after {
+  content: none !important;
+  display: none !important;
+}
+
+.bottom-bar .bottom-timer .bottom-timer-main strong {
+  min-height: 26px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  gap: 5px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.bottom-bar .bottom-timer .bottom-timer-main strong > em {
+  min-height: 20px !important;
+  padding: 0 6px !important;
+  border-radius: 7px !important;
+  font-size: 9px !important;
+}
+
+.bottom-bar .bottom-timer .bottom-timer-main b {
+  font-size: 17px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  letter-spacing: -.015em !important;
+}
+
+.bottom-bar .bottom-timer-variant-clean,
+.bottom-bar .bottom-timer-variant-cards {
+  border: 1px solid color-mix(in srgb, var(--bottom-timer-accent) 16%, #dbe3ec) !important;
+}
+
+.bottom-bar .bottom-timer-variant-cards .bottom-timer-main strong {
+  min-height: 26px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.bottom-bar .bottom-timer-variant-promo {
+  padding-top: 6px !important;
+  box-shadow: none !important;
+}
+
+.bottom-bar .bottom-timer-variant-promo::before {
+  padding-right: 0 !important;
+}
+
+.bottom-bar .bottom-timer-effect-pulse .bottom-timer-main strong {
+  box-shadow: none !important;
+}
+
+.bottom-bar .bottom-timer-effect-fire {
+  border: 0 !important;
+}
+
+@container pagero-landing (max-width: 370px) {
+  .bottom-bar .bottom-timer {
+    min-height: 40px !important;
+    padding: 5px 9px 7px !important;
+    gap: 6px !important;
+    border-radius: 11px !important;
+  }
+
+  .bottom-bar .bottom-timer::before {
+    font-size: 9.5px !important;
+  }
+
+  .bottom-bar .bottom-timer .bottom-timer-main b {
+    font-size: 16px !important;
+  }
+}
