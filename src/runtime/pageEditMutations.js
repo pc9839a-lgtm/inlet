@@ -1,4 +1,8 @@
+import { bindPageHistoryRuntime } from './pageHistoryStore.js';
+
 export function createPageEditMutations({ tab, blockWrite, setPage, commitLocalPageDraft, normalizeIntegrations, normalizeFreeEmailIntegrations }) {
+  bindPageHistoryRuntime({ setPage, commitLocalPageDraft });
+
   const setNormalizedPage = (updater) => {
     if (blockWrite(tab)) return;
     setPage((prev) => commitLocalPageDraft(typeof updater === 'function' ? updater(prev) : updater));
