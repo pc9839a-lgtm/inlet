@@ -15,12 +15,25 @@ if (NativeWebSocket?.prototype?.send) {
   NativeWebSocket.prototype.send = function sendWithChromeCdpCompatibility(data) {
     try {
       const payload = JSON.parse(String(data));
+
       if (
         payload?.method === 'Emulation.setTouchEmulationEnabled'
         && payload?.params?.enabled === false
         && Number(payload?.params?.maxTouchPoints) === 0
       ) {
         payload.params = { enabled: false };
+        return nativeSend.call(this, JSON.stringify(payload));
+      }
+
+      if (
+        payload?.method === 'Runtime.evaluate'
+        && typeof payload?.params?.expression === 'string'
+        && payload.params.expression.includes("document.querySelector('.workspace-tabs')")
+      ) {
+        payload.params.expression = payload.params.expression.replaceAll(
+          "document.querySelector('.workspace-tabs')",
+          "document.querySelector('.top-tabs')",
+        );
         return nativeSend.call(this, JSON.stringify(payload));
       }
     } catch {
