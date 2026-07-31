@@ -1,4 +1,5 @@
-import { Save } from 'lucide-react';
+import { Redo2, Save, Undo2 } from 'lucide-react';
+import { usePageHistoryControls } from '../runtime/usePageHistoryControls.js';
 
 const saveStateColors = {
   idle: '#64748b',
@@ -18,6 +19,7 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
     admin: ['관리자', ''],
   };
   const [title, desc] = titles[tab] || titles.edit;
+  const history = usePageHistoryControls(page, { enabled: tab !== 'templates' });
 
   return (
     <header className="panel-header">
@@ -35,6 +37,28 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
       <div className="panel-actions">
         <button className="ghost-btn" type="button" onClick={onDashboard}>메인</button>
         <button className="ghost-btn start-choice-btn" type="button" onClick={onStartChoice}>시작 선택</button>
+        <div className="panel-history-actions" role="group" aria-label="실행 취소와 다시 실행">
+          <button
+            className="ghost-btn panel-history-btn is-undo"
+            type="button"
+            disabled={!history.canUndo}
+            onClick={history.undo}
+            title={history.canUndo ? `실행 취소 · ${history.undoCount}단계 (Ctrl+Z)` : '실행 취소할 변경이 없습니다.'}
+            aria-label="실행 취소"
+          >
+            <Undo2 size={16} aria-hidden="true" />
+          </button>
+          <button
+            className="ghost-btn panel-history-btn is-redo"
+            type="button"
+            disabled={!history.canRedo}
+            onClick={history.redo}
+            title={history.canRedo ? `다시 실행 · ${history.redoCount}단계 (Ctrl+Shift+Z)` : '다시 실행할 변경이 없습니다.'}
+            aria-label="다시 실행"
+          >
+            <Redo2 size={16} aria-hidden="true" />
+          </button>
+        </div>
         <button className="ghost-btn" type="button" onClick={onPreview} title={previewUrl}>미리보기</button>
         <button className="primary-btn" type="button" onClick={onSave}>
           <Save size={15} />{saved ? '저장됨' : '저장'}
