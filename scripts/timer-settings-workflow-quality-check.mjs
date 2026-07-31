@@ -59,6 +59,17 @@ assert(signalBlocks.includes("const TIMER_EFFECTS = ['none', 'slide', 'flip', 'p
 assert(signalBlocks.includes("const target = settings.endAt || settings.timerEndAt"), 'Timer workflow must not alter countdown target calculation');
 assert(signalBlocks.includes("<strong className=\"timer-ended\">{s.ended || '종료되었습니다.'}</strong>"), 'Public timer must consume the editable ended copy');
 
+assert(signalBlocks.includes("import { useEffect, useState, useSyncExternalStore } from 'react';"), 'Countdowns must use the shared React external store clock');
+assert(signalBlocks.includes('const COUNTDOWN_CLOCK_SUBSCRIBERS = new Set();'), 'Countdown clock must keep one shared subscriber registry');
+assert(signalBlocks.includes('countdownClockInterval = globalThis.setInterval(emitCountdownClockTick, 1000);'), 'Countdown clock must start exactly one shared one-second interval');
+assert(signalBlocks.includes('if (COUNTDOWN_CLOCK_SUBSCRIBERS.size === 1) startCountdownClock();'), 'The shared clock must start only for the first timer subscriber');
+assert(signalBlocks.includes('if (COUNTDOWN_CLOCK_SUBSCRIBERS.size === 0) stopCountdownClock();'), 'The shared clock must stop when the final timer unmounts');
+assert(signalBlocks.includes('const second = useSyncExternalStore('), 'Every countdown must subscribe to the same second snapshot');
+assert(signalBlocks.includes('const now = useCountdownClock();') && signalBlocks.includes('const data = getTimerTarget(settings, now);'), 'Countdown calculation must consume the shared timestamp');
+assert(signalBlocks.includes('data-timer-tick={tickKey}'), 'Main and fixed timers must expose the same tick contract for browser verification');
+assert(!signalBlocks.includes('const [now, setNow] = useState(Date.now())'), 'Countdown hooks must not allocate per-component clock state');
+assert(!signalBlocks.includes('setInterval(() => setNow(Date.now()), 1000)'), 'Countdown hooks must not create one interval per timer');
+
 console.log(JSON.stringify({
   ok: true,
   check: 'timer-settings-workflow',
@@ -66,4 +77,7 @@ console.log(JSON.stringify({
   styles: variantValues.length,
   effects: effectValues.length,
   bottomTimerIntegrated: true,
+  sharedCountdownClock: true,
+  countdownIntervalsPerRuntime: 1,
+  stopsWithoutSubscribers: true,
 }, null, 2));

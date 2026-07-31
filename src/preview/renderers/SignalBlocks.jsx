@@ -1,10 +1,61 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { pickSafe, widgetBoxClass, widgetBoxVars } from './previewUtils.jsx';
 
 const TIMER_BASE_CLASS = 'timer-theme-minimal timer-effect-none';
 const TIMER_VARIANTS = ['clean', 'cards', 'promo'];
 const TIMER_PALETTES = ['ink', 'blue', 'green', 'coral', 'accent'];
 const TIMER_EFFECTS = ['none', 'slide', 'flip', 'pulse', 'fire'];
+const COUNTDOWN_CLOCK_SUBSCRIBERS = new Set();
+let countdownClockTimeout = null;
+let countdownClockInterval = null;
+
+function getCountdownClockSnapshot() {
+  return Math.floor(Date.now() / 1000);
+}
+
+function emitCountdownClockTick() {
+  for (const subscriber of COUNTDOWN_CLOCK_SUBSCRIBERS) subscriber();
+}
+
+function stopCountdownClock() {
+  if (countdownClockTimeout !== null) {
+    globalThis.clearTimeout(countdownClockTimeout);
+    countdownClockTimeout = null;
+  }
+  if (countdownClockInterval !== null) {
+    globalThis.clearInterval(countdownClockInterval);
+    countdownClockInterval = null;
+  }
+}
+
+function startCountdownClock() {
+  stopCountdownClock();
+  const delay = Math.max(16, 1000 - (Date.now() % 1000) + 8);
+  countdownClockTimeout = globalThis.setTimeout(() => {
+    countdownClockTimeout = null;
+    emitCountdownClockTick();
+    countdownClockInterval = globalThis.setInterval(emitCountdownClockTick, 1000);
+  }, delay);
+}
+
+function subscribeCountdownClock(subscriber) {
+  COUNTDOWN_CLOCK_SUBSCRIBERS.add(subscriber);
+  if (COUNTDOWN_CLOCK_SUBSCRIBERS.size === 1) startCountdownClock();
+
+  return () => {
+    COUNTDOWN_CLOCK_SUBSCRIBERS.delete(subscriber);
+    if (COUNTDOWN_CLOCK_SUBSCRIBERS.size === 0) stopCountdownClock();
+  };
+}
+
+function useCountdownClock() {
+  const second = useSyncExternalStore(
+    subscribeCountdownClock,
+    getCountdownClockSnapshot,
+    getCountdownClockSnapshot,
+  );
+  return second * 1000;
+}
 
 function TimerUnit({ value, label, effect = 'none' }) {
   const safeValue = value == null || value === '' ? '00' : String(value);
@@ -49,30 +100,24 @@ function timerEffect(settings = {}) {
   return pickSafe(settings.timerEffect || legacyUrgencyEffect || legacyMotionEffect || 'none', TIMER_EFFECTS, 'none');
 }
 
-export function getTimerTarget(settings = {}) {
+export function getTimerTarget(settings = {}, now = Date.now()) {
   const mode = settings.repeatMode || settings.timerMode || 'fixed';
   if (mode === 'daily24') {
-    const now = new Date();
-    const next = new Date(now);
+    const current = new Date(now);
+    const next = new Date(current);
     next.setHours(24, 0, 0, 0);
-    const start = new Date(now);
+    const start = new Date(current);
     start.setHours(0, 0, 0, 0);
     return { target: next.getTime(), cycle: Math.max(1, next.getTime() - start.getTime()), repeat: true };
   }
   const target = settings.endAt || settings.timerEndAt;
-  return { target: target ? new Date(target).getTime() : Date.now() + 1000 * 60 * 60 * 24 * 3, cycle: 1000 * 60 * 60 * 24 * 3, repeat: false };
+  return { target: target ? new Date(target).getTime() : now + 1000 * 60 * 60 * 24 * 3, cycle: 1000 * 60 * 60 * 24 * 3, repeat: false };
 }
 
 export function useCountdown(input) {
   const settings = typeof input === 'object' ? input : { endAt: input };
-  const [now, setNow] = useState(Date.now());
-
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const data = getTimerTarget(settings);
+  const now = useCountdownClock();
+  const data = getTimerTarget(settings, now);
   const diff = Math.max(0, data.target - now);
   const progress = data.repeat
     ? Math.max(0, Math.min(100, 100 - (diff / data.cycle) * 100))
@@ -132,11 +177,13 @@ export function RenderTimer({ block }) {
   const motion = effect === 'none' ? 'off' : 'on';
   const label = String(s.label ?? '혜택 마감까지').slice(0, 40);
   const promoBadge = String(s.promoBadge ?? '마감 임박').slice(0, 16);
+  const tickKey = `${t.d}-${t.h}-${t.m}-${t.s}`;
 
   return (
     <section
       id={`block-${block.id}`}
       className={`landing-section timer timer-modern-wrap ${TIMER_BASE_CLASS} timer-variant-${variant} timer-palette-${palette} timer-effect-${effect} timer-motion-${motion} ${showDays ? 'timer-has-days' : 'timer-no-days'} ${widgetBoxClass(s, { background: false, shadow: false })}`}
+      data-timer-tick={tickKey}
       style={widgetBoxVars(s)}
     >
       {t.done ? (
