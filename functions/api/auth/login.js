@@ -1,4 +1,5 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse, readJson } from '../_shared.js';
+import { withPlatformMaster } from '../_platformMaster.js';
 import { AUTH_METHODS, googleAuthRedirectUri, googleLoginAuthUrl, loginAccount, loginGoogleAccount } from './_auth.js';
 
 export async function onRequest({ request, env }) {
@@ -12,8 +13,12 @@ export async function onRequest({ request, env }) {
       const url = await googleLoginAuthUrl(request, env, input);
       return jsonResponse(request, env, 200, { ok: true, url }, AUTH_METHODS);
     }
-    const result = await loginAccount(input, env);
-    return jsonResponse(request, env, 200, { ok: true, ...result }, AUTH_METHODS);
+    const result = await loginAccount({ ...input, role: 'master' }, env);
+    return jsonResponse(request, env, 200, {
+      ok: true,
+      ...result,
+      user: withPlatformMaster(result.user, env),
+    }, AUTH_METHODS);
   } catch (error) {
     return handleApiError(request, env, error, AUTH_METHODS);
   }
@@ -33,7 +38,10 @@ async function handleGoogleCallback(request, env) {
       state,
       redirectUri: googleAuthRedirectUri(request, env),
     }, env);
-    return googleAuthSuccessHtml(result);
+    return googleAuthSuccessHtml({
+      ...result,
+      user: withPlatformMaster(result.user, env),
+    });
   } catch (error) {
     return googleAuthFailureHtml(error);
   }
