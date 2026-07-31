@@ -13,6 +13,13 @@ let state = {
   lastMutationAt: 0,
   lastShape: '',
 };
+let cachedPublicState = {
+  identity: '',
+  canUndo: false,
+  canRedo: false,
+  undoCount: 0,
+  redoCount: 0,
+};
 
 function clone(value) {
   if (value == null) return value;
@@ -23,12 +30,22 @@ function text(value) {
   return String(value || '').trim();
 }
 
+function shortHash(value = '') {
+  let hash = 2166136261;
+  const source = String(value || '');
+  for (let index = 0; index < source.length; index += 1) {
+    hash ^= source.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
+
 function blockIdentity(page = {}) {
   const ids = (page.blocks || [])
     .map((block) => text(block?.id))
     .filter(Boolean)
     .sort();
-  return ids.length ? ids.join('.') : '';
+  return ids.length ? `blocks-${shortHash(ids.join('.'))}` : '';
 }
 
 export function pageHistoryIdentity(page = {}) {
@@ -56,8 +73,8 @@ function restoreCurrentServerIdentity(snapshot = {}, currentPage = {}) {
   return restored;
 }
 
-function publicState() {
-  return {
+function refreshPublicState() {
+  cachedPublicState = {
     identity: state.identity,
     canUndo: state.past.length > 0,
     canRedo: state.future.length > 0,
@@ -67,6 +84,7 @@ function publicState() {
 }
 
 function emit() {
+  refreshPublicState();
   for (const listener of listeners) listener();
 }
 
@@ -93,7 +111,7 @@ export function subscribePageHistory(listener) {
 }
 
 export function getPageHistoryState() {
-  return publicState();
+  return cachedPublicState;
 }
 
 export function bindPageHistoryRuntime({ setPage, commitLocalPageDraft }) {
