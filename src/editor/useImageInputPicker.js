@@ -16,7 +16,7 @@ const INITIAL_UPLOAD_STATE = {
   finalBytes: 0,
 };
 
-export function useImageInputPicker({ label, value, onChange, disabled }) {
+export function useImageInputPicker({ label, value, duplicateValues = [], onChange, disabled }) {
   const ref = useRef(null);
   const [uploadState, setUploadState] = useState(INITIAL_UPLOAD_STATE);
 
@@ -69,6 +69,19 @@ export function useImageInputPicker({ label, value, onChange, disabled }) {
           status: 'success',
           progress: 100,
           label: '같은 이미지 · 변경 없음',
+          originalBytes: result.originalBytes,
+          finalBytes: result.finalBytes,
+        });
+        return;
+      }
+
+      const siblingFingerprints = new Set(duplicateValues.map(imageDataFingerprint).filter(Boolean));
+      if (result.fingerprint && siblingFingerprints.has(result.fingerprint)) {
+        notify('갤러리에 이미 같은 이미지가 있어 추가하지 않았습니다.', 'info');
+        setUploadState({
+          status: 'success',
+          progress: 100,
+          label: '중복 이미지 · 추가 안 함',
           originalBytes: result.originalBytes,
           finalBytes: result.finalBytes,
         });
