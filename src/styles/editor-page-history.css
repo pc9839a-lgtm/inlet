@@ -1,0 +1,6 @@
+.panel-history-actions{display:inline-grid;grid-template-columns:repeat(2,36px);gap:4px;padding:3px;border:1px solid #dbe3ef;border-radius:12px;background:#f8fafc}
+.panel-actions .panel-history-btn{width:36px;min-width:36px;height:34px;min-height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:9px}
+.panel-actions .panel-history-btn:disabled{opacity:.34;cursor:not-allowed;background:transparent;color:#94a3b8}
+.panel-actions .panel-history-btn:not(:disabled):hover{background:#e2e8f0;color:#0f172a}
+@media(max-width:980px){.panel-history-actions{grid-template-columns:repeat(2,34px)}.panel-actions .panel-history-btn{width:34px;min-width:34px}}
+@media(prefers-reduced-motion:reduce){.panel-actions .panel-history-btn{transition:none}}
