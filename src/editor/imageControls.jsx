@@ -31,7 +31,7 @@ export {
   warnImageStorageUse,
 };
 
-export function ImageInput({ label, value, onChange, disabled = false }) {
+export function ImageInput({ label, value, onChange, disabled = false, duplicateValues = [] }) {
   const storageInfo = storedImageInfo(value);
   const {
     ref,
@@ -39,7 +39,7 @@ export function ImageInput({ label, value, onChange, disabled = false }) {
     openPicker,
     clearImage,
     uploadState,
-  } = useImageInputPicker({ label, value, onChange, disabled });
+  } = useImageInputPicker({ label, value, duplicateValues, onChange, disabled });
   const processing = uploadState.status === 'processing';
 
   return (
