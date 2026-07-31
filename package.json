@@ -24,7 +24,7 @@
     "topnav:balance:qa": "node scripts/topnav-row-balance-quality-check.mjs",
     "browser:landing:qa": "node scripts/landing-browser-regression-check.mjs",
     "browser:landing:contract:qa": "node scripts/landing-browser-regression-contract-check.mjs",
-    "browser:editor:qa": "node scripts/editor-browser-regression-check.mjs",
+    "browser:editor:qa": "node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-browser-regression-check.mjs",
     "browser:editor:contract:qa": "node scripts/editor-browser-regression-contract-check.mjs",
     "conversion:qa": "node scripts/conversion-quality-check.mjs",
     "csv:qa": "node scripts/csv-quality-check.mjs",
