@@ -10,8 +10,8 @@ import { RenderDownload as LinkRenderDownload, RenderLinks as LinkRenderLinks } 
 import { RenderImage as MediaRenderImage } from './renderers/MediaBlocks.jsx';
 import {
   RenderActivity as SignalRenderActivity,
+  RenderBottomTimer as SignalRenderBottomTimer,
   RenderTimer as SignalRenderTimer,
-  useCountdown,
 } from './renderers/SignalBlocks.jsx';
 import {
   RenderDivider as LayoutRenderDivider,
@@ -266,7 +266,6 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
       el.classList.remove('is-visible');
     };
 
-    // Safety 1: reveal sections already visible in the current viewport.
     const revealVisibleNow = () => {
       const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
       targets.forEach((el) => {
@@ -276,7 +275,6 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
       });
     };
 
-    // Let the hidden state paint before visible sections are revealed.
     let revealFrame = window.requestAnimationFrame(() => {
       revealFrame = window.requestAnimationFrame(() => {
         revealVisibleNow();
@@ -284,7 +282,6 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
       });
     });
 
-    // Safety 2: reveal sections as they enter the viewport.
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
@@ -296,7 +293,6 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
       });
     }, { root: null, threshold: 0.08, rootMargin: '0px 0px -6% 0px' });
 
-    // Safety 3: force reveal if scroll/observer detection fails.
     const fallback = window.setTimeout(() => {
       if (replayOnReentry) {
         revealVisibleNow();
@@ -555,7 +551,7 @@ function RenderBottom({ block, blocks = [], accent = '#111827', buttonEffect = '
 
   return (
     <div className={`bottom-bar ${publicView ? 'public-bottom-bar' : ''} ${hiddenForForm ? 'is-form-input-hidden' : ''} count-${btns.length || 1} bottom-${style} color-${color} ${customButtonColor ? 'bottom-custom-color' : ''} button-effect-${buttonEffect}`} data-public-bottom={publicView ? 'true' : undefined} style={barStyle}>
-      {showTimer && <RenderBottomTimer s={timerSource}/>}
+      {showTimer && <SignalRenderBottomTimer settings={timerSource}/>}
       <div className="bottom-bar-actions">
         <div className="bottom-bar-buttons">
           {btns.map(b=>(
@@ -565,21 +561,6 @@ function RenderBottom({ block, blocks = [], accent = '#111827', buttonEffect = '
             </button>
           ))}
         </div>
-      </div>
-    </div>
-  );
-}
-function RenderBottomTimer({ s }) {
-  const t = useCountdown(s || {});
-  const hasDays = Number(t.d) > 0;
-
-  return (
-    <div className={`bottom-timer bottom-timer-minimal ${hasDays ? 'bottom-timer-has-days' : 'bottom-timer-no-days'}`}>
-      <div className="bottom-timer-main">
-        <strong>
-          {hasDays ? <em>D-{t.d}</em> : null}
-          <b>{t.h}:{t.m}:{t.s}</b>
-        </strong>
       </div>
     </div>
   );
