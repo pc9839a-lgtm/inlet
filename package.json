@@ -26,6 +26,8 @@
     "browser:landing:contract:qa": "node scripts/landing-browser-regression-contract-check.mjs",
     "browser:editor:qa": "node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-browser-regression-check.mjs",
     "browser:editor:contract:qa": "node scripts/editor-browser-regression-contract-check.mjs",
+    "browser:forms:qa": "node --import ./scripts/form-browser-auth-session.mjs scripts/form-reservation-browser-regression-check.mjs",
+    "browser:forms:contract:qa": "node scripts/form-reservation-browser-regression-contract-check.mjs",
     "conversion:qa": "node scripts/conversion-quality-check.mjs",
     "csv:qa": "node scripts/csv-quality-check.mjs",
     "runtime:qa": "node scripts/runtime-quality-check.mjs",
