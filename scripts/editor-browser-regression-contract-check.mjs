@@ -5,13 +5,18 @@ function assert(condition, message) {
 }
 
 const browserSource = await readFile('scripts/editor-browser-regression-check.mjs', 'utf8');
+const cdpCompatSource = await readFile('scripts/editor-browser-cdp-compat.mjs', 'utf8');
 const workflowSource = await readFile('.github/workflows/qa.yml', 'utf8');
 const qaAllSource = await readFile('scripts/qa-all.mjs', 'utf8');
 const packageJson = JSON.parse(await readFile('package.json', 'utf8'));
 
-assert(packageJson.scripts?.['browser:editor:qa'] === 'node scripts/editor-browser-regression-check.mjs', 'browser:editor:qa script is missing');
+assert(packageJson.scripts?.['browser:editor:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-browser-regression-check.mjs', 'browser:editor:qa must preload the Chrome CDP compatibility adapter');
 assert(packageJson.scripts?.['browser:editor:contract:qa'] === 'node scripts/editor-browser-regression-contract-check.mjs', 'browser:editor:contract:qa script is missing');
 assert(qaAllSource.includes("['browser:editor:contract:qa', ['scripts/editor-browser-regression-contract-check.mjs']]"), 'qa:all must enforce the editor browser contract');
+
+assert(cdpCompatSource.includes("payload?.method === 'Emulation.setTouchEmulationEnabled'"), 'CDP compatibility must target touch emulation only');
+assert(cdpCompatSource.includes("payload.params = { enabled: false }"), 'desktop touch emulation must omit an invalid zero touch-point count');
+assert(cdpCompatSource.includes("'run-started.txt'"), 'early browser failures must leave an uploadable diagnostic artifact');
 
 assert(workflowSource.includes('editor-browser-regression:'), 'QA workflow must contain an authenticated editor browser job');
 assert(workflowSource.includes('VITE_INLET_PAGE_MODE: server') && workflowSource.includes('VITE_INLET_LEAD_MODE: server'), 'editor browser build must run in server data mode');
@@ -37,4 +42,5 @@ console.log(JSON.stringify({
   desktopFlow: ['login', 'dashboard', 'page-select', 'edit', 'save', 'reload'],
   mobileWidths: [360, 390, 430],
   productionCredentials: false,
+  chromeCdpCompatibility: true,
 }, null, 2));
