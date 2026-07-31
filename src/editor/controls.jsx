@@ -1,10 +1,13 @@
 export {
   IMAGE_UPLOAD_BATCH_WARN_BYTES,
   IMAGE_UPLOAD_MAX_BYTES,
+  IMAGE_UPLOAD_MAX_DIMENSION,
+  IMAGE_UPLOAD_SOURCE_MAX_BYTES,
   IMAGE_UPLOAD_WARN_BYTES,
   ImageInput,
   estimateImageStorageBytes,
   formatFileSize,
+  imageDataFingerprint,
   imageUploadError,
   storedImageInfo,
   storedImagesSummary,
