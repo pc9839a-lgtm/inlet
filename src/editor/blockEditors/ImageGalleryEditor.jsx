@@ -16,6 +16,7 @@ export default function ImageGalleryEditor({ gallery, set, updateGallery, remove
       <GalleryMultiUpload
         count={filledGallery.length}
         max={4}
+        images={filledGallery}
         onAdd={(images) => set({ gallery: [...filledGallery, ...images].slice(0, 4) })}
       />
       <EditorList
@@ -27,6 +28,7 @@ export default function ImageGalleryEditor({ gallery, set, updateGallery, remove
           <ImageInput
             label="이미지"
             value={item.src}
+            duplicateValues={gallery.filter((_, index) => index !== item.index)}
             onChange={(value) => updateGallery(item.index, value)}
           />
         )}

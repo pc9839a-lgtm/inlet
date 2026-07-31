@@ -1,0 +1,15 @@
+.image-input.is-processing .image-box{pointer-events:none}
+.image-box{position:relative}
+.image-box.is-processing::after{content:"";position:absolute;inset:0;border-radius:inherit;background:rgba(15,23,42,.38);backdrop-filter:blur(2px)}
+.image-upload-status{position:absolute;left:10px;right:10px;bottom:10px;z-index:4;display:grid;gap:7px;padding:9px 10px;border-radius:12px;background:rgba(15,23,42,.88);color:#fff;font-size:11px;font-weight:850;line-height:1.35;box-shadow:0 8px 24px rgba(15,23,42,.2)}
+.image-upload-status.is-success{background:rgba(15,118,110,.92)}
+.image-upload-status.is-error{background:rgba(185,28,28,.94)}
+.image-upload-progress{height:4px;border-radius:999px;background:rgba(255,255,255,.24);overflow:hidden}
+.image-upload-progress i{display:block;height:100%;border-radius:inherit;background:#fff;transition:width .18s ease}
+.image-storage-note.processing{color:#2563eb}
+.image-storage-note.success{color:#047857}
+.image-storage-note.error{color:#b91c1c}
+.gallery-multi-upload.is-processing button{position:relative;overflow:hidden}
+.gallery-upload-progress{position:absolute;left:10px;right:10px;bottom:7px;height:3px;border-radius:999px;background:rgba(37,99,235,.16);overflow:hidden}
+.gallery-upload-progress em{display:block;height:100%;border-radius:inherit;background:#2563eb;transition:width .18s ease}
+@media (prefers-reduced-motion:reduce){.image-upload-progress i,.gallery-upload-progress em{transition:none}}

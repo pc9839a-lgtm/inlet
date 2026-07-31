@@ -1,6 +1,10 @@
-export function ImageInputPreview({ label, value, disabled, onEdit, onClear }) {
+export function ImageInputPreview({ label, value, disabled, uploadState, onEdit, onClear }) {
+  const processing = uploadState?.status === 'processing';
+  const statusVisible = processing || uploadState?.status === 'success' || uploadState?.status === 'error';
+  const progress = Math.max(0, Math.min(100, Number(uploadState?.progress || 0)));
+
   return (
-    <div className={`image-box single-plus ${value ? 'has-image' : 'is-empty'}`}>
+    <div className={`image-box single-plus ${value ? 'has-image' : 'is-empty'} ${processing ? 'is-processing' : ''}`}>
       {value ? (
         <>
           <img src={value} alt="" />
@@ -11,6 +15,21 @@ export function ImageInputPreview({ label, value, disabled, onEdit, onClear }) {
         </>
       ) : (
         <button type="button" className="image-empty-button" disabled={disabled} onClick={onEdit} title="업로드" aria-label={`${label} 업로드`}>+</button>
+      )}
+      {statusVisible && (
+        <div
+          className={`image-upload-status is-${uploadState.status}`}
+          role="status"
+          aria-live="polite"
+          aria-label={`${label} ${uploadState.label || '이미지 처리 상태'}`}
+        >
+          <span>{uploadState.label || '이미지 처리 중'}</span>
+          {processing && (
+            <div className="image-upload-progress" aria-hidden="true">
+              <i style={{ width: `${progress}%` }} />
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

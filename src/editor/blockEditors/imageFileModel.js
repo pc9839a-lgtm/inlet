@@ -1,8 +1,10 @@
-﻿export function readImageFile(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+import { prepareEditorImageFile } from '../imageControlModel.js';
+
+export async function prepareGalleryImageFile(file, options = {}) {
+  return prepareEditorImageFile(file, options);
+}
+
+export async function readImageFile(file, options = {}) {
+  const result = await prepareGalleryImageFile(file, options);
+  return result.dataUrl;
 }
