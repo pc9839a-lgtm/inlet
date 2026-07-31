@@ -16,6 +16,7 @@ assert(qaAllSource.includes("['browser:editor:contract:qa', ['scripts/editor-bro
 
 assert(cdpCompatSource.includes("payload?.method === 'Emulation.setTouchEmulationEnabled'"), 'CDP compatibility must target touch emulation only');
 assert(cdpCompatSource.includes("payload.params = { enabled: false }"), 'desktop touch emulation must omit an invalid zero touch-point count');
+assert(cdpCompatSource.includes("document.querySelector('.top-tabs')"), 'mobile editor bounds must use the current top-tabs DOM selector');
 assert(cdpCompatSource.includes("'run-started.txt'"), 'early browser failures must leave an uploadable diagnostic artifact');
 
 assert(workflowSource.includes('editor-browser-regression:'), 'QA workflow must contain an authenticated editor browser job');
