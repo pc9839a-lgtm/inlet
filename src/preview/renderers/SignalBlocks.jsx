@@ -5,13 +5,6 @@ const TIMER_BASE_CLASS = 'timer-theme-minimal timer-effect-none';
 const TIMER_VARIANTS = ['clean', 'cards', 'promo'];
 const TIMER_PALETTES = ['ink', 'blue', 'green', 'coral', 'accent'];
 const TIMER_EFFECTS = ['none', 'slide', 'flip', 'pulse', 'fire'];
-const BOTTOM_TIMER_PRESENTATION_CLASSES = [
-  ...TIMER_VARIANTS.map((value) => `bottom-timer-variant-${value}`),
-  ...TIMER_PALETTES.map((value) => `bottom-timer-palette-${value}`),
-  ...TIMER_EFFECTS.map((value) => `bottom-timer-effect-${value}`),
-  'bottom-timer-ended',
-  'is-bottom-timer-tick',
-];
 
 function TimerUnit({ value, label, effect = 'none' }) {
   const safeValue = value == null || value === '' ? '00' : String(value);
@@ -56,51 +49,6 @@ function timerEffect(settings = {}) {
   return pickSafe(settings.timerEffect || legacyUrgencyEffect || legacyMotionEffect || 'none', TIMER_EFFECTS, 'none');
 }
 
-function syncBottomTimerPresentation(settings = {}, countdown = {}) {
-  if (typeof document === 'undefined') return undefined;
-  const variant = timerVariant(settings);
-  const palette = timerPalette(settings);
-  const effect = timerEffect(settings);
-  const rawLabel = String(settings.label ?? '').trim();
-  const label = (rawLabel || '혜택 마감까지').slice(0, 40);
-  const promoBadge = String(settings.promoBadge ?? '마감 임박').trim().slice(0, 16);
-  const compactLabel = variant === 'promo' && promoBadge ? `${promoBadge} · ${label}` : label;
-  const endedLabel = String(settings.ended || '이벤트가 종료되었습니다.').slice(0, 40);
-  const tickKey = `${countdown.d}-${countdown.h}-${countdown.m}-${countdown.s}`;
-  let frame = window.requestAnimationFrame(() => {
-    const nodes = document.querySelectorAll('.bottom-timer');
-    nodes.forEach((node) => {
-      node.classList.remove(...BOTTOM_TIMER_PRESENTATION_CLASSES);
-      node.classList.add(
-        `bottom-timer-variant-${variant}`,
-        `bottom-timer-palette-${palette}`,
-        `bottom-timer-effect-${effect}`,
-      );
-      if (countdown.done) node.classList.add('bottom-timer-ended');
-      node.dataset.timerLabel = countdown.done ? endedLabel : compactLabel;
-      node.dataset.timerBadge = '';
-      node.style.setProperty('--bottom-timer-progress', `${Math.max(0, Math.min(100, Number(countdown.progress || 0)))}%`);
-
-      const main = node.querySelector('.bottom-timer-main');
-      if (main) main.dataset.timerBadge = '';
-
-      if (effect === 'none' || countdown.done) {
-        node.dataset.timerTick = tickKey;
-        return;
-      }
-      if (node.dataset.timerTick === tickKey) {
-        node.classList.add('is-bottom-timer-tick');
-        return;
-      }
-      node.dataset.timerTick = tickKey;
-      node.classList.remove('is-bottom-timer-tick');
-      void node.offsetWidth;
-      node.classList.add('is-bottom-timer-tick');
-    });
-  });
-  return () => window.cancelAnimationFrame(frame);
-}
-
 export function getTimerTarget(settings = {}) {
   const mode = settings.repeatMode || settings.timerMode || 'fixed';
   if (mode === 'daily24') {
@@ -129,7 +77,8 @@ export function useCountdown(input) {
   const progress = data.repeat
     ? Math.max(0, Math.min(100, 100 - (diff / data.cycle) * 100))
     : Math.max(0, Math.min(100, 100 - (diff / (data.cycle || 1)) * 100));
-  const countdown = {
+
+  return {
     done: !data.repeat && diff <= 0,
     d: Math.floor(diff / (1000 * 60 * 60 * 24)),
     h: String(Math.floor((diff / (1000 * 60 * 60)) % 24)).padStart(2, '0'),
@@ -138,19 +87,39 @@ export function useCountdown(input) {
     progress,
     diffMs: diff,
   };
+}
+
+export function RenderBottomTimer({ settings = {} }) {
+  const t = useCountdown(settings);
   const variant = timerVariant(settings);
   const palette = timerPalette(settings);
   const effect = timerEffect(settings);
-  const label = String(settings.label ?? '혜택 마감까지').slice(0, 40);
-  const promoBadge = String(settings.promoBadge ?? '마감 임박').slice(0, 16);
-  const ended = String(settings.ended || '이벤트가 종료되었습니다.').slice(0, 40);
+  const hasDays = Number(t.d) > 0;
+  const rawLabel = String(settings.label ?? '').trim();
+  const label = (rawLabel || '혜택 마감까지').slice(0, 40);
+  const promoBadge = String(settings.promoBadge ?? '마감 임박').trim().slice(0, 16);
+  const compactLabel = variant === 'promo' && promoBadge ? `${promoBadge} · ${label}` : label;
+  const endedLabel = String(settings.ended || '이벤트가 종료되었습니다.').slice(0, 40);
+  const tickKey = `${t.d}-${t.h}-${t.m}-${t.s}`;
+  const tickClass = effect !== 'none' && !t.done ? 'is-bottom-timer-tick' : '';
+  const progress = Math.max(0, Math.min(100, Number(t.progress || 0)));
 
-  useEffect(
-    () => syncBottomTimerPresentation(settings, countdown),
-    [variant, palette, effect, label, promoBadge, ended, countdown.done, countdown.d, countdown.h, countdown.m, countdown.s, countdown.progress],
+  return (
+    <div
+      className={`bottom-timer bottom-timer-minimal bottom-timer-variant-${variant} bottom-timer-palette-${palette} bottom-timer-effect-${effect} ${hasDays ? 'bottom-timer-has-days' : 'bottom-timer-no-days'} ${t.done ? 'bottom-timer-ended' : ''} ${tickClass}`.trim()}
+      data-timer-label={t.done ? endedLabel : compactLabel}
+      data-timer-badge=""
+      data-timer-tick={tickKey}
+      style={{ '--bottom-timer-progress': `${progress}%` }}
+    >
+      <div className="bottom-timer-main" data-timer-badge="">
+        <strong>
+          {hasDays ? <em>D-{t.d}</em> : null}
+          <b key={`${effect}-${tickKey}`}>{t.h}:{t.m}:{t.s}</b>
+        </strong>
+      </div>
+    </div>
   );
-
-  return countdown;
 }
 
 export function RenderTimer({ block }) {
