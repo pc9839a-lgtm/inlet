@@ -5,13 +5,15 @@ function assert(condition, message) {
 }
 
 const browserSource = await readFile('scripts/form-reservation-browser-regression-check.mjs', 'utf8');
+const authSessionSource = await readFile('scripts/form-browser-auth-session.mjs', 'utf8');
 const workflowSource = await readFile('.github/workflows/qa.yml', 'utf8');
 const qaAllSource = await readFile('scripts/qa-all.mjs', 'utf8');
 const packageJson = JSON.parse(await readFile('package.json', 'utf8'));
 
-assert(packageJson.scripts?.['browser:forms:qa'] === 'node scripts/form-reservation-browser-regression-check.mjs', 'browser:forms:qa script is missing');
+assert(packageJson.scripts?.['browser:forms:qa'] === 'node --import ./scripts/form-browser-auth-session.mjs scripts/form-reservation-browser-regression-check.mjs', 'browser:forms:qa must preload the fake CI session');
 assert(packageJson.scripts?.['browser:forms:contract:qa'] === 'node scripts/form-reservation-browser-regression-contract-check.mjs', 'browser:forms:contract:qa script is missing');
 assert(qaAllSource.includes("['browser:forms:contract:qa', ['scripts/form-reservation-browser-regression-contract-check.mjs']]"), 'qa:all must enforce form browser contract QA');
+assert(authSessionSource.includes("localStorage.setItem('inlet-auth-v1'") && authSessionSource.includes('form-e2e-session'), 'inbox reflection must use a CI-only authenticated session');
 
 assert(workflowSource.includes('form-browser-regression:'), 'QA workflow must contain a form browser regression job');
 assert(workflowSource.includes('VITE_INLET_PAGE_MODE: server') && workflowSource.includes('VITE_INLET_LEAD_MODE: server'), 'form browser build must run in server mode');
@@ -35,4 +37,5 @@ console.log(JSON.stringify({
   scope: 'form-reservation-browser-contract',
   flows: ['consultation', 'consultation-duplicate', 'reservation', 'reservation-duplicate', 'inbox-reflection'],
   productionData: false,
+  ciAuthenticatedSession: true,
 }, null, 2));
