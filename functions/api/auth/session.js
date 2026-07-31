@@ -1,4 +1,5 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse, readJson } from '../_shared.js';
+import { withPlatformMaster } from '../_platformMaster.js';
 import { AUTH_METHODS, authUserPublic, createSessionToken, getSessionAccount } from './_auth.js';
 
 export async function onRequest({ request, env }) {
@@ -8,7 +9,7 @@ export async function onRequest({ request, env }) {
     assertD1(env);
     const input = request.method === 'POST' ? await readJson(request) : {};
     const { payload, user } = await getSessionAccount(request, env, input);
-    const publicUser = authUserPublic(user);
+    const publicUser = withPlatformMaster(authUserPublic(user), env);
     const session = await createSessionToken({
       ownerId: publicUser.ownerId,
       projectId: String(input.projectId || payload.projectId || ''),

@@ -2,7 +2,9 @@ import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { rememberAccountProjectAccess } from '../lib/accountProjectAccess.js';
 import { authAccountErrorMessage } from '../lib/authAccounts.js';
 import { deleteAccountPage, fetchAccountPages } from '../lib/pageRepository.js';
+import { canCreateLandingPage, isPlatformMasterUser } from '../lib/platformAccountPolicy.js';
 import { WorkspaceCreateModalLayer } from './workspace/WorkspaceCreateModalLayer.jsx';
+import './DashboardAccountLimit.css';
 
 function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdate, onAi, onManual, onTemplate, onCheckUrl, templates = [] }) {
   const currentLeadCount = Array.isArray(leads) ? leads.length : 0;
@@ -22,6 +24,7 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
   const accessMode = user?.accessMode || user?.role || 'master';
   const modeLabel = accessMode === 'manager' ? '매니저' : accessMode === 'clientAdmin' ? '관리자' : '마스터';
   const planLabel = user?.plan || page?.billing?.plan || '기본';
+  const platformMaster = isPlatformMasterUser(user);
 
   useEffect(() => {
     setDraft({ name: user?.name || '', phone: user?.phone || '' });
@@ -57,6 +60,21 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
   }, [accountPages, currentLeadCount, hasCurrentPage, page, pagesLoaded, user?.session]);
 
   const totalLeadCount = visiblePages.reduce((sum, item) => sum + Number(item.leadCount || 0), 0);
+  const pageCountReady = !user?.session || pagesLoaded;
+  const createCheckPending = !platformMaster && !pageCountReady;
+  const createLimitReached = pageCountReady && !canCreateLandingPage(user, visiblePages.length);
+  const createDisabled = createCheckPending || createLimitReached;
+
+  const openCreate = () => {
+    if (createDisabled) return;
+    setCreateOpen(true);
+  };
+
+  const createButtonLabel = createCheckPending
+    ? '확인 중'
+    : createLimitReached
+      ? '랜딩 1개 사용 중'
+      : '새 랜딩 만들기';
 
   const saveAccount = async (event) => {
     event.preventDefault();
@@ -129,7 +147,7 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
             <h1>페이지로</h1>
             <p>랜딩 제작, 접수 확인, 통계를 한 화면에서 관리합니다.</p>
           </div>
-          <button className="primary-btn" type="button" onClick={() => setCreateOpen(true)}>새 랜딩 만들기</button>
+          <button className="primary-btn" type="button" disabled={createDisabled} onClick={openCreate}>{createButtonLabel}</button>
         </section>
 
         <section className="service-summary-grid" aria-label="계정과 랜딩 상태">
@@ -140,7 +158,7 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
           </article>
           <article>
             <span>권한</span>
-            <strong>{modeLabel}</strong>
+            <strong>{platformMaster ? '운영자' : modeLabel}</strong>
             <small>{user?.phone || '연락처 없음'}</small>
           </article>
           <article>
@@ -177,8 +195,11 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
         <section className="home-section service-page-list" aria-busy={pagesLoading}>
           <div className="home-section-title">
             <h2>내 랜딩페이지</h2>
-            <button className="primary-btn" type="button" onClick={() => setCreateOpen(true)}>새로 만들기</button>
+            <button className="primary-btn" type="button" disabled={createDisabled} onClick={openCreate}>{createButtonLabel}</button>
           </div>
+          {createLimitReached && (
+            <p className="service-create-limit-note">일반 계정은 랜딩페이지를 1개까지만 만들 수 있습니다.</p>
+          )}
           {pageListError && <strong className="service-page-list-error" role="alert">{pageListError}</strong>}
           {visiblePages.length ? visiblePages.map((item) => (
             <article className="landing-card service-landing-card" key={`${item.projectId || ''}:${item.id || item.slug}`}>
@@ -202,7 +223,7 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
           )) : (
             <div className="empty-landing">
               <strong>랜딩페이지가 없습니다.</strong>
-              <button className="primary-btn" type="button" onClick={() => setCreateOpen(true)}>새 랜딩 만들기</button>
+              <button className="primary-btn" type="button" disabled={createDisabled} onClick={openCreate}>{createButtonLabel}</button>
             </div>
           )}
         </section>
@@ -210,7 +231,7 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
 
       <Suspense fallback={null}>
         <WorkspaceCreateModalLayer
-          show={createOpen}
+          show={createOpen && !createDisabled}
           page={page}
           onClose={() => setCreateOpen(false)}
           createWithAi={onAi}
