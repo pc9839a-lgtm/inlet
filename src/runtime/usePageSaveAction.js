@@ -1,5 +1,7 @@
 import { persistPage } from '../lib/pageRepository.js';
 import { normalizePageForSave } from '../lib/pageModel.js';
+import { clearPageDraft } from './pageDraftStore.js';
+import { inactivePageSaveMessage, isPageOperationTargetActive, pageOperationIdentity } from './pageOperationIdentity.js';
 import { attachExistingPageIdentity, pageSaveMode } from './savePageIdentity.js';
 import {
   SAVE_BLOCKED_FEEDBACK,
@@ -60,6 +62,9 @@ export function usePageSaveAction({
     const expectedUpdatedAt = saveSourcePage.updatedAt || saveSourcePage.savedAt || saveSourcePage.createdAt || sourcePage.updatedAt || sourcePage.savedAt || sourcePage.createdAt || '';
     const expectedRevision = Number(saveSourcePage.revision || 0);
     const nextPage = pageForAccountSave(saveSourcePage);
+    const targetIdentity = pageOperationIdentity(nextPage);
+    const activePage = () => latestPageRef.current || page;
+    const targetIsActive = () => isPageOperationTargetActive(targetIdentity, activePage());
     let result = null;
     try {
       if (saveMode === 'update-existing') {
@@ -68,9 +73,29 @@ export function usePageSaveAction({
         result = await persistPage(nextPage, authUser, { tab, expectedUpdatedAt, expectedRevision, saveMode: 'create-new' });
       }
     } catch (error) {
+      if (!targetIsActive()) {
+        showToast(inactivePageSaveMessage('page', true), 'error');
+        return { ok: false, error, reason: 'inactive-page', page: activePage() };
+      }
       await handlePagePersistError({ error, page: nextPage, handlePageSaveError, markSaveStatus, showToast });
       return { ok: false, error };
     }
+
+    if (!targetIsActive()) {
+      const persistedClientPage = result?.clientPage || nextPage;
+      const savedTargetPage = result?.page ? savedPageFromResult(persistedClientPage, result.page) : persistedClientPage;
+      clearPageDraft({ page: nextPage, authUser });
+      clearPageDraft({ page: savedTargetPage, authUser });
+      showToast(inactivePageSaveMessage('page'), 'info');
+      return {
+        ok: true,
+        page: activePage(),
+        savedPage: savedTargetPage,
+        result,
+        reason: 'inactive-page',
+      };
+    }
+
     setConnectionsEditing(false);
     const savedPage = commitSavedPageResult({
       result,
