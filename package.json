@@ -17,6 +17,7 @@
     "server:smoke:integrations": "node scripts/server-smoke-integrations.mjs",
     "page:save:qa": "node scripts/page-save-identity-quality-check.mjs",
     "page:draft:qa": "node scripts/page-draft-recovery-quality-check.mjs",
+    "page:operation:isolation:qa": "node scripts/page-operation-isolation-quality-check.mjs",
     "preview:parity:qa": "node scripts/preview-public-parity-quality-check.mjs",
     "bottom:fixed:qa": "node scripts/bottom-fixed-ui-quality-check.mjs",
     "root:entry:qa": "node scripts/root-app-entry-quality-check.mjs",

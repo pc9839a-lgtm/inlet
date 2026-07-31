@@ -1,4 +1,6 @@
 import { persistPage } from '../lib/pageRepository.js';
+import { clearPageDraft } from './pageDraftStore.js';
+import { inactivePageSaveMessage, isPageOperationTargetActive, pageOperationIdentity } from './pageOperationIdentity.js';
 import { attachExistingPageIdentity, pageSaveMode } from './savePageIdentity.js';
 import { STYLE_SAVED_TOAST } from './pageSaveFeedback.js';
 import { commitSavedPageResult, handlePagePersistError } from './pagePersistFlow.js';
@@ -23,7 +25,7 @@ export function usePersistStyleSaveAction({
   setSaved,
 }) {
   const persistStyleNow = async () => {
-    if (blockWrite('style')) return;
+    if (blockWrite('style')) return { ok: false, reason: 'write-blocked' };
     const basePage = latestPageRef.current || page;
     const styleSourcePage = await attachExistingPageIdentity({
       ...basePage,
@@ -36,6 +38,9 @@ export function usePersistStyleSaveAction({
     });
     const saveMode = pageSaveMode(styleSourcePage);
     const nextPage = pageForAccountSave(styleSourcePage);
+    const targetIdentity = pageOperationIdentity(nextPage);
+    const activePage = () => latestPageRef.current || page;
+    const targetIsActive = () => isPageOperationTargetActive(targetIdentity, activePage());
     const expectedUpdatedAt = styleSourcePage.updatedAt || styleSourcePage.savedAt || styleSourcePage.createdAt || page.updatedAt || page.savedAt || page.createdAt || '';
     const expectedRevision = Number(styleSourcePage.revision || 0);
     let result = null;
@@ -46,13 +51,33 @@ export function usePersistStyleSaveAction({
         result = await persistPage(nextPage, authUser, { tab: 'style', expectedUpdatedAt, expectedRevision, saveMode: 'create-new' });
       }
     } catch (error) {
+      if (!targetIsActive()) {
+        showToast(inactivePageSaveMessage('style', true), 'error');
+        return { ok: false, error, reason: 'inactive-page', page: activePage() };
+      }
       await handlePagePersistError({ error, page: nextPage, handlePageSaveError, markSaveStatus, showToast });
-      return;
+      return { ok: false, error };
     }
+
+    if (!targetIsActive()) {
+      const persistedClientPage = result?.clientPage || nextPage;
+      const savedTargetPage = result?.page ? savedPageFromResult(persistedClientPage, result.page) : persistedClientPage;
+      clearPageDraft({ page: nextPage, authUser });
+      clearPageDraft({ page: savedTargetPage, authUser });
+      showToast(inactivePageSaveMessage('style'), 'info');
+      return {
+        ok: true,
+        page: activePage(),
+        savedPage: savedTargetPage,
+        result,
+        reason: 'inactive-page',
+      };
+    }
+
     setStylePreviewTheme(null);
     setStylePreviewBlocks(null);
     setConnectionsEditing(false);
-    commitSavedPageResult({
+    const savedPage = commitSavedPageResult({
       result,
       nextPage,
       scope: 'style',
@@ -64,6 +89,7 @@ export function usePersistStyleSaveAction({
       markSaveStatus,
     });
     showToast(STYLE_SAVED_TOAST, 'success');
+    return { ok: true, page: savedPage, result };
   };
 
   return { persistStyleNow };
