@@ -1,208 +1,448 @@
-# Remaining Patches
+# Pagero Remaining Patches
 
-Updated: 2026-05-28
+Updated: 2026-07-31
 
-Current deployed baseline:
+Repository: `pc9839a-lgtm/inlet`
 
-- GitHub `main`: `db6d3b0`
-- Cloudflare Pages deployment: `3c76ed78`
-- URL: `https://pagero.kr`
-- D1: `inlet-prod`
-- Applied migrations: `0001`, `0002_lead_dedupe_fields.sql`, `0003_event_dimensions.sql`, `0004_lead_blocked_submissions.sql`
-- Passed after deployment: hosted API QA, hosted route QA, production browser QA, strict artifact QA.
+Branch: `main`
 
-This document lists only remaining production work. Completed baseline work should not be reassigned unless a regression is found.
+Current production feature baseline: `59d33060b3e1377128aa3967fc1c5783b2d30090`
 
-Current execution mode: parallel patching is active.
+Latest deployment record commit: `e8391b203750811a46c5e7b8d7371d7efb49aa31`
 
-## Parallel Worker Split
+Latest successful Cloudflare preview recorded in repository: `https://9d7c4684.inlet-8mr.pages.dev`
 
-1. Worker 1: account, auth, email verification, sessions, member data.
-2. Worker 2: lead intake, duplicate policy, inbox, stats, D1 scale, CSV.
-3. Worker 3: personal-rehabilitation, mobile-wedding-invitation, and real-estate-presale templates.
-4. Worker 4: Settings manager permissions, ownership transfer, page duplication URL flow.
-5. Worker 5: QA, deployment, live integration readiness, docs and ops.
+This document is the current master backlog and execution-order reference for Pagero. The previous 2026-05-28 backlog was more than 800 commits behind `main`; completed work from that document must not be reassigned unless an actual regression is reproduced.
 
-Compatibility labels for QA contracts:
+## Source Of Truth Order
 
-- Production account/session hardening.
-- Customer-owned AI key storage.
-- D1 real runtime smoke and write-side migration.
-- Add lead duplicate and spam policy.
-- Page duplication and URL setup.
-- Expanded Launch Backlog.
-- Login, account, and member management.
-- Plans, payment, and subscription, final phase.
-- Do not reassign these.
-- Required command references: `deployment:qa`, `npm run live:qa`.
+Before modifying Pagero, use the following order.
 
-## Immediate Priority
+1. `AGENTS.md`
+2. `docs/PAGERO_MAINTENANCE_HANDOFF_KO.md`
+3. This document
+4. A task-specific handoff document, when one exists
+5. Current `main` code and recent commits
+6. Old worker documents only as historical context
 
-1. Account settings and real email delivery.
-2. Settings UI connection for blocked-history and duplicate/spam policy visibility.
-3. Stats and inbox operation quality.
-4. Template quality pass for the three active templates.
-5. Settings/admin UX completion.
-6. Live integrations.
-7. Billing and subscriptions last.
+Do not treat an old unchecked backlog item as unfinished without checking current code and commit history first.
 
-## Worker 1: Account, Auth, Email, Members
+# Absolute Rules
 
-Main remaining work:
+## 1. Production Home Is Frozen
 
-- Build real account settings UI and API for name, email, phone, password change, logout, and session status.
-- Add account states: active, pending verification, suspended, deleted pending retention.
-- Reject suspended/deleted accounts during login and session refresh with clear Korean copy.
-- Keep signup blocked until email verification is complete.
-- Keep password rule: at least 6 characters, must include English letters and numbers.
-- Password reset must stay as: email verification completed -> set new password -> return to login.
-- Duplicate email and duplicate phone must be checked server-side across active, pending, suspended, and deleted-pending-retention accounts unless a later retention policy explicitly allows reuse.
-- Add transactional email provider boundary for verification, manager invite, password reset, ownership transfer approval/rejection, and later payment failure.
-- Preferred live provider decision: start with AWS SES unless changed by owner.
-- Keep provider swappable, but first implementation should target AWS SES HTTP/API sending for Cloudflare Pages Functions.
-- Do not use raw SMTP sockets in production Pages Functions.
-- SES has a limited free tier, but launch planning must not depend on free usage:
-  - first 12 months after SES usage starts: up to 3,000 message charges/month free;
-  - normal outbound email price is roughly USD 0.10 per 1,000 emails, plus possible data/add-on charges.
-- SES requires domain verification, DKIM/SPF/DMARC DNS, and production access approval if the account is still in sandbox.
-- User-facing mail failure copy must be generic. Do not show quota/provider/internal reason to users.
-- Internal logs should classify not configured, quota exceeded, timeout, provider error, sandbox rejection, and domain not verified.
-- Missing email credentials must be `skipped-live` or unavailable, not a broken signup path.
-- Move remaining account/session/member/invite access reads toward D1 while keeping JSONL/dev fallback.
-- Add audit rows for signup, verification, login failure category, password change, profile change, invite accepted, member removed, account suspended/restored.
+The current `https://pagero.kr/` root screen is the canonical production home.
 
-Done baseline, do not repeat:
+Unless the owner explicitly requests a production-home change, do not change its visible design, copy, section order, menu, footer, hero, animation, lifestyle bridge, login/start behavior, or responsive result.
 
-- Login/session endpoints exist.
-- Offline email verification mock exists.
-- Manager invite accept exists.
-- Signed session strict/production mode exists.
-- Hosted API route QA passed after deployment.
+The actual Cloudflare Pages root source of truth is `functions/index.js`. Do not judge the production root only from the local Vite home or `index.html`.
 
-## Worker 2: Leads, Duplicate Policy, Inbox, Stats, D1
+Protected production-home scope includes:
 
-Main remaining work:
+- `functions/index.js`
+- `index.html`
+- `src/main.jsx`
+- root/public-home routing inside `src/App.jsx`
+- public-home screen components
+- public-home and frozen C63 styles/assets
+- `public/c63-assets/**`
+- `public/c63-life-bridge.js`
+- `public/c63-life-bridge.css`
+- root/static routing inside `server/index.mjs`
 
-- Server now enforces per project/page duplicate settings as of `db6d3b0`.
-- Server now persists blocked/rate-limited attempts in D1/JSONL blocked-history as of `db6d3b0`.
-- UI blocked history must read from server data, not from page JSON placeholder.
-- Required owner settings: IP duplicate rejection, cookie/client duplicate rejection, form-field duplicate count, duplicate period, phone/email mark vs block mode.
-- Defaults should be conservative: cookie duplicate rejection on for accidental repeats, IP rejection off or short-window only, phone/email mark-only by default.
-- Hard-block only rapid repeat, rate-limit abuse, high risk score, or explicit owner-selected reject mode.
-- Store duplicate metadata on saved leads: client id, IP hash, user agent hash, normalized phone/email, duplicate flag, duplicate reason, risk score, submitted time.
-- Store blocked-history metadata: time, project/page/form, reason, risk score, policy snapshot, IP hash, client id, user agent hash, masked contact summary.
-- Do not expose raw IP if only hashes are stored.
-- Inbox first load must stay 50 rows and use more paging.
-- CSV must stay month-bounded and include useful duplicate/reason/operator fields.
-- Stats should expand beyond basic totals: source/channel, device, page, CTA, form start, submit attempt, submit success, reservation attempt/success, conversion rate, trend comparison.
-- Keep D1 SQL aggregation preferred for high volume. JSONL is dev/import fallback only.
+Required production-home signals must remain unchanged:
 
-Done baseline, do not repeat:
+- exactly one `.pagero-exact-home`
+- exactly one `.c63-life-nav-link`
+- exactly one `.c63-life-bridge`
+- exactly four `.c63-life-post` links
+- visible `https://life.pagero.kr/` link
+- visible `https://awards.pagero.kr/` link
+- `/c63-assets/index-pagero-main-fix-20260615.js`
+- `/c63-assets/index-B0Q5rFVf.css`
 
-- D1 lead dedupe/event dimension migrations are applied.
-- D1 blocked lead submission migration is applied.
-- Server duplicate policy and blocked-history API are deployed.
-- Hosted route QA confirms lead/event public writes and authenticated reads.
-- Month-bounded CSV and paging exist.
-- Basic stats summary route exists.
+Stop deployment if any protected-home file or required signal changes during unrelated work.
 
-## Worker 3: Templates, Public Landing, Editor Preview
+## 2. General Account Page Limit Must Stay Enforced
 
-Main remaining work:
+- A general account may own and create one active landing page only.
+- Platform master accounts may create unlimited landing pages.
+- The limit must remain enforced on both frontend controls and the server/API boundary.
+- A forged role string such as `superadmin` must not bypass the limit.
+- Existing owned pages must remain editable and publishable.
+- Archived/deleted projects must not incorrectly block a valid first active page.
+- Platform-master status must survive login and session refresh.
 
-- Keep exactly three templates: personal rehabilitation consultation, mobile wedding invitation, real estate presale.
-- Do not add more templates.
-- Do not build non-editable HTML templates.
-- Remove all public instructional/sample/usage-guide copy.
-- Every visible section must remain editable through existing blocks.
-- Make each template first viewport feel like a finished public service page, not a builder demo.
-- Personal rehabilitation: trust, eligibility, debt situation, consultation benefit, compliant wording, form, FAQ, bottom CTA. No guaranteed approval/outcome wording.
-- Mobile wedding invitation: names, date, venue/map, gallery, RSVP, message, subtle premium effects. Effects must look intentional and not block text.
-- Real estate presale: project name, location, premium points, type/benefit, gallery/image emphasis, visit reservation, map, FAQ, bottom CTA.
-- Continue editor live-preview fixes for text color, font, background, underline, premium effects, scroll behavior, topnav fit, CTA chips, map/gallery/form overlap.
-- Cards block remains 1 or 2 columns only.
-- Premium effects must be subtle, randomized, image-overlay aware, and non-blocking.
+Current default platform-master emails are code-level operational defaults plus optional `INLET_PLATFORM_MASTER_EMAILS`. Do not add another bypass path without an explicit owner decision.
 
-Done baseline, do not repeat:
+## 3. Page Sharing Must Stay Separate From Bottom Bar
 
-- Template count is 3.
-- Template structural QA passes.
-- Production browser QA covers the three first-viewport cases.
-- Style color/font/rich toolbar production QA passes.
+- Global sharing state uses `page.share`.
+- Public and preview sharing use the independent `PageShareButton` flow.
+- Do not restore `bottombar.s.shareEnabled`.
+- Do not move share-position controls into the bottom fixed button editor.
+- Share URLs must use the public page URL, never `/app`, `/dashboard`, or editor query parameters.
 
-## Worker 4: Settings, Managers, Ownership, Page Duplication, Admin
+## 4. Editor-Only Work Must Stay Editor-Only
 
-Main remaining work:
+For editor UI work, do not change unrelated:
 
-- Settings manager permissions must remain in normal project Settings for every client/admin project.
-- Internal admin is route-only and must not appear in public workspace navigation.
-- Manager permission UI must stay compact. Menu-level permission first, detailed permission only after expansion.
-- Labels must be user-facing Korean: 보기, 편집, 소유권이전.
-- Manager invite should create and copy invite link in one action after valid name/email.
-- Invited manager must login/signup and load the invited project only if authenticated email matches invite email.
-- Ownership transfer section should be collapsed and named 소유권이전.
-- Transfer target must be selected from existing managers only.
-- Transfer request goes to internal admin approval before completion.
-- If a paid subscription exists later, transfer waits for billing period end or cancellation before completion.
-- Page duplication is paid-only later. Template duplication is not needed.
-- Page duplication must first open URL setup, not immediately copy.
-- URL setup supports default provided domain slug and custom domain pending DNS state.
-- Saved URL data should be domain-agnostic: domain type, slug, custom domain, domain status. Do not hard-code current Pages domain in records.
-- Page duplication may copy page settings, blocks, style, form structure, CTA, effects, SEO basics.
-- Page duplication must not copy leads, stats, delivery logs, managers, ownership-transfer history, billing/subscription state, or audit history.
-- Internal admin needs practical operator tools: user search, project search, ownership approval queue, suspend/restore, project pause/archive, abuse/blocked history review, audit log search.
+- auth or session behavior
+- account roles or entitlement policy
+- D1 schema
+- page ownership
+- form/reservation payloads
+- stats event contracts
+- public save policy
+- production home
+- SEO files
+- deployment scripts
 
-Done baseline, do not repeat:
+Keep the editor workflow:
 
-- Settings manager card exists.
-- Ownership transfer route/API baseline exists.
-- Page duplication URL modal baseline exists.
-- Production browser QA covers manager settings, duplicate settings, page duplication modal, internal admin ownership queue.
+`add block -> check mobile preview -> edit selected block -> save/publish`
 
-## Worker 5: QA, Deploy, Live Integrations, Ops
+Patch editor work incrementally. Do not replace multiple editor systems with one large CSS override.
 
-Main remaining work:
+## 5. Deployment Rules
 
-- Keep production browser QA current as Workers 1-4 add visible behavior.
-- Add browser QA cases for account settings, email verification UX, blocked-history panel, stats channel/device filters, and deeper template mobile behavior when implemented.
-- Keep hosted route QA covering every production API added by Workers 1, 2, and 4.
-- Keep D1 migration checks aligned with new migrations.
-- Keep artifact cleanup safe. It must never delete source, migrations, config, or committed assets.
-- Maintain release order docs: local QA, build, D1 migration, push, Pages deployment, hosted QA, production browser QA, live readiness.
-- Live integrations still needing credentials: SMTP/email, OAuth/Google, conversion tracking accounts, webhook/CRM endpoint, optional live AI test with customer key.
-- Email credential target is now AWS SES unless owner changes this decision.
-- Required SES live checklist:
-  - AWS account ready;
-  - SES region selected;
-  - sending domain selected;
-  - SES domain identity verified;
-  - DKIM records added;
-  - SPF record added;
-  - DMARC record added;
-  - production access requested/approved if sandboxed;
-  - Cloudflare Pages secrets added for SES access key/secret and sender;
-  - live email QA run without exposing token to browser.
-- Missing credentials must remain `skipped-live`, not false failure.
-- Add rollback/backup runbook for D1 schema changes and Pages deployment rollback.
-- Add custom domain readiness checklist: DNS instructions, verification status, SSL status, route binding.
+- Never force-push `main`.
+- Do not use destructive reset/clean/restore operations to construct a release.
+- Do not deploy a dirty or unclear integration tree.
+- Do not mix unrelated refactors into a functional patch.
+- Run targeted QA during implementation and the full required suite before deployment.
+- Verify preview at desktop, compact, and mobile widths.
+- Verify production-home DOM signals before deployment.
+- Production deployment requires explicit owner approval.
 
-Done baseline, do not repeat:
+## 6. Billing Remains The Final Product Phase
 
-- Latest deployment passed.
-- D1 migrations were applied.
-- Hosted API/route QA passed.
-- Production browser QA passed with Settings next cases included.
+Do not start payment-provider implementation before account policy, custom-domain behavior, admin/audit readiness, live integrations, template mobile QA, and production regression checks are stable.
 
-## Final Phase: Billing And Plans
+# Completed Baseline — Do Not Repeat
 
-Do this last.
+The following work is already present on current `main`. Reopen only when a regression is reproduced.
 
-- Plans under the 9,900 KRW ceiling: 3,300 / 6,600 / 9,900.
-- Server-side feature limits: pages, page duplication, monthly leads, stats retention, managers, custom domain, conversion tracking.
-- Payment provider abstraction first.
-- Toss Payments or selected provider implementation after abstraction.
-- Checkout, billing key/card registration, subscription renewal, cancel-at-period-end, payment failure, grace period.
-- Webhook signature verification and idempotency before accepting payment state changes.
+## Account And Page Policy
+
+- General-account one-page policy model.
+- Platform-master account policy.
+- Server-side creation middleware returning `ACCOUNT_PAGE_LIMIT_REACHED`.
+- Frontend creation-control lock state.
+- Existing-page replay/update allowance.
+- Login and session responses exposing platform-master state.
+- Regression QA through `account:page-limit:qa` and the full QA suite.
+
+## Top Navigation, Sharing, And Form Focus
+
+- Top navigation supports one through eight menu items.
+- One through four items use a balanced single row.
+- Five through eight items wrap into balanced rows without horizontal scrolling.
+- Long menu labels remain visible without destructive ellipsis behavior.
+- Native mobile sharing uses the platform share sheet where supported.
+- Desktop/unsupported environments use clipboard fallback.
+- Share-position selection supports four persisted positions.
+- Share positioning avoids top navigation, safe areas, and bottom fixed controls.
+- Form/reservation input focus temporarily hides fixed top/bottom/share UI.
+
+## Timer And Bottom Fixed UI
+
+- Three purposeful timer layouts with legacy storage compatibility.
+- Editable timer headline and promotional text.
+- Multiple motion/effect choices including strong visual options.
+- Main timer design settings inherited by the compact bottom timer.
+- Bottom timer converted to declarative rendering.
+- Duplicate bottom-timer CSS layers consolidated.
+- Main and bottom countdowns synchronized through one shared second-aligned clock.
+- Fixed UI collision, reserved-space, and viewport-spill regressions covered by QA.
+
+## Save Reliability And Draft Recovery
+
+- Late save responses are isolated after page/project switches.
+- Server-page drafts are separated from local page cache.
+- Drafts are scoped by authenticated account and page identity.
+- Only compatible same-revision drafts are offered for recovery.
+- Sensitive values are excluded from browser draft persistence.
+- Drafts clear after successful server save.
+- Page operation and save-identity regression checks exist.
+
+## Image Handling
+
+- Editor images are oriented, resized, compressed, and deduplicated before storage.
+- Gallery images are processed sequentially with progress feedback.
+- Image optimization has dedicated QA coverage.
+
+## Forms, Leads, Inbox, And Stats
+
+- Real-browser consultation and reservation submission regression exists.
+- Rapid repeated submission locking is covered.
+- Duplicate blocking and inbox reflection are covered.
+- Blocked lead history is server-authoritative and paginated.
+- Month-bounded CSV and useful duplicate fields exist.
+- Stats filters and chart spacing have been stabilized.
+
+## Live Integration Foundations
+
+- AWS SES auth-email delivery implementation exists.
+- SES readiness and hosted behavior checks exist.
+- User-facing mail errors hide provider internals.
+- Google Sheets OAuth connect, status, refresh, delivery, header generation, and disconnect flows exist.
+- Deployment route smoke contracts block broken live route/function releases.
+
+## Browser And Deployment Regression
+
+- Authenticated editor browser regression exists.
+- Public landing browser regression exists.
+- Form/reservation browser regression exists.
+- 360px, 390px, and 430px mobile operation checks exist in the editor flow.
+- Preview/public parity and fixed-bottom UI contracts exist.
+
+# Active Remaining Patches
+
+Patch in the following order unless the owner explicitly changes priority.
+
+## Priority 1 — One-Page Policy Production Verification
+
+The policy is implemented. This is an operational regression pass, not a redesign.
+
+Required verification:
+
+- A new general account can create its first page.
+- A general account with one active page cannot create a second page from dashboard controls.
+- Direct API creation attempts return `409` with `ACCOUNT_PAGE_LIMIT_REACHED`.
+- Existing page save, revision, restore, preview, and publish remain functional.
+- A platform-master account can create multiple pages.
+- Platform-master state remains after logout/login and session refresh.
+- Google-login accounts follow the same quota policy.
+- Archived/deleted projects do not produce a false active-page count.
+- Manager/member access cannot create a second owner page through a different UI path.
+
+Do not weaken the server limit to fix a frontend display issue.
+
+## Priority 2 — Custom Domain Product Completion
+
+Current page URL and duplication foundations do not prove a complete customer-facing custom-domain product flow.
+
+Required work:
+
+- Default Pagero domain plus validated slug.
+- Customer custom-domain input.
+- Domain ownership/DNS instructions.
+- Domain states: `pending`, `verifying`, `active`, `failed`, and removable/disconnected state.
+- SSL readiness/status.
+- Duplicate-domain ownership protection.
+- Reconnect and detach behavior.
+- Public URL, canonical URL, preview, and share URL synchronization.
+- Operator view for failed or stuck domain verification.
+- Domain-agnostic stored fields; do not hard-code the current Pages preview hostname into page records.
+- Compatibility with the one-page general-account policy.
+
+Page duplication remains a later paid feature. Do not make template duplication a product feature.
+
+## Priority 3 — Admin And Audit Completeness Review
+
+Inspect current D1 schema, API, and internal admin UI first. Patch only confirmed gaps.
+
+Required capabilities:
+
+- Audit rows for signup and verification.
+- Login failure category without exposing secrets.
+- Password, name, email, and phone changes.
+- Account suspension, restoration, and deletion-state changes.
+- Manager invite, acceptance, permission change, and removal.
+- Ownership-transfer request, approval, rejection, cancellation, and completion.
+- Project pause/archive/restore actions.
+- Platform-master manual actions.
+- Search/filter by account, project, action, actor, and date.
+- Audit records must not be silently deleted through normal operator actions.
+
+Internal admin remains route-only and must not appear as public workspace navigation.
+
+## Priority 4 — Live Integration Production Verification
+
+Do not reimplement integrations already present. Verify actual production credentials and behavior.
+
+Required live checks:
+
+- SES domain identity, DKIM, SPF, and DMARC.
+- SES production access when the AWS account is sandboxed.
+- Real signup verification email.
+- Real password-reset email.
+- Real manager-invite email.
+- Ownership-transfer approval/rejection email.
+- Generic user-facing failure copy.
+- Internal classification for not configured, quota, timeout, provider error, sandbox, and domain verification failure.
+- Google Sheets OAuth connect with production redirect URI.
+- Token refresh after expiry.
+- Lead row delivery with submitted-field headers.
+- Disconnect immediately stops future delivery.
+- Delivery retry/dead-letter visibility where applicable.
+- Conversion tracking credentials and real event receipt where configured.
+- Missing credentials remain `skipped-live`, not a false product failure.
+
+Never expose provider credentials, verification tokens, access tokens, or raw internal errors to the browser.
+
+## Priority 5 — Three Template Mobile Final Regression
+
+Keep exactly these three templates:
+
+1. Personal rehabilitation consultation.
+2. Mobile wedding invitation.
+3. Real estate presale.
+
+Do not add more templates and do not replace them with non-editable HTML shells.
+
+Required verification at 360px, 390px, and 430px:
+
+- Finished first viewport, not a builder demo.
+- No instructional, editor-guide, sample-usage, or placeholder explanation copy in public output.
+- Every visible section remains editable through existing blocks.
+- No overlap among top navigation, hero, share button, forms, timer, and bottom fixed UI.
+- Mobile keyboard does not hide active fields or submission controls.
+- Gallery, map, FAQ, and form interactions remain usable.
+- Preview and public output remain visually aligned.
+- Premium effects remain intentional, non-blocking, and motion-reduction aware.
+
+Personal rehabilitation copy must not guarantee approval or legal outcome.
+
+## Priority 6 — Remaining Product And Operations Hardening
+
+Inspect before implementing. Complete only gaps proven in current behavior.
+
+- Custom-domain rollback and support runbook.
+- D1 schema backup/rollback procedure.
+- Operator release checklist with current command names.
+- Retention and cleanup policy for logs, blocked submissions, delivery logs, and audit rows.
+- Large-data inbox/stat query verification using D1 aggregation.
+- Abuse/rate-limit operator visibility without exposing raw IP when only hashes are stored.
+- Accessibility and keyboard regression for new account/domain/admin UI.
+
+# Final Phase — Plans, Billing, And Subscription
+
+Start only after Priorities 1 through 6 are stable.
+
+## Plan Direction
+
+Maximum plan ceiling remains under KRW 9,900.
+
+Target paid ladder:
+
+- KRW 3,300
+- KRW 6,600
+- KRW 9,900
+
+Final entitlements must be explicitly defined before checkout implementation:
+
+- active pages
+- page duplication
+- monthly leads
+- stats retention
+- manager count
+- custom domain
+- conversion tracking
+- integration limits where applicable
+
+## Required Billing Architecture
+
+- Server-side entitlement enforcement.
+- Payment-provider abstraction before provider-specific code.
+- Toss Payments or another owner-selected provider after abstraction.
+- Checkout.
+- Billing key/card registration.
+- Subscription renewal.
+- Cancel-at-period-end.
+- Payment failure and grace period.
+- Webhook signature verification.
+- Idempotency before accepting payment-state changes.
 - Payment history and receipt/invoice link storage.
 - Admin manual billing override with audit log.
-- Payment secrets server-only.
+- Payment credentials server-only.
+
+Do not use frontend-only plan locks as the final entitlement system.
+
+# Execution Protocol For Every Patch
+
+## Before Editing
+
+1. Confirm repository and branch: `pc9839a-lgtm/inlet` / `main`.
+2. Fetch current remote state.
+3. Read `AGENTS.md` and `docs/PAGERO_MAINTENANCE_HANDOFF_KO.md`.
+4. Read this document and any task-specific handoff.
+5. List exact allowed files for the patch.
+6. Exclude protected production-home files unless the owner explicitly requested home changes.
+7. Check recent commits so completed work is not repeated.
+
+## During Editing
+
+- Keep one patch group focused on one product problem.
+- Avoid unrelated cleanup and broad formatting.
+- Preserve working API, auth, storage, routing, and public behavior outside scope.
+- Add or update direct regression QA with the implementation.
+- Stop and report scope conflicts instead of silently widening the patch.
+
+## Before Commit
+
+At minimum verify:
+
+- changed-file list
+- no unintended protected-home diff
+- targeted QA
+- build
+- affected browser flow
+- preview/public parity when renderer or CSS changes
+- desktop and 360/390/430px behavior for visible UI
+- no mojibake or broken Korean copy
+
+## Before Production Deployment
+
+Run the current full required QA and release checks, including the relevant commands from `package.json`:
+
+```bash
+npm run qa:all
+npm run build
+npm run deployment:qa
+npm run deployment:smoke:contract:qa
+npm run browser:landing:qa
+npm run browser:editor:qa
+npm run browser:forms:qa
+npm run browser:production:qa
+```
+
+Also run feature-specific QA where applicable, including:
+
+```bash
+npm run account:page-limit:qa
+npm run page:save:qa
+npm run page:draft:qa
+npm run page:operation:isolation:qa
+npm run image:upload:qa
+npm run preview:parity:qa
+npm run bottom:fixed:qa
+npm run timer:workflow:qa
+npm run topnav:balance:qa
+npm run live:qa
+```
+
+A skipped live check must identify the exact missing credential or external approval. It must not be reported as a completed live verification.
+
+Production deployment occurs only after explicit owner approval.
+
+# Do Not Reassign Without A Reproduced Regression
+
+- Top navigation one-to-eight layout.
+- Native sharing and four share positions.
+- Form-focus fixed UI hiding.
+- Three timer styles and strong effects.
+- Bottom timer inheritance and compact layout.
+- Shared countdown clock.
+- Preview/public CSS parity.
+- Fixed bottom UI collision handling.
+- Account-scoped draft recovery.
+- Delayed-save page-switch isolation.
+- Image optimization before storage.
+- Server-backed blocked history.
+- Google Sheets OAuth foundation.
+- AWS SES auth-email foundation.
+- General-account one-page enforcement.
+
+When one of these appears broken, reproduce it first and patch the smallest confirmed regression rather than rebuilding the feature.
