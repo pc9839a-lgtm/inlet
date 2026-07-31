@@ -5,6 +5,7 @@ function assert(condition, message) {
 }
 
 const renderer = await readFile('src/preview/LandingRenderer.jsx', 'utf8');
+const signalBlocks = await readFile('src/preview/renderers/SignalBlocks.jsx', 'utf8');
 const fixedUiCss = await readFile('src/styles/preview-fixed-ui-contract.css', 'utf8');
 const bottomTimerCss = await readFile('src/styles/preview-workspace-bottom-timer-effects.css', 'utf8');
 const rendererCss = await readFile('src/preview/LandingRenderer.css', 'utf8');
@@ -12,6 +13,23 @@ const rendererCss = await readFile('src/preview/LandingRenderer.css', 'utf8');
 assert(renderer.includes("const [fixedUiHeights, setFixedUiHeights] = useState({ top: 0, bottom: 0 })"), 'LandingRenderer must retain measured fixed UI heights');
 assert(renderer.includes('new ResizeObserver(measure)') && renderer.includes("'--page-fixed-bottom-height'"), 'LandingRenderer must measure and expose the rendered bottom bar height');
 assert(renderer.includes("window.visualViewport?.addEventListener('resize', syncFromActiveElement)"), 'Form focus handling must react to the mobile visual viewport');
+
+assert(renderer.includes('RenderBottomTimer as SignalRenderBottomTimer'), 'LandingRenderer must import the shared React bottom timer component');
+assert(renderer.includes('<SignalRenderBottomTimer settings={timerSource}/>'), 'Bottom actions must render the shared React bottom timer directly');
+assert(!renderer.includes('function RenderBottomTimer('), 'LandingRenderer must not keep a duplicate local bottom timer renderer');
+assert(signalBlocks.includes('export function RenderBottomTimer({ settings = {} })'), 'SignalBlocks must own the declarative bottom timer component');
+assert(signalBlocks.includes('data-timer-label={t.done ? endedLabel : compactLabel}'), 'Bottom timer copy must be present on the initial React render');
+assert(signalBlocks.includes("style={{ '--bottom-timer-progress': `${progress}%` }}"), 'Bottom timer progress must be rendered through React style props');
+assert(signalBlocks.includes('bottom-timer-variant-${variant}') && signalBlocks.includes('bottom-timer-palette-${palette}') && signalBlocks.includes('bottom-timer-effect-${effect}'), 'Bottom timer presentation classes must be derived during React render');
+assert(signalBlocks.includes('<b key={`${effect}-${tickKey}`}>'), 'Bottom timer digit effects must replay through React key changes');
+for (const forbidden of [
+  'syncBottomTimerPresentation',
+  "document.querySelectorAll('.bottom-timer')",
+  'node.classList',
+  "node.style.setProperty('--bottom-timer-progress'",
+]) {
+  assert(!signalBlocks.includes(forbidden), `Bottom timer must not mutate rendered DOM directly: ${forbidden}`);
+}
 
 assert(fixedUiCss.includes('scroll-padding-bottom: calc(max(88px, var(--page-fixed-bottom-height, 0px)) + 10px)'), 'Landing runtime must keep anchor targets above measured fixed actions with a compact reserve');
 assert(fixedUiCss.includes('.landing-page.has-bottom-bar .page-share-button.position-bottom-left'), 'Bottom share controls must offset above the measured bottom bar');
@@ -37,7 +55,9 @@ console.log(JSON.stringify({
   measuredReserve: true,
   reserveExtra: 10,
   shareCollisionGuard: true,
-  bottomTimerOwner: 'preview-workspace-bottom-timer-effects.css',
+  bottomTimerOwner: 'SignalBlocks.RenderBottomTimer',
+  bottomTimerRendering: 'declarative-react',
+  directDomMutation: false,
   compactTimerHeight: 42,
   compactButtonHeight: 48,
   safeAreaAware: true,

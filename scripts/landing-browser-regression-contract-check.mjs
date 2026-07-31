@@ -75,8 +75,10 @@ assert(!legacyTimerBottomCss.includes('.bottom-timer'), 'legacy timer-bottom man
 assert(!timerUrgencyCss.includes('.bottom-timer'), 'main timer urgency CSS must not style the fixed bottom timer');
 assert(!fixedUiCss.includes(':has(.bottom-timer) .bottom-timer'), 'fixed collision CSS must not own bottom timer geometry');
 assert(signalBlocks.includes("const compactLabel = variant === 'promo' && promoBadge ? `${promoBadge} · ${label}` : label;"), 'bottom timer must merge the promotional badge into the editable left copy');
-assert(signalBlocks.includes("node.dataset.timerBadge = ''") && signalBlocks.includes("main.dataset.timerBadge = ''"), 'bottom timer must not render a floating promotional badge');
+assert(signalBlocks.includes('data-timer-badge=""') && signalBlocks.includes('data-timer-label={t.done ? endedLabel : compactLabel}'), 'bottom timer must render copy and an empty badge directly through React');
+assert(signalBlocks.includes("style={{ '--bottom-timer-progress': `${progress}%` }}"), 'bottom timer must render progress directly through React');
 assert(signalBlocks.includes("const label = (rawLabel || '혜택 마감까지').slice(0, 40);"), 'bottom timer must keep a visible fallback label when the editable copy is empty');
+assert(!signalBlocks.includes('syncBottomTimerPresentation') && !signalBlocks.includes("document.querySelectorAll('.bottom-timer')"), 'bottom timer must not restore post-render DOM synchronization');
 assert(fixedUiCss.includes('gap: 4px !important') && fixedUiCss.includes('height: 48px !important'), 'fixed action contract must keep the timer/button stack compact');
 assert(fixedUiCss.includes('border-radius: 17px !important'), 'timer-enabled pill buttons must use a controlled radius instead of oversized capsules');
 
@@ -99,7 +101,8 @@ console.log(JSON.stringify({
   scenarios: ['baseline', 'form-focus'],
   inputMethod: 'real-pointer',
   finalTopnavCss: 'preview-topnav-runtime-contract.css',
-  bottomTimerOwner: 'preview-workspace-bottom-timer-effects.css',
+  bottomTimerOwner: 'SignalBlocks.RenderBottomTimer',
+  bottomTimerRendering: 'declarative-react',
   removedOverrideLayer: 'preview-bottom-timer-compact.css',
   finalStylesheet: 'preview-fixed-ui-contract.css',
   focusFallback: true,
