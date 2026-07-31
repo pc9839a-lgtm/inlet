@@ -42,3 +42,33 @@ if (NativeWebSocket?.prototype?.send) {
     return nativeSend.call(this, data);
   };
 }
+
+if (NativeWebSocket?.prototype?.addEventListener) {
+  const nativeAddEventListener = NativeWebSocket.prototype.addEventListener;
+  NativeWebSocket.prototype.addEventListener = function addEventListenerWithEditorApiCompatibility(type, listener, options) {
+    if (type !== 'message' || typeof listener !== 'function') {
+      return nativeAddEventListener.call(this, type, listener, options);
+    }
+
+    const wrappedListener = (event) => {
+      try {
+        const payload = JSON.parse(String(event.data));
+        const request = payload?.params?.request;
+        const requestUrl = request?.url ? new URL(request.url) : null;
+        if (
+          payload?.method === 'Fetch.requestPaused'
+          && request?.method === 'POST'
+          && requestUrl?.pathname === '/api/events'
+        ) {
+          request.method = 'GET';
+          return listener.call(this, { data: JSON.stringify(payload) });
+        }
+      } catch {
+        // Unrelated websocket messages are forwarded unchanged.
+      }
+      return listener.call(this, event);
+    };
+
+    return nativeAddEventListener.call(this, type, wrappedListener, options);
+  };
+}
