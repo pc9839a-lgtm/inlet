@@ -25,6 +25,7 @@ const steps = [
   ['timer:workflow:qa', ['scripts/timer-settings-workflow-quality-check.mjs']],
   ['topnav:balance:qa', ['scripts/topnav-row-balance-quality-check.mjs']],
   ['browser:landing:contract:qa', ['scripts/landing-browser-regression-contract-check.mjs']],
+  ['browser:editor:contract:qa', ['scripts/editor-browser-regression-contract-check.mjs']],
   ['deployment:smoke:contract:qa', ['scripts/deployment-route-smoke-contract-check.mjs']],
   ['conversion:qa', ['scripts/conversion-quality-check.mjs']],
   ['csv:qa', ['scripts/csv-quality-check.mjs']],
