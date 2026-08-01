@@ -1,6 +1,6 @@
 # Pagero Remaining Patches
 
-Updated: 2026-08-01 21:35 KST
+Updated: 2026-08-01 21:42 KST
 
 Repository: `pc9839a-lgtm/inlet`
 
@@ -15,7 +15,7 @@ Other open candidates:
 
 Current execution mode: parallel patching is active
 
-This file separates code completion, QA completion, merge, deployment, and production verification. A branch-only or mock-only result is not production completion.
+Code completion, QA completion, merge, deployment, and production verification are separate states. Branch-only, mock-only, or `skipped-live` results are not production completion.
 
 ## Parallel Worker Split
 
@@ -26,8 +26,6 @@ This file separates code completion, QA completion, merge, deployment, and produ
 5. Worker 5: QA, deployment, live integration readiness, docs and ops
 
 ## Compatibility Labels Retained For QA Contracts
-
-These labels remain because integration QA uses them as execution-contract markers:
 
 - Production account/session hardening
 - Customer-owned AI key storage
@@ -43,48 +41,52 @@ These labels remain because integration QA uses them as execution-contract marke
 
 # Current Patch Checkpoint — PR #43
 
-## Completed In Branch
+## Code Complete
 
 - Added shared platform-master authorization for `/api/admin/*`.
-- Removed administrator access based only on forged role strings such as `superadmin` or `serviceadmin`.
-- Preserved the secret-protected scheduled custom-domain recheck route used by PR `#41`.
-- Added non-blocking D1 audit writes for signup, login, verification request, profile change, and account-status change.
-- Added success and classified failure audit events without storing passwords, tokens, sessions, Authorization headers, or cookies.
-- Replaced raw IP and User-Agent storage with HMAC-SHA256 fingerprints.
-- Added `GET /api/admin/audit` with query, action, actor, project, target type, date, cursor, and limit filters.
-- Excluded raw IP and raw User-Agent from administrator audit responses.
+- Removed administrator access based only on role strings such as `superadmin` and `serviceadmin`.
+- Preserved the secret-protected automatic domain recheck route required by PR `#41`.
+- Added non-blocking D1 audit writes for signup, login, email-verification request, profile change, and account-status change.
+- Added success and classified-failure events without storing passwords, tokens, sessions, Authorization headers, or cookies.
+- Replaced raw IP and User-Agent values with HMAC-SHA256 fingerprints.
+- Added `GET /api/admin/audit` with search, action, actor, project, target type, date, cursor, and limit filters.
+- Excluded raw IP and raw User-Agent from audit responses.
 - Added no audit-log update or deletion API.
-- Added `admin:audit:qa` and registered it in `qa:all`.
+- Added `admin:audit:qa` to `qa:all`.
 - Added `docs/ops-admin-audit-log.md`.
 - Protected production-home file changes: none.
 
-## Validation State
+## QA Complete
 
-- Targeted admin audit QA: complete.
-- Authentication QA: complete.
-- Authentication email QA: complete.
-- Pages Functions QA: complete.
-- API security QA: complete.
-- Build and deployment-artifact build: complete.
-- First full QA run: implementation checks passed; final integration step failed because this backlog still contained the outdated pre-parallel text.
-- Backlog contract correction: complete in this commit.
-- Full QA rerun: pending.
-- Landing browser regression: pending after full QA rerun.
-- Authenticated editor browser regression: pending after full QA rerun.
-- Form and reservation browser regression: pending after full QA rerun.
+Final commit validation passed:
+
+- targeted administrator audit QA
+- authentication QA
+- authentication-email QA
+- Pages Functions QA
+- API security QA
+- full offline QA
+- production build and deployment artifact build
+- public landing real-browser regression
+- authenticated editor real-browser regression
+- consultation and reservation real-browser regression
+
+## Not Complete
+
 - PR `#43` merge to `main`: not completed.
 - Production deployment: not completed.
-- Production administrator/audit verification: not completed.
+- Production administrator authorization verification: not completed.
+- Production D1 audit-row verification: not completed.
 
-Do not describe PR `#43` as production complete until it is merged, deployed with explicit owner approval, and verified with one allowed platform-master account plus one denied general account.
+Do not describe PR `#43` as production complete until it is merged, deployed with explicit owner approval, and checked using an approved platform-master account plus a denied general account.
 
 # Other Open Checkpoints
 
 ## PR #42 — One-Page Policy Production Verification
 
 - General-account one-active-page implementation is already merged through PR `#40`.
-- Live verification script, manual workflow, cleanup, Google-account quota, and manager bypass coverage are complete in PR `#42`.
-- Full QA and browser regressions passed on that branch.
+- Live verification script, manual workflow, cleanup, Google-login quota, and manager bypass coverage are complete in PR `#42`.
+- Full QA and browser regression passed on that branch.
 - Merge to `main`: not completed.
 - Six disposable production fixtures and signed sessions: not configured or verified.
 - Manual workflow result `verified-live`: not completed.
@@ -102,7 +104,7 @@ Do not describe PR `#43` as production complete until it is merged, deployed wit
 
 ## Production Home Is Frozen
 
-Do not change the visible production home unless the owner explicitly requests it. Protected scope includes:
+Do not change the visible production home without an explicit owner request. Protected scope includes:
 
 - `functions/index.js`
 - `index.html`
@@ -114,31 +116,31 @@ Do not change the visible production home unless the owner explicitly requests i
 - `public/c63-life-bridge.css`
 - root/static routing inside `server/index.mjs`
 
-## General Account Page Policy
+## General Account And Administrator Policy
 
 - General account: one active landing page.
-- Platform master: unlimited landing pages.
-- Frontend and API enforcement both remain mandatory.
-- Role-string forgery must not bypass account or administrator policy.
+- Platform master: unlimited landing pages and administrator API eligibility.
+- Frontend and API page-limit enforcement both remain mandatory.
+- Role-string forgery must not bypass page or administrator policy.
 - Existing pages remain editable, revisionable, restorable, previewable, and public.
 - Archived/deleted projects do not consume the active-page quota.
-- Google-login accounts follow the same policy.
+- Google-login accounts follow the same page policy.
 - Manager/member access cannot create another owner page.
-- Default platform-master emails plus `INLET_PLATFORM_MASTER_EMAILS` are the only approved account and administrator bypass source.
+- Default platform-master emails plus `INLET_PLATFORM_MASTER_EMAILS` are the only approved page-limit and administrator bypass source.
 
 ## Paid Plans Are Locked To Two
 
 - `classic`: 클래식, 월 3,500원
 - `pro`: 프로, 월 5,500원
 
-The former 3,300원 / 6,600원 / 9,900원 three-tier direction is discarded. Do not add a third paid plan or invent Classic/Pro entitlements before owner approval.
+The previous 3,300원 / 6,600원 / 9,900원 direction is discarded. Do not add a third paid plan or invent entitlements before owner approval.
 
 ## Deployment
 
 - Never force-push `main`.
-- Do not construct a release with destructive reset, clean, or restore operations.
-- Keep unrelated refactors out of focused patches.
-- Run targeted QA and the full required suite before merge or deployment.
+- Do not construct releases with destructive reset, clean, or restore operations.
+- Do not mix unrelated refactors into a focused patch.
+- Run targeted QA and the full suite before merge or deployment.
 - Production deployment requires explicit owner approval.
 
 # Completed Baseline — Do Not Reassign These
@@ -149,7 +151,7 @@ The former 3,300원 / 6,600원 / 9,900원 three-tier direction is discarded. Do 
 - Add lead duplicate and spam policy foundations.
 - Page duplication and URL setup foundations; template duplication is not needed.
 - Login, account, and member management foundations.
-- General-account one-page policy and platform-master unlimited policy.
+- General-account one-page and platform-master unlimited policies.
 - Save identity, revision conflict, draft recovery, and page-switch isolation.
 - Three active templates only: personal rehabilitation, mobile wedding invitation, and real estate presale.
 - Public landing, authenticated editor, and form/reservation browser regression infrastructure.
@@ -158,38 +160,22 @@ The former 3,300원 / 6,600원 / 9,900원 three-tier direction is discarded. Do 
 
 # Active Remaining Patches
 
-## Priority 1 — Complete PR #43 Validation
+## Priority 1 — PR #43 Merge And Production Verification
 
-1. Require the refreshed full QA run to pass.
-2. Require landing, authenticated-editor, and form/reservation browser jobs to pass.
-3. Confirm no protected production-home file changed.
-4. Mark PR `#43` ready for review only after all checks pass.
-5. Do not merge or deploy without an explicit owner action.
-6. After deployment, verify:
-   - ordinary account receives 403 from `/api/admin/summary` and `/api/admin/audit`
-   - forged `superadmin` role also receives 403
-   - approved platform-master receives 200
-   - signup/login/profile/status events appear in D1
-   - audit responses expose no raw IP, User-Agent, password, token, or session
+After owner approval:
 
-## Priority 2 — Execute One-Page Policy Live Verification
+1. Merge PR `#43` without mixing PR `#41` or PR `#42` branch changes.
+2. Deploy only after explicit deployment approval.
+3. Verify a general account receives 403 from `/api/admin/summary` and `/api/admin/audit`.
+4. Verify a forged `superadmin` role also receives 403.
+5. Verify an approved platform-master receives 200.
+6. Create signup, failed login, successful login, profile change, and status change events.
+7. Confirm D1 audit rows contain no raw password, token, session, IP, or User-Agent.
+8. Confirm filtering and pagination work and no ordinary audit deletion path exists.
 
-1. Prepare the six disposable fixtures documented by PR `#42`.
-2. Store signed test sessions in GitHub Secrets.
-3. Manually run the Account Page Limit Production Verify workflow with write approval.
-4. Require `verified-live`, save the run/deployment/commit evidence, and confirm all `qa-limit-*` pages were removed.
+## Priority 2 — Complete Remaining Admin And Audit Gaps
 
-## Priority 3 — Custom-Domain Operational Rollout
-
-1. Apply production migrations `0006_page_domains.sql` and `0007_page_domain_operations.sql` in order.
-2. Configure the Cloudflare account, Pages project, least-privilege API token, CNAME target, and recheck secret.
-3. Merge PR `#41` only after migration and environment ordering is safe.
-4. Deploy only after explicit owner approval.
-5. Verify DNS, SSL, public routing, assets, forms, reservations, tracking, duplicate ownership, detach/reconnect, retries, and escalation.
-
-## Priority 4 — Remaining Admin And Audit Completeness
-
-After PR `#43`, inspect and patch only confirmed gaps:
+Patch only confirmed gaps after PR `#43`:
 
 - password-change audit
 - email-change workflow and audit
@@ -198,8 +184,23 @@ After PR `#43`, inspect and patch only confirmed gaps:
 - ownership-transfer request, approval, rejection, cancellation, and completion
 - project pause, archive, and restore
 - platform-master manual action audit
-- retention policy that preserves audit records from ordinary operator deletion
+- audit retention that prevents ordinary operator deletion
 - internal route-only audit UI, never public workspace navigation
+
+## Priority 3 — Execute One-Page Policy Live Verification
+
+1. Prepare the six disposable fixtures documented by PR `#42`.
+2. Store signed test sessions in GitHub Secrets.
+3. Manually run Account Page Limit Production Verify with write approval.
+4. Require `verified-live`, retain run/deployment/commit evidence, and confirm every `qa-limit-*` page was removed.
+
+## Priority 4 — Custom-Domain Operational Rollout
+
+1. Apply production migrations `0006_page_domains.sql` and `0007_page_domain_operations.sql` in order.
+2. Configure the Cloudflare account, Pages project, least-privilege token, CNAME target, and recheck secret.
+3. Merge PR `#41` only after migration and environment ordering is safe.
+4. Deploy only after explicit owner approval.
+5. Verify DNS, SSL, public routing, assets, forms, reservations, tracking, duplicate ownership, detach/reconnect, retries, and escalation.
 
 ## Priority 5 — Live Integration Production Verification
 
@@ -218,7 +219,7 @@ Keep exactly:
 2. Mobile wedding invitation.
 3. Real estate presale.
 
-Verify 360px, 390px, and 430px for finished first viewport, editable visible sections, no instructional copy, no fixed-UI overlap, keyboard-safe forms, usable gallery/map/FAQ, preview/public parity, and reduced-motion-aware effects.
+Verify 360px, 390px, and 430px for a finished first viewport, editable visible sections, no instructional copy, no fixed-UI overlap, keyboard-safe forms, usable gallery/map/FAQ, preview/public parity, and reduced-motion-aware effects.
 
 ## Priority 7 — Product And Operations Hardening
 
