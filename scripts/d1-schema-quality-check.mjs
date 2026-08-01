@@ -10,6 +10,7 @@ const eventDimensionsMigration = await readFile('migrations/0003_event_dimension
 const blockedLeadMigration = await readFile('migrations/0004_lead_blocked_submissions.sql', 'utf8');
 const authEmailMigration = await readFile('migrations/0005_auth_email_verifications.sql', 'utf8');
 const pageDomainMigration = await readFile('migrations/0006_page_domains.sql', 'utf8');
+const pageDomainOperationsMigration = await readFile('migrations/0007_page_domain_operations.sql', 'utf8');
 const adapter = await readFile('server/storage/d1Adapter.mjs', 'utf8');
 const runtimeAdapter = await readFile('server/storage/runtimeAdapter.mjs', 'utf8');
 const wrangler = await readFile('wrangler.jsonc', 'utf8');
@@ -68,7 +69,7 @@ for (const token of [
   'replaceD1ProjectMembers',
   'listD1Leads',
   'insertD1BlockedLeadSubmission',
-  'listD1BlockedLeadSubmissions',
+  'listD1BlockedSubmissions',
   'listD1Events',
   'encodeD1Lead',
   'decodeD1Lead',
@@ -80,7 +81,10 @@ for (const token of [
   'insertD1AuditLog',
   'fallbackAdapter',
 ]) {
-  assert(adapter.includes(token), `D1 adapter missing contract token: ${token}`);
+  const accepted = token === 'listD1BlockedSubmissions'
+    ? adapter.includes('listD1BlockedLeadSubmissions')
+    : adapter.includes(token);
+  assert(accepted, `D1 adapter missing contract token: ${token}`);
 }
 
 assert(adapter.includes('ON CONFLICT(id) DO UPDATE SET'), 'D1 lead upsert should be idempotent');
@@ -152,6 +156,19 @@ for (const token of [
 }
 
 for (const token of [
+  'ALTER TABLE page_domains ADD COLUMN retry_count',
+  'ALTER TABLE page_domains ADD COLUMN next_retry_at',
+  'ALTER TABLE page_domains ADD COLUMN last_error_code',
+  'ALTER TABLE page_domains ADD COLUMN escalated_at',
+  'ALTER TABLE page_domains ADD COLUMN last_attempt_at',
+  'idx_page_domains_retry_due',
+  'idx_page_domains_escalated',
+  'trg_page_domains_reset_ops_on_reconnect',
+]) {
+  assert(pageDomainOperationsMigration.includes(token), `D1 page domain operations migration missing token: ${token}`);
+}
+
+for (const token of [
   'isD1MissingLeadDedupeColumnError',
   'isD1MissingEventDimensionColumnError',
   'upsertD1LeadLegacy',
@@ -163,7 +180,7 @@ for (const token of [
   'channelData',
   'deviceData',
 ]) {
-  assert(adapter.includes(token), `D1 lead dedupe adapter missing token: ${token}`);
+  assert(adapter.includes(token), `D1 lead dedupe adapter missing contract token: ${token}`);
 }
 
 for (const token of [
@@ -200,6 +217,7 @@ console.log(JSON.stringify({
   blockedLeadMigration: '0004_lead_blocked_submissions.sql',
   authEmailMigration: '0005_auth_email_verifications.sql',
   pageDomainMigration: '0006_page_domains.sql',
+  pageDomainOperationsMigration: '0007_page_domain_operations.sql',
   adapter: 'server/storage/d1Adapter.mjs',
   runtimeAdapter: 'server/storage/runtimeAdapter.mjs',
 }, null, 2));
