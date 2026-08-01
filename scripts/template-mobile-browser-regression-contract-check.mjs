@@ -55,6 +55,9 @@ assert(qaAll.includes("['browser:templates-mobile:contract:qa', ['scripts/templa
 
 for (const token of [
   'template-mobile-browser-regression:',
+  'Install Korean browser font',
+  'fonts-noto-cjk',
+  'fc-match "Noto Sans CJK KR"',
   'Real browser three-template mobile regression',
   'INLET_TEMPLATE_MOBILE_QA_ORIGIN: http://127.0.0.1:4176',
   'INLET_TEMPLATE_MOBILE_QA_SCREENSHOT_DIR: .tmp-template-mobile-regression',
@@ -128,6 +131,7 @@ console.log(JSON.stringify({
   check: 'template-mobile-browser-regression-contract',
   templates: 3,
   viewports: [360, 390, 430],
+  koreanFontInstalledInCi: true,
   galleryTouchTargetPx: 44,
   consentRowTouchTargetPx: 44,
   consentCheckboxHitBoxPx: 36,
