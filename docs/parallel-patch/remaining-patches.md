@@ -1,6 +1,6 @@
 # Pagero Remaining Patches
 
-Updated: 2026-08-01 13:05 KST
+Updated: 2026-08-01 13:28 KST
 
 Repository: `pc9839a-lgtm/inlet`
 
@@ -28,12 +28,13 @@ This document must be updated at the end of every patch. Code completion, QA com
 - Retry, bounded backoff, exhaustion, and escalation policy: code complete.
 - Detach/reconnect and rollback support runbook: complete.
 - D1 operations migration `0007_page_domain_operations.sql`: complete.
-- Targeted QA: pending for the current commit.
-- Full offline QA: pending for the current commit.
-- Landing browser regression: pending for the current commit.
-- Authenticated editor browser regression: pending for the current commit.
-- Form and reservation browser regression: pending for the current commit.
-- Pull request: open.
+- Targeted QA: complete.
+- Full offline QA: complete.
+- Landing browser regression: complete.
+- Authenticated editor browser regression: complete.
+- Form and reservation browser regression: complete.
+- Pull request: open and QA-complete.
+- Verified implementation head: `40d242a82457668b7d06a386aee6fad6c7e58d71`.
 - Merge to `main`: not completed.
 - Production D1 migrations: not completed.
 - Production Cloudflare environment configuration: not completed.
