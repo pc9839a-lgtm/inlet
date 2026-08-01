@@ -1,6 +1,6 @@
 # Pagero Remaining Patches
 
-Updated: 2026-08-01 21:42 KST
+Updated: 2026-08-01 21:51 KST
 
 Repository: `pc9839a-lgtm/inlet`
 
@@ -52,13 +52,18 @@ Code completion, QA completion, merge, deployment, and production verification a
 - Added `GET /api/admin/audit` with search, action, actor, project, target type, date, cursor, and limit filters.
 - Excluded raw IP and raw User-Agent from audit responses.
 - Added no audit-log update or deletion API.
+- Added manager invite creation and acceptance audit events.
+- Added page-save diff auditing for manager addition, permission change, status change, and removal.
+- Added ownership-transfer request, billing-wait, approval, rejection, cancellation, completion, and fallback status-change events.
+- Added project archive auditing when page deletion archives the project.
+- Added runtime QA that verifies manager additions, permission changes, status changes, and removals are emitted separately and manager emails are not persisted in audit rows.
 - Added `admin:audit:qa` to `qa:all`.
-- Added `docs/ops-admin-audit-log.md`.
+- Updated `docs/ops-admin-audit-log.md`.
 - Protected production-home file changes: none.
 
 ## QA Complete
 
-Final commit validation passed:
+Implementation commit `5ae8588d3bc6ee020c784d9fad78ae629c6da8a1` passed:
 
 - targeted administrator audit QA
 - authentication QA
@@ -71,12 +76,18 @@ Final commit validation passed:
 - authenticated editor real-browser regression
 - consultation and reservation real-browser regression
 
+Documentation-only follow-up commits must still keep the same full QA green before final closeout.
+
 ## Not Complete
 
 - PR `#43` merge to `main`: not completed.
 - Production deployment: not completed.
 - Production administrator authorization verification: not completed.
 - Production D1 audit-row verification: not completed.
+- Password-change and email-change workflow audit: not completed.
+- Project pause and restore API/audit: not completed.
+- Platform-master manual action audit: not completed.
+- Internal route-only audit UI: not completed.
 
 Do not describe PR `#43` as production complete until it is merged, deployed with explicit owner approval, and checked using an approved platform-master account plus a denied general account.
 
@@ -169,23 +180,24 @@ After owner approval:
 3. Verify a general account receives 403 from `/api/admin/summary` and `/api/admin/audit`.
 4. Verify a forged `superadmin` role also receives 403.
 5. Verify an approved platform-master receives 200.
-6. Create signup, failed login, successful login, profile change, and status change events.
-7. Confirm D1 audit rows contain no raw password, token, session, IP, or User-Agent.
+6. Create account, login, email-verification, manager, ownership-transfer, and project-archive events.
+7. Confirm D1 audit rows contain no raw password, token, session, manager email, IP, or User-Agent.
 8. Confirm filtering and pagination work and no ordinary audit deletion path exists.
+9. Confirm ordinary page content saves do not create manager-change events when manager data is unchanged.
 
 ## Priority 2 — Complete Remaining Admin And Audit Gaps
 
-Patch only confirmed gaps after PR `#43`:
+Patch only confirmed remaining gaps after the current PR `#43` implementation:
 
 - password-change audit
 - email-change workflow and audit
-- account restoration audit
-- manager invite, acceptance, permission change, and removal in Pages Functions
-- ownership-transfer request, approval, rejection, cancellation, and completion
-- project pause, archive, and restore
+- account restoration audit where restoration is implemented
+- project pause and restore API plus audit
 - platform-master manual action audit
 - audit retention that prevents ordinary operator deletion
 - internal route-only audit UI, never public workspace navigation
+
+Manager invite, acceptance, permission change, status change, removal, ownership-transfer states, and project archive are implemented in PR `#43`; do not reassign them unless a regression is reproduced.
 
 ## Priority 3 — Execute One-Page Policy Live Verification
 
