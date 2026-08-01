@@ -1,0 +1,85 @@
+name: Admin Audit Production Verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Production or preview API origin
+        required: true
+        default: https://pagero.kr
+        type: string
+      phase:
+        description: Safe verification phase
+        required: true
+        default: read-only
+        type: choice
+        options:
+          - read-only
+          - request-email-token
+          - verify-live
+      allow_writes:
+        description: Allow disposable account and project state changes
+        required: true
+        default: false
+        type: boolean
+      require_live:
+        description: Fail instead of skipped-live when fixtures are unavailable
+        required: true
+        default: true
+        type: boolean
+      project_slug_prefix:
+        description: Required prefix for the disposable project
+        required: true
+        default: qa-audit-
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: admin-audit-production-verify
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      INLET_ADMIN_AUDIT_BASE_URL: ${{ inputs.base_url }}
+      INLET_ADMIN_AUDIT_LIVE_PHASE: ${{ inputs.phase }}
+      INLET_ADMIN_AUDIT_LIVE_WRITE: ${{ inputs.allow_writes && '1' || '0' }}
+      INLET_ADMIN_AUDIT_LIVE_REQUIRE: ${{ inputs.require_live && '1' || '0' }}
+      INLET_ADMIN_AUDIT_PROJECT_SLUG_PREFIX: ${{ inputs.project_slug_prefix }}
+      INLET_ADMIN_AUDIT_PLATFORM_MASTER_SESSION: ${{ secrets.PAGERO_ADMIN_AUDIT_PLATFORM_MASTER_SESSION }}
+      INLET_ADMIN_AUDIT_GENERAL_SESSION: ${{ secrets.PAGERO_ADMIN_AUDIT_GENERAL_SESSION }}
+      INLET_ADMIN_AUDIT_GENERAL_PASSWORD: ${{ secrets.PAGERO_ADMIN_AUDIT_GENERAL_PASSWORD }}
+      INLET_ADMIN_AUDIT_NEXT_EMAIL: ${{ secrets.PAGERO_ADMIN_AUDIT_NEXT_EMAIL }}
+      INLET_ADMIN_AUDIT_EMAIL_CHANGE_TOKEN: ${{ secrets.PAGERO_ADMIN_AUDIT_EMAIL_CHANGE_TOKEN }}
+      INLET_ADMIN_AUDIT_RETENTION_SECRET: ${{ secrets.PAGERO_AUDIT_RETENTION_SECRET }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Verify production administrator audit controls
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run admin:audit:live | tee admin-audit-production-result.json
+
+      - name: Upload verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-audit-production-evidence
+          path: admin-audit-production-result.json
+          if-no-files-found: warn
+          retention-days: 30
