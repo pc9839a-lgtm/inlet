@@ -1,0 +1,60 @@
+name: Audit Log Retention
+
+on:
+  schedule:
+    - cron: '17 3 1 * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Count eligible rows without deleting them'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: audit-log-retention
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      RETENTION_URL: ${{ vars.PAGERO_AUDIT_RETENTION_URL }}
+      RETENTION_SECRET: ${{ secrets.PAGERO_AUDIT_RETENTION_SECRET }}
+      DRY_RUN: ${{ inputs.dry_run || false }}
+    steps:
+      - name: Remove expired audit rows
+        shell: bash
+        run: |
+          set -euo pipefail
+          endpoint="${RETENTION_URL:-https://pagero.kr/api/admin/audit/retention}"
+          if [[ -z "${RETENTION_SECRET:-}" ]]; then
+            echo 'skipped-live: PAGERO_AUDIT_RETENTION_SECRET is not configured'
+            exit 0
+          fi
+
+          payload='{}'
+          if [[ "${DRY_RUN:-false}" == 'true' ]]; then
+            payload='{"dryRun":true}'
+          fi
+
+          response="$(curl --fail-with-body --silent --show-error \
+            --retry 2 --retry-delay 3 \
+            --request POST \
+            --header "Authorization: Bearer ${RETENTION_SECRET}" \
+            --header 'Content-Type: application/json' \
+            --data "${payload}" \
+            "${endpoint}")"
+          echo "${response}"
+          RESPONSE_JSON="${response}" node --input-type=module -e "
+            const payload = JSON.parse(process.env.RESPONSE_JSON || '{}');
+            if (payload.ok !== true) process.exit(1);
+            console.log('retentionDays=' + Number(payload.retentionDays || 0));
+            console.log('candidates=' + Number(payload.candidates || 0));
+            console.log('deleted=' + Number(payload.deleted || 0));
+            console.log('remainingEstimate=' + Number(payload.remainingEstimate || 0));
+          "
