@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(path, 'utf8');
-const [browserScript, workflow, packageJsonSource, qaAll, templates, parityCheck, rendererCss, galleryCss, mediaRenderer] = await Promise.all([
+const [browserScript, workflow, packageJsonSource, qaAll, templates, parityCheck, rendererCss, galleryCss, formMobileCss, mediaRenderer] = await Promise.all([
   read('scripts/template-mobile-browser-regression-check.mjs'),
   read('.github/workflows/qa.yml'),
   read('package.json'),
@@ -11,6 +11,7 @@ const [browserScript, workflow, packageJsonSource, qaAll, templates, parityCheck
   read('scripts/preview-public-parity-quality-check.mjs'),
   read('src/preview/LandingRenderer.css'),
   read('src/styles/preview-gallery-mobile-contract.css'),
+  read('src/styles/preview-form-mobile-contract.css'),
   read('src/preview/renderers/MediaBlocks.jsx'),
 ]);
 const packageJson = JSON.parse(packageJsonSource);
@@ -73,8 +74,14 @@ for (const token of [
   assert(parityCheck.includes(token), `preview/public parity contract missing ${token}`);
 }
 
-assert(rendererCss.includes("@import '../styles/preview-gallery-mobile-contract.css';"), 'LandingRenderer must import the gallery mobile contract');
-assert(rendererCss.indexOf("@import '../styles/preview-gallery-mobile-contract.css';") < rendererCss.indexOf("@import '../styles/preview-fixed-ui-contract.css';"), 'gallery contract must preserve the final fixed UI import priority');
+const fixedUiImport = "@import '../styles/preview-fixed-ui-contract.css';";
+const galleryImport = "@import '../styles/preview-gallery-mobile-contract.css';";
+const formMobileImport = "@import '../styles/preview-form-mobile-contract.css';";
+assert(rendererCss.includes(galleryImport), 'LandingRenderer must import the gallery mobile contract');
+assert(rendererCss.includes(formMobileImport), 'LandingRenderer must import the form mobile contract');
+assert(rendererCss.indexOf(galleryImport) < rendererCss.indexOf(fixedUiImport), 'gallery contract must preserve the final fixed UI import priority');
+assert(rendererCss.indexOf(formMobileImport) < rendererCss.indexOf(fixedUiImport), 'form mobile contract must preserve the final fixed UI import priority');
+
 for (const token of [
   '.phone-frame .image-sec .gallery-arrows button',
   '.public-landing-viewport .image-sec .gallery-arrows button',
@@ -86,6 +93,21 @@ for (const token of [
   ':focus-visible',
 ]) {
   assert(galleryCss.includes(token), `gallery touch contract missing ${token}`);
+}
+
+for (const token of [
+  '.phone-frame .landing-section.form .agree',
+  '.public-landing-viewport .landing-section.form .agree',
+  'min-height: 44px !important',
+  "input[type='checkbox']",
+  'width: 36px !important',
+  'height: 36px !important',
+  'appearance: none !important',
+  ':checked',
+  ':focus-visible',
+  'touch-action: manipulation !important',
+]) {
+  assert(formMobileCss.includes(token), `form mobile touch contract missing ${token}`);
 }
 
 for (const token of [
@@ -107,6 +129,8 @@ console.log(JSON.stringify({
   templates: 3,
   viewports: [360, 390, 430],
   galleryTouchTargetPx: 44,
+  consentRowTouchTargetPx: 44,
+  consentCheckboxHitBoxPx: 36,
   galleryControlsOutsideSwipeCapture: true,
   releaseBlocking: true,
   previewPublicParityRequired: true,
