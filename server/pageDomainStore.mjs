@@ -53,9 +53,6 @@ export async function prepareD1PageDomainSave(db, page = {}, context = {}) {
     throw domainError(issues[0], 400, 'DOMAIN_INVALID', { issues });
   }
 
-  const pageId = String(context.pageId || page.id || '').trim();
-  const current = pageId ? await getD1PageDomainByPageId(db, pageId) : null;
-
   if (domain.domainType !== 'custom') {
     return applyPageDomainConfig(page, {
       domainType: 'default',
@@ -67,6 +64,8 @@ export async function prepareD1PageDomainSave(db, page = {}, context = {}) {
     });
   }
 
+  const pageId = String(context.pageId || page.id || '').trim();
+  const current = pageId ? await getD1PageDomainByPageId(db, pageId) : null;
   await assertD1PageDomainAvailable(db, domain.customDomain, pageId);
   const sameConnection = current
     && String(current.hostname || '') === domain.customDomain
