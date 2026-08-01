@@ -1,6 +1,6 @@
 # Pagero Remaining Patches
 
-Updated: 2026-08-01 12:37 KST
+Updated: 2026-08-01 12:40 KST
 
 Repository: `pc9839a-lgtm/inlet`
 
@@ -24,17 +24,17 @@ This document must be updated at the end of every patch. Code completion, QA com
 
 - Code: complete on PR `#41`.
 - Targeted QA: complete.
-- Full offline QA: complete before the closeout-document edit.
-- Landing browser regression: complete before the closeout-document edit.
-- Authenticated editor browser regression: complete before the closeout-document edit.
-- Form and reservation browser regression: complete before the closeout-document edit.
+- Full offline QA: complete.
+- Landing browser regression: complete.
+- Authenticated editor browser regression: complete.
+- Form and reservation browser regression: complete.
+- Closeout-document compatibility QA: complete.
 - Pull request: open and ready for review.
 - Merge to `main`: not completed.
 - Production D1 migration: not completed.
 - Production Cloudflare environment configuration: not completed.
 - Production deployment: not completed.
 - Real customer-domain smoke test: not completed.
-- Current closeout-document QA: rerunning after compatibility-contract restoration.
 
 The custom-domain implementation is **code and feature QA complete, operational rollout remaining**. Do not describe it as production complete.
 
