@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(path, 'utf8');
-const [browserScript, workflow, packageJsonSource, qaAll, templates, parityCheck, rendererCss, galleryCss] = await Promise.all([
+const [browserScript, workflow, packageJsonSource, qaAll, templates, parityCheck, rendererCss, galleryCss, mediaRenderer] = await Promise.all([
   read('scripts/template-mobile-browser-regression-check.mjs'),
   read('.github/workflows/qa.yml'),
   read('package.json'),
@@ -11,6 +11,7 @@ const [browserScript, workflow, packageJsonSource, qaAll, templates, parityCheck
   read('scripts/preview-public-parity-quality-check.mjs'),
   read('src/preview/LandingRenderer.css'),
   read('src/styles/preview-gallery-mobile-contract.css'),
+  read('src/preview/renderers/MediaBlocks.jsx'),
 ]);
 const packageJson = JSON.parse(packageJsonSource);
 
@@ -72,7 +73,8 @@ for (const token of [
   assert(parityCheck.includes(token), `preview/public parity contract missing ${token}`);
 }
 
-assert(rendererCss.includes("@import '../styles/preview-gallery-mobile-contract.css';"), 'LandingRenderer must import the gallery mobile contract after runtime contracts');
+assert(rendererCss.includes("@import '../styles/preview-gallery-mobile-contract.css';"), 'LandingRenderer must import the gallery mobile contract');
+assert(rendererCss.indexOf("@import '../styles/preview-gallery-mobile-contract.css';") < rendererCss.indexOf("@import '../styles/preview-fixed-ui-contract.css';"), 'gallery contract must preserve the final fixed UI import priority');
 for (const token of [
   '.phone-frame .image-sec .gallery-arrows button',
   '.public-landing-viewport .image-sec .gallery-arrows button',
@@ -86,6 +88,16 @@ for (const token of [
   assert(galleryCss.includes(token), `gallery touch contract missing ${token}`);
 }
 
+for (const token of [
+  'GALLERY_CONTROL_SELECTOR',
+  'isGalleryControlTarget(event.target)',
+  'setPointerCapture?.(event.pointerId)',
+  'aria-label={`이미지 ${index + 1}`}',
+]) {
+  assert(mediaRenderer.includes(token), `gallery renderer pointer contract missing ${token}`);
+}
+assert(mediaRenderer.indexOf('isGalleryControlTarget(event.target)') < mediaRenderer.indexOf('setPointerCapture?.(event.pointerId)'), 'interactive gallery controls must be excluded before pointer capture starts');
+
 assert(!browserScript.includes('captureBeyondViewport: true'), 'mobile screenshots must stay viewport-bounded to keep evidence readable');
 assert(!browserScript.includes('setInterval(() => process.exit'), 'browser regression must not hide hangs with a forced success exit');
 
@@ -95,6 +107,7 @@ console.log(JSON.stringify({
   templates: 3,
   viewports: [360, 390, 430],
   galleryTouchTargetPx: 44,
+  galleryControlsOutsideSwipeCapture: true,
   releaseBlocking: true,
   previewPublicParityRequired: true,
 }, null, 2));
