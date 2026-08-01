@@ -18,6 +18,8 @@
     "page:save:qa": "node scripts/page-save-identity-quality-check.mjs",
     "account:page-limit:qa": "node scripts/account-page-limit-quality-check.mjs",
     "admin:audit:qa": "node scripts/admin-audit-quality-check.mjs",
+    "admin:audit:live": "node scripts/admin-audit-production-check.mjs",
+    "admin:audit:production:contract:qa": "node scripts/admin-audit-production-contract-check.mjs",
     "page:draft:qa": "node scripts/page-draft-recovery-quality-check.mjs",
     "page:operation:isolation:qa": "node scripts/page-operation-isolation-quality-check.mjs",
     "image:upload:qa": "node scripts/image-upload-optimization-quality-check.mjs",
