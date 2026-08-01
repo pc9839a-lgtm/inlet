@@ -2,13 +2,15 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(path, 'utf8');
-const [browserScript, workflow, packageJsonSource, qaAll, templates, parityCheck] = await Promise.all([
+const [browserScript, workflow, packageJsonSource, qaAll, templates, parityCheck, rendererCss, galleryCss] = await Promise.all([
   read('scripts/template-mobile-browser-regression-check.mjs'),
   read('.github/workflows/qa.yml'),
   read('package.json'),
   read('scripts/qa-all.mjs'),
   read('src/templates/landingTemplates.js'),
   read('scripts/preview-public-parity-quality-check.mjs'),
+  read('src/preview/LandingRenderer.css'),
+  read('src/styles/preview-gallery-mobile-contract.css'),
 ]);
 const packageJson = JSON.parse(packageJsonSource);
 
@@ -70,6 +72,20 @@ for (const token of [
   assert(parityCheck.includes(token), `preview/public parity contract missing ${token}`);
 }
 
+assert(rendererCss.includes("@import '../styles/preview-gallery-mobile-contract.css';"), 'LandingRenderer must import the gallery mobile contract after runtime contracts');
+for (const token of [
+  '.phone-frame .image-sec .gallery-arrows button',
+  '.public-landing-viewport .image-sec .gallery-arrows button',
+  'width: 44px !important',
+  'min-width: 44px !important',
+  'height: 44px !important',
+  'min-height: 44px !important',
+  'touch-action: manipulation !important',
+  ':focus-visible',
+]) {
+  assert(galleryCss.includes(token), `gallery touch contract missing ${token}`);
+}
+
 assert(!browserScript.includes('captureBeyondViewport: true'), 'mobile screenshots must stay viewport-bounded to keep evidence readable');
 assert(!browserScript.includes('setInterval(() => process.exit'), 'browser regression must not hide hangs with a forced success exit');
 
@@ -78,6 +94,7 @@ console.log(JSON.stringify({
   check: 'template-mobile-browser-regression-contract',
   templates: 3,
   viewports: [360, 390, 430],
+  galleryTouchTargetPx: 44,
   releaseBlocking: true,
   previewPublicParityRequired: true,
 }, null, 2));
