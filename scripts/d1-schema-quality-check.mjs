@@ -9,6 +9,7 @@ const leadDedupeMigration = await readFile('migrations/0002_lead_dedupe_fields.s
 const eventDimensionsMigration = await readFile('migrations/0003_event_dimensions.sql', 'utf8');
 const blockedLeadMigration = await readFile('migrations/0004_lead_blocked_submissions.sql', 'utf8');
 const authEmailMigration = await readFile('migrations/0005_auth_email_verifications.sql', 'utf8');
+const pageDomainMigration = await readFile('migrations/0006_page_domains.sql', 'utf8');
 const adapter = await readFile('server/storage/d1Adapter.mjs', 'utf8');
 const runtimeAdapter = await readFile('server/storage/runtimeAdapter.mjs', 'utf8');
 const wrangler = await readFile('wrangler.jsonc', 'utf8');
@@ -138,6 +139,19 @@ for (const token of [
 }
 
 for (const token of [
+  'CREATE TABLE IF NOT EXISTS page_domains',
+  'UNIQUE(page_id)',
+  'idx_page_domains_hostname_owner',
+  "status <> 'disconnected'",
+  'idx_page_domains_project_status',
+  'idx_page_domains_status_checked',
+  "ssl_status TEXT NOT NULL DEFAULT 'pending'",
+  "status IN ('ready', 'pending', 'verifying', 'active', 'failed', 'disconnected')",
+]) {
+  assert(pageDomainMigration.includes(token), `D1 page domain migration missing token: ${token}`);
+}
+
+for (const token of [
   'isD1MissingLeadDedupeColumnError',
   'isD1MissingEventDimensionColumnError',
   'upsertD1LeadLegacy',
@@ -177,7 +191,7 @@ assert(
 
 console.log(JSON.stringify({
   ok: true,
-  tables: requiredTables.length,
+  tables: requiredTables.length + 1,
   binding: 'DB',
   database: 'inlet-prod',
   migration: '0001_inlet_core.sql',
@@ -185,6 +199,7 @@ console.log(JSON.stringify({
   eventDimensionsMigration: '0003_event_dimensions.sql',
   blockedLeadMigration: '0004_lead_blocked_submissions.sql',
   authEmailMigration: '0005_auth_email_verifications.sql',
+  pageDomainMigration: '0006_page_domains.sql',
   adapter: 'server/storage/d1Adapter.mjs',
   runtimeAdapter: 'server/storage/runtimeAdapter.mjs',
 }, null, 2));
