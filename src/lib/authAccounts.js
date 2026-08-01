@@ -16,7 +16,7 @@ export function authAccountErrorMessage(error) {
   const code = error?.details?.code || error?.details?.errorCode || '';
   const message = String(error?.message || error || '');
   const byCode = {
-    AUTH_EMAIL_DUPLICATE: '이미 가입된 이메일입니다. 다른 이메일을 입력해주세요.',
+    AUTH_EMAIL_DUPLICATE: '이미 가입된 이메일입니다. 로그인해주세요.',
     AUTH_EMAIL_UNCHANGED: '현재 이메일과 다른 이메일을 입력해주세요.',
     AUTH_PHONE_DUPLICATE: '이미 가입된 휴대폰번호입니다. 다른 번호를 확인해주세요.',
     AUTH_PHONE_REQUIRED: '휴대폰번호를 입력해주세요.',
