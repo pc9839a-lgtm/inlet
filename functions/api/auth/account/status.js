@@ -1,5 +1,6 @@
 import { upsertD1Account } from '../../../../server/storage/d1Adapter.mjs';
 import { assertD1, handleApiError, jsonResponse, optionsResponse, readJson } from '../../_shared.js';
+import { writeAuditLog } from '../../_audit.js';
 import { AUTH_METHODS, assertAccountActive, authError, authUserPublic, getSessionAccount, normalizeAccountStatus } from '../_auth.js';
 
 export async function onRequest({ request, env }) {
@@ -10,6 +11,7 @@ export async function onRequest({ request, env }) {
     const input = await readJson(request);
     const { user } = await getSessionAccount(request, env, input);
     assertAccountActive(user, 'update account status');
+    const previousStatus = normalizeAccountStatus(user.status || 'active');
     const status = normalizeAccountStatus(input.status || input.accountStatus || '');
     if (!['suspended', 'deleted_pending_retention'].includes(status)) {
       throw authError('Only suspended or deleted-pending-retention status can be set through this endpoint.', 400, { code: 'AUTH_ACCOUNT_STATUS_INVALID' });
@@ -21,6 +23,15 @@ export async function onRequest({ request, env }) {
       ...(status === 'suspended' ? { suspendedAt: now } : {}),
       ...(status === 'deleted_pending_retention' ? { deletedAt: now } : {}),
       updatedAt: now,
+    });
+    await writeAuditLog({
+      request,
+      env,
+      actorAccountId: user.ownerId || user.id || '',
+      action: 'account.status_changed',
+      targetType: 'account',
+      targetId: user.ownerId || user.id || '',
+      metadata: { previousStatus, nextStatus: status },
     });
     return jsonResponse(request, env, 200, { ok: true, user: authUserPublic(updated), session: '' }, AUTH_METHODS);
   } catch (error) {
