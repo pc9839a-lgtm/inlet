@@ -8,6 +8,7 @@ export default function SettingsPanelBody({
   canDuplicatePage,
   canManageProjectUsers,
   clientAdminMode,
+  domainSettings,
   duplicateSettings,
   drafts,
   integrations,
@@ -39,6 +40,7 @@ export default function SettingsPanelBody({
         authUser={authUser}
         canManageProjectUsers={canManageProjectUsers}
         clientAdminMode={clientAdminMode}
+        domainSettings={domainSettings}
         drafts={drafts}
         managerSettings={managerSettings}
         onAccountUpdate={onAccountUpdate}
