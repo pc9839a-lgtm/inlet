@@ -34,13 +34,11 @@ export async function onRequest({ request, env }) {
     const project = projectFromRequest(new URL(request.url), body, request);
     await authorizeProject(request, env, project, { write: true, tab: 'settings' });
 
-    const domain = normalizePageDomainConfig({
+    const rawDomain = {
       domainType: 'custom',
       customDomain: body.customDomain || body.hostname || '',
-      domainStatus: 'pending',
-      slug: body.slug || project.slug || 'my-page',
-    });
-    const issues = pageDomainIssues(domain);
+    };
+    const issues = pageDomainIssues(rawDomain);
     if (issues.length) {
       return jsonResponse(request, env, 400, {
         ok: false,
@@ -51,6 +49,11 @@ export async function onRequest({ request, env }) {
         issues,
       }, METHODS);
     }
+    const domain = normalizePageDomainConfig({
+      ...rawDomain,
+      domainStatus: 'pending',
+      slug: body.slug || project.slug || 'my-page',
+    });
 
     const db = assertD1(env);
     const pageId = String(body.pageId || '').trim();
