@@ -1,6 +1,6 @@
 # Pagero Remaining Patches
 
-Updated: 2026-08-01 12:29 KST
+Updated: 2026-08-01 12:37 KST
 
 Repository: `pc9839a-lgtm/inlet`
 
@@ -10,30 +10,33 @@ Current candidate: PR `#41` / `agent/custom-domain-foundation`
 
 Current execution mode: parallel patching is active
 
-This document must be updated at the end of every patch. Code completion, QA
-completion, merge, deployment, and production verification are separate states.
-A patch is not fully complete until the state written here matches reality.
+This document must be updated at the end of every patch. Code completion, QA completion, merge, deployment, and production verification are separate states. A patch is not fully complete until the state written here matches reality.
 
-## Current Patch Checkpoint
+## Parallel Worker Split
 
-### Custom-domain workflow
+1. Worker 1: account, auth, email verification, sessions, member data
+2. Worker 2: lead intake, duplicate policy, inbox, stats, D1 scale, CSV
+3. Worker 3: personal-rehabilitation, mobile-wedding-invitation, and real-estate-presale templates
+4. Worker 4: Settings manager permissions, ownership transfer, page duplication URL flow
+5. Worker 5: QA, deployment, live integration readiness, docs and ops
+
+## Current Patch Checkpoint — Custom Domain
 
 - Code: complete on PR `#41`.
 - Targeted QA: complete.
-- Full offline QA: complete.
-- Landing browser regression: complete.
-- Authenticated editor browser regression: complete.
-- Form and reservation browser regression: complete.
+- Full offline QA: complete before the closeout-document edit.
+- Landing browser regression: complete before the closeout-document edit.
+- Authenticated editor browser regression: complete before the closeout-document edit.
+- Form and reservation browser regression: complete before the closeout-document edit.
 - Pull request: open and ready for review.
 - Merge to `main`: not completed.
 - Production D1 migration: not completed.
 - Production Cloudflare environment configuration: not completed.
 - Production deployment: not completed.
 - Real customer-domain smoke test: not completed.
+- Current closeout-document QA: rerunning after compatibility-contract restoration.
 
-The custom-domain implementation must therefore be described as **code and QA
-complete, operational rollout remaining**. Do not describe it as production
-complete.
+The custom-domain implementation is **code and feature QA complete, operational rollout remaining**. Do not describe it as production complete.
 
 ## Source Of Truth Order
 
@@ -62,11 +65,9 @@ complete.
 
 ## Production Home Is Frozen
 
-Unless the owner explicitly requests a production-home change, do not modify the
-visible design, copy, section order, menu, footer, hero, animation, login/start
-behavior, or responsive result of `https://pagero.kr/`.
+Unless the owner explicitly requests a production-home change, do not modify the visible design, copy, section order, menu, footer, hero, animation, login/start behavior, or responsive result of `https://pagero.kr/`.
 
-Protected scope includes:
+Protected scope:
 
 - `functions/index.js`
 - `index.html`
@@ -78,18 +79,16 @@ Protected scope includes:
 - `public/c63-life-bridge.css`
 - root/static routing inside `server/index.mjs`
 
-The custom-domain patch may add hostname-aware middleware routing, but it must
-not change the `pagero.kr`, `pages.dev`, or `call.pagero.kr` production-home
-result.
+Hostname-aware middleware may route customer domains, but it must not change the `pagero.kr`, `pages.dev`, or `call.pagero.kr` result.
 
 ## General Account Page Limit Must Stay Enforced
 
-- A general account may own and create one active landing page only.
-- Platform-master accounts may create unlimited landing pages.
-- Enforcement must remain in frontend controls and the server/API boundary.
-- Forged role strings must not bypass the limit.
-- Existing pages must remain editable and publishable.
-- Archived or deleted projects must not create a false active-page count.
+- General account: one active landing page.
+- Platform-master account: unlimited pages.
+- Frontend and API enforcement must both remain.
+- Forged roles must not bypass the policy.
+- Existing pages remain editable and publishable.
+- Archived or deleted projects must not create a false count.
 - Default platform-master emails and `INLET_PLATFORM_MASTER_EMAILS` are the only approved bypass source.
 
 ## Paid Plans Are Locked To Two
@@ -97,46 +96,30 @@ result.
 - `classic`: 클래식, 월 3,500원
 - `pro`: 프로, 월 5,500원
 
-The old 3,300원 / 6,600원 / 9,900원 direction is discarded. Do not add a third
-paid plan. Plan feature entitlements remain undecided until the owner explicitly
-defines them.
+The old 3,300원 / 6,600원 / 9,900원 direction is discarded. Do not add a third paid plan. Do not invent plan entitlements before owner approval.
 
-## Page Sharing Must Stay Separate From Bottom Bar
+## Sharing And Deployment
 
-- Global sharing state uses `page.share`.
-- Public and preview sharing use the independent share-button flow.
-- Do not restore `bottombar.s.shareEnabled`.
+- Global sharing uses `page.share` and remains separate from the bottom bar.
 - Share URLs must use the public page URL, not editor or dashboard URLs.
-
-## Deployment Rules
-
 - Never force-push `main`.
 - Do not use destructive reset, clean, or restore operations to construct a release.
-- Do not mix unrelated refactors into a functional patch.
+- Do not mix unrelated refactors into a patch.
 - Run targeted QA and the full suite before deployment.
-- Verify desktop and 360px, 390px, and 430px visible behavior when UI changes.
 - Production deployment requires explicit owner approval.
 
 # Completed Baseline — Reopen Only After Reproducing A Regression
 
-## Account And Page Policy
+## Account, Editor, And Landing Baseline
 
-- General-account one-page policy model.
-- Platform-master policy and session persistence.
-- Server-side `ACCOUNT_PAGE_LIMIT_REACHED` enforcement.
-- Frontend creation-control lock state.
-- Existing-page replay and update allowance.
-- Dedicated and full-suite regression QA.
-
-## Editor And Public Landing Baseline
-
-- Top navigation supports one through eight menu items.
-- Native sharing and clipboard fallback.
-- Four persisted share positions.
+- General-account one-page policy and platform-master bypass.
+- `ACCOUNT_PAGE_LIMIT_REACHED` server enforcement and frontend creation lock.
+- Existing-page replay, save, preview, and publish allowance.
+- Top navigation for one through eight items.
+- Native sharing and clipboard fallback with four persisted positions.
 - Form-focus collision handling.
-- Three timer layouts and bottom-timer inheritance.
-- Shared countdown clock.
-- Fixed UI collision and viewport regression coverage.
+- Three timer layouts, bottom-timer inheritance, and shared countdown clock.
+- Fixed UI collision regression coverage.
 - Account-scoped draft recovery and delayed-save isolation.
 - Image orientation, resize, compression, and deduplication.
 - Consultation and reservation browser regression.
@@ -145,198 +128,149 @@ defines them.
 
 ## Custom-Domain Code And QA Baseline — PR #41
 
-The following implementation exists on PR `#41` and passed the required QA:
-
 - `page_domains` D1 ownership and lifecycle schema.
-- Server-side hostname validation and duplicate ownership protection.
-- New connections forced to trusted server state instead of client-forged active state.
-- Cloudflare Pages custom-domain lookup, registration, and deletion client.
+- Server hostname validation and duplicate ownership protection.
+- Client-forged active and SSL state rejection.
+- Cloudflare Pages domain lookup, registration, and deletion client.
 - DNS JSON CNAME inspection.
-- Mapping of Cloudflare provider, verification, and SSL status.
-- D1 domain state and `pages.page_json` synchronization.
-- Page settings UI for default and personal domain selection.
+- Provider, verification, and SSL state mapping.
+- D1 and `pages.page_json` state synchronization.
+- Default-address and personal-domain settings UI.
 - Manual `연결 상태 확인` action.
-- Detach flow when returning to the default Pagero address.
-- Active custom-host `/` routing to the owning customer landing page.
-- `noindex` 404 response for unregistered or inactive custom hosts.
+- Detach when returning to the default Pagero address.
+- Active customer-host `/` routing to the owning landing page.
+- `noindex` 404 for unregistered or inactive customer hosts.
 - Existing Pagero, Pages preview, CallTag, API, and static-asset routing preservation.
 - Dedicated `page:domain:qa` registered in `qa:all`.
 
-This baseline does not mean the feature is deployed. The rollout items below
-remain active.
+This baseline exists on PR `#41`; it is not yet production-deployed.
 
 # Active Remaining Patches
 
-Proceed in this order unless the owner explicitly changes priority.
-
 ## Priority 1 — Custom-Domain Operational Rollout
 
-### Required before merge or production deployment
+Before merge or deployment:
 
-1. Apply `migrations/0006_page_domains.sql` to the production D1 database.
-2. Confirm the migration against the actual production schema and record rollback steps.
+1. Apply `migrations/0006_page_domains.sql` to production D1.
+2. Verify the actual schema and write rollback steps.
 3. Set `INLET_CLOUDFLARE_ACCOUNT_ID`.
 4. Set `INLET_CLOUDFLARE_PAGES_PROJECT`.
-5. Set `INLET_CLOUDFLARE_API_TOKEN` with the minimum required Pages custom-domain edit permission.
-6. Set `INLET_CUSTOM_DOMAIN_CNAME_TARGET` to the actual Pages target hostname.
-7. Keep all provider credentials server-only.
-8. Merge PR `#41` only after the migration and environment-value order is safe.
+5. Set the minimum-permission Pages Edit token as `INLET_CLOUDFLARE_API_TOKEN`.
+6. Set the real Pages target as `INLET_CUSTOM_DOMAIN_CNAME_TARGET`.
+7. Keep credentials server-only.
+8. Merge PR `#41` only after migration and environment ordering is safe.
 9. Deploy only after explicit owner approval.
 
-### Required live verification
+Live verification:
 
-- Connect a real subdomain and confirm `pending → verifying → active`.
-- Confirm Cloudflare SSL reaches active state.
-- Confirm the custom-domain root displays the correct customer landing, not the Pagero home.
-- Confirm forms, reservations, tracking, and public assets work on the custom host.
-- Confirm an inactive or unowned host returns the `noindex` 404 page.
-- Confirm switching back to the Pagero address detaches the Cloudflare domain.
-- Confirm reconnecting the same domain works after detach.
-- Confirm another page cannot claim an already connected hostname.
-- Confirm apex/root-domain behavior where CNAME flattening is used.
-- Confirm public URL, share URL, preview URL, and canonical behavior do not diverge.
+- Real subdomain reaches `pending → verifying → active`.
+- SSL reaches active.
+- Customer domain root shows the correct landing, not Pagero home.
+- Forms, reservations, tracking, and assets work on the customer host.
+- Inactive or unowned hosts return the `noindex` 404.
+- Returning to the Pagero address detaches the provider domain.
+- Reconnection works after detach.
+- Another page cannot claim an occupied hostname.
+- Apex/root-domain CNAME-flattening behavior works.
+- Public, share, preview, and canonical URLs remain consistent.
 
-### Still-unimplemented operational follow-ups
+Still unimplemented:
 
-- Operator list for failed or long-stuck domain verification.
-- Automatic scheduled recheck for domains left in pending or verifying state.
-- Retry and escalation policy for provider timeout or transient failure.
-- Support runbook for detach, reconnect, rollback, and incorrect DNS records.
+- Operator list for failed or long-stuck domain checks.
+- Scheduled recheck for pending or verifying domains.
+- Provider timeout retry and escalation policy.
+- Support runbook for detach, reconnect, rollback, and bad DNS.
 
 ## Priority 2 — One-Page Policy Production Verification
 
-The implementation is complete, but production evidence must still be recorded.
-
-- New general account creates its first page.
-- General account with one active page cannot create a second from the dashboard.
+- New general account creates the first page.
+- A second dashboard creation is blocked.
 - Direct API creation returns `409 / ACCOUNT_PAGE_LIMIT_REACHED`.
 - Existing page save, revision, restore, preview, and publish remain functional.
-- Platform-master account creates multiple pages.
-- Platform-master state survives logout/login and session refresh.
+- Platform-master creates multiple pages and survives session refresh.
 - Google-login accounts follow the same policy.
 - Archived/deleted projects do not create a false count.
 - Manager or member paths cannot create a second owner page.
 
-Do not weaken the server limit to fix a frontend display issue.
-
 ## Priority 3 — Admin And Audit Completeness Review
 
-Inspect the current implementation first and patch only confirmed gaps.
+Patch only confirmed gaps after inspecting current code:
 
-- Signup and verification audit rows.
-- Classified login failures without secret exposure.
-- Password, name, email, and phone changes.
+- Signup, verification, classified login failure, and profile/password changes.
 - Account suspension, restoration, and deletion-state changes.
 - Manager invite, acceptance, permission change, and removal.
-- Ownership-transfer request through completion.
-- Project pause, archive, and restore actions.
+- Ownership-transfer lifecycle.
+- Project pause, archive, and restore.
 - Platform-master manual actions.
-- Search and filter by account, project, action, actor, and date.
-- Protection against silent audit deletion through normal operator actions.
+- Search by account, project, action, actor, and date.
+- Protection against silent audit deletion.
 
-The internal admin surface remains route-only and must not appear in public
-workspace navigation.
+The internal admin surface remains route-only.
 
 ## Priority 4 — Live Integration Production Verification
 
-Do not reimplement foundations already present.
+AWS SES:
 
-### AWS SES
+- Domain identity, DKIM, SPF, DMARC, and production access.
+- Real verification, reset, invite, and ownership-transfer messages.
+- Generic user errors and classified internal errors.
 
-- Domain identity, DKIM, SPF, and DMARC.
-- Production access if the account is sandboxed.
-- Real signup verification, password reset, manager invite, and ownership-transfer email.
-- Generic user-facing errors and classified internal errors.
+Google Sheets:
 
-### Google Sheets
-
-- Production OAuth redirect URI.
-- Token refresh after expiry.
+- Production OAuth redirect URI and token refresh.
 - Real lead-row delivery with submitted-field headers.
 - Disconnect immediately stops future delivery.
 - Retry and failed-delivery visibility.
 
-### Tracking and live checks
-
-- Real conversion event receipt where configured.
-- Missing credentials reported as `skipped-live`, not false completion.
-- No provider credentials, tokens, or raw internal errors exposed to the browser.
+Also verify real conversion events and preserve `skipped-live` for missing credentials. Never expose provider secrets or raw errors.
 
 ## Priority 5 — Three Template Mobile Final Regression
 
-Keep exactly these templates:
+Keep exactly:
 
 1. Personal rehabilitation consultation.
 2. Mobile wedding invitation.
 3. Real estate presale.
 
-Verify at 360px, 390px, and 430px:
-
-- Finished first viewport, not a builder demo.
-- No instructional or placeholder copy in public output.
-- Every visible section remains editable through existing blocks.
-- No overlap among navigation, hero, share, form, timer, and bottom fixed UI.
-- Mobile keyboard does not hide fields or submission controls.
-- Gallery, map, FAQ, and form interactions remain usable.
-- Preview and public output remain aligned.
-- Effects remain intentional and motion-reduction aware.
-
-Personal-rehabilitation copy must not guarantee approval or legal outcome.
+Verify at 360px, 390px, and 430px: finished first viewport, no builder instructions, editable visible blocks, no fixed-UI overlap, keyboard-safe forms, usable gallery/map/FAQ/forms, preview/public parity, and intentional motion. Personal-rehabilitation copy must not guarantee approval or legal outcome.
 
 ## Priority 6 — Product And Operations Hardening
 
-- D1 backup and migration rollback procedure.
+- D1 backup and migration rollback.
 - Current operator release checklist.
-- Retention and cleanup policy for logs, blocked submissions, delivery logs, and audit rows.
+- Retention and cleanup policy for logs and audit data.
 - Large-data inbox and stats query verification.
-- Abuse and rate-limit visibility without exposing raw IP addresses.
+- Abuse visibility without raw IP exposure.
 - Accessibility and keyboard regression for account, domain, and admin UI.
 - Previous-deployment rollback procedure.
 
-# Final Phase — Plans, Billing, And Subscription
+# Final Phase — Plans, Payment, And Subscription
 
 Start only after Priorities 1 through 6 are stable.
 
-Exactly two paid products remain approved:
+Approved products:
 
 - `classic`: 클래식, 월 3,500원
 - `pro`: 프로, 월 5,500원
 
-Before checkout implementation, the owner must define the difference between
-Classic and Pro. Do not invent limits for pages, duplication, leads, statistics,
-managers, domains, tracking, or integrations.
-
-Required architecture after entitlements are approved:
-
-- Server-side entitlement enforcement.
-- Payment-provider abstraction.
-- Owner-selected provider integration.
-- Checkout and billing-key/card registration.
-- Renewal and cancel-at-period-end.
-- Payment-failure grace period.
-- Webhook signature verification and idempotency.
-- Payment history and receipt links.
-- Admin override with audit logging.
+The owner must define the Classic/Pro entitlement difference before checkout work. Then implement server entitlements, provider abstraction, checkout/billing key, renewal, period-end cancellation, grace period, signed/idempotent webhooks, payment history, receipts, and audited admin override.
 
 # Mandatory Closeout For Every Future Patch
 
-Before the final user response for every patch:
+Before the final user response:
 
-1. Update the timestamp and current branch, PR, or commit in this document.
-2. Record code, QA, merge, deployment, and production-verification states separately.
-3. Move completed implementation into the completed baseline.
+1. Update timestamp and branch, PR, or commit.
+2. Record code, QA, merge, deployment, and production-verification separately.
+3. Move completed implementation into the baseline.
 4. Remove completed items from active priorities.
 5. Reorder the remaining priorities.
-6. Record exact blockers, required owner decisions, migrations, and environment values.
-7. Commit this document in the same branch or PR as the patch.
+6. Record blockers, owner decisions, migrations, and environment values.
+7. Commit this document in the same branch or PR.
 8. Include the refreshed remaining-patch list in the final response.
 
-A final response that says a patch is complete without this document update is
-an incomplete patch closeout.
+A patch reported complete without this update is an incomplete closeout.
 
 # Required Verification Commands
-
-Use the relevant feature QA and the full release checks before production:
 
 ```bash
 npm run qa:all
@@ -360,5 +294,4 @@ npm run topnav:balance:qa
 npm run live:qa
 ```
 
-A skipped live check must identify the exact missing credential or external
-approval. It must never be reported as completed live verification.
+A skipped live check must identify the exact missing credential or external approval and must not be reported as completed live verification.
