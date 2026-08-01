@@ -1,6 +1,6 @@
 # Pagero Remaining Patches
 
-Updated: 2026-08-01 23:31 KST
+Updated: 2026-08-01 23:36 KST
 
 Repository: `pc9839a-lgtm/inlet`
 
@@ -105,7 +105,7 @@ Code completion, QA completion, merge, deployment, and production verification a
 
 ## QA Complete
 
-Implementation commit `21871a9af227672ded641de19a0da5f1db086d37` passed workflow run `30703735200`:
+Final patch head `5841d481928da1df9cdbd159618a4ae6ed02e9b2` passed workflow run `30704124518`:
 
 - targeted administrator audit QA
 - authentication and authentication-email QA
@@ -116,13 +116,12 @@ Implementation commit `21871a9af227672ded641de19a0da5f1db086d37` passed workflow
 - audit-retention limits and secret QA
 - route-only operator console QA
 - Pages Functions and API security QA
+- integration documentation contract QA
 - full offline QA
 - production build and deployment artifact build
 - public landing real-browser regression
 - authenticated editor real-browser regression
 - consultation and reservation real-browser regression
-
-Documentation-only follow-up commits must keep the same full QA green before closeout.
 
 ## Not Complete
 
