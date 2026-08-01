@@ -3,6 +3,7 @@ import { webcrypto } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { sanitizeAuditMetadata, writeAuditLog } from '../functions/api/_audit.js';
 import { isPlatformMasterIdentity } from '../functions/api/_platformMaster.js';
+import { writePageManagerAuditChanges } from '../functions/api/pages/_pageAudit.js';
 
 if (!globalThis.crypto) globalThis.crypto = webcrypto;
 
@@ -42,6 +43,7 @@ const fakeDb = {
   },
 };
 
+const auditEnv = { DB: fakeDb, INLET_AUDIT_HASH_SECRET: 'audit-qa-secret' };
 const request = new Request('https://pagero.kr/api/auth/login', {
   method: 'POST',
   headers: {
@@ -51,7 +53,7 @@ const request = new Request('https://pagero.kr/api/auth/login', {
 });
 await writeAuditLog({
   request,
-  env: { DB: fakeDb, INLET_AUDIT_HASH_SECRET: 'audit-qa-secret' },
+  env: auditEnv,
   actorAccountId: 'user-audit',
   action: 'account.profile_changed',
   targetType: 'account',
@@ -67,6 +69,37 @@ assert.notEqual(writes[0][6], '203.0.113.25');
 assert.notEqual(writes[0][7], 'Audit QA Browser/1.0');
 assert.equal(JSON.parse(writes[0][8]).password, '[redacted]');
 
+await writePageManagerAuditChanges({
+  request,
+  env: auditEnv,
+  identity: { ownerId: 'owner-audit' },
+  projectId: 'project-audit',
+  previousPage: {
+    ownership: {
+      managers: [
+        { id: 'manager-a', email: 'manager-a@example.com', status: 'active', access: { edit: { read: true, write: false } } },
+        { id: 'manager-b', email: 'manager-b@example.com', status: 'active', access: { stats: { read: true, write: false } } },
+      ],
+    },
+  },
+  nextPage: {
+    ownership: {
+      managers: [
+        { id: 'manager-a', email: 'manager-a@example.com', status: 'disabled', access: { edit: { read: true, write: true } } },
+        { id: 'manager-c', email: 'manager-c@example.com', status: 'active', access: { inbox: { read: true, write: false } } },
+      ],
+    },
+  },
+});
+const managerActions = writes.slice(1).map((values) => values[3]);
+assert.deepEqual(managerActions.sort(), [
+  'manager.member_added',
+  'manager.permissions_changed',
+  'manager.removed',
+  'manager.status_changed',
+].sort());
+assert.doesNotMatch(JSON.stringify(writes), /manager-[abc]@example\.com/);
+
 assert.equal(isPlatformMasterIdentity({ email: 'user@example.com', role: 'superadmin' }), false);
 assert.equal(isPlatformMasterIdentity({ email: 'pc9839a@naver.com', role: 'manager' }), true);
 
@@ -80,6 +113,12 @@ const [
   verificationSource,
   accountSource,
   statusSource,
+  inviteRouteSource,
+  inviteHelperSource,
+  ownershipRequestSource,
+  ownershipAdminSource,
+  pageAuditSource,
+  pageRouteSource,
 ] = await Promise.all([
   read('functions/api/admin/_auth.js'),
   read('functions/api/admin/_middleware.js'),
@@ -90,6 +129,12 @@ const [
   read('functions/api/auth/email-verification.js'),
   read('functions/api/auth/account.js'),
   read('functions/api/auth/account/status.js'),
+  read('functions/api/projects/invites.js'),
+  read('functions/api/projects/_invites.js'),
+  read('functions/api/projects/ownership-transfer.js'),
+  read('functions/api/admin/ownership-transfer/[id].js'),
+  read('functions/api/pages/_pageAudit.js'),
+  read('functions/api/pages/[slug].js'),
 ]);
 
 assert.match(adminAuth, /isPlatformMasterIdentity/);
@@ -124,10 +169,17 @@ for (const [name, source, actions] of [
   ['verification', verificationSource, ['auth.email_verification_requested', 'auth.email_verification_request_failed']],
   ['account', accountSource, ['account.profile_changed', 'changedFields']],
   ['status', statusSource, ['account.status_changed', 'previousStatus', 'nextStatus']],
+  ['invite route', inviteRouteSource, ['manager.invite_created']],
+  ['invite acceptance', inviteHelperSource, ['manager.invite_accepted']],
+  ['ownership request', ownershipRequestSource, ['ownership_transfer.requested']],
+  ['ownership admin', ownershipAdminSource, ['ownership_transfer.approved', 'ownership_transfer.rejected', 'ownership_transfer.completed', 'ownership_transfer.canceled']],
+  ['manager page diff', pageAuditSource, ['manager.member_added', 'manager.permissions_changed', 'manager.status_changed', 'manager.removed']],
+  ['project archive', pageRouteSource, ['project.archived', 'writePageManagerAuditChanges']],
 ]) {
   for (const action of actions) assert(source.includes(action), `${name} audit source missing ${action}`);
   assert.doesNotMatch(source, /metadata:\s*\{[^}]*password\s*:/s, `${name} audit metadata must not store passwords`);
 }
+assert.doesNotMatch(pageAuditSource, /metadata:\s*\{[^}]*email\s*:/s);
 
 console.log(JSON.stringify({
   ok: true,
@@ -136,5 +188,6 @@ console.log(JSON.stringify({
   rawIpExposed: false,
   rawUserAgentExposed: false,
   auditDeleteEndpoint: false,
-  auditedFlows: 5,
+  auditedFlows: 11,
+  managerDiffRuntimeActions: managerActions.length,
 }, null, 2));
