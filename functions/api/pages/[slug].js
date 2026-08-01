@@ -1,10 +1,12 @@
 import { decodeD1Page, getD1PageBySlug, getD1ProjectById, upsertD1Page } from '../../../server/storage/d1Adapter.mjs';
+import { prepareD1PageDomainSave, syncD1PageDomain } from '../../../server/pageDomainStore.mjs';
 import {
   assertExpectedPageVersion,
   assertTargetSlugAvailable,
   assertUpdatePageIdentity,
   pageSaveIdentity,
 } from '../../../server/pageSavePolicy.mjs';
+import { normalizePageDomainConfig } from '../../../src/lib/pageDomains.js';
 import { assertD1, authorizeProject, ensureD1ProjectShell, handleApiError, jsonResponse, optionsResponse, projectFromRequest, readJson, sessionIdentity } from '../_shared.js';
 
 const METHODS = 'GET, POST, DELETE, OPTIONS';
@@ -12,6 +14,7 @@ const PUBLIC_PAGE_CACHE_CONTROL = 'no-store';
 const PAGE_SAVE_CONFLICT_CODES = Object.freeze({
   slug: 'PAGE_SLUG_CONFLICT',
   revision: 'PAGE_REVISION_CONFLICT',
+  domain: 'DOMAIN_ALREADY_CONNECTED',
 });
 const PUBLIC_PAGE_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -222,6 +225,14 @@ export async function onRequest({ request, env, params }) {
         SET status = 'archived', updated_at = ?
         WHERE id = ?
       `).bind(archivedAt, project.projectId).run();
+      await db.prepare(`
+        UPDATE page_domains
+        SET status = 'disconnected',
+            ssl_status = 'not_applicable',
+            disconnected_at = ?,
+            updated_at = ?
+        WHERE page_id = ?
+      `).bind(archivedAt, archivedAt, page.id || '').run();
 
       return jsonResponse(request, env, 200, {
         ok: true,
@@ -294,13 +305,25 @@ export async function onRequest({ request, env, params }) {
         ownerId: project.ownerId || incoming.ownerId || '',
         slug,
       }, project, session, fallbackEmail);
-      const saved = await upsertD1Page(db, pageForSave, {
+      const preparedPage = await prepareD1PageDomainSave(db, pageForSave, {
+        pageId: currentById?.id || saveIdentity.pageId || '',
+        projectId: project.projectId,
+      });
+      const saved = await upsertD1Page(db, preparedPage, {
         pageId: currentById?.id || saveIdentity.pageId || '',
         projectId: project.projectId,
         slug,
         createdByAccountId: session?.ownerId || project.ownerId || null,
         reason: body.reason || body.revisionReason || '',
       });
+      const savedDomain = normalizePageDomainConfig(saved);
+      const previousDomain = normalizePageDomainConfig(currentById || {});
+      if (savedDomain.domainType === 'custom' || previousDomain.domainType === 'custom') {
+        await syncD1PageDomain(db, saved, {
+          pageId: saved.id,
+          projectId: project.projectId,
+        });
+      }
       return jsonResponse(request, env, 200, {
         ok: true,
         replayed: false,
