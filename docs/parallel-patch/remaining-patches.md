@@ -46,7 +46,7 @@ Code completion, QA completion, merge, deployment, and production verification a
 - Shared platform-master authorization for `/api/admin/*`.
 - Administrator role-string forgery blocked.
 - Secret-protected custom-domain automatic recheck preserved for PR `#41`.
-- Non-blocking account and authentication audit writes.
+- Non-blocking D1 audit writes for account, authentication, manager, ownership-transfer, and project operations.
 - Signup, login, email-verification, profile, account-status, and password-change success/failure events.
 - Passwords, verification tokens, sessions, Authorization headers, and cookies excluded from audit metadata.
 - Raw IP and User-Agent replaced with HMAC-SHA256 fingerprints.
@@ -68,7 +68,7 @@ Code completion, QA completion, merge, deployment, and production verification a
 
 ## QA Complete
 
-Implementation commit `0eb67738c19cff0c61c1b774615f849e93d4d905` passed:
+Final commit `277e0d8dafa13b6ad7d031ed85989581dda1a760` passed workflow run `30702048220`:
 
 - targeted administrator audit QA
 - password audit and metadata secrecy QA
@@ -83,8 +83,6 @@ Implementation commit `0eb67738c19cff0c61c1b774615f849e93d4d905` passed:
 - public landing real-browser regression
 - authenticated editor real-browser regression
 - consultation and reservation real-browser regression
-
-Documentation follow-up commits must keep the same suite green before closeout.
 
 ## Not Complete
 
