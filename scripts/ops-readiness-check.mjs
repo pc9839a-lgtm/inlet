@@ -8,6 +8,7 @@ const requiredDocs = [
   'docs/ops-operator-readiness-checklist.md',
   'docs/ops-live-integration-matrix.md',
   'docs/ops-deployment-cache-seo-checklist.md',
+  'docs/ops-custom-domain-runbook.md',
 ];
 
 const requiredEnvHints = [
@@ -28,6 +29,13 @@ const requiredEnvHints = [
   'INLET_AUTH_EMAIL_FROM',
   'VITE_INLET_MAP_EMBED_BASE',
   'VITE_GOOGLE_MAPS_EMBED_KEY',
+  'INLET_CLOUDFLARE_ACCOUNT_ID',
+  'INLET_CLOUDFLARE_PAGES_PROJECT',
+  'INLET_CLOUDFLARE_API_TOKEN',
+  'INLET_CUSTOM_DOMAIN_CNAME_TARGET',
+  'INLET_DOMAIN_RECHECK_SECRET',
+  'INLET_DOMAIN_RECHECK_BATCH_SIZE',
+  'INLET_DOMAIN_RECHECK_MAX_RETRIES',
 ];
 
 function assert(condition, message) {
@@ -97,6 +105,19 @@ for (const label of ['liveSummary', 'liveSummary.fail', 'liveSummary.skipped-liv
   assert(matrix.includes(label), `integration matrix missing live summary policy: ${label}`);
 }
 assert(readiness.includes('liveSummary'), 'operator checklist missing liveSummary sign-off evidence');
+
+const customDomainRunbook = await read('docs/ops-custom-domain-runbook.md');
+for (const token of [
+  '0006_page_domains.sql',
+  '0007_page_domain_operations.sql',
+  '/api/admin/domains',
+  '/api/admin/domains/recheck',
+  'PAGERO_DOMAIN_RECHECK_SECRET',
+  'Detach And Reconnect',
+  'Rollback',
+]) {
+  assert(customDomainRunbook.includes(token), `custom-domain runbook missing ${token}`);
+}
 
 console.log(JSON.stringify({
   ok: true,
