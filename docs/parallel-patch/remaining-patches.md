@@ -1,6 +1,6 @@
 # Pagero Remaining Patches
 
-Updated: 2026-08-01 22:21 KST
+Updated: 2026-08-01 23:27 KST
 
 Repository: `pc9839a-lgtm/inlet`
 
@@ -12,8 +12,6 @@ Other open candidates:
 
 - PR `#42` / `agent/account-page-limit-production-verification`
 - PR `#41` / `agent/custom-domain-foundation`
-
-Current execution mode: parallel patching is active
 
 Code completion, QA completion, merge, deployment, and production verification are separate states. Branch-only, mock-only, or `skipped-live` results are not production completion.
 
@@ -43,46 +41,86 @@ Code completion, QA completion, merge, deployment, and production verification a
 
 ## Code Complete
 
+### Administrator authorization
+
 - Shared platform-master authorization for `/api/admin/*`.
 - Administrator role-string forgery blocked.
-- Secret-protected custom-domain automatic recheck preserved for PR `#41`.
-- Non-blocking D1 audit writes for account, authentication, manager, ownership-transfer, and project operations.
-- Signup, login, email-verification, profile, account-status, and password-change success/failure events.
+- Secret-protected custom-domain recheck preserved for PR `#41`.
+- Exact-secret bypass limited to the intended recheck and audit-retention paths.
+
+### Account and authentication audit
+
+- Signup, login, email-verification, profile, account-status, password-change, and email-change success/failure events.
+- Verified email-change workflow with duplicate prevention.
+- Password accounts require the current password before email change.
+- Google accounts use the active session plus new-email verification.
+- Account ID remains stable after email change.
+- Password hash is regenerated against the new email where applicable.
+- New session issued with the new email; old email session becomes invalid.
+- Previous and new email values are stored only as HMAC-SHA256 fingerprints.
 - Passwords, verification tokens, sessions, Authorization headers, and cookies excluded from audit metadata.
 - Raw IP and User-Agent replaced with HMAC-SHA256 fingerprints.
-- `GET /api/admin/audit` search and pagination API.
-- No audit-log update or deletion API.
-- Manager invite creation and acceptance events.
-- Manager addition, permission, status, and removal diff auditing.
+
+### Manager, ownership, and project audit
+
+- Manager invite creation and acceptance.
+- Manager addition, permission change, status change, and removal diff auditing.
 - Ownership-transfer request and all operator status events.
 - Project archive event for normal page deletion.
 - Platform-master project pause, restore, and archive API with audit events.
+
+### Platform account controls
+
+- Platform-master account suspend and restore API.
+- Self-account status changes blocked.
+- Platform-master target accounts blocked.
+- Deleted-pending-retention accounts cannot be restored through this operation.
+- Success and classified failure audit events.
+
+### Audit access and retention
+
+- `GET /api/admin/audit` search and pagination API.
+- No ordinary audit-log update or deletion API.
 - Route-only `/admin/audit` operator console.
-- Audit search, project search, pause, and restore controls.
-- `noindex`, no-store, CSP, and frame-blocking headers for the operator console.
+- Audit search, project pause/restore, and account suspend/restore controls.
+- `noindex`, no-store, CSP, and frame-blocking headers.
 - No platform-master email list or server secret embedded in the operator console.
-- Runtime QA for manager diffs, password secrecy, project action policy, and operator-console headers.
+- Secret-protected `POST /api/admin/audit/retention`.
+- Default 730-day retention, minimum 365 days, maximum 3,650 days.
+- Bounded deletion batches: default 1,000, maximum 5,000 rows.
+- Retention self-audit rows excluded from automatic deletion.
+- Dry-run support.
+- Monthly GitHub Actions retention workflow.
+- Missing retention secret produces `skipped-live`, never false completion.
+
+### QA and documentation
+
+- Runtime QA for manager diffs, password secrecy, email change, account operations, project operations, retention policy, and operator-console headers.
 - `admin:audit:qa` included in `qa:all`.
+- `.env.example` includes audit hash and retention configuration.
 - `docs/ops-admin-audit-log.md` updated.
 - Protected production-home file changes: none.
 
 ## QA Complete
 
-Final commit `166ec83cee5466d2e53b9099b5c09468f87496f0` passed workflow run `30702228961`:
+Implementation commit `21871a9af227672ded641de19a0da5f1db086d37` passed workflow run `30703735200`:
 
 - targeted administrator audit QA
-- password audit and metadata secrecy QA
+- authentication and authentication-email QA
+- verified email-change contract QA
+- password and metadata secrecy QA
+- platform account suspend/restore policy QA
 - project pause/restore policy QA
+- audit-retention limits and secret QA
 - route-only operator console QA
-- authentication QA
-- authentication-email QA
-- Pages Functions QA
-- API security QA
+- Pages Functions and API security QA
 - full offline QA
 - production build and deployment artifact build
 - public landing real-browser regression
 - authenticated editor real-browser regression
 - consultation and reservation real-browser regression
+
+Documentation-only follow-up commits must keep the same full QA green before closeout.
 
 ## Not Complete
 
@@ -91,12 +129,15 @@ Final commit `166ec83cee5466d2e53b9099b5c09468f87496f0` passed workflow run `307
 - Production administrator authorization verification: not completed.
 - Production D1 audit-row verification: not completed.
 - Production `/admin/audit` smoke verification: not completed.
-- Real project pause, public 404, and restore smoke verification: not completed.
-- Email-change workflow and audit: not completed.
-- Platform-master account suspension/restoration API and audit: not completed.
-- Audit retention and cleanup policy: not completed.
+- Real email-change and old-session rejection verification: not completed.
+- Real account suspension, login rejection, and restoration verification: not completed.
+- Real project pause, public 404, and restore verification: not completed.
+- Production audit-retention dry-run and deletion verification: not completed.
+- `INLET_AUDIT_HASH_SECRET`: not confirmed in production.
+- `INLET_AUDIT_RETENTION_SECRET`: not confirmed in production.
+- GitHub `PAGERO_AUDIT_RETENTION_SECRET`: not configured or verified.
 
-Do not describe PR `#43` as production complete until it is merged, deployed with explicit owner approval, and checked using an approved platform-master account plus a denied general account.
+Do not describe PR `#43` as production complete until it is merged, deployed with explicit owner approval, and verified with approved platform-master, general, and disposable test accounts.
 
 # Other Open Checkpoints
 
@@ -151,7 +192,7 @@ Do not change the visible production home without an explicit owner request. Pro
 - `classic`: 클래식, 월 3,500원
 - `pro`: 프로, 월 5,500원
 
-The previous 3,300원 / 6,600원 / 9,900원 direction is discarded. Do not add a third paid plan or invent entitlements before owner approval.
+Do not restore the discarded 3,300원 / 6,600원 / 9,900원 direction. Do not add a third paid plan or invent entitlements before owner approval.
 
 ## Deployment
 
@@ -175,42 +216,44 @@ The previous 3,300원 / 6,600원 / 9,900원 direction is discarded. Do not add a
 - Public landing, authenticated editor, and form/reservation browser regression infrastructure.
 - AWS SES and Google Sheets integration foundations.
 - Deployment route smoke contracts.
+- Administrator authorization and complete account/manager/ownership/project audit implementation on PR `#43`.
+- Verified email-change implementation and audit on PR `#43`.
+- Platform account suspend/restore implementation and audit on PR `#43`.
+- Bounded audit-retention implementation and monthly workflow on PR `#43`.
 
 # Active Remaining Patches
 
 ## Priority 1 — PR #43 Merge And Production Verification
 
-After owner approval:
+After explicit owner approval:
 
-1. Merge PR `#43` without mixing PR `#41` or PR `#42` branch changes.
-2. Deploy only after explicit deployment approval.
-3. Verify a general account receives 403 from `/api/admin/summary` and `/api/admin/audit`.
-4. Verify a forged `superadmin` role also receives 403.
-5. Verify an approved platform-master receives 200.
-6. Open `/admin/audit` and verify search, pagination, project list, pause, and restore.
-7. Create account, login, verification, password, manager, ownership-transfer, and project events.
-8. Confirm D1 audit rows contain no raw password, token, session, manager email, IP, or User-Agent.
-9. Confirm ordinary page saves do not create manager-change events when manager data is unchanged.
-10. Pause a disposable page, confirm its public URL no longer resolves, restore it, and confirm it returns.
+1. Confirm final PR head, changed-file scope, and all green checks.
+2. Configure `INLET_AUDIT_HASH_SECRET`.
+3. Configure `INLET_AUDIT_RETENTION_SECRET`.
+4. Configure GitHub `PAGERO_AUDIT_RETENTION_SECRET` to the same retention value.
+5. Optionally configure `PAGERO_AUDIT_RETENTION_URL` when the default production endpoint is not used.
+6. Merge PR `#43` without mixing PR `#41` or PR `#42` branch changes.
+7. Deploy only after explicit deployment approval.
+8. Verify general and forged-role accounts receive 403 from administrator APIs.
+9. Verify an approved platform-master receives 200.
+10. Verify `/admin/audit` log, project, and account tabs.
+11. Verify account email change, new session, and old-session rejection.
+12. Suspend a disposable general account, confirm login rejection, restore it, and confirm login.
+13. Pause a disposable page, confirm the public URL is unavailable, restore it, and confirm it returns.
+14. Confirm D1 audit rows contain no raw password, token, session, email-change addresses, manager email, IP, or User-Agent.
+15. Run audit retention in dry-run mode and retain the result.
+16. Run a controlled real retention execution only when eligible test data exists.
+17. Confirm the monthly workflow returns real success rather than `skipped-live`.
 
-## Priority 2 — Complete Remaining Admin And Audit Gaps
+## Priority 2 — Execute One-Page Policy Live Verification
 
-Patch only confirmed remaining gaps:
+1. Merge PR `#42` after checking conflict scope.
+2. Prepare the six disposable fixtures documented by PR `#42`.
+3. Store signed test sessions in GitHub Secrets.
+4. Manually run Account Page Limit Production Verify with write approval.
+5. Require `verified-live`, retain run/deployment/commit evidence, and confirm every `qa-limit-*` page was removed.
 
-- verified email-change workflow and audit
-- platform-master account suspend and restore API with audit
-- audit retention and cleanup policy that prevents ordinary operator deletion
-
-Password change, manager events, ownership-transfer events, project archive, project pause/restore, and route-only audit UI are implemented in PR `#43`; do not reassign them unless a regression is reproduced.
-
-## Priority 3 — Execute One-Page Policy Live Verification
-
-1. Prepare the six disposable fixtures documented by PR `#42`.
-2. Store signed test sessions in GitHub Secrets.
-3. Manually run Account Page Limit Production Verify with write approval.
-4. Require `verified-live`, retain run/deployment/commit evidence, and confirm every `qa-limit-*` page was removed.
-
-## Priority 4 — Custom-Domain Operational Rollout
+## Priority 3 — Custom-Domain Operational Rollout
 
 1. Apply production migrations `0006_page_domains.sql` and `0007_page_domain_operations.sql` in order.
 2. Configure the Cloudflare account, Pages project, least-privilege token, CNAME target, and recheck secret.
@@ -218,16 +261,16 @@ Password change, manager events, ownership-transfer events, project archive, pro
 4. Deploy only after explicit owner approval.
 5. Verify DNS, SSL, public routing, assets, forms, reservations, tracking, duplicate ownership, detach/reconnect, retries, and escalation.
 
-## Priority 5 — Live Integration Production Verification
+## Priority 4 — Live Integration Production Verification
 
 - SES identity, DKIM, SPF, DMARC, and production access.
-- Real verification, password-reset, invite, and ownership-transfer messages.
+- Real verification, password-reset, email-change, invite, and ownership-transfer messages.
 - Google Sheets production OAuth, token refresh, row delivery, disconnect, and retry/dead-letter visibility.
 - Real conversion events where configured.
 - Missing credentials remain `skipped-live`, never false success or false product failure.
 - Never expose provider credentials, verification tokens, access tokens, or raw internal errors.
 
-## Priority 6 — Three Template Mobile Final Regression
+## Priority 5 — Three Template Mobile Final Regression
 
 Keep exactly:
 
@@ -237,11 +280,11 @@ Keep exactly:
 
 Verify 360px, 390px, and 430px for a finished first viewport, editable visible sections, no instructional copy, no fixed-UI overlap, keyboard-safe forms, usable gallery/map/FAQ, preview/public parity, and reduced-motion-aware effects.
 
-## Priority 7 — Product And Operations Hardening
+## Priority 6 — Product And Operations Hardening
 
 - D1 backup and migration rollback evidence.
 - Current operator release checklist.
-- Retention and cleanup policy for logs, blocked submissions, delivery logs, and audit rows.
+- Retention and cleanup policy for leads, blocked submissions, delivery logs, AI drafts, and backups.
 - Large-data inbox and stats query verification.
 - Abuse/rate-limit visibility without raw IP exposure.
 - Accessibility and keyboard regression for account, domain, and administrator UI.
