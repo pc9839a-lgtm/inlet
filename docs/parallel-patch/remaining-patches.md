@@ -8,6 +8,8 @@ Production branch: `main`
 
 Current candidate: PR `#41` / `agent/custom-domain-foundation`
 
+Current execution mode: parallel patching is active
+
 This document must be updated at the end of every patch. Code completion, QA
 completion, merge, deployment, and production verification are separate states.
 A patch is not fully complete until the state written here matches reality.
