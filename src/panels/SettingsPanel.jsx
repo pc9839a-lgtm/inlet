@@ -7,6 +7,7 @@ import {
 import { normalizeIntegrations } from '../lib/pageModel.js';
 import SettingsPanelBody from './settings/SettingsPanelBody.jsx';
 import useManagerSettings from './settings/useManagerSettings.js';
+import usePageDomainSettings from './settings/usePageDomainSettings.js';
 import usePageDuplicateSettings from './settings/usePageDuplicateSettings.js';
 import useSettingsDrafts from './settings/useSettingsDrafts.js';
 import useSettingsPanelSections from './settings/useSettingsPanelSections.js';
@@ -44,6 +45,13 @@ export default function SettingsPanel({
     updateMeta,
     updatePage,
   });
+  const domainSettings = usePageDomainSettings({
+    authUser,
+    disabled: clientAdminMode || managerMode,
+    onSavePage,
+    page,
+    updatePage,
+  });
   const managerSettings = useManagerSettings({
     authUser,
     editSection: drafts.editSection,
@@ -66,6 +74,7 @@ export default function SettingsPanel({
       canDuplicatePage={canDuplicatePage}
       canManageProjectUsers={canManageProjectUsers}
       clientAdminMode={clientAdminMode}
+      domainSettings={domainSettings}
       duplicateSettings={duplicateSettings}
       drafts={drafts}
       integrations={integrations}
