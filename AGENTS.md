@@ -7,9 +7,33 @@ Before modifying or deploying Pagero, read:
 - `docs/PAGERO_MAINTENANCE_HANDOFF_KO.md`
 - `docs/PAGERO_PLAN_POLICY_KO.md` for the owner-approved plan names, prices, and plan-count lock.
 - `docs/PAGERO_EDITOR_INTERACTION_PATCH_HANDOFF_KO.md` for editor, top navigation, sharing, form-focus, and timer follow-up work.
+- `docs/parallel-patch/remaining-patches.md` for the current execution order and actual unfinished work.
 
 The production root source of truth is `functions/index.js`, not a file named
 `functions/frozenHome.js` and not the local Vite home alone.
+
+## Mandatory Patch Closeout - Highest Priority
+
+A patch is not finished when code or QA ends. Before reporting any patch as
+complete, update `docs/parallel-patch/remaining-patches.md` in the same branch
+or pull request.
+
+Every patch closeout must:
+
+1. record the update date and the relevant branch, PR, or commit
+2. distinguish `code complete`, `QA complete`, `merged`, `deployed`, and
+   `production verified` instead of treating them as the same state
+3. move genuinely completed implementation into the completed baseline
+4. remove completed work from the active list and leave only real remaining work
+5. reorder the remaining priorities based on the new repository state
+6. record migrations, environment variables, credentials, approvals, live smoke
+   tests, or owner decisions that still block completion
+7. preserve unresolved follow-up work even when the main implementation passed QA
+8. include the refreshed remaining-patch summary in the final user response
+
+Do not claim a patch is fully complete when it exists only on a branch or PR,
+when production migration or configuration is missing, or when live verification
+has not been performed.
 
 ## Production Home Lock - Highest Priority
 
