@@ -52,7 +52,7 @@ async function customDomainLandingResponse(context, url) {
   const assetResponse = await context.env.ASSETS.fetch(assetUrl);
   let html = await assetResponse.text();
   const slug = String(mapping.slug || '').replace(/[^a-zA-Z0-9-_]/g, '');
-  const bootScript = `<script>window.__INLET_CUSTOM_DOMAIN_SLUG__=${JSON.stringify(slug)};window.__INLET_CUSTOM_DOMAIN_HOST__=${JSON.stringify(hostname)};if(location.pathname==='/'){history.replaceState({...history.state,__inletCustomDomain:true},'',/${JSON.stringify(slug)}+location.search+location.hash);}</script>`;
+  const bootScript = `<script>window.__INLET_CUSTOM_DOMAIN_SLUG__=${JSON.stringify(slug)};window.__INLET_CUSTOM_DOMAIN_HOST__=${JSON.stringify(hostname)};if(location.pathname==='/'){history.replaceState({...history.state,__inletCustomDomain:true},'','/'+${JSON.stringify(slug)}+location.search+location.hash);}</script>`;
   const restoreScript = `<script>(()=>{const restore=()=>{if(!document.querySelector('.public-landing-shell'))return false;History.prototype.replaceState.call(window.history,window.history.state,'/'+window.location.search+window.location.hash);return true;};if(!restore()){const observer=new MutationObserver(()=>{if(restore())observer.disconnect();});observer.observe(document.documentElement,{childList:true,subtree:true});setTimeout(()=>observer.disconnect(),15000);}})();</script>`;
   html = html.includes('<head>')
     ? html.replace('<head>', `<head>${bootScript}`)
