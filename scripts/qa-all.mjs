@@ -20,6 +20,7 @@ const steps = [
   ['page:save:qa', ['scripts/page-save-identity-quality-check.mjs']],
   ['account:page-limit:qa', ['scripts/account-page-limit-quality-check.mjs']],
   ['page:domain:qa', ['scripts/page-domain-quality-check.mjs']],
+  ['page:domain:ops:qa', ['scripts/page-domain-operations-quality-check.mjs']],
   ['page:draft:qa', ['scripts/page-draft-recovery-quality-check.mjs']],
   ['page:operation:isolation:qa', ['scripts/page-operation-isolation-quality-check.mjs']],
   ['image:upload:qa', ['scripts/image-upload-optimization-quality-check.mjs']],
