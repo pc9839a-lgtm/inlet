@@ -1,4 +1,5 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse, readJson } from '../_shared.js';
+import { auditErrorMetadata, auditSubjectHash, writeAuditLog } from '../_audit.js';
 import { withPlatformMaster } from '../_platformMaster.js';
 import { AUTH_METHODS, googleAuthRedirectUri, googleLoginAuthUrl, loginAccount, loginGoogleAccount } from './_auth.js';
 
@@ -6,20 +7,39 @@ export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, AUTH_METHODS);
   if (request.method === 'GET') return handleGoogleCallback(request, env);
   if (request.method !== 'POST') return jsonResponse(request, env, 405, { ok: false, error: 'Method not allowed.' }, AUTH_METHODS);
+
+  let input = {};
   try {
     assertD1(env);
-    const input = await readJson(request);
+    input = await readJson(request);
     if (String(input.provider || '').toLowerCase() === 'google' || String(input.action || '').toLowerCase() === 'google-oauth-url') {
       const url = await googleLoginAuthUrl(request, env, input);
       return jsonResponse(request, env, 200, { ok: true, url }, AUTH_METHODS);
     }
     const result = await loginAccount({ ...input, role: 'master' }, env);
+    await writeAuditLog({
+      request,
+      env,
+      actorAccountId: result.user?.ownerId || result.user?.id || '',
+      action: 'auth.login_succeeded',
+      targetType: 'account',
+      targetId: result.user?.ownerId || result.user?.id || '',
+      metadata: { provider: 'password' },
+    });
     return jsonResponse(request, env, 200, {
       ok: true,
       ...result,
       user: withPlatformMaster(result.user, env),
     }, AUTH_METHODS);
   } catch (error) {
+    await writeAuditLog({
+      request,
+      env,
+      action: 'auth.login_failed',
+      targetType: 'account',
+      targetId: await auditSubjectHash(input.email || '', env).catch(() => ''),
+      metadata: { provider: 'password', ...auditErrorMetadata(error) },
+    });
     return handleApiError(request, env, error, AUTH_METHODS);
   }
 }
@@ -38,11 +58,28 @@ async function handleGoogleCallback(request, env) {
       state,
       redirectUri: googleAuthRedirectUri(request, env),
     }, env);
+    await writeAuditLog({
+      request,
+      env,
+      actorAccountId: result.user?.ownerId || result.user?.id || '',
+      action: 'auth.login_succeeded',
+      targetType: 'account',
+      targetId: result.user?.ownerId || result.user?.id || '',
+      metadata: { provider: 'google' },
+    });
     return googleAuthSuccessHtml({
       ...result,
       user: withPlatformMaster(result.user, env),
     });
   } catch (error) {
+    await writeAuditLog({
+      request,
+      env,
+      action: 'auth.login_failed',
+      targetType: 'account',
+      targetId: 'google',
+      metadata: { provider: 'google', ...auditErrorMetadata(error) },
+    });
     return googleAuthFailureHtml(error);
   }
 }
