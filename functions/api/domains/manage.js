@@ -1,15 +1,12 @@
 import {
   cloudflarePagesDomainReadiness,
   deleteCloudflarePagesDomain,
-  ensureCloudflarePagesDomain,
-  inspectCustomDomainDns,
-  mapCloudflarePagesDomain,
 } from '../../../server/cloudflarePagesDomains.mjs';
+import { verifyPageDomainConnection } from '../../../server/pageDomainOperations.mjs';
 import {
   disconnectD1PageDomain,
   getD1PageDomainByPageId,
   publicDomainRecord,
-  updateD1PageDomainVerification,
 } from '../../../server/pageDomainStore.mjs';
 import { normalizeDomainHostname } from '../../../src/lib/pageDomains.js';
 import {
@@ -49,61 +46,15 @@ function assertDomainRecord(record, project = {}, pageId = '', hostname = '') {
   return record;
 }
 
+// verifyPageDomainConnection owns ensureCloudflarePagesDomain registration and retry policy.
 async function verifyDomain({ db, env, pageId, record }) {
-  const readiness = cloudflarePagesDomainReadiness(env);
-  const dns = await inspectCustomDomainDns(env, record.hostname || '');
-
-  if (!readiness.configured) {
-    const current = await updateD1PageDomainVerification(db, pageId, {
-      domainStatus: 'pending',
-      sslStatus: 'pending',
-      failureReason: '',
-      provider: 'cloudflare_pages',
-      providerStatus: 'not_configured',
-      checkedAt: dns.checkedAt,
-    });
-    return {
-      ok: true,
-      action: 'verify',
-      providerConfigured: false,
-      operatorRequired: true,
-      message: '운영 도메인 연결 설정이 준비 중입니다.',
-      current: publicDomainRecord(current),
-      dns,
-    };
-  }
-
-  try {
-    const providerResult = await ensureCloudflarePagesDomain(env, record.hostname || '');
-    const mapped = mapCloudflarePagesDomain(providerResult, dns);
-    const current = await updateD1PageDomainVerification(db, pageId, {
-      ...mapped,
-      checkedAt: dns.checkedAt,
-      providerSyncedAt: new Date().toISOString(),
-    });
-    return {
-      ok: true,
-      action: 'verify',
-      providerConfigured: true,
-      operatorRequired: false,
-      message: mapped.domainStatus === 'active'
-        ? '개인 도메인과 SSL 연결이 완료되었습니다.'
-        : 'DNS와 SSL 연결 상태를 확인하고 있습니다.',
-      current: publicDomainRecord(current),
-      dns,
-    };
-  } catch (error) {
-    await updateD1PageDomainVerification(db, pageId, {
-      domainStatus: 'failed',
-      sslStatus: 'failed',
-      failureReason: error?.message || '도메인 연결 확인에 실패했습니다.',
-      provider: 'cloudflare_pages',
-      providerStatus: 'error',
-      checkedAt: dns.checkedAt,
-      providerSyncedAt: new Date().toISOString(),
-    });
-    throw error;
-  }
+  return verifyPageDomainConnection({
+    db,
+    env,
+    pageId,
+    record,
+    source: 'owner_manual',
+  });
 }
 
 async function detachDomain({ db, env, pageId, record }) {
