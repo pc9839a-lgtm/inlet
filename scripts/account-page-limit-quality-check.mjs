@@ -129,11 +129,22 @@ const replay = await invoke({ email: 'user@example.com', count: 1, ownedTarget: 
 assert.equal(replay.response.status, 200);
 assert.equal(replay.nextCalls, 1);
 
-const [middlewareSource, dashboardSource, loginSource, sessionSource] = await Promise.all([
+const googleAccount = await invoke({ email: 'google-user@example.com', role: 'master', count: 1 });
+assert.equal(googleAccount.response.status, 409, 'Google-authenticated general accounts must follow the same owner quota');
+assert.equal(googleAccount.nextCalls, 0);
+assert.equal((await googleAccount.response.json()).code, 'ACCOUNT_PAGE_LIMIT_REACHED');
+
+const managerAccount = await invoke({ email: 'manager@example.com', role: 'manager', count: 1 });
+assert.equal(managerAccount.response.status, 409, 'manager role must not bypass the owner account quota');
+assert.equal(managerAccount.nextCalls, 0);
+assert.equal((await managerAccount.response.json()).code, 'ACCOUNT_PAGE_LIMIT_REACHED');
+
+const [middlewareSource, dashboardSource, loginSource, sessionSource, authSource] = await Promise.all([
   read('functions/api/pages/_middleware.js'),
   read('src/screens/DashboardScreen.jsx'),
   read('functions/api/auth/login.js'),
   read('functions/api/auth/session.js'),
+  read('functions/api/auth/_auth.js'),
 ]);
 
 assert.match(middlewareSource, /COUNT\(DISTINCT projects\.id\)/);
@@ -147,9 +158,13 @@ assert.match(dashboardSource, /일반 계정은 랜딩페이지를 1개까지만
 assert.match(loginSource, /role: 'master'/);
 assert.match(loginSource, /withPlatformMaster/);
 assert.match(sessionSource, /withPlatformMaster/);
+assert.match(authSource, /source: 'google'/);
+assert.match(authSource, /role: 'master'/);
 
 console.log(JSON.stringify({
   ok: true,
   policy: 'general-account-one-page-platform-master-unlimited',
-  cases: 6,
+  cases: 8,
+  googleQuota: true,
+  managerBypassBlocked: true,
 }, null, 2));
