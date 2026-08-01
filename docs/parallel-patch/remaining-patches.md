@@ -1,6 +1,6 @@
 # Pagero Remaining Patches
 
-Updated: 2026-08-02 00:13 KST
+Updated: 2026-08-02 00:22 KST
 
 Repository: `pc9839a-lgtm/inlet`
 
@@ -95,19 +95,44 @@ Code completion, QA completion, merge, deployment, and production verification a
 - Monthly GitHub Actions retention workflow.
 - Missing retention secret produces `skipped-live`, never false completion.
 
+### Production verification automation
+
+- Manual-only `Admin Audit Production Verify` workflow.
+- `read-only`, `request-email-token`, and `verify-live` phases.
+- Separate write approval and require-live gates.
+- GitHub Secrets only for sessions, password, next email, one-time code, and retention secret.
+- General and forged-role administrator rejection check.
+- Platform-master administrator access check.
+- `/admin/audit` security-header check.
+- Real email-change, new-session, and old-session rejection sequence.
+- Disposable account suspend, login rejection, restore, and login recovery sequence.
+- Disposable project pause, public 404, restore, and public 200 sequence.
+- Audit-retention dry-run with zero deletions.
+- Required audit-action lookup after execution.
+- `qa-audit-` disposable project prefix guard.
+- Automatic account and project restoration attempt after a failed write sequence.
+- Evidence artifact that excludes passwords, sessions, one-time codes, and retention secrets.
+
 ### QA and documentation
 
 - Runtime QA for manager diffs, password secrecy, email change, account operations, project operations, retention policy, and operator-console headers.
 - `admin:audit:qa` included in `qa:all`.
-- `.env.example` includes audit hash and retention configuration.
+- `admin:audit:production:contract:qa` included in `qa:all`.
+- `.env.example` includes audit security, retention, and manual production-verification configuration.
 - `docs/ops-admin-audit-log.md` updated.
+- `docs/ops-admin-audit-production-verification.md` added.
 - Protected production-home file changes: none.
 
 ## QA Complete
 
-Final verified head `03a4b4c06175aee297fbca1f1cecf546901555ce` passed workflow run `30704833235`:
+Implementation head `546a8d29b23c16962359c4bcb5aa66bc92dec141` passed workflow run `30705689396`:
 
 - targeted administrator audit QA
+- administrator production-verification contract QA
+- missing fixture and write approval `skipped-live` behavior
+- manual-only workflow trigger contract
+- workflow secret non-output contract
+- disposable project prefix and cleanup guards
 - authentication and authentication-email QA
 - verified email-change contract QA
 - password and metadata secrecy QA
@@ -134,11 +159,17 @@ Final verified head `03a4b4c06175aee297fbca1f1cecf546901555ce` passed workflow r
 - Real account suspension, login rejection, and restoration verification: not completed.
 - Real project pause, public 404, and restore verification: not completed.
 - Production audit-retention dry-run and deletion verification: not completed.
+- `Admin Audit Production Verify` read-only phase result `verified-live`: not completed.
+- `Admin Audit Production Verify` request-email-token phase result `awaiting-email-token`: not completed.
+- `Admin Audit Production Verify` verify-live phase result `verified-live`: not completed.
+- Disposable password account and `qa-audit-` page: not prepared or verified.
+- Platform-master and disposable general signed sessions: not configured in GitHub Secrets.
+- Disposable account password, next email, and email-change token: not configured or verified.
 - `INLET_AUDIT_HASH_SECRET`: not confirmed in production.
 - `INLET_AUDIT_RETENTION_SECRET`: not confirmed in production.
 - GitHub `PAGERO_AUDIT_RETENTION_SECRET`: not configured or verified.
 
-Do not describe PR `#43` as production complete until it is merged, deployed with explicit owner approval, and verified with approved platform-master, general, and disposable test accounts.
+Do not describe PR `#43` as production complete until it is merged, deployed with explicit owner approval, and the manual workflow returns the expected live status with approved platform-master and disposable general-account fixtures.
 
 # Other Open Checkpoints
 
@@ -221,6 +252,8 @@ Do not restore the discarded 3,300원 / 6,600원 / 9,900원 direction. Do not ad
 - Verified email-change implementation and audit on PR `#43`.
 - Platform account suspend/restore implementation and audit on PR `#43`.
 - Bounded audit-retention implementation and monthly workflow on PR `#43`.
+- Manual three-phase administrator and audit production-verification workflow on PR `#43`.
+- Live verifier write gate, secret-output protection, `qa-audit-` target guard, and restoration cleanup on PR `#43`.
 
 # Active Remaining Patches
 
@@ -229,22 +262,27 @@ Do not restore the discarded 3,300원 / 6,600원 / 9,900원 direction. Do not ad
 After explicit owner approval:
 
 1. Confirm final PR head, changed-file scope, and all green checks.
-2. Configure `INLET_AUDIT_HASH_SECRET`.
-3. Configure `INLET_AUDIT_RETENTION_SECRET`.
+2. Configure `INLET_AUDIT_HASH_SECRET` in production.
+3. Configure `INLET_AUDIT_RETENTION_SECRET` in production.
 4. Configure GitHub `PAGERO_AUDIT_RETENTION_SECRET` to the same retention value.
 5. Optionally configure `PAGERO_AUDIT_RETENTION_URL` when the default production endpoint is not used.
 6. Merge PR `#43` without mixing PR `#41` or PR `#42` branch changes.
 7. Deploy only after explicit deployment approval.
-8. Verify general and forged-role accounts receive 403 from administrator APIs.
-9. Verify an approved platform-master receives 200.
-10. Verify `/admin/audit` log, project, and account tabs.
-11. Verify account email change, new session, and old-session rejection.
-12. Suspend a disposable general account, confirm login rejection, restore it, and confirm login.
-13. Pause a disposable page, confirm the public URL is unavailable, restore it, and confirm it returns.
-14. Confirm D1 audit rows contain no raw password, token, session, email-change addresses, manager email, IP, or User-Agent.
-15. Run audit retention in dry-run mode and retain the result.
-16. Run a controlled real retention execution only when eligible test data exists.
-17. Confirm the monthly workflow returns real success rather than `skipped-live`.
+8. Prepare one disposable verified password account and one active page whose slug starts with `qa-audit-`.
+9. Confirm the disposable page contains no customer data and receives no real traffic.
+10. Store `PAGERO_ADMIN_AUDIT_PLATFORM_MASTER_SESSION`.
+11. Store `PAGERO_ADMIN_AUDIT_GENERAL_SESSION`.
+12. Store `PAGERO_ADMIN_AUDIT_GENERAL_PASSWORD`.
+13. Store a controlled unused address in `PAGERO_ADMIN_AUDIT_NEXT_EMAIL`.
+14. Run `Admin Audit Production Verify` with `phase=read-only`, `allow_writes=false`, and require `verified-live`.
+15. Run it with `phase=request-email-token`, `allow_writes=true`, and require `awaiting-email-token`.
+16. Store the received code in `PAGERO_ADMIN_AUDIT_EMAIL_CHANGE_TOKEN` before its 30-minute expiry.
+17. Run it with `phase=verify-live`, `allow_writes=true`, and require `verified-live`.
+18. Retain the workflow URL, tested commit, deployment SHA, and evidence artifact.
+19. Confirm the disposable account and project both finish active.
+20. Confirm D1 audit rows contain no raw password, token, session, email-change addresses, manager email, IP, or User-Agent.
+21. Run a controlled real retention execution only when eligible test data exists and explicit approval is given.
+22. Confirm the monthly retention workflow returns real success rather than `skipped-live`.
 
 ## Priority 2 — Execute One-Page Policy Live Verification
 
@@ -304,6 +342,7 @@ Start only after the active operational priorities are stable and the owner defi
 
 ```bash
 npm run admin:audit:qa
+npm run admin:audit:production:contract:qa
 npm run auth:qa
 npm run auth:email:qa
 npm run api:functions:qa
@@ -317,6 +356,12 @@ npm run browser:editor:qa
 npm run browser:forms:qa
 npm run browser:production:qa
 npm run live:qa
+```
+
+Manual production verification after deployment and fixture preparation:
+
+```bash
+npm run admin:audit:live
 ```
 
 # Mandatory Closeout
