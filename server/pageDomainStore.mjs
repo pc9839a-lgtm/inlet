@@ -4,6 +4,9 @@ import {
   pageDomainIssues,
 } from '../src/lib/pageDomains.js';
 
+const DOMAIN_STATUSES = new Set(['ready', 'pending', 'verifying', 'active', 'failed', 'disconnected']);
+const SSL_STATUSES = new Set(['not_applicable', 'pending', 'active', 'failed']);
+
 function domainError(message, status, code, details = {}) {
   const error = new Error(message);
   error.status = status;
@@ -26,6 +29,16 @@ function rawPageDomainInput(page = {}) {
     domainType: (page.domainType || nested.domainType) === 'custom' ? 'custom' : 'default',
     customDomain: page.customDomain || page.hostname || nested.customDomain || nested.hostname || '',
   };
+}
+
+function safeDomainStatus(value = '', fallback = 'pending') {
+  const status = String(value || '').trim().toLowerCase();
+  return DOMAIN_STATUSES.has(status) ? status : fallback;
+}
+
+function safeSslStatus(value = '', fallback = 'pending') {
+  const status = String(value || '').trim().toLowerCase();
+  return SSL_STATUSES.has(status) ? status : fallback;
 }
 
 export async function getD1PageDomainByPageId(db, pageId = '') {
@@ -118,16 +131,22 @@ export async function syncD1PageDomain(db, page = {}, context = {}) {
   }
 
   await assertD1PageDomainAvailable(db, domain.customDomain, pageId);
+  const sameConnection = current
+    && String(current.hostname || '') === domain.customDomain
+    && String(current.status || '') !== 'disconnected';
   const connectedAt = domain.domainStatus === 'active'
     ? (current?.connected_at || now)
-    : (current?.connected_at || null);
+    : (sameConnection ? current?.connected_at || null : null);
+  const providerState = sameConnection ? current : {};
 
   await db.prepare(`
     INSERT INTO page_domains (
       id, project_id, page_id, hostname, domain_type, status, ssl_status,
-      failure_reason, verification_token_hash, last_checked_at, connected_at,
-      disconnected_at, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, 'custom', ?, ?, ?, ?, ?, ?, NULL, ?, ?)
+      failure_reason, verification_token_hash, provider, provider_domain_id,
+      provider_status, verification_status, validation_status, validation_method,
+      validation_name, validation_value, last_checked_at, last_provider_sync_at,
+      connected_at, disconnected_at, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, 'custom', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)
     ON CONFLICT(page_id) DO UPDATE SET
       project_id = excluded.project_id,
       hostname = excluded.hostname,
@@ -135,7 +154,17 @@ export async function syncD1PageDomain(db, page = {}, context = {}) {
       status = excluded.status,
       ssl_status = excluded.ssl_status,
       failure_reason = excluded.failure_reason,
+      verification_token_hash = excluded.verification_token_hash,
+      provider = excluded.provider,
+      provider_domain_id = excluded.provider_domain_id,
+      provider_status = excluded.provider_status,
+      verification_status = excluded.verification_status,
+      validation_status = excluded.validation_status,
+      validation_method = excluded.validation_method,
+      validation_name = excluded.validation_name,
+      validation_value = excluded.validation_value,
       last_checked_at = excluded.last_checked_at,
+      last_provider_sync_at = excluded.last_provider_sync_at,
       connected_at = excluded.connected_at,
       disconnected_at = NULL,
       updated_at = excluded.updated_at
@@ -147,14 +176,138 @@ export async function syncD1PageDomain(db, page = {}, context = {}) {
     domain.domainStatus,
     domain.sslStatus,
     domain.domainFailureReason || '',
-    current?.verification_token_hash || '',
-    domain.domainLastCheckedAt || current?.last_checked_at || null,
+    sameConnection ? current?.verification_token_hash || '' : '',
+    providerState?.provider || '',
+    providerState?.provider_domain_id || '',
+    providerState?.provider_status || '',
+    providerState?.verification_status || '',
+    providerState?.validation_status || '',
+    providerState?.validation_method || '',
+    providerState?.validation_name || '',
+    providerState?.validation_value || '',
+    domain.domainLastCheckedAt || (sameConnection ? current?.last_checked_at || null : null),
+    sameConnection ? current?.last_provider_sync_at || null : null,
     connectedAt,
     current?.created_at || now,
     now,
   ).run();
 
   return getD1PageDomainByPageId(db, pageId);
+}
+
+export async function syncD1PageDomainPageJson(db, pageId = '', patch = {}) {
+  const safePageId = String(pageId || '').trim();
+  if (!safePageId) return null;
+  const row = await db.prepare('SELECT page_json FROM pages WHERE id = ? LIMIT 1').bind(safePageId).first();
+  if (!row?.page_json) return null;
+  let page = {};
+  try {
+    page = JSON.parse(row.page_json);
+  } catch {
+    return null;
+  }
+  const nextPage = applyPageDomainConfig(page, patch);
+  await db.prepare('UPDATE pages SET page_json = ? WHERE id = ?').bind(JSON.stringify(nextPage), safePageId).run();
+  return nextPage;
+}
+
+export async function updateD1PageDomainVerification(db, pageId = '', patch = {}) {
+  const safePageId = String(pageId || '').trim();
+  const current = await getD1PageDomainByPageId(db, safePageId);
+  if (!current) {
+    throw domainError('저장된 개인 도메인 정보를 찾을 수 없습니다.', 404, 'DOMAIN_CONNECTION_NOT_FOUND');
+  }
+
+  const now = nowIso();
+  const domainStatus = safeDomainStatus(patch.domainStatus, String(current.status || 'pending'));
+  const sslStatus = safeSslStatus(patch.sslStatus, String(current.ssl_status || 'pending'));
+  const connectedAt = domainStatus === 'active' ? (current.connected_at || now) : current.connected_at || null;
+
+  await db.prepare(`
+    UPDATE page_domains
+    SET status = ?,
+        ssl_status = ?,
+        failure_reason = ?,
+        provider = ?,
+        provider_domain_id = ?,
+        provider_status = ?,
+        verification_status = ?,
+        validation_status = ?,
+        validation_method = ?,
+        validation_name = ?,
+        validation_value = ?,
+        last_checked_at = ?,
+        last_provider_sync_at = ?,
+        connected_at = ?,
+        disconnected_at = NULL,
+        updated_at = ?
+    WHERE page_id = ?
+  `).bind(
+    domainStatus,
+    sslStatus,
+    String(patch.failureReason || '').slice(0, 300),
+    String(patch.provider || current.provider || ''),
+    String(patch.providerDomainId || current.provider_domain_id || ''),
+    String(patch.providerStatus || ''),
+    String(patch.verificationStatus || ''),
+    String(patch.validationStatus || ''),
+    String(patch.validationMethod || ''),
+    String(patch.validationName || ''),
+    String(patch.validationValue || ''),
+    String(patch.checkedAt || now),
+    String(patch.providerSyncedAt || now),
+    connectedAt,
+    now,
+    safePageId,
+  ).run();
+
+  await syncD1PageDomainPageJson(db, safePageId, {
+    domainType: 'custom',
+    customDomain: current.hostname || '',
+    domainStatus,
+    sslStatus,
+    domainFailureReason: String(patch.failureReason || '').slice(0, 300),
+    domainLastCheckedAt: String(patch.checkedAt || now),
+  });
+  return getD1PageDomainByPageId(db, safePageId);
+}
+
+export async function disconnectD1PageDomain(db, pageId = '', options = {}) {
+  const safePageId = String(pageId || '').trim();
+  const current = await getD1PageDomainByPageId(db, safePageId);
+  if (!current) return null;
+  const now = nowIso();
+  await db.prepare(`
+    UPDATE page_domains
+    SET status = 'disconnected',
+        ssl_status = 'not_applicable',
+        failure_reason = ?,
+        provider_status = ?,
+        verification_status = '',
+        validation_status = '',
+        last_checked_at = ?,
+        last_provider_sync_at = ?,
+        disconnected_at = ?,
+        updated_at = ?
+    WHERE page_id = ?
+  `).bind(
+    String(options.failureReason || '').slice(0, 300),
+    String(options.providerStatus || 'deactivated'),
+    now,
+    now,
+    now,
+    now,
+    safePageId,
+  ).run();
+  await syncD1PageDomainPageJson(db, safePageId, {
+    domainType: 'default',
+    customDomain: '',
+    domainStatus: 'ready',
+    sslStatus: 'not_applicable',
+    domainFailureReason: '',
+    domainLastCheckedAt: '',
+  });
+  return getD1PageDomainByPageId(db, safePageId);
 }
 
 export function publicDomainRecord(row = null) {
@@ -169,6 +322,16 @@ export function publicDomainRecord(row = null) {
     sslStatus: row.ssl_status || 'pending',
     domainFailureReason: row.failure_reason || '',
     domainLastCheckedAt: row.last_checked_at || '',
+    provider: row.provider || '',
+    providerDomainId: row.provider_domain_id || '',
+    providerStatus: row.provider_status || '',
+    verificationStatus: row.verification_status || '',
+    validationStatus: row.validation_status || '',
+    validation: {
+      method: row.validation_method || '',
+      name: row.validation_name || '',
+      value: row.validation_value || '',
+    },
     connectedAt: row.connected_at || '',
     disconnectedAt: row.disconnected_at || '',
     updatedAt: row.updated_at || '',
