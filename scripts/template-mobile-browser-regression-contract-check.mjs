@@ -25,8 +25,8 @@ for (const token of [
   'exerciseBottomNavigation',
   'exerciseFormKeyboard',
   'exerciseReservation',
-  'qa-audit-',
   'Page.captureScreenshot',
+  'captureBeyondViewport: false',
   'INLET_TEMPLATE_MOBILE_QA_CHROME_PATH',
   'three-template-mobile-final-regression',
 ]) {
