@@ -237,10 +237,9 @@ export function mapCloudflarePagesDomain(result = {}, dns = {}) {
   const sslStatus = validationStatus === 'active'
     ? 'active'
     : (sslFailed ? 'failed' : 'pending');
-  const dnsReady = dns.configured === false || dns.matched === true;
   const domainStatus = providerFailed || sslFailed
     ? 'failed'
-    : (providerReady && sslStatus === 'active' && dnsReady ? 'active' : 'verifying');
+    : (providerReady && sslStatus === 'active' ? 'active' : 'verifying');
   const providerMessage = String(
     result?.verification_data?.error_message
       || result?.validation_data?.error_message
@@ -248,9 +247,7 @@ export function mapCloudflarePagesDomain(result = {}, dns = {}) {
   ).trim();
   const failureReason = domainStatus === 'failed'
     ? (providerMessage || '도메인 또는 SSL 확인에 실패했습니다. DNS 설정을 확인해주세요.')
-    : (!dnsReady && dns?.target
-      ? `CNAME 레코드가 ${dns.target}을 가리키는지 확인해주세요.`
-      : '');
+    : '';
 
   return {
     provider: PROVIDER_NAME,
