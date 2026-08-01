@@ -4,12 +4,12 @@ import {
   inspectCustomDomainDns,
   mapCloudflarePagesDomain,
 } from './cloudflarePagesDomains.mjs';
+import { updateD1PageDomainVerification } from './pageDomainStore.mjs';
 import {
   nextPageDomainRetryAt,
-  publicDomainRecord,
+  publicDomainOperationsRecord,
   updateD1PageDomainOperationState,
-  updateD1PageDomainVerification,
-} from './pageDomainStore.mjs';
+} from './pageDomainOperationsStore.mjs';
 
 const DEFAULT_MAX_RETRIES = 8;
 const ESCALATE_AFTER_RETRIES = 6;
@@ -120,7 +120,7 @@ export async function verifyPageDomainConnection({
       providerConfigured: false,
       operatorRequired: true,
       message: '운영 도메인 연결 설정이 준비 중입니다.',
-      current: publicDomainRecord(current),
+      current: publicDomainOperationsRecord(current),
       dns,
     };
   }
@@ -166,7 +166,7 @@ export async function verifyPageDomainConnection({
         : (mapped.domainStatus === 'failed'
           ? '도메인 또는 SSL 확인에 실패했습니다. 운영 확인 목록에 추가했습니다.'
           : 'DNS와 SSL 연결 상태를 확인하고 있습니다.'),
-      current: publicDomainRecord(current),
+      current: publicDomainOperationsRecord(current),
       dns,
     };
   } catch (error) {
