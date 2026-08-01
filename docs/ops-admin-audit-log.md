@@ -4,7 +4,7 @@ Updated: 2026-08-01
 
 ## 목적
 
-운영자 권한과 계정 변경 이력을 D1 `audit_logs`에 남기고, 전체 관리자만 검색·조회할 수 있도록 유지합니다.
+운영자 권한과 계정·매니저·소유권·프로젝트 상태 변경 이력을 D1 `audit_logs`에 남기고, 전체 관리자만 검색·조회할 수 있도록 유지합니다.
 
 ## 관리자 권한 원칙
 
@@ -19,7 +19,7 @@ Updated: 2026-08-01
 
 모든 `/api/admin/*` 요청은 `functions/api/admin/_middleware.js`에서 먼저 검사합니다. 단, 자동 도메인 재확인 엔드포인트는 `INLET_DOMAIN_RECHECK_SECRET`과 일치하는 Bearer 비밀키를 사용할 때만 세션 검사를 통과할 수 있습니다. 해당 엔드포인트 내부에서도 비밀키를 다시 검증합니다.
 
-## 기록되는 계정 이벤트
+## 기록되는 계정·인증 이벤트
 
 - `account.signup_completed`
 - `account.signup_failed`
@@ -30,7 +30,36 @@ Updated: 2026-08-01
 - `account.profile_changed`
 - `account.status_changed`
 
-기존 서버 런타임에서 기록하는 매니저 초대·수락·권한 변경·삭제, AI 키, 소유권 이전 등의 이벤트는 별도 감사 이벤트로 계속 유지합니다.
+## 기록되는 매니저 이벤트
+
+- `manager.invite_created`
+- `manager.invite_accepted`
+- `manager.member_added`
+- `manager.permissions_changed`
+- `manager.status_changed`
+- `manager.removed`
+
+매니저 권한 이벤트는 페이지 저장 시 변경 전후 `ownership.managers`를 비교해 실제 차이가 있을 때만 기록합니다. 일반 콘텐츠 저장이나 동일 권한 재저장은 이벤트를 만들지 않습니다.
+
+매니저 이메일은 감사 메타데이터에 저장하지 않습니다. 계정·멤버 ID가 없을 때만 이메일의 HMAC-SHA256 지문을 대상 ID로 사용합니다.
+
+## 기록되는 소유권 이전 이벤트
+
+- `ownership_transfer.requested`
+- `ownership_transfer.waiting_billing_clearance`
+- `ownership_transfer.approved`
+- `ownership_transfer.rejected`
+- `ownership_transfer.completed`
+- `ownership_transfer.canceled`
+- 예외 상태 변경 시 `ownership_transfer.status_changed`
+
+상태 변경 기록에는 이전·다음 상태와 이전·다음 결제 정리 상태를 함께 저장합니다.
+
+## 기록되는 프로젝트 이벤트
+
+- `project.archived`
+
+현재 삭제 동작은 프로젝트를 실제 삭제하지 않고 `archived` 상태로 전환합니다. 감사 기록에는 이전 상태, 다음 상태, 주소 슬러그, 처리 시각을 남깁니다.
 
 ## 개인정보 및 비밀값 보호
 
@@ -77,10 +106,14 @@ GET /api/admin/audit
 1. 일반 계정으로 `/api/admin/summary`와 `/api/admin/audit` 요청 시 403인지 확인합니다.
 2. 역할만 `superadmin`으로 위조한 일반 계정도 403인지 확인합니다.
 3. 허용 이메일 운영자는 두 API에서 200을 받는지 확인합니다.
-4. 회원가입·로그인·프로필 변경 후 `audit_logs`에 이벤트가 생성되는지 확인합니다.
-5. 실패 로그인 기록에 비밀번호·토큰·세션이 없는지 확인합니다.
-6. 조회 응답에 `ip`, `user_agent` 원문이 없는지 확인합니다.
-7. 필터와 페이지네이션이 최신순으로 동작하는지 확인합니다.
+4. 회원가입·로그인·프로필 변경 후 계정 이벤트가 생성되는지 확인합니다.
+5. 매니저 초대 발급·수락 후 초대 이벤트가 생성되는지 확인합니다.
+6. 매니저 권한 변경·비활성화·삭제 후 해당 이벤트만 생성되는지 확인합니다.
+7. 소유권 이전 요청·승인·거절·취소·완료 상태마다 정확한 이벤트가 생성되는지 확인합니다.
+8. 페이지 삭제 처리 후 `project.archived`가 생성되고 프로젝트가 `archived` 상태인지 확인합니다.
+9. 실패 로그인 기록에 비밀번호·토큰·세션이 없는지 확인합니다.
+10. 조회 응답에 `ip`, `user_agent` 원문이 없는지 확인합니다.
+11. 필터와 페이지네이션이 최신순으로 동작하는지 확인합니다.
 
 ## QA
 
@@ -92,6 +125,8 @@ npm run api:functions:qa
 npm run api:security:qa
 npm run qa:all
 ```
+
+`admin:audit:qa`는 매니저 변경 전후 데이터를 직접 실행해 추가·권한 변경·상태 변경·삭제 이벤트가 각각 한 번씩 생성되는지 확인합니다.
 
 ## 배포 상태 구분
 
