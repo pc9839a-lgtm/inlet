@@ -1,6 +1,6 @@
 # Pagero Remaining Patches
 
-Updated: 2026-08-01 23:52 KST
+Updated: 2026-08-01 23:57 KST
 
 Repository: `pc9839a-lgtm/inlet`
 
@@ -105,7 +105,7 @@ Code completion, QA completion, merge, deployment, and production verification a
 
 ## QA Complete
 
-Final verified checkpoint `c297168b115a7d02a805fcd3792ef64035238782` passed workflow run `30704415730`:
+Final verified head `942457b5cb33bd26a045acd485b7a1e2d0261fae` passed workflow run `30704521384`:
 
 - targeted administrator audit QA
 - authentication and authentication-email QA
@@ -123,7 +123,7 @@ Final verified checkpoint `c297168b115a7d02a805fcd3792ef64035238782` passed work
 - authenticated editor real-browser regression
 - consultation and reservation real-browser regression
 
-This checkpoint update changes documentation only and does not alter implementation or protected production-home files.
+This final checkpoint update changes documentation only and does not alter implementation or protected production-home files.
 
 ## Not Complete
 
