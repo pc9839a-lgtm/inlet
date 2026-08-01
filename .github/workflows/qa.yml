@@ -286,6 +286,12 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Install Korean browser font
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends fonts-noto-cjk
+          fc-match "Noto Sans CJK KR" | grep -qi "NotoSansCJK"
+
       - name: Build template mobile assets
         run: npm run build
 
