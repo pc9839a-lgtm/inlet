@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { onRequest as routeDomainRequest } from '../functions/_middleware.js';
 import {
   applyPageDomainConfig,
   normalizeDomainHostname,
@@ -235,6 +236,77 @@ assert.equal(mapped.domainStatus, 'active');
 assert.equal(mapped.sslStatus, 'active');
 assert.equal(mapCloudflarePagesDomain(providerResult, { configured: true, matched: false }).domainStatus, 'active');
 
+let pageroNextCalled = false;
+const pageroResponse = await routeDomainRequest({
+  request: new Request('https://pagero.kr/assets/app.js'),
+  env: {},
+  next: async () => {
+    pageroNextCalled = true;
+    return new Response('pagero-next');
+  },
+});
+assert.equal(pageroNextCalled, true);
+assert.equal(await pageroResponse.text(), 'pagero-next');
+
+let customNextCalled = false;
+const customResponse = await routeDomainRequest({
+  request: new Request('https://shop.example.com/'),
+  env: {
+    DB: {
+      prepare(sql) {
+        assert.match(sql, /page_domains\.status = 'active'/);
+        assert.match(sql, /page_domains\.ssl_status = 'active'/);
+        return {
+          bind(hostname) {
+            assert.equal(hostname, 'shop.example.com');
+            return {
+              async first() {
+                return { slug: 'sample-page', page_id: 'page-b', project_id: 'project-b' };
+              },
+            };
+          },
+        };
+      },
+    },
+    ASSETS: {
+      async fetch() {
+        return new Response('<!doctype html><html><head><script type="module" src="/assets/app.js"></script></head><body><div id="root"></div></body></html>', {
+          status: 200,
+          headers: { 'Content-Type': 'text/html; charset=utf-8' },
+        });
+      },
+    },
+  },
+  next: async () => {
+    customNextCalled = true;
+    return new Response('unexpected-next');
+  },
+});
+assert.equal(customNextCalled, false);
+assert.equal(customResponse.status, 200);
+assert.equal(customResponse.headers.get('X-Inlet-Custom-Domain'), 'shop.example.com');
+assert.equal(customResponse.headers.get('X-Inlet-Custom-Page'), 'sample-page');
+const customHtml = await customResponse.text();
+assert.match(customHtml, /__INLET_CUSTOM_DOMAIN_SLUG__="sample-page"/);
+assert.match(customHtml, /public-landing-shell/);
+const injectedBoot = customHtml.match(/<script>(window\.__INLET_CUSTOM_DOMAIN_SLUG__[\s\S]*?)<\/script>/)?.[1] || '';
+assert.ok(injectedBoot);
+assert.doesNotThrow(() => new Function(injectedBoot));
+
+const missingCustomResponse = await routeDomainRequest({
+  request: new Request('https://missing.example.com/'),
+  env: {
+    DB: {
+      prepare() {
+        return { bind: () => ({ first: async () => null }) };
+      },
+    },
+  },
+  next: async () => new Response('unexpected-next'),
+});
+assert.equal(missingCustomResponse.status, 404);
+assert.match(await missingCustomResponse.text(), /도메인 연결을 확인/);
+
 const db = fakeDb([
   {
     id: 'domain-a',
@@ -306,10 +378,11 @@ await disconnectD1PageDomain(db, 'page-b');
 assert.equal(db.rows.find((row) => row.page_id === 'page-b')?.status, 'disconnected');
 assert.equal(JSON.parse(db.pages[0].page_json).domainType, 'default');
 
-const [migration, checkEndpoint, manageEndpoint, providerModule, pageRoute, panel, section, hookFile, qaAll, packageJson] = await Promise.all([
+const [migration, checkEndpoint, manageEndpoint, middleware, providerModule, pageRoute, panel, section, hookFile, qaAll, packageJson] = await Promise.all([
   readFile('migrations/0006_page_domains.sql', 'utf8'),
   readFile('functions/api/domains/check.js', 'utf8'),
   readFile('functions/api/domains/manage.js', 'utf8'),
+  readFile('functions/_middleware.js', 'utf8'),
   readFile('server/cloudflarePagesDomains.mjs', 'utf8'),
   readFile('functions/api/pages/[slug].js', 'utf8'),
   readFile('src/panels/SettingsPanel.jsx', 'utf8'),
@@ -335,6 +408,9 @@ assert.match(checkEndpoint, /INLET_CUSTOM_DOMAIN_CNAME_TARGET/);
 assert.match(manageEndpoint, /ensureCloudflarePagesDomain/);
 assert.match(manageEndpoint, /deleteCloudflarePagesDomain/);
 assert.match(manageEndpoint, /masterOnly: true/);
+assert.match(middleware, /INNER JOIN page_domains|FROM page_domains/);
+assert.match(middleware, /X-Inlet-Custom-Domain/);
+assert.match(middleware, /__INLET_CUSTOM_DOMAIN_SLUG__/);
 assert.match(providerModule, /api\.cloudflare\.com\/client\/v4/);
 assert.match(providerModule, /INLET_CLOUDFLARE_ACCOUNT_ID/);
 assert.match(providerModule, /INLET_CLOUDFLARE_PAGES_PROJECT/);
@@ -352,7 +428,7 @@ assert.match(packageJson, /"page:domain:qa"/);
 
 console.log(JSON.stringify({
   ok: true,
-  policy: 'cloudflare-pages-domain-provider-reconciled',
+  policy: 'cloudflare-pages-domain-provider-and-host-routing',
   statuses: ['pending', 'verifying', 'active', 'failed', 'disconnected'],
   provider: 'cloudflare_pages',
 }, null, 2));
