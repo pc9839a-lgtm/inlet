@@ -185,6 +185,15 @@ npm run qa:all
 - `/admin/audit`의 noindex·CSP·비밀값 비노출
 - 운영자 이메일 역할 문자열 위조 차단
 
+최종 브랜치 QA 증빙:
+
+- commit: `b521c19f67633cf07b3aa21fa89690cb446ce790`
+- workflow run: `30702147816`
+- full offline QA: success
+- public landing browser regression: success
+- authenticated editor browser regression: success
+- form and reservation browser regression: success
+
 ## 배포 상태 구분
 
 - 코드 완료: 감사 기록·관리자 미들웨어·조회 API·운영 화면이 브랜치에 존재
