@@ -67,6 +67,7 @@
 @import '../styles/preview-runtime-parity.css';
 @import '../styles/preview-topnav-runtime-contract.css';
 @import '../styles/preview-fixed-ui-contract.css';
+@import '../styles/preview-gallery-mobile-contract.css';
 
 /* Global page typography consumers. */
 .landing-page .landing-content > :is(
