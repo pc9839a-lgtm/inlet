@@ -1,19 +1,31 @@
+import { AUTH_KEY } from '../../config/storageKeys.js';
 import {
   authAccountErrorMessage,
+  changeAuthEmail,
   changeAuthPassword,
   confirmEmailVerification,
   isValidAccountPassword,
   normalizeAccountPhone,
   requestEmailVerification,
 } from '../../lib/authAccounts.js';
+import { normalizeAuthUser } from '../../lib/authIdentity.js';
+
+function validEmail(value = '') {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
+}
 
 export function createAccountSettingsActions({
+  authUser,
   email,
+  emailDraft,
   onAccountUpdate,
   passwordDraft,
   profileDraft,
   resetMessage,
   setChanging,
+  setEmailChanging,
+  setEmailDraft,
+  setEmailVerifying,
   setError,
   setNotice,
   setPasswordDraft,
@@ -87,5 +99,81 @@ export function createAccountSettingsActions({
     }
   };
 
-  return { changePassword, saveProfile, sendPasswordCode };
+  const sendEmailChangeCode = async () => {
+    const nextEmail = String(emailDraft.email || '').trim().toLowerCase();
+    if (!validEmail(nextEmail)) {
+      setError('변경할 이메일을 정확히 입력해주세요.');
+      return;
+    }
+    if (nextEmail === email) {
+      setError('현재 이메일과 다른 이메일을 입력해주세요.');
+      return;
+    }
+    setEmailVerifying(true);
+    resetMessage();
+    try {
+      const verification = await requestEmailVerification(nextEmail, 'email-change');
+      setNotice(verification?.token ? '개발용 인증 코드: ' + verification.token : '새 이메일로 인증 코드를 전송했습니다.');
+    } catch (err) {
+      setError(authAccountErrorMessage(err));
+    } finally {
+      setEmailVerifying(false);
+    }
+  };
+
+  const changeEmail = async (event) => {
+    event.preventDefault();
+    const nextEmail = String(emailDraft.email || '').trim().toLowerCase();
+    if (!validEmail(nextEmail)) {
+      setError('변경할 이메일을 정확히 입력해주세요.');
+      return;
+    }
+    if (nextEmail === email) {
+      setError('현재 이메일과 다른 이메일을 입력해주세요.');
+      return;
+    }
+    if (!String(emailDraft.code || '').trim()) {
+      setError('새 이메일로 받은 인증 코드를 입력해주세요.');
+      return;
+    }
+    const session = String(authUser?.session || '').trim();
+    if (!session) {
+      setError('로그인 세션이 만료되었습니다. 다시 로그인해주세요.');
+      return;
+    }
+
+    setEmailChanging(true);
+    resetMessage();
+    try {
+      const updated = await changeAuthEmail({
+        email: nextEmail,
+        currentPassword: emailDraft.currentPassword || '',
+        token: String(emailDraft.code || '').trim(),
+        session,
+        projectId: authUser?.defaultProject?.projectId || '',
+      });
+      const normalized = normalizeAuthUser({
+        ...authUser,
+        ...updated,
+        session: updated?.session || '',
+        signedAt: new Date().toISOString(),
+      });
+      localStorage.setItem(AUTH_KEY, JSON.stringify(normalized));
+      setEmailDraft({ email: '', code: '', currentPassword: '' });
+      setNotice('이메일을 변경했습니다. 새 이메일 계정으로 다시 연결합니다.');
+      window.setTimeout(() => window.location.reload(), 400);
+    } catch (err) {
+      setError(authAccountErrorMessage(err));
+    } finally {
+      setEmailChanging(false);
+    }
+  };
+
+  return {
+    changeEmail,
+    changePassword,
+    saveProfile,
+    sendEmailChangeCode,
+    sendPasswordCode,
+  };
 }
