@@ -1,6 +1,6 @@
 # Pagero Remaining Patches
 
-Updated: 2026-08-02 01:24 KST
+Updated: 2026-08-02 01:31 KST
 
 Repository: `pc9839a-lgtm/inlet`
 
@@ -87,7 +87,7 @@ Code completion, QA completion, merge, deployment, and production verification a
 - Added release-blocking job `template-mobile-browser-regression`.
 - Added screenshot artifact `template-mobile-regression-${{ github.run_id }}`.
 - Added Noto CJK installation and font-match verification to the template-mobile job.
-- Korean text now renders as actual glyphs, so line wrapping and first-screen layout are checked with Korean font metrics rather than missing-glyph boxes.
+- Korean text renders as actual glyphs so line wrapping and first-screen layout use Korean font metrics rather than missing-glyph boxes.
 - Protected production-home file changes: none.
 
 ## QA Complete
@@ -115,6 +115,16 @@ Implementation head `f1f542630964ffea77f949f7879d8284ce3e4c70` passed workflow r
 - consultation and reservation browser regression
 - production build and deployment artifact checks
 
+Documentation closeout head `27641223d72e110cfcc61067412c830f132e62b7` passed workflow run `30708086687`:
+
+- full offline QA
+- public landing browser regression
+- authenticated editor browser regression
+- consultation and reservation browser regression
+- three-template mobile browser regression with Korean fonts
+
+PR `#44` was moved from draft to ready for review after all five final jobs passed.
+
 Screenshot artifact:
 
 - workflow run: `30707915630`
@@ -125,8 +135,6 @@ Screenshot artifact:
 
 ## Not Complete
 
-- Final documentation-only head QA after this closeout update: not completed yet.
-- PR `#44` ready-for-review transition: not completed yet.
 - PR `#44` merge to `main`: not completed.
 - Production deployment: not completed.
 - Production-device verification: not completed.
@@ -260,18 +268,17 @@ Do not restore the discarded 3,300원 / 6,600원 / 9,900원 direction. Do not ad
 
 # Active Remaining Patches
 
-## Priority 1 — PR #44 Review, Merge, And Production Verification
+## Priority 1 — PR #44 Merge And Production Verification
 
-After final documentation-only QA and owner approval:
+After owner approval:
 
 1. Confirm final PR head and all five QA jobs are green.
 2. Confirm protected production-home files remain unchanged.
-3. Mark PR `#44` ready for review.
-4. Merge only with owner approval.
-5. Deploy only with explicit deployment approval.
-6. Verify the three templates on at least one real Android device at approximately 360px, 390px, and 430px CSS widths.
-7. Verify gallery arrows, dots, FAQ, map actions, form keyboard, consent checkbox, reservation form, share button, and bottom actions.
-8. Record production deployment SHA and device evidence before marking production verified.
+3. Merge PR `#44` to `main`.
+4. Deploy only with explicit deployment approval.
+5. Verify the three templates on at least one real Android device at approximately 360px, 390px, and 430px CSS widths.
+6. Verify gallery arrows, dots, FAQ, map actions, form keyboard, consent checkbox, reservation form, share button, and bottom actions.
+7. Record production deployment SHA and device evidence before marking production verified.
 
 ## Priority 2 — PR #43 Merge And Production Verification
 
