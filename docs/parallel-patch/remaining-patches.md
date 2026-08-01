@@ -1,6 +1,6 @@
 # Pagero Remaining Patches
 
-Updated: 2026-08-02 00:55 KST
+Updated: 2026-08-02 01:24 KST
 
 Repository: `pc9839a-lgtm/inlet`
 
@@ -16,7 +16,7 @@ Other open candidates:
 
 Current execution mode: parallel patching is active
 
-Code completion, QA completion, merge, deployment, and production verification are separate states. Branch-only, mock-only, or `skipped-live` results are not production completion.
+Code completion, QA completion, merge, deployment, and production verification are separate states. Branch-only, mock-only, screenshot-only, or `skipped-live` results are not production completion.
 
 ## Parallel Worker Split
 
@@ -44,55 +44,94 @@ Code completion, QA completion, merge, deployment, and production verification a
 
 ## Code Complete
 
-- Added a real Chrome CDP regression for the three active templates only:
-  - `debt-relief-consult` — personal rehabilitation consultation
-  - `wedding-invitation` — mobile wedding invitation
-  - `quote-request` — real estate presale
-- Added viewport coverage for 360×800, 390×844, and 430×932.
-- Added first-viewport checks for hero placement, visible title/body, horizontal containment, placeholder/editor-copy leakage, and runtime error/fallback output.
-- Added section containment checks across every visible public block.
-- Added bottom fixed-button count, touch-height, and share-button collision checks.
-- Added real FAQ open/close interaction.
-- Added real gallery-next interaction for wedding and real-estate templates.
-- Added map-section and external map-action verification.
-- Added real-estate reservation-control verification.
+### Three active templates only
+
+- `debt-relief-consult` — personal rehabilitation consultation.
+- `wedding-invitation` — mobile wedding invitation.
+- `quote-request` — real estate presale.
+- No fourth template was added.
+- Template content, section order, and visual direction were not redesigned during QA.
+
+### Real mobile-browser regression
+
+- Added Chrome CDP coverage for 360×800, 390×844, and 430×932.
+- Added all nine template/viewport combinations as release-blocking checks.
+- Added first-viewport checks for hero placement, title/body visibility, horizontal containment, and runtime fallback/error output.
+- Added editor/placeholder copy leakage checks.
+- Added every visible section's left/right containment checks.
+- Added bottom fixed-button count, minimum touch height, and share-button collision checks.
+- Added physical FAQ open/close interaction.
+- Added physical gallery-next interaction for wedding and real-estate templates.
+- Added map section and external map-action verification.
+- Added real-estate reservation controls verification.
 - Added bottom CTA navigation to the form.
-- Added form-focus and simulated mobile-keyboard checks at 390px.
-- Added fixed top navigation, share button, and bottom bar hiding checks while a form control is focused.
-- Added template/viewport first-screen screenshots and 390px interaction screenshots.
+- Added form focus and simulated mobile-keyboard checks at 390px.
+- Added top navigation, share button, and bottom fixed UI hiding checks while an input is active.
+- Added viewport-bounded screenshots for all nine first screens plus 390px interaction screenshots.
+
+### Reproduced mobile defects fixed
+
+- Increased preview and public gallery arrow targets to 44×44px.
+- Added visible keyboard-focus treatment for gallery controls.
+- Prevented gallery swipe pointer capture from stealing arrow and dot button clicks.
+- Added `type="button"` and accessible labels to gallery dot controls.
+- Increased consent-row touch height to 44px.
+- Added a 36px checkbox hit box with a centered smaller visual checkbox.
+- Applied gallery and consent contracts equally to `.phone-frame` preview and `.public-landing-viewport` runtime.
+- Preserved `preview-fixed-ui-contract.css` as the final stylesheet priority.
+
+### CI evidence quality
+
 - Added `browser:templates-mobile:qa`.
 - Added `browser:templates-mobile:contract:qa` to `qa:all`.
-- Added release-blocking GitHub Actions job `template-mobile-browser-regression`.
+- Added release-blocking job `template-mobile-browser-regression`.
 - Added screenshot artifact `template-mobile-regression-${{ github.run_id }}`.
+- Added Noto CJK installation and font-match verification to the template-mobile job.
+- Korean text now renders as actual glyphs, so line wrapping and first-screen layout are checked with Korean font metrics rather than missing-glyph boxes.
 - Protected production-home file changes: none.
-- Template content and design changes: none.
 
-## QA State
+## QA Complete
 
-Initial PR workflow run `30706845375` showed:
+Implementation head `f1f542630964ffea77f949f7879d8284ce3e4c70` passed workflow run `30707915630`:
 
-- template static QA: passed
-- preview/public parity QA: passed
-- fixed bottom UI QA: passed
-- top navigation QA: passed
-- new template-mobile regression contract: passed
-- build and deployment artifact checks: passed
-- integration contract: failed because the old `main` backlog document omitted the required compatibility marker `Current execution mode: parallel patching is active`
-- all browser jobs, including the new template-mobile job, were skipped because the shared offline QA job failed first
+- full offline QA
+- template static QA
+- preview/public parity QA
+- fixed bottom UI QA
+- top navigation balance QA
+- template mobile regression contract QA
+- Noto CJK installation and font match
+- personal rehabilitation at 360px, 390px, and 430px
+- mobile wedding invitation at 360px, 390px, and 430px
+- real estate presale at 360px, 390px, and 430px
+- physical FAQ interaction
+- physical gallery navigation
+- map actions
+- reservation controls
+- bottom CTA form navigation
+- simulated keyboard and fixed-UI hiding
+- public landing browser regression
+- authenticated editor browser regression
+- consultation and reservation browser regression
+- production build and deployment artifact checks
 
-The failure was a documentation compatibility failure, not a template renderer or browser-test failure. This document now restores every required compatibility marker and records the PR `#44` checkpoint.
+Screenshot artifact:
+
+- workflow run: `30707915630`
+- artifact ID: `8820920405`
+- artifact name: `template-mobile-regression-30707915630`
+- digest: `sha256:d1140f812a70cc97b3ad0015cdfdeb4ff06a1713023bb7fc2ab94a61c612cf2c`
+- reviewed first-viewport evidence: Korean glyphs, line wrapping, hero, share button, and bottom actions rendered correctly across all nine combinations
 
 ## Not Complete
 
-- Final full offline QA after this document update: not completed yet.
-- Real Chrome three-template mobile regression: not completed yet.
-- Screenshot artifact review: not completed yet.
+- Final documentation-only head QA after this closeout update: not completed yet.
 - PR `#44` ready-for-review transition: not completed yet.
 - PR `#44` merge to `main`: not completed.
 - Production deployment: not completed.
-- Production template verification: not completed.
+- Production-device verification: not completed.
 
-Do not describe the three-template mobile final regression as complete until the final PR head passes the new browser job across all nine template/viewport combinations.
+Do not describe PR `#44` as merged, deployed, or production verified until those separate steps are completed with explicit owner approval.
 
 # Absolute Rules
 
@@ -186,6 +225,10 @@ Do not restore the discarded 3,300원 / 6,600원 / 9,900원 direction. Do not ad
 - Administrator authorization, audit, email-change, account controls, project controls, retention, and live-verifier implementation on open PR `#43`.
 - One-page policy production verifier implementation on open PR `#42`.
 - Custom-domain implementation and operations tooling on open PR `#41`.
+- Three-template 360/390/430px real-browser regression implementation on PR `#44`.
+- Shared gallery 44px targets and pointer-capture guard on PR `#44`.
+- Shared consent-row mobile touch contract on PR `#44`.
+- Korean-font screenshot evidence pipeline on PR `#44`.
 
 # Other Open Checkpoints
 
@@ -217,17 +260,18 @@ Do not restore the discarded 3,300원 / 6,600원 / 9,900원 direction. Do not ad
 
 # Active Remaining Patches
 
-## Priority 1 — Complete PR #44 Three-Template Mobile Regression
+## Priority 1 — PR #44 Review, Merge, And Production Verification
 
-1. Run final full offline QA after the backlog compatibility fix.
-2. Run the release-blocking `template-mobile-browser-regression` job.
-3. Require all nine template/viewport combinations to pass.
-4. Review the first-viewport and 390px interaction screenshot artifacts.
-5. Patch only reproduced renderer or CSS regressions; do not redesign the templates during QA.
-6. Confirm protected production-home files remain unchanged.
-7. Mark PR `#44` ready only after all jobs are green.
-8. Merge only with owner approval.
-9. Deploy only with explicit deployment approval.
+After final documentation-only QA and owner approval:
+
+1. Confirm final PR head and all five QA jobs are green.
+2. Confirm protected production-home files remain unchanged.
+3. Mark PR `#44` ready for review.
+4. Merge only with owner approval.
+5. Deploy only with explicit deployment approval.
+6. Verify the three templates on at least one real Android device at approximately 360px, 390px, and 430px CSS widths.
+7. Verify gallery arrows, dots, FAQ, map actions, form keyboard, consent checkbox, reservation form, share button, and bottom actions.
+8. Record production deployment SHA and device evidence before marking production verified.
 
 ## Priority 2 — PR #43 Merge And Production Verification
 
@@ -315,4 +359,4 @@ At the end of every patch:
 3. Move completed implementation into the baseline.
 4. Remove completed work from the active list.
 5. Record missing migrations, credentials, approvals, and live evidence.
-6. Do not claim production completion from branch-only, mock-only, or `skipped-live` results.
+6. Do not claim production completion from branch-only, mock-only, screenshot-only, or `skipped-live` results.
