@@ -20,6 +20,14 @@ function domainId(pageId = '') {
   return `domain_${String(pageId || '').replace(/[^a-zA-Z0-9-_]/g, '')}`;
 }
 
+function rawPageDomainInput(page = {}) {
+  const nested = page?.url && typeof page.url === 'object' ? page.url : {};
+  return {
+    domainType: (page.domainType || nested.domainType) === 'custom' ? 'custom' : 'default',
+    customDomain: page.customDomain || page.hostname || nested.customDomain || nested.hostname || '',
+  };
+}
+
 export async function getD1PageDomainByPageId(db, pageId = '') {
   const safePageId = String(pageId || '').trim();
   if (!safePageId) return null;
@@ -47,11 +55,12 @@ export async function assertD1PageDomainAvailable(db, hostname = '', pageId = ''
 }
 
 export async function prepareD1PageDomainSave(db, page = {}, context = {}) {
-  const domain = normalizePageDomainConfig(page);
-  const issues = pageDomainIssues(domain);
+  const rawDomain = rawPageDomainInput(page);
+  const issues = pageDomainIssues(rawDomain);
   if (issues.length) {
     throw domainError(issues[0], 400, 'DOMAIN_INVALID', { issues });
   }
+  const domain = normalizePageDomainConfig(page);
 
   if (domain.domainType !== 'custom') {
     return applyPageDomainConfig(page, {
