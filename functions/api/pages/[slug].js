@@ -5,7 +5,9 @@ import {
   assertUpdatePageIdentity,
   pageSaveIdentity,
 } from '../../../server/pageSavePolicy.mjs';
+import { writeAuditLog } from '../_audit.js';
 import { assertD1, authorizeProject, ensureD1ProjectShell, handleApiError, jsonResponse, optionsResponse, projectFromRequest, readJson, sessionIdentity } from '../_shared.js';
+import { writePageManagerAuditChanges } from './_pageAudit.js';
 
 const METHODS = 'GET, POST, DELETE, OPTIONS';
 const PUBLIC_PAGE_CACHE_CONTROL = 'no-store';
@@ -212,9 +214,10 @@ export async function onRequest({ request, env, params }) {
 
     if (request.method === 'DELETE') {
       const project = projectFromRequest(url, {}, request);
-      await authorizeProject(request, env, project, { write: true, tab: 'settings' });
+      const { identity } = await authorizeProject(request, env, project, { write: true, tab: 'settings' });
       const page = await getD1PageBySlug(db, { projectId: project.projectId, slug });
       if (!page) return pageNotFoundResponse(request, env);
+      const currentProject = await getD1ProjectById(db, project.projectId);
 
       const archivedAt = new Date().toISOString();
       await db.prepare(`
@@ -222,6 +225,21 @@ export async function onRequest({ request, env, params }) {
         SET status = 'archived', updated_at = ?
         WHERE id = ?
       `).bind(archivedAt, project.projectId).run();
+      await writeAuditLog({
+        request,
+        env,
+        identity,
+        projectId: project.projectId,
+        action: 'project.archived',
+        targetType: 'project',
+        targetId: project.projectId,
+        metadata: {
+          slug,
+          previousStatus: currentProject?.status || 'active',
+          nextStatus: 'archived',
+          archivedAt,
+        },
+      });
 
       return jsonResponse(request, env, 200, {
         ok: true,
@@ -300,6 +318,14 @@ export async function onRequest({ request, env, params }) {
         slug,
         createdByAccountId: session?.ownerId || project.ownerId || null,
         reason: body.reason || body.revisionReason || '',
+      });
+      await writePageManagerAuditChanges({
+        request,
+        env,
+        identity: session,
+        projectId: project.projectId,
+        previousPage: current,
+        nextPage: saved,
       });
       return jsonResponse(request, env, 200, {
         ok: true,
