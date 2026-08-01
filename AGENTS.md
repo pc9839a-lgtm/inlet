@@ -5,6 +5,7 @@
 Before modifying or deploying Pagero, read:
 
 - `docs/PAGERO_MAINTENANCE_HANDOFF_KO.md`
+- `docs/PAGERO_PLAN_POLICY_KO.md` for the owner-approved plan names, prices, and plan-count lock.
 - `docs/PAGERO_EDITOR_INTERACTION_PATCH_HANDOFF_KO.md` for editor, top navigation, sharing, form-focus, and timer follow-up work.
 
 The production root source of truth is `functions/index.js`, not a file named
@@ -69,6 +70,18 @@ the already verified candidate tree.
 
 Do not deploy `1bd91160-8741-490f-8d85-402179a12bbc`; it removes the required
 lifestyle bridge. Production deployment requires explicit user approval.
+
+## Billing Plan Lock - Owner Decision
+
+Pagero has exactly two paid plans:
+
+* `classic`: 클래식, KRW 3,500 per month
+* `pro`: 프로, KRW 5,500 per month
+
+Do not restore or introduce the old KRW 3,300 / 6,600 / 9,900 three-tier plan.
+Do not add a third paid plan unless the owner explicitly changes this decision.
+Use `docs/PAGERO_PLAN_POLICY_KO.md` as the pricing source of truth. Plan feature
+entitlements remain undecided until the owner defines them; do not guess them.
 
 ## Product Context
 
