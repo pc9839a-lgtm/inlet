@@ -16,11 +16,14 @@ export function authAccountErrorMessage(error) {
   const code = error?.details?.code || error?.details?.errorCode || '';
   const message = String(error?.message || error || '');
   const byCode = {
-    AUTH_EMAIL_DUPLICATE: '이미 가입된 이메일입니다. 로그인해주세요.',
+    AUTH_EMAIL_DUPLICATE: '이미 가입된 이메일입니다. 다른 이메일을 입력해주세요.',
+    AUTH_EMAIL_UNCHANGED: '현재 이메일과 다른 이메일을 입력해주세요.',
     AUTH_PHONE_DUPLICATE: '이미 가입된 휴대폰번호입니다. 다른 번호를 확인해주세요.',
     AUTH_PHONE_REQUIRED: '휴대폰번호를 입력해주세요.',
     AUTH_EMAIL_REQUIRED: '이메일을 확인해주세요.',
     AUTH_PASSWORD_POLICY: '비밀번호는 영문과 숫자를 포함해 6자리 이상으로 입력해주세요.',
+    AUTH_CURRENT_PASSWORD_REQUIRED: '현재 비밀번호를 입력해주세요.',
+    AUTH_CURRENT_PASSWORD_INVALID: '현재 비밀번호가 올바르지 않습니다.',
     EMAIL_VERIFICATION_REQUIRED: '이메일 인증을 먼저 완료해주세요.',
     EMAIL_VERIFICATION_TOKEN_REQUIRED: '이메일 인증 코드를 입력해주세요.',
     EMAIL_VERIFICATION_INVALID: '이메일 인증 코드가 올바르지 않습니다.',
@@ -39,8 +42,10 @@ export function authAccountErrorMessage(error) {
   if (/email is already registered/i.test(message)) return byCode.AUTH_EMAIL_DUPLICATE;
   if (/phone number is already registered/i.test(message)) return byCode.AUTH_PHONE_DUPLICATE;
   if (/phone number is required/i.test(message)) return byCode.AUTH_PHONE_REQUIRED;
-  if (/valid email is required/i.test(message)) return '이메일을 확인해주세요.';
-  if (/password must include/i.test(message)) return '비밀번호는 영문과 숫자를 포함해 6자리 이상으로 입력해주세요.';
+  if (/valid email is required/i.test(message)) return byCode.AUTH_EMAIL_REQUIRED;
+  if (/current password is required/i.test(message)) return byCode.AUTH_CURRENT_PASSWORD_REQUIRED;
+  if (/current password is invalid/i.test(message)) return byCode.AUTH_CURRENT_PASSWORD_INVALID;
+  if (/password must include/i.test(message)) return byCode.AUTH_PASSWORD_POLICY;
   if (/requested too recently/i.test(message)) return byCode.EMAIL_VERIFICATION_COOLDOWN;
   if (/too many verification emails/i.test(message)) return byCode.EMAIL_VERIFICATION_DAILY_LIMIT;
   if (/email or password is invalid/i.test(message)) return byCode.AUTH_LOGIN_INVALID;
@@ -113,6 +118,20 @@ export async function updateAuthAccount(input = {}) {
     headers: input.session ? { 'X-Inlet-Session': input.session } : {},
   });
   return data?.user ? { ...data.user, session: data.session || input.session || '' } : null;
+}
+
+export async function changeAuthEmail(input = {}) {
+  const data = await postJson('/api/auth/account/email', {
+    email: String(input.email || '').trim().toLowerCase(),
+    currentPassword: input.currentPassword || '',
+    token: input.token || input.verificationToken || '',
+    projectId: input.projectId || '',
+    session: input.session || '',
+  }, {
+    method: 'PATCH',
+    headers: input.session ? { 'X-Inlet-Session': input.session } : {},
+  });
+  return data?.user ? { ...data.user, session: data.session || '' } : null;
 }
 
 export async function updateAuthAccountStatus(input = {}) {
