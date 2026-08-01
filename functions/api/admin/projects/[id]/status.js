@@ -13,7 +13,7 @@ function projectStatusError(message, status = 400, code = 'PROJECT_STATUS_INVALI
   return error;
 }
 
-function normalizedAction(input = {}) {
+export function normalizedProjectStatusAction(input = {}) {
   const action = String(input.action || '').trim().toLowerCase();
   if (ACTIONS.has(action)) return action;
   const status = String(input.status || '').trim().toLowerCase();
@@ -23,7 +23,7 @@ function normalizedAction(input = {}) {
   return '';
 }
 
-function actionState(action = '') {
+export function projectActionState(action = '') {
   if (action === 'restore') return { dbStatus: 'active', auditAction: 'project.restored', operatorState: 'active' };
   if (action === 'archive') return { dbStatus: 'archived', auditAction: 'project.archived', operatorState: 'archived' };
   return { dbStatus: 'archived', auditAction: 'project.paused', operatorState: 'paused' };
@@ -45,9 +45,9 @@ export async function onRequest({ request, env, params }) {
     const project = await getD1ProjectById(db, projectId);
     if (!project?.projectId) throw projectStatusError('Project was not found.', 404, 'PROJECT_NOT_FOUND');
 
-    const action = normalizedAction(input);
+    const action = normalizedProjectStatusAction(input);
     if (!action) throw projectStatusError('Pause, restore, or archive action is required.');
-    const state = actionState(action);
+    const state = projectActionState(action);
     const previousStatus = String(project.status || 'active').trim().toLowerCase() || 'active';
     const changed = previousStatus !== state.dbStatus;
     const updatedAt = new Date().toISOString();
