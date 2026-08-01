@@ -1,4 +1,4 @@
--- Customer custom-domain ownership and verification state.
+-- Customer custom-domain ownership, provider binding, and verification state.
 
 CREATE TABLE IF NOT EXISTS page_domains (
   id TEXT PRIMARY KEY,
@@ -10,7 +10,16 @@ CREATE TABLE IF NOT EXISTS page_domains (
   ssl_status TEXT NOT NULL DEFAULT 'pending' CHECK (ssl_status IN ('not_applicable', 'pending', 'active', 'failed')),
   failure_reason TEXT NOT NULL DEFAULT '',
   verification_token_hash TEXT NOT NULL DEFAULT '',
+  provider TEXT NOT NULL DEFAULT '',
+  provider_domain_id TEXT NOT NULL DEFAULT '',
+  provider_status TEXT NOT NULL DEFAULT '',
+  verification_status TEXT NOT NULL DEFAULT '',
+  validation_status TEXT NOT NULL DEFAULT '',
+  validation_method TEXT NOT NULL DEFAULT '',
+  validation_name TEXT NOT NULL DEFAULT '',
+  validation_value TEXT NOT NULL DEFAULT '',
   last_checked_at TEXT,
+  last_provider_sync_at TEXT,
   connected_at TEXT,
   disconnected_at TEXT,
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
@@ -29,3 +38,6 @@ CREATE INDEX IF NOT EXISTS idx_page_domains_project_status
 
 CREATE INDEX IF NOT EXISTS idx_page_domains_status_checked
   ON page_domains(status, last_checked_at, updated_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_page_domains_provider_status
+  ON page_domains(provider, provider_status, last_provider_sync_at DESC);
