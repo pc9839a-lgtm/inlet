@@ -1,6 +1,6 @@
 # Pagero Remaining Patches
 
-Updated: 2026-08-01 21:51 KST
+Updated: 2026-08-01 22:21 KST
 
 Repository: `pc9839a-lgtm/inlet`
 
@@ -43,29 +43,37 @@ Code completion, QA completion, merge, deployment, and production verification a
 
 ## Code Complete
 
-- Added shared platform-master authorization for `/api/admin/*`.
-- Removed administrator access based only on role strings such as `superadmin` and `serviceadmin`.
-- Preserved the secret-protected automatic domain recheck route required by PR `#41`.
-- Added non-blocking D1 audit writes for signup, login, email-verification request, profile change, and account-status change.
-- Added success and classified-failure events without storing passwords, tokens, sessions, Authorization headers, or cookies.
-- Replaced raw IP and User-Agent values with HMAC-SHA256 fingerprints.
-- Added `GET /api/admin/audit` with search, action, actor, project, target type, date, cursor, and limit filters.
-- Excluded raw IP and raw User-Agent from audit responses.
-- Added no audit-log update or deletion API.
-- Added manager invite creation and acceptance audit events.
-- Added page-save diff auditing for manager addition, permission change, status change, and removal.
-- Added ownership-transfer request, billing-wait, approval, rejection, cancellation, completion, and fallback status-change events.
-- Added project archive auditing when page deletion archives the project.
-- Added runtime QA that verifies manager additions, permission changes, status changes, and removals are emitted separately and manager emails are not persisted in audit rows.
-- Added `admin:audit:qa` to `qa:all`.
-- Updated `docs/ops-admin-audit-log.md`.
+- Shared platform-master authorization for `/api/admin/*`.
+- Administrator role-string forgery blocked.
+- Secret-protected custom-domain automatic recheck preserved for PR `#41`.
+- Non-blocking account and authentication audit writes.
+- Signup, login, email-verification, profile, account-status, and password-change success/failure events.
+- Passwords, verification tokens, sessions, Authorization headers, and cookies excluded from audit metadata.
+- Raw IP and User-Agent replaced with HMAC-SHA256 fingerprints.
+- `GET /api/admin/audit` search and pagination API.
+- No audit-log update or deletion API.
+- Manager invite creation and acceptance events.
+- Manager addition, permission, status, and removal diff auditing.
+- Ownership-transfer request and all operator status events.
+- Project archive event for normal page deletion.
+- Platform-master project pause, restore, and archive API with audit events.
+- Route-only `/admin/audit` operator console.
+- Audit search, project search, pause, and restore controls.
+- `noindex`, no-store, CSP, and frame-blocking headers for the operator console.
+- No platform-master email list or server secret embedded in the operator console.
+- Runtime QA for manager diffs, password secrecy, project action policy, and operator-console headers.
+- `admin:audit:qa` included in `qa:all`.
+- `docs/ops-admin-audit-log.md` updated.
 - Protected production-home file changes: none.
 
 ## QA Complete
 
-Implementation commit `5ae8588d3bc6ee020c784d9fad78ae629c6da8a1` passed:
+Implementation commit `0eb67738c19cff0c61c1b774615f849e93d4d905` passed:
 
 - targeted administrator audit QA
+- password audit and metadata secrecy QA
+- project pause/restore policy QA
+- route-only operator console QA
 - authentication QA
 - authentication-email QA
 - Pages Functions QA
@@ -76,7 +84,7 @@ Implementation commit `5ae8588d3bc6ee020c784d9fad78ae629c6da8a1` passed:
 - authenticated editor real-browser regression
 - consultation and reservation real-browser regression
 
-Documentation-only follow-up commits must still keep the same full QA green before final closeout.
+Documentation follow-up commits must keep the same suite green before closeout.
 
 ## Not Complete
 
@@ -84,10 +92,11 @@ Documentation-only follow-up commits must still keep the same full QA green befo
 - Production deployment: not completed.
 - Production administrator authorization verification: not completed.
 - Production D1 audit-row verification: not completed.
-- Password-change and email-change workflow audit: not completed.
-- Project pause and restore API/audit: not completed.
-- Platform-master manual action audit: not completed.
-- Internal route-only audit UI: not completed.
+- Production `/admin/audit` smoke verification: not completed.
+- Real project pause, public 404, and restore smoke verification: not completed.
+- Email-change workflow and audit: not completed.
+- Platform-master account suspension/restoration API and audit: not completed.
+- Audit retention and cleanup policy: not completed.
 
 Do not describe PR `#43` as production complete until it is merged, deployed with explicit owner approval, and checked using an approved platform-master account plus a denied general account.
 
@@ -134,7 +143,7 @@ Do not change the visible production home without an explicit owner request. Pro
 - Frontend and API page-limit enforcement both remain mandatory.
 - Role-string forgery must not bypass page or administrator policy.
 - Existing pages remain editable, revisionable, restorable, previewable, and public.
-- Archived/deleted projects do not consume the active-page quota.
+- Archived projects do not consume the active-page quota.
 - Google-login accounts follow the same page policy.
 - Manager/member access cannot create another owner page.
 - Default platform-master emails plus `INLET_PLATFORM_MASTER_EMAILS` are the only approved page-limit and administrator bypass source.
@@ -180,24 +189,21 @@ After owner approval:
 3. Verify a general account receives 403 from `/api/admin/summary` and `/api/admin/audit`.
 4. Verify a forged `superadmin` role also receives 403.
 5. Verify an approved platform-master receives 200.
-6. Create account, login, email-verification, manager, ownership-transfer, and project-archive events.
-7. Confirm D1 audit rows contain no raw password, token, session, manager email, IP, or User-Agent.
-8. Confirm filtering and pagination work and no ordinary audit deletion path exists.
-9. Confirm ordinary page content saves do not create manager-change events when manager data is unchanged.
+6. Open `/admin/audit` and verify search, pagination, project list, pause, and restore.
+7. Create account, login, verification, password, manager, ownership-transfer, and project events.
+8. Confirm D1 audit rows contain no raw password, token, session, manager email, IP, or User-Agent.
+9. Confirm ordinary page saves do not create manager-change events when manager data is unchanged.
+10. Pause a disposable page, confirm its public URL no longer resolves, restore it, and confirm it returns.
 
 ## Priority 2 — Complete Remaining Admin And Audit Gaps
 
-Patch only confirmed remaining gaps after the current PR `#43` implementation:
+Patch only confirmed remaining gaps:
 
-- password-change audit
-- email-change workflow and audit
-- account restoration audit where restoration is implemented
-- project pause and restore API plus audit
-- platform-master manual action audit
-- audit retention that prevents ordinary operator deletion
-- internal route-only audit UI, never public workspace navigation
+- verified email-change workflow and audit
+- platform-master account suspend and restore API with audit
+- audit retention and cleanup policy that prevents ordinary operator deletion
 
-Manager invite, acceptance, permission change, status change, removal, ownership-transfer states, and project archive are implemented in PR `#43`; do not reassign them unless a regression is reproduced.
+Password change, manager events, ownership-transfer events, project archive, project pause/restore, and route-only audit UI are implemented in PR `#43`; do not reassign them unless a regression is reproduced.
 
 ## Priority 3 — Execute One-Page Policy Live Verification
 
