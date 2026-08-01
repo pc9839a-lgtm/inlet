@@ -1,6 +1,6 @@
 # Pagero Remaining Patches
 
-Updated: 2026-08-01 12:40 KST
+Updated: 2026-08-01 13:05 KST
 
 Repository: `pc9839a-lgtm/inlet`
 
@@ -20,23 +20,27 @@ This document must be updated at the end of every patch. Code completion, QA com
 4. Worker 4: Settings manager permissions, ownership transfer, page duplication URL flow
 5. Worker 5: QA, deployment, live integration readiness, docs and ops
 
-## Current Patch Checkpoint — Custom Domain
+## Current Patch Checkpoint — Custom-Domain Operations
 
-- Code: complete on PR `#41`.
-- Targeted QA: complete.
-- Full offline QA: complete.
-- Landing browser regression: complete.
-- Authenticated editor browser regression: complete.
-- Form and reservation browser regression: complete.
-- Closeout-document compatibility QA: complete.
-- Pull request: open and ready for review.
+- Base custom-domain connection code: complete on PR `#41`.
+- Operator domain list API: code complete.
+- Scheduled pending/verifying/failed-domain recheck: code complete.
+- Retry, bounded backoff, exhaustion, and escalation policy: code complete.
+- Detach/reconnect and rollback support runbook: complete.
+- D1 operations migration `0007_page_domain_operations.sql`: complete.
+- Targeted QA: pending for the current commit.
+- Full offline QA: pending for the current commit.
+- Landing browser regression: pending for the current commit.
+- Authenticated editor browser regression: pending for the current commit.
+- Form and reservation browser regression: pending for the current commit.
+- Pull request: open.
 - Merge to `main`: not completed.
-- Production D1 migration: not completed.
+- Production D1 migrations: not completed.
 - Production Cloudflare environment configuration: not completed.
 - Production deployment: not completed.
 - Real customer-domain smoke test: not completed.
 
-The custom-domain implementation is **code and feature QA complete, operational rollout remaining**. Do not describe it as production complete.
+Do not describe the custom-domain feature as production complete until both migrations, provider configuration, merge, deployment, and live verification are complete.
 
 ## Source Of Truth Order
 
@@ -126,7 +130,7 @@ The old 3,300원 / 6,600원 / 9,900원 direction is discarded. Do not add a thir
 - Server-backed blocked-submission history and month-bounded CSV.
 - AWS SES and Google Sheets integration foundations.
 
-## Custom-Domain Code And QA Baseline — PR #41
+## Custom-Domain Connection Baseline — PR #41
 
 - `page_domains` D1 ownership and lifecycle schema.
 - Server hostname validation and duplicate ownership protection.
@@ -143,6 +147,20 @@ The old 3,300원 / 6,600원 / 9,900원 direction is discarded. Do not add a thir
 - Existing Pagero, Pages preview, CallTag, API, and static-asset routing preservation.
 - Dedicated `page:domain:qa` registered in `qa:all`.
 
+## Custom-Domain Operations Baseline — Current Patch
+
+- Platform-master operator list endpoint at `/api/admin/domains`.
+- Status, hostname, page, owner, and stale-time filtering.
+- Manual operator verification for one page.
+- Retry metadata migration with retry count, next retry, error code, escalation time, and last attempt.
+- Bounded retry schedule: 5, 15, 30, 60, 180, and 360 minutes.
+- Transient provider-error classification.
+- Retry exhaustion and 24-hour escalation policy.
+- Protected scheduled endpoint at `/api/admin/domains/recheck`.
+- Fifteen-minute GitHub Actions schedule with `skipped-live` behavior when the secret is absent.
+- Detach/reconnect, DNS triage, migration, and rollback runbook.
+- Dedicated `page:domain:ops:qa` registered in `qa:all`.
+
 This baseline exists on PR `#41`; it is not yet production-deployed.
 
 # Active Remaining Patches
@@ -152,34 +170,34 @@ This baseline exists on PR `#41`; it is not yet production-deployed.
 Before merge or deployment:
 
 1. Apply `migrations/0006_page_domains.sql` to production D1.
-2. Verify the actual schema and write rollback steps.
-3. Set `INLET_CLOUDFLARE_ACCOUNT_ID`.
-4. Set `INLET_CLOUDFLARE_PAGES_PROJECT`.
-5. Set the minimum-permission Pages Edit token as `INLET_CLOUDFLARE_API_TOKEN`.
-6. Set the real Pages target as `INLET_CUSTOM_DOMAIN_CNAME_TARGET`.
-7. Keep credentials server-only.
-8. Merge PR `#41` only after migration and environment ordering is safe.
-9. Deploy only after explicit owner approval.
+2. Apply `migrations/0007_page_domain_operations.sql` immediately after `0006`.
+3. Verify the actual schema and record rollback evidence.
+4. Set `INLET_CLOUDFLARE_ACCOUNT_ID`.
+5. Set `INLET_CLOUDFLARE_PAGES_PROJECT`.
+6. Set the minimum-permission Pages Edit token as `INLET_CLOUDFLARE_API_TOKEN`.
+7. Set the real Pages target as `INLET_CUSTOM_DOMAIN_CNAME_TARGET`.
+8. Set `INLET_DOMAIN_RECHECK_SECRET`.
+9. Set GitHub Actions secret `PAGERO_DOMAIN_RECHECK_SECRET` to the same value.
+10. Optionally set `PAGERO_DOMAIN_RECHECK_URL`; the default is the Pagero production endpoint.
+11. Keep credentials server-only.
+12. Merge PR `#41` only after migration and environment ordering is safe.
+13. Deploy only after explicit owner approval.
 
 Live verification:
 
-- Real subdomain reaches `pending → verifying → active`.
-- SSL reaches active.
-- Customer domain root shows the correct landing, not Pagero home.
-- Forms, reservations, tracking, and assets work on the customer host.
-- Inactive or unowned hosts return the `noindex` 404.
-- Returning to the Pagero address detaches the provider domain.
-- Reconnection works after detach.
-- Another page cannot claim an occupied hostname.
-- Apex/root-domain CNAME-flattening behavior works.
-- Public, share, preview, and canonical URLs remain consistent.
-
-Still unimplemented:
-
-- Operator list for failed or long-stuck domain checks.
-- Scheduled recheck for pending or verifying domains.
-- Provider timeout retry and escalation policy.
-- Support runbook for detach, reconnect, rollback, and bad DNS.
+- Trigger the scheduled-domain workflow manually once.
+- Confirm the operator list returns pending, verifying, failed, stale, and escalated states correctly.
+- Connect a real subdomain and confirm `pending → verifying → active`.
+- Confirm Cloudflare SSL reaches active.
+- Confirm the customer domain root shows the correct landing, not the Pagero home.
+- Confirm forms, reservations, tracking, assets, share URL, preview URL, and canonical URL work.
+- Confirm inactive or unowned hosts return the `noindex` 404.
+- Confirm switching back to the Pagero address detaches the provider domain.
+- Confirm reconnecting the same hostname resets old retry metadata and works.
+- Confirm another page cannot claim an occupied hostname.
+- Confirm apex/root-domain CNAME-flattening behavior.
+- Confirm a transient provider failure schedules a retry without exposing provider secrets.
+- Confirm a terminal or exhausted failure appears as escalated for the operator.
 
 ## Priority 2 — One-Page Policy Production Verification
 
@@ -201,7 +219,7 @@ Patch only confirmed gaps after inspecting current code:
 - Manager invite, acceptance, permission change, and removal.
 - Ownership-transfer lifecycle.
 - Project pause, archive, and restore.
-- Platform-master manual actions.
+- Platform-master manual actions, including custom-domain operator actions.
 - Search by account, project, action, actor, and date.
 - Protection against silent audit deletion.
 
@@ -236,7 +254,7 @@ Verify at 360px, 390px, and 430px: finished first viewport, no builder instructi
 
 ## Priority 6 — Product And Operations Hardening
 
-- D1 backup and migration rollback.
+- D1 backup and migration rollback execution evidence.
 - Current operator release checklist.
 - Retention and cleanup policy for logs and audit data.
 - Large-data inbox and stats query verification.
@@ -259,16 +277,16 @@ The owner must define the Classic/Pro entitlement difference before checkout wor
 
 Before the final user response:
 
-1. Update timestamp and branch, PR, or commit.
-2. Record code, QA, merge, deployment, and production-verification separately.
-3. Move completed implementation into the baseline.
+1. Update the timestamp and current branch, PR, or commit.
+2. Record code, QA, merge, deployment, and production-verification states separately.
+3. Move completed implementation into the completed baseline.
 4. Remove completed items from active priorities.
 5. Reorder the remaining priorities.
-6. Record blockers, owner decisions, migrations, and environment values.
+6. Record exact blockers, owner decisions, migrations, and environment values.
 7. Commit this document in the same branch or PR.
 8. Include the refreshed remaining-patch list in the final response.
 
-A patch reported complete without this update is an incomplete closeout.
+A final response that says a patch is complete without this document update is an incomplete patch closeout.
 
 # Required Verification Commands
 
@@ -283,6 +301,7 @@ npm run browser:forms:qa
 npm run browser:production:qa
 npm run account:page-limit:qa
 npm run page:domain:qa
+npm run page:domain:ops:qa
 npm run page:save:qa
 npm run page:draft:qa
 npm run page:operation:isolation:qa
@@ -294,4 +313,4 @@ npm run topnav:balance:qa
 npm run live:qa
 ```
 
-A skipped live check must identify the exact missing credential or external approval and must not be reported as completed live verification.
+A skipped live check must identify the exact missing credential or external approval. It must never be reported as completed live verification.
