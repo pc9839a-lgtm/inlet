@@ -280,7 +280,7 @@ assert.doesNotMatch(accountEmailSource, /metadata:\s*\{[^}]*currentPassword\s*:/
 assert.doesNotMatch(accountEmailSource, /metadata:\s*\{[^}]*token\s*:/s);
 assert.doesNotMatch(routeOnlyAuditSource, /PLATFORM_MASTER_EMAILS|DEFAULT_MASTER_EMAILS/);
 assert.match(retentionSource, /action NOT LIKE 'audit\.retention_%'/);
-assert.doesNotMatch(retentionWorkflow, /echo.*RETENTION_SECRET|set -x/);
+assert.doesNotMatch(retentionWorkflow, /echo[^\n]*\$\{?RETENTION_SECRET|\bset\s+-x\b/);
 
 console.log(JSON.stringify({
   ok: true,
