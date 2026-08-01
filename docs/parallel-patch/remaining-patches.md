@@ -1,18 +1,18 @@
 # Pagero Remaining Patches
 
-Updated: 2026-08-01 20:45 KST
+Updated: 2026-08-01 20:55 KST
 
 Repository: `pc9839a-lgtm/inlet`
 
 Production branch: `main`
 
-Current patch branch: `agent/account-page-limit-production-verification`
+Current candidate: PR `#42` / `agent/account-page-limit-production-verification`
 
 Open custom-domain candidate: PR `#41` / `agent/custom-domain-foundation`
 
 Current execution mode: parallel patching is active
 
-This document must be updated at the end of every patch. Code completion, QA completion, merge, deployment, and production verification are separate states. A patch is not fully complete until the state written here matches reality.
+This document must be updated at the end of every patch. Code completion, QA completion, merge, deployment, and production verification are separate states.
 
 ## Parallel Worker Split
 
@@ -22,37 +22,39 @@ This document must be updated at the end of every patch. Code completion, QA com
 4. Worker 4: Settings manager permissions, ownership transfer, page duplication URL flow
 5. Worker 5: QA, deployment, live integration readiness, docs and ops
 
-## Current Patch Checkpoint — One-Page Policy Production Verification
+## Current Patch Checkpoint — PR #42
 
-- Existing one-page policy implementation: merged through PR `#40`.
-- Offline general-account and platform-master regression QA: existing and extended.
-- Google-login quota regression case: code complete on the current branch.
-- Manager-role quota-bypass regression case: code complete on the current branch.
-- Manual production verification script: code complete on the current branch.
-- Manual GitHub Actions workflow: code complete on the current branch.
-- Disposable fixture and cleanup runbook: complete on the current branch.
-- Targeted QA: pending.
-- Full offline QA: pending.
-- Landing browser regression: pending.
-- Authenticated editor browser regression: pending.
-- Form and reservation browser regression: pending.
-- Pull request: not opened yet.
+- Existing one-page account policy: merged through PR `#40`.
+- Google-login quota regression: complete.
+- Manager-role bypass regression: complete.
+- Manual production verification script: complete.
+- Manual GitHub Actions workflow: complete.
+- Six-fixture preparation and cleanup runbook: complete.
+- `skipped-live` false-success prevention contract: complete.
+- Targeted QA: complete.
+- Full offline QA: complete.
+- Landing browser regression: complete.
+- Authenticated editor browser regression: complete.
+- Form and reservation browser regression: complete.
+- Protected production-home file changes: none.
+- PR `#42`: open.
 - Merge to `main`: not completed.
-- Production workflow secrets: not configured or verified in this patch.
-- Production live write verification: not completed.
+- Production fixture secrets: not configured or verified by this code patch.
+- Production live-write workflow result: not completed.
+- Production verification status: **not verified live**.
 
-Do not describe the one-page policy as production-verified until the manual workflow reports `verified-live` against the intended deployed commit and cleanup evidence is recorded.
+The implementation and QA tooling are complete. Do not call the account policy production-verified until the manual workflow returns `verified-live` against the intended deployed commit and cleanup evidence is saved.
 
 ## Open Custom-Domain Checkpoint — PR #41
 
-- Connection, DNS, SSL, provider registration, host routing, retries, escalation, operator list, scheduled recheck, and runbook: code and QA complete on PR `#41`.
+- Domain connection, DNS, SSL, provider registration, host routing, retries, escalation, operator list, scheduled recheck, and runbook: code and QA complete.
 - Merge to `main`: not completed.
 - Production D1 migrations `0006` and `0007`: not completed.
 - Production Cloudflare environment configuration: not completed.
 - Production deployment: not completed.
 - Real customer-domain smoke test: not completed.
 
-Do not describe the custom-domain feature as production complete.
+The custom-domain feature is not production complete.
 
 ## Source Of Truth Order
 
@@ -60,7 +62,7 @@ Do not describe the custom-domain feature as production complete.
 2. `docs/PAGERO_MAINTENANCE_HANDOFF_KO.md`
 3. `docs/PAGERO_PLAN_POLICY_KO.md`
 4. This document
-5. Task-specific handoff and operations documents
+5. Task-specific operations documents
 6. Current `main` code and recent commits
 7. Old worker documents as historical context only
 
@@ -83,7 +85,7 @@ Do not describe the custom-domain feature as production complete.
 
 Unless the owner explicitly requests a production-home change, do not modify the visible design, copy, section order, menu, footer, hero, animation, login/start behavior, or responsive result of `https://pagero.kr/`.
 
-Protected scope includes:
+Protected scope:
 
 - `functions/index.js`
 - `index.html`
@@ -95,7 +97,7 @@ Protected scope includes:
 - `public/c63-life-bridge.css`
 - root/static routing inside `server/index.mjs`
 
-Stop if unrelated work changes a protected production-home file or required production-home signal.
+Stop if unrelated work changes a protected production-home file or required production signal.
 
 ## General Account Page Limit Must Stay Enforced
 
@@ -114,14 +116,14 @@ Stop if unrelated work changes a protected production-home file or required prod
 - `classic`: 클래식, 월 3,500원
 - `pro`: 프로, 월 5,500원
 
-The old 3,300원 / 6,600원 / 9,900원 direction is discarded. Do not add a third paid plan. Do not invent plan entitlements before owner approval.
+The old 3,300원 / 6,600원 / 9,900원 direction is discarded. Do not add a third paid plan or invent entitlements before owner approval.
 
 ## Sharing And Deployment
 
 - Global sharing uses `page.share` and remains separate from the bottom bar.
-- Share URLs must use the public page URL, not editor or dashboard URLs.
+- Share URLs use the public page URL, not editor or dashboard URLs.
 - Never force-push `main`.
-- Do not use destructive reset, clean, or restore operations to construct a release.
+- Do not construct releases with destructive reset, clean, or restore operations.
 - Do not mix unrelated refactors into a patch.
 - Run targeted QA and the full suite before merge or deployment.
 - Production deployment requires explicit owner approval.
@@ -130,52 +132,53 @@ The old 3,300원 / 6,600원 / 9,900원 direction is discarded. Do not add a thir
 
 ## Account And Page Policy
 
-- General-account one-page policy model.
-- Platform-master email policy.
-- Server-side creation middleware returning `ACCOUNT_PAGE_LIMIT_REACHED`.
-- Frontend creation-control lock state.
+- General-account one-active-page policy.
+- Platform-master email policy and unlimited quota.
+- Server middleware returning `ACCOUNT_PAGE_LIMIT_REACHED`.
+- Frontend creation lock and modal guard.
 - Existing-page replay and update allowance.
-- Login, Google login, and session responses preserving account identity.
-- Role-string quota bypass blocked.
-- Archived/deleted project exclusion in the server count query.
-- Existing `account:page-limit:qa` registered in `qa:all`.
+- Login and session platform-master state.
+- Role-string bypass protection.
+- Archived/deleted project exclusion.
+- Existing `account:page-limit:qa` coverage.
 
-## Account Page-Limit Verification Infrastructure — Current Patch
+## Account Page-Limit Production Verification Infrastructure — PR #42
 
-- Manual live script at `scripts/account-page-limit-production-check.mjs`.
-- Manual-only workflow at `.github/workflows/account-page-limit-production-verify.yml`.
-- Six dedicated fixture types: empty, occupied, archived, platform master, Google, and manager.
-- Explicit write gate through `INLET_ACCOUNT_PAGE_LIMIT_LIVE_WRITE=1`.
-- Required-live gate that rejects `skipped-live` evidence.
-- Disposable `qa-limit-*` page creation and reverse-order cleanup.
-- Live checks for first create, second-create `409`, existing save, revisions, preview, restore, public read, delete/recreate, archived exclusion, platform-master multiple pages, Google quota, and manager bypass.
-- Contract QA that proves missing secrets cannot create a false live success.
-- Operations runbook at `docs/ops-account-page-limit-production-verification.md`.
+- Live script: `scripts/account-page-limit-production-check.mjs`.
+- Manual-only workflow: `.github/workflows/account-page-limit-production-verify.yml`.
+- Fixture types: empty general, occupied general, archived general, platform master, Google general, manager/member.
+- Explicit write gate and required-live gate.
+- `qa-limit-*` disposable pages and reverse cleanup.
+- First create, second-create `409`, save, revision list, revision preview, restore, public read, delete/recreate, archived exclusion, platform-master multiple pages, Google quota, and manager bypass checks.
+- `skipped-live`, `verified-live`, and `failed-live` result separation.
+- Workflow artifact retention for release evidence.
+- Runbook: `docs/ops-account-page-limit-production-verification.md`.
+- Contract QA registered in `qa:all`.
 
-This infrastructure is not itself production verification. A real workflow result of `verified-live` is still required.
+This is verification infrastructure, not live production evidence.
 
-## Editor, Landing, Forms, And Integrations
+## Editor, Landing, Forms, And Integration Baseline
 
-- Top navigation supports one through eight balanced items.
-- Sharing has native and clipboard paths with four persisted positions.
-- Form-focus collision handling exists.
-- Three timer layouts and one shared countdown clock exist.
-- Bottom timer rendering and fixed-UI collision coverage exist.
-- Account-scoped draft recovery and delayed-save isolation exist.
-- Image orientation, resize, compression, and deduplication exist.
-- Consultation and reservation browser regression exists.
-- Server-backed blocked-submission history and month-bounded CSV exist.
-- AWS SES and Google Sheets integration foundations exist.
+- Balanced top navigation for one through eight items.
+- Independent sharing with four positions.
+- Form-focus fixed-UI collision handling.
+- Three timer layouts and shared countdown clock.
+- Declarative bottom timer and fixed-UI collision QA.
+- Account-scoped draft recovery and delayed-save isolation.
+- Image resize, orientation, compression, and deduplication.
+- Consultation and reservation browser regression.
+- Server-backed blocked history and month-bounded CSV.
+- AWS SES and Google Sheets integration foundations.
 
 ## Custom-Domain Code And QA Baseline — PR #41
 
-- D1 domain ownership and lifecycle schema.
-- Cloudflare Pages registration, deletion, DNS, SSL, and host routing.
-- Duplicate ownership and client-forged state protection.
+- D1 ownership and lifecycle schema.
+- Cloudflare Pages domain registration and deletion.
+- DNS, SSL, host routing, and duplicate ownership protection.
 - Operator list, bounded retries, escalation, and scheduled recheck.
-- Detach/reconnect and rollback runbook.
+- Detach, reconnect, migration, and rollback runbook.
 
-This baseline remains on PR `#41`; it is not production-deployed.
+This baseline remains branch-only until PR `#41` is merged and deployed.
 
 # Active Remaining Patches
 
@@ -184,44 +187,32 @@ This baseline remains on PR `#41`; it is not production-deployed.
 Preparation:
 
 1. Create six disposable QA fixtures described in `docs/ops-account-page-limit-production-verification.md`.
-2. Store their sessions in the six `PAGERO_PAGE_LIMIT_*_SESSION` GitHub secrets.
-3. Confirm the archived fixture has retained archived evidence but zero active pages.
+2. Store their signed sessions in the six `PAGERO_PAGE_LIMIT_*_SESSION` GitHub secrets.
+3. Confirm the archived fixture has archived evidence but zero active pages.
 4. Confirm no fixture belongs to a real customer.
 
 Execution:
 
 1. Manually run **Account Page Limit Production Verify**.
-2. Set the intended deployed URL.
-3. Set `allow_writes=true` only after reviewing the fixtures.
+2. Select the intended deployed URL and commit.
+3. Set `allow_writes=true` only after fixture review.
 4. Keep `require_live=true`.
 5. Require final status `verified-live`.
-6. Save the 30-day workflow artifact and record workflow run ID, deployment ID, and commit SHA.
+6. Save workflow run ID, deployment ID, commit SHA, and the 30-day artifact.
 7. Confirm all `qa-limit-*` pages were removed.
 
-Required live evidence:
-
-- New general account first page succeeds.
-- Second dashboard/API creation is blocked with `409 / ACCOUNT_PAGE_LIMIT_REACHED`.
-- Existing save, revision list, revision preview, restore, and public read work.
-- Deleting the QA page allows a replacement.
-- Archived project does not create a false count.
-- Platform master creates two pages and survives session refresh.
-- Google-login account follows the same quota.
-- Manager/member path returns `403` or `409` and creates nothing.
+Until this is done, the policy remains implemented and QA-covered but not production-verified.
 
 ## Priority 2 — Custom-Domain Operational Rollout
 
-Before merge or deployment:
-
 1. Apply `migrations/0006_page_domains.sql` to production D1.
 2. Apply `migrations/0007_page_domain_operations.sql` immediately afterward.
-3. Verify the schema and record rollback evidence.
-4. Configure the Cloudflare account ID, Pages project, minimum-permission API token, CNAME target, and recheck secret.
+3. Verify schema and rollback evidence.
+4. Configure Cloudflare account ID, Pages project, minimum-permission API token, CNAME target, and recheck secret.
 5. Configure the matching GitHub Actions secret.
 6. Merge PR `#41` only when migration and environment ordering is safe.
 7. Deploy only after explicit owner approval.
-
-Live verification must cover real DNS, SSL, correct landing host routing, forms, reservations, assets, tracking, share/canonical URLs, duplicate ownership, detach/reconnect, retries, and escalation.
+8. Verify real DNS, SSL, landing routing, forms, reservations, assets, tracking, URLs, duplicate ownership, detach/reconnect, retries, and escalation.
 
 ## Priority 3 — Admin And Audit Completeness Review
 
@@ -241,20 +232,13 @@ The internal admin surface remains route-only.
 
 ## Priority 4 — Live Integration Production Verification
 
-AWS SES:
-
-- Domain identity, DKIM, SPF, DMARC, and production access.
+- SES identity, DKIM, SPF, DMARC, and production access.
 - Real verification, reset, invite, and ownership-transfer messages.
 - Generic user errors and classified internal errors.
-
-Google Sheets:
-
-- Production OAuth redirect URI and token refresh.
-- Real lead-row delivery with submitted-field headers.
-- Disconnect immediately stops future delivery.
-- Retry and failed-delivery visibility.
-
-Also verify real conversion events and preserve `skipped-live` for missing credentials. Never expose provider secrets or raw errors.
+- Google Sheets production OAuth, refresh, row delivery, disconnect, and retry visibility.
+- Real conversion events where configured.
+- Missing credentials remain `skipped-live`, not false failure or false success.
+- Never expose provider secrets or raw errors.
 
 ## Priority 5 — Three Template Mobile Final Regression
 
@@ -264,7 +248,7 @@ Keep exactly:
 2. Mobile wedding invitation.
 3. Real estate presale.
 
-Verify at 360px, 390px, and 430px: finished first viewport, no instructional copy, editable visible blocks, no fixed-UI overlap, keyboard-safe forms, usable gallery/map/FAQ/forms, preview/public parity, and intentional reduced-motion-aware effects. Personal-rehabilitation copy must not guarantee approval or legal outcome.
+Verify at 360px, 390px, and 430px: finished first viewport, no instructional copy, editable visible blocks, no fixed-UI overlap, keyboard-safe forms, usable gallery/map/FAQ/forms, preview/public parity, and reduced-motion-aware effects. Personal-rehabilitation copy must not guarantee approval or legal outcome.
 
 ## Priority 6 — Product And Operations Hardening
 
@@ -291,15 +275,15 @@ The owner must define the Classic/Pro entitlement difference before checkout wor
 
 Before the final user response:
 
-1. Update the date, branch, PR, and commit checkpoint in this document.
+1. Update date, branch, PR, and checkpoint.
 2. Separate code complete, QA complete, merged, deployed, and production verified.
-3. Move genuinely completed implementation into the completed baseline.
+3. Move completed implementation into the completed baseline.
 4. Remove completed work from the active list.
-5. Reorder remaining priorities based on reality.
-6. Record missing migrations, environment variables, credentials, approvals, and live evidence.
+5. Reorder priorities based on reality.
+6. Record missing migrations, credentials, approvals, and live evidence.
 7. Include the refreshed remaining-patch summary in the user response.
 
-Do not claim production completion from a branch-only or mock-only result.
+Do not claim production completion from a branch-only, mock-only, or `skipped-live` result.
 
 # Required QA Before Merge Or Deployment
 
@@ -314,7 +298,7 @@ npm run browser:forms:qa
 npm run browser:production:qa
 ```
 
-Feature-specific commands include:
+Feature-specific commands:
 
 ```bash
 npm run account:page-limit:qa
