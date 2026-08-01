@@ -3,7 +3,12 @@ import { webcrypto } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { sanitizeAuditMetadata, writeAuditLog } from '../functions/api/_audit.js';
 import { isPlatformMasterIdentity } from '../functions/api/_platformMaster.js';
+import { onRequest as renderAdminAuditPage } from '../functions/admin/audit.js';
 import { writePageManagerAuditChanges } from '../functions/api/pages/_pageAudit.js';
+import {
+  normalizedProjectStatusAction,
+  projectActionState,
+} from '../functions/api/admin/projects/[id]/status.js';
 
 if (!globalThis.crypto) globalThis.crypto = webcrypto;
 
@@ -100,6 +105,42 @@ assert.deepEqual(managerActions.sort(), [
 ].sort());
 assert.doesNotMatch(JSON.stringify(writes), /manager-[abc]@example\.com/);
 
+assert.equal(normalizedProjectStatusAction({ action: 'pause' }), 'pause');
+assert.equal(normalizedProjectStatusAction({ status: 'active' }), 'restore');
+assert.equal(normalizedProjectStatusAction({ status: 'archived' }), 'archive');
+assert.equal(normalizedProjectStatusAction({ action: 'unknown' }), '');
+assert.deepEqual(projectActionState('pause'), {
+  dbStatus: 'archived',
+  auditAction: 'project.paused',
+  operatorState: 'paused',
+});
+assert.deepEqual(projectActionState('restore'), {
+  dbStatus: 'active',
+  auditAction: 'project.restored',
+  operatorState: 'active',
+});
+
+const adminPageResponse = await renderAdminAuditPage({
+  request: new Request('https://pagero.kr/admin/audit'),
+});
+assert.equal(adminPageResponse.status, 200);
+assert.equal(adminPageResponse.headers.get('X-Robots-Tag'), 'noindex, nofollow, noarchive');
+assert.match(adminPageResponse.headers.get('Content-Security-Policy') || '', /frame-ancestors 'none'/);
+const adminPageHtml = await adminPageResponse.text();
+for (const token of [
+  'inlet-auth-v1',
+  '/api/admin/audit',
+  '/api/admin/summary',
+  '/api/admin/projects/',
+  'noindex,nofollow,noarchive',
+  '일시중지',
+  '복원',
+]) {
+  assert(adminPageHtml.includes(token), `route-only audit UI missing ${token}`);
+}
+assert.doesNotMatch(adminPageHtml, /pc9839a@naver\.com|roadfor@kakao\.com|admin@pagero\.kr/);
+assert.doesNotMatch(adminPageHtml, /INLET_SESSION_SECRET|INLET_API_TOKEN|INLET_AUDIT_HASH_SECRET/);
+
 assert.equal(isPlatformMasterIdentity({ email: 'user@example.com', role: 'superadmin' }), false);
 assert.equal(isPlatformMasterIdentity({ email: 'pc9839a@naver.com', role: 'manager' }), true);
 
@@ -113,12 +154,15 @@ const [
   verificationSource,
   accountSource,
   statusSource,
+  passwordSource,
   inviteRouteSource,
   inviteHelperSource,
   ownershipRequestSource,
   ownershipAdminSource,
+  projectStatusSource,
   pageAuditSource,
   pageRouteSource,
+  routeOnlyAuditSource,
 ] = await Promise.all([
   read('functions/api/admin/_auth.js'),
   read('functions/api/admin/_middleware.js'),
@@ -129,12 +173,15 @@ const [
   read('functions/api/auth/email-verification.js'),
   read('functions/api/auth/account.js'),
   read('functions/api/auth/account/status.js'),
+  read('functions/api/auth/password.js'),
   read('functions/api/projects/invites.js'),
   read('functions/api/projects/_invites.js'),
   read('functions/api/projects/ownership-transfer.js'),
   read('functions/api/admin/ownership-transfer/[id].js'),
+  read('functions/api/admin/projects/[id]/status.js'),
   read('functions/api/pages/_pageAudit.js'),
   read('functions/api/pages/[slug].js'),
+  read('functions/admin/audit.js'),
 ]);
 
 assert.match(adminAuth, /isPlatformMasterIdentity/);
@@ -169,17 +216,22 @@ for (const [name, source, actions] of [
   ['verification', verificationSource, ['auth.email_verification_requested', 'auth.email_verification_request_failed']],
   ['account', accountSource, ['account.profile_changed', 'changedFields']],
   ['status', statusSource, ['account.status_changed', 'previousStatus', 'nextStatus']],
+  ['password', passwordSource, ['account.password_changed', 'account.password_change_failed', 'sessionRotationRequired']],
   ['invite route', inviteRouteSource, ['manager.invite_created']],
   ['invite acceptance', inviteHelperSource, ['manager.invite_accepted']],
   ['ownership request', ownershipRequestSource, ['ownership_transfer.requested']],
   ['ownership admin', ownershipAdminSource, ['ownership_transfer.approved', 'ownership_transfer.rejected', 'ownership_transfer.completed', 'ownership_transfer.canceled']],
+  ['project operations', projectStatusSource, ['project.paused', 'project.restored', 'requirePlatformMaster', 'source: \'platform_master\'']],
   ['manager page diff', pageAuditSource, ['manager.member_added', 'manager.permissions_changed', 'manager.status_changed', 'manager.removed']],
   ['project archive', pageRouteSource, ['project.archived', 'writePageManagerAuditChanges']],
+  ['route-only audit UI', routeOnlyAuditSource, ['/api/admin/audit', '/api/admin/projects/', 'noindex,nofollow,noarchive']],
 ]) {
   for (const action of actions) assert(source.includes(action), `${name} audit source missing ${action}`);
   assert.doesNotMatch(source, /metadata:\s*\{[^}]*password\s*:/s, `${name} audit metadata must not store passwords`);
 }
 assert.doesNotMatch(pageAuditSource, /metadata:\s*\{[^}]*email\s*:/s);
+assert.doesNotMatch(passwordSource, /metadata:\s*\{[^}]*password\s*:/s);
+assert.doesNotMatch(routeOnlyAuditSource, /PLATFORM_MASTER_EMAILS|DEFAULT_MASTER_EMAILS/);
 
 console.log(JSON.stringify({
   ok: true,
@@ -188,6 +240,8 @@ console.log(JSON.stringify({
   rawIpExposed: false,
   rawUserAgentExposed: false,
   auditDeleteEndpoint: false,
-  auditedFlows: 11,
+  auditedFlows: 14,
   managerDiffRuntimeActions: managerActions.length,
+  routeOnlyAuditUi: true,
+  projectPauseRestorePolicy: true,
 }, null, 2));
