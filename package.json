@@ -34,6 +34,8 @@
     "browser:editor:contract:qa": "node scripts/editor-browser-regression-contract-check.mjs",
     "browser:forms:qa": "node --import ./scripts/form-browser-auth-session.mjs scripts/form-reservation-browser-regression-check.mjs",
     "browser:forms:contract:qa": "node scripts/form-reservation-browser-regression-contract-check.mjs",
+    "browser:templates-mobile:qa": "node scripts/template-mobile-browser-regression-check.mjs",
+    "browser:templates-mobile:contract:qa": "node scripts/template-mobile-browser-regression-contract-check.mjs",
     "conversion:qa": "node scripts/conversion-quality-check.mjs",
     "csv:qa": "node scripts/csv-quality-check.mjs",
     "runtime:qa": "node scripts/runtime-quality-check.mjs",
