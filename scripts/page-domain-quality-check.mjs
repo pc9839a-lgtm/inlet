@@ -379,7 +379,7 @@ assert.equal(db.rows.find((row) => row.page_id === 'page-b')?.status, 'disconnec
 assert.equal(JSON.parse(db.pages[0].page_json).domainType, 'default');
 
 const [migration, checkEndpoint, manageEndpoint, middleware, providerModule, pageRoute, panel, section, hookFile, qaAll, packageJson] = await Promise.all([
-  readFile('migrations/0006_page_domains.sql', 'utf8'),
+  readFile('migrations/0007_page_domains.sql', 'utf8'),
   readFile('functions/api/domains/check.js', 'utf8'),
   readFile('functions/api/domains/manage.js', 'utf8'),
   readFile('functions/_middleware.js', 'utf8'),
