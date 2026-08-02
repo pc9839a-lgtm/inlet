@@ -31,6 +31,7 @@ const steps = [
   ['browser:landing:contract:qa', ['scripts/landing-browser-regression-contract-check.mjs']],
   ['browser:editor:contract:qa', ['scripts/editor-browser-regression-contract-check.mjs']],
   ['browser:forms:contract:qa', ['scripts/form-reservation-browser-regression-contract-check.mjs']],
+  ['browser:templates-mobile:contract:qa', ['scripts/template-mobile-browser-regression-contract-check.mjs']],
   ['deployment:smoke:contract:qa', ['scripts/deployment-route-smoke-contract-check.mjs']],
   ['conversion:qa', ['scripts/conversion-quality-check.mjs']],
   ['csv:qa', ['scripts/csv-quality-check.mjs']],

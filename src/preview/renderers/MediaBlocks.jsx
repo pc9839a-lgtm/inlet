@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 
+const GALLERY_CONTROL_SELECTOR = 'button, a, input, textarea, select, label, [role="button"]';
+
+function isGalleryControlTarget(target) {
+  return !!target?.closest?.(GALLERY_CONTROL_SELECTOR);
+}
+
 export function RenderImage({ block }) {
   const s = block.s || {};
   const gallery = (Array.isArray(s.gallery) ? s.gallery : []).filter(Boolean).slice(0, 4);
@@ -41,7 +47,7 @@ export function RenderImage({ block }) {
   };
 
   const onSwipeStart = (event) => {
-    if (s.mode !== 'gallery' || gallery.length < 2) return;
+    if (s.mode !== 'gallery' || gallery.length < 2 || isGalleryControlTarget(event.target)) return;
     swipeRef.current = {
       x: event.clientX,
       y: event.clientY,
@@ -111,6 +117,8 @@ export function RenderImage({ block }) {
                   {gallery.map((_, index) => (
                     <button
                       key={index}
+                      type="button"
+                      aria-label={`이미지 ${index + 1}`}
                       className={idx === index ? 'active' : ''}
                       onClick={(event) => { event.stopPropagation(); setIdx(index); }}
                     />

@@ -267,3 +267,86 @@ jobs:
           if [ -f /tmp/inlet-form-preview.pid ]; then
             kill "$(cat /tmp/inlet-form-preview.pid)" 2>/dev/null || true
           fi
+
+  template-mobile-browser-regression:
+    needs: qa
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Install Korean browser font
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends fonts-noto-cjk
+          fc-match "Noto Sans CJK KR" | grep -qi "NotoSansCJK"
+
+      - name: Build template mobile assets
+        run: npm run build
+
+      - name: Resolve Chrome executable
+        run: |
+          CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$CHROME_BIN" ]; then
+            echo "Chrome or Chromium is required for template mobile regression QA." >&2
+            exit 1
+          fi
+          echo "INLET_TEMPLATE_MOBILE_QA_CHROME_PATH=$CHROME_BIN" >> "$GITHUB_ENV"
+
+      - name: Start template mobile preview
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4176 > /tmp/inlet-template-mobile-preview.log 2>&1 &
+          echo $! > /tmp/inlet-template-mobile-preview.pid
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:4176/ > /dev/null; then
+              exit 0
+            fi
+            sleep 0.5
+          done
+          cat /tmp/inlet-template-mobile-preview.log
+          exit 1
+
+      - name: Real browser three-template mobile regression
+        env:
+          INLET_TEMPLATE_MOBILE_QA_ORIGIN: http://127.0.0.1:4176
+          INLET_TEMPLATE_MOBILE_QA_SCREENSHOT_DIR: .tmp-template-mobile-regression
+        run: |
+          for attempt in 1 2; do
+            echo "Template mobile regression attempt ${attempt}/2"
+            if npm run browser:templates-mobile:qa; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 1 ]; then
+              echo "Retrying once in case Chrome failed to open its debugging endpoint."
+              sleep 2
+            fi
+          done
+          exit 1
+
+      - name: Upload template mobile screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: template-mobile-regression-${{ github.run_id }}
+          path: .tmp-template-mobile-regression
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 14
+
+      - name: Stop template mobile preview
+        if: always()
+        run: |
+          if [ -f /tmp/inlet-template-mobile-preview.pid ]; then
+            kill "$(cat /tmp/inlet-template-mobile-preview.pid)" 2>/dev/null || true
+          fi
