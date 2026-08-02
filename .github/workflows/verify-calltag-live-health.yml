@@ -1,0 +1,21 @@
+name: Verify CallTag Live Health
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/verify-calltag-live-health.yml'
+
+jobs:
+  live-health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Verify production Pagero CallTag queue
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(curl --fail-with-body --silent --show-error --location --max-time 30 \
+            https://pagero.kr/api/call/pagero/health)"
+          echo "$body"
+          node -e "const body=JSON.parse(process.argv[1]); if(body.ok!==true||body.service!=='pagero-calltag-lead-queue'||body.database!=='ready'){throw new Error('Unexpected live health response: '+process.argv[1])}" "$body"
