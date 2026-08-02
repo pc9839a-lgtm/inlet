@@ -1,23 +1,46 @@
 # Pagero Custom Domain Operations Runbook
 
-Updated: 2026-08-01
+Updated: 2026-08-03
 
-This runbook covers production migration, Cloudflare Pages configuration, automatic verification, failed-domain triage, detach/reconnect, and rollback. It does not authorize a production deployment. Production deployment still requires explicit owner approval.
+This runbook covers production migration, Cloudflare Pages configuration, automatic verification, failed-domain triage, detach/reconnect, and rollback. It does not authorize a production deployment or database write. Production migration and deployment still require explicit owner approval.
 
 ## Implementation Tasks
 
-### 1. Apply database migrations in order
+### 1. Confirm migration safety dependency
 
-Apply both migrations to the production `inlet-prod` D1 database:
+The production `main` branch already contains `migrations/0006_calltag_pagero_lead_queue.sql`. That migration remains unchanged and is outside this custom-domain patch.
 
-1. `migrations/0006_page_domains.sql`
-2. `migrations/0007_page_domain_operations.sql`
+Custom-domain migrations therefore begin at the next unambiguous sequence:
 
-Before applying them, export the current D1 schema and record the latest Cloudflare deployment ID and GitHub `main` commit SHA. After applying them, confirm that `page_domains` contains the retry fields `retry_count`, `next_retry_at`, `last_error_code`, `escalated_at`, and `last_attempt_at`.
+1. `migrations/0007_page_domains.sql`
+2. `migrations/0008_page_domain_operations.sql`
 
-Do not deploy application code that writes these columns before `0007_page_domain_operations.sql` is present in production.
+PR `#50` must be merged before any custom-domain production migration. Use its manual `D1 Migration Safety` workflow; do not apply these migrations through an ad-hoc Wrangler command.
 
-### 2. Configure Cloudflare Pages domain access
+Required order:
+
+1. Merge PR `#50` after its QA remains green.
+2. Configure the D1 migration-safety secrets documented in `docs/ops-d1-migration-safety.md`.
+3. Run read-only `preflight` against the intended production `main` SHA.
+4. Review the remote `d1_migrations` history and every local migration hash.
+5. Continue only when the remote pending list is exactly the reviewed list and order. For this release, the expected custom-domain list is `0007_page_domains.sql,0008_page_domain_operations.sql` only when the live preflight reports exactly those pending migrations.
+6. Run `backup-and-apply` only after separate owner approval, with the exact pending list, write switch, approval phrase, and encrypted-backup key.
+7. Keep the encrypted SQL export, manifest, rollback instructions, and Time Travel evidence.
+
+A `skipped-live` preflight is not production verification. Never infer the pending list from repository filenames alone.
+
+### 2. Apply database migrations in order
+
+Apply both custom-domain migrations to the production `inlet-prod` D1 database through the guarded workflow:
+
+1. `migrations/0007_page_domains.sql`
+2. `migrations/0008_page_domain_operations.sql`
+
+Before applying them, record the latest Cloudflare deployment ID and GitHub `main` commit SHA. After applying them, confirm that `page_domains` exists and contains the retry fields `retry_count`, `next_retry_at`, `last_error_code`, `escalated_at`, and `last_attempt_at`.
+
+Do not deploy application code that writes these columns before `0008_page_domain_operations.sql` is present in production.
+
+### 3. Configure Cloudflare Pages domain access
 
 Set these server-only environment values:
 
@@ -33,7 +56,7 @@ The Cloudflare token must have only the minimum Pages custom-domain edit permiss
 
 Configure the GitHub Actions secret `PAGERO_DOMAIN_RECHECK_SECRET` with the same value as `INLET_DOMAIN_RECHECK_SECRET`. Optionally set the Actions variable `PAGERO_DOMAIN_RECHECK_URL`; when omitted, the workflow calls `https://pagero.kr/api/admin/domains/recheck`.
 
-### 3. Verify automatic rechecks
+### 4. Verify automatic rechecks
 
 The `Custom Domain Recheck` workflow runs every 15 minutes and calls the protected recheck endpoint. If the GitHub secret is absent, the workflow reports `skipped-live` and exits without claiming success.
 
@@ -97,7 +120,7 @@ After detaching:
 
 Application rollback does not require deleting customer ownership rows. Roll back to the previous known-good deployment while leaving `page_domains` intact. Disable the scheduled workflow or rotate `INLET_DOMAIN_RECHECK_SECRET` if the recheck endpoint itself is suspected.
 
-SQLite/D1 does not support dropping added columns directly. If the operational columns must be removed, create a replacement table from the `0006` schema, copy the original columns, validate row counts and unique hostname ownership, swap tables inside a controlled migration, recreate indexes, and only then deploy code that no longer references the operational columns.
+SQLite/D1 does not support dropping added columns directly. If the operational columns must be removed, create a replacement table from the `0007` schema, copy the original columns, validate row counts and unique hostname ownership, swap tables inside a controlled migration, recreate indexes, and only then deploy code that no longer references the operational columns.
 
 Never delete all domain rows as a rollback shortcut. Preserve hostname ownership, connection history, provider IDs, and timestamps for support and audit evidence.
 
@@ -117,15 +140,17 @@ npm run build
 
 ## Live-Only Checks
 
-After explicit deployment approval and production configuration:
+After explicit migration and deployment approval and production configuration:
 
-- Apply both D1 migrations and verify the schema.
-- Trigger the GitHub workflow manually once.
-- Connect a real subdomain and observe `pending → verifying → active`.
+- Confirm PR `#50` is merged and the D1 preflight result is `verified-live`.
+- Apply both D1 migrations through `D1 Migration Safety` and verify the schema.
+- Trigger the `Custom Domain Recheck` workflow manually once.
+- Connect a controlled real subdomain and observe `pending → verifying → active`.
 - Confirm SSL becomes active.
 - Force one harmless DNS mismatch and confirm the connection appears in the operator list with a retry/escalation state.
 - Restore DNS and confirm automatic or manual verification clears retry and escalation metadata.
 - Detach and reconnect the same domain.
 - Confirm a different page cannot claim the connected hostname.
+- Verify assets, consultation forms, reservations, analytics, share URL, and canonical URL on the custom host.
 
-Record the Cloudflare deployment ID, GitHub commit SHA, migration output, test hostname, and final domain/SSL status in the release evidence.
+Record the Cloudflare deployment ID, GitHub commit SHA, migration workflow run, encrypted-backup manifest, test hostname, and final domain/SSL status in the release evidence.
