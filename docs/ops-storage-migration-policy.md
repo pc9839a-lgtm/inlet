@@ -74,12 +74,31 @@ This policy defines what can remain in browser storage and what must move to ser
 - Base64 images are accepted for backward compatibility but must be shown in cleanup UX when they exceed warning thresholds.
 - Repair and restore operations must preserve a pre-operation backup before rewriting JSONL.
 
+## Production D1 Migration Rule
+
+Production D1 migrations must use the manual `D1 Migration Safety` workflow documented in `docs/ops-d1-migration-safety.md`.
+
+Required sequence:
+
+1. Run read-only preflight against the selected production `main` SHA.
+2. Review the local migration hashes, remote `d1_migrations` history, and exact pending filename order.
+3. Run `backup-and-apply` only with explicit write approval and the exact pending list.
+4. Create and validate a full SQL export before migration apply.
+5. Encrypt the export before artifact upload and delete the plaintext SQL file.
+6. Record SHA-256, HMAC-SHA256, and available Time Travel recovery evidence.
+7. Verify the approved migrations appear in remote history after apply.
+8. Require a separate owner approval for any restore operation.
+
+The migration workflow must never upload plaintext production SQL and must never execute Time Travel restore automatically.
+
 ## Cleanup Rules
 
 - Local recovery drafts: keep last 10 or 14 days, whichever is smaller.
 - Local event queue: keep 24 hours max after successful server flush.
 - Local lead cache: live mode should not write new entries except explicit fallback export.
 - Base64 image payloads over 500 KB per image require warning.
+- Encrypted D1 migration evidence artifacts: retain 30 days unless incident response requires a separately controlled archive.
+- Plaintext D1 SQL exports: temporary workspace only and deleted before artifact upload.
 
 ## Implementation Tasks
 
@@ -89,10 +108,13 @@ This policy defines what can remain in browser storage and what must move to ser
 - Worker 2: keep recovery draft manager and oversized image cleanup available from Settings/editor.
 - Worker 3: add QA fixture for migration detection and no data loss warnings.
 - Worker 4: include storage policy in launch checklist and PII retention policy.
+- Completed patch: guarded D1 preflight, encrypted export, exact pending-list check, post-apply verification, and recovery evidence workflow.
 
 ## Verification
 
 - `npm run auth:qa`
 - `npm run server:smoke:pages`
 - `npm run server:smoke:leads`
+- `npm run d1:migration:safety:qa`
 - Manual: create local-only page, switch to server mode, confirm migration prompt appears.
+- Manual production operation: run D1 preflight first; do not run `backup-and-apply` without owner approval and reviewed pending migrations.
