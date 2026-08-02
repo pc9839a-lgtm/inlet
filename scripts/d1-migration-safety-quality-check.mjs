@@ -52,6 +52,7 @@ const entrypoint = await read('scripts/d1-migration-safety.mjs');
 const script = await read('scripts/d1-migration-safety-runner.mjs');
 const workflow = await read('.github/workflows/d1-migration-safety.yml');
 const runbook = await read('docs/ops-d1-migration-safety.md');
+const appSpec = await read('docs/calltag-pagero-android-app-implementation-spec.md');
 const packageSource = await read('package.json');
 const qaAll = await read('scripts/qa-all.mjs');
 
@@ -123,13 +124,38 @@ for (const token of [
   assert.ok(runbook.includes(token), `D1 migration runbook missing ${token}`);
 }
 
+for (const token of [
+  '페이지로 폼 제출',
+  'FCM 푸시 발송',
+  '통화 후 큰 정리 화면',
+  'ACTION_DIAL',
+  'SMS Intent',
+  'Calendar INSERT Intent',
+  'Room',
+  'WorkManager',
+  'Outbox 패턴',
+  'accountId + normalizedPhone',
+  'Idempotency-Key',
+  'P0 — 앱 출시 필수',
+  'P1 — 운영 고도화',
+  'P2 — 별도 제품 심사 필요',
+  'READ_SMS',
+  'READ_CALL_LOG',
+  '직접 추가 고객에 페이지로 출처가 표시되지 않는다',
+  '앱 개발 완료 기준',
+]) {
+  assert.ok(appSpec.includes(token), `CallTag app implementation spec missing ${token}`);
+}
+assert.ok(appSpec.indexOf('P0 — 앱 출시 필수') < appSpec.indexOf('P2 — 별도 제품 심사 필요'), 'CallTag app spec priority order is invalid');
+assert.ok(appSpec.includes('완전 자동으로 사용자의 SIM에서 문자를 보내는 기능을 일반 CRM 앱 권한으로 구현하면 안 된다.'), 'CallTag app spec must prohibit unsafe automatic SIM SMS in MVP');
+
 assert.ok(packageSource.includes('node scripts/d1-migration-safety.mjs'), 'package script must execute stable D1 migration entrypoint');
 assert.ok(packageSource.includes('d1:migration:safety:qa'), 'package script d1:migration:safety:qa missing');
 assert.ok(qaAll.includes("['d1:migration:safety:qa'"), 'qa:all registration missing D1 migration safety QA');
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 41,
+  checks: 61,
   contracts: [
     'manual-only-workflow',
     'stable-entrypoint-delegation',
@@ -141,5 +167,7 @@ console.log(JSON.stringify({
     'time-travel-evidence',
     'no-automatic-restore',
     'secret-redaction',
+    'calltag-pagero-app-handoff',
+    'play-safe-sms-call-permissions',
   ],
 }, null, 2));
