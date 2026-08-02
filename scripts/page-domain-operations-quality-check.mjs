@@ -184,7 +184,7 @@ const [
   qaAll,
   envExample,
 ] = await Promise.all([
-  readFile('migrations/0007_page_domain_operations.sql', 'utf8'),
+  readFile('migrations/0008_page_domain_operations.sql', 'utf8'),
   readFile('functions/api/admin/domains.js', 'utf8'),
   readFile('functions/api/admin/domains/recheck.js', 'utf8'),
   readFile('.github/workflows/domain-recheck.yml', 'utf8'),
