@@ -1,18 +1,24 @@
 # Pagero Remaining Patches
 
-Updated: 2026-08-02 01:31 KST
+Updated: 2026-08-02 12:45 KST
 
 Repository: `pc9839a-lgtm/inlet`
 
 Production branch: `main`
 
-Current candidate: PR `#44` / `agent/template-mobile-final-regression`
+Current candidate: PR `#45` / `agent/d1-migration-safety`
 
 Other open candidates:
 
 - PR `#43` / `agent/admin-audit-hardening`
 - PR `#42` / `agent/account-page-limit-production-verification`
 - PR `#41` / `agent/custom-domain-foundation`
+
+Merged baseline:
+
+- PR `#44` / three-template mobile interaction and browser regression patch
+- merge commit: `1c1c4bc3503f367cea81b0a3f435cd6c0d8b7473`
+- latest deployment-record commit observed on main: `2623e8122ac8fde2b544645aabbbb42c0d0d4077`
 
 Current execution mode: parallel patching is active
 
@@ -40,106 +46,66 @@ Code completion, QA completion, merge, deployment, and production verification a
 - `deployment:qa`
 - `npm run live:qa`
 
-# Current Patch Checkpoint — PR #44
+# Current Patch Checkpoint — PR #45
 
 ## Code Complete
 
-### Three active templates only
+### Guarded D1 migration workflow
 
-- `debt-relief-consult` — personal rehabilitation consultation.
-- `wedding-invitation` — mobile wedding invitation.
-- `quote-request` — real estate presale.
-- No fourth template was added.
-- Template content, section order, and visual direction were not redesigned during QA.
+- Added manual-only `D1 Migration Safety` workflow.
+- Added read-only `preflight` mode.
+- Added approval-gated `backup-and-apply` mode.
+- Restricted write mode to the `main` branch.
+- Requires `allow_writes=true` and exact phrase `I_APPROVE_D1_MIGRATIONS`.
+- Requires the remote pending migration filenames and order to exactly match the approved list.
+- Records SHA-256 for every local migration file.
+- Reads remote D1 migration history and table state.
+- Uses the official Wrangler `d1 export --remote --output ... --skip-confirmation` contract.
+- Captures available D1 Time Travel bookmark evidence.
+- Encrypts the full SQL export with AES-256-CBC and PBKDF2-SHA256 before artifact upload.
+- Records encrypted SHA-256 and keyed HMAC-SHA256.
+- Deletes plaintext SQL before artifact upload.
+- Uploads only encrypted SQL and non-secret evidence.
+- Verifies expected migrations in remote history after apply.
+- Never performs an automatic production restore.
 
-### Real mobile-browser regression
+### CallTag Android app developer handoff
 
-- Added Chrome CDP coverage for 360×800, 390×844, and 430×932.
-- Added all nine template/viewport combinations as release-blocking checks.
-- Added first-viewport checks for hero placement, title/body visibility, horizontal containment, and runtime fallback/error output.
-- Added editor/placeholder copy leakage checks.
-- Added every visible section's left/right containment checks.
-- Added bottom fixed-button count, minimum touch height, and share-button collision checks.
-- Added physical FAQ open/close interaction.
-- Added physical gallery-next interaction for wedding and real-estate templates.
-- Added map section and external map-action verification.
-- Added real-estate reservation controls verification.
-- Added bottom CTA navigation to the form.
-- Added form focus and simulated mobile-keyboard checks at 390px.
-- Added top navigation, share button, and bottom fixed UI hiding checks while an input is active.
-- Added viewport-bounded screenshots for all nine first screens plus 390px interaction screenshots.
+- Added `docs/calltag-pagero-android-app-implementation-spec.md`.
+- Defines the full flow from Pagero lead submission to CallTag notification, customer card, call, message, post-call summary, and follow-up schedule.
+- Defines app screens, data models, duplicate-customer rules, FCM payload, sync cursor, Room/WorkManager outbox, conflict handling, API requirements, and acceptance tests.
+- Separates P0 Play-safe implementation from P1 server messaging and P2 default Phone/SMS handler scope.
+- Prohibits unsafe automatic SIM SMS and unrestricted call-log/SMS permissions in the MVP.
+- Defines Calendar INSERT Intent, Photo Picker, contact picker, ACTION_DIAL, offline retry, security, and device test requirements.
 
-### Reproduced mobile defects fixed
+### Documentation
 
-- Increased preview and public gallery arrow targets to 44×44px.
-- Added visible keyboard-focus treatment for gallery controls.
-- Prevented gallery swipe pointer capture from stealing arrow and dot button clicks.
-- Added `type="button"` and accessible labels to gallery dot controls.
-- Increased consent-row touch height to 44px.
-- Added a 36px checkbox hit box with a centered smaller visual checkbox.
-- Applied gallery and consent contracts equally to `.phone-frame` preview and `.public-landing-viewport` runtime.
-- Preserved `preview-fixed-ui-contract.css` as the final stylesheet priority.
+- Added `docs/ops-d1-migration-safety.md`.
+- Updated `docs/ops-storage-migration-policy.md`.
+- Updated `.env.example` with non-secret variable names.
+- Added static and runtime safety contracts to `qa:all`.
 
-### CI evidence quality
+## QA Status
 
-- Added `browser:templates-mobile:qa`.
-- Added `browser:templates-mobile:contract:qa` to `qa:all`.
-- Added release-blocking job `template-mobile-browser-regression`.
-- Added screenshot artifact `template-mobile-regression-${{ github.run_id }}`.
-- Added Noto CJK installation and font-match verification to the template-mobile job.
-- Korean text renders as actual glyphs so line wrapping and first-screen layout use Korean font metrics rather than missing-glyph boxes.
-- Protected production-home file changes: none.
-
-## QA Complete
-
-Implementation head `f1f542630964ffea77f949f7879d8284ce3e4c70` passed workflow run `30707915630`:
-
-- full offline QA
-- template static QA
-- preview/public parity QA
-- fixed bottom UI QA
-- top navigation balance QA
-- template mobile regression contract QA
-- Noto CJK installation and font match
-- personal rehabilitation at 360px, 390px, and 430px
-- mobile wedding invitation at 360px, 390px, and 430px
-- real estate presale at 360px, 390px, and 430px
-- physical FAQ interaction
-- physical gallery navigation
-- map actions
-- reservation controls
-- bottom CTA form navigation
-- simulated keyboard and fixed-UI hiding
-- public landing browser regression
-- authenticated editor browser regression
-- consultation and reservation browser regression
-- production build and deployment artifact checks
-
-Documentation closeout head `27641223d72e110cfcc61067412c830f132e62b7` passed workflow run `30708086687`:
+Initial implementation workflow run `30731060075` passed:
 
 - full offline QA
 - public landing browser regression
 - authenticated editor browser regression
-- consultation and reservation browser regression
-- three-template mobile browser regression with Korean fonts
+- form/reservation browser regression
+- Korean-font three-template mobile browser regression
 
-PR `#44` was moved from draft to ready for review after all five final jobs passed.
-
-Screenshot artifact:
-
-- workflow run: `30707915630`
-- artifact ID: `8820920405`
-- artifact name: `template-mobile-regression-30707915630`
-- digest: `sha256:d1140f812a70cc97b3ad0015cdfdeb4ff06a1713023bb7fc2ab94a61c612cf2c`
-- reviewed first-viewport evidence: Korean glyphs, line wrapping, hero, share button, and bottom actions rendered correctly across all nine combinations
+Final command corrections, app handoff contract, and documentation changes require the final HEAD workflow to pass before PR `#45` is marked ready.
 
 ## Not Complete
 
-- PR `#44` merge to `main`: not completed.
-- Production deployment: not completed.
-- Production-device verification: not completed.
-
-Do not describe PR `#44` as merged, deployed, or production verified until those separate steps are completed with explicit owner approval.
+- PR `#45` merge to `main`: not completed.
+- Production Secrets: not configured or verified.
+- Real D1 `preflight`: not executed.
+- Encrypted production backup: not created.
+- Production migrations: not applied.
+- Restore drill against a disposable database: not completed.
+- Android application implementation: not started in this web repository.
 
 # Absolute Rules
 
@@ -209,6 +175,7 @@ Do not restore the discarded 3,300원 / 6,600원 / 9,900원 direction. Do not ad
 - Do not mix unrelated refactors into a focused patch.
 - Run targeted QA and the full suite before merge or deployment.
 - Production deployment requires explicit owner approval.
+- Production D1 writes require encrypted backup evidence and exact pending-list approval.
 
 # Completed Baseline — Do Not Reassign These
 
@@ -230,86 +197,83 @@ Do not restore the discarded 3,300원 / 6,600원 / 9,900원 direction. Do not ad
 - Public landing, authenticated editor, and form/reservation browser regression infrastructure.
 - Preview/public CSS parity and fixed-bottom collision contracts.
 - Deployment route smoke contracts.
+- Three-template 360/390/430px real-browser regression merged through PR `#44`.
+- Shared gallery 44px targets and pointer-capture guard merged through PR `#44`.
+- Shared consent-row mobile touch contract merged through PR `#44`.
+- Korean-font screenshot evidence pipeline merged through PR `#44`.
 - Administrator authorization, audit, email-change, account controls, project controls, retention, and live-verifier implementation on open PR `#43`.
 - One-page policy production verifier implementation on open PR `#42`.
 - Custom-domain implementation and operations tooling on open PR `#41`.
-- Three-template 360/390/430px real-browser regression implementation on PR `#44`.
-- Shared gallery 44px targets and pointer-capture guard on PR `#44`.
-- Shared consent-row mobile touch contract on PR `#44`.
-- Korean-font screenshot evidence pipeline on PR `#44`.
-
-# Other Open Checkpoints
-
-## PR #43 — Administrator And Audit Operations
-
-- Code and automated QA are complete on its branch.
-- Three-phase production verifier is implemented.
-- Merge to `main`: not completed.
-- Production audit secrets: not confirmed.
-- Production deployment: not completed.
-- Disposable fixtures and GitHub Secrets: not configured or verified.
-- Real `verified-live` result: not completed.
-
-## PR #42 — One-Page Policy Production Verification
-
-- General-account one-active-page implementation is already merged through PR `#40`.
-- Live verification script, manual workflow, cleanup, Google-login quota, and manager-bypass coverage are complete on PR `#42`.
-- Merge to `main`: not completed.
-- Six disposable fixtures and signed sessions: not configured or verified.
-- Manual workflow result `verified-live`: not completed.
-
-## PR #41 — Custom Domain
-
-- Domain ownership, DNS, SSL, provider registration, routing, retries, escalation, operator list, scheduled recheck, and runbook are code/QA complete on the branch.
-- Merge to `main`: not completed.
-- Production D1 migrations `0006` and `0007`: not completed.
-- Cloudflare production environment configuration: not completed.
-- Production deployment and real customer-domain smoke test: not completed.
+- Guarded D1 migration and encrypted backup implementation on open PR `#45`.
+- CallTag Android application implementation handoff document on open PR `#45`.
 
 # Active Remaining Patches
 
-## Priority 1 — PR #44 Merge And Production Verification
+## Priority 1 — Complete And Merge PR #45
 
-After owner approval:
+1. Confirm the final HEAD full offline QA and all four browser regressions are green.
+2. Confirm protected production-home files are unchanged.
+3. Move PR `#45` from draft to ready.
+4. Merge only after owner approval.
+5. Do not run production D1 writes during merge.
+6. Configure Secrets separately after merge.
+7. Run `preflight` before any migration work.
 
-1. Confirm final PR head and all five QA jobs are green.
-2. Confirm protected production-home files remain unchanged.
-3. Merge PR `#44` to `main`.
-4. Deploy only with explicit deployment approval.
-5. Verify the three templates on at least one real Android device at approximately 360px, 390px, and 430px CSS widths.
-6. Verify gallery arrows, dots, FAQ, map actions, form keyboard, consent checkbox, reservation form, share button, and bottom actions.
-7. Record production deployment SHA and device evidence before marking production verified.
+## Priority 2 — PR #43 Administrator And Audit Operations
 
-## Priority 2 — PR #43 Merge And Production Verification
-
-After explicit owner approval:
-
-1. Configure `INLET_AUDIT_HASH_SECRET` and `INLET_AUDIT_RETENTION_SECRET` in production.
-2. Configure matching GitHub audit verification and retention secrets.
-3. Merge PR `#43` without mixing PR `#41`, `#42`, or `#44` branch changes.
-4. Deploy only after explicit deployment approval.
+1. Integrate the latest `main` after PR `#45` if it is merged first.
+2. Configure `INLET_AUDIT_HASH_SECRET` and `INLET_AUDIT_RETENTION_SECRET` in production.
+3. Configure matching GitHub audit verification and retention secrets.
+4. Merge and deploy only after explicit approval.
 5. Prepare one disposable password account and one `qa-audit-` page.
-6. Run the read-only, request-email-token, and verify-live phases.
-7. Require the documented `verified-live` results.
-8. Confirm D1 audit rows contain no raw password, token, session, email-change address, manager email, IP, or User-Agent.
+6. Run read-only, request-email-token, and verify-live phases.
+7. Confirm audit rows contain no raw password, token, session, email-change address, manager email, IP, or User-Agent.
 
-## Priority 3 — Execute One-Page Policy Live Verification
+## Priority 3 — PR #42 One-Page Policy Production Verification
 
-1. Merge PR `#42` after checking conflict scope.
-2. Prepare the six disposable fixtures documented by PR `#42`.
-3. Store signed test sessions in GitHub Secrets.
+1. Integrate the latest `main` after preceding merges.
+2. Prepare six disposable fixtures and signed sessions.
+3. Merge only after conflict and QA review.
 4. Run Account Page Limit Production Verify with explicit write approval.
-5. Require `verified-live` and confirm every `qa-limit-*` page was removed.
+5. Require `verified-live`.
+6. Confirm every `qa-limit-*` page is removed.
 
-## Priority 4 — Custom-Domain Operational Rollout
+## Priority 4 — PR #41 Custom-Domain Operational Rollout
 
-1. Apply production migrations `0006_page_domains.sql` and `0007_page_domain_operations.sql` in order.
-2. Configure the Cloudflare account, Pages project, least-privilege token, CNAME target, and recheck secret.
-3. Merge PR `#41` only after migration and environment ordering is safe.
-4. Deploy only after explicit owner approval.
-5. Verify DNS, SSL, public routing, assets, forms, reservations, tracking, duplicate ownership, detach/reconnect, retries, and escalation.
+1. Integrate latest `main`, including PR `#45` migration safety.
+2. Run read-only D1 preflight.
+3. Review exact pending migrations.
+4. Use the guarded encrypted backup workflow before applying `0006_page_domains.sql` and `0007_page_domain_operations.sql`.
+5. Configure Cloudflare account, Pages project, least-privilege token, CNAME target, and recheck secret.
+6. Merge and deploy only after explicit approval.
+7. Verify DNS, SSL, routing, assets, forms, reservations, tracking, duplicate ownership, detach/reconnect, retries, and escalation.
 
-## Priority 5 — Live Integration Production Verification
+## Priority 5 — CallTag Android App P0 Implementation
+
+Developer source document:
+
+- `docs/calltag-pagero-android-app-implementation-spec.md`
+
+P0 delivery order:
+
+1. Login, session refresh, account suspension handling.
+2. FCM device registration and lead deep links.
+3. Pagero lead inbox and customer card.
+4. Pagero/manual source separation.
+5. Duplicate customer merge by normalized phone.
+6. Status, tags, notes, assignee, and next action.
+7. ACTION_DIAL call flow.
+8. Large post-call summary on app return.
+9. Template SMS using SMS Intent.
+10. Internal follow-up schedule and Calendar INSERT Intent.
+11. Room cache, WorkManager, sync cursor, and outbox idempotency.
+12. Today/7-day/30-day/custom statistics.
+13. Offline, conflict, permission-denied, and retry handling.
+14. Samsung device, notification, keyboard, font-size, dark-mode, and background-restriction QA.
+
+Do not start P2 default Phone/SMS handler scope before P0 is stable and Play policy review is approved.
+
+## Priority 6 — Live Integration Production Verification
 
 - SES identity, DKIM, SPF, DMARC, and production access.
 - Real verification, password-reset, email-change, invite, and ownership-transfer messages.
@@ -318,9 +282,9 @@ After explicit owner approval:
 - Missing credentials remain `skipped-live`, never false success or false product failure.
 - Never expose provider credentials, verification tokens, access tokens, or raw internal errors.
 
-## Priority 6 — Product And Operations Hardening
+## Priority 7 — Product And Operations Hardening
 
-- D1 backup and migration rollback evidence.
+- Restore drill using a disposable D1 database.
 - Current operator release checklist.
 - Retention and cleanup policy for leads, blocked submissions, delivery logs, AI drafts, backups, and audit rows.
 - Large-data inbox and stats query verification.
@@ -346,6 +310,7 @@ npm run browser:templates-mobile:qa
 npm run preview:parity:qa
 npm run bottom:fixed:qa
 npm run topnav:balance:qa
+npm run d1:migration:safety:qa
 npm run qa:all
 npm run build
 npm run deployment:qa
