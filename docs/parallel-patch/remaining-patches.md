@@ -1,14 +1,18 @@
 # Pagero Remaining Patches
 
-Updated: 2026-08-02 11:41 KST
+Updated: 2026-08-03 01:16 KST
 
 Repository: `pc9839a-lgtm/inlet`
 
 Production branch: `main`
 
-Latest main: `2623e8122ac8fde2b544645aabbbb42c0d0d4077`
+Latest main: `d2f929769957bfd7aff1f01b6ac0d9769612ca97`
 
 Current candidate: PR `#41` / `agent/custom-domain-foundation`
+
+Required prerequisite:
+
+- PR `#50` / `agent/pagero-d1-migration-safety`
 
 Other open candidates:
 
@@ -22,7 +26,7 @@ Recently merged:
 
 Current execution mode: parallel patching is active
 
-Code completion, QA completion, merge, deployment, migration, environment configuration, and production verification are separate states. Branch-only, mock-only, screenshot-only, or `skipped-live` results are not production completion.
+Code completion, QA completion, merge, migration, deployment, environment configuration, and production verification are separate states. Branch-only, mock-only, screenshot-only, or `skipped-live` results are not production completion.
 
 ## Parallel Worker Split
 
@@ -73,7 +77,7 @@ Code completion, QA completion, merge, deployment, migration, environment config
 - Bounded 5, 15, 30, 60, 180, and 360 minute retry sequence.
 - Retryable and non-retryable failure classification.
 - Operator escalation after repeated or long-running failures.
-- Fifteen-minute manual-secret GitHub Actions recheck workflow.
+- Fifteen-minute secret-protected GitHub Actions recheck workflow.
 - Missing secret returns `skipped-live`, never false success.
 - Detach and reconnect reset stale failure state.
 
@@ -85,19 +89,27 @@ Code completion, QA completion, merge, deployment, migration, environment config
 - Settings supports Pagero address versus custom domain, status, SSL, DNS, manual recheck, detach, and owner-only changes.
 - Protected production-home files and C63 assets are unchanged.
 
-## Latest Main Integration Complete
+## Migration Number Collision Resolved
 
-- Original PR head: `bbd717aae1b7dc1a496195808d1359b0ef4c9b05`
-- Integrated latest main: `2623e8122ac8fde2b544645aabbbb42c0d0d4077`
-- Integration commit: `6e6a00cdb2e4311bea488915682a5f5027c2cd38`
-- PR `#44` mobile gallery, consent, Korean-font regression, and QA workflow files are preserved.
-- Latest Cloudflare deployment-record files are preserved.
-- `package.json` and `scripts/qa-all.mjs` register both custom-domain and mobile-template QA.
-- PR `#41` is open, ready, and mergeable against current `main`.
+- Latest `main` already contains `migrations/0006_calltag_pagero_lead_queue.sql`.
+- That existing migration and its feature behavior are not modified by PR `#41`.
+- Custom-domain base migration moved from `0006_page_domains.sql` to `0007_page_domains.sql`.
+- Custom-domain operations migration moved from `0007_page_domain_operations.sql` to `0008_page_domain_operations.sql`.
+- D1 schema QA, domain QA, domain operations QA, operations readiness, and the custom-domain runbook now use `0007/0008`.
+- PR `#50` is the mandatory migration-safety prerequisite.
 
-## QA Complete
+## Latest Main Compatibility
 
-Integration head `6e6a00cdb2e4311bea488915682a5f5027c2cd38` passed workflow run `30729439100`:
+- Original integrated main: `2623e8122ac8fde2b544645aabbbb42c0d0d4077`.
+- Current main: `d2f929769957bfd7aff1f01b6ac0d9769612ca97`.
+- Current main-only additions do not overlap the custom-domain application files.
+- `0006_calltag_pagero_lead_queue.sql` remains first and custom-domain migrations follow as `0007/0008`.
+- PR `#44` mobile gallery, consent, Korean-font regression, and QA workflow files remain preserved.
+- Protected production-home files remain unchanged.
+
+## QA Status
+
+Previous integration head `6e6a00cdb2e4311bea488915682a5f5027c2cd38` passed workflow run `30729439100`:
 
 - full offline QA
 - page-domain validation and duplicate ownership QA
@@ -111,16 +123,21 @@ Integration head `6e6a00cdb2e4311bea488915682a5f5027c2cd38` passed workflow run 
 - Korean-font three-template mobile browser regression
 - production build and deployment artifact checks
 
+The migration-renumbering head requires a new full workflow result before PR `#41` can return to ready-for-review state.
+
 ## Not Complete
 
+- PR `#50` merge to `main`: not completed.
+- D1 migration-safety production secrets: not configured or verified.
+- Read-only production D1 preflight: not completed.
 - PR `#41` merge to `main`: not completed.
-- Production migrations `0006_page_domains.sql` and `0007_page_domain_operations.sql`: not applied.
+- Production migrations `0007_page_domains.sql` and `0008_page_domain_operations.sql`: not applied.
 - Cloudflare production account, project, token, CNAME target, and recheck secret: not configured or verified.
 - Production deployment: not completed.
 - Real test-domain DNS and SSL activation: not completed.
-- Real custom-domain form, reservation, conversion, detach, and reconnect verification: not completed.
+- Real custom-domain form, reservation, conversion, detach, reconnect, retry, and escalation verification: not completed.
 
-Do not describe PR `#41` as production complete until migrations, environment configuration, merge, deployment approval, and real-domain verification are all complete.
+Do not describe PR `#41` as production complete until migration safety, exact pending-list review, encrypted backup, environment configuration, merge, deployment approval, and real-domain verification are all complete.
 
 # Absolute Rules
 
@@ -176,9 +193,16 @@ Do not restore the discarded three-plan pricing direction or invent entitlement 
 - PR `#44` gallery and consent mobile interaction patch merged to `main`.
 - Administrator and audit implementation completed on open PR `#43`.
 - One-page production verification implementation completed on open PR `#42`.
-- Custom-domain implementation and latest-main integration completed on open PR `#41`.
+- Custom-domain implementation completed on open PR `#41`; production rollout remains incomplete.
+- D1 migration safety implementation completed on draft PR `#50`; production use remains incomplete.
 
 # Other Open Checkpoints
+
+## PR #50 — D1 Migration Safety
+
+- Manual-only preflight and backup-and-apply workflow: code complete.
+- Exact pending-list gate, encrypted export, plaintext deletion, hashes, HMAC, Time Travel evidence, and no automatic restore: QA complete on branch.
+- Merge, production secrets, `verified-live` preflight, encrypted production backup, and migration execution: not completed.
 
 ## PR #43 — Administrator And Audit Operations
 
@@ -194,7 +218,39 @@ Do not restore the discarded three-plan pricing direction or invent entitlement 
 
 # Active Remaining Patches
 
-## Priority 1 — Administrator And Audit Production Rollout
+## Priority 1 — D1 Migration Safety Prerequisite
+
+1. Confirm PR `#50` remains conflict-free and all QA jobs are green.
+2. Merge PR `#50` only with explicit owner approval.
+3. Configure `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, and `PAGERO_D1_BACKUP_ENCRYPTION_KEY` as GitHub Secrets.
+4. Run manual read-only `D1 Migration Safety` preflight against the intended production `main` SHA.
+5. Require `verified-live`, review local hashes and remote `d1_migrations`, and record the exact pending filename order.
+6. Do not enable writes or apply migrations during this prerequisite step.
+
+## Priority 2 — Custom-Domain Operational Rollout
+
+1. Confirm the live preflight pending list is exactly the reviewed sequence. Expected custom-domain files are `0007_page_domains.sql,0008_page_domain_operations.sql` only when preflight reports exactly those.
+2. Obtain separate explicit approval for `backup-and-apply`.
+3. Create and validate the encrypted production D1 export before migration apply.
+4. Apply `0007_page_domains.sql` and `0008_page_domain_operations.sql` through the guarded workflow.
+5. Verify the applied migration history and retain the encrypted backup, manifest, rollback instructions, and Time Travel evidence.
+6. Configure `INLET_CLOUDFLARE_ACCOUNT_ID`.
+7. Configure `INLET_CLOUDFLARE_PAGES_PROJECT`.
+8. Configure least-privilege `INLET_CLOUDFLARE_API_TOKEN` with Pages custom-domain edit access.
+9. Configure `INLET_CUSTOM_DOMAIN_CNAME_TARGET`.
+10. Configure `INLET_DOMAIN_RECHECK_SECRET` and matching GitHub `PAGERO_DOMAIN_RECHECK_SECRET`.
+11. Merge PR `#41` only after final conflict and QA verification.
+12. Deploy only after explicit owner approval.
+13. Verify test-domain ownership, DNS, SSL, routing, assets, forms, reservations, tracking, detach, reconnect, retry, and escalation.
+
+## Priority 3 — One-Page Policy Live Verification
+
+1. Prepare six disposable account fixtures and signed sessions.
+2. Merge PR `#42` after final conflict and QA verification.
+3. Run the manual workflow with explicit write approval.
+4. Require `verified-live` and confirm all `qa-limit-*` pages are removed.
+
+## Priority 4 — Administrator And Audit Production Rollout
 
 1. Configure production audit hash and retention secrets.
 2. Prepare disposable account and `qa-audit-` page fixtures.
@@ -203,28 +259,7 @@ Do not restore the discarded three-plan pricing direction or invent entitlement 
 5. Run read-only, email-token request, and verify-live phases.
 6. Confirm no raw passwords, tokens, sessions, emails, IPs, or User-Agent values in D1 audit rows.
 
-## Priority 2 — One-Page Policy Live Verification
-
-1. Prepare six disposable account fixtures and signed sessions.
-2. Merge PR `#42` after final conflict and QA verification.
-3. Run the manual workflow with explicit write approval.
-4. Require `verified-live` and confirm all `qa-limit-*` pages are removed.
-
-## Priority 3 — Custom-Domain Operational Rollout
-
-1. Back up production D1.
-2. Apply `0006_page_domains.sql`.
-3. Apply `0007_page_domain_operations.sql`.
-4. Configure `INLET_CLOUDFLARE_ACCOUNT_ID`.
-5. Configure `INLET_CLOUDFLARE_PAGES_PROJECT`.
-6. Configure least-privilege `INLET_CLOUDFLARE_API_TOKEN` with Pages Edit access.
-7. Configure `INLET_CUSTOM_DOMAIN_CNAME_TARGET`.
-8. Configure `INLET_DOMAIN_RECHECK_SECRET` and matching GitHub `PAGERO_DOMAIN_RECHECK_SECRET`.
-9. Merge PR `#41` only after migration and environment ordering is safe.
-10. Deploy only after explicit owner approval.
-11. Verify test-domain ownership, DNS, SSL, routing, assets, forms, reservations, tracking, detach, reconnect, retry, and escalation.
-
-## Priority 4 — Live Integration Production Verification
+## Priority 5 — Live Integration Production Verification
 
 - SES identity, DKIM, SPF, DMARC, and production access.
 - Verification, password-reset, email-change, invite, and ownership-transfer messages.
@@ -232,9 +267,8 @@ Do not restore the discarded three-plan pricing direction or invent entitlement 
 - Real conversion events where configured.
 - Missing credentials remain `skipped-live`, never false success or false product failure.
 
-## Priority 5 — Product And Operations Hardening
+## Priority 6 — Product And Operations Hardening
 
-- D1 backup and migration rollback evidence.
 - Lead, blocked-submission, delivery-log, AI-draft, backup, and audit retention policy.
 - Large-data inbox, stats, CSV, domain operations, and audit search verification.
 - Accessibility and keyboard regression for account, domain, and administrator UI.
@@ -254,6 +288,8 @@ Start only after active operational priorities are stable and the owner defines 
 ```bash
 npm run page:domain:qa
 npm run page:domain:ops:qa
+npm run d1:schema:qa
+npm run ops:qa
 npm run browser:templates-mobile:contract:qa
 npm run qa:all
 npm run build
