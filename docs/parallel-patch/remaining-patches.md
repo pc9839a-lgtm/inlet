@@ -1,18 +1,22 @@
 # Pagero Remaining Patches
 
-Updated: 2026-08-02 01:31 KST
+Updated: 2026-08-02 10:25 KST
 
 Repository: `pc9839a-lgtm/inlet`
 
 Production branch: `main`
 
-Current candidate: PR `#44` / `agent/template-mobile-final-regression`
+Current candidate: PR `#42` / `agent/account-page-limit-production-verification`
 
 Other open candidates:
 
 - PR `#43` / `agent/admin-audit-hardening`
-- PR `#42` / `agent/account-page-limit-production-verification`
 - PR `#41` / `agent/custom-domain-foundation`
+
+Recently merged:
+
+- PR `#44` / three-template mobile interaction and regression patch
+- merge commit `1c1c4bc3503f367cea81b0a3f435cd6c0d8b7473`
 
 Current execution mode: parallel patching is active
 
@@ -40,160 +44,104 @@ Code completion, QA completion, merge, deployment, and production verification a
 - `deployment:qa`
 - `npm run live:qa`
 
-# Current Patch Checkpoint — PR #44
+# Current Patch Checkpoint — PR #42
 
 ## Code Complete
 
-### Three active templates only
+The one-active-page policy itself is already on `main`. PR `#42` adds a controlled production verification gate without changing the product policy.
 
-- `debt-relief-consult` — personal rehabilitation consultation.
-- `wedding-invitation` — mobile wedding invitation.
-- `quote-request` — real estate presale.
-- No fourth template was added.
-- Template content, section order, and visual direction were not redesigned during QA.
+Verified scenarios:
 
-### Real mobile-browser regression
+- A general account can create its first active page.
+- A second direct API creation attempt returns `409 / ACCOUNT_PAGE_LIMIT_REACHED`.
+- The existing page remains editable, revisionable, previewable, restorable, and publicly readable.
+- Deleting or archiving the first project permits a replacement page.
+- Archived projects do not consume the active-page quota.
+- Platform-master accounts can create multiple pages and retain that ability after session refresh.
+- Google-login accounts follow the same one-page quota.
+- Manager/member sessions cannot bypass the owner quota.
 
-- Added Chrome CDP coverage for 360×800, 390×844, and 430×932.
-- Added all nine template/viewport combinations as release-blocking checks.
-- Added first-viewport checks for hero placement, title/body visibility, horizontal containment, and runtime fallback/error output.
-- Added editor/placeholder copy leakage checks.
-- Added every visible section's left/right containment checks.
-- Added bottom fixed-button count, minimum touch height, and share-button collision checks.
-- Added physical FAQ open/close interaction.
-- Added physical gallery-next interaction for wedding and real-estate templates.
-- Added map section and external map-action verification.
-- Added real-estate reservation controls verification.
-- Added bottom CTA navigation to the form.
-- Added form focus and simulated mobile-keyboard checks at 390px.
-- Added top navigation, share button, and bottom fixed UI hiding checks while an input is active.
-- Added viewport-bounded screenshots for all nine first screens plus 390px interaction screenshots.
+Safety controls:
 
-### Reproduced mobile defects fixed
+- Six disposable QA identities are required before live execution.
+- `allow_writes=true` and `INLET_ACCOUNT_PAGE_LIMIT_LIVE_WRITE=1` are both required.
+- Missing fixtures or Secrets produce `skipped-live`, never false `verified-live`.
+- `require_live=true` treats `skipped-live` as failure.
+- Generated slugs are restricted to `qa-limit-*`.
+- Cleanup runs in reverse order after success or failure.
+- Workflow execution is manual only; no schedule is configured.
+- Sessions are read from GitHub Secrets and are not written to evidence output.
 
-- Increased preview and public gallery arrow targets to 44×44px.
-- Added visible keyboard-focus treatment for gallery controls.
-- Prevented gallery swipe pointer capture from stealing arrow and dot button clicks.
-- Added `type="button"` and accessible labels to gallery dot controls.
-- Increased consent-row touch height to 44px.
-- Added a 36px checkbox hit box with a centered smaller visual checkbox.
-- Applied gallery and consent contracts equally to `.phone-frame` preview and `.public-landing-viewport` runtime.
-- Preserved `preview-fixed-ui-contract.css` as the final stylesheet priority.
+Latest-main integration:
 
-### CI evidence quality
-
-- Added `browser:templates-mobile:qa`.
-- Added `browser:templates-mobile:contract:qa` to `qa:all`.
-- Added release-blocking job `template-mobile-browser-regression`.
-- Added screenshot artifact `template-mobile-regression-${{ github.run_id }}`.
-- Added Noto CJK installation and font-match verification to the template-mobile job.
-- Korean text renders as actual glyphs so line wrapping and first-screen layout use Korean font metrics rather than missing-glyph boxes.
-- Protected production-home file changes: none.
+- PR `#44` mobile changes are preserved.
+- `browser:templates-mobile:qa` and its contract remain registered.
+- `account:page-limit:live` and `account:page-limit:live:contract:qa` are registered.
+- PR `#42` now has latest `main` as a real second parent.
+- Integrated head: `1f861167462c4495413e792f709e799dc7097d92`.
+- Protected production-home files changed: none.
 
 ## QA Complete
 
-Implementation head `f1f542630964ffea77f949f7879d8284ce3e4c70` passed workflow run `30707915630`:
+Integrated head `1f861167462c4495413e792f709e799dc7097d92` passed workflow run `30726695162`:
 
 - full offline QA
-- template static QA
-- preview/public parity QA
-- fixed bottom UI QA
-- top navigation balance QA
-- template mobile regression contract QA
-- Noto CJK installation and font match
-- personal rehabilitation at 360px, 390px, and 430px
-- mobile wedding invitation at 360px, 390px, and 430px
-- real estate presale at 360px, 390px, and 430px
-- physical FAQ interaction
-- physical gallery navigation
-- map actions
-- reservation controls
-- bottom CTA form navigation
-- simulated keyboard and fixed-UI hiding
+- account one-page policy QA
+- production verifier safety-contract QA
+- Google-login quota coverage
+- manager/member bypass rejection coverage
 - public landing browser regression
 - authenticated editor browser regression
-- consultation and reservation browser regression
+- form and reservation browser regression
+- Korean-font three-template mobile browser regression
 - production build and deployment artifact checks
-
-Documentation closeout head `27641223d72e110cfcc61067412c830f132e62b7` passed workflow run `30708086687`:
-
-- full offline QA
-- public landing browser regression
-- authenticated editor browser regression
-- consultation and reservation browser regression
-- three-template mobile browser regression with Korean fonts
-
-PR `#44` was moved from draft to ready for review after all five final jobs passed.
-
-Screenshot artifact:
-
-- workflow run: `30707915630`
-- artifact ID: `8820920405`
-- artifact name: `template-mobile-regression-30707915630`
-- digest: `sha256:d1140f812a70cc97b3ad0015cdfdeb4ff06a1713023bb7fc2ab94a61c612cf2c`
-- reviewed first-viewport evidence: Korean glyphs, line wrapping, hero, share button, and bottom actions rendered correctly across all nine combinations
 
 ## Not Complete
 
-- PR `#44` merge to `main`: not completed.
+- PR `#42` merge to `main`: not completed.
 - Production deployment: not completed.
-- Production-device verification: not completed.
+- Six disposable production fixtures: not prepared or verified.
+- Signed sessions in GitHub Secrets: not configured or verified.
+- Manual workflow result `verified-live`: not completed.
+- Cleanup evidence for every generated `qa-limit-*` page: not completed.
 
-Do not describe PR `#44` as merged, deployed, or production verified until those separate steps are completed with explicit owner approval.
+Do not describe the one-page production verification as complete until the manual workflow returns `verified-live` and all disposable pages are confirmed removed.
 
 # Absolute Rules
 
 ## Production Home Is Frozen
 
-The current `https://pagero.kr/` root screen is the canonical production home.
-
-Unless the owner explicitly requests a production-home change, do not change its visible design, copy, section order, menu, footer, hero, animation, lifestyle bridge, login/start behavior, or responsive result.
-
-Protected production-home scope includes:
+Do not change the visible production home without an explicit owner request. Protected scope includes:
 
 - `functions/index.js`
 - `index.html`
 - `src/main.jsx`
 - root/public-home routing inside `src/App.jsx`
-- public-home screen components and styles
+- public-home components and styles
 - `public/c63-assets/**`
 - `public/c63-life-bridge.js`
 - `public/c63-life-bridge.css`
 - root/static routing inside `server/index.mjs`
 
-Stop deployment if a protected-home file changes during unrelated work.
-
 ## General Account And Administrator Policy
 
 - General account: one active landing page.
 - Platform master: unlimited landing pages and administrator API eligibility.
-- Frontend and API page-limit enforcement both remain mandatory.
-- Role-string forgery must not bypass page or administrator policy.
+- Frontend and API enforcement are both mandatory.
+- Forged role strings must not bypass page or administrator policy.
 - Existing pages remain editable, revisionable, restorable, previewable, and public.
 - Archived projects do not consume the active-page quota.
-- Google-login accounts follow the same page policy.
+- Google-login accounts follow the same policy.
 - Manager/member access cannot create another owner page.
-- Default platform-master emails plus `INLET_PLATFORM_MASTER_EMAILS` are the only approved page-limit and administrator bypass source.
-
-## Page Sharing And Fixed UI
-
-- Global sharing state uses `page.share`.
-- Sharing stays separate from the bottom fixed-button editor.
-- Public and preview sharing use the same PageShareButton flow.
-- Share URLs must use the public page URL, never the editor or dashboard URL.
-- Form and reservation focus must hide top navigation, share, and bottom fixed UI where required to protect the active input.
+- Default platform-master emails plus `INLET_PLATFORM_MASTER_EMAILS` are the only approved bypass source.
 
 ## Active Templates Stay Exactly Three
-
-Keep exactly:
 
 1. Personal rehabilitation consultation.
 2. Mobile wedding invitation.
 3. Real estate presale.
 
-Do not add more templates and do not replace them with non-editable HTML shells.
-
-Personal rehabilitation copy must not guarantee approval or legal outcome.
+Do not add a fourth template. Personal rehabilitation copy must not guarantee approval or legal outcomes.
 
 ## Paid Plans Are Locked To Two
 
@@ -205,7 +153,7 @@ Do not restore the discarded 3,300원 / 6,600원 / 9,900원 direction. Do not ad
 ## Deployment
 
 - Never force-push `main`.
-- Do not construct releases with destructive reset, clean, or restore operations.
+- Do not use destructive reset, clean, or restore operations to construct a release.
 - Do not mix unrelated refactors into a focused patch.
 - Run targeted QA and the full suite before merge or deployment.
 - Production deployment requires explicit owner approval.
@@ -216,46 +164,39 @@ Do not restore the discarded 3,300원 / 6,600원 / 9,900원 direction. Do not ad
 - Customer-owned AI key storage.
 - D1 real runtime smoke and write-side migration foundations.
 - Add lead duplicate and spam policy foundations.
-- Page duplication and URL setup foundations; template duplication is not needed.
+- Page duplication and URL setup foundations.
 - Login, account, and member management foundations.
 - General-account one-page and platform-master unlimited policies.
 - Save identity, revision conflict, draft recovery, and page-switch isolation.
-- Native sharing and four persisted share positions.
-- Form-focus fixed UI hiding foundations.
-- Three timer styles, strong effects, bottom-timer inheritance, and shared countdown clock.
-- Image optimization before storage.
-- Server-backed blocked history and month-bounded CSV.
-- AWS SES authentication-email foundation.
-- Google Sheets OAuth and delivery foundation.
-- Public landing, authenticated editor, and form/reservation browser regression infrastructure.
+- Three active templates only.
+- Public landing, authenticated editor, form/reservation, and mobile template browser regression infrastructure.
 - Preview/public CSS parity and fixed-bottom collision contracts.
-- Deployment route smoke contracts.
-- Administrator authorization, audit, email-change, account controls, project controls, retention, and live-verifier implementation on open PR `#43`.
-- One-page policy production verifier implementation on open PR `#42`.
-- Custom-domain implementation and operations tooling on open PR `#41`.
-- Three-template 360/390/430px real-browser regression implementation on PR `#44`.
-- Shared gallery 44px targets and pointer-capture guard on PR `#44`.
-- Shared consent-row mobile touch contract on PR `#44`.
-- Korean-font screenshot evidence pipeline on PR `#44`.
+- PR `#44` mobile gallery, consent touch target, Korean-font screenshot, and 360/390/430px regression patch merged to `main`.
+- Administrator authorization and audit implementation complete on open PR `#43`.
+- One-page policy production verifier implementation complete on open PR `#42`.
+- Custom-domain implementation and operations tooling complete on open PR `#41`.
 
-# Other Open Checkpoints
+# Open Checkpoints
 
 ## PR #43 — Administrator And Audit Operations
 
-- Code and automated QA are complete on its branch.
-- Three-phase production verifier is implemented.
+- Latest `main` conflict resolution: completed.
+- Integrated head: `23d1f5773ba03931f2162d3eb84fe0d32942a5cd`.
+- Workflow run `30726024143`: all five QA jobs passed.
 - Merge to `main`: not completed.
-- Production audit secrets: not confirmed.
-- Production deployment: not completed.
-- Disposable fixtures and GitHub Secrets: not configured or verified.
-- Real `verified-live` result: not completed.
+- Production `INLET_AUDIT_HASH_SECRET`: not confirmed.
+- Production `INLET_AUDIT_RETENTION_SECRET`: not confirmed.
+- GitHub audit verification and retention Secrets: not confirmed.
+- Disposable `qa-audit-` fixture account and page: not prepared.
+- Real three-phase `verified-live`: not completed.
 
 ## PR #42 — One-Page Policy Production Verification
 
-- General-account one-active-page implementation is already merged through PR `#40`.
-- Live verification script, manual workflow, cleanup, Google-login quota, and manager-bypass coverage are complete on PR `#42`.
+- Latest `main` conflict resolution: completed.
+- Integrated head: `1f861167462c4495413e792f709e799dc7097d92`.
+- Workflow run `30726695162`: all five QA jobs passed.
 - Merge to `main`: not completed.
-- Six disposable fixtures and signed sessions: not configured or verified.
+- Six disposable fixtures and signed sessions: not configured.
 - Manual workflow result `verified-live`: not completed.
 
 ## PR #41 — Custom Domain
@@ -263,66 +204,69 @@ Do not restore the discarded 3,300원 / 6,600원 / 9,900원 direction. Do not ad
 - Domain ownership, DNS, SSL, provider registration, routing, retries, escalation, operator list, scheduled recheck, and runbook are code/QA complete on the branch.
 - Merge to `main`: not completed.
 - Production D1 migrations `0006` and `0007`: not completed.
-- Cloudflare production environment configuration: not completed.
+- Cloudflare account, Pages project, API token, CNAME target, and recheck secret: not configured or verified.
 - Production deployment and real customer-domain smoke test: not completed.
 
 # Active Remaining Patches
 
-## Priority 1 — PR #44 Merge And Production Verification
+## Priority 1 — PR #43 Operational Readiness
 
-After owner approval:
+PR `#43` has higher security value but remains blocked by production secrets and disposable fixtures.
 
-1. Confirm final PR head and all five QA jobs are green.
-2. Confirm protected production-home files remain unchanged.
-3. Merge PR `#44` to `main`.
-4. Deploy only with explicit deployment approval.
-5. Verify the three templates on at least one real Android device at approximately 360px, 390px, and 430px CSS widths.
-6. Verify gallery arrows, dots, FAQ, map actions, form keyboard, consent checkbox, reservation form, share button, and bottom actions.
-7. Record production deployment SHA and device evidence before marking production verified.
+1. Confirm production `INLET_AUDIT_HASH_SECRET`.
+2. Confirm production `INLET_AUDIT_RETENTION_SECRET`.
+3. Configure matching GitHub verification and retention Secrets.
+4. Prepare a disposable password account and `qa-audit-` page.
+5. Obtain explicit merge and deployment approval.
+6. Merge and deploy.
+7. Run read-only, request-email-token, and verify-live phases.
+8. Require documented `verified-live` results.
+9. Confirm audit rows contain no raw password, token, session, email-change address, manager email, IP, or User-Agent.
 
-## Priority 2 — PR #43 Merge And Production Verification
+## Priority 2 — PR #42 Merge And Live Verification
 
-After explicit owner approval:
+PR `#42` is code- and QA-ready and has no production schema migration.
 
-1. Configure `INLET_AUDIT_HASH_SECRET` and `INLET_AUDIT_RETENTION_SECRET` in production.
-2. Configure matching GitHub audit verification and retention secrets.
-3. Merge PR `#43` without mixing PR `#41`, `#42`, or `#44` branch changes.
-4. Deploy only after explicit deployment approval.
-5. Prepare one disposable password account and one `qa-audit-` page.
-6. Run the read-only, request-email-token, and verify-live phases.
-7. Require the documented `verified-live` results.
-8. Confirm D1 audit rows contain no raw password, token, session, email-change address, manager email, IP, or User-Agent.
+1. Confirm final head and all five QA jobs remain green.
+2. Merge PR `#42` after explicit approval.
+3. Prepare the six disposable fixtures documented by the runbook.
+4. Store signed sessions in GitHub Secrets.
+5. Run Account Page Limit Production Verify with explicit write approval.
+6. Require `verified-live`.
+7. Confirm every generated `qa-limit-*` page was removed.
 
-## Priority 3 — Execute One-Page Policy Live Verification
+## Priority 3 — PR #44 Real-Device Verification
 
-1. Merge PR `#42` after checking conflict scope.
-2. Prepare the six disposable fixtures documented by PR `#42`.
-3. Store signed test sessions in GitHub Secrets.
-4. Run Account Page Limit Production Verify with explicit write approval.
-5. Require `verified-live` and confirm every `qa-limit-*` page was removed.
+The code is merged; deployment and device verification are separate.
+
+1. Confirm whether the merge triggered an automatic Cloudflare deployment.
+2. Deploy only with explicit approval if not already deployed.
+3. Verify the three templates on real Android Chrome and Samsung Internet.
+4. Check gallery controls, FAQ, map actions, keyboard, consent checkbox, reservation form, sharing, and bottom actions.
+5. Record deployment SHA and device evidence.
 
 ## Priority 4 — Custom-Domain Operational Rollout
 
-1. Apply production migrations `0006_page_domains.sql` and `0007_page_domain_operations.sql` in order.
-2. Configure the Cloudflare account, Pages project, least-privilege token, CNAME target, and recheck secret.
-3. Merge PR `#41` only after migration and environment ordering is safe.
-4. Deploy only after explicit owner approval.
-5. Verify DNS, SSL, public routing, assets, forms, reservations, tracking, duplicate ownership, detach/reconnect, retries, and escalation.
+1. Apply `0006_page_domains.sql` and `0007_page_domain_operations.sql` in order.
+2. Configure the Cloudflare account, Pages project, least-privilege API token, CNAME target, and recheck secret.
+3. Integrate PR `#41` with the latest `main` after PR `#42` and PR `#43` decisions.
+4. Run the full QA suite again.
+5. Merge and deploy only with explicit approval.
+6. Verify DNS, SSL, public routing, forms, reservations, tracking, duplicate ownership, detach/reconnect, retries, and escalation.
 
-## Priority 5 — Live Integration Production Verification
+## Priority 5 — Live Integration Verification
 
 - SES identity, DKIM, SPF, DMARC, and production access.
 - Real verification, password-reset, email-change, invite, and ownership-transfer messages.
-- Google Sheets production OAuth, token refresh, row delivery, disconnect, and retry/dead-letter visibility.
+- Google Sheets OAuth, token refresh, row delivery, disconnect, retry, and dead-letter visibility.
 - Real conversion events where configured.
-- Missing credentials remain `skipped-live`, never false success or false product failure.
-- Never expose provider credentials, verification tokens, access tokens, or raw internal errors.
+- Missing credentials remain `skipped-live`, never false success.
 
 ## Priority 6 — Product And Operations Hardening
 
 - D1 backup and migration rollback evidence.
 - Current operator release checklist.
-- Retention and cleanup policy for leads, blocked submissions, delivery logs, AI drafts, backups, and audit rows.
+- Retention and cleanup for leads, blocked submissions, delivery logs, AI drafts, backups, and audit rows.
 - Large-data inbox and stats query verification.
 - Abuse/rate-limit visibility without raw IP exposure.
 - Accessibility and keyboard regression for account, domain, and administrator UI.
@@ -335,17 +279,14 @@ Approved products:
 - `classic`: 클래식, 월 3,500원
 - `pro`: 프로, 월 5,500원
 
-Start only after active operational priorities are stable and the owner defines the entitlement difference. Required architecture includes server-side entitlements, provider abstraction, checkout/billing key, renewal, period-end cancellation, grace period, signed and idempotent webhooks, payment history, receipts, and audited administrator override.
+Start only after operational priorities are stable and entitlement differences are explicitly approved. Required architecture includes server-side entitlements, provider abstraction, checkout/billing keys, renewal, period-end cancellation, grace period, signed and idempotent webhooks, payment history, receipts, and audited administrator overrides.
 
 # Required QA Before Merge Or Deployment
 
 ```bash
-npm run templates:qa
+npm run account:page-limit:qa
+npm run account:page-limit:live:contract:qa
 npm run browser:templates-mobile:contract:qa
-npm run browser:templates-mobile:qa
-npm run preview:parity:qa
-npm run bottom:fixed:qa
-npm run topnav:balance:qa
 npm run qa:all
 npm run build
 npm run deployment:qa
@@ -353,6 +294,7 @@ npm run deployment:smoke:contract:qa
 npm run browser:landing:qa
 npm run browser:editor:qa
 npm run browser:forms:qa
+npm run browser:templates-mobile:qa
 npm run browser:production:qa
 npm run live:qa
 ```
