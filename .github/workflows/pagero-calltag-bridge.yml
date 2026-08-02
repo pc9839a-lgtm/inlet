@@ -1,0 +1,53 @@
+name: Validate Pagero CallTag Bridge
+
+on:
+  push:
+    branches:
+      - agent/calltag-lead-bridge
+    paths:
+      - 'functions/api/_middleware.js'
+      - 'functions/api/call/pagero/**'
+      - 'migrations/0006_calltag_pagero_lead_queue.sql'
+      - 'scripts/pagero-calltag-bridge-quality-check.mjs'
+      - '.github/workflows/pagero-calltag-bridge.yml'
+  pull_request:
+    paths:
+      - 'functions/api/_middleware.js'
+      - 'functions/api/call/pagero/**'
+      - 'migrations/0006_calltag_pagero_lead_queue.sql'
+      - 'scripts/pagero-calltag-bridge-quality-check.mjs'
+
+jobs:
+  bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: JavaScript syntax
+        run: |
+          node --check functions/api/_middleware.js
+          node --check functions/api/call/pagero/_shared.js
+          node --check functions/api/call/pagero/leads.js
+          node --check functions/api/call/pagero/leads/ack.js
+          node --check functions/api/call/pagero/health.js
+
+      - name: Bridge contract
+        run: node scripts/pagero-calltag-bridge-quality-check.mjs
+
+      - name: Pages Functions regression
+        run: npm run api:functions:qa
+
+      - name: Production build
+        run: npm run build
