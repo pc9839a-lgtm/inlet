@@ -9,8 +9,8 @@ const leadDedupeMigration = await readFile('migrations/0002_lead_dedupe_fields.s
 const eventDimensionsMigration = await readFile('migrations/0003_event_dimensions.sql', 'utf8');
 const blockedLeadMigration = await readFile('migrations/0004_lead_blocked_submissions.sql', 'utf8');
 const authEmailMigration = await readFile('migrations/0005_auth_email_verifications.sql', 'utf8');
-const pageDomainMigration = await readFile('migrations/0006_page_domains.sql', 'utf8');
-const pageDomainOperationsMigration = await readFile('migrations/0007_page_domain_operations.sql', 'utf8');
+const pageDomainMigration = await readFile('migrations/0007_page_domains.sql', 'utf8');
+const pageDomainOperationsMigration = await readFile('migrations/0008_page_domain_operations.sql', 'utf8');
 const adapter = await readFile('server/storage/d1Adapter.mjs', 'utf8');
 const runtimeAdapter = await readFile('server/storage/runtimeAdapter.mjs', 'utf8');
 const wrangler = await readFile('wrangler.jsonc', 'utf8');
@@ -216,8 +216,8 @@ console.log(JSON.stringify({
   eventDimensionsMigration: '0003_event_dimensions.sql',
   blockedLeadMigration: '0004_lead_blocked_submissions.sql',
   authEmailMigration: '0005_auth_email_verifications.sql',
-  pageDomainMigration: '0006_page_domains.sql',
-  pageDomainOperationsMigration: '0007_page_domain_operations.sql',
+  pageDomainMigration: '0007_page_domains.sql',
+  pageDomainOperationsMigration: '0008_page_domain_operations.sql',
   adapter: 'server/storage/d1Adapter.mjs',
   runtimeAdapter: 'server/storage/runtimeAdapter.mjs',
 }, null, 2));
