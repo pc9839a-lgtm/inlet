@@ -5,7 +5,7 @@ import {
   evaluateSafetyGate,
   listsMatchExactly,
   normalizeMigrationList,
-} from './d1-migration-safety.mjs';
+} from './d1-migration-safety-runner.mjs';
 
 const root = process.cwd();
 const read = (relativePath) => readFile(path.join(root, relativePath), 'utf8');
@@ -48,7 +48,7 @@ for (const [name, patch, expectedMessage] of [
   assert.ok(gate.errors.some((message) => message.includes(expectedMessage)), `${name} guard message missing`);
 }
 
-const script = await read('scripts/d1-migration-safety.mjs');
+const script = await read('scripts/d1-migration-safety-runner.mjs');
 const workflow = await read('.github/workflows/d1-migration-safety.yml');
 const runbook = await read('docs/ops-d1-migration-safety.md');
 const packageSource = await read('package.json');
@@ -57,11 +57,12 @@ const qaAll = await read('scripts/qa-all.mjs');
 for (const token of [
   "INLET_D1_MIGRATION_MODE || 'preflight'",
   'INLET_D1_MIGRATION_EXPECTED_PENDING',
-  'INLET_D1_MIGRATION_WRITE === \'1\'',
+  "INLET_D1_MIGRATION_WRITE === '1'",
   'I_APPROVE_D1_MIGRATIONS',
   'PAGERO_D1_BACKUP_ENCRYPTION_KEY',
   'remote pending migrations do not exactly match the approved list',
   "['d1', 'export'",
+  "'--skip-confirmation'",
   "['d1', 'migrations', 'apply'",
   "['d1', 'time-travel', 'info'",
   'aes-256-cbc',
@@ -77,6 +78,8 @@ for (const token of [
 
 assert.ok(script.indexOf("['d1', 'export'") < script.indexOf("['d1', 'migrations', 'apply'"), 'backup export must be defined before migration apply');
 assert.ok(!script.includes("['d1', 'time-travel', 'restore'"), 'production restore must never execute automatically');
+assert.ok(!script.includes("'--json'"), 'Time Travel info must use the supported text command contract');
+assert.ok(!script.includes("'--yes'"), 'D1 export must use --skip-confirmation, not unsupported --yes');
 assert.ok(!script.includes('console.log(encryptionSecret)'), 'encryption secret must not be logged');
 assert.ok(!script.includes('console.log(apiToken)'), 'Cloudflare token must not be logged');
 
@@ -98,6 +101,7 @@ for (const token of [
 ]) {
   assert.ok(workflow.includes(token), `D1 migration workflow missing ${token}`);
 }
+assert.ok(workflow.includes('node scripts/d1-migration-safety-runner.mjs'), 'workflow must execute the final migration runner');
 assert.ok(!workflow.includes('schedule:'), 'D1 migration workflow must not run on a schedule');
 assert.ok(!workflow.includes('push:'), 'D1 migration workflow must not run on push');
 assert.ok(!workflow.includes('pull_request:'), 'D1 migration workflow must not run on pull request');
@@ -116,17 +120,18 @@ for (const token of [
   assert.ok(runbook.includes(token), `D1 migration runbook missing ${token}`);
 }
 
-assert.ok(packageSource.includes('d1:migration:safety'), 'package script d1:migration:safety missing');
+assert.ok(packageSource.includes('node scripts/d1-migration-safety-runner.mjs'), 'package script must execute final D1 migration runner');
 assert.ok(packageSource.includes('d1:migration:safety:qa'), 'package script d1:migration:safety:qa missing');
 assert.ok(qaAll.includes("['d1:migration:safety:qa'"), 'qa:all registration missing D1 migration safety QA');
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 34,
+  checks: 39,
   contracts: [
     'manual-only-workflow',
     'main-branch-write-gate',
     'exact-pending-list',
+    'official-wrangler-command-contract',
     'encrypted-export-only',
     'plaintext-cleanup',
     'time-travel-evidence',
