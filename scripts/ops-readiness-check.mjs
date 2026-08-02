@@ -108,8 +108,8 @@ assert(readiness.includes('liveSummary'), 'operator checklist missing liveSummar
 
 const customDomainRunbook = await read('docs/ops-custom-domain-runbook.md');
 for (const token of [
-  '0006_page_domains.sql',
-  '0007_page_domain_operations.sql',
+  '0007_page_domains.sql',
+  '0008_page_domain_operations.sql',
   '/api/admin/domains',
   '/api/admin/domains/recheck',
   'PAGERO_DOMAIN_RECHECK_SECRET',
