@@ -1,0 +1,85 @@
+name: D1 Migration Safety
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Read-only preflight or encrypted backup followed by migration apply
+        required: true
+        default: preflight
+        type: choice
+        options:
+          - preflight
+          - backup-and-apply
+      expected_pending:
+        description: Exact comma-separated pending migration filenames in execution order
+        required: false
+        default: ''
+        type: string
+      allow_writes:
+        description: Required write approval switch for backup-and-apply
+        required: true
+        default: false
+        type: boolean
+      approval_phrase:
+        description: Type I_APPROVE_D1_MIGRATIONS for backup-and-apply
+        required: false
+        default: ''
+        type: string
+      require_live:
+        description: Fail instead of skipped-live when production credentials are missing
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pagero-d1-migration-safety
+  cancel-in-progress: false
+
+jobs:
+  d1-migration-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    steps:
+      - name: Checkout selected revision
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run guarded D1 migration safety workflow
+        run: node scripts/d1-migration-safety.mjs
+        env:
+          INLET_D1_MIGRATION_MODE: ${{ inputs.mode }}
+          INLET_D1_MIGRATION_EXPECTED_PENDING: ${{ inputs.expected_pending }}
+          INLET_D1_MIGRATION_WRITE: ${{ inputs.allow_writes == true && '1' || '0' }}
+          INLET_D1_MIGRATION_APPROVAL: ${{ inputs.approval_phrase }}
+          INLET_D1_MIGRATION_REQUIRE_LIVE: ${{ inputs.require_live == true && '1' || '0' }}
+          PAGERO_D1_DATABASE_NAME: ${{ secrets.PAGERO_D1_DATABASE_NAME }}
+          INLET_D1_DATABASE_ID: ${{ secrets.PAGERO_D1_DATABASE_ID }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PAGERO_D1_BACKUP_ENCRYPTION_KEY: ${{ secrets.PAGERO_D1_BACKUP_ENCRYPTION_KEY }}
+
+      - name: Upload encrypted backup and non-secret evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: d1-migration-safety-${{ github.run_id }}
+          path: |
+            .tmp-d1-migration-safety/*.enc
+            .tmp-d1-migration-safety/*.manifest.json
+            .tmp-d1-migration-safety/d1-migration-*.json
+            .tmp-d1-migration-safety/*.rollback.txt
+          if-no-files-found: warn
+          retention-days: 30
