@@ -1,0 +1,27 @@
+/* Shared gallery touch-target contract for editor preview and public runtime. */
+.phone-frame .image-sec .gallery-arrows button,
+.public-landing-viewport .image-sec .gallery-arrows button {
+  width: 44px !important;
+  min-width: 44px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  padding: 0 !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  border-radius: 999px !important;
+  line-height: 1 !important;
+  touch-action: manipulation !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.phone-frame .image-sec .gallery-arrows button:focus-visible,
+.public-landing-viewport .image-sec .gallery-arrows button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent, #2563eb) 70%, #ffffff) !important;
+  outline-offset: 2px !important;
+}
+
+@container pagero-landing (max-width: 370px) {
+  .image-sec .gallery-arrows {
+    padding-inline: 6px !important;
+  }
+}
