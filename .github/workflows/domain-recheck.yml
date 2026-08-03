@@ -17,30 +17,30 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
-      RECHECK_URL: ${{ vars.PAGERO_DOMAIN_RECHECK_URL }}
-      RECHECK_SECRET: ${{ secrets.PAGERO_DOMAIN_RECHECK_SECRET }}
+      PAGERO_DOMAIN_RECHECK_URL: ${{ vars.PAGERO_DOMAIN_RECHECK_URL }}
+      PAGERO_DOMAIN_RECHECK_ALLOWED_ORIGINS: ${{ vars.PAGERO_DOMAIN_RECHECK_ALLOWED_ORIGINS }}
+      PAGERO_DOMAIN_RECHECK_SECRET: ${{ secrets.PAGERO_DOMAIN_RECHECK_SECRET }}
+      PAGERO_DOMAIN_RECHECK_TIMEOUT_MS: '30000'
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
       - name: Recheck due custom domains
         shell: bash
         run: |
-          set -euo pipefail
-          endpoint="${RECHECK_URL:-https://pagero.kr/api/admin/domains/recheck}"
-          if [[ -z "${RECHECK_SECRET:-}" ]]; then
-            echo 'skipped-live: PAGERO_DOMAIN_RECHECK_SECRET is not configured'
-            exit 0
-          fi
+          set -o pipefail
+          node scripts/domain-recheck-safe-runner.mjs | tee domain-recheck-result.json
 
-          response="$(curl --fail-with-body --silent --show-error \
-            --retry 2 --retry-delay 3 \
-            --request POST \
-            --header "Authorization: Bearer ${RECHECK_SECRET}" \
-            --header 'Content-Type: application/json' \
-            --data '{}' \
-            "${endpoint}")"
-          echo "${response}"
-          RESPONSE_JSON="${response}" node --input-type=module -e "
-            const payload = JSON.parse(process.env.RESPONSE_JSON || '{}');
-            if (payload.ok !== true) process.exit(1);
-            console.log('processed=' + Number(payload.processed || 0));
-            console.log('operatorRequired=' + Number(payload.operatorRequired || 0));
-          "
+      - name: Upload recheck evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: custom-domain-recheck-evidence-${{ github.run_id }}
+          path: domain-recheck-result.json
+          if-no-files-found: warn
+          retention-days: 30
