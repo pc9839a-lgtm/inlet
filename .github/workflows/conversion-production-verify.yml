@@ -1,0 +1,66 @@
+name: Conversion Tracking Production Verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Exact approved Pagero HTTPS origin
+        required: true
+        default: https://pagero.kr
+        type: string
+      page_slug:
+        description: Dedicated public qa-conversion- page slug
+        required: true
+        default: qa-conversion-production
+        type: string
+      require_live:
+        description: Fail instead of skipped-live when the fixture page is unavailable
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: conversion-production-verify
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+    env:
+      INLET_CONVERSION_BASE_URL: ${{ inputs.base_url }}
+      INLET_CONVERSION_PAGE_SLUG: ${{ inputs.page_slug }}
+      INLET_CONVERSION_REQUIRE_LIVE: ${{ inputs.require_live && '1' || '0' }}
+      INLET_CONVERSION_TIMEOUT_MS: '12000'
+      PAGERO_CONVERSION_ALLOWED_ORIGINS: ${{ vars.PAGERO_CONVERSION_ALLOWED_ORIGINS }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Verify deployed conversion configuration and dispatch
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run conversion:production:live | tee conversion-production-result.json
+
+      - name: Upload verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: conversion-production-evidence-${{ github.run_id }}
+          path: conversion-production-result.json
+          if-no-files-found: warn
+          retention-days: 30
