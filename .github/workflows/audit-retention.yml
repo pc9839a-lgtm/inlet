@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: 'Count eligible rows without deleting them'
+        description: Count eligible rows without deleting them
         required: false
         default: false
         type: boolean
@@ -21,40 +21,33 @@ concurrency:
 jobs:
   cleanup:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
+    environment: production
     env:
-      RETENTION_URL: ${{ vars.PAGERO_AUDIT_RETENTION_URL }}
-      RETENTION_SECRET: ${{ secrets.PAGERO_AUDIT_RETENTION_SECRET }}
-      DRY_RUN: ${{ inputs.dry_run || false }}
+      PAGERO_AUDIT_RETENTION_URL: ${{ vars.PAGERO_AUDIT_RETENTION_URL }}
+      PAGERO_AUDIT_RETENTION_ALLOWED_ORIGINS: ${{ vars.PAGERO_AUDIT_RETENTION_ALLOWED_ORIGINS }}
+      PAGERO_AUDIT_RETENTION_SECRET: ${{ secrets.PAGERO_AUDIT_RETENTION_SECRET }}
+      PAGERO_AUDIT_RETENTION_DRY_RUN: ${{ inputs.dry_run || false }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
       - name: Remove expired audit rows
         shell: bash
         run: |
-          set -euo pipefail
-          endpoint="${RETENTION_URL:-https://pagero.kr/api/admin/audit/retention}"
-          if [[ -z "${RETENTION_SECRET:-}" ]]; then
-            echo 'skipped-live: PAGERO_AUDIT_RETENTION_SECRET is not configured'
-            exit 0
-          fi
+          set -o pipefail
+          npm run audit:retention:run | tee audit-retention-result.json
 
-          payload='{}'
-          if [[ "${DRY_RUN:-false}" == 'true' ]]; then
-            payload='{"dryRun":true}'
-          fi
-
-          response="$(curl --fail-with-body --silent --show-error \
-            --retry 2 --retry-delay 3 \
-            --request POST \
-            --header "Authorization: Bearer ${RETENTION_SECRET}" \
-            --header 'Content-Type: application/json' \
-            --data "${payload}" \
-            "${endpoint}")"
-          echo "${response}"
-          RESPONSE_JSON="${response}" node --input-type=module -e "
-            const payload = JSON.parse(process.env.RESPONSE_JSON || '{}');
-            if (payload.ok !== true) process.exit(1);
-            console.log('retentionDays=' + Number(payload.retentionDays || 0));
-            console.log('candidates=' + Number(payload.candidates || 0));
-            console.log('deleted=' + Number(payload.deleted || 0));
-            console.log('remainingEstimate=' + Number(payload.remainingEstimate || 0));
-          "
+      - name: Upload retention evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-retention-evidence-${{ github.run_id }}
+          path: audit-retention-result.json
+          if-no-files-found: error
+          retention-days: 30
