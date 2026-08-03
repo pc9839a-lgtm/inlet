@@ -1,13 +1,16 @@
 import { getD1AccountByEmail, upsertD1Account } from '../../../server/storage/d1Adapter.mjs';
 import { assertD1, handleApiError, jsonResponse, optionsResponse, readJson } from '../_shared.js';
+import { auditErrorMetadata, auditSubjectHash, writeAuditLog } from '../_audit.js';
 import { AUTH_METHODS, assertAccountActive, authError, authUserPublic, confirmEmailVerificationToken, isValidEmail, isValidPassword, normalizeEmail, passwordHash } from './_auth.js';
 
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, AUTH_METHODS);
   if (request.method !== 'POST') return jsonResponse(request, env, 405, { ok: false, error: 'Method not allowed.' }, AUTH_METHODS);
+
+  let input = {};
   try {
     assertD1(env);
-    const input = await readJson(request);
+    input = await readJson(request);
     const email = normalizeEmail(input.email || '');
     const password = String(input.password || '');
     const token = String(input.token || input.verificationToken || '').trim();
@@ -25,8 +28,29 @@ export async function onRequest({ request, env }) {
       emailVerified: true,
       updatedAt: new Date().toISOString(),
     });
-    return jsonResponse(request, env, 200, { ok: true, user: authUserPublic(updated) }, AUTH_METHODS);
+    const publicUser = authUserPublic(updated);
+    await writeAuditLog({
+      request,
+      env,
+      actorAccountId: publicUser.ownerId,
+      action: 'account.password_changed',
+      targetType: 'account',
+      targetId: publicUser.ownerId,
+      metadata: {
+        verificationPurpose: verification.purpose || 'password-reset',
+        sessionRotationRequired: true,
+      },
+    });
+    return jsonResponse(request, env, 200, { ok: true, user: publicUser }, AUTH_METHODS);
   } catch (error) {
+    await writeAuditLog({
+      request,
+      env,
+      action: 'account.password_change_failed',
+      targetType: 'account',
+      targetId: await auditSubjectHash(input.email || '', env).catch(() => ''),
+      metadata: auditErrorMetadata(error),
+    });
     return handleApiError(request, env, error, AUTH_METHODS);
   }
 }

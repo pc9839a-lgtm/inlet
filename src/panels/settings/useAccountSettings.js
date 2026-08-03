@@ -3,10 +3,13 @@ import { createAccountSettingsActions } from './accountSettingsActions.js';
 
 export default function useAccountSettings({ authUser, onAccountUpdate }) {
   const [profileDraft, setProfileDraft] = useState({ name: authUser?.name || '', phone: authUser?.phone || '' });
+  const [emailDraft, setEmailDraft] = useState({ email: '', code: '', currentPassword: '' });
   const [passwordDraft, setPasswordDraft] = useState({ code: '', password: '', password2: '' });
   const [saving, setSaving] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [changing, setChanging] = useState(false);
+  const [emailVerifying, setEmailVerifying] = useState(false);
+  const [emailChanging, setEmailChanging] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   const email = String(authUser?.email || '').trim().toLowerCase();
@@ -14,6 +17,10 @@ export default function useAccountSettings({ authUser, onAccountUpdate }) {
   useEffect(() => {
     setProfileDraft({ name: authUser?.name || '', phone: authUser?.phone || '' });
   }, [authUser?.name, authUser?.phone]);
+
+  useEffect(() => {
+    setEmailDraft({ email: '', code: '', currentPassword: '' });
+  }, [authUser?.email]);
 
   const resetMessage = () => {
     setError('');
@@ -30,13 +37,29 @@ export default function useAccountSettings({ authUser, onAccountUpdate }) {
     setPasswordDraft((draft) => ({ ...draft, [key]: value }));
   };
 
-  const { changePassword, saveProfile, sendPasswordCode } = createAccountSettingsActions({
+  const setEmailField = (key, value) => {
+    resetMessage();
+    setEmailDraft((draft) => ({ ...draft, [key]: value }));
+  };
+
+  const {
+    changeEmail,
+    changePassword,
+    saveProfile,
+    sendEmailChangeCode,
+    sendPasswordCode,
+  } = createAccountSettingsActions({
+    authUser,
     email,
+    emailDraft,
     onAccountUpdate,
     passwordDraft,
     profileDraft,
     resetMessage,
     setChanging,
+    setEmailChanging,
+    setEmailDraft,
+    setEmailVerifying,
     setError,
     setNotice,
     setPasswordDraft,
@@ -47,15 +70,21 @@ export default function useAccountSettings({ authUser, onAccountUpdate }) {
   return {
     authUser,
     changing,
+    changeEmail,
     changePassword,
     email,
+    emailChanging,
+    emailDraft,
+    emailVerifying,
     error,
     notice,
     passwordDraft,
     profileDraft,
     saveProfile,
     saving,
+    sendEmailChangeCode,
     sendPasswordCode,
+    setEmailField,
     setPasswordField,
     setProfileField,
     verifying,

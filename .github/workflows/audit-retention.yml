@@ -1,0 +1,54 @@
+name: Audit Log Retention
+
+on:
+  schedule:
+    - cron: '17 3 1 * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Count eligible rows without deleting them
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: audit-log-retention
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+    env:
+      PAGERO_AUDIT_RETENTION_URL: ${{ vars.PAGERO_AUDIT_RETENTION_URL }}
+      PAGERO_AUDIT_RETENTION_ALLOWED_ORIGINS: ${{ vars.PAGERO_AUDIT_RETENTION_ALLOWED_ORIGINS }}
+      PAGERO_AUDIT_RETENTION_SECRET: ${{ secrets.PAGERO_AUDIT_RETENTION_SECRET }}
+      PAGERO_AUDIT_RETENTION_DRY_RUN: ${{ inputs.dry_run || false }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # Missing Secrets are failed-live, never skipped-live. The runner maps dry_run to the API dryRun body.
+      - name: Remove expired audit rows
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run audit:retention:run | tee audit-retention-result.json
+
+      - name: Upload retention evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-retention-evidence-${{ github.run_id }}
+          path: audit-retention-result.json
+          if-no-files-found: error
+          retention-days: 30

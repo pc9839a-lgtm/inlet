@@ -1,5 +1,6 @@
 import { getD1AccountByPhone, upsertD1Account } from '../../../server/storage/d1Adapter.mjs';
 import { assertD1, handleApiError, jsonResponse, optionsResponse, readJson } from '../_shared.js';
+import { writeAuditLog } from '../_audit.js';
 import { AUTH_METHODS, authError, authUserPublic, createSessionToken, getSessionAccount, normalizeEmail, normalizePhone } from './_auth.js';
 
 export async function onRequest({ request, env }) {
@@ -15,9 +16,13 @@ export async function onRequest({ request, env }) {
     if (duplicate && normalizeEmail(duplicate.email) !== normalizeEmail(user.email)) {
       throw authError('Phone number is already registered.', 409, { code: 'AUTH_PHONE_DUPLICATE', field: 'phone' });
     }
+    const nextName = String(input.name || '').trim() || user.name || user.email;
+    const changedFields = [];
+    if (nextName !== String(user.name || '')) changedFields.push('name');
+    if (phone !== normalizePhone(user.phone || '')) changedFields.push('phone');
     const updated = await upsertD1Account(env.DB, {
       ...user,
-      name: String(input.name || '').trim() || user.name || user.email,
+      name: nextName,
       phone,
       updatedAt: new Date().toISOString(),
     });
@@ -28,6 +33,17 @@ export async function onRequest({ request, env }) {
       role: payload.role || input.role || 'master',
       email: publicUser.email,
     }, env);
+    if (changedFields.length) {
+      await writeAuditLog({
+        request,
+        env,
+        actorAccountId: publicUser.ownerId,
+        action: 'account.profile_changed',
+        targetType: 'account',
+        targetId: publicUser.ownerId,
+        metadata: { changedFields },
+      });
+    }
     return jsonResponse(request, env, 200, { ok: true, user: publicUser, session }, AUTH_METHODS);
   } catch (error) {
     return handleApiError(request, env, error, AUTH_METHODS);

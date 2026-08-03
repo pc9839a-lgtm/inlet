@@ -1,4 +1,5 @@
 import { getD1InviteByToken, upsertD1Invite, upsertD1Project, upsertD1ProjectMember } from '../../../server/storage/d1Adapter.mjs';
+import { writeAuditLog } from '../_audit.js';
 import { ensureD1ProjectShell } from '../_shared.js';
 import { createSessionToken, loginAccount, normalizeEmail, normalizePhone, ownerIdForEmail, registerAccount } from '../auth/_auth.js';
 
@@ -150,6 +151,22 @@ export async function acceptD1ManagerInvite(request, env = {}, token = '', input
     projectId: invite.projectId,
     accountId: ownerId,
     invitedByAccountId: invite.invitedByAccountId || null,
+  });
+
+  await writeAuditLog({
+    request,
+    env,
+    actorAccountId: ownerId,
+    projectId: invite.projectId || '',
+    action: 'manager.invite_accepted',
+    targetType: 'project_member',
+    targetId: manager.id || ownerId,
+    metadata: {
+      inviteId: invite.id || '',
+      authMode: authMode === 'signup' ? 'signup' : 'login',
+      status: 'active',
+      access: normalizeManagerAccess(invite.access || {}),
+    },
   });
 
   return {

@@ -1,3 +1,4 @@
+import AccountEmailForm from './AccountEmailForm.jsx';
 import AccountPasswordForm from './AccountPasswordForm.jsx';
 import AccountProfileForm from './AccountProfileForm.jsx';
 import AccountSettingsMessages from './AccountSettingsMessages.jsx';
@@ -19,6 +20,16 @@ export default function AccountSettingsSection({ authUser, onAccountUpdate, onLo
         profileDraft={account.profileDraft}
         saving={account.saving}
         setProfileField={account.setProfileField}
+      />
+
+      <AccountEmailForm
+        changing={account.emailChanging}
+        currentEmail={account.email}
+        emailDraft={account.emailDraft}
+        onChangeEmail={account.changeEmail}
+        onSendCode={account.sendEmailChangeCode}
+        setEmailField={account.setEmailField}
+        verifying={account.emailVerifying}
       />
 
       <AccountPasswordForm

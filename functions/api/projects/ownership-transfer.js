@@ -1,4 +1,5 @@
 import { assertD1, authorizeProject, handleApiError, jsonResponse, optionsResponse, projectFromRequest, readJson } from '../_shared.js';
+import { writeAuditLog } from '../_audit.js';
 import { createD1OwnershipTransferRequest, listD1OwnershipTransfers, OWNERSHIP_METHODS } from './_ownership.js';
 
 export async function onRequest({ request, env }) {
@@ -20,6 +21,21 @@ export async function onRequest({ request, env }) {
     }
     const transfer = body.transfer || body.request || {};
     const created = await createD1OwnershipTransferRequest(db, project, transfer, identity || {});
+    await writeAuditLog({
+      request,
+      env,
+      identity,
+      projectId: project.projectId || project.id || created.projectId || '',
+      action: 'ownership_transfer.requested',
+      targetType: 'ownership_transfer',
+      targetId: created.id || '',
+      metadata: {
+        status: created.status || 'requested',
+        billingClearanceStatus: created.billingClearanceStatus || 'not_checked',
+        fromAccountId: created.fromAccountId || '',
+        toAccountId: created.toAccountId || '',
+      },
+    });
     return jsonResponse(request, env, 200, { ok: true, request: created }, OWNERSHIP_METHODS);
   } catch (error) {
     return handleApiError(request, env, error, OWNERSHIP_METHODS);
