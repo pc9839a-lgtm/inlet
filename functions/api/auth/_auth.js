@@ -117,12 +117,7 @@ export async function verifySessionToken(token = '', env = {}) {
     const payload = JSON.parse(base64UrlDecode(payloadPart));
     if (payload.exp && Number(payload.exp) < Math.floor(Date.now() / 1000)) return null;
     return payload;
-  } catch (error) {
-    console.error('auth email SES request failed', {
-      code: 'EMAIL_SEND_TIMEOUT',
-      provider: 'ses',
-      message: String(error?.message || error || ''),
-    });
+  } catch {
     return null;
   }
 }
@@ -149,16 +144,44 @@ export async function issueEmailVerificationToken(input = {}, env = {}) {
   if (purpose === 'signup' && env.DB?.prepare && await getD1AccountByEmail(env.DB, email)) {
     throw authError('Email is already registered.', 409, { code: 'AUTH_EMAIL_DUPLICATE', field: 'email' });
   }
+
+  const provider = emailProvider(env);
+  assertAuthEmailDeliveryReady(provider, env);
+
   const now = Math.floor(Date.now() / 1000);
   await assertEmailVerificationSendAllowed(env.DB, { email, purpose, now });
   const expiresAt = new Date((now + 60 * 30) * 1000).toISOString();
   const code = verificationCode();
   const stored = await storeEmailVerificationCode(env.DB, { email, purpose, code, expiresAt }, env);
+
+  if (provider !== 'mock' && !stored.ok) {
+    throw authError('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 503, {
+      code: 'EMAIL_VERIFICATION_STORAGE_FAILED',
+      provider,
+    });
+  }
+
   const payload = { email, purpose, iat: now, exp: now + 60 * 30 };
   const payloadPart = base64UrlEncode(JSON.stringify(payload));
   const signedFallbackToken = `${payloadPart}.${await hmacBase64Url(payloadPart, authSecret(env))}`;
-  const token = stored ? code : signedFallbackToken;
-  const delivery = await deliverAuthEmail({ email, purpose, token: code, expiresAt }, env);
+  const token = stored.ok ? code : signedFallbackToken;
+
+  let delivery;
+  try {
+    delivery = await deliverAuthEmail({ email, purpose, token: code, expiresAt }, env, provider);
+  } catch (error) {
+    const cleanupOk = stored.id
+      ? await removeEmailVerificationCode(env.DB, { id: stored.id, email, purpose })
+      : true;
+    if (!cleanupOk) {
+      console.error('auth email verification cleanup failed', {
+        code: 'EMAIL_VERIFICATION_CLEANUP_FAILED',
+        provider,
+      });
+    }
+    throw sanitizedAuthEmailDeliveryError(error, provider);
+  }
+
   const exposeToken = shouldExposeVerificationToken(env, delivery);
   return {
     email,
@@ -242,13 +265,30 @@ function verificationId() {
 }
 
 async function storeEmailVerificationCode(db, record = {}, env = {}) {
-  if (!db?.prepare) return false;
+  if (!db?.prepare) return { ok: false, id: '' };
+  const id = verificationId();
   const codeHash = await hmacHex(`${record.email}:${record.purpose}:${record.code}`, authSecret(env));
   try {
     await db.prepare(`
       INSERT INTO auth_email_verifications (id, email, purpose, code_hash, status, attempts, expires_at)
       VALUES (?, ?, ?, ?, 'pending', 0, ?)
-    `).bind(verificationId(), record.email, record.purpose, codeHash, record.expiresAt).run();
+    `).bind(id, record.email, record.purpose, codeHash, record.expiresAt).run();
+    return { ok: true, id };
+  } catch {
+    console.error('auth email verification persistence failed', {
+      code: 'EMAIL_VERIFICATION_STORAGE_FAILED',
+    });
+    return { ok: false, id: '' };
+  }
+}
+
+async function removeEmailVerificationCode(db, record = {}) {
+  if (!db?.prepare || !record.id) return false;
+  try {
+    await db.prepare(`
+      DELETE FROM auth_email_verifications
+      WHERE id = ? AND email = ? AND purpose = ? AND status = 'pending'
+    `).bind(record.id, record.email, record.purpose).run();
     return true;
   } catch {
     return false;
@@ -392,6 +432,18 @@ function base64UrlDecode(value = '') {
   return new TextDecoder().decode(bytes);
 }
 
+function isProductionAuthEmailRuntime(env = {}) {
+  const branch = String(env.CF_PAGES_BRANCH || '').trim().toLowerCase();
+  const environment = String(
+    env.INLET_RUNTIME_ENV
+      || env.INLET_ENVIRONMENT
+      || env.NODE_ENV
+      || env.ENVIRONMENT
+      || '',
+  ).trim().toLowerCase();
+  return branch === 'main' || environment === 'production';
+}
+
 function emailProvider(env = {}) {
   const mode = String(env.INLET_AUTH_EMAIL_MODE || 'mock').trim().toLowerCase();
   if (mode === 'api' || mode === 'ses') return String(env.INLET_EMAIL_PROVIDER || 'ses').trim().toLowerCase();
@@ -399,8 +451,91 @@ function emailProvider(env = {}) {
 }
 
 function shouldExposeVerificationToken(env = {}, delivery = {}) {
-  if (String(env.INLET_AUTH_EMAIL_EXPOSE_TOKEN || '').trim() === '1') return true;
-  return delivery.mode === 'mock';
+  if (isProductionAuthEmailRuntime(env)) return false;
+  if (delivery.mode !== 'mock') return false;
+  return String(env.INLET_AUTH_EMAIL_EXPOSE_TOKEN || '1').trim() !== '0';
+}
+
+function normalizeSesRegion(value = '') {
+  const region = String(value || '').trim().toLowerCase();
+  return /^(?:af|ap|ca|eu|il|me|mx|sa|us)-(?:central|east|north|northeast|northwest|south|southeast|southwest|west)-\d$/.test(region)
+    ? region
+    : '';
+}
+
+function boundedAuthEmailTimeout(value = '') {
+  const parsed = Number(value || 10000);
+  if (!Number.isFinite(parsed)) return 10000;
+  return Math.min(60000, Math.max(5000, Math.trunc(parsed)));
+}
+
+function sesApiOrigin(region = '') {
+  const normalized = normalizeSesRegion(region);
+  return normalized ? `https://email.${normalized}.amazonaws.com` : '';
+}
+
+function sesAuthEmailConfig(env = {}) {
+  const region = normalizeSesRegion(envFirst(env, ['AWS_SES_REGION', 'INLET_AWS_SES_REGION', 'AWS_REGION'], 'ap-northeast-2'));
+  const accessKeyId = envFirst(env, ['AWS_SES_ACCESS_KEY_ID', 'INLET_AWS_SES_ACCESS_KEY_ID', 'AWS_ACCESS_KEY_ID', 'SES_ACCESS_KEY_ID', 'Access key ID']);
+  const secretAccessKey = envFirst(env, ['AWS_SES_SECRET_ACCESS_KEY', 'INLET_AWS_SES_SECRET_ACCESS_KEY', 'AWS_SECRET_ACCESS_KEY', 'SES_SECRET_ACCESS_KEY', 'Secret access key']);
+  const sender = normalizeSesFromAddress(envFirst(env, ['INLET_AUTH_EMAIL_FROM', 'INLET_LEAD_EMAIL_FROM', 'AWS_SES_FROM']));
+  const ok = !!region
+    && accessKeyId.length >= 16
+    && accessKeyId.length <= 128
+    && secretAccessKey.length >= 32
+    && secretAccessKey.length <= 256
+    && !!sender;
+  return {
+    ok,
+    region,
+    accessKeyId,
+    secretAccessKey,
+    sender,
+    timeoutMs: boundedAuthEmailTimeout(env.INLET_AUTH_EMAIL_TIMEOUT_MS || env.INLET_INTEGRATION_TIMEOUT_MS),
+  };
+}
+
+function assertAuthEmailDeliveryReady(provider = '', env = {}) {
+  if (provider === 'mock') {
+    if (isProductionAuthEmailRuntime(env)) {
+      throw authError('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 503, {
+        code: 'EMAIL_SEND_NOT_CONFIGURED',
+        provider: 'mock',
+      });
+    }
+    return;
+  }
+  if (provider !== 'ses') {
+    throw authError('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 503, {
+      code: 'EMAIL_SEND_PROVIDER_UNSUPPORTED',
+      provider,
+    });
+  }
+  if (!sesAuthEmailConfig(env).ok) {
+    throw authError('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 503, {
+      code: 'EMAIL_SEND_NOT_CONFIGURED',
+      provider: 'ses',
+    });
+  }
+}
+
+function sanitizedAuthEmailDeliveryError(error, provider = '') {
+  const allowedCodes = new Set([
+    'EMAIL_SEND_NOT_CONFIGURED',
+    'EMAIL_SEND_PROVIDER_UNSUPPORTED',
+    'EMAIL_SEND_TIMEOUT',
+    'EMAIL_SEND_SANDBOX_REJECTED',
+    'EMAIL_DOMAIN_NOT_VERIFIED',
+    'EMAIL_SEND_QUOTA_EXCEEDED',
+    'EMAIL_SEND_PROVIDER_ERROR',
+    'EMAIL_VERIFICATION_STORAGE_FAILED',
+  ]);
+  const candidate = String(error?.details?.code || '');
+  const code = allowedCodes.has(candidate) ? candidate : 'EMAIL_SEND_PROVIDER_ERROR';
+  return authError('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 503, {
+    code,
+    provider: provider === 'ses' ? 'ses' : String(provider || 'unknown'),
+  });
 }
 
 function envFirst(env = {}, keys = [], fallback = '') {
@@ -587,8 +722,7 @@ function mimeBase64Word(value = '') {
   return `=?UTF-8?B?${btoa(binary)}?=`;
 }
 
-async function deliverAuthEmail(message = {}, env = {}) {
-  const provider = emailProvider(env);
+async function deliverAuthEmail(message = {}, env = {}, provider = emailProvider(env)) {
   const nextMessage = {
     ...message,
     supportEmail: String(env.INLET_SUPPORT_EMAIL || 'support@pagero.kr').trim() || 'support@pagero.kr',
@@ -609,11 +743,8 @@ async function deliverAuthEmail(message = {}, env = {}) {
 }
 
 async function sendSesAuthEmail(message = {}, env = {}) {
-  const region = envFirst(env, ['AWS_SES_REGION', 'INLET_AWS_SES_REGION', 'AWS_REGION'], 'ap-northeast-2');
-  const accessKeyId = envFirst(env, ['AWS_SES_ACCESS_KEY_ID', 'INLET_AWS_SES_ACCESS_KEY_ID', 'AWS_ACCESS_KEY_ID', 'SES_ACCESS_KEY_ID', 'Access key ID']);
-  const secretAccessKey = envFirst(env, ['AWS_SES_SECRET_ACCESS_KEY', 'INLET_AWS_SES_SECRET_ACCESS_KEY', 'AWS_SECRET_ACCESS_KEY', 'SES_SECRET_ACCESS_KEY', 'Secret access key']);
-  const sender = normalizeSesFromAddress(envFirst(env, ['INLET_AUTH_EMAIL_FROM', 'INLET_LEAD_EMAIL_FROM', 'AWS_SES_FROM'], '페이지로 <support@pagero.kr>'));
-  if (!region || !accessKeyId || !secretAccessKey || !sender) {
+  const config = sesAuthEmailConfig(env);
+  if (!config.ok) {
     throw authError('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 503, {
       code: 'EMAIL_SEND_NOT_CONFIGURED',
       provider: 'ses',
@@ -624,7 +755,7 @@ async function sendSesAuthEmail(message = {}, env = {}) {
   const text = cleanAuthEmailText(message);
   const html = cleanAuthEmailHtml(message);
   const body = JSON.stringify({
-    FromEmailAddress: sender,
+    FromEmailAddress: config.sender,
     Destination: { ToAddresses: [message.email] },
     Content: {
       Simple: {
@@ -637,33 +768,42 @@ async function sendSesAuthEmail(message = {}, env = {}) {
     },
   });
 
-  const host = `email.${region}.amazonaws.com`;
   const path = '/v2/email/outbound-emails';
+  const origin = sesApiOrigin(config.region);
+  const url = new URL(path, origin);
+  if (!origin || url.origin !== origin || url.pathname !== path || url.search || url.hash) {
+    throw authError('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 503, {
+      code: 'EMAIL_SEND_NOT_CONFIGURED',
+      provider: 'ses',
+    });
+  }
+
+  const host = url.host;
   const now = new Date();
   const amzDate = awsAmzDate(now);
   const dateStamp = amzDate.slice(0, 8);
   const payloadHash = await sha256Hex(body);
   const canonicalHeaders = [
-    `content-type:application/json`,
+    'content-type:application/json',
     `host:${host}`,
     `x-amz-date:${amzDate}`,
   ].join('\n') + '\n';
   const signedHeaders = 'content-type;host;x-amz-date';
   const canonicalRequest = ['POST', path, '', canonicalHeaders, signedHeaders, payloadHash].join('\n');
-  const credentialScope = `${dateStamp}/${region}/ses/aws4_request`;
+  const credentialScope = `${dateStamp}/${config.region}/ses/aws4_request`;
   const stringToSign = [
     'AWS4-HMAC-SHA256',
     amzDate,
     credentialScope,
     await sha256Hex(canonicalRequest),
   ].join('\n');
-  const signingKey = await awsSigningKey(secretAccessKey, dateStamp, region, 'ses');
+  const signingKey = await awsSigningKey(config.secretAccessKey, dateStamp, config.region, 'ses');
   const signature = bytesToHex(await hmacBytesRaw(signingKey, stringToSign));
-  const authorization = `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+  const authorization = `AWS4-HMAC-SHA256 Credential=${config.accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
 
-  let res;
+  let response;
   try {
-    res = await fetch(`https://${host}${path}`, {
+    response = await fetch(url.toString(), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -671,45 +811,44 @@ async function sendSesAuthEmail(message = {}, env = {}) {
         Authorization: authorization,
       },
       body,
-      signal: AbortSignal.timeout(10000),
+      redirect: 'error',
+      signal: AbortSignal.timeout(config.timeoutMs),
     });
   } catch {
+    console.error('auth email SES request failed', {
+      code: 'EMAIL_SEND_TIMEOUT',
+      provider: 'ses',
+    });
     throw authError('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 503, {
       code: 'EMAIL_SEND_TIMEOUT',
       provider: 'ses',
     });
   }
 
-  const responseText = await res.text();
+  const responseText = (await response.text()).slice(0, 10000);
   let responseData = {};
   try {
     responseData = responseText ? JSON.parse(responseText) : {};
   } catch {
     responseData = {};
   }
-  if (!res.ok) {
+  if (!response.ok) {
     const errorType = String(responseData.__type || responseData.message || responseData.Message || '').toLowerCase();
     const code = errorType.includes('sandbox')
       ? 'EMAIL_SEND_SANDBOX_REJECTED'
       : errorType.includes('notverified') || errorType.includes('identity')
         ? 'EMAIL_DOMAIN_NOT_VERIFIED'
-        : res.status === 429 || errorType.includes('throttl') || errorType.includes('limit')
+        : response.status === 429 || errorType.includes('throttl') || errorType.includes('limit')
           ? 'EMAIL_SEND_QUOTA_EXCEEDED'
           : 'EMAIL_SEND_PROVIDER_ERROR';
     console.error('auth email SES provider rejected request', {
       code,
       provider: 'ses',
-      httpStatus: res.status,
-      errorType: String(responseData.__type || ''),
-      providerMessage: String(responseData.message || responseData.Message || '').slice(0, 500),
-      requestId: String(responseData.RequestId || responseData.requestId || ''),
+      httpStatus: response.status,
     });
     throw authError('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 503, {
       code,
       provider: 'ses',
-      httpStatus: res.status,
-      errorType: String(responseData.__type || ''),
-      providerMessage: String(responseData.message || responseData.Message || '').slice(0, 500),
     });
   }
 
@@ -717,7 +856,6 @@ async function sendSesAuthEmail(message = {}, env = {}) {
     mode: 'api',
     provider: 'ses',
     status: 'sent',
-    messageId: responseData.MessageId || responseData.messageId || '',
   };
 }
 
