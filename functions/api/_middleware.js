@@ -40,11 +40,25 @@ export async function onRequest(context) {
     });
 
     if (queued?.queued) {
-      const ownerId = await ownerIdForProject(env.DB, projectId);
+      const directOwnerId = String(
+        savedLead.ownerId
+          || savedLead.ownerAccountId
+          || submitted?.project?.ownerId
+          || submitted?.project?.ownerAccountId
+          || ''
+      ).trim();
+      const ownerId = directOwnerId || await ownerIdForProject(env.DB, projectId);
       if (ownerId) {
         const notify = notifyPageroLeadAvailable(env, env.DB, ownerId, {
           queueId: queued.lead?.id || 0,
           eventId: queued.lead?.eventId || '',
+        }).then((result) => {
+          if (Number(result?.attempted || 0) > 0 && Number(result?.sent || 0) === 0) {
+            console.warn('CallTag realtime push reached no active device', {
+              ownerId,
+              attempted: Number(result?.attempted || 0),
+            });
+          }
         }).catch((error) => {
           console.error('CallTag realtime push failed', {
             ownerId,
@@ -53,6 +67,8 @@ export async function onRequest(context) {
         });
         if (typeof context.waitUntil === 'function') context.waitUntil(notify);
         else await notify;
+      } else {
+        console.warn('CallTag realtime push owner not found', { projectId });
       }
     }
   } catch (error) {
