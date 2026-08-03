@@ -25,8 +25,18 @@ export function normalizeAllowedOrigins(value = '') {
 }
 
 export function validateDomainRecheckTarget(value = '', allowedOrigins = [DEFAULT_ORIGIN]) {
-  const parsed = new URL(String(value || `${DEFAULT_ORIGIN}${REQUIRED_PATH}`).trim());
   const errors = [];
+  let parsed;
+  try {
+    parsed = new URL(String(value || `${DEFAULT_ORIGIN}${REQUIRED_PATH}`).trim());
+  } catch {
+    return {
+      ok: false,
+      endpoint: '',
+      origin: '',
+      errors: ['domain recheck endpoint is not a valid URL'],
+    };
+  }
   if (parsed.protocol !== 'https:') errors.push('domain recheck endpoint must use HTTPS');
   if (parsed.username || parsed.password) errors.push('domain recheck endpoint must not include URL credentials');
   if (parsed.pathname !== REQUIRED_PATH) errors.push(`domain recheck endpoint path must be exactly ${REQUIRED_PATH}`);
