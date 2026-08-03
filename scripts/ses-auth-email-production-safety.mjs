@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 const REGION_PATTERN = /^(?:af|ap|ca|eu|il|me|mx|sa|us)-(?:central|east|north|northeast|northwest|south|southeast|southwest|west)-\d$/;
 const EMAIL_PATTERN = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
 const DOMAIN_PATTERN = /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+const DNS_QUERY_PATTERN = /^(?=.{1,253}$)(?:_?[a-z0-9](?:[a-z0-9_-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 
 export function normalizeSesRegion(value = '') {
   const region = String(value || '').trim().toLowerCase();
@@ -39,7 +40,7 @@ export function senderMatchesIdentity(senderEmail = '', identity = '') {
 
 export function normalizeDnsName(value = '') {
   const name = String(value || '').trim().toLowerCase().replace(/\.$/, '');
-  return DOMAIN_PATTERN.test(name) ? name : '';
+  return DNS_QUERY_PATTERN.test(name) ? name : '';
 }
 
 export function sesApiOrigin(region = '') {
