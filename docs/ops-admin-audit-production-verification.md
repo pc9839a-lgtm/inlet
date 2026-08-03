@@ -19,23 +19,45 @@ The manual workflow verifies:
 
 Do not use a real customer account or a real customer landing page. Use a disposable password account whose only active landing page slug starts with `qa-audit-`.
 
+## Secret Exfiltration Defense
+
+The workflow carries platform-master sessions, a disposable account session and password, an email-change token, and the audit-retention secret. These values must never be sent to an arbitrary workflow input URL.
+
+Before any live request, the safe entrypoint enforces all of the following:
+
+- the target is an exact HTTPS origin
+- username, password, path, query, and fragment are rejected
+- `https://pagero.kr` is allowed by default
+- preview origins must be listed exactly in the repository variable `PAGERO_ADMIN_AUDIT_ALLOWED_ORIGINS`
+- hostname suffix matching and wildcard matching are not used
+- every fetch request is checked against the approved origin again
+- redirects are disabled with `redirect: error`
+- a cross-origin request fails before any signed session, password, or token is sent
+
+Invalid or unapproved origins always produce `failed-live`, even when `require_live=false`.
+
 ## Workflow
 
 Workflow: `Admin Audit Production Verify`
 
-The workflow is manual-only and has no push, pull-request, or schedule trigger.
+The workflow is manual-only, uses the GitHub `production` environment, and has no push, pull-request, or schedule trigger.
 
 Inputs:
 
-- `base_url`: deployed Pages Functions origin, normally `https://pagero.kr`
+- `base_url`: exact approved deployed HTTPS origin, normally `https://pagero.kr`
 - `phase`: `read-only`, `request-email-token`, or `verify-live`
 - `allow_writes`: must be true for the two write phases
+- `approval_phrase`: write phases require exactly `I_APPROVE_ADMIN_AUDIT_LIVE_WRITES`
 - `require_live`: when true, missing fixtures produce a failed run rather than a successful `skipped-live`
 - `project_slug_prefix`: defaults to `qa-audit-` and must stay in the `qa-...-` form
 
-## Required GitHub Secrets
+## Required GitHub Configuration
 
-Read-only phase:
+Repository variable:
+
+- `PAGERO_ADMIN_AUDIT_ALLOWED_ORIGINS`: comma-separated exact HTTPS preview origins. Leave empty when only `https://pagero.kr` is allowed.
+
+Read-only phase Secrets:
 
 - `PAGERO_ADMIN_AUDIT_PLATFORM_MASTER_SESSION`
 - `PAGERO_ADMIN_AUDIT_GENERAL_SESSION`
@@ -84,6 +106,7 @@ Run with:
 
 - `phase=request-email-token`
 - `allow_writes=true`
+- `approval_phrase=I_APPROVE_ADMIN_AUDIT_LIVE_WRITES`
 - `require_live=true`
 
 Expected result: `awaiting-email-token`.
@@ -98,6 +121,7 @@ Run with:
 
 - `phase=verify-live`
 - `allow_writes=true`
+- `approval_phrase=I_APPROVE_ADMIN_AUDIT_LIVE_WRITES`
 - `require_live=true`
 
 Expected result: `verified-live`.
@@ -119,6 +143,31 @@ The workflow performs this sequence:
 
 The email change is intentionally not rolled back automatically because a rollback also requires a separately delivered one-time code. Rotate the two controlled QA email addresses or manually prepare the fixture before the next run.
 
+## Scheduled Audit Retention
+
+Workflow: `Audit Log Retention`
+
+- runs monthly and can also be dispatched manually
+- uses the GitHub `production` environment
+- accepts only the exact path `/api/admin/audit/retention`
+- accepts only exact HTTPS origins from `PAGERO_AUDIT_RETENTION_ALLOWED_ORIGINS`
+- sends the secret through `X-Inlet-Audit-Retention-Secret`
+- never follows redirects
+- fails when the retention Secret is missing or shorter than 24 characters
+- never treats a missing Secret as successful `skipped-live`
+
+Required configuration:
+
+- variable `PAGERO_AUDIT_RETENTION_URL`, normally `https://pagero.kr/api/admin/audit/retention`
+- variable `PAGERO_AUDIT_RETENTION_ALLOWED_ORIGINS`, normally `https://pagero.kr`
+- Secret `PAGERO_AUDIT_RETENTION_SECRET`
+
+## Audit Fingerprint Key
+
+Production must set a dedicated `INLET_AUDIT_HASH_SECRET`.
+
+IP and User-Agent fingerprints are generated only with this dedicated HMAC key. The audit writer does not fall back to `INLET_SESSION_SECRET`, `INLET_API_TOKEN`, or unkeyed SHA-256. When the dedicated key is absent, raw IP and User-Agent values are not stored and their fingerprint fields remain empty.
+
 ## Automatic Cleanup
 
 If the full phase fails after account suspension or project pause, the script attempts to restore both states before exiting. The evidence artifact records cleanup failure without printing credentials.
@@ -134,8 +183,8 @@ After every run, manually confirm:
 
 - `verified-live`: all checks for the selected phase passed against the deployed environment
 - `awaiting-email-token`: the email was requested successfully and the operator must store the received code before the full phase
-- `skipped-live`: required sessions, password, email, token, secret, or write approval was missing
-- `failed-live`: a live request, state transition, audit assertion, or cleanup failed
+- `skipped-live`: required sessions, password, email, token, Secret, or write approval was missing
+- `failed-live`: a security gate, live request, state transition, audit assertion, retention operation, or cleanup failed
 
 A `skipped-live` result is not production verification. With `require_live=true`, it fails the workflow.
 
@@ -145,18 +194,20 @@ Retain for the release record:
 
 - workflow run URL and run number
 - tested commit SHA and deployment SHA
-- selected phase and base URL
-- the `admin-audit-production-evidence` artifact
+- selected phase and approved base origin
+- the `admin-audit-production-evidence-<run-id>` artifact
+- the `audit-retention-evidence-<run-id>` artifact when retention is run
 - confirmation that the final account and project states are active
-- confirmation that retention ran in dry-run mode only
+- confirmation that retention verification ran in dry-run mode only
 - operator name and verification time
 
 ## Local Command
 
-The same script can be run from a secured operator environment:
+The same safe entrypoint can be run from a secured operator environment:
 
 ```bash
 INLET_ADMIN_AUDIT_BASE_URL=https://pagero.kr \
+PAGERO_ADMIN_AUDIT_ALLOWED_ORIGINS=https://pagero.kr \
 INLET_ADMIN_AUDIT_LIVE_PHASE=read-only \
 INLET_ADMIN_AUDIT_LIVE_REQUIRE=1 \
 INLET_ADMIN_AUDIT_PLATFORM_MASTER_SESSION='***' \
@@ -164,4 +215,6 @@ INLET_ADMIN_AUDIT_GENERAL_SESSION='***' \
 npm run admin:audit:live
 ```
 
-Do not paste real secrets into shell history on shared machines.
+For a write phase, also set `INLET_ADMIN_AUDIT_LIVE_WRITE=1` and `INLET_ADMIN_AUDIT_LIVE_APPROVAL=I_APPROVE_ADMIN_AUDIT_LIVE_WRITES`.
+
+Do not paste real Secrets into shell history on shared machines.
