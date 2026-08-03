@@ -147,6 +147,24 @@ export default function usePageDomainSettings({
     setSaving(true);
     try {
       const previousDomain = normalizePageDomainConfig(page);
+      const requestedDomain = normalizePageDomainConfig(draft);
+      const replacingPreviousDomain = previousDomain.domainType === 'custom'
+        && previousDomain.customDomain
+        && (
+          requestedDomain.domainType !== 'custom'
+          || requestedDomain.customDomain !== previousDomain.customDomain
+        );
+      let basePage = page;
+
+      if (isServerPageMode() && page.id && replacingPreviousDomain) {
+        const detached = await domainRequest('detach', page, previousDomain.customDomain);
+        if (!detached?.ok) {
+          notify(detached?.message || '이전 개인 도메인을 안전하게 해제하지 못했습니다.', 'error');
+          return detached || { ok: false };
+        }
+        basePage = applyManagedState(page, detached);
+      }
+
       const check = await checkDomain();
       if (check && check.ok === false) {
         notify(check.message || '도메인을 사용할 수 없습니다.', 'error');
@@ -154,7 +172,7 @@ export default function usePageDomainSettings({
       }
       setDns(check?.dns || null);
 
-      const nextPage = applyPageDomainConfig(page, {
+      const nextPage = applyPageDomainConfig(basePage, {
         ...draft,
         customDomain: check?.customDomain || draft.customDomain,
         domainStatus: check?.domainStatus || (draft.domainType === 'custom' ? 'pending' : 'ready'),
@@ -171,22 +189,13 @@ export default function usePageDomainSettings({
       updatePage(savedDomain);
       setDraft(savedDomain);
 
-      if (isServerPageMode() && savedPage.id) {
+      if (isServerPageMode() && savedPage.id && savedDomain.domainType === 'custom') {
         try {
-          if (savedDomain.domainType === 'custom') {
-            const managed = await domainRequest('verify', savedPage, savedDomain.customDomain);
-            savedPage = applyManagedState(savedPage, managed);
-            savedDomain = normalizePageDomainConfig(savedPage);
-          } else if (previousDomain.domainType === 'custom' && previousDomain.customDomain) {
-            await domainRequest('detach', savedPage, previousDomain.customDomain);
-          }
+          const managed = await domainRequest('verify', savedPage, savedDomain.customDomain);
+          savedPage = applyManagedState(savedPage, managed);
+          savedDomain = normalizePageDomainConfig(savedPage);
         } catch {
-          notify(
-            savedDomain.domainType === 'custom'
-              ? '도메인은 저장했지만 연결 확인을 완료하지 못했습니다. 상태 확인을 다시 눌러주세요.'
-              : '기본 주소로 변경했지만 이전 도메인 해제 확인이 필요합니다.',
-            'error',
-          );
+          notify('도메인은 저장했지만 연결 확인을 완료하지 못했습니다. 상태 확인을 다시 눌러주세요.', 'error');
         }
       }
 
