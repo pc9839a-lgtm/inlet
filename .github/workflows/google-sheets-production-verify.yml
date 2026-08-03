@@ -1,0 +1,88 @@
+name: Google Sheets Production Verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Exact approved Pagero HTTPS origin
+        required: true
+        default: https://pagero.kr
+        type: string
+      phase:
+        description: Verification phase
+        required: true
+        default: read-only
+        type: choice
+        options:
+          - read-only
+          - verify-live
+      allow_writes:
+        description: Allow one disposable lead and one disposable sheet row
+        required: true
+        default: false
+        type: boolean
+      approval_phrase:
+        description: Type I_APPROVE_GOOGLE_SHEETS_LIVE_WRITES for verify-live
+        required: false
+        default: ''
+        type: string
+      require_live:
+        description: Fail instead of skipped-live when fixtures or credentials are unavailable
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: google-sheets-production-verify
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    env:
+      INLET_GOOGLE_SHEETS_BASE_URL: ${{ inputs.base_url }}
+      INLET_GOOGLE_SHEETS_LIVE_PHASE: ${{ inputs.phase }}
+      INLET_GOOGLE_SHEETS_LIVE_WRITE: ${{ inputs.allow_writes && '1' || '0' }}
+      INLET_GOOGLE_SHEETS_LIVE_APPROVAL: ${{ inputs.approval_phrase }}
+      INLET_GOOGLE_SHEETS_LIVE_REQUIRE: ${{ inputs.require_live && '1' || '0' }}
+      PAGERO_GOOGLE_SHEETS_ALLOWED_ORIGINS: ${{ vars.PAGERO_GOOGLE_SHEETS_ALLOWED_ORIGINS }}
+      INLET_GOOGLE_SHEETS_PAGE_SLUG: ${{ vars.PAGERO_GOOGLE_SHEETS_PAGE_SLUG }}
+      INLET_GOOGLE_SHEETS_SHEET_NAME: ${{ vars.PAGERO_GOOGLE_SHEETS_SHEET_NAME }}
+      INLET_GOOGLE_SHEETS_SESSION: ${{ secrets.PAGERO_GOOGLE_SHEETS_SESSION }}
+      INLET_GOOGLE_SHEETS_PROJECT_ID: ${{ secrets.PAGERO_GOOGLE_SHEETS_PROJECT_ID }}
+      INLET_GOOGLE_SHEETS_SPREADSHEET_ID: ${{ secrets.PAGERO_GOOGLE_SHEETS_SPREADSHEET_ID }}
+      INLET_GOOGLE_SHEETS_VERIFY_CLIENT_ID: ${{ secrets.PAGERO_GOOGLE_SHEETS_VERIFY_CLIENT_ID }}
+      INLET_GOOGLE_SHEETS_VERIFY_CLIENT_SECRET: ${{ secrets.PAGERO_GOOGLE_SHEETS_VERIFY_CLIENT_SECRET }}
+      INLET_GOOGLE_SHEETS_VERIFY_REFRESH_TOKEN: ${{ secrets.PAGERO_GOOGLE_SHEETS_VERIFY_REFRESH_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Verify production Google Sheets integration
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run google:sheets:live | tee google-sheets-production-result.json
+
+      - name: Upload verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: google-sheets-production-evidence-${{ github.run_id }}
+          path: google-sheets-production-result.json
+          if-no-files-found: warn
+          retention-days: 30
