@@ -38,6 +38,7 @@ const steps = [
   ['mojibake:qa', ['scripts/mojibake-quality-check.mjs']],
   ['perf:qa', ['scripts/offline-performance-check.mjs']],
   ['integration:mock:qa', ['scripts/mock-integration-quality-check.mjs']],
+  ['google:sheets:production:contract:qa', ['scripts/google-sheets-production-contract-check.mjs']],
   ['live:qa', ['scripts/live-readiness-check.mjs']],
   ['api:hosted:qa', ['scripts/hosted-api-quality-check.mjs']],
   ['api:hosted:routes:qa', ['scripts/hosted-api-routes-quality-check.mjs']],
