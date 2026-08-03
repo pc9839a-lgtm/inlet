@@ -87,11 +87,14 @@ Required sequence:
 5. Create and validate a full SQL export before migration apply.
 6. Encrypt the export before artifact upload and delete the plaintext SQL file.
 7. Record SHA-256, HMAC-SHA256, and available Time Travel recovery evidence.
-8. Verify approved migrations appear in remote history after apply.
-9. Require separate owner approval for any restore operation.
-10. Prove recovery with a disposable D1 restore drill before calling the process operationally complete.
+8. Re-read remote applied history and pending filenames immediately after backup.
+9. Abort without applying when either list changed after the approved preflight state.
+10. Apply only when the post-backup consistency check passes.
+11. Verify approved migrations appear in remote history after apply.
+12. Require separate owner approval for any restore operation.
+13. Prove recovery with a disposable D1 restore drill before calling the process operationally complete.
 
-The migration workflow must never upload plaintext production SQL and must never execute Time Travel restore automatically.
+The migration workflow must never upload plaintext production SQL, must never apply against changed post-backup migration state, and must never execute Time Travel restore automatically.
 
 ## Cleanup Rules
 
@@ -110,7 +113,7 @@ The migration workflow must never upload plaintext production SQL and must never
 - Worker 2: keep recovery draft manager and oversized image cleanup available from Settings/editor.
 - Worker 3: add QA fixture for migration detection and no data loss warnings.
 - Worker 4: include storage policy in launch checklist and PII retention policy.
-- Completed patch: guarded D1 preflight, encrypted export, exact pending-list check, post-apply verification, and recovery evidence workflow.
+- Completed patch: guarded D1 preflight, encrypted export, exact pending-list check, post-backup pre-apply state recheck, post-apply verification, and recovery evidence workflow.
 
 ## Verification
 
