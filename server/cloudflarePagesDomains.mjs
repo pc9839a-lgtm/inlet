@@ -1,6 +1,8 @@
 import { normalizeDomainHostname } from '../src/lib/pageDomains.js';
 
 const CLOUDFLARE_API_BASE = 'https://api.cloudflare.com/client/v4';
+const CLOUDFLARE_API_ORIGIN = 'https://api.cloudflare.com';
+const CLOUDFLARE_API_PATH_PREFIX = '/client/v4/accounts/';
 const DEFAULT_DNS_RESOLVER = 'https://cloudflare-dns.com/dns-query';
 const PROVIDER_NAME = 'cloudflare_pages';
 
@@ -22,6 +24,32 @@ function firstProviderError(payload = {}) {
     code: String(error?.code || ''),
     message: String(error?.message || '').trim(),
   };
+}
+
+function normalizeDnsResolverEndpoint(value = '') {
+  const parsed = new URL(String(value || '').trim());
+  if (parsed.protocol !== 'https:') throw new Error('DNS resolver must use HTTPS');
+  if (parsed.username || parsed.password) throw new Error('DNS resolver must not include URL credentials');
+  if (parsed.pathname !== '/dns-query' || parsed.search || parsed.hash) {
+    throw new Error('DNS resolver must be an exact /dns-query endpoint without query or fragment');
+  }
+  return `${parsed.origin}/dns-query`;
+}
+
+export function allowedDnsResolverEndpoints(env = {}) {
+  const configured = String(env.INLET_DNS_JSON_RESOLVER_ALLOWED_ENDPOINTS || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+  return [...new Set([DEFAULT_DNS_RESOLVER, ...configured].map(normalizeDnsResolverEndpoint))];
+}
+
+export function resolveDnsResolverEndpoint(env = {}) {
+  const target = normalizeDnsResolverEndpoint(env.INLET_DNS_JSON_RESOLVER_URL || DEFAULT_DNS_RESOLVER);
+  if (!allowedDnsResolverEndpoints(env).includes(target)) {
+    throw new Error('DNS resolver endpoint is not approved');
+  }
+  return target;
 }
 
 export function cloudflarePagesDomainReadiness(env = {}) {
@@ -59,17 +87,27 @@ async function cloudflarePagesRequest(env, pathname, options = {}, fetchImpl = g
     throw providerError('도메인 연결 서버 요청 기능을 사용할 수 없습니다.', 503, 'DOMAIN_PROVIDER_FETCH_UNAVAILABLE');
   }
 
+  const requestUrl = new URL(`${CLOUDFLARE_API_BASE}${pathname}`);
+  if (requestUrl.origin !== CLOUDFLARE_API_ORIGIN || !requestUrl.pathname.startsWith(CLOUDFLARE_API_PATH_PREFIX)) {
+    throw providerError('허용되지 않은 Cloudflare API 경로입니다.', 500, 'DOMAIN_PROVIDER_TARGET_BLOCKED');
+  }
+  const {
+    allowNotFound = false,
+    headers: optionHeaders = {},
+    ...requestOptions
+  } = options;
   const controller = typeof AbortController === 'function' ? new AbortController() : null;
   const timeoutId = controller ? setTimeout(() => controller.abort(), 8000) : null;
   let response;
   try {
-    response = await fetchImpl(`${CLOUDFLARE_API_BASE}${pathname}`, {
-      ...options,
+    response = await fetchImpl(requestUrl.toString(), {
+      ...requestOptions,
       headers: {
+        ...optionHeaders,
         Authorization: `Bearer ${readiness.apiToken}`,
         'Content-Type': 'application/json',
-        ...(options.headers || {}),
       },
+      redirect: 'error',
       signal: controller?.signal,
     });
   } catch (error) {
@@ -90,7 +128,7 @@ async function cloudflarePagesRequest(env, pathname, options = {}, fetchImpl = g
     payload = {};
   }
 
-  if (response.status === 404 && options.allowNotFound === true) return null;
+  if (response.status === 404 && allowNotFound === true) return null;
   if (!response.ok || payload?.success === false) {
     const provider = firstProviderError(payload);
     throw providerError(
@@ -183,7 +221,21 @@ export async function inspectCustomDomainDns(env, hostname = '', fetchImpl = glo
     };
   }
 
-  const resolver = new URL(String(env.INLET_DNS_JSON_RESOLVER_URL || DEFAULT_DNS_RESOLVER));
+  let resolver;
+  try {
+    resolver = new URL(resolveDnsResolverEndpoint(env));
+  } catch {
+    return {
+      configured: true,
+      type: 'CNAME',
+      host: safeHostname,
+      target,
+      matched: false,
+      answers: [],
+      checkedAt,
+      error: '허용되지 않은 DNS 확인 주소가 설정되었습니다.',
+    };
+  }
   resolver.searchParams.set('name', safeHostname);
   resolver.searchParams.set('type', 'CNAME');
   const controller = typeof AbortController === 'function' ? new AbortController() : null;
@@ -191,6 +243,7 @@ export async function inspectCustomDomainDns(env, hostname = '', fetchImpl = glo
   try {
     const response = await fetchImpl(resolver.toString(), {
       headers: { Accept: 'application/dns-json' },
+      redirect: 'error',
       signal: controller?.signal,
     });
     if (!response.ok) throw new Error(`DNS_HTTP_${response.status}`);
