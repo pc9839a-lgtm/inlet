@@ -40,6 +40,8 @@
     "perf:qa": "node scripts/offline-performance-check.mjs",
     "integration:qa": "node scripts/integration-contract-check.mjs",
     "integration:mock:qa": "node scripts/mock-integration-quality-check.mjs",
+    "google:sheets:live": "node scripts/google-sheets-production-safe-entry.mjs",
+    "google:sheets:production:contract:qa": "node scripts/google-sheets-production-contract-check.mjs",
     "live:qa": "node scripts/live-readiness-check.mjs",
     "public:page:live": "node scripts/public-page-live-check.mjs",
     "api:hosted:qa": "node scripts/hosted-api-quality-check.mjs",
