@@ -1,4 +1,3 @@
-import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -46,6 +45,25 @@ export function evaluateLaunchGate({
   return { ok: errors.length === 0, errors, targetOrigin };
 }
 
+export function createOriginLockedFetch(targetOrigin, fetchImpl = globalThis.fetch) {
+  if (typeof fetchImpl !== 'function') throw new Error('global fetch is unavailable');
+  return async function originLockedFetch(input, init = {}) {
+    const rawUrl = input instanceof URL
+      ? input.href
+      : typeof input === 'string'
+        ? input
+        : input?.url;
+    const requestUrl = new URL(String(rawUrl || ''));
+    if (requestUrl.origin !== targetOrigin) {
+      throw new Error('cross-origin request blocked before signed session transmission');
+    }
+    return fetchImpl(input, {
+      ...init,
+      redirect: 'error',
+    });
+  };
+}
+
 function printResult(result, error = false) {
   const output = `${JSON.stringify({ ...result, secretValuesIncluded: false }, null, 2)}\n`;
   if (error) process.stderr.write(output);
@@ -91,30 +109,11 @@ async function main() {
     return;
   }
 
+  process.env.INLET_ACCOUNT_PAGE_LIMIT_BASE_URL = gate.targetOrigin;
+  globalThis.fetch = createOriginLockedFetch(gate.targetOrigin, globalThis.fetch);
+
   const checker = path.join(process.cwd(), 'scripts', 'account-page-limit-production-check.mjs');
-  const child = spawn(process.execPath, [checker], {
-    cwd: process.cwd(),
-    env: {
-      ...process.env,
-      INLET_ACCOUNT_PAGE_LIMIT_BASE_URL: gate.targetOrigin,
-    },
-    shell: false,
-    stdio: 'inherit',
-  });
-
-  child.on('error', (error) => {
-    printResult({
-      ok: false,
-      status: 'failed-live',
-      targetOrigin: gate.targetOrigin,
-      error: String(error?.message || error).slice(0, 500),
-    }, true);
-    process.exitCode = 1;
-  });
-
-  child.on('exit', (code) => {
-    process.exitCode = Number(code ?? 1);
-  });
+  await import(pathToFileURL(checker).href);
 }
 
 const invoked = process.argv[1]
