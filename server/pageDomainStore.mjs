@@ -74,6 +74,21 @@ export async function prepareD1PageDomainSave(db, page = {}, context = {}) {
     throw domainError(issues[0], 400, 'DOMAIN_INVALID', { issues });
   }
   const domain = normalizePageDomainConfig(page);
+  const pageId = String(context.pageId || page.id || '').trim();
+  const current = pageId ? await getD1PageDomainByPageId(db, pageId) : null;
+  const currentConnected = current && String(current.status || '') !== 'disconnected';
+  const replacingConnection = currentConnected && (
+    domain.domainType !== 'custom'
+    || String(current.hostname || '') !== domain.customDomain
+  );
+  if (replacingConnection) {
+    throw domainError(
+      '기존 개인 도메인을 먼저 안전하게 해제한 뒤 새 주소를 저장해주세요.',
+      409,
+      'DOMAIN_DETACH_REQUIRED',
+      { currentHostname: String(current.hostname || '') },
+    );
+  }
 
   if (domain.domainType !== 'custom') {
     return applyPageDomainConfig(page, {
@@ -86,8 +101,6 @@ export async function prepareD1PageDomainSave(db, page = {}, context = {}) {
     });
   }
 
-  const pageId = String(context.pageId || page.id || '').trim();
-  const current = pageId ? await getD1PageDomainByPageId(db, pageId) : null;
   await assertD1PageDomainAvailable(db, domain.customDomain, pageId);
   const sameConnection = current
     && String(current.hostname || '') === domain.customDomain
