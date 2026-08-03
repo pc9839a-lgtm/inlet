@@ -60,6 +60,25 @@ export function evaluateSafetyGate({
   return { ok: errors.length === 0, errors };
 }
 
+export function evaluatePreApplyConsistency({
+  appliedBefore = [],
+  appliedImmediatelyBeforeApply = [],
+  pendingImmediatelyBeforeApply = [],
+  expectedPending = [],
+  historyAvailable = false,
+  migrationsTable = 'd1_migrations',
+} = {}) {
+  const errors = [];
+  if (!historyAvailable) errors.push(`${migrationsTable} history table is unavailable immediately before apply`);
+  if (!listsMatchExactly(appliedImmediatelyBeforeApply, appliedBefore)) {
+    errors.push('remote migration history changed after backup; apply aborted');
+  }
+  if (!listsMatchExactly(pendingImmediatelyBeforeApply, expectedPending)) {
+    errors.push('remote pending migrations changed after backup; apply aborted');
+  }
+  return { ok: errors.length === 0, errors };
+}
+
 function redact(value = '') {
   return String(value || '')
     .replace(/Bearer\s+[A-Za-z0-9._~+\/-]+/gi, 'Bearer [redacted]')
@@ -442,6 +461,40 @@ async function main() {
     baseManifest,
   });
 
+  const immediatelyBeforeApply = await remoteMigrationState(live, config.migrationsTable);
+  const pendingImmediatelyBeforeApply = pendingMigrations(localRows, immediatelyBeforeApply.applied);
+  const preApplyConsistency = evaluatePreApplyConsistency({
+    appliedBefore: before.applied,
+    appliedImmediatelyBeforeApply: immediatelyBeforeApply.applied,
+    pendingImmediatelyBeforeApply,
+    expectedPending,
+    historyAvailable: immediatelyBeforeApply.historyAvailable,
+    migrationsTable: config.migrationsTable,
+  });
+
+  if (!preApplyConsistency.ok) {
+    const blockedAfterBackup = {
+      ...backup.manifest,
+      ok: false,
+      status: 'failed-live',
+      preApplyConsistency: {
+        checked: true,
+        ok: false,
+        errors: preApplyConsistency.errors,
+        remoteAppliedMigrationsImmediatelyBeforeApply: immediatelyBeforeApply.applied,
+        pendingMigrationsImmediatelyBeforeApply,
+      },
+      migrationApply: {
+        attempted: false,
+        error: 'Migration state changed after backup; write was blocked.',
+      },
+    };
+    await writeJson(backup.manifestPath, blockedAfterBackup);
+    console.error(JSON.stringify(blockedAfterBackup, null, 2));
+    process.exitCode = 1;
+    return;
+  }
+
   let applyError = '';
   try {
     await applyMigrations(config.databaseName);
@@ -459,6 +512,13 @@ async function main() {
     ...backup.manifest,
     ok,
     status: ok ? 'verified-live' : 'failed-live',
+    preApplyConsistency: {
+      checked: true,
+      ok: true,
+      errors: [],
+      remoteAppliedMigrationsImmediatelyBeforeApply: immediatelyBeforeApply.applied,
+      pendingMigrationsImmediatelyBeforeApply,
+    },
     migrationApply: {
       attempted: true,
       error: applyError || null,
