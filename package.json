@@ -9,6 +9,8 @@
     "templates:qa": "node scripts/template-quality-check.mjs",
     "auth:qa": "node scripts/auth-quality-check.mjs",
     "auth:email:qa": "node scripts/auth-email-quality-check.mjs",
+    "auth:email:ses:live": "node scripts/ses-auth-email-production-check.mjs",
+    "auth:email:ses:contract:qa": "node scripts/ses-auth-email-production-contract-check.mjs",
     "calllink:auth:qa": "node scripts/calllink-auth-quality-check.mjs",
     "server:smoke:auth": "node scripts/server-smoke-auth.mjs",
     "server:smoke:leads": "node scripts/server-smoke-leads.mjs",
