@@ -1,5 +1,6 @@
 import AccountSettingsSection from './AccountSettingsSection.jsx';
 import PageBasicSettingsSection from './PageBasicSettingsSection.jsx';
+import PageDomainSettingsSection from './PageDomainSettingsSection.jsx';
 import SettingsManagerAccessSection from './SettingsManagerAccessSection.jsx';
 import SettingsSection from './SettingsSection.jsx';
 
@@ -7,6 +8,7 @@ export default function SettingsPrimarySections({
   authUser,
   canManageProjectUsers,
   clientAdminMode,
+  domainSettings,
   drafts,
   managerSettings,
   onAccountUpdate,
@@ -33,6 +35,12 @@ export default function SettingsPrimarySections({
         onEdit={() => editSection('basic')}
         openSection={openSection}
         setBasicDraft={setBasicDraft}
+        setOpenSection={setOpenSection}
+      />
+
+      <PageDomainSettingsSection
+        domainSettings={domainSettings}
+        openSection={openSection}
         setOpenSection={setOpenSection}
       />
 

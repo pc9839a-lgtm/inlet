@@ -1,22 +1,25 @@
 # Pagero Remaining Patches
 
-Updated: 2026-08-02 01:31 KST
+Updated: 2026-08-03 01:16 KST
 
 Repository: `pc9839a-lgtm/inlet`
 
 Production branch: `main`
 
-Current candidate: PR `#44` / `agent/template-mobile-final-regression`
+Latest main: `d2f929769957bfd7aff1f01b6ac0d9769612ca97`
+
+Current candidate: draft PR `#41` / `agent/custom-domain-foundation`
+
+Required prerequisite: draft PR `#50` / `agent/pagero-d1-migration-safety`
 
 Other open candidates:
 
-- PR `#43` / `agent/admin-audit-hardening`
 - PR `#42` / `agent/account-page-limit-production-verification`
-- PR `#41` / `agent/custom-domain-foundation`
+- PR `#43` / `agent/admin-audit-hardening`
 
 Current execution mode: parallel patching is active
 
-Code completion, QA completion, merge, deployment, and production verification are separate states. Branch-only, mock-only, screenshot-only, or `skipped-live` results are not production completion.
+Code completion, QA completion, merge, migration, deployment, environment configuration, and production verification are separate states. Branch-only, mock-only, screenshot-only, or `skipped-live` results are not production completion.
 
 ## Parallel Worker Split
 
@@ -36,126 +39,85 @@ Code completion, QA completion, merge, deployment, and production verification a
 - Expanded Launch Backlog
 - Login, account, and member management
 - Plans, payment, and subscription, final phase
-- Do not reassign these
 - `deployment:qa`
+- Do not reassign these
 - `npm run live:qa`
 
-# Current Patch Checkpoint — PR #44
+# Current Patch — PR #41 Custom Domain
 
 ## Code Complete
 
-### Three active templates only
+- D1 `page_domains` ownership and duplicate-hostname prevention.
+- Domain input validation for paths, ports, IPs, wildcards, and Pagero-owned hosts.
+- Cloudflare Pages custom-domain lookup, registration, deletion, DNS inspection, and SSL state mapping.
+- Active custom-host `/` routing to the owning public landing page.
+- Unknown or inactive custom hosts return noindex 404.
+- Settings UI for Pagero address, custom domain, DNS instructions, status verification, and detach.
+- Operator domain list, manual recheck, scheduled recheck, retry, terminal failure, and escalation.
+- Existing public home, three templates, general-account one-page rule, and paid-plan policy remain unchanged.
 
-- `debt-relief-consult` — personal rehabilitation consultation.
-- `wedding-invitation` — mobile wedding invitation.
-- `quote-request` — real estate presale.
-- No fourth template was added.
-- Template content, section order, and visual direction were not redesigned during QA.
+## Migration Collision Fixed
 
-### Real mobile-browser regression
+Latest `main` already contains:
 
-- Added Chrome CDP coverage for 360×800, 390×844, and 430×932.
-- Added all nine template/viewport combinations as release-blocking checks.
-- Added first-viewport checks for hero placement, title/body visibility, horizontal containment, and runtime fallback/error output.
-- Added editor/placeholder copy leakage checks.
-- Added every visible section's left/right containment checks.
-- Added bottom fixed-button count, minimum touch height, and share-button collision checks.
-- Added physical FAQ open/close interaction.
-- Added physical gallery-next interaction for wedding and real-estate templates.
-- Added map section and external map-action verification.
-- Added real-estate reservation controls verification.
-- Added bottom CTA navigation to the form.
-- Added form focus and simulated mobile-keyboard checks at 390px.
-- Added top navigation, share button, and bottom fixed UI hiding checks while an input is active.
-- Added viewport-bounded screenshots for all nine first screens plus 390px interaction screenshots.
+- `migrations/0006_calltag_pagero_lead_queue.sql`
 
-### Reproduced mobile defects fixed
+PR `#41` does not modify that migration or its feature behavior. Custom-domain migrations now follow it:
 
-- Increased preview and public gallery arrow targets to 44×44px.
-- Added visible keyboard-focus treatment for gallery controls.
-- Prevented gallery swipe pointer capture from stealing arrow and dot button clicks.
-- Added `type="button"` and accessible labels to gallery dot controls.
-- Increased consent-row touch height to 44px.
-- Added a 36px checkbox hit box with a centered smaller visual checkbox.
-- Applied gallery and consent contracts equally to `.phone-frame` preview and `.public-landing-viewport` runtime.
-- Preserved `preview-fixed-ui-contract.css` as the final stylesheet priority.
+1. `migrations/0007_page_domains.sql`
+2. `migrations/0008_page_domain_operations.sql`
 
-### CI evidence quality
+Removed superseded files:
 
-- Added `browser:templates-mobile:qa`.
-- Added `browser:templates-mobile:contract:qa` to `qa:all`.
-- Added release-blocking job `template-mobile-browser-regression`.
-- Added screenshot artifact `template-mobile-regression-${{ github.run_id }}`.
-- Added Noto CJK installation and font-match verification to the template-mobile job.
-- Korean text renders as actual glyphs so line wrapping and first-screen layout use Korean font metrics rather than missing-glyph boxes.
-- Protected production-home file changes: none.
+- `migrations/0006_page_domains.sql`
+- `migrations/0007_page_domain_operations.sql`
+
+Updated references:
+
+- `scripts/d1-schema-quality-check.mjs`
+- `scripts/page-domain-quality-check.mjs`
+- `scripts/page-domain-operations-quality-check.mjs`
+- `scripts/ops-readiness-check.mjs`
+- `docs/ops-custom-domain-runbook.md`
 
 ## QA Complete
 
-Implementation head `f1f542630964ffea77f949f7879d8284ce3e4c70` passed workflow run `30707915630`:
+Current head: `d2bc3e91b7c359d83ca3bd8e369db144f7649502`
 
-- full offline QA
-- template static QA
-- preview/public parity QA
-- fixed bottom UI QA
-- top navigation balance QA
-- template mobile regression contract QA
-- Noto CJK installation and font match
-- personal rehabilitation at 360px, 390px, and 430px
-- mobile wedding invitation at 360px, 390px, and 430px
-- real estate presale at 360px, 390px, and 430px
-- physical FAQ interaction
-- physical gallery navigation
-- map actions
-- reservation controls
-- bottom CTA form navigation
-- simulated keyboard and fixed-UI hiding
-- public landing browser regression
-- authenticated editor browser regression
-- consultation and reservation browser regression
-- production build and deployment artifact checks
+Workflow run: `30756621186`
 
-Documentation closeout head `27641223d72e110cfcc61067412c830f132e62b7` passed workflow run `30708086687`:
+All five jobs passed:
 
-- full offline QA
-- public landing browser regression
-- authenticated editor browser regression
-- consultation and reservation browser regression
-- three-template mobile browser regression with Korean fonts
+- full offline QA, including D1 schema, custom-domain, retry/escalation, operations docs, build, bundle, accessibility, and deployment artifact checks
+- public landing real-browser regression
+- authenticated editor real-browser regression
+- consultation and reservation real-browser regression
+- Korean-font three-template mobile real-browser regression
 
-PR `#44` was moved from draft to ready for review after all five final jobs passed.
-
-Screenshot artifact:
-
-- workflow run: `30707915630`
-- artifact ID: `8820920405`
-- artifact name: `template-mobile-regression-30707915630`
-- digest: `sha256:d1140f812a70cc97b3ad0015cdfdeb4ff06a1713023bb7fc2ab94a61c612cf2c`
-- reviewed first-viewport evidence: Korean glyphs, line wrapping, hero, share button, and bottom actions rendered correctly across all nine combinations
+PR `#41` remains mergeable but intentionally stays Draft because PR `#50` and production preflight are unresolved.
 
 ## Not Complete
 
-- PR `#44` merge to `main`: not completed.
+- PR `#50` merge: not completed.
+- Migration-safety GitHub Secrets: not configured or verified.
+- Production D1 read-only preflight: not completed.
+- PR `#41` merge: not completed.
+- Production migrations `0007_page_domains.sql` and `0008_page_domain_operations.sql`: not applied.
+- Cloudflare production account, Pages project, token, CNAME target, and recheck secret: not configured or verified.
 - Production deployment: not completed.
-- Production-device verification: not completed.
-
-Do not describe PR `#44` as merged, deployed, or production verified until those separate steps are completed with explicit owner approval.
+- Real test-domain DNS, SSL, form, reservation, analytics, detach, reconnect, retry, and escalation verification: not completed.
 
 # Absolute Rules
 
 ## Production Home Is Frozen
 
-The current `https://pagero.kr/` root screen is the canonical production home.
-
-Unless the owner explicitly requests a production-home change, do not change its visible design, copy, section order, menu, footer, hero, animation, lifestyle bridge, login/start behavior, or responsive result.
-
-Protected production-home scope includes:
+Protected production-home scope:
 
 - `functions/index.js`
 - `index.html`
 - `src/main.jsx`
 - root/public-home routing inside `src/App.jsx`
-- public-home screen components and styles
+- public-home components and styles
 - `public/c63-assets/**`
 - `public/c63-life-bridge.js`
 - `public/c63-life-bridge.css`
@@ -163,52 +125,26 @@ Protected production-home scope includes:
 
 Stop deployment if a protected-home file changes during unrelated work.
 
-## General Account And Administrator Policy
+## Account Policy
 
 - General account: one active landing page.
 - Platform master: unlimited landing pages and administrator API eligibility.
-- Frontend and API page-limit enforcement both remain mandatory.
-- Role-string forgery must not bypass page or administrator policy.
-- Existing pages remain editable, revisionable, restorable, previewable, and public.
-- Archived projects do not consume the active-page quota.
-- Google-login accounts follow the same page policy.
-- Manager/member access cannot create another owner page.
-- Default platform-master emails plus `INLET_PLATFORM_MASTER_EMAILS` are the only approved page-limit and administrator bypass source.
-
-## Page Sharing And Fixed UI
-
-- Global sharing state uses `page.share`.
-- Sharing stays separate from the bottom fixed-button editor.
-- Public and preview sharing use the same PageShareButton flow.
-- Share URLs must use the public page URL, never the editor or dashboard URL.
-- Form and reservation focus must hide top navigation, share, and bottom fixed UI where required to protect the active input.
+- Frontend and API enforcement both remain mandatory.
+- Role-string forgery cannot bypass policy.
+- Existing pages remain editable, revisionable, previewable, restorable, and public.
 
 ## Active Templates Stay Exactly Three
-
-Keep exactly:
 
 1. Personal rehabilitation consultation.
 2. Mobile wedding invitation.
 3. Real estate presale.
 
-Do not add more templates and do not replace them with non-editable HTML shells.
-
-Personal rehabilitation copy must not guarantee approval or legal outcome.
-
-## Paid Plans Are Locked To Two
+## Paid Plans Stay Exactly Two
 
 - `classic`: 클래식, 월 3,500원
 - `pro`: 프로, 월 5,500원
 
-Do not restore the discarded 3,300원 / 6,600원 / 9,900원 direction. Do not add a third paid plan or invent entitlement differences before owner approval.
-
-## Deployment
-
-- Never force-push `main`.
-- Do not construct releases with destructive reset, clean, or restore operations.
-- Do not mix unrelated refactors into a focused patch.
-- Run targeted QA and the full suite before merge or deployment.
-- Production deployment requires explicit owner approval.
+Do not invent a third plan or entitlement differences without owner approval.
 
 # Completed Baseline — Do Not Reassign These
 
@@ -216,117 +152,60 @@ Do not restore the discarded 3,300원 / 6,600원 / 9,900원 direction. Do not ad
 - Customer-owned AI key storage.
 - D1 real runtime smoke and write-side migration foundations.
 - Add lead duplicate and spam policy foundations.
-- Page duplication and URL setup foundations; template duplication is not needed.
+- Page duplication and URL setup foundations.
 - Login, account, and member management foundations.
-- General-account one-page and platform-master unlimited policies.
-- Save identity, revision conflict, draft recovery, and page-switch isolation.
-- Native sharing and four persisted share positions.
-- Form-focus fixed UI hiding foundations.
-- Three timer styles, strong effects, bottom-timer inheritance, and shared countdown clock.
-- Image optimization before storage.
-- Server-backed blocked history and month-bounded CSV.
-- AWS SES authentication-email foundation.
-- Google Sheets OAuth and delivery foundation.
-- Public landing, authenticated editor, and form/reservation browser regression infrastructure.
-- Preview/public CSS parity and fixed-bottom collision contracts.
-- Deployment route smoke contracts.
-- Administrator authorization, audit, email-change, account controls, project controls, retention, and live-verifier implementation on open PR `#43`.
-- One-page policy production verifier implementation on open PR `#42`.
-- Custom-domain implementation and operations tooling on open PR `#41`.
-- Three-template 360/390/430px real-browser regression implementation on PR `#44`.
-- Shared gallery 44px targets and pointer-capture guard on PR `#44`.
-- Shared consent-row mobile touch contract on PR `#44`.
-- Korean-font screenshot evidence pipeline on PR `#44`.
-
-# Other Open Checkpoints
-
-## PR #43 — Administrator And Audit Operations
-
-- Code and automated QA are complete on its branch.
-- Three-phase production verifier is implemented.
-- Merge to `main`: not completed.
-- Production audit secrets: not confirmed.
-- Production deployment: not completed.
-- Disposable fixtures and GitHub Secrets: not configured or verified.
-- Real `verified-live` result: not completed.
-
-## PR #42 — One-Page Policy Production Verification
-
-- General-account one-active-page implementation is already merged through PR `#40`.
-- Live verification script, manual workflow, cleanup, Google-login quota, and manager-bypass coverage are complete on PR `#42`.
-- Merge to `main`: not completed.
-- Six disposable fixtures and signed sessions: not configured or verified.
-- Manual workflow result `verified-live`: not completed.
-
-## PR #41 — Custom Domain
-
-- Domain ownership, DNS, SSL, provider registration, routing, retries, escalation, operator list, scheduled recheck, and runbook are code/QA complete on the branch.
-- Merge to `main`: not completed.
-- Production D1 migrations `0006` and `0007`: not completed.
-- Cloudflare production environment configuration: not completed.
-- Production deployment and real customer-domain smoke test: not completed.
+- General-account one-page and platform-master unlimited policy.
+- Three active templates and mobile regression infrastructure.
+- PR `#44` mobile gallery and consent patch merged to `main`.
+- Custom-domain code and migration-number fix complete on draft PR `#41`.
+- D1 migration-safety code complete on draft PR `#50`.
+- One-page live verifier complete on open PR `#42`.
+- Administrator and audit operations complete on open PR `#43`.
 
 # Active Remaining Patches
 
-## Priority 1 — PR #44 Merge And Production Verification
+## Priority 1 — D1 Migration Safety
 
-After owner approval:
+1. Confirm PR `#50` remains conflict-free and green.
+2. Merge PR `#50` only with explicit owner approval.
+3. Configure `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, and `PAGERO_D1_BACKUP_ENCRYPTION_KEY` as GitHub Secrets.
+4. Run manual read-only `D1 Migration Safety` preflight against the intended production `main` SHA.
+5. Require `verified-live` and inspect remote `d1_migrations`, local hashes, and exact pending order.
+6. Do not enable writes during preflight.
 
-1. Confirm final PR head and all five QA jobs are green.
-2. Confirm protected production-home files remain unchanged.
-3. Merge PR `#44` to `main`.
-4. Deploy only with explicit deployment approval.
-5. Verify the three templates on at least one real Android device at approximately 360px, 390px, and 430px CSS widths.
-6. Verify gallery arrows, dots, FAQ, map actions, form keyboard, consent checkbox, reservation form, share button, and bottom actions.
-7. Record production deployment SHA and device evidence before marking production verified.
+## Priority 2 — Custom-Domain Rollout
 
-## Priority 2 — PR #43 Merge And Production Verification
+1. Continue only when live preflight reports the exact reviewed pending list. Expected custom-domain files are `0007_page_domains.sql,0008_page_domain_operations.sql` only when preflight reports exactly those.
+2. Obtain separate owner approval for `backup-and-apply`.
+3. Create and validate the encrypted D1 export before applying migrations.
+4. Apply migrations through `D1 Migration Safety` and verify remote history afterward.
+5. Retain encrypted backup, manifest, rollback instructions, hashes, HMAC, and Time Travel evidence.
+6. Configure Cloudflare Pages domain environment values and matching recheck secret.
+7. Merge PR `#41` after final conflict and QA verification.
+8. Deploy only after explicit owner approval.
+9. Verify a controlled real domain end to end.
 
-After explicit owner approval:
+## Priority 3 — One-Page Policy Live Verification
 
-1. Configure `INLET_AUDIT_HASH_SECRET` and `INLET_AUDIT_RETENTION_SECRET` in production.
-2. Configure matching GitHub audit verification and retention secrets.
-3. Merge PR `#43` without mixing PR `#41`, `#42`, or `#44` branch changes.
-4. Deploy only after explicit deployment approval.
-5. Prepare one disposable password account and one `qa-audit-` page.
-6. Run the read-only, request-email-token, and verify-live phases.
-7. Require the documented `verified-live` results.
-8. Confirm D1 audit rows contain no raw password, token, session, email-change address, manager email, IP, or User-Agent.
+1. Prepare six disposable account fixtures and signed sessions.
+2. Merge PR `#42` after final conflict and QA verification.
+3. Run the manual workflow with explicit write approval.
+4. Require `verified-live` and confirm all `qa-limit-*` pages are removed.
 
-## Priority 3 — Execute One-Page Policy Live Verification
+## Priority 4 — Administrator And Audit Rollout
 
-1. Merge PR `#42` after checking conflict scope.
-2. Prepare the six disposable fixtures documented by PR `#42`.
-3. Store signed test sessions in GitHub Secrets.
-4. Run Account Page Limit Production Verify with explicit write approval.
-5. Require `verified-live` and confirm every `qa-limit-*` page was removed.
-
-## Priority 4 — Custom-Domain Operational Rollout
-
-1. Apply production migrations `0006_page_domains.sql` and `0007_page_domain_operations.sql` in order.
-2. Configure the Cloudflare account, Pages project, least-privilege token, CNAME target, and recheck secret.
-3. Merge PR `#41` only after migration and environment ordering is safe.
+1. Configure audit hash and retention secrets.
+2. Prepare disposable account and `qa-audit-` page fixtures.
+3. Merge PR `#43` after final conflict and QA verification.
 4. Deploy only after explicit owner approval.
-5. Verify DNS, SSL, public routing, assets, forms, reservations, tracking, duplicate ownership, detach/reconnect, retries, and escalation.
+5. Run all production verifier phases and confirm sensitive raw data is absent from audit rows.
 
-## Priority 5 — Live Integration Production Verification
+## Priority 5 — Live Integrations And Hardening
 
-- SES identity, DKIM, SPF, DMARC, and production access.
-- Real verification, password-reset, email-change, invite, and ownership-transfer messages.
-- Google Sheets production OAuth, token refresh, row delivery, disconnect, and retry/dead-letter visibility.
-- Real conversion events where configured.
-- Missing credentials remain `skipped-live`, never false success or false product failure.
-- Never expose provider credentials, verification tokens, access tokens, or raw internal errors.
-
-## Priority 6 — Product And Operations Hardening
-
-- D1 backup and migration rollback evidence.
-- Current operator release checklist.
-- Retention and cleanup policy for leads, blocked submissions, delivery logs, AI drafts, backups, and audit rows.
-- Large-data inbox and stats query verification.
-- Abuse/rate-limit visibility without raw IP exposure.
-- Accessibility and keyboard regression for account, domain, and administrator UI.
-- Previous-deployment rollback procedure.
+- SES identity, DKIM, SPF, DMARC, and live authentication emails.
+- Google Sheets OAuth, refresh, row delivery, disconnect, retry, and dead-letter visibility.
+- Conversion events where configured.
+- Retention, cleanup, accessibility, large-data, and previous-deployment rollback checks.
 
 # Plans, Payment, And Subscription, Final Phase
 
@@ -335,17 +214,15 @@ Approved products:
 - `classic`: 클래식, 월 3,500원
 - `pro`: 프로, 월 5,500원
 
-Start only after active operational priorities are stable and the owner defines the entitlement difference. Required architecture includes server-side entitlements, provider abstraction, checkout/billing key, renewal, period-end cancellation, grace period, signed and idempotent webhooks, payment history, receipts, and audited administrator override.
+Start only after operational priorities are stable and the owner defines entitlement differences.
 
 # Required QA Before Merge Or Deployment
 
 ```bash
-npm run templates:qa
-npm run browser:templates-mobile:contract:qa
-npm run browser:templates-mobile:qa
-npm run preview:parity:qa
-npm run bottom:fixed:qa
-npm run topnav:balance:qa
+npm run page:domain:qa
+npm run page:domain:ops:qa
+npm run d1:schema:qa
+npm run ops:qa
 npm run qa:all
 npm run build
 npm run deployment:qa
@@ -353,17 +230,15 @@ npm run deployment:smoke:contract:qa
 npm run browser:landing:qa
 npm run browser:editor:qa
 npm run browser:forms:qa
+npm run browser:templates-mobile:qa
 npm run browser:production:qa
 npm run live:qa
 ```
 
 # Mandatory Closeout
 
-At the end of every patch:
-
-1. Update the date, branch, PR, and checkpoint.
-2. Separate code complete, QA complete, merged, deployed, and production verified.
-3. Move completed implementation into the baseline.
-4. Remove completed work from the active list.
-5. Record missing migrations, credentials, approvals, and live evidence.
-6. Do not claim production completion from branch-only, mock-only, screenshot-only, or `skipped-live` results.
+1. Update date, branch, PR, commit, and workflow evidence.
+2. Separate code complete, QA complete, merged, migrated, deployed, and production verified.
+3. Remove completed work from active priorities.
+4. Record missing migrations, credentials, approvals, and live evidence.
+5. Never claim production completion from branch-only, mock-only, screenshot-only, or `skipped-live` results.

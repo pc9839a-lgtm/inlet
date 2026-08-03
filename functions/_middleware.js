@@ -1,5 +1,86 @@
+const PAGER0_HOST_SUFFIXES = ['pagero.kr', 'pages.dev', 'localhost'];
+
+function normalizeHostname(value = '') {
+  return String(value || '').trim().toLowerCase().replace(/\.$/, '');
+}
+
+function isPageroOwnedHostname(hostname = '') {
+  const safe = normalizeHostname(hostname);
+  return PAGER0_HOST_SUFFIXES.some((suffix) => safe === suffix || safe.endsWith(`.${suffix}`));
+}
+
+async function activeCustomDomainPage(db, hostname = '') {
+  if (!db?.prepare) return null;
+  return db.prepare(`
+    SELECT pages.slug, pages.id AS page_id, pages.project_id
+    FROM page_domains
+    INNER JOIN pages ON pages.id = page_domains.page_id
+    INNER JOIN projects ON projects.id = page_domains.project_id
+    WHERE page_domains.hostname = ?
+      AND page_domains.status = 'active'
+      AND page_domains.ssl_status = 'active'
+      AND COALESCE(projects.status, 'active') <> 'archived'
+    LIMIT 1
+  `).bind(normalizeHostname(hostname)).first();
+}
+
+function customDomainNotFound(hostname = '') {
+  const safeHostname = normalizeHostname(hostname);
+  return new Response(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>도메인 연결 확인</title></head><body style="margin:0;font-family:Pretendard,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background:#f8fafc;color:#0f172a"><main style="max-width:560px;margin:0 auto;padding:80px 24px"><h1 style="font-size:28px">도메인 연결을 확인해주세요.</h1><p style="line-height:1.7;color:#64748b">${safeHostname}에 연결된 공개 페이지가 아직 활성화되지 않았습니다. 페이지로 설정에서 DNS와 SSL 상태를 다시 확인해주세요.</p></main></body></html>`, {
+    status: 404,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'X-Robots-Tag': 'noindex, nofollow',
+      'X-Content-Type-Options': 'nosniff',
+    },
+  });
+}
+
+async function customDomainLandingResponse(context, url) {
+  const hostname = normalizeHostname(url.hostname);
+  if (isPageroOwnedHostname(hostname) || hostname === 'call.pagero.kr') return null;
+  if (url.pathname.startsWith('/api/')) return null;
+  if (url.pathname !== '/') return null;
+
+  const mapping = await activeCustomDomainPage(context.env.DB, hostname);
+  if (!mapping?.slug) return customDomainNotFound(hostname);
+
+  const assetUrl = new URL(context.request.url);
+  assetUrl.pathname = '/index.html';
+  assetUrl.search = '';
+  const assetResponse = await context.env.ASSETS.fetch(assetUrl);
+  let html = await assetResponse.text();
+  const slug = String(mapping.slug || '').replace(/[^a-zA-Z0-9-_]/g, '');
+  const bootScript = `<script>window.__INLET_CUSTOM_DOMAIN_SLUG__=${JSON.stringify(slug)};window.__INLET_CUSTOM_DOMAIN_HOST__=${JSON.stringify(hostname)};if(location.pathname==='/'){history.replaceState({...history.state,__inletCustomDomain:true},'','/'+${JSON.stringify(slug)}+location.search+location.hash);}</script>`;
+  const restoreScript = `<script>(()=>{const restore=()=>{if(!document.querySelector('.public-landing-shell'))return false;History.prototype.replaceState.call(window.history,window.history.state,'/'+window.location.search+window.location.hash);return true;};if(!restore()){const observer=new MutationObserver(()=>{if(restore())observer.disconnect();});observer.observe(document.documentElement,{childList:true,subtree:true});setTimeout(()=>observer.disconnect(),15000);}})();</script>`;
+  html = html.includes('<head>')
+    ? html.replace('<head>', `<head>${bootScript}`)
+    : `${bootScript}${html}`;
+  html = html.includes('</body>')
+    ? html.replace('</body>', `${restoreScript}</body>`)
+    : `${html}${restoreScript}`;
+
+  const headers = new Headers(assetResponse.headers);
+  headers.set('Content-Type', 'text/html; charset=utf-8');
+  headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  headers.set('CDN-Cache-Control', 'no-store');
+  headers.set('Cloudflare-CDN-Cache-Control', 'no-store');
+  headers.set('X-Inlet-Custom-Domain', hostname);
+  headers.set('X-Inlet-Custom-Page', slug);
+  headers.delete('Content-Length');
+  return new Response(html, {
+    status: assetResponse.status,
+    statusText: assetResponse.statusText,
+    headers,
+  });
+}
+
 export async function onRequest(context) {
   const url = new URL(context.request.url);
+  const customDomainResponse = await customDomainLandingResponse(context, url);
+  if (customDomainResponse) return customDomainResponse;
+
   if (url.hostname !== 'call.pagero.kr' || url.pathname.startsWith('/api/')) {
     return context.next();
   }

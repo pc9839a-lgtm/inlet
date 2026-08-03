@@ -1,0 +1,48 @@
+name: Custom Domain Recheck
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: custom-domain-recheck
+  cancel-in-progress: false
+
+jobs:
+  recheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      PAGERO_DOMAIN_RECHECK_URL: ${{ vars.PAGERO_DOMAIN_RECHECK_URL }}
+      PAGERO_DOMAIN_RECHECK_ALLOWED_ORIGINS: ${{ vars.PAGERO_DOMAIN_RECHECK_ALLOWED_ORIGINS }}
+      PAGERO_DOMAIN_RECHECK_SECRET: ${{ secrets.PAGERO_DOMAIN_RECHECK_SECRET }}
+      PAGERO_DOMAIN_RECHECK_TIMEOUT_MS: '30000'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # Scheduled verification is fail-closed; skipped-live is not an accepted result.
+      # The safe runner fixes the endpoint path to /api/admin/domains/recheck.
+      - name: Recheck due custom domains
+        shell: bash
+        run: |
+          set -o pipefail
+          node scripts/domain-recheck-safe-runner.mjs | tee domain-recheck-result.json
+
+      - name: Upload recheck evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: custom-domain-recheck-evidence-${{ github.run_id }}
+          path: domain-recheck-result.json
+          if-no-files-found: warn
+          retention-days: 30
