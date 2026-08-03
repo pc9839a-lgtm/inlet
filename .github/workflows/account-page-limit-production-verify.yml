@@ -61,11 +61,11 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Verify production account page limit
+      - name: Verify production account page limit and fixture restoration
         shell: bash
         run: |
           set -o pipefail
-          node scripts/account-page-limit-production-safe-entry.mjs | tee account-page-limit-live-result.json
+          node scripts/account-page-limit-production-runner.mjs | tee account-page-limit-live-result.json
 
       - name: Upload verification evidence
         if: always()
