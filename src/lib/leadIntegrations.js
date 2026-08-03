@@ -1,4 +1,4 @@
-﻿import { normalizeIntegrations, uid } from './pageModel.js';
+import { normalizeIntegrations, uid } from './pageModel.js';
 import { BRAND_NAME } from '../config/brand.js';
 import { publicLandingUrl, runtimeConfig } from '../config/runtimeConfig.js';
 import { trackingConfig } from './conversionTracking.js';
@@ -142,6 +142,7 @@ export async function runConnectionTest(type, page) {
   }
   return { ok: false, status: CONNECTION_STATUS.needsSetup, message: '지원하지 않는 연동입니다.' };
 }
+
 export function integrationPayload(lead, page) {
   const createdAt = lead.createdAt || new Date().toISOString();
   return {
@@ -290,40 +291,108 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 10000) {
   }
 }
 
-export function sendConversionIntegrations(lead, page) {
-  const config = trackingConfig(page);
-  if (!config.enabled) return;
+function safeTrackingValue(value = '', maxLength = 80) {
+  return String(value || '').trim().slice(0, maxLength);
+}
 
-  const eventName = lead.type === '방문 예약' || lead.type === '방문예약' ? 'reservation_submit' : 'lead_submit';
-  const payload = {
-    event: eventName,
-    lead_type: lead.type,
-    page_slug: page.slug,
-    lead_id: lead.id,
+function isReservationLead(lead = {}) {
+  const type = safeTrackingValue(lead.type || lead.kind || '', 40).replace(/\s+/g, '').toLowerCase();
+  return type === '방문예약' || type === 'reservation' || type === 'schedule';
+}
+
+function conversionDedupKey(lead = {}, page = {}, eventName = '') {
+  const leadId = safeTrackingValue(lead.id || '', 160);
+  if (!leadId) return '';
+  return `${safeTrackingValue(page.slug || '', 120)}:${eventName}:${leadId}`;
+}
+
+function claimConversionEvent(win, key = '') {
+  if (!key) return true;
+  const cache = win.__inletConversionEventKeys instanceof Set
+    ? win.__inletConversionEventKeys
+    : new Set();
+  win.__inletConversionEventKeys = cache;
+  if (cache.has(key)) return false;
+  cache.add(key);
+  if (cache.size > 500) {
+    const first = cache.values().next().value;
+    if (first) cache.delete(first);
+  }
+  return true;
+}
+
+function browserWindow() {
+  try {
+    return typeof window !== 'undefined' ? window : null;
+  } catch {
+    return null;
+  }
+}
+
+export function conversionEventPayload(lead = {}, page = {}) {
+  const reservation = isReservationLead(lead);
+  return {
+    event: reservation ? 'reservation_submit' : 'lead_submit',
+    lead_type: safeTrackingValue(lead.type || lead.kind || (reservation ? 'reservation' : 'lead'), 40),
+    page_slug: safeTrackingValue(page.slug || '', 120),
+    event_source: 'pagero',
   };
+}
 
+export function sendConversionIntegrations(lead = {}, page = {}, win = browserWindow()) {
+  const config = trackingConfig(page);
+  const payload = conversionEventPayload(lead, page);
+  if (!config.enabled) return { sent: false, duplicate: false, eventName: payload.event, channels: [], reason: 'disabled' };
+  if (!win) return { sent: false, duplicate: false, eventName: payload.event, channels: [], reason: 'browser-unavailable' };
+
+  const dedupKey = conversionDedupKey(lead, page, payload.event);
+  if (!claimConversionEvent(win, dedupKey)) {
+    return { sent: false, duplicate: true, eventName: payload.event, channels: [], reason: 'duplicate' };
+  }
+
+  const channels = [];
   if (config.dataLayer) {
-    window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push(payload);
+    win.dataLayer = win.dataLayer || [];
+    win.dataLayer.push(payload);
+    channels.push('dataLayer');
   }
 
-  if (config.metaPixelId && typeof window.fbq === 'function') window.fbq('track', 'Lead', payload);
+  if (config.ga4Id && typeof win.gtag === 'function') {
+    win.gtag('event', payload.event, payload);
+    channels.push('ga4');
+  }
 
-  if (config.googleAdsId && typeof window.gtag === 'function') {
-    window.gtag('event', 'conversion', {
+  if (config.metaPixelId && typeof win.fbq === 'function') {
+    win.fbq('track', payload.event === 'reservation_submit' ? 'Schedule' : 'Lead', payload);
+    channels.push('meta');
+  }
+
+  if (config.googleAdsId && typeof win.gtag === 'function') {
+    win.gtag('event', 'conversion', {
       ...payload,
-      ...(config.googleAdsSendTo || window.inletGoogleAdsSendTo ? { send_to: config.googleAdsSendTo || window.inletGoogleAdsSendTo } : {}),
+      ...(config.googleAdsSendTo || win.inletGoogleAdsSendTo ? { send_to: config.googleAdsSendTo || win.inletGoogleAdsSendTo } : {}),
     });
+    channels.push('googleAds');
   }
 
-  if (config.kakaoPixelId && window.kakaoPixelId && typeof window.kakaoPixel === 'function') {
-    window.kakaoPixel(window.kakaoPixelId).completeRegistration();
+  if (config.kakaoPixelId && win.kakaoPixelId && typeof win.kakaoPixel === 'function') {
+    win.kakaoPixel(win.kakaoPixelId).completeRegistration();
+    channels.push('kakao');
   }
 
-  if (config.naverId && window.wcs) {
-    window.wcs_add = window.wcs_add || {};
-    window.wcs_do?.();
+  if (config.naverId && win.wcs) {
+    win.wcs_add = win.wcs_add || {};
+    win.wcs_do?.();
+    channels.push('naver');
   }
+
+  return {
+    sent: channels.length > 0,
+    duplicate: false,
+    eventName: payload.event,
+    channels,
+    payload,
+  };
 }
 
 export function deliveryStatusLabel(status = 'none') {
