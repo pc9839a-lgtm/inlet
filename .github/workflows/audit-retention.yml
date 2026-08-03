@@ -37,6 +37,7 @@ jobs:
         with:
           node-version: 24
 
+      # Missing Secrets are failed-live, never skipped-live. The runner maps dry_run to the API dryRun body.
       - name: Remove expired audit rows
         shell: bash
         run: |
