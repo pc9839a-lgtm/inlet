@@ -65,7 +65,7 @@ for (const token of [
   'lead_submit',
   'reservation_submit',
   'no advertising-platform request',
-  'external platform receipt',
+  'External platform receipt',
   'verified-live',
   'skipped-live',
 ]) assert(docs.includes(token), `runbook missing ${token}`);
