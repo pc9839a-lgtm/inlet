@@ -30,6 +30,7 @@ jobs:
         with:
           node-version: 24
 
+      # Scheduled verification is fail-closed; skipped-live is not an accepted result.
       - name: Recheck due custom domains
         shell: bash
         run: |
