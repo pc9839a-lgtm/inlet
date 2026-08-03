@@ -99,12 +99,19 @@ export async function pushStatus(db, ownerId = '', deviceId = '', env = {}) {
 export async function ownerIdForProject(db, projectId = '') {
   if (!db?.prepare || !projectId) return '';
   const row = await db.prepare(`
-    SELECT owner_account_id
+    SELECT *
     FROM projects
     WHERE id = ?
     LIMIT 1
   `).bind(String(projectId)).first();
-  return text(row?.owner_account_id, 120);
+  return text(
+    row?.owner_account_id
+      || row?.owner_id
+      || row?.ownerId
+      || row?.account_id
+      || row?.accountId,
+    120
+  );
 }
 
 export async function notifyPageroLeadAvailable(env = {}, db, ownerId = '', input = {}) {
@@ -131,6 +138,7 @@ export async function notifyPageroLeadAvailable(env = {}, db, ownerId = '', inpu
         type: 'pagero_lead_available',
         eventId: text(input.eventId, 240),
         queueId: String(Number(input.queueId || 0)),
+        sentAt: String(Date.now()),
       });
       sent++;
       await db.prepare(`
@@ -179,8 +187,10 @@ async function sendFirebaseMessage(env, accessToken, token, data = {}) {
         token,
         data: Object.fromEntries(Object.entries(data).map(([key, value]) => [key, String(value ?? '')])),
         android: {
+          collapse_key: 'pagero_lead_available',
           priority: 'HIGH',
           ttl: '300s',
+          restricted_package_name: 'kr.pagero.calltag',
         },
       },
     }),
