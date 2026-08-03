@@ -103,3 +103,10 @@ custom MAIL FROM을 사용한다면 `require_custom_mail_from=true`로 실행한
 9. 테스트 계정과 인증 기록 cleanup
 
 실제 발송 검증에는 별도의 쓰기 승인과 테스트 수신함 allowlist가 필요하다.
+
+## 최신 main 통합 검증 규칙
+
+- PR 헤드 단독으로 통과한 과거 결과만으로 병합하지 않는다.
+- GitHub가 생성한 최신 `main` 병합 후보 SHA에서 전체 QA와 브라우저 회귀를 다시 실행한다.
+- SES 계약 검사는 실제 발송 endpoint 부재, 읽기 전용 메서드, 고정 endpoint, redirect 차단, Secret 비노출을 병합 후보에서 확인한다.
+- 운영 SES·DNS 조회는 별도의 수동 `workflow_dispatch`에서만 실행하며 PR CI에서는 외부 계정에 접근하지 않는다.
