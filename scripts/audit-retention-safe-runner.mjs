@@ -1,3 +1,6 @@
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+
 const DEFAULT_ENDPOINT = 'https://pagero.kr/api/admin/audit/retention';
 const DEFAULT_ALLOWED_ORIGINS = ['https://pagero.kr'];
 const REQUIRED_PATH = '/api/admin/audit/retention';
@@ -108,12 +111,18 @@ async function main() {
   }, null, 2));
 }
 
-main().catch((error) => {
-  console.error(JSON.stringify({
-    ok: false,
-    status: 'failed-live',
-    error: String(error?.message || error).slice(0, 500),
-    secretValuesIncluded: false,
-  }, null, 2));
-  process.exitCode = 1;
-});
+const invoked = process.argv[1]
+  ? pathToFileURL(path.resolve(process.argv[1])).href
+  : '';
+
+if (invoked === import.meta.url) {
+  main().catch((error) => {
+    console.error(JSON.stringify({
+      ok: false,
+      status: 'failed-live',
+      error: String(error?.message || error).slice(0, 500),
+      secretValuesIncluded: false,
+    }, null, 2));
+    process.exitCode = 1;
+  });
+}
