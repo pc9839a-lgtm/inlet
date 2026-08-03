@@ -17,7 +17,7 @@
     "server:smoke:integrations": "node scripts/server-smoke-integrations.mjs",
     "page:save:qa": "node scripts/page-save-identity-quality-check.mjs",
     "account:page-limit:qa": "node scripts/account-page-limit-quality-check.mjs",
-    "account:page-limit:live": "node scripts/account-page-limit-production-check.mjs",
+    "account:page-limit:live": "node scripts/account-page-limit-production-runner.mjs",
     "account:page-limit:live:contract:qa": "node scripts/account-page-limit-production-contract-check.mjs",
     "page:draft:qa": "node scripts/page-draft-recovery-quality-check.mjs",
     "page:operation:isolation:qa": "node scripts/page-operation-isolation-quality-check.mjs",
