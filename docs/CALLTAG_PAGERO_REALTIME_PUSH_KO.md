@@ -1,5 +1,7 @@
 # 페이지로 → 콜태그 실시간 문의 푸시
 
+기준일: **2026-08-03**
+
 ## 목적
 
 페이지로 랜딩페이지의 `/api/leads` 문의 저장이 성공하면 콜태그 Android 앱에 개인정보 없는 신호를 전달한다. 앱은 로그인 세션으로 문의 큐를 조회하고 고객 DB에 반영한 뒤 사용자에게 알림을 표시한다.
@@ -13,6 +15,66 @@
 - 기존 Google 로그인·푸시 통합 PR `#48`은 Draft 유지
 
 `main` 병합은 코드 반영을 의미한다. Cloudflare Pages 운영 배포 완료, Firebase 환경 변수 등록, D1 migration 적용은 별도로 확인해야 한다.
+
+## Firebase Console 등록
+
+백그라운드·잠금화면 즉시 알림을 위해 Firebase 프로젝트와 콜태그 Android 앱 등록이 필요하다.
+
+### Firebase 프로젝트
+
+1. Firebase Console에서 운영 프로젝트를 생성하거나 선택한다.
+2. Android 앱을 추가한다.
+3. 패키지명은 정확히 `kr.pagero.calltag`로 등록한다.
+4. 앱 등록 후 `google-services.json`을 다운로드한다.
+5. 프로젝트 설정의 `클라우드 메시징`에서 Firebase Cloud Messaging API(V1) 사용 상태를 확인한다.
+
+FCM만 사용하는 경우 Android 앱 등록 단계의 SHA-1은 생략 가능하다.
+
+### Android 앱 설정값
+
+`google-services.json`에서 다음 값을 CallTag GitHub Actions Secret으로 등록한다.
+
+| CallTag GitHub Secret | `google-services.json` 값 |
+|---|---|
+| `CALLTAG_FIREBASE_APPLICATION_ID` | `client[].client_info.mobilesdk_app_id` |
+| `CALLTAG_FIREBASE_API_KEY` | `client[].api_key[].current_key` |
+| `CALLTAG_FIREBASE_PROJECT_ID` | `project_info.project_id` |
+| `CALLTAG_FIREBASE_SENDER_ID` | `project_info.project_number` |
+
+CallTag 저장소:
+
+- `pc9839a-lgtm/calltag`
+- `Settings > Secrets and variables > Actions`
+
+Secret 등록 후 Firebase 값이 포함된 APK를 다시 빌드해야 한다.
+
+## 서버 서비스 계정
+
+Firebase Console에서 다음 순서로 서비스 계정 비공개 키 JSON을 발급한다.
+
+1. 프로젝트 설정
+2. `서비스 계정`
+3. `Firebase Admin SDK`
+4. `새 비공개 키 생성`
+
+Cloudflare Pages Production 환경변수 대응:
+
+| 환경변수 | 서비스 계정 JSON 값 |
+|---|---|
+| `FIREBASE_PROJECT_ID` | `project_id` |
+| `FIREBASE_CLIENT_EMAIL` | `client_email` |
+| `FIREBASE_PRIVATE_KEY` | `private_key` 전체 값 |
+
+`FIREBASE_PRIVATE_KEY`는 시작·종료 구문과 줄바꿈을 포함한 전체 키를 사용한다.
+
+절대 금지:
+
+- 서비스 계정 JSON을 저장소에 커밋
+- 비공개 키를 Android APK에 포함
+- 문서·이슈·스크린샷에 전체 키 노출
+- Preview에만 등록하고 Production 환경을 누락
+
+환경변수 등록 후 페이지로 운영 배포를 다시 실행한다.
 
 ## 처리 순서
 
@@ -95,25 +157,6 @@ migration:
 
 API는 `CREATE TABLE IF NOT EXISTS` 방어 로직도 갖지만 운영 migration 적용 여부를 별도 확인한다.
 
-## 운영 환경 변수
-
-Cloudflare Pages 운영 환경:
-
-- `FIREBASE_PROJECT_ID`
-- `FIREBASE_CLIENT_EMAIL`
-- `FIREBASE_PRIVATE_KEY`
-
-값이 없으면 문의 접수와 콜태그 큐 동기화는 기존대로 성공하고 백그라운드 즉시 푸시만 비활성화된다.
-
-Android GitHub Actions Secret:
-
-- `CALLTAG_FIREBASE_APPLICATION_ID`
-- `CALLTAG_FIREBASE_API_KEY`
-- `CALLTAG_FIREBASE_PROJECT_ID`
-- `CALLTAG_FIREBASE_SENDER_ID`
-
-CallTag v0.40.9 검증 APK에서는 위 Android Firebase 값이 빈 문자열로 확인됐다. Secret 등록 후 APK 재빌드가 필요하다.
-
 ## CI 검증
 
 ### Validate Pagero CallTag Bridge
@@ -134,17 +177,43 @@ CallTag v0.40.9 검증 APK에서는 위 Android Firebase 값이 빈 문자열로
 - landing browser regression: 성공
 - template mobile browser regression: 성공
 
-## 아직 필요한 운영 E2E
+## 현재 운영 제한
 
-1. Cloudflare 환경 변수 3개 등록 확인
-2. D1 migration 적용 확인
-3. CallTag Firebase Secret 4개 등록 후 APK 재빌드
-4. 운영 페이지로 문의 제출
-5. 서버 로그에서 FCM attempted·sent 확인
-6. 앱 종료·백그라운드·잠금화면 알림 확인
-7. 알림 터치 후 신규 고객과 `PAGERO_INQUIRY` 확인
-8. 동일 eventId 재전송 중복 미생성 확인
-9. FCM 장애 시 문의 접수 성공 유지 확인
+CallTag v0.40.9 검증 APK의 Firebase Android 값 4개는 빈 문자열로 확인됐다.
+
+따라서 현재 확정된 기능:
+
+- 앱 실행·재진입 문의 동기화
+- 앱을 열어둔 동안 30초 보조 동기화
+- 실제 고객 DB 반영 후 알림
+- 동일 문의 중복방지
+
+아직 운영 완료가 아닌 기능:
+
+- 앱 종료 상태 즉시 알림
+- 잠금화면 즉시 알림
+- 기기 FCM 토큰 운영 서버 등록
+- 운영 FCM HTTP v1 실제 발송
+
+## 운영 E2E 체크리스트
+
+1. Firebase Android 앱 `kr.pagero.calltag` 등록
+2. CallTag GitHub Secret 4개 등록
+3. Firebase 서비스 계정 JSON 발급
+4. Cloudflare Production 환경변수 3개 등록
+5. D1 `0008_calltag_realtime_push.sql` 적용
+6. 페이지로 운영 재배포
+7. CallTag APK 재빌드
+8. APK 내부 Firebase 값 비어 있지 않음 확인
+9. 앱 로그인 후 알림 권한 허용
+10. push register API에서 등록 상태 확인
+11. 운영 페이지로 문의 제출
+12. 서버 로그에서 FCM attempted·sent 확인
+13. 앱 종료·백그라운드·잠금화면 알림 확인
+14. 알림 터치 후 신규 고객과 `PAGERO_INQUIRY` 확인
+15. 동일 eventId 재전송 중복 미생성 확인
+16. 빠른 연속 문의 3건 모두 반영 확인
+17. FCM 장애 시에도 문의 접수 성공 유지 확인
 
 ## 데이터·장애 안전
 
@@ -153,3 +222,11 @@ CallTag v0.40.9 검증 APK에서는 위 Android Firebase 값이 빈 문자열로
 - 고객 개인정보를 FCM payload에 포함하지 않음
 - 잘못된 토큰을 자동 비활성화
 - 실시간 신호 유실 시 앱 전면 보조 동기화로 문의 큐를 다시 확인
+
+## 관련 문서
+
+CallTag:
+
+- `docs/FIREBASE_REGISTRATION_GUIDE_KO.md`
+- `docs/V0409_PAGERO_REALTIME_ALERT_KO.md`
+- `docs/DEVELOPMENT_STATUS_AND_ROADMAP_KO.md`
