@@ -34,27 +34,26 @@ export function sanitizeAuditMetadata(metadata = {}) {
 }
 
 function auditSecret(env = {}) {
-  return normalizeString(env.INLET_AUDIT_HASH_SECRET || env.INLET_SESSION_SECRET || env.INLET_API_TOKEN || '', 500);
+  return normalizeString(env.INLET_AUDIT_HASH_SECRET || '', 500);
+}
+
+export function hasAuditHashSecret(env = {}) {
+  return Boolean(auditSecret(env));
 }
 
 async function auditHash(value = '', env = {}) {
   const text = normalizeString(value, 2000);
-  if (!text) return '';
-  const bytes = new TextEncoder().encode(text);
   const secret = auditSecret(env);
-  let digest;
-  if (secret) {
-    const key = await crypto.subtle.importKey(
-      'raw',
-      new TextEncoder().encode(secret),
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign'],
-    );
-    digest = await crypto.subtle.sign('HMAC', key, bytes);
-  } else {
-    digest = await crypto.subtle.digest('SHA-256', bytes);
-  }
+  if (!text || !secret) return '';
+
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const digest = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(text));
   return `sha256:${Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, '0')).join('')}`;
 }
 
