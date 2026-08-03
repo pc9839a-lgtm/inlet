@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import {
+  createOriginLockedFetch,
   evaluateLaunchGate,
   normalizeAllowedOrigins,
 } from './account-page-limit-production-safe-entry.mjs';
@@ -33,7 +34,6 @@ for (const token of [
   '/revisions?',
   '/restore',
   '?public=1&fresh=',
-  'expectedStatus = 200',
   'expectedStatus === 409',
   '[403, 409].includes',
   'cleanupQueue.splice(0).reverse()',
@@ -41,7 +41,7 @@ for (const token of [
 ]) assert(script.includes(token), `live account page-limit script missing contract token: ${token}`);
 
 assert(!script.includes('console.log(session)'), 'live verification must never print a session secret');
-assert(!script.includes('Authorization: `Bearer ${session}`'), 'live verification must use the signed session header without copying it into logs');
+assert(!script.includes('Authorization: `Bearer ${session}`'), 'signed sessions must not be copied into Authorization logs');
 assert(script.includes("'X-Inlet-Session': session"), 'live verification must authenticate with X-Inlet-Session');
 assert(script.indexOf('if (missingSessions.length || !allowWrites)') < script.indexOf("await sessionSnapshot('empty-general'"), 'write and fixture gates must run before any live request');
 
@@ -54,8 +54,11 @@ for (const token of [
   "parsed.pathname !== '/'",
   'target origin is not in PAGERO_PAGE_LIMIT_ALLOWED_ORIGINS',
   'INLET_ACCOUNT_PAGE_LIMIT_LIVE_APPROVAL',
-  'account-page-limit-production-check.mjs',
-  "stdio: 'inherit'",
+  'createOriginLockedFetch',
+  'cross-origin request blocked before signed session transmission',
+  "redirect: 'error'",
+  'globalThis.fetch = createOriginLockedFetch',
+  'await import(pathToFileURL(checker).href)',
   'secretValuesIncluded: false',
 ]) assert(safeEntry.includes(token), `safe live entry missing contract token: ${token}`);
 assert(!safeEntry.includes('console.log(process.env)'), 'safe entry must never print its environment');
@@ -69,30 +72,38 @@ assert.equal(evaluateLaunchGate({
   writeEnabled: true,
   approval: 'I_APPROVE_ACCOUNT_PAGE_LIMIT_LIVE_WRITES',
 }).ok, true);
-assert.equal(evaluateLaunchGate({
-  baseUrl: 'https://attacker.example',
-  allowedOrigins,
-  writeEnabled: true,
-  approval: 'I_APPROVE_ACCOUNT_PAGE_LIMIT_LIVE_WRITES',
-}).ok, false);
-assert.equal(evaluateLaunchGate({
-  baseUrl: 'http://pagero.kr',
-  allowedOrigins,
-  writeEnabled: true,
-  approval: 'I_APPROVE_ACCOUNT_PAGE_LIMIT_LIVE_WRITES',
-}).ok, false);
-assert.equal(evaluateLaunchGate({
-  baseUrl: 'https://pagero.kr/api',
-  allowedOrigins,
-  writeEnabled: true,
-  approval: 'I_APPROVE_ACCOUNT_PAGE_LIMIT_LIVE_WRITES',
-}).ok, false);
+for (const baseUrl of [
+  'https://attacker.example',
+  'http://pagero.kr',
+  'https://pagero.kr/api',
+  'https://pagero.kr?next=https://attacker.example',
+  'https://user:password@pagero.kr',
+]) {
+  assert.equal(evaluateLaunchGate({
+    baseUrl,
+    allowedOrigins,
+    writeEnabled: true,
+    approval: 'I_APPROVE_ACCOUNT_PAGE_LIMIT_LIVE_WRITES',
+  }).ok, false, `${baseUrl} must be blocked`);
+}
 assert.equal(evaluateLaunchGate({
   baseUrl: 'https://pagero.kr',
   allowedOrigins,
   writeEnabled: true,
   approval: 'wrong',
 }).ok, false);
+
+let capturedInit = null;
+const lockedFetch = createOriginLockedFetch('https://pagero.kr', async (_input, init) => {
+  capturedInit = init;
+  return { ok: true, status: 200 };
+});
+await lockedFetch('https://pagero.kr/api/auth/session', { redirect: 'follow' });
+assert.equal(capturedInit.redirect, 'error', 'redirect following must be disabled');
+await assert.rejects(
+  () => lockedFetch('https://attacker.example/collect'),
+  /cross-origin request blocked/,
+);
 
 for (const token of [
   'workflow_dispatch:',
@@ -113,9 +124,9 @@ for (const token of [
   'account-page-limit-production-evidence-${{ github.run_id }}',
   'retention-days: 30',
 ]) assert(workflow.includes(token), `account page-limit workflow missing contract token: ${token}`);
-assert(!/^\s*schedule:/m.test(workflow), 'production write verification must remain manual and must not be scheduled');
-assert(workflow.includes('permissions:\n  contents: read'), 'production verification workflow must use read-only repository permissions');
-assert(!workflow.includes('npm run account:page-limit:live | tee'), 'workflow must pass through the safe origin gate before the live checker');
+assert(!/^\s*schedule:/m.test(workflow), 'production write verification must remain manual');
+assert(workflow.includes('permissions:\n  contents: read'), 'workflow must use read-only repository permissions');
+assert(!workflow.includes('npm run account:page-limit:live | tee'), 'workflow must pass through the safe entry gate');
 
 for (const token of [
   'Use dedicated QA accounts only',
@@ -129,86 +140,73 @@ for (const token of [
   'I_APPROVE_ACCOUNT_PAGE_LIMIT_LIVE_WRITES',
   'exact HTTPS origin',
   'session exfiltration',
-]) assert(runbook.includes(token), `account page-limit runbook missing safety detail: ${token}`);
+]) assert(runbook.includes(token), `runbook missing safety detail: ${token}`);
 
-assert(packageJson.includes('"account:page-limit:live"'), 'package scripts must expose the live account page-limit command');
-assert(packageJson.includes('"account:page-limit:live:contract:qa"'), 'package scripts must expose the live contract command');
-assert(qaAll.includes("['account:page-limit:live:contract:qa', ['scripts/account-page-limit-production-contract-check.mjs']]"), 'qa:all must execute the account page-limit live contract');
+assert(packageJson.includes('"account:page-limit:live"'));
+assert(packageJson.includes('"account:page-limit:live:contract:qa"'));
+assert(qaAll.includes("['account:page-limit:live:contract:qa', ['scripts/account-page-limit-production-contract-check.mjs']]"));
 
-const skipped = spawnSync(process.execPath, ['scripts/account-page-limit-production-check.mjs'], {
-  cwd: process.cwd(),
-  env: {
-    ...process.env,
-    INLET_ACCOUNT_PAGE_LIMIT_EMPTY_GENERAL_SESSION: '',
-    INLET_ACCOUNT_PAGE_LIMIT_OCCUPIED_GENERAL_SESSION: '',
-    INLET_ACCOUNT_PAGE_LIMIT_ARCHIVED_GENERAL_SESSION: '',
-    INLET_ACCOUNT_PAGE_LIMIT_PLATFORM_MASTER_SESSION: '',
-    INLET_ACCOUNT_PAGE_LIMIT_GOOGLE_SESSION: '',
-    INLET_ACCOUNT_PAGE_LIMIT_MANAGER_SESSION: '',
-    INLET_ACCOUNT_PAGE_LIMIT_LIVE_WRITE: '0',
-    INLET_ACCOUNT_PAGE_LIMIT_LIVE_REQUIRE: '0',
-  },
-  encoding: 'utf8',
+function runScript(file, env) {
+  return spawnSync(process.execPath, [file], {
+    cwd: process.cwd(),
+    env: { ...process.env, ...env },
+    encoding: 'utf8',
+  });
+}
+
+const emptySessions = {
+  INLET_ACCOUNT_PAGE_LIMIT_EMPTY_GENERAL_SESSION: '',
+  INLET_ACCOUNT_PAGE_LIMIT_OCCUPIED_GENERAL_SESSION: '',
+  INLET_ACCOUNT_PAGE_LIMIT_ARCHIVED_GENERAL_SESSION: '',
+  INLET_ACCOUNT_PAGE_LIMIT_PLATFORM_MASTER_SESSION: '',
+  INLET_ACCOUNT_PAGE_LIMIT_GOOGLE_SESSION: '',
+  INLET_ACCOUNT_PAGE_LIMIT_MANAGER_SESSION: '',
+};
+const skipped = runScript('scripts/account-page-limit-production-check.mjs', {
+  ...emptySessions,
+  INLET_ACCOUNT_PAGE_LIMIT_LIVE_WRITE: '0',
+  INLET_ACCOUNT_PAGE_LIMIT_LIVE_REQUIRE: '0',
 });
-assert.equal(skipped.status, 0, `optional missing live fixtures should skip cleanly: ${skipped.stderr}`);
+assert.equal(skipped.status, 0, skipped.stderr);
 assert.match(skipped.stdout, /"status": "skipped-live"/);
 assert.doesNotMatch(skipped.stdout, /verified-live/);
 
-const required = spawnSync(process.execPath, ['scripts/account-page-limit-production-check.mjs'], {
-  cwd: process.cwd(),
-  env: {
-    ...process.env,
-    INLET_ACCOUNT_PAGE_LIMIT_EMPTY_GENERAL_SESSION: '',
-    INLET_ACCOUNT_PAGE_LIMIT_OCCUPIED_GENERAL_SESSION: '',
-    INLET_ACCOUNT_PAGE_LIMIT_ARCHIVED_GENERAL_SESSION: '',
-    INLET_ACCOUNT_PAGE_LIMIT_PLATFORM_MASTER_SESSION: '',
-    INLET_ACCOUNT_PAGE_LIMIT_GOOGLE_SESSION: '',
-    INLET_ACCOUNT_PAGE_LIMIT_MANAGER_SESSION: '',
-    INLET_ACCOUNT_PAGE_LIMIT_LIVE_WRITE: '0',
-    INLET_ACCOUNT_PAGE_LIMIT_LIVE_REQUIRE: '1',
-  },
-  encoding: 'utf8',
+const required = runScript('scripts/account-page-limit-production-check.mjs', {
+  ...emptySessions,
+  INLET_ACCOUNT_PAGE_LIMIT_LIVE_WRITE: '0',
+  INLET_ACCOUNT_PAGE_LIMIT_LIVE_REQUIRE: '1',
 });
-assert.equal(required.status, 1, 'required live verification must fail when fixtures or write approval are missing');
+assert.equal(required.status, 1);
 assert.match(required.stdout, /"status": "skipped-live"/);
 
 const fakeSession = 'SIGNED_SESSION_MUST_NOT_APPEAR';
-const blockedOrigin = spawnSync(process.execPath, ['scripts/account-page-limit-production-safe-entry.mjs'], {
-  cwd: process.cwd(),
-  env: {
-    ...process.env,
-    INLET_ACCOUNT_PAGE_LIMIT_BASE_URL: 'https://attacker.example',
-    INLET_ACCOUNT_PAGE_LIMIT_LIVE_WRITE: '1',
-    INLET_ACCOUNT_PAGE_LIMIT_LIVE_APPROVAL: 'I_APPROVE_ACCOUNT_PAGE_LIMIT_LIVE_WRITES',
-    INLET_ACCOUNT_PAGE_LIMIT_LIVE_REQUIRE: '1',
-    PAGERO_PAGE_LIMIT_ALLOWED_ORIGINS: '',
-    INLET_ACCOUNT_PAGE_LIMIT_EMPTY_GENERAL_SESSION: fakeSession,
-    INLET_ACCOUNT_PAGE_LIMIT_OCCUPIED_GENERAL_SESSION: fakeSession,
-    INLET_ACCOUNT_PAGE_LIMIT_ARCHIVED_GENERAL_SESSION: fakeSession,
-    INLET_ACCOUNT_PAGE_LIMIT_PLATFORM_MASTER_SESSION: fakeSession,
-    INLET_ACCOUNT_PAGE_LIMIT_GOOGLE_SESSION: fakeSession,
-    INLET_ACCOUNT_PAGE_LIMIT_MANAGER_SESSION: fakeSession,
-  },
-  encoding: 'utf8',
+const blockedOrigin = runScript('scripts/account-page-limit-production-safe-entry.mjs', {
+  INLET_ACCOUNT_PAGE_LIMIT_BASE_URL: 'https://attacker.example',
+  INLET_ACCOUNT_PAGE_LIMIT_LIVE_WRITE: '1',
+  INLET_ACCOUNT_PAGE_LIMIT_LIVE_APPROVAL: 'I_APPROVE_ACCOUNT_PAGE_LIMIT_LIVE_WRITES',
+  INLET_ACCOUNT_PAGE_LIMIT_LIVE_REQUIRE: '1',
+  PAGERO_PAGE_LIMIT_ALLOWED_ORIGINS: '',
+  INLET_ACCOUNT_PAGE_LIMIT_EMPTY_GENERAL_SESSION: fakeSession,
+  INLET_ACCOUNT_PAGE_LIMIT_OCCUPIED_GENERAL_SESSION: fakeSession,
+  INLET_ACCOUNT_PAGE_LIMIT_ARCHIVED_GENERAL_SESSION: fakeSession,
+  INLET_ACCOUNT_PAGE_LIMIT_PLATFORM_MASTER_SESSION: fakeSession,
+  INLET_ACCOUNT_PAGE_LIMIT_GOOGLE_SESSION: fakeSession,
+  INLET_ACCOUNT_PAGE_LIMIT_MANAGER_SESSION: fakeSession,
 });
-assert.equal(blockedOrigin.status, 1, 'unapproved origins must fail before the live checker starts');
-assert.match(`${blockedOrigin.stdout}\n${blockedOrigin.stderr}`, /"status": "failed-live"/);
-assert.match(`${blockedOrigin.stdout}\n${blockedOrigin.stderr}`, /not in PAGERO_PAGE_LIMIT_ALLOWED_ORIGINS/);
-assert.doesNotMatch(`${blockedOrigin.stdout}\n${blockedOrigin.stderr}`, new RegExp(fakeSession));
+const blockedOutput = `${blockedOrigin.stdout}\n${blockedOrigin.stderr}`;
+assert.equal(blockedOrigin.status, 1);
+assert.match(blockedOutput, /"status": "failed-live"/);
+assert.match(blockedOutput, /not in PAGERO_PAGE_LIMIT_ALLOWED_ORIGINS/);
+assert.doesNotMatch(blockedOutput, new RegExp(fakeSession));
 
-const missingApproval = spawnSync(process.execPath, ['scripts/account-page-limit-production-safe-entry.mjs'], {
-  cwd: process.cwd(),
-  env: {
-    ...process.env,
-    INLET_ACCOUNT_PAGE_LIMIT_BASE_URL: 'https://pagero.kr',
-    INLET_ACCOUNT_PAGE_LIMIT_LIVE_WRITE: '1',
-    INLET_ACCOUNT_PAGE_LIMIT_LIVE_APPROVAL: '',
-    INLET_ACCOUNT_PAGE_LIMIT_LIVE_REQUIRE: '0',
-    PAGERO_PAGE_LIMIT_ALLOWED_ORIGINS: '',
-  },
-  encoding: 'utf8',
+const missingApproval = runScript('scripts/account-page-limit-production-safe-entry.mjs', {
+  INLET_ACCOUNT_PAGE_LIMIT_BASE_URL: 'https://pagero.kr',
+  INLET_ACCOUNT_PAGE_LIMIT_LIVE_WRITE: '1',
+  INLET_ACCOUNT_PAGE_LIMIT_LIVE_APPROVAL: '',
+  INLET_ACCOUNT_PAGE_LIMIT_LIVE_REQUIRE: '0',
+  PAGERO_PAGE_LIMIT_ALLOWED_ORIGINS: '',
 });
-assert.equal(missingApproval.status, 0, 'optional verification may skip when explicit approval is missing');
+assert.equal(missingApproval.status, 0);
 assert.match(missingApproval.stdout, /"status": "skipped-live"/);
 
 console.log(JSON.stringify({
@@ -223,6 +221,8 @@ console.log(JSON.stringify({
     'no-url-credentials',
     'explicit-write-approval-phrase',
     'production-environment',
+    'same-origin-request-lock',
+    'redirect-following-disabled',
     'session-exfiltration-block',
   ],
 }, null, 2));
