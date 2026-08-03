@@ -27,12 +27,12 @@ assert.match(workflow, /permissions:\s*\n\s*contents:\s*read/);
 
 for (const token of [
   'SES Auth Email Production Verification',
-  'read-only',
+  '읽기 전용',
   'ProductionAccessEnabled',
   'DKIM',
   'DMARC',
   'custom MAIL FROM',
-  'does not send email',
+  '이메일을 발송하지 않는다',
   'verified-live',
 ]) assert(docs.includes(token), `runbook missing ${token}`);
 
