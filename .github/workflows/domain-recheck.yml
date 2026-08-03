@@ -31,6 +31,7 @@ jobs:
           node-version: 24
 
       # Scheduled verification is fail-closed; skipped-live is not an accepted result.
+      # The safe runner fixes the endpoint path to /api/admin/domains/recheck.
       - name: Recheck due custom domains
         shell: bash
         run: |
