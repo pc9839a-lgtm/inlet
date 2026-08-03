@@ -287,9 +287,17 @@ jobs:
         run: npm ci
 
       - name: Install Korean browser font
+        timeout-minutes: 6
+        shell: bash
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends fonts-noto-cjk
+          set -euo pipefail
+          if fc-match "Noto Sans CJK KR" | grep -qi "NotoSansCJK"; then
+            echo "Noto Sans CJK KR is already available."
+            exit 0
+          fi
+          export DEBIAN_FRONTEND=noninteractive
+          timeout 120s sudo apt-get -o DPkg::Lock::Timeout=60 update -qq
+          timeout 180s sudo apt-get -o DPkg::Lock::Timeout=60 install -y --no-install-recommends fonts-noto-cjk
           fc-match "Noto Sans CJK KR" | grep -qi "NotoSansCJK"
 
       - name: Build template mobile assets

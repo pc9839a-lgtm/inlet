@@ -1,0 +1,77 @@
+name: Account Page Limit Production Verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Exact approved production or preview HTTPS origin
+        required: true
+        default: https://pagero.kr
+        type: string
+      allow_writes:
+        description: Create and delete disposable QA pages
+        required: true
+        default: false
+        type: boolean
+      approval_phrase:
+        description: Type I_APPROVE_ACCOUNT_PAGE_LIMIT_LIVE_WRITES
+        required: false
+        default: ''
+        type: string
+      require_live:
+        description: Fail instead of skipped-live when fixtures are unavailable
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: account-page-limit-production-verify
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    env:
+      INLET_ACCOUNT_PAGE_LIMIT_BASE_URL: ${{ inputs.base_url }}
+      INLET_ACCOUNT_PAGE_LIMIT_LIVE_WRITE: ${{ inputs.allow_writes && '1' || '0' }}
+      INLET_ACCOUNT_PAGE_LIMIT_LIVE_APPROVAL: ${{ inputs.approval_phrase }}
+      INLET_ACCOUNT_PAGE_LIMIT_LIVE_REQUIRE: ${{ inputs.require_live && '1' || '0' }}
+      PAGERO_PAGE_LIMIT_ALLOWED_ORIGINS: ${{ secrets.PAGERO_PAGE_LIMIT_ALLOWED_ORIGINS }}
+      INLET_ACCOUNT_PAGE_LIMIT_EMPTY_GENERAL_SESSION: ${{ secrets.PAGERO_PAGE_LIMIT_EMPTY_GENERAL_SESSION }}
+      INLET_ACCOUNT_PAGE_LIMIT_OCCUPIED_GENERAL_SESSION: ${{ secrets.PAGERO_PAGE_LIMIT_OCCUPIED_GENERAL_SESSION }}
+      INLET_ACCOUNT_PAGE_LIMIT_ARCHIVED_GENERAL_SESSION: ${{ secrets.PAGERO_PAGE_LIMIT_ARCHIVED_GENERAL_SESSION }}
+      INLET_ACCOUNT_PAGE_LIMIT_PLATFORM_MASTER_SESSION: ${{ secrets.PAGERO_PAGE_LIMIT_PLATFORM_MASTER_SESSION }}
+      INLET_ACCOUNT_PAGE_LIMIT_GOOGLE_SESSION: ${{ secrets.PAGERO_PAGE_LIMIT_GOOGLE_SESSION }}
+      INLET_ACCOUNT_PAGE_LIMIT_MANAGER_SESSION: ${{ secrets.PAGERO_PAGE_LIMIT_MANAGER_SESSION }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Verify production account page limit and fixture restoration
+        shell: bash
+        run: |
+          set -o pipefail
+          node scripts/account-page-limit-production-runner.mjs | tee account-page-limit-live-result.json
+
+      - name: Upload verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: account-page-limit-production-evidence-${{ github.run_id }}
+          path: account-page-limit-live-result.json
+          if-no-files-found: warn
+          retention-days: 30
