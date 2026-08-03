@@ -54,6 +54,8 @@
     "d1:backfill:dry-run": "node scripts/d1-backfill-dry-run.mjs",
     "d1:backfill:plan": "node scripts/d1-backfill-write-plan.mjs",
     "d1:hosted-qa:cleanup": "node scripts/d1-hosted-qa-cleanup.mjs",
+    "d1:migration:safety": "node scripts/d1-migration-safety.mjs",
+    "d1:migration:safety:qa": "node scripts/d1-migration-safety-quality-check.mjs",
     "ops:qa": "node scripts/ops-readiness-check.mjs",
     "api:container:qa": "node scripts/api-container-quality-check.mjs",
     "api:functions:qa": "node scripts/pages-functions-quality-check.mjs",
