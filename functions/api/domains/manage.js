@@ -46,6 +46,15 @@ function assertDomainRecord(record, project = {}, pageId = '', hostname = '') {
   return record;
 }
 
+function providerAttachmentMayExist(record = {}) {
+  const provider = String(record.provider || '').trim().toLowerCase();
+  const providerDomainId = String(record.provider_domain_id || '').trim();
+  const providerStatus = String(record.provider_status || '').trim().toLowerCase();
+  if (providerDomainId) return true;
+  if (provider !== 'cloudflare_pages') return false;
+  return !['', 'not_configured', 'missing', 'deactivated'].includes(providerStatus);
+}
+
 // verifyPageDomainConnection owns ensureCloudflarePagesDomain registration and retry policy.
 async function verifyDomain({ db, env, pageId, record }) {
   return verifyPageDomainConnection({
@@ -59,19 +68,33 @@ async function verifyDomain({ db, env, pageId, record }) {
 
 async function detachDomain({ db, env, pageId, record }) {
   const readiness = cloudflarePagesDomainReadiness(env);
-  let providerResult = { deleted: false, missing: false };
+  const providerAttached = providerAttachmentMayExist(record);
+  if (!readiness.configured && providerAttached) {
+    throw endpointError(
+      'Cloudflare 도메인 제거 설정이 없어 안전하게 연결을 해제할 수 없습니다.',
+      503,
+      'DOMAIN_PROVIDER_CLEANUP_REQUIRED',
+      {
+        operatorRequired: true,
+        hostname: normalizeDomainHostname(record.hostname || ''),
+      },
+    );
+  }
+
+  let providerResult = { deleted: false, missing: !providerAttached };
   if (readiness.configured && record.hostname) {
     providerResult = await deleteCloudflarePagesDomain(env, record.hostname);
   }
   const current = await disconnectD1PageDomain(db, pageId, {
-    providerStatus: providerResult.deleted ? 'deactivated' : (readiness.configured ? 'missing' : 'not_configured'),
+    providerStatus: providerResult.deleted ? 'deactivated' : (providerResult.missing ? 'missing' : 'not_configured'),
   });
   return {
     ok: true,
     action: 'detach',
     providerConfigured: readiness.configured,
-    operatorRequired: !readiness.configured,
+    operatorRequired: false,
     providerDeleted: !!providerResult.deleted,
+    providerMissing: !!providerResult.missing,
     message: '개인 도메인 연결을 해제했습니다.',
     current: publicDomainRecord(current),
   };
