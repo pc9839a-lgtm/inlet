@@ -1,13 +1,22 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
+import {
+  QA_SHEET_HEADERS,
+  assertDedicatedQaSheetRows,
+  exactMarkerRowIndices,
+  qaResidueRowIndices,
+  rowsDigest,
+  sanitizeGoogleSheetsEvidence,
+} from './google-sheets-production-safety.mjs';
 
 const root = process.cwd();
 const read = (path) => readFile(`${root}/${path}`, 'utf8');
 
-const [safeEntry, liveCheck, workflow, docs, packageJson, qaAll, envExample] = await Promise.all([
+const [safeEntry, liveCheck, safetyHelpers, workflow, docs, packageJson, qaAll, envExample] = await Promise.all([
   read('scripts/google-sheets-production-safe-entry.mjs'),
   read('scripts/google-sheets-production-check.mjs'),
+  read('scripts/google-sheets-production-safety.mjs'),
   read('.github/workflows/google-sheets-production-verify.yml'),
   read('docs/ops-google-sheets-production-verification.md'),
   read('package.json'),
@@ -36,8 +45,6 @@ for (const token of [
   'https://sheets.googleapis.com',
   "redirect: 'error'",
   "grant_type: 'refresh_token'",
-  "provider: 'google_sheets'",
-  "mode: 'oauth'",
   '/api/leads/delivery-logs',
   '/deliver',
   'idempotencyKey',
@@ -45,15 +52,59 @@ for (const token of [
   ':batchUpdate',
   "method: 'DELETE'",
   'sheetRowsDeleted: true',
+  'baselineRestored: true',
   'secretValuesIncluded: false',
+  'persisted qa-sheets page integration does not match the approved fixture',
+  'previous qa-sheets row residue exists in the fixture sheet',
+  'previous qa-sheets lead residue exists in Pagero',
+  'fixture sheet baseline was not restored after cleanup',
+  'assertDedicatedQaSheetRows',
+  'exactMarkerRowIndices',
+  'listQaLeads(marker)',
 ]) {
   assert(liveCheck.includes(token), `live check missing ${token}`);
 }
 assert.match(liveCheck, /target\.origin !== baseOrigin/);
 assert.match(liveCheck, /target\.pathname\.startsWith\('\/api\/'\)/);
+assert.match(liveCheck, /String\(sheets\.spreadsheetId \|\| ''\)\.trim\(\) !== fixture\.spreadsheetId/);
+assert.match(liveCheck, /String\(sheets\.sheetName \|\| ''\)\.trim\(\) !== fixture\.sheetName/);
 assert.doesNotMatch(liveCheck, /console\.(?:log|error)\([^\n]*(?:clientSecret|refreshToken|accessToken|session)/);
 assert.doesNotMatch(liveCheck, /evidence\.push\([^\n]*(?:email|phone|spreadsheetId|session|token)/i);
 assert.doesNotMatch(liveCheck, /follow|redirect:\s*['"]follow['"]/);
+
+for (const token of [
+  'QA_SHEET_HEADERS',
+  'exactMarkerRowIndices',
+  'qaResidueRowIndices',
+  'assertDedicatedQaSheetRows',
+  'rowsDigest',
+  'sanitizeGoogleSheetsEvidence',
+  '[REDACTED]',
+]) {
+  assert(safetyHelpers.includes(token), `safety helper missing ${token}`);
+}
+
+const marker = 'qa-sheets-contract-1';
+const rows = [
+  [...QA_SHEET_HEADERS],
+  ['2026-08-03', marker, `prefix-${marker}`, '', ''],
+  ['2026-08-03', `prefix-${marker}`, '', '', ''],
+];
+assert.deepEqual(exactMarkerRowIndices(rows, marker), [1], 'cleanup must use exact marker cells, not substring matches');
+assert.deepEqual(qaResidueRowIndices(rows), [1], 'residue detection must find qa-sheets markers');
+assert.equal(assertDedicatedQaSheetRows([[...QA_SHEET_HEADERS]]), true);
+assert.throws(() => assertDedicatedQaSheetRows([]), /exactly one header row/);
+assert.throws(() => assertDedicatedQaSheetRows([[...QA_SHEET_HEADERS], ['data']]), /exactly one header row/);
+assert.throws(() => assertDedicatedQaSheetRows([['wrong']]), /header must exactly match/);
+assert.equal(rowsDigest([[...QA_SHEET_HEADERS]]), rowsDigest([[...QA_SHEET_HEADERS]]));
+assert.notEqual(rowsDigest([[...QA_SHEET_HEADERS]]), rowsDigest([[...QA_SHEET_HEADERS], ['data']]));
+const redacted = sanitizeGoogleSheetsEvidence({
+  clientSecret: 'top-secret',
+  details: { message: 'failed with top-secret', spreadsheetId: 'sheet-123' },
+}, ['top-secret', 'sheet-123']);
+assert.equal(redacted.clientSecret, '[REDACTED]');
+assert.equal(redacted.details.spreadsheetId, '[REDACTED]');
+assert.doesNotMatch(JSON.stringify(redacted), /top-secret|sheet-123/);
 
 for (const token of [
   'workflow_dispatch',
@@ -91,6 +142,10 @@ for (const token of [
   'Do not use a customer spreadsheet',
   'verified-live',
   'skipped-live',
+  'Persisted Page Integration Check',
+  'Clean Baseline Contract',
+  '접수일시, 이름, 연락처, qaMarker, source',
+  'baseline digest',
 ]) {
   assert(docs.includes(token), `runbook missing ${token}`);
 }
@@ -168,6 +223,17 @@ const missingApproval = runSafeEntry({
 assert.notEqual(missingApproval.status, 0);
 assert.match(missingApproval.stderr, /I_APPROVE_GOOGLE_SHEETS_LIVE_WRITES/);
 
+const fakeSecret = 'GOOGLE_SHEETS_SECRET_MUST_NOT_APPEAR';
+const blockedSecret = runSafeEntry({
+  INLET_GOOGLE_SHEETS_BASE_URL: 'https://attacker.example',
+  INLET_GOOGLE_SHEETS_LIVE_PHASE: 'read-only',
+  INLET_GOOGLE_SHEETS_PAGE_SLUG: 'qa-sheets-contract',
+  INLET_GOOGLE_SHEETS_SHEET_NAME: 'QA Leads',
+  INLET_GOOGLE_SHEETS_VERIFY_CLIENT_SECRET: fakeSecret,
+});
+assert.notEqual(blockedSecret.status, 0);
+assert.doesNotMatch(`${blockedSecret.stdout}\n${blockedSecret.stderr}`, new RegExp(fakeSecret));
+
 const skipped = runSafeEntry({
   INLET_GOOGLE_SHEETS_BASE_URL: 'https://pagero.kr',
   INLET_GOOGLE_SHEETS_LIVE_PHASE: 'read-only',
@@ -186,7 +252,12 @@ console.log(JSON.stringify({
   exactOriginAllowlist: true,
   redirectBlocked: true,
   writeApprovalRequired: true,
-  googleRefreshTokenCovered: true,
+  persistedPageIntegrationMatched: true,
+  dedicatedSpreadsheetRequired: true,
+  cleanHeaderOnlyBaselineRequired: true,
+  priorResidueBlocked: true,
+  exactMarkerCleanup: true,
+  baselineRestorationRequired: true,
   rowIdempotencyCovered: true,
   cleanupRequired: true,
   secretOutputBlocked: true,
