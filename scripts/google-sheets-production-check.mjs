@@ -1,3 +1,13 @@
+import {
+  QA_MARKER_PREFIX,
+  assertDedicatedQaSheetRows,
+  exactMarkerRowIndices,
+  isQaName,
+  qaResidueRowIndices,
+  rowsDigest,
+  sanitizeGoogleSheetsEvidence,
+} from './google-sheets-production-safety.mjs';
+
 const baseOrigin = String(process.env.INLET_GOOGLE_SHEETS_BASE_URL || 'https://pagero.kr').replace(/\/+$/, '');
 const phase = String(process.env.INLET_GOOGLE_SHEETS_LIVE_PHASE || 'read-only').trim().toLowerCase();
 const requireLive = String(process.env.INLET_GOOGLE_SHEETS_LIVE_REQUIRE || '') === '1';
@@ -18,17 +28,34 @@ const evidence = [];
 let accessToken = '';
 let sheetId = null;
 let marker = '';
-let leadCreated = false;
-let sheetRowCreated = false;
+let persistedPage = null;
+let baselineRows = null;
+let baselineDigest = '';
+
+function sensitiveValues() {
+  return [
+    fixture.session,
+    fixture.projectId,
+    fixture.spreadsheetId,
+    fixture.clientId,
+    fixture.clientSecret,
+    fixture.refreshToken,
+    accessToken,
+  ];
+}
 
 function fail(message, details = {}) {
   const error = new Error(message);
-  error.details = details;
+  error.details = sanitizeGoogleSheetsEvidence(details, sensitiveValues());
   throw error;
 }
 
 function record(name, details = {}) {
-  evidence.push({ name, status: 'passed', ...details });
+  evidence.push({
+    name,
+    status: 'passed',
+    ...sanitizeGoogleSheetsEvidence(details, sensitiveValues()),
+  });
 }
 
 function responseCode(data = {}) {
@@ -36,10 +63,10 @@ function responseCode(data = {}) {
 }
 
 function safeError(error) {
-  return {
+  return sanitizeGoogleSheetsEvidence({
     message: String(error?.message || error || 'unknown error').slice(0, 400),
     ...(error?.details && typeof error.details === 'object' ? { details: error.details } : {}),
-  };
+  }, sensitiveValues());
 }
 
 function missingInputs() {
@@ -62,7 +89,7 @@ async function fetchWithTimeout(url, options = {}) {
 async function pageroRequest(path, { method = 'GET', body, headers = {} } = {}) {
   if (process.env.INLET_GOOGLE_SHEETS_ORIGIN_VERIFIED !== '1') fail('Pagero origin was not verified by the safe entrypoint');
   const target = new URL(path, `${baseOrigin}/`);
-  if (target.origin !== baseOrigin || !target.pathname.startsWith('/api/')) {
+  if (target.origin !== baseOrigin || !target.pathname.startsWith('/api/') || target.username || target.password) {
     fail('cross-origin or non-API Pagero request blocked', { path: target.pathname });
   }
   const response = await fetchWithTimeout(target, {
@@ -89,12 +116,26 @@ async function pageroRequest(path, { method = 'GET', body, headers = {} } = {}) 
 
 function assertGoogleTarget(target) {
   const parsed = target instanceof URL ? target : new URL(target);
-  const tokenEndpoint = parsed.origin === 'https://oauth2.googleapis.com' && parsed.pathname === '/token' && !parsed.search && !parsed.hash;
+  const noCredentials = !parsed.username && !parsed.password;
+  const tokenEndpoint = parsed.origin === 'https://oauth2.googleapis.com'
+    && parsed.pathname === '/token'
+    && !parsed.search
+    && !parsed.hash
+    && noCredentials;
+  const spreadsheetRoot = `/v4/spreadsheets/${encodeURIComponent(fixture.spreadsheetId)}`;
+  const sheetsPathApproved = parsed.pathname === spreadsheetRoot
+    || parsed.pathname.startsWith(`${spreadsheetRoot}/`)
+    || parsed.pathname === `${spreadsheetRoot}:batchUpdate`;
   const sheetsEndpoint = parsed.origin === 'https://sheets.googleapis.com'
-    && parsed.pathname.startsWith('/v4/spreadsheets/')
-    && !parsed.username
-    && !parsed.password;
-  if (!tokenEndpoint && !sheetsEndpoint) fail('unapproved Google API target blocked', { origin: parsed.origin, path: parsed.pathname });
+    && sheetsPathApproved
+    && !parsed.hash
+    && noCredentials;
+  if (!tokenEndpoint && !sheetsEndpoint) {
+    fail('unapproved Google API target blocked', {
+      origin: parsed.origin,
+      endpointType: parsed.origin === 'https://sheets.googleapis.com' ? 'sheets' : 'other',
+    });
+  }
   return parsed;
 }
 
@@ -142,9 +183,9 @@ async function sheetsJson(path, { method = 'GET', body } = {}) {
   try {
     payload = await response.json();
   } catch {
-    fail('Google Sheets API returned invalid JSON', { status: response.status, path: target.pathname });
+    fail('Google Sheets API returned invalid JSON', { status: response.status, endpointType: 'sheets' });
   }
-  if (!response.ok) fail('Google Sheets API request failed', { status: response.status, path: target.pathname });
+  if (!response.ok) fail('Google Sheets API request failed', { status: response.status, endpointType: 'sheets' });
   return payload;
 }
 
@@ -156,10 +197,15 @@ function quotedSheetRange() {
 async function loadSpreadsheetMetadata() {
   const fields = encodeURIComponent('properties.title,sheets.properties(sheetId,title)');
   const payload = await sheetsJson(`/v4/spreadsheets/${encodeURIComponent(fixture.spreadsheetId)}?fields=${fields}`);
+  const spreadsheetTitle = String(payload?.properties?.title || '').trim();
+  if (!isQaName(spreadsheetTitle)) fail('fixture spreadsheet title must start with QA');
   const sheet = (payload.sheets || []).find((item) => String(item?.properties?.title || '') === fixture.sheetName);
   if (!sheet || !Number.isInteger(Number(sheet.properties.sheetId))) fail('dedicated QA sheet was not found');
   sheetId = Number(sheet.properties.sheetId);
-  record('google-sheets:fixture-metadata', { dedicatedQaSheet: true });
+  record('google-sheets:fixture-metadata', {
+    dedicatedQaSpreadsheet: true,
+    dedicatedQaSheet: true,
+  });
 }
 
 async function readSheetRows() {
@@ -168,24 +214,15 @@ async function readSheetRows() {
   return Array.isArray(payload.values) ? payload.values : [];
 }
 
-function markerRowIndices(rows) {
-  if (!marker) return [];
-  const indices = [];
-  rows.forEach((row, index) => {
-    if (Array.isArray(row) && row.some((cell) => String(cell || '').includes(marker))) indices.push(index);
-  });
-  return indices;
-}
-
 async function pollMarker(expectedCount, attempts = 18, delayMs = 3000) {
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     const rows = await readSheetRows();
-    const indices = markerRowIndices(rows);
+    const indices = exactMarkerRowIndices(rows, marker);
     if (indices.length === expectedCount) return indices;
     if (attempt < attempts) await new Promise((resolve) => setTimeout(resolve, delayMs));
   }
   const finalRows = await readSheetRows();
-  const finalIndices = markerRowIndices(finalRows);
+  const finalIndices = exactMarkerRowIndices(finalRows, marker);
   fail('Google Sheets marker count mismatch', { expectedCount, actualCount: finalIndices.length });
 }
 
@@ -204,6 +241,23 @@ async function deleteSheetRows(indices) {
   });
 }
 
+function fixtureProject() {
+  return { projectId: fixture.projectId, slug: fixture.pageSlug };
+}
+
+function fixturePage() {
+  if (!persistedPage) fail('persisted QA page is unavailable');
+  return {
+    id: persistedPage.id || '',
+    projectId: persistedPage.projectId || fixture.projectId,
+    title: persistedPage.title || 'Google Sheets Production QA',
+    slug: persistedPage.slug || fixture.pageSlug,
+    integrations: {
+      sheets: { ...(persistedPage.integrations?.sheets || {}) },
+    },
+  };
+}
+
 async function verifyPageroFixture() {
   const session = await pageroRequest('/api/auth/session');
   if (!session.response.ok || !session.data?.user?.ownerId) {
@@ -215,35 +269,91 @@ async function verifyPageroFixture() {
   if (!projects.response.ok || !Array.isArray(projects.data?.pages)) {
     fail('fixture project list failed', { status: projects.response.status, code: responseCode(projects.data) });
   }
-  const page = projects.data.pages.find((item) => String(item.slug || '').toLowerCase() === fixture.pageSlug);
-  if (!page || String(page.projectId || '') !== fixture.projectId) fail('dedicated qa-sheets fixture page was not found');
-  record('pagero:qa-page-access', { slugPrefixVerified: true });
+  const listedPage = projects.data.pages.find((item) => String(item.slug || '').toLowerCase() === fixture.pageSlug);
+  if (!listedPage || String(listedPage.projectId || '') !== fixture.projectId) {
+    fail('dedicated qa-sheets fixture page was not found');
+  }
+
+  const query = new URLSearchParams(fixtureProject()).toString();
+  const pageResult = await pageroRequest(`/api/pages/${encodeURIComponent(fixture.pageSlug)}?${query}`);
+  if (!pageResult.response.ok || !pageResult.data?.page) {
+    fail('persisted qa-sheets fixture page could not be loaded', {
+      status: pageResult.response.status,
+      code: responseCode(pageResult.data),
+    });
+  }
+  const page = pageResult.data.page;
+  if (
+    String(page.id || '') !== String(listedPage.id || '')
+    || String(page.projectId || '') !== fixture.projectId
+    || String(page.slug || '').toLowerCase() !== fixture.pageSlug
+  ) {
+    fail('persisted qa-sheets fixture identity does not match the project listing');
+  }
+  const sheets = page.integrations?.sheets || {};
+  if (
+    sheets.enabled !== true
+    || String(sheets.mode || '').toLowerCase() !== 'oauth'
+    || String(sheets.spreadsheetId || '').trim() !== fixture.spreadsheetId
+    || String(sheets.sheetName || '').trim() !== fixture.sheetName
+    || String(sheets.status || '').toLowerCase() !== 'connected'
+  ) {
+    fail('persisted qa-sheets page integration does not match the approved fixture');
+  }
+  persistedPage = page;
+  record('pagero:qa-page-access', {
+    slugPrefixVerified: true,
+    persistedIntegrationMatched: true,
+  });
 }
 
 function createMarker() {
-  const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  return `qa-sheets-${suffix}`;
+  const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  return `${QA_MARKER_PREFIX}${suffix}`;
 }
 
-function fixtureProject() {
-  return { projectId: fixture.projectId, slug: fixture.pageSlug };
+function leadHasQaMarker(lead = {}, expected = '') {
+  const values = [
+    lead.id,
+    lead.name,
+    lead.memo,
+    lead.message,
+    lead.values?.qaMarker,
+  ].map((value) => String(value || ''));
+  if (expected) return values.some((value) => value === expected);
+  return values.some((value) => value.startsWith(QA_MARKER_PREFIX));
 }
 
-function fixturePage() {
-  return {
-    title: 'Google Sheets Production QA',
-    slug: fixture.pageSlug,
-    integrations: {
-      sheets: {
-        enabled: true,
-        provider: 'google_sheets',
-        mode: 'oauth',
-        spreadsheetId: fixture.spreadsheetId,
-        sheetName: fixture.sheetName,
-        status: 'connected',
-      },
-    },
-  };
+async function listQaLeads(expected = '') {
+  const query = new URLSearchParams({
+    ...fixtureProject(),
+    q: expected || QA_MARKER_PREFIX,
+    limit: '100',
+  }).toString();
+  const result = await pageroRequest(`/api/leads?${query}`);
+  if (!result.response.ok || !Array.isArray(result.data?.leads)) {
+    fail('fixture lead residue lookup failed', {
+      status: result.response.status,
+      code: responseCode(result.data),
+    });
+  }
+  return result.data.leads.filter((lead) => leadHasQaMarker(lead, expected));
+}
+
+async function verifyFixtureBaseline() {
+  const rows = await readSheetRows();
+  assertDedicatedQaSheetRows(rows);
+  const residueRows = qaResidueRowIndices(rows);
+  if (residueRows.length) fail('previous qa-sheets row residue exists in the fixture sheet', { residueCount: residueRows.length });
+  const residueLeads = await listQaLeads();
+  if (residueLeads.length) fail('previous qa-sheets lead residue exists in Pagero', { residueCount: residueLeads.length });
+  baselineRows = rows;
+  baselineDigest = rowsDigest(rows);
+  record('fixture:clean-baseline', {
+    headerOnly: true,
+    priorSheetResidue: 0,
+    priorLeadResidue: 0,
+  });
 }
 
 function fixtureLead() {
@@ -257,48 +367,62 @@ function fixtureLead() {
     name: marker,
     phone: `010${digits}`,
     memo: marker,
-    values: { qaMarker: marker, source: 'google-sheets-production-verification' },
+    values: {
+      qaMarker: marker,
+      source: 'google-sheets-production-verification',
+    },
     createdAt,
     createdMonth: createdAt.slice(0, 7),
   };
 }
 
 async function deleteLead() {
-  if (!leadCreated || !marker) return;
+  if (!marker) return;
   const query = new URLSearchParams(fixtureProject()).toString();
   const deleted = await pageroRequest(`/api/leads/${encodeURIComponent(marker)}?${query}`, { method: 'DELETE' });
   if (!deleted.response.ok && deleted.response.status !== 404) {
     fail('fixture lead cleanup failed', { status: deleted.response.status, code: responseCode(deleted.data) });
   }
-  leadCreated = false;
 }
 
 async function cleanup() {
   const errors = [];
-  if (sheetRowCreated && marker && sheetId != null && accessToken) {
+  if (marker && sheetId != null && accessToken) {
     try {
       const rows = await readSheetRows();
-      const indices = markerRowIndices(rows);
+      const indices = exactMarkerRowIndices(rows, marker);
       await deleteSheetRows(indices);
-      const remaining = markerRowIndices(await readSheetRows());
+      const afterDelete = await readSheetRows();
+      const remaining = exactMarkerRowIndices(afterDelete, marker);
       if (remaining.length) fail('fixture sheet row cleanup verification failed', { remaining: remaining.length });
-      sheetRowCreated = false;
+      if (baselineDigest && rowsDigest(afterDelete) !== baselineDigest) {
+        fail('fixture sheet baseline was not restored after cleanup', {
+          expectedBaseline: 'header-only',
+          actualRowCount: afterDelete.length,
+        });
+      }
     } catch (error) {
       errors.push({ operation: 'sheet-row-delete', ...safeError(error) });
     }
   }
-  try {
-    await deleteLead();
-  } catch (error) {
-    errors.push({ operation: 'lead-delete', ...safeError(error) });
+
+  if (marker) {
+    try {
+      await deleteLead();
+      const remainingLeads = await listQaLeads(marker);
+      if (remainingLeads.length) fail('fixture lead cleanup verification failed', { remaining: remainingLeads.length });
+    } catch (error) {
+      errors.push({ operation: 'lead-delete', ...safeError(error) });
+    }
   }
+
   if (errors.length) fail('Google Sheets fixture cleanup failed', { errors });
 }
 
 async function verifyLiveDelivery() {
   marker = createMarker();
-  const baseline = markerRowIndices(await readSheetRows());
-  if (baseline.length) fail('generated marker already exists in fixture sheet');
+  if (!baselineRows || !baselineDigest) fail('clean fixture baseline must be captured before writes');
+  if (exactMarkerRowIndices(baselineRows, marker).length) fail('generated marker already exists in fixture sheet');
 
   const project = fixtureProject();
   const page = fixturePage();
@@ -307,7 +431,6 @@ async function verifyLiveDelivery() {
   if (!saved.response.ok || saved.data?.lead?.id !== marker) {
     fail('fixture lead save failed', { status: saved.response.status, code: responseCode(saved.data) });
   }
-  leadCreated = true;
   const sheetLog = (saved.data?.delivery?.logs || []).find((log) => log.provider === 'google_sheets');
   if (!sheetLog || sheetLog.status !== 'success') {
     fail('Google Sheets OAuth delivery did not succeed', { deliveryStatus: String(sheetLog?.status || '') });
@@ -315,7 +438,6 @@ async function verifyLiveDelivery() {
   record('pagero:google-sheets-delivery', { deliveryStatus: 'success' });
 
   const firstRows = await pollMarker(1);
-  sheetRowCreated = true;
   if (firstRows[0] === 0) fail('QA marker unexpectedly replaced the sheet header');
   record('google-sheets:row-created-once', { count: 1 });
 
@@ -323,26 +445,32 @@ async function verifyLiveDelivery() {
     method: 'POST',
     body: { project, page },
   });
-  if (!retried.response.ok) fail('delivery retry request failed', { status: retried.response.status, code: responseCode(retried.data) });
+  if (!retried.response.ok) {
+    fail('delivery retry request failed', { status: retried.response.status, code: responseCode(retried.data) });
+  }
   await new Promise((resolve) => setTimeout(resolve, 4000));
   await pollMarker(1, 4, 2000);
   record('google-sheets:idempotent-retry', { duplicateRows: 0 });
 
   const query = new URLSearchParams({ ...project, leadId: marker }).toString();
   const logs = await pageroRequest(`/api/leads/delivery-logs?${query}`);
-  if (!logs.response.ok || !Array.isArray(logs.data?.logs)) fail('delivery log lookup failed', { status: logs.response.status });
+  if (!logs.response.ok || !Array.isArray(logs.data?.logs)) {
+    fail('delivery log lookup failed', { status: logs.response.status });
+  }
   const googleLogs = logs.data.logs.filter((log) => log.provider === 'google_sheets');
   if (!googleLogs.some((log) => log.status === 'success' && log.idempotencyKey)) {
     fail('Google Sheets delivery log lacks successful idempotency evidence');
   }
-  record('pagero:delivery-log-idempotency', { successfulProviderLogs: googleLogs.filter((log) => log.status === 'success').length });
+  record('pagero:delivery-log-idempotency', {
+    successfulProviderLogs: googleLogs.filter((log) => log.status === 'success').length,
+  });
 }
 
 async function main() {
   if (process.env.INLET_GOOGLE_SHEETS_ORIGIN_VERIFIED !== '1') fail('safe entrypoint verification is required');
   if (!['read-only', 'verify-live'].includes(phase)) fail('unsupported Google Sheets verification phase', { phase });
   if (!/^qa-sheets-[a-z0-9-]+$/.test(fixture.pageSlug || '')) fail('fixture page slug must start with qa-sheets-');
-  if (!/^qa(?:[- _]|$)/i.test(fixture.sheetName || '')) fail('fixture sheet name must start with QA');
+  if (!isQaName(fixture.sheetName)) fail('fixture sheet name must start with QA');
 
   const missing = missingInputs();
   if (missing.length) {
@@ -362,7 +490,7 @@ async function main() {
   await verifyPageroFixture();
   await refreshGoogleAccessToken();
   await loadSpreadsheetMetadata();
-  await readSheetRows();
+  await verifyFixtureBaseline();
   record('google-sheets:read-access', { readable: true });
 
   if (phase === 'read-only') {
@@ -380,14 +508,22 @@ async function main() {
 
   await verifyLiveDelivery();
   await cleanup();
-  record('fixture:cleanup-complete', { leadDeleted: true, sheetRowsDeleted: true });
+  record('fixture:cleanup-complete', {
+    leadDeleted: true,
+    sheetRowsDeleted: true,
+    baselineRestored: true,
+  });
   console.log(JSON.stringify({
     ok: true,
     status: 'verified-live',
     phase,
     checks: evidence.length,
     evidence,
-    fixtureState: { leadDeleted: true, sheetRowsDeleted: true },
+    fixtureState: {
+      leadDeleted: true,
+      sheetRowsDeleted: true,
+      baselineRestored: true,
+    },
     secretValuesIncluded: false,
   }, null, 2));
 }
@@ -406,7 +542,7 @@ try {
     phase,
     error: safeError(error),
     ...(error.cleanup ? { cleanup: error.cleanup } : {}),
-    evidence,
+    evidence: sanitizeGoogleSheetsEvidence(evidence, sensitiveValues()),
     secretValuesIncluded: false,
   }, null, 2));
   process.exitCode = 1;
