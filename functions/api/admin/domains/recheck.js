@@ -8,6 +8,8 @@ import {
 } from '../../_shared.js';
 
 const METHODS = 'POST, OPTIONS';
+const MIN_SECRET_LENGTH = 32;
+const MAX_AUTHORIZATION_LENGTH = 4096;
 
 function endpointError(message, status, code, details = {}) {
   const error = new Error(message);
@@ -23,24 +25,45 @@ function boundedInteger(value, fallback, min, max) {
   return Math.max(min, Math.min(max, parsed));
 }
 
-async function digest(value = '') {
+async function digestBytes(value = '') {
   const bytes = new TextEncoder().encode(String(value || ''));
   const hash = await crypto.subtle.digest('SHA-256', bytes);
-  return Array.from(new Uint8Array(hash)).map((part) => part.toString(16).padStart(2, '0')).join('');
+  return new Uint8Array(hash);
+}
+
+function constantTimeEqual(left, right) {
+  if (!(left instanceof Uint8Array) || !(right instanceof Uint8Array)) return false;
+  let mismatch = left.length ^ right.length;
+  const length = Math.max(left.length, right.length);
+  for (let index = 0; index < length; index += 1) {
+    mismatch |= (left[index % left.length] || 0) ^ (right[index % right.length] || 0);
+  }
+  return mismatch === 0;
 }
 
 async function assertSchedulerSecret(request, env = {}) {
   const expected = String(env.INLET_DOMAIN_RECHECK_SECRET || '').trim();
-  if (!expected) {
-    throw endpointError('도메인 자동 확인 비밀키가 설정되지 않았습니다.', 503, 'DOMAIN_RECHECK_SECRET_MISSING', {
-      status: 'skipped-live',
+  if (expected.length < MIN_SECRET_LENGTH) {
+    throw endpointError('도메인 자동 확인 비밀키가 안전하게 설정되지 않았습니다.', 503, 'DOMAIN_RECHECK_SECRET_WEAK_OR_MISSING', {
+      status: 'failed-live',
+      minimumLength: MIN_SECRET_LENGTH,
     });
   }
   const authorization = String(request.headers.get('Authorization') || '').trim();
+  if (!authorization || authorization.length > MAX_AUTHORIZATION_LENGTH) {
+    throw endpointError('도메인 자동 확인 권한이 없습니다.', 401, 'DOMAIN_RECHECK_UNAUTHORIZED');
+  }
   const bearer = authorization.toLowerCase().startsWith('bearer ')
     ? authorization.slice(7).trim()
     : '';
-  if (!bearer || await digest(bearer) !== await digest(expected)) {
+  if (!bearer) {
+    throw endpointError('도메인 자동 확인 권한이 없습니다.', 401, 'DOMAIN_RECHECK_UNAUTHORIZED');
+  }
+  const [actualDigest, expectedDigest] = await Promise.all([
+    digestBytes(bearer),
+    digestBytes(expected),
+  ]);
+  if (!constantTimeEqual(actualDigest, expectedDigest)) {
     throw endpointError('도메인 자동 확인 권한이 없습니다.', 401, 'DOMAIN_RECHECK_UNAUTHORIZED');
   }
 }
