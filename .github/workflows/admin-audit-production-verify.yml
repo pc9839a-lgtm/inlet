@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       base_url:
-        description: Production or preview API origin
+        description: Exact approved production or preview HTTPS origin
         required: true
         default: https://pagero.kr
         type: string
@@ -22,6 +22,11 @@ on:
         required: true
         default: false
         type: boolean
+      approval_phrase:
+        description: Write phases require I_APPROVE_ADMIN_AUDIT_LIVE_WRITES
+        required: false
+        default: ''
+        type: string
       require_live:
         description: Fail instead of skipped-live when fixtures are unavailable
         required: true
@@ -44,12 +49,15 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    environment: production
     env:
       INLET_ADMIN_AUDIT_BASE_URL: ${{ inputs.base_url }}
       INLET_ADMIN_AUDIT_LIVE_PHASE: ${{ inputs.phase }}
       INLET_ADMIN_AUDIT_LIVE_WRITE: ${{ inputs.allow_writes && '1' || '0' }}
+      INLET_ADMIN_AUDIT_LIVE_APPROVAL: ${{ inputs.approval_phrase }}
       INLET_ADMIN_AUDIT_LIVE_REQUIRE: ${{ inputs.require_live && '1' || '0' }}
       INLET_ADMIN_AUDIT_PROJECT_SLUG_PREFIX: ${{ inputs.project_slug_prefix }}
+      PAGERO_ADMIN_AUDIT_ALLOWED_ORIGINS: ${{ vars.PAGERO_ADMIN_AUDIT_ALLOWED_ORIGINS }}
       INLET_ADMIN_AUDIT_PLATFORM_MASTER_SESSION: ${{ secrets.PAGERO_ADMIN_AUDIT_PLATFORM_MASTER_SESSION }}
       INLET_ADMIN_AUDIT_GENERAL_SESSION: ${{ secrets.PAGERO_ADMIN_AUDIT_GENERAL_SESSION }}
       INLET_ADMIN_AUDIT_GENERAL_PASSWORD: ${{ secrets.PAGERO_ADMIN_AUDIT_GENERAL_PASSWORD }}
@@ -63,7 +71,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - name: Install
@@ -79,7 +87,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: admin-audit-production-evidence
+          name: admin-audit-production-evidence-${{ github.run_id }}
           path: admin-audit-production-result.json
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 30
