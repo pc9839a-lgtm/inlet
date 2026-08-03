@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import {
+  evaluatePreApplyConsistency,
   evaluateSafetyGate,
   listsMatchExactly,
   normalizeMigrationList,
@@ -56,6 +57,47 @@ for (const [name, patch, expectedMessage] of [
   );
 }
 
+const safeConsistency = evaluatePreApplyConsistency({
+  appliedBefore: ['0001_core.sql'],
+  appliedImmediatelyBeforeApply: ['0001_core.sql'],
+  pendingImmediatelyBeforeApply: pending,
+  expectedPending: pending,
+  historyAvailable: true,
+});
+assert.equal(safeConsistency.ok, true, safeConsistency.errors.join('; '));
+
+for (const [name, patch, expectedMessage] of [
+  [
+    'history changed after backup',
+    { appliedImmediatelyBeforeApply: ['0001_core.sql', '0009_external.sql'] },
+    'history changed after backup',
+  ],
+  [
+    'pending changed after backup',
+    { pendingImmediatelyBeforeApply: ['0011_beta.sql'] },
+    'pending migrations changed after backup',
+  ],
+  [
+    'history table disappeared',
+    { historyAvailable: false },
+    'history table is unavailable immediately before apply',
+  ],
+]) {
+  const consistency = evaluatePreApplyConsistency({
+    appliedBefore: ['0001_core.sql'],
+    appliedImmediatelyBeforeApply: ['0001_core.sql'],
+    pendingImmediatelyBeforeApply: pending,
+    expectedPending: pending,
+    historyAvailable: true,
+    ...patch,
+  });
+  assert.equal(consistency.ok, false, `${name} guard should fail`);
+  assert.ok(
+    consistency.errors.some((message) => message.includes(expectedMessage)),
+    `${name} guard message missing`,
+  );
+}
+
 const entrypoint = await read('scripts/d1-migration-safety.mjs');
 const script = await read('scripts/d1-migration-safety-runner.mjs');
 const workflow = await read('.github/workflows/d1-migration-safety.yml');
@@ -70,6 +112,12 @@ for (const token of [
   'I_APPROVE_D1_MIGRATIONS',
   'PAGERO_D1_BACKUP_ENCRYPTION_KEY',
   'remote pending migrations do not exactly match the approved list',
+  'evaluatePreApplyConsistency',
+  'remote migration history changed after backup; apply aborted',
+  'remote pending migrations changed after backup; apply aborted',
+  'immediatelyBeforeApply = await remoteMigrationState',
+  'pendingMigrationsImmediatelyBeforeApply',
+  'attempted: false',
   "'d1', 'export'",
   "'--skip-confirmation'",
   "'d1', 'migrations', 'apply'",
@@ -88,6 +136,11 @@ for (const token of [
 assert.ok(
   script.indexOf("'d1', 'export'") < script.indexOf("'d1', 'migrations', 'apply'"),
   'backup export must be defined before migration apply',
+);
+assert.ok(
+  script.indexOf('immediatelyBeforeApply = await remoteMigrationState')
+    < script.indexOf('await applyMigrations(config.databaseName)'),
+  'remote migration state must be rechecked immediately before apply',
 );
 assert.ok(
   !script.includes("'d1', 'time-travel', 'restore'"),
@@ -143,11 +196,12 @@ assert.ok(qaAll.includes("['d1:migration:safety:qa'"));
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 49,
+  checks: 56,
   contracts: [
     'manual-only-workflow',
     'main-branch-write-gate',
     'exact-pending-list',
+    'post-backup-pre-apply-consistency-gate',
     'encrypted-export-only',
     'plaintext-cleanup',
     'time-travel-evidence',
