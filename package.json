@@ -34,6 +34,8 @@
     "browser:templates-mobile:qa": "node scripts/template-mobile-browser-regression-check.mjs",
     "browser:templates-mobile:contract:qa": "node scripts/template-mobile-browser-regression-contract-check.mjs",
     "conversion:qa": "node scripts/conversion-quality-check.mjs",
+    "conversion:production:live": "node scripts/conversion-production-safe-entry.mjs",
+    "conversion:production:contract:qa": "node scripts/conversion-production-contract-check.mjs",
     "csv:qa": "node scripts/csv-quality-check.mjs",
     "runtime:qa": "node scripts/runtime-quality-check.mjs",
     "mojibake:qa": "node scripts/mojibake-quality-check.mjs",
