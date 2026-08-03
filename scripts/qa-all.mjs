@@ -34,6 +34,7 @@ const steps = [
   ['browser:templates-mobile:contract:qa', ['scripts/template-mobile-browser-regression-contract-check.mjs']],
   ['deployment:smoke:contract:qa', ['scripts/deployment-route-smoke-contract-check.mjs']],
   ['conversion:qa', ['scripts/conversion-quality-check.mjs']],
+  ['conversion:production:contract:qa', ['scripts/conversion-production-contract-check.mjs']],
   ['csv:qa', ['scripts/csv-quality-check.mjs']],
   ['runtime:qa', ['scripts/runtime-quality-check.mjs']],
   ['mojibake:qa', ['scripts/mojibake-quality-check.mjs']],
