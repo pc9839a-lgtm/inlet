@@ -1,0 +1,50 @@
+name: Admin Audit Integration QA
+
+on:
+  pull_request:
+    paths:
+      - 'functions/admin/**'
+      - 'functions/api/_audit.js'
+      - 'functions/api/admin/**'
+      - 'functions/api/auth/**'
+      - 'functions/api/pages/**'
+      - 'functions/api/projects/**'
+      - 'scripts/admin-audit-*.mjs'
+      - 'scripts/audit-retention-safe-runner.mjs'
+      - 'src/lib/authAccounts.js'
+      - 'src/panels/settings/**'
+      - '.github/workflows/admin-audit-integration-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: admin-audit-integration-qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  admin-audit-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout merge candidate
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Administrator and audit quality checks
+        run: node scripts/admin-audit-quality-check.mjs
+
+      - name: Production safety contract checks
+        run: node scripts/admin-audit-production-contract-check.mjs
+
+      - name: Production build
+        run: node scripts/build.mjs
