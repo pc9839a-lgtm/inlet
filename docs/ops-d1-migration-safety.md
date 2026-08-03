@@ -6,12 +6,13 @@ Status: code complete on the landing-only migration-safety patch branch. Product
 
 This runbook defines the only approved path for applying Pagero production D1 migrations.
 
-The workflow is designed around four requirements:
+The workflow is designed around five requirements:
 
 1. **Exact pending migration list** — the operator must enter the exact filenames and order shown by the production preflight.
 2. **Encrypted backup only** — the production SQL export is encrypted before any artifact upload.
 3. **Recovery evidence before writes** — hashes, HMAC, and available Time Travel evidence are recorded before migrations run.
-4. **No automatic restore** — recovery always requires a separate owner approval and a reviewed target database.
+4. **Post-backup state recheck** — remote applied and pending migration lists must remain unchanged after backup and immediately before apply.
+5. **No automatic restore** — recovery always requires a separate owner approval and a reviewed target database.
 
 This workflow is for Pagero landing-page production storage only. It does not define or validate CallTag application behavior.
 
@@ -62,10 +63,12 @@ The workflow then performs these operations in order:
 6. records encrypted SHA-256 and keyed HMAC-SHA256
 7. deletes the plaintext SQL file
 8. writes a non-secret manifest and rollback instructions
-9. applies the exact pending migrations
-10. re-reads migration history and verifies every approved migration was applied
+9. re-reads remote migration history and recalculates pending migrations
+10. aborts without applying when the applied or pending list changed after backup
+11. applies the exact pending migrations only when the post-backup state is unchanged
+12. re-reads migration history and verifies every approved migration was applied
 
-If migration apply fails, the encrypted backup and recovery evidence remain available. The workflow itself never restores production.
+If migration apply fails, or the post-backup state check blocks the write, the encrypted backup and recovery evidence remain available. The workflow itself never restores production.
 
 ## Required GitHub Secrets
 
@@ -132,9 +135,13 @@ Run only after the preflight result has been reviewed.
    - one `.manifest.json`
    - one `.rollback.txt`
    - no plaintext `.sql` file
-10. Confirm the final manifest status is `verified-live`.
-11. Confirm all approved migrations appear in `remoteAppliedMigrationsAfter`.
-12. Run service health, auth, page read/write, form, reservation, and statistics checks.
+10. Confirm `preApplyConsistency.checked=true`.
+11. Confirm `preApplyConsistency.ok=true` and that both immediately-before-apply lists match the reviewed state.
+12. Confirm the final manifest status is `verified-live`.
+13. Confirm all approved migrations appear in `remoteAppliedMigrationsAfter`.
+14. Run service health, auth, page read/write, form, reservation, and statistics checks.
+
+When `preApplyConsistency.ok=false`, `migrationApply.attempted` must be `false`. Treat that result as a blocked write, inspect who or what changed D1 migration history, rerun read-only preflight, and obtain a new approval. Never reuse the previous expected list.
 
 ## Recovery Policy
 
@@ -206,6 +213,8 @@ The workflow must fail before migration apply when:
 - export is empty or invalid
 - encryption fails
 - plaintext cleanup cannot be guaranteed
+- remote applied migration history changes after backup
+- remote pending migration filenames or order change after backup
 - approved migrations are not visible after apply
 
 ## Local QA
@@ -215,4 +224,4 @@ npm run d1:migration:safety:qa
 npm run qa:all
 ```
 
-The QA contract verifies manual-only execution, exact-list matching, encryption requirements, plaintext exclusion, secret non-disclosure, backup-before-apply ordering, and the absence of automatic restore execution.
+The QA contract verifies manual-only execution, exact-list matching, post-backup pre-apply consistency, encryption requirements, plaintext exclusion, secret non-disclosure, backup-before-apply ordering, and the absence of automatic restore execution.
