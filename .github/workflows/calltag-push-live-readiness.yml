@@ -1,6 +1,13 @@
 name: Verify CallTag Push Readiness
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.deployment/cloudflare-deploy-error.txt'
+      - '.deployment/cloudflare-status.json'
+      - '.github/workflows/calltag-push-live-readiness.yml'
   pull_request:
     paths:
       - '.github/workflows/calltag-push-live-readiness.yml'
