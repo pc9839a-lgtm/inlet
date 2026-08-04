@@ -518,6 +518,7 @@ try {
         const fiveMenuFile = path.join(screenshotDir, `${viewport.name}-five-menu-left.png`);
         await capture(client, fiveMenuFile);
         results.push({ scenario: 'five-menu-left', viewport: viewport.name, file: fiveMenuFile, data: fiveMenu });
+        await evaluate(client, storageScript(7));
       }
     } finally {
       await closePage(debugPort, target, client);

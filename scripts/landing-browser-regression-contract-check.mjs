@@ -31,6 +31,7 @@ assert(visual.includes("slug: 'visual-regression'") && visual.includes("localSto
 assert(visual.includes('JSON.stringify([4, 3])'), 'seven-menu browser QA must enforce a 4+3 row split');
 assert(visual.includes('function createQaPage(menuCount = 7)') && visual.includes('storageScript(5)'), 'browser QA must render a dedicated five-menu scenario');
 assert(visual.includes('assertFiveMenuLeftAligned') && visual.includes('menu 4 must align with menu 1') && visual.includes('menu 5 must align with menu 2'), 'five-menu browser QA must compare real x coordinates');
+assert(visual.includes('await evaluate(client, storageScript(7));'), 'five-menu browser QA must restore the seven-menu baseline before the next viewport');
 assert(visual.includes('JSON.stringify([3, 2])'), 'five-menu browser QA must enforce a 3+2 row split');
 assert(visual.includes('menu button ${index + 1} touch height is below 44px'), 'browser QA must enforce 44px menu touch targets');
 assert(visual.includes('share button overlaps bottom bar'), 'browser QA must reject share/bottom-bar overlap');
