@@ -29,13 +29,16 @@ for (const token of [
 
 assert(visual.includes("slug: 'visual-regression'") && visual.includes("localStorage.setItem(${JSON.stringify(STORAGE_KEY)}"), 'visual QA must seed the same-slug local page before the real public route starts');
 assert(visual.includes('JSON.stringify([4, 3])'), 'seven-menu browser QA must enforce a 4+3 row split');
+assert(visual.includes('function createQaPage(menuCount = 7)') && visual.includes('storageScript(5)'), 'browser QA must render a dedicated five-menu scenario');
+assert(visual.includes('assertFiveMenuLeftAligned') && visual.includes('menu 4 must align with menu 1') && visual.includes('menu 5 must align with menu 2'), 'five-menu browser QA must compare real x coordinates');
+assert(visual.includes('JSON.stringify([3, 2])'), 'five-menu browser QA must enforce a 3+2 row split');
 assert(visual.includes('menu button ${index + 1} touch height is below 44px'), 'browser QA must enforce 44px menu touch targets');
 assert(visual.includes('share button overlaps bottom bar'), 'browser QA must reject share/bottom-bar overlap');
 assert(visual.includes('public viewport exceeded 414px'), 'browser QA must reject desktop public viewport spill');
 assert(visual.includes("viewport.name === 'mobile-390'"), 'form focus browser scenario must run at 390px');
 assert(visual.includes('Input.dispatchMouseEvent') && visual.includes('Real pointer click did not focus the form input'), 'form focus scenario must use a real pointer click and verify the active control');
 assert(visual.includes('assertHidden(focused.topnavState') && visual.includes('assertHidden(focused.bottomState'), 'form focus browser QA must enforce hidden fixed UI');
-assert(visual.includes('Page.captureScreenshot') && visual.includes('-baseline.png') && visual.includes('-form-focus.png'), 'browser QA must emit baseline and focused screenshots');
+assert(visual.includes('Page.captureScreenshot') && visual.includes('-baseline.png') && visual.includes('-form-focus.png') && visual.includes('-five-menu-left.png'), 'browser QA must emit baseline, focused, and five-menu alignment screenshots');
 assert(visual.includes("'/usr/bin/google-chrome'") && visual.includes("'/usr/bin/chromium'"), 'browser QA must resolve Linux Chrome/Chromium');
 
 const parityImport = "@import '../styles/preview-runtime-parity.css';";
@@ -98,7 +101,7 @@ assert(workflow.includes('include-hidden-files: true'), 'hidden browser screensh
 console.log(JSON.stringify({
   ok: true,
   viewports: ['desktop', 'mobile-360', 'mobile-390', 'mobile-430'],
-  scenarios: ['baseline', 'form-focus'],
+  scenarios: ['baseline', 'form-focus', 'five-menu-left'],
   inputMethod: 'real-pointer',
   finalTopnavCss: 'preview-topnav-runtime-contract.css',
   bottomTimerOwner: 'SignalBlocks.RenderBottomTimer',

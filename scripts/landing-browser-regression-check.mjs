@@ -106,8 +106,8 @@ function createCdp(webSocketUrl) {
   };
 }
 
-function createQaPage() {
-  const menus = Array.from({ length: 7 }, (_, index) => ({
+function createQaPage(menuCount = 7) {
+  const menus = Array.from({ length: menuCount }, (_, index) => ({
     id: `visual-menu-${index + 1}`,
     label: index === 5 ? '상담 신청 안내' : `메뉴 ${index + 1}`,
     target: `visual-section-${index + 1}`,
@@ -241,8 +241,12 @@ function createQaPage() {
   };
 }
 
+function storageScript(menuCount = 7) {
+  return `localStorage.setItem(${JSON.stringify(STORAGE_KEY)}, JSON.stringify(${JSON.stringify(createQaPage(menuCount))}));`;
+}
+
 function initScript() {
-  return `localStorage.setItem(${JSON.stringify(STORAGE_KEY)}, JSON.stringify(${JSON.stringify(createQaPage())}));`;
+  return `if (!localStorage.getItem(${JSON.stringify(STORAGE_KEY)})) { ${storageScript(7)} }`;
 }
 
 async function evaluate(client, expression) {
@@ -334,6 +338,18 @@ function assertInside(child, parent, label, tolerance = 3) {
 
 function assertVisible(state, label) {
   assert(state?.display !== 'none' && state?.visibility !== 'hidden' && state?.opacity > 0.5, `${label} is not visible: ${JSON.stringify(state)}`);
+}
+
+function assertFiveMenuLeftAligned(data, viewport) {
+  assert(data.menuButtons?.length === 5, `${viewport.name} expected 5 menu buttons, got ${data.menuButtons?.length || 0}`);
+  assert(JSON.stringify(data.menuRows) === JSON.stringify([3, 2]), `${viewport.name} five-menu rows must be 3+2, got ${JSON.stringify(data.menuRows)}`);
+  const [menu1, menu2, menu3, menu4, menu5] = data.menuButtons;
+  const tolerance = 2;
+  assert(Math.abs(menu1.left - menu4.left) <= tolerance, `${viewport.name} menu 4 must align with menu 1: ${JSON.stringify({ menu1, menu4 })}`);
+  assert(Math.abs(menu2.left - menu5.left) <= tolerance, `${viewport.name} menu 5 must align with menu 2: ${JSON.stringify({ menu2, menu5 })}`);
+  assert(Math.abs(menu1.width - menu4.width) <= tolerance, `${viewport.name} menu 4 width must match menu 1`);
+  assert(Math.abs(menu2.width - menu5.width) <= tolerance, `${viewport.name} menu 5 width must match menu 2`);
+  assert(menu5.right <= menu3.left + tolerance, `${viewport.name} five-menu final row must leave the third column empty: ${JSON.stringify({ menu3, menu5 })}`);
 }
 
 function assertHidden(state, label, details) {
@@ -492,6 +508,16 @@ try {
         const focusFile = path.join(screenshotDir, `${viewport.name}-form-focus.png`);
         await capture(client, focusFile);
         results.push({ scenario: 'form-focus', viewport: viewport.name, file: focusFile, data: focused });
+
+        await evaluate(client, storageScript(5));
+        await client.send('Page.reload', { ignoreCache: true });
+        await waitForLanding(client);
+        await wait(500);
+        const fiveMenu = await collectMetrics(client);
+        assertFiveMenuLeftAligned(fiveMenu, viewport);
+        const fiveMenuFile = path.join(screenshotDir, `${viewport.name}-five-menu-left.png`);
+        await capture(client, fiveMenuFile);
+        results.push({ scenario: 'five-menu-left', viewport: viewport.name, file: fiveMenuFile, data: fiveMenu });
       }
     } finally {
       await closePage(debugPort, target, client);
@@ -504,7 +530,7 @@ try {
   await rm(profileDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }).catch(() => {});
 }
 
-assert(results.length === viewports.length + 1, `Expected ${viewports.length + 1} visual results, got ${results.length}`);
+assert(results.length === viewports.length + 2, `Expected ${viewports.length + 2} visual results, got ${results.length}`);
 console.log(JSON.stringify({
   ok: true,
   engine: 'chrome-cdp',
