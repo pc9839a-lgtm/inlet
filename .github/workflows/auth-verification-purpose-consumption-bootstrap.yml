@@ -28,6 +28,9 @@ jobs:
       - name: Apply verification purpose and consumption patch
         run: python3 scripts/bootstrap-auth-verification-purpose-consumption.py
 
+      - name: Update existing SES QA fixture
+        run: python3 scripts/bootstrap-auth-verification-test-compat.py
+
       - name: Install
         run: npm ci
 
@@ -41,6 +44,6 @@ jobs:
         run: |
           git config user.name "Inlet Patch Bot"
           git config user.email "actions@users.noreply.github.com"
-          git add functions/api/auth/_auth.js functions/api/auth/email-verification.js functions/api/auth/password.js functions/api/auth/account/email.js src/lib/authAccounts.js src/screens/AuthScreen.jsx src/panels/settings/accountSettingsActions.js scripts/auth-quality-check.mjs scripts/auth-verification-purpose-consumption-quality-check.mjs docs/ops-auth-verification-purpose-consumption.md
+          git add functions/api/auth/_auth.js functions/api/auth/email-verification.js functions/api/auth/password.js functions/api/auth/account/email.js src/lib/authAccounts.js src/screens/AuthScreen.jsx src/panels/settings/accountSettingsActions.js scripts/auth-quality-check.mjs scripts/auth-email-quality-check.mjs scripts/auth-verification-purpose-consumption-quality-check.mjs docs/ops-auth-verification-purpose-consumption.md
           git commit -m "fix: isolate and consume auth verification codes"
           git push origin HEAD:fix/auth-verification-purpose-consumption-20260804
