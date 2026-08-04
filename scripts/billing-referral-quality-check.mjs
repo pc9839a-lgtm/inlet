@@ -8,11 +8,14 @@ const files = {
   readiness: 'functions/api/billing/_readiness.js',
   entitlements: 'functions/api/billing/entitlements.js',
   subscriptions: 'functions/api/billing/subscriptions.js',
+  billingReadiness: 'functions/api/billing/readiness.js',
+  webPrecheck: 'functions/api/billing/web/precheck.js',
   verify: 'functions/api/billing/google/verify.js',
   restore: 'functions/api/billing/google/restore.js',
   referralMe: 'functions/api/referrals/me.js',
   referralApply: 'functions/api/referrals/apply.js',
   referralSummary: 'functions/api/referrals/summary.js',
+  referralLanding: 'functions/r/[code].js',
   migration: 'migrations/0009_unified_billing_referral.sql',
 };
 
@@ -49,6 +52,8 @@ const checks = {
   'web and Play channels share one subscription table': source.migration.includes('channel TEXT NOT NULL') && source.shared.includes("channel != 'google_play'"),
   'entitlement endpoint exists': source.entitlements.includes('resolveEntitlement'),
   'subscription endpoint exists': source.subscriptions.includes('listSubscriptions'),
+  'billing readiness endpoint exists': source.billingReadiness.includes('billingReadiness'),
+  'web checkout precheck exists': source.webPrecheck.includes('checkoutDecision'),
   'Google verify endpoint exists': source.verify.includes('verifyGoogleSubscription'),
   'Google restore endpoint exists': source.restore.includes('restoreGoogleSubscriptions'),
   'referral identity endpoint exists': source.referralMe.includes('referralMe'),
@@ -61,6 +66,16 @@ const checks = {
   'restore is blocked before publisher verification': restoreGateIndex >= 0 && restoreActionIndex >= 0 && restoreGateIndex < restoreActionIndex,
   'unready Play returns stable server code': source.readiness.includes("'PLAY_BILLING_NOT_READY'"),
   'readiness response does not expose credentials': !source.readiness.includes('credentialsConfigured,'),
+  'entitlement exposes authoritative server time': source.entitlements.includes('serverNow') && source.entitlements.includes('new Date()'),
+  'customer records remain available after expiry': source.entitlements.includes('customerDataRead: true') && source.entitlements.includes('consultationHistoryRead: true'),
+  'paid automation is feature gated': source.entitlements.includes('callManagement: active') && source.entitlements.includes('messageAutomation: active'),
+  'trial ending and expiry notices exist': source.entitlements.includes('TRIAL_ENDING_24H') && source.entitlements.includes('TRIAL_EXPIRED'),
+  'web precheck blocks existing Play subscription': source.webPrecheck.includes('GOOGLE_PLAY_SUBSCRIPTION_ACTIVE'),
+  'web precheck blocks existing web subscription': source.webPrecheck.includes('WEB_SUBSCRIPTION_ACTIVE'),
+  'referral links use dedicated landing path': source.referralMe.includes('https://pagero.kr/r/'),
+  'referral landing opens CallTag scheme': source.referralLanding.includes('calltag://referral?code='),
+  'referral landing is noindex': source.referralLanding.includes('noindex,nofollow'),
+  'partner center is excluded': source.referralSummary.includes('partnerCenterAvailable = false') && source.referralSummary.includes("partnerCenterUrl = ''"),
 };
 
 const failed = Object.entries(checks).filter(([, passed]) => !passed).map(([name]) => name);
