@@ -1,8 +1,11 @@
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { rememberAccountProjectAccess } from '../lib/accountProjectAccess.js';
+import { fetchSelectedAccountPage } from '../lib/accountPageRepository.js';
 import { authAccountErrorMessage } from '../lib/authAccounts.js';
 import { deleteAccountPage, fetchAccountPages } from '../lib/pageRepository.js';
 import { canCreateLandingPage, isPlatformMasterUser } from '../lib/platformAccountPolicy.js';
+import { STORAGE_KEY } from '../config/storageKeys.js';
+import { save as saveJson, storageErrorMessage } from '../lib/storage.js';
 import { WorkspaceCreateModalLayer } from './workspace/WorkspaceCreateModalLayer.jsx';
 import './DashboardAccountLimit.css';
 
@@ -18,6 +21,7 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
   const [pagesLoaded, setPagesLoaded] = useState(false);
   const [pageListError, setPageListError] = useState('');
   const [deletingProjectId, setDeletingProjectId] = useState('');
+  const [openingProjectId, setOpeningProjectId] = useState('');
   const [draft, setDraft] = useState({ name: user?.name || '', phone: user?.phone || '' });
 
   const accountName = user?.name || user?.email || '사용자';
@@ -91,13 +95,33 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
     }
   };
 
-  const openEditor = (item) => {
-    rememberAccountProjectAccess(item);
-    if (typeof onEdit === 'function') {
-      onEdit({ ...item, __accountProjectAccess: true });
-      return;
+  const openEditor = async (item) => {
+    const openKey = item.projectId || item.id || item.slug;
+    setOpeningProjectId(openKey);
+    setPageListError('');
+
+    try {
+      const selectedPage = await fetchSelectedAccountPage(item, user);
+      if (!selectedPage) throw new Error('선택한 페이지의 서버 저장본을 찾지 못했습니다.');
+
+      const editorPage = { ...selectedPage, __accountProjectAccess: true };
+      rememberAccountProjectAccess(editorPage);
+
+      const stored = saveJson(STORAGE_KEY, editorPage);
+      if (!stored?.ok) throw new Error(storageErrorMessage(stored?.error));
+
+      const params = new URLSearchParams({
+        tab: 'edit',
+        pageId: String(editorPage.id || item.id || ''),
+        projectId: String(editorPage.projectId || item.projectId || ''),
+        slug: String(editorPage.slug || item.slug || ''),
+      });
+      window.location.assign(`/app?${params.toString()}`);
+    } catch (openError) {
+      console.warn('Selected page editor open failed:', openError);
+      setPageListError(openError?.message || '편집 페이지를 불러오지 못했습니다.');
+      setOpeningProjectId('');
     }
-    window.location.href = `/app?slug=${encodeURIComponent(item.slug || '')}`;
   };
 
   const openPreview = (item) => {
@@ -201,26 +225,36 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
             <p className="service-create-limit-note">일반 계정은 랜딩페이지를 1개까지만 만들 수 있습니다.</p>
           )}
           {pageListError && <strong className="service-page-list-error" role="alert">{pageListError}</strong>}
-          {visiblePages.length ? visiblePages.map((item) => (
-            <article className="landing-card service-landing-card" key={`${item.projectId || ''}:${item.id || item.slug}`}>
-              <div>
-                <strong>{item.title || '랜딩페이지'}</strong>
-                <span>/{item.slug} · 접수 {Number(item.leadCount || 0)}건</span>
-              </div>
-              <div className="landing-card-actions">
-                <button className="primary-btn" type="button" onClick={() => openEditor(item)}>편집</button>
-                <button className="ghost-btn" type="button" onClick={() => openPreview(item)}>미리보기</button>
-                <button
-                  className="danger-btn landing-delete-btn"
-                  type="button"
-                  disabled={deletingProjectId === (item.projectId || item.id || item.slug)}
-                  onClick={() => deletePage(item)}
-                >
-                  {deletingProjectId === (item.projectId || item.id || item.slug) ? '삭제 중' : '삭제'}
-                </button>
-              </div>
-            </article>
-          )) : (
+          {visiblePages.length ? visiblePages.map((item) => {
+            const itemKey = item.projectId || item.id || item.slug;
+            return (
+              <article className="landing-card service-landing-card" key={`${item.projectId || ''}:${item.id || item.slug}`}>
+                <div>
+                  <strong>{item.title || '랜딩페이지'}</strong>
+                  <span>/{item.slug} · 접수 {Number(item.leadCount || 0)}건</span>
+                </div>
+                <div className="landing-card-actions">
+                  <button
+                    className="primary-btn"
+                    type="button"
+                    disabled={openingProjectId === itemKey}
+                    onClick={() => openEditor(item)}
+                  >
+                    {openingProjectId === itemKey ? '불러오는 중' : '편집'}
+                  </button>
+                  <button className="ghost-btn" type="button" onClick={() => openPreview(item)}>미리보기</button>
+                  <button
+                    className="danger-btn landing-delete-btn"
+                    type="button"
+                    disabled={deletingProjectId === itemKey}
+                    onClick={() => deletePage(item)}
+                  >
+                    {deletingProjectId === itemKey ? '삭제 중' : '삭제'}
+                  </button>
+                </div>
+              </article>
+            );
+          }) : (
             <div className="empty-landing">
               <strong>랜딩페이지가 없습니다.</strong>
               <button className="primary-btn" type="button" disabled={createDisabled} onClick={openCreate}>{createButtonLabel}</button>
