@@ -241,11 +241,9 @@ export async function getSessionAccount(request, env = {}, input = {}) {
 export async function issueEmailVerificationToken(input = {}, env = {}) {
   const email = normalizeEmail(input.email || '');
   const purpose = requireEmailVerificationPurpose(input.purpose || 'signup');
+  const suppressDelivery = input.suppressDelivery === true;
+  const concealDeliveryFailure = input.concealDeliveryFailure === true;
   if (!isValidEmail(email)) throw authError('Valid email is required.', 400, { code: 'AUTH_EMAIL_REQUIRED' });
-  if (purpose === 'signup' && env.DB?.prepare && await getD1AccountByEmail(env.DB, email)) {
-    throw authError('Email is already registered.', 409, { code: 'AUTH_EMAIL_DUPLICATE', field: 'email' });
-  }
-
   const provider = emailProvider(env);
   assertAuthEmailDeliveryReady(provider, env);
 
@@ -268,19 +266,27 @@ export async function issueEmailVerificationToken(input = {}, env = {}) {
   const token = stored.ok ? code : signedFallbackToken;
 
   let delivery;
-  try {
-    delivery = await deliverAuthEmail({ email, purpose, token: code, expiresAt }, env, provider);
-  } catch (error) {
-    const cleanupOk = stored.id
-      ? await removeEmailVerificationCode(env.DB, { id: stored.id, email, purpose })
-      : true;
-    if (!cleanupOk) {
-      console.error('auth email verification cleanup failed', {
-        code: 'EMAIL_VERIFICATION_CLEANUP_FAILED',
-        provider,
-      });
+  if (suppressDelivery) {
+    delivery = { mode: 'api', status: 'accepted' };
+  } else {
+    try {
+      delivery = await deliverAuthEmail({ email, purpose, token: code, expiresAt }, env, provider);
+    } catch (error) {
+      const cleanupOk = stored.id
+        ? await removeEmailVerificationCode(env.DB, { id: stored.id, email, purpose })
+        : true;
+      if (!cleanupOk) {
+        console.error('auth email verification cleanup failed', {
+          code: 'EMAIL_VERIFICATION_CLEANUP_FAILED',
+          provider,
+        });
+      }
+      if (concealDeliveryFailure) {
+        delivery = { mode: 'api', status: 'accepted' };
+      } else {
+        throw sanitizedAuthEmailDeliveryError(error, provider);
+      }
     }
-    throw sanitizedAuthEmailDeliveryError(error, provider);
   }
 
   const exposeToken = shouldExposeVerificationToken(env, delivery);
