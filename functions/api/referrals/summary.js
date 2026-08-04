@@ -14,6 +14,8 @@ export async function onRequest({ request, env }) {
     const db = assertD1(env);
     const session = await callSession(request, env);
     const summary = await referralSummary(db, session.ownerId);
+    summary.partnerCenterAvailable = false;
+    summary.partnerCenterUrl = '';
     return jsonResponse(request, env, 200, { ok: true, summary }, CALL_METHODS);
   } catch (error) {
     return handleApiError(request, env, error, CALL_METHODS);
