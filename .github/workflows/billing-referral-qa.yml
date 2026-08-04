@@ -1,0 +1,37 @@
+name: Billing Referral QA
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - docs/unified-billing-referral-architecture-20260804
+      - agent/billing-referral-**
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: billing-referral-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify billing and referral contracts
+        run: node scripts/billing-referral-quality-check.mjs
+
+      - name: Verify production build
+        run: npm run build
