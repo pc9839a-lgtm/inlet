@@ -62,3 +62,6 @@ if (!deploymentUrl) {
   throw new Error('Cloudflare deployment completed without a detectable pages.dev URL; live asset verification did not run');
 }
 await run(process.execPath, ['scripts/deployment-live-asset-check.mjs', deploymentUrl], { shell: false });
+if (branch === 'main') {
+  await run(process.execPath, ['scripts/calltag-push-readiness-check.mjs', deploymentUrl], { shell: false });
+}
