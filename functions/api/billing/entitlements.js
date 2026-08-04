@@ -1,5 +1,6 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../_shared.js';
 import { CALL_METHODS, callSession } from '../call/_shared.js';
+import { googlePlayBillingReadiness } from './_readiness.js';
 import { resolveEntitlement } from './_shared.js';
 
 export async function onRequest({ request, env }) {
@@ -14,6 +15,9 @@ export async function onRequest({ request, env }) {
     const db = assertD1(env);
     const session = await callSession(request, env);
     const entitlement = await resolveEntitlement(db, session.ownerId);
+    entitlement.billingAvailability = {
+      googlePlay: googlePlayBillingReadiness(env),
+    };
     return jsonResponse(request, env, 200, { ok: true, entitlement }, CALL_METHODS);
   } catch (error) {
     return handleApiError(request, env, error, CALL_METHODS);
