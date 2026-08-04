@@ -88,7 +88,7 @@ export function createAccountSettingsActions({
     setChanging(true);
     resetMessage();
     try {
-      await confirmEmailVerification({ email, token: passwordDraft.code.trim() });
+      await confirmEmailVerification({ email, token: passwordDraft.code.trim(), purpose: 'password-reset' });
       await changeAuthPassword({ email, password: passwordDraft.password, token: passwordDraft.code.trim() });
       setPasswordDraft({ code: '', password: '', password2: '' });
       setNotice('비밀번호를 변경했습니다. 새 비밀번호로 다시 로그인해주세요.');

@@ -57,10 +57,12 @@ export async function onRequest({ request, env }) {
       }
     }
 
-    const verification = await confirmEmailVerificationToken({ email: nextEmail, token }, env);
-    if (verification.purpose !== 'email-change') {
-      throw authError('Email verification token is invalid.', 403, { code: 'EMAIL_VERIFICATION_INVALID' });
-    }
+    const verification = await confirmEmailVerificationToken({
+      email: nextEmail,
+      token,
+      purpose: 'email-change',
+      consume: true,
+    }, env);
 
     const updatedAt = new Date().toISOString();
     const updated = await upsertD1Account(env.DB, {

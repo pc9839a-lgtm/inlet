@@ -26,7 +26,9 @@ export function authAccountErrorMessage(error) {
     AUTH_CURRENT_PASSWORD_INVALID: '현재 비밀번호가 올바르지 않습니다.',
     EMAIL_VERIFICATION_REQUIRED: '이메일 인증을 먼저 완료해주세요.',
     EMAIL_VERIFICATION_TOKEN_REQUIRED: '이메일 인증 코드를 입력해주세요.',
+    EMAIL_VERIFICATION_PURPOSE_INVALID: '이메일 인증 요청 종류를 다시 확인해주세요.',
     EMAIL_VERIFICATION_INVALID: '이메일 인증 코드가 올바르지 않습니다.',
+    EMAIL_VERIFICATION_ALREADY_USED: '이미 사용한 인증 코드입니다. 새 인증 코드를 받아주세요.',
     EMAIL_VERIFICATION_EXPIRED: '이메일 인증 시간이 만료되었습니다. 다시 인증해주세요.',
     EMAIL_VERIFICATION_COOLDOWN: '인증 메일을 이미 보냈습니다. 잠시 후 다시 시도해주세요.',
     EMAIL_VERIFICATION_DAILY_LIMIT: '오늘 인증 메일 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.',
@@ -66,6 +68,7 @@ export async function confirmEmailVerification(input = {}) {
   const data = await postJson('/api/auth/email-verification/confirm', {
     email: String(input.email || '').trim().toLowerCase(),
     token: input.token || '',
+    purpose: input.purpose || '',
   });
   return data?.verification || null;
 }

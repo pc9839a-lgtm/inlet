@@ -16,12 +16,16 @@ export async function onRequest({ request, env }) {
     const token = String(input.token || input.verificationToken || '').trim();
     if (!isValidEmail(email)) throw authError('Valid email is required.', 400, { code: 'AUTH_EMAIL_REQUIRED' });
     if (!token) throw authError('Email verification is required before changing password.', 403, { code: 'EMAIL_VERIFICATION_REQUIRED' });
-    const verification = await confirmEmailVerificationToken({ email, token }, env);
-    if (verification.purpose !== 'password-reset') throw authError('Email verification token is invalid.', 403, { code: 'EMAIL_VERIFICATION_INVALID' });
     if (!isValidPassword(password)) throw authError('Password must include letters and numbers and be at least 6 characters.', 400, { code: 'AUTH_PASSWORD_POLICY' });
     const user = await getD1AccountByEmail(env.DB, email);
     if (!user) throw authError('Account was not found.', 404, { code: 'AUTH_ACCOUNT_NOT_FOUND' });
     assertAccountActive(user, 'change password');
+    const verification = await confirmEmailVerificationToken({
+      email,
+      token,
+      purpose: 'password-reset',
+      consume: true,
+    }, env);
     const updated = await upsertD1Account(env.DB, {
       ...user,
       passwordHash: await passwordHash(password, email, env),

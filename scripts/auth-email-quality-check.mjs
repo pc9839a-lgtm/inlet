@@ -31,6 +31,15 @@ function createVerificationDb() {
               return null;
             },
             async run() {
+              if (normalized.startsWith("UPDATE auth_email_verifications SET status = 'superseded'")) {
+                const [email, purpose] = args;
+                for (const row of rows) {
+                  if (row.email === email && row.purpose === purpose && ['pending', 'confirmed'].includes(row.status)) {
+                    row.status = 'superseded';
+                  }
+                }
+                return { success: true };
+              }
               if (normalized.startsWith('INSERT INTO auth_email_verifications')) {
                 const [id, email, purpose, codeHash, expiresAt] = args;
                 rows.push({

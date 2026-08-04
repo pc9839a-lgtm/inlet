@@ -2,6 +2,40 @@ import { getD1AccountByEmail, getD1AccountByPhone, upsertD1Account } from '../..
 
 export const AUTH_METHODS = 'GET, POST, PATCH, OPTIONS';
 
+
+export const AUTH_EMAIL_VERIFICATION_PURPOSES = Object.freeze([
+  'signup',
+  'password-reset',
+  'email-change',
+]);
+
+export function normalizeEmailVerificationPurpose(value = '') {
+  const purpose = String(value || '').trim().toLowerCase();
+  return AUTH_EMAIL_VERIFICATION_PURPOSES.includes(purpose) ? purpose : '';
+}
+
+function requireEmailVerificationPurpose(value = '') {
+  const purpose = normalizeEmailVerificationPurpose(value);
+  if (!purpose) {
+    throw authError('Email verification purpose is invalid.', 400, {
+      code: 'EMAIL_VERIFICATION_PURPOSE_INVALID',
+    });
+  }
+  return purpose;
+}
+
+const consumedFallbackVerificationTokens = new Set();
+
+function rememberConsumedFallbackVerificationToken(fingerprint = '') {
+  if (!fingerprint) return true;
+  if (consumedFallbackVerificationTokens.has(fingerprint)) return false;
+  consumedFallbackVerificationTokens.add(fingerprint);
+  while (consumedFallbackVerificationTokens.size > 2000) {
+    consumedFallbackVerificationTokens.delete(consumedFallbackVerificationTokens.values().next().value);
+  }
+  return true;
+}
+
 export function normalizeEmail(value = '') {
   return String(value || '').trim().toLowerCase();
 }
@@ -139,7 +173,7 @@ export async function getSessionAccount(request, env = {}, input = {}) {
 
 export async function issueEmailVerificationToken(input = {}, env = {}) {
   const email = normalizeEmail(input.email || '');
-  const purpose = String(input.purpose || 'signup').trim() || 'signup';
+  const purpose = requireEmailVerificationPurpose(input.purpose || 'signup');
   if (!isValidEmail(email)) throw authError('Valid email is required.', 400, { code: 'AUTH_EMAIL_REQUIRED' });
   if (purpose === 'signup' && env.DB?.prepare && await getD1AccountByEmail(env.DB, email)) {
     throw authError('Email is already registered.', 409, { code: 'AUTH_EMAIL_DUPLICATE', field: 'email' });
@@ -229,9 +263,16 @@ async function assertEmailVerificationSendAllowed(db, input = {}) {
 export async function confirmEmailVerificationToken(input = {}, env = {}) {
   const email = normalizeEmail(input.email || '');
   const token = String(input.token || '').trim();
+  const purpose = requireEmailVerificationPurpose(input.purpose);
+  const consume = input.consume === true;
   if (!isValidEmail(email)) throw authError('Valid email is required.', 400, { code: 'AUTH_EMAIL_REQUIRED' });
   if (!token) throw authError('Email verification token is required.', 400, { code: 'EMAIL_VERIFICATION_TOKEN_REQUIRED' });
-  const stored = await confirmStoredEmailVerificationCode(env.DB, { email, code: token }, env);
+  const stored = await confirmStoredEmailVerificationCode(env.DB, {
+    email,
+    purpose,
+    code: token,
+    consume,
+  }, env);
   if (stored) return stored;
   const [payloadPart, signaturePart] = token.split('.');
   if (!payloadPart || !signaturePart) throw authError('Email verification token is invalid.', 403, { code: 'EMAIL_VERIFICATION_INVALID' });
@@ -243,14 +284,26 @@ export async function confirmEmailVerificationToken(input = {}, env = {}) {
   } catch {
     throw authError('Email verification token is invalid.', 403, { code: 'EMAIL_VERIFICATION_INVALID' });
   }
-  if (normalizeEmail(payload.email || '') !== email) throw authError('Email verification token is invalid.', 403, { code: 'EMAIL_VERIFICATION_INVALID' });
+  if (normalizeEmail(payload.email || '') !== email || requireEmailVerificationPurpose(payload.purpose) !== purpose) {
+    throw authError('Email verification token is invalid.', 403, { code: 'EMAIL_VERIFICATION_INVALID' });
+  }
   if (payload.exp && Number(payload.exp) < Math.floor(Date.now() / 1000)) throw authError('Email verification token has expired.', 410, { code: 'EMAIL_VERIFICATION_EXPIRED' });
+  const confirmedAt = new Date().toISOString();
+  if (consume) {
+    const fingerprint = await hmacHex(`fallback:${token}`, authSecret(env));
+    if (!rememberConsumedFallbackVerificationToken(fingerprint)) {
+      throw authError('Email verification token was already used.', 409, {
+        code: 'EMAIL_VERIFICATION_ALREADY_USED',
+      });
+    }
+  }
   return {
     email,
-    purpose: String(payload.purpose || 'signup'),
-    status: 'confirmed',
-    confirmedAt: new Date().toISOString(),
-    delivery: { mode: 'mock', status: 'confirmed' },
+    purpose,
+    status: consume ? 'consumed' : 'confirmed',
+    confirmedAt,
+    ...(consume ? { consumedAt: confirmedAt } : {}),
+    delivery: { mode: 'mock', status: consume ? 'consumed' : 'confirmed' },
   };
 }
 
@@ -269,6 +322,11 @@ async function storeEmailVerificationCode(db, record = {}, env = {}) {
   const id = verificationId();
   const codeHash = await hmacHex(`${record.email}:${record.purpose}:${record.code}`, authSecret(env));
   try {
+    await db.prepare(`
+      UPDATE auth_email_verifications
+      SET status = 'superseded'
+      WHERE email = ? AND purpose = ? AND status IN ('pending', 'confirmed')
+    `).bind(record.email, record.purpose).run();
     await db.prepare(`
       INSERT INTO auth_email_verifications (id, email, purpose, code_hash, status, attempts, expires_at)
       VALUES (?, ?, ?, ?, 'pending', 0, ?)
@@ -300,43 +358,74 @@ async function confirmStoredEmailVerificationCode(db, input = {}, env = {}) {
   const rows = await db.prepare(`
     SELECT id, email, purpose, code_hash, status, attempts, expires_at, confirmed_at
     FROM auth_email_verifications
-    WHERE email = ? AND status IN ('pending', 'confirmed')
+    WHERE email = ? AND purpose = ? AND status IN ('pending', 'confirmed', 'consumed')
     ORDER BY created_at DESC
     LIMIT 5
-  `).bind(input.email).all();
+  `).bind(input.email, input.purpose).all();
   const records = rows?.results || [];
   const now = Date.now();
   for (const record of records) {
     if (Date.parse(record.expires_at || '') <= now) {
-      await db.prepare("UPDATE auth_email_verifications SET status = 'expired' WHERE id = ?").bind(record.id).run();
+      if (String(record.status || '') !== 'consumed') {
+        await db.prepare("UPDATE auth_email_verifications SET status = 'expired' WHERE id = ? AND status IN ('pending', 'confirmed')").bind(record.id).run();
+      }
       continue;
     }
-    if (Number(record.attempts || 0) >= 5) {
-      await db.prepare("UPDATE auth_email_verifications SET status = 'blocked' WHERE id = ?").bind(record.id).run();
+    if (Number(record.attempts || 0) >= 5 && String(record.status || '') !== 'consumed') {
+      await db.prepare("UPDATE auth_email_verifications SET status = 'blocked' WHERE id = ? AND status IN ('pending', 'confirmed')").bind(record.id).run();
       continue;
     }
-    const expected = await hmacHex(`${input.email}:${record.purpose}:${input.code}`, authSecret(env));
+    const expected = await hmacHex(`${input.email}:${input.purpose}:${input.code}`, authSecret(env));
     if (expected === record.code_hash) {
-      if (String(record.status || '') === 'confirmed') {
+      if (String(record.status || '') === 'consumed') {
+        throw authError('Email verification token was already used.', 409, {
+          code: 'EMAIL_VERIFICATION_ALREADY_USED',
+        });
+      }
+      const confirmedAt = record.confirmed_at || new Date().toISOString();
+      if (input.consume === true) {
+        const result = await db.prepare(`
+          UPDATE auth_email_verifications
+          SET status = 'consumed', confirmed_at = COALESCE(confirmed_at, ?)
+          WHERE id = ? AND email = ? AND purpose = ? AND status IN ('pending', 'confirmed')
+        `).bind(confirmedAt, record.id, input.email, input.purpose).run();
+        const changes = Number(result?.meta?.changes ?? result?.changes ?? 0);
+        if (changes !== 1) {
+          throw authError('Email verification token was already used.', 409, {
+            code: 'EMAIL_VERIFICATION_ALREADY_USED',
+          });
+        }
         return {
           email: input.email,
-          purpose: String(record.purpose || 'signup'),
-          status: 'confirmed',
-          confirmedAt: record.confirmed_at || new Date().toISOString(),
-          delivery: { mode: 'api', status: 'confirmed' },
+          purpose: input.purpose,
+          status: 'consumed',
+          confirmedAt,
+          consumedAt: new Date().toISOString(),
+          delivery: { mode: 'api', status: 'consumed' },
         };
       }
-      const confirmedAt = new Date().toISOString();
-      await db.prepare("UPDATE auth_email_verifications SET status = 'confirmed', confirmed_at = ? WHERE id = ?").bind(confirmedAt, record.id).run();
+      if (String(record.status || '') === 'pending') {
+        await db.prepare(`
+          UPDATE auth_email_verifications
+          SET status = 'confirmed', confirmed_at = ?
+          WHERE id = ? AND email = ? AND purpose = ? AND status = 'pending'
+        `).bind(confirmedAt, record.id, input.email, input.purpose).run();
+      }
       return {
         email: input.email,
-        purpose: String(record.purpose || 'signup'),
+        purpose: input.purpose,
         status: 'confirmed',
         confirmedAt,
         delivery: { mode: 'api', status: 'confirmed' },
       };
     }
-    await db.prepare('UPDATE auth_email_verifications SET attempts = attempts + 1 WHERE id = ?').bind(record.id).run();
+    if (String(record.status || '') !== 'consumed') {
+      await db.prepare(`
+        UPDATE auth_email_verifications
+        SET attempts = attempts + 1
+        WHERE id = ? AND email = ? AND purpose = ? AND status IN ('pending', 'confirmed')
+      `).bind(record.id, input.email, input.purpose).run();
+    }
   }
   throw authError('Email verification token is invalid.', 403, { code: 'EMAIL_VERIFICATION_INVALID' });
 }
@@ -351,10 +440,14 @@ export async function registerAccount(input = {}, env = {}) {
   if (!phone) throw authError('Phone number is required.', 400, { code: 'AUTH_PHONE_REQUIRED' });
   if (!isValidPassword(password)) throw authError('Password must include letters and numbers and be at least 6 characters.', 400, { code: 'AUTH_PASSWORD_POLICY' });
   if (!token) throw authError('Email verification is required before signup.', 403, { code: 'EMAIL_VERIFICATION_REQUIRED' });
-  const verification = await confirmEmailVerificationToken({ email, token }, env);
-  if (verification.purpose !== 'signup') throw authError('Email verification token is invalid.', 403, { code: 'EMAIL_VERIFICATION_INVALID' });
   if (await getD1AccountByEmail(env.DB, email)) throw authError('Email is already registered.', 409, { code: 'AUTH_EMAIL_DUPLICATE', field: 'email' });
   if (await getD1AccountByPhone(env.DB, phone)) throw authError('Phone number is already registered.', 409, { code: 'AUTH_PHONE_DUPLICATE', field: 'phone' });
+  const verification = await confirmEmailVerificationToken({
+    email,
+    token,
+    purpose: 'signup',
+    consume: true,
+  }, env);
   const now = new Date().toISOString();
   const user = await upsertD1Account(env.DB, {
     id: ownerIdForEmail(email),
@@ -364,6 +457,7 @@ export async function registerAccount(input = {}, env = {}) {
     phone,
     phoneVerified: false,
     emailVerified: true,
+    emailVerifiedAt: verification.confirmedAt || now,
     passwordHash: await passwordHash(password, email, env),
     status: 'active',
     source: String(input.source || 'signup'),
