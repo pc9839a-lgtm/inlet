@@ -25,10 +25,10 @@ for (const relative of Object.values(files).filter((item) => item.endsWith('.js'
   await import(pathToFileURL(path.join(root, relative)).href);
 }
 
-const verifyGateIndex = source.verify.indexOf('assertGooglePlayBillingReady(env)');
-const verifyActionIndex = source.verify.indexOf('verifyGoogleSubscription');
-const restoreGateIndex = source.restore.indexOf('assertGooglePlayBillingReady(env)');
-const restoreActionIndex = source.restore.indexOf('restoreGoogleSubscriptions');
+const verifyGateIndex = source.verify.indexOf('assertGooglePlayBillingReady(env);');
+const verifyActionIndex = source.verify.indexOf('const entitlement = await verifyGoogleSubscription');
+const restoreGateIndex = source.restore.indexOf('assertGooglePlayBillingReady(env);');
+const restoreActionIndex = source.restore.indexOf('const entitlement = await restoreGoogleSubscriptions');
 
 const checks = {
   'trial base is exactly 3 days': source.shared.includes('const TRIAL_BASE_DAYS = 3'),
