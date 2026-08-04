@@ -9,6 +9,20 @@ const authSessionSource = await readFile('scripts/form-browser-auth-session.mjs'
 const workflowSource = await readFile('.github/workflows/qa.yml', 'utf8');
 const qaAllSource = await readFile('scripts/qa-all.mjs', 'utf8');
 const packageJson = JSON.parse(await readFile('package.json', 'utf8'));
+const leadApiSource = await readFile('functions/api/leads.js', 'utf8');
+const duplicatePanelSource = await readFile('src/panels/inbox/DuplicatePolicyPanel.jsx', 'utf8');
+const formBlocksSource = await readFile('src/preview/renderers/FormBlocks.jsx', 'utf8');
+const { normalizeDuplicateSettings } = await import('../functions/api/leads.js');
+
+const defaultDuplicateSettings = normalizeDuplicateSettings({});
+const legacyImplicitCookieSettings = normalizeDuplicateSettings({ leadDuplicateSettings: { rejectCookieDuplicate: true } });
+const explicitCookieSettings = normalizeDuplicateSettings({
+  leadDuplicateSettings: {
+    rejectCookieDuplicate: true,
+    cookieDuplicatePolicyExplicit: true,
+    duplicatePolicyVersion: 2,
+  },
+});
 
 assert(packageJson.scripts?.['browser:forms:qa'] === 'node --import ./scripts/form-browser-auth-session.mjs scripts/form-reservation-browser-regression-check.mjs', 'browser:forms:qa must preload the fake CI session');
 assert(packageJson.scripts?.['browser:forms:contract:qa'] === 'node scripts/form-reservation-browser-regression-contract-check.mjs', 'browser:forms:contract:qa script is missing');
@@ -31,11 +45,17 @@ assert(browserSource.includes(".inbox-panel") && browserSource.includes(".lead-c
 assert(browserSource.includes("bodyScrollWidth <= inboxMetrics.innerWidth + 3"), 'inbox browser check must reject horizontal overflow');
 assert(browserSource.includes("state.unexpectedApis.length === 0") && browserSource.includes("browserErrors.length === 0"), 'browser QA must fail on unexpected APIs and browser exceptions');
 assert(!browserSource.includes('pagero.kr/api/leads') && !browserSource.includes('productionPassword'), 'form browser QA must not use production data or credentials');
+assert(defaultDuplicateSettings.rejectCookieDuplicate === false, 'cookie duplicate blocking must default to off');
+assert(legacyImplicitCookieSettings.rejectCookieDuplicate === false, 'legacy implicit cookie blocking must migrate to off');
+assert(explicitCookieSettings.rejectCookieDuplicate === true, 'an explicit cookie duplicate toggle must remain enabled');
+assert(leadApiSource.includes("contactDuplicate ? 409 : 429") && leadApiSource.includes("code: contactDuplicate ? 'LEAD_DUPLICATE' : 'LEAD_RATE_LIMITED'"), 'lead API must distinguish duplicates from throttling');
+assert(duplicatePanelSource.includes('cookieDuplicatePolicyExplicit: true') && duplicatePanelSource.includes('duplicatePolicyVersion: 2'), 'inbox policy toggle must persist an explicit cookie setting');
+assert(formBlocksSource.includes('status === 409') && formBlocksSource.includes('status === 429') && !formBlocksSource.includes("[409, 429].includes"), 'public form must show separate duplicate and rate-limit messages');
 
 console.log(JSON.stringify({
   ok: true,
   scope: 'form-reservation-browser-contract',
-  flows: ['consultation', 'consultation-duplicate', 'reservation', 'reservation-duplicate', 'inbox-reflection'],
+  flows: ['consultation', 'unique-contact-default', 'consultation-duplicate', 'reservation', 'reservation-duplicate', 'inbox-reflection'],
   productionData: false,
   ciAuthenticatedSession: true,
 }, null, 2));

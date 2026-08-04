@@ -2383,9 +2383,12 @@ function normalizeLeadDuplicateSettings(settings = {}) {
   const rawCount = Number(source.formDuplicateLimitCount ?? source.fieldDuplicateLimitCount ?? source.duplicateLimitCount ?? 3);
   const phoneEmailMode = String(source.phoneEmailMode || source.phoneEmailDuplicateMode || source.contactDuplicateMode || 'mark').trim();
   const windowKey = String(source.formDuplicateLimitWindow || source.fieldDuplicateLimitPeriod || source.duplicateWindow || source.duplicateWindowKey || '1mo').trim();
+  const cookiePolicyExplicit = source.cookieDuplicatePolicyExplicit === true || Number(source.duplicatePolicyVersion || 0) >= 2;
   return {
     rejectIpDuplicate: !!(source.rejectIpDuplicate ?? source.ipDuplicateRejectEnabled ?? false),
-    rejectCookieDuplicate: source.rejectCookieDuplicate ?? source.cookieDuplicateRejectEnabled ?? false ? true : false,
+    rejectCookieDuplicate: cookiePolicyExplicit && source.rejectCookieDuplicate === true,
+    cookieDuplicatePolicyExplicit: cookiePolicyExplicit,
+    duplicatePolicyVersion: cookiePolicyExplicit ? 2 : 1,
     formDuplicateLimitCount: Math.max(1, Math.min(100, Number.isFinite(rawCount) ? rawCount : 1)),
     formDuplicateLimitWindow: windowKey,
     formDuplicateLimitMs: duplicatePolicyWindowMs(windowKey),
@@ -2629,9 +2632,17 @@ function matchesBlockedLeadFilters(entry = {}, filters = {}) {
 }
 
 function leadRateLimitError(policy = {}) {
-  const error = new Error('Too many lead submissions. Please retry later.');
-  error.status = 429;
-  error.details = { code: 'LEAD_RATE_LIMITED', reason: policy.reason || 'rate_limited', retryAfter: policy.retryAfter || 60 };
+  const reason = String(policy.reason || 'rate_limited');
+  const contactDuplicate = ['phone_duplicate', 'email_duplicate'].includes(reason);
+  const error = new Error(contactDuplicate
+    ? '이미 접수된 연락처입니다.'
+    : '접수가 너무 빠르게 반복되었습니다. 잠시 후 다시 시도해주세요.');
+  error.status = contactDuplicate ? 409 : 429;
+  error.details = {
+    code: contactDuplicate ? 'LEAD_DUPLICATE' : 'LEAD_RATE_LIMITED',
+    reason,
+    retryAfter: policy.retryAfter || 60,
+  };
   return error;
 }
 
