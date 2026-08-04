@@ -20,15 +20,24 @@ async function loadLatestConflictPage(localPage, authUser) {
   }
 
   // 2026-08-04 dyjh incident recovery:
-  // the restored page can temporarily belong to its recovered project identity,
-  // while the signed-in editor still carries the stale local project identity.
-  // Use the already public, read-only server copy only for this slug.
+  // discover the recovered project identity from the read-only public page,
+  // then load the complete private page with the signed-in session.
+  // Never use the stripped public payload as an editable server copy.
   if (slug === 'dyjh') {
     try {
       const publicPage = await fetchPublicServerPage(slug);
-      if (publicPage) return normalize(publicPage);
+      const recoveredProjectId = String(publicPage?.projectId || '').trim();
+      if (recoveredProjectId) {
+        const recoveredPage = await fetchServerPage(slug, {
+          projectId: recoveredProjectId,
+          ownerId: String(localPage?.ownerId || authUser?.ownerId || '').trim(),
+          slug,
+          session: String(authUser?.session || '').trim(),
+        });
+        if (recoveredPage) return normalize(recoveredPage);
+      }
     } catch (error) {
-      console.warn('Public dyjh fallback load after conflict failed:', error);
+      console.warn('Full dyjh recovery page load after conflict failed:', error);
     }
   }
 
