@@ -14,12 +14,20 @@ export async function onRequest({ request, env }) {
     const purpose = normalizeEmailVerificationPurpose(input.purpose || 'signup');
     if (!purpose) throw authError('Email verification purpose is invalid.', 400, { code: 'EMAIL_VERIFICATION_PURPOSE_INVALID' });
     input = { ...input, purpose };
+    const responseStartedAt = Date.now();
     const email = normalizeEmail(input.email || '');
-    if (purpose === 'email-change' && email && await getD1AccountByEmail(env.DB, email)) {
-      throw authError('Email is already registered.', 409, { code: 'AUTH_EMAIL_DUPLICATE', field: 'email' });
-    }
+    const suppressPasswordResetDelivery = purpose === 'password-reset'
+      && !!email
+      && !(await getD1AccountByEmail(env.DB, email));
     const requesterKey = await emailVerificationRequesterKey(request, env);
-    const verification = await issueEmailVerificationToken({ ...input, requesterKey }, env);
+    const verification = await issueEmailVerificationToken({
+      ...input,
+      requesterKey,
+      suppressDelivery: suppressPasswordResetDelivery,
+      concealDeliveryFailure: purpose === 'password-reset',
+    }, env);
+    const publicVerification = publicEmailVerificationResult(verification, purpose);
+    if (purpose === 'password-reset') await ensureMinimumResponseTime(responseStartedAt, 650);
     await writeAuditLog({
       request,
       env,
@@ -28,11 +36,11 @@ export async function onRequest({ request, env }) {
       targetId: await auditSubjectHash(input.email || '', env).catch(() => ''),
       metadata: {
         purpose,
-        deliveryMode: verification.delivery?.mode || '',
-        deliveryStatus: verification.delivery?.status || '',
+        deliveryMode: publicVerification.delivery?.mode || '',
+        deliveryStatus: publicVerification.delivery?.status || '',
       },
     });
-    return jsonResponse(request, env, 200, { ok: true, verification }, AUTH_METHODS);
+    return jsonResponse(request, env, 200, { ok: true, verification: publicVerification }, AUTH_METHODS);
   } catch (error) {
     await writeAuditLog({
       request,
@@ -47,4 +55,23 @@ export async function onRequest({ request, env }) {
     });
     return handleApiError(request, env, error, AUTH_METHODS);
   }
+}
+
+
+function publicEmailVerificationResult(verification = {}, purpose = '') {
+  if (purpose !== 'password-reset') return verification;
+  return {
+    email: verification.email || '',
+    purpose: 'password-reset',
+    status: 'pending',
+    expiresAt: verification.expiresAt || '',
+    delivery: { mode: 'api', status: 'accepted' },
+    ...(verification.token ? { token: verification.token } : {}),
+  };
+}
+
+async function ensureMinimumResponseTime(startedAt = 0, minimumMs = 650) {
+  const elapsed = Date.now() - Number(startedAt || 0);
+  const remaining = Math.max(0, Number(minimumMs || 0) - elapsed);
+  if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, remaining));
 }
