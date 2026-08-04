@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 const root = process.cwd();
 const files = {
   shared: 'functions/api/billing/_shared.js',
+  readiness: 'functions/api/billing/_readiness.js',
   entitlements: 'functions/api/billing/entitlements.js',
   subscriptions: 'functions/api/billing/subscriptions.js',
   verify: 'functions/api/billing/google/verify.js',
@@ -23,6 +24,11 @@ for (const [name, relative] of Object.entries(files)) {
 for (const relative of Object.values(files).filter((item) => item.endsWith('.js'))) {
   await import(pathToFileURL(path.join(root, relative)).href);
 }
+
+const verifyGateIndex = source.verify.indexOf('assertGooglePlayBillingReady(env)');
+const verifyActionIndex = source.verify.indexOf('verifyGoogleSubscription');
+const restoreGateIndex = source.restore.indexOf('assertGooglePlayBillingReady(env)');
+const restoreActionIndex = source.restore.indexOf('restoreGoogleSubscriptions');
 
 const checks = {
   'trial base is exactly 3 days': source.shared.includes('const TRIAL_BASE_DAYS = 3'),
@@ -48,6 +54,13 @@ const checks = {
   'referral identity endpoint exists': source.referralMe.includes('referralMe'),
   'referral apply endpoint exists': source.referralApply.includes('applyReferralCode'),
   'partner summary endpoint exists': source.referralSummary.includes('referralSummary'),
+  'Play billing defaults to explicit release flags': source.readiness.includes('GOOGLE_PLAY_BILLING_ENABLED') && source.readiness.includes('GOOGLE_PLAY_PRODUCTS_READY'),
+  'Play billing has preregistration stage': source.readiness.includes("stage = 'pre_registration'") && source.readiness.includes("'PLAY_RELEASE_DISABLED'"),
+  'entitlement exposes Play readiness': source.entitlements.includes('billingAvailability') && source.entitlements.includes('googlePlayBillingReadiness'),
+  'verify is blocked before publisher verification': verifyGateIndex >= 0 && verifyActionIndex >= 0 && verifyGateIndex < verifyActionIndex,
+  'restore is blocked before publisher verification': restoreGateIndex >= 0 && restoreActionIndex >= 0 && restoreGateIndex < restoreActionIndex,
+  'unready Play returns stable server code': source.readiness.includes("'PLAY_BILLING_NOT_READY'"),
+  'readiness response does not expose credentials': !source.readiness.includes('credentialsConfigured,'),
 };
 
 const failed = Object.entries(checks).filter(([, passed]) => !passed).map(([name]) => name);
