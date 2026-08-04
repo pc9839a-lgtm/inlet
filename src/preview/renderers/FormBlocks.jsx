@@ -249,10 +249,14 @@ export function RenderForm({ block, addLead, track }) {
     try {
       await Promise.resolve(addLead(lead));
     } catch (error) {
-      const isDuplicate = [409, 429].includes(Number(error?.status || 0));
+      const status = Number(error?.status || 0);
       setNotice({
         tone: 'error',
-        message: isDuplicate ? '이미 접수된 정보입니다. 다른 연락처로 다시 시도해주세요.' : '접수 저장에 실패했습니다. 잠시 후 다시 시도해주세요.',
+        message: status === 409
+          ? '이미 접수된 연락처입니다. 입력한 연락처를 확인해주세요.'
+          : status === 429
+            ? '접수가 너무 빠르게 반복되었습니다. 잠시 후 다시 시도해주세요.'
+            : '접수 저장에 실패했습니다. 잠시 후 다시 시도해주세요.',
       });
       setSubmitting(false);
       return;
@@ -696,8 +700,12 @@ export function RenderReservation({ block, addLead, track }) {
     try {
       await Promise.resolve(addLead(lead));
     } catch (submitError) {
-      const isDuplicate = [409, 429].includes(Number(submitError?.status || 0));
-      setError(isDuplicate ? '이미 접수된 정보입니다. 다른 연락처로 다시 시도해주세요.' : '예약 저장에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      const status = Number(submitError?.status || 0);
+      setError(status === 409
+        ? '이미 접수된 연락처입니다. 입력한 연락처를 확인해주세요.'
+        : status === 429
+          ? '접수가 너무 빠르게 반복되었습니다. 잠시 후 다시 시도해주세요.'
+          : '예약 저장에 실패했습니다. 잠시 후 다시 시도해주세요.');
       setSubmitting(false);
       return;
     }

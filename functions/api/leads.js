@@ -40,12 +40,15 @@ export async function onRequest({ request, env }) {
           projectId: project.projectId,
           pageSlug: body.page?.slug || project.slug || lead.pageSlug || '',
         });
-        return publicPostJsonResponse(request, env, 429, {
+        const contactDuplicate = ['phone_duplicate', 'email_duplicate'].includes(String(duplicatePolicy.reason || ''));
+        return publicPostJsonResponse(request, env, contactDuplicate ? 409 : 429, {
           ok: false,
-          code: 'LEAD_RATE_LIMITED',
+          code: contactDuplicate ? 'LEAD_DUPLICATE' : 'LEAD_RATE_LIMITED',
           reason: duplicatePolicy.reason,
-          message: '중복 접수 정책에 따라 이번 접수는 차단되었습니다.',
-          retryAfter: 60,
+          message: contactDuplicate
+            ? '이미 접수된 연락처입니다.'
+            : '접수가 너무 빠르게 반복되었습니다. 잠시 후 다시 시도해주세요.',
+          retryAfter: Number(duplicatePolicy.retryAfter || 60),
         });
       }
       let saved = await upsertD1Lead(db, {
@@ -285,14 +288,17 @@ function isValidEmail(value = '') {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
 }
 
-function normalizeDuplicateSettings(page = {}) {
+export function normalizeDuplicateSettings(page = {}) {
   const source = page.leadDuplicateSettings || page.duplicateCollectionSettings || {};
   const rawCount = Number(source.formDuplicateLimitCount ?? source.fieldDuplicateLimitCount ?? source.duplicateLimitCount ?? 3);
   const windowKey = String(source.formDuplicateLimitWindow || source.fieldDuplicateLimitPeriod || source.duplicateWindow || source.duplicateWindowKey || '1d');
   const phoneEmailMode = String(source.phoneEmailMode || source.phoneEmailDuplicateMode || source.contactDuplicateMode || 'mark').trim();
+  const cookiePolicyExplicit = source.cookieDuplicatePolicyExplicit === true || Number(source.duplicatePolicyVersion || 0) >= 2;
   return {
     rejectIpDuplicate: !!(source.rejectIpDuplicate ?? source.ipDuplicateRejectEnabled ?? false),
-    rejectCookieDuplicate: (source.rejectCookieDuplicate ?? source.cookieDuplicateRejectEnabled ?? true) !== false,
+    rejectCookieDuplicate: cookiePolicyExplicit && source.rejectCookieDuplicate === true,
+    cookieDuplicatePolicyExplicit: cookiePolicyExplicit,
+    duplicatePolicyVersion: cookiePolicyExplicit ? 2 : 1,
     formDuplicateLimitCount: Math.max(1, Math.min(100, Number.isFinite(rawCount) ? rawCount : 3)),
     formDuplicateLimitWindow: ['1d', '3d', '7d', '30d'].includes(windowKey)
       ? windowKey

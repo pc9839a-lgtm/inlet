@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { isServerLeadMode } from '../../config/runtimeConfig.js';
 import { fetchServerBlockedLeadHistory } from '../../lib/leadRepository.js';
 import { currentMonthValue } from '../../lib/monthRange.js';
@@ -27,9 +27,12 @@ function normalizeDuplicateSettings(settings = {}) {
   const count = String(source.formDuplicateLimitCount || '3');
   const windowKey = String(source.formDuplicateLimitWindow || '1d');
   const phoneEmailMode = String(source.phoneEmailMode || 'mark');
+  const cookiePolicyExplicit = source.cookieDuplicatePolicyExplicit === true || Number(source.duplicatePolicyVersion || 0) >= 2;
   return {
     rejectIpDuplicate: !!source.rejectIpDuplicate,
-    rejectCookieDuplicate: source.rejectCookieDuplicate !== false,
+    rejectCookieDuplicate: cookiePolicyExplicit && source.rejectCookieDuplicate === true,
+    cookieDuplicatePolicyExplicit: cookiePolicyExplicit,
+    duplicatePolicyVersion: cookiePolicyExplicit ? 2 : 1,
     formDuplicateLimitCount: ['1', '2', '3', '5'].includes(count) ? count : '3',
     formDuplicateLimitWindow: ['1d', '3d', '7d', '30d'].includes(windowKey) ? windowKey : '1d',
     phoneEmailMode: ['mark', 'block'].includes(phoneEmailMode) ? phoneEmailMode : 'mark',
@@ -168,7 +171,7 @@ export default function IntakeDuplicatePolicyPanel({ page, authUser, updatePage 
         <div className="inbox-policy-body">
           <div className="inbox-policy-grid">
             <DuplicatePolicySwitch label="IP 중복 차단" checked={settings.rejectIpDuplicate} onChange={(value) => save({ rejectIpDuplicate: value })} />
-            <DuplicatePolicySwitch label="쿠키 중복 차단" checked={settings.rejectCookieDuplicate} onChange={(value) => save({ rejectCookieDuplicate: value })} />
+            <DuplicatePolicySwitch label="쿠키 중복 차단" checked={settings.rejectCookieDuplicate} onChange={(value) => save({ rejectCookieDuplicate: value, cookieDuplicatePolicyExplicit: true, duplicatePolicyVersion: 2 })} />
             <DuplicatePolicySelect label="중복 제한 개수" value={settings.formDuplicateLimitCount} options={DUPLICATE_COUNTS} onChange={(value) => save({ formDuplicateLimitCount: value })} />
             <DuplicatePolicySelect label="중복 제한 기간" value={settings.formDuplicateLimitWindow} options={DUPLICATE_WINDOWS} onChange={(value) => save({ formDuplicateLimitWindow: value })} />
             <DuplicatePolicySelect label="연락처/이메일 중복" value={settings.phoneEmailMode} options={CONTACT_OPTIONS} onChange={(value) => save({ phoneEmailMode: value })} />

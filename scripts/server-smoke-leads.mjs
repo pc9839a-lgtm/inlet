@@ -391,6 +391,31 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
   });
   assert(rateLimited.res.status === 429 && rateLimited.data.code === 'LEAD_RATE_LIMITED', 'same IP 4th submission in 1 minute should be rate limited');
 
+  const legacyCookieProject = { projectId: 'smoke-leads-legacy-cookie', slug: 'smoke-legacy-cookie' };
+  const legacyCookiePage = {
+    ...page,
+    slug: legacyCookieProject.slug,
+    leadDuplicateSettings: {
+      rejectIpDuplicate: false,
+      rejectCookieDuplicate: true,
+      formDuplicateLimitCount: 1,
+      formDuplicateLimitWindow: '1mo',
+      phoneEmailMode: 'mark',
+    },
+  };
+  const legacyCookieSeed = await json({ baseUrl }, 'POST', '/api/leads', {
+    project: legacyCookieProject,
+    page: legacyCookiePage,
+    lead: { id: 'legacy-cookie-seed', type: 'consult', status: 'new', name: 'Legacy Cookie Seed', phone: '010-7777-9001', clientId: 'legacy-cookie-client', ipHash: 'ip-legacy-cookie-a', createdAt: '2026-05-21T03:00:00.000Z' },
+  });
+  assert(legacyCookieSeed.res.ok, 'legacy cookie seed lead should save');
+  const legacyCookieUniqueContact = await json({ baseUrl }, 'POST', '/api/leads', {
+    project: legacyCookieProject,
+    page: legacyCookiePage,
+    lead: { id: 'legacy-cookie-unique', type: 'consult', status: 'new', name: 'Legacy Cookie Unique', phone: '010-7777-9002', clientId: 'legacy-cookie-client', ipHash: 'ip-legacy-cookie-b', createdAt: '2026-05-21T03:00:04.000Z' },
+  });
+  assert(legacyCookieUniqueContact.res.ok, 'a new contact from the same browser must not be blocked by a legacy implicit cookie setting');
+
   const policyProject = { projectId: 'smoke-leads-policy', slug: 'smoke-policy' };
   const policyPage = {
     ...page,
@@ -398,6 +423,8 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
     leadDuplicateSettings: {
       rejectIpDuplicate: true,
       rejectCookieDuplicate: true,
+      cookieDuplicatePolicyExplicit: true,
+      duplicatePolicyVersion: 2,
       formDuplicateLimitCount: 1,
       formDuplicateLimitWindow: '1mo',
       phoneEmailMode: 'block',
@@ -414,8 +441,8 @@ await runSmoke('server-smoke-leads', async ({ baseUrl, dataDir }) => {
     page: policyPage,
     lead: { id: 'policy-blocked', type: 'consult', status: 'new', name: 'Policy Blocked', phone: '01077770001', clientId: 'policy-client', ipHash: 'ip-policy', createdAt: '2026-05-21T03:00:04.000Z' },
   });
-  assert(policyBlocked.res.status === 429 && policyBlocked.data.code === 'LEAD_RATE_LIMITED', 'settings should block configured duplicate lead');
-  assert(['phone_duplicate', 'client_duplicate_limit', 'ip_duplicate_limit'].includes(policyBlocked.data.reason), `unexpected policy block reason: ${policyBlocked.data.reason}`);
+  assert(policyBlocked.res.status === 409 && policyBlocked.data.code === 'LEAD_DUPLICATE', 'explicit contact duplicate policy should return a duplicate response');
+  assert(policyBlocked.data.reason === 'phone_duplicate', `unexpected policy block reason: ${policyBlocked.data.reason}`);
 
   const blockedHistoryQuery = new URLSearchParams({ ...policyProject, month: '2026-05', limit: '20' }).toString();
   const blockedHistory = await json({ baseUrl }, 'GET', `/api/leads/blocked-history?${blockedHistoryQuery}`);
