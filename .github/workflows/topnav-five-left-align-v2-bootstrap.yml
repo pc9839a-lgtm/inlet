@@ -1,0 +1,49 @@
+name: Topnav Five Left Align V2 Bootstrap
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.head_ref == 'fix/topnav-five-left-align-v2-20260804' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout patch branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/topnav-five-left-align-v2-20260804
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Apply exact runtime patch
+        run: python3 scripts/bootstrap-topnav-five-left-align-v2.py
+
+      - name: Install
+        run: npm ci
+
+      - name: Static topnav contract
+        run: npm run topnav:balance:qa
+
+      - name: Browser regression contract
+        run: npm run browser:landing:contract:qa
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit exact runtime patch
+        run: |
+          git config user.name "Inlet Patch Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/styles/preview-topnav-runtime-contract.css src/styles/preview-workspace-topnav-balance.css scripts/topnav-row-balance-quality-check.mjs scripts/landing-browser-regression-check.mjs scripts/landing-browser-regression-contract-check.mjs
+          git commit -m "fix: enforce exact left alignment for five menus"
+          git push origin HEAD:fix/topnav-five-left-align-v2-20260804
