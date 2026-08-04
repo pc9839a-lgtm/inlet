@@ -23,6 +23,7 @@ export function ScreenOrderRow({
   onDragStart,
   onDragEnd,
   renderBlockEditor,
+  inlineEditor = true,
 }) {
   const { selectRow, selectRowByKey } = createScreenOrderRowInteraction({ onSelectRow });
 
@@ -58,7 +59,7 @@ export function ScreenOrderRow({
           onRemove={onRemove}
         />
       </div>
-      {open && (
+      {open && inlineEditor && (
         <div className="screen-order-inline-editor" onClick={stop} onKeyDown={stop}>
           <SelectedBlockSettingsBody block={block} renderBlockEditor={renderBlockEditor} />
         </div>
