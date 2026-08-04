@@ -26,7 +26,9 @@ jobs:
           cache: npm
 
       - name: Apply lead duplicate default patch
-        run: python3 scripts/bootstrap-lead-cookie-duplicate-default.py
+        run: |
+          python3 scripts/bootstrap-lead-cookie-duplicate-default.py
+          python3 scripts/bootstrap-lead-cookie-duplicate-reservation-compat.py
 
       - name: Install
         run: npm ci
