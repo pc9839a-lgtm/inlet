@@ -14,6 +14,10 @@ export async function onRequest({ request, env }) {
     const db = assertD1(env);
     const session = await callSession(request, env);
     const referral = await referralMe(db, session.ownerId);
+    const code = String(referral.code || referral.mine?.code || '').trim();
+    const shareUrl = code ? `https://pagero.kr/r/${encodeURIComponent(code)}` : '';
+    referral.shareUrl = shareUrl;
+    if (referral.mine) referral.mine.shareUrl = shareUrl;
     return jsonResponse(request, env, 200, { ok: true, referral }, CALL_METHODS);
   } catch (error) {
     return handleApiError(request, env, error, CALL_METHODS);
