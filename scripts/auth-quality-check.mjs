@@ -6,5 +6,5 @@ await import('./auth-session-revocation-quality-check.mjs');
 console.log(JSON.stringify({
   ok: true,
   aggregate: 'auth-quality-check',
-  checks: 78,
+  checks: 68,
 }, null, 2));
