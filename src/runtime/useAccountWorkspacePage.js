@@ -1,5 +1,5 @@
 import { useLayoutEffect } from 'react';
-import { fetchServerPage } from '../lib/pageRepository.js';
+import { fetchPublicServerPage, fetchServerPage } from '../lib/pageRepository.js';
 import { projectContext } from '../lib/projectContext.js';
 import { defaultPage, normalize, normalizePageForSave } from '../lib/pageModel.js';
 import { hasAccountProjectAccess } from '../lib/accountProjectAccess.js';
@@ -24,6 +24,44 @@ function isRecoveredDyjhPage(serverPage = null, slug = '') {
     || serialized.includes('오지현')
     || serialized.includes('2026-11-28')
     || serialized.includes('삼산월드컨벤션');
+}
+
+async function fetchSelectedWorkspacePage({ slug, context, authUser }) {
+  let firstError = null;
+  try {
+    const page = await fetchServerPage(slug, context);
+    if (page) return page;
+  } catch (error) {
+    firstError = error;
+    console.warn('Selected workspace page load failed:', error);
+  }
+
+  if (slug !== 'dyjh') {
+    if (firstError) throw firstError;
+    return null;
+  }
+
+  let publicPage = null;
+  try {
+    publicPage = await fetchPublicServerPage(slug);
+  } catch (error) {
+    console.warn('Recovered dyjh identity lookup failed:', error);
+  }
+
+  const recoveredProjectId = String(publicPage?.projectId || '').trim();
+  if (!recoveredProjectId || recoveredProjectId === String(context?.projectId || '')) {
+    if (firstError) throw firstError;
+    return null;
+  }
+
+  return fetchServerPage(slug, {
+    projectId: recoveredProjectId,
+    ownerId: String(publicPage?.ownerId || authUser?.ownerId || context?.ownerId || '').trim(),
+    slug,
+    session: authUser?.session || context?.session || '',
+    legacyProjectId: '',
+    legacyOwnerId: '',
+  });
 }
 
 function forceRecoveredDyjhIntoEditor({
@@ -108,13 +146,13 @@ export function useAccountWorkspacePage({
     if (accountPageLoadRef.current === loadKey) return undefined;
     accountPageLoadRef.current = loadKey;
     setAccountPageReadyKey?.('');
-    fetchServerPage(slug, context)
+    fetchSelectedWorkspacePage({ slug, context, authUser })
       .then((serverPage) => {
         if (!alive) return;
         if (accountPageLoadRef.current !== loadKey) return;
 
         const normalizedServerPage = serverPage
-          ? normalize({ ...serverPage, __accountProjectAccess: accountProjectAccess })
+          ? normalize({ ...serverPage, __accountProjectAccess: true })
           : null;
 
         if (isRecoveredDyjhPage(normalizedServerPage, slug)) {
@@ -131,7 +169,7 @@ export function useAccountWorkspacePage({
         if (localPageMutationRef.current !== loadMutation) return;
         if (normalizedServerPage) {
           const current = latestPageRef.current || page;
-          if ((current.slug || '') !== slug || (current.projectId || '') !== (context.projectId || '')) return;
+          if ((current.slug || '') !== slug) return;
           latestPageRef.current = normalizedServerPage;
           setPage(normalizedServerPage);
           offerPageDraftRecovery({ serverPage: normalizedServerPage, authUser, latestPageRef, localPageMutationRef, setPage });
@@ -155,6 +193,7 @@ export function useAccountWorkspacePage({
       })
       .catch((error) => {
         console.warn('Server page load failed:', error);
+        emitBuilderToast('선택한 페이지의 서버 저장본을 불러오지 못했습니다. 저장하지 말고 대시보드에서 다시 열어주세요.', 'error');
       })
       .finally(() => {
         if (!alive) return;
