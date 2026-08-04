@@ -1,4 +1,4 @@
-import { decodeD1Page, getD1PageBySlug, getD1ProjectById, upsertD1Page } from '../../../server/storage/d1Adapter.mjs';
+import { decodeD1Page, decodeD1PageRevision, getD1PageBySlug, getD1ProjectById, upsertD1Page } from '../../../server/storage/d1Adapter.mjs';
 import {
   assertExpectedPageVersion,
   assertTargetSlugAvailable,
@@ -21,6 +21,10 @@ const PUBLIC_PAGE_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Inlet-Api-Token, X-Inlet-Owner-Id, X-Inlet-Project-Id, X-Inlet-Session',
   'Access-Control-Max-Age': '86400',
 };
+
+const DYJH_INCIDENT_RECOVERY_ID = 'pagero-editor-20260804';
+const DYJH_INCIDENT_START = '2026-08-04T13:30:00.000Z';
+const DYJH_INCIDENT_END = '2026-08-04T14:15:00.000Z';
 
 function safeSlug(value = '') {
   return String(value || 'my-page').replace(/[^a-zA-Z0-9-_]/g, '') || 'my-page';
@@ -151,6 +155,43 @@ async function getPageById(db, pageId = '') {
   return row ? decodeD1Page(row) : null;
 }
 
+async function recoverDyjhIncidentPage(db, page, slug) {
+  if (!page || slug !== 'dyjh') return page;
+  if (page.recoveredIncidentId === DYJH_INCIDENT_RECOVERY_ID) return page;
+
+  const updatedAt = String(page.updatedAt || '');
+  if (!updatedAt || updatedAt < DYJH_INCIDENT_START || updatedAt > DYJH_INCIDENT_END) return page;
+
+  const revisionRow = await db.prepare(`
+    SELECT *
+    FROM page_revisions
+    WHERE page_id = ?
+      AND project_id = ?
+      AND created_at < ?
+    ORDER BY created_at DESC, revision DESC
+    LIMIT 1
+  `).bind(page.id, page.projectId, DYJH_INCIDENT_START).first();
+
+  if (!revisionRow) return page;
+  const revision = decodeD1PageRevision(revisionRow);
+  if (!revision?.page || !Array.isArray(revision.page.blocks) || revision.page.blocks.length === 0) return page;
+
+  return upsertD1Page(db, {
+    ...revision.page,
+    id: page.id,
+    projectId: page.projectId,
+    slug,
+    createdAt: page.createdAt || revision.page.createdAt || '',
+    updatedAt: new Date().toISOString(),
+    recoveredIncidentId: DYJH_INCIDENT_RECOVERY_ID,
+  }, {
+    pageId: page.id,
+    projectId: page.projectId,
+    slug,
+    reason: 'incident-recovery:pagero-editor-20260804',
+  });
+}
+
 async function authorizeNewPageProject({ db, request, env, project, identity, slug, writeTab }) {
   let targetProject = project;
   try {
@@ -199,16 +240,19 @@ export async function onRequest({ request, env, params }) {
         const result = project.projectId
           ? { project, page: await getD1PageBySlug(db, { projectId: project.projectId, slug }) }
           : await getPublicPageBySlug(db, slug);
-        const { page, project: publicProject } = result;
+        let { page } = result;
+        const { project: publicProject } = result;
         if (!page) return pageNotFoundResponse(request, env);
+        page = await recoverDyjhIncidentPage(db, page, slug);
         return jsonResponse(request, env, 200, { ok: true, page: publicPagePayload(page, publicProject) }, METHODS, {
           cacheControl: PUBLIC_PAGE_CACHE_CONTROL,
           headers: PUBLIC_PAGE_HEADERS,
         });
       }
       await authorizeProject(request, env, project);
-      const page = await getD1PageBySlug(db, { projectId: project.projectId, slug });
+      let page = await getD1PageBySlug(db, { projectId: project.projectId, slug });
       if (!page) return pageNotFoundResponse(request, env);
+      page = await recoverDyjhIncidentPage(db, page, slug);
       return jsonResponse(request, env, 200, { ok: true, page }, METHODS);
     }
 
