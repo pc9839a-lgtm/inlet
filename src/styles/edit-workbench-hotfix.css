@@ -1,0 +1,65 @@
+/* Edit-only layout ownership. Loaded last so legacy two-column workspace rules cannot split the workbench. */
+html body #root > .builder-shell.edit-workbench-shell:not(.mobile-operations-shell) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-rows: 72px 86px minmax(0, 1fr) !important;
+  align-content: stretch !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  height: 100dvh !important;
+  min-height: 720px !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+}
+
+html body #root > .builder-shell.edit-workbench-shell > .edit-workbench-nav {
+  grid-column: 1 / -1 !important;
+  grid-row: 1 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+html body #root > .builder-shell.edit-workbench-shell > .edit-workbench-toolbar {
+  grid-column: 1 / -1 !important;
+  grid-row: 2 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+html body #root > .builder-shell.edit-workbench-shell > .edit-workbench-grid {
+  grid-column: 1 / -1 !important;
+  grid-row: 3 !important;
+  display: grid !important;
+  grid-template-columns: 258px minmax(520px, 1fr) 340px !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+html body #root > .builder-shell.edit-workbench-shell .edit-workbench-library,
+html body #root > .builder-shell.edit-workbench-shell .preview-workspace-canvas,
+html body #root > .builder-shell.edit-workbench-shell .edit-workbench-inspector {
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+html body #root > .builder-shell.edit-workbench-shell .edit-workbench-library-scroll,
+html body #root > .builder-shell.edit-workbench-shell .edit-workbench-inspector-scroll {
+  height: calc(100dvh - 220px) !important;
+  max-height: calc(100dvh - 220px) !important;
+}
+
+html body #root > .builder-shell.edit-workbench-shell .preview-workspace.preview-workspace-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none !important;
+  overflow: auto !important;
+}
+
+@media (max-width: 1320px) {
+  html body #root > .builder-shell.edit-workbench-shell > .edit-workbench-grid {
+    grid-template-columns: 232px minmax(500px, 1fr) 320px !important;
+  }
+}
