@@ -32,6 +32,7 @@ export function authAccountErrorMessage(error) {
     EMAIL_VERIFICATION_EXPIRED: '이메일 인증 시간이 만료되었습니다. 다시 인증해주세요.',
     EMAIL_VERIFICATION_COOLDOWN: '인증 메일을 이미 보냈습니다. 잠시 후 다시 시도해주세요.',
     EMAIL_VERIFICATION_DAILY_LIMIT: '오늘 인증 메일 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.',
+    EMAIL_VERIFICATION_RATE_LIMITED: '인증 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.',
     AUTH_LOGIN_INVALID: '이메일 또는 비밀번호가 올바르지 않습니다.',
     AUTH_LOGIN_REQUIRED: '이메일과 비밀번호를 입력해주세요.',
     AUTH_SESSION_INVALID: '로그인 세션이 만료되었습니다. 다시 로그인해주세요.',
@@ -51,6 +52,7 @@ export function authAccountErrorMessage(error) {
   if (/password must include/i.test(message)) return byCode.AUTH_PASSWORD_POLICY;
   if (/requested too recently/i.test(message)) return byCode.EMAIL_VERIFICATION_COOLDOWN;
   if (/too many verification emails/i.test(message)) return byCode.EMAIL_VERIFICATION_DAILY_LIMIT;
+  if (/too many verification requests/i.test(message)) return byCode.EMAIL_VERIFICATION_RATE_LIMITED;
   if (/email or password is invalid/i.test(message)) return byCode.AUTH_LOGIN_INVALID;
   if (/email and password are required/i.test(message)) return byCode.AUTH_LOGIN_REQUIRED;
   if (/email verification/i.test(message)) return '이메일 인증 정보를 확인해주세요.';

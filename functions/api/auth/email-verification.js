@@ -1,7 +1,7 @@
 import { getD1AccountByEmail } from '../../../server/storage/d1Adapter.mjs';
 import { assertD1, handleApiError, jsonResponse, optionsResponse, readJson } from '../_shared.js';
 import { auditErrorMetadata, auditSubjectHash, writeAuditLog } from '../_audit.js';
-import { AUTH_METHODS, authError, issueEmailVerificationToken, normalizeEmail, normalizeEmailVerificationPurpose } from './_auth.js';
+import { AUTH_METHODS, authError, emailVerificationRequesterKey, issueEmailVerificationToken, normalizeEmail, normalizeEmailVerificationPurpose } from './_auth.js';
 
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, AUTH_METHODS);
@@ -18,7 +18,8 @@ export async function onRequest({ request, env }) {
     if (purpose === 'email-change' && email && await getD1AccountByEmail(env.DB, email)) {
       throw authError('Email is already registered.', 409, { code: 'AUTH_EMAIL_DUPLICATE', field: 'email' });
     }
-    const verification = await issueEmailVerificationToken(input, env);
+    const requesterKey = await emailVerificationRequesterKey(request, env);
+    const verification = await issueEmailVerificationToken({ ...input, requesterKey }, env);
     await writeAuditLog({
       request,
       env,

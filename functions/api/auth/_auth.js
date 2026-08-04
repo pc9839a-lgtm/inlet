@@ -126,6 +126,22 @@ export function authSecret(env = {}) {
 }
 
 
+function verificationRequestIp(request) {
+  return String(
+    request?.headers?.get?.('CF-Connecting-IP')
+      || request?.headers?.get?.('X-Forwarded-For')?.split(',')[0]
+      || '',
+  ).trim().slice(0, 200);
+}
+
+export async function emailVerificationRequesterKey(request, env = {}) {
+  const ip = verificationRequestIp(request);
+  if (!ip) return '';
+  const digest = await hmacHex(`auth-email-requester:v1:${ip}`, authSecret(env));
+  return digest.slice(0, 24);
+}
+
+
 export async function accountSessionVersion(user = {}, env = {}) {
   const ownerId = String(user.ownerId || user.id || '').trim();
   const email = normalizeEmail(user.email || '');
@@ -234,10 +250,10 @@ export async function issueEmailVerificationToken(input = {}, env = {}) {
   assertAuthEmailDeliveryReady(provider, env);
 
   const now = Math.floor(Date.now() / 1000);
-  await assertEmailVerificationSendAllowed(env.DB, { email, purpose, now });
+  await assertEmailVerificationSendAllowed(env.DB, { email, purpose, requesterKey: input.requesterKey, now });
   const expiresAt = new Date((now + 60 * 30) * 1000).toISOString();
   const code = verificationCode();
-  const stored = await storeEmailVerificationCode(env.DB, { email, purpose, code, expiresAt }, env);
+  const stored = await storeEmailVerificationCode(env.DB, { email, purpose, requesterKey: input.requesterKey, code, expiresAt }, env);
 
   if (provider !== 'mock' && !stored.ok) {
     throw authError('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 503, {
@@ -282,6 +298,7 @@ async function assertEmailVerificationSendAllowed(db, input = {}) {
   if (!db?.prepare) return;
   const nowMs = Number(input.now || Math.floor(Date.now() / 1000)) * 1000;
   const cooldownAt = new Date(nowMs - 60 * 1000).toISOString();
+  const tenMinutesAt = new Date(nowMs - 10 * 60 * 1000).toISOString();
   const dailyAt = new Date(nowMs - 24 * 60 * 60 * 1000).toISOString();
 
   const recent = await db.prepare(`
@@ -306,6 +323,59 @@ async function assertEmailVerificationSendAllowed(db, input = {}) {
   if (Number(daily?.count || 0) >= 20) {
     throw authError('Too many verification emails were requested today.', 429, {
       code: 'EMAIL_VERIFICATION_DAILY_LIMIT',
+      retryAfterSeconds: 60 * 60,
+    });
+  }
+
+  const requesterKey = String(input.requesterKey || '').trim().toLowerCase();
+  if (!/^[a-f0-9]{24}$/.test(requesterKey)) return;
+  const idFrom = `email-verification-${requesterKey}-`;
+  const idTo = `${idFrom}\uffff`;
+
+  const requesterPurposeBurst = await db.prepare(`
+    SELECT COUNT(*) AS count
+    FROM auth_email_verifications
+    WHERE id >= ? AND id < ? AND purpose = ? AND created_at >= ?
+  `).bind(idFrom, idTo, input.purpose, tenMinutesAt).first();
+  if (Number(requesterPurposeBurst?.count || 0) >= 8) {
+    throw authError('Too many verification requests were made.', 429, {
+      code: 'EMAIL_VERIFICATION_RATE_LIMITED',
+      retryAfterSeconds: 10 * 60,
+    });
+  }
+
+  const requesterPurposeDaily = await db.prepare(`
+    SELECT COUNT(*) AS count
+    FROM auth_email_verifications
+    WHERE id >= ? AND id < ? AND purpose = ? AND created_at >= ?
+  `).bind(idFrom, idTo, input.purpose, dailyAt).first();
+  if (Number(requesterPurposeDaily?.count || 0) >= 30) {
+    throw authError('Too many verification requests were made.', 429, {
+      code: 'EMAIL_VERIFICATION_RATE_LIMITED',
+      retryAfterSeconds: 60 * 60,
+    });
+  }
+
+  const requesterGlobalBurst = await db.prepare(`
+    SELECT COUNT(*) AS count
+    FROM auth_email_verifications
+    WHERE id >= ? AND id < ? AND created_at >= ?
+  `).bind(idFrom, idTo, tenMinutesAt).first();
+  if (Number(requesterGlobalBurst?.count || 0) >= 20) {
+    throw authError('Too many verification requests were made.', 429, {
+      code: 'EMAIL_VERIFICATION_RATE_LIMITED',
+      retryAfterSeconds: 10 * 60,
+    });
+  }
+
+  const requesterGlobalDaily = await db.prepare(`
+    SELECT COUNT(*) AS count
+    FROM auth_email_verifications
+    WHERE id >= ? AND id < ? AND created_at >= ?
+  `).bind(idFrom, idTo, dailyAt).first();
+  if (Number(requesterGlobalDaily?.count || 0) >= 80) {
+    throw authError('Too many verification requests were made.', 429, {
+      code: 'EMAIL_VERIFICATION_RATE_LIMITED',
       retryAfterSeconds: 60 * 60,
     });
   }
@@ -364,13 +434,17 @@ function verificationCode() {
   return String(bytes[0] % 1000000).padStart(6, '0');
 }
 
-function verificationId() {
-  return crypto.randomUUID?.() || `email-verification-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+function verificationId(requesterKey = '') {
+  const safeRequesterKey = /^[a-f0-9]{24}$/.test(String(requesterKey || '').trim().toLowerCase())
+    ? String(requesterKey).trim().toLowerCase()
+    : 'anonymous';
+  const suffix = crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return `email-verification-${safeRequesterKey}-${suffix}`;
 }
 
 async function storeEmailVerificationCode(db, record = {}, env = {}) {
   if (!db?.prepare) return { ok: false, id: '' };
-  const id = verificationId();
+  const id = verificationId(record.requesterKey);
   const codeHash = await hmacHex(`${record.email}:${record.purpose}:${record.code}`, authSecret(env));
   try {
     await db.prepare(`
