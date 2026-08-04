@@ -1,0 +1,46 @@
+name: Auth Verification Purpose Consumption Bootstrap
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.head_ref == 'fix/auth-verification-purpose-consumption-20260804' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout patch branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/auth-verification-purpose-consumption-20260804
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Apply verification purpose and consumption patch
+        run: python3 scripts/bootstrap-auth-verification-purpose-consumption.py
+
+      - name: Install
+        run: npm ci
+
+      - name: Auth verification QA
+        run: npm run auth:qa
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit patch
+        run: |
+          git config user.name "Inlet Patch Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add functions/api/auth/_auth.js functions/api/auth/email-verification.js functions/api/auth/password.js functions/api/auth/account/email.js src/lib/authAccounts.js src/screens/AuthScreen.jsx src/panels/settings/accountSettingsActions.js scripts/auth-quality-check.mjs scripts/auth-verification-purpose-consumption-quality-check.mjs docs/ops-auth-verification-purpose-consumption.md
+          git commit -m "fix: isolate and consume auth verification codes"
+          git push origin HEAD:fix/auth-verification-purpose-consumption-20260804
