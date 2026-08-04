@@ -25,6 +25,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Verify billing and referral contracts
         run: node scripts/billing-referral-quality-check.mjs
