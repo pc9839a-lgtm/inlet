@@ -1,0 +1,58 @@
+name: Verify CallTag Push Readiness
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/calltag-push-live-readiness.yml'
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve latest production deployment
+        id: deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="$(grep -Eo 'https://[a-z0-9.-]+\.pages\.dev' .deployment/cloudflare-deploy-error.txt | tail -n 1)"
+          test -n "$url"
+          echo "base_url=$url" >> "$GITHUB_OUTPUT"
+          echo "Production deployment: $url"
+
+      - name: Verify Firebase and D1 readiness
+        env:
+          BASE_URL: ${{ steps.deployment.outputs.base_url }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          endpoint="${BASE_URL%/}/api/call/push/readiness"
+          body=""
+          for attempt in $(seq 1 12); do
+            body="$(curl --fail --silent --show-error --max-time 20 "$endpoint" || true)"
+            if [ -n "$body" ]; then break; fi
+            sleep 5
+          done
+          test -n "$body"
+          BODY="$body" node <<'NODE'
+          const body = JSON.parse(process.env.BODY || '{}');
+          const safe = {
+            ready: body.ready === true,
+            firebase: {
+              configured: body?.firebase?.configured === true,
+              projectId: body?.firebase?.projectId === true,
+              clientEmail: body?.firebase?.clientEmail === true,
+              privateKey: body?.firebase?.privateKey === true,
+            },
+            d1: {
+              bound: body?.d1?.bound === true,
+              pushDevicesTable: body?.d1?.pushDevicesTable === true,
+            },
+            checkedAt: String(body.checkedAt || ''),
+          };
+          console.log(JSON.stringify(safe, null, 2));
+          if (!safe.ready) process.exit(1);
+          NODE
