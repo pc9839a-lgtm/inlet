@@ -1,6 +1,6 @@
 # 페이지로 → 콜태그 실시간 문의 푸시
 
-기준일: **2026-08-03**
+기준일: **2026-08-04**
 
 ## 목적
 
@@ -75,6 +75,36 @@ Cloudflare Pages Production 환경변수 대응:
 - Preview에만 등록하고 Production 환경을 누락
 
 환경변수 등록 후 페이지로 운영 배포를 다시 실행한다.
+
+## 운영 준비상태 확인
+
+비밀값 원문은 외부에 노출하지 않고 설정 유무만 확인한다.
+
+- `GET /api/call/push/readiness`
+- 인증 없이 조회 가능하지만 값 자체는 반환하지 않음
+- 응답 헤더 `Cache-Control: no-store`
+
+확인 항목:
+
+- `firebase.projectId`
+- `firebase.clientEmail`
+- `firebase.privateKey`
+- `firebase.configured`
+- `d1.bound`
+- `d1.pushDevicesTable`
+- 전체 `ready`
+
+`ready=true` 조건:
+
+1. Firebase 운영 환경변수 3개가 모두 존재
+2. D1 바인딩 존재
+3. `calltag_push_devices` 테이블 존재
+
+Production 배포가 완료될 때 `scripts/calltag-push-readiness-check.mjs`가 배포 URL을 조회하고 결과를 다음 파일에 기록한다.
+
+- `.deployment/calltag-push-readiness.json`
+
+기록 파일에도 비밀값은 포함하지 않고 boolean 상태만 남긴다.
 
 ## 처리 순서
 
@@ -203,17 +233,18 @@ CallTag v0.40.9 검증 APK의 Firebase Android 값 4개는 빈 문자열로 확�
 4. Cloudflare Production 환경변수 3개 등록
 5. D1 `0008_calltag_realtime_push.sql` 적용
 6. 페이지로 운영 재배포
-7. CallTag APK 재빌드
-8. APK 내부 Firebase 값 비어 있지 않음 확인
-9. 앱 로그인 후 알림 권한 허용
-10. push register API에서 등록 상태 확인
-11. 운영 페이지로 문의 제출
-12. 서버 로그에서 FCM attempted·sent 확인
-13. 앱 종료·백그라운드·잠금화면 알림 확인
-14. 알림 터치 후 신규 고객과 `PAGERO_INQUIRY` 확인
-15. 동일 eventId 재전송 중복 미생성 확인
-16. 빠른 연속 문의 3건 모두 반영 확인
-17. FCM 장애 시에도 문의 접수 성공 유지 확인
+7. `/api/call/push/readiness`에서 `ready=true` 확인
+8. CallTag APK 재빌드
+9. APK 내부 Firebase 값 비어 있지 않음 확인
+10. 앱 로그인 후 알림 권한 허용
+11. push register API에서 등록 상태 확인
+12. 운영 페이지로 문의 제출
+13. 서버 로그에서 FCM attempted·sent 확인
+14. 앱 종료·백그라운드·잠금화면 알림 확인
+15. 알림 터치 후 신규 고객과 `PAGERO_INQUIRY` 확인
+16. 동일 eventId 재전송 중복 미생성 확인
+17. 빠른 연속 문의 3건 모두 반영 확인
+18. FCM 장애 시에도 문의 접수 성공 유지 확인
 
 ## 데이터·장애 안전
 
