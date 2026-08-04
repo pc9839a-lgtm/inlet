@@ -1,4 +1,4 @@
-import { fetchServerPage, persistPage } from '../lib/pageRepository.js';
+import { fetchPublicServerPage, fetchServerPage, persistPage } from '../lib/pageRepository.js';
 import { projectContext } from '../lib/projectContext.js';
 import { normalize, normalizePageForSave } from '../lib/pageModel.js';
 import { buildPageRevisionDiff } from '../lib/pageRevisionDiff.js';
@@ -6,6 +6,35 @@ import { save as saveJson, storageErrorMessage } from '../lib/storage.js';
 import { saveConflictDraft } from './localConflictDrafts.js';
 import { STORAGE_KEY } from '../config/storageKeys.js';
 import { isPageConflictError } from './conflictUtils.js';
+
+async function loadLatestConflictPage(localPage, authUser) {
+  const slug = String(localPage?.slug || '').trim();
+  let authenticatedError = null;
+
+  try {
+    const latestPage = await fetchServerPage(slug, projectContext(localPage, authUser));
+    if (latestPage) return normalize(latestPage);
+  } catch (error) {
+    authenticatedError = error;
+    console.warn('Authenticated latest server page load after conflict failed:', error);
+  }
+
+  // 2026-08-04 dyjh incident recovery:
+  // the restored page can temporarily belong to its recovered project identity,
+  // while the signed-in editor still carries the stale local project identity.
+  // Use the already public, read-only server copy only for this slug.
+  if (slug === 'dyjh') {
+    try {
+      const publicPage = await fetchPublicServerPage(slug);
+      if (publicPage) return normalize(publicPage);
+    } catch (error) {
+      console.warn('Public dyjh fallback load after conflict failed:', error);
+    }
+  }
+
+  if (authenticatedError) throw authenticatedError;
+  return null;
+}
 
 export function usePageConflict({
   authUser,
@@ -17,8 +46,7 @@ export function usePageConflict({
   const openPageConflict = async (localPage, error) => {
     let serverPage = null;
     try {
-      const latestPage = await fetchServerPage(localPage.slug, projectContext(localPage, authUser));
-      serverPage = latestPage ? normalize(latestPage) : null;
+      serverPage = await loadLatestConflictPage(localPage, authUser);
     } catch (loadError) {
       console.warn('Latest server page load after conflict failed:', loadError);
     }
