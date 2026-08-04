@@ -1,4 +1,5 @@
 import { useLayoutEffect } from 'react';
+import { fetchSelectedAccountPage } from '../lib/accountPageRepository.js';
 import { fetchPublicServerPage, fetchServerPage } from '../lib/pageRepository.js';
 import { projectContext } from '../lib/projectContext.js';
 import { defaultPage, normalize, normalizePageForSave } from '../lib/pageModel.js';
@@ -26,11 +27,14 @@ function isRecoveredDyjhPage(serverPage = null, slug = '') {
     || serialized.includes('삼산월드컨벤션');
 }
 
-async function fetchSelectedWorkspacePage({ slug, context, authUser }) {
+async function fetchSelectedWorkspacePage({ page, slug, context, authUser }) {
+  const exactPage = await fetchSelectedAccountPage(page, authUser);
+  if (exactPage) return exactPage;
+
   let firstError = null;
   try {
-    const page = await fetchServerPage(slug, context);
-    if (page) return page;
+    const serverPage = await fetchServerPage(slug, context);
+    if (serverPage) return serverPage;
   } catch (error) {
     firstError = error;
     console.warn('Selected workspace page load failed:', error);
@@ -141,12 +145,12 @@ export function useAccountWorkspacePage({
       latestPageRef.current = isolatedPage;
       setPage(isolatedPage);
     }
-    const loadKey = `${context.projectId}:${context.slug}:${authUser?.session || authUser?.workspaceId || authUser?.email || ''}`;
+    const loadKey = `${page.id || ''}:${context.projectId}:${context.slug}:${authUser?.session || authUser?.workspaceId || authUser?.email || ''}`;
     const loadMutation = localPageMutationRef.current;
     if (accountPageLoadRef.current === loadKey) return undefined;
     accountPageLoadRef.current = loadKey;
     setAccountPageReadyKey?.('');
-    fetchSelectedWorkspacePage({ slug, context, authUser })
+    fetchSelectedWorkspacePage({ page, slug, context, authUser })
       .then((serverPage) => {
         if (!alive) return;
         if (accountPageLoadRef.current !== loadKey) return;
@@ -201,5 +205,5 @@ export function useAccountWorkspacePage({
         setAccountPageReadyKey?.(loadKey);
       });
     return () => { alive = false; };
-  }, [publicLandingSlug, authUser?.session, authUser?.workspaceId, authUser?.email, page.slug, page.projectId, page.ownerId]);
+  }, [publicLandingSlug, authUser?.session, authUser?.workspaceId, authUser?.email, page.id, page.slug, page.projectId, page.ownerId]);
 }
