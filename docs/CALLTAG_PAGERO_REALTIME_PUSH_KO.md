@@ -14,7 +14,26 @@
 - Google 로그인 변경과 분리된 서버 패치
 - 기존 Google 로그인·푸시 통합 PR `#48`은 Draft 유지
 
-`main` 병합은 코드 반영을 의미한다. Cloudflare Pages 운영 배포 완료, Firebase 환경 변수 등록, D1 migration 적용은 별도로 확인해야 한다.
+## 운영 서버 준비 완료
+
+2026-08-04 Cloudflare Production과 운영 D1 `inlet-prod`를 실측했다.
+
+- 확인 배포: `https://89a7a596.inlet-8mr.pages.dev`
+- readiness 확인 시각: `2026-08-04T02:26:12.061Z`
+- Workflow Run ID: `30871387043`
+- Job ID: `91875065527`
+
+확인 결과:
+
+- `FIREBASE_PROJECT_ID`: `true`
+- `FIREBASE_CLIENT_EMAIL`: `true`
+- `FIREBASE_PRIVATE_KEY`: `true`
+- Firebase 전체 configured: `true`
+- D1 바인딩: `true`
+- `calltag_push_devices` 테이블: `true`
+- 최종 `ready`: `true`
+
+비공개 키 원문은 로그·문서·응답에 출력하지 않고 설정 유무만 확인했다.
 
 ## Firebase Console 등록
 
@@ -74,14 +93,11 @@ Cloudflare Pages Production 환경변수 대응:
 - 문서·이슈·스크린샷에 전체 키 노출
 - Preview에만 등록하고 Production 환경을 누락
 
-환경변수 등록 후 페이지로 운영 배포를 다시 실행한다.
-
 ## 운영 준비상태 확인
 
 비밀값 원문은 외부에 노출하지 않고 설정 유무만 확인한다.
 
 - `GET /api/call/push/readiness`
-- 인증 없이 조회 가능하지만 값 자체는 반환하지 않음
 - 응답 헤더 `Cache-Control: no-store`
 
 확인 항목:
@@ -99,12 +115,6 @@ Cloudflare Pages Production 환경변수 대응:
 1. Firebase 운영 환경변수 3개가 모두 존재
 2. D1 바인딩 존재
 3. `calltag_push_devices` 테이블 존재
-
-Production 배포가 완료될 때 `scripts/calltag-push-readiness-check.mjs`가 배포 URL을 조회하고 결과를 다음 파일에 기록한다.
-
-- `.deployment/calltag-push-readiness.json`
-
-기록 파일에도 비밀값은 포함하지 않고 boolean 상태만 남긴다.
 
 ## 처리 순서
 
@@ -177,15 +187,16 @@ Production 배포가 완료될 때 `scripts/calltag-push-readiness-check.mjs`가
 
 ## D1
 
-migration:
+적용 완료 migration:
 
 - `migrations/0008_calltag_realtime_push.sql`
 
-테이블:
+생성 완료:
 
 - `calltag_push_devices`
+- `idx_calltag_push_owner_enabled`
 
-API는 `CREATE TABLE IF NOT EXISTS` 방어 로직도 갖지만 운영 migration 적용 여부를 별도 확인한다.
+기존 고객·문의·회원·랜딩 데이터는 변경하지 않는다.
 
 ## CI 검증
 
@@ -200,56 +211,39 @@ API는 `CREATE TABLE IF NOT EXISTS` 방어 로직도 갖지만 운영 migration 
 
 ### 전체 QA
 
-- Run ID: `30822112885`
+- Run ID: `30871387085`
 - Full offline QA: 성공
 - form browser regression: 성공
 - editor browser regression: 성공
 - landing browser regression: 성공
 - template mobile browser regression: 성공
 
-## 현재 운영 제한
+### 운영 readiness
 
-CallTag v0.40.9 검증 APK의 Firebase Android 값 4개는 빈 문자열로 확인됐다.
+- Run ID: `30871387043`
+- Job ID: `91875065527`
+- 결론: 성공
+- 최종 `ready=true`
 
-따라서 현재 확정된 기능:
+## 현재 남은 작업
 
-- 앱 실행·재진입 문의 동기화
-- 앱을 열어둔 동안 30초 보조 동기화
-- 실제 고객 DB 반영 후 알림
-- 동일 문의 중복방지
+서버는 FCM 발송 준비가 완료됐다. 남은 작업은 Android 앱 쪽이다.
 
-아직 운영 완료가 아닌 기능:
-
-- 앱 종료 상태 즉시 알림
-- 잠금화면 즉시 알림
-- 기기 FCM 토큰 운영 서버 등록
-- 운영 FCM HTTP v1 실제 발송
-
-## 운영 E2E 체크리스트
-
-1. Firebase Android 앱 `kr.pagero.calltag` 등록
-2. CallTag GitHub Secret 4개 등록
-3. Firebase 서비스 계정 JSON 발급
-4. Cloudflare Production 환경변수 3개 등록
-5. D1 `0008_calltag_realtime_push.sql` 적용
-6. 페이지로 운영 재배포
-7. `/api/call/push/readiness`에서 `ready=true` 확인
-8. CallTag APK 재빌드
-9. APK 내부 Firebase 값 비어 있지 않음 확인
-10. 앱 로그인 후 알림 권한 허용
-11. push register API에서 등록 상태 확인
-12. 운영 페이지로 문의 제출
-13. 서버 로그에서 FCM attempted·sent 확인
-14. 앱 종료·백그라운드·잠금화면 알림 확인
-15. 알림 터치 후 신규 고객과 `PAGERO_INQUIRY` 확인
-16. 동일 eventId 재전송 중복 미생성 확인
-17. 빠른 연속 문의 3건 모두 반영 확인
-18. FCM 장애 시에도 문의 접수 성공 유지 확인
+1. CallTag GitHub Actions Secret 4개 등록
+2. Firebase 값이 포함된 APK 재빌드
+3. APK 내부 Firebase 값 확인
+4. 기존 앱 위에 덮어 설치
+5. 로그인 후 FCM 기기 토큰 서버 등록 확인
+6. 실제 페이지로 문의 접수
+7. 앱 종료·백그라운드·잠금화면 알림 확인
+8. 알림 터치 후 신규 고객·메모·`PAGERO_INQUIRY` 확인
+9. 동일 eventId 중복 미생성 확인
+10. 빠른 연속 문의 3건 전부 반영 확인
 
 ## 데이터·장애 안전
 
-- 푸시 전송은 `context.waitUntil`로 문의 응답과 분리
-- Firebase 미설정·장애가 문의 저장을 실패시키지 않음
+- 푸시 전송은 문의 응답과 분리
+- Firebase 장애가 문의 저장을 실패시키지 않음
 - 고객 개인정보를 FCM payload에 포함하지 않음
 - 잘못된 토큰을 자동 비활성화
 - 실시간 신호 유실 시 앱 전면 보조 동기화로 문의 큐를 다시 확인
