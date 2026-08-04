@@ -10,6 +10,36 @@ function emitBuilderToast(message, tone = 'info') {
   window.dispatchEvent(new CustomEvent('builder:toast', { detail: { message, tone } }));
 }
 
+function isRecoveredDyjhPage(serverPage = null, slug = '') {
+  if (!serverPage || String(slug || serverPage.slug || '') !== 'dyjh') return false;
+  const blocks = Array.isArray(serverPage.blocks) ? serverPage.blocks : [];
+  if (blocks.length < 10) return false;
+  let serialized = '';
+  try {
+    serialized = JSON.stringify(serverPage);
+  } catch {
+    return false;
+  }
+  return serialized.includes('김도윤')
+    || serialized.includes('오지현')
+    || serialized.includes('2026-11-28')
+    || serialized.includes('삼산월드컨벤션');
+}
+
+function forceRecoveredDyjhIntoEditor({
+  serverPage,
+  currentPage,
+  authUser,
+  latestPageRef,
+  setPage,
+}) {
+  clearPageDraft({ page: currentPage, authUser });
+  clearPageDraft({ page: serverPage, authUser });
+  latestPageRef.current = serverPage;
+  setPage(serverPage);
+  emitBuilderToast('복구된 청첩장 서버 저장본을 편집 화면에 불러왔습니다.', 'success');
+}
+
 function offerPageDraftRecovery({ serverPage, authUser, latestPageRef, localPageMutationRef, setPage }) {
   if (typeof window === 'undefined') return;
   const draft = readPageDraft({ page: serverPage, authUser });
@@ -82,14 +112,29 @@ export function useAccountWorkspacePage({
       .then((serverPage) => {
         if (!alive) return;
         if (accountPageLoadRef.current !== loadKey) return;
+
+        const normalizedServerPage = serverPage
+          ? normalize({ ...serverPage, __accountProjectAccess: accountProjectAccess })
+          : null;
+
+        if (isRecoveredDyjhPage(normalizedServerPage, slug)) {
+          forceRecoveredDyjhIntoEditor({
+            serverPage: normalizedServerPage,
+            currentPage: latestPageRef.current || page,
+            authUser,
+            latestPageRef,
+            setPage,
+          });
+          return;
+        }
+
         if (localPageMutationRef.current !== loadMutation) return;
-        if (serverPage) {
+        if (normalizedServerPage) {
           const current = latestPageRef.current || page;
           if ((current.slug || '') !== slug || (current.projectId || '') !== (context.projectId || '')) return;
-          const nextPage = normalize({ ...serverPage, __accountProjectAccess: accountProjectAccess });
-          latestPageRef.current = nextPage;
-          setPage(nextPage);
-          offerPageDraftRecovery({ serverPage: nextPage, authUser, latestPageRef, localPageMutationRef, setPage });
+          latestPageRef.current = normalizedServerPage;
+          setPage(normalizedServerPage);
+          offerPageDraftRecovery({ serverPage: normalizedServerPage, authUser, latestPageRef, localPageMutationRef, setPage });
           return;
         }
         const current = latestPageRef.current || page;
