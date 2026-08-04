@@ -2,6 +2,7 @@ import { assertD1, handleApiError, jsonResponse, optionsResponse, readJson } fro
 import { auditErrorMetadata, auditSubjectHash, writeAuditLog } from '../_audit.js';
 import { withPlatformMaster } from '../_platformMaster.js';
 import { AUTH_METHODS, googleAuthRedirectUri, googleLoginAuthUrl, loginAccount, loginGoogleAccount } from './_auth.js';
+import { assertPasswordLoginAllowed, finishPasswordLoginTiming } from './_loginRateLimit.js';
 
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, AUTH_METHODS);
@@ -9,6 +10,8 @@ export async function onRequest({ request, env }) {
   if (request.method !== 'POST') return jsonResponse(request, env, 405, { ok: false, error: 'Method not allowed.' }, AUTH_METHODS);
 
   let input = {};
+  let passwordLoginStartedAt = 0;
+  let rateLimitContext = { targetId: '', ipHash: '' };
   try {
     assertD1(env);
     input = await readJson(request);
@@ -16,6 +19,8 @@ export async function onRequest({ request, env }) {
       const url = await googleLoginAuthUrl(request, env, input);
       return jsonResponse(request, env, 200, { ok: true, url }, AUTH_METHODS);
     }
+    passwordLoginStartedAt = Date.now();
+    rateLimitContext = await assertPasswordLoginAllowed(request, env, input.email || '');
     const result = await loginAccount({ ...input, role: 'master' }, env);
     await writeAuditLog({
       request,
@@ -26,20 +31,24 @@ export async function onRequest({ request, env }) {
       targetId: result.user?.ownerId || result.user?.id || '',
       metadata: { provider: 'password' },
     });
+    await finishPasswordLoginTiming(passwordLoginStartedAt, env);
     return jsonResponse(request, env, 200, {
       ok: true,
       ...result,
       user: withPlatformMaster(result.user, env),
     }, AUTH_METHODS);
   } catch (error) {
+    const errorCode = String(error?.details?.code || '');
+    const rateLimited = errorCode === 'AUTH_LOGIN_RATE_LIMITED';
     await writeAuditLog({
       request,
       env,
-      action: 'auth.login_failed',
+      action: rateLimited ? 'auth.login_rate_limited' : 'auth.login_failed',
       targetType: 'account',
-      targetId: await auditSubjectHash(input.email || '', env).catch(() => ''),
+      targetId: rateLimitContext.targetId || await auditSubjectHash(input.email || '', env).catch(() => ''),
       metadata: { provider: 'password', ...auditErrorMetadata(error) },
     });
+    await finishPasswordLoginTiming(passwordLoginStartedAt, env);
     return handleApiError(request, env, error, AUTH_METHODS);
   }
 }

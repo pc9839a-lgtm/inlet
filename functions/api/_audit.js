@@ -70,6 +70,10 @@ function requestIp(request) {
   );
 }
 
+export async function auditRequestIpHash(request, env = {}) {
+  return auditHash(requestIp(request), env);
+}
+
 function errorCode(error = {}) {
   return normalizeString(error?.details?.code || error?.code || 'UNKNOWN_ERROR', 100) || 'UNKNOWN_ERROR';
 }

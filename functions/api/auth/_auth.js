@@ -592,12 +592,29 @@ export async function registerAccount(input = {}, env = {}) {
   return authUserPublic(user);
 }
 
+function constantTimeTextEqual(leftValue = '', rightValue = '') {
+  const left = String(leftValue || '');
+  const right = String(rightValue || '');
+  const length = Math.max(left.length, right.length);
+  let mismatch = left.length ^ right.length;
+  for (let index = 0; index < length; index += 1) {
+    mismatch |= (left.charCodeAt(index) || 0) ^ (right.charCodeAt(index) || 0);
+  }
+  return mismatch === 0;
+}
+
 export async function loginAccount(input = {}, env = {}) {
   const email = normalizeEmail(input.email || '');
   const password = String(input.password || '');
   if (!isValidEmail(email) || !password) throw authError('Email and password are required.', 400, { code: 'AUTH_LOGIN_REQUIRED' });
   const user = await getD1AccountByEmail(env.DB, email);
-  if (!user || user.passwordHash !== await passwordHash(password, email, env)) throw authError('Email or password is invalid.', 401, { code: 'AUTH_LOGIN_INVALID' });
+  const [candidateHash, dummyHash] = await Promise.all([
+    passwordHash(password, email, env),
+    passwordHash('pagero-invalid-login-sentinel', email, env),
+  ]);
+  const storedHash = String(user?.passwordHash || user?.password_hash || dummyHash);
+  const passwordMatches = constantTimeTextEqual(storedHash, candidateHash);
+  if (!user || !passwordMatches) throw authError('Email or password is invalid.', 401, { code: 'AUTH_LOGIN_INVALID' });
   assertAccountActive(user, 'login');
   if (user.emailVerified !== true) throw authError('Email verification is required before login.', 403, { code: 'EMAIL_VERIFICATION_REQUIRED' });
   const publicUser = authUserPublic(user);
