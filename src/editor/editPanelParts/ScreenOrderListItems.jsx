@@ -13,6 +13,7 @@ export function ScreenOrderListItems({
   removeBlock,
   reorderToIndex,
   renderBlockEditor,
+  inlineEditor = true,
 }) {
   const total = normalBlocks.length;
 
@@ -34,6 +35,7 @@ export function ScreenOrderListItems({
           removeBlock={removeBlock}
           reorderToIndex={reorderToIndex}
           renderBlockEditor={renderBlockEditor}
+          inlineEditor={inlineEditor}
         />
       ))}
     </div>
