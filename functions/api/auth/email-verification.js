@@ -3,6 +3,8 @@ import { assertD1, handleApiError, jsonResponse, optionsResponse, readJson } fro
 import { auditErrorMetadata, auditSubjectHash, writeAuditLog } from '../_audit.js';
 import { AUTH_METHODS, authError, emailVerificationRequesterKey, issueEmailVerificationToken, normalizeEmail, normalizeEmailVerificationPurpose } from './_auth.js';
 
+const FINAL_DUPLICATE_DECISION_CODE = 'AUTH_EMAIL_DUPLICATE';
+
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, AUTH_METHODS);
   if (request.method !== 'POST') return jsonResponse(request, env, 405, { ok: false, error: 'Method not allowed.' }, AUTH_METHODS);
@@ -28,6 +30,7 @@ export async function onRequest({ request, env }) {
     }, env);
     const publicVerification = publicEmailVerificationResult(verification, purpose);
     if (purpose === 'password-reset') await ensureMinimumResponseTime(responseStartedAt, 650);
+    const ownershipCheckedAtCompletion = purpose === 'signup' || purpose === 'email-change';
     await writeAuditLog({
       request,
       env,
@@ -36,7 +39,8 @@ export async function onRequest({ request, env }) {
       targetId: await auditSubjectHash(input.email || '', env).catch(() => ''),
       metadata: {
         purpose,
-        ownershipCheckedAtCompletion: purpose === 'signup' || purpose === 'email-change',
+        ownershipCheckedAtCompletion,
+        finalDuplicateDecisionCode: ownershipCheckedAtCompletion ? FINAL_DUPLICATE_DECISION_CODE : '',
         deliveryMode: publicVerification.delivery?.mode || '',
         deliveryStatus: publicVerification.delivery?.status || '',
       },
