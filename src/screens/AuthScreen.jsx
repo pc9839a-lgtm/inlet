@@ -29,6 +29,7 @@ function AuthScreen({ onAuth, initialMode = 'login', onBack }) {
 
   const verifyEmail = async () => {
     const email = form.email.trim().toLowerCase();
+    const purpose = mode === 'reset' ? 'password-reset' : 'signup';
     setError('');
     setNotice('');
     if (!email) {
@@ -38,18 +39,18 @@ function AuthScreen({ onAuth, initialMode = 'login', onBack }) {
     setSaving(true);
     try {
       if (form.verificationCode.trim()) {
-        await confirmEmailVerification({ email, token: form.verificationCode.trim() });
+        await confirmEmailVerification({ email, token: form.verificationCode.trim(), purpose });
         setEmailVerified(true);
         setNotice('이메일 인증이 완료되었습니다.');
         return;
       }
-      const verification = await requestEmailVerification(email, mode === 'reset' ? 'password-reset' : 'signup');
+      const verification = await requestEmailVerification(email, purpose);
       const token = String(verification?.token || '').trim();
       if (!token) {
         setNotice('인증 메일을 보냈습니다. 이메일로 받은 인증 코드를 입력한 뒤 다시 인증해주세요.');
         return;
       }
-      await confirmEmailVerification({ email, token });
+      await confirmEmailVerification({ email, token, purpose });
       setEmailVerified(true);
       setNotice('이메일 인증이 완료되었습니다.');
     } catch (err) {
