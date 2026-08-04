@@ -36,6 +36,7 @@ export async function onRequest({ request, env }) {
       targetId: await auditSubjectHash(input.email || '', env).catch(() => ''),
       metadata: {
         purpose,
+        ownershipCheckedAtCompletion: purpose === 'signup' || purpose === 'email-change',
         deliveryMode: publicVerification.delivery?.mode || '',
         deliveryStatus: publicVerification.delivery?.status || '',
       },
@@ -56,7 +57,6 @@ export async function onRequest({ request, env }) {
     return handleApiError(request, env, error, AUTH_METHODS);
   }
 }
-
 
 function publicEmailVerificationResult(verification = {}, purpose = '') {
   if (purpose !== 'password-reset') return verification;
