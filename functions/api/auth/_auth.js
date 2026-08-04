@@ -125,15 +125,50 @@ export function authSecret(env = {}) {
   return String(env.INLET_SESSION_SECRET || env.INLET_API_TOKEN || 'inlet-local-auth-secret');
 }
 
+
+export async function accountSessionVersion(user = {}, env = {}) {
+  const ownerId = String(user.ownerId || user.id || '').trim();
+  const email = normalizeEmail(user.email || '');
+  if (!ownerId || !email) return '';
+  const material = JSON.stringify({
+    ownerId,
+    email,
+    passwordHash: String(user.passwordHash || user.password_hash || ''),
+    status: normalizeAccountStatus(user.status || 'active'),
+    emailVerifiedAt: String(user.emailVerifiedAt || user.email_verified_at || ''),
+  });
+  return hmacHex(`account-session:v1:${material}`, authSecret(env));
+}
+
+async function sessionAccountForToken(input = {}, env = {}) {
+  const email = normalizeEmail(input.email || input.user?.email || input.account?.email || '');
+  if (env.DB?.prepare && email) {
+    return getD1AccountByEmail(env.DB, email);
+  }
+  return input.user || input.account || null;
+}
+
+function revokedSessionError() {
+  return authError('Session was revoked. Please sign in again.', 401, {
+    code: 'AUTH_SESSION_REVOKED',
+  });
+}
+
 export async function createSessionToken(input = {}, env = {}) {
   const secret = authSecret(env);
   if (!secret) return '';
   const now = Math.floor(Date.now() / 1000);
+  const email = normalizeEmail(input.email || input.user?.email || input.account?.email || '');
+  const account = await sessionAccountForToken({ ...input, email }, env);
+  const sessionVersion = account
+    ? await accountSessionVersion(account, env)
+    : String(input.sessionVersion || '').trim();
   const payload = {
-    ownerId: String(input.ownerId || ''),
+    ownerId: String(input.ownerId || account?.ownerId || account?.id || ''),
     projectId: String(input.projectId || ''),
     role: String(input.role || 'master'),
-    email: normalizeEmail(input.email || ''),
+    email,
+    ...(sessionVersion ? { sessionVersion } : {}),
     iat: now,
     exp: now + 60 * 60 * 24 * 30,
   };
@@ -166,8 +201,24 @@ export async function getSessionAccount(request, env = {}, input = {}) {
   const email = normalizeEmail(payload.email || input.email || '');
   const user = email ? await getD1AccountByEmail(env.DB, email) : null;
   if (!user) throw authError('Session account was not found.', 404, { code: 'AUTH_ACCOUNT_NOT_FOUND' });
+  if (payload.ownerId && String(payload.ownerId) !== String(user.ownerId || user.id || '')) {
+    throw revokedSessionError();
+  }
   assertAccountActive(user, 'refresh session');
   if (user.emailVerified !== true) throw authError('Email verification is required before session refresh.', 403, { code: 'EMAIL_VERIFICATION_REQUIRED' });
+
+  const expectedSessionVersion = await accountSessionVersion(user, env);
+  if (payload.sessionVersion) {
+    if (!expectedSessionVersion || String(payload.sessionVersion) !== expectedSessionVersion) {
+      throw revokedSessionError();
+    }
+  } else {
+    const issuedAtMs = Number(payload.iat || 0) * 1000;
+    const accountUpdatedAtMs = Date.parse(user.updatedAt || '');
+    if (!issuedAtMs || (Number.isFinite(accountUpdatedAtMs) && accountUpdatedAtMs > issuedAtMs + 1000)) {
+      throw revokedSessionError();
+    }
+  }
   return { payload, user };
 }
 

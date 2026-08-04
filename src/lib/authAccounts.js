@@ -35,6 +35,7 @@ export function authAccountErrorMessage(error) {
     AUTH_LOGIN_INVALID: '이메일 또는 비밀번호가 올바르지 않습니다.',
     AUTH_LOGIN_REQUIRED: '이메일과 비밀번호를 입력해주세요.',
     AUTH_SESSION_INVALID: '로그인 세션이 만료되었습니다. 다시 로그인해주세요.',
+    AUTH_SESSION_REVOKED: '보안을 위해 로그인 세션이 종료되었습니다. 다시 로그인해주세요.',
     AUTH_ACCOUNT_NOT_FOUND: '계정을 찾을 수 없습니다. 이메일을 확인해주세요.',
     AUTH_ACCOUNT_SUSPENDED: '정지된 계정입니다. 관리자에게 문의해주세요.',
     AUTH_ACCOUNT_DELETED: '탈퇴 처리 보류 중인 계정입니다.',
