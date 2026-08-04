@@ -10,18 +10,21 @@ export function WorkspacePreviewPane({
   track,
   selectedBlockId,
   onSelectPreviewBlock,
+  variant = 'phone',
 }) {
+  const canvasMode = variant === 'canvas';
+
   return (
-    <main className="preview-workspace">
+    <main className={`preview-workspace${canvasMode ? ' preview-workspace-canvas' : ''}`}>
       <div className="preview-sticky">
         <div className="preview-top">
           <div className="preview-title">
-            <span>모바일 미리보기</span>
+            <span>{canvasMode ? '실시간 미리보기' : '모바일 미리보기'}</span>
             <strong>/{page.slug}</strong>
           </div>
           <a className="preview-link" href={previewUrl} target="_blank" rel="noreferrer">{previewUrl}</a>
         </div>
-        <div className="phone-frame">
+        <div className={canvasMode ? 'page-canvas-frame' : 'phone-frame'}>
           <PreviewRenderer
             page={previewPage}
             leads={leads}
