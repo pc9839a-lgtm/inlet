@@ -1,5 +1,4 @@
 import { useLayoutEffect } from 'react';
-import { fetchSelectedAccountPage } from '../lib/accountPageRepository.js';
 import { fetchPublicServerPage, fetchServerPage } from '../lib/pageRepository.js';
 import { projectContext } from '../lib/projectContext.js';
 import { defaultPage, normalize, normalizePageForSave } from '../lib/pageModel.js';
@@ -27,12 +26,7 @@ function isRecoveredDyjhPage(serverPage = null, slug = '') {
     || serialized.includes('삼산월드컨벤션');
 }
 
-async function fetchSelectedWorkspacePage({ page, slug, context, authUser }) {
-  const exactPage = hasAccountProjectAccess(page)
-    ? await fetchSelectedAccountPage(page, authUser)
-    : null;
-  if (exactPage) return exactPage;
-
+async function fetchSelectedWorkspacePage({ slug, context, authUser }) {
   let firstError = null;
   try {
     const serverPage = await fetchServerPage(slug, context);
@@ -152,7 +146,7 @@ export function useAccountWorkspacePage({
     if (accountPageLoadRef.current === loadKey) return undefined;
     accountPageLoadRef.current = loadKey;
     setAccountPageReadyKey?.('');
-    fetchSelectedWorkspacePage({ page, slug, context, authUser })
+    fetchSelectedWorkspacePage({ slug, context, authUser })
       .then((serverPage) => {
         if (!alive) return;
         if (accountPageLoadRef.current !== loadKey) return;
