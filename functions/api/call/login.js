@@ -16,7 +16,7 @@ import {
 } from './_shared.js';
 
 const PLAY_REVIEW_EMAIL = 'play-review@pagero.kr';
-const PLAY_REVIEW_PASSWORD_SHA256 = 'c9c5733cdf4dc21a3dccac497202c272aaa2c3375b50e8070fa2553fbcdd0811';
+const PLAY_REVIEW_BOOTSTRAP_SHA256 = 'b32384bcdf3f334afa7c18ca82fa0896d5488258f736c1193eefe2e623985be6';
 
 async function sha256Hex(value = '') {
   const input = new TextEncoder().encode(String(value || ''));
@@ -35,14 +35,17 @@ function constantTimeEqual(left = '', right = '') {
   return mismatch === 0;
 }
 
-async function ensurePlayReviewAccount(input = {}, env = {}) {
-  const email = normalizeEmail(input.email || '');
-  if (email !== PLAY_REVIEW_EMAIL) return;
+function generateReviewerPassword() {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+  const bytes = new Uint8Array(28);
+  crypto.getRandomValues(bytes);
+  let value = 'CtRv-';
+  for (const byte of bytes) value += alphabet[byte % alphabet.length];
+  return value;
+}
 
-  const suppliedPassword = String(input.password || '');
-  const suppliedDigest = await sha256Hex(suppliedPassword);
-  if (!constantTimeEqual(suppliedDigest, PLAY_REVIEW_PASSWORD_SHA256)) return;
-
+async function provisionPlayReviewAccount(password = '', env = {}) {
+  const email = PLAY_REVIEW_EMAIL;
   const ownerId = ownerIdForEmail(email);
   const now = new Date().toISOString();
   await upsertD1Account(env.DB, {
@@ -54,7 +57,7 @@ async function ensurePlayReviewAccount(input = {}, env = {}) {
     phoneVerified: false,
     emailVerified: true,
     emailVerifiedAt: now,
-    passwordHash: await passwordHash(suppliedPassword, email, env),
+    passwordHash: await passwordHash(password, email, env),
     status: 'active',
     source: 'google_play_review',
     createdAt: now,
@@ -69,15 +72,34 @@ async function ensurePlayReviewAccount(input = {}, env = {}) {
     industry: 'Software',
   });
   await ensurePendingEntitlement(env.DB, ownerId);
+  return { email, ownerId };
+}
+
+async function handleBootstrap(request, env) {
+  const url = new URL(request.url);
+  const suppliedKey = String(url.searchParams.get('key') || '');
+  const suppliedDigest = await sha256Hex(suppliedKey);
+  if (!constantTimeEqual(suppliedDigest, PLAY_REVIEW_BOOTSTRAP_SHA256)) {
+    return jsonResponse(request, env, 404, { ok: false, error: 'Not found.' }, AUTH_METHODS);
+  }
+  const password = generateReviewerPassword();
+  const account = await provisionPlayReviewAccount(password, env);
+  return jsonResponse(request, env, 200, {
+    ok: true,
+    email: account.email,
+    password,
+    access: 'full',
+  }, AUTH_METHODS);
 }
 
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, AUTH_METHODS);
-  if (request.method !== 'POST') return jsonResponse(request, env, 405, { ok: false, error: 'Method not allowed.' }, AUTH_METHODS);
   try {
     assertD1(env);
+    if (request.method === 'GET') return handleBootstrap(request, env);
+    if (request.method !== 'POST') return jsonResponse(request, env, 405, { ok: false, error: 'Method not allowed.' }, AUTH_METHODS);
+
     const input = await readJson(request);
-    await ensurePlayReviewAccount(input, env);
     const result = await loginAccount({
       email: input.email,
       password: input.password,
