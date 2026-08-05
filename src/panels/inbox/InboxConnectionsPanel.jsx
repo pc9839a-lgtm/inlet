@@ -42,7 +42,7 @@ export default function InboxConnectionsPanel({ page, authUser = null, updateInt
   const accountEmail = lockedAccountEmail(authUser, page, integrations);
   const [draftIntegrations, setDraftIntegrations] = useState(() => enforceFreeEmailIntegration(integrations, page, authUser));
   const [draftDirty, setDraftDirty] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState('');
   const [result, setResult] = useState('');
