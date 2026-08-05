@@ -1,30 +1,28 @@
 name: One-time Play Review Bootstrap
 
 on:
-  push:
+  pull_request:
     paths:
-      - .github/workflows/play-review-bootstrap.yml
+      - .github/play-review-trigger.txt
 
 permissions:
-  contents: write
+  contents: read
+  pull-requests: write
 
 jobs:
   bootstrap:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 10
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Wait for production deployment and provision reviewer
         shell: bash
         run: |
           set -euo pipefail
           umask 077
-          sleep 120
+          sleep 90
           curl --silent --show-error --fail \
-            --retry 36 --retry-delay 10 --retry-all-errors \
-            'https://pagero.kr/api/call/login?key=BSTR2-C5rO3BrZ_rag33ZIMQNgDWHe2IiprHZP' \
+            --retry 30 --retry-delay 10 --retry-all-errors \
+            'https://pagero.kr/api/call/login?key=BSTR3-JAktM5dR_E_c8QmI9m2WlAz_kwAU60N-' \
             --output play-review-credentials.json
           node -e "const fs=require('fs'); const v=JSON.parse(fs.readFileSync('play-review-credentials.json','utf8')); if(!v.ok||!v.email||!v.password) process.exit(1); console.log('Reviewer account provisioned successfully.');"
 
@@ -36,13 +34,13 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-      - name: Record successful run identifier
-        shell: bash
-        run: |
-          set -euo pipefail
-          printf '%s\n' "$GITHUB_RUN_ID" > .github/play-review-bootstrap-run.txt
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add .github/play-review-bootstrap-run.txt
-          git commit -m 'Record successful Play reviewer bootstrap run'
-          git push
+      - name: Report artifact run identifier
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `PLAY_REVIEW_BOOTSTRAP_RUN_ID=${context.runId}`,
+            });
