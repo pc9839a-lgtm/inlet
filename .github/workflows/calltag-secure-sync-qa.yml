@@ -10,6 +10,7 @@ on:
       - 'migrations/0010_calltag_secure_sync.sql'
       - 'scripts/calltag-secure-sync-quality-check.mjs'
       - 'docs/CALLTAG_PLATFORM_SECURITY_AND_ROADMAP_KO.md'
+      - 'wrangler.jsonc'
       - '.github/workflows/calltag-secure-sync-qa.yml'
 
 permissions:
