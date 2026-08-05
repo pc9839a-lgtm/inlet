@@ -155,6 +155,12 @@ export function useAccountWorkspacePage({
         if (!alive) return;
         if (accountPageLoadRef.current !== loadKey) return;
 
+        const currentAtResponse = latestPageRef.current || page;
+        if ((currentAtResponse.slug || '') !== slug) return;
+        if ((currentAtResponse.projectId || '')
+          && (context.projectId || '')
+          && (currentAtResponse.projectId || '') !== (context.projectId || '')) return;
+
         const normalizedServerPage = serverPage
           ? normalize({ ...serverPage, __accountProjectAccess: true })
           : null;
@@ -174,6 +180,9 @@ export function useAccountWorkspacePage({
         if (normalizedServerPage) {
           const current = latestPageRef.current || page;
           if ((current.slug || '') !== slug) return;
+          if ((current.projectId || '')
+            && (context.projectId || '')
+            && (current.projectId || '') !== (context.projectId || '')) return;
           latestPageRef.current = normalizedServerPage;
           setPage(normalizedServerPage);
           offerPageDraftRecovery({ serverPage: normalizedServerPage, authUser, latestPageRef, localPageMutationRef, setPage });
