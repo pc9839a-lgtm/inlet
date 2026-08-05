@@ -1,0 +1,286 @@
+/* Statistics dashboard only. No html/body/#root overrides. */
+body .builder-shell.stats-dashboard-shell {
+  grid-template-columns: minmax(0, 1fr) !important;
+  background: #f3f6fa !important;
+}
+
+body .builder-shell.stats-dashboard-shell > .left-workspace {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  border-right: 0 !important;
+}
+
+body .builder-shell.stats-dashboard-shell > .preview-workspace {
+  display: none !important;
+}
+
+body .builder-shell.stats-dashboard-shell .work-panel {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  padding: 14px 18px 48px !important;
+  box-sizing: border-box !important;
+}
+
+body .builder-shell.stats-dashboard-shell .stats-panel.simple-panel {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  display: grid !important;
+  grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+body .builder-shell.stats-dashboard-shell .stats-panel > * {
+  min-width: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+body .builder-shell.stats-dashboard-shell .stats-panel .card,
+body .builder-shell.stats-dashboard-shell .stats-panel .metric-v2 {
+  border: 1px solid #dfe6ef !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+/* Top controls */
+body .builder-shell.stats-dashboard-shell .stats-period-card,
+body .builder-shell.stats-dashboard-shell .stats-channel-filter,
+body .builder-shell.stats-dashboard-shell .stats-partial-notice,
+body .builder-shell.stats-dashboard-shell .stats-comparison-label,
+body .builder-shell.stats-dashboard-shell .stats-summary-v3,
+body .builder-shell.stats-dashboard-shell .stats-columns-v3,
+body .builder-shell.stats-dashboard-shell .stats-lead-table-card-v3 {
+  grid-column: 1 / -1 !important;
+}
+
+body .builder-shell.stats-dashboard-shell .stats-period-card {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 18px !important;
+  padding: 14px 16px !important;
+}
+
+body .builder-shell.stats-dashboard-shell .stats-period-card .section-title h2 {
+  margin: 0 !important;
+  font-size: 18px !important;
+  white-space: nowrap !important;
+}
+
+body .builder-shell.stats-dashboard-shell .stats-period-controls {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 160px !important;
+  gap: 10px !important;
+  align-items: center !important;
+}
+
+body .builder-shell.stats-dashboard-shell .stats-range-tabs {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(76px, 1fr)) !important;
+  gap: 7px !important;
+}
+
+body .builder-shell.stats-dashboard-shell .stats-range-tabs button {
+  min-height: 38px !important;
+  border-radius: 9px !important;
+  font-size: 12px !important;
+}
+
+body .builder-shell.stats-dashboard-shell .stats-month-control > span {
+  display: none !important;
+}
+
+body .builder-shell.stats-dashboard-shell .stats-month-control input {
+  width: 100% !important;
+  min-height: 38px !important;
+  padding: 0 10px !important;
+  border: 1px solid #dbe3ef !important;
+  border-radius: 9px !important;
+  background: #fff !important;
+  font-weight: 800 !important;
+}
+
+body .builder-shell.stats-dashboard-shell .stats-channel-filter {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 14px !important;
+  padding: 12px 16px !important;
+}
+
+body .builder-shell.stats-dashboard-shell .stats-channel-filter .section-title h2 {
+  margin: 0 !important;
+  font-size: 14px !important;
+  white-space: nowrap !important;
+}
+
+body .builder-shell.stats-dashboard-shell .stats-channel-filter-list {
+  display: flex !important;
+  gap: 7px !important;
+  min-width: 0 !important;
+  overflow-x: auto !important;
+  padding: 1px 0 3px !important;
+}
+
+body .builder-shell.stats-dashboard-shell .stats-channel-filter-list button {
+  flex: 0 0 auto !important;
+  min-width: 94px !important;
+  min-height: 36px !important;
+  padding: 0 10px !important;
+  border-radius: 9px !important;
+}
+
+/* KPI */
+body .builder-shell.stats-dashboard-shell .stats-summary-v3 {
+  display: grid !important;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+body .builder-shell.stats-dashboard-shell .metric-v2 {
+  min-height: 118px !important;
+  padding: 16px !important;
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+}
+
+body .builder-shell.stats-dashboard-shell .metric-v2 > span {
+  position: absolute !important;
+  top: 15px !important;
+  left: 16px !important;
+  color: #64748b !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+}
+
+body .builder-shell.stats-dashboard-shell .metric-v2 > strong {
+  color: #0f172a !important;
+  font-size: clamp(25px, 2vw, 33px) !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+}
+
+body .builder-shell.stats-dashboard-shell .metric-v2 > small {
+  margin-top: 6px !important;
+  color: #94a3b8 !important;
+  font-size: 11px !important;
+}
+
+/* Main analysis */
+body .builder-shell.stats-dashboard-shell .stats-funnel-card {
+  grid-column: span 5 !important;
+  padding: 18px !important;
+}
+
+body .builder-shell.stats-dashboard-shell .stats-trend-card {
+  grid-column: span 7 !important;
+  padding: 18px !important;
+  overflow: visible !important;
+}
+
+body .builder-shell.stats-dashboard-shell .stats-funnel-row {
+  grid-template-columns: minmax(84px, .8fr) minmax(94px, 1fr) 18px minmax(94px, 1fr) 58px !important;
+  gap: 8px !important;
+  min-height: 58px !important;
+}
+
+body .builder-shell.stats-dashboard-shell .stats-line-plot {
+  min-height: 280px !important;
+  margin-top: 8px !important;
+}
+
+body .builder-shell.stats-dashboard-shell .stats-line-plot svg {
+  min-height: 240px !important;
+}
+
+/* Breakdown cards */
+body .builder-shell.stats-dashboard-shell .stats-columns-v3 {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+}
+
+body .builder-shell.stats-dashboard-shell .stats-columns-four {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+body .builder-shell.stats-dashboard-shell .stat-card-v2 {
+  min-height: 210px !important;
+  padding: 18px !important;
+}
+
+body .builder-shell.stats-dashboard-shell .stat-row-v2 {
+  min-height: 32px !important;
+  grid-template-columns: minmax(78px, .9fr) minmax(90px, 1.4fr) auto !important;
+  gap: 9px !important;
+}
+
+body .builder-shell.stats-dashboard-shell .stats-lead-table-card-v3 {
+  padding: 18px !important;
+}
+
+body .builder-shell.stats-dashboard-shell .stats-lead-table-v3 > div {
+  min-height: 50px !important;
+  grid-template-columns: 84px minmax(120px, .8fr) minmax(150px, 1fr) 138px !important;
+  gap: 12px !important;
+  align-items: center !important;
+}
+
+@media (max-width: 1240px) {
+  body .builder-shell.stats-dashboard-shell .stats-summary-v3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  body .builder-shell.stats-dashboard-shell .stats-funnel-card,
+  body .builder-shell.stats-dashboard-shell .stats-trend-card {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+@media (max-width: 760px) {
+  body .builder-shell.stats-dashboard-shell .work-panel {
+    padding: 10px 10px 36px !important;
+  }
+
+  body .builder-shell.stats-dashboard-shell .stats-panel.simple-panel,
+  body .builder-shell.stats-dashboard-shell .stats-period-card,
+  body .builder-shell.stats-dashboard-shell .stats-channel-filter,
+  body .builder-shell.stats-dashboard-shell .stats-period-controls,
+  body .builder-shell.stats-dashboard-shell .stats-range-tabs,
+  body .builder-shell.stats-dashboard-shell .stats-summary-v3,
+  body .builder-shell.stats-dashboard-shell .stats-columns-v3,
+  body .builder-shell.stats-dashboard-shell .stats-columns-four {
+    grid-template-columns: 1fr !important;
+  }
+
+  body .builder-shell.stats-dashboard-shell .stats-period-card,
+  body .builder-shell.stats-dashboard-shell .stats-channel-filter {
+    gap: 9px !important;
+    padding: 13px !important;
+  }
+
+  body .builder-shell.stats-dashboard-shell .metric-v2 {
+    min-height: 102px !important;
+  }
+
+  body .builder-shell.stats-dashboard-shell .stats-lead-table-v3 > div {
+    grid-template-columns: 70px minmax(0, 1fr) !important;
+  }
+
+  body .builder-shell.stats-dashboard-shell .stats-lead-table-v3 > div > :nth-child(3),
+  body .builder-shell.stats-dashboard-shell .stats-lead-table-v3 > div > :nth-child(4) {
+    grid-column: 2 !important;
+  }
+}
