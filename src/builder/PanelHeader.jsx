@@ -12,7 +12,7 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
     edit: ['편집', ''],
     templates: ['템플릿', '예시 화면을 보고 페이지 구성을 선택합니다.'],
     style: ['스타일', ''],
-    inbox: ['접수함', ''],
+    inbox: ['고객 문의 관리', ''],
     stats: ['통계', ''],
     settings: ['설정', ''],
     admin: ['관리자', ''],
