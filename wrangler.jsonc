@@ -11,7 +11,8 @@
     "INLET_SUPPORT_EMAIL": "support@pagero.kr",
     "INLET_FILES_PROJECT_MAX_MB": "100",
     "INLET_FILES_PROJECT_MAX_COUNT": "20",
-    "CALLTAG_SECURE_SYNC_ENABLED": "0"
+    "CALLTAG_SECURE_SYNC_ENABLED": "0",
+    "CALLTAG_SYNC_RETENTION_ENABLED": "0"
   },
   "d1_databases": [
     {
