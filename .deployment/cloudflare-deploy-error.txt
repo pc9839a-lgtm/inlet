@@ -2,14 +2,11 @@
  ⛅️ wrangler 4.95.0
 ───────────────────
 ✨ Compiled Worker successfully
-Uploading... (93/133)
-Uploading... (106/133)
-Uploading... (120/133)
 Uploading... (133/133)
-✨ Success! Uploaded 40 files (93 already uploaded) (1.04 sec)
+✨ Success! Uploaded 0 files (133 already uploaded) (0.27 sec)
 
 ✨ Uploading _headers
 ✨ Uploading _redirects
 ✨ Uploading Functions bundle
 🌎 Deploying...
-✨ Deployment complete! Take a peek over at https://3680a510.inlet-8mr.pages.dev
+✨ Deployment complete! Take a peek over at https://d60d53da.inlet-8mr.pages.dev
