@@ -10,9 +10,12 @@ on:
       - 'functions/api/calltag-sync/devices.js'
       - 'functions/api/calltag-sync/retention.js'
       - 'scripts/calltag-secure-sync-p1-quality-check.mjs'
+      - 'scripts/calltag-secure-sync-staging-*.mjs'
       - 'docs/CALLTAG_SECURE_SYNC_P1_BOOTSTRAP_DEVICE_RETENTION_KO.md'
+      - 'docs/CALLTAG_SECURE_SYNC_STAGING_RUNBOOK_KO.md'
       - 'wrangler.jsonc'
       - '.github/workflows/calltag-secure-sync-p1-qa.yml'
+      - '.github/workflows/calltag-secure-sync-staging.yml'
 
 permissions:
   contents: read
@@ -31,6 +34,12 @@ jobs:
 
       - name: Verify bootstrap device and retention contracts
         run: node scripts/calltag-secure-sync-p1-quality-check.mjs
+
+      - name: Verify staging safety contract
+        run: |
+          node --check scripts/calltag-secure-sync-staging-config.mjs
+          node --check scripts/calltag-secure-sync-staging-smoke.mjs
+          node scripts/calltag-secure-sync-staging-contract-check.mjs
 
       - name: Install dependencies
         run: npm ci
