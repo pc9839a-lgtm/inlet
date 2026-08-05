@@ -4,6 +4,7 @@ import {
   optionsResponse,
   readJson,
 } from '../_shared.js';
+import { securePayloadHash } from './_digest.js';
 import { assertSyncRequestSize } from './_guard.js';
 import {
   CALLTAG_SYNC_METHODS,
@@ -43,6 +44,14 @@ export async function onRequest({ request, env }) {
         item.version,
         item.payload,
       );
+      const payloadHash = await securePayloadHash(
+        env,
+        session.ownerId,
+        item.entityType,
+        item.entityId,
+        item.version,
+        item.payload,
+      );
       const phoneHash = item.deleted
         ? ''
         : await phoneSearchHash(env, session.ownerId, item.entityType, item.payload);
@@ -56,7 +65,7 @@ export async function onRequest({ request, env }) {
       if (existing) {
         const existingVersion = Number(existing.version || 0);
         const idempotent = existingVersion === item.version
-          && String(existing.payload_hash || '') === encrypted.payloadHash
+          && String(existing.payload_hash || '') === payloadHash
           && Boolean(existing.deleted_at) === item.deleted;
         if (idempotent) {
           accepted.push({
@@ -104,7 +113,7 @@ export async function onRequest({ request, env }) {
         encrypted.ciphertext,
         encrypted.iv,
         encrypted.keyVersion,
-        encrypted.payloadHash,
+        payloadHash,
         phoneHash,
         deletedAt,
       ).run();
