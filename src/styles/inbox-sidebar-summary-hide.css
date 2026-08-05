@@ -1,0 +1,4 @@
+/* Inbox sidebar cleanup: remove the redundant 상담/예약 summary cards. */
+.builder-shell.inbox-workspace-shell .inbox-ops-side-mini {
+  display: none !important;
+}
