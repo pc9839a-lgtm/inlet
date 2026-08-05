@@ -1,0 +1,257 @@
+/* Compact, direct operations settings UI. Loaded after operations-settings.css. */
+body .builder-shell.inbox-workspace-shell .inbox-ops-management {
+  padding: 18px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-ops-management > header {
+  min-height: 60px !important;
+  margin: 0 0 10px !important;
+  padding: 12px 16px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-ops-management > header small,
+body .builder-shell.inbox-workspace-shell .inbox-ops-management > header p {
+  display: none !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-ops-management > header h2 {
+  font-size: 22px !important;
+}
+
+/* Duplicate policy: title + controls only */
+body .builder-shell.inbox-workspace-shell .policy-settings-head {
+  min-height: 56px !important;
+  padding: 0 16px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-settings-head > span {
+  display: block !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-settings-head small,
+body .builder-shell.inbox-workspace-shell .policy-summary-chip {
+  display: none !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-settings-head strong {
+  font-size: 16px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-toggle-label {
+  min-width: 62px !important;
+  min-height: 32px !important;
+  padding: 0 12px !important;
+  white-space: nowrap !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-settings-body {
+  gap: 10px !important;
+  padding-top: 10px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-settings-section,
+body .builder-shell.inbox-workspace-shell .policy-history-v2 {
+  padding: 14px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-settings-section > header {
+  display: block !important;
+  margin-bottom: 10px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-settings-section > header > span,
+body .builder-shell.inbox-workspace-shell .policy-settings-section > header small {
+  display: none !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-settings-section > header strong {
+  font-size: 14px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-settings-grid {
+  gap: 8px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-settings-grid.switches {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-settings-grid.rules {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-control-card {
+  min-height: 72px !important;
+  padding: 10px 12px !important;
+  grid-template-columns: minmax(0, 1fr) 128px !important;
+  gap: 10px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-settings-grid.rules .policy-control-card {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  align-content: center !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-control-card > span {
+  gap: 0 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-control-card > span small,
+body .builder-shell.inbox-workspace-shell .policy-control-card > span em,
+body .builder-shell.inbox-workspace-shell .policy-current-rule {
+  display: none !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-control-card > span b {
+  font-size: 12px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-control-card select {
+  width: 100% !important;
+  min-height: 38px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-switch-state {
+  width: 66px !important;
+  min-width: 66px !important;
+  min-height: 34px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-history-head-v2 > span small,
+body .builder-shell.inbox-workspace-shell .policy-empty-v2 small {
+  display: none !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-history-head-v2 {
+  align-items: center !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-history-head-v2 strong {
+  font-size: 14px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-empty-v2 {
+  min-height: 76px !important;
+}
+
+/* External connections: one task per card, vertical flow */
+body .builder-shell.inbox-workspace-shell .inbox-connect-card.easy-mode.v4 {
+  border: 0 !important;
+  background: transparent !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-connect-card.v4 .inbox-connect-head {
+  display: none !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-connect-card.v4 .inbox-connect-body {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 10px !important;
+  padding: 0 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-connect-body > .connection-result,
+body .builder-shell.inbox-workspace-shell .inbox-connect-body > .connection-item,
+body .builder-shell.inbox-workspace-shell .inbox-connect-body > .connection-advanced-toggle,
+body .builder-shell.inbox-workspace-shell .inbox-connect-body > .save-connection-btn {
+  grid-column: 1 !important;
+  width: 100% !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-connect-body > .connection-item {
+  border-radius: 12px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .connection-item.connect-v4 .connection-row {
+  min-height: 60px !important;
+  padding: 10px 14px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .connection-row-main small,
+body .builder-shell.inbox-workspace-shell .connection-row-main span,
+body .builder-shell.inbox-workspace-shell .connection-help-text {
+  display: none !important;
+}
+
+body .builder-shell.inbox-workspace-shell .connection-row-main strong {
+  font-size: 14px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inline-switch {
+  width: 64px !important;
+  min-width: 64px !important;
+  height: 34px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .connection-detail-box.compact {
+  min-height: 0 !important;
+  padding: 10px 14px 14px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .connection-inline-control {
+  min-height: 48px !important;
+  grid-template-columns: 110px minmax(0, 1fr) !important;
+  gap: 10px !important;
+  padding: 5px 0 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .connection-inline-control > span {
+  font-size: 11px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .connection-inline-control :is(input, .locked-email-value) {
+  min-height: 38px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .mini-toggle {
+  min-height: 34px !important;
+  padding: 0 12px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .connection-inline-actions {
+  justify-content: flex-start !important;
+  padding-top: 10px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .connection-inline-actions :is(button, a) {
+  min-height: 36px !important;
+  padding: 0 12px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .connection-advanced-toggle {
+  min-height: 50px !important;
+  padding: 0 14px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-connect-body > .save-connection-btn {
+  position: static !important;
+  justify-self: stretch !important;
+  min-height: 44px !important;
+  margin-top: 0 !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 900px) {
+  body .builder-shell.inbox-workspace-shell .policy-settings-grid.switches,
+  body .builder-shell.inbox-workspace-shell .policy-settings-grid.rules {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 640px) {
+  body .builder-shell.inbox-workspace-shell .inbox-ops-management {
+    padding: 10px !important;
+  }
+
+  body .builder-shell.inbox-workspace-shell .policy-control-card,
+  body .builder-shell.inbox-workspace-shell .connection-inline-control {
+    grid-template-columns: 1fr !important;
+  }
+
+  body .builder-shell.inbox-workspace-shell .policy-switch-state,
+  body .builder-shell.inbox-workspace-shell .connection-inline-control :is(input, .locked-email-value) {
+    width: 100% !important;
+  }
+}
