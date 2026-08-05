@@ -12,6 +12,7 @@ import '../styles/inbox-sidebar-summary-hide.css';
 import '../styles/stats-dashboard-safe.css';
 import '../styles/stats-fullwidth-final.css';
 import '../styles/stats-operations-final.css';
+import '../styles/stats-height-match-inbox.css';
 
 export default function WorkspaceEditorScreen({
   canUseBuilder,
