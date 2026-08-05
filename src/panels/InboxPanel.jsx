@@ -302,7 +302,7 @@ export default function InboxPanel({
   const selectedAnswers = selectedLead && Array.isArray(selectedLead.answers)
     ? selectedLead.answers.filter((item) => !isDuplicateLeadAnswer(item, selectedLead))
     : [];
-  const selectedRiskInfo = selectedLead ? leadRiskInfo(selectedLead) : null;
+  const riskInfo = selectedLead ? leadRiskInfo(selectedLead) : null;
   const selectedDeliveryInfo = selectedLead ? leadDeliveryInfo(selectedLead) : null;
   const loadedCount = normalized.length;
   const failedDeliveryCount = normalized.filter((lead) => leadDeliveryInfo(lead)).length;
@@ -570,12 +570,12 @@ export default function InboxPanel({
                     <LeadInfoRow label="기기" value={selectedLead.deviceType} />
                   </section>
 
-                  {selectedRiskInfo ? (
-                    <section className={`inbox-ops-detail-section warning ${selectedRiskInfo.level}`}>
+                  {riskInfo ? (
+                    <section className={`inbox-ops-detail-section warning ${riskInfo.level}`}>
                       <h4>중복·위험 신호</h4>
-                      <LeadInfoRow label="판정" value={selectedRiskInfo.badge} />
-                      <LeadInfoRow label="사유" value={selectedRiskInfo.reasons.join(', ') || '중복 접수로 표시됨'} />
-                      <LeadInfoRow label="위험 점수" value={`${selectedRiskInfo.score}점`} />
+                      <LeadInfoRow label="판정" value={riskInfo.badge} />
+                      <LeadInfoRow label="사유" value={riskInfo.reasons.join(', ') || '중복 접수로 표시됨'} />
+                      <LeadInfoRow label="위험 점수" value={`${riskInfo.score}점`} />
                     </section>
                   ) : null}
 
