@@ -1,0 +1,489 @@
+/* Operations settings: duplicate policy + external connections only. */
+body .builder-shell.inbox-workspace-shell .inbox-ops-management {
+  padding: 24px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-ops-management > header {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  min-height: 92px !important;
+  margin-bottom: 14px !important;
+  padding: 18px 22px !important;
+  border-radius: 14px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-ops-management > header h2 {
+  font-size: 24px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-ops-management > header p {
+  margin-top: 6px !important;
+}
+
+/* Duplicate policy */
+body .builder-shell.inbox-workspace-shell .policy-settings-v2 {
+  border: 0 !important;
+  background: transparent !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-settings-head {
+  min-height: 74px !important;
+  padding: 14px 18px !important;
+  border: 1px solid #dfe5ed !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-settings-head > span {
+  display: grid !important;
+  grid-template-columns: auto auto !important;
+  align-items: center !important;
+  justify-content: start !important;
+  gap: 4px 10px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-settings-head strong {
+  grid-column: 1 !important;
+  font-size: 17px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-settings-head small {
+  grid-column: 1 / -1 !important;
+  font-size: 12px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-summary-chip {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  min-height: 24px !important;
+  padding: 0 9px !important;
+  border: 1px solid #dbeafe !important;
+  border-radius: 999px !important;
+  background: #eff6ff !important;
+  color: #2563eb !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  font-size: 10px !important;
+  font-style: normal !important;
+  font-weight: 900 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-toggle-label {
+  min-width: 74px !important;
+  min-height: 36px !important;
+  border-radius: 10px !important;
+  background: #111827 !important;
+  color: #fff !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-settings-body {
+  display: grid !important;
+  gap: 14px !important;
+  padding: 14px 0 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-settings-section,
+body .builder-shell.inbox-workspace-shell .policy-history-v2 {
+  padding: 18px !important;
+  border: 1px solid #dfe5ed !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-settings-section > header {
+  display: grid !important;
+  grid-template-columns: 34px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin-bottom: 14px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-settings-section > header > span {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 10px !important;
+  background: #eef4ff !important;
+  color: #2563eb !important;
+  display: grid !important;
+  place-items: center !important;
+  font-size: 11px !important;
+  font-weight: 950 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-settings-section > header > div {
+  display: grid !important;
+  gap: 3px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-settings-section > header strong {
+  color: #111827 !important;
+  font-size: 15px !important;
+  font-weight: 950 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-settings-section > header small {
+  color: #64748b !important;
+  font-size: 11px !important;
+  line-height: 1.45 !important;
+  font-weight: 750 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-settings-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-control-card,
+body .builder-shell.inbox-workspace-shell .policy-current-rule {
+  min-height: 104px !important;
+  padding: 14px !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  background: #fbfcfe !important;
+  box-sizing: border-box !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-control-card {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 150px !important;
+  align-items: center !important;
+  gap: 16px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-control-card > span {
+  display: grid !important;
+  gap: 4px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-control-card > span b {
+  color: #111827 !important;
+  font-size: 13px !important;
+  font-weight: 950 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-control-card > span small {
+  max-width: 520px !important;
+  color: #64748b !important;
+  font-size: 11px !important;
+  line-height: 1.45 !important;
+  font-weight: 750 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-control-card > span em {
+  width: fit-content !important;
+  min-height: 22px !important;
+  padding: 0 7px !important;
+  border-radius: 999px !important;
+  background: #f1f5f9 !important;
+  color: #64748b !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  font-size: 9px !important;
+  font-style: normal !important;
+  font-weight: 900 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-control-card select {
+  width: 150px !important;
+  max-width: none !important;
+  min-height: 42px !important;
+  border-radius: 10px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-switch-state {
+  justify-self: end !important;
+  width: 72px !important;
+  min-width: 72px !important;
+  min-height: 38px !important;
+  border-radius: 999px !important;
+  background: #e2e8f0 !important;
+  color: #64748b !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-control-card.on .policy-switch-state {
+  background: #16a34a !important;
+  color: #fff !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-current-rule {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  background: #111827 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-current-rule span,
+body .builder-shell.inbox-workspace-shell .policy-current-rule small {
+  color: #94a3b8 !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-current-rule strong {
+  color: #fff !important;
+  font-size: 16px !important;
+  font-weight: 950 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-history-v2 {
+  display: grid !important;
+  gap: 12px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-history-head-v2 {
+  padding: 0 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-history-head-v2 > span {
+  display: grid !important;
+  gap: 3px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-history-head-v2 > span small {
+  color: #64748b !important;
+  font-size: 11px !important;
+  font-weight: 750 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-history-table-head,
+body .builder-shell.inbox-workspace-shell .policy-history-v2 li {
+  display: grid !important;
+  grid-template-columns: 130px minmax(180px, .8fr) minmax(260px, 1.4fr) !important;
+  gap: 12px !important;
+  align-items: center !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-history-table-head {
+  min-height: 40px !important;
+  padding: 0 12px !important;
+  border-radius: 9px !important;
+  background: #f8fafc !important;
+  color: #64748b !important;
+  font-size: 10px !important;
+  font-weight: 950 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-history-v2 li {
+  min-height: 54px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-empty-v2 {
+  min-height: 116px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: 5px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-empty-v2 b {
+  color: #334155 !important;
+  font-size: 13px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .policy-empty-v2 small {
+  color: #94a3b8 !important;
+  font-size: 10px !important;
+}
+
+/* External connections */
+body .builder-shell.inbox-workspace-shell .inbox-connect-card.easy-mode.v4 {
+  border: 0 !important;
+  background: transparent !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-connect-card.v4 .inbox-connect-head {
+  min-height: 74px !important;
+  padding: 14px 18px !important;
+  border: 1px solid #dfe5ed !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-connect-card.v4 .inbox-connect-body {
+  display: grid !important;
+  grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+  padding: 14px 0 0 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-connect-body > .connection-result {
+  grid-column: 1 / -1 !important;
+  margin: 0 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-connect-body > .connection-item:nth-of-type(1) {
+  grid-column: span 5 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-connect-body > .connection-item:nth-of-type(2) {
+  grid-column: span 7 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-connect-body > .connection-item {
+  min-width: 0 !important;
+  margin: 0 !important;
+  border: 1px solid #dfe5ed !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+  overflow: hidden !important;
+}
+
+body .builder-shell.inbox-workspace-shell .connection-item.connect-v4 .connection-row {
+  min-height: 86px !important;
+  padding: 16px !important;
+  border-bottom: 1px solid #edf1f5 !important;
+  background: #fff !important;
+}
+
+body .builder-shell.inbox-workspace-shell .connection-row-main strong {
+  font-size: 15px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .connection-row-main span,
+body .builder-shell.inbox-workspace-shell .connection-row-main small {
+  margin-top: 4px !important;
+  font-size: 11px !important;
+  line-height: 1.4 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .connection-detail-box.compact {
+  min-height: 176px !important;
+  padding: 14px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #fbfcfe !important;
+}
+
+body .builder-shell.inbox-workspace-shell .connection-inline-control {
+  min-height: 54px !important;
+  grid-template-columns: 118px minmax(0, 1fr) !important;
+  gap: 12px !important;
+  padding: 7px 0 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .connection-inline-control > span {
+  color: #475569 !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .connection-inline-control :is(input, .locked-email-value) {
+  min-height: 42px !important;
+  border-radius: 10px !important;
+  box-sizing: border-box !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inline-switch {
+  min-width: 70px !important;
+  width: 70px !important;
+  height: 38px !important;
+  border-radius: 999px !important;
+  font-size: 10px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inline-chip-row {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 7px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .mini-toggle {
+  min-height: 38px !important;
+  padding: 0 14px !important;
+  border-radius: 10px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .connection-inline-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  padding-top: 12px !important;
+  border-top: 1px solid #e8edf3 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .connection-inline-actions :is(button, a),
+body .builder-shell.inbox-workspace-shell .inbox-connect-body > .save-connection-btn {
+  min-height: 40px !important;
+  border-radius: 10px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .connection-advanced-toggle {
+  grid-column: 1 / -1 !important;
+  min-height: 58px !important;
+  padding: 0 16px !important;
+  border: 1px solid #dfe5ed !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-connect-body > .connection-item.advanced {
+  grid-column: 1 / -1 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-connect-body > .save-connection-btn {
+  position: sticky !important;
+  bottom: 12px !important;
+  z-index: 4 !important;
+  grid-column: 1 / -1 !important;
+  justify-self: end !important;
+  min-width: 180px !important;
+  min-height: 46px !important;
+  padding: 0 20px !important;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, .16) !important;
+}
+
+body .builder-shell.inbox-workspace-shell .connection-help-text {
+  padding: 9px 11px !important;
+  border-radius: 9px !important;
+  background: #f1f5f9 !important;
+  color: #64748b !important;
+  font-size: 10px !important;
+  line-height: 1.45 !important;
+}
+
+@media (max-width: 1180px) {
+  body .builder-shell.inbox-workspace-shell .policy-settings-grid,
+  body .builder-shell.inbox-workspace-shell .inbox-connect-card.v4 .inbox-connect-body {
+    grid-template-columns: 1fr !important;
+  }
+
+  body .builder-shell.inbox-workspace-shell .inbox-connect-body > :is(.connection-item, .connection-advanced-toggle, .save-connection-btn) {
+    grid-column: 1 !important;
+  }
+
+  body .builder-shell.inbox-workspace-shell .inbox-connect-body > .save-connection-btn {
+    justify-self: stretch !important;
+  }
+}
+
+@media (max-width: 720px) {
+  body .builder-shell.inbox-workspace-shell .inbox-ops-management {
+    padding: 14px !important;
+  }
+
+  body .builder-shell.inbox-workspace-shell .policy-control-card,
+  body .builder-shell.inbox-workspace-shell .connection-inline-control {
+    grid-template-columns: 1fr !important;
+  }
+
+  body .builder-shell.inbox-workspace-shell .policy-control-card select,
+  body .builder-shell.inbox-workspace-shell .policy-switch-state {
+    width: 100% !important;
+    justify-self: stretch !important;
+  }
+
+  body .builder-shell.inbox-workspace-shell .policy-history-table-head {
+    display: none !important;
+  }
+
+  body .builder-shell.inbox-workspace-shell .policy-history-v2 li {
+    grid-template-columns: 1fr !important;
+    gap: 4px !important;
+  }
+}

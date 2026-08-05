@@ -90,6 +90,117 @@ html body #root .builder-shell.inbox-workspace-shell .inbox-service > .inbox-con
   max-width: none !important;
 }
 
+/* Inbox copy hierarchy: keep the word '접수함' only in the global tab. */
+html body #root .builder-shell.inbox-workspace-shell .panel-header {
+  min-height: 84px !important;
+  padding: 14px 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 18px !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .panel-title {
+  min-width: 0 !important;
+  display: grid !important;
+  grid-template-columns: auto auto !important;
+  align-items: end !important;
+  column-gap: 10px !important;
+  row-gap: 2px !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .panel-title > p {
+  grid-column: 1 / -1 !important;
+  margin: 0 !important;
+  color: #64748b !important;
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+  font-weight: 850 !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .panel-title > h1 {
+  margin: 0 !important;
+  color: #111827 !important;
+  font-size: 22px !important;
+  line-height: 1.15 !important;
+  letter-spacing: -.4px !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .panel-save-status {
+  margin: 0 0 1px !important;
+  display: block !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .panel-save-status small {
+  display: none !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .panel-save-status strong {
+  display: inline-flex !important;
+  align-items: center !important;
+  min-height: 24px !important;
+  padding: 0 8px !important;
+  border-radius: 999px !important;
+  background: #f1f5f9 !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .panel-actions {
+  flex: 0 0 auto !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-sidebar-title > span {
+  font-size: 0 !important;
+  line-height: 1 !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-sidebar-title > span::after {
+  content: '문의 상태';
+  color: #111827;
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 900;
+  letter-spacing: -.3px;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-main-head small {
+  display: none !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-main-head h2 {
+  font-size: 0 !important;
+  line-height: 1 !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-main-head h2::after {
+  content: '문의 목록';
+  color: #111827;
+  font-size: 26px;
+  line-height: 1.15;
+  font-weight: 950;
+  letter-spacing: -.6px;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-management > header > small {
+  font-size: 0 !important;
+  line-height: 1 !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-management > header > small::after {
+  content: '운영 설정';
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 850;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-detail-head > div > small {
+  color: #64748b !important;
+  font-size: 11px !important;
+  font-weight: 850 !important;
+}
+
 @media (max-width: 1180px) {
   html body #root .builder-shell.inbox-workspace-shell .inbox-toolbar {
     grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
@@ -107,6 +218,22 @@ html body #root .builder-shell.inbox-workspace-shell .inbox-service > .inbox-con
 
   html body #root .builder-shell.inbox-workspace-shell .work-panel {
     padding: 10px 10px 36px !important;
+  }
+
+  html body #root .builder-shell.inbox-workspace-shell .panel-header {
+    min-height: 0 !important;
+    align-items: flex-start !important;
+    flex-direction: column !important;
+  }
+
+  html body #root .builder-shell.inbox-workspace-shell .panel-title {
+    width: 100% !important;
+  }
+
+  html body #root .builder-shell.inbox-workspace-shell .panel-actions {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
 
   html body #root .builder-shell.inbox-workspace-shell .inbox-toolbar {
