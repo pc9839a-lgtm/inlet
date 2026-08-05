@@ -1,6 +1,6 @@
 {
-  "sourceSha": "f830facddb848dc10e333f502722bf507a479fd0",
-  "outcome": "success",
-  "reason": "none",
-  "recordedAt": "2026-08-05T01:16:04Z"
+  "sourceSha": "ec3cd496dd88d2a1f7a9d73bf497545312bbbb91",
+  "outcome": "skipped",
+  "reason": "deploy_command_failed",
+  "recordedAt": "2026-08-05T01:50:50Z"
 }
