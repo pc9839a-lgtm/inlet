@@ -1,0 +1,37 @@
+name: CallTag Secure Sync QA
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'functions/api/calltag-sync/**'
+      - 'migrations/0010_calltag_secure_sync.sql'
+      - 'scripts/calltag-secure-sync-quality-check.mjs'
+      - 'docs/CALLTAG_PLATFORM_SECURITY_AND_ROADMAP_KO.md'
+      - '.github/workflows/calltag-secure-sync-qa.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  secure-sync-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Verify secure sync crypto and isolation contract
+        run: node scripts/calltag-secure-sync-quality-check.mjs
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
