@@ -16,7 +16,7 @@ import {
 } from './_shared.js';
 
 const PLAY_REVIEW_EMAIL = 'play-review@pagero.kr';
-const PLAY_REVIEW_BOOTSTRAP_SHA256 = '7e011a16592fbda5ac615afabfe5a857ccf8cb5caefb013e20de547a3dea9128';
+const PLAY_REVIEW_BOOTSTRAP_SHA256 = '909debd7553070cc0ede6decb705e32349c2d14a2cc29cda2931e99a5b66997f';
 
 async function sha256Hex(value = '') {
   const input = new TextEncoder().encode(String(value || ''));
