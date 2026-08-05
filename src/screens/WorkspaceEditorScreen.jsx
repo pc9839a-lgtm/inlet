@@ -2,6 +2,8 @@ import React from 'react';
 import { WorkspaceLeftPanel } from './workspace/WorkspaceLeftPanel.jsx';
 import { WorkspacePreviewPane } from './workspace/WorkspacePreviewPane.jsx';
 import '../styles/editor-workspace-v2.css';
+import '../styles/workspace-inbox-redesign.css';
+import '../styles/workspace-inbox-fullwidth-fix.css';
 
 export default function WorkspaceEditorScreen({
   canUseBuilder,
@@ -40,8 +42,10 @@ export default function WorkspaceEditorScreen({
   selectedBlockId,
   onSelectPreviewBlock,
 }) {
+  const inboxWorkspace = !mobileOperationsOnly && tab === 'inbox';
+
   return (
-    <div className={`builder-shell${canUseBuilder && startMode === 'template' && !mobileOperationsOnly ? ' template-intro-shell' : ''}${mobileOperationsOnly ? ' mobile-operations-shell' : ''}`}>
+    <div className={`builder-shell${canUseBuilder && startMode === 'template' && !mobileOperationsOnly ? ' template-intro-shell' : ''}${mobileOperationsOnly ? ' mobile-operations-shell' : ''}${inboxWorkspace ? ' inbox-workspace-shell' : ''}`}>
 
       <WorkspaceLeftPanel
         canUseBuilder={canUseBuilder}
@@ -69,7 +73,7 @@ export default function WorkspaceEditorScreen({
         settingsPanelProps={settingsPanelProps}
       />
 
-      {!mobileOperationsOnly && <WorkspacePreviewPane
+      {!mobileOperationsOnly && !inboxWorkspace && <WorkspacePreviewPane
         page={page}
         previewUrl={previewUrl}
         previewPage={previewPage}

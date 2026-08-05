@@ -7,7 +7,7 @@ const saveStateColors = {
   error: '#dc2626',
 };
 
-export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPreview, onStartChoice, onDashboard, previewUrl }) {
+export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPreview, onDashboard, previewUrl }) {
   const titles = {
     edit: ['편집', ''],
     templates: ['템플릿', '예시 화면을 보고 페이지 구성을 선택합니다.'],
@@ -34,7 +34,6 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
       </div>
       <div className="panel-actions">
         <button className="ghost-btn" type="button" onClick={onDashboard}>메인</button>
-        <button className="ghost-btn start-choice-btn" type="button" onClick={onStartChoice}>시작 선택</button>
         <button className="ghost-btn" type="button" onClick={onPreview} title={previewUrl}>미리보기</button>
         <button className="primary-btn" type="button" onClick={onSave}>
           <Save size={15} />{saved ? '저장됨' : '저장'}

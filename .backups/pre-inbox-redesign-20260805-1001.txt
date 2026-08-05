@@ -1,0 +1,1 @@
+Backup marker before inbox-only redesign. Preserve current edit/style behavior and all data/save/runtime logic.
