@@ -8,7 +8,6 @@ import '../styles/operations-settings.css';
 import '../styles/operations-settings-compact.css';
 import '../styles/external-connections-uniform.css';
 import '../styles/inbox-scroll-width-final.css';
-import '../styles/inbox-sidebar-summary-pin.css';
 
 export default function WorkspaceEditorScreen({
   canUseBuilder,
