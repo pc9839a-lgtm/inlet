@@ -105,6 +105,7 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
       if (!selectedPage) throw new Error('선택한 페이지의 서버 저장본을 찾지 못했습니다.');
 
       const editorPage = { ...selectedPage, __accountProjectAccess: true };
+      rememberAccountProjectAccess(item);
       rememberAccountProjectAccess(editorPage);
 
       const stored = saveJson(STORAGE_KEY, editorPage);
