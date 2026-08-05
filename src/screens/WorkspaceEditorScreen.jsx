@@ -4,6 +4,7 @@ import { WorkspacePreviewPane } from './workspace/WorkspacePreviewPane.jsx';
 import '../styles/editor-workspace-v2.css';
 import '../styles/workspace-inbox-redesign.css';
 import '../styles/workspace-inbox-fullwidth-fix.css';
+import '../styles/operations-settings.css';
 
 export default function WorkspaceEditorScreen({
   canUseBuilder,
