@@ -9,6 +9,7 @@ import '../styles/operations-settings-compact.css';
 import '../styles/external-connections-uniform.css';
 import '../styles/inbox-scroll-width-final.css';
 import '../styles/inbox-sidebar-summary-hide.css';
+import '../styles/stats-dashboard-safe.css';
 
 export default function WorkspaceEditorScreen({
   canUseBuilder,
