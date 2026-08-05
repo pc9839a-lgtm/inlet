@@ -11,6 +11,7 @@ import '../styles/inbox-scroll-width-final.css';
 import '../styles/inbox-sidebar-summary-hide.css';
 import '../styles/stats-dashboard-safe.css';
 import '../styles/stats-fullwidth-final.css';
+import '../styles/stats-operations-final.css';
 
 export default function WorkspaceEditorScreen({
   canUseBuilder,
