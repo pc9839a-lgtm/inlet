@@ -1,0 +1,49 @@
+/* Final statistics width owner. Keep this scoped to the statistics tab only. */
+html body #root .builder-shell.stats-dashboard-shell:not(.mobile-operations-shell) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell > .left-workspace {
+  grid-column: 1 / -1 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  border-right: 0 !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell > .preview-workspace {
+  display: none !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .workspace-persistent-header,
+html body #root .builder-shell.stats-dashboard-shell .panel-header,
+html body #root .builder-shell.stats-dashboard-shell .work-panel,
+html body #root .builder-shell.stats-dashboard-shell .top-tabs,
+html body #root .builder-shell.stats-dashboard-shell .simple-panel.stats-panel {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .work-panel {
+  margin: 0 !important;
+  padding-left: 18px !important;
+  padding-right: 18px !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel {
+  justify-self: stretch !important;
+  align-self: start !important;
+}
+
+@media (max-width: 760px) {
+  html body #root .builder-shell.stats-dashboard-shell .work-panel {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+}
