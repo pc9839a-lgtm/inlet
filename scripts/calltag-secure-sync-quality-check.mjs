@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { securePayloadHash } from '../functions/api/calltag-sync/_digest.js';
+import { assertSyncRequestSize } from '../functions/api/calltag-sync/_guard.js';
 import {
   assertSecureSyncReady,
   decryptRecord,
@@ -91,9 +93,31 @@ await check('phone search HMAC is deterministic and non-plaintext', async () => 
   assert.equal(first.length, 64);
 });
 
-const [migration, shared, push, pull, erase, roadmap] = await Promise.all([
+await check('payload HMAC is scoped by owner and version', async () => {
+  const payload = { memo: '예상 가능한 기본 문구' };
+  const first = await securePayloadHash(env, 'owner-a', 'customer', 'local-1', 1, payload);
+  const repeat = await securePayloadHash(env, 'owner-a', 'customer', 'local-1', 1, payload);
+  const otherOwner = await securePayloadHash(env, 'owner-b', 'customer', 'local-1', 1, payload);
+  const otherVersion = await securePayloadHash(env, 'owner-a', 'customer', 'local-1', 2, payload);
+  assert.equal(first, repeat);
+  assert.notEqual(first, otherOwner);
+  assert.notEqual(first, otherVersion);
+  assert.equal(first.includes('예상 가능한 기본 문구'), false);
+});
+
+await check('request size guard blocks oversized body', async () => {
+  const oversized = new Request('https://pagero.kr/api/calltag-sync/push', {
+    method: 'POST',
+    headers: { 'Content-Length': String(2 * 1024 * 1024 + 1) },
+  });
+  assert.throws(() => assertSyncRequestSize(oversized), /크기가 너무 큽니다/);
+});
+
+const [migration, shared, guard, digest, push, pull, erase, roadmap] = await Promise.all([
   readFile(new URL('../migrations/0010_calltag_secure_sync.sql', import.meta.url), 'utf8'),
   readFile(new URL('../functions/api/calltag-sync/_shared.js', import.meta.url), 'utf8'),
+  readFile(new URL('../functions/api/calltag-sync/_guard.js', import.meta.url), 'utf8'),
+  readFile(new URL('../functions/api/calltag-sync/_digest.js', import.meta.url), 'utf8'),
   readFile(new URL('../functions/api/calltag-sync/push.js', import.meta.url), 'utf8'),
   readFile(new URL('../functions/api/calltag-sync/pull.js', import.meta.url), 'utf8'),
   readFile(new URL('../functions/api/calltag-sync/erase.js', import.meta.url), 'utf8'),
@@ -121,11 +145,26 @@ await check('server derives owner from verified session', async () => {
   assert.ok(erase.includes('WHERE owner_id = ?'));
 });
 
+await check('sync endpoints authenticate and limit before body parsing', async () => {
+  assert.ok(guard.includes('DEFAULT_MAX_BYTES'));
+  assert.ok(push.indexOf('secureSyncSession(request, env)') < push.indexOf('readJson(request)'));
+  assert.ok(push.indexOf('assertRateLimit') < push.indexOf('readJson(request)'));
+  assert.ok(erase.indexOf('secureSyncSession(request, env)') < erase.indexOf('readJson(request)'));
+  assert.ok(erase.indexOf('assertRateLimit') < erase.indexOf('readJson(request)'));
+});
+
 await check('sync endpoints require device and rate limits', async () => {
   assert.ok(shared.includes("request.headers.get('X-CallTag-Device')"));
   assert.ok(push.includes('assertRateLimit'));
   assert.ok(pull.includes('assertRateLimit'));
   assert.ok(erase.includes('assertRateLimit'));
+});
+
+await check('stored payload integrity uses keyed HMAC', async () => {
+  assert.ok(digest.includes("name: 'HMAC'"));
+  assert.ok(push.includes('securePayloadHash'));
+  assert.ok(push.includes('payloadHash,'));
+  assert.equal(push.includes('encrypted.payloadHash'), false);
 });
 
 await check('version conflict and tombstone contracts exist', async () => {
