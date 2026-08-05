@@ -4,6 +4,7 @@ import {
   optionsResponse,
   readJson,
 } from '../_shared.js';
+import { assertSyncRequestSize } from './_guard.js';
 import {
   CALLTAG_SYNC_METHODS,
   assertRateLimit,
@@ -25,9 +26,10 @@ export async function onRequest({ request, env }) {
 
   let session;
   try {
-    const body = await readJson(request);
-    session = await secureSyncSession(request, env, body);
+    assertSyncRequestSize(request, 16 * 1024);
+    session = await secureSyncSession(request, env);
     await assertRateLimit(env.DB, env, session.ownerId, session.deviceHash, 'erase', 3, 60 * 60);
+    const body = await readJson(request);
     if (String(body.confirmation || '') !== CONFIRMATION) {
       throw syncError('서버 데이터 삭제 확인값이 필요합니다.', 400, 'CALLTAG_SYNC_ERASE_CONFIRMATION_REQUIRED');
     }
