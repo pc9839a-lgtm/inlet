@@ -1,0 +1,39 @@
+name: CallTag Secure Sync P1 QA
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'functions/api/calltag-sync/bootstrap.js'
+      - 'functions/api/calltag-sync/devices.js'
+      - 'functions/api/calltag-sync/retention.js'
+      - 'scripts/calltag-secure-sync-p1-quality-check.mjs'
+      - 'docs/CALLTAG_SECURE_SYNC_P1_BOOTSTRAP_DEVICE_RETENTION_KO.md'
+      - 'wrangler.jsonc'
+      - '.github/workflows/calltag-secure-sync-p1-qa.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  secure-sync-p1-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Verify bootstrap device and retention contracts
+        run: node scripts/calltag-secure-sync-p1-quality-check.mjs
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
