@@ -1,0 +1,229 @@
+/* Inbox-only workspace expansion. Edit/style/stats/settings remain untouched. */
+body .builder-shell.inbox-workspace-shell:not(.mobile-operations-shell) {
+  grid-template-columns: minmax(0, 1fr) !important;
+  min-height: 100dvh;
+  background: #eef2f6 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .left-workspace {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .workspace-persistent-header {
+  width: 100% !important;
+}
+
+body .builder-shell.inbox-workspace-shell .work-panel {
+  width: min(1440px, calc(100% - 40px)) !important;
+  max-width: 1440px !important;
+  margin: 0 auto !important;
+  padding: 20px 0 56px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-service {
+  display: grid !important;
+  grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  align-items: start !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-service > .inbox-summary-v3 {
+  order: 1;
+  grid-column: 1 / -1;
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  margin: 0 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-summary-v3 article {
+  min-height: 112px !important;
+  padding: 20px 22px !important;
+  border: 1px solid #d9e2ec !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-summary-v3 article span {
+  color: #667085 !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-summary-v3 article strong {
+  color: #111827 !important;
+  font-size: 34px !important;
+  line-height: 1 !important;
+  letter-spacing: -1px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-service > .lead-conflict-notice {
+  order: 2;
+  grid-column: 1 / -1;
+  margin: 0 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-service > .inbox-toolbar-card {
+  order: 3;
+  grid-column: 1 / -1;
+  margin: 0 !important;
+  padding: 18px !important;
+  border: 1px solid #d9e2ec !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-toolbar-card .section-title {
+  margin: 0 0 14px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-toolbar {
+  display: grid !important;
+  grid-template-columns: minmax(260px, 2fr) repeat(3, minmax(135px, .8fr)) auto auto auto !important;
+  align-items: end !important;
+  gap: 10px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-toolbar label {
+  min-width: 0 !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-toolbar :is(input, select, button) {
+  min-height: 44px !important;
+  border-radius: 10px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-service > .inbox-list-card {
+  order: 4;
+  grid-column: 1 / -1;
+  margin: 0 !important;
+  padding: 18px !important;
+  border: 1px solid #d9e2ec !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell.inbox-workspace-shell .lead-table-head,
+body .builder-shell.inbox-workspace-shell .lead-row-service {
+  grid-template-columns: 70px 100px minmax(180px, 1.2fr) minmax(160px, 1fr) 120px 80px !important;
+  gap: 12px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .lead-table-head {
+  padding: 0 14px 10px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .lead-card-service {
+  border: 1px solid #e1e7ef !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+body .builder-shell.inbox-workspace-shell .lead-row-service {
+  min-height: 64px !important;
+  padding: 10px 14px !important;
+}
+
+body .builder-shell.inbox-workspace-shell .lead-detail-service {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  padding: 16px !important;
+  background: #f7f9fc !important;
+}
+
+body .builder-shell.inbox-workspace-shell .lead-detail-service > section {
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 14px !important;
+  border: 1px solid #e1e7ef !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+}
+
+body .builder-shell.inbox-workspace-shell .lead-detail-actions-service,
+body .builder-shell.inbox-workspace-shell .lead-copy-fallback {
+  grid-column: 1 / -1;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-service > .inbox-policy-card {
+  order: 5;
+  grid-column: span 6;
+  margin: 0 !important;
+  border: 1px solid #d9e2ec !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell.inbox-workspace-shell .inbox-service > .inbox-connect-card {
+  order: 6;
+  grid-column: span 6;
+  margin: 0 !important;
+  border: 1px solid #d9e2ec !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 1180px) {
+  body .builder-shell.inbox-workspace-shell .inbox-toolbar {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  body .builder-shell.inbox-workspace-shell .inbox-toolbar label:first-child {
+    grid-column: span 2;
+  }
+
+  body .builder-shell.inbox-workspace-shell .inbox-service > :is(.inbox-policy-card, .inbox-connect-card) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  body .builder-shell.inbox-workspace-shell .work-panel {
+    width: 100% !important;
+    padding: 12px 12px 40px !important;
+  }
+
+  body .builder-shell.inbox-workspace-shell .inbox-summary-v3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  body .builder-shell.inbox-workspace-shell .inbox-summary-v3 article {
+    min-height: 92px !important;
+    padding: 16px !important;
+  }
+
+  body .builder-shell.inbox-workspace-shell .inbox-toolbar {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  body .builder-shell.inbox-workspace-shell .inbox-toolbar label:first-child,
+  body .builder-shell.inbox-workspace-shell .inbox-toolbar button {
+    grid-column: 1 / -1;
+  }
+
+  body .builder-shell.inbox-workspace-shell .lead-table-head {
+    display: none !important;
+  }
+
+  body .builder-shell.inbox-workspace-shell .lead-row-service {
+    grid-template-columns: 54px 76px minmax(0, 1fr) auto !important;
+  }
+
+  body .builder-shell.inbox-workspace-shell .lead-row-service > :is(em, small) {
+    grid-column: 3 / -1;
+  }
+
+  body .builder-shell.inbox-workspace-shell .lead-detail-service {
+    grid-template-columns: 1fr !important;
+  }
+}
