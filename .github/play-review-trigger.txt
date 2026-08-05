@@ -1,1 +1,1 @@
-Trigger the one-time Google Play reviewer account provisioning workflow.
+Trigger the final encrypted Google Play reviewer credential rotation.
