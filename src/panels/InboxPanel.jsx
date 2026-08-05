@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Ban,
   CheckCircle2,
@@ -209,6 +209,7 @@ export default function InboxPanel({
   onRetryLeadConflict,
   onDismissLeadConflict,
 }) {
+  const rootRef = useRef(null);
   const [filter, setFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [queueFilter, setQueueFilter] = useState('all');
@@ -295,6 +296,17 @@ export default function InboxPanel({
     if (!openId || !filtered.some((lead) => lead.id === openId)) setOpenId(filtered[0].id);
   }, [filtered, openId, sectionMode]);
 
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || sectionMode !== 'leads') return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      root.querySelectorAll('.inbox-ops-table-row').forEach((row) => {
+        row.classList.toggle('lead-card-service', row.getClientRects().length > 0);
+      });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [filtered, sectionMode]);
+
   const selectedLead = useMemo(
     () => filtered.find((lead) => lead.id === openId) || null,
     [filtered, openId],
@@ -347,7 +359,7 @@ export default function InboxPanel({
   };
 
   return (
-    <div className={`simple-panel inbox-panel inbox-ops-root mode-${sectionMode}`}>
+    <div ref={rootRef} className={`simple-panel inbox-panel inbox-ops-root mode-${sectionMode}`}>
       <div className="inbox-ops-layout">
         <aside className="inbox-ops-sidebar">
           <div className="inbox-ops-sidebar-title">
@@ -484,7 +496,7 @@ export default function InboxPanel({
                         key={lead.id}
                         role="button"
                         tabIndex={0}
-                        className={`inbox-ops-table-row lead-card-service ${selected ? 'selected' : ''}`}
+                        className={`inbox-ops-table-row ${selected ? 'selected' : ''}`}
                         onClick={() => setOpenId(lead.id)}
                         onKeyDown={(event) => {
                           if (event.key === 'Enter' || event.key === ' ') setOpenId(lead.id);
