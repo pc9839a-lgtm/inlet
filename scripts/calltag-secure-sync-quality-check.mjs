@@ -132,7 +132,8 @@ await check('version conflict and tombstone contracts exist', async () => {
   assert.ok(push.includes('CALLTAG_SYNC_VERSION_CONFLICT'));
   assert.ok(push.includes('deleted_at'));
   assert.ok(push.includes("item.deleted ? 'delete' : 'upsert'"));
-  assert.ok(pull.includes('deleted:'));
+  assert.ok(pull.includes('const deleted = Boolean(row.deleted_at)'));
+  assert.ok(pull.includes('payload: deleted ? null'));
 });
 
 await check('roadmap documents login billing recovery and prohibited data', async () => {
