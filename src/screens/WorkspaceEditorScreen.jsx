@@ -6,6 +6,7 @@ import '../styles/workspace-inbox-redesign.css';
 import '../styles/workspace-inbox-fullwidth-fix.css';
 import '../styles/operations-settings.css';
 import '../styles/operations-settings-compact.css';
+import '../styles/external-connections-uniform.css';
 
 export default function WorkspaceEditorScreen({
   canUseBuilder,
