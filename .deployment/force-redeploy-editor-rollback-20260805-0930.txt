@@ -1,0 +1,3 @@
+Force Cloudflare Pages redeploy after restoring the pre-editor-redesign production state.
+Rollback baseline: 0a7f29a2926b9d5fba89ef2e071de092ec4d7297
+Created: 2026-08-05T09:30:00+09:00
