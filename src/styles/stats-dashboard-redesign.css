@@ -1,0 +1,328 @@
+/* Statistics tab only: full-width compact operations dashboard. */
+html:has(.builder-shell.stats-workspace-shell),
+body:has(.builder-shell.stats-workspace-shell),
+#root:has(.builder-shell.stats-workspace-shell) {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 100% !important;
+  max-height: none !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 100dvh !important;
+  max-height: none !important;
+  overflow: visible !important;
+  background: #f6f8fb !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell > .left-workspace,
+html body #root .builder-shell.stats-workspace-shell .workspace-persistent-header,
+html body #root .builder-shell.stats-workspace-shell .work-panel,
+html body #root .builder-shell.stats-workspace-shell .top-tabs,
+html body #root .builder-shell.stats-workspace-shell .stats-panel {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell > .left-workspace {
+  height: auto !important;
+  min-height: 100dvh !important;
+  max-height: none !important;
+  overflow: visible !important;
+  border-right: 0 !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .work-panel {
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 12px 18px 64px !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stats-panel.simple-panel {
+  display: grid !important;
+  grid-template-columns: minmax(320px, .78fr) minmax(0, 1.22fr) !important;
+  gap: 16px !important;
+  align-items: start !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stats-panel > * {
+  min-width: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stats-panel .card,
+html body #root .builder-shell.stats-workspace-shell .stats-panel .metric-v2 {
+  border: 1px solid #dfe6ef !important;
+  border-radius: 16px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+/* Compact filter toolbar. */
+html body #root .builder-shell.stats-workspace-shell .stats-period-card,
+html body #root .builder-shell.stats-workspace-shell .stats-channel-filter,
+html body #root .builder-shell.stats-workspace-shell .stats-partial-notice,
+html body #root .builder-shell.stats-workspace-shell .stats-comparison-label,
+html body #root .builder-shell.stats-workspace-shell .stats-summary-v3,
+html body #root .builder-shell.stats-workspace-shell .stats-columns-v3,
+html body #root .builder-shell.stats-workspace-shell .stats-lead-table-card-v3 {
+  grid-column: 1 / -1 !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stats-period-card {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) !important;
+  gap: 22px !important;
+  align-items: center !important;
+  padding: 16px 18px !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stats-period-card .section-title {
+  min-width: 92px !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stats-period-card .section-title h2 {
+  font-size: 20px !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stats-period-controls {
+  grid-template-columns: minmax(0, 1fr) 160px !important;
+  gap: 10px !important;
+  align-items: center !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stats-range-tabs {
+  grid-template-columns: repeat(4, minmax(84px, 1fr)) !important;
+  gap: 8px !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stats-month-control {
+  margin: 0 !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stats-month-control > span {
+  display: none !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stats-month-control input {
+  width: 100% !important;
+  min-height: 42px !important;
+  border: 1px solid #dbe3ef !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  padding: 0 12px !important;
+  font-weight: 850 !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stats-channel-filter {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) !important;
+  gap: 18px !important;
+  align-items: center !important;
+  padding: 14px 18px !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stats-channel-filter .section-title {
+  min-width: 76px !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stats-channel-filter .section-title h2 {
+  font-size: 15px !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stats-channel-filter-list {
+  display: flex !important;
+  grid-template-columns: none !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+  overflow-x: auto !important;
+  padding: 1px 0 3px !important;
+  scrollbar-width: thin !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stats-channel-filter-list button {
+  flex: 0 0 auto !important;
+  min-width: 104px !important;
+  min-height: 38px !important;
+  border-radius: 10px !important;
+  padding: 0 10px !important;
+}
+
+/* KPI strip. */
+html body #root .builder-shell.stats-workspace-shell .stats-summary-v3 {
+  display: grid !important;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .metric-v2 {
+  min-height: 126px !important;
+  padding: 18px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+  position: relative !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .metric-v2 > span {
+  position: absolute !important;
+  top: 17px !important;
+  left: 18px !important;
+  color: #64748b !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .metric-v2 > strong {
+  color: #0f172a !important;
+  font-size: clamp(26px, 2vw, 34px) !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .metric-v2 > small {
+  margin-top: 7px !important;
+  color: #94a3b8 !important;
+  font-size: 11px !important;
+  font-weight: 850 !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .metric-v2 .stats-change {
+  top: 14px !important;
+  right: 14px !important;
+}
+
+/* Main analysis cards. */
+html body #root .builder-shell.stats-workspace-shell .stats-funnel-card {
+  grid-column: 1 !important;
+  padding: 20px !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stats-trend-card {
+  grid-column: 2 !important;
+  padding: 20px !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stats-funnel-row {
+  grid-template-columns: minmax(88px, .72fr) minmax(96px, 1fr) 18px minmax(96px, 1fr) 58px !important;
+  gap: 8px !important;
+  min-height: 62px !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stats-line-plot {
+  min-height: 300px !important;
+  margin-top: 8px !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stats-line-plot svg {
+  min-height: 260px !important;
+}
+
+/* Breakdown cards. */
+html body #root .builder-shell.stats-workspace-shell .stats-columns-v3 {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stats-columns-four {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stat-card-v2 {
+  padding: 20px !important;
+  min-height: 220px !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stat-row-v2 {
+  grid-template-columns: minmax(84px, .9fr) minmax(100px, 1.4fr) auto !important;
+  gap: 10px !important;
+  min-height: 34px !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stats-lead-table-card-v3 {
+  padding: 20px !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stats-lead-table-v3 > div {
+  grid-template-columns: 90px minmax(120px, .8fr) minmax(150px, 1fr) 140px !important;
+  gap: 14px !important;
+  min-height: 52px !important;
+  align-items: center !important;
+}
+
+html body #root .builder-shell.stats-workspace-shell .stats-partial-notice {
+  padding: 10px 14px !important;
+  border-radius: 12px !important;
+}
+
+@media (max-width: 1240px) {
+  html body #root .builder-shell.stats-workspace-shell .stats-panel.simple-panel {
+    grid-template-columns: 1fr !important;
+  }
+
+  html body #root .builder-shell.stats-workspace-shell .stats-funnel-card,
+  html body #root .builder-shell.stats-workspace-shell .stats-trend-card {
+    grid-column: 1 / -1 !important;
+  }
+
+  html body #root .builder-shell.stats-workspace-shell .stats-summary-v3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  html body #root .builder-shell.stats-workspace-shell .work-panel {
+    padding: 10px 10px 44px !important;
+  }
+
+  html body #root .builder-shell.stats-workspace-shell .stats-period-card,
+  html body #root .builder-shell.stats-workspace-shell .stats-channel-filter {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    padding: 14px !important;
+  }
+
+  html body #root .builder-shell.stats-workspace-shell .stats-period-controls,
+  html body #root .builder-shell.stats-workspace-shell .stats-range-tabs {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  html body #root .builder-shell.stats-workspace-shell .stats-summary-v3,
+  html body #root .builder-shell.stats-workspace-shell .stats-columns-v3,
+  html body #root .builder-shell.stats-workspace-shell .stats-columns-four {
+    grid-template-columns: 1fr !important;
+  }
+
+  html body #root .builder-shell.stats-workspace-shell .metric-v2 {
+    min-height: 108px !important;
+  }
+
+  html body #root .builder-shell.stats-workspace-shell .stats-lead-table-v3 > div {
+    grid-template-columns: 72px minmax(0, 1fr) !important;
+  }
+
+  html body #root .builder-shell.stats-workspace-shell .stats-lead-table-v3 > div > :nth-child(3),
+  html body #root .builder-shell.stats-workspace-shell .stats-lead-table-v3 > div > :nth-child(4) {
+    grid-column: 2 !important;
+  }
+}
