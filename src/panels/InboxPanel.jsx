@@ -484,7 +484,7 @@ export default function InboxPanel({
                         key={lead.id}
                         role="button"
                         tabIndex={0}
-                        className={`inbox-ops-table-row ${selected ? 'selected' : ''}`}
+                        className={`inbox-ops-table-row lead-card-service ${selected ? 'selected' : ''}`}
                         onClick={() => setOpenId(lead.id)}
                         onKeyDown={(event) => {
                           if (event.key === 'Enter' || event.key === ' ') setOpenId(lead.id);
