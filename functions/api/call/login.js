@@ -6,7 +6,7 @@ import {
   ownerIdForEmail,
   passwordHash,
 } from '../auth/_auth.js';
-import { getD1AccountByEmail, upsertD1Account } from '../../../server/storage/d1Adapter.mjs';
+import { upsertD1Account } from '../../../server/storage/d1Adapter.mjs';
 import {
   ensurePendingEntitlement,
   entitlementPublic,
@@ -16,7 +16,7 @@ import {
 } from './_shared.js';
 
 const PLAY_REVIEW_EMAIL = 'play-review@pagero.kr';
-const PLAY_REVIEW_BOOTSTRAP_SHA256 = 'b32384bcdf3f334afa7c18ca82fa0896d5488258f736c1193eefe2e623985be6';
+const PLAY_REVIEW_BOOTSTRAP_SHA256 = 'bc8c9907aeced1daac7fcb1873ed8bc8cf2efba7aa9ce8b75ca14289c611b9a0';
 
 async function sha256Hex(value = '') {
   const input = new TextEncoder().encode(String(value || ''));
@@ -42,6 +42,21 @@ function generateReviewerPassword() {
   let value = 'CtRv-';
   for (const byte of bytes) value += alphabet[byte % alphabet.length];
   return value;
+}
+
+async function claimBootstrapToken(db) {
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS internal_one_time_operations (
+      operation_key TEXT PRIMARY KEY,
+      completed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+  const result = await db.prepare(`
+    INSERT INTO internal_one_time_operations (operation_key, completed_at)
+    VALUES (?, CURRENT_TIMESTAMP)
+    ON CONFLICT(operation_key) DO NOTHING
+  `).bind(`play-review:${PLAY_REVIEW_BOOTSTRAP_SHA256}`).run();
+  return Number(result?.meta?.changes || 0) === 1;
 }
 
 async function provisionPlayReviewAccount(password = '', env = {}) {
@@ -72,7 +87,7 @@ async function provisionPlayReviewAccount(password = '', env = {}) {
     industry: 'Software',
   });
   await ensurePendingEntitlement(env.DB, ownerId);
-  return { email, ownerId };
+  return { email };
 }
 
 async function handleBootstrap(request, env) {
@@ -82,9 +97,8 @@ async function handleBootstrap(request, env) {
   if (!constantTimeEqual(suppliedDigest, PLAY_REVIEW_BOOTSTRAP_SHA256)) {
     return jsonResponse(request, env, 404, { ok: false, error: 'Not found.' }, AUTH_METHODS);
   }
-  const existing = await getD1AccountByEmail(env.DB, PLAY_REVIEW_EMAIL);
-  if (existing) {
-    return jsonResponse(request, env, 409, { ok: false, error: 'Reviewer account already provisioned.' }, AUTH_METHODS);
+  if (!await claimBootstrapToken(env.DB)) {
+    return jsonResponse(request, env, 409, { ok: false, error: 'Operation already completed.' }, AUTH_METHODS);
   }
   const password = generateReviewerPassword();
   const account = await provisionPlayReviewAccount(password, env);
