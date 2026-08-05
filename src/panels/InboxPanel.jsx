@@ -600,7 +600,7 @@ export default function InboxPanel({
                   </div>
 
                   {copyFallback?.id === selectedLead.id ? (
-                    <section className="inbox-ops-copy-fallback" aria-live="polite">
+                    <section className="inbox-ops-copy-fallback lead-copy-fallback" aria-live="polite">
                       <h4>복사할 내용</h4>
                       <textarea readOnly value={copyFallback.text} onFocus={(event) => event.currentTarget.select()} />
                     </section>
