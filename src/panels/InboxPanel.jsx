@@ -307,7 +307,12 @@ export default function InboxPanel({
   const loadedCount = normalized.length;
   const failedDeliveryCount = normalized.filter((lead) => leadDeliveryInfo(lead)).length;
   const serverTotal = Number(totalLeads || loadedCount);
-  const displaySummary = serverTotal > loadedCount
+  const hasPartialLeadList = serverTotal > loadedCount;
+  const totalSummaryLabel = hasPartialLeadList ? '서버 전체 접수' : '현재 접수';
+  const loadedScopeLabel = hasPartialLeadList
+    ? `${loadedCount}건 불러옴 · 현재 조건 ${filtered.length}건`
+    : `현재 조건 ${filtered.length}건`;
+  const displaySummary = hasPartialLeadList
     ? `${filtered.length}건 표시 · 서버 ${serverTotal}건 중 ${loadedCount}건 로드`
     : `${filtered.length}건 표시`;
 
@@ -379,7 +384,10 @@ export default function InboxPanel({
                   <small>고객 문의 관리</small>
                   <h2>접수함</h2>
                 </div>
-                <span>{displaySummary}</span>
+                <div className="inbox-ops-total-summary" title={displaySummary}>
+                  <strong>{serverTotal}</strong>
+                  <span>{totalSummaryLabel} · {loadedScopeLabel}</span>
+                </div>
               </header>
 
               <section className="inbox-ops-kpis" aria-label="접수 요약">
@@ -485,8 +493,8 @@ export default function InboxPanel({
                         <span className="inbox-ops-name-cell">
                           <strong>{lead.name || '이름 없음'}</strong>
                           <small>{leadKindLabel(lead)}</small>
-                          {riskInfo ? <i className={`inbox-ops-mini-badge ${riskInfo.level}`}>{riskInfo.badge}</i> : null}
-                          {deliveryInfo ? <i className="inbox-ops-mini-badge delivery">{deliveryInfo.label}</i> : null}
+                          {riskInfo ? <i className={`inbox-ops-mini-badge lead-risk-badge ${riskInfo.level}`}>{riskInfo.badge}</i> : null}
+                          {deliveryInfo ? <i className="inbox-ops-mini-badge lead-delivery-badge delivery">{deliveryInfo.label}</i> : null}
                         </span>
                         <span>{leadPrimaryContact(lead) || '-'}</span>
                         <span>{lead.pageTitle || lead.pageSlug || lead.project || page.title || '-'}</span>
