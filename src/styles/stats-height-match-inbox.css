@@ -1,0 +1,60 @@
+/* Keep the statistics workspace on the exact same vertical ownership model as the inbox. */
+html:has(.builder-shell.stats-dashboard-shell),
+body:has(.builder-shell.stats-dashboard-shell),
+#root:has(.builder-shell.stats-dashboard-shell) {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 100% !important;
+  max-height: none !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell:not(.mobile-operations-shell) {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 100dvh !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell > .left-workspace {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 100dvh !important;
+  max-height: none !important;
+  overflow: visible !important;
+  border-right: 0 !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .workspace-persistent-header,
+html body #root .builder-shell.stats-dashboard-shell .work-panel,
+html body #root .builder-shell.stats-dashboard-shell .top-tabs,
+html body #root .builder-shell.stats-dashboard-shell .simple-panel.stats-panel {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .work-panel {
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 12px 18px 64px !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel {
+  min-height: calc(100dvh - 206px) !important;
+  align-self: stretch !important;
+}
+
+@media (max-width: 820px) {
+  html body #root .builder-shell.stats-dashboard-shell .work-panel {
+    padding: 10px 10px 44px !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel {
+    min-height: calc(100dvh - 190px) !important;
+  }
+}
