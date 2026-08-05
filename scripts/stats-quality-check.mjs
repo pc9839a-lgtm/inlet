@@ -101,6 +101,7 @@ assert(mergedComparison.formStartRate === '33.3' && mergedComparison.formComplet
 const statsPanel = await readFile('src/panels/StatsPanel.jsx', 'utf8');
 const inboxPanel = await readFile('src/panels/InboxPanel.jsx', 'utf8');
 const inboxCss = await readFile('src/panels/InboxPanel.css', 'utf8');
+const inboxOperationsCss = await readFile('src/panels/InboxOperations.css', 'utf8');
 const statsPeriodCss = await readFile('src/styles/panels-stats-period-line.css', 'utf8');
 assert(statsPanel.includes('eventPageMeta') && statsPanel.includes('leadPageMeta'), 'stats panel should accept pagination meta');
 assert(statsPanel.includes('statsPartial') && statsPanel.includes('stats-partial-notice'), 'stats panel should expose partial data notice contract');
@@ -122,8 +123,8 @@ assert(statsPeriodCss.includes('grid-template-columns: minmax(0, 1fr) 184px'), '
 assert(statsPeriodCss.includes('min-width: 168px'), 'stats month input should not collapse to year-only text');
 assert(statsPeriodCss.includes('grid-template-columns: 58px minmax(96px, .8fr) minmax(112px, 1fr) 132px'), 'recent lead rows should use four visible columns only');
 
-assert(inboxPanel.includes("if (!['failed', 'partial'].includes(status)) return null;") && inboxPanel.includes('lead-delivery-badge') && inboxPanel.includes('lead-delivery-detail') && inboxPanel.includes('retryLeadDelivery'), 'inbox delivery recovery should appear only for failed or partial deliveries');
-assert(inboxCss.includes('.lead-delivery-badge') && inboxCss.includes('.lead-delivery-detail'), 'inbox CSS should style actionable delivery recovery states');
+assert(inboxPanel.includes("if (!['failed', 'partial'].includes(status)) return null;") && inboxPanel.includes('const deliveryInfo = leadDeliveryInfo(lead)') && inboxPanel.includes('const selectedDeliveryInfo = selectedLead ? leadDeliveryInfo(selectedLead) : null') && inboxPanel.includes('retryLeadDelivery'), 'inbox delivery recovery should appear only for failed or partial deliveries');
+assert(inboxPanel.includes('{deliveryInfo ?') && inboxPanel.includes('{selectedDeliveryInfo ?') && inboxOperationsCss.includes('.inbox-ops-mini-badge.delivery') && inboxOperationsCss.includes('.inbox-ops-detail-section.delivery-warning'), 'inbox CSS should style actionable delivery recovery states');
 assert(inboxCss.includes('grid-template-columns: minmax(96px, 1fr) 64px 82px 66px') && inboxCss.includes('.lead-source-label'), 'inbox lead rows should reserve columns for source, status, date, and detail button');
 
 const leadCaptureActions = await readFile('src/runtime/leadCaptureActions.js', 'utf8');
