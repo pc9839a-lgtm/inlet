@@ -6,7 +6,7 @@ import {
   ownerIdForEmail,
   passwordHash,
 } from '../auth/_auth.js';
-import { upsertD1Account } from '../../../server/storage/d1Adapter.mjs';
+import { getD1AccountByEmail, upsertD1Account } from '../../../server/storage/d1Adapter.mjs';
 import {
   ensurePendingEntitlement,
   entitlementPublic,
@@ -81,6 +81,10 @@ async function handleBootstrap(request, env) {
   const suppliedDigest = await sha256Hex(suppliedKey);
   if (!constantTimeEqual(suppliedDigest, PLAY_REVIEW_BOOTSTRAP_SHA256)) {
     return jsonResponse(request, env, 404, { ok: false, error: 'Not found.' }, AUTH_METHODS);
+  }
+  const existing = await getD1AccountByEmail(env.DB, PLAY_REVIEW_EMAIL);
+  if (existing) {
+    return jsonResponse(request, env, 409, { ok: false, error: 'Reviewer account already provisioned.' }, AUTH_METHODS);
   }
   const password = generateReviewerPassword();
   const account = await provisionPlayReviewAccount(password, env);
