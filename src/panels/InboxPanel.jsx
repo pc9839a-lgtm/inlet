@@ -443,7 +443,7 @@ export default function InboxPanel({
                       q: query.trim(),
                     })}
                   >
-                    <Download size={17} /> CSV
+                    <Download size={17} /> CSV 내보내기
                   </button>
                 ) : null}
               </section>
@@ -499,7 +499,7 @@ export default function InboxPanel({
 
                 <footer className="inbox-ops-table-footer">
                   <span>{filtered.length} / {serverTotal}건</span>
-                  {hasMoreLeads ? <button type="button" onClick={loadMore} disabled={syncing}>더 불러오기</button> : <b>마지막 목록입니다.</b>}
+                  {hasMoreLeads ? <button type="button" onClick={loadMore} disabled={syncing}>더보기</button> : <b>마지막 목록입니다.</b>}
                 </footer>
               </section>
             </main>
