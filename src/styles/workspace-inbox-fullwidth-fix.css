@@ -1,0 +1,120 @@
+/* Final inbox-only full-width owner. Loaded after all workspace styles. */
+html body #root .builder-shell.inbox-workspace-shell:not(.mobile-operations-shell) {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  min-height: 100dvh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+  background: #eef2f6 !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell > .left-workspace {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  grid-column: 1 / -1 !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .workspace-persistent-header {
+  position: relative !important;
+  inset: auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 16px 18px 0 !important;
+  box-sizing: border-box !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .panel-header,
+html body #root .builder-shell.inbox-workspace-shell .work-panel,
+html body #root .builder-shell.inbox-workspace-shell .top-tabs,
+html body #root .builder-shell.inbox-workspace-shell .simple-panel.inbox-panel {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .work-panel {
+  margin: 0 !important;
+  padding: 12px 18px 48px !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .top-tabs {
+  margin: 0 0 14px !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-service {
+  width: 100% !important;
+  max-width: none !important;
+  grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-service > .inbox-summary-v3,
+html body #root .builder-shell.inbox-workspace-shell .inbox-service > .lead-conflict-notice,
+html body #root .builder-shell.inbox-workspace-shell .inbox-service > .inbox-toolbar-card,
+html body #root .builder-shell.inbox-workspace-shell .inbox-service > .inbox-list-card {
+  grid-column: 1 / -1 !important;
+  width: 100% !important;
+  max-width: none !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-toolbar {
+  grid-template-columns: minmax(320px, 2.4fr) minmax(150px, .8fr) minmax(150px, .8fr) minmax(150px, .8fr) auto auto auto !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .lead-list-v3,
+html body #root .builder-shell.inbox-workspace-shell .lead-list-service,
+html body #root .builder-shell.inbox-workspace-shell .lead-card-service,
+html body #root .builder-shell.inbox-workspace-shell .lead-detail-service {
+  width: 100% !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .lead-table-head,
+html body #root .builder-shell.inbox-workspace-shell .lead-row-service {
+  grid-template-columns: 72px 110px minmax(200px, 1.2fr) minmax(190px, 1fr) 140px 88px !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-service > .inbox-policy-card,
+html body #root .builder-shell.inbox-workspace-shell .inbox-service > .inbox-connect-card {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+@media (max-width: 1180px) {
+  html body #root .builder-shell.inbox-workspace-shell .inbox-toolbar {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  html body #root .builder-shell.inbox-workspace-shell .inbox-toolbar label:first-child {
+    grid-column: span 2 !important;
+  }
+}
+
+@media (max-width: 760px) {
+  html body #root .builder-shell.inbox-workspace-shell .workspace-persistent-header {
+    padding: 10px 10px 0 !important;
+  }
+
+  html body #root .builder-shell.inbox-workspace-shell .work-panel {
+    padding: 10px 10px 36px !important;
+  }
+
+  html body #root .builder-shell.inbox-workspace-shell .inbox-toolbar {
+    grid-template-columns: 1fr !important;
+  }
+
+  html body #root .builder-shell.inbox-workspace-shell .inbox-toolbar label:first-child,
+  html body #root .builder-shell.inbox-workspace-shell .inbox-toolbar button {
+    grid-column: auto !important;
+  }
+}
