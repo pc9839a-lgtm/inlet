@@ -47,7 +47,7 @@ export default function InboxConnectionsPanel({ page, authUser = null, updateInt
   const [testing, setTesting] = useState('');
   const [result, setResult] = useState('');
   const [copiedScript, setCopiedScript] = useState(false);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(true);
 
   const counts = useMemo(() => connectionCounts(draftIntegrations), [draftIntegrations]);
   const emailState = connectionState('email', draftIntegrations);
