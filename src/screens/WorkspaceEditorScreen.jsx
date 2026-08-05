@@ -49,9 +49,10 @@ export default function WorkspaceEditorScreen({
   onSelectPreviewBlock,
 }) {
   const inboxWorkspace = !mobileOperationsOnly && tab === 'inbox';
+  const statsWorkspace = !mobileOperationsOnly && tab === 'stats';
 
   return (
-    <div className={`builder-shell${canUseBuilder && startMode === 'template' && !mobileOperationsOnly ? ' template-intro-shell' : ''}${mobileOperationsOnly ? ' mobile-operations-shell' : ''}${inboxWorkspace ? ' inbox-workspace-shell' : ''}`}>
+    <div className={`builder-shell${canUseBuilder && startMode === 'template' && !mobileOperationsOnly ? ' template-intro-shell' : ''}${mobileOperationsOnly ? ' mobile-operations-shell' : ''}${inboxWorkspace ? ' inbox-workspace-shell' : ''}${statsWorkspace ? ' stats-dashboard-shell' : ''}`}>
 
       <WorkspaceLeftPanel
         canUseBuilder={canUseBuilder}
