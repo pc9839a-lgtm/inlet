@@ -1,8 +1,7 @@
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { rememberAccountProjectAccess } from '../lib/accountProjectAccess.js';
-import { fetchSelectedAccountPage } from '../lib/accountPageRepository.js';
 import { authAccountErrorMessage } from '../lib/authAccounts.js';
-import { deleteAccountPage, fetchAccountPages } from '../lib/pageRepository.js';
+import { deleteAccountPage, fetchAccountPages, fetchServerPage } from '../lib/pageRepository.js';
 import { canCreateLandingPage, isPlatformMasterUser } from '../lib/platformAccountPolicy.js';
 import { STORAGE_KEY } from '../config/storageKeys.js';
 import { save as saveJson, storageErrorMessage } from '../lib/storage.js';
@@ -101,11 +100,18 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
     setPageListError('');
 
     try {
-      const selectedPage = await fetchSelectedAccountPage(item, user);
+      rememberAccountProjectAccess(item);
+      const selectedPage = await fetchServerPage(item.slug, {
+        projectId: String(item.projectId || ''),
+        ownerId: String(item.ownerId || user?.ownerId || ''),
+        slug: String(item.slug || ''),
+        session: String(user?.session || ''),
+        legacyProjectId: '',
+        legacyOwnerId: '',
+      });
       if (!selectedPage) throw new Error('선택한 페이지의 서버 저장본을 찾지 못했습니다.');
 
       const editorPage = { ...selectedPage, __accountProjectAccess: true };
-      rememberAccountProjectAccess(item);
       rememberAccountProjectAccess(editorPage);
 
       const stored = saveJson(STORAGE_KEY, editorPage);
