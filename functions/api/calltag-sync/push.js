@@ -4,6 +4,7 @@ import {
   optionsResponse,
   readJson,
 } from '../_shared.js';
+import { assertSyncRequestSize } from './_guard.js';
 import {
   CALLTAG_SYNC_METHODS,
   assertRateLimit,
@@ -25,9 +26,10 @@ export async function onRequest({ request, env }) {
 
   let session;
   try {
-    const body = await readJson(request);
-    session = await secureSyncSession(request, env, body);
+    assertSyncRequestSize(request);
+    session = await secureSyncSession(request, env);
     await assertRateLimit(env.DB, env, session.ownerId, session.deviceHash, 'push', 30, 60);
+    const body = await readJson(request);
     const items = normalizePushItems(body);
     const accepted = [];
     const conflicts = [];
