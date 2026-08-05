@@ -1,0 +1,95 @@
+/* Keep inbox and statistics headers on the exact same vertical rhythm. */
+html body #root :is(.builder-shell.inbox-workspace-shell, .builder-shell.stats-dashboard-shell) .panel-header {
+  width: 100% !important;
+  min-height: 78px !important;
+  height: 78px !important;
+  max-height: 78px !important;
+  padding: 12px 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+html body #root :is(.builder-shell.inbox-workspace-shell, .builder-shell.stats-dashboard-shell) .panel-title {
+  min-width: 0 !important;
+  display: grid !important;
+  grid-template-columns: auto auto !important;
+  grid-template-rows: auto auto !important;
+  align-items: center !important;
+  justify-content: start !important;
+  column-gap: 10px !important;
+  row-gap: 2px !important;
+}
+
+html body #root :is(.builder-shell.inbox-workspace-shell, .builder-shell.stats-dashboard-shell) .panel-title > p {
+  grid-column: 1 / -1 !important;
+  grid-row: 1 !important;
+  margin: 0 !important;
+  line-height: 1.1 !important;
+}
+
+html body #root :is(.builder-shell.inbox-workspace-shell, .builder-shell.stats-dashboard-shell) .panel-title > h1 {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+  margin: 0 !important;
+  line-height: 1.05 !important;
+}
+
+html body #root :is(.builder-shell.inbox-workspace-shell, .builder-shell.stats-dashboard-shell) .panel-save-status {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+  width: auto !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 4px 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  border-radius: 999px !important;
+  background: #f1f5f9 !important;
+  line-height: 1 !important;
+}
+
+html body #root :is(.builder-shell.inbox-workspace-shell, .builder-shell.stats-dashboard-shell) .panel-save-status strong {
+  font-size: 11px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+html body #root :is(.builder-shell.inbox-workspace-shell, .builder-shell.stats-dashboard-shell) .panel-save-status small {
+  display: none !important;
+}
+
+html body #root :is(.builder-shell.inbox-workspace-shell, .builder-shell.stats-dashboard-shell) .panel-actions {
+  flex: 0 0 auto !important;
+  align-self: center !important;
+}
+
+html body #root :is(.builder-shell.inbox-workspace-shell, .builder-shell.stats-dashboard-shell) .top-tabs {
+  min-height: 52px !important;
+  height: 52px !important;
+  max-height: 52px !important;
+  margin-top: 10px !important;
+  margin-bottom: 12px !important;
+  box-sizing: border-box !important;
+}
+
+html body #root :is(.builder-shell.inbox-workspace-shell, .builder-shell.stats-dashboard-shell) .work-panel {
+  padding-top: 12px !important;
+}
+
+@media (max-width: 820px) {
+  html body #root :is(.builder-shell.inbox-workspace-shell, .builder-shell.stats-dashboard-shell) .panel-header {
+    min-height: 72px !important;
+    height: 72px !important;
+    max-height: 72px !important;
+    padding: 10px 12px !important;
+  }
+
+  html body #root :is(.builder-shell.inbox-workspace-shell, .builder-shell.stats-dashboard-shell) .top-tabs {
+    min-height: 50px !important;
+    height: 50px !important;
+    max-height: 50px !important;
+  }
+}
