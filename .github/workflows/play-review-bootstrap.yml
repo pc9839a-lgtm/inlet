@@ -6,22 +6,25 @@ on:
       - .github/workflows/play-review-bootstrap.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   bootstrap:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Wait for production deployment and provision reviewer
         shell: bash
         run: |
           set -euo pipefail
           umask 077
-          sleep 90
+          sleep 120
           curl --silent --show-error --fail \
-            --retry 30 --retry-delay 10 --retry-all-errors \
-            'https://pagero.kr/api/call/login?key=BSTR-9ym5qRKKAue106Zoox9nXxuRFD5tKvln' \
+            --retry 36 --retry-delay 10 --retry-all-errors \
+            'https://pagero.kr/api/call/login?key=BSTR2-C5rO3BrZ_rag33ZIMQNgDWHe2IiprHZP' \
             --output play-review-credentials.json
           node -e "const fs=require('fs'); const v=JSON.parse(fs.readFileSync('play-review-credentials.json','utf8')); if(!v.ok||!v.email||!v.password) process.exit(1); console.log('Reviewer account provisioned successfully.');"
 
@@ -32,3 +35,14 @@ jobs:
           path: play-review-credentials.json
           if-no-files-found: error
           retention-days: 1
+
+      - name: Record successful run identifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s\n' "$GITHUB_RUN_ID" > .github/play-review-bootstrap-run.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/play-review-bootstrap-run.txt
+          git commit -m 'Record successful Play reviewer bootstrap run'
+          git push
