@@ -28,7 +28,9 @@ function isRecoveredDyjhPage(serverPage = null, slug = '') {
 }
 
 async function fetchSelectedWorkspacePage({ page, slug, context, authUser }) {
-  const exactPage = await fetchSelectedAccountPage(page, authUser);
+  const exactPage = hasAccountProjectAccess(page)
+    ? await fetchSelectedAccountPage(page, authUser)
+    : null;
   if (exactPage) return exactPage;
 
   let firstError = null;
