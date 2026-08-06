@@ -15,7 +15,7 @@ function safeError(error) {
 
 async function runDiagnostic(env) {
   if (!env.DB?.prepare) {
-    return json(503, { ok: false, code: 'D1_BINDING_MISSING' });
+    return json(200, { ok: false, code: 'D1_BINDING_MISSING' });
   }
 
   const id = `auth-storage-diagnostic-${crypto.randomUUID()}`;
@@ -86,7 +86,7 @@ async function runDiagnostic(env) {
     && stages.insert?.ok === true
     && stages.cleanup?.ok === true;
 
-  return json(ok ? 200 : 503, {
+  return json(200, {
     ok,
     databaseBinding: 'DB',
     syntheticOnly: true,
