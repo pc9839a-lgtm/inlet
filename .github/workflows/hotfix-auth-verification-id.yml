@@ -1,0 +1,94 @@
+name: Hotfix auth verification record IDs
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/hotfix-auth-verification-id.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-deploy-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Restore UUID verification IDs
+        shell: bash
+        run: |
+          node <<'NODE'
+          import { readFileSync, writeFileSync, existsSync, rmSync } from 'node:fs';
+          const path = 'functions/api/auth/_auth.js';
+          let source = readFileSync(path, 'utf8');
+          const oldBlock = `function verificationId(requesterKey = '') {
+            const safeRequesterKey = /^[a-f0-9]{24}$/.test(String(requesterKey || '').trim().toLowerCase())
+              ? String(requesterKey).trim().toLowerCase()
+              : 'anonymous';
+            const suffix = crypto.randomUUID?.() || \`${'${Date.now()}-${Math.random().toString(36).slice(2)}'}\`;
+            return \`email-verification-${'${safeRequesterKey}'}-${'${suffix}'}\`;
+          }`;
+          const newBlock = `function verificationId() {
+            return crypto.randomUUID?.() || \`email-verification-${'${Date.now()}-${Math.random().toString(36).slice(2)}'}\`;
+          }`;
+          if (!source.includes(oldBlock)) throw new Error('verificationId patch target not found');
+          source = source.replace(oldBlock, newBlock);
+          source = source.replace('const id = verificationId(record.requesterKey);', 'const id = verificationId();');
+          writeFileSync(path, source);
+          if (existsSync('functions/api/diagnostics/auth-verification-storage.js')) rmSync('functions/api/diagnostics/auth-verification-storage.js');
+          if (existsSync('.github/workflows/deploy-auth-storage-diagnostic.yml')) rmSync('.github/workflows/deploy-auth-storage-diagnostic.yml');
+          NODE
+
+      - name: Install
+        run: npm ci
+
+      - name: Targeted regression
+        run: |
+          node --check functions/api/auth/_auth.js
+          npm run auth:email:qa
+          npm run api:functions:qa
+          npm run api:security:qa
+          npm run build
+
+      - name: Deploy production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npm run deploy:pages
+
+      - name: Verify real auth email API
+        shell: bash
+        run: |
+          set -euo pipefail
+          TEST_EMAIL="support+calltag-storage-$(date +%s)@pagero.kr"
+          HTTP_CODE="$(curl -sS -o /tmp/auth-response.json -w '%{http_code}' \
+            -H 'Content-Type: application/json' \
+            --data "{\"email\":\"${TEST_EMAIL}\",\"purpose\":\"signup\"}" \
+            https://pagero.kr/api/auth/email-verification)"
+          cat /tmp/auth-response.json
+          test "$HTTP_CODE" -ge 200
+          test "$HTTP_CODE" -lt 300
+          node -e "const r=require('/tmp/auth-response.json'); if(!r.ok||r.verification?.delivery?.status!=='sent') process.exit(1)"
+
+      - name: Commit verified hotfix
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/hotfix-auth-verification-id.yml
+          git add -A
+          git commit -m "fix: restore compatible auth verification record IDs"
+          git push origin HEAD:main
