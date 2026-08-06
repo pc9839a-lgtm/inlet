@@ -1,0 +1,21 @@
+{
+  "recordedAt": "2026-08-06T17:14:59.850Z",
+  "sourceSha": "ddad819359827661608218126abcafe3c0439fec",
+  "testDomain": "naver.com",
+  "httpStatus": 200,
+  "curlCode": 0,
+  "response": {
+    "ok": true,
+    "verification": {
+      "email": "pc9839a@naver.com",
+      "purpose": "signup",
+      "status": "pending",
+      "expiresAt": "2026-08-06T17:44:56.000Z",
+      "delivery": {
+        "mode": "api",
+        "provider": "ses",
+        "status": "sent"
+      }
+    }
+  }
+}
