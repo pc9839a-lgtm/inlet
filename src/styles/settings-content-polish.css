@@ -1,0 +1,367 @@
+/* Settings content polish: one focused task per selected menu. */
+html body #root .builder-shell.settings-workspace-shell .settings-ops-main {
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-single-section {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 1080px !important;
+  margin: 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-single-section > .settings-section,
+html body #root .builder-shell.settings-workspace-shell .settings-ops-single-section > .settings-advanced-box,
+html body #root .builder-shell.settings-workspace-shell .settings-ops-single-section .settings-section {
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-single-section .settings-section-head,
+html body #root .builder-shell.settings-workspace-shell .settings-ops-single-section .settings-advanced-head {
+  display: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-single-section .settings-section-body {
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-single-section .settings-section-actions {
+  display: flex !important;
+  justify-content: flex-end !important;
+  margin-top: 16px !important;
+  padding: 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-single-section .settings-section-actions button {
+  min-width: 96px !important;
+  min-height: 42px !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: #2563eb !important;
+  color: #fff !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+}
+
+/* Account: show one sub-task at a time. */
+html body #root .builder-shell.settings-workspace-shell .account-settings-focused {
+  width: 100% !important;
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 16px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tabs {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  padding: 0 0 14px !important;
+  border-bottom: 1px solid #e5eaf1 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tabs button {
+  min-height: 40px !important;
+  padding: 0 16px !important;
+  border: 1px solid #dbe3ef !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  color: #475569 !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  cursor: pointer !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tabs button.active {
+  border-color: #2563eb !important;
+  background: #eff6ff !important;
+  color: #2563eb !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 940px !important;
+  padding: 22px !important;
+  border: 1px solid #dfe6ef !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel :is(.account-settings-form, .account-password-form) {
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-password-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  margin: 0 0 18px !important;
+  padding: 0 0 14px !important;
+  border-bottom: 1px solid #edf1f5 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-password-head strong {
+  color: #111827 !important;
+  font-size: 16px !important;
+  font-weight: 950 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-password-head button {
+  min-height: 38px !important;
+  padding: 0 13px !important;
+  border: 1px solid #dbe3ef !important;
+  border-radius: 9px !important;
+  background: #fff !important;
+  color: #111827 !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-settings-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  align-items: end !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-settings-grid label {
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 7px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-settings-grid label > span {
+  color: #475569 !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-settings-grid input {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 44px !important;
+  padding: 0 12px !important;
+  border: 1px solid #dbe3ef !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  color: #111827 !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-settings-grid input:disabled {
+  background: #f4f7fb !important;
+  color: #64748b !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-settings-actions {
+  grid-column: 1 / -1 !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  margin-top: 2px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-settings-actions button {
+  width: auto !important;
+  min-width: 96px !important;
+  min-height: 40px !important;
+  padding: 0 14px !important;
+  border: 1px solid #dbe3ef !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  color: #111827 !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-settings-actions button:first-child {
+  border-color: #111827 !important;
+  background: #111827 !important;
+  color: #fff !important;
+}
+
+/* SEO: compact blocks, bounded image previews, no horizontal overflow. */
+html body #root .builder-shell.settings-workspace-shell .settings-seo-layout {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 1020px !important;
+  display: grid !important;
+  gap: 16px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block {
+  min-width: 0 !important;
+  padding: 18px !important;
+  border: 1px solid #dfe6ef !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block > header {
+  display: grid !important;
+  gap: 4px !important;
+  margin-bottom: 16px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block > header strong {
+  color: #111827 !important;
+  font-size: 15px !important;
+  font-weight: 950 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block > header small {
+  color: #64748b !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-copy-grid,
+html body #root .builder-shell.settings-workspace-shell .settings-seo-verification-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-media-grid {
+  display: grid !important;
+  grid-template-columns: 220px minmax(0, 1fr) !important;
+  gap: 14px !important;
+  align-items: start !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block .settings-field-hint-wrap,
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block .image-input {
+  min-width: 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block .image-box {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  border-radius: 10px !important;
+  background: #f8fafc !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-favicon .image-box {
+  height: 112px !important;
+  min-height: 112px !important;
+  max-height: 112px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-share .image-box {
+  height: 220px !important;
+  min-height: 220px !important;
+  max-height: 220px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block .image-box img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  object-fit: cover !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-favicon .image-box img {
+  object-fit: contain !important;
+  padding: 18px !important;
+  box-sizing: border-box !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block .image-storage-note,
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block .settings-field-hint {
+  display: block !important;
+  margin-top: 7px !important;
+  color: #64748b !important;
+  font-size: 11px !important;
+  line-height: 1.35 !important;
+  font-weight: 800 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block .field,
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block label,
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block input,
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block textarea {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block textarea {
+  min-height: 96px !important;
+  resize: vertical !important;
+}
+
+/* Other selected settings: keep controls readable and bounded. */
+html body #root .builder-shell.settings-workspace-shell .settings-ops-single-section .settings-grid,
+html body #root .builder-shell.settings-workspace-shell .settings-ops-single-section .settings-conversion-grid,
+html body #root .builder-shell.settings-workspace-shell .settings-ops-single-section .manager-list {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 1020px !important;
+}
+
+@media (max-width: 1180px) {
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-layout {
+    grid-template-columns: 210px minmax(0, 1fr) !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-summary {
+    display: none !important;
+  }
+}
+
+@media (max-width: 760px) {
+  html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel,
+  html body #root .builder-shell.settings-workspace-shell .settings-seo-block {
+    padding: 14px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-settings-grid,
+  html body #root .builder-shell.settings-workspace-shell .settings-seo-copy-grid,
+  html body #root .builder-shell.settings-workspace-shell .settings-seo-verification-grid,
+  html body #root .builder-shell.settings-workspace-shell .settings-seo-media-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .account-settings-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .account-settings-tabs button {
+    min-width: 0 !important;
+    padding: 0 8px !important;
+    font-size: 11px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-seo-share .image-box {
+    height: 180px !important;
+    min-height: 180px !important;
+    max-height: 180px !important;
+  }
+}
