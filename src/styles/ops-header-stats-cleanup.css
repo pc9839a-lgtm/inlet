@@ -119,6 +119,11 @@ html body #root .builder-shell.stats-dashboard-shell .stats-funnel-card {
   border-bottom: 0 !important;
 }
 
+/* Remove the redundant recent lead preview from statistics. */
+html body #root .builder-shell.stats-dashboard-shell .stats-lead-table-card {
+  display: none !important;
+}
+
 @media (max-width: 820px) {
   html body #root .builder-shell:is(.inbox-workspace-shell, .stats-dashboard-shell) .panel-header.operations-panel-header {
     height: 76px !important;
