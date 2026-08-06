@@ -1,0 +1,487 @@
+/* Unified Pagero + CallTag billing/referral settings. */
+html body #root .builder-shell.settings-workspace-shell :is(.account-finance-settings,.account-referral-settings) {
+  width: 100% !important;
+  max-width: 1120px !important;
+  display: grid !important;
+  gap: 20px !important;
+  color: #111827 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-finance-head {
+  width: 100% !important;
+  min-height: 60px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  padding: 0 0 18px !important;
+  border-bottom: 1px solid #dfe3e8 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-finance-head > div {
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 11px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-finance-head > div > div {
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 3px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-finance-head strong {
+  color: #111827 !important;
+  font-size: 16px !important;
+  font-weight: 850 !important;
+  line-height: 1.25 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-finance-head small {
+  color: #6b7280 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  overflow-wrap: anywhere !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-finance-head > button {
+  width: auto !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 11px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  border: 1px solid #cfd5dd !important;
+  border-radius: 7px !important;
+  background: #fff !important;
+  color: #374151 !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  font-weight: 750 !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-finance-rule {
+  margin: -4px 0 0 !important;
+  color: #4b5563 !important;
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.account-finance-message,.account-finance-loading) {
+  margin: 0 !important;
+  padding: 12px 14px !important;
+  border: 1px solid #d8dde5 !important;
+  border-radius: 7px !important;
+  background: #f7f8fa !important;
+  color: #374151 !important;
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-finance-message.is-error {
+  border-color: #e3c6c3 !important;
+  background: #fffafa !important;
+  color: #9f1d16 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .billing-service-grid {
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .billing-service-panel {
+  min-width: 0 !important;
+  border: 1px solid #d8dde5 !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  overflow: hidden !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .billing-service-panel > header {
+  min-height: 68px !important;
+  padding: 14px 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  border-bottom: 1px solid #e3e6ea !important;
+  background: #f7f8fa !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .billing-service-panel > header > div {
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 3px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .billing-service-panel > header strong {
+  color: #111827 !important;
+  font-size: 15px !important;
+  font-weight: 850 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .billing-service-panel > header small {
+  color: #6b7280 !important;
+  font-size: 11px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .billing-service-panel > header > span {
+  flex: 0 0 auto !important;
+  padding: 4px 8px !important;
+  border: 1px solid #d2d7de !important;
+  border-radius: 999px !important;
+  background: #fff !important;
+  color: #4b5563 !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .billing-plan-list {
+  display: grid !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .billing-plan-row {
+  min-width: 0 !important;
+  min-height: 72px !important;
+  padding: 12px 16px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto auto !important;
+  align-items: center !important;
+  gap: 12px !important;
+  border-bottom: 1px solid #eceef1 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .billing-plan-row:last-child {
+  border-bottom: 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .billing-plan-row.is-current {
+  background: #f7f8fa !important;
+  box-shadow: inset 3px 0 0 #111827 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .billing-plan-row > div {
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 3px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .billing-plan-row > div strong {
+  color: #111827 !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .billing-plan-row > div small {
+  color: #6b7280 !important;
+  font-size: 11px !important;
+  line-height: 1.35 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .billing-plan-row > b {
+  color: #111827 !important;
+  font-size: 12px !important;
+  font-weight: 850 !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.billing-plan-row button,.billing-plan-free) {
+  width: auto !important;
+  min-width: 66px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  padding: 0 11px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1px solid #111827 !important;
+  border-radius: 6px !important;
+  background: #111827 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .billing-plan-row button:disabled,
+html body #root .builder-shell.settings-workspace-shell .billing-plan-free {
+  border-color: #d5dae1 !important;
+  background: #fff !important;
+  color: #6b7280 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .billing-settlement-summary,
+html body #root .builder-shell.settings-workspace-shell .referral-performance-panel {
+  width: 100% !important;
+  border-top: 1px solid #dfe3e8 !important;
+  padding-top: 20px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.billing-settlement-summary,.referral-performance-panel) > header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-bottom: 12px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.billing-settlement-summary,.referral-performance-panel) > header strong {
+  color: #111827 !important;
+  font-size: 14px !important;
+  font-weight: 850 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.billing-settlement-summary,.referral-performance-panel) dl {
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  border: 1px solid #d8dde5 !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.billing-settlement-summary,.referral-performance-panel) dl > div {
+  min-width: 0 !important;
+  min-height: 70px !important;
+  padding: 13px 14px !important;
+  display: grid !important;
+  align-content: center !important;
+  gap: 5px !important;
+  border-right: 1px solid #e3e6ea !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.billing-settlement-summary,.referral-performance-panel) dl > div:last-child {
+  border-right: 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.billing-settlement-summary,.referral-performance-panel) dt {
+  color: #6b7280 !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.billing-settlement-summary,.referral-performance-panel) dd {
+  margin: 0 !important;
+  color: #111827 !important;
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  overflow-wrap: anywhere !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .billing-service-totals {
+  margin-top: 10px !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .billing-service-totals span {
+  padding: 6px 9px !important;
+  border: 1px solid #d8dde5 !important;
+  border-radius: 6px !important;
+  color: #4b5563 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .referral-code-panel,
+html body #root .builder-shell.settings-workspace-shell .referral-register-panel {
+  width: 100% !important;
+  padding: 18px !important;
+  border: 1px solid #d8dde5 !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .referral-code-panel {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 18px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .referral-code-panel > div {
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 5px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .referral-code-panel span,
+html body #root .builder-shell.settings-workspace-shell .referral-register-panel header small,
+html body #root .builder-shell.settings-workspace-shell .referral-registered-code span {
+  color: #6b7280 !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .referral-code-panel strong {
+  color: #111827 !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+  font-size: 24px !important;
+  font-weight: 900 !important;
+  letter-spacing: .05em !important;
+  overflow-wrap: anywhere !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .referral-code-panel small {
+  color: #4b5563 !important;
+  font-size: 11px !important;
+  line-height: 1.45 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .referral-code-panel > button,
+html body #root .builder-shell.settings-workspace-shell .referral-code-entry > button {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 13px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  border: 1px solid #111827 !important;
+  border-radius: 7px !important;
+  background: #111827 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .referral-register-panel > header {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  margin-bottom: 14px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .referral-register-panel > header > div {
+  display: grid !important;
+  gap: 4px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .referral-register-panel > header strong {
+  color: #111827 !important;
+  font-size: 14px !important;
+  font-weight: 850 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .referral-register-panel > header > span {
+  padding: 4px 8px !important;
+  border: 1px solid #d2d7de !important;
+  border-radius: 999px !important;
+  color: #4b5563 !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .referral-code-entry {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 8px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .referral-code-entry input {
+  width: 100% !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  padding: 0 13px !important;
+  border: 1px solid #cfd5dd !important;
+  border-radius: 7px !important;
+  background: #fff !important;
+  color: #111827 !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  font-weight: 750 !important;
+  text-transform: uppercase !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .referral-registered-code {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 13px 14px !important;
+  border: 1px solid #d8dde5 !important;
+  border-radius: 7px !important;
+  background: #f7f8fa !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .referral-registered-code strong {
+  color: #111827 !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+  font-size: 14px !important;
+  font-weight: 850 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .referral-registered-code small {
+  color: #111827 !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .referral-performance-panel > p {
+  margin: 10px 0 0 !important;
+  color: #6b7280 !important;
+  font-size: 11px !important;
+  line-height: 1.45 !important;
+}
+
+@media (max-width: 1080px) {
+  html body #root .builder-shell.settings-workspace-shell .billing-service-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 760px) {
+  html body #root .builder-shell.settings-workspace-shell .account-finance-head,
+  html body #root .builder-shell.settings-workspace-shell .referral-code-panel {
+    align-items: flex-start !important;
+    flex-direction: column !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .account-finance-head > button,
+  html body #root .builder-shell.settings-workspace-shell .referral-code-panel > button {
+    width: 100% !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .billing-plan-row {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .billing-plan-row :is(button,.billing-plan-free) {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell :is(.billing-settlement-summary,.referral-performance-panel) dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell :is(.billing-settlement-summary,.referral-performance-panel) dl > div:nth-child(2) {
+    border-right: 0 !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell :is(.billing-settlement-summary,.referral-performance-panel) dl > div:nth-child(-n+2) {
+    border-bottom: 1px solid #e3e6ea !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .referral-code-entry,
+  html body #root .builder-shell.settings-workspace-shell .referral-registered-code {
+    grid-template-columns: 1fr !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .referral-code-entry > button {
+    width: 100% !important;
+  }
+}
