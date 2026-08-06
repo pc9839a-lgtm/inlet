@@ -1,36 +1,149 @@
-/* Final visual corrections for SEO media previews and the statistics period bar. */
+/* Refined SEO settings and statistics period toolbar. */
 
-/* SEO media: preserve the complete source image and keep every label readable. */
+/* --------------------------------------------------------------------------
+   SEO SETTINGS — clean section layout, no nested card stack
+   -------------------------------------------------------------------------- */
+html body #root .builder-shell.settings-workspace-shell .settings-seo-layout {
+  width: 100% !important;
+  max-width: none !important;
+  display: grid !important;
+  gap: 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block {
+  width: 100% !important;
+  min-width: 0 !important;
+  display: grid !important;
+  grid-template-columns: 176px minmax(0, 1fr) !important;
+  column-gap: 32px !important;
+  align-items: start !important;
+  padding: 28px 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid #e3e7ec !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block:first-child {
+  padding-top: 4px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block:last-child {
+  padding-bottom: 4px !important;
+  border-bottom: 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block > header {
+  grid-column: 1 !important;
+  display: grid !important;
+  gap: 6px !important;
+  margin: 0 !important;
+  padding: 3px 0 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block > header strong {
+  margin: 0 !important;
+  color: #111827 !important;
+  font-size: 14px !important;
+  line-height: 1.35 !important;
+  font-weight: 800 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block > header small {
+  margin: 0 !important;
+  color: #737b87 !important;
+  font-size: 12px !important;
+  line-height: 1.55 !important;
+  font-weight: 500 !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-copy-grid,
+html body #root .builder-shell.settings-workspace-shell .settings-seo-verification-grid,
 html body #root .builder-shell.settings-workspace-shell .settings-seo-media-grid {
-  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr) !important;
+  grid-column: 2 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-copy-grid,
+html body #root .builder-shell.settings-workspace-shell .settings-seo-verification-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   gap: 18px !important;
-  align-items: stretch !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-media-grid {
+  display: grid !important;
+  grid-template-columns: 144px minmax(0, 1fr) !important;
+  gap: 28px !important;
+  align-items: start !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .settings-seo-favicon,
 html body #root .builder-shell.settings-workspace-shell .settings-seo-share {
-  min-width: 0 !important;
   width: 100% !important;
-  padding: 14px !important;
-  border: 1px solid #dfe5ec !important;
-  border-radius: 12px !important;
-  background: #fff !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-media .image-input {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-media .image-input > span {
+  display: block !important;
+  margin: 0 0 8px !important;
+  color: #313844 !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+  font-weight: 700 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-media input[type='file'][hidden] {
+  display: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-media .image-box {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  border: 1px solid #d9dee5 !important;
+  border-radius: 8px !important;
+  background: #f5f6f8 !important;
+  box-shadow: none !important;
   box-sizing: border-box !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-favicon .image-box {
+  width: 112px !important;
+  height: 112px !important;
+  min-height: 112px !important;
+  max-height: 112px !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .settings-seo-share .image-box {
   width: 100% !important;
+  max-width: 760px !important;
   height: auto !important;
   min-height: 0 !important;
   max-height: none !important;
   aspect-ratio: 1200 / 630 !important;
-  overflow: hidden !important;
-  border: 1px solid #e1e6ed !important;
-  border-radius: 10px !important;
-  background: #f7f8fa !important;
 }
 
-html body #root .builder-shell.settings-workspace-shell .settings-seo-share .image-box img {
+html body #root .builder-shell.settings-workspace-shell .settings-seo-media .image-box img {
   display: block !important;
   width: 100% !important;
   height: 100% !important;
@@ -39,17 +152,19 @@ html body #root .builder-shell.settings-workspace-shell .settings-seo-share .ima
   padding: 0 !important;
   object-fit: contain !important;
   object-position: center !important;
-  background: #f7f8fa !important;
+  background: #f5f6f8 !important;
   box-sizing: border-box !important;
 }
 
-html body #root .builder-shell.settings-workspace-shell .settings-seo-favicon .image-box {
+html body #root .builder-shell.settings-workspace-shell .settings-seo-media .image-empty-button {
   width: 100% !important;
-  height: 112px !important;
-  min-height: 112px !important;
-  max-height: 112px !important;
-  border: 1px solid #e1e6ed !important;
-  background: #f7f8fa !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #111827 !important;
+  box-shadow: none !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .settings-seo-media :is(
@@ -57,29 +172,44 @@ html body #root .builder-shell.settings-workspace-shell .settings-seo-media :is(
   .settings-field-hint,
   small
 ) {
+  display: block !important;
   max-width: 100% !important;
+  margin-top: 8px !important;
+  color: #737b87 !important;
+  font-size: 11px !important;
+  line-height: 1.5 !important;
+  font-weight: 500 !important;
   white-space: normal !important;
   overflow: visible !important;
   text-overflow: clip !important;
   overflow-wrap: anywhere !important;
-  line-height: 1.45 !important;
 }
 
-/* Statistics period: make the filter area visibly separate from the data panels. */
+/* --------------------------------------------------------------------------
+   STATISTICS PERIOD — compact operational toolbar, no empty framed box
+   -------------------------------------------------------------------------- */
 html body #root .builder-shell.stats-dashboard-shell .stats-period-card {
-  min-height: 78px !important;
-  padding: 12px 18px !important;
-  border-top: 1px solid #dfe5ec !important;
-  border-bottom: 1px solid #d7dde6 !important;
-  background: #f6f7f9 !important;
-  box-shadow: inset 0 -1px 0 rgba(15, 23, 42, .03) !important;
+  min-height: 64px !important;
+  padding: 10px 18px !important;
+  border: 0 !important;
+  border-bottom: 1px solid #dfe3e8 !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) !important;
+  align-items: center !important;
+  justify-content: initial !important;
+  gap: 18px !important;
 }
 
 html body #root .builder-shell.stats-dashboard-shell .stats-period-card .section-title {
-  align-self: stretch !important;
-  min-width: 190px !important;
-  padding: 0 20px 0 4px !important;
-  border-right: 1px solid #d9dfe7 !important;
+  align-self: center !important;
+  min-width: 0 !important;
+  width: auto !important;
+  padding: 0 18px 0 0 !important;
+  border-right: 1px solid #dfe3e8 !important;
+  border-bottom: 0 !important;
   display: flex !important;
   align-items: center !important;
 }
@@ -87,55 +217,142 @@ html body #root .builder-shell.stats-dashboard-shell .stats-period-card .section
 html body #root .builder-shell.stats-dashboard-shell .stats-period-card .section-title h2 {
   margin: 0 !important;
   color: #111827 !important;
-  font-size: 15px !important;
-  font-weight: 900 !important;
-  letter-spacing: -.15px !important;
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+  font-weight: 800 !important;
+  letter-spacing: 0 !important;
+  white-space: nowrap !important;
 }
 
 html body #root .builder-shell.stats-dashboard-shell .stats-period-controls {
-  min-height: 52px !important;
-  padding: 6px !important;
-  border: 1px solid #dfe5ec !important;
-  border-radius: 12px !important;
-  background: #fff !important;
-  box-sizing: border-box !important;
+  width: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 10px !important;
 }
 
-html body #root .builder-shell.stats-dashboard-shell .stats-range-tabs button,
-html body #root .builder-shell.stats-dashboard-shell .stats-month-control input {
-  min-height: 40px !important;
-  border: 1px solid #dfe5ec !important;
+html body #root .builder-shell.stats-dashboard-shell .stats-range-tabs {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  padding: 3px !important;
+  border: 1px solid #d9dee5 !important;
   border-radius: 8px !important;
-  background: #fff !important;
-  color: #374151 !important;
+  background: #f5f6f8 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-range-tabs button {
+  width: auto !important;
+  min-width: 54px !important;
+  min-height: 34px !important;
+  height: 34px !important;
+  padding: 0 12px !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+  background: transparent !important;
+  color: #4b5563 !important;
   box-shadow: none !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-range-tabs button:hover {
+  background: #fff !important;
+  color: #111827 !important;
 }
 
 html body #root .builder-shell.stats-dashboard-shell .stats-range-tabs button:is(.active,[aria-pressed='true']) {
-  border-color: #111827 !important;
   background: #111827 !important;
   color: #fff !important;
 }
 
+html body #root .builder-shell.stats-dashboard-shell .stats-month-control {
+  flex: 0 0 170px !important;
+  width: 170px !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-month-control input {
+  width: 100% !important;
+  min-height: 42px !important;
+  height: 42px !important;
+  padding: 0 12px !important;
+  border: 1px solid #d9dee5 !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  color: #111827 !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  box-sizing: border-box !important;
+}
+
 html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel::before,
 html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel::after {
-  top: 78px !important;
+  top: 64px !important;
+}
+
+@media (max-width: 1100px) {
+  html body #root .builder-shell.settings-workspace-shell .settings-seo-block {
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-seo-block > header,
+  html body #root .builder-shell.settings-workspace-shell .settings-seo-copy-grid,
+  html body #root .builder-shell.settings-workspace-shell .settings-seo-verification-grid,
+  html body #root .builder-shell.settings-workspace-shell .settings-seo-media-grid {
+    grid-column: 1 !important;
+  }
 }
 
 @media (max-width: 900px) {
+  html body #root .builder-shell.settings-workspace-shell .settings-seo-copy-grid,
+  html body #root .builder-shell.settings-workspace-shell .settings-seo-verification-grid,
   html body #root .builder-shell.settings-workspace-shell .settings-seo-media-grid {
     grid-template-columns: 1fr !important;
   }
 
+  html body #root .builder-shell.stats-dashboard-shell .stats-period-card {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    padding: 12px 14px !important;
+  }
+
   html body #root .builder-shell.stats-dashboard-shell .stats-period-card .section-title {
-    min-width: 0 !important;
     width: 100% !important;
     padding: 0 0 10px !important;
     border-right: 0 !important;
-    border-bottom: 1px solid #d9dfe7 !important;
+    border-bottom: 1px solid #dfe3e8 !important;
   }
 
   html body #root .builder-shell.stats-dashboard-shell .stats-period-controls {
+    width: 100% !important;
+    flex-wrap: wrap !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-range-tabs {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-range-tabs button {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-month-control {
+    flex: 1 1 100% !important;
     width: 100% !important;
   }
 }
