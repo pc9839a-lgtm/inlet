@@ -24,14 +24,23 @@ html body #root .builder-shell.stats-dashboard-shell .stats-period-card .section
   align-items: center !important;
 }
 
+/* Replace the old text with a single stable label while keeping the calendar icon. */
 html body #root .builder-shell.stats-dashboard-shell .stats-period-card .section-title h2 {
   margin: 0 !important;
-  font-size: 14px !important;
+  font-size: 0 !important;
   line-height: 1.2 !important;
   white-space: nowrap !important;
 }
 
-html body #root .builder-shell.stats-dashboard-shell .stats-period-card .section-title h2::after,
+html body #root .builder-shell.stats-dashboard-shell .stats-period-card .section-title h2::after {
+  content: '기간' !important;
+  display: inline !important;
+  color: #111827 !important;
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+  font-weight: 800 !important;
+}
+
 html body #root .builder-shell.stats-dashboard-shell .stats-period-card .section-title::after,
 html body #root .builder-shell.stats-dashboard-shell .stats-period-controls::before,
 html body #root .builder-shell.stats-dashboard-shell .stats-period-controls::after,
