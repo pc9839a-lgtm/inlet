@@ -1,4 +1,4 @@
-name: Route auth email through proven SES sender
+name: Restore SES delivery on Cloudflare Workers
 
 on:
   push:
@@ -18,28 +18,25 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
-
-      - name: Reuse working SES delivery module
+      - name: Unify auth email and remove incompatible abort signal
         shell: bash
         run: |
           node <<'NODE'
           import { readFileSync, writeFileSync, existsSync, rmSync } from 'node:fs';
-          const path = 'functions/api/auth/_auth.js';
-          let source = readFileSync(path, 'utf8');
+          const authPath = 'functions/api/auth/_auth.js';
+          let source = readFileSync(authPath, 'utf8');
           const importLine = "import { sendSesEmail } from '../_ses.js';\n";
           if (!source.includes(importLine)) source = importLine + source;
           const replacement = `async function sendSesAuthEmail(message = {}, env = {}) {
             const config = sesAuthEmailConfig(env);
             if (!config.ok) {
               throw authError('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 503, {
-                code: 'EMAIL_SEND_NOT_CONFIGURED',
-                provider: 'ses',
+                code: 'EMAIL_SEND_NOT_CONFIGURED', provider: 'ses',
               });
             }
             try {
@@ -51,10 +48,8 @@ jobs:
                 html: cleanAuthEmailHtml(message),
               }, env);
             } catch (error) {
-              const code = String(error?.code || 'EMAIL_SEND_PROVIDER_ERROR');
               throw authError('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 503, {
-                code,
-                provider: 'ses',
+                code: String(error?.code || 'EMAIL_SEND_PROVIDER_ERROR'), provider: 'ses',
               });
             }
             return { mode: 'api', provider: 'ses', status: 'sent' };
@@ -63,47 +58,46 @@ jobs:
           function cleanAuthEmailSubject`;
           const next = source.replace(/async function sendSesAuthEmail\(message = \{\}, env = \{\}\) \{[\s\S]*?\n\}\n\nfunction cleanAuthEmailSubject/, replacement);
           if (next === source) throw new Error('sendSesAuthEmail replacement target not found');
-          writeFileSync(path, next);
-          for (const removePath of [
+          writeFileSync(authPath, next);
+
+          const sesPath = 'functions/api/_ses.js';
+          let ses = readFileSync(sesPath, 'utf8');
+          const signalLine = '      signal: AbortSignal.timeout(10000),\n';
+          if (!ses.includes(signalLine)) throw new Error('shared SES signal target not found');
+          ses = ses.replace(signalLine, '');
+          writeFileSync(sesPath, ses);
+
+          for (const p of [
             'functions/api/diagnostics/auth-verification-storage.js',
             '.github/workflows/deploy-auth-storage-diagnostic.yml',
             '.github/workflows/capture-auth-email-live.yml',
-          ]) {
-            if (existsSync(removePath)) rmSync(removePath);
-          }
+          ]) if (existsSync(p)) rmSync(p);
           NODE
-
       - name: Install
         run: npm ci
-
-      - name: Targeted regression
+      - name: Regression
         run: |
           node --check functions/api/auth/_auth.js
+          node --check functions/api/_ses.js
           npm run api:functions:qa
           npm run api:security:qa
           npm run build
-
       - name: Deploy production
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: npm run deploy:pages
-
       - name: Verify real auth email API
         shell: bash
         run: |
           set -euo pipefail
           sleep 5
-          TEST_EMAIL="support+calltag-final-$(date +%s)@pagero.kr"
-          HTTP_CODE="$(curl -sS -o /tmp/auth-response.json -w '%{http_code}' \
-            -H 'Content-Type: application/json' \
-            --data "{\"email\":\"${TEST_EMAIL}\",\"purpose\":\"signup\"}" \
-            https://pagero.kr/api/auth/email-verification)"
+          TEST_EMAIL="support+calltag-success-$(date +%s)@pagero.kr"
+          HTTP_CODE="$(curl -sS -o /tmp/auth-response.json -w '%{http_code}' -H 'Content-Type: application/json' --data "{\"email\":\"${TEST_EMAIL}\",\"purpose\":\"signup\"}" https://pagero.kr/api/auth/email-verification)"
           cat /tmp/auth-response.json
           test "$HTTP_CODE" -ge 200
           test "$HTTP_CODE" -lt 300
           node -e "const r=require('/tmp/auth-response.json'); if(!r.ok||r.verification?.delivery?.status!=='sent') process.exit(1)"
-
       - name: Commit verified hotfix
         shell: bash
         run: |
@@ -111,5 +105,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git rm .github/workflows/hotfix-auth-verification-id.yml
           git add -A
-          git commit -m "fix: reuse proven SES sender for auth email"
+          git commit -m "fix: restore SES delivery for auth and lead emails"
           git push origin HEAD:main
