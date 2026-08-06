@@ -23,7 +23,7 @@ export async function onRequest({ request, env }) {
       && !!email
       && !(await getD1AccountByEmail(env.DB, email));
     const requesterKey = await emailVerificationRequesterKey(request, env);
-    const authEnv = withCompatibleAuthVerificationStorage(env);
+    const authEnv = withCompatibleAuthVerificationStorage(withAuthEmailDeliveryDefaults(env));
     const verification = await issueEmailVerificationToken({
       ...input,
       requesterKey,
@@ -62,6 +62,45 @@ export async function onRequest({ request, env }) {
     });
     return handleApiError(request, env, error, AUTH_METHODS);
   }
+}
+
+function withAuthEmailDeliveryDefaults(env = {}) {
+  const accessKey = String(
+    env.AWS_SES_ACCESS_KEY_ID
+      || env.INLET_AWS_SES_ACCESS_KEY_ID
+      || env.AWS_ACCESS_KEY_ID
+      || env.SES_ACCESS_KEY_ID
+      || env['Access key ID']
+      || '',
+  ).trim();
+  const secretKey = String(
+    env.AWS_SES_SECRET_ACCESS_KEY
+      || env.INLET_AWS_SES_SECRET_ACCESS_KEY
+      || env.AWS_SECRET_ACCESS_KEY
+      || env.SES_SECRET_ACCESS_KEY
+      || env['Secret access key']
+      || '',
+  ).trim();
+  const hasSesCredentials = !!accessKey && !!secretKey;
+  const branch = String(env.CF_PAGES_BRANCH || '').trim().toLowerCase();
+  const runtime = String(env.INLET_RUNTIME_ENV || env.INLET_ENVIRONMENT || env.NODE_ENV || env.ENVIRONMENT || '').trim().toLowerCase();
+  const production = branch === 'main' || runtime === 'production';
+  const configuredMode = String(env.INLET_AUTH_EMAIL_MODE || '').trim().toLowerCase();
+  const deliveryMode = (!configuredMode || (production && configuredMode === 'mock')) && hasSesCredentials
+    ? 'ses'
+    : configuredMode || 'mock';
+
+  return {
+    ...env,
+    INLET_AUTH_EMAIL_MODE: deliveryMode,
+    INLET_EMAIL_PROVIDER: String(env.INLET_EMAIL_PROVIDER || 'ses').trim().toLowerCase() || 'ses',
+    INLET_AUTH_EMAIL_FROM: String(
+      env.INLET_AUTH_EMAIL_FROM
+        || env.INLET_LEAD_EMAIL_FROM
+        || env.AWS_SES_FROM
+        || '페이지로 <support@pagero.kr>',
+    ).trim(),
+  };
 }
 
 function publicEmailVerificationResult(verification = {}, purpose = '') {
