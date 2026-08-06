@@ -16,11 +16,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Request live verification email after SES runtime patch
+      - name: Request live verification email through shared SES sender
         shell: bash
         run: |
           set +e
-          TEST_EMAIL="support+calltag-live-$(date +%s)@pagero.kr"
+          TEST_EMAIL="support+calltag-shared-$(date +%s)@pagero.kr"
           curl -sS -D /tmp/headers.txt -o /tmp/body.json -w '%{http_code}' \
             -H 'Content-Type: application/json' \
             --data "{\"email\":\"${TEST_EMAIL}\",\"purpose\":\"signup\"}" \
@@ -44,7 +44,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B auth-live-result
           git add .diagnostics/auth-email-live-after-hotfix.json
-          git commit -m "Record live auth email response after SES runtime patch"
+          git commit -m "Record live auth email response through shared SES sender"
           git push --force origin HEAD:auth-live-result
         env:
           CURL_CODE: 0
