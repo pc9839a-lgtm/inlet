@@ -1,20 +1,33 @@
 import { useState } from 'react';
+import {
+  Activity,
+  Code2,
+  Copy,
+  FileText,
+  Globe2,
+  RotateCcw,
+  Search,
+  ShieldCheck,
+  Target,
+  UserRound,
+  UsersRound,
+} from 'lucide-react';
 import SettingsAdvancedAndReset from './SettingsAdvancedAndReset.jsx';
 import PageDuplicateUrlModal from './PageDuplicateUrlModal.jsx';
 import SettingsPrimarySections from './SettingsPrimarySections.jsx';
 
 const PRIMARY_NAV = [
-  ['account', '계정 정보'],
-  ['basic', '페이지 기본'],
-  ['managers', '매니저 권한'],
+  ['account', '계정 정보', UserRound],
+  ['basic', '페이지 기본', FileText],
+  ['managers', '매니저 권한', UsersRound],
 ];
 
 const ADVANCED_NAV = [
-  ['seo', 'SEO 설정'],
-  ['tracking', '추적 코드'],
-  ['conversion', '전환 설정'],
-  ['duplicate', '페이지 복제'],
-  ['reset', '초기화'],
+  ['seo', 'SEO 설정', Search],
+  ['tracking', '추적 코드', Code2],
+  ['conversion', '전환 설정', Target],
+  ['duplicate', '페이지 복제', Copy],
+  ['reset', '초기화', RotateCcw],
 ];
 
 const ALL_NAV = [...PRIMARY_NAV, ...ADVANCED_NAV];
@@ -82,19 +95,20 @@ export default function SettingsPanelBody({
       <div className="settings-ops-layout">
         <aside className="settings-ops-sidebar">
           <div className="settings-ops-sidebar-title">
-            <strong>설정 메뉴</strong>
+            <strong>설정</strong>
             <span>{page.title || '현재 페이지'}</span>
           </div>
 
           <nav className="settings-ops-nav" aria-label="기본 설정">
             <small>기본</small>
-            {PRIMARY_NAV.filter(([id]) => id !== 'managers' || canManageProjectUsers).map(([id, label]) => (
+            {PRIMARY_NAV.filter(([id]) => id !== 'managers' || canManageProjectUsers).map(([id, label, Icon]) => (
               <button
                 key={id}
                 type="button"
                 className={`settings-ops-nav-item ${selectedSection === id ? 'active' : ''}`}
                 onClick={() => selectSection(id)}
               >
+                <Icon size={18} aria-hidden="true" />
                 <span>{label}</span>
               </button>
             ))}
@@ -103,13 +117,14 @@ export default function SettingsPanelBody({
           {!clientAdminMode && (
             <nav className="settings-ops-nav advanced" aria-label="고급 설정">
               <small>고급</small>
-              {ADVANCED_NAV.map(([id, label]) => (
+              {ADVANCED_NAV.map(([id, label, Icon]) => (
                 <button
                   key={id}
                   type="button"
                   className={`settings-ops-nav-item ${selectedSection === id ? 'active' : ''}`}
                   onClick={() => selectSection(id)}
                 >
+                  <Icon size={18} aria-hidden="true" />
                   <span>{label}</span>
                 </button>
               ))}
@@ -158,25 +173,25 @@ export default function SettingsPanelBody({
 
         <aside className="settings-ops-summary">
           <header>
-            <small>현재 설정</small>
+            <small>페이지 정보</small>
             <h3>{page.title || '현재 페이지'}</h3>
           </header>
 
           <dl>
             <div>
-              <dt>공개 주소</dt>
+              <dt><Globe2 size={17} aria-hidden="true" /><span>공개 주소</span></dt>
               <dd>/{page.slug || 'page'}</dd>
             </div>
             <div>
-              <dt>관리 계정</dt>
+              <dt><ShieldCheck size={17} aria-hidden="true" /><span>관리 계정</span></dt>
               <dd>{authUser?.email || '연결 없음'}</dd>
             </div>
             <div>
-              <dt>매니저</dt>
+              <dt><UsersRound size={17} aria-hidden="true" /><span>매니저</span></dt>
               <dd>{managerCount}명</dd>
             </div>
             <div>
-              <dt>운영 상태</dt>
+              <dt><Activity size={17} aria-hidden="true" /><span>운영 상태</span></dt>
               <dd><span>운영 중</span></dd>
             </div>
           </dl>
