@@ -1,0 +1,444 @@
+/* Final clipping cleanup for inbox, statistics, and settings. Loaded last. */
+
+html body #root .builder-shell:is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-workspace-shell),
+html body #root .builder-shell:is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-workspace-shell) > .left-workspace,
+html body #root .builder-shell:is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-workspace-shell) .work-panel {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow-x: clip !important;
+  box-sizing: border-box !important;
+}
+
+/* Keep the outer frame, but never clip menus, tooltips, controls, or form content inside it. */
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-root,
+html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel,
+html body #root .builder-shell.settings-workspace-shell .settings-ops-root {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+  contain: none !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-layout,
+html body #root .builder-shell.settings-workspace-shell .settings-ops-layout,
+html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+html body #root .builder-shell:is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-workspace-shell) :is(
+  aside,
+  main,
+  section,
+  article,
+  header,
+  footer,
+  nav,
+  form,
+  fieldset,
+  label,
+  div
+) {
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Shared header and top-tab protection. */
+html body #root .builder-shell:is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-workspace-shell) :is(
+  .panel-header,
+  .operations-panel-header,
+  .top-tabs,
+  .workspace-persistent-header
+) {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell:is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-workspace-shell) .top-tabs button {
+  min-width: 0 !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell:is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-workspace-shell) :is(
+  h1,h2,h3,h4,strong,span,small,em,b,dt,dd
+) {
+  max-width: 100%;
+}
+
+/* Inbox: table scroll stays local; detail content and buttons never get cut. */
+html body #root .builder-shell.inbox-workspace-shell :is(.inbox-ops-main,.inbox-ops-detail,.inbox-ops-sidebar) {
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-toolbar {
+  min-width: 0 !important;
+  grid-template-columns: minmax(180px, 1fr) minmax(130px, 150px) minmax(118px, 140px) minmax(118px, 140px) 44px max-content !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-toolbar :is(input,select,button,label) {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-table-card {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-detail-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-detail-actions button {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell :is(
+  .inbox-ops-main-head > span,
+  .inbox-ops-detail-head h3,
+  .inbox-ops-detail-head span,
+  .inbox-ops-info-row b,
+  .inbox-ops-message
+) {
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+/* Statistics: prevent KPI badges, period controls, funnel rows, and chart labels from clipping. */
+html body #root .builder-shell.stats-dashboard-shell .stats-period-card {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  flex-wrap: wrap !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-period-controls {
+  min-width: 0 !important;
+  flex-wrap: wrap !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-range-tabs {
+  min-width: 0 !important;
+  flex-wrap: wrap !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-range-tabs button {
+  flex: 1 1 64px !important;
+  min-width: 58px !important;
+  max-width: 100% !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-month-control {
+  flex: 0 1 168px !important;
+  min-width: 148px !important;
+  max-width: 100% !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell :is(
+  .stats-summary-v3,
+  .metric-v2,
+  .stats-funnel-card,
+  .stats-trend-card,
+  .stats-columns-v3,
+  .stat-card-v2,
+  .stats-line-plot,
+  .stats-channel-filter
+) {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .metric-v2 {
+  padding-top: 42px !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .metric-v2 > span {
+  max-width: calc(100% - 64px) !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .metric-v2 .stats-change {
+  top: 12px !important;
+  right: 12px !important;
+  max-width: calc(100% - 24px) !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-funnel-row {
+  min-width: 0 !important;
+  grid-template-columns: minmax(88px,.75fr) minmax(0,1fr) 18px minmax(0,1fr) auto !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-funnel-row :is(strong,span,em,b) {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-funnel-row span {
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-chart-tooltip {
+  max-width: min(260px, calc(100vw - 32px)) !important;
+  overflow: visible !important;
+  white-space: normal !important;
+}
+
+/* Settings: remove the later overflow:hidden rules that were cutting tabs, labels, forms, and action rows. */
+html body #root .builder-shell.settings-workspace-shell :is(
+  .work-panel,
+  .settings-ops-root,
+  .settings-ops-layout,
+  .settings-ops-main,
+  .settings-ops-sections,
+  .settings-ops-single-section,
+  .settings-section,
+  .settings-section-body,
+  .settings-advanced-box,
+  .settings-advanced-body,
+  .account-settings-card,
+  .account-settings-focused,
+  .account-settings-tab-panel,
+  .account-profile-form,
+  .account-email-form,
+  .account-password-form,
+  form,
+  fieldset
+) {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-main {
+  width: 100% !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-main-head {
+  min-width: 0 !important;
+  flex-wrap: wrap !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-main-head :is(h2,span) {
+  min-width: 0 !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-nav-item {
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 48px !important;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-nav-item span {
+  min-width: 0 !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.3 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tabs {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  overflow: visible !important;
+  gap: 6px 18px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tabs button {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: max-content !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(
+  .account-settings-grid,
+  .settings-grid,
+  .settings-form-grid,
+  .settings-fields,
+  .settings-seo-copy-grid,
+  .settings-seo-media-grid,
+  .settings-seo-verification-grid,
+  .tracking-grid,
+  .conversion-grid
+) {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px,100%),1fr)) !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(label,.field,.form-field,.settings-field,.settings-row) {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell label > span {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.35 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(input,select,textarea,button) {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(
+  .account-settings-actions,
+  .settings-section-actions,
+  .account-password-head,
+  .image-actions
+) {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  flex-wrap: wrap !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(
+  .account-settings-actions button,
+  .settings-section-actions button,
+  .account-password-head button,
+  .image-actions button
+) {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-media .image-box {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-media .image-box img {
+  max-width: 100% !important;
+}
+
+/* Responsive: collapse before fixed columns can clip content. */
+@media (max-width: 1460px) {
+  html body #root .builder-shell.inbox-workspace-shell .inbox-ops-layout,
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel {
+    grid-template-columns: 210px minmax(0,1fr) 320px !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel::before { left: 210px !important; }
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel::after { right: 320px !important; }
+}
+
+@media (max-width: 1260px) {
+  html body #root .builder-shell.inbox-workspace-shell .inbox-ops-layout,
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel {
+    grid-template-columns: 210px minmax(0,1fr) !important;
+  }
+
+  html body #root .builder-shell.inbox-workspace-shell .inbox-ops-detail,
+  html body #root .builder-shell.stats-dashboard-shell :is(.stats-columns-v3,.stats-columns-four) {
+    grid-column: 2 !important;
+    border-left: 0 !important;
+    border-top: 1px solid #e7ebf1 !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel::after { display: none !important; }
+
+  html body #root .builder-shell.inbox-workspace-shell .inbox-ops-toolbar {
+    grid-template-columns: minmax(180px,1fr) repeat(3,minmax(110px,1fr)) 44px max-content !important;
+  }
+}
+
+@media (max-width: 980px) {
+  html body #root .builder-shell.inbox-workspace-shell .inbox-ops-layout,
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel,
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  html body #root .builder-shell:is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-workspace-shell) :is(
+    .inbox-ops-sidebar,.inbox-ops-main,.inbox-ops-detail,
+    .stats-period-card,.stats-channel-filter,.stats-summary-v3,.stats-trend-card,.stats-funnel-card,.stats-columns-v3,.stats-columns-four,
+    .settings-ops-sidebar,.settings-ops-main,.settings-ops-summary
+  ) {
+    grid-column: 1 !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel::before,
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel::after { display: none !important; }
+
+  html body #root .builder-shell.inbox-workspace-shell .inbox-ops-toolbar {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  html body #root .builder-shell.inbox-workspace-shell .inbox-ops-search {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+@media (max-width: 640px) {
+  html body #root .builder-shell:is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-workspace-shell) .work-panel {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  html body #root .builder-shell.inbox-workspace-shell .inbox-ops-toolbar {
+    grid-template-columns: 1fr !important;
+  }
+
+  html body #root .builder-shell.inbox-workspace-shell .inbox-ops-search {
+    grid-column: 1 !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-period-controls,
+  html body #root .builder-shell.stats-dashboard-shell .stats-range-tabs {
+    width: 100% !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-month-control {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-main {
+    padding: 18px 14px !important;
+  }
+}
