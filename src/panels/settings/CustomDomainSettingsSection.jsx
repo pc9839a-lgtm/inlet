@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Check, Clipboard, Globe2, Trash2 } from 'lucide-react';
 import SettingsSection from './SettingsSection.jsx';
 
-const DNS_TARGET = 'inlet.pages.dev';
+const DNS_TARGET = 'inlet-8mr.pages.dev';
 const MULTI_PART_SUFFIXES = ['co.kr', 'or.kr', 'go.kr', 'ne.kr', 'ac.kr', 're.kr', 'pe.kr', 'co.uk', 'com.au', 'co.jp'];
 
 function normalizeHostname(value = '') {
