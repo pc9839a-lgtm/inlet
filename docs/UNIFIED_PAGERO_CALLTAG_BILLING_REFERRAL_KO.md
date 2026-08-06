@@ -25,6 +25,7 @@
 - `GET /api/billing/subscriptions`
 - `GET /api/billing/entitlements`
 - `POST /api/billing/web/precheck`
+- `POST /api/billing/web/confirm`
 - `POST /api/billing/google/verify`
 - `POST /api/billing/google/restore`
 
@@ -70,6 +71,25 @@
 - 추천 수익률: 결제 금액의 20%
 - 페이지로와 콜태그에서 발생한 추천 수익은 동일한 추천인 `owner_id`로 합산
 
+## 추천 수익 서버 적립
+
+`functions/api/billing/_commissions.js`가 결제금액의 20%를 서버에서 계산한다.
+
+- 비율: `2000 bps` = 20%
+- 적립 대상: `referrals.referrer_owner_id`
+- 원장: `partner_commissions`
+- 중복 방지: 채널과 결제 고유번호를 조합한 `payment_reference`
+- `payment_reference`는 원장에서 UNIQUE이므로 같은 결제를 반복 검증해도 한 번만 적립된다.
+- 적립 후 추천 관계의 `first_paid_at`과 상태를 갱신한다.
+
+적립 경로는 다음과 같다.
+
+- 콜태그 Google Play 신규 검증: `/api/billing/google/verify`
+- 콜태그 Google Play 구매 복원: `/api/billing/google/restore`
+- 페이지로 웹 결제 제공자 확정: `/api/billing/web/confirm`
+
+웹 결제 확정 API는 `X-Inlet-Api-Token` 또는 Bearer API 토큰을 요구하며, Google Play 구독이 이미 활성화된 계정의 웹 결제 확정을 차단한다.
+
 ## 결제 중복 방지
 
 `POST /api/billing/web/precheck`는 기존 웹 또는 Google Play 구독이 활성 상태인지 확인한다.
@@ -77,6 +97,7 @@
 - Google Play 구독이 있으면 웹 중복 결제를 차단한다.
 - 웹 구독이 있으면 웹 재결제를 차단한다.
 - Google Play 검증도 기존 웹 구독을 확인해 결제 채널 중복을 차단한다.
+- 웹 결제 확정도 기존 Google Play 구독을 다시 확인한다.
 
 ## UI 연결
 
@@ -93,4 +114,4 @@
 - `scripts/billing-referral-quality-check.mjs`
 - `.github/workflows/billing-referral-qa.yml`
 
-QA는 3일 무료 체험, 추천 +5일, 1회 등록, 본인 추천 차단, 결제 후 추천 차단, Google Play 검증, 결제 채널 중복 방지, 공용 추천 원장 계약을 확인한다.
+QA는 3일 무료 체험, 추천 +5일, 1회 등록, 본인 추천 차단, 결제 후 추천 차단, Google Play 검증, 웹 결제 확정, 20% 서버 계산, 결제 고유번호 중복 방지, 결제 채널 중복 방지, 공용 추천 원장 계약을 확인한다.
