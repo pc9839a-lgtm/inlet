@@ -20,6 +20,7 @@ import '../styles/settings-content-polish.css';
 import '../styles/settings-premium-final.css';
 import '../styles/settings-monochrome-alignment-final.css';
 import '../styles/operations-workspaces-unified.css';
+import '../styles/operations-overflow-final.css';
 
 export default function WorkspaceEditorScreen({
   canUseBuilder,
