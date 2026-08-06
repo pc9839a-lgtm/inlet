@@ -1,0 +1,374 @@
+/* Final overflow and responsive fixes for inbox, stats, and settings. */
+
+/* Let the center column actually shrink instead of forcing page-wide overflow. */
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-layout,
+html body #root .builder-shell.settings-workspace-shell .settings-ops-layout,
+html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel {
+  grid-template-columns: 220px minmax(0, 1fr) 390px !important;
+}
+
+html body #root .builder-shell:is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-workspace-shell) :is(
+  .inbox-ops-main,
+  .inbox-ops-detail,
+  .stats-panel,
+  .settings-ops-main,
+  .settings-ops-summary,
+  .settings-ops-sections,
+  .settings-ops-single-section,
+  .account-settings-focused,
+  .account-settings-tab-panel
+) {
+  min-width: 0 !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+}
+
+/* Settings: no clipped tabs, labels, addresses, emails, or action buttons. */
+html body #root .builder-shell.settings-workspace-shell .settings-ops-main {
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-main-head {
+  min-width: 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-main-head > div {
+  min-width: 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-main-head h2,
+html body #root .builder-shell.settings-workspace-shell .settings-ops-main-head > span {
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-main-head h2 {
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-main-head > span {
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  text-align: right !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-nav-item {
+  height: auto !important;
+  min-height: 48px !important;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-nav-item span {
+  min-width: 0 !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.3 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tabs {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 20px !important;
+  min-width: 0 !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scrollbar-width: thin !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tabs button {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: max-content !important;
+  max-width: none !important;
+  padding-left: 2px !important;
+  padding-right: 2px !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel {
+  width: 100% !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-settings-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  column-gap: 24px !important;
+  row-gap: 18px !important;
+  align-items: start !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-settings-grid > label {
+  min-width: 0 !important;
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 8px !important;
+  align-items: start !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-settings-grid > label > span {
+  display: block !important;
+  min-width: 0 !important;
+  width: auto !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  line-height: 1.35 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel :is(input,select,textarea) {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-actions {
+  grid-column: 1 / -1 !important;
+  min-width: 0 !important;
+  flex-wrap: wrap !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-actions button,
+html body #root .builder-shell.settings-workspace-shell .account-password-head button {
+  width: auto !important;
+  max-width: 100% !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-summary {
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-summary header h3 {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  overflow-wrap: anywhere !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-summary dl > div {
+  grid-template-columns: 22px 88px minmax(0, 1fr) !important;
+  align-items: start !important;
+  padding: 16px 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-summary dt span {
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-summary dd {
+  min-width: 0 !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.45 !important;
+}
+
+/* Statistics: keep labels, comparison badges, funnel values, and side navigation readable. */
+html body #root .builder-shell.stats-dashboard-shell .stats-channel-filter-list button {
+  height: auto !important;
+  min-height: 48px !important;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-channel-filter-list button > span {
+  min-width: 0 !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.3 !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .metric-v2 {
+  min-width: 0 !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .metric-v2 > span {
+  max-width: calc(100% - 58px) !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  line-height: 1.25 !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .metric-v2 .stats-change {
+  top: 14px !important;
+  right: 60px !important;
+  left: auto !important;
+  max-width: calc(100% - 112px) !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-funnel-row {
+  grid-template-columns: minmax(90px, .8fr) minmax(0, 1fr) 22px minmax(0, 1fr) auto !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-funnel-row :is(strong,span,em) {
+  min-width: 0 !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-funnel-row span {
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stat-row-v2 > span {
+  min-width: 0 !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.3 !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-line-plot,
+html body #root .builder-shell.stats-dashboard-shell .stats-chart-tooltip {
+  overflow: visible !important;
+}
+
+/* Inbox: preserve the table through local scrolling and wrap detail values instead of clipping them. */
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-main,
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-detail {
+  min-width: 0 !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-main-head > span,
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-detail-head :is(h3,span),
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-info-row b,
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-message {
+  min-width: 0 !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  overflow-wrap: anywhere !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-table-card {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-table-head,
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-table-body,
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-table-footer {
+  min-width: 780px !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-toolbar {
+  grid-template-columns: minmax(220px, 1fr) 142px 126px 126px 44px auto !important;
+}
+
+/* Responsive fallbacks: move right analysis/detail below instead of clipping the page. */
+@media (max-width: 1500px) {
+  html body #root .builder-shell.inbox-workspace-shell .inbox-ops-layout,
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-layout,
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel {
+    grid-template-columns: 210px minmax(0, 1fr) 340px !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel::before {
+    left: 210px !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel::after {
+    right: 340px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-settings-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 1240px) {
+  html body #root .builder-shell.inbox-workspace-shell .inbox-ops-layout,
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-layout {
+    grid-template-columns: 210px minmax(0, 1fr) !important;
+  }
+
+  html body #root .builder-shell.inbox-workspace-shell .inbox-ops-detail,
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-summary {
+    grid-column: 2 !important;
+    border-left: 0 !important;
+    border-top: 1px solid #e7ebf1 !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel {
+    grid-template-columns: 210px minmax(0, 1fr) !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel::before {
+    left: 210px !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel::after {
+    display: none !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-columns-v3,
+  html body #root .builder-shell.stats-dashboard-shell .stats-columns-four {
+    grid-column: 2 !important;
+  }
+
+  html body #root .builder-shell.inbox-workspace-shell .inbox-ops-toolbar {
+    grid-template-columns: minmax(220px, 1fr) repeat(3, minmax(110px, 140px)) 44px auto !important;
+  }
+}
+
+@media (max-width: 900px) {
+  html body #root .builder-shell.inbox-workspace-shell .inbox-ops-layout,
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-layout,
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel {
+    grid-template-columns: 1fr !important;
+  }
+
+  html body #root .builder-shell.inbox-workspace-shell .inbox-ops-sidebar,
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-sidebar,
+  html body #root .builder-shell.stats-dashboard-shell .stats-period-card,
+  html body #root .builder-shell.stats-dashboard-shell .stats-channel-filter,
+  html body #root .builder-shell.inbox-workspace-shell .inbox-ops-main,
+  html body #root .builder-shell.inbox-workspace-shell .inbox-ops-detail,
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-main,
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-summary,
+  html body #root .builder-shell.stats-dashboard-shell .stats-summary-v3,
+  html body #root .builder-shell.stats-dashboard-shell .stats-funnel-card,
+  html body #root .builder-shell.stats-dashboard-shell .stats-trend-card,
+  html body #root .builder-shell.stats-dashboard-shell .stats-columns-v3,
+  html body #root .builder-shell.stats-dashboard-shell .stats-columns-four {
+    grid-column: 1 !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel::before,
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel::after {
+    display: none !important;
+  }
+
+  html body #root .builder-shell.inbox-workspace-shell .inbox-ops-toolbar {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  html body #root .builder-shell.inbox-workspace-shell .inbox-ops-search {
+    grid-column: 1 / -1 !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .account-settings-tabs {
+    gap: 16px !important;
+  }
+}
