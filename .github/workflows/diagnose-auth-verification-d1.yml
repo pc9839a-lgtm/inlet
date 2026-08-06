@@ -1,0 +1,97 @@
+name: Diagnose auth verification D1 schema
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/diagnose-auth-verification-d1.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Read schema metadata only
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -uo pipefail
+          mkdir -p .diagnostics /tmp/auth-d1
+          WRANGLER="node_modules/wrangler/bin/wrangler.js"
+
+          run_query() {
+            local name="$1"
+            local sql="$2"
+            set +e
+            node "$WRANGLER" d1 execute inlet-prod --remote --command "$sql" --json \
+              > "/tmp/auth-d1/${name}.out" 2> "/tmp/auth-d1/${name}.err"
+            echo $? > "/tmp/auth-d1/${name}.code"
+            set -e
+          }
+
+          run_query table_sql "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'auth_email_verifications';"
+          run_query table_info "PRAGMA table_info(auth_email_verifications);"
+          run_query index_list "PRAGMA index_list(auth_email_verifications);"
+
+          node <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
+
+          function read(name, ext) {
+            try { return readFileSync(`/tmp/auth-d1/${name}.${ext}`, 'utf8').trim(); }
+            catch { return ''; }
+          }
+          function parseOutput(text) {
+            if (!text) return null;
+            try { return JSON.parse(text); }
+            catch { return text.replace(/\x1b\[[0-9;]*m/g, ''); }
+          }
+          const queries = {};
+          for (const name of ['table_sql', 'table_info', 'index_list']) {
+            queries[name] = {
+              exitCode: Number(read(name, 'code') || 999),
+              output: parseOutput(read(name, 'out')),
+              error: read(name, 'err').replace(/\x1b\[[0-9;]*m/g, '').slice(-4000),
+            };
+          }
+          const payload = {
+            sourceSha: process.env.GITHUB_SHA,
+            database: 'inlet-prod',
+            metadataOnly: true,
+            recordedAt: new Date().toISOString(),
+            queries,
+          };
+          writeFileSync('.diagnostics/auth-email-verification-schema.json', `${JSON.stringify(payload, null, 2)}\n`);
+          NODE
+
+      - name: Record diagnostic result
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .diagnostics/auth-email-verification-schema.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "Record auth verification D1 schema [skip diagnostic]"
+          git pull --rebase origin main
+          git push origin HEAD:main
