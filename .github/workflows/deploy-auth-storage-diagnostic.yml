@@ -1,4 +1,4 @@
-name: Capture exact auth result from production domain
+name: Deploy and verify full auth storage flow
 
 on:
   push:
@@ -12,26 +12,43 @@ permissions:
   contents: write
 
 jobs:
-  capture-production:
+  verify-production:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
+    environment: production
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Capture exact live result
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Deploy production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npm run deploy:pages
+
+      - name: Capture full flow result
         shell: bash
         run: |
           set -euo pipefail
+          sleep 5
           curl -sS https://pagero.kr/api/diagnostics/auth-verification-storage > /tmp/result.json
           mkdir -p .diagnostics
-          cp /tmp/result.json .diagnostics/auth-email-verification-exact-shape.json
-          printf '\n' >> .diagnostics/auth-email-verification-exact-shape.json
+          cp /tmp/result.json .diagnostics/auth-email-verification-full-flow.json
+          printf '\n' >> .diagnostics/auth-email-verification-full-flow.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B auth-diagnostic-result
-          git add .diagnostics/auth-email-verification-exact-shape.json
-          git commit -m "Record exact auth verification record diagnostic"
+          git add .diagnostics/auth-email-verification-full-flow.json
+          git commit -m "Record full auth verification storage diagnostic"
           git push --force origin HEAD:auth-diagnostic-result
