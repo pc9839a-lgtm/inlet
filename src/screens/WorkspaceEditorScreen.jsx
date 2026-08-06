@@ -19,6 +19,7 @@ import '../styles/settings-operations-final.css';
 import '../styles/settings-content-polish.css';
 import '../styles/settings-premium-final.css';
 import '../styles/settings-monochrome-alignment-final.css';
+import '../styles/operations-workspaces-unified.css';
 
 export default function WorkspaceEditorScreen({
   canUseBuilder,
