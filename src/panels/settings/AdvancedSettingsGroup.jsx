@@ -4,7 +4,7 @@ import SeoSettingsSection from './SeoSettingsSection.jsx';
 import TrackingSettingsSection from './TrackingSettingsSection.jsx';
 
 export default function AdvancedSettingsGroup({
-  advancedOpen,
+  activeSection,
   canDuplicatePage,
   conversionLocked,
   conversionReady,
@@ -18,7 +18,6 @@ export default function AdvancedSettingsGroup({
   saveSeo,
   saveTracking,
   seoDraft,
-  setAdvancedOpen,
   setConversionLocked,
   setDuplicateOpen,
   setOpenSection,
@@ -31,59 +30,54 @@ export default function AdvancedSettingsGroup({
 }) {
   return (
     <>
-      <div className={`settings-advanced-box ${advancedOpen ? 'open' : ''}`}>
-        <button type="button" className="settings-advanced-head" aria-expanded={advancedOpen} aria-label={`고급 설정 ${advancedOpen ? '접기' : '열기'}`} onClick={() => setAdvancedOpen(!advancedOpen)}>
-          <span>
-            <strong>고급 설정</strong>
-          </span>
-          <em aria-hidden="true">{advancedOpen ? '접기' : '열기'}</em>
-        </button>
-      </div>
+      {activeSection === 'seo' && (
+        <SeoSettingsSection
+          locked={lockedSections.seo}
+          onEdit={() => editSection('seo')}
+          onSave={saveSeo}
+          openSection={openSection}
+          seoDraft={seoDraft}
+          setOpenSection={setOpenSection}
+          setSeoDraft={setSeoDraft}
+        />
+      )}
 
-      {advancedOpen && (
-        <div className="settings-advanced-list">
-          <SeoSettingsSection
-            locked={lockedSections.seo}
-            onEdit={() => editSection('seo')}
-            onSave={saveSeo}
-            openSection={openSection}
-            seoDraft={seoDraft}
-            setOpenSection={setOpenSection}
-            setSeoDraft={setSeoDraft}
-          />
+      {activeSection === 'tracking' && (
+        <TrackingSettingsSection
+          locked={lockedSections.tracking}
+          onEdit={() => editSection('tracking')}
+          onSave={saveTracking}
+          openSection={openSection}
+          setOpenSection={setOpenSection}
+          setTrackingDraft={setTrackingDraft}
+          trackingDraft={trackingDraft}
+        />
+      )}
 
-          <TrackingSettingsSection
-            locked={lockedSections.tracking}
-            onEdit={() => editSection('tracking')}
-            onSave={saveTracking}
-            openSection={openSection}
-            setOpenSection={setOpenSection}
-            setTrackingDraft={setTrackingDraft}
-            trackingDraft={trackingDraft}
-          />
+      {activeSection === 'conversion' && (
+        <ConversionSettingsSection
+          conversionLocked={conversionLocked}
+          conversionReady={conversionReady}
+          hasConversionValue={hasConversionValue}
+          integrations={integrations}
+          openSection={openSection}
+          page={page}
+          saveConversionValues={saveConversionValues}
+          setConversionLocked={setConversionLocked}
+          setOpenSection={setOpenSection}
+          showConversionToggles={showConversionToggles}
+          updateConversionMeta={updateConversionMeta}
+          updateIntegrations={updateIntegrations}
+        />
+      )}
 
-          <ConversionSettingsSection
-            conversionLocked={conversionLocked}
-            conversionReady={conversionReady}
-            hasConversionValue={hasConversionValue}
-            integrations={integrations}
-            openSection={openSection}
-            page={page}
-            saveConversionValues={saveConversionValues}
-            setConversionLocked={setConversionLocked}
-            setOpenSection={setOpenSection}
-            showConversionToggles={showConversionToggles}
-            updateConversionMeta={updateConversionMeta}
-            updateIntegrations={updateIntegrations}
-          />
-
-          <PageDuplicateSettingsSection
-            canDuplicatePage={canDuplicatePage}
-            openSection={openSection}
-            setDuplicateOpen={setDuplicateOpen}
-            setOpenSection={setOpenSection}
-          />
-        </div>
+      {activeSection === 'duplicate' && (
+        <PageDuplicateSettingsSection
+          canDuplicatePage={canDuplicatePage}
+          openSection={openSection}
+          setDuplicateOpen={setDuplicateOpen}
+          setOpenSection={setOpenSection}
+        />
       )}
     </>
   );
