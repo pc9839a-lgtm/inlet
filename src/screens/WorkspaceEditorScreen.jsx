@@ -25,6 +25,7 @@ import '../styles/settings-layout-containment-final.css';
 import '../styles/stats-period-top-final.css';
 import '../styles/seo-period-visual-final.css';
 import '../styles/seo-image-actions-final.css';
+import '../styles/operations-clipping-cleanup-final.css';
 
 export default function WorkspaceEditorScreen({
   canUseBuilder,
