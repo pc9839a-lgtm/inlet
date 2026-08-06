@@ -18,7 +18,7 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
     admin: ['관리자', ''],
   };
   const [title, desc] = titles[tab] || titles.edit;
-  const operationsHeader = tab === 'inbox' || tab === 'stats';
+  const operationsHeader = ['inbox', 'stats', 'settings'].includes(tab);
 
   return (
     <header className={`panel-header${operationsHeader ? ' operations-panel-header' : ''}`}>
