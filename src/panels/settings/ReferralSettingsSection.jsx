@@ -77,7 +77,7 @@ export default function ReferralSettingsSection({ authUser, openSection, setOpen
               <div>
                 <span>내 추천인 코드</span>
                 <strong>{referral.code || '-'}</strong>
-                <small>친구가 등록하면 구독료의 20%가 페이지로·콜태그 합산 정산에 반영됩니다.</small>
+                <small>추천받은 계정의 페이지로·콜태그 결제 수익은 같은 계정 기준으로 합산됩니다.</small>
               </div>
               <button type="button" onClick={copyReferralCode} disabled={!referral.code}>
                 <Clipboard size={16} aria-hidden="true" /> 코드 복사
@@ -88,7 +88,7 @@ export default function ReferralSettingsSection({ authUser, openSection, setOpen
               <header>
                 <div>
                   <strong>추천인 코드 등록</strong>
-                  <small>추천인 코드는 계정당 한 번만 등록할 수 있습니다.</small>
+                  <small>첫 유료 결제 전, 계정당 한 번만 등록할 수 있습니다.</small>
                 </div>
                 {referral.locked && <span>등록 완료</span>}
               </header>
@@ -120,15 +120,15 @@ export default function ReferralSettingsSection({ authUser, openSection, setOpen
             <section className="referral-performance-panel">
               <header>
                 <UsersRound size={18} aria-hidden="true" />
-                <strong>추천 현황</strong>
+                <strong>통합 추천 현황</strong>
               </header>
               <dl>
                 <div><dt>추천 가입</dt><dd>{Number(referral.referralCount || 0)}명</dd></div>
-                <div><dt>수익률</dt><dd>{Number(referral.commissionRatePercent || 20)}%</dd></div>
-                <div><dt>통합 누적 수익</dt><dd>{money(settlement.earned)}</dd></div>
-                <div><dt>정산 가능</dt><dd>{money(settlement.available)}</dd></div>
+                <div><dt>유료 전환</dt><dd>{Number(referral.activePaidCount || 0)}명</dd></div>
+                <div><dt>이번 달 예상</dt><dd>{money(settlement.estimatedRevenueKrw)}</dd></div>
+                <div><dt>누적 확정</dt><dd>{money(settlement.confirmedRevenueKrw)}</dd></div>
               </dl>
-              <p>페이지로와 콜태그에서 발생한 추천 수익은 같은 계정으로 합산됩니다.</p>
+              <p>페이지로와 콜태그에서 발생한 추천 수익은 동일한 계정 원장으로 합산됩니다.</p>
             </section>
           </>
         )}
