@@ -32,11 +32,11 @@ function createVerificationDb() {
               return null;
             },
             async all() {
-              if (normalized.includes("WHERE email = ? AND purpose = ? AND status IN ('pending', 'confirmed', 'consumed')")) {
+              if (normalized.includes("WHERE email = ? AND purpose = ? AND status IN ('pending', 'confirmed', 'blocked')")) {
                 const [email, purpose] = args;
                 return {
                   results: rows
-                    .filter((row) => row.email === email && row.purpose === purpose && ['pending', 'confirmed', 'consumed'].includes(row.status))
+                    .filter((row) => row.email === email && row.purpose === purpose && ['pending', 'confirmed', 'blocked'].includes(row.status))
                     .sort((a, b) => b.created_at.localeCompare(a.created_at))
                     .slice(0, 5),
                 };
@@ -44,12 +44,12 @@ function createVerificationDb() {
               return { results: [] };
             },
             async run() {
-              if (normalized.startsWith("UPDATE auth_email_verifications SET status = 'superseded'")) {
+              if (normalized.startsWith("UPDATE auth_email_verifications SET status = 'expired' WHERE email = ?")) {
                 const [email, purpose] = args;
                 let count = 0;
                 for (const row of rows) {
                   if (row.email === email && row.purpose === purpose && ['pending', 'confirmed'].includes(row.status)) {
-                    row.status = 'superseded';
+                    row.status = 'expired';
                     count += 1;
                   }
                 }
@@ -82,17 +82,17 @@ function createVerificationDb() {
                 if (row) row.status = 'expired';
                 return changes(row ? 1 : 0);
               }
-              if (normalized.includes("SET status = 'blocked'")) {
+              if (normalized.includes("SET status = 'blocked'") && !normalized.includes('confirmed_at')) {
                 const [id] = args;
                 const row = rows.find((item) => item.id === id && ['pending', 'confirmed'].includes(item.status));
                 if (row) row.status = 'blocked';
                 return changes(row ? 1 : 0);
               }
-              if (normalized.includes("SET status = 'consumed'")) {
+              if (normalized.includes("SET status = 'blocked', confirmed_at")) {
                 const [confirmedAt, id, email, purpose] = args;
                 const row = rows.find((item) => item.id === id && item.email === email && item.purpose === purpose && ['pending', 'confirmed'].includes(item.status));
                 if (!row) return changes(0);
-                row.status = 'consumed';
+                row.status = 'blocked';
                 row.confirmed_at = row.confirmed_at || confirmedAt;
                 return changes(1);
               }
@@ -151,7 +151,7 @@ assert(signupRow?.attempts === 0, 'wrong-purpose confirmation must not increment
 const confirmed = await confirmEmailVerificationToken({ email, token: signup.token, purpose: 'signup' }, env);
 assert(confirmed.status === 'confirmed' && signupRow.status === 'confirmed', 'confirmation should preserve the code for one final protected action');
 const consumed = await confirmEmailVerificationToken({ email, token: signup.token, purpose: 'signup', consume: true }, env);
-assert(consumed.status === 'consumed' && signupRow.status === 'consumed', 'final protected action must consume the code');
+assert(consumed.status === 'consumed' && signupRow.status === 'blocked', 'final protected action must consume the code');
 await expectCode(() => confirmEmailVerificationToken({ email, token: signup.token, purpose: 'signup', consume: true }, env), 'EMAIL_VERIFICATION_ALREADY_USED', 409);
 
 const resetOne = await issueEmailVerificationToken({ email, purpose: 'password-reset' }, env);
@@ -159,11 +159,11 @@ const firstResetRow = db.rows.find((row) => row.purpose === 'password-reset');
 await confirmEmailVerificationToken({ email, token: resetOne.token, purpose: 'password-reset' }, env);
 firstResetRow.created_at = new Date(Date.now() - 120000).toISOString();
 const resetTwo = await issueEmailVerificationToken({ email, purpose: 'password-reset' }, env);
-assert(firstResetRow.status === 'superseded', 'new code issuance must supersede previous pending or confirmed code for the same purpose');
+assert(firstResetRow.status === 'expired', 'new code issuance must supersede previous pending or confirmed code for the same purpose');
 const latestResetRow = db.rows.filter((row) => row.purpose === 'password-reset').at(-1);
 assert(latestResetRow.status === 'pending', 'latest code must remain pending');
 await confirmEmailVerificationToken({ email, token: resetTwo.token, purpose: 'password-reset', consume: true }, env);
-assert(latestResetRow.status === 'consumed', 'latest password reset code should be consumable once');
+assert(latestResetRow.status === 'blocked', 'latest password reset code should be consumable once');
 
 const authSource = await readFile('functions/api/auth/_auth.js', 'utf8');
 const passwordRoute = await readFile('functions/api/auth/password.js', 'utf8');
@@ -175,9 +175,9 @@ const settingsActions = await readFile('src/panels/settings/accountSettingsActio
 for (const token of [
   'AUTH_EMAIL_VERIFICATION_PURPOSES',
   'EMAIL_VERIFICATION_PURPOSE_INVALID',
-  "status = 'superseded'",
-  "status = 'consumed'",
-  "purpose = ? AND status IN ('pending', 'confirmed', 'consumed')",
+  "status = 'expired'",
+  "status = 'blocked', confirmed_at",
+  "purpose = ? AND status IN ('pending', 'confirmed', 'blocked')",
   'EMAIL_VERIFICATION_ALREADY_USED',
   'changes !== 1',
 ]) {
