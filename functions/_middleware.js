@@ -1,9 +1,45 @@
-export async function onRequest(context) {
-  const url = new URL(context.request.url);
-  if (url.hostname !== 'call.pagero.kr' || url.pathname.startsWith('/api/')) {
-    return context.next();
-  }
+function isPageroPlatformHost(hostname = '') {
+  const host = String(hostname || '').trim().toLowerCase();
+  return host === 'pagero.kr'
+    || host.endsWith('.pagero.kr')
+    || host.endsWith('.pages.dev')
+    || host === 'localhost'
+    || host.endsWith('.localhost');
+}
 
+async function customDomainPageSlug(env = {}, hostname = '') {
+  const host = String(hostname || '').trim().toLowerCase().replace(/:\d+$/, '');
+  if (!host || !env.DB || typeof env.DB.prepare !== 'function') return '';
+  const alternate = host.startsWith('www.') ? host.slice(4) : `www.${host}`;
+  try {
+    const row = await env.DB.prepare(`
+      SELECT pages.slug
+      FROM pages
+      LEFT JOIN projects ON projects.id = pages.project_id
+      WHERE lower(json_extract(pages.page_json, '$.integrations.domain.hostname')) IN (?, ?)
+        AND COALESCE(projects.status, 'active') <> 'archived'
+      ORDER BY pages.updated_at DESC, pages.revision DESC
+      LIMIT 1
+    `).bind(host, alternate).first();
+    return String(row?.slug || '').replace(/[^a-zA-Z0-9-_]/g, '');
+  } catch (error) {
+    console.warn('Custom domain lookup failed:', String(error?.message || error));
+    return '';
+  }
+}
+
+async function handleCustomDomain(context, url) {
+  if (isPageroPlatformHost(url.hostname) || url.pathname.startsWith('/api/')) return null;
+  const slug = await customDomainPageSlug(context.env, url.hostname);
+  if (!slug) return null;
+  const clean = url.pathname.replace(/\/+$/, '') || '/';
+  if (clean !== '/') return null;
+  const redirectUrl = new URL(context.request.url);
+  redirectUrl.pathname = `/${slug}`;
+  return Response.redirect(redirectUrl.toString(), 302);
+}
+
+async function handleCalltagRequest(context, url) {
   const clean = url.pathname.replace(/\/+$/, '') || '/';
   const routes = {
     '/': '/call/home/index.html',
@@ -50,7 +86,7 @@ export async function onRequest(context) {
     homeHeaders.set('Cloudflare-CDN-Cache-Control', 'no-store');
     homeHeaders.set('Pragma', 'no-cache');
     homeHeaders.set('Expires', '0');
-    homeHeaders.set('X-CallLink-Home-Version', 'inline-layout-v7');
+    homeHeaders.set('X-CallTag-Home-Version', 'inline-layout-v7');
 
     let html = await response.text();
     html = html.replace('</body>', '<script src="/call/home/v7.js?v=20260729-2"></script></body>');
@@ -72,7 +108,7 @@ export async function onRequest(context) {
   headers.set('Cloudflare-CDN-Cache-Control', 'no-store');
   headers.set('Pragma', 'no-cache');
   headers.set('Expires', '0');
-  headers.set('X-CallLink-Preview-Version', '1.0.10');
+  headers.set('X-CallTag-Preview-Version', '1.0.10');
 
   if (mapped === '/call/preview-v106/index.html'
           || mapped === '/call/preview-v108/index.html'
@@ -97,4 +133,17 @@ export async function onRequest(context) {
     statusText: response.statusText,
     headers,
   });
+}
+
+export async function onRequest(context) {
+  const url = new URL(context.request.url);
+  if (url.pathname.startsWith('/api/')) return context.next();
+
+  if (url.hostname === 'call.pagero.kr' || url.hostname === 'calltag.pagero.kr') {
+    return handleCalltagRequest(context, url);
+  }
+
+  const customDomainResponse = await handleCustomDomain(context, url);
+  if (customDomainResponse) return customDomainResponse;
+  return context.next();
 }
