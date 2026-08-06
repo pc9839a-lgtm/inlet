@@ -1,0 +1,80 @@
+name: PR-triggered auth email production deploy
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  deploy-and-verify:
+    if: startsWith(github.event.pull_request.title, '[AUTH_EMAIL_DEPLOY]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install and validate
+        run: |
+          npm ci
+          node --check functions/api/auth/_ses-delivery.js
+          node --check functions/api/auth/email-verification.js
+          npm run build
+
+      - name: Deploy latest main
+        run: >-
+          npx wrangler pages deploy dist
+          --project-name inlet
+          --branch main
+          --commit-hash "$GITHUB_SHA"
+          --commit-message "PR-triggered auth email hotfix $GITHUB_SHA"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Verify live authentication email API
+        id: verify
+        shell: bash
+        run: |
+          sleep 10
+          TEST_EMAIL="support+auth-hotfix-$(date +%s)@pagero.kr"
+          HTTP_CODE="$(curl -sS -o /tmp/auth-response.json -w '%{http_code}' \
+            -H 'Content-Type: application/json' \
+            --data "{\"email\":\"${TEST_EMAIL}\",\"purpose\":\"signup\"}" \
+            https://pagero.kr/api/auth/email-verification)"
+          RESPONSE="$(cat /tmp/auth-response.json)"
+          echo "http_code=$HTTP_CODE" >> "$GITHUB_OUTPUT"
+          echo "response_b64=$(printf '%s' "$RESPONSE" | base64 -w0)" >> "$GITHUB_OUTPUT"
+          HTTP_CODE="$HTTP_CODE" node -e "const r=require('/tmp/auth-response.json'); if(Number(process.env.HTTP_CODE)<200||Number(process.env.HTTP_CODE)>=300||!r.ok||r.verification?.delivery?.status!=='sent') process.exit(1)"
+
+      - name: Comment success
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.sha }}
+          HTTP_CODE: ${{ steps.verify.outputs.http_code }}
+          RESPONSE_B64: ${{ steps.verify.outputs.response_b64 }}
+        run: |
+          RESPONSE="$(printf '%s' "$RESPONSE_B64" | base64 -d)"
+          gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body "AUTH_EMAIL_DEPLOY_SUCCESS sha=$SHA http=$HTTP_CODE response=$RESPONSE"
+
+      - name: Comment failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.sha }}
+        run: |
+          gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body "AUTH_EMAIL_DEPLOY_FAILED sha=$SHA. Check workflow steps."
