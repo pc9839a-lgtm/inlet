@@ -18,18 +18,32 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
     admin: ['관리자', ''],
   };
   const [title, desc] = titles[tab] || titles.edit;
+  const operationsHeader = tab === 'inbox' || tab === 'stats';
 
   return (
-    <header className="panel-header">
-      <div className="panel-title">
+    <header className={`panel-header${operationsHeader ? ' operations-panel-header' : ''}`}>
+      <div className={`panel-title${operationsHeader ? ' operations-panel-title' : ''}`}>
         <p>{page.title}</p>
-        <h1>{title}</h1>
-        {desc && <span>{desc}</span>}
-        {saveStatus && (
-          <div className="panel-save-status" title={saveStatus.detail || saveStatus.label} aria-live="polite">
-            <strong style={{ color: saveStateColors[saveStatus.tone] || saveStateColors.idle }}>{saveStatus.label}</strong>
-            {saveStatus.detail && <small>{saveStatus.detail}</small>}
+        {operationsHeader ? (
+          <div className="operations-panel-title-row">
+            <h1>{title}</h1>
+            {saveStatus && (
+              <div className="panel-save-status operations-save-status" title={saveStatus.label} aria-live="polite">
+                <strong style={{ color: saveStateColors[saveStatus.tone] || saveStateColors.idle }}>{saveStatus.label}</strong>
+              </div>
+            )}
           </div>
+        ) : (
+          <>
+            <h1>{title}</h1>
+            {desc && <span>{desc}</span>}
+            {saveStatus && (
+              <div className="panel-save-status" title={saveStatus.detail || saveStatus.label} aria-live="polite">
+                <strong style={{ color: saveStateColors[saveStatus.tone] || saveStateColors.idle }}>{saveStatus.label}</strong>
+                {saveStatus.detail && <small>{saveStatus.detail}</small>}
+              </div>
+            )}
+          </>
         )}
       </div>
       <div className="panel-actions">
