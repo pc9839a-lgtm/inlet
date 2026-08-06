@@ -1,0 +1,62 @@
+{
+  "sourceSha": "d64666b3c0440ef4793548e2c6bb77bd826bda55",
+  "database": "inlet-prod",
+  "metadataOnly": true,
+  "recordedAt": "2026-08-06T10:46:03.402Z",
+  "queries": {
+    "table_sql": {
+      "exitCode": 1,
+      "output": {
+        "error": {
+          "text": "A request to the Cloudflare API (/accounts/eec4828f6c3ab1c52683f0d47767e8fc/d1/database/b68d3820-001f-4dbe-87cd-dc9fc0be17ee/query) failed.",
+          "notes": [
+            {
+              "text": "The given account is not valid or is not authorized to access this service [code: 7403]"
+            }
+          ],
+          "kind": "error",
+          "name": "APIError",
+          "code": 7403,
+          "accountTag": "eec4828f6c3ab1c52683f0d47767e8fc"
+        }
+      },
+      "error": ""
+    },
+    "table_info": {
+      "exitCode": 1,
+      "output": {
+        "error": {
+          "text": "A request to the Cloudflare API (/accounts/eec4828f6c3ab1c52683f0d47767e8fc/d1/database/b68d3820-001f-4dbe-87cd-dc9fc0be17ee/query) failed.",
+          "notes": [
+            {
+              "text": "The given account is not valid or is not authorized to access this service [code: 7403]"
+            }
+          ],
+          "kind": "error",
+          "name": "APIError",
+          "code": 7403,
+          "accountTag": "eec4828f6c3ab1c52683f0d47767e8fc"
+        }
+      },
+      "error": ""
+    },
+    "index_list": {
+      "exitCode": 1,
+      "output": {
+        "error": {
+          "text": "A request to the Cloudflare API (/accounts/eec4828f6c3ab1c52683f0d47767e8fc/d1/database/b68d3820-001f-4dbe-87cd-dc9fc0be17ee/query) failed.",
+          "notes": [
+            {
+              "text": "The given account is not valid or is not authorized to access this service [code: 7403]"
+            }
+          ],
+          "kind": "error",
+          "name": "APIError",
+          "code": 7403,
+          "accountTag": "eec4828f6c3ab1c52683f0d47767e8fc"
+        }
+      },
+      "error": ""
+    }
+  }
+}
