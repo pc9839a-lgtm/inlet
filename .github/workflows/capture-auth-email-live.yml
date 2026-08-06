@@ -1,0 +1,50 @@
+name: Capture live auth email response
+
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/capture-auth-email-live.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Request live verification email
+        shell: bash
+        run: |
+          set +e
+          TEST_EMAIL="support+calltag-live-$(date +%s)@pagero.kr"
+          curl -sS -D /tmp/headers.txt -o /tmp/body.json -w '%{http_code}' \
+            -H 'Content-Type: application/json' \
+            --data "{\"email\":\"${TEST_EMAIL}\",\"purpose\":\"signup\"}" \
+            https://pagero.kr/api/auth/email-verification > /tmp/status.txt
+          CURL_CODE=$?
+          set -e
+          mkdir -p .diagnostics
+          node <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
+          const read = p => { try { return readFileSync(p,'utf8'); } catch { return ''; } };
+          let parsed = null;
+          try { parsed = JSON.parse(read('/tmp/body.json')); } catch {}
+          writeFileSync('.diagnostics/auth-email-live-after-hotfix.json', JSON.stringify({
+            recordedAt: new Date().toISOString(),
+            httpStatus: Number(read('/tmp/status.txt').trim() || 0),
+            curlCode: Number(process.env.CURL_CODE || 0),
+            response: parsed || read('/tmp/body.json').slice(0,4000)
+          }, null, 2) + '\n');
+          NODE
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B auth-live-result
+          git add .diagnostics/auth-email-live-after-hotfix.json
+          git commit -m "Record live auth email response after hotfix"
+          git push --force origin HEAD:auth-live-result
+        env:
+          CURL_CODE: 0
