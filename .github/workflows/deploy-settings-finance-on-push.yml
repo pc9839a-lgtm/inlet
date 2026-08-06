@@ -1,0 +1,52 @@
+name: Deploy settings finance live
+
+on:
+  push:
+    branches:
+      - ops/settings-finance-live
+
+permissions:
+  contents: read
+
+concurrency:
+  group: settings-finance-live
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify unified billing and referral contracts
+        run: node scripts/billing-referral-quality-check.mjs
+
+      - name: Build production assets
+        run: npm run build
+
+      - name: Capture deployed source
+        id: source
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy latest main
+        run: >-
+          npx wrangler pages deploy dist
+          --project-name inlet
+          --branch main
+          --commit-hash "${{ steps.source.outputs.sha }}"
+          --commit-message "Settings finance live ${{ steps.source.outputs.sha }}"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
