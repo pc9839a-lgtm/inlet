@@ -27,7 +27,7 @@ assert(files.api.includes("commission_rate_bps INTEGER NOT NULL DEFAULT 2000"), 
 assert(files.api.includes("bonus_days INTEGER NOT NULL DEFAULT 5"), 'referral bonus must remain 5 days');
 assert(files.api.includes("action === 'record-charge'"), 'payment provider charge action must exist');
 assert(files.api.includes("service, entry_type, amount_krw"), 'ledger must keep service-level entries');
-assert(files.api.includes("service = 'combined'"), 'combined payout record must exist');
+assert(files.api.includes("'combined', 'payout'"), 'combined payout record must exist');
 assert(files.api.includes("pagero: '/subscribe?service=pagero'"), 'Pagero checkout fallback must exist');
 assert(files.api.includes("calltag: 'https://calltag.pagero.kr/subscribe'"), 'CallTag checkout fallback must exist');
 assert.equal(files.calltagAlias.trim(), "export { onRequest } from '../account-finance.js';", 'CallTag must use shared finance API');
