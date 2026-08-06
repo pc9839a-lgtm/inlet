@@ -19,6 +19,7 @@ import SettingsPrimarySections from './SettingsPrimarySections.jsx';
 const PRIMARY_NAV = [
   ['account', '계정 정보', UserRound],
   ['basic', '페이지 기본', FileText],
+  ['domain', '개인 도메인', Globe2],
   ['managers', '매니저 권한', UsersRound],
 ];
 
@@ -148,12 +149,14 @@ export default function SettingsPanelBody({
               canManageProjectUsers={canManageProjectUsers}
               clientAdminMode={clientAdminMode}
               drafts={drafts}
+              integrations={integrations}
               managerSettings={managerSettings}
               onAccountUpdate={onAccountUpdate}
               onLogout={onLogout}
               ownership={ownership}
               sections={visibleSections}
               transferRequest={transferRequest}
+              updateIntegrations={updateIntegrations}
             />
 
             <SettingsAdvancedAndReset
