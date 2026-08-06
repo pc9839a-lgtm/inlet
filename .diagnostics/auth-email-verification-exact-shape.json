@@ -1,0 +1,116 @@
+{
+  "ok": true,
+  "databaseBinding": "DB",
+  "syntheticOnly": true,
+  "userRowsRead": false,
+  "exactRecordShape": {
+    "idLength": 80,
+    "codeHashLength": 64,
+    "purpose": "signup"
+  },
+  "tableSql": "CREATE TABLE auth_email_verifications (\n  id TEXT PRIMARY KEY,\n  email TEXT NOT NULL,\n  purpose TEXT NOT NULL,\n  code_hash TEXT NOT NULL,\n  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'expired', 'blocked')),\n  attempts INTEGER NOT NULL DEFAULT 0,\n  expires_at TEXT NOT NULL,\n  confirmed_at TEXT,\n  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))\n)",
+  "columns": [
+    {
+      "name": "id",
+      "type": "TEXT",
+      "notnull": 0,
+      "defaultValue": null,
+      "primaryKey": 1
+    },
+    {
+      "name": "email",
+      "type": "TEXT",
+      "notnull": 1,
+      "defaultValue": null,
+      "primaryKey": 0
+    },
+    {
+      "name": "purpose",
+      "type": "TEXT",
+      "notnull": 1,
+      "defaultValue": null,
+      "primaryKey": 0
+    },
+    {
+      "name": "code_hash",
+      "type": "TEXT",
+      "notnull": 1,
+      "defaultValue": null,
+      "primaryKey": 0
+    },
+    {
+      "name": "status",
+      "type": "TEXT",
+      "notnull": 1,
+      "defaultValue": "'pending'",
+      "primaryKey": 0
+    },
+    {
+      "name": "attempts",
+      "type": "INTEGER",
+      "notnull": 1,
+      "defaultValue": "0",
+      "primaryKey": 0
+    },
+    {
+      "name": "expires_at",
+      "type": "TEXT",
+      "notnull": 1,
+      "defaultValue": null,
+      "primaryKey": 0
+    },
+    {
+      "name": "confirmed_at",
+      "type": "TEXT",
+      "notnull": 0,
+      "defaultValue": null,
+      "primaryKey": 0
+    },
+    {
+      "name": "created_at",
+      "type": "TEXT",
+      "notnull": 1,
+      "defaultValue": "strftime('%Y-%m-%dT%H:%M:%fZ', 'now')",
+      "primaryKey": 0
+    }
+  ],
+  "indexes": [
+    {
+      "name": "idx_auth_email_verifications_purpose",
+      "unique": 0,
+      "origin": "c"
+    },
+    {
+      "name": "idx_auth_email_verifications_lookup",
+      "unique": 0,
+      "origin": "c"
+    },
+    {
+      "name": "sqlite_autoindex_auth_email_verifications_1",
+      "unique": 1,
+      "origin": "pk"
+    }
+  ],
+  "stages": {
+    "tableSql": {
+      "ok": true
+    },
+    "tableInfo": {
+      "ok": true,
+      "count": 9
+    },
+    "indexList": {
+      "ok": true,
+      "count": 3
+    },
+    "updateExisting": {
+      "ok": true
+    },
+    "insertExactShape": {
+      "ok": true
+    },
+    "cleanup": {
+      "ok": true
+    }
+  }
+}
