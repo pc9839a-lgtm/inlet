@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Request live verification email
+      - name: Request live verification email after SES runtime patch
         shell: bash
         run: |
           set +e
@@ -44,7 +44,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B auth-live-result
           git add .diagnostics/auth-email-live-after-hotfix.json
-          git commit -m "Record live auth email response after hotfix"
+          git commit -m "Record live auth email response after SES runtime patch"
           git push --force origin HEAD:auth-live-result
         env:
           CURL_CODE: 0
