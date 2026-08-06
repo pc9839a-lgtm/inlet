@@ -173,6 +173,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add functions/api/auth/_auth.js scripts/auth-verification-purpose-consumption-quality-check.mjs scripts/auth-email-quality-check.mjs docs/AUTH_EMAIL_VERIFICATION_STORAGE_COMPAT_HOTFIX_KO.md .github/workflows/hotfix-auth-verification-storage.yml
+          git add -A
           git commit -m "fix: restore auth verification storage compatibility"
           git push origin HEAD:fix/auth-verification-storage-compat-20260806
