@@ -17,6 +17,7 @@ const ADVANCED_NAV = [
   ['reset', '초기화'],
 ];
 
+const ALL_NAV = [...PRIMARY_NAV, ...ADVANCED_NAV];
 const ADVANCED_IDS = new Set(ADVANCED_NAV.map(([id]) => id));
 
 export default function SettingsPanelBody({
@@ -59,6 +60,7 @@ export default function SettingsPanelBody({
   })();
   const [selectedSection, setSelectedSection] = useState(initialSection);
   const managerCount = Array.isArray(ownership?.managers) ? ownership.managers.length : 0;
+  const selectedLabel = ALL_NAV.find(([id]) => id === selectedSection)?.[1] || '계정 정보';
 
   const selectSection = (id) => {
     setSelectedSection(id);
@@ -118,8 +120,8 @@ export default function SettingsPanelBody({
         <main className="settings-ops-main">
           <header className="settings-ops-main-head">
             <div>
-              <small>운영 설정</small>
-              <h2>페이지 설정</h2>
+              <small>페이지 설정</small>
+              <h2>{selectedLabel}</h2>
             </div>
             <span>/{page.slug || 'page'}</span>
           </header>
