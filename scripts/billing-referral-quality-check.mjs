@@ -28,6 +28,14 @@ for (const relative of Object.values(files).filter((item) => item.endsWith('.js'
   await import(pathToFileURL(path.join(root, relative)).href);
 }
 
+const settingsSource = {
+  navigation: await readFile(path.join(root, 'src/panels/settings/SettingsPanelBody.jsx'), 'utf8'),
+  sections: await readFile(path.join(root, 'src/panels/settings/SettingsPrimarySections.jsx'), 'utf8'),
+  repository: await readFile(path.join(root, 'src/lib/accountFinanceRepository.js'), 'utf8'),
+  billing: await readFile(path.join(root, 'src/panels/settings/BillingSettingsSection.jsx'), 'utf8'),
+  referral: await readFile(path.join(root, 'src/panels/settings/ReferralSettingsSection.jsx'), 'utf8'),
+};
+
 const verifyGateIndex = source.verify.indexOf('assertGooglePlayBillingReady(env);');
 const verifyActionIndex = source.verify.indexOf('const entitlement = await verifyGoogleSubscription');
 const restoreGateIndex = source.restore.indexOf('assertGooglePlayBillingReady(env);');
@@ -76,6 +84,16 @@ const checks = {
   'referral landing opens CallTag scheme': source.referralLanding.includes('calltag://referral?code='),
   'referral landing is noindex': source.referralLanding.includes('noindex,nofollow'),
   'partner center is excluded': source.referralSummary.includes('partnerCenterAvailable = false') && source.referralSummary.includes("partnerCenterUrl = ''"),
+  'settings navigation exposes billing and referral': settingsSource.navigation.includes('요금제·결제') && settingsSource.navigation.includes('추천인'),
+  'settings render billing and referral sections': settingsSource.sections.includes('BillingSettingsSection') && settingsSource.sections.includes('ReferralSettingsSection'),
+  'settings read existing unified subscription API': settingsSource.repository.includes("'/api/billing/subscriptions'"),
+  'settings read existing referral identity API': settingsSource.repository.includes("'/api/referrals/me'"),
+  'settings read existing referral summary API': settingsSource.repository.includes("'/api/referrals/summary'"),
+  'settings apply referral through existing API': settingsSource.repository.includes("'/api/referrals/apply'"),
+  'settings do not create a parallel finance API': !settingsSource.repository.includes('/api/account-finance'),
+  'billing screen shows Pagero and CallTag together': settingsSource.billing.includes('페이지로') && settingsSource.billing.includes('콜태그'),
+  'referral screen exposes copy and apply actions': settingsSource.referral.includes('코드 복사') && settingsSource.referral.includes('추천인 코드 등록'),
+  'referral screen states unified owner ledger': settingsSource.referral.includes('동일한 계정 원장으로 합산'),
 };
 
 const failed = Object.entries(checks).filter(([, passed]) => !passed).map(([name]) => name);
