@@ -108,6 +108,17 @@ html body #root .builder-shell.stats-dashboard-shell .stats-channel-filter-list 
   min-height: 42px !important;
 }
 
+/* Statistics order: surface the trend chart before the conversion funnel. */
+html body #root .builder-shell.stats-dashboard-shell .stats-trend-card {
+  grid-row: 2 !important;
+  border-bottom: 1px solid #e1e7ef !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-funnel-card {
+  grid-row: 3 !important;
+  border-bottom: 0 !important;
+}
+
 @media (max-width: 820px) {
   html body #root .builder-shell:is(.inbox-workspace-shell, .stats-dashboard-shell) .panel-header.operations-panel-header {
     height: 76px !important;
