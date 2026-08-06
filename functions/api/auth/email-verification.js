@@ -2,6 +2,7 @@ import { getD1AccountByEmail } from '../../../server/storage/d1Adapter.mjs';
 import { assertD1, handleApiError, jsonResponse, optionsResponse, readJson } from '../_shared.js';
 import { auditErrorMetadata, auditSubjectHash, writeAuditLog } from '../_audit.js';
 import { AUTH_METHODS, authError, emailVerificationRequesterKey, issueEmailVerificationToken, normalizeEmail, normalizeEmailVerificationPurpose } from './_auth.js';
+import { withCompatibleAuthVerificationStorage } from './_verification-storage-compat.js';
 
 const FINAL_DUPLICATE_DECISION_CODE = 'AUTH_EMAIL_DUPLICATE';
 
@@ -22,12 +23,13 @@ export async function onRequest({ request, env }) {
       && !!email
       && !(await getD1AccountByEmail(env.DB, email));
     const requesterKey = await emailVerificationRequesterKey(request, env);
+    const authEnv = withCompatibleAuthVerificationStorage(env);
     const verification = await issueEmailVerificationToken({
       ...input,
       requesterKey,
       suppressDelivery: suppressPasswordResetDelivery,
       concealDeliveryFailure: purpose === 'password-reset',
-    }, env);
+    }, authEnv);
     const publicVerification = publicEmailVerificationResult(verification, purpose);
     if (purpose === 'password-reset') await ensureMinimumResponseTime(responseStartedAt, 650);
     const ownershipCheckedAtCompletion = purpose === 'signup' || purpose === 'email-change';
