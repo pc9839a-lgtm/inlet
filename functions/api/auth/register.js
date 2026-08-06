@@ -1,6 +1,7 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse, readJson } from '../_shared.js';
 import { auditErrorMetadata, auditSubjectHash, writeAuditLog } from '../_audit.js';
 import { AUTH_METHODS, createSessionToken, registerAccount } from './_auth.js';
+import { withCompatibleAuthVerificationStorage } from './_verification-storage-compat.js';
 
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, AUTH_METHODS);
@@ -11,13 +12,14 @@ export async function onRequest({ request, env }) {
     assertD1(env);
     input = await readJson(request);
     const registration = input.user && typeof input.user === 'object' ? input.user : input;
-    const user = await registerAccount(registration, env);
+    const authEnv = withCompatibleAuthVerificationStorage(env);
+    const user = await registerAccount(registration, authEnv);
     const session = await createSessionToken({
       ownerId: user.ownerId,
       projectId: String(input.projectId || input.user?.projectId || ''),
       role: 'master',
       email: user.email,
-    }, env);
+    }, authEnv);
     await writeAuditLog({
       request,
       env,
