@@ -1,0 +1,60 @@
+/* Inbox visual cleanup: one blue accent, no inquiry-copy action. */
+html body #root .builder-shell.inbox-workspace-shell {
+  --inbox-accent: #2563eb;
+  --inbox-accent-strong: #1d4ed8;
+  --inbox-accent-soft: #eff6ff;
+  --inbox-accent-border: #93c5fd;
+}
+
+/* 문의 복사는 운영 흐름에서 제거한다. */
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-detail-actions > button.secondary:first-child,
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-copy-fallback {
+  display: none !important;
+}
+
+/* 충돌/재시도 안내는 주황색 대신 서비스 포인트 블루만 사용한다. */
+html body #root .builder-shell.inbox-workspace-shell .lead-conflict-notice.inbox-ops-conflict,
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-retry-banner {
+  border-color: var(--inbox-accent-border) !important;
+  background: var(--inbox-accent-soft) !important;
+  color: var(--inbox-accent-strong) !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-conflict :is(strong, span) {
+  color: var(--inbox-accent-strong) !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-conflict .lead-conflict-actions button {
+  border-color: var(--inbox-accent) !important;
+  background: #fff !important;
+  color: var(--inbox-accent-strong) !important;
+  box-shadow: none !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-conflict .lead-conflict-actions button:first-child,
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-conflict .lead-conflict-actions button:nth-child(2) {
+  background: var(--inbox-accent) !important;
+  color: #fff !important;
+}
+
+/* 접수함의 의미 색상도 파랑 하나로 정리한다. */
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-kpis article strong,
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-kpis article:nth-child(3) strong {
+  color: var(--inbox-accent-strong) !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-status-badge,
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-status-badge.new,
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-status-badge.processing,
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-status-badge.done {
+  border-color: #bfdbfe !important;
+  background: var(--inbox-accent-soft) !important;
+  color: var(--inbox-accent-strong) !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-status-pills button.active,
+html body #root .builder-shell.inbox-workspace-shell .inbox-ops-status-pills button.active[class*='tone-'] {
+  border-color: var(--inbox-accent) !important;
+  background: var(--inbox-accent) !important;
+  color: #fff !important;
+}
