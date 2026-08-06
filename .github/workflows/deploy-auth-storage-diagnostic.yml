@@ -1,4 +1,4 @@
-name: Capture live auth storage response
+name: Deploy and capture exact auth storage diagnostic
 
 on:
   push:
@@ -14,41 +14,40 @@ permissions:
 jobs:
   capture-production:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
+    environment: production
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Capture live response
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Deploy and capture
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         shell: bash
         run: |
-          set +e
-          curl -sS -D /tmp/headers.txt \
-            -o /tmp/body.txt \
-            -w '%{http_code}' \
-            https://pagero.kr/api/diagnostics/auth-verification-storage \
-            > /tmp/status.txt
-          CURL_CODE=$?
-          set -e
+          set -euo pipefail
+          npm run deploy:pages 2>&1 | tee /tmp/deploy.log
+          DEPLOYMENT_URL="$(grep -Eo 'https://[a-z0-9.-]+\.pages\.dev' /tmp/deploy.log | tail -1)"
+          test -n "$DEPLOYMENT_URL"
+          curl -sS "$DEPLOYMENT_URL/api/diagnostics/auth-verification-storage" > /tmp/result.json
           mkdir -p .diagnostics
-          node <<'NODE'
-          import { readFileSync, writeFileSync } from 'node:fs';
-          const read = (path) => { try { return readFileSync(path, 'utf8'); } catch { return ''; } };
-          writeFileSync('.diagnostics/auth-email-verification-live-response.json', `${JSON.stringify({
-            recordedAt: new Date().toISOString(),
-            curlCode: Number(process.env.CURL_CODE || 0),
-            httpStatus: Number(read('/tmp/status.txt').trim() || 0),
-            headers: read('/tmp/headers.txt').slice(0, 4000),
-            body: read('/tmp/body.txt').slice(0, 12000),
-          }, null, 2)}\n`);
-          NODE
+          cp /tmp/result.json .diagnostics/auth-email-verification-exact-shape.json
+          printf '\n' >> .diagnostics/auth-email-verification-exact-shape.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B auth-diagnostic-result
-          git add .diagnostics/auth-email-verification-live-response.json
-          git commit -m "Record live auth verification response"
+          git add .diagnostics/auth-email-verification-exact-shape.json
+          git commit -m "Record exact auth verification record diagnostic"
           git push --force origin HEAD:auth-diagnostic-result
-        env:
-          CURL_CODE: 0
