@@ -1,3 +1,4 @@
 Auth email production deployment trigger
 Date: 2026-08-07 KST
 Target: Cloudflare-safe SES verification sender
+Verification: exact Pages URL, propagated pagero.kr, reported Naver address
