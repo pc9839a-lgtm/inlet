@@ -1,0 +1,122 @@
+/* Final compact header shared by inbox and statistics only. */
+html body #root .builder-shell:is(.inbox-workspace-shell, .stats-dashboard-shell) .panel-header.operations-panel-header {
+  width: 100% !important;
+  height: 82px !important;
+  min-height: 82px !important;
+  max-height: 82px !important;
+  padding: 12px 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+html body #root .builder-shell:is(.inbox-workspace-shell, .stats-dashboard-shell) .operations-panel-title {
+  min-width: 0 !important;
+  display: grid !important;
+  align-content: center !important;
+  gap: 2px !important;
+}
+
+html body #root .builder-shell:is(.inbox-workspace-shell, .stats-dashboard-shell) .operations-panel-title > p {
+  margin: 0 !important;
+  color: #64748b !important;
+  font-size: 11px !important;
+  line-height: 1.15 !important;
+  font-weight: 800 !important;
+}
+
+html body #root .builder-shell:is(.inbox-workspace-shell, .stats-dashboard-shell) .operations-panel-title-row {
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+html body #root .builder-shell:is(.inbox-workspace-shell, .stats-dashboard-shell) .operations-panel-title-row > h1 {
+  margin: 0 !important;
+  color: #111827 !important;
+  font-size: 23px !important;
+  line-height: 1.05 !important;
+  font-weight: 950 !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell:is(.inbox-workspace-shell, .stats-dashboard-shell) .operations-save-status {
+  display: inline-flex !important;
+  align-items: center !important;
+  width: auto !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 4px 8px !important;
+  border-radius: 999px !important;
+  background: #f1f5f9 !important;
+  line-height: 1 !important;
+}
+
+html body #root .builder-shell:is(.inbox-workspace-shell, .stats-dashboard-shell) .operations-save-status strong {
+  font-size: 10px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell:is(.inbox-workspace-shell, .stats-dashboard-shell) .operations-panel-header .panel-actions {
+  flex: 0 0 auto !important;
+  align-self: center !important;
+}
+
+html body #root .builder-shell:is(.inbox-workspace-shell, .stats-dashboard-shell) .top-tabs {
+  height: 56px !important;
+  min-height: 56px !important;
+  max-height: 56px !important;
+  margin: 10px 0 12px !important;
+  box-sizing: border-box !important;
+}
+
+/* Statistics readability: keep filters together at the top of the left column. */
+html body #root .builder-shell.stats-dashboard-shell .stats-period-card .section-title h2 {
+  font-size: 0 !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-period-card .section-title h2::after {
+  content: '기간';
+  font-size: 18px !important;
+  line-height: 1.2 !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-channel-filter {
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 18px 16px 24px !important;
+  display: block !important;
+  align-self: start !important;
+  align-content: start !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-channel-filter .section-title {
+  margin: 0 0 12px !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-channel-filter-list {
+  margin: 0 !important;
+  align-content: start !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-channel-filter-list button {
+  min-height: 42px !important;
+}
+
+@media (max-width: 820px) {
+  html body #root .builder-shell:is(.inbox-workspace-shell, .stats-dashboard-shell) .panel-header.operations-panel-header {
+    height: 76px !important;
+    min-height: 76px !important;
+    max-height: 76px !important;
+    padding: 10px 12px !important;
+  }
+
+  html body #root .builder-shell:is(.inbox-workspace-shell, .stats-dashboard-shell) .operations-panel-title-row > h1 {
+    font-size: 20px !important;
+  }
+}
