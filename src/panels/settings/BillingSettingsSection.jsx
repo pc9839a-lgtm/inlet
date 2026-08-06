@@ -18,14 +18,14 @@ function ServicePlans({ finance, service, label, busy, onCheckout }) {
       <header>
         <div>
           <strong>{label}</strong>
-          <small>{subscription?.status === 'active' ? `${subscription.planName} 이용 중` : '결제된 요금제 없음'}</small>
+          <small>{subscription ? `${subscription.planName} 이용 중` : '결제된 요금제 없음'}</small>
         </div>
-        <span>{subscription?.status === 'active' ? '이용 중' : '미결제'}</span>
+        <span>{subscription ? '이용 중' : '미결제'}</span>
       </header>
 
       <div className="billing-plan-list">
         {plans.map((plan) => {
-          const current = subscription?.status === 'active' && subscription?.planCode === plan.code;
+          const current = subscription?.planCode === plan.code;
           const loading = busy === `${service}:${plan.code}`;
           return (
             <div className={`billing-plan-row ${current ? 'is-current' : ''}`} key={`${service}-${plan.code}`}>
@@ -33,18 +33,14 @@ function ServicePlans({ finance, service, label, busy, onCheckout }) {
                 <strong>{plan.name}</strong>
                 <small>{plan.description}</small>
               </div>
-              <b>{plan.amountKrw ? `${money(plan.amountKrw)}/월` : '무료'}</b>
-              {plan.code === 'free' ? (
-                <span className="billing-plan-free">기본</span>
-              ) : (
-                <button
-                  type="button"
-                  disabled={current || loading}
-                  onClick={() => onCheckout(service, plan.code)}
-                >
-                  {loading ? '이동 중' : current ? '현재 요금제' : '결제'}
-                </button>
-              )}
+              <b>{money(plan.amountKrw)}/월</b>
+              <button
+                type="button"
+                disabled={current || loading}
+                onClick={() => onCheckout(service, plan.code)}
+              >
+                {loading ? '이동 중' : current ? '현재 요금제' : '결제'}
+              </button>
             </div>
           );
         })}
@@ -56,6 +52,8 @@ function ServicePlans({ finance, service, label, busy, onCheckout }) {
 export default function BillingSettingsSection({ authUser, openSection, setOpenSection }) {
   const { finance, loading, busy, error, refresh, checkout } = useAccountFinance(authUser);
   const settlement = finance?.settlement?.combined || {};
+  const entitlement = finance?.entitlement || {};
+  const trialDays = Number(entitlement?.trial?.remainingDays || 0);
 
   return (
     <SettingsSection
@@ -80,7 +78,10 @@ export default function BillingSettingsSection({ authUser, openSection, setOpenS
           </button>
         </header>
 
-        <p className="account-finance-rule">같은 계정의 페이지로·콜태그 결제와 추천 정산은 하나의 원장으로 합산됩니다.</p>
+        <p className="account-finance-rule">
+          같은 계정의 페이지로·콜태그 구독과 추천 수익은 하나의 서버 원장으로 관리됩니다.
+          {trialDays > 0 ? ` 무료 이용 ${trialDays}일 남음.` : ''}
+        </p>
 
         {error && <p className="account-finance-message is-error">{error}</p>}
         {loading && !finance ? (
@@ -95,18 +96,14 @@ export default function BillingSettingsSection({ authUser, openSection, setOpenS
             <section className="billing-settlement-summary">
               <header>
                 <WalletCards size={18} aria-hidden="true" />
-                <strong>통합 정산</strong>
+                <strong>추천 정산 통합 현황</strong>
               </header>
               <dl>
-                <div><dt>누적 수익</dt><dd>{money(settlement.earned)}</dd></div>
-                <div><dt>정산 대기</dt><dd>{money(settlement.pending)}</dd></div>
-                <div><dt>정산 가능</dt><dd>{money(settlement.available)}</dd></div>
-                <div><dt>지급 완료</dt><dd>{money(settlement.paid)}</dd></div>
+                <div><dt>이번 달 예상</dt><dd>{money(settlement.estimatedRevenueKrw)}</dd></div>
+                <div><dt>누적 확정</dt><dd>{money(settlement.confirmedRevenueKrw)}</dd></div>
+                <div><dt>추천 가입</dt><dd>{Number(settlement.referredCount || 0)}명</dd></div>
+                <div><dt>유료 전환</dt><dd>{Number(settlement.activePaidCount || 0)}명</dd></div>
               </dl>
-              <div className="billing-service-totals">
-                <span>페이지로 {money(finance?.settlement?.byService?.pagero?.earned)}</span>
-                <span>콜태그 {money(finance?.settlement?.byService?.calltag?.earned)}</span>
-              </div>
             </section>
           </>
         )}
