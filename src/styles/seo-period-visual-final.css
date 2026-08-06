@@ -1,0 +1,141 @@
+/* Final visual corrections for SEO media previews and the statistics period bar. */
+
+/* SEO media: preserve the complete source image and keep every label readable. */
+html body #root .builder-shell.settings-workspace-shell .settings-seo-media-grid {
+  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr) !important;
+  gap: 18px !important;
+  align-items: stretch !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-favicon,
+html body #root .builder-shell.settings-workspace-shell .settings-seo-share {
+  min-width: 0 !important;
+  width: 100% !important;
+  padding: 14px !important;
+  border: 1px solid #dfe5ec !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  box-sizing: border-box !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-share .image-box {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  aspect-ratio: 1200 / 630 !important;
+  overflow: hidden !important;
+  border: 1px solid #e1e6ed !important;
+  border-radius: 10px !important;
+  background: #f7f8fa !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-share .image-box img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  padding: 0 !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  background: #f7f8fa !important;
+  box-sizing: border-box !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-favicon .image-box {
+  width: 100% !important;
+  height: 112px !important;
+  min-height: 112px !important;
+  max-height: 112px !important;
+  border: 1px solid #e1e6ed !important;
+  background: #f7f8fa !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-media :is(
+  .image-storage-note,
+  .settings-field-hint,
+  small
+) {
+  max-width: 100% !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.45 !important;
+}
+
+/* Statistics period: make the filter area visibly separate from the data panels. */
+html body #root .builder-shell.stats-dashboard-shell .stats-period-card {
+  min-height: 78px !important;
+  padding: 12px 18px !important;
+  border-top: 1px solid #dfe5ec !important;
+  border-bottom: 1px solid #d7dde6 !important;
+  background: #f6f7f9 !important;
+  box-shadow: inset 0 -1px 0 rgba(15, 23, 42, .03) !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-period-card .section-title {
+  align-self: stretch !important;
+  min-width: 190px !important;
+  padding: 0 20px 0 4px !important;
+  border-right: 1px solid #d9dfe7 !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-period-card .section-title h2 {
+  margin: 0 !important;
+  color: #111827 !important;
+  font-size: 15px !important;
+  font-weight: 900 !important;
+  letter-spacing: -.15px !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-period-controls {
+  min-height: 52px !important;
+  padding: 6px !important;
+  border: 1px solid #dfe5ec !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  box-sizing: border-box !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-range-tabs button,
+html body #root .builder-shell.stats-dashboard-shell .stats-month-control input {
+  min-height: 40px !important;
+  border: 1px solid #dfe5ec !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  color: #374151 !important;
+  box-shadow: none !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-range-tabs button:is(.active,[aria-pressed='true']) {
+  border-color: #111827 !important;
+  background: #111827 !important;
+  color: #fff !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel::before,
+html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel::after {
+  top: 78px !important;
+}
+
+@media (max-width: 900px) {
+  html body #root .builder-shell.settings-workspace-shell .settings-seo-media-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-period-card .section-title {
+    min-width: 0 !important;
+    width: 100% !important;
+    padding: 0 0 10px !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid #d9dfe7 !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-period-controls {
+    width: 100% !important;
+  }
+}
