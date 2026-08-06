@@ -1,4 +1,5 @@
 import AccountSettingsSection from './AccountSettingsSection.jsx';
+import CustomDomainSettingsSection from './CustomDomainSettingsSection.jsx';
 import PageBasicSettingsSection from './PageBasicSettingsSection.jsx';
 import SettingsManagerAccessSection from './SettingsManagerAccessSection.jsx';
 import SettingsSection from './SettingsSection.jsx';
@@ -9,12 +10,14 @@ export default function SettingsPrimarySections({
   canManageProjectUsers,
   clientAdminMode,
   drafts,
+  integrations,
   managerSettings,
   onAccountUpdate,
   onLogout,
   ownership,
   sections,
   transferRequest,
+  updateIntegrations,
 }) {
   const { openSection, setOpenSection } = sections;
   const { basicDraft, editSection, lockedSections, saveBasic, setBasicDraft } = drafts;
@@ -38,6 +41,15 @@ export default function SettingsPrimarySections({
           openSection={openSection}
           setBasicDraft={setBasicDraft}
           setOpenSection={setOpenSection}
+        />
+      )}
+
+      {activeSection === 'domain' && (
+        <CustomDomainSettingsSection
+          integrations={integrations}
+          openSection={openSection}
+          setOpenSection={setOpenSection}
+          updateIntegrations={updateIntegrations}
         />
       )}
 
