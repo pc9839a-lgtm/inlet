@@ -156,6 +156,9 @@ jobs:
       - name: Auth email QA
         run: npm run auth:email:qa
 
+      - name: Install dependencies
+        run: npm ci
+
       - name: Full offline QA
         run: npm run qa:all
 
