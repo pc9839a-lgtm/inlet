@@ -1,0 +1,50 @@
+name: SES Auth Email Diagnostic
+
+on:
+  push:
+    branches:
+      - feat/calltag-secure-sync-foundation-20260805
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ses-auth-email-diagnostic-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    environment: production
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Check SES account, identity and DNS without sending email
+        env:
+          INLET_SES_REGION: ap-northeast-2
+          INLET_SES_ACCESS_KEY_ID: ${{ secrets.PAGERO_SES_ACCESS_KEY_ID }}
+          INLET_SES_SECRET_ACCESS_KEY: ${{ secrets.PAGERO_SES_SECRET_ACCESS_KEY }}
+          INLET_AUTH_EMAIL_FROM: ${{ vars.PAGERO_AUTH_EMAIL_FROM }}
+          INLET_SES_IDENTITY: ${{ vars.PAGERO_SES_IDENTITY }}
+          INLET_SES_REQUIRE_DMARC: '1'
+          INLET_SES_REQUIRE_CUSTOM_MAIL_FROM: '0'
+          INLET_SES_REQUIRE_LIVE: '1'
+          INLET_SES_TIMEOUT_MS: '15000'
+        run: npm run auth:email:ses:live | tee ses-auth-email-diagnostic.json
+
+      - name: Upload sanitized evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ses-auth-email-diagnostic-${{ github.run_id }}
+          path: ses-auth-email-diagnostic.json
+          if-no-files-found: warn
+          retention-days: 7
