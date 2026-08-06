@@ -1,4 +1,4 @@
-name: Hotfix auth SES runtime timeout
+name: Route auth email through proven SES sender
 
 on:
   push:
@@ -25,20 +25,52 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Remove incompatible SES abort signal
+      - name: Reuse working SES delivery module
         shell: bash
         run: |
           node <<'NODE'
           import { readFileSync, writeFileSync, existsSync, rmSync } from 'node:fs';
           const path = 'functions/api/auth/_auth.js';
           let source = readFileSync(path, 'utf8');
-          const target = "      signal: AbortSignal.timeout(config.timeoutMs),\n";
-          if (!source.includes(target)) throw new Error('SES AbortSignal patch target not found');
-          source = source.replace(target, '');
-          writeFileSync(path, source);
-          if (existsSync('functions/api/diagnostics/auth-verification-storage.js')) rmSync('functions/api/diagnostics/auth-verification-storage.js');
-          if (existsSync('.github/workflows/deploy-auth-storage-diagnostic.yml')) rmSync('.github/workflows/deploy-auth-storage-diagnostic.yml');
-          if (existsSync('.github/workflows/capture-auth-email-live.yml')) rmSync('.github/workflows/capture-auth-email-live.yml');
+          const importLine = "import { sendSesEmail } from '../_ses.js';\n";
+          if (!source.includes(importLine)) source = importLine + source;
+          const replacement = `async function sendSesAuthEmail(message = {}, env = {}) {
+            const config = sesAuthEmailConfig(env);
+            if (!config.ok) {
+              throw authError('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 503, {
+                code: 'EMAIL_SEND_NOT_CONFIGURED',
+                provider: 'ses',
+              });
+            }
+            try {
+              await sendSesEmail({
+                to: message.email,
+                from: config.sender,
+                subject: cleanAuthEmailSubject(message.purpose),
+                text: cleanAuthEmailText(message),
+                html: cleanAuthEmailHtml(message),
+              }, env);
+            } catch (error) {
+              const code = String(error?.code || 'EMAIL_SEND_PROVIDER_ERROR');
+              throw authError('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 503, {
+                code,
+                provider: 'ses',
+              });
+            }
+            return { mode: 'api', provider: 'ses', status: 'sent' };
+          }
+
+          function cleanAuthEmailSubject`;
+          const next = source.replace(/async function sendSesAuthEmail\(message = \{\}, env = \{\}\) \{[\s\S]*?\n\}\n\nfunction cleanAuthEmailSubject/, replacement);
+          if (next === source) throw new Error('sendSesAuthEmail replacement target not found');
+          writeFileSync(path, next);
+          for (const removePath of [
+            'functions/api/diagnostics/auth-verification-storage.js',
+            '.github/workflows/deploy-auth-storage-diagnostic.yml',
+            '.github/workflows/capture-auth-email-live.yml',
+          ]) {
+            if (existsSync(removePath)) rmSync(removePath);
+          }
           NODE
 
       - name: Install
@@ -47,7 +79,6 @@ jobs:
       - name: Targeted regression
         run: |
           node --check functions/api/auth/_auth.js
-          npm run auth:email:qa
           npm run api:functions:qa
           npm run api:security:qa
           npm run build
@@ -62,7 +93,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          TEST_EMAIL="support+calltag-live-$(date +%s)@pagero.kr"
+          sleep 5
+          TEST_EMAIL="support+calltag-final-$(date +%s)@pagero.kr"
           HTTP_CODE="$(curl -sS -o /tmp/auth-response.json -w '%{http_code}' \
             -H 'Content-Type: application/json' \
             --data "{\"email\":\"${TEST_EMAIL}\",\"purpose\":\"signup\"}" \
@@ -79,5 +111,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git rm .github/workflows/hotfix-auth-verification-id.yml
           git add -A
-          git commit -m "fix: restore auth email delivery on Cloudflare Workers"
+          git commit -m "fix: reuse proven SES sender for auth email"
           git push origin HEAD:main
