@@ -1,0 +1,67 @@
+name: Diagnose SES network exception safely
+
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/diagnose-ses-network.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Add temporary safe SES diagnostic
+        shell: bash
+        run: |
+          mkdir -p functions/api/diagnostics
+          cat > functions/api/diagnostics/ses-network.js <<'EOF'
+          import { sendSesEmail } from '../_ses.js';
+          export async function onRequest({ env }) {
+            try {
+              const result = await sendSesEmail({
+                to: `support+ses-diag-${Date.now()}@pagero.kr`,
+                subject: 'SES diagnostic', text: 'SES diagnostic', html: '<p>SES diagnostic</p>',
+              }, env);
+              return Response.json({ ok: true, result: { provider: result.provider, hasMessageId: !!result.messageId } });
+            } catch (error) {
+              return Response.json({ ok: false, error: {
+                name: String(error?.name || ''), code: String(error?.code || ''),
+                message: String(error?.message || '').slice(0,500),
+                causeName: String(error?.cause?.name || ''), causeMessage: String(error?.cause?.message || '').slice(0,500),
+              }});
+            }
+          }
+          EOF
+      - name: Remove abort signal in diagnostic build
+        run: sed -i "/signal: AbortSignal.timeout(10000),/d" functions/api/_ses.js
+      - name: Deploy diagnostic build
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npm run deploy:pages
+      - name: Capture safe result
+        shell: bash
+        run: |
+          sleep 5
+          curl -sS https://pagero.kr/api/diagnostics/ses-network > /tmp/result.json
+          mkdir -p .diagnostics
+          cp /tmp/result.json .diagnostics/ses-network-error.json
+          printf '\n' >> .diagnostics/ses-network-error.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B ses-network-result
+          git add .diagnostics/ses-network-error.json
+          git commit -m "Record safe SES network diagnostic"
+          git push --force origin HEAD:ses-network-result
