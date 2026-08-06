@@ -5,11 +5,13 @@ import { pathToFileURL } from 'node:url';
 const root = process.cwd();
 const files = {
   shared: 'functions/api/billing/_shared.js',
+  commissions: 'functions/api/billing/_commissions.js',
   readiness: 'functions/api/billing/_readiness.js',
   entitlements: 'functions/api/billing/entitlements.js',
   subscriptions: 'functions/api/billing/subscriptions.js',
   billingReadiness: 'functions/api/billing/readiness.js',
   webPrecheck: 'functions/api/billing/web/precheck.js',
+  webConfirm: 'functions/api/billing/web/confirm.js',
   verify: 'functions/api/billing/google/verify.js',
   restore: 'functions/api/billing/google/restore.js',
   referralMe: 'functions/api/referrals/me.js',
@@ -49,6 +51,15 @@ const checks = {
   'self referral is blocked': source.shared.includes("'SELF_REFERRAL'") && source.migration.includes('CHECK(referrer_owner_id != referred_owner_id)'),
   'paid conversion blocks late referral': source.shared.includes("'PAID_CONVERSION_COMPLETED'"),
   'partner revenue is server stored': source.migration.includes('partner_commissions') && source.shared.includes('commission_amount_krw'),
+  'commission rate is exactly 20 percent': source.commissions.includes('const COMMISSION_RATE_BPS = 2000'),
+  'commission amount is calculated on the server': source.commissions.includes('Math.floor(baseAmountKrw * COMMISSION_RATE_BPS / 10000)'),
+  'commission uses one shared owner ledger': source.commissions.includes('referrer_owner_id') && source.commissions.includes('referred_owner_id'),
+  'commission payment reference is idempotent': source.migration.includes('UNIQUE(payment_reference)') && source.commissions.includes('INSERT OR IGNORE INTO partner_commissions'),
+  'Google Play verification records commission': source.verify.includes('recordReferralCommission') && source.verify.includes("channel: 'google_play'"),
+  'Google Play restore records commission': source.restore.includes('recordReferralCommission') && source.restore.includes("channel: 'google_play'"),
+  'web payment confirmation records commission': source.webConfirm.includes('recordReferralCommission') && source.webConfirm.includes("channel: 'web'"),
+  'web payment confirmation requires provider token': source.webConfirm.includes('apiTokenAuthorized(request, env)'),
+  'web payment confirmation blocks Play conflict': source.webConfirm.includes("'GOOGLE_PLAY_SUBSCRIPTION_ACTIVE'"),
   'CallTag products are allowlisted': ['call_monthly', 'message_monthly', 'all_monthly'].every((value) => source.shared.includes(`'${value}'`)),
   'raw Google purchase token is not stored in D1': source.migration.includes('purchase_token_hash') && !source.migration.includes('purchase_token TEXT'),
   'Google Play package is fixed': source.shared.includes("packageName !== 'kr.pagero.calltag'"),
@@ -62,6 +73,7 @@ const checks = {
   'subscription endpoint exists': source.subscriptions.includes('listSubscriptions'),
   'billing readiness endpoint exists': source.billingReadiness.includes('billingReadiness'),
   'web checkout precheck exists': source.webPrecheck.includes('checkoutDecision'),
+  'web payment confirm endpoint exists': source.webConfirm.includes('resolveEntitlement'),
   'Google verify endpoint exists': source.verify.includes('verifyGoogleSubscription'),
   'Google restore endpoint exists': source.restore.includes('restoreGoogleSubscriptions'),
   'referral identity endpoint exists': source.referralMe.includes('referralMe'),
@@ -94,6 +106,7 @@ const checks = {
   'billing screen shows Pagero and CallTag together': settingsSource.billing.includes('페이지로') && settingsSource.billing.includes('콜태그'),
   'referral screen exposes copy and apply actions': settingsSource.referral.includes('코드 복사') && settingsSource.referral.includes('추천인 코드 등록'),
   'referral screen states unified owner ledger': settingsSource.referral.includes('동일한 계정 원장으로 합산'),
+  'referral screen states twenty percent policy': settingsSource.referral.includes('20%'),
 };
 
 const failed = Object.entries(checks).filter(([, passed]) => !passed).map(([name]) => name);
