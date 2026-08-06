@@ -13,7 +13,7 @@ function safeError(error) {
   return String(error?.message || error || 'unknown error').slice(0, 500);
 }
 
-export async function onRequestPost({ env }) {
+async function runDiagnostic(env) {
   if (!env.DB?.prepare) {
     return json(503, { ok: false, code: 'D1_BINDING_MISSING' });
   }
@@ -97,6 +97,9 @@ export async function onRequestPost({ env }) {
   });
 }
 
-export async function onRequest() {
-  return json(405, { ok: false, code: 'METHOD_NOT_ALLOWED', allowed: 'POST' });
+export async function onRequest({ request, env }) {
+  if (request.method === 'GET' || request.method === 'POST') {
+    return runDiagnostic(env);
+  }
+  return json(405, { ok: false, code: 'METHOD_NOT_ALLOWED', allowed: ['GET', 'POST'] });
 }
