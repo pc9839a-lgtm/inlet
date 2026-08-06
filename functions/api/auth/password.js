@@ -2,6 +2,7 @@ import { getD1AccountByEmail, upsertD1Account } from '../../../server/storage/d1
 import { assertD1, handleApiError, jsonResponse, optionsResponse, readJson } from '../_shared.js';
 import { auditErrorMetadata, auditSubjectHash, writeAuditLog } from '../_audit.js';
 import { AUTH_METHODS, assertAccountActive, authError, authUserPublic, confirmEmailVerificationToken, isValidEmail, isValidPassword, normalizeEmail, passwordHash } from './_auth.js';
+import { withCompatibleAuthVerificationStorage } from './_verification-storage-compat.js';
 
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, AUTH_METHODS);
@@ -20,15 +21,16 @@ export async function onRequest({ request, env }) {
     const user = await getD1AccountByEmail(env.DB, email);
     if (!user) throw authError('Account was not found.', 404, { code: 'AUTH_ACCOUNT_NOT_FOUND' });
     assertAccountActive(user, 'change password');
+    const authEnv = withCompatibleAuthVerificationStorage(env);
     const verification = await confirmEmailVerificationToken({
       email,
       token,
       purpose: 'password-reset',
       consume: true,
-    }, env);
+    }, authEnv);
     const updated = await upsertD1Account(env.DB, {
       ...user,
-      passwordHash: await passwordHash(password, email, env),
+      passwordHash: await passwordHash(password, email, authEnv),
       emailVerified: true,
       updatedAt: new Date().toISOString(),
     });
