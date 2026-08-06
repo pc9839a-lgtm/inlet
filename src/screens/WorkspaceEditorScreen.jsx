@@ -15,6 +15,7 @@ import '../styles/stats-operations-final.css';
 import '../styles/stats-height-match-inbox.css';
 import '../styles/ops-header-stats-cleanup.css';
 import '../styles/inbox-blue-accent-cleanup.css';
+import '../styles/settings-operations-final.css';
 
 export default function WorkspaceEditorScreen({
   canUseBuilder,
@@ -55,9 +56,10 @@ export default function WorkspaceEditorScreen({
 }) {
   const inboxWorkspace = !mobileOperationsOnly && tab === 'inbox';
   const statsWorkspace = !mobileOperationsOnly && tab === 'stats';
+  const settingsWorkspace = !mobileOperationsOnly && tab === 'settings';
 
   return (
-    <div className={`builder-shell${canUseBuilder && startMode === 'template' && !mobileOperationsOnly ? ' template-intro-shell' : ''}${mobileOperationsOnly ? ' mobile-operations-shell' : ''}${inboxWorkspace ? ' inbox-workspace-shell' : ''}${statsWorkspace ? ' stats-dashboard-shell' : ''}`}>
+    <div className={`builder-shell${canUseBuilder && startMode === 'template' && !mobileOperationsOnly ? ' template-intro-shell' : ''}${mobileOperationsOnly ? ' mobile-operations-shell' : ''}${inboxWorkspace ? ' inbox-workspace-shell' : ''}${statsWorkspace ? ' stats-dashboard-shell' : ''}${settingsWorkspace ? ' settings-workspace-shell' : ''}`}>
 
       <WorkspaceLeftPanel
         canUseBuilder={canUseBuilder}
@@ -85,7 +87,7 @@ export default function WorkspaceEditorScreen({
         settingsPanelProps={settingsPanelProps}
       />
 
-      {!mobileOperationsOnly && !inboxWorkspace && <WorkspacePreviewPane
+      {!mobileOperationsOnly && !inboxWorkspace && !settingsWorkspace && <WorkspacePreviewPane
         page={page}
         previewUrl={previewUrl}
         previewPage={previewPage}
