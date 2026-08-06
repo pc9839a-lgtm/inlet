@@ -1,4 +1,4 @@
-name: Capture live auth email response
+name: Deploy and verify auth email hotfix
 
 on:
   push:
@@ -8,19 +8,48 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: pagero-auth-email-live-check
+  cancel-in-progress: true
+
 jobs:
-  capture:
+  verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Request live verification email through shared SES sender
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install and validate
+        run: |
+          npm ci
+          node --check functions/api/auth/_ses-delivery.js
+          node --check functions/api/auth/email-verification.js
+          npm run build
+
+      - name: Deploy latest main to Cloudflare Pages
+        run: >-
+          npx wrangler pages deploy dist
+          --project-name inlet
+          --branch main
+          --commit-hash "$GITHUB_SHA"
+          --commit-message "Auth email live verification $GITHUB_SHA"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Request a real verification email
         shell: bash
         run: |
+          sleep 8
           set +e
-          TEST_EMAIL="support+calltag-shared-$(date +%s)@pagero.kr"
+          TEST_EMAIL="support+calltag-auth-$(date +%s)@pagero.kr"
           curl -sS -D /tmp/headers.txt -o /tmp/body.json -w '%{http_code}' \
             -H 'Content-Type: application/json' \
             --data "{\"email\":\"${TEST_EMAIL}\",\"purpose\":\"signup\"}" \
@@ -28,23 +57,32 @@ jobs:
           CURL_CODE=$?
           set -e
           mkdir -p .diagnostics
-          node <<'NODE'
+          CURL_CODE="$CURL_CODE" node <<'NODE'
           import { readFileSync, writeFileSync } from 'node:fs';
-          const read = p => { try { return readFileSync(p,'utf8'); } catch { return ''; } };
+          const read = (path) => { try { return readFileSync(path, 'utf8'); } catch { return ''; } };
           let parsed = null;
           try { parsed = JSON.parse(read('/tmp/body.json')); } catch {}
           writeFileSync('.diagnostics/auth-email-live-after-hotfix.json', JSON.stringify({
             recordedAt: new Date().toISOString(),
+            sourceSha: process.env.GITHUB_SHA || '',
             httpStatus: Number(read('/tmp/status.txt').trim() || 0),
             curlCode: Number(process.env.CURL_CODE || 0),
-            response: parsed || read('/tmp/body.json').slice(0,4000)
+            response: parsed || read('/tmp/body.json').slice(0, 4000),
           }, null, 2) + '\n');
           NODE
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B auth-live-result
           git add .diagnostics/auth-email-live-after-hotfix.json
-          git commit -m "Record live auth email response through shared SES sender"
+          git commit -m "Record live auth email response after Cloudflare-safe hotfix"
           git push --force origin HEAD:auth-live-result
-        env:
-          CURL_CODE: 0
+
+      - name: Require successful verification delivery
+        shell: bash
+        run: |
+          node - <<'NODE'
+          const result = require('./.diagnostics/auth-email-live-after-hotfix.json');
+          if (result.httpStatus < 200 || result.httpStatus >= 300) process.exit(1);
+          if (!result.response?.ok) process.exit(1);
+          if (result.response?.verification?.delivery?.status !== 'sent') process.exit(1);
+          NODE
