@@ -28,6 +28,7 @@ import '../styles/seo-image-actions-final.css';
 import '../styles/operations-clipping-cleanup-final.css';
 import '../styles/stats-regression-repair-final.css';
 import '../styles/settings-seo-domain-polish-final.css';
+import '../styles/settings-finance-final.css';
 
 export default function WorkspaceEditorScreen({
   canUseBuilder,
