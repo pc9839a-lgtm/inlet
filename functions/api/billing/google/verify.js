@@ -1,5 +1,6 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse, readJson } from '../../_shared.js';
 import { CALL_METHODS, callSession } from '../../call/_shared.js';
+import { recordReferralCommission } from '../_commissions.js';
 import { assertGooglePlayBillingReady } from '../_readiness.js';
 import { verifyGoogleSubscription } from '../_shared.js';
 
@@ -17,10 +18,19 @@ export async function onRequest({ request, env }) {
     const input = await readJson(request);
     const session = await callSession(request, env, input);
     const entitlement = await verifyGoogleSubscription(env, db, session.ownerId, input);
+    const subscription = entitlement?.subscription || {};
+    const commission = await recordReferralCommission(db, {
+      referredOwnerId: session.ownerId,
+      productCode: entitlement?.productCode || input.productId,
+      paymentReference: subscription.orderId || input.orderId || subscription.externalSubscriptionId,
+      subscriptionId: subscription.id,
+      channel: 'google_play',
+      status: 'confirmed',
+    });
     entitlement.billingAvailability = {
       googlePlay: assertGooglePlayBillingReady(env),
     };
-    return jsonResponse(request, env, 200, { ok: true, entitlement }, CALL_METHODS);
+    return jsonResponse(request, env, 200, { ok: true, entitlement, commission }, CALL_METHODS);
   } catch (error) {
     return handleApiError(request, env, error, CALL_METHODS);
   }
