@@ -1,8 +1,41 @@
 import { isLeadConflictError, leadConflictMessage } from '../builder/conflictUtils.js';
 import { deleteServerLead, updateServerLead } from '../lib/leadRepository.js';
 import { isServerLeadMode } from '../config/runtimeConfig.js';
-import { normalizeLeadItem, } from '../lib/leadModel.js';
+import { normalizeLeadItem } from '../lib/leadModel.js';
 import { uid } from '../lib/pageModel.js';
+
+function leadVersion(lead = {}) {
+  return lead.updatedAt || lead.savedAt || lead.createdAt || '';
+}
+
+function comparablePatchEntries(patch = {}) {
+  return Object.entries(patch).filter(([key]) => !['history', '__expectedUpdatedAt', 'expectedUpdatedAt'].includes(key));
+}
+
+function sameValue(left, right) {
+  if (Object.is(left, right)) return true;
+  try {
+    return JSON.stringify(left) === JSON.stringify(right);
+  } catch {
+    return false;
+  }
+}
+
+function patchAlreadyApplied(latest = {}, patch = {}) {
+  const entries = comparablePatchEntries(patch);
+  return entries.length > 0 && entries.every(([key, value]) => sameValue(latest?.[key], value));
+}
+
+function mergePatchHistory(latest = {}, patch = {}) {
+  if (!Array.isArray(patch.history)) return { ...patch };
+  const merged = [...(Array.isArray(latest.history) ? latest.history : [])];
+  patch.history.forEach((entry) => {
+    const entryId = String(entry?.id || '');
+    if (entryId && merged.some((item) => String(item?.id || '') === entryId)) return;
+    merged.push(entry);
+  });
+  return { ...patch, history: merged.slice(-30) };
+}
 
 export function useLeadMutationActions({
   authUser,
@@ -17,10 +50,40 @@ export function useLeadMutationActions({
   setLeads,
   showToast,
 }) {
+  const saveAgainstLatest = async (id, patch) => {
+    const snapshot = await refreshServerLeads({ quiet: true });
+    const latest = (snapshot?.leads || []).find((lead) => String(lead.id) === String(id));
+    if (!latest) throw new Error('최신 목록에서 해당 접수 데이터를 찾지 못했습니다.');
+
+    if (patchAlreadyApplied(latest, patch)) {
+      setLeads((list) => list.map((lead) => String(lead.id) === String(id) ? normalizeLeadItem(latest) : lead));
+      setLeadConflict(null);
+      return latest;
+    }
+
+    const rebasedPatch = mergePatchHistory(latest, patch);
+    const optimistic = normalizeLeadItem({ ...latest, ...rebasedPatch });
+    setLeads((list) => list.map((lead) => String(lead.id) === String(id) ? optimistic : lead));
+
+    try {
+      const saved = await updateServerLead(id, {
+        ...rebasedPatch,
+        __expectedUpdatedAt: leadVersion(latest),
+      }, page, authUser);
+      const resolved = saved ? normalizeLeadItem(saved) : optimistic;
+      setLeads((list) => list.map((lead) => String(lead.id) === String(id) ? resolved : lead));
+      setLeadConflict(null);
+      return resolved;
+    } catch (error) {
+      setLeads((list) => list.map((lead) => String(lead.id) === String(id) ? normalizeLeadItem(latest) : lead));
+      throw error;
+    }
+  };
+
   const updateLead = (id, patch) => {
     if (blockWrite('inbox')) return;
     const previous = leads.find((lead) => lead.id === id) || null;
-    const expectedUpdatedAt = previous?.updatedAt || previous?.savedAt || previous?.createdAt || '';
+    const expectedUpdatedAt = leadVersion(previous);
     const historyEntry = previous && (
       (Object.prototype.hasOwnProperty.call(patch, 'status') && patch.status !== previous.status)
       || (Object.prototype.hasOwnProperty.call(patch, 'memo') && patch.memo !== previous.memo)
@@ -36,29 +99,41 @@ export function useLeadMutationActions({
     const patchWithHistory = historyEntry
       ? { ...patch, history: [...(previous?.history || []), historyEntry].slice(-30) }
       : patch;
+
     setLeads((list) => list.map((lead) => {
       if (lead.id !== id) return lead;
       return { ...lead, ...patchWithHistory };
     }));
-    updateServerLead(id, { ...patchWithHistory, __expectedUpdatedAt: expectedUpdatedAt }, page, authUser).catch((error) => {
+
+    updateServerLead(id, { ...patchWithHistory, __expectedUpdatedAt: expectedUpdatedAt }, page, authUser).catch(async (error) => {
       console.warn('Server lead sync failed:', error);
-      if (previous) {
-        setLeads((list) => list.map((lead) => lead.id === id ? previous : lead));
-        const conflict = isLeadConflictError(error);
-        if (conflict && isServerLeadMode()) {
-          setLeadConflict({
-            id,
-            action: 'update',
-            patch: patchWithHistory,
-            previous,
-            latest: error?.details?.latest || null,
-            message: leadConflictMessage('저장'),
-            createdAt: Date.now(),
-          });
+      if (!previous) return;
+
+      setLeads((list) => list.map((lead) => lead.id === id ? previous : lead));
+      const conflict = isLeadConflictError(error);
+      if (conflict && isServerLeadMode()) {
+        try {
+          await saveAgainstLatest(id, patchWithHistory);
+          return;
+        } catch (retryError) {
+          console.warn('Automatic lead conflict recovery failed:', retryError);
+          if (isLeadConflictError(retryError)) {
+            setLeadConflict({
+              id,
+              action: 'update',
+              patch: patchWithHistory,
+              previous,
+              latest: retryError?.details?.latest || null,
+              message: '최신 데이터 반영이 지연되고 있습니다. 다시 시도해주세요.',
+              createdAt: Date.now(),
+            });
+            return;
+          }
+          showToast(`접수 데이터 저장에 실패했습니다. ${String(retryError?.message || retryError)}`, 'error');
           return;
         }
-        showToast(conflict ? leadConflictMessage('저장') : `접수 데이터 저장에 실패했습니다. ${String(error?.message || error)}`, 'error');
       }
+      showToast(`접수 데이터 저장에 실패했습니다. ${String(error?.message || error)}`, 'error');
     });
   };
 
@@ -112,35 +187,21 @@ export function useLeadMutationActions({
       return;
     }
 
-    const snapshot = await refreshServerLeads({ quiet: true });
-    const latest = (snapshot?.leads || []).find((lead) => String(lead.id) === String(conflict.id));
-    if (!latest) {
-      showToast('최신 목록에서 해당 접수 데이터를 찾지 못했습니다. 목록을 새로고침하세요.', 'error');
-      return;
-    }
-
-    const expectedUpdatedAt = latest.updatedAt || latest.savedAt || latest.createdAt || '';
-    const nextLead = normalizeLeadItem({ ...latest, ...(conflict.patch || {}) });
-    setLeads((list) => list.map((lead) => String(lead.id) === String(conflict.id) ? nextLead : lead));
     try {
-      const saved = await updateServerLead(conflict.id, { ...(conflict.patch || {}), __expectedUpdatedAt: expectedUpdatedAt }, page, authUser);
-      if (saved) {
-        setLeads((list) => list.map((lead) => String(lead.id) === String(conflict.id) ? normalizeLeadItem(saved) : lead));
-      }
+      await saveAgainstLatest(conflict.id, conflict.patch || {});
       setLeadConflict(null);
-      showToast('내 변경을 최신 접수 데이터에 다시 적용했습니다.', 'success');
+      showToast('최신 접수 데이터에 변경사항을 반영했습니다.', 'success');
     } catch (error) {
       console.warn('Server lead conflict retry failed:', error);
       if (isLeadConflictError(error)) {
         setLeadConflict({
           ...conflict,
           latest: error?.details?.latest || null,
-          message: leadConflictMessage('저장'),
+          message: '최신 데이터 반영이 지연되고 있습니다. 다시 시도해주세요.',
           createdAt: Date.now(),
         });
-        showToast('다시 충돌했습니다. 최신 목록을 확인한 뒤 다시 시도하세요.', 'error');
+        showToast('최신 목록을 확인한 뒤 다시 시도해주세요.', 'error');
       } else {
-        setLeads((list) => list.map((lead) => String(lead.id) === String(conflict.id) ? latest : lead));
         showToast(`접수 데이터 재시도에 실패했습니다. ${String(error?.message || error)}`, 'error');
       }
     }
