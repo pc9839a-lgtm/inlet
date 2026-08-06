@@ -6,10 +6,10 @@ Uploading... (93/133)
 Uploading... (106/133)
 Uploading... (119/133)
 Uploading... (133/133)
-✨ Success! Uploaded 40 files (93 already uploaded) (1.09 sec)
+✨ Success! Uploaded 40 files (93 already uploaded) (1.86 sec)
 
 ✨ Uploading _headers
 ✨ Uploading _redirects
 ✨ Uploading Functions bundle
 🌎 Deploying...
-✨ Deployment complete! Take a peek over at https://99a12a5b.inlet-8mr.pages.dev
+✨ Deployment complete! Take a peek over at https://5a8a1fae.inlet-8mr.pages.dev
