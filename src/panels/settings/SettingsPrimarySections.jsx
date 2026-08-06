@@ -1,6 +1,8 @@
 import AccountSettingsSection from './AccountSettingsSection.jsx';
+import BillingSettingsSection from './BillingSettingsSection.jsx';
 import CustomDomainSettingsSection from './CustomDomainSettingsSection.jsx';
 import PageBasicSettingsSection from './PageBasicSettingsSection.jsx';
+import ReferralSettingsSection from './ReferralSettingsSection.jsx';
 import SettingsManagerAccessSection from './SettingsManagerAccessSection.jsx';
 import SettingsSection from './SettingsSection.jsx';
 
@@ -21,6 +23,7 @@ export default function SettingsPrimarySections({
 }) {
   const { openSection, setOpenSection } = sections;
   const { basicDraft, editSection, lockedSections, saveBasic, setBasicDraft } = drafts;
+  const ownerFinanceAccess = canManageProjectUsers && !clientAdminMode;
 
   return (
     <>
@@ -50,6 +53,22 @@ export default function SettingsPrimarySections({
           openSection={openSection}
           setOpenSection={setOpenSection}
           updateIntegrations={updateIntegrations}
+        />
+      )}
+
+      {activeSection === 'billing' && ownerFinanceAccess && (
+        <BillingSettingsSection
+          authUser={authUser}
+          openSection={openSection}
+          setOpenSection={setOpenSection}
+        />
+      )}
+
+      {activeSection === 'referral' && ownerFinanceAccess && (
+        <ReferralSettingsSection
+          authUser={authUser}
+          openSection={openSection}
+          setOpenSection={setOpenSection}
         />
       )}
 
