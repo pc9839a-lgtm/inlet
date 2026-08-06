@@ -1,0 +1,46 @@
+name: Validate auth hotfix syntax
+
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/check-auth-hotfix.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check JavaScript syntax and record result
+        shell: bash
+        run: |
+          set +e
+          node --check functions/api/auth/_ses-delivery.js > /tmp/ses.txt 2>&1
+          SES_CODE=$?
+          node --check functions/api/auth/email-verification.js > /tmp/route.txt 2>&1
+          ROUTE_CODE=$?
+          set -e
+          mkdir -p .diagnostics
+          SES_CODE="$SES_CODE" ROUTE_CODE="$ROUTE_CODE" node <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
+          const read = (path) => { try { return readFileSync(path, 'utf8').slice(0, 4000); } catch { return ''; } };
+          writeFileSync('.diagnostics/auth-code-check.json', JSON.stringify({
+            recordedAt: new Date().toISOString(),
+            sourceSha: process.env.GITHUB_SHA || '',
+            sesCode: Number(process.env.SES_CODE || 0),
+            routeCode: Number(process.env.ROUTE_CODE || 0),
+            sesOutput: read('/tmp/ses.txt'),
+            routeOutput: read('/tmp/route.txt'),
+          }, null, 2) + '\n');
+          NODE
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B auth-code-check-result
+          git add .diagnostics/auth-code-check.json
+          git commit -m "Record auth hotfix syntax check"
+          git push --force origin HEAD:auth-code-check-result
