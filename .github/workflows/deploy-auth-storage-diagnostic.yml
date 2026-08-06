@@ -1,4 +1,4 @@
-name: Deploy and capture exact auth storage diagnostic
+name: Capture exact auth result from production domain
 
 on:
   push:
@@ -14,34 +14,18 @@ permissions:
 jobs:
   capture-production:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    environment: production
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-
-      - name: Install
-        run: npm ci
-
-      - name: Deploy and capture
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Capture exact live result
         shell: bash
         run: |
           set -euo pipefail
-          npm run deploy:pages 2>&1 | tee /tmp/deploy.log
-          DEPLOYMENT_URL="$(grep -Eo 'https://[a-z0-9.-]+\.pages\.dev' /tmp/deploy.log | tail -1)"
-          test -n "$DEPLOYMENT_URL"
-          curl -sS "$DEPLOYMENT_URL/api/diagnostics/auth-verification-storage" > /tmp/result.json
+          curl -sS https://pagero.kr/api/diagnostics/auth-verification-storage > /tmp/result.json
           mkdir -p .diagnostics
           cp /tmp/result.json .diagnostics/auth-email-verification-exact-shape.json
           printf '\n' >> .diagnostics/auth-email-verification-exact-shape.json
