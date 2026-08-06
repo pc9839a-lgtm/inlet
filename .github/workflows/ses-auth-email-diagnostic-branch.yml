@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - feat/calltag-secure-sync-foundation-20260805
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
