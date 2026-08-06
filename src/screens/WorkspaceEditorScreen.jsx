@@ -21,6 +21,7 @@ import '../styles/settings-premium-final.css';
 import '../styles/settings-monochrome-alignment-final.css';
 import '../styles/operations-workspaces-unified.css';
 import '../styles/operations-overflow-final.css';
+import '../styles/settings-layout-containment-final.css';
 
 export default function WorkspaceEditorScreen({
   canUseBuilder,
