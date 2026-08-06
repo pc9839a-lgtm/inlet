@@ -12,6 +12,7 @@ import {
   normalizeEmail,
   passwordHash,
 } from '../_auth.js';
+import { withCompatibleAuthVerificationStorage } from '../_verification-storage-compat.js';
 
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, AUTH_METHODS);
@@ -24,7 +25,8 @@ export async function onRequest({ request, env }) {
   try {
     assertD1(env);
     input = await readJson(request);
-    const session = await getSessionAccount(request, env, input);
+    const authEnv = withCompatibleAuthVerificationStorage(env);
+    const session = await getSessionAccount(request, authEnv, input);
     currentUser = session.user;
 
     const previousEmail = normalizeEmail(currentUser.email || '');
@@ -51,7 +53,7 @@ export async function onRequest({ request, env }) {
       if (!currentPassword) {
         throw authError('Current password is required.', 400, { code: 'AUTH_CURRENT_PASSWORD_REQUIRED' });
       }
-      const currentHash = await passwordHash(currentPassword, previousEmail, env);
+      const currentHash = await passwordHash(currentPassword, previousEmail, authEnv);
       if (currentHash !== currentUser.passwordHash) {
         throw authError('Current password is invalid.', 403, { code: 'AUTH_CURRENT_PASSWORD_INVALID' });
       }
@@ -62,14 +64,14 @@ export async function onRequest({ request, env }) {
       token,
       purpose: 'email-change',
       consume: true,
-    }, env);
+    }, authEnv);
 
     const updatedAt = new Date().toISOString();
     const updated = await upsertD1Account(env.DB, {
       ...currentUser,
       email: nextEmail,
       passwordHash: currentUser.passwordHash
-        ? await passwordHash(currentPassword, nextEmail, env)
+        ? await passwordHash(currentPassword, nextEmail, authEnv)
         : '',
       emailVerified: true,
       emailVerifiedAt: verification.confirmedAt || updatedAt,
@@ -81,7 +83,7 @@ export async function onRequest({ request, env }) {
       projectId: String(input.projectId || session.payload.projectId || ''),
       role: session.payload.role || 'master',
       email: publicUser.email,
-    }, env);
+    }, authEnv);
 
     await writeAuditLog({
       request,
