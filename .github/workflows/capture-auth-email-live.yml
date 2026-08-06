@@ -1,9 +1,8 @@
 name: Deploy and verify auth email hotfix
 
 on:
-  push:
-    branches: [main]
-    paths: [.github/workflows/capture-auth-email-live.yml]
+  pull_request_target:
+    types: [opened, reopened, synchronize]
 
 permissions:
   contents: write
@@ -14,11 +13,14 @@ concurrency:
 
 jobs:
   verify:
+    if: startsWith(github.event.pull_request.head.ref, 'ops/auth-email-deploy-') && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout trusted main branch
+        uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
 
       - uses: actions/setup-node@v4
@@ -38,18 +40,18 @@ jobs:
           npx wrangler pages deploy dist
           --project-name inlet
           --branch main
-          --commit-hash "$GITHUB_SHA"
-          --commit-message "Auth email live verification $GITHUB_SHA"
+          --commit-hash "$(git rev-parse HEAD)"
+          --commit-message "Pagero and CallTag auth email hotfix"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      - name: Request a real verification email
+      - name: Request real verification email to reported address
         shell: bash
         run: |
-          sleep 8
+          sleep 10
           set +e
-          TEST_EMAIL="support+calltag-auth-$(date +%s)@pagero.kr"
+          TEST_EMAIL="pc9839a@naver.com"
           curl -sS -D /tmp/headers.txt -o /tmp/body.json -w '%{http_code}' \
             -H 'Content-Type: application/json' \
             --data "{\"email\":\"${TEST_EMAIL}\",\"purpose\":\"signup\"}" \
@@ -65,6 +67,7 @@ jobs:
           writeFileSync('.diagnostics/auth-email-live-after-hotfix.json', JSON.stringify({
             recordedAt: new Date().toISOString(),
             sourceSha: process.env.GITHUB_SHA || '',
+            testDomain: 'naver.com',
             httpStatus: Number(read('/tmp/status.txt').trim() || 0),
             curlCode: Number(process.env.CURL_CODE || 0),
             response: parsed || read('/tmp/body.json').slice(0, 4000),
@@ -74,7 +77,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B auth-live-result
           git add .diagnostics/auth-email-live-after-hotfix.json
-          git commit -m "Record live auth email response after Cloudflare-safe hotfix"
+          git commit -m "Record live Pagero and CallTag auth email response"
           git push --force origin HEAD:auth-live-result
 
       - name: Require successful verification delivery
