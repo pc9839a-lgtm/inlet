@@ -1,0 +1,207 @@
+/* Statistics period controls live in a full-width top bar. */
+html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel {
+  grid-template-columns: 220px minmax(0, 1fr) 390px !important;
+  grid-template-rows: auto auto auto auto !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel::before,
+html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel::after {
+  top: 68px !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-period-card {
+  grid-column: 1 / -1 !important;
+  grid-row: 1 !important;
+  min-height: 68px !important;
+  padding: 12px 18px !important;
+  border: 0 !important;
+  border-bottom: 1px solid #e7ebf1 !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 18px !important;
+  box-sizing: border-box !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-period-card .section-title {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-period-card .section-title h2 {
+  font-size: 15px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-period-controls {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-range-tabs {
+  width: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-range-tabs button {
+  width: auto !important;
+  min-width: 64px !important;
+  min-height: 40px !important;
+  padding: 0 14px !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-month-control {
+  flex: 0 0 168px !important;
+  width: 168px !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-month-control input {
+  width: 100% !important;
+  min-height: 40px !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-channel-filter {
+  grid-column: 1 !important;
+  grid-row: 2 / 5 !important;
+  min-height: 0 !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-summary-v3 {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-trend-card {
+  grid-column: 2 !important;
+  grid-row: 3 !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-funnel-card {
+  grid-column: 2 !important;
+  grid-row: 4 !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-columns-v3:not(.stats-columns-four) {
+  grid-column: 3 !important;
+  grid-row: 2 !important;
+}
+
+html body #root .builder-shell.stats-dashboard-shell .stats-columns-four {
+  grid-column: 3 !important;
+  grid-row: 3 / 5 !important;
+}
+
+@media (max-width: 1320px) {
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel {
+    grid-template-columns: 210px minmax(0, 1fr) 320px !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel::before {
+    left: 210px !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel::after {
+    right: 320px !important;
+  }
+}
+
+@media (max-width: 1240px) {
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel {
+    grid-template-columns: 210px minmax(0, 1fr) !important;
+    grid-template-rows: auto auto auto auto auto auto !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel::after {
+    display: none !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-columns-v3:not(.stats-columns-four) {
+    grid-column: 2 !important;
+    grid-row: 5 !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-columns-four {
+    grid-column: 2 !important;
+    grid-row: 6 !important;
+  }
+}
+
+@media (max-width: 900px) {
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: repeat(7, auto) !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel::before,
+  html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel::after {
+    display: none !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-period-card {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    align-items: flex-start !important;
+    flex-direction: column !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-period-controls {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-range-tabs {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-range-tabs button {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-month-control {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-channel-filter {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-summary-v3 {
+    grid-column: 1 !important;
+    grid-row: 3 !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-trend-card {
+    grid-column: 1 !important;
+    grid-row: 4 !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-funnel-card {
+    grid-column: 1 !important;
+    grid-row: 5 !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-columns-v3:not(.stats-columns-four) {
+    grid-column: 1 !important;
+    grid-row: 6 !important;
+  }
+
+  html body #root .builder-shell.stats-dashboard-shell .stats-columns-four {
+    grid-column: 1 !important;
+    grid-row: 7 !important;
+  }
+}
