@@ -1,0 +1,403 @@
+/* Final settings ownership: compact SEO media and a usable custom-domain panel. */
+
+/* --------------------------------------------------------------------------
+   SEO — compact, aligned, no dead columns
+   -------------------------------------------------------------------------- */
+html body #root .builder-shell.settings-workspace-shell .settings-seo-layout {
+  width: 100% !important;
+  max-width: 1180px !important;
+  margin: 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block {
+  width: 100% !important;
+  max-width: 1180px !important;
+  grid-template-columns: 150px minmax(0, 1fr) !important;
+  column-gap: 28px !important;
+  padding: 24px 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block > header {
+  width: 150px !important;
+  min-width: 150px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-copy-grid,
+html body #root .builder-shell.settings-workspace-shell .settings-seo-verification-grid {
+  width: 100% !important;
+  max-width: 920px !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  justify-content: start !important;
+  gap: 16px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-media-grid {
+  width: 100% !important;
+  max-width: 920px !important;
+  display: grid !important;
+  grid-template-columns: 132px minmax(360px, 720px) !important;
+  justify-content: start !important;
+  align-items: start !important;
+  gap: 24px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-favicon,
+html body #root .builder-shell.settings-workspace-shell .settings-seo-share {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-media .image-input > span {
+  min-height: 18px !important;
+  margin: 0 0 8px !important;
+  color: #111827 !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-favicon .image-box {
+  width: 112px !important;
+  min-width: 112px !important;
+  max-width: 112px !important;
+  height: 112px !important;
+  min-height: 112px !important;
+  max-height: 112px !important;
+  overflow: hidden !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-share .image-box {
+  width: 100% !important;
+  max-width: 720px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  aspect-ratio: 1200 / 630 !important;
+  overflow: hidden !important;
+  border: 1px solid #d8dde5 !important;
+  border-radius: 8px !important;
+  background: #f4f5f7 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-media .image-box img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  background: #f4f5f7 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-media .image-box.has-image .image-actions {
+  top: 8px !important;
+  right: 8px !important;
+  bottom: auto !important;
+  padding: 4px !important;
+  border: 1px solid rgba(17, 24, 39, .13) !important;
+  border-radius: 7px !important;
+  background: rgba(255, 255, 255, .96) !important;
+  box-shadow: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-media .image-box.has-image .image-actions button {
+  min-width: 42px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  padding: 0 8px !important;
+  border-radius: 5px !important;
+  font-size: 11px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-favicon .image-box.has-image .image-actions {
+  top: 4px !important;
+  right: 4px !important;
+  gap: 2px !important;
+  padding: 2px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-favicon .image-box.has-image .image-actions button {
+  min-width: 34px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  padding: 0 5px !important;
+  font-size: 10px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-media :is(.image-storage-note,.settings-field-hint) {
+  width: 100% !important;
+  max-width: 720px !important;
+  margin-top: 7px !important;
+  color: #6b7280 !important;
+  line-height: 1.4 !important;
+  overflow-wrap: anywhere !important;
+}
+
+/* --------------------------------------------------------------------------
+   CUSTOM DOMAIN — one task, visible DNS values, no decorative card stack
+   -------------------------------------------------------------------------- */
+html body #root .builder-shell.settings-workspace-shell .custom-domain-settings {
+  width: 100% !important;
+  max-width: 980px !important;
+  display: grid !important;
+  gap: 0 !important;
+  border-top: 1px solid #dfe3e8 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-settings > section {
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 24px 0 !important;
+  border-bottom: 1px solid #dfe3e8 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-entry > header,
+html body #root .builder-shell.settings-workspace-shell .custom-domain-dns > header {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  margin-bottom: 18px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-entry > header {
+  justify-content: flex-start !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-entry > header > div,
+html body #root .builder-shell.settings-workspace-shell .custom-domain-dns > header > div {
+  display: grid !important;
+  gap: 4px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-settings header strong {
+  color: #111827 !important;
+  font-size: 15px !important;
+  line-height: 1.3 !important;
+  font-weight: 850 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-settings header small {
+  color: #6b7280 !important;
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+  font-weight: 500 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-field {
+  width: 100% !important;
+  display: grid !important;
+  gap: 8px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-field > span {
+  color: #374151 !important;
+  font-size: 12px !important;
+  font-weight: 750 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-field > div {
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto auto !important;
+  gap: 8px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-field input {
+  width: 100% !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  padding: 0 13px !important;
+  border: 1px solid #cfd5dd !important;
+  border-radius: 7px !important;
+  background: #fff !important;
+  color: #111827 !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-field button,
+html body #root .builder-shell.settings-workspace-shell .custom-domain-dns button {
+  width: auto !important;
+  min-width: 0 !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  padding: 0 14px !important;
+  border: 1px solid #cfd5dd !important;
+  border-radius: 7px !important;
+  background: #fff !important;
+  color: #111827 !important;
+  box-shadow: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-field .custom-domain-primary {
+  border-color: #111827 !important;
+  background: #111827 !important;
+  color: #fff !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-field .custom-domain-remove {
+  color: #9f1d16 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-status {
+  width: fit-content !important;
+  max-width: 100% !important;
+  margin-top: 14px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  color: #6b7280 !important;
+  font-size: 12px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-status > span {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: #9ca3af !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-status.is-pending > span {
+  background: #111827 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-status strong {
+  color: #374151 !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-status small {
+  color: #6b7280 !important;
+  overflow-wrap: anywhere !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-copy-all {
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 11px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-dns-table {
+  width: 100% !important;
+  overflow: hidden !important;
+  border: 1px solid #d8dde5 !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-dns-table > div {
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: 120px minmax(160px, .65fr) minmax(260px, 1fr) !important;
+  align-items: center !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-dns-table > div:first-child {
+  min-height: 38px !important;
+  background: #f5f6f8 !important;
+  border-bottom: 1px solid #d8dde5 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-dns-table > div:last-child {
+  min-height: 54px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-dns-table :is(span,strong,code) {
+  min-width: 0 !important;
+  padding: 0 14px !important;
+  color: #374151 !important;
+  font-size: 12px !important;
+  overflow-wrap: anywhere !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-dns-table code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+  color: #111827 !important;
+  font-weight: 750 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-dns-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  margin-top: 10px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-dns-actions button {
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 11px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-note {
+  margin: 14px 0 0 !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 7px !important;
+  color: #6b7280 !important;
+  font-size: 12px !important;
+  line-height: 1.55 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-note svg {
+  flex: 0 0 auto !important;
+  margin-top: 2px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .custom-domain-notice {
+  margin: 14px 0 0 !important;
+  padding: 11px 13px !important;
+  border: 1px solid #d8dde5 !important;
+  border-radius: 7px !important;
+  background: #f7f8fa !important;
+  color: #374151 !important;
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+}
+
+@media (max-width: 1080px) {
+  html body #root .builder-shell.settings-workspace-shell .settings-seo-block {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-seo-block > header {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+}
+
+@media (max-width: 760px) {
+  html body #root .builder-shell.settings-workspace-shell .settings-seo-copy-grid,
+  html body #root .builder-shell.settings-workspace-shell .settings-seo-verification-grid,
+  html body #root .builder-shell.settings-workspace-shell .settings-seo-media-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-seo-share .image-box {
+    max-width: 100% !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .custom-domain-field > div {
+    grid-template-columns: 1fr !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .custom-domain-field button {
+    width: 100% !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .custom-domain-dns-table {
+    overflow-x: auto !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .custom-domain-dns-table > div {
+    min-width: 620px !important;
+  }
+}
