@@ -56,9 +56,7 @@ jobs:
           RESPONSE="$(cat /tmp/auth-response.json)"
           echo "http_code=$HTTP_CODE" >> "$GITHUB_OUTPUT"
           echo "response_b64=$(printf '%s' "$RESPONSE" | base64 -w0)" >> "$GITHUB_OUTPUT"
-          node -e "const r=require('/tmp/auth-response.json'); if(Number(process.env.HTTP_CODE)<200||Number(process.env.HTTP_CODE)>=300||!r.ok||r.verification?.delivery?.status!=='sent') process.exit(1)" 
-        env:
-          HTTP_CODE: ${{ steps.verify.outputs.http_code }}
+          HTTP_CODE="$HTTP_CODE" node -e "const r=require('/tmp/auth-response.json'); if(Number(process.env.HTTP_CODE)<200||Number(process.env.HTTP_CODE)>=300||!r.ok||r.verification?.delivery?.status!=='sent') process.exit(1)"
 
       - name: Comment success
         if: success()
