@@ -455,7 +455,7 @@ async function storeEmailVerificationCode(db, record = {}, env = {}) {
   try {
     await db.prepare(`
       UPDATE auth_email_verifications
-      SET status = 'superseded'
+      SET status = 'expired'
       WHERE email = ? AND purpose = ? AND status IN ('pending', 'confirmed')
     `).bind(record.email, record.purpose).run();
     await db.prepare(`
@@ -489,7 +489,7 @@ async function confirmStoredEmailVerificationCode(db, input = {}, env = {}) {
   const rows = await db.prepare(`
     SELECT id, email, purpose, code_hash, status, attempts, expires_at, confirmed_at
     FROM auth_email_verifications
-    WHERE email = ? AND purpose = ? AND status IN ('pending', 'confirmed', 'consumed')
+    WHERE email = ? AND purpose = ? AND status IN ('pending', 'confirmed', 'blocked')
     ORDER BY created_at DESC
     LIMIT 5
   `).bind(input.email, input.purpose).all();
@@ -497,27 +497,30 @@ async function confirmStoredEmailVerificationCode(db, input = {}, env = {}) {
   const now = Date.now();
   for (const record of records) {
     if (Date.parse(record.expires_at || '') <= now) {
-      if (String(record.status || '') !== 'consumed') {
+      if (String(record.status || '') !== 'blocked') {
         await db.prepare("UPDATE auth_email_verifications SET status = 'expired' WHERE id = ? AND status IN ('pending', 'confirmed')").bind(record.id).run();
       }
       continue;
     }
-    if (Number(record.attempts || 0) >= 5 && String(record.status || '') !== 'consumed') {
+    if (Number(record.attempts || 0) >= 5 && String(record.status || '') !== 'blocked') {
       await db.prepare("UPDATE auth_email_verifications SET status = 'blocked' WHERE id = ? AND status IN ('pending', 'confirmed')").bind(record.id).run();
       continue;
     }
     const expected = await hmacHex(`${input.email}:${input.purpose}:${input.code}`, authSecret(env));
     if (expected === record.code_hash) {
-      if (String(record.status || '') === 'consumed') {
+      if (String(record.status || '') === 'blocked') {
+      if (record.confirmed_at) {
         throw authError('Email verification token was already used.', 409, {
           code: 'EMAIL_VERIFICATION_ALREADY_USED',
         });
       }
+      continue;
+    }
       const confirmedAt = record.confirmed_at || new Date().toISOString();
       if (input.consume === true) {
         const result = await db.prepare(`
           UPDATE auth_email_verifications
-          SET status = 'consumed', confirmed_at = COALESCE(confirmed_at, ?)
+          SET status = 'blocked', confirmed_at = COALESCE(confirmed_at, ?)
           WHERE id = ? AND email = ? AND purpose = ? AND status IN ('pending', 'confirmed')
         `).bind(confirmedAt, record.id, input.email, input.purpose).run();
         const changes = Number(result?.meta?.changes ?? result?.changes ?? 0);
@@ -550,7 +553,7 @@ async function confirmStoredEmailVerificationCode(db, input = {}, env = {}) {
         delivery: { mode: 'api', status: 'confirmed' },
       };
     }
-    if (String(record.status || '') !== 'consumed') {
+    if (String(record.status || '') !== 'blocked') {
       await db.prepare(`
         UPDATE auth_email_verifications
         SET attempts = attempts + 1
