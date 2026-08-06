@@ -36,56 +36,93 @@ jobs:
           npm run build
 
       - name: Deploy latest main to Cloudflare Pages
-        run: >-
-          npx wrangler pages deploy dist
-          --project-name inlet
-          --branch main
-          --commit-hash "$(git rev-parse HEAD)"
-          --commit-message "Pagero and CallTag auth email hotfix"
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-
-      - name: Request real verification email to reported address
+        id: deploy
         shell: bash
         run: |
-          sleep 10
-          set +e
-          TEST_EMAIL="pc9839a@naver.com"
-          curl -sS -D /tmp/headers.txt -o /tmp/body.json -w '%{http_code}' \
-            -H 'Content-Type: application/json' \
-            --data "{\"email\":\"${TEST_EMAIL}\",\"purpose\":\"signup\"}" \
-            https://pagero.kr/api/auth/email-verification > /tmp/status.txt
-          CURL_CODE=$?
-          set -e
+          set -o pipefail
+          npx wrangler pages deploy dist \
+            --project-name inlet \
+            --branch main \
+            --commit-hash "$(git rev-parse HEAD)" \
+            --commit-message "Pagero and CallTag auth email hotfix" \
+            2>&1 | tee /tmp/pages-deploy.log
+          DEPLOY_URL="$(grep -Eo 'https://[a-z0-9-]+\.inlet-8mr\.pages\.dev' /tmp/pages-deploy.log | tail -n 1)"
+          test -n "$DEPLOY_URL"
+          echo "deploy_url=$DEPLOY_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Verify exact deployment and propagated custom domain
+        id: live
+        shell: bash
+        env:
+          DEPLOY_URL: ${{ steps.deploy.outputs.deploy_url }}
+        run: |
+          set -euo pipefail
           mkdir -p .diagnostics
-          CURL_CODE="$CURL_CODE" node <<'NODE'
+
+          request_verification() {
+            local base="$1"
+            local email="$2"
+            local output="$3"
+            local status
+            status="$(curl -sS --max-time 40 -o "$output" -w '%{http_code}' \
+              -H 'Content-Type: application/json' \
+              --data "{\"email\":\"${email}\",\"purpose\":\"signup\"}" \
+              "${base}/api/auth/email-verification" || true)"
+            printf '%s' "$status"
+          }
+
+          sleep 8
+          EXACT_EMAIL="support+auth-exact-$(date +%s)@pagero.kr"
+          EXACT_STATUS="$(request_verification "$DEPLOY_URL" "$EXACT_EMAIL" /tmp/exact.json)"
+
+          CUSTOM_STATUS=0
+          CUSTOM_ATTEMPTS=0
+          : > /tmp/custom.json
+          for attempt in 1 2 3 4 5 6 7 8; do
+            CUSTOM_ATTEMPTS="$attempt"
+            CUSTOM_EMAIL="support+auth-propagation-${attempt}-$(date +%s)@pagero.kr"
+            CUSTOM_STATUS="$(request_verification 'https://pagero.kr' "$CUSTOM_EMAIL" /tmp/custom.json)"
+            if [ "$CUSTOM_STATUS" -ge 200 ] 2>/dev/null && [ "$CUSTOM_STATUS" -lt 300 ] 2>/dev/null; then
+              if node -e "const r=require('/tmp/custom.json'); process.exit(r?.ok && r?.verification?.delivery?.status === 'sent' ? 0 : 1)"; then
+                break
+              fi
+            fi
+            sleep 15
+          done
+
+          USER_STATUS=0
+          : > /tmp/user.json
+          if [ "$CUSTOM_STATUS" -ge 200 ] 2>/dev/null && [ "$CUSTOM_STATUS" -lt 300 ] 2>/dev/null; then
+            USER_STATUS="$(request_verification 'https://pagero.kr' 'pc9839a@naver.com' /tmp/user.json)"
+          fi
+
+          EXACT_STATUS="$EXACT_STATUS" CUSTOM_STATUS="$CUSTOM_STATUS" USER_STATUS="$USER_STATUS" CUSTOM_ATTEMPTS="$CUSTOM_ATTEMPTS" node <<'NODE'
           import { readFileSync, writeFileSync } from 'node:fs';
-          const read = (path) => { try { return readFileSync(path, 'utf8'); } catch { return ''; } };
-          let parsed = null;
-          try { parsed = JSON.parse(read('/tmp/body.json')); } catch {}
-          writeFileSync('.diagnostics/auth-email-live-after-hotfix.json', JSON.stringify({
+          const readJson = (path) => {
+            try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
+          };
+          const result = {
             recordedAt: new Date().toISOString(),
             sourceSha: process.env.GITHUB_SHA || '',
-            testDomain: 'naver.com',
-            httpStatus: Number(read('/tmp/status.txt').trim() || 0),
-            curlCode: Number(process.env.CURL_CODE || 0),
-            response: parsed || read('/tmp/body.json').slice(0, 4000),
-          }, null, 2) + '\n');
+            deploymentUrl: process.env.DEPLOY_URL || '',
+            exact: { httpStatus: Number(process.env.EXACT_STATUS || 0), response: readJson('/tmp/exact.json') },
+            custom: { httpStatus: Number(process.env.CUSTOM_STATUS || 0), attempts: Number(process.env.CUSTOM_ATTEMPTS || 0), response: readJson('/tmp/custom.json') },
+            reportedAddress: { httpStatus: Number(process.env.USER_STATUS || 0), response: readJson('/tmp/user.json') },
+          };
+          writeFileSync('.diagnostics/auth-email-live-after-hotfix.json', JSON.stringify(result, null, 2) + '\n');
+          const exactOk = result.exact.httpStatus >= 200 && result.exact.httpStatus < 300 && result.exact.response?.ok === true && result.exact.response?.verification?.delivery?.status === 'sent';
+          const customOk = result.custom.httpStatus >= 200 && result.custom.httpStatus < 300 && result.custom.response?.ok === true && result.custom.response?.verification?.delivery?.status === 'sent';
+          const userOk = result.reportedAddress.httpStatus >= 200 && result.reportedAddress.httpStatus < 300 && result.reportedAddress.response?.ok === true && result.reportedAddress.response?.verification?.delivery?.status === 'sent';
+          if (!exactOk || !customOk || !userOk) process.exit(1);
           NODE
+
+      - name: Record live result
+        if: always()
+        shell: bash
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B auth-live-result
           git add .diagnostics/auth-email-live-after-hotfix.json
-          git commit -m "Record live Pagero and CallTag auth email response"
+          git commit -m "Record exact and custom-domain auth email verification" || exit 0
           git push --force origin HEAD:auth-live-result
-
-      - name: Require successful verification delivery
-        shell: bash
-        run: |
-          node - <<'NODE'
-          const result = require('./.diagnostics/auth-email-live-after-hotfix.json');
-          if (result.httpStatus < 200 || result.httpStatus >= 300) process.exit(1);
-          if (!result.response?.ok) process.exit(1);
-          if (result.response?.verification?.delivery?.status !== 'sent') process.exit(1);
-          NODE
