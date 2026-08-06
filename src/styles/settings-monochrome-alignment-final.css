@@ -1,0 +1,362 @@
+/* Settings final visual owner: neutral palette, strict alignment, no clipped labels. */
+html body #root .builder-shell.settings-workspace-shell {
+  --settings-ink: #15171a;
+  --settings-text: #2f3338;
+  --settings-muted: #737a84;
+  --settings-line: #dfe3e8;
+  --settings-soft: #f5f6f7;
+  --settings-panel: #ffffff;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-main {
+  overflow: visible !important;
+  padding: 28px 32px 44px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-single-section {
+  width: 100% !important;
+  max-width: none !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-main-head {
+  align-items: center !important;
+  margin: 0 0 22px !important;
+  padding: 0 0 18px !important;
+  border-bottom: 1px solid var(--settings-line) !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-main-head small {
+  display: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-main-head h2 {
+  color: var(--settings-ink) !important;
+  font-size: 25px !important;
+  line-height: 1.2 !important;
+  font-weight: 750 !important;
+  letter-spacing: -.35px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-main-head > span {
+  color: var(--settings-muted) !important;
+  font-size: 12px !important;
+  font-weight: 650 !important;
+}
+
+/* Left navigation: monochrome and aligned. */
+html body #root .builder-shell.settings-workspace-shell .settings-ops-sidebar {
+  padding: 28px 20px 30px !important;
+  background: #fafafa !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-sidebar-title {
+  margin: 0 8px 24px !important;
+  gap: 5px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-sidebar-title strong {
+  color: var(--settings-ink) !important;
+  font-size: 20px !important;
+  font-weight: 750 !important;
+  letter-spacing: -.3px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-sidebar-title span,
+html body #root .builder-shell.settings-workspace-shell .settings-ops-nav > small {
+  color: var(--settings-muted) !important;
+  font-weight: 650 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-nav {
+  gap: 3px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-nav.advanced {
+  margin-top: 20px !important;
+  padding-top: 18px !important;
+  border-color: var(--settings-line) !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-nav-item {
+  min-height: 43px !important;
+  padding: 0 13px !important;
+  border-radius: 7px !important;
+  color: #505761 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-nav-item:hover {
+  color: var(--settings-ink) !important;
+  background: #f0f1f2 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-nav-item.active {
+  color: var(--settings-ink) !important;
+  background: #eceeef !important;
+  box-shadow: inset 3px 0 0 var(--settings-ink) !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-nav-item span {
+  color: inherit !important;
+  font-size: 13px !important;
+  font-weight: 650 !important;
+}
+
+/* Account task tabs: text tabs, never clipped. */
+html body #root .builder-shell.settings-workspace-shell .account-settings-focused {
+  gap: 0 !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tabs {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  gap: 28px !important;
+  min-height: 48px !important;
+  padding: 0 !important;
+  border-bottom: 1px solid var(--settings-line) !important;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  scrollbar-width: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tabs::-webkit-scrollbar {
+  display: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tabs button {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: max-content !important;
+  min-height: 48px !important;
+  padding: 0 1px !important;
+  border: 0 !important;
+  border-bottom: 2px solid transparent !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #666d76 !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  line-height: 1 !important;
+  font-weight: 650 !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tabs button.active {
+  border-color: var(--settings-ink) !important;
+  background: transparent !important;
+  color: var(--settings-ink) !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 28px 0 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel :is(.account-settings-form, .account-password-form) {
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-password-head {
+  margin: 0 0 24px !important;
+  padding: 0 0 16px !important;
+  border-color: var(--settings-line) !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-password-head strong {
+  color: var(--settings-ink) !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-password-head button {
+  min-height: 38px !important;
+  border: 1px solid #cfd4da !important;
+  border-radius: 7px !important;
+  background: #fff !important;
+  color: var(--settings-ink) !important;
+  font-weight: 650 !important;
+}
+
+/* Form geometry: every label gets enough room, every field starts on the same line. */
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-settings-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  column-gap: 32px !important;
+  row-gap: 20px !important;
+  align-items: start !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-settings-grid > label {
+  min-width: 0 !important;
+  display: grid !important;
+  grid-template-columns: 118px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 14px !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-settings-grid > label > span {
+  display: block !important;
+  min-width: 0 !important;
+  color: var(--settings-text) !important;
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+  font-weight: 650 !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  word-break: keep-all !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-settings-grid input {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  padding: 0 13px !important;
+  border: 1px solid #cfd4da !important;
+  border-radius: 7px !important;
+  background: #fff !important;
+  color: var(--settings-ink) !important;
+  font-size: 13px !important;
+  font-weight: 550 !important;
+  box-shadow: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-settings-grid input:focus {
+  border-color: #7a8088 !important;
+  outline: 2px solid rgba(21, 23, 26, .08) !important;
+  outline-offset: 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-settings-grid input:disabled {
+  background: #f3f4f5 !important;
+  color: #686f78 !important;
+  opacity: 1 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-password-code {
+  grid-column: 1 / -1 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-settings-actions {
+  grid-column: 1 / -1 !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin: 4px 0 0 !important;
+  padding: 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-settings-actions button,
+html body #root .builder-shell.settings-workspace-shell .settings-ops-single-section .settings-section-actions button {
+  width: auto !important;
+  min-width: 100px !important;
+  min-height: 42px !important;
+  padding: 0 16px !important;
+  border: 1px solid #cfd4da !important;
+  border-radius: 7px !important;
+  background: #fff !important;
+  color: var(--settings-ink) !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-settings-actions button:first-child,
+html body #root .builder-shell.settings-workspace-shell .settings-ops-single-section .settings-section-actions button:first-child {
+  border-color: var(--settings-ink) !important;
+  background: var(--settings-ink) !important;
+  color: #fff !important;
+}
+
+/* Remove blue styling from every settings-only status and badge. */
+html body #root .builder-shell.settings-workspace-shell :is(
+  .settings-section-title-row em,
+  .settings-ops-summary dd span,
+  .operations-save-status,
+  .settings-ops-main-head > span
+) {
+  border-color: var(--settings-line) !important;
+  background: transparent !important;
+  color: var(--settings-muted) !important;
+  box-shadow: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .operations-save-status strong {
+  color: var(--settings-muted) !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-summary {
+  background: #fafafa !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-summary header h3,
+html body #root .builder-shell.settings-workspace-shell .settings-ops-summary dd {
+  color: var(--settings-ink) !important;
+}
+
+/* Other settings forms inherit the same neutral language. */
+html body #root .builder-shell.settings-workspace-shell .settings-ops-single-section :is(input, textarea, select) {
+  border-color: #cfd4da !important;
+  border-radius: 7px !important;
+  box-shadow: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-single-section :is(input, textarea, select):focus {
+  border-color: #7a8088 !important;
+  outline: 2px solid rgba(21, 23, 26, .08) !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block,
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block .image-box {
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 1240px) {
+  html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-settings-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .account-password-code {
+    grid-column: auto !important;
+  }
+}
+
+@media (max-width: 760px) {
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-main {
+    padding: 20px 16px 36px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .account-settings-tabs {
+    gap: 20px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel {
+    padding-top: 22px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-settings-grid > label {
+    grid-template-columns: 1fr !important;
+    gap: 7px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel .account-settings-grid > label > span {
+    white-space: normal !important;
+  }
+}
