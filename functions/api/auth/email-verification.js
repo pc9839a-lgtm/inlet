@@ -2,6 +2,7 @@ import { getD1AccountByEmail } from '../../../server/storage/d1Adapter.mjs';
 import { assertD1, handleApiError, jsonResponse, optionsResponse, readJson } from '../_shared.js';
 import { auditErrorMetadata, auditSubjectHash, writeAuditLog } from '../_audit.js';
 import { AUTH_METHODS, authError, emailVerificationRequesterKey, issueEmailVerificationToken, normalizeEmail, normalizeEmailVerificationPurpose } from './_auth.js';
+import { sendAuthVerificationEmail } from './_ses-delivery.js';
 import { withCompatibleAuthVerificationStorage } from './_verification-storage-compat.js';
 
 const FINAL_DUPLICATE_DECISION_CODE = 'AUTH_EMAIL_DUPLICATE';
@@ -17,22 +18,64 @@ export async function onRequest({ request, env }) {
     const purpose = normalizeEmailVerificationPurpose(input.purpose || 'signup');
     if (!purpose) throw authError('Email verification purpose is invalid.', 400, { code: 'EMAIL_VERIFICATION_PURPOSE_INVALID' });
     input = { ...input, purpose };
+
     const responseStartedAt = Date.now();
     const email = normalizeEmail(input.email || '');
     const suppressPasswordResetDelivery = purpose === 'password-reset'
       && !!email
       && !(await getD1AccountByEmail(env.DB, email));
     const requesterKey = await emailVerificationRequesterKey(request, env);
-    const authEnv = withCompatibleAuthVerificationStorage(withAuthEmailDeliveryDefaults(env));
-    const verification = await issueEmailVerificationToken({
+
+    const issuanceEnv = withCompatibleAuthVerificationStorage(internalTokenIssuanceEnv(env));
+    const issuedVerification = await issueEmailVerificationToken({
       ...input,
       requesterKey,
       suppressDelivery: suppressPasswordResetDelivery,
       concealDeliveryFailure: purpose === 'password-reset',
-    }, authEnv);
+    }, issuanceEnv);
+
+    let verification = issuedVerification;
+    if (!suppressPasswordResetDelivery) {
+      const token = String(issuedVerification.token || '').trim();
+      if (!/^\d{6}$/.test(token)) {
+        await cleanupLatestPendingVerification(env.DB, email, purpose);
+        throw authError('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 503, {
+          code: 'EMAIL_VERIFICATION_TOKEN_MISSING',
+          provider: 'ses',
+        });
+      }
+
+      try {
+        const delivery = await sendAuthVerificationEmail({
+          email,
+          purpose,
+          token,
+          expiresAt: issuedVerification.expiresAt || '',
+        }, env);
+        verification = {
+          email: issuedVerification.email || email,
+          purpose,
+          status: issuedVerification.status || 'pending',
+          expiresAt: issuedVerification.expiresAt || '',
+          delivery: {
+            mode: delivery.mode || 'api',
+            provider: delivery.provider || 'ses',
+            status: delivery.status || 'sent',
+          },
+        };
+      } catch (error) {
+        await cleanupLatestPendingVerification(env.DB, email, purpose);
+        throw authError('메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 503, {
+          code: String(error?.code || 'EMAIL_SEND_PROVIDER_ERROR'),
+          provider: 'ses',
+        });
+      }
+    }
+
     const publicVerification = publicEmailVerificationResult(verification, purpose);
     if (purpose === 'password-reset') await ensureMinimumResponseTime(responseStartedAt, 650);
     const ownershipCheckedAtCompletion = purpose === 'signup' || purpose === 'email-change';
+
     await writeAuditLog({
       request,
       env,
@@ -64,43 +107,38 @@ export async function onRequest({ request, env }) {
   }
 }
 
-function withAuthEmailDeliveryDefaults(env = {}) {
-  const accessKey = String(
-    env.AWS_SES_ACCESS_KEY_ID
-      || env.INLET_AWS_SES_ACCESS_KEY_ID
-      || env.AWS_ACCESS_KEY_ID
-      || env.SES_ACCESS_KEY_ID
-      || env['Access key ID']
-      || '',
-  ).trim();
-  const secretKey = String(
-    env.AWS_SES_SECRET_ACCESS_KEY
-      || env.INLET_AWS_SES_SECRET_ACCESS_KEY
-      || env.AWS_SECRET_ACCESS_KEY
-      || env.SES_SECRET_ACCESS_KEY
-      || env['Secret access key']
-      || '',
-  ).trim();
-  const hasSesCredentials = !!accessKey && !!secretKey;
-  const branch = String(env.CF_PAGES_BRANCH || '').trim().toLowerCase();
-  const runtime = String(env.INLET_RUNTIME_ENV || env.INLET_ENVIRONMENT || env.NODE_ENV || env.ENVIRONMENT || '').trim().toLowerCase();
-  const production = branch === 'main' || runtime === 'production';
-  const configuredMode = String(env.INLET_AUTH_EMAIL_MODE || '').trim().toLowerCase();
-  const deliveryMode = (!configuredMode || (production && configuredMode === 'mock')) && hasSesCredentials
-    ? 'ses'
-    : configuredMode || 'mock';
-
+function internalTokenIssuanceEnv(env = {}) {
   return {
     ...env,
-    INLET_AUTH_EMAIL_MODE: deliveryMode,
-    INLET_EMAIL_PROVIDER: String(env.INLET_EMAIL_PROVIDER || 'ses').trim().toLowerCase() || 'ses',
-    INLET_AUTH_EMAIL_FROM: String(
-      env.INLET_AUTH_EMAIL_FROM
-        || env.INLET_LEAD_EMAIL_FROM
-        || env.AWS_SES_FROM
-        || '페이지로 <support@pagero.kr>',
-    ).trim(),
+    CF_PAGES_BRANCH: 'auth-email-internal',
+    INLET_RUNTIME_ENV: 'development',
+    INLET_ENVIRONMENT: 'development',
+    NODE_ENV: 'development',
+    ENVIRONMENT: 'development',
+    INLET_AUTH_EMAIL_MODE: 'mock',
+    INLET_AUTH_EMAIL_EXPOSE_TOKEN: '1',
   };
+}
+
+async function cleanupLatestPendingVerification(db, email = '', purpose = '') {
+  if (!db?.prepare || !email || !purpose) return;
+  try {
+    await db.prepare(`
+      DELETE FROM auth_email_verifications
+      WHERE id IN (
+        SELECT id
+        FROM auth_email_verifications
+        WHERE email = ? AND purpose = ? AND status = 'pending'
+        ORDER BY created_at DESC
+        LIMIT 1
+      )
+    `).bind(email, purpose).run();
+  } catch {
+    console.error('auth verification cleanup failed', {
+      code: 'EMAIL_VERIFICATION_CLEANUP_FAILED',
+      provider: 'ses',
+    });
+  }
 }
 
 function publicEmailVerificationResult(verification = {}, purpose = '') {
@@ -111,7 +149,6 @@ function publicEmailVerificationResult(verification = {}, purpose = '') {
     status: 'pending',
     expiresAt: verification.expiresAt || '',
     delivery: { mode: 'api', status: 'accepted' },
-    ...(verification.token ? { token: verification.token } : {}),
   };
 }
 
