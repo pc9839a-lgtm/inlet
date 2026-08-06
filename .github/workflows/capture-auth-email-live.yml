@@ -7,10 +7,6 @@ on:
 permissions:
   contents: write
 
-concurrency:
-  group: pagero-auth-email-live-check
-  cancel-in-progress: true
-
 jobs:
   verify:
     if: startsWith(github.event.pull_request.head.ref, 'ops/auth-email-deploy-') && github.event.pull_request.head.repo.full_name == github.repository
