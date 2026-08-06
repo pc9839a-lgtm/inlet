@@ -3,7 +3,9 @@ import {
   Activity,
   Code2,
   Copy,
+  CreditCard,
   FileText,
+  Gift,
   Globe2,
   RotateCcw,
   Search,
@@ -23,6 +25,11 @@ const PRIMARY_NAV = [
   ['managers', '매니저 권한', UsersRound],
 ];
 
+const SERVICE_NAV = [
+  ['billing', '요금제·결제', CreditCard],
+  ['referral', '추천인', Gift],
+];
+
 const ADVANCED_NAV = [
   ['seo', 'SEO 설정', Search],
   ['tracking', '추적 코드', Code2],
@@ -31,8 +38,9 @@ const ADVANCED_NAV = [
   ['reset', '초기화', RotateCcw],
 ];
 
-const ALL_NAV = [...PRIMARY_NAV, ...ADVANCED_NAV];
+const ALL_NAV = [...PRIMARY_NAV, ...SERVICE_NAV, ...ADVANCED_NAV];
 const ADVANCED_IDS = new Set(ADVANCED_NAV.map(([id]) => id));
+const OWNER_ONLY_IDS = new Set(['billing', 'referral']);
 
 export default function SettingsPanelBody({
   authUser,
@@ -66,10 +74,12 @@ export default function SettingsPanelBody({
     setAdvancedOpen,
     setOpenSection,
   } = sections;
+  const ownerFinanceAccess = canManageProjectUsers && !clientAdminMode;
   const initialSection = (() => {
     const requested = openSection || 'account';
     if (clientAdminMode && ADVANCED_IDS.has(requested)) return 'account';
     if (!canManageProjectUsers && requested === 'managers') return 'account';
+    if (!ownerFinanceAccess && OWNER_ONLY_IDS.has(requested)) return 'account';
     return requested;
   })();
   const [selectedSection, setSelectedSection] = useState(initialSection);
@@ -114,6 +124,23 @@ export default function SettingsPanelBody({
               </button>
             ))}
           </nav>
+
+          {ownerFinanceAccess && (
+            <nav className="settings-ops-nav service" aria-label="서비스 설정">
+              <small>서비스</small>
+              {SERVICE_NAV.map(([id, label, Icon]) => (
+                <button
+                  key={id}
+                  type="button"
+                  className={`settings-ops-nav-item ${selectedSection === id ? 'active' : ''}`}
+                  onClick={() => selectSection(id)}
+                >
+                  <Icon size={18} aria-hidden="true" />
+                  <span>{label}</span>
+                </button>
+              ))}
+            </nav>
+          )}
 
           {!clientAdminMode && (
             <nav className="settings-ops-nav advanced" aria-label="고급 설정">
