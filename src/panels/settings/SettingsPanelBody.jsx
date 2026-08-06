@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import SettingsAdvancedAndReset from './SettingsAdvancedAndReset.jsx';
 import PageDuplicateUrlModal from './PageDuplicateUrlModal.jsx';
 import SettingsPrimarySections from './SettingsPrimarySections.jsx';
@@ -15,6 +16,8 @@ const ADVANCED_NAV = [
   ['duplicate', '페이지 복제'],
   ['reset', '초기화'],
 ];
+
+const ADVANCED_IDS = new Set(ADVANCED_NAV.map(([id]) => id));
 
 export default function SettingsPanelBody({
   authUser,
@@ -44,21 +47,32 @@ export default function SettingsPanelBody({
     setDuplicateOpen,
   } = duplicateSettings;
   const {
-    advancedOpen,
     openSection,
     setAdvancedOpen,
     setOpenSection,
   } = sections;
+  const initialSection = (() => {
+    const requested = openSection || 'account';
+    if (clientAdminMode && ADVANCED_IDS.has(requested)) return 'account';
+    if (!canManageProjectUsers && requested === 'managers') return 'account';
+    return requested;
+  })();
+  const [selectedSection, setSelectedSection] = useState(initialSection);
   const managerCount = Array.isArray(ownership?.managers) ? ownership.managers.length : 0;
 
-  const openPrimary = (id) => {
-    setAdvancedOpen(false);
-    setOpenSection(openSection === id ? '' : id);
+  const selectSection = (id) => {
+    setSelectedSection(id);
+    setAdvancedOpen(ADVANCED_IDS.has(id));
+    setOpenSection(id);
   };
 
-  const openAdvanced = (id) => {
-    setAdvancedOpen(true);
-    setOpenSection(openSection === id ? '' : id);
+  const visibleSections = {
+    ...sections,
+    advancedOpen: ADVANCED_IDS.has(selectedSection),
+    openSection: selectedSection,
+    setOpenSection: (nextSection) => {
+      if (nextSection) selectSection(nextSection);
+    },
   };
 
   return (
@@ -76,8 +90,8 @@ export default function SettingsPanelBody({
               <button
                 key={id}
                 type="button"
-                className={`settings-ops-nav-item ${openSection === id && !advancedOpen ? 'active' : ''}`}
-                onClick={() => openPrimary(id)}
+                className={`settings-ops-nav-item ${selectedSection === id ? 'active' : ''}`}
+                onClick={() => selectSection(id)}
               >
                 <span>{label}</span>
               </button>
@@ -91,8 +105,8 @@ export default function SettingsPanelBody({
                 <button
                   key={id}
                   type="button"
-                  className={`settings-ops-nav-item ${advancedOpen && openSection === id ? 'active' : ''}`}
-                  onClick={() => openAdvanced(id)}
+                  className={`settings-ops-nav-item ${selectedSection === id ? 'active' : ''}`}
+                  onClick={() => selectSection(id)}
                 >
                   <span>{label}</span>
                 </button>
@@ -110,8 +124,9 @@ export default function SettingsPanelBody({
             <span>/{page.slug || 'page'}</span>
           </header>
 
-          <div className="settings-ops-sections">
+          <div className="settings-ops-sections settings-ops-single-section">
             <SettingsPrimarySections
+              activeSection={selectedSection}
               authUser={authUser}
               canManageProjectUsers={canManageProjectUsers}
               clientAdminMode={clientAdminMode}
@@ -120,11 +135,12 @@ export default function SettingsPanelBody({
               onAccountUpdate={onAccountUpdate}
               onLogout={onLogout}
               ownership={ownership}
-              sections={sections}
+              sections={visibleSections}
               transferRequest={transferRequest}
             />
 
             <SettingsAdvancedAndReset
+              activeSection={selectedSection}
               canDuplicatePage={canDuplicatePage}
               clientAdminMode={clientAdminMode}
               duplicateSettings={duplicateSettings}
@@ -132,7 +148,7 @@ export default function SettingsPanelBody({
               integrations={integrations}
               onReset={onReset}
               page={page}
-              sections={sections}
+              sections={visibleSections}
               updateIntegrations={updateIntegrations}
             />
           </div>
