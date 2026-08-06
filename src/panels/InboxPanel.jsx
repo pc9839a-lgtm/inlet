@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Ban,
   CheckCircle2,
@@ -209,6 +209,7 @@ export default function InboxPanel({
   onRetryLeadConflict,
   onDismissLeadConflict,
 }) {
+  const rootRef = useRef(null);
   const [filter, setFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [queueFilter, setQueueFilter] = useState('all');
@@ -295,6 +296,17 @@ export default function InboxPanel({
     if (!openId || !filtered.some((lead) => lead.id === openId)) setOpenId(filtered[0].id);
   }, [filtered, openId, sectionMode]);
 
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || sectionMode !== 'leads') return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      root.querySelectorAll('.inbox-ops-table-row').forEach((row) => {
+        row.classList.toggle('lead-card-service', row.getClientRects().length > 0);
+      });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [filtered, sectionMode]);
+
   const selectedLead = useMemo(
     () => filtered.find((lead) => lead.id === openId) || null,
     [filtered, openId],
@@ -302,12 +314,17 @@ export default function InboxPanel({
   const selectedAnswers = selectedLead && Array.isArray(selectedLead.answers)
     ? selectedLead.answers.filter((item) => !isDuplicateLeadAnswer(item, selectedLead))
     : [];
-  const selectedRiskInfo = selectedLead ? leadRiskInfo(selectedLead) : null;
+  const riskInfo = selectedLead ? leadRiskInfo(selectedLead) : null;
   const selectedDeliveryInfo = selectedLead ? leadDeliveryInfo(selectedLead) : null;
   const loadedCount = normalized.length;
   const failedDeliveryCount = normalized.filter((lead) => leadDeliveryInfo(lead)).length;
   const serverTotal = Number(totalLeads || loadedCount);
-  const displaySummary = serverTotal > loadedCount
+  const hasPartialLeadList = serverTotal > loadedCount;
+  const totalSummaryLabel = hasPartialLeadList ? '서버 전체 접수' : '현재 접수';
+  const loadedScopeLabel = hasPartialLeadList
+    ? `${loadedCount}건 불러옴 · 현재 조건 ${filtered.length}건`
+    : `현재 조건 ${filtered.length}건`;
+  const displaySummary = hasPartialLeadList
     ? `${filtered.length}건 표시 · 서버 ${serverTotal}건 중 ${loadedCount}건 로드`
     : `${filtered.length}건 표시`;
 
@@ -342,7 +359,7 @@ export default function InboxPanel({
   };
 
   return (
-    <div className={`simple-panel inbox-panel inbox-ops-root mode-${sectionMode}`}>
+    <div ref={rootRef} className={`simple-panel inbox-panel inbox-ops-root mode-${sectionMode}`}>
       <div className="inbox-ops-layout">
         <aside className="inbox-ops-sidebar">
           <div className="inbox-ops-sidebar-title">
@@ -379,7 +396,10 @@ export default function InboxPanel({
                   <small>고객 문의 관리</small>
                   <h2>접수함</h2>
                 </div>
-                <span>{displaySummary}</span>
+                <div className="inbox-ops-total-summary" title={displaySummary}>
+                  <strong>{serverTotal}</strong>
+                  <span>{totalSummaryLabel} · {loadedScopeLabel}</span>
+                </div>
               </header>
 
               <section className="inbox-ops-kpis" aria-label="접수 요약">
@@ -443,7 +463,7 @@ export default function InboxPanel({
                       q: query.trim(),
                     })}
                   >
-                    <Download size={17} /> CSV
+                    <Download size={17} /> CSV 내보내기
                   </button>
                 ) : null}
               </section>
@@ -485,8 +505,8 @@ export default function InboxPanel({
                         <span className="inbox-ops-name-cell">
                           <strong>{lead.name || '이름 없음'}</strong>
                           <small>{leadKindLabel(lead)}</small>
-                          {riskInfo ? <i className={`inbox-ops-mini-badge ${riskInfo.level}`}>{riskInfo.badge}</i> : null}
-                          {deliveryInfo ? <i className="inbox-ops-mini-badge delivery">{deliveryInfo.label}</i> : null}
+                          {riskInfo ? <i className={`inbox-ops-mini-badge lead-risk-badge ${riskInfo.level}`}>{riskInfo.badge}</i> : null}
+                          {deliveryInfo ? <i className="inbox-ops-mini-badge lead-delivery-badge delivery">{deliveryInfo.label}</i> : null}
                         </span>
                         <span>{leadPrimaryContact(lead) || '-'}</span>
                         <span>{lead.pageTitle || lead.pageSlug || lead.project || page.title || '-'}</span>
@@ -499,7 +519,7 @@ export default function InboxPanel({
 
                 <footer className="inbox-ops-table-footer">
                   <span>{filtered.length} / {serverTotal}건</span>
-                  {hasMoreLeads ? <button type="button" onClick={loadMore} disabled={syncing}>더 불러오기</button> : <b>마지막 목록입니다.</b>}
+                  {hasMoreLeads ? <button type="button" onClick={loadMore} disabled={syncing}>더보기</button> : <b>마지막 목록입니다.</b>}
                 </footer>
               </section>
             </main>
@@ -562,12 +582,12 @@ export default function InboxPanel({
                     <LeadInfoRow label="기기" value={selectedLead.deviceType} />
                   </section>
 
-                  {selectedRiskInfo ? (
-                    <section className={`inbox-ops-detail-section warning ${selectedRiskInfo.level}`}>
+                  {riskInfo ? (
+                    <section className={`inbox-ops-detail-section warning ${riskInfo.level}`}>
                       <h4>중복·위험 신호</h4>
-                      <LeadInfoRow label="판정" value={selectedRiskInfo.badge} />
-                      <LeadInfoRow label="사유" value={selectedRiskInfo.reasons.join(', ') || '중복 접수로 표시됨'} />
-                      <LeadInfoRow label="위험 점수" value={`${selectedRiskInfo.score}점`} />
+                      <LeadInfoRow label="판정" value={riskInfo.badge} />
+                      <LeadInfoRow label="사유" value={riskInfo.reasons.join(', ') || '중복 접수로 표시됨'} />
+                      <LeadInfoRow label="위험 점수" value={`${riskInfo.score}점`} />
                     </section>
                   ) : null}
 
@@ -600,7 +620,7 @@ export default function InboxPanel({
                   </div>
 
                   {copyFallback?.id === selectedLead.id ? (
-                    <section className="inbox-ops-copy-fallback" aria-live="polite">
+                    <section className="inbox-ops-copy-fallback lead-copy-fallback" aria-live="polite">
                       <h4>복사할 내용</h4>
                       <textarea readOnly value={copyFallback.text} onFocus={(event) => event.currentTarget.select()} />
                     </section>

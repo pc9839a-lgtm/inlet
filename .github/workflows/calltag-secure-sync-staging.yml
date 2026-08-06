@@ -1,0 +1,187 @@
+name: CallTag Secure Sync Staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply_migrations:
+        description: '전용 staging D1에 미적용 migration을 적용합니다.'
+        required: true
+        default: false
+        type: boolean
+      deploy_staging:
+        description: '전용 staging Pages 프로젝트에 암호화 키를 등록하고 배포합니다.'
+        required: true
+        default: false
+        type: boolean
+      run_smoke:
+        description: '두 전용 계정으로 격리·복구·삭제 smoke test를 실행합니다.'
+        required: true
+        default: false
+        type: boolean
+      confirmation:
+        description: 'CALLTAG_STAGING_ONLY를 정확히 입력합니다.'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: calltag-secure-sync-staging
+  cancel-in-progress: false
+
+jobs:
+  staging:
+    name: Protected staging migration, deploy and smoke
+    runs-on: ubuntu-latest
+    environment: calltag-staging
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CALLTAG_STAGING_PAGES_PROJECT: ${{ vars.CALLTAG_STAGING_PAGES_PROJECT }}
+      CALLTAG_STAGING_D1_DATABASE_NAME: ${{ vars.CALLTAG_STAGING_D1_DATABASE_NAME }}
+      CALLTAG_STAGING_D1_DATABASE_ID: ${{ vars.CALLTAG_STAGING_D1_DATABASE_ID }}
+      CALLTAG_STAGING_BASE_URL: ${{ vars.CALLTAG_STAGING_BASE_URL }}
+      CALLTAG_STAGING_ALLOW_CUSTOM_HOST: ${{ vars.CALLTAG_STAGING_ALLOW_CUSTOM_HOST }}
+      CALLTAG_STAGING_SESSION_SECRET: ${{ secrets.CALLTAG_STAGING_SESSION_SECRET }}
+      CALLTAG_STAGING_DATA_ENCRYPTION_KEY: ${{ secrets.CALLTAG_STAGING_DATA_ENCRYPTION_KEY }}
+      CALLTAG_STAGING_DATA_SEARCH_KEY: ${{ secrets.CALLTAG_STAGING_DATA_SEARCH_KEY }}
+      CALLTAG_STAGING_ACCOUNT_A_EMAIL: ${{ secrets.CALLTAG_STAGING_ACCOUNT_A_EMAIL }}
+      CALLTAG_STAGING_ACCOUNT_A_PASSWORD: ${{ secrets.CALLTAG_STAGING_ACCOUNT_A_PASSWORD }}
+      CALLTAG_STAGING_ACCOUNT_B_EMAIL: ${{ secrets.CALLTAG_STAGING_ACCOUNT_B_EMAIL }}
+      CALLTAG_STAGING_ACCOUNT_B_PASSWORD: ${{ secrets.CALLTAG_STAGING_ACCOUNT_B_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate explicit staging confirmation
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ inputs.confirmation }}" != "CALLTAG_STAGING_ONLY" ]]; then
+            echo "Staging confirmation is invalid." >&2
+            exit 1
+          fi
+          if [[ "${{ inputs.apply_migrations }}" != "true" && "${{ inputs.deploy_staging }}" != "true" && "${{ inputs.run_smoke }}" != "true" ]]; then
+            echo "Select at least one staging action." >&2
+            exit 1
+          fi
+
+      - name: Verify staging safety contract
+        run: node scripts/calltag-secure-sync-staging-contract-check.mjs
+
+      - name: Validate isolated staging resource names
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in CALLTAG_STAGING_PAGES_PROJECT CALLTAG_STAGING_D1_DATABASE_NAME CALLTAG_STAGING_D1_DATABASE_ID; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "${name} is required in the calltag-staging GitHub Environment." >&2
+              exit 1
+            fi
+          done
+          node scripts/calltag-secure-sync-staging-config.mjs "$RUNNER_TEMP/calltag-staging-wrangler.jsonc"
+
+      - name: Validate Cloudflare credentials
+        if: ${{ inputs.apply_migrations == true || inputs.deploy_staging == true }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "CLOUDFLARE_API_TOKEN is required" >&2; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "CLOUDFLARE_ACCOUNT_ID is required" >&2; exit 1; }
+
+      - name: Apply migrations to dedicated staging D1
+        if: ${{ inputs.apply_migrations == true }}
+        env:
+          CI: 'true'
+        run: >-
+          npx wrangler d1 migrations apply "$CALLTAG_STAGING_D1_DATABASE_NAME"
+          --remote
+          --config "$RUNNER_TEMP/calltag-staging-wrangler.jsonc"
+
+      - name: Validate staging encryption secrets
+        if: ${{ inputs.deploy_staging == true }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in CALLTAG_STAGING_SESSION_SECRET CALLTAG_STAGING_DATA_ENCRYPTION_KEY CALLTAG_STAGING_DATA_SEARCH_KEY; do
+            value="${!name:-}"
+            if [[ -z "$value" ]]; then
+              echo "${name} is required in the calltag-staging GitHub Environment." >&2
+              exit 1
+            fi
+          done
+          node - <<'NODE'
+          const names = ['CALLTAG_STAGING_DATA_ENCRYPTION_KEY', 'CALLTAG_STAGING_DATA_SEARCH_KEY'];
+          for (const name of names) {
+            const raw = String(process.env[name] || '').trim();
+            let bytes = 0;
+            try { bytes = Buffer.from(raw, 'base64').length; } catch {}
+            if (bytes !== 32) throw new Error(`${name} must be base64 for exactly 32 bytes`);
+          }
+          if (String(process.env.CALLTAG_STAGING_SESSION_SECRET || '').length < 32) {
+            throw new Error('CALLTAG_STAGING_SESSION_SECRET must be at least 32 characters');
+          }
+          console.log('Staging secret shapes validated without printing secret values.');
+          NODE
+
+      - name: Upload staging-only Pages secrets
+        if: ${{ inputs.deploy_staging == true }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s' "$CALLTAG_STAGING_SESSION_SECRET" | npx wrangler pages secret put INLET_SESSION_SECRET --project-name "$CALLTAG_STAGING_PAGES_PROJECT"
+          printf '%s' "$CALLTAG_STAGING_DATA_ENCRYPTION_KEY" | npx wrangler pages secret put CALLTAG_DATA_ENCRYPTION_KEY --project-name "$CALLTAG_STAGING_PAGES_PROJECT"
+          printf '%s' "$CALLTAG_STAGING_DATA_SEARCH_KEY" | npx wrangler pages secret put CALLTAG_DATA_SEARCH_KEY --project-name "$CALLTAG_STAGING_PAGES_PROJECT"
+
+      - name: Build staging artifact
+        if: ${{ inputs.deploy_staging == true }}
+        run: npm run build
+
+      - name: Deploy dedicated staging Pages project
+        if: ${{ inputs.deploy_staging == true }}
+        run: >-
+          npx wrangler pages deploy dist
+          --project-name "$CALLTAG_STAGING_PAGES_PROJECT"
+          --branch staging
+          --config "$RUNNER_TEMP/calltag-staging-wrangler.jsonc"
+
+      - name: Validate two staging accounts
+        if: ${{ inputs.run_smoke == true }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in CALLTAG_STAGING_BASE_URL CALLTAG_STAGING_ACCOUNT_A_EMAIL CALLTAG_STAGING_ACCOUNT_A_PASSWORD CALLTAG_STAGING_ACCOUNT_B_EMAIL CALLTAG_STAGING_ACCOUNT_B_PASSWORD; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "${name} is required for the staging smoke test." >&2
+              exit 1
+            fi
+          done
+
+      - name: Wait for staging deployment propagation
+        if: ${{ inputs.deploy_staging == true && inputs.run_smoke == true }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 40); do
+            if curl --fail --silent --show-error --max-time 10 "$CALLTAG_STAGING_BASE_URL/" >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "Staging deployment did not become reachable in time." >&2
+          exit 1
+
+      - name: Run two-account isolation and reinstall smoke
+        if: ${{ inputs.run_smoke == true }}
+        run: node scripts/calltag-secure-sync-staging-smoke.mjs
