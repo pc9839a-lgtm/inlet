@@ -14,6 +14,7 @@ import '../styles/stats-fullwidth-final.css';
 import '../styles/stats-operations-final.css';
 import '../styles/stats-height-match-inbox.css';
 import '../styles/ops-header-stats-cleanup.css';
+import '../styles/inbox-blue-accent-cleanup.css';
 
 export default function WorkspaceEditorScreen({
   canUseBuilder,
