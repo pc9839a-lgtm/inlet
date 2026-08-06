@@ -77,7 +77,7 @@ export default function ReferralSettingsSection({ authUser, openSection, setOpen
               <div>
                 <span>내 추천인 코드</span>
                 <strong>{referral.code || '-'}</strong>
-                <small>추천받은 계정의 페이지로·콜태그 결제 수익은 같은 계정 기준으로 합산됩니다.</small>
+                <small>추천받은 계정 결제 금액의 20%가 페이지로·콜태그 통합 정산에 반영됩니다.</small>
               </div>
               <button type="button" onClick={copyReferralCode} disabled={!referral.code}>
                 <Clipboard size={16} aria-hidden="true" /> 코드 복사
