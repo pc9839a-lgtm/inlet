@@ -8,12 +8,15 @@ permissions:
   contents: read
   pull-requests: write
 
+concurrency:
+  group: auth-email-production-deploy
+  cancel-in-progress: true
+
 jobs:
   deploy-and-verify:
     if: startsWith(github.event.pull_request.title, '[AUTH_EMAIL_DEPLOY]')
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    environment: production
     steps:
       - uses: actions/checkout@v4
         with:
