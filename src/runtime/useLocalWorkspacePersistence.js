@@ -7,6 +7,7 @@ import { pageDraftContentSignature, pageDraftIdentity, savePageDraft } from './p
 
 const SERVER_DRAFT_DELAY_MS = 550;
 const SERVER_BASELINE_STABILIZE_MS = 1200;
+const USER_EDIT_INTENT_WINDOW_MS = 5000;
 
 export function useLocalWorkspacePersistence({
   authUser,
@@ -21,12 +22,41 @@ export function useLocalWorkspacePersistence({
   const serverBaselineRef = useRef(null);
   const serverDraftTimerRef = useRef(null);
   const serverDraftDirtyRef = useRef(false);
+  const lastUserEditIntentRef = useRef(0);
 
   useEffect(() => {
     if (publicLandingSlug) return;
     if (isServerPageMode()) return;
     saveLocalJson(STORAGE_KEY, normalizePageForSave(page), '페이지');
   }, [page, publicLandingSlug]);
+
+  useEffect(() => {
+    if (!isServerPageMode() || !authUser || publicLandingSlug || typeof window === 'undefined') return undefined;
+
+    const markUserEditIntent = (event) => {
+      const target = event?.target;
+      if (!(target instanceof Element)) return;
+      if (!target.closest('.edit-layout, .style-panel, .settings-panel')) return;
+      if (event.type === 'keydown') {
+        const key = String(event.key || '');
+        if (['Tab', 'Shift', 'Control', 'Alt', 'Meta', 'Escape'].includes(key)) return;
+      }
+      lastUserEditIntentRef.current = Date.now();
+    };
+
+    const options = { capture: true, passive: true };
+    window.addEventListener('input', markUserEditIntent, options);
+    window.addEventListener('change', markUserEditIntent, options);
+    window.addEventListener('pointerdown', markUserEditIntent, options);
+    window.addEventListener('keydown', markUserEditIntent, true);
+
+    return () => {
+      window.removeEventListener('input', markUserEditIntent, true);
+      window.removeEventListener('change', markUserEditIntent, true);
+      window.removeEventListener('pointerdown', markUserEditIntent, true);
+      window.removeEventListener('keydown', markUserEditIntent, true);
+    };
+  }, [authUser?.session, publicLandingSlug]);
 
   useEffect(() => {
     if (!isServerPageMode() || !authUser || publicLandingSlug) return undefined;
@@ -46,18 +76,35 @@ export function useLocalWorkspacePersistence({
       if (serverDraftTimerRef.current) clearTimeout(serverDraftTimerRef.current);
       serverDraftTimerRef.current = null;
       serverDraftDirtyRef.current = false;
+      lastUserEditIntentRef.current = 0;
       serverBaselineRef.current = { identity, revision, updatedAt, signature, observedAt: Date.now() };
       return undefined;
     }
 
     if (baseline.signature === signature) return undefined;
+
+    const now = Date.now();
+    const lastUserIntentAt = Number(lastUserEditIntentRef.current || 0);
+    const hasRecentUserIntent = lastUserIntentAt > 0 && now - lastUserIntentAt <= USER_EDIT_INTENT_WINDOW_MS;
+    if (!hasRecentUserIntent) {
+      baseline.signature = signature;
+      baseline.observedAt = now;
+      serverDraftDirtyRef.current = false;
+      return undefined;
+    }
+
     serverDraftDirtyRef.current = true;
     if (serverDraftTimerRef.current) clearTimeout(serverDraftTimerRef.current);
-    const waitForBaseline = Math.max(0, SERVER_BASELINE_STABILIZE_MS - (Date.now() - Number(baseline.observedAt || 0)));
+    const waitForBaseline = Math.max(0, SERVER_BASELINE_STABILIZE_MS - (now - Number(baseline.observedAt || 0)));
     serverDraftTimerRef.current = setTimeout(() => {
-      const draft = savePageDraft({ page: latestPageRef.current || normalized, authUser });
+      const draft = savePageDraft({
+        page: latestPageRef.current || normalized,
+        authUser,
+        interactionConfirmed: true,
+      });
       serverDraftDirtyRef.current = !draft;
       serverDraftTimerRef.current = null;
+      if (draft) lastUserEditIntentRef.current = 0;
       if (!draft && typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('builder:toast', {
           detail: { message: '편집 내용 임시 저장에 실패했습니다. 브라우저 저장 공간을 확인해주세요.', tone: 'error' },
@@ -75,7 +122,11 @@ export function useLocalWorkspacePersistence({
     if (!isServerPageMode() || !authUser || publicLandingSlug) return undefined;
     const flushDraft = () => {
       if (!serverDraftDirtyRef.current) return;
-      const draft = savePageDraft({ page: latestPageRef.current || page, authUser });
+      const draft = savePageDraft({
+        page: latestPageRef.current || page,
+        authUser,
+        interactionConfirmed: true,
+      });
       serverDraftDirtyRef.current = !draft;
     };
     window.addEventListener('pagehide', flushDraft);
