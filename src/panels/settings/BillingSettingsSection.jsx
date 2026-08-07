@@ -15,9 +15,14 @@ function ServicePlans({ finance, service, label, busy, onCheckout }) {
   const subscription = subscriptionFor(finance, service);
   const plans = finance?.pricing?.[service] || [];
   const freeCurrent = service === 'pagero' && !subscription;
-  const currentLabel = subscription
-    ? `${subscription.planName} 이용 중`
-    : freeCurrent ? '무료 요금제 이용 중' : '결제된 요금제 없음';
+  const domainIncluded = service === 'domain' && finance?.domain?.includedByPlan === true;
+  const domainActive = service === 'domain' && finance?.domain?.enabled === true;
+  const currentLabel = domainIncluded
+    ? '프로 요금제에 1개 포함'
+    : subscription
+      ? `${subscription.planName} 이용 중`
+      : freeCurrent ? '무료 요금제 이용 중' : '결제된 요금제 없음';
+  const serviceActive = subscription || freeCurrent || domainActive;
 
   return (
     <section className="billing-service-panel">
@@ -26,12 +31,14 @@ function ServicePlans({ finance, service, label, busy, onCheckout }) {
           <strong>{label}</strong>
           <small>{currentLabel}</small>
         </div>
-        <span>{subscription || freeCurrent ? '이용 중' : '미결제'}</span>
+        <span>{serviceActive ? '이용 중' : '미결제'}</span>
       </header>
 
       <div className="billing-plan-list">
         {plans.map((plan) => {
-          const current = plan.included ? freeCurrent : subscription?.planCode === plan.code;
+          const current = domainIncluded
+            ? true
+            : plan.included ? freeCurrent : subscription?.planCode === plan.code;
           const loading = busy === `${service}:${plan.code}`;
           return (
             <div className={`billing-plan-row ${current ? 'is-current' : ''}`} key={`${service}-${plan.code}`}>
@@ -39,13 +46,13 @@ function ServicePlans({ finance, service, label, busy, onCheckout }) {
                 <strong>{plan.name}</strong>
                 <small>{plan.description}</small>
               </div>
-              <b>{money(plan.amountKrw)}{plan.amountKrw > 0 ? '/월' : ''}</b>
+              <b>{domainIncluded ? '프로 포함' : `${money(plan.amountKrw)}${plan.amountKrw > 0 ? '/월' : ''}`}</b>
               <button
                 type="button"
                 disabled={current || loading || plan.included}
                 onClick={() => onCheckout(service, plan.code)}
               >
-                {loading ? '이동 중' : plan.included ? '기본 제공' : current ? '현재 요금제' : '결제'}
+                {loading ? '이동 중' : domainIncluded ? '프로 포함' : plan.included ? '기본 제공' : current ? '현재 이용 중' : '결제'}
               </button>
             </div>
           );
@@ -62,7 +69,7 @@ export default function BillingSettingsSection({ authUser, openSection, setOpenS
     <SettingsSection
       id="billing"
       title="요금제·결제"
-      description="페이지로와 콜태그 요금제"
+      description="페이지로, 개인 도메인, 콜태그 요금제"
       openSection={openSection}
       setOpenSection={setOpenSection}
       className="settings-billing-card"
@@ -81,7 +88,7 @@ export default function BillingSettingsSection({ authUser, openSection, setOpenS
           </button>
         </header>
 
-        <p className="account-finance-rule">페이지로와 콜태그 결제는 같은 계정에서 관리되며 각 서비스 요금제는 별도로 표시됩니다.</p>
+        <p className="account-finance-rule">프로는 개인 도메인 1개와 HTTPS/SSL 관리가 포함됩니다. 무료·클래식은 개인 도메인을 월 1,000원에 추가할 수 있습니다.</p>
 
         {error && <p className="account-finance-message is-error">{error}</p>}
         {loading && !finance ? (
@@ -89,6 +96,7 @@ export default function BillingSettingsSection({ authUser, openSection, setOpenS
         ) : (
           <div className="billing-service-grid">
             <ServicePlans finance={finance} service="pagero" label="페이지로" busy={busy} onCheckout={checkout} />
+            <ServicePlans finance={finance} service="domain" label="개인 도메인·HTTPS" busy={busy} onCheckout={checkout} />
             <ServicePlans finance={finance} service="calltag" label="콜태그" busy={busy} onCheckout={checkout} />
           </div>
         )}
