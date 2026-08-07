@@ -1,20 +1,27 @@
 import React, { useState } from 'react';
 import { authAccountErrorMessage, changeAuthPassword, confirmEmailVerification, isValidAccountPassword, loginAuthAccount, normalizeAccountPhone, registerAuthAccount, requestEmailVerification, startGoogleAuthLogin } from '../lib/authAccounts.js';
 
-function partnerCodeFromLocation() {
+function referralCodeFromLocation() {
   if (typeof window === 'undefined') return '';
   const params = new URLSearchParams(window.location.search || '');
   return String(params.get('ref') || params.get('partner') || params.get('partnerCode') || '')
     .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9-_]/g, '')
-    .slice(0, 32);
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(0, 20);
 }
 
 function AuthScreen({ onAuth, initialMode = 'login', onBack }) {
   const [mode, setMode] = useState(initialMode);
-  const [partnerCode] = useState(() => partnerCodeFromLocation());
-  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', password2: '', verificationCode: '' });
+  const [form, setForm] = useState(() => ({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    password2: '',
+    verificationCode: '',
+    referralCode: referralCodeFromLocation(),
+  }));
   const [emailVerified, setEmailVerified] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -135,7 +142,7 @@ function AuthScreen({ onAuth, initialMode = 'login', onBack }) {
           password: form.password,
           token: form.verificationCode.trim(),
           source: 'signup',
-          partnerCode,
+          referralCode: form.referralCode.trim().toUpperCase(),
         })
         : await loginAuthAccount({ email, password: form.password });
       onAuth({
@@ -157,7 +164,10 @@ function AuthScreen({ onAuth, initialMode = 'login', onBack }) {
     setNotice('');
     setSaving(true);
     try {
-      await startGoogleAuthLogin({ next: '/dashboard', partnerCode });
+      await startGoogleAuthLogin({
+        next: '/dashboard',
+        referralCode: mode === 'signup' ? form.referralCode.trim().toUpperCase() : '',
+      });
     } catch (err) {
       setError(authAccountErrorMessage(err));
       setSaving(false);
@@ -196,6 +206,21 @@ function AuthScreen({ onAuth, initialMode = 'login', onBack }) {
             <label>
               <span>핸드폰번호</span>
               <input type="tel" inputMode="tel" autoComplete="tel" value={form.phone} onChange={(e)=>set('phone', e.target.value)} placeholder="01012345678" />
+            </label>
+          )}
+
+          {mode === 'signup' && (
+            <label className="auth-referral-field">
+              <span>추천인 코드 <em>선택</em></span>
+              <input
+                value={form.referralCode}
+                onChange={(e)=>set('referralCode', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 20))}
+                placeholder="추천인 코드"
+                autoComplete="off"
+                spellCheck="false"
+                maxLength={20}
+              />
+              <small>입력하면 페이지로 클래식 7일 이용권이 적용됩니다.</small>
             </label>
           )}
 
