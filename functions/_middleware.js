@@ -1,3 +1,5 @@
+const RUNTIME_RECOVERY_QUERY_KEYS = ['__fresh', '__runtime', '__runtimefix', '__hardreset'];
+
 function isPageroPlatformHost(hostname = '') {
   const host = String(hostname || '').trim().toLowerCase();
   return host === 'pagero.kr'
@@ -5,6 +7,59 @@ function isPageroPlatformHost(hostname = '') {
     || host.endsWith('.pages.dev')
     || host === 'localhost'
     || host.endsWith('.localhost');
+}
+
+function isProtectedPageroSpaRoute(pathname = '') {
+  const clean = String(pathname || '/').replace(/\/+$/, '') || '/';
+  return /^\/(?:app|dashboard|account|login|signup|admin|invite)(?:\/|$)/.test(clean)
+    || /^\/[^/?#]+\/admin(?:\/|$)/.test(clean);
+}
+
+function hasRuntimeRecoveryQuery(url) {
+  return RUNTIME_RECOVERY_QUERY_KEYS.some((key) => url.searchParams.has(key));
+}
+
+function noStoreHtmlResponse(response, { clearSiteCache = false, runtimeVersion = 'edge-reset-v1' } = {}) {
+  const headers = new Headers(response.headers);
+  headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  headers.set('CDN-Cache-Control', 'no-store');
+  headers.set('Cloudflare-CDN-Cache-Control', 'no-store');
+  headers.set('Pragma', 'no-cache');
+  headers.set('Expires', '0');
+  headers.set('Content-Type', 'text/html; charset=utf-8');
+  headers.set('X-Pagero-Runtime-Shell', runtimeVersion);
+  headers.delete('Content-Length');
+  if (clearSiteCache) {
+    // CacheStorage cleanup in JavaScript cannot remove the browser HTTP cache.
+    // Clear-Site-Data is intentionally limited to cache so auth/storage survive.
+    headers.set('Clear-Site-Data', '"cache"');
+  }
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+async function handlePageroSpaShell(context, url) {
+  if (!isPageroPlatformHost(url.hostname)) return null;
+  if (url.pathname.startsWith('/api/')) return null;
+
+  const recovery = hasRuntimeRecoveryQuery(url);
+  const protectedRoute = isProtectedPageroSpaRoute(url.pathname);
+  if (!recovery && !protectedRoute) return null;
+
+  // Bypass the SPA fallback/cache path completely and fetch the index asset from
+  // the current deployment. This guarantees that /app and /dashboard always get
+  // the current deployment's hashed entrypoint after a deploy.
+  const assetUrl = new URL(context.request.url);
+  assetUrl.pathname = '/index.html';
+  assetUrl.search = '';
+  const response = await context.env.ASSETS.fetch(assetUrl);
+  return noStoreHtmlResponse(response, {
+    clearSiteCache: recovery,
+    runtimeVersion: recovery ? 'edge-hard-reset-v1' : 'edge-shell-v1',
+  });
 }
 
 async function customDomainPageSlug(env = {}, hostname = '') {
@@ -142,6 +197,9 @@ export async function onRequest(context) {
   if (url.hostname === 'call.pagero.kr' || url.hostname === 'calltag.pagero.kr') {
     return handleCalltagRequest(context, url);
   }
+
+  const pageroSpaResponse = await handlePageroSpaShell(context, url);
+  if (pageroSpaResponse) return pageroSpaResponse;
 
   const customDomainResponse = await handleCustomDomain(context, url);
   if (customDomainResponse) return customDomainResponse;
