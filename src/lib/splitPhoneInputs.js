@@ -47,8 +47,11 @@ function enhancePhoneInput(input) {
   if (input.dataset.pageroPhoneSplit === 'true') return;
   if (!input.matches('.landing-section.form .form-field-phone > input[type="tel"]')) return;
 
+  const wasRequired = input.required;
   input.dataset.pageroPhoneSplit = 'true';
+  input.dataset.pageroPhoneRequired = wasRequired ? 'true' : 'false';
   input.classList.add('pagero-phone-native');
+  input.required = false;
   input.tabIndex = -1;
   input.setAttribute('aria-hidden', 'true');
 
@@ -62,7 +65,7 @@ function enhancePhoneInput(input) {
   const last = makePart({ placeholder: '9839', maxLength: 4, label: '연락처 뒷자리' });
   const parts = [first, middle, last];
 
-  if (input.required) parts.forEach((part) => { part.required = true; });
+  if (wasRequired) parts.forEach((part) => { part.required = true; });
 
   wrapper.append(first, separator(), middle, separator(), last);
   input.insertAdjacentElement('afterend', wrapper);
@@ -114,7 +117,7 @@ function enhancePhoneInput(input) {
     }
     syncPartsFromNative();
   });
-  observer.observe(input, { attributes: true, attributeFilter: ['value', 'required'] });
+  observer.observe(input, { attributes: true, attributeFilter: ['value'] });
 }
 
 function scan(root = document) {
