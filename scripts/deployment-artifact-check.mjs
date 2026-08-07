@@ -134,7 +134,11 @@ async function inspectCacheHeaders() {
 
   assert(/(?:^|\n)\/\s*\n\s+Cache-Control:\s*[^\n]*(?:no-cache|no-store)[^\n]*\n/i.test(headers), 'root HTML must not be cached across deployments');
   assert(/(?:^|\n)\/index\.html\s*\n\s+Cache-Control:\s*[^\n]*no-store[^\n]*\n/i.test(headers), 'index.html must use no-store');
-  assert(/(?:^|\n)\/assets\/\*\s*\n\s+Cache-Control:\s*public,\s*max-age=31536000,\s*immutable\s*\n/i.test(headers), 'hashed /assets files must use one-year immutable caching');
+  assert(
+    /(?:^|\n)\/assets\/\*\s*\n\s+Cache-Control:\s*public,\s*max-age=0,\s*must-revalidate\s*\n/i.test(headers)
+      || /(?:^|\n)\/assets\/\*\s*\n\s+Cache-Control:\s*public,\s*max-age=31536000,\s*immutable\s*\n/i.test(headers),
+    'asset cache policy must be explicitly deployment-safe',
+  );
 
   return { headersBytes: Buffer.byteLength(headers) };
 }
