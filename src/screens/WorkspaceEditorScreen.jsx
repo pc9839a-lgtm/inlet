@@ -29,6 +29,7 @@ import '../styles/operations-clipping-cleanup-final.css';
 import '../styles/stats-regression-repair-final.css';
 import '../styles/settings-seo-domain-polish-final.css';
 import '../styles/settings-finance-final.css';
+import '../styles/settings-scroll-repair-final.css';
 
 export default function WorkspaceEditorScreen({
   canUseBuilder,
