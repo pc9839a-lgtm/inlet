@@ -10,7 +10,7 @@ import { productPriceKrw, recordReferralCommission } from '../_commissions.js';
 import { ensureBillingSchema, resolveEntitlement } from '../_shared.js';
 
 const METHODS = 'POST, OPTIONS';
-const WEB_PRODUCTS = new Set(['pagero_monthly', 'pagero_pro_monthly', 'all_monthly']);
+const WEB_PRODUCTS = new Set(['pagero_monthly', 'pagero_pro_monthly', 'pagero_domain_monthly', 'all_monthly']);
 const CALLTAG_PRODUCTS = new Set(['all_monthly', 'call_monthly', 'message_monthly']);
 
 function text(value, max = 240) {
@@ -73,6 +73,20 @@ export async function onRequest({ request, env }) {
       `).bind(ownerId).first();
       if (playConflict?.id) {
         throw billingError('Google Play 콜태그 구독이 있어 웹 결제를 확정할 수 없습니다.', 409, 'GOOGLE_PLAY_SUBSCRIPTION_ACTIVE');
+      }
+    }
+
+    if (productCode === 'pagero_domain_monthly') {
+      const included = await db.prepare(`
+        SELECT id FROM billing_subscriptions
+        WHERE owner_id = ?
+          AND product_code = 'pagero_pro_monthly'
+          AND status IN ('active', 'grace', 'cancelled')
+          AND (expires_at = '' OR julianday(expires_at) > julianday('now'))
+        LIMIT 1
+      `).bind(ownerId).first();
+      if (included?.id) {
+        throw billingError('페이지로 프로 요금제에 개인 도메인 + HTTPS가 이미 포함되어 있습니다.', 409, 'DOMAIN_INCLUDED_IN_PRO');
       }
     }
 
