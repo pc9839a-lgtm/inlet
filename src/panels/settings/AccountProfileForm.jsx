@@ -1,23 +1,34 @@
 export default function AccountProfileForm({ email, onLogout, onSave, profileDraft, saving, setProfileField }) {
   return (
-    <form className="account-settings-form" onSubmit={onSave}>
-      <div className="account-settings-grid">
-        <label>
+    <form className="account-settings-form account-profile-form-v2" onSubmit={onSave}>
+      <div className="account-profile-fields">
+        <label className="account-profile-field account-profile-name">
           <span>이름</span>
-          <input value={profileDraft.name} onChange={(event) => setProfileField('name', event.target.value)} placeholder="이름" />
+          <input
+            value={profileDraft.name}
+            onChange={(event) => setProfileField('name', event.target.value)}
+            placeholder="이름"
+          />
         </label>
-        <label>
+        <label className="account-profile-field account-profile-email">
           <span>이메일</span>
           <input value={email} disabled placeholder="email@example.com" />
         </label>
-        <label>
+        <label className="account-profile-field account-profile-phone">
           <span>연락처</span>
-          <input type="tel" inputMode="tel" value={profileDraft.phone} onChange={(event) => setProfileField('phone', event.target.value)} placeholder="01012345678" />
+          <input
+            type="tel"
+            inputMode="tel"
+            value={profileDraft.phone}
+            onChange={(event) => setProfileField('phone', event.target.value)}
+            placeholder="01012345678"
+          />
         </label>
-        <div className="account-settings-actions">
-          <button type="submit" disabled={saving}>{saving ? '저장 중' : '계정 저장'}</button>
-          <button type="button" onClick={onLogout}>로그아웃</button>
-        </div>
+      </div>
+
+      <div className="account-settings-actions account-profile-actions">
+        <button type="submit" disabled={saving}>{saving ? '저장 중' : '계정 저장'}</button>
+        <button type="button" onClick={onLogout}>로그아웃</button>
       </div>
     </form>
   );
