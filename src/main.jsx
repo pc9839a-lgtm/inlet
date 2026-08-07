@@ -3,6 +3,7 @@ import App from './App.jsx';
 import { AppErrorBoundary } from './components/AppErrorBoundary.jsx';
 import MapEmbedApp from './map/MapEmbedApp.jsx';
 import PublicHomeRoute from './screens/PublicHomeRoute.jsx';
+import { installSplitPhoneInputs } from './lib/splitPhoneInputs.js';
 import './styles.css';
 
 const APP_QUERY_PARAMS = ['auth', 'code', 'state', 'session', 'token', 'provider', 'tab', 'mode', 'invite', 'admin'];
@@ -57,6 +58,7 @@ function installDomMutationGuard() {
 
 markPageAsNotranslate();
 installDomMutationGuard();
+installSplitPhoneInputs();
 
 function PublicHomeEntry() {
   return (
