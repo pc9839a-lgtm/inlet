@@ -11,3 +11,108 @@
   box-shadow: none;
   transform: none;
 }
+
+.service-account-danger-zone {
+  margin-top: 18px;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid #fecaca;
+  border-radius: 16px;
+  background: #fff7f7;
+}
+
+.service-account-danger-zone > div:first-child {
+  min-width: 0;
+}
+
+.service-account-danger-zone strong {
+  color: #b91c1c;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.service-account-danger-zone p {
+  margin: 5px 0 0;
+  color: #7f1d1d;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.service-account-withdraw-open {
+  white-space: nowrap;
+}
+
+.service-account-withdraw-confirm {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.service-account-withdraw-confirm label {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.service-account-withdraw-confirm label span {
+  color: #7f1d1d;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.service-account-withdraw-confirm input {
+  width: 100%;
+  min-height: 42px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border: 1px solid #fca5a5;
+  border-radius: 12px;
+  background: #fff;
+  color: #111827;
+  font-size: 14px;
+  outline: none;
+}
+
+.service-account-withdraw-confirm input:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, .1);
+}
+
+.service-account-withdraw-confirm > div {
+  display: flex;
+  gap: 8px;
+}
+
+.service-account-withdraw-confirm button {
+  min-height: 42px;
+  white-space: nowrap;
+}
+
+.service-account-withdraw-confirm .danger-btn:disabled {
+  cursor: not-allowed;
+  opacity: .5;
+}
+
+@media (max-width: 700px) {
+  .service-account-danger-zone,
+  .service-account-withdraw-confirm {
+    grid-template-columns: 1fr;
+  }
+
+  .service-account-danger-zone > button,
+  .service-account-withdraw-confirm > div,
+  .service-account-withdraw-confirm > div button {
+    width: 100%;
+  }
+
+  .service-account-withdraw-confirm > div {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}
