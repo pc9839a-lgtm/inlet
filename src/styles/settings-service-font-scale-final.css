@@ -1,130 +1,274 @@
-/* Final readability pass for service settings only. Keep the restored settings shell unchanged. */
+/* Service billing readability: large section hierarchy, plan cards, clear pricing. */
 html body #root .builder-shell.settings-workspace-shell .service-content-v2 {
-  gap: 24px !important;
+  gap: 26px !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-content-v2 .service-content-head {
-  min-height: 72px !important;
-  padding-bottom: 20px !important;
+  min-height: 76px !important;
+  padding-bottom: 22px !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-content-v2 .service-content-head strong {
-  font-size: 24px !important;
+  font-size: 25px !important;
   line-height: 1.2 !important;
   font-weight: 950 !important;
+  letter-spacing: -.4px !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-content-v2 .service-content-head small {
+  margin-top: 4px !important;
   font-size: 15px !important;
   line-height: 1.45 !important;
   font-weight: 700 !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-card-grid.billing-service-grid {
-  gap: 18px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 24px !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-card {
-  border-radius: 14px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  border: 1px solid #d8dde5 !important;
+  border-radius: 16px !important;
+  background: #fff !important;
+  overflow: hidden !important;
+  box-shadow: 0 2px 8px rgba(17,24,39,.035) !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-card-head {
-  min-height: 108px !important;
-  padding: 20px 20px 18px !important;
+  min-height: 94px !important;
+  padding: 20px 22px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 18px !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  background: #fff !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-title {
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-icon,
 html body #root .builder-shell.settings-workspace-shell .service-card-icon {
   width: 46px !important;
   height: 46px !important;
+  flex: 0 0 46px !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 1px solid #d9dee5 !important;
   border-radius: 11px !important;
-}
-
-html body #root .builder-shell.settings-workspace-shell .service-plan-title {
-  gap: 14px !important;
+  background: #f7f8fa !important;
+  color: #111827 !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-title > div {
-  gap: 6px !important;
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 4px !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-title strong {
-  font-size: 21px !important;
-  line-height: 1.25 !important;
+  color: #111827 !important;
+  font-size: 22px !important;
+  line-height: 1.2 !important;
   font-weight: 950 !important;
+  letter-spacing: -.3px !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-title small {
+  color: #68717d !important;
   font-size: 14px !important;
-  line-height: 1.45 !important;
+  line-height: 1.4 !important;
   font-weight: 700 !important;
+  white-space: normal !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-state {
-  min-height: 32px !important;
+  flex: 0 0 auto !important;
+  min-height: 34px !important;
   padding: 0 12px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1px solid #d4d9e0 !important;
+  border-radius: 999px !important;
+  background: #f8f9fa !important;
+  color: #4b5563 !important;
   font-size: 13px !important;
   font-weight: 900 !important;
 }
 
+html body #root .builder-shell.settings-workspace-shell .service-state.active {
+  border-color: #111827 !important;
+  background: #111827 !important;
+  color: #fff !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-options {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+  padding: 16px !important;
+  background: #f6f7f9 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-domain .service-plan-options {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
 html body #root .builder-shell.settings-workspace-shell .service-plan-option {
-  min-height: 116px !important;
-  gap: 18px !important;
+  min-width: 0 !important;
+  min-height: 226px !important;
   padding: 20px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: space-between !important;
+  gap: 22px !important;
+  border: 1px solid #dfe3e8 !important;
+  border-radius: 13px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-domain .service-plan-option {
+  min-height: 150px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 24px !important;
+  padding: 22px 24px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-option.is-current {
+  border-color: #9aa3af !important;
+  background: #fbfbfc !important;
+  box-shadow: inset 0 0 0 1px #d7dce3 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-option.is-featured {
+  border-color: #111827 !important;
+  box-shadow: inset 0 0 0 1px #111827 !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-copy {
-  gap: 8px !important;
+  min-width: 0 !important;
+  display: grid !important;
+  align-content: start !important;
+  gap: 10px !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-name-row {
-  gap: 9px !important;
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 7px !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-name-row strong {
-  font-size: 19px !important;
-  line-height: 1.25 !important;
+  color: #111827 !important;
+  font-size: 20px !important;
+  line-height: 1.2 !important;
   font-weight: 950 !important;
+  letter-spacing: -.2px !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-name-row span {
-  min-height: 26px !important;
+  min-height: 24px !important;
   padding: 0 8px !important;
-  font-size: 12px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  border-radius: 6px !important;
+  background: #111827 !important;
+  color: #fff !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-name-row .service-recommend-badge {
+  background: #3156d9 !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-copy small {
+  color: #626b77 !important;
   font-size: 14px !important;
-  line-height: 1.5 !important;
+  line-height: 1.55 !important;
   font-weight: 700 !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-action {
-  min-width: 118px !important;
-  gap: 10px !important;
+  min-width: 0 !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  align-items: end !important;
+  justify-items: stretch !important;
+  gap: 14px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-domain .service-plan-action {
+  min-width: 210px !important;
+  justify-items: end !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-action b {
-  font-size: 25px !important;
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 3px !important;
+  color: #111827 !important;
+  font-size: 31px !important;
   line-height: 1 !important;
   font-weight: 950 !important;
-  letter-spacing: -.35px !important;
+  letter-spacing: -1px !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-domain .service-plan-action b {
+  justify-content: flex-end !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-action b em {
-  margin-left: 2px !important;
+  color: #6b7280 !important;
   font-size: 13px !important;
+  font-style: normal !important;
   font-weight: 800 !important;
+  letter-spacing: 0 !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-action button {
-  min-width: 82px !important;
-  height: 42px !important;
-  min-height: 42px !important;
-  padding: 0 15px !important;
-  border-radius: 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 46px !important;
+  min-height: 46px !important;
+  padding: 0 16px !important;
+  border: 1px solid #111827 !important;
+  border-radius: 9px !important;
+  background: #111827 !important;
+  color: #fff !important;
+  box-shadow: none !important;
   font-size: 14px !important;
   font-weight: 900 !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-domain .service-plan-action button {
+  width: auto !important;
+  min-width: 118px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-action button:disabled {
+  border-color: #d7dce3 !important;
+  background: #eef0f3 !important;
+  color: #767f8b !important;
 }
 
 /* Referral */
@@ -210,44 +354,103 @@ html body #root .builder-shell.settings-workspace-shell :is(.service-footer-acti
 }
 
 @media (max-width: 1180px) {
-  html body #root .builder-shell.settings-workspace-shell .service-card-grid.billing-service-grid {
+  html body #root .builder-shell.settings-workspace-shell .service-plan-options {
     grid-template-columns: minmax(0, 1fr) !important;
   }
 
-  html body #root .builder-shell.settings-workspace-shell .service-plan-title small {
-    white-space: normal !important;
+  html body #root .builder-shell.settings-workspace-shell .service-plan-option {
+    min-height: 150px !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 220px !important;
+    align-items: center !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .service-plan-action {
+    justify-items: end !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .service-plan-action button {
+    width: auto !important;
+    min-width: 128px !important;
   }
 }
 
 @media (max-width: 700px) {
+  html body #root .builder-shell.settings-workspace-shell .service-content-v2 .service-content-head {
+    min-height: 68px !important;
+    padding-bottom: 16px !important;
+  }
+
   html body #root .builder-shell.settings-workspace-shell .service-content-v2 .service-content-head strong {
     font-size: 21px !important;
   }
 
-  html body #root .builder-shell.settings-workspace-shell .service-plan-card-head {
-    min-height: 96px !important;
-    padding: 18px !important;
+  html body #root .builder-shell.settings-workspace-shell .service-content-v2 .service-content-head small {
+    font-size: 13px !important;
   }
 
-  html body #root .builder-shell.settings-workspace-shell .service-plan-option {
-    min-height: 104px !important;
-    padding: 18px !important;
+  html body #root .builder-shell.settings-workspace-shell .service-plan-card-head {
+    min-height: 84px !important;
+    padding: 16px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .service-plan-icon {
+    width: 40px !important;
+    height: 40px !important;
+    flex-basis: 40px !important;
   }
 
   html body #root .builder-shell.settings-workspace-shell .service-plan-title strong {
     font-size: 19px !important;
   }
 
+  html body #root .builder-shell.settings-workspace-shell .service-plan-title small {
+    font-size: 13px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .service-state {
+    min-height: 30px !important;
+    font-size: 12px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .service-plan-options {
+    gap: 10px !important;
+    padding: 10px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .service-plan-option,
+  html body #root .builder-shell.settings-workspace-shell .service-domain .service-plan-option {
+    min-height: 0 !important;
+    padding: 18px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 18px !important;
+  }
+
   html body #root .builder-shell.settings-workspace-shell .service-plan-name-row strong {
     font-size: 18px !important;
   }
 
-  html body #root .builder-shell.settings-workspace-shell .service-plan-action b {
-    font-size: 22px !important;
+  html body #root .builder-shell.settings-workspace-shell .service-plan-copy small {
+    font-size: 13px !important;
   }
 
-  html body #root .builder-shell.settings-workspace-shell .service-plan-copy small,
-  html body #root .builder-shell.settings-workspace-shell .service-plan-title small {
-    font-size: 14px !important;
+  html body #root .builder-shell.settings-workspace-shell .service-plan-action,
+  html body #root .builder-shell.settings-workspace-shell .service-domain .service-plan-action {
+    min-width: 0 !important;
+    justify-items: stretch !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .service-plan-action b,
+  html body #root .builder-shell.settings-workspace-shell .service-domain .service-plan-action b {
+    justify-content: flex-start !important;
+    font-size: 28px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .service-plan-action button,
+  html body #root .builder-shell.settings-workspace-shell .service-domain .service-plan-action button {
+    width: 100% !important;
+    min-width: 0 !important;
   }
 }
