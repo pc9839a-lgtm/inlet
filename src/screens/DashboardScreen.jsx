@@ -1,10 +1,10 @@
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { rememberAccountProjectAccess } from '../lib/accountProjectAccess.js';
 import { fetchSelectedAccountPage } from '../lib/accountPageRepository.js';
-import { authAccountErrorMessage } from '../lib/authAccounts.js';
+import { authAccountErrorMessage, updateAuthAccountStatus } from '../lib/authAccounts.js';
 import { deleteAccountPage, fetchAccountPages } from '../lib/pageRepository.js';
 import { canCreateLandingPage, isPlatformMasterUser } from '../lib/platformAccountPolicy.js';
-import { STORAGE_KEY } from '../config/storageKeys.js';
+import { AUTH_KEY, DASHBOARD_KEY, PAGE_DRAFTS_KEY, STORAGE_KEY, WORKSPACE_KEY } from '../config/storageKeys.js';
 import { save as saveJson, storageErrorMessage } from '../lib/storage.js';
 import { WorkspaceCreateModalLayer } from './workspace/WorkspaceCreateModalLayer.jsx';
 import './DashboardAccountLimit.css';
@@ -23,6 +23,9 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
   const [deletingProjectId, setDeletingProjectId] = useState('');
   const [openingProjectId, setOpeningProjectId] = useState('');
   const [draft, setDraft] = useState({ name: user?.name || '', phone: user?.phone || '' });
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [withdrawPhrase, setWithdrawPhrase] = useState('');
+  const [withdrawing, setWithdrawing] = useState(false);
 
   const accountName = user?.name || user?.email || '사용자';
   const accessMode = user?.accessMode || user?.role || 'master';
@@ -95,6 +98,36 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
     }
   };
 
+  const deleteAccount = async (event) => {
+    event.preventDefault();
+    if (withdrawPhrase.trim() !== '탈퇴') {
+      setError("확인을 위해 '탈퇴'를 정확히 입력해주세요.");
+      return;
+    }
+    const session = String(user?.session || '').trim();
+    if (!session) {
+      setError('로그인 세션이 만료되었습니다. 다시 로그인해주세요.');
+      return;
+    }
+
+    setWithdrawing(true);
+    setError('');
+    try {
+      await updateAuthAccountStatus({
+        status: 'deleted_pending_retention',
+        session,
+      });
+      try {
+        [AUTH_KEY, DASHBOARD_KEY, WORKSPACE_KEY, PAGE_DRAFTS_KEY].forEach((key) => window.localStorage?.removeItem(key));
+        window.sessionStorage?.clear();
+      } catch {}
+      window.location.replace('/');
+    } catch (err) {
+      setError(authAccountErrorMessage(err));
+      setWithdrawing(false);
+    }
+  };
+
   const openEditor = async (item) => {
     const openKey = item.projectId || item.id || item.slug;
     setOpeningProjectId(openKey);
@@ -130,7 +163,7 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
 
   const deletePage = async (item) => {
     const title = item.title || item.slug || '이 페이지';
-    if (!window.confirm(`"${title}" 페이지를 삭제할까요?\n삭제하면 공개 주소에서도 보이지 않습니다.`)) return;
+    if (!window.confirm(`\"${title}\" 페이지를 삭제할까요?\n삭제하면 공개 주소에서도 보이지 않습니다.`)) return;
     const deleteKey = item.projectId || item.id || item.slug;
     setDeletingProjectId(deleteKey);
     setPageListError('');
@@ -210,9 +243,65 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
                 <span>연락처</span>
                 <input value={draft.phone} onChange={(event) => setDraft((current) => ({ ...current, phone: event.target.value }))} placeholder="010-0000-0000" />
               </label>
-              {error && <strong className="auth-error">{error}</strong>}
-              <button className="primary-btn" type="submit" disabled={saving}>{saving ? '저장 중' : '저장'}</button>
+              {error && <strong className="auth-error" role="alert">{error}</strong>}
+              <button className="primary-btn" type="submit" disabled={saving || withdrawing}>{saving ? '저장 중' : '저장'}</button>
             </form>
+
+            <div className="service-account-danger-zone">
+              <div>
+                <strong>회원 탈퇴</strong>
+                <p>탈퇴하면 페이지로 계정 이용이 즉시 중지되고 로그아웃됩니다.</p>
+              </div>
+              {!withdrawOpen ? (
+                <button
+                  className="danger-btn service-account-withdraw-open"
+                  type="button"
+                  onClick={() => {
+                    setError('');
+                    setWithdrawPhrase('');
+                    setWithdrawOpen(true);
+                  }}
+                >
+                  회원 탈퇴
+                </button>
+              ) : (
+                <form className="service-account-withdraw-confirm" onSubmit={deleteAccount}>
+                  <label>
+                    <span>확인을 위해 '탈퇴' 입력</span>
+                    <input
+                      value={withdrawPhrase}
+                      onChange={(event) => {
+                        setError('');
+                        setWithdrawPhrase(event.target.value);
+                      }}
+                      placeholder="탈퇴"
+                      autoComplete="off"
+                    />
+                  </label>
+                  <div>
+                    <button
+                      className="ghost-btn"
+                      type="button"
+                      disabled={withdrawing}
+                      onClick={() => {
+                        setWithdrawOpen(false);
+                        setWithdrawPhrase('');
+                        setError('');
+                      }}
+                    >
+                      취소
+                    </button>
+                    <button
+                      className="danger-btn"
+                      type="submit"
+                      disabled={withdrawing || withdrawPhrase.trim() !== '탈퇴'}
+                    >
+                      {withdrawing ? '탈퇴 처리 중' : '회원 탈퇴 확정'}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
           </section>
         )}
 
