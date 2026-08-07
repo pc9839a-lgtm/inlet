@@ -1,0 +1,222 @@
+/* Final readability pass for service settings only. Keep the restored settings shell unchanged. */
+html body #root .builder-shell.settings-workspace-shell .service-content-v2 {
+  gap: 20px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-content-v2 .service-content-head {
+  min-height: 64px !important;
+  padding-bottom: 18px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-content-v2 .service-content-head strong {
+  font-size: 21px !important;
+  line-height: 1.25 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-content-v2 .service-content-head small {
+  font-size: 13px !important;
+  line-height: 1.45 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-card-grid.billing-service-grid {
+  gap: 16px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-card-head {
+  min-height: 92px !important;
+  padding: 18px 18px 16px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-icon,
+html body #root .builder-shell.settings-workspace-shell .service-card-icon {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 10px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-title {
+  gap: 12px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-title > div {
+  gap: 5px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-title strong {
+  font-size: 17px !important;
+  line-height: 1.3 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-title small {
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-state {
+  min-height: 28px !important;
+  padding: 0 10px !important;
+  font-size: 11px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-option {
+  min-height: 94px !important;
+  gap: 16px !important;
+  padding: 16px 18px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-copy {
+  gap: 6px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-name-row {
+  gap: 8px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-name-row strong {
+  font-size: 16px !important;
+  line-height: 1.3 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-name-row span {
+  min-height: 22px !important;
+  padding: 0 7px !important;
+  font-size: 10px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-copy small {
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-action {
+  gap: 9px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-action b {
+  font-size: 16px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-action b em {
+  font-size: 11px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-action button {
+  min-width: 70px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 12px !important;
+  font-size: 12px !important;
+}
+
+/* Referral */
+html body #root .builder-shell.settings-workspace-shell :is(.referral-benefit-card,.referral-status-card) {
+  min-height: 154px !important;
+  grid-template-columns: 44px minmax(0, 1fr) !important;
+  gap: 14px !important;
+  padding: 22px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.referral-benefit-card,.referral-status-card) small {
+  font-size: 12px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.referral-benefit-card,.referral-status-card) strong {
+  font-size: 23px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.referral-benefit-card,.referral-status-card) p {
+  font-size: 13px !important;
+  line-height: 1.55 !important;
+}
+
+/* Partner + settlement */
+html body #root .builder-shell.settings-workspace-shell .partner-code-v2 {
+  min-height: 132px !important;
+  padding: 22px 24px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .partner-code-v2 small {
+  font-size: 12px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .partner-code-v2 strong {
+  font-size: 31px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .partner-code-v2 p {
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .partner-metric-grid,
+html body #root .builder-shell.settings-workspace-shell .settlement-metric-grid {
+  gap: 14px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .partner-metric-grid > div,
+html body #root .builder-shell.settings-workspace-shell .settlement-metric {
+  min-height: 124px !important;
+  gap: 10px !important;
+  padding: 18px 20px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.partner-metric-grid > div,.settlement-metric) > span {
+  font-size: 12px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.partner-metric-grid > div,.settlement-metric) > strong {
+  font-size: 24px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-footer-action,
+html body #root .builder-shell.settings-workspace-shell .settlement-cta-card {
+  min-height: 86px !important;
+  padding: 17px 20px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-footer-action > span,
+html body #root .builder-shell.settings-workspace-shell .settlement-cta-card small {
+  font-size: 13px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settlement-cta-card strong {
+  font-size: 16px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.service-footer-action a,.settlement-cta-card a) {
+  min-height: 42px !important;
+  padding: 0 16px !important;
+  font-size: 13px !important;
+}
+
+@media (max-width: 1180px) {
+  html body #root .builder-shell.settings-workspace-shell .service-plan-title small {
+    white-space: normal !important;
+  }
+}
+
+@media (max-width: 700px) {
+  html body #root .builder-shell.settings-workspace-shell .service-plan-card-head {
+    min-height: 82px !important;
+    padding: 15px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .service-plan-option {
+    min-height: 88px !important;
+    padding: 15px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .service-plan-title strong {
+    font-size: 16px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .service-plan-name-row strong,
+  html body #root .builder-shell.settings-workspace-shell .service-plan-action b {
+    font-size: 15px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .service-plan-copy small,
+  html body #root .builder-shell.settings-workspace-shell .service-plan-title small {
+    font-size: 12px !important;
+  }
+}
