@@ -10,7 +10,7 @@ import { productPriceKrw, recordReferralCommission } from '../_commissions.js';
 import { ensureBillingSchema, resolveEntitlement } from '../_shared.js';
 
 const METHODS = 'POST, OPTIONS';
-const WEB_PRODUCTS = new Set(['pagero_monthly', 'all_monthly']);
+const WEB_PRODUCTS = new Set(['pagero_monthly', 'pagero_pro_monthly', 'all_monthly']);
 
 function text(value, max = 240) {
   return String(value || '').trim().slice(0, max);
