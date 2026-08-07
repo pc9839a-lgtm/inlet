@@ -4,24 +4,31 @@ const ACTIVE_SUBSCRIPTION_STATUSES = new Set(['active', 'grace', 'cancelled']);
 const PRICING = Object.freeze({
   pagero: [
     {
+      code: 'pagero_free',
+      name: '무료',
+      amountKrw: 0,
+      description: '기본 페이지 제작과 운영',
+      included: true,
+    },
+    {
       code: 'pagero_monthly',
-      name: '페이지로',
+      name: '클래식',
       amountKrw: 3500,
-      description: '랜딩페이지 운영과 접수 관리',
+      description: '페이지 운영과 고객 접수 관리',
+    },
+    {
+      code: 'pagero_pro_monthly',
+      name: '프로',
+      amountKrw: 5500,
+      description: '고급 연동과 확장 운영 기능',
     },
   ],
   calltag: [
     {
-      code: 'call_monthly',
-      name: '클래식',
-      amountKrw: 3500,
-      description: '통화 후 고객관리',
-    },
-    {
       code: 'all_monthly',
-      name: '프로',
-      amountKrw: 5500,
-      description: '통화관리와 문자 자동화',
+      name: '통합',
+      amountKrw: 6000,
+      description: '통화 고객관리와 문자 자동화 통합',
     },
   ],
 });
@@ -68,18 +75,18 @@ function isSubscriptionActive(subscription = {}) {
 }
 
 function planName(productCode = '') {
+  if (['all_monthly', 'call_monthly', 'message_monthly'].includes(productCode)) return '통합';
   for (const plans of Object.values(PRICING)) {
     const found = plans.find((plan) => plan.code === productCode);
     if (found) return found.name;
   }
-  if (productCode === 'message_monthly') return '문자 자동화';
   return productCode || '구독';
 }
 
 function subscriptionForService(subscriptions = [], service = '') {
   const candidates = subscriptions.filter(isSubscriptionActive);
   const productPriority = service === 'pagero'
-    ? ['pagero_monthly']
+    ? ['pagero_pro_monthly', 'pagero_monthly']
     : ['all_monthly', 'call_monthly', 'message_monthly'];
   const selected = productPriority
     .map((productCode) => candidates.find((item) => item.productCode === productCode))
@@ -88,7 +95,7 @@ function subscriptionForService(subscriptions = [], service = '') {
   return {
     ...selected,
     service,
-    planCode: selected.productCode,
+    planCode: service === 'calltag' ? 'all_monthly' : selected.productCode,
     planName: planName(selected.productCode),
     status: 'active',
     rawStatus: selected.status,
@@ -140,34 +147,33 @@ export async function fetchAccountFinance(authUser = null) {
   if (!authUser?.session) throw new ApiError('로그인이 필요합니다.', 401);
   const [subscriptionsData, referralData, summaryData] = await Promise.all([
     getJson('/api/billing/subscriptions', authUser, '구독 정보를 불러오지 못했습니다.'),
-    getJson('/api/referrals/me', authUser, '추천인 코드를 불러오지 못했습니다.'),
-    getJson('/api/referrals/summary', authUser, '추천 정산 정보를 불러오지 못했습니다.'),
+    getJson('/api/referrals/me', authUser, '추천인 정보를 불러오지 못했습니다.'),
+    getJson('/api/referrals/summary', authUser, '파트너 정산 정보를 불러오지 못했습니다.'),
   ]);
   return normalizeFinance({ authUser, subscriptionsData, referralData, summaryData });
 }
 
-export async function applyAccountReferralCode(authUser = null, code = '') {
-  if (!authUser?.session) throw new ApiError('로그인이 필요합니다.', 401);
-  await postJson('/api/referrals/apply', { code }, {
-    headers: sessionHeaders(authUser),
+export async function applyAccountReferralCode() {
+  throw new ApiError('추천인 코드는 회원가입할 때만 입력할 수 있습니다.', 409, {
+    code: 'REFERRAL_SIGNUP_ONLY',
   });
-  return fetchAccountFinance(authUser);
 }
 
 export async function createAccountCheckout(authUser = null, service = '', planCode = '') {
   if (!authUser?.session) throw new ApiError('로그인이 필요합니다.', 401);
   const productCode = String(planCode || '').trim();
-  const valid = (PRICING[service] || []).some((plan) => plan.code === productCode);
-  if (!valid) throw new ApiError('결제할 요금제를 확인해주세요.', 400);
+  const selectedPlan = (PRICING[service] || []).find((plan) => plan.code === productCode);
+  if (!selectedPlan) throw new ApiError('결제할 요금제를 확인해주세요.', 400);
+  if (selectedPlan.included || selectedPlan.amountKrw <= 0) {
+    throw new ApiError('무료 요금제는 별도 결제가 필요하지 않습니다.', 400);
+  }
 
-  if (productCode === 'pagero_monthly' || productCode === 'all_monthly') {
-    const data = await postJson('/api/billing/web/precheck', { productCode }, {
-      headers: sessionHeaders(authUser),
-    });
-    const decision = data?.checkoutDecision || {};
-    if (decision.allowed === false) {
-      throw new ApiError(decision.message || '이미 이용 중인 구독이 있습니다.', 409, decision);
-    }
+  const data = await postJson('/api/billing/web/precheck', { productCode }, {
+    headers: sessionHeaders(authUser),
+  });
+  const decision = data?.checkoutDecision || {};
+  if (decision.allowed === false) {
+    throw new ApiError(decision.message || '이미 이용 중인 구독이 있습니다.', 409, decision);
   }
 
   if (service === 'pagero') {
