@@ -1,4 +1,4 @@
-import { CreditCard, RefreshCw } from 'lucide-react';
+import { CreditCard, Globe2, PhoneCall, RefreshCw, ShieldCheck } from 'lucide-react';
 import SettingsSection from './SettingsSection.jsx';
 import useAccountFinance from './useAccountFinance.js';
 
@@ -11,51 +11,70 @@ function subscriptionFor(finance, service) {
   return (finance?.subscriptions || []).find((item) => item.service === service) || null;
 }
 
-function ServicePlans({ finance, service, label, busy, onCheckout }) {
+const SERVICE_META = {
+  pagero: { label: '페이지로', icon: Globe2 },
+  domain: { label: 'HTTPS · SSL', icon: ShieldCheck },
+  calltag: { label: '콜태그', icon: PhoneCall },
+};
+
+function ServicePlans({ finance, service, busy, onCheckout }) {
   const subscription = subscriptionFor(finance, service);
   const plans = finance?.pricing?.[service] || [];
   const freeCurrent = service === 'pagero' && !subscription;
   const sslIncluded = service === 'domain' && finance?.domain?.includedByPlan === true;
   const sslActive = service === 'domain' && finance?.domain?.enabled === true;
+  const serviceActive = Boolean(subscription || freeCurrent || sslActive);
+  const MetaIcon = SERVICE_META[service].icon;
   const currentLabel = sslIncluded
-    ? '프로 요금제 포함'
+    ? '프로 포함'
     : subscription
-      ? `${subscription.planName} 이용 중`
+      ? subscription.planName
       : service === 'domain'
-        ? '도메인 연결은 무료'
-        : freeCurrent ? '무료 요금제 이용 중' : '결제된 요금제 없음';
-  const serviceActive = subscription || freeCurrent || sslActive;
+        ? '미신청'
+        : freeCurrent ? '무료' : '미이용';
 
   return (
-    <section className="billing-service-panel">
-      <header>
-        <div>
-          <strong>{label}</strong>
-          <small>{currentLabel}</small>
+    <section className={`service-plan-card service-${service}`}>
+      <header className="service-plan-card-head">
+        <div className="service-plan-title">
+          <span className="service-plan-icon"><MetaIcon size={18} aria-hidden="true" /></span>
+          <div>
+            <strong>{SERVICE_META[service].label}</strong>
+            <small>{service === 'domain' ? '도메인 연결은 무료' : service === 'pagero' ? '랜딩페이지 제작·운영' : '통화 후 고객관리'}</small>
+          </div>
         </div>
-        <span>{service === 'domain' ? (serviceActive ? '적용' : '선택') : (serviceActive ? '이용 중' : '미결제')}</span>
+        <span className={`service-state ${serviceActive ? 'active' : ''}`}>{currentLabel}</span>
       </header>
 
-      <div className="billing-plan-list">
+      <div className="service-plan-options">
         {plans.map((plan) => {
           const current = sslIncluded
             ? true
             : plan.included ? freeCurrent : subscription?.planCode === plan.code;
           const loading = busy === `${service}:${plan.code}`;
+          const title = service === 'domain' ? 'SSL 관리' : plan.name;
+          const description = service === 'domain'
+            ? '인증서 발급·갱신·HTTPS 관리'
+            : plan.description;
           return (
-            <div className={`billing-plan-row ${current ? 'is-current' : ''}`} key={`${service}-${plan.code}`}>
-              <div>
-                <strong>{service === 'domain' ? 'HTTPS · SSL 관리' : plan.name}</strong>
-                <small>{service === 'domain' ? '인증서 발급·갱신 및 HTTPS 관리' : plan.description}</small>
+            <div className={`service-plan-option ${current ? 'is-current' : ''}`} key={`${service}-${plan.code}`}>
+              <div className="service-plan-copy">
+                <div className="service-plan-name-row">
+                  <strong>{title}</strong>
+                  {current && <span>현재</span>}
+                </div>
+                <small>{description}</small>
               </div>
-              <b>{sslIncluded ? '프로 포함' : `${money(plan.amountKrw)}${plan.amountKrw > 0 ? '/월' : ''}`}</b>
-              <button
-                type="button"
-                disabled={current || loading || plan.included}
-                onClick={() => onCheckout(service, plan.code)}
-              >
-                {loading ? '이동 중' : sslIncluded ? '프로 포함' : plan.included ? '기본 제공' : current ? '현재 이용 중' : service === 'domain' ? 'SSL 신청' : '결제'}
-              </button>
+              <div className="service-plan-action">
+                <b>{sslIncluded ? '포함' : money(plan.amountKrw)}{!sslIncluded && plan.amountKrw > 0 ? <em>/월</em> : null}</b>
+                <button
+                  type="button"
+                  disabled={current || loading || plan.included}
+                  onClick={() => onCheckout(service, plan.code)}
+                >
+                  {loading ? '이동 중' : current ? '이용 중' : plan.included ? '기본' : service === 'domain' ? '신청' : '선택'}
+                </button>
+              </div>
             </div>
           );
         })}
@@ -71,35 +90,33 @@ export default function BillingSettingsSection({ authUser, openSection, setOpenS
     <SettingsSection
       id="billing"
       title="요금제·결제"
-      description="페이지로 · HTTPS(SSL) · 콜태그"
+      description="서비스 이용 현황과 결제"
       openSection={openSection}
       setOpenSection={setOpenSection}
       className="settings-billing-card"
     >
-      <div className="account-finance-settings">
-        <header className="account-finance-head">
+      <div className="account-finance-settings service-content-v2">
+        <header className="account-finance-head service-content-head">
           <div>
             <CreditCard size={20} aria-hidden="true" />
             <div>
-              <strong>요금제·결제</strong>
+              <strong>서비스 이용 현황</strong>
               <small>{finance?.account?.email || authUser?.email || '현재 계정'}</small>
             </div>
           </div>
-          <button type="button" onClick={refresh} disabled={loading}>
+          <button type="button" onClick={refresh} disabled={loading} aria-label="결제 정보 새로고침">
             <RefreshCw size={16} aria-hidden="true" /> 새로고침
           </button>
         </header>
-
-        <p className="account-finance-rule">개인 도메인 연결은 무료입니다. HTTPS(SSL) 관리만 월 1,000원이며 프로 요금제에는 포함됩니다.</p>
 
         {error && <p className="account-finance-message is-error">{error}</p>}
         {loading && !finance ? (
           <div className="account-finance-loading">결제 정보를 불러오는 중입니다.</div>
         ) : (
-          <div className="billing-service-grid">
-            <ServicePlans finance={finance} service="pagero" label="페이지로" busy={busy} onCheckout={checkout} />
-            <ServicePlans finance={finance} service="domain" label="HTTPS · SSL" busy={busy} onCheckout={checkout} />
-            <ServicePlans finance={finance} service="calltag" label="콜태그" busy={busy} onCheckout={checkout} />
+          <div className="billing-service-grid service-card-grid">
+            <ServicePlans finance={finance} service="pagero" busy={busy} onCheckout={checkout} />
+            <ServicePlans finance={finance} service="domain" busy={busy} onCheckout={checkout} />
+            <ServicePlans finance={finance} service="calltag" busy={busy} onCheckout={checkout} />
           </div>
         )}
       </div>
