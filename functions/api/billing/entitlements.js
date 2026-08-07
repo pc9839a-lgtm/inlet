@@ -1,7 +1,7 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../_shared.js';
 import { CALL_METHODS, callSession } from '../call/_shared.js';
 import { googlePlayBillingReadiness } from './_readiness.js';
-import { resolveEntitlement } from './_shared.js';
+import { resolveCallTagEntitlement } from './trial-policy.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -17,7 +17,7 @@ export async function onRequest({ request, env }) {
     const db = assertD1(env);
     const session = await callSession(request, env);
     const serverNow = new Date();
-    const entitlement = await resolveEntitlement(db, session.ownerId);
+    const entitlement = await resolveCallTagEntitlement(db, session.ownerId);
     entitlement.serverNow = serverNow.toISOString();
     entitlement.billingAvailability = {
       googlePlay: googlePlayBillingReadiness(env),
