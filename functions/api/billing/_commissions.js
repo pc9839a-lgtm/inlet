@@ -3,9 +3,10 @@ import { ensureBillingSchema } from './_shared.js';
 const COMMISSION_RATE_BPS = 2000;
 const PRODUCT_PRICE_KRW = Object.freeze({
   pagero_monthly: 3500,
-  call_monthly: 3500,
-  message_monthly: 2000,
-  all_monthly: 5500,
+  pagero_pro_monthly: 5500,
+  call_monthly: 6000,
+  message_monthly: 6000,
+  all_monthly: 6000,
 });
 
 function text(value, max = 240) {
