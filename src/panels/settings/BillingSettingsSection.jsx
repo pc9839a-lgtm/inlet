@@ -12,9 +12,9 @@ function subscriptionFor(finance, service) {
 }
 
 const SERVICE_META = {
-  pagero: { label: '페이지로', icon: Globe2 },
-  domain: { label: 'HTTPS · SSL', icon: ShieldCheck },
-  calltag: { label: '콜태그', icon: PhoneCall },
+  pagero: { label: '페이지로', icon: Globe2, subtitle: '랜딩페이지 제작·운영' },
+  calltag: { label: '콜태그', icon: PhoneCall, subtitle: '전화관리 · 문자자동화' },
+  domain: { label: 'HTTPS · SSL', icon: ShieldCheck, subtitle: '도메인 연결은 무료' },
 };
 
 function ServicePlans({ finance, service, busy, onCheckout }) {
@@ -29,21 +29,21 @@ function ServicePlans({ finance, service, busy, onCheckout }) {
   const serviceActive = Boolean(subscription || freeCurrent || sslActive || bundleClassic || (service === 'calltag' && calltagActiveCodes.size));
   const MetaIcon = SERVICE_META[service].icon;
 
-  let currentLabel = service === 'domain' ? '미신청' : freeCurrent ? '무료' : '미이용';
+  let currentLabel = service === 'domain' ? '미신청' : freeCurrent ? '무료 이용 중' : '미이용';
   if (sslIncluded) currentLabel = '프로 포함';
   else if (bundleClassic) currentLabel = '통합권 포함';
-  else if (service === 'calltag' && bundleActive) currentLabel = '통합권';
-  else if (service === 'calltag' && calltagActiveCodes.has('call_monthly') && calltagActiveCodes.has('message_monthly')) currentLabel = '전화 + 문자';
-  else if (subscription) currentLabel = subscription.planName;
+  else if (service === 'calltag' && bundleActive) currentLabel = '통합권 이용 중';
+  else if (service === 'calltag' && calltagActiveCodes.has('call_monthly') && calltagActiveCodes.has('message_monthly')) currentLabel = '전화 + 문자 이용 중';
+  else if (subscription) currentLabel = `${subscription.planName} 이용 중`;
 
   return (
     <section className={`service-plan-card service-${service}`}>
       <header className="service-plan-card-head">
         <div className="service-plan-title">
-          <span className="service-plan-icon"><MetaIcon size={18} aria-hidden="true" /></span>
+          <span className="service-plan-icon"><MetaIcon size={22} aria-hidden="true" /></span>
           <div>
             <strong>{SERVICE_META[service].label}</strong>
-            <small>{service === 'domain' ? '도메인 연결은 무료' : service === 'pagero' ? '랜딩페이지 제작·운영' : '전화관리 · 문자자동화'}</small>
+            <small>{SERVICE_META[service].subtitle}</small>
           </div>
         </div>
         <span className={`service-state ${serviceActive ? 'active' : ''}`}>{currentLabel}</span>
@@ -63,15 +63,20 @@ function ServicePlans({ finance, service, busy, onCheckout }) {
           const loading = busy === `${service}:${plan.code}`;
           const title = service === 'domain' ? 'SSL 관리' : plan.name;
           const description = service === 'domain'
-            ? '인증서 발급·갱신·HTTPS 관리'
+            ? 'SSL 인증서 발급·갱신·HTTPS 관리'
             : plan.description;
           const included = calltagIncludedByBundle || pageroIncludedByBundle;
+          const featured = service === 'calltag' && plan.code === 'all_monthly';
 
           return (
-            <div className={`service-plan-option ${current || included ? 'is-current' : ''}`} key={`${service}-${plan.code}`}>
+            <div
+              className={`service-plan-option plan-${plan.code}${current || included ? ' is-current' : ''}${featured ? ' is-featured' : ''}`}
+              key={`${service}-${plan.code}`}
+            >
               <div className="service-plan-copy">
                 <div className="service-plan-name-row">
                   <strong>{title}</strong>
+                  {featured && <span className="service-recommend-badge">추천</span>}
                   {current && !included && <span>현재</span>}
                   {included && <span>포함</span>}
                 </div>
@@ -84,7 +89,7 @@ function ServicePlans({ finance, service, busy, onCheckout }) {
                   disabled={current || included || loading || plan.included}
                   onClick={() => onCheckout(service, plan.code)}
                 >
-                  {loading ? '이동 중' : included ? '통합권 포함' : current ? '이용 중' : plan.included ? '기본' : service === 'domain' ? '신청' : '선택'}
+                  {loading ? '이동 중' : included ? '통합권 포함' : current ? '이용 중' : plan.included ? '기본 제공' : service === 'domain' ? 'SSL 신청' : '이용하기'}
                 </button>
               </div>
             </div>
@@ -110,14 +115,14 @@ export default function BillingSettingsSection({ authUser, openSection, setOpenS
       <div className="account-finance-settings service-content-v2">
         <header className="account-finance-head service-content-head">
           <div>
-            <CreditCard size={20} aria-hidden="true" />
+            <CreditCard size={22} aria-hidden="true" />
             <div>
               <strong>서비스 이용 현황</strong>
               <small>{finance?.account?.email || authUser?.email || '현재 계정'}</small>
             </div>
           </div>
           <button type="button" onClick={refresh} disabled={loading} aria-label="결제 정보 새로고침">
-            <RefreshCw size={16} aria-hidden="true" /> 새로고침
+            <RefreshCw size={17} aria-hidden="true" /> 새로고침
           </button>
         </header>
 
@@ -127,8 +132,8 @@ export default function BillingSettingsSection({ authUser, openSection, setOpenS
         ) : (
           <div className="billing-service-grid service-card-grid">
             <ServicePlans finance={finance} service="pagero" busy={busy} onCheckout={checkout} />
-            <ServicePlans finance={finance} service="domain" busy={busy} onCheckout={checkout} />
             <ServicePlans finance={finance} service="calltag" busy={busy} onCheckout={checkout} />
+            <ServicePlans finance={finance} service="domain" busy={busy} onCheckout={checkout} />
           </div>
         )}
       </div>
