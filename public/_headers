@@ -1,8 +1,12 @@
 /
   Cache-Control: no-cache, no-store, must-revalidate
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
 
 /index.html
   Cache-Control: no-cache, no-store, must-revalidate
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
 
 /*.html
   Cache-Control: no-cache, no-store, must-revalidate
@@ -45,43 +49,81 @@
   Cache-Control: public, max-age=3600
 
 /login
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow, noarchive
 
 /signup
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow, noarchive
 
 /app
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow, noarchive
 
 /app/*
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow, noarchive
 
 /dashboard
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow, noarchive
 
 /dashboard/*
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow, noarchive
 
 /account
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow, noarchive
 
 /account/*
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow, noarchive
 
 /admin
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow, noarchive
 
 /*/admin
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow, noarchive
 
 /invite
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow, noarchive
 
 /invite/*
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow, noarchive
 
 /embed
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
   X-Robots-Tag: noindex, nofollow, noarchive
 
 /embed/*
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
   X-Robots-Tag: noindex, nofollow, noarchive
