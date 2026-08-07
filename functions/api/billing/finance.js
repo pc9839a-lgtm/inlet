@@ -211,7 +211,7 @@ export async function onRequest({ request, env }) {
       `).bind(ownerId),
       db.prepare(`
         SELECT
-          COUNT(*) AS referred_count,
+          COUNT(DISTINCT r.id) AS referred_count,
           COUNT(DISTINCT CASE WHEN s.id IS NOT NULL THEN r.referred_owner_id END) AS active_paid_count
         FROM referrals r
         LEFT JOIN billing_subscriptions s
