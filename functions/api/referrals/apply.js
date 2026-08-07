@@ -1,6 +1,5 @@
-import { assertD1, handleApiError, jsonResponse, optionsResponse, readJson } from '../_shared.js';
+import { handleApiError, jsonResponse, optionsResponse, readJson } from '../_shared.js';
 import { CALL_METHODS, callSession } from '../call/_shared.js';
-import { applyReferralCode } from '../billing/_shared.js';
 
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, CALL_METHODS);
@@ -11,14 +10,12 @@ export async function onRequest({ request, env }) {
     }, CALL_METHODS);
   }
   try {
-    const db = assertD1(env);
     const input = await readJson(request);
-    const session = await callSession(request, env, input);
-    const result = await applyReferralCode(db, session.ownerId, input.code);
-    return jsonResponse(request, env, 200, {
-      ok: true,
-      referral: result,
-      entitlement: result.entitlement,
+    await callSession(request, env, input);
+    return jsonResponse(request, env, 409, {
+      ok: false,
+      error: '추천인 코드는 회원가입할 때만 입력할 수 있습니다.',
+      code: 'REFERRAL_SIGNUP_ONLY',
     }, CALL_METHODS);
   } catch (error) {
     return handleApiError(request, env, error, CALL_METHODS);
