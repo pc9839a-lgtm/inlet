@@ -1,4 +1,4 @@
-import { ExternalLink, RefreshCw, WalletCards } from 'lucide-react';
+import { ExternalLink, RefreshCw, TrendingUp, UserPlus, WalletCards } from 'lucide-react';
 import SettingsSection from './SettingsSection.jsx';
 import useAccountFinance from './useAccountFinance.js';
 
@@ -21,16 +21,16 @@ export default function SettlementSettingsSection({ authUser, openSection, setOp
       setOpenSection={setOpenSection}
       className="settings-settlement-card"
     >
-      <div className="account-settlement-settings">
-        <header className="account-finance-head">
+      <div className="account-settlement-settings service-content-v2">
+        <header className="account-finance-head service-content-head">
           <div>
             <WalletCards size={20} aria-hidden="true" />
             <div>
-              <strong>통합 정산</strong>
+              <strong>정산 현황</strong>
               <small>{finance?.account?.email || authUser?.email || '현재 계정'}</small>
             </div>
           </div>
-          <button type="button" onClick={refresh} disabled={loading}>
+          <button type="button" onClick={refresh} disabled={loading} aria-label="정산 정보 새로고침">
             <RefreshCw size={16} aria-hidden="true" /> 새로고침
           </button>
         </header>
@@ -41,20 +41,32 @@ export default function SettlementSettingsSection({ authUser, openSection, setOp
           <div className="account-finance-loading">정산 정보를 불러오는 중입니다.</div>
         ) : (
           <>
-            <section className="settlement-overview-panel">
-              <div><span>이번 달 예상 정산</span><strong>{money(settlement.estimatedRevenueKrw)}</strong></div>
-              <div><span>누적 확정 정산</span><strong>{money(settlement.confirmedRevenueKrw)}</strong></div>
-              <div><span>추천 가입</span><strong>{Number(settlement.referredCount || 0)}명</strong></div>
-              <div><span>유료 전환</span><strong>{Number(settlement.activePaidCount || 0)}명</strong></div>
+            <section className="settlement-metric-grid">
+              <div className="settlement-metric primary">
+                <span><WalletCards size={17} />이번 달 예상</span>
+                <strong>{money(settlement.estimatedRevenueKrw)}</strong>
+              </div>
+              <div className="settlement-metric">
+                <span><TrendingUp size={17} />누적 확정</span>
+                <strong>{money(settlement.confirmedRevenueKrw)}</strong>
+              </div>
+              <div className="settlement-metric">
+                <span><UserPlus size={17} />추천 가입</span>
+                <strong>{Number(settlement.referredCount || 0)}명</strong>
+              </div>
+              <div className="settlement-metric">
+                <span><TrendingUp size={17} />유료 전환</span>
+                <strong>{Number(settlement.activePaidCount || 0)}명</strong>
+              </div>
             </section>
 
-            <section className="settlement-link-panel">
+            <section className="settlement-cta-card">
               <div>
-                <strong>페이지로·콜태그 정산 페이지</strong>
-                <small>동일 계정의 페이지로와 콜태그 수익을 합산한 정산 내역을 확인합니다.</small>
+                <strong>콜태그 × 페이지로 통합 정산</strong>
+                <small>서비스별 수익, 확정 금액, 지급 내역을 한 화면에서 확인합니다.</small>
               </div>
               <a href={SETTLEMENT_URL} target="_blank" rel="noreferrer">
-                정산 페이지 열기 <ExternalLink size={17} aria-hidden="true" />
+                정산 내역 보기 <ExternalLink size={16} aria-hidden="true" />
               </a>
             </section>
           </>
