@@ -11,6 +11,7 @@ import usePageDuplicateSettings from './settings/usePageDuplicateSettings.js';
 import useSettingsDrafts from './settings/useSettingsDrafts.js';
 import useSettingsPanelSections from './settings/useSettingsPanelSections.js';
 import './SettingsPanel.css';
+import './SettingsPanel-final-policy-layout.css';
 
 export default function SettingsPanel({
   page,
