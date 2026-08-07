@@ -24,15 +24,15 @@ const PRICING = Object.freeze({
       code: 'pagero_pro_monthly',
       name: '프로',
       amountKrw: 5500,
-      description: '고급 연동 + 개인 도메인 1개 + HTTPS 포함',
+      description: '고급 연동 + HTTPS/SSL 관리 포함',
     },
   ],
   domain: [
     {
       code: 'pagero_domain_monthly',
-      name: '개인 도메인 + HTTPS',
+      name: 'HTTPS · SSL 관리',
       amountKrw: 1000,
-      description: '개인 도메인 연결, SSL 발급·갱신 및 HTTPS 관리',
+      description: 'SSL 인증서 발급·갱신 및 HTTPS 관리',
     },
   ],
   calltag: [
