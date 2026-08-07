@@ -1,0 +1,165 @@
+/* Pagero form editor: keep question rows on one compact baseline. */
+body .builder-shell .edit-layout .block-editor-v2 .form-question-list {
+  gap: 10px !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .form-question-card {
+  border-radius: 14px !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .form-question-head-row {
+  display: grid !important;
+  grid-template-columns: 40px minmax(0, 1fr) 40px 40px !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-height: 58px !important;
+  padding: 8px !important;
+  margin: 0 !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .form-question-head-row.reservation-custom-head-row {
+  grid-template-columns: 40px minmax(0, 1fr) 40px !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .form-question-head-row > button {
+  align-self: center !important;
+  margin: 0 !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .form-question-head-row > :is(.drag-handle, .icon-only) {
+  width: 40px !important;
+  min-width: 40px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  border-radius: 10px !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .form-question-title {
+  display: grid !important;
+  grid-template-columns: 30px minmax(0, 1fr) auto auto 20px !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 40px !important;
+  height: 40px !important;
+  padding: 0 2px !important;
+  margin: 0 !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .form-question-title > span {
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 9px !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .form-question-title > strong {
+  min-width: 0 !important;
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .form-question-title > :is(em, b) {
+  min-height: 24px !important;
+  padding: 0 8px !important;
+  margin: 0 !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .form-question-body {
+  gap: 12px !important;
+  padding: 14px 16px 16px !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .form-question-body .field {
+  margin: 0 !important;
+}
+
+@media (max-width: 760px) {
+  body .builder-shell .edit-layout .block-editor-v2 .form-question-head-row {
+    grid-template-columns: 38px minmax(0, 1fr) 38px 38px !important;
+    gap: 6px !important;
+    padding: 7px !important;
+  }
+
+  body .builder-shell .edit-layout .block-editor-v2 .form-question-head-row.reservation-custom-head-row {
+    grid-template-columns: 38px minmax(0, 1fr) 38px !important;
+  }
+
+  body .builder-shell .edit-layout .block-editor-v2 .form-question-title {
+    grid-template-columns: 28px minmax(0, 1fr) 18px !important;
+    gap: 7px !important;
+  }
+
+  body .builder-shell .edit-layout .block-editor-v2 .form-question-title > :is(em, b) {
+    display: none !important;
+  }
+
+  body .builder-shell .edit-layout .block-editor-v2 .form-question-head-row > :is(.drag-handle, .icon-only) {
+    width: 38px !important;
+    min-width: 38px !important;
+  }
+}
+
+/* Public consultation + visit reservation: phone number is entered as 3 separate parts. */
+.landing-section.form .form-field-phone {
+  position: relative !important;
+}
+
+.landing-section.form .form-field-phone > input.pagero-phone-native {
+  position: absolute !important;
+  width: 1px !important;
+  min-width: 1px !important;
+  max-width: 1px !important;
+  height: 1px !important;
+  min-height: 1px !important;
+  max-height: 1px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  overflow: hidden !important;
+}
+
+.landing-section.form .pagero-phone-parts {
+  display: grid !important;
+  grid-template-columns: minmax(0, .78fr) 10px minmax(0, 1fr) 10px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 6px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.landing-section.form .pagero-phone-parts > input.pagero-phone-part {
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  text-align: center !important;
+  letter-spacing: .02em !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.landing-section.form .pagero-phone-separator {
+  display: grid !important;
+  place-items: center !important;
+  width: 10px !important;
+  color: #94a3b8 !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  user-select: none !important;
+}
+
+@media (max-width: 420px) {
+  .landing-section.form .pagero-phone-parts {
+    grid-template-columns: minmax(0, .75fr) 8px minmax(0, 1fr) 8px minmax(0, 1fr) !important;
+    gap: 4px !important;
+  }
+
+  .landing-section.form .pagero-phone-separator {
+    width: 8px !important;
+  }
+}
