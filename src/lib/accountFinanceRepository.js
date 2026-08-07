@@ -37,10 +37,22 @@ const PRICING = Object.freeze({
   ],
   calltag: [
     {
+      code: 'call_monthly',
+      name: '전화관리',
+      amountKrw: 1900,
+      description: '통화 후 태그·고객 상태·재연락 일정 관리',
+    },
+    {
+      code: 'message_monthly',
+      name: '문자자동화',
+      amountKrw: 990,
+      description: '자동문자·후속문자·중복발송 방지',
+    },
+    {
       code: 'all_monthly',
-      name: '통합',
+      name: '통합권',
       amountKrw: 6000,
-      description: '통화 고객관리와 문자 자동화 통합',
+      description: '페이지로 클래식 + 콜태그 전화관리 + 문자자동화',
     },
   ],
 });
@@ -93,7 +105,12 @@ function isSubscriptionActive(subscription = {}) {
 }
 
 function planName(productCode = '') {
-  if (['all_monthly', 'call_monthly', 'message_monthly'].includes(productCode)) return '통합';
+  const calltagNames = {
+    call_monthly: '전화관리',
+    message_monthly: '문자자동화',
+    all_monthly: '통합권',
+  };
+  if (calltagNames[productCode]) return calltagNames[productCode];
   for (const plans of Object.values(PRICING)) {
     const found = plans.find((plan) => plan.code === productCode);
     if (found) return found.name;
@@ -115,7 +132,7 @@ function subscriptionForService(subscriptions = [], service = '') {
   return {
     ...selected,
     service,
-    planCode: service === 'calltag' ? 'all_monthly' : selected.productCode,
+    planCode: selected.productCode,
     planName: planName(selected.productCode),
     status: 'active',
     rawStatus: selected.status,
@@ -128,13 +145,15 @@ function normalizeFinance({ authUser, subscriptionsData, referralData, summaryDa
     : [];
   const referral = referralData?.referral || {};
   const summary = summaryData?.summary || {};
+  const activeRaw = rawSubscriptions.filter(isSubscriptionActive);
+  const calltagActivePlanCodes = activeRaw
+    .filter((item) => ['call_monthly', 'message_monthly', 'all_monthly'].includes(item.productCode))
+    .map((item) => item.productCode);
+  const bundleSubscription = activeRaw.find((item) => item.productCode === 'all_monthly') || null;
   const pageroSubscription = subscriptionForService(rawSubscriptions, 'pagero');
   const domainSubscription = subscriptionForService(rawSubscriptions, 'domain');
-  const subscriptions = [
-    pageroSubscription,
-    subscriptionForService(rawSubscriptions, 'calltag'),
-    domainSubscription,
-  ].filter(Boolean);
+  const calltagSubscription = subscriptionForService(rawSubscriptions, 'calltag');
+  const subscriptions = [pageroSubscription, calltagSubscription, domainSubscription].filter(Boolean);
   const domainIncludedByPlan = pageroSubscription?.planCode === 'pagero_pro_monthly';
 
   return {
@@ -146,6 +165,14 @@ function normalizeFinance({ authUser, subscriptionsData, referralData, summaryDa
     pricing: PRICING,
     subscriptions,
     entitlement: subscriptionsData?.entitlement || null,
+    pagero: {
+      includedClassicByBundle: !!bundleSubscription,
+    },
+    calltag: {
+      activePlanCodes: calltagActivePlanCodes,
+      bundleActive: !!bundleSubscription,
+      bundleIncludes: ['pagero_monthly', 'call_monthly', 'message_monthly'],
+    },
     domain: {
       enabled: domainIncludedByPlan || !!domainSubscription,
       includedByPlan: domainIncludedByPlan,
