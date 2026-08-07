@@ -3,15 +3,22 @@ body .builder-shell:not(.mobile-operations-shell) .edit-layout:has(.fixed-add-do
   padding-bottom: 94px !important;
 }
 
+/*
+ * The authenticated desktop editor is 720px wide (660px at <=1280px), while
+ * the work panel is centered with 18px horizontal padding. Keep the fixed dock
+ * inside that exact editable column instead of sizing it from the older
+ * --editor-left-width token, which can be wider than the live workspace.
+ */
 body .builder-shell:not(.mobile-operations-shell) .edit-layout .fixed-add-dock {
-  --pg-add-dock-width: min(700px, calc(var(--editor-left-width, 720px) - 36px));
+  --pg-add-dock-left-column: 720px;
+  --pg-add-dock-edge: 28px;
   position: fixed !important;
-  left: calc((var(--editor-left-width, 720px) - var(--pg-add-dock-width)) / 2) !important;
+  left: var(--pg-add-dock-edge) !important;
   right: auto !important;
   bottom: 12px !important;
   z-index: 1200 !important;
-  width: var(--pg-add-dock-width) !important;
-  max-width: calc(100vw - 28px) !important;
+  width: calc(var(--pg-add-dock-left-column) - (var(--pg-add-dock-edge) * 2)) !important;
+  max-width: calc(100vw - (var(--pg-add-dock-edge) * 2)) !important;
   margin: 0 !important;
   padding: 8px !important;
   border: 1px solid rgba(203, 213, 225, .9) !important;
@@ -35,6 +42,12 @@ body .builder-shell:not(.mobile-operations-shell) .edit-layout .fixed-add-dock.o
   overflow-y: auto !important;
   overscroll-behavior: contain !important;
   scrollbar-gutter: stable !important;
+}
+
+@media (max-width: 1280px) and (min-width: 1181px) {
+  body .builder-shell:not(.mobile-operations-shell) .edit-layout .fixed-add-dock {
+    --pg-add-dock-left-column: 660px;
+  }
 }
 
 @media (max-width: 1180px) {
