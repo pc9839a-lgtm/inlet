@@ -13,6 +13,7 @@ import {
   Target,
   UserRound,
   UsersRound,
+  WalletCards,
 } from 'lucide-react';
 import SettingsAdvancedAndReset from './SettingsAdvancedAndReset.jsx';
 import PageDuplicateUrlModal from './PageDuplicateUrlModal.jsx';
@@ -28,6 +29,8 @@ const PRIMARY_NAV = [
 const SERVICE_NAV = [
   ['billing', '요금제·결제', CreditCard],
   ['referral', '추천인', Gift],
+  ['partner', '파트너', UsersRound],
+  ['settlement', '정산', WalletCards],
 ];
 
 const ADVANCED_NAV = [
@@ -40,7 +43,7 @@ const ADVANCED_NAV = [
 
 const ALL_NAV = [...PRIMARY_NAV, ...SERVICE_NAV, ...ADVANCED_NAV];
 const ADVANCED_IDS = new Set(ADVANCED_NAV.map(([id]) => id));
-const OWNER_ONLY_IDS = new Set(['billing', 'referral']);
+const OWNER_ONLY_IDS = new Set(['billing', 'referral', 'partner', 'settlement']);
 
 export default function SettingsPanelBody({
   authUser,
