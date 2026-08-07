@@ -1,56 +1,145 @@
-/* Final left-pane service layout. The settings workspace is narrow even on a wide viewport,
-   so service pricing must size to the pane, not to the browser width. */
-html body #root .builder-shell.settings-workspace-shell .settings-billing-card,
-html body #root .builder-shell.settings-workspace-shell .settings-billing-card > *,
-html body #root .builder-shell.settings-workspace-shell .account-finance-settings.service-content-v2,
-html body #root .builder-shell.settings-workspace-shell .service-card-grid.billing-service-grid,
-html body #root .builder-shell.settings-workspace-shell .service-plan-card,
-html body #root .builder-shell.settings-workspace-shell .service-plan-options,
-html body #root .builder-shell.settings-workspace-shell .service-plan-option {
-  box-sizing: border-box !important;
+/* Final owner for billing + custom domain readability.
+   Imported after all legacy settings styles so older fixed grids cannot clip these surfaces. */
+
+html body #root .builder-shell.settings-workspace-shell :is(.settings-billing-card,.settings-domain-card),
+html body #root .builder-shell.settings-workspace-shell :is(.settings-billing-card,.settings-domain-card) .settings-section-body,
+html body #root .builder-shell.settings-workspace-shell :is(.service-content-v2,.compact-domain-settings) {
   width: 100% !important;
-  max-width: 100% !important;
   min-width: 0 !important;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-  transform: none !important;
+  max-width: none !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
 }
 
-html body #root .builder-shell.settings-workspace-shell .account-finance-settings.service-content-v2 {
-  overflow-x: hidden !important;
-  padding-inline: 0 !important;
+html body #root .builder-shell.settings-workspace-shell :is(.settings-billing-card,.settings-domain-card) .settings-section-body {
+  overflow: visible !important;
+}
+
+/* --------------------------------------------------------------------------
+   BILLING — SaaS-style hierarchy: service header, clear plan cards, big price
+   -------------------------------------------------------------------------- */
+html body #root .builder-shell.settings-workspace-shell .service-content-v2 {
+  display: grid !important;
+  gap: 22px !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-content-v2 .service-content-head {
+  min-height: 70px !important;
+  padding: 0 0 18px !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-content-v2 .service-content-head > div {
+  min-width: 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-content-v2 .service-content-head strong {
+  color: #111827 !important;
+  font-size: 22px !important;
+  line-height: 1.2 !important;
+  font-weight: 950 !important;
+  letter-spacing: -.35px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-content-v2 .service-content-head small {
+  margin-top: 4px !important;
+  color: #6b7280 !important;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+  font-weight: 700 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-content-v2 .service-content-head > button {
+  width: auto !important;
+  min-width: 98px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 13px !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 9px !important;
+  background: #fff !important;
+  color: #374151 !important;
+  font-size: 13px !important;
+  font-weight: 850 !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-card-grid.billing-service-grid {
+  display: grid !important;
   grid-template-columns: minmax(0, 1fr) !important;
   gap: 18px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-card {
-  border-radius: 14px !important;
+  container-type: inline-size !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
   overflow: hidden !important;
+  border: 1px solid #d9dee6 !important;
+  border-radius: 15px !important;
+  background: #fff !important;
+  box-shadow: 0 1px 2px rgba(17,24,39,.03) !important;
+  transform: none !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-card-head {
   width: 100% !important;
-  max-width: 100% !important;
   min-width: 0 !important;
-  min-height: 82px !important;
+  min-height: 78px !important;
   padding: 16px 18px !important;
-  gap: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 14px !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  background: #fff !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-title {
   flex: 1 1 auto !important;
   min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-icon {
+  width: 42px !important;
+  height: 42px !important;
+  flex: 0 0 42px !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 1px solid #e0e4ea !important;
+  border-radius: 10px !important;
+  background: #f6f7f9 !important;
+  color: #111827 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-title > div {
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 3px !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-title strong {
-  font-size: 21px !important;
+  color: #111827 !important;
+  font-size: 20px !important;
+  line-height: 1.2 !important;
+  font-weight: 950 !important;
+  letter-spacing: -.25px !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-title small {
+  color: #68717d !important;
   font-size: 13px !important;
+  line-height: 1.4 !important;
+  font-weight: 700 !important;
+  white-space: normal !important;
   overflow-wrap: anywhere !important;
 }
 
@@ -59,111 +148,421 @@ html body #root .builder-shell.settings-workspace-shell .service-state {
   max-width: 42% !important;
   min-height: 30px !important;
   padding: 0 10px !important;
-  font-size: 12px !important;
-  white-space: normal !important;
-  text-align: center !important;
-  line-height: 1.2 !important;
-}
-
-/* Always use rows. The left settings pane never has enough usable width for 3 price columns. */
-html body #root .builder-shell.settings-workspace-shell .service-plan-options,
-html body #root .builder-shell.settings-workspace-shell .service-domain .service-plan-options {
-  grid-template-columns: minmax(0, 1fr) !important;
-  gap: 10px !important;
-  padding: 12px !important;
-}
-
-html body #root .builder-shell.settings-workspace-shell .service-plan-option,
-html body #root .builder-shell.settings-workspace-shell .service-domain .service-plan-option {
-  min-height: 112px !important;
-  padding: 16px 18px !important;
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) 176px !important;
+  display: inline-flex !important;
   align-items: center !important;
-  gap: 14px !important;
-  border-radius: 11px !important;
+  justify-content: center !important;
+  border: 1px solid #d5dae1 !important;
+  border-radius: 999px !important;
+  background: #f8f9fa !important;
+  color: #596270 !important;
+  font-size: 12px !important;
+  line-height: 1.2 !important;
+  font-weight: 900 !important;
+  text-align: center !important;
+  white-space: normal !important;
 }
 
-html body #root .builder-shell.settings-workspace-shell .service-calltag .service-plan-option {
-  min-height: 126px !important;
+html body #root .builder-shell.settings-workspace-shell .service-state.active {
   border-color: #111827 !important;
+  background: #111827 !important;
+  color: #fff !important;
+}
+
+/* PageRo uses three comparable cards when room exists. Auto-fit prevents clipping. */
+html body #root .builder-shell.settings-workspace-shell .service-plan-options {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  padding: 14px !important;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)) !important;
+  gap: 12px !important;
+  background: #f7f8fa !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-option {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  min-height: 214px !important;
+  padding: 18px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: space-between !important;
+  gap: 20px !important;
+  overflow: hidden !important;
+  border: 1px solid #e0e4e9 !important;
+  border-radius: 12px !important;
   background: #fff !important;
-  box-shadow: inset 4px 0 0 #111827 !important;
+  box-shadow: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-option.is-current {
+  border-color: #9da5b1 !important;
+  background: #fbfbfc !important;
+  box-shadow: inset 0 0 0 1px #d7dce3 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-option.is-featured {
+  border-color: #111827 !important;
+  box-shadow: inset 0 0 0 1px #111827 !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-copy {
   min-width: 0 !important;
-  gap: 7px !important;
+  display: grid !important;
+  gap: 9px !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-name-row {
   min-width: 0 !important;
-  gap: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 7px !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-name-row strong {
-  font-size: 18px !important;
-  line-height: 1.25 !important;
+  color: #111827 !important;
+  font-size: 19px !important;
+  line-height: 1.2 !important;
+  font-weight: 950 !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-name-row span {
-  min-height: 22px !important;
-  padding: 0 7px !important;
+  min-height: 23px !important;
+  padding: 0 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  border-radius: 6px !important;
+  background: #111827 !important;
+  color: #fff !important;
   font-size: 10px !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-copy small {
-  max-width: 100% !important;
-  color: #596270 !important;
-  font-size: 13px !important;
+  color: #5f6875 !important;
+  font-size: 14px !important;
   line-height: 1.5 !important;
   font-weight: 700 !important;
   white-space: normal !important;
   overflow-wrap: anywhere !important;
 }
 
-html body #root .builder-shell.settings-workspace-shell .service-plan-action,
-html body #root .builder-shell.settings-workspace-shell .service-domain .service-plan-action {
-  width: 176px !important;
+html body #root .builder-shell.settings-workspace-shell .service-plan-action {
+  width: 100% !important;
   min-width: 0 !important;
-  justify-items: stretch !important;
-  gap: 9px !important;
+  display: grid !important;
+  gap: 12px !important;
 }
 
-html body #root .builder-shell.settings-workspace-shell .service-plan-action b,
-html body #root .builder-shell.settings-workspace-shell .service-domain .service-plan-action b {
-  justify-content: flex-end !important;
-  font-size: 27px !important;
-  letter-spacing: -.7px !important;
+html body #root .builder-shell.settings-workspace-shell .service-plan-action b {
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 3px !important;
+  color: #111827 !important;
+  font-size: 34px !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  letter-spacing: -1px !important;
+  white-space: nowrap !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-action b em {
-  font-size: 12px !important;
+  color: #6b7280 !important;
+  font-size: 13px !important;
+  font-style: normal !important;
+  font-weight: 800 !important;
+  letter-spacing: 0 !important;
 }
 
-html body #root .builder-shell.settings-workspace-shell .service-plan-action button,
-html body #root .builder-shell.settings-workspace-shell .service-domain .service-plan-action button {
+html body #root .builder-shell.settings-workspace-shell .service-plan-action button {
   width: 100% !important;
   min-width: 0 !important;
-  height: 42px !important;
-  min-height: 42px !important;
-  padding: 0 12px !important;
-  font-size: 13px !important;
-}
-
-/* Current/basic plans stay readable without looking disabled into the background. */
-html body #root .builder-shell.settings-workspace-shell .service-plan-option.is-current {
-  background: #f9fafb !important;
+  height: 46px !important;
+  min-height: 46px !important;
+  padding: 0 14px !important;
+  border: 1px solid #111827 !important;
+  border-radius: 9px !important;
+  background: #111827 !important;
+  color: #fff !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .service-plan-action button:disabled {
   opacity: 1 !important;
-  border-color: #d1d5db !important;
-  background: #e9edf2 !important;
-  color: #4b5563 !important;
+  border-color: #d7dce3 !important;
+  background: #edf0f3 !important;
+  color: #596270 !important;
 }
 
-@media (max-width: 700px) {
+html body #root .builder-shell.settings-workspace-shell .service-bundle-includes {
+  min-width: 0 !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 7px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-bundle-includes span {
+  min-height: 30px !important;
+  padding: 0 10px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  border: 1px solid #d9dee5 !important;
+  border-radius: 999px !important;
+  background: #f7f8fa !important;
+  color: #374151 !important;
+  font-size: 12px !important;
+  font-weight: 850 !important;
+}
+
+/* CallTag and SSL have only one sellable plan on Pagero: use a strong horizontal card. */
+html body #root .builder-shell.settings-workspace-shell :is(.service-calltag,.service-domain) .service-plan-options {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.service-calltag,.service-domain) .service-plan-option {
+  min-height: 142px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 220px !important;
+  align-items: center !important;
+  gap: 24px !important;
+  padding: 20px 22px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.service-calltag,.service-domain) .service-plan-action {
+  width: 220px !important;
+  justify-self: end !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.service-calltag,.service-domain) .service-plan-action b {
+  justify-content: flex-end !important;
+}
+
+/* --------------------------------------------------------------------------
+   CUSTOM DOMAIN — override older SEO/domain rules that were cutting the panel
+   -------------------------------------------------------------------------- */
+html body #root .builder-shell.settings-workspace-shell .settings-domain-card .settings-section-body {
+  padding-inline: 18px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .compact-domain-settings.custom-domain-settings {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 14px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  overflow: visible !important;
+  transform: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .compact-domain-settings.custom-domain-settings > section {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 18px !important;
+  border: 1px solid #dfe3e8 !important;
+  border-radius: 13px !important;
+  background: #fff !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .compact-domain-settings .custom-domain-title-row {
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 0 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 11px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .compact-domain-settings .custom-domain-title-row > div:last-child {
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .compact-domain-settings :is(.custom-domain-title-icon,.custom-domain-ssl-icon) {
+  width: 38px !important;
+  height: 38px !important;
+  flex: 0 0 38px !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 10px !important;
+  background: #f3f4f6 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .compact-domain-settings .custom-domain-title-row strong {
+  font-size: 17px !important;
+  font-weight: 950 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .compact-domain-settings .custom-domain-free-badge {
+  min-height: 24px !important;
+  padding: 0 9px !important;
+  font-size: 11px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .compact-domain-settings .custom-domain-field.compact {
+  width: 100% !important;
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 8px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .compact-domain-settings .custom-domain-field.compact > span {
+  width: auto !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .compact-domain-settings .custom-domain-field.compact > div {
+  width: 100% !important;
+  min-width: 0 !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 82px auto !important;
+  gap: 8px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .compact-domain-settings .custom-domain-field.compact input {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 46px !important;
+  min-height: 46px !important;
+  padding: 0 13px !important;
+  border: 1px solid #cfd5dd !important;
+  border-radius: 9px !important;
+  font-size: 14px !important;
+  box-sizing: border-box !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .compact-domain-settings :is(.custom-domain-primary,.custom-domain-remove) {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 46px !important;
+  min-height: 46px !important;
+  padding: 0 14px !important;
+  box-sizing: border-box !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .compact-domain-settings .custom-domain-primary {
+  min-width: 82px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .compact-domain-settings .custom-domain-status {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin: 12px 0 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .compact-domain-settings .custom-domain-ssl-card {
+  min-height: 86px !important;
+  display: grid !important;
+  grid-template-columns: 38px minmax(0, 1fr) auto auto !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 16px 18px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .compact-domain-settings .custom-domain-ssl-copy {
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 4px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .compact-domain-settings .custom-domain-ssl-copy strong {
+  font-size: 16px !important;
+  font-weight: 950 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .compact-domain-settings .custom-domain-ssl-copy small {
+  font-size: 13px !important;
+  font-weight: 800 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .compact-domain-settings :is(.custom-domain-ssl-state,.custom-domain-ssl-button) {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .compact-domain-settings .custom-domain-ssl-button {
+  width: auto !important;
+  min-width: 104px !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  padding: 0 14px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .compact-domain-settings .custom-domain-dns.compact {
+  padding: 18px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .compact-domain-settings .custom-domain-dns-table.compact {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  overflow: hidden !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .compact-domain-settings .custom-domain-dns-table.compact > div {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  min-height: 48px !important;
+  display: grid !important;
+  grid-template-columns: 84px 110px minmax(0, 1fr) !important;
+  gap: 8px !important;
+  padding: 0 12px !important;
+  box-sizing: border-box !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .compact-domain-settings .custom-domain-dns-table.compact :is(strong,code) {
+  min-width: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+@container (max-width: 760px) {
+  html body #root .builder-shell.settings-workspace-shell :is(.service-calltag,.service-domain) .service-plan-option {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 16px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell :is(.service-calltag,.service-domain) .service-plan-action {
+    width: 100% !important;
+    justify-self: stretch !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell :is(.service-calltag,.service-domain) .service-plan-action b {
+    justify-content: flex-start !important;
+  }
+}
+
+@media (max-width: 760px) {
   html body #root .builder-shell.settings-workspace-shell .service-plan-card-head {
     align-items: flex-start !important;
     flex-wrap: wrap !important;
@@ -173,21 +572,33 @@ html body #root .builder-shell.settings-workspace-shell .service-plan-action but
     max-width: 100% !important;
   }
 
-  html body #root .builder-shell.settings-workspace-shell .service-plan-option,
-  html body #root .builder-shell.settings-workspace-shell .service-domain .service-plan-option {
-    min-height: 0 !important;
-    grid-template-columns: minmax(0, 1fr) !important;
-    gap: 14px !important;
-    padding: 16px !important;
+  html body #root .builder-shell.settings-workspace-shell .settings-domain-card .settings-section-body {
+    padding-inline: 12px !important;
   }
 
-  html body #root .builder-shell.settings-workspace-shell .service-plan-action,
-  html body #root .builder-shell.settings-workspace-shell .service-domain .service-plan-action {
+  html body #root .builder-shell.settings-workspace-shell .compact-domain-settings .custom-domain-field.compact > div {
+    grid-template-columns: minmax(0, 1fr) 78px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .compact-domain-settings .custom-domain-field.compact .custom-domain-remove {
+    grid-column: 1 / -1 !important;
     width: 100% !important;
   }
 
-  html body #root .builder-shell.settings-workspace-shell .service-plan-action b,
-  html body #root .builder-shell.settings-workspace-shell .service-domain .service-plan-action b {
-    justify-content: flex-start !important;
+  html body #root .builder-shell.settings-workspace-shell .compact-domain-settings .custom-domain-ssl-card {
+    grid-template-columns: 38px minmax(0, 1fr) auto !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .compact-domain-settings .custom-domain-ssl-button {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .compact-domain-settings .custom-domain-dns-table.compact {
+    overflow-x: auto !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .compact-domain-settings .custom-domain-dns-table.compact > div {
+    min-width: 520px !important;
   }
 }
