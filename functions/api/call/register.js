@@ -15,10 +15,10 @@ import {
   upsertCallProfile,
 } from './_shared.js';
 import {
-  applySignupReferralCode,
+  applyCallTagSignupReferralCode,
   normalizeSignupReferralCode,
   validateSignupReferralCode,
-} from '../referrals/_signup.js';
+} from '../referrals/_calltag-signup.js';
 import {
   enforceCallTagTrialPolicy,
   resolveCallTagEntitlement,
@@ -92,7 +92,7 @@ export async function onRequest({ request, env }) {
 
     await enforceCallTagTrialPolicy(db, user.ownerId);
     const referral = referralCode
-      ? await applySignupReferralCode(db, user.ownerId, referralCode)
+      ? await applyCallTagSignupReferralCode(db, user.ownerId, referralCode)
       : null;
     const billingEntitlement = await resolveCallTagEntitlement(db, user.ownerId);
     const entitlement = await ensurePendingEntitlement(env.DB, user.ownerId);
