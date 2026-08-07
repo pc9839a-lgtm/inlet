@@ -171,7 +171,7 @@ export class AppErrorBoundary extends React.Component {
         <div className="error-screen error-screen-v2">
           <div>
             <h1>최신 화면으로 다시 연결 중입니다.</h1>
-            <p>이전 배포 파일을 제거하고 현재 버전을 불러오고 있습니다.</p>
+            <p>이전 배포 파일을 제거하고 현재 버전을 불러오고 있습니다. 페이지 데이터는 삭제하지 않습니다.</p>
           </div>
         </div>
       );
@@ -184,9 +184,9 @@ export class AppErrorBoundary extends React.Component {
         <div className="error-screen error-screen-v2">
           <div>
             <h1>최신 버전 연결이 필요합니다.</h1>
-            <p>브라우저에 남은 이전 배포 파일을 제거한 뒤 현재 버전으로 다시 연결합니다.</p>
+            <p>브라우저에 남은 이전 배포 파일을 제거한 뒤 현재 버전으로 다시 연결합니다. 페이지 데이터는 삭제하지 않습니다.</p>
             <div className="error-actions">
-              <button type="button" onClick={forceFreshRuntime}>현재 버전 다시 열기</button>
+              <button type="button" onClick={forceFreshRuntime}>최신 화면 다시 열기</button>
             </div>
           </div>
         </div>
@@ -200,7 +200,7 @@ export class AppErrorBoundary extends React.Component {
           <h1>화면을 불러오는 중 오류가 발생했습니다.</h1>
           <p>{cleanMessage}</p>
           <div className="error-actions">
-            <button type="button" onClick={forceFreshRuntime}>현재 버전 다시 열기</button>
+            <button type="button" onClick={forceFreshRuntime}>최신 화면 다시 열기</button>
             <button type="button" onClick={() => { localStorage.removeItem(STORAGE_KEY); location.reload(); }}>페이지 설정만 초기화</button>
             <button
               type="button"
