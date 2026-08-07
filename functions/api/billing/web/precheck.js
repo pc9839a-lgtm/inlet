@@ -2,7 +2,7 @@ import { assertD1, handleApiError, jsonResponse, optionsResponse, readJson } fro
 import { CALL_METHODS, callSession } from '../../call/_shared.js';
 import { listSubscriptions, resolveEntitlement } from '../_shared.js';
 
-const WEB_PRODUCTS = new Set(['pagero_monthly', 'pagero_pro_monthly', 'pagero_domain_monthly', 'all_monthly', 'call_monthly', 'message_monthly']);
+const WEB_PRODUCTS = new Set(['pagero_monthly', 'pagero_pro_monthly', 'pagero_domain_monthly', 'all_monthly']);
 const PAGERO_PRODUCTS = new Set(['pagero_monthly', 'pagero_pro_monthly']);
 const DOMAIN_PRODUCTS = new Set(['pagero_domain_monthly']);
 const CALLTAG_PRODUCTS = new Set(['all_monthly', 'call_monthly', 'message_monthly']);
@@ -11,8 +11,6 @@ function sameServiceProduct(requestedProductCode = '', existingProductCode = '')
   if (PAGERO_PRODUCTS.has(requestedProductCode)) return PAGERO_PRODUCTS.has(existingProductCode);
   if (DOMAIN_PRODUCTS.has(requestedProductCode)) return DOMAIN_PRODUCTS.has(existingProductCode);
   if (requestedProductCode === 'all_monthly') return CALLTAG_PRODUCTS.has(existingProductCode);
-  if (requestedProductCode === 'call_monthly') return ['call_monthly', 'all_monthly'].includes(existingProductCode);
-  if (requestedProductCode === 'message_monthly') return ['message_monthly', 'all_monthly'].includes(existingProductCode);
   return false;
 }
 
@@ -33,7 +31,7 @@ export async function onRequest({ request, env }) {
     if (!WEB_PRODUCTS.has(productCode)) {
       return jsonResponse(request, env, 400, {
         ok: false,
-        error: '지원하지 않는 웹 구독 상품입니다.',
+        error: '페이지로 웹에서는 콜태그 통합권만 구매할 수 있습니다.',
         code: 'WEB_PRODUCT_INVALID',
       }, CALL_METHODS);
     }
