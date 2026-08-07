@@ -4,12 +4,12 @@
 ✨ Compiled Worker successfully
 Uploading... (96/136)
 Uploading... (109/136)
-Uploading... (122/136)
+Uploading... (123/136)
 Uploading... (136/136)
-✨ Success! Uploaded 40 files (96 already uploaded) (0.86 sec)
+✨ Success! Uploaded 40 files (96 already uploaded) (2.54 sec)
 
 ✨ Uploading _headers
 ✨ Uploading _redirects
 ✨ Uploading Functions bundle
 🌎 Deploying...
-✨ Deployment complete! Take a peek over at https://a3077ac3.inlet-8mr.pages.dev
+✨ Deployment complete! Take a peek over at https://d7fe773e.inlet-8mr.pages.dev
