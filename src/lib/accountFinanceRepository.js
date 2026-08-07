@@ -1,6 +1,10 @@
 import { ApiError, apiFetch, postJson } from './apiClient.js';
 
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set(['active', 'grace', 'cancelled']);
+const FINANCE_CACHE_TTL_MS = 20 * 1000;
+const FINANCE_CACHE_STALE_MS = 5 * 60 * 1000;
+const financeCache = new Map();
+
 const PRICING = Object.freeze({
   pagero: [
     {
@@ -36,6 +40,12 @@ const PRICING = Object.freeze({
 function sessionHeaders(authUser = null) {
   const session = String(authUser?.session || '').trim();
   return session ? { 'X-Inlet-Session': session } : {};
+}
+
+function financeCacheKey(authUser = null) {
+  const account = String(authUser?.ownerId || authUser?.id || authUser?.email || '').trim().toLowerCase();
+  const session = String(authUser?.session || '').trim();
+  return account && session ? `${account}:${session.slice(-24)}` : '';
 }
 
 async function readJsonResponse(response, fallback) {
@@ -143,14 +153,50 @@ function normalizeFinance({ authUser, subscriptionsData, referralData, summaryDa
   };
 }
 
-export async function fetchAccountFinance(authUser = null) {
+export function getCachedAccountFinance(authUser = null) {
+  const key = financeCacheKey(authUser);
+  if (!key) return null;
+  const entry = financeCache.get(key);
+  if (!entry?.data) return null;
+  if (Date.now() - Number(entry.updatedAt || 0) > FINANCE_CACHE_STALE_MS) {
+    financeCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+export async function fetchAccountFinance(authUser = null, options = {}) {
   if (!authUser?.session) throw new ApiError('로그인이 필요합니다.', 401);
-  const [subscriptionsData, referralData, summaryData] = await Promise.all([
-    getJson('/api/billing/subscriptions', authUser, '구독 정보를 불러오지 못했습니다.'),
-    getJson('/api/referrals/me', authUser, '추천인 정보를 불러오지 못했습니다.'),
-    getJson('/api/referrals/summary', authUser, '파트너 정산 정보를 불러오지 못했습니다.'),
-  ]);
-  return normalizeFinance({ authUser, subscriptionsData, referralData, summaryData });
+  const key = financeCacheKey(authUser);
+  const force = options?.force === true;
+  const existing = key ? financeCache.get(key) : null;
+  const age = Date.now() - Number(existing?.updatedAt || 0);
+
+  if (!force && existing?.data && age <= FINANCE_CACHE_TTL_MS) return existing.data;
+  if (existing?.promise) return existing.promise;
+
+  const request = getJson('/api/billing/finance', authUser, '서비스 정보를 불러오지 못했습니다.')
+    .then((data) => {
+      const next = normalizeFinance({
+        authUser,
+        subscriptionsData: data,
+        referralData: data,
+        summaryData: data,
+      });
+      if (key) financeCache.set(key, { data: next, updatedAt: Date.now(), promise: null });
+      return next;
+    })
+    .catch((error) => {
+      if (key) {
+        const stale = financeCache.get(key);
+        if (stale?.data) financeCache.set(key, { ...stale, promise: null });
+        else financeCache.delete(key);
+      }
+      throw error;
+    });
+
+  if (key) financeCache.set(key, { data: existing?.data || null, updatedAt: existing?.updatedAt || 0, promise: request });
+  return request;
 }
 
 export async function applyAccountReferralCode() {
