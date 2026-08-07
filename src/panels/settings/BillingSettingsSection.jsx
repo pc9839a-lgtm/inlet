@@ -13,8 +13,8 @@ function subscriptionFor(finance, service) {
 
 const SERVICE_META = {
   pagero: { label: '페이지로', icon: Globe2, subtitle: '랜딩페이지 제작·운영' },
-  calltag: { label: '콜태그', icon: PhoneCall, subtitle: '전화관리 · 문자자동화' },
-  domain: { label: 'HTTPS · SSL', icon: ShieldCheck, subtitle: '도메인 연결은 무료' },
+  calltag: { label: '콜태그', icon: PhoneCall, subtitle: '페이지로 클래식 + 전화관리 + 문자자동화' },
+  domain: { label: 'HTTPS · SSL', icon: ShieldCheck, subtitle: '도메인 연결은 무료 · HTTPS 관리만 유료' },
 };
 
 function ServicePlans({ finance, service, busy, onCheckout }) {
@@ -33,7 +33,7 @@ function ServicePlans({ finance, service, busy, onCheckout }) {
   if (sslIncluded) currentLabel = '프로 포함';
   else if (bundleClassic) currentLabel = '통합권 포함';
   else if (service === 'calltag' && bundleActive) currentLabel = '통합권 이용 중';
-  else if (service === 'calltag' && calltagActiveCodes.has('call_monthly') && calltagActiveCodes.has('message_monthly')) currentLabel = '전화 + 문자 이용 중';
+  else if (service === 'calltag' && calltagActiveCodes.has('call_monthly') && calltagActiveCodes.has('message_monthly')) currentLabel = '앱 이용 중';
   else if (subscription) currentLabel = `${subscription.planName} 이용 중`;
 
   return (
@@ -51,7 +51,6 @@ function ServicePlans({ finance, service, busy, onCheckout }) {
 
       <div className="service-plan-options">
         {plans.map((plan) => {
-          const calltagIncludedByBundle = service === 'calltag' && bundleActive && plan.code !== 'all_monthly';
           const pageroIncludedByBundle = service === 'pagero' && bundleClassic && plan.code === 'pagero_monthly';
           const current = sslIncluded
             ? true
@@ -63,9 +62,9 @@ function ServicePlans({ finance, service, busy, onCheckout }) {
           const loading = busy === `${service}:${plan.code}`;
           const title = service === 'domain' ? 'SSL 관리' : plan.name;
           const description = service === 'domain'
-            ? 'SSL 인증서 발급·갱신·HTTPS 관리'
+            ? '인증서 발급 · 자동 갱신 · HTTPS 적용'
             : plan.description;
-          const included = calltagIncludedByBundle || pageroIncludedByBundle;
+          const included = pageroIncludedByBundle;
           const featured = service === 'calltag' && plan.code === 'all_monthly';
 
           return (
@@ -76,11 +75,19 @@ function ServicePlans({ finance, service, busy, onCheckout }) {
               <div className="service-plan-copy">
                 <div className="service-plan-name-row">
                   <strong>{title}</strong>
-                  {featured && <span className="service-recommend-badge">추천</span>}
+                  {featured && <span className="service-recommend-badge">통합</span>}
                   {current && !included && <span>현재</span>}
                   {included && <span>포함</span>}
                 </div>
-                <small>{description}</small>
+                {featured ? (
+                  <div className="service-bundle-includes" aria-label="통합권 포함 서비스">
+                    <span>페이지로 클래식</span>
+                    <span>전화관리</span>
+                    <span>문자자동화</span>
+                  </div>
+                ) : (
+                  <small>{description}</small>
+                )}
               </div>
               <div className="service-plan-action">
                 <b>{sslIncluded ? '포함' : money(plan.amountKrw)}{!sslIncluded && plan.amountKrw > 0 ? <em>/월</em> : null}</b>
