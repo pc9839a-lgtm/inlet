@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Check, Clipboard, Globe2, LockKeyhole, ShieldCheck, Trash2 } from 'lucide-react';
 import SettingsSection from './SettingsSection.jsx';
 import useAccountFinance from './useAccountFinance.js';
+import './CustomDomainBilling.css';
 
 const DNS_TARGET = 'inlet-8mr.pages.dev';
 const DOMAIN_PRODUCT = 'pagero_domain_monthly';
