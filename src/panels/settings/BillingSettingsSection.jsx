@@ -20,18 +20,21 @@ const SERVICE_META = {
 function ServicePlans({ finance, service, busy, onCheckout }) {
   const subscription = subscriptionFor(finance, service);
   const plans = finance?.pricing?.[service] || [];
-  const freeCurrent = service === 'pagero' && !subscription;
+  const bundleActive = finance?.calltag?.bundleActive === true;
+  const bundleClassic = service === 'pagero' && finance?.pagero?.includedClassicByBundle === true;
+  const calltagActiveCodes = new Set(finance?.calltag?.activePlanCodes || []);
+  const freeCurrent = service === 'pagero' && !subscription && !bundleClassic;
   const sslIncluded = service === 'domain' && finance?.domain?.includedByPlan === true;
   const sslActive = service === 'domain' && finance?.domain?.enabled === true;
-  const serviceActive = Boolean(subscription || freeCurrent || sslActive);
+  const serviceActive = Boolean(subscription || freeCurrent || sslActive || bundleClassic || (service === 'calltag' && calltagActiveCodes.size));
   const MetaIcon = SERVICE_META[service].icon;
-  const currentLabel = sslIncluded
-    ? '프로 포함'
-    : subscription
-      ? subscription.planName
-      : service === 'domain'
-        ? '미신청'
-        : freeCurrent ? '무료' : '미이용';
+
+  let currentLabel = service === 'domain' ? '미신청' : freeCurrent ? '무료' : '미이용';
+  if (sslIncluded) currentLabel = '프로 포함';
+  else if (bundleClassic) currentLabel = '통합권 포함';
+  else if (service === 'calltag' && bundleActive) currentLabel = '통합권';
+  else if (service === 'calltag' && calltagActiveCodes.has('call_monthly') && calltagActiveCodes.has('message_monthly')) currentLabel = '전화 + 문자';
+  else if (subscription) currentLabel = subscription.planName;
 
   return (
     <section className={`service-plan-card service-${service}`}>
@@ -40,7 +43,7 @@ function ServicePlans({ finance, service, busy, onCheckout }) {
           <span className="service-plan-icon"><MetaIcon size={18} aria-hidden="true" /></span>
           <div>
             <strong>{SERVICE_META[service].label}</strong>
-            <small>{service === 'domain' ? '도메인 연결은 무료' : service === 'pagero' ? '랜딩페이지 제작·운영' : '통화 후 고객관리'}</small>
+            <small>{service === 'domain' ? '도메인 연결은 무료' : service === 'pagero' ? '랜딩페이지 제작·운영' : '전화관리 · 문자자동화'}</small>
           </div>
         </div>
         <span className={`service-state ${serviceActive ? 'active' : ''}`}>{currentLabel}</span>
@@ -48,20 +51,29 @@ function ServicePlans({ finance, service, busy, onCheckout }) {
 
       <div className="service-plan-options">
         {plans.map((plan) => {
+          const calltagIncludedByBundle = service === 'calltag' && bundleActive && plan.code !== 'all_monthly';
+          const pageroIncludedByBundle = service === 'pagero' && bundleClassic && plan.code === 'pagero_monthly';
           const current = sslIncluded
             ? true
-            : plan.included ? freeCurrent : subscription?.planCode === plan.code;
+            : service === 'calltag'
+              ? calltagActiveCodes.has(plan.code)
+              : pageroIncludedByBundle
+                ? true
+                : plan.included ? freeCurrent : subscription?.planCode === plan.code;
           const loading = busy === `${service}:${plan.code}`;
           const title = service === 'domain' ? 'SSL 관리' : plan.name;
           const description = service === 'domain'
             ? '인증서 발급·갱신·HTTPS 관리'
             : plan.description;
+          const included = calltagIncludedByBundle || pageroIncludedByBundle;
+
           return (
-            <div className={`service-plan-option ${current ? 'is-current' : ''}`} key={`${service}-${plan.code}`}>
+            <div className={`service-plan-option ${current || included ? 'is-current' : ''}`} key={`${service}-${plan.code}`}>
               <div className="service-plan-copy">
                 <div className="service-plan-name-row">
                   <strong>{title}</strong>
-                  {current && <span>현재</span>}
+                  {current && !included && <span>현재</span>}
+                  {included && <span>포함</span>}
                 </div>
                 <small>{description}</small>
               </div>
@@ -69,10 +81,10 @@ function ServicePlans({ finance, service, busy, onCheckout }) {
                 <b>{sslIncluded ? '포함' : money(plan.amountKrw)}{!sslIncluded && plan.amountKrw > 0 ? <em>/월</em> : null}</b>
                 <button
                   type="button"
-                  disabled={current || loading || plan.included}
+                  disabled={current || included || loading || plan.included}
                   onClick={() => onCheckout(service, plan.code)}
                 >
-                  {loading ? '이동 중' : current ? '이용 중' : plan.included ? '기본' : service === 'domain' ? '신청' : '선택'}
+                  {loading ? '이동 중' : included ? '통합권 포함' : current ? '이용 중' : plan.included ? '기본' : service === 'domain' ? '신청' : '선택'}
                 </button>
               </div>
             </div>
