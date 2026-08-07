@@ -1,0 +1,207 @@
+/* Account settings final layout: keep forms readable on wide settings canvases. */
+html body #root .builder-shell.settings-workspace-shell .account-settings-section .settings-section-body {
+  padding: 0 !important;
+  background: #fff !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-card.account-settings-focused {
+  width: 100% !important;
+  max-width: 980px !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 0 8px !important;
+  display: grid !important;
+  gap: 0 !important;
+  background: #fff !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tabs {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 980px !important;
+  min-height: 58px !important;
+  display: flex !important;
+  align-items: flex-end !important;
+  flex-wrap: nowrap !important;
+  gap: 26px !important;
+  padding: 0 0 0 !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  overflow-x: auto !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tabs button {
+  width: auto !important;
+  min-width: 0 !important;
+  height: 58px !important;
+  min-height: 58px !important;
+  padding: 0 2px !important;
+  border: 0 !important;
+  border-bottom: 2px solid transparent !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #6b7280 !important;
+  box-shadow: none !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+  font-weight: 850 !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tabs button.active {
+  border-bottom-color: #111827 !important;
+  color: #111827 !important;
+  font-weight: 950 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 980px !important;
+  padding: 26px 0 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-form {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 980px !important;
+  margin: 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-grid {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 980px !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 20px 22px !important;
+  align-items: end !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-grid > label {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 8px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-grid > label:nth-child(3) {
+  grid-column: 1 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-grid > label > span {
+  color: #374151 !important;
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+  font-weight: 900 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-grid :is(input,select,textarea) {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  padding: 0 14px !important;
+  border: 1px solid #cfd5dd !important;
+  border-radius: 9px !important;
+  background: #fff !important;
+  color: #111827 !important;
+  box-shadow: none !important;
+  font-size: 14px !important;
+  font-weight: 750 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-grid input:focus {
+  border-color: #111827 !important;
+  outline: 0 !important;
+  box-shadow: 0 0 0 3px rgba(17,24,39,.06) !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-grid input:disabled {
+  border-color: #d9dde3 !important;
+  background: #f4f5f7 !important;
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-actions {
+  grid-column: 2 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 48px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-actions button {
+  width: auto !important;
+  min-width: 104px !important;
+  height: 46px !important;
+  min-height: 46px !important;
+  padding: 0 16px !important;
+  border-radius: 9px !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-actions button[type="submit"] {
+  border: 1px solid #111827 !important;
+  background: #111827 !important;
+  color: #fff !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-actions button[type="button"] {
+  border: 1px solid #d1d5db !important;
+  background: #fff !important;
+  color: #374151 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-settings-empty,
+html body #root .builder-shell.settings-workspace-shell .account-settings-message {
+  max-width: 980px !important;
+}
+
+@media (max-width: 900px) {
+  html body #root .builder-shell.settings-workspace-shell .account-settings-card.account-settings-focused,
+  html body #root .builder-shell.settings-workspace-shell .account-settings-tabs,
+  html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel,
+  html body #root .builder-shell.settings-workspace-shell .account-settings-form,
+  html body #root .builder-shell.settings-workspace-shell .account-settings-grid {
+    max-width: none !important;
+  }
+}
+
+@media (max-width: 700px) {
+  html body #root .builder-shell.settings-workspace-shell .account-settings-tabs {
+    gap: 20px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .account-settings-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 16px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .account-settings-grid > label:nth-child(3),
+  html body #root .builder-shell.settings-workspace-shell .account-settings-actions {
+    grid-column: 1 !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .account-settings-actions {
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .account-settings-actions button {
+    flex: 1 1 140px !important;
+    width: auto !important;
+  }
+}
