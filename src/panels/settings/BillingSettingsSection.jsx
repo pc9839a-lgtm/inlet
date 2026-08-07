@@ -1,9 +1,10 @@
-import { CreditCard, RefreshCw, WalletCards } from 'lucide-react';
+import { CreditCard, RefreshCw } from 'lucide-react';
 import SettingsSection from './SettingsSection.jsx';
 import useAccountFinance from './useAccountFinance.js';
 
 function money(value = 0) {
-  return `${Math.max(0, Number(value || 0)).toLocaleString('ko-KR')}원`;
+  const amount = Math.max(0, Number(value || 0));
+  return amount === 0 ? '무료' : `${amount.toLocaleString('ko-KR')}원`;
 }
 
 function subscriptionFor(finance, service) {
@@ -13,19 +14,24 @@ function subscriptionFor(finance, service) {
 function ServicePlans({ finance, service, label, busy, onCheckout }) {
   const subscription = subscriptionFor(finance, service);
   const plans = finance?.pricing?.[service] || [];
+  const freeCurrent = service === 'pagero' && !subscription;
+  const currentLabel = subscription
+    ? `${subscription.planName} 이용 중`
+    : freeCurrent ? '무료 요금제 이용 중' : '결제된 요금제 없음';
+
   return (
     <section className="billing-service-panel">
       <header>
         <div>
           <strong>{label}</strong>
-          <small>{subscription ? `${subscription.planName} 이용 중` : '결제된 요금제 없음'}</small>
+          <small>{currentLabel}</small>
         </div>
-        <span>{subscription ? '이용 중' : '미결제'}</span>
+        <span>{subscription || freeCurrent ? '이용 중' : '미결제'}</span>
       </header>
 
       <div className="billing-plan-list">
         {plans.map((plan) => {
-          const current = subscription?.planCode === plan.code;
+          const current = plan.included ? freeCurrent : subscription?.planCode === plan.code;
           const loading = busy === `${service}:${plan.code}`;
           return (
             <div className={`billing-plan-row ${current ? 'is-current' : ''}`} key={`${service}-${plan.code}`}>
@@ -33,13 +39,13 @@ function ServicePlans({ finance, service, label, busy, onCheckout }) {
                 <strong>{plan.name}</strong>
                 <small>{plan.description}</small>
               </div>
-              <b>{money(plan.amountKrw)}/월</b>
+              <b>{money(plan.amountKrw)}{plan.amountKrw > 0 ? '/월' : ''}</b>
               <button
                 type="button"
-                disabled={current || loading}
+                disabled={current || loading || plan.included}
                 onClick={() => onCheckout(service, plan.code)}
               >
-                {loading ? '이동 중' : current ? '현재 요금제' : '결제'}
+                {loading ? '이동 중' : plan.included ? '기본 제공' : current ? '현재 요금제' : '결제'}
               </button>
             </div>
           );
@@ -51,15 +57,12 @@ function ServicePlans({ finance, service, label, busy, onCheckout }) {
 
 export default function BillingSettingsSection({ authUser, openSection, setOpenSection }) {
   const { finance, loading, busy, error, refresh, checkout } = useAccountFinance(authUser);
-  const settlement = finance?.settlement?.combined || {};
-  const entitlement = finance?.entitlement || {};
-  const trialDays = Number(entitlement?.trial?.remainingDays || 0);
 
   return (
     <SettingsSection
       id="billing"
       title="요금제·결제"
-      description="페이지로와 콜태그 통합 결제"
+      description="페이지로와 콜태그 요금제"
       openSection={openSection}
       setOpenSection={setOpenSection}
       className="settings-billing-card"
@@ -67,45 +70,27 @@ export default function BillingSettingsSection({ authUser, openSection, setOpenS
       <div className="account-finance-settings">
         <header className="account-finance-head">
           <div>
-            <CreditCard size={19} aria-hidden="true" />
+            <CreditCard size={20} aria-hidden="true" />
             <div>
-              <strong>통합 구독</strong>
+              <strong>요금제·결제</strong>
               <small>{finance?.account?.email || authUser?.email || '현재 계정'}</small>
             </div>
           </div>
           <button type="button" onClick={refresh} disabled={loading}>
-            <RefreshCw size={15} aria-hidden="true" /> 새로고침
+            <RefreshCw size={16} aria-hidden="true" /> 새로고침
           </button>
         </header>
 
-        <p className="account-finance-rule">
-          같은 계정의 페이지로·콜태그 구독과 추천 수익은 하나의 서버 원장으로 관리됩니다.
-          {trialDays > 0 ? ` 무료 이용 ${trialDays}일 남음.` : ''}
-        </p>
+        <p className="account-finance-rule">페이지로와 콜태그 결제는 같은 계정에서 관리되며 각 서비스 요금제는 별도로 표시됩니다.</p>
 
         {error && <p className="account-finance-message is-error">{error}</p>}
         {loading && !finance ? (
           <div className="account-finance-loading">결제 정보를 불러오는 중입니다.</div>
         ) : (
-          <>
-            <div className="billing-service-grid">
-              <ServicePlans finance={finance} service="pagero" label="페이지로" busy={busy} onCheckout={checkout} />
-              <ServicePlans finance={finance} service="calltag" label="콜태그" busy={busy} onCheckout={checkout} />
-            </div>
-
-            <section className="billing-settlement-summary">
-              <header>
-                <WalletCards size={18} aria-hidden="true" />
-                <strong>추천 정산 통합 현황</strong>
-              </header>
-              <dl>
-                <div><dt>이번 달 예상</dt><dd>{money(settlement.estimatedRevenueKrw)}</dd></div>
-                <div><dt>누적 확정</dt><dd>{money(settlement.confirmedRevenueKrw)}</dd></div>
-                <div><dt>추천 가입</dt><dd>{Number(settlement.referredCount || 0)}명</dd></div>
-                <div><dt>유료 전환</dt><dd>{Number(settlement.activePaidCount || 0)}명</dd></div>
-              </dl>
-            </section>
-          </>
+          <div className="billing-service-grid">
+            <ServicePlans finance={finance} service="pagero" label="페이지로" busy={busy} onCheckout={checkout} />
+            <ServicePlans finance={finance} service="calltag" label="콜태그" busy={busy} onCheckout={checkout} />
+          </div>
         )}
       </div>
     </SettingsSection>
