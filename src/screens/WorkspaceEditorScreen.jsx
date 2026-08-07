@@ -34,6 +34,7 @@ import '../styles/settings-service-content-v2.css';
 import '../styles/settings-service-font-scale-final.css';
 import '../styles/settings-service-leftpane-final.css';
 import '../styles/settings-account-final.css';
+import '../styles/settings-account-edge-fix.css';
 
 export default function WorkspaceEditorScreen({
   canUseBuilder,
