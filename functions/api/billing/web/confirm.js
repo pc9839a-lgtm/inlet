@@ -11,6 +11,7 @@ import { ensureBillingSchema, resolveEntitlement } from '../_shared.js';
 
 const METHODS = 'POST, OPTIONS';
 const WEB_PRODUCTS = new Set(['pagero_monthly', 'pagero_pro_monthly', 'all_monthly']);
+const CALLTAG_PRODUCTS = new Set(['all_monthly', 'call_monthly', 'message_monthly']);
 
 function text(value, max = 240) {
   return String(value || '').trim().slice(0, max);
@@ -60,15 +61,19 @@ export async function onRequest({ request, env }) {
     if (!paymentReference) throw billingError('결제 고유번호가 없습니다.', 400, 'WEB_PAYMENT_REFERENCE_REQUIRED');
     if (!Number.isFinite(amountKrw) || amountKrw <= 0) throw billingError('결제 금액이 올바르지 않습니다.', 400, 'WEB_PAYMENT_AMOUNT_INVALID');
 
-    const playConflict = await db.prepare(`
-      SELECT id FROM billing_subscriptions
-      WHERE owner_id = ? AND channel = 'google_play'
-        AND status IN ('active', 'grace', 'cancelled')
-        AND (expires_at = '' OR julianday(expires_at) > julianday('now'))
-      LIMIT 1
-    `).bind(ownerId).first();
-    if (playConflict?.id) {
-      throw billingError('Google Play 구독이 있어 웹 결제를 확정할 수 없습니다.', 409, 'GOOGLE_PLAY_SUBSCRIPTION_ACTIVE');
+    if (CALLTAG_PRODUCTS.has(productCode)) {
+      const playConflict = await db.prepare(`
+        SELECT id FROM billing_subscriptions
+        WHERE owner_id = ?
+          AND channel = 'google_play'
+          AND product_code IN ('all_monthly', 'call_monthly', 'message_monthly')
+          AND status IN ('active', 'grace', 'cancelled')
+          AND (expires_at = '' OR julianday(expires_at) > julianday('now'))
+        LIMIT 1
+      `).bind(ownerId).first();
+      if (playConflict?.id) {
+        throw billingError('Google Play 콜태그 구독이 있어 웹 결제를 확정할 수 없습니다.', 409, 'GOOGLE_PLAY_SUBSCRIPTION_ACTIVE');
+      }
     }
 
     const tokenHash = await sha256(`web:${paymentReference}`);
