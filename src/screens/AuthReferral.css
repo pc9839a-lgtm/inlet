@@ -32,3 +32,12 @@
   line-height: 1.45;
   font-weight: 700;
 }
+
+.auth-form .auth-referral-field small::after {
+  content: ' 추천인 혜택은 이메일 회원가입에서만 적용됩니다.';
+  font-weight: 850;
+}
+
+.auth-form:has(.auth-referral-field input:not(:placeholder-shown)) .auth-google-btn {
+  display: none;
+}
