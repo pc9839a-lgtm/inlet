@@ -10,4 +10,4 @@ Uploading... (136/136)
 ✨ Uploading _redirects
 ✨ Uploading Functions bundle
 🌎 Deploying...
-✨ Deployment complete! Take a peek over at https://a21b47c9.inlet-8mr.pages.dev
+✨ Deployment complete! Take a peek over at https://81424e90.inlet-8mr.pages.dev
