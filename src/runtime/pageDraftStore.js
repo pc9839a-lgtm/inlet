@@ -107,7 +107,7 @@ export function pageDraftIdentity(page = {}, authUser = {}) {
   return [account, pageOwner, project, pageKey].map((part) => encodeURIComponent(part)).join(':');
 }
 
-export function savePageDraft({ page, authUser, editedAt = Date.now(), storage } = {}) {
+export function savePageDraft({ page, authUser, editedAt = Date.now(), storage, interactionConfirmed = true } = {}) {
   const normalized = normalizePageForSave(page || {});
   const identity = pageDraftIdentity(normalized, authUser);
   const envelope = readEnvelope(storage);
@@ -115,6 +115,7 @@ export function savePageDraft({ page, authUser, editedAt = Date.now(), storage }
     version: DRAFT_VERSION,
     identity,
     editedAt,
+    interactionConfirmed: interactionConfirmed === true,
     baseRevision: Number(normalized.revision || 0),
     baseUpdatedAt: text(normalized.updatedAt || normalized.savedAt || normalized.createdAt),
     page: sanitizeValue(normalized),
@@ -146,6 +147,7 @@ export function clearPageDraft({ page, authUser, storage } = {}) {
 
 export function evaluatePageDraft({ draft, serverPage, now = Date.now() } = {}) {
   if (!draft?.page) return { action: 'none' };
+  if (draft.interactionConfirmed !== true) return { action: 'discard', reason: 'unconfirmed-edit' };
   if (now - Number(draft.editedAt || 0) > MAX_DRAFT_AGE_MS) return { action: 'discard', reason: 'expired' };
   const serverRevision = Number(serverPage?.revision || 0);
   const baseRevision = Number(draft.baseRevision || 0);
