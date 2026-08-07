@@ -58,7 +58,7 @@ const referralValidationIndex = source.register.indexOf('validateSignupReferralC
 const accountRegistrationIndex = source.register.indexOf('registerAccount(registration');
 
 const checks = {
-  'base trial remains three days': source.shared.includes('const TRIAL_BASE_DAYS = 3'),
+  'base trial remains three days for Pagero generic billing': source.shared.includes('const TRIAL_BASE_DAYS = 3'),
   'signup referral classic pass is exactly seven days': source.signupReferral.includes('const SIGNUP_CLASSIC_DAYS = 7'),
   'signup referral creates Pagero Classic entitlement': source.signupReferral.includes("'pagero_monthly'") && source.signupReferral.includes("channel, 'referral'") === false && source.signupReferral.includes("'referral', 'active'"),
   'signup referral entitlement is promotional not paid': source.signupReferral.includes("'promotional'") && source.referralSummary.includes("verification_state = 'verified'"),
@@ -90,12 +90,12 @@ const checks = {
   'settings pricing has Pagero free': ui.repository.includes("code: 'pagero_free'") && ui.repository.includes('amountKrw: 0'),
   'settings pricing has Pagero Classic 3500': ui.repository.includes("code: 'pagero_monthly'") && ui.repository.includes('amountKrw: 3500'),
   'settings pricing has Pagero Pro 5500': ui.repository.includes("code: 'pagero_pro_monthly'") && ui.repository.includes('amountKrw: 5500'),
-  'settings pricing shows only CallTag integrated 6000': ui.repository.includes("name: '통합'") && ui.repository.includes('amountKrw: 6000') && !ui.repository.includes("service=\"calltag\" label=\"콜태그 클래식\""),
+  'settings pricing keeps CallTag integrated 6000': ui.repository.includes("name: '통합권'") && ui.repository.includes("code: 'all_monthly'") && ui.repository.includes('amountKrw: 6000'),
   'Pagero checkout lists free Classic and Pro': ['무료', '클래식', '프로', '월 3,500원', '월 5,500원'].every((text) => ui.pageroCheckout.includes(text)),
-  'CallTag checkout lists only integrated 6000': ui.calltagCheckout.includes('콜태그 통합') && ui.calltagCheckout.includes('월 6,000원') && !ui.calltagCheckout.includes('월 3,500원') && !ui.calltagCheckout.includes('월 5,500원'),
+  'CallTag checkout lists phone message and integrated plans': ['전화관리', '월 1,900원', '문자자동화', '월 990원', '통합권', '월 6,000원'].every((text) => ui.calltagCheckout.includes(text)) && !ui.calltagCheckout.includes('월 3,500원') && !ui.calltagCheckout.includes('월 5,500원'),
   'settings navigation separates referral partner settlement': ['추천인', '파트너', '정산'].every((text) => ui.navigation.includes(text)),
   'settings renders partner and settlement sections': ui.sections.includes('PartnerSettingsSection') && ui.sections.includes('SettlementSettingsSection'),
-  'partner section exposes code copy and performance': ui.partner.includes('코드 복사') && ui.partner.includes('파트너 실적') && ui.partner.includes('20%'),
+  'partner section exposes code copy and performance': ui.partner.includes('내 파트너 코드') && ui.partner.includes('복사') && ui.partner.includes('partner-metric-grid') && ui.partner.includes('20%'),
   'settlement section links exact CallTag settlement page': ui.settlement.includes('https://calltag.pagero.kr/web/settlement') && ui.settlement.includes('페이지로·콜태그 통합 정산'),
   'referral settings no longer accepts a code': ui.referral.includes('회원가입할 때 추천인 코드를 입력') && !ui.referral.includes('<input') && !ui.referral.includes('applyReferral'),
   'settings hook has no post signup referral action': !ui.financeHook.includes('applyAccountReferralCode') && !ui.financeHook.includes('applyReferral'),
@@ -106,7 +106,7 @@ const checks = {
   'final layout expands page basic controls': ui.layout.includes('.page-basic-settings-grid') && ui.layout.includes('grid-template-columns: repeat(2') && ui.layout.includes('height: 56px'),
   'final layout expands manager empty state full width': ui.layout.includes('.manager-empty-state.compact') && ui.layout.includes('grid-column: 1 / -1') && ui.layout.includes('min-width: 142px'),
   'final layout is imported after legacy settings CSS': ui.settingsPanel.indexOf("'./SettingsPanel.css'") < ui.settingsPanel.indexOf("'./SettingsPanel-final-policy-layout.css'"),
-  'settings still use existing unified APIs': ui.repository.includes("'/api/billing/subscriptions'") && ui.repository.includes("'/api/referrals/me'") && ui.repository.includes("'/api/referrals/summary'"),
+  'settings use consolidated finance API': ui.repository.includes("'/api/billing/finance'") && ui.repository.includes('normalizeFinance'),
   'no parallel finance API was introduced': !ui.repository.includes('/api/account-finance'),
 };
 
