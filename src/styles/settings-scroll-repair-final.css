@@ -1,0 +1,73 @@
+/* Final settings scroll contract: header/tabs stay visible, settings columns scroll independently. */
+html body #root .builder-shell.settings-workspace-shell > .left-workspace {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior-y: contain !important;
+  scrollbar-gutter: stable !important;
+  touch-action: pan-y !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-root {
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-layout {
+  height: calc(100dvh - 226px) !important;
+  min-height: 420px !important;
+  max-height: calc(100dvh - 226px) !important;
+  align-items: stretch !important;
+  overflow: hidden !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-sidebar,
+html body #root .builder-shell.settings-workspace-shell .settings-ops-main,
+html body #root .builder-shell.settings-workspace-shell .settings-ops-summary {
+  min-height: 0 !important;
+  max-height: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  scrollbar-gutter: stable !important;
+  touch-action: pan-y !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-main {
+  padding-bottom: 44px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-sidebar {
+  padding-bottom: 36px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-sidebar::-webkit-scrollbar,
+html body #root .builder-shell.settings-workspace-shell .settings-ops-main::-webkit-scrollbar,
+html body #root .builder-shell.settings-workspace-shell .settings-ops-summary::-webkit-scrollbar {
+  width: 10px;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-sidebar::-webkit-scrollbar-thumb,
+html body #root .builder-shell.settings-workspace-shell .settings-ops-main::-webkit-scrollbar-thumb,
+html body #root .builder-shell.settings-workspace-shell .settings-ops-summary::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: #cbd5e1;
+  background-clip: padding-box;
+}
+
+@media (max-width: 1000px) {
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-root,
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-layout {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-sidebar,
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-main,
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-summary {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}
