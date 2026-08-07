@@ -1,0 +1,52 @@
+/* Final owner for the screen-order add control. */
+body .builder-shell:not(.mobile-operations-shell) .edit-layout:has(.fixed-add-dock) {
+  padding-bottom: 94px !important;
+}
+
+body .builder-shell:not(.mobile-operations-shell) .edit-layout .fixed-add-dock {
+  --pg-add-dock-width: min(700px, calc(var(--editor-left-width, 720px) - 36px));
+  position: fixed !important;
+  left: calc((var(--editor-left-width, 720px) - var(--pg-add-dock-width)) / 2) !important;
+  right: auto !important;
+  bottom: 12px !important;
+  z-index: 1200 !important;
+  width: var(--pg-add-dock-width) !important;
+  max-width: calc(100vw - 28px) !important;
+  margin: 0 !important;
+  padding: 8px !important;
+  border: 1px solid rgba(203, 213, 225, .9) !important;
+  border-radius: 16px !important;
+  background: rgba(248, 250, 252, .94) !important;
+  box-shadow: 0 16px 38px rgba(15, 23, 42, .16) !important;
+  backdrop-filter: blur(14px) !important;
+  overflow: visible !important;
+}
+
+body .builder-shell:not(.mobile-operations-shell) .edit-layout .fixed-add-dock .add-toggle {
+  min-height: 54px !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell:not(.mobile-operations-shell) .edit-layout .fixed-add-dock.open .add-panel {
+  max-height: min(58dvh, 520px) !important;
+  margin: 0 0 8px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  scrollbar-gutter: stable !important;
+}
+
+@media (max-width: 1180px) {
+  body .builder-shell:not(.mobile-operations-shell) .edit-layout:has(.fixed-add-dock) {
+    padding-bottom: 90px !important;
+  }
+
+  body .builder-shell:not(.mobile-operations-shell) .edit-layout .fixed-add-dock {
+    left: 14px !important;
+    right: 14px !important;
+    width: auto !important;
+    max-width: none !important;
+    bottom: 10px !important;
+  }
+}
