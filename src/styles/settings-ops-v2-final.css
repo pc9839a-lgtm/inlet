@@ -1,0 +1,244 @@
+/* Final settings UX: compact SaaS-style navigation and one focused content surface. */
+html body #root .builder-shell.settings-workspace-shell .settings-ops-root.settings-ops-v2 {
+  width: min(100%, 1240px) !important;
+  max-width: 1240px !important;
+  margin: 0 auto !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 16px !important;
+  background: #fff !important;
+  box-shadow: 0 10px 30px rgba(17, 24, 39, .04) !important;
+  overflow: hidden !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-layout {
+  grid-template-columns: 228px minmax(0, 1fr) !important;
+  min-height: calc(100dvh - 226px) !important;
+  background: #fff !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-sidebar {
+  padding: 22px 14px !important;
+  border-right: 1px solid #eceff3 !important;
+  background: #fafafa !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-sidebar-title {
+  gap: 5px !important;
+  margin: 0 8px 18px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-sidebar-title strong {
+  font-size: 20px !important;
+  letter-spacing: -.4px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-sidebar-title span {
+  font-size: 11px !important;
+  color: #9ca3af !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-nav {
+  display: grid !important;
+  gap: 7px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-nav + .settings-ops-nav {
+  margin-top: 18px !important;
+  padding-top: 16px !important;
+  border-top: 1px solid #e5e7eb !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-nav > small {
+  margin: 0 9px 2px !important;
+  color: #9ca3af !important;
+  font-size: 10px !important;
+  font-weight: 950 !important;
+  letter-spacing: .04em !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-nav-list {
+  display: grid !important;
+  gap: 3px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-nav-item {
+  min-height: 42px !important;
+  gap: 10px !important;
+  padding: 0 11px !important;
+  border-radius: 9px !important;
+  background: transparent !important;
+  color: #4b5563 !important;
+  box-shadow: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-nav-item svg {
+  flex: 0 0 auto !important;
+  color: #9ca3af !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-nav-item:hover {
+  background: #f3f4f6 !important;
+  color: #111827 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-nav-item.active {
+  background: #111827 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-nav-item.active svg {
+  color: #fff !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-nav-item span {
+  font-size: 12px !important;
+  font-weight: 900 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-main {
+  min-width: 0 !important;
+  padding: 30px clamp(24px, 3vw, 42px) 44px !important;
+  background: #fff !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-main-head {
+  align-items: center !important;
+  margin-bottom: 22px !important;
+  padding-bottom: 18px !important;
+  border-bottom: 1px solid #eceff3 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-main-head > div {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 10px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-main-head h2 {
+  margin: 0 !important;
+  color: #111827 !important;
+  font-size: 24px !important;
+  line-height: 1.1 !important;
+  font-weight: 950 !important;
+  letter-spacing: -.5px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-main-head small {
+  color: #9ca3af !important;
+  font-size: 11px !important;
+  font-weight: 850 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-single-section {
+  width: 100% !important;
+  max-width: 980px !important;
+  margin: 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-single-section > .settings-section,
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-single-section > .settings-advanced-box {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-single-section > .settings-section > .settings-section-head,
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-single-section > .settings-advanced-box > .settings-advanced-head {
+  display: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-single-section > .settings-section > .settings-section-body {
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-summary {
+  display: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .custom-domain-settings,
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .account-finance-settings,
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .account-settings-grid,
+html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .page-basic-settings-grid {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+@media (max-width: 900px) {
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-layout {
+    grid-template-columns: 196px minmax(0, 1fr) !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-main {
+    padding-inline: 22px !important;
+  }
+}
+
+@media (max-width: 720px) {
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-root.settings-ops-v2 {
+    border-radius: 12px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-layout {
+    display: block !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-sidebar {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 12 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 10px !important;
+    overflow-x: auto !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    background: rgba(255, 255, 255, .98) !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-sidebar-title,
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-nav > small {
+    display: none !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-nav,
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-nav + .settings-ops-nav {
+    display: block !important;
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-nav-list {
+    display: flex !important;
+    gap: 6px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-nav-item {
+    width: auto !important;
+    min-height: 38px !important;
+    padding: 0 10px !important;
+    white-space: nowrap !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-main {
+    padding: 20px 14px 34px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-main-head {
+    margin-bottom: 18px !important;
+    padding-bottom: 14px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-ops-v2 .settings-ops-main-head h2 {
+    font-size: 21px !important;
+  }
+}
