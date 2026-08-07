@@ -30,7 +30,6 @@ import '../styles/stats-regression-repair-final.css';
 import '../styles/settings-seo-domain-polish-final.css';
 import '../styles/settings-finance-final.css';
 import '../styles/settings-scroll-repair-final.css';
-import '../styles/settings-ops-v2-final.css';
 
 export default function WorkspaceEditorScreen({
   canUseBuilder,
