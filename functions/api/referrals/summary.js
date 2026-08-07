@@ -2,6 +2,8 @@ import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../_sha
 import { CALL_METHODS, callSession } from '../call/_shared.js';
 import { referralSummary } from '../billing/_shared.js';
 
+// The shared summary query counts paid conversions only when verification_state = 'verified'.
+// Signup referral passes use verification_state = 'promotional' and are never counted as paid.
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, CALL_METHODS);
   if (request.method !== 'GET') {
