@@ -1,0 +1,415 @@
+/* Service-only settings refresh: billing, referral, partner, settlement. */
+html body #root .builder-shell.settings-workspace-shell .service-content-v2 {
+  width: 100% !important;
+  max-width: none !important;
+  display: grid !important;
+  gap: 16px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-content-v2 .service-content-head {
+  min-height: 52px !important;
+  padding-bottom: 14px !important;
+  margin: 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-content-v2 .service-content-head strong {
+  font-size: 17px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-card-grid.billing-service-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-card {
+  min-width: 0 !important;
+  display: grid !important;
+  grid-template-rows: auto 1fr !important;
+  border: 1px solid #dfe3e8 !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  overflow: hidden !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-card-head {
+  min-height: 76px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  padding: 14px 14px 13px !important;
+  border-bottom: 1px solid #eceff3 !important;
+  background: #fafafa !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-title {
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-icon,
+html body #root .builder-shell.settings-workspace-shell .service-card-icon {
+  flex: 0 0 auto !important;
+  width: 34px !important;
+  height: 34px !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 1px solid #e1e5ea !important;
+  border-radius: 9px !important;
+  background: #fff !important;
+  color: #111827 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-title > div {
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 3px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-title strong {
+  color: #111827 !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-title small {
+  color: #7b8491 !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-state {
+  flex: 0 0 auto !important;
+  min-height: 24px !important;
+  padding: 0 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1px solid #d7dce3 !important;
+  border-radius: 999px !important;
+  background: #fff !important;
+  color: #6b7280 !important;
+  font-size: 10px !important;
+  font-weight: 850 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-state.active {
+  border-color: #cfd5dd !important;
+  color: #111827 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-options {
+  display: grid !important;
+  align-content: start !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-option {
+  min-height: 76px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 12px 14px !important;
+  border-bottom: 1px solid #eff1f4 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-option:last-child {
+  border-bottom: 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-option.is-current {
+  background: #f6f7f9 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-copy {
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 4px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-name-row {
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-name-row strong {
+  color: #111827 !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-name-row span {
+  min-height: 20px !important;
+  padding: 0 6px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  border-radius: 5px !important;
+  background: #111827 !important;
+  color: #fff !important;
+  font-size: 9px !important;
+  font-weight: 900 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-copy small {
+  color: #7b8491 !important;
+  font-size: 10px !important;
+  line-height: 1.35 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-action {
+  display: grid !important;
+  justify-items: end !important;
+  gap: 7px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-action b {
+  color: #111827 !important;
+  font-size: 13px !important;
+  font-weight: 950 !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-action b em {
+  color: #7b8491 !important;
+  font-size: 9px !important;
+  font-style: normal !important;
+  font-weight: 750 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-action button {
+  min-width: 58px !important;
+  min-height: 30px !important;
+  height: 30px !important;
+  padding: 0 9px !important;
+  border: 1px solid #111827 !important;
+  border-radius: 6px !important;
+  background: #111827 !important;
+  color: #fff !important;
+  font-size: 10px !important;
+  font-weight: 850 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-action button:disabled {
+  border-color: #dde1e6 !important;
+  background: #f5f6f7 !important;
+  color: #8a929d !important;
+}
+
+/* Referral */
+html body #root .builder-shell.settings-workspace-shell .referral-service-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.referral-benefit-card,.referral-status-card) {
+  min-height: 132px !important;
+  display: grid !important;
+  grid-template-columns: 40px minmax(0, 1fr) !important;
+  align-items: start !important;
+  gap: 12px !important;
+  padding: 18px !important;
+  border: 1px solid #dfe3e8 !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.referral-benefit-card,.referral-status-card) > div {
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 5px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.referral-benefit-card,.referral-status-card) small {
+  color: #7b8491 !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.referral-benefit-card,.referral-status-card) strong {
+  color: #111827 !important;
+  font-size: 20px !important;
+  line-height: 1.2 !important;
+  font-weight: 950 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.referral-benefit-card,.referral-status-card) p {
+  margin: 2px 0 0 !important;
+  color: #68717d !important;
+  font-size: 11px !important;
+  line-height: 1.45 !important;
+}
+
+/* Partner */
+html body #root .builder-shell.settings-workspace-shell .partner-code-v2 {
+  min-height: 112px !important;
+  padding: 18px 20px !important;
+  border: 1px solid #dfe3e8 !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .partner-code-v2 > div {
+  gap: 4px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .partner-code-v2 small {
+  color: #7b8491 !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .partner-code-v2 strong {
+  font-size: 27px !important;
+  letter-spacing: .04em !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .partner-code-v2 p {
+  margin: 2px 0 0 !important;
+  color: #68717d !important;
+  font-size: 11px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .partner-metric-grid,
+html body #root .builder-shell.settings-workspace-shell .settlement-metric-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .partner-metric-grid > div,
+html body #root .builder-shell.settings-workspace-shell .settlement-metric {
+  min-width: 0 !important;
+  min-height: 104px !important;
+  display: grid !important;
+  align-content: center !important;
+  gap: 9px !important;
+  padding: 14px 16px !important;
+  border: 1px solid #dfe3e8 !important;
+  border-radius: 11px !important;
+  background: #fff !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.partner-metric-grid > div,.settlement-metric) > span {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  color: #747d88 !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.partner-metric-grid > div,.settlement-metric) > strong {
+  color: #111827 !important;
+  font-size: 20px !important;
+  line-height: 1.1 !important;
+  font-weight: 950 !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settlement-metric.primary {
+  background: #111827 !important;
+  border-color: #111827 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settlement-metric.primary > span {
+  color: #cbd5e1 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settlement-metric.primary > strong {
+  color: #fff !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-footer-action,
+html body #root .builder-shell.settings-workspace-shell .settlement-cta-card {
+  min-height: 72px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  padding: 14px 16px !important;
+  border: 1px solid #dfe3e8 !important;
+  border-radius: 11px !important;
+  background: #f8f9fa !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-footer-action > span,
+html body #root .builder-shell.settings-workspace-shell .settlement-cta-card small {
+  color: #68717d !important;
+  font-size: 11px !important;
+  line-height: 1.4 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settlement-cta-card > div {
+  display: grid !important;
+  gap: 4px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settlement-cta-card strong {
+  color: #111827 !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell :is(.service-footer-action a,.settlement-cta-card a) {
+  flex: 0 0 auto !important;
+  min-height: 38px !important;
+  padding: 0 13px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  border: 1px solid #111827 !important;
+  border-radius: 7px !important;
+  background: #111827 !important;
+  color: #fff !important;
+  text-decoration: none !important;
+  font-size: 11px !important;
+  font-weight: 850 !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 1180px) {
+  html body #root .builder-shell.settings-workspace-shell .service-card-grid.billing-service-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .partner-metric-grid,
+  html body #root .builder-shell.settings-workspace-shell .settlement-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 700px) {
+  html body #root .builder-shell.settings-workspace-shell .referral-service-grid,
+  html body #root .builder-shell.settings-workspace-shell .partner-metric-grid,
+  html body #root .builder-shell.settings-workspace-shell .settlement-metric-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .service-plan-option,
+  html body #root .builder-shell.settings-workspace-shell :is(.service-footer-action,.settlement-cta-card) {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell :is(.service-footer-action,.settlement-cta-card) {
+    display: grid !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .service-plan-action {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    justify-items: start !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell :is(.service-footer-action a,.settlement-cta-card a) {
+    width: 100% !important;
+  }
+}
