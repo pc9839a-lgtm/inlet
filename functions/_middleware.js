@@ -1,4 +1,5 @@
 const RUNTIME_RECOVERY_QUERY_KEYS = ['__fresh', '__runtime', '__runtimefix', '__hardreset'];
+const RUNTIME_RESET_PATH = '/__pagero_runtime_reset';
 
 function isPageroPlatformHost(hostname = '') {
   const host = String(hostname || '').trim().toLowerCase();
@@ -15,25 +16,29 @@ function isProtectedPageroSpaRoute(pathname = '') {
     || /^\/[^/?#]+\/admin(?:\/|$)/.test(clean);
 }
 
+function isRuntimeAssetPath(pathname = '') {
+  return /^\/assets\/.+\.(?:js|css)$/i.test(String(pathname || ''));
+}
+
 function hasRuntimeRecoveryQuery(url) {
   return RUNTIME_RECOVERY_QUERY_KEYS.some((key) => url.searchParams.has(key));
 }
 
-function noStoreHtmlResponse(response, { clearSiteCache = false, runtimeVersion = 'edge-reset-v1' } = {}) {
-  const headers = new Headers(response.headers);
+function applyNoStoreHeaders(headers, { clearSiteCache = false } = {}) {
   headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
   headers.set('CDN-Cache-Control', 'no-store');
   headers.set('Cloudflare-CDN-Cache-Control', 'no-store');
   headers.set('Pragma', 'no-cache');
   headers.set('Expires', '0');
+  if (clearSiteCache) headers.set('Clear-Site-Data', '"cache"');
+  return headers;
+}
+
+function noStoreHtmlResponse(response, { clearSiteCache = false, runtimeVersion = 'edge-reset-v2' } = {}) {
+  const headers = applyNoStoreHeaders(new Headers(response.headers), { clearSiteCache });
   headers.set('Content-Type', 'text/html; charset=utf-8');
   headers.set('X-Pagero-Runtime-Shell', runtimeVersion);
   headers.delete('Content-Length');
-  if (clearSiteCache) {
-    // CacheStorage cleanup in JavaScript cannot remove the browser HTTP cache.
-    // Clear-Site-Data is intentionally limited to cache so auth/storage survive.
-    headers.set('Clear-Site-Data', '"cache"');
-  }
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
@@ -41,24 +46,122 @@ function noStoreHtmlResponse(response, { clearSiteCache = false, runtimeVersion 
   });
 }
 
+function safeRuntimeNext(rawNext = '') {
+  const value = String(rawNext || '').trim();
+  if (!value.startsWith('/') || value.startsWith('//')) return '/dashboard';
+  if (value.startsWith('/assets/') || value.startsWith(RUNTIME_RESET_PATH)) return '/dashboard';
+  return value;
+}
+
+function runtimeResetHtml(nextPath = '/dashboard') {
+  const encodedNext = JSON.stringify(safeRuntimeNext(nextPath));
+  return `<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>페이지로</title>
+<style>
+html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#fff;color:#111827}body{display:grid;place-items:center;min-height:100vh}.runtime-reset{padding:28px;text-align:center}.runtime-reset strong{display:block;font-size:18px;margin-bottom:8px}.runtime-reset span{font-size:13px;color:#6b7280}
+</style>
+</head>
+<body>
+<div class="runtime-reset"><strong>최신 화면으로 연결 중입니다.</strong><span>페이지 데이터와 로그인 정보는 유지됩니다.</span></div>
+<script>
+(() => {
+  const next = ${encodedNext};
+  const finish = () => {
+    try {
+      const target = new URL(next, location.origin);
+      ['__fresh','__runtime','__runtimefix','__hardreset'].forEach((key) => target.searchParams.delete(key));
+      target.searchParams.set('__hardreset', String(Date.now()));
+      location.replace(target.pathname + target.search + target.hash);
+    } catch {
+      location.replace('/dashboard?__hardreset=' + Date.now());
+    }
+  };
+  try {
+    const storage = sessionStorage;
+    for (let i = storage.length - 1; i >= 0; i -= 1) {
+      const key = storage.key(i) || '';
+      if (key.startsWith('pagero-root-chunk-reload') || key.startsWith('pagero-chunk-reload') || key.startsWith('pagero-runtime-recovery')) storage.removeItem(key);
+    }
+  } catch {}
+  const jobs = [];
+  if ('caches' in window) jobs.push(caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key)))).catch(() => undefined));
+  if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) jobs.push(navigator.serviceWorker.getRegistrations().then((items) => Promise.all(items.map((item) => item.unregister().catch(() => false)))).catch(() => undefined));
+  Promise.all(jobs).catch(() => undefined).finally(finish);
+  setTimeout(finish, 1200);
+})();
+</script>
+</body>
+</html>`;
+}
+
+function runtimeResetResponse(url) {
+  const next = safeRuntimeNext(url.searchParams.get('next') || '/dashboard');
+  const headers = applyNoStoreHeaders(new Headers(), { clearSiteCache: true });
+  headers.set('Content-Type', 'text/html; charset=utf-8');
+  headers.set('X-Pagero-Runtime-Shell', 'edge-reset-page-v2');
+  return new Response(runtimeResetHtml(next), { status: 200, headers });
+}
+
+function staleJavaScriptRecoveryResponse() {
+  const source = `const __pageroStaleRuntime=()=>{try{const next=location.pathname+location.search+location.hash;location.replace('${RUNTIME_RESET_PATH}?next='+encodeURIComponent(next)+'&t='+Date.now())}catch{location.replace('/dashboard?__hardreset='+Date.now())}};__pageroStaleRuntime();export default function PageroStaleRuntimeRecovery(){return null}`;
+  const headers = applyNoStoreHeaders(new Headers(), { clearSiteCache: true });
+  headers.set('Content-Type', 'application/javascript; charset=utf-8');
+  headers.set('X-Pagero-Stale-Asset-Recovery', '1');
+  return new Response(source, { status: 200, headers });
+}
+
+function staleCssRecoveryResponse() {
+  const headers = applyNoStoreHeaders(new Headers(), { clearSiteCache: true });
+  headers.set('Content-Type', 'text/css; charset=utf-8');
+  headers.set('X-Pagero-Stale-Asset-Recovery', '1');
+  return new Response('/* stale Pagero CSS chunk intentionally replaced; JS recovery will refresh the runtime */', { status: 200, headers });
+}
+
+async function handleRuntimeAsset(context, url) {
+  if (!isPageroPlatformHost(url.hostname) || !isRuntimeAssetPath(url.pathname)) return null;
+
+  const assetUrl = new URL(context.request.url);
+  const response = await context.env.ASSETS.fetch(assetUrl);
+  const contentType = String(response.headers.get('content-type') || '').toLowerCase();
+  const expectsJs = /\.js$/i.test(url.pathname);
+  const expectsCss = /\.css$/i.test(url.pathname);
+  const validType = expectsJs
+    ? /(?:javascript|ecmascript)/i.test(contentType)
+    : expectsCss
+      ? /text\/css/i.test(contentType)
+      : true;
+
+  if (response.ok && validType) return response;
+
+  // Cloudflare Pages' SPA fallback can answer a deleted hashed JS/CSS URL with
+  // index.html. An old open tab then receives HTML for a module request and lands
+  // on the legacy "Loading screen failed" UI. Return a same-origin rescue asset
+  // instead so even that stale tab can escape to a server-owned reset page.
+  return expectsJs ? staleJavaScriptRecoveryResponse() : staleCssRecoveryResponse();
+}
+
 async function handlePageroSpaShell(context, url) {
   if (!isPageroPlatformHost(url.hostname)) return null;
   if (url.pathname.startsWith('/api/')) return null;
+
+  if (url.pathname === RUNTIME_RESET_PATH) return runtimeResetResponse(url);
 
   const recovery = hasRuntimeRecoveryQuery(url);
   const protectedRoute = isProtectedPageroSpaRoute(url.pathname);
   if (!recovery && !protectedRoute) return null;
 
-  // Bypass the SPA fallback/cache path completely and fetch the index asset from
-  // the current deployment. This guarantees that /app and /dashboard always get
-  // the current deployment's hashed entrypoint after a deploy.
   const assetUrl = new URL(context.request.url);
   assetUrl.pathname = '/index.html';
   assetUrl.search = '';
   const response = await context.env.ASSETS.fetch(assetUrl);
   return noStoreHtmlResponse(response, {
     clearSiteCache: recovery,
-    runtimeVersion: recovery ? 'edge-hard-reset-v1' : 'edge-shell-v1',
+    runtimeVersion: recovery ? 'edge-hard-reset-v2' : 'edge-shell-v2',
   });
 }
 
@@ -197,6 +300,9 @@ export async function onRequest(context) {
   if (url.hostname === 'call.pagero.kr' || url.hostname === 'calltag.pagero.kr') {
     return handleCalltagRequest(context, url);
   }
+
+  const runtimeAssetResponse = await handleRuntimeAsset(context, url);
+  if (runtimeAssetResponse) return runtimeAssetResponse;
 
   const pageroSpaResponse = await handlePageroSpaShell(context, url);
   if (pageroSpaResponse) return pageroSpaResponse;
