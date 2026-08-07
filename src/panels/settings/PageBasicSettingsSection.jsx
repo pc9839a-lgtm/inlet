@@ -23,8 +23,9 @@ export default function PageBasicSettingsSection({
       locked={locked}
       onSave={onSave}
       onEdit={onEdit}
+      className="page-basic-settings-card"
     >
-      <div className="settings-grid">
+      <div className="settings-grid page-basic-settings-grid">
         <Field
           label="페이지명"
           value={basicDraft.title}
