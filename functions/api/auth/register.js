@@ -7,7 +7,6 @@ import {
   normalizeSignupReferralCode,
   validateSignupReferralCode,
 } from '../referrals/_signup.js';
-import { enforceCallTagTrialPolicy } from '../billing/trial-policy.js';
 
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, AUTH_METHODS);
@@ -28,11 +27,9 @@ export async function onRequest({ request, env }) {
 
     const authEnv = withCompatibleAuthVerificationStorage(env);
     const user = await registerAccount(registration, authEnv);
-    await enforceCallTagTrialPolicy(db, user.ownerId);
     const referral = referralCode
       ? await applySignupReferralCode(db, user.ownerId, referralCode)
       : null;
-    const trial = await enforceCallTagTrialPolicy(db, user.ownerId);
     const session = await createSessionToken({
       ownerId: user.ownerId,
       projectId: String(input.projectId || input.user?.projectId || ''),
@@ -50,17 +47,10 @@ export async function onRequest({ request, env }) {
         source: String(registration.source || 'signup'),
         emailVerified: user.emailVerified === true,
         referralApplied: !!referral,
-        referralBonusDays: Number(referral?.bonusDays || 0),
-        trialTotalDays: Number(trial?.totalDays || 7),
+        referralClassicDays: Number(referral?.classicDays || 0),
       },
     });
-    return jsonResponse(request, env, 200, {
-      ok: true,
-      user,
-      session,
-      referral,
-      trial,
-    }, AUTH_METHODS);
+    return jsonResponse(request, env, 200, { ok: true, user, session, referral }, AUTH_METHODS);
   } catch (error) {
     const registration = input.user && typeof input.user === 'object' ? input.user : input;
     await writeAuditLog({
