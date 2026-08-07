@@ -51,6 +51,7 @@ export default function SettingsPrimarySections({
 
       {activeSection === 'domain' && (
         <CustomDomainSettingsSection
+          authUser={authUser}
           integrations={integrations}
           openSection={openSection}
           setOpenSection={setOpenSection}
