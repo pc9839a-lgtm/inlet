@@ -32,6 +32,7 @@ import '../styles/settings-finance-final.css';
 import '../styles/settings-scroll-repair-final.css';
 import '../styles/settings-service-content-v2.css';
 import '../styles/settings-service-font-scale-final.css';
+import '../styles/settings-service-leftpane-final.css';
 
 export default function WorkspaceEditorScreen({
   canUseBuilder,
