@@ -33,5 +33,8 @@ jobs:
       - name: Verify billing and referral contracts
         run: node scripts/billing-referral-quality-check.mjs
 
+      - name: Verify CallTag 7 plus 7 trial isolation
+        run: node scripts/calltag-trial-7plus7-quality-check.mjs
+
       - name: Verify production build
         run: npm run build

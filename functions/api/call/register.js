@@ -14,23 +14,36 @@ import {
   profilePublic,
   upsertCallProfile,
 } from './_shared.js';
+import {
+  applyCallTagSignupReferralCode,
+  normalizeSignupReferralCode,
+  validateSignupReferralCode,
+} from '../referrals/_calltag-signup.js';
+import {
+  enforceCallTagTrialPolicy,
+  resolveCallTagEntitlement,
+} from '../billing/trial-policy.js';
 
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, AUTH_METHODS);
   if (request.method !== 'POST') return jsonResponse(request, env, 405, { ok: false, error: 'Method not allowed.' }, AUTH_METHODS);
   try {
-    assertD1(env);
+    const db = assertD1(env);
     const input = await readJson(request);
     const name = String(input.name || '').trim().replace(/\s+/g, ' ').slice(0, 80);
     const phone = normalizePhone(input.phone || '');
     const brandName = String(input.brandName || '').trim().replace(/\s+/g, ' ').slice(0, 100) || '개인';
     const industry = String(input.industry || '').trim().replace(/\s+/g, ' ').slice(0, 100) || '기타';
+    const referralCode = normalizeSignupReferralCode(input.referralCode || input.partnerCode || '');
 
     if (!name) {
       throw authError('이름을 입력해주세요.', 400, { code: 'AUTH_NAME_REQUIRED', field: 'name' });
     }
     if (!phone) {
       throw authError('연락처를 정확히 입력해주세요.', 400, { code: 'AUTH_PHONE_REQUIRED', field: 'phone' });
+    }
+    if (referralCode) {
+      await validateSignupReferralCode(db, referralCode);
     }
 
     let user;
@@ -76,6 +89,12 @@ export async function onRequest({ request, env }) {
       brandName,
       industry,
     });
+
+    await enforceCallTagTrialPolicy(db, user.ownerId);
+    const referral = referralCode
+      ? await applyCallTagSignupReferralCode(db, user.ownerId, referralCode)
+      : null;
+    const billingEntitlement = await resolveCallTagEntitlement(db, user.ownerId);
     const entitlement = await ensurePendingEntitlement(env.DB, user.ownerId);
     const session = await createSessionToken({
       ownerId: user.ownerId,
@@ -89,6 +108,8 @@ export async function onRequest({ request, env }) {
       user,
       profile: profilePublic(profile, user),
       entitlement: entitlementPublic(entitlement),
+      billingEntitlement,
+      referral,
       session,
     }, AUTH_METHODS);
   } catch (error) {
