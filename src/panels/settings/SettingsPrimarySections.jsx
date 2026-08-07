@@ -2,7 +2,9 @@ import AccountSettingsSection from './AccountSettingsSection.jsx';
 import BillingSettingsSection from './BillingSettingsSection.jsx';
 import CustomDomainSettingsSection from './CustomDomainSettingsSection.jsx';
 import PageBasicSettingsSection from './PageBasicSettingsSection.jsx';
+import PartnerSettingsSection from './PartnerSettingsSection.jsx';
 import ReferralSettingsSection from './ReferralSettingsSection.jsx';
+import SettlementSettingsSection from './SettlementSettingsSection.jsx';
 import SettingsManagerAccessSection from './SettingsManagerAccessSection.jsx';
 import SettingsSection from './SettingsSection.jsx';
 
@@ -66,6 +68,22 @@ export default function SettingsPrimarySections({
 
       {activeSection === 'referral' && ownerFinanceAccess && (
         <ReferralSettingsSection
+          authUser={authUser}
+          openSection={openSection}
+          setOpenSection={setOpenSection}
+        />
+      )}
+
+      {activeSection === 'partner' && ownerFinanceAccess && (
+        <PartnerSettingsSection
+          authUser={authUser}
+          openSection={openSection}
+          setOpenSection={setOpenSection}
+        />
+      )}
+
+      {activeSection === 'settlement' && ownerFinanceAccess && (
+        <SettlementSettingsSection
           authUser={authUser}
           openSection={openSection}
           setOpenSection={setOpenSection}
