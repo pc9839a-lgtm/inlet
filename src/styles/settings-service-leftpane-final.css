@@ -1,0 +1,193 @@
+/* Final left-pane service layout. The settings workspace is narrow even on a wide viewport,
+   so service pricing must size to the pane, not to the browser width. */
+html body #root .builder-shell.settings-workspace-shell .settings-billing-card,
+html body #root .builder-shell.settings-workspace-shell .settings-billing-card > *,
+html body #root .builder-shell.settings-workspace-shell .account-finance-settings.service-content-v2,
+html body #root .builder-shell.settings-workspace-shell .service-card-grid.billing-service-grid,
+html body #root .builder-shell.settings-workspace-shell .service-plan-card,
+html body #root .builder-shell.settings-workspace-shell .service-plan-options,
+html body #root .builder-shell.settings-workspace-shell .service-plan-option {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  transform: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-finance-settings.service-content-v2 {
+  overflow-x: hidden !important;
+  padding-inline: 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-card-grid.billing-service-grid {
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 18px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-card {
+  border-radius: 14px !important;
+  overflow: hidden !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-card-head {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  min-height: 82px !important;
+  padding: 16px 18px !important;
+  gap: 12px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-title {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-title strong {
+  font-size: 21px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-title small {
+  font-size: 13px !important;
+  overflow-wrap: anywhere !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-state {
+  flex: 0 0 auto !important;
+  max-width: 42% !important;
+  min-height: 30px !important;
+  padding: 0 10px !important;
+  font-size: 12px !important;
+  white-space: normal !important;
+  text-align: center !important;
+  line-height: 1.2 !important;
+}
+
+/* Always use rows. The left settings pane never has enough usable width for 3 price columns. */
+html body #root .builder-shell.settings-workspace-shell .service-plan-options,
+html body #root .builder-shell.settings-workspace-shell .service-domain .service-plan-options {
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 10px !important;
+  padding: 12px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-option,
+html body #root .builder-shell.settings-workspace-shell .service-domain .service-plan-option {
+  min-height: 112px !important;
+  padding: 16px 18px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 176px !important;
+  align-items: center !important;
+  gap: 14px !important;
+  border-radius: 11px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-calltag .service-plan-option {
+  min-height: 126px !important;
+  border-color: #111827 !important;
+  background: #fff !important;
+  box-shadow: inset 4px 0 0 #111827 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-copy {
+  min-width: 0 !important;
+  gap: 7px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-name-row {
+  min-width: 0 !important;
+  gap: 6px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-name-row strong {
+  font-size: 18px !important;
+  line-height: 1.25 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-name-row span {
+  min-height: 22px !important;
+  padding: 0 7px !important;
+  font-size: 10px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-copy small {
+  max-width: 100% !important;
+  color: #596270 !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+  font-weight: 700 !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-action,
+html body #root .builder-shell.settings-workspace-shell .service-domain .service-plan-action {
+  width: 176px !important;
+  min-width: 0 !important;
+  justify-items: stretch !important;
+  gap: 9px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-action b,
+html body #root .builder-shell.settings-workspace-shell .service-domain .service-plan-action b {
+  justify-content: flex-end !important;
+  font-size: 27px !important;
+  letter-spacing: -.7px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-action b em {
+  font-size: 12px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-action button,
+html body #root .builder-shell.settings-workspace-shell .service-domain .service-plan-action button {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  padding: 0 12px !important;
+  font-size: 13px !important;
+}
+
+/* Current/basic plans stay readable without looking disabled into the background. */
+html body #root .builder-shell.settings-workspace-shell .service-plan-option.is-current {
+  background: #f9fafb !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .service-plan-action button:disabled {
+  opacity: 1 !important;
+  border-color: #d1d5db !important;
+  background: #e9edf2 !important;
+  color: #4b5563 !important;
+}
+
+@media (max-width: 700px) {
+  html body #root .builder-shell.settings-workspace-shell .service-plan-card-head {
+    align-items: flex-start !important;
+    flex-wrap: wrap !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .service-state {
+    max-width: 100% !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .service-plan-option,
+  html body #root .builder-shell.settings-workspace-shell .service-domain .service-plan-option {
+    min-height: 0 !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 14px !important;
+    padding: 16px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .service-plan-action,
+  html body #root .builder-shell.settings-workspace-shell .service-domain .service-plan-action {
+    width: 100% !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .service-plan-action b,
+  html body #root .builder-shell.settings-workspace-shell .service-domain .service-plan-action b {
+    justify-content: flex-start !important;
+  }
+}
