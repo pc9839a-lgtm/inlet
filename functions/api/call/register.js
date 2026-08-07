@@ -1,6 +1,19 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse, readJson } from '../_shared.js';
-import { AUTH_METHODS, createSessionToken, registerAccount } from '../auth/_auth.js';
-import { ensurePendingEntitlement, entitlementPublic, profilePublic, upsertCallProfile } from './_shared.js';
+import {
+  AUTH_METHODS,
+  authError,
+  createSessionToken,
+  loginAccount,
+  normalizePhone,
+  registerAccount,
+} from '../auth/_auth.js';
+import {
+  ensurePendingEntitlement,
+  entitlementPublic,
+  getCallProfile,
+  profilePublic,
+  upsertCallProfile,
+} from './_shared.js';
 
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, AUTH_METHODS);
@@ -8,21 +21,60 @@ export async function onRequest({ request, env }) {
   try {
     assertD1(env);
     const input = await readJson(request);
-    const user = await registerAccount({
-      name: input.name,
-      phone: input.phone,
-      email: input.email,
-      password: input.password,
-      token: input.token || input.verificationToken,
-      source: 'calllink_app',
-    }, env);
+    const name = String(input.name || '').trim().replace(/\s+/g, ' ').slice(0, 80);
+    const phone = normalizePhone(input.phone || '');
+    const brandName = String(input.brandName || '').trim().replace(/\s+/g, ' ').slice(0, 100) || '개인';
+    const industry = String(input.industry || '').trim().replace(/\s+/g, ' ').slice(0, 100) || '기타';
+
+    if (!name) {
+      throw authError('이름을 입력해주세요.', 400, { code: 'AUTH_NAME_REQUIRED', field: 'name' });
+    }
+    if (!phone) {
+      throw authError('연락처를 정확히 입력해주세요.', 400, { code: 'AUTH_PHONE_REQUIRED', field: 'phone' });
+    }
+
+    let user;
+    let recovered = false;
+    try {
+      user = await registerAccount({
+        name,
+        phone,
+        email: input.email,
+        password: input.password,
+        token: input.token || input.verificationToken,
+        source: 'calllink_app',
+      }, env);
+    } catch (error) {
+      if (String(error?.details?.code || '') !== 'AUTH_EMAIL_DUPLICATE') throw error;
+
+      const existing = await loginAccount({
+        email: input.email,
+        password: input.password,
+        projectId: 'calllink',
+        role: 'calllink_user',
+      }, env);
+      const existingOwnerId = String(existing.user?.ownerId || existing.user?.id || '');
+      const existingProfile = await getCallProfile(env.DB, existingOwnerId);
+
+      if (existingProfile) throw error;
+      if (normalizePhone(existing.user?.phone || '') !== phone) {
+        throw authError('기존 가입 연락처와 일치하지 않습니다.', 409, {
+          code: 'AUTH_PHONE_MISMATCH',
+          field: 'phone',
+        });
+      }
+
+      user = existing.user;
+      recovered = true;
+    }
+
     const profile = await upsertCallProfile(env.DB, {
       ownerId: user.ownerId,
       email: user.email,
-      name: input.name,
-      phone: input.phone,
-      brandName: input.brandName,
-      industry: input.industry,
+      name,
+      phone,
+      brandName,
+      industry,
     });
     const entitlement = await ensurePendingEntitlement(env.DB, user.ownerId);
     const session = await createSessionToken({
@@ -33,6 +85,7 @@ export async function onRequest({ request, env }) {
     }, env);
     return jsonResponse(request, env, 200, {
       ok: true,
+      recovered,
       user,
       profile: profilePublic(profile, user),
       entitlement: entitlementPublic(entitlement),
