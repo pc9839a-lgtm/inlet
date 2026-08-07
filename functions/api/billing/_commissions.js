@@ -5,8 +5,8 @@ const PRODUCT_PRICE_KRW = Object.freeze({
   pagero_monthly: 3500,
   pagero_pro_monthly: 5500,
   pagero_domain_monthly: 1000,
-  call_monthly: 6000,
-  message_monthly: 6000,
+  call_monthly: 1900,
+  message_monthly: 990,
   all_monthly: 6000,
 });
 
