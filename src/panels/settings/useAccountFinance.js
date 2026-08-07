@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
-  applyAccountReferralCode,
   createAccountCheckout,
   fetchAccountFinance,
 } from '../../lib/accountFinanceRepository.js';
@@ -36,23 +35,6 @@ export default function useAccountFinance(authUser = null) {
     refresh();
   }, [refresh]);
 
-  const applyReferral = useCallback(async (code) => {
-    setBusy('referral');
-    setError('');
-    setNotice('');
-    try {
-      const next = await applyAccountReferralCode(authUser, code);
-      setFinance(next);
-      setNotice('추천인 코드가 등록되었습니다. 무료 이용 기간 5일이 추가됩니다.');
-      return true;
-    } catch (requestError) {
-      setError(String(requestError?.message || '추천인 코드를 등록하지 못했습니다.'));
-      return false;
-    } finally {
-      setBusy('');
-    }
-  }, [authUser?.session]);
-
   const checkout = useCallback(async (service, planCode) => {
     const busyKey = `${service}:${planCode}`;
     setBusy(busyKey);
@@ -78,7 +60,6 @@ export default function useAccountFinance(authUser = null) {
     error,
     notice,
     refresh,
-    applyReferral,
     checkout,
     setNotice,
   };
