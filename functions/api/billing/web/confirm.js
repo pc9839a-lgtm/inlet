@@ -10,7 +10,7 @@ import { productPriceKrw, recordReferralCommission } from '../_commissions.js';
 import { ensureBillingSchema, resolveEntitlement } from '../_shared.js';
 
 const METHODS = 'POST, OPTIONS';
-const WEB_PRODUCTS = new Set(['pagero_monthly', 'pagero_pro_monthly', 'pagero_domain_monthly', 'all_monthly', 'call_monthly', 'message_monthly']);
+const WEB_PRODUCTS = new Set(['pagero_monthly', 'pagero_pro_monthly', 'pagero_domain_monthly', 'all_monthly']);
 const CALLTAG_PRODUCTS = new Set(['all_monthly', 'call_monthly', 'message_monthly']);
 
 function text(value, max = 240) {
@@ -57,7 +57,7 @@ export async function onRequest({ request, env }) {
     const amountKrw = Math.round(Number(input.amountKrw || productPriceKrw(productCode)));
 
     if (!ownerId) throw billingError('결제 계정 정보가 없습니다.', 400, 'WEB_BILLING_OWNER_REQUIRED');
-    if (!WEB_PRODUCTS.has(productCode)) throw billingError('지원하지 않는 웹 구독 상품입니다.', 400, 'WEB_PRODUCT_INVALID');
+    if (!WEB_PRODUCTS.has(productCode)) throw billingError('페이지로 웹에서는 콜태그 통합권만 결제할 수 있습니다.', 400, 'WEB_PRODUCT_INVALID');
     if (!paymentReference) throw billingError('결제 고유번호가 없습니다.', 400, 'WEB_PAYMENT_REFERENCE_REQUIRED');
     if (!Number.isFinite(amountKrw) || amountKrw <= 0) throw billingError('결제 금액이 올바르지 않습니다.', 400, 'WEB_PAYMENT_AMOUNT_INVALID');
 
