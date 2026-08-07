@@ -37,18 +37,6 @@ const PRICING = Object.freeze({
   ],
   calltag: [
     {
-      code: 'call_monthly',
-      name: '전화관리',
-      amountKrw: 1900,
-      description: '통화 후 태그·고객 상태·재연락 일정 관리',
-    },
-    {
-      code: 'message_monthly',
-      name: '문자자동화',
-      amountKrw: 990,
-      description: '자동문자·후속문자·중복발송 방지',
-    },
-    {
       code: 'all_monthly',
       name: '통합권',
       amountKrw: 6000,
