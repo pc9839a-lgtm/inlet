@@ -3,12 +3,9 @@ import {
   ensureBillingAccount,
   ensureBillingSchema,
 } from '../billing/_shared.js';
-import {
-  CALLTAG_BASE_TRIAL_DAYS,
-  CALLTAG_REFERRAL_BONUS_DAYS,
-  CALLTAG_REFERRAL_TOTAL_DAYS,
-  enforceCallTagTrialPolicy,
-} from '../billing/trial-policy.js';
+
+const SIGNUP_CLASSIC_DAYS = 7;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export function normalizeSignupReferralCode(value = '') {
   return String(value || '')
@@ -60,33 +57,70 @@ export async function applySignupReferralCode(db, ownerId = '', rawCode = '') {
     throw billingError('이미 추천인 등록을 완료했습니다.', 409, 'REFERRAL_ALREADY_APPLIED');
   }
 
-  await db.prepare(`
-    INSERT INTO referrals (
-      referrer_owner_id,
-      referred_owner_id,
-      referral_code,
-      bonus_days,
-      status,
-      applied_at,
-      created_at,
-      updated_at
-    ) VALUES (?, ?, ?, ?, 'applied', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-  `).bind(
-    validated.referrerOwnerId,
-    safeOwnerId,
-    validated.code,
-    CALLTAG_REFERRAL_BONUS_DAYS,
-  ).run();
+  const startedAt = new Date();
+  const expiresAt = new Date(startedAt.getTime() + SIGNUP_CLASSIC_DAYS * DAY_MS);
+  const startedIso = startedAt.toISOString();
+  const expiresIso = expiresAt.toISOString();
+  const promotionalReference = `signup-referral:${safeOwnerId}`.slice(0, 240);
 
-  const policy = await enforceCallTagTrialPolicy(db, safeOwnerId);
+  await db.batch([
+    db.prepare(`
+      INSERT INTO referrals (
+        referrer_owner_id,
+        referred_owner_id,
+        referral_code,
+        bonus_days,
+        status,
+        applied_at,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, 'applied', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    `).bind(
+      validated.referrerOwnerId,
+      safeOwnerId,
+      validated.code,
+      SIGNUP_CLASSIC_DAYS,
+    ),
+    db.prepare(`
+      UPDATE billing_accounts
+      SET referral_bonus_days = ?,
+          trial_ends_at = ?,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE owner_id = ?
+    `).bind(SIGNUP_CLASSIC_DAYS, expiresIso, safeOwnerId),
+    db.prepare(`
+      INSERT OR IGNORE INTO billing_subscriptions (
+        owner_id,
+        product_code,
+        channel,
+        status,
+        external_subscription_id,
+        purchase_token_hash,
+        order_id,
+        started_at,
+        next_billing_at,
+        expires_at,
+        auto_renewing,
+        verification_state,
+        last_verified_at,
+        created_at,
+        updated_at
+      ) VALUES (?, 'pagero_monthly', 'referral', 'active', ?, ?, ?, ?, '', ?, 0, 'promotional', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    `).bind(
+      safeOwnerId,
+      promotionalReference,
+      promotionalReference,
+      `REF-${validated.code}`,
+      startedIso,
+      expiresIso,
+    ),
+  ]);
+
   return {
     code: validated.code,
-    bonusDays: CALLTAG_REFERRAL_BONUS_DAYS,
-    baseDays: CALLTAG_BASE_TRIAL_DAYS,
-    totalDays: CALLTAG_REFERRAL_TOTAL_DAYS,
-    productCode: 'all_monthly',
-    scope: 'all',
-    startsAt: policy.startsAt,
-    expiresAt: policy.endsAt,
+    classicDays: SIGNUP_CLASSIC_DAYS,
+    productCode: 'pagero_monthly',
+    startsAt: startedIso,
+    expiresAt: expiresIso,
   };
 }
