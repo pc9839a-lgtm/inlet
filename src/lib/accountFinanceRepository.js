@@ -24,7 +24,15 @@ const PRICING = Object.freeze({
       code: 'pagero_pro_monthly',
       name: '프로',
       amountKrw: 5500,
-      description: '고급 연동과 확장 운영 기능',
+      description: '고급 연동 + 개인 도메인 1개 + HTTPS 포함',
+    },
+  ],
+  domain: [
+    {
+      code: 'pagero_domain_monthly',
+      name: '개인 도메인 + HTTPS',
+      amountKrw: 1000,
+      description: '개인 도메인 연결, SSL 발급·갱신 및 HTTPS 관리',
     },
   ],
   calltag: [
@@ -97,7 +105,9 @@ function subscriptionForService(subscriptions = [], service = '') {
   const candidates = subscriptions.filter(isSubscriptionActive);
   const productPriority = service === 'pagero'
     ? ['pagero_pro_monthly', 'pagero_monthly']
-    : ['all_monthly', 'call_monthly', 'message_monthly'];
+    : service === 'domain'
+      ? ['pagero_domain_monthly']
+      : ['all_monthly', 'call_monthly', 'message_monthly'];
   const selected = productPriority
     .map((productCode) => candidates.find((item) => item.productCode === productCode))
     .find(Boolean);
@@ -118,10 +128,14 @@ function normalizeFinance({ authUser, subscriptionsData, referralData, summaryDa
     : [];
   const referral = referralData?.referral || {};
   const summary = summaryData?.summary || {};
+  const pageroSubscription = subscriptionForService(rawSubscriptions, 'pagero');
+  const domainSubscription = subscriptionForService(rawSubscriptions, 'domain');
   const subscriptions = [
-    subscriptionForService(rawSubscriptions, 'pagero'),
+    pageroSubscription,
     subscriptionForService(rawSubscriptions, 'calltag'),
+    domainSubscription,
   ].filter(Boolean);
+  const domainIncludedByPlan = pageroSubscription?.planCode === 'pagero_pro_monthly';
 
   return {
     account: {
@@ -132,6 +146,13 @@ function normalizeFinance({ authUser, subscriptionsData, referralData, summaryDa
     pricing: PRICING,
     subscriptions,
     entitlement: subscriptionsData?.entitlement || null,
+    domain: {
+      enabled: domainIncludedByPlan || !!domainSubscription,
+      includedByPlan: domainIncludedByPlan,
+      addonActive: !!domainSubscription,
+      monthlyKrw: 1000,
+      httpsIncluded: true,
+    },
     referral: {
       code: String(referral.code || referral.mine?.code || ''),
       shareUrl: String(referral.shareUrl || referral.mine?.shareUrl || ''),
@@ -222,7 +243,7 @@ export async function createAccountCheckout(authUser = null, service = '', planC
     throw new ApiError(decision.message || '이미 이용 중인 구독이 있습니다.', 409, decision);
   }
 
-  if (service === 'pagero') {
+  if (service === 'pagero' || service === 'domain') {
     return `/subscribe?product=${encodeURIComponent(productCode)}`;
   }
   return `https://calltag.pagero.kr/subscribe?product=${encodeURIComponent(productCode)}`;
