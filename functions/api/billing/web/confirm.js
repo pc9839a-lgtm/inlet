@@ -10,7 +10,7 @@ import { productPriceKrw, recordReferralCommission } from '../_commissions.js';
 import { ensureBillingSchema, resolveEntitlement } from '../_shared.js';
 
 const METHODS = 'POST, OPTIONS';
-const WEB_PRODUCTS = new Set(['pagero_monthly', 'pagero_pro_monthly', 'pagero_domain_monthly', 'all_monthly']);
+const WEB_PRODUCTS = new Set(['pagero_monthly', 'pagero_pro_monthly', 'pagero_domain_monthly', 'all_monthly', 'call_monthly', 'message_monthly']);
 const CALLTAG_PRODUCTS = new Set(['all_monthly', 'call_monthly', 'message_monthly']);
 
 function text(value, max = 240) {
@@ -86,7 +86,7 @@ export async function onRequest({ request, env }) {
         LIMIT 1
       `).bind(ownerId).first();
       if (included?.id) {
-        throw billingError('페이지로 프로 요금제에 개인 도메인 + HTTPS가 이미 포함되어 있습니다.', 409, 'DOMAIN_INCLUDED_IN_PRO');
+        throw billingError('페이지로 프로 요금제에 HTTPS 관리가 이미 포함되어 있습니다.', 409, 'DOMAIN_INCLUDED_IN_PRO');
       }
     }
 
