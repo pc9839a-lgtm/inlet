@@ -2,25 +2,29 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   createAccountCheckout,
   fetchAccountFinance,
+  getCachedAccountFinance,
 } from '../../lib/accountFinanceRepository.js';
 
 export default function useAccountFinance(authUser = null) {
-  const [finance, setFinance] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const cached = getCachedAccountFinance(authUser);
+  const [finance, setFinance] = useState(cached);
+  const [loading, setLoading] = useState(!cached);
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
 
-  const refresh = useCallback(async () => {
+  const load = useCallback(async (force = false) => {
     if (!authUser?.session) {
       setLoading(false);
       setError('로그인이 필요합니다.');
       return null;
     }
-    setLoading(true);
+    const current = getCachedAccountFinance(authUser);
+    if (!current || force) setLoading(true);
+    if (current) setFinance(current);
     setError('');
     try {
-      const next = await fetchAccountFinance(authUser);
+      const next = await fetchAccountFinance(authUser, { force });
       setFinance(next);
       return next;
     } catch (requestError) {
@@ -29,11 +33,13 @@ export default function useAccountFinance(authUser = null) {
     } finally {
       setLoading(false);
     }
-  }, [authUser?.session]);
+  }, [authUser?.session, authUser?.ownerId, authUser?.id, authUser?.email]);
 
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    load(false);
+  }, [load]);
+
+  const refresh = useCallback(() => load(true), [load]);
 
   const checkout = useCallback(async (service, planCode) => {
     const busyKey = `${service}:${planCode}`;
