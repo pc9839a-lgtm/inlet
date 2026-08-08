@@ -15,26 +15,12 @@ import '../styles/stats-operations-final.css';
 import '../styles/stats-height-match-inbox.css';
 import '../styles/ops-header-stats-cleanup.css';
 import '../styles/inbox-blue-accent-cleanup.css';
-import '../styles/settings-operations-final.css';
-import '../styles/settings-content-polish.css';
-import '../styles/settings-premium-final.css';
-import '../styles/settings-monochrome-alignment-final.css';
 import '../styles/operations-workspaces-unified.css';
 import '../styles/operations-overflow-final.css';
-import '../styles/settings-layout-containment-final.css';
 import '../styles/stats-period-top-final.css';
-import '../styles/seo-period-visual-final.css';
-import '../styles/seo-image-actions-final.css';
 import '../styles/operations-clipping-cleanup-final.css';
 import '../styles/stats-regression-repair-final.css';
-import '../styles/settings-seo-domain-polish-final.css';
-import '../styles/settings-finance-final.css';
-import '../styles/settings-scroll-repair-final.css';
-import '../styles/settings-service-content-v2.css';
-import '../styles/settings-service-font-scale-final.css';
-import '../styles/settings-service-leftpane-final.css';
-import '../styles/settings-account-final.css';
-import '../styles/settings-account-edge-fix.css';
+import '../styles/settings-system-v3.css';
 
 export default function WorkspaceEditorScreen({
   canUseBuilder,
