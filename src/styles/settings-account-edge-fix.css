@@ -1,6 +1,7 @@
 /* Final account edge guard: keep profile actions and Hangul labels fully visible. */
 
-/* NAME FIELD: own the final geometry so Korean glyphs cannot be cropped. */
+/* NAME FIELD: match the email field geometry exactly. The previous name-only
+   margin + taller input doubled the label gap and made the name row look cut/misaligned. */
 html body #root .builder-shell.settings-workspace-shell .account-profile-name {
   width: 100% !important;
   min-width: 0 !important;
@@ -16,17 +17,17 @@ html body #root .builder-shell.settings-workspace-shell .account-profile-name {
 
 html body #root .builder-shell.settings-workspace-shell .account-profile-name > span {
   display: block !important;
-  width: 100% !important;
+  width: auto !important;
   min-width: 0 !important;
   max-width: none !important;
   min-height: 0 !important;
   height: auto !important;
-  margin: 0 0 8px !important;
+  margin: 0 !important;
   padding: 0 !important;
-  color: #111827 !important;
-  font-size: 14px !important;
-  line-height: 1.55 !important;
-  font-weight: 800 !important;
+  color: #374151 !important;
+  font-size: 13px !important;
+  line-height: 1.3 !important;
+  font-weight: 900 !important;
   white-space: normal !important;
   overflow: visible !important;
   text-overflow: clip !important;
@@ -41,24 +42,23 @@ html body #root .builder-shell.settings-workspace-shell .account-profile-name > 
   width: 100% !important;
   min-width: 0 !important;
   max-width: 100% !important;
-  height: auto !important;
-  min-height: 56px !important;
+  height: 50px !important;
+  min-height: 50px !important;
   margin: 0 !important;
-  padding: 16px !important;
+  padding: 13px 16px !important;
   border: 1px solid #cfd5dd !important;
-  border-radius: 0 !important;
+  border-radius: 9px !important;
   background: #fff !important;
   color: #111827 !important;
   box-shadow: none !important;
   font-family: inherit !important;
   font-size: 15px !important;
   line-height: 22px !important;
-  font-weight: 700 !important;
+  font-weight: 750 !important;
   letter-spacing: 0 !important;
   text-indent: 0 !important;
-  vertical-align: middle !important;
   white-space: nowrap !important;
-  overflow: visible !important;
+  overflow: hidden !important;
   text-overflow: clip !important;
   clip: auto !important;
   clip-path: none !important;
@@ -71,7 +71,7 @@ html body #root .builder-shell.settings-workspace-shell .account-profile-name > 
 html body #root .builder-shell.settings-workspace-shell .account-profile-name > input:focus {
   border-color: #111827 !important;
   outline: 0 !important;
-  box-shadow: none !important;
+  box-shadow: 0 0 0 3px rgba(17,24,39,.06) !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .account-profile-actions.account-settings-actions {
