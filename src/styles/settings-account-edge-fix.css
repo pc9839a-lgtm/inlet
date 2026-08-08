@@ -1,45 +1,77 @@
 /* Final account edge guard: keep profile actions and Hangul labels fully visible. */
 
-/* NAME FIELD: previous generic settings rules were clipping Korean glyph metrics. */
-html body #root .builder-shell.settings-workspace-shell .account-profile-name,
-html body #root .builder-shell.settings-workspace-shell .account-profile-name > span,
-html body #root .builder-shell.settings-workspace-shell .account-profile-name > input {
+/* NAME FIELD: own the final geometry so Korean glyphs cannot be cropped. */
+html body #root .builder-shell.settings-workspace-shell .account-profile-name {
+  width: 100% !important;
   min-width: 0 !important;
   max-width: 100% !important;
-  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: 0 !important;
   overflow: visible !important;
   clip: auto !important;
   clip-path: none !important;
   transform: none !important;
+  box-sizing: border-box !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .account-profile-name > span {
-  display: flex !important;
-  align-items: center !important;
+  display: block !important;
   width: 100% !important;
-  min-height: 24px !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  min-height: 0 !important;
   height: auto !important;
-  margin: 0 !important;
-  padding: 2px 0 3px !important;
-  color: #374151 !important;
+  margin: 0 0 8px !important;
+  padding: 0 !important;
+  color: #111827 !important;
   font-size: 14px !important;
-  line-height: 20px !important;
-  font-weight: 900 !important;
-  white-space: nowrap !important;
+  line-height: 1.55 !important;
+  font-weight: 800 !important;
+  white-space: normal !important;
+  overflow: visible !important;
   text-overflow: clip !important;
-  position: relative !important;
-  z-index: 2 !important;
+  clip: auto !important;
+  clip-path: none !important;
+  transform: none !important;
+  position: static !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .account-profile-name > input {
   display: block !important;
   width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
   height: auto !important;
-  min-height: 52px !important;
-  padding: 12px 16px !important;
-  line-height: 1.45 !important;
+  min-height: 56px !important;
+  margin: 0 !important;
+  padding: 16px !important;
+  border: 1px solid #cfd5dd !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  color: #111827 !important;
+  box-shadow: none !important;
+  font-family: inherit !important;
+  font-size: 15px !important;
+  line-height: 22px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  text-indent: 0 !important;
+  vertical-align: middle !important;
   white-space: nowrap !important;
+  overflow: visible !important;
   text-overflow: clip !important;
+  clip: auto !important;
+  clip-path: none !important;
+  transform: none !important;
+  box-sizing: border-box !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .account-profile-name > input:focus {
+  border-color: #111827 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
 }
 
 html body #root .builder-shell.settings-workspace-shell .account-profile-actions.account-settings-actions {
@@ -65,6 +97,7 @@ html body #root .builder-shell.settings-workspace-shell .account-profile-actions
   min-height: 46px !important;
   margin: 0 !important;
   padding: 0 14px !important;
+  border-radius: 0 !important;
   box-sizing: border-box !important;
   overflow: visible !important;
   text-overflow: clip !important;
