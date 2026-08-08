@@ -42,6 +42,7 @@ const ADVANCED_NAV = [
 const ALL_NAV = [...PRIMARY_NAV, ...SERVICE_NAV, ...ADVANCED_NAV];
 const ADVANCED_IDS = new Set(ADVANCED_NAV.map(([id]) => id));
 const OWNER_ONLY_IDS = new Set(['billing', 'referral', 'partner', 'settlement']);
+const ACCOUNT_SCOPE_IDS = new Set(['account', 'billing', 'referral', 'partner', 'settlement']);
 
 const SECTION_HELP = {
   account: '계정 프로필, 이메일, 비밀번호를 관리합니다.',
@@ -118,6 +119,9 @@ export default function SettingsPanelBody({
   })();
   const [selectedSection, setSelectedSection] = useState(initialSection);
   const selectedLabel = ALL_NAV.find(([id]) => id === selectedSection)?.[1] || '계정 정보';
+  const selectedScope = ACCOUNT_SCOPE_IDS.has(selectedSection)
+    ? (authUser?.email || '계정')
+    : `/${page.slug || 'page'}`;
 
   const selectSection = (id) => {
     setSelectedSection(id);
@@ -160,7 +164,7 @@ export default function SettingsPanelBody({
               <h1>{selectedLabel}</h1>
               <p>{SECTION_HELP[selectedSection]}</p>
             </div>
-            <span className="settings-page-slug">/{page.slug || 'page'}</span>
+            <span className="settings-page-slug">{selectedScope}</span>
           </header>
 
           <div className="settings-v3-content">
