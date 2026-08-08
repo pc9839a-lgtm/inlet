@@ -21,8 +21,6 @@ import '../styles/stats-period-top-final.css';
 import '../styles/operations-clipping-cleanup-final.css';
 import '../styles/stats-regression-repair-final.css';
 import '../styles/settings-system-v3.css';
-import '../styles/settings-system-v3-media.css';
-import '../styles/settings-system-v3-components.css';
 
 export default function WorkspaceEditorScreen({
   canUseBuilder,
