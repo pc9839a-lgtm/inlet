@@ -1,9 +1,8 @@
-export default function ManagerEmptyState({ addManager, locked }) {
+export default function ManagerEmptyState() {
   return (
     <div className="manager-empty-state compact">
-      <strong>매니저가 없습니다.</strong>
-      <p>매니저를 추가한 뒤 메뉴권한 또는 초대만 열어 설정하세요.</p>
-      <button type="button" disabled={locked} onClick={addManager}>첫 매니저 추가</button>
+      <strong>추가된 매니저가 없습니다.</strong>
+      <p>상단의 매니저 추가 버튼으로 계정을 추가한 뒤 필요한 메뉴 권한만 설정하세요.</p>
     </div>
   );
 }
