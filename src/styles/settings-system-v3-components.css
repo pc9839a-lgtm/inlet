@@ -1,0 +1,210 @@
+/* Remaining legacy component shapes normalized into settings v3. */
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .manager-owner-summary.compact {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  align-items: center;
+  gap: 16px;
+  margin: 0 0 12px;
+  padding: 18px;
+  border: 1px solid #e3e7ee;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: none;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .manager-owner-summary.compact > div {
+  min-width: 0;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .manager-owner-summary.compact span {
+  display: block;
+  color: #667085;
+  font-size: 11px;
+  line-height: 1.4;
+  font-weight: 800;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .manager-owner-summary.compact strong {
+  display: block;
+  margin-top: 4px;
+  color: #111827;
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 850;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .manager-fold-btn,
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .ownership-transfer-controls button,
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .ownership-transfer-status button {
+  min-width: 100px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid #cfd6e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #344054;
+  box-shadow: none;
+  font-size: 12px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .ownership-transfer-box {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: 16px;
+  margin: 0 0 12px;
+  padding: 18px;
+  border: 1px solid #e3e7ee;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: none;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .ownership-transfer-box p {
+  margin: 5px 0 0;
+  color: #667085;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .ownership-transfer-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .ownership-transfer-controls select {
+  width: 100%;
+}
+
+/* Page basic stays compact and action bar directly follows fields. */
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .page-basic-settings-card .settings-section-body {
+  max-width: 920px;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .page-basic-settings-grid {
+  width: 100%;
+  max-width: none;
+  padding: 22px;
+  border: 1px solid #e3e7ee;
+  border-radius: 12px;
+  background: #fff;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .page-basic-settings-card .settings-action-bar {
+  margin-top: 16px;
+}
+
+/* Tracking / conversion / duplicate / reset surfaces */
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root [data-settings-section="tracking"] .settings-grid,
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root [data-settings-section="conversion"] > .settings-section-body > div,
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root [data-settings-section="duplicate"] > .settings-section-body > div,
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root [data-settings-section="reset"] > .settings-section-body > div {
+  padding: 22px;
+  border: 1px solid #e3e7ee;
+  border-radius: 12px;
+  background: #fff;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root [data-settings-section="tracking"] .settings-grid {
+  width: 100%;
+}
+
+/* Finance service content no longer owns its own inconsistent typography. */
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .service-content-v2 {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .service-card-icon {
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #e3e7ee;
+  border-radius: 9px;
+  background: #f7f8fa;
+  color: #344054;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .referral-benefit-card,
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .referral-status-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .referral-benefit-card small,
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .referral-status-card small,
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .partner-metric-grid span,
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .settlement-metric span {
+  color: #667085;
+  font-size: 11px;
+  line-height: 1.4;
+  font-weight: 800;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .referral-benefit-card strong,
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .referral-status-card strong {
+  display: block;
+  margin-top: 4px;
+  color: #111827;
+  font-size: 17px;
+  line-height: 1.35;
+  font-weight: 900;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .referral-benefit-card p,
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .referral-status-card p {
+  margin: 6px 0 0;
+  color: #667085;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* Any plain save/edit button produced by nested legacy components follows the same system. */
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .settings-section-body > button,
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root .settings-section-body form > button {
+  min-width: 104px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid #111827;
+  border-radius: 8px;
+  background: #111827;
+  color: #fff;
+  box-shadow: none;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+@media (max-width: 820px) {
+  html body #root .builder-shell.settings-workspace-shell .settings-v3-root .manager-owner-summary.compact {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v3-root .manager-owner-summary.compact .manager-fold-btn {
+    width: 100%;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v3-root .ownership-transfer-controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v3-root .ownership-transfer-controls button {
+    width: 100%;
+  }
+}
