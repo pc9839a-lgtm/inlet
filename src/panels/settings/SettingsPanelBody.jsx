@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-  Activity,
   Code2,
   Copy,
   CreditCard,
@@ -9,7 +8,6 @@ import {
   Globe2,
   RotateCcw,
   Search,
-  ShieldCheck,
   Target,
   UserRound,
   UsersRound,
@@ -45,6 +43,43 @@ const ALL_NAV = [...PRIMARY_NAV, ...SERVICE_NAV, ...ADVANCED_NAV];
 const ADVANCED_IDS = new Set(ADVANCED_NAV.map(([id]) => id));
 const OWNER_ONLY_IDS = new Set(['billing', 'referral', 'partner', 'settlement']);
 
+const SECTION_HELP = {
+  account: '계정 프로필, 이메일, 비밀번호를 관리합니다.',
+  basic: '페이지 이름과 공개 주소를 관리합니다.',
+  domain: '개인 도메인과 DNS, HTTPS를 연결합니다.',
+  managers: '매니저 초대와 접근 권한을 관리합니다.',
+  billing: '현재 이용 중인 서비스와 요금제를 관리합니다.',
+  referral: '추천인 코드와 추천 혜택을 확인합니다.',
+  partner: '파트너 코드와 수익 현황을 관리합니다.',
+  settlement: '정산 예정·확정 금액과 정산 정보를 확인합니다.',
+  seo: '검색 결과와 공유 링크에 노출될 정보를 설정합니다.',
+  tracking: '분석 및 광고 추적 코드를 관리합니다.',
+  conversion: '문의·예약 등 전환 이벤트를 설정합니다.',
+  duplicate: '현재 페이지를 새 주소로 복제합니다.',
+  reset: '페이지 설정을 초기 상태로 되돌립니다.',
+};
+
+function SettingsNavGroup({ label, items, selectedSection, selectSection }) {
+  return (
+    <nav className="settings-nav-group" aria-label={`${label} 설정`}>
+      <span className="settings-nav-label">{label}</span>
+      <div className="settings-nav-items">
+        {items.map(([id, itemLabel, Icon]) => (
+          <button
+            key={id}
+            type="button"
+            className={`settings-nav-item ${selectedSection === id ? 'active' : ''}`}
+            onClick={() => selectSection(id)}
+          >
+            <Icon size={18} aria-hidden="true" />
+            <span>{itemLabel}</span>
+          </button>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
 export default function SettingsPanelBody({
   authUser,
   canDuplicatePage,
@@ -72,11 +107,7 @@ export default function SettingsPanelBody({
     setDuplicateField,
     setDuplicateOpen,
   } = duplicateSettings;
-  const {
-    openSection,
-    setAdvancedOpen,
-    setOpenSection,
-  } = sections;
+  const { openSection, setAdvancedOpen, setOpenSection } = sections;
   const ownerFinanceAccess = canManageProjectUsers && !clientAdminMode;
   const initialSection = (() => {
     const requested = openSection || 'account';
@@ -86,7 +117,6 @@ export default function SettingsPanelBody({
     return requested;
   })();
   const [selectedSection, setSelectedSection] = useState(initialSection);
-  const managerCount = Array.isArray(ownership?.managers) ? ownership.managers.length : 0;
   const selectedLabel = ALL_NAV.find(([id]) => id === selectedSection)?.[1] || '계정 정보';
 
   const selectSection = (id) => {
@@ -104,75 +134,36 @@ export default function SettingsPanelBody({
     },
   };
 
+  const primaryItems = PRIMARY_NAV.filter(([id]) => id !== 'managers' || canManageProjectUsers);
+
   return (
-    <div className="simple-panel settings-panel settings-ops-root">
-      <div className="settings-ops-layout">
-        <aside className="settings-ops-sidebar">
-          <div className="settings-ops-sidebar-title">
-            <strong>설정</strong>
-            <span>{page.title || '현재 페이지'}</span>
-          </div>
+    <div className="settings-v3-root">
+      <aside className="settings-v3-sidebar">
+        <header className="settings-sidebar-head">
+          <strong>설정</strong>
+          <span>{page.title || '현재 페이지'}</span>
+        </header>
 
-          <nav className="settings-ops-nav" aria-label="기본 설정">
-            <small>기본</small>
-            {PRIMARY_NAV.filter(([id]) => id !== 'managers' || canManageProjectUsers).map(([id, label, Icon]) => (
-              <button
-                key={id}
-                type="button"
-                className={`settings-ops-nav-item ${selectedSection === id ? 'active' : ''}`}
-                onClick={() => selectSection(id)}
-              >
-                <Icon size={18} aria-hidden="true" />
-                <span>{label}</span>
-              </button>
-            ))}
-          </nav>
+        <SettingsNavGroup label="기본" items={primaryItems} selectedSection={selectedSection} selectSection={selectSection} />
+        {ownerFinanceAccess && (
+          <SettingsNavGroup label="서비스" items={SERVICE_NAV} selectedSection={selectedSection} selectSection={selectSection} />
+        )}
+        {!clientAdminMode && (
+          <SettingsNavGroup label="고급" items={ADVANCED_NAV} selectedSection={selectedSection} selectSection={selectSection} />
+        )}
+      </aside>
 
-          {ownerFinanceAccess && (
-            <nav className="settings-ops-nav service" aria-label="서비스 설정">
-              <small>서비스</small>
-              {SERVICE_NAV.map(([id, label, Icon]) => (
-                <button
-                  key={id}
-                  type="button"
-                  className={`settings-ops-nav-item ${selectedSection === id ? 'active' : ''}`}
-                  onClick={() => selectSection(id)}
-                >
-                  <Icon size={18} aria-hidden="true" />
-                  <span>{label}</span>
-                </button>
-              ))}
-            </nav>
-          )}
-
-          {!clientAdminMode && (
-            <nav className="settings-ops-nav advanced" aria-label="고급 설정">
-              <small>고급</small>
-              {ADVANCED_NAV.map(([id, label, Icon]) => (
-                <button
-                  key={id}
-                  type="button"
-                  className={`settings-ops-nav-item ${selectedSection === id ? 'active' : ''}`}
-                  onClick={() => selectSection(id)}
-                >
-                  <Icon size={18} aria-hidden="true" />
-                  <span>{label}</span>
-                </button>
-              ))}
-            </nav>
-          )}
-        </aside>
-
-        <main className="settings-ops-main">
-          <header className="settings-ops-main-head">
+      <main className="settings-v3-main">
+        <div className="settings-v3-content-wrap">
+          <header className="settings-page-head">
             <div>
-              <small>페이지 설정</small>
-              <h2>{selectedLabel}</h2>
+              <h1>{selectedLabel}</h1>
+              <p>{SECTION_HELP[selectedSection]}</p>
             </div>
-            <span>/{page.slug || 'page'}</span>
+            <span className="settings-page-slug">/{page.slug || 'page'}</span>
           </header>
 
-          <div className="settings-ops-sections settings-ops-single-section">
+          <div className="settings-v3-content">
             <SettingsPrimarySections
               activeSection={selectedSection}
               authUser={authUser}
@@ -202,34 +193,8 @@ export default function SettingsPanelBody({
               updateIntegrations={updateIntegrations}
             />
           </div>
-        </main>
-
-        <aside className="settings-ops-summary">
-          <header>
-            <small>페이지 정보</small>
-            <h3>{page.title || '현재 페이지'}</h3>
-          </header>
-
-          <dl>
-            <div>
-              <dt><Globe2 size={17} aria-hidden="true" /><span>공개 주소</span></dt>
-              <dd>/{page.slug || 'page'}</dd>
-            </div>
-            <div>
-              <dt><ShieldCheck size={17} aria-hidden="true" /><span>관리 계정</span></dt>
-              <dd>{authUser?.email || '연결 없음'}</dd>
-            </div>
-            <div>
-              <dt><UsersRound size={17} aria-hidden="true" /><span>매니저</span></dt>
-              <dd>{managerCount}명</dd>
-            </div>
-            <div>
-              <dt><Activity size={17} aria-hidden="true" /><span>운영 상태</span></dt>
-              <dd><span>운영 중</span></dd>
-            </div>
-          </dl>
-        </aside>
-      </div>
+        </div>
+      </main>
 
       {duplicateOpen && (
         <PageDuplicateUrlModal
