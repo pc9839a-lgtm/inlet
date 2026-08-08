@@ -3,7 +3,7 @@ export default function AccountProfileForm({ email, onLogout, onSave, profileDra
     <form className="account-settings-form account-profile-form-v2" onSubmit={onSave}>
       <div className="account-profile-fields">
         <label className="account-profile-field account-profile-name">
-          <span>이름</span>
+          <b className="account-profile-name-label">이름</b>
           <input
             value={profileDraft.name}
             onChange={(event) => setProfileField('name', event.target.value)}
