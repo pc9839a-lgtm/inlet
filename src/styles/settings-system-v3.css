@@ -1,15 +1,23 @@
-/* PageRo settings v3: one owner for layout, spacing, controls and actions. */
+/* PageRo Settings Design System — single style owner */
 html body #root .builder-shell.settings-workspace-shell {
-  --settings-bg: #f6f7f9;
-  --settings-surface: #ffffff;
-  --settings-text: #111827;
-  --settings-muted: #667085;
-  --settings-line: #e3e7ee;
-  --settings-line-strong: #cfd6e1;
-  --settings-soft: #f8fafc;
-  --settings-dark: #111827;
-  --settings-success: #087a55;
-  --settings-success-bg: #eafaf3;
+  --s-bg: #f6f7f9;
+  --s-surface: #ffffff;
+  --s-soft: #f8fafc;
+  --s-text: #101828;
+  --s-muted: #667085;
+  --s-subtle: #98a2b3;
+  --s-line: #e4e7ec;
+  --s-line-strong: #d0d5dd;
+  --s-dark: #101828;
+  --s-success: #067647;
+  --s-success-bg: #ecfdf3;
+  --s-danger: #b42318;
+  --s-danger-bg: #fef3f2;
+  --s-warning: #b54708;
+  --s-warning-bg: #fffaeb;
+  --s-radius: 10px;
+  --s-control-h: 48px;
+  --s-button-h: 44px;
 }
 
 html body #root .builder-shell.settings-workspace-shell .settings-v3-root,
@@ -23,72 +31,73 @@ html body #root .builder-shell.settings-workspace-shell .settings-v3-root {
   height: 100%;
   min-height: 0;
   display: grid;
-  grid-template-columns: 232px minmax(0, 1fr);
-  background: var(--settings-bg);
-  color: var(--settings-text);
+  grid-template-columns: 228px minmax(0, 1fr);
+  background: var(--s-bg);
+  color: var(--s-text);
   overflow: hidden;
 }
 
-/* Sidebar */
+/* sidebar */
 html body #root .builder-shell.settings-workspace-shell .settings-v3-sidebar {
   min-width: 0;
   height: 100%;
-  padding: 24px 16px 28px;
-  border-right: 1px solid var(--settings-line);
+  padding: 24px 14px 32px;
+  border-right: 1px solid var(--s-line);
   background: #fff;
   overflow-y: auto;
   overflow-x: hidden;
 }
 
 html body #root .builder-shell.settings-workspace-shell .settings-sidebar-head {
-  padding: 0 8px 20px;
-  margin-bottom: 16px;
-  border-bottom: 1px solid var(--settings-line);
+  margin: 0 6px 18px;
+  padding: 0 4px 18px;
+  border-bottom: 1px solid var(--s-line);
 }
 
 html body #root .builder-shell.settings-workspace-shell .settings-sidebar-head strong {
   display: block;
-  font-size: 22px;
+  margin: 0;
+  color: var(--s-text);
+  font-size: 21px;
   line-height: 1.25;
-  font-weight: 900;
-  letter-spacing: -.04em;
+  font-weight: 850;
+  letter-spacing: -.03em;
 }
 
 html body #root .builder-shell.settings-workspace-shell .settings-sidebar-head span {
   display: block;
   margin-top: 6px;
-  color: var(--settings-muted);
+  color: var(--s-muted);
   font-size: 12px;
-  line-height: 1.45;
-  white-space: nowrap;
+  line-height: 1.4;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 html body #root .builder-shell.settings-workspace-shell .settings-nav-group {
   display: grid;
-  gap: 8px;
+  gap: 7px;
   margin-top: 18px;
 }
 
 html body #root .builder-shell.settings-workspace-shell .settings-nav-label {
   padding: 0 10px;
-  color: #98a2b3;
+  color: var(--s-subtle);
   font-size: 11px;
   line-height: 1.4;
   font-weight: 800;
-  letter-spacing: .02em;
 }
 
 html body #root .builder-shell.settings-workspace-shell .settings-nav-items {
   display: grid;
-  gap: 4px;
+  gap: 3px;
 }
 
 html body #root .builder-shell.settings-workspace-shell .settings-nav-item {
   width: 100%;
   min-width: 0;
-  min-height: 42px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -99,20 +108,21 @@ html body #root .builder-shell.settings-workspace-shell .settings-nav-item {
   background: transparent;
   color: #475467;
   box-shadow: none;
+  font: inherit;
   font-size: 14px;
-  line-height: 1.3;
-  font-weight: 750;
+  line-height: 1;
+  font-weight: 700;
   text-align: left;
   cursor: pointer;
 }
 
 html body #root .builder-shell.settings-workspace-shell .settings-nav-item:hover {
-  background: #f4f6f8;
-  color: var(--settings-text);
+  background: #f2f4f7;
+  color: var(--s-text);
 }
 
 html body #root .builder-shell.settings-workspace-shell .settings-nav-item.active {
-  background: #111827;
+  background: var(--s-dark);
   color: #fff;
 }
 
@@ -123,67 +133,62 @@ html body #root .builder-shell.settings-workspace-shell .settings-nav-item span 
   white-space: nowrap;
 }
 
-/* Main workspace */
+/* main */
 html body #root .builder-shell.settings-workspace-shell .settings-v3-main {
   min-width: 0;
   min-height: 0;
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  background: var(--settings-bg);
+  background: var(--s-bg);
 }
 
 html body #root .builder-shell.settings-workspace-shell .settings-v3-content-wrap {
-  width: min(1080px, calc(100% - 48px));
+  width: min(1040px, calc(100% - 48px));
   margin: 0 auto;
-  padding: 30px 0 64px;
+  padding: 30px 0 72px;
 }
 
 html body #root .builder-shell.settings-workspace-shell .settings-page-head {
   min-width: 0;
-  min-height: 82px;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 24px;
-  padding: 0 0 24px;
-  margin-bottom: 24px;
-  border-bottom: 1px solid var(--settings-line);
+  margin: 0 0 24px;
+  padding: 0 0 22px;
+  border-bottom: 1px solid var(--s-line);
 }
 
-html body #root .builder-shell.settings-workspace-shell .settings-page-head > div {
-  min-width: 0;
-}
-
+html body #root .builder-shell.settings-workspace-shell .settings-page-head > div { min-width: 0; }
 html body #root .builder-shell.settings-workspace-shell .settings-page-head h1 {
   margin: 0;
-  color: var(--settings-text);
-  font-size: 28px;
+  color: var(--s-text);
+  font-size: 27px;
   line-height: 1.2;
-  font-weight: 950;
-  letter-spacing: -.045em;
+  font-weight: 850;
+  letter-spacing: -.035em;
 }
-
 html body #root .builder-shell.settings-workspace-shell .settings-page-head p {
-  margin: 8px 0 0;
-  color: var(--settings-muted);
+  margin: 7px 0 0;
+  color: var(--s-muted);
   font-size: 14px;
-  line-height: 1.55;
+  line-height: 1.5;
 }
-
 html body #root .builder-shell.settings-workspace-shell .settings-page-slug {
   flex: 0 0 auto;
-  margin-top: 5px;
+  margin-top: 4px;
   padding: 6px 9px;
-  border: 1px solid var(--settings-line);
+  border: 1px solid var(--s-line);
   border-radius: 7px;
   background: #fff;
-  color: #667085;
+  color: var(--s-muted);
   font-size: 12px;
   line-height: 1;
-  font-weight: 800;
+  font-weight: 750;
 }
 
+/* section ownership */
 html body #root .builder-shell.settings-workspace-shell .settings-v3-content,
 html body #root .builder-shell.settings-workspace-shell .settings-section,
 html body #root .builder-shell.settings-workspace-shell .settings-section-body {
@@ -201,39 +206,30 @@ html body #root .builder-shell.settings-workspace-shell .settings-section {
   box-shadow: none;
   overflow: visible;
 }
-
 html body #root .builder-shell.settings-workspace-shell .settings-section-body {
-  position: relative;
   margin: 0;
   padding: 0;
   background: transparent;
   overflow: visible;
 }
+html body #root .builder-shell.settings-workspace-shell .settings-section-badge { display: none; }
+html body #root .builder-shell.settings-workspace-shell .settings-stack { display: grid; gap: 16px; }
 
-html body #root .builder-shell.settings-workspace-shell .settings-section-badge {
-  display: none;
-}
-
-/* Universal surfaces */
-html body #root .builder-shell.settings-workspace-shell .settings-stack {
-  display: grid;
-  gap: 16px;
-}
-
+/* surfaces */
 html body #root .builder-shell.settings-workspace-shell .settings-surface,
 html body #root .builder-shell.settings-workspace-shell .account-settings-card,
 html body #root .builder-shell.settings-workspace-shell .settings-seo-block,
 html body #root .builder-shell.settings-workspace-shell .partner-code-panel,
-html body #root .builder-shell.settings-workspace-shell .service-footer-action,
 html body #root .builder-shell.settings-workspace-shell .settlement-cta-card,
-html body #root .builder-shell.settings-workspace-shell .manager-empty-state {
+html body #root .builder-shell.settings-workspace-shell .manager-empty-state,
+html body #root .builder-shell.settings-workspace-shell .ownership-transfer-box {
   width: 100%;
   min-width: 0;
   margin: 0;
   padding: 22px;
-  border: 1px solid var(--settings-line);
-  border-radius: 12px;
-  background: var(--settings-surface);
+  border: 1px solid var(--s-line);
+  border-radius: var(--s-radius);
+  background: var(--s-surface);
   box-shadow: none;
 }
 
@@ -249,29 +245,23 @@ html body #root .builder-shell.settings-workspace-shell .account-finance-head {
   border: 0;
   background: transparent;
 }
-
-html body #root .builder-shell.settings-workspace-shell .settings-surface-head.simple {
-  align-items: flex-start;
-}
-
+html body #root .builder-shell.settings-workspace-shell .settings-surface-head.simple { align-items: flex-start; }
 html body #root .builder-shell.settings-workspace-shell .settings-surface-head strong,
 html body #root .builder-shell.settings-workspace-shell .account-finance-head strong {
   display: block;
-  color: var(--settings-text);
-  font-size: 17px;
+  color: var(--s-text);
+  font-size: 16px;
   line-height: 1.35;
-  font-weight: 900;
+  font-weight: 800;
 }
-
 html body #root .builder-shell.settings-workspace-shell .settings-surface-head small,
 html body #root .builder-shell.settings-workspace-shell .account-finance-head small {
   display: block;
   margin-top: 4px;
-  color: var(--settings-muted);
+  color: var(--s-muted);
   font-size: 13px;
   line-height: 1.5;
 }
-
 html body #root .builder-shell.settings-workspace-shell .settings-icon-title,
 html body #root .builder-shell.settings-workspace-shell .account-finance-head > div {
   min-width: 0;
@@ -279,125 +269,20 @@ html body #root .builder-shell.settings-workspace-shell .account-finance-head > 
   align-items: center;
   gap: 12px;
 }
-
 html body #root .builder-shell.settings-workspace-shell .settings-icon-box {
   flex: 0 0 38px;
   width: 38px;
   height: 38px;
   display: grid;
   place-items: center;
-  border: 1px solid var(--settings-line);
+  border: 1px solid var(--s-line);
   border-radius: 9px;
-  background: #f7f8fa;
+  background: #f8fafc;
   color: #344054;
 }
 
-/* Common controls */
-html body #root .builder-shell.settings-workspace-shell .field,
-html body #root .builder-shell.settings-workspace-shell .account-profile-field,
-html body #root .builder-shell.settings-workspace-shell .settings-control-group {
-  width: 100%;
-  min-width: 0;
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: auto auto;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  overflow: visible;
-}
-
-html body #root .builder-shell.settings-workspace-shell .field > span,
-html body #root .builder-shell.settings-workspace-shell .account-profile-label,
-html body #root .builder-shell.settings-workspace-shell .settings-control-group > span {
-  display: block;
-  width: 100%;
-  min-width: 0;
-  min-height: 22px;
-  margin: 0;
-  padding: 1px 0;
-  color: #344054;
-  font-size: 13px;
-  line-height: 20px;
-  font-weight: 850;
-  white-space: normal;
-  overflow: visible;
-  clip: auto;
-  clip-path: none;
-}
-
-html body #root .builder-shell.settings-workspace-shell .field > div,
-html body #root .builder-shell.settings-workspace-shell .prefix-field,
-html body #root .builder-shell.settings-workspace-shell .settings-inline-control {
-  width: 100%;
-  min-width: 0;
-}
-
-html body #root .builder-shell.settings-workspace-shell input,
-html body #root .builder-shell.settings-workspace-shell textarea,
-html body #root .builder-shell.settings-workspace-shell select {
-  min-width: 0;
-  max-width: 100%;
-  border: 1px solid var(--settings-line-strong);
-  border-radius: 8px;
-  background: #fff;
-  color: var(--settings-text);
-  box-shadow: none;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 650;
-  outline: 0;
-  box-sizing: border-box;
-}
-
-html body #root .builder-shell.settings-workspace-shell input,
-html body #root .builder-shell.settings-workspace-shell select {
-  width: 100%;
-  height: 48px;
-  min-height: 48px;
-  padding: 0 14px;
-  line-height: 1.4;
-}
-
-html body #root .builder-shell.settings-workspace-shell textarea {
-  width: 100%;
-  min-height: 112px;
-  padding: 12px 14px;
-  line-height: 1.55;
-  resize: vertical;
-}
-
-html body #root .builder-shell.settings-workspace-shell input:focus,
-html body #root .builder-shell.settings-workspace-shell textarea:focus,
-html body #root .builder-shell.settings-workspace-shell select:focus {
-  border-color: #667085;
-  box-shadow: 0 0 0 3px rgba(17, 24, 39, .05);
-}
-
-html body #root .builder-shell.settings-workspace-shell input:disabled,
-html body #root .builder-shell.settings-workspace-shell textarea:disabled,
-html body #root .builder-shell.settings-workspace-shell select:disabled {
-  background: #f4f5f7;
-  color: #667085;
-  opacity: 1;
-}
-
-html body #root .builder-shell.settings-workspace-shell .prefix-field {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  align-items: center;
-  gap: 8px;
-}
-
-html body #root .builder-shell.settings-workspace-shell .prefix-field > em {
-  margin: 0;
-  color: #667085;
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 800;
-  text-align: center;
-}
-
+/* shared form rhythm */
+html body #root .builder-shell.settings-workspace-shell .settings-form-grid,
 html body #root .builder-shell.settings-workspace-shell .settings-grid {
   width: 100%;
   min-width: 0;
@@ -406,24 +291,138 @@ html body #root .builder-shell.settings-workspace-shell .settings-grid {
   gap: 20px;
   align-items: start;
 }
+html body #root .builder-shell.settings-workspace-shell .settings-grid-span-2,
+html body #root .builder-shell.settings-workspace-shell .account-profile-phone { grid-column: 1 / -1; }
 
-html body #root .builder-shell.settings-workspace-shell .page-basic-settings-grid {
-  max-width: 900px;
+html body #root .builder-shell.settings-workspace-shell .field,
+html body #root .builder-shell.settings-workspace-shell .account-profile-field,
+html body #root .builder-shell.settings-workspace-shell .settings-control-group,
+html body #root .builder-shell.settings-workspace-shell .settings-field-with-help {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  align-content: start;
+  overflow: visible;
 }
 
-/* Buttons: one system */
+html body #root .builder-shell.settings-workspace-shell .field > span,
+html body #root .builder-shell.settings-workspace-shell .account-profile-label,
+html body #root .builder-shell.settings-workspace-shell .settings-control-group > span,
+html body #root .builder-shell.settings-workspace-shell .image-input > span {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 22px;
+  height: auto;
+  margin: 0;
+  padding: 1px 0;
+  color: #344054;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 750;
+  letter-spacing: 0;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  clip: auto;
+  clip-path: none;
+  transform: none;
+}
+
+html body #root .builder-shell.settings-workspace-shell .field > div,
+html body #root .builder-shell.settings-workspace-shell .prefix-field,
+html body #root .builder-shell.settings-workspace-shell .settings-inline-control { width: 100%; min-width: 0; }
+
+html body #root .builder-shell.settings-workspace-shell input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+html body #root .builder-shell.settings-workspace-shell textarea,
+html body #root .builder-shell.settings-workspace-shell select {
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid var(--s-line-strong);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--s-text);
+  box-shadow: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  outline: 0;
+  box-sizing: border-box;
+}
+html body #root .builder-shell.settings-workspace-shell input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+html body #root .builder-shell.settings-workspace-shell select {
+  width: 100%;
+  height: var(--s-control-h);
+  min-height: var(--s-control-h);
+  padding: 0 14px;
+  line-height: 1.4;
+}
+html body #root .builder-shell.settings-workspace-shell textarea {
+  width: 100%;
+  min-height: 112px;
+  padding: 12px 14px;
+  line-height: 1.55;
+  resize: vertical;
+}
+html body #root .builder-shell.settings-workspace-shell input:focus,
+html body #root .builder-shell.settings-workspace-shell textarea:focus,
+html body #root .builder-shell.settings-workspace-shell select:focus {
+  border-color: #667085;
+  box-shadow: 0 0 0 3px rgba(16, 24, 40, .06);
+}
+html body #root .builder-shell.settings-workspace-shell input:disabled,
+html body #root .builder-shell.settings-workspace-shell textarea:disabled,
+html body #root .builder-shell.settings-workspace-shell select:disabled {
+  background: #f2f4f7;
+  color: #667085;
+  opacity: 1;
+}
+html body #root .builder-shell.settings-workspace-shell input[aria-invalid="true"] { border-color: #f04438; }
+
+html body #root .builder-shell.settings-workspace-shell .settings-field-help,
+html body #root .builder-shell.settings-workspace-shell .settings-field-error {
+  display: block;
+  margin: -1px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+html body #root .builder-shell.settings-workspace-shell .settings-field-help { color: var(--s-muted); }
+html body #root .builder-shell.settings-workspace-shell .settings-field-error { color: var(--s-danger); font-weight: 650; }
+
+html body #root .builder-shell.settings-workspace-shell .prefix-field {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+html body #root .builder-shell.settings-workspace-shell .prefix-field > em {
+  margin: 0;
+  color: var(--s-muted);
+  font-size: 17px;
+  line-height: 1;
+  font-style: normal;
+  font-weight: 750;
+  text-align: center;
+}
+
+/* button system */
 html body #root .builder-shell.settings-workspace-shell .settings-primary-button,
 html body #root .builder-shell.settings-workspace-shell .settings-secondary-button,
 html body #root .builder-shell.settings-workspace-shell .settings-action-bar button,
-html body #root .builder-shell.settings-workspace-shell .account-profile-actions button,
 html body #root .builder-shell.settings-workspace-shell .manager-section-tools button,
 html body #root .builder-shell.settings-workspace-shell .account-finance-head button,
 html body #root .builder-shell.settings-workspace-shell .partner-code-panel button,
 html body #root .builder-shell.settings-workspace-shell .service-footer-action a,
-html body #root .builder-shell.settings-workspace-shell .settlement-cta-card a {
+html body #root .builder-shell.settings-workspace-shell .settlement-cta-card a,
+html body #root .builder-shell.settings-workspace-shell .manager-fold-btn {
   min-width: 104px;
-  height: 44px;
-  min-height: 44px;
+  height: var(--s-button-h);
+  min-height: var(--s-button-h);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -433,541 +432,359 @@ html body #root .builder-shell.settings-workspace-shell .settlement-cta-card a {
   border-radius: 8px;
   box-sizing: border-box;
   box-shadow: none;
+  font-family: inherit;
   font-size: 13px;
   line-height: 1;
-  font-weight: 850;
+  font-weight: 750;
   white-space: nowrap;
   text-decoration: none;
   cursor: pointer;
 }
-
 html body #root .builder-shell.settings-workspace-shell .settings-primary-button,
 html body #root .builder-shell.settings-workspace-shell .settings-action-bar .settings-primary-button,
-html body #root .builder-shell.settings-workspace-shell .account-profile-actions button[type="submit"],
 html body #root .builder-shell.settings-workspace-shell .manager-section-tools button,
 html body #root .builder-shell.settings-workspace-shell .service-footer-action a,
 html body #root .builder-shell.settings-workspace-shell .settlement-cta-card a {
-  border: 1px solid var(--settings-dark);
-  background: var(--settings-dark);
+  border: 1px solid var(--s-dark);
+  background: var(--s-dark);
   color: #fff;
 }
-
 html body #root .builder-shell.settings-workspace-shell .settings-secondary-button,
 html body #root .builder-shell.settings-workspace-shell .settings-action-bar .settings-secondary-button,
-html body #root .builder-shell.settings-workspace-shell .account-profile-actions button[type="button"],
 html body #root .builder-shell.settings-workspace-shell .account-finance-head button,
-html body #root .builder-shell.settings-workspace-shell .partner-code-panel button {
-  border: 1px solid var(--settings-line-strong);
+html body #root .builder-shell.settings-workspace-shell .partner-code-panel button,
+html body #root .builder-shell.settings-workspace-shell .manager-fold-btn {
+  border: 1px solid var(--s-line-strong);
   background: #fff;
   color: #344054;
 }
+html body #root .builder-shell.settings-workspace-shell button:disabled,
+html body #root .builder-shell.settings-workspace-shell a[aria-disabled="true"] { opacity: .48; cursor: default; }
+html body #root .builder-shell.settings-workspace-shell .compact { min-width: 0; height: 38px; min-height: 38px; padding: 0 12px; }
 
-html body #root .builder-shell.settings-workspace-shell button:disabled {
-  cursor: default;
-  opacity: .55;
-}
-
-html body #root .builder-shell.settings-workspace-shell .settings-secondary-button.compact,
-html body #root .builder-shell.settings-workspace-shell .account-finance-head button {
-  min-width: 0;
-  height: 38px;
-  min-height: 38px;
-  padding: 0 12px;
-}
-
-html body #root .builder-shell.settings-workspace-shell .settings-action-bar,
-html body #root .builder-shell.settings-workspace-shell .settings-section-actions,
-html body #root .builder-shell.settings-workspace-shell .account-profile-actions {
+/* universal action bar */
+html body #root .builder-shell.settings-workspace-shell .settings-action-bar {
   width: 100%;
   min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  margin: 24px 0 0;
-  padding: 20px 0 0;
-  border-top: 1px solid var(--settings-line);
+  justify-content: space-between;
+  gap: 18px;
+  margin: 18px 0 0;
+  padding: 16px 0 0;
+  border-top: 1px solid var(--s-line);
   background: transparent;
-  overflow: visible;
+}
+html body #root .builder-shell.settings-workspace-shell .settings-action-bar-note {
+  min-width: 0;
+  color: var(--s-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+html body #root .builder-shell.settings-workspace-shell .settings-action-bar-buttons {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
-/* Account */
+/* account */
 html body #root .builder-shell.settings-workspace-shell .account-settings-card {
   padding: 0;
   overflow: hidden;
 }
-
 html body #root .builder-shell.settings-workspace-shell .account-settings-tabs {
-  width: 100%;
-  min-width: 0;
   display: flex;
-  gap: 24px;
-  padding: 0 22px;
-  border-bottom: 1px solid var(--settings-line);
+  align-items: center;
+  gap: 4px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--s-line);
   background: #fff;
-  overflow-x: auto;
 }
-
 html body #root .builder-shell.settings-workspace-shell .account-settings-tabs button {
-  width: auto;
   min-width: 0;
-  height: 52px;
-  padding: 0 1px;
+  height: 48px;
+  margin: 0;
+  padding: 0 10px;
   border: 0;
   border-bottom: 2px solid transparent;
   border-radius: 0;
   background: transparent;
-  color: #667085;
+  color: var(--s-muted);
   box-shadow: none;
+  font-family: inherit;
   font-size: 13px;
-  font-weight: 800;
-  white-space: nowrap;
+  font-weight: 700;
+  cursor: pointer;
 }
-
 html body #root .builder-shell.settings-workspace-shell .account-settings-tabs button.active {
-  border-bottom-color: #111827;
-  color: #111827;
+  border-bottom-color: var(--s-dark);
+  color: var(--s-text);
 }
+html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel { padding: 22px; }
+html body #root .builder-shell.settings-workspace-shell .account-profile-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+html body #root .builder-shell.settings-workspace-shell .account-profile-field { grid-template-rows: 22px 48px auto; }
+html body #root .builder-shell.settings-workspace-shell .account-profile-label { align-self: start; }
+html body #root .builder-shell.settings-workspace-shell .account-profile-actions { margin-top: 22px; }
 
-html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel {
-  width: 100%;
-  min-width: 0;
-  padding: 24px 22px 22px;
-  overflow: visible;
-}
-
-html body #root .builder-shell.settings-workspace-shell .account-profile-form-v2,
-html body #root .builder-shell.settings-workspace-shell .account-profile-fields {
-  width: 100%;
-  min-width: 0;
-}
-
-html body #root .builder-shell.settings-workspace-shell .account-profile-form-v2 {
-  display: grid;
-  gap: 0;
-}
-
-html body #root .builder-shell.settings-workspace-shell .account-profile-fields {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px;
-}
-
-html body #root .builder-shell.settings-workspace-shell .account-profile-phone {
-  grid-column: 1 / -1;
-}
-
-html body #root .builder-shell.settings-workspace-shell .account-profile-label {
-  min-height: 22px;
-  height: auto;
-  padding: 1px 0;
-  line-height: 20px;
-  overflow: visible;
-  clip: auto;
-  clip-path: none;
-}
-
-html body #root .builder-shell.settings-workspace-shell .account-profile-field > input {
-  width: 100%;
-  height: 48px;
-  min-height: 48px;
-  padding: 0 14px;
-  border-radius: 8px;
-  line-height: 1.4;
-  overflow: visible;
-}
-
-/* Domain */
-html body #root .builder-shell.settings-workspace-shell .settings-inline-control {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 8px;
-  align-items: center;
-}
-
-html body #root .builder-shell.settings-workspace-shell .domain-connection-state {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 14px;
-  color: #667085;
-  font-size: 12px;
-}
-
-html body #root .builder-shell.settings-workspace-shell .domain-connection-state > span {
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  background: #c7cdd6;
-}
-
-html body #root .builder-shell.settings-workspace-shell .domain-connection-state > span.active {
-  background: #f59e0b;
-}
-
-html body #root .builder-shell.settings-workspace-shell .domain-connection-state small {
-  color: #98a2b3;
-}
-
+/* domain */
 html body #root .builder-shell.settings-workspace-shell .domain-dns-grid {
   width: 100%;
   min-width: 0;
-  overflow-x: auto;
-  border: 1px solid var(--settings-line);
-  border-radius: 9px;
+  overflow: hidden;
+  border: 1px solid var(--s-line);
+  border-radius: 8px;
+  background: #fff;
 }
-
 html body #root .builder-shell.settings-workspace-shell .domain-dns-head,
 html body #root .builder-shell.settings-workspace-shell .domain-dns-row {
-  min-width: 620px;
   display: grid;
-  grid-template-columns: 120px 180px minmax(260px, 1fr);
+  grid-template-columns: 110px 180px minmax(0, 1fr);
   align-items: center;
-}
-
-html body #root .builder-shell.settings-workspace-shell .domain-dns-head {
-  min-height: 38px;
-  background: #f7f8fa;
-  color: #667085;
-  font-size: 11px;
-  font-weight: 800;
-}
-
-html body #root .builder-shell.settings-workspace-shell .domain-dns-row {
-  min-height: 48px;
-  border-top: 1px solid var(--settings-line);
-}
-
-html body #root .builder-shell.settings-workspace-shell .domain-dns-head > *,
-html body #root .builder-shell.settings-workspace-shell .domain-dns-row > * {
   min-width: 0;
-  padding: 0 14px;
 }
-
+html body #root .builder-shell.settings-workspace-shell .domain-dns-head {
+  background: #f8fafc;
+  border-bottom: 1px solid var(--s-line);
+}
+html body #root .builder-shell.settings-workspace-shell .domain-dns-head span,
 html body #root .builder-shell.settings-workspace-shell .domain-dns-row code {
-  color: #111827;
-  font-size: 13px;
-  font-weight: 750;
+  min-width: 0;
+  padding: 11px 13px;
+  border-right: 1px solid var(--s-line);
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
-
+html body #root .builder-shell.settings-workspace-shell .domain-dns-head span:last-child,
+html body #root .builder-shell.settings-workspace-shell .domain-dns-row code:last-child { border-right: 0; }
+html body #root .builder-shell.settings-workspace-shell .domain-dns-head span {
+  color: var(--s-muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+html body #root .builder-shell.settings-workspace-shell .domain-dns-row code {
+  color: #344054;
+  font-size: 13px;
+  font-weight: 700;
+}
 html body #root .builder-shell.settings-workspace-shell .settings-help-line {
   display: flex;
   align-items: flex-start;
   gap: 7px;
   margin: 12px 0 0;
-  color: #667085;
+  color: var(--s-muted);
   font-size: 12px;
   line-height: 1.5;
 }
-
-html body #root .builder-shell.settings-workspace-shell .domain-ssl-surface,
-html body #root .builder-shell.settings-workspace-shell .billing-addon-row {
+html body #root .builder-shell.settings-workspace-shell .domain-inline-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+}
+html body #root .builder-shell.settings-workspace-shell .domain-state-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  gap: 16px;
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--s-line);
+  border-radius: 8px;
+  background: var(--s-soft);
 }
-
-html body #root .builder-shell.settings-workspace-shell .settings-row-action,
-html body #root .builder-shell.settings-workspace-shell .billing-addon-action {
-  flex: 0 0 auto;
+html body #root .builder-shell.settings-workspace-shell .domain-state-card > div span,
+html body #root .builder-shell.settings-workspace-shell .domain-state-card > div small { display: block; }
+html body #root .builder-shell.settings-workspace-shell .domain-state-card > div span { color: var(--s-muted); font-size: 11px; font-weight: 750; }
+html body #root .builder-shell.settings-workspace-shell .domain-state-card > div strong { display: block; margin-top: 2px; font-size: 15px; }
+html body #root .builder-shell.settings-workspace-shell .domain-state-card > div small { margin-top: 3px; color: var(--s-muted); font-size: 12px; }
+html body #root .builder-shell.settings-workspace-shell .domain-state-card code { color: #344054; font-size: 12px; font-weight: 700; }
+html body #root .builder-shell.settings-workspace-shell .domain-state-card.state-connected { border-color: #abefc6; background: var(--s-success-bg); }
+html body #root .builder-shell.settings-workspace-shell .domain-state-card.state-error { border-color: #fecdca; background: var(--s-danger-bg); }
+html body #root .builder-shell.settings-workspace-shell .domain-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+html body #root .builder-shell.settings-workspace-shell .domain-steps > div {
+  min-width: 0;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 7px;
+  color: var(--s-subtle);
+  font-size: 11px;
+  line-height: 1.3;
+  font-weight: 700;
 }
+html body #root .builder-shell.settings-workspace-shell .domain-steps i {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--s-line-strong);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--s-muted);
+  font-style: normal;
+}
+html body #root .builder-shell.settings-workspace-shell .domain-steps > div.active { color: #344054; }
+html body #root .builder-shell.settings-workspace-shell .domain-steps > div.active i { border-color: var(--s-dark); background: var(--s-dark); color: #fff; }
+html body #root .builder-shell.settings-workspace-shell .domain-ssl-surface {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+html body #root .builder-shell.settings-workspace-shell .settings-row-action { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
 
-/* Status chips */
+/* badges */
 html body #root .builder-shell.settings-workspace-shell .settings-status-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 24px;
-  padding: 0 8px;
+  min-height: 26px;
+  padding: 0 9px;
   border-radius: 999px;
-  background: #f2f4f7;
-  color: #667085;
-  font-size: 11px;
-  line-height: 1;
-  font-weight: 850;
-  white-space: nowrap;
-}
-
-html body #root .builder-shell.settings-workspace-shell .settings-status-badge.success {
-  background: var(--settings-success-bg);
-  color: var(--settings-success);
-}
-
-html body #root .builder-shell.settings-workspace-shell .settings-status-badge.dark {
-  background: #111827;
-  color: #fff;
-}
-
-/* Billing */
-html body #root .builder-shell.settings-workspace-shell .billing-current-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-html body #root .builder-shell.settings-workspace-shell .billing-current-grid > div {
-  min-width: 0;
-  padding: 14px 15px;
-  border: 1px solid var(--settings-line);
-  border-radius: 9px;
-  background: #fafbfc;
-}
-
-html body #root .builder-shell.settings-workspace-shell .billing-current-grid span {
-  display: block;
-  color: #667085;
-  font-size: 11px;
-  font-weight: 800;
-}
-
-html body #root .builder-shell.settings-workspace-shell .billing-current-grid strong {
-  display: block;
-  margin-top: 5px;
-  color: #111827;
-  font-size: 14px;
-  line-height: 1.4;
-  font-weight: 900;
-}
-
-html body #root .builder-shell.settings-workspace-shell .billing-plan-list {
-  width: 100%;
-  min-width: 0;
-  border: 1px solid var(--settings-line);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-html body #root .builder-shell.settings-workspace-shell .billing-plan-row {
-  min-width: 0;
-  min-height: 78px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 150px 120px;
-  align-items: center;
-  gap: 18px;
-  padding: 14px 16px;
-  background: #fff;
-  border-top: 1px solid var(--settings-line);
-}
-
-html body #root .builder-shell.settings-workspace-shell .billing-plan-row:first-child {
-  border-top: 0;
-}
-
-html body #root .builder-shell.settings-workspace-shell .billing-plan-row.current {
-  background: #fafbfc;
-}
-
-html body #root .builder-shell.settings-workspace-shell .billing-plan-copy {
-  min-width: 0;
-}
-
-html body #root .builder-shell.settings-workspace-shell .billing-plan-title-line {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 7px;
-}
-
-html body #root .builder-shell.settings-workspace-shell .billing-plan-title-line > strong {
-  color: #111827;
-  font-size: 16px;
-  line-height: 1.3;
-  font-weight: 900;
-}
-
-html body #root .builder-shell.settings-workspace-shell .billing-plan-copy > small {
-  display: block;
-  margin-top: 5px;
-  color: #667085;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-html body #root .builder-shell.settings-workspace-shell .billing-plan-price {
-  display: flex;
-  align-items: baseline;
-  justify-content: flex-end;
-  gap: 3px;
-  white-space: nowrap;
-}
-
-html body #root .builder-shell.settings-workspace-shell .billing-plan-price b,
-html body #root .builder-shell.settings-workspace-shell .billing-addon-action b {
-  color: #111827;
-  font-size: 22px;
-  line-height: 1;
-  font-weight: 950;
-  letter-spacing: -.04em;
-}
-
-html body #root .builder-shell.settings-workspace-shell .billing-plan-price span,
-html body #root .builder-shell.settings-workspace-shell .billing-addon-action b span {
-  color: #667085;
-  font-size: 11px;
-  font-weight: 800;
-}
-
-html body #root .builder-shell.settings-workspace-shell .billing-bundle-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-  margin-top: 12px;
-}
-
-html body #root .builder-shell.settings-workspace-shell .billing-bundle-chips span {
-  padding: 6px 9px;
-  border-radius: 6px;
   background: #f2f4f7;
   color: #475467;
   font-size: 11px;
+  line-height: 1;
   font-weight: 800;
+  white-space: nowrap;
 }
+html body #root .builder-shell.settings-workspace-shell .settings-status-badge.success { background: var(--s-success-bg); color: var(--s-success); }
+html body #root .builder-shell.settings-workspace-shell .settings-status-badge.dark { background: #e4e7ec; color: var(--s-dark); }
 
-/* Manager */
+/* billing */
+html body #root .builder-shell.settings-workspace-shell .billing-current-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--s-line);
+  border-radius: 8px;
+  background: var(--s-line);
+}
+html body #root .builder-shell.settings-workspace-shell .billing-current-grid > div {
+  min-width: 0;
+  padding: 14px 16px;
+  background: #fff;
+}
+html body #root .builder-shell.settings-workspace-shell .billing-current-grid span { display: block; color: var(--s-muted); font-size: 11px; font-weight: 750; }
+html body #root .builder-shell.settings-workspace-shell .billing-current-grid strong { display: block; margin-top: 4px; color: var(--s-text); font-size: 14px; line-height: 1.35; }
+html body #root .builder-shell.settings-workspace-shell .billing-plan-list { border-top: 1px solid var(--s-line); }
+html body #root .builder-shell.settings-workspace-shell .billing-plan-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px 118px;
+  align-items: center;
+  gap: 18px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--s-line);
+}
+html body #root .builder-shell.settings-workspace-shell .billing-plan-row:last-child { border-bottom: 0; }
+html body #root .builder-shell.settings-workspace-shell .billing-plan-title-line { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
+html body #root .builder-shell.settings-workspace-shell .billing-plan-copy strong { font-size: 14px; line-height: 1.35; }
+html body #root .builder-shell.settings-workspace-shell .billing-plan-copy small { display: block; margin-top: 4px; color: var(--s-muted); font-size: 12px; line-height: 1.45; }
+html body #root .builder-shell.settings-workspace-shell .billing-plan-price { text-align: right; white-space: nowrap; }
+html body #root .builder-shell.settings-workspace-shell .billing-plan-price b { font-size: 15px; }
+html body #root .builder-shell.settings-workspace-shell .billing-plan-price span { margin-left: 2px; color: var(--s-muted); font-size: 11px; }
+html body #root .builder-shell.settings-workspace-shell .billing-bundle-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+html body #root .builder-shell.settings-workspace-shell .billing-bundle-chips span { padding: 6px 9px; border-radius: 6px; background: #f2f4f7; color: #475467; font-size: 11px; font-weight: 700; }
+html body #root .builder-shell.settings-workspace-shell .billing-addon-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+html body #root .builder-shell.settings-workspace-shell .billing-addon-action { display: flex; align-items: center; gap: 14px; }
+html body #root .builder-shell.settings-workspace-shell .billing-addon-action b { white-space: nowrap; font-size: 15px; }
+html body #root .builder-shell.settings-workspace-shell .billing-addon-action b span { margin-left: 2px; color: var(--s-muted); font-size: 11px; }
+
+/* manager rows */
 html body #root .builder-shell.settings-workspace-shell .manager-section-tools {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 16px;
-  padding: 0;
+  margin-bottom: 14px;
 }
-
-html body #root .builder-shell.settings-workspace-shell .manager-section-tools p {
-  margin: 0;
-  color: #667085;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-html body #root .builder-shell.settings-workspace-shell .manager-list {
+html body #root .builder-shell.settings-workspace-shell .manager-section-tools p { margin: 0; color: var(--s-muted); font-size: 13px; }
+html body #root .builder-shell.settings-workspace-shell .manager-owner-summary.compact {
   display: grid;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 1px;
+  margin-bottom: 14px;
+  overflow: hidden;
+  border: 1px solid var(--s-line);
+  border-radius: 8px;
+  background: var(--s-line);
 }
-
-html body #root .builder-shell.settings-workspace-shell .manager-empty-state {
-  padding: 24px;
-  text-align: left;
+html body #root .builder-shell.settings-workspace-shell .manager-owner-summary.compact > div,
+html body #root .builder-shell.settings-workspace-shell .manager-owner-summary.compact > button { background: #fff; }
+html body #root .builder-shell.settings-workspace-shell .manager-owner-summary.compact > div { min-width: 0; padding: 12px 14px; }
+html body #root .builder-shell.settings-workspace-shell .manager-owner-summary.compact span { display: block; color: var(--s-muted); font-size: 11px; }
+html body #root .builder-shell.settings-workspace-shell .manager-owner-summary.compact strong { display: block; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+html body #root .builder-shell.settings-workspace-shell .manager-list {
+  overflow: hidden;
+  border: 1px solid var(--s-line);
+  border-radius: 8px;
+  background: #fff;
 }
-
-html body #root .builder-shell.settings-workspace-shell .manager-empty-state strong {
-  display: block;
-  color: #111827;
-  font-size: 16px;
-  font-weight: 900;
-}
-
-html body #root .builder-shell.settings-workspace-shell .manager-empty-state p {
-  margin: 7px 0 0;
-  color: #667085;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-html body #root .builder-shell.settings-workspace-shell .manager-card,
-html body #root .builder-shell.settings-workspace-shell .manager-ownership-card,
-html body #root .builder-shell.settings-workspace-shell .ownership-transfer-card {
-  width: 100%;
-  min-width: 0;
+html body #root .builder-shell.settings-workspace-shell .manager-card.compact {
   margin: 0;
-  border: 1px solid var(--settings-line);
-  border-radius: 10px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--s-line);
+  border-radius: 0;
   background: #fff;
   box-shadow: none;
 }
+html body #root .builder-shell.settings-workspace-shell .manager-card.compact:last-child { border-bottom: 0; }
+html body #root .builder-shell.settings-workspace-shell .manager-card-body { padding: 16px; border-top: 1px solid var(--s-line); background: #fafbfc; }
+html body #root .builder-shell.settings-workspace-shell .manager-empty-state { border: 0; border-radius: 0; text-align: center; }
+html body #root .builder-shell.settings-workspace-shell .ownership-transfer-box { margin-bottom: 14px; }
+html body #root .builder-shell.settings-workspace-shell .ownership-transfer-controls { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin-top: 14px; }
 
-/* SEO */
-html body #root .builder-shell.settings-workspace-shell .settings-seo-layout {
-  display: grid;
-  gap: 16px;
-}
-
-html body #root .builder-shell.settings-workspace-shell .settings-seo-block {
-  padding: 22px;
-}
-
-html body #root .builder-shell.settings-workspace-shell .settings-seo-block > header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 18px;
-  padding: 0;
-  border: 0;
-}
-
-html body #root .builder-shell.settings-workspace-shell .settings-seo-block > header strong {
-  display: block;
-  color: #111827;
-  font-size: 16px;
-  font-weight: 900;
-}
-
-html body #root .builder-shell.settings-workspace-shell .settings-seo-block > header small {
-  display: block;
-  margin-top: 4px;
-  color: #667085;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-html body #root .builder-shell.settings-workspace-shell .settings-seo-copy-grid,
-html body #root .builder-shell.settings-workspace-shell .settings-seo-verification-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-html body #root .builder-shell.settings-workspace-shell .settings-seo-media-grid {
-  display: grid;
-  grid-template-columns: 180px minmax(0, 1fr);
-  gap: 20px;
-  align-items: start;
-}
-
-html body #root .builder-shell.settings-workspace-shell .settings-seo-media-grid img {
-  max-width: 100%;
-  height: auto;
-  object-fit: cover;
-}
-
-html body #root .builder-shell.settings-workspace-shell .settings-seo-share {
+/* SEO + image */
+html body #root .builder-shell.settings-workspace-shell .settings-seo-layout { display: grid; gap: 16px; }
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block > header { margin-bottom: 18px; }
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block > header strong { display: block; font-size: 16px; }
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block > header small { display: block; margin-top: 4px; color: var(--s-muted); font-size: 12px; }
+html body #root .builder-shell.settings-workspace-shell .settings-seo-media-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+html body #root .builder-shell.settings-workspace-shell .image-input { width: 100%; min-width: 0; display: grid; gap: 8px; }
+html body #root .builder-shell.settings-workspace-shell .image-box {
+  width: 100%;
   min-width: 0;
-}
-
-html body #root .builder-shell.settings-workspace-shell .settings-seo-share .image-input-preview,
-html body #root .builder-shell.settings-workspace-shell .settings-seo-share [class*="preview"] {
-  max-width: 680px;
-}
-
-html body #root .builder-shell.settings-workspace-shell .settings-field-hint {
-  display: block;
-  margin-top: 7px;
-  color: #98a2b3;
-  font-size: 11px;
-  line-height: 1.4;
-}
-
-/* Referral / partner / settlement */
-html body #root .builder-shell.settings-workspace-shell .account-referral-settings,
-html body #root .builder-shell.settings-workspace-shell .account-partner-settings,
-html body #root .builder-shell.settings-workspace-shell .account-settlement-settings {
+  min-height: 132px;
   display: grid;
-  gap: 16px;
+  place-items: center;
+  position: relative;
+  overflow: hidden;
+  border: 1px dashed var(--s-line-strong);
+  border-radius: 8px;
+  background: #f8fafc;
 }
-
-html body #root .builder-shell.settings-workspace-shell .service-content-head {
-  margin: 0;
-  padding: 18px 20px;
-  border: 1px solid var(--settings-line);
-  border-radius: 12px;
+html body #root .builder-shell.settings-workspace-shell .image-box img { width: 100%; height: 132px; object-fit: cover; display: block; }
+html body #root .builder-shell.settings-workspace-shell .image-empty-button {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--s-line-strong);
+  border-radius: 8px;
   background: #fff;
+  color: #475467;
+  font-size: 22px;
+  cursor: pointer;
 }
+html body #root .builder-shell.settings-workspace-shell .image-actions { position: absolute; right: 8px; bottom: 8px; display: flex; gap: 6px; }
+html body #root .builder-shell.settings-workspace-shell .image-actions button { height: 32px; padding: 0 10px; border: 1px solid var(--s-line-strong); border-radius: 6px; background: rgba(255,255,255,.94); color: #344054; font-size: 11px; font-weight: 700; }
+html body #root .builder-shell.settings-workspace-shell .settings-field-hint { display: block; margin-top: 5px; color: var(--s-muted); font-size: 11px; }
 
+/* referral / partner / settlement */
 html body #root .builder-shell.settings-workspace-shell .referral-service-grid,
 html body #root .builder-shell.settings-workspace-shell .partner-metric-grid,
 html body #root .builder-shell.settings-workspace-shell .settlement-metric-grid {
@@ -975,247 +792,149 @@ html body #root .builder-shell.settings-workspace-shell .settlement-metric-grid 
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
-
 html body #root .builder-shell.settings-workspace-shell .referral-benefit-card,
 html body #root .builder-shell.settings-workspace-shell .referral-status-card,
 html body #root .builder-shell.settings-workspace-shell .partner-metric-grid > div,
 html body #root .builder-shell.settings-workspace-shell .settlement-metric {
   min-width: 0;
-  padding: 18px;
-  border: 1px solid var(--settings-line);
-  border-radius: 10px;
+  padding: 16px;
+  border: 1px solid var(--s-line);
+  border-radius: 8px;
   background: #fff;
   box-shadow: none;
 }
-
-html body #root .builder-shell.settings-workspace-shell .partner-code-panel {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-html body #root .builder-shell.settings-workspace-shell .partner-code-panel strong,
-html body #root .builder-shell.settings-workspace-shell .settlement-metric strong {
-  display: block;
-  margin-top: 5px;
-  color: #111827;
-  font-size: 24px;
-  line-height: 1.2;
-  font-weight: 950;
-  letter-spacing: -.03em;
-}
-
-html body #root .builder-shell.settings-workspace-shell .partner-code-panel p,
-html body #root .builder-shell.settings-workspace-shell .service-footer-action span,
-html body #root .builder-shell.settings-workspace-shell .settlement-cta-card small {
-  color: #667085;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
+html body #root .builder-shell.settings-workspace-shell .partner-code-panel { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+html body #root .builder-shell.settings-workspace-shell .partner-code-panel p { color: var(--s-muted); font-size: 12px; }
 html body #root .builder-shell.settings-workspace-shell .service-footer-action,
-html body #root .builder-shell.settings-workspace-shell .settlement-cta-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-}
+html body #root .builder-shell.settings-workspace-shell .settlement-cta-card { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 14px; }
 
-/* Messages */
+/* status and feedback */
 html body #root .builder-shell.settings-workspace-shell .settings-message,
-html body #root .builder-shell.settings-workspace-shell .account-finance-message,
-html body #root .builder-shell.settings-workspace-shell .account-settings-message,
-html body #root .builder-shell.settings-workspace-shell .settings-loading,
-html body #root .builder-shell.settings-workspace-shell .account-finance-loading {
-  width: 100%;
+html body #root .builder-shell.settings-workspace-shell .account-finance-message {
   margin: 0;
-  padding: 12px 14px;
-  border: 1px solid var(--settings-line);
+  padding: 10px 12px;
+  border: 1px solid #b2ddff;
   border-radius: 8px;
-  background: #fff;
-  color: #667085;
+  background: #eff8ff;
+  color: #175cd3;
   font-size: 12px;
   line-height: 1.5;
 }
-
 html body #root .builder-shell.settings-workspace-shell .settings-message.error,
 html body #root .builder-shell.settings-workspace-shell .account-finance-message.is-error {
-  border-color: #fecaca;
-  background: #fff7f7;
-  color: #b42318;
+  border-color: #fecdca;
+  background: var(--s-danger-bg);
+  color: var(--s-danger);
+}
+html body #root .builder-shell.settings-workspace-shell .settings-loading,
+html body #root .builder-shell.settings-workspace-shell .account-finance-loading {
+  padding: 26px;
+  border: 1px solid var(--s-line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--s-muted);
+  font-size: 13px;
+  text-align: center;
 }
 
-/* Kill legacy settings chrome inside v3 */
-html body #root .builder-shell.settings-workspace-shell .settings-v3-root .settings-section-head,
-html body #root .builder-shell.settings-workspace-shell .settings-v3-root .settings-section-state,
-html body #root .builder-shell.settings-workspace-shell .settings-v3-root .settings-ops-summary,
-html body #root .builder-shell.settings-workspace-shell .settings-v3-root .settings-ops-main-head {
-  display: none !important;
+/* focus */
+html body #root .builder-shell.settings-workspace-shell button:focus-visible,
+html body #root .builder-shell.settings-workspace-shell a:focus-visible,
+html body #root .builder-shell.settings-workspace-shell input:focus-visible,
+html body #root .builder-shell.settings-workspace-shell textarea:focus-visible,
+html body #root .builder-shell.settings-workspace-shell select:focus-visible {
+  outline: 3px solid rgba(46, 144, 250, .28);
+  outline-offset: 2px;
 }
 
-@media (max-width: 1100px) {
+/* danger zone */
+html body #root .builder-shell.settings-workspace-shell [data-settings-section="reset"] .settings-section-body {
+  padding: 22px;
+  border: 1px solid #fecdca;
+  border-radius: var(--s-radius);
+  background: #fff;
+}
+html body #root .builder-shell.settings-workspace-shell [data-settings-section="reset"] button {
+  border-color: var(--s-danger);
+  background: var(--s-danger);
+  color: #fff;
+}
+
+@media (max-width: 980px) {
+  html body #root .builder-shell.settings-workspace-shell .settings-v3-root { grid-template-columns: 200px minmax(0, 1fr); }
+  html body #root .builder-shell.settings-workspace-shell .settings-v3-content-wrap { width: min(100% - 32px, 960px); }
+  html body #root .builder-shell.settings-workspace-shell .billing-plan-row { grid-template-columns: minmax(0, 1fr) 100px 110px; gap: 12px; }
+}
+
+@media (max-width: 760px) {
   html body #root .builder-shell.settings-workspace-shell .settings-v3-root {
-    grid-template-columns: 208px minmax(0, 1fr);
+    height: 100%;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    overflow: hidden;
   }
-
-  html body #root .builder-shell.settings-workspace-shell .settings-v3-content-wrap {
-    width: min(100% - 36px, 1000px);
-  }
-
-  html body #root .builder-shell.settings-workspace-shell .billing-plan-row {
-    grid-template-columns: minmax(0, 1fr) 130px 110px;
-  }
-}
-
-@media (max-width: 820px) {
-  html body #root .builder-shell.settings-workspace-shell .settings-v3-root {
-    height: auto;
-    min-height: 100%;
-    display: block;
-    overflow: visible;
-  }
-
   html body #root .builder-shell.settings-workspace-shell .settings-v3-sidebar {
-    position: static;
     height: auto;
-    padding: 14px 14px 10px;
+    padding: 12px 12px 10px;
     border-right: 0;
-    border-bottom: 1px solid var(--settings-line);
-    overflow: visible;
-  }
-
-  html body #root .builder-shell.settings-workspace-shell .settings-sidebar-head {
-    display: none;
-  }
-
-  html body #root .builder-shell.settings-workspace-shell .settings-nav-group {
-    margin: 0 0 8px;
-  }
-
-  html body #root .builder-shell.settings-workspace-shell .settings-nav-label {
-    display: none;
-  }
-
-  html body #root .builder-shell.settings-workspace-shell .settings-nav-items {
-    display: flex;
-    gap: 6px;
+    border-bottom: 1px solid var(--s-line);
     overflow-x: auto;
-    padding-bottom: 2px;
+    overflow-y: hidden;
   }
-
-  html body #root .builder-shell.settings-workspace-shell .settings-nav-item {
-    flex: 0 0 auto;
-    width: auto;
-    min-height: 38px;
-    padding: 0 11px;
-  }
-
-  html body #root .builder-shell.settings-workspace-shell .settings-v3-main {
-    height: auto;
-    overflow: visible;
-  }
-
-  html body #root .builder-shell.settings-workspace-shell .settings-v3-content-wrap {
-    width: calc(100% - 28px);
-    padding: 22px 0 42px;
-  }
-
-  html body #root .builder-shell.settings-workspace-shell .settings-page-head {
-    min-height: 0;
-    margin-bottom: 18px;
-    padding-bottom: 18px;
-  }
-
-  html body #root .builder-shell.settings-workspace-shell .settings-page-head h1 {
-    font-size: 24px;
-  }
-
+  html body #root .builder-shell.settings-workspace-shell .settings-sidebar-head { display: none; }
+  html body #root .builder-shell.settings-workspace-shell .settings-v3-sidebar { display: flex; align-items: center; gap: 12px; }
+  html body #root .builder-shell.settings-workspace-shell .settings-nav-group { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; margin: 0; }
+  html body #root .builder-shell.settings-workspace-shell .settings-nav-label { display: none; }
+  html body #root .builder-shell.settings-workspace-shell .settings-nav-items { display: flex; gap: 4px; }
+  html body #root .builder-shell.settings-workspace-shell .settings-nav-item { width: auto; height: 38px; padding: 0 11px; white-space: nowrap; }
+  html body #root .builder-shell.settings-workspace-shell .settings-nav-item svg { display: none; }
+  html body #root .builder-shell.settings-workspace-shell .settings-v3-content-wrap { width: calc(100% - 28px); padding: 20px 0 44px; }
+  html body #root .builder-shell.settings-workspace-shell .settings-page-head { gap: 10px; margin-bottom: 18px; padding-bottom: 17px; }
+  html body #root .builder-shell.settings-workspace-shell .settings-page-head h1 { font-size: 23px; }
+  html body #root .builder-shell.settings-workspace-shell .settings-page-slug { display: none; }
+  html body #root .builder-shell.settings-workspace-shell .settings-surface,
+  html body #root .builder-shell.settings-workspace-shell .account-settings-card,
+  html body #root .builder-shell.settings-workspace-shell .settings-seo-block,
+  html body #root .builder-shell.settings-workspace-shell .partner-code-panel,
+  html body #root .builder-shell.settings-workspace-shell .settlement-cta-card,
+  html body #root .builder-shell.settings-workspace-shell .ownership-transfer-box { padding: 18px; }
   html body #root .builder-shell.settings-workspace-shell .settings-grid,
+  html body #root .builder-shell.settings-workspace-shell .settings-form-grid,
   html body #root .builder-shell.settings-workspace-shell .account-profile-fields,
-  html body #root .builder-shell.settings-workspace-shell .settings-seo-copy-grid,
-  html body #root .builder-shell.settings-workspace-shell .settings-seo-verification-grid,
-  html body #root .builder-shell.settings-workspace-shell .billing-current-grid,
+  html body #root .builder-shell.settings-workspace-shell .settings-seo-media-grid,
   html body #root .builder-shell.settings-workspace-shell .referral-service-grid,
   html body #root .builder-shell.settings-workspace-shell .partner-metric-grid,
-  html body #root .builder-shell.settings-workspace-shell .settlement-metric-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  html body #root .builder-shell.settings-workspace-shell .account-profile-phone {
-    grid-column: auto;
-  }
-
-  html body #root .builder-shell.settings-workspace-shell .billing-plan-row {
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 12px;
-  }
-
-  html body #root .builder-shell.settings-workspace-shell .billing-plan-row > button {
-    grid-column: 1 / -1;
-    width: 100%;
-  }
-
-  html body #root .builder-shell.settings-workspace-shell .settings-seo-media-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
+  html body #root .builder-shell.settings-workspace-shell .settlement-metric-grid,
+  html body #root .builder-shell.settings-workspace-shell .billing-current-grid { grid-template-columns: minmax(0, 1fr); }
+  html body #root .builder-shell.settings-workspace-shell .domain-dns-head { display: none; }
+  html body #root .builder-shell.settings-workspace-shell .domain-dns-row { grid-template-columns: minmax(0, 1fr); }
+  html body #root .builder-shell.settings-workspace-shell .domain-dns-row code { border-right: 0; border-bottom: 1px solid var(--s-line); white-space: normal; overflow-wrap: anywhere; }
+  html body #root .builder-shell.settings-workspace-shell .domain-dns-row code:last-child { border-bottom: 0; }
+  html body #root .builder-shell.settings-workspace-shell .domain-inline-control { grid-template-columns: minmax(0, 1fr); }
+  html body #root .builder-shell.settings-workspace-shell .domain-inline-control button { width: 100%; }
+  html body #root .builder-shell.settings-workspace-shell .domain-state-card,
   html body #root .builder-shell.settings-workspace-shell .domain-ssl-surface,
   html body #root .builder-shell.settings-workspace-shell .billing-addon-row,
   html body #root .builder-shell.settings-workspace-shell .partner-code-panel,
   html body #root .builder-shell.settings-workspace-shell .service-footer-action,
-  html body #root .builder-shell.settings-workspace-shell .settlement-cta-card {
-    align-items: stretch;
-    flex-direction: column;
-  }
+  html body #root .builder-shell.settings-workspace-shell .settlement-cta-card { align-items: stretch; flex-direction: column; }
+  html body #root .builder-shell.settings-workspace-shell .domain-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html body #root .builder-shell.settings-workspace-shell .billing-plan-row { grid-template-columns: minmax(0, 1fr); align-items: stretch; gap: 10px; }
+  html body #root .builder-shell.settings-workspace-shell .billing-plan-price { text-align: left; }
+  html body #root .builder-shell.settings-workspace-shell .billing-plan-row > button { width: 100%; }
+  html body #root .builder-shell.settings-workspace-shell .manager-owner-summary.compact { grid-template-columns: minmax(0, 1fr); }
+  html body #root .builder-shell.settings-workspace-shell .settings-action-bar { align-items: stretch; flex-direction: column; }
+  html body #root .builder-shell.settings-workspace-shell .settings-action-bar-buttons { width: 100%; }
+  html body #root .builder-shell.settings-workspace-shell .settings-action-bar-buttons button { flex: 1 1 0; min-width: 0; }
 }
 
-@media (max-width: 560px) {
-  html body #root .builder-shell.settings-workspace-shell .settings-v3-content-wrap {
-    width: calc(100% - 20px);
-  }
-
-  html body #root .builder-shell.settings-workspace-shell .settings-page-head {
-    gap: 12px;
-  }
-
-  html body #root .builder-shell.settings-workspace-shell .settings-page-head p {
-    display: none;
-  }
-
-  html body #root .builder-shell.settings-workspace-shell .settings-page-slug {
-    max-width: 120px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
+@media (max-width: 460px) {
+  html body #root .builder-shell.settings-workspace-shell .settings-v3-content-wrap { width: calc(100% - 20px); }
+  html body #root .builder-shell.settings-workspace-shell .settings-page-head p { font-size: 13px; }
   html body #root .builder-shell.settings-workspace-shell .settings-surface,
-  html body #root .builder-shell.settings-workspace-shell .settings-seo-block,
-  html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel {
-    padding: 18px;
-  }
-
-  html body #root .builder-shell.settings-workspace-shell .settings-inline-control {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  html body #root .builder-shell.settings-workspace-shell .settings-inline-control button,
-  html body #root .builder-shell.settings-workspace-shell .settings-action-bar button,
-  html body #root .builder-shell.settings-workspace-shell .account-profile-actions button {
-    width: 100%;
-  }
-
-  html body #root .builder-shell.settings-workspace-shell .settings-action-bar,
-  html body #root .builder-shell.settings-workspace-shell .account-profile-actions {
-    flex-direction: column;
-  }
-
-  html body #root .builder-shell.settings-workspace-shell .billing-plan-row {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  html body #root .builder-shell.settings-workspace-shell .billing-plan-price {
-    justify-content: flex-start;
-  }
+  html body #root .builder-shell.settings-workspace-shell .account-settings-tab-panel,
+  html body #root .builder-shell.settings-workspace-shell .settings-seo-block { padding: 16px; }
+  html body #root .builder-shell.settings-workspace-shell .account-settings-tabs { padding: 0 10px; overflow-x: auto; }
+  html body #root .builder-shell.settings-workspace-shell .account-settings-tabs button { flex: 0 0 auto; }
+  html body #root .builder-shell.settings-workspace-shell .domain-steps { grid-template-columns: minmax(0, 1fr); }
 }
