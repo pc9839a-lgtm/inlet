@@ -18,7 +18,6 @@ export default function ManagerSettingsSection({
   managerDraft,
   managerPermissionMode,
   onSave,
-  openSection,
   ownership,
   removeManager,
   requestOwnershipTransferPersisted,
@@ -26,7 +25,6 @@ export default function ManagerSettingsSection({
   setExpandedManagerMenuId,
   setManagerPermissionMode,
   setManagerPreset,
-  setOpenSection,
   setShowTransfer,
   setTransferManagerId,
   showTransfer,
@@ -35,45 +33,66 @@ export default function ManagerSettingsSection({
   updateManager,
 }) {
   return (
-    <SettingsSection id="managers" title="매니저 권한" description="초대와 메뉴 권한" badge={`${managerDraft.length}명`} openSection={openSection} setOpenSection={setOpenSection} locked={locked} onSave={onSave} onEdit={editManagers} className="manager-access-card">
-      <div className="manager-section-tools">
-        <div>
-          <p>매니저별로 필요한 메뉴만 열어줍니다.</p>
-        </div>
-        <button type="button" disabled={locked} onClick={addManager}>매니저 추가</button>
+    <SettingsSection
+      id="managers"
+      badge={`${managerDraft.length}명`}
+      locked={locked}
+      onSave={onSave}
+      onEdit={editManagers}
+      actionNote="매니저 역할과 메뉴 권한 변경사항을 저장합니다."
+      className="manager-access-card"
+    >
+      <div className="settings-stack">
+        <section className="settings-surface manager-list-surface">
+          <header className="settings-surface-head">
+            <div>
+              <strong>매니저</strong>
+              <small>역할 프리셋을 먼저 선택하고 필요한 메뉴 권한만 세부 조정합니다.</small>
+            </div>
+            <button type="button" className="settings-primary-button" disabled={locked} onClick={addManager}>매니저 추가</button>
+          </header>
+
+          <ManagerList
+            addManager={addManager}
+            copyInvite={copyInvite}
+            createInvite={createInvite}
+            disableManager={disableManager}
+            expandedManagerId={expandedManagerId}
+            expandedManagerMenuId={expandedManagerMenuId}
+            inviteLoading={inviteLoading}
+            locked={locked}
+            managerDraft={managerDraft}
+            managerPermissionMode={managerPermissionMode}
+            removeManager={removeManager}
+            setExpandedManagerId={setExpandedManagerId}
+            setExpandedManagerMenuId={setExpandedManagerMenuId}
+            setManagerPermissionMode={setManagerPermissionMode}
+            setManagerPreset={setManagerPreset}
+            updateManager={updateManager}
+          />
+        </section>
+
+        <section className="settings-surface manager-ownership-surface">
+          <header className="settings-surface-head simple">
+            <div>
+              <strong>소유권</strong>
+              <small>마스터 계정과 클라이언트 계정을 확인하고 필요한 경우 소유권 이전을 요청합니다.</small>
+            </div>
+          </header>
+          <ManagerOwnershipTransfer
+            authUser={authUser}
+            cancelOwnershipTransfer={cancelOwnershipTransfer}
+            eligibleTransferManagers={eligibleTransferManagers}
+            ownership={ownership}
+            requestOwnershipTransferPersisted={requestOwnershipTransferPersisted}
+            setShowTransfer={setShowTransfer}
+            setTransferManagerId={setTransferManagerId}
+            showTransfer={showTransfer}
+            transferManagerId={transferManagerId}
+            transferRequest={transferRequest}
+          />
+        </section>
       </div>
-
-      <ManagerOwnershipTransfer
-        authUser={authUser}
-        cancelOwnershipTransfer={cancelOwnershipTransfer}
-        eligibleTransferManagers={eligibleTransferManagers}
-        ownership={ownership}
-        requestOwnershipTransferPersisted={requestOwnershipTransferPersisted}
-        setShowTransfer={setShowTransfer}
-        setTransferManagerId={setTransferManagerId}
-        showTransfer={showTransfer}
-        transferManagerId={transferManagerId}
-        transferRequest={transferRequest}
-      />
-
-      <ManagerList
-        addManager={addManager}
-        copyInvite={copyInvite}
-        createInvite={createInvite}
-        disableManager={disableManager}
-        expandedManagerId={expandedManagerId}
-        expandedManagerMenuId={expandedManagerMenuId}
-        inviteLoading={inviteLoading}
-        locked={locked}
-        managerDraft={managerDraft}
-        managerPermissionMode={managerPermissionMode}
-        removeManager={removeManager}
-        setExpandedManagerId={setExpandedManagerId}
-        setExpandedManagerMenuId={setExpandedManagerMenuId}
-        setManagerPermissionMode={setManagerPermissionMode}
-        setManagerPreset={setManagerPreset}
-        updateManager={updateManager}
-      />
     </SettingsSection>
   );
 }
