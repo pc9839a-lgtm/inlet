@@ -92,18 +92,20 @@ function isSubscriptionActive(subscription = {}) {
   return !Number.isFinite(expiresAt) || expiresAt > Date.now();
 }
 
-function planName(productCode = '') {
-  const calltagNames = {
-    call_monthly: '전화관리',
-    message_monthly: '문자자동화',
-    all_monthly: '통합권',
-  };
-  if (calltagNames[productCode]) return calltagNames[productCode];
-  for (const plans of Object.values(PRICING)) {
+function pricingPlan(productCode = '') {
+  for (const [service, plans] of Object.entries(PRICING)) {
     const found = plans.find((plan) => plan.code === productCode);
-    if (found) return found.name;
+    if (found) return { ...found, service };
   }
-  return productCode || '구독';
+  const legacy = {
+    call_monthly: { name: '전화관리', amountKrw: 0, service: 'calltag' },
+    message_monthly: { name: '문자자동화', amountKrw: 0, service: 'calltag' },
+  };
+  return legacy[productCode] || { name: productCode || '구독', amountKrw: 0, service: '' };
+}
+
+function planName(productCode = '') {
+  return pricingPlan(productCode).name;
 }
 
 function subscriptionForService(subscriptions = [], service = '') {
@@ -143,6 +145,15 @@ function normalizeFinance({ authUser, subscriptionsData, referralData, summaryDa
   const calltagSubscription = subscriptionForService(rawSubscriptions, 'calltag');
   const subscriptions = [pageroSubscription, calltagSubscription, domainSubscription].filter(Boolean);
   const domainIncludedByPlan = pageroSubscription?.planCode === 'pagero_pro_monthly';
+  const subscriptionHistory = rawSubscriptions.map((item) => {
+    const plan = pricingPlan(item.productCode);
+    return {
+      ...item,
+      planName: plan.name,
+      service: plan.service,
+      amountKrw: Number(plan.amountKrw || 0),
+    };
+  });
 
   return {
     account: {
@@ -152,6 +163,7 @@ function normalizeFinance({ authUser, subscriptionsData, referralData, summaryDa
     },
     pricing: PRICING,
     subscriptions,
+    subscriptionHistory,
     entitlement: subscriptionsData?.entitlement || null,
     pagero: {
       includedClassicByBundle: !!bundleSubscription,
