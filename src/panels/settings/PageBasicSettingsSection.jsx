@@ -1,4 +1,4 @@
-import { Field } from '../../editor/controls.jsx';
+import SettingsField from './SettingsField.jsx';
 import SettingsSection from './SettingsSection.jsx';
 
 export default function PageBasicSettingsSection({
@@ -10,6 +10,8 @@ export default function PageBasicSettingsSection({
   onSave,
   setBasicDraft,
 }) {
+  const readOnly = locked || clientAdminMode;
+
   return (
     <SettingsSection
       id="basic"
@@ -17,6 +19,7 @@ export default function PageBasicSettingsSection({
       locked={locked}
       onSave={onSave}
       onEdit={onEdit}
+      actionNote="페이지 이름과 공개 주소 변경사항을 저장합니다."
       className="page-basic-settings-card"
     >
       <div className="settings-stack">
@@ -24,32 +27,35 @@ export default function PageBasicSettingsSection({
           <header className="settings-surface-head simple">
             <div>
               <strong>페이지 정보</strong>
-              <small>페이지 이름과 공개 주소를 설정합니다.</small>
+              <small>방문자에게 표시되는 이름과 공개 주소를 관리합니다.</small>
             </div>
           </header>
 
-          <div className="settings-grid page-basic-settings-grid">
-            <Field
+          <div className="settings-form-grid page-basic-settings-grid">
+            <SettingsField
               label="페이지명"
               value={basicDraft.title}
-              disabled={locked || clientAdminMode}
+              disabled={readOnly}
               onChange={(value) => setBasicDraft((draft) => ({ ...draft, title: value }))}
+              placeholder="페이지 이름"
             />
-            <div className="settings-field-with-help">
-              <Field
-                label="페이지 주소"
-                prefix="/"
-                value={basicDraft.slug}
-                disabled={locked || clientAdminMode}
-                onChange={(value) => setBasicDraft((draft) => ({ ...draft, slug: value.replace(/[^a-zA-Z0-9-_]/g, '') }))}
-              />
-              <small className="settings-field-help">영문, 숫자, 하이픈(-), 밑줄(_)만 사용할 수 있습니다.</small>
-            </div>
+            <SettingsField
+              label="페이지 주소"
+              prefix="/"
+              value={basicDraft.slug}
+              disabled={readOnly}
+              onChange={(value) => setBasicDraft((draft) => ({ ...draft, slug: value.replace(/[^a-zA-Z0-9-_]/g, '') }))}
+              placeholder="page"
+              hint="영문, 숫자, 하이픈(-), 밑줄(_)만 사용할 수 있습니다."
+            />
             {clientAdminMode && (
-              <div className="settings-field-with-help settings-grid-span-2">
-                <Field label="관리 계정" value={authUser?.email || ''} disabled onChange={() => {}} />
-                <small className="settings-field-help">관리 계정은 이 화면에서 변경할 수 없습니다.</small>
-              </div>
+              <SettingsField
+                label="관리 계정"
+                value={authUser?.email || ''}
+                disabled
+                hint="관리 계정은 이 화면에서 변경할 수 없습니다."
+                className="settings-grid-span-2"
+              />
             )}
           </div>
         </section>
