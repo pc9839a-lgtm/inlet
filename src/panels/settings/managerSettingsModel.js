@@ -1,17 +1,30 @@
 import { MANAGER_PERMISSION_TABS } from '../../lib/authContext.js';
 
 export const MANAGER_TAB_LABELS = {
-  edit: '\uD3B8\uC9D1',
-  style: '\uC2A4\uD0C0\uC77C',
-  inbox: '\uC811\uC218\uD568',
-  stats: '\uD1B5\uACC4',
-  settings: '\uC124\uC815',
+  edit: '편집',
+  style: '스타일',
+  inbox: '접수함',
+  stats: '통계',
+  settings: '설정',
 };
 
 export const MANAGER_ACCESS_PRESETS = [
   {
+    id: 'admin',
+    label: '관리자',
+    description: '모든 메뉴 보기·편집',
+    access: {
+      edit: { read: true, write: true },
+      style: { read: true, write: true },
+      inbox: { read: true, write: true },
+      stats: { read: true, write: true },
+      settings: { read: true, write: true },
+    },
+  },
+  {
     id: 'editor',
-    label: '\uD3B8\uC9D1 \uB2F4\uB2F9',
+    label: '콘텐츠 관리자',
+    description: '페이지 편집과 스타일 관리',
     access: {
       edit: { read: true, write: true },
       style: { read: true, write: true },
@@ -22,7 +35,8 @@ export const MANAGER_ACCESS_PRESETS = [
   },
   {
     id: 'lead',
-    label: '\uC811\uC218 \uB2F4\uB2F9',
+    label: '문의 관리자',
+    description: '접수 관리와 통계 조회',
     access: {
       edit: { read: false, write: false },
       style: { read: false, write: false },
@@ -33,7 +47,8 @@ export const MANAGER_ACCESS_PRESETS = [
   },
   {
     id: 'viewer',
-    label: '\uC870\uD68C \uC804\uC6A9',
+    label: '조회 전용',
+    description: '접수와 통계 보기만 허용',
     access: {
       edit: { read: false, write: false },
       style: { read: false, write: false },
@@ -45,21 +60,22 @@ export const MANAGER_ACCESS_PRESETS = [
 ];
 
 export function managerLabel(manager) {
-  return manager.name || manager.email || '\uC0C8 \uB9E4\uB2C8\uC800';
+  return manager.name || manager.email || '새 매니저';
 }
 
 export function managerAccessSummary(manager) {
   const access = manager.access || {};
   const editable = MANAGER_PERMISSION_TABS.filter((tab) => access[tab]?.write).map((tab) => MANAGER_TAB_LABELS[tab]);
   const viewOnly = MANAGER_PERMISSION_TABS.filter((tab) => access[tab]?.read && !access[tab]?.write).map((tab) => MANAGER_TAB_LABELS[tab]);
-  if (manager.status !== 'active') return '\uBE44\uD65C\uC131';
-  if (editable.length) return '\uD3B8\uC9D1 ' + editable.join(', ');
-  if (viewOnly.length) return '\uBCF4\uAE30 ' + viewOnly.join(', ');
-  return '\uAD8C\uD55C \uC5C6\uC74C';
+  if (manager.status !== 'active') return '비활성';
+  if (editable.length === MANAGER_PERMISSION_TABS.length) return '관리자';
+  if (editable.length) return `편집 ${editable.join(', ')}`;
+  if (viewOnly.length) return `보기 ${viewOnly.join(', ')}`;
+  return '권한 없음';
 }
 
 export function managerInviteState(manager, inviteUrl = '') {
-  if (manager.acceptedAt) return '\uAC00\uC785 \uC644\uB8CC';
-  if (inviteUrl) return '\uCD08\uB300 \uB9C1\uD06C \uC788\uC74C';
-  return '\uCD08\uB300 \uC804';
+  if (manager.acceptedAt) return '가입 완료';
+  if (inviteUrl) return '초대 대기';
+  return '초대 전';
 }
