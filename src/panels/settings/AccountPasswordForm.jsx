@@ -16,7 +16,6 @@ export default function AccountPasswordForm({ changing, onChangePassword, onSend
           onChange={(value) => setPasswordField('code', value)}
           placeholder="인증 코드"
         />
-        <div />
         <SettingsField
           label="새 비밀번호"
           name="pagero-new-password"
