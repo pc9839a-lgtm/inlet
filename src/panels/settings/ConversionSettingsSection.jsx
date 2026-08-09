@@ -15,34 +15,27 @@ export default function ConversionSettingsSection({
   updateIntegrations,
 }) {
   return (
-    <SettingsSection id="conversion" className="settings-conversion-card">
-      <div className="settings-stack settings-conversion-grid">
-        <ConversionCodeFields
-          conversionLocked={conversionLocked}
-          hasConversionValue={hasConversionValue}
-          page={page}
-          saveConversionValues={saveConversionValues}
-          setConversionLocked={setConversionLocked}
-          updateConversionMeta={updateConversionMeta}
-        />
-        {showConversionToggles && (
-          <section className="settings-surface settings-conversion-toggles">
-            <header className="settings-surface-head simple">
-              <div>
-                <strong>전환 기록 방식</strong>
-                <small>입력된 전환 코드에 맞춰 기록할 채널을 켜거나 끕니다.</small>
-              </div>
-            </header>
-            <div className="settings-toggle-list">
-              <ConversionToggleList
-                conversionReady={conversionReady}
-                integrations={integrations}
-                updateIntegrations={updateIntegrations}
-              />
-            </div>
-          </section>
-        )}
-      </div>
+    <SettingsSection id="conversion" className="settings-conversion-card settings-flat-section">
+      <ConversionCodeFields
+        conversionLocked={conversionLocked}
+        hasConversionValue={hasConversionValue}
+        page={page}
+        saveConversionValues={saveConversionValues}
+        setConversionLocked={setConversionLocked}
+        updateConversionMeta={updateConversionMeta}
+      />
+      {showConversionToggles && (
+        <div className="settings-flat-block settings-conversion-toggles">
+          <div className="settings-flat-block-head"><strong>기록 채널</strong></div>
+          <div className="settings-toggle-list">
+            <ConversionToggleList
+              conversionReady={conversionReady}
+              integrations={integrations}
+              updateIntegrations={updateIntegrations}
+            />
+          </div>
+        </div>
+      )}
     </SettingsSection>
   );
 }
