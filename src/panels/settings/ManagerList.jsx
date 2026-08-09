@@ -19,9 +19,19 @@ export default function ManagerList({
   setManagerPreset,
   updateManager,
 }) {
+  const hasManagers = managerDraft.length > 0;
+
   return (
     <div className="manager-list">
-      {managerDraft.length === 0 && <ManagerEmptyState addManager={addManager} locked={locked} />}
+      {hasManagers && (
+        <div className="manager-list-head" aria-hidden="true">
+          <span>매니저</span>
+          <span>권한</span>
+          <span>상태</span>
+          <span />
+        </div>
+      )}
+      {!hasManagers && <ManagerEmptyState addManager={addManager} locked={locked} />}
       {managerDraft.map((manager, index) => (
         <ManagerCard
           key={manager.id || index}
