@@ -1,4 +1,4 @@
-import { CreditCard, RefreshCw, ShieldCheck } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import SettingsSection from './SettingsSection.jsx';
 import useAccountFinance from './useAccountFinance.js';
 
@@ -27,15 +27,15 @@ function statusLabel(value = '') {
 }
 
 function channelLabel(value = '') {
-  const labels = { web: '웹 결제', google_play: 'Google Play', mixed: '통합' };
-  return labels[String(value || '').toLowerCase()] || '결제 채널';
+  const labels = { web: '웹', google_play: 'Google Play', mixed: '통합' };
+  return labels[String(value || '').toLowerCase()] || '-';
 }
 
 function subscriptionFor(finance, service) {
   return (finance?.subscriptions || []).find((item) => item.service === service) || null;
 }
 
-function PlanRow({ name, description, price, current, included, busy, onClick, badge = '' }) {
+function PlanRow({ name, price, current, included, busy, onClick, badge = '' }) {
   return (
     <div className={`billing-plan-row ${current || included ? 'current' : ''}`}>
       <div className="billing-plan-copy">
@@ -45,7 +45,6 @@ function PlanRow({ name, description, price, current, included, busy, onClick, b
           {current && <span className="settings-status-badge success">이용 중</span>}
           {included && <span className="settings-status-badge success">포함</span>}
         </div>
-        <small>{description}</small>
       </div>
       <div className="billing-plan-price">
         <b>{price}</b>
@@ -53,11 +52,11 @@ function PlanRow({ name, description, price, current, included, busy, onClick, b
       </div>
       <button
         type="button"
-        className={current || included ? 'settings-secondary-button' : 'settings-primary-button'}
+        className={current || included ? 'settings-secondary-button compact' : 'settings-primary-button compact'}
         disabled={current || included || busy}
         onClick={onClick}
       >
-        {busy ? '이동 중' : current ? '현재 요금제' : included ? '통합권 포함' : '변경'}
+        {busy ? '이동 중' : current ? '현재' : included ? '포함' : '변경'}
       </button>
     </div>
   );
@@ -82,151 +81,99 @@ export default function BillingSettingsSection({ authUser }) {
   };
 
   return (
-    <SettingsSection id="billing" className="settings-billing-section">
-      <div className="settings-stack">
-        <section className="settings-surface billing-summary-surface">
-          <div className="settings-surface-head">
-            <div className="settings-icon-title">
-              <span className="settings-icon-box"><CreditCard size={19} aria-hidden="true" /></span>
-              <div>
-                <strong>현재 이용 상태</strong>
-                <small>{finance?.account?.email || authUser?.email || '현재 계정'}</small>
-              </div>
+    <SettingsSection id="billing" className="settings-billing-section settings-flat-section">
+      <div className="settings-flat-block">
+        <div className="settings-flat-block-head">
+          <strong>현재 이용</strong>
+          <button type="button" className="settings-secondary-button compact" onClick={refresh} disabled={loading}>
+            <RefreshCw size={14} aria-hidden="true" /> 새로고침
+          </button>
+        </div>
+        <div className="settings-compact-rows">
+          <div className="settings-compact-row"><span>페이지로</span><strong>{bundleClassic ? '클래식 · 통합권 포함' : pageroSubscription?.planName || '무료'}</strong><em>{pageroSubscription?.nextBillingAt ? dateLabel(pageroSubscription.nextBillingAt) : '-'}</em></div>
+          <div className="settings-compact-row"><span>콜태그</span><strong>{bundleActive ? '통합권' : '미이용'}</strong><em>{calltagSubscription?.nextBillingAt ? dateLabel(calltagSubscription.nextBillingAt) : '-'}</em></div>
+          <div className="settings-compact-row"><span>SSL</span><strong>{sslIncluded ? '프로 포함' : sslEnabled ? '이용 중' : '미이용'}</strong><em>{sslIncluded ? '포함' : sslEnabled ? '1,000원/월' : '-'}</em></div>
+        </div>
+      </div>
+
+      {error && <p className="settings-message error" role="alert">{error}</p>}
+
+      {loading && !finance ? (
+        <div className="settings-loading">불러오는 중</div>
+      ) : (
+        <>
+          <div className="settings-flat-block">
+            <div className="settings-flat-block-head"><strong>페이지로 요금제</strong></div>
+            <div className="billing-plan-list">
+              {pageroPlans.map((plan) => {
+                const included = bundleClassic && plan.code === 'pagero_monthly';
+                const current = isPageroCurrent(plan);
+                return (
+                  <PlanRow
+                    key={plan.code}
+                    name={plan.name}
+                    price={money(plan.amountKrw)}
+                    current={current && !included}
+                    included={included}
+                    busy={busy === `pagero:${plan.code}`}
+                    onClick={() => checkout('pagero', plan.code)}
+                  />
+                );
+              })}
             </div>
-            <button type="button" className="settings-secondary-button compact" onClick={refresh} disabled={loading}>
-              <RefreshCw size={15} aria-hidden="true" /> 새로고침
+          </div>
+
+          <div className="settings-flat-block">
+            <div className="settings-flat-block-head"><strong>콜태그 통합권</strong></div>
+            <div className="billing-plan-list">
+              <PlanRow
+                name="통합권"
+                price={money(calltagBundle?.amountKrw || 6000)}
+                current={bundleActive}
+                busy={busy === 'calltag:all_monthly'}
+                onClick={() => checkout('calltag', 'all_monthly')}
+                badge="페이지로 클래식 · 전화관리 · 문자자동화"
+              />
+            </div>
+          </div>
+
+          <div className="settings-flat-block settings-flat-row">
+            <div><strong>SSL 관리</strong><span className="settings-flat-value">{sslIncluded ? '프로 포함' : '1,000원/월'}</span></div>
+            <button
+              type="button"
+              className={sslEnabled || sslIncluded ? 'settings-secondary-button compact' : 'settings-primary-button compact'}
+              disabled={sslEnabled || sslIncluded || busy === 'domain:pagero_domain_monthly'}
+              onClick={() => checkout('domain', 'pagero_domain_monthly')}
+            >
+              {sslIncluded ? '포함' : sslEnabled ? '이용 중' : '신청'}
             </button>
           </div>
 
-          <div className="billing-current-grid">
-            <div>
-              <span>페이지로</span>
-              <strong>{bundleClassic ? '클래식 · 통합권 포함' : pageroSubscription?.planName || '무료'}</strong>
-              <small>{pageroSubscription?.nextBillingAt ? `다음 결제 ${dateLabel(pageroSubscription.nextBillingAt)}` : '별도 결제 일정 없음'}</small>
-            </div>
-            <div>
-              <span>콜태그</span>
-              <strong>{bundleActive ? '통합권 이용 중' : '미이용'}</strong>
-              <small>{calltagSubscription?.nextBillingAt ? `다음 결제 ${dateLabel(calltagSubscription.nextBillingAt)}` : '통합권 결제 없음'}</small>
-            </div>
-            <div>
-              <span>HTTPS · SSL</span>
-              <strong>{sslIncluded ? '프로 포함' : sslEnabled ? '이용 중' : '미이용'}</strong>
-              <small>{sslIncluded ? '추가 비용 없음' : sslEnabled ? '월 1,000원' : '선택 부가서비스'}</small>
-            </div>
-          </div>
-        </section>
-
-        {error && <p className="settings-message error" role="alert">{error}</p>}
-
-        {loading && !finance ? (
-          <div className="settings-loading">결제 정보를 불러오는 중입니다.</div>
-        ) : (
-          <>
-            <section className="settings-surface billing-group">
-              <div className="settings-surface-head simple">
-                <div>
-                  <strong>페이지로 요금제</strong>
-                  <small>현재 상태를 확인한 뒤 필요한 플랜으로 변경합니다.</small>
+          <div className="settings-flat-block">
+            <div className="settings-flat-block-head"><strong>최근 구독</strong></div>
+            {history.length ? (
+              <div className="billing-history-list" role="table" aria-label="최근 구독 기록">
+                <div className="billing-history-head" role="row">
+                  <span role="columnheader">상품</span>
+                  <span role="columnheader">채널</span>
+                  <span role="columnheader">상태</span>
+                  <span role="columnheader">다음 결제/만료</span>
                 </div>
-              </div>
-              <div className="billing-plan-list">
-                {pageroPlans.map((plan) => {
-                  const included = bundleClassic && plan.code === 'pagero_monthly';
-                  const current = isPageroCurrent(plan);
-                  return (
-                    <PlanRow
-                      key={plan.code}
-                      name={plan.name}
-                      description={plan.description}
-                      price={money(plan.amountKrw)}
-                      current={current && !included}
-                      included={included}
-                      busy={busy === `pagero:${plan.code}`}
-                      onClick={() => checkout('pagero', plan.code)}
-                    />
-                  );
-                })}
-              </div>
-            </section>
-
-            <section className="settings-surface billing-group calltag-bundle-group">
-              <div className="settings-surface-head simple">
-                <div>
-                  <strong>콜태그 통합권</strong>
-                  <small>페이지로 웹에서는 통합권 하나만 판매합니다.</small>
-                </div>
-              </div>
-              <div className="billing-plan-list">
-                <PlanRow
-                  name="통합권"
-                  description="페이지로 클래식 + 콜태그 전화관리 + 문자자동화"
-                  price={money(calltagBundle?.amountKrw || 6000)}
-                  current={bundleActive}
-                  busy={busy === 'calltag:all_monthly'}
-                  onClick={() => checkout('calltag', 'all_monthly')}
-                  badge="통합"
-                />
-              </div>
-              <div className="billing-bundle-chips" aria-label="콜태그 통합권 포함 서비스">
-                <span>페이지로 클래식</span>
-                <span>전화관리</span>
-                <span>문자자동화</span>
-              </div>
-            </section>
-
-            <section className="settings-surface billing-addon-row">
-              <div className="settings-icon-title">
-                <span className="settings-icon-box"><ShieldCheck size={19} aria-hidden="true" /></span>
-                <div>
-                  <strong>HTTPS · SSL 관리</strong>
-                  <small>도메인 연결은 무료이며 인증서 발급·갱신 관리만 유료입니다.</small>
-                </div>
-              </div>
-              <div className="billing-addon-action">
-                <b>{sslIncluded ? '포함' : '1,000원'}{!sslIncluded && <span>/월</span>}</b>
-                <button
-                  type="button"
-                  className={sslEnabled || sslIncluded ? 'settings-secondary-button' : 'settings-primary-button'}
-                  disabled={sslEnabled || sslIncluded || busy === 'domain:pagero_domain_monthly'}
-                  onClick={() => checkout('domain', 'pagero_domain_monthly')}
-                >
-                  {sslIncluded ? '프로 포함' : sslEnabled ? '이용 중' : '신청'}
-                </button>
-              </div>
-            </section>
-
-            <section className="settings-surface billing-history-surface">
-              <div className="settings-surface-head simple">
-                <div>
-                  <strong>구독 기록</strong>
-                  <small>최근 구독 상태와 결제 채널을 확인합니다.</small>
-                </div>
-              </div>
-              {history.length ? (
-                <div className="billing-history-list" role="table" aria-label="최근 구독 기록">
-                  <div className="billing-history-head" role="row">
-                    <span role="columnheader">상품</span>
-                    <span role="columnheader">채널</span>
-                    <span role="columnheader">상태</span>
-                    <span role="columnheader">다음 결제/만료</span>
+                {history.map((item) => (
+                  <div className="billing-history-row" role="row" key={`${item.id}-${item.updatedAt}`}>
+                    <strong role="cell">{item.planName}</strong>
+                    <span role="cell">{channelLabel(item.channel)}</span>
+                    <span role="cell">{statusLabel(item.status)}</span>
+                    <span role="cell">{dateLabel(item.nextBillingAt || item.expiresAt)}</span>
                   </div>
-                  {history.map((item) => (
-                    <div className="billing-history-row" role="row" key={`${item.id}-${item.updatedAt}`}>
-                      <strong role="cell">{item.planName}</strong>
-                      <span role="cell">{channelLabel(item.channel)}</span>
-                      <span role="cell">{statusLabel(item.status)}</span>
-                      <span role="cell">{dateLabel(item.nextBillingAt || item.expiresAt)}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="settings-empty-copy">아직 구독 기록이 없습니다.</p>
-              )}
-            </section>
-          </>
-        )}
-      </div>
+                ))}
+              </div>
+            ) : (
+              <p className="settings-empty-copy">구독 기록 없음</p>
+            )}
+          </div>
+        </>
+      )}
     </SettingsSection>
   );
 }
