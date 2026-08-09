@@ -24,14 +24,17 @@ export default function ManagerOwnershipTransfer({
           <span>클라이언트</span>
           <strong>{ownership.clientEmail || '없음'}</strong>
         </div>
-        <button type="button" className="manager-fold-btn" onClick={() => setShowTransfer(!showTransfer)}>소유권이전</button>
+        <button type="button" className="manager-fold-btn" onClick={() => setShowTransfer(!showTransfer)}>
+          {showTransfer ? '소유권 이전 닫기' : '소유권 이전'}
+        </button>
       </div>
 
       {showTransfer && (
-        <div className="ownership-transfer-box">
-          <div>
-            <strong>소유권이전</strong>
-            <p>매니저를 선택해 요청하면 내부 관리자가 최종 승인합니다.</p>
+        <div className="ownership-transfer-box settings-danger-zone-lite">
+          <div className="ownership-transfer-copy">
+            <span>민감한 권한</span>
+            <strong>소유권 이전</strong>
+            <p>대상 매니저를 선택해 요청하면 내부 관리자의 최종 승인 후 소유권이 변경됩니다.</p>
           </div>
           <div className="ownership-transfer-controls">
             <select value={transferManagerId} onChange={(event) => setTransferManagerId(event.target.value)} disabled={!eligibleTransferManagers.length}>
@@ -40,7 +43,7 @@ export default function ManagerOwnershipTransfer({
                 <option key={manager.id} value={manager.id}>{managerLabel(manager)} · {manager.email}</option>
               ))}
             </select>
-            <button type="button" onClick={requestOwnershipTransferPersisted} disabled={!eligibleTransferManagers.length}>요청</button>
+            <button type="button" className="settings-danger-button" onClick={requestOwnershipTransferPersisted} disabled={!eligibleTransferManagers.length}>이전 요청</button>
           </div>
           {transferRequest?.status && (
             <div className={`ownership-transfer-status status-${transferRequest.status}`}>
@@ -50,7 +53,7 @@ export default function ManagerOwnershipTransfer({
                 <small>{ownershipTransferBillingLabel(transferRequest.billingClearanceStatus)} · {transferRequest.requestedAt ? String(transferRequest.requestedAt).slice(0, 10) : '날짜 없음'}</small>
               </div>
               {['requested', 'pending-admin-approval'].includes(transferRequest.status) && (
-                <button type="button" onClick={cancelOwnershipTransfer}>취소</button>
+                <button type="button" className="settings-secondary-button compact" onClick={cancelOwnershipTransfer}>요청 취소</button>
               )}
             </div>
           )}
