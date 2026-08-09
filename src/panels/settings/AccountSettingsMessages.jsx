@@ -1,8 +1,8 @@
 export default function AccountSettingsMessages({ error, notice }) {
   return (
-    <>
-      {notice && <p className="account-settings-notice">{notice}</p>}
-      {error && <p className="account-settings-error">{error}</p>}
-    </>
+    <div className="account-settings-messages" aria-live="polite">
+      {notice && <p className="settings-message" role="status">{notice}</p>}
+      {error && <p className="settings-message error" role="alert">{error}</p>}
+    </div>
   );
 }
