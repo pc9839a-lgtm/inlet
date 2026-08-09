@@ -1,0 +1,332 @@
+/* PageRo settings v6 — fix spacing, ownership clipping and SEO image preview cropping. */
+@media (min-width: 900px) {
+  /* Shared rhythm: keep every settings section on the same vertical system. */
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .settings-section-body {
+    overflow: visible !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .settings-flat-block {
+    padding-top: 20px !important;
+    padding-bottom: 20px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .settings-flat-block-head {
+    min-height: 40px !important;
+    margin-bottom: 12px !important;
+  }
+
+  /* PAGE BASIC — same label column, same row height, same action spacing. */
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .page-basic-settings-card {
+    --settings-row-label: 144px;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .page-basic-settings-card .settings-section-body {
+    padding: 0 20px !important;
+    overflow: visible !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .page-basic-settings-card .settings-form-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0 !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .page-basic-settings-card .settings-field-with-help {
+    min-height: 68px !important;
+    padding: 8px 0 !important;
+    margin: 0 !important;
+    border-bottom: 1px solid var(--s-line) !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .page-basic-settings-card .settings-control-group {
+    min-height: 52px !important;
+    display: grid !important;
+    grid-template-columns: var(--settings-row-label) minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 20px !important;
+    margin: 0 !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .page-basic-settings-card .settings-control-group > span {
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+    font-weight: 750 !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .page-basic-settings-card :is(input, textarea, select) {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 48px !important;
+    height: 48px !important;
+    margin: 0 !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .page-basic-settings-card .prefix-field {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: 20px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .page-basic-settings-card .prefix-field > em {
+    width: 20px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: var(--s-muted) !important;
+    font-size: 18px !important;
+    line-height: 1 !important;
+    font-style: normal !important;
+    text-align: center !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .page-basic-settings-card .settings-action-bar {
+    min-height: 68px !important;
+    margin: 0 !important;
+    padding: 14px 0 12px !important;
+    border-top: 1px solid var(--s-line) !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .page-basic-settings-card .settings-action-bar button {
+    min-width: 88px !important;
+    min-height: 44px !important;
+    margin: 0 !important;
+  }
+
+  /* MANAGERS — remove oversized empty state and keep ownership controls fully visible. */
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .manager-access-card .settings-section-body {
+    padding: 0 20px !important;
+    overflow: visible !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .manager-access-card .settings-flat-block {
+    overflow: visible !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .manager-access-card .settings-flat-block + .settings-flat-block {
+    margin-top: 0 !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .manager-access-card .manager-list {
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .manager-access-card .manager-empty-state.compact {
+    width: 100% !important;
+    min-height: 60px !important;
+    height: 60px !important;
+    max-height: 60px !important;
+    margin: 0 !important;
+    padding: 0 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: visible !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .manager-access-card .manager-empty-state.compact strong {
+    margin: 0 !important;
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .manager-access-card .manager-owner-summary.compact {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 56px !important;
+    height: auto !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) max-content !important;
+    align-items: stretch !important;
+    gap: 0 !important;
+    overflow: visible !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .manager-access-card .manager-owner-summary.compact > div {
+    min-width: 0 !important;
+    min-height: 56px !important;
+    height: auto !important;
+    padding: 8px 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    overflow: visible !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .manager-access-card .manager-owner-summary.compact > div :is(span, strong) {
+    min-width: 0 !important;
+    margin: 0 !important;
+    line-height: 1.4 !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .manager-access-card .manager-owner-summary.compact > div > span {
+    flex: 0 0 auto !important;
+    font-size: 13px !important;
+    font-weight: 750 !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .manager-access-card .manager-owner-summary.compact > div > strong {
+    flex: 1 1 auto !important;
+    font-size: 14px !important;
+    font-weight: 750 !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .manager-access-card .manager-owner-summary.compact .manager-fold-btn {
+    align-self: center !important;
+    justify-self: end !important;
+    min-width: 112px !important;
+    min-height: 42px !important;
+    height: 42px !important;
+    max-height: none !important;
+    margin: 7px 10px !important;
+    padding: 0 14px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: visible !important;
+    white-space: nowrap !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .manager-access-card .ownership-transfer-box,
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .manager-access-card .ownership-transfer-controls,
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .manager-access-card .ownership-transfer-status {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .manager-access-card .settings-action-bar {
+    min-height: 68px !important;
+    margin: 0 !important;
+    padding: 14px 0 12px !important;
+    border-top: 1px solid var(--s-line) !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .manager-access-card .settings-action-bar button {
+    min-width: 88px !important;
+    min-height: 44px !important;
+    margin: 0 !important;
+  }
+
+  /* SEO MEDIA — settings previews must show the whole uploaded image, never crop it. */
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .settings-seo-card .settings-seo-media-grid {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    align-items: start !important;
+    gap: 20px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .settings-seo-card .image-input {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .settings-seo-card .image-input > span {
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+    font-weight: 750 !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .settings-seo-card .image-box {
+    position: relative !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 160px !important;
+    min-height: 160px !important;
+    max-height: 160px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: #f8fafc !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .settings-seo-card .image-box > img {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+    transform: none !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .settings-seo-card .image-actions {
+    position: absolute !important;
+    right: 10px !important;
+    bottom: 10px !important;
+    z-index: 2 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin: 0 !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .settings-seo-card .image-actions button {
+    min-width: 48px !important;
+    min-height: 40px !important;
+    height: 40px !important;
+    margin: 0 !important;
+    padding: 0 12px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .settings-seo-card .image-input :is(.image-storage-note, small) {
+    max-width: 100% !important;
+    margin-top: 0 !important;
+    font-size: 13px !important;
+    line-height: 1.45 !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+}
+
+@media (min-width: 900px) and (max-width: 1120px) {
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .settings-seo-card .settings-seo-media-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .manager-access-card .manager-owner-summary.compact {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .settings-v4-flat .manager-access-card .manager-owner-summary.compact .manager-fold-btn {
+    grid-column: 1 / -1 !important;
+    justify-self: end !important;
+    margin-top: 8px !important;
+  }
+}
