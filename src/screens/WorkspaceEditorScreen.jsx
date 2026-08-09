@@ -23,6 +23,7 @@ import '../styles/stats-regression-repair-final.css';
 import '../styles/settings-system-v3.css';
 import '../styles/settings-workspace-shell.css';
 import '../styles/operations-height-parity-final.css';
+import '../styles/settings-compact-scroll-final.css';
 
 export default function WorkspaceEditorScreen({
   canUseBuilder,
