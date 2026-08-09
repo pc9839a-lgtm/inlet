@@ -64,6 +64,7 @@ export default function WorkspaceEditorScreen({
   const inboxWorkspace = !mobileOperationsOnly && tab === 'inbox';
   const statsWorkspace = !mobileOperationsOnly && tab === 'stats';
   const settingsWorkspace = !mobileOperationsOnly && tab === 'settings';
+  const operationsWorkspace = inboxWorkspace || statsWorkspace || settingsWorkspace;
 
   return (
     <div className={`builder-shell${canUseBuilder && startMode === 'template' && !mobileOperationsOnly ? ' template-intro-shell' : ''}${mobileOperationsOnly ? ' mobile-operations-shell' : ''}${inboxWorkspace ? ' inbox-workspace-shell' : ''}${statsWorkspace ? ' stats-dashboard-shell' : ''}${settingsWorkspace ? ' settings-workspace-shell' : ''}`}>
@@ -94,7 +95,7 @@ export default function WorkspaceEditorScreen({
         settingsPanelProps={settingsPanelProps}
       />
 
-      {!mobileOperationsOnly && !inboxWorkspace && !settingsWorkspace && <WorkspacePreviewPane
+      {!mobileOperationsOnly && !operationsWorkspace && <WorkspacePreviewPane
         page={page}
         previewUrl={previewUrl}
         previewPage={previewPage}
