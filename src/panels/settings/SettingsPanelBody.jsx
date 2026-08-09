@@ -42,7 +42,6 @@ const ADVANCED_NAV = [
 const ALL_NAV = [...PRIMARY_NAV, ...SERVICE_NAV, ...ADVANCED_NAV];
 const ADVANCED_IDS = new Set(ADVANCED_NAV.map(([id]) => id));
 const OWNER_ONLY_IDS = new Set(['billing', 'referral', 'partner', 'settlement']);
-const ACCOUNT_SCOPE_IDS = new Set(['account', 'billing', 'referral', 'partner', 'settlement']);
 
 function SettingsNavGroup({ label, items, selectedSection, selectSection }) {
   return (
@@ -103,9 +102,6 @@ export default function SettingsPanelBody({
   })();
   const [selectedSection, setSelectedSection] = useState(initialSection);
   const selectedLabel = ALL_NAV.find(([id]) => id === selectedSection)?.[1] || '계정 정보';
-  const selectedScope = ACCOUNT_SCOPE_IDS.has(selectedSection)
-    ? (authUser?.email || '계정')
-    : `/${page.slug || 'page'}`;
 
   const selectSection = (id) => {
     setSelectedSection(id);
@@ -125,7 +121,7 @@ export default function SettingsPanelBody({
   const primaryItems = PRIMARY_NAV.filter(([id]) => id !== 'managers' || canManageProjectUsers);
 
   return (
-    <div className="settings-v3-root">
+    <div className="settings-v3-root settings-v4-flat">
       <aside className="settings-v3-sidebar">
         <header className="settings-sidebar-head">
           <strong>설정</strong>
@@ -143,9 +139,8 @@ export default function SettingsPanelBody({
 
       <main className="settings-v3-main">
         <div className="settings-v3-content-wrap">
-          <header className="settings-page-head">
+          <header className="settings-page-head settings-page-head-compact">
             <h1>{selectedLabel}</h1>
-            <span className="settings-page-slug">{selectedScope}</span>
           </header>
 
           <div className="settings-v3-content">
