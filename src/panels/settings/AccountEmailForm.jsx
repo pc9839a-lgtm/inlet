@@ -10,6 +10,8 @@ export default function AccountEmailForm({
   setEmailField,
   verifying,
 }) {
+  const emailReady = !!emailDraft.email.trim();
+
   return (
     <form className="account-password-form" onSubmit={onChangeEmail}>
       <div className="settings-form-grid">
@@ -52,12 +54,13 @@ export default function AccountEmailForm({
       <SettingsActionBar
         note={verifying ? '새 이메일로 인증 코드를 전송하고 있습니다.' : '먼저 새 이메일 인증 코드를 받아주세요.'}
         secondaryLabel={verifying ? '전송 중' : '인증 코드 받기'}
+        secondaryDisabled={verifying || !emailReady}
         onSecondary={onSendCode}
         primaryLabel="이메일 변경"
         primaryBusyLabel="변경 중"
         primaryBusy={changing}
         primaryType="submit"
-        primaryDisabled={!emailDraft.email.trim() || !emailDraft.code.trim()}
+        primaryDisabled={!emailReady || !emailDraft.code.trim()}
         onPrimary={onChangeEmail}
       />
     </form>
