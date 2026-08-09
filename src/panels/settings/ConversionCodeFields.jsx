@@ -1,7 +1,10 @@
+import SettingsActionBar from './SettingsActionBar.jsx';
+import SettingsField from './SettingsField.jsx';
+
 const CONVERSION_FIELDS = [
   {
     key: 'ads',
-    label: 'Google Ads \uC804\uD658',
+    label: 'Google Ads 전환',
     placeholder: 'AW-123456789/AbCdEf',
     multiline: true,
   },
@@ -12,7 +15,7 @@ const CONVERSION_FIELDS = [
   },
   {
     key: 'naver',
-    label: 'Naver \uC804\uD658 ID',
+    label: 'Naver 전환 ID',
     placeholder: 's_abcdef1234',
   },
   {
@@ -21,23 +24,6 @@ const CONVERSION_FIELDS = [
     placeholder: '987654321',
   },
 ];
-
-function ConversionCodeInput({ field, locked, page, updateConversionMeta }) {
-  const value = page.meta?.[field.key] || '';
-  const commonProps = {
-    value,
-    disabled: locked,
-    onChange: (event) => updateConversionMeta({ [field.key]: event.target.value }),
-    placeholder: field.placeholder,
-  };
-
-  return (
-    <label className="settings-conversion-field">
-      <span>{field.label}</span>
-      {field.multiline ? <textarea {...commonProps} /> : <input {...commonProps} />}
-    </label>
-  );
-}
 
 export default function ConversionCodeFields({
   conversionLocked,
@@ -48,27 +34,32 @@ export default function ConversionCodeFields({
   updateConversionMeta,
 }) {
   return (
-    <div className="settings-full settings-conversion-values">
-      {CONVERSION_FIELDS.map((field) => (
-        <ConversionCodeInput
-          key={field.key}
-          field={field}
-          locked={conversionLocked}
-          page={page}
-          updateConversionMeta={updateConversionMeta}
-        />
-      ))}
-      <div className="settings-conversion-actions">
-        {conversionLocked ? (
-          <button type="button" className="test-connection-btn" onClick={() => setConversionLocked(false)}>
-            {'\uC218\uC815'}
-          </button>
-        ) : (
-          <button type="button" className="save-connection-btn" disabled={!hasConversionValue} onClick={saveConversionValues}>
-            {'\uC800\uC7A5'}
-          </button>
-        )}
+    <section className="settings-surface settings-conversion-values">
+      <header className="settings-surface-head simple">
+        <div>
+          <strong>전환 코드</strong>
+          <small>광고 플랫폼에서 발급받은 전환 ID를 입력합니다.</small>
+        </div>
+      </header>
+      <div className="settings-form-grid">
+        {CONVERSION_FIELDS.map((field) => (
+          <SettingsField
+            key={field.key}
+            label={field.label}
+            textarea={field.multiline}
+            value={page.meta?.[field.key] || ''}
+            disabled={conversionLocked}
+            placeholder={field.placeholder}
+            onChange={(value) => updateConversionMeta({ [field.key]: value })}
+          />
+        ))}
       </div>
-    </div>
+      <SettingsActionBar
+        note="사용하는 전환 플랫폼의 ID만 입력하면 됩니다."
+        primaryLabel={conversionLocked ? '전환 코드 수정' : '전환 코드 저장'}
+        primaryDisabled={!conversionLocked && !hasConversionValue}
+        onPrimary={conversionLocked ? () => setConversionLocked(false) : saveConversionValues}
+      />
+    </section>
   );
 }
