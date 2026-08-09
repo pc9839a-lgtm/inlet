@@ -16,7 +16,6 @@ export default function AccountProfileForm({ email, onLogout, onSave, profileDra
           label="이메일"
           value={email}
           disabled
-          hint="이메일 변경은 ‘이메일 변경’ 탭에서 할 수 있습니다."
           placeholder="email@example.com"
         />
         <SettingsField
@@ -32,10 +31,9 @@ export default function AccountProfileForm({ email, onLogout, onSave, profileDra
       </div>
 
       <SettingsActionBar
-        note="계정 기본 정보를 관리합니다."
         secondaryLabel="로그아웃"
         onSecondary={onLogout}
-        primaryLabel="계정 저장"
+        primaryLabel="저장"
         primaryBusyLabel="저장 중"
         primaryBusy={saving}
         primaryType="submit"
