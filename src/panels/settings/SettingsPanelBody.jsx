@@ -44,22 +44,6 @@ const ADVANCED_IDS = new Set(ADVANCED_NAV.map(([id]) => id));
 const OWNER_ONLY_IDS = new Set(['billing', 'referral', 'partner', 'settlement']);
 const ACCOUNT_SCOPE_IDS = new Set(['account', 'billing', 'referral', 'partner', 'settlement']);
 
-const SECTION_HELP = {
-  account: '계정 프로필, 이메일, 비밀번호를 관리합니다.',
-  basic: '페이지 이름과 공개 주소를 관리합니다.',
-  domain: '개인 도메인과 DNS, HTTPS를 연결합니다.',
-  managers: '매니저 초대와 접근 권한을 관리합니다.',
-  billing: '현재 이용 중인 서비스와 요금제를 관리합니다.',
-  referral: '추천인 코드와 추천 혜택을 확인합니다.',
-  partner: '파트너 코드와 수익 현황을 관리합니다.',
-  settlement: '정산 예정·확정 금액과 정산 정보를 확인합니다.',
-  seo: '검색 결과와 공유 링크에 노출될 정보를 설정합니다.',
-  tracking: '분석 및 광고 추적 코드를 관리합니다.',
-  conversion: '문의·예약 등 전환 이벤트를 설정합니다.',
-  duplicate: '현재 페이지를 새 주소로 복제합니다.',
-  reset: '페이지 설정을 초기 상태로 되돌립니다.',
-};
-
 function SettingsNavGroup({ label, items, selectedSection, selectSection }) {
   return (
     <nav className="settings-nav-group" aria-label={`${label} 설정`}>
@@ -160,10 +144,7 @@ export default function SettingsPanelBody({
       <main className="settings-v3-main">
         <div className="settings-v3-content-wrap">
           <header className="settings-page-head">
-            <div>
-              <h1>{selectedLabel}</h1>
-              <p>{SECTION_HELP[selectedSection]}</p>
-            </div>
+            <h1>{selectedLabel}</h1>
             <span className="settings-page-slug">{selectedScope}</span>
           </header>
 
