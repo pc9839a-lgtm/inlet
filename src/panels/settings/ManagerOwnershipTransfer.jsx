@@ -15,7 +15,7 @@ export default function ManagerOwnershipTransfer({
 }) {
   return (
     <>
-      <div className="manager-owner-summary compact">
+      <div className="manager-owner-summary">
         <div>
           <span>마스터</span>
           <strong>{ownership.ownerEmail || authUser?.email || '미지정'}</strong>
