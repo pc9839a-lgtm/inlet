@@ -81,36 +81,6 @@ function SettingsNavGroup({ label, items, selectedSection, selectSection }) {
   );
 }
 
-function MobileSettingsNav({ primaryItems, ownerFinanceAccess, clientAdminMode, selectedSection, selectSection }) {
-  return (
-    <div className="settings-mobile-nav">
-      <div>
-        <span>설정</span>
-        <strong>{ALL_NAV.find(([id]) => id === selectedSection)?.[1] || '계정 정보'}</strong>
-      </div>
-      <select
-        aria-label="설정 메뉴 선택"
-        value={selectedSection}
-        onChange={(event) => selectSection(event.target.value)}
-      >
-        <optgroup label="기본">
-          {primaryItems.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
-        </optgroup>
-        {ownerFinanceAccess && (
-          <optgroup label="서비스">
-            {SERVICE_NAV.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
-          </optgroup>
-        )}
-        {!clientAdminMode && (
-          <optgroup label="고급">
-            {ADVANCED_NAV.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
-          </optgroup>
-        )}
-      </select>
-    </div>
-  );
-}
-
 export default function SettingsPanelBody({
   authUser,
   canDuplicatePage,
@@ -172,14 +142,6 @@ export default function SettingsPanelBody({
 
   return (
     <div className="settings-v3-root">
-      <MobileSettingsNav
-        primaryItems={primaryItems}
-        ownerFinanceAccess={ownerFinanceAccess}
-        clientAdminMode={clientAdminMode}
-        selectedSection={selectedSection}
-        selectSection={selectSection}
-      />
-
       <aside className="settings-v3-sidebar">
         <header className="settings-sidebar-head">
           <strong>설정</strong>
