@@ -1,4 +1,5 @@
 @import './settings-flat-v4.css';
+@import './settings-flat-v4-forms.css';
 
 /* Final owner for operations scrolling and compact settings copy. */
 html:has(.builder-shell:is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-workspace-shell)),
