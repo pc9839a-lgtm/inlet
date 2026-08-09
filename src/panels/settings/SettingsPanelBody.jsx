@@ -123,11 +123,6 @@ export default function SettingsPanelBody({
   return (
     <div className="settings-v3-root settings-v4-flat">
       <aside className="settings-v3-sidebar">
-        <header className="settings-sidebar-head">
-          <strong>설정</strong>
-          <span>{page.title || '현재 페이지'}</span>
-        </header>
-
         <SettingsNavGroup label="기본" items={primaryItems} selectedSection={selectedSection} selectSection={selectSection} />
         {ownerFinanceAccess && (
           <SettingsNavGroup label="서비스" items={SERVICE_NAV} selectedSection={selectedSection} selectSection={selectSection} />
