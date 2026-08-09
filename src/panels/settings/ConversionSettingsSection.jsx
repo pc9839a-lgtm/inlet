@@ -7,25 +7,16 @@ export default function ConversionSettingsSection({
   conversionReady,
   hasConversionValue,
   integrations,
-  openSection,
   page,
   saveConversionValues,
   setConversionLocked,
-  setOpenSection,
   showConversionToggles,
   updateConversionMeta,
   updateIntegrations,
 }) {
   return (
-    <SettingsSection
-      id="conversion"
-      title="전환 설정"
-      description="접수와 예약 완료 기준"
-      openSection={openSection}
-      setOpenSection={setOpenSection}
-      className="settings-conversion-card"
-    >
-      <div className="settings-conversion-grid">
+    <SettingsSection id="conversion" className="settings-conversion-card">
+      <div className="settings-stack settings-conversion-grid">
         <ConversionCodeFields
           conversionLocked={conversionLocked}
           hasConversionValue={hasConversionValue}
@@ -35,11 +26,21 @@ export default function ConversionSettingsSection({
           updateConversionMeta={updateConversionMeta}
         />
         {showConversionToggles && (
-          <ConversionToggleList
-            conversionReady={conversionReady}
-            integrations={integrations}
-            updateIntegrations={updateIntegrations}
-          />
+          <section className="settings-surface settings-conversion-toggles">
+            <header className="settings-surface-head simple">
+              <div>
+                <strong>전환 기록 방식</strong>
+                <small>입력된 전환 코드에 맞춰 기록할 채널을 켜거나 끕니다.</small>
+              </div>
+            </header>
+            <div className="settings-toggle-list">
+              <ConversionToggleList
+                conversionReady={conversionReady}
+                integrations={integrations}
+                updateIntegrations={updateIntegrations}
+              />
+            </div>
+          </section>
         )}
       </div>
     </SettingsSection>
