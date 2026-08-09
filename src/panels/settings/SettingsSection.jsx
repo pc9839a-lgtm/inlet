@@ -1,11 +1,11 @@
 import SettingsActionBar from './SettingsActionBar.jsx';
 
 const ACTION_LABELS = {
-  basic: ['페이지 저장', '페이지 수정'],
-  managers: ['권한 저장', '권한 수정'],
-  seo: ['SEO 저장', 'SEO 수정'],
-  tracking: ['추적 코드 저장', '추적 코드 수정'],
-  conversion: ['전환 설정 저장', '전환 설정 수정'],
+  basic: ['저장', '수정'],
+  managers: ['저장', '수정'],
+  seo: ['저장', '수정'],
+  tracking: ['저장', '수정'],
+  conversion: ['저장', '수정'],
 };
 
 export default function SettingsSection({
@@ -18,7 +18,7 @@ export default function SettingsSection({
   className = '',
   saveLabel,
   editLabel,
-  actionNote = '변경사항을 확인한 뒤 저장하세요.',
+  actionNote = '',
 }) {
   const labels = ACTION_LABELS[id] || ['저장', '수정'];
 
