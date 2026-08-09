@@ -1,359 +1,456 @@
-/* Final settings ownership: full-width basic/manager panels and separated service finance screens. */
+/* Canonical settings layout for the current v4 settings DOM.
+   Keep this file as the single final owner for settings spacing/layout. */
 
-.settings-panel.settings-ops-root,
-.settings-panel.settings-ops-root .settings-ops-layout,
-.settings-panel.settings-ops-root .settings-ops-main,
-.settings-panel.settings-ops-root .settings-ops-sections,
-.settings-panel.settings-ops-root .settings-ops-single-section,
-.settings-panel.settings-ops-root .settings-ops-single-section > .settings-section {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: none !important;
+.settings-v4-flat,
+.settings-v4-flat * {
+  box-sizing: border-box;
 }
 
-.settings-panel.settings-ops-root .settings-ops-main {
-  padding-inline: clamp(20px, 2.6vw, 44px) !important;
+.settings-v4-flat {
+  --settings-label-width: 144px;
+  --settings-control-height: 48px;
+  --settings-row-height: 68px;
 }
 
-/* Page basic: use the available width instead of leaving a small strip at the top. */
-.settings-panel .page-basic-settings-card .settings-section-body {
-  min-height: 250px !important;
-  align-content: start !important;
-  padding: 28px 30px 30px !important;
+.settings-v4-flat .settings-section,
+.settings-v4-flat .settings-section-body,
+.settings-v4-flat .settings-v3-content,
+.settings-v4-flat .settings-flat-block,
+.settings-v4-flat .settings-form-grid {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
-.settings-panel .page-basic-settings-grid {
-  width: 100% !important;
-  display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  gap: 24px !important;
+.settings-v4-flat .settings-section-body,
+.settings-v4-flat .settings-flat-block,
+.settings-v4-flat .manager-list,
+.settings-v4-flat .manager-owner-summary,
+.settings-v4-flat .ownership-transfer-box {
+  overflow: visible;
 }
 
-.settings-panel .page-basic-settings-grid .field {
-  min-height: 76px !important;
-  display: grid !important;
-  grid-template-columns: 118px minmax(0, 1fr) !important;
-  align-items: center !important;
-  gap: 16px !important;
-  padding: 0 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  overflow: visible !important;
+.settings-v4-flat .settings-flat-block {
+  margin: 0;
+  padding: 20px 0;
 }
 
-.settings-panel .page-basic-settings-grid .field > span {
-  color: #111827 !important;
-  font-size: 14px !important;
-  font-weight: 900 !important;
+.settings-v4-flat .settings-flat-block + .settings-flat-block {
+  border-top: 1px solid #e2e6eb;
 }
 
-.settings-panel .page-basic-settings-grid :is(input, .prefix-field) {
-  width: 100% !important;
-  min-height: 56px !important;
-  height: 56px !important;
-  border-radius: 9px !important;
-  font-size: 16px !important;
+.settings-v4-flat .settings-flat-block-head {
+  min-height: 40px;
+  margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
-.settings-panel .page-basic-settings-card .settings-section-actions {
-  width: 100% !important;
-  grid-column: 1 / -1 !important;
-  margin-top: 22px !important;
-  padding-top: 22px !important;
-  border-top: 1px solid #e2e6eb !important;
+.settings-v4-flat .settings-flat-block-head > strong {
+  margin: 0;
+  color: #111827;
+  font-size: 16px;
+  line-height: 1.4;
+  font-weight: 900;
 }
 
-.settings-panel .page-basic-settings-card .settings-section-actions button {
-  min-width: 112px !important;
-  height: 48px !important;
-  min-height: 48px !important;
-  border-radius: 9px !important;
-  font-size: 14px !important;
+.settings-v4-flat .settings-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  margin-left: 6px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 800;
 }
 
-/* Manager: master card, empty state and first-add action all share one horizontal edge. */
-.settings-panel .manager-access-card .settings-section-body {
-  width: 100% !important;
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) !important;
-  align-content: start !important;
-  gap: 18px !important;
-  padding: 26px 30px 30px !important;
+/* --------------------------------------------------------------------------
+   PAGE BASIC
+   -------------------------------------------------------------------------- */
+
+.settings-v4-flat .page-basic-settings-card .settings-section-body {
+  padding: 0 20px;
 }
 
-.settings-panel .manager-access-card :is(.manager-section-tools, .manager-owner-summary, .ownership-transfer-box, .manager-list, .manager-empty-state) {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: none !important;
-  grid-column: 1 / -1 !important;
+.settings-v4-flat .page-basic-settings-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
 }
 
-.settings-panel .manager-list {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) !important;
-  gap: 16px !important;
+.settings-v4-flat .page-basic-settings-grid .settings-field-with-help {
+  min-height: var(--settings-row-height);
+  margin: 0;
+  padding: 8px 0;
+  border-bottom: 1px solid #e2e6eb;
 }
 
-.settings-panel .manager-empty-state,
-.settings-panel .manager-empty-state.compact {
-  min-height: 156px !important;
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) auto !important;
-  grid-template-rows: auto auto !important;
-  align-items: center !important;
-  gap: 8px 24px !important;
-  padding: 28px 30px !important;
-  border-radius: 14px !important;
+.settings-v4-flat .page-basic-settings-grid .settings-control-group {
+  min-height: 52px;
+  margin: 0;
+  display: grid;
+  grid-template-columns: var(--settings-label-width) minmax(0, 1fr);
+  align-items: center;
+  gap: 20px;
 }
 
-.settings-panel .manager-empty-state strong {
-  grid-column: 1 !important;
-  grid-row: 1 !important;
-  font-size: 20px !important;
+.settings-v4-flat .page-basic-settings-grid .settings-control-group > span {
+  margin: 0;
+  padding: 0;
+  color: #111827;
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 800;
 }
 
-.settings-panel .manager-empty-state p {
-  grid-column: 1 !important;
-  grid-row: 2 !important;
-  display: block !important;
-  margin: 0 !important;
-  font-size: 14px !important;
+.settings-v4-flat .page-basic-settings-grid :is(input, textarea, select) {
+  width: 100%;
+  min-width: 0;
+  height: var(--settings-control-height);
+  min-height: var(--settings-control-height);
+  margin: 0;
+  font-size: 16px;
 }
 
-.settings-panel .manager-empty-state button,
-.settings-panel .manager-empty-state.compact button {
-  grid-column: 2 !important;
-  grid-row: 1 / 3 !important;
-  width: auto !important;
-  min-width: 142px !important;
-  min-height: 48px !important;
-  border-radius: 9px !important;
-  font-size: 14px !important;
+.settings-v4-flat .page-basic-settings-grid .prefix-field {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
 }
 
-/* Service settings: larger panels and consistent horizontal rhythm. */
-.settings-panel :is(.account-finance-settings, .account-referral-settings, .account-partner-settings, .account-settlement-settings) {
-  width: 100% !important;
-  display: grid !important;
-  gap: 18px !important;
+.settings-v4-flat .page-basic-settings-grid .prefix-field > em {
+  width: 20px;
+  margin: 0;
+  padding: 0;
+  color: #64748b;
+  font-size: 18px;
+  line-height: 1;
+  font-style: normal;
+  text-align: center;
 }
 
-.settings-panel .account-finance-head {
-  min-height: 68px !important;
-  padding: 0 0 18px !important;
-  border-bottom: 1px solid #e2e6eb !important;
+.settings-v4-flat .page-basic-settings-card .settings-action-bar,
+.settings-v4-flat .manager-access-card .settings-action-bar {
+  min-height: 68px;
+  margin: 0;
+  padding: 14px 0 12px;
+  border-top: 1px solid #e2e6eb;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
-.settings-panel .account-finance-head > div {
-  gap: 12px !important;
+.settings-v4-flat .settings-action-bar-note:empty {
+  display: none;
 }
 
-.settings-panel .account-finance-head strong {
-  font-size: 19px !important;
+.settings-v4-flat .settings-action-bar-buttons {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.settings-panel .account-finance-head small {
-  font-size: 13px !important;
+.settings-v4-flat .settings-action-bar-buttons button {
+  min-width: 88px;
+  min-height: 44px;
+  margin: 0;
+  font-size: 14px;
 }
 
-.settings-panel .billing-service-grid {
-  width: 100% !important;
-  display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  gap: 22px !important;
+/* --------------------------------------------------------------------------
+   MANAGER ACCESS
+   -------------------------------------------------------------------------- */
+
+.settings-v4-flat .manager-access-card {
+  overflow: visible;
 }
 
-.settings-panel .billing-service-panel {
-  min-width: 0 !important;
-  border: 1px solid #d9dee5 !important;
-  border-radius: 12px !important;
-  overflow: hidden !important;
-  background: #fff !important;
+.settings-v4-flat .manager-access-card .settings-section-body {
+  padding: 0 20px;
+  overflow: visible;
 }
 
-.settings-panel .billing-service-panel > header {
-  min-height: 84px !important;
-  padding: 18px 20px !important;
+.settings-v4-flat .manager-access-card .manager-list {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  overflow: visible;
 }
 
-.settings-panel .billing-service-panel > header strong {
-  font-size: 18px !important;
+.settings-v4-flat .manager-access-card .manager-empty-state {
+  width: 100%;
+  min-width: 0;
+  min-height: 60px;
+  height: 60px;
+  margin: 0;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  overflow: visible;
 }
 
-.settings-panel .billing-plan-row {
-  min-height: 88px !important;
-  grid-template-columns: minmax(0, 1fr) auto 104px !important;
-  gap: 18px !important;
-  padding: 16px 20px !important;
+.settings-v4-flat .manager-access-card .manager-empty-state > strong {
+  margin: 0;
+  color: #111827;
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 800;
 }
 
-.settings-panel .billing-plan-row > div > strong {
-  font-size: 15px !important;
+.settings-v4-flat .manager-access-card .manager-owner-summary {
+  width: 100%;
+  min-width: 0;
+  min-height: 64px;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 124px;
+  align-items: stretch;
+  gap: 0;
+  border: 1px solid #dbe3ef;
+  border-radius: 12px;
+  background: #f8fafc;
+  overflow: visible;
 }
 
-.settings-panel .billing-plan-row > b {
-  font-size: 15px !important;
-  white-space: nowrap !important;
+.settings-v4-flat .manager-access-card .manager-owner-summary > div {
+  min-width: 0;
+  min-height: 64px;
+  margin: 0;
+  padding: 0 16px;
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  border-right: 1px solid #dbe3ef;
+  overflow: visible;
 }
 
-.settings-panel .billing-plan-row > button {
-  width: 104px !important;
-  min-height: 42px !important;
-  border-radius: 8px !important;
+.settings-v4-flat .manager-access-card .manager-owner-summary > div > span {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
-.settings-panel :is(.referral-signup-policy, .referral-registration-status, .partner-code-panel, .partner-performance-panel, .settlement-link-panel) {
-  width: 100% !important;
-  min-width: 0 !important;
-  padding: 22px 24px !important;
-  border: 1px solid #d9dee5 !important;
-  border-radius: 12px !important;
-  background: #fff !important;
+.settings-v4-flat .manager-access-card .manager-owner-summary > div > strong {
+  min-width: 0;
+  margin: 0;
+  color: #111827;
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 800;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
-.settings-panel .referral-signup-policy {
-  display: grid !important;
-  grid-template-columns: auto minmax(0, 1fr) !important;
-  align-items: center !important;
-  gap: 16px !important;
+.settings-v4-flat .manager-access-card .manager-fold-btn {
+  width: 104px;
+  min-width: 104px;
+  height: 42px;
+  min-height: 42px;
+  margin: 10px;
+  align-self: center;
+  justify-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border-radius: 9px;
+  white-space: nowrap;
+  overflow: visible;
 }
 
-.settings-panel .referral-signup-policy div {
-  display: grid !important;
-  gap: 7px !important;
+.settings-v4-flat .manager-access-card .ownership-transfer-box {
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  max-height: none;
+  margin: 12px 0 0;
+  overflow: visible;
 }
 
-.settings-panel .referral-signup-policy strong,
-.settings-panel .settlement-link-panel strong {
-  font-size: 17px !important;
-  line-height: 1.45 !important;
+.settings-v4-flat .manager-access-card .ownership-transfer-controls,
+.settings-v4-flat .manager-access-card .ownership-transfer-status {
+  min-width: 0;
+  max-width: 100%;
+  height: auto;
+  max-height: none;
+  overflow: visible;
 }
 
-.settings-panel .referral-registration-status,
-.settings-panel .partner-code-panel,
-.settings-panel .settlement-link-panel {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) auto !important;
-  align-items: center !important;
-  gap: 20px !important;
+.settings-v4-flat .manager-access-card .ownership-transfer-controls select {
+  min-width: 0;
+  font-size: 15px;
 }
 
-.settings-panel .referral-registration-status > div,
-.settings-panel .partner-code-panel > div,
-.settings-panel .settlement-link-panel > div {
-  min-width: 0 !important;
-  display: grid !important;
-  gap: 7px !important;
+/* --------------------------------------------------------------------------
+   SEO IMAGE PREVIEWS
+   -------------------------------------------------------------------------- */
+
+.settings-v4-flat .settings-seo-card .settings-seo-media-grid {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 20px;
 }
 
-.settings-panel .partner-code-panel > div > strong {
-  font-size: 28px !important;
-  letter-spacing: .04em !important;
+.settings-v4-flat .settings-seo-card .image-input {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: 10px;
 }
 
-.settings-panel :is(.partner-code-panel button, .partner-performance-panel a, .settlement-link-panel a) {
-  min-height: 46px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-  padding: 0 17px !important;
-  border: 1px solid #111827 !important;
-  border-radius: 9px !important;
-  background: #111827 !important;
-  color: #fff !important;
-  text-decoration: none !important;
-  font-size: 14px !important;
-  font-weight: 900 !important;
-  white-space: nowrap !important;
+.settings-v4-flat .settings-seo-card .image-input > span {
+  margin: 0;
+  color: #111827;
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 800;
 }
 
-.settings-panel .partner-performance-panel {
-  display: grid !important;
-  gap: 18px !important;
+.settings-v4-flat .settings-seo-card .image-box {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  height: 180px;
+  min-height: 180px;
+  margin: 0;
+  padding: 0;
+  border-radius: 12px;
+  background: #f8fafc;
+  overflow: hidden;
 }
 
-.settings-panel .partner-performance-panel > header {
-  display: flex !important;
-  align-items: center !important;
-  gap: 9px !important;
+.settings-v4-flat .settings-seo-card .image-box > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  margin: 0;
+  padding: 0;
+  display: block;
+  object-fit: contain;
+  object-position: center;
+  transform: none;
 }
 
-.settings-panel :is(.partner-performance-panel dl, .settlement-overview-panel) {
-  width: 100% !important;
-  display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap: 12px !important;
-  margin: 0 !important;
+.settings-v4-flat .settings-seo-card .image-actions {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
 }
 
-.settings-panel :is(.partner-performance-panel dl > div, .settlement-overview-panel > div) {
-  min-height: 104px !important;
-  display: grid !important;
-  align-content: center !important;
-  gap: 8px !important;
-  padding: 16px 18px !important;
-  border: 1px solid #e0e4e9 !important;
-  border-radius: 10px !important;
-  background: #f7f8fa !important;
+.settings-v4-flat .settings-seo-card .image-actions button {
+  min-width: 48px;
+  height: 40px;
+  min-height: 40px;
+  margin: 0;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
-.settings-panel :is(.partner-performance-panel dd, .settlement-overview-panel strong) {
-  margin: 0 !important;
-  color: #111827 !important;
-  font-size: 21px !important;
-  font-weight: 950 !important;
+.settings-v4-flat .settings-seo-card .image-input :is(.image-storage-note, small) {
+  max-width: 100%;
+  margin-top: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
-.settings-panel .partner-performance-panel > a {
-  justify-self: end !important;
+/* --------------------------------------------------------------------------
+   SERVICE PANELS — preserve current full-width finance layout.
+   -------------------------------------------------------------------------- */
+
+.settings-v4-flat :is(.account-finance-settings, .account-referral-settings, .account-partner-settings, .account-settlement-settings) {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: 18px;
 }
 
-@media (max-width: 980px) {
-  .settings-panel .page-basic-settings-grid,
-  .settings-panel .billing-service-grid {
-    grid-template-columns: minmax(0, 1fr) !important;
+.settings-v4-flat .billing-service-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.settings-v4-flat .billing-service-panel {
+  min-width: 0;
+  border: 1px solid #d9dee5;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.settings-v4-flat .billing-plan-row {
+  min-height: 72px;
+  grid-template-columns: minmax(0, 1fr) auto 104px;
+  gap: 18px;
+  padding: 14px 18px;
+}
+
+.settings-v4-flat :is(.referral-signup-policy, .referral-registration-status, .partner-code-panel, .partner-performance-panel, .settlement-link-panel) {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 1120px) {
+  .settings-v4-flat .settings-seo-card .settings-seo-media-grid,
+  .settings-v4-flat .billing-service-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .settings-panel :is(.partner-performance-panel dl, .settlement-overview-panel) {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
-}
-
-@media (max-width: 700px) {
-  .settings-panel.settings-ops-root .settings-ops-main {
-    padding-inline: 14px !important;
+  .settings-v4-flat .manager-access-card .manager-owner-summary {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .settings-panel .page-basic-settings-card .settings-section-body,
-  .settings-panel .manager-access-card .settings-section-body {
-    padding: 20px 16px 22px !important;
+  .settings-v4-flat .manager-access-card .manager-owner-summary > div {
+    border-right: 0;
+    border-bottom: 1px solid #dbe3ef;
   }
 
-  .settings-panel .page-basic-settings-grid .field,
-  .settings-panel .manager-empty-state,
-  .settings-panel .manager-empty-state.compact,
-  .settings-panel .referral-registration-status,
-  .settings-panel .partner-code-panel,
-  .settings-panel .settlement-link-panel,
-  .settings-panel .billing-plan-row {
-    grid-template-columns: minmax(0, 1fr) !important;
-  }
-
-  .settings-panel .manager-empty-state button,
-  .settings-panel .manager-empty-state.compact button {
-    grid-column: 1 !important;
-    grid-row: auto !important;
-    width: 100% !important;
-  }
-
-  .settings-panel :is(.partner-performance-panel dl, .settlement-overview-panel) {
-    grid-template-columns: minmax(0, 1fr) !important;
-  }
-
-  .settings-panel .billing-plan-row > button,
-  .settings-panel :is(.partner-code-panel button, .partner-performance-panel a, .settlement-link-panel a) {
-    width: 100% !important;
+  .settings-v4-flat .manager-access-card .manager-fold-btn {
+    justify-self: end;
+    margin: 10px;
   }
 }
