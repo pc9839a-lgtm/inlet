@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Check, Clipboard, Globe2, ShieldCheck, Trash2 } from 'lucide-react';
+import { Clipboard, Trash2 } from 'lucide-react';
 import SettingsSection from './SettingsSection.jsx';
 import useAccountFinance from './useAccountFinance.js';
 
@@ -33,18 +33,12 @@ function dnsRecordName(hostname = '') {
 }
 
 function domainState(savedDomain, savedHostname) {
-  if (!savedHostname) return { key: 'empty', label: '미연결', detail: '도메인을 입력하고 연결을 시작하세요.', step: 0 };
+  if (!savedHostname) return { key: 'empty', label: '미연결' };
   const status = String(savedDomain?.status || 'pending').toLowerCase();
-  if (['connected', 'active', 'verified', 'ready'].includes(status)) {
-    return { key: 'connected', label: '연결됨', detail: 'DNS 연결이 확인되었습니다.', step: 3 };
-  }
-  if (['error', 'failed', 'invalid'].includes(status)) {
-    return { key: 'error', label: '확인 필요', detail: 'DNS 레코드가 올바른지 확인하세요.', step: 1 };
-  }
-  if (['verifying', 'checking', 'processing'].includes(status)) {
-    return { key: 'verifying', label: '확인 중', detail: 'DNS 레코드를 확인하고 있습니다.', step: 2 };
-  }
-  return { key: 'pending', label: 'DNS 대기', detail: 'DNS 업체에 아래 CNAME 레코드를 등록하세요.', step: 1 };
+  if (['connected', 'active', 'verified', 'ready'].includes(status)) return { key: 'connected', label: '연결됨' };
+  if (['error', 'failed', 'invalid'].includes(status)) return { key: 'error', label: '확인 필요' };
+  if (['verifying', 'checking', 'processing'].includes(status)) return { key: 'verifying', label: '확인 중' };
+  return { key: 'pending', label: 'DNS 대기' };
 }
 
 async function copyText(value) {
@@ -125,112 +119,67 @@ export default function CustomDomainSettingsSection({ authUser, integrations, up
   };
 
   return (
-    <SettingsSection id="domain" className="settings-domain-section">
-      <div className="settings-stack">
-        <section className="settings-surface domain-dns-surface">
-          <div className="settings-surface-head">
-            <div>
-              <strong>1. DNS 설정</strong>
-              <small>도메인 연결 전에도 필요한 값을 먼저 확인할 수 있습니다.</small>
-            </div>
-            <button type="button" className="settings-secondary-button compact" onClick={copyDns}>
-              <Clipboard size={15} aria-hidden="true" /> DNS 복사
-            </button>
+    <SettingsSection id="domain" className="settings-domain-section settings-flat-section">
+      <div className="settings-flat-block">
+        <div className="settings-flat-block-head">
+          <strong>DNS</strong>
+          <button type="button" className="settings-secondary-button compact" onClick={copyDns}>
+            <Clipboard size={14} aria-hidden="true" /> 복사
+          </button>
+        </div>
+        <div className="domain-dns-grid" role="table" aria-label="개인 도메인 DNS 레코드">
+          <div className="domain-dns-head" role="row">
+            <span role="columnheader">유형</span>
+            <span role="columnheader">호스트</span>
+            <span role="columnheader">대상</span>
           </div>
-
-          <div className="domain-dns-grid" role="table" aria-label="개인 도메인 DNS 레코드">
-            <div className="domain-dns-head" role="row">
-              <span role="columnheader">유형</span>
-              <span role="columnheader">호스트</span>
-              <span role="columnheader">대상 주소</span>
-            </div>
-            <div className="domain-dns-row" role="row">
-              <code role="cell">CNAME</code>
-              <code role="cell">{recordName}</code>
-              <code role="cell">{DNS_TARGET}</code>
-            </div>
+          <div className="domain-dns-row" role="row">
+            <code role="cell">CNAME</code>
+            <code role="cell">{recordName}</code>
+            <code role="cell">{DNS_TARGET}</code>
           </div>
-
-          <p className="settings-help-line">
-            <Check size={15} aria-hidden="true" />
-            루트 도메인은 호스트를 <b>@</b>로 입력하고, 서브도메인은 입력한 주소에 맞춰 자동 표시됩니다.
-          </p>
-        </section>
-
-        <section className="settings-surface domain-connect-surface">
-          <div className="settings-surface-head">
-            <div className="settings-icon-title">
-              <span className="settings-icon-box"><Globe2 size={19} aria-hidden="true" /></span>
-              <div>
-                <strong>2. 도메인 연결</strong>
-                <small>도메인 연결 자체는 무료입니다.</small>
-              </div>
-            </div>
-            <span className="settings-status-badge success">무료</span>
-          </div>
-
-          <label className="settings-control-group">
-            <span>개인 도메인</span>
-            <div className="settings-inline-control domain-inline-control">
-              <input
-                type="text"
-                value={hostname}
-                onChange={(event) => setHostname(event.target.value)}
-                placeholder="example.com"
-                autoComplete="off"
-                spellCheck="false"
-                aria-invalid={hostnameInvalid}
-              />
-              <button type="button" className="settings-primary-button" onClick={saveDomain}>도메인 연결</button>
-              {savedHostname && (
-                <button type="button" className="settings-secondary-button" onClick={removeDomain}>
-                  <Trash2 size={15} aria-hidden="true" /> 해제
-                </button>
-              )}
-            </div>
-            {hostnameInvalid && <small className="settings-field-error">example.com 또는 www.example.com 형식으로 입력하세요.</small>}
-          </label>
-
-          <div className={`domain-state-card state-${status.key}`}>
-            <div>
-              <span>현재 상태</span>
-              <strong>{status.label}</strong>
-              <small>{status.detail}</small>
-            </div>
-            {savedHostname && <code>{savedHostname}</code>}
-          </div>
-
-          <div className="domain-steps" aria-label="도메인 연결 단계">
-            {['도메인 입력', 'DNS 등록', '확인 중', '연결 완료'].map((label, index) => (
-              <div key={label} className={index <= status.step ? 'active' : ''}>
-                <i aria-hidden="true">{index + 1}</i>
-                <span>{label}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className={`settings-surface domain-ssl-surface ${sslEnabled ? 'active' : ''}`}>
-          <div className="settings-icon-title">
-            <span className="settings-icon-box"><ShieldCheck size={19} aria-hidden="true" /></span>
-            <div>
-              <strong>3. HTTPS · SSL 관리</strong>
-              <small>{sslEnabled ? (sslIncludedByPlan ? '프로 요금제에 포함되어 있습니다.' : 'SSL 관리 이용 중입니다.') : '인증서 발급·자동 갱신·HTTPS 관리를 월 1,000원에 제공합니다.'}</small>
-            </div>
-          </div>
-          <div className="settings-row-action">
-            <span className={`settings-status-badge ${sslEnabled ? 'success' : ''}`}>{sslEnabled ? '적용' : '선택'}</span>
-            {!sslEnabled && !sslLoading && (
-              <button type="button" className="settings-primary-button" disabled={checkoutBusy} onClick={startSslCheckout}>
-                {checkoutBusy ? '이동 중' : 'SSL 신청'}
-              </button>
-            )}
-          </div>
-        </section>
-
-        {financeError && <p className="settings-message error" role="alert">{financeError}</p>}
-        {notice && <p className="settings-message" role="status">{notice}</p>}
+        </div>
       </div>
+
+      <div className="settings-flat-block">
+        <div className="settings-flat-block-head">
+          <strong>도메인</strong>
+          <span className={`settings-status-badge ${status.key === 'connected' ? 'success' : ''}`}>{status.label}</span>
+        </div>
+        <div className="settings-inline-control domain-inline-control">
+          <input
+            type="text"
+            value={hostname}
+            onChange={(event) => setHostname(event.target.value)}
+            placeholder="example.com"
+            autoComplete="off"
+            spellCheck="false"
+            aria-invalid={hostnameInvalid}
+          />
+          <button type="button" className="settings-primary-button" onClick={saveDomain}>연결</button>
+          {savedHostname && (
+            <button type="button" className="settings-secondary-button" onClick={removeDomain}>
+              <Trash2 size={14} aria-hidden="true" /> 해제
+            </button>
+          )}
+        </div>
+        {hostnameInvalid && <small className="settings-field-error">도메인 형식을 확인하세요.</small>}
+      </div>
+
+      <div className="settings-flat-block settings-flat-row">
+        <div>
+          <strong>SSL</strong>
+          <span className="settings-flat-value">{sslIncludedByPlan ? '프로 포함' : sslEnabled ? '이용 중' : '1,000원/월'}</span>
+        </div>
+        {!sslEnabled && !sslLoading && (
+          <button type="button" className="settings-primary-button compact" disabled={checkoutBusy} onClick={startSslCheckout}>
+            {checkoutBusy ? '이동 중' : '신청'}
+          </button>
+        )}
+      </div>
+
+      {financeError && <p className="settings-message error" role="alert">{financeError}</p>}
+      {notice && <p className="settings-message" role="status">{notice}</p>}
     </SettingsSection>
   );
 }
