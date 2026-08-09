@@ -1,23 +1,42 @@
 export default function ManagerDetailActions({
   copyInvite,
   createInvite,
+  disableManager,
   disabledManager,
   inviteUrl,
   loading,
   locked,
   menuExpanded,
+  removeManager,
   toggleMenu,
 }) {
   const inviteLabel = loading
-    ? '\uCC98\uB9AC \uC911'
+    ? '처리 중'
     : inviteUrl
-      ? '\uCD08\uB300 \uB9C1\uD06C \uBCF5\uC0AC'
-      : '\uCD08\uB300 \uB9C1\uD06C \uB9CC\uB4E4\uAE30';
+      ? '초대 링크 복사'
+      : '초대 링크 만들기';
 
   return (
     <div className="manager-detail-actions">
-      <button type="button" onClick={toggleMenu}>{menuExpanded ? '\uBA54\uB274 \uAD8C\uD55C \uB2EB\uAE30' : '\uBA54\uB274 \uAD8C\uD55C'}</button>
-      <button type="button" onClick={inviteUrl ? copyInvite : createInvite} disabled={locked || disabledManager || loading}>{inviteLabel}</button>
+      <div className="manager-detail-primary-actions">
+        <button type="button" className="settings-secondary-button" onClick={toggleMenu}>
+          {menuExpanded ? '메뉴 권한 닫기' : '메뉴 권한 설정'}
+        </button>
+        <button
+          type="button"
+          className="settings-secondary-button"
+          onClick={inviteUrl ? copyInvite : createInvite}
+          disabled={locked || disabledManager || loading}
+        >
+          {inviteLabel}
+        </button>
+      </div>
+      <div className="manager-detail-danger-actions">
+        {!disabledManager && (
+          <button type="button" className="settings-secondary-button" disabled={locked} onClick={disableManager}>비활성화</button>
+        )}
+        <button type="button" className="settings-danger-button" disabled={locked} onClick={removeManager}>매니저 삭제</button>
+      </div>
     </div>
   );
 }
