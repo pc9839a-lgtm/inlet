@@ -7,8 +7,10 @@ export default function SettingsActionBar({
   primaryType = 'button',
   onPrimary,
   secondaryLabel = '',
+  secondaryDisabled = false,
   onSecondary,
   dangerLabel = '',
+  dangerDisabled = false,
   onDanger,
 }) {
   return (
@@ -16,10 +18,10 @@ export default function SettingsActionBar({
       <span className="settings-action-bar-note">{note}</span>
       <div className="settings-action-bar-buttons">
         {dangerLabel && (
-          <button type="button" className="settings-danger-button" onClick={onDanger}>{dangerLabel}</button>
+          <button type="button" className="settings-danger-button" disabled={dangerDisabled} onClick={onDanger}>{dangerLabel}</button>
         )}
         {secondaryLabel && (
-          <button type="button" className="settings-secondary-button" onClick={onSecondary}>{secondaryLabel}</button>
+          <button type="button" className="settings-secondary-button" disabled={secondaryDisabled} onClick={onSecondary}>{secondaryLabel}</button>
         )}
         {onPrimary && (
           <button
