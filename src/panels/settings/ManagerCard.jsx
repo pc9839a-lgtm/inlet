@@ -31,48 +31,57 @@ export default function ManagerCard({
     <div className={['manager-card compact', disabledManager ? 'disabled' : ''].filter(Boolean).join(' ')}>
       <ManagerCardHeader
         disabledManager={disabledManager}
-        disableManager={() => disableManager(index)}
         expanded={expanded}
         inviteUrl={inviteUrl}
-        locked={locked}
         manager={manager}
-        removeManager={() => removeManager(index)}
         toggleExpanded={() => setExpandedManagerId(expanded ? '' : manager.id)}
       />
       {expanded && (
         <div className="manager-card-body">
-          <ManagerProfileFields
-            index={index}
-            locked={locked}
-            manager={manager}
-            updateManager={updateManager}
-          />
-          <ManagerPresetRow
-            disabledManager={disabledManager}
-            index={index}
-            locked={locked}
-            setManagerPreset={setManagerPreset}
-          />
+          <div className="manager-detail-section">
+            <div className="manager-subtitle">기본 정보</div>
+            <ManagerProfileFields
+              index={index}
+              locked={locked}
+              manager={manager}
+              updateManager={updateManager}
+            />
+          </div>
+
+          <div className="manager-detail-section">
+            <ManagerPresetRow
+              disabledManager={disabledManager}
+              index={index}
+              locked={locked}
+              setManagerPreset={setManagerPreset}
+            />
+          </div>
+
+          {menuExpanded && (
+            <div className="manager-detail-section">
+              <ManagerPermissionPanel
+                disabledManager={disabledManager}
+                index={index}
+                locked={locked}
+                manager={manager}
+                managerPermissionMode={managerPermissionMode}
+                setManagerPermissionMode={setManagerPermissionMode}
+              />
+            </div>
+          )}
+
           <ManagerDetailActions
             createInvite={() => createInvite(manager, index)}
             copyInvite={() => copyInvite(manager)}
+            disableManager={() => disableManager(index)}
             disabledManager={disabledManager}
             inviteUrl={inviteUrl}
             loading={loading}
             locked={locked}
             menuExpanded={menuExpanded}
+            removeManager={() => removeManager(index)}
             toggleMenu={() => setExpandedManagerMenuId(menuExpanded ? '' : manager.id)}
           />
-          {menuExpanded && (
-            <ManagerPermissionPanel
-              disabledManager={disabledManager}
-              index={index}
-              locked={locked}
-              manager={manager}
-              managerPermissionMode={managerPermissionMode}
-              setManagerPermissionMode={setManagerPermissionMode}
-            />
-          )}
         </div>
       )}
     </div>
