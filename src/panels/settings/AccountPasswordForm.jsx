@@ -42,6 +42,7 @@ export default function AccountPasswordForm({ changing, onChangePassword, onSend
       <SettingsActionBar
         note={verifying ? '인증 코드를 전송하고 있습니다.' : '인증 코드를 받은 뒤 새 비밀번호를 저장하세요.'}
         secondaryLabel={verifying ? '전송 중' : '인증 코드 받기'}
+        secondaryDisabled={verifying}
         onSecondary={onSendCode}
         primaryLabel="비밀번호 변경"
         primaryBusyLabel="변경 중"
