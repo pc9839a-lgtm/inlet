@@ -1,0 +1,123 @@
+/* Final owner for operations scrolling and compact settings copy. */
+html:has(.builder-shell:is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-workspace-shell)),
+body:has(.builder-shell:is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-workspace-shell)),
+#root:has(.builder-shell:is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-workspace-shell)) {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+}
+
+html body #root .builder-shell:is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-workspace-shell):not(.mobile-operations-shell) {
+  width: 100% !important;
+  height: 100dvh !important;
+  min-height: 0 !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+}
+
+html body #root .builder-shell:is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-workspace-shell) > .left-workspace {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+html body #root .builder-shell:is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-workspace-shell) .workspace-persistent-header {
+  flex: 0 0 auto !important;
+}
+
+html body #root .builder-shell:is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-workspace-shell) .work-panel {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-gutter: stable !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root {
+  height: auto !important;
+  min-height: calc(100dvh - 206px) !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-v3-main {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.inbox-workspace-shell .inbox-panel.simple-panel,
+html body #root .builder-shell.stats-dashboard-shell .stats-panel.simple-panel {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+/* Settings should read like a control panel, not a help article. */
+html body #root .builder-shell.settings-workspace-shell .settings-page-head {
+  align-items: center !important;
+  margin-bottom: 18px !important;
+  padding-bottom: 16px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-page-head h1 {
+  font-size: 24px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-page-head p,
+html body #root .builder-shell.settings-workspace-shell .settings-surface-head small,
+html body #root .builder-shell.settings-workspace-shell .account-finance-head small,
+html body #root .builder-shell.settings-workspace-shell .settings-action-bar-note:empty {
+  display: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-surface-head,
+html body #root .builder-shell.settings-workspace-shell .account-finance-head {
+  margin-bottom: 12px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-surface,
+html body #root .builder-shell.settings-workspace-shell .account-settings-card,
+html body #root .builder-shell.settings-workspace-shell .settings-seo-block,
+html body #root .builder-shell.settings-workspace-shell .ownership-transfer-box {
+  padding: 18px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-stack {
+  gap: 12px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-action-bar:has(.settings-action-bar-note:empty) {
+  justify-content: flex-end !important;
+}
+
+/* Keep only operational guidance: field formats, DNS targets, status, errors and destructive warnings. */
+html body #root .builder-shell.settings-workspace-shell :is(
+  .settings-field-help,
+  .settings-field-error,
+  .settings-help-line,
+  .domain-state-card small,
+  .settings-danger-copy p,
+  .ownership-transfer-copy p,
+  .settings-message,
+  .account-finance-message
+) {
+  display: block;
+}
+
+@media (max-width: 820px) {
+  html body #root .builder-shell.settings-workspace-shell .settings-v3-root {
+    min-height: calc(100dvh - 190px) !important;
+  }
+}
