@@ -24,12 +24,15 @@ function UploadStatus({ label, uploadState }) {
 export function ImageInputPreview({ label, value, disabled, uploadState, onEdit, onClear, variant = 'default' }) {
   const processing = uploadState?.status === 'processing';
   const assetVariant = variant === 'favicon' || variant === 'share';
-  const rootClass = `image-box image-box--${variant} single-plus ${value ? 'has-image' : 'is-empty'} ${processing ? 'is-processing' : ''}`;
 
   if (assetVariant) {
+    const frameStyle = variant === 'favicon'
+      ? { width: 96, height: 96 }
+      : { width: 'min(440px, 100%)', aspectRatio: '1200 / 630' };
+
     return (
-      <div className={`${rootClass} settings-asset-control`}>
-        <div className="settings-asset-frame">
+      <div className={`settings-asset-control settings-asset-control--${variant} ${value ? 'has-image' : 'is-empty'} ${processing ? 'is-processing' : ''}`}>
+        <div className="settings-asset-frame" style={frameStyle}>
           {value ? (
             <img src={value} alt="" />
           ) : (
@@ -39,7 +42,7 @@ export function ImageInputPreview({ label, value, disabled, uploadState, onEdit,
         </div>
         {value && (
           <div className="settings-asset-actions">
-            <button type="button" disabled={disabled} onClick={onEdit} aria-label={`${label} 수정`}>교체</button>
+            <button type="button" disabled={disabled} onClick={onEdit} aria-label={`${label} 교체`}>교체</button>
             <button type="button" disabled={disabled} onClick={onClear} aria-label={`${label} 삭제`}>삭제</button>
           </div>
         )}
@@ -47,6 +50,7 @@ export function ImageInputPreview({ label, value, disabled, uploadState, onEdit,
     );
   }
 
+  const rootClass = `image-box image-box--${variant} single-plus ${value ? 'has-image' : 'is-empty'} ${processing ? 'is-processing' : ''}`;
   return (
     <div className={rootClass}>
       {value ? (
