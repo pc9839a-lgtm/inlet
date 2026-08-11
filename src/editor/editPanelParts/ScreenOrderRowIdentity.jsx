@@ -13,7 +13,7 @@ export function ScreenOrderRowIdentity({ block, index, meta, open, onDragStart, 
   return (
     <>
       <div
-        className="drag screen-drag-handle"
+        className="screen-drag-handle"
         draggable
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
