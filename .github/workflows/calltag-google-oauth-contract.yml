@@ -1,0 +1,39 @@
+name: CallTag Google OAuth contract
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check endpoint syntax
+        run: |
+          node --check functions/api/call/google/_shared.js
+          node --check functions/api/call/google/start.js
+          node --check functions/api/call/google/callback.js
+          node --check functions/api/call/google/exchange.js
+      - name: Verify current-main imports and CallTag redirect contract
+        run: |
+          set -euo pipefail
+          test -f functions/api/call/_shared.js
+          test -f functions/api/auth/_auth.js
+          test -f server/storage/d1Adapter.mjs
+          grep -F "https://pagero.kr/api/call/google/callback" functions/api/call/google/_shared.js
+          grep -F "prompt: 'select_account'" functions/api/call/google/_shared.js
+          grep -F 'return `${scheme}://auth/google?' functions/api/call/google/_shared.js
+          grep -F "projectId: 'calllink'" functions/api/call/google/_shared.js
+          grep -F "returnScheme: url.searchParams.get('return_scheme') || 'calltag'" functions/api/call/google/start.js
+      - name: Import endpoints
+        run: |
+          node -e "Promise.all([import('./functions/api/call/google/start.js'),import('./functions/api/call/google/callback.js'),import('./functions/api/call/google/exchange.js')]).then(()=>console.log('calltag google oauth imports ok'))"
