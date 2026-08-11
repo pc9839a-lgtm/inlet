@@ -25,11 +25,11 @@ export function ScreenOrderRowActions({
 
   const menuItemStyle = {
     width: '100%',
-    minHeight: 36,
+    minHeight: 34,
     display: 'flex',
     alignItems: 'center',
-    gap: 8,
-    padding: '0 10px',
+    gap: 7,
+    padding: '0 9px',
     border: 0,
     borderRadius: 7,
     background: 'transparent',
@@ -39,27 +39,56 @@ export function ScreenOrderRowActions({
     textAlign: 'left',
   };
 
+  const quickActionStyle = {
+    width: 28,
+    minWidth: 28,
+    height: 28,
+    minHeight: 28,
+    borderRadius: 7,
+  };
+
   return (
     <div
       className="screen-row-actions"
       onClick={stop}
       style={{
-        width: 36,
-        minWidth: 36,
-        display: 'block',
+        width: 92,
+        minWidth: 92,
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, 28px)',
+        alignItems: 'center',
+        justifyContent: 'end',
+        gap: 4,
         position: 'relative',
-        justifySelf: 'end',
         overflow: 'visible',
       }}
     >
       <IconAction
-        onClick={() => setMenuOpen((open) => !open)}
-        title="화면 순서 메뉴"
-        aria-label={`${meta.label} 화면 순서 메뉴`}
-        aria-expanded={menuOpen}
-        style={{ width: 36, minWidth: 36, height: 36, minHeight: 36 }}
+        onClick={onMoveUp}
+        title={T.moveUp}
+        aria-label={`${meta.label} ${T.moveUp}`}
+        disabled={!canMoveUp}
+        style={quickActionStyle}
       >
-        <MoreHorizontal size={18} />
+        <ArrowUp size={15} />
+      </IconAction>
+      <IconAction
+        onClick={onMoveDown}
+        title={T.moveDown}
+        aria-label={`${meta.label} ${T.moveDown}`}
+        disabled={!canMoveDown}
+        style={quickActionStyle}
+      >
+        <ArrowDown size={15} />
+      </IconAction>
+      <IconAction
+        onClick={() => setMenuOpen((open) => !open)}
+        title="더보기"
+        aria-label={`${meta.label} 더보기`}
+        aria-expanded={menuOpen}
+        style={quickActionStyle}
+      >
+        <MoreHorizontal size={16} />
       </IconAction>
 
       {menuOpen && (
@@ -68,10 +97,10 @@ export function ScreenOrderRowActions({
           role="menu"
           style={{
             position: 'absolute',
-            top: 40,
+            top: 34,
             right: 0,
             zIndex: 200,
-            width: 142,
+            width: 118,
             display: 'grid',
             gap: 3,
             padding: 5,
@@ -81,16 +110,21 @@ export function ScreenOrderRowActions({
             boxShadow: '0 12px 30px rgba(17,24,39,.16)',
           }}
         >
-          <button type="button" role="menuitem" disabled={!canMoveUp} onClick={() => run(onMoveUp)} style={{ ...menuItemStyle, opacity: canMoveUp ? 1 : .4 }}>
-            <ArrowUp size={14} /> {T.moveUp}
-          </button>
-          <button type="button" role="menuitem" disabled={!canMoveDown} onClick={() => run(onMoveDown)} style={{ ...menuItemStyle, opacity: canMoveDown ? 1 : .4 }}>
-            <ArrowDown size={14} /> {T.moveDown}
-          </button>
-          <button type="button" role="menuitem" disabled={!canDuplicate} onClick={() => run(onDuplicate)} style={{ ...menuItemStyle, opacity: canDuplicate ? 1 : .4 }}>
+          <button
+            type="button"
+            role="menuitem"
+            disabled={!canDuplicate}
+            onClick={() => run(onDuplicate)}
+            style={{ ...menuItemStyle, opacity: canDuplicate ? 1 : .4 }}
+          >
             <Copy size={14} /> 복제
           </button>
-          <button type="button" role="menuitem" onClick={() => run(onRemove)} style={{ ...menuItemStyle, color: 'var(--product-danger)' }}>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => run(onRemove)}
+            style={{ ...menuItemStyle, color: 'var(--product-danger)' }}
+          >
             <Trash2 size={14} /> 삭제
           </button>
         </div>
