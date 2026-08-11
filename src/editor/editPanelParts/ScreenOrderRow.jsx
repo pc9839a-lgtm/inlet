@@ -29,11 +29,11 @@ export function ScreenOrderRow({
   return (
     <div
       id={`editor-block-${block.id}`}
-      className={`block-item screen-order-item ${open ? 'open selected' : ''} ${!block.visible ? 'muted' : ''} ${dragId === block.id ? 'dragging' : ''}`}
+      className={`screen-order-item${open ? ' is-open' : ''}${!block.visible ? ' is-hidden' : ''}${dragId === block.id ? ' is-dragging' : ''}`}
       data-order={index + 1}
       data-selected={open ? 'true' : 'false'}
     >
-      <div className="block-head screen-order-head" onClick={selectRow}>
+      <div className="screen-order-head" onClick={selectRow}>
         <ScreenOrderRowIdentity
           block={block}
           index={index}
@@ -58,6 +58,7 @@ export function ScreenOrderRow({
           onRemove={onRemove}
         />
       </div>
+
       {open && (
         <div className="screen-order-inline-editor" onClick={stop} onKeyDown={stop}>
           <SelectedBlockSettingsBody block={block} renderBlockEditor={renderBlockEditor} />
