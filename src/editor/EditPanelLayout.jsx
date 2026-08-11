@@ -2,7 +2,6 @@ import React from 'react';
 import { AddBlockDock } from './editPanelParts/AddBlockDock.jsx';
 import { PageGlobalOptions } from './editPanelParts/PageGlobalOptions.jsx';
 import { ScreenOrderList } from './editPanelParts/ScreenOrderList.jsx';
-import '../styles/edit-panel-tabs.css';
 
 export function EditPanelLayout({
   pageGlobalOptionsProps,
