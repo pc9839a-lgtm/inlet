@@ -10,7 +10,10 @@ export default function ManagerCard({
   const disabledManager = manager.status !== 'active';
 
   return (
-    <div className={['manager-card compact', disabledManager ? 'disabled' : '', expanded ? 'selected' : ''].filter(Boolean).join(' ')}>
+    <div
+      className={['manager-card compact', disabledManager ? 'disabled' : '', expanded ? 'selected' : ''].filter(Boolean).join(' ')}
+      style={{ height: 'auto', minHeight: 68 }}
+    >
       <ManagerCardHeader
         disabledManager={disabledManager}
         expanded={expanded}
