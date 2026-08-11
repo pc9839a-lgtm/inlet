@@ -1,0 +1,41 @@
+name: CallTag Google ID token live smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'functions/api/call/google/id-token.js'
+      - '.github/workflows/calltag-google-idtoken-live-smoke.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check endpoint syntax
+        run: node --check functions/api/call/google/id-token.js
+      - name: Wait for production route and verify rejection contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL='https://pagero.kr/api/call/google/id-token'
+          for attempt in $(seq 1 18); do
+            status="$(curl -sS -o body.json -w '%{http_code}' \
+              -H 'Content-Type: application/json' \
+              --data '{"idToken":"invalid","nonce":"invalid"}' "$URL" || true)"
+            echo "attempt=$attempt status=$status"
+            cat body.json || true
+            if [ "$status" = '400' ] || [ "$status" = '401' ]; then
+              grep -Eq 'GOOGLE_ID_TOKEN_INVALID|Google 로그인 토큰' body.json
+              exit 0
+            fi
+            sleep 10
+          done
+          echo '::error::CallTag Google ID token route is not live with the expected contract.'
+          exit 1
