@@ -1,6 +1,7 @@
-/* Page editor owner — CallTag product language. */
+/* PageRo edit workspace — single owner for editor layout, order rows and edit controls. */
+
 body .builder-shell:not(.mobile-operations-shell):not(.inbox-workspace-shell):not(.stats-dashboard-shell):not(.settings-workspace-shell) {
-  grid-template-columns: minmax(680px,720px) minmax(520px,1fr);
+  grid-template-columns: minmax(680px, 720px) minmax(520px, 1fr);
   background: var(--product-bg);
 }
 
@@ -14,32 +15,86 @@ body .builder-shell:not(.mobile-operations-shell):not(.inbox-workspace-shell):no
   width: 100%;
   max-width: 700px;
   margin: 0 auto;
-  padding: 14px 18px 48px;
+  padding: 14px 18px 96px;
+  overflow-x: hidden;
+}
+
+body .builder-shell .edit-layout,
+body .builder-shell .edit-layout * {
+  box-sizing: border-box;
 }
 
 body .builder-shell .edit-layout {
   width: 100%;
   min-width: 0;
+  display: grid;
+  gap: 10px;
 }
 
-body .builder-shell .edit-layout :is(.page-global-options-card,.screen-order-card) {
+/* Edit section tabs */
+body .builder-shell .edit-section-tabs {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  padding: 5px;
+  border: 1px solid var(--product-line);
+  border-radius: 10px;
+  background: #fff;
+}
+
+body .builder-shell .edit-section-tabs button {
+  min-width: 0;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--product-muted);
+  box-shadow: none;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+body .builder-shell .edit-section-tabs button:hover {
+  background: var(--product-soft);
+  color: var(--product-text);
+}
+
+body .builder-shell .edit-section-tabs button.active,
+body .builder-shell .edit-section-tabs button[aria-pressed='true'] {
+  background: var(--product-text);
+  color: #fff;
+}
+
+body .builder-shell .edit-section-panel {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Page option + screen order cards */
+body .builder-shell .edit-layout :is(.page-global-options-card, .screen-order-card) {
   width: 100%;
   min-width: 0;
   margin: 0;
   padding: 14px;
+  overflow: visible;
   border: 1px solid var(--product-line);
-  border-radius: var(--product-radius-card);
-  background: var(--product-panel);
+  border-radius: 12px;
+  background: #fff;
   box-shadow: none;
 }
 
-body .builder-shell .edit-layout :is(.page-global-options-title,.screen-order-title) {
+body .builder-shell .edit-layout :is(.page-global-options-title, .screen-order-title) {
   margin: 0 0 10px;
   padding: 0;
   border: 0;
 }
 
-body .builder-shell .edit-layout :is(.page-global-options-title,.screen-order-title) h2 {
+body .builder-shell .edit-layout :is(.page-global-options-title, .screen-order-title) h2 {
   margin: 0;
   color: var(--product-text);
   font-size: 15px;
@@ -56,28 +111,173 @@ body .builder-shell .edit-layout .screen-order-title p {
   font-weight: 750;
 }
 
-body .builder-shell .edit-layout .page-global-options-list,
-body .builder-shell .edit-layout .screen-order-list {
+body .builder-shell .edit-layout :is(.page-global-options-list, .screen-order-list) {
+  width: 100%;
+  min-width: 0;
   display: grid;
   gap: 7px;
 }
 
-body .builder-shell .edit-layout :is(.fixed-block-card,.edit-animation-card,.screen-order-item.block-item) {
+/* Screen order row: all controls are accounted for inside the row width. */
+body .builder-shell .edit-layout .screen-order-item.block-item {
+  width: 100%;
   min-width: 0;
   margin: 0;
+  overflow: visible;
   border: 1px solid var(--product-line);
   border-radius: 9px;
-  background: var(--product-panel);
+  background: #fff;
   box-shadow: none;
+}
+
+body .builder-shell .edit-layout .screen-order-item.block-item.open,
+body .builder-shell .edit-layout .screen-order-item.block-item[data-selected='true'] {
+  border-color: #9db4f5;
+  box-shadow: inset 3px 0 0 var(--product-accent);
+}
+
+body .builder-shell .edit-layout .screen-order-head.block-head {
+  width: 100%;
+  min-width: 0;
+  min-height: 56px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 42px 136px;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 8px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 8px;
+  background: #fff;
+}
+
+body .builder-shell .edit-layout .screen-order-item.block-item.open > .screen-order-head.block-head,
+body .builder-shell .edit-layout .screen-order-item.block-item[data-selected='true'] > .screen-order-head.block-head {
+  background: #f5f8ff;
+}
+
+body .builder-shell .edit-layout .screen-title-wrap {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 26px 18px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 7px;
+  overflow: hidden;
+}
+
+body .builder-shell .edit-layout .screen-title-wrap strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--product-text);
+  font-size: 13px;
+  line-height: 1.25;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body .builder-shell .edit-layout .screen-order-number {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--product-accent-soft);
+  color: var(--product-accent);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+body .builder-shell .edit-layout .screen-row-chevron {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  color: var(--product-muted);
+}
+
+body .builder-shell .edit-layout .screen-row-visibility {
+  width: 42px;
+  min-width: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+body .builder-shell .edit-layout .screen-row-visibility label,
+body .builder-shell .edit-layout .screen-row-visibility .switch {
+  margin: 0;
+}
+
+body .builder-shell .edit-layout .screen-row-actions {
+  width: 136px;
+  min-width: 136px;
+  display: grid;
+  grid-template-columns: repeat(4, 31px);
+  align-items: center;
+  justify-content: end;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
   overflow: visible;
 }
 
-body .builder-shell .edit-layout :is(.fixed-block-card.open,.screen-order-item.block-item.open,.screen-order-item.block-item[data-selected='true']) {
-  border-color: var(--product-line-strong);
-  box-shadow: 0 8px 20px rgba(17,24,39,.06);
+body .builder-shell .edit-layout :is(.screen-icon-action, .screen-drag-handle) {
+  width: 31px;
+  min-width: 31px;
+  height: 31px;
+  min-height: 31px;
+  display: inline-grid;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--product-line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--product-muted);
+  box-shadow: none;
 }
 
-body .builder-shell .edit-layout :is(.fixed-block-head,.edit-animation-head,.screen-order-head.block-head) {
+body .builder-shell .edit-layout .screen-drag-handle {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+}
+
+body .builder-shell .edit-layout .screen-icon-action:disabled {
+  opacity: .35;
+}
+
+body .builder-shell .edit-layout .screen-delete-action {
+  color: var(--product-danger);
+}
+
+body .builder-shell .edit-layout .screen-order-inline-editor {
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  overflow: visible;
+  border-top: 1px solid var(--product-line);
+  background: #f8fafc;
+  border-radius: 0 0 9px 9px;
+}
+
+/* Fixed/global editor cards */
+body .builder-shell .edit-layout :is(.fixed-block-card, .edit-animation-card) {
+  min-width: 0;
+  margin: 0;
+  overflow: visible;
+  border: 1px solid var(--product-line);
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: none;
+}
+
+body .builder-shell .edit-layout :is(.fixed-block-head, .edit-animation-head) {
   min-width: 0;
   min-height: 52px;
   align-items: center;
@@ -85,19 +285,18 @@ body .builder-shell .edit-layout :is(.fixed-block-head,.edit-animation-head,.scr
   padding: 7px 9px;
   border: 0;
   border-radius: 9px;
-  background: var(--product-panel);
+  background: #fff;
 }
 
-body .builder-shell .edit-layout :is(.fixed-block-card.open > .fixed-block-head,.screen-order-item.block-item.open > .screen-order-head.block-head,.screen-order-item.block-item[data-selected='true'] > .screen-order-head.block-head) {
+body .builder-shell .edit-layout :is(.fixed-block-card.open > .fixed-block-head, .edit-animation-card.open > .edit-animation-head) {
   background: var(--product-soft);
 }
 
-body .builder-shell .edit-layout :is(.fixed-block-copy strong,.edit-animation-head b,.screen-title-wrap strong) {
+body .builder-shell .edit-layout .fixed-block-copy strong,
+body .builder-shell .edit-layout .edit-animation-head b {
   color: var(--product-text);
   font-size: 13px;
-  line-height: 1.25;
   font-weight: 900;
-  letter-spacing: -.02em;
 }
 
 body .builder-shell .edit-layout .fixed-block-copy em {
@@ -111,59 +310,24 @@ body .builder-shell .edit-layout .fixed-block-copy em {
   white-space: nowrap;
 }
 
-body .builder-shell .edit-layout .screen-order-head.block-head {
-  grid-template-columns: 34px minmax(0,1fr) 46px auto;
-}
-
-body .builder-shell .edit-layout .screen-order-number {
-  width: 26px;
-  min-width: 26px;
-  height: 26px;
-  min-height: 26px;
-  display: grid;
-  place-items: center;
-  border-radius: 8px;
-  background: var(--product-accent-soft);
-  color: var(--product-accent);
-  font-size: 11px;
-  font-weight: 900;
-}
-
-body .builder-shell .edit-layout :is(.fixed-open-button,.screen-icon-action,.screen-drag-handle) {
-  width: 34px;
-  min-width: 34px;
-  height: 34px;
-  min-height: 34px;
-  display: inline-grid;
-  place-items: center;
-  border: 1px solid var(--product-line);
-  border-radius: 8px;
-  background: var(--product-panel);
-  color: var(--product-muted);
-  box-shadow: none;
-}
-
-body .builder-shell .edit-layout :is(.fixed-block-editor,.edit-animation-settings,.screen-order-inline-editor) {
+body .builder-shell .edit-layout :is(.fixed-block-editor, .edit-animation-settings) {
+  min-width: 0;
   padding: 12px;
   border-top: 1px solid var(--product-line);
-  background: var(--product-soft);
+  background: #f8fafc;
 }
 
-body .builder-shell .edit-layout .screen-order-inline-editor {
-  min-width: 0;
-  overflow: visible;
-}
-
+/* Block editor internals */
 body .builder-shell .edit-layout .block-editor-v2-header {
   min-width: 0;
   display: grid;
-  grid-template-columns: 30px minmax(0,1fr);
+  grid-template-columns: 30px minmax(0, 1fr);
   align-items: center;
   gap: 8px;
   padding: 9px 10px;
 }
 
-body .builder-shell .edit-layout :is(.block-editor-v2-icon,.editor-section-v2-icon) {
+body .builder-shell .edit-layout :is(.block-editor-v2-icon, .editor-section-v2-icon) {
   width: 24px;
   height: 24px;
   display: grid;
@@ -183,13 +347,13 @@ body .builder-shell .edit-layout .editor-section-v2-trigger {
   min-width: 0;
   min-height: 48px;
   display: grid;
-  grid-template-columns: 24px minmax(0,1fr) 24px;
+  grid-template-columns: 24px minmax(0, 1fr) 24px;
   align-items: center;
   gap: 8px;
   padding: 0 4px;
 }
 
-body .builder-shell .edit-layout :is(.editor-section-v2-copy strong,.editor-control-v2-copy strong) {
+body .builder-shell .edit-layout :is(.editor-section-v2-copy strong, .editor-control-v2-copy strong) {
   color: var(--product-text);
   font-size: 12px;
   font-weight: 900;
@@ -198,7 +362,7 @@ body .builder-shell .edit-layout :is(.editor-section-v2-copy strong,.editor-cont
 body .builder-shell .edit-layout .editor-section-v2-body {
   min-width: 0;
   display: grid;
-  gap: 12px;
+  gap: 11px;
   padding: 12px 4px 16px;
 }
 
@@ -207,13 +371,15 @@ body .builder-shell .edit-layout .editor-field-v2 {
   gap: 5px;
 }
 
-body .builder-shell .edit-layout .editor-field-v2 :is(input,select,textarea),
-body .builder-shell .edit-layout .field :is(input,select,textarea) {
+body .builder-shell .edit-layout .editor-field-v2 :is(input, select, textarea),
+body .builder-shell .edit-layout .field :is(input, select, textarea) {
   width: 100%;
   min-width: 0;
+  max-width: 100%;
+  margin: 0;
   border: 1px solid var(--product-line-strong);
-  border-radius: 9px;
-  background: var(--product-panel);
+  border-radius: 8px;
+  background: #fff;
   color: var(--product-text);
   box-shadow: none;
   font: inherit;
@@ -221,8 +387,8 @@ body .builder-shell .edit-layout .field :is(input,select,textarea) {
   outline: none;
 }
 
-body .builder-shell .edit-layout .editor-field-v2 :is(input,select),
-body .builder-shell .edit-layout .field :is(input,select) {
+body .builder-shell .edit-layout .editor-field-v2 :is(input, select),
+body .builder-shell .edit-layout .field :is(input, select) {
   min-height: 42px;
   padding: 0 10px;
 }
@@ -233,21 +399,23 @@ body .builder-shell .edit-layout .field textarea {
   padding: 9px 10px;
 }
 
-body .builder-shell .edit-layout :is(.editor-field-v2 input,.editor-field-v2 select,.editor-field-v2 textarea,.field input,.field select,.field textarea):focus {
-  border-color: #aeb8d3;
-  box-shadow: 0 0 0 3px rgba(49,94,231,.08);
+body .builder-shell .edit-layout :is(.editor-field-v2 input, .editor-field-v2 select, .editor-field-v2 textarea, .field input, .field select, .field textarea):focus {
+  border-color: #9aa7ba;
+  box-shadow: 0 0 0 3px rgba(49, 94, 231, .08);
 }
 
-body .builder-shell .edit-layout :is(.editor-toggle-row-v2,.editor-segmented-v2,.image-mode-toolbar) {
+body .builder-shell .edit-layout :is(.editor-toggle-row-v2, .editor-segmented-v2, .image-mode-toolbar) {
+  width: 100%;
   min-width: 0;
-  gap: 6px;
+  gap: 5px;
   padding: 4px;
+  overflow: hidden;
   border: 1px solid var(--product-line);
-  border-radius: 10px;
-  background: var(--product-panel);
+  border-radius: 9px;
+  background: #f6f7f9;
 }
 
-body .builder-shell .edit-layout :is(.editor-segmented-v2,.image-mode-toolbar) button {
+body .builder-shell .edit-layout :is(.editor-segmented-v2, .image-mode-toolbar) button {
   min-width: 0;
   min-height: 38px;
   padding: 0 9px;
@@ -260,42 +428,48 @@ body .builder-shell .edit-layout :is(.editor-segmented-v2,.image-mode-toolbar) b
   font-weight: 900;
 }
 
-body .builder-shell .edit-layout :is(.editor-segmented-v2,.image-mode-toolbar) button:is(.active,[aria-pressed='true']) {
+body .builder-shell .edit-layout :is(.editor-segmented-v2, .image-mode-toolbar) button:is(.active, [aria-pressed='true']) {
   background: var(--product-text);
   color: #fff;
 }
 
-body .builder-shell .edit-layout .image-edit-attached {
-  min-width: 0;
-  display: grid;
-  gap: 10px;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
+/* Add block dock */
+body .builder-shell .edit-layout:has(.fixed-add-dock) {
+  padding-bottom: 84px;
 }
 
-body .builder-shell .edit-layout .image-mode-note {
+body .builder-shell .edit-layout .fixed-add-dock {
+  position: fixed;
+  left: 28px;
+  bottom: 12px;
+  z-index: 1200;
+  width: 664px;
+  max-width: calc(100vw - 56px);
   margin: 0;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: var(--product-soft);
-  color: var(--product-muted);
-  font-size: 10px;
-  line-height: 1.45;
-}
-
-body .builder-shell .edit-layout .crop-open-button {
-  min-height: 38px;
+  padding: 6px;
+  overflow: visible;
   border: 1px solid var(--product-line);
-  border-radius: 8px;
-  background: var(--product-panel);
-  color: var(--product-text);
-  box-shadow: none;
-  font-size: 11px;
-  font-weight: 900;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, .97);
+  box-shadow: var(--product-shadow);
+  backdrop-filter: blur(12px);
 }
 
+body .builder-shell .edit-layout .fixed-add-dock .add-toggle {
+  min-height: 44px;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+body .builder-shell .edit-layout .fixed-add-dock.open .add-panel {
+  max-height: min(58dvh, 520px);
+  margin: 0 0 6px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Preview */
 html body #root .builder-shell .preview-workspace {
   min-width: 0;
   padding: 18px 22px;
@@ -303,7 +477,7 @@ html body #root .builder-shell .preview-workspace {
 }
 
 html body #root .builder-shell .preview-workspace .preview-sticky {
-  width: min(430px,100%);
+  width: min(430px, 100%);
   height: calc(100dvh - 36px);
   max-height: calc(100dvh - 36px);
   gap: 8px;
@@ -324,16 +498,62 @@ html body #root .builder-shell .preview-workspace .phone-frame {
   overflow: hidden;
   border: 7px solid var(--product-text);
   border-radius: 26px;
-  background: var(--product-panel);
-  box-shadow: 0 18px 50px rgba(17,24,39,.14);
+  background: #fff;
+  box-shadow: 0 18px 50px rgba(17, 24, 39, .14);
 }
 
 @media (max-width: 1280px) {
   body .builder-shell:not(.mobile-operations-shell):not(.inbox-workspace-shell):not(.stats-dashboard-shell):not(.settings-workspace-shell) {
-    grid-template-columns: minmax(620px,660px) minmax(460px,1fr);
+    grid-template-columns: minmax(620px, 660px) minmax(460px, 1fr);
   }
 
   body .builder-shell:not(.mobile-operations-shell):not(.inbox-workspace-shell):not(.stats-dashboard-shell):not(.settings-workspace-shell) .work-panel {
     max-width: 640px;
+  }
+
+  body .builder-shell .edit-layout .screen-order-head.block-head {
+    grid-template-columns: 34px minmax(0, 1fr) 40px 128px;
+  }
+
+  body .builder-shell .edit-layout .screen-row-actions {
+    width: 128px;
+    min-width: 128px;
+    grid-template-columns: repeat(4, 29px);
+  }
+
+  body .builder-shell .edit-layout .screen-icon-action {
+    width: 29px;
+    min-width: 29px;
+    height: 29px;
+    min-height: 29px;
+  }
+
+  body .builder-shell .edit-layout .fixed-add-dock {
+    left: 14px;
+    width: 632px;
+    max-width: calc(100vw - 28px);
+  }
+}
+
+@media (max-width: 760px) {
+  body .builder-shell .edit-layout .screen-order-head.block-head {
+    grid-template-columns: 32px minmax(0, 1fr) 40px;
+  }
+
+  body .builder-shell .edit-layout .screen-row-actions {
+    grid-column: 2 / 4;
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: repeat(4, 31px);
+    justify-content: end;
+    padding-top: 4px;
+  }
+
+  body .builder-shell .edit-layout .fixed-add-dock {
+    left: 10px;
+    right: 10px;
+    width: auto;
+    max-width: none;
+    bottom: 10px;
   }
 }
