@@ -40,6 +40,7 @@ export default function ManagerEditorPanel({
           disabledManager={disabledManager}
           index={index}
           locked={locked}
+          manager={manager}
           setManagerPreset={setManagerPreset}
         />
       </div>
