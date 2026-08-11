@@ -38,15 +38,12 @@ export default function ManagerCard({
       />
       {expanded && (
         <div className="manager-card-body">
-          <div className="manager-detail-section">
-            <div className="manager-subtitle">기본 정보</div>
-            <ManagerProfileFields
-              index={index}
-              locked={locked}
-              manager={manager}
-              updateManager={updateManager}
-            />
-          </div>
+          <ManagerProfileFields
+            index={index}
+            locked={locked}
+            manager={manager}
+            updateManager={updateManager}
+          />
 
           <div className="manager-detail-section">
             <ManagerPresetRow
