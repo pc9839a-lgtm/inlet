@@ -1,0 +1,682 @@
+/* Settings workspace owner. Uses the CallTag product tokens and avoids cross-screen overrides. */
+
+.settings-workspace-shell .settings-v3-root {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  color: var(--product-text);
+  background: var(--product-bg);
+}
+
+.settings-workspace-shell .settings-v3-sidebar {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  min-height: calc(100dvh - 141px);
+  padding: 18px 12px 28px;
+  border-right: 1px solid var(--product-line);
+  background: var(--product-panel);
+}
+
+.settings-workspace-shell .settings-nav-group {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 18px;
+}
+
+.settings-workspace-shell .settings-nav-label {
+  padding: 0 10px;
+  color: var(--product-muted-2);
+  font-size: 10px;
+  line-height: 1.4;
+  font-weight: 950;
+  letter-spacing: .04em;
+}
+
+.settings-workspace-shell .settings-nav-items {
+  display: grid;
+  gap: 3px;
+}
+
+.settings-workspace-shell .settings-nav-item {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--product-muted);
+  box-shadow: none;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.settings-workspace-shell .settings-nav-item:hover {
+  background: var(--product-soft);
+  color: var(--product-text);
+}
+
+.settings-workspace-shell .settings-nav-item.active {
+  background: var(--product-text);
+  color: #fff;
+}
+
+.settings-workspace-shell .settings-v3-main {
+  min-width: 0;
+  background: var(--product-bg);
+}
+
+.settings-workspace-shell .settings-v3-content-wrap {
+  width: min(var(--product-content-max), calc(100% - 48px));
+  margin: 0 auto;
+  padding: 24px 0 56px;
+}
+
+.settings-workspace-shell .settings-page-head {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  margin: 0 0 12px;
+}
+
+.settings-workspace-shell .settings-page-head h1 {
+  margin: 0;
+  color: var(--product-text);
+  font-size: 26px;
+  line-height: 1.15;
+  font-weight: 950;
+  letter-spacing: -.05em;
+}
+
+.settings-workspace-shell :is(.settings-section,.settings-section-body,.settings-v3-content) {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+.settings-workspace-shell .settings-section {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.settings-workspace-shell .settings-section-body,
+.settings-workspace-shell .account-settings-card {
+  padding: 0 18px;
+  border: 1px solid var(--product-line);
+  border-radius: var(--product-radius-card);
+  background: var(--product-panel);
+  box-shadow: none;
+  overflow: visible;
+}
+
+.settings-workspace-shell .settings-flat-block {
+  margin: 0;
+  padding: 18px 0;
+  border: 0;
+  border-bottom: 1px solid var(--product-line);
+  background: transparent;
+}
+
+.settings-workspace-shell .settings-flat-block:last-child {
+  border-bottom: 0;
+}
+
+.settings-workspace-shell .settings-flat-block-head {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 10px;
+}
+
+.settings-workspace-shell .settings-flat-block-head > strong,
+.settings-workspace-shell .settings-flat-row strong {
+  color: var(--product-text);
+  font-size: 14px;
+  line-height: 1.3;
+  font-weight: 900;
+}
+
+.settings-workspace-shell .settings-form-grid,
+.settings-workspace-shell .settings-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+
+.settings-workspace-shell .settings-field-with-help {
+  min-width: 0;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--product-line);
+}
+
+.settings-workspace-shell .settings-field-with-help:last-child {
+  border-bottom: 0;
+}
+
+.settings-workspace-shell :is(.settings-control-group,.field) {
+  min-width: 0;
+  min-height: 54px;
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+}
+
+.settings-workspace-shell :is(.settings-control-group,.field) > span {
+  color: #4f5661;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.settings-workspace-shell input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.settings-workspace-shell select,
+.settings-workspace-shell textarea {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid var(--product-line-strong);
+  border-radius: var(--product-radius-control);
+  background: var(--product-panel);
+  color: var(--product-text);
+  box-shadow: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  outline: none;
+}
+
+.settings-workspace-shell input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.settings-workspace-shell select {
+  height: var(--product-control-h);
+  padding: 0 12px;
+}
+
+.settings-workspace-shell textarea {
+  min-height: 96px;
+  padding: 11px 12px;
+  resize: vertical;
+}
+
+.settings-workspace-shell :is(input,select,textarea):focus {
+  border-color: #aeb8d3;
+  box-shadow: 0 0 0 3px rgba(49, 94, 231, .08);
+}
+
+.settings-workspace-shell .prefix-field {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-workspace-shell .prefix-field > em {
+  position: static;
+  color: var(--product-muted);
+  font-style: normal;
+  font-weight: 900;
+  text-align: center;
+  transform: none;
+}
+
+.settings-workspace-shell :is(.settings-field-help,.settings-field-error) {
+  display: block;
+  margin: 4px 0 0 148px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.settings-workspace-shell .settings-field-help { color: var(--product-muted); }
+.settings-workspace-shell .settings-field-error { color: var(--product-danger); font-weight: 850; }
+
+.settings-workspace-shell :is(.settings-primary-button,.settings-secondary-button,.settings-danger-button,.manager-fold-btn) {
+  min-width: 78px;
+  min-height: var(--product-button-h);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 12px;
+  border-radius: var(--product-radius-control);
+  box-shadow: none;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.settings-workspace-shell .settings-primary-button {
+  border: 1px solid var(--product-text);
+  background: var(--product-text);
+  color: #fff;
+}
+
+.settings-workspace-shell :is(.settings-secondary-button,.manager-fold-btn) {
+  border: 1px solid var(--product-line);
+  background: var(--product-panel);
+  color: #30353d;
+}
+
+.settings-workspace-shell .settings-danger-button {
+  border: 1px solid var(--product-danger);
+  background: var(--product-danger);
+  color: #fff;
+}
+
+.settings-workspace-shell .compact {
+  min-width: 0;
+  min-height: 36px;
+  height: 36px;
+  padding: 0 10px;
+}
+
+.settings-workspace-shell .settings-action-bar {
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 0 12px;
+  border-top: 1px solid var(--product-line);
+}
+
+.settings-workspace-shell .settings-action-bar-note:empty { display: none; }
+.settings-workspace-shell .settings-action-bar-buttons { display: flex; align-items: center; gap: 8px; }
+
+/* Account */
+.settings-workspace-shell .account-settings-card {
+  padding: 14px 18px 0;
+}
+
+.settings-workspace-shell .account-settings-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  margin-bottom: 8px;
+  padding: 5px;
+  border: 1px solid var(--product-line);
+  border-radius: 11px;
+  background: var(--product-soft);
+}
+
+.settings-workspace-shell .account-settings-tabs button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--product-muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.settings-workspace-shell .account-settings-tabs button.active {
+  background: var(--product-text);
+  color: #fff;
+}
+
+.settings-workspace-shell .account-settings-tab-panel { min-width: 0; }
+.settings-workspace-shell .account-settings-empty,
+.settings-workspace-shell .settings-empty-copy,
+.settings-workspace-shell .settings-loading { color: var(--product-muted); font-size: 12px; }
+
+/* Domain */
+.settings-workspace-shell .domain-dns-grid,
+.settings-workspace-shell .billing-history-list {
+  overflow: hidden;
+  border: 1px solid var(--product-line);
+  border-radius: 10px;
+  background: var(--product-panel);
+}
+
+.settings-workspace-shell :is(.domain-dns-head,.domain-dns-row) {
+  display: grid;
+  grid-template-columns: 100px 140px minmax(0, 1fr);
+  align-items: center;
+  min-height: 42px;
+  gap: 10px;
+  padding: 0 12px;
+}
+
+.settings-workspace-shell .domain-dns-head {
+  background: var(--product-soft);
+  color: var(--product-muted);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.settings-workspace-shell .domain-dns-row {
+  border-top: 1px solid var(--product-line);
+}
+
+.settings-workspace-shell .domain-dns-row code {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--product-text);
+  font-size: 12px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-workspace-shell .settings-inline-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.settings-workspace-shell .settings-status-badge,
+.settings-workspace-shell .manager-state-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #eef0f3;
+  color: #505762;
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.settings-workspace-shell .settings-status-badge.success,
+.settings-workspace-shell .manager-state-pill.on {
+  background: var(--product-good-soft);
+  color: var(--product-good);
+}
+
+.settings-workspace-shell .settings-status-badge.dark {
+  background: var(--product-text);
+  color: #fff;
+}
+
+.settings-workspace-shell .settings-message {
+  margin: 10px 0 0;
+  color: var(--product-good);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.settings-workspace-shell .settings-message.error { color: var(--product-danger); }
+
+/* Billing and compact value rows */
+.settings-workspace-shell .settings-compact-rows,
+.settings-workspace-shell .billing-plan-list {
+  display: grid;
+  gap: 0;
+}
+
+.settings-workspace-shell .settings-compact-row,
+.settings-workspace-shell .billing-plan-row {
+  min-width: 0;
+  min-height: 56px;
+  display: grid;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--product-line);
+}
+
+.settings-workspace-shell .settings-compact-row:last-child,
+.settings-workspace-shell .billing-plan-row:last-child { border-bottom: 0; }
+
+.settings-workspace-shell .settings-compact-row {
+  grid-template-columns: 132px minmax(0, 1fr) auto;
+}
+
+.settings-workspace-shell .settings-compact-row > span,
+.settings-workspace-shell .settings-flat-value {
+  color: var(--product-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.settings-workspace-shell .settings-compact-row > strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--product-text);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-workspace-shell .settings-compact-row > em {
+  color: var(--product-muted);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.settings-workspace-shell .billing-plan-row {
+  grid-template-columns: minmax(0, 1fr) 120px 78px;
+  padding: 8px 0;
+}
+
+.settings-workspace-shell .billing-plan-title-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.settings-workspace-shell .billing-plan-title-line > strong {
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.settings-workspace-shell .billing-plan-price {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.settings-workspace-shell .billing-plan-price b { font-size: 14px; }
+.settings-workspace-shell .billing-plan-price span { color: var(--product-muted); font-size: 10px; }
+
+.settings-workspace-shell .settings-flat-row {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.settings-workspace-shell .settings-flat-row > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.settings-workspace-shell .billing-history-head,
+.settings-workspace-shell .billing-history-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 1.2fr) 110px 110px 150px;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.settings-workspace-shell .billing-history-head {
+  background: var(--product-soft);
+  color: var(--product-muted);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.settings-workspace-shell .billing-history-row {
+  border-top: 1px solid var(--product-line);
+  font-size: 12px;
+}
+
+/* Manager */
+.settings-workspace-shell .manager-list-shell { display: grid; gap: 10px; min-width: 0; }
+.settings-workspace-shell .manager-list {
+  overflow: hidden;
+  border: 1px solid var(--product-line);
+  border-radius: 10px;
+  background: var(--product-panel);
+}
+
+.settings-workspace-shell .manager-card.compact {
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--product-line);
+  border-radius: 0;
+  background: var(--product-panel);
+  box-shadow: none;
+}
+
+.settings-workspace-shell .manager-card.compact:last-child { border-bottom: 0; }
+
+.settings-workspace-shell .manager-row-head {
+  min-width: 0;
+  min-height: 62px;
+  display: grid;
+  grid-template-columns: minmax(220px, 1.3fr) minmax(160px, .8fr) auto 80px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+}
+
+.settings-workspace-shell :is(.manager-row-identity,.manager-row-role) { min-width: 0; }
+.settings-workspace-shell :is(.manager-row-identity,.manager-row-role) strong {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--product-text);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.settings-workspace-shell .manager-row-identity span {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--product-muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.settings-workspace-shell .manager-row-status { display: flex; align-items: center; gap: 6px; }
+.settings-workspace-shell .manager-state-pill.off { background: var(--product-danger-soft); color: var(--product-danger); }
+
+.settings-workspace-shell .manager-editor-panel {
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--product-line);
+  border-radius: 12px;
+  background: var(--product-soft);
+}
+
+.settings-workspace-shell .manager-editor-panel .settings-form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.settings-workspace-shell .manager-editor-panel .settings-field-with-help { padding: 0; border: 0; }
+.settings-workspace-shell .manager-editor-panel .settings-control-group { grid-template-columns: 84px minmax(0, 1fr); }
+.settings-workspace-shell .manager-subtitle { margin: 0 0 8px; font-size: 12px; font-weight: 900; }
+.settings-workspace-shell .manager-subcopy { display: none; }
+.settings-workspace-shell .manager-preset-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.settings-workspace-shell .manager-preset-row button {
+  min-height: 40px;
+  border: 1px solid var(--product-line);
+  border-radius: 8px;
+  background: var(--product-panel);
+  color: #30353d;
+  font-size: 12px;
+  font-weight: 900;
+}
+.settings-workspace-shell .manager-permission-grid { overflow: hidden; border: 1px solid var(--product-line); border-radius: 10px; background: var(--product-panel); }
+.settings-workspace-shell .manager-permission-row { min-height: 50px; display: grid; grid-template-columns: minmax(0, 1fr) 140px; align-items: center; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--product-line); }
+.settings-workspace-shell .manager-permission-row:last-child { border-bottom: 0; }
+.settings-workspace-shell .manager-permission-row small { display: none; }
+.settings-workspace-shell .manager-detail-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 12px; border-top: 1px solid var(--product-line); }
+.settings-workspace-shell :is(.manager-detail-primary-actions,.manager-detail-danger-actions) { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.settings-workspace-shell .manager-empty-state { min-height: 64px; display: grid; place-items: center; color: var(--product-muted); font-size: 12px; }
+
+/* SEO assets: favicon and OG image have separate geometry. */
+.settings-workspace-shell .settings-seo-media-grid {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.settings-workspace-shell .image-input { min-width: 0; display: grid; gap: 8px; }
+.settings-workspace-shell .image-input > span { color: #4f5661; font-size: 12px; font-weight: 850; }
+.settings-workspace-shell .image-box {
+  position: relative;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--product-line-strong);
+  border-radius: 10px;
+  background: var(--product-soft);
+  overflow: hidden;
+}
+.settings-workspace-shell .image-input--favicon .image-box { width: 96px; height: 96px; }
+.settings-workspace-shell .image-input--share .image-box { width: min(520px, 100%); aspect-ratio: 1200 / 630; }
+.settings-workspace-shell .image-box img { width: 100%; height: 100%; display: block; object-fit: contain; object-position: center; }
+.settings-workspace-shell .image-empty-button { width: 42px; height: 42px; border: 1px solid var(--product-line); border-radius: 9px; background: var(--product-panel); color: var(--product-muted); }
+.settings-workspace-shell .image-actions { position: static; display: flex; gap: 6px; margin-top: 8px; }
+.settings-workspace-shell .image-actions button { min-height: 34px; padding: 0 10px; border: 1px solid var(--product-line); border-radius: 8px; background: var(--product-panel); color: #30353d; font-size: 11px; font-weight: 900; }
+.settings-workspace-shell .image-storage-note { margin: 0; color: var(--product-muted); font-size: 11px; }
+
+@media (max-width: 900px) {
+  .settings-workspace-shell .settings-v3-root { grid-template-columns: minmax(0, 1fr); }
+  .settings-workspace-shell .settings-v3-sidebar {
+    position: static;
+    min-height: 0;
+    display: flex;
+    gap: 6px;
+    padding: 8px 10px;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--product-line);
+  }
+  .settings-workspace-shell .settings-nav-group { display: flex; align-items: center; gap: 4px; margin: 0; }
+  .settings-workspace-shell .settings-nav-label { display: none; }
+  .settings-workspace-shell .settings-nav-items { display: flex; gap: 4px; }
+  .settings-workspace-shell .settings-nav-item { width: auto; min-width: max-content; padding: 0 10px; }
+  .settings-workspace-shell .settings-v3-content-wrap { width: calc(100% - 24px); padding: 16px 0 32px; }
+  .settings-workspace-shell .settings-page-head h1 { font-size: 22px; }
+  .settings-workspace-shell .settings-seo-media-grid { grid-template-columns: minmax(0, 1fr); }
+  .settings-workspace-shell .manager-row-head { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; }
+  .settings-workspace-shell :is(.manager-row-role,.manager-row-status) { grid-column: 1; }
+  .settings-workspace-shell .manager-row-head > button { grid-column: 2; grid-row: 1 / span 3; }
+  .settings-workspace-shell .manager-editor-panel .settings-form-grid { grid-template-columns: minmax(0, 1fr); }
+  .settings-workspace-shell .manager-preset-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .settings-workspace-shell .manager-detail-actions { align-items: stretch; flex-direction: column; }
+}
+
+@media (max-width: 640px) {
+  .settings-workspace-shell .settings-v3-content-wrap { width: calc(100% - 20px); }
+  .settings-workspace-shell .settings-section-body,
+  .settings-workspace-shell .account-settings-card { padding-inline: 12px; border-radius: 12px; }
+  .settings-workspace-shell :is(.settings-control-group,.field),
+  .settings-workspace-shell .settings-compact-row { grid-template-columns: minmax(0, 1fr); gap: 6px; padding-block: 8px; }
+  .settings-workspace-shell :is(.settings-field-help,.settings-field-error) { margin-left: 0; }
+  .settings-workspace-shell .settings-inline-control { grid-template-columns: minmax(0, 1fr); }
+  .settings-workspace-shell :is(.domain-dns-head,.domain-dns-row) { grid-template-columns: 72px 76px minmax(0, 1fr); padding-inline: 8px; }
+  .settings-workspace-shell .billing-plan-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .settings-workspace-shell .billing-plan-price { text-align: left; }
+  .settings-workspace-shell .billing-plan-row > button { grid-column: 2; grid-row: 1 / span 2; }
+  .settings-workspace-shell .billing-history-head { display: none; }
+  .settings-workspace-shell .billing-history-row { grid-template-columns: 1fr 1fr; gap: 6px 10px; padding: 10px; }
+  .settings-workspace-shell .account-settings-tabs { grid-template-columns: 1fr; }
+  .settings-workspace-shell .manager-permission-row { grid-template-columns: minmax(0, 1fr); }
+}
