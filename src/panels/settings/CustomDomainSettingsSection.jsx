@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
 import { Clipboard, Trash2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import SettingsSection from './SettingsSection.jsx';
 import useAccountFinance from './useAccountFinance.js';
 
@@ -8,13 +8,7 @@ const DOMAIN_PRODUCT = 'pagero_domain_monthly';
 const MULTI_PART_SUFFIXES = ['co.kr', 'or.kr', 'go.kr', 'ne.kr', 'ac.kr', 're.kr', 'pe.kr', 'co.uk', 'com.au', 'co.jp'];
 
 function normalizeHostname(value = '') {
-  return String(value || '')
-    .trim()
-    .toLowerCase()
-    .replace(/^https?:\/\//, '')
-    .replace(/\/.*$/, '')
-    .replace(/:\d+$/, '')
-    .replace(/^\.+|\.+$/g, '');
+  return String(value || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/:\d+$/, '').replace(/^\.+|\.+$/g, '');
 }
 
 function isValidHostname(value = '') {
@@ -119,67 +113,67 @@ export default function CustomDomainSettingsSection({ authUser, integrations, up
   };
 
   return (
-    <SettingsSection id="domain" className="settings-domain-section settings-flat-section">
-      <div className="settings-flat-block">
-        <div className="settings-flat-block-head">
-          <strong>DNS</strong>
+    <SettingsSection id="domain" className="settings-domain-section">
+      <div className="domain-settings-screen">
+        <section className="domain-setting-row domain-dns-row-v2">
+          <div className="domain-setting-label">
+            <strong>DNS</strong>
+            <span>먼저 DNS에 아래 CNAME을 등록하세요.</span>
+          </div>
+          <div className="domain-dns-values">
+            <div><span>유형</span><code>CNAME</code></div>
+            <div><span>호스트</span><code>{recordName}</code></div>
+            <div><span>대상</span><code>{DNS_TARGET}</code></div>
+          </div>
           <button type="button" className="settings-secondary-button compact" onClick={copyDns}>
             <Clipboard size={14} aria-hidden="true" /> 복사
           </button>
-        </div>
-        <div className="domain-dns-grid" role="table" aria-label="개인 도메인 DNS 레코드">
-          <div className="domain-dns-head" role="row">
-            <span role="columnheader">유형</span>
-            <span role="columnheader">호스트</span>
-            <span role="columnheader">대상</span>
+        </section>
+
+        <section className="domain-setting-row">
+          <div className="domain-setting-label">
+            <strong>도메인</strong>
+            <span className={`settings-status-badge ${status.key === 'connected' ? 'success' : ''}`}>{status.label}</span>
           </div>
-          <div className="domain-dns-row" role="row">
-            <code role="cell">CNAME</code>
-            <code role="cell">{recordName}</code>
-            <code role="cell">{DNS_TARGET}</code>
+          <div className="domain-connect-control">
+            <input
+              type="text"
+              value={hostname}
+              onChange={(event) => setHostname(event.target.value)}
+              placeholder="example.com"
+              autoComplete="off"
+              spellCheck="false"
+              aria-invalid={hostnameInvalid}
+            />
+            <button type="button" className="settings-primary-button" onClick={saveDomain}>연결</button>
+            {savedHostname && (
+              <button type="button" className="settings-secondary-button" onClick={removeDomain}>
+                <Trash2 size={14} aria-hidden="true" /> 해제
+              </button>
+            )}
           </div>
-        </div>
-      </div>
+          {hostnameInvalid && <small className="settings-field-error domain-field-error">도메인 형식을 확인하세요.</small>}
+        </section>
 
-      <div className="settings-flat-block">
-        <div className="settings-flat-block-head">
-          <strong>도메인</strong>
-          <span className={`settings-status-badge ${status.key === 'connected' ? 'success' : ''}`}>{status.label}</span>
-        </div>
-        <div className="settings-inline-control domain-inline-control">
-          <input
-            type="text"
-            value={hostname}
-            onChange={(event) => setHostname(event.target.value)}
-            placeholder="example.com"
-            autoComplete="off"
-            spellCheck="false"
-            aria-invalid={hostnameInvalid}
-          />
-          <button type="button" className="settings-primary-button" onClick={saveDomain}>연결</button>
-          {savedHostname && (
-            <button type="button" className="settings-secondary-button" onClick={removeDomain}>
-              <Trash2 size={14} aria-hidden="true" /> 해제
-            </button>
-          )}
-        </div>
-        {hostnameInvalid && <small className="settings-field-error">도메인 형식을 확인하세요.</small>}
-      </div>
+        <section className="domain-setting-row domain-ssl-row">
+          <div className="domain-setting-label">
+            <strong>HTTPS · SSL</strong>
+            <span>{sslIncludedByPlan ? '프로 요금제 포함' : sslEnabled ? '이용 중' : '월 1,000원'}</span>
+          </div>
+          <div className="domain-ssl-action">
+            {sslEnabled || sslIncludedByPlan ? (
+              <span className="settings-status-badge success">적용</span>
+            ) : !sslLoading ? (
+              <button type="button" className="settings-primary-button compact" disabled={checkoutBusy} onClick={startSslCheckout}>
+                {checkoutBusy ? '이동 중' : 'SSL 신청'}
+              </button>
+            ) : null}
+          </div>
+        </section>
 
-      <div className="settings-flat-block settings-flat-row">
-        <div>
-          <strong>SSL</strong>
-          <span className="settings-flat-value">{sslIncludedByPlan ? '프로 포함' : sslEnabled ? '이용 중' : '1,000원/월'}</span>
-        </div>
-        {!sslEnabled && !sslLoading && (
-          <button type="button" className="settings-primary-button compact" disabled={checkoutBusy} onClick={startSslCheckout}>
-            {checkoutBusy ? '이동 중' : '신청'}
-          </button>
-        )}
+        {financeError && <p className="settings-message error" role="alert">{financeError}</p>}
+        {notice && <p className="settings-message" role="status">{notice}</p>}
       </div>
-
-      {financeError && <p className="settings-message error" role="alert">{financeError}</p>}
-      {notice && <p className="settings-message" role="status">{notice}</p>}
     </SettingsSection>
   );
 }
