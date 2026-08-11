@@ -33,19 +33,7 @@ export function ScreenOrderRow({
       data-order={index + 1}
       data-selected={open ? 'true' : 'false'}
     >
-      <div
-        className="block-head screen-order-head"
-        onClick={selectRow}
-        style={{
-          width: '100%',
-          minWidth: 0,
-          boxSizing: 'border-box',
-          gridTemplateColumns: '34px minmax(0, 1fr) 38px 92px',
-          gap: 4,
-          padding: 6,
-          overflow: 'visible',
-        }}
-      >
+      <div className="block-head screen-order-head" onClick={selectRow}>
         <ScreenOrderRowIdentity
           block={block}
           index={index}
