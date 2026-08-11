@@ -20,10 +20,8 @@ import '../styles/operations-overflow-final.css';
 import '../styles/stats-period-top-final.css';
 import '../styles/operations-clipping-cleanup-final.css';
 import '../styles/stats-regression-repair-final.css';
-import '../styles/settings-system-v3.css';
-import '../styles/settings-workspace-shell.css';
 import '../styles/operations-height-parity-final.css';
-import '../styles/settings-compact-scroll-final.css';
+import '../styles/settings-control-panel.css';
 
 export default function WorkspaceEditorScreen({
   canUseBuilder,
