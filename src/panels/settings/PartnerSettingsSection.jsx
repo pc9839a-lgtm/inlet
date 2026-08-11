@@ -54,29 +54,24 @@ export default function PartnerSettingsSection({ authUser }) {
         {loading && !finance ? (
           <div className="settings-loading">불러오는 중</div>
         ) : (
-          <>
-            <div className="partner-metric-grid settings-metric-grid">
-              <div><span>추천 가입</span><strong>{Number(referral.referralCount || 0)}명</strong></div>
-              <div><span>유료 전환</span><strong>{Number(referral.activePaidCount || 0)}명</strong></div>
-              <div><span>이번 달</span><strong>{money(settlement.estimatedRevenueKrw)}</strong></div>
-              <div><span>누적 확정</span><strong>{money(settlement.confirmedRevenueKrw)}</strong></div>
+          <div className="settings-compact-rows">
+            <div className="settings-compact-row"><span>추천 가입</span><strong>{Number(referral.referralCount || 0)}명</strong><em /></div>
+            <div className="settings-compact-row"><span>유료 전환</span><strong>{Number(referral.activePaidCount || 0)}명</strong><em /></div>
+            <div className="settings-compact-row"><span>이번 달</span><strong>{money(settlement.estimatedRevenueKrw)}</strong><em /></div>
+            <div className="settings-compact-row"><span>누적 확정</span><strong>{money(settlement.confirmedRevenueKrw)}</strong><em /></div>
+            <div className="settings-compact-row settings-compact-row-action">
+              <span>파트너 코드</span>
+              <strong className="settings-mono-value">{referral.code || '-'}</strong>
+              <button type="button" className="settings-secondary-button compact" onClick={copyPartnerCode} disabled={!referral.code}>
+                <Clipboard size={14} aria-hidden="true" /> 복사
+              </button>
             </div>
-
-            <div className="settings-compact-rows">
-              <div className="settings-compact-row settings-compact-row-action">
-                <span>파트너 코드</span>
-                <strong className="settings-mono-value">{referral.code || '-'}</strong>
-                <button type="button" className="settings-secondary-button compact" onClick={copyPartnerCode} disabled={!referral.code}>
-                  <Clipboard size={14} aria-hidden="true" /> 복사
-                </button>
-              </div>
-              <div className="settings-compact-row settings-compact-row-action">
-                <span>정산</span>
-                <strong>결제 금액의 20%</strong>
-                <a className="settings-primary-button compact" href={SETTLEMENT_URL} target="_blank" rel="noreferrer">보기</a>
-              </div>
+            <div className="settings-compact-row settings-compact-row-action">
+              <span>정산</span>
+              <strong>결제 금액의 20%</strong>
+              <a className="settings-primary-button compact" href={SETTLEMENT_URL} target="_blank" rel="noreferrer">보기</a>
             </div>
-          </>
+          </div>
         )}
       </div>
     </SettingsSection>
