@@ -1,3 +1,5 @@
+import './ImageInputPreview.css';
+
 function UploadStatus({ label, uploadState }) {
   const processing = uploadState?.status === 'processing';
   const statusVisible = processing || uploadState?.status === 'success' || uploadState?.status === 'error';
@@ -21,50 +23,40 @@ function UploadStatus({ label, uploadState }) {
   );
 }
 
+function PreviewActions({ label, disabled, onEdit, onClear }) {
+  return (
+    <div className="image-preview-actions">
+      <button type="button" disabled={disabled} onClick={onEdit} aria-label={`${label} 교체`}>교체</button>
+      <button type="button" className="danger" disabled={disabled} onClick={onClear} aria-label={`${label} 삭제`}>삭제</button>
+    </div>
+  );
+}
+
 export function ImageInputPreview({ label, value, disabled, uploadState, onEdit, onClear, variant = 'default' }) {
   const processing = uploadState?.status === 'processing';
   const assetVariant = variant === 'favicon' || variant === 'share';
+  const modeClass = assetVariant ? `is-${variant}` : 'is-default';
 
-  if (assetVariant) {
-    const frameStyle = variant === 'favicon'
-      ? { width: 96, height: 96 }
-      : { width: 'min(440px, 100%)', aspectRatio: '1200 / 630' };
-
-    return (
-      <div className={`settings-asset-control settings-asset-control--${variant} ${value ? 'has-image' : 'is-empty'} ${processing ? 'is-processing' : ''}`}>
-        <div className="settings-asset-frame" style={frameStyle}>
-          {value ? (
-            <img src={value} alt="" />
-          ) : (
-            <button type="button" className="settings-asset-empty" disabled={disabled} onClick={onEdit} title="업로드" aria-label={`${label} 업로드`}>+</button>
-          )}
-          <UploadStatus label={label} uploadState={uploadState} />
-        </div>
-        {value && (
-          <div className="settings-asset-actions">
-            <button type="button" disabled={disabled} onClick={onEdit} aria-label={`${label} 교체`}>교체</button>
-            <button type="button" disabled={disabled} onClick={onClear} aria-label={`${label} 삭제`}>삭제</button>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  const rootClass = `image-box image-box--${variant} single-plus ${value ? 'has-image' : 'is-empty'} ${processing ? 'is-processing' : ''}`;
   return (
-    <div className={rootClass}>
-      {value ? (
-        <>
+    <div className={`image-preview-control ${modeClass} ${value ? 'has-image' : 'is-empty'} ${processing ? 'is-processing' : ''}`}>
+      <div className="image-preview-frame">
+        {value ? (
           <img src={value} alt="" />
-          <div className="image-actions">
-            <button type="button" disabled={disabled} onClick={onEdit} title="수정" aria-label={`${label} 수정`}>수정</button>
-            <button type="button" disabled={disabled} onClick={onClear} title="삭제" aria-label={`${label} 삭제`}>삭제</button>
-          </div>
-        </>
-      ) : (
-        <button type="button" className="image-empty-button" disabled={disabled} onClick={onEdit} title="업로드" aria-label={`${label} 업로드`}>+</button>
-      )}
-      <UploadStatus label={label} uploadState={uploadState} />
+        ) : (
+          <button
+            type="button"
+            className="image-preview-empty"
+            disabled={disabled}
+            onClick={onEdit}
+            title="업로드"
+            aria-label={`${label} 업로드`}
+          >
+            +
+          </button>
+        )}
+        <UploadStatus label={label} uploadState={uploadState} />
+      </div>
+      {value && <PreviewActions label={label} disabled={disabled} onEdit={onEdit} onClear={onClear} />}
     </div>
   );
 }
