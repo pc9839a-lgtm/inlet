@@ -6,13 +6,12 @@ const ICON_MODES = [
 
 export default function LinkIconModeButtons({ mode, onChange }) {
   return (
-    <div className="link-icon-mode-v2" role="group" aria-label="링크 아이콘">
+    <div className="link-icon-mode-v3" role="group" aria-label="링크 표시 방식">
       {ICON_MODES.map(([key, label]) => (
         <button
           key={key}
           type="button"
           aria-pressed={mode === key}
-          className={mode === key ? 'active' : ''}
           onClick={() => onChange({ iconMode: key })}
         >
           {label}
