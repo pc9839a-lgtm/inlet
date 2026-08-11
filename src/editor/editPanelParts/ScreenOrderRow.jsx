@@ -37,7 +37,12 @@ export function ScreenOrderRow({
         className="block-head screen-order-head"
         onClick={selectRow}
         style={{
-          gridTemplateColumns: '34px minmax(0, 1fr) 42px 102px',
+          width: '100%',
+          minWidth: 0,
+          boxSizing: 'border-box',
+          gridTemplateColumns: '34px minmax(0, 1fr) 42px 36px',
+          gap: 6,
+          padding: 8,
           overflow: 'visible',
         }}
       >
