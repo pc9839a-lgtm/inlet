@@ -1,0 +1,674 @@
+/* PageRo settings control panel — single layout owner. */
+html body #root .builder-shell.settings-workspace-shell {
+  --settings-bg: #f6f7f9;
+  --settings-surface: #fff;
+  --settings-soft: #f8fafc;
+  --settings-line: #e2e6eb;
+  --settings-line-strong: #cfd6df;
+  --settings-text: #111827;
+  --settings-muted: #667085;
+  --settings-danger: #b42318;
+  --settings-success: #067647;
+  --settings-control-h: 46px;
+  --settings-button-h: 42px;
+  --settings-label-w: 138px;
+  grid-template-columns: minmax(0, 1fr) !important;
+  width: 100% !important;
+  height: 100dvh !important;
+  min-height: 0 !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+  background: var(--settings-bg) !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell > .left-workspace {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .workspace-persistent-header {
+  flex: 0 0 auto !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .work-panel {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  scrollbar-gutter: stable !important;
+  background: var(--settings-bg) !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .preview-workspace {
+  display: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root,
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root * {
+  box-sizing: border-box;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-v3-root {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 100% !important;
+  display: grid !important;
+  grid-template-columns: 220px minmax(0, 1fr) !important;
+  background: var(--settings-bg) !important;
+  color: var(--settings-text) !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-v3-sidebar {
+  position: sticky !important;
+  top: 0 !important;
+  align-self: start !important;
+  min-width: 0 !important;
+  min-height: calc(100dvh - 206px) !important;
+  padding: 20px 12px 28px !important;
+  border-right: 1px solid var(--settings-line) !important;
+  background: #fff !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-nav-group {
+  display: grid !important;
+  gap: 7px !important;
+  margin: 0 0 18px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-nav-label {
+  padding: 0 10px !important;
+  color: #98a2b3 !important;
+  font-size: 11px !important;
+  line-height: 1.4 !important;
+  font-weight: 800 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-nav-items {
+  display: grid !important;
+  gap: 3px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-nav-item {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 9px !important;
+  padding: 0 11px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: #475467 !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  font-weight: 750 !important;
+  text-align: left !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-nav-item.active {
+  background: var(--settings-text) !important;
+  color: #fff !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-v3-main {
+  min-width: 0 !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  background: var(--settings-bg) !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-v3-content-wrap {
+  width: min(1120px, calc(100% - 48px)) !important;
+  margin: 0 auto !important;
+  padding: 26px 0 56px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-page-head {
+  min-height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 18px !important;
+  margin: 0 0 14px !important;
+  padding: 0 0 14px !important;
+  border-bottom: 1px solid var(--settings-line) !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-page-head h1 {
+  margin: 0 !important;
+  color: var(--settings-text) !important;
+  font-size: 23px !important;
+  line-height: 1.2 !important;
+  font-weight: 850 !important;
+  letter-spacing: -.025em !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-page-head p,
+html body #root .builder-shell.settings-workspace-shell .settings-page-slug,
+html body #root .builder-shell.settings-workspace-shell .settings-section-badge,
+html body #root .builder-shell.settings-workspace-shell .settings-action-bar-note:empty {
+  display: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-section,
+html body #root .builder-shell.settings-workspace-shell .settings-section-body,
+html body #root .builder-shell.settings-workspace-shell .settings-v3-content {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-section-body {
+  padding: 0 20px !important;
+  border: 1px solid var(--settings-line) !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-flat-block {
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 18px 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--settings-line) !important;
+  background: transparent !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-flat-block:last-of-type {
+  border-bottom: 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-flat-block-head {
+  min-height: 34px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  margin: 0 0 12px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-flat-block-head > strong {
+  margin: 0 !important;
+  color: var(--settings-text) !important;
+  font-size: 14px !important;
+  line-height: 1.35 !important;
+  font-weight: 800 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-count {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 22px !important;
+  height: 22px !important;
+  margin-left: 5px !important;
+  padding: 0 6px !important;
+  border-radius: 999px !important;
+  background: #f2f4f7 !important;
+  color: #475467 !important;
+  font-size: 11px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-form-grid,
+html body #root .builder-shell.settings-workspace-shell .settings-grid {
+  width: 100% !important;
+  min-width: 0 !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-field-with-help,
+html body #root .builder-shell.settings-workspace-shell .settings-control-group,
+html body #root .builder-shell.settings-workspace-shell .field {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-field-with-help {
+  min-height: 66px !important;
+  display: block !important;
+  padding: 8px 0 !important;
+  border-bottom: 1px solid var(--settings-line) !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-field-with-help:last-child {
+  border-bottom: 0 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-control-group,
+html body #root .builder-shell.settings-workspace-shell .field {
+  min-height: 50px !important;
+  display: grid !important;
+  grid-template-columns: var(--settings-label-w) minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 16px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-control-group > span,
+html body #root .builder-shell.settings-workspace-shell .field > span {
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: #344054 !important;
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+  font-weight: 750 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+html body #root .builder-shell.settings-workspace-shell select,
+html body #root .builder-shell.settings-workspace-shell textarea {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  border: 1px solid var(--settings-line-strong) !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  color: var(--settings-text) !important;
+  box-shadow: none !important;
+  font-family: inherit !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+html body #root .builder-shell.settings-workspace-shell select {
+  height: var(--settings-control-h) !important;
+  min-height: var(--settings-control-h) !important;
+  padding: 0 13px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell textarea {
+  min-height: 96px !important;
+  padding: 11px 13px !important;
+  resize: vertical !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .prefix-field {
+  width: 100% !important;
+  min-width: 0 !important;
+  display: grid !important;
+  grid-template-columns: 22px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .prefix-field > em {
+  position: static !important;
+  width: 22px !important;
+  margin: 0 !important;
+  color: var(--settings-muted) !important;
+  font-size: 17px !important;
+  line-height: 1 !important;
+  font-style: normal !important;
+  font-weight: 800 !important;
+  text-align: center !important;
+  transform: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-field-help,
+html body #root .builder-shell.settings-workspace-shell .settings-field-error {
+  display: block !important;
+  margin: 4px 0 0 calc(var(--settings-label-w) + 16px) !important;
+  font-size: 11px !important;
+  line-height: 1.4 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-field-help { color: var(--settings-muted) !important; }
+html body #root .builder-shell.settings-workspace-shell .settings-field-error { color: var(--settings-danger) !important; font-weight: 700 !important; }
+
+html body #root .builder-shell.settings-workspace-shell .settings-primary-button,
+html body #root .builder-shell.settings-workspace-shell .settings-secondary-button,
+html body #root .builder-shell.settings-workspace-shell .settings-danger-button,
+html body #root .builder-shell.settings-workspace-shell .manager-fold-btn {
+  min-width: 84px !important;
+  height: var(--settings-button-h) !important;
+  min-height: var(--settings-button-h) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  margin: 0 !important;
+  padding: 0 13px !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  line-height: 1 !important;
+  font-weight: 750 !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-primary-button { border: 1px solid var(--settings-text) !important; background: var(--settings-text) !important; color: #fff !important; }
+html body #root .builder-shell.settings-workspace-shell .settings-secondary-button,
+html body #root .builder-shell.settings-workspace-shell .manager-fold-btn { border: 1px solid var(--settings-line-strong) !important; background: #fff !important; color: #344054 !important; }
+html body #root .builder-shell.settings-workspace-shell .settings-danger-button { border: 1px solid var(--settings-danger) !important; background: var(--settings-danger) !important; color: #fff !important; }
+html body #root .builder-shell.settings-workspace-shell .compact { min-width: 0 !important; height: 38px !important; min-height: 38px !important; padding: 0 12px !important; }
+
+html body #root .builder-shell.settings-workspace-shell .settings-action-bar {
+  min-height: 62px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  margin: 0 !important;
+  padding: 10px 0 12px !important;
+  border-top: 1px solid var(--settings-line) !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .settings-action-bar-buttons {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+}
+
+/* Manager list: stable rows, editor below the list. */
+html body #root .builder-shell.settings-workspace-shell .manager-list-shell {
+  width: 100% !important;
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 12px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .manager-list {
+  width: 100% !important;
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 0 !important;
+  overflow: visible !important;
+  border: 1px solid var(--settings-line) !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .manager-card.compact {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--settings-line) !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .manager-card.compact:last-child { border-bottom: 0 !important; }
+
+html body #root .builder-shell.settings-workspace-shell .manager-row-head {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 62px !important;
+  display: grid !important;
+  grid-template-columns: minmax(220px, 1.3fr) minmax(180px, .9fr) auto 78px !important;
+  align-items: center !important;
+  gap: 14px !important;
+  padding: 10px 14px !important;
+  background: #fff !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .manager-row-identity,
+html body #root .builder-shell.settings-workspace-shell .manager-row-role { min-width: 0 !important; }
+html body #root .builder-shell.settings-workspace-shell .manager-row-identity strong,
+html body #root .builder-shell.settings-workspace-shell .manager-row-role strong { display: block !important; min-width: 0 !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; color: var(--settings-text) !important; font-size: 13px !important; }
+html body #root .builder-shell.settings-workspace-shell .manager-row-identity span { display: block !important; margin-top: 2px !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; color: var(--settings-muted) !important; font-size: 11px !important; }
+html body #root .builder-shell.settings-workspace-shell .manager-row-status { display: flex !important; align-items: center !important; gap: 6px !important; flex-wrap: nowrap !important; }
+html body #root .builder-shell.settings-workspace-shell .manager-state-pill { display: inline-flex !important; align-items: center !important; min-height: 24px !important; padding: 0 8px !important; border-radius: 999px !important; background: #f2f4f7 !important; color: #475467 !important; font-size: 10px !important; font-weight: 750 !important; white-space: nowrap !important; }
+html body #root .builder-shell.settings-workspace-shell .manager-state-pill.on { background: #ecfdf3 !important; color: var(--settings-success) !important; }
+html body #root .builder-shell.settings-workspace-shell .manager-state-pill.off { background: #fef3f2 !important; color: var(--settings-danger) !important; }
+
+html body #root .builder-shell.settings-workspace-shell .manager-editor-panel {
+  width: 100% !important;
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 16px !important;
+  padding: 16px !important;
+  border: 1px solid var(--settings-line) !important;
+  border-radius: 8px !important;
+  background: var(--settings-soft) !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .manager-editor-panel .settings-form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .manager-editor-panel .settings-field-with-help { border: 0 !important; padding: 0 !important; min-height: 0 !important; }
+html body #root .builder-shell.settings-workspace-shell .manager-editor-panel .settings-control-group { grid-template-columns: 84px minmax(0, 1fr) !important; }
+html body #root .builder-shell.settings-workspace-shell .manager-subtitle { margin: 0 0 8px !important; color: var(--settings-text) !important; font-size: 12px !important; font-weight: 800 !important; }
+html body #root .builder-shell.settings-workspace-shell .manager-subcopy { display: none !important; }
+
+html body #root .builder-shell.settings-workspace-shell .manager-preset-row {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .manager-preset-row button {
+  min-width: 0 !important;
+  min-height: 40px !important;
+  padding: 0 10px !important;
+  border: 1px solid var(--settings-line-strong) !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  color: #344054 !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  font-weight: 750 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .manager-permission-grid { display: grid !important; gap: 0 !important; border: 1px solid var(--settings-line) !important; border-radius: 8px !important; overflow: hidden !important; background: #fff !important; }
+html body #root .builder-shell.settings-workspace-shell .manager-permission-row { min-height: 52px !important; display: grid !important; grid-template-columns: minmax(0, 1fr) 150px !important; align-items: center !important; gap: 12px !important; padding: 8px 12px !important; border-bottom: 1px solid var(--settings-line) !important; }
+html body #root .builder-shell.settings-workspace-shell .manager-permission-row:last-child { border-bottom: 0 !important; }
+html body #root .builder-shell.settings-workspace-shell .manager-permission-row small { display: none !important; }
+html body #root .builder-shell.settings-workspace-shell .manager-detail-actions { display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 12px !important; padding-top: 12px !important; border-top: 1px solid var(--settings-line) !important; }
+html body #root .builder-shell.settings-workspace-shell .manager-detail-primary-actions,
+html body #root .builder-shell.settings-workspace-shell .manager-detail-danger-actions { display: flex !important; align-items: center !important; gap: 8px !important; flex-wrap: wrap !important; }
+
+html body #root .builder-shell.settings-workspace-shell .manager-empty-state {
+  min-height: 62px !important;
+  display: grid !important;
+  place-items: center !important;
+  color: var(--settings-muted) !important;
+  font-size: 13px !important;
+}
+
+/* SEO images: compact asset controls, never full-page banners. */
+html body #root .builder-shell.settings-workspace-shell .settings-seo-media-grid {
+  width: 100% !important;
+  min-width: 0 !important;
+  display: grid !important;
+  grid-template-columns: 140px minmax(0, 1fr) !important;
+  gap: 24px !important;
+  align-items: start !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .image-input {
+  width: 100% !important;
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 8px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .image-input > span {
+  margin: 0 !important;
+  color: #344054 !important;
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+  font-weight: 750 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .image-box {
+  position: relative !important;
+  display: grid !important;
+  place-items: center !important;
+  margin: 0 !important;
+  border: 1px dashed var(--settings-line-strong) !important;
+  border-radius: 8px !important;
+  background: var(--settings-soft) !important;
+  overflow: hidden !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .image-input--favicon .image-box {
+  width: 96px !important;
+  height: 96px !important;
+  min-height: 96px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .image-input--share .image-box {
+  width: min(520px, 100%) !important;
+  height: auto !important;
+  min-height: 0 !important;
+  aspect-ratio: 1200 / 630 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .image-box img {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  display: block !important;
+  object-fit: contain !important;
+  object-position: center !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .image-empty-button {
+  width: 42px !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  padding: 0 !important;
+  border: 1px solid var(--settings-line-strong) !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  color: #475467 !important;
+  box-shadow: none !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .image-actions {
+  position: absolute !important;
+  right: 8px !important;
+  bottom: 8px !important;
+  display: flex !important;
+  gap: 6px !important;
+  z-index: 2 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .image-actions button {
+  min-width: 48px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  padding: 0 10px !important;
+  border: 1px solid var(--settings-line-strong) !important;
+  border-radius: 7px !important;
+  background: rgba(255,255,255,.96) !important;
+  color: #344054 !important;
+  box-shadow: none !important;
+  font-size: 11px !important;
+  font-weight: 750 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .image-storage-note {
+  margin: 0 !important;
+  color: var(--settings-muted) !important;
+  font-size: 11px !important;
+  line-height: 1.4 !important;
+}
+
+/* Common rows used by billing/domain/referral/partner/settlement. */
+html body #root .builder-shell.settings-workspace-shell :is(.settings-compact-rows,.billing-history,.domain-dns-table) {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+html body #root .builder-shell.settings-workspace-shell :is(.settings-compact-row,.billing-plan-row,.billing-addon-row,.settings-info-row) {
+  min-width: 0 !important;
+}
+html body #root .builder-shell.settings-workspace-shell .settings-compact-row {
+  min-height: 52px !important;
+  display: grid !important;
+  grid-template-columns: var(--settings-label-w) minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 14px !important;
+  padding: 8px 0 !important;
+  border-bottom: 1px solid var(--settings-line) !important;
+}
+html body #root .builder-shell.settings-workspace-shell .settings-compact-row:last-child { border-bottom: 0 !important; }
+html body #root .builder-shell.settings-workspace-shell .settings-compact-row > span { color: var(--settings-muted) !important; font-size: 12px !important; font-weight: 700 !important; }
+html body #root .builder-shell.settings-workspace-shell .settings-compact-row > strong { min-width: 0 !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; color: var(--settings-text) !important; font-size: 13px !important; }
+
+html body #root .builder-shell.settings-workspace-shell button:focus-visible,
+html body #root .builder-shell.settings-workspace-shell input:focus-visible,
+html body #root .builder-shell.settings-workspace-shell select:focus-visible,
+html body #root .builder-shell.settings-workspace-shell textarea:focus-visible {
+  outline: 3px solid rgba(37,99,235,.16) !important;
+  outline-offset: 2px !important;
+}
+
+@media (max-width: 900px) {
+  html body #root .builder-shell.settings-workspace-shell .settings-v3-root {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  html body #root .builder-shell.settings-workspace-shell .settings-v3-sidebar {
+    position: static !important;
+    min-height: 0 !important;
+    display: flex !important;
+    gap: 8px !important;
+    padding: 10px 12px !important;
+    overflow-x: auto !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid var(--settings-line) !important;
+  }
+  html body #root .builder-shell.settings-workspace-shell .settings-nav-group { display: flex !important; align-items: center !important; gap: 4px !important; margin: 0 !important; }
+  html body #root .builder-shell.settings-workspace-shell .settings-nav-label { display: none !important; }
+  html body #root .builder-shell.settings-workspace-shell .settings-nav-items { display: flex !important; gap: 4px !important; }
+  html body #root .builder-shell.settings-workspace-shell .settings-nav-item { width: auto !important; white-space: nowrap !important; }
+  html body #root .builder-shell.settings-workspace-shell .settings-v3-content-wrap { width: calc(100% - 28px) !important; padding: 18px 0 36px !important; }
+  html body #root .builder-shell.settings-workspace-shell .settings-seo-media-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  html body #root .builder-shell.settings-workspace-shell .image-input--share .image-box { width: min(520px, 100%) !important; }
+  html body #root .builder-shell.settings-workspace-shell .manager-row-head { grid-template-columns: minmax(0, 1fr) auto !important; gap: 8px 12px !important; }
+  html body #root .builder-shell.settings-workspace-shell .manager-row-role,
+  html body #root .builder-shell.settings-workspace-shell .manager-row-status { grid-column: 1 !important; }
+  html body #root .builder-shell.settings-workspace-shell .manager-row-head > button { grid-column: 2 !important; grid-row: 1 / span 3 !important; }
+  html body #root .builder-shell.settings-workspace-shell .manager-editor-panel .settings-form-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  html body #root .builder-shell.settings-workspace-shell .manager-preset-row { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  html body #root .builder-shell.settings-workspace-shell .manager-detail-actions { align-items: stretch !important; flex-direction: column !important; }
+  html body #root .builder-shell.settings-workspace-shell .manager-detail-primary-actions,
+  html body #root .builder-shell.settings-workspace-shell .manager-detail-danger-actions { width: 100% !important; }
+  html body #root .builder-shell.settings-workspace-shell .settings-control-group,
+  html body #root .builder-shell.settings-workspace-shell .field,
+  html body #root .builder-shell.settings-workspace-shell .settings-compact-row { grid-template-columns: minmax(0, 1fr) !important; gap: 7px !important; }
+  html body #root .builder-shell.settings-workspace-shell .settings-field-help,
+  html body #root .builder-shell.settings-workspace-shell .settings-field-error { margin-left: 0 !important; }
+}
