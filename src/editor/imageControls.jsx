@@ -42,6 +42,7 @@ export function ImageInput({ label, value, onChange, disabled = false, duplicate
   } = useImageInputPicker({ label, value, duplicateValues, onChange, disabled });
   const processing = uploadState.status === 'processing';
   const safeVariant = ['default', 'favicon', 'share'].includes(variant) ? variant : 'default';
+  const showStorageNote = safeVariant === 'default';
 
   return (
     <div className={`image-input image-input--${safeVariant} ${processing ? 'is-processing' : ''}`}>
@@ -63,7 +64,7 @@ export function ImageInput({ label, value, onChange, disabled = false, duplicate
         onClear={clearImage}
         variant={safeVariant}
       />
-      <ImageStorageNote storageInfo={storageInfo} uploadState={uploadState} />
+      {showStorageNote && <ImageStorageNote storageInfo={storageInfo} uploadState={uploadState} />}
     </div>
   );
 }
