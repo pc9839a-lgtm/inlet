@@ -1,0 +1,384 @@
+/* Manager access owner — stable rows, separate editor, non-clipping ownership controls. */
+.settings-workspace-shell .manager-access-card .manager-list-shell {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.settings-workspace-shell .manager-access-card .manager-list {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--product-line);
+  border-radius: 10px;
+  background: var(--product-panel);
+}
+
+.settings-workspace-shell .manager-access-card .manager-card.compact {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--product-line);
+  border-radius: 0;
+  background: var(--product-panel);
+  box-shadow: none;
+  overflow: visible;
+}
+
+.settings-workspace-shell .manager-access-card .manager-card.compact:last-child {
+  border-bottom: 0;
+}
+
+.settings-workspace-shell .manager-access-card .manager-card.compact.selected {
+  background: var(--product-accent-soft);
+}
+
+.settings-workspace-shell .manager-access-card .manager-row-head {
+  width: 100%;
+  min-width: 0;
+  min-height: 62px;
+  display: grid;
+  grid-template-columns: minmax(220px,1.4fr) minmax(170px,.9fr) minmax(150px,auto) 78px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+}
+
+.settings-workspace-shell .manager-access-card :is(.manager-row-identity,.manager-row-role,.manager-row-status) {
+  min-width: 0;
+}
+
+.settings-workspace-shell .manager-access-card :is(.manager-row-identity,.manager-row-role) strong {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--product-text);
+  font-size: 13px;
+  line-height: 1.25;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-workspace-shell .manager-access-card .manager-row-identity span {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--product-muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-workspace-shell .manager-access-card .manager-row-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.settings-workspace-shell .manager-access-card .manager-state-pill {
+  min-height: 23px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: #eef0f3;
+  color: #505762;
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.settings-workspace-shell .manager-access-card .manager-state-pill.on {
+  background: var(--product-good-soft);
+  color: var(--product-good);
+}
+
+.settings-workspace-shell .manager-access-card .manager-state-pill.off {
+  background: var(--product-danger-soft);
+  color: var(--product-danger);
+}
+
+.settings-workspace-shell .manager-access-card .manager-row-head > button {
+  width: 78px;
+  min-width: 78px;
+}
+
+.settings-workspace-shell .manager-access-card .manager-editor-panel {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--product-line);
+  border-radius: 10px;
+  background: var(--product-soft);
+  overflow: visible;
+}
+
+.settings-workspace-shell .manager-access-card .manager-editor-panel .settings-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 10px;
+}
+
+.settings-workspace-shell .manager-access-card .manager-editor-panel .settings-field-with-help {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+
+.settings-workspace-shell .manager-access-card .manager-editor-panel .settings-control-group {
+  grid-template-columns: 76px minmax(0,1fr);
+}
+
+.settings-workspace-shell .manager-access-card .manager-editor-role {
+  min-width: 0;
+}
+
+.settings-workspace-shell .manager-access-card .manager-preset-row {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap: 6px;
+}
+
+.settings-workspace-shell .manager-access-card .manager-preset-row button {
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 8px;
+  border: 1px solid var(--product-line);
+  border-radius: 8px;
+  background: var(--product-panel);
+  color: #30353d;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.settings-workspace-shell .manager-access-card .manager-preset-row button:is(.active,[aria-pressed='true']) {
+  border-color: var(--product-text);
+  background: var(--product-text);
+  color: #fff;
+}
+
+.settings-workspace-shell .manager-access-card .manager-permission-grid {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--product-line);
+  border-radius: 10px;
+  background: var(--product-panel);
+}
+
+.settings-workspace-shell .manager-access-card .manager-permission-row {
+  min-width: 0;
+  min-height: 50px;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 140px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 11px;
+  border-bottom: 1px solid var(--product-line);
+}
+
+.settings-workspace-shell .manager-access-card .manager-permission-row:last-child {
+  border-bottom: 0;
+}
+
+.settings-workspace-shell .manager-access-card .manager-permission-row small {
+  display: none;
+}
+
+.settings-workspace-shell .manager-access-card .manager-detail-actions {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--product-line);
+}
+
+.settings-workspace-shell .manager-access-card :is(.manager-detail-primary-actions,.manager-detail-danger-actions) {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.settings-workspace-shell .manager-access-card .manager-empty-state {
+  min-height: 68px;
+  display: grid;
+  place-items: center;
+  color: var(--product-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* Ownership is a three-column information row. The action never shares the value track. */
+.settings-workspace-shell .manager-access-card .manager-owner-summary {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) minmax(0,1fr) 116px;
+  align-items: stretch;
+  overflow: hidden;
+  border: 1px solid var(--product-line);
+  border-radius: 10px;
+  background: var(--product-panel);
+}
+
+.settings-workspace-shell .manager-access-card .manager-owner-summary > div {
+  min-width: 0;
+  min-height: 64px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 12px;
+  border-right: 1px solid var(--product-line);
+}
+
+.settings-workspace-shell .manager-access-card .manager-owner-summary > div > span {
+  color: var(--product-muted);
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.settings-workspace-shell .manager-access-card .manager-owner-summary > div > strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--product-text);
+  font-size: 12px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-workspace-shell .manager-access-card .manager-owner-summary > .manager-fold-btn {
+  width: 116px;
+  min-width: 116px;
+  height: auto;
+  min-height: 64px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 0;
+  background: var(--product-panel);
+  color: var(--product-text);
+  white-space: normal;
+  line-height: 1.3;
+}
+
+.settings-workspace-shell .manager-access-card .manager-owner-summary > .manager-fold-btn:hover {
+  background: var(--product-soft);
+}
+
+.settings-workspace-shell .manager-access-card .ownership-transfer-box {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 13px;
+  border: 1px solid #f1cfcb;
+  border-radius: 10px;
+  background: var(--product-danger-soft);
+  overflow: visible;
+}
+
+.settings-workspace-shell .manager-access-card .ownership-transfer-copy > span {
+  color: var(--product-danger);
+  font-size: 10px;
+  font-weight: 950;
+}
+
+.settings-workspace-shell .manager-access-card .ownership-transfer-copy > strong {
+  display: block;
+  margin-top: 2px;
+  color: var(--product-text);
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.settings-workspace-shell .manager-access-card .ownership-transfer-copy > p {
+  margin: 4px 0 0;
+  color: var(--product-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.settings-workspace-shell .manager-access-card .ownership-transfer-controls {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 104px;
+  gap: 8px;
+  align-items: center;
+}
+
+.settings-workspace-shell .manager-access-card .ownership-transfer-controls select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.settings-workspace-shell .manager-access-card .ownership-transfer-controls .settings-danger-button {
+  width: 104px;
+  min-width: 104px;
+}
+
+.settings-workspace-shell .manager-access-card .ownership-transfer-status {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 11px;
+  border: 1px solid rgba(180,35,24,.14);
+  border-radius: 9px;
+  background: rgba(255,255,255,.68);
+}
+
+.settings-workspace-shell .manager-access-card .ownership-transfer-status > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.settings-workspace-shell .manager-access-card .ownership-transfer-status :is(strong,span,small) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-workspace-shell .manager-access-card .ownership-transfer-status strong { color: var(--product-text); font-size: 11px; }
+.settings-workspace-shell .manager-access-card .ownership-transfer-status span,
+.settings-workspace-shell .manager-access-card .ownership-transfer-status small { color: var(--product-muted); font-size: 10px; }
+
+@media (max-width: 900px) {
+  .settings-workspace-shell .manager-access-card .manager-row-head {
+    grid-template-columns: minmax(0,1fr) 78px;
+    gap: 6px 10px;
+  }
+  .settings-workspace-shell .manager-access-card .manager-row-role,
+  .settings-workspace-shell .manager-access-card .manager-row-status { grid-column: 1; }
+  .settings-workspace-shell .manager-access-card .manager-row-head > button { grid-column: 2; grid-row: 1 / span 3; }
+  .settings-workspace-shell .manager-access-card .manager-editor-panel .settings-form-grid { grid-template-columns: minmax(0,1fr); }
+  .settings-workspace-shell .manager-access-card .manager-preset-row { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .settings-workspace-shell .manager-access-card .manager-owner-summary { grid-template-columns: minmax(0,1fr); }
+  .settings-workspace-shell .manager-access-card .manager-owner-summary > div { border-right: 0; border-bottom: 1px solid var(--product-line); }
+  .settings-workspace-shell .manager-access-card .manager-owner-summary > .manager-fold-btn { width: 100%; min-width: 0; min-height: 44px; }
+}
+
+@media (max-width: 640px) {
+  .settings-workspace-shell .manager-access-card .manager-permission-row,
+  .settings-workspace-shell .manager-access-card .ownership-transfer-controls { grid-template-columns: minmax(0,1fr); }
+  .settings-workspace-shell .manager-access-card .ownership-transfer-controls .settings-danger-button { width: 100%; min-width: 0; }
+  .settings-workspace-shell .manager-access-card .manager-detail-actions,
+  .settings-workspace-shell .manager-access-card .ownership-transfer-status { align-items: stretch; flex-direction: column; }
+}
