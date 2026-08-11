@@ -1,10 +1,10 @@
-export function ImageInputPreview({ label, value, disabled, uploadState, onEdit, onClear }) {
+export function ImageInputPreview({ label, value, disabled, uploadState, onEdit, onClear, variant = 'default' }) {
   const processing = uploadState?.status === 'processing';
   const statusVisible = processing || uploadState?.status === 'success' || uploadState?.status === 'error';
   const progress = Math.max(0, Math.min(100, Number(uploadState?.progress || 0)));
 
   return (
-    <div className={`image-box single-plus ${value ? 'has-image' : 'is-empty'} ${processing ? 'is-processing' : ''}`}>
+    <div className={`image-box image-box--${variant} single-plus ${value ? 'has-image' : 'is-empty'} ${processing ? 'is-processing' : ''}`}>
       {value ? (
         <>
           <img src={value} alt="" />
