@@ -126,8 +126,8 @@ body .builder-shell .edit-layout :is(.page-global-options-list, .screen-order-li
   gap: 7px;
 }
 
-/* Screen order — reorder controls stay visible before opening the row. */
-body .builder-shell .edit-layout .screen-order-item.block-item {
+/* Screen order — unique classes only. No block-item/block-head/drag/switch inheritance. */
+body .builder-shell .edit-layout .screen-order-item {
   width: 100%;
   min-width: 0;
   max-width: 100%;
@@ -139,13 +139,21 @@ body .builder-shell .edit-layout .screen-order-item.block-item {
   box-shadow: none;
 }
 
-body .builder-shell .edit-layout .screen-order-item.block-item.open,
-body .builder-shell .edit-layout .screen-order-item.block-item[data-selected='true'] {
+body .builder-shell .edit-layout .screen-order-item.is-open,
+body .builder-shell .edit-layout .screen-order-item[data-selected='true'] {
   border-color: #9db4f5;
   box-shadow: inset 3px 0 0 var(--product-accent);
 }
 
-body .builder-shell .edit-layout .screen-order-head.block-head {
+body .builder-shell .edit-layout .screen-order-item.is-dragging {
+  opacity: .72;
+}
+
+body .builder-shell .edit-layout .screen-order-item.is-hidden .screen-title-wrap {
+  opacity: .55;
+}
+
+body .builder-shell .edit-layout .screen-order-head {
   width: 100%;
   min-width: 0;
   max-width: 100%;
@@ -162,9 +170,26 @@ body .builder-shell .edit-layout .screen-order-head.block-head {
   background: #fff;
 }
 
-body .builder-shell .edit-layout .screen-order-item.block-item.open > .screen-order-head.block-head,
-body .builder-shell .edit-layout .screen-order-item.block-item[data-selected='true'] > .screen-order-head.block-head {
+body .builder-shell .edit-layout .screen-order-item.is-open > .screen-order-head,
+body .builder-shell .edit-layout .screen-order-item[data-selected='true'] > .screen-order-head {
   background: #f5f8ff;
+}
+
+body .builder-shell .edit-layout .screen-drag-handle {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  display: inline-grid;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--product-line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--product-muted);
+  box-shadow: none;
+  cursor: grab;
 }
 
 body .builder-shell .edit-layout .screen-title-wrap {
@@ -211,15 +236,45 @@ body .builder-shell .edit-layout .screen-row-chevron {
 body .builder-shell .edit-layout .screen-row-visibility {
   width: 40px;
   min-width: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   overflow: visible;
 }
 
-body .builder-shell .edit-layout .screen-row-visibility label,
-body .builder-shell .edit-layout .screen-row-visibility .switch {
+body .builder-shell .edit-layout .screen-order-visibility-toggle {
+  position: relative;
+  width: 40px;
+  min-width: 40px;
+  height: 24px;
+  min-height: 24px;
   margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #e8edf3;
+  box-shadow: inset 0 0 0 1px #d9e0e8;
+  cursor: pointer;
+}
+
+body .builder-shell .edit-layout .screen-order-visibility-toggle > span {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15,23,42,.2);
+  transition: transform .14s ease;
+}
+
+body .builder-shell .edit-layout .screen-order-visibility-toggle.is-on {
+  background: var(--product-good);
+  box-shadow: none;
+}
+
+body .builder-shell .edit-layout .screen-order-visibility-toggle.is-on > span {
+  transform: translateX(16px);
 }
 
 body .builder-shell .edit-layout .screen-row-actions {
@@ -230,14 +285,14 @@ body .builder-shell .edit-layout .screen-row-actions {
   grid-template-columns: repeat(3, 28px);
   align-items: center;
   justify-content: end;
+  justify-self: end;
   gap: 4px;
   margin: 0;
   padding: 0;
   overflow: visible;
 }
 
-body .builder-shell .edit-layout .screen-row-quick-action,
-body .builder-shell .edit-layout .screen-row-actions .screen-icon-action {
+body .builder-shell .edit-layout .screen-order-action-button {
   width: 28px;
   min-width: 28px;
   height: 28px;
@@ -251,27 +306,17 @@ body .builder-shell .edit-layout .screen-row-actions .screen-icon-action {
   background: #fff;
   color: var(--product-muted);
   box-shadow: none;
+  cursor: pointer;
 }
 
-body .builder-shell .edit-layout .screen-row-quick-action:disabled,
-body .builder-shell .edit-layout .screen-row-actions .screen-icon-action:disabled {
-  opacity: .32;
+body .builder-shell .edit-layout .screen-order-action-button:hover:not(:disabled) {
+  border-color: var(--product-line-strong);
+  color: var(--product-text);
 }
 
-body .builder-shell .edit-layout .screen-drag-handle {
-  width: 34px;
-  min-width: 34px;
-  height: 34px;
-  min-height: 34px;
-  display: inline-grid;
-  place-items: center;
-  margin: 0;
-  padding: 0;
-  border: 1px solid var(--product-line);
-  border-radius: 8px;
-  background: #fff;
-  color: var(--product-muted);
-  box-shadow: none;
+body .builder-shell .edit-layout .screen-order-action-button:disabled {
+  opacity: .28;
+  cursor: default;
 }
 
 body .builder-shell .edit-layout .screen-row-more-menu {
@@ -329,7 +374,7 @@ body .builder-shell .edit-layout .screen-order-inline-editor {
   background: #f8fafc;
 }
 
-/* Fixed/global editor cards — reserve action controls inside card width. */
+/* Fixed/global editor cards */
 body .builder-shell .edit-layout :is(.fixed-block-card, .edit-animation-card) {
   width: 100%;
   min-width: 0;
@@ -601,20 +646,41 @@ html body #root .builder-shell .preview-workspace .phone-frame {
     padding-inline: 12px;
   }
 
-  body .builder-shell .edit-layout .screen-order-head.block-head {
-    grid-template-columns: 32px minmax(0, 1fr) 38px 86px;
+  body .builder-shell .edit-layout .screen-order-head {
+    grid-template-columns: 32px minmax(0, 1fr) 38px 84px;
     gap: 3px;
     padding: 5px;
   }
 
-  body .builder-shell .edit-layout .screen-row-actions {
-    width: 86px;
-    min-width: 86px;
-    grid-template-columns: repeat(3,26px);
+  body .builder-shell .edit-layout .screen-drag-handle {
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
+    min-height: 32px;
   }
 
-  body .builder-shell .edit-layout .screen-row-quick-action,
-  body .builder-shell .edit-layout .screen-row-actions .screen-icon-action {
+  body .builder-shell .edit-layout .screen-row-visibility {
+    width: 38px;
+    min-width: 38px;
+  }
+
+  body .builder-shell .edit-layout .screen-order-visibility-toggle {
+    width: 38px;
+    min-width: 38px;
+  }
+
+  body .builder-shell .edit-layout .screen-order-visibility-toggle.is-on > span {
+    transform: translateX(14px);
+  }
+
+  body .builder-shell .edit-layout .screen-row-actions {
+    width: 84px;
+    min-width: 84px;
+    grid-template-columns: repeat(3,26px);
+    gap: 3px;
+  }
+
+  body .builder-shell .edit-layout .screen-order-action-button {
     width: 26px;
     min-width: 26px;
     height: 26px;
@@ -628,16 +694,64 @@ html body #root .builder-shell .preview-workspace .phone-frame {
 }
 
 @media (max-width: 760px) {
-  body .builder-shell .edit-layout .screen-order-head.block-head {
-    grid-template-columns: 32px minmax(0, 1fr) 38px;
+  body .builder-shell .edit-layout .screen-order-head {
+    grid-template-columns: 30px minmax(0, 1fr) 36px 76px;
+    gap: 3px;
+    padding: 5px;
+  }
+
+  body .builder-shell .edit-layout .screen-drag-handle {
+    width: 30px;
+    min-width: 30px;
+    height: 30px;
+    min-height: 30px;
+  }
+
+  body .builder-shell .edit-layout .screen-title-wrap {
+    grid-template-columns: 24px 17px minmax(0, 1fr) 16px;
+    gap: 5px;
+  }
+
+  body .builder-shell .edit-layout .screen-order-number {
+    width: 24px;
+    height: 24px;
+  }
+
+  body .builder-shell .edit-layout .screen-row-visibility {
+    width: 36px;
+    min-width: 36px;
+  }
+
+  body .builder-shell .edit-layout .screen-order-visibility-toggle {
+    width: 36px;
+    min-width: 36px;
+    height: 22px;
+    min-height: 22px;
+  }
+
+  body .builder-shell .edit-layout .screen-order-visibility-toggle > span {
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+  }
+
+  body .builder-shell .edit-layout .screen-order-visibility-toggle.is-on > span {
+    transform: translateX(14px);
   }
 
   body .builder-shell .edit-layout .screen-row-actions {
-    grid-column: 2 / 4;
-    width: 86px;
-    min-width: 86px;
-    justify-self: end;
-    padding-top: 4px;
+    width: 76px;
+    min-width: 76px;
+    grid-template-columns: repeat(3,24px);
+    gap: 2px;
+  }
+
+  body .builder-shell .edit-layout .screen-order-action-button {
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+    min-height: 24px;
   }
 
   body .builder-shell .edit-layout .fixed-add-dock {
