@@ -1,7 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, Plus, Trash2 } from 'lucide-react';
 
-export function EditorList({ items = [], getTitle, getIcon, getBadge, renderItem, onAdd, onRemove, canRemove = () => true, addLabel = '항목 추가', emptyText = '아직 추가된 항목이 없습니다.' }) {
+export function EditorList({
+  items = [],
+  getTitle,
+  getIcon,
+  getBadge,
+  renderItem,
+  onAdd,
+  onRemove,
+  canRemove = () => true,
+  addLabel = '항목 추가',
+  emptyText = '아직 추가된 항목이 없습니다.',
+  detailPlacement = 'inline',
+}) {
   const [openId, setOpenId] = useState('');
   const previousLength = useRef(items.length);
 
@@ -14,8 +26,12 @@ export function EditorList({ items = [], getTitle, getIcon, getBadge, renderItem
     if (openId && !items.some((item) => item.id === openId)) setOpenId('');
   }, [items, openId]);
 
+  const panelMode = detailPlacement === 'panel';
+  const selectedIndex = openId ? items.findIndex((item) => item.id === openId) : -1;
+  const selectedItem = selectedIndex >= 0 ? items[selectedIndex] : null;
+
   return (
-    <div className="editor-list-v2">
+    <div className={`editor-list-v2 ${panelMode ? 'editor-list-v2--panel' : ''}`}>
       <div className="editor-list-v2-items">
         {items.length === 0 && <p className="editor-list-v2-empty">{emptyText}</p>}
         {items.map((item, index) => {
@@ -40,11 +56,18 @@ export function EditorList({ items = [], getTitle, getIcon, getBadge, renderItem
                   </button>
                 )}
               </div>
-              {open && <div className="editor-list-item-v2-body">{renderItem(item, index)}</div>}
+              {!panelMode && open && <div className="editor-list-item-v2-body">{renderItem(item, index)}</div>}
             </section>
           );
         })}
       </div>
+
+      {panelMode && selectedItem && (
+        <div className="editor-list-v2-detail-panel">
+          {renderItem(selectedItem, selectedIndex)}
+        </div>
+      )}
+
       {onAdd && (
         <button type="button" className="editor-list-v2-add" onClick={onAdd}>
           <Plus size={17} aria-hidden="true" />
