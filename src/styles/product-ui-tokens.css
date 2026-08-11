@@ -1,0 +1,34 @@
+:root {
+  --product-bg: #f5f6f8;
+  --product-panel: #ffffff;
+  --product-text: #101217;
+  --product-muted: #6c727e;
+  --product-muted-2: #9aa0aa;
+  --product-line: #e4e7ec;
+  --product-line-strong: #cfd5de;
+  --product-soft: #f7f8fa;
+  --product-accent: #315ee7;
+  --product-accent-soft: #eef3ff;
+  --product-good: #147a50;
+  --product-good-soft: #eaf7f1;
+  --product-warn: #946100;
+  --product-warn-soft: #fff4df;
+  --product-danger: #b42318;
+  --product-danger-soft: #fff0ef;
+  --product-shadow: 0 12px 34px rgba(17, 24, 39, .06);
+
+  --product-space-1: 6px;
+  --product-space-2: 8px;
+  --product-space-3: 10px;
+  --product-space-4: 14px;
+  --product-space-5: 18px;
+  --product-space-6: 24px;
+
+  --product-radius-control: 9px;
+  --product-radius-card: 14px;
+  --product-control-h: 46px;
+  --product-button-h: 40px;
+  --product-tab-h: 43px;
+  --product-topbar-h: 62px;
+  --product-content-max: 1180px;
+}
