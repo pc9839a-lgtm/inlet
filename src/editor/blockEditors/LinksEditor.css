@@ -1,8 +1,6 @@
-/* Links editor owner — stable geometry with CallTag product tokens. */
+/* Links editor owner — compact CallTag-style list + separate detail panel. */
 .links-editor-v3,
-.links-editor-v3 * {
-  box-sizing: border-box;
-}
+.links-editor-v3 * { box-sizing: border-box; }
 
 .links-editor-v3 {
   width: 100%;
@@ -12,7 +10,7 @@
 
 .links-editor-v3 .editor-tabs-v2-panel {
   gap: 10px;
-  padding: 12px 0 16px;
+  padding: 12px 0 14px;
 }
 
 .links-editor-v3 .editor-list-v2,
@@ -20,21 +18,22 @@
   width: 100%;
   min-width: 0;
   display: grid;
-  gap: 6px;
+  gap: 7px;
 }
 
 .links-editor-v3 .editor-list-item-v2 {
   width: 100%;
   min-width: 0;
-  border: 1px solid var(--product-line);
-  border-radius: 10px;
-  background: var(--product-panel);
-  box-shadow: none;
   overflow: visible;
+  border: 1px solid var(--product-line);
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: none;
 }
 
 .links-editor-v3 .editor-list-item-v2.is-open {
-  border-color: var(--product-line-strong);
+  border-color: #9db4f5;
+  box-shadow: inset 3px 0 0 var(--product-accent);
 }
 
 .links-editor-v3 .editor-list-item-v2-trigger {
@@ -42,11 +41,11 @@
   grid-template-columns: 32px minmax(0, 1fr) auto 20px;
   gap: 8px;
   padding: 7px 9px;
-  background: var(--product-panel);
+  background: #fff;
 }
 
 .links-editor-v3 .editor-list-item-v2.is-open .editor-list-item-v2-trigger {
-  background: var(--product-soft);
+  background: #f5f8ff;
 }
 
 .links-editor-v3 .editor-list-item-v2-remove {
@@ -58,18 +57,20 @@
 .links-editor-v3 .editor-list-v2-detail-panel {
   width: 100%;
   min-width: 0;
-  margin-top: 6px;
+  margin: 2px 0 0;
   padding: 14px;
-  border: 1px solid var(--product-line);
-  border-radius: 10px;
-  background: var(--product-soft);
   overflow: visible;
+  border: 1px solid var(--product-line-strong);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: none;
 }
 
 .links-editor-v3 .editor-list-v2-add {
-  min-height: 40px;
-  margin-top: 2px;
+  min-height: 42px;
+  margin-top: 1px;
   border-radius: 9px;
+  background: #fff;
 }
 
 .links-editor-v3 .link-editor-panel-v3 {
@@ -86,7 +87,7 @@
   width: 100%;
   min-width: 0;
   display: grid;
-  grid-template-columns: 82px minmax(0, 1fr);
+  grid-template-columns: 72px minmax(0, 1fr);
   align-items: center;
   gap: 10px;
 }
@@ -97,7 +98,7 @@
 .links-editor-v3 .target-control-v3-body .field > span {
   min-width: 0;
   margin: 0;
-  color: #4f5661;
+  color: var(--product-text);
   font-size: 12px;
   line-height: 1.3;
   font-weight: 850;
@@ -112,8 +113,8 @@
   margin: 0;
   padding: 0 11px;
   border: 1px solid var(--product-line-strong);
-  border-radius: 9px;
-  background: var(--product-panel);
+  border-radius: 8px;
+  background: #fff;
   color: var(--product-text);
   box-shadow: none;
   font-size: 13px;
@@ -123,7 +124,7 @@
 
 .links-editor-v3 .editor-field-v2 input:focus,
 .links-editor-v3 .target-control-v3-body :is(input, select):focus {
-  border-color: #aeb8d3;
+  border-color: #9aa7ba;
   box-shadow: 0 0 0 3px rgba(49,94,231,.08);
 }
 
@@ -144,18 +145,12 @@
   gap: 5px;
   padding: 4px;
   border: 1px solid var(--product-line);
-  border-radius: 10px;
-  background: var(--product-panel);
+  border-radius: 9px;
+  background: #f6f7f9;
 }
 
-.links-editor-v3 .target-mode-tabs {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.links-editor-v3 .link-icon-mode-v3 {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  min-height: 48px;
-}
+.links-editor-v3 .target-mode-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.links-editor-v3 .link-icon-mode-v3 { grid-template-columns: repeat(3, minmax(0, 1fr)); min-height: 48px; }
 
 .links-editor-v3 :is(.target-mode-tabs,.link-icon-mode-v3) > button {
   width: 100%;
@@ -175,6 +170,8 @@
 }
 
 .links-editor-v3 .target-mode-tabs > button.active,
+.links-editor-v3 .target-mode-tabs > button[aria-pressed='true'],
+.links-editor-v3 .link-icon-mode-v3 > button.active,
 .links-editor-v3 .link-icon-mode-v3 > button[aria-pressed='true'] {
   background: var(--product-text);
   color: #fff;
@@ -194,20 +191,9 @@
   box-shadow: none;
 }
 
-.links-editor-v3 .link-visual-control-v3 {
-  align-items: start;
-}
-
-.links-editor-v3 .link-control-label-v3 {
-  min-height: 48px;
-  display: flex;
-  align-items: center;
-}
-
-/* Keep the visual-mode selector stable even when '없음' has no subordinate control. */
-.links-editor-v3 .link-icon-control-v3[data-icon-mode='none'] {
-  min-height: 48px;
-}
+.links-editor-v3 .link-visual-control-v3 { align-items: start; }
+.links-editor-v3 .link-control-label-v3 { min-height: 48px; display: flex; align-items: center; }
+.links-editor-v3 .link-icon-control-v3[data-icon-mode='none'] { min-height: 48px; }
 
 .links-editor-v3 .emoji-simple-row {
   min-width: 0;
@@ -223,34 +209,14 @@
   padding: 0;
   border: 1px solid var(--product-line);
   border-radius: 8px;
-  background: var(--product-panel);
+  background: #fff;
   box-shadow: none;
 }
 
 .links-editor-v3 .thumb-simple-row-v2,
-.links-editor-v3 .thumb-actions {
-  min-width: 0;
-  overflow: visible;
-}
-
-.links-editor-v3 .thumb-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.links-editor-v3 .thumb-actions > button {
-  min-width: 0;
-  min-height: 36px;
-  padding: 0 10px;
-  border: 1px solid var(--product-line);
-  border-radius: 8px;
-  background: var(--product-panel);
-  color: #30353d;
-  box-shadow: none;
-  font-size: 11px;
-  font-weight: 900;
-}
+.links-editor-v3 .thumb-actions { min-width: 0; overflow: visible; }
+.links-editor-v3 .thumb-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.links-editor-v3 .thumb-actions > button { min-width: 0; min-height: 36px; padding: 0 10px; border: 1px solid var(--product-line); border-radius: 8px; background: #fff; color: #30353d; box-shadow: none; font-size: 11px; font-weight: 900; }
 
 @media (max-width: 720px) {
   .links-editor-v3 .link-editor-panel-v3 > .editor-field-v2,
@@ -260,12 +226,6 @@
     grid-template-columns: minmax(0, 1fr);
     gap: 6px;
   }
-
-  .links-editor-v3 .link-control-label-v3 {
-    min-height: 0;
-  }
-
-  .links-editor-v3 .emoji-simple-row {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
+  .links-editor-v3 .link-control-label-v3 { min-height: 0; }
+  .links-editor-v3 .emoji-simple-row { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 }
