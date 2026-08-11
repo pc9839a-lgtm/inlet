@@ -1,7 +1,6 @@
 import ManagerList from './ManagerList.jsx';
 import ManagerOwnershipTransfer from './ManagerOwnershipTransfer.jsx';
 import SettingsSection from './SettingsSection.jsx';
-import './ManagerAccess.css';
 
 export default function ManagerSettingsSection({
   addManager,
