@@ -1,56 +1,43 @@
 import { Save } from 'lucide-react';
 
 const saveStateColors = {
-  idle: '#64748b',
-  ok: '#15803d',
-  warning: '#b45309',
-  error: '#dc2626',
+  idle: '#6c727e',
+  ok: '#147a50',
+  warning: '#946100',
+  error: '#b42318',
 };
 
 export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPreview, onDashboard, previewUrl }) {
   const titles = {
-    edit: ['편집', ''],
-    templates: ['템플릿', '예시 화면을 보고 페이지 구성을 선택합니다.'],
-    style: ['스타일', ''],
-    inbox: ['고객 문의 관리', ''],
-    stats: ['통계', ''],
-    settings: ['설정', ''],
-    admin: ['관리자', ''],
+    edit: '편집',
+    templates: '템플릿',
+    style: '스타일',
+    inbox: '접수함',
+    stats: '통계',
+    settings: '설정',
+    admin: '관리자',
   };
-  const [title, desc] = titles[tab] || titles.edit;
-  const operationsHeader = ['inbox', 'stats', 'settings'].includes(tab);
+  const title = titles[tab] || titles.edit;
 
   return (
-    <header className={`panel-header${operationsHeader ? ' operations-panel-header' : ''}`}>
-      <div className={`panel-title${operationsHeader ? ' operations-panel-title' : ''}`}>
+    <header className="panel-header product-panel-header">
+      <div className="panel-title product-panel-title">
         <p>{page.title}</p>
-        {operationsHeader ? (
-          <div className="operations-panel-title-row">
-            <h1>{title}</h1>
-            {saveStatus && (
-              <div className="panel-save-status operations-save-status" title={saveStatus.label} aria-live="polite">
-                <strong style={{ color: saveStateColors[saveStatus.tone] || saveStateColors.idle }}>{saveStatus.label}</strong>
-              </div>
-            )}
-          </div>
-        ) : (
-          <>
-            <h1>{title}</h1>
-            {desc && <span>{desc}</span>}
-            {saveStatus && (
-              <div className="panel-save-status" title={saveStatus.detail || saveStatus.label} aria-live="polite">
-                <strong style={{ color: saveStateColors[saveStatus.tone] || saveStateColors.idle }}>{saveStatus.label}</strong>
-                {saveStatus.detail && <small>{saveStatus.detail}</small>}
-              </div>
-            )}
-          </>
-        )}
+        <div className="operations-panel-title-row">
+          <h1>{title}</h1>
+          {saveStatus && (
+            <div className="panel-save-status operations-save-status" title={saveStatus.detail || saveStatus.label} aria-live="polite">
+              <strong style={{ color: saveStateColors[saveStatus.tone] || saveStateColors.idle }}>{saveStatus.label}</strong>
+            </div>
+          )}
+        </div>
       </div>
+
       <div className="panel-actions">
         <button className="ghost-btn" type="button" onClick={onDashboard}>메인</button>
         <button className="ghost-btn" type="button" onClick={onPreview} title={previewUrl}>미리보기</button>
         <button className="primary-btn" type="button" onClick={onSave}>
-          <Save size={15} />{saved ? '저장됨' : '저장'}
+          <Save size={14} />{saved ? '저장됨' : '저장'}
         </button>
       </div>
     </header>
