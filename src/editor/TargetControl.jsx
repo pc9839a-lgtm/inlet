@@ -15,19 +15,21 @@ export default function TargetControl({ label = TARGET_LABELS.move, target, url,
   };
 
   return (
-    <div className="target-control target-control-tabs">
-      <span className="target-title">{label}</span>
-      <TargetModeTabs mode={mode} onChange={setMode} />
-
-      {mode === 'widget' && (
-        <TargetWidgetSelect
-          blocks={blocks}
-          currentWidget={currentWidget}
-          onChange={(value) => onChange({ target: value, url: '', lastWidgetTarget: value })}
-        />
-      )}
-
-      {mode === 'url' && <TargetUrlField value={url} onChange={(value) => onChange({ target: 'url', url: value, lastWidgetTarget: currentWidget })} />}
+    <div className="target-control target-control-v3">
+      <div className="target-control-v3-head">
+        <span className="target-title">{label}</span>
+        <TargetModeTabs mode={mode} onChange={setMode} />
+      </div>
+      <div className="target-control-v3-body">
+        {mode === 'widget' && (
+          <TargetWidgetSelect
+            blocks={blocks}
+            currentWidget={currentWidget}
+            onChange={(value) => onChange({ target: value, url: '', lastWidgetTarget: value })}
+          />
+        )}
+        {mode === 'url' && <TargetUrlField value={url} onChange={(value) => onChange({ target: 'url', url: value, lastWidgetTarget: currentWidget })} />}
+      </div>
     </div>
   );
 }
