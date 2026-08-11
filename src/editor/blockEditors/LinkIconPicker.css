@@ -1,0 +1,98 @@
+.link-icon-simple-v2 {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+  overflow: visible;
+}
+
+.link-icon-mode-v2 {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: 0;
+  overflow: visible;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .link-icon-mode-v2 > button {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  margin: 0 !important;
+  padding: 0 8px !important;
+  border: 1px solid var(--editor-v2-line, #dfe6ef) !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  color: var(--editor-v2-text, #172033) !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .link-icon-mode-v2 > button[aria-pressed='true'] {
+  border-color: #111827 !important;
+  background: #111827 !important;
+  color: #fff !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .link-icon-mode-v2 > button:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, .16) !important;
+  outline-offset: 1px !important;
+}
+
+.link-icon-simple-v2[data-icon-mode='none'] {
+  min-height: 42px;
+}
+
+.link-icon-simple-v2 .emoji-simple-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 6px;
+  overflow: visible;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .link-icon-simple-v2 .emoji-simple-row > button {
+  min-width: 0 !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 0 !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+.link-icon-simple-v2 .thumb-simple-row-v2 {
+  min-width: 0;
+  overflow: visible;
+}
+
+.link-icon-simple-v2 .thumb-actions {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .link-icon-simple-v2 .thumb-actions > button {
+  min-width: 0 !important;
+  min-height: 38px !important;
+  padding: 0 10px !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 720px) {
+  .link-icon-mode-v2 {
+    gap: 4px;
+  }
+
+  .link-icon-simple-v2 .emoji-simple-row {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
