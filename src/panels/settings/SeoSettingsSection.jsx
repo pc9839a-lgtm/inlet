@@ -1,6 +1,7 @@
 import { ImageInput } from '../../editor/controls.jsx';
 import SettingsField from './SettingsField.jsx';
 import SettingsSection from './SettingsSection.jsx';
+import './SeoAssetControls.css';
 
 export default function SeoSettingsSection({
   locked,
