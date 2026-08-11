@@ -1,27 +1,10 @@
 import React from 'react';
 import { WorkspaceLeftPanel } from './workspace/WorkspaceLeftPanel.jsx';
 import { WorkspacePreviewPane } from './workspace/WorkspacePreviewPane.jsx';
+import '../styles/product-ui-tokens.css';
 import '../styles/editor-workspace-v2.css';
-import '../styles/workspace-inbox-redesign.css';
-import '../styles/workspace-inbox-fullwidth-fix.css';
-import '../styles/operations-settings.css';
-import '../styles/operations-settings-compact.css';
-import '../styles/external-connections-uniform.css';
-import '../styles/inbox-scroll-width-final.css';
-import '../styles/inbox-sidebar-summary-hide.css';
-import '../styles/stats-dashboard-safe.css';
-import '../styles/stats-fullwidth-final.css';
-import '../styles/stats-operations-final.css';
-import '../styles/stats-height-match-inbox.css';
-import '../styles/ops-header-stats-cleanup.css';
-import '../styles/inbox-blue-accent-cleanup.css';
-import '../styles/operations-workspaces-unified.css';
-import '../styles/operations-overflow-final.css';
-import '../styles/stats-period-top-final.css';
-import '../styles/operations-clipping-cleanup-final.css';
-import '../styles/stats-regression-repair-final.css';
-import '../styles/operations-height-parity-final.css';
-import '../styles/settings-control-panel.css';
+import '../styles/workspace-shell.css';
+import '../styles/settings-workspace.css';
 
 export default function WorkspaceEditorScreen({
   canUseBuilder,
