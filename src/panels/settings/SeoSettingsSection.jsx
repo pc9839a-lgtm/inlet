@@ -43,8 +43,12 @@ export default function SeoSettingsSection({
       <div className="settings-flat-block">
         <div className="settings-flat-block-head"><strong>이미지</strong></div>
         <div className="settings-seo-media-grid">
-          <ImageInput label="파비콘" value={seoDraft.favicon} disabled={locked} onChange={(value) => setSeoDraft((draft) => ({ ...draft, favicon: value }))} />
-          <ImageInput label="공유 이미지" value={seoDraft.og} disabled={locked} onChange={(value) => setSeoDraft((draft) => ({ ...draft, og: value }))} />
+          <div className="settings-seo-favicon">
+            <ImageInput label="파비콘" value={seoDraft.favicon} disabled={locked} onChange={(value) => setSeoDraft((draft) => ({ ...draft, favicon: value }))} />
+          </div>
+          <div className="settings-seo-share">
+            <ImageInput label="공유 이미지" value={seoDraft.og} disabled={locked} onChange={(value) => setSeoDraft((draft) => ({ ...draft, og: value }))} />
+          </div>
         </div>
       </div>
 
