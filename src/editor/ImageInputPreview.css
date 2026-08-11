@@ -1,0 +1,133 @@
+.image-preview-control,
+.image-preview-control * {
+  box-sizing: border-box;
+}
+
+.image-preview-control {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.image-preview-frame {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px dashed var(--product-line-strong, #cfd6df);
+  border-radius: 10px;
+  background: var(--product-soft, #f6f7f9);
+}
+
+.image-preview-control.is-default .image-preview-frame {
+  min-height: 170px;
+  max-height: 300px;
+}
+
+.image-preview-control.is-favicon .image-preview-frame {
+  width: 96px;
+  height: 96px;
+}
+
+.image-preview-control.is-share .image-preview-frame {
+  width: min(440px, 100%);
+  aspect-ratio: 1200 / 630;
+}
+
+.image-preview-frame img {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+  object-fit: contain;
+  object-position: center;
+}
+
+.image-preview-control.is-default .image-preview-frame img {
+  max-height: 300px;
+}
+
+.image-preview-empty {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--product-line-strong, #cfd6df);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--product-text, #101217);
+  box-shadow: none;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.image-preview-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.image-preview-actions button {
+  min-width: 58px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--product-line-strong, #cfd6df);
+  border-radius: 8px;
+  background: #fff;
+  color: #30353d;
+  box-shadow: none;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.image-preview-actions button.danger {
+  color: var(--product-danger, #b42318);
+}
+
+.image-preview-actions button:disabled,
+.image-preview-empty:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.image-preview-control .image-upload-status {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  padding: 7px 8px;
+  border-radius: 7px;
+  background: rgba(16, 18, 23, .88);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.image-preview-control .image-upload-progress {
+  height: 3px;
+  margin-top: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255,255,255,.2);
+}
+
+.image-preview-control .image-upload-progress i {
+  display: block;
+  height: 100%;
+  background: #fff;
+}
+
+@media (max-width: 640px) {
+  .image-preview-control.is-share .image-preview-frame,
+  .image-preview-control.is-default .image-preview-frame {
+    width: 100%;
+  }
+}
