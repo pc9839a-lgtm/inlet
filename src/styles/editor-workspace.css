@@ -1,0 +1,339 @@
+/* Page editor owner — CallTag product language. */
+body .builder-shell:not(.mobile-operations-shell):not(.inbox-workspace-shell):not(.stats-dashboard-shell):not(.settings-workspace-shell) {
+  grid-template-columns: minmax(680px,720px) minmax(520px,1fr);
+  background: var(--product-bg);
+}
+
+body .builder-shell:not(.mobile-operations-shell):not(.inbox-workspace-shell):not(.stats-dashboard-shell):not(.settings-workspace-shell) .left-workspace {
+  min-width: 0;
+  border-right: 1px solid var(--product-line);
+  background: var(--product-bg);
+}
+
+body .builder-shell:not(.mobile-operations-shell):not(.inbox-workspace-shell):not(.stats-dashboard-shell):not(.settings-workspace-shell) .work-panel {
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 14px 18px 48px;
+}
+
+body .builder-shell .edit-layout {
+  width: 100%;
+  min-width: 0;
+}
+
+body .builder-shell .edit-layout :is(.page-global-options-card,.screen-order-card) {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 14px;
+  border: 1px solid var(--product-line);
+  border-radius: var(--product-radius-card);
+  background: var(--product-panel);
+  box-shadow: none;
+}
+
+body .builder-shell .edit-layout :is(.page-global-options-title,.screen-order-title) {
+  margin: 0 0 10px;
+  padding: 0;
+  border: 0;
+}
+
+body .builder-shell .edit-layout :is(.page-global-options-title,.screen-order-title) h2 {
+  margin: 0;
+  color: var(--product-text);
+  font-size: 15px;
+  line-height: 1.3;
+  font-weight: 950;
+  letter-spacing: -.035em;
+}
+
+body .builder-shell .edit-layout .screen-order-title p {
+  margin: 3px 0 0;
+  color: var(--product-muted);
+  font-size: 10px;
+  line-height: 1.4;
+  font-weight: 750;
+}
+
+body .builder-shell .edit-layout .page-global-options-list,
+body .builder-shell .edit-layout .screen-order-list {
+  display: grid;
+  gap: 7px;
+}
+
+body .builder-shell .edit-layout :is(.fixed-block-card,.edit-animation-card,.screen-order-item.block-item) {
+  min-width: 0;
+  margin: 0;
+  border: 1px solid var(--product-line);
+  border-radius: 9px;
+  background: var(--product-panel);
+  box-shadow: none;
+  overflow: visible;
+}
+
+body .builder-shell .edit-layout :is(.fixed-block-card.open,.screen-order-item.block-item.open,.screen-order-item.block-item[data-selected='true']) {
+  border-color: var(--product-line-strong);
+  box-shadow: 0 8px 20px rgba(17,24,39,.06);
+}
+
+body .builder-shell .edit-layout :is(.fixed-block-head,.edit-animation-head,.screen-order-head.block-head) {
+  min-width: 0;
+  min-height: 52px;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--product-panel);
+}
+
+body .builder-shell .edit-layout :is(.fixed-block-card.open > .fixed-block-head,.screen-order-item.block-item.open > .screen-order-head.block-head,.screen-order-item.block-item[data-selected='true'] > .screen-order-head.block-head) {
+  background: var(--product-soft);
+}
+
+body .builder-shell .edit-layout :is(.fixed-block-copy strong,.edit-animation-head b,.screen-title-wrap strong) {
+  color: var(--product-text);
+  font-size: 13px;
+  line-height: 1.25;
+  font-weight: 900;
+  letter-spacing: -.02em;
+}
+
+body .builder-shell .edit-layout .fixed-block-copy em {
+  max-width: 220px;
+  overflow: hidden;
+  color: var(--product-muted);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body .builder-shell .edit-layout .screen-order-head.block-head {
+  grid-template-columns: 34px minmax(0,1fr) 46px auto;
+}
+
+body .builder-shell .edit-layout .screen-order-number {
+  width: 26px;
+  min-width: 26px;
+  height: 26px;
+  min-height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--product-accent-soft);
+  color: var(--product-accent);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+body .builder-shell .edit-layout :is(.fixed-open-button,.screen-icon-action,.screen-drag-handle) {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--product-line);
+  border-radius: 8px;
+  background: var(--product-panel);
+  color: var(--product-muted);
+  box-shadow: none;
+}
+
+body .builder-shell .edit-layout :is(.fixed-block-editor,.edit-animation-settings,.screen-order-inline-editor) {
+  padding: 12px;
+  border-top: 1px solid var(--product-line);
+  background: var(--product-soft);
+}
+
+body .builder-shell .edit-layout .screen-order-inline-editor {
+  min-width: 0;
+  overflow: visible;
+}
+
+body .builder-shell .edit-layout .block-editor-v2-header {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 30px minmax(0,1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+}
+
+body .builder-shell .edit-layout :is(.block-editor-v2-icon,.editor-section-v2-icon) {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: var(--product-soft);
+  color: var(--product-muted);
+}
+
+body .builder-shell .edit-layout .block-editor-v2-heading strong {
+  color: var(--product-text);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+body .builder-shell .edit-layout .editor-section-v2-trigger {
+  min-width: 0;
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: 24px minmax(0,1fr) 24px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+body .builder-shell .edit-layout :is(.editor-section-v2-copy strong,.editor-control-v2-copy strong) {
+  color: var(--product-text);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+body .builder-shell .edit-layout .editor-section-v2-body {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  padding: 12px 4px 16px;
+}
+
+body .builder-shell .edit-layout .editor-field-v2 {
+  min-width: 0;
+  gap: 5px;
+}
+
+body .builder-shell .edit-layout .editor-field-v2 :is(input,select,textarea),
+body .builder-shell .edit-layout .field :is(input,select,textarea) {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--product-line-strong);
+  border-radius: 9px;
+  background: var(--product-panel);
+  color: var(--product-text);
+  box-shadow: none;
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+}
+
+body .builder-shell .edit-layout .editor-field-v2 :is(input,select),
+body .builder-shell .edit-layout .field :is(input,select) {
+  min-height: 42px;
+  padding: 0 10px;
+}
+
+body .builder-shell .edit-layout .editor-field-v2 textarea,
+body .builder-shell .edit-layout .field textarea {
+  min-height: 88px;
+  padding: 9px 10px;
+}
+
+body .builder-shell .edit-layout :is(.editor-field-v2 input,.editor-field-v2 select,.editor-field-v2 textarea,.field input,.field select,.field textarea):focus {
+  border-color: #aeb8d3;
+  box-shadow: 0 0 0 3px rgba(49,94,231,.08);
+}
+
+body .builder-shell .edit-layout :is(.editor-toggle-row-v2,.editor-segmented-v2,.image-mode-toolbar) {
+  min-width: 0;
+  gap: 6px;
+  padding: 4px;
+  border: 1px solid var(--product-line);
+  border-radius: 10px;
+  background: var(--product-panel);
+}
+
+body .builder-shell .edit-layout :is(.editor-segmented-v2,.image-mode-toolbar) button {
+  min-width: 0;
+  min-height: 38px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--product-muted);
+  box-shadow: none;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+body .builder-shell .edit-layout :is(.editor-segmented-v2,.image-mode-toolbar) button:is(.active,[aria-pressed='true']) {
+  background: var(--product-text);
+  color: #fff;
+}
+
+body .builder-shell .edit-layout .image-edit-attached {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+body .builder-shell .edit-layout .image-mode-note {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--product-soft);
+  color: var(--product-muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+body .builder-shell .edit-layout .crop-open-button {
+  min-height: 38px;
+  border: 1px solid var(--product-line);
+  border-radius: 8px;
+  background: var(--product-panel);
+  color: var(--product-text);
+  box-shadow: none;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+html body #root .builder-shell .preview-workspace {
+  min-width: 0;
+  padding: 18px 22px;
+  background: var(--product-bg);
+}
+
+html body #root .builder-shell .preview-workspace .preview-sticky {
+  width: min(430px,100%);
+  height: calc(100dvh - 36px);
+  max-height: calc(100dvh - 36px);
+  gap: 8px;
+}
+
+html body #root .builder-shell .preview-workspace .preview-top {
+  width: 100%;
+  margin: 0;
+}
+
+html body #root .builder-shell .preview-workspace .phone-frame {
+  width: 430px;
+  max-width: 100%;
+  height: calc(100dvh - 110px);
+  min-height: 620px;
+  max-height: 820px;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 7px solid var(--product-text);
+  border-radius: 26px;
+  background: var(--product-panel);
+  box-shadow: 0 18px 50px rgba(17,24,39,.14);
+}
+
+@media (max-width: 1280px) {
+  body .builder-shell:not(.mobile-operations-shell):not(.inbox-workspace-shell):not(.stats-dashboard-shell):not(.settings-workspace-shell) {
+    grid-template-columns: minmax(620px,660px) minmax(460px,1fr);
+  }
+
+  body .builder-shell:not(.mobile-operations-shell):not(.inbox-workspace-shell):not(.stats-dashboard-shell):not(.settings-workspace-shell) .work-panel {
+    max-width: 640px;
+  }
+}
