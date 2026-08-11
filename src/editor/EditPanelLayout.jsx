@@ -3,7 +3,6 @@ import { AddBlockDock } from './editPanelParts/AddBlockDock.jsx';
 import { PageGlobalOptions } from './editPanelParts/PageGlobalOptions.jsx';
 import { ScreenOrderList } from './editPanelParts/ScreenOrderList.jsx';
 import '../styles/edit-panel-tabs.css';
-import '../styles/edit-add-dock-final.css';
 
 export function EditPanelLayout({
   pageGlobalOptionsProps,
