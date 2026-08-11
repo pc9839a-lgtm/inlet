@@ -1,0 +1,61 @@
+name: CallTag Google OAuth live verify
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  live-oauth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check live CallTag OAuth start redirect
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL='https://pagero.kr/api/call/google/start?return_scheme=calltag'
+          curl -sS -A 'Mozilla/5.0' -D headers.txt -o /dev/null --max-redirs 0 "$URL"
+          cat headers.txt
+          LOCATION="$(awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]*:[[:space:]]*/,""); sub(/\r$/,""); print; exit}' headers.txt)"
+          test -n "$LOCATION"
+          printf '%s' "$LOCATION" > location.txt
+
+      - name: Verify Google client and callback URI
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from urllib.parse import urlparse, parse_qs
+          url=open('location.txt').read().strip()
+          p=urlparse(url)
+          q=parse_qs(p.query)
+          client=q.get('client_id',[''])[0]
+          redirect=q.get('redirect_uri',[''])[0]
+          print('oauth_host=', p.netloc)
+          print('client_id_prefix=', client[:24])
+          print('redirect_uri=', redirect)
+          assert p.netloc == 'accounts.google.com', p.netloc
+          assert client.startswith('31346298247-ojcfv'), client[:24]
+          assert redirect == 'https://pagero.kr/api/call/google/callback', redirect
+          assert q.get('response_type',[''])[0] == 'code'
+          assert 'openid' in q.get('scope',[''])[0]
+          PY
+
+      - name: Ask Google whether request is structurally accepted
+        shell: bash
+        run: |
+          set -euo pipefail
+          LOCATION="$(cat location.txt)"
+          HTTP_CODE="$(curl -sS -L -A 'Mozilla/5.0' -o google.html -w '%{http_code}' "$LOCATION")"
+          echo "google_http=$HTTP_CODE"
+          if grep -Eqi 'redirect_uri_mismatch|Error 400: redirect_uri_mismatch|Access blocked|This app.*request.*invalid|이 앱의 요청이 잘못|액세스 차단' google.html; then
+            echo '::error::Google rejected the OAuth authorization request.'
+            grep -Eio '.{0,120}(redirect_uri_mismatch|Access blocked|This app.{0,80}invalid|이 앱의 요청이 잘못|액세스 차단).{0,120}' google.html | head -5 || true
+            exit 1
+          fi
+          test "$HTTP_CODE" = '200'
+          echo 'Google authorization request reached a normal Google auth page without a redirect_uri mismatch marker.'
