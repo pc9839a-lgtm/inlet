@@ -40,9 +40,9 @@ export function ScreenOrderRow({
           width: '100%',
           minWidth: 0,
           boxSizing: 'border-box',
-          gridTemplateColumns: '34px minmax(0, 1fr) 42px 36px',
-          gap: 6,
-          padding: 8,
+          gridTemplateColumns: '34px minmax(0, 1fr) 38px 92px',
+          gap: 4,
+          padding: 6,
           overflow: 'visible',
         }}
       >
