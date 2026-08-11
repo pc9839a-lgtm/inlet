@@ -20,7 +20,7 @@ export default function AccountSettingsSection({ authUser, onAccountUpdate, onLo
   }
 
   return (
-    <div className="account-settings-card account-settings-focused">
+    <div className="account-settings-card account-settings-screen">
       <nav className="account-settings-tabs" aria-label="계정 설정 항목">
         {ACCOUNT_TABS.map(([id, label]) => (
           <button
