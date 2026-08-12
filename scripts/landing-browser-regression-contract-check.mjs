@@ -6,6 +6,7 @@ function assert(condition, message) {
 
 const visual = await readFile('scripts/landing-browser-regression-check.mjs', 'utf8');
 const workflow = await readFile('.github/workflows/qa.yml', 'utf8');
+const deployWorkflow = await readFile('.github/workflows/deploy-cloudflare.yml', 'utf8');
 const packageJson = JSON.parse(await readFile('package.json', 'utf8'));
 const qaAll = await readFile('scripts/qa-all.mjs', 'utf8');
 const landingCss = await readFile('src/preview/LandingRenderer.css', 'utf8');
@@ -91,13 +92,15 @@ assert(packageJson.scripts?.['browser:landing:contract:qa'] === 'node scripts/la
 assert(qaAll.includes("['browser:landing:contract:qa', ['scripts/landing-browser-regression-contract-check.mjs']]"), 'qa:all must enforce the browser regression wiring contract');
 
 assert(workflow.includes('browser-regression:'), 'QA workflow must include a browser-regression job');
-assert(workflow.includes('needs: qa'), 'browser regression must run after offline QA');
+assert(!workflow.includes('browser-regression:\n    needs: qa'), 'landing browser regression must run independently so static QA failures do not suppress browser diagnostics');
 assert(workflow.includes('npm run build'), 'browser regression job must build production assets');
 assert(workflow.includes('npm run preview -- --host 127.0.0.1 --port 4173'), 'browser regression job must start the production preview server');
 assert(workflow.includes('npm run browser:landing:qa'), 'browser regression job must run the real browser gate');
 assert(workflow.includes('actions/upload-artifact@v4'), 'browser screenshots must be uploaded as a workflow artifact');
 assert(workflow.includes('.tmp-landing-browser-regression'), 'browser screenshot artifact path missing');
 assert(workflow.includes('include-hidden-files: true'), 'hidden browser screenshot directory must be included in the artifact');
+assert(deployWorkflow.includes('workflow_run:') && deployWorkflow.includes('- QA') && deployWorkflow.includes("github.event.workflow_run.conclusion == 'success'") && deployWorkflow.includes("github.event.workflow_run.head_branch == 'main'"), 'production deployment must remain gated on the complete successful QA workflow');
+assert(deployWorkflow.includes('ref: ${{ steps.source.outputs.sha }}'), 'production deployment must checkout the exact SHA that passed QA');
 
 console.log(JSON.stringify({
   ok: true,
@@ -110,5 +113,7 @@ console.log(JSON.stringify({
   removedOverrideLayer: 'preview-bottom-timer-compact.css',
   finalStylesheet: 'preview-fixed-ui-contract.css',
   focusFallback: true,
+  browserJobsParallel: true,
+  deployAfterFullQa: true,
   artifactIncludesHiddenFiles: true,
 }, null, 2));
