@@ -1,0 +1,68 @@
+name: CallTag Play Billing Live Health
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'functions/api/billing/google/health.js'
+      - '.github/workflows/calltag-play-billing-live-health.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  play-billing-health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check temporary health endpoint source
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check functions/api/billing/google/health.js
+          grep -F "packageName = 'kr.pagero.calltag'" functions/api/billing/google/health.js
+          grep -F "scope: 'https://www.googleapis.com/auth/androidpublisher'" functions/api/billing/google/health.js
+
+      - name: Wait for production deploy and verify Google Play credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='https://pagero.kr/api/billing/google/health'
+          body="$RUNNER_TEMP/play-health.json"
+
+          for attempt in $(seq 1 60); do
+            code="$(curl -sS --connect-timeout 8 --max-time 25 -o "$body" -w '%{http_code}' "$url" || true)"
+            echo "attempt=$attempt http=$code"
+            if [ "$code" = '200' ]; then
+              cat "$body"
+              if python3 - "$body" <<'PY'
+import json,sys
+p=sys.argv[1]
+try:
+    d=json.load(open(p,encoding='utf-8'))
+except Exception:
+    raise SystemExit(1)
+print('configured=', d.get('configured'))
+print('oauthToken=', d.get('oauthToken'))
+print('publisherAccess=', d.get('publisherAccess'))
+print('releaseEnabled=', d.get('releaseEnabled'))
+print('productsReady=', d.get('productsReady'))
+print('googleStatus=', d.get('googleStatus'))
+print('code=', d.get('code'))
+if d.get('configured') is True and d.get('oauthToken') is True and d.get('publisherAccess') is True:
+    raise SystemExit(0)
+raise SystemExit(2)
+PY
+              then
+                echo 'Google Play credential and Publisher API access probe passed.'
+                exit 0
+              fi
+            fi
+            sleep 10
+          done
+
+          echo 'Google Play credential health did not become healthy in time.' >&2
+          [ -f "$body" ] && cat "$body" >&2 || true
+          exit 1
