@@ -828,6 +828,61 @@
 .settings-workspace-shell .billing-history-head { background: var(--product-soft); color: var(--product-muted); font-size: 11px; font-weight: 900; }
 .settings-workspace-shell .billing-history-row { border-top: 1px solid var(--product-line); font-size: 12px; }
 
+/* Readable typography scale — maintained in this sole owner file, not a separate override stylesheet. */
+.settings-workspace-shell .settings-v3-root { font-size: 14px; }
+.settings-workspace-shell .settings-nav-label { font-size: 12px; }
+.settings-workspace-shell .settings-nav-item { font-size: 14px; }
+.settings-workspace-shell .settings-page-head h1 { font-size: 26px; }
+.settings-workspace-shell :is(.settings-control-group,.field) > span { font-size: 14px; }
+.settings-workspace-shell input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.settings-workspace-shell select,
+.settings-workspace-shell textarea { font-size: 14px; }
+.settings-workspace-shell :is(.settings-field-help,.settings-field-error) { font-size: 12px; }
+.settings-workspace-shell :is(.settings-primary-button,.settings-secondary-button,.settings-danger-button,.manager-fold-btn) { font-size: 13px; }
+.settings-workspace-shell .settings-status-badge,
+.settings-workspace-shell .manager-state-pill { font-size: 11px; }
+.settings-workspace-shell .settings-message,
+.settings-workspace-shell .settings-loading,
+.settings-workspace-shell .settings-empty-copy,
+.settings-workspace-shell .account-settings-empty { font-size: 13px; }
+.settings-workspace-shell .settings-flat-block-head > strong,
+.settings-workspace-shell .settings-flat-row strong { font-size: 16px; }
+.settings-workspace-shell .settings-compact-row > span,
+.settings-workspace-shell .settings-flat-value { font-size: 13px; }
+.settings-workspace-shell .settings-compact-row > strong { font-size: 14px; }
+.settings-workspace-shell .settings-compact-row > em { font-size: 12px; }
+.settings-workspace-shell .account-settings-tabs button { font-size: 13px; }
+.settings-workspace-shell .account-settings-form .settings-control-group > span { font-size: 14px; }
+.settings-workspace-shell .domain-setting-label > strong { font-size: 15px; }
+.settings-workspace-shell .domain-setting-label > span:not(.settings-status-badge) { font-size: 12px; }
+.settings-workspace-shell .domain-dns-values span { font-size: 11px; }
+.settings-workspace-shell .domain-dns-values code { font-size: 13px; }
+.settings-workspace-shell .billing-tier-intro > strong { font-size: 17px; }
+.settings-workspace-shell .billing-tier-intro > span { font-size: 13px; }
+.settings-workspace-shell .billing-tier-head strong { font-size: 17px; }
+.settings-workspace-shell .billing-tier-current { font-size: 11px; }
+.settings-workspace-shell .billing-tier-head b { font-size: 25px; }
+.settings-workspace-shell .billing-tier-head p span { font-size: 12px; }
+.settings-workspace-shell .billing-tier-features li { font-size: 13px; }
+.settings-workspace-shell .manager-access-card :is(.manager-row-identity,.manager-row-role) strong { font-size: 14px; }
+.settings-workspace-shell .manager-access-card .manager-row-identity span { font-size: 12px; }
+.settings-workspace-shell .manager-access-card .manager-subtitle { font-size: 14px; }
+.settings-workspace-shell .manager-access-card .manager-preset-row button { font-size: 13px; }
+.settings-workspace-shell .manager-access-card .manager-empty-state { font-size: 13px; }
+.settings-workspace-shell .manager-access-card .manager-owner-summary > div > span { font-size: 12px; }
+.settings-workspace-shell .manager-access-card .manager-owner-summary > div > strong { font-size: 14px; }
+.settings-workspace-shell .manager-access-card .ownership-transfer-copy > span { font-size: 12px; }
+.settings-workspace-shell .manager-access-card .ownership-transfer-copy > strong { font-size: 15px; }
+.settings-workspace-shell .manager-access-card .ownership-transfer-copy > p { font-size: 13px; }
+.settings-workspace-shell .seo-setting-label strong { font-size: 15px; }
+.settings-workspace-shell .seo-setting-label span { font-size: 12px; }
+.settings-workspace-shell .settings-seo-media-grid .image-input > span { font-size: 13px; }
+.settings-workspace-shell .settings-asset-actions button { font-size: 12px; }
+.settings-workspace-shell .settings-seo-media-grid .image-storage-note { font-size: 12px; }
+.settings-workspace-shell .settings-seo-media-grid .image-upload-status { font-size: 11px; }
+.settings-workspace-shell .billing-history-head { font-size: 12px; }
+.settings-workspace-shell .billing-history-row { font-size: 13px; }
+
 @media (max-width: 980px) {
   .settings-workspace-shell .billing-tier-grid { grid-template-columns: minmax(0, 1fr); }
   .settings-workspace-shell .domain-setting-row { grid-template-columns: 140px minmax(0, 1fr); }
@@ -856,7 +911,7 @@
   .settings-workspace-shell .settings-nav-items { display: flex; gap: 4px; }
   .settings-workspace-shell .settings-nav-item { width: auto; min-width: max-content; padding: 0 10px; }
   .settings-workspace-shell .settings-v3-content-wrap { width: calc(100% - 24px); padding: 16px 0 32px; }
-  .settings-workspace-shell .settings-page-head h1 { font-size: 21px; }
+  .settings-workspace-shell .settings-page-head h1 { font-size: 23px; }
   .settings-workspace-shell .seo-setting-row { grid-template-columns: minmax(0, 1fr); gap: 10px; }
   .settings-workspace-shell .settings-seo-media-grid { grid-template-columns: 112px minmax(280px, 440px); }
   .settings-workspace-shell .manager-access-card .manager-editor-panel .settings-form-grid { grid-template-columns: minmax(0, 1fr); }
