@@ -13,7 +13,7 @@ permissions:
 jobs:
   play-billing-health:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
 
@@ -25,24 +25,44 @@ jobs:
           grep -F "packageName = 'kr.pagero.calltag'" functions/api/billing/google/health.js
           grep -F "scope: 'https://www.googleapis.com/auth/androidpublisher'" functions/api/billing/google/health.js
 
-      - name: Wait for production deploy and verify Google Play credentials
+      - name: Verify production Google Play credentials
         shell: bash
         run: |
           set -euo pipefail
           url='https://pagero.kr/api/billing/google/health'
           body="$RUNNER_TEMP/play-health.json"
-          for attempt in $(seq 1 60); do
+          for attempt in $(seq 1 6); do
             code="$(curl -sS --connect-timeout 8 --max-time 25 -o "$body" -w '%{http_code}' "$url" || true)"
             echo "attempt=$attempt http=$code"
             if [ "$code" = '200' ]; then
-              cat "$body"
-              if python3 -c "import json,sys; d=json.load(open(sys.argv[1],encoding='utf-8')); print('configured=',d.get('configured')); print('oauthToken=',d.get('oauthToken')); print('publisherAccess=',d.get('publisherAccess')); print('releaseEnabled=',d.get('releaseEnabled')); print('productsReady=',d.get('productsReady')); print('googleStatus=',d.get('googleStatus')); print('code=',d.get('code')); sys.exit(0 if d.get('configured') is True and d.get('oauthToken') is True and d.get('publisherAccess') is True else 2)" "$body"; then
+              python3 - "$body" <<'PY'
+import json,sys
+p=sys.argv[1]
+d=json.load(open(p,encoding='utf-8'))
+allowed=('ok','configured','oauthToken','publisherAccess','googleStatus','releaseEnabled','productsReady','code')
+print(json.dumps({k:d.get(k) for k in allowed}, ensure_ascii=False, sort_keys=True))
+if d.get('configured') is True and d.get('oauthToken') is True and d.get('publisherAccess') is True:
+    raise SystemExit(0)
+raise SystemExit(2)
+PY
+              result=$?
+              if [ "$result" = '0' ]; then
                 echo 'Google Play credential and Publisher API access probe passed.'
                 exit 0
               fi
             fi
-            sleep 10
+            sleep 5
           done
-          echo 'Google Play credential health did not become healthy in time.' >&2
-          [ -f "$body" ] && cat "$body" >&2 || true
+          echo 'Google Play credential health is not ready.' >&2
+          if [ -f "$body" ]; then
+            python3 - "$body" <<'PY'
+import json,sys
+try:
+    d=json.load(open(sys.argv[1],encoding='utf-8'))
+    allowed=('ok','configured','oauthToken','publisherAccess','googleStatus','releaseEnabled','productsReady','code')
+    print(json.dumps({k:d.get(k) for k in allowed}, ensure_ascii=False, sort_keys=True))
+except Exception:
+    print('non-json health response')
+PY
+          fi
           exit 1
