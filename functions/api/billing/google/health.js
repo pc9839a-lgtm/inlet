@@ -2,6 +2,7 @@ const JSON_HEADERS = {
   'content-type': 'application/json; charset=utf-8',
   'cache-control': 'no-store',
 };
+const REQUIRED_PRODUCTS = ['call_monthly', 'message_monthly'];
 
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') {
@@ -42,19 +43,24 @@ export async function onRequest({ request, env }) {
       ...base,
       oauthToken: false,
       publisherAccess: false,
+      catalogAccess: false,
+      requiredProductsPresent: false,
       code: 'PLAY_CREDENTIALS_MISSING',
     });
   }
 
   try {
     const oauth = await issueAccessToken(clientEmail, privateKey);
-    const probe = await probePublisher(oauth.accessToken);
+    const probe = await probeCatalog(oauth.accessToken);
     return json(200, {
       ...base,
       oauthToken: true,
       oauthStatus: oauth.oauthStatus,
       publisherAccess: probe.publisherAccess,
+      catalogAccess: probe.catalogAccess,
       googleStatus: probe.googleStatus,
+      productIds: probe.productIds,
+      requiredProductsPresent: probe.requiredProductsPresent,
       code: probe.code,
     });
   } catch (error) {
@@ -63,6 +69,8 @@ export async function onRequest({ request, env }) {
       oauthToken: false,
       oauthStatus: Number(error?.oauthStatus || 0) || null,
       publisherAccess: false,
+      catalogAccess: false,
+      requiredProductsPresent: false,
       code: safeCode(error),
     });
   }
@@ -126,13 +134,12 @@ async function issueAccessToken(clientEmail, privateKey) {
   };
 }
 
-async function probePublisher(accessToken) {
+async function probeCatalog(accessToken) {
   const packageName = 'kr.pagero.calltag';
-  const fakeToken = 'calltag-health-check-invalid-token';
   let response;
   try {
     response = await fetch(
-      `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(packageName)}/purchases/subscriptionsv2/tokens/${encodeURIComponent(fakeToken)}`,
+      `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(packageName)}/subscriptions?pageSize=50`,
       {
         method: 'GET',
         headers: {
@@ -144,30 +151,43 @@ async function probePublisher(accessToken) {
   } catch (cause) {
     return {
       publisherAccess: null,
+      catalogAccess: false,
       googleStatus: 0,
-      code: 'PLAY_PUBLISHER_NETWORK_FAILED',
+      productIds: [],
+      requiredProductsPresent: false,
+      code: 'PLAY_CATALOG_NETWORK_FAILED',
     };
   }
 
   const googleStatus = Number(response.status || 0);
-  if (googleStatus === 401 || googleStatus === 403) {
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
     return {
       publisherAccess: false,
+      catalogAccess: false,
       googleStatus,
-      code: 'PLAY_PUBLISHER_ACCESS_DENIED',
+      productIds: [],
+      requiredProductsPresent: false,
+      code: googleStatus === 401 || googleStatus === 403
+        ? 'PLAY_PUBLISHER_ACCESS_DENIED'
+        : 'PLAY_CATALOG_READ_FAILED',
     };
   }
-  if (googleStatus === 429 || googleStatus >= 500) {
-    return {
-      publisherAccess: null,
-      googleStatus,
-      code: 'PLAY_PUBLISHER_TEMPORARY_FAILURE',
-    };
-  }
+
+  const productIds = Array.isArray(body?.subscriptions)
+    ? body.subscriptions
+        .map((item) => String(item?.productId || '').trim())
+        .filter(Boolean)
+        .sort()
+    : [];
+  const requiredProductsPresent = REQUIRED_PRODUCTS.every((id) => productIds.includes(id));
   return {
     publisherAccess: true,
+    catalogAccess: true,
     googleStatus,
-    code: 'PLAY_PUBLISHER_ACCESS_OK',
+    productIds,
+    requiredProductsPresent,
+    code: requiredProductsPresent ? 'PLAY_CATALOG_OK' : 'PLAY_REQUIRED_PRODUCTS_MISSING',
   };
 }
 
