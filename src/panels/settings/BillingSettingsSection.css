@@ -1,201 +1,191 @@
-.settings-workspace-shell .billing-plan-v5-section .settings-section-body {
-  padding: 22px;
+.settings-workspace-shell .billing-settings-v6 .settings-section-body {
+  padding: 0 18px;
 }
 
-.settings-workspace-shell .billing-plan-v5-intro {
+.settings-workspace-shell .billing-settings-head,
+.settings-workspace-shell .billing-addon-head {
+  min-height: 58px;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  gap: 18px;
-  margin: 0 0 18px;
+  gap: 12px;
 }
 
-.settings-workspace-shell .billing-plan-v5-intro > div {
-  display: grid;
-  gap: 5px;
+.settings-workspace-shell .billing-settings-head > div {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
 }
 
-.settings-workspace-shell .billing-plan-v5-intro strong {
+.settings-workspace-shell .billing-settings-head strong,
+.settings-workspace-shell .billing-addon-head strong {
   color: var(--product-text);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 950;
 }
 
-.settings-workspace-shell .billing-plan-v5-intro span,
-.settings-workspace-shell .billing-plan-v5-intro em {
+.settings-workspace-shell .billing-settings-head span {
   color: var(--product-muted);
-  font-size: 13px;
-  line-height: 1.45;
-  font-style: normal;
+  font-size: 12px;
+  line-height: 1.4;
   font-weight: 750;
 }
 
-.settings-workspace-shell .billing-plan-v5-intro em {
-  flex: 0 0 auto;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: var(--product-soft);
-  color: var(--product-text);
-  font-weight: 850;
-}
-
-.settings-workspace-shell .billing-plan-v5-grid {
+.settings-workspace-shell .billing-plan-list {
   width: 100%;
   min-width: 0;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.settings-workspace-shell .billing-plan-v5-card {
-  min-width: 0;
-  min-height: 470px;
-  display: flex;
-  flex-direction: column;
-  padding: 24px 20px 20px;
+  overflow: hidden;
   border: 1px solid var(--product-line);
-  border-radius: 14px;
+  border-radius: 11px;
   background: #fff;
-  box-shadow: none;
 }
 
-.settings-workspace-shell .billing-plan-v5-card.is-current {
-  border-color: var(--product-text);
-  box-shadow: inset 0 0 0 1px var(--product-text);
-}
-
-.settings-workspace-shell .billing-plan-v5-card.is-recommended:not(.is-current) {
-  border-color: #9aa7ba;
-  box-shadow: inset 0 3px 0 var(--product-text);
-}
-
-.settings-workspace-shell .billing-plan-v5-head {
+.settings-workspace-shell .billing-plan-row {
+  width: 100%;
+  min-width: 0;
+  min-height: 154px;
   display: grid;
-  gap: 9px;
+  grid-template-columns: minmax(0, 1fr) 92px;
+  align-items: stretch;
+  gap: 14px;
+  padding: 18px 14px 18px 16px;
+  border-bottom: 1px solid var(--product-line);
+  background: #fff;
 }
 
-.settings-workspace-shell .billing-plan-v5-topline {
-  min-height: 24px;
-  display: flex;
+.settings-workspace-shell .billing-plan-row:last-child {
+  border-bottom: 0;
+}
+
+.settings-workspace-shell .billing-plan-row.is-current {
+  background: #fafbfc;
+  box-shadow: inset 3px 0 0 var(--product-text);
+}
+
+.settings-workspace-shell .billing-plan-row.is-recommended:not(.is-current) {
+  background: #fcfcfd;
+}
+
+.settings-workspace-shell .billing-plan-row-main {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 170px minmax(220px, 1.15fr) minmax(260px, 1fr);
   align-items: center;
-  justify-content: space-between;
+  gap: 22px;
+}
+
+.settings-workspace-shell .billing-plan-row-name,
+.settings-workspace-shell .billing-plan-row-value {
+  min-width: 0;
+  display: grid;
+  align-content: center;
   gap: 8px;
 }
 
-.settings-workspace-shell .billing-plan-v5-eyebrow,
-.settings-workspace-shell .billing-plan-v5-current {
-  min-height: 24px;
+.settings-workspace-shell .billing-plan-row-name > div {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.settings-workspace-shell .billing-plan-row-name > div > strong {
+  color: var(--product-text);
+  font-size: 18px;
+  line-height: 1.15;
+  font-weight: 950;
+}
+
+.settings-workspace-shell .billing-plan-row-name > div > span {
+  min-height: 22px;
   display: inline-flex;
   align-items: center;
-  width: fit-content;
-  padding: 0 8px;
+  padding: 0 7px;
   border-radius: 999px;
   background: var(--product-soft);
   color: var(--product-muted);
-  font-size: 11px;
+  font-size: 10px;
   line-height: 1;
   font-weight: 900;
 }
 
-.settings-workspace-shell .billing-plan-v5-card.is-recommended .billing-plan-v5-eyebrow {
+.settings-workspace-shell .billing-plan-row-name > div > span.recommended {
   background: var(--product-text);
   color: #fff;
 }
 
-.settings-workspace-shell .billing-plan-v5-current {
+.settings-workspace-shell .billing-plan-row-name > div > span.current {
   background: var(--product-good-soft);
   color: var(--product-good);
 }
 
-.settings-workspace-shell .billing-plan-v5-name-row {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.settings-workspace-shell .billing-plan-v5-name-row > strong {
-  color: var(--product-text);
-  font-size: 20px;
-  line-height: 1.2;
-  font-weight: 950;
-}
-
-.settings-workspace-shell .billing-plan-v5-price {
+.settings-workspace-shell .billing-plan-row-name > p {
+  margin: 0;
   display: flex;
   align-items: baseline;
   gap: 4px;
 }
 
-.settings-workspace-shell .billing-plan-v5-price > b {
+.settings-workspace-shell .billing-plan-row-name > p > b {
   color: var(--product-text);
-  font-size: 30px;
+  font-size: 24px;
   line-height: 1;
   font-weight: 950;
   letter-spacing: -.04em;
 }
 
-.settings-workspace-shell .billing-plan-v5-price > span {
+.settings-workspace-shell .billing-plan-row-name > p > em {
   color: var(--product-muted);
-  font-size: 13px;
+  font-size: 11px;
+  font-style: normal;
   font-weight: 750;
 }
 
-.settings-workspace-shell .billing-plan-v5-pitch {
-  min-height: 44px;
-  margin: 4px 0 0;
-  color: #394150;
-  font-size: 14px;
-  line-height: 1.55;
-  font-weight: 800;
+.settings-workspace-shell .billing-plan-row-value {
+  padding-left: 18px;
+  border-left: 1px solid var(--product-line);
 }
 
-.settings-workspace-shell .billing-plan-v5-value {
-  min-height: 92px;
-  display: grid;
-  align-content: start;
-  gap: 7px;
-  margin-top: 18px;
-  padding: 14px;
-  border: 1px solid var(--product-line);
-  border-radius: 10px;
-  background: var(--product-soft);
-}
-
-.settings-workspace-shell .billing-plan-v5-value > span {
-  color: var(--product-muted);
-  font-size: 11px;
-  font-weight: 900;
-}
-
-.settings-workspace-shell .billing-plan-v5-value > strong {
+.settings-workspace-shell .billing-plan-row-value > strong {
   color: var(--product-text);
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.45;
   font-weight: 900;
 }
 
-.settings-workspace-shell .billing-plan-v5-features {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 11px;
-  margin: 18px 0 0;
-  padding: 0;
+.settings-workspace-shell .billing-plan-row-value > span {
+  color: var(--product-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 750;
+}
+
+.settings-workspace-shell .billing-plan-row-features {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: center;
+  gap: 9px 14px;
+  margin: 0;
+  padding: 0 0 0 18px;
+  border-left: 1px solid var(--product-line);
   list-style: none;
 }
 
-.settings-workspace-shell .billing-plan-v5-features li {
+.settings-workspace-shell .billing-plan-row-features li {
   position: relative;
+  min-width: 0;
   margin: 0;
-  padding: 0 0 0 17px;
-  color: #505762;
-  font-size: 13px;
-  line-height: 1.45;
+  padding-left: 15px;
+  color: #4f5661;
+  font-size: 12px;
+  line-height: 1.4;
   font-weight: 800;
 }
 
-.settings-workspace-shell .billing-plan-v5-features li::before {
+.settings-workspace-shell .billing-plan-row-features li::before {
   content: '✓';
   position: absolute;
   top: 0;
@@ -204,61 +194,133 @@
   font-weight: 950;
 }
 
-.settings-workspace-shell .billing-plan-v5-action {
-  width: 100%;
-  min-height: 46px;
-  margin-top: auto;
+.settings-workspace-shell .billing-plan-row-action {
+  width: 92px;
+  min-width: 92px;
+  min-height: 42px;
+  align-self: center;
+  justify-self: end;
   padding: 0 12px;
   border: 1px solid var(--product-text);
   border-radius: 9px;
   background: var(--product-text);
   color: #fff;
   box-shadow: none;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1;
-  font-weight: 950;
+  font-weight: 900;
   cursor: pointer;
 }
 
-.settings-workspace-shell .billing-plan-v5-action.is-current,
-.settings-workspace-shell .billing-plan-v5-action:disabled {
+.settings-workspace-shell .billing-plan-row-action:disabled,
+.settings-workspace-shell .billing-plan-row-action.is-current {
   border-color: var(--product-line-strong);
   background: #fff;
   color: #8b929c;
   cursor: not-allowed;
 }
 
-.settings-workspace-shell .billing-plan-v5-action:not(:disabled):hover {
-  opacity: .92;
+.settings-workspace-shell .billing-addon-head {
+  margin-top: 8px;
+  border-top: 1px solid var(--product-line);
 }
 
-@media (max-width: 980px) {
-  .settings-workspace-shell .billing-plan-v5-intro {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 8px;
+.settings-workspace-shell .billing-addon-row {
+  min-width: 0;
+  min-height: 92px;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 92px;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 18px;
+  padding: 14px 14px 14px 16px;
+  border: 1px solid var(--product-line);
+  border-radius: 11px;
+  background: #fff;
+}
+
+.settings-workspace-shell .billing-addon-name,
+.settings-workspace-shell .billing-addon-value {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.settings-workspace-shell .billing-addon-name strong,
+.settings-workspace-shell .billing-addon-value strong {
+  color: var(--product-text);
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 900;
+}
+
+.settings-workspace-shell .billing-addon-name span,
+.settings-workspace-shell .billing-addon-value span {
+  color: var(--product-muted);
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 750;
+}
+
+@media (max-width: 1100px) {
+  .settings-workspace-shell .billing-plan-row-main {
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 14px 18px;
   }
 
-  .settings-workspace-shell .billing-plan-v5-grid {
+  .settings-workspace-shell .billing-plan-row-features {
+    grid-column: 1 / -1;
+    padding: 12px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--product-line);
+  }
+}
+
+@media (max-width: 760px) {
+  .settings-workspace-shell .billing-settings-v6 .settings-section-body {
+    padding: 0 12px;
+  }
+
+  .settings-workspace-shell .billing-settings-head > div {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .settings-workspace-shell .billing-plan-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    padding: 16px;
+  }
+
+  .settings-workspace-shell .billing-plan-row-main {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .settings-workspace-shell .billing-plan-row-value,
+  .settings-workspace-shell .billing-plan-row-features {
+    padding: 12px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--product-line);
+  }
+
+  .settings-workspace-shell .billing-plan-row-features {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .settings-workspace-shell .billing-plan-v5-card {
-    min-height: 420px;
-  }
-}
-
-@media (max-width: 640px) {
-  .settings-workspace-shell .billing-plan-v5-section .settings-section-body {
-    padding: 14px;
+  .settings-workspace-shell .billing-plan-row-action {
+    width: 100%;
+    min-width: 0;
+    justify-self: stretch;
   }
 
-  .settings-workspace-shell .billing-plan-v5-card {
-    min-height: 400px;
-    padding: 20px 16px 16px;
+  .settings-workspace-shell .billing-addon-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
   }
 
-  .settings-workspace-shell .billing-plan-v5-price > b {
-    font-size: 27px;
+  .settings-workspace-shell .billing-addon-row .billing-plan-row-action {
+    width: 100%;
   }
 }
