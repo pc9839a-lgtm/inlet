@@ -11,14 +11,20 @@ function normalizeEmail(value = '') {
   return String(value || '').trim().toLowerCase().slice(0, 254);
 }
 
-export async function requireCalltagFinanceAdmin(request, env = {}, expectedAction = '') {
-  const identity = await requireCalltagAdmin(request, env);
+export function isCalltagFinanceAdmin(identity = {}, env = {}) {
   const allowedOwnerIds = new Set(csv(env.CALLTAG_ADMIN_FINANCE_OWNER_IDS || ''));
   const allowedEmails = new Set(csv(env.CALLTAG_ADMIN_FINANCE_EMAILS || '').map(normalizeEmail).filter(Boolean));
-  if (!allowedOwnerIds.size && !allowedEmails.size) {
+  if (!allowedOwnerIds.size && !allowedEmails.size) return false;
+  return allowedOwnerIds.has(String(identity.ownerId || '')) || allowedEmails.has(normalizeEmail(identity.email));
+}
+
+export async function requireCalltagFinanceAdmin(request, env = {}, expectedAction = '') {
+  const identity = await requireCalltagAdmin(request, env);
+  const configured = csv(env.CALLTAG_ADMIN_FINANCE_OWNER_IDS || '').length || csv(env.CALLTAG_ADMIN_FINANCE_EMAILS || '').length;
+  if (!configured) {
     throw callError('정산 관리자 권한이 설정되지 않았습니다.', 503, { code: 'CALLTAG_ADMIN_FINANCE_CONFIG_REQUIRED' });
   }
-  if (!allowedOwnerIds.has(identity.ownerId) && !allowedEmails.has(normalizeEmail(identity.email))) {
+  if (!isCalltagFinanceAdmin(identity, env)) {
     throw callError('정산 변경 권한이 없습니다.', 403, { code: 'CALLTAG_ADMIN_FINANCE_FORBIDDEN' });
   }
 
