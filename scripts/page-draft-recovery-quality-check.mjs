@@ -94,7 +94,8 @@ assert(persistenceSource.includes('baseline.revision !== revision') && persisten
 assert(persistenceSource.includes("window.addEventListener('pagehide', flushDraft)") && persistenceSource.includes("window.addEventListener('beforeunload', flushDraft)"), 'pending edits must flush before the page closes');
 assert(accountLoadSource.includes("new CustomEvent('builder:confirm'") && accountLoadSource.includes("confirmLabel: '임시본 복원'"), 'page load must offer explicit draft recovery');
 assert(accountLoadSource.includes("evaluation.action !== 'restore'") && accountLoadSource.includes('clearPageDraft'), 'stale drafts must be discarded instead of restored');
-assert(accountLoadSource.includes("(current.slug || '') !== slug") && accountLoadSource.includes("(current.projectId || '') !== (context.projectId || '')"), 'late server responses must not restore drafts into another page');
+assert(accountLoadSource.includes('const loadKey =') && accountLoadSource.includes('context.projectId') && accountLoadSource.includes('if (accountPageLoadRef.current !== loadKey) return;') && accountLoadSource.includes('return () => { alive = false; };'), 'late server responses must be rejected by page/project-scoped load identity and effect cleanup');
+assert(accountLoadSource.includes("if ((current.slug || '') !== slug) return;"), 'server responses must still match the selected page slug before draft recovery');
 assert(persistFlowSource.includes('clearPageDraft({ page: nextPage })') && persistFlowSource.includes('clearPageDraft({ page: savedPage })'), 'successful server saves must clear local drafts');
 assert(storageKeysSource.includes("PAGE_DRAFTS_KEY = 'inlet-page-drafts-v1'"), 'page draft storage key must be versioned');
 assert(packageJson.scripts?.['page:draft:qa'] === 'node scripts/page-draft-recovery-quality-check.mjs', 'package page:draft:qa script missing');
