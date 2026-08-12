@@ -1,0 +1,45 @@
+name: CallTag Support Safe Smoke
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'functions/api/call/support.js'
+      - '.github/workflows/calltag-support-live-smoke.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  support-safe-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify support endpoint syntax and contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check functions/api/call/support.js
+          grep -F "const SUPPORT_TO = 'roadfor@kakao.com';" functions/api/call/support.js
+          grep -F 'ReplyToAddresses: [inquiry.email]' functions/api/call/support.js
+          grep -F 'await callSession(request, env, input)' functions/api/call/support.js
+
+      - name: Verify live endpoint rejects unauthenticated request without sending mail
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$RUNNER_TEMP/support-body.json"
+          code="$(curl -sS -o "$body" -w '%{http_code}' \
+            -X POST 'https://pagero.kr/api/call/support' \
+            -H 'Content-Type: application/json' \
+            -H 'X-CallLink-Client: android' \
+            -H 'X-Pagero-Product: calltag' \
+            --data '{"type":"일반문의","name":"smoke","email":"smoke@example.com","message":"safe smoke only"}')"
+          cat "$body"
+          if [ "$code" != '401' ]; then
+            echo "Expected unauthenticated 401, got $code" >&2
+            exit 1
+          fi
