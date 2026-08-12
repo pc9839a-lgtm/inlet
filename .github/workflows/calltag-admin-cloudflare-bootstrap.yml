@@ -45,19 +45,20 @@ jobs:
             exit 1
           fi
 
-          # Remove stale CallTag Admin applications created with the old /admin* pattern.
           mapfile -t stale_ids < <(jq -r --arg d "$ACCESS_DOMAIN" '.result[]? | select(.name == "CallTag Admin" and .domain != $d) | .id' /tmp/apps.json)
+          deleted=0
           for stale_id in "${stale_ids[@]:-}"; do
             [ -n "$stale_id" ] || continue
             delete_status=$(curl -sS -o /tmp/delete.json -w '%{http_code}' "$api/$stale_id" -X DELETE "${auth[@]}")
-            if [ "$delete_status" != "200" ] && [ "$delete_status" != "204" ]; then
+            if [ "$delete_status" != "200" ] && [ "$delete_status" != "202" ] && [ "$delete_status" != "204" ]; then
               echo "Failed to remove stale CallTag Access application (HTTP $delete_status)."
               jq -r '.errors[]?.message // empty' /tmp/delete.json | head -10
               exit 1
             fi
+            deleted=1
           done
+          if [ "$deleted" = "1" ]; then sleep 3; fi
 
-          # Refresh list after cleanup.
           curl -fsS "$api" "${auth[@]}" > /tmp/apps.json
           app_id=$(jq -r --arg d "$ACCESS_DOMAIN" '.result[]? | select(.domain == $d) | .id' /tmp/apps.json | head -1)
           aud=$(jq -r --arg d "$ACCESS_DOMAIN" '.result[]? | select(.domain == $d) | .aud' /tmp/apps.json | head -1)
