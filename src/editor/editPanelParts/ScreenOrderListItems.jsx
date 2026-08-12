@@ -17,7 +17,7 @@ export function ScreenOrderListItems({
   const total = normalBlocks.length;
 
   return (
-    <div className="block-list screen-order-list">
+    <div className="screen-order-v2-list">
       {normalBlocks.map((block, index) => (
         <ScreenOrderItem
           key={block.id}
