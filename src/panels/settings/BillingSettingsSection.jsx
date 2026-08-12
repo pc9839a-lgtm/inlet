@@ -19,8 +19,8 @@ const PLAN_CONTENT = {
   },
   pagero_monthly: {
     badge: '추천',
-    pitch: '문의가 들어오기 시작하면 필요한 실전 운영 단계',
-    why: '접수함에서 문의를 관리하고 유입·전환 통계를 확인할 때',
+    pitch: '문의 관리와 통계가 필요한 실전 운영 단계',
+    why: '문의가 들어오기 시작했고 접수·유입·전환을 놓치고 싶지 않을 때',
     features: ['무료 기능 전체', '접수함 문의 관리', '유입·전환 통계', '운영 기능 확장'],
   },
   pagero_pro_monthly: {
@@ -40,7 +40,7 @@ function subscriptionFor(finance, service) {
   return (finance?.subscriptions || []).find((item) => item.service === service) || null;
 }
 
-function PlanRow({ plan, current, included, busy, onClick }) {
+function PlanCard({ plan, current, included, busy, onClick }) {
   const content = PLAN_CONTENT[plan.code] || {
     badge: '',
     pitch: plan.description || '',
@@ -52,34 +52,36 @@ function PlanRow({ plan, current, included, busy, onClick }) {
   const recommended = plan.code === 'pagero_monthly';
 
   return (
-    <article className={`billing-plan-row ${active ? 'is-current' : ''} ${recommended ? 'is-recommended' : ''}`}>
-      <div className="billing-plan-row-main">
-        <div className="billing-plan-row-name">
-          <div>
-            <strong>{plan.name}</strong>
-            {content.badge && <span className={recommended ? 'recommended' : ''}>{content.badge}</span>}
-            {active && <span className="current">현재</span>}
-          </div>
-          <p><b>{money(plan.amountKrw)}</b>{paid && <em>/월</em>}</p>
+    <article className={`billing-plan-card ${active ? 'is-current' : ''} ${recommended ? 'is-recommended' : ''}`}>
+      <div className="billing-plan-card-top">
+        <div className="billing-plan-badges">
+          <span className={recommended ? 'recommended' : ''}>{content.badge}</span>
+          {active && <span className="current">현재</span>}
         </div>
-
-        <div className="billing-plan-row-value">
-          <strong>{content.pitch}</strong>
-          <span>{content.why}</span>
+        <strong className="billing-plan-name">{plan.name}</strong>
+        <div className="billing-plan-price">
+          <b>{money(plan.amountKrw)}</b>
+          {paid && <span>/월</span>}
         </div>
-
-        <ul className="billing-plan-row-features">
-          {content.features.map((feature) => <li key={feature}>{feature}</li>)}
-        </ul>
+        <p className="billing-plan-pitch">{content.pitch}</p>
       </div>
+
+      <div className="billing-plan-why">
+        <span>이런 경우 추천</span>
+        <strong>{content.why}</strong>
+      </div>
+
+      <ul className="billing-plan-features">
+        {content.features.map((feature) => <li key={feature}>{feature}</li>)}
+      </ul>
 
       <button
         type="button"
-        className={`billing-plan-row-action ${active ? 'is-current' : ''}`}
+        className={`billing-plan-action ${active ? 'is-current' : ''}`}
         disabled={!paid || active || busy}
         onClick={onClick}
       >
-        {busy ? '이동 중' : active ? '이용 중' : paid ? '변경' : '기본'}
+        {busy ? '이동 중' : active ? '이용 중' : paid ? `${plan.name} 선택` : '기본'}
       </button>
     </article>
   );
@@ -96,23 +98,23 @@ export default function BillingSettingsSection({ authUser }) {
   const sslBusy = busy === `domain:${DOMAIN_PRODUCT}`;
 
   return (
-    <SettingsSection id="billing" className="settings-billing-section billing-settings-v6">
+    <SettingsSection id="billing" className="settings-billing-section billing-settings-v7">
       <div className="billing-settings-head">
         <div>
           <strong>페이지로 요금제</strong>
-          <span>무료 → 클래식 → 프로 순서로 운영 기능이 확장됩니다.</span>
+          <span>운영 방식에 맞는 요금제를 선택하세요.</span>
         </div>
       </div>
 
       {error && <p className="settings-message error" role="alert">{error}</p>}
       {loading && !finance ? <div className="settings-loading">요금제 확인 중</div> : null}
 
-      <div className="billing-plan-list" aria-label="페이지로 요금제">
+      <div className="billing-plan-grid" aria-label="페이지로 요금제">
         {plans.slice(0, 3).map((plan) => {
           const included = bundleClassic && plan.code === 'pagero_monthly';
           const current = currentCode === plan.code;
           return (
-            <PlanRow
+            <PlanCard
               key={plan.code}
               plan={plan}
               current={current}
@@ -139,7 +141,7 @@ export default function BillingSettingsSection({ authUser }) {
         </div>
         <button
           type="button"
-          className="billing-plan-row-action"
+          className="billing-plan-action billing-addon-action"
           disabled={sslEnabled || sslIncludedByPlan || sslBusy}
           onClick={() => checkout('domain', DOMAIN_PRODUCT)}
         >
