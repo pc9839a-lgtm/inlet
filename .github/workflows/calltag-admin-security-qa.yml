@@ -1,0 +1,53 @@
+name: CallTag Admin Security QA
+
+on:
+  pull_request:
+    paths:
+      - 'functions/api/call/admin/**'
+      - '.github/workflows/calltag-admin-security-qa.yml'
+  push:
+    branches:
+      - 'agent/calltag-admin-minimal-risk'
+    paths:
+      - 'functions/api/call/admin/**'
+      - '.github/workflows/calltag-admin-security-qa.yml'
+  workflow_dispatch:
+
+jobs:
+  security-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Parse admin modules
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check functions/api/call/admin/_security.js
+          node --check functions/api/call/admin/overview.js
+          node --check functions/api/call/admin/member.js
+
+      - name: Enforce minimal-data contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(functions/api/call/admin/_security.js functions/api/call/admin/overview.js functions/api/call/admin/member.js)
+          if grep -E -n 'purchase_token_hash|purchaseToken|order_id|external_subscription_id|password_hash|values_json|message_body|sms_body|bank_account' "${files[@]}"; then
+            echo 'Forbidden sensitive field reference found in CallTag admin surface.' >&2
+            exit 1
+          fi
+          if grep -E -n 'CALLLINK_ADMIN_TOKEN|INLET_API_TOKEN|x-inlet-session' "${files[@]}"; then
+            echo 'Reusable legacy admin/session credential found in CallTag admin surface.' >&2
+            exit 1
+          fi
+          grep -q "CALLTAG_ADMIN_ACCESS_AUD" functions/api/call/admin/_security.js
+          grep -q "CF-Access-Jwt-Assertion" functions/api/call/admin/_security.js
+          grep -q "CALLTAG_ADMIN_OWNER_IDS" functions/api/call/admin/_security.js
+          grep -q "verification_state" functions/api/call/admin/member.js
