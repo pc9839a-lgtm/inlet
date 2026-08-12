@@ -1,9 +1,9 @@
-﻿import React from 'react';
+import React from 'react';
 import { ScreenDropZone } from './ScreenDropZone.jsx';
 
 export function ScreenOrderItemDropTargets({ controls, isLast, children }) {
   return (
-    <>
+    <div className="screen-order-v2-slot">
       <ScreenDropZone
         onDragOver={controls.activateDrop}
         onDragEnter={controls.activateDrop}
@@ -22,6 +22,6 @@ export function ScreenOrderItemDropTargets({ controls, isLast, children }) {
           onDrop={controls.dropAfter}
         />
       )}
-    </>
+    </div>
   );
 }
