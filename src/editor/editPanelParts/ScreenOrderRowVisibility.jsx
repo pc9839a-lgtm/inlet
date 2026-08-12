@@ -5,10 +5,10 @@ import { stop } from './editorEvents.js';
 export function ScreenOrderRowVisibility({ visible, onToggleVisible }) {
   const active = Boolean(visible);
   return (
-    <div className="screen-row-visibility" onClick={stop}>
+    <div className="screen-order-v2-visibility" onClick={stop}>
       <button
         type="button"
-        className={`screen-order-visibility-toggle${active ? ' is-on' : ''}`}
+        className={`screen-order-v2-visibility-toggle${active ? ' is-on' : ''}`}
         role="switch"
         aria-checked={active}
         aria-label={active ? T.show : T.hide}
