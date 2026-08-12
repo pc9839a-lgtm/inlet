@@ -1,0 +1,3 @@
+CallTag Admin Cloudflare Access configured.
+Access app and owner-only policy created.
+Admin runtime secrets configured in Cloudflare Pages project inlet.
