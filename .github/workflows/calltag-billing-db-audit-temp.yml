@@ -18,24 +18,17 @@ jobs:
       - name: Read latest Google Play billing rows without PII
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
           url='https://pagero.kr/api/billing/audit-temp'
           body="$RUNNER_TEMP/billing-audit.json"
           for attempt in $(seq 1 30); do
             code="$(curl -sS --connect-timeout 8 --max-time 20 -o "$body" -w '%{http_code}' "$url" || true)"
             echo "attempt=$attempt http=$code"
             if [ "$code" = '200' ]; then
-              python3 - "$body" <<'PY'
-import json,sys
-p=sys.argv[1]
-d=json.load(open(p,encoding='utf-8'))
-print(json.dumps(d,ensure_ascii=False,sort_keys=True))
-rows=d.get('rows') or []
-if d.get('ok') is True and rows:
-    raise SystemExit(0)
-raise SystemExit(2)
-PY
-              exit 0
+              cat "$body"
+              if python3 -c "import json,sys; d=json.load(open(sys.argv[1],encoding='utf-8')); rows=d.get('rows') or []; sys.exit(0 if d.get('ok') is True and len(rows)>0 else 2)" "$body"; then
+                exit 0
+              fi
             fi
             sleep 5
           done
