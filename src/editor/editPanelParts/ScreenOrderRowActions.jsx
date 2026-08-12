@@ -22,11 +22,16 @@ export function ScreenOrderRowActions({
     action?.();
   };
 
+  const toggleMenu = (event) => {
+    stop(event);
+    setMenuOpen((open) => !open);
+  };
+
   return (
-    <div className="screen-row-actions" onClick={stop}>
+    <div className="screen-order-v2-actions" onClick={stop}>
       <button
         type="button"
-        className="screen-order-action-button"
+        className="screen-order-v2-action"
         onClick={onMoveUp}
         title={T.moveUp}
         aria-label={`${meta.label} ${T.moveUp}`}
@@ -36,7 +41,7 @@ export function ScreenOrderRowActions({
       </button>
       <button
         type="button"
-        className="screen-order-action-button"
+        className="screen-order-v2-action"
         onClick={onMoveDown}
         title={T.moveDown}
         aria-label={`${meta.label} ${T.moveDown}`}
@@ -46,8 +51,8 @@ export function ScreenOrderRowActions({
       </button>
       <button
         type="button"
-        className="screen-order-action-button"
-        onClick={() => setMenuOpen((open) => !open)}
+        className="screen-order-v2-action"
+        onClick={toggleMenu}
         title="더보기"
         aria-label={`${meta.label} 더보기`}
         aria-expanded={menuOpen}
@@ -56,7 +61,7 @@ export function ScreenOrderRowActions({
       </button>
 
       {menuOpen && (
-        <div className="screen-row-more-menu" role="menu">
+        <div className="screen-order-v2-menu" role="menu" onClick={stop}>
           <button type="button" role="menuitem" disabled={!canDuplicate} onClick={() => run(onDuplicate)}>
             <Copy size={14} /> 복제
           </button>
