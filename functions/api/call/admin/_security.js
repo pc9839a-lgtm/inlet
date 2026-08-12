@@ -58,37 +58,33 @@ export async function requireCalltagAdmin(request, env = {}) {
   if (!assertion) {
     throw callError('Cloudflare Access 인증이 필요합니다.', 401, { code: 'CALLTAG_ADMIN_ACCESS_REQUIRED' });
   }
+
   const access = await verifyAccessAssertion(assertion, issuer, allowedAudiences);
   const accessEmail = normalizeEmail(access.email || '');
   if (!accessEmail) {
     throw callError('Access 계정 이메일을 확인할 수 없습니다.', 403, { code: 'CALLTAG_ADMIN_ACCESS_EMAIL_REQUIRED' });
   }
 
-  const account = await env.DB.prepare(`
-    SELECT p.owner_id, p.email, a.status AS account_status, a.email_verified_at
-    FROM calllink_profiles p
-    JOIN accounts a ON a.id = p.owner_id
-    WHERE LOWER(p.email) = ?
-    LIMIT 1
-  `).bind(accessEmail).first();
-  const ownerId = String(account?.owner_id || '').trim();
-  const accountEmail = normalizeEmail(account?.email || '');
-  const accountStatus = String(account?.account_status || '').trim().toLowerCase();
-  if (!ownerId || accountEmail !== accessEmail || accountStatus !== 'active' || !account?.email_verified_at) {
-    throw callError('등록된 활성 콜태그 관리자 계정을 확인할 수 없습니다.', 403, { code: 'CALLTAG_ADMIN_ACCOUNT_NOT_ELIGIBLE' });
-  }
-
+  // Admin operators are intentionally independent from customer CallTag accounts.
+  // Cloudflare Access verifies the operator identity; the server-side allowlist
+  // decides whether that operator may use the backoffice. This avoids requiring
+  // an administrator to also exist as a production customer account.
+  const actorId = await accessActorId(access.sub || accessEmail);
   const allowedOwnerIds = new Set(csv(env.CALLTAG_ADMIN_OWNER_IDS || ''));
   const allowedEmails = new Set(csv(env.CALLTAG_ADMIN_EMAILS || '').map(normalizeEmail).filter(Boolean));
   if (!allowedOwnerIds.size && !allowedEmails.size) {
     throw callError('관리자 allowlist가 설정되지 않았습니다.', 503, { code: 'CALLTAG_ADMIN_ALLOWLIST_CONFIG_REQUIRED' });
   }
-  if (!allowedOwnerIds.has(ownerId) && !allowedEmails.has(accountEmail)) {
+  if (!allowedOwnerIds.has(actorId) && !allowedEmails.has(accessEmail)) {
     throw callError('관리자 권한이 없습니다.', 403, { code: 'CALLTAG_ADMIN_FORBIDDEN' });
   }
 
-  enforceLocalRateLimit(ownerId);
-  return { ownerId, email: accountEmail, accessSubject: String(access.sub || '').slice(0, 160) };
+  enforceLocalRateLimit(actorId);
+  return {
+    ownerId: actorId,
+    email: accessEmail,
+    accessSubject: String(access.sub || '').slice(0, 160),
+  };
 }
 
 export async function recordAdminAudit(db, request, env, identity, action, targetOwnerId = '', outcome = 'ok') {
@@ -162,6 +158,13 @@ function csv(value = '') {
 
 function normalizeIssuer(value = '') {
   return String(value || '').trim().replace(/\/+$/, '');
+}
+
+async function accessActorId(subject) {
+  const value = String(subject || '').trim().slice(0, 512);
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`calltag-admin-actor:v1:${value}`));
+  const hex = Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
+  return `access:${hex.slice(0, 24)}`;
 }
 
 async function verifyAccessAssertion(token, issuer, allowedAudiences) {
