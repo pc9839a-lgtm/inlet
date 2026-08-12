@@ -1,52 +1,99 @@
-# CallTag Google Play Billing 서버 환경변수 — 2026-08-12
+# CallTag Google Play Billing 서버 환경 — 2026-08-12
 
-CallTag Android 결제 검증 서버는 `functions/api/billing/_readiness.js`와 `functions/api/billing/_shared.js` 기준으로 아래 환경변수를 사용한다.
+CallTag 서버 저장소: `pc9839a-lgtm/inlet` / `main`
 
-## 운영 변수
+## 현재 운영 Secret
+
+필수:
 
 ```text
-GOOGLE_PLAY_BILLING_ENABLED=0
-GOOGLE_PLAY_PRODUCTS_READY=0
-GOOGLE_PLAY_CLIENT_EMAIL=
-GOOGLE_PLAY_PRIVATE_KEY=
+GOOGLE_PLAY_CLIENT_EMAIL=<service account client_email>
+GOOGLE_PLAY_PRIVATE_KEY=<service account private_key>
 ```
 
-## 적용 순서
+실제 값은 Cloudflare Secret에만 저장한다. 저장소/문서/채팅에 원문을 넣지 않는다.
 
-1. Google Cloud 프로젝트에서 `Google Play Android Developer API` 활성화
-2. 서버용 service account 생성
-3. Play Console `사용자 및 권한`에서 service account 이메일 초대
-4. CallTag 앱 범위로 결제 API에 필요한 최소 권한 부여
-   - 재무 데이터, 주문 및 취소 설문 응답 보기
-   - 주문 및 정기 결제 관리
-5. service account JSON의 `client_email`을 `GOOGLE_PLAY_CLIENT_EMAIL`로 등록
-6. service account JSON의 `private_key`를 `GOOGLE_PLAY_PRIVATE_KEY`로 등록
-7. Play Console의 `all_monthly`, `call_monthly`, `message_monthly`와 base plan이 모두 준비되기 전에는 `GOOGLE_PLAY_PRODUCTS_READY=0` 유지
-8. service account/API 검증이 준비되기 전에는 `GOOGLE_PLAY_BILLING_ENABLED=0` 유지
-9. 상품 준비 완료 후 `GOOGLE_PLAY_PRODUCTS_READY=1`
-10. 실제 검증 준비까지 완료 후 `GOOGLE_PLAY_BILLING_ENABLED=1`
+현재 서버 readiness는 위 credential이 구성되어 있고 명시적 중지 상태가 아니면 Google Play 결제를 사용 가능으로 판단한다.
 
-## 비공개 키 형식
+긴급 중지:
 
-현재 서버의 `importPrivateKey()`는 실제 줄바꿈 PEM과 `\n` 이스케이프 PEM을 모두 처리한다.
+```text
+GOOGLE_PLAY_BILLING_DISABLED=1
+```
 
-예시 형식만 아래와 같으며 실제 키를 문서나 저장소에 넣지 않는다.
+과거의 `GOOGLE_PLAY_BILLING_ENABLED` / `GOOGLE_PLAY_PRODUCTS_READY` 수동 플래그는 현재 핵심 readiness 게이트가 아니다.
+
+## 실제 운영 검증 완료
+
+2026-08-12 운영 서버에서 다음을 확인했다.
+
+- service account private key import/JWT 서명 성공
+- Google OAuth access token 발급 성공
+- Android Publisher API 접근 성공
+- subscription catalog 조회 성공
+- `call_monthly` 존재 확인
+- `message_monthly` 존재 확인
+- 실제 `call_monthly` 테스트 구매 서버 검증 성공
+- 운영 D1 `channel=google_play / status=active / verification_state=verified`
+- server acknowledgement 경로 유지
+
+## 현재 Play 상품
+
+- `call_monthly` — 사용
+- `message_monthly` — 사용
+- `all_monthly` — 현재 미생성, 검증/구매 허용 대상 아님
+
+사용자 지시 전 `all_monthly`를 임의 생성하거나 허용 목록에 다시 넣지 않는다.
+
+## private key 형식
+
+서버 `importPrivateKey()`는 실제 줄바꿈 PEM과 `\n` 이스케이프 PEM을 처리한다.
+
+형식 예시:
 
 ```text
 -----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n
 ```
 
+실제 키 값은 절대 문서에 기록하지 않는다.
+
+## 서버 결제 검증 구조
+
+`functions/api/billing/_shared.js`의 Google Play 검증은:
+
+1. package `kr.pagero.calltag` 확인
+2. productId `call_monthly` / `message_monthly` 확인
+3. `purchases.subscriptionsv2.get` 조회
+4. line item productId 일치 확인
+5. 상태/expiry 검증
+6. 다른 활성 결제 채널 충돌 차단
+7. purchaseToken SHA-256 hash 저장
+8. verified subscription upsert
+9. 필요 시 서버 acknowledge
+10. entitlement 반환
+
+Cloudflare Pages에서 Google API 호출과 충돌했던 불필요한 fetch 옵션은 제거된 상태다.
+
+## 다음 작업
+
+신규 결제는 성공했다. 다음 서버 우선순위는 RTDN/Pub/Sub이다.
+
+- renewal
+- cancel
+- expiry
+- grace period
+- account hold
+- resume
+- refund / voided purchase
+- reconciliation
+
+RTDN 알림을 받은 뒤 Android Publisher API를 다시 조회해서 최종 entitlement를 갱신한다.
+
 ## 절대 금지
 
-- service account JSON 원본 커밋 금지
-- private key 커밋/이슈/PR/로그 기록 금지
-- production secret 값을 `.env.example`에 실제 값으로 넣지 않음
-- readiness 플래그를 credential/product 준비보다 먼저 활성화하지 않음
-- 앱에서 Android Publisher API 직접 호출 금지
-- 앱에서 acknowledge 중복 구현 금지
-
-## 실제 준비 완료 판정
-
-환경변수 문자열이 존재하는 것만으로 Google Play 권한 검증이 완료된 것은 아니다.
-
-최종 확인은 라이선스 테스터 결제에서 받은 purchaseToken으로 `/api/billing/google/verify`가 Google Android Publisher API 조회와 서버 acknowledgement를 성공한 뒤 entitlement `active`를 반환하는지로 판정한다.
+- service account JSON 커밋 금지
+- private key 로그/문서/PR/이슈 노출 금지
+- purchaseToken 원문 장기 저장 금지
+- Android 앱에서 Publisher API 직접 호출 금지
+- 앱과 서버에서 acknowledge 중복 구현 금지
+- 신규 구매 성공을 RTDN lifecycle 완료로 기록 금지
