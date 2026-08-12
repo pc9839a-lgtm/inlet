@@ -126,40 +126,43 @@ async function verifyGoogleIdToken(idToken = '', expectedNonce = '', env = {}) {
 async function googleJwk(kid = '') {
   const now = Date.now();
   if (jwksCache.expiresAt <= now || !jwksCache.keys.length) {
-    const response = await fetch(GOOGLE_JWKS_URL, {
-      headers: { Accept: 'application/json' },
-      signal: AbortSignal.timeout(10_000),
-    });
-    const body = await response.json().catch(() => ({}));
-    if (!response.ok || !Array.isArray(body.keys)) {
-      throw oauthError('Google 로그인 인증키를 확인하지 못했습니다.', 503, 'GOOGLE_JWKS_UNAVAILABLE');
-    }
-    const maxAge = cacheMaxAge(response.headers.get('cache-control'));
+    const fresh = await fetchGoogleJwks();
     jwksCache = {
-      expiresAt: now + Math.max(60_000, maxAge * 1000),
-      keys: body.keys,
+      expiresAt: now + Math.max(60_000, fresh.maxAge * 1000),
+      keys: fresh.keys,
     };
   }
 
   let key = jwksCache.keys.find((entry) => entry && entry.kid === kid);
   if (!key) {
-    jwksCache = { expiresAt: 0, keys: [] };
-    const response = await fetch(GOOGLE_JWKS_URL, {
-      headers: { Accept: 'application/json' },
-      signal: AbortSignal.timeout(10_000),
-    });
-    const body = await response.json().catch(() => ({}));
-    if (!response.ok || !Array.isArray(body.keys)) {
-      throw oauthError('Google 로그인 인증키를 확인하지 못했습니다.', 503, 'GOOGLE_JWKS_UNAVAILABLE');
-    }
+    const fresh = await fetchGoogleJwks();
     jwksCache = {
-      expiresAt: Date.now() + Math.max(60_000, cacheMaxAge(response.headers.get('cache-control')) * 1000),
-      keys: body.keys,
+      expiresAt: Date.now() + Math.max(60_000, fresh.maxAge * 1000),
+      keys: fresh.keys,
     };
     key = jwksCache.keys.find((entry) => entry && entry.kid === kid);
   }
   if (!key) throw oauthError('Google 로그인 인증키가 올바르지 않습니다.', 401, 'GOOGLE_JWK_NOT_FOUND');
   return key;
+}
+
+async function fetchGoogleJwks() {
+  let response;
+  try {
+    response = await fetch(GOOGLE_JWKS_URL, {
+      headers: { Accept: 'application/json' },
+    });
+  } catch (error) {
+    throw oauthError('Google 로그인 인증키 서버에 연결하지 못했습니다.', 503, 'GOOGLE_JWKS_NETWORK_FAILED');
+  }
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok || !Array.isArray(body.keys)) {
+    throw oauthError('Google 로그인 인증키를 확인하지 못했습니다.', 503, 'GOOGLE_JWKS_UNAVAILABLE');
+  }
+  return {
+    keys: body.keys,
+    maxAge: cacheMaxAge(response.headers.get('cache-control')),
+  };
 }
 
 function cacheMaxAge(value = '') {
