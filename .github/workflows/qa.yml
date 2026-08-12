@@ -30,7 +30,6 @@ jobs:
         run: npm run qa:all
 
   browser-regression:
-    needs: qa
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -107,7 +106,6 @@ jobs:
           fi
 
   editor-browser-regression:
-    needs: qa
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -188,7 +186,6 @@ jobs:
           fi
 
   form-browser-regression:
-    needs: qa
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -269,7 +266,6 @@ jobs:
           fi
 
   template-mobile-browser-regression:
-    needs: qa
     runs-on: ubuntu-latest
     timeout-minutes: 25
 
