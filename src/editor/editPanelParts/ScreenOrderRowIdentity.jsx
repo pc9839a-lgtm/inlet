@@ -13,7 +13,7 @@ export function ScreenOrderRowIdentity({ block, index, meta, open, onDragStart, 
   return (
     <>
       <div
-        className="screen-drag-handle"
+        className="screen-order-v2-drag"
         draggable
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
@@ -21,15 +21,16 @@ export function ScreenOrderRowIdentity({ block, index, meta, open, onDragStart, 
         role="button"
         tabIndex={0}
         title={T.dragToReorder}
+        aria-label={`${meta.label} 순서 이동`}
       >
         <GripVertical size={18} />
       </div>
 
-      <div className="screen-title-wrap" role="button" tabIndex={0} aria-expanded={open} onClick={selectTitle} onKeyDown={onSelectRowByKey}>
-        <span className="screen-order-number">{index + 1}</span>
+      <div className="screen-order-v2-title-wrap" role="button" tabIndex={0} aria-expanded={open} onClick={selectTitle} onKeyDown={onSelectRowByKey}>
+        <span className="screen-order-v2-number">{index + 1}</span>
         <Icon size={17} />
         <strong>{meta.label}</strong>
-        <span className="screen-row-chevron" aria-hidden="true">
+        <span className="screen-order-v2-chevron" aria-hidden="true">
           {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </span>
       </div>
