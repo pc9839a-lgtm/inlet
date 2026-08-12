@@ -27,10 +27,7 @@ function PlanCard({ plan, current, included, busy, onClick }) {
   const paid = Number(plan.amountKrw || 0) > 0;
 
   return (
-    <article
-      className={`billing-tier-card ${current || included ? 'is-current' : ''}`}
-      style={{ minHeight: '320px', padding: '22px 18px' }}
-    >
+    <article className={`billing-tier-card ${current || included ? 'is-current' : ''}`}>
       <div className="billing-tier-head">
         <div>
           <strong>{plan.name}</strong>
