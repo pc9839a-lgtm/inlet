@@ -1,0 +1,82 @@
+name: Configure CallTag Admin OTP Login
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/calltag-admin-otp-bootstrap.yml
+  workflow_dispatch:
+
+jobs:
+  otp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      CLOUDFLARE_ACCESS_API_TOKEN: ${{ secrets.CLOUDFLARE_ACCESS_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      ACCESS_DOMAIN: calltag.pagero.kr/admin
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure OTP identity provider and bind app
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$CLOUDFLARE_ACCESS_API_TOKEN"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+          auth=(-H "Authorization: Bearer $CLOUDFLARE_ACCESS_API_TOKEN")
+          idp_api="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/access/identity_providers"
+          apps_api="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/access/apps"
+
+          status=$(curl -sS -o /tmp/idps.json -w '%{http_code}' "$idp_api" "${auth[@]}")
+          if [ "$status" != "200" ]; then
+            echo "OTP_IDP_PERMISSION_MISSING HTTP=$status"
+            jq -r '.errors[]?.message // empty' /tmp/idps.json | head -10
+            echo "Required Cloudflare API token permission: Access: Organizations, Identity Providers, and Groups -> Edit"
+            exit 1
+          fi
+
+          otp_id=$(jq -r '.result[]? | select(.type == "onetimepin") | .id' /tmp/idps.json | head -1)
+          if [ -z "$otp_id" ] || [ "$otp_id" = "null" ]; then
+            jq -n '{name:"CallTag Email Code",type:"onetimepin",config:{}}' >/tmp/idp-create.json
+            status=$(curl -sS -o /tmp/idp-result.json -w '%{http_code}' "$idp_api" -X POST "${auth[@]}" -H 'Content-Type: application/json' --data @/tmp/idp-create.json)
+            if [ "$status" != "200" ] && [ "$status" != "201" ]; then
+              echo "Failed to create OTP identity provider HTTP=$status"
+              jq -r '.errors[]?.message // empty' /tmp/idp-result.json | head -10
+              exit 1
+            fi
+            otp_id=$(jq -r '.result.id // empty' /tmp/idp-result.json)
+          fi
+          test -n "$otp_id"
+          echo "OTP identity provider ready."
+
+          curl -fsS "$apps_api" "${auth[@]}" >/tmp/apps.json
+          app_id=$(jq -r --arg d "$ACCESS_DOMAIN" '.result[]? | select(.domain == $d) | .id' /tmp/apps.json | head -1)
+          test -n "$app_id"
+
+          app_api="$apps_api/$app_id"
+          status=$(curl -sS -o /tmp/app.json -w '%{http_code}' "$app_api" "${auth[@]}")
+          test "$status" = "200"
+          jq --arg otp "$otp_id" '.result | {
+            name,
+            type,
+            domain,
+            destinations,
+            session_duration,
+            app_launcher_visible,
+            allow_authenticate_via_warp,
+            policies,
+            custom_deny_message,
+            custom_deny_url,
+            custom_non_identity_deny_url
+          } + {allowed_idps:[$otp],auto_redirect_to_identity:true}' /tmp/app.json >/tmp/app-update.json
+
+          status=$(curl -sS -o /tmp/app-update-result.json -w '%{http_code}' "$app_api" -X PUT "${auth[@]}" -H 'Content-Type: application/json' --data @/tmp/app-update.json)
+          if [ "$status" != "200" ]; then
+            echo "Failed to bind OTP-only login HTTP=$status"
+            jq -r '.errors[]?.message // empty' /tmp/app-update-result.json | head -10
+            exit 1
+          fi
+
+          echo "CallTag Admin is now OTP-only."
