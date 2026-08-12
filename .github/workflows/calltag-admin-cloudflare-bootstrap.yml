@@ -22,7 +22,7 @@ jobs:
       CLOUDFLARE_PAGES_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       ADMIN_EMAIL: pc9839a@naver.com
-      ACCESS_ISSUER: https://dump-morning-01d7.cloudflareaccess.com
+      ACCESS_ISSUER: https://damp-morning-01d7.cloudflareaccess.com
       ACCESS_DOMAIN: calltag.pagero.kr/admin
       PAGES_PROJECT: inlet
     steps:
