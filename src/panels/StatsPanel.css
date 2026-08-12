@@ -471,6 +471,36 @@
 .stats-dashboard-shell .stats-v4-lead-list em { min-width: 0; overflow: hidden; color: var(--product-muted); font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
 .stats-dashboard-shell .stats-v4-lead-list small { color: var(--product-muted); text-align: right; white-space: nowrap; }
 
+/* Readable typography scale — kept in this owner file so no extra override layer is introduced. */
+.stats-dashboard-shell .stats-v4 { font-size: 14px; }
+.stats-dashboard-shell .stats-v4-sidebar-title { font-size: 20px; }
+.stats-dashboard-shell .stats-v4-nav button { font-size: 14px; }
+.stats-dashboard-shell .stats-v4-page-head h1 { font-size: 26px; }
+.stats-dashboard-shell .stats-v4-page-head > span { font-size: 13px; }
+.stats-dashboard-shell .stats-v4-period-tabs button { font-size: 13px; }
+.stats-dashboard-shell .stats-v4-filter-control > span { font-size: 12px; }
+.stats-dashboard-shell .stats-v4-filter-control :is(input, select) { font-size: 13px; }
+.stats-dashboard-shell .stats-v4-notice { font-size: 13px; }
+.stats-dashboard-shell .stats-v4-metric > span { font-size: 13px; }
+.stats-dashboard-shell .stats-v4-metric > strong { font-size: clamp(26px, 2vw, 34px); }
+.stats-dashboard-shell .stats-v4-metric > small { font-size: 12px; }
+.stats-dashboard-shell .stats-v4-change { font-size: 11px; }
+.stats-dashboard-shell .stats-v4-card-title h2 { font-size: 17px; }
+.stats-dashboard-shell .stats-v4-card-title p { font-size: 12px; }
+.stats-dashboard-shell .stats-v4-trend .axis-label { font-size: 12px; }
+.stats-dashboard-shell .stats-v4-legend { font-size: 11px; }
+.stats-dashboard-shell .stats-v4-tooltip :is(span,strong,em) { font-size: 11px; }
+.stats-dashboard-shell .stats-v4-tooltip strong { font-size: 13px; }
+.stats-dashboard-shell .stats-v4-funnel-row > strong { font-size: 13px; }
+.stats-dashboard-shell .stats-v4-funnel-row > span { font-size: 12px; }
+.stats-dashboard-shell .stats-v4-funnel-row > span b { font-size: 16px; }
+.stats-dashboard-shell .stats-v4-funnel-row > em { font-size: 11px; }
+.stats-dashboard-shell .stats-v4-stat-row > span { font-size: 13px; }
+.stats-dashboard-shell .stats-v4-stat-row > b { font-size: 13px; }
+.stats-dashboard-shell .stats-v4-empty { font-size: 13px; }
+.stats-dashboard-shell .stats-v4-lead-list > div { font-size: 13px; }
+.stats-dashboard-shell .stats-v4-lead-list small { font-size: 12px; }
+
 @media (max-width: 1320px) {
   .stats-dashboard-shell .stats-v4-filterbar {
     grid-template-columns: minmax(260px, 1fr) 150px 180px;
@@ -504,7 +534,7 @@
   .stats-dashboard-shell .stats-v4-nav { display: flex; gap: 4px; }
   .stats-dashboard-shell .stats-v4-nav button { width: auto; min-width: max-content; grid-template-columns: 18px auto; padding: 0 11px; }
   .stats-dashboard-shell .stats-v4-main { padding: 16px 14px 36px; }
-  .stats-dashboard-shell .stats-v4-page-head h1 { font-size: 21px; }
+  .stats-dashboard-shell .stats-v4-page-head h1 { font-size: 23px; }
   .stats-dashboard-shell .stats-v4-filterbar { grid-template-columns: minmax(0, 1fr) 150px; }
   .stats-dashboard-shell .stats-v4-channel-control { grid-column: 1 / -1; }
 }
@@ -516,7 +546,7 @@
   .stats-dashboard-shell .stats-v4-filterbar { grid-template-columns: minmax(0, 1fr); padding: 8px; }
   .stats-dashboard-shell .stats-v4-channel-control { grid-column: auto; }
   .stats-dashboard-shell .stats-v4-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .stats-dashboard-shell .stats-v4-metric { min-height: 88px; padding: 12px; }
+  .stats-dashboard-shell .stats-v4-metric { min-height: 92px; padding: 12px; }
   .stats-dashboard-shell .stats-v4-metric > span { top: 10px; left: 12px; }
   .stats-dashboard-shell .stats-v4-split { grid-template-columns: minmax(0, 1fr); }
   .stats-dashboard-shell .stats-v4-card { padding: 13px; }
