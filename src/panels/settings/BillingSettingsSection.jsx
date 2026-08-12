@@ -1,5 +1,6 @@
 import SettingsSection from './SettingsSection.jsx';
 import useAccountFinance from './useAccountFinance.js';
+import './BillingSettingsSection.css';
 
 const FALLBACK_PLANS = [
   { code: 'pagero_free', name: '무료', amountKrw: 0 },
@@ -25,28 +26,32 @@ function subscriptionFor(finance, service) {
 function PlanCard({ plan, current, included, busy, onClick }) {
   const features = PLAN_FEATURES[plan.code] || [plan.description].filter(Boolean);
   const paid = Number(plan.amountKrw || 0) > 0;
+  const active = current || included;
 
   return (
-    <article className={`billing-tier-card ${current || included ? 'is-current' : ''}`}>
-      <div className="billing-tier-head">
-        <div>
+    <article className={`billing-plan-v5-card ${active ? 'is-current' : ''}`}>
+      <header className="billing-plan-v5-head">
+        <div className="billing-plan-v5-name-row">
           <strong>{plan.name}</strong>
-          {(current || included) && <span className="billing-tier-current">현재</span>}
+          {active && <span>현재</span>}
         </div>
-        <p><b>{money(plan.amountKrw)}</b>{paid && <span>/월</span>}</p>
-      </div>
+        <div className="billing-plan-v5-price">
+          <b>{money(plan.amountKrw)}</b>
+          {paid && <span>/월</span>}
+        </div>
+      </header>
 
-      <ul className="billing-tier-features">
+      <ul className="billing-plan-v5-features">
         {features.map((feature) => <li key={feature}>{feature}</li>)}
       </ul>
 
       <button
         type="button"
-        className={current || included ? 'settings-secondary-button' : 'settings-primary-button'}
-        disabled={!paid || current || included || busy}
+        className={`billing-plan-v5-action ${active ? 'is-current' : ''}`}
+        disabled={!paid || active || busy}
         onClick={onClick}
       >
-        {busy ? '이동 중' : current || included ? '이용 중' : paid ? '이 요금제 선택' : '기본 요금제'}
+        {busy ? '이동 중' : active ? '이용 중' : paid ? '이 요금제 선택' : '기본 요금제'}
       </button>
     </article>
   );
@@ -60,8 +65,8 @@ export default function BillingSettingsSection({ authUser }) {
   const currentCode = bundleClassic ? 'pagero_monthly' : pageroSubscription?.planCode || 'pagero_free';
 
   return (
-    <SettingsSection id="billing" className="settings-billing-section billing-tier-section">
-      <div className="billing-tier-intro">
+    <SettingsSection id="billing" className="settings-billing-section billing-plan-v5-section">
+      <div className="billing-plan-v5-intro">
         <strong>페이지로 요금제</strong>
         <span>필요한 기능에 맞춰 선택하세요.</span>
       </div>
@@ -69,7 +74,7 @@ export default function BillingSettingsSection({ authUser }) {
       {error && <p className="settings-message error" role="alert">{error}</p>}
       {loading && !finance ? <div className="settings-loading">요금제 확인 중</div> : null}
 
-      <div className="billing-tier-grid" aria-label="페이지로 요금제">
+      <div className="billing-plan-v5-grid" aria-label="페이지로 요금제">
         {plans.slice(0, 3).map((plan) => {
           const included = bundleClassic && plan.code === 'pagero_monthly';
           const current = currentCode === plan.code;
