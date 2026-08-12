@@ -1,2 +1,8 @@
-/* Compatibility entry only. The editor layout is owned by editor-workspace.css. */
+/* Compatibility entry. Core editor geometry is owned by editor-workspace.css. */
 @import './editor-workspace.css';
+
+/* Keep editor preview pixel-parity with the 414px public landing viewport. */
+html body #root .builder-shell .preview-workspace .phone-frame {
+  width: 430px !important;
+  border: 8px solid #111827 !important;
+}
