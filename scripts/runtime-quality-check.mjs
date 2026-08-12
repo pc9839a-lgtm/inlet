@@ -201,7 +201,7 @@ const pageSlugs = await readFile('src/lib/pageSlugs.js', 'utf8');
 const leadIntegrations = await readFile('src/lib/leadIntegrations.js', 'utf8');
 const apiClientSource = await readFile('src/lib/apiClient.js', 'utf8');
 const settingsPanel = await readFile('src/panels/SettingsPanel.jsx', 'utf8');
-const settingsPanelCss = await readFile('src/panels/SettingsPanel.css', 'utf8');
+const settingsPanelCss = await readFile('src/styles/panels-settings.css', 'utf8');
 const baseCss = await readFile('src/styles/base.css', 'utf8');
 const runtimeConfigSource = await readFile('src/config/runtimeConfig.js', 'utf8');
 const previewFormBlocks = await readFile('src/preview/renderers/FormBlocks.jsx', 'utf8');
@@ -540,10 +540,10 @@ assert(leadIntegrations.includes("integration: {") && leadIntegrations.includes(
 assert(inboxConnectionsPanel.includes('advancedOpen') && inboxConnectionsPanel.includes('connection-advanced-toggle') && inboxConnectionsPanel.includes('연동 전체 저장'), 'Inbox integrations should keep webhook inside an advanced section and label full save clearly');
 assert(settingsSection.includes('const stateLabel = open ?') && settingsSection.includes('settings-section-state') && settingsSection.includes('aria-hidden="true"') && settingsSection.includes('{stateLabel}</span>'), 'Settings sections must render explicit open/close action labels');
 assert(settingsAdvancedGroup.includes('aria-label={`') && settingsAdvancedGroup.includes('advancedOpen ?') && settingsAdvancedGroup.includes('<em aria-hidden="true">{advancedOpen ?'), 'Settings advanced section must render explicit open/close action labels');
-assert(/grid-template-columns:\s*minmax\(0,\s*1fr\)\s*58px\s*!important/.test(settingsPanelCss), 'Settings section headers must reserve readable action label space');
-assert(/\.settings-panel \.settings-section-state,[\s\S]*?width:\s*64px\s*!important[\s\S]*?writing-mode:\s*horizontal-tb\s*!important/.test(settingsPanelCss), 'Settings action controls must stay horizontal and unclipped');
-assert(/\.settings-panel \.settings-grid,[\s\S]*?\.settings-panel \.account-settings-grid[\s\S]*?grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)\s*!important/.test(settingsPanelCss), 'Settings forms must keep two-column desktop layout');
-assert(/\.settings-panel \.settings-section-title-row[\s\S]*?background:\s*transparent\s*!important[\s\S]*?box-shadow:\s*none\s*!important/.test(settingsPanelCss), 'Settings section titles must stay flat without nested pill styling');
+assert(settingsPanelCss.includes('grid-template-columns:minmax(0,1fr) 64px'), 'Settings section headers must reserve readable action label space');
+assert(settingsPanelCss.includes('.settings-section-state{justify-self:end;width:58px;height:38px') && settingsPanelCss.includes('white-space:nowrap'), 'Settings action controls must stay horizontal and unclipped');
+assert(settingsPanelCss.includes('.settings-grid,.account-settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}'), 'Settings forms must keep two-column desktop layout');
+assert(settingsPanelCss.includes('.settings-section-title-row{display:flex;align-items:center;gap:8px}') && !settingsPanelCss.includes('.settings-section-title-row{background:'), 'Settings section titles must stay flat without nested pill styling');
 
 const stats = await Promise.all(sourceFiles.map((file) => stat(file)));
 const totalSourceBytes = stats.reduce((sum, item) => sum + item.size, 0);
