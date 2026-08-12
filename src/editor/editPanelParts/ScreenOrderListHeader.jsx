@@ -3,7 +3,7 @@ import { T } from './editorLabels.js';
 
 export function ScreenOrderListHeader() {
   return (
-    <div className="section-title screen-order-title">
+    <div className="screen-order-v2-title">
       <h2>{T.screenOrder}</h2>
     </div>
   );
