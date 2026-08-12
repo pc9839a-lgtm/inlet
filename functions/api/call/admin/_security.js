@@ -54,7 +54,16 @@ export async function requireCalltagAdmin(request, env = {}) {
     throw callError('관리자 Access 설정이 완료되지 않았습니다.', 503, { code: 'CALLTAG_ADMIN_ACCESS_CONFIG_REQUIRED' });
   }
 
-  const assertion = String(request.headers.get('CF-Access-Jwt-Assertion') || '').trim();
+  // Requests to /admin are protected by Cloudflare Access, while the same-origin
+  // backoffice API lives under /api/call/admin. Access injects the assertion
+  // header on protected routes; browsers also carry the signed CF_Authorization
+  // session cookie. Accept either source, then run the exact same JWT signature,
+  // issuer, audience, expiry and allowlist verification below.
+  const assertion = String(
+    request.headers.get('CF-Access-Jwt-Assertion')
+      || cookieValue(request.headers.get('Cookie') || '', 'CF_Authorization')
+      || '',
+  ).trim();
   if (!assertion) {
     throw callError('Cloudflare Access 인증이 필요합니다.', 401, { code: 'CALLTAG_ADMIN_ACCESS_REQUIRED' });
   }
@@ -158,6 +167,23 @@ function csv(value = '') {
 
 function normalizeIssuer(value = '') {
   return String(value || '').trim().replace(/\/+$/, '');
+}
+
+function cookieValue(header = '', name = '') {
+  const target = String(name || '').trim();
+  if (!target) return '';
+  for (const item of String(header || '').split(';')) {
+    const index = item.indexOf('=');
+    if (index <= 0) continue;
+    if (item.slice(0, index).trim() !== target) continue;
+    const value = item.slice(index + 1).trim();
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  }
+  return '';
 }
 
 async function accessActorId(subject) {
