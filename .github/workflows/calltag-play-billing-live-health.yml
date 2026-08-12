@@ -35,18 +35,15 @@ jobs:
             code="$(curl -sS --connect-timeout 8 --max-time 25 -o "$body" -w '%{http_code}' "$url" || true)"
             echo "attempt=$attempt http=$code"
             if [ "$code" = '200' ]; then
-              python3 - "$body" <<'PY'
+              if python3 - "$body" <<'PY'
 import json,sys
 p=sys.argv[1]
 d=json.load(open(p,encoding='utf-8'))
 allowed=('ok','configured','oauthToken','publisherAccess','googleStatus','releaseEnabled','productsReady','code')
 print(json.dumps({k:d.get(k) for k in allowed}, ensure_ascii=False, sort_keys=True))
-if d.get('configured') is True and d.get('oauthToken') is True and d.get('publisherAccess') is True:
-    raise SystemExit(0)
-raise SystemExit(2)
+raise SystemExit(0 if d.get('configured') is True and d.get('oauthToken') is True and d.get('publisherAccess') is True else 2)
 PY
-              result=$?
-              if [ "$result" = '0' ]; then
+              then
                 echo 'Google Play credential and Publisher API access probe passed.'
                 exit 0
               fi
