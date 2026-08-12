@@ -102,8 +102,6 @@ async function issueAccessToken(clientEmail, privateKey) {
         grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
         assertion,
       }),
-      redirect: 'error',
-      signal: AbortSignal.timeout(15000),
     });
   } catch (cause) {
     throw coded('PLAY_OAUTH_NETWORK_FAILED');
@@ -131,18 +129,25 @@ async function issueAccessToken(clientEmail, privateKey) {
 async function probePublisher(accessToken) {
   const packageName = 'kr.pagero.calltag';
   const fakeToken = 'calltag-health-check-invalid-token';
-  const response = await fetch(
-    `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(packageName)}/purchases/subscriptionsv2/tokens/${encodeURIComponent(fakeToken)}`,
-    {
-      method: 'GET',
-      headers: {
-        authorization: `Bearer ${accessToken}`,
-        accept: 'application/json',
+  let response;
+  try {
+    response = await fetch(
+      `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(packageName)}/purchases/subscriptionsv2/tokens/${encodeURIComponent(fakeToken)}`,
+      {
+        method: 'GET',
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          accept: 'application/json',
+        },
       },
-      redirect: 'error',
-      signal: AbortSignal.timeout(15000),
-    },
-  );
+    );
+  } catch (cause) {
+    return {
+      publisherAccess: null,
+      googleStatus: 0,
+      code: 'PLAY_PUBLISHER_NETWORK_FAILED',
+    };
+  }
 
   const googleStatus = Number(response.status || 0);
   if (googleStatus === 401 || googleStatus === 403) {
