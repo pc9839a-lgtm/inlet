@@ -24,6 +24,7 @@ jobs:
       ADMIN_EMAIL: pc9839a@naver.com
       ACCESS_ISSUER: https://damp-morning-01d7.cloudflareaccess.com
       ACCESS_DOMAIN: calltag.pagero.kr/admin
+      ACCESS_API_DOMAIN: calltag.pagero.kr/api/call/admin/*
       PAGES_PROJECT: inlet
     steps:
       - uses: actions/checkout@v4
@@ -64,11 +65,14 @@ jobs:
           aud=$(jq -r --arg d "$ACCESS_DOMAIN" '.result[]? | select(.domain == $d) | .aud' /tmp/apps.json | head -1)
 
           if [ -z "$app_id" ] || [ "$app_id" = "null" ]; then
-            jq -n --arg domain "$ACCESS_DOMAIN" '{
+            jq -n --arg domain "$ACCESS_DOMAIN" --arg api_domain "$ACCESS_API_DOMAIN" '{
               name:"CallTag Admin",
               type:"self_hosted",
               domain:$domain,
-              destinations:[{type:"public",uri:$domain}],
+              destinations:[
+                {type:"public",uri:$domain},
+                {type:"public",uri:$api_domain}
+              ],
               session_duration:"24h",
               app_launcher_visible:false,
               allow_authenticate_via_warp:false
@@ -82,13 +86,34 @@ jobs:
             fi
             app_id=$(jq -r '.result.id // empty' /tmp/app-result.json)
             aud=$(jq -r '.result.aud // empty' /tmp/app-result.json)
+          else
+            jq -n --arg domain "$ACCESS_DOMAIN" --arg api_domain "$ACCESS_API_DOMAIN" '{
+              name:"CallTag Admin",
+              type:"self_hosted",
+              domain:$domain,
+              destinations:[
+                {type:"public",uri:$domain},
+                {type:"public",uri:$api_domain}
+              ],
+              session_duration:"24h",
+              app_launcher_visible:false,
+              allow_authenticate_via_warp:false
+            }' >/tmp/app-update.json
+            status=$(curl -sS -o /tmp/app-result.json -w '%{http_code}' "$api/$app_id" \
+              -X PUT "${auth[@]}" -H 'Content-Type: application/json' --data @/tmp/app-update.json)
+            if [ "$status" != "200" ]; then
+              echo "Failed to update CallTag Access application destinations (HTTP $status)."
+              jq -r '.errors[]?.message // empty' /tmp/app-result.json | head -10
+              exit 1
+            fi
+            aud=$(jq -r '.result.aud // empty' /tmp/app-result.json)
           fi
 
           test -n "$app_id"
           test -n "$aud"
           echo "app_id=$app_id" >> "$GITHUB_OUTPUT"
           echo "aud=$aud" >> "$GITHUB_OUTPUT"
-          echo "Access application ready for $ACCESS_DOMAIN."
+          echo "Access application ready for $ACCESS_DOMAIN and $ACCESS_API_DOMAIN."
 
       - name: Ensure owner-only Access policy
         shell: bash
@@ -128,26 +153,32 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          url="https://$ACCESS_DOMAIN"
-          for attempt in 1 2 3 4 5 6 7 8 9 10; do
-            status=$(curl -sS -o /dev/null -D /tmp/headers.txt -w '%{http_code}' "$url" || true)
-            location=$(awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]+:[[:space:]]*/,""); sub(/\r$/,""); print; exit}' /tmp/headers.txt)
-            echo "Access probe attempt $attempt: HTTP $status"
-            if [ "$status" = "302" ] || [ "$status" = "303" ] || [ "$status" = "307" ]; then
-              if printf '%s' "$location" | grep -Eqi 'cloudflareaccess\.com|/cdn-cgi/access/'; then
-                echo "Live Access gate verified."
-                exit 0
+          for target in "$ACCESS_DOMAIN" "${ACCESS_API_DOMAIN%\*}overview"; do
+            url="https://$target"
+            protected=0
+            for attempt in 1 2 3 4 5 6 7 8 9 10; do
+              status=$(curl -sS -o /dev/null -D /tmp/headers.txt -w '%{http_code}' "$url" || true)
+              location=$(awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]+:[[:space:]]*/,""); sub(/\r$/,""); print; exit}' /tmp/headers.txt)
+              echo "Access probe $url attempt $attempt: HTTP $status"
+              if [ "$status" = "302" ] || [ "$status" = "303" ] || [ "$status" = "307" ]; then
+                if printf '%s' "$location" | grep -Eqi 'cloudflareaccess\.com|/cdn-cgi/access/'; then
+                  protected=1
+                  break
+                fi
               fi
+              if [ "$status" = "401" ] || [ "$status" = "403" ]; then
+                protected=1
+                break
+              fi
+              sleep 3
+            done
+            if [ "$protected" != "1" ]; then
+              echo "ERROR: $url is not protected by the Cloudflare Access login gate."
+              sed -n '1,20p' /tmp/headers.txt || true
+              exit 1
             fi
-            if [ "$status" = "401" ] || [ "$status" = "403" ]; then
-              echo "Live Access gate is denying unauthenticated traffic."
-              exit 0
-            fi
-            sleep 3
           done
-          echo "ERROR: $url is not protected by the Cloudflare Access login gate."
-          sed -n '1,20p' /tmp/headers.txt || true
-          exit 1
+          echo "Live Access gates verified for admin UI and API."
 
       - name: Install Wrangler
         run: npm ci
@@ -173,4 +204,4 @@ jobs:
 
       - name: Bootstrap complete
         run: |
-          echo "Cloudflare Access now protects $ACCESS_DOMAIN and its inherited child paths."
+          echo "Cloudflare Access protects the CallTag admin UI and admin API with one audience."
