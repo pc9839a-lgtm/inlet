@@ -1,0 +1,164 @@
+name: Bootstrap CallTag Admin Cloudflare Access
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/calltag-admin-cloudflare-bootstrap.yml
+  workflow_dispatch:
+
+concurrency:
+  group: calltag-admin-cloudflare-bootstrap
+  cancel-in-progress: false
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      ADMIN_EMAIL: pc9839a@naver.com
+      ACCESS_ISSUER: https://dump-morning-01d7.cloudflareaccess.com
+      ACCESS_DOMAIN: calltag.pagero.kr/admin*
+      PAGES_PROJECT: inlet
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify existing Cloudflare credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+          status=$(curl -sS -o /tmp/account.json -w '%{http_code}' \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN")
+          if [ "$status" != "200" ]; then
+            echo "Cloudflare account token verification failed (HTTP $status)."
+            jq -r '.errors[]?.message // empty' /tmp/account.json | head -5
+            exit 1
+          fi
+
+      - name: Create or find CallTag Access application
+        id: access
+        shell: bash
+        run: |
+          set -euo pipefail
+          api="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/access/apps"
+          status=$(curl -sS -o /tmp/apps.json -w '%{http_code}' "$api" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN")
+          if [ "$status" != "200" ]; then
+            echo "Cloudflare Access Apps API unavailable (HTTP $status)."
+            jq -r '.errors[]?.message // empty' /tmp/apps.json | head -10
+            echo "Required token permission: Access: Apps and Policies Write."
+            exit 1
+          fi
+
+          app_id=$(jq -r --arg d "$ACCESS_DOMAIN" '.result[]? | select(.domain == $d) | .id' /tmp/apps.json | head -1)
+          aud=$(jq -r --arg d "$ACCESS_DOMAIN" '.result[]? | select(.domain == $d) | .aud' /tmp/apps.json | head -1)
+
+          if [ -z "$app_id" ] || [ "$app_id" = "null" ]; then
+            jq -n --arg domain "$ACCESS_DOMAIN" '{
+              name:"CallTag Admin",
+              type:"self_hosted",
+              domain:$domain,
+              session_duration:"24h",
+              app_launcher_visible:false,
+              allow_authenticate_via_warp:false
+            }' >/tmp/app-create.json
+            status=$(curl -sS -o /tmp/app-result.json -w '%{http_code}' "$api" \
+              -X POST \
+              -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+              -H 'Content-Type: application/json' \
+              --data @/tmp/app-create.json)
+            if [ "$status" != "200" ] && [ "$status" != "201" ]; then
+              echo "Failed to create CallTag Access application (HTTP $status)."
+              jq -r '.errors[]?.message // empty' /tmp/app-result.json | head -10
+              exit 1
+            fi
+            app_id=$(jq -r '.result.id // empty' /tmp/app-result.json)
+            aud=$(jq -r '.result.aud // empty' /tmp/app-result.json)
+          fi
+
+          test -n "$app_id"
+          test -n "$aud"
+          echo "app_id=$app_id" >> "$GITHUB_OUTPUT"
+          echo "aud=$aud" >> "$GITHUB_OUTPUT"
+          echo "Access application ready."
+
+      - name: Ensure owner-only Access policy
+        shell: bash
+        env:
+          APP_ID: ${{ steps.access.outputs.app_id }}
+        run: |
+          set -euo pipefail
+          api="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/access/apps/$APP_ID/policies"
+          status=$(curl -sS -o /tmp/policies.json -w '%{http_code}' "$api" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN")
+          if [ "$status" != "200" ]; then
+            echo "Unable to list Access policies (HTTP $status)."
+            jq -r '.errors[]?.message // empty' /tmp/policies.json | head -10
+            exit 1
+          fi
+          exists=$(jq -r --arg e "$ADMIN_EMAIL" '[.result[]? | select(any(.include[]?; .email.email == $e))] | length' /tmp/policies.json)
+          if [ "$exists" = "0" ]; then
+            jq -n --arg email "$ADMIN_EMAIL" '{
+              name:"CallTag owner only",
+              decision:"allow",
+              precedence:1,
+              include:[{email:{email:$email}}],
+              exclude:[],
+              require:[]
+            }' >/tmp/policy-create.json
+            status=$(curl -sS -o /tmp/policy-result.json -w '%{http_code}' "$api" \
+              -X POST \
+              -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+              -H 'Content-Type: application/json' \
+              --data @/tmp/policy-create.json)
+            if [ "$status" != "200" ] && [ "$status" != "201" ]; then
+              echo "Failed to create owner-only Access policy (HTTP $status)."
+              jq -r '.errors[]?.message // empty' /tmp/policy-result.json | head -10
+              exit 1
+            fi
+          fi
+          echo "Owner-only Access policy ready."
+
+      - name: Install Wrangler
+        run: npm ci
+
+      - name: Configure inlet Pages admin secrets
+        shell: bash
+        env:
+          ACCESS_AUD: ${{ steps.access.outputs.aud }}
+        run: |
+          set -euo pipefail
+          put_secret() {
+            local key="$1" value="$2"
+            printf '%s' "$value" | npx wrangler pages secret put "$key" --project-name "$PAGES_PROJECT" >/dev/null
+          }
+          put_secret CALLTAG_ADMIN_ENABLED 1
+          put_secret CALLTAG_ADMIN_ACCESS_ISS "$ACCESS_ISSUER"
+          put_secret CALLTAG_ADMIN_ACCESS_AUD "$ACCESS_AUD"
+          put_secret CALLTAG_ADMIN_EMAILS "$ADMIN_EMAIL"
+          put_secret CALLTAG_ADMIN_FINANCE_EMAILS "$ADMIN_EMAIL"
+          put_secret CALLTAG_ADMIN_AUDIT_SALT "$(openssl rand -hex 32)"
+          echo "CallTag admin runtime secrets configured."
+
+      - name: Record success and trigger production redeploy
+        shell: bash
+        env:
+          APP_ID: ${{ steps.access.outputs.app_id }}
+        run: |
+          set -euo pipefail
+          mkdir -p .deployment
+          printf 'CallTag Admin Cloudflare Access configured.\nApp ID: %s\nConfigured at: %s\n' \
+            "$APP_ID" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            > .deployment/calltag-admin-access-configured.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "4189828+github-actions[bot]@users.noreply.github.com"
+          git add .deployment/calltag-admin-access-configured.txt
+          git commit -m "ops(admin): record Cloudflare Access bootstrap [skip bootstrap]" || exit 0
+          git push
