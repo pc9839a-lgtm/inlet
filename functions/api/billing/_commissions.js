@@ -1,6 +1,6 @@
 import { ensureBillingSchema } from './_shared.js';
+import { resolvePartnerCommissionRateBps } from './_partnerFinance.js';
 
-const COMMISSION_RATE_BPS = 2000;
 const PRODUCT_PRICE_KRW = Object.freeze({
   pagero_monthly: 3500,
   pagero_pro_monthly: 5500,
@@ -54,7 +54,9 @@ export async function recordReferralCommission(db, input = {}) {
     return { created: false, reason: 'REFERRAL_NOT_FOUND' };
   }
 
-  const commissionAmountKrw = Math.floor(baseAmountKrw * COMMISSION_RATE_BPS / 10000);
+  const referrerOwnerId = String(referral.referrer_owner_id);
+  const commissionRateBps = await resolvePartnerCommissionRateBps(db, referrerOwnerId);
+  const commissionAmountKrw = Math.floor(baseAmountKrw * commissionRateBps / 10000);
   if (!commissionAmountKrw) {
     return { created: false, reason: 'COMMISSION_AMOUNT_ZERO' };
   }
@@ -74,7 +76,7 @@ export async function recordReferralCommission(db, input = {}) {
       updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
   `).bind(
-    String(referral.referrer_owner_id),
+    referrerOwnerId,
     referredOwnerId,
     subscriptionId,
     paymentReference,
@@ -97,13 +99,13 @@ export async function recordReferralCommission(db, input = {}) {
   return {
     created,
     duplicate: !created,
-    referrerOwnerId: String(referral.referrer_owner_id),
+    referrerOwnerId,
     referredOwnerId,
     productCode,
     paymentReference,
     baseAmountKrw,
     commissionAmountKrw,
-    commissionRateBps: COMMISSION_RATE_BPS,
+    commissionRateBps,
     status,
   };
 }

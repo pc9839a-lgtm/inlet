@@ -1,0 +1,51 @@
+name: CallTag Partner Settlement QA
+
+on:
+  pull_request:
+    paths:
+      - 'functions/api/billing/_commissions.js'
+      - 'functions/api/billing/_partnerFinance.js'
+      - 'functions/api/call/admin/**'
+      - '.github/workflows/calltag-partner-settlement-qa.yml'
+  push:
+    branches:
+      - 'agent/calltag-admin-partner-settlement'
+    paths:
+      - 'functions/api/billing/_commissions.js'
+      - 'functions/api/billing/_partnerFinance.js'
+      - 'functions/api/call/admin/**'
+      - '.github/workflows/calltag-partner-settlement-qa.yml'
+  workflow_dispatch:
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Parse modules
+        run: |
+          set -euo pipefail
+          node --check functions/api/billing/_commissions.js
+          node --check functions/api/billing/_partnerFinance.js
+          node --check functions/api/call/admin/_financeSecurity.js
+          node --check functions/api/call/admin/partners.js
+          node --check functions/api/call/admin/partner.js
+          node --check functions/api/call/admin/partner-rate.js
+          node --check functions/api/call/admin/settlement-pay.js
+      - name: Enforce finance contract
+        run: |
+          set -euo pipefail
+          grep -q "CALLTAG_ADMIN_FINANCE_OWNER_IDS" functions/api/call/admin/_financeSecurity.js
+          grep -q "partner.rate.update" functions/api/call/admin/partner-rate.js
+          grep -q "partner.settlement.pay" functions/api/call/admin/settlement-pay.js
+          grep -q "CHECK(commission_rate_bps IN (2000, 5000))" functions/api/billing/_partnerFinance.js
+          grep -q "resolvePartnerCommissionRateBps" functions/api/billing/_commissions.js
+          grep -q "UNIQUE" functions/api/billing/_partnerFinance.js
+          if grep -E -n 'purchase_token|purchaseToken|order_id|payment_reference|external_subscription_id|password_hash|bank_account' functions/api/call/admin/partners.js functions/api/call/admin/partner.js functions/api/call/admin/partner-rate.js functions/api/call/admin/settlement-pay.js; then
+            echo 'Sensitive billing/account field exposed in partner admin surface.' >&2
+            exit 1
+          fi
