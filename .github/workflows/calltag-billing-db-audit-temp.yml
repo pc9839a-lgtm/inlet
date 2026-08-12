@@ -12,35 +12,33 @@ permissions:
 jobs:
   audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 6
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-      - name: Install
-        run: npm ci
       - name: Read latest Google Play billing rows without PII
         shell: bash
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -euo pipefail
-          npx wrangler d1 list --json > /tmp/d1.json
-          found=0
-          while IFS= read -r db; do
-            [ -n "$db" ] || continue
-            echo "Checking D1 database: $db"
-            if npx wrangler d1 execute "$db" --remote --json --command "SELECT name FROM sqlite_master WHERE type='table' AND name='billing_subscriptions';" > /tmp/table.json 2>/tmp/table.err; then
-              if grep -q 'billing_subscriptions' /tmp/table.json; then
-                found=1
-                echo 'Latest Google Play billing rows:'
-                npx wrangler d1 execute "$db" --remote --json --command "SELECT id, product_code, channel, status, verification_state, auto_renewing, last_verified_at, created_at, updated_at, expires_at FROM billing_subscriptions WHERE channel='google_play' ORDER BY id DESC LIMIT 5;"
-              fi
+          url='https://pagero.kr/api/billing/audit-temp'
+          body="$RUNNER_TEMP/billing-audit.json"
+          for attempt in $(seq 1 30); do
+            code="$(curl -sS --connect-timeout 8 --max-time 20 -o "$body" -w '%{http_code}' "$url" || true)"
+            echo "attempt=$attempt http=$code"
+            if [ "$code" = '200' ]; then
+              python3 - "$body" <<'PY'
+import json,sys
+p=sys.argv[1]
+d=json.load(open(p,encoding='utf-8'))
+print(json.dumps(d,ensure_ascii=False,sort_keys=True))
+rows=d.get('rows') or []
+if d.get('ok') is True and rows:
+    raise SystemExit(0)
+raise SystemExit(2)
+PY
+              exit 0
             fi
-          done < <(jq -r '.[] | .name // empty' /tmp/d1.json)
-          if [ "$found" -ne 1 ]; then
-            echo 'No D1 database with billing_subscriptions was found.' >&2
-            exit 2
-          fi
+            sleep 5
+          done
+          echo 'Sanitized billing audit endpoint did not become ready.' >&2
+          [ -f "$body" ] && cat "$body" >&2 || true
+          exit 1
