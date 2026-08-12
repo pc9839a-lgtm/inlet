@@ -1,10 +1,14 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../_shared.js';
 import { CALL_METHODS, callSession } from '../call/_shared.js';
 import { googlePlayBillingReadiness } from './_readiness.js';
-import { resolveEntitlement } from './_shared.js';
+import { listSubscriptions, resolveEntitlement } from './_shared.js';
 import { resolveCallTagEntitlement } from './trial-policy.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const ACTIVE_SUBSCRIPTION_STATES = new Set(['active', 'grace', 'cancelled']);
+const PHONE_PRODUCT = 'call_monthly';
+const MESSAGE_PRODUCT = 'message_monthly';
+const BUNDLE_PRODUCT = 'all_monthly';
 
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, CALL_METHODS);
@@ -22,6 +26,12 @@ export async function onRequest({ request, env }) {
     const entitlement = productClient === 'calltag'
       ? await resolveCallTagEntitlement(db, session.ownerId)
       : await resolveEntitlement(db, session.ownerId);
+
+    if (productClient === 'calltag') {
+      const subscriptions = await listSubscriptions(db, session.ownerId);
+      applyCallTagProductState(entitlement, subscriptions, serverNow.getTime());
+    }
+
     entitlement.serverNow = serverNow.toISOString();
     entitlement.billingAvailability = {
       googlePlay: googlePlayBillingReadiness(env),
@@ -38,15 +48,82 @@ export async function onRequest({ request, env }) {
   }
 }
 
+function applyCallTagProductState(entitlement = {}, subscriptions = [], now = Date.now()) {
+  const current = (Array.isArray(subscriptions) ? subscriptions : []).filter((item) => {
+    const status = String(item?.status || '').trim().toLowerCase();
+    if (!ACTIVE_SUBSCRIPTION_STATES.has(status)) return false;
+    const expiresAt = Date.parse(String(item?.expiresAt || ''));
+    return !Number.isFinite(expiresAt) || expiresAt > now;
+  });
+
+  const bundle = current.find((item) => item.productCode === BUNDLE_PRODUCT) || null;
+  const phone = bundle || current.find((item) => item.productCode === PHONE_PRODUCT) || null;
+  const message = bundle || current.find((item) => item.productCode === MESSAGE_PRODUCT) || null;
+  const activeProducts = [];
+  if (phone) activeProducts.push(PHONE_PRODUCT);
+  if (message) activeProducts.push(MESSAGE_PRODUCT);
+
+  const activeWeb = current.some((item) => item.channel === 'web');
+  entitlement.activeProducts = activeProducts;
+  entitlement.productAccess = {
+    [PHONE_PRODUCT]: productState(phone),
+    [MESSAGE_PRODUCT]: productState(message),
+  };
+  entitlement.purchaseOptions = {
+    [PHONE_PRODUCT]: {
+      available: !activeWeb && !phone,
+      reason: activeWeb ? 'WEB_SUBSCRIPTION_ACTIVE' : phone ? 'PRODUCT_ALREADY_ACTIVE' : '',
+    },
+    [MESSAGE_PRODUCT]: {
+      available: !activeWeb && !message,
+      reason: activeWeb ? 'WEB_SUBSCRIPTION_ACTIVE' : message ? 'PRODUCT_ALREADY_ACTIVE' : '',
+    },
+  };
+
+  // A Google Play subscription for one CallTag product must not block the other product.
+  // Web subscriptions still block Play purchases to prevent cross-channel duplicate billing.
+  entitlement.purchaseBlocked = activeWeb;
+  entitlement.purchaseBlockReason = activeWeb ? 'WEB_SUBSCRIPTION_ACTIVE' : '';
+  entitlement.purchase = {
+    blocked: activeWeb,
+    reason: activeWeb ? 'WEB_SUBSCRIPTION_ACTIVE' : '',
+  };
+}
+
+function productState(subscription) {
+  if (!subscription) {
+    return {
+      active: false,
+      status: 'inactive',
+      channel: 'none',
+      nextBillingAt: '',
+      expiresAt: '',
+      autoRenewing: false,
+    };
+  }
+  return {
+    active: true,
+    status: String(subscription.status || 'active'),
+    channel: String(subscription.channel || 'none'),
+    nextBillingAt: String(subscription.nextBillingAt || ''),
+    expiresAt: String(subscription.expiresAt || ''),
+    autoRenewing: subscription.autoRenewing === true,
+  };
+}
+
 function featureAccess(entitlement = {}) {
   const active = entitlement.active === true;
-  const product = String(entitlement.productCode || entitlement.plan || 'all_monthly');
+  const status = String(entitlement.status || 'inactive');
+  const trial = active && status === 'trial';
+  const products = new Set(Array.isArray(entitlement.activeProducts) ? entitlement.activeProducts : []);
+  const product = String(entitlement.productCode || entitlement.plan || BUNDLE_PRODUCT);
+  const bundle = product === BUNDLE_PRODUCT && active;
   return {
     customerDataRead: true,
     customerDataWrite: true,
     consultationHistoryRead: true,
-    callManagement: active && (product === 'call_monthly' || product === 'all_monthly'),
-    messageAutomation: active && (product === 'message_monthly' || product === 'all_monthly'),
+    callManagement: trial || bundle || products.has(PHONE_PRODUCT),
+    messageAutomation: trial || bundle || products.has(MESSAGE_PRODUCT),
   };
 }
 
