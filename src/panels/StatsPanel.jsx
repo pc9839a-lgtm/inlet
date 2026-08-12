@@ -1,9 +1,17 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
+import { GitBranch, Inbox, LayoutDashboard, Megaphone } from 'lucide-react';
 import { leadKindLabel, leadPrimaryContact } from '../lib/leadModel.js';
 import { currentMonthValue } from '../lib/monthRange.js';
 import { PERIOD_OPTIONS, buildStats as buildStatsMetrics, countBy as countByMetrics, statLabel } from '../lib/statsMetrics.js';
 import { trafficChannelFromItem } from '../lib/trafficAttribution.js';
 import './StatsPanel.css';
+
+const STATS_VIEWS = [
+  { id: 'overview', label: '개요', icon: LayoutDashboard },
+  { id: 'conversion', label: '전환', icon: GitBranch },
+  { id: 'traffic', label: '유입', icon: Megaphone },
+  { id: 'leads', label: '접수', icon: Inbox },
+];
 
 function hasPartialStatsData({ statsPartial, eventPageMeta, leadPageMeta }) {
   return Boolean(statsPartial || eventPageMeta?.hasMore || eventPageMeta?.nextCursor || leadPageMeta?.hasMore || leadPageMeta?.nextCursor);
@@ -118,18 +126,18 @@ function rateMetricChange(current, previous) {
 
 function Metric({ title, value, sub, change = null }) {
   return (
-    <div className="metric metric-v2">
+    <div className="stats-v4-metric">
       <span>{title}</span>
       <strong>{value}</strong>
       {sub && <small>{sub}</small>}
-      {change && <em className={'stats-change ' + change.tone}>{change.label}</em>}
+      {change && <em className={'stats-v4-change ' + change.tone}>{change.label}</em>}
     </div>
   );
 }
 
 function FunnelRow({ title, startLabel, startValue, endLabel, endValue, rate }) {
   return (
-    <div className="stats-funnel-row">
+    <div className="stats-v4-funnel-row">
       <strong>{title}</strong>
       <span>{startLabel}<b>{Number(startValue || 0).toLocaleString('ko-KR')}</b></span>
       <i aria-hidden="true">→</i>
@@ -145,36 +153,16 @@ function fmtDateOnly(value) {
   return date.toLocaleDateString('ko-KR', { year: 'numeric', month: 'numeric', day: 'numeric' });
 }
 
-function ChannelFilter({ channels, value, onChange }) {
-  const total = channels.reduce((sum, item) => sum + Number(item.count || 0), 0);
-  const visible = channels.slice(0, 8);
-  return (
-    <section className="card stats-channel-filter">
-      <div className="section-title"><h2>유입 채널</h2></div>
-      <div className="stats-channel-filter-list">
-        <button type="button" className={value === 'all' ? 'active' : ''} aria-pressed={value === 'all'} onClick={() => onChange('all')}>
-          <span>전체</span><b>{total}</b>
-        </button>
-        {visible.map((item) => (
-          <button type="button" key={item.channel} className={value === item.channel ? 'active' : ''} aria-pressed={value === item.channel} onClick={() => onChange(item.channel)}>
-            <span>{statLabel(item.channel)}</span><b>{item.count}</b>
-          </button>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 function StatsTrend({ data }) {
   const [hover, setHover] = useState(null);
   const total = data.reduce((sum, row) => sum + Number(row.pv || 0) + Number(row.cta || 0) + Number(row.db || 0), 0);
-  if (!total) return <div className="stats-empty-chart">선택한 기간에 표시할 데이터가 없습니다.</div>;
+  if (!total) return <div className="stats-v4-empty">선택한 기간에 표시할 데이터가 없습니다.</div>;
   const max = Math.max(1, ...data.flatMap((row) => [row.pv, row.cta, row.db]));
   const width = 720;
-  const height = 240;
+  const height = 220;
   const padX = 34;
-  const padTop = 22;
-  const padBottom = 36;
+  const padTop = 18;
+  const padBottom = 34;
   const plotW = width - padX * 2;
   const plotH = height - padTop - padBottom;
   const x = (index) => padX + (data.length <= 1 ? plotW / 2 : (index / (data.length - 1)) * plotW);
@@ -185,7 +173,7 @@ function StatsTrend({ data }) {
   const hoverTop = (row) => Math.min(y(row.pv), y(row.cta), y(row.db));
 
   return (
-    <div className="stats-line-chart stats-trend-line stats-line-plot" role="img" aria-label="상세 통계">
+    <div className="stats-v4-trend" role="img" aria-label="상세 통계">
       <svg viewBox={'0 0 ' + width + ' ' + height} preserveAspectRatio="none" aria-hidden="true" onMouseLeave={() => setHover(null)}>
         {[0.25, 0.5, 0.75, 1].map((ratio) => (
           <line key={ratio} className="guide" x1={padX} x2={width - padX} y1={padTop + plotH * ratio} y2={padTop + plotH * ratio} />
@@ -196,7 +184,7 @@ function StatsTrend({ data }) {
         )))}
         {data.map((row, index) => {
           const show = index === 0 || index === data.length - 1 || index % labelEvery === 0;
-          return show ? <text key={row.id || row.label} className="axis-label" x={x(index)} y={height - 10} textAnchor="middle">{row.label}</text> : null;
+          return show ? <text key={row.id || row.label} className="axis-label" x={x(index)} y={height - 9} textAnchor="middle">{row.label}</text> : null;
         })}
         {data.map((row, index) => (
           <rect
@@ -212,13 +200,13 @@ function StatsTrend({ data }) {
         ))}
       </svg>
       {hover && (
-        <div className="stats-chart-tooltip stats-chart-tooltip-wide" style={{ left: String((hover.x / width) * 100) + '%', top: String(Math.max(86, hover.y)) + 'px' }}>
+        <div className="stats-v4-tooltip" style={{ left: String((hover.x / width) * 100) + '%', top: String(Math.max(82, hover.y)) + 'px' }}>
           <span>{hover.row.id || hover.row.label}</span>
           <strong>조회 {Number(hover.row.pv || 0).toLocaleString('ko-KR')}</strong>
           <em>클릭 {Number(hover.row.cta || 0).toLocaleString('ko-KR')} / 접수 {Number(hover.row.db || 0).toLocaleString('ko-KR')}</em>
         </div>
       )}
-      <div className="trend-legend">{series.map(([key, label]) => <b key={key}><i className={key} />{label}</b>)}</div>
+      <div className="stats-v4-legend">{series.map(([key, label]) => <b key={key}><i className={key} />{label}</b>)}</div>
     </div>
   );
 }
@@ -227,15 +215,38 @@ function StatCard({ title, data }) {
   const entries = Object.entries(data || {}).sort((a, b) => b[1] - a[1]);
   const max = Math.max(1, ...entries.map(([, value]) => value));
   return (
-    <section className="card stat-card-v2">
-      <div className="section-title"><h2>{title}</h2></div>
-      {!entries.length ? <div className="empty">데이터 없음</div> : (
-        <div className="stat-list stat-list-v2">
+    <section className="stats-v4-card stats-v4-stat-card">
+      <div className="stats-v4-card-title"><h2>{title}</h2></div>
+      {!entries.length ? <div className="stats-v4-empty">데이터 없음</div> : (
+        <div className="stats-v4-stat-list">
           {entries.slice(0, 8).map(([key, value]) => (
-            <div className="stat-row stat-row-v2" key={key}>
+            <div className="stats-v4-stat-row" key={key}>
               <span>{statLabel(key)}</span>
               <div><i style={{ width: String(Math.max(4, Number(value || 0) / max * 100)) + '%' }} /></div>
               <b>{value}</b>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function RecentLeads({ leads, total }) {
+  return (
+    <section className="stats-v4-card stats-v4-leads-card">
+      <div className="stats-v4-card-title">
+        <h2>최근 접수</h2>
+        <p>{total > leads.length ? `전체 ${total}건 중 최근 ${leads.length}건` : `${leads.length}건`}</p>
+      </div>
+      {!leads.length ? <div className="stats-v4-empty">접수 데이터가 없습니다.</div> : (
+        <div className="stats-v4-lead-list">
+          {leads.slice(0, 8).map((lead) => (
+            <div key={lead.id || lead.createdAt}>
+              <span>{leadKindLabel(lead)}</span>
+              <b>{lead.name || '이름 없음'}</b>
+              <em>{leadPrimaryContact(lead)}</em>
+              <small title={fmtDateOnly(lead.createdAt)}>{fmtDateOnly(lead.createdAt)}</small>
             </div>
           ))}
         </div>
@@ -259,6 +270,7 @@ export default function StatsPanel({
   channel: controlledChannel = 'all',
   onChannelChange,
 }) {
+  const [activeView, setActiveView] = useState('overview');
   const [localMonth, setLocalMonth] = useState(controlledMonth || currentMonthValue());
   const [localPeriod, setLocalPeriod] = useState(controlledPeriod || '30d');
   const [localChannel, setLocalChannel] = useState(controlledChannel || 'all');
@@ -305,86 +317,120 @@ export default function StatsPanel({
   }, [baseStats, period, scopedEvents, scopedLeads, serverMode]);
   const partialData = statsPartial || (!serverMode && hasPartialStatsData({ statsPartial, eventPageMeta, leadPageMeta }));
   const recentLeadTotal = Number(leadPageMeta?.total || stats.filteredLeads.length);
+  const activeLabel = STATS_VIEWS.find((item) => item.id === activeView)?.label || '개요';
 
   useEffect(() => {
     if (channelFilter !== 'all' && !channelOptions.some((item) => item.channel === channelFilter)) setChannel('all');
   }, [channelFilter, channelOptions]);
 
   return (
-    <div className="simple-panel stats-panel stats-v2 stats-v3">
-      <section className="card period-card stats-period-card">
-        <div className="section-title"><h2>상세 통계</h2></div>
-        <div className="stats-period-controls">
-          <div className="period-tabs period-tabs-v2 stats-range-tabs" aria-label="통계 기간">
+    <div className="stats-panel stats-v4">
+      <aside className="stats-v4-sidebar">
+        <div className="stats-v4-sidebar-title">통계</div>
+        <nav className="stats-v4-nav" aria-label="통계 메뉴">
+          {STATS_VIEWS.map((item) => {
+            const Icon = item.icon;
+            const active = activeView === item.id;
+            return (
+              <button key={item.id} type="button" className={active ? 'active' : ''} aria-pressed={active} onClick={() => setActiveView(item.id)}>
+                <Icon size={18} aria-hidden="true" />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </aside>
+
+      <main className="stats-v4-main">
+        <header className="stats-v4-page-head">
+          <h1>{activeLabel}</h1>
+          {stats.comparison && <span>직전 동일 기간 대비</span>}
+        </header>
+
+        <section className="stats-v4-filterbar" aria-label="통계 필터">
+          <div className="stats-v4-period-tabs">
             {PERIOD_OPTIONS.map(([value, label]) => (
               <button type="button" key={value} className={period === value ? 'active' : ''} aria-pressed={period === value} onClick={() => setPeriod(value)}>{label}</button>
             ))}
           </div>
-          <label className="stats-month-control">
-            <span>월 선택</span>
+          <label className="stats-v4-filter-control">
+            <span>월</span>
             <input type="month" value={month} onChange={(event) => setMonth(event.target.value)} />
           </label>
-        </div>
-      </section>
+          <label className="stats-v4-filter-control stats-v4-channel-control">
+            <span>유입</span>
+            <select value={channelFilter} onChange={(event) => setChannel(event.target.value)}>
+              <option value="all">전체 채널</option>
+              {channelOptions.map((item) => <option key={item.channel} value={item.channel}>{statLabel(item.channel)} · {item.count}</option>)}
+            </select>
+          </label>
+        </section>
 
-      <ChannelFilter channels={channelOptions} value={channelFilter} onChange={setChannel} />
+        {partialData && <div className="stats-v4-notice" role="status">일부 데이터만 표시 중입니다.</div>}
 
-      {partialData && <div className="stats-partial-notice" role="status">일부 데이터만 표시 중입니다.</div>}
+        {activeView === 'overview' && (
+          <div className="stats-v4-view">
+            <section className="stats-v4-summary">
+              <Metric title="조회" value={stats.pv} sub="방문" change={countMetricChange(stats.pv, stats.comparison?.pv)} />
+              <Metric title="클릭" value={stats.cta} sub="버튼" change={countMetricChange(stats.cta, stats.comparison?.cta)} />
+              <Metric title="상담" value={stats.consultLeads} sub="접수" change={countMetricChange(stats.consultLeads, stats.comparison?.consultLeads)} />
+              <Metric title="예약" value={stats.reservationLeads} sub="접수" change={countMetricChange(stats.reservationLeads, stats.comparison?.reservationLeads)} />
+              <Metric title="전환율" value={stats.conversion + '%'} sub="방문 대비" change={rateMetricChange(stats.conversion, stats.comparison?.conversion)} />
+              <Metric title="CTA 전환" value={stats.ctaConversion + '%'} sub="클릭 대비" change={rateMetricChange(stats.ctaConversion, stats.comparison?.ctaConversion)} />
+            </section>
 
-      {stats.comparison && <div className="stats-comparison-label">직전 동일 기간 대비</div>}
-
-      <section className="stats-grid stats-summary stats-summary-v2 stats-summary-v3">
-        <Metric title="조회" value={stats.pv} sub="방문" change={countMetricChange(stats.pv, stats.comparison?.pv)} />
-        <Metric title="클릭" value={stats.cta} sub="버튼" change={countMetricChange(stats.cta, stats.comparison?.cta)} />
-        <Metric title="상담" value={stats.consultLeads} sub="접수" change={countMetricChange(stats.consultLeads, stats.comparison?.consultLeads)} />
-        <Metric title="예약" value={stats.reservationLeads} sub="접수" change={countMetricChange(stats.reservationLeads, stats.comparison?.reservationLeads)} />
-        <Metric title="전환율" value={stats.conversion + '%'} sub="방문 대비" change={rateMetricChange(stats.conversion, stats.comparison?.conversion)} />
-        <Metric title="CTA 전환" value={stats.ctaConversion + '%'} sub="클릭 대비" change={rateMetricChange(stats.ctaConversion, stats.comparison?.ctaConversion)} />
-      </section>
-
-      <section className="card stats-funnel-card">
-        <div className="section-title"><h2>전환 단계</h2></div>
-        <div className="stats-funnel-list">
-          <FunnelRow title="상담 시작" startLabel="조회" startValue={stats.pv} endLabel="폼 시작" endValue={stats.formStart} rate={stats.formStartRate} />
-          <FunnelRow title="상담 제출" startLabel="제출 시도" startValue={stats.submitAttempt} endLabel="제출 완료" endValue={stats.submitSuccess} rate={stats.formCompletionRate} />
-          <FunnelRow title="방문 예약" startLabel="제출 시도" startValue={stats.reservationAttempt} endLabel="예약 완료" endValue={stats.reservationSuccess} rate={stats.reservationCompletionRate} />
-        </div>
-      </section>
-
-      <section className="card stats-trend-card">
-        <div className="section-title"><h2>성과 흐름</h2></div>
-        <StatsTrend data={stats.trend} />
-      </section>
-
-      <section className="stats-columns stats-columns-v3">
-        <StatCard title="접수 유형" data={stats.typeData} />
-        <StatCard title="접수 상태" data={stats.statusData} />
-      </section>
-
-      <section className="stats-columns stats-columns-v3 stats-columns-four">
-        <StatCard title="CTA 클릭 위치" data={serverMode ? stats.ctaLabelData : ctaClickData(stats.filteredEvents, page)} />
-        <StatCard title="유입 기기" data={serverMode ? stats.deviceData : countByMetrics(stats.filteredEvents, 'device')} />
-        <StatCard title="유입 채널" data={serverMode ? stats.channelData : stats.channelData} />
-      </section>
-
-      <section className="card stats-lead-table-card stats-lead-table-card-v3">
-        <div className="section-title">
-          <h2>최근 접수</h2>
-          <p>{recentLeadTotal > stats.filteredLeads.length ? `전체 ${recentLeadTotal}건 중 최근 ${stats.filteredLeads.length}건` : `${stats.filteredLeads.length}건`}</p>
-        </div>
-        {!stats.filteredLeads.length ? <div className="empty">접수 데이터가 없습니다.</div> : (
-          <div className="stats-lead-table stats-lead-table-v3">
-            {stats.filteredLeads.slice(0, 8).map((lead) => (
-              <div key={lead.id || lead.createdAt}>
-                <span>{leadKindLabel(lead)}</span>
-                <b>{lead.name || '이름 없음'}</b>
-                <em>{leadPrimaryContact(lead)}</em>
-                <small title={fmtDateOnly(lead.createdAt)}>{fmtDateOnly(lead.createdAt)}</small>
+            <section className="stats-v4-split stats-v4-overview-split">
+              <div className="stats-v4-card stats-v4-trend-card">
+                <div className="stats-v4-card-title"><h2>성과 흐름</h2></div>
+                <StatsTrend data={stats.trend} />
               </div>
-            ))}
+              <div className="stats-v4-card stats-v4-funnel-card">
+                <div className="stats-v4-card-title"><h2>전환 단계</h2></div>
+                <div className="stats-v4-funnel-list">
+                  <FunnelRow title="상담 시작" startLabel="조회" startValue={stats.pv} endLabel="폼 시작" endValue={stats.formStart} rate={stats.formStartRate} />
+                  <FunnelRow title="상담 제출" startLabel="제출 시도" startValue={stats.submitAttempt} endLabel="제출 완료" endValue={stats.submitSuccess} rate={stats.formCompletionRate} />
+                  <FunnelRow title="방문 예약" startLabel="제출 시도" startValue={stats.reservationAttempt} endLabel="예약 완료" endValue={stats.reservationSuccess} rate={stats.reservationCompletionRate} />
+                </div>
+              </div>
+            </section>
           </div>
         )}
-      </section>
+
+        {activeView === 'conversion' && (
+          <div className="stats-v4-view">
+            <section className="stats-v4-split">
+              <div className="stats-v4-card stats-v4-funnel-card">
+                <div className="stats-v4-card-title"><h2>전환 단계</h2></div>
+                <div className="stats-v4-funnel-list">
+                  <FunnelRow title="상담 시작" startLabel="조회" startValue={stats.pv} endLabel="폼 시작" endValue={stats.formStart} rate={stats.formStartRate} />
+                  <FunnelRow title="상담 제출" startLabel="제출 시도" startValue={stats.submitAttempt} endLabel="제출 완료" endValue={stats.submitSuccess} rate={stats.formCompletionRate} />
+                  <FunnelRow title="방문 예약" startLabel="제출 시도" startValue={stats.reservationAttempt} endLabel="예약 완료" endValue={stats.reservationSuccess} rate={stats.reservationCompletionRate} />
+                </div>
+              </div>
+              <StatCard title="CTA 클릭 위치" data={serverMode ? stats.ctaLabelData : ctaClickData(stats.filteredEvents, page)} />
+            </section>
+          </div>
+        )}
+
+        {activeView === 'traffic' && (
+          <div className="stats-v4-view">
+            <section className="stats-v4-split">
+              <StatCard title="유입 채널" data={stats.channelData} />
+              <StatCard title="유입 기기" data={serverMode ? stats.deviceData : countByMetrics(stats.filteredEvents, 'device')} />
+            </section>
+          </div>
+        )}
+
+        {activeView === 'leads' && (
+          <div className="stats-v4-view">
+            <section className="stats-v4-split">
+              <StatCard title="접수 유형" data={stats.typeData} />
+              <StatCard title="접수 상태" data={stats.statusData} />
+            </section>
+            <RecentLeads leads={stats.filteredLeads} total={recentLeadTotal} />
+          </div>
+        )}
+      </main>
     </div>
   );
 }
