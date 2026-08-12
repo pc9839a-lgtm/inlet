@@ -1,4 +1,4 @@
-name: CallTag Billing DB Audit Temp
+name: CallTag Live Billing Auth Audit Temp
 
 on:
   workflow_dispatch:
@@ -15,23 +15,21 @@ jobs:
     timeout-minutes: 6
     steps:
       - uses: actions/checkout@v4
-      - name: Read latest Google Play billing rows without PII
+
+      - name: Verify latest Google Play billing row without PII
         shell: bash
         run: |
-          set -uo pipefail
-          url='https://pagero.kr/api/billing/audit-temp'
+          set -euo pipefail
           body="$RUNNER_TEMP/billing-audit.json"
-          for attempt in $(seq 1 30); do
-            code="$(curl -sS --connect-timeout 8 --max-time 20 -o "$body" -w '%{http_code}' "$url" || true)"
-            echo "attempt=$attempt http=$code"
-            if [ "$code" = '200' ]; then
-              cat "$body"
-              if python3 -c "import json,sys; d=json.load(open(sys.argv[1],encoding='utf-8')); rows=d.get('rows') or []; sys.exit(0 if d.get('ok') is True and len(rows)>0 else 2)" "$body"; then
-                exit 0
-              fi
-            fi
-            sleep 5
-          done
-          echo 'Sanitized billing audit endpoint did not become ready.' >&2
-          [ -f "$body" ] && cat "$body" >&2 || true
-          exit 1
+          curl -fsS --connect-timeout 8 --max-time 20 'https://pagero.kr/api/billing/audit-temp' -o "$body"
+          cat "$body"
+          python3 -c "import json,sys; d=json.load(open(sys.argv[1],encoding='utf-8')); rows=d.get('rows') or []; r=rows[0] if rows else {}; ok=d.get('ok') is True and r.get('channel')=='google_play' and r.get('status')=='active' and r.get('verificationState')=='verified'; sys.exit(0 if ok else 2)" "$body"
+
+      - name: Verify live Google native login configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$RUNNER_TEMP/google-health.json"
+          curl -fsS --connect-timeout 8 --max-time 20 'https://pagero.kr/api/call/google/health-temp' -o "$body"
+          cat "$body"
+          python3 -c "import json,sys; d=json.load(open(sys.argv[1],encoding='utf-8')); ok=d.get('ok') is True and d.get('nativeClientIdConfigured') is True and d.get('nativeClientIdMatchesApp') is True and d.get('jwksReachable') is True and d.get('nativeLoginReady') is True; sys.exit(0 if ok else 2)" "$body"
