@@ -27,26 +27,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify existing Cloudflare credentials
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -n "$CLOUDFLARE_API_TOKEN"
-          test -n "$CLOUDFLARE_ACCOUNT_ID"
-          status=$(curl -sS -o /tmp/account.json -w '%{http_code}' \
-            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID" \
-            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN")
-          if [ "$status" != "200" ]; then
-            echo "Cloudflare account token verification failed (HTTP $status)."
-            jq -r '.errors[]?.message // empty' /tmp/account.json | head -5
-            exit 1
-          fi
-
       - name: Create or find CallTag Access application
         id: access
         shell: bash
         run: |
           set -euo pipefail
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
           api="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/access/apps"
           status=$(curl -sS -o /tmp/apps.json -w '%{http_code}' "$api" \
             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN")
