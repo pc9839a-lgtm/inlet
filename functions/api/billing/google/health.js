@@ -23,40 +23,46 @@ export async function onRequest({ request, env }) {
   const clientEmail = String(env.GOOGLE_PLAY_CLIENT_EMAIL || '').trim();
   const privateKey = String(env.GOOGLE_PLAY_PRIVATE_KEY || '').trim();
   const configured = !!(clientEmail && privateKey);
+  const emailShapeValid = /^[^\s@]+@[^\s@]+\.iam\.gserviceaccount\.com$/i.test(clientEmail);
+  const normalizedKey = privateKey.replace(/\\n/g, '\n');
+  const keyShapeValid = normalizedKey.includes('-----BEGIN PRIVATE KEY-----')
+    && normalizedKey.includes('-----END PRIVATE KEY-----');
+
+  const base = {
+    ok: true,
+    configured,
+    emailShapeValid,
+    keyShapeValid,
+    releaseEnabled,
+    productsReady,
+  };
 
   if (!configured) {
     return json(200, {
-      ok: true,
-      configured: false,
+      ...base,
       oauthToken: false,
       publisherAccess: false,
-      releaseEnabled,
-      productsReady,
       code: 'PLAY_CREDENTIALS_MISSING',
     });
   }
 
   try {
-    const accessToken = await issueAccessToken(clientEmail, privateKey);
-    const probe = await probePublisher(accessToken);
+    const oauth = await issueAccessToken(clientEmail, privateKey);
+    const probe = await probePublisher(oauth.accessToken);
     return json(200, {
-      ok: true,
-      configured: true,
+      ...base,
       oauthToken: true,
+      oauthStatus: oauth.oauthStatus,
       publisherAccess: probe.publisherAccess,
       googleStatus: probe.googleStatus,
-      releaseEnabled,
-      productsReady,
       code: probe.code,
     });
   } catch (error) {
     return json(200, {
-      ok: true,
-      configured: true,
+      ...base,
       oauthToken: false,
+      oauthStatus: Number(error?.oauthStatus || 0) || null,
       publisherAccess: false,
-      releaseEnabled,
-      productsReady,
       code: safeCode(error),
     });
   }
@@ -74,30 +80,52 @@ async function issueAccessToken(clientEmail, privateKey) {
   });
   const unsigned = `${header}.${payload}`;
   const key = await importPrivateKey(privateKey);
-  const signature = await crypto.subtle.sign(
-    { name: 'RSASSA-PKCS1-v1_5' },
-    key,
-    new TextEncoder().encode(unsigned),
-  );
-  const assertion = `${unsigned}.${bytesToBase64Url(new Uint8Array(signature))}`;
 
-  const response = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion,
-    }),
-    redirect: 'error',
-    signal: AbortSignal.timeout(15000),
-  });
+  let signature;
+  try {
+    signature = await crypto.subtle.sign(
+      { name: 'RSASSA-PKCS1-v1_5' },
+      key,
+      new TextEncoder().encode(unsigned),
+    );
+  } catch (cause) {
+    throw coded('PLAY_JWT_SIGN_FAILED');
+  }
+
+  const assertion = `${unsigned}.${bytesToBase64Url(new Uint8Array(signature))}`;
+  let response;
+  try {
+    response = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+        assertion,
+      }),
+      redirect: 'error',
+      signal: AbortSignal.timeout(15000),
+    });
+  } catch (cause) {
+    throw coded('PLAY_OAUTH_NETWORK_FAILED');
+  }
+
   const body = await response.json().catch(() => ({}));
   if (!response.ok || !body.access_token) {
-    const error = new Error('Google OAuth token issuance failed');
-    error.code = 'PLAY_OAUTH_TOKEN_FAILED';
+    const oauthError = String(body?.error || '').trim().toLowerCase();
+    const error = coded(
+      oauthError === 'invalid_grant'
+        ? 'PLAY_OAUTH_INVALID_GRANT'
+        : oauthError === 'invalid_client'
+          ? 'PLAY_OAUTH_INVALID_CLIENT'
+          : 'PLAY_OAUTH_TOKEN_FAILED',
+    );
+    error.oauthStatus = Number(response.status || 0);
     throw error;
   }
-  return String(body.access_token);
+  return {
+    accessToken: String(body.access_token),
+    oauthStatus: Number(response.status || 200),
+  };
 }
 
 async function probePublisher(accessToken) {
@@ -144,18 +172,13 @@ async function importPrivateKey(value) {
     .replace(/-----BEGIN PRIVATE KEY-----/g, '')
     .replace(/-----END PRIVATE KEY-----/g, '')
     .replace(/\s+/g, '');
-  if (!base64) {
-    const error = new Error('Private key missing');
-    error.code = 'PLAY_PRIVATE_KEY_MISSING';
-    throw error;
-  }
+  if (!base64) throw coded('PLAY_PRIVATE_KEY_MISSING');
+
   let binary;
   try {
     binary = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
   } catch (cause) {
-    const error = new Error('Private key decode failed');
-    error.code = 'PLAY_PRIVATE_KEY_DECODE_FAILED';
-    throw error;
+    throw coded('PLAY_PRIVATE_KEY_DECODE_FAILED');
   }
   try {
     return await crypto.subtle.importKey(
@@ -166,9 +189,7 @@ async function importPrivateKey(value) {
       ['sign'],
     );
   } catch (cause) {
-    const error = new Error('Private key import failed');
-    error.code = 'PLAY_PRIVATE_KEY_IMPORT_FAILED';
-    throw error;
+    throw coded('PLAY_PRIVATE_KEY_IMPORT_FAILED');
   }
 }
 
@@ -189,6 +210,12 @@ function enabled(value) {
   return ['1', 'true', 'yes', 'on', 'enabled'].includes(
     String(value || '').trim().toLowerCase(),
   );
+}
+
+function coded(code) {
+  const error = new Error(code);
+  error.code = code;
+  return error;
 }
 
 function safeCode(error) {
