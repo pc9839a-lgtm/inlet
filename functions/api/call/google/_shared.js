@@ -79,27 +79,38 @@ export async function verifyGoogleState(value = '', env = {}) {
 
 export async function exchangeGoogleCode(code = '', env = {}) {
   if (!googleLoginConfigured(env)) throw oauthError('Google 로그인 운영 설정이 필요합니다.', 503, 'GOOGLE_LOGIN_NOT_CONFIGURED');
-  const response = await fetch(GOOGLE_TOKEN_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      code: String(code || '').trim(),
-      client_id: googleClientId(env),
-      client_secret: googleClientSecret(env),
-      redirect_uri: googleRedirectUri(env),
-      grant_type: 'authorization_code',
-    }),
-    signal: AbortSignal.timeout(15000),
-  });
+
+  let response;
+  try {
+    response = await fetch(GOOGLE_TOKEN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code: String(code || '').trim(),
+        client_id: googleClientId(env),
+        client_secret: googleClientSecret(env),
+        redirect_uri: googleRedirectUri(env),
+        grant_type: 'authorization_code',
+      }),
+    });
+  } catch (error) {
+    throw oauthError('Google 인증 서버에 연결하지 못했습니다.', 503, 'GOOGLE_CODE_EXCHANGE_NETWORK_FAILED');
+  }
+
   const body = await response.json().catch(() => ({}));
   if (!response.ok || !body.access_token) {
     throw oauthError('Google 인증 정보를 확인하지 못했습니다.', 401, 'GOOGLE_CODE_EXCHANGE_FAILED');
   }
 
-  const userResponse = await fetch(GOOGLE_USERINFO_URL, {
-    headers: { Authorization: `Bearer ${body.access_token}` },
-    signal: AbortSignal.timeout(15000),
-  });
+  let userResponse;
+  try {
+    userResponse = await fetch(GOOGLE_USERINFO_URL, {
+      headers: { Authorization: `Bearer ${body.access_token}` },
+    });
+  } catch (error) {
+    throw oauthError('Google 계정정보 서버에 연결하지 못했습니다.', 503, 'GOOGLE_USERINFO_NETWORK_FAILED');
+  }
+
   const profile = await userResponse.json().catch(() => ({}));
   const email = normalizeEmail(profile.email || '');
   if (!userResponse.ok || !email || profile.email_verified !== true) {
