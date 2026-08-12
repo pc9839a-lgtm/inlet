@@ -31,38 +31,18 @@ jobs:
           set -euo pipefail
           url='https://pagero.kr/api/billing/google/health'
           body="$RUNNER_TEMP/play-health.json"
-
           for attempt in $(seq 1 60); do
             code="$(curl -sS --connect-timeout 8 --max-time 25 -o "$body" -w '%{http_code}' "$url" || true)"
             echo "attempt=$attempt http=$code"
             if [ "$code" = '200' ]; then
               cat "$body"
-              if python3 - "$body" <<'PY'
-import json,sys
-p=sys.argv[1]
-try:
-    d=json.load(open(p,encoding='utf-8'))
-except Exception:
-    raise SystemExit(1)
-print('configured=', d.get('configured'))
-print('oauthToken=', d.get('oauthToken'))
-print('publisherAccess=', d.get('publisherAccess'))
-print('releaseEnabled=', d.get('releaseEnabled'))
-print('productsReady=', d.get('productsReady'))
-print('googleStatus=', d.get('googleStatus'))
-print('code=', d.get('code'))
-if d.get('configured') is True and d.get('oauthToken') is True and d.get('publisherAccess') is True:
-    raise SystemExit(0)
-raise SystemExit(2)
-PY
-              then
+              if python3 -c "import json,sys; d=json.load(open(sys.argv[1],encoding='utf-8')); print('configured=',d.get('configured')); print('oauthToken=',d.get('oauthToken')); print('publisherAccess=',d.get('publisherAccess')); print('releaseEnabled=',d.get('releaseEnabled')); print('productsReady=',d.get('productsReady')); print('googleStatus=',d.get('googleStatus')); print('code=',d.get('code')); sys.exit(0 if d.get('configured') is True and d.get('oauthToken') is True and d.get('publisherAccess') is True else 2)" "$body"; then
                 echo 'Google Play credential and Publisher API access probe passed.'
                 exit 0
               fi
             fi
             sleep 10
           done
-
           echo 'Google Play credential health did not become healthy in time.' >&2
           [ -f "$body" ] && cat "$body" >&2 || true
           exit 1
