@@ -60,7 +60,9 @@ assertIncludes('functions/api/call/admin/entitlement.js', [
   'calllink_entitlements',
 ]);
 assertIncludes('functions/_middleware.js', [
-  "url.hostname !== 'call.pagero.kr'",
+  'handleCalltagRequest',
+  "url.hostname === 'call.pagero.kr'",
+  "url.hostname === 'calltag.pagero.kr'",
   'context.env.ASSETS.fetch',
   "'/privacy'",
   "'/subscribe'",
