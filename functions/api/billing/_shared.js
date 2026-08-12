@@ -4,7 +4,7 @@ const PRODUCT_CODES = new Set([
   'message_monthly',
   'all_monthly',
 ]);
-const CALLTAG_PRODUCT_CODES = new Set(['call_monthly', 'message_monthly', 'all_monthly']);
+const CALLTAG_PRODUCT_CODES = new Set(['call_monthly', 'message_monthly']);
 const ACTIVE_STATES = new Set(['active', 'grace', 'cancelled']);
 const TRIAL_BASE_DAYS = 3;
 const REFERRAL_BONUS_DAYS = 5;
@@ -471,15 +471,18 @@ function referralCodePublic(row = {}) {
 
 async function googlePlaySubscription(env, packageName, purchaseToken) {
   const token = await googlePlayAccessToken(env);
-  const response = await fetch(
-    `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(packageName)}/purchases/subscriptionsv2/tokens/${encodeURIComponent(purchaseToken)}`,
-    {
-      method: 'GET',
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-      redirect: 'error',
-      signal: AbortSignal.timeout(15000),
-    }
-  );
+  let response;
+  try {
+    response = await fetch(
+      `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(packageName)}/purchases/subscriptionsv2/tokens/${encodeURIComponent(purchaseToken)}`,
+      {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      }
+    );
+  } catch (error) {
+    throw billingError('Google Play 구매 확인 서버에 연결하지 못했습니다.', 502, 'PLAY_VERIFICATION_NETWORK_FAILED');
+  }
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     throw billingError('Google Play 구매를 확인하지 못했습니다.', 502, 'PLAY_VERIFICATION_FAILED', {
@@ -491,19 +494,22 @@ async function googlePlaySubscription(env, packageName, purchaseToken) {
 
 async function acknowledgeGoogleSubscription(env, packageName, productId, purchaseToken) {
   const token = await googlePlayAccessToken(env);
-  const response = await fetch(
-    `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(packageName)}/purchases/subscriptions/${encodeURIComponent(productId)}/tokens/${encodeURIComponent(purchaseToken)}:acknowledge`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({}),
-      redirect: 'error',
-      signal: AbortSignal.timeout(15000),
-    }
-  );
+  let response;
+  try {
+    response = await fetch(
+      `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(packageName)}/purchases/subscriptions/${encodeURIComponent(productId)}/tokens/${encodeURIComponent(purchaseToken)}:acknowledge`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}),
+      }
+    );
+  } catch (error) {
+    throw billingError('Google Play 구매 승인 서버에 연결하지 못했습니다.', 502, 'PLAY_ACKNOWLEDGE_NETWORK_FAILED');
+  }
   if (!response.ok) {
     throw billingError('Google Play 구매 승인을 완료하지 못했습니다.', 502, 'PLAY_ACKNOWLEDGE_FAILED', {
       googleStatus: Number(response.status || 0),
@@ -523,19 +529,24 @@ async function googlePlayAccessToken(env = {}) {
     iat: now,
     exp: now + 3600,
   });
-  const response = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion,
-    }),
-    redirect: 'error',
-    signal: AbortSignal.timeout(15000),
-  });
+  let response;
+  try {
+    response = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+        assertion,
+      }),
+    });
+  } catch (error) {
+    throw billingError('Google Play 인증 서버에 연결하지 못했습니다.', 503, 'PLAY_AUTH_NETWORK_FAILED');
+  }
   const body = await response.json().catch(() => ({}));
   if (!response.ok || !body.access_token) {
-    throw billingError('Google Play 인증에 실패했습니다.', 503, 'PLAY_AUTH_FAILED');
+    throw billingError('Google Play 인증에 실패했습니다.', 503, 'PLAY_AUTH_FAILED', {
+      googleStatus: Number(response.status || 0),
+    });
   }
   cachedPlayAccessToken = String(body.access_token);
   cachedPlayAccessTokenExpiresAt = Date.now() + Math.max(60, Number(body.expires_in || 3600)) * 1000;
