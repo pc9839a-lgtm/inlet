@@ -1,4 +1,5 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse, readJson } from '../_shared.js';
+import { revokeFreshSensitiveSessions } from './_fresh.js';
 import {
   PARTNER_SECURITY_METHODS,
   exchangePartnerSession,
@@ -15,6 +16,7 @@ export async function onRequest({ request, env }) {
       ...input,
       session: input.session || input.ticket || '',
     });
+    await revokeFreshSensitiveSessions(env.DB, auth.ownerId);
     return jsonResponse(request, env, 200, {
       ok: true,
       user: auth.user,
