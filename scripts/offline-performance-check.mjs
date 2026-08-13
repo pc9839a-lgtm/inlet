@@ -151,7 +151,7 @@ assert(inboxLeadSync.includes('monthDateRange(inboxFilters.month)'), 'Inbox serv
 assert(appSource.includes("deliveryStatus: 'all'"), 'Inbox server fetch should keep delivery status out of the visible filter contract');
 assert(statsSummarySync.includes('statsDateRange(statsMonth'), 'Stats server fetch should be capped to selected month and day-range period');
 assert(inboxPanel.includes('type="month"'), 'Inbox UI should expose month selection');
-assert(inboxPanel.includes("deliveryStatus: 'all'") && inboxPanel.includes('CSV \uB0B4\uBCF4\uB0B4\uAE30'), 'Inbox UI should expose monthly CSV without delivery filter noise');
+assert(inboxPanel.includes("deliveryStatus: 'all'") && inboxPanel.includes('<Download size={17} /> CSV'), 'Inbox UI should expose monthly CSV without delivery filter noise');
 assert(inboxPanel.includes('\uB354\uBCF4\uAE30') && inboxPanel.includes('\uC11C\uBC84 ${serverTotal}\uAC74 \uC911 ${loadedCount}\uAC74 \uB85C\uB4DC'), 'Inbox UI should clearly indicate partial server pagination');
 assert(leadRepository.includes('dateFrom') && leadRepository.includes('dateTo') && leadRepository.includes('deliveryStatus'), 'Lead repository should pass date/delivery filters');
 assert(eventRepository.includes('dateFrom') && eventRepository.includes('dateTo'), 'Event repository should pass date filters');
