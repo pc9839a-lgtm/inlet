@@ -29,25 +29,16 @@ jobs:
           p = Path('scripts/css-quality-check.mjs')
           s = p.read_text(encoding='utf-8')
           marker = "const lazyCssOwners = {\n"
-          owners = """const lazyCssOwners = {
-  'src/styles/editor.css': 'src/app-styles.css',
-  'src/styles/editor-rich.css': 'src/app-styles.css',
-  'src/styles/editor-blocks.css': 'src/app-styles.css',
-  'src/styles/editor-animation.css': 'src/app-styles.css',
-  'src/styles/editor-wysiwyg.css': 'src/app-styles.css',
-  'src/styles/editor-dock.css': 'src/app-styles.css',
-  'src/styles/editor-widget-controls.css': 'src/app-styles.css',
-  'src/styles/editor-download.css': 'src/app-styles.css',
-  'src/styles/editor-stack.css': 'src/app-styles.css',
-  'src/styles/editor-demo.css': 'src/app-styles.css',
-  'src/styles/panels.css': 'src/app-styles.css',
-  'src/styles/panels-metrics.css': 'src/app-styles.css',
-  'src/styles/panels-settings.css': 'src/app-styles.css',
-  'src/styles/panels-create-modal.css': 'src/app-styles.css',
-"""
+          moved = [
+              'editor.css', 'editor-rich.css', 'editor-blocks.css', 'editor-animation.css',
+              'editor-wysiwyg.css', 'editor-dock.css', 'editor-widget-controls.css',
+              'editor-download.css', 'editor-stack.css', 'editor-demo.css', 'panels.css',
+              'panels-metrics.css', 'panels-settings.css', 'panels-create-modal.css',
+          ]
+          owner_lines = ''.join(f"  'src/styles/{name}': 'src/app-styles.css',\n" for name in moved)
           if marker not in s:
               raise SystemExit('lazyCssOwners marker missing')
-          s = s.replace(marker, owners, 1)
+          s = s.replace(marker, marker + owner_lines, 1)
           old = "  const lazyImportPath = file.replace('src/styles/', '../styles/');\n"
           new = "  const relativeImportPath = path.relative(path.dirname(lazyOwner), file).replaceAll('\\\\', '/');\n  const lazyImportPath = relativeImportPath.startsWith('.') ? relativeImportPath : `./${relativeImportPath}`;\n"
           if old not in s:
