@@ -11,6 +11,7 @@ import {
 import { isCalltagFinanceAdmin } from './_financeSecurity.js';
 import { ensureBillingSchema } from '../../billing/_shared.js';
 import { ensurePartnerFinanceSchema, normalizeSettlementMonth } from '../../billing/_partnerFinance.js';
+import { ensurePartnerPortalSchema } from '../../partner/_portal.js';
 
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return adminOptions();
@@ -18,11 +19,15 @@ export async function onRequest({ request, env }) {
 
   try {
     const identity = await requireCalltagAdmin(request, env);
+    const financeWriteEnabled = isCalltagFinanceAdmin(identity, env);
     const url = new URL(request.url);
     const ownerId = ownerIdInput(url.searchParams.get('ownerId') || '');
     const month = normalizeSettlementMonth(url.searchParams.get('month') || '') || new Date().toISOString().slice(0, 7);
-    await ensureBillingSchema(env.DB);
-    await ensurePartnerFinanceSchema(env.DB);
+    await Promise.all([
+      ensureBillingSchema(env.DB),
+      ensurePartnerFinanceSchema(env.DB),
+      ensurePartnerPortalSchema(env.DB),
+    ]);
 
     const profile = await env.DB.prepare(`
       SELECT
@@ -42,7 +47,7 @@ export async function onRequest({ request, env }) {
       return adminJson(404, { ok: false, error: '파트너 회원을 찾을 수 없습니다.', code: 'CALLTAG_ADMIN_PARTNER_NOT_FOUND' });
     }
 
-    const [referralStats, commissionResult, settlementResult] = await Promise.all([
+    const [referralStats, commissionResult, settlementResult, payoutRequestResult, payoutProfile] = await Promise.all([
       env.DB.prepare(`
         SELECT
           COUNT(*) AS referred_count,
@@ -94,6 +99,22 @@ export async function onRequest({ request, env }) {
         ORDER BY settlement_month DESC
         LIMIT 12
       `).bind(ownerId).all(),
+      env.DB.prepare(`
+        SELECT request_id, settlement_month, service_scope, amount_krw, status,
+               settlement_id, requested_at, processed_at
+        FROM partner_payout_requests
+        WHERE owner_id = ? AND settlement_month = ?
+        ORDER BY datetime(requested_at) DESC, request_id DESC
+        LIMIT 20
+      `).bind(ownerId, month).all(),
+      env.DB.prepare(`
+        SELECT payout_type, account_holder, bank_name, account_number_last4,
+               settlement_email, phone, business_name, business_number_last4,
+               tax_email, updated_at
+        FROM partner_payout_profiles
+        WHERE owner_id = ?
+        LIMIT 1
+      `).bind(ownerId).first(),
     ]);
 
     const commissions = (Array.isArray(commissionResult?.results) ? commissionResult.results : []).map((row) => {
@@ -128,10 +149,40 @@ export async function onRequest({ request, env }) {
       lastPaidAt: safeIso(row.last_paid_at),
     }));
 
+    const payoutRequests = (Array.isArray(payoutRequestResult?.results) ? payoutRequestResult.results : []).map((row) => ({
+      requestId: String(row.request_id || '').slice(0, 120),
+      month: String(row.settlement_month || '').slice(0, 7),
+      service: safeService(row.service_scope),
+      amountKrw: amount(row.amount_krw),
+      status: safeRequestStatus(row.status),
+      settlementId: String(row.settlement_id || '').slice(0, 120),
+      requestedAt: safeIso(row.requested_at),
+      processedAt: safeIso(row.processed_at),
+    }));
+    const activeRequests = payoutRequests.filter((item) => ['requested', 'processing', 'review'].includes(item.status));
+
+    const payoutProfileDto = payoutProfile
+      ? financeWriteEnabled
+        ? {
+            configured: true,
+            payoutType: safePayoutType(payoutProfile.payout_type),
+            accountHolder: String(payoutProfile.account_holder || '').trim().slice(0, 80),
+            bankName: String(payoutProfile.bank_name || '').trim().slice(0, 60),
+            accountNumberMasked: maskLast4(payoutProfile.account_number_last4, '****-****-'),
+            settlementEmail: maskEmail(payoutProfile.settlement_email),
+            phone: maskPhone(payoutProfile.phone),
+            businessName: String(payoutProfile.business_name || '').trim().slice(0, 120),
+            businessNumberMasked: maskLast4(payoutProfile.business_number_last4, '***-**-'),
+            taxEmail: maskEmail(payoutProfile.tax_email),
+            updatedAt: safeIso(payoutProfile.updated_at),
+          }
+        : { configured: true }
+      : { configured: false };
+
     await recordAdminAudit(env.DB, request, env, identity, 'partner.read', ownerId);
     return adminJson(200, {
       ok: true,
-      financeWriteEnabled: isCalltagFinanceAdmin(identity, env),
+      financeWriteEnabled,
       partner: {
         ownerId,
         email: maskEmail(profile.email),
@@ -148,7 +199,11 @@ export async function onRequest({ request, env }) {
         earnedCommissionKrw,
         paidAmountKrw,
         payableAmountKrw: Math.max(0, earnedCommissionKrw - paidAmountKrw),
+        payoutRequestCount: activeRequests.length,
+        requestedAmountKrw: activeRequests.reduce((sum, item) => sum + item.amountKrw, 0),
       },
+      payoutRequests,
+      payoutProfile: payoutProfileDto,
       commissions,
       settlements,
     });
@@ -165,4 +220,24 @@ function amount(value) {
 function safeIso(value) {
   const parsed = Date.parse(String(value || ''));
   return Number.isFinite(parsed) ? new Date(parsed).toISOString() : '';
+}
+
+function safeService(value) {
+  const service = String(value || '').trim().toUpperCase();
+  return ['ALL', 'CALLTAG', 'PAGERO'].includes(service) ? service : 'ALL';
+}
+
+function safeRequestStatus(value) {
+  const status = String(value || '').trim().toLowerCase();
+  return ['requested', 'processing', 'paid', 'cancelled', 'review'].includes(status) ? status : 'review';
+}
+
+function safePayoutType(value) {
+  const type = String(value || '').trim().toUpperCase();
+  return ['INDIVIDUAL', 'SOLE_PROPRIETOR', 'CORPORATION'].includes(type) ? type : 'INDIVIDUAL';
+}
+
+function maskLast4(value, prefix) {
+  const last4 = String(value || '').replace(/\D/g, '').slice(-4);
+  return last4 ? `${prefix}${last4}` : '';
 }
