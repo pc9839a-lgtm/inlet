@@ -1,8 +1,8 @@
 /* Widget add dock and add-menu controls. */
 .edit-layout .fixed-add-dock {
   display: block !important;
-  position: sticky !important;
-  bottom: 0 !important;
+  position: relative !important;
+  bottom: auto !important;
   z-index: 180 !important;
   margin-top: 14px !important;
   padding: 14px 0 10px !important;
@@ -11,13 +11,6 @@
   background: linear-gradient(180deg, rgba(245, 247, 250, 0), #f5f7fa 26%, #f5f7fa 100%) !important;
   box-shadow: none !important;
   overflow: visible !important;
-}
-
-/* Reserve scroll room for the sticky add dock so the last screen-order rows stay fully visible. */
-@media (min-width: 1181px) {
-  .builder-shell .edit-layout:has(.fixed-add-dock) {
-    padding-bottom: 96px !important;
-  }
 }
 
 .edit-layout .fixed-add-dock .add-toggle {
