@@ -7,7 +7,6 @@ html body #root .builder-shell .preview-workspace .phone-frame {
   border: 8px solid #111827 !important;
 }
 
-
 /* Stable desktop workspace viewport contract. */
 .builder-shell:not(.template-intro-shell) {
   height: 100dvh !important;
@@ -63,3 +62,5 @@ html body #root .builder-shell .preview-workspace .phone-frame {
     overflow: visible !important;
   }
 }
+
+/* QA trigger: verify the repaired workspace against the complete pipeline. */
