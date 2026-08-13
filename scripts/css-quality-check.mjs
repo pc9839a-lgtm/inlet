@@ -112,6 +112,20 @@ const cssFiles = [
   'src/styles/base-wayzi-footer.css',
 ];
 const lazyCssOwners = {
+  'src/styles/editor.css': 'src/app-styles.css',
+  'src/styles/editor-rich.css': 'src/app-styles.css',
+  'src/styles/editor-blocks.css': 'src/app-styles.css',
+  'src/styles/editor-animation.css': 'src/app-styles.css',
+  'src/styles/editor-wysiwyg.css': 'src/app-styles.css',
+  'src/styles/editor-dock.css': 'src/app-styles.css',
+  'src/styles/editor-widget-controls.css': 'src/app-styles.css',
+  'src/styles/editor-download.css': 'src/app-styles.css',
+  'src/styles/editor-stack.css': 'src/app-styles.css',
+  'src/styles/editor-demo.css': 'src/app-styles.css',
+  'src/styles/panels.css': 'src/app-styles.css',
+  'src/styles/panels-metrics.css': 'src/app-styles.css',
+  'src/styles/panels-settings.css': 'src/app-styles.css',
+  'src/styles/panels-create-modal.css': 'src/app-styles.css',
   'src/styles/panels-inbox-v2.css': 'src/panels/InboxPanel.css',
   'src/styles/panels-inbox-v3.css': 'src/panels/InboxPanel.css',
   'src/styles/panels-inbox.css': 'src/panels/InboxPanel.css',
@@ -227,7 +241,8 @@ for (const file of cssFiles) {
     continue;
   }
 
-  const lazyImportPath = file.replace('src/styles/', '../styles/');
+  const relativeImportPath = path.relative(path.dirname(lazyOwner), file).replaceAll('\\', '/');
+  const lazyImportPath = relativeImportPath.startsWith('.') ? relativeImportPath : `./${relativeImportPath}`;
   assert(
     entry.includes(importPath) || (await ownerContent(lazyOwner)).includes(lazyImportPath),
     `${file} must be imported from src/styles.css or ${lazyOwner}`
