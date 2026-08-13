@@ -43,5 +43,6 @@ console.log(JSON.stringify({
   desktopFlow: ['login', 'dashboard', 'account-page', 'page-select', 'edit-workbench', 'save', 'reload'],
   mobileWidths: [360, 390, 430],
   productionCredentials: false,
+  accountPageMock: true,
   chromeCdpCompatibility: true,
 }, null, 2));
