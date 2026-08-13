@@ -1,0 +1,49 @@
+name: Patch stats v4 CSS QA contract
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-css-stats-v4-contract.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Remove obsolete stats v2 CSS entries from QA
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/css-quality-check.mjs')
+          s = p.read_text(encoding='utf-8')
+          targets = [
+              "  'src/styles/panels-stats-v2.css',\n",
+              "  'src/styles/panels-stats.css',\n",
+              "  'src/styles/panels-stats-v2-detail.css',\n",
+              "  'src/styles/panels-stats-period-line.css',\n",
+              "  'src/styles/panels-stats-v2.css': 'src/panels/StatsPanel.css',\n",
+              "  'src/styles/panels-stats.css': 'src/panels/StatsPanel.css',\n",
+              "  'src/styles/panels-stats-v2-detail.css': 'src/panels/StatsPanel.css',\n",
+              "  'src/styles/panels-stats-period-line.css': 'src/panels/StatsPanel.css',\n",
+          ]
+          missing = [t for t in targets if t not in s]
+          if missing:
+              raise SystemExit(f'expected QA entries missing: {missing}')
+          for t in targets:
+              s = s.replace(t, '', 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit patch and remove temporary workflow
+        run: |
+          rm .github/workflows/patch-css-stats-v4-contract.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/css-quality-check.mjs .github/workflows/patch-css-stats-v4-contract.yml
+          git commit -m "fix(qa): validate stats v4 CSS ownership"
+          git push origin HEAD:main
