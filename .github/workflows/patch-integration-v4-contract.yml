@@ -1,0 +1,115 @@
+name: Patch current integration QA contracts
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-integration-v4-contract.yml'
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Update stats and inbox integration contracts
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/integration-contract-check.mjs')
+          s = p.read_text(encoding='utf-8')
+
+          old_stats = """const statsPanel = await read('src/panels/StatsPanel.jsx');
+requireAll(statsPanel, [
+  'eventPageMeta',
+  'leadPageMeta',
+  'statsPartial',
+  'stats-partial-notice',
+], 'stats panel contract');"""
+          new_stats = """const statsPanel = await read('src/panels/StatsPanel.jsx');
+requireAll(statsPanel, [
+  'eventPageMeta',
+  'leadPageMeta',
+  'statsPartial',
+  'stats-v4-notice',
+], 'stats v4 panel contract');"""
+
+          old_inbox = """const inboxPanel = await read('src/panels/InboxPanel.jsx');
+requireAll(inboxPanel, [
+  'const [month, setMonth] = useState(currentMonthValue())',
+  'monthDateRange(month)',
+  'setMonth(event.target.value || currentMonthValue())',
+  'loadMoreLeads',
+  'hasMoreLeads',
+  'exportLeadsCsv(filtered, {',
+  'kind: filter',
+  'status: statusFilter',
+  \"deliveryStatus: 'all'\",
+  'q: query.trim()',
+  'const hasPartialLeadList = serverTotal > loadedCount',
+  '<strong>{serverTotal}</strong>',
+  'totalSummaryLabel',
+  'loadedScopeLabel',
+  'leadRiskInfo(lead)',
+  'lead-risk-badge',
+  '중복·위험 신호',
+  'riskInfo.reasons.join',
+  'riskInfo.score',
+  'retryLeadDelivery',
+  'retryFailedDeliveries',
+  'failedDeliveryCount',
+  'lead-delivery-badge',
+  '알림 실패',
+  '다시 보내기',
+], 'inbox month and pagination contract');"""
+          new_inbox = """const inboxPanel = await read('src/panels/InboxPanel.jsx');
+requireAll(inboxPanel, [
+  'const [month, setMonth] = useState(currentMonthValue())',
+  'monthDateRange(month)',
+  'setMonth(event.target.value || currentMonthValue())',
+  'loadMoreLeads',
+  'hasMoreLeads',
+  'exportLeadsCsv(filtered, {',
+  'kind: filter',
+  'status: statusFilter',
+  \"deliveryStatus: 'all'\",
+  'q: query.trim()',
+  'const displaySummary = serverTotal > loadedCount',
+  '서버 ${serverTotal}건 중 ${loadedCount}건 로드',
+  '{filtered.length} / {serverTotal}건',
+  'leadRiskInfo(lead)',
+  'inbox-ops-mini-badge',
+  '중복·위험 신호',
+  'selectedRiskInfo.reasons.join',
+  'selectedRiskInfo.score',
+  'retryLeadDelivery',
+  'retryFailedDeliveries',
+  'failedDeliveryCount',
+  'inbox-ops-mini-badge delivery',
+  '알림 실패',
+  '다시 보내기',
+], 'inbox current month, pagination, risk, and delivery contract');"""
+
+          if old_stats not in s:
+              raise SystemExit('old stats integration contract not found')
+          if old_inbox not in s:
+              raise SystemExit('old inbox integration contract not found')
+          s = s.replace(old_stats, new_stats, 1).replace(old_inbox, new_inbox, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit patch, self-delete, dispatch full QA
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rm .github/workflows/patch-integration-v4-contract.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/integration-contract-check.mjs .github/workflows/patch-integration-v4-contract.yml
+          git commit -m "fix(qa): validate current stats and inbox integration contracts"
+          git push origin HEAD:main
+          gh workflow run qa.yml --ref main
