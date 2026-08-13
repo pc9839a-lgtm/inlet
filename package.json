@@ -99,5 +99,9 @@
   },
   "devDependencies": {
     "wrangler": "^4.95.0"
+  },
+  "allowScripts": {
+    "esbuild": true,
+    "workerd": true
   }
 }

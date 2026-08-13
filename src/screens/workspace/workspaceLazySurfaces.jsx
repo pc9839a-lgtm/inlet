@@ -5,4 +5,3 @@ export const StatsPanel = lazy(() => import('../../panels/StatsPanel.jsx'));
 export const StylePanel = lazy(() => import('../../panels/StylePanel.jsx'));
 export const SettingsPanel = lazy(() => import('../../panels/SettingsPanel.jsx'));
 export const TemplatesPanel = lazy(() => import('../../panels/TemplatesPanel'));
-export const CreateLandingModal = lazy(() => import('../CreateLandingFlow.jsx').then((module) => ({ default: module.CreateLandingModal })));
