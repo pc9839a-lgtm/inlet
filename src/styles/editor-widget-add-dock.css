@@ -13,6 +13,13 @@
   overflow: visible !important;
 }
 
+/* Reserve scroll room for the sticky add dock so the last screen-order rows stay fully visible. */
+@media (min-width: 1181px) {
+  .builder-shell .edit-layout:has(.fixed-add-dock) {
+    padding-bottom: 96px !important;
+  }
+}
+
 .edit-layout .fixed-add-dock .add-toggle {
   appearance: none !important;
   width: 100% !important;
