@@ -1,0 +1,75 @@
+name: Patch CSS split QA and audit
+
+on:
+  push:
+    branches:
+      - optimize/css-audit-20260813
+    paths:
+      - '.github/workflows/patch-css-split-audit.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: optimize/css-audit-20260813
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Teach CSS QA about app style owner
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/css-quality-check.mjs')
+          s = p.read_text(encoding='utf-8')
+          marker = "const lazyCssOwners = {\n"
+          owners = """const lazyCssOwners = {
+  'src/styles/editor.css': 'src/app-styles.css',
+  'src/styles/editor-rich.css': 'src/app-styles.css',
+  'src/styles/editor-blocks.css': 'src/app-styles.css',
+  'src/styles/editor-animation.css': 'src/app-styles.css',
+  'src/styles/editor-wysiwyg.css': 'src/app-styles.css',
+  'src/styles/editor-dock.css': 'src/app-styles.css',
+  'src/styles/editor-widget-controls.css': 'src/app-styles.css',
+  'src/styles/editor-download.css': 'src/app-styles.css',
+  'src/styles/editor-stack.css': 'src/app-styles.css',
+  'src/styles/editor-demo.css': 'src/app-styles.css',
+  'src/styles/panels.css': 'src/app-styles.css',
+  'src/styles/panels-metrics.css': 'src/app-styles.css',
+  'src/styles/panels-settings.css': 'src/app-styles.css',
+  'src/styles/panels-create-modal.css': 'src/app-styles.css',
+"""
+          if marker not in s:
+              raise SystemExit('lazyCssOwners marker missing')
+          s = s.replace(marker, owners, 1)
+          old = "  const lazyImportPath = file.replace('src/styles/', '../styles/');\n"
+          new = "  const relativeImportPath = path.relative(path.dirname(lazyOwner), file).replaceAll('\\\\', '/');\n  const lazyImportPath = relativeImportPath.startsWith('.') ? relativeImportPath : `./${relativeImportPath}`;\n"
+          if old not in s:
+              raise SystemExit('lazy import path contract missing')
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Install dependencies
+        run: npm ci
+      - name: Dependency audit snapshot
+        run: |
+          npm audit --json > /tmp/npm-audit.json || true
+          cat /tmp/npm-audit.json
+      - name: Validate CSS ownership and production build
+        run: |
+          npm run css:qa
+          npm run build
+      - name: Commit QA update and remove temporary workflow
+        run: |
+          rm .github/workflows/patch-css-split-audit.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/css-quality-check.mjs .github/workflows/patch-css-split-audit.yml
+          git commit -m "test(css): validate split workspace style ownership"
+          git push origin HEAD:optimize/css-audit-20260813
