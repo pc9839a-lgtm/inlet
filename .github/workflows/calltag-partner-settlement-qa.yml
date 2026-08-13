@@ -42,7 +42,11 @@ jobs:
           node --check functions/api/call/admin/partner-rate.js
           node --check functions/api/call/admin/settlement-pay.js
           node --check functions/api/partner/_security.js
+          node --check functions/api/partner/_fresh.js
           node --check functions/api/partner/_portal.js
+          node --check functions/api/partner/_middleware.js
+          node --check functions/api/partner/totp/fresh.js
+          node --check functions/api/partner/logout.js
           node --check functions/api/partner/dashboard.js
           node --check functions/api/partner/referrals.js
           node --check functions/api/partner/earnings.js
@@ -59,6 +63,12 @@ jobs:
           grep -q "CHECK(commission_rate_bps IN (2000, 5000))" functions/api/billing/_partnerFinance.js
           grep -q "resolvePartnerCommissionRateBps" functions/api/billing/_commissions.js
           grep -q "requireSettlementStepup" functions/api/partner/_portal.js
+          grep -q "PARTNER_FRESH_TTL_SECONDS = 5 \* 60" functions/api/partner/_fresh.js
+          grep -q "PARTNER_TOTP_FRESH_REQUIRED" functions/api/partner/_fresh.js
+          grep -q "'/api/partner/totp/fresh'" functions/api/partner/_middleware.js
+          grep -q "requireFreshSensitiveStepup" functions/api/partner/payout-profile.js
+          grep -q "requireFreshSensitiveStepup" functions/api/partner/settlements/request.js
+          grep -q "clearPartnerFreshCookie" functions/api/partner/logout.js
           grep -q "partner_commissions" functions/api/partner/dashboard.js
           grep -q "partner_commissions" functions/api/partner/earnings.js
           grep -q "billing_subscriptions" functions/api/partner/referrals.js

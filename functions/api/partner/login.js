@@ -1,6 +1,7 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse, readJson } from '../_shared.js';
 import { auditErrorMetadata, auditSubjectHash, writeAuditLog } from '../_audit.js';
 import { assertPasswordLoginAllowed, finishPasswordLoginTiming } from '../auth/_loginRateLimit.js';
+import { revokeFreshSensitiveSessions } from './_fresh.js';
 import {
   PARTNER_SECURITY_METHODS,
   partnerAuthCookie,
@@ -20,13 +21,15 @@ export async function onRequest({ request, env }) {
     startedAt = Date.now();
     rateLimitContext = await assertPasswordLoginAllowed(request, env, input.email || '');
     const result = await passwordPartnerLogin(input, env);
+    const ownerId = String(result.user?.ownerId || result.user?.id || '').trim();
+    await revokeFreshSensitiveSessions(env.DB, ownerId);
     await writeAuditLog({
       request,
       env,
-      actorAccountId: result.user?.ownerId || result.user?.id || '',
+      actorAccountId: ownerId,
       action: 'auth.login_succeeded',
       targetType: 'account',
-      targetId: result.user?.ownerId || result.user?.id || '',
+      targetId: ownerId,
       metadata: { provider: 'password', surface: 'partner-settlement' },
     });
     await finishPasswordLoginTiming(startedAt, env);

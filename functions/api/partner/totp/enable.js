@@ -1,4 +1,5 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse, readJson } from '../../_shared.js';
+import { revokeFreshSensitiveSessions } from '../_fresh.js';
 import { PARTNER_SECURITY_METHODS, enableTotp, partnerStepupCookie } from '../_security.js';
 
 export async function onRequest({ request, env }) {
@@ -8,6 +9,7 @@ export async function onRequest({ request, env }) {
     assertD1(env);
     const input = await readJson(request);
     const result = await enableTotp(request, env, input);
+    await revokeFreshSensitiveSessions(env.DB, result.auth.ownerId);
     return jsonResponse(request, env, 200, {
       ok: true,
       totpEnrolled: true,

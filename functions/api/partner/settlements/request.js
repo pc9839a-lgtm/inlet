@@ -1,4 +1,5 @@
 import { handleApiError, jsonResponse, optionsResponse, readJson } from '../../_shared.js';
+import { requireFreshSensitiveStepup } from '../_fresh.js';
 import {
   PARTNER_PORTAL_METHODS,
   createPayoutRequest,
@@ -13,6 +14,7 @@ export async function onRequest({ request, env }) {
   }
   try {
     const context = await partnerPortalContext(request, env);
+    await requireFreshSensitiveStepup(request, env);
     const input = await readJson(request);
     const service = normalizeService(input.service || 'ALL');
     const payoutRequest = await createPayoutRequest(context.db, context.ownerId, service);

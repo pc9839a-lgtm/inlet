@@ -6,6 +6,7 @@ import {
   partnerAuthSession,
   revokeSettlementSessions,
 } from './_security.js';
+import { clearPartnerFreshCookie, revokeFreshSensitiveSessions } from './_fresh.js';
 
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, PARTNER_SECURITY_METHODS);
@@ -13,13 +14,17 @@ export async function onRequest({ request, env }) {
   try {
     assertD1(env);
     const auth = await partnerAuthSession(request, env);
-    await revokeSettlementSessions(env.DB, auth.ownerId);
+    await Promise.all([
+      revokeSettlementSessions(env.DB, auth.ownerId),
+      revokeFreshSensitiveSessions(env.DB, auth.ownerId),
+    ]);
     const headers = new Headers({
       'Content-Type': 'application/json; charset=utf-8',
       'Cache-Control': 'no-store',
     });
     headers.append('Set-Cookie', clearPartnerAuthCookie(request));
     headers.append('Set-Cookie', clearPartnerStepupCookie(request));
+    headers.append('Set-Cookie', clearPartnerFreshCookie(request));
     return new Response(JSON.stringify({ ok: true }), { status: 200, headers });
   } catch (error) {
     return handleApiError(request, env, error, PARTNER_SECURITY_METHODS);
