@@ -101,7 +101,7 @@ assert(mergedComparison.formStartRate === '33.3' && mergedComparison.formComplet
 const statsPanel = await readFile('src/panels/StatsPanel.jsx', 'utf8');
 const inboxPanel = await readFile('src/panels/InboxPanel.jsx', 'utf8');
 const inboxOperationsCss = await readFile('src/panels/InboxOperations.css', 'utf8');
-const statsPeriodCss = await readFile('src/styles/panels-stats-period-line.css', 'utf8');
+const statsPanelCss = await readFile('src/panels/StatsPanel.css', 'utf8');
 assert(statsPanel.includes('eventPageMeta') && statsPanel.includes('leadPageMeta'), 'stats panel should accept pagination meta');
 assert(statsPanel.includes('statsPartial') && statsPanel.includes('stats-v4-notice'), 'stats panel should expose partial data notice contract');
 assert(statsPanel.includes('partialData = statsPartial || (!serverMode && hasPartialStatsData') && statsPanel.includes('recentLeadTotal'), 'server aggregate stats should stay complete while recent lead rows disclose their limited count');
@@ -118,9 +118,9 @@ assert(statsPanel.includes('serverStats') && statsPanel.includes('normalizeServe
 assert(statsPanel.includes('stats-v4-funnel-card') && statsPanel.includes('formStartRate') && statsPanel.includes('formCompletionRate') && statsPanel.includes('reservationCompletionRate'), 'stats panel should expose server-backed form and reservation funnel completion');
 assert(statsPanel.includes('stats-v4-change') && statsPanel.includes('countMetricChange') && statsPanel.includes('rateMetricChange'), 'stats panel should show previous-period changes on summary metrics');
 assert(!statsPanel.includes('DeliveryLogCard') && !statsPanel.includes('\uC804\uC1A1 \uB85C\uADF8') && !statsPanel.includes('\uC678\uBD80 \uC804\uC1A1'), 'stats panel should not expose delivery log cards');
-assert(statsPeriodCss.includes('grid-template-columns: minmax(0, 1fr) 184px'), 'stats month picker should have enough width for year/month text');
-assert(statsPeriodCss.includes('min-width: 168px'), 'stats month input should not collapse to year-only text');
-assert(statsPeriodCss.includes('grid-template-columns: 58px minmax(96px, .8fr) minmax(112px, 1fr) 132px'), 'recent lead rows should use four visible columns only');
+assert(statsPanelCss.includes('grid-template-columns: minmax(280px, 1fr) 170px 210px'), 'stats v4 desktop filter row should reserve a dedicated month column');
+assert(statsPanelCss.includes('.stats-v4-filter-control :is(input, select)') && statsPanelCss.includes('width: 100%'), 'stats v4 month/select controls should fill their reserved columns');
+assert(statsPanelCss.includes('grid-template-columns: 80px minmax(120px,.8fr) minmax(160px,1fr) 130px'), 'stats v4 recent lead rows should use four visible columns only');
 
 assert(inboxPanel.includes("if (!['failed', 'partial'].includes(status)) return null;") && inboxPanel.includes('selectedDeliveryInfo') && inboxPanel.includes('retryLeadDelivery'), 'inbox delivery recovery should appear only for failed or partial deliveries');
 assert(inboxOperationsCss.includes('.inbox-ops-mini-badge.delivery') && inboxOperationsCss.includes('.inbox-ops-detail-section.delivery-warning') && inboxOperationsCss.includes('.inbox-ops-retry-banner'), 'inbox operations CSS should style actionable delivery recovery states');
