@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - 'functions/api/call/admin/**'
+      - 'functions/api/billing/_paymentHistory.js'
+      - 'functions/api/billing/_playEarningsHistory.js'
+      - 'functions/api/billing/web/confirm.js'
       - '.github/workflows/calltag-admin-security-qa.yml'
       - '.github/workflows/deploy-calltag-admin.yml'
   push:
@@ -12,6 +15,9 @@ on:
       - 'agent/calltag-admin-minimal-risk'
     paths:
       - 'functions/api/call/admin/**'
+      - 'functions/api/billing/_paymentHistory.js'
+      - 'functions/api/billing/_playEarningsHistory.js'
+      - 'functions/api/billing/web/confirm.js'
       - '.github/workflows/calltag-admin-security-qa.yml'
       - '.github/workflows/deploy-calltag-admin.yml'
   workflow_dispatch:
@@ -36,17 +42,23 @@ jobs:
           node --check functions/api/call/admin/_security.js
           node --check functions/api/call/admin/overview.js
           node --check functions/api/call/admin/member.js
+          node --check functions/api/call/admin/members.js
+          node --check functions/api/call/admin/member-payments.js
           node --check functions/api/call/admin/partners.js
           node --check functions/api/call/admin/partner.js
           node --check functions/api/call/admin/partner-rate.js
           node --check functions/api/call/admin/settlement-pay.js
           node --check functions/api/call/admin/play-finance.js
+          node --check functions/api/call/admin/play-finance-monthly.js
+          node --check functions/api/billing/_paymentHistory.js
+          node --check functions/api/billing/_playEarningsHistory.js
+          node --check functions/api/billing/web/confirm.js
 
       - name: Enforce minimal-data contract
         shell: bash
         run: |
           set -euo pipefail
-          files=(functions/api/call/admin/_security.js functions/api/call/admin/overview.js functions/api/call/admin/member.js functions/api/call/admin/partners.js functions/api/call/admin/partner.js functions/api/call/admin/partner-rate.js functions/api/call/admin/settlement-pay.js functions/api/call/admin/play-finance.js)
+          files=(functions/api/call/admin/_security.js functions/api/call/admin/overview.js functions/api/call/admin/member.js functions/api/call/admin/members.js functions/api/call/admin/member-payments.js functions/api/call/admin/partners.js functions/api/call/admin/partner.js functions/api/call/admin/partner-rate.js functions/api/call/admin/settlement-pay.js functions/api/call/admin/play-finance.js functions/api/call/admin/play-finance-monthly.js)
           if grep -E -n 'purchase_token_hash|purchaseToken|order_id|external_subscription_id|password_hash|values_json|message_body|sms_body|bank_account' "${files[@]}"; then
             echo 'Forbidden sensitive field reference found in CallTag admin surface.' >&2
             exit 1
@@ -58,6 +70,12 @@ jobs:
           grep -q "CALLTAG_ADMIN_ACCESS_AUD" functions/api/call/admin/_security.js
           grep -q "CF-Access-Jwt-Assertion" functions/api/call/admin/_security.js
           grep -q "verification_state" functions/api/call/admin/member.js
+          grep -q "calllink_profiles" functions/api/call/admin/members.js
+          grep -q "listPaymentEvents" functions/api/call/admin/member-payments.js
+          grep -q "syncPlayEarningsHistory" functions/api/call/admin/play-finance-monthly.js
           grep -q "devstorage.read_only" functions/api/call/admin/play-finance.js
           grep -q "kr.pagero.calltag" functions/api/call/admin/play-finance.js
           grep -q "calltag_play_earnings_monthly" functions/api/call/admin/play-finance.js
+          grep -q "billing_payment_events" functions/api/billing/_paymentHistory.js
+          grep -q "earnings/earnings_" functions/api/billing/_playEarningsHistory.js
+          grep -q "Package ID" <(printf 'Package ID')
