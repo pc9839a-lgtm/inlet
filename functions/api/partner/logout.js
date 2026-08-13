@@ -1,4 +1,5 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../_shared.js';
+import { revokeSessionToken } from '../auth/_session-revocation.js';
 import {
   PARTNER_SECURITY_METHODS,
   clearPartnerAuthCookie,
@@ -15,6 +16,7 @@ export async function onRequest({ request, env }) {
     assertD1(env);
     const auth = await partnerAuthSession(request, env);
     await Promise.all([
+      revokeSessionToken(env.DB, auth.session),
       revokeSettlementSessions(env.DB, auth.ownerId),
       revokeFreshSensitiveSessions(env.DB, auth.ownerId),
     ]);
@@ -25,7 +27,7 @@ export async function onRequest({ request, env }) {
     headers.append('Set-Cookie', clearPartnerAuthCookie(request));
     headers.append('Set-Cookie', clearPartnerStepupCookie(request));
     headers.append('Set-Cookie', clearPartnerFreshCookie(request));
-    return new Response(JSON.stringify({ ok: true }), { status: 200, headers });
+    return new Response(JSON.stringify({ ok: true, accountSessionRevoked: true }), { status: 200, headers });
   } catch (error) {
     return handleApiError(request, env, error, PARTNER_SECURITY_METHODS);
   }

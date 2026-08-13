@@ -1,9 +1,33 @@
+import { isRequestSessionRevoked } from './auth/_session-revocation.js';
 import { enqueuePageroLead } from './call/pagero/_shared.js';
 import { notifyPageroLeadAvailable, ownerIdForProject } from './call/push/_shared.js';
+
+function sessionError(status, code, error) {
+  return new Response(JSON.stringify({ ok: false, error, code }), {
+    status,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store',
+    },
+  });
+}
 
 export async function onRequest(context) {
   const { request, env, next } = context;
   const url = new URL(request.url);
+
+  try {
+    if (await isRequestSessionRevoked(request, env)) {
+      return sessionError(401, 'AUTH_SESSION_REVOKED', 'Session was revoked. Please sign in again.');
+    }
+  } catch (error) {
+    console.error('auth session revocation check failed', {
+      path: url.pathname,
+      message: String(error?.message || error || 'unknown error').slice(0, 180),
+    });
+    return sessionError(503, 'AUTH_SESSION_REVOCATION_CHECK_FAILED', 'Session security check failed.');
+  }
+
   if (request.method !== 'POST' || url.pathname !== '/api/leads') {
     return next();
   }

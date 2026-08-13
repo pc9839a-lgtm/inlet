@@ -3,6 +3,9 @@ name: CallTag Partner Settlement QA
 on:
   pull_request:
     paths:
+      - 'functions/api/_middleware.js'
+      - 'functions/api/auth/_session-revocation.js'
+      - 'functions/api/auth/logout.js'
       - 'functions/api/billing/_commissions.js'
       - 'functions/api/billing/_partnerFinance.js'
       - 'functions/api/call/admin/**'
@@ -15,6 +18,9 @@ on:
       - 'main'
       - 'agent/calltag-admin-partner-settlement'
     paths:
+      - 'functions/api/_middleware.js'
+      - 'functions/api/auth/_session-revocation.js'
+      - 'functions/api/auth/logout.js'
       - 'functions/api/billing/_commissions.js'
       - 'functions/api/billing/_partnerFinance.js'
       - 'functions/api/call/admin/**'
@@ -36,12 +42,16 @@ jobs:
       - name: Parse modules
         run: |
           set -euo pipefail
+          node --check functions/api/_middleware.js
+          node --check functions/api/auth/_session-revocation.js
+          node --check functions/api/auth/logout.js
           node --check functions/api/billing/_commissions.js
           node --check functions/api/billing/_partnerFinance.js
           node --check functions/api/call/admin/_financeSecurity.js
           node --check functions/api/call/admin/partners.js
           node --check functions/api/call/admin/partner.js
           node --check functions/api/call/admin/partner-rate.js
+          node --check functions/api/call/admin/partner-totp-reset.js
           node --check functions/api/call/admin/settlement-pay.js
           node --check functions/api/partner/_security.js
           node --check functions/api/partner/_fresh.js
@@ -49,6 +59,7 @@ jobs:
           node --check functions/api/partner/_middleware.js
           node --check functions/api/partner/_payout-notification.js
           node --check functions/api/partner/totp/fresh.js
+          node --check functions/api/partner/totp/recover.js
           node --check functions/api/partner/logout.js
           node --check functions/api/partner/dashboard.js
           node --check functions/api/partner/referrals.js
@@ -61,9 +72,14 @@ jobs:
       - name: Enforce finance contract
         run: |
           set -euo pipefail
+          grep -q "isRequestSessionRevoked" functions/api/_middleware.js
+          grep -q "AUTH_SESSION_REVOKED" functions/api/_middleware.js
+          grep -q "auth_session_revocations" functions/api/auth/_session-revocation.js
+          grep -q "revokeSessionToken" functions/api/auth/logout.js
           grep -q "CALLTAG_ADMIN_FINANCE_OWNER_IDS" functions/api/call/admin/_financeSecurity.js
           grep -q "partner.rate.update" functions/api/call/admin/partner-rate.js
           grep -q "partner.settlement.pay" functions/api/call/admin/settlement-pay.js
+          grep -q "revokeFreshSensitiveSessions" functions/api/call/admin/partner-totp-reset.js
           grep -q "CHECK(commission_rate_bps IN (2000, 5000))" functions/api/billing/_partnerFinance.js
           grep -q "resolvePartnerCommissionRateBps" functions/api/billing/_commissions.js
           grep -q "requireSettlementStepup" functions/api/partner/_portal.js
@@ -72,7 +88,9 @@ jobs:
           grep -q "'/api/partner/totp/fresh'" functions/api/partner/_middleware.js
           grep -q "requireFreshSensitiveStepup" functions/api/partner/payout-profile.js
           grep -q "requireFreshSensitiveStepup" functions/api/partner/settlements/request.js
+          grep -q "revokeSessionToken" functions/api/partner/logout.js
           grep -q "clearPartnerFreshCookie" functions/api/partner/logout.js
+          grep -q "revokeFreshSensitiveSessions" functions/api/partner/totp/recover.js
           grep -q "partner_commissions" functions/api/partner/dashboard.js
           grep -q "partner_commissions" functions/api/partner/earnings.js
           grep -q "billing_subscriptions" functions/api/partner/referrals.js

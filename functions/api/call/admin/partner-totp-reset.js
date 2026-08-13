@@ -6,6 +6,7 @@ import {
   recordAdminAudit,
   requireCalltagAdmin,
 } from './_security.js';
+import { revokeFreshSensitiveSessions } from '../../partner/_fresh.js';
 import { adminResetPartnerTotp } from '../../partner/_security.js';
 import { readJson } from '../../_shared.js';
 
@@ -17,6 +18,7 @@ export async function onRequest({ request, env }) {
     const input = await readJson(request);
     const ownerId = ownerIdInput(input.ownerId || '');
     const result = await adminResetPartnerTotp(env.DB, ownerId);
+    await revokeFreshSensitiveSessions(env.DB, ownerId);
     await recordAdminAudit(env.DB, request, env, identity, 'partner.totp_reset', ownerId);
     return adminJson(200, { ok: true, ...result });
   } catch (error) {
