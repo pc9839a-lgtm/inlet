@@ -1,0 +1,58 @@
+name: Deploy CallTag Admin Backend
+
+on:
+  workflow_run:
+    workflows:
+      - CallTag Admin Security QA
+    types:
+      - completed
+
+concurrency:
+  group: inlet-calltag-admin-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout tested source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Recheck admin modules
+        run: |
+          set -euo pipefail
+          node --check functions/api/call/admin/_security.js
+          node --check functions/api/call/admin/overview.js
+          node --check functions/api/call/admin/member.js
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Deploy assets and Pages Functions
+        run: |
+          npx wrangler pages deploy dist \
+            --project-name inlet \
+            --branch main \
+            --commit-hash "${{ github.event.workflow_run.head_sha }}" \
+            --commit-message "CallTag admin deploy ${{ github.event.workflow_run.head_sha }}"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
