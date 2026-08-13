@@ -12,5 +12,6 @@ export async function onRequest({ request, env }) {
     loggedOut: true,
     revoked: !!token,
     mode: 'revoked-session',
+    legacyMode: 'stateless-session',
   }, AUTH_METHODS);
 }
