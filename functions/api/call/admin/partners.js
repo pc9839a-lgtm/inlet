@@ -10,6 +10,7 @@ import {
 import { isCalltagFinanceAdmin } from './_financeSecurity.js';
 import { ensureBillingSchema } from '../../billing/_shared.js';
 import { ensurePartnerFinanceSchema, normalizeSettlementMonth } from '../../billing/_partnerFinance.js';
+import { ensurePartnerPortalSchema } from '../../partner/_portal.js';
 
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return adminOptions();
@@ -18,8 +19,11 @@ export async function onRequest({ request, env }) {
   try {
     const identity = await requireCalltagAdmin(request, env);
     const month = normalizeSettlementMonth(new URL(request.url).searchParams.get('month') || '') || new Date().toISOString().slice(0, 7);
-    await ensureBillingSchema(env.DB);
-    await ensurePartnerFinanceSchema(env.DB);
+    await Promise.all([
+      ensureBillingSchema(env.DB),
+      ensurePartnerFinanceSchema(env.DB),
+      ensurePartnerPortalSchema(env.DB),
+    ]);
 
     const result = await env.DB.prepare(`
       WITH partner_ids AS (
@@ -28,6 +32,8 @@ export async function onRequest({ request, env }) {
         SELECT referrer_owner_id AS owner_id FROM referrals
         UNION
         SELECT referrer_owner_id AS owner_id FROM partner_commissions
+        UNION
+        SELECT owner_id FROM partner_payout_requests
       ),
       referral_stats AS (
         SELECT
@@ -64,6 +70,16 @@ export async function onRequest({ request, env }) {
         JOIN partner_settlement_items psi ON psi.settlement_id = ps.settlement_id
         WHERE ps.settlement_month = ? AND ps.status = 'paid'
         GROUP BY ps.partner_owner_id
+      ),
+      active_request AS (
+        SELECT
+          owner_id,
+          COUNT(*) AS request_count,
+          COALESCE(SUM(amount_krw), 0) AS requested_amount_krw,
+          MAX(requested_at) AS last_requested_at
+        FROM partner_payout_requests
+        WHERE settlement_month = ? AND status IN ('requested','processing','review')
+        GROUP BY owner_id
       )
       SELECT
         ids.owner_id,
@@ -79,7 +95,10 @@ export async function onRequest({ request, env }) {
         COALESCE(mc.estimated_commission_krw, 0) AS estimated_commission_krw,
         COALESCE(mp.paid_amount_krw, 0) AS paid_amount_krw,
         COALESCE(mp.settlement_count, 0) AS settlement_count,
-        mp.last_paid_at
+        mp.last_paid_at,
+        COALESCE(ar.request_count, 0) AS request_count,
+        COALESCE(ar.requested_amount_krw, 0) AS requested_amount_krw,
+        ar.last_requested_at
       FROM partner_ids ids
       LEFT JOIN calllink_profiles p ON p.owner_id = ids.owner_id
       LEFT JOIN referral_codes rc ON rc.owner_id = ids.owner_id
@@ -87,17 +106,21 @@ export async function onRequest({ request, env }) {
       LEFT JOIN referral_stats rs ON rs.owner_id = ids.owner_id
       LEFT JOIN month_commission mc ON mc.owner_id = ids.owner_id
       LEFT JOIN month_paid mp ON mp.owner_id = ids.owner_id
+      LEFT JOIN active_request ar ON ar.owner_id = ids.owner_id
       ORDER BY
+        CASE WHEN COALESCE(ar.request_count, 0) > 0 THEN 0 ELSE 1 END ASC,
+        datetime(ar.last_requested_at) DESC,
         (COALESCE(mc.earned_commission_krw, 0) - COALESCE(mp.paid_amount_krw, 0)) DESC,
-        COALESCE(mc.earned_commission_krw, 0) DESC,
         ids.owner_id ASC
       LIMIT 500
-    `).bind(month, month).all();
+    `).bind(month, month, month).all();
 
     const partners = (Array.isArray(result?.results) ? result.results : []).map((row) => {
       const earned = amount(row.earned_commission_krw);
       const paid = Math.min(earned, amount(row.paid_amount_krw));
       const payable = Math.max(0, earned - paid);
+      const payoutRequestCount = amount(row.request_count);
+      const requestedAmountKrw = amount(row.requested_amount_krw);
       return {
         ownerId: String(row.owner_id || '').slice(0, 120),
         email: maskEmail(row.email),
@@ -113,9 +136,12 @@ export async function onRequest({ request, env }) {
           estimatedCommissionKrw: amount(row.estimated_commission_krw),
           paidAmountKrw: paid,
           payableAmountKrw: payable,
+          payoutRequestCount,
+          requestedAmountKrw,
+          lastRequestedAt: safeIso(row.last_requested_at),
           settlementCount: amount(row.settlement_count),
           lastPaidAt: safeIso(row.last_paid_at),
-          status: settlementStatus(earned, paid),
+          status: payoutRequestCount > 0 ? 'requested' : settlementStatus(earned, paid),
         },
       };
     }).filter((row) => row.ownerId);
@@ -126,8 +152,18 @@ export async function onRequest({ request, env }) {
       acc.earnedCommissionKrw += partner.month.earnedCommissionKrw;
       acc.payableAmountKrw += partner.month.payableAmountKrw;
       acc.paidAmountKrw += partner.month.paidAmountKrw;
+      acc.payoutRequestCount += partner.month.payoutRequestCount;
+      acc.requestedAmountKrw += partner.month.requestedAmountKrw;
       return acc;
-    }, { partnerCount: 0, grossSalesKrw: 0, earnedCommissionKrw: 0, payableAmountKrw: 0, paidAmountKrw: 0 });
+    }, {
+      partnerCount: 0,
+      grossSalesKrw: 0,
+      earnedCommissionKrw: 0,
+      payableAmountKrw: 0,
+      paidAmountKrw: 0,
+      payoutRequestCount: 0,
+      requestedAmountKrw: 0,
+    });
 
     await recordAdminAudit(env.DB, request, env, identity, 'partners.read');
     return adminJson(200, {
