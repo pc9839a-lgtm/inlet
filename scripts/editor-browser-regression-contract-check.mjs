@@ -29,7 +29,7 @@ assert(workflowSource.includes('include-hidden-files: true'), 'hidden browser sc
 assert(browserSource.includes("`${origin}/login`") && browserSource.includes("input[placeholder=\"email@example.com\"]"), 'browser QA must start from the real login screen');
 assert(browserSource.includes("pathname === '/api/auth/login'") && browserSource.includes("pathname === '/api/auth/session'"), 'browser QA must mock login and session refresh APIs');
 assert(browserSource.includes("pathname === '/api/projects'") && browserSource.includes(".service-landing-card"), 'browser QA must load and select a dashboard page');
-assert(browserSource.includes("#editor-block-editor-hero") && browserSource.includes('브라우저 저장 검증 완료'), 'browser QA must edit a real block and verify live preview');
+assert(browserSource.includes("pathname === '/api/account-page'") && browserSource.includes(".phone-frame #block-editor-hero") && browserSource.includes(".edit-workbench-inspector textarea[placeholder=\"핵심 제목을 입력하세요\"]") && browserSource.includes('브라우저 저장 검증 완료'), 'browser QA must open the current account page, edit a real preview block through EditWorkbench, and verify live preview');
 assert(browserSource.includes(".panel-actions .primary-btn") && browserSource.includes("Page.reload"), 'browser QA must save and verify the page after reload');
 assert(browserSource.includes("publicVerifyCount") && browserSource.includes("saveCount === 0"), 'browser QA must verify explicit save and public verification behavior');
 assert(browserSource.includes("{ name: 'mobile-360', width: 360") && browserSource.includes("{ name: 'mobile-390', width: 390") && browserSource.includes("{ name: 'mobile-430', width: 430"), 'browser QA must cover 360, 390, and 430 pixel mobile widths');
@@ -40,7 +40,7 @@ assert(!browserSource.includes('pagero.kr/api/auth/login') && !browserSource.inc
 console.log(JSON.stringify({
   ok: true,
   scope: 'authenticated-editor-browser-contract',
-  desktopFlow: ['login', 'dashboard', 'page-select', 'edit', 'save', 'reload'],
+  desktopFlow: ['login', 'dashboard', 'account-page', 'page-select', 'edit-workbench', 'save', 'reload'],
   mobileWidths: [360, 390, 430],
   productionCredentials: false,
   chromeCdpCompatibility: true,
