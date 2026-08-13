@@ -40,12 +40,13 @@ jobs:
           node --check functions/api/call/admin/partner.js
           node --check functions/api/call/admin/partner-rate.js
           node --check functions/api/call/admin/settlement-pay.js
+          node --check functions/api/call/admin/play-finance.js
 
       - name: Enforce minimal-data contract
         shell: bash
         run: |
           set -euo pipefail
-          files=(functions/api/call/admin/_security.js functions/api/call/admin/overview.js functions/api/call/admin/member.js functions/api/call/admin/partners.js functions/api/call/admin/partner.js functions/api/call/admin/partner-rate.js functions/api/call/admin/settlement-pay.js)
+          files=(functions/api/call/admin/_security.js functions/api/call/admin/overview.js functions/api/call/admin/member.js functions/api/call/admin/partners.js functions/api/call/admin/partner.js functions/api/call/admin/partner-rate.js functions/api/call/admin/settlement-pay.js functions/api/call/admin/play-finance.js)
           if grep -E -n 'purchase_token_hash|purchaseToken|order_id|external_subscription_id|password_hash|values_json|message_body|sms_body|bank_account' "${files[@]}"; then
             echo 'Forbidden sensitive field reference found in CallTag admin surface.' >&2
             exit 1
@@ -57,3 +58,6 @@ jobs:
           grep -q "CALLTAG_ADMIN_ACCESS_AUD" functions/api/call/admin/_security.js
           grep -q "CF-Access-Jwt-Assertion" functions/api/call/admin/_security.js
           grep -q "verification_state" functions/api/call/admin/member.js
+          grep -q "devstorage.read_only" functions/api/call/admin/play-finance.js
+          grep -q "kr.pagero.calltag" functions/api/call/admin/play-finance.js
+          grep -q "calltag_play_earnings_monthly" functions/api/call/admin/play-finance.js
