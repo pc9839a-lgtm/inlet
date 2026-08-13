@@ -7,6 +7,7 @@ on:
       - 'functions/api/billing/_partnerFinance.js'
       - 'functions/api/call/admin/**'
       - 'functions/api/partner/**'
+      - '.github/scripts/partner-settlement-hardening.mjs'
       - '.github/workflows/calltag-partner-settlement-qa.yml'
       - '.github/workflows/deploy-calltag-partner-settlement.yml'
   push:
@@ -18,6 +19,7 @@ on:
       - 'functions/api/billing/_partnerFinance.js'
       - 'functions/api/call/admin/**'
       - 'functions/api/partner/**'
+      - '.github/scripts/partner-settlement-hardening.mjs'
       - '.github/workflows/calltag-partner-settlement-qa.yml'
       - '.github/workflows/deploy-calltag-partner-settlement.yml'
   workflow_dispatch:
@@ -54,6 +56,7 @@ jobs:
           node --check functions/api/partner/payout-profile.js
           node --check functions/api/partner/settlements/request.js
           node --check functions/api/partner/policies.js
+          node --check .github/scripts/partner-settlement-hardening.mjs
       - name: Enforce finance contract
         run: |
           set -euo pipefail
@@ -97,3 +100,5 @@ jobs:
             echo 'Sensitive billing/account field exposed in partner admin surface.' >&2
             exit 1
           fi
+      - name: Run settlement hardening regression contract
+        run: node .github/scripts/partner-settlement-hardening.mjs
