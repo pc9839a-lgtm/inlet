@@ -1,0 +1,34 @@
+name: Probe Google public config
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'functions/api/call/google/config.js'
+      - '.github/workflows/probe-google-public-config.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Wait for deployment and print public client id
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL='https://pagero.kr/api/call/google/config'
+          for attempt in $(seq 1 24); do
+            BODY="$(curl -fsS --max-time 10 "$URL" 2>/dev/null || true)"
+            echo "attempt=$attempt body=$BODY"
+            if printf '%s' "$BODY" | grep -q '"configured":true'; then
+              printf '%s\n' "$BODY"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo 'Google public config endpoint was not deployed in time.' >&2
+          exit 1
