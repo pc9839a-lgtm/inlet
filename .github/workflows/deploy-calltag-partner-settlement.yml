@@ -1,0 +1,64 @@
+name: Deploy CallTag Partner Settlement Backend
+
+on:
+  workflow_run:
+    workflows:
+      - CallTag Partner Settlement QA
+    types:
+      - completed
+
+concurrency:
+  group: inlet-calltag-partner-settlement-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout tested source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Recheck partner settlement modules
+        run: |
+          set -euo pipefail
+          node --check functions/api/partner/_security.js
+          node --check functions/api/partner/_portal.js
+          node --check functions/api/partner/dashboard.js
+          node --check functions/api/partner/referrals.js
+          node --check functions/api/partner/earnings.js
+          node --check functions/api/partner/settlements.js
+          node --check functions/api/partner/payout-profile.js
+          node --check functions/api/partner/settlements/request.js
+          node --check functions/api/partner/policies.js
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Deploy assets and Pages Functions
+        run: |
+          npx wrangler pages deploy dist \
+            --project-name inlet \
+            --branch main \
+            --commit-hash "${{ github.event.workflow_run.head_sha }}" \
+            --commit-message "CallTag partner settlement deploy ${{ github.event.workflow_run.head_sha }}"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
