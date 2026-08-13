@@ -49,3 +49,21 @@
   font-size: 12px !important;
   line-height: 1.45 !important;
 }
+
+/* Reservation contact fields must remain real, tappable controls on mobile.
+   A later global style layer previously allowed the telephone input to collapse to 1px. */
+.phone-frame .landing-section.reservation .form-field-phone input[type='tel'],
+.public-landing-viewport .landing-section.reservation .form-field-phone input[type='tel'] {
+  position: static !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 44px !important;
+  margin: 0 !important;
+  padding: 12px 13px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  clip: auto !important;
+  clip-path: none !important;
+  transform: none !important;
+}
