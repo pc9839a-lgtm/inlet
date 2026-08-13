@@ -4,14 +4,11 @@ function digitsOnly(value = '') {
 
 function splitPhone(value = '') {
   const digits = digitsOnly(value).slice(0, 11);
-  if (!digits) return ['', '', ''];
-  if (digits.length <= 3) return [digits, '', ''];
-
-  const first = digits.slice(0, 3);
-  const rest = digits.slice(3);
-  if (rest.length <= 4) return [first, rest, ''];
-
-  return [first, rest.slice(0, -4).slice(0, 4), rest.slice(-4)];
+  return [
+    digits.slice(0, 3),
+    digits.slice(3, 7),
+    digits.slice(7, 11),
+  ];
 }
 
 function setReactInputValue(input, value) {
