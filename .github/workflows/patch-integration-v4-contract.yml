@@ -17,92 +17,32 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Update stats and inbox integration contracts
+      - name: Update integration contracts
         run: |
           python - <<'PY'
           from pathlib import Path
           p = Path('scripts/integration-contract-check.mjs')
           s = p.read_text(encoding='utf-8')
-
-          old_stats = """const statsPanel = await read('src/panels/StatsPanel.jsx');
-requireAll(statsPanel, [
-  'eventPageMeta',
-  'leadPageMeta',
-  'statsPartial',
-  'stats-partial-notice',
-], 'stats panel contract');"""
-          new_stats = """const statsPanel = await read('src/panels/StatsPanel.jsx');
-requireAll(statsPanel, [
-  'eventPageMeta',
-  'leadPageMeta',
-  'statsPartial',
-  'stats-v4-notice',
-], 'stats v4 panel contract');"""
-
-          old_inbox = """const inboxPanel = await read('src/panels/InboxPanel.jsx');
-requireAll(inboxPanel, [
-  'const [month, setMonth] = useState(currentMonthValue())',
-  'monthDateRange(month)',
-  'setMonth(event.target.value || currentMonthValue())',
-  'loadMoreLeads',
-  'hasMoreLeads',
-  'exportLeadsCsv(filtered, {',
-  'kind: filter',
-  'status: statusFilter',
-  \"deliveryStatus: 'all'\",
-  'q: query.trim()',
-  'const hasPartialLeadList = serverTotal > loadedCount',
-  '<strong>{serverTotal}</strong>',
-  'totalSummaryLabel',
-  'loadedScopeLabel',
-  'leadRiskInfo(lead)',
-  'lead-risk-badge',
-  '중복·위험 신호',
-  'riskInfo.reasons.join',
-  'riskInfo.score',
-  'retryLeadDelivery',
-  'retryFailedDeliveries',
-  'failedDeliveryCount',
-  'lead-delivery-badge',
-  '알림 실패',
-  '다시 보내기',
-], 'inbox month and pagination contract');"""
-          new_inbox = """const inboxPanel = await read('src/panels/InboxPanel.jsx');
-requireAll(inboxPanel, [
-  'const [month, setMonth] = useState(currentMonthValue())',
-  'monthDateRange(month)',
-  'setMonth(event.target.value || currentMonthValue())',
-  'loadMoreLeads',
-  'hasMoreLeads',
-  'exportLeadsCsv(filtered, {',
-  'kind: filter',
-  'status: statusFilter',
-  \"deliveryStatus: 'all'\",
-  'q: query.trim()',
-  'const displaySummary = serverTotal > loadedCount',
-  '서버 ${serverTotal}건 중 ${loadedCount}건 로드',
-  '{filtered.length} / {serverTotal}건',
-  'leadRiskInfo(lead)',
-  'inbox-ops-mini-badge',
-  '중복·위험 신호',
-  'selectedRiskInfo.reasons.join',
-  'selectedRiskInfo.score',
-  'retryLeadDelivery',
-  'retryFailedDeliveries',
-  'failedDeliveryCount',
-  'inbox-ops-mini-badge delivery',
-  '알림 실패',
-  '다시 보내기',
-], 'inbox current month, pagination, risk, and delivery contract');"""
-
-          if old_stats not in s:
-              raise SystemExit('old stats integration contract not found')
-          if old_inbox not in s:
-              raise SystemExit('old inbox integration contract not found')
-          s = s.replace(old_stats, new_stats, 1).replace(old_inbox, new_inbox, 1)
+          replacements = {
+              "'stats-partial-notice',": "'stats-v4-notice',",
+              "], 'stats panel contract');": "], 'stats v4 panel contract');",
+              "'const hasPartialLeadList = serverTotal > loadedCount',": "'const displaySummary = serverTotal > loadedCount',",
+              "'<strong>{serverTotal}</strong>',": "'서버 ${serverTotal}건 중 ${loadedCount}건 로드',",
+              "'totalSummaryLabel',": "'{filtered.length} / {serverTotal}건',",
+              "'loadedScopeLabel',": "'inbox-ops-table-footer',",
+              "'lead-risk-badge',": "'inbox-ops-mini-badge',",
+              "'riskInfo.reasons.join',": "'selectedRiskInfo.reasons.join',",
+              "'riskInfo.score',": "'selectedRiskInfo.score',",
+              "'lead-delivery-badge',": "'inbox-ops-mini-badge delivery',",
+              "], 'inbox month and pagination contract');": "], 'inbox current month, pagination, risk, and delivery contract');",
+          }
+          for old, new in replacements.items():
+              if old not in s:
+                  raise SystemExit(f'expected integration QA token missing: {old}')
+              s = s.replace(old, new, 1)
           p.write_text(s, encoding='utf-8')
           PY
-      - name: Commit patch, self-delete, dispatch full QA
+      - name: Commit patch and dispatch full QA
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
