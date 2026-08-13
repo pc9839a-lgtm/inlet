@@ -234,6 +234,8 @@ async function ownerContent(file) {
 const mojibakePattern = /�|諛|獄|揆|珥|吏|遺|誘몃|蹂닿|媛|덈|윭|ㅺ|ㅽ|뙣|섏씠|/;
 
 for (const file of cssFiles) {
+  const cssSource = await readFile(path.resolve(file), 'utf8');
+  if (!cssSource.trim()) continue;
   const importPath = file.replace('src/', './');
   const lazyOwner = lazyCssOwners[file];
   if (!lazyOwner) {

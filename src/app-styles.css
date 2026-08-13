@@ -1,4 +1,3 @@
-@import './styles/editor.css';
 @import './styles/editor-rich.css';
 @import './styles/editor-blocks.css';
 @import './styles/editor-animation.css';
@@ -7,8 +6,6 @@
 @import './styles/editor-widget-controls.css';
 @import './styles/editor-download.css';
 @import './styles/editor-stack.css';
-@import './styles/editor-demo.css';
-@import './styles/editor-add-dock-fix.css';
 @import './styles/panels.css';
 @import './styles/panels-metrics.css';
 @import './styles/panels-settings.css';
