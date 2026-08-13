@@ -579,8 +579,8 @@ requireAll(statsPanel, [
   'eventPageMeta',
   'leadPageMeta',
   'statsPartial',
-  'stats-partial-notice',
-], 'stats panel contract');
+  'stats-v4-notice',
+], 'stats v4 panel contract');
 
 const eventRepository = await read('src/lib/eventRepository.js');
 const leadRepository = await read('src/lib/leadRepository.js');
@@ -612,22 +612,22 @@ requireAll(inboxPanel, [
   'status: statusFilter',
   "deliveryStatus: 'all'",
   'q: query.trim()',
-  'const hasPartialLeadList = serverTotal > loadedCount',
-  '<strong>{serverTotal}</strong>',
-  'totalSummaryLabel',
-  'loadedScopeLabel',
+  'const displaySummary = serverTotal > loadedCount',
+  '서버 ${serverTotal}건 중 ${loadedCount}건 로드',
+  '{filtered.length} / {serverTotal}건',
+  'inbox-ops-table-footer',
   'leadRiskInfo(lead)',
-  'lead-risk-badge',
+  'inbox-ops-mini-badge',
   '중복·위험 신호',
-  'riskInfo.reasons.join',
-  'riskInfo.score',
+  'selectedRiskInfo.reasons.join',
+  'selectedRiskInfo.score',
   'retryLeadDelivery',
   'retryFailedDeliveries',
   'failedDeliveryCount',
-  'lead-delivery-badge',
+  'inbox-ops-mini-badge delivery',
   '알림 실패',
   '다시 보내기',
-], 'inbox month and pagination contract');
+], 'inbox current month, pagination, risk, and delivery contract');
 
 const duplicatePolicyPanel = await read('src/panels/inbox/DuplicatePolicyPanel.jsx');
 requireAll(duplicatePolicyPanel, [
