@@ -6,14 +6,17 @@ on:
       - 'functions/api/billing/_commissions.js'
       - 'functions/api/billing/_partnerFinance.js'
       - 'functions/api/call/admin/**'
+      - 'functions/api/partner/**'
       - '.github/workflows/calltag-partner-settlement-qa.yml'
   push:
     branches:
+      - 'main'
       - 'agent/calltag-admin-partner-settlement'
     paths:
       - 'functions/api/billing/_commissions.js'
       - 'functions/api/billing/_partnerFinance.js'
       - 'functions/api/call/admin/**'
+      - 'functions/api/partner/**'
       - '.github/workflows/calltag-partner-settlement-qa.yml'
   workflow_dispatch:
 
@@ -36,6 +39,15 @@ jobs:
           node --check functions/api/call/admin/partner.js
           node --check functions/api/call/admin/partner-rate.js
           node --check functions/api/call/admin/settlement-pay.js
+          node --check functions/api/partner/_security.js
+          node --check functions/api/partner/_portal.js
+          node --check functions/api/partner/dashboard.js
+          node --check functions/api/partner/referrals.js
+          node --check functions/api/partner/earnings.js
+          node --check functions/api/partner/settlements.js
+          node --check functions/api/partner/payout-profile.js
+          node --check functions/api/partner/settlements/request.js
+          node --check functions/api/partner/policies.js
       - name: Enforce finance contract
         run: |
           set -euo pipefail
@@ -44,7 +56,19 @@ jobs:
           grep -q "partner.settlement.pay" functions/api/call/admin/settlement-pay.js
           grep -q "CHECK(commission_rate_bps IN (2000, 5000))" functions/api/billing/_partnerFinance.js
           grep -q "resolvePartnerCommissionRateBps" functions/api/billing/_commissions.js
-          grep -q "UNIQUE" functions/api/billing/_partnerFinance.js
+          grep -q "requireSettlementStepup" functions/api/partner/_portal.js
+          grep -q "partner_commissions" functions/api/partner/dashboard.js
+          grep -q "partner_commissions" functions/api/partner/earnings.js
+          grep -q "billing_subscriptions" functions/api/partner/referrals.js
+          grep -q "partner_payout_profiles" functions/api/partner/_portal.js
+          grep -q "partner_payout_requests" functions/api/partner/_portal.js
+          grep -q "PARTNER_TOTP_ENCRYPTION_KEY" functions/api/partner/_portal.js
+          grep -q "payout-save" functions/api/partner/_portal.js
+          grep -q "settlement-request" functions/api/partner/_portal.js
+          if grep -E -n 'purchase_token|purchaseToken|order_id|payment_reference|external_subscription_id|password_hash|account_number_ciphertext|business_number_ciphertext' functions/api/partner/dashboard.js functions/api/partner/referrals.js functions/api/partner/earnings.js functions/api/partner/settlements.js; then
+            echo 'Sensitive billing/account field exposed in partner response surface.' >&2
+            exit 1
+          fi
           if grep -E -n 'purchase_token|purchaseToken|order_id|payment_reference|external_subscription_id|password_hash|bank_account' functions/api/call/admin/partners.js functions/api/call/admin/partner.js functions/api/call/admin/partner-rate.js functions/api/call/admin/settlement-pay.js; then
             echo 'Sensitive billing/account field exposed in partner admin surface.' >&2
             exit 1
