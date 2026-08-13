@@ -301,6 +301,11 @@ function createApiMock(client) {
       return;
     }
 
+    if (pathname === '/api/account-page' && method === 'GET') {
+      await fulfill(requestId, 200, { page });
+      return;
+    }
+
     if (pathname === '/api/leads' && method === 'POST') {
       state.leadPosts += 1;
       await wait(400);

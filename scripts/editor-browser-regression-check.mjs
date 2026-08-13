@@ -338,6 +338,12 @@ function createApiMock(client) {
       return;
     }
 
+    if (pathname === '/api/account-page' && method === 'GET') {
+      state.pageLoadCount += 1;
+      await fulfill(requestId, 200, { page: state.currentPage });
+      return;
+    }
+
     if (pathname === '/api/leads' && method === 'GET') {
       state.leadLoadCount += 1;
       await fulfill(requestId, 200, { leads: [], total: 0, nextCursor: null, hasMore: false });
