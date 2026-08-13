@@ -1,3 +1,5 @@
+@import './screens/HomeScreens.css';
+@import './screens/AuthReferral.css';
 @import './styles/editor-rich.css';
 @import './styles/editor-blocks.css';
 @import './styles/editor-animation.css';
