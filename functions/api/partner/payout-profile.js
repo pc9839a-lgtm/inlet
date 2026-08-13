@@ -1,4 +1,5 @@
 import { handleApiError, jsonResponse, optionsResponse, readJson } from '../_shared.js';
+import { requireFreshSensitiveStepup } from './_fresh.js';
 import {
   PARTNER_PORTAL_METHODS,
   partnerPortalContext,
@@ -15,6 +16,7 @@ export async function onRequest({ request, env }) {
       return jsonResponse(request, env, 200, { ok: true, ...profile }, PARTNER_PORTAL_METHODS);
     }
     if (request.method === 'PUT') {
+      await requireFreshSensitiveStepup(request, env);
       const input = await readJson(request);
       const profile = await savePayoutProfile(context.db, context.ownerId, input, env);
       return jsonResponse(request, env, 200, { ok: true, ...profile }, PARTNER_PORTAL_METHODS);
