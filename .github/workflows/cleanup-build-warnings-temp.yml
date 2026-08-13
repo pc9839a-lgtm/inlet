@@ -1,0 +1,102 @@
+name: Cleanup build warnings temp
+
+on:
+  push:
+    branches:
+      - cleanup/build-warnings-20260813
+    paths:
+      - '.github/workflows/cleanup-build-warnings-temp.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: cleanup/build-warnings-20260813
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Apply warning cleanup
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+
+          function replaceExact(path, from, to) {
+            const source = fs.readFileSync(path, 'utf8');
+            if (!source.includes(from)) throw new Error(`Missing expected token in ${path}: ${from}`);
+            fs.writeFileSync(path, source.replace(from, to));
+          }
+
+          const pkgPath = 'package.json';
+          const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+          pkg.allowScripts = { esbuild: true, workerd: true };
+          fs.writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
+
+          for (const line of [
+            "@import './styles/editor.css';\n",
+            "@import './styles/editor-demo.css';\n",
+            "@import './styles/editor-add-dock-fix.css';\n",
+          ]) {
+            replaceExact('src/app-styles.css', line, '');
+          }
+
+          for (const line of [
+            "@import '../styles/preview-forms-questions.css';\n",
+            "@import '../styles/preview-forms-advanced.css';\n",
+          ]) {
+            replaceExact('src/preview/LandingRenderer.css', line, '');
+          }
+
+          replaceExact(
+            'src/App.jsx',
+            "import WorkspaceEditorScreen from './screens/WorkspaceEditorScreen.jsx';\n",
+            "import WorkspaceEditorScreen from './screens/WorkspaceEditorScreen.jsx';\nimport PublicHome from './screens/PublicHomeRoute.jsx';\n",
+          );
+          replaceExact(
+            'src/App.jsx',
+            "const AuthScreen = lazy(() => import('./screens/HomeScreens.jsx').then((module) => ({ default: module.AuthScreen })));\nconst Dashboard = lazy(() => import('./screens/HomeScreens.jsx').then((module) => ({ default: module.Dashboard })));\nconst PublicHome = lazy(() => import('./screens/PublicHomeRoute.jsx'));\n",
+            "const AuthScreen = lazy(() => import('./screens/AuthScreen.jsx'));\nconst Dashboard = lazy(() => import('./screens/DashboardScreen.jsx'));\n",
+          );
+
+          replaceExact(
+            'src/screens/workspace/workspaceLazySurfaces.jsx',
+            "\nexport const CreateLandingModal = lazy(() => import('../CreateLandingFlow.jsx').then((module) => ({ default: module.CreateLandingModal })));",
+            '',
+          );
+          NODE
+      - name: Install without script warnings
+        shell: bash
+        run: |
+          set -o pipefail
+          npm ci 2>&1 | tee /tmp/npm-ci.log
+          if grep -q 'npm warn allow-scripts' /tmp/npm-ci.log; then
+            echo 'allow-scripts warning remains' >&2
+            exit 1
+          fi
+      - name: Build without known warnings
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee /tmp/build.log
+          if grep -Eq '\[vite:css\]\[postcss\].* is empty|\[INEFFECTIVE_DYNAMIC_IMPORT\]' /tmp/build.log; then
+            echo 'known build warning remains' >&2
+            exit 1
+          fi
+      - name: Full offline QA
+        run: npm run qa:all
+      - name: Commit validated cleanup
+        shell: bash
+        run: |
+          rm .github/workflows/cleanup-build-warnings-temp.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package.json src/app-styles.css src/preview/LandingRenderer.css src/App.jsx src/screens/workspace/workspaceLazySurfaces.jsx .github/workflows/cleanup-build-warnings-temp.yml
+          git commit -m 'chore: clear build and install warnings'
+          git push origin HEAD:cleanup/build-warnings-20260813
