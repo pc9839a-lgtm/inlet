@@ -1,0 +1,42 @@
+name: Apply safe dependency audit fixes
+
+on:
+  push:
+    branches:
+      - optimize/css-audit-20260813
+    paths:
+      - '.github/workflows/patch-safe-audit-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  audit-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: optimize/css-audit-20260813
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Apply audit fixes without force
+        run: npm audit fix --package-lock-only
+      - name: Install updated lockfile
+        run: npm ci
+      - name: Verify dependency audit
+        run: npm audit --json
+      - name: Validate production build and offline QA
+        run: |
+          npm run build
+          npm run qa:all
+      - name: Commit safe lockfile update and remove temporary workflow
+        run: |
+          rm .github/workflows/patch-safe-audit-fix.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json .github/workflows/patch-safe-audit-fix.yml
+          git commit -m "fix(deps): apply non-breaking audit updates"
+          git push origin HEAD:optimize/css-audit-20260813
