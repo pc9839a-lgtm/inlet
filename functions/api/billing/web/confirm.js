@@ -8,6 +8,7 @@ import {
 } from '../../_shared.js';
 import { productPriceKrw, recordReferralCommission } from '../_commissions.js';
 import { ensureBillingSchema, resolveEntitlement } from '../_shared.js';
+import { recordPaymentEvent } from '../_paymentHistory.js';
 
 const METHODS = 'POST, OPTIONS';
 const WEB_PRODUCTS = new Set(['pagero_monthly', 'pagero_pro_monthly', 'pagero_domain_monthly', 'all_monthly']);
@@ -128,6 +129,23 @@ export async function onRequest({ request, env }) {
       WHERE channel = 'web' AND purchase_token_hash = ?
       LIMIT 1
     `).bind(tokenHash).first();
+
+    try {
+      await recordPaymentEvent(db, {
+        ownerId,
+        subscriptionId: subscription?.id,
+        productCode,
+        channel: 'web',
+        eventType: 'charge',
+        paymentReference,
+        amountKrw,
+        amountSource: 'provider_confirmed',
+        paymentStatus: 'paid',
+        paidAt: text(input.paidAt || startedAt, 40),
+      });
+    } catch (error) {
+      console.warn('billing-payment-history-web', String(error?.message || 'record_failed').slice(0, 120));
+    }
 
     const commission = await recordReferralCommission(db, {
       referredOwnerId: ownerId,
