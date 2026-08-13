@@ -151,10 +151,20 @@ function PublicHomeEntry() {
 
 const root = createRoot(document.getElementById('root'));
 
+async function renderWorkspaceApp() {
+  try {
+    await import('./app-styles.css');
+  } catch (error) {
+    if (recoverRuntimeAssetFailure(error)) return;
+    throw error;
+  }
+  root.render(<AppErrorBoundary><App /></AppErrorBoundary>);
+}
+
 if (window.location.pathname.startsWith('/embed/')) {
   root.render(<AppErrorBoundary><MapEmbedApp /></AppErrorBoundary>);
 } else if (isRootPublicHomeLocation(window.location)) {
   root.render(<AppErrorBoundary><PublicHomeEntry /></AppErrorBoundary>);
 } else {
-  root.render(<AppErrorBoundary><App /></AppErrorBoundary>);
+  void renderWorkspaceApp();
 }

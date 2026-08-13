@@ -24,7 +24,7 @@ const files = {
   ])).join('\n'),
   statsPanel: await readFile('src/panels/StatsPanel.jsx', 'utf8'),
   createModalCss: await readFile('src/styles/panels-create-modal.css', 'utf8'),
-  stylesEntry: await readFile('src/styles.css', 'utf8'),
+  appStylesEntry: await readFile('src/app-styles.css', 'utf8'),
   homeCss: await readFile('src/screens/HomeScreens.css', 'utf8'),
 };
 
@@ -63,8 +63,8 @@ assert(
 );
 assert(files.statsPanel.includes('role="status"'), 'stats partial notice should use status semantics');
 assert(files.createModalCss.includes('.sr-only'), 'screen-reader-only utility should exist for hidden modal titles');
-assert(files.stylesEntry.includes("@import './styles/panels-create-modal.css';"), 'builder feedback modal CSS must be loaded globally');
-assert(!files.homeCss.includes('panels-create-modal.css'), 'home screen should not lazy-own global feedback modal CSS');
+assert(files.appStylesEntry.includes("@import './styles/panels-create-modal.css';"), 'builder feedback modal CSS must be loaded by the workspace style bundle');
+assert(!files.homeCss.includes('panels-create-modal.css'), 'home screen should not separately own workspace feedback modal CSS');
 
 const unlabeledIconButtons = [
   ...files.feedback.matchAll(/<button(?![^>]*(?:aria-label|title|>\s*[\p{L}\p{N}]))[^>]*>\s*[×✕]\s*<\/button>/gu),
