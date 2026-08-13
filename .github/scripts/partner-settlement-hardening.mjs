@@ -2,6 +2,9 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 
 const read = (path) => fs.readFileSync(path, 'utf8');
+const apiMiddleware = read('functions/api/_middleware.js');
+const authLogout = read('functions/api/auth/logout.js');
+const sessionRevocation = read('functions/api/auth/_session-revocation.js');
 const portal = read('functions/api/partner/_portal.js');
 const middleware = read('functions/api/partner/_middleware.js');
 const payout = read('functions/api/partner/payout-profile.js');
@@ -9,6 +12,8 @@ const request = read('functions/api/partner/settlements/request.js');
 const logout = read('functions/api/partner/logout.js');
 const security = read('functions/api/partner/_security.js');
 const fresh = read('functions/api/partner/_fresh.js');
+const recoverTotp = read('functions/api/partner/totp/recover.js');
+const adminTotpReset = read('functions/api/call/admin/partner-totp-reset.js');
 const commissions = read('functions/api/billing/_commissions.js');
 const partnerRate = read('functions/api/call/admin/partner-rate.js');
 const settlementPay = read('functions/api/call/admin/settlement-pay.js');
@@ -45,16 +50,34 @@ includesAll(payout, ['requireFreshSensitiveStepup(request, env)', "request.metho
 includesAll(request, ['requireFreshSensitiveStepup(request, env)', 'createPayoutRequest'], 'request fresh TOTP');
 includesAll(fresh, ['PARTNER_FRESH_TTL_SECONDS = 5 * 60', 'PARTNER_TOTP_FRESH_REQUIRED'], 'fresh session');
 
-// 3) Logout destroys all settlement-side reusable sessions and cookies.
+// 3) Settlement logout revokes the current unified account token plus all settlement-side sessions/cookies.
 includesAll(logout, [
+  'revokeSessionToken(env.DB, auth.session)',
   'revokeSettlementSessions(env.DB, auth.ownerId)',
   'revokeFreshSensitiveSessions(env.DB, auth.ownerId)',
   'clearPartnerAuthCookie(request)',
   'clearPartnerStepupCookie(request)',
   'clearPartnerFreshCookie(request)',
-], 'logout');
+], 'partner logout');
+includesAll(authLogout, [
+  'sessionTokenFromAnyRequest(request, { includeBody: true })',
+  'revokeSessionToken(env.DB, token)',
+  "mode: 'revoked-session'",
+], 'account logout');
+includesAll(sessionRevocation, [
+  'auth_session_revocations',
+  "request?.headers?.get?.('X-Inlet-Session')",
+  "request?.headers?.get?.('Authorization')",
+  "PARTNER_AUTH_COOKIE = 'ct_partner_auth'",
+  'body?.session',
+  'isSessionTokenRevoked',
+], 'session revocation store');
+includesAll(apiMiddleware, [
+  'isRequestSessionRevoked(request, env)',
+  "'AUTH_SESSION_REVOKED'",
+], 'global revoked-session enforcement');
 
-// 4) Admin/email recovery TOTP reset removes secret material and invalidates old step-up sessions.
+// 4) Admin/email recovery TOTP reset removes secret material and invalidates both step-up and fresh sessions.
 includesAll(security, [
   "secret_ciphertext = ''",
   "secret_iv = ''",
@@ -66,6 +89,14 @@ includesAll(security, [
   'adminResetPartnerTotp',
   'recoverTotpByEmail',
 ], 'TOTP reset');
+includesAll(adminTotpReset, [
+  'adminResetPartnerTotp(env.DB, ownerId)',
+  'revokeFreshSensitiveSessions(env.DB, ownerId)',
+], 'admin TOTP reset fresh revocation');
+includesAll(recoverTotp, [
+  'const result = await recoverTotpByEmail(request, env, input)',
+  'revokeFreshSensitiveSessions(env.DB, result.auth.ownerId)',
+], 'email TOTP recovery fresh revocation');
 
 // 5) CALLTAG/PAGERO service partitions must be disjoint and identical between request and admin payout paths.
 const portalCalltag = parseProducts(portal, 'CALLTAG', 'serviceCondition');
@@ -108,7 +139,9 @@ console.log('partner settlement hardening contract: OK');
 console.log(JSON.stringify({
   protectedByStepup: true,
   freshTotpForSensitiveWrites: true,
+  logoutRevokesUnifiedSession: true,
   logoutRevokesAllSettlementSessions: true,
+  totpResetRevokesFreshSessions: true,
   totpResetRevokesOldCodes: true,
   calltagProducts: portalCalltag,
   pageroProducts: portalPagero,
