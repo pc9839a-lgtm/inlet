@@ -595,7 +595,7 @@ async function run() {
       innerWidth,
       bodyScrollWidth: document.body?.scrollWidth || 0,
       documentScrollWidth: document.documentElement?.scrollWidth || 0,
-      leadCards: document.querySelectorAll('.lead-card-service').length,
+      leadCards: document.querySelectorAll('.inbox-ops-table-row').length,
       text: document.body?.innerText || '',
     }))()`);
     assert(inboxMetrics.path === '/app', `inbox route changed: ${inboxMetrics.path}`);

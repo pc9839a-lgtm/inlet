@@ -638,14 +638,14 @@ async function run() {
     })()`);
     assert(opened, 'dashboard editor button was not found');
 
-    await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('#editor-block-editor-hero') && !!document.querySelector('.phone-frame')`, 'desktop editor');
+    await waitForBrowser(client, `!!document.querySelector('.builder-shell.edit-workbench-shell') && !!document.querySelector('.edit-workbench-inspector') && !!document.querySelector('.phone-frame') && !!document.querySelector('.phone-frame #block-editor-hero')`, 'desktop editor');
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes('저장 전 히어로 제목')`, 'initial editor preview');
     assert(apiState.pageLoadCount >= 1, 'selected page was not loaded from the page API');
     await capture(client, 'desktop-editor-before');
 
-    await clickSelector(client, '#editor-block-editor-hero .screen-order-head');
-    await waitForBrowser(client, `!!document.querySelector('#editor-block-editor-hero textarea[placeholder="핵심 제목을 입력하세요"]')`, 'hero editor textarea');
-    await setInputValue(client, '#editor-block-editor-hero textarea[placeholder="핵심 제목을 입력하세요"]', updatedHeroTitle);
+    await clickSelector(client, '.phone-frame #block-editor-hero');
+    await waitForBrowser(client, `!!document.querySelector('.edit-workbench-inspector textarea[placeholder="핵심 제목을 입력하세요"]')`, 'hero editor textarea');
+    await setInputValue(client, '.edit-workbench-inspector textarea[placeholder="핵심 제목을 입력하세요"]', updatedHeroTitle);
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(updatedHeroTitle)})`, 'live hero preview');
     await wait(1100);
     assert(apiState.saveCount === 0, 'editing must not submit a server save before the save button is pressed');

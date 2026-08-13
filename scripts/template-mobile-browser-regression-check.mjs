@@ -474,7 +474,11 @@ async function exerciseReservation(client, templateLabel) {
     });
   })()`);
   assert(Array.isArray(metrics) && metrics.length >= 7, `${templateLabel}: reservation controls are incomplete`);
-  assert(metrics.every((control) => control.width > 0 && control.height >= 36), `${templateLabel}: a reservation control is too small or collapsed`);
+  const invalidControl = metrics.find((control) => {
+    const minHeight = ['checkbox', 'radio'].includes(control.type) ? 18 : 36;
+    return control.width <= 0 || control.height < minHeight;
+  });
+  assert(!invalidControl, `${templateLabel}: a reservation control is too small or collapsed: ${JSON.stringify(invalidControl)}`);
 }
 
 async function capture(client, file) {

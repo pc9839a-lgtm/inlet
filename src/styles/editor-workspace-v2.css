@@ -6,3 +6,60 @@ html body #root .builder-shell .preview-workspace .phone-frame {
   width: 430px !important;
   border: 8px solid #111827 !important;
 }
+
+
+/* Stable desktop workspace viewport contract. */
+.builder-shell:not(.template-intro-shell) {
+  height: 100dvh !important;
+  overflow: hidden !important;
+  padding-bottom: 0 !important;
+}
+
+.builder-shell:not(.template-intro-shell) ~ .wayzi-global-footer {
+  display: none !important;
+}
+
+.builder-shell:not(.template-intro-shell) .left-workspace {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.builder-shell:not(.template-intro-shell) .workspace-persistent-header {
+  position: sticky !important;
+  top: 0 !important;
+  grid-row: 1 !important;
+  z-index: 90 !important;
+}
+
+.builder-shell:not(.template-intro-shell) .work-panel {
+  grid-row: 2 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 899px) {
+  .builder-shell.mobile-operations-shell:not(.template-intro-shell) {
+    height: auto !important;
+    min-height: 100dvh !important;
+    overflow: visible !important;
+    padding-bottom: 24px !important;
+  }
+
+  .builder-shell.mobile-operations-shell:not(.template-intro-shell) ~ .wayzi-global-footer {
+    display: grid !important;
+  }
+
+  .builder-shell.mobile-operations-shell:not(.template-intro-shell) .left-workspace {
+    display: block !important;
+    min-height: 100dvh !important;
+    overflow: visible !important;
+  }
+
+  .builder-shell.mobile-operations-shell:not(.template-intro-shell) .work-panel {
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+}
