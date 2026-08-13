@@ -29,7 +29,8 @@ export async function onRequest({ request, env }) {
     const input = await readJson(request);
     const idToken = String(input.idToken || '').trim();
     const nonce = String(input.nonce || '').trim();
-    const googleProfile = await verifyGoogleIdToken(idToken, nonce, env);
+    const legacyNative = input.legacyNative === true;
+    const googleProfile = await verifyGoogleIdToken(idToken, nonce, env, legacyNative);
     const user = await findOrCreateGoogleAccount(db, googleProfile);
     const profile = await getCallProfile(db, user.ownerId);
     const entitlement = await ensurePendingEntitlement(db, user.ownerId);
@@ -54,11 +55,14 @@ export async function onRequest({ request, env }) {
   }
 }
 
-async function verifyGoogleIdToken(idToken = '', expectedNonce = '', env = {}) {
+async function verifyGoogleIdToken(idToken = '', expectedNonce = '', env = {}, legacyNative = false) {
   if (!idToken || idToken.length > MAX_TOKEN_LENGTH) {
     throw oauthError('Google 로그인 토큰이 올바르지 않습니다.', 400, 'GOOGLE_ID_TOKEN_INVALID');
   }
-  if (!expectedNonce || expectedNonce.length > MAX_NONCE_LENGTH) {
+  if (!legacyNative && (!expectedNonce || expectedNonce.length > MAX_NONCE_LENGTH)) {
+    throw oauthError('Google 로그인 요청값이 올바르지 않습니다.', 400, 'GOOGLE_NONCE_INVALID');
+  }
+  if (legacyNative && expectedNonce.length > MAX_NONCE_LENGTH) {
     throw oauthError('Google 로그인 요청값이 올바르지 않습니다.', 400, 'GOOGLE_NONCE_INVALID');
   }
 
@@ -109,7 +113,7 @@ async function verifyGoogleIdToken(idToken = '', expectedNonce = '', env = {}) {
   if (Number(payload.exp || 0) <= now || Number(payload.iat || 0) > now + 120) {
     throw oauthError('Google 로그인 토큰이 만료되었습니다.', 401, 'GOOGLE_ID_TOKEN_EXPIRED');
   }
-  if (String(payload.nonce || '') !== expectedNonce) {
+  if (!legacyNative && String(payload.nonce || '') !== expectedNonce) {
     throw oauthError('Google 로그인 요청값이 일치하지 않습니다.', 401, 'GOOGLE_NONCE_MISMATCH');
   }
   if (payload.email_verified !== true || !String(payload.email || '').trim()) {
