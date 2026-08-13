@@ -1,0 +1,30 @@
+name: Trigger latest full QA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/trigger-latest-qa.yml'
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Remove trigger and dispatch QA on final main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rm .github/workflows/trigger-latest-qa.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/trigger-latest-qa.yml
+          git commit -m "chore: finalize QA trigger"
+          git push origin HEAD:main
+          gh workflow run qa.yml --ref main
