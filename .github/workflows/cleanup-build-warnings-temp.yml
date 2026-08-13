@@ -71,6 +71,12 @@ jobs:
             '',
           );
           NODE
+          rm -f \
+            src/styles/editor.css \
+            src/styles/editor-demo.css \
+            src/styles/editor-add-dock-fix.css \
+            src/styles/preview-forms-questions.css \
+            src/styles/preview-forms-advanced.css
       - name: Install without script warnings
         shell: bash
         run: |
@@ -97,6 +103,6 @@ jobs:
           rm .github/workflows/cleanup-build-warnings-temp.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add package.json src/app-styles.css src/preview/LandingRenderer.css src/App.jsx src/screens/workspace/workspaceLazySurfaces.jsx .github/workflows/cleanup-build-warnings-temp.yml
+          git add -A
           git commit -m 'chore: clear build and install warnings'
           git push origin HEAD:cleanup/build-warnings-20260813
