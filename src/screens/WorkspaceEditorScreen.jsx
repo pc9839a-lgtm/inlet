@@ -4,6 +4,7 @@ import { WorkspacePreviewPane } from './workspace/WorkspacePreviewPane.jsx';
 import '../styles/product-ui-tokens.css';
 import '../styles/workspace-shell.css';
 import '../styles/editor-workspace.css';
+import '../styles/editor-narrow-width-fix.css';
 import '../styles/settings-workspace.css';
 
 export default function WorkspaceEditorScreen({
