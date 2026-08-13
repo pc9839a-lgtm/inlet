@@ -1,9 +1,9 @@
 import React from 'react';
-import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
+import { ChevronRight, GripVertical } from 'lucide-react';
 import { T } from './editorLabels.js';
 import { stop } from './editorEvents.js';
 
-export function ScreenOrderRowIdentity({ block, index, meta, open, onDragStart, onDragEnd, onSelectRow, onSelectRowByKey }) {
+export function ScreenOrderRowIdentity({ block, meta, open, onDragStart, onDragEnd, onSelectRow, onSelectRowByKey }) {
   const Icon = meta.icon;
   const selectTitle = (event) => {
     stop(event);
@@ -23,15 +23,16 @@ export function ScreenOrderRowIdentity({ block, index, meta, open, onDragStart, 
         title={T.dragToReorder}
         aria-label={`${meta.label} 순서 이동`}
       >
-        <GripVertical size={18} />
+        <GripVertical size={17} />
       </div>
 
       <div className="screen-order-v2-title-wrap" role="button" tabIndex={0} aria-expanded={open} onClick={selectTitle} onKeyDown={onSelectRowByKey}>
-        <span className="screen-order-v2-number">{index + 1}</span>
-        <Icon size={17} />
+        <span className="screen-order-v2-type-icon" aria-hidden="true">
+          <Icon size={17} />
+        </span>
         <strong>{meta.label}</strong>
-        <span className="screen-order-v2-chevron" aria-hidden="true">
-          {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        <span className={`screen-order-v2-chevron${open ? ' is-open' : ''}`} aria-hidden="true">
+          <ChevronRight size={16} />
         </span>
       </div>
     </>

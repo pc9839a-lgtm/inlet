@@ -7,8 +7,8 @@ export function AddBlockDock({ addOpen, setAddOpen, openId, addBlock }) {
 
   return (
     <section className={`add-dock fixed-add-dock ${addOpen ? 'open' : ''}`}>
-      {addOpen && <AddBlockPanel onAdd={addBlock} />}
       <AddBlockDockToggle open={addOpen} onToggle={() => setAddOpen(!addOpen)} />
+      {addOpen && <AddBlockPanel onAdd={addBlock} />}
     </section>
   );
 }

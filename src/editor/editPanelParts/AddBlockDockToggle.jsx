@@ -1,13 +1,14 @@
 import React from 'react';
-import { Plus } from 'lucide-react';
-import { T } from './editorLabels.js';
+import { ChevronDown, Plus } from 'lucide-react';
 
 export function AddBlockDockToggle({ open, onToggle }) {
   return (
-    <button className="add-toggle" type="button" onClick={onToggle}>
-      <Plus size={18} />
-      <strong>{T.add}</strong>
-      <span>{open ? T.close : T.open}</span>
+    <button className="add-toggle" type="button" onClick={onToggle} aria-expanded={open}>
+      <Plus size={17} />
+      <strong>블록 추가</strong>
+      <span className={`add-toggle-chevron${open ? ' is-open' : ''}`} aria-hidden="true">
+        <ChevronDown size={15} />
+      </span>
     </button>
   );
 }
