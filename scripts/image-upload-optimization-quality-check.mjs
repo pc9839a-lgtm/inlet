@@ -39,7 +39,7 @@ const gallerySource = await readFile('src/editor/blockEditors/useGalleryMultiUpl
 const galleryEditorSource = await readFile('src/editor/blockEditors/ImageGalleryEditor.jsx', 'utf8');
 const galleryButtonSource = await readFile('src/editor/blockEditors/GalleryUploadButton.jsx', 'utf8');
 const stylesSource = await readFile('src/styles/editor-image-upload-status.css', 'utf8');
-const styleEntrySource = await readFile('src/styles.css', 'utf8');
+const appStyleEntrySource = await readFile('src/app-styles.css', 'utf8');
 const packageJson = JSON.parse(await readFile('package.json', 'utf8'));
 const qaAllSource = await readFile('scripts/qa-all.mjs', 'utf8');
 
@@ -62,7 +62,7 @@ assert(gallerySource.includes('fingerprints.has(result.fingerprint)') && gallery
 assert(galleryEditorSource.includes('duplicateValues={gallery.filter'), 'individual gallery replacements must check sibling images');
 assert(galleryButtonSource.includes('aria-busy') && galleryButtonSource.includes('gallery-upload-progress'), 'multi-upload button must expose busy and progress states');
 assert(stylesSource.includes('.image-upload-status') && stylesSource.includes('.gallery-upload-progress'), 'image progress UI styles are missing');
-assert(styleEntrySource.includes("@import './styles/editor-image-upload-status.css';"), 'image progress stylesheet must be loaded');
+assert(appStyleEntrySource.includes("@import './styles/editor-image-upload-status.css';"), 'image progress stylesheet must be loaded by the workspace style bundle');
 
 assert(packageJson.scripts?.['image:upload:qa'] === 'node scripts/image-upload-optimization-quality-check.mjs', 'image:upload:qa package script is missing');
 assert(qaAllSource.includes("['image:upload:qa', ['scripts/image-upload-optimization-quality-check.mjs']]"), 'qa:all must enforce image upload optimization QA');
