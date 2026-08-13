@@ -10,6 +10,7 @@ const PUBLIC_SECURITY_PATHS = new Set([
   '/api/partner/totp/setup',
   '/api/partner/totp/enable',
   '/api/partner/totp/verify',
+  '/api/partner/totp/fresh',
   '/api/partner/totp/recovery-email',
   '/api/partner/totp/recover',
 ]);
