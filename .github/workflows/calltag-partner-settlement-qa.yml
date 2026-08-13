@@ -47,6 +47,7 @@ jobs:
           node --check functions/api/partner/_fresh.js
           node --check functions/api/partner/_portal.js
           node --check functions/api/partner/_middleware.js
+          node --check functions/api/partner/_payout-notification.js
           node --check functions/api/partner/totp/fresh.js
           node --check functions/api/partner/logout.js
           node --check functions/api/partner/dashboard.js
@@ -80,6 +81,10 @@ jobs:
           grep -q "PARTNER_TOTP_ENCRYPTION_KEY" functions/api/partner/_portal.js
           grep -q "payout-save" functions/api/partner/_portal.js
           grep -q "settlement-request" functions/api/partner/_portal.js
+          grep -q "notifyPayoutRequestAdmin" functions/api/partner/settlements/request.js
+          grep -q "event.waitUntil" functions/api/partner/settlements/request.js
+          grep -q "PARTNER_PAYOUT_ADMIN_EMAIL" functions/api/partner/_payout-notification.js
+          grep -q "새 정산 지급요청" functions/api/partner/_payout-notification.js
           grep -q "partner_payout_requests" functions/api/call/admin/partners.js
           grep -q "payoutRequestCount" functions/api/call/admin/partners.js
           grep -q "partner_payout_requests" functions/api/call/admin/partner.js
@@ -92,8 +97,8 @@ jobs:
           grep -q "processed_at" functions/api/call/admin/settlement-pay.js
           grep -q "CallTag Partner Settlement QA" .github/workflows/deploy-calltag-partner-settlement.yml
           grep -q "wrangler pages deploy dist" .github/workflows/deploy-calltag-partner-settlement.yml
-          if grep -E -n 'purchase_token|purchaseToken|order_id|payment_reference|external_subscription_id|password_hash|account_number_ciphertext|business_number_ciphertext' functions/api/partner/dashboard.js functions/api/partner/referrals.js functions/api/partner/earnings.js functions/api/partner/settlements.js; then
-            echo 'Sensitive billing/account field exposed in partner response surface.' >&2
+          if grep -E -n 'purchase_token|purchaseToken|order_id|payment_reference|external_subscription_id|password_hash|account_number_ciphertext|business_number_ciphertext' functions/api/partner/dashboard.js functions/api/partner/referrals.js functions/api/partner/earnings.js functions/api/partner/settlements.js functions/api/partner/_payout-notification.js; then
+            echo 'Sensitive billing/account field exposed in partner response/notification surface.' >&2
             exit 1
           fi
           if grep -E -n 'purchase_token|purchaseToken|order_id|payment_reference|external_subscription_id|password_hash|bank_account|account_number_ciphertext|account_number_iv|business_number_ciphertext|business_number_iv' functions/api/call/admin/partners.js functions/api/call/admin/partner.js functions/api/call/admin/partner-rate.js functions/api/call/admin/settlement-pay.js; then
