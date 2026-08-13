@@ -1,0 +1,41 @@
+name: Temporary Runtime QA Restore
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/restore-runtime-qa-contract.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore full QA and update only stale chunk contract
+        shell: bash
+        run: |
+          git show d5af936b837d609637d73e96bd3ce4def5eb8ef0:scripts/runtime-quality-check.mjs > scripts/runtime-quality-check.mjs
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/runtime-quality-check.mjs')
+          s = p.read_text(encoding='utf-8')
+          old = "assert(appErrorBoundary.includes('ROOT_CHUNK_RELOAD_LIMIT = 1') && appErrorBoundary.includes(\"url.searchParams.set('__fresh'\"), 'AppErrorBoundary stale chunk recovery must be bounded and use a fresh URL');"
+          new = "assert(appErrorBoundary.includes('ROOT_CHUNK_RELOAD_LIMIT = 3') && appErrorBoundary.includes('ROOT_CHUNK_RELOAD_WINDOW_MS = 45000') && appErrorBoundary.includes('chunkErrorFingerprint(error)') && appErrorBoundary.includes(\"url.searchParams.set('__runtimefix'\"), 'AppErrorBoundary stale chunk recovery must remain fingerprinted, time-window bounded, attempt bounded, and use a fresh runtime URL');"
+          if old not in s:
+              raise SystemExit('stale AppErrorBoundary assertion not found in restored runtime QA')
+          p.write_text(s.replace(old, new, 1), encoding='utf-8')
+          PY
+      - name: Commit restored full QA and remove temporary workflow
+        shell: bash
+        run: |
+          rm -f .github/workflows/restore-runtime-qa-contract.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add scripts/runtime-quality-check.mjs .github/workflows/restore-runtime-qa-contract.yml
+          git commit -m 'fix(qa): restore full runtime checks and current chunk recovery contract'
+          git push origin HEAD:main
