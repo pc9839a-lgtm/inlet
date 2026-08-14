@@ -6,10 +6,15 @@ export function AnchorControl({ block, value, set }) {
 
   return (
     <div className="anchor-control block-editor-anchor-control">
-      <span>위젯 코드</span>
-      <div>
-        <b>#</b>
-        <input value={value || ''} onChange={(event) => changeAnchor(event.target.value)} placeholder="widget-code" />
+      <span className="block-editor-anchor-label">위젯 코드</span>
+      <div className="block-editor-anchor-value">
+        <b aria-hidden="true">#</b>
+        <input
+          value={value || ''}
+          onChange={(event) => changeAnchor(event.target.value)}
+          placeholder="widget-code"
+          aria-label="위젯 코드"
+        />
         <button type="button" onClick={copy}>복사</button>
       </div>
     </div>

@@ -1,0 +1,180 @@
+.block-editor-v2 {
+  --editor-v2-surface: #fff;
+  --editor-v2-soft: #f8fafc;
+  --editor-v2-text: #101828;
+  --editor-v2-muted: #667085;
+  --editor-v2-line: #eaecf0;
+  --editor-v2-primary: #2563eb;
+  --editor-v2-primary-soft: #eff6ff;
+  --editor-v2-danger: #dc2626;
+  display: grid;
+  min-width: 0;
+  color: var(--editor-v2-text);
+  background: transparent;
+  font-size: 14px;
+}
+
+.block-editor-v2-content {
+  display: grid;
+  min-width: 0;
+  background: transparent;
+}
+
+.block-editor-v2 .block-editor-anchor-control {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 8px 0 10px;
+  border: 0;
+  border-bottom: 1px solid var(--editor-v2-line);
+  background: transparent;
+}
+
+.block-editor-v2 .block-editor-anchor-label {
+  color: #667085;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.block-editor-v2 .block-editor-anchor-value {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 34px;
+  overflow: hidden;
+  border: 1px solid #d0d5dd;
+  border-radius: 7px;
+  background: #fff;
+}
+
+.block-editor-v2 .block-editor-anchor-value > b {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: #98a2b3;
+  background: #f9fafb;
+  font-size: 12px;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .block-editor-anchor-value > input {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 32px !important;
+  padding: 0 9px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  background: #fff !important;
+  color: var(--editor-v2-text) !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .block-editor-anchor-value > button {
+  min-width: 46px !important;
+  min-height: 32px !important;
+  padding: 0 9px !important;
+  border: 0 !important;
+  border-left: 1px solid var(--editor-v2-line) !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  color: #475467 !important;
+  box-shadow: none !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+.editor-tabs-v2 {
+  min-width: 0;
+  padding-top: 10px;
+  background: transparent;
+}
+
+.editor-tabs-v2-list {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  gap: 2px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+  padding: 2px;
+  border-radius: 8px;
+  background: #f2f4f7;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .editor-tabs-v2-list > button {
+  min-width: 62px !important;
+  min-height: 30px !important;
+  padding: 0 10px !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+  background: transparent !important;
+  color: #667085 !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .editor-tabs-v2-list > button[aria-selected='true'] {
+  background: #fff !important;
+  color: #101828 !important;
+  box-shadow: 0 1px 2px rgba(16,24,40,.08) !important;
+}
+
+.editor-tabs-v2-panel {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px 0 8px;
+}
+
+.editor-section-v2 {
+  overflow: hidden;
+  border: 0;
+  border-bottom: 1px solid var(--editor-v2-line);
+  background: transparent;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .editor-section-v2-trigger {
+  display: grid !important;
+  grid-template-columns: 22px minmax(0, 1fr) 22px !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-height: 44px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--editor-v2-text) !important;
+  box-shadow: none !important;
+}
+
+.editor-section-v2-body {
+  display: grid;
+  gap: 12px;
+  padding: 12px 0 14px;
+  border-top: 1px solid var(--editor-v2-line);
+}
+
+@media (max-width: 640px) {
+  .block-editor-v2 .block-editor-anchor-control {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+
+  .editor-tabs-v2-list {
+    width: 100%;
+  }
+
+  body .builder-shell .edit-layout .block-editor-v2 .editor-tabs-v2-list > button {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+  }
+}
