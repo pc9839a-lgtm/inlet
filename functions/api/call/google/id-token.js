@@ -14,6 +14,7 @@ import {
 
 const METHODS = 'POST, OPTIONS';
 const GOOGLE_JWKS_URL = 'https://www.googleapis.com/oauth2/v3/certs';
+const CALLTAG_BACKEND_CLIENT_ID = '31346298247-26okq7jrsac89q8pucjeuui6jrfofvqn.apps.googleusercontent.com';
 const MAX_TOKEN_LENGTH = 16_384;
 const MAX_NONCE_LENGTH = 256;
 let jwksCache = { expiresAt: 0, keys: [] };
@@ -103,8 +104,12 @@ async function verifyGoogleIdToken(idToken = '', expectedNonce = '', env = {}, l
   }
 
   const now = Math.floor(Date.now() / 1000);
-  const audience = googleClientId(env);
-  if (!audience || String(payload.aud || '') !== audience) {
+  const configuredAudience = googleClientId(env);
+  const allowedAudiences = new Set([
+    CALLTAG_BACKEND_CLIENT_ID,
+    configuredAudience,
+  ].filter(Boolean));
+  if (!allowedAudiences.has(String(payload.aud || ''))) {
     throw oauthError('Google 로그인 대상이 올바르지 않습니다.', 401, 'GOOGLE_ID_TOKEN_AUDIENCE_INVALID');
   }
   if (payload.iss !== 'accounts.google.com' && payload.iss !== 'https://accounts.google.com') {
