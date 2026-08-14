@@ -14,7 +14,9 @@ import {
 
 const METHODS = 'POST, OPTIONS';
 const GOOGLE_JWKS_URL = 'https://www.googleapis.com/oauth2/v3/certs';
-const CALLTAG_BACKEND_CLIENT_ID = '31346298247-26okq7jrsac89q8pucjeuui6jrfofvqn.apps.googleusercontent.com';
+// This must be the Web application OAuth client that verifies server-side ID tokens.
+// Android OAuth clients identify package + signing certificate and must never be used as token audience here.
+const CALLTAG_BACKEND_CLIENT_ID = '31346298247-o5jfdetjs84mu02c8tp68qg19ifo89en.apps.googleusercontent.com';
 const MAX_TOKEN_LENGTH = 16_384;
 const MAX_NONCE_LENGTH = 256;
 let jwksCache = { expiresAt: 0, keys: [] };
