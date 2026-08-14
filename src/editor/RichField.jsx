@@ -16,9 +16,16 @@ function textToHtml(text) {
 
 export default function RichField({ label, value, onChange, description = '', placeholder = '', required = false, variant = 'legacy' }) {
   if (variant === 'v2') {
+    const compact = label === '제목';
     return (
-      <EditorField label={label} description={description} required={required}>
+      <EditorField
+        label={label}
+        description={description}
+        required={required}
+        className={compact ? 'editor-field-v2--compact-text' : 'editor-field-v2--body-text'}
+      >
         <textarea
+          rows={compact ? 2 : 3}
           value={htmlToText(value)}
           placeholder={placeholder}
           onChange={(event) => onChange(textToHtml(event.target.value))}
