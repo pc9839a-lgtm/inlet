@@ -100,6 +100,72 @@ export async function filterGooglePurchasesForOwner(
   return allowed;
 }
 
+/**
+ * Best-effort cleanup for rows that were historically moved to the wrong CallTag account.
+ * It only deletes a row when Google returns an explicit obfuscated account id and that id
+ * differs from the current signed-in account. Legacy purchases without the identifier are
+ * left untouched to avoid false revocation.
+ */
+export async function pruneMismatchedGoogleSubscriptions(
+  env = {},
+  db,
+  ownerId = '',
+  email = '',
+) {
+  await ensureBillingSchema(db);
+  const safeOwnerId = String(ownerId || '').trim();
+  const safeEmail = String(email || '').trim().toLowerCase();
+  if (!safeOwnerId || !safeEmail) return { checked: 0, removed: 0 };
+
+  const rows = await db.prepare(`
+    SELECT id, order_id
+    FROM billing_subscriptions
+    WHERE owner_id = ?
+      AND channel = 'google_play'
+      AND status IN ('active', 'grace', 'cancelled')
+      AND order_id != ''
+    ORDER BY updated_at DESC, id DESC
+    LIMIT 6
+  `).bind(safeOwnerId).all();
+  const subscriptions = Array.isArray(rows?.results) ? rows.results : [];
+  if (!subscriptions.length) return { checked: 0, removed: 0 };
+
+  const expected = await sha256(safeEmail);
+  let checked = 0;
+  let removed = 0;
+
+  for (const row of subscriptions) {
+    const orderId = String(row?.order_id || '').trim();
+    if (!orderId) continue;
+    try {
+      const order = await googlePlayOrder(env, orderId);
+      const purchaseToken = String(order?.purchaseToken || '').trim();
+      if (!purchaseToken) continue;
+      const purchase = await googlePlaySubscription(env, purchaseToken);
+      const actual = String(
+        purchase?.externalAccountIdentifiers?.obfuscatedExternalAccountId || '',
+      ).trim().toLowerCase();
+      if (!actual) continue;
+      checked++;
+      if (actual === expected) continue;
+
+      const result = await db.prepare(`
+        DELETE FROM billing_subscriptions
+        WHERE id = ? AND owner_id = ? AND channel = 'google_play'
+      `).bind(Number(row.id || 0), safeOwnerId).run();
+      if (Number(result?.meta?.changes ?? result?.changes ?? 0) > 0) removed++;
+    } catch (error) {
+      // Entitlement reads must not fail because Google is temporarily unavailable.
+      // The row remains and will be checked again on the next refresh.
+      console.warn('google play ownership audit skipped', {
+        code: String(error?.details?.code || error?.message || 'PLAY_OWNERSHIP_AUDIT_FAILED').slice(0, 120),
+      });
+    }
+  }
+
+  return { checked, removed };
+}
+
 async function assertGoogleAccountIdentifier(env, email, purchaseToken) {
   if (!email) return;
   const purchase = await googlePlaySubscription(env, purchaseToken);
@@ -126,6 +192,36 @@ async function googlePurchaseMatchesAccount(env, email, purchaseToken) {
   if (!actual) return false;
   const expected = await sha256(email);
   return actual === expected;
+}
+
+async function googlePlayOrder(env, orderId) {
+  const accessToken = await googlePlayAccessToken(env);
+  let response;
+  try {
+    response = await fetch(
+      `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/kr.pagero.calltag/orders/${encodeURIComponent(orderId)}`,
+      {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+      },
+    );
+  } catch (error) {
+    throw billingError(
+      'Google Play 주문 확인 서버에 연결하지 못했습니다.',
+      502,
+      'PLAY_ORDER_NETWORK_FAILED',
+    );
+  }
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw billingError(
+      'Google Play 주문을 확인하지 못했습니다.',
+      502,
+      'PLAY_ORDER_LOOKUP_FAILED',
+      { googleStatus: Number(response.status || 0) },
+    );
+  }
+  return body;
 }
 
 async function googlePlaySubscription(env, purchaseToken) {
