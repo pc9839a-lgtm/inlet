@@ -3,6 +3,7 @@ import { CALL_METHODS, callSession } from '../../call/_shared.js';
 import { recordReferralCommission } from '../_commissions.js';
 import { assertGooglePlayBillingReady } from '../_readiness.js';
 import { verifyGoogleSubscription } from '../_shared.js';
+import { assertGooglePurchaseOwnership } from './_ownership.js';
 
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, CALL_METHODS);
@@ -17,6 +18,7 @@ export async function onRequest({ request, env }) {
     const db = assertD1(env);
     const input = await readJson(request);
     const session = await callSession(request, env, input);
+    await assertGooglePurchaseOwnership(db, session.ownerId, input.purchaseToken);
     const entitlement = await verifyGoogleSubscription(env, db, session.ownerId, input);
     const subscription = entitlement?.subscription || {};
     const commission = await recordReferralCommission(db, {
