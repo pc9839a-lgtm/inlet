@@ -2,6 +2,7 @@ import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../_sha
 import { CALL_METHODS, callSession } from '../call/_shared.js';
 import { googlePlayBillingReadiness } from './_readiness.js';
 import { listSubscriptions, resolveEntitlement } from './_shared.js';
+import { pruneMismatchedGoogleSubscriptions } from './google/_ownership.js';
 import { resolveCallTagEntitlement } from './trial-policy.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -23,6 +24,24 @@ export async function onRequest({ request, env }) {
     const session = await callSession(request, env);
     const serverNow = new Date();
     const productClient = String(request.headers.get('X-Pagero-Product') || '').trim().toLowerCase();
+
+    if (productClient === 'calltag') {
+      try {
+        await pruneMismatchedGoogleSubscriptions(
+          env,
+          db,
+          session.ownerId,
+          session.profile?.email || session.user?.email || '',
+        );
+      } catch (error) {
+        // Ownership cleanup is fail-open for transient Google/API errors; a mismatch is
+        // only removed after Google explicitly proves it belongs to a different account.
+        console.warn('calltag google ownership cleanup skipped', {
+          code: String(error?.details?.code || error?.message || 'PLAY_OWNERSHIP_CLEANUP_FAILED').slice(0, 120),
+        });
+      }
+    }
+
     const entitlement = productClient === 'calltag'
       ? await resolveCallTagEntitlement(db, session.ownerId)
       : await resolveEntitlement(db, session.ownerId);
