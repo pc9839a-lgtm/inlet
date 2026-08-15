@@ -18,7 +18,13 @@ export async function onRequest({ request, env }) {
     const db = assertD1(env);
     const input = await readJson(request);
     const session = await callSession(request, env, input);
-    await assertGooglePurchaseOwnership(db, session.ownerId, input.purchaseToken);
+    await assertGooglePurchaseOwnership(
+      env,
+      db,
+      session.ownerId,
+      session.profile?.email || session.user?.email || '',
+      input.purchaseToken,
+    );
     const entitlement = await verifyGoogleSubscription(env, db, session.ownerId, input);
     const subscription = entitlement?.subscription || {};
     const commission = await recordReferralCommission(db, {
