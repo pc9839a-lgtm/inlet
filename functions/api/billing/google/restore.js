@@ -18,7 +18,13 @@ export async function onRequest({ request, env }) {
     const db = assertD1(env);
     const input = await readJson(request);
     const session = await callSession(request, env, input);
-    const purchases = await filterGooglePurchasesForOwner(db, session.ownerId, input.purchases);
+    const purchases = await filterGooglePurchasesForOwner(
+      env,
+      db,
+      session.ownerId,
+      session.profile?.email || session.user?.email || '',
+      input.purchases,
+    );
     const entitlement = await restoreGoogleSubscriptions(
       env,
       db,
