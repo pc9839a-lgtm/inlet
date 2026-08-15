@@ -3,6 +3,7 @@ import { CALL_METHODS, callSession } from '../../call/_shared.js';
 import { recordReferralCommission } from '../_commissions.js';
 import { assertGooglePlayBillingReady } from '../_readiness.js';
 import { restoreGoogleSubscriptions } from '../_shared.js';
+import { filterGooglePurchasesForOwner } from './_ownership.js';
 
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, CALL_METHODS);
@@ -17,15 +18,16 @@ export async function onRequest({ request, env }) {
     const db = assertD1(env);
     const input = await readJson(request);
     const session = await callSession(request, env, input);
+    const purchases = await filterGooglePurchasesForOwner(db, session.ownerId, input.purchases);
     const entitlement = await restoreGoogleSubscriptions(
       env,
       db,
       session.ownerId,
-      input.purchases,
+      purchases,
     );
 
     const commissions = [];
-    for (const purchase of Array.isArray(input.purchases) ? input.purchases.slice(0, 10) : []) {
+    for (const purchase of purchases) {
       const paymentReference = String(purchase?.orderId || '').trim();
       for (const productCode of Array.isArray(purchase?.products) ? purchase.products.slice(0, 3) : []) {
         const commission = await recordReferralCommission(db, {
