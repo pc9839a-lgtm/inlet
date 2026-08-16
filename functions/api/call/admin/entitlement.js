@@ -1,105 +1,60 @@
-import { callError } from '../_shared.js';
-import {
-  getCalltagAdminEntitlement,
-  grantCalltagAdminEntitlement,
-  normalizeAdminEntitlementScope,
-  revokeCalltagAdminEntitlement,
-} from '../../billing/_adminEntitlements.js';
-import {
-  adminErrorResponse,
-  adminJson,
-  ownerIdInput,
-  recordAdminAudit,
-  requireCalltagAdmin,
-} from './_security.js';
-
-const METHODS = 'GET, POST, OPTIONS';
+import { assertD1, handleApiError, jsonResponse, optionsResponse, readJson } from '../../_shared.js';
+import { AUTH_METHODS } from '../../auth/_auth.js';
+import { assertCallAdmin, callError, entitlementPublic, normalizeEntitlementStatus } from '../_shared.js';
 
 export async function onRequest({ request, env }) {
-  if (request.method === 'OPTIONS') return optionsResponse();
-  if (!['GET', 'POST'].includes(request.method)) {
-    return adminJson(405, { ok: false, error: 'Method not allowed.', code: 'METHOD_NOT_ALLOWED' });
-  }
-
+  if (request.method === 'OPTIONS') return optionsResponse(request, env, AUTH_METHODS);
+  if (!['GET', 'POST', 'PATCH'].includes(request.method)) return jsonResponse(request, env, 405, { ok: false, error: 'Method not allowed.' }, AUTH_METHODS);
   try {
-    if (!env.DB?.prepare) {
-      return adminJson(503, { ok: false, error: '관리자 저장소가 연결되지 않았습니다.', code: 'CALLTAG_ADMIN_DB_REQUIRED' });
-    }
-    const identity = await requireCalltagAdmin(request, env);
+    assertD1(env);
+    assertCallAdmin(request, env);
     const input = request.method === 'GET'
       ? Object.fromEntries(new URL(request.url).searchParams.entries())
-      : await readBody(request);
-    const ownerId = ownerIdInput(input.ownerId || '');
-    const profile = await env.DB.prepare(`
-      SELECT owner_id
-      FROM calllink_profiles
-      WHERE owner_id = ?
-      LIMIT 1
-    `).bind(ownerId).first();
-    if (!profile?.owner_id) {
-      throw callError('회원을 찾을 수 없습니다.', 404, { code: 'CALLTAG_ADMIN_MEMBER_NOT_FOUND' });
+      : await readJson(request);
+    const email = String(input.email || '').trim().toLowerCase();
+    const phone = String(input.phone || '').replace(/\D/g, '');
+    const ownerIdInput = String(input.ownerId || '').trim();
+    const profile = ownerIdInput
+      ? await env.DB.prepare('SELECT owner_id, email, phone FROM calllink_profiles WHERE owner_id = ? LIMIT 1').bind(ownerIdInput).first()
+      : email
+        ? await env.DB.prepare('SELECT owner_id, email, phone FROM calllink_profiles WHERE email = ? LIMIT 1').bind(email).first()
+        : phone
+          ? await env.DB.prepare('SELECT owner_id, email, phone FROM calllink_profiles WHERE phone = ? LIMIT 1').bind(phone).first()
+          : null;
+    if (!profile) throw callError('CallLink user was not found.', 404, { code: 'CALL_USER_NOT_FOUND' });
+
+    if (request.method !== 'GET') {
+      const status = normalizeEntitlementStatus(input.status || 'active');
+      const planCode = String(input.planCode || 'calllink_paid').trim().slice(0, 80);
+      const paidUntil = String(input.paidUntil || '').trim();
+      const source = String(input.source || 'pagero_payment').trim().slice(0, 80);
+      const paymentCustomerId = String(input.paymentCustomerId || '').trim().slice(0, 120);
+      const note = String(input.note || '').trim().slice(0, 300);
+      await env.DB.prepare(`
+        INSERT INTO calllink_entitlements (
+          owner_id, status, plan_code, paid_until, source, payment_customer_id, note, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        ON CONFLICT(owner_id) DO UPDATE SET
+          status = excluded.status,
+          plan_code = excluded.plan_code,
+          paid_until = excluded.paid_until,
+          source = excluded.source,
+          payment_customer_id = excluded.payment_customer_id,
+          note = excluded.note,
+          updated_at = CURRENT_TIMESTAMP
+      `).bind(profile.owner_id, status, planCode, paidUntil, source, paymentCustomerId, note).run();
     }
 
-    if (request.method === 'GET') {
-      const entitlement = await getCalltagAdminEntitlement(env.DB, ownerId);
-      await recordAdminAudit(env.DB, request, env, identity, 'member.entitlement.read', ownerId);
-      return adminJson(200, { ok: true, ownerId, entitlement });
-    }
-
-    const action = String(input.action || 'grant').trim().toLowerCase();
-    if (action === 'grant') {
-      const scope = normalizeAdminEntitlementScope(input.scope || 'all');
-      const durationDays = Math.trunc(Number(input.durationDays || 0));
-      if (!scope || !Number.isFinite(durationDays) || durationDays < 1 || durationDays > 3660) {
-        throw callError('이용권 범위 또는 기간이 올바르지 않습니다.', 400, { code: 'CALLTAG_ADMIN_ENTITLEMENT_INVALID' });
-      }
-      const entitlement = await grantCalltagAdminEntitlement(env.DB, {
-        ownerId,
-        scope,
-        durationDays,
-        note: String(input.note || '').slice(0, 300),
-        grantedBy: identity.ownerId,
-      });
-      await recordAdminAudit(env.DB, request, env, identity, 'member.entitlement.grant', ownerId);
-      return adminJson(200, { ok: true, ownerId, entitlement });
-    }
-
-    if (action === 'revoke') {
-      const entitlement = await revokeCalltagAdminEntitlement(env.DB, {
-        ownerId,
-        revokedBy: identity.ownerId,
-      });
-      await recordAdminAudit(env.DB, request, env, identity, 'member.entitlement.revoke', ownerId);
-      return adminJson(200, { ok: true, ownerId, entitlement });
-    }
-
-    throw callError('지원하지 않는 이용권 작업입니다.', 400, { code: 'CALLTAG_ADMIN_ENTITLEMENT_ACTION_INVALID' });
+    const entitlement = await env.DB.prepare(`
+      SELECT owner_id, status, plan_code, paid_until, source, payment_customer_id, note, created_at, updated_at
+      FROM calllink_entitlements WHERE owner_id = ? LIMIT 1
+    `).bind(profile.owner_id).first();
+    return jsonResponse(request, env, 200, {
+      ok: true,
+      account: { ownerId: profile.owner_id, email: profile.email, phone: profile.phone },
+      entitlement: entitlementPublic(entitlement),
+    }, AUTH_METHODS);
   } catch (error) {
-    return adminErrorResponse(error);
+    return handleApiError(request, env, error, AUTH_METHODS);
   }
-}
-
-async function readBody(request) {
-  const text = await request.text().catch(() => '');
-  if (!text || text.length > 4096) {
-    throw callError('요청 데이터가 올바르지 않습니다.', 400, { code: 'CALLTAG_ADMIN_BODY_INVALID' });
-  }
-  try {
-    const body = JSON.parse(text);
-    if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('invalid');
-    return body;
-  } catch {
-    throw callError('요청 데이터가 올바르지 않습니다.', 400, { code: 'CALLTAG_ADMIN_BODY_INVALID' });
-  }
-}
-
-function optionsResponse() {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      allow: METHODS,
-      'cache-control': 'no-store, max-age=0',
-      'x-content-type-options': 'nosniff',
-    },
-  });
 }
