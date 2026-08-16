@@ -77,6 +77,12 @@ jobs:
           fi
           grep -q "CALLTAG_ADMIN_ACCESS_AUD" functions/api/call/admin/_security.js
           grep -q "CF-Access-Jwt-Assertion" functions/api/call/admin/_security.js
+          grep -q "assertCallAdmin" functions/api/call/admin/entitlement.js
+          grep -q "requireCalltagAdmin" functions/api/call/admin/manual-entitlement.js
+          if grep -q "assertCallAdmin" functions/api/call/admin/manual-entitlement.js; then
+            echo 'Manual entitlement endpoint must stay on the CF Access admin security boundary.' >&2
+            exit 1
+          fi
           grep -q "verification_state" functions/api/call/admin/member.js
           grep -q "calllink_profiles" functions/api/call/admin/members.js
           grep -q "calltag_admin_entitlements" functions/api/billing/_adminEntitlements.js
