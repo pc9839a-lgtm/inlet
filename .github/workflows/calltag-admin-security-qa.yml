@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'functions/api/call/admin/**'
+      - 'functions/api/billing/_adminEntitlements.js'
+      - 'functions/api/billing/entitlements.js'
       - 'functions/api/billing/_paymentHistory.js'
       - 'functions/api/billing/_playEarningsHistory.js'
       - 'functions/api/billing/web/confirm.js'
@@ -15,6 +17,8 @@ on:
       - 'agent/calltag-admin-minimal-risk'
     paths:
       - 'functions/api/call/admin/**'
+      - 'functions/api/billing/_adminEntitlements.js'
+      - 'functions/api/billing/entitlements.js'
       - 'functions/api/billing/_paymentHistory.js'
       - 'functions/api/billing/_playEarningsHistory.js'
       - 'functions/api/billing/web/confirm.js'
@@ -44,12 +48,16 @@ jobs:
           node --check functions/api/call/admin/member.js
           node --check functions/api/call/admin/members.js
           node --check functions/api/call/admin/member-payments.js
+          node --check functions/api/call/admin/entitlement.js
+          node --check functions/api/call/admin/manual-entitlement.js
           node --check functions/api/call/admin/partners.js
           node --check functions/api/call/admin/partner.js
           node --check functions/api/call/admin/partner-rate.js
           node --check functions/api/call/admin/settlement-pay.js
           node --check functions/api/call/admin/play-finance.js
           node --check functions/api/call/admin/play-finance-monthly.js
+          node --check functions/api/billing/_adminEntitlements.js
+          node --check functions/api/billing/entitlements.js
           node --check functions/api/billing/_paymentHistory.js
           node --check functions/api/billing/_playEarningsHistory.js
           node --check functions/api/billing/web/confirm.js
@@ -58,7 +66,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          files=(functions/api/call/admin/_security.js functions/api/call/admin/overview.js functions/api/call/admin/member.js functions/api/call/admin/members.js functions/api/call/admin/member-payments.js functions/api/call/admin/partners.js functions/api/call/admin/partner.js functions/api/call/admin/partner-rate.js functions/api/call/admin/settlement-pay.js functions/api/call/admin/play-finance.js functions/api/call/admin/play-finance-monthly.js)
+          files=(functions/api/call/admin/_security.js functions/api/call/admin/overview.js functions/api/call/admin/member.js functions/api/call/admin/members.js functions/api/call/admin/member-payments.js functions/api/call/admin/manual-entitlement.js functions/api/call/admin/partners.js functions/api/call/admin/partner.js functions/api/call/admin/partner-rate.js functions/api/call/admin/settlement-pay.js functions/api/call/admin/play-finance.js functions/api/call/admin/play-finance-monthly.js)
           if grep -E -n 'purchase_token_hash|purchaseToken|order_id|external_subscription_id|password_hash|values_json|message_body|sms_body|bank_account' "${files[@]}"; then
             echo 'Forbidden sensitive field reference found in CallTag admin surface.' >&2
             exit 1
@@ -69,8 +77,18 @@ jobs:
           fi
           grep -q "CALLTAG_ADMIN_ACCESS_AUD" functions/api/call/admin/_security.js
           grep -q "CF-Access-Jwt-Assertion" functions/api/call/admin/_security.js
+          grep -q "assertCallAdmin" functions/api/call/admin/entitlement.js
+          grep -q "requireCalltagAdmin" functions/api/call/admin/manual-entitlement.js
+          if grep -q "assertCallAdmin" functions/api/call/admin/manual-entitlement.js; then
+            echo 'Manual entitlement endpoint must stay on the CF Access admin security boundary.' >&2
+            exit 1
+          fi
           grep -q "verification_state" functions/api/call/admin/member.js
           grep -q "calllink_profiles" functions/api/call/admin/members.js
+          grep -q "calltag_admin_entitlements" functions/api/billing/_adminEntitlements.js
+          grep -q "getCalltagAdminEntitlement" functions/api/billing/entitlements.js
+          grep -q "ADMIN_ENTITLEMENT_ACTIVE" functions/api/billing/entitlements.js
+          grep -q "member.entitlement.grant" functions/api/call/admin/manual-entitlement.js
           grep -q "listPaymentEvents" functions/api/call/admin/member-payments.js
           grep -q "syncPlayEarningsHistory" functions/api/call/admin/play-finance-monthly.js
           grep -q "devstorage.read_only" functions/api/call/admin/play-finance.js
@@ -78,4 +96,8 @@ jobs:
           grep -q "calltag_play_earnings_monthly" functions/api/call/admin/play-finance.js
           grep -q "billing_payment_events" functions/api/billing/_paymentHistory.js
           grep -q "earnings/earnings_" functions/api/billing/_playEarningsHistory.js
+          if grep -E -n 'INSERT[[:space:]]+INTO[[:space:]]+billing_subscriptions|INSERT[[:space:]]+INTO[[:space:]]+partner_commissions|UPDATE[[:space:]]+billing_subscriptions' functions/api/billing/_adminEntitlements.js functions/api/call/admin/manual-entitlement.js; then
+            echo 'Admin entitlement must not create or mutate billing/commission records.' >&2
+            exit 1
+          fi
           grep -q "Package ID" <(printf 'Package ID')
