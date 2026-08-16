@@ -41,15 +41,16 @@ export async function getCalltagAdminEntitlement(db, ownerId = '', { activeOnly 
 export async function grantCalltagAdminEntitlement(db, input = {}) {
   await ensureCalltagAdminEntitlementSchema(db);
   const ownerId = text(input.ownerId, 120);
-  const scope = normalizeAdminEntitlementScope(input.scope);
+  const requestedScope = normalizeAdminEntitlementScope(input.scope);
   const grantedBy = text(input.grantedBy, 120);
   const note = text(input.note, 300);
   const durationDays = clampDays(input.durationDays);
-  if (!ownerId || !scope || !grantedBy || !durationDays) {
+  if (!ownerId || !requestedScope || !grantedBy || !durationDays) {
     throw new Error('Invalid CallTag admin entitlement grant.');
   }
 
   const current = await getCalltagAdminEntitlement(db, ownerId);
+  const scope = mergeAdminEntitlementScopes(current?.active === true ? current.scope : '', requestedScope);
   const now = Date.now();
   const currentExpiry = current?.active === true ? Date.parse(String(current.expiresAt || '')) : 0;
   const baseMs = Number.isFinite(currentExpiry) && currentExpiry > now ? currentExpiry : now;
@@ -117,6 +118,15 @@ export function adminEntitlementPublic(row = null) {
 export function normalizeAdminEntitlementScope(value = '') {
   const scope = String(value || '').trim().toLowerCase();
   return ADMIN_ENTITLEMENT_SCOPES.has(scope) ? scope : '';
+}
+
+function mergeAdminEntitlementScopes(currentScope = '', requestedScope = '') {
+  const current = normalizeAdminEntitlementScope(currentScope);
+  const requested = normalizeAdminEntitlementScope(requestedScope);
+  if (!current) return requested;
+  if (!requested || current === requested) return current;
+  if (current === 'all' || requested === 'all') return 'all';
+  return 'all';
 }
 
 function clampDays(value) {
