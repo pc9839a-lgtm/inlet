@@ -1,3 +1,4 @@
+import { ensureCalltagAdminEntitlementSchema } from '../../billing/_adminEntitlements.js';
 import {
   adminErrorResponse,
   adminJson,
@@ -41,8 +42,11 @@ export async function onRequest({ request, env }) {
     `).bind(...bindings, PAGE_SIZE, offset).all();
     const rows = Array.isArray(result?.results) ? result.results : [];
     const ownerIds = rows.map((row) => String(row?.owner_id || '')).filter(Boolean);
-    const accounts = await loadAccounts(env.DB, ownerIds);
-    const subscriptions = await loadSubscriptions(env.DB, ownerIds);
+    const [accounts, subscriptions, adminEntitlements] = await Promise.all([
+      loadAccounts(env.DB, ownerIds),
+      loadSubscriptions(env.DB, ownerIds),
+      loadAdminEntitlements(env.DB, ownerIds),
+    ]);
 
     await recordAdminAudit(env.DB, request, env, identity, 'members.search');
     return adminJson(200, {
@@ -63,6 +67,7 @@ export async function onRequest({ request, env }) {
           trialEndsAt: safeIso(accounts.get(ownerId)?.trial_ends_at),
           referralBonusDays: clampNumber(accounts.get(ownerId)?.referral_bonus_days, 0, 31),
           subscriptions: subscriptions.get(ownerId) || [],
+          adminEntitlement: adminEntitlements.get(ownerId) || null,
         };
       }),
       generatedAt: new Date().toISOString(),
@@ -122,6 +127,36 @@ async function loadSubscriptions(db, ownerIds) {
       const key = `${item.productCode}:${item.channel}:${item.status}:${item.expiresAt}`;
       if (!list.some((entry) => `${entry.productCode}:${entry.channel}:${entry.status}:${entry.expiresAt}` === key)) list.push(item);
       map.set(ownerId, list.slice(0, 6));
+    }
+  } catch {}
+  return map;
+}
+
+async function loadAdminEntitlements(db, ownerIds) {
+  const map = new Map();
+  if (!ownerIds.length) return map;
+  try {
+    await ensureCalltagAdminEntitlementSchema(db);
+    const placeholders = ownerIds.map(() => '?').join(',');
+    const result = await db.prepare(`
+      SELECT owner_id, scope, status, starts_at, expires_at
+      FROM calltag_admin_entitlements
+      WHERE owner_id IN (${placeholders})
+    `).bind(...ownerIds).all();
+    for (const row of (Array.isArray(result?.results) ? result.results : [])) {
+      const ownerId = String(row.owner_id || '');
+      if (!ownerId) continue;
+      const expiresAt = safeIso(row.expires_at);
+      const active = String(row.status || '').toLowerCase() === 'active'
+        && Number.isFinite(Date.parse(expiresAt))
+        && Date.parse(expiresAt) > Date.now();
+      map.set(ownerId, {
+        active,
+        status: active ? 'active' : (String(row.status || '').toLowerCase() === 'active' ? 'expired' : token(row.status, 24)),
+        scope: ['call', 'message', 'all'].includes(String(row.scope || '')) ? String(row.scope) : '',
+        startsAt: safeIso(row.starts_at),
+        expiresAt,
+      });
     }
   } catch {}
   return map;
