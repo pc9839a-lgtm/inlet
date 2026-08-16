@@ -478,6 +478,8 @@ async function googlePlaySubscription(env, packageName, purchaseToken) {
       {
         method: 'GET',
         headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+        redirect: 'error',
+        signal: AbortSignal.timeout(15000),
       }
     );
   } catch (error) {
@@ -505,6 +507,8 @@ async function acknowledgeGoogleSubscription(env, packageName, productId, purcha
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({}),
+        redirect: 'error',
+        signal: AbortSignal.timeout(15000),
       }
     );
   } catch (error) {
@@ -538,6 +542,8 @@ async function googlePlayAccessToken(env = {}) {
         grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
         assertion,
       }),
+      redirect: 'error',
+      signal: AbortSignal.timeout(15000),
     });
   } catch (error) {
     throw billingError('Google Play 인증 서버에 연결하지 못했습니다.', 503, 'PLAY_AUTH_NETWORK_FAILED');
