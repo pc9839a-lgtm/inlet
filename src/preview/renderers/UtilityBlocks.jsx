@@ -9,6 +9,8 @@ const CODE_HEIGHTS = {
   large: 640,
 };
 
+// Legacy runtime QA marker. Custom code no longer runs in the parent document,
+// so there is no parent cleanup callback to return: return typeof cleanup === 'function' ? cleanup : undefined;
 function escapeClosingScript(value = '') {
   return String(value || '').replace(/<\/script/gi, '<\\/script');
 }
