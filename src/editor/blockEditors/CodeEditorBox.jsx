@@ -8,11 +8,11 @@ export default function CodeEditorBox({ draft, onDraftChange, onOpenModal, onApp
       <textarea
         value={draft}
         onChange={(event) => onDraftChange(event.target.value)}
-        placeholder="HTML 코드를 입력하세요"
+        placeholder="HTML / CSS / JavaScript 코드를 붙여넣으세요"
         spellCheck={false}
       />
       <div className="code-editor-actions">
-        <span>저장하면 위험한 코드는 자동으로 제거됩니다.</span>
+        <span>HTML·CSS·JavaScript를 격리된 영역에서 실행합니다.</span>
         <button type="button" onClick={onApply}>적용</button>
       </div>
     </div>
