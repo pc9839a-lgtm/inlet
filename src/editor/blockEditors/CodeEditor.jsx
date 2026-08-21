@@ -1,6 +1,6 @@
-import { Code2 } from 'lucide-react';
 import './CodeEditor.css';
-import { EditorSection, EditorTabs } from '../ui/index.js';
+import { EditorTabs } from '../ui/index.js';
+import BgmEditor from './BgmEditor.jsx';
 import { CodeStylePanel } from './WidgetStylePanels.jsx';
 import CodeEditorBox from './CodeEditorBox.jsx';
 import CodeEditorModal from './CodeEditorModal.jsx';
@@ -8,6 +8,10 @@ import { useCodeDraft } from './useCodeDraft.js';
 
 export default function CodeEditor({ s, set }) {
   const { draft, setDraft, modalOpen, setModalOpen } = useCodeDraft(s.html);
+
+  if (s.widgetMode === 'bgm') {
+    return <BgmEditor s={s} set={set} />;
+  }
 
   const apply = () => {
     set({ html: draft, css: '', js: '', runJs: false });

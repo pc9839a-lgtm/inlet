@@ -23,8 +23,17 @@ export function useEditorBlockActions({
     setPage((p) => commitLocalPageDraft({ ...p, blocks: p.blocks.map((b) => b.id === id ? { ...b, visible: !b.visible } : b) }));
   };
 
-  const addBlock = (type) => {
+  const addBlock = (type, preset = '') => {
     if (blockWrite('edit')) return;
+    const bgmPreset = type === 'code' && preset === 'bgm';
+    if (bgmPreset) {
+      const existing = page.blocks.find((b) => b.type === 'code' && b.s?.widgetMode === 'bgm');
+      if (existing) {
+        setOpenId(existing.id);
+        setAddOpen(false);
+        return;
+      }
+    }
     if (SINGLETON_BLOCK_TYPES.includes(type)) {
       const existing = page.blocks.find((b) => b.type === type);
       if (existing) {
@@ -34,8 +43,20 @@ export function useEditorBlockActions({
       }
     }
     const block = newBlock(type);
+    if (bgmPreset) {
+      block.s = {
+        ...block.s,
+        widgetMode: 'bgm',
+        bgmSrc: '',
+        bgmLabel: 'BGM',
+        autoplay: true,
+        loop: true,
+        volume: 70,
+        showControl: true,
+      };
+    }
     setPage((p) => commitLocalPageDraft({ ...p, blocks: ensureUniqueAnchors([...p.blocks, block]) }));
-    setOpenId('');
+    setOpenId(bgmPreset ? block.id : '');
     setAddOpen(false);
   };
 
@@ -50,12 +71,12 @@ export function useEditorBlockActions({
   const duplicateBlock = (id) => {
     if (blockWrite('edit')) return;
     const source = page.blocks.find((b) => b.id === id);
-    if (!source || SINGLETON_BLOCK_TYPES.includes(source.type)) return;
+    if (!source || SINGLETON_BLOCK_TYPES.includes(source.type) || source.s?.widgetMode === 'bgm') return;
     const copy = clone(source);
     copy.id = uid();
     setPage((p) => {
       const idx = p.blocks.findIndex((b) => b.id === id);
-      if (idx < 0 || SINGLETON_BLOCK_TYPES.includes(p.blocks[idx].type)) return p;
+      if (idx < 0 || SINGLETON_BLOCK_TYPES.includes(p.blocks[idx].type) || p.blocks[idx].s?.widgetMode === 'bgm') return p;
       const next = [...p.blocks];
       next.splice(idx + 1, 0, copy);
       return commitLocalPageDraft({ ...p, blocks: ensureUniqueAnchors(next) });
