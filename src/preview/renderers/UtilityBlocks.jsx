@@ -130,7 +130,136 @@ function findSearchableSections(root, currentId) {
     .filter((item) => item.normalized);
 }
 
-export function RenderCode({ block }) {
+function RenderBgmCode({ block }) {
+  const s = block.s || {};
+  const audioRef = useRef(null);
+  const [playing, setPlaying] = useState(false);
+  const [blocked, setBlocked] = useState(false);
+  const src = String(s.bgmSrc || '').trim();
+  const volume = Math.max(0, Math.min(100, Number(s.volume ?? 70)));
+  const autoplay = s.autoplay !== false;
+  const loop = s.loop !== false;
+  const showControl = s.showControl !== false;
+  const label = String(s.bgmLabel ?? 'BGM').trim() || 'BGM';
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.volume = volume / 100;
+  }, [volume, src]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !src) {
+      setPlaying(false);
+      setBlocked(false);
+      return undefined;
+    }
+
+    let disposed = false;
+    const tryPlay = () => {
+      if (disposed || !autoplay) return;
+      try {
+        const result = audio.play();
+        if (result && typeof result.then === 'function') {
+          result.then(() => {
+            if (!disposed) {
+              setPlaying(true);
+              setBlocked(false);
+            }
+          }).catch(() => {
+            if (!disposed) setBlocked(true);
+          });
+        }
+      } catch {
+        if (!disposed) setBlocked(true);
+      }
+    };
+
+    audio.load();
+    tryPlay();
+
+    const retryAfterGesture = () => {
+      if (!autoplay || !audio.paused) return;
+      tryPlay();
+    };
+    window.addEventListener('pointerdown', retryAfterGesture, { passive: true, once: true });
+    window.addEventListener('touchstart', retryAfterGesture, { passive: true, once: true });
+    window.addEventListener('keydown', retryAfterGesture, { once: true });
+
+    return () => {
+      disposed = true;
+      window.removeEventListener('pointerdown', retryAfterGesture);
+      window.removeEventListener('touchstart', retryAfterGesture);
+      window.removeEventListener('keydown', retryAfterGesture);
+    };
+  }, [src, autoplay]);
+
+  const toggle = async () => {
+    const audio = audioRef.current;
+    if (!audio || !src) return;
+    if (!audio.paused) {
+      audio.pause();
+      setPlaying(false);
+      return;
+    }
+    try {
+      await audio.play();
+      setPlaying(true);
+      setBlocked(false);
+    } catch {
+      setBlocked(true);
+    }
+  };
+
+  const hiddenStyle = showControl
+    ? { background: 'transparent', boxShadow: 'none', border: 0, paddingTop: 8, paddingBottom: 8 }
+    : { background: 'transparent', boxShadow: 'none', border: 0, padding: 0, margin: 0, minHeight: 0, height: 0, overflow: 'visible' };
+
+  return (
+    <section id={`block-${block.id}`} className="landing-section code-widget bgm-widget" style={hiddenStyle}>
+      <audio
+        ref={audioRef}
+        src={src || undefined}
+        autoPlay={autoplay}
+        loop={loop}
+        preload="auto"
+        onPlay={() => { setPlaying(true); setBlocked(false); }}
+        onPause={() => setPlaying(false)}
+        onEnded={() => setPlaying(false)}
+      />
+      {showControl && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <button
+            type="button"
+            onClick={toggle}
+            disabled={!src}
+            aria-label={`${label} ${playing ? '끄기' : '재생'}`}
+            style={{
+              minHeight: 42,
+              padding: '0 16px',
+              border: '1px solid rgba(47,42,39,.12)',
+              borderRadius: 999,
+              background: '#ffffff',
+              color: '#2f2a27',
+              font: 'inherit',
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: src ? 'pointer' : 'default',
+              boxShadow: '0 6px 18px rgba(47,42,39,.06)',
+            }}
+          >
+            {playing ? '♪' : '♫'} {label} {playing ? '끄기' : '재생'}
+          </button>
+        </div>
+      )}
+      {!src && showControl && <p style={{ margin: '8px 0 0', textAlign: 'center', color: '#94a3b8', fontSize: 12 }}>BGM 음원 URL을 입력하세요.</p>}
+      {blocked && showControl && src && <p style={{ margin: '8px 0 0', textAlign: 'center', color: '#94a3b8', fontSize: 12 }}>브라우저 자동재생 제한으로 재생 버튼을 눌러주세요.</p>}
+    </section>
+  );
+}
+
+function RenderCustomCode({ block }) {
   const s = block.s || {};
   const rootRef = useRef(null);
   const iframeRef = useRef(null);
@@ -212,6 +341,11 @@ export function RenderCode({ block }) {
       )}
     </section>
   );
+}
+
+export function RenderCode({ block }) {
+  if (block.s?.widgetMode === 'bgm') return <RenderBgmCode block={block} />;
+  return <RenderCustomCode block={block} />;
 }
 
 export function RenderPageSearch({ block }) {
