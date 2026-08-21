@@ -332,7 +332,8 @@ function RenderCustomCode({ block }) {
           className="custom-code-frame"
           srcDoc={srcDoc}
           title="사용자 코드"
-          sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation allow-downloads"
+          data-custom-code-runtime="sandbox-v3"
+          sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation allow-top-navigation-to-custom-protocols allow-downloads allow-modals"
           allow="autoplay; clipboard-write"
           style={{ width: '100%', height: `${frameHeight}px`, border: 0, display: 'block', background: 'transparent' }}
         />
