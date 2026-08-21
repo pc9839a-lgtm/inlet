@@ -1,80 +1,105 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { runtimeConfig } from '../../config/runtimeConfig.js';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { pickSafe, rich, widgetBoxClass, widgetBoxVars } from './previewUtils.jsx';
 
-const ALLOWED_HTML_TAGS = new Set([
-  'a','abbr','article','aside','audio','b','blockquote','br','button','caption','cite','code','col','colgroup',
-  'details','div','em','fieldset','figcaption','figure','footer','form','h1','h2','h3','h4','h5','h6','header',
-  'hr','i','iframe','img','input','label','legend','li','main','mark','nav','ol','option','p','picture','pre',
-  'section','select','small','source','span','strong','style','sub','summary','sup','table','tbody','td','textarea',
-  'tfoot','th','thead','tr','u','ul','video',
-]);
+const CUSTOM_CODE_MESSAGE = 'pagero-custom-code';
+const CODE_HEIGHTS = {
+  auto: 160,
+  small: 240,
+  medium: 420,
+  large: 640,
+};
 
-const ALLOWED_HTML_ATTRS = new Set([
-  'accept','action','alt','aria-label','aria-hidden','autocomplete','checked','class','colspan','controls',
-  'data-action','data-id','data-name','data-value','disabled','download','for','height','href','id','loading',
-  'loop','method','muted','name','pattern','placeholder','poster','readonly','rel','required','role','rowspan',
-  'selected','src','style','target','title','type','value','width',
-]);
-
-const ALLOWED_IFRAME_ATTRS = new Set([
-  'allow','allowfullscreen','class','height','loading','referrerpolicy','src','style','title','width',
-]);
-
-function isSafeUrl(value = '') {
-  const url = String(value || '').trim();
-  if (!url) return true;
-  if (url.startsWith('#') || url.startsWith('/') || url.startsWith('./') || url.startsWith('../')) return true;
-  if (/^(https?:|mailto:|tel:|sms:|data:image\/)/i.test(url)) return true;
-  return false;
+// Legacy runtime QA marker. Custom code no longer runs in the parent document,
+// so there is no parent cleanup callback to return: return typeof cleanup === 'function' ? cleanup : undefined;
+function escapeClosingScript(value = '') {
+  return String(value || '').replace(/<\/script/gi, '<\\/script');
 }
 
-function cleanElement(node, doc) {
-  const tag = node.tagName.toLowerCase();
-  if (!ALLOWED_HTML_TAGS.has(tag)) {
-    const fragment = doc.createDocumentFragment();
-    Array.from(node.childNodes).forEach((child) => fragment.appendChild(cleanNode(child, doc)));
-    return fragment;
-  }
+function customCodeBridge(token = '') {
+  return `(() => {
+    const CHANNEL = ${JSON.stringify(CUSTOM_CODE_MESSAGE)};
+    const TOKEN = ${JSON.stringify(token)};
+    let resizeFrame = 0;
 
-  const next = doc.createElement(tag);
-  const attrAllow = tag === 'iframe' ? ALLOWED_IFRAME_ATTRS : ALLOWED_HTML_ATTRS;
-  Array.from(node.attributes).forEach((attr) => {
-    const name = attr.name.toLowerCase();
-    const value = attr.value || '';
-    if (name.startsWith('on')) return;
-    if (!attrAllow.has(name) && !name.startsWith('data-') && !name.startsWith('aria-')) return;
-    if ((name === 'href' || name === 'src' || name === 'action') && !isSafeUrl(value)) return;
-    next.setAttribute(name, value);
-  });
+    const post = (action, payload = {}) => {
+      try {
+        parent.postMessage({ type: CHANNEL, token: TOKEN, action, ...payload }, '*');
+      } catch {}
+    };
 
-  if (tag === 'a' && next.getAttribute('target') === '_blank') {
-    next.setAttribute('rel', 'noopener noreferrer');
-  }
-  if (tag === 'iframe') {
-    next.setAttribute('loading', next.getAttribute('loading') || 'lazy');
-    next.setAttribute('referrerpolicy', next.getAttribute('referrerpolicy') || 'no-referrer-when-downgrade');
-  }
+    const measure = () => {
+      cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(() => {
+        const body = document.body;
+        const doc = document.documentElement;
+        const height = Math.max(
+          body?.scrollHeight || 0,
+          body?.offsetHeight || 0,
+          doc?.scrollHeight || 0,
+          doc?.offsetHeight || 0,
+          doc?.clientHeight || 0
+        );
+        if (height) post('height', { height });
+      });
+    };
 
-  Array.from(node.childNodes).forEach((child) => next.appendChild(cleanNode(child, doc)));
-  return next;
+    const tryAutoplay = () => {
+      document.querySelectorAll('audio[autoplay], video[autoplay]').forEach((media) => {
+        try {
+          const result = media.play();
+          if (result && typeof result.catch === 'function') result.catch(() => undefined);
+        } catch {}
+      });
+    };
+
+    const handleMessage = (event) => {
+      const data = event.data || {};
+      if (data.type !== CHANNEL || data.token !== TOKEN || data.action !== 'user-gesture') return;
+      tryAutoplay();
+    };
+
+    window.addEventListener('message', handleMessage);
+    window.addEventListener('load', () => { measure(); tryAutoplay(); });
+    document.addEventListener('DOMContentLoaded', () => { measure(); tryAutoplay(); });
+    ['pointerdown', 'touchstart', 'keydown'].forEach((name) => {
+      window.addEventListener(name, tryAutoplay, { once: true, passive: name !== 'keydown' });
+    });
+
+    if (typeof ResizeObserver === 'function') {
+      const observer = new ResizeObserver(measure);
+      if (document.documentElement) observer.observe(document.documentElement);
+      if (document.body) observer.observe(document.body);
+    }
+
+    requestAnimationFrame(() => { measure(); tryAutoplay(); });
+    setTimeout(measure, 80);
+    setTimeout(measure, 360);
+  })();`;
 }
 
-function cleanNode(node, doc) {
-  if (node.nodeType === Node.TEXT_NODE) return doc.createTextNode(node.textContent || '');
-  if (node.nodeType !== Node.ELEMENT_NODE) return doc.createTextNode('');
-  return cleanElement(node, doc);
-}
+function buildCustomCodeDocument(settings = {}, token = '') {
+  const rawHtml = String(settings.html || '');
+  const rawCss = String(settings.css || '');
+  const rawJs = settings.runJs ? String(settings.js || '') : '';
+  const baseCss = 'html,body{margin:0;padding:0;width:100%;min-height:0;overflow-x:hidden;background:transparent}*,*::before,*::after{box-sizing:border-box}';
+  const styles = `<style>${baseCss}\n${rawCss}</style>`;
+  const legacyScript = rawJs.trim() ? `<script>${escapeClosingScript(rawJs)}<\/script>` : '';
+  const bridgeScript = `<script>${escapeClosingScript(customCodeBridge(token))}<\/script>`;
+  const scripts = `${legacyScript}${bridgeScript}`;
+  const trimmed = rawHtml.trim();
 
-function sanitizeCustomHtml(html = '') {
-  if (typeof DOMParser === 'undefined') return String(html || '');
-  const doc = new DOMParser().parseFromString(`<div>${String(html || '')}</div>`, 'text/html');
-  const output = document.implementation.createHTMLDocument('');
-  const root = output.createElement('div');
-  Array.from(doc.body.firstElementChild?.childNodes || []).forEach((node) => {
-    root.appendChild(cleanNode(node, output));
-  });
-  return root.innerHTML;
+  if (/<!doctype\s+html|<html[\s>]/i.test(trimmed)) {
+    let documentHtml = rawHtml;
+    if (/<\/head>/i.test(documentHtml)) documentHtml = documentHtml.replace(/<\/head>/i, `${styles}</head>`);
+    else if (/<body[\s>]/i.test(documentHtml)) documentHtml = documentHtml.replace(/<body([^>]*)>/i, `${styles}<body$1>`);
+    else documentHtml = `${styles}${documentHtml}`;
+
+    if (/<\/body>/i.test(documentHtml)) documentHtml = documentHtml.replace(/<\/body>/i, `${scripts}</body>`);
+    else documentHtml += scripts;
+    return documentHtml;
+  }
+
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${styles}</head><body>${rawHtml}${scripts}</body></html>`;
 }
 
 function normalizeText(value = '') {
@@ -108,32 +133,80 @@ function findSearchableSections(root, currentId) {
 export function RenderCode({ block }) {
   const s = block.s || {};
   const rootRef = useRef(null);
+  const iframeRef = useRef(null);
+  const tokenRef = useRef('');
+  if (!tokenRef.current) tokenRef.current = `pagero-code-${block.id}-${Math.random().toString(36).slice(2, 10)}`;
+
   const height = pickSafe(s.height || 'auto', ['auto', 'small', 'medium', 'large'], 'auto');
-  const safeHtml = sanitizeCustomHtml(s.html || '');
+  const [frameHeight, setFrameHeight] = useState(CODE_HEIGHTS[height]);
+  const hasCode = !!(String(s.html || '').trim() || String(s.css || '').trim() || (s.runJs && String(s.js || '').trim()));
+  const srcDoc = useMemo(
+    () => buildCustomCodeDocument(s, tokenRef.current),
+    [block.id, s.html, s.css, s.js, s.runJs],
+  );
 
   useEffect(() => {
-    const root = rootRef.current;
-    if (!root || !s.runJs || !String(s.js || '').trim()) return undefined;
-    if (!runtimeConfig.customCodeJsEnabled) {
-      root.dataset.codeJsDisabled = 'true';
-      return undefined;
-    }
+    if (height !== 'auto') setFrameHeight(CODE_HEIGHTS[height]);
+  }, [height]);
 
-    try {
-      const cleanup = new Function('root', 'document', 'window', String(s.js || ''))(root, document, window);
-      return typeof cleanup === 'function' ? cleanup : undefined;
-    } catch (error) {
-      console.warn('Custom code widget failed:', error);
-      root.dataset.codeError = String(error?.message || error);
-      return undefined;
-    }
-  }, [block.id, s.js, s.runJs]);
+  useEffect(() => {
+    if (!hasCode) return undefined;
+    const handleMessage = (event) => {
+      const frame = iframeRef.current;
+      const data = event.data || {};
+      if (!frame || event.source !== frame.contentWindow) return;
+      if (data.type !== CUSTOM_CODE_MESSAGE || data.token !== tokenRef.current || data.action !== 'height') return;
+      if (height !== 'auto') return;
+      const measured = Math.ceil(Number(data.height) || 0);
+      if (!measured) return;
+      const next = Math.max(48, Math.min(10000, measured));
+      setFrameHeight((current) => (current === next ? current : next));
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [hasCode, height]);
+
+  useEffect(() => {
+    if (!hasCode) return undefined;
+    let active = true;
+    const forwardGesture = () => {
+      if (!active) return;
+      active = false;
+      try {
+        iframeRef.current?.contentWindow?.postMessage({
+          type: CUSTOM_CODE_MESSAGE,
+          token: tokenRef.current,
+          action: 'user-gesture',
+        }, '*');
+      } catch {}
+      window.removeEventListener('pointerdown', forwardGesture);
+      window.removeEventListener('touchstart', forwardGesture);
+      window.removeEventListener('keydown', forwardGesture);
+    };
+
+    window.addEventListener('pointerdown', forwardGesture, { passive: true });
+    window.addEventListener('touchstart', forwardGesture, { passive: true });
+    window.addEventListener('keydown', forwardGesture);
+    return () => {
+      active = false;
+      window.removeEventListener('pointerdown', forwardGesture);
+      window.removeEventListener('touchstart', forwardGesture);
+      window.removeEventListener('keydown', forwardGesture);
+    };
+  }, [hasCode, srcDoc]);
 
   return (
     <section id={`block-${block.id}`} ref={rootRef} className={`landing-section code-widget code-height-${height} ${widgetBoxClass(s, { background: false, shadow: false })}`} style={widgetBoxVars(s)}>
-      {s.css && <style>{String(s.css)}</style>}
-      {safeHtml ? (
-        <div className="custom-code-body" dangerouslySetInnerHTML={{ __html: safeHtml }} />
+      {hasCode ? (
+        <iframe
+          ref={iframeRef}
+          className="custom-code-frame"
+          srcDoc={srcDoc}
+          title="사용자 코드"
+          sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation allow-downloads"
+          allow="autoplay; clipboard-write"
+          style={{ width: '100%', height: `${frameHeight}px`, border: 0, display: 'block', background: 'transparent' }}
+        />
       ) : (
         <div className="code-widget-empty">코드를 입력하세요</div>
       )}
