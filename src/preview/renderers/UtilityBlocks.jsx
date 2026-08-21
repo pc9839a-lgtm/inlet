@@ -130,10 +130,7 @@ function findSearchableSections(root, currentId) {
     .filter((item) => item.normalized);
 }
 
-export function RenderCode({ block }) {
-  // 기존 저장 데이터의 BGM 프리셋은 재생하지 않고 출력에서도 제외한다.
-  if (block.s?.widgetMode === 'bgm') return null;
-
+function RenderCustomCode({ block }) {
   const s = block.s || {};
   const rootRef = useRef(null);
   const iframeRef = useRef(null);
@@ -216,6 +213,12 @@ export function RenderCode({ block }) {
       )}
     </section>
   );
+}
+
+export function RenderCode({ block }) {
+  // 기존 저장 데이터의 BGM 프리셋은 재생하지 않고 출력에서도 제외한다.
+  if (block.s?.widgetMode === 'bgm') return null;
+  return <RenderCustomCode block={block} />;
 }
 
 export function RenderPageSearch({ block }) {
