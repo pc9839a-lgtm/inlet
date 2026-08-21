@@ -150,7 +150,14 @@ function metadataTags({ title, description, canonical, image, imageType, favicon
 export async function handlePublicOgImageRequest(context, url) {
   if (context.request.method !== 'GET' && context.request.method !== 'HEAD') return null;
   if (!String(url.pathname || '').startsWith(OG_IMAGE_PATH_PREFIX)) return null;
-  const slug = cleanSlug(decodeURIComponent(String(url.pathname || '').slice(OG_IMAGE_PATH_PREFIX.length)));
+
+  let decodedSlug = '';
+  try {
+    decodedSlug = decodeURIComponent(String(url.pathname || '').slice(OG_IMAGE_PATH_PREFIX.length));
+  } catch {
+    return new Response('Not Found', { status: 404 });
+  }
+  const slug = cleanSlug(decodedSlug);
   if (!slug) return new Response('Not Found', { status: 404 });
 
   const record = await loadPublicPage(context.env, slug);
@@ -168,7 +175,6 @@ export async function handlePublicOgImageRequest(context, url) {
       'Access-Control-Allow-Origin': '*',
       'X-Pagero-Og-Image': 'd1-data-url-v1',
     });
-    headers.set('Content-Length', String(bytes.byteLength));
     return new Response(context.request.method === 'HEAD' ? null : bytes, { status: 200, headers });
   } catch (error) {
     console.warn('Public OG image decode failed:', slug, String(error?.message || error));
@@ -220,4 +226,11 @@ export async function injectPublicPageMeta(context, url, response) {
     statusText: response.statusText,
     headers,
   });
+}
+
+// Files inside /functions participate in Pages file-based routing. This module
+// is primarily imported by root middleware, but a pass-through handler keeps
+// its own route valid and side-effect free if requested directly.
+export async function onRequest(context) {
+  return context.next();
 }
