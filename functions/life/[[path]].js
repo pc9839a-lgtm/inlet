@@ -109,6 +109,12 @@ export async function onRequest(context) {
     });
   }
 
+  if (incoming.pathname === LIFE_PREFIX) {
+    const canonical = new URL(context.request.url);
+    canonical.pathname = `${LIFE_PREFIX}/`;
+    return Response.redirect(canonical.toString(), 308);
+  }
+
   const upstreamUrl = upstreamUrlFor(incoming);
   const requestHeaders = new Headers(context.request.headers);
   requestHeaders.delete('host');
