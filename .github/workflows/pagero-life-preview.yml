@@ -59,22 +59,46 @@ jobs:
           echo "url=$PREVIEW_URL" >> "$GITHUB_OUTPUT"
           echo "PAGERO_LIFE_PREVIEW_URL=$PREVIEW_URL" >> "$GITHUB_ENV"
 
-      - name: Smoke test /life proxy
+      - name: Diagnose and smoke test /life proxy
         shell: bash
         run: |
           set -euo pipefail
           BASE="$PAGERO_LIFE_PREVIEW_URL"
 
+          fetch_status() {
+            local label="$1"
+            local path="$2"
+            local out="$3"
+            local code
+            code="$(curl -sS -L -o "$out" -w '%{http_code}' "$BASE$path" || true)"
+            echo "$label $path -> $code"
+            echo "$label=$code" >> /tmp/life-status.txt
+            if [ "$code" != "200" ]; then
+              echo "--- $label response preview ---"
+              head -c 600 "$out" 2>/dev/null || true
+              echo
+            fi
+          }
+
           for attempt in $(seq 1 20); do
-            if curl -fsS "$BASE/life/" -o /tmp/life-home.html; then
+            code="$(curl -sS -L -o /tmp/life-home.html -w '%{http_code}' "$BASE/life/" || true)"
+            echo "home attempt $attempt -> $code"
+            if [ "$code" = "200" ]; then
+              echo "home=200" > /tmp/life-status.txt
               break
             fi
             sleep 2
           done
 
-          curl -fsS "$BASE/life/styles.css" -o /tmp/life-styles.css
-          curl -fsS "$BASE/life/sitemap.xml" -o /tmp/life-sitemap.xml
-          curl -fsS "$BASE/life/car/car-inspection-period/" -o /tmp/life-article.html
+          fetch_status styles '/life/styles.css' /tmp/life-styles.css
+          fetch_status sitemap '/life/sitemap.xml' /tmp/life-sitemap.xml
+          fetch_status article '/life/car/car-inspection-period/' /tmp/life-article.html
+
+          cat /tmp/life-status.txt
+          grep -q '^home=200$' /tmp/life-status.txt
+          grep -q '^styles=200$' /tmp/life-status.txt
+          grep -q '^sitemap=200$' /tmp/life-status.txt
+          grep -q '^article=200$' /tmp/life-status.txt
 
           grep -q '생활비서' /tmp/life-home.html
           grep -q 'https://pagero.kr/life/' /tmp/life-home.html
