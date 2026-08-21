@@ -9,8 +9,12 @@ export function createScreenOrderItemModel({
   setDragId,
   reorderToIndex,
 }) {
+  const meta = block.type === 'code' && block.s?.widgetMode === 'bgm'
+    ? META.bgm
+    : (META[block.type] || META.text);
+
   return {
-    meta: META[block.type] || META.text,
+    meta,
     controls: createScreenOrderControls({
       block,
       index,
