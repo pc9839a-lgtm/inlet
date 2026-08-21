@@ -112,9 +112,7 @@ export default function EditWorkbench({
     inlineEditor: false,
   };
 
-  const selectedLabel = selectedBlock
-    ? (selectedBlock.type === 'code' && selectedBlock.s?.widgetMode === 'bgm' ? META.bgm.label : (META[selectedBlock.type]?.label || '블록'))
-    : '';
+  const selectedLabel = selectedBlock ? (META[selectedBlock.type]?.label || '블록') : '';
 
   return (
     <div className="builder-shell edit-workbench-shell">
