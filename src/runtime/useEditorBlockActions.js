@@ -23,17 +23,8 @@ export function useEditorBlockActions({
     setPage((p) => commitLocalPageDraft({ ...p, blocks: p.blocks.map((b) => b.id === id ? { ...b, visible: !b.visible } : b) }));
   };
 
-  const addBlock = (type, preset = '') => {
+  const addBlock = (type) => {
     if (blockWrite('edit')) return;
-    const bgmPreset = type === 'code' && preset === 'bgm';
-    if (bgmPreset) {
-      const existing = page.blocks.find((b) => b.type === 'code' && b.s?.widgetMode === 'bgm');
-      if (existing) {
-        setOpenId(existing.id);
-        setAddOpen(false);
-        return;
-      }
-    }
     if (SINGLETON_BLOCK_TYPES.includes(type)) {
       const existing = page.blocks.find((b) => b.type === type);
       if (existing) {
@@ -43,20 +34,8 @@ export function useEditorBlockActions({
       }
     }
     const block = newBlock(type);
-    if (bgmPreset) {
-      block.s = {
-        ...block.s,
-        widgetMode: 'bgm',
-        bgmSrc: '',
-        bgmLabel: 'BGM',
-        autoplay: true,
-        loop: true,
-        volume: 70,
-        showControl: true,
-      };
-    }
     setPage((p) => commitLocalPageDraft({ ...p, blocks: ensureUniqueAnchors([...p.blocks, block]) }));
-    setOpenId(bgmPreset ? block.id : '');
+    setOpenId('');
     setAddOpen(false);
   };
 
