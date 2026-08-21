@@ -1,3 +1,5 @@
+import { handlePublicOgImageRequest, injectPublicPageMeta } from './lib/publicPageMeta.js';
+
 const RUNTIME_RECOVERY_QUERY_KEYS = ['__fresh', '__runtime', '__runtimefix', '__hardreset'];
 const RUNTIME_RESET_PATH = '/__pagero_runtime_reset';
 
@@ -301,6 +303,9 @@ export async function onRequest(context) {
     return handleCalltagRequest(context, url);
   }
 
+  const publicOgImageResponse = await handlePublicOgImageRequest(context, url);
+  if (publicOgImageResponse) return publicOgImageResponse;
+
   const runtimeAssetResponse = await handleRuntimeAsset(context, url);
   if (runtimeAssetResponse) return runtimeAssetResponse;
 
@@ -309,5 +314,7 @@ export async function onRequest(context) {
 
   const customDomainResponse = await handleCustomDomain(context, url);
   if (customDomainResponse) return customDomainResponse;
-  return context.next();
+
+  const response = await context.next();
+  return injectPublicPageMeta(context, url, response);
 }
