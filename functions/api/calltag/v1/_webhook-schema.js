@@ -77,7 +77,7 @@ export async function cleanupExpiredWebhookPayloads(db) {
   try {
     const result = await db.prepare(`
       DELETE FROM calltag_webhook_raw_events
-      WHERE expires_at != '' AND expires_at < CURRENT_TIMESTAMP
+      WHERE expires_at != '' AND datetime(expires_at) < CURRENT_TIMESTAMP
     `).run();
     return Number(result?.meta?.changes || 0);
   } catch {
