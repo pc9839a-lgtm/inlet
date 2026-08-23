@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS calltag_lead_events (
   result TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(owner_id, event_id),
+  UNIQUE(owner_id, connection_id, event_id),
   UNIQUE(owner_id, dedupe_key),
   FOREIGN KEY (owner_id) REFERENCES accounts(id) ON DELETE CASCADE,
   FOREIGN KEY (customer_id) REFERENCES calltag_lead_customers(id) ON DELETE CASCADE
@@ -61,10 +61,13 @@ CREATE INDEX IF NOT EXISTS idx_calltag_lead_events_owner_customer_submitted
   ON calltag_lead_events(owner_id, customer_id, submitted_at DESC);
 CREATE INDEX IF NOT EXISTS idx_calltag_lead_events_owner_source_submitted
   ON calltag_lead_events(owner_id, source_type, submitted_at DESC);
+CREATE INDEX IF NOT EXISTS idx_calltag_lead_events_owner_connection
+  ON calltag_lead_events(owner_id, connection_id, id DESC);
 
 CREATE TABLE IF NOT EXISTS calltag_api_keys (
   id TEXT PRIMARY KEY,
   owner_id TEXT NOT NULL,
+  connection_id TEXT NOT NULL,
   name TEXT NOT NULL DEFAULT '',
   key_prefix TEXT NOT NULL,
   key_hash TEXT NOT NULL UNIQUE,
@@ -78,6 +81,8 @@ CREATE TABLE IF NOT EXISTS calltag_api_keys (
 
 CREATE INDEX IF NOT EXISTS idx_calltag_api_keys_owner_status
   ON calltag_api_keys(owner_id, status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_calltag_api_keys_owner_connection
+  ON calltag_api_keys(owner_id, connection_id, created_at DESC);
 
 CREATE TABLE IF NOT EXISTS calltag_lead_audit (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -95,3 +100,5 @@ CREATE TABLE IF NOT EXISTS calltag_lead_audit (
 
 CREATE INDEX IF NOT EXISTS idx_calltag_lead_audit_owner_created
   ON calltag_lead_audit(owner_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_calltag_lead_audit_key_created
+  ON calltag_lead_audit(api_key_id, created_at DESC);
