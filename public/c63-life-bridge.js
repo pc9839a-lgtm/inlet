@@ -3,22 +3,22 @@
     {
       category: '\uC790\uB3D9\uCC28',
       title: '\uC790\uB3D9\uCC28\uB4F1\uB85D\uC99D \uC7AC\uBC1C\uAE09 \uC628\uB77C\uC778\u00B7\uBC29\uBB38 \uC2E0\uCCAD \uBC29\uBC95',
-      href: 'https://life.pagero.kr/car/car-registration-certificate-reissue/',
+      href: '/life/car/car-registration-certificate-reissue/',
     },
     {
       category: '\uC790\uB3D9\uCC28',
       title: '2026 \uC790\uB3D9\uCC28\uC138 \uC5F0\uB0A9 \uC2E0\uCCAD \uC2DC\uAE30\u00B7\uD560\uC778\u00B7\uD658\uAE09 \uD655\uC778',
-      href: 'https://life.pagero.kr/car/car-tax-annual-payment-2026/',
+      href: '/life/car/car-tax-annual-payment-2026/',
     },
     {
       category: '\uC9C0\uC6D0\uC815\uCC45',
       title: '2026 \uADFC\uB85C\u00B7\uC790\uB140\uC7A5\uB824\uAE08 \uAE30\uD55C \uD6C4 \uC2E0\uCCAD \uAE30\uAC04\uACFC \uBC29\uBC95',
-      href: 'https://life.pagero.kr/support/earned-income-tax-credit-late-2026/',
+      href: '/life/support/earned-income-tax-credit-late-2026/',
     },
     {
       category: '\uC9C0\uC6D0\uC815\uCC45',
       title: '2026 \uB178\uD6C4\uCC28 \uC870\uAE30\uD3D0\uCC28 \uC9C0\uC6D0 \uB300\uC0C1\u00B7\uC2E0\uCCAD \uC21C\uC11C',
-      href: 'https://life.pagero.kr/support/early-scrappage-guide/',
+      href: '/life/support/early-scrappage-guide/',
     },
   ];
 
@@ -53,7 +53,7 @@
 
     const more = document.createElement('a');
     more.className = 'c63-life-more';
-    more.href = 'https://life.pagero.kr/';
+    more.href = '/life/';
     more.textContent = '\uC0DD\uD65C\uC815\uBCF4 \uC804\uCCB4\uBCF4\uAE30';
     head.append(copy, more);
 
@@ -84,13 +84,13 @@
     const home = root?.querySelector('.pagero-exact-home');
     if (!home) return;
 
-    ensureLink(home.querySelector('.header .menu'), 'https://life.pagero.kr/', '\uC0DD\uD65C\uC815\uBCF4', 'c63-life-nav-link');
+    ensureLink(home.querySelector('.header .menu'), '/life/', '\uC0DD\uD65C\uC815\uBCF4', 'c63-life-nav-link');
 
     const footerLinks = home.querySelector('.footer-links');
     ensureLink(footerLinks, '/about', '\uC0AC\uC774\uD2B8 \uC18C\uAC1C');
     ensureLink(footerLinks, '/contact', '\uBB38\uC758');
     ensureLink(footerLinks, '/privacy', '\uAC1C\uC778\uC815\uBCF4\uCC98\uB9AC\uBC29\uCE68');
-    ensureLink(footerLinks, 'https://life.pagero.kr/', '\uC0DD\uD65C\uBE44\uC11C');
+    ensureLink(footerLinks, '/life/', '\uC0DD\uD65C\uBE44\uC11C');
     ensureLink(footerLinks, 'https://awards.pagero.kr/', '\uBE0C\uB79C\uB4DC\uC5B4\uC6CC\uC988');
 
     if (!home.querySelector('.c63-life-bridge')) {
