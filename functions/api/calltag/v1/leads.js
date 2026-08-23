@@ -16,10 +16,11 @@ export async function onRequest({ request, env }) {
     return jsonResponse(request, env, 405, { ok: false, error: '허용되지 않는 요청 방식입니다.' }, METHODS);
   }
 
-  const db = assertD1(env);
+  let db = null;
   let apiKey = null;
   const requestId = request.headers.get('CF-Ray') || crypto.randomUUID();
   try {
+    db = assertD1(env);
     if (request.method === 'GET') {
       const session = await callSession(request, env, {});
       const url = new URL(request.url);
@@ -62,7 +63,7 @@ export async function onRequest({ request, env }) {
       result: result.result,
     }, METHODS);
   } catch (error) {
-    if (apiKey?.ownerId) {
+    if (db && apiKey?.ownerId) {
       await recordLeadAudit(db, {
         requestId,
         ownerId: apiKey.ownerId,
