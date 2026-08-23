@@ -43,7 +43,7 @@ export async function onRequest({ request, env }) {
     }
     const result = await intakeCanonicalLead(db, apiKey.ownerId, body, {
       idempotencyKey,
-      connectionId: `api:${apiKey.id}`,
+      connectionId: apiKey.connectionId,
     });
     const status = result.created ? 201 : 200;
     await recordLeadAudit(db, {
