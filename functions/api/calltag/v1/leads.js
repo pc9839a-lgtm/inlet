@@ -1,0 +1,70 @@
+import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../../_shared.js';
+import { callSession } from '../../call/_shared.js';
+import {
+  authenticateLeadApiKey,
+  intakeCanonicalLead,
+  listUniversalLeads,
+  readJsonLimited,
+  recordLeadAudit,
+} from './_shared.js';
+
+const METHODS = 'GET, POST, OPTIONS';
+
+export async function onRequest({ request, env }) {
+  if (request.method === 'OPTIONS') return optionsResponse(request, env, METHODS);
+  if (!['GET', 'POST'].includes(request.method)) {
+    return jsonResponse(request, env, 405, { ok: false, error: '허용되지 않는 요청 방식입니다.' }, METHODS);
+  }
+
+  const db = assertD1(env);
+  let apiKey = null;
+  const requestId = request.headers.get('CF-Ray') || crypto.randomUUID();
+  try {
+    if (request.method === 'GET') {
+      const session = await callSession(request, env, {});
+      const url = new URL(request.url);
+      const result = await listUniversalLeads(db, session.ownerId, {
+        after: url.searchParams.get('after'),
+        limit: url.searchParams.get('limit'),
+      });
+      return jsonResponse(request, env, 200, { ok: true, ...result }, METHODS);
+    }
+
+    apiKey = await authenticateLeadApiKey(request, db);
+    const body = await readJsonLimited(request);
+    const idempotencyKey = String(request.headers.get('Idempotency-Key') || '').trim();
+    const result = await intakeCanonicalLead(db, apiKey.ownerId, body, {
+      idempotencyKey,
+      connectionId: `api:${apiKey.id}`,
+    });
+    const status = result.created ? 201 : 200;
+    await recordLeadAudit(db, {
+      requestId,
+      ownerId: apiKey.ownerId,
+      apiKeyId: apiKey.id,
+      eventId: result.eventId,
+      action: 'lead.intake',
+      result: result.result,
+      sourceType: result.event?.source?.type || '',
+      statusCode: status,
+    });
+    return jsonResponse(request, env, status, {
+      ok: true,
+      eventId: result.eventId,
+      customerId: result.customerId,
+      result: result.result,
+    }, METHODS);
+  } catch (error) {
+    if (apiKey?.ownerId) {
+      await recordLeadAudit(db, {
+        requestId,
+        ownerId: apiKey.ownerId,
+        apiKeyId: apiKey.id,
+        action: 'lead.intake',
+        result: error?.code || error?.details?.code || 'REJECTED',
+        statusCode: Number(error?.status || 500),
+      });
+    }
+    return handleApiError(request, env, error, METHODS);
+  }
+}
