@@ -33,6 +33,13 @@ export async function onRequest({ request, env }) {
     apiKey = await authenticateLeadApiKey(request, db);
     const body = await readJsonLimited(request);
     const idempotencyKey = String(request.headers.get('Idempotency-Key') || '').trim();
+    const stableExternalId = String(body?.event_id || body?.eventId || body?.external_id || body?.externalId || '').trim();
+    if (!idempotencyKey && !stableExternalId) {
+      const error = new Error('Idempotency-Key 또는 event_id/external_id 중 하나가 필요합니다.');
+      error.status = 400;
+      error.code = 'CALLTAG_LEAD_IDEMPOTENCY_REQUIRED';
+      throw error;
+    }
     const result = await intakeCanonicalLead(db, apiKey.ownerId, body, {
       idempotencyKey,
       connectionId: `api:${apiKey.id}`,
