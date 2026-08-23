@@ -22,6 +22,7 @@ import {
 const WEBHOOK_PREFIX = 'ctwh_';
 const DEFAULT_RETENTION_DAYS = 7;
 const MAX_RETENTION_DAYS = 30;
+const MAX_WEBHOOKS_PER_MINUTE = 300;
 
 export async function createWebhookConnection(db, ownerId = '', input = {}) {
   await ensureWebhookSchema(db);
@@ -210,6 +211,9 @@ export async function receiveGenericWebhook(request, db, endpointKey = '') {
   `).bind(endpointHash).first();
   if (!connection?.id) throw leadError('Webhook endpoint was not found.', 404, 'CALLTAG_WEBHOOK_NOT_FOUND');
 
+  await cleanupExpiredWebhookPayloads(db);
+  await assertWebhookRateLimit(db, connection.id);
+
   const payload = await readJsonLimited(request, MAX_BODY_BYTES);
   const payloadJson = limitedJson(payload, MAX_BODY_BYTES, 'CALLTAG_WEBHOOK_BODY_TOO_LARGE');
   const payloadSha = await sha256(payloadJson);
@@ -252,7 +256,6 @@ export async function receiveGenericWebhook(request, db, endpointKey = '') {
       errorCode: 'CALLTAG_WEBHOOK_MAPPING_REQUIRED',
       errorMessage: '필드 매핑이 필요합니다.',
     });
-    await cleanupExpiredWebhookPayloads(db);
     return {
       ok: true,
       received: true,
@@ -283,7 +286,6 @@ export async function receiveGenericWebhook(request, db, endpointKey = '') {
       sourceType: 'custom_webhook',
       statusCode: 202,
     });
-    await cleanupExpiredWebhookPayloads(db);
     return {
       ok: true,
       received: true,
@@ -309,7 +311,6 @@ export async function receiveGenericWebhook(request, db, endpointKey = '') {
       sourceType: 'custom_webhook',
       statusCode: 202,
     });
-    await cleanupExpiredWebhookPayloads(db);
     return {
       ok: true,
       received: true,
@@ -402,6 +403,18 @@ async function markRawEvent(db, rawId, status, input = {}) {
     text(input.errorMessage, 500),
     Number(rawId),
   ).run();
+}
+
+async function assertWebhookRateLimit(db, connectionId) {
+  const row = await db.prepare(`
+    SELECT COUNT(*) AS count
+    FROM calltag_webhook_raw_events
+    WHERE connection_id = ?
+      AND datetime(received_at) >= datetime('now', '-1 minute')
+  `).bind(text(connectionId, 160)).first();
+  if (Number(row?.count || 0) >= MAX_WEBHOOKS_PER_MINUTE) {
+    throw leadError('Webhook request rate is too high.', 429, 'CALLTAG_WEBHOOK_RATE_LIMITED');
+  }
 }
 
 function webhookIdempotencyKey(request, payloadSha = '') {
