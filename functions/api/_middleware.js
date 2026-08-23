@@ -1,6 +1,7 @@
 import { isRequestSessionRevoked } from './auth/_session-revocation.js';
 import { enqueuePageroLead } from './call/pagero/_shared.js';
 import { notifyPageroLeadAvailable, ownerIdForProject } from './call/push/_shared.js';
+import { canonicalLeadFromPageroQueue, intakeCanonicalLead, recordLeadAudit } from './calltag/v1/_shared.js';
 
 function sessionError(status, code, error) {
   return new Response(JSON.stringify({ ok: false, error, code }), {
@@ -73,6 +74,39 @@ export async function onRequest(context) {
       ).trim();
       const ownerId = directOwnerId || await ownerIdForProject(env.DB, projectId);
       if (ownerId) {
+        try {
+          const queueLead = queued.lead || {};
+          const canonical = canonicalLeadFromPageroQueue({
+            ...queueLead,
+            pageSlug: queueLead.siteId || savedLead.pageSlug || submitted?.page?.slug || '',
+            customerName: queueLead.customer?.name || '',
+            customerPhone: queueLead.customer?.phone || '',
+            customerEmail: queueLead.customer?.email || '',
+            inquiryContent: queueLead.inquiry?.content || '',
+            sourceUrl: queueLead.inquiry?.sourceUrl || '',
+            campaign: queueLead.inquiry?.campaign || '',
+            metadataJson: JSON.stringify(queueLead.metadata || {}),
+          });
+          const canonicalResult = await intakeCanonicalLead(env.DB, ownerId, canonical, {
+            connectionId: `pagero:${projectId}`,
+            idempotencyKey: queueLead.eventId || '',
+          });
+          await recordLeadAudit(env.DB, {
+            requestId: `pagero:${queueLead.eventId || crypto.randomUUID()}`,
+            ownerId,
+            eventId: canonicalResult.eventId,
+            action: 'pagero.adapter',
+            result: canonicalResult.result,
+            sourceType: 'pagero',
+            statusCode: canonicalResult.created ? 201 : 200,
+          });
+        } catch (error) {
+          console.error('Pagero canonical lead dual-write failed', {
+            projectId,
+            message: String(error?.message || error || 'unknown error').slice(0, 180),
+          });
+        }
+
         const notify = notifyPageroLeadAvailable(env, env.DB, ownerId, {
           queueId: queued.lead?.id || 0,
           eventId: queued.lead?.eventId || '',
