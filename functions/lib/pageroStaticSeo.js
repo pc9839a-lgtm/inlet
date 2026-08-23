@@ -1,14 +1,5 @@
 const ROOT_ORIGIN = 'https://pagero.kr';
 
-const LIFE_LINKS = [
-  ['/life/support/childcare-service-government-support-2026/', '2026 아이돌봄서비스 정부지원'],
-  ['/life/support/basic-pension-2026/', '2026 기초연금'],
-  ['/life/support/child-allowance-2026/', '2026 아동수당'],
-  ['/life/car/car-inspection-period/', '자동차 검사기간 확인'],
-  ['/life/car/traffic-fine-check-payment/', '교통 과태료 조회·납부'],
-  ['/life/car/car-registration-certificate-reissue/', '자동차등록증 재발급'],
-];
-
 function escapeHtml(value = '') {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -43,22 +34,6 @@ function shell({ eyebrow = '페이지로', title, intro = '', content = '' }) {
 function section(title, body = '', items = []) {
   return `<section><h2>${escapeHtml(title)}</h2>${body ? `<p>${escapeHtml(body)}</p>` : ''}${items.length ? `<ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>` : ''}</section>`;
 }
-
-const HOME = {
-  title: '페이지로 | 모바일 랜딩페이지 제작과 생활정보',
-  description: '페이지로는 모바일 랜딩페이지 제작·문의 접수·운영 관리 기능과 자동차 행정·정부지원 생활정보를 제공합니다.',
-  body: shell({
-    eyebrow: '페이지로',
-    title: '모바일 페이지를 빠르게 만드세요',
-    intro: '페이지로는 모바일 랜딩페이지 제작, 문의 접수, 전환 확인과 운영 관리를 한 곳에서 처리할 수 있도록 만든 웹 기반 서비스입니다.',
-    content: `${section('페이지로에서 할 수 있는 일', '', [
-      '모바일 랜딩페이지 제작 및 수정',
-      '상담·예약·견적·이벤트 신청 폼 구성',
-      '접수된 문의와 리드 관리',
-      '페이지 방문과 전환 통계 확인',
-    ])}<section><h2>생활에 필요한 정보를 한곳에서 확인하세요</h2><p>생활비서는 자동차 행정과 정부지원·생활정책을 공식 자료와 확인일을 기준으로 정리하는 페이지로의 생활정보 영역입니다.</p><div class="pagero-seo-life-links">${LIFE_LINKS.map(([href, label]) => `<a href="${href}">${escapeHtml(label)}</a>`).join('')}</div><p><a href="/life/">생활비서 전체보기</a></p></section>`,
-  }),
-};
 
 const ABOUT = {
   title: '페이지로 소개 | 페이지로',
@@ -134,7 +109,6 @@ const TERMS = {
 };
 
 const PAGES = {
-  '/': HOME,
   '/about': ABOUT,
   '/contact': CONTACT,
   '/privacy': PRIVACY,
@@ -142,7 +116,7 @@ const PAGES = {
 };
 
 const STATIC_STYLE = `<style data-pagero-seo-style>
-[data-pagero-seo-shell]{min-height:100vh;background:#fff;color:#101828;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}[data-pagero-seo-shell] *{box-sizing:border-box}.pagero-seo-wrap{width:min(980px,calc(100% - 40px));margin:0 auto;padding:32px 0 72px}.pagero-seo-wrap>nav{display:flex;flex-wrap:wrap;gap:14px;padding:10px 0 28px;border-bottom:1px solid #e4e7ec}.pagero-seo-wrap a{color:#175cd3;text-decoration:none}.pagero-seo-wrap>nav a{color:#344054;font-size:14px;font-weight:700}.pagero-seo-wrap main{padding-top:48px}.pagero-seo-eyebrow{margin:0 0 10px;color:#175cd3;font-size:13px;font-weight:800}.pagero-seo-wrap h1{margin:0;font-size:clamp(38px,6vw,72px);line-height:1.04;letter-spacing:-.055em}.pagero-seo-intro{max-width:760px;margin:22px 0 42px;color:#475467;font-size:17px;line-height:1.75}.pagero-seo-wrap section{padding:28px 0;border-top:1px solid #eaecf0}.pagero-seo-wrap section h2{margin:0 0 14px;font-size:24px;letter-spacing:-.035em}.pagero-seo-wrap section p,.pagero-seo-wrap li{color:#475467;font-size:15px;line-height:1.75}.pagero-seo-wrap ul{margin:0;padding-left:20px}.pagero-seo-life-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:18px 0}.pagero-seo-life-links a{padding:14px;border:1px solid #e4e7ec;border-radius:14px;background:#f9fafb;color:#101828;font-weight:700}@media(max-width:640px){.pagero-seo-wrap{width:min(100% - 28px,980px);padding-top:18px}.pagero-seo-wrap main{padding-top:34px}.pagero-seo-life-links{grid-template-columns:1fr}.pagero-seo-wrap h1{font-size:40px}}
+[data-pagero-seo-shell]{min-height:100vh;background:#fff;color:#101828;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}[data-pagero-seo-shell] *{box-sizing:border-box}.pagero-seo-wrap{width:min(980px,calc(100% - 40px));margin:0 auto;padding:32px 0 72px}.pagero-seo-wrap>nav{display:flex;flex-wrap:wrap;gap:14px;padding:10px 0 28px;border-bottom:1px solid #e4e7ec}.pagero-seo-wrap a{color:#175cd3;text-decoration:none}.pagero-seo-wrap>nav a{color:#344054;font-size:14px;font-weight:700}.pagero-seo-wrap main{padding-top:48px}.pagero-seo-eyebrow{margin:0 0 10px;color:#175cd3;font-size:13px;font-weight:800}.pagero-seo-wrap h1{margin:0;font-size:clamp(38px,6vw,72px);line-height:1.04;letter-spacing:-.055em}.pagero-seo-intro{max-width:760px;margin:22px 0 42px;color:#475467;font-size:17px;line-height:1.75}.pagero-seo-wrap section{padding:28px 0;border-top:1px solid #eaecf0}.pagero-seo-wrap section h2{margin:0 0 14px;font-size:24px;letter-spacing:-.035em}.pagero-seo-wrap section p,.pagero-seo-wrap li{color:#475467;font-size:15px;line-height:1.75}.pagero-seo-wrap ul{margin:0;padding-left:20px}@media(max-width:640px){.pagero-seo-wrap{width:min(100% - 28px,980px);padding-top:18px}.pagero-seo-wrap main{padding-top:34px}.pagero-seo-wrap h1{font-size:40px}}
 </style>`;
 
 function replaceTitle(html = '', title = '') {
@@ -182,7 +156,7 @@ export async function injectPageroStaticSeo(context, url, response) {
   const page = PAGES[path];
   if (!page) return null;
 
-  const canonical = path === '/' ? `${ROOT_ORIGIN}/` : `${ROOT_ORIGIN}${path}`;
+  const canonical = `${ROOT_ORIGIN}${path}`;
   let html = await response.text();
   html = replaceTitle(html, page.title);
   html = injectHead(html, page, canonical);
