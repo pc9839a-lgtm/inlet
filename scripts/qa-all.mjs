@@ -15,6 +15,7 @@ const steps = [
   ['auth:email:qa', ['scripts/auth-email-quality-check.mjs']],
   ['auth:email:ses:contract:qa', ['scripts/ses-auth-email-production-contract-check.mjs']],
   ['calllink:auth:qa', ['scripts/calllink-auth-quality-check.mjs']],
+  ['calltag:lead-intake:qa', ['scripts/calltag-lead-intake-quality-check.mjs']],
   ['server:smoke:auth', ['scripts/server-smoke-auth.mjs']],
   ['server:smoke:leads', ['scripts/server-smoke-leads.mjs']],
   ['server:smoke:events', ['scripts/server-smoke-events.mjs']],
