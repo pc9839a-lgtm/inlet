@@ -23,6 +23,39 @@ const PAGE_CARDS = [
   ['이벤트 접수', '쿠폰, 체험단, 설명회'],
 ];
 
+const LIFE_CARDS = [
+  ['/life/support/childcare-service-government-support-2026/', '2026 아이돌봄서비스 정부지원', '신청 대상과 지원 기준, 이용 전 확인할 내용을 정리합니다.'],
+  ['/life/support/basic-pension-2026/', '2026 기초연금', '대상 기준과 신청 전 확인할 핵심 조건을 공식 자료 기준으로 안내합니다.'],
+  ['/life/support/child-allowance-2026/', '2026 아동수당', '지급 대상, 신청 시기와 확인해야 할 행정 절차를 정리합니다.'],
+  ['/life/car/car-inspection-period/', '자동차 검사기간 확인', '정기검사·종합검사 시기와 놓치기 쉬운 확인 지점을 안내합니다.'],
+  ['/life/car/traffic-fine-check-payment/', '교통 과태료 조회·납부', '조회 경로와 납부 전 확인할 사항을 한 번에 정리합니다.'],
+  ['/life/car/car-registration-certificate-reissue/', '자동차등록증 재발급', '온라인·방문 재발급 방법과 준비사항을 정리합니다.'],
+];
+
+const LIFE_LINK_STYLE = {
+  color: 'inherit',
+  textDecoration: 'none',
+  display: 'grid',
+  gap: 10,
+};
+
+const LIFE_LEAD_STYLE = {
+  width: 'min(620px, 100%)',
+  margin: '14px auto 28px',
+  color: '#667085',
+  fontSize: 15,
+  lineHeight: 1.7,
+  fontWeight: 800,
+};
+
+const LIFE_ALL_STYLE = {
+  marginTop: 24,
+  color: '#101828',
+  textDecoration: 'none',
+  fontSize: 15,
+  fontWeight: 950,
+};
+
 const SHOWCASE_SAMPLES = [
   {
     tone: 'blue',
@@ -146,6 +179,7 @@ export default function PageroCanonicalHome({ onLogin, onSignup }) {
         <a href="/" className="pagerol-logo" aria-label="페이지로 홈">페이지로</a>
         <nav aria-label="메인 메뉴">
           <a href="#pages">활용</a>
+          <a href="#life">생활정보</a>
         </nav>
         <div className="pagerol-actions">
           <button type="button" onClick={onLogin}>로그인</button>
@@ -192,12 +226,29 @@ export default function PageroCanonicalHome({ onLogin, onSignup }) {
           </div>
         </section>
 
+        <section className="pagerol-stats" id="life" aria-label="생활비서 생활정보">
+          <h2>생활에 필요한 정보를<br />한곳에서 확인하세요</h2>
+          <p style={LIFE_LEAD_STYLE}>생활비서는 자동차 행정과 정부지원·생활정책을 공식 자료와 확인일을 기준으로 정리하는 페이지로의 생활정보 영역입니다.</p>
+          <div className="pagerol-stat-grid">
+            {LIFE_CARDS.map(([href, title, body]) => (
+              <article key={href}>
+                <a href={href} style={LIFE_LINK_STYLE}>
+                  <strong>{title}</strong>
+                  <p>{body}</p>
+                </a>
+              </article>
+            ))}
+          </div>
+          <a href="/life/" style={LIFE_ALL_STYLE}>생활비서 전체보기 →</a>
+        </section>
+
         <footer className="pagerol-home-footer" aria-label="페이지로 서비스 정보">
           <div>
             <strong>페이지로</strong>
             <span>노코드 모바일 랜딩페이지 빌더</span>
           </div>
           <nav aria-label="페이지로 하단 메뉴">
+            <a href="/life/">생활비서</a>
             <a href="/about">소개</a>
             <a href="/contact">문의</a>
             <a href="/privacy">개인정보처리방침</a>
