@@ -65,6 +65,8 @@ CREATE TABLE IF NOT EXISTS calltag_webhook_raw_events (
 
 CREATE INDEX IF NOT EXISTS idx_calltag_webhook_raw_owner_connection_id
   ON calltag_webhook_raw_events(owner_id, connection_id, id DESC);
+CREATE INDEX IF NOT EXISTS idx_calltag_webhook_raw_connection_received
+  ON calltag_webhook_raw_events(connection_id, received_at DESC);
 CREATE INDEX IF NOT EXISTS idx_calltag_webhook_raw_expiry
   ON calltag_webhook_raw_events(expires_at);
 CREATE INDEX IF NOT EXISTS idx_calltag_webhook_raw_status
