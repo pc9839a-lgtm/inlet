@@ -1,6 +1,12 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../../../_shared.js';
 import { callSession } from '../../../call/_shared.js';
-import { listMetaConnections, readJsonLimited, revokeMetaConnection, upsertMetaConnection } from '../_shared.js';
+import {
+  listMetaConnections,
+  readJsonLimited,
+  revokeMetaConnection,
+  upsertMetaConnection,
+  verifyMetaPageAccess,
+} from '../_shared.js';
 
 const METHODS = 'GET, POST, PATCH, OPTIONS';
 
@@ -23,11 +29,21 @@ export async function onRequest({ request, env }) {
     const body = await readJsonLimited(request, 65536);
     const session = await callSession(request, env, body || {});
     if (request.method === 'POST') {
-      const connection = await upsertMetaConnection(db, session.ownerId, body || {}, env);
+      const verified = await verifyMetaPageAccess(
+        env,
+        body?.pageId || body?.page_id,
+        body?.pageAccessToken || body?.page_access_token,
+      );
+      const connection = await upsertMetaConnection(db, session.ownerId, {
+        ...body,
+        pageId: verified.pageId,
+        pageName: verified.pageName || body?.pageName || body?.page_name,
+      }, env);
       return jsonResponse(request, env, 201, {
         ok: true,
         connection,
         credentialStoredEncrypted: true,
+        credentialVerified: true,
       }, METHODS);
     }
 
