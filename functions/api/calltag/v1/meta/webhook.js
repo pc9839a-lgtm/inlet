@@ -3,7 +3,8 @@ import { acceptMetaWebhookRequest, processMetaLeadEvents, verifyMetaWebhookChall
 
 const METHODS = 'GET, POST, OPTIONS';
 
-export async function onRequest({ request, env, waitUntil }) {
+export async function onRequest(context) {
+  const { request, env } = context;
   if (request.method === 'OPTIONS') return optionsResponse(request, env, METHODS);
   if (!['GET', 'POST'].includes(request.method)) {
     return jsonResponse(request, env, 405, { ok: false, error: '허용되지 않는 요청 방식입니다.' }, METHODS);
@@ -28,7 +29,7 @@ export async function onRequest({ request, env, waitUntil }) {
         });
       });
 
-    if (typeof waitUntil === 'function') waitUntil(work);
+    if (typeof context.waitUntil === 'function') context.waitUntil(work);
     else await work;
 
     return jsonResponse(request, env, 200, {
