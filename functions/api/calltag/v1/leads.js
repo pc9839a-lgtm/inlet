@@ -1,9 +1,10 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../../_shared.js';
 import { callSession } from '../../call/_shared.js';
+import { notifyUniversalLeadAvailable } from '../../call/push/_shared.js';
+import { listUniversalLeadsForDelivery, parseExcludedSourceTypes } from './_delivery.js';
 import {
   authenticateLeadApiKey,
   intakeCanonicalLead,
-  listUniversalLeads,
   readJsonLimited,
   recordLeadAudit,
 } from './_shared.js';
@@ -24,9 +25,10 @@ export async function onRequest({ request, env }) {
     if (request.method === 'GET') {
       const session = await callSession(request, env, {});
       const url = new URL(request.url);
-      const result = await listUniversalLeads(db, session.ownerId, {
+      const result = await listUniversalLeadsForDelivery(db, session.ownerId, {
         after: url.searchParams.get('after'),
         limit: url.searchParams.get('limit'),
+        excludeSourceTypes: parseExcludedSourceTypes(url),
       });
       return jsonResponse(request, env, 200, { ok: true, ...result }, METHODS);
     }
@@ -56,6 +58,21 @@ export async function onRequest({ request, env }) {
       sourceType: result.event?.source?.type || '',
       statusCode: status,
     });
+
+    // FCM failure must never roll back an already accepted lead. It is only a pull trigger.
+    if (result.created) {
+      try {
+        await notifyUniversalLeadAvailable(env, db, apiKey.ownerId, {
+          eventId: result.eventId,
+          leadId: result.event?.id,
+        });
+      } catch (pushError) {
+        console.error('CallTag universal lead push failed', {
+          message: String(pushError?.message || pushError || '').slice(0, 180),
+        });
+      }
+    }
+
     return jsonResponse(request, env, status, {
       ok: true,
       eventId: result.eventId,
