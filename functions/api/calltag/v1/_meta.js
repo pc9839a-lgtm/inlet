@@ -316,9 +316,35 @@ async function readRawBodyLimited(request, maxBytes) {
   if (Number.isFinite(declared) && declared > maxBytes) {
     throw leadError('Meta webhook body is too large.', 413, 'CALLTAG_META_BODY_TOO_LARGE');
   }
-  const buffer = new Uint8Array(await request.arrayBuffer());
-  if (buffer.byteLength > maxBytes) throw leadError('Meta webhook body is too large.', 413, 'CALLTAG_META_BODY_TOO_LARGE');
-  return buffer;
+
+  const reader = request.body?.getReader?.();
+  if (!reader) {
+    const buffer = new Uint8Array(await request.arrayBuffer());
+    if (buffer.byteLength > maxBytes) {
+      throw leadError('Meta webhook body is too large.', 413, 'CALLTAG_META_BODY_TOO_LARGE');
+    }
+    return buffer;
+  }
+
+  const chunks = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      try { await reader.cancel(); } catch {}
+      throw leadError('Meta webhook body is too large.', 413, 'CALLTAG_META_BODY_TOO_LARGE');
+    }
+    chunks.push(value);
+  }
+  const merged = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return merged;
 }
 
 function fieldDataMap(fieldData) {
