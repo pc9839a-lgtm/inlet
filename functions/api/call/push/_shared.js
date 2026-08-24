@@ -115,6 +115,28 @@ export async function ownerIdForProject(db, projectId = '') {
 }
 
 export async function notifyPageroLeadAvailable(env = {}, db, ownerId = '', input = {}) {
+  return notifyOwnerDevices(env, db, ownerId, {
+    type: 'pagero_lead_available',
+    eventId: text(input.eventId, 240),
+    queueId: String(Number(input.queueId || 0)),
+    sentAt: String(Date.now()),
+  }, 'pagero_lead_available');
+}
+
+/**
+ * PII-free signal for any non-PageRo canonical lead. Android always pulls the actual lead from
+ * the signed Universal Lead API; FCM is never a source of truth.
+ */
+export async function notifyUniversalLeadAvailable(env = {}, db, ownerId = '', input = {}) {
+  return notifyOwnerDevices(env, db, ownerId, {
+    type: 'lead_available',
+    eventId: text(input.eventId, 240),
+    leadId: String(Number(input.leadId || 0)),
+    sentAt: String(Date.now()),
+  }, 'lead_available');
+}
+
+async function notifyOwnerDevices(env, db, ownerId, data, collapseKey) {
   const safeOwnerId = text(ownerId, 120);
   if (!safeOwnerId || !firebaseConfigured(env)) {
     return { configured: firebaseConfigured(env), attempted: 0, sent: 0 };
@@ -134,12 +156,13 @@ export async function notifyPageroLeadAvailable(env = {}, db, ownerId = '', inpu
   let sent = 0;
   for (const device of devices) {
     try {
-      await sendFirebaseMessage(env, accessToken, String(device.token || ''), {
-        type: 'pagero_lead_available',
-        eventId: text(input.eventId, 240),
-        queueId: String(Number(input.queueId || 0)),
-        sentAt: String(Date.now()),
-      });
+      await sendFirebaseMessage(
+        env,
+        accessToken,
+        String(device.token || ''),
+        data,
+        collapseKey,
+      );
       sent++;
       await db.prepare(`
         UPDATE calltag_push_devices
@@ -174,7 +197,7 @@ export function pushError(message, status = 400, code = 'PUSH_ERROR') {
   return error;
 }
 
-async function sendFirebaseMessage(env, accessToken, token, data = {}) {
+async function sendFirebaseMessage(env, accessToken, token, data = {}, collapseKey = 'lead_available') {
   const projectId = text(env.FIREBASE_PROJECT_ID, 200);
   const response = await fetch(`https://fcm.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/messages:send`, {
     method: 'POST',
@@ -187,7 +210,7 @@ async function sendFirebaseMessage(env, accessToken, token, data = {}) {
         token,
         data: Object.fromEntries(Object.entries(data).map(([key, value]) => [key, String(value ?? '')])),
         android: {
-          collapse_key: 'pagero_lead_available',
+          collapse_key: text(collapseKey, 80) || 'lead_available',
           priority: 'HIGH',
           ttl: '300s',
           restricted_package_name: 'kr.pagero.calltag',
