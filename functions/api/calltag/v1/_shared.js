@@ -7,4 +7,5 @@ export * from './_webhook-schema.js';
 export * from './_webhooks.js';
 export * from './_credentials.js';
 export * from './_meta-schema.js';
+export * from './_meta-graph.js';
 export * from './_meta.js';
