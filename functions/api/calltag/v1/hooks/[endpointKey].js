@@ -1,5 +1,5 @@
-import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../../../../_shared.js';
-import { receiveGenericWebhook } from '../../_shared.js';
+import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../../../_shared.js';
+import { receiveGenericWebhook } from '../_shared.js';
 
 const METHODS = 'POST, OPTIONS';
 
