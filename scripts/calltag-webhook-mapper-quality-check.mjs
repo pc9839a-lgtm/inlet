@@ -134,6 +134,17 @@ for (const file of [files.schema, files.mapper, files.webhooks, files.connection
   assert.equal(checked.status, 0, `syntax check failed for ${file}: ${checked.stderr || checked.stdout}`);
 }
 
+// `node --check` does not resolve ESM import paths. Import the route modules for real so a bad
+// nested relative path cannot pass CI and then fail only in Pages Functions at runtime.
+for (const file of [files.connections, files.samples, files.hook]) {
+  const loaded = spawnSync(
+    process.execPath,
+    ['--input-type=module', '--eval', `await import('./${file}')`],
+    { encoding: 'utf8' },
+  );
+  assert.equal(loaded.status, 0, `module import failed for ${file}: ${loaded.stderr || loaded.stdout}`);
+}
+
 console.log(JSON.stringify({
   ok: true,
   phase: 'CallTag Generic Webhook + Field Mapper Phase 2',
@@ -146,5 +157,6 @@ console.log(JSON.stringify({
     'mapping-required-sample-capture',
     'canonical-lead-intake-reuse',
     'replayable-raw-samples',
+    'runtime-route-import-resolution',
   ],
 }, null, 2));
