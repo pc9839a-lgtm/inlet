@@ -129,7 +129,7 @@ export function normalizeWebhookMapping(input = {}) {
 export function validateWebhookMapping(input = {}) {
   const mapping = normalizeWebhookMapping(input);
   if (!mapping.phone) {
-    throw leadError('Webhook mapping requires a phone field.', 400, 'CALLTAG_WEBHOOK_MAPPING_PHONE_REQUIRED');
+    throw leadError('전화번호 필드는 반드시 지정해야 합니다.', 400, 'CALLTAG_WEBHOOK_MAPPING_PHONE_REQUIRED');
   }
   return mapping;
 }
@@ -148,7 +148,7 @@ export function applyWebhookMapping(payload, mappingInput = {}, connection = {})
   const rawPhone = value(mapping.phone);
   const phone = normalizePhone(rawPhone);
   if (phone.length < 8) {
-    throw leadError('Mapped webhook phone field is empty or invalid.', 422, 'CALLTAG_WEBHOOK_MAPPED_PHONE_INVALID');
+    throw leadError('선택한 전화번호 필드의 값이 비어 있거나 전화번호 형식이 아닙니다. 다른 필드를 선택해주세요.', 422, 'CALLTAG_WEBHOOK_MAPPED_PHONE_INVALID');
   }
 
   const customFields = mapping.customFields.map((field) => ({
@@ -247,8 +247,8 @@ function unescapePointerSegment(value) {
 function normalizePointer(value = '') {
   const pointer = String(value || '').trim();
   if (!pointer) return '';
-  if (!pointer.startsWith('/')) throw leadError('Webhook mapping paths must use JSON Pointer syntax.', 400, 'CALLTAG_WEBHOOK_MAPPING_PATH_INVALID');
-  if (pointer.length > 1000) throw leadError('Webhook mapping path is too long.', 400, 'CALLTAG_WEBHOOK_MAPPING_PATH_INVALID');
+  if (!pointer.startsWith('/')) throw leadError('필드 경로는 / 로 시작하는 JSON Pointer 형식이어야 합니다.', 400, 'CALLTAG_WEBHOOK_MAPPING_PATH_INVALID');
+  if (pointer.length > 1000) throw leadError('필드 경로가 너무 깁니다. 1,000자 이하의 JSON Pointer를 사용해주세요.', 400, 'CALLTAG_WEBHOOK_MAPPING_PATH_INVALID');
   return pointer;
 }
 
