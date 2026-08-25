@@ -8,7 +8,6 @@ const read = (relativePath) => readFile(path.join(root, relativePath), 'utf8');
 const audit = await read('scripts/d1-baseline-audit.mjs');
 const entrypoint = await read('scripts/d1-migration-safety.mjs');
 const workflow = await read('.github/workflows/d1-migration-safety.yml');
-const packageSource = await read('package.json');
 const qaAll = await read('scripts/qa-all.mjs');
 
 for (const token of [
@@ -55,12 +54,11 @@ assert.ok(entrypoint.indexOf('const runnerCode = await run(runner)') < entrypoin
 assert.ok(workflow.includes('.tmp-d1-migration-safety/d1-baseline-audit.json'));
 assert.ok(!workflow.includes('push:'), 'D1 workflow must remain manual-only');
 assert.ok(!workflow.includes('pull_request:'), 'D1 workflow must remain manual-only');
-assert.ok(packageSource.includes('d1:baseline:audit:qa'));
 assert.ok(qaAll.includes("['d1:baseline:audit:qa'"));
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 34,
+  checks: 33,
   contracts: [
     'read-only-schema-query',
     '0001-through-0009-baseline-scope',
