@@ -59,7 +59,7 @@
       </article>
       <article class="provider-card">
         <div class="provider-top"><div class="provider"><div class="provider-mark google-forms">G</div><div class="provider-title"><strong>Google Forms</strong><span>구글 설문·상담폼</span></div></div><span id="googleFormsStatus" class="status">미연결</span></div>
-        <p class="provider-copy">Google Forms 제출을 Apps Script와 CallTag Webhook으로 연결해 새 문의로 자동 수집합니다.</p>
+        <p class="provider-copy">Google Forms용 Webhook을 만들면 URL이 포함된 Apps Script를 바로 복사할 수 있습니다.</p>
         <button id="openGoogleForms" class="card-action" type="button">Google Forms 연결</button>
       </article>
       <article class="provider-card">
@@ -108,8 +108,8 @@
     <div class="google-forms-guide">
       <div class="google-forms-steps">
         <div class="google-forms-step"><b>1</b>Google Forms용 Webhook을 만듭니다.</div>
-        <div class="google-forms-step"><b>2</b>한 번만 표시되는 URL을 복사합니다.</div>
-        <div class="google-forms-step"><b>3</b>아래 Apps Script에 URL을 넣고 installCallTag를 1회 실행합니다.</div>
+        <div class="google-forms-step"><b>2</b>발급 URL이 포함된 Apps Script가 자동으로 준비됩니다.</div>
+        <div class="google-forms-step"><b>3</b>스크립트를 Google Form에 붙여넣고 installCallTag를 1회 실행합니다.</div>
         <div class="google-forms-step"><b>4</b>테스트 응답 후 Webhook 매핑에서 전화번호 필드를 지정합니다.</div>
       </div>
       <div class="google-forms-actions">
@@ -118,11 +118,11 @@
       </div>
       <div class="guide-card">
         <h3>Google Forms에 넣을 Apps Script</h3>
-        <p>Google Form의 Apps Script 편집기에 붙여넣고 첫 줄의 <code>&lt;YOUR_CALLTAG_WEBHOOK_URL&gt;</code>만 발급받은 CallTag URL로 교체하세요. 그 다음 <strong>installCallTag</strong>를 한 번 실행해 제출 트리거를 설치합니다.</p>
+        <p>Webhook을 생성하면 방금 발급된 CallTag URL이 이 스크립트에 자동으로 포함됩니다. 그대로 복사해서 Google Form의 Apps Script 편집기에 붙여넣고 <strong>installCallTag</strong>를 한 번 실행하세요.</p>
         <div class="google-forms-code-wrap"><pre id="googleFormsCode" class="google-forms-code"></pre></div>
         <button id="copyGoogleFormsScript" class="row-action google-forms-code-copy" type="button">Apps Script 복사</button>
       </div>
-      <div class="google-forms-note">Webhook URL 자체가 비밀값입니다. 공개 문서나 저장소에 올리지 마세요. 현재 방식은 바로 사용할 수 있는 Apps Script 브리지이며, Google Forms API + Pub/Sub 기반 완전 자동 연결은 준비 중입니다.</div>
+      <div class="google-forms-note">Webhook URL 자체가 비밀값입니다. 공개 문서나 저장소에 올리지 마세요. URL은 브라우저 저장소에 저장하지 않으며 로그아웃·세션 만료 시 URL이 포함된 스크립트도 지웁니다. 현재 방식은 바로 사용할 수 있는 Apps Script 브리지이며, Google Forms API + Pub/Sub 기반 완전 자동 연결은 준비 중입니다.</div>
     </div>
   </section>
 
