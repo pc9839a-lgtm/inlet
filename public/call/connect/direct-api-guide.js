@@ -1,6 +1,19 @@
 (()=>{
+  function loadWebhookGuideAssets(){
+    if(!document.querySelector('link[data-webhook-guide-css]')){
+      const link=document.createElement('link');
+      link.rel='stylesheet';link.href='/call/connect/webhook-guide.css';link.dataset.webhookGuideCss='1';
+      document.head.appendChild(link);
+    }
+    if(!document.querySelector('script[data-webhook-guide-js]')){
+      const script=document.createElement('script');
+      script.src='/call/connect/webhook-guide.js';script.dataset.webhookGuideJs='1';script.defer=true;
+      document.body.appendChild(script);
+    }
+  }
+
   const root=document.getElementById('apiGuide');
-  if(!root)return;
+  if(!root){loadWebhookGuideAssets();return}
 
   const endpoint=`${location.origin}/api/calltag/v1/leads`;
   const payload={
@@ -145,4 +158,5 @@
   details.appendChild(body);
   root.textContent='';
   root.appendChild(details);
+  loadWebhookGuideAssets();
 })();
