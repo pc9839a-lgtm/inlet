@@ -68,24 +68,29 @@ function SettingsModeSwitch({ mode, setMode, advancedEnabled }) {
   if (!advancedEnabled) return null;
 
   return (
-    <div className="settings-mode-switch" role="group" aria-label="설정 범위 선택">
-      <button
-        type="button"
-        className={mode === 'basic' ? 'active' : ''}
-        aria-pressed={mode === 'basic'}
-        onClick={() => setMode('basic')}
-      >
-        기본 설정
-      </button>
-      <button
-        type="button"
-        className={mode === 'advanced' ? 'active' : ''}
-        aria-pressed={mode === 'advanced'}
-        onClick={() => setMode('advanced')}
-      >
-        고급 설정
-      </button>
-    </div>
+    <nav className="settings-nav-group settings-mode-switch" aria-label="설정 구분">
+      <span className="settings-nav-label">설정 구분</span>
+      <div className="settings-nav-items">
+        <button
+          type="button"
+          className={`settings-nav-item ${mode === 'basic' ? 'active' : ''}`}
+          aria-pressed={mode === 'basic'}
+          onClick={() => setMode('basic')}
+        >
+          <FileText size={18} aria-hidden="true" />
+          <span>기본 설정</span>
+        </button>
+        <button
+          type="button"
+          className={`settings-nav-item ${mode === 'advanced' ? 'active' : ''}`}
+          aria-pressed={mode === 'advanced'}
+          onClick={() => setMode('advanced')}
+        >
+          <Code2 size={18} aria-hidden="true" />
+          <span>고급 설정</span>
+        </button>
+      </div>
+    </nav>
   );
 }
 
@@ -134,7 +139,7 @@ export default function SettingsPanelBody({
   const primaryItems = PRIMARY_NAV.filter(([id]) => id !== 'managers' || canManageProjectUsers);
   const basicItems = ownerFinanceAccess ? [...primaryItems, ...SERVICE_NAV] : primaryItems;
   const modeItems = settingsMode === 'advanced' ? ADVANCED_NAV : basicItems;
-  const modeLabel = settingsMode === 'advanced' ? '고급 설정' : '기본 설정';
+  const modeLabel = settingsMode === 'advanced' ? '고급' : '기본';
 
   const selectSection = (id) => {
     const nextMode = ADVANCED_IDS.has(id) ? 'advanced' : 'basic';
@@ -181,10 +186,7 @@ export default function SettingsPanelBody({
       <main className="settings-v3-main">
         <div className="settings-v3-content-wrap">
           <header className="settings-page-head settings-page-head-compact">
-            <div>
-              <span className="settings-page-kicker">{modeLabel}</span>
-              <h1>{selectedLabel}</h1>
-            </div>
+            <h1>{selectedLabel}</h1>
           </header>
 
           <div className="settings-v3-content">
