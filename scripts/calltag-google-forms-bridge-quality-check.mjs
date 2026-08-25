@@ -45,6 +45,15 @@ for (const token of [
   'function clearTransientEndpoint',
   'new MutationObserver',
   "authObserver.observe(loginPanel,{attributes:true,attributeFilter:['class']})",
+  'function googleFormsReadiness',
+  'function renderGoogleFormsConnections',
+  'data.googleFormsAutoMap',
+  '추천 매핑 자동 설정',
+  'function autoMapGoogleForms',
+  '/samples?limit=5',
+  'draftMapping?.phone',
+  "action:'update_mapping'",
+  'function mergeSuggestedMapping',
 ]) {
   assert.ok(js.includes(token), `Google Forms bridge contract missing: ${token}`);
 }
@@ -56,15 +65,17 @@ assert.doesNotMatch(js, /localStorage|sessionStorage/, 'Google Forms bridge guid
 assert.doesNotMatch(js, /innerHTML/, 'Google Forms bridge guide must render without dynamic HTML injection');
 assert.doesNotMatch(js, /ctwh_[A-Za-z0-9_-]{8,}/, 'Google Forms bridge guide must never contain a real-looking CallTag Webhook secret');
 assert.doesNotMatch(js, /observe\(document\.body/, 'Google Forms bridge must not reintroduce a body-wide MutationObserver');
+assert.doesNotMatch(js, /replay_raw/, 'Google Forms one-click mapping must not automatically replay test samples into real customers');
 assert.match(js, /copyText\(appsScriptTemplate\(\),event\.currentTarget\)/, 'Apps Script copy must use the existing transient copy helper');
 assert.match(js, /if\(!loginPanel\.classList\.contains\('hidden'\)\)clearTransientEndpoint\(\)/, 'Auth reset must clear the transient endpoint-bearing script');
+assert.match(js, /autoMap\.onclick=\(\)=>autoMapGoogleForms\(item\.id,card,autoMap\)/, 'Recommended mapping write must require an explicit user button click');
 assert.match(css, /@media\(max-width:680px\)/, 'Google Forms guide must keep mobile responsive rules');
 assert.match(css, /@media\(max-width:420px\)/, 'Google Forms guide must keep small-screen action rules');
 assert.doesNotThrow(() => new Function(js), 'Google Forms bridge browser script must parse');
 
 console.log(JSON.stringify({
   ok: true,
-  phase: 'CallTag Google Forms Ready Script',
+  phase: 'CallTag Google Forms One-click Mapping',
   contracts: [
     'google-forms-connect-card-and-detail',
     'unsupported-naver-kakao-removed',
@@ -75,6 +86,10 @@ console.log(JSON.stringify({
     'transient-endpoint-only',
     'auth-reset-clears-endpoint-script',
     'google-forms-rotate-context',
+    'connection-readiness-list',
+    'sample-backed-recommended-mapping',
+    'explicit-user-click-before-mapping-write',
+    'no-automatic-test-sample-replay',
     'phone-mapping-required',
     'endpoint-secret-warning',
     'no-browser-secret-storage',
