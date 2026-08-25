@@ -9,3 +9,5 @@ export * from './_credentials.js';
 export * from './_meta-schema.js';
 export * from './_meta-graph.js';
 export * from './_meta.js';
+export * from './_meta-oauth-schema.js';
+export * from './_meta-oauth.js';
