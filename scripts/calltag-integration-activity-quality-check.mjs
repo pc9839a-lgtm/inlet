@@ -85,12 +85,20 @@ assert.equal(result.failures[0].code,'CALLTAG_PUSH_FAILED');
 assert.ok(statements.length===4,'Activity should use exactly four bounded read queries');
 for(const sql of statements)assert.match(sql.trim(),/^SELECT\b/i,'Activity DB operation must be SELECT only');
 
-// FCM remains best effort: intake acceptance is preserved while a safe, PII-free audit record is added.
-for(const token of ["action: 'lead.push'",'result: pushCode','statusCode: 503','notifyUniversalLeadAvailable','recordLeadAudit']){
+// FCM remains best effort: intake acceptance is preserved while fatal and per-device delivery gaps are audited.
+for(const token of [
+  "action: 'lead.push'",'result: pushCode','statusCode: 503','notifyUniversalLeadAvailable','recordLeadAudit',
+  'const attempted = Math.max(0, Number(push?.attempted || 0))','const sent = Math.max(0, Number(push?.sent || 0))',
+  'if (attempted > sent)',"'FCM_PARTIAL_FAILURE'","'FCM_ALL_DEVICES_FAILED'",'pushError?.details?.code',
+]){
   assert.ok(direct.includes(token),`Direct API push audit contract missing: ${token}`);
 }
 assert.ok(direct.includes('return jsonResponse(request, env, status'),'Direct API must still return accepted intake after best-effort push handling');
-for(const token of ["action: 'webhook.push'","sourceType: 'custom_webhook'",'statusCode: 503','sha256(endpointKey)','SELECT owner_id','calltag_webhook_connections']){
+for(const token of [
+  "action: 'webhook.push'","sourceType: 'custom_webhook'",'statusCode: 503','sha256(endpointKey)','SELECT owner_id','calltag_webhook_connections',
+  'const attempted = Math.max(0, Number(push?.attempted || 0))','const sent = Math.max(0, Number(push?.sent || 0))',
+  'if (attempted > sent)',"'FCM_PARTIAL_FAILURE'","'FCM_ALL_DEVICES_FAILED'",'pushError?.details?.code',
+]){
   assert.ok(webhook.includes(token),`Webhook push audit contract missing: ${token}`);
 }
 assert.ok(webhook.includes('return jsonResponse(request, env, 202, result'),'Webhook must remain accepted even if its best-effort FCM signal fails');
@@ -119,7 +127,7 @@ console.log(JSON.stringify({
     'pagero-legacy-status-isolation',
     'e2e-excluded-from-operational-summary',
     'bounded-pii-free-recent-failures',
-    'best-effort-push-failure-audit',
+    'fatal-and-device-level-push-gap-audit',
     'webhook-owner-derived-from-endpoint-secret',
     'manual-refresh-only',
     'source-and-status-filters',
