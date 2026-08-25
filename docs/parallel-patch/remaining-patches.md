@@ -1,343 +1,506 @@
-# Pagero Remaining Patches
+# 페이지로 랜딩 제작 남은 패치
 
-Updated: 2026-08-02 01:31 KST
+업데이트: 2026-08-03 00:37 KST
 
-Repository: `pc9839a-lgtm/inlet`
+저장소: `pc9839a-lgtm/inlet`
 
-Production branch: `main`
+운영 브랜치: `main`
 
-Current candidate: PR `#44` / `agent/template-mobile-final-regression`
+현재 `main`: `d2f929769957bfd7aff1f01b6ac0d9769612ca97`
 
-Other open candidates:
+랜딩 제작 모바일 기준선: `1c1c4bc3503f367cea81b0a3f435cd6c0d8b7473`
 
-- PR `#43` / `agent/admin-audit-hardening`
-- PR `#42` / `agent/account-page-limit-production-verification`
-- PR `#41` / `agent/custom-domain-foundation`
+현재 배포 기록의 소스 SHA: `38d6a56abd5fad86ed621cc558538efdfc03ed14`
 
-Current execution mode: parallel patching is active
+이 문서는 **페이지로의 랜딩페이지 제작·편집·저장·미리보기·발행·도메인·운영 기능만** 관리한다.
 
-Code completion, QA completion, merge, deployment, and production verification are separate states. Branch-only, mock-only, screenshot-only, or `skipped-live` results are not production completion.
+콜태그 앱, 콜태그 문의 동기화, 문자·전화 CRM 기능은 이 문서의 범위가 아니며 별도 제품 문서에서 관리한다.
 
-## Parallel Worker Split
+코드 완료, 자동 QA 완료, `main` 병합, 운영 배포, 실환경 검증은 서로 다른 상태다. 브랜치 전용 코드, mock, 스크린샷, `skipped-live` 결과만으로 운영 완료라고 기록하지 않는다.
 
-1. Worker 1: account, auth, email verification, sessions, member data
-2. Worker 2: lead intake, duplicate policy, inbox, stats, D1 scale, CSV
-3. Worker 3: personal-rehabilitation, mobile-wedding-invitation, and real-estate-presale templates
-4. Worker 4: Settings manager permissions, ownership transfer, page duplication URL flow
-5. Worker 5: QA, deployment, live integration readiness, docs and ops
+# 현재 상태 요약
 
-## Compatibility Labels Retained For QA Contracts
+## 완료된 랜딩 제작 기준선
 
-- Production account/session hardening
-- Customer-owned AI key storage
-- D1 real runtime smoke and write-side migration
-- Add lead duplicate and spam policy
-- Page duplication and URL setup
-- Expanded Launch Backlog
-- Login, account, and member management
-- Plans, payment, and subscription, final phase
-- Do not reassign these
-- `deployment:qa`
-- `npm run live:qa`
+다음 항목은 현재 `main`에 병합됐다. 실제 회귀가 재현되지 않는 한 다시 만들지 않는다.
 
-# Current Patch Checkpoint — PR #44
+- 활성 템플릿 3종 유지
+  - 개인회생 상담
+  - 모바일 청첩장
+  - 부동산 분양
+- 360px, 390px, 430px 실제 Chrome 모바일 회귀검사
+- 갤러리 화살표·도트 터치 및 키보드 포커스
+- FAQ 열기·닫기
+- 지도 외부 이동
+- 상담폼·방문예약폼
+- 모바일 키보드 표시 중 상단 메뉴·공유·하단 고정 UI 숨김
+- 개인정보 동의 행과 체크박스 터치 영역
+- 상단 메뉴 1~8개 균형 배치
+- 공유 버튼과 하단 고정 버튼 충돌 방지
+- 타이머 3종, 하단 타이머 상속, 공용 카운트다운 시계
+- 저장 중 페이지 전환 응답 격리
+- 계정·페이지별 임시 초안 복구
+- 이미지 방향 보정·리사이즈·압축·중복 방지
+- 일반 계정 1개 활성 페이지 서버 차단 기반
+- 공개 랜딩, 로그인 편집기, 상담·예약 브라우저 회귀 기반
+- 배포 후 HTML·Functions·정적 자산 smoke 검사
 
-## Code Complete
+PR `#44`는 `1c1c4bc3503f367cea81b0a3f435cd6c0d8b7473`으로 `main`에 병합됐다. 이전 문서의 “PR #44 미병합” 상태는 폐기한다.
 
-### Three active templates only
+## 아직 운영 완료가 아닌 영역
 
-- `debt-relief-consult` — personal rehabilitation consultation.
-- `wedding-invitation` — mobile wedding invitation.
-- `quote-request` — real estate presale.
-- No fourth template was added.
-- Template content, section order, and visual direction were not redesigned during QA.
+- D1 변경 전 암호화 백업·복구 게이트
+- 개인 도메인
+- 일반 계정 1페이지 정책의 운영 실검증
+- 관리자 권한·감사기록
+- 실제 Android 기기 최종 검수
+- Google Sheets·전환추적 실환경 검증
+- 대용량 문의·통계 성능 검증
+- 클래식·프로 기능 권한
+- 결제·정기구독
 
-### Real mobile-browser regression
+# 절대 규칙
 
-- Added Chrome CDP coverage for 360×800, 390×844, and 430×932.
-- Added all nine template/viewport combinations as release-blocking checks.
-- Added first-viewport checks for hero placement, title/body visibility, horizontal containment, and runtime fallback/error output.
-- Added editor/placeholder copy leakage checks.
-- Added every visible section's left/right containment checks.
-- Added bottom fixed-button count, minimum touch height, and share-button collision checks.
-- Added physical FAQ open/close interaction.
-- Added physical gallery-next interaction for wedding and real-estate templates.
-- Added map section and external map-action verification.
-- Added real-estate reservation controls verification.
-- Added bottom CTA navigation to the form.
-- Added form focus and simulated mobile-keyboard checks at 390px.
-- Added top navigation, share button, and bottom fixed UI hiding checks while an input is active.
-- Added viewport-bounded screenshots for all nine first screens plus 390px interaction screenshots.
+## 운영 메인 동결
 
-### Reproduced mobile defects fixed
+`https://pagero.kr/`의 현재 메인 화면은 동결 기준본이다.
 
-- Increased preview and public gallery arrow targets to 44×44px.
-- Added visible keyboard-focus treatment for gallery controls.
-- Prevented gallery swipe pointer capture from stealing arrow and dot button clicks.
-- Added `type="button"` and accessible labels to gallery dot controls.
-- Increased consent-row touch height to 44px.
-- Added a 36px checkbox hit box with a centered smaller visual checkbox.
-- Applied gallery and consent contracts equally to `.phone-frame` preview and `.public-landing-viewport` runtime.
-- Preserved `preview-fixed-ui-contract.css` as the final stylesheet priority.
+사용자가 메인 변경을 직접 요청하지 않은 작업에서는 디자인, 문구, 섹션 순서, 메뉴, 푸터, 애니메이션, 생활정보 연결, 로그인·시작 버튼, 반응형 결과를 변경하지 않는다.
 
-### CI evidence quality
-
-- Added `browser:templates-mobile:qa`.
-- Added `browser:templates-mobile:contract:qa` to `qa:all`.
-- Added release-blocking job `template-mobile-browser-regression`.
-- Added screenshot artifact `template-mobile-regression-${{ github.run_id }}`.
-- Added Noto CJK installation and font-match verification to the template-mobile job.
-- Korean text renders as actual glyphs so line wrapping and first-screen layout use Korean font metrics rather than missing-glyph boxes.
-- Protected production-home file changes: none.
-
-## QA Complete
-
-Implementation head `f1f542630964ffea77f949f7879d8284ce3e4c70` passed workflow run `30707915630`:
-
-- full offline QA
-- template static QA
-- preview/public parity QA
-- fixed bottom UI QA
-- top navigation balance QA
-- template mobile regression contract QA
-- Noto CJK installation and font match
-- personal rehabilitation at 360px, 390px, and 430px
-- mobile wedding invitation at 360px, 390px, and 430px
-- real estate presale at 360px, 390px, and 430px
-- physical FAQ interaction
-- physical gallery navigation
-- map actions
-- reservation controls
-- bottom CTA form navigation
-- simulated keyboard and fixed-UI hiding
-- public landing browser regression
-- authenticated editor browser regression
-- consultation and reservation browser regression
-- production build and deployment artifact checks
-
-Documentation closeout head `27641223d72e110cfcc61067412c830f132e62b7` passed workflow run `30708086687`:
-
-- full offline QA
-- public landing browser regression
-- authenticated editor browser regression
-- consultation and reservation browser regression
-- three-template mobile browser regression with Korean fonts
-
-PR `#44` was moved from draft to ready for review after all five final jobs passed.
-
-Screenshot artifact:
-
-- workflow run: `30707915630`
-- artifact ID: `8820920405`
-- artifact name: `template-mobile-regression-30707915630`
-- digest: `sha256:d1140f812a70cc97b3ad0015cdfdeb4ff06a1713023bb7fc2ab94a61c612cf2c`
-- reviewed first-viewport evidence: Korean glyphs, line wrapping, hero, share button, and bottom actions rendered correctly across all nine combinations
-
-## Not Complete
-
-- PR `#44` merge to `main`: not completed.
-- Production deployment: not completed.
-- Production-device verification: not completed.
-
-Do not describe PR `#44` as merged, deployed, or production verified until those separate steps are completed with explicit owner approval.
-
-# Absolute Rules
-
-## Production Home Is Frozen
-
-The current `https://pagero.kr/` root screen is the canonical production home.
-
-Unless the owner explicitly requests a production-home change, do not change its visible design, copy, section order, menu, footer, hero, animation, lifestyle bridge, login/start behavior, or responsive result.
-
-Protected production-home scope includes:
+보호 범위:
 
 - `functions/index.js`
 - `index.html`
 - `src/main.jsx`
-- root/public-home routing inside `src/App.jsx`
-- public-home screen components and styles
+- `src/App.jsx`의 루트·공개 홈 분기
+- 공개 홈 컴포넌트와 스타일
 - `public/c63-assets/**`
 - `public/c63-life-bridge.js`
 - `public/c63-life-bridge.css`
-- root/static routing inside `server/index.mjs`
+- `server/index.mjs`의 루트·정적 라우팅
 
-Stop deployment if a protected-home file changes during unrelated work.
+필수 운영 신호:
 
-## General Account And Administrator Policy
+- `.pagero-exact-home` 정확히 1개
+- `.c63-life-nav-link` 정확히 1개
+- `.c63-life-bridge` 정확히 1개
+- `.c63-life-post` 정확히 4개
+- `https://life.pagero.kr/` 링크
+- `https://awards.pagero.kr/` 링크
 
-- General account: one active landing page.
-- Platform master: unlimited landing pages and administrator API eligibility.
-- Frontend and API page-limit enforcement both remain mandatory.
-- Role-string forgery must not bypass page or administrator policy.
-- Existing pages remain editable, revisionable, restorable, previewable, and public.
-- Archived projects do not consume the active-page quota.
-- Google-login accounts follow the same page policy.
-- Manager/member access cannot create another owner page.
-- Default platform-master emails plus `INLET_PLATFORM_MASTER_EMAILS` are the only approved page-limit and administrator bypass source.
+관련 없는 패치에서 보호 파일 diff 또는 필수 신호 변화가 생기면 병합·배포를 중단한다.
 
-## Page Sharing And Fixed UI
+## 계정별 페이지 정책
 
-- Global sharing state uses `page.share`.
-- Sharing stays separate from the bottom fixed-button editor.
-- Public and preview sharing use the same PageShareButton flow.
-- Share URLs must use the public page URL, never the editor or dashboard URL.
-- Form and reservation focus must hide top navigation, share, and bottom fixed UI where required to protect the active input.
+- 일반 계정: 활성 랜딩페이지 1개
+- 플랫폼 마스터: 활성 랜딩페이지 무제한
+- 화면과 API 양쪽에서 제한
+- `superadmin` 같은 역할 문자열 위조로 우회 금지
+- 기존 페이지 편집·revision·restore·preview·publish 허용
+- 보관·삭제된 페이지는 활성 페이지 수에서 제외
+- Google 로그인 계정도 동일 정책
+- manager/member가 소유자 quota를 우회해 새 페이지 생성 금지
+- 플랫폼 마스터 판별은 승인 이메일과 `INLET_PLATFORM_MASTER_EMAILS`만 사용
 
-## Active Templates Stay Exactly Three
+## 활성 템플릿
 
-Keep exactly:
+아래 3개만 유지한다.
 
-1. Personal rehabilitation consultation.
-2. Mobile wedding invitation.
-3. Real estate presale.
+1. 개인회생 상담
+2. 모바일 청첩장
+3. 부동산 분양
 
-Do not add more templates and do not replace them with non-editable HTML shells.
+새 템플릿을 추가하거나 편집 불가능한 HTML 껍데기로 교체하지 않는다.
 
-Personal rehabilitation copy must not guarantee approval or legal outcome.
+개인회생 문구에서 승인·면책·법적 결과를 보장하지 않는다.
 
-## Paid Plans Are Locked To Two
+## 요금제
 
-- `classic`: 클래식, 월 3,500원
-- `pro`: 프로, 월 5,500원
-
-Do not restore the discarded 3,300원 / 6,600원 / 9,900원 direction. Do not add a third paid plan or invent entitlement differences before owner approval.
-
-## Deployment
-
-- Never force-push `main`.
-- Do not construct releases with destructive reset, clean, or restore operations.
-- Do not mix unrelated refactors into a focused patch.
-- Run targeted QA and the full suite before merge or deployment.
-- Production deployment requires explicit owner approval.
-
-# Completed Baseline — Do Not Reassign These
-
-- Production account/session hardening.
-- Customer-owned AI key storage.
-- D1 real runtime smoke and write-side migration foundations.
-- Add lead duplicate and spam policy foundations.
-- Page duplication and URL setup foundations; template duplication is not needed.
-- Login, account, and member management foundations.
-- General-account one-page and platform-master unlimited policies.
-- Save identity, revision conflict, draft recovery, and page-switch isolation.
-- Native sharing and four persisted share positions.
-- Form-focus fixed UI hiding foundations.
-- Three timer styles, strong effects, bottom-timer inheritance, and shared countdown clock.
-- Image optimization before storage.
-- Server-backed blocked history and month-bounded CSV.
-- AWS SES authentication-email foundation.
-- Google Sheets OAuth and delivery foundation.
-- Public landing, authenticated editor, and form/reservation browser regression infrastructure.
-- Preview/public CSS parity and fixed-bottom collision contracts.
-- Deployment route smoke contracts.
-- Administrator authorization, audit, email-change, account controls, project controls, retention, and live-verifier implementation on open PR `#43`.
-- One-page policy production verifier implementation on open PR `#42`.
-- Custom-domain implementation and operations tooling on open PR `#41`.
-- Three-template 360/390/430px real-browser regression implementation on PR `#44`.
-- Shared gallery 44px targets and pointer-capture guard on PR `#44`.
-- Shared consent-row mobile touch contract on PR `#44`.
-- Korean-font screenshot evidence pipeline on PR `#44`.
-
-# Other Open Checkpoints
-
-## PR #43 — Administrator And Audit Operations
-
-- Code and automated QA are complete on its branch.
-- Three-phase production verifier is implemented.
-- Merge to `main`: not completed.
-- Production audit secrets: not confirmed.
-- Production deployment: not completed.
-- Disposable fixtures and GitHub Secrets: not configured or verified.
-- Real `verified-live` result: not completed.
-
-## PR #42 — One-Page Policy Production Verification
-
-- General-account one-active-page implementation is already merged through PR `#40`.
-- Live verification script, manual workflow, cleanup, Google-login quota, and manager-bypass coverage are complete on PR `#42`.
-- Merge to `main`: not completed.
-- Six disposable fixtures and signed sessions: not configured or verified.
-- Manual workflow result `verified-live`: not completed.
-
-## PR #41 — Custom Domain
-
-- Domain ownership, DNS, SSL, provider registration, routing, retries, escalation, operator list, scheduled recheck, and runbook are code/QA complete on the branch.
-- Merge to `main`: not completed.
-- Production D1 migrations `0006` and `0007`: not completed.
-- Cloudflare production environment configuration: not completed.
-- Production deployment and real customer-domain smoke test: not completed.
-
-# Active Remaining Patches
-
-## Priority 1 — PR #44 Merge And Production Verification
-
-After owner approval:
-
-1. Confirm final PR head and all five QA jobs are green.
-2. Confirm protected production-home files remain unchanged.
-3. Merge PR `#44` to `main`.
-4. Deploy only with explicit deployment approval.
-5. Verify the three templates on at least one real Android device at approximately 360px, 390px, and 430px CSS widths.
-6. Verify gallery arrows, dots, FAQ, map actions, form keyboard, consent checkbox, reservation form, share button, and bottom actions.
-7. Record production deployment SHA and device evidence before marking production verified.
-
-## Priority 2 — PR #43 Merge And Production Verification
-
-After explicit owner approval:
-
-1. Configure `INLET_AUDIT_HASH_SECRET` and `INLET_AUDIT_RETENTION_SECRET` in production.
-2. Configure matching GitHub audit verification and retention secrets.
-3. Merge PR `#43` without mixing PR `#41`, `#42`, or `#44` branch changes.
-4. Deploy only after explicit deployment approval.
-5. Prepare one disposable password account and one `qa-audit-` page.
-6. Run the read-only, request-email-token, and verify-live phases.
-7. Require the documented `verified-live` results.
-8. Confirm D1 audit rows contain no raw password, token, session, email-change address, manager email, IP, or User-Agent.
-
-## Priority 3 — Execute One-Page Policy Live Verification
-
-1. Merge PR `#42` after checking conflict scope.
-2. Prepare the six disposable fixtures documented by PR `#42`.
-3. Store signed test sessions in GitHub Secrets.
-4. Run Account Page Limit Production Verify with explicit write approval.
-5. Require `verified-live` and confirm every `qa-limit-*` page was removed.
-
-## Priority 4 — Custom-Domain Operational Rollout
-
-1. Apply production migrations `0006_page_domains.sql` and `0007_page_domain_operations.sql` in order.
-2. Configure the Cloudflare account, Pages project, least-privilege token, CNAME target, and recheck secret.
-3. Merge PR `#41` only after migration and environment ordering is safe.
-4. Deploy only after explicit owner approval.
-5. Verify DNS, SSL, public routing, assets, forms, reservations, tracking, duplicate ownership, detach/reconnect, retries, and escalation.
-
-## Priority 5 — Live Integration Production Verification
-
-- SES identity, DKIM, SPF, DMARC, and production access.
-- Real verification, password-reset, email-change, invite, and ownership-transfer messages.
-- Google Sheets production OAuth, token refresh, row delivery, disconnect, and retry/dead-letter visibility.
-- Real conversion events where configured.
-- Missing credentials remain `skipped-live`, never false success or false product failure.
-- Never expose provider credentials, verification tokens, access tokens, or raw internal errors.
-
-## Priority 6 — Product And Operations Hardening
-
-- D1 backup and migration rollback evidence.
-- Current operator release checklist.
-- Retention and cleanup policy for leads, blocked submissions, delivery logs, AI drafts, backups, and audit rows.
-- Large-data inbox and stats query verification.
-- Abuse/rate-limit visibility without raw IP exposure.
-- Accessibility and keyboard regression for account, domain, and administrator UI.
-- Previous-deployment rollback procedure.
-
-# Plans, Payment, And Subscription, Final Phase
-
-Approved products:
+유료 플랜은 정확히 2개다.
 
 - `classic`: 클래식, 월 3,500원
 - `pro`: 프로, 월 5,500원
 
-Start only after active operational priorities are stable and the owner defines the entitlement difference. Required architecture includes server-side entitlements, provider abstraction, checkout/billing key, renewal, period-end cancellation, grace period, signed and idempotent webhooks, payment history, receipts, and audited administrator override.
+3,300원 / 6,600원 / 9,900원 3단계 방향을 복원하지 않는다. 세 번째 유료 플랜을 추가하지 않는다.
 
-# Required QA Before Merge Or Deployment
+플랜별 페이지 수, 문의 수, 통계 보관기간, 매니저 수, 개인 도메인, 외부 연동 권한은 사용자가 확정하기 전까지 추측으로 구현하지 않는다.
+
+## 배포
+
+- `main` force-push 금지
+- destructive reset, clean, restore로 릴리스 구성 금지
+- 관련 없는 리팩터링 혼합 금지
+- 기능별 QA와 전체 QA 통과 전 병합 금지
+- 운영 배포는 명시적 승인 후에만 진행
+- `skipped-live`를 실환경 성공으로 기록 금지
+
+# 남은 패치 우선순위
+
+## P0-1. D1 마이그레이션 안전 게이트 분리
+
+현재 PR `#45`에는 D1 안전 게이트와 콜태그 Android 문서가 함께 들어 있다. 이 문서의 범위에서는 PR `#45`를 그대로 병합하지 않는다.
+
+페이지로 랜딩 제작에 필요한 아래 파일만 최신 `main` 기준의 별도 PR로 분리한다.
+
+- `.github/workflows/d1-migration-safety.yml`
+- `scripts/d1-migration-safety.mjs`
+- `scripts/d1-migration-safety-runner.mjs`
+- `scripts/d1-migration-safety-quality-check.mjs`
+- `docs/ops-d1-migration-safety.md`
+- `docs/ops-storage-migration-policy.md`
+- 필요한 `.env.example` 항목
+- 필요한 `package.json` QA 명령
+- 필요한 `scripts/qa-all.mjs` 등록
+
+필수 동작:
+
+1. 읽기 전용 `preflight`
+2. 원격 migration history 조회
+3. 적용 예정 파일명과 순서의 정확한 승인
+4. 전체 SQL export
+5. AES-256 암호화 artifact만 보관
+6. plaintext SQL 삭제 확인
+7. SHA-256과 HMAC 증빙
+8. 가능한 경우 D1 Time Travel bookmark 기록
+9. 적용 후 migration history 재확인
+10. 자동 운영 복구 금지
+11. disposable D1에서 복구 연습
+
+완료 기준:
+
+- 별도 랜딩 전용 PR
+- 최신 `main`과 충돌 없음
+- 전체 QA 성공
+- 운영 Secret 목록 문서화
+- read-only preflight 성공
+- 암호화 백업 생성 증빙
+- disposable 복구 drill 성공
+
+## P0-2. 개인 도메인 migration 번호 정리
+
+현재 `main`에는 이미 `0006_*` migration이 존재한다. PR `#41`의 `0006_page_domains.sql`, `0007_page_domain_operations.sql`을 그대로 적용하지 않는다.
+
+D1 preflight에서 원격·로컬 migration 목록을 확인한 뒤 다음 사용 가능한 연속 번호로 재명명한다.
+
+예상 번호는 `0007_page_domains.sql`, `0008_page_domain_operations.sql`이지만, 원격 이력을 확인하기 전 확정하지 않는다.
+
+함께 수정할 범위:
+
+- migration 파일명
+- migration 안전 게이트 승인 목록
+- D1 schema QA
+- 운영 runbook
+- PR 설명과 체크리스트
+
+## P0-3. 개인 도메인 운영 완성
+
+PR `#41`에는 코드와 자동 QA 기반이 있으나 아직 운영 기능이 아니다.
+
+필수 작업:
+
+- 최신 `main` 재통합
+- 보호 메인 파일 diff 없음 확인
+- D1 백업 후 재번호화된 migration 적용
+- Cloudflare account ID 설정
+- Pages project 설정
+- Pages Edit 최소 권한 API token 설정
+- CNAME target 설정
+- domain recheck secret 설정
+- GitHub scheduled recheck secret 동기화
+- 테스트 도메인 연결
+
+실환경 검증:
+
+- 도메인 입력 검증
+- 동일 도메인 중복 소유 차단
+- DNS 안내
+- `pending → verifying → active` 상태
+- 실패·재시도·운영 확인 승격
+- SSL 활성화
+- 루트 공개 라우팅
+- JS·CSS·이미지 자산
+- 상담폼 제출
+- 방문예약 제출
+- 통계·전환 이벤트
+- 공유 URL과 canonical URL
+- 기본 주소 복귀
+- 도메인 해제·재연결
+- 미등록·미활성 도메인 noindex 404
+
+## P0-4. 일반 계정 1페이지 운영 실검증
+
+제품 제한 로직은 `main`에 존재하지만 실제 운영 fixture 검증은 완료되지 않았다.
+
+PR `#42`를 최신 `main` 기준으로 재통합하고 다음을 검증한다.
+
+- 일반 계정 첫 페이지 생성 성공
+- 두 번째 화면 생성 차단
+- 직접 API 생성 `409 / ACCOUNT_PAGE_LIMIT_REACHED`
+- 기존 페이지 저장·revision·restore·preview·publish
+- 보관 후 대체 페이지 생성
+- 삭제 후 대체 페이지 생성
+- 플랫폼 마스터 복수 페이지 생성
+- 로그아웃·로그인·세션 갱신 후 플랫폼 마스터 유지
+- Google 로그인 계정 동일 quota
+- manager/member 우회 차단
+- 모든 `qa-limit-*` 테스트 페이지 삭제
+
+`verified-live`와 cleanup 증빙이 모두 있어야 완료다.
+
+## P1-1. 실제 Android 기기 최종 검수
+
+자동 Chrome QA와 별도로 실제 Android 기기에서 검수한다.
+
+최소 폭:
+
+- 약 360px
+- 약 390px
+- 약 430px
+
+검수 항목:
+
+- 긴 히어로 제목과 설명
+- 5~8개 상단 메뉴
+- 갤러리 화살표·도트·스와이프
+- FAQ
+- 지도 앱 이동
+- 상담폼
+- 예약 날짜·시간
+- 개인정보 동의
+- 키보드가 제출 버튼을 가리지 않는지
+- 입력 중 고정 UI 숨김
+- 공유 버튼
+- 하단 CTA
+- 느린 네트워크 이미지 로딩
+- 중복 제출 잠금
+- Chrome과 Samsung Internet
+
+실기기 증빙 없이 모바일 운영 검증 완료라고 기록하지 않는다.
+
+## P1-2. 관리자 권한·감사 기능
+
+PR `#43`을 최신 `main`에 재통합한다.
+
+필수 기능:
+
+- `/api/admin/*` 플랫폼 마스터 권한 통일
+- 역할 문자열 위조 차단
+- 계정 정지·복원
+- 프로젝트 일시중지·복원
+- 이메일 변경 후 이전 세션 무효화
+- 매니저 초대·수락·권한 변경·삭제 이력
+- 소유권 이전 요청·승인·거절·취소·완료 이력
+- 감사 검색·필터·페이지네이션
+- 비밀번호·토큰·세션·쿠키·Authorization 마스킹
+- IP·User-Agent 원문 저장 금지
+- 감사 로그 보존정책
+- `/admin/audit` route-only 유지
+
+운영 Secret과 disposable fixture를 준비한 뒤 read-only → token request → verify-live 순서로 검증한다.
+
+## P1-3. 외부 연동 실환경 검증
+
+새로 구현하지 말고 현재 기반을 실제 운영 설정으로 검증한다.
+
+Google Sheets:
+
+- 운영 OAuth redirect URI
+- 연결
+- 토큰 만료 후 refresh
+- 폼 항목에 맞춘 header
+- 문의 행 전달
+- 중복 행 방지
+- 연결 해제 즉시 전송 중단
+- 실패 재시도와 dead-letter 확인
+
+전환 추적:
+
+- GTM
+- Google Analytics
+- Meta Pixel
+- 상담 제출 이벤트
+- 예약 제출 이벤트
+- 실제 광고 계정 이벤트 수신
+
+인증 이메일:
+
+- SES identity
+- DKIM
+- SPF
+- DMARC
+- sandbox 해제
+- 가입 인증
+- 비밀번호 재설정
+- 이메일 변경
+- 매니저 초대
+- 소유권 이전 알림
+
+## P1-4. 대용량 데이터와 운영 복구
+
+검증 데이터 규모:
+
+- 문의 10,000건
+- 문의 100,000건
+- 이벤트·통계 1,000,000행 수준의 쿼리 계획 점검
+
+검증 항목:
+
+- 접수함 첫 로드
+- cursor 또는 page pagination
+- 기간 필터
+- 검색
+- CSV 월 범위 제한
+- 통계 집계
+- source·device·page 필터
+- D1 인덱스 사용
+- timeout과 메모리
+
+운영 복구:
+
+- 이전 Cloudflare Pages 배포로 복귀
+- D1 Time Travel
+- migration rollback 문서
+- 잘못 연결된 개인 도메인 긴급 해제
+- 폼 접수 장애 사용자 안내
+- audit·delivery log 보존기간
+
+## P1-5. 접근성·키보드 회귀
+
+- 키보드만으로 편집기 주요 기능 접근
+- 모달 focus trap
+- 닫은 뒤 원래 버튼으로 focus 복귀
+- input·button·toggle 라벨
+- `focus-visible`
+- 44px 모바일 터치 영역
+- 색 대비
+- reduced motion
+- 오류·저장 상태 `aria-live`
+
+## P2-1. 클래식·프로 권한 확정
+
+결제 전에 사용자가 아래 차이를 확정해야 한다.
+
+- 활성 페이지 수
+- 페이지 복제
+- 월 문의 접수량
+- 통계 보관기간
+- 매니저 수
+- 개인 도메인
+- Google Sheets
+- GTM·Pixel·전환추적
+- 데이터 내보내기
+- 외부 연동 수
+
+확정 전에는 화면이나 서버에서 임의 권한을 만들지 않는다.
+
+## P2-2. 서버 권한 엔진
+
+플랜 권한은 화면 버튼 숨김이 아니라 API와 저장소 경계에서 강제한다.
+
+필수:
+
+- 서버 entitlement 모델
+- 기능별 limit 검사
+- 기존 사용자 migration
+- 운영자 override 감사기록
+- downgrade 처리
+- grace period
+- 만료 후 데이터 보존정책
+
+## P2-3. 결제·정기구독
+
+- 결제 제공자 추상화
+- 빌링키·카드 등록
+- 최초 결제
+- 정기 갱신
+- 기간 종료 해지
+- 결제 실패
+- 유예기간
+- 서명된 webhook
+- webhook idempotency
+- 결제내역
+- 영수증 링크
+- 관리자 수동 처리와 감사기록
+- 결제 Secret 서버 전용
+
+# 현재 열린 PR 판정
+
+## PR #41 — 개인 도메인
+
+상태:
+
+- 코드·자동 QA 기반 완료
+- open / mergeable
+- 최신 `main` 이후 다시 상태 확인 필요
+- 운영 migration 미적용
+- Cloudflare 운영 설정 미완료
+- 실제 도메인 검증 미완료
+
+판정:
+
+- 바로 병합 금지
+- D1 안전 게이트와 migration 재번호화 후 진행
+
+## PR #42 — 1페이지 정책 실검증
+
+상태:
+
+- 제품 제한 로직은 이미 `main`에 있음
+- 운영 verifier 코드·자동 QA 기반 완료
+- disposable fixture·signed session 미준비
+- `verified-live` 미완료
+
+판정:
+
+- 개인 도메인과 분리해서 최신 `main`에 재통합
+- 운영 쓰기 검증은 별도 승인 필요
+
+## PR #43 — 관리자·감사
+
+상태:
+
+- 코드·자동 QA 기반 완료
+- 운영 Secret·fixture 미확인
+- `verified-live` 미완료
+
+판정:
+
+- 개인 도메인과 한 번에 병합 금지
+- 최신 `main` 재통합 후 별도 배포·검증
+
+## PR #45 — D1 안전 게이트 + 타 제품 문서 혼합
+
+상태:
+
+- D1 안전 게이트 코드와 QA 기반 완료
+- 콜태그 Android 문서가 같은 PR에 포함
+- 운영 preflight·backup·restore drill 미완료
+
+판정:
+
+- 그대로 병합 금지
+- 페이지로 랜딩 제작에 필요한 D1 안전 파일만 별도 PR로 분리
+
+# 실행 순서
+
+1. 이 백로그 문서 최신화
+2. PR #45에서 D1 안전 게이트만 분리
+3. 최신 `main` read-only D1 preflight
+4. migration 번호 충돌 해소
+5. 암호화 운영 D1 백업
+6. disposable D1 복구 drill
+7. PR #41 개인 도메인 최신화·QA
+8. 개인 도메인 migration·환경 설정·배포·실검증
+9. PR #42 1페이지 정책 `verified-live`
+10. 실제 Android 기기 검수
+11. PR #43 관리자·감사 최신화·실검증
+12. Sheets·SES·전환추적 실환경 검증
+13. 대용량·복구·접근성 검증
+14. 클래식·프로 권한 확정
+15. 서버 entitlement
+16. 결제·정기구독
+
+# 병합·배포 전 필수 QA
 
 ```bash
 npm run templates:qa
@@ -357,13 +520,33 @@ npm run browser:production:qa
 npm run live:qa
 ```
 
-# Mandatory Closeout
+기능에 따라 추가:
 
-At the end of every patch:
+```bash
+npm run account:page-limit:qa
+npm run page:save:qa
+npm run page:draft:qa
+npm run page:operation:isolation:qa
+npm run image:upload:qa
+```
 
-1. Update the date, branch, PR, and checkpoint.
-2. Separate code complete, QA complete, merged, deployed, and production verified.
-3. Move completed implementation into the baseline.
-4. Remove completed work from the active list.
-5. Record missing migrations, credentials, approvals, and live evidence.
-6. Do not claim production completion from branch-only, mock-only, screenshot-only, or `skipped-live` results.
+D1 안전 게이트가 분리되면 해당 contract QA와 preflight도 필수 명령에 추가한다.
+
+# 패치 종료 기록
+
+모든 패치 종료 시 아래를 기록한다.
+
+1. 기준 `main` SHA
+2. 작업 브랜치와 PR
+3. 변경 파일
+4. 보호 메인 파일 diff 없음
+5. 코드 완료 여부
+6. 자동 QA 완료 여부
+7. 병합 여부
+8. 배포 SHA와 URL
+9. migration 적용 여부
+10. 필요한 Secret 설정 여부
+11. 실환경 검증 결과
+12. cleanup·rollback 증빙
+
+완료된 항목은 활성 목록에서 제거한다. 브랜치 전용, mock 전용, screenshot 전용, `skipped-live` 결과를 운영 완료로 남기지 않는다.
