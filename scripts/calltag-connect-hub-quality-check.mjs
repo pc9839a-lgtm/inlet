@@ -137,7 +137,14 @@ assert.match(mapper, /if\(!mapping\.phone\)/, 'Client mapper must block save wit
 assert.match(mapper, /mapping\.phone\.startsWith\('\/'\)/, 'Client mapper must validate JSON Pointer shape before save');
 assert.match(mapper, /encodeURIComponent\(connectionId\)/, 'Webhook sample endpoint must encode connection identifiers');
 assert.match(mapper, /Number\(sample\.id\)/, 'Raw replay must use a numeric sample id');
-assert.match(mapper, /MutationObserver/, 'Webhook mapper must re-bind after connection list refreshes');
+assert.match(js, /data\.webhookMapperTrigger|dataset\.webhookMapperTrigger/, 'Hub must mark the mapper trigger explicitly');
+assert.match(js, /dataset\.webhookConnectionId/, 'Hub must bind each Webhook card to its connection id');
+assert.match(js, /calltag:webhooks-rendered/, 'Hub must emit an explicit Webhook render event');
+assert.match(mapper, /calltag:webhooks-rendered/, 'Webhook mapper must re-bind from the explicit render event');
+assert.match(mapper, /webhookConnections\.find/, 'Webhook mapper must resolve the connection by id');
+assert.match(mapper, /data-webhook-mapper-trigger/, 'Webhook mapper must target the explicit mapper button');
+assert.doesNotMatch(mapper, /MutationObserver/, 'Webhook mapper must not watch DOM mutations to infer connection binding');
+assert.doesNotMatch(mapper, /cards\.forEach\(\(card,index\)/, 'Webhook mapper must not bind cards by array position');
 assert.match(apiGuide, /location\.origin/, 'Direct API guide should derive the endpoint from the current CallTag origin');
 assert.match(apiGuide, /navigator\.clipboard/, 'Direct API guide should support copy actions without persisting secrets');
 assert.doesNotMatch(apiGuide, /webhook-guide\.(?:css|js)|connect-polish\.(?:css|js)/, 'Direct API guide must not act as a hidden asset loader');
@@ -208,6 +215,9 @@ console.log(JSON.stringify({
     'server-suggested-draft-mapping',
     'raw-sample-replay-after-mapping',
     'payload-preview-text-only-and-truncated',
+    'webhook-card-id-binding',
+    'webhook-render-event-rebinding',
+    'no-mutation-observer-mapper-binding',
     'no-webhook-sample-browser-storage',
     'one-time-secret-display-only',
     'no-secret-browser-storage',
