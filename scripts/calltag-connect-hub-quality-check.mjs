@@ -7,15 +7,19 @@ const mapperFile = 'public/call/connect/webhook-mapper.js';
 const cssFile = 'public/call/connect/hub.css';
 const apiGuideFile = 'public/call/connect/direct-api-guide.js';
 const apiGuideCssFile = 'public/call/connect/direct-api-guide.css';
-const [html, js, mapper, css, apiGuide, apiGuideCss] = await Promise.all([
+const webhookGuideFile = 'public/call/connect/webhook-guide.js';
+const webhookGuideCssFile = 'public/call/connect/webhook-guide.css';
+const [html, js, mapper, css, apiGuide, apiGuideCss, webhookGuide, webhookGuideCss] = await Promise.all([
   readFile(htmlFile, 'utf8'),
   readFile(jsFile, 'utf8'),
   readFile(mapperFile, 'utf8'),
   readFile(cssFile, 'utf8'),
   readFile(apiGuideFile, 'utf8'),
   readFile(apiGuideCssFile, 'utf8'),
+  readFile(webhookGuideFile, 'utf8'),
+  readFile(webhookGuideCssFile, 'utf8'),
 ]);
-const source = `${html}\n${js}\n${mapper}\n${apiGuide}`;
+const source = `${html}\n${js}\n${mapper}\n${apiGuide}\n${webhookGuide}`;
 
 for (const label of ['PageRo', 'Meta Lead Ads', 'Generic Webhook', 'Direct API']) {
   assert.ok(source.includes(label), `Connect hub provider missing: ${label}`);
@@ -83,6 +87,29 @@ for (const token of [
   assert.ok(apiGuide.includes(token), `Direct API guide contract missing: ${token}`);
 }
 
+for (const token of [
+  'Webhook 연결 가이드',
+  '<YOUR_WEBHOOK_URL>',
+  'Webhook URL 자체가 비밀값입니다.',
+  'MAPPING_REQUIRED',
+  'MAPPED',
+  'REJECTED',
+  'Idempotency-Key',
+  'X-Webhook-Id',
+  'X-Delivery-Id',
+  'X-Request-Id',
+  'X-Event-Id',
+  'SHA-256',
+  '최대 256KB',
+  '연결당 1분 300건',
+  '1~30일 · 기본 7일',
+  '/lead/customer/phone',
+  '전화번호는 필수입니다.',
+  'URL 교체',
+]) {
+  assert.ok(webhookGuide.includes(token), `Webhook usage guide contract missing: ${token}`);
+}
+
 assert.ok(source.includes("const SESSION_KEY='calllink-session'"), 'CallTag session key must remain compatible');
 assert.ok(source.includes("const OAUTH_SESSION_KEY='calltag-meta-oauth-session'"), 'Meta OAuth refresh recovery must remain compatible');
 assert.ok(source.includes('Promise.allSettled'), 'Hub channel loading must be failure-isolated');
@@ -90,6 +117,7 @@ assert.ok(source.includes('textContent='), 'Dynamic provider values should rende
 assert.ok(!js.includes('innerHTML'), 'Connect hub must avoid dynamic HTML injection surfaces');
 assert.ok(!mapper.includes('innerHTML'), 'Webhook mapper must render provider payloads without dynamic HTML injection');
 assert.ok(!apiGuide.includes('innerHTML'), 'Direct API guide must render dynamic origin values without innerHTML');
+assert.ok(!webhookGuide.includes('innerHTML'), 'Webhook guide must render examples without innerHTML');
 assert.doesNotMatch(source, /pageAccessToken|page_access_token|user_access_token|access_token/i, 'Provider access tokens must never be exposed in Connect HTML');
 
 for (const storage of ['localStorage', 'sessionStorage']) {
@@ -98,7 +126,9 @@ for (const storage of ['localStorage', 'sessionStorage']) {
 }
 assert.doesNotMatch(mapper, /localStorage|sessionStorage/, 'Webhook mapper must not persist sample payload or mapping drafts in browser storage');
 assert.doesNotMatch(apiGuide, /localStorage|sessionStorage/, 'Direct API guide must not persist API keys, payloads, or examples in browser storage');
+assert.doesNotMatch(webhookGuide, /localStorage|sessionStorage/, 'Webhook guide must not persist endpoint secrets or samples in browser storage');
 assert.doesNotMatch(apiGuide, /ctk_[A-Za-z0-9_-]{8,}/, 'Direct API guide must never contain a real-looking CallTag API key');
+assert.doesNotMatch(webhookGuide, /ctwh_[A-Za-z0-9_-]{8,}/, 'Webhook guide must never contain a real-looking endpoint secret');
 
 assert.match(source, /localStorage\.setItem\(SESSION_KEY,session\)/, 'Only the signed CallTag session should persist in localStorage');
 assert.match(source, /sessionStorage\.setItem\(OAUTH_SESSION_KEY,id\)/, 'Only the temporary OAuth session id should persist in sessionStorage');
@@ -110,6 +140,10 @@ assert.match(mapper, /Number\(sample\.id\)/, 'Raw replay must use a numeric samp
 assert.match(mapper, /MutationObserver/, 'Webhook mapper must re-bind after connection list refreshes');
 assert.match(apiGuide, /location\.origin/, 'Direct API guide should derive the endpoint from the current CallTag origin');
 assert.match(apiGuide, /navigator\.clipboard/, 'Direct API guide should support copy actions without persisting secrets');
+assert.match(apiGuide, /webhook-guide\.css/, 'Connect guide loader must load Webhook guide styles');
+assert.match(apiGuide, /webhook-guide\.js/, 'Connect guide loader must load Webhook guide runtime');
+assert.match(webhookGuide, /document\.getElementById\('webhookDetail'\)/, 'Webhook guide must mount only inside the authenticated Webhook detail section');
+assert.match(webhookGuide, /navigator\.clipboard/, 'Webhook guide should offer safe copy actions');
 
 assert.ok(html.includes('/call/connect/hub.css') && html.includes('/call/connect/hub.js'), 'Connect hub assets must be loaded');
 assert.ok(html.includes('/call/connect/webhook-mapper.js'), 'Webhook mapper runtime must load after the Connect hub');
@@ -121,13 +155,16 @@ assert.ok(css.includes('.mapper-panel') && css.includes('.mapper-grid') && css.i
 assert.ok(css.includes('@media(max-width:420px)'), 'Connect hub must keep mobile responsive rules');
 assert.ok(apiGuideCss.includes('.api-guide-shell') && apiGuideCss.includes('.api-guide-code'), 'Direct API guide styles must be present');
 assert.ok(apiGuideCss.includes('@media(max-width:680px)'), 'Direct API guide must keep mobile responsive rules');
+assert.ok(webhookGuideCss.includes('.webhook-guide-shell') && webhookGuideCss.includes('.webhook-guide-code'), 'Webhook guide styles must be present');
+assert.ok(webhookGuideCss.includes('@media(max-width:680px)'), 'Webhook guide must keep mobile responsive rules');
 assert.doesNotThrow(() => new Function(js), 'Connect hub browser script must parse');
 assert.doesNotThrow(() => new Function(mapper), 'Webhook mapper browser script must parse');
 assert.doesNotThrow(() => new Function(apiGuide), 'Direct API guide browser script must parse');
+assert.doesNotThrow(() => new Function(webhookGuide), 'Webhook usage guide browser script must parse');
 
 console.log(JSON.stringify({
   ok: true,
-  phase: 'CallTag Unified Connect Hub + Webhook Mapper + Direct API Guide',
+  phase: 'CallTag Unified Connect Hub + Webhook Mapper + Integration Guides',
   contracts: [
     'pagero-built-in-channel',
     'meta-oauth-and-health-preserved',
@@ -139,6 +176,13 @@ console.log(JSON.stringify({
     'direct-api-request-response-examples',
     'direct-api-error-code-reference',
     'direct-api-same-phone-reinquiry-guidance',
+    'webhook-secret-url-guidance',
+    'webhook-test-payload-and-curl-example',
+    'webhook-idempotency-header-reference',
+    'webhook-payload-hash-fallback',
+    'webhook-rate-body-retention-limits',
+    'webhook-status-explanation',
+    'webhook-mapping-and-replay-flow',
     'sample-assisted-json-pointer-mapping',
     'phone-mapping-required-before-save',
     'server-suggested-draft-mapping',
