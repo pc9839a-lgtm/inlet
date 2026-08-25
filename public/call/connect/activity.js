@@ -7,6 +7,7 @@ const ACTIVITY_SOURCE_LABELS={
   meta_lead_ads:'Meta Lead Ads',
   custom_webhook:'Generic Webhook',
   direct_api:'Direct API',
+  calltag_e2e_test:'CallTag E2E Test',
 };
 
 function activityStageMeta(event={}){
@@ -157,3 +158,8 @@ if(activityTab)activityTab.addEventListener('click',()=>loadActivity());
 $('refreshActivity').onclick=()=>loadActivity(true);
 $('activitySource').onchange=()=>{activityLoaded=false;loadActivity(true)};
 $('activityStatus').onchange=()=>{activityLoaded=false;loadActivity(true)};
+
+const e2eScript=document.createElement('script');
+e2eScript.src='/call/connect/e2e.js';
+e2eScript.defer=true;
+document.body.appendChild(e2eScript);
