@@ -7,8 +7,9 @@ const files={
   core:'functions/api/calltag/v1/_e2e.js',
   client:'public/call/connect/e2e.js',
   activity:'public/call/connect/activity.js',
+  html:'public/call/connect/index.html',
 };
-const [route,core,client,activity]=await Promise.all(Object.values(files).map((file)=>readFile(file,'utf8')));
+const [route,core,client,activity,html]=await Promise.all(Object.values(files).map((file)=>readFile(file,'utf8')));
 
 assert.match(route,/const METHODS = 'GET, POST, OPTIONS'/,'E2E route should expose only GET/POST');
 assert.ok(route.includes('callSession(request, env'),'E2E route must require signed CallTag session');
@@ -75,7 +76,9 @@ for(const token of [
   'encodeURIComponent(e2eLastRunId)',
 ])assert.ok(client.includes(token),`E2E client contract missing: ${token}`);
 
-assert.ok(activity.includes("e2eScript.src='/call/connect/e2e.js'"),'Activity tab must load E2E controls');
+assert.ok(html.includes('/call/connect/e2e.js'),'Connect HTML must explicitly load E2E controls');
+assert.ok(html.indexOf('/call/connect/e2e.js')>html.indexOf('/call/connect/activity.js'),'E2E runtime must load after activity runtime');
+assert.doesNotMatch(activity,/createElement\(['"]script['"]\)|e2eScript/,'Activity runtime must not dynamically load E2E assets');
 assert.ok(activity.includes("calltag_e2e_test:'CallTag E2E Test'"),'Activity source labels must identify E2E events');
 assert.doesNotMatch(client,/setInterval|setTimeout\s*\(/,'E2E client must not auto-poll');
 assert.doesNotMatch(client,/localStorage\.setItem|sessionStorage\.setItem/,'E2E client must not persist test lead data');
@@ -95,6 +98,7 @@ console.log(JSON.stringify({
     'audited-push-attempt',
     'read-only-status-check',
     'server-side-phone-masking',
+    'explicit-html-runtime-loading',
     'manual-status-refresh-only',
     'no-test-data-browser-storage',
   ],

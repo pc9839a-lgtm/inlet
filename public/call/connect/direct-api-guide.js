@@ -1,22 +1,6 @@
 (()=>{
-  function loadAssetOnce(selector,tag,attrs){
-    if(document.querySelector(selector))return;
-    const node=document.createElement(tag);
-    for(const [key,value] of Object.entries(attrs)){
-      if(key==='dataset')for(const [dataKey,dataValue] of Object.entries(value))node.dataset[dataKey]=dataValue;
-      else node[key]=value;
-    }
-    (tag==='link'?document.head:document.body).appendChild(node);
-  }
-  function loadConnectCompanionAssets(){
-    loadAssetOnce('link[data-webhook-guide-css]','link',{rel:'stylesheet',href:'/call/connect/webhook-guide.css',dataset:{webhookGuideCss:'1'}});
-    loadAssetOnce('script[data-webhook-guide-js]','script',{src:'/call/connect/webhook-guide.js',defer:true,dataset:{webhookGuideJs:'1'}});
-    loadAssetOnce('link[data-connect-polish-css]','link',{rel:'stylesheet',href:'/call/connect/connect-polish.css',dataset:{connectPolishCss:'1'}});
-    loadAssetOnce('script[data-connect-polish-js]','script',{src:'/call/connect/connect-polish.js',defer:true,dataset:{connectPolishJs:'1'}});
-  }
-
   const root=document.getElementById('apiGuide');
-  if(!root){loadConnectCompanionAssets();return}
+  if(!root)return;
 
   const endpoint=`${location.origin}/api/calltag/v1/leads`;
   const payload={
@@ -161,5 +145,4 @@
   details.appendChild(body);
   root.textContent='';
   root.appendChild(details);
-  loadConnectCompanionAssets();
 })();
