@@ -5,13 +5,17 @@ const htmlFile = 'public/call/connect/index.html';
 const jsFile = 'public/call/connect/hub.js';
 const mapperFile = 'public/call/connect/webhook-mapper.js';
 const cssFile = 'public/call/connect/hub.css';
-const [html, js, mapper, css] = await Promise.all([
+const apiGuideFile = 'public/call/connect/direct-api-guide.js';
+const apiGuideCssFile = 'public/call/connect/direct-api-guide.css';
+const [html, js, mapper, css, apiGuide, apiGuideCss] = await Promise.all([
   readFile(htmlFile, 'utf8'),
   readFile(jsFile, 'utf8'),
   readFile(mapperFile, 'utf8'),
   readFile(cssFile, 'utf8'),
+  readFile(apiGuideFile, 'utf8'),
+  readFile(apiGuideCssFile, 'utf8'),
 ]);
-const source = `${html}\n${js}\n${mapper}`;
+const source = `${html}\n${js}\n${mapper}\n${apiGuide}`;
 
 for (const label of ['PageRo', 'Meta Lead Ads', 'Generic Webhook', 'Direct API']) {
   assert.ok(source.includes(label), `Connect hub provider missing: ${label}`);
@@ -58,12 +62,34 @@ for (const token of [
   assert.ok(source.includes(token), `Webhook mapper UI contract missing: ${token}`);
 }
 
+for (const token of [
+  'Direct API 연동 가이드',
+  'Authorization: Bearer <YOUR_API_KEY>',
+  'Idempotency-Key',
+  'event_id / external_id',
+  'CALLTAG_API_KEY_REQUIRED',
+  'CALLTAG_API_KEY_INVALID',
+  'CALLTAG_LEAD_IDEMPOTENCY_REQUIRED',
+  'CALLTAG_LEAD_PHONE_REQUIRED',
+  'CALLTAG_LEAD_EMAIL_INVALID',
+  'CALLTAG_LEAD_JSON_INVALID',
+  'CALLTAG_LEAD_BODY_TOO_LARGE',
+  'CREATED',
+  'MATCHED_EXISTING',
+  'DUPLICATE_IGNORED',
+  '서버에서만 호출하세요.',
+  'API Key를 웹페이지 JavaScript',
+]) {
+  assert.ok(apiGuide.includes(token), `Direct API guide contract missing: ${token}`);
+}
+
 assert.ok(source.includes("const SESSION_KEY='calllink-session'"), 'CallTag session key must remain compatible');
 assert.ok(source.includes("const OAUTH_SESSION_KEY='calltag-meta-oauth-session'"), 'Meta OAuth refresh recovery must remain compatible');
 assert.ok(source.includes('Promise.allSettled'), 'Hub channel loading must be failure-isolated');
 assert.ok(source.includes('textContent='), 'Dynamic provider values should render through textContent');
 assert.ok(!js.includes('innerHTML'), 'Connect hub must avoid dynamic HTML injection surfaces');
 assert.ok(!mapper.includes('innerHTML'), 'Webhook mapper must render provider payloads without dynamic HTML injection');
+assert.ok(!apiGuide.includes('innerHTML'), 'Direct API guide must render dynamic origin values without innerHTML');
 assert.doesNotMatch(source, /pageAccessToken|page_access_token|user_access_token|access_token/i, 'Provider access tokens must never be exposed in Connect HTML');
 
 for (const storage of ['localStorage', 'sessionStorage']) {
@@ -71,6 +97,8 @@ for (const storage of ['localStorage', 'sessionStorage']) {
   assert.doesNotMatch(source, secretWrite, `${storage} must not persist integration secrets or webhook samples`);
 }
 assert.doesNotMatch(mapper, /localStorage|sessionStorage/, 'Webhook mapper must not persist sample payload or mapping drafts in browser storage');
+assert.doesNotMatch(apiGuide, /localStorage|sessionStorage/, 'Direct API guide must not persist API keys, payloads, or examples in browser storage');
+assert.doesNotMatch(apiGuide, /ctk_[A-Za-z0-9_-]{8,}/, 'Direct API guide must never contain a real-looking CallTag API key');
 
 assert.match(source, /localStorage\.setItem\(SESSION_KEY,session\)/, 'Only the signed CallTag session should persist in localStorage');
 assert.match(source, /sessionStorage\.setItem\(OAUTH_SESSION_KEY,id\)/, 'Only the temporary OAuth session id should persist in sessionStorage');
@@ -80,23 +108,37 @@ assert.match(mapper, /mapping\.phone\.startsWith\('\/'\)/, 'Client mapper must v
 assert.match(mapper, /encodeURIComponent\(connectionId\)/, 'Webhook sample endpoint must encode connection identifiers');
 assert.match(mapper, /Number\(sample\.id\)/, 'Raw replay must use a numeric sample id');
 assert.match(mapper, /MutationObserver/, 'Webhook mapper must re-bind after connection list refreshes');
+assert.match(apiGuide, /location\.origin/, 'Direct API guide should derive the endpoint from the current CallTag origin');
+assert.match(apiGuide, /navigator\.clipboard/, 'Direct API guide should support copy actions without persisting secrets');
 
 assert.ok(html.includes('/call/connect/hub.css') && html.includes('/call/connect/hub.js'), 'Connect hub assets must be loaded');
 assert.ok(html.includes('/call/connect/webhook-mapper.js'), 'Webhook mapper runtime must load after the Connect hub');
+assert.ok(html.includes('/call/connect/direct-api-guide.js'), 'Direct API guide runtime must load');
+assert.ok(html.includes('/call/connect/direct-api-guide.css'), 'Direct API guide stylesheet must load');
+assert.ok(html.includes('id="apiGuide"'), 'Direct API guide mount point must be present');
 assert.ok(html.indexOf('/call/connect/hub.js') < html.indexOf('/call/connect/webhook-mapper.js'), 'Webhook mapper must load after hub globals are defined');
 assert.ok(css.includes('.mapper-panel') && css.includes('.mapper-grid') && css.includes('.mapper-payload'), 'Webhook mapper styles must be present');
 assert.ok(css.includes('@media(max-width:420px)'), 'Connect hub must keep mobile responsive rules');
+assert.ok(apiGuideCss.includes('.api-guide-shell') && apiGuideCss.includes('.api-guide-code'), 'Direct API guide styles must be present');
+assert.ok(apiGuideCss.includes('@media(max-width:680px)'), 'Direct API guide must keep mobile responsive rules');
 assert.doesNotThrow(() => new Function(js), 'Connect hub browser script must parse');
 assert.doesNotThrow(() => new Function(mapper), 'Webhook mapper browser script must parse');
+assert.doesNotThrow(() => new Function(apiGuide), 'Direct API guide browser script must parse');
 
 console.log(JSON.stringify({
   ok: true,
-  phase: 'CallTag Unified Connect Hub + Webhook Mapper UI',
+  phase: 'CallTag Unified Connect Hub + Webhook Mapper + Direct API Guide',
   contracts: [
     'pagero-built-in-channel',
     'meta-oauth-and-health-preserved',
     'generic-webhook-lifecycle-management',
     'direct-api-key-lifecycle-management',
+    'direct-api-server-only-security-guidance',
+    'direct-api-bearer-auth-contract',
+    'direct-api-idempotency-contract',
+    'direct-api-request-response-examples',
+    'direct-api-error-code-reference',
+    'direct-api-same-phone-reinquiry-guidance',
     'sample-assisted-json-pointer-mapping',
     'phone-mapping-required-before-save',
     'server-suggested-draft-mapping',
