@@ -1,4 +1,5 @@
 .provider-mark.google-forms{background:#f3f6ff;color:#5f46c6;border:1px solid #ded8ff}
+#hubSummary .summary-grid.google-forms-summary-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
 .google-forms-guide{margin-top:18px;display:grid;gap:16px}
 .google-forms-guide .guide-card{border:1px solid var(--line);border-radius:20px;padding:18px;background:#fff}
 .google-forms-guide .guide-card h3{margin:0 0 8px;font-size:17px;letter-spacing:-.02em}
@@ -16,5 +17,5 @@
 .google-forms-list{margin-top:0}
 .google-forms-connection-card .row-main span{white-space:normal;line-height:1.45}
 .google-forms-note{padding:13px 14px;border-radius:14px;background:#fff8e8;border:1px solid #f4dfad;color:#6e541a;font-size:13px;line-height:1.6}
-@media(max-width:680px){.google-forms-steps{grid-template-columns:1fr 1fr}.google-forms-guide .guide-card{padding:15px}.google-forms-code{max-height:360px}}
+@media(max-width:680px){#hubSummary .summary-grid.google-forms-summary-grid{grid-template-columns:1fr 1fr}.google-forms-steps{grid-template-columns:1fr 1fr}.google-forms-guide .guide-card{padding:15px}.google-forms-code{max-height:360px}}
 @media(max-width:420px){.google-forms-steps{grid-template-columns:1fr}.google-forms-actions{display:grid}.google-forms-actions button{width:100%}.google-forms-connection-card .row-actions{display:grid}.google-forms-connection-card .row-actions button{width:100%}}
