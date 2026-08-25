@@ -22,7 +22,7 @@
   }
 
   html body #root .builder-shell.edit-mode-shell .preview-workspace .phone-frame {
-    width: 480px !important;
+    width: 430px !important;
     max-width: 100% !important;
   }
 }
