@@ -58,6 +58,14 @@ for (const token of [
   'dataset.googleFormsRefresh',
   '테스트 응답 확인',
   '상태 새로고침',
+  'function rotateGoogleFormsConnection',
+  "action:'rotate_endpoint'",
+  'dataset.googleFormsRotate',
+  '스크립트 재발급',
+  'function revokeGoogleFormsConnection',
+  "action:'revoke'",
+  'dataset.googleFormsRevoke',
+  '연결 해제',
 ]) {
   assert.ok(js.includes(token), `Google Forms bridge contract missing: ${token}`);
 }
@@ -75,13 +83,17 @@ assert.match(js, /copyText\(appsScriptTemplate\(\),event\.currentTarget\)/, 'App
 assert.match(js, /if\(!loginPanel\.classList\.contains\('hidden'\)\)clearTransientEndpoint\(\)/, 'Auth reset must clear the transient endpoint-bearing script');
 assert.match(js, /autoMap\.onclick=\(\)=>autoMapGoogleForms\(item\.id,card,autoMap\)/, 'Recommended mapping write must require an explicit user button click');
 assert.match(js, /refresh\.onclick=\(\)=>refreshGoogleFormsConnection\(item\.id,card,refresh\)/, 'Test response refresh must require an explicit user button click');
+assert.match(js, /rotate\.onclick=\(\)=>rotateGoogleFormsConnection\(item\.id,card,rotate\)/, 'Endpoint rotation must require an explicit user button click');
+assert.match(js, /revoke\.onclick=\(\)=>revokeGoogleFormsConnection\(item\.id,card,revoke\)/, 'Connection revoke must require an explicit user button click');
+assert.match(js, /data\.endpointUrl&&acceptTransientEndpoint\(data\.endpointUrl\)/, 'Rotated endpoint must stay transient and flow directly into the ready-to-paste script');
+assert.match(js, /if\(error\?\.status===401\|\|error\?\.status===403\)\{requireLogin\(\);return\}/, 'Google Forms lifecycle actions must recover expired sessions');
 assert.match(css, /@media\(max-width:680px\)/, 'Google Forms guide must keep mobile responsive rules');
 assert.match(css, /@media\(max-width:420px\)/, 'Google Forms guide must keep small-screen action rules');
 assert.doesNotThrow(() => new Function(js), 'Google Forms bridge browser script must parse');
 
 console.log(JSON.stringify({
   ok: true,
-  phase: 'CallTag Google Forms Guided Setup',
+  phase: 'CallTag Google Forms Guided Lifecycle',
   contracts: [
     'google-forms-connect-card-and-detail',
     'unsupported-naver-kakao-removed',
@@ -97,6 +109,9 @@ console.log(JSON.stringify({
     'no-automatic-status-polling',
     'sample-backed-recommended-mapping',
     'explicit-user-click-before-mapping-write',
+    'direct-google-forms-endpoint-rotation',
+    'direct-google-forms-revoke',
+    'expired-session-recovery',
     'no-automatic-test-sample-replay',
     'phone-mapping-required',
     'endpoint-secret-warning',

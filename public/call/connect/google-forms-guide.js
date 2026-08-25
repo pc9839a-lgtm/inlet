@@ -319,6 +319,52 @@ function sendToCallTag(e) {
     }
   }
 
+  async function rotateGoogleFormsConnection(connectionId,card,button){
+    const id=String(connectionId||'');
+    if(!id||!confirm('Webhook URL을 교체하면 현재 Google Form의 기존 URL은 즉시 사용할 수 없게 됩니다. 새 Apps Script로 교체할까요?'))return;
+    button.disabled=true;
+    const original=button.textContent;
+    button.textContent='재발급 중...';
+    try{
+      const data=await api('/api/calltag/v1/connections',{method:'PATCH',body:{action:'rotate_endpoint',connectionId:id}});
+      if(data.connection)replaceWebhookConnection(data.connection);
+      rerenderConnectionState();
+      if(data.endpointUrl&&acceptTransientEndpoint(data.endpointUrl)){
+        const nextCard=findGoogleFormsCard(id);
+        cardMessage(nextCard,'새 URL이 포함된 Apps Script를 준비했습니다. 기존 Google Form 스크립트를 새 코드로 교체하세요.','warn');
+      }else{
+        cardMessage(findGoogleFormsCard(id)||card,'새 Webhook URL을 표시하지 못했습니다. Webhook 관리에서 다시 시도해주세요.','error');
+      }
+    }catch(error){
+      if(error?.status===401||error?.status===403){requireLogin();return}
+      cardMessage(card,error?.message||'스크립트 URL을 재발급하지 못했습니다.','error');
+    }finally{
+      button.disabled=false;
+      button.textContent=original;
+    }
+  }
+
+  async function revokeGoogleFormsConnection(connectionId,card,button){
+    const id=String(connectionId||'');
+    if(!id||!confirm('이 Google Forms 연결을 해제할까요? 현재 Apps Script는 더 이상 CallTag로 전송할 수 없습니다.'))return;
+    button.disabled=true;
+    const original=button.textContent;
+    button.textContent='해제 중...';
+    try{
+      const data=await api('/api/calltag/v1/connections',{method:'PATCH',body:{action:'revoke',connectionId:id}});
+      if(data.connection)replaceWebhookConnection(data.connection);
+      if(pendingGoogleFormsRotateId===id)pendingGoogleFormsRotateId='';
+      clearTransientEndpoint();
+      rerenderConnectionState();
+    }catch(error){
+      if(error?.status===401||error?.status===403){requireLogin();return}
+      cardMessage(card,error?.message||'Google Forms 연결을 해제하지 못했습니다.','error');
+    }finally{
+      button.disabled=false;
+      button.textContent=original;
+    }
+  }
+
   function renderGoogleFormsConnections(){
     const root=ensureGoogleFormsConnectionSection();
     if(!root)return;
@@ -348,8 +394,10 @@ function sendToCallTag(e) {
         const autoMap=document.createElement('button');autoMap.type='button';autoMap.className='row-action primary-small';autoMap.dataset.googleFormsAutoMap='1';autoMap.textContent='추천 매핑 자동 설정';autoMap.onclick=()=>autoMapGoogleForms(item.id,card,autoMap);actions.appendChild(autoMap);
       }
       const mapper=document.createElement('button');mapper.type='button';mapper.className=`row-action ${(item.mappingReady||Number(item.sampleCount||0)>0)?'':'primary-small'}`.trim();mapper.textContent=item.mappingReady?'매핑 보기':'전화번호 매핑';mapper.onclick=()=>openGoogleFormsMapper(item.id);
+      const rotate=document.createElement('button');rotate.type='button';rotate.className='row-action';rotate.dataset.googleFormsRotate='1';rotate.textContent='스크립트 재발급';rotate.onclick=()=>rotateGoogleFormsConnection(item.id,card,rotate);
       const manage=document.createElement('button');manage.type='button';manage.className='row-action';manage.textContent='Webhook 관리';manage.onclick=()=>openGoogleFormsWebhook(item.id);
-      actions.append(mapper,manage);
+      const revoke=document.createElement('button');revoke.type='button';revoke.className='row-action danger';revoke.dataset.googleFormsRevoke='1';revoke.textContent='연결 해제';revoke.onclick=()=>revokeGoogleFormsConnection(item.id,card,revoke);
+      actions.append(mapper,rotate,manage,revoke);
       card.append(top,meta,actions);root.appendChild(card);
     }
     syncGoogleFormsStatus();
