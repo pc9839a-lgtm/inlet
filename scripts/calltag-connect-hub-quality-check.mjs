@@ -52,8 +52,8 @@ for (const token of [
   'JSON Pointer',
   'JSON.stringify(sample.payload,null,2)',
   'value.slice(0,8000)',
-  'sample.mapper?.draftMapping',
-  'sample.mapper?.fields',
+  'sample?.mapper?.draftMapping',
+  'sample?.mapper?.fields',
 ]) {
   assert.ok(source.includes(token), `Webhook mapper UI contract missing: ${token}`);
 }
