@@ -19,6 +19,7 @@ const steps = [
   ['calltag:webhook-mapper:qa', ['scripts/calltag-webhook-mapper-quality-check.mjs']],
   ['calltag:generic-lead-delivery:qa', ['scripts/calltag-generic-lead-delivery-quality-check.mjs']],
   ['calltag:meta-lead-ads:qa', ['scripts/calltag-meta-lead-ads-quality-check.mjs']],
+  ['calltag:meta-oauth:qa', ['scripts/calltag-meta-oauth-quality-check.mjs']],
   ['server:smoke:auth', ['scripts/server-smoke-auth.mjs']],
   ['server:smoke:leads', ['scripts/server-smoke-leads.mjs']],
   ['server:smoke:events', ['scripts/server-smoke-events.mjs']],
