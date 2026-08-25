@@ -13,6 +13,42 @@
     }catch{return []}
   }
 
+  function genericWebhookConnections(){
+    try{
+      return activeOnly(webhookConnections).filter((item)=>String(item?.sourceName||'').trim()!==GOOGLE_FORMS_SOURCE);
+    }catch{return []}
+  }
+
+  function ensureGoogleFormsSummary(){
+    const grid=$('hubSummary')?.querySelector('.summary-grid');
+    if(!grid)return null;
+    let value=$('summaryGoogleForms');
+    if(value)return value;
+    const item=document.createElement('div');item.className='summary-item';item.dataset.googleFormsSummary='1';
+    const label=document.createElement('b');label.textContent='Google Forms';
+    value=document.createElement('strong');value.id='summaryGoogleForms';value.textContent='0';
+    item.append(label,value);
+    const meta=$('summaryMeta')?.closest('.summary-item');
+    if(meta?.parentNode===grid)meta.insertAdjacentElement('afterend',item);else grid.appendChild(item);
+    grid.classList.add('google-forms-summary-grid');
+    return value;
+  }
+
+  function syncGoogleFormsSummary(){
+    const googleTarget=ensureGoogleFormsSummary();
+    if(!googleTarget)return;
+    const meta=activeOnly(metaConnections).length;
+    const google=googleFormsConnections().length;
+    const generic=genericWebhookConnections().length;
+    const keys=activeOnly(apiKeys).length;
+    const channels=1+(meta?1:0)+(google?1:0)+(generic?1:0)+(keys?1:0);
+    googleTarget.textContent=String(google);
+    const webhookSummary=$('summaryWebhook');if(webhookSummary)webhookSummary.textContent=String(generic);
+    const channelSummary=$('summaryChannels');if(channelSummary)channelSummary.textContent=String(channels);
+    const hubState=$('hubState');if(hubState)hubState.textContent=(meta+google+generic+keys)?'연동 사용 중':'PageRo 기본';
+    const webhookStatus=$('webhookStatus');if(webhookStatus)setStatus(webhookStatus,generic);
+  }
+
   function googleFormsReadiness(item={}){
     const samples=Number(item.sampleCount||0);
     if(item.lastError)return{label:'확인 필요',className:'warn',hint:'최근 Webhook 처리 오류가 있습니다.'};
@@ -371,7 +407,7 @@ function sendToCallTag(e) {
     const items=googleFormsConnections();
     root.textContent='';
     if(!items.length){
-      const empty=document.createElement('div');empty.className='empty';empty.textContent='Google Forms용 Webhook을 만들면 연결 상태가 여기에 표시됩니다.';root.appendChild(empty);syncGoogleFormsStatus();return;
+      const empty=document.createElement('div');empty.className='empty';empty.textContent='Google Forms용 Webhook을 만들면 연결 상태가 여기에 표시됩니다.';root.appendChild(empty);syncGoogleFormsStatus();syncGoogleFormsSummary();return;
     }
     for(const item of items){
       const readiness=googleFormsReadiness(item);
@@ -401,6 +437,7 @@ function sendToCallTag(e) {
       card.append(top,meta,actions);root.appendChild(card);
     }
     syncGoogleFormsStatus();
+    syncGoogleFormsSummary();
   }
 
   function prepareWebhook(){
@@ -431,8 +468,10 @@ function sendToCallTag(e) {
   $('webhookList')?.addEventListener('click',rememberRotateContext,true);
 
   document.addEventListener('calltag:connect-ui-updated',(event)=>{
-    if(event?.detail?.area==='webhook'){renderGoogleFormsConnections();syncGoogleFormsStatus()}
-    if(event?.detail?.area==='secret')captureSecretIfGoogleForms();
+    const area=event?.detail?.area||'';
+    if(area==='webhook'){renderGoogleFormsConnections();syncGoogleFormsStatus()}
+    if(area==='secret')captureSecretIfGoogleForms();
+    if(area==='meta'||area==='webhook'||area==='api')syncGoogleFormsSummary();
   });
 
   const loginPanel=$('loginPanel');
@@ -443,8 +482,10 @@ function sendToCallTag(e) {
     authObserver.observe(loginPanel,{attributes:true,attributeFilter:['class']});
   }
 
+  ensureGoogleFormsSummary();
   ensureGoogleFormsConnectionSection();
   renderAppsScript();
   renderGoogleFormsConnections();
   syncGoogleFormsStatus();
+  syncGoogleFormsSummary();
 })();
