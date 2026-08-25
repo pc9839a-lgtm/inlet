@@ -54,6 +54,10 @@ for (const token of [
   'draftMapping?.phone',
   "action:'update_mapping'",
   'function mergeSuggestedMapping',
+  'function refreshGoogleFormsConnection',
+  'dataset.googleFormsRefresh',
+  '테스트 응답 확인',
+  '상태 새로고침',
 ]) {
   assert.ok(js.includes(token), `Google Forms bridge contract missing: ${token}`);
 }
@@ -66,16 +70,18 @@ assert.doesNotMatch(js, /innerHTML/, 'Google Forms bridge guide must render with
 assert.doesNotMatch(js, /ctwh_[A-Za-z0-9_-]{8,}/, 'Google Forms bridge guide must never contain a real-looking CallTag Webhook secret');
 assert.doesNotMatch(js, /observe\(document\.body/, 'Google Forms bridge must not reintroduce a body-wide MutationObserver');
 assert.doesNotMatch(js, /replay_raw/, 'Google Forms one-click mapping must not automatically replay test samples into real customers');
+assert.doesNotMatch(js, /setInterval\s*\(/, 'Google Forms status must not use automatic polling');
 assert.match(js, /copyText\(appsScriptTemplate\(\),event\.currentTarget\)/, 'Apps Script copy must use the existing transient copy helper');
 assert.match(js, /if\(!loginPanel\.classList\.contains\('hidden'\)\)clearTransientEndpoint\(\)/, 'Auth reset must clear the transient endpoint-bearing script');
 assert.match(js, /autoMap\.onclick=\(\)=>autoMapGoogleForms\(item\.id,card,autoMap\)/, 'Recommended mapping write must require an explicit user button click');
+assert.match(js, /refresh\.onclick=\(\)=>refreshGoogleFormsConnection\(item\.id,card,refresh\)/, 'Test response refresh must require an explicit user button click');
 assert.match(css, /@media\(max-width:680px\)/, 'Google Forms guide must keep mobile responsive rules');
 assert.match(css, /@media\(max-width:420px\)/, 'Google Forms guide must keep small-screen action rules');
 assert.doesNotThrow(() => new Function(js), 'Google Forms bridge browser script must parse');
 
 console.log(JSON.stringify({
   ok: true,
-  phase: 'CallTag Google Forms One-click Mapping',
+  phase: 'CallTag Google Forms Guided Setup',
   contracts: [
     'google-forms-connect-card-and-detail',
     'unsupported-naver-kakao-removed',
@@ -87,6 +93,8 @@ console.log(JSON.stringify({
     'auth-reset-clears-endpoint-script',
     'google-forms-rotate-context',
     'connection-readiness-list',
+    'manual-test-response-refresh',
+    'no-automatic-status-polling',
     'sample-backed-recommended-mapping',
     'explicit-user-click-before-mapping-write',
     'no-automatic-test-sample-replay',
