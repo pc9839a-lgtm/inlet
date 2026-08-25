@@ -54,6 +54,7 @@ const steps = [
   ['d1:adapter:qa', ['scripts/d1-adapter-quality-check.mjs']],
   ['d1:migration:safety:qa', ['scripts/d1-migration-safety-quality-check.mjs']],
   ['d1:baseline:audit:qa', ['scripts/d1-baseline-audit-quality-check.mjs']],
+  ['d1:baseline:write:qa', ['scripts/d1-baseline-history-write-quality-check.mjs']],
   ['ops:qa', ['scripts/ops-readiness-check.mjs']],
   ['api:functions:qa', ['scripts/pages-functions-quality-check.mjs']],
   ['api:security:qa', ['scripts/api-security-quality-check.mjs']],
