@@ -71,11 +71,18 @@ assert.equal(getJsonPointerValue(escaped, '/a~0b/value'), 'ok');
 
 assert.throws(
   () => validateWebhookMapping({ name: '/name' }),
-  (error) => error?.code === 'CALLTAG_WEBHOOK_MAPPING_PHONE_REQUIRED',
+  (error) => error?.code === 'CALLTAG_WEBHOOK_MAPPING_PHONE_REQUIRED'
+    && error?.message === '전화번호 필드는 반드시 지정해야 합니다.',
 );
 assert.throws(
   () => validateWebhookMapping({ phone: 'customer.phone' }),
-  (error) => error?.code === 'CALLTAG_WEBHOOK_MAPPING_PATH_INVALID',
+  (error) => error?.code === 'CALLTAG_WEBHOOK_MAPPING_PATH_INVALID'
+    && error?.message.includes('JSON Pointer'),
+);
+assert.throws(
+  () => applyWebhookMapping({ customer: { mobile: 'not-a-phone' } }, { phone: '/customer/mobile' }, {}),
+  (error) => error?.code === 'CALLTAG_WEBHOOK_MAPPED_PHONE_INVALID'
+    && error?.message.includes('다른 필드를 선택해주세요.'),
 );
 
 const files = {
@@ -122,6 +129,13 @@ for (const token of [
 ]) {
   assert.ok(source.webhooks.includes(token), `webhook intake core missing: ${token}`);
 }
+for (const token of [
+  '전화번호 필드는 반드시 지정해야 합니다.',
+  '필드 경로는 / 로 시작하는 JSON Pointer 형식이어야 합니다.',
+  '선택한 전화번호 필드의 값이 비어 있거나 전화번호 형식이 아닙니다.',
+]) {
+  assert.ok(source.mapper.includes(token), `friendly webhook mapper message missing: ${token}`);
+}
 assert.ok(source.webhooks.includes('owner_id = ? AND connection_id = ?'), 'sample reads must be owner + connection scoped');
 assert.ok(source.connections.includes('callSession') && source.connections.includes('session.ownerId'), 'connection management must be signed-session scoped');
 assert.ok(!source.hook.includes('callSession'), 'public webhook intake must authenticate only from the secret endpoint token');
@@ -155,6 +169,7 @@ console.log(JSON.stringify({
     'versioned-json-pointer-field-mapping',
     'automatic-field-suggestions',
     'mapping-required-sample-capture',
+    'friendly-korean-mapping-errors',
     'canonical-lead-intake-reuse',
     'replayable-raw-samples',
     'runtime-route-import-resolution',
