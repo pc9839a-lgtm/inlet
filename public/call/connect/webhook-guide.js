@@ -1,6 +1,13 @@
 (()=>{
-  const root=document.getElementById('webhookGuide');
-  if(!root)return;
+  const detail=document.getElementById('webhookDetail');
+  if(!detail)return;
+  let root=document.getElementById('webhookGuide');
+  if(!root){
+    root=document.createElement('div');
+    root.id='webhookGuide';
+    const list=document.getElementById('webhookList');
+    if(list)detail.insertBefore(root,list);else detail.appendChild(root);
+  }
 
   const samplePayload={
     lead:{
