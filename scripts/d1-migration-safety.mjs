@@ -4,6 +4,8 @@ import path from 'node:path';
 const root = process.cwd();
 const runner = path.join(root, 'scripts', 'd1-migration-safety-runner.mjs');
 const baselineAudit = path.join(root, 'scripts', 'd1-baseline-audit.mjs');
+const baselineWriter = path.join(root, 'scripts', 'd1-baseline-history-write.mjs');
+const BASELINE_APPROVAL = 'I_APPROVE_D1_BASELINE_0001_0009';
 
 function run(scriptPath) {
   return new Promise((resolve, reject) => {
@@ -32,7 +34,31 @@ async function main() {
   }
 
   const auditCode = await run(baselineAudit);
-  process.exitCode = auditCode;
+  if (auditCode !== 0) {
+    process.exitCode = auditCode;
+    return;
+  }
+
+  const writeEnabled = process.env.INLET_D1_MIGRATION_WRITE === '1';
+  const approval = String(process.env.INLET_D1_MIGRATION_APPROVAL || '');
+  if (!writeEnabled) {
+    process.exitCode = 0;
+    return;
+  }
+
+  if (approval !== BASELINE_APPROVAL) {
+    console.error(JSON.stringify({
+      ok: false,
+      status: 'baseline-history-write-not-approved',
+      error: `preflight write requires approval phrase ${BASELINE_APPROVAL}`,
+      secretValuesIncluded: false,
+    }, null, 2));
+    process.exitCode = 1;
+    return;
+  }
+
+  const writeCode = await run(baselineWriter);
+  process.exitCode = writeCode;
 }
 
 main().catch((error) => {
