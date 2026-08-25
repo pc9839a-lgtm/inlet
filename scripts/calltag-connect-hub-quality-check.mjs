@@ -133,6 +133,25 @@ assert.doesNotMatch(webhookGuide, /ctwh_[A-Za-z0-9_-]{8,}/, 'Webhook guide must 
 assert.match(source, /localStorage\.setItem\(SESSION_KEY,session\)/, 'Only the signed CallTag session should persist in localStorage');
 assert.match(source, /sessionStorage\.setItem\(OAUTH_SESSION_KEY,id\)/, 'Only the temporary OAuth session id should persist in sessionStorage');
 assert.match(source, /if\(rejected\.length\)\{\$\('hubState'\)\.textContent='일부 확인 필요'/, 'Partial channel failures must remain visible');
+const cleanupStart=js.indexOf('function clearTransientAuthUi()');
+const cleanupEnd=js.indexOf('\nfunction requireLogin()',cleanupStart);
+assert.ok(cleanupStart>=0&&cleanupEnd>cleanupStart,'Transient auth cleanup must be defined before login reset');
+const cleanupBody=js.slice(cleanupStart,cleanupEnd);
+assert.match(cleanupBody,/rememberOauthSession\(''\)/,'Expired sessions must clear temporary Meta OAuth session state');
+for(const id of ['webhookSecret','apiSecret']){
+  assert.ok(cleanupBody.includes(`'${id}'`),`Expired sessions must target ${id}`);
+}
+assert.match(cleanupBody,/box\.textContent=''/,'Expired sessions must erase one-time secret DOM contents');
+assert.match(cleanupBody,/box\.className='secret-box'/,'Expired sessions must restore secret boxes to hidden base state');
+assert.match(cleanupBody,/removeAttribute\('role'\)/,'Expired sessions must remove transient secret accessibility region state');
+assert.match(cleanupBody,/removeAttribute\('aria-label'\)/,'Expired sessions must remove transient secret accessibility labels');
+assert.match(cleanupBody,/\$\('pagePicker'\).*classList\.add\('hidden'\)/s,'Expired sessions must hide stale Meta page selection UI');
+assert.match(cleanupBody,/\$\('pageList'\).*textContent=''/s,'Expired sessions must clear stale Meta page selection content');
+const requireLoginStart=js.indexOf('function requireLogin()');
+const requireLoginEnd=js.indexOf('\nfunction handleConnectActionError',requireLoginStart);
+const requireLoginBody=js.slice(requireLoginStart,requireLoginEnd);
+assert.match(requireLoginBody,/localStorage\.removeItem\(SESSION_KEY\)/,'Expired session recovery must remove signed session storage');
+assert.match(requireLoginBody,/clearTransientAuthUi\(\)/,'Expired session recovery must erase transient secrets before exposing login UI');
 assert.match(js, /function handleConnectActionError\(error,target\)\{\s*if\(error\?\.status===401\|\|error\?\.status===403\)\{requireLogin\(\);return true\}/, 'Lifecycle action errors must route expired sessions back to login');
 const lifecycleActionTargets = [
   ['revokeConnection', 'metaNotice'],
@@ -218,6 +237,8 @@ console.log(JSON.stringify({
     'generic-webhook-lifecycle-management',
     'direct-api-key-lifecycle-management',
     'expired-session-lifecycle-action-normalization',
+    'expired-session-transient-secret-erasure',
+    'expired-session-oauth-state-erasure',
     'scoped-403-session-handling',
     'direct-api-server-only-security-guidance',
     'direct-api-bearer-auth-contract',

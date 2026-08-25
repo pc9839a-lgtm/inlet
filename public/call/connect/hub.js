@@ -15,7 +15,16 @@ function setAuthed(value){
   $('logout').classList.toggle('hidden',!value);
   if(value){resetMetaStartButton();showDetail('metaDetail',false)}
 }
-function requireLogin(){session='';localStorage.removeItem(SESSION_KEY);resetMetaStartButton();setAuthed(false)}
+function clearTransientAuthUi(){
+  rememberOauthSession('');
+  for(const id of ['webhookSecret','apiSecret']){
+    const box=$(id);if(!box)continue;
+    box.textContent='';box.className='secret-box';box.removeAttribute('role');box.removeAttribute('aria-label');
+  }
+  const picker=$('pagePicker');if(picker)picker.classList.add('hidden');
+  const pages=$('pageList');if(pages)pages.textContent='';
+}
+function requireLogin(){session='';localStorage.removeItem(SESSION_KEY);clearTransientAuthUi();resetMetaStartButton();setAuthed(false)}
 function handleConnectActionError(error,target){
   if(error?.status===401||error?.status===403){requireLogin();return true}
   notice(target,error?.message||'요청을 처리하지 못했습니다.','error');return false
