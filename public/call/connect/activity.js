@@ -220,8 +220,3 @@ if(activityTab)activityTab.addEventListener('click',()=>loadActivity());
 $('refreshActivity').onclick=()=>loadActivity(true);
 $('activitySource').onchange=()=>{activityLoaded=false;loadActivity(true)};
 $('activityStatus').onchange=()=>{activityLoaded=false;loadActivity(true)};
-
-const e2eScript=document.createElement('script');
-e2eScript.src='/call/connect/e2e.js';
-e2eScript.defer=true;
-document.body.appendChild(e2eScript);
