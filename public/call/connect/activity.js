@@ -205,6 +205,7 @@ async function loadActivity(force=false){
     activityLoaded=true;
     $('activityReadOnly').textContent=data.summaryExcludesTest===true?'읽기 전용 · 테스트 제외':'읽기 전용';
     $('activityReadOnly').className='status on';
+    document.dispatchEvent(new CustomEvent('calltag:connect-ui-updated',{detail:{area:'activity'}}));
   }catch(error){
     if(error.status===401||error.status===403){requireLogin();return}
     $('activityReadOnly').textContent='확인 실패';$('activityReadOnly').className='status bad';

@@ -53,6 +53,7 @@ function e2eBuildPanel(){
   form.onsubmit=e2eRun;
   statusButton.onclick=()=>e2eCheckStatus();
   e2ePanelReady=true;
+  document.dispatchEvent(new CustomEvent('calltag:connect-ui-updated',{detail:{area:'e2e'}}));
 }
 
 async function e2eLoadReadiness(){
@@ -141,6 +142,7 @@ function e2eRenderStatus(status={}){
   card.appendChild(grid);
   const message=document.createElement('div');message.className=`health-message show ${meta.className==='good'?'good':meta.className==='bad'?'bad':'warn'}`;message.textContent=meta.detail;card.appendChild(message);
   result.insertBefore(card,$('checkE2eStatus'));
+  document.dispatchEvent(new CustomEvent('calltag:connect-ui-updated',{detail:{area:'e2e-status'}}));
 }
 
 const e2eActivityTab=document.querySelector('[data-section="activityDetail"]');
