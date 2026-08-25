@@ -256,6 +256,7 @@ function renderWebhookMapperPanel(panel,data,card){
     renderMapperPayload(state);
     clearMapperNotice(panel);
   };
+  document.dispatchEvent(new CustomEvent('calltag:connect-ui-updated',{detail:{area:'mapper'}}));
 }
 
 async function refreshWebhookMapper(state,button=null){
@@ -284,6 +285,7 @@ async function openWebhookMapper(connectionId,card,button){
     if(error.status===401||error.status===403){panel.remove();requireLogin();return}
     panel.textContent='';
     const fail=document.createElement('div');fail.className='mapper-notice show error';fail.textContent=error.message;panel.appendChild(fail);
+    document.dispatchEvent(new CustomEvent('calltag:connect-ui-updated',{detail:{area:'mapper-error'}}));
   }finally{button.disabled=false;button.textContent=original}
 }
 

@@ -23,7 +23,8 @@ function healthClass(state){return state==='healthy'?'good':state==='warning'?'w
 function reasonLabel(code){const labels={CALLTAG_META_TOKEN_EXPIRED:'Meta 인증이 만료되었습니다. 다시 연결해주세요.',CALLTAG_META_PAGE_ACCESS_DENIED:'Meta 페이지 접근 권한을 확인할 수 없습니다. 다시 연결해주세요.',CALLTAG_META_PAGE_CREDENTIAL_INVALID:'Meta 페이지 인증정보를 확인할 수 없습니다. 다시 연결해주세요.',CALLTAG_META_CREDENTIAL_MISSING:'저장된 Meta 인증정보가 없습니다. 다시 연결해주세요.',CALLTAG_META_SCOPE_MISSING:'필수 Meta 권한 일부가 부족합니다. 다시 연결해주세요.',CALLTAG_META_CONNECTION_ERROR:'최근 문의 처리 중 오류가 있었습니다.',CALLTAG_META_LAST_ERROR:'최근 Meta 문의 처리 오류가 기록되어 있습니다.',CALLTAG_META_HEALTH_CHECK_FAILED:'Meta 연결 상태를 확인하지 못했습니다.'};return labels[code]||''}
 function setStatus(el,count,label='연결'){el.textContent=count?`${count}개 ${label}`:'미연결';el.classList.toggle('on',count>0)}
 function activeOnly(items=[]){return items.filter((item)=>item.status!=='revoked')}
-function emitWebhooksRendered(root,count){root.dispatchEvent(new CustomEvent('calltag:webhooks-rendered',{detail:{count}}))}
+function emitConnectUiUpdated(area){document.dispatchEvent(new CustomEvent('calltag:connect-ui-updated',{detail:{area}}))}
+function emitWebhooksRendered(root,count){root.dispatchEvent(new CustomEvent('calltag:webhooks-rendered',{detail:{count}}));emitConnectUiUpdated('webhook')}
 
 async function api(url,{method='GET',body}={}){
   const response=await fetch(url,{method,headers:authHeaders(body!==undefined),...(body!==undefined?{body:JSON.stringify(body)}:{})});
@@ -74,7 +75,7 @@ function renderConnections(items=[]){
   $('metaStatus').textContent=!active.length?'미연결':hasWarning?'확인 필요':`${active.length}개 연결`;
   $('metaStatus').classList.toggle('on',active.length>0&&!hasWarning);
   $('metaStatus').classList.toggle('warn',hasWarning);
-  if(!active.length){const empty=document.createElement('div');empty.className='empty';empty.textContent='연결된 Meta 페이지가 없습니다.';root.appendChild(empty);updateSummary();return}
+  if(!active.length){const empty=document.createElement('div');empty.className='empty';empty.textContent='연결된 Meta 페이지가 없습니다.';root.appendChild(empty);updateSummary();emitConnectUiUpdated('meta');return}
   for(const item of active){
     const card=document.createElement('div');card.className='connection-card';card.dataset.connectionId=item.id||'';
     const top=document.createElement('div');top.className='connection-top';
@@ -100,6 +101,7 @@ function renderConnections(items=[]){
     card.append(top,grid,message,actions);root.appendChild(card);
   }
   updateSummary();
+  emitConnectUiUpdated('meta');
 }
 
 function applyHealth(card,health={}){
@@ -169,6 +171,7 @@ function showSecret(el,title,value,note){
   const copy=document.createElement('button');copy.className='copy-button';copy.type='button';copy.textContent='복사';copy.onclick=()=>copyText(value,copy);
   const p=document.createElement('p');p.className='secret-note';p.textContent=note;
   line.append(secret,copy);el.append(b,line,p);
+  emitConnectUiUpdated('secret');
 }
 
 async function copyText(value,button){
@@ -218,7 +221,7 @@ function renderApiKeys(items=[]){
   apiKeys=items;
   const root=$('apiList');root.textContent='';
   const active=activeOnly(items);
-  if(!active.length){const empty=document.createElement('div');empty.className='empty';empty.textContent='활성 API Key가 없습니다.';root.appendChild(empty);updateSummary();return}
+  if(!active.length){const empty=document.createElement('div');empty.className='empty';empty.textContent='활성 API Key가 없습니다.';root.appendChild(empty);updateSummary();emitConnectUiUpdated('api');return}
   for(const item of active){
     const card=document.createElement('div');card.className='connection-card';
     const top=document.createElement('div');top.className='connection-top';
@@ -238,6 +241,7 @@ function renderApiKeys(items=[]){
     actions.append(rotate,endpoint,revoke);card.append(top,meta,actions);root.appendChild(card);
   }
   updateSummary();
+  emitConnectUiUpdated('api');
 }
 
 async function loadApiKeys(){const data=await api('/api/calltag/v1/keys');renderApiKeys(data.keys||[])}

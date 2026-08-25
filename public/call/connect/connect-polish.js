@@ -73,8 +73,7 @@
     if(queued)return;queued=true;
     requestAnimationFrame(()=>{queued=false;enhance()});
   };
-  const observer=new MutationObserver(schedule);
-  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+  document.addEventListener('calltag:connect-ui-updated',schedule);
   document.addEventListener('click',schedule,true);
   document.addEventListener('keydown',(event)=>{
     if(event.key!=='Escape')return;

@@ -1,11 +1,15 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [runtime, css, html, apiGuide] = await Promise.all([
+const [runtime, css, html, apiGuide, hub, mapper, activity, e2e] = await Promise.all([
   readFile('public/call/connect/connect-polish.js','utf8'),
   readFile('public/call/connect/connect-polish.css','utf8'),
   readFile('public/call/connect/index.html','utf8'),
   readFile('public/call/connect/direct-api-guide.js','utf8'),
+  readFile('public/call/connect/hub.js','utf8'),
+  readFile('public/call/connect/webhook-mapper.js','utf8'),
+  readFile('public/call/connect/activity.js','utf8'),
+  readFile('public/call/connect/e2e.js','utf8'),
 ]);
 
 for(const token of [
@@ -19,15 +23,34 @@ for(const token of [
   'URL 교체',
   '키 폐기',
   '키 교체',
-  'MutationObserver',
+  'calltag:connect-ui-updated',
   "event.key!=='Escape'",
 ])assert.ok(runtime.includes(token),`Connect polish runtime missing ${token}`);
 
+assert.doesNotMatch(runtime,/MutationObserver/,'UX polish must not watch the entire Connect DOM for mutations');
 assert.doesNotMatch(runtime,/localStorage|sessionStorage/,'UX polish must not persist state or secrets');
 assert.doesNotMatch(runtime,/innerHTML/,'UX polish must avoid dynamic HTML injection');
 assert.doesNotMatch(runtime,/fetch\s*\(/,'UX polish must not add network/API behavior');
 assert.doesNotMatch(runtime,/confirm\s*=|window\.confirm/,'UX polish must not bypass existing confirmation guards');
 assert.doesNotThrow(()=>new Function(runtime),'Connect polish browser script must parse');
+
+for(const [label,producer] of [
+  ['hub',hub],
+  ['webhook mapper',mapper],
+  ['activity',activity],
+  ['E2E',e2e],
+])assert.ok(producer.includes('calltag:connect-ui-updated'),`${label} must announce dynamic Connect UI updates`);
+
+for(const token of [
+  "emitConnectUiUpdated('meta')",
+  "emitConnectUiUpdated('webhook')",
+  "emitConnectUiUpdated('api')",
+  "emitConnectUiUpdated('secret')",
+])assert.ok(hub.includes(token),`Connect hub UI update producer missing ${token}`);
+
+assert.ok(mapper.includes("area:'mapper'"),'Webhook mapper must announce mapper panel renders');
+assert.ok(activity.includes("area:'activity'"),'Activity renderer must announce activity UI renders');
+assert.ok(e2e.includes("area:'e2e'")&&e2e.includes("area:'e2e-status'"),'E2E renderer must announce panel and status renders');
 
 for(const token of [
   '.connect-empty-action',
@@ -55,6 +78,8 @@ console.log(JSON.stringify({
     'mobile-minimum-action-targets',
     'responsive-action-grid',
     'escape-closes-create-forms',
+    'explicit-ui-update-events',
+    'no-body-mutation-observer',
     'explicit-html-asset-loading',
     'no-hidden-guide-loader',
     'no-new-network-behavior',
