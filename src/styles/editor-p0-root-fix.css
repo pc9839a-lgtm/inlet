@@ -1,0 +1,77 @@
+/* Final edit-workbench root ownership: isolate the editor from legacy builder-shell 640px/2-column rules. */
+@media (min-width: 901px) {
+  html body #root > .builder-shell.edit-workbench-shell:not(.mobile-operations-shell) {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: 72px 86px minmax(0, 1fr) !important;
+    width: 100% !important;
+    min-width: 1180px !important;
+    height: 100dvh !important;
+    min-height: 720px !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+  }
+
+  html body #root > .builder-shell.edit-workbench-shell > .edit-workbench-nav {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  html body #root > .builder-shell.edit-workbench-shell > .edit-workbench-toolbar {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  html body #root > .builder-shell.edit-workbench-shell > .edit-workbench-grid {
+    grid-column: 1 !important;
+    grid-row: 3 !important;
+    grid-template-columns: clamp(340px, 29vw, 400px) minmax(0, 1fr) !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+  }
+
+  html body #root .builder-shell.edit-workbench-shell .preview-workspace.preview-workspace-canvas {
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: auto !important;
+  }
+
+  html body #root .builder-shell.edit-workbench-shell .preview-workspace-canvas .preview-sticky {
+    width: min(1080px, 100%) !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 100% !important;
+    max-height: none !important;
+  }
+}
+
+@media (max-width: 900px) {
+  html body #root > .builder-shell.edit-workbench-shell:not(.mobile-operations-shell) {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: 58px 74px minmax(0, 1fr) !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+  }
+
+  html body #root > .builder-shell.edit-workbench-shell > :is(.edit-workbench-nav, .edit-workbench-toolbar, .edit-workbench-grid) {
+    grid-column: 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  html body #root > .builder-shell.edit-workbench-shell > .edit-workbench-nav { grid-row: 1 !important; }
+  html body #root > .builder-shell.edit-workbench-shell > .edit-workbench-toolbar { grid-row: 2 !important; }
+  html body #root > .builder-shell.edit-workbench-shell > .edit-workbench-grid { grid-row: 3 !important; }
+}
