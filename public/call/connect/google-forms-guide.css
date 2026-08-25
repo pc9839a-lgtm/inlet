@@ -1,0 +1,15 @@
+.provider-mark.google-forms{background:#f3f6ff;color:#5f46c6;border:1px solid #ded8ff}
+.google-forms-guide{margin-top:18px;display:grid;gap:16px}
+.google-forms-guide .guide-card{border:1px solid var(--line);border-radius:20px;padding:18px;background:#fff}
+.google-forms-guide .guide-card h3{margin:0 0 8px;font-size:17px;letter-spacing:-.02em}
+.google-forms-guide .guide-card p{margin:0;color:var(--muted);font-size:14px;line-height:1.65}
+.google-forms-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.google-forms-step{padding:13px 14px;border-radius:16px;background:#f8f9fc;border:1px solid var(--line);font-size:13px;line-height:1.45}
+.google-forms-step b{display:block;margin-bottom:5px;font-size:12px;color:#5f46c6}
+.google-forms-code-wrap{position:relative;margin-top:12px}
+.google-forms-code{margin:0;max-height:420px;overflow:auto;padding:16px;border-radius:16px;background:#111827;color:#f8fafc;font:12px/1.65 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre;tab-size:2}
+.google-forms-code-copy{margin-top:10px}
+.google-forms-actions{display:flex;gap:10px;flex-wrap:wrap}
+.google-forms-note{padding:13px 14px;border-radius:14px;background:#fff8e8;border:1px solid #f4dfad;color:#6e541a;font-size:13px;line-height:1.6}
+@media(max-width:680px){.google-forms-steps{grid-template-columns:1fr 1fr}.google-forms-guide .guide-card{padding:15px}.google-forms-code{max-height:360px}}
+@media(max-width:420px){.google-forms-steps{grid-template-columns:1fr}.google-forms-actions{display:grid}.google-forms-actions button{width:100%}}
