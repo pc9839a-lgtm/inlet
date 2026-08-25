@@ -1,3 +1,5 @@
+import { injectPageroRootSeo } from './pageroRootSeo.js';
+
 const OG_IMAGE_PATH_PREFIX = '/__pagero_og/';
 const PUBLIC_SLUG_PATTERN = /^[a-zA-Z0-9_-]+$/;
 
@@ -187,6 +189,9 @@ export async function injectPublicPageMeta(context, url, response) {
   if (!response?.ok) return response;
   const contentType = String(response.headers.get('content-type') || '').toLowerCase();
   if (!contentType.includes('text/html')) return response;
+
+  const rootSeoResponse = await injectPageroRootSeo(url, response);
+  if (rootSeoResponse.headers.get('X-Pagero-Root-SEO')) return rootSeoResponse;
 
   const slug = slugFromPublicPath(url.pathname);
   if (!slug) return response;
