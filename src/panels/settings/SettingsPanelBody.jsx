@@ -18,9 +18,9 @@ import PageDuplicateUrlModal from './PageDuplicateUrlModal.jsx';
 import SettingsPrimarySections from './SettingsPrimarySections.jsx';
 
 const PRIMARY_NAV = [
-  ['account', '계정 정보', UserRound],
   ['basic', '페이지 기본', FileText],
   ['domain', '개인 도메인', Globe2],
+  ['account', '계정 정보', UserRound],
   ['managers', '매니저 권한', UsersRound],
 ];
 
@@ -64,6 +64,31 @@ function SettingsNavGroup({ label, items, selectedSection, selectSection }) {
   );
 }
 
+function SettingsModeSwitch({ mode, setMode, advancedEnabled }) {
+  if (!advancedEnabled) return null;
+
+  return (
+    <div className="settings-mode-switch" role="group" aria-label="설정 범위 선택">
+      <button
+        type="button"
+        className={mode === 'basic' ? 'active' : ''}
+        aria-pressed={mode === 'basic'}
+        onClick={() => setMode('basic')}
+      >
+        기본 설정
+      </button>
+      <button
+        type="button"
+        className={mode === 'advanced' ? 'active' : ''}
+        aria-pressed={mode === 'advanced'}
+        onClick={() => setMode('advanced')}
+      >
+        고급 설정
+      </button>
+    </div>
+  );
+}
+
 export default function SettingsPanelBody({
   authUser,
   canDuplicatePage,
@@ -94,48 +119,72 @@ export default function SettingsPanelBody({
   const { openSection, setAdvancedOpen, setOpenSection } = sections;
   const ownerFinanceAccess = canManageProjectUsers && !clientAdminMode;
   const initialSection = (() => {
-    const requested = openSection || 'account';
-    if (clientAdminMode && ADVANCED_IDS.has(requested)) return 'account';
-    if (!canManageProjectUsers && requested === 'managers') return 'account';
-    if (!ownerFinanceAccess && OWNER_ONLY_IDS.has(requested)) return 'account';
+    const requested = openSection || 'basic';
+    if (clientAdminMode && ADVANCED_IDS.has(requested)) return 'basic';
+    if (!canManageProjectUsers && requested === 'managers') return 'basic';
+    if (!ownerFinanceAccess && OWNER_ONLY_IDS.has(requested)) return 'basic';
     return requested;
   })();
   const [selectedSection, setSelectedSection] = useState(initialSection);
-  const selectedLabel = ALL_NAV.find(([id]) => id === selectedSection)?.[1] || '계정 정보';
+  const [settingsMode, setSettingsMode] = useState(
+    !clientAdminMode && ADVANCED_IDS.has(initialSection) ? 'advanced' : 'basic',
+  );
+  const selectedLabel = ALL_NAV.find(([id]) => id === selectedSection)?.[1] || '페이지 기본';
+
+  const primaryItems = PRIMARY_NAV.filter(([id]) => id !== 'managers' || canManageProjectUsers);
+  const basicItems = ownerFinanceAccess ? [...primaryItems, ...SERVICE_NAV] : primaryItems;
+  const modeItems = settingsMode === 'advanced' ? ADVANCED_NAV : basicItems;
+  const modeLabel = settingsMode === 'advanced' ? '고급 설정' : '기본 설정';
 
   const selectSection = (id) => {
+    const nextMode = ADVANCED_IDS.has(id) ? 'advanced' : 'basic';
+    setSettingsMode(nextMode);
     setSelectedSection(id);
-    setAdvancedOpen(ADVANCED_IDS.has(id));
+    setAdvancedOpen(nextMode === 'advanced');
     setOpenSection(id);
+  };
+
+  const selectMode = (nextMode) => {
+    if (nextMode === settingsMode) return;
+    const nextSection = nextMode === 'advanced' ? ADVANCED_NAV[0][0] : basicItems[0]?.[0] || 'basic';
+    setSettingsMode(nextMode);
+    setSelectedSection(nextSection);
+    setAdvancedOpen(nextMode === 'advanced');
+    setOpenSection(nextSection);
   };
 
   const visibleSections = {
     ...sections,
-    advancedOpen: ADVANCED_IDS.has(selectedSection),
+    advancedOpen: settingsMode === 'advanced',
     openSection: selectedSection,
     setOpenSection: (nextSection) => {
       if (nextSection) selectSection(nextSection);
     },
   };
 
-  const primaryItems = PRIMARY_NAV.filter(([id]) => id !== 'managers' || canManageProjectUsers);
-
   return (
     <div className="settings-v3-root settings-v4-flat">
       <aside className="settings-v3-sidebar">
-        <SettingsNavGroup label="기본" items={primaryItems} selectedSection={selectedSection} selectSection={selectSection} />
-        {ownerFinanceAccess && (
-          <SettingsNavGroup label="서비스" items={SERVICE_NAV} selectedSection={selectedSection} selectSection={selectSection} />
-        )}
-        {!clientAdminMode && (
-          <SettingsNavGroup label="고급" items={ADVANCED_NAV} selectedSection={selectedSection} selectSection={selectSection} />
-        )}
+        <SettingsModeSwitch
+          mode={settingsMode}
+          setMode={selectMode}
+          advancedEnabled={!clientAdminMode}
+        />
+        <SettingsNavGroup
+          label={modeLabel}
+          items={modeItems}
+          selectedSection={selectedSection}
+          selectSection={selectSection}
+        />
       </aside>
 
       <main className="settings-v3-main">
         <div className="settings-v3-content-wrap">
           <header className="settings-page-head settings-page-head-compact">
-            <h1>{selectedLabel}</h1>
+            <div>
+              <span className="settings-page-kicker">{modeLabel}</span>
+              <h1>{selectedLabel}</h1>
+            </div>
           </header>
 
           <div className="settings-v3-content">
