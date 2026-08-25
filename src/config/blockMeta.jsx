@@ -16,6 +16,7 @@ import {
   Search,
   TimerReset,
   Type,
+  Youtube,
 } from 'lucide-react';
 import { SINGLETON_BLOCK_TYPES } from './blockTypes.js';
 
@@ -23,6 +24,7 @@ export const META = {
   topnav: { label: '상단 메뉴', badge: 'MENU', icon: Menu },
   hero: { label: '히어로', badge: 'TOP', icon: FileText, category: 'content' },
   image: { label: '이미지', badge: 'IMG', icon: ImageIcon, category: 'content' },
+  youtube: { label: '유튜브 영상', badge: 'VIDEO', icon: Youtube, category: 'content' },
   text: { label: '텍스트', badge: 'TXT', icon: Type, category: 'content' },
   cards: { label: '카드', badge: 'CARD', icon: LayoutGrid, category: 'content' },
   links: { label: '링크', badge: 'LINK', icon: LinkIcon, category: 'conversion' },
