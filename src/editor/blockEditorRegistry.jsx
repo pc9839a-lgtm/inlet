@@ -1,3 +1,4 @@
+import YouTubeEditor from './blockEditors/YouTubeEditor.jsx';
 import {
   ActivityEditor,
   BottomBarEditor,
@@ -19,7 +20,6 @@ import {
   TextEditor,
   TimerEditor,
   TopNavEditor,
-  YouTubeEditor,
 } from './blockEditorLazyImports.jsx';
 
 export {
@@ -43,8 +43,8 @@ export {
   TextEditor,
   TimerEditor,
   TopNavEditor,
-  YouTubeEditor,
 } from './blockEditorLazyImports.jsx';
+export { YouTubeEditor };
 
 export const BLOCK_EDITORS = {
   topnav: TopNavEditor,
