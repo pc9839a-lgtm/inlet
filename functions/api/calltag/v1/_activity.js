@@ -1,6 +1,7 @@
 import { safeOwner, text } from './_utils.js';
 
 const ALLOWED_STATUSES = new Set(['ACCEPTED', 'DELIVERED', 'IMPORTED', 'REJECTED']);
+const E2E_SOURCE_TYPE = 'calltag_e2e_test';
 
 export async function listIntegrationActivity(db, ownerId = '', options = {}) {
   const safeOwnerId = safeOwner(ownerId);
@@ -33,12 +34,16 @@ export async function listIntegrationActivity(db, ownerId = '', options = {}) {
     LIMIT ?
   `).bind(...bindings, limit).all();
 
+  // Operational summary intentionally excludes synthetic E2E probes. Test events remain available
+  // in the event list/source filter so diagnostics can still inspect their real delivery path.
   const summaryRows = await db.prepare(`
     SELECT status, COUNT(*) AS count
     FROM calltag_lead_events
-    WHERE owner_id = ? AND created_at >= datetime('now', '-7 days')
+    WHERE owner_id = ?
+      AND lower(source_type) != ?
+      AND created_at >= datetime('now', '-7 days')
     GROUP BY status
-  `).bind(safeOwnerId).all();
+  `).bind(safeOwnerId, E2E_SOURCE_TYPE).all();
 
   const sourceRows = await db.prepare(`
     SELECT lower(source_type) AS source_type, COUNT(*) AS count
@@ -48,6 +53,22 @@ export async function listIntegrationActivity(db, ownerId = '', options = {}) {
     ORDER BY count DESC, source_type ASC
     LIMIT 20
   `).bind(safeOwnerId).all();
+
+  const failureRows = await db.prepare(`
+    SELECT id, request_id, event_id, action, result, source_type, status_code, created_at
+    FROM calltag_lead_audit
+    WHERE owner_id = ?
+      AND lower(source_type) != ?
+      AND created_at >= datetime('now', '-7 days')
+      AND (
+        status_code >= 400
+        OR upper(result) LIKE '%FAILED%'
+        OR upper(result) LIKE '%REJECT%'
+        OR upper(result) LIKE '%ERROR%'
+      )
+    ORDER BY id DESC
+    LIMIT 20
+  `).bind(safeOwnerId, E2E_SOURCE_TYPE).all();
 
   const summary = { accepted: 0, delivered: 0, imported: 0, rejected: 0, total: 0 };
   for (const row of summaryRows?.results || []) {
@@ -60,11 +81,13 @@ export async function listIntegrationActivity(db, ownerId = '', options = {}) {
   return {
     readOnly: true,
     windowDays: 7,
+    summaryExcludesTest: true,
     summary,
     sources: (sourceRows?.results || []).map((row) => ({
       type: String(row?.source_type || ''),
       count: Math.max(0, Number(row?.count || 0)),
     })),
+    failures: (failureRows?.results || []).map(publicAuditFailure),
     events: (rows?.results || []).map(publicActivityEvent),
   };
 }
@@ -96,6 +119,19 @@ export function publicActivityEvent(row = {}) {
     result: text(row?.result, 500),
     createdAt: String(row?.created_at || ''),
     updatedAt: String(row?.updated_at || ''),
+  };
+}
+
+export function publicAuditFailure(row = {}) {
+  return {
+    id: Number(row?.id || 0),
+    requestId: text(row?.request_id, 120),
+    eventId: text(row?.event_id, 240),
+    action: text(row?.action, 80),
+    code: text(row?.result, 80),
+    sourceType: String(row?.source_type || '').toLowerCase(),
+    statusCode: Math.max(0, Number(row?.status_code || 0)),
+    createdAt: String(row?.created_at || ''),
   };
 }
 
