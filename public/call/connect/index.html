@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>콜태그 외부 연동</title>
+  <style>
+    :root{font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#101828;background:#f6f7fb}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:#f6f7fb}button,input{font:inherit}button{cursor:pointer}.wrap{width:min(620px,calc(100% - 28px));margin:0 auto;padding:28px 0 72px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}.brand{display:flex;align-items:center;gap:11px;color:inherit;text-decoration:none}.logo{width:42px;height:42px;border-radius:13px;background:#111827;color:#fff;display:grid;place-items:center;font-size:18px;font-weight:900}.brand strong{display:block;font-size:18px}.brand span{display:block;margin-top:2px;font-size:12px;color:#667085}.ghost{border:0;background:transparent;color:#667085;font-size:13px;font-weight:800;padding:10px}.hero{margin-bottom:18px}.eyebrow{margin:0 0 6px;font-size:12px;font-weight:900;color:#3156d9}.hero h1{margin:0;font-size:28px;letter-spacing:-.04em}.hero p{margin:8px 0 0;color:#667085;font-size:14px;line-height:1.6}.panel{background:#fff;border:1px solid #e4e7ec;border-radius:20px;padding:19px;box-shadow:0 12px 34px rgba(16,24,40,.06);margin-top:12px}.panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.provider{display:flex;gap:12px;align-items:center}.meta-mark{width:42px;height:42px;border-radius:13px;background:#eef2ff;color:#3156d9;display:grid;place-items:center;font-weight:950;font-size:20px}.panel h2{margin:0;font-size:17px}.muted{margin:4px 0 0;color:#667085;font-size:12px;line-height:1.5}.status{font-size:11px;font-weight:900;border-radius:999px;padding:6px 9px;background:#f2f4f7;color:#475467;white-space:nowrap}.status.on{background:#ecfdf3;color:#067647}.primary{width:100%;min-height:48px;border:0;border-radius:13px;font-weight:900;margin-top:14px;background:#3156d9;color:#fff}.primary:disabled{opacity:.5;cursor:not-allowed}.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:16px}.step{background:#f8fafc;border-radius:12px;padding:10px 8px;text-align:center;font-size:11px;color:#475467;font-weight:800}.list{display:grid;gap:9px;margin-top:14px}.page-row,.connection-row{border:1px solid #eaecf0;border-radius:14px;padding:13px;display:flex;align-items:center;gap:11px}.page-row input{width:20px;height:20px;accent-color:#3156d9}.row-main{min-width:0;flex:1}.row-main strong{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.row-main span{display:block;margin-top:3px;font-size:11px;color:#98a2b3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.row-action{border:0;background:#fef3f2;color:#b42318;border-radius:10px;padding:8px 10px;font-size:11px;font-weight:900}.notice{display:none;margin-top:12px;border-radius:13px;padding:12px 13px;font-size:12px;line-height:1.55}.notice.show{display:block}.notice.ok{background:#ecfdf3;color:#067647}.notice.error{background:#fef3f2;color:#b42318}.login{display:grid;gap:10px}.field{display:grid;gap:6px}.field label{font-size:12px;font-weight:800;color:#344054}.field input{width:100%;height:48px;border:1px solid #d0d5dd;border-radius:12px;padding:0 13px;background:#fff}.field input:focus{outline:3px solid #dbe4ff;border-color:#3156d9}.hidden{display:none!important}.empty{padding:16px 4px 4px;text-align:center;color:#98a2b3;font-size:12px}.footer{display:flex;justify-content:center;gap:14px;margin-top:22px}.footer a{color:#667085;font-size:12px;text-decoration:none}@media(max-width:420px){.wrap{padding-top:20px}.hero h1{font-size:25px}.panel{padding:16px}.steps{gap:5px}.step{font-size:10px;padding:9px 5px}}
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <div class="top">
+    <a class="brand" href="/"><div class="logo">C</div><div><strong>콜태그</strong><span>CallTag Connect</span></div></a>
+    <button id="logout" class="ghost hidden" type="button">로그아웃</button>
+  </div>
+
+  <section class="hero">
+    <p class="eyebrow">외부 연동</p>
+    <h1>문의가 들어오면<br>콜태그로 바로 받습니다.</h1>
+    <p>Meta 리드 광고를 연결하면 새 문의가 콜태그 고객으로 자동 들어옵니다.</p>
+  </section>
+
+  <section id="loginPanel" class="panel hidden">
+    <div class="panel-head"><div><h2>로그인이 필요합니다</h2><p class="muted">콜태그 계정으로 로그인한 뒤 바로 연결을 이어갑니다.</p></div></div>
+    <form id="loginForm" class="login" style="margin-top:15px">
+      <div class="field"><label for="email">이메일</label><input id="email" type="email" autocomplete="email" required></div>
+      <div class="field"><label for="password">비밀번호</label><input id="password" type="password" autocomplete="current-password" required></div>
+      <button class="primary" type="submit">로그인</button>
+    </form>
+    <div id="loginNotice" class="notice"></div>
+  </section>
+
+  <section id="connectPanel" class="panel hidden">
+    <div class="panel-head">
+      <div class="provider"><div class="meta-mark">M</div><div><h2>Meta Lead Ads</h2><p class="muted">Facebook 페이지 리드 광고 문의 자동 수집</p></div></div>
+      <span id="metaStatus" class="status">미연결</span>
+    </div>
+    <div class="steps"><div class="step">1. Meta 로그인</div><div class="step">2. 페이지 선택</div><div class="step">3. 연결 완료</div></div>
+    <button id="startMeta" class="primary" type="button">Meta로 연결</button>
+    <div id="metaNotice" class="notice"></div>
+    <div id="pagePicker" class="hidden">
+      <div style="margin-top:18px"><strong style="font-size:14px">연결할 페이지 선택</strong><p class="muted">선택한 페이지의 새 리드만 콜태그로 들어옵니다.</p></div>
+      <div id="pageList" class="list"></div>
+      <button id="completeMeta" class="primary" type="button">선택 페이지 연결</button>
+    </div>
+  </section>
+
+  <section id="connectionsPanel" class="panel hidden">
+    <div class="panel-head"><div><h2>연결된 페이지</h2><p class="muted">현재 콜태그로 문의를 받는 Meta 페이지입니다.</p></div></div>
+    <div id="connectionList" class="list"></div>
+  </section>
+
+  <nav class="footer"><a href="/">콜태그 홈</a><a href="/privacy">개인정보처리방침</a><a href="/terms">이용약관</a></nav>
+</main>
+<script>
+const SESSION_KEY='calllink-session';
+const OAUTH_SESSION_KEY='calltag-meta-oauth-session';
+const $=(id)=>document.getElementById(id);
+let session=localStorage.getItem(SESSION_KEY)||'';
+let oauthSessionId='';
+try{oauthSessionId=sessionStorage.getItem(OAUTH_SESSION_KEY)||''}catch{}
+
+function notice(el,message,type='ok'){el.textContent=message;el.className=`notice show ${type}`}
+function clearNotice(el){el.textContent='';el.className='notice'}
+function authHeaders(json=false){return {...(json?{'Content-Type':'application/json'}:{}),...(session?{'X-Inlet-Session':session}:{})}}
+function resetMetaStartButton(){const button=$('startMeta');button.disabled=false;button.textContent='Meta로 연결'}
+function setAuthed(value){$('loginPanel').classList.toggle('hidden',value);$('connectPanel').classList.toggle('hidden',!value);$('connectionsPanel').classList.toggle('hidden',!value);$('logout').classList.toggle('hidden',!value);if(value)resetMetaStartButton()}
+function requireLogin(){session='';localStorage.removeItem(SESSION_KEY);resetMetaStartButton();setAuthed(false)}
+function rememberOauthSession(id=''){oauthSessionId=id;try{if(id)sessionStorage.setItem(OAUTH_SESSION_KEY,id);else sessionStorage.removeItem(OAUTH_SESSION_KEY)}catch{}}
+function statusLabel(status){return status==='active'?'정상 연결':status==='error'?'확인 필요':'연결 해제'}
+
+async function api(url,{method='GET',body}={}){
+  const response=await fetch(url,{method,headers:authHeaders(body!==undefined),...(body!==undefined?{body:JSON.stringify(body)}:{})});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok||data.ok===false){const error=new Error(data.error||'요청을 처리하지 못했습니다.');error.code=data.details?.code||data.code||'';error.status=response.status;throw error}
+  return data;
+}
+
+function renderConnections(items=[]){
+  const root=$('connectionList');root.textContent='';
+  const active=items.filter((item)=>item.status!=='revoked');
+  $('metaStatus').textContent=active.length?`${active.length}개 연결`:'미연결';
+  $('metaStatus').classList.toggle('on',active.length>0);
+  if(!active.length){const empty=document.createElement('div');empty.className='empty';empty.textContent='연결된 Meta 페이지가 없습니다.';root.appendChild(empty);return}
+  for(const item of active){
+    const row=document.createElement('div');row.className='connection-row';
+    const main=document.createElement('div');main.className='row-main';
+    const name=document.createElement('strong');name.textContent=item.pageName||'Meta 페이지';
+    const sub=document.createElement('span');sub.textContent=`${statusLabel(item.status)} · Page ${item.pageId||''}`;
+    main.append(name,sub);
+    const button=document.createElement('button');button.className='row-action';button.type='button';button.textContent='연결 해제';button.onclick=()=>revokeConnection(item.id,button);
+    row.append(main,button);root.appendChild(row);
+  }
+}
+
+async function loadConnections(){
+  try{const data=await api('/api/calltag/v1/meta/connections');setAuthed(true);renderConnections(data.connections||[]);return true}
+  catch(error){if(error.status===401||error.status===403){requireLogin();return false}notice($('metaNotice'),error.message,'error');return false}
+}
+
+async function revokeConnection(id,button){
+  if(!confirm('이 Meta 페이지 연결을 해제할까요?'))return;
+  button.disabled=true;
+  try{await api('/api/calltag/v1/meta/connections',{method:'PATCH',body:{action:'revoke',connectionId:id}});await loadConnections();notice($('metaNotice'),'연결을 해제했습니다.')}
+  catch(error){notice($('metaNotice'),error.message,'error')}
+  finally{button.disabled=false}
+}
+
+$('loginForm').onsubmit=async(event)=>{
+  event.preventDefault();clearNotice($('loginNotice'));
+  const button=event.currentTarget.querySelector('button[type=submit]');button.disabled=true;
+  try{
+    const response=await fetch('/api/call/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:$('email').value,password:$('password').value})});
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok||data.ok===false)throw new Error(data.error||'로그인하지 못했습니다.');
+    session=data.session||'';if(!session)throw new Error('로그인 세션을 만들지 못했습니다.');
+    localStorage.setItem(SESSION_KEY,session);setAuthed(true);resetMetaStartButton();
+    await loadConnections();await resumeOauthFromUrl();
+  }catch(error){notice($('loginNotice'),error.message,'error')}
+  finally{button.disabled=false}
+};
+
+$('logout').onclick=()=>{localStorage.removeItem(SESSION_KEY);rememberOauthSession('');location.replace('/connect')};
+
+$('startMeta').onclick=async()=>{
+  const button=$('startMeta');clearNotice($('metaNotice'));button.disabled=true;button.textContent='Meta 연결 준비 중...';
+  try{
+    const data=await api('/api/calltag/v1/meta/oauth/start',{method:'POST',body:{returnPath:'/connect'}});
+    if(!data.authorizationUrl)throw new Error('Meta 로그인 주소를 만들지 못했습니다.');
+    location.assign(data.authorizationUrl);
+  }catch(error){
+    resetMetaStartButton();
+    if(error.status===401||error.status===403){requireLogin();return}
+    notice($('metaNotice'),error.message,'error');
+  }
+};
+
+function renderPages(pages=[]){
+  const root=$('pageList');root.textContent='';
+  if(!pages.length){const empty=document.createElement('div');empty.className='empty';empty.textContent='연결 가능한 Meta 페이지가 없습니다.';root.appendChild(empty);$('completeMeta').disabled=true;return}
+  $('completeMeta').disabled=false;
+  for(const page of pages){
+    const label=document.createElement('label');label.className='page-row';
+    const input=document.createElement('input');input.type='checkbox';input.value=page.id;input.checked=true;
+    const main=document.createElement('span');main.className='row-main';
+    const name=document.createElement('strong');name.textContent=page.name||'Meta 페이지';
+    const sub=document.createElement('span');sub.textContent=`Page ${page.id}`;
+    main.append(name,sub);label.append(input,main);root.appendChild(label);
+  }
+}
+
+async function resumeOauthFromUrl(){
+  const url=new URL(location.href);const id=url.searchParams.get('metaOAuth')||'';const state=url.searchParams.get('meta')||'';
+  if(id)rememberOauthSession(id);
+  if(url.searchParams.has('meta')||url.searchParams.has('metaOAuth')||url.searchParams.has('reason')){url.searchParams.delete('meta');url.searchParams.delete('metaOAuth');url.searchParams.delete('reason');history.replaceState({},'',url.pathname+url.search+url.hash)}
+  if(state==='error'){notice($('metaNotice'),'Meta 연결을 완료하지 못했습니다. 다시 연결해주세요.','error');return}
+  if(!oauthSessionId)return;
+  try{
+    const data=await api(`/api/calltag/v1/meta/oauth/session?id=${encodeURIComponent(oauthSessionId)}`);const oauth=data.oauth||{};
+    if(oauth.status==='authorized'){renderPages(oauth.pages||[]);$('pagePicker').classList.remove('hidden');notice($('metaNotice'),'Meta 로그인이 완료됐습니다. 연결할 페이지를 선택해주세요.')}
+    else if(oauth.status==='completed'){rememberOauthSession('');$('pagePicker').classList.add('hidden');notice($('metaNotice'),'Meta 페이지 연결이 완료됐습니다.');await loadConnections()}
+    else if(oauth.status==='expired'||oauth.status==='failed'){rememberOauthSession('');$('pagePicker').classList.add('hidden');notice($('metaNotice'),'Meta 연결 시간이 끝났습니다. 다시 연결해주세요.','error')}
+  }catch(error){if(error.status===401||error.status===403){requireLogin();return}notice($('metaNotice'),error.message,'error')}
+}
+
+$('completeMeta').onclick=async()=>{
+  const selected=[...document.querySelectorAll('#pageList input[type=checkbox]:checked')].map((input)=>input.value);
+  if(!selected.length){notice($('metaNotice'),'연결할 페이지를 한 개 이상 선택해주세요.','error');return}
+  const button=$('completeMeta');button.disabled=true;button.textContent='연결 중...';
+  try{
+    const data=await api('/api/calltag/v1/meta/oauth/complete',{method:'POST',body:{sessionId:oauthSessionId,pageIds:selected}});
+    const failed=(data.results||[]).filter((item)=>!item.ok);
+    if(data.completed){rememberOauthSession('');$('pagePicker').classList.add('hidden');notice($('metaNotice'),'선택한 Meta 페이지 연결을 완료했습니다.')}
+    else notice($('metaNotice'),failed.length?`${failed.length}개 페이지를 연결하지 못했습니다. 다시 시도해주세요.`:'일부 페이지 연결을 완료하지 못했습니다.','error');
+    await loadConnections();
+  }catch(error){if(error.status===401||error.status===403){requireLogin();return}notice($('metaNotice'),error.message,'error')}
+  finally{button.disabled=false;button.textContent='선택 페이지 연결'}
+};
+
+(async()=>{
+  if(!session){setAuthed(false);return}
+  setAuthed(true);
+  const authed=await loadConnections();
+  if(authed)await resumeOauthFromUrl();
+})();
+</script>
+</body>
+</html>
