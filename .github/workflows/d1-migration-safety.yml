@@ -80,6 +80,7 @@ jobs:
             .tmp-d1-migration-safety/*.enc
             .tmp-d1-migration-safety/*.manifest.json
             .tmp-d1-migration-safety/d1-migration-*.json
+            .tmp-d1-migration-safety/d1-baseline-audit.json
             .tmp-d1-migration-safety/*.rollback.txt
           if-no-files-found: warn
           retention-days: 30
