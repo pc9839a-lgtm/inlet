@@ -67,8 +67,19 @@ export async function onRequest({ request, env }) {
           leadId: result.event?.id,
         });
       } catch (pushError) {
+        const pushCode = String(pushError?.code || 'CALLTAG_PUSH_FAILED').slice(0, 80);
         console.error('CallTag universal lead push failed', {
           message: String(pushError?.message || pushError || '').slice(0, 180),
+        });
+        await recordLeadAudit(db, {
+          requestId,
+          ownerId: apiKey.ownerId,
+          apiKeyId: apiKey.id,
+          eventId: result.eventId,
+          action: 'lead.push',
+          result: pushCode,
+          sourceType: result.event?.source?.type || 'direct_api',
+          statusCode: 503,
         });
       }
     }
