@@ -133,6 +133,26 @@ assert.doesNotMatch(webhookGuide, /ctwh_[A-Za-z0-9_-]{8,}/, 'Webhook guide must 
 assert.match(source, /localStorage\.setItem\(SESSION_KEY,session\)/, 'Only the signed CallTag session should persist in localStorage');
 assert.match(source, /sessionStorage\.setItem\(OAUTH_SESSION_KEY,id\)/, 'Only the temporary OAuth session id should persist in sessionStorage');
 assert.match(source, /if\(rejected\.length\)\{\$\('hubState'\)\.textContent='일부 확인 필요'/, 'Partial channel failures must remain visible');
+assert.match(js, /function handleConnectActionError\(error,target\)\{\s*if\(error\?\.status===401\|\|error\?\.status===403\)\{requireLogin\(\);return true\}/, 'Lifecycle action errors must route expired sessions back to login');
+const lifecycleActionTargets = [
+  ['revokeConnection', 'metaNotice'],
+  ['rotateWebhook', 'webhookNotice'],
+  ['revokeWebhook', 'webhookNotice'],
+  ['rotateApiKey', 'apiNotice'],
+  ['revokeApiKey', 'apiNotice'],
+];
+for (const [name,target] of lifecycleActionTargets) {
+  const start=js.indexOf(`async function ${name}`);
+  assert.ok(start>=0, `Lifecycle action missing: ${name}`);
+  const next=js.indexOf('\nasync function ',start+1);
+  const body=js.slice(start,next>=0?next:js.length);
+  assert.match(body,new RegExp(`handleConnectActionError\\(error,\\$\\('${target}'\\)\\)`),`${name} must normalize expired-session handling`);
+}
+assert.equal((js.match(/catch\(error\)\{handleConnectActionError\(error,/g)||[]).length,5,'Exactly the five destructive/rotation lifecycle actions should use the scoped session handler');
+const apiStart=js.indexOf('async function api(');
+const apiEnd=js.indexOf('\nfunction showDetail',apiStart);
+assert.ok(apiStart>=0&&apiEnd>apiStart,'Shared api helper must remain discoverable');
+assert.doesNotMatch(js.slice(apiStart,apiEnd),/requireLogin\(/,'Shared api helper must not globally convert every 403 into session expiry');
 assert.match(mapper, /if\(!mapping\.phone\)/, 'Client mapper must block save without a phone mapping');
 assert.match(mapper, /mapping\.phone\.startsWith\('\/'\)/, 'Client mapper must validate JSON Pointer shape before save');
 assert.match(mapper, /encodeURIComponent\(connectionId\)/, 'Webhook sample endpoint must encode connection identifiers');
@@ -197,6 +217,8 @@ console.log(JSON.stringify({
     'meta-oauth-and-health-preserved',
     'generic-webhook-lifecycle-management',
     'direct-api-key-lifecycle-management',
+    'expired-session-lifecycle-action-normalization',
+    'scoped-403-session-handling',
     'direct-api-server-only-security-guidance',
     'direct-api-bearer-auth-contract',
     'direct-api-idempotency-contract',

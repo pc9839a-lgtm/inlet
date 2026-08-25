@@ -16,6 +16,10 @@ function setAuthed(value){
   if(value){resetMetaStartButton();showDetail('metaDetail',false)}
 }
 function requireLogin(){session='';localStorage.removeItem(SESSION_KEY);resetMetaStartButton();setAuthed(false)}
+function handleConnectActionError(error,target){
+  if(error?.status===401||error?.status===403){requireLogin();return true}
+  notice(target,error?.message||'요청을 처리하지 못했습니다.','error');return false
+}
 function rememberOauthSession(id=''){oauthSessionId=id;try{if(id)sessionStorage.setItem(OAUTH_SESSION_KEY,id);else sessionStorage.removeItem(OAUTH_SESSION_KEY)}catch{}}
 function formatTime(value){if(!value)return '아직 없음';const date=new Date(value);return Number.isNaN(date.getTime())?'확인 필요':date.toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}
 function healthLabel(state){return state==='healthy'?'정상':state==='active'?'연결됨':state==='warning'?'확인 필요':state==='error'?'연결 오류':state==='revoked'?'해제됨':'확인 전'}
@@ -129,7 +133,7 @@ async function revokeConnection(id,button){
   if(!confirm('이 Meta 페이지 연결을 해제할까요?'))return;
   button.disabled=true;
   try{await api('/api/calltag/v1/meta/connections',{method:'PATCH',body:{action:'revoke',connectionId:id}});await loadMetaConnections();notice($('metaNotice'),'연결을 해제했습니다.')}
-  catch(error){notice($('metaNotice'),error.message,'error')}
+  catch(error){handleConnectActionError(error,$('metaNotice'))}
   finally{button.disabled=false}
 }
 
@@ -205,7 +209,7 @@ async function rotateWebhook(id,button){
     const data=await api('/api/calltag/v1/connections',{method:'PATCH',body:{action:'rotate_endpoint',connectionId:id}});
     if(data.endpointUrl)showSecret($('webhookSecret'),'새 Webhook URL — 지금 한 번만 저장하세요',data.endpointUrl,'기존 URL은 폐기되었습니다. 새 URL은 브라우저 저장소에 보관하지 않습니다.');
     await loadWebhooks();
-  }catch(error){notice($('webhookNotice'),error.message,'error')}
+  }catch(error){handleConnectActionError(error,$('webhookNotice'))}
   finally{button.disabled=false}
 }
 
@@ -213,7 +217,7 @@ async function revokeWebhook(id,button){
   if(!confirm('이 Webhook 연결을 해제할까요?'))return;
   button.disabled=true;
   try{await api('/api/calltag/v1/connections',{method:'PATCH',body:{action:'revoke',connectionId:id}});await loadWebhooks();notice($('webhookNotice'),'Webhook 연결을 해제했습니다.')}
-  catch(error){notice($('webhookNotice'),error.message,'error')}
+  catch(error){handleConnectActionError(error,$('webhookNotice'))}
   finally{button.disabled=false}
 }
 
@@ -267,7 +271,7 @@ async function rotateApiKey(id,name,button){
     const data=await api('/api/calltag/v1/keys',{method:'POST',body:{action:'rotate',keyId:id,name}});
     const key=data.key||{};if(key.apiKey)showSecret($('apiSecret'),'새 API Key — 지금 한 번만 저장하세요',key.apiKey,'기존 키는 폐기되었습니다. 새 키는 브라우저 저장소에 보관하지 않습니다.');
     await loadApiKeys();
-  }catch(error){notice($('apiNotice'),error.message,'error')}
+  }catch(error){handleConnectActionError(error,$('apiNotice'))}
   finally{button.disabled=false}
 }
 
@@ -275,7 +279,7 @@ async function revokeApiKey(id,button){
   if(!confirm('이 API Key를 폐기할까요? 이 키를 쓰는 외부 연동은 즉시 중단됩니다.'))return;
   button.disabled=true;
   try{await api('/api/calltag/v1/keys',{method:'POST',body:{action:'revoke',keyId:id}});await loadApiKeys();notice($('apiNotice'),'API Key를 폐기했습니다.')}
-  catch(error){notice($('apiNotice'),error.message,'error')}
+  catch(error){handleConnectActionError(error,$('apiNotice'))}
   finally{button.disabled=false}
 }
 
