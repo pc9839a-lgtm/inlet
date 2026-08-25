@@ -24,7 +24,7 @@ const fixture=publicActivityEvent({
   customer_name:'홍길동',customer_phone:'010-1234-5678',inquiry_content:'보험 상담을 원합니다.',status:'IMPORTED',
   delivered_at:'2026-08-25T01:00:00.000Z',imported_at:'2026-08-25T01:01:00.000Z',created_at:'2026-08-25T00:59:00.000Z',updated_at:'2026-08-25T01:01:00.000Z',
 });
-assert.equal(fixture.customer.phoneMasked,'010***5678');
+assert.equal(fixture.customer.phoneMasked,'010****5678');
 assert.equal(fixture.customer.phone,undefined,'Raw phone must not be exposed');
 assert.equal(fixture.stage,'IMPORTED');
 
@@ -56,7 +56,7 @@ const fakeDb={
 const result=await listIntegrationActivity(fakeDb,'owner_test',{limit:50});
 assert.equal(result.readOnly,true);
 assert.deepEqual(result.summary,{accepted:2,delivered:0,imported:3,rejected:0,total:5});
-assert.equal(result.events[0].customer.phoneMasked,'010***2222');
+assert.equal(result.events[0].customer.phoneMasked,'010****2222');
 assert.ok(statements.length===3,'Activity should use exactly three read queries');
 for(const sql of statements)assert.match(sql.trim(),/^SELECT\b/i,'Activity DB operation must be SELECT only');
 
