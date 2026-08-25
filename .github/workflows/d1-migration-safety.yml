@@ -79,6 +79,7 @@ jobs:
           path: |
             .tmp-d1-migration-safety/*.enc
             .tmp-d1-migration-safety/*.manifest.json
+            .tmp-d1-migration-safety/d1-cloudflare-access-preflight.json
             .tmp-d1-migration-safety/d1-migration-*.json
             .tmp-d1-migration-safety/*.rollback.txt
           if-no-files-found: warn
