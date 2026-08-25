@@ -6,6 +6,7 @@
   <meta name="robots" content="noindex,nofollow,noarchive">
   <title>콜태그 외부 연동</title>
   <link rel="stylesheet" href="/call/connect/hub.css">
+  <link rel="stylesheet" href="/call/connect/direct-api-guide.css">
 </head>
 <body>
 <main class="wrap">
@@ -118,6 +119,7 @@
     </form>
     <div id="apiSecret" class="secret-box"></div>
     <div id="apiNotice" class="notice"></div>
+    <div id="apiGuide"></div>
     <div id="apiList" class="list"></div>
   </section>
 
@@ -158,6 +160,7 @@ function resetMetaStartButton(){const button=document.getElementById('startMeta'
 function replaceConnectHistory(url){history.replaceState({},'',url.pathname+url.search+url.hash)}
 </script>
 <script src="/call/connect/hub.js"></script>
+<script src="/call/connect/direct-api-guide.js"></script>
 <script src="/call/connect/webhook-mapper.js"></script>
 <script src="/call/connect/activity.js"></script>
 </body>
