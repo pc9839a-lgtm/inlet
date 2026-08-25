@@ -31,12 +31,24 @@ export async function onRequest({ request, env, params }) {
         `).bind(endpointHash).first();
         pushOwnerId = String(connection?.owner_id || '');
         if (pushOwnerId) {
-          await notifyUniversalLeadAvailable(env, db, pushOwnerId, {
+          const push = await notifyUniversalLeadAvailable(env, db, pushOwnerId, {
             eventId: result.eventId,
           });
+          const attempted = Math.max(0, Number(push?.attempted || 0));
+          const sent = Math.max(0, Number(push?.sent || 0));
+          if (attempted > sent) {
+            await recordLeadAudit(db, {
+              ownerId: pushOwnerId,
+              eventId: result.eventId,
+              action: 'webhook.push',
+              result: sent > 0 ? 'FCM_PARTIAL_FAILURE' : 'FCM_ALL_DEVICES_FAILED',
+              sourceType: 'custom_webhook',
+              statusCode: 503,
+            });
+          }
         }
       } catch (pushError) {
-        const pushCode = String(pushError?.code || 'CALLTAG_PUSH_FAILED').slice(0, 80);
+        const pushCode = String(pushError?.code || pushError?.details?.code || 'CALLTAG_PUSH_FAILED').slice(0, 80);
         console.error('CallTag webhook lead push failed', {
           message: String(pushError?.message || pushError || '').slice(0, 180),
         });
