@@ -19,6 +19,7 @@ import {
   TextEditor,
   TimerEditor,
   TopNavEditor,
+  YouTubeEditor,
 } from './blockEditorLazyImports.jsx';
 
 export {
@@ -42,12 +43,14 @@ export {
   TextEditor,
   TimerEditor,
   TopNavEditor,
+  YouTubeEditor,
 } from './blockEditorLazyImports.jsx';
 
 export const BLOCK_EDITORS = {
   topnav: TopNavEditor,
   hero: HeroEditor,
   image: ImageEditor,
+  youtube: YouTubeEditor,
   text: TextEditor,
   cards: CardsEditor,
   map: MapEditor,

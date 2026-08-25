@@ -1,5 +1,6 @@
 import { SINGLETON_BLOCK_TYPES } from '../config/blockMeta.jsx';
 import { clone, ensureUniqueAnchors, newBlock, sanitizeBlock, uid } from '../lib/pageModel.js';
+import { createYouTubeCodeSettings } from '../lib/youtubeEmbed.js';
 
 export function useEditorBlockActions({
   page,
@@ -33,7 +34,14 @@ export function useEditorBlockActions({
         return;
       }
     }
-    const block = newBlock(type);
+    const block = type === 'youtube'
+      ? sanitizeBlock({
+        id: uid(),
+        type: 'code',
+        visible: true,
+        s: { anchorId: 'youtube', ...createYouTubeCodeSettings('') },
+      })
+      : newBlock(type);
     setPage((p) => commitLocalPageDraft({ ...p, blocks: ensureUniqueAnchors([...p.blocks, block]) }));
     setOpenId('');
     setAddOpen(false);

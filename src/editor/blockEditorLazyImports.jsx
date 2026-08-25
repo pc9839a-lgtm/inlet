@@ -8,6 +8,7 @@ export const FaqEditor = lazy(() => import('./blockEditors/FaqEditor.jsx'));
 export const MapEditor = lazy(() => import('./blockEditors/MapEditor.jsx'));
 export const ScheduleEditor = lazy(() => import('./blockEditors/ScheduleEditor.jsx'));
 export const CodeEditor = lazy(() => import('./blockEditors/CodeEditor.jsx'));
+export const YouTubeEditor = lazy(() => import('./blockEditors/YouTubeEditor.jsx'));
 export const SearchEditor = lazy(() => import('./blockEditors/SearchEditor.jsx'));
 export const HeroEditor = lazy(() => import('./blockEditors/HeroEditor.jsx'));
 export const ImageEditor = lazy(() => import('./blockEditors/ImageEditor.jsx'));
