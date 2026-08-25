@@ -140,17 +140,37 @@ assert.match(mapper, /Number\(sample\.id\)/, 'Raw replay must use a numeric samp
 assert.match(mapper, /MutationObserver/, 'Webhook mapper must re-bind after connection list refreshes');
 assert.match(apiGuide, /location\.origin/, 'Direct API guide should derive the endpoint from the current CallTag origin');
 assert.match(apiGuide, /navigator\.clipboard/, 'Direct API guide should support copy actions without persisting secrets');
-assert.match(apiGuide, /webhook-guide\.css/, 'Connect guide loader must load Webhook guide styles');
-assert.match(apiGuide, /webhook-guide\.js/, 'Connect guide loader must load Webhook guide runtime');
+assert.doesNotMatch(apiGuide, /webhook-guide\.(?:css|js)|connect-polish\.(?:css|js)/, 'Direct API guide must not act as a hidden asset loader');
 assert.match(webhookGuide, /document\.getElementById\('webhookDetail'\)/, 'Webhook guide must mount only inside the authenticated Webhook detail section');
 assert.match(webhookGuide, /navigator\.clipboard/, 'Webhook guide should offer safe copy actions');
 
-assert.ok(html.includes('/call/connect/hub.css') && html.includes('/call/connect/hub.js'), 'Connect hub assets must be loaded');
-assert.ok(html.includes('/call/connect/webhook-mapper.js'), 'Webhook mapper runtime must load after the Connect hub');
-assert.ok(html.includes('/call/connect/direct-api-guide.js'), 'Direct API guide runtime must load');
-assert.ok(html.includes('/call/connect/direct-api-guide.css'), 'Direct API guide stylesheet must load');
+const expectedAssets=[
+  '/call/connect/hub.css',
+  '/call/connect/direct-api-guide.css',
+  '/call/connect/webhook-guide.css',
+  '/call/connect/connect-polish.css',
+  '/call/connect/hub.js',
+  '/call/connect/direct-api-guide.js',
+  '/call/connect/webhook-guide.js',
+  '/call/connect/connect-polish.js',
+  '/call/connect/webhook-mapper.js',
+  '/call/connect/activity.js',
+  '/call/connect/e2e.js',
+];
+for(const asset of expectedAssets)assert.ok(html.includes(asset),`Connect HTML must explicitly load ${asset}`);
+const orderedScripts=[
+  '/call/connect/hub.js',
+  '/call/connect/direct-api-guide.js',
+  '/call/connect/webhook-guide.js',
+  '/call/connect/connect-polish.js',
+  '/call/connect/webhook-mapper.js',
+  '/call/connect/activity.js',
+  '/call/connect/e2e.js',
+];
+for(let index=1;index<orderedScripts.length;index++){
+  assert.ok(html.indexOf(orderedScripts[index-1])<html.indexOf(orderedScripts[index]),`Connect script order must keep ${orderedScripts[index-1]} before ${orderedScripts[index]}`);
+}
 assert.ok(html.includes('id="apiGuide"'), 'Direct API guide mount point must be present');
-assert.ok(html.indexOf('/call/connect/hub.js') < html.indexOf('/call/connect/webhook-mapper.js'), 'Webhook mapper must load after hub globals are defined');
 assert.ok(css.includes('.mapper-panel') && css.includes('.mapper-grid') && css.includes('.mapper-payload'), 'Webhook mapper styles must be present');
 assert.ok(css.includes('@media(max-width:420px)'), 'Connect hub must keep mobile responsive rules');
 assert.ok(apiGuideCss.includes('.api-guide-shell') && apiGuideCss.includes('.api-guide-code'), 'Direct API guide styles must be present');
@@ -193,6 +213,8 @@ console.log(JSON.stringify({
     'no-secret-browser-storage',
     'failure-isolated-channel-loading',
     'future-provider-placeholder-honesty',
+    'explicit-static-asset-loading',
+    'no-hidden-companion-asset-loader',
     'dom-text-only-dynamic-rendering',
   ],
 }, null, 2));
