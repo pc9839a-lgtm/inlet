@@ -1,10 +1,8 @@
-import { ensureUniversalLeadSchema } from './_schema.js';
 import { safeOwner, text } from './_utils.js';
 
 const ALLOWED_STATUSES = new Set(['ACCEPTED', 'DELIVERED', 'IMPORTED', 'REJECTED']);
 
 export async function listIntegrationActivity(db, ownerId = '', options = {}) {
-  await ensureUniversalLeadSchema(db);
   const safeOwnerId = safeOwner(ownerId);
   const limit = Math.max(1, Math.min(100, Number(options.limit || 50)));
   const sourceType = normalizeSourceType(options.sourceType);
