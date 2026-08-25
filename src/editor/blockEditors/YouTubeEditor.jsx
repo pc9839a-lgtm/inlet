@@ -1,13 +1,13 @@
 import { EditorTabs } from '../ui/index.js';
-import { createYouTubeCodeSettings, getYouTubeVideoId } from '../../lib/youtubeEmbed.js';
+import { createVideoCodeSettings, getVideoSource } from '../../lib/youtubeEmbed.js';
 
 export default function YouTubeEditor({ s, set }) {
-  const value = String(s.youtubeUrl || '');
-  const valid = !!getYouTubeVideoId(value);
+  const value = String(s.videoUrl || s.youtubeUrl || '');
+  const valid = !!getVideoSource(value);
   const hasValue = !!value.trim();
 
   const updateUrl = (nextValue) => {
-    set(createYouTubeCodeSettings(nextValue));
+    set(createVideoCodeSettings(nextValue));
   };
 
   return (
@@ -18,13 +18,13 @@ export default function YouTubeEditor({ s, set }) {
         content: (
           <>
             <label className="field">
-              <span>YouTube 주소</span>
+              <span>동영상 주소</span>
               <div>
                 <input
                   type="url"
                   inputMode="url"
                   autoComplete="off"
-                  placeholder="https://youtu.be/..."
+                  placeholder="https://youtu.be/... 또는 https://.../video.mp4"
                   value={value}
                   onChange={(event) => updateUrl(event.target.value)}
                 />
@@ -32,8 +32,8 @@ export default function YouTubeEditor({ s, set }) {
             </label>
             <p style={{ margin: '8px 2px 0', color: hasValue && !valid ? '#dc2626' : '#64748b', fontSize: '12px', lineHeight: 1.5, fontWeight: 800 }}>
               {hasValue && !valid
-                ? 'YouTube 영상 주소를 확인해주세요.'
-                : '일반 영상, Shorts, 공유 링크를 붙여넣으면 페이지 안에 바로 표시됩니다.'}
+                ? '지원하는 동영상 주소인지 확인해주세요.'
+                : '지원: YouTube 일반·Shorts·Live·공유 링크, Vimeo, MP4·WebM·Ogg 직접 링크'}
             </p>
           </>
         ),
