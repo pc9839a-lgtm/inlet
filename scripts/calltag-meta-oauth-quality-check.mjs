@@ -102,13 +102,21 @@ assert.ok(source.session.includes('callSession') && source.session.includes('ses
 assert.ok(source.complete.includes('callSession') && source.complete.includes('session.ownerId'), 'OAuth completion must be signed-session scoped');
 assert.ok(!source.callback.includes('callSession'), 'OAuth callback must authenticate by one-time state, not browser owner/session fields');
 assert.ok(!source.callback.includes('ownerId'), 'OAuth callback route must not read ownerId from callback input');
+assert.ok(source.callback.includes("String(row.status) !== 'pending'"), 'OAuth callback must reject replay once state leaves pending');
 
 assert.ok(source.core.includes('SELECT id, owner_id, status, pages_json, requested_scopes_json, granted_scopes_json'), 'public OAuth session projection must be explicit');
 assert.ok(!source.core.includes('publicMetaOauthSession(row = {}) {\n  return {\n    userToken'), 'public OAuth session must not expose user tokens');
 assert.ok(source.core.includes('const freshPages = await fetchMetaManagedPages(env, userToken)'), 'OAuth completion must re-fetch managed Pages server-side');
 assert.ok(!source.complete.includes('pageAccessToken'), 'browser complete route must not accept a Page access token');
+for (const token of [
+  'SELECT requested_scopes_json, granted_scopes_json',
+  'const grantedScopes = new Set',
+  'const missingScopes = requestedScopes.filter',
+  'CALLTAG_META_OAUTH_SCOPE_MISSING',
+]) assert.ok(source.complete.includes(token), `OAuth completion permission gate missing: ${token}`);
 
 assert.ok(source.connectHtml.includes("const SESSION_KEY='calllink-session'"), 'Connect screen must reuse CallTag session storage');
+assert.ok(source.connectHtml.includes("const OAUTH_SESSION_KEY='calltag-meta-oauth-session'"), 'Connect screen must preserve OAuth selection session across refresh');
 assert.ok(source.connectHtml.includes('/api/calltag/v1/meta/oauth/start'), 'Connect screen missing OAuth start action');
 assert.ok(source.connectHtml.includes('/api/calltag/v1/meta/oauth/session'), 'Connect screen missing OAuth session action');
 assert.ok(source.connectHtml.includes('/api/calltag/v1/meta/oauth/complete'), 'Connect screen missing OAuth complete action');
@@ -116,6 +124,7 @@ assert.ok(source.connectHtml.includes('Meta 로그인') && source.connectHtml.in
 assert.ok(!/pageAccessToken|page_access_token|user_access_token/i.test(source.connectHtml), 'Connect UI must not expose manual token fields');
 assert.ok(!/type=["'](?:text|password)["'][^>]*(?:token|access)/i.test(source.connectHtml), 'Connect UI must not render provider token inputs');
 assert.ok(source.connectHtml.includes('history.replaceState'), 'OAuth session identifier should be removed from the visible URL after capture');
+assert.ok(source.connectHtml.includes('resetMetaStartButton'), 'Connect UI must recover its Meta start button after an expired CallTag session');
 
 assert.ok(source.connectRoute.includes("host === 'calltag.pagero.kr'"), 'Connect route must be limited to CallTag host');
 assert.ok(source.connectRoute.includes('return context.next()'), 'non-CallTag hosts must retain existing routing');
@@ -136,12 +145,15 @@ console.log(JSON.stringify({
   phase: 'CallTag Meta OAuth Connect',
   contracts: [
     'one-time-state-hash-only',
+    'oauth-callback-replay-rejection',
     'ten-minute-oauth-session',
     'temporary-user-token-aes-gcm',
+    'server-side-granted-scope-enforcement',
     'server-side-page-refetch',
     'server-side-page-owner-collision-guard',
     'leadgen-page-app-subscription',
     'no-provider-token-in-browser',
+    'refresh-safe-oauth-selection-session',
     'calltag-host-only-connect-screen',
     'safe-same-origin-return-path',
     'runtime-route-import-resolution',
