@@ -22,6 +22,7 @@ const steps = [
   ['calltag:meta-oauth:qa', ['scripts/calltag-meta-oauth-quality-check.mjs']],
   ['calltag:meta-connection-health:qa', ['scripts/calltag-meta-connection-health-quality-check.mjs']],
   ['calltag:connect-hub:qa', ['scripts/calltag-connect-hub-quality-check.mjs']],
+  ['calltag:integration-activity:qa', ['scripts/calltag-integration-activity-quality-check.mjs']],
   ['server:smoke:auth', ['scripts/server-smoke-auth.mjs']],
   ['server:smoke:leads', ['scripts/server-smoke-leads.mjs']],
   ['server:smoke:events', ['scripts/server-smoke-events.mjs']],
