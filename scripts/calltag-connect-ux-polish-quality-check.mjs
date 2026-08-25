@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [runtime, css, loader] = await Promise.all([
+const [runtime, css, html, apiGuide] = await Promise.all([
   readFile('public/call/connect/connect-polish.js','utf8'),
   readFile('public/call/connect/connect-polish.css','utf8'),
+  readFile('public/call/connect/index.html','utf8'),
   readFile('public/call/connect/direct-api-guide.js','utf8'),
 ]);
 
@@ -36,9 +37,10 @@ for(const token of [
   '@media(max-width:420px)',
 ])assert.ok(css.includes(token),`Connect polish CSS missing ${token}`);
 
-assert.ok(loader.includes('/call/connect/connect-polish.css'),'Connect guide loader must load UX polish CSS');
-assert.ok(loader.includes('/call/connect/connect-polish.js'),'Connect guide loader must load UX polish runtime');
-assert.ok(loader.includes('data-connect-polish-css')&&loader.includes('data-connect-polish-js'),'Connect polish assets must be deduplicated');
+assert.ok(html.includes('/call/connect/connect-polish.css'),'Connect HTML must explicitly load UX polish CSS');
+assert.ok(html.includes('/call/connect/connect-polish.js'),'Connect HTML must explicitly load UX polish runtime');
+assert.ok(html.indexOf('/call/connect/connect-polish.js')>html.indexOf('/call/connect/hub.js'),'UX polish runtime must load after hub runtime');
+assert.doesNotMatch(apiGuide,/connect-polish\.(?:css|js)/,'Direct API guide must not own UX polish asset loading');
 
 console.log(JSON.stringify({
   ok:true,
@@ -53,6 +55,8 @@ console.log(JSON.stringify({
     'mobile-minimum-action-targets',
     'responsive-action-grid',
     'escape-closes-create-forms',
+    'explicit-html-asset-loading',
+    'no-hidden-guide-loader',
     'no-new-network-behavior',
     'no-browser-storage',
     'no-innerhtml',
