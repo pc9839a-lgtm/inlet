@@ -7,6 +7,10 @@ import {
   listsMatchExactly,
   normalizeMigrationList,
 } from './d1-migration-safety-runner.mjs';
+import {
+  classifyD1AccessFailure,
+  resolveD1Target,
+} from './d1-cloudflare-access-preflight.mjs';
 
 const root = process.cwd();
 const read = (relativePath) => readFile(path.join(root, relativePath), 'utf8');
@@ -18,6 +22,40 @@ assert.deepEqual(
 );
 assert.equal(listsMatchExactly(pending, pending), true);
 assert.equal(listsMatchExactly([...pending].reverse(), pending), false);
+
+const declaredD1 = {
+  d1_databases: [{ binding: 'DB', database_name: 'inlet-prod', database_id: 'b68d3820-001f-4dbe-87cd-dc9fc0be17ee' }],
+};
+const resolvedFromWrangler = resolveD1Target({ env: {}, config: declaredD1 });
+assert.equal(resolvedFromWrangler.ok, true);
+assert.equal(resolvedFromWrangler.databaseName, 'inlet-prod');
+assert.equal(resolvedFromWrangler.nameSource, 'wrangler.jsonc');
+assert.equal(resolvedFromWrangler.idSource, 'wrangler.jsonc');
+
+const matchingOverride = resolveD1Target({
+  env: {
+    PAGERO_D1_DATABASE_NAME: 'inlet-prod',
+    PAGERO_D1_DATABASE_ID: 'b68d3820-001f-4dbe-87cd-dc9fc0be17ee',
+  },
+  config: declaredD1,
+});
+assert.equal(matchingOverride.ok, true);
+assert.equal(matchingOverride.nameSource, 'environment');
+assert.equal(matchingOverride.idSource, 'environment');
+
+const staleOverride = resolveD1Target({
+  env: { PAGERO_D1_DATABASE_ID: '00000000-0000-0000-0000-000000000000' },
+  config: declaredD1,
+});
+assert.equal(staleOverride.ok, false);
+assert.ok(staleOverride.errors.some((message) => message.includes('does not match wrangler.jsonc')));
+
+const accountMismatch = classifyD1AccessFailure({
+  status: 403,
+  errors: [{ code: 7403, message: 'not authorized' }],
+});
+assert.equal(accountMismatch.code, 'CLOUDFLARE_D1_ACCOUNT_OR_PERMISSION_MISMATCH');
+assert.ok(accountMismatch.message.includes('D1 Read permission'));
 
 const safeGate = evaluateSafetyGate({
   mode: 'backup-and-apply',
@@ -99,6 +137,7 @@ for (const [name, patch, expectedMessage] of [
 }
 
 const entrypoint = await read('scripts/d1-migration-safety.mjs');
+const accessScript = await read('scripts/d1-cloudflare-access-preflight.mjs');
 const script = await read('scripts/d1-migration-safety-runner.mjs');
 const workflow = await read('.github/workflows/d1-migration-safety.yml');
 const runbook = await read('docs/ops-d1-migration-safety.md');
@@ -133,6 +172,20 @@ for (const token of [
   assert.ok(script.includes(token), `migration safety runner missing ${token}`);
 }
 
+for (const token of [
+  '/user/tokens/verify',
+  '/d1/database/',
+  "redirect: 'error'",
+  'D1_CONFIG_OVERRIDE_MISMATCH',
+  'CLOUDFLARE_D1_ACCOUNT_OR_PERMISSION_MISMATCH',
+  'D1 Read permission',
+  'databaseNameSource',
+  'databaseIdSource',
+  'd1-cloudflare-access-preflight.json',
+]) {
+  assert.ok(accessScript.includes(token), `D1 access preflight missing ${token}`);
+}
+
 assert.ok(
   script.indexOf("'d1', 'export'") < script.indexOf("'d1', 'migrations', 'apply'"),
   'backup export must be defined before migration apply',
@@ -149,8 +202,13 @@ assert.ok(
 assert.ok(!script.includes("'--yes'"), 'D1 export must use --skip-confirmation');
 assert.ok(!script.includes('console.log(encryptionSecret)'), 'encryption secret must not be logged');
 assert.ok(!script.includes('console.log(apiToken)'), 'Cloudflare token must not be logged');
+assert.ok(!accessScript.includes('console.log(apiToken)'), 'access preflight must not log Cloudflare token');
+assert.ok(entrypoint.includes("'d1-cloudflare-access-preflight.mjs'"));
 assert.ok(entrypoint.includes("'d1-migration-safety-runner.mjs'"));
-assert.ok(entrypoint.includes("stdio: 'inherit'"));
+assert.ok(
+  entrypoint.indexOf('runScript(accessPreflight)') < entrypoint.indexOf('runScript(runner)'),
+  'Cloudflare access preflight must run before migration inspection',
+);
 
 for (const token of [
   'workflow_dispatch:',
@@ -166,6 +224,7 @@ for (const token of [
   'd1-migration-safety-${{ github.run_id }}',
   '.tmp-d1-migration-safety/*.enc',
   '.tmp-d1-migration-safety/*.manifest.json',
+  '.tmp-d1-migration-safety/d1-cloudflare-access-preflight.json',
   '.tmp-d1-migration-safety/*.rollback.txt',
   'retention-days: 30',
 ]) {
@@ -196,9 +255,14 @@ assert.ok(qaAll.includes("['d1:migration:safety:qa'"));
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 56,
+  checks: 70,
   contracts: [
     'manual-only-workflow',
+    'cloudflare-token-verify-first',
+    'account-d1-access-before-migration-query',
+    'wrangler-target-fallback',
+    'stale-d1-override-block',
+    '7403-actionable-classification',
     'main-branch-write-gate',
     'exact-pending-list',
     'post-backup-pre-apply-consistency-gate',
