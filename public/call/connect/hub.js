@@ -23,6 +23,7 @@ function healthClass(state){return state==='healthy'?'good':state==='warning'?'w
 function reasonLabel(code){const labels={CALLTAG_META_TOKEN_EXPIRED:'Meta 인증이 만료되었습니다. 다시 연결해주세요.',CALLTAG_META_PAGE_ACCESS_DENIED:'Meta 페이지 접근 권한을 확인할 수 없습니다. 다시 연결해주세요.',CALLTAG_META_PAGE_CREDENTIAL_INVALID:'Meta 페이지 인증정보를 확인할 수 없습니다. 다시 연결해주세요.',CALLTAG_META_CREDENTIAL_MISSING:'저장된 Meta 인증정보가 없습니다. 다시 연결해주세요.',CALLTAG_META_SCOPE_MISSING:'필수 Meta 권한 일부가 부족합니다. 다시 연결해주세요.',CALLTAG_META_CONNECTION_ERROR:'최근 문의 처리 중 오류가 있었습니다.',CALLTAG_META_LAST_ERROR:'최근 Meta 문의 처리 오류가 기록되어 있습니다.',CALLTAG_META_HEALTH_CHECK_FAILED:'Meta 연결 상태를 확인하지 못했습니다.'};return labels[code]||''}
 function setStatus(el,count,label='연결'){el.textContent=count?`${count}개 ${label}`:'미연결';el.classList.toggle('on',count>0)}
 function activeOnly(items=[]){return items.filter((item)=>item.status!=='revoked')}
+function emitWebhooksRendered(root,count){root.dispatchEvent(new CustomEvent('calltag:webhooks-rendered',{detail:{count}}))}
 
 async function api(url,{method='GET',body}={}){
   const response=await fetch(url,{method,headers:authHeaders(body!==undefined),...(body!==undefined?{body:JSON.stringify(body)}:{})});
@@ -134,9 +135,9 @@ function renderWebhooks(items=[]){
   webhookConnections=items;
   const root=$('webhookList');root.textContent='';
   const active=activeOnly(items);
-  if(!active.length){const empty=document.createElement('div');empty.className='empty';empty.textContent='만든 Webhook 연결이 없습니다.';root.appendChild(empty);updateSummary();return}
+  if(!active.length){const empty=document.createElement('div');empty.className='empty';empty.textContent='만든 Webhook 연결이 없습니다.';root.appendChild(empty);updateSummary();emitWebhooksRendered(root,0);return}
   for(const item of active){
-    const card=document.createElement('div');card.className='connection-card';
+    const card=document.createElement('div');card.className='connection-card';card.dataset.webhookConnectionId=String(item.id||'');
     const top=document.createElement('div');top.className='connection-top';
     const main=document.createElement('div');main.className='row-main';
     const name=document.createElement('strong');name.textContent=item.name||'Webhook';
@@ -150,11 +151,12 @@ function renderWebhooks(items=[]){
     const message=document.createElement('div');if(item.lastError){message.className='health-message show warn';message.textContent='최근 Webhook 처리 오류가 있습니다. 필드 매핑 또는 원문 샘플을 확인해주세요.'}
     const actions=document.createElement('div');actions.className='row-actions';
     const rotate=document.createElement('button');rotate.className='row-action primary-small';rotate.type='button';rotate.textContent='URL 교체';rotate.onclick=()=>rotateWebhook(item.id,rotate);
-    const info=document.createElement('button');info.className='row-action';info.type='button';info.textContent=item.mappingReady?'매핑 완료':'매핑 필요';info.disabled=true;
+    const info=document.createElement('button');info.className='row-action';info.type='button';info.dataset.webhookMapperTrigger='1';info.textContent=item.mappingReady?'매핑 완료':'매핑 필요';info.disabled=true;
     const revoke=document.createElement('button');revoke.className='row-action danger';revoke.type='button';revoke.textContent='연결 해제';revoke.onclick=()=>revokeWebhook(item.id,revoke);
     actions.append(rotate,info,revoke);card.append(top,meta);if(item.lastError)card.append(message);card.append(actions);root.appendChild(card);
   }
   updateSummary();
+  emitWebhooksRendered(root,active.length);
 }
 
 async function loadWebhooks(){const data=await api('/api/calltag/v1/connections');renderWebhooks(data.connections||[])}

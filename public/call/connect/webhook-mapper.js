@@ -7,29 +7,21 @@ const WEBHOOK_MAPPING_ROLES=[
   {key:'submittedAt',label:'접수일시',hint:'선택'},
 ];
 
-function webhookMapperItems(){
-  if(typeof webhookConnections==='undefined'||!Array.isArray(webhookConnections))return [];
-  return webhookConnections.filter((item)=>item&&item.status!=='revoked');
-}
-
 function decorateWebhookMapperCards(){
   const root=$('webhookList');
-  if(!root)return;
-  const cards=[...root.children].filter((node)=>node.classList?.contains('connection-card'));
-  const items=webhookMapperItems();
-  cards.forEach((card,index)=>{
-    const item=items[index];
-    if(!item?.id)return;
-    card.dataset.webhookConnectionId=item.id;
-    const actions=card.querySelector('.row-actions');
-    const buttons=actions?[...actions.querySelectorAll('button')]:[];
-    const mapperButton=buttons[1];
-    if(!mapperButton)return;
+  if(!root||typeof webhookConnections==='undefined'||!Array.isArray(webhookConnections))return;
+  const cards=[...root.querySelectorAll('.connection-card[data-webhook-connection-id]')];
+  for(const card of cards){
+    const connectionId=String(card.dataset.webhookConnectionId||'');
+    const item=webhookConnections.find((candidate)=>String(candidate?.id||'')===connectionId&&candidate?.status!=='revoked');
+    if(!item?.id)continue;
+    const mapperButton=card.querySelector('[data-webhook-mapper-trigger]');
+    if(!mapperButton)continue;
     mapperButton.disabled=false;
     mapperButton.textContent='매핑 설정';
     mapperButton.classList.toggle('primary-small',!item.mappingReady);
     mapperButton.onclick=()=>openWebhookMapper(item.id,card,mapperButton);
-  });
+  }
 }
 
 function mapperNotice(panel,message,type='ok'){
@@ -158,7 +150,7 @@ function syncMapperConnectionState(state,connection){
   const metaRows=[...state.card.querySelectorAll('.item-meta > div')];
   const mappingValue=metaRows[2]?.querySelector('span');
   if(mappingValue)mappingValue.textContent=connection.mappingReady?`v${connection.mappingVersion||1} 적용`:'설정 필요';
-  const mapperButton=state.card.querySelector('.row-actions button:nth-child(2)');
+  const mapperButton=state.card.querySelector('[data-webhook-mapper-trigger]');
   if(mapperButton){mapperButton.textContent='매핑 설정';mapperButton.classList.toggle('primary-small',!connection.mappingReady)}
   if(!connection.lastError){const warning=state.card.querySelector('.health-message.warn');if(warning)warning.remove()}
   renderMapperPayload(state);
@@ -208,7 +200,7 @@ function hydrateMapperInputs(state){
 
 function renderWebhookMapperPanel(panel,data,card){
   panel.textContent='';
-  const connection=data.connection||webhookConnections.find((item)=>item.id===card.dataset.webhookConnectionId)||{};
+  const connection=data.connection||webhookConnections.find((item)=>String(item.id||'')===String(card.dataset.webhookConnectionId||''))||{};
   const samples=Array.isArray(data.samples)?data.samples:[];
   const state={panel,card,connection,samples,inputs:{},previews:{}};
   panel._webhookMapperState=state;
@@ -297,7 +289,6 @@ async function openWebhookMapper(connectionId,card,button){
 
 const webhookMapperRoot=$('webhookList');
 if(webhookMapperRoot){
-  const webhookMapperObserver=new MutationObserver(()=>decorateWebhookMapperCards());
-  webhookMapperObserver.observe(webhookMapperRoot,{childList:true});
+  webhookMapperRoot.addEventListener('calltag:webhooks-rendered',decorateWebhookMapperCards);
   decorateWebhookMapperCards();
 }
