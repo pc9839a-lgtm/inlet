@@ -1,6 +1,6 @@
 /* Final edit-workbench root ownership: isolate the editor from legacy builder-shell 640px/2-column rules. */
 @media (min-width: 901px) {
-  html body #root > .builder-shell.edit-workbench-shell:not(.mobile-operations-shell) {
+  html body #root .builder-shell.edit-workbench-shell:not(.mobile-operations-shell) {
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) !important;
     grid-template-rows: 72px 86px minmax(0, 1fr) !important;
@@ -12,21 +12,21 @@
     overflow: hidden !important;
   }
 
-  html body #root > .builder-shell.edit-workbench-shell > .edit-workbench-nav {
+  html body #root .builder-shell.edit-workbench-shell > .edit-workbench-nav {
     grid-column: 1 !important;
     grid-row: 1 !important;
     width: 100% !important;
     min-width: 0 !important;
   }
 
-  html body #root > .builder-shell.edit-workbench-shell > .edit-workbench-toolbar {
+  html body #root .builder-shell.edit-workbench-shell > .edit-workbench-toolbar {
     grid-column: 1 !important;
     grid-row: 2 !important;
     width: 100% !important;
     min-width: 0 !important;
   }
 
-  html body #root > .builder-shell.edit-workbench-shell > .edit-workbench-grid {
+  html body #root .builder-shell.edit-workbench-shell > .edit-workbench-grid {
     grid-column: 1 !important;
     grid-row: 3 !important;
     grid-template-columns: clamp(340px, 29vw, 400px) minmax(0, 1fr) !important;
@@ -53,7 +53,7 @@
 }
 
 @media (max-width: 900px) {
-  html body #root > .builder-shell.edit-workbench-shell:not(.mobile-operations-shell) {
+  html body #root .builder-shell.edit-workbench-shell:not(.mobile-operations-shell) {
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) !important;
     grid-template-rows: 58px 74px minmax(0, 1fr) !important;
@@ -65,13 +65,13 @@
     overflow: hidden !important;
   }
 
-  html body #root > .builder-shell.edit-workbench-shell > :is(.edit-workbench-nav, .edit-workbench-toolbar, .edit-workbench-grid) {
+  html body #root .builder-shell.edit-workbench-shell > :is(.edit-workbench-nav, .edit-workbench-toolbar, .edit-workbench-grid) {
     grid-column: 1 !important;
     width: 100% !important;
     min-width: 0 !important;
   }
 
-  html body #root > .builder-shell.edit-workbench-shell > .edit-workbench-nav { grid-row: 1 !important; }
-  html body #root > .builder-shell.edit-workbench-shell > .edit-workbench-toolbar { grid-row: 2 !important; }
-  html body #root > .builder-shell.edit-workbench-shell > .edit-workbench-grid { grid-row: 3 !important; }
+  html body #root .builder-shell.edit-workbench-shell > .edit-workbench-nav { grid-row: 1 !important; }
+  html body #root .builder-shell.edit-workbench-shell > .edit-workbench-toolbar { grid-row: 2 !important; }
+  html body #root .builder-shell.edit-workbench-shell > .edit-workbench-grid { grid-row: 3 !important; }
 }
