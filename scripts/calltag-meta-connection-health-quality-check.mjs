@@ -12,11 +12,14 @@ const root = process.cwd();
 const healthModulePath = path.join(root, 'functions/api/calltag/v1/_meta-health.js');
 const healthRoutePath = path.join(root, 'functions/api/calltag/v1/meta/health.js');
 const connectPath = path.join(root, 'public/call/connect/index.html');
-const [healthSource, routeSource, connectSource] = await Promise.all([
+const connectHubPath = path.join(root, 'public/call/connect/hub.js');
+const [healthSource, routeSource, connectHtmlSource, connectHubSource] = await Promise.all([
   readFile(healthModulePath, 'utf8'),
   readFile(healthRoutePath, 'utf8'),
   readFile(connectPath, 'utf8'),
+  readFile(connectHubPath, 'utf8'),
 ]);
+const connectSource = `${connectHtmlSource}\n${connectHubSource}`;
 
 const baseRow = {
   id: 'ctmeta_qa',
