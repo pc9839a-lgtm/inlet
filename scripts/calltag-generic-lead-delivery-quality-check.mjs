@@ -30,7 +30,10 @@ for (const token of [
 assert.ok(source.leads.includes('parseExcludedSourceTypes(url)'), 'GET must pass source exclusions to delivery query');
 assert.ok(source.leads.includes('notifyUniversalLeadAvailable'), 'Direct REST intake must trigger generic FCM');
 assert.ok(source.leads.includes('if (result.created)'), 'duplicate direct API events must not trigger FCM');
-assert.ok(source.leads.includes('FCM failure must never roll back'), 'push must stay non-transactional to lead acceptance');
+const directPushIndex=source.leads.indexOf('notifyUniversalLeadAvailable');
+const directResponseIndex=source.leads.indexOf('return jsonResponse(request, env, status');
+assert.ok(directPushIndex>=0&&directResponseIndex>directPushIndex,'push handling must finish before the already-accepted lead response and must not replace it');
+assert.ok(source.leads.includes("action: 'lead.push'"),'Direct push delivery gaps must be audited without changing intake acceptance');
 
 for (const token of [
   "type: 'pagero_lead_available'",
@@ -56,6 +59,7 @@ assert.ok(source.hook.includes('sha256(endpointKey)'), 'webhook push owner must 
 assert.ok(source.hook.includes('SELECT owner_id'), 'webhook push must resolve owner server-side');
 assert.ok(source.hook.includes("result?.result !== 'DUPLICATE_IGNORED'"), 'duplicate webhook must not trigger FCM');
 assert.ok(source.hook.includes('notifyUniversalLeadAvailable'), 'mapped webhook must trigger generic FCM');
+assert.ok(source.hook.includes("action: 'webhook.push'"), 'Webhook device push gaps must be audited');
 assert.ok(!source.hook.includes('body.ownerId'), 'webhook route must never trust body ownerId');
 
 for (const file of Object.values(files)) {
@@ -72,6 +76,7 @@ console.log(JSON.stringify({
     'generic-webhook-realtime-trigger',
     'duplicate-push-suppression',
     'server-resolved-webhook-owner',
+    'best-effort-push-gap-audit',
     'pagero-canonical-delivery-exclusion',
     'legacy-pagero-push-preserved',
   ],

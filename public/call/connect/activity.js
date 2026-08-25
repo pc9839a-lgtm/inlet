@@ -9,6 +9,13 @@ const ACTIVITY_SOURCE_LABELS={
   direct_api:'Direct API',
   calltag_e2e_test:'CallTag E2E Test',
 };
+const ACTIVITY_ACTION_LABELS={
+  'lead.push':'Direct API 앱 신호',
+  'webhook.push':'Webhook 앱 신호',
+  'meta.lead.process':'Meta 리드 처리',
+  'lead.intake':'Direct API 접수',
+  'webhook.receive':'Webhook 수신',
+};
 
 function activityStageMeta(event={}){
   if(event.stage==='PAGERO_LEGACY')return {label:'PageRo 기존 경로',className:'neutral',detail:'PageRo 문의는 기존 전용 전달 경로에서 처리됩니다.'};
@@ -32,6 +39,7 @@ function activityText(value=''){return String(value||'')}
 
 function activityClear(){
   $('activityList').textContent='';
+  const failures=$('activityFailureList');if(failures)failures.textContent='';
   clearNotice($('activityNotice'));
 }
 
@@ -55,6 +63,59 @@ function activityRenderSources(sources=[]){
     select.appendChild(option);
   }
   if([...select.options].some((option)=>option.value===current))select.value=current;
+}
+
+function activityEnsureFailureSection(){
+  let root=$('activityFailureList');
+  if(root)return root;
+  const activity=$('activityDetail');
+  const eventList=$('activityList');
+  if(!activity||!eventList)return null;
+
+  const section=document.createElement('div');section.className='activity-failure-section';
+  const head=document.createElement('div');head.className='connection-top';
+  const main=document.createElement('div');main.className='row-main';
+  const title=document.createElement('strong');title.textContent='최근 실패';
+  const description=document.createElement('span');description.textContent='최근 7일 운영 실패 코드만 표시하며 고객 개인정보는 포함하지 않습니다.';
+  main.append(title,description);
+  const count=document.createElement('span');count.id='activityFailureCount';count.className='status';count.textContent='0건';
+  head.append(main,count);
+  root=document.createElement('div');root.id='activityFailureList';root.className='list';
+  section.append(head,root);
+  activity.insertBefore(section,eventList);
+  return root;
+}
+
+function activityRenderFailures(failures=[]){
+  const root=activityEnsureFailureSection();
+  if(!root)return;
+  root.textContent='';
+  const count=$('activityFailureCount');if(count)count.textContent=`${failures.length}건`;
+  if(!failures.length){
+    const empty=document.createElement('div');empty.className='empty';empty.textContent='최근 7일 운영 실패 기록이 없습니다.';root.appendChild(empty);return;
+  }
+  for(const failure of failures){
+    const card=document.createElement('article');card.className='activity-card';
+    const top=document.createElement('div');top.className='connection-top';
+    const main=document.createElement('div');main.className='row-main';
+    const source=document.createElement('strong');source.textContent=activitySourceLabel(failure.sourceType);
+    const action=document.createElement('span');action.textContent=ACTIVITY_ACTION_LABELS[failure.action]||failure.action||'연동 처리';
+    main.append(source,action);
+    const badge=document.createElement('span');badge.className='health-badge bad';badge.textContent=failure.code||'FAILED';
+    top.append(main,badge);
+
+    const details=document.createElement('div');details.className='activity-meta';
+    const rows=[
+      ['발생',activityFormatTime(failure.createdAt)],
+      ['HTTP',failure.statusCode?String(failure.statusCode):'확인 필요'],
+      ['이벤트',failure.eventId||'없음'],
+    ];
+    for(const [label,value] of rows){
+      const box=document.createElement('div');const b=document.createElement('b');b.textContent=label;const span=document.createElement('span');span.textContent=value;box.append(b,span);details.appendChild(box);
+    }
+    card.append(top,details);
+    root.appendChild(card);
+  }
 }
 
 function activityTimeline(event={}){
@@ -139,9 +200,10 @@ async function loadActivity(force=false){
     if(data.readOnly!==true)throw new Error('활동 조회 안전 상태를 확인하지 못했습니다.');
     activitySetSummary(data.summary||{});
     activityRenderSources(data.sources||[]);
+    activityRenderFailures(data.failures||[]);
     activityRenderEvents(data.events||[]);
     activityLoaded=true;
-    $('activityReadOnly').textContent='읽기 전용';
+    $('activityReadOnly').textContent=data.summaryExcludesTest===true?'읽기 전용 · 테스트 제외':'읽기 전용';
     $('activityReadOnly').className='status on';
   }catch(error){
     if(error.status===401||error.status===403){requireLogin();return}

@@ -59,16 +59,42 @@ export async function onRequest({ request, env }) {
       statusCode: status,
     });
 
-    // FCM failure must never roll back an already accepted lead. It is only a pull trigger.
+    // FCM is only a best-effort pull trigger. Accepted leads stay accepted even when one or all
+    // registered devices fail to receive the signal; the delivery gap is recorded for operations.
     if (result.created) {
       try {
-        await notifyUniversalLeadAvailable(env, db, apiKey.ownerId, {
+        const push = await notifyUniversalLeadAvailable(env, db, apiKey.ownerId, {
           eventId: result.eventId,
           leadId: result.event?.id,
         });
+        const attempted = Math.max(0, Number(push?.attempted || 0));
+        const sent = Math.max(0, Number(push?.sent || 0));
+        if (attempted > sent) {
+          await recordLeadAudit(db, {
+            requestId,
+            ownerId: apiKey.ownerId,
+            apiKeyId: apiKey.id,
+            eventId: result.eventId,
+            action: 'lead.push',
+            result: sent > 0 ? 'FCM_PARTIAL_FAILURE' : 'FCM_ALL_DEVICES_FAILED',
+            sourceType: result.event?.source?.type || 'direct_api',
+            statusCode: 503,
+          });
+        }
       } catch (pushError) {
+        const pushCode = String(pushError?.code || pushError?.details?.code || 'CALLTAG_PUSH_FAILED').slice(0, 80);
         console.error('CallTag universal lead push failed', {
           message: String(pushError?.message || pushError || '').slice(0, 180),
+        });
+        await recordLeadAudit(db, {
+          requestId,
+          ownerId: apiKey.ownerId,
+          apiKeyId: apiKey.id,
+          eventId: result.eventId,
+          action: 'lead.push',
+          result: pushCode,
+          sourceType: result.event?.source?.type || 'direct_api',
+          statusCode: 503,
         });
       }
     }

@@ -1,6 +1,6 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../../../_shared.js';
 import { notifyUniversalLeadAvailable } from '../../../call/push/_shared.js';
-import { receiveGenericWebhook, sha256 } from '../_shared.js';
+import { receiveGenericWebhook, recordLeadAudit, sha256 } from '../_shared.js';
 
 const METHODS = 'POST, OPTIONS';
 
@@ -20,6 +20,7 @@ export async function onRequest({ request, env, params }) {
     if (result?.status === 'MAPPED'
         && result?.eventId
         && result?.result !== 'DUPLICATE_IGNORED') {
+      let pushOwnerId = '';
       try {
         const endpointHash = await sha256(endpointKey);
         const connection = await db.prepare(`
@@ -28,15 +29,39 @@ export async function onRequest({ request, env, params }) {
           WHERE endpoint_hash = ? AND status = 'active'
           LIMIT 1
         `).bind(endpointHash).first();
-        if (connection?.owner_id) {
-          await notifyUniversalLeadAvailable(env, db, connection.owner_id, {
+        pushOwnerId = String(connection?.owner_id || '');
+        if (pushOwnerId) {
+          const push = await notifyUniversalLeadAvailable(env, db, pushOwnerId, {
             eventId: result.eventId,
           });
+          const attempted = Math.max(0, Number(push?.attempted || 0));
+          const sent = Math.max(0, Number(push?.sent || 0));
+          if (attempted > sent) {
+            await recordLeadAudit(db, {
+              ownerId: pushOwnerId,
+              eventId: result.eventId,
+              action: 'webhook.push',
+              result: sent > 0 ? 'FCM_PARTIAL_FAILURE' : 'FCM_ALL_DEVICES_FAILED',
+              sourceType: 'custom_webhook',
+              statusCode: 503,
+            });
+          }
         }
       } catch (pushError) {
+        const pushCode = String(pushError?.code || pushError?.details?.code || 'CALLTAG_PUSH_FAILED').slice(0, 80);
         console.error('CallTag webhook lead push failed', {
           message: String(pushError?.message || pushError || '').slice(0, 180),
         });
+        if (pushOwnerId) {
+          await recordLeadAudit(db, {
+            ownerId: pushOwnerId,
+            eventId: result.eventId,
+            action: 'webhook.push',
+            result: pushCode,
+            sourceType: 'custom_webhook',
+            statusCode: 503,
+          });
+        }
       }
     }
 
