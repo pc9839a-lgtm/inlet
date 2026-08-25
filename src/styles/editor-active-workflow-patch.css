@@ -1,0 +1,79 @@
+/* Active PageRO editor workflow patch. Scoped to WorkspaceEditorScreen edit tab only. */
+@media (min-width: 1181px) {
+  html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) {
+    grid-template-columns: clamp(480px, 36vw, 540px) minmax(560px, 1fr) !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell > .left-workspace {
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .work-panel {
+    padding: 14px 14px 96px !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell > .preview-workspace {
+    min-width: 0 !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .preview-workspace .preview-sticky {
+    width: min(1040px, 100%) !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .preview-workspace .phone-frame {
+    width: 430px !important;
+    max-width: 100% !important;
+  }
+}
+
+/* Widget search added in #148 now receives styling on the actual editor path. */
+body .builder-shell.edit-mode-shell .edit-layout .widget-search {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: grid;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 0 0 10px;
+  background: #fff;
+}
+
+body .builder-shell.edit-mode-shell .edit-layout .widget-search label {
+  color: var(--product-muted);
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 850;
+}
+
+body .builder-shell.edit-mode-shell .edit-layout .widget-search input {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--product-line);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--product-text);
+  font-size: 13px;
+  outline: none;
+}
+
+body .builder-shell.edit-mode-shell .edit-layout .widget-search input:focus {
+  border-color: #9db4f5;
+  box-shadow: 0 0 0 3px rgba(47, 102, 246, .10);
+}
+
+body .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock.open .add-panel {
+  max-height: min(62vh, 620px) !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+}
+
+/* Selected rows stay visually anchored while preview/row synchronization scrolls. */
+body .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true'] {
+  scroll-margin-block: 84px;
+}
+
+html body #root .builder-shell.edit-mode-shell .preview-workspace [id^='block-'] {
+  scroll-margin-block: 120px;
+}
