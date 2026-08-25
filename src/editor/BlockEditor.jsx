@@ -16,7 +16,7 @@ export default function BlockEditor({ block, page, updateBlock, editors, editorD
   return (
     <BlockEditorShell blockType={editorType}>
       <AnchorControl block={block} value={s.anchorId || ''} set={set} />
-      <LazyEditorBoundary resetKey={`${block.id}:${editorType}`}>
+      <LazyEditorBoundary resetKey={`${block.id}:${block.type}`}>
         <Editor {...props} />
       </LazyEditorBoundary>
     </BlockEditorShell>
