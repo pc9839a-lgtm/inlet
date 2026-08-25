@@ -47,7 +47,7 @@ for (const token of [
   "authObserver.observe(loginPanel,{attributes:true,attributeFilter:['class']})",
   'function googleFormsReadiness',
   'function renderGoogleFormsConnections',
-  'data.googleFormsAutoMap',
+  'dataset.googleFormsAutoMap',
   '추천 매핑 자동 설정',
   'function autoMapGoogleForms',
   '/samples?limit=5',
