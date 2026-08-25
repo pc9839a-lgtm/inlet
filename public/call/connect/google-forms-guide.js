@@ -2,6 +2,7 @@
   const $=(id)=>document.getElementById(id);
   const GOOGLE_FORMS_SOURCE='Google Forms';
   const PLACEHOLDER='<YOUR_CALLTAG_WEBHOOK_URL>';
+  const MAPPING_ROLES=['name','phone','email','content','externalId','submittedAt'];
   let transientEndpointUrl='';
   let pendingGoogleFormsRotateId='';
   let rotateContextTimer=0;
@@ -16,7 +17,7 @@
     const samples=Number(item.sampleCount||0);
     if(item.lastError)return{label:'확인 필요',className:'warn',hint:'최근 Webhook 처리 오류가 있습니다.'};
     if(item.mappingReady)return{label:'수집 준비',className:'good',hint:'전화번호 필드 매핑이 완료되었습니다.'};
-    if(samples>0)return{label:'매핑 필요',className:'warn',hint:'샘플을 받았습니다. 전화번호 필드를 지정하세요.'};
+    if(samples>0)return{label:'매핑 필요',className:'warn',hint:'샘플을 받았습니다. 추천 매핑을 자동 설정하거나 직접 확인하세요.'};
     return{label:'테스트 필요',className:'',hint:'Google Form에서 테스트 응답을 1건 제출하세요.'};
   }
 
@@ -123,7 +124,7 @@ function sendToCallTag(e) {
     setStep(0,'Google Forms용 Webhook을 만들었습니다.');
     setStep(1,'URL이 이미 포함된 Apps Script를 그대로 복사합니다.');
     setStep(2,'Google Form의 Apps Script에 붙여넣고 installCallTag를 1회 실행합니다.');
-    setStep(3,'테스트 응답 후 Webhook 매핑에서 전화번호 필드를 지정합니다.');
+    setStep(3,'테스트 응답 후 추천 매핑을 자동 설정하거나 전화번호 필드를 직접 확인합니다.');
     const copyTextNode=document.querySelector('#googleFormsDetail .guide-card p');
     if(copyTextNode)copyTextNode.textContent='방금 발급된 CallTag Webhook URL이 이미 포함된 스크립트입니다. 그대로 복사해 Google Form의 Apps Script 편집기에 붙여넣고 installCallTag를 한 번 실행하세요.';
   }
@@ -200,6 +201,12 @@ function sendToCallTag(e) {
       .find((card)=>String(card.dataset.webhookConnectionId||'')===id)||null;
   }
 
+  function findGoogleFormsCard(connectionId){
+    const id=String(connectionId||'');
+    return [...document.querySelectorAll('#googleFormsConnectionList [data-google-forms-connection-id]')]
+      .find((card)=>String(card.dataset.googleFormsConnectionId||'')===id)||null;
+  }
+
   function openGoogleFormsMapper(connectionId){
     showDetail('webhookDetail');
     window.requestAnimationFrame(()=>{
@@ -216,6 +223,67 @@ function sendToCallTag(e) {
       const card=findWebhookCard(connectionId);
       card?.scrollIntoView({behavior:'smooth',block:'center'});
     });
+  }
+
+  function cardMessage(card,message,type='ok'){
+    if(!card)return;
+    let box=card.querySelector('[data-google-forms-map-notice]');
+    if(!box){box=document.createElement('div');box.dataset.googleFormsMapNotice='1';card.appendChild(box)}
+    box.textContent=message;
+    box.className=`health-message show ${type==='error'?'bad':type==='warn'?'warn':'good'}`;
+  }
+
+  function mergeSuggestedMapping(connection={},sample={}){
+    const current=connection?.mapping&&typeof connection.mapping==='object'?connection.mapping:{};
+    const draft=sample?.mapper?.draftMapping&&typeof sample.mapper.draftMapping==='object'?sample.mapper.draftMapping:{};
+    const mapping={customFields:Array.isArray(current.customFields)?current.customFields:[]};
+    for(const role of MAPPING_ROLES)mapping[role]=String(current[role]||draft[role]||'').trim();
+    return mapping;
+  }
+
+  function replaceWebhookConnection(connection){
+    if(!connection?.id||!Array.isArray(webhookConnections))return;
+    const index=webhookConnections.findIndex((item)=>String(item?.id||'')===String(connection.id));
+    if(index>=0)webhookConnections[index]=connection;
+  }
+
+  async function autoMapGoogleForms(connectionId,card,button){
+    const id=String(connectionId||'');
+    if(!id)return;
+    button.disabled=true;
+    const original=button.textContent;
+    button.textContent='추천 확인 중...';
+    try{
+      const data=await api(`/api/calltag/v1/connections/${encodeURIComponent(id)}/samples?limit=5`);
+      const samples=Array.isArray(data.samples)?data.samples:[];
+      const sample=samples.find((item)=>String(item?.mapper?.draftMapping?.phone||'').trim());
+      if(!sample){
+        cardMessage(card,'전화번호 후보를 자동으로 찾지 못했습니다. 전화번호 매핑에서 직접 선택해주세요.','warn');
+        return;
+      }
+      const connection=data.connection||googleFormsConnections().find((item)=>String(item.id||'')===id)||{};
+      const mapping=mergeSuggestedMapping(connection,sample);
+      if(!mapping.phone){
+        cardMessage(card,'전화번호 후보를 자동으로 찾지 못했습니다. 전화번호 매핑에서 직접 선택해주세요.','warn');
+        return;
+      }
+      button.textContent='저장 중...';
+      const result=await api('/api/calltag/v1/connections',{method:'PATCH',body:{action:'update_mapping',connectionId:id,mapping}});
+      const updated=result.connection||{...connection,mapping,mappingReady:true,mappingVersion:Number(connection.mappingVersion||0)+1,lastError:''};
+      replaceWebhookConnection(updated);
+      if(typeof renderWebhooks==='function')renderWebhooks(webhookConnections);
+      else renderGoogleFormsConnections();
+      window.requestAnimationFrame(()=>{
+        const nextCard=findGoogleFormsCard(id);
+        cardMessage(nextCard,`추천 매핑을 저장했습니다. 전화번호 경로: ${mapping.phone}. 테스트 샘플은 자동으로 고객 생성하지 않았습니다.`,'ok');
+      });
+    }catch(error){
+      if(error?.status===401||error?.status===403){requireLogin();return}
+      cardMessage(card,error?.message||'추천 매핑을 저장하지 못했습니다.','error');
+    }finally{
+      button.disabled=false;
+      button.textContent=original;
+    }
   }
 
   function renderGoogleFormsConnections(){
@@ -242,7 +310,10 @@ function sendToCallTag(e) {
       appendMetaValue(meta,'전화번호 매핑',item.mappingReady?`v${item.mappingVersion||1} 완료`:'설정 필요');
       appendMetaValue(meta,'원문 보관',`${Number(item.rawRetentionDays||7)}일`);
       const actions=document.createElement('div');actions.className='row-actions';
-      const mapper=document.createElement('button');mapper.type='button';mapper.className=`row-action ${item.mappingReady?'':'primary-small'}`.trim();mapper.textContent=item.mappingReady?'매핑 보기':'전화번호 매핑';mapper.onclick=()=>openGoogleFormsMapper(item.id);
+      if(Number(item.sampleCount||0)>0&&!item.mappingReady&&!item.lastError){
+        const autoMap=document.createElement('button');autoMap.type='button';autoMap.className='row-action primary-small';autoMap.dataset.googleFormsAutoMap='1';autoMap.textContent='추천 매핑 자동 설정';autoMap.onclick=()=>autoMapGoogleForms(item.id,card,autoMap);actions.appendChild(autoMap);
+      }
+      const mapper=document.createElement('button');mapper.type='button';mapper.className=`row-action ${(item.mappingReady||Number(item.sampleCount||0)>0)?'':'primary-small'}`.trim();mapper.textContent=item.mappingReady?'매핑 보기':'전화번호 매핑';mapper.onclick=()=>openGoogleFormsMapper(item.id);
       const manage=document.createElement('button');manage.type='button';manage.className='row-action';manage.textContent='Webhook 관리';manage.onclick=()=>openGoogleFormsWebhook(item.id);
       actions.append(mapper,manage);
       card.append(top,meta,actions);root.appendChild(card);
