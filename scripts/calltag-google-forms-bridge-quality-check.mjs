@@ -66,6 +66,16 @@ for (const token of [
   "action:'revoke'",
   'dataset.googleFormsRevoke',
   '연결 해제',
+  'function genericWebhookConnections',
+  "trim()!==GOOGLE_FORMS_SOURCE",
+  'function ensureGoogleFormsSummary',
+  "value.id='summaryGoogleForms'",
+  "label.textContent='Google Forms'",
+  'function syncGoogleFormsSummary',
+  'const google=googleFormsConnections().length',
+  'const generic=genericWebhookConnections().length',
+  'const channels=1+(meta?1:0)+(google?1:0)+(generic?1:0)+(keys?1:0)',
+  "setStatus(webhookStatus,generic)",
 ]) {
   assert.ok(js.includes(token), `Google Forms bridge contract missing: ${token}`);
 }
@@ -87,13 +97,15 @@ assert.match(js, /rotate\.onclick=\(\)=>rotateGoogleFormsConnection\(item\.id,ca
 assert.match(js, /revoke\.onclick=\(\)=>revokeGoogleFormsConnection\(item\.id,card,revoke\)/, 'Connection revoke must require an explicit user button click');
 assert.match(js, /data\.endpointUrl&&acceptTransientEndpoint\(data\.endpointUrl\)/, 'Rotated endpoint must stay transient and flow directly into the ready-to-paste script');
 assert.match(js, /if\(error\?\.status===401\|\|error\?\.status===403\)\{requireLogin\(\);return\}/, 'Google Forms lifecycle actions must recover expired sessions');
+assert.match(js, /if\(area==='meta'\|\|area==='webhook'\|\|area==='api'\)syncGoogleFormsSummary\(\)/, 'First-class summary must re-sync when any connection family changes');
+assert.match(css, /summary-grid\.google-forms-summary-grid\{grid-template-columns:repeat\(5,minmax\(0,1fr\)\)\}/, 'Desktop summary must fit PageRo plus four external channel families');
 assert.match(css, /@media\(max-width:680px\)/, 'Google Forms guide must keep mobile responsive rules');
 assert.match(css, /@media\(max-width:420px\)/, 'Google Forms guide must keep small-screen action rules');
 assert.doesNotThrow(() => new Function(js), 'Google Forms bridge browser script must parse');
 
 console.log(JSON.stringify({
   ok: true,
-  phase: 'CallTag Google Forms Guided Lifecycle',
+  phase: 'CallTag Google Forms First-class Channel',
   contracts: [
     'google-forms-connect-card-and-detail',
     'unsupported-naver-kakao-removed',
@@ -112,6 +124,9 @@ console.log(JSON.stringify({
     'direct-google-forms-endpoint-rotation',
     'direct-google-forms-revoke',
     'expired-session-recovery',
+    'first-class-google-forms-summary',
+    'generic-webhook-summary-excludes-google-forms',
+    'active-channel-family-count',
     'no-automatic-test-sample-replay',
     'phone-mapping-required',
     'endpoint-secret-warning',
