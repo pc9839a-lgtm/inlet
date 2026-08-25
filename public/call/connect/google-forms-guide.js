@@ -247,6 +247,40 @@ function sendToCallTag(e) {
     if(index>=0)webhookConnections[index]=connection;
   }
 
+  function rerenderConnectionState(){
+    if(typeof renderWebhooks==='function')renderWebhooks(webhookConnections);
+    else renderGoogleFormsConnections();
+  }
+
+  async function refreshGoogleFormsConnection(connectionId,card,button){
+    const id=String(connectionId||'');
+    if(!id)return;
+    button.disabled=true;
+    const original=button.textContent;
+    button.textContent='확인 중...';
+    try{
+      const data=await api(`/api/calltag/v1/connections/${encodeURIComponent(id)}/samples?limit=5`);
+      const current=googleFormsConnections().find((item)=>String(item.id||'')===id)||{};
+      const updated=data.connection||current;
+      replaceWebhookConnection(updated);
+      rerenderConnectionState();
+      window.requestAnimationFrame(()=>{
+        const nextCard=findGoogleFormsCard(id);
+        const samples=Number(updated.sampleCount||0);
+        if(updated.lastError)cardMessage(nextCard,'최근 처리 오류가 있습니다. Webhook 관리에서 상세 상태를 확인해주세요.','warn');
+        else if(updated.mappingReady)cardMessage(nextCard,`현재 수집 준비 상태입니다. 테스트 샘플 ${samples}건을 확인했습니다.`,'ok');
+        else if(samples>0)cardMessage(nextCard,`테스트 응답 ${samples}건을 확인했습니다. 이제 추천 매핑 자동 설정을 사용할 수 있습니다.`,'ok');
+        else cardMessage(nextCard,'아직 테스트 응답이 없습니다. Google Form에서 응답을 1건 제출한 뒤 다시 확인해주세요.','warn');
+      });
+    }catch(error){
+      if(error?.status===401||error?.status===403){requireLogin();return}
+      cardMessage(card,error?.message||'테스트 응답 상태를 확인하지 못했습니다.','error');
+    }finally{
+      button.disabled=false;
+      button.textContent=original;
+    }
+  }
+
   async function autoMapGoogleForms(connectionId,card,button){
     const id=String(connectionId||'');
     if(!id)return;
@@ -271,8 +305,7 @@ function sendToCallTag(e) {
       const result=await api('/api/calltag/v1/connections',{method:'PATCH',body:{action:'update_mapping',connectionId:id,mapping}});
       const updated=result.connection||{...connection,mapping,mappingReady:true,mappingVersion:Number(connection.mappingVersion||0)+1,lastError:''};
       replaceWebhookConnection(updated);
-      if(typeof renderWebhooks==='function')renderWebhooks(webhookConnections);
-      else renderGoogleFormsConnections();
+      rerenderConnectionState();
       window.requestAnimationFrame(()=>{
         const nextCard=findGoogleFormsCard(id);
         cardMessage(nextCard,`추천 매핑을 저장했습니다. 전화번호 경로: ${mapping.phone}. 테스트 샘플은 자동으로 고객 생성하지 않았습니다.`,'ok');
@@ -310,6 +343,7 @@ function sendToCallTag(e) {
       appendMetaValue(meta,'전화번호 매핑',item.mappingReady?`v${item.mappingVersion||1} 완료`:'설정 필요');
       appendMetaValue(meta,'원문 보관',`${Number(item.rawRetentionDays||7)}일`);
       const actions=document.createElement('div');actions.className='row-actions';
+      const refresh=document.createElement('button');refresh.type='button';refresh.className=`row-action ${Number(item.sampleCount||0)===0?'primary-small':''}`.trim();refresh.dataset.googleFormsRefresh='1';refresh.textContent=Number(item.sampleCount||0)===0?'테스트 응답 확인':'상태 새로고침';refresh.onclick=()=>refreshGoogleFormsConnection(item.id,card,refresh);actions.appendChild(refresh);
       if(Number(item.sampleCount||0)>0&&!item.mappingReady&&!item.lastError){
         const autoMap=document.createElement('button');autoMap.type='button';autoMap.className='row-action primary-small';autoMap.dataset.googleFormsAutoMap='1';autoMap.textContent='추천 매핑 자동 설정';autoMap.onclick=()=>autoMapGoogleForms(item.id,card,autoMap);actions.appendChild(autoMap);
       }
