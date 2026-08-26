@@ -8,7 +8,7 @@ const AUDIT_FILE = path.join(OUTPUT_DIR, 'd1-baseline-audit.json');
 const EVIDENCE_FILE = path.join(OUTPUT_DIR, 'd1-baseline-history-write.json');
 const SQL_FILE = path.join(OUTPUT_DIR, 'd1-baseline-history.sql');
 const APPROVAL = 'I_APPROVE_D1_BASELINE_0001_0009';
-const REQUIRED_BRANCH = 'ops/calltag-d1-baseline-audit-20260825';
+const REQUIRED_BRANCH = 'main';
 const EXPECTED_BASELINE = [
   '0001_inlet_core.sql',
   '0002_lead_dedupe_fields.sql',
