@@ -463,6 +463,7 @@ async function main() {
 
   const immediatelyBeforeApply = await remoteMigrationState(live, config.migrationsTable);
   const pendingImmediatelyBeforeApply = pendingMigrations(localRows, immediatelyBeforeApply.applied);
+  const pendingMigrationsImmediatelyBeforeApply = pendingImmediatelyBeforeApply;
   const preApplyConsistency = evaluatePreApplyConsistency({
     appliedBefore: before.applied,
     appliedImmediatelyBeforeApply: immediatelyBeforeApply.applied,
