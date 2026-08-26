@@ -39,7 +39,7 @@ for (const token of [
   'JSON.stringify(endpoint)',
   'function captureSecretIfGoogleForms',
   "querySelector('.secret-value')",
-  "event?.detail?.area==='secret'",
+  "if(area==='secret')captureSecretIfGoogleForms();",
   "showDetail('googleFormsDetail')",
   'URL 포함 Apps Script 복사',
   'function clearTransientEndpoint',
