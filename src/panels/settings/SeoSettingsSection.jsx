@@ -15,6 +15,60 @@ export default function SeoSettingsSection({
     padding: '20px 0',
   };
 
+  const searchSectionStyle = {
+    display: 'grid',
+    gridTemplateColumns: 'minmax(0, 1fr)',
+    gap: '16px',
+    padding: '20px 0',
+  };
+
+  const searchHeadingStyle = {
+    display: 'grid',
+    gap: '4px',
+  };
+
+  const metaFieldsStyle = {
+    width: '100%',
+    maxWidth: '720px',
+    display: 'grid',
+    gridTemplateColumns: 'minmax(0, 1fr)',
+    gap: '14px',
+  };
+
+  const metaFieldStyle = {
+    display: 'grid',
+    gap: '6px',
+  };
+
+  const metaLabelStyle = {
+    color: '#101828',
+    fontSize: '14px',
+    fontWeight: 850,
+    lineHeight: 1.3,
+  };
+
+  const metaControlStyle = {
+    width: '100%',
+    height: '44px',
+    minHeight: '44px',
+    boxSizing: 'border-box',
+  };
+
+  const metaTextareaStyle = {
+    ...metaControlStyle,
+    padding: '11px 12px',
+    resize: 'none',
+    overflow: 'hidden',
+  };
+
+  const metaCountStyle = {
+    margin: 0,
+    color: '#667085',
+    fontSize: '12px',
+    fontWeight: 700,
+    lineHeight: 1.35,
+  };
+
   return (
     <SettingsSection
       id="seo"
@@ -25,39 +79,38 @@ export default function SeoSettingsSection({
       style={{ maxWidth: '860px' }}
     >
       <div className="seo-settings-screen">
-        <section className="seo-setting-row" style={compactRowStyle}>
-          <div className="seo-setting-label" style={{ paddingTop: 0 }}>
+        <section className="seo-setting-row seo-search-row" style={searchSectionStyle}>
+          <div className="seo-setting-label" style={{ ...searchHeadingStyle, paddingTop: 0 }}>
             <strong>검색 정보</strong>
             <span>검색 결과에 표시되는 제목과 설명</span>
           </div>
-          <div
-            className="seo-copy-grid"
-            style={{ gridTemplateColumns: 'minmax(0, 1fr)', gap: '14px' }}
-          >
-            <SettingsField
-              label="메타 제목"
-              value={seoDraft.title}
-              disabled={locked}
-              placeholder="검색 결과 제목"
-              hint={`${String(seoDraft.title || '').length}자`}
-              onChange={(value) => setSeoDraft((draft) => ({ ...draft, title: value }))}
-            />
-            <SettingsField
-              label="메타 설명"
-              textarea
-              rows={1}
-              controlStyle={{
-                height: '44px',
-                minHeight: '44px',
-                padding: '11px 12px',
-                resize: 'none',
-              }}
-              value={seoDraft.desc}
-              disabled={locked}
-              placeholder="검색 결과 설명"
-              hint={`${String(seoDraft.desc || '').length}자`}
-              onChange={(value) => setSeoDraft((draft) => ({ ...draft, desc: value }))}
-            />
+
+          <div className="seo-meta-fields" style={metaFieldsStyle}>
+            <label className="seo-meta-field" style={metaFieldStyle}>
+              <span style={metaLabelStyle}>메타 제목</span>
+              <input
+                type="text"
+                value={seoDraft.title || ''}
+                disabled={locked}
+                placeholder="검색 결과 제목"
+                style={metaControlStyle}
+                onChange={(event) => setSeoDraft((draft) => ({ ...draft, title: event.target.value }))}
+              />
+              <small style={metaCountStyle}>{String(seoDraft.title || '').length} / 60</small>
+            </label>
+
+            <label className="seo-meta-field" style={metaFieldStyle}>
+              <span style={metaLabelStyle}>메타 설명</span>
+              <textarea
+                rows={1}
+                value={seoDraft.desc || ''}
+                disabled={locked}
+                placeholder="검색 결과 설명"
+                style={metaTextareaStyle}
+                onChange={(event) => setSeoDraft((draft) => ({ ...draft, desc: event.target.value }))}
+              />
+              <small style={metaCountStyle}>{String(seoDraft.desc || '').length} / 160</small>
+            </label>
           </div>
         </section>
 
