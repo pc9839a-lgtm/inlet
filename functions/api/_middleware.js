@@ -1,6 +1,7 @@
 import { isRequestSessionRevoked } from './auth/_session-revocation.js';
 import { enqueuePageroLead } from './call/pagero/_shared.js';
 import { notifyPageroLeadAvailable, ownerIdForProject } from './call/push/_shared.js';
+import { canonicalLeadFromPageroQueue, intakeCanonicalLead, recordLeadAudit } from './calltag/v1/_shared.js';
 
 function sessionError(status, code, error) {
   return new Response(JSON.stringify({ ok: false, error, code }), {
@@ -53,26 +54,64 @@ export async function onRequest(context) {
     const queued = await enqueuePageroLead(env.DB, {
       lead: savedLead,
       project: {
-        ...(submitted?.project || {}),
         projectId,
+        id: projectId,
+        slug: savedLead.pageSlug || submitted?.project?.slug || '',
+        title: submitted?.project?.title || '',
       },
       page: {
-        ...(submitted?.page || {}),
         id: savedLead.pageId || submitted?.page?.id || '',
         slug: savedLead.pageSlug || submitted?.page?.slug || '',
+        title: savedLead.pageTitle || submitted?.page?.title || '',
+        url: savedLead.pageUrl || submitted?.page?.url || '',
       },
     });
 
     if (queued?.queued) {
-      const directOwnerId = String(
-        savedLead.ownerId
-          || savedLead.ownerAccountId
-          || submitted?.project?.ownerId
-          || submitted?.project?.ownerAccountId
-          || ''
-      ).trim();
-      const ownerId = directOwnerId || await ownerIdForProject(env.DB, projectId);
+      const ownerId = await ownerIdForProject(env.DB, projectId);
       if (ownerId) {
+        try {
+          const queueLead = queued.lead || {};
+          const canonical = canonicalLeadFromPageroQueue({
+            ...queueLead,
+            pageSlug: queueLead.siteId || savedLead.pageSlug || submitted?.page?.slug || '',
+            customerName: queueLead.customer?.name || '',
+            customerPhone: queueLead.customer?.phone || '',
+            customerEmail: queueLead.customer?.email || '',
+            inquiryContent: queueLead.inquiry?.content || '',
+            sourceUrl: queueLead.inquiry?.sourceUrl || '',
+            campaign: queueLead.inquiry?.campaign || '',
+            metadataJson: JSON.stringify({
+              ...(queueLead.metadata || {}),
+              leadId: savedLead.id || '',
+              pageTitle: savedLead.pageTitle || queueLead.metadata?.pageTitle || '',
+              answers: Array.isArray(savedLead.answers) ? savedLead.answers : (queueLead.metadata?.answers || []),
+              referrer: savedLead.referrer || queueLead.metadata?.referrer || '',
+              utmSource: savedLead.utmSource || savedLead.utm_source || queueLead.metadata?.utmSource || '',
+              utmMedium: savedLead.utmMedium || savedLead.utm_medium || queueLead.metadata?.utmMedium || '',
+              utmCampaign: savedLead.utmCampaign || savedLead.utm_campaign || queueLead.metadata?.utmCampaign || '',
+            }),
+          });
+          const canonicalResult = await intakeCanonicalLead(env.DB, ownerId, canonical, {
+            connectionId: `pagero:${projectId}`,
+            idempotencyKey: queueLead.eventId || '',
+          });
+          await recordLeadAudit(env.DB, {
+            requestId: `pagero:${queueLead.eventId || crypto.randomUUID()}`,
+            ownerId,
+            eventId: canonicalResult.eventId,
+            action: 'pagero.adapter',
+            result: canonicalResult.result,
+            sourceType: 'pagero',
+            statusCode: canonicalResult.created ? 201 : 200,
+          });
+        } catch (error) {
+          console.error('Pagero canonical lead dual-write failed', {
+            projectId,
+            message: String(error?.message || error || 'unknown error').slice(0, 180),
+          });
+        }
+
         const notify = notifyPageroLeadAvailable(env, env.DB, ownerId, {
           queueId: queued.lead?.id || 0,
           eventId: queued.lead?.eventId || '',

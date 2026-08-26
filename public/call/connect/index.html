@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>콜태그 외부 연동</title>
+  <link rel="stylesheet" href="/call/connect/hub.css">
+  <link rel="stylesheet" href="/call/connect/direct-api-guide.css">
+  <link rel="stylesheet" href="/call/connect/webhook-guide.css">
+  <link rel="stylesheet" href="/call/connect/google-forms-guide.css">
+  <link rel="stylesheet" href="/call/connect/connect-polish.css">
+</head>
+<body>
+<main class="wrap">
+  <div class="top">
+    <a class="brand" href="/"><div class="logo">C</div><div><strong>콜태그</strong><span>CallTag Connect</span></div></a>
+    <button id="logout" class="ghost hidden" type="button">로그아웃</button>
+  </div>
+
+  <section class="hero">
+    <p class="eyebrow">외부 연동</p>
+    <h1>어디서 문의가 들어오든<br>콜태그로 한 번에 받습니다.</h1>
+    <p>광고·랜딩페이지·외부 서비스 문의를 하나의 고객 흐름으로 연결합니다.</p>
+  </section>
+
+  <section id="loginPanel" class="panel hidden">
+    <div class="panel-head"><div><h2>로그인이 필요합니다</h2><p class="muted">콜태그 계정으로 로그인한 뒤 외부 연동을 관리합니다.</p></div></div>
+    <form id="loginForm" class="login" style="margin-top:15px">
+      <div class="field"><label for="email">이메일</label><input id="email" type="email" autocomplete="email" required></div>
+      <div class="field"><label for="password">비밀번호</label><input id="password" type="password" autocomplete="current-password" required></div>
+      <button class="primary" type="submit">로그인</button>
+    </form>
+    <div id="loginNotice" class="notice"></div>
+  </section>
+
+  <section id="hubSummary" class="panel hidden" data-auth-only>
+    <div class="panel-head"><div><h2>연동 현황</h2><p class="muted">현재 계정에 연결된 문의 수집 경로입니다.</p></div><span id="hubState" class="status on">확인 중</span></div>
+    <div class="summary-grid" style="margin-top:14px">
+      <div class="summary-item"><b>활성 채널</b><strong id="summaryChannels">1</strong></div>
+      <div class="summary-item"><b>Meta 페이지</b><strong id="summaryMeta">0</strong></div>
+      <div class="summary-item"><b>Webhook</b><strong id="summaryWebhook">0</strong></div>
+      <div class="summary-item"><b>API Key</b><strong id="summaryApi">0</strong></div>
+    </div>
+  </section>
+
+  <section id="providersPanel" class="panel hidden" data-auth-only>
+    <div class="panel-head"><div><h2>문의 연결</h2><p class="muted">사용 중인 채널만 연결하면 모든 문의가 같은 고객 흐름으로 들어옵니다.</p></div></div>
+    <div class="providers">
+      <article class="provider-card">
+        <div class="provider-top"><div class="provider"><div class="provider-mark pagero">P</div><div class="provider-title"><strong>PageRo</strong><span>페이지로 랜딩 문의</span></div></div><span class="status on">기본 연동</span></div>
+        <p class="provider-copy">PageRo 폼 문의를 CallTag canonical intake로 전달하는 내장 경로입니다.</p>
+        <button class="card-action" type="button" disabled>별도 설정 없음</button>
+      </article>
+      <article class="provider-card">
+        <div class="provider-top"><div class="provider"><div class="provider-mark meta">M</div><div class="provider-title"><strong>Meta Lead Ads</strong><span>Facebook 리드 광고</span></div></div><span id="metaStatus" class="status">미연결</span></div>
+        <p class="provider-copy">Meta 로그인 후 관리 중인 페이지를 선택하면 리드 광고 문의를 자동 수집합니다.</p>
+        <button id="openMeta" class="card-action primary-small" type="button">Meta 관리</button>
+      </article>
+      <article class="provider-card">
+        <div class="provider-top"><div class="provider"><div class="provider-mark google-forms">G</div><div class="provider-title"><strong>Google Forms</strong><span>구글 설문·상담폼</span></div></div><span id="googleFormsStatus" class="status">미연결</span></div>
+        <p class="provider-copy">Google Forms용 Webhook을 만들면 URL이 포함된 Apps Script를 바로 복사할 수 있습니다.</p>
+        <button id="openGoogleForms" class="card-action" type="button">Google Forms 연결</button>
+      </article>
+      <article class="provider-card">
+        <div class="provider-top"><div class="provider"><div class="provider-mark webhook">W</div><div class="provider-title"><strong>Generic Webhook</strong><span>폼·CRM·자동화 서비스</span></div></div><span id="webhookStatus" class="status">미연결</span></div>
+        <p class="provider-copy">JSON Webhook을 보내는 서비스라면 전용 URL로 문의를 받을 수 있습니다.</p>
+        <button id="openWebhook" class="card-action" type="button">Webhook 관리</button>
+      </article>
+      <article class="provider-card">
+        <div class="provider-top"><div class="provider"><div class="provider-mark api">API</div><div class="provider-title"><strong>Direct API</strong><span>직접 서버 연동</span></div></div><span id="apiStatus" class="status">미연결</span></div>
+        <p class="provider-copy">서버에서 CallTag Lead API로 직접 문의를 전송하는 개발자용 연결입니다.</p>
+        <button id="openApi" class="card-action" type="button">API 관리</button>
+      </article>
+    </div>
+  </section>
+
+  <div id="detailTabs" class="section-tabs hidden" data-auth-only>
+    <button class="section-tab active" type="button" data-section="metaDetail">Meta</button>
+    <button class="section-tab" type="button" data-section="googleFormsDetail">Google Forms</button>
+    <button class="section-tab" type="button" data-section="webhookDetail">Webhook</button>
+    <button class="section-tab" type="button" data-section="apiDetail">Direct API</button>
+    <button class="section-tab" type="button" data-section="activityDetail">활동</button>
+  </div>
+
+  <section id="metaDetail" class="panel detail-section hidden" data-auth-only data-detail>
+    <div class="panel-head">
+      <div class="provider"><div class="provider-mark meta">M</div><div><h2>Meta Lead Ads</h2><p class="muted">Facebook 페이지 리드 광고 문의 자동 수집</p></div></div>
+      <span class="status">OAuth</span>
+    </div>
+    <div class="steps"><div class="step">1. Meta 로그인</div><div class="step">2. 페이지 선택</div><div class="step">3. 연결 완료</div></div>
+    <button id="startMeta" class="primary" type="button">Meta로 연결</button>
+    <div id="metaNotice" class="notice"></div>
+    <div id="pagePicker" class="hidden">
+      <div style="margin-top:18px"><strong style="font-size:14px">연결할 페이지 선택</strong><p class="muted">선택한 페이지의 새 리드만 콜태그로 들어옵니다.</p></div>
+      <div id="pageList" class="list"></div>
+      <button id="completeMeta" class="primary" type="button">선택 페이지 연결</button>
+    </div>
+    <div style="margin-top:18px"><strong style="font-size:14px">연결된 페이지</strong><p class="muted">상태 확인은 사용자가 눌렀을 때만 Meta에 실시간 요청합니다.</p></div>
+    <div id="connectionList" class="list"></div>
+  </section>
+
+  <section id="googleFormsDetail" class="panel detail-section hidden" data-auth-only data-detail>
+    <div class="panel-head">
+      <div class="provider"><div class="provider-mark google-forms">G</div><div><h2>Google Forms</h2><p class="muted">Google Form 제출을 CallTag 문의로 자동 전송</p></div></div>
+      <span id="googleFormsDetailStatus" class="status">Webhook 브리지</span>
+    </div>
+    <div class="google-forms-guide">
+      <div class="google-forms-steps">
+        <div class="google-forms-step"><b>1</b>Google Forms용 Webhook을 만듭니다.</div>
+        <div class="google-forms-step"><b>2</b>발급 URL이 포함된 Apps Script가 자동으로 준비됩니다.</div>
+        <div class="google-forms-step"><b>3</b>스크립트를 Google Form에 붙여넣고 installCallTag를 1회 실행합니다.</div>
+        <div class="google-forms-step"><b>4</b>테스트 응답 후 Webhook 매핑에서 전화번호 필드를 지정합니다.</div>
+      </div>
+      <div class="google-forms-actions">
+        <button id="prepareGoogleFormsWebhook" class="primary" type="button">Google Forms용 Webhook 만들기</button>
+        <button id="openGoogleFormsMapper" class="row-action" type="button">Webhook 매핑 열기</button>
+      </div>
+      <div class="guide-card">
+        <h3>Google Forms에 넣을 Apps Script</h3>
+        <p>Webhook을 생성하면 방금 발급된 CallTag URL이 이 스크립트에 자동으로 포함됩니다. 그대로 복사해서 Google Form의 Apps Script 편집기에 붙여넣고 <strong>installCallTag</strong>를 한 번 실행하세요.</p>
+        <div class="google-forms-code-wrap"><pre id="googleFormsCode" class="google-forms-code"></pre></div>
+        <button id="copyGoogleFormsScript" class="row-action google-forms-code-copy" type="button">Apps Script 복사</button>
+      </div>
+      <div class="google-forms-note">Webhook URL 자체가 비밀값입니다. 공개 문서나 저장소에 올리지 마세요. URL은 브라우저 저장소에 저장하지 않으며 로그아웃·세션 만료 시 URL이 포함된 스크립트도 지웁니다. 현재 방식은 바로 사용할 수 있는 Apps Script 브리지이며, Google Forms API + Pub/Sub 기반 완전 자동 연결은 준비 중입니다.</div>
+    </div>
+  </section>
+
+  <section id="webhookDetail" class="panel detail-section hidden" data-auth-only data-detail>
+    <div class="panel-head"><div class="provider"><div class="provider-mark webhook">W</div><div><h2>Generic Webhook</h2><p class="muted">외부 JSON 요청을 CallTag 문의로 변환</p></div></div><span id="webhookDetailStatus" class="status">0개</span></div>
+    <button id="toggleWebhookCreate" class="primary" type="button">새 Webhook 만들기</button>
+    <form id="webhookCreateForm" class="create-box hidden">
+      <h3>Webhook 연결 만들기</h3>
+      <div class="form-grid">
+        <div class="field"><label for="webhookName">연결 이름</label><input id="webhookName" maxlength="120" placeholder="예: 보험 상담폼" required></div>
+        <div class="field"><label for="webhookSource">소스 이름</label><input id="webhookSource" maxlength="160" placeholder="예: 외부 상담폼"></div>
+        <div class="field full"><label for="webhookRetention">원문 보관</label><select id="webhookRetention"><option value="1">1일</option><option value="3">3일</option><option value="7" selected>7일</option><option value="14">14일</option><option value="30">30일</option></select></div>
+      </div>
+      <button class="primary" type="submit">Webhook 생성</button>
+    </form>
+    <div id="webhookSecret" class="secret-box"></div>
+    <div id="webhookNotice" class="notice"></div>
+    <div id="webhookList" class="list"></div>
+  </section>
+
+  <section id="apiDetail" class="panel detail-section hidden" data-auth-only data-detail>
+    <div class="panel-head"><div class="provider"><div class="provider-mark api">API</div><div><h2>Direct API</h2><p class="muted">서버에서 CallTag Lead API로 직접 전송</p></div></div><span id="apiDetailStatus" class="status">0개</span></div>
+    <button id="toggleApiCreate" class="primary" type="button">새 API Key 만들기</button>
+    <form id="apiCreateForm" class="create-box hidden">
+      <h3>API Key 생성</h3>
+      <div class="field"><label for="apiName">키 이름</label><input id="apiName" maxlength="80" placeholder="예: 사내 CRM" required></div>
+      <button class="primary" type="submit">API Key 생성</button>
+    </form>
+    <div id="apiSecret" class="secret-box"></div>
+    <div id="apiNotice" class="notice"></div>
+    <div id="apiGuide"></div>
+    <div id="apiList" class="list"></div>
+  </section>
+
+  <section id="activityDetail" class="panel detail-section hidden" data-auth-only data-detail>
+    <div class="panel-head">
+      <div><h2>연동 활동</h2><p class="muted">외부 문의가 서버에 들어온 뒤 콜태그 앱이 가져가고 ACK한 상태를 읽기 전용으로 확인합니다.</p></div>
+      <span id="activityReadOnly" class="status">확인 전</span>
+    </div>
+    <div class="activity-summary">
+      <div><b>최근 7일</b><strong id="activityTotal">0</strong></div>
+      <div><b>서버 수신</b><strong id="activityAccepted">0</strong></div>
+      <div><b>앱 가져감</b><strong id="activityDelivered">0</strong></div>
+      <div><b>완료</b><strong id="activityImported">0</strong></div>
+      <div><b>거절</b><strong id="activityRejected">0</strong></div>
+    </div>
+    <div class="activity-controls">
+      <select id="activitySource" aria-label="문의 소스"><option value="">전체 소스</option></select>
+      <select id="activityStatus" aria-label="전달 상태">
+        <option value="">전체 상태</option>
+        <option value="ACCEPTED">서버 수신</option>
+        <option value="DELIVERED">앱 가져감</option>
+        <option value="IMPORTED">가져오기 완료</option>
+        <option value="REJECTED">가져오기 거절</option>
+      </select>
+      <button id="refreshActivity" class="row-action primary-small" type="button">새로고침</button>
+    </div>
+    <p class="activity-note">자동 새로고침하지 않습니다. 이 화면은 전달 상태를 변경하지 않는 조회 전용입니다.</p>
+    <div id="activityNotice" class="notice"></div>
+    <div id="activityList" class="list"></div>
+  </section>
+
+  <nav class="footer"><a href="/">콜태그 홈</a><a href="/privacy">개인정보처리방침</a><a href="/terms">이용약관</a></nav>
+</main><script>
+const SESSION_KEY='calllink-session';
+const OAUTH_SESSION_KEY='calltag-meta-oauth-session';
+const CONNECT_ENDPOINTS={metaConnections:'/api/calltag/v1/meta/connections',metaHealth:'/api/calltag/v1/meta/health',metaOauthStart:'/api/calltag/v1/meta/oauth/start',metaOauthSession:'/api/calltag/v1/meta/oauth/session',metaOauthComplete:'/api/calltag/v1/meta/oauth/complete',webhookConnections:'/api/calltag/v1/connections',apiKeys:'/api/calltag/v1/keys',leadApi:'/api/calltag/v1/leads',activity:'/api/calltag/v1/activity'};
+function resetMetaStartButton(){const button=document.getElementById('startMeta');if(button){button.disabled=false;button.textContent='Meta로 연결'}}
+function replaceConnectHistory(url){history.replaceState({},'',url.pathname+url.search+url.hash)}
+</script>
+<script src="/call/connect/hub.js"></script>
+<script src="/call/connect/direct-api-guide.js"></script>
+<script src="/call/connect/webhook-guide.js"></script>
+<script src="/call/connect/google-forms-guide.js"></script>
+<script src="/call/connect/connect-polish.js"></script>
+<script src="/call/connect/webhook-mapper.js"></script>
+<script src="/call/connect/activity.js"></script>
+<script src="/call/connect/e2e.js"></script>
+</body>
+</html>

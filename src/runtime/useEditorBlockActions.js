@@ -1,5 +1,8 @@
 import { SINGLETON_BLOCK_TYPES } from '../config/blockMeta.jsx';
 import { clone, ensureUniqueAnchors, newBlock, sanitizeBlock, uid } from '../lib/pageModel.js';
+import { createVideoCodeSettings } from '../lib/youtubeEmbed.js';
+
+const FIXED_BLOCK_TYPES = ['topnav', 'bottombar', 'footer'];
 
 export function useEditorBlockActions({
   page,
@@ -28,20 +31,32 @@ export function useEditorBlockActions({
     if (SINGLETON_BLOCK_TYPES.includes(type)) {
       const existing = page.blocks.find((b) => b.type === type);
       if (existing) {
-        setOpenId('');
+        setOpenId(existing.id);
         setAddOpen(false);
         return;
       }
     }
-    const block = newBlock(type);
+    const block = type === 'youtube'
+      ? sanitizeBlock({
+        id: uid(),
+        type: 'code',
+        visible: true,
+        s: { anchorId: 'video', ...createVideoCodeSettings('') },
+      })
+      : newBlock(type);
     setPage((p) => commitLocalPageDraft({ ...p, blocks: ensureUniqueAnchors([...p.blocks, block]) }));
-    setOpenId('');
+    setOpenId(block.id);
     setAddOpen(false);
   };
 
   const removeBlock = (id) => {
     if (blockWrite('edit')) return;
-    const nextOpen = openId === id ? '' : openId;
+    let nextOpen = openId;
+    if (openId === id) {
+      const normalBlocks = page.blocks.filter((block) => !FIXED_BLOCK_TYPES.includes(block.type));
+      const index = normalBlocks.findIndex((block) => block.id === id);
+      nextOpen = normalBlocks[index + 1]?.id || normalBlocks[index - 1]?.id || '';
+    }
     setPage((p) => commitLocalPageDraft({ ...p, blocks: ensureUniqueAnchors(p.blocks.filter((b) => b.id !== id)) }));
     setOpenId(nextOpen);
     setAddOpen(false);
@@ -60,7 +75,7 @@ export function useEditorBlockActions({
       next.splice(idx + 1, 0, copy);
       return commitLocalPageDraft({ ...p, blocks: ensureUniqueAnchors(next) });
     });
-    setOpenId('');
+    setOpenId(copy.id);
     setAddOpen(false);
   };
 
@@ -68,8 +83,8 @@ export function useEditorBlockActions({
     if (blockWrite('edit')) return;
     if (!fromId && fromId !== 0) return;
     setPage((p) => {
-      const normal = p.blocks.filter((b) => !['topnav', 'bottombar', 'footer'].includes(b.type));
-      const fixed = p.blocks.filter((b) => ['topnav', 'bottombar', 'footer'].includes(b.type));
+      const normal = p.blocks.filter((b) => !FIXED_BLOCK_TYPES.includes(b.type));
+      const fixed = p.blocks.filter((b) => FIXED_BLOCK_TYPES.includes(b.type));
       const from = normal.findIndex((b) => b.id === fromId);
       if (from < 0) return p;
       const nextNormal = [...normal];

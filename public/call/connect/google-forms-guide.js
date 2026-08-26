@@ -1,0 +1,491 @@
+(()=>{
+  const $=(id)=>document.getElementById(id);
+  const GOOGLE_FORMS_SOURCE='Google Forms';
+  const PLACEHOLDER='<YOUR_CALLTAG_WEBHOOK_URL>';
+  const MAPPING_ROLES=['name','phone','email','content','externalId','submittedAt'];
+  let transientEndpointUrl='';
+  let pendingGoogleFormsRotateId='';
+  let rotateContextTimer=0;
+
+  function googleFormsConnections(){
+    try{
+      return activeOnly(webhookConnections).filter((item)=>String(item?.sourceName||'').trim()===GOOGLE_FORMS_SOURCE);
+    }catch{return []}
+  }
+
+  function genericWebhookConnections(){
+    try{
+      return activeOnly(webhookConnections).filter((item)=>String(item?.sourceName||'').trim()!==GOOGLE_FORMS_SOURCE);
+    }catch{return []}
+  }
+
+  function ensureGoogleFormsSummary(){
+    const grid=$('hubSummary')?.querySelector('.summary-grid');
+    if(!grid)return null;
+    let value=$('summaryGoogleForms');
+    if(value)return value;
+    const item=document.createElement('div');item.className='summary-item';item.dataset.googleFormsSummary='1';
+    const label=document.createElement('b');label.textContent='Google Forms';
+    value=document.createElement('strong');value.id='summaryGoogleForms';value.textContent='0';
+    item.append(label,value);
+    const meta=$('summaryMeta')?.closest('.summary-item');
+    if(meta?.parentNode===grid)meta.insertAdjacentElement('afterend',item);else grid.appendChild(item);
+    grid.classList.add('google-forms-summary-grid');
+    return value;
+  }
+
+  function syncGoogleFormsSummary(){
+    const googleTarget=ensureGoogleFormsSummary();
+    if(!googleTarget)return;
+    const meta=activeOnly(metaConnections).length;
+    const google=googleFormsConnections().length;
+    const generic=genericWebhookConnections().length;
+    const keys=activeOnly(apiKeys).length;
+    const channels=1+(meta?1:0)+(google?1:0)+(generic?1:0)+(keys?1:0);
+    googleTarget.textContent=String(google);
+    const webhookSummary=$('summaryWebhook');if(webhookSummary)webhookSummary.textContent=String(generic);
+    const channelSummary=$('summaryChannels');if(channelSummary)channelSummary.textContent=String(channels);
+    const hubState=$('hubState');if(hubState)hubState.textContent=(meta+google+generic+keys)?'연동 사용 중':'PageRo 기본';
+    const webhookStatus=$('webhookStatus');if(webhookStatus)setStatus(webhookStatus,generic);
+  }
+
+  function googleFormsReadiness(item={}){
+    const samples=Number(item.sampleCount||0);
+    if(item.lastError)return{label:'확인 필요',className:'warn',hint:'최근 Webhook 처리 오류가 있습니다.'};
+    if(item.mappingReady)return{label:'수집 준비',className:'good',hint:'전화번호 필드 매핑이 완료되었습니다.'};
+    if(samples>0)return{label:'매핑 필요',className:'warn',hint:'샘플을 받았습니다. 추천 매핑을 자동 설정하거나 직접 확인하세요.'};
+    return{label:'테스트 필요',className:'',hint:'Google Form에서 테스트 응답을 1건 제출하세요.'};
+  }
+
+  function syncGoogleFormsStatus(){
+    const items=googleFormsConnections();
+    const count=items.length;
+    const hasIssue=items.some((item)=>Boolean(item.lastError));
+    const needsSetup=items.some((item)=>!item.mappingReady);
+    const cardStatus=$('googleFormsStatus');
+    const detailStatus=$('googleFormsDetailStatus');
+    if(cardStatus){
+      cardStatus.textContent=!count?'미연결':hasIssue?'확인 필요':needsSetup?'설정 필요':`${count}개 준비`;
+      cardStatus.classList.toggle('on',count>0&&!hasIssue&&!needsSetup);
+      cardStatus.classList.toggle('warn',count>0&&(hasIssue||needsSetup));
+    }
+    if(detailStatus){
+      detailStatus.textContent=transientEndpointUrl?'스크립트 준비됨':!count?'Webhook 브리지':hasIssue?'확인 필요':needsSetup?'설정 필요':`${count}개 수집 준비`;
+      detailStatus.classList.toggle('on',Boolean(transientEndpointUrl)||(count>0&&!hasIssue&&!needsSetup));
+      detailStatus.classList.toggle('warn',!transientEndpointUrl&&count>0&&(hasIssue||needsSetup));
+    }
+  }
+
+  function endpointLiteral(endpoint=''){
+    return endpoint?JSON.stringify(endpoint):`'${PLACEHOLDER}'`;
+  }
+
+  function appsScriptTemplate(endpoint=transientEndpointUrl){
+    return `const CALLTAG_WEBHOOK_URL = ${endpointLiteral(endpoint)};
+
+function installCallTag() {
+  const form = FormApp.getActiveForm();
+  if (!form) throw new Error('Google Form에 연결된 Apps Script에서 실행해주세요.');
+
+  ScriptApp.getProjectTriggers()
+    .filter((trigger) => trigger.getHandlerFunction() === 'sendToCallTag')
+    .forEach((trigger) => ScriptApp.deleteTrigger(trigger));
+
+  ScriptApp.newTrigger('sendToCallTag')
+    .forForm(form)
+    .onFormSubmit()
+    .create();
+}
+
+function sendToCallTag(e) {
+  const form = e.source;
+  const response = e.response;
+  const answers = {};
+
+  response.getItemResponses().forEach((itemResponse) => {
+    const title = itemResponse.getItem().getTitle();
+    const raw = itemResponse.getResponse();
+    answers[title] = Array.isArray(raw) ? raw.join(', ') : String(raw == null ? '' : raw);
+  });
+
+  const responseId = response.getId() || Utilities.getUuid();
+  const submittedAt = response.getTimestamp();
+  const payload = {
+    source: 'google_forms',
+    form_id: form.getId(),
+    form_title: form.getTitle(),
+    response_id: responseId,
+    submitted_at: submittedAt ? submittedAt.toISOString() : new Date().toISOString(),
+    answers,
+  };
+
+  const result = UrlFetchApp.fetch(CALLTAG_WEBHOOK_URL, {
+    method: 'post',
+    contentType: 'application/json',
+    payload: JSON.stringify(payload),
+    headers: { 'Idempotency-Key': responseId },
+    muteHttpExceptions: true,
+  });
+
+  const status = result.getResponseCode();
+  if (status < 200 || status >= 300) {
+    throw new Error('CallTag 전송 실패: HTTP ' + status);
+  }
+}`;
+  }
+
+  function setStep(index,text){
+    const step=document.querySelectorAll('#googleFormsDetail .google-forms-step')[index];
+    if(!step)return;
+    const number=document.createElement('b');number.textContent=String(index+1);
+    step.textContent='';step.append(number,document.createTextNode(text));
+  }
+
+  function renderAppsScript(){
+    const code=$('googleFormsCode');
+    if(code){
+      code.textContent=appsScriptTemplate();
+      code.dataset.endpointReady=transientEndpointUrl?'1':'0';
+    }
+    const copy=$('copyGoogleFormsScript');
+    if(copy)copy.textContent=transientEndpointUrl?'URL 포함 Apps Script 복사':'Apps Script 복사';
+    syncGoogleFormsStatus();
+  }
+
+  function isUsableEndpoint(value=''){
+    return /^https:\/\/[^\s]+$/i.test(String(value).trim());
+  }
+
+  function showReadyInstructions(){
+    setStep(0,'Google Forms용 Webhook을 만들었습니다.');
+    setStep(1,'URL이 이미 포함된 Apps Script를 그대로 복사합니다.');
+    setStep(2,'Google Form의 Apps Script에 붙여넣고 installCallTag를 1회 실행합니다.');
+    setStep(3,'테스트 응답 후 추천 매핑을 자동 설정하거나 전화번호 필드를 직접 확인합니다.');
+    const copyTextNode=document.querySelector('#googleFormsDetail .guide-card p');
+    if(copyTextNode)copyTextNode.textContent='방금 발급된 CallTag Webhook URL이 이미 포함된 스크립트입니다. 그대로 복사해 Google Form의 Apps Script 편집기에 붙여넣고 installCallTag를 한 번 실행하세요.';
+  }
+
+  function clearTransientEndpoint(){
+    transientEndpointUrl='';
+    pendingGoogleFormsRotateId='';
+    if(rotateContextTimer){clearTimeout(rotateContextTimer);rotateContextTimer=0}
+    renderAppsScript();
+  }
+
+  function acceptTransientEndpoint(endpoint){
+    const value=String(endpoint||'').trim();
+    if(!isUsableEndpoint(value))return false;
+    transientEndpointUrl=value;
+    pendingGoogleFormsRotateId='';
+    if(rotateContextTimer){clearTimeout(rotateContextTimer);rotateContextTimer=0}
+    renderAppsScript();
+    showReadyInstructions();
+    showDetail('googleFormsDetail');
+    return true;
+  }
+
+  function captureSecretIfGoogleForms(){
+    const secretBox=$('webhookSecret');
+    const endpoint=secretBox?.querySelector('.secret-value')?.textContent?.trim()||'';
+    if(!isUsableEndpoint(endpoint))return;
+    const formSource=String($('webhookSource')?.value||'').trim();
+    const secretTitle=secretBox?.querySelector('b')?.textContent||'';
+    const isGoogleFormsCreate=formSource===GOOGLE_FORMS_SOURCE;
+    const isGoogleFormsRotate=Boolean(pendingGoogleFormsRotateId)&&secretTitle.startsWith('새 Webhook URL');
+    if(isGoogleFormsCreate||isGoogleFormsRotate)acceptTransientEndpoint(endpoint);
+  }
+
+  function rememberRotateContext(event){
+    const button=event.target?.closest?.('button');
+    if(!button||button.textContent.trim()!=='URL 교체')return;
+    const card=button.closest('[data-webhook-connection-id]');
+    const id=String(card?.dataset?.webhookConnectionId||'');
+    const item=(webhookConnections||[]).find((entry)=>String(entry?.id||'')===id);
+    pendingGoogleFormsRotateId=String(item?.sourceName||'').trim()===GOOGLE_FORMS_SOURCE?id:'';
+    if(rotateContextTimer)clearTimeout(rotateContextTimer);
+    rotateContextTimer=window.setTimeout(()=>{pendingGoogleFormsRotateId='';rotateContextTimer=0},30000);
+  }
+
+  function ensureGoogleFormsConnectionSection(){
+    let root=$('googleFormsConnectionList');
+    if(root)return root;
+    const guide=document.querySelector('#googleFormsDetail .google-forms-guide');
+    if(!guide)return null;
+    const section=document.createElement('section');section.className='google-forms-connections';
+    const head=document.createElement('div');head.className='google-forms-connections-head';
+    const titleWrap=document.createElement('div');
+    const title=document.createElement('h3');title.textContent='Google Forms 연결 상태';
+    const desc=document.createElement('p');desc.textContent='테스트 응답 수신과 전화번호 매핑 여부를 여기서 바로 확인합니다.';
+    titleWrap.append(title,desc);head.appendChild(titleWrap);
+    root=document.createElement('div');root.id='googleFormsConnectionList';root.className='list google-forms-list';
+    section.append(head,root);
+    const guideCard=guide.querySelector('.guide-card');
+    guide.insertBefore(section,guideCard||null);
+    return root;
+  }
+
+  function appendMetaValue(meta,label,value){
+    const row=document.createElement('div');
+    const b=document.createElement('b');b.textContent=label;
+    const span=document.createElement('span');span.textContent=value;
+    row.append(b,span);meta.appendChild(row);
+  }
+
+  function findWebhookCard(connectionId){
+    const id=String(connectionId||'');
+    return [...document.querySelectorAll('#webhookList [data-webhook-connection-id]')]
+      .find((card)=>String(card.dataset.webhookConnectionId||'')===id)||null;
+  }
+
+  function findGoogleFormsCard(connectionId){
+    const id=String(connectionId||'');
+    return [...document.querySelectorAll('#googleFormsConnectionList [data-google-forms-connection-id]')]
+      .find((card)=>String(card.dataset.googleFormsConnectionId||'')===id)||null;
+  }
+
+  function openGoogleFormsMapper(connectionId){
+    showDetail('webhookDetail');
+    window.requestAnimationFrame(()=>{
+      const card=findWebhookCard(connectionId);
+      const button=card?.querySelector('[data-webhook-mapper-trigger]');
+      if(card)card.scrollIntoView({behavior:'smooth',block:'center'});
+      if(card&&button&&typeof openWebhookMapper==='function')openWebhookMapper(connectionId,card,button);
+    });
+  }
+
+  function openGoogleFormsWebhook(connectionId){
+    showDetail('webhookDetail');
+    window.requestAnimationFrame(()=>{
+      const card=findWebhookCard(connectionId);
+      card?.scrollIntoView({behavior:'smooth',block:'center'});
+    });
+  }
+
+  function cardMessage(card,message,type='ok'){
+    if(!card)return;
+    let box=card.querySelector('[data-google-forms-map-notice]');
+    if(!box){box=document.createElement('div');box.dataset.googleFormsMapNotice='1';card.appendChild(box)}
+    box.textContent=message;
+    box.className=`health-message show ${type==='error'?'bad':type==='warn'?'warn':'good'}`;
+  }
+
+  function mergeSuggestedMapping(connection={},sample={}){
+    const current=connection?.mapping&&typeof connection.mapping==='object'?connection.mapping:{};
+    const draft=sample?.mapper?.draftMapping&&typeof sample.mapper.draftMapping==='object'?sample.mapper.draftMapping:{};
+    const mapping={customFields:Array.isArray(current.customFields)?current.customFields:[]};
+    for(const role of MAPPING_ROLES)mapping[role]=String(current[role]||draft[role]||'').trim();
+    return mapping;
+  }
+
+  function replaceWebhookConnection(connection){
+    if(!connection?.id||!Array.isArray(webhookConnections))return;
+    const index=webhookConnections.findIndex((item)=>String(item?.id||'')===String(connection.id));
+    if(index>=0)webhookConnections[index]=connection;
+  }
+
+  function rerenderConnectionState(){
+    if(typeof renderWebhooks==='function')renderWebhooks(webhookConnections);
+    else renderGoogleFormsConnections();
+  }
+
+  async function refreshGoogleFormsConnection(connectionId,card,button){
+    const id=String(connectionId||'');
+    if(!id)return;
+    button.disabled=true;
+    const original=button.textContent;
+    button.textContent='확인 중...';
+    try{
+      const data=await api(`/api/calltag/v1/connections/${encodeURIComponent(id)}/samples?limit=5`);
+      const current=googleFormsConnections().find((item)=>String(item.id||'')===id)||{};
+      const updated=data.connection||current;
+      replaceWebhookConnection(updated);
+      rerenderConnectionState();
+      window.requestAnimationFrame(()=>{
+        const nextCard=findGoogleFormsCard(id);
+        const samples=Number(updated.sampleCount||0);
+        if(updated.lastError)cardMessage(nextCard,'최근 처리 오류가 있습니다. Webhook 관리에서 상세 상태를 확인해주세요.','warn');
+        else if(updated.mappingReady)cardMessage(nextCard,`현재 수집 준비 상태입니다. 테스트 샘플 ${samples}건을 확인했습니다.`,'ok');
+        else if(samples>0)cardMessage(nextCard,`테스트 응답 ${samples}건을 확인했습니다. 이제 추천 매핑 자동 설정을 사용할 수 있습니다.`,'ok');
+        else cardMessage(nextCard,'아직 테스트 응답이 없습니다. Google Form에서 응답을 1건 제출한 뒤 다시 확인해주세요.','warn');
+      });
+    }catch(error){
+      if(error?.status===401||error?.status===403){requireLogin();return}
+      cardMessage(card,error?.message||'테스트 응답 상태를 확인하지 못했습니다.','error');
+    }finally{
+      button.disabled=false;
+      button.textContent=original;
+    }
+  }
+
+  async function autoMapGoogleForms(connectionId,card,button){
+    const id=String(connectionId||'');
+    if(!id)return;
+    button.disabled=true;
+    const original=button.textContent;
+    button.textContent='추천 확인 중...';
+    try{
+      const data=await api(`/api/calltag/v1/connections/${encodeURIComponent(id)}/samples?limit=5`);
+      const samples=Array.isArray(data.samples)?data.samples:[];
+      const sample=samples.find((item)=>String(item?.mapper?.draftMapping?.phone||'').trim());
+      if(!sample){
+        cardMessage(card,'전화번호 후보를 자동으로 찾지 못했습니다. 전화번호 매핑에서 직접 선택해주세요.','warn');
+        return;
+      }
+      const connection=data.connection||googleFormsConnections().find((item)=>String(item.id||'')===id)||{};
+      const mapping=mergeSuggestedMapping(connection,sample);
+      if(!mapping.phone){
+        cardMessage(card,'전화번호 후보를 자동으로 찾지 못했습니다. 전화번호 매핑에서 직접 선택해주세요.','warn');
+        return;
+      }
+      button.textContent='저장 중...';
+      const result=await api('/api/calltag/v1/connections',{method:'PATCH',body:{action:'update_mapping',connectionId:id,mapping}});
+      const updated=result.connection||{...connection,mapping,mappingReady:true,mappingVersion:Number(connection.mappingVersion||0)+1,lastError:''};
+      replaceWebhookConnection(updated);
+      rerenderConnectionState();
+      window.requestAnimationFrame(()=>{
+        const nextCard=findGoogleFormsCard(id);
+        cardMessage(nextCard,`추천 매핑을 저장했습니다. 전화번호 경로: ${mapping.phone}. 테스트 샘플은 자동으로 고객 생성하지 않았습니다.`,'ok');
+      });
+    }catch(error){
+      if(error?.status===401||error?.status===403){requireLogin();return}
+      cardMessage(card,error?.message||'추천 매핑을 저장하지 못했습니다.','error');
+    }finally{
+      button.disabled=false;
+      button.textContent=original;
+    }
+  }
+
+  async function rotateGoogleFormsConnection(connectionId,card,button){
+    const id=String(connectionId||'');
+    if(!id||!confirm('Webhook URL을 교체하면 현재 Google Form의 기존 URL은 즉시 사용할 수 없게 됩니다. 새 Apps Script로 교체할까요?'))return;
+    button.disabled=true;
+    const original=button.textContent;
+    button.textContent='재발급 중...';
+    try{
+      const data=await api('/api/calltag/v1/connections',{method:'PATCH',body:{action:'rotate_endpoint',connectionId:id}});
+      if(data.connection)replaceWebhookConnection(data.connection);
+      rerenderConnectionState();
+      if(data.endpointUrl&&acceptTransientEndpoint(data.endpointUrl)){
+        const nextCard=findGoogleFormsCard(id);
+        cardMessage(nextCard,'새 URL이 포함된 Apps Script를 준비했습니다. 기존 Google Form 스크립트를 새 코드로 교체하세요.','warn');
+      }else{
+        cardMessage(findGoogleFormsCard(id)||card,'새 Webhook URL을 표시하지 못했습니다. Webhook 관리에서 다시 시도해주세요.','error');
+      }
+    }catch(error){
+      if(error?.status===401||error?.status===403){requireLogin();return}
+      cardMessage(card,error?.message||'스크립트 URL을 재발급하지 못했습니다.','error');
+    }finally{
+      button.disabled=false;
+      button.textContent=original;
+    }
+  }
+
+  async function revokeGoogleFormsConnection(connectionId,card,button){
+    const id=String(connectionId||'');
+    if(!id||!confirm('이 Google Forms 연결을 해제할까요? 현재 Apps Script는 더 이상 CallTag로 전송할 수 없습니다.'))return;
+    button.disabled=true;
+    const original=button.textContent;
+    button.textContent='해제 중...';
+    try{
+      const data=await api('/api/calltag/v1/connections',{method:'PATCH',body:{action:'revoke',connectionId:id}});
+      if(data.connection)replaceWebhookConnection(data.connection);
+      if(pendingGoogleFormsRotateId===id)pendingGoogleFormsRotateId='';
+      clearTransientEndpoint();
+      rerenderConnectionState();
+    }catch(error){
+      if(error?.status===401||error?.status===403){requireLogin();return}
+      cardMessage(card,error?.message||'Google Forms 연결을 해제하지 못했습니다.','error');
+    }finally{
+      button.disabled=false;
+      button.textContent=original;
+    }
+  }
+
+  function renderGoogleFormsConnections(){
+    const root=ensureGoogleFormsConnectionSection();
+    if(!root)return;
+    const items=googleFormsConnections();
+    root.textContent='';
+    if(!items.length){
+      const empty=document.createElement('div');empty.className='empty';empty.textContent='Google Forms용 Webhook을 만들면 연결 상태가 여기에 표시됩니다.';root.appendChild(empty);syncGoogleFormsStatus();syncGoogleFormsSummary();return;
+    }
+    for(const item of items){
+      const readiness=googleFormsReadiness(item);
+      const card=document.createElement('div');card.className='connection-card google-forms-connection-card';card.dataset.googleFormsConnectionId=String(item.id||'');
+      const top=document.createElement('div');top.className='connection-top';
+      const main=document.createElement('div');main.className='row-main';
+      const name=document.createElement('strong');name.textContent=item.name||'Google Forms';
+      const sub=document.createElement('span');sub.textContent=readiness.hint;
+      main.append(name,sub);
+      const badge=document.createElement('span');badge.className=`health-badge ${readiness.className}`.trim();badge.textContent=readiness.label;
+      top.append(main,badge);
+      const meta=document.createElement('div');meta.className='item-meta';
+      appendMetaValue(meta,'최근 수신',formatTime(item.lastReceivedAt));
+      appendMetaValue(meta,'테스트 샘플',`${Number(item.sampleCount||0)}건`);
+      appendMetaValue(meta,'전화번호 매핑',item.mappingReady?`v${item.mappingVersion||1} 완료`:'설정 필요');
+      appendMetaValue(meta,'원문 보관',`${Number(item.rawRetentionDays||7)}일`);
+      const actions=document.createElement('div');actions.className='row-actions';
+      const refresh=document.createElement('button');refresh.type='button';refresh.className=`row-action ${Number(item.sampleCount||0)===0?'primary-small':''}`.trim();refresh.dataset.googleFormsRefresh='1';refresh.textContent=Number(item.sampleCount||0)===0?'테스트 응답 확인':'상태 새로고침';refresh.onclick=()=>refreshGoogleFormsConnection(item.id,card,refresh);actions.appendChild(refresh);
+      if(Number(item.sampleCount||0)>0&&!item.mappingReady&&!item.lastError){
+        const autoMap=document.createElement('button');autoMap.type='button';autoMap.className='row-action primary-small';autoMap.dataset.googleFormsAutoMap='1';autoMap.textContent='추천 매핑 자동 설정';autoMap.onclick=()=>autoMapGoogleForms(item.id,card,autoMap);actions.appendChild(autoMap);
+      }
+      const mapper=document.createElement('button');mapper.type='button';mapper.className=`row-action ${(item.mappingReady||Number(item.sampleCount||0)>0)?'':'primary-small'}`.trim();mapper.textContent=item.mappingReady?'매핑 보기':'전화번호 매핑';mapper.onclick=()=>openGoogleFormsMapper(item.id);
+      const rotate=document.createElement('button');rotate.type='button';rotate.className='row-action';rotate.dataset.googleFormsRotate='1';rotate.textContent='스크립트 재발급';rotate.onclick=()=>rotateGoogleFormsConnection(item.id,card,rotate);
+      const manage=document.createElement('button');manage.type='button';manage.className='row-action';manage.textContent='Webhook 관리';manage.onclick=()=>openGoogleFormsWebhook(item.id);
+      const revoke=document.createElement('button');revoke.type='button';revoke.className='row-action danger';revoke.dataset.googleFormsRevoke='1';revoke.textContent='연결 해제';revoke.onclick=()=>revokeGoogleFormsConnection(item.id,card,revoke);
+      actions.append(mapper,rotate,manage,revoke);
+      card.append(top,meta,actions);root.appendChild(card);
+    }
+    syncGoogleFormsStatus();
+    syncGoogleFormsSummary();
+  }
+
+  function prepareWebhook(){
+    clearTransientEndpoint();
+    showDetail('webhookDetail');
+    const form=$('webhookCreateForm');
+    if(form?.classList.contains('hidden'))$('toggleWebhookCreate')?.click();
+    const name=$('webhookName');
+    const source=$('webhookSource');
+    const retention=$('webhookRetention');
+    if(name&&!name.value)name.value='Google Forms';
+    if(source)source.value=GOOGLE_FORMS_SOURCE;
+    if(retention)retention.value='7';
+    notice($('webhookNotice'),'Google Forms용 Webhook 설정을 채웠습니다. 생성하면 발급 URL이 Apps Script에 자동으로 포함됩니다.');
+    form?.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+
+  $('openGoogleForms')?.addEventListener('click',()=>{renderGoogleFormsConnections();showDetail('googleFormsDetail')});
+  document.querySelector('[data-section="googleFormsDetail"]')?.addEventListener('click',renderGoogleFormsConnections);
+  $('prepareGoogleFormsWebhook')?.addEventListener('click',prepareWebhook);
+  $('openGoogleFormsMapper')?.addEventListener('click',()=>{
+    const first=googleFormsConnections()[0];
+    if(first?.id){openGoogleFormsMapper(first.id);return}
+    showDetail('webhookDetail');
+    $('webhookList')?.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+  $('copyGoogleFormsScript')?.addEventListener('click',(event)=>copyText(appsScriptTemplate(),event.currentTarget));
+  $('webhookList')?.addEventListener('click',rememberRotateContext,true);
+
+  document.addEventListener('calltag:connect-ui-updated',(event)=>{
+    const area=event?.detail?.area||'';
+    if(area==='webhook'){renderGoogleFormsConnections();syncGoogleFormsStatus()}
+    if(area==='secret')captureSecretIfGoogleForms();
+    if(area==='meta'||area==='webhook'||area==='api')syncGoogleFormsSummary();
+  });
+
+  const loginPanel=$('loginPanel');
+  if(loginPanel&&typeof MutationObserver==='function'){
+    const authObserver=new MutationObserver(()=>{
+      if(!loginPanel.classList.contains('hidden'))clearTransientEndpoint();
+    });
+    authObserver.observe(loginPanel,{attributes:true,attributeFilter:['class']});
+  }
+
+  ensureGoogleFormsSummary();
+  ensureGoogleFormsConnectionSection();
+  renderAppsScript();
+  renderGoogleFormsConnections();
+  syncGoogleFormsStatus();
+  syncGoogleFormsSummary();
+})();

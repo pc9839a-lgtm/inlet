@@ -15,9 +15,20 @@ export function ScreenOrderListItems({
   renderBlockEditor,
 }) {
   const total = normalBlocks.length;
+  const listRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (!selectedId || typeof window === 'undefined') return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      listRef.current
+        ?.querySelector('[data-selected="true"]')
+        ?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [selectedId, normalBlocks.length]);
 
   return (
-    <div className="screen-order-v2-list">
+    <div className="screen-order-v2-list" ref={listRef}>
       {normalBlocks.map((block, index) => (
         <ScreenOrderItem
           key={block.id}

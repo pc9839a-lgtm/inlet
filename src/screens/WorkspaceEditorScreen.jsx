@@ -5,6 +5,7 @@ import '../styles/product-ui-tokens.css';
 import '../styles/workspace-shell.css';
 import '../styles/editor-workspace.css';
 import '../styles/editor-narrow-width-fix.css';
+import '../styles/editor-active-workflow-patch.css';
 import '../styles/settings-workspace.css';
 
 export default function WorkspaceEditorScreen({
@@ -47,10 +48,11 @@ export default function WorkspaceEditorScreen({
   const inboxWorkspace = !mobileOperationsOnly && tab === 'inbox';
   const statsWorkspace = !mobileOperationsOnly && tab === 'stats';
   const settingsWorkspace = !mobileOperationsOnly && tab === 'settings';
+  const editWorkspace = !mobileOperationsOnly && tab === 'edit';
   const operationsWorkspace = inboxWorkspace || statsWorkspace || settingsWorkspace;
 
   return (
-    <div className={`builder-shell${canUseBuilder && startMode === 'template' && !mobileOperationsOnly ? ' template-intro-shell' : ''}${mobileOperationsOnly ? ' mobile-operations-shell' : ''}${inboxWorkspace ? ' inbox-workspace-shell' : ''}${statsWorkspace ? ' stats-dashboard-shell' : ''}${settingsWorkspace ? ' settings-workspace-shell' : ''}`}>
+    <div className={`builder-shell${canUseBuilder && startMode === 'template' && !mobileOperationsOnly ? ' template-intro-shell' : ''}${mobileOperationsOnly ? ' mobile-operations-shell' : ''}${editWorkspace ? ' edit-mode-shell' : ''}${inboxWorkspace ? ' inbox-workspace-shell' : ''}${statsWorkspace ? ' stats-dashboard-shell' : ''}${settingsWorkspace ? ' settings-workspace-shell' : ''}`}>
 
       <WorkspaceLeftPanel
         canUseBuilder={canUseBuilder}

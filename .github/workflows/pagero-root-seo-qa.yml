@@ -1,0 +1,38 @@
+name: Pagero Root SEO QA
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'functions/lib/pageroRootSeo.js'
+      - 'functions/lib/publicPageMeta.js'
+      - 'scripts/validate-pagero-root-seo.mjs'
+      - '.github/workflows/pagero-root-seo-qa.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'functions/lib/pageroRootSeo.js'
+      - 'functions/lib/publicPageMeta.js'
+      - 'scripts/validate-pagero-root-seo.mjs'
+      - '.github/workflows/pagero-root-seo-qa.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-root-seo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check function syntax
+        run: |
+          node --check functions/lib/pageroRootSeo.js
+          node --check functions/lib/publicPageMeta.js
+      - name: Validate root SEO transformer
+        run: node scripts/validate-pagero-root-seo.mjs
