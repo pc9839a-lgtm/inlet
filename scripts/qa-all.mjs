@@ -20,6 +20,7 @@ const steps = [
   ['calltag:generic-lead-delivery:qa', ['scripts/calltag-generic-lead-delivery-quality-check.mjs']],
   ['calltag:meta-lead-ads:qa', ['scripts/calltag-meta-lead-ads-quality-check.mjs']],
   ['calltag:meta-oauth:qa', ['scripts/calltag-meta-oauth-quality-check.mjs']],
+  ['calltag:android-meta-return:qa', ['scripts/calltag-android-meta-return-quality-check.mjs']],
   ['calltag:meta-connection-health:qa', ['scripts/calltag-meta-connection-health-quality-check.mjs']],
   ['calltag:connect-hub:qa', ['scripts/calltag-connect-hub-quality-check.mjs']],
   ['calltag:google-forms-bridge:qa', ['scripts/calltag-google-forms-bridge-quality-check.mjs']],
