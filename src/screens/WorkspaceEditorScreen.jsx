@@ -48,7 +48,7 @@ export default function WorkspaceEditorScreen({
   const inboxWorkspace = !mobileOperationsOnly && tab === 'inbox';
   const statsWorkspace = !mobileOperationsOnly && tab === 'stats';
   const settingsWorkspace = !mobileOperationsOnly && tab === 'settings';
-  const editWorkspace = !mobileOperationsOnly && tab === 'edit';
+  const editWorkspace = !mobileOperationsOnly && (tab === 'edit' || tab === 'style');
   const operationsWorkspace = inboxWorkspace || statsWorkspace || settingsWorkspace;
 
   return (
