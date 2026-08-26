@@ -11,6 +11,10 @@ export default function PageBasicSettingsSection({
   setBasicDraft,
 }) {
   const readOnly = locked || clientAdminMode;
+  const inputStyle = {
+    height: '44px',
+    minHeight: '44px',
+  };
 
   return (
     <SettingsSection
@@ -25,14 +29,15 @@ export default function PageBasicSettingsSection({
           label="페이지명"
           value={basicDraft.title}
           disabled={readOnly}
+          controlStyle={inputStyle}
           onChange={(value) => setBasicDraft((draft) => ({ ...draft, title: value }))}
           placeholder="페이지 이름"
         />
         <SettingsField
           label="페이지 주소"
-          prefix="/"
           value={basicDraft.slug}
           disabled={readOnly}
+          controlStyle={inputStyle}
           onChange={(value) => setBasicDraft((draft) => ({ ...draft, slug: value.replace(/[^a-zA-Z0-9-_]/g, '') }))}
           placeholder="page"
         />
