@@ -17,12 +17,12 @@ on:
         default: ''
         type: string
       allow_writes:
-        description: Required write approval switch for backup-and-apply
+        description: Required write switch for approved baseline history or backup-and-apply
         required: true
         default: false
         type: boolean
       approval_phrase:
-        description: Type I_APPROVE_D1_MIGRATIONS for backup-and-apply
+        description: Baseline uses I_APPROVE_D1_BASELINE_0001_0009; migration apply uses I_APPROVE_D1_MIGRATIONS
         required: false
         default: ''
         type: string
@@ -80,6 +80,9 @@ jobs:
             .tmp-d1-migration-safety/*.enc
             .tmp-d1-migration-safety/*.manifest.json
             .tmp-d1-migration-safety/d1-migration-*.json
+            .tmp-d1-migration-safety/d1-baseline-audit.json
+            .tmp-d1-migration-safety/d1-baseline-history-write.json
             .tmp-d1-migration-safety/*.rollback.txt
+          include-hidden-files: true
           if-no-files-found: warn
           retention-days: 30
