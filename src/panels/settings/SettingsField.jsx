@@ -6,6 +6,8 @@ export default function SettingsField({
   error = '',
   type = 'text',
   textarea = false,
+  rows,
+  controlStyle,
   prefix = '',
   placeholder = '',
   disabled = false,
@@ -23,12 +25,13 @@ export default function SettingsField({
     name,
     autoComplete,
     inputMode,
+    style: controlStyle,
     'aria-invalid': error ? 'true' : undefined,
     onChange: (event) => onChange(event.target.value),
   };
 
   const control = textarea
-    ? <textarea {...controlProps} />
+    ? <textarea {...controlProps} rows={rows} />
     : <input {...controlProps} type={type} />;
 
   return (
