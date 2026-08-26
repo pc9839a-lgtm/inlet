@@ -45,6 +45,13 @@ export default function SeoSettingsSection({
             <SettingsField
               label="메타 설명"
               textarea
+              rows={1}
+              controlStyle={{
+                height: '44px',
+                minHeight: '44px',
+                padding: '11px 12px',
+                resize: 'none',
+              }}
               value={seoDraft.desc}
               disabled={locked}
               placeholder="검색 결과 설명"
