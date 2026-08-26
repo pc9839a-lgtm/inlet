@@ -11,7 +11,7 @@ const workflow = await read('.github/workflows/d1-migration-safety.yml');
 
 for (const token of [
   "const APPROVAL = 'I_APPROVE_D1_BASELINE_0001_0009'",
-  "const REQUIRED_BRANCH = 'ops/calltag-d1-baseline-audit-20260825'",
+  "const REQUIRED_BRANCH = 'main'",
   "'0001_inlet_core.sql'",
   "'0009_unified_billing_referral.sql'",
   "'0010_calltag_universal_lead_intake.sql'",
@@ -90,7 +90,7 @@ console.log(JSON.stringify({
   checks: 43,
   contracts: [
     'explicit-baseline-approval',
-    'branch-restricted-write',
+    'main-only-write',
     'fresh-read-only-audit-before-write',
     'pre-write-time-travel-bookmark',
     'wrangler-compatible-d1-migrations-schema',
