@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { getVideoSource, getYouTubeEmbedUrl } from '../../lib/youtubeEmbed.js';
 import { pickSafe, rich, widgetBoxClass, widgetBoxVars } from './previewUtils.jsx';
 
 const CUSTOM_CODE_MESSAGE = 'pagero-custom-code';
@@ -215,9 +216,59 @@ function RenderCustomCode({ block }) {
   );
 }
 
+function RenderYouTube({ block }) {
+  const s = block.s || {};
+  const value = s.videoUrl || s.youtubeUrl || '';
+  const source = getVideoSource(value);
+  const youtubeEmbedUrl = source?.kind === 'youtube' ? getYouTubeEmbedUrl(value) : '';
+  const sectionStyle = widgetBoxVars(s);
+  const frameSrc = youtubeEmbedUrl || source?.src || '';
+
+  return (
+    <section
+      id={`block-${block.id}`}
+      className={`landing-section youtube-widget video-widget ${widgetBoxClass(s, { background: false, shadow: false })}`}
+      style={sectionStyle}
+      data-youtube-runtime="direct-v1"
+      data-video-runtime="direct-v2"
+    >
+      {source ? (
+        <div style={{ width: '100%', aspectRatio: '16 / 9', overflow: 'hidden', borderRadius: 18, background: '#000' }}>
+          {source.kind === 'file' ? (
+            <video
+              src={frameSrc}
+              controls
+              playsInline
+              preload="metadata"
+              style={{ width: '100%', height: '100%', display: 'block', background: '#000', objectFit: 'contain' }}
+            />
+          ) : (
+            <iframe
+              src={frameSrc}
+              title={source.title || 'Video'}
+              loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              style={{ width: '100%', height: '100%', display: 'block', border: 0, background: '#000' }}
+            />
+          )}
+        </div>
+      ) : (
+        <div style={{ width: '100%', minHeight: 148, display: 'grid', placeItems: 'center', padding: 22, border: '1px dashed #cbd5e1', borderRadius: 18, background: '#f8fafc', color: '#64748b', fontSize: 14, lineHeight: 1.45, fontWeight: 700, textAlign: 'center' }}>
+          동영상 주소를 입력하세요
+        </div>
+      )}
+    </section>
+  );
+}
+
 export function RenderCode({ block }) {
   // 기존 저장 데이터의 BGM 프리셋은 재생하지 않고 출력에서도 제외한다.
   if (block.s?.widgetMode === 'bgm') return null;
+  // 동영상 위젯은 사용자 코드 sandbox 안에 중첩하지 않는다. YouTube/Vimeo iframe과
+  // 직접 영상 재생은 일반 페이지 컨텍스트에서 렌더링한다.
+  if (block.s?.widgetMode === 'youtube') return <RenderYouTube block={block} />;
   return <RenderCustomCode block={block} />;
 }
 

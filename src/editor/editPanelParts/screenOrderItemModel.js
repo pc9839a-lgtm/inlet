@@ -9,8 +9,10 @@ export function createScreenOrderItemModel({
   setDragId,
   reorderToIndex,
 }) {
+  const metaType = block.s?.widgetMode === 'youtube' ? 'youtube' : block.type;
+
   return {
-    meta: META[block.type] || META.text,
+    meta: META[metaType] || META.text,
     controls: createScreenOrderControls({
       block,
       index,

@@ -5,15 +5,16 @@ import { BlockEditorShell } from './ui/index.js';
 export default function BlockEditor({ block, page, updateBlock, editors, editorDeps = {} }) {
   const s = block.s || {};
   const set = (patch) => updateBlock(block.id, patch);
-  const Editor = editors?.[block.type];
+  const editorType = s.widgetMode === 'youtube' ? 'youtube' : block.type;
+  const Editor = editors?.[editorType];
 
   if (!Editor) return null;
 
-  const props = { s, set, page, updateBlock, blockId: block.id, blockType: block.type, ...editorDeps };
+  const props = { s, set, page, updateBlock, blockId: block.id, blockType: editorType, ...editorDeps };
   if (block.type === 'image') props.block = block;
 
   return (
-    <BlockEditorShell blockType={block.type}>
+    <BlockEditorShell blockType={editorType}>
       <AnchorControl block={block} value={s.anchorId || ''} set={set} />
       <LazyEditorBoundary resetKey={`${block.id}:${block.type}`}>
         <Editor {...props} />

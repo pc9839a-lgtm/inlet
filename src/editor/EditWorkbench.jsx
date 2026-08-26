@@ -51,8 +51,8 @@ export default function EditWorkbench({
   } = editPanelProps;
 
   const selection = useEditPanelSelection({ page, openId, setOpenId, setAddOpen });
-  const [inspectorView, setInspectorView] = useState('settings');
   const [settingsTarget, setSettingsTarget] = useState(selection.normalSelectedId ? 'block' : 'page');
+  const [mobilePane, setMobilePane] = useState('blocks');
 
   const sectionProps = createEditPanelSectionProps({
     page,
@@ -83,7 +83,6 @@ export default function EditWorkbench({
   useEffect(() => {
     if (!selection.normalSelectedId) return;
     setSettingsTarget('block');
-    setInspectorView('settings');
   }, [selection.normalSelectedId]);
 
   useEffect(() => {
@@ -95,13 +94,13 @@ export default function EditWorkbench({
     const closing = selection.normalSelectedId === blockId;
     selection.selectBlock(blockId);
     setSettingsTarget(closing ? 'page' : 'block');
-    setInspectorView('settings');
+    setMobilePane(closing ? 'blocks' : 'settings');
   };
 
   const showPageOptions = () => {
     if (selection.normalSelectedId) selection.selectBlock(selection.normalSelectedId);
     setSettingsTarget('page');
-    setInspectorView('settings');
+    setMobilePane('settings');
   };
 
   const screenOrderListProps = {
@@ -135,17 +134,43 @@ export default function EditWorkbench({
         />
       </div>
 
-      <div className="edit-workbench-grid">
-        <aside className="edit-workbench-library" aria-label="블록 추가">
-          <div className="edit-workbench-panel-head">
-            <strong>블록</strong>
-            <button type="button" onClick={showPageOptions}>페이지</button>
+      <div className="edit-workbench-grid" data-mobile-pane={mobilePane}>
+        <div className="edit-workbench-mobile-tabs" role="tablist" aria-label="모바일 편집 화면">
+          <button type="button" role="tab" aria-selected={mobilePane === 'blocks'} className={mobilePane === 'blocks' ? 'active' : ''} onClick={() => setMobilePane('blocks')}>블록</button>
+          <button type="button" role="tab" aria-selected={mobilePane === 'settings'} className={mobilePane === 'settings' ? 'active' : ''} onClick={() => setMobilePane('settings')}>설정</button>
+          <button type="button" role="tab" aria-selected={mobilePane === 'preview'} className={mobilePane === 'preview' ? 'active' : ''} onClick={() => setMobilePane('preview')}>미리보기</button>
+        </div>
+
+        <aside className="edit-workbench-sidebar" aria-label="화면 순서 및 편집 설정">
+          <div className="edit-workbench-sidebar-scroll edit-layout">
+            <section className="edit-workbench-order-pane">
+              <div className="edit-workbench-section-head">
+                <strong>화면 순서</strong>
+                <button type="button" className={settingsTarget === 'page' ? 'active' : ''} onClick={showPageOptions}>페이지 옵션</button>
+              </div>
+              <ScreenOrderList {...screenOrderListProps} />
+            </section>
+
+            <section className="edit-workbench-settings-pane">
+              {settingsTarget === 'block' && selectedBlock ? (
+                <div className="edit-workbench-selected-card">
+                  <div className="edit-workbench-selected-head">
+                    <div>
+                      <span>선택한 블록</span>
+                      <strong>{selectedLabel}</strong>
+                    </div>
+                    <button type="button" onClick={showPageOptions}>페이지 옵션</button>
+                  </div>
+                  <SelectedBlockSettingsBody block={selectedBlock} renderBlockEditor={renderBlockEditor} />
+                </div>
+              ) : (
+                <PageGlobalOptions {...sectionProps.pageGlobalOptionsProps} />
+              )}
+            </section>
           </div>
-          <div className="edit-workbench-library-scroll">
-            <AddBlockDock
-              {...sectionProps.addBlockDockProps}
-              alwaysOpen
-            />
+
+          <div className="edit-workbench-sidebar-footer">
+            <AddBlockDock {...sectionProps.addBlockDockProps} />
           </div>
         </aside>
 
@@ -160,44 +185,6 @@ export default function EditWorkbench({
           selectedBlockId={selectedBlockId}
           onSelectPreviewBlock={onSelectPreviewBlock}
         />
-
-        <aside className="edit-workbench-inspector" aria-label="편집 설정">
-          <div className="edit-workbench-inspector-tabs">
-            <button
-              type="button"
-              className={inspectorView === 'settings' ? 'active' : ''}
-              onClick={() => setInspectorView('settings')}
-            >
-              {settingsTarget === 'block' && selectedBlock ? `${selectedLabel} 설정` : '페이지 옵션'}
-            </button>
-            <button
-              type="button"
-              className={inspectorView === 'order' ? 'active' : ''}
-              onClick={() => setInspectorView('order')}
-            >
-              화면 순서
-            </button>
-          </div>
-
-          <div className="edit-workbench-inspector-scroll edit-layout">
-            {inspectorView === 'order' ? (
-              <ScreenOrderList {...screenOrderListProps} />
-            ) : settingsTarget === 'block' && selectedBlock ? (
-              <section className="edit-workbench-selected-card">
-                <div className="edit-workbench-selected-head">
-                  <div>
-                    <span>선택한 블록</span>
-                    <strong>{selectedLabel}</strong>
-                  </div>
-                  <button type="button" onClick={showPageOptions}>페이지 옵션</button>
-                </div>
-                <SelectedBlockSettingsBody block={selectedBlock} renderBlockEditor={renderBlockEditor} />
-              </section>
-            ) : (
-              <PageGlobalOptions {...sectionProps.pageGlobalOptionsProps} />
-            )}
-          </div>
-        </aside>
       </div>
     </div>
   );
