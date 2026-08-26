@@ -16,6 +16,7 @@ export default function SettingsSection({
   onEdit,
   children,
   className = '',
+  style,
   saveLabel,
   editLabel,
   actionNote = '',
@@ -23,7 +24,7 @@ export default function SettingsSection({
   const labels = ACTION_LABELS[id] || ['저장', '수정'];
 
   return (
-    <section className={`settings-section ${className}`} data-settings-section={id}>
+    <section className={`settings-section ${className}`} data-settings-section={id} style={style}>
       <div className="settings-section-body">
         {badge && <span className="settings-section-badge">{badge}</span>}
         {children}
