@@ -1,1 +1,1 @@
-Wedding BGM live fix in progress: cache-busted asset wedding-bgm-v2.mp3 published from verified 400,918-byte MP3 blob. Custom-code runtime parent delegation patch queued separately.
+Wedding BGM live fix: verified 400,918-byte MP3 published as public/assets/wedding/wedding-bgm-v2.mp3 to bypass prior corrupted-asset browser/CDN cache. Next runtime step: custom-code BGM requires autoplay/delegated parent playback.
