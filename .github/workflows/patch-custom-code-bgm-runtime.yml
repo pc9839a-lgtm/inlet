@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Patch UtilityBlocks BGM delegation
         shell: bash
@@ -129,7 +131,6 @@ jobs:
             src={nativeBgmSrc}
             loop
             preload="auto"
-            playsInline
           />
           <button
             type="button"
@@ -180,4 +181,5 @@ jobs:
             exit 0
           fi
           git commit -m 'fix(pagero): play custom-code BGM in parent runtime'
+          git pull --rebase origin main
           git push origin HEAD:main
