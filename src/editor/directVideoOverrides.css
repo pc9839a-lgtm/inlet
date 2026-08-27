@@ -1,0 +1,20 @@
+.pagero-direct-loop-frame {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: auto !important;
+  background: transparent !important;
+  overflow: hidden !important;
+}
+
+.pagero-direct-loop-frame > video {
+  width: 100% !important;
+  height: auto !important;
+  max-width: 100% !important;
+  display: block !important;
+  object-fit: contain !important;
+  background: transparent !important;
+}
+
+.pagero-direct-loop-frame > video::-webkit-media-controls {
+  display: none !important;
+}
