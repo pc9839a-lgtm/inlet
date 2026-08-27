@@ -111,8 +111,10 @@ export function isSupportedVideoUrl(value = '') {
 }
 
 const VIDEO_EMBED_CSS = `
-.pagero-youtube-embed,.pagero-video-embed{width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:18px;background:#0f172a}
-.pagero-youtube-embed iframe,.pagero-video-embed iframe,.pagero-video-embed video{width:100%;height:100%;display:block;border:0;background:#000;object-fit:contain}
+.pagero-video-embed{width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:18px;background:#0f172a}
+.pagero-video-embed iframe{width:100%;height:100%;display:block;border:0;background:#000}
+.pagero-video-file-wrap{width:100%;max-width:100%;margin:0 auto;overflow:hidden;border-radius:18px;background:transparent}
+.pagero-video-file{width:100%;height:auto;display:block;border:0;background:transparent}
 .pagero-youtube-empty,.pagero-video-empty{width:100%;min-height:148px;display:grid;place-items:center;padding:22px;border:1px dashed #cbd5e1;border-radius:18px;background:#f8fafc;color:#64748b;font:700 14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;text-align:center}
 `;
 
@@ -123,14 +125,15 @@ export function createVideoCodeSettings(value = '') {
   let html = `<div class="pagero-video-empty">${emptyMessage}</div>`;
 
   if (source?.kind === 'file') {
-    html = `<div class="pagero-video-embed"><video src="${escapeHtmlAttr(source.src)}" controls playsinline preload="metadata"></video></div>`;
+    html = `<div class="pagero-video-file-wrap"><video class="pagero-video-file" src="${escapeHtmlAttr(source.src)}" autoplay loop muted playsinline preload="auto"></video></div>`;
   } else if (source) {
     html = `<div class="pagero-video-embed"><iframe src="${escapeHtmlAttr(source.src)}" title="${escapeHtmlAttr(source.title)}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" allowfullscreen></iframe></div>`;
   }
 
   return {
-    // 기존 저장 데이터와 편집기 라우팅 호환을 위해 내부 모드는 youtube를 유지한다.
-    widgetMode: 'youtube',
+    // 직접 영상 파일은 custom-code sandbox에서 GIF처럼 자동/무음/무한 반복한다.
+    // YouTube/Vimeo는 기존 direct renderer를 유지한다.
+    widgetMode: source?.kind === 'file' ? 'video-file' : 'youtube',
     videoUrl: raw,
     youtubeUrl: raw,
     html,
