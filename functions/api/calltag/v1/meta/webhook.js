@@ -1,5 +1,10 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../../../_shared.js';
-import { acceptMetaWebhookRequest, processMetaLeadEvents, verifyMetaWebhookChallenge } from '../_shared.js';
+import {
+  acceptMetaWebhookRequest,
+  filterMetaLeadEventsBySelectedForms,
+  processMetaLeadEvents,
+  verifyMetaWebhookChallenge,
+} from '../_shared.js';
 
 const METHODS = 'GET, POST, OPTIONS';
 
@@ -21,8 +26,9 @@ export async function onRequest(context) {
 
     const db = assertD1(env);
     const accepted = await acceptMetaWebhookRequest(request, env);
+    const selectedEvents = await filterMetaLeadEventsBySelectedForms(db, accepted.events);
     const requestId = request.headers.get('CF-Ray') || crypto.randomUUID();
-    const work = processMetaLeadEvents(env, db, accepted.events, { requestId })
+    const work = processMetaLeadEvents(env, db, selectedEvents, { requestId })
       .catch((error) => {
         console.error('CallTag Meta webhook processing failed', {
           message: String(error?.message || error || '').slice(0, 180),
@@ -36,6 +42,7 @@ export async function onRequest(context) {
       ok: true,
       received: true,
       events: accepted.events.length,
+      selectedEvents: selectedEvents.length,
     }, METHODS);
   } catch (error) {
     return handleApiError(request, env, error, METHODS);
