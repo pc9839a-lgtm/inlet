@@ -1,6 +1,7 @@
 const YOUTUBE_ID_RE = /^[A-Za-z0-9_-]{11}$/;
 const VIMEO_ID_RE = /^\d{5,12}$/;
 const VIDEO_FILE_RE = /\.(mp4|webm|ogg|ogv)$/i;
+const VIDEO_DATA_RE = /^data:video\/(?:mp4|webm|ogg|x-m4v)(?:;[^,]*)?,/i;
 
 function toUrl(value = '') {
   const raw = String(value || '').trim();
@@ -76,6 +77,15 @@ export function getVideoSource(value = '') {
   const raw = String(value || '').trim();
   if (!raw) return null;
 
+  if (VIDEO_DATA_RE.test(raw)) {
+    return {
+      kind: 'file',
+      src: raw,
+      title: 'Video',
+      embedded: true,
+    };
+  }
+
   const youtubeId = getYouTubeVideoId(raw);
   if (youtubeId) {
     return {
@@ -100,6 +110,7 @@ export function getVideoSource(value = '') {
       kind: 'file',
       src: url.href,
       title: 'Video',
+      embedded: false,
     };
   }
 
@@ -118,9 +129,10 @@ const VIDEO_EMBED_CSS = `
 .pagero-youtube-empty,.pagero-video-empty{width:100%;min-height:148px;display:grid;place-items:center;padding:22px;border:1px dashed #cbd5e1;border-radius:18px;background:#f8fafc;color:#64748b;font:700 14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;text-align:center}
 `;
 
-export function createVideoCodeSettings(value = '') {
+export function createVideoCodeSettings(value = '', options = {}) {
   const raw = String(value || '').trim();
   const source = getVideoSource(raw);
+  const embeddedFile = source?.kind === 'file' && source.embedded === true;
   const emptyMessage = raw ? '지원하는 동영상 주소를 입력하세요' : '동영상 주소를 입력하세요';
   let html = `<div class="pagero-video-empty">${emptyMessage}</div>`;
 
@@ -132,10 +144,11 @@ export function createVideoCodeSettings(value = '') {
 
   return {
     // 직접 영상 파일은 custom-code sandbox에서 GIF처럼 자동/무음/무한 반복한다.
-    // YouTube/Vimeo는 기존 direct renderer를 유지한다.
+    // 업로드된 data URL은 HTML에 한 번만 저장해 페이지 데이터 중복을 줄인다.
     widgetMode: source?.kind === 'file' ? 'video-file' : 'youtube',
-    videoUrl: raw,
-    youtubeUrl: raw,
+    videoUrl: embeddedFile ? '' : raw,
+    youtubeUrl: embeddedFile ? '' : raw,
+    videoFileName: embeddedFile ? String(options.fileName || '업로드 영상') : '',
     html,
     css: VIDEO_EMBED_CSS,
     js: '',
