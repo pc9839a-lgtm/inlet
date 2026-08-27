@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { EditorTabs } from '../ui/index.js';
 import { createVideoCodeSettings, getVideoSource } from '../../lib/youtubeEmbed.js';
 
-const MAX_VIDEO_BYTES = 8 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 4 * 1024 * 1024;
 const VIDEO_TYPES = new Set(['video/mp4', 'video/webm', 'video/ogg']);
 
 function fileSizeLabel(bytes = 0) {
@@ -13,11 +13,13 @@ function fileSizeLabel(bytes = 0) {
 }
 
 export default function YouTubeEditor({ s, set }) {
-  const value = String(s.videoUrl || s.youtubeUrl || '');
-  const source = getVideoSource(value);
-  const uploadedFile = s.widgetMode === 'video-file' && !!s.videoFileName && !value;
-  const valid = !!source || uploadedFile;
-  const hasValue = !!value.trim() || uploadedFile;
+  const rawValue = String(s.videoUrl || s.youtubeUrl || '');
+  const embeddedFile = /^data:video\//i.test(rawValue);
+  const value = embeddedFile ? '' : rawValue;
+  const source = getVideoSource(rawValue);
+  const uploadedFile = embeddedFile && !!s.videoFileName;
+  const valid = !!source;
+  const hasValue = !!rawValue.trim();
   const fileRef = useRef(null);
   const [fileError, setFileError] = useState('');
   const [readingFile, setReadingFile] = useState(false);
@@ -35,7 +37,7 @@ export default function YouTubeEditor({ s, set }) {
       return;
     }
     if (Number(file.size || 0) > MAX_VIDEO_BYTES) {
-      setFileError('영상은 8MB 이하로 최적화해서 올려주세요.');
+      setFileError(`영상은 ${fileSizeLabel(MAX_VIDEO_BYTES)} 이하로 최적화해서 올려주세요.`);
       return;
     }
 
@@ -80,8 +82,9 @@ export default function YouTubeEditor({ s, set }) {
                   type="url"
                   inputMode="url"
                   autoComplete="off"
-                  placeholder="https://youtu.be/... 또는 https://.../video.mp4"
+                  placeholder={uploadedFile ? '업로드된 영상 사용 중' : 'https://youtu.be/... 또는 https://.../video.mp4'}
                   value={value}
+                  disabled={uploadedFile}
                   onChange={(event) => updateUrl(event.target.value)}
                 />
               </div>
@@ -102,7 +105,7 @@ export default function YouTubeEditor({ s, set }) {
                   disabled={readingFile}
                   style={{ minHeight: 38, padding: '0 14px', border: '1px solid #dbe2ea', borderRadius: 10, background: '#fff', color: '#0f172a', fontWeight: 800, cursor: readingFile ? 'wait' : 'pointer' }}
                 >
-                  {readingFile ? '영상 읽는 중...' : 'MP4 파일 선택'}
+                  {readingFile ? '영상 읽는 중...' : uploadedFile ? '영상 교체' : 'MP4 파일 선택'}
                 </button>
                 {hasValue && (
                   <button
@@ -125,7 +128,7 @@ export default function YouTubeEditor({ s, set }) {
               {fileError
                 || (hasValue && !valid
                   ? '지원하는 동영상 주소인지 확인해주세요.'
-                  : (source?.kind === 'file' || uploadedFile)
+                  : source?.kind === 'file'
                     ? '직접 영상은 원본 비율 그대로 자동재생 · 무음 · 무한반복됩니다.'
                     : '지원: YouTube, Vimeo, MP4·WebM·Ogg 직접 링크 또는 파일 업로드')}
             </p>
