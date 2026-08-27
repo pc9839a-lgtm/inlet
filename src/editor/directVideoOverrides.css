@@ -15,6 +15,23 @@
   background: transparent !important;
 }
 
+.pagero-direct-loop-frame.pagero-direct-auto-crop {
+  position: relative !important;
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: var(--pagero-direct-content-ratio) !important;
+}
+
+.pagero-direct-loop-frame.pagero-direct-auto-crop > video {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  object-fit: cover !important;
+  object-position: 50% 50% !important;
+}
+
 .pagero-direct-loop-frame > video::-webkit-media-controls {
   display: none !important;
 }
