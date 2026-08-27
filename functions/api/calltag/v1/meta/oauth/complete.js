@@ -1,6 +1,6 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../../../../_shared.js';
 import { callSession } from '../../../../call/_shared.js';
-import { completeMetaOauthSession, readJsonLimited } from '../../_shared.js';
+import { completeMetaOauthFormsSession, readJsonLimited } from '../../_shared.js';
 
 const METHODS = 'POST, OPTIONS';
 
@@ -36,7 +36,7 @@ export async function onRequest({ request, env }) {
       }
     }
 
-    const result = await completeMetaOauthSession(
+    const result = await completeMetaOauthFormsSession(
       db,
       session.ownerId,
       oauthSessionId,
