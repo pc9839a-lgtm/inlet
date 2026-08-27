@@ -28,12 +28,18 @@ export async function onRequest({ request, env }) {
     const fileName = safeFileName(object.customMetadata?.originalName || key.split('/').pop() || 'download');
     const asciiName = fileName.replace(/[^\x20-\x7E]+/g, '_').replace(/"/g, "'");
     const contentType = object.httpMetadata?.contentType || 'application/octet-stream';
+    const inlineMedia = /^video\//i.test(contentType) || String(object.customMetadata?.purpose || '') === 'media';
+    const disposition = inlineMedia
+      ? `inline; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`
+      : `attachment; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`;
+
     return new Response(object.body, {
       status: 200,
       headers: {
         'Content-Type': contentType,
-        'Content-Disposition': `attachment; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`,
-        'Cache-Control': 'public, max-age=86400, s-maxage=604800',
+        'Content-Disposition': disposition,
+        'Content-Length': String(object.size || ''),
+        'Cache-Control': inlineMedia ? 'public, max-age=31536000, immutable' : 'public, max-age=86400, s-maxage=604800',
         'Access-Control-Allow-Origin': '*',
       },
     });
