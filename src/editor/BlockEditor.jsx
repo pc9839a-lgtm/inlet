@@ -1,3 +1,5 @@
+import '../lib/directVideoRuntime.js';
+import './directVideoOverrides.css';
 import { AnchorControl } from './AnchorControl.jsx';
 import { LazyEditorBoundary } from './LazyEditorBoundary.jsx';
 import { BlockEditorShell } from './ui/index.js';
