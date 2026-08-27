@@ -4,7 +4,7 @@ import { pickSafe, rich, widgetBoxClass, widgetBoxVars } from './previewUtils.js
 
 const CUSTOM_CODE_MESSAGE = 'pagero-custom-code';
 const CODE_HEIGHTS = {
-  auto: 160,
+  auto: 48,
   small: 240,
   medium: 420,
   large: 640,
@@ -32,13 +32,19 @@ function customCodeBridge(token = '') {
       cancelAnimationFrame(resizeFrame);
       resizeFrame = requestAnimationFrame(() => {
         const body = document.body;
-        const doc = document.documentElement;
+        const bodyRect = body?.getBoundingClientRect?.();
+        const childHeight = body && bodyRect
+          ? Array.from(body.children || []).reduce((max, node) => {
+              const rect = node?.getBoundingClientRect?.();
+              if (!rect) return max;
+              return Math.max(max, Math.ceil(rect.bottom - bodyRect.top));
+            }, 0)
+          : 0;
         const height = Math.max(
           body?.scrollHeight || 0,
           body?.offsetHeight || 0,
-          doc?.scrollHeight || 0,
-          doc?.offsetHeight || 0,
-          doc?.clientHeight || 0
+          Math.ceil(bodyRect?.height || 0),
+          childHeight
         );
         if (height) post('height', { height });
       });
@@ -82,7 +88,7 @@ function buildCustomCodeDocument(settings = {}, token = '') {
   const rawHtml = String(settings.html || '');
   const rawCss = String(settings.css || '');
   const rawJs = settings.runJs ? String(settings.js || '') : '';
-  const baseCss = 'html,body{margin:0;padding:0;width:100%;min-height:0;overflow-x:hidden;background:transparent}*,*::before,*::after{box-sizing:border-box}';
+  const baseCss = 'html,body{margin:0;padding:0;width:100%;height:auto;min-height:0;overflow:hidden;background:transparent}*,*::before,*::after{box-sizing:border-box}';
   const styles = `<style>${baseCss}\n${rawCss}</style>`;
   const legacyScript = rawJs.trim() ? `<script>${escapeClosingScript(rawJs)}<\/script>` : '';
   const bridgeScript = `<script>${escapeClosingScript(customCodeBridge(token))}<\/script>`;
@@ -145,9 +151,17 @@ function RenderCustomCode({ block }) {
     () => buildCustomCodeDocument(s, tokenRef.current),
     [block.id, s.html, s.css, s.js, s.runJs],
   );
+  const sectionStyle = {
+    ...widgetBoxVars({ ...s, marginY: 0, paddingY: 0 }),
+    width: 'calc(100% + 24px)',
+    marginLeft: '-12px',
+    marginRight: '-12px',
+    borderRadius: 0,
+    overflow: 'hidden',
+  };
 
   useEffect(() => {
-    if (height !== 'auto') setFrameHeight(CODE_HEIGHTS[height]);
+    setFrameHeight(CODE_HEIGHTS[height]);
   }, [height]);
 
   useEffect(() => {
@@ -157,10 +171,10 @@ function RenderCustomCode({ block }) {
       const data = event.data || {};
       if (!frame || event.source !== frame.contentWindow) return;
       if (data.type !== CUSTOM_CODE_MESSAGE || data.token !== tokenRef.current || data.action !== 'height') return;
-      if (height !== 'auto') return;
       const measured = Math.ceil(Number(data.height) || 0);
       if (!measured) return;
-      const next = Math.max(48, Math.min(10000, measured));
+      const minimum = CODE_HEIGHTS[height] || CODE_HEIGHTS.auto;
+      const next = Math.min(10000, Math.max(minimum, measured));
       setFrameHeight((current) => (current === next ? current : next));
     };
     window.addEventListener('message', handleMessage);
@@ -197,17 +211,24 @@ function RenderCustomCode({ block }) {
   }, [hasCode, srcDoc]);
 
   return (
-    <section id={`block-${block.id}`} ref={rootRef} className={`landing-section code-widget code-height-${height} ${widgetBoxClass(s, { background: false, shadow: false })}`} style={widgetBoxVars(s)}>
+    <section
+      id={`block-${block.id}`}
+      ref={rootRef}
+      className={`landing-section code-widget code-height-${height} ${widgetBoxClass(s, { background: false, shadow: false })}`}
+      style={sectionStyle}
+      data-code-layout="full-bleed"
+    >
       {hasCode ? (
         <iframe
           ref={iframeRef}
           className="custom-code-frame"
           srcDoc={srcDoc}
           title="사용자 코드"
-          data-custom-code-runtime="sandbox-v3"
+          data-custom-code-runtime="sandbox-v4"
           sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation allow-top-navigation-to-custom-protocols allow-downloads allow-modals"
           allow="autoplay; clipboard-write"
-          style={{ width: '100%', height: `${frameHeight}px`, border: 0, display: 'block', background: 'transparent' }}
+          scrolling="no"
+          style={{ width: '100%', height: `${frameHeight}px`, border: 0, display: 'block', overflow: 'hidden', background: 'transparent' }}
         />
       ) : (
         <div className="code-widget-empty">코드를 입력하세요</div>
