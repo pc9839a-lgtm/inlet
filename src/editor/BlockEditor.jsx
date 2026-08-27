@@ -5,7 +5,7 @@ import { BlockEditorShell } from './ui/index.js';
 export default function BlockEditor({ block, page, updateBlock, editors, editorDeps = {} }) {
   const s = block.s || {};
   const set = (patch) => updateBlock(block.id, patch);
-  const editorType = s.widgetMode === 'youtube' ? 'youtube' : block.type;
+  const editorType = ['youtube', 'video-file'].includes(s.widgetMode) ? 'youtube' : block.type;
   const Editor = editors?.[editorType];
 
   if (!Editor) return null;
