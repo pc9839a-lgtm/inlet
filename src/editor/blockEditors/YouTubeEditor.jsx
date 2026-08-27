@@ -1,5 +1,6 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { EditorTabs } from '../ui/index.js';
+import { uploadMediaFile } from '../../lib/fileRepository.js';
 import { createVideoCodeSettings, getVideoSource } from '../../lib/youtubeEmbed.js';
 
 const MAX_VIDEO_BYTES = 4 * 1024 * 1024;
@@ -12,25 +13,49 @@ function fileSizeLabel(bytes = 0) {
   return `${(value / (1024 * 1024)).toFixed(1)}MB`;
 }
 
-export default function YouTubeEditor({ s, set }) {
+function videoExtension(type = '') {
+  const mime = String(type || '').toLowerCase();
+  if (mime.includes('webm')) return 'webm';
+  if (mime.includes('ogg')) return 'ogg';
+  return 'mp4';
+}
+
+function ensureVideoFileName(name = '', type = '') {
+  const clean = String(name || '').trim() || 'page-video';
+  return /\.(mp4|webm|ogg|ogv)$/i.test(clean) ? clean : `${clean}.${videoExtension(type)}`;
+}
+
+export default function YouTubeEditor({ s, set, page, authUser }) {
   const rawValue = String(s.videoUrl || s.youtubeUrl || '');
   const embeddedFile = /^data:video\//i.test(rawValue);
-  const value = embeddedFile ? '' : rawValue;
   const source = getVideoSource(rawValue);
-  const uploadedFile = embeddedFile && !!s.videoFileName;
+  const uploadedFile = source?.kind === 'file' && !!s.videoFileName;
+  const value = embeddedFile || uploadedFile ? '' : rawValue;
   const valid = !!source;
   const hasValue = !!rawValue.trim();
   const fileRef = useRef(null);
+  const migratedLegacyRef = useRef(false);
   const [fileError, setFileError] = useState('');
-  const [readingFile, setReadingFile] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const updateUrl = (nextValue) => {
     setFileError('');
     set(createVideoCodeSettings(nextValue));
   };
 
-  const pickVideo = (file) => {
-    if (!file || readingFile) return;
+  const applyUploadResult = (result, fallbackName = '') => {
+    const url = String(result?.downloadUrl || '').trim();
+    if (!url) throw new Error('영상 업로드 주소를 받지 못했습니다.');
+    set(createVideoCodeSettings(url, { fileName: result?.fileName || fallbackName || '업로드 영상' }));
+  };
+
+  const uploadVideo = async (file, fileName = '') => {
+    const result = await uploadMediaFile(file, page, authUser, fileName || file?.name || 'page-video.mp4');
+    applyUploadResult(result, fileName || file?.name || '업로드 영상');
+  };
+
+  const pickVideo = async (file) => {
+    if (!file || uploading) return;
     setFileError('');
     if (!VIDEO_TYPES.has(String(file.type || '').toLowerCase())) {
       setFileError('MP4, WebM, Ogg 영상만 업로드할 수 있습니다.');
@@ -41,27 +66,44 @@ export default function YouTubeEditor({ s, set }) {
       return;
     }
 
-    setReadingFile(true);
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const dataUrl = String(reader.result || '');
-        if (!dataUrl.startsWith('data:video/')) throw new Error('영상 파일을 읽지 못했습니다.');
-        set(createVideoCodeSettings(dataUrl, { fileName: file.name || '업로드 영상' }));
-      } catch (error) {
-        setFileError(error?.message || '영상 파일을 읽지 못했습니다.');
-      } finally {
-        setReadingFile(false);
-        if (fileRef.current) fileRef.current.value = '';
-      }
-    };
-    reader.onerror = () => {
-      setReadingFile(false);
-      setFileError('영상 파일을 읽지 못했습니다.');
+    setUploading(true);
+    try {
+      await uploadVideo(file, file.name || 'page-video.mp4');
+    } catch (error) {
+      setFileError(error?.message || '영상 서버 업로드에 실패했습니다.');
+    } finally {
+      setUploading(false);
       if (fileRef.current) fileRef.current.value = '';
-    };
-    reader.readAsDataURL(file);
+    }
   };
+
+  useEffect(() => {
+    if (!embeddedFile || migratedLegacyRef.current || uploading) return;
+    migratedLegacyRef.current = true;
+    let cancelled = false;
+
+    (async () => {
+      setUploading(true);
+      setFileError('');
+      try {
+        const response = await fetch(rawValue);
+        const blob = await response.blob();
+        if (!blob?.size) throw new Error('임시 영상 데이터가 비어 있습니다.');
+        if (blob.size > MAX_VIDEO_BYTES) throw new Error(`영상은 ${fileSizeLabel(MAX_VIDEO_BYTES)} 이하로 최적화해서 올려주세요.`);
+        if (cancelled) return;
+        const fileName = ensureVideoFileName(s.videoFileName || 'page-video', blob.type);
+        await uploadVideo(blob, fileName);
+      } catch (error) {
+        if (!cancelled) setFileError(error?.message || '기존 임시 영상을 서버 저장소로 옮기지 못했습니다. 영상을 다시 선택해주세요.');
+      } finally {
+        if (!cancelled) setUploading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [embeddedFile, rawValue, s.videoFileName]);
 
   const clearVideo = () => {
     setFileError('');
@@ -84,7 +126,7 @@ export default function YouTubeEditor({ s, set }) {
                   autoComplete="off"
                   placeholder={uploadedFile ? '업로드된 영상 사용 중' : 'https://youtu.be/... 또는 https://.../video.mp4'}
                   value={value}
-                  disabled={uploadedFile}
+                  disabled={uploadedFile || uploading}
                   onChange={(event) => updateUrl(event.target.value)}
                 />
               </div>
@@ -102,12 +144,12 @@ export default function YouTubeEditor({ s, set }) {
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
-                  disabled={readingFile}
-                  style={{ minHeight: 38, padding: '0 14px', border: '1px solid #dbe2ea', borderRadius: 10, background: '#fff', color: '#0f172a', fontWeight: 800, cursor: readingFile ? 'wait' : 'pointer' }}
+                  disabled={uploading}
+                  style={{ minHeight: 38, padding: '0 14px', border: '1px solid #dbe2ea', borderRadius: 10, background: '#fff', color: '#0f172a', fontWeight: 800, cursor: uploading ? 'wait' : 'pointer' }}
                 >
-                  {readingFile ? '영상 읽는 중...' : uploadedFile ? '영상 교체' : 'MP4 파일 선택'}
+                  {uploading ? '서버 업로드 중...' : uploadedFile ? '영상 교체' : 'MP4 파일 선택'}
                 </button>
-                {hasValue && (
+                {hasValue && !uploading && (
                   <button
                     type="button"
                     onClick={clearVideo}
@@ -117,9 +159,14 @@ export default function YouTubeEditor({ s, set }) {
                   </button>
                 )}
               </div>
-              {uploadedFile && (
+              {uploadedFile && !embeddedFile && (
                 <div style={{ padding: '9px 11px', borderRadius: 10, background: '#f0fdf4', color: '#166534', fontSize: 12, lineHeight: 1.45, fontWeight: 800 }}>
-                  업로드됨 · {s.videoFileName}
+                  서버 저장 완료 · {s.videoFileName}
+                </div>
+              )}
+              {embeddedFile && uploading && (
+                <div style={{ padding: '9px 11px', borderRadius: 10, background: '#eff6ff', color: '#1d4ed8', fontSize: 12, lineHeight: 1.45, fontWeight: 800 }}>
+                  기존 임시 영상을 서버 저장소로 옮기는 중입니다.
                 </div>
               )}
             </div>
@@ -133,7 +180,7 @@ export default function YouTubeEditor({ s, set }) {
                     : '지원: YouTube, Vimeo, MP4·WebM·Ogg 직접 링크 또는 파일 업로드')}
             </p>
             <p style={{ margin: '4px 2px 0', color: '#94a3b8', fontSize: 11, lineHeight: 1.45, fontWeight: 700 }}>
-              모바일 호환은 H.264 MP4 권장 · 최대 {fileSizeLabel(MAX_VIDEO_BYTES)}
+              영상 파일은 페이지 데이터가 아니라 서버 저장소(R2)에 저장됩니다 · 최대 {fileSizeLabel(MAX_VIDEO_BYTES)}
             </p>
           </>
         ),
