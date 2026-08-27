@@ -1,0 +1,106 @@
+name: Recover Wedding BGM
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-wedding-bgm.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  recover-audio:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download verified Pixabay source audio
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import html as htmlmod
+          import re
+          import sys
+          import urllib.request
+          from pathlib import Path
+
+          page_url = 'https://pixabay.com/music/wedding-wedding-wedding-trailer-music-269139/'
+          req = urllib.request.Request(page_url, headers={
+              'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/146 Safari/537.36',
+              'Accept-Language': 'en-US,en;q=0.9',
+          })
+          with urllib.request.urlopen(req, timeout=30) as response:
+              page = response.read().decode('utf-8', 'replace')
+
+          normalized = htmlmod.unescape(page).replace('\\u002F', '/').replace('\\/', '/')
+          candidates = []
+          patterns = [
+              r'https://cdn\.pixabay\.com/download/audio/[^"\'<>\\ ]+?\.mp3(?:\?[^"\'<>\\ ]*)?',
+              r'https://cdn\.pixabay\.com/audio/[^"\'<>\\ ]+?\.mp3(?:\?[^"\'<>\\ ]*)?',
+              r'https://[^"\'<>\\ ]*pixabay[^"\'<>\\ ]+?\.mp3(?:\?[^"\'<>\\ ]*)?',
+          ]
+          for pattern in patterns:
+              for value in re.findall(pattern, normalized, flags=re.I):
+                  value = value.replace('\\u0026', '&').replace('\\u002F', '/').replace('\\/', '/')
+                  if value not in candidates:
+                      candidates.append(value)
+
+          if not candidates:
+              Path('/tmp/pixabay-page.html').write_text(page)
+              print('No MP3 URL found in Pixabay page source.', file=sys.stderr)
+              for needle in ('269139', 'audio_url', 'download_url', 'cdn.pixabay.com'):
+                  idx = normalized.find(needle)
+                  if idx >= 0:
+                      print(normalized[max(0, idx-400):idx+1000], file=sys.stderr)
+              sys.exit(2)
+
+          preferred = [u for u in candidates if '269139' in u or 'wedding' in u.lower()]
+          urls = preferred + [u for u in candidates if u not in preferred]
+          out = Path('public/assets/wedding/hitslab-wedding-wedding-trailer-music-269139.mp3')
+          out.parent.mkdir(parents=True, exist_ok=True)
+
+          last_error = None
+          for url in urls:
+              try:
+                  print('Trying:', url)
+                  req = urllib.request.Request(url, headers={
+                      'User-Agent': 'Mozilla/5.0',
+                      'Referer': page_url,
+                  })
+                  with urllib.request.urlopen(req, timeout=60) as response:
+                      data = response.read()
+                  if len(data) < 100_000:
+                      raise RuntimeError(f'audio payload too small: {len(data)} bytes')
+                  if data[:3] != b'ID3' and not (len(data) >= 2 and data[0] == 0xff and (data[1] & 0xe0) == 0xe0):
+                      raise RuntimeError(f'payload is not MP3, first bytes={data[:12]!r}')
+                  out.write_bytes(data)
+                  print(f'Wrote {len(data)} bytes to {out}')
+                  break
+              except Exception as exc:
+                  last_error = exc
+                  print('Candidate failed:', exc, file=sys.stderr)
+          else:
+              raise SystemExit(f'No candidate produced valid MP3: {last_error}')
+          PY
+
+          ffprobe -v error \
+            -show_entries format=duration,size,bit_rate \
+            -of default=noprint_wrappers=1 \
+            public/assets/wedding/hitslab-wedding-wedding-trailer-music-269139.mp3
+
+      - name: Commit repaired BGM binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/assets/wedding/hitslab-wedding-wedding-trailer-music-269139.mp3
+          if git diff --cached --quiet; then
+            echo 'No audio change needed.'
+            exit 0
+          fi
+          git commit -m 'fix(wedding): restore valid BGM audio binary'
+          git push origin HEAD:main
