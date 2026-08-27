@@ -6,6 +6,7 @@ import {
   fileBucket,
   handleApiError,
   jsonResponse,
+  normalizeFilePurpose,
   optionsResponse,
   projectFromRequest,
   publicDownloadUrl,
@@ -22,6 +23,7 @@ export async function onRequest({ request, env }) {
     const url = new URL(request.url);
     const form = await request.formData();
     const file = form.get('file');
+    const purpose = normalizeFilePurpose(form.get('purpose') || 'download');
     const projectRaw = String(form.get('project') || '{}');
     let body = {};
     try {
@@ -37,9 +39,9 @@ export async function onRequest({ request, env }) {
     }
 
     const bucket = fileBucket(env);
-    const meta = assertAllowedFile(file);
-    const quota = await assertProjectFileQuota(bucket, project, file.size || 0, env);
-    const key = safeObjectKey(project, meta.extension);
+    const meta = assertAllowedFile(file, purpose);
+    const quota = await assertProjectFileQuota(bucket, project, file.size || 0, env, purpose);
+    const key = safeObjectKey(project, meta.extension, purpose);
 
     await bucket.put(key, file.stream(), {
       httpMetadata: {
@@ -49,6 +51,7 @@ export async function onRequest({ request, env }) {
       customMetadata: {
         originalName: meta.name,
         extension: meta.extension,
+        purpose,
         projectId: project.projectId || project.id || '',
         uploadedAt: new Date().toISOString(),
       },
@@ -57,6 +60,7 @@ export async function onRequest({ request, env }) {
     return jsonResponse(request, env, 200, {
       ok: true,
       key,
+      purpose,
       fileName: meta.name,
       extension: meta.extension,
       size: file.size || 0,
