@@ -1,11 +1,15 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../../_shared.js';
+import { maybeHandleGoogleFormsOauthCallback } from '../../calltag/v1/_google-forms.js';
 import { AUTH_METHODS, googleAuthRedirectUri, loginGoogleAccount } from '../_auth.js';
 
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, AUTH_METHODS);
   if (request.method !== 'GET') return jsonResponse(request, env, 405, { ok: false, error: 'Method not allowed.' }, AUTH_METHODS);
   try {
-    assertD1(env);
+    const db = assertD1(env);
+    const googleFormsResponse = await maybeHandleGoogleFormsOauthCallback(db, request, env);
+    if (googleFormsResponse) return googleFormsResponse;
+
     const url = new URL(request.url);
     const result = await loginGoogleAccount({
       code: url.searchParams.get('code') || '',
