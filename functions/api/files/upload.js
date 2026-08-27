@@ -39,7 +39,7 @@ export async function onRequest({ request, env }) {
     }
 
     const bucket = fileBucket(env);
-    const meta = assertAllowedFile(file, purpose);
+    const meta = purpose === 'media' ? assertAllowedFile(file, purpose) : assertAllowedFile(file);
     const quota = await assertProjectFileQuota(bucket, project, file.size || 0, env, purpose);
     const key = safeObjectKey(project, meta.extension, purpose);
 
