@@ -3,7 +3,8 @@ import { createVideoCodeSettings, getVideoSource } from '../../lib/youtubeEmbed.
 
 export default function YouTubeEditor({ s, set }) {
   const value = String(s.videoUrl || s.youtubeUrl || '');
-  const valid = !!getVideoSource(value);
+  const source = getVideoSource(value);
+  const valid = !!source;
   const hasValue = !!value.trim();
 
   const updateUrl = (nextValue) => {
@@ -33,7 +34,9 @@ export default function YouTubeEditor({ s, set }) {
             <p style={{ margin: '8px 2px 0', color: hasValue && !valid ? '#dc2626' : '#64748b', fontSize: '12px', lineHeight: 1.5, fontWeight: 800 }}>
               {hasValue && !valid
                 ? '지원하는 동영상 주소인지 확인해주세요.'
-                : '지원: YouTube 일반·Shorts·Live·공유 링크, Vimeo, MP4·WebM·Ogg 직접 링크'}
+                : source?.kind === 'file'
+                  ? '직접 영상 파일은 원본 비율 그대로 자동재생 · 무음 · 무한반복됩니다.'
+                  : '지원: YouTube 일반·Shorts·Live·공유 링크, Vimeo, MP4·WebM·Ogg 직접 링크'}
             </p>
           </>
         ),
