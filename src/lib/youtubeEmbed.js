@@ -105,7 +105,8 @@ export function getVideoSource(value = '') {
   }
 
   const url = toUrl(raw);
-  if (url && ['http:', 'https:'].includes(url.protocol) && VIDEO_FILE_RE.test(url.pathname)) {
+  const key = url?.searchParams?.get('key') || '';
+  if (url && ['http:', 'https:'].includes(url.protocol) && (VIDEO_FILE_RE.test(url.pathname) || VIDEO_FILE_RE.test(key))) {
     return {
       kind: 'file',
       src: url.href,
@@ -130,7 +131,6 @@ const VIDEO_EMBED_CSS = `
 export function createVideoCodeSettings(value = '', options = {}) {
   const raw = String(value || '').trim();
   const source = getVideoSource(raw);
-  const embeddedFile = source?.kind === 'file' && source.embedded === true;
   const emptyMessage = raw ? '지원하는 동영상 주소를 입력하세요' : '동영상 주소를 입력하세요';
   let html = `<div class="pagero-video-empty">${emptyMessage}</div>`;
 
@@ -141,11 +141,10 @@ export function createVideoCodeSettings(value = '', options = {}) {
   }
 
   return {
-    // 기존 direct renderer를 그대로 사용한다. MP4는 별도 runtime이 원본 비율/무한루프로 보정한다.
     widgetMode: 'youtube',
     videoUrl: raw,
-    youtubeUrl: embeddedFile ? '' : raw,
-    videoFileName: embeddedFile ? String(options.fileName || '업로드 영상') : '',
+    youtubeUrl: source?.kind === 'file' ? raw : raw,
+    videoFileName: source?.kind === 'file' ? String(options.fileName || '') : '',
     html,
     css: VIDEO_EMBED_CSS,
     js: '',
