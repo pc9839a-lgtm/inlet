@@ -21,6 +21,7 @@ function customCodeBridge(token = '') {
     const CHANNEL = ${JSON.stringify(CUSTOM_CODE_MESSAGE)};
     const TOKEN = ${JSON.stringify(token)};
     let resizeFrame = 0;
+    let sizeObserver = null;
 
     const post = (action, payload = {}) => {
       try {
@@ -33,21 +34,36 @@ function customCodeBridge(token = '') {
       resizeFrame = requestAnimationFrame(() => {
         const body = document.body;
         const bodyRect = body?.getBoundingClientRect?.();
-        const childHeight = body && bodyRect
+        const contentHeight = body && bodyRect
           ? Array.from(body.children || []).reduce((max, node) => {
               const rect = node?.getBoundingClientRect?.();
               if (!rect) return max;
-              return Math.max(max, Math.ceil(rect.bottom - bodyRect.top));
+              let marginBottom = 0;
+              try {
+                marginBottom = parseFloat(getComputedStyle(node).marginBottom || '0') || 0;
+              } catch {}
+              return Math.max(max, Math.ceil(rect.bottom - bodyRect.top + marginBottom));
             }, 0)
           : 0;
-        const height = Math.max(
+        const fallbackHeight = Math.max(
           body?.scrollHeight || 0,
           body?.offsetHeight || 0,
-          Math.ceil(bodyRect?.height || 0),
-          childHeight
+          Math.ceil(bodyRect?.height || 0)
         );
+        const height = contentHeight > 0 ? contentHeight : fallbackHeight;
         if (height) post('height', { height });
       });
+    };
+
+    const observeSizeTargets = () => {
+      if (!sizeObserver) return;
+      try {
+        if (document.documentElement) sizeObserver.observe(document.documentElement);
+        if (document.body) {
+          sizeObserver.observe(document.body);
+          Array.from(document.body.children || []).forEach((node) => sizeObserver.observe(node));
+        }
+      } catch {}
     };
 
     const tryAutoplay = () => {
@@ -66,19 +82,36 @@ function customCodeBridge(token = '') {
     };
 
     window.addEventListener('message', handleMessage);
-    window.addEventListener('load', () => { measure(); tryAutoplay(); });
-    document.addEventListener('DOMContentLoaded', () => { measure(); tryAutoplay(); });
+    window.addEventListener('load', () => { observeSizeTargets(); measure(); tryAutoplay(); });
+    document.addEventListener('DOMContentLoaded', () => { observeSizeTargets(); measure(); tryAutoplay(); });
+    document.addEventListener('toggle', measure, true);
+    document.addEventListener('transitionend', measure, true);
+    document.addEventListener('animationend', measure, true);
     ['pointerdown', 'touchstart', 'keydown'].forEach((name) => {
       window.addEventListener(name, tryAutoplay, { once: true, passive: name !== 'keydown' });
     });
 
     if (typeof ResizeObserver === 'function') {
-      const observer = new ResizeObserver(measure);
-      if (document.documentElement) observer.observe(document.documentElement);
-      if (document.body) observer.observe(document.body);
+      sizeObserver = new ResizeObserver(measure);
+      observeSizeTargets();
     }
 
-    requestAnimationFrame(() => { measure(); tryAutoplay(); });
+    if (typeof MutationObserver === 'function') {
+      const mutationObserver = new MutationObserver(() => {
+        observeSizeTargets();
+        measure();
+      });
+      if (document.documentElement) {
+        mutationObserver.observe(document.documentElement, {
+          subtree: true,
+          childList: true,
+          attributes: true,
+          characterData: true,
+        });
+      }
+    }
+
+    requestAnimationFrame(() => { observeSizeTargets(); measure(); tryAutoplay(); });
     setTimeout(measure, 80);
     setTimeout(measure, 360);
   })();`;
@@ -224,7 +257,7 @@ function RenderCustomCode({ block }) {
           className="custom-code-frame"
           srcDoc={srcDoc}
           title="사용자 코드"
-          data-custom-code-runtime="sandbox-v4"
+          data-custom-code-runtime="sandbox-v5"
           sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation allow-top-navigation-to-custom-protocols allow-downloads allow-modals"
           allow="autoplay; clipboard-write"
           scrolling="no"
