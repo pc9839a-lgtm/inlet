@@ -11,5 +11,6 @@ export * from './_meta-graph.js';
 export * from './_meta.js';
 export * from './_meta-oauth-schema.js';
 export * from './_meta-oauth.js';
+export * from './_meta-forms.js';
 export * from './_google-forms-schema.js';
 export * from './_google-forms.js';
