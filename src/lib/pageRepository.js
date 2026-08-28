@@ -217,6 +217,22 @@ async function verifyPublicPageSave(savedPage = {}) {
   });
 }
 
+async function verifyPublicPageSaveAdvisory(savedPage = {}, enabled = true) {
+  if (!enabled || !savedPage) return { ok: true, skipped: true };
+  try {
+    await verifyPublicPageSave(savedPage);
+    return { ok: true, skipped: false };
+  } catch (error) {
+    console.warn('Page save committed, but public verification is delayed:', error);
+    return {
+      ok: false,
+      skipped: false,
+      code: String(error?.details?.code || 'PAGE_PUBLIC_VERIFY_DELAYED'),
+      message: String(error?.message || '공개 페이지 반영 확인이 지연되고 있습니다.'),
+    };
+  }
+}
+
 export async function persistPage(page, authUser = null, options = {}) {
   const optimizedPage = await optimizePageForServerSave(page);
   const safePage = normalizePageForSave(optimizedPage);
@@ -250,8 +266,8 @@ export async function persistPage(page, authUser = null, options = {}) {
   };
   try {
     const result = await postJson(`/api/pages/${encodeURIComponent(slug)}`, payload, { headers: projectAuthHeaders(context) });
-    if (result?.page && options.verifyPublic !== false) await verifyPublicPageSave(result.page);
-    return { ...result, clientPage: pageWithContext };
+    const publicVerification = await verifyPublicPageSaveAdvisory(result?.page, options.verifyPublic !== false);
+    return { ...result, clientPage: pageWithContext, publicVerification };
   } catch (error) {
     if (saveMode === 'update-existing') throw error;
     if (!canRetryWithAccountProject(error, authUser, pageWithContext)) throw error;
@@ -266,8 +282,8 @@ export async function persistPage(page, authUser = null, options = {}) {
       saveRequestId: pageSaveRequestId(retryIdentity, expectedRevision),
       recoveredProjectAccess: true,
     }, { headers: projectAuthHeaders(retry.context) });
-    if (result?.page && options.verifyPublic !== false) await verifyPublicPageSave(result.page);
-    return { ...result, clientPage: retry.page };
+    const publicVerification = await verifyPublicPageSaveAdvisory(result?.page, options.verifyPublic !== false);
+    return { ...result, clientPage: retry.page, publicVerification };
   }
 }
 
