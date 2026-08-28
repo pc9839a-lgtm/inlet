@@ -1,4 +1,4 @@
-name: Patch DYJH Hero Flush Top
+name: Patch Page Save Capacity
 
 on:
   push:
@@ -16,40 +16,45 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Remove top gap from DYJH wedding hero only
+      - name: Raise page JSON save capacity within D1 hard limit
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
 
-          path = Path('src/preview/renderers/UtilityBlocks.jsx')
-          text = path.read_text()
+          server_path = Path('server/storage/d1Adapter.mjs')
+          server_text = server_path.read_text()
+          old_server = 'const D1_PAGE_JSON_MAX_BYTES = 1_000_000;'
+          new_server = 'const D1_PAGE_JSON_MAX_BYTES = 1_850_000;'
+          if new_server not in server_text:
+              if old_server not in server_text:
+                  raise SystemExit('D1 page JSON server limit marker not found')
+              server_text = server_text.replace(old_server, new_server, 1)
+          server_path.write_text(server_text)
 
-          old = "    marginLeft: '-12px',\n    marginRight: '-12px',\n    borderRadius: 0,\n"
-          new = "    marginLeft: '-12px',\n    marginRight: '-12px',\n    marginTop: isDyjhWeddingCover ? '-12px' : undefined,\n    borderRadius: 0,\n"
-
-          if "marginTop: isDyjhWeddingCover ? '-12px' : undefined" not in text:
-              if old not in text:
-                  raise SystemExit('RenderCustomCode sectionStyle marker not found')
-              text = text.replace(old, new, 1)
-
-          path.write_text(text)
+          client_path = Path('src/lib/pageSaveOptimizer.js')
+          client_text = client_path.read_text()
+          old_client = 'const D1_PAGE_JSON_SAFE_BYTES = 900_000;'
+          new_client = 'const D1_PAGE_JSON_SAFE_BYTES = 1_750_000;'
+          if new_client not in client_text:
+              if old_client not in client_text:
+                  raise SystemExit('Page save optimizer limit marker not found')
+              client_text = client_text.replace(old_client, new_client, 1)
+          client_path.write_text(client_text)
           PY
 
-      - name: Commit runtime fix
+      - name: Commit capacity fix
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/preview/renderers/UtilityBlocks.jsx
+          git config user.email '4189829+github-actions[bot]@users.noreply.github.com'
+          git add server/storage/d1Adapter.mjs src/lib/pageSaveOptimizer.js
           if git diff --cached --quiet; then
             echo 'No changes.'
             exit 0
           fi
-          git commit -m 'fix(pagero): remove dyjh hero top gap'
+          git commit -m 'fix(pagero): raise page save capacity safely'
           git pull --rebase origin main
           git push origin HEAD:main
-
-# deploy-kick: 2026-08-29T00:22+09:00
