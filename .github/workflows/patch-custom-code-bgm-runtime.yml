@@ -51,3 +51,5 @@ jobs:
           git commit -m 'fix(pagero): remove dyjh hero top gap'
           git pull --rebase origin main
           git push origin HEAD:main
+
+# deploy-kick: 2026-08-29T00:22+09:00
