@@ -343,6 +343,7 @@ function RenderCustomCode({ block }) {
   const height = pickSafe(s.height || 'auto', ['auto', 'small', 'medium', 'large'], 'auto');
   const [frameHeight, setFrameHeight] = useState(CODE_HEIGHTS[height]);
   const hasCode = !!(String(s.html || '').trim() || String(s.css || '').trim() || (s.runJs && String(s.js || '').trim()));
+  const isDyjhWeddingCover = /\bdyjh-wedding-cover\b/.test(String(s.html || ''));
   const srcDoc = useMemo(
     () => buildCustomCodeDocument(s, tokenRef.current),
     [block.id, s.html, s.css, s.js, s.runJs],
@@ -355,6 +356,24 @@ function RenderCustomCode({ block }) {
     borderRadius: 0,
     overflow: 'hidden',
   };
+
+  useEffect(() => {
+    if (!isDyjhWeddingCover) return undefined;
+
+    const targets = [rootRef.current, iframeRef.current].filter(Boolean);
+    targets.forEach((node) => {
+      node.style.setProperty('border-radius', '0', 'important');
+      node.style.setProperty('border-top-left-radius', '0', 'important');
+      node.style.setProperty('border-top-right-radius', '0', 'important');
+      node.style.setProperty('border-bottom-left-radius', '0', 'important');
+      node.style.setProperty('border-bottom-right-radius', '0', 'important');
+      node.style.setProperty('clip-path', 'none', 'important');
+      node.style.setProperty('mask-image', 'none', 'important');
+      node.style.setProperty('-webkit-mask-image', 'none', 'important');
+    });
+
+    return undefined;
+  }, [isDyjhWeddingCover, srcDoc]);
 
   useEffect(() => {
     setFrameHeight(CODE_HEIGHTS[height]);
