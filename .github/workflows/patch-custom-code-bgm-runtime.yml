@@ -1,4 +1,4 @@
-name: Patch DYJH Hero Rounding
+name: Patch DYJH Hero Flush Top
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Remove rounding from DYJH wedding hero only
+      - name: Remove top gap from DYJH wedding hero only
         shell: bash
         run: |
           set -euo pipefail
@@ -26,21 +26,13 @@ jobs:
           path = Path('src/preview/renderers/UtilityBlocks.jsx')
           text = path.read_text()
 
-          detect_line = "  const hasCode = !!(String(s.html || '').trim() || String(s.css || '').trim() || (s.runJs && String(s.js || '').trim()));\n"
-          detect_insert = detect_line + "  const isDyjhWeddingCover = /\\bdyjh-wedding-cover\\b/.test(String(s.html || ''));\n"
+          old = "    marginLeft: '-12px',\n    marginRight: '-12px',\n    borderRadius: 0,\n"
+          new = "    marginLeft: '-12px',\n    marginRight: '-12px',\n    marginTop: isDyjhWeddingCover ? '-12px' : undefined,\n    borderRadius: 0,\n"
 
-          if 'const isDyjhWeddingCover =' not in text:
-              if detect_line not in text:
-                  raise SystemExit('RenderCustomCode hasCode marker not found')
-              text = text.replace(detect_line, detect_insert, 1)
-
-          effect_marker = "  useEffect(() => {\n    setFrameHeight(CODE_HEIGHTS[height]);\n  }, [height]);\n"
-          effect = "  useEffect(() => {\n    if (!isDyjhWeddingCover) return undefined;\n\n    const targets = [rootRef.current, iframeRef.current].filter(Boolean);\n    targets.forEach((node) => {\n      node.style.setProperty('border-radius', '0', 'important');\n      node.style.setProperty('border-top-left-radius', '0', 'important');\n      node.style.setProperty('border-top-right-radius', '0', 'important');\n      node.style.setProperty('border-bottom-left-radius', '0', 'important');\n      node.style.setProperty('border-bottom-right-radius', '0', 'important');\n      node.style.setProperty('clip-path', 'none', 'important');\n      node.style.setProperty('mask-image', 'none', 'important');\n      node.style.setProperty('-webkit-mask-image', 'none', 'important');\n    });\n\n    return undefined;\n  }, [isDyjhWeddingCover, srcDoc]);\n\n" + effect_marker
-
-          if "node.style.setProperty('border-top-left-radius', '0', 'important');" not in text:
-              if effect_marker not in text:
-                  raise SystemExit('RenderCustomCode height effect marker not found')
-              text = text.replace(effect_marker, effect, 1)
+          if "marginTop: isDyjhWeddingCover ? '-12px' : undefined" not in text:
+              if old not in text:
+                  raise SystemExit('RenderCustomCode sectionStyle marker not found')
+              text = text.replace(old, new, 1)
 
           path.write_text(text)
           PY
@@ -56,6 +48,6 @@ jobs:
             echo 'No changes.'
             exit 0
           fi
-          git commit -m 'fix(pagero): remove rounding from dyjh hero only'
+          git commit -m 'fix(pagero): remove dyjh hero top gap'
           git pull --rebase origin main
           git push origin HEAD:main
