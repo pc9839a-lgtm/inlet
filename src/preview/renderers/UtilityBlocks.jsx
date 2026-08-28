@@ -353,6 +353,7 @@ function RenderCustomCode({ block }) {
     width: 'calc(100% + 24px)',
     marginLeft: '-12px',
     marginRight: '-12px',
+    marginTop: isDyjhWeddingCover ? '-12px' : undefined,
     borderRadius: 0,
     overflow: 'hidden',
   };
