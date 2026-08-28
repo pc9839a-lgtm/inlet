@@ -269,7 +269,7 @@ export function encodeD1PageRevision(revision = {}, context = {}) {
   };
 }
 
-const D1_PAGE_JSON_MAX_BYTES = 1_000_000;
+const D1_PAGE_JSON_MAX_BYTES = 1_850_000;
 
 function assertD1PageJsonSize(pageJson = '') {
   const bytes = new TextEncoder().encode(String(pageJson || '')).length;
