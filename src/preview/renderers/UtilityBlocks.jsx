@@ -3,6 +3,7 @@ import { getVideoSource, getYouTubeEmbedUrl } from '../../lib/youtubeEmbed.js';
 import { pickSafe, rich, widgetBoxClass, widgetBoxVars } from './previewUtils.jsx';
 
 const CUSTOM_CODE_MESSAGE = 'pagero-custom-code';
+const WEDDING_BGM_CDN = 'https://res.cloudinary.com/dwz5e6lsq/video/upload/v1787910677/pagero/wedding/wedding-bgm-main.mp3';
 const CODE_HEIGHTS = {
   auto: 48,
   small: 240,
@@ -185,7 +186,10 @@ function RenderBgmCode({ block, forcedSrc = '' }) {
   const [playing, setPlaying] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [failed, setFailed] = useState(false);
-  const src = String(forcedSrc || s.bgmSrc || extractBgmSrcFromHtml(s.html) || '').trim();
+  const requestedSrc = String(forcedSrc || s.bgmSrc || extractBgmSrcFromHtml(s.html) || '').trim();
+  const src = /(?:^|\/)assets\/wedding\/(?:wedding-bgm-v2|hitslab-wedding-wedding-trailer-music-269139)\.mp3(?:[?#].*)?$/i.test(requestedSrc)
+    ? WEDDING_BGM_CDN
+    : requestedSrc;
   const volume = Math.max(0, Math.min(100, Number(s.volume ?? 35)));
   const autoplay = s.autoplay !== false;
   const loop = s.loop !== false;
