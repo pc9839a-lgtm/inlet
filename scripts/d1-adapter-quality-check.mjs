@@ -1049,7 +1049,7 @@ assert(db.rows.ownership_transfer_requests.length === 1 && transferPage.records[
 await upsertD1Page(db, decodeD1Page(encodedPage), { projectId: 'project-1', slug: 'landing' });
 let oversizedPageError = null;
 try {
-  await upsertD1Page(db, { ...decodeD1Page(encodedPage), content: 'x'.repeat(1_000_100) }, { projectId: 'project-1', slug: 'landing' });
+  await upsertD1Page(db, { ...decodeD1Page(encodedPage), content: 'x'.repeat(1_850_100) }, { projectId: 'project-1', slug: 'landing' });
 } catch (error) {
   oversizedPageError = error;
 }
