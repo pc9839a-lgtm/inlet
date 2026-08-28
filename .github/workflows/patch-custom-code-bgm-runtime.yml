@@ -43,11 +43,16 @@ jobs:
               client_text = client_text.replace(old_client, new_client, 1)
           client_path.write_text(client_text)
 
-          qa_path = Path('scripts/runtime-quality-check.mjs')
-          qa_text = qa_path.read_text()
-          qa_text = qa_text.replace("D1_PAGE_JSON_SAFE_BYTES = 900_000", "D1_PAGE_JSON_SAFE_BYTES = 1_750_000")
-          qa_text = qa_text.replace("D1_PAGE_JSON_MAX_BYTES = 1_000_000", "D1_PAGE_JSON_MAX_BYTES = 1_850_000")
-          qa_path.write_text(qa_text)
+          runtime_qa_path = Path('scripts/runtime-quality-check.mjs')
+          runtime_qa_text = runtime_qa_path.read_text()
+          runtime_qa_text = runtime_qa_text.replace("D1_PAGE_JSON_SAFE_BYTES = 900_000", "D1_PAGE_JSON_SAFE_BYTES = 1_750_000")
+          runtime_qa_text = runtime_qa_text.replace("D1_PAGE_JSON_MAX_BYTES = 1_000_000", "D1_PAGE_JSON_MAX_BYTES = 1_850_000")
+          runtime_qa_path.write_text(runtime_qa_text)
+
+          d1_qa_path = Path('scripts/d1-adapter-quality-check.mjs')
+          d1_qa_text = d1_qa_path.read_text()
+          d1_qa_text = d1_qa_text.replace("content: 'x'.repeat(1_000_100)", "content: 'x'.repeat(1_850_100)")
+          d1_qa_path.write_text(d1_qa_text)
           PY
 
       - name: Commit capacity fix
@@ -56,13 +61,11 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add server/storage/d1Adapter.mjs src/lib/pageSaveOptimizer.js scripts/runtime-quality-check.mjs
+          git add server/storage/d1Adapter.mjs src/lib/pageSaveOptimizer.js scripts/runtime-quality-check.mjs scripts/d1-adapter-quality-check.mjs
           if git diff --cached --quiet; then
             echo 'No changes.'
             exit 0
           fi
-          git commit -m 'test(pagero): align page save capacity contract'
+          git commit -m 'test(pagero): align D1 save capacity rejection case'
           git pull --rebase origin main
           git push origin HEAD:main
-
-# final-qa-kick: 2026-08-29T00:43+09:00
