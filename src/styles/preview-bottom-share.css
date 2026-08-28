@@ -127,3 +127,26 @@
     }
   }
 }
+
+/* DYJH wedding cover only: keep the hero edge-to-edge and square without changing other custom-code blocks. */
+.landing-section.code-widget:has(> iframe.custom-code-frame[srcdoc*="dyjh-wedding-cover"]) {
+  border-radius: 0 !important;
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  clip-path: none !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+
+.landing-section.code-widget:has(> iframe.custom-code-frame[srcdoc*="dyjh-wedding-cover"]) > iframe.custom-code-frame {
+  border-radius: 0 !important;
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  clip-path: none !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
