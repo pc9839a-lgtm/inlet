@@ -16,156 +16,29 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Patch UtilityBlocks BGM delegation
+      - name: Route wedding BGM to verified audio CDN
         shell: bash
         run: |
+          set -euo pipefail
           python - <<'PY'
           from pathlib import Path
 
           path = Path('src/preview/renderers/UtilityBlocks.jsx')
           text = path.read_text()
 
-          marker = 'function RenderCustomCode({ block }) {'
-          helper = r'''function extractDelegatedBgmSrc(settings = {}) {
-  const html = String(settings.html || '');
-  const tag = html.match(/<audio\b[^>]*(?:id=["']wedding-bgm["']|data-pagero-bgm(?:=["'][^"']*["'])?)[^>]*>/i)?.[0] || '';
-  if (!tag) return '';
-  return tag.match(/\bsrc\s*=\s*["']([^"']+)["']/i)?.[1]?.trim() || '';
-}
-
-'''
-          if 'function extractDelegatedBgmSrc' not in text:
+          constant = "const WEDDING_BGM_CDN = 'https://res.cloudinary.com/dwz5e6lsq/video/upload/v1787910677/pagero/wedding/wedding-bgm-main.mp3';\n"
+          marker = "const CUSTOM_CODE_MESSAGE = 'pagero-custom-code';\n"
+          if 'const WEDDING_BGM_CDN =' not in text:
               if marker not in text:
-                  raise SystemExit('RenderCustomCode marker not found')
-              text = text.replace(marker, helper + marker, 1)
+                  raise SystemExit('CUSTOM_CODE_MESSAGE marker not found')
+              text = text.replace(marker, marker + constant, 1)
 
-          old_refs = '''  const rootRef = useRef(null);\n  const iframeRef = useRef(null);\n  const tokenRef = useRef('');'''
-          new_refs = '''  const rootRef = useRef(null);\n  const iframeRef = useRef(null);\n  const nativeAudioRef = useRef(null);\n  const tokenRef = useRef('');\n  const [nativeAudioPlaying, setNativeAudioPlaying] = useState(false);'''
-          if 'const nativeAudioRef = useRef(null);' not in text:
-              if old_refs not in text:
-                  raise SystemExit('ref marker not found')
-              text = text.replace(old_refs, new_refs, 1)
-
-          old_has = "  const hasCode = !!(String(s.html || '').trim() || String(s.css || '').trim() || (s.runJs && String(s.js || '').trim()));"
-          new_has = old_has + "\n  const nativeBgmSrc = useMemo(() => extractDelegatedBgmSrc(s), [s.html]);"
-          if 'const nativeBgmSrc = useMemo' not in text:
-              if old_has not in text:
-                  raise SystemExit('hasCode marker not found')
-              text = text.replace(old_has, new_has, 1)
-
-          gesture_effect_end = '''  }, [hasCode, srcDoc]);\n\n  return ('''
-          native_effect = r'''  }, [hasCode, srcDoc]);
-
-  useEffect(() => {
-    const audio = nativeAudioRef.current;
-    if (!audio || !nativeBgmSrc) return undefined;
-
-    audio.volume = 0.35;
-    audio.load();
-
-    let disposed = false;
-    const sync = () => {
-      if (!disposed) setNativeAudioPlaying(!audio.paused);
-    };
-    const tryPlay = () => {
-      try {
-        const result = audio.play();
-        if (result && typeof result.then === 'function') {
-          result.then(sync).catch(sync);
-        } else {
-          sync();
-        }
-      } catch {
-        sync();
-      }
-    };
-    const playOnGesture = (event) => {
-      if (event?.target?.closest?.('[data-pagero-bgm-control]')) return;
-      if (audio.paused) tryPlay();
-    };
-
-    audio.addEventListener('play', sync);
-    audio.addEventListener('pause', sync);
-    window.addEventListener('pointerdown', playOnGesture, { passive: true, capture: true, once: true });
-    window.addEventListener('touchstart', playOnGesture, { passive: true, capture: true, once: true });
-    window.addEventListener('keydown', playOnGesture, { capture: true, once: true });
-
-    return () => {
-      disposed = true;
-      audio.removeEventListener('play', sync);
-      audio.removeEventListener('pause', sync);
-      window.removeEventListener('pointerdown', playOnGesture, true);
-      window.removeEventListener('touchstart', playOnGesture, true);
-      window.removeEventListener('keydown', playOnGesture, true);
-    };
-  }, [nativeBgmSrc]);
-
-  const toggleNativeBgm = async () => {
-    const audio = nativeAudioRef.current;
-    if (!audio || !nativeBgmSrc) return;
-    if (!audio.paused) {
-      audio.pause();
-      setNativeAudioPlaying(false);
-      return;
-    }
-    try {
-      await audio.play();
-      setNativeAudioPlaying(true);
-    } catch {
-      setNativeAudioPlaying(false);
-    }
-  };
-
-  return ('''
-          if 'const toggleNativeBgm = async () =>' not in text:
-              if gesture_effect_end not in text:
-                  raise SystemExit('effect end marker not found')
-              text = text.replace(gesture_effect_end, native_effect, 1)
-
-          section_open = '''    >\n      {hasCode ? ('''
-          native_ui = r'''    >
-      {nativeBgmSrc && (
-        <>
-          <audio
-            ref={nativeAudioRef}
-            src={nativeBgmSrc}
-            loop
-            preload="auto"
-          />
-          <button
-            type="button"
-            data-pagero-bgm-control
-            onClick={toggleNativeBgm}
-            aria-label={nativeAudioPlaying ? '배경음악 정지' : '배경음악 재생'}
-            style={{
-              position: 'fixed',
-              right: 18,
-              bottom: 22,
-              zIndex: 2147483000,
-              width: 44,
-              height: 44,
-              padding: 0,
-              border: '1px solid rgba(154,119,104,.28)',
-              borderRadius: '50%',
-              background: 'rgba(255,253,249,.96)',
-              color: '#927567',
-              display: 'grid',
-              placeItems: 'center',
-              fontSize: 19,
-              lineHeight: 1,
-              boxShadow: '0 5px 18px rgba(60,45,35,.13)',
-              cursor: 'pointer',
-            }}
-          >
-            {nativeAudioPlaying ? '♪' : '♫'}
-          </button>
-        </>
-      )}
-      {hasCode ? ('''
-          if 'data-pagero-bgm-control' not in text:
-              if section_open not in text:
-                  raise SystemExit('section open marker not found')
-              text = text.replace(section_open, native_ui, 1)
+          old = "  const src = String(forcedSrc || s.bgmSrc || extractBgmSrcFromHtml(s.html) || '').trim();"
+          new = "  const requestedSrc = String(forcedSrc || s.bgmSrc || extractBgmSrcFromHtml(s.html) || '').trim();\n  const src = /(?:^|\\/)assets\\/wedding\\/(?:wedding-bgm-v2|hitslab-wedding-wedding-trailer-music-269139)\\.mp3(?:[?#].*)?$/i.test(requestedSrc)\n    ? WEDDING_BGM_CDN\n    : requestedSrc;"
+          if old in text:
+              text = text.replace(old, new, 1)
+          elif 'const requestedSrc =' not in text:
+              raise SystemExit('BGM src marker not found')
 
           path.write_text(text)
           PY
@@ -173,6 +46,7 @@ jobs:
       - name: Commit runtime fix
         shell: bash
         run: |
+          set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add src/preview/renderers/UtilityBlocks.jsx
@@ -180,6 +54,6 @@ jobs:
             echo 'No changes.'
             exit 0
           fi
-          git commit -m 'fix(pagero): play custom-code BGM in parent runtime'
+          git commit -m 'fix(pagero): serve wedding BGM from verified CDN'
           git pull --rebase origin main
           git push origin HEAD:main
