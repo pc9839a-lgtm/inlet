@@ -170,6 +170,165 @@ function findSearchableSections(root, currentId) {
     .filter((item) => item.normalized);
 }
 
+function extractBgmSrcFromHtml(html = '') {
+  const source = String(html || '');
+  const audioTag = source.match(/<audio\b[^>]*(?:id=["']wedding-bgm["']|data-pagero-bgm(?:=["'][^"']*["'])?)[^>]*>/i)?.[0]
+    || source.match(/<audio\b[^>]*autoplay[^>]*>/i)?.[0]
+    || '';
+  return audioTag.match(/\bsrc\s*=\s*["']([^"']+)["']/i)?.[1]?.trim() || '';
+}
+
+function RenderBgmCode({ block, forcedSrc = '' }) {
+  const s = block.s || {};
+  const audioRef = useRef(null);
+  const userPausedRef = useRef(false);
+  const [playing, setPlaying] = useState(false);
+  const [blocked, setBlocked] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const src = String(forcedSrc || s.bgmSrc || extractBgmSrcFromHtml(s.html) || '').trim();
+  const volume = Math.max(0, Math.min(100, Number(s.volume ?? 35)));
+  const autoplay = s.autoplay !== false;
+  const loop = s.loop !== false;
+  const label = String(s.bgmLabel ?? 'BGM').trim() || 'BGM';
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.volume = volume / 100;
+  }, [volume, src]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !src) {
+      setPlaying(false);
+      setBlocked(false);
+      setFailed(!src);
+      return undefined;
+    }
+
+    let disposed = false;
+    userPausedRef.current = false;
+    setFailed(false);
+
+    const sync = () => {
+      if (!disposed) setPlaying(!audio.paused);
+    };
+
+    const tryPlay = () => {
+      if (disposed || userPausedRef.current || !autoplay) return;
+      try {
+        const result = audio.play();
+        if (result && typeof result.then === 'function') {
+          result.then(() => {
+            if (!disposed) {
+              setPlaying(true);
+              setBlocked(false);
+              setFailed(false);
+            }
+          }).catch(() => {
+            if (!disposed) setBlocked(true);
+          });
+        }
+      } catch {
+        if (!disposed) setBlocked(true);
+      }
+    };
+
+    audio.load();
+    tryPlay();
+
+    const retryAfterGesture = () => {
+      if (!autoplay || userPausedRef.current || !audio.paused) return;
+      tryPlay();
+    };
+
+    audio.addEventListener('play', sync);
+    audio.addEventListener('pause', sync);
+    window.addEventListener('pointerdown', retryAfterGesture, { passive: true, capture: true });
+    window.addEventListener('touchstart', retryAfterGesture, { passive: true, capture: true });
+    window.addEventListener('keydown', retryAfterGesture, true);
+
+    return () => {
+      disposed = true;
+      audio.removeEventListener('play', sync);
+      audio.removeEventListener('pause', sync);
+      window.removeEventListener('pointerdown', retryAfterGesture, true);
+      window.removeEventListener('touchstart', retryAfterGesture, true);
+      window.removeEventListener('keydown', retryAfterGesture, true);
+    };
+  }, [src, autoplay]);
+
+  const toggle = async () => {
+    const audio = audioRef.current;
+    if (!audio || !src) return;
+    if (!audio.paused) {
+      userPausedRef.current = true;
+      audio.pause();
+      setPlaying(false);
+      return;
+    }
+    userPausedRef.current = false;
+    try {
+      await audio.play();
+      setPlaying(true);
+      setBlocked(false);
+      setFailed(false);
+    } catch {
+      setBlocked(true);
+    }
+  };
+
+  return (
+    <section
+      id={`block-${block.id}`}
+      className="landing-section code-widget bgm-widget"
+      style={{ height: 0, minHeight: 0, margin: 0, padding: 0, overflow: 'visible', background: 'transparent', border: 0, boxShadow: 'none' }}
+    >
+      <audio
+        ref={audioRef}
+        src={src || undefined}
+        autoPlay={autoplay}
+        loop={loop}
+        preload="auto"
+        playsInline
+        onPlay={() => { setPlaying(true); setBlocked(false); setFailed(false); }}
+        onPause={() => setPlaying(false)}
+        onError={() => { setFailed(true); setPlaying(false); }}
+      />
+      <button
+        type="button"
+        onClick={toggle}
+        disabled={!src}
+        aria-label={`${label} ${playing ? '끄기' : '재생'}`}
+        title={failed ? 'BGM 파일을 불러오지 못했습니다.' : blocked ? '눌러서 BGM을 재생하세요.' : undefined}
+        style={{
+          position: 'fixed',
+          right: 18,
+          bottom: 22,
+          zIndex: 2147483000,
+          width: 44,
+          height: 44,
+          padding: 0,
+          border: failed ? '1px solid rgba(220,38,38,.35)' : '1px solid rgba(154,119,104,.28)',
+          borderRadius: '50%',
+          background: 'rgba(255,253,249,.96)',
+          color: failed ? '#b91c1c' : '#927567',
+          display: 'grid',
+          placeItems: 'center',
+          font: 'inherit',
+          fontSize: 19,
+          lineHeight: 1,
+          boxShadow: '0 5px 18px rgba(60,45,35,.13)',
+          cursor: src ? 'pointer' : 'default',
+          opacity: src ? 1 : .45,
+        }}
+      >
+        {failed ? '!' : playing ? '♪' : '♫'}
+      </button>
+    </section>
+  );
+}
+
 function RenderCustomCode({ block }) {
   const s = block.s || {};
   const rootRef = useRef(null);
@@ -318,11 +477,12 @@ function RenderYouTube({ block }) {
 }
 
 export function RenderCode({ block }) {
-  // 기존 저장 데이터의 BGM 프리셋은 재생하지 않고 출력에서도 제외한다.
-  if (block.s?.widgetMode === 'bgm') return null;
-  // 동영상 위젯은 사용자 코드 sandbox 안에 중첩하지 않는다. YouTube/Vimeo iframe과
-  // 직접 영상 재생은 일반 페이지 컨텍스트에서 렌더링한다.
-  if (block.s?.widgetMode === 'youtube') return <RenderYouTube block={block} />;
+  const s = block.s || {};
+  const embeddedBgmSrc = extractBgmSrcFromHtml(s.html);
+  if (s.widgetMode === 'bgm' || embeddedBgmSrc) {
+    return <RenderBgmCode block={block} forcedSrc={embeddedBgmSrc} />;
+  }
+  if (s.widgetMode === 'youtube') return <RenderYouTube block={block} />;
   return <RenderCustomCode block={block} />;
 }
 
