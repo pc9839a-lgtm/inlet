@@ -42,6 +42,12 @@ jobs:
                   raise SystemExit('Page save optimizer limit marker not found')
               client_text = client_text.replace(old_client, new_client, 1)
           client_path.write_text(client_text)
+
+          qa_path = Path('scripts/runtime-quality-check.mjs')
+          qa_text = qa_path.read_text()
+          qa_text = qa_text.replace("D1_PAGE_JSON_SAFE_BYTES = 900_000", "D1_PAGE_JSON_SAFE_BYTES = 1_750_000")
+          qa_text = qa_text.replace("D1_PAGE_JSON_MAX_BYTES = 1_000_000", "D1_PAGE_JSON_MAX_BYTES = 1_850_000")
+          qa_path.write_text(qa_text)
           PY
 
       - name: Commit capacity fix
@@ -50,13 +56,11 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add server/storage/d1Adapter.mjs src/lib/pageSaveOptimizer.js
+          git add server/storage/d1Adapter.mjs src/lib/pageSaveOptimizer.js scripts/runtime-quality-check.mjs
           if git diff --cached --quiet; then
             echo 'No changes.'
             exit 0
           fi
-          git commit -m 'fix(pagero): raise page save capacity safely'
+          git commit -m 'test(pagero): align page save capacity contract'
           git pull --rebase origin main
           git push origin HEAD:main
-
-# deploy-kick: 2026-08-29T00:41+09:00
