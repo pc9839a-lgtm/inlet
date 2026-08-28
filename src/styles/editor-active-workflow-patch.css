@@ -63,10 +63,98 @@ body .builder-shell.edit-mode-shell .edit-layout .widget-search input:focus {
   box-shadow: 0 0 0 3px rgba(47, 102, 246, .10);
 }
 
-body .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock.open .add-panel {
-  max-height: min(62vh, 620px) !important;
+/*
+ * Block-add dock must be sized by the editor pane, never by the viewport.
+ * The old fixed geometry (688px/636px) could be wider than the active
+ * 480-540px editor column, so the right side of the add panel/buttons was
+ * clipped by .left-workspace. Keep it sticky inside .edit-layout instead.
+ */
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock {
+  position: sticky !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: 10px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 12px 0 0 !important;
+  padding: 6px !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .add-toggle {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  min-height: 46px !important;
+  display: grid !important;
+  grid-template-columns: 22px minmax(0, 1fr) 22px !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 0 12px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .add-toggle strong {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock.open {
+  max-height: calc(100dvh - 92px) !important;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock.open .add-panel {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  max-height: min(62dvh, 620px) !important;
+  margin: 0 0 6px !important;
+  padding-inline: 0 !important;
+  box-sizing: border-box !important;
+  overflow-x: hidden !important;
   overflow-y: auto !important;
   overscroll-behavior: contain;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock :is(.widget-search, .widget-group-grid, .widget-group) {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .widget-group-grid {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .widget-group > div {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(126px, 1fr)) !important;
+  gap: 7px !important;
+  box-sizing: border-box !important;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .widget-group > div > button {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .widget-group > div > button strong {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
 }
 
 /* Selected rows stay visually anchored while preview/row synchronization scrolls. */
