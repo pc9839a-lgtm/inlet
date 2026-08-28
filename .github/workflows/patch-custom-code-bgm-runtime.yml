@@ -57,3 +57,5 @@ jobs:
           git commit -m 'fix(pagero): serve wedding BGM from verified CDN'
           git pull --rebase origin main
           git push origin HEAD:main
+
+# deploy-kick: 2026-08-28T18:53+09:00
