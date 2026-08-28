@@ -49,7 +49,7 @@ jobs:
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
-          git config user.email '4189829+github-actions[bot]@users.noreply.github.com'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add server/storage/d1Adapter.mjs src/lib/pageSaveOptimizer.js
           if git diff --cached --quiet; then
             echo 'No changes.'
@@ -58,3 +58,5 @@ jobs:
           git commit -m 'fix(pagero): raise page save capacity safely'
           git pull --rebase origin main
           git push origin HEAD:main
+
+# deploy-kick: 2026-08-29T00:41+09:00
