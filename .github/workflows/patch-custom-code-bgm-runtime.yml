@@ -69,3 +69,5 @@ jobs:
           git commit -m 'test(pagero): align D1 save capacity rejection case'
           git pull --rebase origin main
           git push origin HEAD:main
+
+# release-qa-kick: 2026-08-29T00:45+09:00
