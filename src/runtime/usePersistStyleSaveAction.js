@@ -27,6 +27,8 @@ export function usePersistStyleSaveAction({
   const persistStyleNow = async () => {
     if (blockWrite('style')) return { ok: false, reason: 'write-blocked' };
     const basePage = latestPageRef.current || page;
+    const styleThemeAtSaveStart = stylePreviewTheme;
+    const styleBlocksAtSaveStart = stylePreviewBlocks;
     const styleSourcePage = await attachExistingPageIdentity({
       ...basePage,
       theme: stylePreviewTheme ? { ...basePage.theme, ...stylePreviewTheme } : basePage.theme,
@@ -77,8 +79,8 @@ export function usePersistStyleSaveAction({
       };
     }
 
-    setStylePreviewTheme(null);
-    setStylePreviewBlocks(null);
+    setStylePreviewTheme((current) => current === styleThemeAtSaveStart ? null : current);
+    setStylePreviewBlocks((current) => current === styleBlocksAtSaveStart ? null : current);
     setConnectionsEditing(false);
     const savedPage = commitSavedPageResult({
       result,
