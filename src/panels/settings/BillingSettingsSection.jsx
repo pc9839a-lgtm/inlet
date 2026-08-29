@@ -13,21 +13,15 @@ const FALLBACK_PLANS = [
 const PLAN_CONTENT = {
   pagero_free: {
     badge: '기본',
-    pitch: '페이지를 만들고 문의를 받는 기본 단계',
-    why: '처음 페이지를 만들거나 기능을 먼저 확인할 때',
-    features: ['페이지 제작·공개', '기본 편집·스타일', '문의 접수'],
+    features: ['페이지 제작·공개', '문의 접수'],
   },
   pagero_monthly: {
     badge: '추천',
-    pitch: '문의 관리와 통계가 필요한 실전 운영 단계',
-    why: '문의가 들어오기 시작했고 접수·유입·전환을 놓치고 싶지 않을 때',
-    features: ['무료 기능 전체', '접수함 문의 관리', '유입·전환 통계', '운영 기능 확장'],
+    features: ['접수함 문의 관리', '유입·전환 통계'],
   },
   pagero_pro_monthly: {
     badge: '고급',
-    pitch: '연동과 HTTPS까지 필요한 고급 운영 단계',
-    why: '페이지를 본격적으로 운영하고 보안·연동까지 한 번에 관리할 때',
-    features: ['클래식 기능 전체', '고급 연동', 'HTTPS·SSL 포함', '고급 운영 기능'],
+    features: ['고급 연동', 'HTTPS·SSL 포함'],
   },
 };
 
@@ -43,8 +37,6 @@ function subscriptionFor(finance, service) {
 function PlanCard({ plan, current, included, busy, onClick }) {
   const content = PLAN_CONTENT[plan.code] || {
     badge: '',
-    pitch: plan.description || '',
-    why: '',
     features: [plan.description].filter(Boolean),
   };
   const active = current || included;
@@ -55,7 +47,7 @@ function PlanCard({ plan, current, included, busy, onClick }) {
     <article className={`billing-plan-card ${active ? 'is-current' : ''} ${recommended ? 'is-recommended' : ''}`}>
       <div className="billing-plan-card-top">
         <div className="billing-plan-badges">
-          <span className={recommended ? 'recommended' : ''}>{content.badge}</span>
+          {content.badge && <span className={recommended ? 'recommended' : ''}>{content.badge}</span>}
           {active && <span className="current">현재</span>}
         </div>
         <strong className="billing-plan-name">{plan.name}</strong>
@@ -63,12 +55,6 @@ function PlanCard({ plan, current, included, busy, onClick }) {
           <b>{money(plan.amountKrw)}</b>
           {paid && <span>/월</span>}
         </div>
-        <p className="billing-plan-pitch">{content.pitch}</p>
-      </div>
-
-      <div className="billing-plan-why">
-        <span>이런 경우 추천</span>
-        <strong>{content.why}</strong>
       </div>
 
       <ul className="billing-plan-features">
@@ -100,10 +86,7 @@ export default function BillingSettingsSection({ authUser }) {
   return (
     <SettingsSection id="billing" className="settings-billing-section billing-settings-v7">
       <div className="billing-settings-head">
-        <div>
-          <strong>페이지로 요금제</strong>
-          <span>운영 방식에 맞는 요금제를 선택하세요.</span>
-        </div>
+        <strong>페이지로 요금제</strong>
       </div>
 
       {error && <p className="settings-message error" role="alert">{error}</p>}
@@ -136,8 +119,7 @@ export default function BillingSettingsSection({ authUser }) {
           <span>{sslIncludedByPlan ? '프로 포함' : sslEnabled ? '이용 중' : '1,000원/월'}</span>
         </div>
         <div className="billing-addon-value">
-          <strong>직접 설정 없이 HTTPS를 관리합니다.</strong>
-          <span>프로 요금제에는 SSL 관리가 기본 포함됩니다.</span>
+          <strong>{sslIncludedByPlan ? '포함' : sslEnabled ? '적용 중' : '미적용'}</strong>
         </div>
         <button
           type="button"
