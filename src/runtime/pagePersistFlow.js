@@ -1,6 +1,6 @@
 import { STORAGE_KEY } from '../config/storageKeys.js';
 import { clearPageDraft } from './pageDraftStore.js';
-import { PAGE_SAVE_LABEL, pageSaveErrorFeedback, pageSaveSuccessFeedback } from './pageSaveFeedback.js';
+import { PAGE_SAVE_LABEL, pageSaveErrorFeedback, pageSavePublicVerificationDelayed, pageSaveSuccessFeedback } from './pageSaveFeedback.js';
 
 export async function handlePagePersistError({
   error,
@@ -16,6 +16,10 @@ export async function handlePagePersistError({
   return { handled, feedback };
 }
 
+export function shouldPreservePageDraftAfterSave(result) {
+  return pageSavePublicVerificationDelayed(result);
+}
+
 export function commitSavedPageResult({
   result,
   nextPage,
@@ -29,11 +33,14 @@ export function commitSavedPageResult({
 }) {
   const persistedClientPage = result?.clientPage || nextPage;
   const savedPage = result?.page ? savedPageFromResult(persistedClientPage, result.page) : persistedClientPage;
+  const preserveRecoveryDraft = shouldPreservePageDraftAfterSave(result);
   latestPageRef.current = savedPage;
   setPage(savedPage);
   saveLocalJson(STORAGE_KEY, savedPage, PAGE_SAVE_LABEL);
-  clearPageDraft({ page: nextPage });
-  clearPageDraft({ page: savedPage });
+  if (!preserveRecoveryDraft) {
+    clearPageDraft({ page: nextPage });
+    clearPageDraft({ page: savedPage });
+  }
   setSaved(true);
   setTimeout(() => setSaved(false), 1000);
   const feedback = pageSaveSuccessFeedback(result, scope);
