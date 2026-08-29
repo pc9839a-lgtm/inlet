@@ -4,11 +4,12 @@ import { clearPageDraft } from './pageDraftStore.js';
 import { inactivePageSaveMessage, isPageOperationTargetActive, pageOperationIdentity } from './pageOperationIdentity.js';
 import { attachExistingPageIdentity, pageSaveMode } from './savePageIdentity.js';
 import {
+  PUBLIC_VERIFY_DELAYED_TOAST,
   SAVE_BLOCKED_FEEDBACK,
   STYLE_CONFIRM_FEEDBACK,
   WRITE_BLOCKED_FEEDBACK,
 } from './pageSaveFeedback.js';
-import { commitSavedPageResult, handlePagePersistError } from './pagePersistFlow.js';
+import { commitSavedPageResult, handlePagePersistError, shouldPreservePageDraftAfterSave } from './pagePersistFlow.js';
 
 export function usePageSaveAction({
   allowedTabs,
@@ -84,9 +85,12 @@ export function usePageSaveAction({
     if (!targetIsActive()) {
       const persistedClientPage = result?.clientPage || nextPage;
       const savedTargetPage = result?.page ? savedPageFromResult(persistedClientPage, result.page) : persistedClientPage;
-      clearPageDraft({ page: nextPage, authUser });
-      clearPageDraft({ page: savedTargetPage, authUser });
-      showToast(inactivePageSaveMessage('page'), 'info');
+      const preserveRecoveryDraft = shouldPreservePageDraftAfterSave(result);
+      if (!preserveRecoveryDraft) {
+        clearPageDraft({ page: nextPage, authUser });
+        clearPageDraft({ page: savedTargetPage, authUser });
+      }
+      showToast(preserveRecoveryDraft ? PUBLIC_VERIFY_DELAYED_TOAST : inactivePageSaveMessage('page'), preserveRecoveryDraft ? 'warning' : 'info');
       return {
         ok: true,
         page: activePage(),
