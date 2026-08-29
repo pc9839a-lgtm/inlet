@@ -80,7 +80,7 @@ export default function CustomDomainSettingsSection({ authUser, integrations, up
       requestedAt: new Date().toISOString(),
     });
     setHostname(normalizedHostname);
-    setNotice('도메인 연결 요청을 저장했습니다.');
+    setNotice('저장됨');
   };
 
   const removeDomain = () => {
@@ -94,7 +94,7 @@ export default function CustomDomainSettingsSection({ authUser, integrations, up
       requestedAt: '',
     });
     setHostname('');
-    setNotice('도메인 연결을 해제했습니다.');
+    setNotice('해제됨');
   };
 
   const startSslCheckout = async () => {
@@ -106,9 +106,9 @@ export default function CustomDomainSettingsSection({ authUser, integrations, up
   const copyDns = async () => {
     try {
       await copyText(`CNAME\t${recordName}\t${DNS_TARGET}`);
-      setNotice('DNS 정보 복사 완료');
+      setNotice('복사됨');
     } catch {
-      setNotice('복사하지 못했습니다.');
+      setNotice('복사 실패');
     }
   };
 
@@ -116,10 +116,7 @@ export default function CustomDomainSettingsSection({ authUser, integrations, up
     <SettingsSection id="domain" className="settings-domain-section">
       <div className="domain-settings-screen">
         <section className="domain-setting-row domain-dns-row-v2">
-          <div className="domain-setting-label">
-            <strong>DNS</strong>
-            <span>먼저 DNS에 아래 CNAME을 등록하세요.</span>
-          </div>
+          <div className="domain-setting-label"><strong>DNS</strong></div>
           <div className="domain-dns-values">
             <div><span>유형</span><code>CNAME</code></div>
             <div><span>호스트</span><code>{recordName}</code></div>
@@ -152,13 +149,13 @@ export default function CustomDomainSettingsSection({ authUser, integrations, up
               </button>
             )}
           </div>
-          {hostnameInvalid && <small className="settings-field-error domain-field-error">도메인 형식을 확인하세요.</small>}
+          {hostnameInvalid && <small className="settings-field-error domain-field-error">형식 오류</small>}
         </section>
 
         <section className="domain-setting-row domain-ssl-row">
           <div className="domain-setting-label">
             <strong>HTTPS · SSL</strong>
-            <span>{sslIncludedByPlan ? '프로 요금제 포함' : sslEnabled ? '이용 중' : '월 1,000원'}</span>
+            <span>{sslIncludedByPlan ? '프로 포함' : sslEnabled ? '이용 중' : '월 1,000원'}</span>
           </div>
           <div className="domain-ssl-action">
             {sslEnabled || sslIncludedByPlan ? (
