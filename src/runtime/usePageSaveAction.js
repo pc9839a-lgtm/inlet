@@ -9,7 +9,12 @@ import {
   STYLE_CONFIRM_FEEDBACK,
   WRITE_BLOCKED_FEEDBACK,
 } from './pageSaveFeedback.js';
-import { commitSavedPageResult, handlePagePersistError, shouldPreservePageDraftAfterSave } from './pagePersistFlow.js';
+import {
+  commitSavedPageResult,
+  commitSavedVersionIntoNewerDraft,
+  handlePagePersistError,
+  shouldPreservePageDraftAfterSave,
+} from './pagePersistFlow.js';
 
 export function usePageSaveAction({
   allowedTabs,
@@ -51,9 +56,10 @@ export function usePageSaveAction({
       return { ok: false, reason: 'style-confirm-required' };
     }
 
+    const localPageAtSaveStart = latestPageRef.current || page;
     const sourcePage = pageOverride
-      ? normalizePageForSave({ ...(latestPageRef.current || page), ...pageOverride })
-      : (latestPageRef.current || page);
+      ? normalizePageForSave({ ...localPageAtSaveStart, ...pageOverride })
+      : localPageAtSaveStart;
     const saveSourcePage = await attachExistingPageIdentity(sourcePage, {
       authUser,
       latestPage: latestPageRef.current,
@@ -98,6 +104,21 @@ export function usePageSaveAction({
         result,
         reason: 'inactive-page',
       };
+    }
+
+    const currentPageAfterSave = activePage();
+    if (currentPageAfterSave !== localPageAtSaveStart) {
+      const newerDraft = commitSavedVersionIntoNewerDraft({
+        result,
+        currentPage: currentPageAfterSave,
+        latestPageRef,
+        savedPageFromResult,
+        saveLocalJson,
+        setPage,
+        markSaveStatus,
+      });
+      showToast('이전 변경분은 저장됐습니다. 저장 중 추가한 변경분은 한 번 더 저장해주세요.', 'warning');
+      return { ok: true, page: newerDraft, result, reason: 'newer-local-changes' };
     }
 
     setConnectionsEditing(false);
