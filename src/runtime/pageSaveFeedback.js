@@ -20,6 +20,11 @@ export const STYLE_CONFIRM_FEEDBACK = {
 };
 
 export const STYLE_SAVED_TOAST = '스타일 설정이 저장되었습니다.';
+export const PUBLIC_VERIFY_DELAYED_TOAST = '서버에는 저장됐지만 공개 반영 확인이 지연되고 있습니다. 임시 복구본을 유지합니다.';
+
+export function pageSavePublicVerificationDelayed(result) {
+  return result?.mode !== 'local' && result?.publicVerification?.ok === false;
+}
 
 export function pageSaveErrorFeedback(error, handled = false) {
   if (handled) {
@@ -43,9 +48,18 @@ export function pageSaveErrorFeedback(error, handled = false) {
 export function pageSaveSuccessFeedback(result, scope = 'page') {
   const local = result?.mode === 'local';
   const target = scope === 'style' ? '스타일과 페이지' : PAGE_SAVE_LABEL;
+  if (pageSavePublicVerificationDelayed(result)) {
+    return {
+      level: 'warning',
+      title: '저장됨 · 반영 확인 필요',
+      message: `${target}는 서버에 기록됐지만 공개 페이지 반영을 확인하지 못했습니다. 임시 복구본은 유지됩니다.`,
+      toast: PUBLIC_VERIFY_DELAYED_TOAST,
+    };
+  }
   return {
     level: 'ok',
     title: local ? '로컬 저장됨' : '서버 저장됨',
     message: local ? target + '가 브라우저에 저장되었습니다.' : target + '가 서버에 저장되었습니다.',
+    toast: '',
   };
 }
