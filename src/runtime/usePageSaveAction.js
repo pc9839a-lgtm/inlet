@@ -4,11 +4,17 @@ import { clearPageDraft } from './pageDraftStore.js';
 import { inactivePageSaveMessage, isPageOperationTargetActive, pageOperationIdentity } from './pageOperationIdentity.js';
 import { attachExistingPageIdentity, pageSaveMode } from './savePageIdentity.js';
 import {
+  PUBLIC_VERIFY_DELAYED_TOAST,
   SAVE_BLOCKED_FEEDBACK,
   STYLE_CONFIRM_FEEDBACK,
   WRITE_BLOCKED_FEEDBACK,
 } from './pageSaveFeedback.js';
-import { commitSavedPageResult, handlePagePersistError } from './pagePersistFlow.js';
+import {
+  commitSavedPageResult,
+  commitSavedVersionIntoNewerDraft,
+  handlePagePersistError,
+  shouldPreservePageDraftAfterSave,
+} from './pagePersistFlow.js';
 
 export function usePageSaveAction({
   allowedTabs,
@@ -50,9 +56,10 @@ export function usePageSaveAction({
       return { ok: false, reason: 'style-confirm-required' };
     }
 
+    const localPageAtSaveStart = latestPageRef.current || page;
     const sourcePage = pageOverride
-      ? normalizePageForSave({ ...(latestPageRef.current || page), ...pageOverride })
-      : (latestPageRef.current || page);
+      ? normalizePageForSave({ ...localPageAtSaveStart, ...pageOverride })
+      : localPageAtSaveStart;
     const saveSourcePage = await attachExistingPageIdentity(sourcePage, {
       authUser,
       latestPage: latestPageRef.current,
@@ -84,9 +91,12 @@ export function usePageSaveAction({
     if (!targetIsActive()) {
       const persistedClientPage = result?.clientPage || nextPage;
       const savedTargetPage = result?.page ? savedPageFromResult(persistedClientPage, result.page) : persistedClientPage;
-      clearPageDraft({ page: nextPage, authUser });
-      clearPageDraft({ page: savedTargetPage, authUser });
-      showToast(inactivePageSaveMessage('page'), 'info');
+      const preserveRecoveryDraft = shouldPreservePageDraftAfterSave(result);
+      if (!preserveRecoveryDraft) {
+        clearPageDraft({ page: nextPage, authUser });
+        clearPageDraft({ page: savedTargetPage, authUser });
+      }
+      showToast(preserveRecoveryDraft ? PUBLIC_VERIFY_DELAYED_TOAST : inactivePageSaveMessage('page'), preserveRecoveryDraft ? 'warning' : 'info');
       return {
         ok: true,
         page: activePage(),
@@ -94,6 +104,21 @@ export function usePageSaveAction({
         result,
         reason: 'inactive-page',
       };
+    }
+
+    const currentPageAfterSave = activePage();
+    if (currentPageAfterSave !== localPageAtSaveStart) {
+      const newerDraft = commitSavedVersionIntoNewerDraft({
+        result,
+        currentPage: currentPageAfterSave,
+        latestPageRef,
+        savedPageFromResult,
+        saveLocalJson,
+        setPage,
+        markSaveStatus,
+      });
+      showToast('이전 변경분은 저장됐습니다. 저장 중 추가한 변경분은 한 번 더 저장해주세요.', 'warning');
+      return { ok: true, page: newerDraft, result, reason: 'newer-local-changes' };
     }
 
     setConnectionsEditing(false);

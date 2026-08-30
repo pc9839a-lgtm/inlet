@@ -2,8 +2,8 @@ import { persistPage } from '../lib/pageRepository.js';
 import { clearPageDraft } from './pageDraftStore.js';
 import { inactivePageSaveMessage, isPageOperationTargetActive, pageOperationIdentity } from './pageOperationIdentity.js';
 import { attachExistingPageIdentity, pageSaveMode } from './savePageIdentity.js';
-import { STYLE_SAVED_TOAST } from './pageSaveFeedback.js';
-import { commitSavedPageResult, handlePagePersistError } from './pagePersistFlow.js';
+import { PUBLIC_VERIFY_DELAYED_TOAST, STYLE_SAVED_TOAST } from './pageSaveFeedback.js';
+import { commitSavedPageResult, handlePagePersistError, shouldPreservePageDraftAfterSave } from './pagePersistFlow.js';
 
 export function usePersistStyleSaveAction({
   page,
@@ -27,6 +27,8 @@ export function usePersistStyleSaveAction({
   const persistStyleNow = async () => {
     if (blockWrite('style')) return { ok: false, reason: 'write-blocked' };
     const basePage = latestPageRef.current || page;
+    const styleThemeAtSaveStart = stylePreviewTheme;
+    const styleBlocksAtSaveStart = stylePreviewBlocks;
     const styleSourcePage = await attachExistingPageIdentity({
       ...basePage,
       theme: stylePreviewTheme ? { ...basePage.theme, ...stylePreviewTheme } : basePage.theme,
@@ -62,9 +64,12 @@ export function usePersistStyleSaveAction({
     if (!targetIsActive()) {
       const persistedClientPage = result?.clientPage || nextPage;
       const savedTargetPage = result?.page ? savedPageFromResult(persistedClientPage, result.page) : persistedClientPage;
-      clearPageDraft({ page: nextPage, authUser });
-      clearPageDraft({ page: savedTargetPage, authUser });
-      showToast(inactivePageSaveMessage('style'), 'info');
+      const preserveRecoveryDraft = shouldPreservePageDraftAfterSave(result);
+      if (!preserveRecoveryDraft) {
+        clearPageDraft({ page: nextPage, authUser });
+        clearPageDraft({ page: savedTargetPage, authUser });
+      }
+      showToast(preserveRecoveryDraft ? PUBLIC_VERIFY_DELAYED_TOAST : inactivePageSaveMessage('style'), preserveRecoveryDraft ? 'warning' : 'info');
       return {
         ok: true,
         page: activePage(),
@@ -74,8 +79,8 @@ export function usePersistStyleSaveAction({
       };
     }
 
-    setStylePreviewTheme(null);
-    setStylePreviewBlocks(null);
+    setStylePreviewTheme((current) => current === styleThemeAtSaveStart ? null : current);
+    setStylePreviewBlocks((current) => current === styleBlocksAtSaveStart ? null : current);
     setConnectionsEditing(false);
     const savedPage = commitSavedPageResult({
       result,
@@ -88,7 +93,8 @@ export function usePersistStyleSaveAction({
       setSaved,
       markSaveStatus,
     });
-    showToast(STYLE_SAVED_TOAST, 'success');
+    const preserveRecoveryDraft = shouldPreservePageDraftAfterSave(result);
+    showToast(preserveRecoveryDraft ? PUBLIC_VERIFY_DELAYED_TOAST : STYLE_SAVED_TOAST, preserveRecoveryDraft ? 'warning' : 'success');
     return { ok: true, page: savedPage, result };
   };
 
