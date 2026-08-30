@@ -60,6 +60,18 @@
   right: max(14px, calc((100vw - 414px) / 2 + 14px), env(safe-area-inset-right));
 }
 
+/* Share is always bottom-right. If a fixed bottom CTA exists, its measured height is added automatically. */
+.page-share-button {
+  top: auto !important;
+  bottom: calc(max(12px, env(safe-area-inset-bottom)) + var(--page-fixed-bottom-height, 0px)) !important;
+  left: auto !important;
+  right: max(14px, env(safe-area-inset-right)) !important;
+}
+
+.page-share-button.public-share-button {
+  right: max(14px, calc((100vw - 414px) / 2 + 14px), env(safe-area-inset-right)) !important;
+}
+
 .page-share-button.has-feedback {
   width: 94px;
   padding: 0 12px;
