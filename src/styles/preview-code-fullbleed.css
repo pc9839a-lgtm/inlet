@@ -74,3 +74,11 @@
   background: transparent !important;
   z-index: 2147483000 !important;
 }
+
+/* DYJH's legacy BGM is a zero-height regular code block, so the cover is not :first-child.
+   The DYJH cover renderer marks the cover with inline margin-top:-12px. Remove the parent
+   landing-content top padding as well so the photo begins at y=0. */
+.phone-frame .landing-content:has(> .code-widget[data-code-layout="full-bleed"][style*="margin-top: -12px"]),
+.public-landing-viewport .landing-content:has(> .code-widget[data-code-layout="full-bleed"][style*="margin-top: -12px"]) {
+  padding-top: 0 !important;
+}
