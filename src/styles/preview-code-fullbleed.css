@@ -1,0 +1,15 @@
+/* Remove Pagero's default 12px top inset when a page intentionally starts with a full-bleed custom-code block.
+   Keep the normal content padding for every other page/block layout. */
+.phone-frame .landing-content:has(> .code-widget[data-code-layout="full-bleed"]:first-child),
+.public-landing-viewport .landing-content:has(> .code-widget[data-code-layout="full-bleed"]:first-child),
+.phone-frame .landing-content:has(> .bgm-widget:first-child + .code-widget[data-code-layout="full-bleed"]),
+.public-landing-viewport .landing-content:has(> .bgm-widget:first-child + .code-widget[data-code-layout="full-bleed"]) {
+  padding-top: 0 !important;
+}
+
+.phone-frame .landing-content > .code-widget[data-code-layout="full-bleed"]:first-child,
+.public-landing-viewport .landing-content > .code-widget[data-code-layout="full-bleed"]:first-child,
+.phone-frame .landing-content > .bgm-widget:first-child + .code-widget[data-code-layout="full-bleed"],
+.public-landing-viewport .landing-content > .bgm-widget:first-child + .code-widget[data-code-layout="full-bleed"] {
+  margin-top: 0 !important;
+}
