@@ -13,3 +13,64 @@
 .public-landing-viewport .landing-content > .bgm-widget:first-child + .code-widget[data-code-layout="full-bleed"] {
   margin-top: 0 !important;
 }
+
+/* Legacy DYJH BGM code was saved as a normal custom-code iframe. Auto-height custom code has a
+   48px minimum, so a button-only BGM block above the wedding cover still reserved a blank strip.
+   When that overlay block sits directly before the DYJH full-bleed cover (the cover runtime owns
+   margin-top:-12px), remove it from layout and pin only its iframe to the viewport. */
+.phone-frame .landing-content > .code-widget[data-code-layout="full-bleed"]:has(+ .code-widget[data-code-layout="full-bleed"][style*="margin-top: -12px"]),
+.public-landing-viewport .landing-content > .code-widget[data-code-layout="full-bleed"]:has(+ .code-widget[data-code-layout="full-bleed"][style*="margin-top: -12px"]),
+.phone-frame .landing-content > .code-widget[data-code-layout="full-bleed"]:has(+ .landing-anchor + .code-widget[data-code-layout="full-bleed"][style*="margin-top: -12px"]),
+.public-landing-viewport .landing-content > .code-widget[data-code-layout="full-bleed"]:has(+ .landing-anchor + .code-widget[data-code-layout="full-bleed"][style*="margin-top: -12px"]) {
+  position: relative !important;
+  z-index: 2147482000 !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* The following cover must start at y=0 after the zero-height overlay. */
+.phone-frame .landing-content > .code-widget[data-code-layout="full-bleed"] + .code-widget[data-code-layout="full-bleed"][style*="margin-top: -12px"],
+.public-landing-viewport .landing-content > .code-widget[data-code-layout="full-bleed"] + .code-widget[data-code-layout="full-bleed"][style*="margin-top: -12px"],
+.phone-frame .landing-content > .code-widget[data-code-layout="full-bleed"] + .landing-anchor + .code-widget[data-code-layout="full-bleed"][style*="margin-top: -12px"],
+.public-landing-viewport .landing-content > .code-widget[data-code-layout="full-bleed"] + .landing-anchor + .code-widget[data-code-layout="full-bleed"][style*="margin-top: -12px"] {
+  margin-top: 0 !important;
+}
+
+/* Public page: keep only the BGM control floating at the top-right of the centered 414px page. */
+.public-landing-viewport .landing-content > .code-widget[data-code-layout="full-bleed"]:has(+ .code-widget[data-code-layout="full-bleed"][style*="margin-top: -12px"]) > .custom-code-frame,
+.public-landing-viewport .landing-content > .code-widget[data-code-layout="full-bleed"]:has(+ .landing-anchor + .code-widget[data-code-layout="full-bleed"][style*="margin-top: -12px"]) > .custom-code-frame {
+  position: fixed !important;
+  top: 0 !important;
+  right: max(0px, calc((100vw - 414px) / 2)) !important;
+  width: 100px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  overflow: visible !important;
+  background: transparent !important;
+  z-index: 2147483000 !important;
+}
+
+/* Builder preview: remove the layout gap too; keep the control visually attached to the cover. */
+.phone-frame .landing-content > .code-widget[data-code-layout="full-bleed"]:has(+ .code-widget[data-code-layout="full-bleed"][style*="margin-top: -12px"]) > .custom-code-frame,
+.phone-frame .landing-content > .code-widget[data-code-layout="full-bleed"]:has(+ .landing-anchor + .code-widget[data-code-layout="full-bleed"][style*="margin-top: -12px"]) > .custom-code-frame {
+  position: absolute !important;
+  top: 0 !important;
+  right: -414px !important;
+  width: 100px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  overflow: visible !important;
+  background: transparent !important;
+  z-index: 2147483000 !important;
+}
