@@ -1,0 +1,187 @@
+name: PAGERO Launch Readiness
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/pagero-launch-readiness.yml'
+      - 'scripts/live-readiness-check.mjs'
+      - 'scripts/ses-auth-email-production-check.mjs'
+      - 'scripts/ses-auth-email-production-safety.mjs'
+      - 'scripts/billing-referral-quality-check.mjs'
+      - 'functions/api/auth/**'
+      - 'functions/api/billing/**'
+      - 'functions/api/pages/**'
+      - 'functions/api/leads/**'
+  workflow_dispatch:
+    inputs:
+      launch_mode:
+        description: Launch gate to enforce
+        required: true
+        default: beta
+        type: choice
+        options:
+          - beta
+          - paid
+      public_slug:
+        description: Existing public PAGERO slug used for live storage/public-route verification
+        required: true
+        default: dyjh
+        type: string
+      region:
+        description: AWS SES region
+        required: true
+        default: ap-northeast-2
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pagero-launch-readiness-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify beta/paid launch gate
+    runs-on: ubuntu-24.04
+    environment: production
+    timeout-minutes: 20
+    env:
+      PAGERO_LAUNCH_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.launch_mode || 'beta' }}
+      PAGERO_PUBLIC_SLUG: ${{ github.event_name == 'workflow_dispatch' && inputs.public_slug || vars.PAGERO_LAUNCH_PUBLIC_SLUG || 'dyjh' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Billing/referral offline quality gate
+        run: node scripts/billing-referral-quality-check.mjs
+
+      - name: Verify production health and public saved page
+        id: live
+        continue-on-error: true
+        env:
+          INLET_PUBLIC_API_URL: https://pagero.kr
+          INLET_PUBLIC_QA_URL: https://pagero.kr
+          INLET_PUBLIC_PAGE_SLUG: ${{ env.PAGERO_PUBLIC_SLUG }}
+        shell: bash
+        run: |
+          set +e
+          node scripts/live-readiness-check.mjs > pagero-live-readiness.json
+          code=$?
+          cat pagero-live-readiness.json
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Verify SES production readiness (read-only)
+        id: ses
+        continue-on-error: true
+        env:
+          INLET_SES_REGION: ${{ github.event_name == 'workflow_dispatch' && inputs.region || 'ap-northeast-2' }}
+          INLET_SES_ACCESS_KEY_ID: ${{ secrets.PAGERO_SES_ACCESS_KEY_ID }}
+          INLET_SES_SECRET_ACCESS_KEY: ${{ secrets.PAGERO_SES_SECRET_ACCESS_KEY }}
+          INLET_AUTH_EMAIL_FROM: ${{ vars.PAGERO_AUTH_EMAIL_FROM }}
+          INLET_SES_IDENTITY: ${{ vars.PAGERO_SES_IDENTITY }}
+          INLET_SES_REQUIRE_DMARC: '1'
+          INLET_SES_REQUIRE_CUSTOM_MAIL_FROM: '0'
+          INLET_SES_REQUIRE_LIVE: '1'
+          INLET_SES_TIMEOUT_MS: '15000'
+        shell: bash
+        run: |
+          set +e
+          node scripts/ses-auth-email-production-check.mjs > pagero-ses-readiness.json
+          code=$?
+          cat pagero-ses-readiness.json
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Classify web billing launch state
+        id: billing
+        env:
+          LAUNCH_MODE: ${{ env.PAGERO_LAUNCH_MODE }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { appendFileSync, readFileSync } from 'node:fs';
+
+          const source = readFileSync('functions/api/billing/readiness.js', 'utf8');
+          const webBlock = source.match(/web\s*:\s*\{([\s\S]*?)\n\s*\}/)?.[1] || '';
+          const webAvailableFalse = /available\s*:\s*false/.test(webBlock);
+          const preCheckout = /stage\s*:\s*['"]pre_checkout['"]/.test(webBlock);
+          const paidBlocked = webAvailableFalse || preCheckout;
+          const mode = String(process.env.LAUNCH_MODE || 'beta').trim().toLowerCase();
+
+          appendFileSync(process.env.GITHUB_OUTPUT, `paid_blocked=${paidBlocked ? 'true' : 'false'}\n`);
+          appendFileSync(process.env.GITHUB_OUTPUT, `launch_mode=${mode}\n`);
+
+          console.log(JSON.stringify({
+            launchMode: mode,
+            webBillingAvailable: !paidBlocked,
+            paidSelfServeLaunchBlocked: paidBlocked,
+            expectedCurrentStage: preCheckout ? 'pre_checkout' : 'unknown',
+          }, null, 2));
+          NODE
+
+      - name: Upload launch evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pagero-launch-readiness-${{ github.run_id }}
+          path: |
+            pagero-live-readiness.json
+            pagero-ses-readiness.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Publish launch decision
+        if: always()
+        shell: bash
+        run: |
+          live_code="${{ steps.live.outputs.exit_code }}"
+          ses_code="${{ steps.ses.outputs.exit_code }}"
+          paid_blocked="${{ steps.billing.outputs.paid_blocked }}"
+          launch_mode="${{ steps.billing.outputs.launch_mode }}"
+
+          live_code="${live_code:-1}"
+          ses_code="${ses_code:-1}"
+          paid_blocked="${paid_blocked:-true}"
+          launch_mode="${launch_mode:-${PAGERO_LAUNCH_MODE:-beta}}"
+
+          {
+            echo "## PAGERO launch decision"
+            echo
+            echo "| Gate | Result |"
+            echo "| --- | --- |"
+            if [ "$live_code" = "0" ]; then echo "| Production health + public page | PASS |"; else echo "| Production health + public page | BLOCKED |"; fi
+            if [ "$ses_code" = "0" ]; then echo "| SES auth email infrastructure | PASS |"; else echo "| SES auth email infrastructure | BLOCKED |"; fi
+            if [ "$paid_blocked" = "true" ]; then echo "| Web paid self-serve checkout | NOT READY (pre-checkout) |"; else echo "| Web paid self-serve checkout | READY |"; fi
+            echo "| Requested launch mode | $launch_mode |"
+            echo
+            if [ "$live_code" = "0" ] && [ "$ses_code" = "0" ] && { [ "$launch_mode" != "paid" ] || [ "$paid_blocked" != "true" ]; }; then
+              echo "**Decision: READY**"
+            else
+              echo "**Decision: BLOCKED**"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$live_code" != "0" ]; then
+            echo "PAGERO launch blocked: production health/public page live gate failed."
+            exit 1
+          fi
+          if [ "$ses_code" != "0" ]; then
+            echo "PAGERO launch blocked: SES production readiness failed."
+            exit 1
+          fi
+          if [ "$launch_mode" = "paid" ] && [ "$paid_blocked" = "true" ]; then
+            echo "PAGERO paid launch blocked: web billing is still pre-checkout."
+            exit 1
+          fi
+
+          echo "PAGERO $launch_mode launch gate passed."
