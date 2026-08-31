@@ -227,9 +227,11 @@ function schedulePublicPageSaveVerification(savedPage = {}, enabled = true) {
   return { ok: true, skipped: false, pending: true };
 }
 
-function pageSavePostPath(slug, saveMode) {
+function pageSavePostPath(slug, saveMode, identity = {}) {
   const params = new URLSearchParams();
   if (saveMode) params.set('saveMode', saveMode);
+  if (identity.pageId) params.set('pageId', identity.pageId);
+  if (identity.projectId) params.set('projectId', identity.projectId);
   const query = params.toString();
   return `/api/pages/${encodeURIComponent(slug)}${query ? `?${query}` : ''}`;
 }
@@ -266,7 +268,7 @@ export async function persistPage(page, authUser = null, options = {}) {
     ...(expectedRevision ? { expectedRevision } : {}),
   };
   try {
-    const result = await postJson(pageSavePostPath(slug, saveMode), payload, { headers: projectAuthHeaders(context) });
+    const result = await postJson(pageSavePostPath(slug, saveMode, identity), payload, { headers: projectAuthHeaders(context) });
     const publicVerification = schedulePublicPageSaveVerification(result?.page, options.verifyPublic !== false);
     return { ...result, clientPage: pageWithContext, publicVerification };
   } catch (error) {
@@ -275,7 +277,7 @@ export async function persistPage(page, authUser = null, options = {}) {
     const retry = accountOwnedPageForRetry(pageWithContext, authUser);
     if (!retry.context.projectId || retry.context.projectId === context.projectId) throw error;
     const retryIdentity = pageSaveIdentity(retry.page, retry.context, saveMode);
-    const result = await postJson(pageSavePostPath(retry.page.slug, saveMode), {
+    const result = await postJson(pageSavePostPath(retry.page.slug, saveMode, retryIdentity), {
       ...payload,
       page: pageForServerWrite(retry.page),
       project: retry.context,
