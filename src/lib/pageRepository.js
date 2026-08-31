@@ -217,20 +217,21 @@ async function verifyPublicPageSave(savedPage = {}) {
   });
 }
 
-async function verifyPublicPageSaveAdvisory(savedPage = {}, enabled = true) {
-  if (!enabled || !savedPage) return { ok: true, skipped: true };
-  try {
-    await verifyPublicPageSave(savedPage);
-    return { ok: true, skipped: false };
-  } catch (error) {
-    console.warn('Page save committed, but public verification is delayed:', error);
-    return {
-      ok: false,
-      skipped: false,
-      code: String(error?.details?.code || 'PAGE_PUBLIC_VERIFY_DELAYED'),
-      message: String(error?.message || '공개 페이지 반영 확인이 지연되고 있습니다.'),
-    };
-  }
+function schedulePublicPageSaveVerification(savedPage = {}, enabled = true) {
+  if (!enabled || !savedPage) return { ok: true, skipped: true, pending: false };
+  Promise.resolve()
+    .then(() => verifyPublicPageSave(savedPage))
+    .catch((error) => {
+      console.warn('Page save committed, but public verification is delayed:', error);
+    });
+  return { ok: true, skipped: false, pending: true };
+}
+
+function pageSavePostPath(slug, saveMode) {
+  const params = new URLSearchParams();
+  if (saveMode) params.set('saveMode', saveMode);
+  const query = params.toString();
+  return `/api/pages/${encodeURIComponent(slug)}${query ? `?${query}` : ''}`;
 }
 
 export async function persistPage(page, authUser = null, options = {}) {
@@ -265,8 +266,8 @@ export async function persistPage(page, authUser = null, options = {}) {
     ...(expectedRevision ? { expectedRevision } : {}),
   };
   try {
-    const result = await postJson(`/api/pages/${encodeURIComponent(slug)}`, payload, { headers: projectAuthHeaders(context) });
-    const publicVerification = await verifyPublicPageSaveAdvisory(result?.page, options.verifyPublic !== false);
+    const result = await postJson(pageSavePostPath(slug, saveMode), payload, { headers: projectAuthHeaders(context) });
+    const publicVerification = schedulePublicPageSaveVerification(result?.page, options.verifyPublic !== false);
     return { ...result, clientPage: pageWithContext, publicVerification };
   } catch (error) {
     if (saveMode === 'update-existing') throw error;
@@ -274,7 +275,7 @@ export async function persistPage(page, authUser = null, options = {}) {
     const retry = accountOwnedPageForRetry(pageWithContext, authUser);
     if (!retry.context.projectId || retry.context.projectId === context.projectId) throw error;
     const retryIdentity = pageSaveIdentity(retry.page, retry.context, saveMode);
-    const result = await postJson(`/api/pages/${encodeURIComponent(retry.page.slug)}`, {
+    const result = await postJson(pageSavePostPath(retry.page.slug, saveMode), {
       ...payload,
       page: pageForServerWrite(retry.page),
       project: retry.context,
@@ -282,7 +283,7 @@ export async function persistPage(page, authUser = null, options = {}) {
       saveRequestId: pageSaveRequestId(retryIdentity, expectedRevision),
       recoveredProjectAccess: true,
     }, { headers: projectAuthHeaders(retry.context) });
-    const publicVerification = await verifyPublicPageSaveAdvisory(result?.page, options.verifyPublic !== false);
+    const publicVerification = schedulePublicPageSaveVerification(result?.page, options.verifyPublic !== false);
     return { ...result, clientPage: retry.page, publicVerification };
   }
 }
