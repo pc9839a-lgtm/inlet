@@ -5,6 +5,8 @@ on:
     paths:
       - '.github/workflows/pagero-launch-readiness.yml'
       - 'scripts/live-readiness-check.mjs'
+      - 'scripts/production-browser-quality-check.mjs'
+      - 'scripts/browser-visual-quality-check.mjs'
       - 'scripts/billing-referral-quality-check.mjs'
       - 'functions/api/auth/**'
       - 'functions/api/billing/**'
@@ -37,7 +39,7 @@ jobs:
   verify:
     name: Verify beta/paid launch gate
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 25
     env:
       PAGERO_LAUNCH_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.launch_mode || 'beta' }}
       PAGERO_PUBLIC_SLUG: ${{ github.event_name == 'workflow_dispatch' && inputs.public_slug || vars.PAGERO_LAUNCH_PUBLIC_SLUG || 'dyjh' }}
@@ -73,6 +75,22 @@ jobs:
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
 
+      - name: Verify production pages in real Chrome
+        id: browser
+        continue-on-error: true
+        env:
+          INLET_PRODUCTION_QA_URL: https://pagero.kr
+          INLET_PRODUCTION_BROWSER_QA_REQUIRE: '1'
+          INLET_PRODUCTION_QA_PUBLIC_SLUG: ${{ env.PAGERO_PUBLIC_SLUG }}
+        shell: bash
+        run: |
+          set +e
+          node scripts/production-browser-quality-check.mjs > pagero-production-browser.json
+          code=$?
+          cat pagero-production-browser.json
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
       - name: Classify web billing launch state
         id: billing
         env:
@@ -104,8 +122,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pagero-launch-readiness-${{ github.run_id }}
-          path: pagero-live-readiness.json
-          if-no-files-found: error
+          path: |
+            pagero-live-readiness.json
+            pagero-production-browser.json
+            .tmp-browser-visual/production-*/**
+          if-no-files-found: warn
           retention-days: 30
 
       - name: Publish launch decision
@@ -113,10 +134,12 @@ jobs:
         shell: bash
         run: |
           live_code="${{ steps.live.outputs.exit_code }}"
+          browser_code="${{ steps.browser.outputs.exit_code }}"
           paid_blocked="${{ steps.billing.outputs.paid_blocked }}"
           launch_mode="${{ steps.billing.outputs.launch_mode }}"
 
           live_code="${live_code:-1}"
+          browser_code="${browser_code:-1}"
           paid_blocked="${paid_blocked:-true}"
           launch_mode="${launch_mode:-${PAGERO_LAUNCH_MODE:-beta}}"
 
@@ -126,12 +149,13 @@ jobs:
             echo "| Gate | Result |"
             echo "| --- | --- |"
             if [ "$live_code" = "0" ]; then echo "| Production health + saved public page + hosted SES readiness | PASS |"; else echo "| Production health + saved public page + hosted SES readiness | BLOCKED |"; fi
+            if [ "$browser_code" = "0" ]; then echo "| Production real-browser routes (desktop/mobile) | PASS |"; else echo "| Production real-browser routes (desktop/mobile) | BLOCKED |"; fi
             if [ "$paid_blocked" = "true" ]; then echo "| Web paid self-serve checkout | NOT READY (pre-checkout) |"; else echo "| Web paid self-serve checkout | READY |"; fi
             echo "| Requested launch mode | $launch_mode |"
             echo
             echo "Note: credential/DNS-level SES verification remains in the existing manual 'SES Auth Email Production Verify' workflow."
             echo
-            if [ "$live_code" = "0" ] && { [ "$launch_mode" != "paid" ] || [ "$paid_blocked" != "true" ]; }; then
+            if [ "$live_code" = "0" ] && [ "$browser_code" = "0" ] && { [ "$launch_mode" != "paid" ] || [ "$paid_blocked" != "true" ]; }; then
               echo "**Decision: READY**"
             else
               echo "**Decision: BLOCKED**"
@@ -140,6 +164,10 @@ jobs:
 
           if [ "$live_code" != "0" ]; then
             echo "PAGERO launch blocked: production health/public-page/hosted-SES gate failed."
+            exit 1
+          fi
+          if [ "$browser_code" != "0" ]; then
+            echo "PAGERO launch blocked: production real-browser gate failed."
             exit 1
           fi
           if [ "$launch_mode" = "paid" ] && [ "$paid_blocked" = "true" ]; then
