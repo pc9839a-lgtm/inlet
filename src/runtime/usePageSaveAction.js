@@ -1,7 +1,6 @@
 import { useRef } from 'react';
 import { persistPage } from '../lib/pageRepository.js';
 import { normalizePageForSave } from '../lib/pageModel.js';
-import { STORAGE_KEY } from '../config/storageKeys.js';
 import { clearPageDraft } from './pageDraftStore.js';
 import { inactivePageSaveMessage, isPageOperationTargetActive, pageOperationIdentity } from './pageOperationIdentity.js';
 import { attachExistingPageIdentity, pageSaveMode } from './savePageIdentity.js';
@@ -10,22 +9,11 @@ import {
   STYLE_CONFIRM_FEEDBACK,
   WRITE_BLOCKED_FEEDBACK,
 } from './pageSaveFeedback.js';
-import { commitSavedPageResult, handlePagePersistError } from './pagePersistFlow.js';
-
-function rebaseServerIdentity(currentPage = {}, serverPage = null) {
-  if (!serverPage) return normalizePageForSave(currentPage);
-  return normalizePageForSave({
-    ...currentPage,
-    id: serverPage.id || currentPage.id,
-    projectId: serverPage.projectId || currentPage.projectId,
-    ownerId: serverPage.ownerId || currentPage.ownerId,
-    revision: serverPage.revision ?? currentPage.revision,
-    createdAt: serverPage.createdAt || currentPage.createdAt,
-    updatedAt: serverPage.updatedAt || currentPage.updatedAt,
-    savedAt: serverPage.savedAt || currentPage.savedAt,
-    publishedAt: serverPage.publishedAt || currentPage.publishedAt,
-  });
-}
+import {
+  commitPendingLocalChangesAfterSave,
+  commitSavedPageResult,
+  handlePagePersistError,
+} from './pagePersistFlow.js';
 
 export function usePageSaveAction({
   allowedTabs,
@@ -126,13 +114,16 @@ export function usePageSaveAction({
         && currentAfterSave !== nextPage;
 
       if (changedWhileSaving) {
-        const rebasedPage = rebaseServerIdentity(currentAfterSave, result?.page);
-        latestPageRef.current = rebasedPage;
-        setPage(rebasedPage);
-        saveLocalJson(STORAGE_KEY, rebasedPage, '페이지');
         setConnectionsEditing(false);
-        setSaved(false);
-        markSaveStatus('warning', '서버 저장 완료', '저장 중 추가로 수정한 내용이 있습니다. 현재 화면은 한 번 더 저장해주세요.');
+        const rebasedPage = commitPendingLocalChangesAfterSave({
+          result,
+          currentPage: currentAfterSave,
+          latestPageRef,
+          saveLocalJson,
+          setPage,
+          setSaved,
+          markSaveStatus,
+        });
         return {
           ok: true,
           page: rebasedPage,
