@@ -168,12 +168,19 @@ function publicPageMatchesSaved(publicPage = null, savedPage = {}) {
   if (String(publicPage.projectId || '') !== String(savedPage.projectId || '')) return false;
   const publicRevision = Number(publicPage.revision || 0);
   const savedRevision = Number(savedPage.revision || 0);
-  if (publicRevision && savedRevision && publicRevision < savedRevision) return false;
   const publicUpdatedAt = String(publicPage.updatedAt || '').trim();
   const savedUpdatedAt = String(savedPage.updatedAt || '').trim();
+
+  // Versioned D1 rows are authoritative. Avoid recursively stable-stringifying image-heavy
+  // page JSON after every save when revision and timestamp already prove the exact write.
+  if (publicRevision > 0 && savedRevision > 0) {
+    if (publicRevision !== savedRevision) return false;
+    if (publicUpdatedAt && savedUpdatedAt && publicUpdatedAt !== savedUpdatedAt) return false;
+    return true;
+  }
+
   if (publicUpdatedAt && savedUpdatedAt && publicUpdatedAt !== savedUpdatedAt) return false;
-  if (publicPageRenderFingerprint(publicPage) !== publicPageRenderFingerprint(savedPage)) return false;
-  return true;
+  return publicPageRenderFingerprint(publicPage) === publicPageRenderFingerprint(savedPage);
 }
 
 function publicPageRenderFingerprint(page = {}) {
