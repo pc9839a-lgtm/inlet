@@ -5,6 +5,9 @@ import { normalizePageForSave } from './pageModel.js';
 import { optimizePageForServerSave } from './pageSaveOptimizer.js';
 import { projectContext } from './projectContext.js';
 
+const PUBLIC_VERIFICATION_DEBOUNCE_MS = 700;
+const publicVerificationTimers = new Map();
+
 function pageSlug(pageOrSlug) {
   const raw = typeof pageOrSlug === 'string' ? pageOrSlug : pageOrSlug?.slug;
   return String(raw || 'my-page').replace(/[^a-zA-Z0-9-_]/g, '') || 'my-page';
@@ -143,6 +146,7 @@ export async function fetchAccountPages(authUser = null) {
   const data = await res.json();
   return Array.isArray(data?.pages) ? data.pages : [];
 }
+
 export async function deleteAccountPage(page, authUser = null) {
   if (!isServerPageMode()) return { ok: true, mode: 'local' };
   const slug = pageSlug(page);
@@ -219,12 +223,17 @@ async function verifyPublicPageSave(savedPage = {}) {
 
 function schedulePublicPageSaveVerification(savedPage = {}, enabled = true) {
   if (!enabled || !savedPage) return { ok: true, skipped: true, pending: false };
-  Promise.resolve()
-    .then(() => verifyPublicPageSave(savedPage))
-    .catch((error) => {
+  const slug = pageSlug(savedPage);
+  const previousTimer = publicVerificationTimers.get(slug);
+  if (previousTimer) clearTimeout(previousTimer);
+  const timer = setTimeout(() => {
+    publicVerificationTimers.delete(slug);
+    verifyPublicPageSave(savedPage).catch((error) => {
       console.warn('Page save committed, but public verification is delayed:', error);
     });
-  return { ok: true, skipped: false, pending: true };
+  }, PUBLIC_VERIFICATION_DEBOUNCE_MS);
+  publicVerificationTimers.set(slug, timer);
+  return { ok: true, skipped: false, pending: true, debounceMs: PUBLIC_VERIFICATION_DEBOUNCE_MS };
 }
 
 function pageSavePostPath(slug, saveMode, identity = {}) {
