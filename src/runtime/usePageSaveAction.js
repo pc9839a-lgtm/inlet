@@ -1,5 +1,7 @@
+import { useRef } from 'react';
 import { persistPage } from '../lib/pageRepository.js';
 import { normalizePageForSave } from '../lib/pageModel.js';
+import { STORAGE_KEY } from '../config/storageKeys.js';
 import { clearPageDraft } from './pageDraftStore.js';
 import { inactivePageSaveMessage, isPageOperationTargetActive, pageOperationIdentity } from './pageOperationIdentity.js';
 import { attachExistingPageIdentity, pageSaveMode } from './savePageIdentity.js';
@@ -9,6 +11,21 @@ import {
   WRITE_BLOCKED_FEEDBACK,
 } from './pageSaveFeedback.js';
 import { commitSavedPageResult, handlePagePersistError } from './pagePersistFlow.js';
+
+function rebaseServerIdentity(currentPage = {}, serverPage = null) {
+  if (!serverPage) return normalizePageForSave(currentPage);
+  return normalizePageForSave({
+    ...currentPage,
+    id: serverPage.id || currentPage.id,
+    projectId: serverPage.projectId || currentPage.projectId,
+    ownerId: serverPage.ownerId || currentPage.ownerId,
+    revision: serverPage.revision ?? currentPage.revision,
+    createdAt: serverPage.createdAt || currentPage.createdAt,
+    updatedAt: serverPage.updatedAt || currentPage.updatedAt,
+    savedAt: serverPage.savedAt || currentPage.savedAt,
+    publishedAt: serverPage.publishedAt || currentPage.publishedAt,
+  });
+}
 
 export function usePageSaveAction({
   allowedTabs,
@@ -30,7 +47,9 @@ export function usePageSaveAction({
   setPage,
   setSaved,
 }) {
-  const saveNow = async (pageOverride = null) => {
+  const saveInFlightRef = useRef(null);
+
+  const executeSave = async (pageOverride = null) => {
     if (!allowedTabs.includes(tab)) {
       markSaveStatus(SAVE_BLOCKED_FEEDBACK.level, SAVE_BLOCKED_FEEDBACK.title, SAVE_BLOCKED_FEEDBACK.message);
       return { ok: false, reason: 'tab-blocked' };
@@ -53,6 +72,7 @@ export function usePageSaveAction({
     const sourcePage = pageOverride
       ? normalizePageForSave({ ...(latestPageRef.current || page), ...pageOverride })
       : (latestPageRef.current || page);
+    const sourcePageRef = latestPageRef.current || page;
     const saveSourcePage = await attachExistingPageIdentity(sourcePage, {
       authUser,
       latestPage: latestPageRef.current,
@@ -96,6 +116,29 @@ export function usePageSaveAction({
       };
     }
 
+    const currentAfterSave = activePage();
+    const changedWhileSaving = currentAfterSave !== sourcePageRef
+      && currentAfterSave !== sourcePage
+      && currentAfterSave !== saveSourcePage
+      && currentAfterSave !== nextPage;
+
+    if (changedWhileSaving) {
+      const rebasedPage = rebaseServerIdentity(currentAfterSave, result?.page);
+      latestPageRef.current = rebasedPage;
+      setPage(rebasedPage);
+      saveLocalJson(STORAGE_KEY, rebasedPage, '페이지');
+      setConnectionsEditing(false);
+      setSaved(false);
+      markSaveStatus('warning', '서버 저장 완료', '저장 중 추가로 수정한 내용이 있습니다. 현재 화면은 한 번 더 저장해주세요.');
+      return {
+        ok: true,
+        page: rebasedPage,
+        savedPage: result?.page || null,
+        result,
+        pendingChanges: true,
+      };
+    }
+
     setConnectionsEditing(false);
     const savedPage = commitSavedPageResult({
       result,
@@ -109,6 +152,16 @@ export function usePageSaveAction({
       markSaveStatus,
     });
     return { ok: true, page: savedPage, result };
+  };
+
+  const saveNow = (pageOverride = null) => {
+    if (saveInFlightRef.current) return saveInFlightRef.current;
+    const task = executeSave(pageOverride);
+    saveInFlightRef.current = task;
+    task.finally(() => {
+      if (saveInFlightRef.current === task) saveInFlightRef.current = null;
+    });
+    return task;
   };
 
   return { saveNow };
