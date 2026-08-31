@@ -8,6 +8,7 @@ import {
 } from '../server/pageSavePolicy.mjs';
 import {
   attachExistingPageIdentity,
+  hasPersistedServerVersion,
   pageForAccountSave,
   pageSaveMode,
 } from '../src/runtime/savePageIdentity.js';
@@ -37,6 +38,8 @@ const authUser = {
 
 assert(pageSaveMode({ slug: 'new-page' }) === 'create-new', 'new local pages must use create-new');
 assert(pageSaveMode({ id: 'page-existing', projectId: 'project-existing', revision: 2, updatedAt: '2026-07-30T00:00:00.000Z' }) === 'update-existing', 'persisted pages must use update-existing');
+assert(hasPersistedServerVersion({ id: 'page-shell', projectId: 'project-shell' }) === false, 'a dashboard identity shell must not be treated as a loaded persisted revision');
+assert(hasPersistedServerVersion({ id: 'page-existing', projectId: 'project-existing', revision: 1 }) === true, 'a positive server revision must be treated as persisted');
 
 const preparedNewA = pageForAccountSave({ sourcePage: { slug: 'new-page', title: 'New' }, authUser });
 const preparedNewB = pageForAccountSave({ sourcePage: { slug: 'new-page', title: 'New retry' }, authUser });
@@ -113,6 +116,7 @@ expectCode('revision conflict', () => assertExpectedPageVersion({
 const pageAction = await readFile('src/runtime/usePageSaveAction.js', 'utf8');
 const styleAction = await readFile('src/runtime/usePersistStyleSaveAction.js', 'utf8');
 const persistFlow = await readFile('src/runtime/pagePersistFlow.js', 'utf8');
+const saveIdentitySource = await readFile('src/runtime/savePageIdentity.js', 'utf8');
 const repository = await readFile('src/lib/pageRepository.js', 'utf8');
 const hostedRoute = await readFile('functions/api/pages/[slug].js', 'utf8');
 const pageLimitMiddleware = await readFile('functions/api/pages/_middleware.js', 'utf8');
@@ -126,7 +130,9 @@ assert(pageAction.includes('const saveInFlightRef = useRef(null)') && pageAction
 assert(styleAction.includes('const styleSaveInFlightRef = useRef(null)') && styleAction.includes('if (styleSaveInFlightRef.current) return styleSaveInFlightRef.current'), 'style saves must deduplicate rapid repeated clicks while a write is in flight');
 assert(pageAction.includes('commitPendingLocalChangesAfterSave') && styleAction.includes('commitPendingLocalChangesAfterSave') && persistFlow.includes('rebaseSavedPageIdentity'), 'server responses must preserve edits made while a save is in flight and only advance server identity metadata');
 assert(repository.includes('schedulePublicPageSaveVerification') && !repository.includes('await verifyPublicPageSaveAdvisory'), 'public route verification must remain advisory and must not block successful D1 save completion');
+assert(repository.includes('publicVerificationTimers') && repository.includes('clearTimeout(previousTimer)') && repository.includes('PUBLIC_VERIFICATION_DEBOUNCE_MS'), 'rapid saves of the same page must coalesce advisory public-route verification reads');
 assert(pageLimitMiddleware.includes('canFastPathExistingSave') && pageLimitMiddleware.includes('ownedTargetExists') && pageLimitMiddleware.includes("url.searchParams.get('saveMode') !== 'update-existing'"), 'existing-page save middleware may skip large body parsing only after signed owner/page/project validation');
 assert(optimizer.includes('.sort((a, b) => b.bytes - a.bytes)') && optimizer.includes('if (estimatedBytes <= D1_PAGE_JSON_TARGET_BYTES) break'), 'oversized page optimization must compress the largest embedded images only until the safe target is reached');
+assert(saveIdentitySource.includes('if (hasPersistedServerVersion(sourcePage)) return sourcePage;') && saveIdentitySource.includes('const accountPages = await fetchAccountPages(authUser)'), 'known page identity without a loaded revision must resolve persisted version metadata instead of replaying create-new');
 
-console.log(JSON.stringify({ ok: true, checks: 26 }, null, 2));
+console.log(JSON.stringify({ ok: true, checks: 29 }, null, 2));
