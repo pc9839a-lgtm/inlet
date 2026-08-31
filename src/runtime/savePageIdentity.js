@@ -7,9 +7,12 @@ export function hasServerIdentity(page = {}) {
   return !!(String(page?.id || '').trim() && String(page?.projectId || '').trim());
 }
 
+export function hasPersistedServerVersion(page = {}) {
+  return Number(page?.revision || 0) > 0 || !!String(page?.updatedAt || page?.savedAt || page?.publishedAt || '').trim();
+}
+
 export function pageSaveMode(page = {}) {
-  const hasPersistedVersion = Number(page?.revision || 0) > 0 || !!String(page?.updatedAt || page?.savedAt || page?.publishedAt || '').trim();
-  return hasServerIdentity(page) && hasPersistedVersion ? 'update-existing' : 'create-new';
+  return hasServerIdentity(page) && hasPersistedServerVersion(page) ? 'update-existing' : 'create-new';
 }
 
 function sameSlug(a = {}, b = {}) {
@@ -110,15 +113,21 @@ export async function attachExistingPageIdentity(sourcePage = {}, {
   const context = projectContext(sourceWithSlug, authUser);
 
   if (hasServerIdentity(sourcePage)) {
-    if (matchesSaveContext(sourcePage, sourceWithSlug, context, authUser)) return sourcePage;
-    const error = new Error('다른 계정의 페이지는 편집하거나 저장할 수 없습니다. 페이지 소유 계정으로 로그인해주세요.');
-    error.status = 403;
-    error.details = { code: 'PAGE_ACCOUNT_MISMATCH' };
-    throw error;
+    if (!matchesSaveContext(sourcePage, sourceWithSlug, context, authUser)) {
+      const error = new Error('다른 계정의 페이지는 편집하거나 저장할 수 없습니다. 페이지 소유 계정으로 로그인해주세요.');
+      error.status = 403;
+      error.details = { code: 'PAGE_ACCOUNT_MISMATCH' };
+      throw error;
+    }
+    // Dashboard/open flows can know pageId/projectId before the full page revision has loaded.
+    // Treating that shell as create-new makes the server replay the old page without applying edits.
+    // Only fast-return when we also know the persisted version; otherwise resolve revision metadata below.
+    if (hasPersistedServerVersion(sourcePage)) return sourcePage;
   }
 
   if (
     hasServerIdentity(localIdentity)
+    && hasPersistedServerVersion(localIdentity)
     && (samePageId(localIdentity, sourceWithSlug) || matchesSaveContext(localIdentity, sourceWithSlug, context, authUser))
   ) {
     return mergeServerIdentity(sourcePage, localIdentity);

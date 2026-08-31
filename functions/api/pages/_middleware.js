@@ -45,10 +45,27 @@ async function activeOwnedPageCount(db, ownerId) {
   return Math.max(0, Number(row?.count || 0));
 }
 
+async function canFastPathExistingSave(request, env, slug) {
+  const url = new URL(request.url);
+  if (url.searchParams.get('saveMode') !== 'update-existing') return false;
+  const projectId = String(url.searchParams.get('projectId') || '').trim();
+  const pageId = String(url.searchParams.get('pageId') || '').trim();
+  if (!projectId || !pageId) return false;
+
+  const identity = await sessionIdentity(request, env);
+  if (!identity?.ownerId || isPlatformMasterIdentity(identity, env)) return !!identity?.ownerId;
+  const db = assertD1(env);
+  return ownedTargetExists(db, identity.ownerId, { projectId, pageId }, slug);
+}
+
 export async function onRequest({ request, env, next }) {
   if (request.method !== 'POST') return next();
   const slug = exactPageRoute(request);
   if (!slug) return next();
+
+  // 정상적인 기존 페이지 저장은 최대 1.8MB JSON body를 clone+parse할 필요가 없다.
+  // URL 힌트만 신뢰하지 않고 signed session 소유권과 실제 page/project 조합까지 확인한 뒤 fast-path 한다.
+  if (await canFastPathExistingSave(request, env, slug)) return next();
 
   let body;
   try {

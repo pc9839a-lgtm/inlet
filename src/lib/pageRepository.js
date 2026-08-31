@@ -5,6 +5,9 @@ import { normalizePageForSave } from './pageModel.js';
 import { optimizePageForServerSave } from './pageSaveOptimizer.js';
 import { projectContext } from './projectContext.js';
 
+const PUBLIC_VERIFICATION_DEBOUNCE_MS = 700;
+const publicVerificationTimers = new Map();
+
 function pageSlug(pageOrSlug) {
   const raw = typeof pageOrSlug === 'string' ? pageOrSlug : pageOrSlug?.slug;
   return String(raw || 'my-page').replace(/[^a-zA-Z0-9-_]/g, '') || 'my-page';
@@ -143,6 +146,7 @@ export async function fetchAccountPages(authUser = null) {
   const data = await res.json();
   return Array.isArray(data?.pages) ? data.pages : [];
 }
+
 export async function deleteAccountPage(page, authUser = null) {
   if (!isServerPageMode()) return { ok: true, mode: 'local' };
   const slug = pageSlug(page);
@@ -164,12 +168,19 @@ function publicPageMatchesSaved(publicPage = null, savedPage = {}) {
   if (String(publicPage.projectId || '') !== String(savedPage.projectId || '')) return false;
   const publicRevision = Number(publicPage.revision || 0);
   const savedRevision = Number(savedPage.revision || 0);
-  if (publicRevision && savedRevision && publicRevision < savedRevision) return false;
   const publicUpdatedAt = String(publicPage.updatedAt || '').trim();
   const savedUpdatedAt = String(savedPage.updatedAt || '').trim();
+
+  // Versioned D1 rows are authoritative. Avoid recursively stable-stringifying image-heavy
+  // page JSON after every save when revision and timestamp already prove the exact write.
+  if (publicRevision > 0 && savedRevision > 0) {
+    if (publicRevision !== savedRevision) return false;
+    if (publicUpdatedAt && savedUpdatedAt && publicUpdatedAt !== savedUpdatedAt) return false;
+    return true;
+  }
+
   if (publicUpdatedAt && savedUpdatedAt && publicUpdatedAt !== savedUpdatedAt) return false;
-  if (publicPageRenderFingerprint(publicPage) !== publicPageRenderFingerprint(savedPage)) return false;
-  return true;
+  return publicPageRenderFingerprint(publicPage) === publicPageRenderFingerprint(savedPage);
 }
 
 function publicPageRenderFingerprint(page = {}) {
@@ -217,20 +228,28 @@ async function verifyPublicPageSave(savedPage = {}) {
   });
 }
 
-async function verifyPublicPageSaveAdvisory(savedPage = {}, enabled = true) {
-  if (!enabled || !savedPage) return { ok: true, skipped: true };
-  try {
-    await verifyPublicPageSave(savedPage);
-    return { ok: true, skipped: false };
-  } catch (error) {
-    console.warn('Page save committed, but public verification is delayed:', error);
-    return {
-      ok: false,
-      skipped: false,
-      code: String(error?.details?.code || 'PAGE_PUBLIC_VERIFY_DELAYED'),
-      message: String(error?.message || '공개 페이지 반영 확인이 지연되고 있습니다.'),
-    };
-  }
+function schedulePublicPageSaveVerification(savedPage = {}, enabled = true) {
+  if (!enabled || !savedPage) return { ok: true, skipped: true, pending: false };
+  const slug = pageSlug(savedPage);
+  const previousTimer = publicVerificationTimers.get(slug);
+  if (previousTimer) clearTimeout(previousTimer);
+  const timer = setTimeout(() => {
+    publicVerificationTimers.delete(slug);
+    verifyPublicPageSave(savedPage).catch((error) => {
+      console.warn('Page save committed, but public verification is delayed:', error);
+    });
+  }, PUBLIC_VERIFICATION_DEBOUNCE_MS);
+  publicVerificationTimers.set(slug, timer);
+  return { ok: true, skipped: false, pending: true, debounceMs: PUBLIC_VERIFICATION_DEBOUNCE_MS };
+}
+
+function pageSavePostPath(slug, saveMode, identity = {}) {
+  const params = new URLSearchParams();
+  if (saveMode) params.set('saveMode', saveMode);
+  if (identity.pageId) params.set('pageId', identity.pageId);
+  if (identity.projectId) params.set('projectId', identity.projectId);
+  const query = params.toString();
+  return `/api/pages/${encodeURIComponent(slug)}${query ? `?${query}` : ''}`;
 }
 
 export async function persistPage(page, authUser = null, options = {}) {
@@ -265,8 +284,8 @@ export async function persistPage(page, authUser = null, options = {}) {
     ...(expectedRevision ? { expectedRevision } : {}),
   };
   try {
-    const result = await postJson(`/api/pages/${encodeURIComponent(slug)}`, payload, { headers: projectAuthHeaders(context) });
-    const publicVerification = await verifyPublicPageSaveAdvisory(result?.page, options.verifyPublic !== false);
+    const result = await postJson(pageSavePostPath(slug, saveMode, identity), payload, { headers: projectAuthHeaders(context) });
+    const publicVerification = schedulePublicPageSaveVerification(result?.page, options.verifyPublic !== false);
     return { ...result, clientPage: pageWithContext, publicVerification };
   } catch (error) {
     if (saveMode === 'update-existing') throw error;
@@ -274,7 +293,7 @@ export async function persistPage(page, authUser = null, options = {}) {
     const retry = accountOwnedPageForRetry(pageWithContext, authUser);
     if (!retry.context.projectId || retry.context.projectId === context.projectId) throw error;
     const retryIdentity = pageSaveIdentity(retry.page, retry.context, saveMode);
-    const result = await postJson(`/api/pages/${encodeURIComponent(retry.page.slug)}`, {
+    const result = await postJson(pageSavePostPath(retry.page.slug, saveMode, retryIdentity), {
       ...payload,
       page: pageForServerWrite(retry.page),
       project: retry.context,
@@ -282,7 +301,7 @@ export async function persistPage(page, authUser = null, options = {}) {
       saveRequestId: pageSaveRequestId(retryIdentity, expectedRevision),
       recoveredProjectAccess: true,
     }, { headers: projectAuthHeaders(retry.context) });
-    const publicVerification = await verifyPublicPageSaveAdvisory(result?.page, options.verifyPublic !== false);
+    const publicVerification = schedulePublicPageSaveVerification(result?.page, options.verifyPublic !== false);
     return { ...result, clientPage: retry.page, publicVerification };
   }
 }

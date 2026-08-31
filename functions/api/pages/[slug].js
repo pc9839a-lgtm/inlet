@@ -320,7 +320,13 @@ export async function onRequest({ request, env, params }) {
         project = await authorizeNewPageProject({ db, request, env, project, identity: session, slug, writeTab });
       }
 
-      const publicExisting = await getPublicPageBySlug(db, slug);
+      // 기존 페이지가 같은 slug로 저장되는 일반적인 경로에서는 이미 읽은 currentById를 재사용한다.
+      // 새 URL로 변경할 때만 전체 공개 slug 충돌 조회가 필요하다.
+      const publicExisting = saveMode === 'update-existing'
+        && currentById
+        && String(currentById.slug || '') === slug
+        ? { page: currentById, project: { projectId: currentById.projectId, slug: currentById.slug } }
+        : await getPublicPageBySlug(db, slug);
       const targetState = assertTargetSlugAvailable({
         mode: saveMode,
         identity: { ...saveIdentity, slug },
@@ -348,7 +354,8 @@ export async function onRequest({ request, env, params }) {
         slug,
       });
 
-      const fallbackEmail = await fallbackFreeEmailAlertRecipient(db, project);
+      // signed session에 이메일이 있으면 프로젝트/계정 이메일을 다시 조회하지 않는다.
+      const fallbackEmail = session?.email ? '' : await fallbackFreeEmailAlertRecipient(db, project);
       const pageForSave = enforceFreeEmailAlertRecipient({
         ...incoming,
         id: currentById?.id || incoming.id || saveIdentity.pageId || '',
@@ -363,14 +370,18 @@ export async function onRequest({ request, env, params }) {
         createdByAccountId: session?.ownerId || project.ownerId || null,
         reason: body.reason || body.revisionReason || '',
       });
-      await writePageManagerAuditChanges({
-        request,
-        env,
-        identity: session,
-        projectId: project.projectId,
-        previousPage: current,
-        nextPage: saved,
-      });
+
+      // 매니저 권한 변경 감사 로그는 설정 저장에서만 필요하다.
+      if (writeTab === 'settings') {
+        await writePageManagerAuditChanges({
+          request,
+          env,
+          identity: session,
+          projectId: project.projectId,
+          previousPage: current,
+          nextPage: saved,
+        });
+      }
       return jsonResponse(request, env, 200, {
         ok: true,
         replayed: false,
