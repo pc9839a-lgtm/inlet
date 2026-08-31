@@ -38,7 +38,7 @@ concurrency:
 jobs:
   verify:
     name: Verify beta/paid launch gate
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
       PAGERO_LAUNCH_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.launch_mode || 'beta' }}
@@ -75,8 +75,24 @@ jobs:
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
 
+      - name: Resolve Chrome executable
+        id: chrome
+        continue-on-error: true
+        shell: bash
+        run: |
+          CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$CHROME_BIN" ]; then
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "Chrome or Chromium is not present on this runner."
+            exit 0
+          fi
+          echo "found=true" >> "$GITHUB_OUTPUT"
+          echo "INLET_BROWSER_QA_CHROME_PATH=$CHROME_BIN" >> "$GITHUB_ENV"
+          echo "Using browser: $CHROME_BIN"
+
       - name: Verify production pages in real Chrome
         id: browser
+        if: steps.chrome.outputs.found == 'true'
         continue-on-error: true
         env:
           INLET_PRODUCTION_QA_URL: https://pagero.kr
@@ -134,11 +150,13 @@ jobs:
         shell: bash
         run: |
           live_code="${{ steps.live.outputs.exit_code }}"
+          chrome_found="${{ steps.chrome.outputs.found }}"
           browser_code="${{ steps.browser.outputs.exit_code }}"
           paid_blocked="${{ steps.billing.outputs.paid_blocked }}"
           launch_mode="${{ steps.billing.outputs.launch_mode }}"
 
           live_code="${live_code:-1}"
+          chrome_found="${chrome_found:-false}"
           browser_code="${browser_code:-1}"
           paid_blocked="${paid_blocked:-true}"
           launch_mode="${launch_mode:-${PAGERO_LAUNCH_MODE:-beta}}"
@@ -149,13 +167,13 @@ jobs:
             echo "| Gate | Result |"
             echo "| --- | --- |"
             if [ "$live_code" = "0" ]; then echo "| Production health + saved public page + hosted SES readiness | PASS |"; else echo "| Production health + saved public page + hosted SES readiness | BLOCKED |"; fi
-            if [ "$browser_code" = "0" ]; then echo "| Production real-browser routes (desktop/mobile) | PASS |"; else echo "| Production real-browser routes (desktop/mobile) | BLOCKED |"; fi
+            if [ "$chrome_found" != "true" ]; then echo "| Production real-browser routes | BLOCKED (browser engine unavailable) |"; elif [ "$browser_code" = "0" ]; then echo "| Production real-browser routes (desktop/mobile) | PASS |"; else echo "| Production real-browser routes (desktop/mobile) | BLOCKED |"; fi
             if [ "$paid_blocked" = "true" ]; then echo "| Web paid self-serve checkout | NOT READY (pre-checkout) |"; else echo "| Web paid self-serve checkout | READY |"; fi
             echo "| Requested launch mode | $launch_mode |"
             echo
             echo "Note: credential/DNS-level SES verification remains in the existing manual 'SES Auth Email Production Verify' workflow."
             echo
-            if [ "$live_code" = "0" ] && [ "$browser_code" = "0" ] && { [ "$launch_mode" != "paid" ] || [ "$paid_blocked" != "true" ]; }; then
+            if [ "$live_code" = "0" ] && [ "$chrome_found" = "true" ] && [ "$browser_code" = "0" ] && { [ "$launch_mode" != "paid" ] || [ "$paid_blocked" != "true" ]; }; then
               echo "**Decision: READY**"
             else
               echo "**Decision: BLOCKED**"
@@ -164,6 +182,10 @@ jobs:
 
           if [ "$live_code" != "0" ]; then
             echo "PAGERO launch blocked: production health/public-page/hosted-SES gate failed."
+            exit 1
+          fi
+          if [ "$chrome_found" != "true" ]; then
+            echo "PAGERO launch blocked: browser engine is unavailable on the runner."
             exit 1
           fi
           if [ "$browser_code" != "0" ]; then
