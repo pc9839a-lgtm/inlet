@@ -5,7 +5,6 @@ on:
     paths:
       - '.github/workflows/pagero-launch-readiness.yml'
       - 'scripts/live-readiness-check.mjs'
-      - 'scripts/production-browser-quality-check.mjs'
       - 'scripts/browser-visual-quality-check.mjs'
       - 'scripts/billing-referral-quality-check.mjs'
       - 'functions/api/auth/**'
@@ -94,16 +93,35 @@ jobs:
         id: browser
         if: steps.chrome.outputs.found == 'true'
         continue-on-error: true
-        env:
-          INLET_PRODUCTION_QA_URL: https://pagero.kr
-          INLET_PRODUCTION_BROWSER_QA_REQUIRE: '1'
-          INLET_PRODUCTION_QA_PUBLIC_SLUG: ${{ env.PAGERO_PUBLIC_SLUG }}
         shell: bash
         run: |
           set +e
-          node scripts/production-browser-quality-check.mjs > pagero-production-browser.json
-          code=$?
-          cat pagero-production-browser.json
+          rm -rf .tmp-browser-visual/pagero-launch
+          mkdir -p .tmp-browser-visual/pagero-launch
+
+          run_case() {
+            name="$1"
+            url="$2"
+            viewports="$3"
+            expected_text="$4"
+            expected_selector="$5"
+            screenshot_dir=".tmp-browser-visual/pagero-launch/${name}"
+            echo "[PAGERO launch browser] ${name}: ${url}"
+            INLET_BROWSER_QA_URL="$url" \
+            INLET_BROWSER_QA_REQUIRE=1 \
+            INLET_BROWSER_QA_VIEWPORTS="$viewports" \
+            INLET_BROWSER_QA_EXPECT_TEXT="$expected_text" \
+            INLET_BROWSER_QA_EXPECT_SELECTOR="$expected_selector" \
+            INLET_BROWSER_QA_FORBID_TEXT="화면을 불러오는 중 오류가 발생했습니다,Failed to fetch dynamically imported module,ApiError is not defined,Project access is required,Page not found,페이지를 찾을 수 없습니다" \
+            INLET_BROWSER_QA_SCREENSHOT_DIR="$screenshot_dir" \
+            node scripts/browser-visual-quality-check.mjs
+          }
+
+          code=0
+          run_case "home-desktop" "https://pagero.kr/" "desktop" "WAYZI" "" || code=1
+          run_case "home-mobile" "https://pagero.kr/" "mobile" "WAYZI" "" || code=1
+          run_case "public-landing" "https://pagero.kr/${PAGERO_PUBLIC_SLUG}" "desktop,mobile" "" ".public-landing-shell,.public-landing-viewport,.landing-page.public-render" || code=1
+
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
 
@@ -140,8 +158,7 @@ jobs:
           name: pagero-launch-readiness-${{ github.run_id }}
           path: |
             pagero-live-readiness.json
-            pagero-production-browser.json
-            .tmp-browser-visual/production-*/**
+            .tmp-browser-visual/pagero-launch/**
           if-no-files-found: warn
           retention-days: 30
 
@@ -171,6 +188,7 @@ jobs:
             if [ "$paid_blocked" = "true" ]; then echo "| Web paid self-serve checkout | NOT READY (pre-checkout) |"; else echo "| Web paid self-serve checkout | READY |"; fi
             echo "| Requested launch mode | $launch_mode |"
             echo
+            echo "Note: public landing smoke is template-agnostic; a custom page is not required to contain a hero section."
             echo "Note: credential/DNS-level SES verification remains in the existing manual 'SES Auth Email Production Verify' workflow."
             echo
             if [ "$live_code" = "0" ] && [ "$chrome_found" = "true" ] && [ "$browser_code" = "0" ] && { [ "$launch_mode" != "paid" ] || [ "$paid_blocked" != "true" ]; }; then
