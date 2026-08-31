@@ -118,8 +118,8 @@ jobs:
           }
 
           code=0
-          run_case "home-desktop" "https://pagero.kr/" "desktop" "WAYZI" "" || code=1
-          run_case "home-mobile" "https://pagero.kr/" "mobile" "WAYZI" "" || code=1
+          run_case "home-desktop" "https://pagero.kr/" "desktop" "바로 시작하기" "" || code=1
+          run_case "home-mobile" "https://pagero.kr/" "mobile" "바로 시작하기" "" || code=1
           run_case "public-landing" "https://pagero.kr/${PAGERO_PUBLIC_SLUG}" "desktop,mobile" "" ".public-landing-shell,.public-landing-viewport,.landing-page.public-render" || code=1
 
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
@@ -188,6 +188,7 @@ jobs:
             if [ "$paid_blocked" = "true" ]; then echo "| Web paid self-serve checkout | NOT READY (pre-checkout) |"; else echo "| Web paid self-serve checkout | READY |"; fi
             echo "| Requested launch mode | $launch_mode |"
             echo
+            echo "Note: homepage smoke requires the real launch CTA, not footer-only text."
             echo "Note: public landing smoke is template-agnostic; a custom page is not required to contain a hero section."
             echo "Note: credential/DNS-level SES verification remains in the existing manual 'SES Auth Email Production Verify' workflow."
             echo
