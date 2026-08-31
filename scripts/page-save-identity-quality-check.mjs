@@ -112,12 +112,21 @@ expectCode('revision conflict', () => assertExpectedPageVersion({
 
 const pageAction = await readFile('src/runtime/usePageSaveAction.js', 'utf8');
 const styleAction = await readFile('src/runtime/usePersistStyleSaveAction.js', 'utf8');
+const persistFlow = await readFile('src/runtime/pagePersistFlow.js', 'utf8');
 const repository = await readFile('src/lib/pageRepository.js', 'utf8');
 const hostedRoute = await readFile('functions/api/pages/[slug].js', 'utf8');
+const pageLimitMiddleware = await readFile('functions/api/pages/_middleware.js', 'utf8');
+const optimizer = await readFile('src/lib/pageSaveOptimizer.js', 'utf8');
 
 assert(pageAction.includes('const saveMode = pageSaveMode(saveSourcePage)') && pageAction.includes('expectedRevision'), 'normal page saves must derive mode before adding a new transport identity');
 assert(styleAction.includes('const saveMode = pageSaveMode(styleSourcePage)') && styleAction.includes('expectedRevision'), 'style saves must use the same page identity contract');
 assert(repository.includes('saveRequestId') && repository.includes('identity,') && repository.includes("if (saveMode === 'update-existing') throw error"), 'page repository must send identity/idempotency metadata and never retarget an existing update to a new project');
 assert(hostedRoute.includes("SELECT * FROM pages WHERE id = ? LIMIT 1") && hostedRoute.includes('assertTargetSlugAvailable') && hostedRoute.includes('assertExpectedPageVersion'), 'hosted save route must resolve updates by page id and guard slug/version conflicts');
+assert(pageAction.includes('const saveInFlightRef = useRef(null)') && pageAction.includes('if (saveInFlightRef.current) return saveInFlightRef.current'), 'normal page saves must deduplicate rapid repeated clicks while a write is in flight');
+assert(styleAction.includes('const styleSaveInFlightRef = useRef(null)') && styleAction.includes('if (styleSaveInFlightRef.current) return styleSaveInFlightRef.current'), 'style saves must deduplicate rapid repeated clicks while a write is in flight');
+assert(pageAction.includes('commitPendingLocalChangesAfterSave') && styleAction.includes('commitPendingLocalChangesAfterSave') && persistFlow.includes('rebaseSavedPageIdentity'), 'server responses must preserve edits made while a save is in flight and only advance server identity metadata');
+assert(repository.includes('schedulePublicPageSaveVerification') && !repository.includes('await verifyPublicPageSaveAdvisory'), 'public route verification must remain advisory and must not block successful D1 save completion');
+assert(pageLimitMiddleware.includes('canFastPathExistingSave') && pageLimitMiddleware.includes('ownedTargetExists') && pageLimitMiddleware.includes("url.searchParams.get('saveMode') !== 'update-existing'"), 'existing-page save middleware may skip large body parsing only after signed owner/page/project validation');
+assert(optimizer.includes('.sort((a, b) => b.bytes - a.bytes)') && optimizer.includes('if (estimatedBytes <= D1_PAGE_JSON_TARGET_BYTES) break'), 'oversized page optimization must compress the largest embedded images only until the safe target is reached');
 
-console.log(JSON.stringify({ ok: true, checks: 20 }, null, 2));
+console.log(JSON.stringify({ ok: true, checks: 26 }, null, 2));
