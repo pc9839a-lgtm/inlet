@@ -5,8 +5,6 @@ on:
     paths:
       - '.github/workflows/pagero-launch-readiness.yml'
       - 'scripts/live-readiness-check.mjs'
-      - 'scripts/ses-auth-email-production-check.mjs'
-      - 'scripts/ses-auth-email-production-safety.mjs'
       - 'scripts/billing-referral-quality-check.mjs'
       - 'functions/api/auth/**'
       - 'functions/api/billing/**'
@@ -27,11 +25,6 @@ on:
         required: true
         default: dyjh
         type: string
-      region:
-        description: AWS SES region
-        required: true
-        default: ap-northeast-2
-        type: string
 
 permissions:
   contents: read
@@ -44,7 +37,6 @@ jobs:
   verify:
     name: Verify beta/paid launch gate
     runs-on: ubuntu-24.04
-    environment: production
     timeout-minutes: 20
     env:
       PAGERO_LAUNCH_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.launch_mode || 'beta' }}
@@ -65,7 +57,7 @@ jobs:
       - name: Billing/referral offline quality gate
         run: node scripts/billing-referral-quality-check.mjs
 
-      - name: Verify production health and public saved page
+      - name: Verify production health, SES runtime readiness, and public saved page
         id: live
         continue-on-error: true
         env:
@@ -78,28 +70,6 @@ jobs:
           node scripts/live-readiness-check.mjs > pagero-live-readiness.json
           code=$?
           cat pagero-live-readiness.json
-          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
-          exit 0
-
-      - name: Verify SES production readiness (read-only)
-        id: ses
-        continue-on-error: true
-        env:
-          INLET_SES_REGION: ${{ github.event_name == 'workflow_dispatch' && inputs.region || 'ap-northeast-2' }}
-          INLET_SES_ACCESS_KEY_ID: ${{ secrets.PAGERO_SES_ACCESS_KEY_ID }}
-          INLET_SES_SECRET_ACCESS_KEY: ${{ secrets.PAGERO_SES_SECRET_ACCESS_KEY }}
-          INLET_AUTH_EMAIL_FROM: ${{ vars.PAGERO_AUTH_EMAIL_FROM }}
-          INLET_SES_IDENTITY: ${{ vars.PAGERO_SES_IDENTITY }}
-          INLET_SES_REQUIRE_DMARC: '1'
-          INLET_SES_REQUIRE_CUSTOM_MAIL_FROM: '0'
-          INLET_SES_REQUIRE_LIVE: '1'
-          INLET_SES_TIMEOUT_MS: '15000'
-        shell: bash
-        run: |
-          set +e
-          node scripts/ses-auth-email-production-check.mjs > pagero-ses-readiness.json
-          code=$?
-          cat pagero-ses-readiness.json
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
 
@@ -134,10 +104,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pagero-launch-readiness-${{ github.run_id }}
-          path: |
-            pagero-live-readiness.json
-            pagero-ses-readiness.json
-          if-no-files-found: warn
+          path: pagero-live-readiness.json
+          if-no-files-found: error
           retention-days: 30
 
       - name: Publish launch decision
@@ -145,12 +113,10 @@ jobs:
         shell: bash
         run: |
           live_code="${{ steps.live.outputs.exit_code }}"
-          ses_code="${{ steps.ses.outputs.exit_code }}"
           paid_blocked="${{ steps.billing.outputs.paid_blocked }}"
           launch_mode="${{ steps.billing.outputs.launch_mode }}"
 
           live_code="${live_code:-1}"
-          ses_code="${ses_code:-1}"
           paid_blocked="${paid_blocked:-true}"
           launch_mode="${launch_mode:-${PAGERO_LAUNCH_MODE:-beta}}"
 
@@ -159,12 +125,13 @@ jobs:
             echo
             echo "| Gate | Result |"
             echo "| --- | --- |"
-            if [ "$live_code" = "0" ]; then echo "| Production health + public page | PASS |"; else echo "| Production health + public page | BLOCKED |"; fi
-            if [ "$ses_code" = "0" ]; then echo "| SES auth email infrastructure | PASS |"; else echo "| SES auth email infrastructure | BLOCKED |"; fi
+            if [ "$live_code" = "0" ]; then echo "| Production health + saved public page + hosted SES readiness | PASS |"; else echo "| Production health + saved public page + hosted SES readiness | BLOCKED |"; fi
             if [ "$paid_blocked" = "true" ]; then echo "| Web paid self-serve checkout | NOT READY (pre-checkout) |"; else echo "| Web paid self-serve checkout | READY |"; fi
             echo "| Requested launch mode | $launch_mode |"
             echo
-            if [ "$live_code" = "0" ] && [ "$ses_code" = "0" ] && { [ "$launch_mode" != "paid" ] || [ "$paid_blocked" != "true" ]; }; then
+            echo "Note: credential/DNS-level SES verification remains in the existing manual 'SES Auth Email Production Verify' workflow."
+            echo
+            if [ "$live_code" = "0" ] && { [ "$launch_mode" != "paid" ] || [ "$paid_blocked" != "true" ]; }; then
               echo "**Decision: READY**"
             else
               echo "**Decision: BLOCKED**"
@@ -172,11 +139,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
           if [ "$live_code" != "0" ]; then
-            echo "PAGERO launch blocked: production health/public page live gate failed."
-            exit 1
-          fi
-          if [ "$ses_code" != "0" ]; then
-            echo "PAGERO launch blocked: SES production readiness failed."
+            echo "PAGERO launch blocked: production health/public-page/hosted-SES gate failed."
             exit 1
           fi
           if [ "$launch_mode" = "paid" ] && [ "$paid_blocked" = "true" ]; then
