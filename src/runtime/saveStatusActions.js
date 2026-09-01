@@ -10,14 +10,16 @@ export function createLocalJsonSaver({ saveJson, storageErrorMessage, saveErrorN
     if (result?.ok) {
       if (!options.quietSuccess && (!saveErrorNoticeRef.current || saveErrorNoticeRef.current.startsWith(`${key}:`))) {
         saveErrorNoticeRef.current = '';
-        markSaveStatus('ok', '\uB85C\uCEEC \uC800\uC7A5\uB428', `${label} \uC800\uC7A5 \uC644\uB8CC`);
+        markSaveStatus('ok', '브라우저에 저장됨', '');
       }
       return result;
     }
 
-    const message = `${label} \uB85C\uCEEC \uC800\uC7A5 \uC2E4\uD328: ${storageErrorMessage(result?.error)}`;
+    const detail = storageErrorMessage(result?.error);
+    const message = '브라우저 임시 저장에 실패했습니다.';
     const signature = `${key}:${result?.reason || 'unknown'}:${String(result?.error?.message || result?.error || '')}`;
-    markSaveStatus('error', '\uB85C\uCEEC \uC800\uC7A5 \uC2E4\uD328', message);
+    console.warn(`Local save failed (${label}):`, detail);
+    markSaveStatus('error', '임시 저장 실패', message);
     if (saveErrorNoticeRef.current !== signature) {
       saveErrorNoticeRef.current = signature;
       showToast(message, 'error');
