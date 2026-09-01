@@ -149,15 +149,22 @@ export function evaluatePageDraft({ draft, serverPage, now = Date.now() } = {}) 
   if (!draft?.page) return { action: 'none' };
   if (draft.interactionConfirmed !== true) return { action: 'discard', reason: 'unconfirmed-edit' };
   if (now - Number(draft.editedAt || 0) > MAX_DRAFT_AGE_MS) return { action: 'discard', reason: 'expired' };
+
+  const draftSignature = pageDraftContentSignature(draft.page);
+  const serverSignature = pageDraftContentSignature(serverPage);
+  if (draftSignature === serverSignature) return { action: 'discard', reason: 'same-content' };
+
   const serverRevision = Number(serverPage?.revision || 0);
   const baseRevision = Number(draft.baseRevision || 0);
-  if (serverRevision !== baseRevision) return { action: 'discard', reason: 'server-revision-changed' };
+  if (serverRevision !== baseRevision) return { action: 'conflict', reason: 'server-revision-changed' };
+
   const serverUpdatedAt = text(serverPage?.updatedAt || serverPage?.savedAt || serverPage?.createdAt);
   if (draft.baseUpdatedAt && serverUpdatedAt && draft.baseUpdatedAt !== serverUpdatedAt) {
-    return { action: 'discard', reason: 'server-timestamp-changed' };
+    return { action: 'conflict', reason: 'server-timestamp-changed' };
   }
-  if (pageDraftContentSignature(draft.page) === pageDraftContentSignature(serverPage)) return { action: 'discard', reason: 'same-content' };
-  if (serverUpdatedAt && Number(draft.editedAt || 0) <= timestamp(serverUpdatedAt)) return { action: 'discard', reason: 'server-newer' };
+  if (serverUpdatedAt && Number(draft.editedAt || 0) <= timestamp(serverUpdatedAt)) {
+    return { action: 'conflict', reason: 'server-newer' };
+  }
   return { action: 'restore', reason: 'newer-local-draft' };
 }
 
