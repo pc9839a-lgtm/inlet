@@ -85,6 +85,8 @@ assert(!readPageDraft({ page: serverPage, authUser, storage }), 'saved or discar
 const persistenceSource = await readFile('src/runtime/useLocalWorkspacePersistence.js', 'utf8');
 const accountLoadSource = await readFile('src/runtime/useAccountWorkspacePage.js', 'utf8');
 const persistFlowSource = await readFile('src/runtime/pagePersistFlow.js', 'utf8');
+const pageSaveActionSource = await readFile('src/runtime/usePageSaveAction.js', 'utf8');
+const styleSaveActionSource = await readFile('src/runtime/usePersistStyleSaveAction.js', 'utf8');
 const storageKeysSource = await readFile('src/config/storageKeys.js', 'utf8');
 const packageJson = JSON.parse(await readFile('package.json', 'utf8'));
 const qaAllSource = await readFile('scripts/qa-all.mjs', 'utf8');
@@ -96,7 +98,12 @@ assert(accountLoadSource.includes("new CustomEvent('builder:confirm'") && accoun
 assert(accountLoadSource.includes("evaluation.action !== 'restore'") && accountLoadSource.includes('clearPageDraft'), 'stale drafts must be discarded instead of restored');
 assert(accountLoadSource.includes('const loadKey =') && accountLoadSource.includes('context.projectId') && accountLoadSource.includes('if (accountPageLoadRef.current !== loadKey) return;') && accountLoadSource.includes('return () => { alive = false; };'), 'late server responses must be rejected by page/project-scoped load identity and effect cleanup');
 assert(accountLoadSource.includes("if ((current.slug || '') !== slug) return;"), 'server responses must still match the selected page slug before draft recovery');
-assert(persistFlowSource.includes('clearPageDraft({ page: nextPage })') && persistFlowSource.includes('clearPageDraft({ page: savedPage })'), 'successful server saves must clear local drafts');
+assert(persistFlowSource.includes('clearPageDraft({ page: nextPage, authUser })') && persistFlowSource.includes('clearPageDraft({ page: savedPage, authUser })'), 'successful server saves must clear only the active account draft');
+assert(persistFlowSource.includes('recoveryPage = page') && persistFlowSource.includes('preserveRecoveryDraft(recoveryPage, authUser)'), 'failed server saves must immediately preserve the latest recovery page');
+assert(persistFlowSource.includes('recoveryPage = currentPage') && persistFlowSource.includes('rebaseSavedPageIdentity(recoveryPage, result?.page)') && persistFlowSource.includes('preserveRecoveryDraft(rebasedRecoveryPage, authUser)'), 'edits made during a successful save must be rebased to the new server revision and snapshotted immediately');
+assert(pageSaveActionSource.includes('recoveryPage: activePage()') && pageSaveActionSource.includes('authUser,'), 'page save failures must snapshot the currently active edited page');
+assert(styleSaveActionSource.includes('recoveryPageWithLatestStyle') && styleSaveActionSource.includes('latestStylePreviewThemeRef.current') && styleSaveActionSource.includes('latestStylePreviewBlocksRef.current'), 'style recovery must include the latest pending preview theme and blocks');
+assert(styleSaveActionSource.includes('recoveryPage: recoveryPageWithLatestStyle(activePage())') && styleSaveActionSource.includes('recoveryPage: recoveryPageWithLatestStyle(currentAfterSave)'), 'style save failures and save-race success must both persist a complete recovery draft');
 assert(storageKeysSource.includes("PAGE_DRAFTS_KEY = 'inlet-page-drafts-v1'"), 'page draft storage key must be versioned');
 assert(packageJson.scripts?.['page:draft:qa'] === 'node scripts/page-draft-recovery-quality-check.mjs', 'package page:draft:qa script missing');
 assert(qaAllSource.includes("['page:draft:qa', ['scripts/page-draft-recovery-quality-check.mjs']]"), 'qa:all must enforce draft recovery QA');
@@ -112,4 +119,8 @@ console.log(JSON.stringify({
   serverRevisionGuard: true,
   pageSwitchGuard: true,
   clearAfterSave: true,
+  scopedDraftClear: true,
+  immediateFailureSnapshot: true,
+  saveRaceRecoverySnapshot: true,
+  pendingStyleRecoverySnapshot: true,
 }, null, 2));
