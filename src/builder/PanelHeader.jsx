@@ -1,8 +1,6 @@
 import { Save } from 'lucide-react';
 
 const saveStateColors = {
-  idle: '#6c727e',
-  ok: '#147a50',
   warning: '#946100',
   error: '#b42318',
 };
@@ -18,6 +16,7 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
     admin: '관리자',
   };
   const title = titles[tab] || titles.edit;
+  const showSaveAlert = saveStatus && (saveStatus.tone === 'warning' || saveStatus.tone === 'error');
 
   return (
     <header className="panel-header product-panel-header">
@@ -25,9 +24,9 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
         <p>{page.title}</p>
         <div className="operations-panel-title-row">
           <h1>{title}</h1>
-          {saveStatus && (
+          {showSaveAlert && (
             <div className="panel-save-status operations-save-status" title={saveStatus.detail || saveStatus.label} aria-live="polite">
-              <strong style={{ color: saveStateColors[saveStatus.tone] || saveStateColors.idle }}>{saveStatus.label}</strong>
+              <strong style={{ color: saveStateColors[saveStatus.tone] }}>{saveStatus.label}</strong>
             </div>
           )}
         </div>
