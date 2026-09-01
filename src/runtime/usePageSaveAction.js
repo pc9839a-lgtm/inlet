@@ -3,6 +3,7 @@ import { persistPage } from '../lib/pageRepository.js';
 import { normalizePageForSave } from '../lib/pageModel.js';
 import { clearPageDraft } from './pageDraftStore.js';
 import { inactivePageSaveMessage, isPageOperationTargetActive, pageOperationIdentity } from './pageOperationIdentity.js';
+import { recoverCommittedPageSave } from './pageSaveReplayRecovery.js';
 import { attachExistingPageIdentity, pageSaveMode } from './savePageIdentity.js';
 import {
   SAVE_BLOCKED_FEEDBACK,
@@ -88,16 +89,21 @@ export function usePageSaveAction({
           showToast(inactivePageSaveMessage('page', true), 'error');
           return { ok: false, error, reason: 'inactive-page', page: activePage() };
         }
-        await handlePagePersistError({
-          error,
-          page: nextPage,
-          recoveryPage: activePage(),
-          authUser,
-          handlePageSaveError,
-          markSaveStatus,
-          showToast,
-        });
-        return { ok: false, error };
+        const replayedResult = await recoverCommittedPageSave({ error, page: nextPage, authUser });
+        if (replayedResult) {
+          result = replayedResult;
+        } else {
+          await handlePagePersistError({
+            error,
+            page: nextPage,
+            recoveryPage: activePage(),
+            authUser,
+            handlePageSaveError,
+            markSaveStatus,
+            showToast,
+          });
+          return { ok: false, error };
+        }
       }
 
       if (!targetIsActive()) {
