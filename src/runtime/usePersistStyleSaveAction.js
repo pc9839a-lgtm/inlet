@@ -35,6 +35,14 @@ export function usePersistStyleSaveAction({
   latestStylePreviewThemeRef.current = stylePreviewTheme;
   latestStylePreviewBlocksRef.current = stylePreviewBlocks;
 
+  const recoveryPageWithLatestStyle = (currentPage) => ({
+    ...currentPage,
+    theme: latestStylePreviewThemeRef.current
+      ? { ...currentPage.theme, ...latestStylePreviewThemeRef.current }
+      : currentPage.theme,
+    blocks: latestStylePreviewBlocksRef.current || currentPage.blocks,
+  });
+
   const persistStyleNow = async () => {
     if (styleSaveInFlightRef.current) return styleSaveInFlightRef.current;
 
@@ -71,7 +79,15 @@ export function usePersistStyleSaveAction({
           showToast(inactivePageSaveMessage('style', true), 'error');
           return { ok: false, error, reason: 'inactive-page', page: activePage() };
         }
-        await handlePagePersistError({ error, page: nextPage, handlePageSaveError, markSaveStatus, showToast });
+        await handlePagePersistError({
+          error,
+          page: nextPage,
+          recoveryPage: recoveryPageWithLatestStyle(activePage()),
+          authUser,
+          handlePageSaveError,
+          markSaveStatus,
+          showToast,
+        });
         return { ok: false, error };
       }
 
@@ -100,6 +116,8 @@ export function usePersistStyleSaveAction({
         const rebasedPage = commitPendingLocalChangesAfterSave({
           result,
           currentPage: currentAfterSave,
+          recoveryPage: recoveryPageWithLatestStyle(currentAfterSave),
+          authUser,
           latestPageRef,
           saveLocalJson,
           setPage,
@@ -123,6 +141,7 @@ export function usePersistStyleSaveAction({
         result,
         nextPage,
         scope: 'style',
+        authUser,
         latestPageRef,
         savedPageFromResult,
         saveLocalJson,
