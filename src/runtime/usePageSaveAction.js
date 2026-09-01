@@ -88,7 +88,15 @@ export function usePageSaveAction({
           showToast(inactivePageSaveMessage('page', true), 'error');
           return { ok: false, error, reason: 'inactive-page', page: activePage() };
         }
-        await handlePagePersistError({ error, page: nextPage, handlePageSaveError, markSaveStatus, showToast });
+        await handlePagePersistError({
+          error,
+          page: nextPage,
+          recoveryPage: activePage(),
+          authUser,
+          handlePageSaveError,
+          markSaveStatus,
+          showToast,
+        });
         return { ok: false, error };
       }
 
@@ -118,6 +126,7 @@ export function usePageSaveAction({
         const rebasedPage = commitPendingLocalChangesAfterSave({
           result,
           currentPage: currentAfterSave,
+          authUser,
           latestPageRef,
           saveLocalJson,
           setPage,
@@ -138,6 +147,7 @@ export function usePageSaveAction({
         result,
         nextPage,
         scope: 'page',
+        authUser,
         latestPageRef,
         savedPageFromResult,
         saveLocalJson,
