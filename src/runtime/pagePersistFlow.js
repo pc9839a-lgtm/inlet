@@ -54,7 +54,7 @@ export function commitPendingLocalChangesAfterSave({
   setPage,
   setSaved,
   markSaveStatus,
-  message = '저장 중 추가로 수정한 내용이 있습니다. 현재 화면은 한 번 더 저장해주세요.',
+  message = '추가 수정이 있습니다. 한 번 더 저장해주세요.',
 }) {
   const rebasedPage = rebaseSavedPageIdentity(currentPage, result?.page);
   const rebasedRecoveryPage = rebaseSavedPageIdentity(recoveryPage, result?.page);
@@ -63,9 +63,9 @@ export function commitPendingLocalChangesAfterSave({
   preserveRecoveryDraft(rebasedRecoveryPage, authUser);
   latestPageRef.current = rebasedPage;
   setPage(rebasedPage);
-  saveLocalJson(STORAGE_KEY, rebasedPage, PAGE_SAVE_LABEL);
+  saveLocalJson(STORAGE_KEY, rebasedPage, PAGE_SAVE_LABEL, { quietSuccess: true });
   setSaved(false);
-  markSaveStatus('warning', '서버 저장 완료', message);
+  markSaveStatus('warning', '추가 수정 있음', message);
   return rebasedPage;
 }
 
@@ -85,7 +85,7 @@ export function commitSavedPageResult({
   const savedPage = result?.page ? savedPageFromResult(persistedClientPage, result.page) : persistedClientPage;
   latestPageRef.current = savedPage;
   setPage(savedPage);
-  saveLocalJson(STORAGE_KEY, savedPage, PAGE_SAVE_LABEL);
+  saveLocalJson(STORAGE_KEY, savedPage, PAGE_SAVE_LABEL, { quietSuccess: true });
   clearPageDraft({ page: nextPage, authUser });
   clearPageDraft({ page: savedPage, authUser });
   setSaved(true);
