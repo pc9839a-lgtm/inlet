@@ -76,8 +76,32 @@ assert(restored.ai?.apiKey !== 'draft-secret-key', 'draft recovery must never re
 assert(restored.ai?.apiKey === serverPage.ai?.apiKey, 'draft recovery must preserve the existing client AI key policy');
 assert(restored.integrations?.sheets?.accessTokenRef === 'server-token-ref', 'redacted token references must be preserved from the server page');
 
-const newerServer = { ...serverPage, revision: 5, updatedAt: '2026-07-30T10:10:00.000Z' };
-assert(evaluatePageDraft({ draft, serverPage: newerServer, now: editedAt + 1000 }).action === 'discard', 'newer server revision must invalidate a local draft');
+const newerServer = normalizePageForSave({
+  ...serverPage,
+  title: '다른 서버 저장본',
+  revision: 5,
+  updatedAt: '2026-07-30T10:10:00.000Z',
+});
+const divergentNewerServer = evaluatePageDraft({ draft, serverPage: newerServer, now: editedAt + 1000 });
+assert(divergentNewerServer.action === 'conflict' && divergentNewerServer.reason === 'server-revision-changed', `different-content newer server revision must preserve the local draft as a conflict: ${JSON.stringify(divergentNewerServer)}`);
+
+const sameContentNewerServer = normalizePageForSave({
+  ...editedPage,
+  revision: 5,
+  updatedAt: '2026-07-30T10:10:00.000Z',
+});
+const alreadySaved = evaluatePageDraft({ draft, serverPage: sameContentNewerServer, now: editedAt + 1000 });
+assert(alreadySaved.action === 'discard' && alreadySaved.reason === 'same-content', `same-content newer server revision must be treated as already saved: ${JSON.stringify(alreadySaved)}`);
+
+const timestampConflictServer = normalizePageForSave({
+  ...serverPage,
+  title: '타임스탬프가 바뀐 서버 저장본',
+  revision: 4,
+  updatedAt: '2026-07-30T10:10:00.000Z',
+});
+const timestampConflict = evaluatePageDraft({ draft, serverPage: timestampConflictServer, now: editedAt + 1000 });
+assert(timestampConflict.action === 'conflict' && timestampConflict.reason === 'server-timestamp-changed', `different-content server timestamp advance must preserve the draft as a conflict: ${JSON.stringify(timestampConflict)}`);
+
 assert(evaluatePageDraft({ draft: { ...draft, editedAt: editedAt - (8 * 24 * 60 * 60 * 1000) }, serverPage, now: editedAt }).reason === 'expired', 'drafts older than seven days must expire');
 assert(clearPageDraft({ page: serverPage, authUser, storage }), 'draft clear must succeed');
 assert(!readPageDraft({ page: serverPage, authUser, storage }), 'saved or discarded draft must be removed');
@@ -94,8 +118,9 @@ const qaAllSource = await readFile('scripts/qa-all.mjs', 'utf8');
 assert(persistenceSource.includes('SERVER_DRAFT_DELAY_MS') && persistenceSource.includes('SERVER_BASELINE_STABILIZE_MS'), 'server draft writes must be debounced after a stable server baseline');
 assert(persistenceSource.includes('baseline.revision !== revision') && persistenceSource.includes('baseline.updatedAt !== updatedAt'), 'server revision and timestamp must define the draft baseline');
 assert(persistenceSource.includes("window.addEventListener('pagehide', flushDraft)") && persistenceSource.includes("window.addEventListener('beforeunload', flushDraft)"), 'pending edits must flush before the page closes');
-assert(accountLoadSource.includes("new CustomEvent('builder:confirm'") && accountLoadSource.includes("confirmLabel: '임시본 복원'"), 'page load must offer explicit draft recovery');
-assert(accountLoadSource.includes("evaluation.action !== 'restore'") && accountLoadSource.includes('clearPageDraft'), 'stale drafts must be discarded instead of restored');
+assert(accountLoadSource.includes("new CustomEvent('builder:confirm'") && accountLoadSource.includes("confirmLabel: conflict ? '내 임시본 복원' : '임시본 복원'") && accountLoadSource.includes("cancelLabel: '서버 저장본 유지'"), 'page load must offer explicit draft recovery and conflict choices');
+assert(accountLoadSource.includes("evaluation.action === 'restore' || evaluation.action === 'conflict'") && accountLoadSource.includes("title: conflict ? '서버와 다른 임시 편집본이 있습니다.'"), 'divergent newer server state must surface as an explicit local draft conflict instead of being silently discarded');
+assert(accountLoadSource.includes('if (!recoverable)') && accountLoadSource.includes('clearPageDraft({ page: serverPage, authUser })'), 'only non-recoverable drafts should be cleared automatically');
 assert(accountLoadSource.includes('const loadKey =') && accountLoadSource.includes('context.projectId') && accountLoadSource.includes('if (accountPageLoadRef.current !== loadKey) return;') && accountLoadSource.includes('return () => { alive = false; };'), 'late server responses must be rejected by page/project-scoped load identity and effect cleanup');
 assert(accountLoadSource.includes("if ((current.slug || '') !== slug) return;"), 'server responses must still match the selected page slug before draft recovery');
 assert(persistFlowSource.includes('clearPageDraft({ page: nextPage, authUser })') && persistFlowSource.includes('clearPageDraft({ page: savedPage, authUser })'), 'successful server saves must clear only the active account draft');
@@ -123,4 +148,8 @@ console.log(JSON.stringify({
   immediateFailureSnapshot: true,
   saveRaceRecoverySnapshot: true,
   pendingStyleRecoverySnapshot: true,
+  sameContentNewerRevisionDiscarded: true,
+  divergentNewerRevisionPreservedAsConflict: true,
+  divergentNewerTimestampPreservedAsConflict: true,
+  explicitConflictChoiceRequired: true,
 }, null, 2));
