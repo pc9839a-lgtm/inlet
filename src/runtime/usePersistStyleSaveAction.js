@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { persistPage } from '../lib/pageRepository.js';
 import { clearPageDraft } from './pageDraftStore.js';
 import { inactivePageSaveMessage, isPageOperationTargetActive, pageOperationIdentity } from './pageOperationIdentity.js';
+import { recoverCommittedPageSave } from './pageSaveReplayRecovery.js';
 import { attachExistingPageIdentity, pageSaveMode } from './savePageIdentity.js';
 import { STYLE_SAVED_TOAST } from './pageSaveFeedback.js';
 import {
@@ -79,16 +80,21 @@ export function usePersistStyleSaveAction({
           showToast(inactivePageSaveMessage('style', true), 'error');
           return { ok: false, error, reason: 'inactive-page', page: activePage() };
         }
-        await handlePagePersistError({
-          error,
-          page: nextPage,
-          recoveryPage: recoveryPageWithLatestStyle(activePage()),
-          authUser,
-          handlePageSaveError,
-          markSaveStatus,
-          showToast,
-        });
-        return { ok: false, error };
+        const replayedResult = await recoverCommittedPageSave({ error, page: nextPage, authUser });
+        if (replayedResult) {
+          result = replayedResult;
+        } else {
+          await handlePagePersistError({
+            error,
+            page: nextPage,
+            recoveryPage: recoveryPageWithLatestStyle(activePage()),
+            authUser,
+            handlePageSaveError,
+            markSaveStatus,
+            showToast,
+          });
+          return { ok: false, error };
+        }
       }
 
       if (!targetIsActive()) {
