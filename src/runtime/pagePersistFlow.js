@@ -1,20 +1,32 @@
 import { STORAGE_KEY } from '../config/storageKeys.js';
 import { normalizePageForSave } from '../lib/pageModel.js';
-import { clearPageDraft } from './pageDraftStore.js';
+import { clearPageDraft, savePageDraft } from './pageDraftStore.js';
 import { PAGE_SAVE_LABEL, pageSaveErrorFeedback, pageSaveSuccessFeedback } from './pageSaveFeedback.js';
+
+function preserveRecoveryDraft(page, authUser) {
+  if (!page) return null;
+  return savePageDraft({
+    page,
+    authUser,
+    interactionConfirmed: true,
+  });
+}
 
 export async function handlePagePersistError({
   error,
   page,
+  recoveryPage = page,
+  authUser,
   handlePageSaveError,
   markSaveStatus,
   showToast,
 }) {
+  const recoveryDraft = preserveRecoveryDraft(recoveryPage, authUser);
   const handled = await handlePageSaveError(error, page);
   const feedback = pageSaveErrorFeedback(error, handled);
   markSaveStatus(feedback.level, feedback.title, feedback.message);
   if (feedback.toast) showToast(feedback.toast, feedback.level);
-  return { handled, feedback };
+  return { handled, feedback, recoveryDraftSaved: !!recoveryDraft };
 }
 
 export function rebaseSavedPageIdentity(currentPage = {}, serverPage = null) {
@@ -35,6 +47,8 @@ export function rebaseSavedPageIdentity(currentPage = {}, serverPage = null) {
 export function commitPendingLocalChangesAfterSave({
   result,
   currentPage,
+  recoveryPage = currentPage,
+  authUser,
   latestPageRef,
   saveLocalJson,
   setPage,
@@ -43,6 +57,10 @@ export function commitPendingLocalChangesAfterSave({
   message = '저장 중 추가로 수정한 내용이 있습니다. 현재 화면은 한 번 더 저장해주세요.',
 }) {
   const rebasedPage = rebaseSavedPageIdentity(currentPage, result?.page);
+  const rebasedRecoveryPage = rebaseSavedPageIdentity(recoveryPage, result?.page);
+  clearPageDraft({ page: currentPage, authUser });
+  if (recoveryPage !== currentPage) clearPageDraft({ page: recoveryPage, authUser });
+  preserveRecoveryDraft(rebasedRecoveryPage, authUser);
   latestPageRef.current = rebasedPage;
   setPage(rebasedPage);
   saveLocalJson(STORAGE_KEY, rebasedPage, PAGE_SAVE_LABEL);
@@ -55,6 +73,7 @@ export function commitSavedPageResult({
   result,
   nextPage,
   scope = 'page',
+  authUser,
   latestPageRef,
   savedPageFromResult,
   saveLocalJson,
@@ -67,8 +86,8 @@ export function commitSavedPageResult({
   latestPageRef.current = savedPage;
   setPage(savedPage);
   saveLocalJson(STORAGE_KEY, savedPage, PAGE_SAVE_LABEL);
-  clearPageDraft({ page: nextPage });
-  clearPageDraft({ page: savedPage });
+  clearPageDraft({ page: nextPage, authUser });
+  clearPageDraft({ page: savedPage, authUser });
   setSaved(true);
   setTimeout(() => setSaved(false), 1000);
   const feedback = pageSaveSuccessFeedback(result, scope);
