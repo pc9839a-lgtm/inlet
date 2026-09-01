@@ -87,22 +87,33 @@ function offerPageDraftRecovery({ serverPage, authUser, latestPageRef, localPage
   const draft = readPageDraft({ page: serverPage, authUser });
   if (!draft) return;
   const evaluation = evaluatePageDraft({ draft, serverPage });
-  if (evaluation.action !== 'restore') {
+  const recoverable = evaluation.action === 'restore' || evaluation.action === 'conflict';
+  if (!recoverable) {
     clearPageDraft({ page: serverPage, authUser });
     return;
   }
+
   const editedAt = new Date(Number(draft.editedAt || Date.now())).toLocaleString('ko-KR');
+  const conflict = evaluation.action === 'conflict';
   window.dispatchEvent(new CustomEvent('builder:confirm', {
     detail: {
-      title: '저장하지 않은 편집본이 있습니다.',
-      message: `${editedAt}에 이 브라우저에 임시 저장한 내용입니다. 서버에 마지막으로 저장한 페이지 대신 임시 편집본을 복원할까요?`,
-      confirmLabel: '임시본 복원',
+      title: conflict ? '서버와 다른 임시 편집본이 있습니다.' : '저장하지 않은 편집본이 있습니다.',
+      message: conflict
+        ? `${editedAt}에 이 브라우저에 보관한 작업이 있습니다. 서버 저장본도 이후 변경됐습니다. 내 임시 편집본을 복원해서 확인할까요?`
+        : `${editedAt}에 이 브라우저에 임시 저장한 내용입니다. 서버에 마지막으로 저장한 페이지 대신 임시 편집본을 복원할까요?`,
+      confirmLabel: conflict ? '내 임시본 복원' : '임시본 복원',
+      cancelLabel: '서버 저장본 유지',
       onConfirm: () => {
         const restored = restorePageDraft({ draft, serverPage });
         latestPageRef.current = restored;
         localPageMutationRef.current += 1;
         setPage(restored);
-        emitBuilderToast('저장하지 않은 임시 편집본을 복원했습니다. 확인 후 저장해주세요.', 'success');
+        emitBuilderToast(
+          conflict
+            ? '내 임시 편집본을 복원했습니다. 서버 저장본과 확인 후 다시 저장해주세요.'
+            : '저장하지 않은 임시 편집본을 복원했습니다. 확인 후 저장해주세요.',
+          conflict ? 'warning' : 'success',
+        );
       },
       onCancel: () => {
         clearPageDraft({ page: serverPage, authUser });
