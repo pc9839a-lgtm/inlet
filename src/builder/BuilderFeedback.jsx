@@ -2,15 +2,15 @@
 import { createPortal } from 'react-dom';
 
 const pageConflictErrorStyle = {
-  margin: 0,
-  padding: '10px 12px',
+  margin: '10px 0 0',
+  padding: '9px 11px',
   border: '1px solid #fecaca',
-  borderRadius: 14,
+  borderRadius: 12,
   background: '#fef2f2',
   color: '#b91c1c',
   fontSize: 12,
   fontWeight: 850,
-  lineHeight: 1.45,
+  lineHeight: 1.4,
 };
 
 const previewCopyInputStyle = {
@@ -43,7 +43,7 @@ function useDialogKeyboard(onClose) {
   return ref;
 }
 
-export function PageConflictModal({ conflict, onClose, onUseLatest, onKeepDraft, onForceSave }) {
+export function PageConflictModal({ conflict, onClose, onUseLatest, onForceSave }) {
   const diff = Array.isArray(conflict?.diff) ? conflict.diff : [];
   const hasServerPage = !!conflict?.serverPage;
   const updatedAt = conflict?.serverPage?.updatedAt || conflict?.serverPage?.savedAt || '';
@@ -53,43 +53,47 @@ export function PageConflictModal({ conflict, onClose, onUseLatest, onKeepDraft,
     <div className="create-modal-backdrop" role="presentation">
       <section ref={dialogRef} className="create-modal page-conflict-modal" role="dialog" aria-modal="true" aria-labelledby="page-conflict-title">
         <button type="button" className="create-modal-close" onClick={onClose} aria-label="닫기">×</button>
-        <div className="create-modal-title">
+        <div className="create-modal-title page-conflict-title">
           <span>저장 충돌</span>
-          <h2 id="page-conflict-title">다른 곳에서 먼저 저장된 페이지가 있습니다.</h2>
-          <p>현재 작업은 브라우저에 남아 있습니다. 최신 서버본을 확인한 뒤 덮어쓸지, 현재 작업을 임시 보관할지 선택하세요.</p>
+          <h2 id="page-conflict-title">저장 내용이 겹쳤습니다.</h2>
+          <p>{hasServerPage ? '내 작업으로 저장할지, 서버 최신본을 불러올지 선택하세요.' : '서버 최신본을 확인하지 못했습니다. 창을 닫고 다시 저장해주세요.'}</p>
         </div>
-        <div className="page-revision-preview page-conflict-preview">
-          <strong>{hasServerPage ? `최신 서버본: ${conflict.serverPage.title || '제목 없음'}` : '최신 서버본을 불러오지 못했습니다.'}</strong>
-          <p>{updatedAt ? `서버 저장 시간: ${new Date(updatedAt).toLocaleString('ko-KR')}` : conflict?.errorMessage}</p>
-          <ul className="page-revision-diff">
-            {diff.map((item) => (
-              <li key={item.key} className={`revision-diff-${item.tone}`}>
-                <b>{item.label}</b>
-                {item.detail && <span>{item.detail}</span>}
-              </li>
-            ))}
-          </ul>
+
+        <div className="page-conflict-status" aria-live="polite">
+          {conflict?.draftSaved && <span className="page-conflict-safe">현재 작업 자동 보관됨</span>}
+          {updatedAt && <span className="page-conflict-time">서버 최신본 · {new Date(updatedAt).toLocaleString('ko-KR')}</span>}
         </div>
-        {conflict?.draftSaved && <p className="page-conflict-saved">현재 작업을 임시 보관했습니다. 최신본을 불러와도 보관본은 브라우저 저장소에 남습니다.</p>}
-        {conflict?.draftSaveError && <p style={pageConflictErrorStyle}>현재 작업 임시 보관에 실패했습니다. {conflict.draftSaveError}</p>}
-        <div className="create-options page-conflict-actions">
-          <button type="button" className="primary" onClick={onUseLatest} disabled={!hasServerPage}>
-            <strong>최신본 불러오기</strong>
-            <span>서버에 먼저 저장된 페이지로 편집 화면을 맞춥니다.</span>
-          </button>
-          <button type="button" onClick={onKeepDraft}>
-            <strong>현재 작업 임시 보관</strong>
-            <span>충돌 난 현재 편집본을 별도 로컬 초안으로 저장합니다.</span>
-          </button>
-          <button type="button" onClick={onForceSave} disabled={!hasServerPage}>
-            <strong>현재 작업으로 덮어쓰기</strong>
-            <span>최신 서버본을 확인한 뒤 현재 편집본을 서버에 다시 저장합니다.</span>
-          </button>
-          <button type="button" onClick={onClose}>
-            <strong>현재 화면 유지</strong>
-            <span>저장은 완료되지 않았고, 편집 화면은 그대로 둡니다.</span>
-          </button>
-        </div>
+
+        {hasServerPage && diff.length > 0 && (
+          <details className="page-conflict-details">
+            <summary>변경 내용 보기</summary>
+            <ul className="page-revision-diff">
+              {diff.map((item) => (
+                <li key={item.key} className={`revision-diff-${item.tone}`}>
+                  <b>{item.label}</b>
+                  {item.detail && <span>{item.detail}</span>}
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
+
+        {conflict?.draftSaveError && <p style={pageConflictErrorStyle}>자동 보관 실패 · {conflict.draftSaveError}</p>}
+
+        {hasServerPage ? (
+          <div className="page-conflict-actions">
+            <button type="button" className="page-conflict-primary" onClick={onForceSave} aria-label="현재 작업으로 서버 최신본 덮어쓰기">
+              내 작업으로 저장
+            </button>
+            <button type="button" className="page-conflict-secondary" onClick={onUseLatest}>
+              최신본 불러오기
+            </button>
+          </div>
+        ) : (
+          <div className="page-conflict-actions page-conflict-actions-single">
+            <button type="button" className="page-conflict-primary" onClick={onClose}>닫기</button>
+          </div>
+        )}
       </section>
     </div>,
     document.body,
