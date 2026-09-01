@@ -121,6 +121,8 @@ const repository = await readFile('src/lib/pageRepository.js', 'utf8');
 const hostedRoute = await readFile('functions/api/pages/[slug].js', 'utf8');
 const pageLimitMiddleware = await readFile('functions/api/pages/_middleware.js', 'utf8');
 const optimizer = await readFile('src/lib/pageSaveOptimizer.js', 'utf8');
+const feedbackSource = await readFile('src/runtime/pageSaveFeedback.js', 'utf8');
+const saveStatusSource = await readFile('src/runtime/saveStatusActions.js', 'utf8');
 
 assert(pageAction.includes('const saveMode = pageSaveMode(saveSourcePage)') && pageAction.includes('expectedRevision'), 'normal page saves must derive mode before adding a new transport identity');
 assert(styleAction.includes('const saveMode = pageSaveMode(styleSourcePage)') && styleAction.includes('expectedRevision'), 'style saves must use the same page identity contract');
@@ -134,5 +136,9 @@ assert(repository.includes('publicVerificationTimers') && repository.includes('c
 assert(pageLimitMiddleware.includes('canFastPathExistingSave') && pageLimitMiddleware.includes('ownedTargetExists') && pageLimitMiddleware.includes("url.searchParams.get('saveMode') !== 'update-existing'"), 'existing-page save middleware may skip large body parsing only after signed owner/page/project validation');
 assert(optimizer.includes('.sort((a, b) => b.bytes - a.bytes)') && optimizer.includes('if (estimatedBytes <= D1_PAGE_JSON_TARGET_BYTES) break'), 'oversized page optimization must compress the largest embedded images only until the safe target is reached');
 assert(saveIdentitySource.includes('if (hasPersistedServerVersion(sourcePage)) return sourcePage;') && saveIdentitySource.includes('const accountPages = await fetchAccountPages(authUser)'), 'known page identity without a loaded revision must resolve persisted version metadata instead of replaying create-new');
+assert((persistFlow.match(/quietSuccess: true/g) || []).length >= 2, 'server save commits must suppress duplicate internal local-save success status updates');
+assert(feedbackSource.includes("title: local ? '브라우저에 저장됨' : '저장됨'") && feedbackSource.includes("message: ''"), 'successful save feedback must stay compact and avoid duplicate title/body copy');
+assert(feedbackSource.includes("toast: '저장 실패 · 작업은 자동 보관됨'") && !feedbackSource.includes("'서버 저장에 실패했습니다. ' + detail"), 'save failure toast must be concise and must not expose long transport errors');
+assert(saveStatusSource.includes("markSaveStatus('ok', '브라우저에 저장됨', '')") && saveStatusSource.includes("showToast(message, 'error')"), 'local persistence feedback must use compact success/error messaging');
 
-console.log(JSON.stringify({ ok: true, checks: 29 }, null, 2));
+console.log(JSON.stringify({ ok: true, checks: 33 }, null, 2));
