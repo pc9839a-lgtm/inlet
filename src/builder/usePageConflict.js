@@ -60,12 +60,24 @@ export function usePageConflict({
       console.warn('Latest server page load after conflict failed:', loadError);
     }
 
+    const normalizedLocalPage = normalizePageForSave(localPage);
+    let draftResult = null;
+    try {
+      draftResult = saveConflictDraft(normalizedLocalPage, {
+        reason: 'page-save-conflict',
+        source: 'conflict-auto',
+      });
+    } catch (draftError) {
+      draftResult = { ok: false, error: draftError };
+    }
+
     setPageConflict({
-      localPage,
+      localPage: normalizedLocalPage,
       serverPage,
       errorMessage: String(error?.message || error || '서버 저장 충돌'),
-      diff: buildPageRevisionDiff(serverPage || {}, localPage),
-      draftSaved: false,
+      diff: buildPageRevisionDiff(serverPage || {}, normalizedLocalPage),
+      draftSaved: !!draftResult?.ok,
+      draftSaveError: draftResult?.ok ? '' : storageErrorMessage(draftResult?.error),
     });
   };
 
