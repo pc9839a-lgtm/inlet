@@ -123,6 +123,7 @@ const pageLimitMiddleware = await readFile('functions/api/pages/_middleware.js',
 const optimizer = await readFile('src/lib/pageSaveOptimizer.js', 'utf8');
 const feedbackSource = await readFile('src/runtime/pageSaveFeedback.js', 'utf8');
 const saveStatusSource = await readFile('src/runtime/saveStatusActions.js', 'utf8');
+const panelHeaderSource = await readFile('src/builder/PanelHeader.jsx', 'utf8');
 
 assert(pageAction.includes('const saveMode = pageSaveMode(saveSourcePage)') && pageAction.includes('expectedRevision'), 'normal page saves must derive mode before adding a new transport identity');
 assert(styleAction.includes('const saveMode = pageSaveMode(styleSourcePage)') && styleAction.includes('expectedRevision'), 'style saves must use the same page identity contract');
@@ -140,5 +141,7 @@ assert((persistFlow.match(/quietSuccess: true/g) || []).length >= 2, 'server sav
 assert(feedbackSource.includes("title: local ? '브라우저에 저장됨' : '저장됨'") && feedbackSource.includes("message: ''"), 'successful save feedback must stay compact and avoid duplicate title/body copy');
 assert(feedbackSource.includes("toast: '저장 실패 · 작업은 자동 보관됨'") && !feedbackSource.includes("'서버 저장에 실패했습니다. ' + detail"), 'save failure toast must be concise and must not expose long transport errors');
 assert(saveStatusSource.includes("markSaveStatus('ok', '브라우저에 저장됨', '')") && saveStatusSource.includes("showToast(message, 'error')"), 'local persistence feedback must use compact success/error messaging');
+assert(panelHeaderSource.includes("saveStatus.tone === 'warning' || saveStatus.tone === 'error'"), 'editor header must show save status text only for actionable warning/error states');
+assert(panelHeaderSource.includes("{saved ? '저장됨' : '저장'}") && !panelHeaderSource.includes("idle: '#6c727e'") && !panelHeaderSource.includes("ok: '#147a50'"), 'normal save state must be represented by the save button without duplicate idle/ok header labels');
 
-console.log(JSON.stringify({ ok: true, checks: 33 }, null, 2));
+console.log(JSON.stringify({ ok: true, checks: 35 }, null, 2));
