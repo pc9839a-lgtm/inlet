@@ -129,8 +129,8 @@ assert(pageAction.includes('const saveMode = pageSaveMode(saveSourcePage)') && p
 assert(styleAction.includes('const saveMode = pageSaveMode(styleSourcePage)') && styleAction.includes('expectedRevision'), 'style saves must use the same page identity contract');
 assert(repository.includes('saveRequestId') && repository.includes('identity,') && repository.includes("if (saveMode === 'update-existing') throw error"), 'page repository must send identity/idempotency metadata and never retarget an existing update to a new project');
 assert(hostedRoute.includes("SELECT * FROM pages WHERE id = ? LIMIT 1") && hostedRoute.includes('assertTargetSlugAvailable') && hostedRoute.includes('assertExpectedPageVersion'), 'hosted save route must resolve updates by page id and guard slug/version conflicts');
-assert(pageAction.includes('const saveInFlightRef = useRef(null)') && pageAction.includes('if (saveInFlightRef.current) return saveInFlightRef.current'), 'normal page saves must deduplicate rapid repeated clicks while a write is in flight');
-assert(styleAction.includes('const styleSaveInFlightRef = useRef(null)') && styleAction.includes('if (styleSaveInFlightRef.current) return styleSaveInFlightRef.current'), 'style saves must deduplicate rapid repeated clicks while a write is in flight');
+assert(pageAction.includes('const saveInFlightRef = useRef(null)') && pageAction.includes('const queuedSaveRequestRef = useRef(null)') && pageAction.includes('return saveInFlightRef.current'), 'normal page saves must serialize rapid repeated clicks and queue the latest trailing save while a write is in flight');
+assert(styleAction.includes('const styleSaveInFlightRef = useRef(null)') && styleAction.includes('const queuedStyleSaveRef = useRef(false)') && styleAction.includes('return styleSaveInFlightRef.current'), 'style saves must serialize rapid repeated clicks and queue a trailing style save while a write is in flight');
 assert(pageAction.includes('commitPendingLocalChangesAfterSave') && styleAction.includes('commitPendingLocalChangesAfterSave') && persistFlow.includes('rebaseSavedPageIdentity'), 'server responses must preserve edits made while a save is in flight and only advance server identity metadata');
 assert(repository.includes('schedulePublicPageSaveVerification') && !repository.includes('await verifyPublicPageSaveAdvisory'), 'public route verification must remain advisory and must not block successful D1 save completion');
 assert(repository.includes('publicVerificationTimers') && repository.includes('clearTimeout(previousTimer)') && repository.includes('PUBLIC_VERIFICATION_DEBOUNCE_MS'), 'rapid saves of the same page must coalesce advisory public-route verification reads');
@@ -144,4 +144,6 @@ assert(saveStatusSource.includes("markSaveStatus('ok', '브라우저에 저장�
 assert(panelHeaderSource.includes("saveStatus.tone === 'warning' || saveStatus.tone === 'error'"), 'editor header must show save status text only for actionable warning/error states');
 assert(panelHeaderSource.includes("{saved ? '저장됨' : '저장'}") && !panelHeaderSource.includes("idle: '#6c727e'") && !panelHeaderSource.includes("ok: '#147a50'"), 'normal save state must be represented by the save button without duplicate idle/ok header labels');
 
-console.log(JSON.stringify({ ok: true, checks: 35 }, null, 2));
+await import('./page-save-queue-quality-check.mjs');
+
+console.log(JSON.stringify({ ok: true, checks: 37, trailingSaveQueue: true }, null, 2));
