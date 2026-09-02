@@ -53,39 +53,6 @@ function declaredBodyTooLarge(request) {
   return Number(raw) > PUBLIC_LEAD_MAX_BODY_BYTES;
 }
 
-async function streamedBodyTooLarge(request) {
-  if (!request.body || typeof request.clone !== 'function') return false;
-  let clone;
-  try {
-    clone = request.clone();
-  } catch {
-    return false;
-  }
-  const reader = clone.body?.getReader?.();
-  if (!reader) return false;
-
-  let bytes = 0;
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) return false;
-      bytes += Number(value?.byteLength || 0);
-      if (bytes > PUBLIC_LEAD_MAX_BODY_BYTES) {
-        await reader.cancel('public lead body limit exceeded').catch(() => undefined);
-        return true;
-      }
-    }
-  } catch {
-    return false;
-  } finally {
-    try {
-      reader.releaseLock?.();
-    } catch {
-      // Reader cleanup is best-effort.
-    }
-  }
-}
-
 function pruneBurstBuckets(now) {
   if (burstBuckets.size <= MAX_BURST_BUCKETS) return;
   for (const [key, bucket] of burstBuckets) {
@@ -152,10 +119,9 @@ export async function guardPublicLeadIngress(request, now = Date.now()) {
     return ingressJson(429, 'LEAD_INGRESS_RATE_LIMITED', '요청이 너무 빠르게 반복되었습니다. 잠시 후 다시 시도해주세요.', burst.retryAfter);
   }
 
-  if (await streamedBodyTooLarge(request)) {
-    return ingressJson(413, 'LEAD_PAYLOAD_TOO_LARGE', '접수 데이터가 너무 큽니다. 입력 내용을 줄인 뒤 다시 시도해주세요.');
-  }
-
+  // Do not pre-read or clone the request body here. Some runtimes implement Request.clone()
+  // with a tee whose unused downstream branch can apply backpressure. The route remains the
+  // single body consumer; this guard only uses declared length plus cheap edge burst limits.
   return null;
 }
 
