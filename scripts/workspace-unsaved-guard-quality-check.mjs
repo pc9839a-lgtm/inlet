@@ -66,12 +66,23 @@ try {
   assert(shouldBlockWorkspaceBeforeUnload() === false, 'discarded state must not block unload');
 
   const localPersistence = await readFile('src/runtime/useLocalWorkspacePersistence.js', 'utf8');
+  const persistFlow = await readFile('src/runtime/pagePersistFlow.js', 'utf8');
   const authActions = await readFile('src/runtime/useAuthAccountActions.js', 'utf8');
   const shellActions = await readFile('src/runtime/useWorkspaceShellActions.js', 'utf8');
   const dashboard = await readFile('src/screens/DashboardScreen.jsx', 'utf8');
 
   assert(localPersistence.includes('setWorkspaceUnsavedDirty(true)') && localPersistence.includes('shouldBlockWorkspaceBeforeUnload()'), 'local persistence must own dirty detection and native unload blocking');
   assert(localPersistence.includes("window.addEventListener('beforeunload', handleBeforeUnload)"), 'browser close/reload must use the unified unsaved guard');
+  assert(localPersistence.includes('if (identityChanged) setWorkspaceUnsavedDirty(false)') && !localPersistence.includes('if (baseChanged) setWorkspaceUnsavedDirty(false)'), 'revision rebases from a queued save must not clear pending unsaved state');
+
+  const pendingStart = persistFlow.indexOf('export function commitPendingLocalChangesAfterSave');
+  const savedStart = persistFlow.indexOf('export function commitSavedPageResult');
+  const pendingSection = persistFlow.slice(pendingStart, savedStart);
+  const savedSection = persistFlow.slice(savedStart);
+  assert(pendingSection.includes('setWorkspaceUnsavedDirty(true)'), 'a successful write with trailing local edits must remain dirty until the queue drains');
+  assert(savedSection.includes('setWorkspaceUnsavedDirty(false)'), 'only the fully committed save result may clear the unified dirty guard');
+  assert(persistFlow.includes('handlePagePersistError') && persistFlow.slice(0, pendingStart).includes('setWorkspaceUnsavedDirty(true)'), 'save failures must leave the workspace guarded after preserving recovery');
+
   assert(authActions.includes('confirmWorkspaceLeaveSync') && authActions.includes('allowUnload: true'), 'logout must guard unsaved edits before replacing the page');
   assert(shellActions.includes('confirmWorkspaceLeaveSync') && shellActions.includes('대시보드로 이동'), 'workspace-to-dashboard navigation must guard unsaved edits');
   assert(dashboard.includes('const dirtyCurrent = deletingCurrent && workspaceHasUnsavedChanges()') && dashboard.includes('clearPageDraft({ page: item, authUser: user, allSources: true })'), 'current-page deletion must combine unsaved confirmation with draft cleanup');
@@ -79,10 +90,11 @@ try {
 
   console.log(JSON.stringify({
     ok: true,
-    checks: 15,
+    checks: 19,
     unifiedUnsavedGuard: true,
     recoveryBeforeLeave: true,
     browserUnloadGuard: true,
+    saveQueueDirtyLifecycle: true,
     deletionDraftCleanup: true,
   }, null, 2));
 } finally {
