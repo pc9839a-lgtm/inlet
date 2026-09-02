@@ -33,7 +33,6 @@ export function ShareOptionsCard({ page, updatePage }) {
         <div className="fixed-block-copy">
           <Share2 size={17} aria-hidden="true" />
           <strong>공유</strong>
-          <em>공개 페이지 공유 버튼</em>
         </div>
         <Switch
           checked={enabled}
