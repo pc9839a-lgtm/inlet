@@ -19,8 +19,8 @@ assert(probe.includes('configuredOrigins.includes(baseUrl)') && probe.includes("
 assert(probe.includes('user.platformMaster') && probe.includes('refuses platform-master fixture'), 'production probe must refuse platform-master credentials');
 assert(workflow.includes('production-save-roundtrip:') && workflow.includes('needs: deploy'), 'Cloudflare workflow must run production save verification only after deploy');
 assert(workflow.includes('environment: production'), 'production save verification must use the protected production environment');
-assert(workflow.includes('PAGERO_PAGE_LIMIT_EMPTY_GENERAL_SESSION'), 'production save verification must reuse the dedicated empty-page fixture session');
-assert(workflow.includes('PAGERO_PAGE_LIMIT_ALLOWED_ORIGINS'), 'production save verification must use the approved production origin allowlist');
+assert(workflow.includes('PAGERO_PAGE_LIMIT_EMPTY_GENERAL_SESSION || secrets.PAGERO_ADMIN_AUDIT_GENERAL_SESSION'), 'production save verification must prefer the empty fixture and may fall back only to the existing general QA fixture');
+assert(workflow.includes('PAGERO_PRODUCTION_SAVE_ALLOWED_ORIGINS: https://pagero.kr'), 'production save verification must pin its approved origin to the production origin');
 assert(workflow.includes('node scripts/production-save-roundtrip-check.mjs'), 'Cloudflare workflow must execute the production save roundtrip probe');
 assert(qaAll.includes("production:save:roundtrip:contract:qa"), 'offline release gate must protect the production save probe contract');
 
@@ -33,5 +33,6 @@ console.log(JSON.stringify({
     createUpdateReadDelete: true,
     baselineRestorationRequired: true,
     productionEnvironmentRequired: true,
+    existingQaFallbackOnly: true,
   },
 }, null, 2));
