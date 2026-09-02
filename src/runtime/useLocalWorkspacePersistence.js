@@ -3,7 +3,12 @@ import { isServerPageMode } from '../config/runtimeConfig.js';
 import { AUTH_KEY, EVENTS_KEY, LEADS_KEY, STORAGE_KEY } from '../config/storageKeys.js';
 import { normalizeAuthUser } from '../lib/authIdentity.js';
 import { normalizePageForSave } from '../lib/pageModel.js';
-import { pageDraftContentSignature, pageDraftIdentity, savePageDraft } from './pageDraftStore.js';
+import {
+  pageDraftContentSignature,
+  pageDraftIdentity,
+  pageDraftStorageFailureMessage,
+  savePageDraftResult,
+} from './pageDraftStore.js';
 
 const SERVER_DRAFT_DELAY_MS = 550;
 const SERVER_BASELINE_STABILIZE_MS = 1200;
@@ -23,6 +28,33 @@ export function useLocalWorkspacePersistence({
   const serverDraftTimerRef = useRef(null);
   const serverDraftDirtyRef = useRef(false);
   const lastUserEditIntentRef = useRef(0);
+  const draftStorageFailureNoticeRef = useRef('');
+
+  const recordDraftStorageResult = (result) => {
+    serverDraftDirtyRef.current = !result?.ok;
+    if (result?.ok) {
+      lastUserEditIntentRef.current = 0;
+      draftStorageFailureNoticeRef.current = '';
+      return true;
+    }
+
+    if (typeof window !== 'undefined') {
+      const signature = `${result?.reason || 'storage'}:${result?.error?.name || ''}`;
+      if (draftStorageFailureNoticeRef.current !== signature) {
+        draftStorageFailureNoticeRef.current = signature;
+        window.dispatchEvent(new CustomEvent('builder:toast', {
+          detail: { message: pageDraftStorageFailureMessage(result), tone: 'error' },
+        }));
+      }
+    }
+    return false;
+  };
+
+  const persistRecoveryDraft = (pageValue) => recordDraftStorageResult(savePageDraftResult({
+    page: pageValue,
+    authUser,
+    interactionConfirmed: true,
+  }));
 
   useEffect(() => {
     if (publicLandingSlug) return;
@@ -80,6 +112,7 @@ export function useLocalWorkspacePersistence({
       serverDraftTimerRef.current = null;
       serverDraftDirtyRef.current = false;
       lastUserEditIntentRef.current = 0;
+      draftStorageFailureNoticeRef.current = '';
       serverBaselineRef.current = { identity, revision, updatedAt, signature, observedAt: Date.now() };
       return undefined;
     }
@@ -98,27 +131,15 @@ export function useLocalWorkspacePersistence({
 
     const flushPendingDraft = () => {
       if (!serverDraftDirtyRef.current) return true;
-      const draft = savePageDraft({
-        page: latestPageRef.current || normalized,
-        authUser,
-        interactionConfirmed: true,
-      });
-      serverDraftDirtyRef.current = !draft;
-      if (draft) lastUserEditIntentRef.current = 0;
-      return !!draft;
+      return persistRecoveryDraft(latestPageRef.current || normalized);
     };
 
     serverDraftDirtyRef.current = true;
     if (serverDraftTimerRef.current) clearTimeout(serverDraftTimerRef.current);
     const waitForBaseline = Math.max(0, SERVER_BASELINE_STABILIZE_MS - (now - Number(baseline.observedAt || 0)));
     serverDraftTimerRef.current = setTimeout(() => {
-      const stored = flushPendingDraft();
+      flushPendingDraft();
       serverDraftTimerRef.current = null;
-      if (!stored && typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('builder:toast', {
-          detail: { message: '편집 내용 임시 저장에 실패했습니다. 브라우저 저장 공간을 확인해주세요.', tone: 'error' },
-        }));
-      }
     }, SERVER_DRAFT_DELAY_MS + waitForBaseline);
 
     return () => {
@@ -140,13 +161,7 @@ export function useLocalWorkspacePersistence({
       const lastUserIntentAt = Number(lastUserEditIntentRef.current || 0);
       const hasRecentUserIntent = lastUserIntentAt > 0 && Date.now() - lastUserIntentAt <= USER_EDIT_INTENT_WINDOW_MS;
       if (!serverDraftDirtyRef.current && !(signatureChanged && hasRecentUserIntent)) return;
-      const draft = savePageDraft({
-        page: normalized,
-        authUser,
-        interactionConfirmed: true,
-      });
-      serverDraftDirtyRef.current = !draft;
-      if (draft) lastUserEditIntentRef.current = 0;
+      persistRecoveryDraft(normalized);
     };
 
     const handleVisibilityChange = () => {
