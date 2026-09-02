@@ -1,4 +1,5 @@
 import React from 'react';
+import './PageGlobalOptions.css';
 import { PageGlobalOptionsHeader } from './PageGlobalOptionsHeader.jsx';
 import { PageGlobalOptionsList } from './PageGlobalOptionsList.jsx';
 
