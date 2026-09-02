@@ -108,8 +108,8 @@ export function useLocalWorkspacePersistence({
     const updatedAt = String(normalized.updatedAt || normalized.savedAt || normalized.createdAt || '');
     const signature = pageDraftContentSignature(normalized);
     const baseline = serverBaselineRef.current;
-    const baseChanged = !baseline
-      || baseline.identity !== identity
+    const identityChanged = !baseline || baseline.identity !== identity;
+    const baseChanged = identityChanged
       || baseline.revision !== revision
       || baseline.updatedAt !== updatedAt;
 
@@ -120,7 +120,7 @@ export function useLocalWorkspacePersistence({
       lastUserEditIntentRef.current = 0;
       draftStorageFailureNoticeRef.current = '';
       serverBaselineRef.current = { identity, revision, updatedAt, signature, observedAt: Date.now() };
-      setWorkspaceUnsavedDirty(false);
+      if (identityChanged) setWorkspaceUnsavedDirty(false);
       return undefined;
     }
 
