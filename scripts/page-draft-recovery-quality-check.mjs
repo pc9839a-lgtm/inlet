@@ -118,6 +118,11 @@ const qaAllSource = await readFile('scripts/qa-all.mjs', 'utf8');
 assert(persistenceSource.includes('SERVER_DRAFT_DELAY_MS') && persistenceSource.includes('SERVER_BASELINE_STABILIZE_MS'), 'server draft writes must be debounced after a stable server baseline');
 assert(persistenceSource.includes('baseline.revision !== revision') && persistenceSource.includes('baseline.updatedAt !== updatedAt'), 'server revision and timestamp must define the draft baseline');
 assert(persistenceSource.includes("window.addEventListener('pagehide', flushDraft)") && persistenceSource.includes("window.addEventListener('beforeunload', flushDraft)"), 'pending edits must flush before the page closes');
+assert(persistenceSource.includes("window.addEventListener('popstate', flushDraft)") && persistenceSource.includes("window.addEventListener('hashchange', flushDraft)"), 'browser back and in-app history navigation must flush the active recovery draft');
+assert(persistenceSource.includes("document.addEventListener('visibilitychange', handleVisibilityChange)") && persistenceSource.includes("document.visibilityState === 'hidden'"), 'backgrounding or hiding the editor must flush pending recovery work');
+assert(persistenceSource.includes('return () => {\n      if (serverDraftTimerRef.current) clearTimeout(serverDraftTimerRef.current);\n      serverDraftTimerRef.current = null;\n      flushPendingDraft();'), 'draft debounce cleanup must synchronously persist pending edits instead of cancelling them');
+assert(persistenceSource.includes('useLayoutEffect(() => {\n    latestPageRef.current = page;'), 'latest page reference must update before paint so exit recovery sees the newest committed editor state');
+assert(persistenceSource.includes("event.type === 'input' || event.type === 'change' || event.type === 'keydown'") && persistenceSource.includes('serverDraftDirtyRef.current = true;'), 'direct edit intent must mark recovery work dirty before delayed persistence runs');
 assert(accountLoadSource.includes("new CustomEvent('builder:confirm'") && accountLoadSource.includes("confirmLabel: conflict ? '내 임시본 복원' : '임시본 복원'") && accountLoadSource.includes("cancelLabel: '서버 저장본 유지'"), 'page load must offer explicit draft recovery and conflict choices');
 assert(accountLoadSource.includes("evaluation.action === 'restore' || evaluation.action === 'conflict'") && accountLoadSource.includes("title: conflict ? '서버와 다른 임시 편집본이 있습니다.'"), 'divergent newer server state must surface as an explicit local draft conflict instead of being silently discarded');
 assert(accountLoadSource.includes('if (!recoverable)') && accountLoadSource.includes('clearPageDraft({ page: serverPage, authUser, sourceId: draft.sourceId })'), 'only non-recoverable drafts should clear the selected recovery source automatically');
@@ -143,6 +148,11 @@ console.log(JSON.stringify({
   clientAiKeyPolicyPreserved: true,
   serverRevisionGuard: true,
   pageSwitchGuard: true,
+  browserExitFlush: true,
+  browserBackFlush: true,
+  hiddenTabFlush: true,
+  cleanupFlush: true,
+  latestPageLayoutSync: true,
   clearAfterSave: true,
   scopedDraftClear: true,
   immediateFailureSnapshot: true,
