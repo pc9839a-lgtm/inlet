@@ -46,7 +46,44 @@ export function usePersistStyleSaveAction({
     blocks: latestStylePreviewBlocksRef.current || currentPage.blocks,
   });
 
-  const runStyleSaveCycle = async () => {
+  const persistStyleNow = async () => {
+    if (styleSaveInFlightRef.current) {
+      queuedStyleSaveRef.current = true;
+      markSaveStatus('warning', '저장 대기', '현재 저장이 끝나면 최신 스타일을 이어서 저장합니다.');
+      return styleSaveInFlightRef.current;
+    }
+
+    const task = (async () => {
+      let finalResult = null;
+
+      while (true) {
+        finalResult = await runStyleSaveCycle();
+        const queued = queuedStyleSaveRef.current;
+        queuedStyleSaveRef.current = false;
+        const next = nextTrailingSaveRequest({
+          result: finalResult,
+          queued,
+          queuedRequest: true,
+          automaticRequest: finalResult?.pendingChanges ? true : null,
+        });
+
+        if (!next.continue) break;
+        markSaveStatus('warning', '추가 수정 저장 중', '저장 중 변경된 최신 스타일을 이어서 저장합니다.');
+      }
+
+      return finalResult;
+    })();
+
+    styleSaveInFlightRef.current = task;
+    try {
+      return await task;
+    } finally {
+      if (styleSaveInFlightRef.current === task) styleSaveInFlightRef.current = null;
+      queuedStyleSaveRef.current = false;
+    }
+  };
+
+  async function runStyleSaveCycle() {
     if (blockWrite('style')) return { ok: false, reason: 'write-blocked' };
     const basePage = latestPageRef.current || page;
     const previewThemeAtSave = latestStylePreviewThemeRef.current;
@@ -156,44 +193,7 @@ export function usePersistStyleSaveAction({
     });
     showToast(STYLE_SAVED_TOAST, 'success');
     return { ok: true, page: savedPage, result };
-  };
-
-  const persistStyleNow = async () => {
-    if (styleSaveInFlightRef.current) {
-      queuedStyleSaveRef.current = true;
-      markSaveStatus('warning', '저장 대기', '현재 저장이 끝나면 최신 스타일을 이어서 저장합니다.');
-      return styleSaveInFlightRef.current;
-    }
-
-    const task = (async () => {
-      let finalResult = null;
-
-      while (true) {
-        finalResult = await runStyleSaveCycle();
-        const queued = queuedStyleSaveRef.current;
-        queuedStyleSaveRef.current = false;
-        const next = nextTrailingSaveRequest({
-          result: finalResult,
-          queued,
-          queuedRequest: true,
-          automaticRequest: finalResult?.pendingChanges ? true : null,
-        });
-
-        if (!next.continue) break;
-        markSaveStatus('warning', '추가 수정 저장 중', '저장 중 변경된 최신 스타일을 이어서 저장합니다.');
-      }
-
-      return finalResult;
-    })();
-
-    styleSaveInFlightRef.current = task;
-    try {
-      return await task;
-    } finally {
-      if (styleSaveInFlightRef.current === task) styleSaveInFlightRef.current = null;
-      queuedStyleSaveRef.current = false;
-    }
-  };
+  }
 
   return { persistStyleNow };
 }
