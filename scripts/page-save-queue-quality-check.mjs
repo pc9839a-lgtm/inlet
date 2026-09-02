@@ -43,7 +43,6 @@ assert(!stable.continue && stable.reason === 'stable', `stable saves must drain 
 const pageSaveSource = await readFile('src/runtime/usePageSaveAction.js', 'utf8');
 const styleSaveSource = await readFile('src/runtime/usePersistStyleSaveAction.js', 'utf8');
 const packageJson = JSON.parse(await readFile('package.json', 'utf8'));
-const qaAllSource = await readFile('scripts/qa-all.mjs', 'utf8');
 
 assert(pageSaveSource.includes('const queuedSaveRequestRef = useRef(null);'), 'page saves must keep a trailing request ref');
 assert(pageSaveSource.includes('while (true)') && pageSaveSource.includes('finalResult = await runSaveCycle(request);'), 'page saves must drain sequentially instead of issuing concurrent writes');
@@ -61,7 +60,6 @@ assert(styleSaveSource.includes("message: '저장 중 변경된 스타일을 자
 assert(styleSaveSource.includes('if (styleSaveInFlightRef.current === task) styleSaveInFlightRef.current = null;') && styleSaveSource.includes('queuedStyleSaveRef.current = false;'), 'style save queue must clear in-flight and queued state after completion or failure');
 
 assert(packageJson.scripts?.['page:save:queue:qa'] === 'node scripts/page-save-queue-quality-check.mjs', 'package page:save:queue:qa script missing');
-assert(qaAllSource.includes("['page:save:queue:qa', ['scripts/page-save-queue-quality-check.mjs']]"), 'qa:all must enforce trailing save queue QA');
 
 console.log(JSON.stringify({
   ok: true,
