@@ -8,6 +8,7 @@ import {
   finalizeApiRequestTrace,
   logApiRequestException,
 } from './_requestTrace.js';
+import { evaluatePublicLeadAbuse, publicLeadAbuseResponse } from './_publicLeadAbuseGuard.js';
 
 function sessionError(status, code, error) {
   return new Response(JSON.stringify({ ok: false, error, code }), {
@@ -46,6 +47,16 @@ export async function onRequest(context) {
 
     if (request.method !== 'POST' || url.pathname !== '/api/leads') {
       return finish(await next());
+    }
+
+    const abuse = await evaluatePublicLeadAbuse(request, env, { requestId: trace.requestId });
+    if (!abuse.allowed) {
+      console.warn('public lead request blocked', {
+        requestId: trace.requestId,
+        status: Number(abuse.status || 429),
+        reason: String(abuse.reason || 'rate_limited').slice(0, 64),
+      });
+      return finish(publicLeadAbuseResponse(abuse));
     }
 
     let submitted = {};
