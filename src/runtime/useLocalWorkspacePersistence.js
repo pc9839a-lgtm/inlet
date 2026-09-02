@@ -179,7 +179,6 @@ export function useLocalWorkspacePersistence({
     setWorkspaceRecoveryFlusher(flushDraft);
 
     const handleBeforeUnload = (event) => {
-      flushDraft();
       if (!shouldBlockWorkspaceBeforeUnload()) return;
       event.preventDefault();
       event.returnValue = '';
@@ -190,6 +189,7 @@ export function useLocalWorkspacePersistence({
     };
 
     window.addEventListener('pagehide', flushDraft);
+    window.addEventListener('beforeunload', flushDraft);
     window.addEventListener('beforeunload', handleBeforeUnload);
     window.addEventListener('popstate', flushDraft);
     window.addEventListener('hashchange', flushDraft);
@@ -198,6 +198,7 @@ export function useLocalWorkspacePersistence({
       flushDraft();
       setWorkspaceRecoveryFlusher(null);
       window.removeEventListener('pagehide', flushDraft);
+      window.removeEventListener('beforeunload', flushDraft);
       window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('popstate', flushDraft);
       window.removeEventListener('hashchange', flushDraft);
