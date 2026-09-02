@@ -115,7 +115,7 @@ assert(accountWorkspaceSource.includes('sourceId: draft.sourceId'), 'recovery ca
 assert(accountWorkspaceSource.includes('usePageRemoteFreshness({'), 'workspace page lifecycle must watch for saves from another tab or device');
 assert(remoteFreshnessSource.includes("window.addEventListener('focus', checkRemoteFreshness)"), 'remote freshness must re-check when the editor regains focus');
 assert(remoteFreshnessSource.includes("document.addEventListener('visibilitychange', handleVisibility)"), 'remote freshness must re-check when a background tab becomes visible');
-assert(remoteFreshnessSource.includes('savePageDraft({') && remoteFreshnessSource.includes("decision.action === 'preserve-local'"), 'remote divergence must snapshot local work before warning');
+assert(remoteFreshnessSource.includes('const recoveryDraft = savePageDraft({') && remoteFreshnessSource.includes('다른 곳에서 저장된 변경이 있습니다. 현재 작업은 임시 보관했습니다.'), 'remote divergence must snapshot local work and surface a warning');
 assert(remoteFreshnessSource.includes('clearPageDraft({ page: activePage, authUser })') && remoteFreshnessSource.includes("decision.action === 'adopt-server'"), 'clean local state may discard only its own stale draft when adopting the server');
 assert(!persistFlowSource.includes('allSources: true'), 'ordinary save success must never delete recovery drafts owned by another editor tab');
 assert(qaAllSource.includes("['page:concurrency:qa', ['scripts/page-multi-editor-concurrency-quality-check.mjs']]"), 'release QA must enforce multi-editor concurrency protections');
