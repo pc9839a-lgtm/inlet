@@ -13,7 +13,7 @@ function revision(value) {
 
 function invalidSaveResult(reason, details = {}) {
   return new ApiError(
-    '서버 저장 응답을 확인하지 못했습니다. 저장 완료로 처리하지 않고 작업을 임시 보관했습니다. 다시 저장해주세요.',
+    '서버 저장 응답을 확인하지 못했습니다. 저장 완료로 처리하지 않습니다. 다시 저장해주세요.',
     500,
     {
       code: INVALID_SAVE_RESULT_CODE,
