@@ -61,6 +61,7 @@
     "api:hosted:qa": "node scripts/hosted-api-quality-check.mjs",
     "api:hosted:routes:qa": "node scripts/hosted-api-routes-quality-check.mjs",
     "api:trace:qa": "node scripts/api-request-trace-quality-check.mjs",
+    "public:lead:abuse:qa": "node scripts/public-lead-abuse-guard-quality-check.mjs",
     "jsonl:qa": "node scripts/jsonl-ops-quality-check.mjs",
     "d1:schema:qa": "node scripts/d1-schema-quality-check.mjs",
     "d1:adapter:qa": "node scripts/d1-adapter-quality-check.mjs",
