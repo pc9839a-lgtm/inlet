@@ -42,12 +42,6 @@ assert(declaredOversize.headers.get('cache-control') === 'no-store', 'ingress re
 assert(declaredOversize.headers.get('access-control-allow-origin') === '*', 'public lead ingress rejection should remain CORS-readable');
 
 resetPublicLeadIngressForTests();
-const streamedOversize = await guardPublicLeadIngress(leadRequest({
-  body: JSON.stringify({ content: 'x'.repeat(PUBLIC_LEAD_MAX_BODY_BYTES + 512) }),
-}), 3_000);
-assert(streamedOversize?.status === 413, 'chunked/undeclared oversized public lead payload should be rejected by stream cap');
-
-resetPublicLeadIngressForTests();
 for (let index = 0; index < PUBLIC_LEAD_BURST_LIMIT; index += 1) {
   const allowed = await guardPublicLeadIngress(leadRequest({ ip: '198.51.100.22' }), 10_000 + index);
   assert(allowed === null, `burst request ${index + 1} should stay within generous edge limit`);
@@ -74,15 +68,17 @@ const ingressSource = await readFile('functions/api/_publicLeadIngress.js', 'utf
 assert(middleware.includes("import { guardPublicLeadIngress } from './_publicLeadIngress.js';"), 'API middleware should own public lead ingress guard');
 assert(middleware.indexOf('guardPublicLeadIngress(request)') < middleware.indexOf('request.clone().json()'), 'ingress guard must run before public lead JSON parsing');
 assert(middleware.indexOf('guardPublicLeadIngress(request)') < middleware.indexOf('const response = await next()'), 'ingress guard must run before downstream D1/delivery work');
-assert(ingressSource.includes('PUBLIC_LEAD_MAX_BODY_BYTES = 128 * 1024'), 'public lead body cap should remain explicit and bounded');
+assert(ingressSource.includes('PUBLIC_LEAD_MAX_BODY_BYTES = 128 * 1024'), 'public lead declared body cap should remain explicit and bounded');
 assert(ingressSource.includes('PUBLIC_LEAD_BURST_LIMIT = 20') && ingressSource.includes('PUBLIC_LEAD_BURST_WINDOW_MS = 5_000'), 'edge burst threshold should remain generous enough for legitimate traffic');
 assert(ingressSource.includes('stableHash(ip)') && !ingressSource.includes('console.'), 'ingress limiter must avoid logging or retaining raw client IPs');
+assert(!ingressSource.includes('request.clone()') && !ingressSource.includes('getReader()'), 'ingress guard must not pre-read or tee the downstream request body');
 assert(!/D1|\.prepare\(|INSERT INTO|UPDATE /.test(ingressSource), 'ingress abuse guard must not amplify blocked traffic into database writes');
 
 console.log(JSON.stringify({
   ok: true,
   checks: 17,
-  maxBodyBytes: PUBLIC_LEAD_MAX_BODY_BYTES,
+  maxDeclaredBodyBytes: PUBLIC_LEAD_MAX_BODY_BYTES,
   burstLimit: PUBLIC_LEAD_BURST_LIMIT,
   cooldownMs: PUBLIC_LEAD_COOLDOWN_MS,
+  requestBodyPreRead: false,
 }, null, 2));
