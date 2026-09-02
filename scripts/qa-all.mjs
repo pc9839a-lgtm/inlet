@@ -75,6 +75,7 @@ const steps = [
   ['ops:qa', ['scripts/ops-readiness-check.mjs']],
   ['api:functions:qa', ['scripts/pages-functions-quality-check.mjs']],
   ['api:security:qa', ['scripts/api-security-quality-check.mjs']],
+  ['api:trace:qa', ['scripts/api-request-trace-quality-check.mjs']],
   ['rendering:qa', ['scripts/rendering-quality-check.mjs']],
   ['css:qa', ['scripts/css-quality-check.mjs']],
   ['build', ['scripts/build.mjs']],
