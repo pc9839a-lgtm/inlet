@@ -25,12 +25,13 @@ function invalidSaveResult(reason, details = {}) {
 }
 
 export function expectedPageSaveRequestId(page = {}, saveMode = '', expectedRevision = 0) {
+  const safeRevision = revision(expectedRevision);
   return [
     text(saveMode) || 'create-new',
     text(page.projectId) || 'project',
     text(page.id || page.pageId) || 'page',
     text(page.slug) || 'my-page',
-    Math.max(0, revision(expectedRevision) < 0 ? 0 : revision(expectedRevision)),
+    Math.max(0, safeRevision < 0 ? 0 : safeRevision),
   ].join(':');
 }
 
@@ -81,7 +82,13 @@ export function assertValidPageSaveResult({
 
   const requestedMode = text(saveMode);
   const responseMode = text(result.saveMode);
-  if (responseMode && requestedMode && responseMode !== requestedMode) {
+  if (requireSaveRequestId && requestedMode && responseMode !== requestedMode) {
+    throw invalidSaveResult('save-mode-mismatch', {
+      expectedSaveMode: requestedMode,
+      actualSaveMode: responseMode,
+    });
+  }
+  if (!requireSaveRequestId && responseMode && requestedMode && responseMode !== requestedMode) {
     throw invalidSaveResult('save-mode-mismatch', {
       expectedSaveMode: requestedMode,
       actualSaveMode: responseMode,
