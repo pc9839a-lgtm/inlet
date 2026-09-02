@@ -1,4 +1,11 @@
 import { runtimeApiUrl, runtimeConfig } from '../config/runtimeConfig.js';
+import {
+  PAGE_SAVE_MAX_ATTEMPTS,
+  PAGE_SAVE_RETRY_DELAY_MS,
+  PAGE_SAVE_TIMEOUT_MS,
+  isPageroPageSaveRequest,
+  isRetryablePageSaveStatus,
+} from './pageSaveTransportPolicy.js';
 
 export class ApiError extends Error {
   constructor(message, status, details = null) {
@@ -95,28 +102,124 @@ async function readApiError(res) {
   }
 }
 
-export async function postJson(path, payload, options = {}) {
-  const res = await apiFetch(path, {
-    method: options.method || 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers || {}),
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function createPageSaveAbortControl(enabled = false, externalSignal = null) {
+  if (!enabled || typeof AbortController === 'undefined') {
+    return {
+      signal: externalSignal || undefined,
+      timedOut: () => false,
+      cleanup: () => {},
+    };
+  }
+
+  const controller = new AbortController();
+  let timeoutTriggered = false;
+  const forwardAbort = () => controller.abort();
+  if (externalSignal) {
+    if (externalSignal.aborted) controller.abort();
+    else externalSignal.addEventListener('abort', forwardAbort, { once: true });
+  }
+  const timer = setTimeout(() => {
+    timeoutTriggered = true;
+    controller.abort();
+  }, PAGE_SAVE_TIMEOUT_MS);
+
+  return {
+    signal: controller.signal,
+    timedOut: () => timeoutTriggered,
+    cleanup: () => {
+      clearTimeout(timer);
+      externalSignal?.removeEventListener?.('abort', forwardAbort);
     },
-    body: JSON.stringify(payload || {}),
-    keepalive: !!options.keepalive,
+  };
+}
+
+function normalizePageSaveTransportError(error, { timedOut = false, attempt = 1 } = {}) {
+  if (error instanceof ApiError) {
+    if (!isRetryablePageSaveStatus(error.status)) return error;
+    error.details = {
+      ...(error.details || {}),
+      code: error.details?.code || 'PAGE_SAVE_TRANSIENT_SERVER',
+      scope: 'page-save',
+      retryable: true,
+      attempt,
+      maxAttempts: PAGE_SAVE_MAX_ATTEMPTS,
+    };
+    return error;
+  }
+
+  const code = timedOut ? 'PAGE_SAVE_TIMEOUT' : 'PAGE_SAVE_NETWORK_ERROR';
+  const message = timedOut
+    ? '서버 응답 시간이 초과되었습니다.'
+    : '네트워크 연결이 불안정해 저장하지 못했습니다.';
+  return new ApiError(message, 0, {
+    code,
+    scope: 'page-save',
+    retryable: true,
+    transportKind: timedOut ? 'timeout' : 'network',
+    attempt,
+    maxAttempts: PAGE_SAVE_MAX_ATTEMPTS,
   });
+}
 
-  if (!res.ok) {
-    const error = await readApiError(res);
-    throw new ApiError(error.message, res.status, error.details);
-  }
-
-  const text = await res.text().catch(() => '');
-  if (!text) return {};
-
+async function postJsonAttempt(path, payload, options = {}, pageSaveRequest = false, attempt = 1) {
+  const abortControl = createPageSaveAbortControl(pageSaveRequest, options.signal || null);
   try {
-    return JSON.parse(text);
-  } catch {
-    return { ok: true, text };
+    const res = await apiFetch(path, {
+      method: options.method || 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options.headers || {}),
+      },
+      body: JSON.stringify(payload || {}),
+      keepalive: !!options.keepalive,
+      signal: abortControl.signal,
+    });
+
+    if (!res.ok) {
+      const error = await readApiError(res);
+      throw new ApiError(error.message, res.status, error.details);
+    }
+
+    const text = await res.text().catch(() => '');
+    if (!text) return {};
+
+    try {
+      return JSON.parse(text);
+    } catch {
+      return { ok: true, text };
+    }
+  } catch (error) {
+    if (!pageSaveRequest) throw error;
+    throw normalizePageSaveTransportError(error, {
+      timedOut: abortControl.timedOut(),
+      attempt,
+    });
+  } finally {
+    abortControl.cleanup();
   }
+}
+
+export async function postJson(path, payload, options = {}) {
+  const pageSaveRequest = isPageroPageSaveRequest(path, payload);
+  const maxAttempts = pageSaveRequest ? PAGE_SAVE_MAX_ATTEMPTS : 1;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      return await postJsonAttempt(path, payload, options, pageSaveRequest, attempt);
+    } catch (error) {
+      const retryable = pageSaveRequest && error?.details?.scope === 'page-save' && error?.details?.retryable === true;
+      if (!retryable || attempt >= maxAttempts) throw error;
+      await sleep(PAGE_SAVE_RETRY_DELAY_MS);
+    }
+  }
+
+  throw new ApiError(userFacingApiMessage('', 0), 0, {
+    code: 'PAGE_SAVE_NETWORK_ERROR',
+    scope: 'page-save',
+    retryable: true,
+  });
 }
