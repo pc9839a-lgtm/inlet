@@ -20,6 +20,7 @@
     "page:save:qa": "node scripts/page-save-identity-quality-check.mjs",
     "page:save:queue:qa": "node scripts/page-save-queue-quality-check.mjs",
     "page:save:network:qa": "node scripts/page-save-network-recovery-quality-check.mjs",
+    "page:save:result:qa": "node scripts/page-save-result-validation-quality-check.mjs",
     "workspace:unsaved:qa": "node scripts/workspace-unsaved-guard-quality-check.mjs",
     "account:page-limit:qa": "node scripts/account-page-limit-quality-check.mjs",
     "account:page-limit:live": "node scripts/account-page-limit-production-runner.mjs",
