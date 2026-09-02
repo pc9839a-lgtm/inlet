@@ -1,4 +1,5 @@
 import { PAGE_DRAFTS_KEY } from '../config/storageKeys.js';
+import { isStorageQuotaError } from '../lib/storage.js';
 import { normalizePageForSave } from '../lib/pageModel.js';
 
 const DRAFT_VERSION = 1;
@@ -66,14 +67,55 @@ function readEnvelope(storage) {
   }
 }
 
-function writeEnvelope(envelope, storage) {
+function writeEnvelopeResult(envelope, storage) {
   const target = safeStorage(storage);
-  if (!target) return false;
+  if (!target) {
+    return {
+      ok: false,
+      reason: 'unavailable',
+      error: new Error('localStorage is not available'),
+    };
+  }
+
+  let payload = '';
   try {
-    target.setItem(PAGE_DRAFTS_KEY, JSON.stringify(envelope));
-    return true;
-  } catch {
-    return false;
+    payload = JSON.stringify(envelope);
+  } catch (error) {
+    return { ok: false, reason: 'serialize', error };
+  }
+
+  try {
+    target.setItem(PAGE_DRAFTS_KEY, payload);
+    return { ok: true, reason: '', error: null };
+  } catch (error) {
+    return {
+      ok: false,
+      reason: isStorageQuotaError(error)
+        ? 'quota'
+        : error?.name === 'SecurityError'
+          ? 'security'
+          : 'storage',
+      error,
+    };
+  }
+}
+
+function writeEnvelope(envelope, storage) {
+  return writeEnvelopeResult(envelope, storage).ok;
+}
+
+export function pageDraftStorageFailureMessage(result = {}) {
+  switch (result?.reason) {
+    case 'quota':
+      return '브라우저 저장 공간이 부족해 편집 내용을 임시 보관하지 못했습니다. 이 화면을 닫지 말고 큰 이미지나 오래된 임시 초안을 정리한 뒤 다시 저장해주세요.';
+    case 'security':
+      return '브라우저가 로컬 저장을 차단해 편집 내용을 임시 보관하지 못했습니다. 이 화면을 닫지 말고 사이트 저장 권한을 허용한 뒤 다시 저장해주세요.';
+    case 'unavailable':
+      return '이 브라우저에서 로컬 저장을 사용할 수 없어 편집 내용을 임시 보관하지 못했습니다. 이 화면을 닫지 말고 다시 저장해주세요.';
+    case 'serialize':
+      return '편집 내용을 브라우저 임시본으로 만들지 못했습니다. 이 화면을 닫지 말고 다시 저장해주세요.';
+    default:
+      return '편집 내용을 브라우저에 임시 보관하지 못했습니다. 이 화면을 닫지 말고 다시 저장해주세요.';
   }
 }
 
@@ -143,7 +185,7 @@ export function pageDraftIdentity(page = {}, authUser = {}) {
   return [account, pageOwner, project, pageKey].map((part) => encodeURIComponent(part)).join(':');
 }
 
-export function savePageDraft({
+export function savePageDraftResult({
   page,
   authUser,
   editedAt = Date.now(),
@@ -169,7 +211,14 @@ export function savePageDraft({
     ...envelope.drafts,
     [draftStorageKey(identity, resolvedSourceId)]: draft,
   }, editedAt);
-  return writeEnvelope(envelope, storage) ? draft : null;
+  const writeResult = writeEnvelopeResult(envelope, storage);
+  return writeResult.ok
+    ? { ...writeResult, draft }
+    : { ...writeResult, draft: null };
+}
+
+export function savePageDraft(options = {}) {
+  return savePageDraftResult(options).draft;
 }
 
 export function readPageDraft({ page, authUser, storage, sourceId, includeOtherSources = false } = {}) {

@@ -21,7 +21,16 @@ export const STYLE_CONFIRM_FEEDBACK = {
 
 export const STYLE_SAVED_TOAST = '저장됨';
 
-export function pageSaveErrorFeedback(_error, handled = false) {
+export function pageSaveErrorFeedback(_error, handled = false, recovery = { saved: true, message: '' }) {
+  if (recovery?.saved === false) {
+    return {
+      level: 'error',
+      title: handled ? '저장 충돌 · 임시 보관 실패' : '저장 실패 · 임시 보관 실패',
+      message: recovery?.message || '현재 작업을 브라우저에 임시 보관하지 못했습니다. 이 화면을 닫지 말고 다시 저장해주세요.',
+      toast: '임시 보관 실패 · 화면을 닫지 마세요',
+    };
+  }
+
   if (handled) {
     return {
       level: 'warning',

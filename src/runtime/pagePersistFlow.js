@@ -1,11 +1,23 @@
 import { STORAGE_KEY } from '../config/storageKeys.js';
 import { normalizePageForSave } from '../lib/pageModel.js';
-import { clearPageDraft, savePageDraft } from './pageDraftStore.js';
+import {
+  clearPageDraft,
+  pageDraftIdentity,
+  pageDraftStorageFailureMessage,
+  savePageDraftResult,
+} from './pageDraftStore.js';
 import { PAGE_SAVE_LABEL, pageSaveErrorFeedback, pageSaveSuccessFeedback } from './pageSaveFeedback.js';
 
 function preserveRecoveryDraft(page, authUser) {
-  if (!page) return null;
-  return savePageDraft({
+  if (!page) {
+    return {
+      ok: false,
+      reason: 'unavailable',
+      error: new Error('recovery page is missing'),
+      draft: null,
+    };
+  }
+  return savePageDraftResult({
     page,
     authUser,
     interactionConfirmed: true,
@@ -21,12 +33,20 @@ export async function handlePagePersistError({
   markSaveStatus,
   showToast,
 }) {
-  const recoveryDraft = preserveRecoveryDraft(recoveryPage, authUser);
+  const recoveryResult = preserveRecoveryDraft(recoveryPage, authUser);
   const handled = await handlePageSaveError(error, page);
-  const feedback = pageSaveErrorFeedback(error, handled);
+  const feedback = pageSaveErrorFeedback(error, handled, {
+    saved: recoveryResult.ok,
+    message: recoveryResult.ok ? '' : pageDraftStorageFailureMessage(recoveryResult),
+  });
   markSaveStatus(feedback.level, feedback.title, feedback.message);
   if (feedback.toast) showToast(feedback.toast, feedback.level);
-  return { handled, feedback, recoveryDraftSaved: !!recoveryDraft };
+  return {
+    handled,
+    feedback,
+    recoveryDraftSaved: recoveryResult.ok,
+    recoveryDraftFailureReason: recoveryResult.ok ? '' : recoveryResult.reason,
+  };
 }
 
 export function rebaseSavedPageIdentity(currentPage = {}, serverPage = null) {
@@ -58,14 +78,32 @@ export function commitPendingLocalChangesAfterSave({
 }) {
   const rebasedPage = rebaseSavedPageIdentity(currentPage, result?.page);
   const rebasedRecoveryPage = rebaseSavedPageIdentity(recoveryPage, result?.page);
-  clearPageDraft({ page: currentPage, authUser });
-  if (recoveryPage !== currentPage) clearPageDraft({ page: recoveryPage, authUser });
-  preserveRecoveryDraft(rebasedRecoveryPage, authUser);
+  const recoveryResult = preserveRecoveryDraft(rebasedRecoveryPage, authUser);
+
+  if (recoveryResult.ok) {
+    const rebasedIdentity = pageDraftIdentity(rebasedRecoveryPage, authUser);
+    if (pageDraftIdentity(currentPage, authUser) !== rebasedIdentity) {
+      clearPageDraft({ page: currentPage, authUser });
+    }
+    if (recoveryPage !== currentPage && pageDraftIdentity(recoveryPage, authUser) !== rebasedIdentity) {
+      clearPageDraft({ page: recoveryPage, authUser });
+    }
+  }
+
   latestPageRef.current = rebasedPage;
   setPage(rebasedPage);
   saveLocalJson(STORAGE_KEY, rebasedPage, PAGE_SAVE_LABEL, { quietSuccess: true });
   setSaved(false);
-  markSaveStatus('warning', '추가 수정 있음', message);
+
+  if (recoveryResult.ok) {
+    markSaveStatus('warning', '추가 수정 있음', message);
+  } else {
+    markSaveStatus(
+      'error',
+      '추가 수정 · 임시 보관 실패',
+      `${message} ${pageDraftStorageFailureMessage(recoveryResult)}`,
+    );
+  }
   return rebasedPage;
 }
 
