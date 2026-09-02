@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { persistPage } from '../lib/pageRepository.js';
+import { assertValidPageSaveResult } from '../lib/pageSaveResultValidation.js';
 import { clearPageDraft } from './pageDraftStore.js';
 import { inactivePageSaveMessage, isPageOperationTargetActive, pageOperationIdentity } from './pageOperationIdentity.js';
 import { recoverCommittedPageSave } from './pageSaveReplayRecovery.js';
@@ -131,6 +132,31 @@ export function usePersistStyleSaveAction({
         });
         return { ok: false, error };
       }
+    }
+
+    try {
+      assertValidPageSaveResult({
+        result,
+        requestPage: result?.clientPage || nextPage,
+        saveMode,
+        expectedRevision,
+        requireSaveRequestId: !result?.replayReason,
+      });
+    } catch (error) {
+      if (!targetIsActive()) {
+        showToast(inactivePageSaveMessage('style', true), 'error');
+        return { ok: false, error, reason: 'inactive-page', page: activePage() };
+      }
+      await handlePagePersistError({
+        error,
+        page: nextPage,
+        recoveryPage: recoveryPageWithLatestStyle(activePage()),
+        authUser,
+        handlePageSaveError,
+        markSaveStatus,
+        showToast,
+      });
+      return { ok: false, error, reason: 'invalid-save-result' };
     }
 
     if (!targetIsActive()) {
