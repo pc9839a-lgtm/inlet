@@ -1,4 +1,5 @@
 import { DASHBOARD_KEY, START_MODE_KEY } from '../config/storageKeys.js';
+import { confirmWorkspaceLeaveSync } from './workspaceUnsavedGuard.js';
 
 export function useWorkspaceShellActions({
   page,
@@ -81,11 +82,17 @@ export function useWorkspaceShellActions({
   };
 
   const closeWorkspace = () => {
-    if (!confirmLeaveStyleChanges()) return;
-    if (typeof history !== 'undefined') history.replaceState(null, '', '/dashboard');
-    clearPendingStyle();
-    saveLocalJson(DASHBOARD_KEY, { open: false }, '작업공간 상태', { quietSuccess: true });
-    setWorkspaceOpen(false);
+    const run = () => {
+      if (!confirmWorkspaceLeaveSync({
+        message: '저장하지 않은 변경사항이 있습니다. 임시 편집본은 브라우저에 보관됩니다. 저장하지 않고 대시보드로 이동할까요?',
+      })) return;
+      if (typeof history !== 'undefined') history.replaceState(null, '', '/dashboard');
+      clearPendingStyle();
+      saveLocalJson(DASHBOARD_KEY, { open: false }, '작업공간 상태', { quietSuccess: true });
+      setWorkspaceOpen(false);
+    };
+    if (!confirmLeaveStyleChanges(run)) return;
+    run();
   };
 
   return {
