@@ -3,6 +3,7 @@ import { logoutAuthAccount, updateAuthAccount } from '../lib/authAccounts.js';
 import { normalizeAuthUser } from '../lib/authIdentity.js';
 import { fetchServerPage } from '../lib/pageRepository.js';
 import { normalize, normalizePageForSave } from '../lib/pageModel.js';
+import { confirmWorkspaceLeaveSync } from './workspaceUnsavedGuard.js';
 
 export function createAuthAccountActions({
   authUser,
@@ -15,6 +16,11 @@ export function createAuthAccountActions({
   showToast,
 }) {
   const logout = () => {
+    if (!confirmWorkspaceLeaveSync({
+      message: '저장하지 않은 변경사항이 있습니다. 임시 편집본은 브라우저에 보관되지만 서버에는 아직 반영되지 않았습니다. 그래도 로그아웃할까요?',
+      allowUnload: true,
+    })) return;
+
     const session = String(authUser?.session || '').trim();
     if (session) {
       logoutAuthAccount({ session }).catch((error) => {
