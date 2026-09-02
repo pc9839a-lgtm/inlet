@@ -21,12 +21,16 @@ assert(workflow.includes('production-save-roundtrip:') && workflow.includes('nee
 assert(workflow.includes('environment: production'), 'production save verification must use the protected production environment');
 assert(workflow.includes('PAGERO_PAGE_LIMIT_EMPTY_GENERAL_SESSION || secrets.PAGERO_ADMIN_AUDIT_GENERAL_SESSION'), 'production save verification must prefer the empty fixture and may fall back only to the existing general QA fixture');
 assert(workflow.includes('PAGERO_PRODUCTION_SAVE_ALLOWED_ORIGINS: https://pagero.kr'), 'production save verification must pin its approved origin to the production origin');
-assert(workflow.includes('node scripts/production-save-roundtrip-check.mjs'), 'Cloudflare workflow must execute the production save roundtrip probe');
+assert(workflow.includes('Check production save fixture') && workflow.includes('configured=false'), 'workflow must explicitly preflight fixture availability');
+assert(workflow.includes('"status": "skipped-live"') && workflow.includes('"writesAttempted": 0'), 'missing fixture must emit explicit zero-write skipped-live evidence');
+assert(workflow.includes("if: steps.fixture.outputs.configured == 'true'"), 'live roundtrip must run only when the fixture is configured');
+assert(workflow.includes('if-no-files-found: error'), 'production save evidence artifact must always exist');
+assert(workflow.includes('node scripts/production-save-roundtrip-check.mjs'), 'Cloudflare workflow must execute the production save roundtrip probe when configured');
 assert(qaAll.includes("production:save:roundtrip:contract:qa"), 'offline release gate must protect the production save probe contract');
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 15,
+  checks: 19,
   protections: {
     disposablePrefixOnly: true,
     emptyFixtureRequired: true,
@@ -34,5 +38,7 @@ console.log(JSON.stringify({
     baselineRestorationRequired: true,
     productionEnvironmentRequired: true,
     existingQaFallbackOnly: true,
+    missingFixtureExplicitlySkipped: true,
+    zeroWritesWhenSkipped: true,
   },
 }, null, 2));
