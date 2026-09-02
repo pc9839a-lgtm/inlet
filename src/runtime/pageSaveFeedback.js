@@ -1,3 +1,5 @@
+import { isRetryablePageSaveFailure, pageSaveFailureKind } from '../lib/pageSaveTransportPolicy.js';
+
 export const PAGE_SAVE_LABEL = '페이지';
 
 export const SAVE_BLOCKED_FEEDBACK = {
@@ -21,7 +23,7 @@ export const STYLE_CONFIRM_FEEDBACK = {
 
 export const STYLE_SAVED_TOAST = '저장됨';
 
-export function pageSaveErrorFeedback(_error, handled = false, recovery = { saved: true, message: '' }) {
+export function pageSaveErrorFeedback(error, handled = false, recovery = { saved: true, message: '' }) {
   if (recovery?.saved === false) {
     return {
       level: 'error',
@@ -37,6 +39,19 @@ export function pageSaveErrorFeedback(_error, handled = false, recovery = { save
       title: '저장 내용이 겹쳤습니다',
       message: '현재 작업은 자동 보관했습니다.',
       toast: '',
+    };
+  }
+
+  if (isRetryablePageSaveFailure(error)) {
+    const failureKind = pageSaveFailureKind(error);
+    const connectionIssue = failureKind === 'network' || failureKind === 'timeout';
+    return {
+      level: 'error',
+      title: '일시적 저장 실패',
+      message: connectionIssue
+        ? '작업은 자동 보관했습니다. 인터넷 연결을 확인한 뒤 저장을 다시 눌러주세요.'
+        : '작업은 자동 보관했습니다. 잠시 후 저장을 다시 눌러주세요.',
+      toast: '저장 실패 · 다시 저장 가능',
     };
   }
 
