@@ -100,3 +100,57 @@ jobs:
       - name: Fail when Cloudflare deployment failed
         if: steps.cloudflare_deploy.outcome != 'success'
         run: exit 1
+
+  production-save-roundtrip:
+    name: production-save-roundtrip
+    needs: deploy
+    if: needs.deploy.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    permissions:
+      contents: read
+    env:
+      INLET_PRODUCTION_SAVE_BASE_URL: https://pagero.kr
+      INLET_PRODUCTION_SAVE_SESSION: ${{ secrets.PAGERO_PAGE_LIMIT_EMPTY_GENERAL_SESSION }}
+      PAGERO_PRODUCTION_SAVE_ALLOWED_ORIGINS: ${{ secrets.PAGERO_PAGE_LIMIT_ALLOWED_ORIGINS }}
+
+    steps:
+      - name: Resolve source SHA
+        id: source
+        shell: bash
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_run" ]; then
+            echo "sha=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout deployed source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.source.outputs.sha }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Verify production D1 save roundtrip
+        shell: bash
+        run: |
+          set -o pipefail
+          node scripts/production-save-roundtrip-check.mjs | tee production-save-roundtrip-result.json
+
+      - name: Upload production save evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-save-roundtrip-${{ github.run_id }}
+          path: production-save-roundtrip-result.json
+          if-no-files-found: warn
+          retention-days: 30
