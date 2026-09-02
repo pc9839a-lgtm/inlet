@@ -9,6 +9,41 @@ export const GOOGLE_SHEETS_COLUMNS = [
   '접수일시',
 ];
 
+export const GOOGLE_EXTERNAL_TIMEOUT_MS = 10_000;
+
+function normalizedGoogleTimeout(value = GOOGLE_EXTERNAL_TIMEOUT_MS) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return GOOGLE_EXTERNAL_TIMEOUT_MS;
+  return Math.min(30_000, Math.max(10, Math.trunc(parsed)));
+}
+
+function googleTimeoutError() {
+  const error = new Error('Google 응답 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.');
+  error.code = 'GOOGLE_API_TIMEOUT';
+  error.status = 504;
+  return error;
+}
+
+export async function googleExternalJsonRequest(url, init = {}, timeoutMs = GOOGLE_EXTERNAL_TIMEOUT_MS) {
+  const signal = AbortSignal.timeout(normalizedGoogleTimeout(timeoutMs));
+  try {
+    const response = await fetch(url, { ...init, signal });
+    let data = {};
+    try {
+      data = await response.json();
+    } catch (error) {
+      if (signal.aborted) throw error;
+      data = {};
+    }
+    return { response, data };
+  } catch (error) {
+    if (signal.aborted || error?.name === 'TimeoutError' || error?.name === 'AbortError') {
+      throw googleTimeoutError();
+    }
+    throw error;
+  }
+}
+
 export function googleClientId(env = {}) {
   return String(env.GOOGLE_OAUTH_CLIENT_ID || env.GOOGLE_CLIENT_ID || '').trim();
 }
@@ -66,12 +101,11 @@ export async function exchangeGoogleOAuthCode({ code, clientId, clientSecret, re
     redirect_uri: redirectUri,
     grant_type: 'authorization_code',
   });
-  const response = await fetch('https://oauth2.googleapis.com/token', {
+  const { response, data } = await googleExternalJsonRequest('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body,
   });
-  const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     const error = new Error('Google 계정 연결에 실패했습니다.');
     error.status = 502;
@@ -82,10 +116,9 @@ export async function exchangeGoogleOAuthCode({ code, clientId, clientSecret, re
 }
 
 export async function fetchGoogleProfile(accessToken = '') {
-  const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+  const { response, data } = await googleExternalJsonRequest('https://www.googleapis.com/oauth2/v3/userinfo', {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
-  const data = await response.json().catch(() => ({}));
   if (!response.ok) return {};
   return data;
 }
@@ -93,7 +126,7 @@ export async function fetchGoogleProfile(accessToken = '') {
 export async function createGoogleSpreadsheet(accessToken = '', input = {}) {
   const title = String(input.title || 'Pagero 접수함').trim() || 'Pagero 접수함';
   const sheetName = String(input.sheetName || '접수함').trim() || '접수함';
-  const response = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
+  const { response, data } = await googleExternalJsonRequest('https://sheets.googleapis.com/v4/spreadsheets', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -104,7 +137,6 @@ export async function createGoogleSpreadsheet(accessToken = '', input = {}) {
       sheets: [{ properties: { title: sheetName } }],
     }),
   });
-  const data = await response.json().catch(() => ({}));
   if (!response.ok || !data.spreadsheetId) {
     const error = new Error('Google Sheets 파일 생성에 실패했습니다.');
     error.status = 502;
@@ -228,12 +260,11 @@ export async function refreshGoogleAccessToken({ refreshToken, clientId, clientS
     client_secret: String(clientSecret || ''),
     grant_type: 'refresh_token',
   });
-  const response = await fetch('https://oauth2.googleapis.com/token', {
+  const { response, data } = await googleExternalJsonRequest('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body,
   });
-  const data = await response.json().catch(() => ({}));
   if (!response.ok || !data.access_token) {
     const error = new Error('Google access token refresh failed.');
     error.status = 502;
@@ -252,7 +283,7 @@ export async function appendGoogleSheetRow({ accessToken, spreadsheetId, sheetNa
     throw error;
   }
   const range = encodeURIComponent(`${tab}!A:${columnName(Math.max(Array.isArray(row) ? row.length : 1, 1))}`);
-  const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${range}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`, {
+  const { response, data } = await googleExternalJsonRequest(`https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${range}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -260,7 +291,6 @@ export async function appendGoogleSheetRow({ accessToken, spreadsheetId, sheetNa
     },
     body: JSON.stringify({ values: [row] }),
   });
-  const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     const error = new Error(`Google Sheets append failed: ${response.status}`);
     error.status = response.status;
@@ -306,10 +336,9 @@ export async function ensureGoogleSheetHeaders({ accessToken, spreadsheetId, she
     throw error;
   }
   const readRange = encodeURIComponent(`${tab}!1:1`);
-  const readResponse = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${readRange}`, {
+  const { response: readResponse, data: readData } = await googleExternalJsonRequest(`https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${readRange}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
-  const readData = await readResponse.json().catch(() => ({}));
   if (!readResponse.ok && readResponse.status !== 404) {
     const error = new Error(`Google Sheets header read failed: ${readResponse.status}`);
     error.status = readResponse.status;
@@ -322,7 +351,7 @@ export async function ensureGoogleSheetHeaders({ accessToken, spreadsheetId, she
     const writeWidth = Math.max(currentRaw.length, merged.length);
     const writeRow = merged.concat(Array(Math.max(writeWidth - merged.length, 0)).fill(''));
     const writeRange = encodeURIComponent(`${tab}!A1:${columnName(writeWidth)}1`);
-    const writeResponse = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${writeRange}?valueInputOption=USER_ENTERED`, {
+    const { response: writeResponse, data: writeData } = await googleExternalJsonRequest(`https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}/values/${writeRange}?valueInputOption=USER_ENTERED`, {
       method: 'PUT',
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -330,7 +359,6 @@ export async function ensureGoogleSheetHeaders({ accessToken, spreadsheetId, she
       },
       body: JSON.stringify({ values: [writeRow] }),
     });
-    const writeData = await writeResponse.json().catch(() => ({}));
     if (!writeResponse.ok) {
       const error = new Error(`Google Sheets header update failed: ${writeResponse.status}`);
       error.status = writeResponse.status;
