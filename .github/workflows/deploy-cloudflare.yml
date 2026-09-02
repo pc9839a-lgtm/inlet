@@ -140,11 +140,49 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Check production save fixture
+        id: fixture
+        shell: bash
+        run: |
+          if [ -n "$INLET_PRODUCTION_SAVE_SESSION" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            cat > production-save-roundtrip-result.json <<'JSON'
+          {
+            "ok": false,
+            "status": "skipped-live",
+            "reason": "fixture-session-missing",
+            "targetOrigin": "https://pagero.kr",
+            "writesAttempted": 0,
+            "secretValuesIncluded": false
+          }
+          JSON
+            echo "::warning::Production D1 save roundtrip was not executed because no dedicated QA fixture session is configured."
+          fi
+
       - name: Verify production D1 save roundtrip
+        if: steps.fixture.outputs.configured == 'true'
         shell: bash
         run: |
           set -o pipefail
           node scripts/production-save-roundtrip-check.mjs | tee production-save-roundtrip-result.json
+
+      - name: Record production save verification
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Production D1 save roundtrip"
+            echo ""
+            if [ "${{ steps.fixture.outputs.configured }}" = "true" ]; then
+              echo "Fixture: **configured**"
+              echo "Result: see production-save-roundtrip evidence"
+            else
+              echo "Fixture: **missing**"
+              echo "Result: **skipped-live** (0 writes attempted)"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload production save evidence
         if: always()
@@ -152,5 +190,5 @@ jobs:
         with:
           name: production-save-roundtrip-${{ github.run_id }}
           path: production-save-roundtrip-result.json
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 30
