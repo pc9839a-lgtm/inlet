@@ -3,10 +3,13 @@ import { defaultPage, normalizePageForSave } from '../src/lib/pageModel.js';
 import {
   clearPageDraft,
   evaluatePageDraft,
+  pageDraftStorageFailureMessage,
   readPageDraft,
   restorePageDraft,
   savePageDraft,
+  savePageDraftResult,
 } from '../src/runtime/pageDraftStore.js';
+import { pageSaveErrorFeedback } from '../src/runtime/pageSaveFeedback.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -27,6 +30,20 @@ class MemoryStorage {
 
   removeItem(key) {
     this.values.delete(key);
+  }
+}
+
+class FailingStorage extends MemoryStorage {
+  constructor(errorName) {
+    super();
+    this.errorName = errorName;
+  }
+
+  setItem() {
+    const error = new Error(`forced ${this.errorName}`);
+    error.name = this.errorName;
+    if (this.errorName === 'QuotaExceededError') error.code = 22;
+    throw error;
   }
 }
 
@@ -102,6 +119,42 @@ const timestampConflictServer = normalizePageForSave({
 const timestampConflict = evaluatePageDraft({ draft, serverPage: timestampConflictServer, now: editedAt + 1000 });
 assert(timestampConflict.action === 'conflict' && timestampConflict.reason === 'server-timestamp-changed', `different-content server timestamp advance must preserve the draft as a conflict: ${JSON.stringify(timestampConflict)}`);
 
+const quotaResult = savePageDraftResult({
+  page: editedPage,
+  authUser,
+  editedAt,
+  storage: new FailingStorage('QuotaExceededError'),
+  sourceId: 'quota-test',
+});
+assert(quotaResult.ok === false && quotaResult.reason === 'quota' && quotaResult.draft === null, `quota failures must be explicit: ${JSON.stringify({ ok: quotaResult.ok, reason: quotaResult.reason })}`);
+const quotaMessage = pageDraftStorageFailureMessage(quotaResult);
+assert(quotaMessage.includes('저장 공간이 부족') && quotaMessage.includes('이 화면을 닫지 말고'), 'quota failure guidance must tell the user the draft was not stored and to keep the screen open');
+
+const securityResult = savePageDraftResult({
+  page: editedPage,
+  authUser,
+  editedAt,
+  storage: new FailingStorage('SecurityError'),
+  sourceId: 'security-test',
+});
+assert(securityResult.ok === false && securityResult.reason === 'security', 'browser storage permission failures must be classified separately');
+assert(pageDraftStorageFailureMessage(securityResult).includes('로컬 저장을 차단'), 'storage permission failure guidance must explain the browser block');
+
+const failedRecoveryFeedback = pageSaveErrorFeedback(new Error('server save failed'), false, {
+  saved: false,
+  message: quotaMessage,
+});
+assert(failedRecoveryFeedback.level === 'error' && failedRecoveryFeedback.title.includes('임시 보관 실패'), 'server save plus recovery failure must be a hard error');
+assert(!failedRecoveryFeedback.message.includes('자동 보관') && !failedRecoveryFeedback.toast.includes('자동 보관'), 'failed recovery must never claim the work was automatically stored');
+assert(failedRecoveryFeedback.toast.includes('화면을 닫지 마세요'), 'failed recovery toast must protect the in-memory work');
+
+const conflictRecoveryFeedback = pageSaveErrorFeedback(new Error('conflict'), true, {
+  saved: false,
+  message: quotaMessage,
+});
+assert(conflictRecoveryFeedback.level === 'error' && conflictRecoveryFeedback.title.includes('저장 충돌'), 'conflict plus recovery failure must remain an error instead of a normal conflict warning');
+assert(!conflictRecoveryFeedback.message.includes('자동 보관'), 'conflict recovery failure must not claim local backup success');
+
 assert(evaluatePageDraft({ draft: { ...draft, editedAt: editedAt - (8 * 24 * 60 * 60 * 1000) }, serverPage, now: editedAt }).reason === 'expired', 'drafts older than seven days must expire');
 assert(clearPageDraft({ page: serverPage, authUser, storage }), 'draft clear must succeed');
 assert(!readPageDraft({ page: serverPage, authUser, storage }), 'saved or discarded draft must be removed');
@@ -111,6 +164,7 @@ const accountLoadSource = await readFile('src/runtime/useAccountWorkspacePage.js
 const persistFlowSource = await readFile('src/runtime/pagePersistFlow.js', 'utf8');
 const pageSaveActionSource = await readFile('src/runtime/usePageSaveAction.js', 'utf8');
 const styleSaveActionSource = await readFile('src/runtime/usePersistStyleSaveAction.js', 'utf8');
+const pageSaveFeedbackSource = await readFile('src/runtime/pageSaveFeedback.js', 'utf8');
 const storageKeysSource = await readFile('src/config/storageKeys.js', 'utf8');
 const packageJson = JSON.parse(await readFile('package.json', 'utf8'));
 const qaAllSource = await readFile('scripts/qa-all.mjs', 'utf8');
@@ -123,14 +177,21 @@ assert(persistenceSource.includes("document.addEventListener('visibilitychange',
 assert(persistenceSource.includes('return () => {\n      if (serverDraftTimerRef.current) clearTimeout(serverDraftTimerRef.current);\n      serverDraftTimerRef.current = null;\n      flushPendingDraft();'), 'draft debounce cleanup must synchronously persist pending edits instead of cancelling them');
 assert(persistenceSource.includes('useLayoutEffect(() => {\n    latestPageRef.current = page;'), 'latest page reference must update before paint so exit recovery sees the newest committed editor state');
 assert(persistenceSource.includes("event.type === 'input' || event.type === 'change' || event.type === 'keydown'") && persistenceSource.includes('serverDraftDirtyRef.current = true;'), 'direct edit intent must mark recovery work dirty before delayed persistence runs');
+assert(persistenceSource.includes('savePageDraftResult({') && persistenceSource.includes('pageDraftStorageFailureMessage(result)'), 'background draft persistence must retain the storage failure reason and show specific recovery guidance');
+assert(persistenceSource.includes("const draftStorageFailureNoticeRef = useRef('')") && persistenceSource.includes("draftStorageFailureNoticeRef.current !== signature"), 'repeated quota failures must be deduplicated instead of spamming identical error toasts');
 assert(accountLoadSource.includes("new CustomEvent('builder:confirm'") && accountLoadSource.includes("confirmLabel: conflict ? '내 임시본 복원' : '임시본 복원'") && accountLoadSource.includes("cancelLabel: '서버 저장본 유지'"), 'page load must offer explicit draft recovery and conflict choices');
 assert(accountLoadSource.includes("evaluation.action === 'restore' || evaluation.action === 'conflict'") && accountLoadSource.includes("title: conflict ? '서버와 다른 임시 편집본이 있습니다.'"), 'divergent newer server state must surface as an explicit local draft conflict instead of being silently discarded');
 assert(accountLoadSource.includes('if (!recoverable)') && accountLoadSource.includes('clearPageDraft({ page: serverPage, authUser, sourceId: draft.sourceId })'), 'only non-recoverable drafts should clear the selected recovery source automatically');
 assert(accountLoadSource.includes('const loadKey =') && accountLoadSource.includes('context.projectId') && accountLoadSource.includes('if (accountPageLoadRef.current !== loadKey) return;') && accountLoadSource.includes('return () => { alive = false; };'), 'late server responses must be rejected by page/project-scoped load identity and effect cleanup');
 assert(accountLoadSource.includes("if ((current.slug || '') !== slug) return;"), 'server responses must still match the selected page slug before draft recovery');
 assert(persistFlowSource.includes('clearPageDraft({ page: nextPage, authUser })') && persistFlowSource.includes('clearPageDraft({ page: savedPage, authUser })'), 'successful server saves must clear only the active account draft');
-assert(persistFlowSource.includes('recoveryPage = page') && persistFlowSource.includes('preserveRecoveryDraft(recoveryPage, authUser)'), 'failed server saves must immediately preserve the latest recovery page');
-assert(persistFlowSource.includes('recoveryPage = currentPage') && persistFlowSource.includes('rebaseSavedPageIdentity(recoveryPage, result?.page)') && persistFlowSource.includes('preserveRecoveryDraft(rebasedRecoveryPage, authUser)'), 'edits made during a successful save must be rebased to the new server revision and snapshotted immediately');
+assert(persistFlowSource.includes('recoveryPage = page') && persistFlowSource.includes('const recoveryResult = preserveRecoveryDraft(recoveryPage, authUser);'), 'failed server saves must immediately attempt to preserve the latest recovery page');
+assert(persistFlowSource.includes('saved: recoveryResult.ok') && persistFlowSource.includes('recoveryDraftFailureReason'), 'server save failure feedback must know whether local recovery actually succeeded');
+assert(persistFlowSource.includes("'추가 수정 · 임시 보관 실패'") && persistFlowSource.includes('pageDraftStorageFailureMessage(recoveryResult)'), 'save-race pending edits must surface recovery storage failure instead of a normal pending warning');
+const pendingPreserveIndex = persistFlowSource.indexOf('const recoveryResult = preserveRecoveryDraft(rebasedRecoveryPage, authUser);');
+const pendingClearIndex = persistFlowSource.indexOf('clearPageDraft({ page: currentPage, authUser });');
+assert(pendingPreserveIndex >= 0 && pendingClearIndex > pendingPreserveIndex, 'existing recovery drafts must not be cleared before the rebased pending draft is safely written');
+assert(pageSaveFeedbackSource.includes('recovery?.saved === false') && pageSaveFeedbackSource.includes("toast: '임시 보관 실패 · 화면을 닫지 마세요'"), 'save feedback must have an explicit branch for failed local recovery');
 assert(pageSaveActionSource.includes('recoveryPage: activePage()') && pageSaveActionSource.includes('authUser,'), 'page save failures must snapshot the currently active edited page');
 assert(styleSaveActionSource.includes('recoveryPageWithLatestStyle') && styleSaveActionSource.includes('latestStylePreviewThemeRef.current') && styleSaveActionSource.includes('latestStylePreviewBlocksRef.current'), 'style recovery must include the latest pending preview theme and blocks');
 assert(styleSaveActionSource.includes('recoveryPage: recoveryPageWithLatestStyle(activePage())') && styleSaveActionSource.includes('recoveryPage: recoveryPageWithLatestStyle(currentAfterSave)'), 'style save failures and save-race success must both persist a complete recovery draft');
@@ -153,6 +214,12 @@ console.log(JSON.stringify({
   hiddenTabFlush: true,
   cleanupFlush: true,
   latestPageLayoutSync: true,
+  quotaFailureClassified: true,
+  securityFailureClassified: true,
+  failedRecoveryNeverClaimsBackup: true,
+  failedRecoveryKeepsScreenOpenWarning: true,
+  storageFailureToastDeduped: true,
+  pendingDraftPreservedBeforeLegacyClear: true,
   clearAfterSave: true,
   scopedDraftClear: true,
   immediateFailureSnapshot: true,
