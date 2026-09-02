@@ -5,6 +5,7 @@ import { clearPageDraft } from './pageDraftStore.js';
 import { inactivePageSaveMessage, isPageOperationTargetActive, pageOperationIdentity } from './pageOperationIdentity.js';
 import { recoverCommittedPageSave } from './pageSaveReplayRecovery.js';
 import { attachExistingPageIdentity, pageSaveMode } from './savePageIdentity.js';
+import { nextTrailingSaveRequest } from './saveQueuePolicy.js';
 import {
   SAVE_BLOCKED_FEEDBACK,
   STYLE_CONFIRM_FEEDBACK,
@@ -37,140 +38,179 @@ export function usePageSaveAction({
   setSaved,
 }) {
   const saveInFlightRef = useRef(null);
+  const queuedSaveRequestRef = useRef(null);
 
   const saveNow = async (pageOverride = null) => {
-    if (saveInFlightRef.current) return saveInFlightRef.current;
+    if (saveInFlightRef.current) {
+      queuedSaveRequestRef.current = {
+        hasOverride: pageOverride != null,
+        pageOverride,
+      };
+      markSaveStatus('warning', '저장 대기', '현재 저장이 끝나면 최신 수정분을 이어서 저장합니다.');
+      return saveInFlightRef.current;
+    }
 
     const task = (async () => {
-      if (!allowedTabs.includes(tab)) {
-        markSaveStatus(SAVE_BLOCKED_FEEDBACK.level, SAVE_BLOCKED_FEEDBACK.title, SAVE_BLOCKED_FEEDBACK.message);
-        return { ok: false, reason: 'tab-blocked' };
-      }
-      if (!canWriteCurrentTab) {
-        markSaveStatus(WRITE_BLOCKED_FEEDBACK.level, WRITE_BLOCKED_FEEDBACK.title, WRITE_BLOCKED_FEEDBACK.message);
-        showToast(WRITE_BLOCKED_FEEDBACK.toast, WRITE_BLOCKED_FEEDBACK.level);
-        return { ok: false, reason: 'write-blocked' };
-      }
-      if (tab === 'style' && hasPendingStyle) {
-        requestConfirm({
-          title: STYLE_CONFIRM_FEEDBACK.title,
-          message: STYLE_CONFIRM_FEEDBACK.message,
-          confirmLabel: STYLE_CONFIRM_FEEDBACK.confirmLabel,
-          onConfirm: persistStyleNow,
+      let request = pageOverride;
+      let finalResult = null;
+
+      while (true) {
+        finalResult = await runSaveCycle(request);
+        const queued = queuedSaveRequestRef.current;
+        queuedSaveRequestRef.current = null;
+        const queuedRequest = queued
+          ? (queued.hasOverride ? queued.pageOverride : (latestPageRef.current || finalResult?.page || null))
+          : null;
+        const automaticRequest = finalResult?.pendingChanges
+          ? (finalResult.page || latestPageRef.current || null)
+          : null;
+        const next = nextTrailingSaveRequest({
+          result: finalResult,
+          queued: !!queued,
+          queuedRequest,
+          automaticRequest,
         });
-        return { ok: false, reason: 'style-confirm-required' };
+
+        if (!next.continue) break;
+        markSaveStatus('warning', '추가 수정 저장 중', '저장 중 변경된 최신 내용을 이어서 저장합니다.');
+        request = next.request;
       }
 
-      const sourcePage = pageOverride
-        ? normalizePageForSave({ ...(latestPageRef.current || page), ...pageOverride })
-        : (latestPageRef.current || page);
-      const sourcePageRef = latestPageRef.current || page;
-      const saveSourcePage = await attachExistingPageIdentity(sourcePage, {
-        authUser,
-        latestPage: latestPageRef.current,
-        currentPage: page,
+      return finalResult;
+    })();
+
+    saveInFlightRef.current = task;
+    try {
+      return await task;
+    } finally {
+      if (saveInFlightRef.current === task) saveInFlightRef.current = null;
+      queuedSaveRequestRef.current = null;
+    }
+  };
+
+  async function runSaveCycle(pageOverride = null) {
+    if (!allowedTabs.includes(tab)) {
+      markSaveStatus(SAVE_BLOCKED_FEEDBACK.level, SAVE_BLOCKED_FEEDBACK.title, SAVE_BLOCKED_FEEDBACK.message);
+      return { ok: false, reason: 'tab-blocked' };
+    }
+    if (!canWriteCurrentTab) {
+      markSaveStatus(WRITE_BLOCKED_FEEDBACK.level, WRITE_BLOCKED_FEEDBACK.title, WRITE_BLOCKED_FEEDBACK.message);
+      showToast(WRITE_BLOCKED_FEEDBACK.toast, WRITE_BLOCKED_FEEDBACK.level);
+      return { ok: false, reason: 'write-blocked' };
+    }
+    if (tab === 'style' && hasPendingStyle) {
+      requestConfirm({
+        title: STYLE_CONFIRM_FEEDBACK.title,
+        message: STYLE_CONFIRM_FEEDBACK.message,
+        confirmLabel: STYLE_CONFIRM_FEEDBACK.confirmLabel,
+        onConfirm: persistStyleNow,
       });
-      const saveMode = pageSaveMode(saveSourcePage);
-      const expectedUpdatedAt = saveSourcePage.updatedAt || saveSourcePage.savedAt || saveSourcePage.createdAt || sourcePage.updatedAt || sourcePage.savedAt || sourcePage.createdAt || '';
-      const expectedRevision = Number(saveSourcePage.revision || 0);
-      const nextPage = pageForAccountSave(saveSourcePage);
-      const targetIdentity = pageOperationIdentity(nextPage);
-      const activePage = () => latestPageRef.current || page;
-      const targetIsActive = () => isPageOperationTargetActive(targetIdentity, activePage());
-      let result = null;
-      try {
-        if (saveMode === 'update-existing') {
-          result = await persistPage(nextPage, authUser, { tab, expectedUpdatedAt, saveMode: 'update-existing' });
-        } else {
-          result = await persistPage(nextPage, authUser, { tab, expectedUpdatedAt, expectedRevision, saveMode: 'create-new' });
-        }
-      } catch (error) {
-        if (!targetIsActive()) {
-          showToast(inactivePageSaveMessage('page', true), 'error');
-          return { ok: false, error, reason: 'inactive-page', page: activePage() };
-        }
-        const replayedResult = await recoverCommittedPageSave({ error, page: nextPage, authUser });
-        if (replayedResult) {
-          result = replayedResult;
-        } else {
-          await handlePagePersistError({
-            error,
-            page: nextPage,
-            recoveryPage: activePage(),
-            authUser,
-            handlePageSaveError,
-            markSaveStatus,
-            showToast,
-          });
-          return { ok: false, error };
-        }
-      }
+      return { ok: false, reason: 'style-confirm-required' };
+    }
 
+    const sourcePage = pageOverride
+      ? normalizePageForSave({ ...(latestPageRef.current || page), ...pageOverride })
+      : (latestPageRef.current || page);
+    const sourcePageRef = latestPageRef.current || page;
+    const saveSourcePage = await attachExistingPageIdentity(sourcePage, {
+      authUser,
+      latestPage: latestPageRef.current,
+      currentPage: page,
+    });
+    const saveMode = pageSaveMode(saveSourcePage);
+    const expectedUpdatedAt = saveSourcePage.updatedAt || saveSourcePage.savedAt || saveSourcePage.createdAt || sourcePage.updatedAt || sourcePage.savedAt || sourcePage.createdAt || '';
+    const expectedRevision = Number(saveSourcePage.revision || 0);
+    const nextPage = pageForAccountSave(saveSourcePage);
+    const targetIdentity = pageOperationIdentity(nextPage);
+    const activePage = () => latestPageRef.current || page;
+    const targetIsActive = () => isPageOperationTargetActive(targetIdentity, activePage());
+    let result = null;
+    try {
+      if (saveMode === 'update-existing') {
+        result = await persistPage(nextPage, authUser, { tab, expectedUpdatedAt, saveMode: 'update-existing' });
+      } else {
+        result = await persistPage(nextPage, authUser, { tab, expectedUpdatedAt, expectedRevision, saveMode: 'create-new' });
+      }
+    } catch (error) {
       if (!targetIsActive()) {
-        const persistedClientPage = result?.clientPage || nextPage;
-        const savedTargetPage = result?.page ? savedPageFromResult(persistedClientPage, result.page) : persistedClientPage;
-        clearPageDraft({ page: nextPage, authUser });
-        clearPageDraft({ page: savedTargetPage, authUser });
-        showToast(inactivePageSaveMessage('page'), 'info');
-        return {
-          ok: true,
-          page: activePage(),
-          savedPage: savedTargetPage,
-          result,
-          reason: 'inactive-page',
-        };
+        showToast(inactivePageSaveMessage('page', true), 'error');
+        return { ok: false, error, reason: 'inactive-page', page: activePage() };
       }
-
-      const currentAfterSave = activePage();
-      const changedWhileSaving = currentAfterSave !== sourcePageRef
-        && currentAfterSave !== sourcePage
-        && currentAfterSave !== saveSourcePage
-        && currentAfterSave !== nextPage;
-
-      if (changedWhileSaving) {
-        setConnectionsEditing(false);
-        const rebasedPage = commitPendingLocalChangesAfterSave({
-          result,
-          currentPage: currentAfterSave,
+      const replayedResult = await recoverCommittedPageSave({ error, page: nextPage, authUser });
+      if (replayedResult) {
+        result = replayedResult;
+      } else {
+        await handlePagePersistError({
+          error,
+          page: nextPage,
+          recoveryPage: activePage(),
           authUser,
-          latestPageRef,
-          saveLocalJson,
-          setPage,
-          setSaved,
+          handlePageSaveError,
           markSaveStatus,
+          showToast,
         });
-        return {
-          ok: true,
-          page: rebasedPage,
-          savedPage: result?.page || null,
-          result,
-          pendingChanges: true,
-        };
+        return { ok: false, error };
       }
+    }
 
-      setConnectionsEditing(false);
-      const savedPage = commitSavedPageResult({
+    if (!targetIsActive()) {
+      const persistedClientPage = result?.clientPage || nextPage;
+      const savedTargetPage = result?.page ? savedPageFromResult(persistedClientPage, result.page) : persistedClientPage;
+      clearPageDraft({ page: nextPage, authUser });
+      clearPageDraft({ page: savedTargetPage, authUser });
+      showToast(inactivePageSaveMessage('page'), 'info');
+      return {
+        ok: true,
+        page: activePage(),
+        savedPage: savedTargetPage,
         result,
-        nextPage,
-        scope: 'page',
+        reason: 'inactive-page',
+      };
+    }
+
+    const currentAfterSave = activePage();
+    const changedWhileSaving = currentAfterSave !== sourcePageRef
+      && currentAfterSave !== sourcePage
+      && currentAfterSave !== saveSourcePage
+      && currentAfterSave !== nextPage;
+
+    if (changedWhileSaving) {
+      setConnectionsEditing(false);
+      const rebasedPage = commitPendingLocalChangesAfterSave({
+        result,
+        currentPage: currentAfterSave,
         authUser,
         latestPageRef,
-        savedPageFromResult,
         saveLocalJson,
         setPage,
         setSaved,
         markSaveStatus,
+        message: '저장 중 변경된 내용을 자동으로 이어서 저장합니다.',
       });
-      return { ok: true, page: savedPage, result };
-    })();
+      return {
+        ok: true,
+        page: rebasedPage,
+        savedPage: result?.page || null,
+        result,
+        pendingChanges: true,
+      };
+    }
 
-    saveInFlightRef.current = task;
-    const clearInFlight = () => {
-      if (saveInFlightRef.current === task) saveInFlightRef.current = null;
-    };
-    task.then(clearInFlight, clearInFlight);
-    return task;
-  };
+    setConnectionsEditing(false);
+    const savedPage = commitSavedPageResult({
+      result,
+      nextPage,
+      scope: 'page',
+      authUser,
+      latestPageRef,
+      savedPageFromResult,
+      saveLocalJson,
+      setPage,
+      setSaved,
+      markSaveStatus,
+    });
+    return { ok: true, page: savedPage, result };
+  }
 
   return { saveNow };
 }

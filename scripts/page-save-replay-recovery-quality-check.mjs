@@ -72,11 +72,11 @@ assert(
   'style saves must use the same committed-retry recovery path',
 );
 assert(
-  pageActionSource.includes('if (replayedResult) {\n          result = replayedResult;'),
+  pageActionSource.includes('if (replayedResult) {') && pageActionSource.includes('result = replayedResult;'),
   'normal page saves must continue through the ordinary successful commit path after replay recovery',
 );
 assert(
-  styleActionSource.includes('if (replayedResult) {\n          result = replayedResult;'),
+  styleActionSource.includes('if (replayedResult) {') && styleActionSource.includes('result = replayedResult;'),
   'style saves must continue through the ordinary successful commit path after replay recovery',
 );
 
