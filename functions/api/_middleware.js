@@ -2,6 +2,7 @@ import { isRequestSessionRevoked } from './auth/_session-revocation.js';
 import { enqueuePageroLead } from './call/pagero/_shared.js';
 import { notifyPageroLeadAvailable, ownerIdForProject } from './call/push/_shared.js';
 import { canonicalLeadFromPageroQueue, intakeCanonicalLead, recordLeadAudit } from './calltag/v1/_shared.js';
+import { guardPublicLeadIngress } from './_publicLeadIngress.js';
 import {
   bindApiRequestTrace,
   createApiRequestTrace,
@@ -47,6 +48,9 @@ export async function onRequest(context) {
     if (request.method !== 'POST' || url.pathname !== '/api/leads') {
       return finish(await next());
     }
+
+    const ingressResponse = await guardPublicLeadIngress(request);
+    if (ingressResponse) return finish(ingressResponse);
 
     let submitted = {};
     try {
