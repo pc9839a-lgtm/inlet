@@ -9,6 +9,11 @@ import {
   pageDraftStorageFailureMessage,
   savePageDraftResult,
 } from './pageDraftStore.js';
+import {
+  setWorkspaceRecoveryFlusher,
+  setWorkspaceUnsavedDirty,
+  shouldBlockWorkspaceBeforeUnload,
+} from './workspaceUnsavedGuard.js';
 
 const SERVER_DRAFT_DELAY_MS = 550;
 const SERVER_BASELINE_STABILIZE_MS = 1200;
@@ -76,6 +81,7 @@ export function useLocalWorkspacePersistence({
       lastUserEditIntentRef.current = Date.now();
       if (event.type === 'input' || event.type === 'change' || event.type === 'keydown') {
         serverDraftDirtyRef.current = true;
+        setWorkspaceUnsavedDirty(true);
       }
     };
 
@@ -114,6 +120,7 @@ export function useLocalWorkspacePersistence({
       lastUserEditIntentRef.current = 0;
       draftStorageFailureNoticeRef.current = '';
       serverBaselineRef.current = { identity, revision, updatedAt, signature, observedAt: Date.now() };
+      setWorkspaceUnsavedDirty(false);
       return undefined;
     }
 
@@ -135,6 +142,7 @@ export function useLocalWorkspacePersistence({
     };
 
     serverDraftDirtyRef.current = true;
+    setWorkspaceUnsavedDirty(true);
     if (serverDraftTimerRef.current) clearTimeout(serverDraftTimerRef.current);
     const waitForBaseline = Math.max(0, SERVER_BASELINE_STABILIZE_MS - (now - Number(baseline.observedAt || 0)));
     serverDraftTimerRef.current = setTimeout(() => {
@@ -150,7 +158,11 @@ export function useLocalWorkspacePersistence({
   }, [page, publicLandingSlug, authUser]);
 
   useEffect(() => {
-    if (!isServerPageMode() || !authUser || publicLandingSlug || typeof window === 'undefined') return undefined;
+    if (!isServerPageMode() || !authUser || publicLandingSlug || typeof window === 'undefined') {
+      setWorkspaceRecoveryFlusher(null);
+      setWorkspaceUnsavedDirty(false);
+      return undefined;
+    }
 
     const flushDraft = () => {
       const currentPage = latestPageRef.current || page;
@@ -160,8 +172,17 @@ export function useLocalWorkspacePersistence({
       const signatureChanged = sameIdentity && baseline?.signature !== pageDraftContentSignature(normalized);
       const lastUserIntentAt = Number(lastUserEditIntentRef.current || 0);
       const hasRecentUserIntent = lastUserIntentAt > 0 && Date.now() - lastUserIntentAt <= USER_EDIT_INTENT_WINDOW_MS;
-      if (!serverDraftDirtyRef.current && !(signatureChanged && hasRecentUserIntent)) return;
-      persistRecoveryDraft(normalized);
+      if (!serverDraftDirtyRef.current && !(signatureChanged && hasRecentUserIntent)) return true;
+      return persistRecoveryDraft(normalized);
+    };
+
+    setWorkspaceRecoveryFlusher(flushDraft);
+
+    const handleBeforeUnload = (event) => {
+      flushDraft();
+      if (!shouldBlockWorkspaceBeforeUnload()) return;
+      event.preventDefault();
+      event.returnValue = '';
     };
 
     const handleVisibilityChange = () => {
@@ -169,14 +190,15 @@ export function useLocalWorkspacePersistence({
     };
 
     window.addEventListener('pagehide', flushDraft);
-    window.addEventListener('beforeunload', flushDraft);
+    window.addEventListener('beforeunload', handleBeforeUnload);
     window.addEventListener('popstate', flushDraft);
     window.addEventListener('hashchange', flushDraft);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
       flushDraft();
+      setWorkspaceRecoveryFlusher(null);
       window.removeEventListener('pagehide', flushDraft);
-      window.removeEventListener('beforeunload', flushDraft);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('popstate', flushDraft);
       window.removeEventListener('hashchange', flushDraft);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
