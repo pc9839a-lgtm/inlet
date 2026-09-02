@@ -129,7 +129,11 @@ expectInvalid('revision did not advance', {
   requireSaveRequestId: true,
 }, 'revision-not-advanced');
 expectInvalid('invalid saved revision', {
-  result: { ...validResult, page: { ...validResult.page, revision: 0 } },
+  result: {
+    ...validResult,
+    saveMode: 'create-new',
+    page: { ...validResult.page, revision: 0 },
+  },
   requestPage: { ...requestPage, revision: 0 },
   saveMode: 'create-new',
   expectedRevision: 0,
