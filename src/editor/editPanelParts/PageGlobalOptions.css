@@ -1,0 +1,113 @@
+/* Page options — compact, overflow-safe editor surface. */
+body .builder-shell .page-global-options-card,
+body .builder-shell .page-global-options-card * {
+  box-sizing: border-box;
+}
+
+body .builder-shell .page-global-options-card {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+body .builder-shell .page-global-options-title {
+  margin: 0 0 6px;
+  padding: 0 2px;
+}
+
+body .builder-shell .page-global-options-title h2 {
+  margin: 0;
+  color: var(--product-text);
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 850;
+  letter-spacing: -.025em;
+}
+
+body .builder-shell .page-global-options-list {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  display: grid;
+  gap: 6px;
+}
+
+body .builder-shell .page-global-options-list > * {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+body .builder-shell .page-global-options-card :is(.edit-animation-card, .fixed-block-card) {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid #eaecf0;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: none;
+}
+
+body .builder-shell .page-global-options-card :is(.fixed-block-head, .edit-animation-head) {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+}
+
+body .builder-shell .page-global-options-card .fixed-block-copy {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+body .builder-shell .page-global-options-card .fixed-block-copy strong,
+body .builder-shell .page-global-options-card .fixed-block-copy em {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body .builder-shell .page-global-options-card :is(.fixed-block-editor, .edit-animation-settings, .share-position-control) {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+@media (max-width: 760px) {
+  body .builder-shell .page-global-options-card {
+    padding: 10px;
+    border: 1px solid var(--product-line);
+    border-radius: 10px;
+    background: #fff;
+  }
+
+  body .builder-shell .page-global-options-list {
+    gap: 6px;
+  }
+
+  body .builder-shell .page-global-options-card :is(.fixed-block-head, .edit-animation-head) {
+    gap: 4px;
+    padding: 7px 6px;
+  }
+
+  body .builder-shell .page-global-options-card .fixed-block-copy em {
+    display: none;
+  }
+
+  body .builder-shell .page-global-options-card :is(.fixed-block-editor, .edit-animation-settings) {
+    padding: 10px;
+  }
+}
