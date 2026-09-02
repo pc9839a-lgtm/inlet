@@ -144,7 +144,8 @@ assert(saveStatusSource.includes("markSaveStatus('ok', '브라우저에 저장�
 assert(panelHeaderSource.includes("saveStatus.tone === 'warning' || saveStatus.tone === 'error'"), 'editor header must show save status text only for actionable warning/error states');
 assert(panelHeaderSource.includes("{saved ? '저장됨' : '저장'}") && !panelHeaderSource.includes("idle: '#6c727e'") && !panelHeaderSource.includes("ok: '#147a50'"), 'normal save state must be represented by the save button without duplicate idle/ok header labels');
 
+await import('./page-save-result-validation-quality-check.mjs');
 await import('./page-save-queue-quality-check.mjs');
 await import('./page-save-network-recovery-quality-check.mjs');
 
-console.log(JSON.stringify({ ok: true, checks: 39, trailingSaveQueue: true, networkRecovery: true }, null, 2));
+console.log(JSON.stringify({ ok: true, checks: 40, resultValidation: true, trailingSaveQueue: true, networkRecovery: true }, null, 2));
