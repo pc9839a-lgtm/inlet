@@ -40,7 +40,55 @@ export function usePageSaveAction({
   const saveInFlightRef = useRef(null);
   const queuedSaveRequestRef = useRef(null);
 
-  const runSaveCycle = async (pageOverride = null) => {
+  const saveNow = async (pageOverride = null) => {
+    if (saveInFlightRef.current) {
+      queuedSaveRequestRef.current = {
+        hasOverride: pageOverride != null,
+        pageOverride,
+      };
+      markSaveStatus('warning', '저장 대기', '현재 저장이 끝나면 최신 수정분을 이어서 저장합니다.');
+      return saveInFlightRef.current;
+    }
+
+    const task = (async () => {
+      let request = pageOverride;
+      let finalResult = null;
+
+      while (true) {
+        finalResult = await runSaveCycle(request);
+        const queued = queuedSaveRequestRef.current;
+        queuedSaveRequestRef.current = null;
+        const queuedRequest = queued
+          ? (queued.hasOverride ? queued.pageOverride : (latestPageRef.current || finalResult?.page || null))
+          : null;
+        const automaticRequest = finalResult?.pendingChanges
+          ? (finalResult.page || latestPageRef.current || null)
+          : null;
+        const next = nextTrailingSaveRequest({
+          result: finalResult,
+          queued: !!queued,
+          queuedRequest,
+          automaticRequest,
+        });
+
+        if (!next.continue) break;
+        markSaveStatus('warning', '추가 수정 저장 중', '저장 중 변경된 최신 내용을 이어서 저장합니다.');
+        request = next.request;
+      }
+
+      return finalResult;
+    })();
+
+    saveInFlightRef.current = task;
+    try {
+      return await task;
+    } finally {
+      if (saveInFlightRef.current === task) saveInFlightRef.current = null;
+      queuedSaveRequestRef.current = null;
+    }
+  };
+
+  async function runSaveCycle(pageOverride = null) {
     if (!allowedTabs.includes(tab)) {
       markSaveStatus(SAVE_BLOCKED_FEEDBACK.level, SAVE_BLOCKED_FEEDBACK.title, SAVE_BLOCKED_FEEDBACK.message);
       return { ok: false, reason: 'tab-blocked' };
@@ -162,55 +210,7 @@ export function usePageSaveAction({
       markSaveStatus,
     });
     return { ok: true, page: savedPage, result };
-  };
-
-  const saveNow = async (pageOverride = null) => {
-    if (saveInFlightRef.current) {
-      queuedSaveRequestRef.current = {
-        hasOverride: pageOverride != null,
-        pageOverride,
-      };
-      markSaveStatus('warning', '저장 대기', '현재 저장이 끝나면 최신 수정분을 이어서 저장합니다.');
-      return saveInFlightRef.current;
-    }
-
-    const task = (async () => {
-      let request = pageOverride;
-      let finalResult = null;
-
-      while (true) {
-        finalResult = await runSaveCycle(request);
-        const queued = queuedSaveRequestRef.current;
-        queuedSaveRequestRef.current = null;
-        const queuedRequest = queued
-          ? (queued.hasOverride ? queued.pageOverride : (latestPageRef.current || finalResult?.page || null))
-          : null;
-        const automaticRequest = finalResult?.pendingChanges
-          ? (finalResult.page || latestPageRef.current || null)
-          : null;
-        const next = nextTrailingSaveRequest({
-          result: finalResult,
-          queued: !!queued,
-          queuedRequest,
-          automaticRequest,
-        });
-
-        if (!next.continue) break;
-        markSaveStatus('warning', '추가 수정 저장 중', '저장 중 변경된 최신 내용을 이어서 저장합니다.');
-        request = next.request;
-      }
-
-      return finalResult;
-    })();
-
-    saveInFlightRef.current = task;
-    try {
-      return await task;
-    } finally {
-      if (saveInFlightRef.current === task) saveInFlightRef.current = null;
-      queuedSaveRequestRef.current = null;
-    }
-  };
+  }
 
   return { saveNow };
 }
