@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { isServerPageMode } from '../config/runtimeConfig.js';
 import { AUTH_KEY, EVENTS_KEY, LEADS_KEY, STORAGE_KEY } from '../config/storageKeys.js';
 import { normalizeAuthUser } from '../lib/authIdentity.js';
@@ -42,6 +42,9 @@ export function useLocalWorkspacePersistence({
         if (['Tab', 'Shift', 'Control', 'Alt', 'Meta', 'Escape'].includes(key)) return;
       }
       lastUserEditIntentRef.current = Date.now();
+      if (event.type === 'input' || event.type === 'change' || event.type === 'keydown') {
+        serverDraftDirtyRef.current = true;
+      }
     };
 
     const options = { capture: true, passive: true };
@@ -93,19 +96,25 @@ export function useLocalWorkspacePersistence({
       return undefined;
     }
 
-    serverDraftDirtyRef.current = true;
-    if (serverDraftTimerRef.current) clearTimeout(serverDraftTimerRef.current);
-    const waitForBaseline = Math.max(0, SERVER_BASELINE_STABILIZE_MS - (now - Number(baseline.observedAt || 0)));
-    serverDraftTimerRef.current = setTimeout(() => {
+    const flushPendingDraft = () => {
+      if (!serverDraftDirtyRef.current) return true;
       const draft = savePageDraft({
         page: latestPageRef.current || normalized,
         authUser,
         interactionConfirmed: true,
       });
       serverDraftDirtyRef.current = !draft;
-      serverDraftTimerRef.current = null;
       if (draft) lastUserEditIntentRef.current = 0;
-      if (!draft && typeof window !== 'undefined') {
+      return !!draft;
+    };
+
+    serverDraftDirtyRef.current = true;
+    if (serverDraftTimerRef.current) clearTimeout(serverDraftTimerRef.current);
+    const waitForBaseline = Math.max(0, SERVER_BASELINE_STABILIZE_MS - (now - Number(baseline.observedAt || 0)));
+    serverDraftTimerRef.current = setTimeout(() => {
+      const stored = flushPendingDraft();
+      serverDraftTimerRef.current = null;
+      if (!stored && typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('builder:toast', {
           detail: { message: '편집 내용 임시 저장에 실패했습니다. 브라우저 저장 공간을 확인해주세요.', tone: 'error' },
         }));
@@ -115,25 +124,47 @@ export function useLocalWorkspacePersistence({
     return () => {
       if (serverDraftTimerRef.current) clearTimeout(serverDraftTimerRef.current);
       serverDraftTimerRef.current = null;
+      flushPendingDraft();
     };
   }, [page, publicLandingSlug, authUser]);
 
   useEffect(() => {
-    if (!isServerPageMode() || !authUser || publicLandingSlug) return undefined;
+    if (!isServerPageMode() || !authUser || publicLandingSlug || typeof window === 'undefined') return undefined;
+
     const flushDraft = () => {
-      if (!serverDraftDirtyRef.current) return;
+      const currentPage = latestPageRef.current || page;
+      const normalized = normalizePageForSave(currentPage);
+      const baseline = serverBaselineRef.current;
+      const sameIdentity = baseline?.identity === pageDraftIdentity(normalized, authUser);
+      const signatureChanged = sameIdentity && baseline?.signature !== pageDraftContentSignature(normalized);
+      const lastUserIntentAt = Number(lastUserEditIntentRef.current || 0);
+      const hasRecentUserIntent = lastUserIntentAt > 0 && Date.now() - lastUserIntentAt <= USER_EDIT_INTENT_WINDOW_MS;
+      if (!serverDraftDirtyRef.current && !(signatureChanged && hasRecentUserIntent)) return;
       const draft = savePageDraft({
-        page: latestPageRef.current || page,
+        page: normalized,
         authUser,
         interactionConfirmed: true,
       });
       serverDraftDirtyRef.current = !draft;
+      if (draft) lastUserEditIntentRef.current = 0;
     };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') flushDraft();
+    };
+
     window.addEventListener('pagehide', flushDraft);
     window.addEventListener('beforeunload', flushDraft);
+    window.addEventListener('popstate', flushDraft);
+    window.addEventListener('hashchange', flushDraft);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
+      flushDraft();
       window.removeEventListener('pagehide', flushDraft);
       window.removeEventListener('beforeunload', flushDraft);
+      window.removeEventListener('popstate', flushDraft);
+      window.removeEventListener('hashchange', flushDraft);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [authUser, latestPageRef, page, publicLandingSlug]);
 
@@ -152,7 +183,7 @@ export function useLocalWorkspacePersistence({
     if (JSON.stringify(normalized) !== JSON.stringify(authUser)) setAuthUser(normalized);
   }, [authUser]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     latestPageRef.current = page;
   }, [latestPageRef, page]);
 }
