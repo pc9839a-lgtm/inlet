@@ -41,6 +41,13 @@ export function publicLeadRequestIpHash(request) {
   return stableHash(requestIp(request));
 }
 
+function cancelBodyReader(reader) {
+  try {
+    const pending = reader?.cancel?.('payload-too-large');
+    if (pending && typeof pending.catch === 'function') pending.catch(() => undefined);
+  } catch {}
+}
+
 async function requestBodyWithinLimit(request, maxBodyBytes) {
   const declared = Number(request.headers.get('Content-Length') || 0);
   if (Number.isFinite(declared) && declared > maxBodyBytes) {
@@ -59,7 +66,10 @@ async function requestBodyWithinLimit(request, maxBodyBytes) {
       if (done) break;
       bytes += Number(value?.byteLength || value?.length || 0);
       if (bytes > maxBodyBytes) {
-        try { await reader.cancel('payload-too-large'); } catch {}
+        // Request.clone() creates a tee stream. Awaiting cancel on one branch can
+        // wait for the untouched original branch in some runtimes, stalling the API.
+        // Cancellation is therefore best-effort after the size decision is final.
+        cancelBodyReader(reader);
         return { ok: false, bytes, source: 'stream' };
       }
     }
