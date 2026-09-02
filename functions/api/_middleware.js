@@ -19,6 +19,10 @@ function sessionError(status, code, error) {
   });
 }
 
+function preserveOriginalResponse(response) {
+  return response;
+}
+
 export async function onRequest(context) {
   const { request, env, next } = context;
   const url = new URL(request.url);
@@ -161,7 +165,7 @@ export async function onRequest(context) {
       });
     }
 
-    return finish(response);
+    return finish(preserveOriginalResponse(response));
   } catch (error) {
     logApiRequestException(trace, error);
     throw error;
