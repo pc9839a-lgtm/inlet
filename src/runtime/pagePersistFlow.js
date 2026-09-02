@@ -7,6 +7,7 @@ import {
   savePageDraftResult,
 } from './pageDraftStore.js';
 import { PAGE_SAVE_LABEL, pageSaveErrorFeedback, pageSaveSuccessFeedback } from './pageSaveFeedback.js';
+import { setWorkspaceUnsavedDirty } from './workspaceUnsavedGuard.js';
 
 function preserveRecoveryDraft(page, authUser) {
   if (!page) {
@@ -34,6 +35,7 @@ export async function handlePagePersistError({
   showToast,
 }) {
   const recoveryResult = preserveRecoveryDraft(recoveryPage, authUser);
+  setWorkspaceUnsavedDirty(true);
   const handled = await handlePageSaveError(error, page);
   const feedback = pageSaveErrorFeedback(error, handled, {
     saved: recoveryResult.ok,
@@ -94,6 +96,7 @@ export function commitPendingLocalChangesAfterSave({
   setPage(rebasedPage);
   saveLocalJson(STORAGE_KEY, rebasedPage, PAGE_SAVE_LABEL, { quietSuccess: true });
   setSaved(false);
+  setWorkspaceUnsavedDirty(true);
 
   if (recoveryResult.ok) {
     markSaveStatus('warning', '추가 수정 있음', message);
@@ -126,6 +129,7 @@ export function commitSavedPageResult({
   saveLocalJson(STORAGE_KEY, savedPage, PAGE_SAVE_LABEL, { quietSuccess: true });
   clearPageDraft({ page: nextPage, authUser });
   clearPageDraft({ page: savedPage, authUser });
+  setWorkspaceUnsavedDirty(false);
   setSaved(true);
   setTimeout(() => setSaved(false), 1000);
   const feedback = pageSaveSuccessFeedback(result, scope);

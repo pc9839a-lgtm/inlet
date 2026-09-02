@@ -6,6 +6,13 @@ import { deleteAccountPage, fetchAccountPages } from '../lib/pageRepository.js';
 import { canCreateLandingPage, isPlatformMasterUser } from '../lib/platformAccountPolicy.js';
 import { AUTH_KEY, DASHBOARD_KEY, PAGE_DRAFTS_KEY, STORAGE_KEY, WORKSPACE_KEY } from '../config/storageKeys.js';
 import { save as saveJson, storageErrorMessage } from '../lib/storage.js';
+import { clearPageDraft } from '../runtime/pageDraftStore.js';
+import {
+  allowWorkspaceNextUnload,
+  confirmWorkspaceLeaveSync,
+  discardWorkspaceUnsavedState,
+  workspaceHasUnsavedChanges,
+} from '../runtime/workspaceUnsavedGuard.js';
 import { WorkspaceCreateModalLayer } from './workspace/WorkspaceCreateModalLayer.jsx';
 import './DashboardAccountLimit.css';
 
@@ -72,6 +79,16 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
   const createLimitReached = pageCountReady && !canCreateLandingPage(user, visiblePages.length);
   const createDisabled = createCheckPending || createLimitReached;
 
+  const isCurrentPage = (item = {}) => {
+    const currentId = String(page?.id || '').trim();
+    const itemId = String(item?.id || '').trim();
+    if (currentId && itemId) return currentId === itemId;
+    const currentProjectId = String(page?.projectId || '').trim();
+    const itemProjectId = String(item?.projectId || '').trim();
+    if (currentProjectId && itemProjectId) return currentProjectId === itemProjectId;
+    return String(page?.slug || '').trim() === String(item?.slug || '').trim();
+  };
+
   const openCreate = () => {
     if (createDisabled) return;
     setCreateOpen(true);
@@ -109,6 +126,9 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
       setError('로그인 세션이 만료되었습니다. 다시 로그인해주세요.');
       return;
     }
+    if (!confirmWorkspaceLeaveSync({
+      message: '저장하지 않은 변경사항이 있습니다. 회원 탈퇴를 계속하면 임시 편집본을 포함한 계정 작업 데이터도 함께 삭제됩니다. 그래도 탈퇴할까요?',
+    })) return;
 
     setWithdrawing(true);
     setError('');
@@ -117,10 +137,12 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
         status: 'deleted_pending_retention',
         session,
       });
+      discardWorkspaceUnsavedState();
       try {
         [AUTH_KEY, DASHBOARD_KEY, WORKSPACE_KEY, PAGE_DRAFTS_KEY].forEach((key) => window.localStorage?.removeItem(key));
         window.sessionStorage?.clear();
       } catch {}
+      allowWorkspaceNextUnload();
       window.location.replace('/');
     } catch (err) {
       setError(authAccountErrorMessage(err));
@@ -129,6 +151,10 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
   };
 
   const openEditor = async (item) => {
+    if (!confirmWorkspaceLeaveSync({
+      message: '저장하지 않은 변경사항이 있습니다. 임시 편집본은 브라우저에 보관됩니다. 다른 페이지 편집 화면으로 이동할까요?',
+    })) return;
+
     const openKey = item.projectId || item.id || item.slug;
     setOpeningProjectId(openKey);
     setPageListError('');
@@ -149,6 +175,7 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
         projectId: String(editorPage.projectId || item.projectId || ''),
         slug: String(editorPage.slug || item.slug || ''),
       });
+      allowWorkspaceNextUnload();
       window.location.assign(`/app?${params.toString()}`);
     } catch (openError) {
       console.warn('Selected page editor open failed:', openError);
@@ -158,17 +185,34 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
   };
 
   const openPreview = (item) => {
+    if (!confirmWorkspaceLeaveSync({
+      message: '저장하지 않은 변경사항이 있습니다. 임시 편집본은 브라우저에 보관됩니다. 미리보기 페이지로 이동할까요?',
+    })) return;
+    allowWorkspaceNextUnload();
     window.location.href = `/${item.slug}`;
   };
 
   const deletePage = async (item) => {
     const title = item.title || item.slug || '이 페이지';
-    if (!window.confirm(`\"${title}\" 페이지를 삭제할까요?\n삭제하면 공개 주소에서도 보이지 않습니다.`)) return;
+    const deletingCurrent = isCurrentPage(item);
+    const dirtyCurrent = deletingCurrent && workspaceHasUnsavedChanges();
+    if (dirtyCurrent) {
+      if (!confirmWorkspaceLeaveSync({
+        message: `\"${title}\" 페이지에 저장하지 않은 변경사항이 있습니다. 삭제를 계속하면 서버 페이지와 이 브라우저의 임시 편집본도 함께 삭제됩니다. 그래도 삭제할까요?`,
+      })) return;
+    } else if (!window.confirm(`\"${title}\" 페이지를 삭제할까요?\n삭제하면 공개 주소에서도 보이지 않습니다.`)) {
+      return;
+    }
+
     const deleteKey = item.projectId || item.id || item.slug;
     setDeletingProjectId(deleteKey);
     setPageListError('');
     try {
       await deleteAccountPage(item, user);
+      if (deletingCurrent) {
+        clearPageDraft({ page: item, authUser: user, allSources: true });
+        discardWorkspaceUnsavedState();
+      }
       setAccountPages((current) => current.filter((candidate) => (
         (candidate.projectId || candidate.id || candidate.slug) !== deleteKey
       )));
