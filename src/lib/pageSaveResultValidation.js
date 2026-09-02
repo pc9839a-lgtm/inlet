@@ -24,12 +24,22 @@ function invalidSaveResult(reason, details = {}) {
   );
 }
 
+export function expectedPageSaveRequestId(page = {}, saveMode = '', expectedRevision = 0) {
+  return [
+    text(saveMode) || 'create-new',
+    text(page.projectId) || 'project',
+    text(page.id || page.pageId) || 'page',
+    text(page.slug) || 'my-page',
+    Math.max(0, revision(expectedRevision) < 0 ? 0 : revision(expectedRevision)),
+  ].join(':');
+}
+
 export function assertValidPageSaveResult({
   result,
   requestPage = {},
   saveMode = '',
   expectedRevision,
-  expectedSaveRequestId = '',
+  requireSaveRequestId = false,
 } = {}) {
   if (result?.mode === 'local') return result;
 
@@ -78,15 +88,6 @@ export function assertValidPageSaveResult({
     });
   }
 
-  const expectedRequestId = text(expectedSaveRequestId);
-  const actualRequestId = text(result.saveRequestId);
-  if (expectedRequestId && actualRequestId !== expectedRequestId) {
-    throw invalidSaveResult('save-request-id-mismatch', {
-      expectedSaveRequestId: expectedRequestId,
-      actualSaveRequestId: actualRequestId,
-    });
-  }
-
   const beforeRevision = revision(expectedRevision ?? requestPage.revision ?? 0);
   const savedRevision = revision(savedPage.revision);
   if (savedRevision <= 0) {
@@ -100,6 +101,17 @@ export function assertValidPageSaveResult({
       expectedRevision: beforeRevision,
       actualRevision: savedRevision,
     });
+  }
+
+  if (requireSaveRequestId) {
+    const expectedRequestId = expectedPageSaveRequestId(requestPage, requestedMode, Math.max(0, beforeRevision));
+    const actualRequestId = text(result.saveRequestId);
+    if (!actualRequestId || actualRequestId !== expectedRequestId) {
+      throw invalidSaveResult('save-request-id-mismatch', {
+        expectedSaveRequestId: expectedRequestId,
+        actualSaveRequestId: actualRequestId,
+      });
+    }
   }
 
   const savedUpdatedAt = text(savedPage.updatedAt || savedPage.savedAt);
