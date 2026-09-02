@@ -30,6 +30,10 @@ export function discardWorkspaceUnsavedState() {
   allowNextUnload = false;
 }
 
+export function allowWorkspaceNextUnload() {
+  allowNextUnload = true;
+}
+
 export function confirmWorkspaceLeaveSync({
   message = '저장하지 않은 변경사항이 있습니다. 이동하면 서버에는 반영되지 않습니다. 그래도 이동할까요?',
   allowUnload = false,
