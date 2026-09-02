@@ -4,7 +4,8 @@ import { fetchPublicServerPage, fetchServerPage } from '../lib/pageRepository.js
 import { projectContext } from '../lib/projectContext.js';
 import { defaultPage, normalize, normalizePageForSave } from '../lib/pageModel.js';
 import { hasAccountProjectAccess } from '../lib/accountProjectAccess.js';
-import { clearPageDraft, evaluatePageDraft, readPageDraft, restorePageDraft } from './pageDraftStore.js';
+import { clearPageDraft, evaluatePageDraft, readPageDraft, restorePageDraft, savePageDraft } from './pageDraftStore.js';
+import { usePageRemoteFreshness } from './usePageRemoteFreshness.js';
 
 function emitBuilderToast(message, tone = 'info') {
   if (typeof window === 'undefined') return;
@@ -75,8 +76,8 @@ function forceRecoveredDyjhIntoEditor({
   latestPageRef,
   setPage,
 }) {
-  clearPageDraft({ page: currentPage, authUser });
-  clearPageDraft({ page: serverPage, authUser });
+  clearPageDraft({ page: currentPage, authUser, allSources: true });
+  clearPageDraft({ page: serverPage, authUser, allSources: true });
   latestPageRef.current = serverPage;
   setPage(serverPage);
   emitBuilderToast('복구된 청첩장 서버 저장본을 편집 화면에 불러왔습니다.', 'success');
@@ -84,12 +85,12 @@ function forceRecoveredDyjhIntoEditor({
 
 function offerPageDraftRecovery({ serverPage, authUser, latestPageRef, localPageMutationRef, setPage }) {
   if (typeof window === 'undefined') return;
-  const draft = readPageDraft({ page: serverPage, authUser });
+  const draft = readPageDraft({ page: serverPage, authUser, includeOtherSources: true });
   if (!draft) return;
   const evaluation = evaluatePageDraft({ draft, serverPage });
   const recoverable = evaluation.action === 'restore' || evaluation.action === 'conflict';
   if (!recoverable) {
-    clearPageDraft({ page: serverPage, authUser });
+    clearPageDraft({ page: serverPage, authUser, sourceId: draft.sourceId });
     return;
   }
 
@@ -105,6 +106,14 @@ function offerPageDraftRecovery({ serverPage, authUser, latestPageRef, localPage
       cancelLabel: '서버 저장본 유지',
       onConfirm: () => {
         const restored = restorePageDraft({ draft, serverPage });
+        const adoptedDraft = savePageDraft({
+          page: restored,
+          authUser,
+          interactionConfirmed: true,
+        });
+        if (draft.sourceId && adoptedDraft?.sourceId && draft.sourceId !== adoptedDraft.sourceId) {
+          clearPageDraft({ page: serverPage, authUser, sourceId: draft.sourceId });
+        }
         latestPageRef.current = restored;
         localPageMutationRef.current += 1;
         setPage(restored);
@@ -116,7 +125,7 @@ function offerPageDraftRecovery({ serverPage, authUser, latestPageRef, localPage
         );
       },
       onCancel: () => {
-        clearPageDraft({ page: serverPage, authUser });
+        clearPageDraft({ page: serverPage, authUser, sourceId: draft.sourceId });
         emitBuilderToast('임시 편집본을 삭제하고 서버 저장본을 유지했습니다.', 'info');
       },
     },
@@ -133,6 +142,14 @@ export function useAccountWorkspacePage({
   localPageMutationRef,
   setAccountPageReadyKey,
 }) {
+  usePageRemoteFreshness({
+    publicLandingSlug,
+    authUser,
+    page,
+    latestPageRef,
+    setPage,
+  });
+
   useLayoutEffect(() => {
     if (publicLandingSlug || !authUser) {
       setAccountPageReadyKey?.('');

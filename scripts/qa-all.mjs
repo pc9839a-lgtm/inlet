@@ -40,6 +40,7 @@ const steps = [
   ['admin:audit:qa', ['scripts/admin-audit-quality-check.mjs']],
   ['admin:audit:production:contract:qa', ['scripts/admin-audit-production-contract-check.mjs']],
   ['page:draft:qa', ['scripts/page-draft-recovery-quality-check.mjs']],
+  ['page:concurrency:qa', ['scripts/page-multi-editor-concurrency-quality-check.mjs']],
   ['page:operation:isolation:qa', ['scripts/page-operation-isolation-quality-check.mjs']],
   ['image:upload:qa', ['scripts/image-upload-optimization-quality-check.mjs']],
   ['preview:parity:qa', ['scripts/preview-public-parity-quality-check.mjs']],

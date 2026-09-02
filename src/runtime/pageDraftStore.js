@@ -4,7 +4,9 @@ import { normalizePageForSave } from '../lib/pageModel.js';
 const DRAFT_VERSION = 1;
 const MAX_DRAFTS = 12;
 const MAX_DRAFT_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+const DRAFT_SOURCE_SESSION_KEY = 'inlet-page-draft-source-v1';
 const SENSITIVE_KEY = /(api[-_]?key|access[-_]?token|refresh[-_]?token|authorization|password|secret|credential)/i;
+let fallbackDraftSourceId = '';
 
 function safeStorage(storage) {
   if (storage) return storage;
@@ -12,8 +14,42 @@ function safeStorage(storage) {
   return window.localStorage || null;
 }
 
+function safeSessionStorage(storage) {
+  if (storage) return storage;
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.sessionStorage || null;
+  } catch {
+    return null;
+  }
+}
+
 function text(value) {
   return String(value || '').trim();
+}
+
+function newDraftSourceId() {
+  const random = globalThis.crypto?.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  return `tab-${random}`;
+}
+
+export function pageDraftSourceId(sessionStorage) {
+  const target = safeSessionStorage(sessionStorage);
+  if (target) {
+    try {
+      const existing = text(target.getItem(DRAFT_SOURCE_SESSION_KEY));
+      if (existing) return existing;
+      const created = newDraftSourceId();
+      target.setItem(DRAFT_SOURCE_SESSION_KEY, created);
+      return created;
+    } catch {}
+  }
+  if (!fallbackDraftSourceId) fallbackDraftSourceId = newDraftSourceId();
+  return fallbackDraftSourceId;
+}
+
+function draftStorageKey(identity, sourceId) {
+  return `${identity}::${encodeURIComponent(text(sourceId) || 'shared')}`;
 }
 
 function readEnvelope(storage) {
@@ -107,36 +143,65 @@ export function pageDraftIdentity(page = {}, authUser = {}) {
   return [account, pageOwner, project, pageKey].map((part) => encodeURIComponent(part)).join(':');
 }
 
-export function savePageDraft({ page, authUser, editedAt = Date.now(), storage, interactionConfirmed = true } = {}) {
+export function savePageDraft({
+  page,
+  authUser,
+  editedAt = Date.now(),
+  storage,
+  sourceId,
+  interactionConfirmed = true,
+} = {}) {
   const normalized = normalizePageForSave(page || {});
   const identity = pageDraftIdentity(normalized, authUser);
+  const resolvedSourceId = text(sourceId) || pageDraftSourceId();
   const envelope = readEnvelope(storage);
   const draft = {
     version: DRAFT_VERSION,
     identity,
+    sourceId: resolvedSourceId,
     editedAt,
     interactionConfirmed: interactionConfirmed === true,
     baseRevision: Number(normalized.revision || 0),
     baseUpdatedAt: text(normalized.updatedAt || normalized.savedAt || normalized.createdAt),
     page: sanitizeValue(normalized),
   };
-  envelope.drafts = pruneDrafts({ ...envelope.drafts, [identity]: draft }, editedAt);
+  envelope.drafts = pruneDrafts({
+    ...envelope.drafts,
+    [draftStorageKey(identity, resolvedSourceId)]: draft,
+  }, editedAt);
   return writeEnvelope(envelope, storage) ? draft : null;
 }
 
-export function readPageDraft({ page, authUser, storage } = {}) {
+export function readPageDraft({ page, authUser, storage, sourceId, includeOtherSources = false } = {}) {
   const identity = pageDraftIdentity(page, authUser);
-  return readEnvelope(storage).drafts[identity] || null;
+  const resolvedSourceId = text(sourceId) || pageDraftSourceId();
+  const drafts = readEnvelope(storage).drafts;
+  const exact = drafts[draftStorageKey(identity, resolvedSourceId)] || drafts[identity] || null;
+  if (exact || !includeOtherSources) return exact;
+  const candidates = Object.entries(drafts)
+    .filter(([key, draft]) => key === identity || draft?.identity === identity)
+    .map(([, draft]) => draft)
+    .filter(Boolean)
+    .sort((left, right) => Number(right.editedAt || 0) - Number(left.editedAt || 0));
+  return candidates[0] || null;
 }
 
-export function clearPageDraft({ page, authUser, storage } = {}) {
+export function clearPageDraft({ page, authUser, storage, sourceId, allSources = false } = {}) {
   const identity = pageDraftIdentity(page, authUser);
+  const resolvedSourceId = text(sourceId) || pageDraftSourceId();
   const envelope = readEnvelope(storage);
+  const exactKey = draftStorageKey(identity, resolvedSourceId);
   let changed = false;
   for (const [key, draft] of Object.entries(envelope.drafts)) {
-    const exactMatch = key === identity;
+    const identityMatch = key === identity || draft?.identity === identity;
     const pageMatchWithoutAuth = !authUser && sameDraftPage(draft?.page || {}, page || {});
-    if (!exactMatch && !pageMatchWithoutAuth) continue;
+    if (!identityMatch && !pageMatchWithoutAuth) continue;
+    const sourceMatch = allSources
+      || !authUser
+      || key === identity
+      || key === exactKey
+      || text(draft?.sourceId) === resolvedSourceId;
+    if (!sourceMatch) continue;
     delete envelope.drafts[key];
     changed = true;
   }
