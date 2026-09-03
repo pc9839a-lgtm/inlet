@@ -166,7 +166,7 @@ for (const token of [
 }
 
 assert(wrangler.includes('"name": "inlet"'), 'wrangler config should keep project name');
-assert(wrangler.includes('"pages_build_output_dir": "dist"'), 'wrangler config should keep Pages output dir');
+assert(!wrangler.includes('"pages_build_output_dir"'), 'wrangler config should leave Pages production config dashboard-managed');
 assert(wrangler.includes('"d1_databases"'), 'wrangler config should include D1 bindings');
 assert(wrangler.includes('"binding": "DB"'), 'wrangler config should expose the DB binding');
 assert(wrangler.includes('"database_name": "inlet-prod"'), 'wrangler config should reference inlet-prod D1');
