@@ -133,10 +133,11 @@ for (const token of [
   'pagero.kr/api/readiness',
   'deployment_not_ready',
   'steps.readiness.outcome',
+  "grep -Eo 'https://[a-z0-9]+\\.inlet-8mr\\.pages\\.dev'",
+  'probe_readiness "$deployment_url/api/readiness" exact-deployment',
 ]) {
   assert(workflow.includes(token), `deployment readiness gate missing ${token}`);
 }
-assert(/inlet-8mr\.pages\.dev/.test(workflow), 'deployment readiness must probe the exact Cloudflare deployment URL');
 
 console.log(JSON.stringify({
   ok: true,
@@ -145,4 +146,5 @@ console.log(JSON.stringify({
   requiredTables: REQUIRED_TABLES,
   failClosed: true,
   deploymentProbe: true,
+  exactDeploymentProbe: true,
 }, null, 2));
