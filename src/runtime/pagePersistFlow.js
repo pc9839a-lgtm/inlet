@@ -1,5 +1,6 @@
 import { STORAGE_KEY } from '../config/storageKeys.js';
 import { normalizePageForSave } from '../lib/pageModel.js';
+import { optimizePageForServerSave } from '../lib/pageSaveOptimizer.js';
 import {
   clearPageDraft,
   pageDraftIdentity,
@@ -25,6 +26,18 @@ function preserveRecoveryDraft(page, authUser) {
   });
 }
 
+async function compactRecoveryPage(page) {
+  if (!page) return page;
+  try {
+    return await optimizePageForServerSave(page);
+  } catch {
+    // A recovery attempt must never replace the latest edit with a partial object.
+    // If compaction itself cannot complete, preserve the original page and let
+    // pageDraftStore report the real browser storage failure.
+    return page;
+  }
+}
+
 export async function handlePagePersistError({
   error,
   page,
@@ -34,6 +47,7 @@ export async function handlePagePersistError({
   markSaveStatus,
   showToast,
 }) {
+  recoveryPage = await compactRecoveryPage(recoveryPage);
   const recoveryResult = preserveRecoveryDraft(recoveryPage, authUser);
   setWorkspaceUnsavedDirty(true);
   const handled = await handlePageSaveError(error, page);
