@@ -8,6 +8,7 @@ import {
 import { writeAuditLog } from '../_audit.js';
 import { assertD1, authorizeProject, ensureD1ProjectShell, handleApiError, jsonResponse, optionsResponse, projectFromRequest, readJson, sessionIdentity } from '../_shared.js';
 import { writePageManagerAuditChanges } from './_pageAudit.js';
+import { externalizeEmbeddedPageImages } from './_pageAssets.js';
 
 const METHODS = 'GET, POST, DELETE, OPTIONS';
 const PUBLIC_PAGE_CACHE_CONTROL = 'no-store';
@@ -363,7 +364,8 @@ export async function onRequest({ request, env, params }) {
         ownerId: project.ownerId || incoming.ownerId || '',
         slug,
       }, project, session, fallbackEmail);
-      const saved = await upsertD1Page(db, pageForSave, {
+      const assetResult = await externalizeEmbeddedPageImages(pageForSave, env, project);
+      const saved = await upsertD1Page(db, assetResult.page, {
         pageId: currentById?.id || saveIdentity.pageId || '',
         projectId: project.projectId,
         slug,
@@ -388,6 +390,11 @@ export async function onRequest({ request, env, params }) {
         saveMode,
         saveRequestId: body.saveRequestId || '',
         page: saved,
+        pageAssets: {
+          replaced: assetResult.replaced,
+          uploaded: assetResult.uploaded,
+          totalBytes: assetResult.totalBytes,
+        },
         conflictCodes: PAGE_SAVE_CONFLICT_CODES,
       }, METHODS);
     }
