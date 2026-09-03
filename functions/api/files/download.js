@@ -28,7 +28,8 @@ export async function onRequest({ request, env }) {
     const fileName = safeFileName(object.customMetadata?.originalName || key.split('/').pop() || 'download');
     const asciiName = fileName.replace(/[^\x20-\x7E]+/g, '_').replace(/"/g, "'");
     const contentType = object.httpMetadata?.contentType || 'application/octet-stream';
-    const inlineMedia = /^video\//i.test(contentType) || String(object.customMetadata?.purpose || '') === 'media';
+    const purpose = String(object.customMetadata?.purpose || '');
+    const inlineMedia = /^(?:image|video)\//i.test(contentType) || purpose === 'media' || purpose === 'page-image';
     const disposition = inlineMedia
       ? `inline; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`
       : `attachment; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`;
