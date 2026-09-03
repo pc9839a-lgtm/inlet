@@ -53,6 +53,62 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Ensure Cloudflare production branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          project_api="https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/inlet"
+
+          curl --silent --show-error --fail-with-body \
+            --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            "$project_api" \
+            --output /tmp/pages-project.json
+
+          production_branch="$(node - /tmp/pages-project.json <<'NODE'
+          const fs = require('node:fs');
+          const payload = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+          if (payload?.success !== true || typeof payload?.result?.production_branch !== 'string') {
+            process.exit(1);
+          }
+          process.stdout.write(payload.result.production_branch);
+          NODE
+          )"
+
+          if [ "$production_branch" != "main" ]; then
+            echo "Cloudflare Pages production branch is '$production_branch'; updating it to main."
+            curl --silent --show-error --fail-with-body \
+              --request PATCH \
+              --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+              --header 'Content-Type: application/json' \
+              --data '{"production_branch":"main"}' \
+              "$project_api" \
+              --output /tmp/pages-project-update.json
+          fi
+
+          curl --silent --show-error --fail-with-body \
+            --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            "$project_api" \
+            --output /tmp/pages-project-after.json
+
+          verified_branch="$(node - /tmp/pages-project-after.json <<'NODE'
+          const fs = require('node:fs');
+          const payload = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+          if (payload?.success !== true || typeof payload?.result?.production_branch !== 'string') {
+            process.exit(1);
+          }
+          process.stdout.write(payload.result.production_branch);
+          NODE
+          )"
+
+          if [ "$verified_branch" != "main" ]; then
+            echo "::error::Cloudflare Pages production branch is '$verified_branch', expected 'main'."
+            exit 1
+          fi
+          echo "Cloudflare Pages production branch confirmed: main."
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Ensure production session secret
         shell: bash
         run: |
@@ -89,6 +145,7 @@ jobs:
           set -o pipefail
           npx wrangler pages deploy dist \
             --project-name inlet \
+            --branch main \
             --commit-hash "${{ steps.source.outputs.sha }}" \
             --commit-message "Deploy ${{ steps.source.outputs.sha }}" \
             2>&1 | tee /tmp/cloudflare-deploy.log
@@ -103,7 +160,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          deployment_url="$(grep -Eo 'https://[a-z0-9]+\.inlet-8mr\.pages\.dev' /tmp/cloudflare-deploy.log | tail -n 1)"
+          deployment_url="$(sed -nE 's#^.*Deployment complete! Take a peek over at (https://[^[:space:]]+).*$#\1#p' /tmp/cloudflare-deploy.log | tail -n 1)"
           if [ -z "$deployment_url" ]; then
             echo "::error::Could not resolve exact Cloudflare deployment URL from deploy output."
             exit 1
