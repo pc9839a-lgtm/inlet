@@ -77,6 +77,7 @@ const steps = [
   ['api:security:qa', ['scripts/api-security-quality-check.mjs']],
   ['api:trace:qa', ['scripts/api-request-trace-quality-check.mjs']],
   ['public:lead:abuse:qa', ['scripts/public-lead-abuse-guard-quality-check.mjs']],
+  ['lead:delivery:lease:qa', ['scripts/lead-delivery-lease-quality-check.mjs']],
   ['rendering:qa', ['scripts/rendering-quality-check.mjs']],
   ['css:qa', ['scripts/css-quality-check.mjs']],
   ['build', ['scripts/build.mjs']],
