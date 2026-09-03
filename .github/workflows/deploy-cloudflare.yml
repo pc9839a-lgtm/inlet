@@ -53,6 +53,31 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Ensure production session secret
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx wrangler pages secret list --project-name inlet 2>&1 | tee /tmp/pages-secrets.txt
+          if grep -Eq '(^|[^A-Za-z0-9_])INLET_SESSION_SECRET([^A-Za-z0-9_]|$)' /tmp/pages-secrets.txt; then
+            echo "INLET_SESSION_SECRET is already configured."
+            exit 0
+          fi
+
+          echo "INLET_SESSION_SECRET is missing; creating one encrypted Pages secret."
+          session_secret="$(openssl rand -hex 64)"
+          printf '%s' "$session_secret" | npx wrangler pages secret put INLET_SESSION_SECRET --project-name inlet
+          unset session_secret
+
+          npx wrangler pages secret list --project-name inlet 2>&1 | tee /tmp/pages-secrets-after.txt
+          if ! grep -Eq '(^|[^A-Za-z0-9_])INLET_SESSION_SECRET([^A-Za-z0-9_]|$)' /tmp/pages-secrets-after.txt; then
+            echo "::error::INLET_SESSION_SECRET was not confirmed after secret creation."
+            exit 1
+          fi
+          echo "INLET_SESSION_SECRET created and confirmed without exposing its value."
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Build production bundle
         run: npm run build
 
