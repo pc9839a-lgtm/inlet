@@ -24,6 +24,16 @@ function preserveOriginalResponse(response) {
   return response;
 }
 
+function configuredSessionSecret(env = {}) {
+  return String(env.INLET_SESSION_SECRET || env.INLET_API_TOKEN || '').trim();
+}
+
+function requestNeedsConfiguredSessionSecret(request, url) {
+  if (request.method === 'OPTIONS') return false;
+  if (url.pathname.startsWith('/api/auth/')) return true;
+  return !!String(request.headers.get('X-Inlet-Session') || '').trim();
+}
+
 export async function onRequest(context) {
   const { request, env, next } = context;
   const url = new URL(request.url);
@@ -31,6 +41,15 @@ export async function onRequest(context) {
   const finish = (response) => finalizeApiRequestTrace(response, trace);
 
   try {
+    if (requestNeedsConfiguredSessionSecret(request, url) && !configuredSessionSecret(env)) {
+      console.error('session security configuration missing', {
+        requestId: trace.requestId,
+        path: url.pathname,
+        code: 'AUTH_SESSION_SECRET_MISSING',
+      });
+      return finish(sessionError(503, 'AUTH_SESSION_SECRET_MISSING', 'Session security is not configured.'));
+    }
+
     try {
       if (await isRequestSessionRevoked(request, env)) {
         return finish(sessionError(401, 'AUTH_SESSION_REVOKED', 'Session was revoked. Please sign in again.'));
