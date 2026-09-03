@@ -8,7 +8,7 @@ export function ImageStorageNote({ storageInfo, uploadState }) {
   if (uploadState?.status === 'success' && uploadState.label) {
     return <small className="image-storage-note success">{uploadState.label}</small>;
   }
-  if (!storageInfo.stored) return <small className="image-storage-note">JPG·PNG·WebP는 최대 1920px로 자동 최적화됩니다.</small>;
+  if (!storageInfo.stored) return <small className="image-storage-note">JPG·PNG·WebP는 최대 1600px로 자동 최적화됩니다.</small>;
 
   return (
     <small className={`image-storage-note ${storageInfo.heavy ? 'warning' : ''}`}>

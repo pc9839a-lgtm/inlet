@@ -3,6 +3,8 @@ import {
   IMAGE_UPLOAD_MAX_BYTES,
   IMAGE_UPLOAD_MAX_DIMENSION,
   IMAGE_UPLOAD_SOURCE_MAX_BYTES,
+  IMAGE_UPLOAD_WARN_BYTES,
+  estimatedDataUrlBytes,
   imageDataFingerprint,
   storedDataImageBytes,
   validateImageUpload,
@@ -15,8 +17,10 @@ function assert(condition, message) {
 const fakeFile = (type, size, name = 'image') => ({ type, size, name });
 
 assert(IMAGE_UPLOAD_SOURCE_MAX_BYTES === 12 * 1024 * 1024, 'source image limit must allow common high-resolution mobile photos');
-assert(IMAGE_UPLOAD_MAX_BYTES === 1200 * 1024, 'stored image output must stay below the D1-safe per-image ceiling');
-assert(IMAGE_UPLOAD_MAX_DIMENSION === 1920, 'editor images must be resized to a 1920px maximum edge');
+assert(IMAGE_UPLOAD_MAX_BYTES === 240 * 1024, 'embedded image hard limit must match the page-save per-image safety budget');
+assert(IMAGE_UPLOAD_WARN_BYTES === 180 * 1024, 'embedded image target must leave room for page JSON and base64 expansion');
+assert(IMAGE_UPLOAD_MAX_DIMENSION === 1600, 'editor images must match the page-save 1600px maximum edge');
+assert(estimatedDataUrlBytes({ size: IMAGE_UPLOAD_MAX_BYTES }) < 330 * 1024, 'one maximum embedded image must stay near 320KB after base64 expansion');
 assert(validateImageUpload(fakeFile('image/jpeg', 8 * 1024 * 1024, 'phone.jpg')).ok, 'an 8MB mobile JPG must be accepted for optimization');
 assert(validateImageUpload(fakeFile('image/jpeg', 13 * 1024 * 1024, 'huge.jpg')).reason === 'source-size', 'source images over 12MB must be rejected before decoding');
 assert(validateImageUpload(fakeFile('image/heic', 2 * 1024 * 1024, 'photo.heic')).reason === 'format', 'HEIC must return a clear conversion requirement');
@@ -54,8 +58,12 @@ assert(pickerSource.includes("status: 'processing'") && pickerSource.includes('o
 assert(pickerSource.includes('imageDataFingerprint(value)') && pickerSource.includes('siblingFingerprints.has(result.fingerprint)'), 'single and gallery-slot uploads must reject identical images');
 assert(imageControlsSource.includes('accept="image/jpeg,image/png,image/webp,image/gif"'), 'file picker must advertise only supported image formats');
 assert(previewSource.includes('image-upload-progress') && previewSource.includes('aria-live="polite"'), 'image preview must show accessible progress feedback');
-assert(storageNoteSource.includes('최대 1920px로 자동 최적화'), 'empty image inputs must explain automatic optimization');
+assert(storageNoteSource.includes('최대 1600px로 자동 최적화'), 'empty image inputs must explain the corrected automatic optimization limit');
 
+assert(gallerySource.includes('GALLERY_EMBEDDED_TOTAL_TARGET_BYTES = 600 * 1024'), 'gallery uploads must share a total embedded image budget');
+assert(gallerySource.includes('GALLERY_IMAGE_MIN_TARGET_BYTES = 72 * 1024'), 'gallery uploads must preserve the page-save minimum image target');
+assert(gallerySource.includes('galleryImageBudget(count, limited.length, max)'), 'gallery uploads must size each image from the final gallery count');
+assert(gallerySource.includes('targetBytes: imageBudget.targetBytes') && gallerySource.includes('maxBytes: imageBudget.maxBytes'), 'gallery optimization must enforce the calculated per-image budget');
 assert(gallerySource.includes('for (let index = 0; index < limited.length; index += 1)'), 'gallery files must be optimized sequentially to limit memory spikes');
 assert(!gallerySource.includes('Promise.all(limited.map'), 'gallery optimization must not decode all large files concurrently');
 assert(gallerySource.includes('fingerprints.has(result.fingerprint)') && gallerySource.includes('duplicateCount'), 'multi-upload must skip duplicate images');
@@ -71,8 +79,10 @@ console.log(JSON.stringify({
   ok: true,
   scope: 'image-upload-optimization',
   sourceMaxMb: 12,
-  outputMaxKb: 1200,
-  maxDimension: 1920,
+  outputMaxKb: 240,
+  outputTargetKb: 180,
+  maxDimension: 1600,
+  galleryTotalTargetKb: 600,
   formats: ['jpeg', 'png', 'webp', 'gif'],
   sequentialGallery: true,
   duplicateGuard: true,
