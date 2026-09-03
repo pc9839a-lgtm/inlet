@@ -128,25 +128,33 @@ assert(source.includes("'Cache-Control': 'no-store'"), 'readiness response must 
 
 const workflow = await readFile('.github/workflows/deploy-cloudflare.yml', 'utf8');
 for (const token of [
+  'Ensure Cloudflare production branch',
+  'pages/projects/inlet',
+  'production_branch',
+  '--branch main',
+  'Cloudflare Pages production branch confirmed: main.',
   'Ensure production session secret',
   'wrangler pages secret list --project-name inlet',
   'openssl rand -hex 64',
   'wrangler pages secret put INLET_SESSION_SECRET --project-name inlet',
   'unset session_secret',
   'Verify deployed readiness',
+  'Deployment complete! Take a peek over at',
   '/api/readiness',
   'pagero.kr/api/readiness',
   'deployment_not_ready',
   'steps.readiness.outcome',
-  "grep -Eo 'https://[a-z0-9]+\\.inlet-8mr\\.pages\\.dev'",
   'probe_readiness "$deployment_url/api/readiness" exact-deployment',
 ]) {
   assert(workflow.includes(token), `deployment readiness/security gate missing ${token}`);
 }
+assert(workflow.includes('--data \'{"production_branch":"main"}\''), 'production branch repair must explicitly set main');
+assert(workflow.indexOf('Ensure Cloudflare production branch') < workflow.indexOf('Ensure production session secret'), 'production branch must be confirmed before secret and deploy checks');
 assert(workflow.indexOf('Ensure production session secret') < workflow.indexOf('Deploy assets and Pages Functions'), 'session secret bootstrap must happen before deploy');
 assert(!workflow.includes('echo "$session_secret"'), 'session secret value must never be echoed');
 assert(!workflow.includes('set -x'), 'deployment workflow must not enable shell xtrace around secrets');
 assert(/openssl rand -hex 64/.test(workflow), 'generated session secret must provide 512 bits of random material');
+assert(!workflow.includes("grep -Eo 'https://[a-z0-9]+\\.inlet-8mr\\.pages\\.dev' /tmp/cloudflare-deploy.log | tail -n 1"), 'exact deployment probe must not resolve a branch alias via generic URL tail matching');
 
 console.log(JSON.stringify({
   ok: true,
@@ -156,6 +164,8 @@ console.log(JSON.stringify({
   failClosed: true,
   deploymentProbe: true,
   exactDeploymentProbe: true,
+  productionBranchGuard: true,
+  productionBranch: 'main',
   sessionSecretBootstrap: true,
   generatedSecretBits: 512,
   secretValueLogged: false,
