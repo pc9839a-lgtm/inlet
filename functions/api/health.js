@@ -65,6 +65,16 @@ function envFirst(env = {}, keys = [], fallback = '') {
   return fallback;
 }
 
+function sessionSecurityStatus(env = {}) {
+  if (String(env.INLET_SESSION_SECRET || '').trim()) {
+    return { ready: true, source: 'session-secret' };
+  }
+  if (String(env.INLET_API_TOKEN || '').trim()) {
+    return { ready: true, source: 'api-token' };
+  }
+  return { ready: false, source: 'missing' };
+}
+
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: corsHeaders(request, env) });
@@ -78,6 +88,7 @@ export async function onRequest({ request, env }) {
     INLET_STORAGE_ADAPTER: env.INLET_STORAGE_ADAPTER || 'd1',
   });
   const auth = sessionSource(env.INLET_SESSION_AUTH_MODE || 'production');
+  const sessionSecurity = sessionSecurityStatus(env);
   const authEmailModeInput = String(env.INLET_AUTH_EMAIL_MODE || 'mock').trim().toLowerCase();
   const authEmailMode = authEmailModeInput === 'api' || authEmailModeInput === 'ses' ? 'api' : 'mock';
   const authEmailProvider = authEmailMode === 'api' ? String(env.INLET_EMAIL_PROVIDER || 'ses').trim().toLowerCase() : 'mock';
@@ -101,7 +112,9 @@ export async function onRequest({ request, env }) {
       sessionMode: auth.sessionMode,
       sourceOfTruth: auth.sourceOfTruth,
       hostedAuthImplemented: auth.hostedAuthImplemented,
-      signedSessionReady: !!String(env.INLET_SESSION_SECRET || env.INLET_API_TOKEN || 'inlet-local-auth-secret').trim(),
+      signedSessionReady: sessionSecurity.ready,
+      sessionSecretSource: sessionSecurity.source,
+      insecureFallbackEnabled: false,
       devHeadersAccepted: auth.devHeadersAccepted,
       emailDeliveryMode: authEmailMode,
       emailDeliveryProvider: authEmailProvider,
