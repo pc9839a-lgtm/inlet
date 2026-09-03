@@ -153,9 +153,92 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
+      - name: Verify deployment environment metadata
+        id: deployment_meta
+        if: steps.cloudflare_deploy.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          deployment_url="$(sed -nE 's#^.*Deployment complete! Take a peek over at (https://[^[:space:]]+).*$#\1#p' /tmp/cloudflare-deploy.log | tail -n 1)"
+          short_id="$(printf '%s' "$deployment_url" | sed -nE 's#https://([a-z0-9]+)\.inlet-8mr\.pages\.dev.*#\1#p')"
+          if [ -z "$short_id" ]; then
+            echo "::error::Could not resolve deployment short id from Wrangler output."
+            exit 1
+          fi
+
+          deployments_api="https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/inlet/deployments?per_page=20"
+          curl --silent --show-error --fail-with-body \
+            --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            "$deployments_api" \
+            --output /tmp/pages-deployments.json
+
+          node - /tmp/pages-deployments.json "$short_id" "${{ steps.source.outputs.sha }}" <<'NODE'
+          const fs = require('node:fs');
+          const payload = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+          const shortId = String(process.argv[3] || '');
+          const expectedSha = String(process.argv[4] || '');
+          if (payload?.success !== true || !Array.isArray(payload?.result)) {
+            console.error('::error::Cloudflare deployment metadata response was invalid.');
+            process.exit(1);
+          }
+          const deployment = payload.result.find((item) => String(item?.short_id || '') === shortId);
+          if (!deployment) {
+            console.error(`::error::Cloudflare deployment metadata not found for short id ${shortId}.`);
+            process.exit(1);
+          }
+
+          const environment = String(deployment?.environment || '');
+          const branch = String(deployment?.deployment_trigger?.metadata?.branch || '');
+          const commitHash = String(deployment?.deployment_trigger?.metadata?.commit_hash || '');
+          const secretBinding = deployment?.env_vars?.INLET_SESSION_SECRET;
+          const secretBindingType = String(secretBinding?.type || 'missing');
+          const secretBindingPresent = secretBindingType === 'secret_text';
+          const commitMatches = commitHash === expectedSha;
+
+          console.log(JSON.stringify({
+            shortId,
+            environment,
+            branch,
+            commitMatches,
+            sessionSecretBindingPresent: secretBindingPresent,
+            sessionSecretBindingType: secretBindingType,
+            secretValueLogged: false,
+          }, null, 2));
+
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, [
+            `environment=${environment}`,
+            `branch=${branch}`,
+            `commit_matches=${commitMatches}`,
+            `session_secret_present=${secretBindingPresent}`,
+            `session_secret_type=${secretBindingType}`,
+            '',
+          ].join('\n'));
+
+          if (environment !== 'production') {
+            console.error(`::error::Deployment ${shortId} is '${environment}', expected 'production'.`);
+            process.exit(1);
+          }
+          if (branch !== 'main') {
+            console.error(`::error::Deployment ${shortId} branch is '${branch}', expected 'main'.`);
+            process.exit(1);
+          }
+          if (!commitMatches) {
+            console.error(`::error::Deployment ${shortId} commit hash does not match tested source SHA.`);
+            process.exit(1);
+          }
+          if (!secretBindingPresent) {
+            console.error(`::error::Deployment ${shortId} does not contain INLET_SESSION_SECRET as a secret_text binding.`);
+            process.exit(1);
+          }
+          NODE
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Verify deployed readiness
         id: readiness
-        if: steps.cloudflare_deploy.outcome == 'success'
+        if: steps.cloudflare_deploy.outcome == 'success' && steps.deployment_meta.outcome == 'success'
         continue-on-error: true
         shell: bash
         run: |
@@ -214,6 +297,7 @@ jobs:
         run: |
           reason="none"
           outcome="${{ steps.cloudflare_deploy.outcome }}"
+          metadata_outcome="${{ steps.deployment_meta.outcome }}"
           readiness_outcome="${{ steps.readiness.outcome }}"
           if [ "$outcome" != "success" ]; then
             reason="deploy_command_failed"
@@ -224,6 +308,9 @@ jobs:
             elif grep -Eqi "project.*not found|unknown project|inlet.*not found" /tmp/cloudflare-deploy.log 2>/dev/null; then
               reason="cloudflare_project_not_found"
             fi
+          elif [ "$metadata_outcome" != "success" ]; then
+            outcome="failure"
+            reason="deployment_metadata_invalid"
           elif [ "$readiness_outcome" != "success" ]; then
             outcome="failure"
             reason="deployment_not_ready"
@@ -235,6 +322,10 @@ jobs:
             echo "Source: \`${{ steps.source.outputs.sha }}\`"
             echo "Outcome: **$outcome**"
             echo "Reason: \`$reason\`"
+            echo "Environment metadata: \`${metadata_outcome:-not-run}\`"
+            echo "Environment: \`${{ steps.deployment_meta.outputs.environment || 'unknown' }}\`"
+            echo "Branch: \`${{ steps.deployment_meta.outputs.branch || 'unknown' }}\`"
+            echo "Session secret binding: \`${{ steps.deployment_meta.outputs.session_secret_type || 'unknown' }}\`"
             echo "Readiness: \`${readiness_outcome:-not-run}\`"
             if [ -n "${{ steps.readiness.outputs.deployment_url }}" ]; then
               echo "Deployment URL: ${{ steps.readiness.outputs.deployment_url }}"
@@ -242,7 +333,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Fail when Cloudflare deployment or readiness failed
-        if: steps.cloudflare_deploy.outcome != 'success' || steps.readiness.outcome != 'success'
+        if: steps.cloudflare_deploy.outcome != 'success' || steps.deployment_meta.outcome != 'success' || steps.readiness.outcome != 'success'
         run: exit 1
 
   production-save-roundtrip:
