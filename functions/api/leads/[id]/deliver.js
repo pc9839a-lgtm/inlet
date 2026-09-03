@@ -1,4 +1,4 @@
-import { getD1LatestPageByProject, getD1Lead, getD1PageBySlug, upsertD1Lead } from '../../../../server/storage/d1Adapter.mjs';
+import { getD1LatestPageByProject, getD1Lead, getD1PageBySlug, listD1DeliveryLogs, upsertD1Lead } from '../../../../server/storage/d1Adapter.mjs';
 import { assertD1, authorizeProject, handleApiError, jsonResponse, optionsResponse, projectFromRequest, readJson } from '../../_shared.js';
 import {
   failedDeliveryProviders,
@@ -7,6 +7,10 @@ import {
   normalizeDeliveryPage,
   sendLeadDelivery,
 } from '../_delivery.js';
+import {
+  acquireD1LeadDeliveryLease,
+  releaseD1LeadDeliveryLease,
+} from '../_deliveryLease.js';
 
 const METHODS = 'POST, OPTIONS';
 const TERMINAL_DELIVERY_STATUSES = new Set(['success']);
@@ -33,6 +37,26 @@ export async function onRequest({ request, env, params }) {
       return jsonResponse(request, env, 200, { ok: true, lead: current, delivery: current.delivery || { status: 'none', summary: NO_DELIVERY_SETTINGS_MESSAGE, logs: [] } }, METHODS);
     }
 
+    const lease = await acquireD1LeadDeliveryLease(db, {
+      projectId: project.projectId,
+      leadId: id,
+      lead: current,
+    });
+    if (!lease.acquired) {
+      const latest = await getD1Lead(db, { projectId: project.projectId, id }) || current;
+      if (TERMINAL_DELIVERY_STATUSES.has(String(latest.delivery?.status || latest.deliveryStatus || ''))) {
+        return jsonResponse(request, env, 200, { ok: true, lead: latest, delivery: latest.delivery || current.delivery || { status: 'success', summary: '전송 완료', logs: [] } }, METHODS);
+      }
+      return jsonResponse(request, env, 202, {
+        ok: true,
+        inProgress: true,
+        code: 'LEAD_DELIVERY_IN_PROGRESS',
+        message: '알림 전송이 이미 진행 중입니다.',
+        lead: latest,
+        delivery: latest.delivery || current.delivery || { status: 'sending', summary: '전송 중', logs: [] },
+      }, METHODS);
+    }
+
     let storedPage = await getD1PageBySlug(db, {
       projectId: project.projectId,
       slug: input.page?.slug || current.pageSlug || project.slug || '',
@@ -42,19 +66,44 @@ export async function onRequest({ request, env, params }) {
     const currentDelivery = current.delivery || {};
     const currentStatus = String(currentDelivery.status || current.deliveryStatus || '');
     const providers = currentStatus === 'partial' ? failedDeliveryProviders(currentDelivery) : [];
-    const retryDelivery = await sendLeadDelivery(current, deliveryPage, env, { providers });
+    const successfulLogs = await listD1DeliveryLogs(db, {
+      projectId: project.projectId,
+      leadId: id,
+      status: 'success',
+      limit: 100,
+    }).catch(() => ({ records: [] }));
+    const successfulKeys = Array.from(new Set((successfulLogs.records || [])
+      .map((log) => String(log.idempotencyKey || '').trim())
+      .filter(Boolean)));
+
+    let retryDelivery;
+    try {
+      retryDelivery = await sendLeadDelivery(current, deliveryPage, env, {
+        providers,
+        skipSuccessfulIdempotencyKeys: successfulKeys,
+      });
+    } catch (error) {
+      await releaseD1LeadDeliveryLease(db, {
+        projectId: project.projectId,
+        leadId: id,
+        restoreStatus: lease.previousStatus,
+      }).catch(() => false);
+      throw error;
+    }
+
     const delivery = currentStatus === 'partial'
       ? mergeDeliveryReports(currentDelivery, retryDelivery)
       : retryDelivery;
+    const latest = await getD1Lead(db, { projectId: project.projectId, id }) || current;
     const saved = await upsertD1Lead(db, {
-      ...current,
+      ...latest,
       delivery,
       deliveryStatus: delivery.status,
       updatedAt: new Date().toISOString(),
     }, {
       projectId: project.projectId,
-      pageId: current.pageId || '',
-      pageSlug: current.pageSlug || input.page?.slug || project.slug || '',
+      pageId: latest.pageId || current.pageId || '',
+      pageSlug: latest.pageSlug || current.pageSlug || input.page?.slug || project.slug || '',
     });
 
     return jsonResponse(request, env, 200, { ok: true, lead: saved, delivery }, METHODS);
