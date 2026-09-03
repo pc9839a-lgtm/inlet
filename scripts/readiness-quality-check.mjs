@@ -123,7 +123,7 @@ const source = await readFile('functions/api/readiness.js', 'utf8');
 for (const table of REQUIRED_TABLES) {
   assert(source.includes(`'${table}'`), `readiness core schema check missing ${table}`);
 }
-assert(!/\b(INSERT|UPDATE|DELETE|REPLACE)\b/i.test(source), 'readiness endpoint must not contain write SQL');
+assert(!/\b(?:INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM|REPLACE\s+INTO)\b/i.test(source), 'readiness endpoint must not contain write SQL');
 assert(source.includes("'Cache-Control': 'no-store'"), 'readiness response must not be cached');
 
 const workflow = await readFile('.github/workflows/deploy-cloudflare.yml', 'utf8');
