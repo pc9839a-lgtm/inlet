@@ -1,7 +1,7 @@
 export const IMAGE_UPLOAD_SOURCE_MAX_BYTES = 12 * 1024 * 1024;
-export const IMAGE_UPLOAD_MAX_BYTES = 1200 * 1024;
-export const IMAGE_UPLOAD_WARN_BYTES = 900 * 1024;
-export const IMAGE_UPLOAD_MAX_DIMENSION = 1920;
+export const IMAGE_UPLOAD_MAX_BYTES = 240 * 1024;
+export const IMAGE_UPLOAD_WARN_BYTES = 180 * 1024;
+export const IMAGE_UPLOAD_MAX_DIMENSION = 1600;
 export const IMAGE_UPLOAD_MIN_DIMENSION = 720;
 
 const OPTIMIZABLE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
