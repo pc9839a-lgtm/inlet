@@ -116,11 +116,14 @@ const healthConfiguredPayload = await healthConfigured.json();
 assert(healthConfiguredPayload.auth?.signedSessionReady === true, 'health must report configured API token as session-ready fallback source');
 assert(healthConfiguredPayload.auth?.sessionSecretSource === 'api-token', 'health must report API token session source without exposing the token');
 
+await import('./readiness-quality-check.mjs');
+
 console.log(JSON.stringify({
   ok: true,
-  checks: 31,
+  checks: 32,
   cors: 'INLET_ALLOWED_ORIGINS',
   sessionSecurity: 'fail-closed',
   predictableFallbackAccepted: false,
   publicApiPreserved: true,
+  deploymentReadinessGated: true,
 }, null, 2));
