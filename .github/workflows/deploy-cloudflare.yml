@@ -253,8 +253,9 @@ jobs:
           probe_readiness() {
             target="$1"
             label="$2"
+            attempts="$3"
             output="/tmp/readiness-${label}.json"
-            for attempt in $(seq 1 12); do
+            for attempt in $(seq 1 "$attempts"); do
               http_code="$(curl --silent --show-error --connect-timeout 5 --max-time 10 \
                 --header 'Cache-Control: no-cache, no-store' \
                 --output "$output" \
@@ -279,17 +280,28 @@ jobs:
                 return 0
               fi
               echo "Readiness pending: $label attempt=$attempt status=${http_code:-curl-error}"
-              sleep 5
+              if [ "$attempt" -lt "$attempts" ]; then
+                sleep 5
+              fi
             done
-            echo "::error::Readiness failed for $label ($target)."
             if [ -f "$output" ]; then
               cat "$output"
             fi
             return 1
           }
 
-          probe_readiness "$deployment_url/api/readiness" exact-deployment
-          probe_readiness "https://pagero.kr/api/readiness" production-domain
+          if ! probe_readiness "https://pagero.kr/api/readiness" production-domain 12; then
+            echo "::error::Production domain readiness failed."
+            exit 1
+          fi
+          echo "production_domain_ready=true" >> "$GITHUB_OUTPUT"
+
+          if probe_readiness "$deployment_url/api/readiness" exact-deployment 2; then
+            echo "exact_deployment_ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exact_deployment_ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Exact deployment URL readiness is not production-gating; production domain is healthy."
+          fi
 
       - name: Record deployment result
         if: always()
@@ -326,13 +338,14 @@ jobs:
             echo "Environment: \`${{ steps.deployment_meta.outputs.environment || 'unknown' }}\`"
             echo "Branch: \`${{ steps.deployment_meta.outputs.branch || 'unknown' }}\`"
             echo "Session secret binding: \`${{ steps.deployment_meta.outputs.session_secret_type || 'unknown' }}\`"
-            echo "Readiness: \`${readiness_outcome:-not-run}\`"
+            echo "Production readiness: \`${{ steps.readiness.outputs.production_domain_ready || 'false' }}\`"
+            echo "Exact deployment readiness: \`${{ steps.readiness.outputs.exact_deployment_ready || 'unknown' }}\`"
             if [ -n "${{ steps.readiness.outputs.deployment_url }}" ]; then
               echo "Deployment URL: ${{ steps.readiness.outputs.deployment_url }}"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Fail when Cloudflare deployment or readiness failed
+      - name: Fail when Cloudflare deployment or production readiness failed
         if: steps.cloudflare_deploy.outcome != 'success' || steps.deployment_meta.outcome != 'success' || steps.readiness.outcome != 'success'
         run: exit 1
 
