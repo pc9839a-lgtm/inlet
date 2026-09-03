@@ -14,6 +14,23 @@ import {
 } from './galleryUploadModel.js';
 
 const INITIAL_UPLOAD_STATE = { status: 'idle', progress: 0, label: '' };
+const GALLERY_EMBEDDED_TOTAL_TARGET_BYTES = 600 * 1024;
+const GALLERY_IMAGE_MIN_TARGET_BYTES = 72 * 1024;
+const GALLERY_IMAGE_MAX_TARGET_BYTES = 180 * 1024;
+const GALLERY_IMAGE_MAX_BYTES = 240 * 1024;
+
+function galleryImageBudget(currentCount, incomingCount, max) {
+  const totalCount = Math.max(1, Math.min(max, Number(currentCount || 0) + Number(incomingCount || 0)));
+  const targetBytes = Math.max(
+    GALLERY_IMAGE_MIN_TARGET_BYTES,
+    Math.min(GALLERY_IMAGE_MAX_TARGET_BYTES, Math.floor(GALLERY_EMBEDDED_TOTAL_TARGET_BYTES / totalCount)),
+  );
+  const maxBytes = Math.min(
+    GALLERY_IMAGE_MAX_BYTES,
+    Math.max(targetBytes, Math.round(targetBytes * 1.35)),
+  );
+  return { targetBytes, maxBytes };
+}
 
 export function useGalleryMultiUpload({ count = 0, max = 10, images = [], onAdd }) {
   const inputRef = useRef(null);
@@ -47,6 +64,7 @@ export function useGalleryMultiUpload({ count = 0, max = 10, images = [], onAdd 
     try {
       const fingerprints = new Set(images.map(imageDataFingerprint).filter(Boolean));
       const optimizedImages = [];
+      const imageBudget = galleryImageBudget(count, limited.length, max);
       let duplicateCount = 0;
       let originalBytes = 0;
       let finalBytes = 0;
@@ -54,6 +72,8 @@ export function useGalleryMultiUpload({ count = 0, max = 10, images = [], onAdd 
       for (let index = 0; index < limited.length; index += 1) {
         const file = limited[index];
         const result = await prepareGalleryImageFile(file, {
+          targetBytes: imageBudget.targetBytes,
+          maxBytes: imageBudget.maxBytes,
           onProgress: ({ progress, label }) => {
             const combinedProgress = Math.round(((index + (Number(progress || 0) / 100)) / limited.length) * 100);
             setUploadState({
