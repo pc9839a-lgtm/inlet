@@ -89,7 +89,6 @@ jobs:
           set -o pipefail
           npx wrangler pages deploy dist \
             --project-name inlet \
-            --branch main \
             --commit-hash "${{ steps.source.outputs.sha }}" \
             --commit-message "Deploy ${{ steps.source.outputs.sha }}" \
             2>&1 | tee /tmp/cloudflare-deploy.log
