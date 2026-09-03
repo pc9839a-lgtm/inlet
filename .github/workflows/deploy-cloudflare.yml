@@ -325,7 +325,7 @@ jobs:
             reason="deployment_metadata_invalid"
           elif [ "$readiness_outcome" != "success" ]; then
             outcome="failure"
-            reason="production_domain_not_ready"
+            reason="deployment_not_ready"
           fi
 
           {
