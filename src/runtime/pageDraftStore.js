@@ -67,16 +67,13 @@ function readEnvelope(storage) {
   }
 }
 
-function writeEnvelopeResult(envelope, storage) {
-  const target = safeStorage(storage);
-  if (!target) {
-    return {
-      ok: false,
-      reason: 'unavailable',
-      error: new Error('localStorage is not available'),
-    };
-  }
+function storageFailureReason(error) {
+  if (isStorageQuotaError(error)) return 'quota';
+  if (error?.name === 'SecurityError') return 'security';
+  return 'storage';
+}
 
+function writeEnvelopeOnce(envelope, target) {
   let payload = '';
   try {
     payload = JSON.stringify(envelope);
@@ -88,16 +85,45 @@ function writeEnvelopeResult(envelope, storage) {
     target.setItem(PAGE_DRAFTS_KEY, payload);
     return { ok: true, reason: '', error: null };
   } catch (error) {
+    return { ok: false, reason: storageFailureReason(error), error };
+  }
+}
+
+function writeEnvelopeResult(envelope, storage, protectedDraftKey = '') {
+  const target = safeStorage(storage);
+  if (!target) {
     return {
       ok: false,
-      reason: isStorageQuotaError(error)
-        ? 'quota'
-        : error?.name === 'SecurityError'
-          ? 'security'
-          : 'storage',
-      error,
+      reason: 'unavailable',
+      error: new Error('localStorage is not available'),
     };
   }
+
+  const initial = writeEnvelopeOnce(envelope, target);
+  if (initial.ok || initial.reason !== 'quota' || !protectedDraftKey) return initial;
+
+  const recoveryEnvelope = {
+    ...envelope,
+    drafts: { ...(envelope?.drafts || {}) },
+  };
+  const evictionKeys = Object.entries(recoveryEnvelope.drafts)
+    .filter(([key]) => key !== protectedDraftKey)
+    .sort(([, left], [, right]) => Number(left?.editedAt || 0) - Number(right?.editedAt || 0))
+    .map(([key]) => key);
+
+  let quotaPrunedDrafts = 0;
+  let lastResult = initial;
+  for (const key of evictionKeys) {
+    delete recoveryEnvelope.drafts[key];
+    quotaPrunedDrafts += 1;
+    lastResult = writeEnvelopeOnce(recoveryEnvelope, target);
+    if (lastResult.ok) {
+      return { ...lastResult, quotaPrunedDrafts };
+    }
+    if (lastResult.reason !== 'quota') return { ...lastResult, quotaPrunedDrafts };
+  }
+
+  return { ...lastResult, quotaPrunedDrafts };
 }
 
 function writeEnvelope(envelope, storage) {
@@ -197,6 +223,7 @@ export function savePageDraftResult({
   const identity = pageDraftIdentity(normalized, authUser);
   const resolvedSourceId = text(sourceId) || pageDraftSourceId();
   const envelope = readEnvelope(storage);
+  const storageKey = draftStorageKey(identity, resolvedSourceId);
   const draft = {
     version: DRAFT_VERSION,
     identity,
@@ -209,9 +236,15 @@ export function savePageDraftResult({
   };
   envelope.drafts = pruneDrafts({
     ...envelope.drafts,
-    [draftStorageKey(identity, resolvedSourceId)]: draft,
+    [storageKey]: draft,
   }, editedAt);
-  const writeResult = writeEnvelopeResult(envelope, storage);
+  if (!envelope.drafts[storageKey]) {
+    envelope.drafts = Object.fromEntries([
+      [storageKey, draft],
+      ...Object.entries(envelope.drafts).slice(0, Math.max(0, MAX_DRAFTS - 1)),
+    ]);
+  }
+  const writeResult = writeEnvelopeResult(envelope, storage, storageKey);
   return writeResult.ok
     ? { ...writeResult, draft }
     : { ...writeResult, draft: null };

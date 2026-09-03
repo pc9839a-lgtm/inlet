@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { rm } from 'node:fs/promises';
+import { readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const root = process.cwd();
@@ -44,6 +44,20 @@ function assertSafeOutputDir(target) {
   }
 }
 
+async function prepareProductionPagesDeployConfig() {
+  if (process.env.GITHUB_ACTIONS !== 'true') return;
+  if (process.env.GITHUB_WORKFLOW !== 'Deploy Cloudflare Pages') return;
+
+  const wranglerPath = path.resolve(root, 'wrangler.jsonc');
+  const source = await readFile(wranglerPath, 'utf8');
+  const prepared = source.replace(/^\s*"pages_build_output_dir"\s*:\s*"dist"\s*,?\s*\r?\n/m, '');
+  if (prepared === source) {
+    throw new Error('production Pages deploy config guard could not remove pages_build_output_dir');
+  }
+  await writeFile(wranglerPath, prepared, 'utf8');
+  console.log('[build] production Pages deploy uses dashboard-managed project bindings');
+}
+
 const outDirArg = readArgValue(['--outDir', '--out-dir']);
 const outDir = path.resolve(root, outDirArg || 'dist');
 const buildsDefaultDist = outDir === defaultDist;
@@ -62,4 +76,5 @@ await run(process.execPath, ['scripts/root-app-entry-quality-check.mjs', '--outD
 
 if (buildsDefaultDist) {
   await run(process.execPath, ['scripts/prune-dist-assets.mjs']);
+  await prepareProductionPagesDeployConfig();
 }
