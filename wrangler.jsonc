@@ -2,7 +2,6 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "inlet",
   "compatibility_date": "2026-05-27",
-  "pages_build_output_dir": "dist",
   "vars": {
     "INLET_AUTH_EMAIL_MODE": "api",
     "INLET_EMAIL_PROVIDER": "ses",
