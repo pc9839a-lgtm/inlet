@@ -165,3 +165,347 @@ body .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true'] 
 html body #root .builder-shell.edit-mode-shell .preview-workspace [id^='block-'] {
   scroll-margin-block: 120px;
 }
+
+/* --------------------------------------------------------------------------
+   Edit panel visual unification + narrow-width overflow repair
+   -------------------------------------------------------------------------- */
+body .builder-shell.edit-mode-shell .edit-layout,
+body .builder-shell.edit-mode-shell .edit-section-panel,
+body .builder-shell.edit-mode-shell .page-global-options-card,
+body .builder-shell.edit-mode-shell .screen-order-v2-card {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+body .builder-shell.edit-mode-shell .edit-layout {
+  gap: 10px !important;
+  padding-bottom: 14px !important;
+  overflow-x: hidden !important;
+}
+
+/* Page options / screen order use one segmented-control language. */
+body .builder-shell.edit-mode-shell .edit-section-tabs {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 4px !important;
+  margin: 0 !important;
+  padding: 4px !important;
+  overflow: hidden !important;
+  border: 1px solid #dfe4ea !important;
+  border-radius: 11px !important;
+  background: #f1f3f6 !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell.edit-mode-shell .edit-section-tabs button {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 42px !important;
+  margin: 0 !important;
+  padding: 0 10px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: #667085 !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  line-height: 1 !important;
+  font-weight: 850 !important;
+  white-space: nowrap !important;
+}
+
+body .builder-shell.edit-mode-shell .edit-section-tabs button:hover:not(.active) {
+  background: #fff !important;
+  color: #111827 !important;
+}
+
+body .builder-shell.edit-mode-shell .edit-section-tabs button.active,
+body .builder-shell.edit-mode-shell .edit-section-tabs button[aria-pressed='true'] {
+  background: #111318 !important;
+  color: #fff !important;
+}
+
+/* The tab label already names the section, so keep the repeated inner heading accessible but visual-only hidden. */
+body .builder-shell.edit-mode-shell .page-global-options-title,
+body .builder-shell.edit-mode-shell .screen-order-v2-title {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  border: 0 !important;
+  white-space: nowrap !important;
+}
+
+/* Both tabs now sit on the same surface size and spacing. */
+body .builder-shell.edit-mode-shell .page-global-options-card,
+body .builder-shell.edit-mode-shell .screen-order-v2-card {
+  margin: 0 !important;
+  padding: 12px !important;
+  overflow: visible !important;
+  border: 1px solid #dfe4ea !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell.edit-mode-shell .page-global-options-list,
+body .builder-shell.edit-mode-shell .page-global-grid {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  display: grid !important;
+  gap: 8px !important;
+}
+
+body .builder-shell.edit-mode-shell .edit-layout :is(.fixed-block-card, .edit-animation-card) {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  border: 1px solid #e1e5ea !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell.edit-mode-shell .edit-layout :is(.fixed-block-head, .edit-animation-head) {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 50px !important;
+  margin: 0 !important;
+  padding: 8px 11px !important;
+  border-radius: 9px !important;
+  background: #fff !important;
+  box-sizing: border-box !important;
+}
+
+body .builder-shell.edit-mode-shell .edit-layout :is(.fixed-block-editor, .edit-animation-settings, .share-position-control) {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Screen order is a compact card list instead of full-bleed rows. */
+body .builder-shell.edit-mode-shell .screen-order-v2-list {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  display: grid !important;
+  gap: 6px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+body .builder-shell.edit-mode-shell .screen-order-v2-slot {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+body .builder-shell.edit-mode-shell .screen-order-v2-item {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  overflow: visible !important;
+  border: 1px solid #e2e6eb !important;
+  border-radius: 9px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell.edit-mode-shell .screen-order-v2-item:hover {
+  border-color: #cfd6df !important;
+  background: #fafbfc !important;
+}
+
+body .builder-shell.edit-mode-shell .screen-order-v2-item.is-open,
+body .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true'] {
+  border-color: #b8c3d2 !important;
+  background: #f8fafc !important;
+  box-shadow: inset 2px 0 0 #667085 !important;
+}
+
+body .builder-shell.edit-mode-shell .screen-order-v2-item.is-open::before,
+body .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true']::before {
+  display: none !important;
+}
+
+body .builder-shell.edit-mode-shell .screen-order-v2-head {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  min-height: 46px !important;
+  display: grid !important;
+  grid-template-columns: 22px minmax(0, 1fr) 32px 32px !important;
+  align-items: center !important;
+  gap: 5px !important;
+  margin: 0 !important;
+  padding: 0 7px !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  box-sizing: border-box !important;
+}
+
+body .builder-shell.edit-mode-shell .screen-order-v2-drag {
+  width: 22px !important;
+  min-width: 22px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+}
+
+body .builder-shell.edit-mode-shell .screen-order-v2-title-wrap {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  grid-template-columns: 20px minmax(0, 1fr) 16px !important;
+  gap: 7px !important;
+  overflow: hidden !important;
+}
+
+body .builder-shell.edit-mode-shell .screen-order-v2-title-wrap strong {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body .builder-shell.edit-mode-shell .screen-order-v2-visibility,
+body .builder-shell.edit-mode-shell .screen-order-v2-actions {
+  width: 32px !important;
+  min-width: 32px !important;
+}
+
+body .builder-shell.edit-mode-shell .screen-order-v2-inline-editor {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 12px !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-top: 1px solid #e2e6eb !important;
+  border-radius: 0 0 8px 8px !important;
+  background: #f8fafc !important;
+  box-sizing: border-box !important;
+}
+
+/* Repair the add-block dock: legacy sticky + fixed offsets were mixing and pushing it outside the panel. */
+body .builder-shell.edit-mode-shell .edit-layout:has(.fixed-add-dock) {
+  padding-bottom: 14px !important;
+}
+
+body .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock {
+  position: sticky !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 10px 0 0 !important;
+  padding: 8px 0 0 !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: linear-gradient(to bottom, rgba(245,247,249,0), var(--product-bg) 34%, var(--product-bg) 100%) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  box-sizing: border-box !important;
+}
+
+body .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .add-toggle {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  min-height: 46px !important;
+  display: grid !important;
+  grid-template-columns: 20px minmax(0, 1fr) 20px !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  overflow: hidden !important;
+  border: 1px solid #111318 !important;
+  border-radius: 10px !important;
+  background: #111827 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+  text-align: left !important;
+  box-sizing: border-box !important;
+}
+
+body .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .add-toggle strong {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .add-toggle-chevron {
+  justify-self: end !important;
+}
+
+body .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .add-panel {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0 0 7px !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 760px) {
+  body .builder-shell.edit-mode-shell .edit-layout {
+    gap: 8px !important;
+  }
+
+  body .builder-shell.edit-mode-shell .page-global-options-card,
+  body .builder-shell.edit-mode-shell .screen-order-v2-card {
+    padding: 10px !important;
+    border-radius: 11px !important;
+  }
+
+  body .builder-shell.edit-mode-shell .screen-order-v2-list {
+    gap: 5px !important;
+  }
+
+  body .builder-shell.edit-mode-shell .screen-order-v2-item {
+    margin: 0 !important;
+    border-radius: 9px !important;
+  }
+
+  body .builder-shell.edit-mode-shell .screen-order-v2-head {
+    grid-template-columns: 20px minmax(0, 1fr) 30px 30px !important;
+    gap: 4px !important;
+    min-height: 46px !important;
+    padding: 0 6px !important;
+  }
+
+  body .builder-shell.edit-mode-shell .screen-order-v2-inline-editor {
+    margin: 0 !important;
+    padding: 10px !important;
+  }
+
+  body .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock {
+    left: auto !important;
+    right: auto !important;
+    width: 100% !important;
+    margin-inline: 0 !important;
+  }
+}
