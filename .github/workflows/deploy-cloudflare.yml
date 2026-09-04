@@ -290,17 +290,25 @@ jobs:
             return 1
           }
 
-          if ! probe_readiness "https://pagero.kr/api/readiness" production-domain 12; then
+          exact_ready=false
+          production_ready=false
+
+          if probe_readiness "$deployment_url/api/readiness" exact-deployment 3; then
+            exact_ready=true
+          fi
+          echo "exact_deployment_ready=$exact_ready" >> "$GITHUB_OUTPUT"
+
+          if probe_readiness "https://pagero.kr/api/readiness" production-domain 12; then
+            production_ready=true
+          fi
+          echo "production_domain_ready=$production_ready" >> "$GITHUB_OUTPUT"
+
+          if [ "$exact_ready" != "true" ]; then
+            echo "::warning::Exact deployment readiness failed; deployment runtime bindings are unhealthy before custom-domain routing is considered."
+          fi
+          if [ "$production_ready" != "true" ]; then
             echo "::error::Production domain readiness failed."
             exit 1
-          fi
-          echo "production_domain_ready=true" >> "$GITHUB_OUTPUT"
-
-          if probe_readiness "$deployment_url/api/readiness" exact-deployment 2; then
-            echo "exact_deployment_ready=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exact_deployment_ready=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::Exact deployment URL readiness is not production-gating; production domain is healthy."
           fi
 
       - name: Record deployment result
