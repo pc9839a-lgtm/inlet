@@ -122,7 +122,16 @@ export async function passwordHash(password = '', email = '', env = {}) {
 }
 
 export function authSecret(env = {}) {
-  return String(env.INLET_SESSION_SECRET || env.INLET_API_TOKEN || 'inlet-local-auth-secret');
+  const secret = String(
+    env.INLET_SESSION_SECRET_V2
+      || env.INLET_SESSION_SECRET
+      || env.INLET_API_TOKEN
+      || '',
+  ).trim();
+  if (secret) return secret;
+  throw authError('Authentication secret is not configured.', 503, {
+    code: 'AUTH_SECRET_MISSING',
+  });
 }
 
 
