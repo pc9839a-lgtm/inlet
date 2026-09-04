@@ -44,6 +44,7 @@ const steps = [
   ['page:concurrency:qa', ['scripts/page-multi-editor-concurrency-quality-check.mjs']],
   ['page:operation:isolation:qa', ['scripts/page-operation-isolation-quality-check.mjs']],
   ['image:upload:qa', ['scripts/image-upload-optimization-quality-check.mjs']],
+  ['page:image:r2:qa', ['scripts/page-image-r2-quality-check.mjs']],
   ['preview:parity:qa', ['scripts/preview-public-parity-quality-check.mjs']],
   ['bottom:fixed:qa', ['scripts/bottom-fixed-ui-quality-check.mjs']],
   ['root:entry:qa', ['scripts/root-app-entry-quality-check.mjs']],

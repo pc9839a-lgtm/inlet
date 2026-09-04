@@ -94,7 +94,8 @@
     "browser:visual:qa": "node scripts/browser-visual-quality-check.mjs",
     "browser:production:qa": "node scripts/production-browser-quality-check.mjs",
     "accessibility:qa": "node scripts/accessibility-quality-check.mjs",
-    "qa:all": "node scripts/qa-all.mjs"
+    "qa:all": "node scripts/qa-all.mjs",
+    "page:image:r2:qa": "node scripts/page-image-r2-quality-check.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
