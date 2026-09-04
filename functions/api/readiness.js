@@ -11,6 +11,8 @@ function jsonResponse(status, payload) {
 }
 
 function explicitSessionSecret(env = {}) {
+  const sessionSecretV2 = String(env.INLET_SESSION_SECRET_V2 || '').trim();
+  if (sessionSecretV2) return { ready: true, source: 'session-secret-v2' };
   const sessionSecret = String(env.INLET_SESSION_SECRET || '').trim();
   if (sessionSecret) return { ready: true, source: 'session-secret' };
   const apiToken = String(env.INLET_API_TOKEN || '').trim();
@@ -120,6 +122,7 @@ export async function onRequest({ request, env }) {
         insecureFallbackEnabled: false,
       },
       runtimeBindings: {
+        sessionSecretV2PropertyPresent: Object.prototype.hasOwnProperty.call(runtimeEnv, 'INLET_SESSION_SECRET_V2'),
         sessionSecretPropertyPresent: Object.prototype.hasOwnProperty.call(runtimeEnv, 'INLET_SESSION_SECRET'),
         apiTokenPropertyPresent: Object.prototype.hasOwnProperty.call(runtimeEnv, 'INLET_API_TOKEN'),
         d1PropertyPresent: Object.prototype.hasOwnProperty.call(runtimeEnv, 'DB'),
