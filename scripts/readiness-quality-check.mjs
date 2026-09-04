@@ -62,6 +62,9 @@ async function payload(response) {
   assert(body.checks?.session?.ready === true, 'session secret must be ready');
   assert(body.checks?.session?.source === 'session-secret', 'session-secret source must be reported');
   assert(body.checks?.session?.insecureFallbackEnabled === false, 'insecure fallback must stay disabled');
+  assert(body.checks?.runtimeBindings?.sessionSecretPropertyPresent === true, 'runtime binding diagnostics must report session secret property presence');
+  assert(body.checks?.runtimeBindings?.d1PropertyPresent === true, 'runtime binding diagnostics must report D1 property presence');
+  assert(body.checks?.runtimeBindings?.valuesExposed === false, 'runtime binding diagnostics must never expose values');
 }
 
 {
@@ -77,6 +80,8 @@ async function payload(response) {
   assert(response.status === 503, 'missing session secret must return 503');
   assert(body.checks?.session?.ready === false, 'missing session secret must not be ready');
   assert(body.checks?.session?.source === 'missing', 'missing secret source must be explicit');
+  assert(body.checks?.runtimeBindings?.sessionSecretPropertyPresent === false, 'missing secret must report absent runtime property');
+  assert(body.checks?.runtimeBindings?.d1PropertyPresent === true, 'D1 runtime property must still be visible');
 }
 
 {
@@ -145,12 +150,17 @@ for (const token of [
   'deployment_not_ready',
   'steps.readiness.outcome',
   'probe_readiness "$deployment_url/api/readiness" exact-deployment',
+  'exact_ready=false',
+  'production_ready=false',
+  'exact_deployment_ready=$exact_ready',
+  'production_domain_ready=$production_ready',
 ]) {
   assert(workflow.includes(token), `deployment readiness/security gate missing ${token}`);
 }
 assert(workflow.includes('--data \'{"production_branch":"main"}\''), 'production branch repair must explicitly set main');
 assert(workflow.indexOf('Ensure Cloudflare production branch') < workflow.indexOf('Ensure production session secret'), 'production branch must be confirmed before secret and deploy checks');
 assert(workflow.indexOf('Ensure production session secret') < workflow.indexOf('Deploy assets and Pages Functions'), 'session secret bootstrap must happen before deploy');
+assert(workflow.indexOf('probe_readiness "$deployment_url/api/readiness" exact-deployment') < workflow.indexOf('probe_readiness "https://pagero.kr/api/readiness" production-domain'), 'exact deployment readiness must be diagnosed before the production domain');
 assert(!workflow.includes('echo "$session_secret"'), 'session secret value must never be echoed');
 assert(!workflow.includes('set -x'), 'deployment workflow must not enable shell xtrace around secrets');
 assert(/openssl rand -hex 64/.test(workflow), 'generated session secret must provide 512 bits of random material');
@@ -164,6 +174,8 @@ console.log(JSON.stringify({
   failClosed: true,
   deploymentProbe: true,
   exactDeploymentProbe: true,
+  runtimeBindingPresenceDiagnostics: true,
+  exactProbeBeforeProductionDomain: true,
   productionBranchGuard: true,
   productionBranch: 'main',
   sessionSecretBootstrap: true,
