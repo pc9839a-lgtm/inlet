@@ -99,9 +99,10 @@ export async function onRequest({ request, env }) {
     });
   }
 
+  const runtimeEnv = env && typeof env === 'object' ? env : {};
   const [d1, session] = await Promise.all([
-    checkD1(env?.DB),
-    Promise.resolve(explicitSessionSecret(env)),
+    checkD1(runtimeEnv.DB),
+    Promise.resolve(explicitSessionSecret(runtimeEnv)),
   ]);
   const ready = d1.ready === true && session.ready === true;
 
@@ -117,6 +118,14 @@ export async function onRequest({ request, env }) {
         ready: session.ready,
         source: session.source,
         insecureFallbackEnabled: false,
+      },
+      runtimeBindings: {
+        sessionSecretPropertyPresent: Object.prototype.hasOwnProperty.call(runtimeEnv, 'INLET_SESSION_SECRET'),
+        apiTokenPropertyPresent: Object.prototype.hasOwnProperty.call(runtimeEnv, 'INLET_API_TOKEN'),
+        d1PropertyPresent: Object.prototype.hasOwnProperty.call(runtimeEnv, 'DB'),
+        filesBucketPropertyPresent: Object.prototype.hasOwnProperty.call(runtimeEnv, 'FILES_BUCKET'),
+        configuredVarPropertyPresent: Object.prototype.hasOwnProperty.call(runtimeEnv, 'INLET_AUTH_EMAIL_MODE'),
+        valuesExposed: false,
       },
     },
   });
