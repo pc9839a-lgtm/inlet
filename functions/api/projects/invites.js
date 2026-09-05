@@ -9,7 +9,7 @@ export async function onRequest({ request, env }) {
     const db = assertD1(env);
     const body = await readJson(request);
     const project = projectFromRequest(new URL(request.url), body, request);
-    const { identity } = await authorizeProject(request, env, project, { write: true, tab: 'settings', masterOnly: true });
+    const { identity } = await authorizeProject(request, env, project, { write: true, tab: 'settings', masterOnly: true, requireSignedSession: true });
     const invite = await createD1ManagerInvite(db, project, body.manager || {}, identity || {});
     await writeAuditLog({
       request,
