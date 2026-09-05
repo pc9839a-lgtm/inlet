@@ -51,7 +51,7 @@ async function payload(response) {
 {
   const response = await onRequest({
     request: request(),
-    env: { INLET_SESSION_SECRET: 'qa-secret', DB: healthyDb() },
+    env: { INLET_SESSION_SECRET_V2: 'qa-secret-v2', INLET_SESSION_SECRET: 'legacy-secret', DB: healthyDb() },
   });
   const body = await payload(response);
   assert(response.status === 200, 'healthy readiness must return 200');
@@ -60,9 +60,10 @@ async function payload(response) {
   assert(body.checks?.d1?.queryReady === true, 'D1 query must be ready');
   assert(body.checks?.d1?.schemaReady === true, 'D1 schema must be ready');
   assert(body.checks?.session?.ready === true, 'session secret must be ready');
-  assert(body.checks?.session?.source === 'session-secret', 'session-secret source must be reported');
+  assert(body.checks?.session?.source === 'session-secret-v2', 'V2 session-secret source must be preferred');
   assert(body.checks?.session?.insecureFallbackEnabled === false, 'insecure fallback must stay disabled');
-  assert(body.checks?.runtimeBindings?.sessionSecretPropertyPresent === true, 'runtime binding diagnostics must report session secret property presence');
+  assert(body.checks?.runtimeBindings?.sessionSecretV2PropertyPresent === true, 'runtime binding diagnostics must report V2 session secret property presence');
+  assert(body.checks?.runtimeBindings?.sessionSecretPropertyPresent === true, 'runtime binding diagnostics must report legacy session secret property presence');
   assert(body.checks?.runtimeBindings?.d1PropertyPresent === true, 'runtime binding diagnostics must report D1 property presence');
   assert(body.checks?.runtimeBindings?.valuesExposed === false, 'runtime binding diagnostics must never expose values');
 }
@@ -80,8 +81,19 @@ async function payload(response) {
   assert(response.status === 503, 'missing session secret must return 503');
   assert(body.checks?.session?.ready === false, 'missing session secret must not be ready');
   assert(body.checks?.session?.source === 'missing', 'missing secret source must be explicit');
-  assert(body.checks?.runtimeBindings?.sessionSecretPropertyPresent === false, 'missing secret must report absent runtime property');
+  assert(body.checks?.runtimeBindings?.sessionSecretV2PropertyPresent === false, 'missing V2 secret must report absent runtime property');
+  assert(body.checks?.runtimeBindings?.sessionSecretPropertyPresent === false, 'missing legacy secret must report absent runtime property');
   assert(body.checks?.runtimeBindings?.d1PropertyPresent === true, 'D1 runtime property must still be visible');
+}
+
+{
+  const response = await onRequest({
+    request: request(),
+    env: { INLET_SESSION_SECRET: 'legacy-secret', DB: healthyDb() },
+  });
+  const body = await payload(response);
+  assert(response.status === 200, 'legacy explicit session secret must remain supported during migration');
+  assert(body.checks?.session?.source === 'session-secret', 'legacy explicit session secret source must be reported');
 }
 
 {
@@ -125,11 +137,18 @@ async function payload(response) {
 }
 
 const source = await readFile('functions/api/readiness.js', 'utf8');
+const sharedSource = await readFile('functions/api/_shared.js', 'utf8');
+const authSource = await readFile('functions/api/auth/_auth.js', 'utf8');
 for (const table of REQUIRED_TABLES) {
   assert(source.includes(`'${table}'`), `readiness core schema check missing ${table}`);
 }
 assert(!/\b(?:INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM|REPLACE\s+INTO)\b/i.test(source), 'readiness endpoint must not contain write SQL');
 assert(source.includes("'Cache-Control': 'no-store'"), 'readiness response must not be cached');
+assert(sharedSource.includes('INLET_SESSION_SECRET_V2'), 'shared session verification must prefer V2 secret');
+assert(authSource.includes('INLET_SESSION_SECRET_V2'), 'auth signing must prefer V2 secret');
+assert(!sharedSource.includes('inlet-local-auth-secret'), 'shared session verification must not contain a static fallback secret');
+assert(!authSource.includes('inlet-local-auth-secret'), 'auth signing must not contain a static fallback secret');
+assert(authSource.includes('AUTH_SECRET_MISSING'), 'auth must fail closed when no explicit secret is configured');
 
 const workflow = await readFile('.github/workflows/deploy-cloudflare.yml', 'utf8');
 for (const token of [
@@ -139,10 +158,13 @@ for (const token of [
   '--branch main',
   'Cloudflare Pages production branch confirmed: main.',
   'Ensure production session secret',
+  'INLET_SESSION_SECRET_V2',
   'wrangler pages secret list --project-name inlet',
   'openssl rand -hex 64',
-  'wrangler pages secret put INLET_SESSION_SECRET --project-name inlet',
-  'unset session_secret',
+  'wrangler pages secret put INLET_SESSION_SECRET_V2 --project-name inlet',
+  'Legacy INLET_SESSION_SECRET is present and will not be changed.',
+  'INLET_SESSION_SECRET_V2 created and confirmed without exposing its value.',
+  'unset session_secret_v2',
   'Verify deployed readiness',
   'Deployment complete! Take a peek over at',
   '/api/readiness',
@@ -161,7 +183,9 @@ assert(workflow.includes('--data \'{"production_branch":"main"}\''), 'production
 assert(workflow.indexOf('Ensure Cloudflare production branch') < workflow.indexOf('Ensure production session secret'), 'production branch must be confirmed before secret and deploy checks');
 assert(workflow.indexOf('Ensure production session secret') < workflow.indexOf('Deploy assets and Pages Functions'), 'session secret bootstrap must happen before deploy');
 assert(workflow.indexOf('probe_readiness "$deployment_url/api/readiness" exact-deployment') < workflow.indexOf('probe_readiness "https://pagero.kr/api/readiness" production-domain'), 'exact deployment readiness must be diagnosed before the production domain');
-assert(!workflow.includes('echo "$session_secret"'), 'session secret value must never be echoed');
+assert(!workflow.includes('echo "$session_secret_v2"'), 'V2 session secret value must never be echoed');
+assert(!workflow.includes('pages secret put INLET_SESSION_SECRET --project-name inlet'), 'legacy session secret must never be rotated by production deploy');
+assert(!workflow.includes('pages secret delete INLET_SESSION_SECRET'), 'legacy session secret must never be deleted by production deploy');
 assert(!workflow.includes('set -x'), 'deployment workflow must not enable shell xtrace around secrets');
 assert(/openssl rand -hex 64/.test(workflow), 'generated session secret must provide 512 bits of random material');
 assert(!workflow.includes("grep -Eo 'https://[a-z0-9]+\\.inlet-8mr\\.pages\\.dev' /tmp/cloudflare-deploy.log | tail -n 1"), 'exact deployment probe must not resolve a branch alias via generic URL tail matching');
@@ -179,6 +203,9 @@ console.log(JSON.stringify({
   productionBranchGuard: true,
   productionBranch: 'main',
   sessionSecretBootstrap: true,
+  sessionSecretV2Bootstrap: true,
+  legacySecretMutation: false,
+  staticFallbackRemoved: true,
   generatedSecretBits: 512,
   secretValueLogged: false,
 }, null, 2));

@@ -168,7 +168,12 @@ export async function sessionIdentity(request, env = {}) {
 }
 
 function sessionSecret(env = {}) {
-  return String(env.INLET_SESSION_SECRET || env.INLET_API_TOKEN || 'inlet-local-auth-secret').trim();
+  return String(
+    env.INLET_SESSION_SECRET_V2
+      || env.INLET_SESSION_SECRET
+      || env.INLET_API_TOKEN
+      || '',
+  ).trim();
 }
 
 export async function authorizeProject(request, env = {}, project = {}, options = {}) {

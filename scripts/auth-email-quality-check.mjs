@@ -96,6 +96,7 @@ function sesEnv(overrides = {}) {
     AWS_SES_ACCESS_KEY_ID: 'AKIA1234567890TEST',
     AWS_SES_SECRET_ACCESS_KEY: 'x'.repeat(40),
     INLET_AUTH_EMAIL_FROM: '페이지로 <support@pagero.kr>',
+    INLET_SESSION_SECRET_V2: 'qa-session-secret-v2-32-characters-long',
     INLET_SESSION_SECRET: 'qa-session-secret-32-characters-long',
     ...overrides,
   };
@@ -109,7 +110,7 @@ assert(authAccountErrorMessage({ message: 'Password must include letters and num
 const localMock = await issueEmailVerificationToken({
   email: 'auth-email-local@example.test',
   purpose: 'password-reset',
-}, {});
+}, { INLET_SESSION_SECRET_V2: 'qa-local-session-secret-v2' });
 assert(localMock.delivery?.mode === 'mock', 'local mock mode should remain available for offline QA');
 assert(localMock.token, 'local mock mode should expose a fallback token');
 
@@ -120,6 +121,7 @@ await captureError(() => issueEmailVerificationToken({
   CF_PAGES_BRANCH: 'main',
   INLET_AUTH_EMAIL_MODE: 'mock',
   INLET_AUTH_EMAIL_EXPOSE_TOKEN: '1',
+  INLET_SESSION_SECRET_V2: 'qa-production-session-secret-v2',
 }), 'EMAIL_SEND_NOT_CONFIGURED');
 
 await captureError(() => issueEmailVerificationToken({
@@ -128,6 +130,7 @@ await captureError(() => issueEmailVerificationToken({
 }, {
   INLET_AUTH_EMAIL_MODE: 'api',
   INLET_EMAIL_PROVIDER: 'ses',
+  INLET_SESSION_SECRET_V2: 'qa-missing-ses-session-secret-v2',
 }), 'EMAIL_SEND_NOT_CONFIGURED');
 
 await captureError(() => issueEmailVerificationToken({
@@ -136,6 +139,7 @@ await captureError(() => issueEmailVerificationToken({
 }, {
   INLET_AUTH_EMAIL_MODE: 'api',
   INLET_EMAIL_PROVIDER: 'unsupported-provider',
+  INLET_SESSION_SECRET_V2: 'qa-unsupported-provider-session-secret-v2',
 }), 'EMAIL_SEND_PROVIDER_UNSUPPORTED');
 
 let fetchCount = 0;
