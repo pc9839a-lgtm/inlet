@@ -66,6 +66,9 @@ function envFirst(env = {}, keys = [], fallback = '') {
 }
 
 function sessionSecurityStatus(env = {}) {
+  if (String(env.INLET_SESSION_SECRET_V2 || '').trim()) {
+    return { ready: true, source: 'session-secret-v2' };
+  }
   if (String(env.INLET_SESSION_SECRET || '').trim()) {
     return { ready: true, source: 'session-secret' };
   }
