@@ -5,8 +5,9 @@ import { runSesAuthEmailProductionCheck } from './ses-auth-email-production-chec
 
 const root = process.cwd();
 const read = (path) => readFile(`${root}/${path}`, 'utf8');
-const [workflow, docs, packageJson, qaAll, envExample, checkSource, safetySource] = await Promise.all([
+const [workflow, diagnosticWorkflow, docs, packageJson, qaAll, envExample, checkSource, safetySource] = await Promise.all([
   read('.github/workflows/ses-auth-email-production-verify.yml'),
+  read('.github/workflows/diagnose-ses-network.yml'),
   read('docs/ops-ses-auth-email-production-verification.md'),
   read('package.json'),
   read('scripts/qa-all.mjs'),
@@ -24,6 +25,24 @@ for (const token of [
 ]) assert(workflow.includes(token), `workflow missing ${token}`);
 assert(!/\bpush\s*:|\bpull_request\s*:|\bschedule\s*:/.test(workflow), 'SES verifier must stay manual-only');
 assert.match(workflow, /permissions:\s*\n\s*contents:\s*read/);
+
+for (const token of [
+  'workflow_dispatch',
+  'environment: production',
+  'npm run auth:email:ses:live',
+  'ses-readiness-evidence-${{ github.run_id }}',
+]) assert(diagnosticWorkflow.includes(token), `SES diagnostic workflow missing ${token}`);
+assert(!/\bpush\s*:|\bpull_request\s*:|\bschedule\s*:/.test(diagnosticWorkflow), 'SES diagnostic must stay manual-only');
+assert.match(diagnosticWorkflow, /permissions:\s*\n\s*contents:\s*read/);
+for (const forbidden of [
+  'npm run deploy:pages',
+  'wrangler pages deploy',
+  'git push',
+  'contents: write',
+  'functions/api/diagnostics',
+  'sed -i',
+  '/v2/email/outbound-emails',
+]) assert(!diagnosticWorkflow.includes(forbidden), `SES diagnostic workflow must not contain ${forbidden}`);
 
 for (const token of [
   'SES Auth Email Production Verification',
@@ -151,6 +170,9 @@ console.log(JSON.stringify({
   dmarcChecked: true,
   customMailFromSpfChecked: true,
   evidenceRedacted: true,
+  legacyDiagnosticReplaced: true,
+  diagnosticManualOnly: true,
+  diagnosticDeploys: false,
 }, null, 2));
 
 function jsonResponse(data, status = 200) {

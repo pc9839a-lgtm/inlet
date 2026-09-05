@@ -48,10 +48,19 @@ async function payload(response) {
   return response.json();
 }
 
+const HEALTHY_AUTH_EMAIL_ENV = Object.freeze({
+  INLET_AUTH_EMAIL_MODE: 'api',
+  INLET_EMAIL_PROVIDER: 'ses',
+  INLET_AUTH_EMAIL_FROM: '페이지로 <no-reply@pagero.kr>',
+  AWS_SES_REGION: 'ap-northeast-2',
+  AWS_SES_ACCESS_KEY_ID: 'AKIA_READINESS_QA',
+  AWS_SES_SECRET_ACCESS_KEY: 'readiness-qa-secret-key-material-32chars',
+});
+
 {
   const response = await onRequest({
     request: request(),
-    env: { INLET_SESSION_SECRET_V2: 'qa-secret-v2', INLET_SESSION_SECRET: 'legacy-secret', DB: healthyDb() },
+    env: { ...HEALTHY_AUTH_EMAIL_ENV, INLET_SESSION_SECRET_V2: 'qa-secret-v2', INLET_SESSION_SECRET: 'legacy-secret', DB: healthyDb() },
   });
   const body = await payload(response);
   assert(response.status === 200, 'healthy readiness must return 200');
@@ -62,6 +71,11 @@ async function payload(response) {
   assert(body.checks?.session?.ready === true, 'session secret must be ready');
   assert(body.checks?.session?.source === 'session-secret-v2', 'V2 session-secret source must be preferred');
   assert(body.checks?.session?.insecureFallbackEnabled === false, 'insecure fallback must stay disabled');
+  assert(body.checks?.authEmail?.ready === true, 'auth email SES configuration must be ready');
+  assert(body.checks?.authEmail?.accessKeyPresent === true, 'auth email readiness must confirm access key presence without exposing it');
+  assert(body.checks?.authEmail?.secretKeyPresent === true, 'auth email readiness must confirm secret key presence without exposing it');
+  assert(body.checks?.authEmail?.senderReady === true, 'auth email readiness must validate sender syntax');
+  assert(body.checks?.authEmail?.valuesExposed === false, 'auth email readiness must never expose credential values');
   assert(body.checks?.runtimeBindings?.sessionSecretV2PropertyPresent === true, 'runtime binding diagnostics must report V2 session secret property presence');
   assert(body.checks?.runtimeBindings?.sessionSecretPropertyPresent === true, 'runtime binding diagnostics must report legacy session secret property presence');
   assert(body.checks?.runtimeBindings?.d1PropertyPresent === true, 'runtime binding diagnostics must report D1 property presence');
@@ -89,7 +103,7 @@ async function payload(response) {
 {
   const response = await onRequest({
     request: request(),
-    env: { INLET_SESSION_SECRET: 'legacy-secret', DB: healthyDb() },
+    env: { ...HEALTHY_AUTH_EMAIL_ENV, INLET_SESSION_SECRET: 'legacy-secret', DB: healthyDb() },
   });
   const body = await payload(response);
   assert(response.status === 200, 'legacy explicit session secret must remain supported during migration');
@@ -99,11 +113,44 @@ async function payload(response) {
 {
   const response = await onRequest({
     request: request(),
-    env: { INLET_API_TOKEN: 'qa-token', DB: healthyDb() },
+    env: { ...HEALTHY_AUTH_EMAIL_ENV, INLET_API_TOKEN: 'qa-token', DB: healthyDb() },
   });
   const body = await payload(response);
   assert(response.status === 200, 'explicit API token may provide session secret readiness');
   assert(body.checks?.session?.source === 'api-token', 'API token source must be reported');
+}
+
+{
+  const response = await onRequest({
+    request: request(),
+    env: {
+      ...HEALTHY_AUTH_EMAIL_ENV,
+      AWS_SES_SECRET_ACCESS_KEY: '',
+      INLET_SESSION_SECRET_V2: 'qa-secret-v2',
+      DB: healthyDb(),
+    },
+  });
+  const body = await payload(response);
+  assert(response.status === 503, 'missing SES secret key must fail production readiness');
+  assert(body.checks?.authEmail?.ready === false, 'missing SES secret must mark auth email unready');
+  assert(body.checks?.authEmail?.reason === 'ses-secret-key-missing', 'missing SES secret reason must be explicit');
+  assert(body.checks?.authEmail?.secretKeyPresent === false, 'missing SES secret must report presence=false only');
+  assert(!JSON.stringify(body).includes('readiness-qa-secret-key-material'), 'readiness must never expose SES credential material');
+}
+
+{
+  const response = await onRequest({
+    request: request(),
+    env: {
+      ...HEALTHY_AUTH_EMAIL_ENV,
+      INLET_AUTH_EMAIL_MODE: 'mock',
+      INLET_SESSION_SECRET_V2: 'qa-secret-v2',
+      DB: healthyDb(),
+    },
+  });
+  const body = await payload(response);
+  assert(response.status === 503, 'mock auth email mode must fail production readiness');
+  assert(body.checks?.authEmail?.reason === 'auth-email-mode-invalid', 'invalid auth email mode reason must be explicit');
 }
 
 {
@@ -176,6 +223,7 @@ for (const token of [
   'production_ready=false',
   'exact_deployment_ready=$exact_ready',
   'production_domain_ready=$production_ready',
+  'payload?.checks?.authEmail?.ready === true',
 ]) {
   assert(workflow.includes(token), `deployment readiness/security gate missing ${token}`);
 }
@@ -206,6 +254,8 @@ console.log(JSON.stringify({
   sessionSecretV2Bootstrap: true,
   legacySecretMutation: false,
   staticFallbackRemoved: true,
+  authEmailReadinessGate: true,
+  sesCredentialValuesExposed: false,
   generatedSecretBits: 512,
   secretValueLogged: false,
 }, null, 2));
