@@ -70,6 +70,24 @@ try {
   calls = 0;
   globalThis.fetch = async () => {
     calls += 1;
+    return new Response(JSON.stringify({ ok: false, code: 'AUTH_SESSION_INVALID', message: 'Session is invalid or expired.' }), { status: 401 });
+  };
+  let authError = null;
+  try {
+    await postJson('/api/pages/qa-page?saveMode=update-existing', savePayload);
+  } catch (error) {
+    authError = error;
+  }
+  assert(calls === 1 && authError instanceof ApiError && authError.status === 401, 'stale sessions must fail once without automatic retry');
+  assert(authError.details?.code === 'AUTH_SESSION_INVALID', 'stale session error code must remain available to save UX');
+  const authFeedback = pageSaveErrorFeedback(authError, false, { saved: true, message: '' });
+  assert(authFeedback.title === '로그인이 만료되었습니다', 'stale session save feedback must name the login expiry');
+  assert(authFeedback.message.includes('자동 보관') && authFeedback.message.includes('다시 로그인'), 'stale session feedback must preserve the edit and give the next action');
+  assert(authFeedback.toast === '로그인 만료 · 작업은 자동 보관됨', 'stale session toast must be concise and recovery-safe');
+
+  calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
     throw new TypeError('Failed to fetch');
   };
   let networkError = null;
@@ -111,6 +129,7 @@ assert(apiClientSource.includes('createPageSaveAbortControl') && apiClientSource
 assert(apiClientSource.includes('for (let attempt = 1; attempt <= maxAttempts; attempt += 1)') && apiClientSource.includes('await sleep(PAGE_SAVE_RETRY_DELAY_MS)'), 'page save transport retry must be finite and delayed');
 assert(repositorySource.includes('saveRequestId') && repositorySource.includes('pageSaveRequestId(identity, expectedRevision)'), 'automatic transport retry must reuse the existing deterministic save request identity');
 assert(feedbackSource.includes("toast: '저장 실패 · 다시 저장 가능'") && feedbackSource.includes('isRetryablePageSaveFailure(error)'), 'save UX must distinguish temporary transport failure from permanent save failure');
+assert(feedbackSource.includes("title: '로그인이 만료되었습니다'") && feedbackSource.includes("toast: '로그인 만료 · 작업은 자동 보관됨'"), 'save UX must distinguish stale auth from ordinary save failure');
 
 console.log(JSON.stringify({
   ok: true,
@@ -122,4 +141,5 @@ console.log(JSON.stringify({
   conflictRetryBlocked: true,
   nonPageBehaviorPreserved: true,
   recoveryFeedback: true,
+  staleSessionFeedback: true,
 }, null, 2));

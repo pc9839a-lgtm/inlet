@@ -2,6 +2,16 @@ import { isRetryablePageSaveFailure, pageSaveFailureKind } from '../lib/pageSave
 
 export const PAGE_SAVE_LABEL = '페이지';
 
+function isAuthSessionSaveFailure(error = null) {
+  const status = Number(error?.status || 0);
+  const code = String(error?.details?.code || error?.details?.errorCode || '').trim();
+  const message = String(error?.message || error || '');
+  return status === 401
+    || code === 'AUTH_SESSION_INVALID'
+    || code === 'AUTH_SESSION_MISSING'
+    || /Session is invalid|Session account was not found|로그인 세션/i.test(message);
+}
+
 export const SAVE_BLOCKED_FEEDBACK = {
   level: 'warning',
   title: '저장할 수 없음',
@@ -30,6 +40,15 @@ export function pageSaveErrorFeedback(error, handled = false, recovery = { saved
       title: handled ? '저장 충돌 · 임시 보관 실패' : '저장 실패 · 임시 보관 실패',
       message: recovery?.message || '현재 작업을 브라우저에 임시 보관하지 못했습니다. 이 화면을 닫지 말고 다시 저장해주세요.',
       toast: '임시 보관 실패 · 화면을 닫지 마세요',
+    };
+  }
+
+  if (isAuthSessionSaveFailure(error)) {
+    return {
+      level: 'warning',
+      title: '로그인이 만료되었습니다',
+      message: '작업은 자동 보관했습니다. 다시 로그인한 뒤 저장해주세요.',
+      toast: '로그인 만료 · 작업은 자동 보관됨',
     };
   }
 
