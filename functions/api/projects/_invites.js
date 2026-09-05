@@ -1,6 +1,5 @@
-import { getD1InviteByToken, upsertD1Invite, upsertD1Project, upsertD1ProjectMember } from '../../../server/storage/d1Adapter.mjs';
+import { getD1InviteByToken, getD1ProjectById, upsertD1Invite, upsertD1ProjectMember } from '../../../server/storage/d1Adapter.mjs';
 import { writeAuditLog } from '../_audit.js';
-import { ensureD1ProjectShell } from '../_shared.js';
 import { createSessionToken, loginAccount, normalizeEmail, normalizePhone, ownerIdForEmail, registerAccount } from '../auth/_auth.js';
 
 export const INVITE_METHODS = 'GET, POST, OPTIONS';
@@ -41,33 +40,15 @@ export function inviteError(message, status = 400, details = {}) {
 export async function createD1ManagerInvite(db, project = {}, manager = {}, identity = {}) {
   const projectId = String(project.projectId || project.id || '').trim();
   if (!projectId) throw inviteError('projectId is required.', 400, { code: 'PROJECT_ID_REQUIRED' });
-  const ownerId = String(identity.ownerId || project.ownerId || '').trim();
-  if (!ownerId) throw inviteError('Project owner identity is required.', 403, { code: 'PROJECT_ACCESS_REQUIRED' });
-  await ensureD1ProjectShell(db, { ...project, ownerId });
-  await upsertD1Project(db, {
-    ...project,
-    projectId,
-    ownerId,
-    ownerAccountId: ownerId,
-    slug: project.slug || projectId,
-    updatedAt: new Date().toISOString(),
-  }, {
-    projectId,
-    ownerId,
-    slug: project.slug || projectId,
-  });
-  await upsertD1ProjectMember(db, {
-    id: `${projectId}-${ownerId}-master`,
-    ownerId,
-    role: 'master',
-    access: {},
-    status: 'active',
-  }, {
-    projectId,
-    accountId: ownerId,
-    invitedByAccountId: ownerId,
-  });
-
+  const ownerId = String(identity.ownerId || '').trim();
+  if (!ownerId) throw inviteError('Signed project owner session is required.', 401, { code: 'AUTH_SIGNED_SESSION_REQUIRED' });
+  const storedProject = await getD1ProjectById(db, projectId);
+  if (!storedProject?.projectId) {
+    throw inviteError('Project was not found.', 404, { code: 'PROJECT_NOT_FOUND' });
+  }
+  if (String(storedProject.ownerId || '').trim() !== ownerId) {
+    throw inviteError('Only the project owner can create manager invites.', 403, { code: 'PROJECT_OWNER_REQUIRED' });
+  }
   const email = normalizeEmail(manager.email || manager.managerEmail || '');
   if (!email) throw inviteError('Manager email is required.', 400, { code: 'MANAGER_EMAIL_REQUIRED' });
   const token = crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '') : `${Date.now()}${Math.random().toString(36).slice(2)}`;
