@@ -103,6 +103,18 @@ async function readPages(session) {
   return Array.isArray(data.pages) ? data.pages : [];
 }
 
+async function hardCleanupQaProject(projectId) {
+  if (!productionQaSecret) return { ok: false, skipped: true };
+  const { response, data } = await requestJson('/api/qa/production-save-session', {
+    method: 'POST',
+    headers: { 'X-Inlet-Production-QA-Secret': productionQaSecret },
+    body: { action: 'cleanup', projectId },
+  });
+  if (!response.ok) {
+    fail('production QA hard cleanup failed', { status: response.status, code: data.code || '', projectId });
+  }
+  return data.cleanup || { ok: true };
+}
 async function deleteQaPage(session, page) {
   const slug = String(page?.slug || '');
   const projectId = String(page?.projectId || '');
@@ -122,7 +134,10 @@ async function deleteQaPage(session, page) {
 async function cleanupResidue(session) {
   const pages = await readPages(session);
   const residue = qaPages(pages);
-  for (const page of residue) await deleteQaPage(session, page);
+  for (const page of residue) {
+    await deleteQaPage(session, page);
+    await hardCleanupQaProject(String(page.projectId || ''));
+  }
   const after = await readPages(session);
   if (qaPages(after).length) fail('production QA page residue remains after cleanup');
   return { removed: residue.length, pages: after };
@@ -283,6 +298,13 @@ async function main() {
       } catch (error) {
         evidence.cleanupError = safeError(error);
       }
+    }
+    try {
+      const cleanup = await hardCleanupQaProject(projectId);
+      evidence.r2CleanupDeleted = Number(cleanup?.r2Deleted || 0);
+      evidence.hardCleanup = cleanup?.skipped ? 'skipped' : 'ready';
+    } catch (error) {
+      evidence.cleanupError = safeError(error);
     }
     const finalPages = await readPages(session).catch(() => []);
     evidence.cleanupAfter = currentQaPages.length;
