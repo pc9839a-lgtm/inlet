@@ -21,12 +21,16 @@ assert(!probe.includes("'dyjh'") && !probe.includes('"dyjh"'), 'production probe
 assert(probe.includes('configuredOrigins.includes(baseUrl)') && probe.includes("url.protocol !== 'https:'"), 'production probe must enforce approved HTTPS origins');
 assert(probe.includes('user.platformMaster') && probe.includes('refuses platform-master fixture'), 'production probe must refuse platform-master credentials');
 assert(probe.includes('embeddedQaImage') && probe.includes('pageAssets.replaced') && probe.includes("savedImage.startsWith('/api/files/download?key=')"), 'production probe must verify live R2 image externalization through the normal save route');
+assert(probe.includes('hardCleanupQaProject') && probe.includes("body: { action: 'cleanup', projectId }"), 'production probe must hard-clean isolated QA D1/R2 residue after normal route cleanup');
 
 assert(endpoint.includes("const QA_HOST = 'pagero.kr'"), 'QA session endpoint must be pinned to pagero.kr');
 assert(endpoint.includes('INLET_PRODUCTION_QA_SECRET') && endpoint.includes('X-Inlet-Production-QA-Secret'), 'QA session endpoint must require the rotating production QA secret');
 assert(endpoint.includes('expected.length >= 64') && endpoint.includes('provided.length >= 64') && endpoint.includes('constantTimeEqual'), 'QA credential comparison must require strong material and constant-time comparison');
 assert(endpoint.includes("return jsonResponse(request, env, 404"), 'unauthorized QA session requests must be concealed as not found');
 assert(endpoint.includes('upsertD1Account') && endpoint.includes('createSessionToken'), 'QA endpoint must mint an ordinary signed session for a dedicated D1 account');
+assert(endpoint.includes('QA_PROJECT_PREFIX') && endpoint.includes("DELETE FROM page_revisions WHERE project_id = ?") && endpoint.includes("DELETE FROM pages WHERE project_id = ?"), 'QA hard cleanup must be restricted to the dedicated project prefix');
+assert(endpoint.includes("prefix: `${assetProjectId}/images/`") && endpoint.includes('await bucket.delete(keys)'), 'QA hard cleanup must remove only its R2 page-image prefix');
+assert(endpoint.includes("owner_account_id = ?") && endpoint.includes('QA_ACCOUNT_ID'), 'QA project hard deletion must require fixture ownership');
 assert(endpoint.includes("QA_EMAIL = 'production-save-qa@pagero.invalid'"), 'QA endpoint must use a reserved non-user email fixture');
 assert(endpoint.includes('platformMaster: false') && endpoint.includes('secretValuesIncluded: false'), 'QA endpoint must remain non-admin and must never return secret values');
 
@@ -47,7 +51,7 @@ assert(qaAll.includes("production:save:roundtrip:contract:qa"), 'offline release
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 33,
+  checks: 37,
   protections: {
     disposablePrefixOnly: true,
     rotatingQaCredential: true,
@@ -60,6 +64,8 @@ console.log(JSON.stringify({
     createUpdateReadDelete: true,
     liveR2Externalization: true,
     baselineRestorationRequired: true,
+    d1ResiduePurged: true,
+    r2ResiduePurged: true,
     noStaticFixtureSessionDependency: true,
     liveSaveDeploymentGate: true,
   },
