@@ -141,6 +141,26 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
+      - name: Rotate production save QA secret
+        shell: bash
+        run: |
+          set -euo pipefail
+          qa_secret="$(openssl rand -hex 64)"
+          echo "::add-mask::$qa_secret"
+          printf '%s' "$qa_secret" | npx wrangler pages secret put INLET_PRODUCTION_QA_SECRET --project-name inlet >/tmp/production-qa-secret-put.log 2>&1
+          echo "INLET_PRODUCTION_SAVE_QA_SECRET=$qa_secret" >> "$GITHUB_ENV"
+          unset qa_secret
+
+          npx wrangler pages secret list --project-name inlet 2>&1 | tee /tmp/pages-secrets-qa.txt
+          if ! grep -Eq '(^|[^A-Za-z0-9_])INLET_PRODUCTION_QA_SECRET([^A-Za-z0-9_]|$)' /tmp/pages-secrets-qa.txt; then
+            echo "::error::INLET_PRODUCTION_QA_SECRET was not confirmed after rotation."
+            exit 1
+          fi
+          echo "Production save QA secret rotated and masked for this deployment."
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Build production bundle
         run: npm run build
 
@@ -321,6 +341,27 @@ jobs:
             exit 1
           fi
 
+      - name: Verify production D1 save roundtrip
+        id: production_save
+        if: steps.readiness.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        env:
+          INLET_PRODUCTION_SAVE_BASE_URL: https://pagero.kr
+          PAGERO_PRODUCTION_SAVE_ALLOWED_ORIGINS: https://pagero.kr
+        run: |
+          set -o pipefail
+          node scripts/production-save-roundtrip-check.mjs | tee production-save-roundtrip-result.json
+
+      - name: Upload production save evidence
+        if: always() && steps.production_save.outcome != 'skipped'
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-save-roundtrip-${{ github.run_id }}
+          path: production-save-roundtrip-result.json
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Record deployment result
         if: always()
         shell: bash
@@ -329,6 +370,7 @@ jobs:
           outcome="${{ steps.cloudflare_deploy.outcome }}"
           metadata_outcome="${{ steps.deployment_meta.outcome }}"
           readiness_outcome="${{ steps.readiness.outcome }}"
+          production_save_outcome="${{ steps.production_save.outcome }}"
           if [ "$outcome" != "success" ]; then
             reason="deploy_command_failed"
             if grep -Eqi "CLOUDFLARE_API_TOKEN|CLOUDFLARE_ACCOUNT_ID|non-interactive environment|not set" /tmp/cloudflare-deploy.log 2>/dev/null; then
@@ -344,6 +386,9 @@ jobs:
           elif [ "$readiness_outcome" != "success" ]; then
             outcome="failure"
             reason="deployment_not_ready"
+          elif [ "$production_save_outcome" != "success" ]; then
+            outcome="failure"
+            reason="production_save_roundtrip_failed"
           fi
 
           {
@@ -358,103 +403,13 @@ jobs:
             echo "Session secret V2 binding: \`${{ steps.deployment_meta.outputs.session_secret_type || 'unknown' }}\`"
             echo "Production readiness: \`${{ steps.readiness.outputs.production_domain_ready || 'false' }}\`"
             echo "Exact deployment readiness: \`${{ steps.readiness.outputs.exact_deployment_ready || 'unknown' }}\`"
+            echo "Production save roundtrip: \`${production_save_outcome:-not-run}\`"
             if [ -n "${{ steps.readiness.outputs.deployment_url }}" ]; then
               echo "Deployment URL: ${{ steps.readiness.outputs.deployment_url }}"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Fail when Cloudflare deployment or production readiness failed
-        if: steps.cloudflare_deploy.outcome != 'success' || steps.deployment_meta.outcome != 'success' || steps.readiness.outcome != 'success'
+      - name: Fail when Cloudflare deployment, readiness, or live save failed
+        if: steps.cloudflare_deploy.outcome != 'success' || steps.deployment_meta.outcome != 'success' || steps.readiness.outcome != 'success' || (steps.readiness.outcome == 'success' && steps.production_save.outcome != 'success')
         run: exit 1
 
-  production-save-roundtrip:
-    name: production-save-roundtrip
-    needs: deploy
-    if: needs.deploy.result == 'success'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    environment: production
-    permissions:
-      contents: read
-    env:
-      INLET_PRODUCTION_SAVE_BASE_URL: https://pagero.kr
-      INLET_PRODUCTION_SAVE_SESSION: ${{ secrets.PAGERO_PAGE_LIMIT_EMPTY_GENERAL_SESSION || secrets.PAGERO_ADMIN_AUDIT_GENERAL_SESSION }}
-      PAGERO_PRODUCTION_SAVE_ALLOWED_ORIGINS: https://pagero.kr
-
-    steps:
-      - name: Resolve source SHA
-        id: source
-        shell: bash
-        run: |
-          if [ "$GITHUB_EVENT_NAME" = "workflow_run" ]; then
-            echo "sha=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Checkout deployed source
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ steps.source.outputs.sha }}
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-
-      - name: Install
-        run: npm ci
-
-      - name: Check production save fixture
-        id: fixture
-        shell: bash
-        run: |
-          if [ -n "$INLET_PRODUCTION_SAVE_SESSION" ]; then
-            echo "configured=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "configured=false" >> "$GITHUB_OUTPUT"
-            cat > production-save-roundtrip-result.json <<'JSON'
-          {
-            "ok": false,
-            "status": "skipped-live",
-            "reason": "fixture-session-missing",
-            "targetOrigin": "https://pagero.kr",
-            "writesAttempted": 0,
-            "secretValuesIncluded": false
-          }
-          JSON
-            echo "::warning::Production D1 save roundtrip was not executed because no dedicated QA fixture session is configured."
-          fi
-
-      - name: Verify production D1 save roundtrip
-        if: steps.fixture.outputs.configured == 'true'
-        shell: bash
-        run: |
-          set -o pipefail
-          node scripts/production-save-roundtrip-check.mjs | tee production-save-roundtrip-result.json
-
-      - name: Record production save verification
-        if: always()
-        shell: bash
-        run: |
-          {
-            echo "## Production D1 save roundtrip"
-            echo ""
-            if [ "${{ steps.fixture.outputs.configured }}" = "true" ]; then
-              echo "Fixture: **configured**"
-              echo "Result: see production-save-roundtrip evidence"
-            else
-              echo "Fixture: **missing**"
-              echo "Result: **skipped-live** (0 writes attempted)"
-            fi
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload production save evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: production-save-roundtrip-${{ github.run_id }}
-          path: production-save-roundtrip-result.json
-          if-no-files-found: error
-          retention-days: 30
