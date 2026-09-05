@@ -48,8 +48,12 @@ export async function createD1OwnershipTransferRequest(db, project = {}, input =
   if (!projectId) throw ownershipError('projectId is required.', 400, { code: 'PROJECT_ID_REQUIRED' });
   const access = await getD1ProjectAccess(db, { projectId });
   if (!access) throw ownershipError('Project access metadata is required before ownership transfer.', 403, { code: 'PROJECT_ACCESS_REQUIRED' });
-  if (identity.ownerId && identity.ownerId !== access.ownerId && !access.clientOwnerIds?.includes(identity.ownerId)) {
-    throw ownershipError('Only the project master or client admin can request ownership transfer.', 403, { code: 'PROJECT_ADMIN_REQUIRED' });
+  const actorOwnerId = String(identity.ownerId || '').trim();
+  if (!actorOwnerId) {
+    throw ownershipError('Signed project owner session is required.', 401, { code: 'AUTH_SIGNED_SESSION_REQUIRED' });
+  }
+  if (actorOwnerId !== String(access.ownerId || '').trim()) {
+    throw ownershipError('Only the project owner can request ownership transfer.', 403, { code: 'PROJECT_OWNER_REQUIRED' });
   }
 
   const managerEmail = normalizeEmail(input.managerEmail || input.email || '');
