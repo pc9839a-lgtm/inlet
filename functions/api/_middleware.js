@@ -25,7 +25,7 @@ function preserveOriginalResponse(response) {
 }
 
 function configuredSessionSecret(env = {}) {
-  return String(env.INLET_SESSION_SECRET || env.INLET_API_TOKEN || '').trim();
+  return String(env.INLET_SESSION_SECRET_V2 || env.INLET_SESSION_SECRET || env.INLET_API_TOKEN || '').trim();
 }
 
 function requestNeedsConfiguredSessionSecret(request, url) {
