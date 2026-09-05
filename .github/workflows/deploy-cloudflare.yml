@@ -299,7 +299,8 @@ jobs:
             const ready = payload?.ok === true
               && payload?.ready === true
               && payload?.checks?.d1?.ready === true
-              && payload?.checks?.session?.ready === true;
+              && payload?.checks?.session?.ready === true
+              && payload?.checks?.authEmail?.ready === true;
             process.exit(ready ? 0 : 1);
           } catch {
             process.exit(1);
