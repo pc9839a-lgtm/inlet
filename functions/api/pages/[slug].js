@@ -6,7 +6,7 @@ import {
   pageSaveIdentity,
 } from '../../../server/pageSavePolicy.mjs';
 import { writeAuditLog } from '../_audit.js';
-import { assertD1, authorizeProject, ensureD1ProjectShell, handleApiError, jsonResponse, optionsResponse, projectFromRequest, readJson, sessionIdentity } from '../_shared.js';
+import { apiTokenAuthorized, assertD1, authorizeProject, ensureD1ProjectShell, handleApiError, jsonResponse, optionsResponse, projectFromRequest, readJson, sessionIdentity } from '../_shared.js';
 import { writePageManagerAuditChanges } from './_pageAudit.js';
 import { externalizeEmbeddedPageImages } from './_pageAssets.js';
 
@@ -301,6 +301,12 @@ export async function onRequest({ request, env, params }) {
       let project = projectFromRequest(url, body, request);
       const writeTab = String(body.tab || body.saveTab || 'edit').trim() || 'edit';
       const session = await sessionIdentity(request, env);
+      if (!session && !apiTokenAuthorized(request, env)) {
+        const error = new Error('Session is invalid or expired.');
+        error.status = 401;
+        error.details = { code: 'AUTH_SESSION_INVALID' };
+        throw error;
+      }
       const incoming = body.page && typeof body.page === 'object' ? body.page : body;
       const saveIdentity = pageSaveIdentity(body, incoming, project, slug);
       const saveMode = saveIdentity.mode;
