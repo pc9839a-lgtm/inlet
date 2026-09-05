@@ -12,6 +12,7 @@ const steps = [
   ['stats:qa', ['scripts/stats-quality-check.mjs']],
   ['revision:qa', ['scripts/revision-quality-check.mjs']],
   ['auth:qa', ['scripts/auth-quality-check.mjs']],
+  ['authz:sensitive-project:qa', ['scripts/sensitive-project-authz-quality-check.mjs']],
   ['auth:email:qa', ['scripts/auth-email-quality-check.mjs']],
   ['auth:email:ses:contract:qa', ['scripts/ses-auth-email-production-contract-check.mjs']],
   ['calllink:auth:qa', ['scripts/calllink-auth-quality-check.mjs']],

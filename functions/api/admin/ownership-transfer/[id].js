@@ -1,5 +1,6 @@
-import { assertD1, authorizeProject, handleApiError, jsonResponse, optionsResponse, projectFromRequest, readJson } from '../../_shared.js';
+import { assertD1, handleApiError, jsonResponse, optionsResponse, projectFromRequest, readJson } from '../../_shared.js';
 import { writeAuditLog } from '../../_audit.js';
+import { requirePlatformMaster } from '../_auth.js';
 import { listD1OwnershipTransfers, OWNERSHIP_METHODS, updateD1OwnershipTransferRequest } from '../../projects/_ownership.js';
 
 const STATUS_ACTIONS = {
@@ -17,7 +18,7 @@ export async function onRequest({ request, env, params }) {
     const db = assertD1(env);
     const body = await readJson(request);
     const project = projectFromRequest(new URL(request.url), body, request);
-    const { identity } = await authorizeProject(request, env, project, { write: true, tab: 'settings', masterOnly: true });
+    const identity = await requirePlatformMaster(request, env);
     const requestId = decodeURIComponent(params.id || '');
     const beforePage = await listD1OwnershipTransfers(db, project, { limit: 100 });
     const previous = beforePage.requests.find((item) => item.id === requestId) || null;

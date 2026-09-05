@@ -182,10 +182,19 @@ export async function authorizeProject(request, env = {}, project = {}, options 
     error.status = 400;
     throw error;
   }
-  if (apiTokenAuthorized(request, env)) return { project, identity: { source: 'api-token' } };
+  const apiToken = apiTokenAuthorized(request, env);
+  if (apiToken && options.requireSignedSession !== true) {
+    return { project, identity: { source: 'api-token' } };
+  }
 
   const enforce = String(env.INLET_PROJECT_AUTH_ENFORCE || '1') !== '0';
   const identity = await sessionIdentity(request, env);
+  if (options.requireSignedSession === true && !identity?.ownerId) {
+    const error = new Error('로그인이 필요한 보안 작업입니다.');
+    error.status = 401;
+    error.details = { code: 'AUTH_SIGNED_SESSION_REQUIRED' };
+    throw error;
+  }
   if (options.publicWrite === true && request.method === 'POST' && !identity) return { project, identity: null };
   if (!enforce) return { project, identity };
   const role = normalizeRole(identity?.role);
@@ -214,7 +223,7 @@ export async function authorizeProject(request, env = {}, project = {}, options 
   }
 
   if (identity && (!identity.projectId || identity.projectId === project.projectId)) {
-    if (apiTokenAuthorized(request, env)) return { project, identity };
+    if (apiToken && options.requireSignedSession !== true) return { project, identity };
     if (['master', 'owner', 'builder'].includes(role)) return { project, identity };
     if (!options.write && ['manager', 'client_admin'].includes(role)) return { project, identity };
   }
