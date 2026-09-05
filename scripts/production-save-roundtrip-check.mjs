@@ -5,6 +5,7 @@ const configuredOrigins = String(process.env.PAGERO_PRODUCTION_SAVE_ALLOWED_ORIG
   .map((value) => value.trim().replace(/\/+$/, ''))
   .filter(Boolean);
 const initialSession = String(process.env.INLET_PRODUCTION_SAVE_SESSION || '').trim();
+const productionQaSecret = String(process.env.INLET_PRODUCTION_SAVE_QA_SECRET || '').trim();
 const timeoutMs = Math.max(3000, Math.min(30000, Number(process.env.INLET_PRODUCTION_SAVE_TIMEOUT_MS || 12000)));
 
 function fail(message, details = {}) {
@@ -30,7 +31,7 @@ function assertLaunchGate() {
   if (url.protocol !== 'https:') fail('production save probe requires HTTPS');
   if (url.pathname !== '/' || url.search || url.hash) fail('production save probe base URL must be an origin only');
   if (!configuredOrigins.includes(baseUrl)) fail('production save probe target is not in the approved origin list', { baseUrl });
-  if (!initialSession) fail('production save probe fixture session is missing');
+  if (!initialSession && !productionQaSecret) fail('production save probe fixture credential is missing');
 }
 
 async function requestJson(path, { session = '', method = 'GET', body, headers = {} } = {}) {
@@ -73,6 +74,18 @@ function pageListDigest(pages = []) {
 
 function qaPages(pages = []) {
   return (Array.isArray(pages) ? pages : []).filter((page) => String(page?.slug || '').startsWith(QA_SLUG_PREFIX));
+}
+
+async function mintProductionQaSession() {
+  const { response, data } = await requestJson('/api/qa/production-save-session', {
+    method: 'POST',
+    headers: { 'X-Inlet-Production-QA-Secret': productionQaSecret },
+  });
+  if (!response.ok) fail('production QA session mint failed', { status: response.status, code: data.code || '' });
+  const session = String(data.session || '').trim();
+  if (!session) fail('production QA session mint returned no session');
+  if (data.fixture?.platformMaster) fail('production QA session must never be platform master');
+  return session;
 }
 
 async function refreshSession(session) {
@@ -138,7 +151,8 @@ function savePayload({ mode, page, ownerId, projectId, slug, expectedRevision = 
 
 async function main() {
   assertLaunchGate();
-  const refreshed = await refreshSession(initialSession);
+  const sessionInput = initialSession || await mintProductionQaSession();
+  const refreshed = await refreshSession(sessionInput);
   let session = refreshed.session;
   const ownerId = String(refreshed.user.ownerId);
 
@@ -159,19 +173,25 @@ async function main() {
     targetOrigin: baseUrl,
     qaSlugPrefix: QA_SLUG_PREFIX,
     baselineActivePages: baselinePages.length,
+    fixtureSource: initialSession ? 'configured-session' : 'ephemeral-production-qa',
     cleanupBefore: preCleanup.removed,
     checks: [],
     secretValuesIncluded: false,
   };
 
   try {
+    const embeddedQaImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9ZC8sAAAAASUVORK5CYII=';
     const pageV1 = {
       id: pageId,
       projectId,
       ownerId,
       slug,
       title: 'Production Save QA v1',
-      blocks: [{ id: `hero-${stamp}`, type: 'hero', s: { title: 'Production Save QA v1' } }],
+      blocks: [{
+        id: `hero-${stamp}`,
+        type: 'hero',
+        s: { title: 'Production Save QA v1', image: embeddedQaImage },
+      }],
     };
     const saveV1 = await requestJson(path, {
       session,
@@ -188,10 +208,25 @@ async function main() {
     });
     createdPage = saveV1.data?.page || null;
     const revisionV1 = Number(createdPage?.revision || 0);
+    const savedImage = String(createdPage?.blocks?.[0]?.s?.image || '');
+    const pageAssets = saveV1.data?.pageAssets || {};
     if (!saveV1.response.ok || createdPage?.title !== 'Production Save QA v1' || revisionV1 < 1) {
       fail('production D1 save v1 failed', { status: saveV1.response.status, code: saveV1.data?.code || '', revision: revisionV1 });
     }
-    evidence.checks.push({ name: 'save-v1', status: 'ready', revision: revisionV1 });
+    if (Number(pageAssets.replaced || 0) < 1 || !savedImage.startsWith('/api/files/download?key=')) {
+      fail('production R2 page image externalization failed', {
+        replaced: Number(pageAssets.replaced || 0),
+        uploaded: Number(pageAssets.uploaded || 0),
+        externalized: savedImage.startsWith('/api/files/download?key='),
+      });
+    }
+    evidence.checks.push({
+      name: 'save-v1',
+      status: 'ready',
+      revision: revisionV1,
+      pageImageExternalized: true,
+      r2Uploaded: Number(pageAssets.uploaded || 0) >= 1,
+    });
 
     const pageV2 = {
       ...pageV1,
