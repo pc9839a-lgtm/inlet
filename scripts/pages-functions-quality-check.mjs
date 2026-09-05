@@ -13,6 +13,7 @@ function assert(condition, message) {
 }
 
 const health = await readFile('functions/api/health.js', 'utf8');
+const apiMiddleware = await readFile('functions/api/_middleware.js', 'utf8');
 const shared = await readFile('functions/api/_shared.js', 'utf8');
 const leads = await readFile('functions/api/leads.js', 'utf8');
 const leadDelivery = await readFile('functions/api/leads/_delivery.js', 'utf8');
@@ -82,6 +83,16 @@ assert(
   'Functions shared API errors should route user-facing failures through readable Korean messages',
 );
 const hostedRoutesQa = await readFile('scripts/hosted-api-routes-quality-check.mjs', 'utf8');
+
+assert(
+  apiMiddleware.includes("env.INLET_SESSION_SECRET_V2 || env.INLET_SESSION_SECRET || env.INLET_API_TOKEN || ''"),
+  'API middleware must accept the V2 production session secret before legacy fallbacks',
+);
+assert(
+  health.includes("return { ready: true, source: 'session-secret-v2' }"),
+  'health must report the V2 production session secret as ready',
+);
+
 
 const storedDeliveryPage = normalizeDeliveryPage(
   {
@@ -216,6 +227,7 @@ for (const token of [
   "mode: 'pages-functions'",
   "sourceOfTruth: 'signed-session'",
   "INLET_STORAGE_ADAPTER: env.INLET_STORAGE_ADAPTER || 'd1'",
+  'INLET_SESSION_SECRET_V2',
   'INLET_SESSION_SECRET',
   'Access-Control-Allow-Origin',
   'Access key ID',
@@ -379,7 +391,7 @@ for (const token of [
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 75,
+  checks: 77,
   functions: [
     'functions/api/health.js',
     'functions/api/leads.js',
