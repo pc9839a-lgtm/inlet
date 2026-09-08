@@ -2,15 +2,19 @@ import { ensureBillingAccount, resolveEntitlement } from './_shared.js';
 
 export const CALLTAG_BASE_TRIAL_DAYS = 7;
 export const CALLTAG_REFERRAL_BONUS_DAYS = 7;
+export const CALLTAG_REFERRER_REWARD_DAYS = 5;
 export const CALLTAG_REFERRAL_TOTAL_DAYS = 14;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
- * CallTag launch policy:
+ * CallTag access policy:
  * - normal signup: ALL IN ONE 7-day trial
- * - signup referral code: +7 days, total 14 days
+ * - signup referral code: invitee +7 days, total 14 days
+ * - every successful referred signup: referrer +5 days
+ * - referrer reward has no lifetime referral-count cap
  *
- * This function is idempotent and never shortens a longer promotional expiry.
+ * referral_bonus_days stores the cumulative CallTag access-day bonus. This function
+ * is idempotent and never shortens a longer expiry already granted to the account.
  */
 export async function enforceCallTagTrialPolicy(db, ownerId = '') {
   const safeOwnerId = String(ownerId || '').trim().slice(0, 120);
@@ -23,7 +27,9 @@ export async function enforceCallTagTrialPolicy(db, ownerId = '') {
   `).bind(safeOwnerId).first();
 
   const startedMs = Date.parse(String(account?.trial_started_at || '')) || Date.now();
-  const bonusDays = referral?.id ? CALLTAG_REFERRAL_BONUS_DAYS : 0;
+  const signupReferralBonusDays = referral?.id ? CALLTAG_REFERRAL_BONUS_DAYS : 0;
+  const storedBonusDays = Math.max(0, Number(account?.referral_bonus_days || 0));
+  const bonusDays = Math.max(storedBonusDays, signupReferralBonusDays);
   const policyDays = CALLTAG_BASE_TRIAL_DAYS + bonusDays;
   const policyEndsAt = new Date(startedMs + policyDays * DAY_MS).toISOString();
   const existingEndsMs = Date.parse(String(account?.trial_ends_at || '')) || 0;
@@ -51,6 +57,7 @@ export async function enforceCallTagTrialPolicy(db, ownerId = '') {
   return {
     baseDays: CALLTAG_BASE_TRIAL_DAYS,
     referralApplied: !!referral?.id,
+    signupReferralBonusDays,
     referralBonusDays: bonusDays,
     totalDays: policyDays,
     startsAt: new Date(startedMs).toISOString(),
@@ -66,6 +73,9 @@ export async function resolveCallTagEntitlement(db, ownerId = '') {
     scope: 'all',
     baseDays: CALLTAG_BASE_TRIAL_DAYS,
     referralBonusDays: policy.referralBonusDays,
+    signupReferralBonusDays: policy.signupReferralBonusDays,
+    referrerRewardDaysPerSignup: CALLTAG_REFERRER_REWARD_DAYS,
+    referrerRewardUnlimited: true,
     totalDays: policy.totalDays,
     startsAt: policy.startsAt,
     endsAt: entitlement.trial?.endsAt || policy.endsAt,
