@@ -1,6 +1,8 @@
 import { ensureBillingSchema } from './_shared.js';
 import { resolvePartnerCommissionRateBps } from './_partnerFinance.js';
 
+const CALLTAG_TIME_REWARD_PRODUCTS = new Set(['call_monthly', 'message_monthly', 'all_monthly']);
+
 const PRODUCT_PRICE_KRW = Object.freeze({
   pagero_monthly: 3500,
   pagero_pro_monthly: 5500,
@@ -39,6 +41,12 @@ export async function recordReferralCommission(db, input = {}) {
   const status = ['estimated', 'confirmed', 'cancelled'].includes(String(input.status || ''))
     ? String(input.status)
     : 'confirmed';
+
+  // CallTag referrals use access-time rewards only: +5 days per successful referred signup.
+  // Monetary commission remains available for non-CallTag/PageRo partner products.
+  if (CALLTAG_TIME_REWARD_PRODUCTS.has(productCode)) {
+    return { created: false, reason: 'CALLTAG_REFERRAL_TIME_REWARD_ONLY' };
+  }
 
   if (!referredOwnerId || !paymentReference || !baseAmountKrw) {
     return { created: false, reason: 'COMMISSION_INPUT_INCOMPLETE' };

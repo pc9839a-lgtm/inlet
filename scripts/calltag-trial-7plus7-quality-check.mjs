@@ -8,12 +8,16 @@ const files = {
   callRegister: await readFile('functions/api/call/register.js', 'utf8'),
   authRegister: await readFile('functions/api/auth/register.js', 'utf8'),
   postSignupApply: await readFile('functions/api/referrals/apply.js', 'utf8'),
+  commissions: await readFile('functions/api/billing/_commissions.js', 'utf8'),
 };
 
 const checks = {
   'CallTag base trial is seven days': files.policy.includes('CALLTAG_BASE_TRIAL_DAYS = 7'),
   'CallTag referral bonus is seven days': files.policy.includes('CALLTAG_REFERRAL_BONUS_DAYS = 7'),
   'CallTag referral total is fourteen days': files.policy.includes('CALLTAG_REFERRAL_TOTAL_DAYS = 14'),
+  'CallTag referrer earns five days per signup': files.policy.includes('CALLTAG_REFERRER_REWARD_DAYS = 5') && files.calltagSignupReferral.includes('CALLTAG_REFERRER_REWARD_DAYS'),
+  'CallTag referrer reward is cumulative without a referral-count cap': files.calltagSignupReferral.includes('referral_bonus_days = referral_bonus_days + ?') && files.calltagSignupReferral.includes('referrerRewardUnlimited: true'),
+  'CallTag monetary commissions are disabled for CallTag products': files.commissions.includes('CALLTAG_TIME_REWARD_PRODUCTS') && files.commissions.includes('CALLTAG_REFERRAL_TIME_REWARD_ONLY'),
   'CallTag referral trial scope is all in one': files.policy.includes("scope: 'all'") && files.calltagSignupReferral.includes("productCode: 'all_monthly'"),
   'billing endpoint scopes CallTag policy by product header': files.entitlements.includes("productClient === 'calltag'") && files.entitlements.includes('resolveCallTagEntitlement'),
   'CallTag app signup validates referral before account creation': files.callRegister.indexOf('validateSignupReferralCode') >= 0 && files.callRegister.indexOf('validateSignupReferralCode') < files.callRegister.indexOf('registerAccount({'),
