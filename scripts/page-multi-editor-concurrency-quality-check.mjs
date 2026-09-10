@@ -29,6 +29,11 @@ class MemoryStorage {
   }
 }
 
+// Keep fixtures inside the seven-day draft retention window. Fixed calendar dates make this
+// regression test expire over time and can falsely report cross-tab deletion failures.
+const fixtureBaseMs = Date.now() - 10 * 60 * 1000;
+const fixtureIso = (offsetMs = 0) => new Date(fixtureBaseMs + offsetMs).toISOString();
+
 const storage = new MemoryStorage();
 const authUser = { email: 'owner@example.com', ownerId: 'owner-1', workspaceId: 'project-1' };
 const serverPage = normalizePageForSave({
@@ -39,7 +44,7 @@ const serverPage = normalizePageForSave({
   slug: 'concurrency-test',
   title: '서버 기준본',
   revision: 10,
-  updatedAt: '2026-09-02T00:00:00.000Z',
+  updatedAt: fixtureIso(0),
 });
 const tabAPage = normalizePageForSave({ ...serverPage, title: '탭 A 미저장 작업' });
 const tabBPage = normalizePageForSave({ ...serverPage, title: '탭 B 미저장 작업' });
@@ -48,14 +53,14 @@ const tabADraft = savePageDraft({
   page: tabAPage,
   authUser,
   sourceId: 'tab-a',
-  editedAt: Date.parse('2026-09-02T00:01:00.000Z'),
+  editedAt: fixtureBaseMs + 60 * 1000,
   storage,
 });
 const tabBDraft = savePageDraft({
   page: tabBPage,
   authUser,
   sourceId: 'tab-b',
-  editedAt: Date.parse('2026-09-02T00:02:00.000Z'),
+  editedAt: fixtureBaseMs + 2 * 60 * 1000,
   storage,
 });
 assert(tabADraft?.sourceId === 'tab-a' && tabBDraft?.sourceId === 'tab-b', 'each editor tab must own a distinct draft source');
@@ -72,7 +77,7 @@ const remoteServerPage = normalizePageForSave({
   ...serverPage,
   title: '다른 탭 또는 기기 저장본',
   revision: 11,
-  updatedAt: '2026-09-02T00:03:00.000Z',
+  updatedAt: fixtureIso(3 * 60 * 1000),
 });
 const cleanDecision = remotePageFreshnessDecision({
   baselinePage: serverPage,
@@ -92,7 +97,7 @@ assert(conflictDecision.action === 'preserve-local', `divergent local edits must
 const sameContentRemotePage = normalizePageForSave({
   ...localDirtyPage,
   revision: 11,
-  updatedAt: '2026-09-02T00:03:00.000Z',
+  updatedAt: fixtureIso(3 * 60 * 1000),
 });
 const sameContentDecision = remotePageFreshnessDecision({
   baselinePage: serverPage,
