@@ -16,6 +16,7 @@ import {
 } from './_shared.js';
 import {
   applyCallTagSignupReferralCode,
+  assertCallTagReferralIdentityAvailable,
   normalizeSignupReferralCode,
   validateSignupReferralCode,
 } from '../referrals/_calltag-signup.js';
@@ -42,8 +43,12 @@ export async function onRequest({ request, env }) {
     if (!phone) {
       throw authError('연락처를 정확히 입력해주세요.', 400, { code: 'AUTH_PHONE_REQUIRED', field: 'phone' });
     }
+
+    let referralIdentity = null;
     if (referralCode) {
       await validateSignupReferralCode(db, referralCode);
+      // Block reinstall/account-delete/new-email referral abuse before a new account is created.
+      referralIdentity = await assertCallTagReferralIdentityAvailable(db, phone, env);
     }
 
     let user;
@@ -92,7 +97,11 @@ export async function onRequest({ request, env }) {
 
     await enforceCallTagTrialPolicy(db, user.ownerId);
     const referral = referralCode
-      ? await applyCallTagSignupReferralCode(db, user.ownerId, referralCode)
+      ? await applyCallTagSignupReferralCode(db, user.ownerId, referralCode, {
+          phone,
+          env,
+          phoneHash: referralIdentity?.phoneHash || '',
+        })
       : null;
     const billingEntitlement = await resolveCallTagEntitlement(db, user.ownerId);
     const entitlement = await ensurePendingEntitlement(env.DB, user.ownerId);
