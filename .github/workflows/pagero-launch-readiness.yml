@@ -1,0 +1,219 @@
+name: PAGERO Launch Readiness
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/pagero-launch-readiness.yml'
+      - 'scripts/live-readiness-check.mjs'
+      - 'scripts/browser-visual-quality-check.mjs'
+      - 'scripts/billing-referral-quality-check.mjs'
+      - 'functions/api/auth/**'
+      - 'functions/api/billing/**'
+      - 'functions/api/pages/**'
+      - 'functions/api/leads/**'
+  workflow_dispatch:
+    inputs:
+      launch_mode:
+        description: Launch gate to enforce
+        required: true
+        default: beta
+        type: choice
+        options:
+          - beta
+          - paid
+      public_slug:
+        description: Existing public PAGERO slug used for live storage/public-route verification
+        required: true
+        default: dyjh
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pagero-launch-readiness-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify beta/paid launch gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PAGERO_LAUNCH_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.launch_mode || 'beta' }}
+      PAGERO_PUBLIC_SLUG: ${{ github.event_name == 'workflow_dispatch' && inputs.public_slug || vars.PAGERO_LAUNCH_PUBLIC_SLUG || 'dyjh' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Billing/referral offline quality gate
+        run: node scripts/billing-referral-quality-check.mjs
+
+      - name: Verify production health, SES runtime readiness, and public saved page
+        id: live
+        continue-on-error: true
+        env:
+          INLET_PUBLIC_API_URL: https://pagero.kr
+          INLET_PUBLIC_QA_URL: https://pagero.kr
+          INLET_PUBLIC_PAGE_SLUG: ${{ env.PAGERO_PUBLIC_SLUG }}
+        shell: bash
+        run: |
+          set +e
+          node scripts/live-readiness-check.mjs > pagero-live-readiness.json
+          code=$?
+          cat pagero-live-readiness.json
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Resolve Chrome executable
+        id: chrome
+        continue-on-error: true
+        shell: bash
+        run: |
+          CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$CHROME_BIN" ]; then
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "Chrome or Chromium is not present on this runner."
+            exit 0
+          fi
+          echo "found=true" >> "$GITHUB_OUTPUT"
+          echo "INLET_BROWSER_QA_CHROME_PATH=$CHROME_BIN" >> "$GITHUB_ENV"
+          echo "Using browser: $CHROME_BIN"
+
+      - name: Verify production pages in real Chrome
+        id: browser
+        if: steps.chrome.outputs.found == 'true'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          rm -rf .tmp-browser-visual/pagero-launch
+          mkdir -p .tmp-browser-visual/pagero-launch
+
+          run_case() {
+            name="$1"
+            url="$2"
+            viewports="$3"
+            expected_text="$4"
+            expected_selector="$5"
+            screenshot_dir=".tmp-browser-visual/pagero-launch/${name}"
+            echo "[PAGERO launch browser] ${name}: ${url}"
+            INLET_BROWSER_QA_URL="$url" \
+            INLET_BROWSER_QA_REQUIRE=1 \
+            INLET_BROWSER_QA_VIEWPORTS="$viewports" \
+            INLET_BROWSER_QA_EXPECT_TEXT="$expected_text" \
+            INLET_BROWSER_QA_EXPECT_SELECTOR="$expected_selector" \
+            INLET_BROWSER_QA_FORBID_TEXT="화면을 불러오는 중 오류가 발생했습니다,Failed to fetch dynamically imported module,ApiError is not defined,Project access is required,Page not found,페이지를 찾을 수 없습니다" \
+            INLET_BROWSER_QA_SCREENSHOT_DIR="$screenshot_dir" \
+            node scripts/browser-visual-quality-check.mjs
+          }
+
+          code=0
+          run_case "home-desktop" "https://pagero.kr/" "desktop" "바로 시작하기" "" || code=1
+          run_case "home-mobile" "https://pagero.kr/" "mobile" "바로 시작하기" "" || code=1
+          run_case "public-landing" "https://pagero.kr/${PAGERO_PUBLIC_SLUG}" "desktop,mobile" "" ".public-landing-shell,.public-landing-viewport,.landing-page.public-render" || code=1
+
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Classify web billing launch state
+        id: billing
+        env:
+          LAUNCH_MODE: ${{ env.PAGERO_LAUNCH_MODE }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { appendFileSync, readFileSync } from 'node:fs';
+
+          const source = readFileSync('functions/api/billing/readiness.js', 'utf8');
+          const webBlock = source.match(/web\s*:\s*\{([\s\S]*?)\n\s*\}/)?.[1] || '';
+          const webAvailableFalse = /available\s*:\s*false/.test(webBlock);
+          const preCheckout = /stage\s*:\s*['"]pre_checkout['"]/.test(webBlock);
+          const paidBlocked = webAvailableFalse || preCheckout;
+          const mode = String(process.env.LAUNCH_MODE || 'beta').trim().toLowerCase();
+
+          appendFileSync(process.env.GITHUB_OUTPUT, `paid_blocked=${paidBlocked ? 'true' : 'false'}\n`);
+          appendFileSync(process.env.GITHUB_OUTPUT, `launch_mode=${mode}\n`);
+
+          console.log(JSON.stringify({
+            launchMode: mode,
+            webBillingAvailable: !paidBlocked,
+            paidSelfServeLaunchBlocked: paidBlocked,
+            expectedCurrentStage: preCheckout ? 'pre_checkout' : 'unknown',
+          }, null, 2));
+          NODE
+
+      - name: Upload launch evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pagero-launch-readiness-${{ github.run_id }}
+          path: |
+            pagero-live-readiness.json
+            .tmp-browser-visual/pagero-launch/**
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Publish launch decision
+        if: always()
+        shell: bash
+        run: |
+          live_code="${{ steps.live.outputs.exit_code }}"
+          chrome_found="${{ steps.chrome.outputs.found }}"
+          browser_code="${{ steps.browser.outputs.exit_code }}"
+          paid_blocked="${{ steps.billing.outputs.paid_blocked }}"
+          launch_mode="${{ steps.billing.outputs.launch_mode }}"
+
+          live_code="${live_code:-1}"
+          chrome_found="${chrome_found:-false}"
+          browser_code="${browser_code:-1}"
+          paid_blocked="${paid_blocked:-true}"
+          launch_mode="${launch_mode:-${PAGERO_LAUNCH_MODE:-beta}}"
+
+          {
+            echo "## PAGERO launch decision"
+            echo
+            echo "| Gate | Result |"
+            echo "| --- | --- |"
+            if [ "$live_code" = "0" ]; then echo "| Production health + saved public page + hosted SES readiness | PASS |"; else echo "| Production health + saved public page + hosted SES readiness | BLOCKED |"; fi
+            if [ "$chrome_found" != "true" ]; then echo "| Production real-browser routes | BLOCKED (browser engine unavailable) |"; elif [ "$browser_code" = "0" ]; then echo "| Production real-browser routes (desktop/mobile) | PASS |"; else echo "| Production real-browser routes (desktop/mobile) | BLOCKED |"; fi
+            if [ "$paid_blocked" = "true" ]; then echo "| Web paid self-serve checkout | NOT READY (pre-checkout) |"; else echo "| Web paid self-serve checkout | READY |"; fi
+            echo "| Requested launch mode | $launch_mode |"
+            echo
+            echo "Note: homepage smoke requires the real launch CTA, not footer-only text."
+            echo "Note: public landing smoke is template-agnostic; a custom page is not required to contain a hero section."
+            echo "Note: credential/DNS-level SES verification remains in the existing manual 'SES Auth Email Production Verify' workflow."
+            echo
+            if [ "$live_code" = "0" ] && [ "$chrome_found" = "true" ] && [ "$browser_code" = "0" ] && { [ "$launch_mode" != "paid" ] || [ "$paid_blocked" != "true" ]; }; then
+              echo "**Decision: READY**"
+            else
+              echo "**Decision: BLOCKED**"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$live_code" != "0" ]; then
+            echo "PAGERO launch blocked: production health/public-page/hosted-SES gate failed."
+            exit 1
+          fi
+          if [ "$chrome_found" != "true" ]; then
+            echo "PAGERO launch blocked: browser engine is unavailable on the runner."
+            exit 1
+          fi
+          if [ "$browser_code" != "0" ]; then
+            echo "PAGERO launch blocked: production real-browser gate failed."
+            exit 1
+          fi
+          if [ "$launch_mode" = "paid" ] && [ "$paid_blocked" = "true" ]; then
+            echo "PAGERO paid launch blocked: web billing is still pre-checkout."
+            exit 1
+          fi
+
+          echo "PAGERO $launch_mode launch gate passed."
