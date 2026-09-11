@@ -124,7 +124,7 @@ export async function assertCallTagReferralIdentityAvailable(db, rawPhone = '', 
 
 /**
  * CallTag app signup only.
- * - new member using a referral code: base 7 + invitee bonus 7 = 14 days
+ * - new member using a referral code: base 7 + invitee bonus 5 = 12 days
  * - referrer: +5 access days for every successful unique referred signup
  * - no lifetime cap on the number of referrer rewards
  * - the same phone identity can receive referral benefits only once for life
