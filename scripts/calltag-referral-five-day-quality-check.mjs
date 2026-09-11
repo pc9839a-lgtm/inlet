@@ -12,10 +12,12 @@ const files = {
 };
 
 const checks = {
-  'CallTag base trial is seven days': files.policy.includes('CALLTAG_BASE_TRIAL_DAYS = 7'),
-  'CallTag referral bonus is seven days': files.policy.includes('CALLTAG_REFERRAL_BONUS_DAYS = 7'),
-  'CallTag referral total is fourteen days': files.policy.includes('CALLTAG_REFERRAL_TOTAL_DAYS = 14'),
+  'CallTag base trial stays seven days': files.policy.includes('CALLTAG_BASE_TRIAL_DAYS = 7'),
+  'CallTag referral recipient bonus is five days': files.policy.includes('CALLTAG_REFERRAL_BONUS_DAYS = 5'),
+  'CallTag referral total is twelve days': files.policy.includes('CALLTAG_REFERRAL_TOTAL_DAYS = 12'),
   'CallTag referrer earns five days per signup': files.policy.includes('CALLTAG_REFERRER_REWARD_DAYS = 5') && files.calltagSignupReferral.includes('CALLTAG_REFERRER_REWARD_DAYS'),
+  'legacy CallTag seven-day referral bonus is absent': !files.policy.includes('CALLTAG_REFERRAL_BONUS_DAYS = 7'),
+  'legacy CallTag fourteen-day referral total is absent': !files.policy.includes('CALLTAG_REFERRAL_TOTAL_DAYS = 14'),
   'CallTag referrer reward is cumulative without a referral-count cap': files.calltagSignupReferral.includes('referral_bonus_days = referral_bonus_days + ?') && files.calltagSignupReferral.includes('referrerRewardUnlimited: true'),
   'CallTag monetary commissions are disabled for CallTag products': files.commissions.includes('CALLTAG_TIME_REWARD_PRODUCTS') && files.commissions.includes('CALLTAG_REFERRAL_TIME_REWARD_ONLY'),
   'CallTag referral trial scope is all in one': files.policy.includes("scope: 'all'") && files.calltagSignupReferral.includes("productCode: 'all_monthly'"),
@@ -27,7 +29,7 @@ const checks = {
   'CallTag referral identity survives reinstall and account deletion': files.calltagSignupReferral.includes('calltag_referral_identity_claims') && files.callRegister.includes('phoneHash: referralIdentity?.phoneHash'),
   'CallTag app signup applies CallTag-specific referral only during signup': files.callRegister.includes('applyCallTagSignupReferralCode') && files.callRegister.includes('referralCode'),
   'post signup referral endpoint stays blocked': files.postSignupApply.includes('REFERRAL_SIGNUP_ONLY'),
-  'PageRo signup referral keeps its Classic seven day policy': files.pageroSignupReferral.includes('SIGNUP_CLASSIC_DAYS = 7') && files.pageroSignupReferral.includes("productCode: 'pagero_monthly'") && files.pageroSignupReferral.includes("'promotional'"),
+  'PageRo signup referral keeps its own Classic seven day policy': files.pageroSignupReferral.includes('SIGNUP_CLASSIC_DAYS = 7') && files.pageroSignupReferral.includes("productCode: 'pagero_monthly'") && files.pageroSignupReferral.includes("'promotional'"),
   'PageRo generic signup is not rewritten to CallTag trial policy': !files.authRegister.includes('enforceCallTagTrialPolicy') && files.authRegister.includes('applySignupReferralCode'),
   'CallTag referral does not create PageRo promotional subscription': !files.calltagSignupReferral.includes("'pagero_monthly'") && !files.calltagSignupReferral.includes("'promotional'"),
 };
@@ -36,5 +38,5 @@ const failed = Object.entries(checks).filter(([, passed]) => !passed).map(([name
 for (const [name, passed] of Object.entries(checks)) {
   console.log(`${passed ? 'ok' : 'failed'} - ${name}`);
 }
-if (failed.length) throw new Error(`CallTag trial checks failed: ${failed.join(', ')}`);
+if (failed.length) throw new Error(`CallTag referral checks failed: ${failed.join(', ')}`);
 console.log(JSON.stringify({ ok: true, checks: Object.keys(checks).length }, null, 2));
