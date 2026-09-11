@@ -120,18 +120,27 @@ function assertSafeArtifactPath(target) {
   }
 }
 
-async function cleanupGeneratedArtifacts() {
-  const names = await readdir(root);
-  const targets = names.filter(isGeneratedArtifactName).map((name) => path.join(root, name));
+async function cleanGeneratedArtifacts(reason) {
+  const entries = await readdir(root, { withFileTypes: true });
+  const targets = entries.filter((entry) => isGeneratedArtifactName(entry.name)).map((entry) => path.join(root, entry.name));
+
   for (const target of targets) {
     assertSafeArtifactPath(target);
-    await rm(target, { recursive: true, force: true });
+    await rm(target, { recursive: true, force: true, maxRetries: 5, retryDelay: 150 });
+  }
+
+  if (targets.length) {
+    console.log(`[qa:all] cleaned ${targets.length} generated artifact(s) before ${reason}`);
   }
 }
 
+await cleanGeneratedArtifacts('start');
+
 for (const [label, args] of steps) {
+  if (label === 'artifact:qa' || label === 'worker3:qa' || label === 'integration:qa') {
+    await cleanGeneratedArtifacts(label);
+  }
   await runStep(label, args);
-  await cleanupGeneratedArtifacts();
 }
 
-console.log('\n[qa:all] PASS');
+await cleanGeneratedArtifacts('finish');
