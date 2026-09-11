@@ -16,6 +16,7 @@ const steps = [
   ['auth:email:qa', ['scripts/auth-email-quality-check.mjs']],
   ['auth:email:ses:contract:qa', ['scripts/ses-auth-email-production-contract-check.mjs']],
   ['calllink:auth:qa', ['scripts/calllink-auth-quality-check.mjs']],
+  ['calltag:account-deletion:qa', ['scripts/calltag-account-deletion-quality-check.mjs']],
   ['calltag:lead-intake:qa', ['scripts/calltag-lead-intake-quality-check.mjs']],
   ['calltag:webhook-mapper:qa', ['scripts/calltag-webhook-mapper-quality-check.mjs']],
   ['calltag:generic-lead-delivery:qa', ['scripts/calltag-generic-lead-delivery-quality-check.mjs']],
