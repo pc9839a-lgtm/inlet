@@ -16,6 +16,7 @@ const steps = [
   ['auth:email:qa', ['scripts/auth-email-quality-check.mjs']],
   ['auth:email:ses:contract:qa', ['scripts/ses-auth-email-production-contract-check.mjs']],
   ['calllink:auth:qa', ['scripts/calllink-auth-quality-check.mjs']],
+  ['calltag:account-deletion:qa', ['scripts/calltag-account-deletion-quality-check.mjs']],
   ['calltag:lead-intake:qa', ['scripts/calltag-lead-intake-quality-check.mjs']],
   ['calltag:webhook-mapper:qa', ['scripts/calltag-webhook-mapper-quality-check.mjs']],
   ['calltag:generic-lead-delivery:qa', ['scripts/calltag-generic-lead-delivery-quality-check.mjs']],
@@ -119,27 +120,18 @@ function assertSafeArtifactPath(target) {
   }
 }
 
-async function cleanGeneratedArtifacts(reason) {
-  const entries = await readdir(root, { withFileTypes: true });
-  const targets = entries.filter((entry) => isGeneratedArtifactName(entry.name)).map((entry) => path.join(root, entry.name));
-
+async function cleanupGeneratedArtifacts() {
+  const names = await readdir(root);
+  const targets = names.filter(isGeneratedArtifactName).map((name) => path.join(root, name));
   for (const target of targets) {
     assertSafeArtifactPath(target);
-    await rm(target, { recursive: true, force: true, maxRetries: 5, retryDelay: 150 });
-  }
-
-  if (targets.length) {
-    console.log(`[qa:all] cleaned ${targets.length} generated artifact(s) before ${reason}`);
+    await rm(target, { recursive: true, force: true });
   }
 }
-
-await cleanGeneratedArtifacts('start');
 
 for (const [label, args] of steps) {
-  if (label === 'artifact:qa' || label === 'worker3:qa' || label === 'integration:qa') {
-    await cleanGeneratedArtifacts(label);
-  }
   await runStep(label, args);
+  await cleanupGeneratedArtifacts();
 }
 
-await cleanGeneratedArtifacts('finish');
+console.log('\n[qa:all] PASS');
