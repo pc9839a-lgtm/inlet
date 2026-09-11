@@ -1,15 +1,15 @@
 import { ensureBillingAccount, resolveEntitlement } from './_shared.js';
 
 export const CALLTAG_BASE_TRIAL_DAYS = 7;
-export const CALLTAG_REFERRAL_BONUS_DAYS = 7;
+export const CALLTAG_REFERRAL_BONUS_DAYS = 5;
 export const CALLTAG_REFERRER_REWARD_DAYS = 5;
-export const CALLTAG_REFERRAL_TOTAL_DAYS = 14;
+export const CALLTAG_REFERRAL_TOTAL_DAYS = 12;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
  * CallTag access policy:
  * - normal signup: ALL IN ONE 7-day trial
- * - signup referral code: invitee +7 days, total 14 days
+ * - signup referral code: invitee +5 days, total 12 days
  * - every successful referred signup: referrer +5 days
  * - referrer reward has no lifetime referral-count cap
  *
