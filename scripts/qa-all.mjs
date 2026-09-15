@@ -35,6 +35,7 @@ const steps = [
   ['server:smoke:pages', ['scripts/server-smoke-pages.mjs']],
   ['server:smoke:integrations', ['scripts/server-smoke-integrations.mjs']],
   ['page:save:qa', ['scripts/page-save-identity-quality-check.mjs']],
+  ['page:save:public-verification:qa', ['scripts/page-public-verification-quality-check.mjs']],
   ['page:save:replay:qa', ['scripts/page-save-replay-recovery-quality-check.mjs']],
   ['production:save:roundtrip:contract:qa', ['scripts/production-save-roundtrip-contract-check.mjs']],
   ['account:page-limit:qa', ['scripts/account-page-limit-quality-check.mjs']],
