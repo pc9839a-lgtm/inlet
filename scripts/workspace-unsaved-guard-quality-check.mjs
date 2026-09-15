@@ -76,11 +76,15 @@ try {
   assert(localPersistence.includes('if (identityChanged) setWorkspaceUnsavedDirty(false)') && !localPersistence.includes('if (baseChanged) setWorkspaceUnsavedDirty(false)'), 'revision rebases from a queued save must not clear pending unsaved state');
 
   const pendingStart = persistFlow.indexOf('export function commitPendingLocalChangesAfterSave');
+  const verificationStart = persistFlow.indexOf('export function settlePendingPublicVerification');
   const savedStart = persistFlow.indexOf('export function commitSavedPageResult');
-  const pendingSection = persistFlow.slice(pendingStart, savedStart);
+  const pendingSection = persistFlow.slice(pendingStart, verificationStart);
+  const verificationSection = persistFlow.slice(verificationStart, savedStart);
   const savedSection = persistFlow.slice(savedStart);
   assert(pendingSection.includes('setWorkspaceUnsavedDirty(true)'), 'a successful write with trailing local edits must remain dirty until the queue drains');
-  assert(savedSection.includes('setWorkspaceUnsavedDirty(false)'), 'only the fully committed save result may clear the unified dirty guard');
+  assert(savedSection.includes('setWorkspaceUnsavedDirty(verificationPending)'), 'a server-committed save must remain dirty while public verification is pending');
+  assert(verificationSection.includes("if (status?.ok === true)") && verificationSection.includes('setWorkspaceUnsavedDirty(false)'), 'only successful public verification of the active saved version may clear the unified dirty guard');
+  assert(verificationSection.includes('setWorkspaceUnsavedDirty(true)') && verificationSection.includes('pageSaveSuccessFeedback(settledResult, scope)'), 'failed public verification must keep the workspace guarded and surface recovery-safe feedback');
   assert(persistFlow.includes('handlePagePersistError') && persistFlow.slice(0, pendingStart).includes('setWorkspaceUnsavedDirty(true)'), 'save failures must leave the workspace guarded after preserving recovery');
 
   assert(authActions.includes('confirmWorkspaceLeaveSync') && authActions.includes('allowUnload: true'), 'logout must guard unsaved edits before replacing the page');
@@ -90,11 +94,12 @@ try {
 
   console.log(JSON.stringify({
     ok: true,
-    checks: 19,
+    checks: 21,
     unifiedUnsavedGuard: true,
     recoveryBeforeLeave: true,
     browserUnloadGuard: true,
     saveQueueDirtyLifecycle: true,
+    publicVerificationDirtyLifecycle: true,
     deletionDraftCleanup: true,
   }, null, 2));
 } finally {
