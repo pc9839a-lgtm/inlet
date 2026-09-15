@@ -32,6 +32,17 @@ export const STYLE_CONFIRM_FEEDBACK = {
 };
 
 export const STYLE_SAVED_TOAST = '저장됨';
+export const PUBLIC_VERIFY_DELAYED_TOAST = '서버에는 저장됐지만 공개 반영 확인이 지연되고 있습니다. 임시 복구본을 유지합니다.';
+
+export function pageSavePublicVerificationPending(result = null) {
+  return result?.mode !== 'local' && result?.publicVerification?.pending === true;
+}
+
+export function pageSavePublicVerificationDelayed(result = null) {
+  return result?.mode !== 'local'
+    && result?.publicVerification?.pending === false
+    && result?.publicVerification?.ok === false;
+}
 
 export function pageSaveErrorFeedback(error, handled = false, recovery = { saved: true, message: '' }) {
   if (recovery?.saved === false) {
@@ -82,11 +93,32 @@ export function pageSaveErrorFeedback(error, handled = false, recovery = { saved
   };
 }
 
-export function pageSaveSuccessFeedback(result) {
+export function pageSaveSuccessFeedback(result, scope = 'page') {
   const local = result?.mode === 'local';
+  const target = scope === 'style' ? '스타일과 페이지' : PAGE_SAVE_LABEL;
+
+  if (pageSavePublicVerificationPending(result)) {
+    return {
+      level: 'warning',
+      title: '서버 저장됨 · 반영 확인 중',
+      message: `${target}는 서버에 기록됐습니다. 공개 페이지 반영 확인 전까지 임시 복구본을 유지합니다.`,
+      toast: '',
+    };
+  }
+
+  if (pageSavePublicVerificationDelayed(result)) {
+    return {
+      level: 'warning',
+      title: '저장됨 · 공개 반영 확인 필요',
+      message: `${target}는 서버에 기록됐지만 공개 페이지의 최신 반영을 확인하지 못했습니다. 임시 복구본을 유지합니다. 다시 저장해주세요.`,
+      toast: PUBLIC_VERIFY_DELAYED_TOAST,
+    };
+  }
+
   return {
     level: 'ok',
     title: local ? '브라우저에 저장됨' : '저장됨',
     message: '',
+    toast: '',
   };
 }

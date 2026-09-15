@@ -16,7 +16,9 @@ import {
   commitPendingLocalChangesAfterSave,
   commitSavedPageResult,
   handlePagePersistError,
+  settlePendingPublicVerification,
 } from './pagePersistFlow.js';
+import { attachPublicPageSaveVerification } from './publicPageSaveVerification.js';
 
 export function usePageSaveAction({
   allowedTabs,
@@ -128,9 +130,9 @@ export function usePageSaveAction({
     let result = null;
     try {
       if (saveMode === 'update-existing') {
-        result = await persistPage(nextPage, authUser, { tab, expectedUpdatedAt, saveMode: 'update-existing' });
+        result = await persistPage(nextPage, authUser, { tab, expectedUpdatedAt, saveMode: 'update-existing', verifyPublic: false });
       } else {
-        result = await persistPage(nextPage, authUser, { tab, expectedUpdatedAt, expectedRevision, saveMode: 'create-new' });
+        result = await persistPage(nextPage, authUser, { tab, expectedUpdatedAt, expectedRevision, saveMode: 'create-new', verifyPublic: false });
       }
     } catch (error) {
       if (!targetIsActive()) {
@@ -179,11 +181,26 @@ export function usePageSaveAction({
       return { ok: false, error, reason: 'invalid-save-result' };
     }
 
+    result = attachPublicPageSaveVerification(result);
+
     if (!targetIsActive()) {
       const persistedClientPage = result?.clientPage || nextPage;
       const savedTargetPage = result?.page ? savedPageFromResult(persistedClientPage, result.page) : persistedClientPage;
-      clearPageDraft({ page: nextPage, authUser });
-      clearPageDraft({ page: savedTargetPage, authUser });
+      const verificationPending = settlePendingPublicVerification({
+        result,
+        savedPage: savedTargetPage,
+        draftPages: [nextPage, savedTargetPage],
+        scope: 'page',
+        authUser,
+        latestPageRef,
+        markSaveStatus,
+        showToast,
+        surfaceStatus: false,
+      });
+      if (!verificationPending) {
+        clearPageDraft({ page: nextPage, authUser });
+        clearPageDraft({ page: savedTargetPage, authUser });
+      }
       showToast(inactivePageSaveMessage('page'), 'info');
       return {
         ok: true,
@@ -234,6 +251,7 @@ export function usePageSaveAction({
       setPage,
       setSaved,
       markSaveStatus,
+      showToast,
     });
     return { ok: true, page: savedPage, result };
   }
