@@ -55,6 +55,15 @@ function sameSavedContent(left, right) {
   return pageDraftContentSignature(left) === pageDraftContentSignature(right);
 }
 
+function ensureSavedRecoveryDraft(savedPage, authUser) {
+  if (!savedPage) return preserveRecoveryDraft(savedPage, authUser);
+  const existing = readPageDraft({ page: savedPage, authUser });
+  if (existing?.page && !sameSavedContent(existing.page, savedPage)) {
+    return { ok: true, reason: 'newer-existing-draft', draft: existing, preservedExisting: true };
+  }
+  return preserveRecoveryDraft(savedPage, authUser);
+}
+
 function clearMatchingRecoveryDraft(candidatePage, savedPage, authUser) {
   if (!candidatePage || !savedPage) return false;
   const draft = readPageDraft({ page: candidatePage, authUser });
@@ -171,6 +180,17 @@ export function settlePendingPublicVerification({
   const verification = result?.publicVerification;
   if (!verification?.pending || typeof verification?.completion?.then !== 'function') return false;
 
+  const recoveryResult = ensureSavedRecoveryDraft(savedPage, authUser);
+  if (!recoveryResult.ok && surfaceStatus && savedVersionIsStillActive(savedPage, latestPageRef, authUser)) {
+    setWorkspaceUnsavedDirty(true);
+    markSaveStatus(
+      'error',
+      '반영 확인 중 · 임시 보관 실패',
+      pageDraftStorageFailureMessage(recoveryResult),
+    );
+    showToast('임시 보관 실패 · 화면을 닫지 마세요', 'error');
+  }
+
   const handleSettledVerification = (status = {}) => {
     if (status?.superseded) return status;
     const settledResult = { ...result, publicVerification: status };
@@ -192,6 +212,15 @@ export function settlePendingPublicVerification({
 
     if (surfaceStatus && activeSavedVersion) {
       setWorkspaceUnsavedDirty(true);
+      if (!recoveryResult.ok) {
+        markSaveStatus(
+          'error',
+          '공개 반영 확인 필요 · 임시 보관 실패',
+          pageDraftStorageFailureMessage(recoveryResult),
+        );
+        showToast('임시 보관 실패 · 화면을 닫지 마세요', 'error');
+        return status;
+      }
       const feedback = pageSaveSuccessFeedback(settledResult, scope);
       markSaveStatus(feedback.level, feedback.title, feedback.message);
       if (feedback.toast) showToast(feedback.toast, feedback.level);
