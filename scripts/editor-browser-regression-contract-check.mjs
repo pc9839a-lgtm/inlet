@@ -9,6 +9,7 @@ function assert(condition, message) {
 }
 
 const browserSource = await readFile('scripts/editor-browser-regression-check.mjs', 'utf8');
+const imageLibraryBrowserSource = await readFile('scripts/editor-image-library-browser-check.mjs', 'utf8');
 const cdpCompatSource = await readFile('scripts/editor-browser-cdp-compat.mjs', 'utf8');
 const workflowSource = await readFile('.github/workflows/qa.yml', 'utf8');
 const qaAllSource = await readFile('scripts/qa-all.mjs', 'utf8');
@@ -16,7 +17,8 @@ const packageJson = JSON.parse(await readFile('package.json', 'utf8'));
 const panelHeaderSource = await readFile('src/builder/PanelHeader.jsx', 'utf8');
 const editHistorySource = await readFile('src/runtime/pageEditHistory.js', 'utf8');
 
-assert(packageJson.scripts?.['browser:editor:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-browser-regression-check.mjs', 'browser:editor:qa must preload the Chrome CDP compatibility adapter');
+assert(packageJson.scripts?.['browser:editor:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-browser-regression-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-image-library-browser-check.mjs', 'browser:editor:qa must run the authenticated editor regression and project image-library E2E');
+assert(packageJson.scripts?.['browser:editor:image-library:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-image-library-browser-check.mjs', 'browser:editor:image-library:qa script is missing');
 assert(packageJson.scripts?.['browser:editor:contract:qa'] === 'node scripts/editor-browser-regression-contract-check.mjs', 'browser:editor:contract:qa script is missing');
 assert(qaAllSource.includes("['browser:editor:contract:qa', ['scripts/editor-browser-regression-contract-check.mjs']]"), 'qa:all must enforce the editor browser contract');
 
@@ -42,6 +44,17 @@ assert(browserSource.includes("{ name: 'mobile-360', width: 360") && browserSour
 assert(browserSource.includes("mobile-operations-shell") && browserSource.includes("bodyScrollWidth <= viewport.width + 3"), 'mobile editor regression must reject overflow and verify operations mode');
 assert(browserSource.includes("unexpectedApis.length === 0") && browserSource.includes("browserErrors.length === 0"), 'browser QA must fail on unexpected API calls or browser exceptions');
 assert(!browserSource.includes('pagero.kr/api/auth/login') && !browserSource.includes('productionPassword'), 'browser QA must not use production credentials or production auth endpoints');
+
+assert(imageLibraryBrowserSource.includes("id: 'editor-image', type: 'image'") && imageLibraryBrowserSource.includes("#editor-block-editor-image"), 'image-library browser QA must use the real image block editor instead of assuming hero image controls');
+assert(imageLibraryBrowserSource.includes("pathname === '/api/files/list'") && imageLibraryBrowserSource.includes("kind: 'image'"), 'image-library browser QA must load project images through the real list route contract');
+assert(imageLibraryBrowserSource.includes("projectId === 'editor-project'") && imageLibraryBrowserSource.includes("ownerId === 'editor-owner'") && imageLibraryBrowserSource.includes("slug === 'editor-e2e'"), 'image-library browser QA must verify project, owner, and page scope');
+assert(imageLibraryBrowserSource.includes('.image-input-library-action') && imageLibraryBrowserSource.includes('.image-library-picker-item'), 'image-library browser QA must click the real picker action and a real picker item');
+assert(imageLibraryBrowserSource.includes("(document.body?.innerText || '').includes('내 이미지에서 선택 완료')"), 'image-library browser QA must verify selection feedback');
+assert(imageLibraryBrowserSource.includes("saveCount === 0") && imageLibraryBrowserSource.includes(".panel-actions .primary-btn"), 'image-library selection must stay local before explicit publish');
+assert(imageLibraryBrowserSource.includes("savedImageBlock?.s?.image === selectedImageValue") && imageLibraryBrowserSource.includes("Page.reload"), 'image-library browser QA must verify the selected image is published and survives reload');
+assert(imageLibraryBrowserSource.includes("imageDownloadCount >= 1") && imageLibraryBrowserSource.includes("unexpectedApis.length === 0") && imageLibraryBrowserSource.includes("browserErrors.length === 0"), 'image-library browser QA must verify image readback and fail on unexpected runtime errors');
+assert(!imageLibraryBrowserSource.includes('pagero.kr/api/auth/login') && !imageLibraryBrowserSource.includes('productionPassword'), 'image-library browser QA must not use production credentials or production auth endpoints');
+
 assert(panelHeaderSource.includes('undoPageEdit') && panelHeaderSource.includes('redoPageEdit') && panelHeaderSource.includes('Ctrl/Cmd+Z'), 'editor header must expose undo/redo controls and keyboard shortcuts');
 assert(editHistorySource.includes('const MAX_HISTORY = 50') && editHistorySource.includes('future = []'), 'editor history must cap snapshots and invalidate redo after fresh edits');
 
@@ -49,6 +62,7 @@ console.log(JSON.stringify({
   ok: true,
   scope: 'authenticated-editor-browser-contract',
   desktopFlow: ['login', 'dashboard', 'account-page', 'page-select', 'edit-panel', 'publish', 'reload'],
+  imageLibraryFlow: ['image-block', 'open-library', 'project-scoped-list', 'select-existing-image', 'local-draft', 'publish', 'reload'],
   mobileWidths: [360, 390, 430],
   productionCredentials: false,
   accountPageMock: true,
@@ -57,4 +71,5 @@ console.log(JSON.stringify({
   editHistory: ['undo', 'redo', '50-snapshots', 'page-isolation'],
   revisionDraftRestore: true,
   draftPublishSemantics: true,
+  imageLibraryBrowserE2E: true,
 }, null, 2));
