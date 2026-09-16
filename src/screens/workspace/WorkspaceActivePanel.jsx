@@ -31,7 +31,9 @@ export function WorkspaceActivePanel({
 
   return (
     <>
-      {canRenderBuilder && tab === 'edit' && <EditPanel {...editPanelProps} />}
+      {canRenderBuilder && tab === 'edit' && (
+        <EditPanel {...editPanelProps} authUser={settingsPanelProps?.authUser || null} />
+      )}
 
       <LazyChunkBoundary resetKey={tab}>
         <Suspense fallback={<LazyPanelFallback />}>

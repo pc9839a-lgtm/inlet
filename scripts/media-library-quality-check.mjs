@@ -87,6 +87,7 @@ const [
   settingsSource,
   mediaSource,
   mediaCssSource,
+  workspaceActiveSource,
   editPanelSource,
   editorMediaContextSource,
   imageControlsSource,
@@ -101,6 +102,7 @@ const [
   readFile('src/panels/settings/SettingsPanelBody.jsx', 'utf8'),
   readFile('src/panels/settings/MediaLibrarySettings.jsx', 'utf8'),
   readFile('src/panels/settings/MediaLibrarySettings.css', 'utf8'),
+  readFile('src/screens/workspace/WorkspaceActivePanel.jsx', 'utf8'),
   readFile('src/editor/EditPanel.jsx', 'utf8'),
   readFile('src/editor/EditorMediaLibraryContext.jsx', 'utf8'),
   readFile('src/editor/imageControls.jsx', 'utf8'),
@@ -132,8 +134,10 @@ assert(mediaSource.includes('navigator.clipboard.writeText'), 'media library mus
 assert(!mediaSource.includes('deleteProjectAsset') && !mediaSource.includes('미디어 삭제'), 'media library must remain non-destructive');
 assert(mediaCssSource.includes('@media (max-width: 720px)') && mediaCssSource.includes('min-height: 44px'), 'media library mobile actions must retain 44px touch targets');
 
-assert(editPanelSource.includes('<EditorMediaLibraryProvider page={page}>'), 'edit panel must scope image reuse to the active page');
-assert(editorMediaContextSource.includes('load(AUTH_KEY, null)') && editorMediaContextSource.includes('normalizeAuthUser'), 'editor media context must reuse the current authenticated session without changing App routing');
+assert(workspaceActiveSource.includes('authUser={settingsPanelProps?.authUser || null}'), 'workspace must pass the current live auth user into the edit panel');
+assert(editPanelSource.includes('<EditorMediaLibraryProvider page={page} authUser={authUser}>'), 'edit panel must scope image reuse to the active page and live auth state');
+assert(editorMediaContextSource.includes('EditorMediaLibraryProvider({ page, authUser = null, children })'), 'editor media context must accept the live authenticated user');
+assert(!editorMediaContextSource.includes('AUTH_KEY') && !editorMediaContextSource.includes('load('), 'editor media context must not re-read authentication from local storage');
 assert(editorMediaContextSource.includes('EditorMediaLibraryContext.Provider'), 'editor media context provider missing');
 
 assert(imageControlsSource.includes('useEditorMediaLibrary()'), 'shared ImageInput must read the editor media context');
@@ -163,6 +167,7 @@ console.log(JSON.stringify({
   imageVideoSeparation: true,
   pagination: true,
   editReadAuthorization: true,
+  liveAuthState: true,
   searchAndFilters: true,
   imageVideoPreview: true,
   editorImageReuse: true,
