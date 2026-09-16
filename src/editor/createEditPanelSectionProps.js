@@ -1,4 +1,5 @@
 import { createAddBlockDockProps } from './editPanelSectionProps/addBlockDockProps.js';
+import { createFixedBlocksProps } from './editPanelSectionProps/fixedBlocksProps.js';
 import { createPageGlobalOptionsProps } from './editPanelSectionProps/pageGlobalOptionsProps.js';
 import { createScreenOrderListProps } from './editPanelSectionProps/screenOrderListProps.js';
 
@@ -25,9 +26,11 @@ export function createEditPanelSectionProps({
   return {
     pageGlobalOptionsProps: createPageGlobalOptionsProps({
       page,
-      selection,
       updatePage,
       updateTheme,
+    }),
+    fixedBlocksProps: createFixedBlocksProps({
+      selection,
       toggleVisible,
       renderTopNavEditor,
       renderBottomBarEditor,
