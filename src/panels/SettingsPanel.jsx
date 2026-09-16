@@ -16,6 +16,7 @@ export default function SettingsPanel({
   updatePage,
   updateMeta,
   updateIntegrations,
+  setPage,
   onSavePage,
   onDuplicatePage,
   onCheckUrl,
@@ -75,6 +76,7 @@ export default function SettingsPanel({
       ownership={ownership}
       page={page}
       sections={sections}
+      setPage={setPage}
       transferRequest={transferRequest}
       updateIntegrations={updateIntegrations}
     />

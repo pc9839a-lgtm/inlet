@@ -1,8 +1,10 @@
 import AdvancedSettingsGroup from './AdvancedSettingsGroup.jsx';
+import PageRevisionHistorySection from './PageRevisionHistorySection.jsx';
 import ResetSettingsSection from './ResetSettingsSection.jsx';
 
 export default function SettingsAdvancedAndReset({
   activeSection,
+  authUser,
   canDuplicatePage,
   clientAdminMode,
   duplicateSettings,
@@ -11,6 +13,7 @@ export default function SettingsAdvancedAndReset({
   onReset,
   page,
   sections,
+  setPage,
   updateIntegrations,
 }) {
   if (clientAdminMode) return null;
@@ -37,7 +40,7 @@ export default function SettingsAdvancedAndReset({
 
   return (
     <>
-      {activeSection !== 'reset' && (
+      {activeSection !== 'reset' && activeSection !== 'history' && (
         <AdvancedSettingsGroup
           activeSection={activeSection}
           canDuplicatePage={canDuplicatePage}
@@ -62,6 +65,14 @@ export default function SettingsAdvancedAndReset({
           trackingDraft={trackingDraft}
           updateConversionMeta={updateConversionMeta}
           updateIntegrations={updateIntegrations}
+        />
+      )}
+
+      {activeSection === 'history' && (
+        <PageRevisionHistorySection
+          page={page}
+          authUser={authUser}
+          setPage={setPage}
         />
       )}
 
