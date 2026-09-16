@@ -80,8 +80,13 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
         )}
         <button className="ghost-btn" type="button" onClick={onDashboard}>메인</button>
         <button className="ghost-btn" type="button" onClick={onPreview} title={previewUrl}>미리보기</button>
-        <button className="primary-btn" type="button" onClick={onSave}>
-          <Save size={14} />{saved ? '저장됨' : '저장'}
+        <button
+          className="primary-btn"
+          type="button"
+          onClick={onSave}
+          title="편집 내용은 브라우저에 자동 임시보관됩니다. 발행하면 공개 페이지에 반영됩니다."
+        >
+          <Save size={14} />{saved ? '발행됨' : '발행'}
         </button>
       </div>
     </header>
