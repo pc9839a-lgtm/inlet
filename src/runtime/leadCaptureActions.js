@@ -35,11 +35,15 @@ function leadApiMessage(error) {
   return String(error?.details?.message || error?.message || '').trim();
 }
 
+function leadApiDetailMessage(error) {
+  return String(error?.details?.message || '').trim();
+}
+
 export function leadCaptureServerErrorMessage(error) {
   const status = Number(error?.status || 0);
+  if (status === 409) return leadApiDetailMessage(error) || '이미 접수된 연락처입니다.';
+  if (status === 429) return leadApiDetailMessage(error) || '접수가 너무 빠르게 반복되었습니다. 잠시 후 다시 시도해주세요.';
   const message = leadApiMessage(error);
-  if (status === 409) return message || '이미 접수된 연락처입니다.';
-  if (status === 429) return message || '접수가 너무 빠르게 반복되었습니다. 잠시 후 다시 시도해주세요.';
   return `접수 저장에 실패했습니다.${message ? ` ${message}` : ''}`;
 }
 
