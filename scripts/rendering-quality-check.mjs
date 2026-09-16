@@ -83,6 +83,7 @@ const files = {
   workspaceShellActions: await readFile('src/runtime/useWorkspaceShellActions.js', 'utf8'),
   fixedBlockSelection: await readFile('src/editor/useFixedBlockSelection.js', 'utf8'),
   pageGlobalOptionsProps: await readFile('src/editor/editPanelSectionProps/pageGlobalOptionsProps.js', 'utf8'),
+  fixedBlocksProps: await readFile('src/editor/editPanelSectionProps/fixedBlocksProps.js', 'utf8'),
   content: await readFile('src/preview/renderers/ContentBlocks.jsx', 'utf8'),
   form: await readFile('src/preview/renderers/FormBlocks.jsx', 'utf8'),
   formEditor: await readFile('src/editor/blockEditors/FormEditor.jsx', 'utf8'),
@@ -244,7 +245,12 @@ assert(files.browserVisualQa.includes('INLET_BROWSER_QA_TEMPLATE_ROUTES'), 'brow
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_STATE_PRESET') && files.browserVisualQa.includes('owner-settings'), 'browser QA authenticated presets missing');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_SET_INPUT') && files.browserVisualQa.includes('INLET_BROWSER_QA_EXPECT_COMPUTED'), 'browser QA interaction/computed checks missing');
 assert(files.workspaceShellActions.includes("if (['topnav', 'bottombar', 'footer'].includes(target?.type))"), 'fixed block selection guard missing');
-assert(files.fixedBlockSelection.includes("React.useState('')") && files.pageGlobalOptionsProps.includes('openId: selection.fixedOpenId'), 'fixed editor selection state contract missing');
+assert(
+  files.fixedBlockSelection.includes("React.useState('')")
+    && files.fixedBlocksProps.includes('openId: selection.fixedOpenId')
+    && !files.pageGlobalOptionsProps.includes('selection.fixedOpenId'),
+  'fixed editor selection state contract missing',
+);
 
 const productionBrowserQa = await readFile('scripts/production-browser-quality-check.mjs', 'utf8');
 assert(productionBrowserQa.includes('owner style text color live preview'), 'production browser QA text color check missing');
