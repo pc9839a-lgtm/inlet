@@ -103,6 +103,7 @@ export default function SettingsPanelBody({
   authUser,
   canDuplicatePage,
   canManageProjectUsers,
+  canReadMedia,
   clientAdminMode,
   duplicateSettings,
   drafts,
@@ -131,7 +132,8 @@ export default function SettingsPanelBody({
   const ownerFinanceAccess = canManageProjectUsers && !clientAdminMode;
   const initialSection = (() => {
     const requested = openSection || 'basic';
-    if (clientAdminMode && (ADVANCED_IDS.has(requested) || requested === 'media')) return 'basic';
+    if (clientAdminMode && ADVANCED_IDS.has(requested)) return 'basic';
+    if (!canReadMedia && requested === 'media') return 'basic';
     if (!canManageProjectUsers && requested === 'managers') return 'basic';
     if (!ownerFinanceAccess && OWNER_ONLY_IDS.has(requested)) return 'basic';
     return requested;
@@ -144,7 +146,7 @@ export default function SettingsPanelBody({
 
   const primaryItems = PRIMARY_NAV.filter(([id]) => {
     if (id === 'managers' && !canManageProjectUsers) return false;
-    if (id === 'media' && clientAdminMode) return false;
+    if (id === 'media' && !canReadMedia) return false;
     return true;
   });
   const basicItems = ownerFinanceAccess ? [...primaryItems, ...SERVICE_NAV] : primaryItems;
@@ -200,7 +202,7 @@ export default function SettingsPanelBody({
           </header>
 
           <div className="settings-v3-content">
-            {selectedSection === 'media' && !clientAdminMode && (
+            {selectedSection === 'media' && canReadMedia && (
               <MediaLibrarySettings page={page} authUser={authUser} />
             )}
 
