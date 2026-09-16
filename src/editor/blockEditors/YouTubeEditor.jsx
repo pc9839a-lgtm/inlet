@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { EditorTabs } from '../ui/index.js';
 import { uploadMediaFile } from '../../lib/fileRepository.js';
 import { createVideoCodeSettings, getVideoSource } from '../../lib/youtubeEmbed.js';
+import { useEditorMediaLibrary } from '../EditorMediaLibraryContext.jsx';
+import VideoLibraryPicker from '../VideoLibraryPicker.jsx';
 
 const MAX_VIDEO_BYTES = 4 * 1024 * 1024;
 const VIDEO_TYPES = new Set(['video/mp4', 'video/webm', 'video/ogg']);
@@ -26,6 +28,9 @@ function ensureVideoFileName(name = '', type = '') {
 }
 
 export default function YouTubeEditor({ s, set, page, authUser }) {
+  const mediaContext = useEditorMediaLibrary();
+  const libraryPage = mediaContext?.page || page;
+  const libraryAuthUser = mediaContext?.authUser || authUser;
   const rawValue = String(s.videoUrl || s.youtubeUrl || '');
   const embeddedFile = /^data:video\//i.test(rawValue);
   const source = getVideoSource(rawValue);
@@ -37,6 +42,8 @@ export default function YouTubeEditor({ s, set, page, authUser }) {
   const migratedLegacyRef = useRef(false);
   const [fileError, setFileError] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const canBrowseLibrary = !!libraryPage && !!libraryAuthUser;
 
   const updateUrl = (nextValue) => {
     setFileError('');
@@ -77,6 +84,14 @@ export default function YouTubeEditor({ s, set, page, authUser }) {
     }
   };
 
+  const selectLibraryVideo = (nextValue, asset = {}) => {
+    const url = String(nextValue || '').trim();
+    if (!url) return false;
+    setFileError('');
+    set(createVideoCodeSettings(url, { fileName: asset?.fileName || '업로드 영상' }));
+    return true;
+  };
+
   useEffect(() => {
     if (!embeddedFile || migratedLegacyRef.current || uploading) return;
     migratedLegacyRef.current = true;
@@ -111,80 +126,100 @@ export default function YouTubeEditor({ s, set, page, authUser }) {
   };
 
   return (
-    <EditorTabs
-      tabs={[{
-        id: 'video',
-        label: '영상',
-        content: (
-          <>
-            <label className="field">
-              <span>동영상 주소</span>
-              <div>
-                <input
-                  type="url"
-                  inputMode="url"
-                  autoComplete="off"
-                  placeholder={uploadedFile ? '업로드된 영상 사용 중' : 'https://youtu.be/... 또는 https://.../video.mp4'}
-                  value={value}
-                  disabled={uploadedFile || uploading}
-                  onChange={(event) => updateUrl(event.target.value)}
-                />
-              </div>
-            </label>
+    <>
+      <EditorTabs
+        tabs={[{
+          id: 'video',
+          label: '영상',
+          content: (
+            <>
+              <label className="field">
+                <span>동영상 주소</span>
+                <div>
+                  <input
+                    type="url"
+                    inputMode="url"
+                    autoComplete="off"
+                    placeholder={uploadedFile ? '업로드된 영상 사용 중' : 'https://youtu.be/... 또는 https://.../video.mp4'}
+                    value={value}
+                    disabled={uploadedFile || uploading}
+                    onChange={(event) => updateUrl(event.target.value)}
+                  />
+                </div>
+              </label>
 
-            <div style={{ marginTop: 10, display: 'grid', gap: 8 }}>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="video/mp4,video/webm,video/ogg,.mp4,.webm,.ogg"
-                style={{ display: 'none' }}
-                onChange={(event) => pickVideo(event.target.files?.[0])}
-              />
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  onClick={() => fileRef.current?.click()}
-                  disabled={uploading}
-                  style={{ minHeight: 38, padding: '0 14px', border: '1px solid #dbe2ea', borderRadius: 10, background: '#fff', color: '#0f172a', fontWeight: 800, cursor: uploading ? 'wait' : 'pointer' }}
-                >
-                  {uploading ? '서버 업로드 중...' : uploadedFile ? '영상 교체' : 'MP4 파일 선택'}
-                </button>
-                {hasValue && !uploading && (
+              <div style={{ marginTop: 10, display: 'grid', gap: 8 }}>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="video/mp4,video/webm,video/ogg,.mp4,.webm,.ogg"
+                  style={{ display: 'none' }}
+                  onChange={(event) => pickVideo(event.target.files?.[0])}
+                />
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   <button
                     type="button"
-                    onClick={clearVideo}
-                    style={{ minHeight: 38, padding: '0 14px', border: '1px solid #fecaca', borderRadius: 10, background: '#fff', color: '#b91c1c', fontWeight: 800, cursor: 'pointer' }}
+                    onClick={() => fileRef.current?.click()}
+                    disabled={uploading}
+                    style={{ minHeight: 38, padding: '0 14px', border: '1px solid #dbe2ea', borderRadius: 10, background: '#fff', color: '#0f172a', fontWeight: 800, cursor: uploading ? 'wait' : 'pointer' }}
                   >
-                    영상 제거
+                    {uploading ? '서버 업로드 중...' : uploadedFile ? '영상 교체' : 'MP4 파일 선택'}
                   </button>
+                  {canBrowseLibrary && (
+                    <button
+                      type="button"
+                      className="video-library-action"
+                      onClick={() => setLibraryOpen(true)}
+                      disabled={uploading}
+                    >
+                      내 영상에서 선택
+                    </button>
+                  )}
+                  {hasValue && !uploading && (
+                    <button
+                      type="button"
+                      onClick={clearVideo}
+                      style={{ minHeight: 38, padding: '0 14px', border: '1px solid #fecaca', borderRadius: 10, background: '#fff', color: '#b91c1c', fontWeight: 800, cursor: 'pointer' }}
+                    >
+                      영상 제거
+                    </button>
+                  )}
+                </div>
+                {uploadedFile && !embeddedFile && (
+                  <div style={{ padding: '9px 11px', borderRadius: 10, background: '#f0fdf4', color: '#166534', fontSize: 12, lineHeight: 1.45, fontWeight: 800 }}>
+                    서버 저장 완료 · {s.videoFileName}
+                  </div>
+                )}
+                {embeddedFile && uploading && (
+                  <div style={{ padding: '9px 11px', borderRadius: 10, background: '#eff6ff', color: '#1d4ed8', fontSize: 12, lineHeight: 1.45, fontWeight: 800 }}>
+                    기존 임시 영상을 서버 저장소로 옮기는 중입니다.
+                  </div>
                 )}
               </div>
-              {uploadedFile && !embeddedFile && (
-                <div style={{ padding: '9px 11px', borderRadius: 10, background: '#f0fdf4', color: '#166534', fontSize: 12, lineHeight: 1.45, fontWeight: 800 }}>
-                  서버 저장 완료 · {s.videoFileName}
-                </div>
-              )}
-              {embeddedFile && uploading && (
-                <div style={{ padding: '9px 11px', borderRadius: 10, background: '#eff6ff', color: '#1d4ed8', fontSize: 12, lineHeight: 1.45, fontWeight: 800 }}>
-                  기존 임시 영상을 서버 저장소로 옮기는 중입니다.
-                </div>
-              )}
-            </div>
 
-            <p style={{ margin: '8px 2px 0', color: fileError || (hasValue && !valid) ? '#dc2626' : '#64748b', fontSize: '12px', lineHeight: 1.5, fontWeight: 800 }}>
-              {fileError
-                || (hasValue && !valid
-                  ? '지원하는 동영상 주소인지 확인해주세요.'
-                  : source?.kind === 'file'
-                    ? '직접 영상은 원본 비율 그대로 자동재생 · 무음 · 무한반복됩니다.'
-                    : '지원: YouTube, Vimeo, MP4·WebM·Ogg 직접 링크 또는 파일 업로드')}
-            </p>
-            <p style={{ margin: '4px 2px 0', color: '#94a3b8', fontSize: 11, lineHeight: 1.45, fontWeight: 700 }}>
-              영상 파일은 페이지 데이터가 아니라 서버 저장소(R2)에 저장됩니다 · 최대 {fileSizeLabel(MAX_VIDEO_BYTES)}
-            </p>
-          </>
-        ),
-      }]}
-    />
+              <p style={{ margin: '8px 2px 0', color: fileError || (hasValue && !valid) ? '#dc2626' : '#64748b', fontSize: '12px', lineHeight: 1.5, fontWeight: 800 }}>
+                {fileError
+                  || (hasValue && !valid
+                    ? '지원하는 동영상 주소인지 확인해주세요.'
+                    : source?.kind === 'file'
+                      ? '직접 영상은 원본 비율 그대로 자동재생 · 무음 · 무한반복됩니다.'
+                      : '지원: YouTube, Vimeo, MP4·WebM·Ogg 직접 링크 또는 파일 업로드')}
+              </p>
+              <p style={{ margin: '4px 2px 0', color: '#94a3b8', fontSize: 11, lineHeight: 1.45, fontWeight: 700 }}>
+                영상 파일은 페이지 데이터가 아니라 서버 저장소(R2)에 저장됩니다 · 최대 {fileSizeLabel(MAX_VIDEO_BYTES)}
+              </p>
+            </>
+          ),
+        }]}
+      />
+      <VideoLibraryPicker
+        open={libraryOpen}
+        page={libraryPage}
+        authUser={libraryAuthUser}
+        currentValue={rawValue}
+        onClose={() => setLibraryOpen(false)}
+        onSelect={selectLibraryVideo}
+      />
+    </>
   );
 }
