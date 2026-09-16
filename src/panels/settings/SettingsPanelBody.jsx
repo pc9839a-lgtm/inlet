@@ -7,6 +7,7 @@ import {
   Gift,
   Globe2,
   History,
+  Images,
   RotateCcw,
   Search,
   Target,
@@ -14,12 +15,14 @@ import {
   UsersRound,
   WalletCards,
 } from 'lucide-react';
+import MediaLibrarySettings from './MediaLibrarySettings.jsx';
 import SettingsAdvancedAndReset from './SettingsAdvancedAndReset.jsx';
 import PageDuplicateUrlModal from './PageDuplicateUrlModal.jsx';
 import SettingsPrimarySections from './SettingsPrimarySections.jsx';
 
 const PRIMARY_NAV = [
   ['basic', '페이지 기본', FileText],
+  ['media', '미디어 보관함', Images],
   ['domain', '개인 도메인', Globe2],
   ['account', '계정 정보', UserRound],
   ['managers', '매니저 권한', UsersRound],
@@ -128,7 +131,7 @@ export default function SettingsPanelBody({
   const ownerFinanceAccess = canManageProjectUsers && !clientAdminMode;
   const initialSection = (() => {
     const requested = openSection || 'basic';
-    if (clientAdminMode && ADVANCED_IDS.has(requested)) return 'basic';
+    if (clientAdminMode && (ADVANCED_IDS.has(requested) || requested === 'media')) return 'basic';
     if (!canManageProjectUsers && requested === 'managers') return 'basic';
     if (!ownerFinanceAccess && OWNER_ONLY_IDS.has(requested)) return 'basic';
     return requested;
@@ -139,7 +142,11 @@ export default function SettingsPanelBody({
   );
   const selectedLabel = ALL_NAV.find(([id]) => id === selectedSection)?.[1] || '페이지 기본';
 
-  const primaryItems = PRIMARY_NAV.filter(([id]) => id !== 'managers' || canManageProjectUsers);
+  const primaryItems = PRIMARY_NAV.filter(([id]) => {
+    if (id === 'managers' && !canManageProjectUsers) return false;
+    if (id === 'media' && clientAdminMode) return false;
+    return true;
+  });
   const basicItems = ownerFinanceAccess ? [...primaryItems, ...SERVICE_NAV] : primaryItems;
   const modeItems = settingsMode === 'advanced' ? ADVANCED_NAV : basicItems;
   const modeLabel = settingsMode === 'advanced' ? '고급' : '기본';
@@ -193,6 +200,10 @@ export default function SettingsPanelBody({
           </header>
 
           <div className="settings-v3-content">
+            {selectedSection === 'media' && !clientAdminMode && (
+              <MediaLibrarySettings page={page} authUser={authUser} />
+            )}
+
             <SettingsPrimarySections
               activeSection={selectedSection}
               authUser={authUser}
