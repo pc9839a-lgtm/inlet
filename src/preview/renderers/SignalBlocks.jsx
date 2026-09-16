@@ -2,7 +2,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import { pickSafe, widgetBoxClass, widgetBoxVars } from './previewUtils.jsx';
 
 const TIMER_BASE_CLASS = 'timer-theme-minimal timer-effect-none';
-const TIMER_VARIANTS = ['clean', 'cards', 'promo'];
+const TIMER_VARIANTS = ['clean', 'cards', 'promo', 'line', 'point'];
 const TIMER_PALETTES = ['ink', 'blue', 'green', 'coral', 'accent'];
 const TIMER_EFFECTS = ['none', 'slide', 'flip', 'pulse', 'fire'];
 const COUNTDOWN_CLOCK_SUBSCRIBERS = new Set();
@@ -76,14 +76,14 @@ function timerVariant(settings = {}) {
     accent: 'promo',
     minimal: 'clean',
   }[settings.timerTheme];
-  const legacyVariant = {
+  const savedVariant = {
     minimal: 'clean',
-    line: 'clean',
     flat: 'cards',
-    point: 'cards',
     block: 'promo',
+    line: 'line',
+    point: 'point',
   }[settings.timerVariant];
-  return pickSafe(legacyVariant || settings.timerVariant || legacyThemeVariant || 'clean', TIMER_VARIANTS, 'clean');
+  return pickSafe(savedVariant || settings.timerVariant || legacyThemeVariant || 'clean', TIMER_VARIANTS, 'clean');
 }
 
 function timerPalette(settings = {}) {
