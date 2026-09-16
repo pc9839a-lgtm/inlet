@@ -45,12 +45,13 @@ assert(browserSource.includes("mobile-operations-shell") && browserSource.includ
 assert(browserSource.includes("unexpectedApis.length === 0") && browserSource.includes("browserErrors.length === 0"), 'browser QA must fail on unexpected API calls or browser exceptions');
 assert(!browserSource.includes('pagero.kr/api/auth/login') && !browserSource.includes('productionPassword'), 'browser QA must not use production credentials or production auth endpoints');
 
+assert(imageLibraryBrowserSource.includes("id: 'editor-image', type: 'image'") && imageLibraryBrowserSource.includes("#editor-block-editor-image"), 'image-library browser QA must use the real image block editor instead of assuming hero image controls');
 assert(imageLibraryBrowserSource.includes("pathname === '/api/files/list'") && imageLibraryBrowserSource.includes("kind: 'image'"), 'image-library browser QA must load project images through the real list route contract');
 assert(imageLibraryBrowserSource.includes("projectId === 'editor-project'") && imageLibraryBrowserSource.includes("ownerId === 'editor-owner'") && imageLibraryBrowserSource.includes("slug === 'editor-e2e'"), 'image-library browser QA must verify project, owner, and page scope');
 assert(imageLibraryBrowserSource.includes('.image-input-library-action') && imageLibraryBrowserSource.includes('.image-library-picker-item'), 'image-library browser QA must click the real picker action and a real picker item');
 assert(imageLibraryBrowserSource.includes("(document.body?.innerText || '').includes('내 이미지에서 선택 완료')"), 'image-library browser QA must verify selection feedback');
 assert(imageLibraryBrowserSource.includes("saveCount === 0") && imageLibraryBrowserSource.includes(".panel-actions .primary-btn"), 'image-library selection must stay local before explicit publish');
-assert(imageLibraryBrowserSource.includes("savedHero?.s?.image === selectedImageValue") && imageLibraryBrowserSource.includes("Page.reload"), 'image-library browser QA must verify the selected image is published and survives reload');
+assert(imageLibraryBrowserSource.includes("savedImageBlock?.s?.image === selectedImageValue") && imageLibraryBrowserSource.includes("Page.reload"), 'image-library browser QA must verify the selected image is published and survives reload');
 assert(imageLibraryBrowserSource.includes("imageDownloadCount >= 1") && imageLibraryBrowserSource.includes("unexpectedApis.length === 0") && imageLibraryBrowserSource.includes("browserErrors.length === 0"), 'image-library browser QA must verify image readback and fail on unexpected runtime errors');
 assert(!imageLibraryBrowserSource.includes('pagero.kr/api/auth/login') && !imageLibraryBrowserSource.includes('productionPassword'), 'image-library browser QA must not use production credentials or production auth endpoints');
 
@@ -61,7 +62,7 @@ console.log(JSON.stringify({
   ok: true,
   scope: 'authenticated-editor-browser-contract',
   desktopFlow: ['login', 'dashboard', 'account-page', 'page-select', 'edit-panel', 'publish', 'reload'],
-  imageLibraryFlow: ['open-library', 'project-scoped-list', 'select-existing-image', 'local-draft', 'publish', 'reload'],
+  imageLibraryFlow: ['image-block', 'open-library', 'project-scoped-list', 'select-existing-image', 'local-draft', 'publish', 'reload'],
   mobileWidths: [360, 390, 430],
   productionCredentials: false,
   accountPageMock: true,
