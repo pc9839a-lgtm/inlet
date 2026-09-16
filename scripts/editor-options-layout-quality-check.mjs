@@ -19,6 +19,7 @@ const screenOrderCss = await readFile('src/editor/editPanelParts/ScreenOrder.css
 const editorLabels = await readFile('src/editor/editPanelParts/editorLabels.js', 'utf8');
 const editLayout = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
 const sectionProps = await readFile('src/editor/createEditPanelSectionProps.js', 'utf8');
+const mobileScreenOrderCss = screenOrderCss.slice(screenOrderCss.indexOf('@media (max-width: 760px)'));
 
 assert(pageOptions.includes("import './PageGlobalOptions.css';"), 'page options must load its compact layout owner');
 assert(pageOptionsCss.includes('max-width: 100%') && pageOptionsCss.includes('overflow-x: hidden'), 'page options must clamp nested editor width and horizontal overflow');
@@ -40,16 +41,20 @@ assert(screenOrderCss.includes('@media (max-width: 760px)') && screenOrderCss.in
 assert(editLayout.includes('페이지 옵션') && editLayout.includes('화면 순서'), 'edit panel must keep page options and screen order as separate top-level modes');
 assert(editorLabels.includes("globalSettings: '\\uC804\\uC5ED \\uC124\\uC815'") && pageOptionsHeader.includes('T.globalSettings'), 'page options content heading must be global settings instead of repeating the tab label');
 assert(editorLabels.includes("normalBlocks: '\\uC77C\\uBC18 \\uBE14\\uB85D'") && screenOrderHeader.includes('T.normalBlocks'), 'screen order content heading must identify normal blocks instead of repeating the tab label');
+assert(mobileScreenOrderCss.includes('grid-template-columns: 44px minmax(0,1fr) 44px 44px'), 'mobile screen order must reserve full touch columns without horizontal overflow');
+assert(/\.screen-order-v2-drag\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;/s.test(mobileScreenOrderCss), 'mobile drag handle must expose a 44px touch target');
+assert(/\.screen-order-v2-visibility-button,[\s\S]*?\.screen-order-v2-action\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;/s.test(mobileScreenOrderCss), 'mobile visibility and action controls must expose 44px touch targets');
 
 console.log(JSON.stringify({
   ok: true,
   scope: 'editor-options-layout',
-  checks: 20,
+  checks: 23,
   saveFlowTouched: false,
   globalOptionsSeparated: true,
   fixedBlocksMovedToScreenOrder: true,
   fixedBlockStylesOwned: true,
   hierarchyLabelsDistinct: true,
+  mobileTouchTargetPx: 44,
   mobileOverflowGuard: true,
   largeMobileControls: true,
 }, null, 2));
