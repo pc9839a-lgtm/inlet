@@ -31,6 +31,18 @@ export function createVisibleLeadUpdater({ normalizeLeadItem, setLeads }) {
   };
 }
 
+function leadApiMessage(error) {
+  return String(error?.details?.message || error?.message || '').trim();
+}
+
+export function leadCaptureServerErrorMessage(error) {
+  const status = Number(error?.status || 0);
+  const message = leadApiMessage(error);
+  if (status === 409) return message || '이미 접수된 연락처입니다.';
+  if (status === 429) return message || '접수가 너무 빠르게 반복되었습니다. 잠시 후 다시 시도해주세요.';
+  return `접수 저장에 실패했습니다.${message ? ` ${message}` : ''}`;
+}
+
 export function createLeadCaptureAction({
   currentTrafficAttribution,
   uid,
@@ -51,10 +63,10 @@ export function createLeadCaptureAction({
     const traffic = currentTrafficAttribution();
     const savedLead = normalizeLeadItem({
       id: uid(),
-      status: '??',
+      status: '신규',
       memo: '',
       createdAt: new Date().toISOString(),
-      delivery: { status: 'pending', summary: '?? ?? ?? ?', logs: [] },
+      delivery: { status: 'pending', summary: '알림 전송 대기', logs: [] },
       ...lead,
       channel: lead.channel || traffic.channel,
       utmSource: lead.utmSource || traffic.utmSource,
@@ -87,9 +99,9 @@ export function createLeadCaptureAction({
             return {
               report: {
                 status: 'failed',
-                summary: '??? ????? ?? ??? ??????.',
+                summary: '접수는 저장됐지만 알림 전송에 실패했습니다.',
                 logs: [{
-                  target: '?? ??',
+                  target: '알림 전송',
                   status: 'failed',
                   message: String(error?.message || error),
                   at: new Date().toISOString(),
@@ -114,19 +126,14 @@ export function createLeadCaptureAction({
         if (isServerLeadMode()) {
           setLeads((list) => list.filter((item) => item.id !== savedLead.id));
           setLeadPageMeta((meta) => ({ ...meta, total: Math.max(0, Number(meta.total || 0) - 1) }));
-          showToast(
-            [409, 429].includes(Number(error?.status || 0))
-              ? '?? ??? ??? ?? ??????. ?? ?? ??? ?????.'
-              : `?? ??? ??????. ${String(error?.message || error)}`,
-            'error',
-          );
+          showToast(leadCaptureServerErrorMessage(error), 'error');
           throw error;
         }
         const delivery = {
           status: 'failed',
-          summary: '?? ?? ??',
+          summary: '접수 저장에 실패했습니다.',
           logs: [{
-            target: '?? ??',
+            target: '접수 저장',
             status: 'failed',
             message: String(error?.message || error),
             at: new Date().toISOString(),
