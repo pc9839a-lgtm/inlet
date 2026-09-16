@@ -387,7 +387,12 @@ function createApiMock(client) {
           revision: Number(state.currentPage.revision || 0) + 1,
           updatedAt: `2026-07-31T00:${String(state.saveCount).padStart(2, '0')}:00.000Z`,
         };
-        await fulfill(requestId, 200, { ok: true, page: state.currentPage });
+        await fulfill(requestId, 200, {
+          ok: true,
+          page: state.currentPage,
+          saveMode: body.saveMode || url.searchParams.get('saveMode') || '',
+          saveRequestId: body.saveRequestId || '',
+        });
         return;
       }
     }
@@ -649,9 +654,12 @@ async function run() {
     assert(apiState.pageLoadCount >= 1, 'selected page was not loaded from the page API');
     await capture(client, 'desktop-editor-before');
 
+    const heroEditorSelector = '.screen-order-v2-settings-panel textarea[placeholder="핵심 제목을 입력하세요"]';
     await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
-    await waitForBrowser(client, `!!document.querySelector('#editor-block-editor-hero textarea[placeholder="핵심 제목을 입력하세요"]')`, 'hero editor textarea');
-    await setInputValue(client, '#editor-block-editor-hero textarea[placeholder="핵심 제목을 입력하세요"]', updatedHeroTitle);
+    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'separate hero editor textarea');
+    const inlineEditorStillNested = await evaluate(client, `!!document.querySelector('#editor-block-editor-hero textarea[placeholder="핵심 제목을 입력하세요"]')`);
+    assert(!inlineEditorStillNested, 'screen order row must not contain the block detail editor');
+    await setInputValue(client, heroEditorSelector, updatedHeroTitle);
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(updatedHeroTitle)})`, 'live hero preview');
     await wait(1100);
     assert(apiState.saveCount === 0, 'editing must not submit a server save before the save button is pressed');

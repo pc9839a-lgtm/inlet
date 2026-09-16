@@ -3,8 +3,6 @@ import { ScreenOrderRowActions } from './ScreenOrderRowActions.jsx';
 import { ScreenOrderRowIdentity } from './ScreenOrderRowIdentity.jsx';
 import { ScreenOrderRowVisibility } from './ScreenOrderRowVisibility.jsx';
 import { createScreenOrderRowInteraction } from './screenOrderRowInteraction.js';
-import { SelectedBlockSettingsBody } from './SelectedBlockSettingsBody.jsx';
-import { stop } from './editorEvents.js';
 
 export function ScreenOrderRow({
   block,
@@ -22,7 +20,6 @@ export function ScreenOrderRow({
   onRemove,
   onDragStart,
   onDragEnd,
-  renderBlockEditor,
 }) {
   const { selectRow, selectRowByKey } = createScreenOrderRowInteraction({ onSelectRow });
 
@@ -60,9 +57,7 @@ export function ScreenOrderRow({
       </div>
 
       {open && (
-        <div className="screen-order-v2-inline-editor" onClick={stop} onKeyDown={stop}>
-          <SelectedBlockSettingsBody block={block} renderBlockEditor={renderBlockEditor} />
-        </div>
+        <span hidden data-screen-order-selected-state="true" />
       )}
     </div>
   );
