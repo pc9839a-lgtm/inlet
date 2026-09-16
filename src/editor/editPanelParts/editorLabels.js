@@ -29,6 +29,8 @@ export const T = {
   screenOrder: '\uD654\uBA74 \uC21C\uC11C',
   screenOrderDesc: '\uBCF4\uC774\uB294 \uC21C\uC11C\uB300\uB85C \uC704\uC5D0\uC11C \uC544\uB798\uB85C \uBC30\uCE58\uB429\uB2C8\uB2E4.',
   pageOptions: '\uD398\uC774\uC9C0 \uC635\uC158',
+  globalSettings: '\uC804\uC5ED \uC124\uC815',
+  normalBlocks: '\uC77C\uBC18 \uBE14\uB85D',
   selectedBlockSettings: '\uC120\uD0DD\uD55C \uBE14\uB85D \uC124\uC815',
   dragToReorder: '\uB04C\uC5B4\uC11C \uC21C\uC11C \uBCC0\uACBD',
   moveUp: '\uC704\uB85C \uC774\uB3D9',
