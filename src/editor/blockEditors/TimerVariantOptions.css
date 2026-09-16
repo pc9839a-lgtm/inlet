@@ -1,0 +1,76 @@
+.timer-workflow-variant .timer-workflow-choice-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.timer-workflow-choice.choice-line .timer-workflow-choice-preview {
+  border-top: 2px solid #111827;
+  border-bottom: 1px solid #dbe3ed;
+  border-radius: 0;
+  background: #ffffff;
+}
+
+.timer-workflow-choice.choice-line .timer-choice-line {
+  gap: 0;
+}
+
+.timer-workflow-choice.choice-line .timer-choice-line > b {
+  min-width: 0;
+  width: 33.333%;
+  min-height: 26px;
+  border: 0;
+  border-right: 1px solid #dbe3ed;
+  border-radius: 0;
+  background: transparent;
+}
+
+.timer-workflow-choice.choice-line .timer-choice-line > b:last-child {
+  border-right: 0;
+}
+
+.timer-workflow-choice.choice-point .timer-workflow-choice-preview {
+  border: 1px solid #dbe3ed;
+  background: #ffffff;
+}
+
+.timer-workflow-choice.choice-point .timer-choice-point > b {
+  background: #f1f5f9;
+}
+
+.timer-workflow-choice.choice-point .timer-choice-point > b:last-child {
+  border-color: #111827;
+  background: #111827;
+  color: #ffffff;
+}
+
+.timer-bottom-mini-line {
+  border-top: 2px solid #ffffff;
+  border-bottom: 1px solid rgba(255, 255, 255, .4);
+  border-radius: 0;
+}
+
+.timer-bottom-mini-line b {
+  letter-spacing: .04em;
+}
+
+.timer-bottom-mini-point {
+  border: 1px solid #64748b;
+  background: #f8fafc;
+  color: #111827;
+}
+
+.timer-bottom-mini-point span {
+  color: #64748b;
+}
+
+.timer-bottom-mini-point b {
+  padding: 7px 9px;
+  border-radius: 9px;
+  background: #111827;
+  color: #ffffff;
+}
+
+@media (max-width: 1180px) {
+  .timer-workflow-variant .timer-workflow-choice-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

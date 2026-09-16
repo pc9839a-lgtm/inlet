@@ -5,6 +5,8 @@ export const TIMER_VARIANT_OPTIONS = [
   { value: 'minimal', label: '클린', description: '숫자 중심의 가장 단순한 형태' },
   { value: 'flat', label: '카드', description: '숫자를 각각 카드로 구분' },
   { value: 'block', label: '프로모션', description: '마감 문구와 배지를 강하게 강조' },
+  { value: 'line', label: '라인', description: '선과 구분으로 가볍게 정돈' },
+  { value: 'point', label: '포인트', description: '마지막 숫자를 강조해 시선을 집중' },
 ];
 
 export const TIMER_PALETTE_OPTIONS = [
@@ -27,8 +29,6 @@ const LEGACY_TIMER_VARIANTS = {
   clean: 'minimal',
   cards: 'flat',
   promo: 'block',
-  line: 'minimal',
-  point: 'flat',
 };
 
 export function safeValue(value, options, fallback) {
@@ -64,6 +64,8 @@ function TimerChoiceCards({ label, value, options, kind, onChange }) {
               {kind === 'variant' && option.value === 'minimal' && <b>08 : 24 : 36</b>}
               {kind === 'variant' && option.value === 'flat' && <i><b>08</b><b>24</b><b>36</b></i>}
               {kind === 'variant' && option.value === 'block' && <i><em>마감 임박</em><b>08:24:36</b></i>}
+              {kind === 'variant' && option.value === 'line' && <i className="timer-choice-line"><b>08</b><b>24</b><b>36</b></i>}
+              {kind === 'variant' && option.value === 'point' && <i className="timer-choice-point"><b>08</b><b>24</b><b>36</b></i>}
               {kind === 'effect' && <b>08</b>}
             </span>
             <strong>{option.label}</strong>

@@ -1,6 +1,7 @@
 import { EditorTabs, ToggleRow } from '../ui/index.js';
 import { TimerContentSection, TimerDesignSection, safeTimerEffect, safeTimerVariant } from './TimerBasicSection.jsx';
 import './TimerEditor.css';
+import './TimerVariantOptions.css';
 
 function TimerBottomSection({ s, page, updateBlock }) {
   const bottomBlock = page?.blocks?.find((block) => block?.type === 'bottombar');
@@ -8,7 +9,7 @@ function TimerBottomSection({ s, page, updateBlock }) {
   const bottomVisible = bottomBlock?.visible !== false;
   const variant = safeTimerVariant(s.timerVariant);
   const effect = safeTimerEffect(s);
-  const variantLabel = ({ minimal: '클린', flat: '카드', block: '프로모션' })[variant] || '클린';
+  const variantLabel = ({ minimal: '클린', flat: '카드', block: '프로모션', line: '라인', point: '포인트' })[variant] || '클린';
   const effectLabel = ({ none: '없음', slide: '슬라이드', flip: '플립', pulse: '펄스', fire: '불꽃' })[effect] || '없음';
 
   return (
