@@ -81,12 +81,32 @@ assert(videos.assets[0].fileName === '소개영상.mp4', 'uploaded video must pr
 assert(videos.assets[0].contentType === 'video/mp4', 'video content type must be exposed for preview');
 assert(bucket.calls.every((call) => call.include?.includes('httpMetadata') && call.include?.includes('customMetadata')), 'asset list must request preview and display metadata from R2');
 
-const [routeSource, repositorySource, settingsSource, mediaSource, cssSource, qaAllSource, packageSource] = await Promise.all([
+const [
+  routeSource,
+  repositorySource,
+  settingsSource,
+  mediaSource,
+  mediaCssSource,
+  editPanelSource,
+  editorMediaContextSource,
+  imageControlsSource,
+  imagePickerSource,
+  imagePickerCssSource,
+  imagePickerHookSource,
+  qaAllSource,
+  packageSource,
+] = await Promise.all([
   readFile('functions/api/files/list.js', 'utf8'),
   readFile('src/lib/fileRepository.js', 'utf8'),
   readFile('src/panels/settings/SettingsPanelBody.jsx', 'utf8'),
   readFile('src/panels/settings/MediaLibrarySettings.jsx', 'utf8'),
   readFile('src/panels/settings/MediaLibrarySettings.css', 'utf8'),
+  readFile('src/editor/EditPanel.jsx', 'utf8'),
+  readFile('src/editor/EditorMediaLibraryContext.jsx', 'utf8'),
+  readFile('src/editor/imageControls.jsx', 'utf8'),
+  readFile('src/editor/ImageLibraryPicker.jsx', 'utf8'),
+  readFile('src/editor/ImageLibraryPicker.css', 'utf8'),
+  readFile('src/editor/useImageInputPicker.js', 'utf8'),
   readFile('scripts/qa-all.mjs', 'utf8'),
   readFile('package.json', 'utf8'),
 ]);
@@ -109,20 +129,44 @@ assert(mediaSource.includes('type="search"') && mediaSource.includes('assetSearc
 assert(mediaSource.includes("loadMore('image')") && mediaSource.includes("loadMore('video')"), 'media library must expose pagination for both asset kinds');
 assert(mediaSource.includes('<img className="media-library-preview"') && mediaSource.includes('<video'), 'media library must preview both images and videos');
 assert(mediaSource.includes('navigator.clipboard.writeText'), 'media library must let users copy an existing asset URL');
-assert(!mediaSource.includes('deleteProjectAsset') && !mediaSource.includes('미디어 삭제'), 'foundation step must remain read-only and avoid destructive asset actions');
+assert(!mediaSource.includes('deleteProjectAsset') && !mediaSource.includes('미디어 삭제'), 'media library must remain non-destructive');
+assert(mediaCssSource.includes('@media (max-width: 720px)') && mediaCssSource.includes('min-height: 44px'), 'media library mobile actions must retain 44px touch targets');
 
-assert(cssSource.includes('@media (max-width: 720px)') && cssSource.includes('min-height: 44px'), 'media library mobile actions must retain 44px touch targets');
+assert(editPanelSource.includes('<EditorMediaLibraryProvider page={page}>'), 'edit panel must scope image reuse to the active page');
+assert(editorMediaContextSource.includes('load(AUTH_KEY, null)') && editorMediaContextSource.includes('normalizeAuthUser'), 'editor media context must reuse the current authenticated session without changing App routing');
+assert(editorMediaContextSource.includes('EditorMediaLibraryContext.Provider'), 'editor media context provider missing');
+
+assert(imageControlsSource.includes('useEditorMediaLibrary()'), 'shared ImageInput must read the editor media context');
+assert(imageControlsSource.includes('내 이미지에서 선택'), 'shared ImageInput must expose the existing-image action');
+assert(imageControlsSource.includes('<ImageLibraryPicker'), 'shared ImageInput must mount the project image picker');
+assert(imageControlsSource.includes('selectExistingImage(nextValue)'), 'library selection must use the same ImageInput mutation guard');
+
+assert(imagePickerSource.includes("listProjectAssets(page, authUser, { kind: 'image', limit: 100 })"), 'image picker must request only project images');
+assert(imagePickerSource.includes("kind: 'image', cursor, limit: 100"), 'image picker must preserve cursor pagination');
+assert(imagePickerSource.includes('type="search"') && imagePickerSource.includes('searchText(asset)'), 'image picker must support image search');
+assert(imagePickerSource.includes('normalizeAssetValue') && imagePickerSource.includes('url.origin === window.location.origin'), 'image picker must keep same-origin asset references portable');
+assert(imagePickerSource.includes('현재 이미지') && imagePickerSource.includes('aria-pressed={selected}'), 'image picker must identify the current image');
+assert(!imagePickerSource.includes('deleteProjectAsset') && !imagePickerSource.includes('삭제'), 'image picker must not expose destructive asset actions');
+
+assert(imagePickerHookSource.includes('selectExistingImage'), 'ImageInput picker hook must support existing project images');
+assert(imagePickerHookSource.includes('siblingFingerprints.has(nextFingerprint)'), 'existing-image selection must keep gallery duplicate protection');
+assert(imagePickerHookSource.includes("label: '내 이미지에서 선택 완료'"), 'existing-image selection must provide success feedback');
+
+assert(imagePickerCssSource.includes('@media (max-width: 720px)') && imagePickerCssSource.includes('min-height: 44px'), 'image picker mobile actions must retain 44px touch targets');
 assert(packageJson.scripts?.['media:library:qa'] === 'node scripts/media-library-quality-check.mjs', 'media:library:qa package script missing');
 assert(qaAllSource.includes("['media:library:qa', ['scripts/media-library-quality-check.mjs']]"), 'release QA must include media library coverage');
 
 console.log(JSON.stringify({
   ok: true,
-  scope: 'project-media-library-foundation',
+  scope: 'project-media-library-and-editor-image-reuse',
   projectIsolation: true,
   imageVideoSeparation: true,
   pagination: true,
   editReadAuthorization: true,
   searchAndFilters: true,
   imageVideoPreview: true,
+  editorImageReuse: true,
+  duplicateProtection: true,
+  sameOriginPortability: true,
   destructiveActionsDeferred: true,
 }, null, 2));

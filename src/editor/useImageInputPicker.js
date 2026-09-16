@@ -34,6 +34,48 @@ export function useImageInputPicker({ label, value, duplicateValues = [], onChan
     setUploadState(INITIAL_UPLOAD_STATE);
   };
 
+  const selectExistingImage = (nextValue = '') => {
+    if (disabled || uploadState.status === 'processing') return false;
+    const normalizedValue = String(nextValue || '').trim();
+    if (!normalizedValue) {
+      notify('선택한 이미지 주소를 확인하지 못했습니다.', 'error');
+      return false;
+    }
+
+    const nextFingerprint = imageDataFingerprint(normalizedValue);
+    if (imageDataFingerprint(value) && imageDataFingerprint(value) === nextFingerprint) {
+      notify('현재 등록된 이미지와 같은 이미지입니다.', 'info');
+      setUploadState({
+        ...INITIAL_UPLOAD_STATE,
+        status: 'success',
+        progress: 100,
+        label: '같은 이미지 · 변경 없음',
+      });
+      return false;
+    }
+
+    const siblingFingerprints = new Set(duplicateValues.map(imageDataFingerprint).filter(Boolean));
+    if (nextFingerprint && siblingFingerprints.has(nextFingerprint)) {
+      notify('갤러리에 이미 같은 이미지가 있어 추가하지 않았습니다.', 'info');
+      setUploadState({
+        ...INITIAL_UPLOAD_STATE,
+        status: 'success',
+        progress: 100,
+        label: '중복 이미지 · 추가 안 함',
+      });
+      return false;
+    }
+
+    onChange(normalizedValue);
+    setUploadState({
+      ...INITIAL_UPLOAD_STATE,
+      status: 'success',
+      progress: 100,
+      label: '내 이미지에서 선택 완료',
+    });
+    return true;
+  };
+
   const pick = async (file) => {
     if (disabled || !file || uploadState.status === 'processing') return;
     const error = imageUploadError(file);
@@ -111,5 +153,5 @@ export function useImageInputPicker({ label, value, duplicateValues = [], onChan
     }
   };
 
-  return { ref, pick, openPicker, clearImage, uploadState };
+  return { ref, pick, openPicker, clearImage, selectExistingImage, uploadState };
 }
