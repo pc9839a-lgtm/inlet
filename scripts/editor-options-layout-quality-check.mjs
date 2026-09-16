@@ -5,6 +5,7 @@ function assert(condition, message) {
 }
 
 const pageOptions = await readFile('src/editor/editPanelParts/PageGlobalOptions.jsx', 'utf8');
+const pageOptionsHeader = await readFile('src/editor/editPanelParts/PageGlobalOptionsHeader.jsx', 'utf8');
 const pageOptionsList = await readFile('src/editor/editPanelParts/PageGlobalOptionsList.jsx', 'utf8');
 const pageOptionsProps = await readFile('src/editor/editPanelSectionProps/pageGlobalOptionsProps.js', 'utf8');
 const fixedBlocksProps = await readFile('src/editor/editPanelSectionProps/fixedBlocksProps.js', 'utf8');
@@ -13,7 +14,9 @@ const fixedBlocksCss = await readFile('src/editor/editPanelParts/FixedBlocksSect
 const pageOptionsCss = await readFile('src/editor/editPanelParts/PageGlobalOptions.css', 'utf8');
 const shareCard = await readFile('src/editor/editPanelParts/ShareOptionsCard.jsx', 'utf8');
 const shareCss = await readFile('src/editor/editPanelParts/ShareOptionsCard.css', 'utf8');
+const screenOrderHeader = await readFile('src/editor/editPanelParts/ScreenOrderListHeader.jsx', 'utf8');
 const screenOrderCss = await readFile('src/editor/editPanelParts/ScreenOrder.css', 'utf8');
+const editorLabels = await readFile('src/editor/editPanelParts/editorLabels.js', 'utf8');
 const editLayout = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
 const sectionProps = await readFile('src/editor/createEditPanelSectionProps.js', 'utf8');
 
@@ -35,15 +38,18 @@ assert(shareCss.includes('grid-template-columns: repeat(2, minmax(0, 1fr))'), 'm
 assert(shareCss.includes('min-height: 42px'), 'mobile share position choices must keep large tap targets');
 assert(screenOrderCss.includes('@media (max-width: 760px)') && screenOrderCss.includes('.screen-order-v2-card { padding: 10px;'), 'screen order must retain its compact mobile card contract');
 assert(editLayout.includes('페이지 옵션') && editLayout.includes('화면 순서'), 'edit panel must keep page options and screen order as separate top-level modes');
+assert(editorLabels.includes("globalSettings: '\\uC804\\uC5ED \\uC124\\uC815'") && pageOptionsHeader.includes('T.globalSettings'), 'page options content heading must be global settings instead of repeating the tab label');
+assert(editorLabels.includes("normalBlocks: '\\uC77C\\uBC18 \\uBE14\\uB85D'") && screenOrderHeader.includes('T.normalBlocks'), 'screen order content heading must identify normal blocks instead of repeating the tab label');
 
 console.log(JSON.stringify({
   ok: true,
   scope: 'editor-options-layout',
-  checks: 18,
+  checks: 20,
   saveFlowTouched: false,
   globalOptionsSeparated: true,
   fixedBlocksMovedToScreenOrder: true,
   fixedBlockStylesOwned: true,
+  hierarchyLabelsDistinct: true,
   mobileOverflowGuard: true,
   largeMobileControls: true,
 }, null, 2));
