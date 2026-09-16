@@ -310,6 +310,13 @@
   .screen-order-v2-item { border: 1px solid var(--product-line); border-radius: 9px; margin-bottom: 6px; }
   .screen-order-v2-item.is-open::before,
   .screen-order-v2-item[data-selected='true']::before { display: none; }
-  .screen-order-v2-head { grid-template-columns: 20px minmax(0,1fr) 30px 30px; min-height: 46px; padding: 0 5px; }
+  .screen-order-v2-head { grid-template-columns: 44px minmax(0,1fr) 44px 44px; min-height: 54px; gap: 2px; padding: 0 4px; }
+  .screen-order-v2-drag { width: 44px; min-width: 44px; height: 44px; min-height: 44px; border-radius: 8px; }
+  .screen-order-v2-visibility,
+  .screen-order-v2-actions { width: 44px; min-width: 44px; }
+  .screen-order-v2-visibility-button,
+  .screen-order-v2-action { width: 44px; min-width: 44px; height: 44px; min-height: 44px; border-radius: 8px; }
+  .screen-order-v2-actions { grid-template-columns: 44px; }
+  .screen-order-v2-menu { top: 45px; }
   .screen-order-v2-inline-editor { margin: 0; padding: 0; border-width: 1px 0 0; border-radius: 0 0 8px 8px; }
 }
