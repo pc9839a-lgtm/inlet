@@ -9,7 +9,11 @@ function normalizeAssetValue(value = '') {
   const raw = String(value || '').trim();
   if (!raw || typeof window === 'undefined') return raw;
   try {
-    return new URL(raw, window.location.origin).href;
+    const url = new URL(raw, window.location.origin);
+    // Direct-video settings historically persist an absolute R2 download URL.
+    // Preserve that contract even for a same-origin library response so getVideoSource can classify it correctly.
+    if (url.origin === window.location.origin) return url.href;
+    return url.href;
   } catch {
     return raw;
   }
