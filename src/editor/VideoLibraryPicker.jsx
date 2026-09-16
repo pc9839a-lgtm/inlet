@@ -9,9 +9,7 @@ function normalizeAssetValue(value = '') {
   const raw = String(value || '').trim();
   if (!raw || typeof window === 'undefined') return raw;
   try {
-    const url = new URL(raw, window.location.origin);
-    if (url.origin === window.location.origin) return `${url.pathname}${url.search}${url.hash}`;
-    return url.href;
+    return new URL(raw, window.location.origin).href;
   } catch {
     return raw;
   }
