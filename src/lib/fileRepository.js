@@ -39,6 +39,43 @@ export async function uploadMediaFile(file, page = {}, authUser = null, fileName
   return uploadProjectFile(file, page, authUser, { purpose: 'media', fileName });
 }
 
+async function fileListError(res) {
+  const text = await res.text().catch(() => '');
+  let message = text || `미디어 목록을 불러오지 못했습니다: ${res.status}`;
+  let details = null;
+  try {
+    details = JSON.parse(text);
+    message = details.message || details.error || message;
+  } catch {
+    // Plain text error response.
+  }
+  return new ApiError(message, res.status, details);
+}
+
+export async function listProjectAssets(page = {}, authUser = null, { kind = 'image', cursor = '', limit = 100 } = {}) {
+  const project = projectContext(page, authUser);
+  const params = new URLSearchParams();
+  params.set('projectId', project.projectId);
+  if (project.ownerId) params.set('ownerId', project.ownerId);
+  if (project.slug) params.set('slug', project.slug);
+  params.set('kind', kind === 'video' ? 'video' : 'image');
+  params.set('limit', String(Math.max(1, Math.min(200, Number(limit || 100)))));
+  if (cursor) params.set('cursor', String(cursor));
+
+  const res = await apiFetch(`/api/files/list?${params.toString()}`, {
+    method: 'GET',
+    headers: projectAuthHeaders(project, {}),
+  });
+  if (!res.ok) throw await fileListError(res);
+  const payload = await res.json();
+  return {
+    assets: Array.isArray(payload?.assets) ? payload.assets : [],
+    hasMore: !!payload?.hasMore,
+    cursor: String(payload?.cursor || ''),
+    kind: payload?.kind === 'video' ? 'video' : 'image',
+  };
+}
+
 function isEmbeddedVideo(value = '') {
   return /^data:video\/(?:mp4|webm|ogg|x-m4v)(?:;[^,]*)?,/i.test(String(value || '').trim());
 }
