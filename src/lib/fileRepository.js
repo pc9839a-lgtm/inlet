@@ -76,6 +76,34 @@ export async function listProjectAssets(page = {}, authUser = null, { kind = 'im
   };
 }
 
+async function mediaMutationError(res) {
+  const text = await res.text().catch(() => '');
+  let message = text || `미디어 삭제에 실패했습니다: ${res.status}`;
+  let details = null;
+  try {
+    details = JSON.parse(text);
+    message = details.message || details.error || message;
+  } catch {
+    // Plain text error response.
+  }
+  return new ApiError(message, res.status, details);
+}
+
+export async function deleteProjectAsset(page = {}, authUser = null, key = '', { allowRevisionReferences = false } = {}) {
+  const project = projectContext(page, authUser);
+  const res = await apiFetch('/api/files/delete', {
+    method: 'DELETE',
+    headers: projectAuthHeaders(project, { 'Content-Type': 'application/json' }),
+    body: JSON.stringify({
+      project,
+      key: String(key || ''),
+      allowRevisionReferences: allowRevisionReferences === true,
+    }),
+  });
+  if (!res.ok) throw await mediaMutationError(res);
+  return res.json();
+}
+
 function isEmbeddedVideo(value = '') {
   return /^data:video\/(?:mp4|webm|ogg|x-m4v)(?:;[^,]*)?,/i.test(String(value || '').trim());
 }
