@@ -2,6 +2,7 @@ import React from 'react';
 import { META } from '../config/blockMeta.jsx';
 import { createEditPanelSectionProps } from './createEditPanelSectionProps.js';
 import { EditPanelLayout } from './EditPanelLayout.jsx';
+import { EditorMediaLibraryProvider } from './EditorMediaLibraryContext.jsx';
 import { useEditPanelSelection } from './useEditPanelSelection.jsx';
 
 export default function EditPanel({
@@ -53,9 +54,11 @@ export default function EditPanel({
     : null;
 
   return (
-    <EditPanelLayout
-      {...sectionProps}
-      selectedBlockSettingsProps={selectedBlockSettingsProps}
-    />
+    <EditorMediaLibraryProvider page={page}>
+      <EditPanelLayout
+        {...sectionProps}
+        selectedBlockSettingsProps={selectedBlockSettingsProps}
+      />
+    </EditorMediaLibraryProvider>
   );
 }
