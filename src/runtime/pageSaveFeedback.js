@@ -14,25 +14,25 @@ function isAuthSessionSaveFailure(error = null) {
 
 export const SAVE_BLOCKED_FEEDBACK = {
   level: 'warning',
-  title: '저장할 수 없음',
-  message: '이 화면은 저장할 수 없습니다.',
+  title: '발행할 수 없음',
+  message: '이 화면은 발행할 수 없습니다.',
 };
 
 export const WRITE_BLOCKED_FEEDBACK = {
   level: 'warning',
-  title: '저장 권한 없음',
-  message: '이 화면을 저장할 권한이 없습니다.',
-  toast: '저장 권한이 없습니다.',
+  title: '발행 권한 없음',
+  message: '이 화면을 발행할 권한이 없습니다.',
+  toast: '발행 권한이 없습니다.',
 };
 
 export const STYLE_CONFIRM_FEEDBACK = {
-  title: '스타일을 저장할까요?',
-  message: '',
-  confirmLabel: '저장',
+  title: '스타일 변경을 발행할까요?',
+  message: '발행하면 현재 스타일이 공개 페이지에 반영됩니다.',
+  confirmLabel: '발행',
 };
 
-export const STYLE_SAVED_TOAST = '저장됨';
-export const PUBLIC_VERIFY_DELAYED_TOAST = '서버에는 저장됐지만 공개 반영 확인이 지연되고 있습니다. 임시 복구본을 유지합니다.';
+export const STYLE_SAVED_TOAST = '발행됨';
+export const PUBLIC_VERIFY_DELAYED_TOAST = '서버 발행은 완료됐지만 공개 반영 확인이 지연되고 있습니다. 임시 복구본을 유지합니다.';
 
 export function pageSavePublicVerificationPending(result = null) {
   return result?.mode !== 'local' && result?.publicVerification?.pending === true;
@@ -48,8 +48,8 @@ export function pageSaveErrorFeedback(error, handled = false, recovery = { saved
   if (recovery?.saved === false) {
     return {
       level: 'error',
-      title: handled ? '저장 충돌 · 임시 보관 실패' : '저장 실패 · 임시 보관 실패',
-      message: recovery?.message || '현재 작업을 브라우저에 임시 보관하지 못했습니다. 이 화면을 닫지 말고 다시 저장해주세요.',
+      title: handled ? '발행 충돌 · 임시 보관 실패' : '발행 실패 · 임시 보관 실패',
+      message: recovery?.message || '현재 작업을 브라우저에 임시 보관하지 못했습니다. 이 화면을 닫지 말고 다시 발행해주세요.',
       toast: '임시 보관 실패 · 화면을 닫지 마세요',
     };
   }
@@ -58,16 +58,16 @@ export function pageSaveErrorFeedback(error, handled = false, recovery = { saved
     return {
       level: 'warning',
       title: '로그인이 만료되었습니다',
-      message: '작업은 자동 보관했습니다. 다시 로그인한 뒤 저장해주세요.',
-      toast: '로그인 만료 · 작업은 자동 보관됨',
+      message: '작업은 자동 임시보관했습니다. 다시 로그인한 뒤 발행해주세요.',
+      toast: '로그인 만료 · 작업은 자동 임시보관됨',
     };
   }
 
   if (handled) {
     return {
       level: 'warning',
-      title: '저장 내용이 겹쳤습니다',
-      message: '현재 작업은 자동 보관했습니다.',
+      title: '발행 내용이 겹쳤습니다',
+      message: '현재 작업은 자동 임시보관했습니다.',
       toast: '',
     };
   }
@@ -77,19 +77,19 @@ export function pageSaveErrorFeedback(error, handled = false, recovery = { saved
     const connectionIssue = failureKind === 'network' || failureKind === 'timeout';
     return {
       level: 'error',
-      title: '일시적 저장 실패',
+      title: '일시적 발행 실패',
       message: connectionIssue
-        ? '작업은 자동 보관했습니다. 인터넷 연결을 확인한 뒤 저장을 다시 눌러주세요.'
-        : '작업은 자동 보관했습니다. 잠시 후 저장을 다시 눌러주세요.',
-      toast: '저장 실패 · 다시 저장 가능',
+        ? '작업은 자동 임시보관했습니다. 인터넷 연결을 확인한 뒤 발행을 다시 눌러주세요.'
+        : '작업은 자동 임시보관했습니다. 잠시 후 발행을 다시 눌러주세요.',
+      toast: '발행 실패 · 다시 발행 가능',
     };
   }
 
   return {
     level: 'error',
-    title: '저장 실패',
-    message: '작업은 자동 보관했습니다. 다시 저장해주세요.',
-    toast: '저장 실패 · 작업은 자동 보관됨',
+    title: '발행 실패',
+    message: '작업은 자동 임시보관했습니다. 다시 발행해주세요.',
+    toast: '발행 실패 · 작업은 자동 임시보관됨',
   };
 }
 
@@ -100,8 +100,8 @@ export function pageSaveSuccessFeedback(result, scope = 'page') {
   if (pageSavePublicVerificationPending(result)) {
     return {
       level: 'warning',
-      title: '서버 저장됨 · 반영 확인 중',
-      message: `${target}는 서버에 기록됐습니다. 공개 페이지 반영 확인 전까지 임시 복구본을 유지합니다.`,
+      title: '발행됨 · 공개 반영 확인 중',
+      message: `${target} 발행은 서버에 기록됐습니다. 공개 페이지 반영 확인 전까지 임시 복구본을 유지합니다.`,
       toast: '',
     };
   }
@@ -109,15 +109,15 @@ export function pageSaveSuccessFeedback(result, scope = 'page') {
   if (pageSavePublicVerificationDelayed(result)) {
     return {
       level: 'warning',
-      title: '저장됨 · 공개 반영 확인 필요',
-      message: `${target}는 서버에 기록됐지만 공개 페이지의 최신 반영을 확인하지 못했습니다. 임시 복구본을 유지합니다. 다시 저장해주세요.`,
+      title: '발행됨 · 공개 반영 확인 필요',
+      message: `${target} 발행은 서버에 기록됐지만 공개 페이지의 최신 반영을 확인하지 못했습니다. 임시 복구본을 유지합니다. 다시 발행해주세요.`,
       toast: PUBLIC_VERIFY_DELAYED_TOAST,
     };
   }
 
   return {
     level: 'ok',
-    title: local ? '브라우저에 저장됨' : '저장됨',
+    title: local ? '브라우저에 임시저장됨' : '발행됨',
     message: '',
     toast: '',
   };
