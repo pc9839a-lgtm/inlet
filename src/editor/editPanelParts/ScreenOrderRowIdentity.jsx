@@ -26,12 +26,20 @@ export function ScreenOrderRowIdentity({ block, meta, open, onDragStart, onDragE
         <GripVertical size={16} />
       </div>
 
-      <div className="screen-order-v2-title-wrap" role="button" tabIndex={0} aria-expanded={open} onClick={selectTitle} onKeyDown={onSelectRowByKey}>
+      <div
+        className="screen-order-v2-title-wrap"
+        role="button"
+        tabIndex={0}
+        aria-pressed={open}
+        aria-label={`${meta.label} 설정 선택`}
+        onClick={selectTitle}
+        onKeyDown={onSelectRowByKey}
+      >
         <span className="screen-order-v2-type-icon" aria-hidden="true">
           <Icon size={16} />
         </span>
         <strong>{meta.label}</strong>
-        <span className={`screen-order-v2-chevron${open ? ' is-open' : ''}`} aria-hidden="true">
+        <span className="screen-order-v2-chevron" aria-hidden="true">
           <ChevronRight size={15} />
         </span>
       </div>
