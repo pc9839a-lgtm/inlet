@@ -1,18 +1,7 @@
 import React from 'react';
-import { getAddableBlocksByCategory } from './addBlockCatalog.js';
 import { AddBlockOption } from './AddBlockOption.jsx';
 
-function normalizeSearch(value) {
-  return String(value || '').trim().toLocaleLowerCase().replace(/\s+/g, '');
-}
-
-export function AddBlockGroup({ category, label, onAdd, query = '' }) {
-  const normalizedQuery = normalizeSearch(query);
-  const items = getAddableBlocksByCategory(category).filter(([type, meta]) => {
-    if (!normalizedQuery) return true;
-    const haystack = normalizeSearch([type, meta?.label, meta?.badge, label].filter(Boolean).join(' '));
-    return haystack.includes(normalizedQuery);
-  });
+export function AddBlockGroup({ label, items = [], onAdd }) {
   if (!items.length) return null;
 
   return (
