@@ -1,4 +1,5 @@
 ﻿import React from 'react';
+import './FixedBlocksSection.css';
 import { createFixedBlockDescriptors } from './fixedBlockDescriptors.js';
 import { FixedBlockCard } from './FixedBlockCard.jsx';
 
