@@ -387,7 +387,12 @@ function createApiMock(client) {
           revision: Number(state.currentPage.revision || 0) + 1,
           updatedAt: `2026-07-31T00:${String(state.saveCount).padStart(2, '0')}:00.000Z`,
         };
-        await fulfill(requestId, 200, { ok: true, page: state.currentPage });
+        await fulfill(requestId, 200, {
+          ok: true,
+          page: state.currentPage,
+          saveMode: body.saveMode || url.searchParams.get('saveMode') || '',
+          saveRequestId: body.saveRequestId || '',
+        });
         return;
       }
     }
