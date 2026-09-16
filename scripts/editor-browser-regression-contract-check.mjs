@@ -16,6 +16,10 @@ const qaAllSource = await readFile('scripts/qa-all.mjs', 'utf8');
 const packageJson = JSON.parse(await readFile('package.json', 'utf8'));
 const panelHeaderSource = await readFile('src/builder/PanelHeader.jsx', 'utf8');
 const editHistorySource = await readFile('src/runtime/pageEditHistory.js', 'utf8');
+const addBlockPanelSource = await readFile('src/editor/editPanelParts/AddBlockPanel.jsx', 'utf8');
+const addBlockGridSource = await readFile('src/editor/editPanelParts/AddBlockGroupGrid.jsx', 'utf8');
+const addBlockOptionSource = await readFile('src/editor/editPanelParts/AddBlockOption.jsx', 'utf8');
+const addBlockDockCssSource = await readFile('src/styles/editor-widget-add-dock.css', 'utf8');
 
 assert(packageJson.scripts?.['browser:editor:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-browser-regression-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-image-library-browser-check.mjs', 'browser:editor:qa must run the authenticated editor regression and project image-library E2E');
 assert(packageJson.scripts?.['browser:editor:image-library:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-image-library-browser-check.mjs', 'browser:editor:image-library:qa script is missing');
@@ -55,6 +59,13 @@ assert(imageLibraryBrowserSource.includes("savedImageBlock?.s?.image === selecte
 assert(imageLibraryBrowserSource.includes("imageDownloadCount >= 1") && imageLibraryBrowserSource.includes("unexpectedApis.length === 0") && imageLibraryBrowserSource.includes("browserErrors.length === 0"), 'image-library browser QA must verify image readback and fail on unexpected runtime errors');
 assert(!imageLibraryBrowserSource.includes('pagero.kr/api/auth/login') && !imageLibraryBrowserSource.includes('productionPassword'), 'image-library browser QA must not use production credentials or production auth endpoints');
 
+assert(addBlockPanelSource.includes("const RECENT_BLOCKS_KEY = 'pagero.editor.recent-blocks.v1'") && addBlockPanelSource.includes('const MAX_RECENT_BLOCKS = 5'), 'block add picker must keep a bounded browser-local recent list');
+assert(addBlockPanelSource.includes('window.localStorage.setItem(RECENT_BLOCKS_KEY') && addBlockPanelSource.includes("<b>최근 사용</b>"), 'block add picker must persist and expose recent blocks without changing page data');
+assert(addBlockPanelSource.includes('aria-label="위젯 카테고리"') && addBlockPanelSource.includes("setCategory('all')"), 'block add picker must expose category shortcuts and reset to all for global search');
+assert(addBlockGridSource.includes("category === 'all' || categoryKey === category") && addBlockGridSource.includes('조건에 맞는 위젯이 없습니다.'), 'block add grid must filter categories and show a clear empty state');
+assert(addBlockOptionSource.includes("meta.preset || '', type"), 'block add options must preserve the catalog type for recent-block history');
+assert(addBlockDockCssSource.includes('.widget-category-filter button') && addBlockDockCssSource.includes('min-height: 44px !important;'), 'block add picker mobile actions must keep 44px touch targets');
+
 assert(panelHeaderSource.includes('undoPageEdit') && panelHeaderSource.includes('redoPageEdit') && panelHeaderSource.includes('Ctrl/Cmd+Z'), 'editor header must expose undo/redo controls and keyboard shortcuts');
 assert(editHistorySource.includes('const MAX_HISTORY = 50') && editHistorySource.includes('future = []'), 'editor history must cap snapshots and invalidate redo after fresh edits');
 
@@ -72,4 +83,5 @@ console.log(JSON.stringify({
   revisionDraftRestore: true,
   draftPublishSemantics: true,
   imageLibraryBrowserE2E: true,
+  blockAddPicker: ['search', 'category-filter', 'recent-5', 'empty-state', 'mobile-44px'],
 }, null, 2));
