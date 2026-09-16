@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 
 await import('./page-edit-history-quality-check.mjs');
+await import('./page-revision-restore-quality-check.mjs');
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -53,4 +54,5 @@ console.log(JSON.stringify({
   activeEditorDom: 'EditPanel/ScreenOrderRow',
   chromeCdpCompatibility: true,
   editHistory: ['undo', 'redo', '50-snapshots', 'page-isolation'],
+  revisionDraftRestore: true,
 }, null, 2));
