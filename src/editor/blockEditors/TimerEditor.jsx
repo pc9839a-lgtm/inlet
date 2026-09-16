@@ -1,6 +1,7 @@
 import { EditorTabs, ToggleRow } from '../ui/index.js';
 import { TimerContentSection, TimerDesignSection, safeTimerEffect, safeTimerVariant } from './TimerBasicSection.jsx';
 import './TimerEditor.css';
+import './TimerVariantOptions.css';
 
 function TimerBottomSection({ s, page, updateBlock }) {
   const bottomBlock = page?.blocks?.find((block) => block?.type === 'bottombar');
