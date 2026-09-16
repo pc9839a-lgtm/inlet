@@ -135,8 +135,8 @@ for (const sample of [
 {
   const noDetailDuplicate = Object.assign(new Error('Request failed'), { status: 409 });
   const noDetailRate = Object.assign(new Error('Request failed'), { status: 429 });
-  assert(leadCaptureServerErrorMessage(noDetailDuplicate) === 'Request failed', '409 fallback should retain a usable API message when present');
-  assert(leadCaptureServerErrorMessage(noDetailRate) === 'Request failed', '429 fallback should retain a usable API message when present');
+  assert(leadCaptureServerErrorMessage(noDetailDuplicate) === '이미 접수된 연락처입니다.', '409 without structured details must use the canonical duplicate fallback');
+  assert(leadCaptureServerErrorMessage(noDetailRate) === '접수가 너무 빠르게 반복되었습니다. 잠시 후 다시 시도해주세요.', '429 without structured details must use the canonical rate-limit fallback');
 }
 
 const source = await readFile('src/runtime/leadCaptureActions.js', 'utf8');
