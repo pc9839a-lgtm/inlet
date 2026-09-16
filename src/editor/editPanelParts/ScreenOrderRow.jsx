@@ -55,6 +55,10 @@ export function ScreenOrderRow({
           onRemove={onRemove}
         />
       </div>
+
+      {open && (
+        <span hidden data-screen-order-selected-state="true" />
+      )}
     </div>
   );
 }
