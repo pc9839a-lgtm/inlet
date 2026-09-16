@@ -15,6 +15,11 @@ export async function onRequest({ request }) {
   }
 
   let html = await sourceResponse.text();
+  html = html.replace(
+    "window.location.replace('/app');",
+    "if (location.pathname !== '/landing-preview') window.location.replace('/app');",
+  );
+
   const previewCss = `
 <style id="pagero-conversion-preview-style">
   .pagero-exact-home.pagero-conversion-preview {
@@ -187,7 +192,10 @@ export async function onRequest({ request }) {
 
   html = html.replace('</head>', previewCss + '</head>');
   html = html.replace('</body>', previewScript + '</body>');
-  html = html.replace('<link rel="canonical" href="https://pagero.kr/" />', '<meta name="robots" content="noindex, nofollow, noarchive" /><link rel="canonical" href="https://pagero.kr/" />');
+  html = html.replace(
+    '<meta name="robots" content="index, follow, max-image-preview:large" />',
+    '<meta name="robots" content="noindex, nofollow, noarchive" />',
+  );
 
   return new Response(html, {
     status: 200,
