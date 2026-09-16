@@ -79,11 +79,11 @@ try {
     authError = error;
   }
   assert(calls === 1 && authError instanceof ApiError && authError.status === 401, 'stale sessions must fail once without automatic retry');
-  assert(authError.details?.code === 'AUTH_SESSION_INVALID', 'stale session error code must remain available to save UX');
+  assert(authError.details?.code === 'AUTH_SESSION_INVALID', 'stale session error code must remain available to publish UX');
   const authFeedback = pageSaveErrorFeedback(authError, false, { saved: true, message: '' });
-  assert(authFeedback.title === '로그인이 만료되었습니다', 'stale session save feedback must name the login expiry');
-  assert(authFeedback.message.includes('자동 보관') && authFeedback.message.includes('다시 로그인'), 'stale session feedback must preserve the edit and give the next action');
-  assert(authFeedback.toast === '로그인 만료 · 작업은 자동 보관됨', 'stale session toast must be concise and recovery-safe');
+  assert(authFeedback.title === '로그인이 만료되었습니다', 'stale session publish feedback must name the login expiry');
+  assert(authFeedback.message.includes('자동 임시보관') && authFeedback.message.includes('다시 로그인'), 'stale session feedback must preserve the edit and give the next action');
+  assert(authFeedback.toast === '로그인 만료 · 작업은 자동 임시보관됨', 'stale session toast must be concise and recovery-safe');
 
   calls = 0;
   globalThis.fetch = async () => {
@@ -98,12 +98,12 @@ try {
   }
   assert(calls === 2, 'network failures must receive exactly one automatic retry');
   assert(networkError instanceof ApiError && networkError.status === 0, 'network failures must become a stable ApiError contract');
-  assert(isRetryablePageSaveFailure(networkError) && pageSaveFailureKind(networkError) === 'network', 'network failure must be explicitly marked retryable for save UX');
+  assert(isRetryablePageSaveFailure(networkError) && pageSaveFailureKind(networkError) === 'network', 'network failure must be explicitly marked retryable for publish UX');
   assert(networkError.details?.attempt === 2 && networkError.details?.maxAttempts === 2, 'final network failure must expose bounded attempt metadata');
 
   const networkFeedback = pageSaveErrorFeedback(networkError, false, { saved: true, message: '' });
-  assert(networkFeedback.title === '일시적 저장 실패' && networkFeedback.toast === '저장 실패 · 다시 저장 가능', 'retryable failures must tell the user the edit is recoverable and can be saved again');
-  assert(networkFeedback.message.includes('자동 보관') && networkFeedback.message.includes('인터넷 연결'), 'network save feedback must preserve the draft and give a compact connection action');
+  assert(networkFeedback.title === '일시적 발행 실패' && networkFeedback.toast === '발행 실패 · 다시 발행 가능', 'retryable failures must tell the user the edit is recoverable and can be published again');
+  assert(networkFeedback.message.includes('자동 임시보관') && networkFeedback.message.includes('인터넷 연결'), 'network publish feedback must preserve the draft and give a compact connection action');
 
   calls = 0;
   globalThis.fetch = async () => {
@@ -128,8 +128,8 @@ const feedbackSource = await readFile('src/runtime/pageSaveFeedback.js', 'utf8')
 assert(apiClientSource.includes('createPageSaveAbortControl') && apiClientSource.includes('controller.abort()') && apiClientSource.includes('PAGE_SAVE_TIMEOUT_MS'), 'page save requests must be actively aborted after the bounded timeout instead of using Promise.race');
 assert(apiClientSource.includes('for (let attempt = 1; attempt <= maxAttempts; attempt += 1)') && apiClientSource.includes('await sleep(PAGE_SAVE_RETRY_DELAY_MS)'), 'page save transport retry must be finite and delayed');
 assert(repositorySource.includes('saveRequestId') && repositorySource.includes('pageSaveRequestId(identity, expectedRevision)'), 'automatic transport retry must reuse the existing deterministic save request identity');
-assert(feedbackSource.includes("toast: '저장 실패 · 다시 저장 가능'") && feedbackSource.includes('isRetryablePageSaveFailure(error)'), 'save UX must distinguish temporary transport failure from permanent save failure');
-assert(feedbackSource.includes("title: '로그인이 만료되었습니다'") && feedbackSource.includes("toast: '로그인 만료 · 작업은 자동 보관됨'"), 'save UX must distinguish stale auth from ordinary save failure');
+assert(feedbackSource.includes("toast: '발행 실패 · 다시 발행 가능'") && feedbackSource.includes('isRetryablePageSaveFailure(error)'), 'publish UX must distinguish temporary transport failure from permanent publish failure');
+assert(feedbackSource.includes("title: '로그인이 만료되었습니다'") && feedbackSource.includes("toast: '로그인 만료 · 작업은 자동 임시보관됨'"), 'publish UX must distinguish stale auth from ordinary publish failure');
 
 console.log(JSON.stringify({
   ok: true,
@@ -142,4 +142,5 @@ console.log(JSON.stringify({
   nonPageBehaviorPreserved: true,
   recoveryFeedback: true,
   staleSessionFeedback: true,
+  draftPublishSemantics: true,
 }, null, 2));
