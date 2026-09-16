@@ -1,5 +1,6 @@
 import { isServerPageMode } from '../config/runtimeConfig.js';
 import {
+  canReadTab,
   isClientAdminMode,
   isManagerMode,
   normalizeOwnershipSettings,
@@ -35,6 +36,7 @@ export default function SettingsPanel({
   const clientAdminMode = isClientAdminMode(accessMode);
   const managerMode = isManagerMode(accessMode);
   const canManageProjectUsers = !managerMode;
+  const canReadMedia = canReadTab(accessMode, page, authUser, 'edit');
   const sections = useSettingsPanelSections();
   const drafts = useSettingsDrafts({
     onCheckUrl,
@@ -65,6 +67,7 @@ export default function SettingsPanel({
       authUser={authUser}
       canDuplicatePage={canDuplicatePage}
       canManageProjectUsers={canManageProjectUsers}
+      canReadMedia={canReadMedia}
       clientAdminMode={clientAdminMode}
       duplicateSettings={duplicateSettings}
       drafts={drafts}
