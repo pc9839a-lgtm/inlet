@@ -151,7 +151,7 @@ export default function EditWorkbench({
               <ScreenOrderList {...screenOrderListProps} />
             </section>
 
-            <section className="edit-workbench-settings-pane screen-order-v2-settings-panel">
+            <section className="edit-workbench-settings-pane">
               {settingsTarget === 'block' && selectedBlock ? (
                 <div className="edit-workbench-selected-card">
                   <div className="edit-workbench-selected-head">
