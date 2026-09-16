@@ -6,6 +6,7 @@ import {
   FileText,
   Gift,
   Globe2,
+  History,
   RotateCcw,
   Search,
   Target,
@@ -35,6 +36,7 @@ const ADVANCED_NAV = [
   ['seo', 'SEO 설정', Search],
   ['tracking', '추적 코드', Code2],
   ['conversion', '전환 설정', Target],
+  ['history', '버전 기록', History],
   ['duplicate', '페이지 복제', Copy],
   ['reset', '초기화', RotateCcw],
 ];
@@ -109,6 +111,7 @@ export default function SettingsPanelBody({
   ownership,
   page,
   sections,
+  setPage,
   transferRequest,
   updateIntegrations,
 }) {
@@ -208,6 +211,7 @@ export default function SettingsPanelBody({
 
             <SettingsAdvancedAndReset
               activeSection={selectedSection}
+              authUser={authUser}
               canDuplicatePage={canDuplicatePage}
               clientAdminMode={clientAdminMode}
               duplicateSettings={duplicateSettings}
@@ -216,6 +220,7 @@ export default function SettingsPanelBody({
               onReset={onReset}
               page={page}
               sections={visibleSections}
+              setPage={setPage}
               updateIntegrations={updateIntegrations}
             />
           </div>
