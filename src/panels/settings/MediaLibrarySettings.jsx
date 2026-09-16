@@ -211,7 +211,7 @@ export default function MediaLibrarySettings({ page, authUser }) {
 
   const copyAssetUrl = async (asset) => {
     const url = absoluteAssetUrl(asset.downloadUrl);
-    if (!url || !navigator?.clipboard?.writeText) {
+    if (!url || typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
       notify('이 브라우저에서는 주소 복사를 지원하지 않습니다.', 'error');
       return;
     }
