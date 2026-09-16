@@ -41,6 +41,34 @@ if (NativeWebSocket?.prototype?.send) {
         payload?.method === 'Runtime.evaluate'
         && typeof payload?.params?.expression === 'string'
         && payload.params.expression.includes('.screen-order-v2-list #editor-block-editor-image .screen-order-v2-head')
+        && payload.params.expression.includes('element.click()')
+      ) {
+        payload.params.expression = `new Promise((resolve) => {
+          const deadline = Date.now() + 3000;
+          const clickWhenReady = () => {
+            const element = document.querySelector('#editor-block-editor-image .screen-order-v2-head');
+            if (element) {
+              element.scrollIntoView({ block: 'center', inline: 'center' });
+              element.click();
+              resolve(true);
+              return;
+            }
+            if (Date.now() >= deadline) {
+              resolve(false);
+              return;
+            }
+            setTimeout(clickWhenReady, 50);
+          };
+          clickWhenReady();
+        })`;
+        payload.params.awaitPromise = true;
+        return nativeSend.call(this, JSON.stringify(payload));
+      }
+
+      if (
+        payload?.method === 'Runtime.evaluate'
+        && typeof payload?.params?.expression === 'string'
+        && payload.params.expression.includes('.screen-order-v2-list #editor-block-editor-image .screen-order-v2-head')
       ) {
         payload.params.expression = payload.params.expression.replaceAll(
           '.screen-order-v2-list #editor-block-editor-image .screen-order-v2-head',
