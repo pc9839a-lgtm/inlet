@@ -36,6 +36,18 @@ if (NativeWebSocket?.prototype?.send) {
         );
         return nativeSend.call(this, JSON.stringify(payload));
       }
+
+      if (
+        payload?.method === 'Runtime.evaluate'
+        && typeof payload?.params?.expression === 'string'
+        && payload.params.expression.includes('.screen-order-v2-list #editor-block-editor-image .screen-order-v2-head')
+      ) {
+        payload.params.expression = payload.params.expression.replaceAll(
+          '.screen-order-v2-list #editor-block-editor-image .screen-order-v2-head',
+          '#editor-block-editor-image .screen-order-v2-head',
+        );
+        return nativeSend.call(this, JSON.stringify(payload));
+      }
     } catch {
       // Non-JSON websocket payloads are forwarded unchanged.
     }
