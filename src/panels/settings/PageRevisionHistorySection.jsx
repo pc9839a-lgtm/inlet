@@ -98,7 +98,7 @@ export default function PageRevisionHistorySection({ page, authUser, setPage }) 
             </div>
             <button
               type="button"
-              className="settings-secondary-button compact"
+              className="ghost-btn"
               onClick={() => restoreToEditor(revision)}
               disabled={current || !revision?.page}
             >
