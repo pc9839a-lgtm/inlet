@@ -147,6 +147,8 @@ const [
   imagePickerSource,
   imagePickerCssSource,
   imagePickerHookSource,
+  youtubeEditorSource,
+  videoPickerSource,
   qaAllSource,
   packageSource,
 ] = await Promise.all([
@@ -164,6 +166,8 @@ const [
   readFile('src/editor/ImageLibraryPicker.jsx', 'utf8'),
   readFile('src/editor/ImageLibraryPicker.css', 'utf8'),
   readFile('src/editor/useImageInputPicker.js', 'utf8'),
+  readFile('src/editor/blockEditors/YouTubeEditor.jsx', 'utf8'),
+  readFile('src/editor/VideoLibraryPicker.jsx', 'utf8'),
   readFile('scripts/qa-all.mjs', 'utf8'),
   readFile('package.json', 'utf8'),
 ]);
@@ -202,7 +206,7 @@ assert(mediaSource.includes("deleteError?.details?.code || '') === 'ASSET_IN_USE
 assert(mediaCssSource.includes('.media-library-delete') && mediaCssSource.includes('@media (max-width: 720px)') && mediaCssSource.includes('min-height: 44px'), 'media delete controls must retain mobile touch targets');
 
 assert(workspaceActiveSource.includes('authUser={settingsPanelProps?.authUser || null}'), 'workspace must pass the current live auth user into the edit panel');
-assert(editPanelSource.includes('<EditorMediaLibraryProvider page={page} authUser={authUser}>'), 'edit panel must scope image reuse to the active page and live auth state');
+assert(editPanelSource.includes('<EditorMediaLibraryProvider page={page} authUser={authUser}>'), 'edit panel must scope media reuse to the active page and live auth state');
 assert(editorMediaContextSource.includes('EditorMediaLibraryProvider({ page, authUser = null, children })'), 'editor media context must accept the live authenticated user');
 assert(!editorMediaContextSource.includes('AUTH_KEY') && !editorMediaContextSource.includes('load('), 'editor media context must not re-read authentication from local storage');
 assert(editorMediaContextSource.includes('EditorMediaLibraryContext.Provider'), 'editor media context provider missing');
@@ -223,13 +227,28 @@ assert(imagePickerHookSource.includes('selectExistingImage'), 'ImageInput picker
 assert(imagePickerHookSource.includes('siblingFingerprints.has(nextFingerprint)'), 'existing-image selection must keep gallery duplicate protection');
 assert(imagePickerHookSource.includes("label: '내 이미지에서 선택 완료'"), 'existing-image selection must provide success feedback');
 
-assert(imagePickerCssSource.includes('@media (max-width: 720px)') && imagePickerCssSource.includes('min-height: 44px'), 'image picker mobile actions must retain 44px touch targets');
+assert(youtubeEditorSource.includes('useEditorMediaLibrary()'), 'video editor must reuse the live editor media context');
+assert(youtubeEditorSource.includes('내 영상에서 선택') && youtubeEditorSource.includes('<VideoLibraryPicker'), 'video editor must expose the project video library action');
+assert(youtubeEditorSource.includes("createVideoCodeSettings(url, { fileName: asset?.fileName || '업로드 영상' })"), 'existing video selection must persist URL and file metadata through the canonical video settings helper');
+assert(youtubeEditorSource.includes('uploadMediaFile(file, page, authUser'), 'existing local video upload flow must remain intact');
+assert(youtubeEditorSource.includes('updateUrl(event.target.value)'), 'existing YouTube/direct URL input flow must remain intact');
+
+assert(videoPickerSource.includes("listProjectAssets(page, authUser, { kind: 'video', limit: 100 })"), 'video picker must request only project videos');
+assert(videoPickerSource.includes("kind: 'video', cursor, limit: 100"), 'video picker must preserve cursor pagination');
+assert(videoPickerSource.includes('type="search"') && videoPickerSource.includes('searchText(asset)'), 'video picker must support video search');
+assert(videoPickerSource.includes('normalizeAssetValue') && videoPickerSource.includes('url.origin === window.location.origin'), 'video picker must keep same-origin video references portable');
+assert(videoPickerSource.includes('<video') && videoPickerSource.includes('preload="metadata"') && videoPickerSource.includes('playsInline'), 'video picker must preview stored videos without autoplay');
+assert(videoPickerSource.includes('현재 영상') && videoPickerSource.includes('aria-pressed={selected}'), 'video picker must identify the current video');
+assert(!videoPickerSource.includes('deleteProjectAsset') && !videoPickerSource.includes('삭제'), 'video picker must remain non-destructive; deletion belongs in settings');
+
+assert(imagePickerCssSource.includes('.image-library-picker-thumb video') && imagePickerCssSource.includes('.video-library-action'), 'shared picker styling must support video previews and the video-library action');
+assert(imagePickerCssSource.includes('@media (max-width: 720px)') && imagePickerCssSource.includes('min-height: 44px'), 'media picker mobile actions must retain 44px touch targets');
 assert(packageJson.scripts?.['media:library:qa'] === 'node scripts/media-library-quality-check.mjs', 'media:library:qa package script missing');
 assert(qaAllSource.includes("['media:library:qa', ['scripts/media-library-quality-check.mjs']]"), 'release QA must include media library coverage');
 
 console.log(JSON.stringify({
   ok: true,
-  scope: 'project-media-library-image-reuse-and-safe-delete',
+  scope: 'project-media-library-image-video-reuse-and-safe-delete',
   projectIsolation: true,
   imageVideoSeparation: true,
   pagination: true,
@@ -243,6 +262,9 @@ console.log(JSON.stringify({
   searchAndFilters: true,
   imageVideoPreview: true,
   editorImageReuse: true,
+  editorVideoReuse: true,
+  localVideoUploadPreserved: true,
+  videoUrlInputPreserved: true,
   duplicateProtection: true,
   sameOriginPortability: true,
 }, null, 2));
