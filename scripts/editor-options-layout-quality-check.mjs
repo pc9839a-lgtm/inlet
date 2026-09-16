@@ -8,6 +8,8 @@ const pageOptions = await readFile('src/editor/editPanelParts/PageGlobalOptions.
 const pageOptionsList = await readFile('src/editor/editPanelParts/PageGlobalOptionsList.jsx', 'utf8');
 const pageOptionsProps = await readFile('src/editor/editPanelSectionProps/pageGlobalOptionsProps.js', 'utf8');
 const fixedBlocksProps = await readFile('src/editor/editPanelSectionProps/fixedBlocksProps.js', 'utf8');
+const fixedBlocks = await readFile('src/editor/editPanelParts/GlobalFixedBlocks.jsx', 'utf8');
+const fixedBlocksCss = await readFile('src/editor/editPanelParts/FixedBlocksSection.css', 'utf8');
 const pageOptionsCss = await readFile('src/editor/editPanelParts/PageGlobalOptions.css', 'utf8');
 const shareCard = await readFile('src/editor/editPanelParts/ShareOptionsCard.jsx', 'utf8');
 const shareCss = await readFile('src/editor/editPanelParts/ShareOptionsCard.css', 'utf8');
@@ -25,6 +27,9 @@ assert(fixedBlocksProps.includes('topNavBlock: selection.topNavBlock') && fixedB
 assert(sectionProps.includes('fixedBlocksProps: createFixedBlocksProps'), 'edit panel section props must expose fixed blocks separately');
 assert(editLayout.includes('<GlobalFixedBlocks {...fixedBlocksProps} />'), 'screen order mode must own the fixed block editor group');
 assert(editLayout.includes('aria-label="고정 영역"') && editLayout.includes('<h2>고정 영역</h2>'), 'fixed blocks must be clearly labeled outside page options');
+assert(fixedBlocks.includes("import './FixedBlocksSection.css';"), 'fixed block group must load its own styles after leaving page options');
+assert(fixedBlocksCss.includes('.screen-order-fixed-blocks .fixed-block-card') && fixedBlocksCss.includes('.screen-order-fixed-blocks .fixed-block-editor'), 'fixed block section must own card and editor layout');
+assert(fixedBlocksCss.includes('@media (max-width: 760px)') && fixedBlocksCss.includes('.fixed-block-copy em'), 'fixed block section must retain compact mobile behavior');
 assert(!shareCard.includes('<em>공개 페이지 공유 버튼</em>'), 'share option must not repeat an explanatory subtitle');
 assert(shareCss.includes('grid-template-columns: repeat(2, minmax(0, 1fr))'), 'mobile share position choices must use a readable 2x2 grid');
 assert(shareCss.includes('min-height: 42px'), 'mobile share position choices must keep large tap targets');
@@ -34,10 +39,11 @@ assert(editLayout.includes('페이지 옵션') && editLayout.includes('화면 �
 console.log(JSON.stringify({
   ok: true,
   scope: 'editor-options-layout',
-  checks: 15,
+  checks: 18,
   saveFlowTouched: false,
   globalOptionsSeparated: true,
   fixedBlocksMovedToScreenOrder: true,
+  fixedBlockStylesOwned: true,
   mobileOverflowGuard: true,
   largeMobileControls: true,
 }, null, 2));
