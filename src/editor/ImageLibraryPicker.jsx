@@ -47,7 +47,7 @@ export default function ImageLibraryPicker({
   const [cursor, setCursor] = useState('');
   const [hasMore, setHasMore] = useState(false);
 
-  const libraryKey = `${page?.projectId || page?.id || ''}:${page?.slug || ''}:${authUser?.ownerId || authUser?.email || ''}`;
+  const libraryKey = `${page?.projectId || page?.id || ''}:${page?.slug || ''}:${authUser?.ownerId || authUser?.email || ''}:${authUser?.session || ''}`;
 
   useEffect(() => {
     if (!open) return undefined;
@@ -115,8 +115,8 @@ export default function ImageLibraryPicker({
       notify('선택한 이미지 주소를 확인하지 못했습니다.', 'error');
       return;
     }
-    onSelect?.(value, asset);
-    onClose?.();
+    const accepted = onSelect?.(value, asset);
+    if (accepted !== false) onClose?.();
   };
 
   if (!open || typeof document === 'undefined') return null;
