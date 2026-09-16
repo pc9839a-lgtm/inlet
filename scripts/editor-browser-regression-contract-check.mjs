@@ -1,5 +1,7 @@
 import { readFile } from 'node:fs/promises';
 
+await import('./page-edit-history-quality-check.mjs');
+
 function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
@@ -9,6 +11,8 @@ const cdpCompatSource = await readFile('scripts/editor-browser-cdp-compat.mjs', 
 const workflowSource = await readFile('.github/workflows/qa.yml', 'utf8');
 const qaAllSource = await readFile('scripts/qa-all.mjs', 'utf8');
 const packageJson = JSON.parse(await readFile('package.json', 'utf8'));
+const panelHeaderSource = await readFile('src/builder/PanelHeader.jsx', 'utf8');
+const editHistorySource = await readFile('src/runtime/pageEditHistory.js', 'utf8');
 
 assert(packageJson.scripts?.['browser:editor:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-browser-regression-check.mjs', 'browser:editor:qa must preload the Chrome CDP compatibility adapter');
 assert(packageJson.scripts?.['browser:editor:contract:qa'] === 'node scripts/editor-browser-regression-contract-check.mjs', 'browser:editor:contract:qa script is missing');
@@ -36,6 +40,8 @@ assert(browserSource.includes("{ name: 'mobile-360', width: 360") && browserSour
 assert(browserSource.includes("mobile-operations-shell") && browserSource.includes("bodyScrollWidth <= viewport.width + 3"), 'mobile editor regression must reject overflow and verify operations mode');
 assert(browserSource.includes("unexpectedApis.length === 0") && browserSource.includes("browserErrors.length === 0"), 'browser QA must fail on unexpected API calls or browser exceptions');
 assert(!browserSource.includes('pagero.kr/api/auth/login') && !browserSource.includes('productionPassword'), 'browser QA must not use production credentials or production auth endpoints');
+assert(panelHeaderSource.includes('undoPageEdit') && panelHeaderSource.includes('redoPageEdit') && panelHeaderSource.includes('Ctrl/Cmd+Z'), 'editor header must expose undo/redo controls and keyboard shortcuts');
+assert(editHistorySource.includes('const MAX_HISTORY = 50') && editHistorySource.includes('future = []'), 'editor history must cap snapshots and invalidate redo after fresh edits');
 
 console.log(JSON.stringify({
   ok: true,
@@ -46,4 +52,5 @@ console.log(JSON.stringify({
   accountPageMock: true,
   activeEditorDom: 'EditPanel/ScreenOrderRow',
   chromeCdpCompatibility: true,
+  editHistory: ['undo', 'redo', '50-snapshots', 'page-isolation'],
 }, null, 2));
