@@ -1,4 +1,5 @@
 import React from 'react';
+import './SelectedBlockSettings.css';
 import { SelectedBlockSettingsBody } from './SelectedBlockSettingsBody.jsx';
 import { SelectedBlockSettingsHeader } from './SelectedBlockSettingsHeader.jsx';
 
