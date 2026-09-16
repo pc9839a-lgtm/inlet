@@ -4,6 +4,13 @@ import {
   projectImagesPrefix,
   projectMediaPrefix,
 } from '../functions/api/files/_files.js';
+import {
+  assetReferenceNeedles,
+  findProjectAssetUsage,
+  pageJsonReferencesAssetKey,
+  projectAssetKind,
+} from '../functions/api/files/_assetSafety.js';
+import { pageReferencesAssetKey } from '../src/lib/mediaAssetUsage.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -81,10 +88,56 @@ assert(videos.assets[0].fileName === '소개영상.mp4', 'uploaded video must pr
 assert(videos.assets[0].contentType === 'video/mp4', 'video content type must be exposed for preview');
 assert(bucket.calls.every((call) => call.include?.includes('httpMetadata') && call.include?.includes('customMetadata')), 'asset list must request preview and display metadata from R2');
 
+const activeKey = 'project-a/images/hash-a.jpg';
+const encodedActiveKey = encodeURIComponent(activeKey);
+assert(projectAssetKind({ projectId: 'project-a' }, activeKey) === 'image', 'project image delete scope must resolve image keys');
+assert(projectAssetKind({ projectId: 'project-a' }, 'project-a/media/2026-09-12/demo.mp4') === 'video', 'project media delete scope must resolve video keys');
+let crossProjectRejected = false;
+try {
+  projectAssetKind({ projectId: 'project-a' }, 'project-b/images/private.png');
+} catch (error) {
+  crossProjectRejected = error?.code === 'ASSET_PROJECT_SCOPE';
+}
+assert(crossProjectRejected, 'asset deletion must reject cross-project keys');
+assert(assetReferenceNeedles(activeKey).includes(encodedActiveKey), 'asset reference matching must include URL-encoded R2 keys');
+assert(pageJsonReferencesAssetKey(JSON.stringify({ image: `/api/files/download?key=${encodedActiveKey}` }), activeKey), 'server usage matching must detect encoded download URLs');
+assert(pageReferencesAssetKey({ blocks: [{ s: { image: `/api/files/download?key=${encodedActiveKey}` } }] }, activeKey), 'client usage matching must detect the current draft image');
+
+const preparedSql = [];
+const fakeDb = {
+  prepare(sql) {
+    preparedSql.push(sql);
+    return {
+      bind() {
+        return {
+          async all() {
+            if (sql.includes('FROM page_revisions')) {
+              return {
+                results: [{
+                  page_id: 'page-1',
+                  revision: 4,
+                  page_json: JSON.stringify({ id: 'page-1', slug: 'history-page', title: '과거 페이지' }),
+                }],
+              };
+            }
+            return { results: [{ id: 'page-1', slug: 'live-page', title: '현재 페이지' }] };
+          },
+        };
+      },
+    };
+  },
+};
+const usage = await findProjectAssetUsage(fakeDb, { projectId: 'project-a' }, activeKey);
+assert(usage.pages[0]?.title === '현재 페이지', 'safe delete usage lookup must return active page references');
+assert(usage.revisions[0]?.revision === 4 && usage.revisions[0]?.title === '과거 페이지', 'safe delete usage lookup must return revision references');
+assert(preparedSql.some((sql) => sql.includes('FROM pages')) && preparedSql.some((sql) => sql.includes('FROM page_revisions')), 'safe delete must check both live pages and revision history');
+
 const [
-  routeSource,
+  listRouteSource,
+  deleteRouteSource,
   repositorySource,
-  settingsSource,
+  settingsPanelSource,
+  settingsBodySource,
   mediaSource,
   mediaCssSource,
   workspaceActiveSource,
@@ -98,7 +151,9 @@ const [
   packageSource,
 ] = await Promise.all([
   readFile('functions/api/files/list.js', 'utf8'),
+  readFile('functions/api/files/delete.js', 'utf8'),
   readFile('src/lib/fileRepository.js', 'utf8'),
+  readFile('src/panels/SettingsPanel.jsx', 'utf8'),
   readFile('src/panels/settings/SettingsPanelBody.jsx', 'utf8'),
   readFile('src/panels/settings/MediaLibrarySettings.jsx', 'utf8'),
   readFile('src/panels/settings/MediaLibrarySettings.css', 'utf8'),
@@ -114,25 +169,37 @@ const [
 ]);
 const packageJson = JSON.parse(packageSource);
 
-assert(routeSource.includes("authorizeProject(request, env, project, { tab: 'edit' })"), 'media asset listing must require edit-read project access');
-assert(!routeSource.includes('publicWrite: true'), 'media asset listing must never be publicly readable');
-assert(routeSource.includes('listProjectAssetObjects') && routeSource.includes('publicDownloadUrl'), 'media list endpoint must only expose project-scoped R2 assets through the existing download route');
+assert(listRouteSource.includes("authorizeProject(request, env, project, { tab: 'edit' })"), 'media asset listing must require edit-read project access');
+assert(!listRouteSource.includes('publicWrite: true'), 'media asset listing must never be publicly readable');
+assert(listRouteSource.includes('listProjectAssetObjects') && listRouteSource.includes('publicDownloadUrl'), 'media list endpoint must only expose project-scoped R2 assets through the existing download route');
+
+assert(deleteRouteSource.includes("request.method !== 'DELETE'"), 'media delete route must only accept DELETE');
+assert(deleteRouteSource.includes("write: true") && deleteRouteSource.includes("tab: 'edit'") && deleteRouteSource.includes('requireSignedSession: true'), 'media deletion must require signed edit-write access');
+assert(deleteRouteSource.includes('projectAssetKind(project, key)'), 'media deletion must constrain keys to the current project image/video prefixes');
+assert(deleteRouteSource.includes('findProjectAssetUsage(db, project, key)'), 'media deletion must check project page usage before R2 deletion');
+assert(deleteRouteSource.includes("code: 'ASSET_IN_USE'") && deleteRouteSource.includes('usage.pages.length'), 'active page references must hard-block media deletion');
+assert(deleteRouteSource.includes("code: 'ASSET_REVISION_REFERENCED'") && deleteRouteSource.includes('allowRevisionReferences'), 'revision-only references must require an explicit second confirmation');
+assert(deleteRouteSource.includes('await bucket.delete(key)'), 'safe deletion must remove the R2 object only after usage checks');
 
 assert(repositorySource.includes("/api/files/list?${params.toString()}") && repositorySource.includes('projectContext(page, authUser)'), 'client media listing must preserve project identity');
-assert(repositorySource.includes('projectAuthHeaders(project, {})'), 'client media listing must send the existing authenticated project headers');
-assert(repositorySource.includes("params.set('kind', kind === 'video' ? 'video' : 'image')"), 'client must constrain media list kinds');
+assert(repositorySource.includes("apiFetch('/api/files/delete'") && repositorySource.includes("method: 'DELETE'"), 'client media deletion must use the authenticated delete route');
+assert(repositorySource.includes('projectAuthHeaders(project') && repositorySource.includes('allowRevisionReferences'), 'client deletion must preserve signed project identity and revision override intent');
 
-assert(settingsSource.includes("['media', '미디어 보관함', Images]"), 'settings navigation must expose the media library');
-assert(settingsSource.includes("id === 'media' && !canReadMedia"), 'settings navigation must hide media library without edit access');
-assert(settingsSource.includes('<MediaLibrarySettings page={page} authUser={authUser} />'), 'settings must bind media library to the active page and authenticated user');
+assert(settingsPanelSource.includes('canWriteTab') && settingsPanelSource.includes("canWriteTab(accessMode, page, authUser, 'edit')"), 'media delete visibility must follow edit-write permission');
+assert(settingsBodySource.includes('canDelete={canDeleteMedia}'), 'settings must pass media deletion permission into the library');
+assert(settingsBodySource.includes("['media', '미디어 보관함', Images]"), 'settings navigation must expose the media library');
+assert(settingsBodySource.includes("id === 'media' && !canReadMedia"), 'settings navigation must hide media library without edit access');
 
 assert(mediaSource.includes("['all', `전체 ${imageCount + videoCount}`]") && mediaSource.includes("['image', `이미지 ${imageCount}`]") && mediaSource.includes("['video', `영상 ${videoCount}`]"), 'media library must provide all/image/video filters');
 assert(mediaSource.includes('type="search"') && mediaSource.includes('assetSearchText'), 'media library must provide local asset search');
 assert(mediaSource.includes("loadMore('image')") && mediaSource.includes("loadMore('video')"), 'media library must expose pagination for both asset kinds');
 assert(mediaSource.includes('<img className="media-library-preview"') && mediaSource.includes('<video'), 'media library must preview both images and videos');
 assert(mediaSource.includes('navigator.clipboard.writeText'), 'media library must let users copy an existing asset URL');
-assert(!mediaSource.includes('deleteProjectAsset') && !mediaSource.includes('미디어 삭제'), 'media library must remain non-destructive');
-assert(mediaCssSource.includes('@media (max-width: 720px)') && mediaCssSource.includes('min-height: 44px'), 'media library mobile actions must retain 44px touch targets');
+assert(mediaSource.includes('pageReferencesAssetKey(page, asset.key)') && mediaSource.includes('현재 페이지에서 사용 중'), 'current draft usage must be visible and block the delete button');
+assert(mediaSource.includes('deleteProjectAsset(page, authUser, asset.key)') && mediaSource.includes('window.confirm'), 'media deletion must require a user confirmation before destructive action');
+assert(mediaSource.includes("code === 'ASSET_REVISION_REFERENCED'") && mediaSource.includes('allowRevisionReferences: true'), 'revision-only deletion must require a second explicit confirmation');
+assert(mediaSource.includes("deleteError?.details?.code || '') === 'ASSET_IN_USE'"), 'server-detected cross-page usage must surface as a blocked delete');
+assert(mediaCssSource.includes('.media-library-delete') && mediaCssSource.includes('@media (max-width: 720px)') && mediaCssSource.includes('min-height: 44px'), 'media delete controls must retain mobile touch targets');
 
 assert(workspaceActiveSource.includes('authUser={settingsPanelProps?.authUser || null}'), 'workspace must pass the current live auth user into the edit panel');
 assert(editPanelSource.includes('<EditorMediaLibraryProvider page={page} authUser={authUser}>'), 'edit panel must scope image reuse to the active page and live auth state');
@@ -150,7 +217,7 @@ assert(imagePickerSource.includes("kind: 'image', cursor, limit: 100"), 'image p
 assert(imagePickerSource.includes('type="search"') && imagePickerSource.includes('searchText(asset)'), 'image picker must support image search');
 assert(imagePickerSource.includes('normalizeAssetValue') && imagePickerSource.includes('url.origin === window.location.origin'), 'image picker must keep same-origin asset references portable');
 assert(imagePickerSource.includes('현재 이미지') && imagePickerSource.includes('aria-pressed={selected}'), 'image picker must identify the current image');
-assert(!imagePickerSource.includes('deleteProjectAsset') && !imagePickerSource.includes('삭제'), 'image picker must not expose destructive asset actions');
+assert(!imagePickerSource.includes('deleteProjectAsset') && !imagePickerSource.includes('미디어 삭제'), 'image picker must stay non-destructive; deletion belongs in settings');
 
 assert(imagePickerHookSource.includes('selectExistingImage'), 'ImageInput picker hook must support existing project images');
 assert(imagePickerHookSource.includes('siblingFingerprints.has(nextFingerprint)'), 'existing-image selection must keep gallery duplicate protection');
@@ -162,16 +229,20 @@ assert(qaAllSource.includes("['media:library:qa', ['scripts/media-library-qualit
 
 console.log(JSON.stringify({
   ok: true,
-  scope: 'project-media-library-and-editor-image-reuse',
+  scope: 'project-media-library-image-reuse-and-safe-delete',
   projectIsolation: true,
   imageVideoSeparation: true,
   pagination: true,
   editReadAuthorization: true,
+  editWriteDeletionAuthorization: true,
+  signedSessionRequiredForDelete: true,
+  activePageDeleteBlocked: true,
+  revisionDeleteDoubleConfirm: true,
+  currentDraftDeleteBlocked: true,
   liveAuthState: true,
   searchAndFilters: true,
   imageVideoPreview: true,
   editorImageReuse: true,
   duplicateProtection: true,
   sameOriginPortability: true,
-  destructiveActionsDeferred: true,
 }, null, 2));

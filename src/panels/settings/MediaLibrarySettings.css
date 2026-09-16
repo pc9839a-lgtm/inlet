@@ -25,6 +25,7 @@
 
 .media-library-refresh,
 .media-library-copy,
+.media-library-delete,
 .media-library-load-more button,
 .media-library-state button,
 .media-library-filters button {
@@ -38,7 +39,8 @@
 }
 
 .media-library-refresh,
-.media-library-copy {
+.media-library-copy,
+.media-library-delete {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -48,9 +50,10 @@
 }
 
 .media-library-refresh:disabled,
+.media-library-delete:disabled,
 .media-library-load-more button:disabled {
-  cursor: wait;
-  opacity: .6;
+  cursor: not-allowed;
+  opacity: .55;
 }
 
 .media-library-controls {
@@ -162,9 +165,30 @@
   line-height: 1.45;
 }
 
-.media-library-copy {
-  width: 100%;
+.media-library-use-note {
+  font-weight: 700;
+}
+
+.media-library-card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
   margin-top: 2px;
+}
+
+.media-library-card-actions > button:only-child {
+  grid-column: 1 / -1;
+}
+
+.media-library-copy,
+.media-library-delete {
+  width: 100%;
+  min-width: 0;
+}
+
+.media-library-delete:not(:disabled) {
+  border-color: #f0c9c9;
+  color: #b42318;
 }
 
 .media-library-state {
@@ -214,6 +238,7 @@
 
   .media-library-refresh,
   .media-library-copy,
+  .media-library-delete,
   .media-library-load-more button,
   .media-library-state button,
   .media-library-filters button {

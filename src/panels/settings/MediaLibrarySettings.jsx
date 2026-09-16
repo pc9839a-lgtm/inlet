@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Copy, Film, Image as ImageIcon, RefreshCw, Search } from 'lucide-react';
-import { listProjectAssets } from '../../lib/fileRepository.js';
+import { Copy, Film, Image as ImageIcon, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { deleteProjectAsset, listProjectAssets } from '../../lib/fileRepository.js';
+import { pageReferencesAssetKey } from '../../lib/mediaAssetUsage.js';
 import { notify } from '../../lib/uiFeedback.js';
 import './MediaLibrarySettings.css';
 
@@ -85,7 +86,7 @@ function AssetPreview({ asset }) {
   return <img className="media-library-preview" src={asset.downloadUrl} alt={asset.fileName || '페이지 이미지'} loading="lazy" />;
 }
 
-function AssetCard({ asset, onCopy }) {
+function AssetCard({ asset, onCopy, onDelete, canDelete, inCurrentPage, deleting }) {
   const isVideo = asset.kind === 'video';
   const Icon = isVideo ? Film : ImageIcon;
   return (
@@ -100,21 +101,37 @@ function AssetCard({ asset, onCopy }) {
       <div className="media-library-card-body">
         <strong title={asset.fileName || asset.key}>{asset.fileName || '이름 없는 자산'}</strong>
         <span>{formatBytes(asset.size)} · {formatDate(asset.uploadedAt)}</span>
-        <button type="button" className="media-library-copy" onClick={() => onCopy(asset)}>
-          <Copy size={16} aria-hidden="true" />
-          주소 복사
-        </button>
+        {inCurrentPage && <span className="media-library-use-note">현재 페이지에서 사용 중</span>}
+        <div className="media-library-card-actions">
+          <button type="button" className="media-library-copy" onClick={() => onCopy(asset)}>
+            <Copy size={16} aria-hidden="true" />
+            주소 복사
+          </button>
+          {canDelete && (
+            <button
+              type="button"
+              className="media-library-delete"
+              onClick={() => onDelete(asset)}
+              disabled={inCurrentPage || deleting}
+              title={inCurrentPage ? '현재 페이지에서 사용 중인 미디어는 삭제할 수 없습니다.' : '미디어 삭제'}
+            >
+              <Trash2 size={16} aria-hidden="true" />
+              {deleting ? '삭제 중' : inCurrentPage ? '사용 중' : '삭제'}
+            </button>
+          )}
+        </div>
       </div>
     </article>
   );
 }
 
-export default function MediaLibrarySettings({ page, authUser }) {
+export default function MediaLibrarySettings({ page, authUser, canDelete = false }) {
   const [library, setLibrary] = useState(emptyLibraryState);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all');
   const [query, setQuery] = useState('');
+  const [deletingKey, setDeletingKey] = useState('');
   const libraryKey = `${page?.projectId || page?.id || ''}:${page?.slug || ''}:${authUser?.ownerId || authUser?.email || ''}`;
 
   const loadInitial = async () => {
@@ -169,6 +186,11 @@ export default function MediaLibrarySettings({ page, authUser }) {
     () => sortAssets([...library.image.assets, ...library.video.assets]),
     [library],
   );
+  const activePageAssetKeys = useMemo(() => new Set(
+    allAssets
+      .filter((asset) => pageReferencesAssetKey(page, asset.key))
+      .map((asset) => asset.key),
+  ), [allAssets, page]);
   const visibleAssets = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     return allAssets.filter((asset) => {
@@ -220,6 +242,49 @@ export default function MediaLibrarySettings({ page, authUser }) {
       notify('미디어 주소를 복사했습니다.', 'success');
     } catch {
       notify('주소를 복사하지 못했습니다.', 'error');
+    }
+  };
+
+  const removeAssetFromView = (key) => {
+    setLibrary((state) => ({
+      image: { ...state.image, assets: state.image.assets.filter((asset) => asset.key !== key) },
+      video: { ...state.video, assets: state.video.assets.filter((asset) => asset.key !== key) },
+    }));
+  };
+
+  const deleteAsset = async (asset) => {
+    if (!canDelete || !asset?.key || deletingKey) return;
+    if (activePageAssetKeys.has(asset.key)) {
+      notify('현재 페이지에서 사용 중인 미디어는 먼저 페이지에서 제거해야 합니다.', 'error');
+      return;
+    }
+    if (typeof window === 'undefined' || !window.confirm('이 미디어를 보관함에서 삭제할까요? 삭제 후에는 되돌릴 수 없습니다.')) return;
+
+    setDeletingKey(asset.key);
+    try {
+      try {
+        await deleteProjectAsset(page, authUser, asset.key);
+      } catch (deleteError) {
+        const code = String(deleteError?.details?.code || '');
+        if (code === 'ASSET_REVISION_REFERENCED') {
+          const confirmed = window.confirm('이 미디어는 과거 버전 기록에서만 사용 중입니다. 삭제하면 해당 버전을 복원할 때 이미지나 영상이 보이지 않을 수 있습니다. 그래도 삭제할까요?');
+          if (!confirmed) return;
+          await deleteProjectAsset(page, authUser, asset.key, { allowRevisionReferences: true });
+        } else {
+          throw deleteError;
+        }
+      }
+      removeAssetFromView(asset.key);
+      notify('미디어를 삭제했습니다.', 'success');
+    } catch (deleteError) {
+      console.warn('Media library delete failed:', deleteError);
+      if (String(deleteError?.details?.code || '') === 'ASSET_IN_USE') {
+        notify(deleteError?.message || '다른 페이지에서 사용 중인 미디어는 삭제할 수 없습니다.', 'error');
+      } else {
+        notify(deleteError?.message || '미디어를 삭제하지 못했습니다.', 'error');
+      }
+    } finally {
+      setDeletingKey('');
     }
   };
 
@@ -290,7 +355,15 @@ export default function MediaLibrarySettings({ page, authUser }) {
       {!loading && !error && visibleAssets.length > 0 && (
         <div className="media-library-grid">
           {visibleAssets.map((asset) => (
-            <AssetCard key={asset.key} asset={asset} onCopy={copyAssetUrl} />
+            <AssetCard
+              key={asset.key}
+              asset={asset}
+              onCopy={copyAssetUrl}
+              onDelete={deleteAsset}
+              canDelete={canDelete}
+              inCurrentPage={activePageAssetKeys.has(asset.key)}
+              deleting={deletingKey === asset.key}
+            />
           ))}
         </div>
       )}

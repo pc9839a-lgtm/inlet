@@ -101,6 +101,7 @@ function SettingsModeSwitch({ mode, setMode, advancedEnabled }) {
 
 export default function SettingsPanelBody({
   authUser,
+  canDeleteMedia,
   canDuplicatePage,
   canManageProjectUsers,
   canReadMedia,
@@ -203,7 +204,11 @@ export default function SettingsPanelBody({
 
           <div className="settings-v3-content">
             {selectedSection === 'media' && canReadMedia && (
-              <MediaLibrarySettings page={page} authUser={authUser} />
+              <MediaLibrarySettings
+                page={page}
+                authUser={authUser}
+                canDelete={canDeleteMedia}
+              />
             )}
 
             <SettingsPrimarySections
