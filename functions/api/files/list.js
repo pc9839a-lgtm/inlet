@@ -25,7 +25,7 @@ export async function onRequest({ request, env }) {
   try {
     const url = new URL(request.url);
     const project = projectFromRequest(url, {}, request);
-    await authorizeProject(request, env, project, { tab: 'settings' });
+    await authorizeProject(request, env, project, { tab: 'edit' });
 
     const kind = normalizeAssetKind(url.searchParams.get('kind') || 'image');
     const limit = Math.max(1, Math.min(200, Number(url.searchParams.get('limit') || 100)));
