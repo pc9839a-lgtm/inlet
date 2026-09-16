@@ -31,6 +31,7 @@ const steps = [
   ['calltag:e2e-test:qa', ['scripts/calltag-e2e-test-quality-check.mjs']],
   ['server:smoke:auth', ['scripts/server-smoke-auth.mjs']],
   ['server:smoke:leads', ['scripts/server-smoke-leads.mjs']],
+  ['lead:capture:qa', ['scripts/lead-capture-quality-check.mjs']],
   ['server:smoke:events', ['scripts/server-smoke-events.mjs']],
   ['server:smoke:pages', ['scripts/server-smoke-pages.mjs']],
   ['server:smoke:integrations', ['scripts/server-smoke-integrations.mjs']],
