@@ -19,12 +19,18 @@ function readArgValue(names) {
 
 const main = await readFile('src/main.jsx', 'utf8');
 const boundary = await readFile('src/components/AppErrorBoundary.jsx', 'utf8');
+const rootFunction = await readFile('functions/index.js', 'utf8');
 const legacyChunkNames = ['App-DrlN22f5.js', 'App-CoeQq7xJ.js'];
 
 assert(main.includes("import App from './App.jsx';"), 'Root App must be statically imported by main.jsx');
 assert(!main.includes("lazy(() => import('./App.jsx'))"), 'Root App must never return to a deployment-sensitive dynamic import');
 assert(!main.includes('<Suspense') && !main.includes('Suspense fallback'), 'Root App entry must not wait behind a Suspense boundary');
 assert(main.includes('root.render(<AppErrorBoundary><App /></AppErrorBoundary>)'), 'Static root App must remain protected by AppErrorBoundary');
+
+assert(rootFunction.includes('return context.next();'), 'Public root Pages Function must pass through to the current Vite index');
+assert(!rootFunction.includes('C63_HOME_HTML'), 'Public root Pages Function must not embed the legacy C63 landing document');
+assert(!rootFunction.includes('pagero-exact-home'), 'Public root Pages Function must not contain the legacy landing markup');
+assert(!rootFunction.includes('/c63-assets/') && !rootFunction.includes('c63-life-bridge'), 'Public root Pages Function must not load legacy landing assets');
 
 assert(boundary.includes('const chunkError = isLazyChunkLoadError(this.state.error);'), 'Chunk errors must use a dedicated non-destructive screen');
 assert(boundary.includes('페이지 데이터는 삭제하지 않습니다.'), 'Chunk recovery must explicitly preserve page data');
@@ -55,6 +61,8 @@ console.log(JSON.stringify({
   ok: true,
   check: 'root-app-entry',
   staticRootApp: true,
+  legacyRootHtmlRemoved: true,
+  rootFunctionPassThrough: true,
   destructiveChunkReset: false,
   legacyRescueModules: legacyChunkNames,
   artifactChecked: Boolean(outDirArg),
