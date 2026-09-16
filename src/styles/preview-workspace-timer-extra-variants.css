@@ -1,0 +1,203 @@
+/* Additional solid timer variants. Keep these gradient-free so structure, not decoration, differentiates them. */
+.landing-section.timer.timer-variant-line {
+  padding: 15px 0 13px !important;
+  border: 0 !important;
+  border-top: 2px solid var(--timer-accent) !important;
+  border-bottom: 1px solid var(--timer-border) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.landing-section.timer.timer-variant-line .timer-topline {
+  margin-bottom: 9px;
+  padding: 0 2px;
+}
+
+.landing-section.timer.timer-variant-line .timer-topline span {
+  color: var(--timer-muted);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: .04em;
+}
+
+.landing-section.timer.timer-variant-line .timer-grid-modern {
+  gap: 0 !important;
+  border-top: 1px solid var(--timer-border);
+  border-bottom: 1px solid var(--timer-border);
+}
+
+.landing-section.timer.timer-variant-line .timer-unit {
+  min-height: 68px !important;
+  padding: 10px 8px !important;
+  border: 0 !important;
+  border-right: 1px solid var(--timer-border) !important;
+  border-radius: 0 !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.landing-section.timer.timer-variant-line .timer-unit:last-child {
+  border-right: 0 !important;
+}
+
+.landing-section.timer.timer-variant-line .timer-unit b {
+  justify-self: start;
+  color: var(--timer-text) !important;
+  font-size: clamp(25px, 7vw, 32px) !important;
+  font-weight: 900 !important;
+  letter-spacing: -.045em !important;
+}
+
+.landing-section.timer.timer-variant-line .timer-unit span {
+  justify-self: end;
+  color: var(--timer-muted) !important;
+  font-size: 9px !important;
+  font-weight: 900 !important;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+.landing-section.timer.timer-variant-line .timer-progress-solid {
+  height: 2px;
+  margin-top: 10px;
+  border-radius: 0;
+  background: var(--timer-border);
+}
+
+.landing-section.timer.timer-variant-line .timer-progress-solid i {
+  border-radius: 0;
+}
+
+.landing-section.timer.timer-variant-point {
+  padding: 16px !important;
+  border: 1px solid var(--timer-border) !important;
+  border-radius: 20px !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+}
+
+.landing-section.timer.timer-variant-point .timer-topline {
+  margin-bottom: 12px;
+}
+
+.landing-section.timer.timer-variant-point .timer-topline::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--timer-accent);
+}
+
+.landing-section.timer.timer-variant-point .timer-topline span {
+  margin-right: auto;
+  color: var(--timer-text);
+  font-size: 12px;
+}
+
+.landing-section.timer.timer-variant-point .timer-grid-modern {
+  gap: 6px !important;
+}
+
+.landing-section.timer.timer-variant-point .timer-unit {
+  min-height: 72px !important;
+  padding: 9px 4px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: var(--timer-soft) !important;
+  box-shadow: none !important;
+}
+
+.landing-section.timer.timer-variant-point .timer-unit b {
+  color: var(--timer-text) !important;
+  font-size: clamp(23px, 6.5vw, 29px) !important;
+  font-weight: 900 !important;
+}
+
+.landing-section.timer.timer-variant-point .timer-unit span {
+  color: var(--timer-muted) !important;
+}
+
+.landing-section.timer.timer-variant-point .timer-unit.is-second {
+  background: var(--timer-accent) !important;
+}
+
+.landing-section.timer.timer-variant-point .timer-unit.is-second b,
+.landing-section.timer.timer-variant-point .timer-unit.is-second span {
+  color: var(--timer-on-accent) !important;
+}
+
+.landing-section.timer.timer-variant-point .timer-progress-solid {
+  height: 6px;
+  margin-top: 11px;
+  padding: 2px;
+  border: 1px solid var(--timer-border);
+  background: #ffffff;
+}
+
+.landing-section.timer.timer-variant-point .timer-progress-solid i {
+  min-width: 6px;
+}
+
+/* Compact fixed-bottom counterparts. */
+.bottom-bar .bottom-timer-variant-line {
+  --bottom-timer-surface: #ffffff;
+  border-width: 0 0 1px !important;
+  border-radius: 0 !important;
+  background: #ffffff !important;
+}
+
+.bottom-bar .bottom-timer-variant-line::after {
+  left: 0 !important;
+  bottom: 0 !important;
+  max-width: 100% !important;
+  border-radius: 0 !important;
+}
+
+.bottom-bar .bottom-timer-variant-line .bottom-timer-main b {
+  color: var(--bottom-timer-accent) !important;
+  letter-spacing: .025em !important;
+}
+
+.bottom-bar .bottom-timer-variant-point {
+  --bottom-timer-surface: var(--bottom-timer-soft);
+  border-color: var(--bottom-timer-accent) !important;
+  background: var(--bottom-timer-soft) !important;
+}
+
+.bottom-bar .bottom-timer-variant-point::before {
+  padding-left: 12px;
+  position: relative;
+}
+
+.bottom-bar .bottom-timer-variant-point .bottom-timer-main::before {
+  content: "" !important;
+  width: 7px !important;
+  height: 7px !important;
+  display: block !important;
+  border-radius: 999px !important;
+  background: var(--bottom-timer-accent) !important;
+}
+
+.bottom-bar .bottom-timer-variant-point .bottom-timer-main b {
+  color: var(--bottom-timer-accent) !important;
+}
+
+@container pagero-landing (max-width: 370px) {
+  .landing-section.timer.timer-variant-line .timer-unit {
+    min-height: 62px !important;
+    padding-inline: 5px !important;
+  }
+
+  .landing-section.timer.timer-variant-point {
+    padding: 13px !important;
+  }
+
+  .landing-section.timer.timer-variant-point .timer-unit {
+    min-height: 66px !important;
+  }
+}
