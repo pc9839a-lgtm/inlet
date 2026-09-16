@@ -138,14 +138,14 @@ assert(pageLimitMiddleware.includes('canFastPathExistingSave') && pageLimitMiddl
 assert(optimizer.includes('.sort((a, b) => b.bytes - a.bytes)') && optimizer.includes('if (estimatedBytes <= D1_PAGE_JSON_TARGET_BYTES) break'), 'oversized page optimization must compress the largest embedded images only until the safe target is reached');
 assert(saveIdentitySource.includes('if (hasPersistedServerVersion(sourcePage)) return sourcePage;') && saveIdentitySource.includes('const accountPages = await fetchAccountPages(authUser)'), 'known page identity without a loaded revision must resolve persisted version metadata instead of replaying create-new');
 assert((persistFlow.match(/quietSuccess: true/g) || []).length >= 2, 'server save commits must suppress duplicate internal local-save success status updates');
-assert(feedbackSource.includes("title: local ? '브라우저에 저장됨' : '저장됨'") && feedbackSource.includes("message: ''"), 'successful save feedback must stay compact and avoid duplicate title/body copy');
-assert(feedbackSource.includes("toast: '저장 실패 · 작업은 자동 보관됨'") && !feedbackSource.includes("'서버 저장에 실패했습니다. ' + detail"), 'save failure toast must be concise and must not expose long transport errors');
-assert(saveStatusSource.includes("markSaveStatus('ok', '브라우저에 저장됨', '')") && saveStatusSource.includes("showToast(message, 'error')"), 'local persistence feedback must use compact success/error messaging');
-assert(panelHeaderSource.includes("saveStatus.tone === 'warning' || saveStatus.tone === 'error'"), 'editor header must show save status text only for actionable warning/error states');
-assert(panelHeaderSource.includes("{saved ? '저장됨' : '저장'}") && !panelHeaderSource.includes("idle: '#6c727e'") && !panelHeaderSource.includes("ok: '#147a50'"), 'normal save state must be represented by the save button without duplicate idle/ok header labels');
+assert(feedbackSource.includes("title: local ? '브라우저에 임시저장됨' : '발행됨'") && feedbackSource.includes("message: ''"), 'successful feedback must distinguish local temporary persistence from public publishing');
+assert(feedbackSource.includes("toast: '발행 실패 · 작업은 자동 임시보관됨'") && !feedbackSource.includes("'서버 저장에 실패했습니다. ' + detail"), 'publish failure toast must stay concise and must not expose long transport errors');
+assert(saveStatusSource.includes("markSaveStatus('ok', '브라우저에 임시저장됨', '')") && saveStatusSource.includes("showToast(message, 'error')"), 'local persistence feedback must explicitly describe temporary browser storage');
+assert(panelHeaderSource.includes("saveStatus.tone === 'warning' || saveStatus.tone === 'error'"), 'editor header must show status text only for actionable warning/error states');
+assert(panelHeaderSource.includes("{saved ? '발행됨' : '발행'}") && panelHeaderSource.includes('자동 임시보관됩니다') && !panelHeaderSource.includes("idle: '#6c727e'") && !panelHeaderSource.includes("ok: '#147a50'"), 'normal server persistence state must be represented as publish while local editing remains temporary');
 
 await import('./page-save-result-validation-quality-check.mjs');
 await import('./page-save-queue-quality-check.mjs');
 await import('./page-save-network-recovery-quality-check.mjs');
 
-console.log(JSON.stringify({ ok: true, checks: 40, resultValidation: true, trailingSaveQueue: true, networkRecovery: true }, null, 2));
+console.log(JSON.stringify({ ok: true, checks: 40, resultValidation: true, trailingSaveQueue: true, networkRecovery: true, draftPublishSemantics: true }, null, 2));

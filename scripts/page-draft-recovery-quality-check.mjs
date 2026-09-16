@@ -58,28 +58,28 @@ const serverPage = normalizePageForSave({
   title: '서버 저장본',
   revision: 4,
   updatedAt: '2026-07-30T10:00:00.000Z',
-  ai: { ...(defaultPage.ai || {}), apiKey: 'server-secret-key' },
+  ai: { ...(defaultPage.ai || {}), apiKey: 'server-fixture-ai-value' },
   integrations: {
     ...(defaultPage.integrations || {}),
-    sheets: { ...(defaultPage.integrations?.sheets || {}), accessTokenRef: 'server-token-ref' },
+    sheets: { ...(defaultPage.integrations?.sheets || {}), accessTokenRef: 'server-fixture-sheet-ref' },
   },
 });
 const editedPage = normalizePageForSave({
   ...serverPage,
   title: '저장 전 편집본',
   meta: { ...(serverPage.meta || {}), desc: '브라우저에서 수정한 설명' },
-  ai: { ...(serverPage.ai || {}), apiKey: 'draft-secret-key' },
+  ai: { ...(serverPage.ai || {}), apiKey: 'draft-fixture-ai-value' },
   integrations: {
     ...(serverPage.integrations || {}),
-    sheets: { ...(serverPage.integrations?.sheets || {}), accessTokenRef: 'draft-token-ref' },
+    sheets: { ...(serverPage.integrations?.sheets || {}), accessTokenRef: 'draft-fixture-sheet-ref' },
   },
 });
 const editedAt = Date.parse('2026-07-30T10:05:00.000Z');
 const draft = savePageDraft({ page: editedPage, authUser, editedAt, storage });
 assert(draft, 'server page draft must be written');
 const rawDraftStorage = [...storage.values.values()].join('\n');
-assert(!rawDraftStorage.includes('draft-secret-key'), 'draft storage must redact API keys');
-assert(!rawDraftStorage.includes('draft-token-ref'), 'draft storage must redact token references');
+assert(!rawDraftStorage.includes('draft-fixture-ai-value'), 'draft storage must redact API keys');
+assert(!rawDraftStorage.includes('draft-fixture-sheet-ref'), 'draft storage must redact token references');
 assert(readPageDraft({ page: serverPage, authUser, storage })?.page?.title === '저장 전 편집본', 'same account and page must read its draft');
 assert(!readPageDraft({ page: serverPage, authUser: { ...authUser, ownerId: 'owner-2' }, storage }), 'drafts must be isolated by owner');
 
@@ -89,9 +89,9 @@ const restored = restorePageDraft({ draft, serverPage });
 assert(restored.title === '저장 전 편집본', 'restored page must contain unsaved edits');
 assert(restored.meta?.desc === '브라우저에서 수정한 설명', 'restored page must contain nested unsaved edits');
 assert(restored.revision === serverPage.revision && restored.updatedAt === serverPage.updatedAt, 'restored page must retain server revision identity');
-assert(restored.ai?.apiKey !== 'draft-secret-key', 'draft recovery must never reintroduce a locally supplied API key');
+assert(restored.ai?.apiKey !== 'draft-fixture-ai-value', 'draft recovery must never reintroduce a locally supplied API key');
 assert(restored.ai?.apiKey === serverPage.ai?.apiKey, 'draft recovery must preserve the existing client AI key policy');
-assert(restored.integrations?.sheets?.accessTokenRef === 'server-token-ref', 'redacted token references must be preserved from the server page');
+assert(restored.integrations?.sheets?.accessTokenRef === 'server-fixture-sheet-ref', 'redacted token references must be preserved from the server page');
 
 const newerServer = normalizePageForSave({
   ...serverPage,
@@ -152,7 +152,7 @@ const conflictRecoveryFeedback = pageSaveErrorFeedback(new Error('conflict'), tr
   saved: false,
   message: quotaMessage,
 });
-assert(conflictRecoveryFeedback.level === 'error' && conflictRecoveryFeedback.title.includes('저장 충돌'), 'conflict plus recovery failure must remain an error instead of a normal conflict warning');
+assert(conflictRecoveryFeedback.level === 'error' && conflictRecoveryFeedback.title.includes('발행 충돌'), 'conflict plus recovery failure must remain an error instead of a normal conflict warning');
 assert(!conflictRecoveryFeedback.message.includes('자동 보관'), 'conflict recovery failure must not claim local backup success');
 
 assert(evaluatePageDraft({ draft: { ...draft, editedAt: editedAt - (8 * 24 * 60 * 60 * 1000) }, serverPage, now: editedAt }).reason === 'expired', 'drafts older than seven days must expire');

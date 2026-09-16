@@ -35,7 +35,7 @@ export function allowWorkspaceNextUnload() {
 }
 
 export function confirmWorkspaceLeaveSync({
-  message = '저장하지 않은 변경사항이 있습니다. 이동하면 서버에는 반영되지 않습니다. 그래도 이동할까요?',
+  message = '발행하지 않은 변경사항이 있습니다. 공개 페이지에는 아직 반영되지 않았습니다. 그래도 이동할까요?',
   allowUnload = false,
 } = {}) {
   if (!unsavedDirty) {
@@ -46,7 +46,7 @@ export function confirmWorkspaceLeaveSync({
   const recoverySaved = flushWorkspaceRecoveryDraft();
   if (!recoverySaved) {
     if (typeof window !== 'undefined' && typeof window.alert === 'function') {
-      window.alert('현재 작업을 브라우저에 임시 보관하지 못했습니다. 화면을 닫지 말고 저장을 다시 시도해주세요.');
+      window.alert('현재 작업을 브라우저에 임시 보관하지 못했습니다. 화면을 닫지 말고 발행을 다시 시도해주세요.');
     }
     return false;
   }

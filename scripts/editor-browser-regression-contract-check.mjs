@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 
 await import('./page-edit-history-quality-check.mjs');
 await import('./page-revision-restore-quality-check.mjs');
+await import('./page-publish-semantics-quality-check.mjs');
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -35,8 +36,8 @@ assert(browserSource.includes("`${origin}/login`") && browserSource.includes("in
 assert(browserSource.includes("pathname === '/api/auth/login'") && browserSource.includes("pathname === '/api/auth/session'"), 'browser QA must mock login and session refresh APIs');
 assert(browserSource.includes("pathname === '/api/projects'") && browserSource.includes(".service-landing-card"), 'browser QA must load and select a dashboard page');
 assert(browserSource.includes("pathname === '/api/account-page'") && browserSource.includes("#editor-block-editor-hero") && browserSource.includes(".screen-order-v2-head") && browserSource.includes("#editor-block-editor-hero textarea[placeholder=\"핵심 제목을 입력하세요\"]") && browserSource.includes('브라우저 저장 검증 완료'), 'browser QA must open the current account page, edit the active EditPanel block, and verify live preview');
-assert(browserSource.includes(".panel-actions .primary-btn") && browserSource.includes("Page.reload"), 'browser QA must save and verify the page after reload');
-assert(browserSource.includes("publicVerifyCount") && browserSource.includes("saveCount === 0"), 'browser QA must verify explicit save and public verification behavior');
+assert(browserSource.includes(".panel-actions .primary-btn") && browserSource.includes("Page.reload"), 'browser QA must publish and verify the page after reload');
+assert(browserSource.includes("publicVerifyCount") && browserSource.includes("saveCount === 0"), 'browser QA must verify that editing stays local until explicit publish and then verifies the public page');
 assert(browserSource.includes("{ name: 'mobile-360', width: 360") && browserSource.includes("{ name: 'mobile-390', width: 390") && browserSource.includes("{ name: 'mobile-430', width: 430"), 'browser QA must cover 360, 390, and 430 pixel mobile widths');
 assert(browserSource.includes("mobile-operations-shell") && browserSource.includes("bodyScrollWidth <= viewport.width + 3"), 'mobile editor regression must reject overflow and verify operations mode');
 assert(browserSource.includes("unexpectedApis.length === 0") && browserSource.includes("browserErrors.length === 0"), 'browser QA must fail on unexpected API calls or browser exceptions');
@@ -47,7 +48,7 @@ assert(editHistorySource.includes('const MAX_HISTORY = 50') && editHistorySource
 console.log(JSON.stringify({
   ok: true,
   scope: 'authenticated-editor-browser-contract',
-  desktopFlow: ['login', 'dashboard', 'account-page', 'page-select', 'edit-panel', 'save', 'reload'],
+  desktopFlow: ['login', 'dashboard', 'account-page', 'page-select', 'edit-panel', 'publish', 'reload'],
   mobileWidths: [360, 390, 430],
   productionCredentials: false,
   accountPageMock: true,
@@ -55,4 +56,5 @@ console.log(JSON.stringify({
   chromeCdpCompatibility: true,
   editHistory: ['undo', 'redo', '50-snapshots', 'page-isolation'],
   revisionDraftRestore: true,
+  draftPublishSemantics: true,
 }, null, 2));
