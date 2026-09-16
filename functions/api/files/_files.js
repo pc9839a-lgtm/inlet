@@ -22,6 +22,10 @@ export function normalizeFilePurpose(value = '') {
   return String(value || '').trim().toLowerCase() === 'media' ? 'media' : 'download';
 }
 
+export function normalizeAssetKind(value = '') {
+  return String(value || '').trim().toLowerCase() === 'video' ? 'video' : 'image';
+}
+
 export function fileBucket(env = {}) {
   const bucket = env.FILES_BUCKET || env.INLET_FILES_BUCKET || env.R2_FILES || env.FILES;
   if (!bucket || typeof bucket.put !== 'function' || typeof bucket.get !== 'function') {
@@ -94,10 +98,68 @@ export function projectMediaPrefix(projectOrId = {}) {
   return `${projectId}/media/`;
 }
 
+export function projectImagesPrefix(projectOrId = {}) {
+  const projectId = typeof projectOrId === 'string' ? projectOrId : safeProjectId(projectOrId);
+  return `${projectId}/images/`;
+}
+
 export function projectFilesPrefix(projectOrId = {}, purpose = 'download') {
   return normalizeFilePurpose(purpose) === 'media'
     ? projectMediaPrefix(projectOrId)
     : projectDownloadsPrefix(projectOrId);
+}
+
+function assetFileName(object = {}, kind = 'image') {
+  const metadata = object.customMetadata || {};
+  const originalName = String(metadata.originalName || '').trim();
+  if (originalName) return originalName;
+  const leaf = String(object.key || '').split('/').pop() || 'asset';
+  if (kind === 'video') return leaf;
+  const dot = leaf.lastIndexOf('.');
+  const stem = dot > 0 ? leaf.slice(0, dot) : leaf;
+  const ext = dot > 0 ? leaf.slice(dot) : '';
+  return `페이지 이미지 · ${stem.slice(0, 12)}${stem.length > 12 ? '…' : ''}${ext}`;
+}
+
+function uploadedAtValue(object = {}) {
+  const metadataValue = String(object.customMetadata?.uploadedAt || '').trim();
+  if (metadataValue) return metadataValue;
+  const uploaded = object.uploaded;
+  if (uploaded && typeof uploaded.toISOString === 'function') return uploaded.toISOString();
+  return String(uploaded || '').trim();
+}
+
+export async function listProjectAssetObjects(bucket, project = {}, kind = 'image', options = {}) {
+  if (!bucket || typeof bucket.list !== 'function') {
+    const error = new Error('R2 파일 목록 기능을 사용할 수 없습니다.');
+    error.status = 503;
+    throw error;
+  }
+  const safeKind = normalizeAssetKind(kind);
+  const prefix = safeKind === 'video' ? projectMediaPrefix(project) : projectImagesPrefix(project);
+  const limit = Math.max(1, Math.min(200, Number(options.limit || 100)));
+  const cursor = String(options.cursor || '').trim() || undefined;
+  const page = await bucket.list({
+    prefix,
+    cursor,
+    limit,
+    include: ['httpMetadata', 'customMetadata'],
+  });
+  const assets = (page.objects || []).map((object) => ({
+    key: String(object.key || ''),
+    kind: safeKind,
+    fileName: assetFileName(object, safeKind),
+    size: Number(object.size || 0),
+    uploadedAt: uploadedAtValue(object),
+    contentType: String(object.httpMetadata?.contentType || ''),
+    purpose: String(object.customMetadata?.purpose || (safeKind === 'image' ? 'page-image' : 'media')),
+  }));
+  return {
+    assets,
+    hasMore: !!page.truncated,
+    cursor: page.truncated ? String(page.cursor || '') : '',
+    prefix,
+  };
 }
 
 export function projectFileLimits(env = {}, purpose = 'download') {
