@@ -113,6 +113,7 @@ export default function SettingsPanelBody({
   onAccountUpdate,
   onLogout,
   onReset,
+  onSavePage,
   ownership,
   page,
   sections,
@@ -221,7 +222,9 @@ export default function SettingsPanelBody({
               managerSettings={managerSettings}
               onAccountUpdate={onAccountUpdate}
               onLogout={onLogout}
+              onSavePage={onSavePage}
               ownership={ownership}
+              page={page}
               sections={visibleSections}
               transferRequest={transferRequest}
               updateIntegrations={updateIntegrations}
