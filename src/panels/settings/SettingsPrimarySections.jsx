@@ -19,6 +19,7 @@ export default function SettingsPrimarySections({
   onAccountUpdate,
   onLogout,
   ownership,
+  page,
   sections,
   transferRequest,
   updateIntegrations,
@@ -53,6 +54,7 @@ export default function SettingsPrimarySections({
         <CustomDomainSettingsSection
           authUser={authUser}
           integrations={integrations}
+          page={page}
           openSection={openSection}
           setOpenSection={setOpenSection}
           updateIntegrations={updateIntegrations}
