@@ -1,50 +1,47 @@
 # Pagero Remaining Patches
 
-Updated: 2026-09-17 10:29 KST
+Updated: 2026-09-17 KST
 
 Repository: `pc9839a-lgtm/inlet`
 
 Production branch: `main`
 
-Production code baseline before this documentation-only update: `00d0cef636ddc03fa6b5d9126f61d0a52c8b1661`
+Verified production-code baseline before the current patch series: `00d0cef636ddc03fa6b5d9126f61d0a52c8b1661`
 
-Documentation branch: `docs/pagero-remaining-patches-20260917`
+This document is the current execution-order source of truth for PageRo editor, publishing, account, integrations, billing, and operations work.
 
-This document is the current backlog and execution-order source of truth for **PageRo landing creation, editor, publishing, account, integration, billing, and operations work**.
+`code complete`, `QA complete`, `merged`, `deployed`, `migration applied`, and `production verified` are separate states. Branch-only, mock-only, screenshot-only, CI-only, or `skipped-live` evidence is not production completion.
 
-Code complete, QA complete, merged, deployed, and production verified are separate states. A branch, mock, screenshot, CI pass, or `skipped-live` result alone is not production completion.
+# 1. Production Recovery Checkpoint
 
-# 1. 2026-09-17 Production Recovery Checkpoint
+On 2026-09-17 the protected PageRo production home was accidentally changed by PR `#230` and PR `#231` after root identity was inferred from component names rather than the repository handoff rules.
 
-The protected PageRo production home was accidentally changed by PR `#230` and PR `#231` after the root identity was inferred from component names instead of the repository handoff rules.
-
-Recovery was completed by restoring the last verified pre-incident tree without force-pushing or rewriting history.
+Recovery was completed without force-push or history rewriting.
 
 - last verified pre-incident code commit: `935e6cb37ab22a553f9b30dfaa68711e1768efde`
 - restored tree: `8c757f1e6a951a3b11c7c290a649220817baea80`
 - recovery commit on `main`: `00d0cef636ddc03fa6b5d9126f61d0a52c8b1661`
 - reverted effects: PR `#230` and PR `#231`
-- force push: **not used**
-- production deployment after recovery: `https://05a7e004.inlet-8mr.pages.dev`
+- force push: not used
+- recovery deployment: `https://05a7e004.inlet-8mr.pages.dev`
 - production readiness: passed
-- exact deployment readiness: passed
-- production save → D1 → authenticated readback → public readback roundtrip: passed
+- exact-deployment readiness: passed
+- production save → D1 → authenticated readback → public readback: passed
 
-Do not re-apply the root identity assumptions from PR `#230` or PR `#231`.
+Do not re-apply the root-identity assumptions from PR `#230` or PR `#231`.
 
 # 2. Absolute Production Home Lock
 
 `https://pagero.kr/` is a frozen production baseline.
 
-Unless the owner explicitly requests a production-home change, do not change its visible design, copy, section order, menu, footer, hero, animation, lifestyle bridge, login/start behavior, or responsive result.
-
 Before any PageRo task:
 
 1. Read `AGENTS.md`.
 2. Read `docs/PAGERO_MAINTENANCE_HANDOFF_KO.md`.
-3. Confirm the task is not a production-home change.
-4. Exclude protected-home files from the patch unless the owner explicitly overrides the lock.
-5. Verify the actual production URL, not only local Vite or component names.
+3. Read `docs/PAGERO_PLAN_POLICY_KO.md` when plans/billing are in scope.
+4. Confirm the task is not a production-home change.
+5. Exclude protected-home files unless the owner explicitly overrides the lock.
+6. Verify the actual production URL; never infer root identity from component names.
 
 Protected production-home scope includes at minimum:
 
@@ -53,25 +50,23 @@ Protected production-home scope includes at minimum:
 - `src/main.jsx`
 - root/public-home routing inside `src/App.jsx`
 - `src/screens/PublicHomeRoute.jsx`
-- public-home screen components and styles
+- public-home components/styles
 - `public/c63-assets/**`
 - `public/c63-life-bridge.js`
 - `public/c63-life-bridge.css`
-- root/static routing inside `server/index.mjs`
-
-The production `/` source of truth is the frozen Pages Function path described in the handoff document. Do not replace it because another React component name appears newer or more canonical.
+- root/static handling inside `server/index.mjs`
 
 Stop deployment if an unrelated patch changes protected-home files.
 
-# 3. Baseline Completed Since The Old 2026-08-02 Backlog
+# 3. Completed Baseline — Do Not Reassign
 
-The previous version of this document is stale. The following items must no longer be treated as unmerged backlog merely because the old document says so.
+The old 2026-08-02 backlog is stale. The following are baseline unless current-production evidence proves a regression.
 
 ## PR #44 — Three-template mobile regression
 
 Merged to `main` on 2026-08-02.
 
-Baseline now includes:
+Baseline includes:
 
 - three active templates
 - 360 / 390 / 430 px real-browser regression
@@ -80,111 +75,237 @@ Baseline now includes:
 - Korean-font screenshot evidence
 - mobile touch-target fixes
 
-Do not create a new task to "merge PR #44".
+Do not create a new task to merge PR `#44`.
 
 ## PR #42 — One-page policy production verifier
 
 Merged to `main` on 2026-08-03.
 
-Baseline includes the production-verification workflow for:
+Baseline includes verification tooling for:
 
-- general-account one-active-page policy
+- normal account one-active-page policy
 - platform-master bypass policy
 - Google-login parity
 - manager/member bypass prevention
-- fixture cleanup and residue checks
+- fixture cleanup/residue checks
 
-The remaining work is **production verification where still unverified**, not re-implementing or re-merging PR #42.
+Remaining work is production verification where evidence is still missing, not reimplementation.
 
 ## PR #43 — Administrator and audit hardening
 
 Merged to `main` on 2026-08-03.
 
-Baseline includes administrator/audit verification tooling and retention workflow foundations.
+Baseline includes administrator/audit verification tooling and retention foundations.
 
-The remaining work is **production verification and operations evidence where still missing**, not re-merging PR #43.
+Remaining work is live verification and operations evidence where still missing, not re-merging PR `#43`.
 
 ## Editor interaction foundations
 
-Treat these as baseline unless current production evidence proves a regression:
+Treat these as baseline unless reproduced on current code:
 
-- native sharing
-- four persisted share positions
-- form/reservation focus hides top navigation, share, and bottom fixed UI
-- timer style/effect foundations
+- native sharing and persisted share positions
+- form/reservation focus fixed-UI hiding
+- timer/effect foundations
 - preview/public fixed-UI parity
 - save identity and revision conflict protection
 - local draft/recovery foundations
 - editor browser regression infrastructure
 - template/mobile browser regression infrastructure
+- later block-add/search/category/recent work
+- later image/video reuse and save/recovery work
 
-Do not revive an old editor PR solely because it is still open. Compare it with current `main` first.
+Do not revive an old editor PR solely because it remains open.
 
-# 4. Stale/Open PR Handling Rules
+# 4. Current Custom-Domain Reality
 
-Open does not mean current.
+The current `main` already contains basic custom-domain product behavior added after the old backlog.
 
-## PR #41 — Custom domain
+Already present:
 
-Status: **still open / draft / not merged**.
+- personal-domain input UI in settings
+- saved hostname at `page.integrations.domain.hostname`
+- CNAME guidance targeting `inlet-8mr.pages.dev`
+- custom-host public routing based on the saved hostname
+- existing domain settings/billing presentation
 
-This is the only major old PageRo product branch that still maps to a genuinely unfinished capability, but it must **not** be merged as-is.
+Therefore **custom domain is not a full rebuild task**.
+
+What is still missing or insufficiently operationalized:
+
+- canonical D1 ownership boundary
+- apex / `www.` equivalent-domain collision protection
+- provider registration lifecycle
+- Cloudflare Pages domain registration/removal
+- live DNS verification
+- SSL/provider status verification
+- fail-closed detach/replace behavior
+- provider orphan cleanup protection
+- controlled retries/escalation
+- authenticated UI status refresh/actions backed by server state
+- scheduled recheck/operator tooling
+- controlled real-domain production verification
+
+## Old PR #41
+
+PR `#41` is still open/draft and contains useful historical work, but must not be merged as-is.
 
 Reasons:
 
 - it was built against an old `main`
-- migration numbering and operational assumptions have changed
-- current `main` already contains later migrations and D1 tooling
-- the branch has accumulated a large historical delta
+- current migration numbering and schema have moved on
+- current `main` already has later domain UI/routing not represented by the old branch assumptions
+- the branch contains a large historical delta
 
-Required approach:
+Rule: extract only still-missing behavior into small current-main patches.
 
-1. Start from current `main`.
-2. Re-audit the current schema and migration history.
-3. Extract only the still-needed custom-domain product behavior.
-4. Assign safe new migration numbers only after remote preflight.
-5. Re-run current QA and live verification.
-6. Never mix production-home changes into the port.
+# 5. Current Custom-Domain Patch Series
 
-## PR #162 / #163 / #100 and similar old editor branches
+## Phase 1A — Canonical domain ownership core — PR #233
 
-Do not merge them merely because their original UX or save issue still sounds relevant.
+Branch: `fix/pagero-domain-core-20260917`
 
-Current `main` has received substantial later editor/save work. For any old editor PR:
+Base: `00d0cef636ddc03fa6b5d9126f61d0a52c8b1661`
 
-- reproduce the issue on current `main` first
-- compare the old patch against current code
+Status:
+
+- code complete: yes
+- full offline QA: passed
+- landing browser regression: passed
+- authenticated editor regression: passed
+- form/reservation regression: passed
+- three-template mobile browser regression: passed
+- protected-home changes: none
+- merged to `main`: no
+- production deployment: no
+- production D1 migration applied: no
+- production verified: no
+
+Patch content:
+
+- new `0015_page_domain_ownership.sql`
+- dedicated `page_domains` ownership/lifecycle mirror
+- canonical apex/`www.` ownership key
+- existing page-JSON backfill
+- duplicate active ownership rejection
+- reserved PageRo/Pages.dev/localhost host rejection
+- page save → ownership sync trigger
+- hostname removal → ownership release
+- project archive → ownership release
+- real `node:sqlite` migration behavior QA
+
+Operational rule: do not apply `0015` to production without D1 preflight, exact pending-list review, explicit write approval, and encrypted backup.
+
+## Phase 1B — Cloudflare provider + DNS/SSL operations — PR #234
+
+Branch: `feat/pagero-domain-provider-20260917`
+
+Stack base: PR `#233`
+
+Current scope:
+
+- Cloudflare Pages provider module
+- fixed `api.cloudflare.com/client/v4/accounts/...` credential destination
+- server-owned Bearer token
+- redirect following blocked
+- provider timeout/error normalization
+- allowlisted HTTPS `/dns-query` resolver only
+- CNAME status verification
+- SSL/provider status mapping
+- retry cadence: 5 → 15 → 30 → 60 → 180 → 360 minutes
+- page/project identity revalidation before provider actions
+- `verify` / `detach` mutation allowlist
+- provider-attachment marker before external registration call
+- fail-closed `DOMAIN_PROVIDER_CLEANUP_REQUIRED` when safe cleanup cannot be proven
+- provider security tests wired into the D1 release gate
+
+Current state at this document revision:
+
+- code: in progress / branch only
+- PR: `#234` draft
+- QA: pending current run
+- merged: no
+- deployed: no
+- live Cloudflare call: not performed
+
+## Phase 1C — Current settings UI wiring
+
+Start only after Phase 1B server/API contracts are green.
+
+Required behavior:
+
+- pass the current page/project identity to the domain settings view without changing protected root files
+- check availability through the authenticated server endpoint
+- show canonical server status rather than trusting local-only `integrations.domain.status`
+- user-triggered `상태 확인`
+- explicit safe detach before replacement
+- concise DNS/SSL/provider state
+- preserve existing PageRo plan policy; do not invent new entitlement differences
+
+## Phase 1D — Scheduled recheck + operator operations
+
+After manual owner flow is stable:
+
+- due-for-recheck query
+- protected scheduled/manual runner
+- exact approved origin/path for any secret-bearing recheck request
+- bounded retry count
+- 24-hour/retry-exhaustion escalation
+- operator list for failed/stale domain mappings
+- no raw provider token or sensitive internal error in artifacts
+
+## Phase 1E — Controlled production verification
+
+Only with explicit owner approval:
+
+1. D1 migration preflight.
+2. Confirm exact pending migration list.
+3. Create encrypted backup.
+4. Apply only the approved migration set.
+5. Configure least-privilege Cloudflare/runtime secrets.
+6. Connect one controlled test domain/subdomain.
+7. Verify DNS and SSL active.
+8. Verify public root/assets/forms/reservations/tracking.
+9. Verify duplicate ownership rejection.
+10. Verify detach/reconnect/provider cleanup.
+11. Record deployment SHA and live evidence.
+
+# 6. Stale/Open PR Handling
+
+Open does not mean current.
+
+For PR `#162`, `#163`, `#100`, and similar old editor branches:
+
+- reproduce on current code first
+- compare against current `main`
 - port only a still-missing minimal fix
-- never restore an old full layout or old save flow wholesale
+- never restore an old full layout or save flow wholesale
 
-## PR #45 and other old D1-safety branches
+For PR `#45` and old D1-safety branches:
 
-Current `main` already contains `.github/workflows/d1-migration-safety.yml` and later migration tooling.
+- current `main` already contains D1 migration-safety tooling
+- use current-main tooling and remote migration state
+- do not merge an old safety branch wholesale
 
-Do not merge an old D1-safety branch wholesale. Use current-main tooling and current remote state.
-
-# 5. Current Product Policies That Stay Locked
+# 7. Locked Product Policies
 
 ## Account policy
 
 - General account: one active landing page.
 - Platform master: unlimited landing pages and administrator API eligibility.
-- Frontend and API enforcement both remain required.
-- Role-string forgery must not bypass page or administrator policy.
+- Frontend and API enforcement remain mandatory.
+- Role-string forgery must not bypass page/admin policy.
 - Existing pages remain editable, revisionable, restorable, previewable, and public.
-- Archived projects do not consume the active-page quota.
+- Archived projects do not consume active-page quota.
 - Google-login accounts follow the same page policy.
 - Manager/member access cannot create another owner page.
 
 ## Active templates
 
-Keep exactly the currently approved three active templates unless the owner explicitly changes product direction:
+Keep exactly the currently approved three templates unless the owner explicitly changes direction:
 
 1. Personal rehabilitation consultation.
 2. Mobile wedding invitation.
 3. Real estate presale.
-
-Do not replace editable templates with static HTML shells.
 
 ## Paid plans
 
@@ -193,68 +314,32 @@ Approved paid plans remain:
 - `classic`: 클래식, 월 3,500원
 - `pro`: 프로, 월 5,500원
 
-Do not reintroduce discarded pricing or create a third plan without owner approval.
+Do not add a third paid plan or invent entitlement differences without owner approval.
 
-# 6. Active Remaining Work — Current Priority Order
+# 8. Remaining Work After Custom Domain
 
-This is the current execution order as of 2026-09-17.
+## Priority 2 — Close production-verification gaps for existing features
 
-## Priority 1 — Rebuild Custom Domain On Current Main
-
-Goal: safely complete customer-owned domain support without reviving stale PR #41 wholesale.
-
-Required product behavior:
-
-- connect a customer domain to the correct PageRo page
-- verify ownership and prevent duplicate ownership
-- register/manage the Cloudflare Pages custom domain
-- show DNS and SSL status
-- support explicit detach before replacement
-- prevent orphaned provider mappings
-- support safe recheck/retry/escalation
-- route the custom-domain root to the correct public landing
-- return safe noindex/error states for invalid or inactive hosts
-
-Before implementation:
-
-1. Inspect current migration files and remote migration history.
-2. Run current D1 migration preflight.
-3. Resolve migration numbering from actual remote state; do not reuse stale `0006`/`0007` assumptions.
-4. Port the smallest current-main-compatible subset of PR #41.
-
-Acceptance:
-
-- controlled test domain connect succeeds
-- DNS status is correct
-- SSL reaches active
-- public page loads with assets/forms/reservations intact
-- duplicate ownership is rejected
-- detach/reconnect is deterministic
-- provider mapping cleanup is proven
-- protected PageRo production home is unchanged
-
-## Priority 2 — Close Production Verification Gaps For Existing Features
-
-Do not rebuild already-implemented features. Run the existing production-verification tools and patch only reproduced failures.
+Do not rebuild already-implemented features. Use existing production-verification tooling and patch only reproduced failures.
 
 Verify at minimum:
 
-### Account / page policy
+### Account/page policy
 
 - normal account first page succeeds
 - second active page is rejected
 - existing page editing still works
-- archived project handling is correct
-- platform master can manage multiple pages
+- archived-project handling is correct
+- platform master manages multiple pages
 - Google login follows the same quota
 - manager/member access cannot bypass owner quota
 
-### Administrator / audit
+### Administrator/audit
 
-- administrator authorization uses the approved platform-master boundary
-- audit rows contain no raw password/token/session/private PII
-- retention workflow behaves correctly
-- account/project controls work with audit evidence
+- approved platform-master authorization boundary
+- no raw password/token/session/private PII in audit rows
+- retention behavior
+- account/project controls with audit evidence
 
 ### Authentication email / SES
 
@@ -262,101 +347,84 @@ Verify at minimum:
 - password reset
 - email change
 - invitations/ownership transfer where applicable
-- DKIM/SPF/DMARC/provider readiness evidence
+- provider/DKIM/SPF/DMARC readiness evidence
 
 ### Google Sheets
 
 - OAuth connect
 - token refresh
-- one-row delivery
+- row delivery
 - idempotency
 - disconnect
 - failure/retry visibility
-- cleanup of QA fixtures
+- QA fixture cleanup
 
 ### Conversion tracking
 
-- configured conversion events fire with expected event semantics
-- no raw lead PII is sent
-- duplicate suppression works
+- expected event semantics
+- no raw lead PII
+- duplicate suppression
 
-Missing credentials or fixtures must be reported as `not verified` / `skipped-live`, not product success and not product failure.
+Missing credentials or fixtures must be `not verified` / `skipped-live`, never false success.
 
-## Priority 3 — Finish Web Billing And Subscription
+## Priority 3 — Finish web billing/subscription
 
-Current server readiness explicitly reports web billing as not available:
+Current server readiness still reports web billing unavailable at `stage: pre_checkout`.
 
-- `available: false`
-- `stage: pre_checkout`
-- message: `웹 결제 checkout과 webhook을 준비하고 있습니다.`
+Required before paid self-serve launch:
 
-Therefore paid self-serve web billing is **not complete**.
-
-Required architecture:
-
-- checkout session / billing key flow
-- server-side product and entitlement mapping
-- signed/idempotent provider webhook processing
-- successful payment activation
+- checkout/billing-key flow
+- server-side product/entitlement mapping
+- signed/idempotent provider webhook
+- payment activation
 - renewal
-- failed renewal / grace period policy
+- failed renewal/grace policy
 - period-end cancellation
 - payment history
 - receipt/invoice surface where supported
-- audited administrator override
-- replay-safe webhook handling
+- audited admin override
+- webhook replay safety
 - no client-only entitlement trust
 
-Do not mark paid web launch ready until a real test subscription completes the full lifecycle.
+## Priority 4 — Large-data and operations hardening
 
-## Priority 4 — Large-Data And Operations Hardening
-
-Verify with realistic data volume rather than only small fixtures.
+Use realistic volumes.
 
 Scope:
 
-- inbox pagination under thousands/tens-of-thousands of leads
-- statistics query performance over larger date ranges
+- inbox pagination at thousands/tens-of-thousands of leads
+- larger-range statistics performance
 - month-bounded and large CSV export
 - blocked/spam history growth
-- delivery-log retention
-- audit-log retention
+- delivery/audit retention
 - AI draft/cache cleanup where applicable
 - backup retention
-- rate-limit/abuse visibility without raw IP exposure
-- index/query-plan review where measurements justify it
+- abuse/rate-limit visibility without raw IP
+- measured query/index review
 
-Acceptance must include measured production-like evidence, not only static code review.
+## Priority 5 — Current editor real-use audit
 
-## Priority 5 — Current Editor Real-Use Audit
+Audit current code/current production end-to-end instead of reviving old PRs:
 
-Do not start by merging old editor branches.
-
-Audit the current production/current-main flow end to end:
-
-`page create/open → block add → text/image/video edit → reorder → page options → save/publish → reload → public readback`
+`page open/create → block add → text/image/video edit → reorder → options → save/publish → reload → public readback`
 
 Verify:
 
-- block add/search/category/recent flow
+- block add/search/category/recent
 - selected-block editing
-- image upload and existing-image reuse
+- image upload/reuse
 - video upload/reuse and supported URL playback
 - undo/redo
 - revision restore
 - save while continuing to type
-- stale server response cannot overwrite newer local edits
+- stale response cannot overwrite newer edits
 - conflict/recovery behavior
-- page switch / logout / reload unsaved protection
+- page-switch/logout/reload unsaved protection
 - preview/public parity
-- editor width/overflow at narrow desktop widths
-- mobile touch targets where editor mobile UI is exposed
+- narrow-desktop overflow
+- exposed mobile editor touch targets
 
-Only create patches for defects reproduced on current code or current production.
-
-## Priority 6 — Accessibility, Keyboard, And Mobile Final Pass
-
-Scope:
+## Priority 6 — Accessibility, keyboard, and mobile final pass
 
 - keyboard navigation order
 - visible focus
@@ -365,24 +433,22 @@ Scope:
 - 44 px touch targets where required
 - 360 / 390 / 430 px public layouts
 - form keyboard viewport behavior
-- fixed UI collision
+- fixed-UI collision
 - screen-order controls without pointer-only dependency
-- labels and accessible names
-- contrast for actionable controls
+- labels/accessibility names
+- actionable-control contrast
 
-This is a regression and usability pass, not a broad redesign.
+## Priority 7 — Backup, migration, deployment, and rollback closeout
 
-## Priority 7 — Backup, Migration, Deployment, And Rollback Closeout
-
-Required operating evidence:
+Required evidence:
 
 - D1 remote preflight
 - exact pending migration list
-- encrypted backup before write-side migration
+- encrypted pre-write backup
 - post-migration verification
 - disposable restore drill where applicable
 - release checklist
-- current deployment SHA recording
+- deployment SHA record
 - readiness verification
 - save/readback verification
 - previous-deployment rollback procedure
@@ -390,32 +456,28 @@ Required operating evidence:
 
 Never force-push `main`.
 
-Never use destructive reset/clean/restore operations to construct a production rollback.
+Never construct production rollback with destructive reset/clean/restore operations.
 
-When a deployment incident is isolated to one or more bad commits, preserve history and revert the minimal bad scope.
-
-# 7. Live-Screen Verification Contract
+# 9. Live-Screen Verification Contract
 
 A green build is not visual production verification.
-
-For every UI patch, verify the actual deployed screen together with code/CI evidence.
 
 ## Frozen root
 
 For `https://pagero.kr/`:
 
-- compare the actual production URL against the protected baseline
-- verify desktop and mobile behavior
-- verify required root DOM signals from `docs/PAGERO_MAINTENANCE_HANDOFF_KO.md`
-- do not infer root identity from React component names
+- compare the real production URL against the protected baseline
+- verify desktop/mobile behavior
+- verify required root DOM signals from the maintenance handoff
+- never infer root identity from React component names
 
 ## Authenticated internal screens
 
-For editor/settings/dashboard/admin screens:
+For editor/settings/dashboard/admin:
 
-- code review alone is insufficient to claim live-screen correctness
-- use an authenticated production browser test, controlled QA account, or owner-provided production screenshot/session evidence
-- if authenticated live access is unavailable, explicitly mark visual production verification as pending
+- code review alone is insufficient
+- use authenticated production browser coverage, a controlled QA account, or owner-provided production evidence
+- if live authenticated access is unavailable, mark visual production verification pending
 
 ## Public customer pages
 
@@ -425,27 +487,29 @@ Verify at least:
 - 360 px
 - 390 px
 - 430 px
-- form focus / keyboard state
+- form focus/keyboard
 - fixed UI
 - media assets
 - save/publish readback
 
-# 8. Current Main Migration Caution
+# 10. Migration Rules
 
-Do not assume migration numbers from old PR descriptions are still available.
+Do not assume old PR migration numbers remain available.
 
-Current `main` contains historical numbering complexity, including multiple `0006_*` files and later `0008`, `0009`, `0010+` migrations.
+Current `main` has historical numbering complexity, including multiple `0006_*` files and later `0008`, `0009`, `0010+` migrations.
 
-Therefore:
+Rules:
 
-1. local file order is not enough to decide production pending state
+1. local filenames alone do not establish production pending state
 2. remote migration history is authoritative for rollout planning
-3. custom-domain work must not reuse stale migration numbers without preflight
-4. no production migration write occurs without explicit write approval and backup gate
+3. new domain ownership uses `0015_page_domain_ownership.sql` on the current branch, but it is not approved for production merely because the filename exists
+4. no production migration write occurs without current preflight, exact pending-list review, explicit write approval, and backup gate
 
-# 9. Required QA Before Merge Or Deployment
+# 11. QA And Deployment Rules
 
-Use current `package.json` as the command source of truth. At minimum, keep the release-blocking coverage represented by:
+Use current `package.json` as command source of truth.
+
+Release-blocking coverage must include at minimum:
 
 ```bash
 npm run qa:all
@@ -457,34 +521,23 @@ npm run browser:forms:qa
 npm run browser:templates-mobile:qa
 ```
 
-Where the current repository still exposes the corresponding contracts, also run:
+Where still defined, keep relevant parity/deployment/live contracts as well.
 
-```bash
-npm run preview:parity:qa
-npm run bottom:fixed:qa
-npm run topnav:balance:qa
-npm run deployment:smoke:contract:qa
-npm run browser:production:qa
-npm run live:qa
-```
+Deployment rules:
 
-Do not copy obsolete commands from this document if `package.json` no longer defines them; update the document instead.
+- never force-push `main`
+- do not mix unrelated refactors into focused patches
+- do not deploy a branch merely because CI is green
+- production deployment requires explicit owner approval
+- a docs-only `main` push can still trigger QA → Cloudflare production deployment; keep docs-only changes on a non-main branch/PR until deployment is approved
+- protected-home files must remain unchanged for unrelated work
 
-# 10. Deployment Rules
-
-- Never force-push `main`.
-- Do not mix unrelated refactors into focused patches.
-- Do not deploy a branch simply because CI is green.
-- Production deployment requires explicit owner approval.
-- A docs-only `main` push can still trigger the QA → Cloudflare production workflow; use a non-main documentation branch/PR when production deployment was not approved.
-- Protected-home files must remain unchanged for unrelated work.
-
-# 11. Mandatory Patch Closeout
+# 12. Mandatory Patch Closeout
 
 At the end of every patch:
 
 1. Record date, branch, PR, and exact head SHA.
-2. Separate `code complete`, `QA complete`, `merged`, `deployed`, and `production verified` states.
+2. Separate `code complete`, `QA complete`, `merged`, `deployed`, `migration applied`, and `production verified` states.
 3. Record actual live-screen verification scope.
 4. Move completed implementation into the baseline.
 5. Remove superseded/stale work from the active list.
