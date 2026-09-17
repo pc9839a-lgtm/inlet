@@ -175,9 +175,10 @@ assert(
   'wrangler config should reference the created inlet-prod D1 database id',
 );
 
-// Custom-domain ownership and provider hardening are release-blocking D1 contracts.
+// Custom-domain ownership, provider hardening, and settings workflow are release-blocking contracts.
 await import('./page-domain-core-quality-check.mjs');
 await import('./page-domain-provider-quality-check.mjs');
+await import('./page-domain-settings-ui-quality-check.mjs');
 
 console.log(JSON.stringify({
   ok: true,
@@ -191,6 +192,7 @@ console.log(JSON.stringify({
   authEmailMigration: '0005_auth_email_verifications.sql',
   pageDomainMigration: '0015_page_domain_ownership.sql',
   pageDomainProviderQa: 'page-domain-provider-quality-check.mjs',
+  pageDomainSettingsUiQa: 'page-domain-settings-ui-quality-check.mjs',
   adapter: 'server/storage/d1Adapter.mjs',
   runtimeAdapter: 'server/storage/runtimeAdapter.mjs',
 }, null, 2));
