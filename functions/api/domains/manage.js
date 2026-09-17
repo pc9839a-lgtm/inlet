@@ -1,7 +1,4 @@
-import {
-  assertOwnedD1PageDomain,
-  publicDomainRecord,
-} from '../../../server/pageDomainStore.mjs';
+import { assertOwnedD1PageDomain } from '../../../server/pageDomainStore.mjs';
 import {
   detachPageDomainConnection,
   verifyPageDomainConnection,
@@ -63,14 +60,6 @@ export async function onRequest({ request, env }) {
     });
     return jsonResponse(request, env, 200, result, METHODS);
   } catch (error) {
-    if (String(error?.code || '') === 'DOMAIN_ALREADY_DISCONNECTED') {
-      return jsonResponse(request, env, 200, {
-        ok: true,
-        action: 'detach',
-        alreadyDetached: true,
-        current: publicDomainRecord(null),
-      }, METHODS);
-    }
     return handleApiError(request, env, error, METHODS);
   }
 }
