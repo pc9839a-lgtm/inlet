@@ -178,6 +178,8 @@ for (const token of [
 ]) {
   assert(storeSource.includes(token), `domain store contract missing: ${token}`);
 }
+assert(!storeSource.includes('UPDATE pages SET page_json'), 'provider state must not bypass normal page revision writes');
+assert(!storeSource.includes('mirrorPageJsonDomainState'), 'provider state must remain canonical in page_domains only');
 for (const token of [
   'DOMAIN_PROVIDER_CLEANUP_REQUIRED',
   'deleteCloudflarePagesDomain',
@@ -202,6 +204,7 @@ console.log(JSON.stringify({
   dnsResolver: 'allowlisted DoH only',
   cloudflareRedirects: 'blocked',
   providerAuthorization: 'server-owned',
+  providerState: 'page_domains canonical; page_json revision-isolated',
   actions: ['check', 'verify', 'detach'],
   retryMinutes: [5, 15, 30, 60, 180, 360],
   protectedRootChanged: false,
