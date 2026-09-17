@@ -27,7 +27,9 @@ function invalidDomain(message = '도메인 주소를 확인해주세요.') {
 }
 
 function validateHostname(value = '') {
-  const hostname = normalizeDomainHostname(value);
+  const raw = String(value || '').trim().toLowerCase();
+  if (!raw || /\s/.test(raw) || /[/?#@*:]/.test(raw) || raw.includes('://')) throw invalidDomain();
+  const hostname = normalizeDomainHostname(raw);
   if (!hostname || hostname.length > 253 || !hostname.includes('.')) throw invalidDomain();
   if (!hostname.split('.').every((label) => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(label))) throw invalidDomain();
   if (hostname === 'pagero.kr' || hostname.endsWith('.pagero.kr')) throw invalidDomain('PageRo 서비스 도메인은 개인 도메인으로 사용할 수 없습니다.');
