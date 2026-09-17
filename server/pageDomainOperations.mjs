@@ -110,6 +110,23 @@ export async function verifyPageDomainConnection({ db, env = {}, pageId = '', re
     };
   }
 
+  // Persist an attachment marker before the external create/read call. If the
+  // provider succeeds but the following D1 update fails, detach must still fail
+  // closed when provider credentials are later unavailable instead of leaving a
+  // silent orphan mapping behind.
+  await updateD1PageDomainVerification(db, pageId, {
+    domainStatus: 'verifying',
+    sslStatus: String(current.ssl_status || '') === 'active' ? 'active' : 'pending',
+    provider: 'cloudflare_pages',
+    providerStatus: 'registration_attempt',
+    checkedAt,
+    retryCount: Number(current.retry_count || 0),
+    nextRetryAt: current.next_retry_at || '',
+    lastErrorCode: '',
+    escalatedAt: current.escalated_at || null,
+    lastAttemptAt: checkedAt,
+  });
+
   try {
     const providerResult = await ensureCloudflarePagesDomain(env, current.hostname || '', fetchImpl);
     const mapped = mapCloudflarePagesDomain(providerResult, dns);
