@@ -48,6 +48,7 @@ function jsonResponse(status, payload) {
   };
 }
 
+// Register path: provider GET miss -> exact same-provider POST.
 {
   const requests = [];
   const fetchImpl = async (url, options = {}) => {
@@ -76,6 +77,7 @@ function jsonResponse(status, payload) {
   assert.deepEqual(JSON.parse(requests[1].options.body), { name: 'example.com' });
 }
 
+// Existing provider mapping: no duplicate POST.
 {
   let count = 0;
   const existing = await ensureCloudflarePagesDomain(env, 'example.com', async () => {
@@ -86,6 +88,7 @@ function jsonResponse(status, payload) {
   assert.equal(count, 1);
 }
 
+// Safe delete performs lookup first and follows no redirects.
 {
   const requests = [];
   const deleted = await deleteCloudflarePagesDomain(env, 'example.com', async (url, options = {}) => {
@@ -99,6 +102,7 @@ function jsonResponse(status, payload) {
   assert.equal(requests[1].options.redirect, 'error');
 }
 
+// DNS resolution uses only approved DoH target and never the customer hostname as a fetch origin.
 {
   const requests = [];
   const dns = await inspectCustomDomainDns(env, 'www.example.com', async (url, options = {}) => {
@@ -118,6 +122,7 @@ function jsonResponse(status, payload) {
   assert.equal(requests[0].options.redirect, 'error');
 }
 
+// Unapproved resolver fails closed before any network request.
 {
   let called = false;
   const dns = await inspectCustomDomainDns({
@@ -153,12 +158,13 @@ assert.equal(mapCloudflarePagesDomain({
 
 assert.deepEqual([1, 2, 3, 4, 5, 6, 7].map(pageDomainRetryDelayMinutes), [5, 15, 30, 60, 180, 360, 360]);
 
+// Security/authorization contracts must remain explicit in source.
 for (const token of [
   "redirect: 'error'",
   "Authorization: `Bearer ${readiness.apiToken}`",
-  'CLOUDFLARE_API_ORIGIN',
-  'CLOUDFLARE_API_PATH_PREFIX',
-  'INLET_DNS_JSON_RESOLVER_ALLOWED_ENDPOINTS',
+  "CLOUDFLARE_API_ORIGIN",
+  "CLOUDFLARE_API_PATH_PREFIX",
+  "INLET_DNS_JSON_RESOLVER_ALLOWED_ENDPOINTS",
 ]) {
   assert(providerSource.includes(token), `provider hardening missing: ${token}`);
 }
