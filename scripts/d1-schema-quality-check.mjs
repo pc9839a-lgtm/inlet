@@ -67,7 +67,7 @@ for (const token of [
   'replaceD1ProjectMembers',
   'listD1Leads',
   'insertD1BlockedLeadSubmission',
-  'listD1BlockedSubmissions',
+  'listD1BlockedLeadSubmissions',
   'listD1Events',
   'encodeD1Lead',
   'decodeD1Lead',
@@ -79,8 +79,7 @@ for (const token of [
   'insertD1AuditLog',
   'fallbackAdapter',
 ]) {
-  const compatibleToken = token === 'listD1BlockedSubmissions' ? 'listD1BlockedSubmissions' : token;
-  assert(adapter.includes(compatibleToken), `D1 adapter missing contract token: ${compatibleToken}`);
+  assert(adapter.includes(token), `D1 adapter missing contract token: ${token}`);
 }
 
 assert(adapter.includes('ON CONFLICT(id) DO UPDATE SET'), 'D1 lead upsert should be idempotent');
@@ -176,8 +175,7 @@ assert(
   'wrangler config should reference the created inlet-prod D1 database id',
 );
 
-// The custom-domain ownership migration is part of the normal D1 schema gate so
-// future edits cannot silently bypass its backfill, collision, or release rules.
+// Custom-domain ownership is part of the normal D1 schema release gate.
 await import('./page-domain-core-quality-check.mjs');
 
 console.log(JSON.stringify({
