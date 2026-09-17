@@ -102,34 +102,6 @@ function safeSslStatus(value, current = 'pending') {
   return SSL_STATUSES.has(normalized) ? normalized : current;
 }
 
-async function mirrorPageJsonDomainState(db, pageId = '', patch = {}) {
-  const row = await db.prepare('SELECT page_json FROM pages WHERE id = ? LIMIT 1').bind(pageId).first();
-  if (!row?.page_json) return;
-  let page;
-  try {
-    page = JSON.parse(row.page_json);
-  } catch {
-    return;
-  }
-  const integrations = page?.integrations && typeof page.integrations === 'object' ? page.integrations : {};
-  const domain = integrations?.domain && typeof integrations.domain === 'object' ? integrations.domain : {};
-  const next = {
-    ...page,
-    integrations: {
-      ...integrations,
-      domain: {
-        ...domain,
-        ...(Object.prototype.hasOwnProperty.call(patch, 'hostname') ? { hostname: patch.hostname } : {}),
-        ...(Object.prototype.hasOwnProperty.call(patch, 'status') ? { status: patch.status } : {}),
-        ...(Object.prototype.hasOwnProperty.call(patch, 'sslStatus') ? { sslStatus: patch.sslStatus } : {}),
-        ...(Object.prototype.hasOwnProperty.call(patch, 'failureReason') ? { failureReason: patch.failureReason } : {}),
-        ...(Object.prototype.hasOwnProperty.call(patch, 'lastCheckedAt') ? { lastCheckedAt: patch.lastCheckedAt } : {}),
-      },
-    },
-  };
-  await db.prepare('UPDATE pages SET page_json = ? WHERE id = ?').bind(JSON.stringify(next), pageId).run();
-}
-
 export async function updateD1PageDomainVerification(db, pageId = '', patch = {}) {
   const safePageId = String(pageId || '').trim();
   const current = await getD1PageDomainByPageId(db, safePageId);
@@ -187,12 +159,6 @@ export async function updateD1PageDomainVerification(db, pageId = '', patch = {}
     safePageId,
   ).run();
 
-  await mirrorPageJsonDomainState(db, safePageId, {
-    status,
-    sslStatus,
-    failureReason: String(patch.failureReason || '').slice(0, 300),
-    lastCheckedAt: now,
-  });
   return getD1PageDomainByPageId(db, safePageId);
 }
 
@@ -231,13 +197,6 @@ export async function disconnectD1PageDomain(db, pageId = '', options = {}) {
     now,
     safePageId,
   ).run();
-  await mirrorPageJsonDomainState(db, safePageId, {
-    hostname: '',
-    status: 'disconnected',
-    sslStatus: 'not_enabled',
-    failureReason: '',
-    lastCheckedAt: now,
-  });
   return getD1PageDomainByPageId(db, safePageId);
 }
 
