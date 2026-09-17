@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import PageroCanonicalHome from './PageroCanonicalHome.jsx';
+import PageroExactHome from './PageroExactHome.jsx';
 
 export default function PublicHomeRoute({ onLogin, onSignup }) {
   useEffect(() => {
@@ -10,5 +10,5 @@ export default function PublicHomeRoute({ onLogin, onSignup }) {
     };
   }, []);
 
-  return <PageroCanonicalHome onLogin={onLogin} onSignup={onSignup} />;
+  return <PageroExactHome onLogin={onLogin} onSignup={onSignup} />;
 }
