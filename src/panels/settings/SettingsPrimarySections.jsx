@@ -18,6 +18,7 @@ export default function SettingsPrimarySections({
   managerSettings,
   onAccountUpdate,
   onLogout,
+  onSavePage,
   ownership,
   page,
   sections,
@@ -54,6 +55,7 @@ export default function SettingsPrimarySections({
         <CustomDomainSettingsSection
           authUser={authUser}
           integrations={integrations}
+          onSavePage={onSavePage}
           page={page}
           openSection={openSection}
           setOpenSection={setOpenSection}
