@@ -4,11 +4,11 @@
 - 갱신일: 2026-09-18 KST
 - 저장소: `pc9839a-lgtm/inlet`
 - 운영 기준 브랜치: `main`
-- 운영 기준 HEAD: `2fccc263e381ad5681cbd9ecbfa9b343e1e58a8c`
-- 현재 정리/최적화 후보 PR: `#242` — P3 미디어 UX 마감
-- 후보 브랜치: `feat/pagero-media-ux-p3-20260918`
-- 최근 production 검증 코드 SHA: `2fccc263e381ad5681cbd9ecbfa9b343e1e58a8c`
-- 문서 최신 기준: current main + #242 P3 후보
+- 운영 기능 검증 기준 HEAD: `c899c3b7e4af76c25040b8cab0bfe0302fff2710`
+- 현재 정리/최적화 후보 PR: 없음 — 다음 실행 단계 P4
+- 후보 브랜치: 없음
+- 최근 production 검증 코드 SHA: `c899c3b7e4af76c25040b8cab0bfe0302fff2710`
+- 문서 최신 기준: current main + P3 production closeout
 - 운영 도메인: `https://pagero.kr/`
 - 범위: PageRo 내부 편집기, 워크스페이스, 설정, 저장/발행, 미디어, 도메인, 운영 기능
 - 명시적 비범위: 운영 메인 랜딩 개편
@@ -29,7 +29,7 @@
 | migration 적용 | 운영 D1에 승인된 migration write가 수행됨 |
 | 운영 검증 | 실제 운영 URL/인증 화면/공개 페이지에서 확인 완료 |
 
-**#236, #238, #239, #240과 P2 closeout은 production verified 상태다. #242 P3 미디어 UX 후보는 PR QA 5/5를 통과했으며, main 병합/운영 배포는 아직 완료로 표시하지 않는다.**
+**#236, #238, #239, #240과 P2 closeout에 이어 #242 P3 미디어 UX도 main 병합·운영 배포·readiness·production D1 save roundtrip까지 완료됐다. 다음 실행 단계는 P4 저장/Undo/Revision 연결 검증이다.**
 
 ### 0.1 현재 상태 대시보드
 
@@ -38,7 +38,7 @@
 | 운영 메인 | 동결 / 유지 | `main` + `functions/index.js` |
 | 편집기 구조 1~6차 | main 반영 완료 | #213~#218 계열 |
 | 저장/복구/undo/revision | main 반영 완료 | current main |
-| 이미지/영상 재사용·미디어 보관함 | P3 QA 완료 / main 미병합 | #242 |
+| 이미지/영상 재사용·미디어 보관함 | production verified / P3 완료 | #242 / P3 |
 | 문서 통합/구 문서 제거 | production verified | #236 |
 | 불필요 랜딩 소스 제거 | production verified | #236 + 폐기 #212 branch cleanup |
 | 고정영역 모바일 44px | production verified | #236에 #237 squash 포함 |
@@ -46,7 +46,7 @@
 | real-use 편집 전체 회귀 | production verified / P2 완료 | #239 + #240 / P2 |
 | 개인 도메인 운영화 | draft stack | #233 → #234 → #235 |
 | 웹 결제/구독 | 부분 구현 / 운영 lifecycle 미완료 | P7 |
-| production deploy | #236/#238/#239/#240 production verified | Cloudflare Pages |
+| production deploy | #236/#238/#239/#240/#242 production verified | Cloudflare Pages |
 
 ### 0.2 2026-09-18 정리 작업 기록
 
@@ -475,15 +475,20 @@ P2 상태:
 - media settings browser scope: `media-library-settings-browser-e2e`
 - 실제 통과 flow: `error-retry / pagination-dedupe / revision-double-confirm / narrow-desktop`
 
-#242 상태:
+#242 production 결과:
 
-- 구현: 완료 후보
+- 구현: 완료
 - 정적 계약: 완료
 - browser E2E: 완료
 - PR QA: 완료 5/5
-- main 병합: 아직 아님
-- 운영 배포: 아직 아님
-- production verified: 아직 아님
+- main 병합: 완료 — `c899c3b7e4af76c25040b8cab0bfe0302fff2710`
+- main 재QA: 완료 5/5
+- Cloudflare production deploy: 완료
+- exact deployment: `https://731fc398.inlet-8mr.pages.dev`
+- exact deployment readiness: success
+- `https://pagero.kr/api/readiness`: success
+- production D1 save roundtrip: success
+- production verified: 완료
 
 P3 완료 판정 원칙:
 
