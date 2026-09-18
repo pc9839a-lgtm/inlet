@@ -12,6 +12,9 @@ const qaAll = await readFile('scripts/qa-all.mjs', 'utf8');
 assert(probe.includes("const QA_SLUG_PREFIX = 'qa-save-roundtrip-'"), 'production probe must use a dedicated QA slug prefix');
 assert(probe.includes('productionQaSecret') && probe.includes('/api/qa/production-save-session'), 'production probe must mint an ephemeral QA session when no static fixture session exists');
 assert(probe.includes("'X-Inlet-Production-QA-Secret': productionQaSecret"), 'production probe must send the rotating QA credential only in the dedicated header');
+assert(probe.includes('productionQaMintAttempts') && probe.includes('productionQaMintDelayMs'), 'production QA session mint retry must be bounded by explicit attempt and delay limits');
+assert(probe.includes('const propagationCandidate = response.status === 404'), 'production QA session mint may retry only the concealed 404 propagation state');
+assert(probe.includes('!propagationCandidate || attempt >= productionQaMintAttempts'), 'non-404 mint errors and exhausted propagation retries must fail immediately');
 assert(probe.includes("baselinePages.length !== 0"), 'production probe must require the dedicated empty-page fixture');
 assert(probe.includes("saveMode: 'create-new'") && probe.includes("saveMode: 'update-existing'"), 'production probe must exercise create and update save modes');
 assert(probe.includes("authenticated-readback") && probe.includes("public-readback"), 'production probe must verify authenticated and public D1 readback');
@@ -40,6 +43,7 @@ assert(workflow.includes('wrangler pages secret put INLET_PRODUCTION_QA_SECRET -
 assert(workflow.includes('INLET_PRODUCTION_SAVE_QA_SECRET=$qa_secret') && workflow.includes('$GITHUB_ENV'), 'live probe must receive the current QA credential only inside the deployment job');
 assert(workflow.includes("id: production_save") && workflow.includes("if: steps.readiness.outcome == 'success'"), 'live save must run in the same deploy job after readiness');
 assert(workflow.includes('PAGERO_PRODUCTION_SAVE_ALLOWED_ORIGINS: https://pagero.kr'), 'production save verification must pin its approved origin to pagero.kr');
+assert(workflow.includes("INLET_PRODUCTION_QA_MINT_ATTEMPTS: '12'") && workflow.includes("INLET_PRODUCTION_QA_MINT_DELAY_MS: '2500'"), 'deployment must use a finite QA mint propagation retry window');
 assert(workflow.includes('node scripts/production-save-roundtrip-check.mjs'), 'deployment must execute the live production save probe');
 assert(workflow.includes('production_save_roundtrip_failed'), 'live save failure must fail the production deployment');
 assert(workflow.includes("steps.production_save.outcome != 'success'"), 'final deployment gate must require a successful live save');
@@ -51,7 +55,7 @@ assert(qaAll.includes("production:save:roundtrip:contract:qa"), 'offline release
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 37,
+  checks: 41,
   protections: {
     disposablePrefixOnly: true,
     rotatingQaCredential: true,
@@ -68,5 +72,6 @@ console.log(JSON.stringify({
     r2ResiduePurged: true,
     noStaticFixtureSessionDependency: true,
     liveSaveDeploymentGate: true,
+    propagation404RetryBounded: true,
   },
 }, null, 2));
