@@ -156,7 +156,7 @@ body .builder-shell .edit-layout {
   --pg-green: #22c55e;
 }
 
-body .builder-shell .edit-layout :is(.page-global-options-card, .screen-order-card, .selected-block-settings-card) {
+body .builder-shell .edit-layout :is(.page-global-options-card, .selected-block-settings-card) {
   width: 100% !important;
   padding: 18px !important;
   border: 1px solid var(--pg-line) !important;
@@ -166,7 +166,7 @@ body .builder-shell .edit-layout :is(.page-global-options-card, .screen-order-ca
   overflow: visible !important;
 }
 
-body .builder-shell .edit-layout :is(.page-global-options-title, .screen-order-title, .selected-block-settings-title) {
+body .builder-shell .edit-layout :is(.page-global-options-title, .selected-block-settings-title) {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
@@ -175,7 +175,7 @@ body .builder-shell .edit-layout :is(.page-global-options-title, .screen-order-t
   padding: 0 !important;
 }
 
-body .builder-shell .edit-layout :is(.page-global-options-title, .screen-order-title, .selected-block-settings-title) h2 {
+body .builder-shell .edit-layout :is(.page-global-options-title, .selected-block-settings-title) h2 {
   margin: 0 !important;
   color: var(--pg-ink) !important;
   font-size: 18px !important;
@@ -191,8 +191,7 @@ body .builder-shell .edit-layout .selected-block-settings-title p {
   font-weight: 850 !important;
 }
 
-body .builder-shell .edit-layout .page-global-options-list,
-body .builder-shell .edit-layout .screen-order-list {
+body .builder-shell .edit-layout .page-global-options-list {
   display: grid !important;
   gap: 10px !important;
 }
@@ -202,44 +201,14 @@ body .builder-shell .edit-layout .screen-drop-zone span {
   display: none !important;
 }
 
-body .builder-shell .edit-layout .screen-order-item.block-item {
-  position: relative !important;
-  display: block !important;
-  min-height: 0 !important;
-  padding: 0 !important;
-  border: 1px solid var(--pg-line) !important;
-  border-radius: 18px !important;
-  background: #fff !important;
-  box-shadow: none !important;
-  outline: 0 !important;
-  overflow: visible !important;
-}
 
-body .builder-shell .edit-layout .screen-order-item.block-item:is(.selected, .open, [data-selected='true']) {
-  border-color: #94b7f6 !important;
-  background: var(--pg-selected) !important;
-  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, .08) !important;
-}
 
-body .builder-shell .edit-layout .screen-order-item.block-item.muted {
-  opacity: .62 !important;
-}
 
-body .builder-shell .edit-layout .screen-order-head.block-head {
-  display: grid !important;
-  grid-template-columns: 42px minmax(0, 1fr) 52px 40px !important;
-  align-items: center !important;
-  gap: 10px !important;
-  width: 100% !important;
-  min-height: 62px !important;
-  padding: 9px 10px !important;
-  border: 0 !important;
-  border-radius: 18px !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
 
-body .builder-shell .edit-layout .screen-drag-handle,
+
+
+
+
 body .builder-shell .edit-layout .screen-icon-action,
 body .builder-shell .edit-layout .fixed-open-button {
   display: inline-grid !important;
@@ -257,9 +226,7 @@ body .builder-shell .edit-layout .fixed-open-button {
   line-height: 1 !important;
 }
 
-body .builder-shell .edit-layout .screen-drag-handle {
-  cursor: grab !important;
-}
+
 
 body .builder-shell .edit-layout .screen-icon-action:hover,
 body .builder-shell .edit-layout .fixed-open-button:hover,
@@ -275,61 +242,17 @@ body .builder-shell .edit-layout .screen-icon-action[aria-expanded='true'] {
   color: #fff !important;
 }
 
-body .builder-shell .edit-layout .screen-title-wrap {
-  display: flex !important;
-  align-items: center !important;
-  gap: 9px !important;
-  min-width: 0 !important;
-  height: auto !important;
-  padding: 0 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  color: var(--pg-ink) !important;
-}
 
-body .builder-shell .edit-layout .screen-order-number {
-  display: inline-grid !important;
-  place-items: center !important;
-  width: 30px !important;
-  min-width: 30px !important;
-  height: 30px !important;
-  border-radius: 999px !important;
-  background: #eef5ff !important;
-  color: var(--pg-ink) !important;
-  font-size: 13px !important;
-  font-weight: 950 !important;
-}
 
-body .builder-shell .edit-layout .screen-title-wrap svg {
-  flex: 0 0 auto !important;
-  width: 17px !important;
-  height: 17px !important;
-  color: var(--pg-ink) !important;
-}
 
-body .builder-shell .edit-layout .screen-title-wrap strong {
-  min-width: 0 !important;
-  overflow: hidden !important;
-  color: var(--pg-ink) !important;
-  font-size: 15px !important;
-  font-weight: 900 !important;
-  line-height: 1.2 !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
-}
 
-body .builder-shell .edit-layout .screen-row-visibility,
-body .builder-shell .edit-layout .screen-row-actions {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  min-width: 0 !important;
-  position: relative !important;
-}
 
-body .builder-shell .edit-layout :is(.switch-clean, .toggle-clean > button, .toggle > button, .screen-on-toggle) {
+
+
+
+
+
+body .builder-shell .edit-layout :is(.switch-clean, .toggle-clean > button, .toggle > button) {
   position: relative !important;
   display: inline-flex !important;
   align-items: center !important;
@@ -353,13 +276,12 @@ body .builder-shell .edit-layout :is(.switch-clean, .toggle-clean > button, .tog
   text-indent: -9999px !important;
 }
 
-body .builder-shell .edit-layout :is(.switch-clean, .toggle-clean > button, .toggle > button, .screen-on-toggle)::before,
-body .builder-shell .edit-layout :is(.switch-clean, .toggle-clean > button, .toggle > button, .screen-on-toggle)::after {
+body .builder-shell .edit-layout :is(.switch-clean, .toggle-clean > button, .toggle > button)::before,
+body .builder-shell .edit-layout :is(.switch-clean, .toggle-clean > button, .toggle > button)::after {
   content: none !important;
 }
 
-body .builder-shell .edit-layout :is(.switch-clean, .toggle-clean > button, .toggle > button, .screen-on-toggle) > i,
-body .builder-shell .edit-layout .screen-on-toggle span {
+body .builder-shell .edit-layout :is(.switch-clean, .toggle-clean > button, .toggle > button) > i {
   display: block !important;
   width: 22px !important;
   min-width: 22px !important;
@@ -373,57 +295,24 @@ body .builder-shell .edit-layout .screen-on-toggle span {
   transition: transform .18s ease !important;
 }
 
-body .builder-shell .edit-layout :is(.switch-clean.active, .switch-clean[aria-checked='true'], .toggle-clean > button.active, .toggle-clean > button[aria-checked='true'], .toggle > button.active, .toggle > button[aria-checked='true'], .screen-on-toggle.active) {
+body .builder-shell .edit-layout :is(.switch-clean.active, .switch-clean[aria-checked='true'], .toggle-clean > button.active, .toggle-clean > button[aria-checked='true'], .toggle > button.active, .toggle > button[aria-checked='true']) {
   border-color: var(--pg-green) !important;
   background: var(--pg-green) !important;
 }
 
-body .builder-shell .edit-layout :is(.switch-clean.active, .switch-clean[aria-checked='true'], .toggle-clean > button.active, .toggle-clean > button[aria-checked='true'], .toggle > button.active, .toggle > button[aria-checked='true'], .screen-on-toggle.active) > i,
-body .builder-shell .edit-layout .screen-on-toggle.active span {
+body .builder-shell .edit-layout :is(.switch-clean.active, .switch-clean[aria-checked='true'], .toggle-clean > button.active, .toggle-clean > button[aria-checked='true'], .toggle > button.active, .toggle > button[aria-checked='true']) > i {
   transform: translateX(18px) !important;
 }
 
-body .builder-shell .edit-layout .screen-row-action-menu {
-  position: absolute !important;
-  top: calc(100% + 8px) !important;
-  right: 0 !important;
-  z-index: 30 !important;
-  display: grid !important;
-  min-width: 154px !important;
-  padding: 8px !important;
-  border: 1px solid var(--pg-line) !important;
-  border-radius: 14px !important;
-  background: #fff !important;
-  box-shadow: 0 14px 30px rgba(15, 23, 42, .14) !important;
-}
 
-body .builder-shell .edit-layout .screen-row-action-menu button {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-  min-height: 34px !important;
-  padding: 0 10px !important;
-  border: 0 !important;
-  border-radius: 10px !important;
-  background: transparent !important;
-  color: var(--pg-ink) !important;
-  box-shadow: none !important;
-  font-size: 13px !important;
-  font-weight: 850 !important;
-}
 
-body .builder-shell .edit-layout .screen-row-action-menu button:hover {
-  background: #f1f6ff !important;
-}
 
-body .builder-shell .edit-layout .screen-row-action-menu button.danger {
-  color: #ef4444 !important;
-}
 
-body .builder-shell .edit-layout .screen-row-action-menu button:disabled {
-  color: #b4c0cf !important;
-  cursor: not-allowed !important;
-}
+
+
+
+
+
 
 body .builder-shell .edit-layout :is(.edit-animation-card, .fixed-block-card) {
   border: 1px solid var(--pg-line) !important;
@@ -646,10 +535,7 @@ body .builder-shell .edit-layout .selected-block-settings-body textarea {
 }
 
 body .builder-shell .edit-layout .selected-block-settings-body :is(input, textarea, select):focus-visible,
-body .builder-shell .edit-layout .screen-order-item.block-item:focus-visible {
-  outline: 2px solid rgba(37, 99, 235, .22) !important;
-  outline-offset: 2px !important;
-}
+
 
 body .builder-shell .edit-layout .selected-block-settings-body :is(.choice, .choice-clean, .weekday) > div {
   display: grid !important;
@@ -685,14 +571,11 @@ body .builder-shell .edit-layout .selected-block-settings-body :is(.image-box, .
 }
 
 @media (max-width: 720px) {
-  body .builder-shell .edit-layout :is(.page-global-options-card, .screen-order-card, .selected-block-settings-card) {
+  body .builder-shell .edit-layout :is(.page-global-options-card, .selected-block-settings-card) {
     padding: 14px !important;
   }
 
-  body .builder-shell .edit-layout .screen-order-head.block-head {
-    grid-template-columns: 38px minmax(0, 1fr) 50px 38px !important;
-    gap: 8px !important;
-  }
+
 
   body .builder-shell .edit-layout .selected-block-settings-body :is(.field, .range, .color, .choice, .choice-clean, .toggle, .toggle-clean, .weekday, .anchor-control) {
     grid-template-columns: 1fr !important;

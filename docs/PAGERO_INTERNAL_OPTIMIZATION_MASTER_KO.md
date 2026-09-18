@@ -42,7 +42,7 @@
 | 문서 통합/구 문서 제거 | QA 완료, main 미병합 | #236 |
 | 불필요 랜딩 소스 제거 | QA 완료, main 미병합 | #236 + 폐기 #212 branch cleanup |
 | 고정영역 모바일 44px | QA 완료, main 미병합 | #236에 #237 squash 포함 |
-| legacy/shared CSS 충돌 정리 | 다음 작업 | P1 |
+| legacy/shared CSS 충돌 정리 | QA 완료, main 미병합 | #238 (stacked on #236) |
 | real-use 편집 전체 회귀 | 다음 작업 | P2 |
 | 개인 도메인 운영화 | draft stack | #233 → #234 → #235 |
 | 웹 결제/구독 | 부분 구현 / 운영 lifecycle 미완료 | P7 |
@@ -211,7 +211,7 @@
 - main 병합: 아직 아님
 - 운영 배포: 아직 아님
 
-### P1 — 구/신 편집기 CSS 충돌 감사 — 1차 조사 완료
+### P1 — 구/신 편집기 CSS 충돌 감사 — 후보 완료 (#238)
 
 현재 실제 편집기 진입 경로는 다음이다.
 
@@ -253,6 +253,37 @@
 - 일반 블록 구 selector는 repo-wide import/class reference 확인 + browser QA를 붙인 뒤 작은 패치로 제거한다.
 - `ScreenOrderRowActionMenu.jsx` 같은 과거 컴포넌트는 import 0건이 확인되면 소스와 대응 CSS를 함께 제거하는 방향으로 본다.
 - CSS cleanup PR에서는 저장/발행/API/public renderer 변경을 섞지 않는다.
+
+#### P1 #238 반영 결과
+
+- 실제 일반 블록 layout owner는 계속 `ScreenOrder.css`의 `screen-order-v2-*` 계열 유지
+- `editor-final-clean.css`에서 구 일반 블록 selector 제거
+- `editor-screen-order-polish.css`에서 동일 구 selector 중복 제거
+- 현재 사용 중인 `.screen-icon-action`, `.fixed-open-button`, `.switch-clean`, `.fixed-block-head` 유지
+- import 0건 dead chain 제거
+  - `ScreenOrderRowActionMenu.jsx`
+  - `screenOrderRowMenuItems.js`
+  - `useScreenOrderRowMenu.js`
+- `editor-options-layout-quality-check.mjs`에 legacy selector/source 재유입 금지 계약 추가
+- 저장/발행/API/D1/public renderer 변경 없음
+
+#238 QA:
+
+- `qa`: success
+- `browser-regression`: success
+- `editor-browser-regression`: success
+- `form-browser-regression`: success
+- `template-mobile-browser-regression`: success
+- production deploy workflows: skipped
+
+상태:
+
+- 구현: 완료
+- QA: 완료
+- #238: open / #236 위 stacked PR
+- #236 반영: 아직 아님
+- main 병합: 아직 아님
+- 운영 배포: 아직 아님
 
 ### P2 — 편집 전체 real-use audit
 
@@ -741,7 +772,7 @@
 현재 내부 최적화는 아래 순서로 진행한다.
 
 1. ~~고정 영역 모바일 컨트롤 44px 보강~~ — #236 후보에서 완료, main 병합 대기
-2. 공용 control/legacy CSS 충돌 최소 정리
+2. ~~공용 control/legacy CSS 충돌 최소 정리~~ — #238 QA 완료, #236 반영 대기
 3. 편집 전체 real-use browser regression 추가/보강
 4. 발견된 실제 UX 오류를 작은 PR로 수정
 5. 미디어 UX 마감

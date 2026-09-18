@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -22,6 +22,34 @@ const editorLabels = await readFile('src/editor/editPanelParts/editorLabels.js',
 const editLayout = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
 const sectionProps = await readFile('src/editor/createEditPanelSectionProps.js', 'utf8');
 const mobileScreenOrderCss = screenOrderCss.slice(screenOrderCss.indexOf('@media (max-width: 760px)'));
+const editorFinalCleanCss = await readFile('src/styles/editor-final-clean.css', 'utf8');
+const screenOrderPolishCss = await readFile('src/styles/editor-screen-order-polish.css', 'utf8');
+const legacyScreenOrderTokens = [
+  '.screen-order-card',
+  '.screen-order-list',
+  '.screen-order-item',
+  '.screen-order-inline-editor',
+  '.screen-order-head',
+  '.screen-title-wrap',
+  '.screen-order-number',
+  '.screen-row-chevron',
+  '.screen-row-visibility',
+  '.screen-row-actions',
+  '.screen-row-action-menu',
+  '.screen-drag-handle',
+  '.screen-on-toggle',
+  '.screen-more-action',
+];
+
+async function assertMissingFile(relativePath) {
+  try {
+    await access(relativePath);
+  } catch (error) {
+    if (error?.code === 'ENOENT') return;
+    throw error;
+  }
+  throw new Error(`legacy editor source must stay removed: ${relativePath}`);
+}
 
 assert(pageOptions.includes("import './PageGlobalOptions.css';"), 'page options must load its compact layout owner');
 assert(pageOptionsCss.includes('max-width: 100%') && pageOptionsCss.includes('overflow-x: hidden'), 'page options must clamp nested editor width and horizontal overflow');
@@ -50,11 +78,18 @@ assert(fixedBlockHeader.includes('className="fixed-block-switch"'), 'fixed block
 assert(editorControls.includes("className = ''") && editorControls.includes('className ?'), 'shared Switch must accept an optional scoped class without changing other switch callers');
 assert(/\.fixed-open-button\s*\{[^}]*width:\s*44px\s*!important;[^}]*height:\s*44px\s*!important;/s.test(fixedBlocksCss), 'mobile fixed block open button must expose a 44px touch target');
 assert(/\.fixed-block-switch\s*\{[^}]*height:\s*44px\s*!important;[\s\S]*?\.fixed-block-switch::before\s*\{[^}]*height:\s*28px\s*!important;/s.test(fixedBlocksCss), 'fixed block switch must keep a 44px hit target while preserving the compact 28px visual track');
+assert(screenOrderCss.includes('.screen-order-v2-item') && screenOrderCss.includes('.screen-order-v2-head') && screenOrderCss.includes('.screen-order-v2-menu'), 'screen order V2 stylesheet must remain the normal-block layout owner');
+assert(legacyScreenOrderTokens.every((token) => !editorFinalCleanCss.includes(token)), 'editor-final-clean must not restore legacy normal-block selectors');
+assert(legacyScreenOrderTokens.every((token) => !screenOrderPolishCss.includes(token)), 'editor-screen-order-polish must not restore legacy normal-block selectors');
+assert(['.screen-icon-action', '.fixed-open-button', '.switch-clean', '.fixed-block-head'].every((token) => editorFinalCleanCss.includes(token)), 'current shared fixed-block controls must remain styled after legacy cleanup');
+await assertMissingFile('src/editor/editPanelParts/ScreenOrderRowActionMenu.jsx');
+await assertMissingFile('src/editor/editPanelParts/screenOrderRowMenuItems.js');
+await assertMissingFile('src/editor/editPanelParts/useScreenOrderRowMenu.js');
 
 console.log(JSON.stringify({
   ok: true,
   scope: 'editor-options-layout',
-  checks: 27,
+  checks: 34,
   saveFlowTouched: false,
   globalOptionsSeparated: true,
   fixedBlocksMovedToScreenOrder: true,
@@ -65,4 +100,6 @@ console.log(JSON.stringify({
   largeMobileControls: true,
   fixedBlockMobileTouchTargetPx: 44,
   fixedBlockSwitchVisualTrackPx: 28,
+  legacyScreenOrderCssRemoved: true,
+  legacyScreenOrderMenuSourcesRemoved: true,
 }, null, 2));

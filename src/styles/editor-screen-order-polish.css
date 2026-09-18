@@ -7,7 +7,7 @@
   --editor-green: #22c55e;
 }
 
-.edit-layout :is(.page-global-options-card, .screen-order-card, .selected-block-settings-card).card {
+.edit-layout :is(.page-global-options-card, .selected-block-settings-card).card {
   width: 100% !important;
   min-width: 0 !important;
   padding: 18px !important;
@@ -17,7 +17,7 @@
   box-shadow: none !important;
 }
 
-.edit-layout :is(.page-global-options-card, .screen-order-card, .selected-block-settings-card) .section-title {
+.edit-layout :is(.page-global-options-card, .selected-block-settings-card) .section-title {
   display: flex !important;
   align-items: flex-start !important;
   justify-content: space-between !important;
@@ -25,7 +25,7 @@
   margin: 0 0 14px !important;
 }
 
-.edit-layout :is(.page-global-options-card, .screen-order-card, .selected-block-settings-card) .section-title h2 {
+.edit-layout :is(.page-global-options-card, .selected-block-settings-card) .section-title h2 {
   margin: 0 !important;
   color: var(--editor-ink) !important;
   font-size: 20px !important;
@@ -33,7 +33,7 @@
   font-weight: 950 !important;
 }
 
-.edit-layout :is(.page-global-options-card, .screen-order-card, .selected-block-settings-card) .section-title p {
+.edit-layout :is(.page-global-options-card, .selected-block-settings-card) .section-title p {
   margin: 3px 0 0 !important;
   color: var(--editor-muted) !important;
   font-size: 13px !important;
@@ -53,8 +53,7 @@
 
 .edit-layout .switch-clean,
 .edit-layout .toggle-clean > button,
-.edit-layout .toggle > button,
-.edit-layout .screen-on-toggle {
+.edit-layout .toggle > button {
   position: relative !important;
   display: inline-block !important;
   width: 50px !important;
@@ -72,7 +71,6 @@
   line-height: 0 !important;
 }
 
-.edit-layout .screen-on-toggle span,
 .edit-layout :is(.switch-clean, .toggle-clean > button, .toggle > button) > i {
   position: absolute !important;
   top: 4px !important;
@@ -89,16 +87,15 @@
   transition: transform .16s ease !important;
 }
 
-.edit-layout :is(.switch-clean.active, .switch-clean[aria-checked='true'], .toggle-clean > button.active, .toggle > button.active, .toggle-clean > button[aria-checked='true'], .toggle > button[aria-checked='true'], .screen-on-toggle.active) {
+.edit-layout :is(.switch-clean.active, .switch-clean[aria-checked='true'], .toggle-clean > button.active, .toggle > button.active, .toggle-clean > button[aria-checked='true'], .toggle > button[aria-checked='true']) {
   background: var(--editor-green) !important;
 }
 
-.edit-layout :is(.switch-clean.active, .switch-clean[aria-checked='true'], .toggle-clean > button.active, .toggle > button.active, .toggle-clean > button[aria-checked='true'], .toggle > button[aria-checked='true'], .screen-on-toggle.active) :is(i, span) {
+.edit-layout :is(.switch-clean.active, .switch-clean[aria-checked='true'], .toggle-clean > button.active, .toggle > button.active, .toggle-clean > button[aria-checked='true'], .toggle > button[aria-checked='true']) :is(i, span) {
   transform: translateX(20px) !important;
 }
 
 .edit-layout .page-global-grid,
-.edit-layout .screen-order-list,
 .edit-layout .editor-stack {
   display: grid !important;
   gap: 12px !important;
@@ -172,7 +169,7 @@
   border-top: 1px solid #edf2f8 !important;
 }
 
-.edit-layout :is(.screen-drag-handle, .screen-icon-action, .fixed-open-button) {
+.edit-layout :is(.screen-icon-action, .fixed-open-button) {
   display: inline-grid !important;
   place-items: center !important;
   width: 38px !important;
@@ -192,7 +189,7 @@
   border-radius: 999px !important;
 }
 
-.edit-layout :is(.screen-icon-action:hover, .screen-icon-action:focus-visible, .fixed-open-button:hover, .fixed-open-button:focus-visible, .screen-more-action[aria-expanded='true']) {
+.edit-layout :is(.screen-icon-action:hover, .screen-icon-action:focus-visible, .fixed-open-button:hover, .fixed-open-button:focus-visible) {
   border-color: #b9cbe1 !important;
   background: #f8fbff !important;
   color: var(--editor-ink) !important;
@@ -244,40 +241,15 @@
   background: var(--editor-blue) !important;
 }
 
-.edit-layout .screen-order-item.block-item {
-  position: relative !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: 1px solid var(--editor-line) !important;
-  border-radius: 18px !important;
-  background: #fff !important;
-  box-shadow: none !important;
-  outline: 0 !important;
-  overflow: visible !important;
-  cursor: pointer !important;
-}
 
-.edit-layout .screen-order-item.block-item:is(.open, [data-selected='true']) {
-  border-color: #b9cae0 !important;
-  background: linear-gradient(180deg, #fff, #f8fbff) !important;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, .08) !important;
-}
 
-.edit-layout .screen-order-item.block-item:focus-visible {
-  border-color: var(--editor-blue) !important;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, .14) !important;
-}
 
-.edit-layout .screen-order-inline-editor {
-  cursor: default !important;
-  padding: 14px !important;
-  border-top: 1px solid var(--editor-line) !important;
-  background: #fbfdff !important;
-}
 
-.edit-layout .screen-order-inline-editor .selected-block-settings-body {
-  margin: 0 !important;
-}
+
+
+
+
+
 .edit-layout .lazy-editor-error {
   display: flex !important;
   align-items: center !important;
@@ -297,147 +269,39 @@
   white-space: nowrap !important;
 }
 
-.edit-layout .screen-order-head.block-head {
-  display: grid !important;
-  grid-template-columns: 42px minmax(0, 1fr) 50px auto !important;
-  align-items: center !important;
-  gap: 8px !important;
-  min-height: 58px !important;
-  padding: 8px 10px !important;
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
 
-.edit-layout .screen-title-wrap {
-  display: flex !important;
-  align-items: center !important;
-  gap: 9px !important;
-  min-width: 0 !important;
-  min-height: 38px !important;
-  padding: 0 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  outline: 0 !important;
-}
 
-.edit-layout .screen-title-wrap * {
-  pointer-events: none !important;
-}
 
-.edit-layout .screen-order-number {
-  display: inline-grid !important;
-  place-items: center !important;
-  width: 28px !important;
-  min-width: 28px !important;
-  height: 28px !important;
-  min-height: 28px !important;
-  padding: 0 !important;
-  border: 0 !important;
-  border-radius: 999px !important;
-  background: #eff6ff !important;
-  color: var(--editor-ink) !important;
-  font-size: 13px !important;
-  font-weight: 950 !important;
-}
 
-.edit-layout .screen-title-wrap strong {
-  flex: 1 1 auto !important;
-  min-width: 0 !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
-  color: var(--editor-ink) !important;
-  font-size: 15px !important;
-  font-weight: 950 !important;
-}
 
-.edit-layout .screen-title-wrap svg {
-  flex: 0 0 auto !important;
-  color: var(--editor-ink) !important;
-}
 
-.edit-layout .screen-row-chevron {
-  display: inline-grid !important;
-  flex: 0 0 auto !important;
-  place-items: center !important;
-  color: var(--editor-muted) !important;
-}
 
-.edit-layout .screen-row-visibility,
-.edit-layout .screen-row-actions {
-  display: grid !important;
-  place-items: center !important;
-  min-width: 0 !important;
-}
 
-.edit-layout .screen-row-actions {
-  position: relative !important;
-  display: inline-flex !important;
-  gap: 4px !important;
-}
 
-.edit-layout .screen-row-actions .screen-icon-action {
-  width: 34px !important;
-  min-width: 34px !important;
-  height: 34px !important;
-  min-height: 34px !important;
-}
 
-.edit-layout .screen-row-actions .screen-icon-action:disabled {
-  opacity: .32 !important;
-  cursor: not-allowed !important;
-}
 
-.edit-layout .screen-row-actions .screen-delete-action:is(:hover, :focus-visible) {
-  border-color: #fecaca !important;
-  background: #fff7f7 !important;
-  color: #dc2626 !important;
-}
 
-.edit-layout .screen-row-action-menu {
-  position: absolute !important;
-  right: 0 !important;
-  top: calc(100% + 8px) !important;
-  z-index: 70 !important;
-  display: grid !important;
-  gap: 4px !important;
-  width: 136px !important;
-  padding: 6px !important;
-  border: 1px solid var(--editor-line) !important;
-  border-radius: 14px !important;
-  background: #fff !important;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, .16) !important;
-}
 
-.edit-layout .screen-row-action-menu button {
-  width: 100% !important;
-  min-height: 34px !important;
-  padding: 0 10px !important;
-  border: 0 !important;
-  border-radius: 10px !important;
-  background: #fff !important;
-  color: var(--editor-ink) !important;
-  box-shadow: none !important;
-  text-align: left !important;
-  font-size: 12px !important;
-  font-weight: 900 !important;
-}
 
-.edit-layout .screen-row-action-menu button:hover {
-  background: #f3f7fc !important;
-}
 
-.edit-layout .screen-row-action-menu button:disabled {
-  color: #c5d1df !important;
-  cursor: default !important;
-}
 
-.edit-layout .screen-row-action-menu button.danger {
-  color: #ef4444 !important;
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 .edit-layout .selected-block-settings-card {
   margin-top: 12px !important;
@@ -717,15 +581,9 @@
 }
 
 @media (max-width: 720px) {
-  .edit-layout .screen-order-head.block-head {
-    grid-template-columns: 40px minmax(0, 1fr) 48px auto !important;
-    gap: 7px !important;
-    padding: 8px !important;
-  }
 
-  .edit-layout .screen-title-wrap strong {
-    font-size: 14px !important;
-  }
+
+
 
   .edit-layout .selected-block-settings-body :is(.field, .range, .color, .choice, .choice-clean, .toggle, .toggle-clean, .weekday, .anchor-control),
   .edit-layout .selected-block-settings-body :is(.two-col, .mini-list) {
