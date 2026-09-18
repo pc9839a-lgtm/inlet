@@ -45,7 +45,7 @@
 | legacy/shared CSS 충돌 정리 | 다음 작업 | P1 |
 | real-use 편집 전체 회귀 | 다음 작업 | P2 |
 | 개인 도메인 운영화 | draft stack | #233 → #234 → #235 |
-| 웹 결제/구독 | 미완료 | P7 |
+| 웹 결제/구독 | 부분 구현 / 운영 lifecycle 미완료 | P7 |
 | production deploy | 미실행 | 별도 승인 필요 |
 
 ### 0.2 2026-09-18 정리 작업 기록
@@ -350,13 +350,50 @@
 
 ### P5 — 개인 도메인 운영화
 
-현재 `main`에는 기본 UI/hostname 저장/CNAME 안내/custom-host routing이 있다.
+현재 상태는 **main baseline + 3단계 draft stack**으로 나눠서 본다.
+
+#### P5 현재 구현현황
+
+현재 `main`에 이미 존재하는 기능:
+
+- 설정 화면의 개인 도메인 입력 UI
+- `page.integrations.domain.hostname` 저장
+- CNAME 대상 `inlet-8mr.pages.dev` 안내
+- 저장된 hostname 기반 custom-host 공개 라우팅
+- 기본적인 도메인 형식 검증
+- HTTPS/SSL add-on 상태 표시와 결제 진입 연결
 
 현재 draft stack:
 
-- PR #233: canonical ownership core
-- PR #234: Cloudflare provider + DNS/SSL operations
-- PR #235: 현재 설정 UI와 server operations 연결
+- PR #233 — canonical ownership core
+  - `0015_page_domain_ownership.sql`
+  - `page_domains` canonical ownership/lifecycle mirror
+  - apex / `www.` 동등 hostname canonical key
+  - 중복 active ownership 차단
+  - reserved hostname 차단
+  - page insert/update/archive 시 ownership sync/release
+- PR #234 — provider/DNS/SSL operations
+  - Cloudflare Pages custom-domain 등록/확인/삭제
+  - DNS CNAME 확인
+  - SSL/provider 상태 저장
+  - provider API origin 고정, redirect 차단, timeout
+  - allowlisted DNS-over-HTTPS만 허용
+  - provider cleanup 불가 시 fail-closed detach
+- PR #235 — 현재 설정 UI와 server operations 연결
+  - `/api/domains/check`
+  - `/api/domains/manage`
+  - availability check → page save → provider verify
+  - provider detach → page save
+  - canonical `page_domains` 상태를 UI에 표시
+
+현재 상태:
+
+- main baseline: 구현 완료 / 운영 중
+- #233~#235: 구현 + PR QA 완료
+- #233~#235 main 병합: 아직 아님
+- `0015_page_domain_ownership.sql` 운영 적용: 아직 아님
+- Cloudflare provider credential 운영 적용: 아직 아님
+- 실제 DNS/SSL 연결 운영 검증: 아직 아님
 
 규칙:
 
@@ -364,21 +401,68 @@
 - #233 → #234 → #235 순서 유지
 - production D1 migration은 별도 승인
 - Cloudflare provider credential 적용은 별도 승인
-- 운영 실제 도메인 연결 테스트는 별도 승인
+- 운영 실제 도메인 연결/교체/해제 테스트는 별도 승인
+- provider 상태만 바꾸기 위해 `pages.page_json`을 직접 수정하지 않는다
+
+#### P5 완료조건
+
+개인 도메인을 완료로 판정하려면 아래가 전부 필요하다.
+
+1. #233 → #234 → #235가 순서대로 현재 main에 재검증 후 병합
+2. D1 migration read-only preflight에서 pending migration과 SHA 확인
+3. 별도 승인 후 encrypted backup 생성
+4. `0015_page_domain_ownership.sql` 운영 적용
+5. backfill 후 중복 ownership / orphan claim 없음 확인
+6. 최소권한 Cloudflare credential과 Pages project 설정
+7. 통제된 테스트 서브도메인으로 실제 connect → DNS 대기 → SSL ready 검증
+8. 동일 도메인 중복 연결 차단 검증
+9. 도메인 교체 시 기존 provider detach 선행 검증
+10. provider 오류/credential 누락 시 D1만 먼저 해제되지 않는지 검증
+11. custom host 공개 readback이 올바른 page/project에 연결되는지 검증
+12. 해제 후 기본 `pagero.kr/<slug>` 주소가 정상 유지되는지 검증
+
+#### P5 테스트 매트릭스
+
+| ID | 시나리오 | 기대 결과 |
+| --- | --- | --- |
+| DOMAIN-01 | 유효 도메인 availability check | 현재 project/page 기준으로 사용 가능 여부 반환 |
+| DOMAIN-02 | 다른 project가 같은 canonical hostname 보유 | 중복 ownership 차단 |
+| DOMAIN-03 | apex와 `www.` 변형 충돌 | 동일 canonical ownership으로 취급 |
+| DOMAIN-04 | 예약 hostname 입력 | 저장/provider 호출 전에 차단 |
+| DOMAIN-05 | 도메인 연결 | page save 성공 후에만 provider verify 실행 |
+| DOMAIN-06 | DNS 미설정 | pending 상태 유지, 공개주소를 ready로 가장하지 않음 |
+| DOMAIN-07 | DNS 정상 + SSL 준비 | canonical 상태가 connected/ready로 전환 |
+| DOMAIN-08 | provider 등록 실패 | page/provider 상태가 모순되지 않고 재시도 가능 |
+| DOMAIN-09 | 기존 도메인 → 새 도메인 교체 | 기존 provider detach 성공 전 새 claim으로 덮어쓰지 않음 |
+| DOMAIN-10 | provider credential 누락 상태에서 해제 | orphan 가능성이 있으면 fail-closed |
+| DOMAIN-11 | custom host 공개 요청 | 정확한 project/page만 렌더링 |
+| DOMAIN-12 | 도메인 해제 | provider detach 후 hostname 제거, 기본 주소 정상 유지 |
 
 ### P6 — 설정 전체 사용성
 
-설정 메뉴:
+설정 기능 자체는 이미 상당 부분 구현돼 있다. P6의 목적은 새 설정 시스템을 만드는 것이 아니라 **현재 메뉴 구조/권한/저장 UX를 실제 사용 흐름에서 마감**하는 것이다.
+
+#### P6 현재 구현현황
+
+현재 설정 내비게이션은 다음으로 분리돼 있다.
+
+기본 영역:
 
 - 페이지 기본
 - 미디어 보관함
 - 개인 도메인
 - 계정 정보
 - 매니저 권한
+
+서비스 영역:
+
 - 요금제·결제
 - 추천인
 - 파트너
 - 정산
+
+고급 영역:
+
 - SEO 설정
 - 추적 코드
 - 전환 설정
@@ -386,56 +470,271 @@
 - 페이지 복제
 - 초기화
 
-목표:
+현재 확인된 권한/구조:
 
-- PC에서 과도한 빈 공간 제거
-- 모바일에서 메뉴/본문 이동 명확화
-- 설명문 최소화
-- 저장 상태/권한 제한 명확화
-- owner-only 기능 오인 방지
+- 기본 설정 / 고급 설정 모드 분리
+- client-admin 모드에서는 고급 설정 숨김
+- edit 읽기 권한이 없으면 미디어 보관함 숨김
+- manager 모드에서는 매니저 관리 숨김
+- 요금제·추천인·파트너·정산은 owner finance access에 한정
+- 계정/매니저/페이지 설정은 별도 section 컴포넌트로 분리
+- revision history는 별도 설정 section으로 분리
+- 페이지 복제는 별도 URL modal 사용
+- 오류는 `role="alert"`, 상태 안내는 일부 `role="status"` 사용
+
+현재 미완료 판단:
+
+- 설정 전체를 한 사용자 세션에서 이동하는 browser E2E 기준 없음
+- 좁은 PC/모바일에서 sidebar → 본문 이동성 전체 검증 필요
+- 저장 가능한 section과 즉시 반영 section의 피드백 일관성 검증 필요
+- owner/manager/client-admin별 숨김/비활성 정책을 한 matrix로 고정할 필요
+- destructive action의 keyboard/focus 복귀까지 포함한 검증 필요
+
+#### P6 완료조건
+
+1. 모든 설정 메뉴가 desktop / narrow desktop / 360 / 390 / 430에서 접근 가능
+2. section 전환 시 가로 overflow와 본문 잘림 없음
+3. owner / manager / client-admin별 메뉴 노출이 정책과 일치
+4. 저장 버튼이 필요한 section과 즉시 반영 section의 UX가 명확히 구분
+5. 저장 중 / 성공 / 실패 상태가 중복 토스트나 모순 문구 없이 표시
+6. section 전환 후 이전 draft가 의도치 않게 다른 section을 덮지 않음
+7. 페이지 복제 / 초기화 / 소유권 이전 같은 위험 작업은 확인 절차가 명확
+8. 오류 후 재시도가 가능하고 기존 입력이 보존
+9. 키보드만으로 메뉴 이동/주요 입력/저장/취소 가능
+10. 권한 없는 기능은 단순 CSS 숨김이 아니라 실제 action도 차단
+
+#### P6 테스트 매트릭스
+
+| ID | 시나리오 | 기대 결과 |
+| --- | --- | --- |
+| SETTINGS-01 | 기본 ↔ 고급 전환 | 선택 section과 본문이 정확히 동기화 |
+| SETTINGS-02 | owner 로그인 | finance/manager/advanced 정책대로 노출 |
+| SETTINGS-03 | manager 로그인 | owner-only 메뉴/action 접근 불가 |
+| SETTINGS-04 | client-admin 모드 | advanced 영역 미노출, 허용된 기본 section만 접근 |
+| SETTINGS-05 | 미디어 read 권한 없음 | 메뉴와 실제 보관함 action 모두 차단 |
+| SETTINGS-06 | section 수정 후 다른 section 이동 | 저장/draft 정책대로 값 보존 또는 경고 |
+| SETTINGS-07 | 서버 저장 실패 | 입력 보존 + 명확한 오류 + 재시도 가능 |
+| SETTINGS-08 | 페이지 복제 | 새 URL 검증 후 복제, 원본 page 영향 없음 |
+| SETTINGS-09 | 초기화 | 명시 확인 전 데이터 변경 없음 |
+| SETTINGS-10 | narrow desktop | sidebar/content overflow 없음 |
+| SETTINGS-11 | 360/390/430 | 메뉴 선택과 본문 이동이 한 손 조작 범위에서 가능 |
+| SETTINGS-12 | keyboard only | focus 순서, Enter/Space, Escape가 예측 가능 |
 
 ### P7 — 웹 결제/구독
 
-메뉴나 화면 존재와 실제 결제 완료를 혼동하지 않는다.
+메뉴나 화면 존재와 실제 결제 lifecycle 완료를 혼동하지 않는다. 현재는 **조회/사전검사/확정용 서버 계약과 UI 진입은 존재하지만, 운영 결제 provider lifecycle 전체는 완료로 볼 수 없다.**
 
-미완료 범위:
+#### P7 현재 구현현황
 
-- checkout/billing key
-- server-side entitlement mapping
-- provider webhook
-- idempotency
-- 활성화/갱신
-- 결제 실패/grace
-- 해지
-- 결제 이력
-- 영수증/증빙
-- admin override audit
+현재 `main`에 존재:
+
+- `BillingSettingsSection`
+  - 무료 / 클래식 / 프로 요금제 표시
+  - HTTPS·SSL add-on 표시
+  - 현재 구독 상태 표시
+- `accountFinanceRepository`
+  - `/api/billing/finance` 조회
+  - 구독/entitlement/referral/settlement 상태 정규화
+  - `/api/billing/web/precheck` 호출
+  - 허용된 웹 상품은 `/subscribe?product=...`로 이동
+- `/api/billing/web/precheck`
+  - 중복 활성 구독 방지
+  - Google Play / referral / web 구독 충돌 판정
+  - 프로 플랜의 domain 포함 여부 판정
+- `/api/billing/web/confirm`
+  - provider 인증 필요
+  - payment reference / external subscription id 수신
+  - D1 subscription/payment history 반영
+  - entitlement/commission 연계
+  - Google Play와 웹 중복 충돌 방어
+- `/api/billing/finance`, `subscriptions`, `entitlements`, payment history 관련 서버 코드
+- finance/referral 관련 QA workflow 존재
+
+현재 완료로 볼 수 없는 범위:
+
+- 실제 결제 provider checkout UI/SDK와 운영 credential 검증
+- billing key 또는 recurring token lifecycle
+- provider webhook endpoint와 event signature 검증
+- webhook 중복/역순 event idempotency
+- 자동 갱신
+- 결제 실패 → grace → 만료 전이
+- 사용자가 직접 해지하는 완결된 흐름
+- provider-side 취소/환불 반영
+- invoice/receipt/증빙 UX
+- 운영 결제 실거래 smoke
 - webhook replay safety
+- admin override 전체 audit trail 운영 검증
 
-요금 정책은 `docs/PAGERO_PLAN_POLICY_KO.md`만 따른다.
+#### P7 완료조건
+
+1. `/subscribe`에서 실제 provider 결제 성공/실패/취소가 분리 처리
+2. 결제 성공은 client callback만 믿지 않고 provider 검증 후 확정
+3. 동일 payment reference / webhook event 재전송이 중복 entitlement를 만들지 않음
+4. subscription 상태 전이 `active → grace → expired/cancelled`가 서버 기준으로 일관
+5. 자동 갱신 성공 시 expires/next billing이 정상 갱신
+6. 자동 갱신 실패 시 grace 정책과 기능 제한 시점이 문서 정책과 일치
+7. 해지 시 즉시 권한 박탈 여부/기간 종료 후 만료 여부가 제품정책과 일치
+8. Google Play 구독과 웹 구독이 이중 과금되지 않음
+9. 프로 요금제와 domain add-on 중복 청구 차단
+10. 결제 이력/영수증/증빙 조회 가능
+11. provider webhook signature + replay + idempotency 검증
+12. admin override는 actor/reason/before/after audit가 남음
+13. 실제 운영 sandbox 또는 승인된 실거래 smoke 통과
+14. `docs/PAGERO_PLAN_POLICY_KO.md`와 화면/서버 entitlement가 일치
+
+#### P7 테스트 매트릭스
+
+| ID | 시나리오 | 기대 결과 |
+| --- | --- | --- |
+| BILLING-01 | 무료 → 클래식 결제 사전검사 | 허용 후 checkout 진입 |
+| BILLING-02 | 이미 웹 클래식 활성 | 중복 결제 차단 |
+| BILLING-03 | Google Play 충돌 상품 | 웹 이중 결제 차단 |
+| BILLING-04 | 프로 활성 + domain add-on 신청 | 포함 상품 중복 청구 차단 |
+| BILLING-05 | provider 결제 성공 | 서버 검증 후 subscription/payment/entitlement 일치 |
+| BILLING-06 | 같은 payment reference 재전송 | 중복 결제/중복 entitlement 없음 |
+| BILLING-07 | webhook event 중복/역순 | 최신 유효 상태만 반영 |
+| BILLING-08 | 갱신 성공 | nextBilling/expiresAt 연장 |
+| BILLING-09 | 갱신 실패 | grace 정책 적용, 즉시 임의 만료 금지 |
+| BILLING-10 | 해지 | 정책에 맞는 종료 시점까지 entitlement 유지/종료 |
+| BILLING-11 | 환불/취소 | 결제 이력과 entitlement가 provider 상태와 일치 |
+| BILLING-12 | admin override | actor/reason/before/after audit 존재 |
 
 ### P8 — 대량 데이터/운영
 
-- 수천~수만 접수 pagination
-- 통계 대범위 조회 성능
-- CSV 대용량
-- blocked/spam history
-- audit/delivery retention
-- backup retention
-- 실제 query/index 검증
+현재는 기본 pagination/export/retention 기반이 일부 존재한다. P8은 기능 유무보다 **실제 대량 데이터에서 query/index/메모리/다운로드가 버티는지**를 검증하는 단계다.
+
+#### P8 현재 구현현황
+
+현재 확인된 기반:
+
+- 접수 조회
+  - `fetchServerLeads()` cursor/limit 지원
+  - 기본 limit 500
+  - `withMeta` 시 `total / nextCursor / hasMore`
+- 전체 접수 수집
+  - `fetchAllServerLeads()`
+  - 요청 limit 최대 5,000
+  - 수집 max 최대 20,000
+  - 기본 max 10,000
+  - truncate 시 `partial / hasMore` 반환
+- 차단 이력
+  - 별도 pagination
+  - `total / nextCursor / hasMore`
+  - query plan/meta 전달 경로 존재
+- CSV
+  - client 전체 배열만 내보내는 방식이 아니라 서버 `/api/leads/export.csv` 경로 존재
+- 운영
+  - audit retention workflow 존재
+  - stats quality check 존재
+  - lead server smoke/QA 존재
+
+현재 미검증:
+
+- 10k / 50k / 100k 이상 접수에서 응답시간/메모리
+- deep cursor/offset 비용
+- 통계 장기간 범위 query plan
+- CSV 대용량 streaming/timeout/memory
+- blocked/spam history 장기간 조회
+- audit/delivery retention 실제 운영 실행 결과
+- production D1 index 사용 여부
+- backup 크기 증가 시 복구시간
+- 브라우저에서 대량 목록 렌더링 비용
+
+#### P8 완료조건
+
+1. 대표 데이터 규모를 1k / 10k / 50k 이상으로 정의하고 fixture/load test 보유
+2. 접수 목록 첫 페이지와 다음 페이지 응답시간 예산 수립 및 통과
+3. pagination 중 누락/중복/순서 역전 없음
+4. filter/search/month/date/channel/delivery 조합에서 index 사용 확인
+5. 통계 1일/30일/1년 범위 query plan과 시간 예산 확인
+6. CSV 대용량 export가 browser memory에 전체 데이터를 올리지 않고 완료
+7. export 실패/timeout 시 재시도 가능한 오류 반환
+8. blocked/spam history가 장기 데이터에서도 pagination 유지
+9. audit/delivery retention이 승인된 기간 기준으로 실제 삭제/보존
+10. retention job 재실행이 idempotent
+11. backup artifact 크기와 복원 절차 검증
+12. 운영 query/index 검증 결과를 문서에 남김
+
+#### P8 테스트 매트릭스
+
+| ID | 시나리오 | 기대 결과 |
+| --- | --- | --- |
+| DATA-01 | 1k 접수 첫 페이지 | 시간 예산 내 응답, total/nextCursor 정확 |
+| DATA-02 | 10k+ pagination 연속 탐색 | 중복/누락/순서 역전 없음 |
+| DATA-03 | 50k+ filter/search | full scan 회피 여부와 query plan 확인 |
+| DATA-04 | 월/기간 필터 | 경계 날짜 포함 규칙 일치 |
+| DATA-05 | blocked history 대량 조회 | pagination과 total 정확 |
+| DATA-06 | 30일/1년 통계 | 시간 예산 내 결과, 집계 정확 |
+| DATA-07 | 대용량 CSV | timeout/메모리 폭증 없이 완료 |
+| DATA-08 | CSV 중간 실패 | 사용자에게 재시도 가능한 오류 제공 |
+| DATA-09 | retention dry-run | 삭제 대상/보존 대상 수량 확인 가능 |
+| DATA-10 | retention 실제 실행 | 승인된 범위만 삭제, 재실행 안전 |
+| DATA-11 | backup 생성/복원 smoke | 무결성 검증 가능 |
+| DATA-12 | 브라우저 대량 목록 | 스크롤/필터 시 UI freeze 허용범위 내 |
 
 ### P9 — 접근성/모바일 최종 마감
 
-- 키보드 탐색
-- visible focus
-- dialog focus trap
-- Escape
-- 44px touch target
-- 360 / 390 / 430
-- form keyboard viewport
-- fixed UI collision
-- accessible names
-- contrast
+현재 모바일 회귀와 일부 ARIA는 존재하지만, 제품 전체 접근성 완료로 판정할 전용 audit는 없다. P9는 **마지막 release gate**로 별도 수행한다.
+
+#### P9 현재 구현현황
+
+현재 확인된 기반:
+
+- 360 / 390 / 430 템플릿 모바일 browser regression 존재
+- 일반 블록 및 #236 후보의 fixed block에 44px touch target 보강
+- 설정/결제 일부 영역에 `aria-label`
+- 오류 `role="alert"`, 상태 메시지 `role="status"` 일부 적용
+- 장식 아이콘에 `aria-hidden="true"` 사용 사례 존재
+- 버튼 기반 설정 내비게이션과 `aria-pressed` 일부 적용
+- unsaved guard / modal / keyboard shortcut 관련 기존 기능 존재
+
+현재 미검증:
+
+- 전체 앱 keyboard-only 탐색
+- visible focus의 화면별 일관성
+- 모든 dialog의 focus trap / 초기 focus / focus return
+- Escape 동작 충돌
+- 모든 icon-only button의 accessible name
+- input label/description/error 연결
+- 색 대비
+- 모바일 키보드가 열린 상태의 viewport/fixed UI 충돌
+- 200% zoom / narrow reflow
+- screen reader landmark/heading 구조
+- drag/reorder의 비포인터 대체 동작 전체 검증
+
+#### P9 완료조건
+
+1. keyboard-only로 로그인 → 대시보드 → 편집기 → 설정 → 발행 핵심 흐름 수행 가능
+2. 모든 interactive control에 visible focus 존재
+3. icon-only button에 accessible name 존재
+4. dialog는 열릴 때 내부 focus, Tab trap, Escape close, 닫힌 후 trigger로 focus return
+5. 입력 오류는 색상만이 아니라 텍스트/ARIA로 전달
+6. 44px touch target 정책이 모바일 주요 조작에 적용
+7. 360 / 390 / 430에서 horizontal overflow 없음
+8. 모바일 키보드 open 상태에서 저장/확인 버튼과 입력 필드가 가려지지 않음
+9. fixed top/bottom UI가 form focus와 충돌하지 않음
+10. 200% zoom/reflow에서 기능 손실 없음
+11. 텍스트/버튼/상태 색 대비가 기준 충족
+12. drag/reorder에 keyboard 대체 조작 제공 또는 명확한 대체 버튼 유지
+13. automated accessibility scan + 실제 keyboard/browser audit 둘 다 통과
+
+#### P9 테스트 매트릭스
+
+| ID | 시나리오 | 기대 결과 |
+| --- | --- | --- |
+| A11Y-01 | Tab으로 편집기 주요 조작 순회 | 논리적 순서 + focus 표시 |
+| A11Y-02 | icon-only control | 스크린리더가 기능 이름을 읽음 |
+| A11Y-03 | modal open/Tab/Escape/close | focus trap과 focus return 정상 |
+| A11Y-04 | form validation error | 오류 문구와 해당 input 관계 명확 |
+| A11Y-05 | block reorder keyboard | pointer 없이 순서 변경 가능 |
+| A11Y-06 | 360px + keyboard open | input/action이 viewport 밖으로 밀리지 않음 |
+| A11Y-07 | 390/430 fixed UI | form focus 중 fixed UI 충돌 없음 |
+| A11Y-08 | 200% zoom | 가로 스크롤 최소화, 핵심 기능 손실 없음 |
+| A11Y-09 | contrast audit | 텍스트/버튼/상태 대비 기준 충족 |
+| A11Y-10 | settings keyboard-only | nav → form → save → feedback 흐름 가능 |
+| A11Y-11 | public page keyboard | 링크/폼/공유 주요 동작 접근 가능 |
+| A11Y-12 | automated scan | 중대/심각 접근성 위반 0건 |
+
 
 ## 4. 현재 실행 순서
 
