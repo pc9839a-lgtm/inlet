@@ -955,6 +955,10 @@ requireAll(pageroInternalMaster, [
   '현재 상태 대시보드',
   '작업 시작 체크리스트',
   '다음 AI가 하면 안 되는 오해',
+  'WorkspaceEditorScreen → WorkspaceLeftPanel → WorkspaceActivePanel → EditPanel → EditPanelLayout',
+  '.screen-icon-action',
+  '.fixed-open-button',
+  '.switch-clean',
   '대체 랜딩 금지',
   '고정 영역 모바일 컨트롤 44px 보강',
   '편집 전체 real-use audit',
@@ -975,7 +979,7 @@ requireAll(pageroInternalMaster, [
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 41,
+  checks: 45,
   scripts: 20,
   contracts: [
     'jsonl-ops',
