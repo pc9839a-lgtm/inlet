@@ -785,14 +785,14 @@ async function run() {
     await waitForState(() => apiState.saveCount === 1, 'first publish request start');
     await setInputValue(client, heroEditorSelector, continuedHeroTitle);
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(continuedHeroTitle)})`, 'continued edit while publish pending');
+    apiState.saveDelayMs = 0;
     await waitForState(() => apiState.publicVerifyCount >= 1, 'first publish public verification');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(continuedHeroTitle)}`, 'newer local draft after delayed publish response');
-    assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === updatedHeroTitle, 'first server snapshot should contain the pre-race title');
+    assert(apiState.saveSnapshots[0]?.blocks?.find((block) => block.id === 'editor-hero')?.s?.title === updatedHeroTitle, 'first server snapshot should contain the pre-race title');
     assert(apiState.saveSnapshots[0]?.theme?.accent === updatedAccent, 'style change was not included in the first publish snapshot');
 
-    apiState.saveDelayMs = 0;
-    await clickSelector(client, '.panel-actions .primary-btn');
-    await waitForState(() => apiState.saveCount === 2 && apiState.publicVerifyCount >= 2, 'second publish and public verification');
+    await waitForState(() => apiState.saveCount >= 2 && apiState.publicVerifyCount >= 2, 'automatic trailing publish and public verification');
+    assert(apiState.saveCount === 2, `pending edit should require exactly one automatic trailing save, got ${apiState.saveCount}`);
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(continuedHeroTitle)})`, 'latest saved editor preview');
     assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === continuedHeroTitle, 'latest server page does not contain the continued hero title');
     assert(apiState.currentPage.theme?.accent === updatedAccent, 'latest server page does not contain the applied accent');
