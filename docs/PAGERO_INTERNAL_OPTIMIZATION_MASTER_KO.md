@@ -3,13 +3,76 @@
 - 문서 상태: 현재 실행 기준 / 단일 소스
 - 갱신일: 2026-09-18 KST
 - 저장소: `pc9839a-lgtm/inlet`
-- 기준 브랜치: `main`
-- 기준 HEAD: `00d0cef636ddc03fa6b5d9126f61d0a52c8b1661`
+- 운영 기준 브랜치: `main`
+- 운영 기준 HEAD: `00d0cef636ddc03fa6b5d9126f61d0a52c8b1661`
+- 현재 정리/최적화 후보 PR: `#236`
+- 후보 브랜치: `chore/pagero-internal-master-cleanup-20260918`
+- 후보 HEAD: `410132847198e2c1a58d94c295b11666a50c295c`
 - 운영 도메인: `https://pagero.kr/`
 - 범위: PageRo 내부 편집기, 워크스페이스, 설정, 저장/발행, 미디어, 도메인, 운영 기능
 - 명시적 비범위: 운영 메인 랜딩 개편
 
 이 문서는 PageRo 내부 기능의 현재 상태, 남은 작업, 작업 순서, 금지사항을 한곳에서 관리한다. 과거 편집기 패치 문서와 병렬 패치 문서는 이 문서로 대체한다.
+
+## 0. 상태 해석 규칙
+
+이 문서에서 아래 상태는 서로 다른 의미다. 절대 합쳐서 해석하지 않는다.
+
+| 상태 | 의미 |
+| --- | --- |
+| 구현 완료 | 코드가 해당 브랜치에 존재 |
+| QA 완료 | 자동/브라우저 검증을 통과 |
+| PR 병합 | 대상 브랜치에 병합됨 |
+| main 병합 | 운영 소스 브랜치 `main`에 포함 |
+| 배포 완료 | Cloudflare Pages 운영 배포가 실행됨 |
+| migration 적용 | 운영 D1에 승인된 migration write가 수행됨 |
+| 운영 검증 | 실제 운영 URL/인증 화면/공개 페이지에서 확인 완료 |
+
+**현재 #236은 구현 완료 + QA 완료 상태이며, main 병합/운영 배포는 아직 아니다.**
+
+### 0.1 현재 상태 대시보드
+
+| 영역 | 현재 상태 | 기준 |
+| --- | --- | --- |
+| 운영 메인 | 동결 / 유지 | `main` + `functions/index.js` |
+| 편집기 구조 1~6차 | main 반영 완료 | #213~#218 계열 |
+| 저장/복구/undo/revision | main 반영 완료 | current main |
+| 이미지/영상 재사용·미디어 보관함 | main 반영 완료 | current main |
+| 문서 통합/구 문서 제거 | QA 완료, main 미병합 | #236 |
+| 불필요 랜딩 소스 제거 | QA 완료, main 미병합 | #236 + 폐기 #212 branch cleanup |
+| 고정영역 모바일 44px | QA 완료, main 미병합 | #236에 #237 squash 포함 |
+| legacy/shared CSS 충돌 정리 | 다음 작업 | P1 |
+| real-use 편집 전체 회귀 | 다음 작업 | P2 |
+| 개인 도메인 운영화 | draft stack | #233 → #234 → #235 |
+| 웹 결제/구독 | 미완료 | P7 |
+| production deploy | 미실행 | 별도 승인 필요 |
+
+### 0.2 2026-09-18 정리 작업 기록
+
+완료된 정리:
+
+- `docs/PAGERO_EDITOR_INTERACTION_PATCH_HANDOFF_KO.md` 제거
+- `docs/pagero-home-copy-plan.md` 제거
+- `docs/parallel-patch/README.md` 제거
+- `docs/parallel-patch/remaining-patches.md` 제거
+- `docs/parallel-patch/worker-1~5-*.md` 제거
+- `src/screens/PageroExactHome.jsx` 제거
+- `src/screens/PageroRestoredHome.jsx` 제거
+- 폐기 PR #212 브랜치의 `functions/landing-preview.js` 제거
+- stale PageRo PR #41, #49, #100, #162, #163, #232 close
+- old parallel-patch 문서를 직접 읽던 integration QA를 이 마스터 문서 기준으로 변경
+- fixed block 모바일 컨트롤 44px 패치 #237을 #236 후보 브랜치에 squash 병합
+
+최종 합본 QA:
+
+- `qa`: success
+- `browser-regression`: success
+- `editor-browser-regression`: success
+- `form-browser-regression`: success
+- `template-mobile-browser-regression`: success
+- PR-triggered production deploy workflows: skipped
+
+보호된 운영 메인 파일은 변경하지 않았다.
 
 ## 1. 최상위 원칙
 
@@ -126,22 +189,26 @@
 
 ## 3. 현재 확인된 미완료/개선 영역
 
-### P0 — 편집기 모바일 컨트롤 일관성
+### P0 — 편집기 모바일 컨트롤 일관성 — 후보 완료
 
-일반 화면순서 V2는 모바일 44px 터치 영역으로 보강됐다.
+일반 화면순서 V2는 모바일 44px 터치 영역으로 이미 보강되어 있고, #236 후보에는 고정 영역까지 보강됐다.
 
-남은 문제:
+후보 반영 내용:
 
-- 고정 영역의 `.fixed-open-button`은 공용 legacy CSS에서 38x38px 강제
-- `.switch-clean`은 46x28px이며 조작 hit area가 좁음
-- `editor-final-clean.css`의 legacy `!important` selector가 신형 화면과 공용 컨트롤 일부에 계속 영향을 줌
+- 고정 영역 `.fixed-open-button`: 모바일 44x44 hit target
+- 고정 영역 visibility switch: 실제 46x44 hit target
+- switch 시각 track: 기존 46x28 유지
+- 공용 `Switch`에 optional `className`을 추가해 fixed block에만 scoped override
+- 데스크톱 크기/밀도 유지
+- 전체 legacy CSS 재작성 없음
 
-원칙:
+상태:
 
-- 모바일에서 실제 조작 hit area 최소 44x44
-- 시각적 스위치 크기 자체를 불필요하게 키우지 않아도 wrapper/hit target으로 44px 확보 가능
-- 데스크톱 밀도는 유지
-- 전체 CSS 재작성 금지
+- 구현: 완료
+- QA: 완료
+- #236 후보 포함: 예
+- main 병합: 아직 아님
+- 운영 배포: 아직 아님
 
 ### P1 — 구/신 편집기 CSS 충돌 감사
 
@@ -298,7 +365,7 @@ dead selector 정리는 실제 참조가 없고 QA가 있는 경우에만 작은
 
 현재 내부 최적화는 아래 순서로 진행한다.
 
-1. 고정 영역 모바일 컨트롤 44px 보강
+1. ~~고정 영역 모바일 컨트롤 44px 보강~~ — #236 후보에서 완료, main 병합 대기
 2. 공용 control/legacy CSS 충돌 최소 정리
 3. 편집 전체 real-use browser regression 추가/보강
 4. 발견된 실제 UX 오류를 작은 PR로 수정
@@ -310,6 +377,55 @@ dead selector 정리는 실제 참조가 없고 QA가 있는 경우에만 작은
 10. 대량 데이터/운영
 11. 접근성/모바일 최종 pass
 12. 배포/백업/롤백 closeout
+
+## 4.1 내부 기능 파일 지도
+
+다음 AI는 먼저 이 경계를 기준으로 탐색한다.
+
+| 영역 | 우선 확인 파일/폴더 | 주의 |
+| --- | --- | --- |
+| 편집기 조립 | `src/editor/EditPanel.jsx`, `src/editor/EditPanelLayout.jsx` | 목록/상세/전역 설정 구조 유지 |
+| 화면 순서 | `src/editor/editPanelParts/ScreenOrder*.jsx/css` | V2 selector 기준 |
+| 고정 영역 | `GlobalFixedBlocks.jsx`, `FixedBlockCard*.jsx`, `FixedBlocksSection.css` | topnav/bottombar/footer |
+| 공용 편집 컨트롤 | `editorControls.jsx`, `compactControls.jsx` | 전역 변경 전 사용처 확인 |
+| legacy editor CSS | `src/styles/editor-final-clean.css` | `!important` 영향 확인 후 최소 수정 |
+| 위젯 편집기 | `src/editor/blockEditors/**` | 한 위젯씩 수정 |
+| 모바일/공개 렌더링 | `src/preview/**`, preview 관련 styles | editor-only 작업과 섞지 않음 |
+| 저장/발행 | `src/runtime/usePageSaveAction.js`, save/status helpers | identity/revision 보호 유지 |
+| undo/redo | `src/runtime/pageEditHistory.js` | restore/save와 상호작용 검증 |
+| revision | `PageRevisionHistorySection.jsx`, `pageRevisionRestore.js` | 공개 페이지 즉시 변경 금지 |
+| 미디어 | `EditorMediaLibraryContext.jsx`, picker, `MediaLibrarySettings.jsx`, `fileRepository.js` | 사용 중 자산 보호 |
+| 설정 | `src/panels/SettingsPanel.jsx`, `src/panels/settings/**` | owner-only 구분 유지 |
+| 개인 도메인 | domain settings/repository + #233~#235 | migration/provider 작업 분리 |
+| 운영 메인 | `functions/index.js` + C63 assets | 내부 작업에서 수정 금지 |
+
+### 4.2 작업 시작 체크리스트
+
+다음 AI는 PageRo 내부 기능 작업을 시작할 때 반드시 순서대로 한다.
+
+1. `AGENTS.md` 확인
+2. `PAGERO_MAINTENANCE_HANDOFF_KO.md` 확인
+3. 이 마스터의 상태 대시보드 확인
+4. 현재 `main` HEAD와 열려 있는 관련 PR 확인
+5. 작업이 이미 구현됐는지 먼저 검색
+6. 재현 가능한 문제만 패치
+7. 보호 홈 파일을 수정 대상에서 제외
+8. 작은 브랜치/PR로 작업
+9. 직접 contract + 전체 QA + browser QA
+10. main 병합/배포/migration/운영검증 상태를 각각 따로 보고
+
+### 4.3 패치 중단 조건
+
+아래는 구현을 멈추고 별도 승인 또는 정보가 필요한 경우다.
+
+- production D1 write
+- 실제 결제 provider 활성화/청구
+- Cloudflare custom domain 실제 연결/삭제
+- 운영 메인 디자인/문구 변경
+- 실사용자 데이터 파괴 또는 대량 삭제
+- 기존 제품정책에 없는 요금제/권한 결정
+
+그 외의 현재 내부 UX/CSS/회귀 문제는 가능한 범위에서 재현 후 작은 패치로 처리한다.
 
 ## 5. 작업 단위 원칙
 
@@ -389,6 +505,18 @@ npm run browser:templates-mobile:qa
 4. 이 문서 — 내부 기능 현황/실행순서
 
 과거 완료 패치 지시서, 오래된 병렬 작업 문서, 폐기된 메인 랜딩 기획서는 current source로 유지하지 않는다.
+
+## 9.1 다음 AI가 하면 안 되는 오해
+
+- `main`에 파일이 있다고 운영 배포됐다고 쓰지 않는다.
+- PR QA 성공을 production verified로 쓰지 않는다.
+- `skipped-live`를 성공으로 쓰지 않는다.
+- 닫힌 오래된 PR이 열려 있었다는 이유만으로 재병합하지 않는다.
+- 이름에 `Home`, `Exact`, `Canonical`, `Restored`가 들어간다고 운영 메인 원본이라고 추정하지 않는다.
+- 실제 사용처 검색 없이 CSS selector를 삭제하지 않는다.
+- 공용 `Switch`, `IconAction`, input 스타일을 한 화면 문제 때문에 전역 변경하지 않는다.
+- 개인 도메인 #233~#235를 순서 없이 합치지 않는다.
+- 결제 메뉴가 있다는 이유로 결제 기능이 완료됐다고 쓰지 않는다.
 
 ## 10. 완료 보고 형식
 
