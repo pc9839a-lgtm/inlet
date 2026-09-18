@@ -11,6 +11,7 @@ function assert(condition, message) {
 const browserSource = await readFile('scripts/editor-browser-regression-check.mjs', 'utf8');
 const imageLibraryBrowserSource = await readFile('scripts/editor-image-library-browser-check.mjs', 'utf8');
 const videoLibraryBrowserSource = await readFile('scripts/editor-video-library-browser-check.mjs', 'utf8');
+const mediaSettingsBrowserSource = await readFile('scripts/media-library-settings-browser-check.mjs', 'utf8');
 const cdpCompatSource = await readFile('scripts/editor-browser-cdp-compat.mjs', 'utf8');
 const workflowSource = await readFile('.github/workflows/qa.yml', 'utf8');
 const qaAllSource = await readFile('scripts/qa-all.mjs', 'utf8');
@@ -23,9 +24,10 @@ const addBlockOptionSource = await readFile('src/editor/editPanelParts/AddBlockO
 const addBlockDockCssSource = await readFile('src/styles/editor-widget-add-dock.css', 'utf8');
 const screenOrderMovementSource = await readFile('src/editor/editPanelParts/screenOrderMovement.js', 'utf8');
 
-assert(packageJson.scripts?.['browser:editor:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-browser-regression-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-image-library-browser-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-video-library-browser-check.mjs', 'browser:editor:qa must run authenticated editor, image-library, and video-library E2E');
+assert(packageJson.scripts?.['browser:editor:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-browser-regression-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-image-library-browser-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-video-library-browser-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/media-library-settings-browser-check.mjs', 'browser:editor:qa must run editor, image/video reuse, and media settings E2E');
 assert(packageJson.scripts?.['browser:editor:image-library:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-image-library-browser-check.mjs', 'browser:editor:image-library:qa script is missing');
 assert(packageJson.scripts?.['browser:editor:video-library:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-video-library-browser-check.mjs', 'browser:editor:video-library:qa script is missing');
+assert(packageJson.scripts?.['browser:media-settings:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/media-library-settings-browser-check.mjs', 'browser:media-settings:qa script is missing');
 assert(packageJson.scripts?.['browser:editor:contract:qa'] === 'node scripts/editor-browser-regression-contract-check.mjs', 'browser:editor:contract:qa script is missing');
 assert(qaAllSource.includes("['browser:editor:contract:qa', ['scripts/editor-browser-regression-contract-check.mjs']]"), 'qa:all must enforce the editor browser contract');
 
@@ -79,6 +81,10 @@ assert(videoLibraryBrowserSource.includes("savedVideoBlock?.s?.videoUrl === sele
 assert(videoLibraryBrowserSource.includes("saveCount === 0") && videoLibraryBrowserSource.includes(".panel-actions .primary-btn"), 'video-library selection must stay local before explicit publish');
 assert(videoLibraryBrowserSource.includes("unexpectedApis.length === 0") && videoLibraryBrowserSource.includes("browserErrors.length === 0"), 'video-library browser QA must fail on unexpected runtime errors');
 assert(!videoLibraryBrowserSource.includes('pagero.kr/api/auth/login') && !videoLibraryBrowserSource.includes('productionPassword'), 'video-library browser QA must not use production credentials or production auth endpoints');
+assert(mediaSettingsBrowserSource.includes("'media-library-settings-browser-e2e'") && mediaSettingsBrowserSource.includes("'revision-double-confirm'"), 'media settings browser QA must cover the settings surface and revision delete confirmation');
+assert(mediaSettingsBrowserSource.includes("'전체 2+'") && mediaSettingsBrowserSource.includes("'이미지 1+'") && mediaSettingsBrowserSource.includes("'pagination-dedupe'"), 'media settings browser QA must cover honest paginated counts and deduplication');
+assert(mediaSettingsBrowserSource.includes("width: 980") && mediaSettingsBrowserSource.includes("narrow media settings overflow"), 'media settings browser QA must cover narrow desktop overflow');
+assert(!mediaSettingsBrowserSource.includes('pagero.kr/api/auth/login') && !mediaSettingsBrowserSource.includes('productionPassword'), 'media settings browser QA must not use production credentials or production auth endpoints');
 
 assert(addBlockPanelSource.includes("const RECENT_BLOCKS_KEY = 'pagero.editor.recent-blocks.v1'") && addBlockPanelSource.includes('const MAX_RECENT_BLOCKS = 5'), 'block add picker must keep a bounded browser-local recent list');
 assert(addBlockPanelSource.includes('window.localStorage.setItem(RECENT_BLOCKS_KEY') && addBlockPanelSource.includes("<b>최근 사용</b>"), 'block add picker must persist and expose recent blocks without changing page data');
@@ -106,6 +112,7 @@ console.log(JSON.stringify({
   draftPublishSemantics: true,
   imageLibraryBrowserE2E: true,
   videoLibraryBrowserE2E: true,
+  mediaSettingsBrowserE2E: true,
   pointerDragBrowserE2E: true,
   blockAddPicker: ['search', 'category-filter', 'recent-5', 'empty-state', 'mobile-44px'],
 }, null, 2));
