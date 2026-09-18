@@ -10,7 +10,7 @@ export function FixedBlockCardHeader({ title, badge, visible, open, onToggleOpen
         <strong>{title}</strong>
         <em>{badge}</em>
       </div>
-      <Switch checked={visible} onChange={onToggleVisible} label={`${title} ${T.show}`} />
+      <Switch className="fixed-block-switch" checked={visible} onChange={onToggleVisible} label={`${title} ${T.show}`} />
       <IconAction className="fixed-open-button" onClick={onToggleOpen} aria-label={`${title} ${open ? T.close : T.open}`}>
         {open ? <ChevronUp size={17} /> : <ChevronDown size={17} />}
       </IconAction>
