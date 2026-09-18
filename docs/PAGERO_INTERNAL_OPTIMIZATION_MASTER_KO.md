@@ -4,11 +4,11 @@
 - 갱신일: 2026-09-18 KST
 - 저장소: `pc9839a-lgtm/inlet`
 - 운영 기준 브랜치: `main`
-- 운영 기준 HEAD: `f9a325d0e175f08f060445b2d04c06935f5bacbf`
-- 현재 정리/최적화 후보 PR: 없음 — 다음 구현 단계는 P3
-- 후보 브랜치: 없음
-- 최근 production 검증 코드 SHA: `f9a325d0e175f08f060445b2d04c06935f5bacbf`
-- 문서 최신 기준: current main + P2 production closeout
+- 운영 기준 HEAD: `2fccc263e381ad5681cbd9ecbfa9b343e1e58a8c`
+- 현재 정리/최적화 후보 PR: `#242` — P3 미디어 UX 마감
+- 후보 브랜치: `feat/pagero-media-ux-p3-20260918`
+- 최근 production 검증 코드 SHA: `2fccc263e381ad5681cbd9ecbfa9b343e1e58a8c`
+- 문서 최신 기준: current main + #242 P3 후보
 - 운영 도메인: `https://pagero.kr/`
 - 범위: PageRo 내부 편집기, 워크스페이스, 설정, 저장/발행, 미디어, 도메인, 운영 기능
 - 명시적 비범위: 운영 메인 랜딩 개편
@@ -29,7 +29,7 @@
 | migration 적용 | 운영 D1에 승인된 migration write가 수행됨 |
 | 운영 검증 | 실제 운영 URL/인증 화면/공개 페이지에서 확인 완료 |
 
-**#236, #238, #239, #240은 main 병합·운영 배포·readiness·production D1 save roundtrip까지 완료됐다. P2 real-use audit는 production verified로 종료하며 다음 구현 단계는 P3 미디어 UX 마감이다.**
+**#236, #238, #239, #240과 P2 closeout은 production verified 상태다. 현재 작업은 #242 P3 미디어 UX 마감이며, 구현 후보가 올라간 상태로 QA/main 병합/운영 배포는 아직 완료로 표시하지 않는다.**
 
 ### 0.1 현재 상태 대시보드
 
@@ -38,7 +38,7 @@
 | 운영 메인 | 동결 / 유지 | `main` + `functions/index.js` |
 | 편집기 구조 1~6차 | main 반영 완료 | #213~#218 계열 |
 | 저장/복구/undo/revision | main 반영 완료 | current main |
-| 이미지/영상 재사용·미디어 보관함 | main 반영 완료 | current main |
+| 이미지/영상 재사용·미디어 보관함 | P3 구현 후보 / QA 대기 | #242 |
 | 문서 통합/구 문서 제거 | production verified | #236 |
 | 불필요 랜딩 소스 제거 | production verified | #236 + 폐기 #212 branch cleanup |
 | 고정영역 모바일 44px | production verified | #236에 #237 squash 포함 |
@@ -437,6 +437,52 @@ P2 상태:
 - 선택기 동작은 `기존 이미지 선택` / `기존 영상 선택`처럼 행동 중심
 - 자산 키 같은 내부 용어는 검색 보조 외에는 과도하게 노출하지 않음
 - `사용 중`, `삭제`, `주소 복사`, `새로고침`의 의미를 화면마다 바꾸지 않음
+
+#### P3 #242 구현 후보
+
+현재 반영된 UX:
+
+- 이미지 선택기 오류 상태에 `다시 시도` action 추가
+- 영상 선택기 오류 상태에도 동일한 `다시 시도` action 추가
+- pagination이 남아 있는 필터 수량은 `100+`처럼 부분 로드임을 표시
+- 검색 결과가 없더라도 해당 종류에 아직 불러올 자산이 남아 있으면 전체 미디어를 검색한 것처럼 단정하지 않음
+- 남은 자산이 있는 검색 실패에는 `더 불러오기` 후 재검색 안내
+- 1080px 이하 narrow desktop에서 필터/검색 controls를 1열로 전환
+- media grid는 narrow desktop 2열, 420px 이하 1열 유지
+- 기존 현재 페이지 사용 중 삭제 차단 / revision 2차 확인 정책은 유지
+
+추가된 실제 browser E2E:
+
+- 설정 탭 → `미디어 보관함` 실제 진입
+- 초기 목록 오류 → 오류 원인 표시 → `다시 시도`
+- pagination이 남은 상태의 `전체 2+ / 이미지 1+ / 영상 1` 수량 표시
+- 파일명 검색
+- 이미지/영상 필터
+- 이미지 더보기 cursor 요청
+- 다음 page에 중복 asset이 있어도 카드 1개만 유지
+- 현재 페이지 사용 중 asset의 삭제 버튼 disabled 확인
+- revision-only asset 삭제 시 첫 요청은 override 없이 실패
+- 과거 버전 손실 경고 후 두 번째 요청에만 `allowRevisionReferences=true`
+- 980px narrow desktop에서 보관함/controls 가로 overflow 없음
+
+#242 상태:
+
+- 구현: 완료 후보
+- 정적 계약: 추가 완료
+- browser E2E: 추가 완료
+- PR QA: 진행 전/진행 중
+- main 병합: 아직 아님
+- 운영 배포: 아직 아님
+- production verified: 아직 아님
+
+P3 완료 판정 원칙:
+
+- MEDIA-01~10 중 코드로 이미 충족된 항목도 browser/static 계약으로 고정
+- #242 HEAD 전체 QA 5/5 통과
+- main 병합 후 동일 QA 재통과
+- Cloudflare production metadata/readiness 통과
+- production D1 save roundtrip 통과
+- 마지막 closeout에서만 P3를 production verified로 변경
 
 ### P4 — 저장/Undo/Revision 연결 검증
 
