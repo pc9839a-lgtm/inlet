@@ -339,7 +339,20 @@ dead selector 정리는 실제 참조가 없고 QA가 있는 경우에만 작은
 - 저장 키/schema를 임의 변경
 - 실제 기능이 없는 UI를 데모로 추가
 
-## 7. QA 기준
+## 7. 유지해야 할 기존 제품·운영 계약
+
+과거 병렬 작업 문서를 삭제해도 아래 계약은 유지한다.
+
+- 중복 이메일/연락처 검증은 서버 기준을 유지한다.
+- 연락처/이메일은 중복 판단의 주 키이며, client id/cookie는 우발적 반복 제출 방지 보조 수단이다.
+- IP는 짧은 시간대의 abuse/rate-limit 신호로만 사용하고 고객 identity로 취급하지 않는다.
+- 현재 승인된 템플릿은 개인회생 상담, 모바일 청첩장, 부동산 분양 3종만 유지한다.
+- 페이지 복제 시 새 URL 설정 흐름을 유지한다.
+- 템플릿 자체 복제 기능은 현재 요구사항이 아니다.
+- live credential이나 fixture가 없으면 `skipped-live` / `not verified`로 기록하고 성공으로 가장하지 않는다.
+- 내부 편집기 카피는 짧게 유지하고 과도한 사용설명 문구를 추가하지 않는다.
+
+## 8. QA 기준
 
 최소 release-blocking:
 
@@ -366,7 +379,7 @@ npm run browser:templates-mobile:qa
 - console error 없음
 - horizontal overflow 없음
 
-## 8. 문서 정리 규칙
+## 9. 문서 정리 규칙
 
 현재 소스 오브 트루스:
 
@@ -377,7 +390,7 @@ npm run browser:templates-mobile:qa
 
 과거 완료 패치 지시서, 오래된 병렬 작업 문서, 폐기된 메인 랜딩 기획서는 current source로 유지하지 않는다.
 
-## 9. 완료 보고 형식
+## 10. 완료 보고 형식
 
 ```text
 작업 브랜치:
