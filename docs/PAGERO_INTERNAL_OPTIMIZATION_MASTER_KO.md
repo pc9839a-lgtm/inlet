@@ -5,10 +5,10 @@
 - 저장소: `pc9839a-lgtm/inlet`
 - 운영 기준 브랜치: `main`
 - 운영 기능 검증 기준 HEAD: `c899c3b7e4af76c25040b8cab0bfe0302fff2710`
-- 현재 정리/최적화 후보 PR: 없음 — 다음 실행 단계 P4
-- 후보 브랜치: 없음
+- 현재 정리/최적화 후보 PR: `#244` — production save QA propagation race 보강
+- 후보 브랜치: `fix/pagero-production-save-mint-retry-20260918`
 - 최근 production 검증 코드 SHA: `c899c3b7e4af76c25040b8cab0bfe0302fff2710`
-- 문서 최신 기준: current main + P3 production closeout
+- 문서 최신 기준: current main + #244 운영 gate 보강
 - 운영 도메인: `https://pagero.kr/`
 - 범위: PageRo 내부 편집기, 워크스페이스, 설정, 저장/발행, 미디어, 도메인, 운영 기능
 - 명시적 비범위: 운영 메인 랜딩 개편
@@ -29,7 +29,7 @@
 | migration 적용 | 운영 D1에 승인된 migration write가 수행됨 |
 | 운영 검증 | 실제 운영 URL/인증 화면/공개 페이지에서 확인 완료 |
 
-**#236, #238, #239, #240과 P2 closeout에 이어 #242 P3 미디어 UX도 main 병합·운영 배포·readiness·production D1 save roundtrip까지 완료됐다. 다음 실행 단계는 P4 저장/Undo/Revision 연결 검증이다.**
+**#242 P3 미디어 UX 기능 배포는 production verified 상태다. 다만 #243 closeout 재배포에서 custom-domain propagation 직후 production QA session mint가 404로 1회 실패해 최종 deployment gate가 실패했다. Pages 배포/metadata/readiness는 성공했고, 이 운영 검증 race는 #244에서 bounded retry로 보강 중이다. #244를 production verified하기 전 P4로 넘어가지 않는다.**
 
 ### 0.1 현재 상태 대시보드
 
@@ -489,6 +489,46 @@ P2 상태:
 - `https://pagero.kr/api/readiness`: success
 - production D1 save roundtrip: success
 - production verified: 완료
+
+#### P3 closeout 재배포 gate 이슈 — #244
+
+#243 문서 closeout이 main `053f4fe9cd3cef02e46e898570922d7ba347fb9a`에 병합된 뒤 재배포에서 확인된 현상:
+
+- Cloudflare Pages deploy: success
+- deployment metadata: production / main / commit match / secret binding 정상
+- exact deployment readiness: success
+- `pagero.kr/api/readiness`: success
+- production save roundtrip: failure
+- 실패 지점: `/api/qa/production-save-session` session mint
+- 응답: 404
+- 최종 gate reason: `production_save_roundtrip_failed`
+
+원인:
+
+- production QA secret은 배포 직전에 새 값으로 회전
+- QA endpoint는 보안상 secret 불일치를 404로 conceal
+- exact deployment는 새 secret binding으로 준비됐지만 custom domain `pagero.kr`이 짧은 전파 구간 동안 이전 deployment를 가리킬 수 있음
+- 이전 deployment에 새 secret으로 요청하면 의도된 보안 동작으로 404
+- 기존 probe는 mint를 1회만 시도해 이 짧은 routing race를 실제 save failure와 구분하지 못함
+
+#244 보강 규칙:
+
+- session mint 404만 propagation candidate로 간주
+- 최대 12회
+- 2.5초 간격
+- 404 외 상태는 즉시 실패
+- 12회 소진 후에도 404면 실패
+- secret 값은 로그에 노출하지 않음
+- 실제 page create/update/readback/delete 검증 강도는 완화하지 않음
+- contract QA로 bounded retry 조건 재유입 방지
+
+#244 상태:
+
+- 구현: 후보 완료
+- contract QA: 추가 완료
+- PR QA: 대기
+- main 병합: 아직 아님
+- production 재검증: 아직 아님
 
 P3 완료 판정 원칙:
 
