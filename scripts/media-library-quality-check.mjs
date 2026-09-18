@@ -149,6 +149,7 @@ const [
   imagePickerHookSource,
   youtubeEditorSource,
   videoPickerSource,
+  mediaSettingsBrowserSource,
   qaAllSource,
   packageSource,
 ] = await Promise.all([
@@ -168,6 +169,7 @@ const [
   readFile('src/editor/useImageInputPicker.js', 'utf8'),
   readFile('src/editor/blockEditors/YouTubeEditor.jsx', 'utf8'),
   readFile('src/editor/VideoLibraryPicker.jsx', 'utf8'),
+  readFile('scripts/media-library-settings-browser-check.mjs', 'utf8'),
   readFile('scripts/qa-all.mjs', 'utf8'),
   readFile('package.json', 'utf8'),
 ]);
@@ -194,7 +196,9 @@ assert(settingsBodySource.includes('canDelete={canDeleteMedia}'), 'settings must
 assert(settingsBodySource.includes("['media', '미디어 보관함', Images]"), 'settings navigation must expose the media library');
 assert(settingsBodySource.includes("id === 'media' && !canReadMedia"), 'settings navigation must hide media library without edit access');
 
-assert(mediaSource.includes("['all', `전체 ${imageCount + videoCount}`]") && mediaSource.includes("['image', `이미지 ${imageCount}`]") && mediaSource.includes("['video', `영상 ${videoCount}`]"), 'media library must provide all/image/video filters');
+assert(mediaSource.includes("['all', `전체 ${allCountLabel}`]") && mediaSource.includes("['image', `이미지 ${imageCountLabel}`]") && mediaSource.includes("['video', `영상 ${videoCountLabel}`]"), 'media library must provide all/image/video filters');
+assert(mediaSource.includes('function countLabel') && mediaSource.includes("hasMore ? '+' : ''"), 'media filter counts must visibly mark partially loaded totals');
+assert(mediaSource.includes('partialSearchMiss') && mediaSource.includes('더 불러오기를 눌러 남은 미디어를 가져온 뒤 다시 검색해보세요.'), 'partial local search must not pretend unloaded assets were searched');
 assert(mediaSource.includes('type="search"') && mediaSource.includes('assetSearchText'), 'media library must provide local asset search');
 assert(mediaSource.includes("loadMore('image')") && mediaSource.includes("loadMore('video')"), 'media library must expose pagination for both asset kinds');
 assert(mediaSource.includes('<img className="media-library-preview"') && mediaSource.includes('<video'), 'media library must preview both images and videos');
@@ -204,6 +208,7 @@ assert(mediaSource.includes('deleteProjectAsset(page, authUser, asset.key)') && 
 assert(mediaSource.includes("code === 'ASSET_REVISION_REFERENCED'") && mediaSource.includes('allowRevisionReferences: true'), 'revision-only deletion must require a second explicit confirmation');
 assert(mediaSource.includes("deleteError?.details?.code || '') === 'ASSET_IN_USE'"), 'server-detected cross-page usage must surface as a blocked delete');
 assert(mediaCssSource.includes('.media-library-delete') && mediaCssSource.includes('@media (max-width: 720px)') && mediaCssSource.includes('min-height: 44px'), 'media delete controls must retain mobile touch targets');
+assert(mediaCssSource.includes('@media (max-width: 1080px)') && mediaCssSource.includes('.media-library-controls') && mediaCssSource.includes('grid-template-columns: 1fr'), 'media settings controls must stack before narrow desktop overflow');
 
 assert(workspaceActiveSource.includes('authUser={settingsPanelProps?.authUser || null}'), 'workspace must pass the current live auth user into the edit panel');
 assert(editPanelSource.includes('<EditorMediaLibraryProvider page={page} authUser={authUser}>'), 'edit panel must scope media reuse to the active page and live auth state');
@@ -221,6 +226,7 @@ assert(imagePickerSource.includes("kind: 'image', cursor, limit: 100"), 'image p
 assert(imagePickerSource.includes('type="search"') && imagePickerSource.includes('searchText(asset)'), 'image picker must support image search');
 assert(imagePickerSource.includes('normalizeAssetValue') && imagePickerSource.includes('url.origin === window.location.origin'), 'image picker must keep same-origin asset references portable');
 assert(imagePickerSource.includes('현재 이미지') && imagePickerSource.includes('aria-pressed={selected}'), 'image picker must identify the current image');
+assert(imagePickerSource.includes('reloadToken') && imagePickerSource.includes('image-library-picker-retry') && imagePickerSource.includes('다시 시도'), 'image picker load failures must expose a retry action');
 assert(!imagePickerSource.includes('deleteProjectAsset') && !imagePickerSource.includes('미디어 삭제'), 'image picker must stay non-destructive; deletion belongs in settings');
 
 assert(imagePickerHookSource.includes('selectExistingImage'), 'ImageInput picker hook must support existing project images');
@@ -239,11 +245,16 @@ assert(videoPickerSource.includes('type="search"') && videoPickerSource.includes
 assert(videoPickerSource.includes('normalizeAssetValue') && videoPickerSource.includes('url.origin === window.location.origin'), 'video picker must keep same-origin video references portable');
 assert(videoPickerSource.includes('<video') && videoPickerSource.includes('preload="metadata"') && videoPickerSource.includes('playsInline'), 'video picker must preview stored videos without autoplay');
 assert(videoPickerSource.includes('현재 영상') && videoPickerSource.includes('aria-pressed={selected}'), 'video picker must identify the current video');
+assert(videoPickerSource.includes('reloadToken') && videoPickerSource.includes('image-library-picker-retry') && videoPickerSource.includes('다시 시도'), 'video picker load failures must expose a retry action');
 assert(!videoPickerSource.includes('deleteProjectAsset') && !videoPickerSource.includes('삭제'), 'video picker must remain non-destructive; deletion belongs in settings');
 
 assert(imagePickerCssSource.includes('.image-library-picker-thumb video') && imagePickerCssSource.includes('.video-library-action'), 'shared picker styling must support video previews and the video-library action');
+assert(imagePickerCssSource.includes('.image-library-picker-retry') && imagePickerCssSource.includes('min-height: 42px'), 'shared picker retry action must be visible and tappable');
 assert(imagePickerCssSource.includes('@media (max-width: 720px)') && imagePickerCssSource.includes('min-height: 44px'), 'media picker mobile actions must retain 44px touch targets');
 assert(packageJson.scripts?.['media:library:qa'] === 'node scripts/media-library-quality-check.mjs', 'media:library:qa package script missing');
+assert(packageJson.scripts?.['browser:media-settings:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/media-library-settings-browser-check.mjs', 'media settings browser QA package script missing');
+assert(mediaSettingsBrowserSource.includes("'error-retry'") && mediaSettingsBrowserSource.includes("'pagination-dedupe'") && mediaSettingsBrowserSource.includes("'revision-double-confirm'"), 'media settings browser QA must cover retry, pagination dedupe, and revision safety');
+assert(mediaSettingsBrowserSource.includes("'narrow-desktop'") && mediaSettingsBrowserSource.includes('width: 980'), 'media settings browser QA must cover narrow desktop layout');
 assert(qaAllSource.includes("['media:library:qa', ['scripts/media-library-quality-check.mjs']]"), 'release QA must include media library coverage');
 
 console.log(JSON.stringify({
@@ -260,6 +271,10 @@ console.log(JSON.stringify({
   currentDraftDeleteBlocked: true,
   liveAuthState: true,
   searchAndFilters: true,
+  honestPartialCounts: true,
+  pickerRetry: true,
+  mediaSettingsBrowserE2E: true,
+  narrowDesktop: true,
   imageVideoPreview: true,
   editorImageReuse: true,
   editorVideoReuse: true,
