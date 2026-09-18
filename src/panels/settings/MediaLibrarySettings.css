@@ -226,6 +226,20 @@
   flex-wrap: wrap;
 }
 
+@media (max-width: 1080px) {
+  .media-library-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .media-library-search {
+    width: 100%;
+  }
+
+  .media-library-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 720px) {
   .media-library-toolbar,
   .media-library-controls {

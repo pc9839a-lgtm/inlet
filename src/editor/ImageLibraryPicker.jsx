@@ -46,6 +46,7 @@ export default function ImageLibraryPicker({
   const [error, setError] = useState('');
   const [cursor, setCursor] = useState('');
   const [hasMore, setHasMore] = useState(false);
+  const [reloadToken, setReloadToken] = useState(0);
 
   const libraryKey = `${page?.projectId || page?.id || ''}:${page?.slug || ''}:${authUser?.ownerId || authUser?.email || ''}:${authUser?.session || ''}`;
 
@@ -76,7 +77,7 @@ export default function ImageLibraryPicker({
     return () => {
       active = false;
     };
-  }, [open, libraryKey]);
+  }, [open, libraryKey, reloadToken]);
 
   useEffect(() => {
     if (!open || typeof document === 'undefined') return undefined;
@@ -154,6 +155,9 @@ export default function ImageLibraryPicker({
             <div className="image-library-picker-state is-error" role="alert">
               <strong>이미지를 불러오지 못했습니다.</strong>
               <span>{error}</span>
+              <button type="button" className="image-library-picker-retry" onClick={() => setReloadToken((value) => value + 1)}>
+                다시 시도
+              </button>
             </div>
           )}
           {!loading && !error && assets.length === 0 && (

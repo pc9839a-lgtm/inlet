@@ -184,6 +184,19 @@
   border-style: solid;
 }
 
+.image-library-picker-retry {
+  min-height: 42px;
+  margin-top: 4px;
+  padding: 0 16px;
+  border: 1px solid #d0d5dd;
+  border-radius: 10px;
+  background: #fff;
+  color: #344054;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .image-library-picker-foot {
   display: flex;
   justify-content: center;
@@ -271,6 +284,7 @@
   }
 
   .image-library-picker-foot button,
+  .image-library-picker-retry,
   .image-input-library-action,
   .video-library-action {
     min-height: 44px;

@@ -71,6 +71,10 @@ function sortAssets(items = []) {
   });
 }
 
+function countLabel(count = 0, hasMore = false) {
+  return `${Math.max(0, Number(count || 0))}${hasMore ? '+' : ''}`;
+}
+
 function AssetPreview({ asset }) {
   if (asset.kind === 'video') {
     return (
@@ -290,8 +294,17 @@ export default function MediaLibrarySettings({ page, authUser, canDelete = false
 
   const imageCount = library.image.assets.length;
   const videoCount = library.video.assets.length;
+  const imageCountLabel = countLabel(imageCount, library.image.hasMore);
+  const videoCountLabel = countLabel(videoCount, library.video.hasMore);
+  const allCountLabel = countLabel(imageCount + videoCount, library.image.hasMore || library.video.hasMore);
+  const activeKindHasMore = filter === 'image'
+    ? library.image.hasMore
+    : filter === 'video'
+      ? library.video.hasMore
+      : library.image.hasMore || library.video.hasMore;
   const noAssets = !loading && !error && allAssets.length === 0;
   const noMatches = !loading && !error && allAssets.length > 0 && visibleAssets.length === 0;
+  const partialSearchMiss = noMatches && !!query.trim() && activeKindHasMore;
 
   return (
     <section className="settings-section-card media-library-settings" aria-label="미디어 보관함">
@@ -309,9 +322,9 @@ export default function MediaLibrarySettings({ page, authUser, canDelete = false
       <div className="media-library-controls">
         <div className="media-library-filters" role="group" aria-label="미디어 유형 필터">
           {[
-            ['all', `전체 ${imageCount + videoCount}`],
-            ['image', `이미지 ${imageCount}`],
-            ['video', `영상 ${videoCount}`],
+            ['all', `전체 ${allCountLabel}`],
+            ['image', `이미지 ${imageCountLabel}`],
+            ['video', `영상 ${videoCountLabel}`],
           ].map(([id, label]) => (
             <button
               key={id}
@@ -350,7 +363,12 @@ export default function MediaLibrarySettings({ page, authUser, canDelete = false
           <span>페이지를 발행하면 이미지가 자동으로 보관되고, 업로드 영상도 여기에 표시됩니다.</span>
         </div>
       )}
-      {noMatches && <div className="media-library-state">검색 조건에 맞는 미디어가 없습니다.</div>}
+      {noMatches && (
+        <div className="media-library-state">
+          <strong>{partialSearchMiss ? '현재 불러온 미디어에는 검색 결과가 없습니다.' : '검색 조건에 맞는 미디어가 없습니다.'}</strong>
+          {partialSearchMiss && <span>더 불러오기를 눌러 남은 미디어를 가져온 뒤 다시 검색해보세요.</span>}
+        </div>
+      )}
 
       {!loading && !error && visibleAssets.length > 0 && (
         <div className="media-library-grid">
