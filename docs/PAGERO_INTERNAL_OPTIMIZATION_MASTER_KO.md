@@ -4,11 +4,11 @@
 - 갱신일: 2026-09-18 KST
 - 저장소: `pc9839a-lgtm/inlet`
 - 운영 기준 브랜치: `main`
-- 운영 기준 HEAD: `58f0c6c285e1457df0faa32bc1e081e8efcb2553`
-- 현재 정리/최적화 후보 PR: `#240`
-- 후보 브랜치: `test/pagero-editor-video-drag-e2e-20260918`
-- 후보 코드 검증 기준 SHA: `8d0ca191dfa49699a7a5322e4988556455227069`
-- 문서 최신 HEAD: PR `#240`의 현재 head를 기준으로 확인
+- 운영 기준 HEAD: `f9a325d0e175f08f060445b2d04c06935f5bacbf`
+- 현재 정리/최적화 후보 PR: 없음 — 다음 구현 단계는 P3
+- 후보 브랜치: 없음
+- 최근 production 검증 코드 SHA: `f9a325d0e175f08f060445b2d04c06935f5bacbf`
+- 문서 최신 기준: current main + P2 production closeout
 - 운영 도메인: `https://pagero.kr/`
 - 범위: PageRo 내부 편집기, 워크스페이스, 설정, 저장/발행, 미디어, 도메인, 운영 기능
 - 명시적 비범위: 운영 메인 랜딩 개편
@@ -29,7 +29,7 @@
 | migration 적용 | 운영 D1에 승인된 migration write가 수행됨 |
 | 운영 검증 | 실제 운영 URL/인증 화면/공개 페이지에서 확인 완료 |
 
-**#236, #238, #239는 main 병합·운영 배포·readiness·production D1 save roundtrip까지 완료됐다. P2 마지막 영상 재사용/pointer drag 회귀는 #240에서 QA 완료·main 병합 대기 상태다.**
+**#236, #238, #239, #240은 main 병합·운영 배포·readiness·production D1 save roundtrip까지 완료됐다. P2 real-use audit는 production verified로 종료하며 다음 구현 단계는 P3 미디어 UX 마감이다.**
 
 ### 0.1 현재 상태 대시보드
 
@@ -43,10 +43,10 @@
 | 불필요 랜딩 소스 제거 | production verified | #236 + 폐기 #212 branch cleanup |
 | 고정영역 모바일 44px | production verified | #236에 #237 squash 포함 |
 | legacy/shared CSS 충돌 정리 | production verified | #238 |
-| real-use 편집 전체 회귀 | P2 전체 QA 완료, main/production 반영 대기 | #239 + #240 / P2 |
+| real-use 편집 전체 회귀 | production verified / P2 완료 | #239 + #240 / P2 |
 | 개인 도메인 운영화 | draft stack | #233 → #234 → #235 |
 | 웹 결제/구독 | 부분 구현 / 운영 lifecycle 미완료 | P7 |
-| production deploy | #236/#238/#239 production verified, #240 대기 | Cloudflare Pages |
+| production deploy | #236/#238/#239/#240 production verified | Cloudflare Pages |
 
 ### 0.2 2026-09-18 정리 작업 기록
 
@@ -404,9 +404,13 @@ P2 상태:
 - 기능 구현: 완료
 - real-use browser QA: 완료
 - E2E-01 ~ E2E-14: 완료
-- #240 main 병합: 아직 아님
-- #240 운영 배포: 아직 아님
-- production verified: #240 병합/배포 후 최종 갱신
+- #240 main 병합: 완료 — `f9a325d0e175f08f060445b2d04c06935f5bacbf`
+- #240 운영 배포: 완료
+- Cloudflare exact deployment: `https://473a2c22.inlet-8mr.pages.dev`
+- exact deployment readiness: success
+- `https://pagero.kr/api/readiness`: success
+- production D1 save roundtrip: success
+- P2 production verified: 완료
 
 ### P3 — 미디어 UX 마감
 
@@ -864,7 +868,7 @@ P2 상태:
 
 1. ~~고정 영역 모바일 컨트롤 44px 보강~~ — #236 production verified
 2. ~~공용 control/legacy CSS 충돌 최소 정리~~ — #238 production verified
-3. ~~편집 전체 real-use browser regression 추가/보강~~ — #239 production verified + #240 전체 QA 완료, main/배포 대기
+3. ~~편집 전체 real-use browser regression 추가/보강~~ — #239 + #240 production verified / P2 완료
 4. ~~발견된 실제 UX 오류를 작은 PR로 수정~~ — #239 move action wiring 수정 및 production 반영
 5. 미디어 UX 마감
 6. 저장/undo/revision/publish 연결 검증
