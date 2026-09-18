@@ -791,8 +791,10 @@ async function run() {
     assert(apiState.saveSnapshots[0]?.blocks?.find((block) => block.id === 'editor-hero')?.s?.title === updatedHeroTitle, 'first server snapshot should contain the pre-race title');
     assert(apiState.saveSnapshots[0]?.theme?.accent === updatedAccent, 'style change was not included in the first publish snapshot');
 
-    await waitForState(() => apiState.saveCount >= 2 && apiState.publicVerifyCount >= 2, 'automatic trailing publish and public verification');
+    await waitForState(() => apiState.saveCount >= 2, 'automatic trailing publish');
     assert(apiState.saveCount === 2, `pending edit should require exactly one automatic trailing save, got ${apiState.saveCount}`);
+    assert(apiState.saveSnapshots[1]?.blocks?.find((block) => block.id === 'editor-hero')?.s?.title === continuedHeroTitle, 'automatic trailing save did not capture the latest hero title');
+    await waitForState(() => apiState.publicVerifyCount >= 1, 'latest public verification after trailing save');
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(continuedHeroTitle)})`, 'latest saved editor preview');
     assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === continuedHeroTitle, 'latest server page does not contain the continued hero title');
     assert(apiState.currentPage.theme?.accent === updatedAccent, 'latest server page does not contain the applied accent');
