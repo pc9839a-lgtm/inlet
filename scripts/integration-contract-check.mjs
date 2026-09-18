@@ -948,61 +948,26 @@ requireAll(opsQa, [
   'bad-model-response',
 ], 'ops QA');
 
-const remainingPatches = await read('docs/parallel-patch/remaining-patches.md');
-requireAll(remainingPatches, [
-  'Remaining Patches',
-  'Current execution mode: parallel patching is active',
-  'Parallel Worker Split',
-  'Production account/session hardening',
-  'Customer-owned AI key storage',
-  'D1 real runtime smoke and write-side migration',
-  'Worker 1: account, auth, email verification, sessions, member data',
-  'Worker 2: lead intake, duplicate policy, inbox, stats, D1 scale, CSV',
-  'Worker 3: personal-rehabilitation, mobile-wedding-invitation, and real-estate-presale templates',
-  'Worker 4: Settings manager permissions, ownership transfer, page duplication URL flow',
-  'Worker 5: QA, deployment, live integration readiness, docs and ops',
-  'Add lead duplicate and spam policy',
-  'Page duplication and URL setup',
-  'Expanded Launch Backlog',
-  'Login, account, and member management',
-  'Plans, payment, and subscription, final phase',
-  'deployment:qa',
-  'Do not reassign these',
-  'npm run live:qa',
-], 'remaining patch docs');
-
-const parallelReadme = await read('docs/parallel-patch/README.md');
-requireAll(parallelReadme, [
-  'remaining-patches.md',
-  'worker-1-auth-members.md',
-  'worker-2-leads-stats-d1.md',
-  'worker-3-templates-editor.md',
-  'worker-4-manager-ownership.md',
-  'worker-5-qa-ops-live.md',
-  'Primary mode: parallel patching is active',
-  'Five workers can run at the same time only if they respect file ownership',
-  'High-conflict files',
-], 'parallel README');
-
-const workerDocs = await Promise.all([
-  read('docs/parallel-patch/worker-1-auth-members.md'),
-  read('docs/parallel-patch/worker-2-leads-stats-d1.md'),
-  read('docs/parallel-patch/worker-3-templates-editor.md'),
-  read('docs/parallel-patch/worker-4-manager-ownership.md'),
-  read('docs/parallel-patch/worker-5-qa-ops-live.md'),
-]);
-requireAll(workerDocs.join('\n'), [
-  'Duplicate email and duplicate phone must be server-side checks',
-  'Phone/email is the primary duplicate key',
-  'Cookie/client id prevents accidental repeated submission',
-  'IP is only a short-window spam/rate-limit signal',
-  'Do not write instructional copy',
-  'Only these three templates are active',
-  'Page duplication',
-  'URL setup',
-  'Template duplication is not needed',
-  'Missing live credentials must be `skipped-live`, not false failures',
-], 'parallel worker docs');
+const pageroInternalMaster = await read('docs/PAGERO_INTERNAL_OPTIMIZATION_MASTER_KO.md');
+requireAll(pageroInternalMaster, [
+  'PageRo 내부 기능 최적화 마스터',
+  '대체 랜딩 금지',
+  '고정 영역 모바일 컨트롤 44px 보강',
+  '편집 전체 real-use audit',
+  'PR #233',
+  'PR #234',
+  'PR #235',
+  '중복 이메일/연락처 검증은 서버 기준',
+  '연락처/이메일은 중복 판단의 주 키',
+  'IP는 짧은 시간대의 abuse/rate-limit 신호',
+  '개인회생 상담, 모바일 청첩장, 부동산 분양 3종',
+  '페이지 복제 시 새 URL 설정 흐름',
+  '템플릿 자체 복제 기능은 현재 요구사항이 아니다',
+  'skipped-live',
+  'npm run qa:all',
+  'npm run deployment:qa',
+  '승인 없는 production deploy',
+], 'Pagero internal optimization master');
 
 console.log(JSON.stringify({
   ok: true,
@@ -1024,7 +989,7 @@ console.log(JSON.stringify({
     'worker4-ops-docs',
     'mock-integration-proof',
     'ai-live-status-contract',
-    'remaining-patches-doc',
+    'pagero-internal-master-doc',
     'owner-admin-mode',
     'server-project-access',
     'deployment-artifact-qa',
