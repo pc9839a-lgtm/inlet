@@ -29,7 +29,7 @@
 | migration 적용 | 운영 D1에 승인된 migration write가 수행됨 |
 | 운영 검증 | 실제 운영 URL/인증 화면/공개 페이지에서 확인 완료 |
 
-**#236, #238, #239, #240과 P2 closeout은 production verified 상태다. 현재 작업은 #242 P3 미디어 UX 마감이며, 구현 후보가 올라간 상태로 QA/main 병합/운영 배포는 아직 완료로 표시하지 않는다.**
+**#236, #238, #239, #240과 P2 closeout은 production verified 상태다. #242 P3 미디어 UX 후보는 PR QA 5/5를 통과했으며, main 병합/운영 배포는 아직 완료로 표시하지 않는다.**
 
 ### 0.1 현재 상태 대시보드
 
@@ -38,7 +38,7 @@
 | 운영 메인 | 동결 / 유지 | `main` + `functions/index.js` |
 | 편집기 구조 1~6차 | main 반영 완료 | #213~#218 계열 |
 | 저장/복구/undo/revision | main 반영 완료 | current main |
-| 이미지/영상 재사용·미디어 보관함 | P3 구현 후보 / QA 대기 | #242 |
+| 이미지/영상 재사용·미디어 보관함 | P3 QA 완료 / main 미병합 | #242 |
 | 문서 통합/구 문서 제거 | production verified | #236 |
 | 불필요 랜딩 소스 제거 | production verified | #236 + 폐기 #212 branch cleanup |
 | 고정영역 모바일 44px | production verified | #236에 #237 squash 포함 |
@@ -465,12 +465,22 @@ P2 상태:
 - 과거 버전 손실 경고 후 두 번째 요청에만 `allowRevisionReferences=true`
 - 980px narrow desktop에서 보관함/controls 가로 overflow 없음
 
+#242 QA 결과:
+
+- `qa`: success
+- `browser-regression`: success
+- `editor-browser-regression`: success
+- `form-browser-regression`: success
+- `template-mobile-browser-regression`: success
+- media settings browser scope: `media-library-settings-browser-e2e`
+- 실제 통과 flow: `error-retry / pagination-dedupe / revision-double-confirm / narrow-desktop`
+
 #242 상태:
 
 - 구현: 완료 후보
-- 정적 계약: 추가 완료
-- browser E2E: 추가 완료
-- PR QA: 진행 전/진행 중
+- 정적 계약: 완료
+- browser E2E: 완료
+- PR QA: 완료 5/5
 - main 병합: 아직 아님
 - 운영 배포: 아직 아님
 - production verified: 아직 아님
