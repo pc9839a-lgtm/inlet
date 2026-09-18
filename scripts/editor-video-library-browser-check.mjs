@@ -211,12 +211,20 @@ async function evaluate(client, expression) {
 async function waitForBrowser(client, expression, label, timeoutMs = 18000) {
   const started = Date.now();
   let last = null;
+  let transientError = '';
   while (Date.now() - started < timeoutMs) {
-    last = await evaluate(client, expression);
-    if (last) return last;
+    try {
+      last = await evaluate(client, expression);
+      transientError = '';
+      if (last) return last;
+    } catch (error) {
+      const message = String(error?.message || error || '');
+      if (!/Inspected target navigated or closed|Cannot find context|Execution context was destroyed/i.test(message)) throw error;
+      transientError = message;
+    }
     await wait(200);
   }
-  throw new Error(`${label} did not become ready: ${JSON.stringify(last)}`);
+  throw new Error(`${label} did not become ready: ${JSON.stringify(last)}${transientError ? ` · ${transientError}` : ''}`);
 }
 async function waitForState(check, label, timeoutMs = 15000) {
   const started = Date.now();
@@ -234,11 +242,23 @@ async function setInputValue(client, selector, value) {
   assert(result, `Unable to set input value for ${selector}`);
 }
 async function clickSelector(client, selector) {
-  const clicked = await evaluate(client, `(() => {
-    const element = document.querySelector(${JSON.stringify(selector)}); if (!element) return false;
-    element.scrollIntoView({ block: 'center', inline: 'center' }); element.click(); return true;
-  })()`);
-  assert(clicked, `Unable to click ${selector}`);
+  const started = Date.now();
+  while (Date.now() - started < 5000) {
+    try {
+      const clicked = await evaluate(client, `(() => {
+        const element = document.querySelector(${JSON.stringify(selector)}); if (!element || !element.isConnected) return false;
+        element.scrollIntoView({ block: 'center', inline: 'center' });
+        element.click();
+        return true;
+      })()`);
+      if (clicked) return;
+    } catch (error) {
+      const message = String(error?.message || error || '');
+      if (!/Inspected target navigated or closed|Cannot find context|Execution context was destroyed/i.test(message)) throw error;
+    }
+    await wait(120);
+  }
+  throw new Error(`Unable to click ${selector}`);
 }
 async function capture(client, name) {
   const image = await client.send('Page.captureScreenshot', { format: 'png', fromSurface: true, captureBeyondViewport: false });
@@ -284,7 +304,8 @@ async function run() {
     })()`);
     assert(opened, 'dashboard editor button was not found');
 
-    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(videoRowHeadSelector)})`, 'desktop editor video row');
+    await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector(${JSON.stringify(videoRowHeadSelector)})`, 'desktop editor video row');
+    await wait(180);
     await clickSelector(client, videoRowHeadSelector);
     await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-settings-panel .video-library-action')`, 'video block library action');
     assert(apiState.saveCount === 0, 'opening the video editor must not publish the page');
