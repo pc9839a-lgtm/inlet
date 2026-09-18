@@ -513,6 +513,39 @@ async function normalBlockCount(client) {
   return evaluate(client, `document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item').length`);
 }
 
+async function dragPointer(client, sourceSelector, targetSelector) {
+  const points = await evaluate(client, `(() => {
+    const source = document.querySelector(${JSON.stringify(sourceSelector)});
+    const target = document.querySelector(${JSON.stringify(targetSelector)});
+    if (!source || !target) return null;
+    source.scrollIntoView({ block: 'center', inline: 'center' });
+    target.scrollIntoView({ block: 'center', inline: 'center' });
+    const sourceRect = source.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    return {
+      source: { x: sourceRect.left + sourceRect.width / 2, y: sourceRect.top + sourceRect.height / 2 },
+      target: { x: targetRect.left + targetRect.width / 2, y: targetRect.top + Math.max(2, targetRect.height / 2) },
+    };
+  })()`);
+  assert(points?.source && points?.target, `Unable to resolve drag geometry: ${sourceSelector} -> ${targetSelector}`);
+
+  await client.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: points.source.x, y: points.source.y });
+  await client.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: points.source.x, y: points.source.y, button: 'left', buttons: 1, clickCount: 1 });
+  for (let step = 1; step <= 8; step += 1) {
+    const ratio = step / 8;
+    await client.send('Input.dispatchMouseEvent', {
+      type: 'mouseMoved',
+      x: points.source.x + (points.target.x - points.source.x) * ratio,
+      y: points.source.y + (points.target.y - points.source.y) * ratio,
+      button: 'left',
+      buttons: 1,
+    });
+    await wait(45);
+  }
+  await client.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: points.target.x, y: points.target.y, button: 'left', buttons: 0, clickCount: 1 });
+  await wait(250);
+}
+
 async function capture(client, name) {
   const image = await client.send('Page.captureScreenshot', { format: 'png', fromSurface: true, captureBeyondViewport: false });
   const target = path.join(screenshotDir, `${name}.png`);
@@ -756,6 +789,20 @@ async function run() {
     const orderAfterMove = await normalBlockOrder(client);
     assert(JSON.stringify(orderAfterMove) !== JSON.stringify(orderBeforeMove), 'block order did not change');
 
+    // E2E-06: use real Chrome mouse input to drag the newly added divider to the first drop-zone.
+    const dragOrderBefore = await normalBlockOrder(client);
+    await dragPointer(
+      client,
+      `#${addedDividerId} .screen-order-v2-drag`,
+      '.screen-order-v2-list .screen-order-v2-slot:first-child .screen-order-v2-drop-zone',
+    );
+    await waitForBrowser(client, `(() => {
+      const ids = [...document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item')].map((item) => item.id);
+      return ids[0] === ${JSON.stringify(addedDividerId)};
+    })()`, 'pointer drag moved divider to first position');
+    const dragOrderAfter = await normalBlockOrder(client);
+    assert(JSON.stringify(dragOrderAfter) !== JSON.stringify(dragOrderBefore), 'pointer drag did not change block order');
+
     // E2E-11 / E2E-12: style draft previews first, then apply into the page draft.
     await clickButtonByText(client, '.top-tabs', '스타일');
     await waitForBrowser(client, `!!document.querySelector('.style-panel')`, 'style panel');
@@ -839,7 +886,7 @@ async function run() {
       publicVerifyCount: apiState.publicVerifyCount,
       mobileWidths: mobileViewports.map((item) => item.width),
       screenshots: 7,
-      realUseFlows: ['add-block', 'undo-redo', 'visibility', 'reorder', 'style-apply', 'preview-continue', 'publish-race', 'narrow-desktop'],
+      realUseFlows: ['add-block', 'undo-redo', 'visibility', 'menu-reorder', 'pointer-drag-reorder', 'style-apply', 'preview-continue', 'publish-race', 'narrow-desktop'],
     }, null, 2));
   } finally {
     await client?.close().catch(() => {});
