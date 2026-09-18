@@ -9,6 +9,8 @@ const screenshotDir = process.env.INLET_EDITOR_BROWSER_QA_SCREENSHOT_DIR || '.tm
 const debugPort = Number(process.env.INLET_EDITOR_BROWSER_QA_CHROME_PORT || 9341);
 const chromeInput = String(process.env.INLET_EDITOR_BROWSER_QA_CHROME_PATH || '').trim();
 const updatedHeroTitle = '브라우저 저장 검증 완료';
+const continuedHeroTitle = '발행 중 추가 편집 보존';
+const updatedAccent = '#7c3aed';
 const mobileViewports = [
   { name: 'mobile-360', width: 360, height: 800 },
   { name: 'mobile-390', width: 390, height: 844 },
@@ -274,6 +276,8 @@ function createApiMock(client) {
     pageLoadCount: 0,
     publicVerifyCount: 0,
     saveCount: 0,
+    saveDelayMs: 0,
+    saveSnapshots: [],
     leadLoadCount: 0,
     loginBody: null,
     unexpectedApis: [],
@@ -377,6 +381,9 @@ function createApiMock(client) {
       if (method === 'POST' && slug === state.currentPage.slug) {
         const incomingPage = body.page || {};
         state.saveCount += 1;
+        const saveNumber = state.saveCount;
+        state.saveSnapshots.push(structuredClone(incomingPage));
+        if (state.saveDelayMs > 0) await wait(state.saveDelayMs);
         state.currentPage = {
           ...incomingPage,
           id: state.currentPage.id,
@@ -385,7 +392,7 @@ function createApiMock(client) {
           slug: state.currentPage.slug,
           status: 'published',
           revision: Number(state.currentPage.revision || 0) + 1,
-          updatedAt: `2026-07-31T00:${String(state.saveCount).padStart(2, '0')}:00.000Z`,
+          updatedAt: `2026-07-31T00:${String(saveNumber).padStart(2, '0')}:00.000Z`,
         };
         await fulfill(requestId, 200, {
           ok: true,
@@ -486,6 +493,26 @@ async function clickSelector(client, selector) {
   assert(clicked, `Unable to click ${selector}`);
 }
 
+async function clickButtonByText(client, scopeSelector, text) {
+  const clicked = await evaluate(client, `(() => {
+    const scope = document.querySelector(${JSON.stringify(scopeSelector)}) || document;
+    const button = [...scope.querySelectorAll('button')].find((item) => item.textContent.trim() === ${JSON.stringify(text)});
+    if (!button) return false;
+    button.scrollIntoView({ block: 'center', inline: 'center' });
+    button.click();
+    return true;
+  })()`);
+  assert(clicked, `Unable to click button "${text}" in ${scopeSelector}`);
+}
+
+async function normalBlockOrder(client) {
+  return evaluate(client, `[...document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item')].map((item) => item.id)`);
+}
+
+async function normalBlockCount(client) {
+  return evaluate(client, `document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item').length`);
+}
+
 async function capture(client, name) {
   const image = await client.send('Page.captureScreenshot', { format: 'png', fromSurface: true, captureBeyondViewport: false });
   const target = path.join(screenshotDir, `${name}.png`);
@@ -516,7 +543,28 @@ async function collectDesktopMetrics(client) {
       frame: rect(frame),
       header: rect(header),
       mobile: shell?.classList.contains('mobile-operations-shell') || false,
-      heroTitleVisible: !!frame && (frame.innerText || '').includes(${JSON.stringify(updatedHeroTitle)}),
+      heroTitleVisible: !!frame && (frame.innerText || '').includes(${JSON.stringify(continuedHeroTitle)}),
+      fallback: !!document.querySelector('.app-error-screen, .error-screen, .block-render-fallback'),
+    };
+  })()`);
+}
+
+async function collectNarrowDesktopMetrics(client) {
+  return evaluate(client, String.raw`(() => {
+    const rect = (element) => {
+      if (!element) return null;
+      const box = element.getBoundingClientRect();
+      return { left: box.left, right: box.right, top: box.top, bottom: box.bottom, width: box.width, height: box.height };
+    };
+    return {
+      path: location.pathname,
+      innerWidth,
+      bodyScrollWidth: document.body?.scrollWidth || 0,
+      documentScrollWidth: document.documentElement?.scrollWidth || 0,
+      shell: rect(document.querySelector('.builder-shell')),
+      left: rect(document.querySelector('.left-workspace')),
+      preview: rect(document.querySelector('.preview-workspace')),
+      mobile: document.querySelector('.builder-shell')?.classList.contains('mobile-operations-shell') || false,
       fallback: !!document.querySelector('.app-error-screen, .error-screen, .block-render-fallback'),
     };
   })()`);
@@ -569,6 +617,17 @@ function assertDesktop(metrics) {
   assertInsideViewport(metrics.preview, metrics.innerWidth, 'desktop preview workspace');
   assert(metrics.frame?.width >= 400 && metrics.frame?.width <= 432, `desktop phone frame width is invalid: ${metrics.frame?.width}`);
   assert(metrics.heroTitleVisible, 'saved hero title is not visible in desktop preview');
+}
+
+function assertNarrowDesktop(metrics, width) {
+  assert(metrics.path === '/app', `narrow desktop editor route changed: ${metrics.path}`);
+  assert(!metrics.mobile, 'narrow desktop unexpectedly entered mobile operations mode');
+  assert(!metrics.fallback, 'narrow desktop rendered an error fallback');
+  assert(metrics.bodyScrollWidth <= width + 3, `narrow desktop body overflow: ${metrics.bodyScrollWidth} > ${width}`);
+  assert(metrics.documentScrollWidth <= width + 3, `narrow desktop document overflow: ${metrics.documentScrollWidth} > ${width}`);
+  assertInsideViewport(metrics.shell, width, 'narrow desktop builder shell');
+  assertInsideViewport(metrics.left, width, 'narrow desktop left workspace');
+  assertInsideViewport(metrics.preview, width, 'narrow desktop preview workspace');
 }
 
 function assertMobile(metrics, viewport) {
@@ -661,22 +720,100 @@ async function run() {
     assert(!inlineEditorStillNested, 'screen order row must not contain the block detail editor');
     await setInputValue(client, heroEditorSelector, updatedHeroTitle);
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(updatedHeroTitle)})`, 'live hero preview');
-    await wait(1100);
+    await wait(250);
     assert(apiState.saveCount === 0, 'editing must not submit a server save before the save button is pressed');
 
+    // E2E-02 / E2E-03: add a real block, then undo and redo the add operation.
+    const initialNormalBlockCount = await normalBlockCount(client);
+    await clickSelector(client, '.add-toggle');
+    await waitForBrowser(client, `!!document.querySelector('#pagero-widget-search')`, 'block add panel');
+    await setInputValue(client, '#pagero-widget-search', '구분선');
+    await clickButtonByText(client, '.add-panel', '구분선');
+    await waitForBrowser(client, `document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item').length === ${initialNormalBlockCount + 1}`, 'added divider row');
+    const addedDividerId = (await normalBlockOrder(client)).find((id) => !['editor-block-editor-hero', 'editor-block-editor-text', 'editor-block-editor-form'].includes(id));
+    assert(addedDividerId, 'added divider block id was not resolved');
+    assert(apiState.saveCount === 0, 'adding a block must remain local before publish');
+
+    await clickSelector(client, '.panel-history-btn[aria-label="실행 취소"]');
+    await waitForBrowser(client, `document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item').length === ${initialNormalBlockCount}`, 'undo block add');
+    await clickSelector(client, '.panel-history-btn[aria-label="다시 실행"]');
+    await waitForBrowser(client, `document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item').length === ${initialNormalBlockCount + 1}`, 'redo block add');
+
+    // E2E-04: visibility toggle must update the preview without publishing.
+    await clickSelector(client, '#editor-block-editor-text .screen-order-v2-visibility-button');
+    await waitForBrowser(client, `document.querySelector('#editor-block-editor-text .screen-order-v2-visibility-button')?.getAttribute('aria-checked') === 'false'`, 'text visibility off');
+    await waitForBrowser(client, `!(document.querySelector('.phone-frame')?.innerText || '').includes('편집기 회귀 방지')`, 'hidden text removed from preview');
+
+    // E2E-03: move the form above the text row through the real overflow menu.
+    const orderBeforeMove = await normalBlockOrder(client);
+    await clickSelector(client, '#editor-block-editor-form .screen-order-v2-action');
+    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-menu')`, 'form action menu');
+    await clickButtonByText(client, '.screen-order-v2-menu', '위로 이동');
+    await waitForBrowser(client, `(() => {
+      const ids = [...document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item')].map((item) => item.id);
+      return ids.indexOf('editor-block-editor-form') < ids.indexOf('editor-block-editor-text');
+    })()`, 'form moved above text');
+    const orderAfterMove = await normalBlockOrder(client);
+    assert(JSON.stringify(orderAfterMove) !== JSON.stringify(orderBeforeMove), 'block order did not change');
+
+    // E2E-11 / E2E-12: style draft previews first, then apply into the page draft.
+    await clickButtonByText(client, '.top-tabs', '스타일');
+    await waitForBrowser(client, `!!document.querySelector('.style-panel')`, 'style panel');
+    await clickButtonByText(client, '.style-subnav', '색상');
+    await waitForBrowser(client, `!!document.querySelector('.style-panel input[type="color"]')`, 'style accent input');
+    await setInputValue(client, '.style-panel input[type="color"]', updatedAccent);
+    await waitForBrowser(client, `!document.querySelector('.style-apply-btn')?.disabled`, 'style apply enabled');
+    assert(apiState.saveCount === 0, 'style preview must not publish automatically');
+    await clickSelector(client, '.style-apply-btn');
+    await waitForBrowser(client, `document.querySelector('.style-apply-btn')?.disabled === true`, 'style applied to page draft');
+
+    await clickButtonByText(client, '.top-tabs', '편집');
+    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-list')`, 'edit panel after style apply');
+
+    // E2E-13: preview action must not close or freeze the editor; continue editing afterwards.
+    await evaluate(client, `window.__pageroQaPreviewCalls = []; window.open = (...args) => { window.__pageroQaPreviewCalls.push(args); return { opener: null }; };`);
+    await clickButtonByText(client, '.panel-actions', '미리보기');
+    await waitForBrowser(client, `window.__pageroQaPreviewCalls?.length === 1`, 'preview window request');
+    assert((await evaluate(client, 'location.pathname')) === '/app', 'preview action must keep the editor page active');
+    await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
+    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'hero editor after preview');
+    await setInputValue(client, heroEditorSelector, updatedHeroTitle);
+
+    // E2E-14: delay the first publish response, edit again while it is in-flight, and ensure late response does not erase the newer local draft.
+    apiState.saveDelayMs = 900;
     await clickSelector(client, '.panel-actions .primary-btn');
-    await waitForState(() => apiState.saveCount === 1 && apiState.publicVerifyCount >= 1, 'server save and public verification');
-    await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(updatedHeroTitle)})`, 'saved editor preview');
-    assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === updatedHeroTitle, 'saved server page does not contain the edited hero title');
+    await waitForState(() => apiState.saveCount === 1, 'first publish request start');
+    await setInputValue(client, heroEditorSelector, continuedHeroTitle);
+    await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(continuedHeroTitle)})`, 'continued edit while publish pending');
+    apiState.saveDelayMs = 0;
+    await waitForState(() => apiState.publicVerifyCount >= 1, 'first publish public verification');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(continuedHeroTitle)}`, 'newer local draft after delayed publish response');
+    assert(apiState.saveSnapshots[0]?.blocks?.find((block) => block.id === 'editor-hero')?.s?.title === updatedHeroTitle, 'first server snapshot should contain the pre-race title');
+    assert(apiState.saveSnapshots[0]?.theme?.accent === updatedAccent, 'style change was not included in the first publish snapshot');
+
+    await waitForState(() => apiState.saveCount >= 2, 'automatic trailing publish');
+    assert(apiState.saveCount === 2, `pending edit should require exactly one automatic trailing save, got ${apiState.saveCount}`);
+    assert(apiState.saveSnapshots[1]?.blocks?.find((block) => block.id === 'editor-hero')?.s?.title === continuedHeroTitle, 'automatic trailing save did not capture the latest hero title');
+    await waitForState(() => apiState.publicVerifyCount >= 1, 'latest public verification after trailing save');
+    await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(continuedHeroTitle)})`, 'latest saved editor preview');
+    assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === continuedHeroTitle, 'latest server page does not contain the continued hero title');
+    assert(apiState.currentPage.theme?.accent === updatedAccent, 'latest server page does not contain the applied accent');
+    assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-text')?.visible === false, 'visibility change did not persist');
     await capture(client, 'desktop-editor-saved');
 
     await client.send('Page.reload', { ignoreCache: true });
     await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('.phone-frame')`, 'reloaded desktop editor');
-    await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(updatedHeroTitle)})`, 'saved page after reload');
+    await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(continuedHeroTitle)})`, 'saved page after reload');
     assert(apiState.sessionCount >= 1, 'saved login session was not refreshed after reload');
     const desktopMetrics = await collectDesktopMetrics(client);
     assertDesktop(desktopMetrics);
     await capture(client, 'desktop-editor-reloaded');
+
+    await setViewport(client, 1180, 900, false);
+    await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('.preview-workspace')`, 'narrow desktop editor');
+    const narrowDesktopMetrics = await collectNarrowDesktopMetrics(client);
+    assertNarrowDesktop(narrowDesktopMetrics, 1180);
+    await capture(client, 'desktop-narrow-1180');
 
     for (const viewport of mobileViewports) {
       await setViewport(client, viewport.width, viewport.height, true);
@@ -698,9 +835,11 @@ async function run() {
       projectListCount: apiState.projectListCount,
       pageLoadCount: apiState.pageLoadCount,
       saveCount: apiState.saveCount,
+      saveRaceProtected: apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === continuedHeroTitle,
       publicVerifyCount: apiState.publicVerifyCount,
       mobileWidths: mobileViewports.map((item) => item.width),
-      screenshots: 6,
+      screenshots: 7,
+      realUseFlows: ['add-block', 'undo-redo', 'visibility', 'reorder', 'style-apply', 'preview-continue', 'publish-race', 'narrow-desktop'],
     }, null, 2));
   } finally {
     await client?.close().catch(() => {});
