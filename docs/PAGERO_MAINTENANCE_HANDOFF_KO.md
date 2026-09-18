@@ -5,6 +5,8 @@
 > 운영 도메인: `https://pagero.kr/`
 >
 > 이 문서는 다음 개발자·AI 에이전트가 기존 운영 화면을 훼손하지 않고 수정하기 위한 최우선 작업 기준이다.
+>
+> 내부 편집기·설정·저장·미디어·도메인 등 현재 실행 순서는 `docs/PAGERO_INTERNAL_OPTIMIZATION_MASTER_KO.md`를 함께 따른다.
 
 ## 1. 가장 중요한 원칙
 
@@ -376,3 +378,8 @@ ads.txt 확인:
 - 생활비서 신규 글 발행과 페이지로 메인 생활정보 카드 변경을 혼동하지 않는다.
 
 이 문서와 `AGENTS.md`가 충돌할 경우 더 엄격하게 운영 메인을 보호하는 규칙을 우선한다.
+
+
+## 15. 내부 기능 문서 기준
+
+2026-09-18부터 내부 기능의 현재 상태와 실행 순서는 `docs/PAGERO_INTERNAL_OPTIMIZATION_MASTER_KO.md`를 단일 기준으로 사용한다. 완료된 `PAGERO_EDITOR_INTERACTION_PATCH_HANDOFF_KO.md`, 과거 메인 재작업안, 구 병렬 패치 문서는 current source로 사용하지 않는다. 운영 메인 보호 규칙은 이 문서가 계속 최우선이다.
