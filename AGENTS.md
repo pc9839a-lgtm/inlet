@@ -6,7 +6,7 @@ Before modifying or deploying Pagero, read:
 
 - `docs/PAGERO_MAINTENANCE_HANDOFF_KO.md`
 - `docs/PAGERO_PLAN_POLICY_KO.md` for the owner-approved plan names, prices, and plan-count lock.
-- `docs/PAGERO_EDITOR_INTERACTION_PATCH_HANDOFF_KO.md` for editor, top navigation, sharing, form-focus, and timer follow-up work.
+- `docs/PAGERO_INTERNAL_OPTIMIZATION_MASTER_KO.md` for the current PageRo internal-feature baseline, priorities, editor follow-up, and stale-document rules.
 
 The production root source of truth is `functions/index.js`, not a file named
 `functions/frozenHome.js` and not the local Vite home alone.
@@ -70,6 +70,10 @@ the already verified candidate tree.
 
 Do not deploy `1bd91160-8741-490f-8d85-402179a12bbc`; it removes the required
 lifestyle bridge. Production deployment requires explicit user approval.
+
+## Alternative Landing Ban
+
+Unless the owner explicitly requests a production-home redesign, do not create or retain alternate PageRo home/landing implementations, conversion-preview landings, legacy home copies, or dormant landing preview functions. If an experiment is rejected, remove the unused source instead of leaving it in the repository as a fallback.
 
 ## Billing Plan Lock - Owner Decision
 

@@ -1,13 +1,13 @@
 import React from 'react';
 import { stop } from './editorEvents.js';
 
-export function Switch({ checked, onChange, label }) {
+export function Switch({ checked, onChange, label, className = '' }) {
   const active = !!checked;
 
   return (
     <button
       type="button"
-      className={`switch-clean${active ? ' active' : ''}`}
+      className={`switch-clean${className ? ` ${className}` : ''}${active ? ' active' : ''}`}
       role="switch"
       aria-checked={active}
       aria-label={label}
