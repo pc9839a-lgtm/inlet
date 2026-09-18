@@ -43,6 +43,12 @@ assert(browserSource.includes("pathname === '/api/auth/login'") && browserSource
 assert(browserSource.includes("pathname === '/api/projects'") && browserSource.includes(".service-landing-card"), 'browser QA must load and select a dashboard page');
 assert(browserSource.includes("pathname === '/api/account-page'") && browserSource.includes("#editor-block-editor-hero") && browserSource.includes(".screen-order-v2-head") && browserSource.includes("#editor-block-editor-hero textarea[placeholder=\"핵심 제목을 입력하세요\"]") && browserSource.includes('브라우저 저장 검증 완료'), 'browser QA must open the current account page, edit the active EditPanel block, and verify live preview');
 assert(browserSource.includes(".panel-actions .primary-btn") && browserSource.includes("Page.reload"), 'browser QA must publish and verify the page after reload');
+assert(browserSource.includes("clickButtonByText(client, '.add-panel', '구분선')") && browserSource.includes("panel-history-btn[aria-label=\"실행 취소\"]") && browserSource.includes("panel-history-btn[aria-label=\"다시 실행\"]"), 'browser QA must add a block and verify undo/redo through the real editor controls');
+assert(browserSource.includes("#editor-block-editor-text .screen-order-v2-visibility-button") && browserSource.includes("#editor-block-editor-form .screen-order-v2-action") && browserSource.includes("'위로 이동'"), 'browser QA must verify visibility and order changes through the current screen-order V2 controls');
+assert(browserSource.includes("clickButtonByText(client, '.top-tabs', '스타일')") && browserSource.includes("updatedAccent") && browserSource.includes(".style-apply-btn"), 'browser QA must preview and apply a style change before publish');
+assert(browserSource.includes("window.__pageroQaPreviewCalls") && browserSource.includes("clickButtonByText(client, '.panel-actions', '미리보기')"), 'browser QA must verify preview can open without interrupting continued editing');
+assert(browserSource.includes("saveDelayMs = 900") && browserSource.includes("continuedHeroTitle") && browserSource.includes("newer local draft after delayed publish response"), 'browser QA must cover edits made while a publish response is in flight');
+assert(browserSource.includes("setViewport(client, 1180, 900, false)") && browserSource.includes("assertNarrowDesktop"), 'browser QA must cover narrow desktop overflow separately from mobile operations mode');
 assert(browserSource.includes("publicVerifyCount") && browserSource.includes("saveCount === 0"), 'browser QA must verify that editing stays local until explicit publish and then verifies the public page');
 assert(browserSource.includes("{ name: 'mobile-360', width: 360") && browserSource.includes("{ name: 'mobile-390', width: 390") && browserSource.includes("{ name: 'mobile-430', width: 430"), 'browser QA must cover 360, 390, and 430 pixel mobile widths');
 assert(browserSource.includes("mobile-operations-shell") && browserSource.includes("bodyScrollWidth <= viewport.width + 3"), 'mobile editor regression must reject overflow and verify operations mode');
@@ -72,7 +78,7 @@ assert(editHistorySource.includes('const MAX_HISTORY = 50') && editHistorySource
 console.log(JSON.stringify({
   ok: true,
   scope: 'authenticated-editor-browser-contract',
-  desktopFlow: ['login', 'dashboard', 'account-page', 'page-select', 'edit-panel', 'publish', 'reload'],
+  desktopFlow: ['login', 'dashboard', 'account-page', 'page-select', 'edit-panel', 'add-block', 'undo-redo', 'visibility', 'reorder', 'style-apply', 'preview-continue', 'publish-race', 'publish', 'reload', 'narrow-desktop'],
   imageLibraryFlow: ['image-block', 'open-library', 'project-scoped-list', 'select-existing-image', 'local-draft', 'publish', 'reload'],
   mobileWidths: [360, 390, 430],
   productionCredentials: false,
