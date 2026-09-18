@@ -7,7 +7,7 @@
 - 운영 기준 HEAD: `58f0c6c285e1457df0faa32bc1e081e8efcb2553`
 - 현재 정리/최적화 후보 PR: `#240`
 - 후보 브랜치: `test/pagero-editor-video-drag-e2e-20260918`
-- 후보 코드 검증 기준 SHA: `195f825b3366ecb023b8cb26ae604558a6985777`
+- 후보 코드 검증 기준 SHA: `8d0ca191dfa49699a7a5322e4988556455227069`
 - 문서 최신 HEAD: PR `#240`의 현재 head를 기준으로 확인
 - 운영 도메인: `https://pagero.kr/`
 - 범위: PageRo 내부 편집기, 워크스페이스, 설정, 저장/발행, 미디어, 도메인, 운영 기능
@@ -388,6 +388,16 @@ pointer drag E2E:
 - `editor-browser-regression`: success
 - `form-browser-regression`: success
 - `template-mobile-browser-regression`: success
+
+#240 QA 중 발견한 테스트 안정성 이슈와 조치:
+
+- 영상 E2E 첫 실행에서 editor route 전환 직후 row click이 React rerender와 겹치는 간헐 실패 확인
+- 재시도에서는 Chrome CDP가 navigation 순간 `Inspected target navigated or closed`를 반환하는 transient 오류 확인
+- 기능 검증 조건을 완화하지 않고 영상 E2E의 navigation 대기만 보강
+- `waitForBrowser`는 navigation/context-destroy transient 오류에 한해 재시도
+- `clickSelector`는 element가 실제 DOM에 연결된 상태에서 최대 5초 동안 재확인
+- 영상 URL/fileName, `readyState >= 1`, local-only, publish, public verification, reload 조건은 그대로 유지
+- 안정화 후 전체 5개 QA 재통과
 
 P2 상태:
 
