@@ -175,6 +175,9 @@ assert(
   'wrangler config should reference the created inlet-prod D1 database id',
 );
 
+// Custom-domain ownership is part of the normal D1 schema release gate.
+await import('./page-domain-core-quality-check.mjs');
+
 console.log(JSON.stringify({
   ok: true,
   tables: requiredTables.length,
@@ -185,6 +188,7 @@ console.log(JSON.stringify({
   eventDimensionsMigration: '0003_event_dimensions.sql',
   blockedLeadMigration: '0004_lead_blocked_submissions.sql',
   authEmailMigration: '0005_auth_email_verifications.sql',
+  pageDomainMigration: '0015_page_domain_ownership.sql',
   adapter: 'server/storage/d1Adapter.mjs',
   runtimeAdapter: 'server/storage/runtimeAdapter.mjs',
 }, null, 2));
