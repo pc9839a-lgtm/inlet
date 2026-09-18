@@ -211,26 +211,48 @@
 - main 병합: 아직 아님
 - 운영 배포: 아직 아님
 
-### P1 — 구/신 편집기 CSS 충돌 감사
+### P1 — 구/신 편집기 CSS 충돌 감사 — 1차 조사 완료
 
-현재 신형 화면순서는 `screen-order-v2-*`를 사용하지만 legacy selector가 남아 있다.
+현재 실제 편집기 진입 경로는 다음이다.
 
-감사 대상:
+`WorkspaceEditorScreen → WorkspaceLeftPanel → WorkspaceActivePanel → EditPanel → EditPanelLayout`
 
-- `screen-order-item`
-- `screen-order-head`
-- `screen-icon-action`
-- `screen-title-wrap`
-- `fixed-open-button`
-- `switch-clean`
+`EditWorkbench.jsx` 파일은 저장소에 남아 있지만 현재 `WorkspaceActivePanel`의 edit 탭 진입 경로는 `EditPanel`을 직접 사용한다. 따라서 새 편집기 구조 판단을 `EditWorkbench` 기준으로 하면 안 된다.
 
-구분:
+현재 일반 블록 화면순서의 실제 DOM은 `screen-order-v2-*` 계열이다.
 
-1. 현재 실제 DOM에서 사용
-2. 공용 컨트롤 때문에 여전히 영향 있음
-3. 완전 dead selector
+- `screen-order-v2-item`
+- `screen-order-v2-head`
+- `screen-order-v2-drag`
+- `screen-order-v2-title-wrap`
+- `screen-order-v2-visibility-button`
+- `screen-order-v2-action`
+- `screen-order-v2-menu`
 
-dead selector 정리는 실제 참조가 없고 QA가 있는 경우에만 작은 단위로 한다.
+반면 `editor-final-clean.css`에는 과거 일반 블록용 selector가 함께 남아 있다.
+
+#### 1차 selector 분류
+
+| selector | 현재 판단 | 근거/조치 |
+| --- | --- | --- |
+| `.screen-order-item.block-item` | legacy 후보 | 현재 `ScreenOrderRow.jsx`는 `screen-order-v2-item` 사용. repo-wide 참조 최종 확인 후 제거 후보 |
+| `.screen-order-head.block-head` | legacy 후보 | 현재 일반 블록 head는 `screen-order-v2-head`. 고정영역은 별도 `fixed-block-head` 사용 |
+| `.screen-title-wrap` | legacy 후보 | 현재 일반 블록 title은 `screen-order-v2-title-wrap` |
+| `.screen-drag-handle` | legacy 후보 | 현재 drag는 `screen-order-v2-drag` |
+| `.screen-row-action-menu` | 고위험 legacy 후보 | `ScreenOrderRowActionMenu.jsx` 파일은 존재하지만 현재 `ScreenOrderRowActions.jsx`는 portal 기반 `screen-order-v2-menu`를 직접 렌더링. import 사용처 확인 후 정리 |
+| `.screen-icon-action` | **현재 사용 중** | `IconAction` 공용 컴포넌트가 이 class를 생성하며 fixed block header에서 사용 |
+| `.fixed-open-button` | **현재 사용 중** | `FixedBlockCardHeader.jsx`의 고정영역 열기/닫기 버튼 |
+| `.switch-clean` | **현재 사용 중** | 공용 `Switch` 컴포넌트. fixed block/animation 등 여러 곳 영향 |
+| `.fixed-block-head` | **현재 사용 중** | `FixedBlockCardHeader`, `AnimationOptionsHeader`에서 사용 |
+
+#### 정리 원칙
+
+- `legacy`라는 이름만 보고 `editor-final-clean.css`를 통째로 삭제하지 않는다.
+- 일반 블록 V2 selector와 고정영역 공용 selector를 분리해서 본다.
+- `.screen-icon-action`, `.fixed-open-button`, `.switch-clean`, `.fixed-block-head`는 현재 사용 중이므로 전역 삭제 금지.
+- 일반 블록 구 selector는 repo-wide import/class reference 확인 + browser QA를 붙인 뒤 작은 패치로 제거한다.
+- `ScreenOrderRowActionMenu.jsx` 같은 과거 컴포넌트는 import 0건이 확인되면 소스와 대응 CSS를 함께 제거하는 방향으로 본다.
+- CSS cleanup PR에서는 저장/발행/API/public renderer 변경을 섞지 않는다.
 
 ### P2 — 편집 전체 real-use audit
 
