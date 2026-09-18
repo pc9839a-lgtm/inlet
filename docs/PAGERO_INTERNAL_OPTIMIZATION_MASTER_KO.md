@@ -4,11 +4,11 @@
 - 갱신일: 2026-09-18 KST
 - 저장소: `pc9839a-lgtm/inlet`
 - 운영 기준 브랜치: `main`
-- 운영 기준 HEAD: `00d0cef636ddc03fa6b5d9126f61d0a52c8b1661`
-- 현재 정리/최적화 후보 PR: `#236`
-- 후보 브랜치: `chore/pagero-internal-master-cleanup-20260918`
-- 후보 코드 검증 기준 SHA: `410132847198e2c1a58d94c295b11666a50c295c`
-- 문서 최신 HEAD: PR `#236`의 현재 head를 기준으로 확인
+- 운영 기준 HEAD: `58f0c6c285e1457df0faa32bc1e081e8efcb2553`
+- 현재 정리/최적화 후보 PR: `#240`
+- 후보 브랜치: `test/pagero-editor-video-drag-e2e-20260918`
+- 후보 코드 검증 기준 SHA: `8d0ca191dfa49699a7a5322e4988556455227069`
+- 문서 최신 HEAD: PR `#240`의 현재 head를 기준으로 확인
 - 운영 도메인: `https://pagero.kr/`
 - 범위: PageRo 내부 편집기, 워크스페이스, 설정, 저장/발행, 미디어, 도메인, 운영 기능
 - 명시적 비범위: 운영 메인 랜딩 개편
@@ -29,7 +29,7 @@
 | migration 적용 | 운영 D1에 승인된 migration write가 수행됨 |
 | 운영 검증 | 실제 운영 URL/인증 화면/공개 페이지에서 확인 완료 |
 
-**현재 #236과 #238은 main 병합 및 운영 배포까지 완료됐고, P2 real-use 회귀 보강은 #239에서 QA 완료·main 병합 대기 상태다.**
+**#236, #238, #239는 main 병합·운영 배포·readiness·production D1 save roundtrip까지 완료됐다. P2 마지막 영상 재사용/pointer drag 회귀는 #240에서 QA 완료·main 병합 대기 상태다.**
 
 ### 0.1 현재 상태 대시보드
 
@@ -43,10 +43,10 @@
 | 불필요 랜딩 소스 제거 | production verified | #236 + 폐기 #212 branch cleanup |
 | 고정영역 모바일 44px | production verified | #236에 #237 squash 포함 |
 | legacy/shared CSS 충돌 정리 | production verified | #238 |
-| real-use 편집 전체 회귀 | core flow QA 완료, 영상 재사용/drag 추가 검증 남음 | #239 / P2 |
+| real-use 편집 전체 회귀 | P2 전체 QA 완료, main/production 반영 대기 | #239 + #240 / P2 |
 | 개인 도메인 운영화 | draft stack | #233 → #234 → #235 |
 | 웹 결제/구독 | 부분 구현 / 운영 lifecycle 미완료 | P7 |
-| production deploy | #236/#238 성공, P2는 #239 병합 후 자동 배포 대기 | Cloudflare Pages |
+| production deploy | #236/#238/#239 production verified, #240 대기 | Cloudflare Pages |
 
 ### 0.2 2026-09-18 정리 작업 기록
 
@@ -318,7 +318,7 @@
 - 저장/API/schema 변경이 필요해 보이면 먼저 재현 로그와 request/response 순서를 확인
 - screenshot-only 성공을 기능 성공으로 보지 않음
 
-#### P2 #239 현재 반영 결과
+#### P2 #239 production 반영 결과
 
 실제 브라우저 회귀에 추가된 흐름:
 
@@ -348,7 +348,40 @@
 - 연속 저장에서는 이전 public verification job을 최신 저장 검증이 supersede할 수 있음
 - 따라서 save request 수와 public readback request 수를 1:1로 가정하지 않는다
 
-#239 현재 QA:
+#239 검증/배포 상태:
+
+- `qa`: success
+- `browser-regression`: success
+- `editor-browser-regression`: success
+- `form-browser-regression`: success
+- `template-mobile-browser-regression`: success
+- main 병합: 완료 — `58f0c6c285e1457df0faa32bc1e081e8efcb2553`
+- Cloudflare production deploy: 완료
+- exact deployment readiness: success
+- `https://pagero.kr/api/readiness`: success
+- production D1 save roundtrip: success
+
+#### P2 #240 마지막 회귀 보강
+
+영상 재사용 E2E:
+
+- 실제 `YouTubeEditor` / `VideoLibraryPicker` 경로 사용
+- `/api/files/list?kind=video` project/owner/slug scope 검증
+- 기존 MP4 선택
+- editor state의 `videoUrl` / `videoFileName` 반영 확인
+- preview의 실제 `<video>`가 선택 URL을 사용하고 `readyState >= 1`인지 확인
+- 명시적 발행 전 server save 0건 확인
+- 발행 + public verification
+- reload 후 URL/fileName/playable metadata 상태 유지 확인
+
+pointer drag E2E:
+
+- 직접 `drop` handler를 호출하지 않음
+- Chrome CDP `Input.dispatchMouseEvent`로 실제 draggable handle에서 drop-zone까지 mouse press/move/release 수행
+- drag 후 일반 블록 DOM 순서가 실제 변경되는지 확인
+- 기존 메뉴 기반 위/아래 이동 E2E도 함께 유지
+
+#240 QA:
 
 - `qa`: success
 - `browser-regression`: success
@@ -356,17 +389,24 @@
 - `form-browser-regression`: success
 - `template-mobile-browser-regression`: success
 
-아직 P2 전체 완료로 닫지 않는 항목:
+#240 QA 중 발견한 테스트 안정성 이슈와 조치:
 
-- 기존 영상 재사용을 실제 browser E2E로 선택→발행→reload까지 검증
-- pointer drag 자체의 실제 reorder E2E (위/아래 이동은 검증 완료)
+- 영상 E2E 첫 실행에서 editor route 전환 직후 row click이 React rerender와 겹치는 간헐 실패 확인
+- 재시도에서는 Chrome CDP가 navigation 순간 `Inspected target navigated or closed`를 반환하는 transient 오류 확인
+- 기능 검증 조건을 완화하지 않고 영상 E2E의 navigation 대기만 보강
+- `waitForBrowser`는 navigation/context-destroy transient 오류에 한해 재시도
+- `clickSelector`는 element가 실제 DOM에 연결된 상태에서 최대 5초 동안 재확인
+- 영상 URL/fileName, `readyState >= 1`, local-only, publish, public verification, reload 조건은 그대로 유지
+- 안정화 후 전체 5개 QA 재통과
 
-상태:
+P2 상태:
 
-- core real-use flow 구현/QA: 완료
-- #239 main 병합: 아직 아님
-- #239 운영 배포: 아직 아님
-- P2 최종 close: 영상 재사용 + pointer drag E2E 후
+- 기능 구현: 완료
+- real-use browser QA: 완료
+- E2E-01 ~ E2E-14: 완료
+- #240 main 병합: 아직 아님
+- #240 운영 배포: 아직 아님
+- production verified: #240 병합/배포 후 최종 갱신
 
 ### P3 — 미디어 UX 마감
 
@@ -824,8 +864,8 @@
 
 1. ~~고정 영역 모바일 컨트롤 44px 보강~~ — #236 production verified
 2. ~~공용 control/legacy CSS 충돌 최소 정리~~ — #238 production verified
-3. 편집 전체 real-use browser regression 추가/보강 — #239 core flow QA 완료, 영상/drag 남음
-4. 발견된 실제 UX 오류를 작은 PR로 수정 — #239 move action wiring 수정
+3. ~~편집 전체 real-use browser regression 추가/보강~~ — #239 production verified + #240 전체 QA 완료, main/배포 대기
+4. ~~발견된 실제 UX 오류를 작은 PR로 수정~~ — #239 move action wiring 수정 및 production 반영
 5. 미디어 UX 마감
 6. 저장/undo/revision/publish 연결 검증
 7. 개인 도메인 stack 검토

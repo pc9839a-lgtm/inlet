@@ -10,6 +10,7 @@ function assert(condition, message) {
 
 const browserSource = await readFile('scripts/editor-browser-regression-check.mjs', 'utf8');
 const imageLibraryBrowserSource = await readFile('scripts/editor-image-library-browser-check.mjs', 'utf8');
+const videoLibraryBrowserSource = await readFile('scripts/editor-video-library-browser-check.mjs', 'utf8');
 const cdpCompatSource = await readFile('scripts/editor-browser-cdp-compat.mjs', 'utf8');
 const workflowSource = await readFile('.github/workflows/qa.yml', 'utf8');
 const qaAllSource = await readFile('scripts/qa-all.mjs', 'utf8');
@@ -22,8 +23,9 @@ const addBlockOptionSource = await readFile('src/editor/editPanelParts/AddBlockO
 const addBlockDockCssSource = await readFile('src/styles/editor-widget-add-dock.css', 'utf8');
 const screenOrderMovementSource = await readFile('src/editor/editPanelParts/screenOrderMovement.js', 'utf8');
 
-assert(packageJson.scripts?.['browser:editor:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-browser-regression-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-image-library-browser-check.mjs', 'browser:editor:qa must run the authenticated editor regression and project image-library E2E');
+assert(packageJson.scripts?.['browser:editor:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-browser-regression-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-image-library-browser-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-video-library-browser-check.mjs', 'browser:editor:qa must run authenticated editor, image-library, and video-library E2E');
 assert(packageJson.scripts?.['browser:editor:image-library:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-image-library-browser-check.mjs', 'browser:editor:image-library:qa script is missing');
+assert(packageJson.scripts?.['browser:editor:video-library:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-video-library-browser-check.mjs', 'browser:editor:video-library:qa script is missing');
 assert(packageJson.scripts?.['browser:editor:contract:qa'] === 'node scripts/editor-browser-regression-contract-check.mjs', 'browser:editor:contract:qa script is missing');
 assert(qaAllSource.includes("['browser:editor:contract:qa', ['scripts/editor-browser-regression-contract-check.mjs']]"), 'qa:all must enforce the editor browser contract');
 
@@ -46,6 +48,7 @@ assert(browserSource.includes("pathname === '/api/account-page'") && browserSour
 assert(browserSource.includes(".panel-actions .primary-btn") && browserSource.includes("Page.reload"), 'browser QA must publish and verify the page after reload');
 assert(browserSource.includes("clickButtonByText(client, '.add-panel', '구분선')") && browserSource.includes("panel-history-btn[aria-label=\"실행 취소\"]") && browserSource.includes("panel-history-btn[aria-label=\"다시 실행\"]"), 'browser QA must add a block and verify undo/redo through the real editor controls');
 assert(browserSource.includes("#editor-block-editor-text .screen-order-v2-visibility-button") && browserSource.includes("#editor-block-editor-form .screen-order-v2-action") && browserSource.includes("'위로 이동'"), 'browser QA must verify visibility and order changes through the current screen-order V2 controls');
+assert(browserSource.includes("Input.dispatchMouseEvent") && browserSource.includes("pointer drag moved divider to first position") && browserSource.includes(".screen-order-v2-drag"), 'browser QA must verify reorder through real Chrome mouse input, not only menu actions');
 assert(screenOrderMovementSource.includes('const moveUp = () =>') && screenOrderMovementSource.includes('const moveDown = () =>') && !screenOrderMovementSource.includes('event.stopPropagation'), 'screen-order move actions must stay event-independent because the overflow menu invokes them without an event');
 assert(browserSource.includes("clickButtonByText(client, '.top-tabs', '스타일')") && browserSource.includes("updatedAccent") && browserSource.includes(".style-apply-btn"), 'browser QA must preview and apply a style change before publish');
 assert(browserSource.includes("window.__pageroQaPreviewCalls") && browserSource.includes("clickButtonByText(client, '.panel-actions', '미리보기')"), 'browser QA must verify preview can open without interrupting continued editing');
@@ -67,6 +70,16 @@ assert(imageLibraryBrowserSource.includes("savedImageBlock?.s?.image === selecte
 assert(imageLibraryBrowserSource.includes("imageDownloadCount >= 1") && imageLibraryBrowserSource.includes("unexpectedApis.length === 0") && imageLibraryBrowserSource.includes("browserErrors.length === 0"), 'image-library browser QA must verify image readback and fail on unexpected runtime errors');
 assert(!imageLibraryBrowserSource.includes('pagero.kr/api/auth/login') && !imageLibraryBrowserSource.includes('productionPassword'), 'image-library browser QA must not use production credentials or production auth endpoints');
 
+assert(videoLibraryBrowserSource.includes("id: 'editor-video', type: 'code'") && videoLibraryBrowserSource.includes("widgetMode: 'youtube'") && videoLibraryBrowserSource.includes("#editor-block-editor-video"), 'video-library browser QA must use the real video editor path');
+assert(videoLibraryBrowserSource.includes("pathname === '/api/files/list'") && videoLibraryBrowserSource.includes("kind: 'video'"), 'video-library browser QA must load project videos through the real list route contract');
+assert(videoLibraryBrowserSource.includes("projectId === 'editor-project'") && videoLibraryBrowserSource.includes("ownerId === 'editor-owner'") && videoLibraryBrowserSource.includes("slug === 'editor-e2e'"), 'video-library browser QA must verify project, owner, and page scope');
+assert(videoLibraryBrowserSource.includes('.video-library-action') && videoLibraryBrowserSource.includes('.image-library-picker-item'), 'video-library browser QA must click the real video picker action and shared picker item');
+assert(videoLibraryBrowserSource.includes("video.readyState >= 1") && videoLibraryBrowserSource.includes("videoDownloadCount >= 1"), 'video-library browser QA must verify the selected MP4 reaches playable metadata state');
+assert(videoLibraryBrowserSource.includes("savedVideoBlock?.s?.videoUrl === selectedVideoValue") && videoLibraryBrowserSource.includes("savedVideoBlock?.s?.videoFileName === libraryFileName") && videoLibraryBrowserSource.includes("Page.reload"), 'video-library browser QA must verify URL/file name publish and reload persistence');
+assert(videoLibraryBrowserSource.includes("saveCount === 0") && videoLibraryBrowserSource.includes(".panel-actions .primary-btn"), 'video-library selection must stay local before explicit publish');
+assert(videoLibraryBrowserSource.includes("unexpectedApis.length === 0") && videoLibraryBrowserSource.includes("browserErrors.length === 0"), 'video-library browser QA must fail on unexpected runtime errors');
+assert(!videoLibraryBrowserSource.includes('pagero.kr/api/auth/login') && !videoLibraryBrowserSource.includes('productionPassword'), 'video-library browser QA must not use production credentials or production auth endpoints');
+
 assert(addBlockPanelSource.includes("const RECENT_BLOCKS_KEY = 'pagero.editor.recent-blocks.v1'") && addBlockPanelSource.includes('const MAX_RECENT_BLOCKS = 5'), 'block add picker must keep a bounded browser-local recent list');
 assert(addBlockPanelSource.includes('window.localStorage.setItem(RECENT_BLOCKS_KEY') && addBlockPanelSource.includes("<b>최근 사용</b>"), 'block add picker must persist and expose recent blocks without changing page data');
 assert(addBlockPanelSource.includes('aria-label="위젯 카테고리"') && addBlockPanelSource.includes("setCategory('all')"), 'block add picker must expose category shortcuts and reset to all for global search');
@@ -80,8 +93,9 @@ assert(editHistorySource.includes('const MAX_HISTORY = 50') && editHistorySource
 console.log(JSON.stringify({
   ok: true,
   scope: 'authenticated-editor-browser-contract',
-  desktopFlow: ['login', 'dashboard', 'account-page', 'page-select', 'edit-panel', 'add-block', 'undo-redo', 'visibility', 'reorder', 'style-apply', 'preview-continue', 'publish-race', 'publish', 'reload', 'narrow-desktop'],
+  desktopFlow: ['login', 'dashboard', 'account-page', 'page-select', 'edit-panel', 'add-block', 'undo-redo', 'visibility', 'menu-reorder', 'pointer-drag-reorder', 'style-apply', 'preview-continue', 'publish-race', 'publish', 'reload', 'narrow-desktop'],
   imageLibraryFlow: ['image-block', 'open-library', 'project-scoped-list', 'select-existing-image', 'local-draft', 'publish', 'reload'],
+  videoLibraryFlow: ['video-block', 'open-library', 'project-scoped-list', 'select-existing-video', 'playable-metadata', 'local-draft', 'publish', 'reload'],
   mobileWidths: [360, 390, 430],
   productionCredentials: false,
   accountPageMock: true,
@@ -91,5 +105,7 @@ console.log(JSON.stringify({
   revisionDraftRestore: true,
   draftPublishSemantics: true,
   imageLibraryBrowserE2E: true,
+  videoLibraryBrowserE2E: true,
+  pointerDragBrowserE2E: true,
   blockAddPicker: ['search', 'category-filter', 'recent-5', 'empty-state', 'mobile-44px'],
 }, null, 2));
