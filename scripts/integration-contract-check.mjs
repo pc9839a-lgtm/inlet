@@ -951,6 +951,10 @@ requireAll(opsQa, [
 const pageroInternalMaster = await read('docs/PAGERO_INTERNAL_OPTIMIZATION_MASTER_KO.md');
 requireAll(pageroInternalMaster, [
   'PageRo 내부 기능 최적화 마스터',
+  '상태 해석 규칙',
+  '현재 상태 대시보드',
+  '작업 시작 체크리스트',
+  '다음 AI가 하면 안 되는 오해',
   '대체 랜딩 금지',
   '고정 영역 모바일 컨트롤 44px 보강',
   '편집 전체 real-use audit',
@@ -971,7 +975,7 @@ requireAll(pageroInternalMaster, [
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 37,
+  checks: 41,
   scripts: 20,
   contracts: [
     'jsonl-ops',
