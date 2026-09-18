@@ -29,7 +29,7 @@
 | migration 적용 | 운영 D1에 승인된 migration write가 수행됨 |
 | 운영 검증 | 실제 운영 URL/인증 화면/공개 페이지에서 확인 완료 |
 
-**현재 #236은 구현 완료 + QA 완료 상태이며, main 병합/운영 배포는 아직 아니다.**
+**현재 #236과 #238은 main 병합 및 운영 배포까지 완료됐고, P2 real-use 회귀 보강은 #239에서 QA 완료·main 병합 대기 상태다.**
 
 ### 0.1 현재 상태 대시보드
 
@@ -39,14 +39,14 @@
 | 편집기 구조 1~6차 | main 반영 완료 | #213~#218 계열 |
 | 저장/복구/undo/revision | main 반영 완료 | current main |
 | 이미지/영상 재사용·미디어 보관함 | main 반영 완료 | current main |
-| 문서 통합/구 문서 제거 | QA 완료, main 미병합 | #236 |
-| 불필요 랜딩 소스 제거 | QA 완료, main 미병합 | #236 + 폐기 #212 branch cleanup |
-| 고정영역 모바일 44px | QA 완료, main 미병합 | #236에 #237 squash 포함 |
-| legacy/shared CSS 충돌 정리 | QA 완료, main 미병합 | #238 (stacked on #236) |
-| real-use 편집 전체 회귀 | 다음 작업 | P2 |
+| 문서 통합/구 문서 제거 | production verified | #236 |
+| 불필요 랜딩 소스 제거 | production verified | #236 + 폐기 #212 branch cleanup |
+| 고정영역 모바일 44px | production verified | #236에 #237 squash 포함 |
+| legacy/shared CSS 충돌 정리 | production verified | #238 |
+| real-use 편집 전체 회귀 | core flow QA 완료, 영상 재사용/drag 추가 검증 남음 | #239 / P2 |
 | 개인 도메인 운영화 | draft stack | #233 → #234 → #235 |
 | 웹 결제/구독 | 부분 구현 / 운영 lifecycle 미완료 | P7 |
-| production deploy | 미실행 | 별도 승인 필요 |
+| production deploy | #236/#238 성공, P2는 #239 병합 후 자동 배포 대기 | Cloudflare Pages |
 
 ### 0.2 2026-09-18 정리 작업 기록
 
@@ -207,9 +207,10 @@
 
 - 구현: 완료
 - QA: 완료
-- #236 후보 포함: 예
-- main 병합: 아직 아님
-- 운영 배포: 아직 아님
+- #236 반영: 완료
+- main 병합: 완료
+- 운영 배포: 완료
+- production readiness / D1 save roundtrip: 통과
 
 ### P1 — 구/신 편집기 CSS 충돌 감사 — 후보 완료 (#238)
 
@@ -280,10 +281,10 @@
 
 - 구현: 완료
 - QA: 완료
-- #238: open / #236 위 stacked PR
-- #236 반영: 아직 아님
-- main 병합: 아직 아님
-- 운영 배포: 아직 아님
+- #238: main 병합 완료
+- #236 반영: 완료
+- 운영 배포: 완료
+- production readiness / D1 save roundtrip: 통과
 
 ### P2 — 편집 전체 real-use audit
 
@@ -316,6 +317,56 @@
 - 그 전 단계까지 통과한 기능을 재설계하지 않음
 - 저장/API/schema 변경이 필요해 보이면 먼저 재현 로그와 request/response 순서를 확인
 - screenshot-only 성공을 기능 성공으로 보지 않음
+
+#### P2 #239 현재 반영 결과
+
+실제 브라우저 회귀에 추가된 흐름:
+
+- 블록 추가 → undo → redo
+- 표시/숨김 변경
+- 현재 `screen-order-v2` 메뉴를 통한 위로 이동
+- 스타일 draft → 적용
+- 미리보기 실행 후 같은 편집기에서 계속 입력
+- 첫 발행 응답을 지연시킨 상태에서 추가 입력
+- 늦은 첫 응답이 최신 입력을 덮지 않는지 확인
+- 변경 중 저장 발생 시 automatic trailing save가 최신 입력을 저장하는지 확인
+- 공개 검증 debounce가 이전 검증을 supersede하고 최신 저장본을 검증하는 흐름 확인
+- 새로고침 후 마지막 저장 상태 확인
+- 1180px narrow desktop overflow 검사
+- 360 / 390 / 430 모바일 회귀 유지
+
+#239에서 실제로 발견해 수정한 제품 오류:
+
+- `screenOrderMovement.js`의 `moveUp/moveDown`이 event 인자를 강제하고 있었음
+- 현재 portal overflow menu는 이동 action을 event 없이 호출하므로 `event.stopPropagation()`에서 이동이 중단됨
+- 이동 action을 event-independent 함수로 변경해 실제 메뉴 이동 복구
+- contract QA에 event 의존 재도입 금지 추가
+
+저장 회귀에서 확인한 현재 정상 계약:
+
+- 저장 중 추가 편집이 생기면 사용자가 발행 버튼을 다시 누르지 않아도 automatic trailing save 수행
+- 연속 저장에서는 이전 public verification job을 최신 저장 검증이 supersede할 수 있음
+- 따라서 save request 수와 public readback request 수를 1:1로 가정하지 않는다
+
+#239 현재 QA:
+
+- `qa`: success
+- `browser-regression`: success
+- `editor-browser-regression`: success
+- `form-browser-regression`: success
+- `template-mobile-browser-regression`: success
+
+아직 P2 전체 완료로 닫지 않는 항목:
+
+- 기존 영상 재사용을 실제 browser E2E로 선택→발행→reload까지 검증
+- pointer drag 자체의 실제 reorder E2E (위/아래 이동은 검증 완료)
+
+상태:
+
+- core real-use flow 구현/QA: 완료
+- #239 main 병합: 아직 아님
+- #239 운영 배포: 아직 아님
+- P2 최종 close: 영상 재사용 + pointer drag E2E 후
 
 ### P3 — 미디어 UX 마감
 
@@ -771,10 +822,10 @@
 
 현재 내부 최적화는 아래 순서로 진행한다.
 
-1. ~~고정 영역 모바일 컨트롤 44px 보강~~ — #236 후보에서 완료, main 병합 대기
-2. ~~공용 control/legacy CSS 충돌 최소 정리~~ — #238 QA 완료, #236 반영 대기
-3. 편집 전체 real-use browser regression 추가/보강
-4. 발견된 실제 UX 오류를 작은 PR로 수정
+1. ~~고정 영역 모바일 컨트롤 44px 보강~~ — #236 production verified
+2. ~~공용 control/legacy CSS 충돌 최소 정리~~ — #238 production verified
+3. 편집 전체 real-use browser regression 추가/보강 — #239 core flow QA 완료, 영상/drag 남음
+4. 발견된 실제 UX 오류를 작은 PR로 수정 — #239 move action wiring 수정
 5. 미디어 UX 마감
 6. 저장/undo/revision/publish 연결 검증
 7. 개인 도메인 stack 검토
