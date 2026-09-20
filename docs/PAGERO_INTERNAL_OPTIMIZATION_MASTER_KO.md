@@ -7,7 +7,7 @@
 - 검증 기준 main SHA: `f51674687248549d7465bd0c65baf66df75e1853`
 - 마지막 기능 production 검증 SHA: `c899c3b7e4af76c25040b8cab0bfe0302fff2710`
 - 운영 도메인: `https://pagero.kr/`
-- 현재 최우선: **production save deployment gate → 신규 사용자 launch smoke → 편집기 제품성 개선**
+- 현재 최우선: **P4 저장/Undo/Revision 상태전이 검증 → 신규 사용자 launch smoke → 편집기 제품성 개선**
 
 이 문서는 과거 패치 일지를 보관하지 않는다. 현재 코드 상태, 실제 남은 문제, 실행 순서만 유지한다.
 
