@@ -81,7 +81,7 @@ function PlanCard({ plan, current, included, busy, onClick }) {
         disabled={!paid || active || busy}
         onClick={onClick}
       >
-        {busy ? '이동 중' : active ? '이용 중' : paid ? `${plan.name} 선택` : '기본'}
+        {busy ? '이동 중' : active ? '이용 중' : paid ? '가입 문의' : '기본'}
       </button>
     </article>
   );
@@ -106,6 +106,7 @@ export default function BillingSettingsSection({ authUser }) {
         </div>
       </div>
 
+      <p className="settings-message">웹 자동결제는 준비 중입니다. 유료 요금제 버튼은 즉시 결제가 아니라 가입 문의 페이지로 이동합니다.</p>
       {error && <p className="settings-message error" role="alert">{error}</p>}
       {loading && !finance ? <div className="settings-loading">요금제 확인 중</div> : null}
 
@@ -136,8 +137,8 @@ export default function BillingSettingsSection({ authUser }) {
           <span>{sslIncludedByPlan ? '프로 포함' : sslEnabled ? '이용 중' : '1,000원/월'}</span>
         </div>
         <div className="billing-addon-value">
-          <strong>직접 설정 없이 HTTPS를 관리합니다.</strong>
-          <span>프로 요금제에는 SSL 관리가 기본 포함됩니다.</span>
+          <strong>개인 도메인 자동 연결과 SSL 자동 적용은 준비 중입니다.</strong>
+          <span>현재는 도입 문의만 접수하며, 프로 요금제 포함 정책은 유지됩니다.</span>
         </div>
         <button
           type="button"
@@ -145,7 +146,7 @@ export default function BillingSettingsSection({ authUser }) {
           disabled={sslEnabled || sslIncludedByPlan || sslBusy}
           onClick={() => checkout('domain', DOMAIN_PRODUCT)}
         >
-          {sslBusy ? '이동 중' : sslEnabled || sslIncludedByPlan ? '적용 중' : '신청'}
+          {sslBusy ? '이동 중' : sslEnabled || sslIncludedByPlan ? '포함됨' : '도입 문의'}
         </button>
       </article>
     </SettingsSection>
