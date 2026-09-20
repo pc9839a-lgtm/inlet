@@ -24,7 +24,7 @@ const PRICING = Object.freeze({
       code: 'pagero_pro_monthly',
       name: '프로',
       amountKrw: 5500,
-      description: '고급 연동 + HTTPS/SSL 관리 포함',
+      description: '고급 연동 + HTTPS/SSL 지원 정책',
     },
   ],
   domain: [
