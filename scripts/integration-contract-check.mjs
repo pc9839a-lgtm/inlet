@@ -950,32 +950,20 @@ requireAll(opsQa, [
 
 const pageroInternalMaster = await read('docs/PAGERO_INTERNAL_OPTIMIZATION_MASTER_KO.md');
 requireAll(pageroInternalMaster, [
-  'PageRo 내부 기능 최적화 마스터',
-  '상태 해석 규칙',
-  '현재 상태 대시보드',
-  '작업 시작 체크리스트',
-  '다음 AI가 하면 안 되는 오해',
+  'PageRo 내부 기능 / 출시 마스터',
+  '유지보수 정리 → 출시 블로커 종료 → 편집기 제품성 개선',
   'WorkspaceEditorScreen → WorkspaceLeftPanel → WorkspaceActivePanel → EditPanel → EditPanelLayout',
-  '.screen-icon-action',
-  '.fixed-open-button',
-  '.switch-clean',
-  '대체 랜딩 금지',
-  '고정 영역 모바일 컨트롤 44px 보강',
-  '편집 전체 real-use audit',
-  'PR #233',
-  'PR #234',
-  'PR #235',
-  '중복 이메일/연락처 검증은 서버 기준',
-  '연락처/이메일은 중복 판단의 주 키',
-  'IP는 짧은 시간대의 abuse/rate-limit 신호',
-  '개인회생 상담, 모바일 청첩장, 부동산 분양 3종',
-  '페이지 복제 시 새 URL 설정 흐름',
-  '템플릿 자체 복제 기능은 현재 요구사항이 아니다',
-  'skipped-live',
+  'B1 — production save deployment gate',
+  'B2 — Revision restore ↔ Undo/Redo',
+  'B3 — 실제 신규 사용자 launch smoke',
+  '#233 → #234 → #235',
+  'web.available=false',
+  'stage=pre_checkout',
+  'PAGERO_EDITOR_PRODUCT_DIRECTION_KO.md',
   'npm run qa:all',
   'npm run deployment:qa',
-  '승인 없는 production deploy',
-], 'Pagero internal optimization master');
+  'production deploy',
+], 'Pagero current execution master');
 
 console.log(JSON.stringify({
   ok: true,
