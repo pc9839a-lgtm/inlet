@@ -533,6 +533,26 @@ P3 완료 판정 원칙:
 
 ### P4 — 저장/Undo/Revision 연결 검증
 
+#### P4 1차 코드 감사 결과 — 2026-09-20
+
+실제 연결을 끝까지 추적한 결과, `PageRevisionHistorySection`의 `setPage` prop 이름만 보면 raw React setter처럼 보이지만 운영 wiring은 다음과 같다.
+
+`createWorkspacePanelProps.settingsPanelProps.setPage = setNormalizedPage`
+→ `SettingsPanel`
+→ `SettingsPanelBody`
+→ `SettingsAdvancedAndReset`
+→ `PageRevisionHistorySection`
+
+`setNormalizedPage`는 내부에서 `commitLocalPageDraft`를 호출하고, 이 경로가 `recordPageEditMutation`과 local mutation counter를 함께 갱신한다. 따라서 현재 main 코드 기준 revision restore는 실제로 canonical local draft/history 경로를 통과한다.
+
+1차 감사 결론:
+- production 코드의 revision restore wiring 자체는 수정 필요 없음
+- 잘못된 직접 server restore 호출 없음
+- page identity/revision/credentials 보존 규칙 유지
+- 실제 누락은 **revision restore ↔ undo/redo ↔ publish ↔ readback 교차 상태전이 회귀**
+- 이를 정적 QA + authenticated browser E2E로 고정하는 후보 패치를 `test/pagero-p4-save-history-transition-20260920`에서 진행
+- PR QA/main 병합/production verified 전에는 P4 완료로 표시하지 않음
+
 #### P4 실행 절차
 
 P4는 아래 순서로만 진행한다.
