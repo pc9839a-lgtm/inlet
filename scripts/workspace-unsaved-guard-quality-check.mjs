@@ -73,6 +73,7 @@ try {
 
   assert(localPersistence.includes('setWorkspaceUnsavedDirty(true)') && localPersistence.includes('shouldBlockWorkspaceBeforeUnload()'), 'local persistence must own dirty detection and native unload blocking');
   assert(localPersistence.includes("window.addEventListener('beforeunload', handleBeforeUnload)"), 'browser close/reload must use the unified unsaved guard');
+  assert(localPersistence.includes("'.edit-layout, .style-panel, .settings-panel, .settings-v3-root'"), 'current settings v3 interactions must participate in dirty/recovery tracking');
   assert(localPersistence.includes('if (identityChanged) setWorkspaceUnsavedDirty(false)') && !localPersistence.includes('if (baseChanged) setWorkspaceUnsavedDirty(false)'), 'revision rebases from a queued save must not clear pending unsaved state');
 
   const pendingStart = persistFlow.indexOf('export function commitPendingLocalChangesAfterSave');
@@ -94,7 +95,7 @@ try {
 
   console.log(JSON.stringify({
     ok: true,
-    checks: 21,
+    checks: 22,
     unifiedUnsavedGuard: true,
     recoveryBeforeLeave: true,
     browserUnloadGuard: true,
