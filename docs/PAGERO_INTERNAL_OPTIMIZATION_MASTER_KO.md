@@ -4,10 +4,10 @@
 - 갱신일: 2026-09-20 KST
 - 저장소: `pc9839a-lgtm/inlet`
 - 운영 브랜치: `main`
-- 현재 main HEAD: `053f4fe9cd3cef02e46e898570922d7ba347fb9a`
+- 현재 main HEAD: `266cb7e8079431546dfe050f32a217b092942e6c`
 - 마지막 기능 production 검증 SHA: `c899c3b7e4af76c25040b8cab0bfe0302fff2710`
 - 운영 도메인: `https://pagero.kr/`
-- 현재 최우선: **유지보수 정리 → 출시 블로커 종료 → 편집기 제품성 개선**
+- 현재 최우선: **P4 저장/Undo/Revision 상태전이 검증 → 신규 사용자 launch smoke → 편집기 제품성 개선**
 
 이 문서는 과거 패치 일지를 보관하지 않는다. 현재 코드 상태, 실제 남은 문제, 실행 순서만 유지한다.
 
@@ -31,9 +31,9 @@
 
 ## 2. 현재 release blocker
 
-### B0 — 유지보수 정리
+### B0 — 유지보수 정리 — 완료 (#246)
 
-현재 최우선이다.
+2026-09-20 `main`에 병합 완료했다. production home/API/D1/schema/save runtime은 변경하지 않았고, dead editor path·stale docs·중복 CSS owner·backup residue를 정리했다.
 
 원칙:
 
@@ -80,33 +80,39 @@
 
 **#244는 유지한다.**
 
-### B2 — Revision restore ↔ Undo/Redo
+### B2 — Revision restore ↔ Undo/Redo — P4 후보 검증 중
 
-일반 편집은:
+1차 실제 wiring 감사 결과, `PageRevisionHistorySection`의 `setPage`는 raw setter가 아니다.
 
-`commitLocalPageDraft → recordPageEditMutation → pageEditHistory`
+`createWorkspacePanelProps.settingsPanelProps.setPage = setNormalizedPage`
+→ SettingsPanel
+→ SettingsAdvancedAndReset
+→ PageRevisionHistorySection
 
-경로를 사용한다.
+`setNormalizedPage`는 `commitLocalPageDraft → recordPageEditMutation` 경로를 사용한다. 따라서 revision restore 자체의 canonical history 연결은 이미 존재하며, production save API/schema를 바꿀 필요는 없다.
 
-현재 버전 기록의 불러오기는 `setPage(pageFromRevisionDraft(...))`를 직접 호출하므로 history 경계를 우회한다.
+P4에서 실제로 찾은 빈틈/패치:
 
-확인/수정할 동작:
+- settings v3의 pointer interaction이 local dirty/recovery intent selector에 포함되지 않음
+- revision restore 직후 recovery draft flush가 user intent를 소모하면서 global unsaved guard가 false로 남을 수 있음
+- `.settings-v3-root`를 사용자 편집 감지 범위에 추가
+- user-driven signature change를 recovery draft로 flush할 때 `setWorkspaceUnsavedDirty(true)` 유지
+- revision restore → Undo → Redo → 추가 수정 → 재발행 → reload → public readback 브라우저 E2E 추가
+- 실제 Chrome pointer로 revision restore와 native unsaved navigation guard 검증
+- API shape / D1 schema / public renderer / save runtime 의미 변경 없음
 
-1. 수정
-2. 과거 revision 불러오기
-3. Undo
-4. Redo
-5. 추가 수정
-6. 발행
-7. 공개 readback
+현재 후보 브랜치:
+`test/pagero-p4-save-history-transition-v2-20260920`
 
-완료 기준:
+완료 조건:
 
-- revision restore 직후 Undo 의미가 예측 가능
-- 과거 unrelated history로 튀지 않음
-- restore만으로 공개 페이지가 변경되지 않음
-- 발행 후에만 public readback 변경
-- local draft 자동 손실 없음
+1. `qa:all`
+2. build
+3. editor browser regression
+4. form/browser/template-mobile regression
+5. production-home diff 0
+6. PR merge 후 production deploy 여부 별도 기록
+7. production verified 전에는 P4 완료로 표시하지 않음
 
 ### B3 — 실제 신규 사용자 launch smoke
 
