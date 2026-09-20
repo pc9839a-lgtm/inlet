@@ -350,6 +350,8 @@ jobs:
         env:
           INLET_PRODUCTION_SAVE_BASE_URL: https://pagero.kr
           PAGERO_PRODUCTION_SAVE_ALLOWED_ORIGINS: https://pagero.kr
+          INLET_PRODUCTION_QA_MINT_ATTEMPTS: '12'
+          INLET_PRODUCTION_QA_MINT_DELAY_MS: '2500'
         run: |
           set -o pipefail
           node scripts/production-save-roundtrip-check.mjs | tee production-save-roundtrip-result.json
