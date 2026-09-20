@@ -22,6 +22,11 @@ assert(probe.includes('configuredOrigins.includes(baseUrl)') && probe.includes("
 assert(probe.includes('user.platformMaster') && probe.includes('refuses platform-master fixture'), 'production probe must refuse platform-master credentials');
 assert(probe.includes('embeddedQaImage') && probe.includes('pageAssets.replaced') && probe.includes("savedImage.startsWith('/api/files/download?key=')"), 'production probe must verify live R2 image externalization through the normal save route');
 assert(probe.includes('hardCleanupQaProject') && probe.includes("body: { action: 'cleanup', projectId }"), 'production probe must hard-clean isolated QA D1/R2 residue after normal route cleanup');
+assert(probe.includes('INLET_PRODUCTION_SAVE_QA_MINT_RETRY_ATTEMPTS || 12'), 'production QA mint retry must default to a bounded 12 attempts');
+assert(probe.includes('INLET_PRODUCTION_SAVE_QA_MINT_RETRY_DELAY_MS || 2500'), 'production QA mint retry must default to a 2.5 second delay');
+assert(probe.includes('for (let attempt = 1; attempt <= qaMintRetryAttempts; attempt += 1)'), 'production QA mint retry must be bounded by the configured attempt count');
+assert(probe.includes("if (response.status !== 404) fail('production QA session mint failed', details)"), 'production QA mint must retry only concealed 404 responses and fail other statuses immediately');
+assert(probe.includes("if (attempt >= qaMintRetryAttempts) fail('production QA session mint failed after 404 retry window', details)"), 'production QA mint must fail after exhausting the bounded 404 retry window');
 
 assert(endpoint.includes("const QA_HOST = 'pagero.kr'"), 'QA session endpoint must be pinned to pagero.kr');
 assert(endpoint.includes('INLET_PRODUCTION_QA_SECRET') && endpoint.includes('X-Inlet-Production-QA-Secret'), 'QA session endpoint must require the rotating production QA secret');
@@ -40,6 +45,7 @@ assert(workflow.includes('wrangler pages secret put INLET_PRODUCTION_QA_SECRET -
 assert(workflow.includes('INLET_PRODUCTION_SAVE_QA_SECRET=$qa_secret') && workflow.includes('$GITHUB_ENV'), 'live probe must receive the current QA credential only inside the deployment job');
 assert(workflow.includes("id: production_save") && workflow.includes("if: steps.readiness.outcome == 'success'"), 'live save must run in the same deploy job after readiness');
 assert(workflow.includes('PAGERO_PRODUCTION_SAVE_ALLOWED_ORIGINS: https://pagero.kr'), 'production save verification must pin its approved origin to pagero.kr');
+assert(workflow.includes("INLET_PRODUCTION_SAVE_QA_MINT_RETRY_ATTEMPTS: '12'") && workflow.includes("INLET_PRODUCTION_SAVE_QA_MINT_RETRY_DELAY_MS: '2500'"), 'deployment workflow must make the bounded production QA mint retry window explicit');
 assert(workflow.includes('node scripts/production-save-roundtrip-check.mjs'), 'deployment must execute the live production save probe');
 assert(workflow.includes('production_save_roundtrip_failed'), 'live save failure must fail the production deployment');
 assert(workflow.includes("steps.production_save.outcome != 'success'"), 'final deployment gate must require a successful live save');
@@ -51,7 +57,7 @@ assert(qaAll.includes("production:save:roundtrip:contract:qa"), 'offline release
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 37,
+  checks: 43,
   protections: {
     disposablePrefixOnly: true,
     rotatingQaCredential: true,
@@ -68,5 +74,6 @@ console.log(JSON.stringify({
     r2ResiduePurged: true,
     noStaticFixtureSessionDependency: true,
     liveSaveDeploymentGate: true,
+    mint404BoundedRetry: true,
   },
 }, null, 2));

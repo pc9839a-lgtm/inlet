@@ -4,7 +4,7 @@
 - 갱신일: 2026-09-20 KST
 - 저장소: `pc9839a-lgtm/inlet`
 - 운영 브랜치: `main`
-- 현재 main HEAD: `266cb7e8079431546dfe050f32a217b092942e6c`
+- 검증 기준 main SHA: `f51674687248549d7465bd0c65baf66df75e1853`
 - 마지막 기능 production 검증 SHA: `c899c3b7e4af76c25040b8cab0bfe0302fff2710`
 - 운영 도메인: `https://pagero.kr/`
 - 현재 최우선: **P4 저장/Undo/Revision 상태전이 검증 → 신규 사용자 launch smoke → 편집기 제품성 개선**
@@ -19,7 +19,7 @@
 | 편집기 기본 구조 | main 반영 | 블록 목록 / 선택 설정 / 미리보기 |
 | 저장 / trailing save | 구현·회귀 존재 | delayed save 중 최신 입력 보호 |
 | Undo / Redo | 구현 | 일반 mutation history |
-| Revision | 구현 | restore와 history 경계 추가 검증 필요 |
+| Revision | main 반영 / QA 통과 | #248에서 restore ↔ undo/redo ↔ republish 회귀 고정 |
 | 이미지/영상 재사용 | production 검증 이력 있음 | P3 기능 SHA `c899c3b7...` |
 | 문의 폼 / 공개 페이지 | QA 존재 | form/public browser regression |
 | 모바일 공개 페이지 | QA 존재 | 360 / 390 / 430 |
@@ -57,9 +57,9 @@
 
 ### B1 — production save deployment gate
 
-최신 main `053f4fe9...`의 QA 5종은 통과했다.
+현재 main 기준 production save probe를 다시 감사했다.
 
-다만 Cloudflare production deploy run에서:
+이전 production deploy run에서:
 
 - Pages upload: 성공
 - deployment metadata: 성공
@@ -68,19 +68,22 @@
 - production save QA session mint: 404
 - 최종 결과: `production_save_roundtrip_failed`
 
-제품 저장 실패가 확인된 것이 아니라 배포 직후 custom-domain/rotated QA secret 경합으로 판단된다.
+제품 저장 실패가 확인된 것이 아니라 배포 직후 custom-domain/rotated QA secret 경합 가능성이 남아 있다.
 
-보강 PR:
+기존 `#244`는 #246 정리 뒤 main과 동일한 빈 브랜치가 되어 closed 상태가 되었고, `#249`는 #248 병합 뒤 base 충돌로 대체했다.
 
-- `#244 fix(pagero): harden production save QA during domain propagation`
-- 404만 bounded retry
-- PR QA 성공
-- main 미병합
+현재 보강 PR:
+
+- `#250 fix(pagero): restore production save mint retry on current main`
+- QA session mint 404만 최대 12회 / 2.5초 간격 bounded retry
+- 404 외 상태는 즉시 실패
+- retry window 소진 시 실패
+- deploy workflow와 offline contract QA에서 retry 범위를 고정
 - production 재검증 미완료
 
-**#244는 유지한다.**
+`#250` QA 통과 후 main 병합 상태를 확인하고 production gate를 재검증한다.
 
-### B2 — Revision restore ↔ Undo/Redo — P4 후보 검증 중
+### B2 — Revision restore ↔ Undo/Redo — main 병합 완료 (#248)
 
 1차 실제 wiring 감사 결과, `PageRevisionHistorySection`의 `setPage`는 raw setter가 아니다.
 
@@ -101,18 +104,13 @@ P4에서 실제로 찾은 빈틈/패치:
 - 실제 Chrome pointer로 revision restore와 native unsaved navigation guard 검증
 - API shape / D1 schema / public renderer / save runtime 의미 변경 없음
 
-현재 후보 브랜치:
-`test/pagero-p4-save-history-transition-v2-20260920`
+결과:
 
-완료 조건:
-
-1. `qa:all`
-2. build
-3. editor browser regression
-4. form/browser/template-mobile regression
-5. production-home diff 0
-6. PR merge 후 production deploy 여부 별도 기록
-7. production verified 전에는 P4 완료로 표시하지 않음
+- `#248` main 병합 완료
+- `qa:all` 통과
+- editor / form / template-mobile browser regression 통과
+- production-home/API/D1/schema 의미 변경 없음
+- production verified 표시는 별도 운영 검증 결과와 분리
 
 ### B3 — 실제 신규 사용자 launch smoke
 
@@ -153,8 +151,8 @@ beta에서는 자동결제처럼 오해할 문구를 사용하지 않는다.
 다음이 모두 끝나면 P5~P9 전체 완료를 기다리지 않고 beta를 열 수 있다.
 
 1. 유지보수 cleanup QA 통과
-2. #244 production deployment gate 재검증
-3. Revision restore ↔ Undo/Redo 연결 검증
+2. #250 production deployment gate 재검증
+3. Revision restore ↔ Undo/Redo 연결 검증 — 완료 (#248)
 4. 신규 사용자 production smoke 통과
 5. 개인도메인/자동결제의 미완료 상태를 UI에서 명확히 처리
 6. 공개 페이지 / 문의 제출 / 접수함 핵심 흐름 정상
