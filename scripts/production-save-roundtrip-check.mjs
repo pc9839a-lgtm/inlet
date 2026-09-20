@@ -7,6 +7,8 @@ const configuredOrigins = String(process.env.PAGERO_PRODUCTION_SAVE_ALLOWED_ORIG
 const initialSession = String(process.env.INLET_PRODUCTION_SAVE_SESSION || '').trim();
 const productionQaSecret = String(process.env.INLET_PRODUCTION_SAVE_QA_SECRET || '').trim();
 const timeoutMs = Math.max(3000, Math.min(30000, Number(process.env.INLET_PRODUCTION_SAVE_TIMEOUT_MS || 12000)));
+const qaMintRetryAttempts = Math.max(1, Math.min(20, Number(process.env.INLET_PRODUCTION_SAVE_QA_MINT_RETRY_ATTEMPTS || 12)));
+const qaMintRetryDelayMs = Math.max(0, Math.min(10000, Number(process.env.INLET_PRODUCTION_SAVE_QA_MINT_RETRY_DELAY_MS || 2500)));
 
 function fail(message, details = {}) {
   const error = new Error(message);
@@ -76,16 +78,29 @@ function qaPages(pages = []) {
   return (Array.isArray(pages) ? pages : []).filter((page) => String(page?.slug || '').startsWith(QA_SLUG_PREFIX));
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function mintProductionQaSession() {
-  const { response, data } = await requestJson('/api/qa/production-save-session', {
-    method: 'POST',
-    headers: { 'X-Inlet-Production-QA-Secret': productionQaSecret },
-  });
-  if (!response.ok) fail('production QA session mint failed', { status: response.status, code: data.code || '' });
-  const session = String(data.session || '').trim();
-  if (!session) fail('production QA session mint returned no session');
-  if (data.fixture?.platformMaster) fail('production QA session must never be platform master');
-  return session;
+  for (let attempt = 1; attempt <= qaMintRetryAttempts; attempt += 1) {
+    const { response, data } = await requestJson('/api/qa/production-save-session', {
+      method: 'POST',
+      headers: { 'X-Inlet-Production-QA-Secret': productionQaSecret },
+    });
+    if (response.ok) {
+      const session = String(data.session || '').trim();
+      if (!session) fail('production QA session mint returned no session');
+      if (data.fixture?.platformMaster) fail('production QA session must never be platform master');
+      return session;
+    }
+
+    const details = { status: response.status, code: data.code || '', attempt, attempts: qaMintRetryAttempts };
+    if (response.status !== 404) fail('production QA session mint failed', details);
+    if (attempt >= qaMintRetryAttempts) fail('production QA session mint failed after 404 retry window', details);
+    if (qaMintRetryDelayMs > 0) await sleep(qaMintRetryDelayMs);
+  }
+  fail('production QA session mint retry loop exited unexpectedly');
 }
 
 async function refreshSession(session) {
