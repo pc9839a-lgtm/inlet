@@ -552,7 +552,9 @@ P3 완료 판정 원칙:
 - 교차 상태전이 회귀가 비어 있어 **revision restore ↔ undo/redo ↔ publish ↔ readback** 브라우저 시나리오를 추가
 - 추가 감사에서 `useLocalWorkspacePersistence`의 사용자 편집 감지 selector가 legacy `.settings-panel`만 보고 현재 `.settings-v3-root`를 누락한 것을 확인
 - 이 누락 때문에 버전 불러오기/설정 변경이 dirty/recovery intent로 잡히지 않을 수 있어 `.settings-v3-root`를 감지 범위에 추가
-- browser E2E에서 revision restore 직후 native unsaved navigation guard까지 검증
+- 실제 Chrome 회귀에서 pointer 기반 revision restore 후 recovery draft flush가 먼저 실행되며 `lastUserEditIntent`가 초기화되고, 전역 unsaved guard가 false로 남는 두 번째 결함 확인
+- `flushDraft`가 `signatureChanged && hasRecentUserIntent`인 사용자 유발 변경을 저장할 때 `setWorkspaceUnsavedDirty(true)`를 함께 유지하도록 수정
+- browser E2E에서 실제 Chrome pointer로 revision restore 후 native unsaved navigation guard까지 검증
 - 후보 브랜치: `test/pagero-p4-save-history-transition-20260920`
 - PR QA/main 병합/production verified 전에는 P4 완료로 표시하지 않음
 
