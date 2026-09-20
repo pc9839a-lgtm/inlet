@@ -29,7 +29,7 @@ function dnsRecordName(hostname = '') {
 function domainState(savedDomain, savedHostname) {
   if (!savedHostname) return { key: 'empty', label: '미연결' };
   const status = String(savedDomain?.status || 'pending').toLowerCase();
-  if (['connected', 'active', 'verified', 'ready'].includes(status)) return { key: 'connected', label: '연결됨' };
+  if (['connected', 'active', 'verified', 'ready'].includes(status)) return { key: 'saved', label: '주소 저장됨' };
   if (['error', 'failed', 'invalid'].includes(status)) return { key: 'error', label: '확인 필요' };
   if (['verifying', 'checking', 'processing'].includes(status)) return { key: 'verifying', label: '확인 중' };
   return { key: 'pending', label: 'DNS 대기' };
@@ -80,7 +80,7 @@ export default function CustomDomainSettingsSection({ authUser, integrations, up
       requestedAt: new Date().toISOString(),
     });
     setHostname(normalizedHostname);
-    setNotice('도메인 연결 요청을 저장했습니다.');
+    setNotice('도메인 주소를 저장했습니다. 자동 연결은 준비 중입니다.');
   };
 
   const removeDomain = () => {
@@ -94,7 +94,7 @@ export default function CustomDomainSettingsSection({ authUser, integrations, up
       requestedAt: '',
     });
     setHostname('');
-    setNotice('도메인 연결을 해제했습니다.');
+    setNotice('저장한 도메인 주소를 삭제했습니다.');
   };
 
   const startSslCheckout = async () => {
@@ -133,7 +133,7 @@ export default function CustomDomainSettingsSection({ authUser, integrations, up
         <section className="domain-setting-row">
           <div className="domain-setting-label">
             <strong>도메인</strong>
-            <span className={`settings-status-badge ${status.key === 'connected' ? 'success' : ''}`}>{status.label}</span>
+            <span className="settings-status-badge">{status.label}</span>
           </div>
           <div className="domain-connect-control">
             <input
