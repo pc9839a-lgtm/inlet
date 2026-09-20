@@ -68,6 +68,13 @@ assert(!workspaceSource.includes('EditWorkbench'), 'dead EditWorkbench path must
 assert(!workspaceSource.includes('edit-workbench-v3.css'), 'dead workbench CSS must not return');
 assert(!workspaceSource.includes('edit-workbench-hotfix.css'), 'dead workbench hotfix CSS must not return');
 
+
+const editorWorkspaceCss = await readFile('src/styles/editor-workspace.css', 'utf8');
+for (const legacySelector of ['.screen-order-item', '.screen-order-head', '.screen-title-wrap', '.screen-drag-handle', '.screen-row-action-menu']) {
+  assert(!editorWorkspaceCss.includes(legacySelector), `legacy screen-order selector reintroduced in editor-workspace.css: ${legacySelector}`);
+}
+assert(await exists('src/editor/editPanelParts/ScreenOrder.css'), 'ScreenOrder.css must remain the current screen-order CSS owner');
+
 const docsIndex = await readFile('docs/README.md', 'utf8');
 assert(docsIndex.includes('PAGERO_EDITOR_PRODUCT_DIRECTION_KO.md'), 'docs index must point to current editor product direction');
 assert(docsIndex.includes('PAGERO_INTERNAL_OPTIMIZATION_MASTER_KO.md'), 'docs index must point to current execution master');
