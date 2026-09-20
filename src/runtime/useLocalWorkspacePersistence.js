@@ -73,7 +73,7 @@ export function useLocalWorkspacePersistence({
     const markUserEditIntent = (event) => {
       const target = event?.target;
       if (!(target instanceof Element)) return;
-      if (!target.closest('.edit-layout, .style-panel, .settings-panel')) return;
+      if (!target.closest('.edit-layout, .style-panel, .settings-panel, .settings-v3-root')) return;
       if (event.type === 'keydown') {
         const key = String(event.key || '');
         if (['Tab', 'Shift', 'Control', 'Alt', 'Meta', 'Escape'].includes(key)) return;
