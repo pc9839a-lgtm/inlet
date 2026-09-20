@@ -162,6 +162,12 @@ dead file 삭제 후 build가 통과하지 않으면 실제 사용처를 놓친 
 
 ## 10. 배포
 
+운영 CORS 기준:
+
+- `INLET_ALLOWED_ORIGINS`에 production origin `https://pagero.kr`를 포함한다.
+- session/API 보안 설정을 문서나 프론트 코드의 임의 fallback으로 대체하지 않는다.
+
+
 운영 배포는 사용자의 명시적 승인 후에만 수행한다.
 
 금지:
