@@ -57,9 +57,9 @@
 
 ### B1 — production save deployment gate
 
-최신 main `053f4fe9...`의 QA 5종은 통과했다.
+현재 main `266cb7e...` 기준 production save probe를 다시 감사했다.
 
-다만 Cloudflare production deploy run에서:
+이전 production deploy run에서:
 
 - Pages upload: 성공
 - deployment metadata: 성공
@@ -68,17 +68,20 @@
 - production save QA session mint: 404
 - 최종 결과: `production_save_roundtrip_failed`
 
-제품 저장 실패가 확인된 것이 아니라 배포 직후 custom-domain/rotated QA secret 경합으로 판단된다.
+제품 저장 실패가 확인된 것이 아니라 배포 직후 custom-domain/rotated QA secret 경합 가능성이 남아 있다.
 
-보강 PR:
+기존 `#244`는 #246 정리 뒤 main과 동일한 빈 브랜치가 되어 **closed / 0 commits / 0 changed files** 상태다. current patch로 사용하지 않는다.
 
-- `#244 fix(pagero): harden production save QA during domain propagation`
-- 404만 bounded retry
-- PR QA 성공
-- main 미병합
+현재 보강 PR:
+
+- `#249 fix(pagero): restore bounded production save QA mint retry`
+- QA session mint 404만 최대 12회 / 2.5초 간격 bounded retry
+- 404 외 상태는 즉시 실패
+- retry window 소진 시 실패
+- deploy workflow와 offline contract QA에서 retry 범위를 고정
 - production 재검증 미완료
 
-**#244는 유지한다.**
+`#249` QA 통과 후 별도 production deploy 승인을 받아 재검증한다.
 
 ### B2 — Revision restore ↔ Undo/Redo
 
@@ -147,7 +150,7 @@ beta에서는 자동결제처럼 오해할 문구를 사용하지 않는다.
 다음이 모두 끝나면 P5~P9 전체 완료를 기다리지 않고 beta를 열 수 있다.
 
 1. 유지보수 cleanup QA 통과
-2. #244 production deployment gate 재검증
+2. #249 production deployment gate 재검증
 3. Revision restore ↔ Undo/Redo 연결 검증
 4. 신규 사용자 production smoke 통과
 5. 개인도메인/자동결제의 미완료 상태를 UI에서 명확히 처리
