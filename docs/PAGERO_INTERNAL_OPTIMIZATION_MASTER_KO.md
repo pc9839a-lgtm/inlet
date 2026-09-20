@@ -4,10 +4,10 @@
 - 갱신일: 2026-09-20 KST
 - 저장소: `pc9839a-lgtm/inlet`
 - 운영 브랜치: `main`
-- 검증 기준 main SHA: `36bb08ba025815d69c92656ba1c009f4b9bd1559`
+- 검증 기준 main SHA: `a000ec652d7ac7bf0d068c726be9ffe86e09a2db`
 - 마지막 기능 production 검증 SHA: `f51674687248549d7465bd0c65baf66df75e1853`
 - 운영 도메인: `https://pagero.kr/`
-- 현재 최우선: **P4 저장/Undo/Revision 상태전이 검증 → 신규 사용자 launch smoke → 편집기 제품성 개선**
+- 현재 최우선: **신규 사용자 production launch smoke → 편집기 제품성 개선**
 
 이 문서는 과거 패치 일지를 보관하지 않는다. 현재 코드 상태, 실제 남은 문제, 실행 순서만 유지한다.
 
@@ -116,7 +116,7 @@ P4에서 실제로 찾은 빈틈/패치:
 - production-home/API/D1/schema 의미 변경 없음
 - `f5167468...` production deploy 및 production save roundtrip 성공
 
-### B3 — 실제 신규 사용자 launch smoke
+### B3 — 실제 신규 사용자 launch smoke — 실행 준비 완료 / production 1회 실행 대기
 
 mock browser QA와 QA 전용 production save probe만으로 beta launch를 끝내지 않는다.
 
@@ -124,43 +124,37 @@ mock browser QA와 QA 전용 production save probe만으로 beta launch를 끝�
 
 `회원가입 → 이메일 인증 → 로그인 → 첫 페이지 생성 → 템플릿 선택 → 수정 → 발행 → 공개 URL → 테스트 문의 → 접수함 확인`
 
+실행 기준은 `docs/ops-pagero-production-launch-smoke.md` 하나로 고정한다.
+
+현재 준비 완료:
+
+- 실제 SES 이메일 인증 경로 사용
+- 회원가입 후 재로그인 포함
+- shipped template `quote-request` 선택
+- 수정/발행 후 공개 URL readback
+- 공개 문의 1건 제출
+- 접수함 readback
+- 테스트 문의 삭제
+- 테스트 페이지 삭제/보관
+- 인증코드/비밀번호/session token/전체 전화번호는 증빙에 기록 금지
+- `scripts/pagero-launch-smoke-contract-check.mjs`를 `qa:all`에 포함
+
+production D1 write가 발생하므로 실제 실행은 별도 명시적 승인 후 수행한다.
+
 이 시나리오가 beta launch 최종 gate다.
 
-### B4 — 미완료 기능 오해 방지 — 패치 후보 진행 중
+### B4 — 미완료 기능 오해 방지 — 완료 (#251)
 
-#### 개인 도메인
+#251에서 beta UI를 실제 제공 범위에 맞췄다.
 
-현재 main UI는 hostname 저장과 DNS 안내가 보이지만 provider registration / DNS verify / SSL lifecycle은 #233~#235 draft stack이다.
-
-beta에서 완전 자동 기능처럼 보이게 하지 않는다.
-
-선택:
-
-- 준비중으로 명확히 표시
-- 또는 운영 자동화 완료 전 진입 제한
-
-#### 웹 결제
-
-현재 서버 readiness:
-
-- `web.available=false`
-- `stage=pre_checkout`
-
-`/subscribe`는 실제 PG 자동 checkout이 아니라 결제 문의 흐름이다.
-
-beta에서는 자동결제처럼 오해할 문구를 사용하지 않는다.
-
-현재 후보 브랜치:
-`fix/pagero-beta-incomplete-feature-labels-20260920`
-
-적용 범위:
-
-- 개인 도메인 `연결`을 `주소 저장`으로 명확화
-- 자동 도메인 연결 / SSL 자동 적용은 `준비 중` 표시
-- 유료 요금제 버튼을 `가입 문의`로 명확화
-- SSL 추가서비스를 `도입 문의`로 명확화
-- `/subscribe`를 자동결제가 아닌 가입 문의 페이지로 명확화
+- 개인 도메인 `연결` → `주소 저장`
+- 자동 도메인 연결 / SSL 자동 적용은 준비 중으로 표시
+- 유료 요금제 버튼은 `가입 문의`
+- SSL 추가서비스는 `도입 문의`
+- `/subscribe`는 자동결제가 아니라 가입 문의 페이지로 명확화
 - provider / 결제 / DNS / SSL 실제 동작은 변경하지 않음
+
+current main 반영 SHA: `a000ec65...`
 
 ## 3. Beta 출시 기준
 
@@ -170,7 +164,7 @@ beta에서는 자동결제처럼 오해할 문구를 사용하지 않는다.
 2. #250 production deployment gate 재검증 — 완료
 3. Revision restore ↔ Undo/Redo 연결 검증 — 완료 (#248)
 4. 신규 사용자 production smoke 통과
-5. 개인도메인/자동결제의 미완료 상태를 UI에서 명확히 처리
+5. 개인도메인/자동결제의 미완료 상태를 UI에서 명확히 처리 — 완료 (#251)
 6. 공개 페이지 / 문의 제출 / 접수함 핵심 흐름 정상
 
 과거 launch gate PR #166의 핵심 결론은 현재도 방향상 유효하다.

@@ -8,6 +8,7 @@ const root = process.cwd();
 // and production deployment is allowed only after the complete QA workflow succeeds.
 const steps = [
   ['pagero:maintenance:qa', ['scripts/pagero-maintenance-quality-check.mjs']],
+  ['pagero:launch-smoke:contract:qa', ['scripts/pagero-launch-smoke-contract-check.mjs']],
   ['templates:qa', ['scripts/template-quality-check.mjs']],
   ['ai:qa', ['scripts/ai-quality-check.mjs']],
   ['stats:qa', ['scripts/stats-quality-check.mjs']],
