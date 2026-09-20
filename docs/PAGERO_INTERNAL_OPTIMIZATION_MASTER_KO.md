@@ -546,11 +546,14 @@ P3 완료 판정 원칙:
 `setNormalizedPage`는 내부에서 `commitLocalPageDraft`를 호출하고, 이 경로가 `recordPageEditMutation`과 local mutation counter를 함께 갱신한다. 따라서 현재 main 코드 기준 revision restore는 실제로 canonical local draft/history 경로를 통과한다.
 
 1차 감사 결론:
-- production 코드의 revision restore wiring 자체는 수정 필요 없음
+- revision restore의 canonical mutation/history wiring 자체는 수정 필요 없음
 - 잘못된 직접 server restore 호출 없음
 - page identity/revision/credentials 보존 규칙 유지
-- 실제 누락은 **revision restore ↔ undo/redo ↔ publish ↔ readback 교차 상태전이 회귀**
-- 이를 정적 QA + authenticated browser E2E로 고정하는 후보 패치를 `test/pagero-p4-save-history-transition-20260920`에서 진행
+- 교차 상태전이 회귀가 비어 있어 **revision restore ↔ undo/redo ↔ publish ↔ readback** 브라우저 시나리오를 추가
+- 추가 감사에서 `useLocalWorkspacePersistence`의 사용자 편집 감지 selector가 legacy `.settings-panel`만 보고 현재 `.settings-v3-root`를 누락한 것을 확인
+- 이 누락 때문에 버전 불러오기/설정 변경이 dirty/recovery intent로 잡히지 않을 수 있어 `.settings-v3-root`를 감지 범위에 추가
+- browser E2E에서 revision restore 직후 native unsaved navigation guard까지 검증
+- 후보 브랜치: `test/pagero-p4-save-history-transition-20260920`
 - PR QA/main 병합/production verified 전에는 P4 완료로 표시하지 않음
 
 #### P4 실행 절차
