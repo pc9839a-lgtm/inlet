@@ -882,6 +882,11 @@ async function run() {
     await evaluate(client, `window.confirm = () => true; true`);
     await clickButtonByText(client, '.page-revision-history-section', '불러오기');
     await waitForBrowser(client, `(document.querySelector('.page-revision-history-section')?.innerText || '').includes('버전 2 불러옴')`, 'revision restored notice');
+    await waitForBrowser(client, `(() => {
+      const event = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented;
+    })()`, 'revision restore unsaved navigation guard');
     assert(apiState.saveCount === 2, 'revision restore must stay local before explicit publish');
 
     await clickButtonByText(client, '.top-tabs', '편집');
