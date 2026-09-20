@@ -4,7 +4,7 @@
 - 갱신일: 2026-09-20 KST
 - 저장소: `pc9839a-lgtm/inlet`
 - 운영 브랜치: `main`
-- 현재 main HEAD: `053f4fe9cd3cef02e46e898570922d7ba347fb9a`
+- 현재 main HEAD: `266cb7e8079431546dfe050f32a217b092942e6c`
 - 마지막 기능 production 검증 SHA: `c899c3b7e4af76c25040b8cab0bfe0302fff2710`
 - 운영 도메인: `https://pagero.kr/`
 - 현재 최우선: **유지보수 정리 → 출시 블로커 종료 → 편집기 제품성 개선**
@@ -45,14 +45,14 @@
 - 새 기능 전에 현재 실제 진입 경로를 먼저 확인
 - `final`, `fix`, `hotfix`, `v2/v3` 이름의 병렬 기준 문서를 만들지 않음
 
-현재 cleanup 작업:
+완료 상태:
 
-- 브랜치: `chore/pagero-maintenance-reset-20260920`
+- #246 main squash 병합 완료 — `266cb7e8079431546dfe050f32a217b092942e6c`
 - dead `EditWorkbench` 경로 제거
 - 미사용 workbench CSS 제거
 - repository backup marker 제거
 - 과거 editor/UI/hotfix/deploy 문서 제거
-- `docs/README.md`를 문서 인덱스로 추가
+- `docs/README.md` 문서 인덱스 추가
 - 편집기 방향은 `PAGERO_EDITOR_PRODUCT_DIRECTION_KO.md` 하나로 통합
 
 ### B1 — production save deployment gate
