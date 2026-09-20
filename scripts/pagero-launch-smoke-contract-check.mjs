@@ -13,6 +13,7 @@ const leads = await readFile('functions/api/leads.js', 'utf8');
 const leadDetail = await readFile('functions/api/leads/[id].js', 'utf8');
 const templates = await readFile('src/templates/landingTemplates.js', 'utf8');
 const inbox = await readFile('src/panels/InboxPanel.jsx', 'utf8');
+const inboxSync = await readFile('src/runtime/useInboxLeadSync.js', 'utf8');
 
 assert(runbook.includes('production 실행에 대한 명시적 승인'), 'launch smoke runbook must require explicit production approval');
 assert(runbook.includes('실제 production D1 write'), 'launch smoke runbook must call out production writes');
@@ -33,11 +34,12 @@ assert(leads.includes("request.method === 'GET'") && leads.includes('listD1Leads
 assert(leadDetail.includes("request.method === 'DELETE'") && leadDetail.includes('deleteD1Lead'), 'launch smoke must have a lead cleanup route');
 assert(pages.includes("request.method === 'DELETE'") && pages.includes("status = 'archived'"), 'launch smoke must have a page cleanup/archive route');
 assert(templates.includes("id: 'quote-request'") && templates.includes('createTemplatePage'), 'launch smoke template must exist in the shipped catalog');
-assert(inbox.includes('fetchServerLeads') || inbox.includes('useInboxLeadSync'), 'InboxPanel must remain wired to server lead readback');
+assert(inbox.includes('leads,') && inbox.includes('onReloadLeads') && inbox.includes('deleteLead'), 'InboxPanel must keep injected lead readback and cleanup controls');
+assert(inboxSync.includes("fetchServerLeads(page, authUser") && inboxSync.includes("tab !== 'inbox'"), 'inbox runtime must load server leads when the inbox tab is active');
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 19,
+  checks: 20,
   launchGate: {
     explicitProductionApproval: true,
     realEmailVerification: true,
