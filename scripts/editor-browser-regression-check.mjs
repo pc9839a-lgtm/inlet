@@ -526,6 +526,22 @@ async function clickButtonByText(client, scopeSelector, text) {
   assert(clicked, `Unable to click button "${text}" in ${scopeSelector}`);
 }
 
+async function clickPointer(client, selector) {
+  const point = await evaluate(client, `(() => {
+    const element = document.querySelector(${JSON.stringify(selector)});
+    if (!element) return null;
+    element.scrollIntoView({ block: 'center', inline: 'center' });
+    const rect = element.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  })()`);
+  assert(point, `Unable to resolve click geometry: ${selector}`);
+
+  await client.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: point.x, y: point.y });
+  await client.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', buttons: 1, clickCount: 1 });
+  await client.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', buttons: 0, clickCount: 1 });
+  await wait(150);
+}
+
 async function normalBlockOrder(client) {
   return evaluate(client, `[...document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item')].map((item) => item.id)`);
 }
@@ -880,7 +896,7 @@ async function run() {
     await waitForState(() => apiState.revisionListCount >= 1, 'revision list request');
 
     await evaluate(client, `window.confirm = () => true; true`);
-    await clickButtonByText(client, '.page-revision-history-section', '불러오기');
+    await clickPointer(client, '.page-revision-history-section .page-revision-history-row .ghost-btn');
     await waitForBrowser(client, `(document.querySelector('.page-revision-history-section')?.innerText || '').includes('버전 2 불러옴')`, 'revision restored notice');
     await waitForBrowser(client, `(() => {
       const event = new Event('beforeunload', { cancelable: true });
