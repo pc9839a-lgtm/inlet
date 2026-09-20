@@ -1,14 +1,14 @@
 # PageRo 내부 기능 최적화 마스터
 
 - 문서 상태: 현재 실행 기준 / 단일 소스
-- 갱신일: 2026-09-18 KST
+- 갱신일: 2026-09-20 KST
 - 저장소: `pc9839a-lgtm/inlet`
 - 운영 기준 브랜치: `main`
-- 운영 기능 검증 기준 HEAD: `c899c3b7e4af76c25040b8cab0bfe0302fff2710`
-- 현재 정리/최적화 후보 PR: 없음 — 다음 실행 단계 P4
-- 후보 브랜치: 없음
+- 현재 main HEAD: `053f4fe9cd3cef02e46e898570922d7ba347fb9a`
 - 최근 production 검증 코드 SHA: `c899c3b7e4af76c25040b8cab0bfe0302fff2710`
-- 문서 최신 기준: current main + P3 production closeout
+- 현재 실행 단계: `P4 — 저장/Undo/Revision 연결 검증`
+- 현재 문서 작업 브랜치: `docs/pagero-p4-execution-plan-20260920`
+- 문서 최신 기준: current main + P3 production closeout + P4 실행계획
 - 운영 도메인: `https://pagero.kr/`
 - 범위: PageRo 내부 편집기, 워크스페이스, 설정, 저장/발행, 미디어, 도메인, 운영 기능
 - 명시적 비범위: 운영 메인 랜딩 개편
@@ -47,6 +47,38 @@
 | 개인 도메인 운영화 | draft stack | #233 → #234 → #235 |
 | 웹 결제/구독 | 부분 구현 / 운영 lifecycle 미완료 | P7 |
 | production deploy | #236/#238/#239/#240/#242 production verified | Cloudflare Pages |
+
+### 0.2 2026-09-20 실행 체크포인트
+
+현재 상태를 다시 확인한 결과:
+
+- #236 문서통합/구 문서·불필요 랜딩 정리: main 병합 및 production verified
+- #238 legacy/shared editor CSS 정리: production verified
+- #239 + #240 real-use editor regression/P2: production verified
+- #242 media UX/P3: production verified
+- 현재 main HEAD: `053f4fe9cd3cef02e46e898570922d7ba347fb9a`
+- 최근 명시적으로 production 검증된 기능 기준 SHA: `c899c3b7e4af76c25040b8cab0bfe0302fff2710`
+- 따라서 **현재 main HEAD와 마지막 production-verified SHA를 같은 것으로 취급하지 않는다.**
+
+다음 실행 단계는 P4다. P4에서는 새 저장 기능을 만드는 것이 아니라, 이미 존재하는 아래 기능 사이의 **상태 전이 충돌**을 검증한다.
+
+1. editor mutation
+2. local draft
+3. undo/redo history
+4. revision restore
+5. save/publish request identity
+6. stale response protection
+7. conflict recovery
+8. public readback
+
+P4 완료 전에는 아래를 완료라고 쓰지 않는다.
+
+- "저장 완벽"
+- "revision 복원 완벽"
+- "undo/redo 완벽"
+- "발행 안정화 완료"
+
+각 기능이 개별 QA를 통과했다는 사실과, 서로 연결된 상태 전이가 안전하다는 사실은 별도다.
 
 ### 0.2 2026-09-18 정리 작업 기록
 
@@ -500,6 +532,86 @@ P3 완료 판정 원칙:
 - 마지막 closeout에서만 P3를 production verified로 변경
 
 ### P4 — 저장/Undo/Revision 연결 검증
+
+#### P4 실행 절차
+
+P4는 아래 순서로만 진행한다.
+
+**A. 코드 경로 확인**
+- `src/runtime/pageEditHistory.js`
+- `src/runtime/usePageSaveAction.js`
+- `src/runtime/pageDraftMutations.js`
+- `src/runtime/pageEditMutations.js`
+- `src/runtime/pageSaveFeedback.js`
+- `src/runtime/saveStatusActions.js`
+- `src/runtime/workspaceUnsavedGuard.js`
+- `src/panels/settings/PageRevisionHistorySection.jsx`
+- `src/lib/pageRevisionRestore.js`
+
+**B. 기존 QA 확인**
+- save identity
+- network recovery
+- draft recovery
+- revision restore
+- publish semantics
+- editor browser regression
+
+기존 QA가 있으면 중복 스크립트를 만들지 않고, **교차 상태전이가 빠진 부분만 추가**한다.
+
+**C. 반드시 브라우저에서 재현할 순서**
+1. 텍스트 A 입력
+2. undo
+3. redo
+4. 발행
+5. 바로 텍스트 B 추가 입력
+6. 첫 발행 응답 대기
+7. B가 유지되는지 확인
+8. 과거 revision 불러오기
+9. 추가 수정 C
+10. undo/redo
+11. 발행
+12. 새로고침
+13. 공개 페이지 readback 비교
+
+**D. 실패 시 수집할 값**
+- client mutation sequence
+- save request id
+- save mode
+- request 시작 시 revision
+- 응답 revision
+- 응답 도착 순서
+- 현재 editor state hash 또는 핵심 필드
+- local draft 존재 여부
+- history canUndo/canRedo
+- restored revision id
+- conflict payload
+- public readback 결과
+
+**E. 패치 원칙**
+- 실패한 상태전이만 수정
+- 저장 API shape 변경 금지, 실제로 필요한 경우 별도 PR
+- D1 schema 변경 금지
+- public renderer 변경 금지
+- undo history 전체 재설계 금지
+- revision restore를 자동 publish로 바꾸지 않음
+- stale response 방어를 약화하지 않음
+
+#### P4 완료 게이트
+
+P4를 완료로 바꾸려면 다음이 모두 필요하다.
+
+- SAVE-01~SAVE-10 전부 PASS
+- 정적 contract PASS
+- `qa:all` PASS
+- authenticated editor browser regression PASS
+- form/browser/template-mobile 회귀 PASS
+- 보호 홈 diff 0
+- 새로고침 후 서버 readback PASS
+- 공개 페이지 readback PASS
+- production 배포 여부 별도 기록
+- production verified 여부 별도 기록
+
+
 
 서로 개별 구현된 기능이 한 흐름에서 충돌하지 않는지 검증한다.
 
