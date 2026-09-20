@@ -1,14 +1,15 @@
 # PageRo 내부 기능 최적화 마스터
 
 - 문서 상태: 현재 실행 기준 / 단일 소스
-- 갱신일: 2026-09-18 KST
+- 갱신일: 2026-09-20 KST
 - 저장소: `pc9839a-lgtm/inlet`
 - 운영 기준 브랜치: `main`
+- 현재 main HEAD: `053f4fe9cd3cef02e46e898570922d7ba347fb9a`
 - 운영 기능 검증 기준 HEAD: `c899c3b7e4af76c25040b8cab0bfe0302fff2710`
 - 현재 정리/최적화 후보 PR: 없음 — 다음 실행 단계 P4
 - 후보 브랜치: 없음
 - 최근 production 검증 코드 SHA: `c899c3b7e4af76c25040b8cab0bfe0302fff2710`
-- 문서 최신 기준: current main + P3 production closeout
+- 문서 최신 기준: 2026-09-20 current main + P3 production closeout
 - 운영 도메인: `https://pagero.kr/`
 - 범위: PageRo 내부 편집기, 워크스페이스, 설정, 저장/발행, 미디어, 도메인, 운영 기능
 - 명시적 비범위: 운영 메인 랜딩 개편
@@ -29,7 +30,7 @@
 | migration 적용 | 운영 D1에 승인된 migration write가 수행됨 |
 | 운영 검증 | 실제 운영 URL/인증 화면/공개 페이지에서 확인 완료 |
 
-**#236, #238, #239, #240과 P2 closeout에 이어 #242 P3 미디어 UX도 main 병합·운영 배포·readiness·production D1 save roundtrip까지 완료됐다. 다음 실행 단계는 P4 저장/Undo/Revision 연결 검증이다.**
+**P0~P3는 main 병합·운영 배포·readiness·production D1 save roundtrip까지 완료됐다. 현재 기능 기준 SHA는 `c899c3b7e4af76c25040b8cab0bfe0302fff2710`, 최신 문서 closeout을 포함한 main HEAD는 `053f4fe9cd3cef02e46e898570922d7ba347fb9a`다. 다음 실행 단계는 P4 저장/Undo/Revision 연결 검증이다.**
 
 ### 0.1 현재 상태 대시보드
 
@@ -37,7 +38,7 @@
 | --- | --- | --- |
 | 운영 메인 | 동결 / 유지 | `main` + `functions/index.js` |
 | 편집기 구조 1~6차 | main 반영 완료 | #213~#218 계열 |
-| 저장/복구/undo/revision | main 반영 완료 | current main |
+| 저장/복구/undo/revision | 개별 기능 main 반영 완료 / P4 연결 검증 대기 | current main |
 | 이미지/영상 재사용·미디어 보관함 | production verified / P3 완료 | #242 / P3 |
 | 문서 통합/구 문서 제거 | production verified | #236 |
 | 불필요 랜딩 소스 제거 | production verified | #236 + 폐기 #212 branch cleanup |
@@ -74,6 +75,25 @@
 - PR-triggered production deploy workflows: skipped
 
 보호된 운영 메인 파일은 변경하지 않았다.
+
+
+### 0.3 2026-09-20 문서 기준점
+
+현재 문서 기준은 다음과 같다.
+
+- current main HEAD: `053f4fe9cd3cef02e46e898570922d7ba347fb9a`
+- 마지막 기능 변경 기준 SHA: `c899c3b7e4af76c25040b8cab0bfe0302fff2710` — P3 미디어 UX
+- 최신 main 변경: `053f4fe9...` — P3 production verified closeout 문서
+- P0: production verified
+- P1: production verified
+- P2: production verified
+- P3: production verified
+- 현재 실행 단계: **P4 저장 / Undo / Revision / Publish 연결 검증**
+- P5 개인 도메인: #233 → #234 → #235 draft stack 유지, main 미병합
+- P7 웹 결제: 부분 구현 상태, 실제 provider lifecycle 미완료
+- 운영 메인 랜딩: 동결 유지
+
+중요: 문서 커밋 때문에 기능 SHA가 바뀐 것처럼 해석하지 않는다. 기능 검증 기준 SHA와 최신 문서 HEAD를 별도로 기록한다.
 
 ## 1. 최상위 원칙
 
@@ -190,7 +210,7 @@
 
 ## 3. 현재 확인된 미완료/개선 영역
 
-### P0 — 편집기 모바일 컨트롤 일관성 — 후보 완료
+### P0 — 편집기 모바일 컨트롤 일관성 — production verified
 
 일반 화면순서 V2는 모바일 44px 터치 영역으로 이미 보강되어 있고, #236 후보에는 고정 영역까지 보강됐다.
 
@@ -212,7 +232,7 @@
 - 운영 배포: 완료
 - production readiness / D1 save roundtrip: 통과
 
-### P1 — 구/신 편집기 CSS 충돌 감사 — 후보 완료 (#238)
+### P1 — 구/신 편집기 CSS 충돌 감사 — production verified (#238)
 
 현재 실제 편집기 진입 경로는 다음이다.
 
@@ -412,7 +432,7 @@ P2 상태:
 - production D1 save roundtrip: success
 - P2 production verified: 완료
 
-### P3 — 미디어 UX 마감
+### P3 — 미디어 UX 마감 — production verified (#242/#243)
 
 현재 미디어 기능은 존재하므로 새 보관함을 다시 만들지 않는다. 아래 UX 일관성만 마감한다.
 
@@ -534,6 +554,50 @@ P3 완료 판정 원칙:
 - revision 숫자만 올라갔다고 최신 입력 보존을 가정
 - conflict에서 local draft를 자동 폐기
 - revision restore를 즉시 public publish로 취급
+
+
+#### P4 실행 패치 설계
+
+P4는 저장 기능을 새로 만드는 단계가 아니다. 이미 존재하는 저장/Undo/Revision 기능을 **한 흐름에서 실제로 충돌 없이 동작하는지 검증하고, 재현되는 연결 오류만 수정**한다.
+
+우선 확인 파일:
+
+- `src/runtime/usePageSaveAction.js`
+- `src/runtime/pageEditHistory.js`
+- `src/runtime/pageDraftMutations.js`
+- `src/runtime/pageEditMutations.js`
+- `src/runtime/pageSaveFeedback.js`
+- `src/runtime/saveStatusActions.js`
+- `src/runtime/workspaceUnsavedGuard.js`
+- `src/lib/pageRevisionRestore.js`
+- `src/panels/settings/PageRevisionHistorySection.jsx`
+- 기존 save/revision/editor browser QA scripts
+
+실행 순서:
+
+1. 현재 save request id / revision / trailing save 흐름을 코드로 재확인한다.
+2. undo/redo가 page mutation history에 어떤 단위로 기록되는지 확인한다.
+3. revision restore가 history stack을 어떻게 갱신하는지 확인한다.
+4. SAVE-01~10을 가능한 한 실제 Chrome browser E2E로 만든다.
+5. 저장 응답 지연/역전은 mock transport로 의도적으로 재현한다.
+6. conflict는 local draft가 남아 있는 상태에서 사용자의 복구 선택지를 검증한다.
+7. public readback은 save 응답 자체가 아니라 실제 공개 route 결과로 판정한다.
+8. 실패가 나오면 테스트를 완화하지 않고 해당 연결부만 최소 수정한다.
+9. 수정 후 기존 editor/form/template/landing browser QA 전체를 다시 통과시킨다.
+10. main 병합 후 production deploy/readiness/D1 save roundtrip까지 별도 상태로 기록한다.
+
+P4 완료 기준:
+
+- SAVE-01~SAVE-10 자동 계약 존재
+- 최소 한 개 이상의 실제 browser save-state E2E 존재
+- delayed response / response inversion 회귀가 자동 재현 가능
+- revision restore 후 undo/redo 경계가 문서와 실제 코드에서 일치
+- conflict에서 local draft 자동 손실 0건
+- publish 이후 public readback 일치
+- 전체 5개 QA 통과
+- main 병합 후 production readiness 통과
+- production D1 save roundtrip 통과
+- 그 마지막 closeout 이후에만 P4를 production verified로 변경
 
 ### P5 — 개인 도메인 운영화
 
@@ -931,13 +995,13 @@ P3 완료 판정 원칙:
 2. ~~공용 control/legacy CSS 충돌 최소 정리~~ — #238 production verified
 3. ~~편집 전체 real-use browser regression 추가/보강~~ — #239 + #240 production verified / P2 완료
 4. ~~발견된 실제 UX 오류를 작은 PR로 수정~~ — #239 move action wiring 수정 및 production 반영
-5. 미디어 UX 마감
-6. 저장/undo/revision/publish 연결 검증
-7. 개인 도메인 stack 검토
-8. 설정 전체 PC/모바일 UX
-9. 웹 결제/구독
-10. 대량 데이터/운영
-11. 접근성/모바일 최종 pass
+5. ~~미디어 UX 마감~~ — #242 + #243 production verified / P3 완료
+6. **저장/undo/revision/publish 연결 검증 — 현재 실행 단계 P4**
+7. 개인 도메인 stack 검토 — P5
+8. 설정 전체 PC/모바일 UX — P6
+9. 웹 결제/구독 — P7
+10. 대량 데이터/운영 — P8
+11. 접근성/모바일 최종 pass — P9
 12. 배포/백업/롤백 closeout
 
 ## 4.1 내부 기능 파일 지도
