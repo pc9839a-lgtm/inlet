@@ -4,8 +4,8 @@
 - 갱신일: 2026-09-20 KST
 - 저장소: `pc9839a-lgtm/inlet`
 - 운영 브랜치: `main`
-- 검증 기준 main SHA: `f51674687248549d7465bd0c65baf66df75e1853`
-- 마지막 기능 production 검증 SHA: `c899c3b7e4af76c25040b8cab0bfe0302fff2710`
+- 검증 기준 main SHA: `36bb08ba025815d69c92656ba1c009f4b9bd1559`
+- 마지막 기능 production 검증 SHA: `f51674687248549d7465bd0c65baf66df75e1853`
 - 운영 도메인: `https://pagero.kr/`
 - 현재 최우선: **P4 저장/Undo/Revision 상태전이 검증 → 신규 사용자 launch smoke → 편집기 제품성 개선**
 
@@ -55,7 +55,7 @@
 - `docs/README.md`를 문서 인덱스로 추가
 - 편집기 방향은 `PAGERO_EDITOR_PRODUCT_DIRECTION_KO.md` 하나로 통합
 
-### B1 — production save deployment gate
+### B1 — production save deployment gate — 완료 (#250)
 
 현재 main 기준 production save probe를 다시 감사했다.
 
@@ -79,9 +79,13 @@
 - 404 외 상태는 즉시 실패
 - retry window 소진 시 실패
 - deploy workflow와 offline contract QA에서 retry 범위를 고정
-- production 재검증 미완료
+- `#250` main 병합 완료 (`36bb08ba...`)
+- main QA 5종 통과
+- Cloudflare production deploy 성공
+- deployed readiness 성공
+- production D1 save roundtrip 성공
 
-`#250` QA 통과 후 main 병합 상태를 확인하고 production gate를 재검증한다.
+B1은 운영 재검증까지 완료했다.
 
 ### B2 — Revision restore ↔ Undo/Redo — main 병합 완료 (#248)
 
@@ -110,7 +114,7 @@ P4에서 실제로 찾은 빈틈/패치:
 - `qa:all` 통과
 - editor / form / template-mobile browser regression 통과
 - production-home/API/D1/schema 의미 변경 없음
-- production verified 표시는 별도 운영 검증 결과와 분리
+- `f5167468...` production deploy 및 production save roundtrip 성공
 
 ### B3 — 실제 신규 사용자 launch smoke
 
@@ -122,7 +126,7 @@ mock browser QA와 QA 전용 production save probe만으로 beta launch를 끝�
 
 이 시나리오가 beta launch 최종 gate다.
 
-### B4 — 미완료 기능 오해 방지
+### B4 — 미완료 기능 오해 방지 — 패치 후보 진행 중
 
 #### 개인 도메인
 
@@ -146,12 +150,24 @@ beta에서 완전 자동 기능처럼 보이게 하지 않는다.
 
 beta에서는 자동결제처럼 오해할 문구를 사용하지 않는다.
 
+현재 후보 브랜치:
+`fix/pagero-beta-incomplete-feature-labels-20260920`
+
+적용 범위:
+
+- 개인 도메인 `연결`을 `주소 저장`으로 명확화
+- 자동 도메인 연결 / SSL 자동 적용은 `준비 중` 표시
+- 유료 요금제 버튼을 `가입 문의`로 명확화
+- SSL 추가서비스를 `도입 문의`로 명확화
+- `/subscribe`를 자동결제가 아닌 가입 문의 페이지로 명확화
+- provider / 결제 / DNS / SSL 실제 동작은 변경하지 않음
+
 ## 3. Beta 출시 기준
 
 다음이 모두 끝나면 P5~P9 전체 완료를 기다리지 않고 beta를 열 수 있다.
 
 1. 유지보수 cleanup QA 통과
-2. #250 production deployment gate 재검증
+2. #250 production deployment gate 재검증 — 완료
 3. Revision restore ↔ Undo/Redo 연결 검증 — 완료 (#248)
 4. 신규 사용자 production smoke 통과
 5. 개인도메인/자동결제의 미완료 상태를 UI에서 명확히 처리
