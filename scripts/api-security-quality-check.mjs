@@ -8,7 +8,7 @@ function assert(condition, message) {
 
 const server = await readFile('server/index.mjs', 'utf8');
 const envExample = await readFile('.env.example', 'utf8');
-const deployDoc = await readFile('docs/deploy-github-cloudflare.md', 'utf8');
+const maintenanceDoc = await readFile('docs/PAGERO_MAINTENANCE_HANDOFF_KO.md', 'utf8');
 const middleware = await readFile('functions/api/_middleware.js', 'utf8');
 const health = await readFile('functions/api/health.js', 'utf8');
 
@@ -25,8 +25,8 @@ for (const token of [
 }
 
 assert(envExample.includes('INLET_ALLOWED_ORIGINS'), '.env.example missing INLET_ALLOWED_ORIGINS');
-assert(deployDoc.includes('INLET_ALLOWED_ORIGINS'), 'deploy doc missing INLET_ALLOWED_ORIGINS');
-assert(deployDoc.includes('https://pagero.kr'), 'deploy doc should mention the current production origin');
+assert(maintenanceDoc.includes('INLET_ALLOWED_ORIGINS'), 'maintenance guide missing INLET_ALLOWED_ORIGINS');
+assert(maintenanceDoc.includes('https://pagero.kr'), 'maintenance guide should mention the current production origin');
 
 for (const token of [
   'configuredSessionSecret',
