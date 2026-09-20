@@ -115,10 +115,11 @@ export default function CustomDomainSettingsSection({ authUser, integrations, up
   return (
     <SettingsSection id="domain" className="settings-domain-section">
       <div className="domain-settings-screen">
+        <p className="settings-message">베타 운영: 개인 도메인 자동 연결과 SSL 자동 적용은 준비 중입니다. 현재는 도메인 주소 저장과 DNS 정보 확인, 도입 문의만 가능합니다.</p>
         <section className="domain-setting-row domain-dns-row-v2">
           <div className="domain-setting-label">
             <strong>DNS</strong>
-            <span>먼저 DNS에 아래 CNAME을 등록하세요.</span>
+            <span>연결 준비용 CNAME 정보입니다. 현재는 DNS를 변경하지 않아도 됩니다.</span>
           </div>
           <div className="domain-dns-values">
             <div><span>유형</span><code>CNAME</code></div>
@@ -145,7 +146,7 @@ export default function CustomDomainSettingsSection({ authUser, integrations, up
               spellCheck="false"
               aria-invalid={hostnameInvalid}
             />
-            <button type="button" className="settings-primary-button" onClick={saveDomain}>연결</button>
+            <button type="button" className="settings-primary-button" onClick={saveDomain}>주소 저장</button>
             {savedHostname && (
               <button type="button" className="settings-secondary-button" onClick={removeDomain}>
                 <Trash2 size={14} aria-hidden="true" /> 해제
@@ -158,14 +159,14 @@ export default function CustomDomainSettingsSection({ authUser, integrations, up
         <section className="domain-setting-row domain-ssl-row">
           <div className="domain-setting-label">
             <strong>HTTPS · SSL</strong>
-            <span>{sslIncludedByPlan ? '프로 요금제 포함' : sslEnabled ? '이용 중' : '월 1,000원'}</span>
+            <span>{sslIncludedByPlan ? '프로 요금제 포함 · 자동 적용 준비중' : sslEnabled ? '이용 권한 있음 · 자동 적용 준비중' : '도입 문의'}</span>
           </div>
           <div className="domain-ssl-action">
             {sslEnabled || sslIncludedByPlan ? (
-              <span className="settings-status-badge success">적용</span>
+              <span className="settings-status-badge success">포함됨</span>
             ) : !sslLoading ? (
               <button type="button" className="settings-primary-button compact" disabled={checkoutBusy} onClick={startSslCheckout}>
-                {checkoutBusy ? '이동 중' : 'SSL 신청'}
+                {checkoutBusy ? '이동 중' : '도입 문의'}
               </button>
             ) : null}
           </div>
