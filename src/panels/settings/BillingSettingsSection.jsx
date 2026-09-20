@@ -27,7 +27,7 @@ const PLAN_CONTENT = {
     badge: '고급',
     pitch: '연동과 HTTPS까지 필요한 고급 운영 단계',
     why: '페이지를 본격적으로 운영하고 보안·연동까지 한 번에 관리할 때',
-    features: ['클래식 기능 전체', '고급 연동', 'HTTPS·SSL 포함', '고급 운영 기능'],
+    features: ['클래식 기능 전체', '고급 연동', 'HTTPS·SSL 지원 정책', '고급 운영 기능'],
   },
 };
 
