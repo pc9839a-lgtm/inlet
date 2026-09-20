@@ -1,5 +1,14 @@
 import { readFile } from 'node:fs/promises';
 import { PAGE_REVISION_RESTORABLE_KEYS, pageFromRevisionDraft } from '../src/lib/pageRevisionRestore.js';
+import {
+  clearPageEditHistory,
+  getPageEditHistoryState,
+  redoPageEdit,
+  syncPageEditHistoryScope,
+  undoPageEdit,
+} from '../src/runtime/pageEditHistory.js';
+import { commitLocalPageDraft } from '../src/runtime/pageDraftMutations.js';
+import { createPageEditMutations } from '../src/runtime/pageEditMutations.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -67,15 +76,56 @@ assert(restored.integrations.sheets.accessTokenRef === 'keep-current-token', 're
 assert(restored.ownership.managers[0].id === 'keep-manager', 'revision restore must not roll back ownership/access');
 assert(restored.ai.apiKey === 'keep-current-ai-key', 'revision restore must not roll back AI credentials');
 
+const latestPageRef = { current: JSON.parse(JSON.stringify(current)) };
+let currentPage = latestPageRef.current;
+let localMutationCount = 0;
+const rawSetPage = (updater) => {
+  currentPage = typeof updater === 'function' ? updater(currentPage) : updater;
+};
+const canonicalCommit = (nextPage) => commitLocalPageDraft({
+  nextPage,
+  normalizePageForSave: (value) => JSON.parse(JSON.stringify(value)),
+  latestPageRef,
+  markLocalPageMutation: () => { localMutationCount += 1; },
+});
+const mutations = createPageEditMutations({
+  tab: 'settings',
+  blockWrite: () => false,
+  setPage: rawSetPage,
+  commitLocalPageDraft: canonicalCommit,
+  normalizeIntegrations: (value) => value,
+  normalizeFreeEmailIntegrations: (value) => value,
+});
+
+syncPageEditHistoryScope(currentPage);
+clearPageEditHistory();
+await Promise.resolve();
+
+mutations.setNormalizedPage(pageFromRevisionDraft(currentPage, revision));
+await Promise.resolve();
+assert(currentPage.title === revision.page.title, 'revision restore must enter the canonical local page mutation path');
+assert(getPageEditHistoryState().canUndo, 'revision restore must create an undo checkpoint');
+
+assert(undoPageEdit(), 'revision restore must be undoable');
+await Promise.resolve();
+assert(currentPage.title === current.title, 'undo after revision restore must recover the pre-restore editor state');
+
+assert(redoPageEdit(), 'revision restore must be redoable');
+await Promise.resolve();
+assert(currentPage.title === revision.page.title, 'redo after revision restore must reapply the restored draft');
+assert(localMutationCount >= 3, 'restore/undo/redo must keep using the canonical local draft commit');
+
 const sectionSource = await readFile('src/panels/settings/PageRevisionHistorySection.jsx', 'utf8');
 const settingsBodySource = await readFile('src/panels/settings/SettingsPanelBody.jsx', 'utf8');
 const advancedSource = await readFile('src/panels/settings/SettingsAdvancedAndReset.jsx', 'utf8');
 const pageRepositorySource = await readFile('src/lib/pageRepository.js', 'utf8');
+const workspacePanelPropsSource = await readFile('src/runtime/createWorkspacePanelProps.js', 'utf8');
 
 assert(settingsBodySource.includes("['history', '버전 기록', History]"), 'settings advanced navigation must expose version history');
 assert(advancedSource.includes('PageRevisionHistorySection') && advancedSource.includes("activeSection === 'history'"), 'version history section must render from advanced settings');
 assert(sectionSource.includes('fetchPageRevisions(page, authUser)'), 'version history UI must use the authenticated revision list API');
 assert(sectionSource.includes('pageFromRevisionDraft(page, revision)'), 'version history restore must load a draft into the editor');
+assert(workspacePanelPropsSource.includes('setPage: setNormalizedPage'), 'settings revision restore must receive the canonical normalized page mutation setter');
 assert(sectionSource.includes('저장 버튼을 누르기 전까지 공개 페이지는 변경되지 않습니다.'), 'revision restore UI must explain that public content is unchanged before save');
 assert(!sectionSource.includes('restorePageRevision('), 'revision history UI must not call the immediate server restore endpoint');
 assert(pageRepositorySource.includes('export async function fetchPageRevisions'), 'page repository must retain the revision list API');
@@ -88,4 +138,6 @@ console.log(JSON.stringify({
   identityPreserved: true,
   credentialsPreserved: true,
   immediateServerRestoreUsed: false,
+  canonicalMutationPath: true,
+  restoreUndoRedo: true,
 }, null, 2));
