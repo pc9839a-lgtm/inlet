@@ -172,7 +172,9 @@ export function useLocalWorkspacePersistence({
       const signatureChanged = sameIdentity && baseline?.signature !== pageDraftContentSignature(normalized);
       const lastUserIntentAt = Number(lastUserEditIntentRef.current || 0);
       const hasRecentUserIntent = lastUserIntentAt > 0 && Date.now() - lastUserIntentAt <= USER_EDIT_INTENT_WINDOW_MS;
-      if (!serverDraftDirtyRef.current && !(signatureChanged && hasRecentUserIntent)) return true;
+      const userDrivenSignatureChange = signatureChanged && hasRecentUserIntent;
+      if (!serverDraftDirtyRef.current && !userDrivenSignatureChange) return true;
+      if (userDrivenSignatureChange) setWorkspaceUnsavedDirty(true);
       return persistRecoveryDraft(normalized);
     };
 
