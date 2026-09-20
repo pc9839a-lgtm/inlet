@@ -23,6 +23,7 @@ const addBlockGridSource = await readFile('src/editor/editPanelParts/AddBlockGro
 const addBlockOptionSource = await readFile('src/editor/editPanelParts/AddBlockOption.jsx', 'utf8');
 const addBlockDockCssSource = await readFile('src/styles/editor-widget-add-dock.css', 'utf8');
 const screenOrderMovementSource = await readFile('src/editor/editPanelParts/screenOrderMovement.js', 'utf8');
+const workspacePanelPropsSource = await readFile('src/runtime/createWorkspacePanelProps.js', 'utf8');
 
 assert(packageJson.scripts?.['browser:editor:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-browser-regression-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-image-library-browser-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-video-library-browser-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/media-library-settings-browser-check.mjs', 'browser:editor:qa must run editor, image/video reuse, and media settings E2E');
 assert(packageJson.scripts?.['browser:editor:image-library:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-image-library-browser-check.mjs', 'browser:editor:image-library:qa script is missing');
@@ -55,6 +56,10 @@ assert(screenOrderMovementSource.includes('const moveUp = () =>') && screenOrder
 assert(browserSource.includes("clickButtonByText(client, '.top-tabs', '스타일')") && browserSource.includes("updatedAccent") && browserSource.includes(".style-apply-btn"), 'browser QA must preview and apply a style change before publish');
 assert(browserSource.includes("window.__pageroQaPreviewCalls") && browserSource.includes("clickButtonByText(client, '.panel-actions', '미리보기')"), 'browser QA must verify preview can open without interrupting continued editing');
 assert(browserSource.includes("saveDelayMs = 900") && browserSource.includes("continuedHeroTitle") && browserSource.includes("newer local draft after delayed publish response"), 'browser QA must cover edits made while a publish response is in flight');
+assert(browserSource.includes("revisionHeroTitle") && browserSource.includes("finalHeroTitle") && browserSource.includes("'버전 기록'") && browserSource.includes("'불러오기'"), 'browser QA must restore a prior revision through the real settings UI');
+assert(browserSource.includes("'undo revision restore'") && browserSource.includes("'redo revision restore'") && browserSource.includes("'publish restored revision with additional edit'"), 'browser QA must verify revision restore undo/redo and republish transition');
+assert(browserSource.includes("apiState.saveCount === 2") && browserSource.includes("apiState.saveCount === 3") && browserSource.includes("public verification after revision publish"), 'revision restore must remain local until explicit publish and then verify public readback');
+assert(workspacePanelPropsSource.includes('setPage: setNormalizedPage'), 'settings panel must route revision restore through the canonical normalized page mutation setter');
 assert(browserSource.includes("setViewport(client, 1180, 900, false)") && browserSource.includes("assertNarrowDesktop"), 'browser QA must cover narrow desktop overflow separately from mobile operations mode');
 assert(browserSource.includes("publicVerifyCount") && browserSource.includes("saveCount === 0"), 'browser QA must verify that editing stays local until explicit publish and then verifies the public page');
 assert(browserSource.includes("{ name: 'mobile-360', width: 360") && browserSource.includes("{ name: 'mobile-390', width: 390") && browserSource.includes("{ name: 'mobile-430', width: 430"), 'browser QA must cover 360, 390, and 430 pixel mobile widths');
@@ -107,7 +112,7 @@ console.log(JSON.stringify({
   accountPageMock: true,
   activeEditorDom: 'EditPanel/ScreenOrderRow',
   chromeCdpCompatibility: true,
-  editHistory: ['undo', 'redo', '50-snapshots', 'page-isolation'],
+  editHistory: ['undo', 'redo', '50-snapshots', 'page-isolation', 'revision-restore-transition'],
   revisionDraftRestore: true,
   draftPublishSemantics: true,
   imageLibraryBrowserE2E: true,
