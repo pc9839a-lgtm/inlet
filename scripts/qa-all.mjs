@@ -7,6 +7,7 @@ const root = process.cwd();
 // This runner is the offline half of the release gate. Browser regressions run in parallel,
 // and production deployment is allowed only after the complete QA workflow succeeds.
 const steps = [
+  ['pagero:maintenance:qa', ['scripts/pagero-maintenance-quality-check.mjs']],
   ['templates:qa', ['scripts/template-quality-check.mjs']],
   ['ai:qa', ['scripts/ai-quality-check.mjs']],
   ['stats:qa', ['scripts/stats-quality-check.mjs']],
