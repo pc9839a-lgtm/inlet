@@ -10,6 +10,8 @@ const debugPort = Number(process.env.INLET_EDITOR_BROWSER_QA_CHROME_PORT || 9341
 const chromeInput = String(process.env.INLET_EDITOR_BROWSER_QA_CHROME_PATH || '').trim();
 const updatedHeroTitle = '브라우저 저장 검증 완료';
 const continuedHeroTitle = '발행 중 추가 편집 보존';
+const revisionHeroTitle = '저장 버전 복원 검증';
+const finalHeroTitle = '버전 복원 후 추가 편집';
 const updatedAccent = '#7c3aed';
 const mobileViewports = [
   { name: 'mobile-360', width: 360, height: 800 },
@@ -278,6 +280,7 @@ function createApiMock(client) {
     saveCount: 0,
     saveDelayMs: 0,
     saveSnapshots: [],
+    revisionListCount: 0,
     leadLoadCount: 0,
     loginBody: null,
     unexpectedApis: [],
@@ -405,7 +408,25 @@ function createApiMock(client) {
     }
 
     if (/^\/api\/pages\/[^/]+\/revisions/.test(pathname) && method === 'GET') {
-      await fulfill(requestId, 200, { revisions: [] });
+      state.revisionListCount += 1;
+      const revisionPage = createQaPage();
+      revisionPage.revision = 2;
+      revisionPage.updatedAt = '2026-07-30T00:00:00.000Z';
+      revisionPage.blocks = revisionPage.blocks.map((block) => (
+        block.id === 'editor-hero'
+          ? { ...block, s: { ...block.s, title: revisionHeroTitle } }
+          : block
+      ));
+      await fulfill(requestId, 200, {
+        revisions: [{
+          id: 'editor-revision-2',
+          revision: 2,
+          revisionAt: '2026-07-30T00:00:00.000Z',
+          title: '이전 저장본',
+          blocks: revisionPage.blocks.length,
+          page: revisionPage,
+        }],
+      });
       return;
     }
 
@@ -505,6 +526,22 @@ async function clickButtonByText(client, scopeSelector, text) {
   assert(clicked, `Unable to click button "${text}" in ${scopeSelector}`);
 }
 
+async function clickPointer(client, selector) {
+  const point = await evaluate(client, `(() => {
+    const element = document.querySelector(${JSON.stringify(selector)});
+    if (!element) return null;
+    element.scrollIntoView({ block: 'center', inline: 'center' });
+    const rect = element.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  })()`);
+  assert(point, `Unable to resolve click geometry: ${selector}`);
+
+  await client.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: point.x, y: point.y });
+  await client.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', buttons: 1, clickCount: 1 });
+  await client.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', buttons: 0, clickCount: 1 });
+  await wait(150);
+}
+
 async function normalBlockOrder(client) {
   return evaluate(client, `[...document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item')].map((item) => item.id)`);
 }
@@ -576,7 +613,7 @@ async function collectDesktopMetrics(client) {
       frame: rect(frame),
       header: rect(header),
       mobile: shell?.classList.contains('mobile-operations-shell') || false,
-      heroTitleVisible: !!frame && (frame.innerText || '').includes(${JSON.stringify(continuedHeroTitle)}),
+      heroTitleVisible: !!frame && (frame.innerText || '').includes(${JSON.stringify(finalHeroTitle)}),
       fallback: !!document.querySelector('.app-error-screen, .error-screen, .block-render-fallback'),
     };
   })()`);
@@ -848,9 +885,53 @@ async function run() {
     assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-text')?.visible === false, 'visibility change did not persist');
     await capture(client, 'desktop-editor-saved');
 
+    // P4: restore a prior server revision into the editor draft, verify undo/redo,
+    // edit again, publish, then verify the final server/public readback survives reload.
+    await clickButtonByText(client, '.top-tabs', '설정');
+    await waitForBrowser(client, `!!document.querySelector('.settings-v3-root')`, 'settings panel');
+    await clickButtonByText(client, '.settings-mode-switch', '고급 설정');
+    await waitForBrowser(client, `[...document.querySelectorAll('.settings-v3-sidebar button')].some((button) => button.textContent.trim() === '버전 기록')`, 'advanced settings navigation');
+    await clickButtonByText(client, '.settings-v3-sidebar', '버전 기록');
+    await waitForBrowser(client, `!!document.querySelector('.page-revision-history-section') && (document.querySelector('.page-revision-history-section')?.innerText || '').includes('버전 2')`, 'revision history list');
+    await waitForState(() => apiState.revisionListCount >= 1, 'revision list request');
+
+    await evaluate(client, `window.confirm = () => true; true`);
+    await clickPointer(client, '.page-revision-history-section .page-revision-history-row .ghost-btn');
+    await waitForBrowser(client, `(document.querySelector('.page-revision-history-section')?.innerText || '').includes('버전 2 불러옴')`, 'revision restored notice');
+    await waitForBrowser(client, `(() => {
+      const event = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented;
+    })()`, 'revision restore unsaved navigation guard');
+    assert(apiState.saveCount === 2, 'revision restore must stay local before explicit publish');
+
+    await clickButtonByText(client, '.top-tabs', '편집');
+    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-list')`, 'edit panel after revision restore');
+    await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
+    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'hero editor after revision restore');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(revisionHeroTitle)}`, 'restored revision hero title');
+
+    await clickSelector(client, '.panel-history-btn[aria-label="실행 취소"]');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(continuedHeroTitle)}`, 'undo revision restore');
+    await clickSelector(client, '.panel-history-btn[aria-label="다시 실행"]');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(revisionHeroTitle)}`, 'redo revision restore');
+
+    await setInputValue(client, heroEditorSelector, finalHeroTitle);
+    await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(finalHeroTitle)})`, 'post-restore edit preview');
+    await clickSelector(client, '.panel-history-btn[aria-label="실행 취소"]');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(revisionHeroTitle)}`, 'undo post-restore edit');
+    await clickSelector(client, '.panel-history-btn[aria-label="다시 실행"]');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(finalHeroTitle)}`, 'redo post-restore edit');
+
+    await clickSelector(client, '.panel-actions .primary-btn');
+    await waitForState(() => apiState.saveCount === 3, 'publish restored revision with additional edit');
+    await waitForState(() => apiState.publicVerifyCount >= 2, 'public verification after revision publish');
+    assert(apiState.saveSnapshots[2]?.blocks?.find((block) => block.id === 'editor-hero')?.s?.title === finalHeroTitle, 'revision publish snapshot did not include the final hero title');
+    assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === finalHeroTitle, 'server page did not keep the final post-restore edit');
+
     await client.send('Page.reload', { ignoreCache: true });
     await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('.phone-frame')`, 'reloaded desktop editor');
-    await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(continuedHeroTitle)})`, 'saved page after reload');
+    await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(finalHeroTitle)})`, 'saved page after reload');
     assert(apiState.sessionCount >= 1, 'saved login session was not refreshed after reload');
     const desktopMetrics = await collectDesktopMetrics(client);
     assertDesktop(desktopMetrics);
@@ -882,11 +963,13 @@ async function run() {
       projectListCount: apiState.projectListCount,
       pageLoadCount: apiState.pageLoadCount,
       saveCount: apiState.saveCount,
-      saveRaceProtected: apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === continuedHeroTitle,
+      saveRaceProtected: apiState.saveSnapshots[1]?.blocks?.find((block) => block.id === 'editor-hero')?.s?.title === continuedHeroTitle,
+      revisionListCount: apiState.revisionListCount,
+      revisionRestoreUndoRedo: apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === finalHeroTitle,
       publicVerifyCount: apiState.publicVerifyCount,
       mobileWidths: mobileViewports.map((item) => item.width),
       screenshots: 7,
-      realUseFlows: ['add-block', 'undo-redo', 'visibility', 'menu-reorder', 'pointer-drag-reorder', 'style-apply', 'preview-continue', 'publish-race', 'narrow-desktop'],
+      realUseFlows: ['add-block', 'undo-redo', 'visibility', 'menu-reorder', 'pointer-drag-reorder', 'style-apply', 'preview-continue', 'publish-race', 'revision-restore-undo-redo', 'post-restore-publish-readback', 'narrow-desktop'],
     }, null, 2));
   } finally {
     await client?.close().catch(() => {});
