@@ -951,15 +951,15 @@ requireAll(opsQa, [
 const pageroInternalMaster = await read('docs/PAGERO_INTERNAL_OPTIMIZATION_MASTER_KO.md');
 requireAll(pageroInternalMaster, [
   'PageRo 내부 기능 / 출시 마스터',
-  'P4 저장/Undo/Revision 상태전이 검증 → 신규 사용자 launch smoke → 편집기 제품성 개선',
+  '현재 최우선:',
+  '신규 사용자 production launch smoke',
   'B0 — 유지보수 정리 — 완료 (#246)',
   'WorkspaceEditorScreen → WorkspaceLeftPanel → WorkspaceActivePanel → EditPanel → EditPanelLayout',
   'B1 — production save deployment gate',
   'B2 — Revision restore ↔ Undo/Redo',
   'B3 — 실제 신규 사용자 launch smoke',
   '#233 → #234 → #235',
-  'web.available=false',
-  'stage=pre_checkout',
+  'B4 — 미완료 기능 오해 방지 — 완료 (#251)',
   'PAGERO_EDITOR_PRODUCT_DIRECTION_KO.md',
   'npm run qa:all',
   'npm run deployment:qa',
