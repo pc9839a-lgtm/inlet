@@ -304,6 +304,51 @@ async function main() {
       fail('public production D1 readback mismatch', { status: publicRead.response.status });
     }
     evidence.checks.push({ name: 'public-readback', status: 'ready', revision: revisionV2 });
+
+    const leadId = `qa-lead-${stamp}`.replace(/[^a-zA-Z0-9-_]/g, '').slice(0, 120);
+    const leadCreatedAt = new Date().toISOString();
+    const publicLead = await requestJson('/api/leads', {
+      method: 'POST',
+      body: {
+        project: { projectId, slug },
+        page: { id: pageId, projectId, slug, title: savedV2.title || 'Production Save QA v2' },
+        lead: {
+          id: leadId,
+          type: 'consult',
+          kind: 'consult',
+          status: 'new',
+          source: 'production-launch-smoke',
+          name: 'Production Launch QA',
+          phone: '01000000000',
+          values: { qa: 'production-launch-smoke' },
+          createdAt: leadCreatedAt,
+        },
+      },
+    });
+    if (!publicLead.response.ok || String(publicLead.data?.lead?.id || '') !== leadId) {
+      fail('public production lead submission failed', {
+        status: publicLead.response.status,
+        code: publicLead.data?.code || '',
+      });
+    }
+    evidence.checks.push({ name: 'public-lead-submit', status: 'ready' });
+
+    const createdMonth = leadCreatedAt.slice(0, 7);
+    const inboxRead = await requestJson(
+      `/api/leads?${new URLSearchParams({ projectId, slug, month: createdMonth, limit: '20' })}`,
+      {
+        session,
+        headers: { 'X-Inlet-Project-Id': projectId },
+      },
+    );
+    const inboxLeads = Array.isArray(inboxRead.data?.leads) ? inboxRead.data.leads : [];
+    if (!inboxRead.response.ok || !inboxLeads.some((lead) => String(lead?.id || '') === leadId)) {
+      fail('authenticated production inbox readback mismatch', {
+        status: inboxRead.response.status,
+        total: Number(inboxRead.data?.total || 0),
+      });
+    }
+    evidence.checks.push({ name: 'authenticated-inbox-readback', status: 'ready' });
   } finally {
     const pages = await readPages(session).catch(() => []);
     const currentQaPages = qaPages(pages);
@@ -328,7 +373,7 @@ async function main() {
     if (!evidence.baselineRestored) process.exitCode = 1;
   }
 
-  evidence.ok = evidence.checks.length === 4 && evidence.checks.every((check) => check.status === 'ready') && evidence.baselineRestored && !evidence.cleanupError;
+  evidence.ok = evidence.checks.length === 6 && evidence.checks.every((check) => check.status === 'ready') && evidence.baselineRestored && !evidence.cleanupError;
   process.stdout.write(`${JSON.stringify(evidence, null, 2)}\n`);
   if (!evidence.ok) process.exitCode = 1;
 }
