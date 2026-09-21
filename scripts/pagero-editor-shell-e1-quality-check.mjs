@@ -25,9 +25,9 @@ assert(layout.includes('<SelectedBlockSettings') && layout.includes('<PageGlobal
 assert(layout.includes('setInspectorMode(\'selection\')'), 'block selection must move inspector to the selected element');
 assert(layout.includes('addBlockDockProps?.setAddOpen?.(true)'), 'add mode must open the existing add-section source instead of creating a parallel source');
 
-assert(css.includes('grid-template-columns: 300px minmax(460px, 1fr) 380px'), 'desktop editor must use structure/canvas/inspector columns');
+assert(css.includes('grid-template-columns: 280px minmax(520px, 1fr) 360px !important'), 'desktop editor must use the repaired compact structure/canvas/inspector columns');
 assert(css.includes('grid-column: 1;') && css.includes('grid-column: 2;') && css.includes('grid-column: 3;'), 'all three editor columns must be owned by the edit shell CSS');
-assert(css.includes('> .left-workspace') && css.includes('display: contents !important'), 'legacy nested left workspace must flatten only in edit mode');
+assert(css.includes('html body #root .builder-shell.edit-mode-shell') && css.includes('> .left-workspace') && css.includes('display: contents !important'), 'edit mode must explicitly outrank legacy geometry and flatten the nested left workspace');
 assert(css.includes('.editor-add-mode .fixed-add-dock') && css.includes('position: static !important'), 'add-section UI must live inside the left pane, not a floating footer dock');
 assert(preview.includes('<span>페이지 캔버스</span>'), 'center surface must be presented as the page canvas');
 
