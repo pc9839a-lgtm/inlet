@@ -27,11 +27,15 @@ export function WorkspacePreviewPane({
     <main className="preview-workspace" ref={previewRef}>
       <div className="preview-sticky">
         <div className="preview-top">
-          <div className="preview-title">
-            <span>페이지 캔버스</span>
-            <strong>/{page.slug}</strong>
-          </div>
-          <a className="preview-link" href={previewUrl} target="_blank" rel="noreferrer">{previewUrl}</a>
+          <a
+            className="preview-link"
+            href={previewUrl}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="공개 페이지 새 창에서 열기"
+          >
+            /{page.slug}
+          </a>
         </div>
         <div className="phone-frame">
           <PreviewRenderer
