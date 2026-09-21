@@ -783,7 +783,7 @@ async function run() {
     assert(apiState.pageLoadCount >= 1, 'selected page was not loaded from the page API');
     await capture(client, 'desktop-editor-before');
 
-    const heroEditorSelector = '.screen-order-v2-settings-panel textarea[placeholder="핵심 제목을 입력하세요"]';
+    const heroEditorSelector = '.editor-inspector-pane .selected-block-settings-card textarea[placeholder="핵심 제목을 입력하세요"]';
     await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'separate hero editor textarea');
     const inlineEditorStillNested = await evaluate(client, `!!document.querySelector('#editor-block-editor-hero textarea[placeholder="핵심 제목을 입력하세요"]')`);
@@ -795,10 +795,11 @@ async function run() {
 
     // E2E-02 / E2E-03: add a real block, then undo and redo the add operation.
     const initialNormalBlockCount = await normalBlockCount(client);
-    await clickSelector(client, '.add-toggle');
+    await clickButtonByText(client, '.editor-left-modes', '추가');
     await waitForBrowser(client, `!!document.querySelector('#pagero-widget-search')`, 'block add panel');
     await setInputValue(client, '#pagero-widget-search', '구분선');
     await clickButtonByText(client, '.add-panel', '구분선');
+    await clickButtonByText(client, '.editor-left-modes', '구조');
     await waitForBrowser(client, `document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item').length === ${initialNormalBlockCount + 1}`, 'added divider row');
     const addedDividerId = (await normalBlockOrder(client)).find((id) => !['editor-block-editor-hero', 'editor-block-editor-text', 'editor-block-editor-form'].includes(id));
     assert(addedDividerId, 'added divider block id was not resolved');
