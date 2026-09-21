@@ -27,10 +27,6 @@ export function WorkspacePreviewPane({
     <main className="preview-workspace" ref={previewRef}>
       <div className="preview-sticky">
         <div className="preview-top">
-          <div className="preview-title">
-            <span>페이지 캔버스</span>
-            <strong>/{page.slug}</strong>
-          </div>
           <a className="preview-link" href={previewUrl} target="_blank" rel="noreferrer">{previewUrl}</a>
         </div>
         <div className="phone-frame">
