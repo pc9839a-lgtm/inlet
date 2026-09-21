@@ -9,6 +9,7 @@ export default function EditPanel({
   page,
   authUser = null,
   stylePanelProps = null,
+  previewPane = null,
   openId,
   setOpenId,
   addOpen,
@@ -63,6 +64,8 @@ export default function EditPanel({
         {...sectionProps}
         selectedBlockSettingsProps={selectedBlockSettingsProps}
         stylePanelProps={stylePanelProps}
+        previewPane={previewPane}
+        onClearSelection={() => setOpenId('')}
       />
     </EditorMediaLibraryProvider>
   );

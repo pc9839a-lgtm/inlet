@@ -7,7 +7,7 @@
 - 검증 기준 main SHA: `a000ec652d7ac7bf0d068c726be9ffe86e09a2db`
 - 마지막 기능 production 검증 SHA: `f51674687248549d7465bd0c65baf66df75e1853`
 - 운영 도메인: `https://pagero.kr/`
-- 현재 최우선: **E2 섹션 패턴 → E3 문의/전환 cockpit → E4 AI first-page**
+- 현재 최우선: **editor shell ownership 정리 → Inspector 전용화 → E3 문의/전환 cockpit**
 
 이 문서는 과거 패치 일지를 보관하지 않는다. 현재 코드 상태, 실제 남은 문제, 실행 순서만 유지한다.
 
@@ -263,9 +263,11 @@ PageRo는 Framer/Wix의 디자인 자유도를 복제하는 범용 builder가 �
 8. 실사용 데이터 이후 A/B test
 
 
-## 5-1. E1 편집기 shell 단순화 — 진행 중
+## 5-1. E1 편집기 shell 단순화 — production 반영 후 ownership 교정 중
 
-현재 패치 브랜치: `feat/pagero-editor-shell-e1-20260921`
+E1/E2 production 반영: `#255`, SHA `de781d70...`  
+1차 corrective hotfix: `#256`, SHA `7c665309...`  
+현재 구조 교정 브랜치: `refactor/pagero-editor-shell-owner-cleanup-20260921`
 
 1차 범위:
 
@@ -294,9 +296,21 @@ PageRo는 Framer/Wix의 디자인 자유도를 복제하는 범용 builder가 �
 - production home/API/D1/schema diff 없음
 
 
-## 5-2. E2 섹션 패턴 — 진행 중
+### E1 corrective ownership cleanup
 
-stacked branch: `feat/pagero-section-patterns-e2-20260921`
+production 화면 검토에서 E1 DOM 위에 legacy geometry owner가 계속 개입하는 문제가 확인됐다.
+
+현재 교정 원칙:
+
+- edit 탭은 `WorkspaceLeftPanel` 내부 구조를 CSS `display: contents`로 펼치지 않는다.
+- `Header → Global Nav → [Structure | Canvas | Inspector]`를 실제 DOM 형제로 렌더링한다.
+- edit geometry owner는 `workspace-shell.css`와 `editor-workspace.css`만 허용한다.
+- `editor-layout-final.css`, `editor-workspace-v2.css`, `editor-p0-workflow.css`, `editor-p0-root-fix.css`, `editor-narrow-width-fix.css`, `editor-active-workflow-patch.css`는 제거한다.
+- `editor-final-clean.css`는 control polish만 남기고 workspace geometry는 소유하지 않는다.
+- 페이지 설정 모드로 전환할 때 block selection을 해제해 preview auto-scroll이 중간 섹션에 고정되지 않게 한다.
+- global nav를 구조 pane 폭 안에 가두지 않는다.
+
+## 5-2. E2 섹션 패턴 — production 반영 완료 (#255)
 
 목표:
 
@@ -333,9 +347,9 @@ stacked branch: `feat/pagero-section-patterns-e2-20260921`
 
 ## 6. 현재 실제 편집기 경로
 
-`WorkspaceEditorScreen → WorkspaceLeftPanel → WorkspaceActivePanel → EditPanel → EditPanelLayout`
+`WorkspaceEditorScreen → WorkspaceEditShell → EditPanel → EditPanelLayout`
 
-이 경로가 current source다.
+편집 탭의 current source는 위 경로다. `WorkspaceLeftPanel → WorkspaceActivePanel`은 접수함/통계/설정 및 template intro 경로로만 유지한다.
 
 제거된 dead path를 다시 복구하지 않는다.
 
@@ -343,9 +357,9 @@ stacked branch: `feat/pagero-section-patterns-e2-20260921`
 
 | 영역 | 우선 파일 |
 | --- | --- |
-| editor shell | `src/screens/WorkspaceEditorScreen.jsx` |
-| left workspace | `src/screens/workspace/WorkspaceLeftPanel.jsx` |
-| active panel | `src/screens/workspace/WorkspaceActivePanel.jsx` |
+| editor shell router | `src/screens/WorkspaceEditorScreen.jsx` |
+| dedicated edit shell | `src/screens/workspace/WorkspaceEditShell.jsx` |
+| operations shell | `src/screens/workspace/WorkspaceLeftPanel.jsx`, `WorkspaceActivePanel.jsx` |
 | edit panel | `src/editor/EditPanel.jsx` |
 | edit layout | `src/editor/EditPanelLayout.jsx` |
 | block order | `src/editor/editPanelParts/ScreenOrder*.jsx/css` |
