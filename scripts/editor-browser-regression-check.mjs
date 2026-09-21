@@ -840,9 +840,9 @@ async function run() {
     const dragOrderAfter = await normalBlockOrder(client);
     assert(JSON.stringify(dragOrderAfter) !== JSON.stringify(dragOrderBefore), 'pointer drag did not change block order');
 
-    // E2E-11 / E2E-12: style draft previews first, then apply into the page draft.
-    await clickButtonByText(client, '.top-tabs', '스타일');
-    await waitForBrowser(client, `!!document.querySelector('.style-panel')`, 'style panel');
+    // E2E-11 / E2E-12: page/theme inspector previews the style draft, then applies it into the page draft.
+    await clickButtonByText(client, '.editor-inspector-modes', '페이지 · 테마');
+    await waitForBrowser(client, `!!document.querySelector('.editor-inspector-pane .style-panel')`, 'page theme inspector');
     await clickButtonByText(client, '.style-subnav', '색상');
     await waitForBrowser(client, `!!document.querySelector('.style-panel input[type="color"]')`, 'style accent input');
     await setInputValue(client, '.style-panel input[type="color"]', updatedAccent);
@@ -851,8 +851,7 @@ async function run() {
     await clickSelector(client, '.style-apply-btn');
     await waitForBrowser(client, `document.querySelector('.style-apply-btn')?.disabled === true`, 'style applied to page draft');
 
-    await clickButtonByText(client, '.top-tabs', '편집');
-    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-list')`, 'edit panel after style apply');
+    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-list')`, 'structure pane after style apply');
 
     // E2E-13: preview action must not close or freeze the editor; continue editing afterwards.
     await evaluate(client, `window.__pageroQaPreviewCalls = []; window.open = (...args) => { window.__pageroQaPreviewCalls.push(args); return { opener: null }; };`);
