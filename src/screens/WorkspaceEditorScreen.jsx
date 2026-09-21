@@ -45,10 +45,11 @@ export default function WorkspaceEditorScreen({
   selectedBlockId,
   onSelectPreviewBlock,
 }) {
-  const inboxWorkspace = !mobileOperationsOnly && tab === 'inbox';
-  const statsWorkspace = !mobileOperationsOnly && tab === 'stats';
-  const settingsWorkspace = !mobileOperationsOnly && tab === 'settings';
-  const editWorkspace = !mobileOperationsOnly && (tab === 'edit' || tab === 'style');
+  const effectiveTab = tab === 'style' ? 'edit' : tab;
+  const inboxWorkspace = !mobileOperationsOnly && effectiveTab === 'inbox';
+  const statsWorkspace = !mobileOperationsOnly && effectiveTab === 'stats';
+  const settingsWorkspace = !mobileOperationsOnly && effectiveTab === 'settings';
+  const editWorkspace = !mobileOperationsOnly && effectiveTab === 'edit';
   const operationsWorkspace = inboxWorkspace || statsWorkspace || settingsWorkspace;
 
   return (
@@ -61,7 +62,7 @@ export default function WorkspaceEditorScreen({
         clientAdminMode={clientAdminMode}
         startMode={startMode}
         page={page}
-        tab={tab}
+        tab={effectiveTab}
         saved={saved}
         saveStatus={saveStatus}
         onSave={onSave}

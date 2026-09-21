@@ -53,7 +53,7 @@ assert(browserSource.includes("clickButtonByText(client, '.add-panel', '구분�
 assert(browserSource.includes("#editor-block-editor-text .screen-order-v2-visibility-button") && browserSource.includes("#editor-block-editor-form .screen-order-v2-action") && browserSource.includes("'위로 이동'"), 'browser QA must verify visibility and order changes through the current screen-order V2 controls');
 assert(browserSource.includes("Input.dispatchMouseEvent") && browserSource.includes("pointer drag moved divider to first position") && browserSource.includes(".screen-order-v2-drag"), 'browser QA must verify reorder through real Chrome mouse input, not only menu actions');
 assert(screenOrderMovementSource.includes('const moveUp = () =>') && screenOrderMovementSource.includes('const moveDown = () =>') && !screenOrderMovementSource.includes('event.stopPropagation'), 'screen-order move actions must stay event-independent because the overflow menu invokes them without an event');
-assert(browserSource.includes("clickButtonByText(client, '.top-tabs', '스타일')") && browserSource.includes("updatedAccent") && browserSource.includes(".style-apply-btn"), 'browser QA must preview and apply a style change before publish');
+assert(browserSource.includes("clickButtonByText(client, '.editor-inspector-modes', '페이지 · 테마')") && browserSource.includes("updatedAccent") && browserSource.includes(".style-apply-btn"), 'browser QA must preview and apply a page theme change from the unified inspector before publish');
 assert(browserSource.includes("window.__pageroQaPreviewCalls") && browserSource.includes("clickButtonByText(client, '.panel-actions', '미리보기')"), 'browser QA must verify preview can open without interrupting continued editing');
 assert(browserSource.includes("saveDelayMs = 900") && browserSource.includes("continuedHeroTitle") && browserSource.includes("newer local draft after delayed publish response"), 'browser QA must cover edits made while a publish response is in flight');
 assert(browserSource.includes("revisionHeroTitle") && browserSource.includes("finalHeroTitle") && browserSource.includes("'버전 기록'") && browserSource.includes("clickPointer(client, '.page-revision-history-section .page-revision-history-row .ghost-btn')"), 'browser QA must restore a prior revision through real Chrome pointer input in the settings UI');
@@ -92,11 +92,11 @@ assert(mediaSettingsBrowserSource.includes("'전체 2+'") && mediaSettingsBrowse
 assert(mediaSettingsBrowserSource.includes("width: 980") && mediaSettingsBrowserSource.includes("narrow media settings overflow"), 'media settings browser QA must cover narrow desktop overflow');
 assert(!mediaSettingsBrowserSource.includes('pagero.kr/api/auth/login') && !mediaSettingsBrowserSource.includes('productionPassword'), 'media settings browser QA must not use production credentials or production auth endpoints');
 
-assert(addBlockPanelSource.includes("const RECENT_BLOCKS_KEY = 'pagero.editor.recent-blocks.v1'") && addBlockPanelSource.includes('const MAX_RECENT_BLOCKS = 5'), 'block add picker must keep a bounded browser-local recent list');
-assert(addBlockPanelSource.includes('window.localStorage.setItem(RECENT_BLOCKS_KEY') && addBlockPanelSource.includes("<b>최근 사용</b>"), 'block add picker must persist and expose recent blocks without changing page data');
-assert(addBlockPanelSource.includes('aria-label="위젯 카테고리"') && addBlockPanelSource.includes("setCategory('all')"), 'block add picker must expose category shortcuts and reset to all for global search');
+assert(addBlockPanelSource.includes("const RECENT_ADDITIONS_KEY = 'pagero.editor.recent-additions.v2'") && addBlockPanelSource.includes("const LEGACY_RECENT_BLOCKS_KEY = 'pagero.editor.recent-blocks.v1'") && addBlockPanelSource.includes('const MAX_RECENT_ITEMS = 7'), 'add picker must keep a bounded browser-local recent list while migrating the legacy block history');
+assert(addBlockPanelSource.includes('window.localStorage.setItem(RECENT_ADDITIONS_KEY') && addBlockPanelSource.includes("['recent', '최근 사용']"), 'add picker must persist and expose recent sections/blocks without changing page data');
+assert(addBlockPanelSource.includes('aria-label="블록 카테고리"') && addBlockPanelSource.includes("setCategory('all')"), 'basic block mode must expose category shortcuts and reset to all for global search');
 assert(addBlockGridSource.includes("category === 'all' || categoryKey === category") && addBlockGridSource.includes('조건에 맞는 위젯이 없습니다.'), 'block add grid must filter categories and show a clear empty state');
-assert(addBlockOptionSource.includes("meta.preset || '', type"), 'block add options must preserve the catalog type for recent-block history');
+assert(addBlockOptionSource.includes("meta.preset || '', type"), 'block add options must preserve the catalog type for recent addition history');
 assert(addBlockDockCssSource.includes('.widget-category-filter button') && addBlockDockCssSource.includes('min-height: 44px !important;'), 'block add picker mobile actions must keep 44px touch targets');
 
 assert(panelHeaderSource.includes('undoPageEdit') && panelHeaderSource.includes('redoPageEdit') && panelHeaderSource.includes('Ctrl/Cmd+Z'), 'editor header must expose undo/redo controls and keyboard shortcuts');
@@ -120,5 +120,5 @@ console.log(JSON.stringify({
   videoLibraryBrowserE2E: true,
   mediaSettingsBrowserE2E: true,
   pointerDragBrowserE2E: true,
-  blockAddPicker: ['search', 'category-filter', 'recent-5', 'empty-state', 'mobile-44px'],
+  blockAddPicker: ['recommended-sections', 'industry-sections', 'basic-blocks', 'recent-7', 'legacy-recent-migration', 'mobile-44px'],
 }, null, 2));

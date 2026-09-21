@@ -5,58 +5,127 @@ import { PageGlobalOptions } from './editPanelParts/PageGlobalOptions.jsx';
 import { ScreenOrderList } from './editPanelParts/ScreenOrderList.jsx';
 import { SelectedBlockSettings } from './editPanelParts/SelectedBlockSettings.jsx';
 
+const PageThemeStylePanel = React.lazy(() => import('../panels/StylePanel.jsx'));
+
 export function EditPanelLayout({
   pageGlobalOptionsProps,
   fixedBlocksProps,
   screenOrderListProps,
   addBlockDockProps,
   selectedBlockSettingsProps,
+  stylePanelProps,
 }) {
-  const [section, setSection] = React.useState('order');
+  const [leftMode, setLeftMode] = React.useState('structure');
+  const [inspectorMode, setInspectorMode] = React.useState(selectedBlockSettingsProps ? 'selection' : 'page');
+
+  React.useEffect(() => {
+    if (selectedBlockSettingsProps) setInspectorMode('selection');
+    else setInspectorMode('page');
+  }, [selectedBlockSettingsProps?.block?.id]);
+
+  const showAddMode = () => {
+    setLeftMode('add');
+    addBlockDockProps?.setAddOpen?.(true);
+  };
+
+  const showStructureMode = () => {
+    setLeftMode('structure');
+    addBlockDockProps?.setAddOpen?.(false);
+  };
 
   return (
-    <div className="edit-layout">
-      <nav className="edit-section-tabs" aria-label="편집 영역 선택">
-        <button
-          className={section === 'options' ? 'active' : ''}
-          type="button"
-          aria-pressed={section === 'options'}
-          onClick={() => setSection('options')}
-        >
-          페이지 옵션
-        </button>
-        <button
-          className={section === 'order' ? 'active' : ''}
-          type="button"
-          aria-pressed={section === 'order'}
-          onClick={() => setSection('order')}
-        >
-          화면 순서
-        </button>
-      </nav>
+    <div className="edit-layout editor-shell-v2">
+      <section className="editor-structure-pane" aria-label="페이지 구조와 섹션 추가">
+        <div className="editor-pane-heading">
+          <div>
+            <strong>페이지 구성</strong>
+            <span>섹션 순서와 추가만 여기서 관리합니다.</span>
+          </div>
+        </div>
 
-      <div className="edit-section-panel">
-        {section === 'options' ? (
-          <PageGlobalOptions {...pageGlobalOptionsProps} />
-        ) : (
-          <>
+        <nav className="editor-left-modes" aria-label="페이지 구성 모드">
+          <button
+            type="button"
+            className={leftMode === 'structure' ? 'active' : ''}
+            aria-pressed={leftMode === 'structure'}
+            onClick={showStructureMode}
+          >
+            구조
+          </button>
+          <button
+            type="button"
+            className={leftMode === 'add' ? 'active' : ''}
+            aria-pressed={leftMode === 'add'}
+            onClick={showAddMode}
+          >
+            추가
+          </button>
+        </nav>
+
+        {leftMode === 'structure' ? (
+          <div className="editor-structure-scroll">
             <ScreenOrderList {...screenOrderListProps} />
-            {selectedBlockSettingsProps && (
-              <div className="screen-order-v2-settings-panel">
-                <SelectedBlockSettings {...selectedBlockSettingsProps} />
-              </div>
-            )}
             <section className="screen-order-fixed-blocks" aria-label="고정 영역">
               <div className="section-title screen-order-fixed-blocks-title">
                 <h2>고정 영역</h2>
               </div>
               <GlobalFixedBlocks {...fixedBlocksProps} />
             </section>
-          </>
+          </div>
+        ) : (
+          <div className="editor-add-mode">
+            <div className="editor-add-intro">
+              <strong>섹션 추가</strong>
+              <span>필요한 섹션을 골라 현재 페이지에 바로 넣습니다.</span>
+            </div>
+            <AddBlockDock {...addBlockDockProps} embedded />
+          </div>
         )}
-      </div>
+      </section>
 
-      {section === 'order' && <AddBlockDock {...addBlockDockProps} />}
+      <aside className="editor-inspector-pane" aria-label="선택 요소 설정">
+        <div className="editor-pane-heading inspector-heading">
+          <div>
+            <strong>{selectedBlockSettingsProps ? '설정' : '페이지 설정'}</strong>
+            <span>{selectedBlockSettingsProps ? '선택한 섹션을 바로 수정합니다.' : '페이지 전체 디자인과 기본값을 관리합니다.'}</span>
+          </div>
+        </div>
+
+        <nav className="editor-inspector-modes" aria-label="설정 대상">
+          <button
+            type="button"
+            className={inspectorMode === 'selection' ? 'active' : ''}
+            aria-pressed={inspectorMode === 'selection'}
+            disabled={!selectedBlockSettingsProps}
+            onClick={() => selectedBlockSettingsProps && setInspectorMode('selection')}
+          >
+            선택 요소
+          </button>
+          <button
+            type="button"
+            className={inspectorMode === 'page' ? 'active' : ''}
+            aria-pressed={inspectorMode === 'page'}
+            onClick={() => setInspectorMode('page')}
+          >
+            페이지 · 테마
+          </button>
+        </nav>
+
+        <div className="editor-inspector-scroll">
+          {inspectorMode === 'selection' && selectedBlockSettingsProps ? (
+            <SelectedBlockSettings {...selectedBlockSettingsProps} />
+          ) : (
+            <div className="editor-page-inspector">
+              <PageGlobalOptions {...pageGlobalOptionsProps} />
+              {stylePanelProps && (
+                <React.Suspense fallback={<div className="editor-inspector-loading">테마 설정 불러오는 중</div>}>
+                  <PageThemeStylePanel {...stylePanelProps} />
+                </React.Suspense>
+              )}
+            </div>
+          )}
+        </div>
+      </aside>
     </div>
   );
 }

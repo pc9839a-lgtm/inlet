@@ -281,11 +281,11 @@ async function run() {
 
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(imageRowHeadSelector)})`, 'desktop editor image row');
     await clickSelector(client, imageRowHeadSelector);
-    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-settings-panel .image-input-library-action')`, 'image block library action');
+    await waitForBrowser(client, `!!document.querySelector('.editor-inspector-pane .selected-block-settings-card .image-input-library-action')`, 'image block library action');
     assert(apiState.saveCount === 0, 'opening the image editor must not publish the page');
     await capture(client, 'desktop-image-library-before');
 
-    await clickSelector(client, '.screen-order-v2-settings-panel .image-input-library-action');
+    await clickSelector(client, '.editor-inspector-pane .selected-block-settings-card .image-input-library-action');
     await waitForState(() => apiState.mediaListCount === 1, 'project image list request');
     await waitForBrowser(client, `!!document.querySelector('.image-library-picker[role="dialog"]') && !!document.querySelector('.image-library-picker-item[title="${libraryFileName}"]')`, 'image library dialog');
     const mediaRequest = apiState.mediaListRequests[0] || {};
@@ -296,7 +296,7 @@ async function run() {
 
     await clickSelector(client, `.image-library-picker-item[title="${libraryFileName}"]`);
     await waitForBrowser(client, `!document.querySelector('.image-library-picker[role="dialog"]')`, 'image library dialog close');
-    await waitForBrowser(client, `(() => { const image = document.querySelector('.screen-order-v2-settings-panel .image-preview-control.has-image img'); return !!image && image.src.includes(${JSON.stringify(encodeURIComponent(libraryKey))}); })()`, 'selected image preview');
+    await waitForBrowser(client, `(() => { const image = document.querySelector('.editor-inspector-pane .selected-block-settings-card .image-preview-control.has-image img'); return !!image && image.src.includes(${JSON.stringify(encodeURIComponent(libraryKey))}); })()`, 'selected image preview');
     await waitForBrowser(client, `(document.body?.innerText || '').includes('내 이미지에서 선택 완료')`, 'image selection success feedback');
     await capture(client, 'desktop-image-library-selected');
 
@@ -310,7 +310,7 @@ async function run() {
     await client.send('Page.reload', { ignoreCache: true });
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(imageRowHeadSelector)})`, 'reloaded editor image row');
     await clickSelector(client, imageRowHeadSelector);
-    await waitForBrowser(client, `(() => { const image = document.querySelector('.screen-order-v2-settings-panel .image-preview-control.has-image img'); return !!image && image.src.includes(${JSON.stringify(encodeURIComponent(libraryKey))}); })()`, 'selected image after reload');
+    await waitForBrowser(client, `(() => { const image = document.querySelector('.editor-inspector-pane .selected-block-settings-card .image-preview-control.has-image img'); return !!image && image.src.includes(${JSON.stringify(encodeURIComponent(libraryKey))}); })()`, 'selected image after reload');
     await capture(client, 'desktop-image-library-reloaded');
 
     assert(apiState.loginCount === 1, `login API must run exactly once: ${apiState.loginCount}`);

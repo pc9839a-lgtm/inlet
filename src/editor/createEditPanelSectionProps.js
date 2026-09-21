@@ -12,6 +12,7 @@ export function createEditPanelSectionProps({
   updateTheme,
   toggleVisible,
   addBlock,
+  addSectionPattern,
   removeBlock,
   duplicateBlock,
   reorderToIndex,
@@ -51,6 +52,7 @@ export function createEditPanelSectionProps({
       setAddOpen,
       openId,
       addBlock,
+      addSectionPattern,
     }),
   };
 }

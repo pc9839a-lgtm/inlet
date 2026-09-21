@@ -952,7 +952,7 @@ const pageroInternalMaster = await read('docs/PAGERO_INTERNAL_OPTIMIZATION_MASTE
 requireAll(pageroInternalMaster, [
   'PageRo 내부 기능 / 출시 마스터',
   '현재 최우선:',
-  '신규 사용자 production launch smoke',
+  'E1 편집기 shell 단순화',
   'B0 — 유지보수 정리 — 완료 (#246)',
   'WorkspaceEditorScreen → WorkspaceLeftPanel → WorkspaceActivePanel → EditPanel → EditPanelLayout',
   'B1 — production save deployment gate',

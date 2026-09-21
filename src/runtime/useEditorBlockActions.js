@@ -1,6 +1,7 @@
 import { SINGLETON_BLOCK_TYPES } from '../config/blockMeta.jsx';
 import { clone, ensureUniqueAnchors, newBlock, sanitizeBlock, uid } from '../lib/pageModel.js';
 import { createVideoCodeSettings } from '../lib/youtubeEmbed.js';
+import { createSectionPatternBlocks } from '../editor/editPanelParts/sectionPatternCatalog.js';
 
 const FIXED_BLOCK_TYPES = ['topnav', 'bottombar', 'footer'];
 
@@ -46,6 +47,21 @@ export function useEditorBlockActions({
       : newBlock(type);
     setPage((p) => commitLocalPageDraft({ ...p, blocks: ensureUniqueAnchors([...p.blocks, block]) }));
     setOpenId(block.id);
+    setAddOpen(false);
+  };
+
+  const addSectionPattern = (patternId) => {
+    if (blockWrite('edit')) return;
+    const blocks = createSectionPatternBlocks(patternId);
+    if (!blocks.length) return;
+    setPage((p) => {
+      const next = [...p.blocks];
+      const trailingFixedIndex = next.findIndex((item) => ['bottombar', 'footer'].includes(item.type));
+      if (trailingFixedIndex >= 0) next.splice(trailingFixedIndex, 0, ...blocks);
+      else next.push(...blocks);
+      return commitLocalPageDraft({ ...p, blocks: ensureUniqueAnchors(next) });
+    });
+    setOpenId(blocks[0].id);
     setAddOpen(false);
   };
 
@@ -101,6 +117,7 @@ export function useEditorBlockActions({
     updateBlock,
     toggleVisible,
     addBlock,
+    addSectionPattern,
     removeBlock,
     duplicateBlock,
     reorderToIndex,

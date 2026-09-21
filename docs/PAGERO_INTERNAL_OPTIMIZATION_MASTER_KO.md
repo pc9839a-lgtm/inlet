@@ -7,7 +7,7 @@
 - 검증 기준 main SHA: `a000ec652d7ac7bf0d068c726be9ffe86e09a2db`
 - 마지막 기능 production 검증 SHA: `f51674687248549d7465bd0c65baf66df75e1853`
 - 운영 도메인: `https://pagero.kr/`
-- 현재 최우선: **신규 사용자 production launch smoke → 편집기 제품성 개선**
+- 현재 최우선: **E2 섹션 패턴 → E3 문의/전환 cockpit → E4 AI first-page**
 
 이 문서는 과거 패치 일지를 보관하지 않는다. 현재 코드 상태, 실제 남은 문제, 실행 순서만 유지한다.
 
@@ -116,7 +116,7 @@ P4에서 실제로 찾은 빈틈/패치:
 - production-home/API/D1/schema 의미 변경 없음
 - `f5167468...` production deploy 및 production save roundtrip 성공
 
-### B3 — 실제 신규 사용자 launch smoke — 실행 준비 완료 / production 1회 실행 대기
+### B3 — 실제 신규 사용자 launch smoke — 실행 준비 완료 / 사용자 요청으로 실운영 실행 보류
 
 mock browser QA와 QA 전용 production save probe만으로 beta launch를 끝내지 않는다.
 
@@ -261,6 +261,75 @@ PageRo는 Framer/Wix의 디자인 자유도를 복제하는 범용 builder가 �
 6. 문의/전환 cockpit
 7. AI first-page flow
 8. 실사용 데이터 이후 A/B test
+
+
+## 5-1. E1 편집기 shell 단순화 — 진행 중
+
+현재 패치 브랜치: `feat/pagero-editor-shell-e1-20260921`
+
+1차 범위:
+
+- 데스크톱 편집기를 `구조 / 캔버스 / Inspector` 3열로 재배치
+- 왼쪽은 `구조 / 추가` 두 모드만 유지
+- 가운데는 실제 페이지 캔버스
+- 오른쪽은 `선택 요소 / 페이지·테마` contextual inspector
+- 별도 `스타일` workspace 탭 제거
+- 과거 `style` URL은 `edit` workspace로 호환 처리
+- 기존 AddBlockDock source를 재사용하되 하단 floating dock이 아니라 왼쪽 추가 모드 안에서 표시
+- 새 병렬 editor source는 만들지 않음
+
+이번 범위에서 하지 않는 것:
+
+- 섹션 preset 재설계(E2)
+- 테스트 문의/UTM/tracking cockpit(E3)
+- AI first-page(E4)
+- save/API/D1/schema 변경
+
+완료 기준:
+
+- qa:all
+- editor/browser/form/template-mobile regression
+- desktop/narrow desktop에서 구조·캔버스·Inspector 동시 식별
+- 기존 style URL 회귀 없음
+- production home/API/D1/schema diff 없음
+
+
+## 5-2. E2 섹션 패턴 — 진행 중
+
+stacked branch: `feat/pagero-section-patterns-e2-20260921`
+
+목표:
+
+- 블록 하나씩 조립하는 흐름보다 완성형 섹션 묶음을 먼저 제안
+- 왼쪽 `추가`를 `추천 섹션 / 업종별 / 기본 블록 / 최근 사용` 4모드로 단순화
+- 현재 핵심 업종 3종(개인회생 / 분양 / 청첩장)부터 패턴 제공
+- 패턴은 새 렌더러를 만들지 않고 기존 PageRo 블록 여러 개를 묶어서 생성
+- 여러 블록 패턴도 한 번의 local mutation으로 추가되어 Undo 1회로 전체 제거
+- bottombar/footer 앞에 삽입해 일반 콘텐츠 순서를 유지
+- 기존 최근 블록 localStorage와 호환
+
+현재 패턴:
+
+- 상담 히어로 + 문의
+- 핵심 장점 + FAQ
+- 오시는 길 + 방문 예약
+- 개인회생 진단 섹션
+- 분양 상담 + 방문 예약
+- 예식 안내 + 오시는 길
+
+비변경:
+
+- save API
+- D1/schema
+- public renderer
+- 기존 개별 블록 편집기
+
+완료 기준:
+
+- E2 quality contract PASS
+- 실제 브라우저에서 추천 섹션 추가 → Undo 1회 → Redo 1회
+- 기존 기본 블록 추가 회귀 PASS
+- editor/form/template-mobile 전체 회귀 PASS
 
 ## 6. 현재 실제 편집기 경로
 
