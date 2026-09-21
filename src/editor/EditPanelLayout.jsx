@@ -39,7 +39,6 @@ export function EditPanelLayout({
         <div className="editor-pane-heading">
           <div>
             <strong>페이지 구성</strong>
-            <span>섹션 순서와 추가만 여기서 관리합니다.</span>
           </div>
         </div>
 
@@ -76,7 +75,6 @@ export function EditPanelLayout({
           <div className="editor-add-mode">
             <div className="editor-add-intro">
               <strong>섹션 추가</strong>
-              <span>필요한 섹션을 골라 현재 페이지에 바로 넣습니다.</span>
             </div>
             <AddBlockDock {...addBlockDockProps} embedded />
           </div>
@@ -86,8 +84,7 @@ export function EditPanelLayout({
       <aside className="editor-inspector-pane" aria-label="선택 요소 설정">
         <div className="editor-pane-heading inspector-heading">
           <div>
-            <strong>{selectedBlockSettingsProps ? '설정' : '페이지 설정'}</strong>
-            <span>{selectedBlockSettingsProps ? '선택한 섹션을 바로 수정합니다.' : '페이지 전체 디자인과 기본값을 관리합니다.'}</span>
+            <strong>설정</strong>
           </div>
         </div>
 
