@@ -520,8 +520,9 @@ body .builder-shell.edit-mode-shell .preview-workspace .preview-top {
 }
 
 body .builder-shell.edit-mode-shell .preview-workspace .phone-frame {
-  width: 460px !important;
+  width: 430px !important;
   max-width: 100% !important;
+  border: 8px solid #111827 !important;
   height: calc(100dvh - var(--product-topbar-h) - 48px - 112px) !important;
   min-height: 600px !important;
   max-height: 880px !important;
