@@ -513,7 +513,7 @@ body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .preview-works
 
 body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-pane-heading {
   flex: 0 0 auto;
-  min-height: 62px;
+  min-height: 48px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -706,5 +706,96 @@ body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .screen-order-
 
   body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .top-tabs button span {
     display: none;
+  }
+}
+
+
+/* Production repair: edit-mode-shell is the sole geometry owner.
+   Explicitly neutralize legacy editor-final-clean/editor-workspace-v2 desktop geometry. */
+html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) {
+  --pg-left-width: 280px !important;
+  --pg-panel-width: 100% !important;
+  --pg-preview-width: 100% !important;
+  display: grid !important;
+  grid-template-columns: 280px minmax(520px, 1fr) 360px !important;
+  grid-template-rows: var(--product-topbar-h) auto minmax(0, 1fr) !important;
+  width: 100% !important;
+  height: 100dvh !important;
+  min-height: 0 !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+}
+
+html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) > .left-workspace,
+html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) > .left-workspace > .work-panel,
+html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) > .left-workspace > .work-panel > .edit-layout {
+  display: contents !important;
+  width: auto !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) > .left-workspace > .workspace-persistent-header {
+  grid-column: 1 / -1 !important;
+  grid-row: 1 !important;
+}
+
+html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) > .left-workspace > .top-tabs {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+  width: auto !important;
+  max-width: none !important;
+}
+
+html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-structure-pane {
+  grid-column: 1 !important;
+  grid-row: 3 !important;
+  width: 280px !important;
+  max-width: 280px !important;
+}
+
+html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) > .preview-workspace {
+  grid-column: 2 !important;
+  grid-row: 2 / 4 !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow: auto !important;
+}
+
+html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) > .preview-workspace > .preview-sticky {
+  width: min(460px, 100%) !important;
+  max-width: 460px !important;
+  height: auto !important;
+  max-height: none !important;
+  min-height: 0 !important;
+}
+
+html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-inspector-pane {
+  grid-column: 3 !important;
+  grid-row: 2 / 4 !important;
+  width: 360px !important;
+  max-width: 360px !important;
+}
+
+@media (max-width: 1360px) {
+  html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) {
+    grid-template-columns: 260px minmax(460px, 1fr) 330px !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-structure-pane {
+    width: 260px !important;
+    max-width: 260px !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-inspector-pane {
+    width: 330px !important;
+    max-width: 330px !important;
   }
 }
