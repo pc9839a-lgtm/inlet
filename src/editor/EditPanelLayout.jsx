@@ -38,12 +38,6 @@ export function EditPanelLayout({
   return (
     <div className="edit-layout editor-shell-v2">
       <section className="editor-structure-pane" aria-label="페이지 구조와 섹션 추가">
-        <div className="editor-pane-heading">
-          <div>
-            <strong>페이지 구성</strong>
-          </div>
-        </div>
-
         <nav className="editor-left-modes" aria-label="페이지 구성 모드">
           <button
             type="button"
@@ -51,7 +45,7 @@ export function EditPanelLayout({
             aria-pressed={leftMode === 'structure'}
             onClick={showStructureMode}
           >
-            구조
+            구성
           </button>
           <button
             type="button"
@@ -75,9 +69,6 @@ export function EditPanelLayout({
           </div>
         ) : (
           <div className="editor-add-mode">
-            <div className="editor-add-intro">
-              <strong>섹션 추가</strong>
-            </div>
             <AddBlockDock {...addBlockDockProps} embedded />
           </div>
         )}
@@ -87,23 +78,18 @@ export function EditPanelLayout({
         {previewPane}
       </div>
 
-      <aside className="editor-inspector-pane" aria-label="선택 요소 설정">
-        <div className="editor-pane-heading inspector-heading">
-          <div>
-            <strong>설정</strong>
-          </div>
-        </div>
-
-        <nav className="editor-inspector-modes" aria-label="설정 대상">
-          <button
-            type="button"
-            className={inspectorMode === 'selection' ? 'active' : ''}
-            aria-pressed={inspectorMode === 'selection'}
-            disabled={!selectedBlockSettingsProps}
-            onClick={() => selectedBlockSettingsProps && setInspectorMode('selection')}
-          >
-            선택 요소
-          </button>
+      <aside className="editor-inspector-pane" aria-label="설정">
+        <nav className={`editor-inspector-modes${selectedBlockSettingsProps ? ' has-selection' : ' page-only'}`} aria-label="설정 대상">
+          {selectedBlockSettingsProps && (
+            <button
+              type="button"
+              className={inspectorMode === 'selection' ? 'active' : ''}
+              aria-pressed={inspectorMode === 'selection'}
+              onClick={() => setInspectorMode('selection')}
+            >
+              선택 요소
+            </button>
+          )}
           <button
             type="button"
             className={inspectorMode === 'page' ? 'active' : ''}
@@ -113,7 +99,7 @@ export function EditPanelLayout({
               setInspectorMode('page');
             }}
           >
-            페이지 · 테마
+            페이지
           </button>
         </nav>
 
