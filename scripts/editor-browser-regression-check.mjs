@@ -600,6 +600,8 @@ async function collectDesktopMetrics(client) {
     const shell = document.querySelector('.builder-shell');
     const left = document.querySelector('.left-workspace');
     const preview = document.querySelector('.preview-workspace');
+    const structure = document.querySelector('.editor-structure-pane');
+    const inspector = document.querySelector('.editor-inspector-pane');
     const frame = document.querySelector('.phone-frame');
     const header = document.querySelector('.panel-header');
     return {
@@ -610,6 +612,8 @@ async function collectDesktopMetrics(client) {
       shell: rect(shell),
       left: rect(left),
       preview: rect(preview),
+      structure: rect(structure),
+      inspector: rect(inspector),
       frame: rect(frame),
       header: rect(header),
       mobile: shell?.classList.contains('mobile-operations-shell') || false,
@@ -634,6 +638,8 @@ async function collectNarrowDesktopMetrics(client) {
       shell: rect(document.querySelector('.builder-shell')),
       left: rect(document.querySelector('.left-workspace')),
       preview: rect(document.querySelector('.preview-workspace')),
+      structure: rect(document.querySelector('.editor-structure-pane')),
+      inspector: rect(document.querySelector('.editor-inspector-pane')),
       mobile: document.querySelector('.builder-shell')?.classList.contains('mobile-operations-shell') || false,
       fallback: !!document.querySelector('.app-error-screen, .error-screen, .block-render-fallback'),
     };
@@ -685,6 +691,12 @@ function assertDesktop(metrics) {
   assertInsideViewport(metrics.shell, metrics.innerWidth, 'desktop builder shell');
   assertInsideViewport(metrics.left, metrics.innerWidth, 'desktop left workspace');
   assertInsideViewport(metrics.preview, metrics.innerWidth, 'desktop preview workspace');
+  assertInsideViewport(metrics.structure, metrics.innerWidth, 'desktop structure pane');
+  assertInsideViewport(metrics.inspector, metrics.innerWidth, 'desktop inspector pane');
+  assert(metrics.structure?.width >= 298 && metrics.structure?.width <= 302, `desktop structure pane width drifted: ${metrics.structure?.width}`);
+  assert(metrics.inspector?.width >= 378 && metrics.inspector?.width <= 382, `desktop inspector pane width drifted: ${metrics.inspector?.width}`);
+  assert(Math.abs((metrics.structure?.right || 0) - (metrics.preview?.left || 0)) <= 2, `desktop structure/canvas columns are not adjacent: ${JSON.stringify(metrics)}`);
+  assert(Math.abs((metrics.preview?.right || 0) - (metrics.inspector?.left || 0)) <= 2, `desktop canvas/inspector columns are not adjacent: ${JSON.stringify(metrics)}`);
   assert(metrics.frame?.width >= 400 && metrics.frame?.width <= 432, `desktop phone frame width is invalid: ${metrics.frame?.width}`);
   assert(metrics.heroTitleVisible, 'saved hero title is not visible in desktop preview');
 }
@@ -698,6 +710,10 @@ function assertNarrowDesktop(metrics, width) {
   assertInsideViewport(metrics.shell, width, 'narrow desktop builder shell');
   assertInsideViewport(metrics.left, width, 'narrow desktop left workspace');
   assertInsideViewport(metrics.preview, width, 'narrow desktop preview workspace');
+  assertInsideViewport(metrics.structure, width, 'narrow desktop structure pane');
+  assertInsideViewport(metrics.inspector, width, 'narrow desktop inspector pane');
+  assert(metrics.structure?.width >= 268 && metrics.structure?.width <= 272, `narrow desktop structure pane width drifted: ${metrics.structure?.width}`);
+  assert(metrics.inspector?.width >= 338 && metrics.inspector?.width <= 342, `narrow desktop inspector pane width drifted: ${metrics.inspector?.width}`);
 }
 
 function assertMobile(metrics, viewport) {
