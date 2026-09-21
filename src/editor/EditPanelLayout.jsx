@@ -14,6 +14,8 @@ export function EditPanelLayout({
   addBlockDockProps,
   selectedBlockSettingsProps,
   stylePanelProps,
+  previewPane,
+  onClearSelection,
 }) {
   const [leftMode, setLeftMode] = React.useState('structure');
   const [inspectorMode, setInspectorMode] = React.useState(selectedBlockSettingsProps ? 'selection' : 'page');
@@ -81,6 +83,10 @@ export function EditPanelLayout({
         )}
       </section>
 
+      <div className="editor-canvas-pane">
+        {previewPane}
+      </div>
+
       <aside className="editor-inspector-pane" aria-label="선택 요소 설정">
         <div className="editor-pane-heading inspector-heading">
           <div>
@@ -102,7 +108,10 @@ export function EditPanelLayout({
             type="button"
             className={inspectorMode === 'page' ? 'active' : ''}
             aria-pressed={inspectorMode === 'page'}
-            onClick={() => setInspectorMode('page')}
+            onClick={() => {
+              onClearSelection?.();
+              setInspectorMode('page');
+            }}
           >
             페이지 · 테마
           </button>
