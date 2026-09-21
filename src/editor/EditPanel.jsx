@@ -8,6 +8,7 @@ import { useEditPanelSelection } from './useEditPanelSelection.jsx';
 export default function EditPanel({
   page,
   authUser = null,
+  stylePanelProps = null,
   openId,
   setOpenId,
   addOpen,
@@ -59,6 +60,7 @@ export default function EditPanel({
       <EditPanelLayout
         {...sectionProps}
         selectedBlockSettingsProps={selectedBlockSettingsProps}
+        stylePanelProps={stylePanelProps}
       />
     </EditorMediaLibraryProvider>
   );
