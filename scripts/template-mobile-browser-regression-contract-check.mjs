@@ -55,7 +55,7 @@ assert(qaAll.includes("['browser:templates-mobile:contract:qa', ['scripts/templa
 
 for (const token of [
   'template-mobile-browser-regression:',
-  'Install Korean browser font',
+  'Prepare Korean browser font',
   'fonts-noto-cjk',
   'fc-match "Noto Sans CJK KR"',
   'Real browser three-template mobile regression',
