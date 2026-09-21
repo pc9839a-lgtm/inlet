@@ -513,7 +513,7 @@ body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .preview-works
 
 body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-pane-heading {
   flex: 0 0 auto;
-  min-height: 62px;
+  min-height: 48px;
   display: flex;
   align-items: center;
   justify-content: space-between;
