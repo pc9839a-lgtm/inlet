@@ -21,7 +21,7 @@ assert(layout.includes('editor-structure-pane'), 'editor shell must expose a ded
 assert(layout.includes('editor-inspector-pane'), 'editor shell must expose a dedicated contextual inspector');
 assert(layout.includes('editor-left-modes') && layout.includes('구조') && layout.includes('추가'), 'left pane must have structure and add modes');
 assert(layout.includes('editor-inspector-modes') && layout.includes('선택 요소') && layout.includes('페이지 · 테마'), 'inspector must switch between selected block and page/theme');
-assert(layout.includes('<SelectedBlockSettings') && layout.includes('<PageGlobalOptions') && layout.includes('<StylePanel'), 'inspector must own block, page and theme editing');
+assert(layout.includes('<SelectedBlockSettings') && layout.includes('<PageGlobalOptions') && layout.includes('<PageThemeStylePanel'), 'inspector must own block, page and lazy-loaded theme editing');
 assert(layout.includes('setInspectorMode(\'selection\')'), 'block selection must move inspector to the selected element');
 assert(layout.includes('addBlockDockProps?.setAddOpen?.(true)'), 'add mode must open the existing add-section source instead of creating a parallel source');
 
