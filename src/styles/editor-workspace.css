@@ -708,3 +708,56 @@ body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .screen-order-
     display: none;
   }
 }
+
+
+/* Editor shell cleanup: compact controls and a canvas-first center surface. */
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-pane-heading {
+  min-height: 46px !important;
+  padding: 9px 12px !important;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-pane-heading strong {
+  font-size: 13px !important;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .preview-workspace .preview-sticky {
+  gap: 6px !important;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .preview-workspace .preview-top {
+  width: min(430px, 100%) !important;
+  min-height: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  margin: 0 auto !important;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .preview-workspace .preview-title {
+  display: none !important;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .preview-workspace .preview-link {
+  width: auto !important;
+  max-width: 100% !important;
+  min-height: 26px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 0 8px !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  border-radius: 7px !important;
+  background: transparent !important;
+  color: var(--product-muted) !important;
+  box-shadow: none !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  text-decoration: none !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .preview-workspace .preview-link:hover {
+  background: rgba(15, 23, 42, .06) !important;
+  color: var(--product-text) !important;
+}
