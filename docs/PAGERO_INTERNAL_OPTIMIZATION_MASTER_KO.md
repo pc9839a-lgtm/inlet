@@ -7,7 +7,7 @@
 - 검증 기준 main SHA: `a000ec652d7ac7bf0d068c726be9ffe86e09a2db`
 - 마지막 기능 production 검증 SHA: `f51674687248549d7465bd0c65baf66df75e1853`
 - 운영 도메인: `https://pagero.kr/`
-- 현재 최우선: **E1 편집기 shell 단순화 → E2 섹션 패턴 → E3 문의/전환 cockpit**
+- 현재 최우선: **E2 섹션 패턴 → E3 문의/전환 cockpit → E4 AI first-page**
 
 이 문서는 과거 패치 일지를 보관하지 않는다. 현재 코드 상태, 실제 남은 문제, 실행 순서만 유지한다.
 
@@ -292,6 +292,44 @@ PageRo는 Framer/Wix의 디자인 자유도를 복제하는 범용 builder가 �
 - desktop/narrow desktop에서 구조·캔버스·Inspector 동시 식별
 - 기존 style URL 회귀 없음
 - production home/API/D1/schema diff 없음
+
+
+## 5-2. E2 섹션 패턴 — 진행 중
+
+stacked branch: `feat/pagero-section-patterns-e2-20260921`
+
+목표:
+
+- 블록 하나씩 조립하는 흐름보다 완성형 섹션 묶음을 먼저 제안
+- 왼쪽 `추가`를 `추천 섹션 / 업종별 / 기본 블록 / 최근 사용` 4모드로 단순화
+- 현재 핵심 업종 3종(개인회생 / 분양 / 청첩장)부터 패턴 제공
+- 패턴은 새 렌더러를 만들지 않고 기존 PageRo 블록 여러 개를 묶어서 생성
+- 여러 블록 패턴도 한 번의 local mutation으로 추가되어 Undo 1회로 전체 제거
+- bottombar/footer 앞에 삽입해 일반 콘텐츠 순서를 유지
+- 기존 최근 블록 localStorage와 호환
+
+현재 패턴:
+
+- 상담 히어로 + 문의
+- 핵심 장점 + FAQ
+- 오시는 길 + 방문 예약
+- 개인회생 진단 섹션
+- 분양 상담 + 방문 예약
+- 예식 안내 + 오시는 길
+
+비변경:
+
+- save API
+- D1/schema
+- public renderer
+- 기존 개별 블록 편집기
+
+완료 기준:
+
+- E2 quality contract PASS
+- 실제 브라우저에서 추천 섹션 추가 → Undo 1회 → Redo 1회
+- 기존 기본 블록 추가 회귀 PASS
+- editor/form/template-mobile 전체 회귀 PASS
 
 ## 6. 현재 실제 편집기 경로
 
