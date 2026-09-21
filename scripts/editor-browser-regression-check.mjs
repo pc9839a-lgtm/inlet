@@ -797,6 +797,7 @@ async function run() {
     const initialNormalBlockCount = await normalBlockCount(client);
     await clickButtonByText(client, '.editor-left-modes', '추가');
     await waitForBrowser(client, `!!document.querySelector('#pagero-widget-search')`, 'block add panel');
+    await clickButtonByText(client, '.section-add-modes', '기본 블록');
     await setInputValue(client, '#pagero-widget-search', '구분선');
     await clickButtonByText(client, '.add-panel', '구분선');
     await clickButtonByText(client, '.editor-left-modes', '구조');
@@ -809,6 +810,20 @@ async function run() {
     await waitForBrowser(client, `document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item').length === ${initialNormalBlockCount}`, 'undo block add');
     await clickSelector(client, '.panel-history-btn[aria-label="다시 실행"]');
     await waitForBrowser(client, `document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item').length === ${initialNormalBlockCount + 1}`, 'redo block add');
+
+    // E2: add a recommended multi-block section pattern as one undoable local mutation.
+    const beforePatternCount = await normalBlockCount(client);
+    await clickButtonByText(client, '.editor-left-modes', '추가');
+    await waitForBrowser(client, `!!document.querySelector('.section-add-modes')`, 'section add modes');
+    await clickButtonByText(client, '.section-add-modes', '추천 섹션');
+    await clickButtonByText(client, '.section-pattern-grid', '핵심 장점 + FAQ');
+    await clickButtonByText(client, '.editor-left-modes', '구조');
+    await waitForBrowser(client, `document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item').length === ${beforePatternCount + 2}`, 'recommended section pattern added');
+    assert(apiState.saveCount === 0, 'section pattern insertion must remain local before publish');
+    await clickSelector(client, '.panel-history-btn[aria-label="실행 취소"]');
+    await waitForBrowser(client, `document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item').length === ${beforePatternCount}`, 'undo recommended section pattern as one mutation');
+    await clickSelector(client, '.panel-history-btn[aria-label="다시 실행"]');
+    await waitForBrowser(client, `document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item').length === ${beforePatternCount + 2}`, 'redo recommended section pattern as one mutation');
 
     // E2E-04: visibility toggle must update the preview without publishing.
     await clickSelector(client, '#editor-block-editor-text .screen-order-v2-visibility-button');
