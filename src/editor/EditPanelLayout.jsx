@@ -78,7 +78,7 @@ export function EditPanelLayout({
               <strong>섹션 추가</strong>
               <span>필요한 섹션을 골라 현재 페이지에 바로 넣습니다.</span>
             </div>
-            <AddBlockDock {...addBlockDockProps} />
+            <AddBlockDock {...addBlockDockProps} embedded />
           </div>
         )}
       </section>
