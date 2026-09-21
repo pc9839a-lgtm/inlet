@@ -816,7 +816,7 @@ async function run() {
     await clickButtonByText(client, '.editor-left-modes', '추가');
     await waitForBrowser(client, `!!document.querySelector('.section-add-modes')`, 'section add modes');
     await clickButtonByText(client, '.section-add-modes', '추천 섹션');
-    await clickButtonByText(client, '.section-pattern-grid', '핵심 장점 + FAQ');
+    await clickSelector(client, '.section-pattern-card[aria-label="핵심 장점 + FAQ 섹션 추가"]');
     await clickButtonByText(client, '.editor-left-modes', '구조');
     await waitForBrowser(client, `document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item').length === ${beforePatternCount + 2}`, 'recommended section pattern added');
     assert(apiState.saveCount === 0, 'section pattern insertion must remain local before publish');
