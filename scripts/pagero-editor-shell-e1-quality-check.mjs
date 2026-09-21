@@ -11,6 +11,7 @@ const editPanel = await readFile('src/editor/EditPanel.jsx', 'utf8');
 const layout = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
 const css = await readFile('src/styles/editor-workspace.css', 'utf8');
 const preview = await readFile('src/screens/workspace/WorkspacePreviewPane.jsx', 'utf8');
+const activeWorkflowCss = await readFile('src/styles/editor-active-workflow-patch.css', 'utf8');
 
 assert(!navigation.includes("['style', '스타일'"), 'editor navigation must not expose a separate style workspace tab');
 assert(screen.includes("const effectiveTab = tab === 'style' ? 'edit' : tab;"), 'legacy style routes must normalize into edit');
@@ -30,10 +31,13 @@ assert(css.includes('grid-column: 1;') && css.includes('grid-column: 2;') && css
 assert(css.includes('> .left-workspace') && css.includes('display: contents !important'), 'legacy nested left workspace must flatten only in edit mode');
 assert(css.includes('.editor-add-mode .fixed-add-dock') && css.includes('position: static !important'), 'add-section UI must live inside the left pane, not a floating footer dock');
 assert(preview.includes('<span>페이지 캔버스</span>'), 'center surface must be presented as the page canvas');
+assert(!activeWorkflowCss.includes('grid-template-columns:'), 'late active-workflow CSS must never override edit-shell column geometry');
+assert(!activeWorkflowCss.includes('.fixed-add-dock'), 'late active-workflow CSS must not resurrect the legacy floating add dock');
+assert(!layout.includes('섹션 순서와 추가만 여기서 관리합니다.') && !layout.includes('선택한 섹션을 바로 수정합니다.') && !layout.includes('페이지 전체 디자인과 기본값을 관리합니다.'), 'editor shell must not contain redundant instructional microcopy');
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 16,
+  checks: 19,
   scope: 'pagero-editor-shell-e1',
   shell: ['structure', 'canvas', 'inspector'],
   separateStyleTab: false,
