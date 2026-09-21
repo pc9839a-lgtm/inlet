@@ -1,10 +1,11 @@
 import React from 'react';
-import StylePanel from '../panels/StylePanel.jsx';
 import { AddBlockDock } from './editPanelParts/AddBlockDock.jsx';
 import { GlobalFixedBlocks } from './editPanelParts/GlobalFixedBlocks.jsx';
 import { PageGlobalOptions } from './editPanelParts/PageGlobalOptions.jsx';
 import { ScreenOrderList } from './editPanelParts/ScreenOrderList.jsx';
 import { SelectedBlockSettings } from './editPanelParts/SelectedBlockSettings.jsx';
+
+const PageThemeStylePanel = React.lazy(() => import('../panels/StylePanel.jsx'));
 
 export function EditPanelLayout({
   pageGlobalOptionsProps,
@@ -116,7 +117,11 @@ export function EditPanelLayout({
           ) : (
             <div className="editor-page-inspector">
               <PageGlobalOptions {...pageGlobalOptionsProps} />
-              {stylePanelProps && <StylePanel {...stylePanelProps} />}
+              {stylePanelProps && (
+                <React.Suspense fallback={<div className="editor-inspector-loading">테마 설정 불러오는 중</div>}>
+                  <PageThemeStylePanel {...stylePanelProps} />
+                </React.Suspense>
+              )}
             </div>
           )}
         </div>
