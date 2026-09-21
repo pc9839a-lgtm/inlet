@@ -37,7 +37,7 @@ assert(sectionProps.includes('addSectionPattern') && dockProps.includes('addSect
 
 assert(css.includes('.section-add-modes') && css.includes('.section-pattern-card') && css.includes('.section-pattern-tags'), 'E2 section picker styles are missing');
 assert(browser.includes("clickButtonByText(client, '.section-add-modes', '기본 블록')"), 'browser regression must follow the new basic block mode');
-assert(browser.includes("clickButtonByText(client, '.section-pattern-grid', '핵심 장점 + FAQ')"), 'browser regression must add a real recommended section pattern');
+assert(browser.includes(".section-pattern-card[aria-label=\"핵심 장점 + FAQ 섹션 추가\"]"), 'browser regression must add a real recommended section pattern');
 assert(browser.includes('undo recommended section pattern as one mutation') && browser.includes('redo recommended section pattern as one mutation'), 'browser regression must lock one-step undo/redo for multi-block section patterns');
 
 console.log(JSON.stringify({
