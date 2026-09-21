@@ -7,7 +7,7 @@
 - 검증 기준 main SHA: `a000ec652d7ac7bf0d068c726be9ffe86e09a2db`
 - 마지막 기능 production 검증 SHA: `f51674687248549d7465bd0c65baf66df75e1853`
 - 운영 도메인: `https://pagero.kr/`
-- 현재 최우선: **신규 사용자 production launch smoke → 편집기 제품성 개선**
+- 현재 최우선: **E1 편집기 shell 단순화 → E2 섹션 패턴 → E3 문의/전환 cockpit**
 
 이 문서는 과거 패치 일지를 보관하지 않는다. 현재 코드 상태, 실제 남은 문제, 실행 순서만 유지한다.
 
@@ -116,7 +116,7 @@ P4에서 실제로 찾은 빈틈/패치:
 - production-home/API/D1/schema 의미 변경 없음
 - `f5167468...` production deploy 및 production save roundtrip 성공
 
-### B3 — 실제 신규 사용자 launch smoke — 실행 준비 완료 / production 1회 실행 대기
+### B3 — 실제 신규 사용자 launch smoke — 실행 준비 완료 / 사용자 요청으로 실운영 실행 보류
 
 mock browser QA와 QA 전용 production save probe만으로 beta launch를 끝내지 않는다.
 
@@ -261,6 +261,37 @@ PageRo는 Framer/Wix의 디자인 자유도를 복제하는 범용 builder가 �
 6. 문의/전환 cockpit
 7. AI first-page flow
 8. 실사용 데이터 이후 A/B test
+
+
+## 5-1. E1 편집기 shell 단순화 — 진행 중
+
+현재 패치 브랜치: `feat/pagero-editor-shell-e1-20260921`
+
+1차 범위:
+
+- 데스크톱 편집기를 `구조 / 캔버스 / Inspector` 3열로 재배치
+- 왼쪽은 `구조 / 추가` 두 모드만 유지
+- 가운데는 실제 페이지 캔버스
+- 오른쪽은 `선택 요소 / 페이지·테마` contextual inspector
+- 별도 `스타일` workspace 탭 제거
+- 과거 `style` URL은 `edit` workspace로 호환 처리
+- 기존 AddBlockDock source를 재사용하되 하단 floating dock이 아니라 왼쪽 추가 모드 안에서 표시
+- 새 병렬 editor source는 만들지 않음
+
+이번 범위에서 하지 않는 것:
+
+- 섹션 preset 재설계(E2)
+- 테스트 문의/UTM/tracking cockpit(E3)
+- AI first-page(E4)
+- save/API/D1/schema 변경
+
+완료 기준:
+
+- qa:all
+- editor/browser/form/template-mobile regression
+- desktop/narrow desktop에서 구조·캔버스·Inspector 동시 식별
+- 기존 style URL 회귀 없음
+- production home/API/D1/schema diff 없음
 
 ## 6. 현재 실제 편집기 경로
 
