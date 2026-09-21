@@ -1,11 +1,10 @@
 import React from 'react';
+import { WorkspaceEditShell } from './workspace/WorkspaceEditShell.jsx';
 import { WorkspaceLeftPanel } from './workspace/WorkspaceLeftPanel.jsx';
 import { WorkspacePreviewPane } from './workspace/WorkspacePreviewPane.jsx';
 import '../styles/product-ui-tokens.css';
 import '../styles/workspace-shell.css';
 import '../styles/editor-workspace.css';
-import '../styles/editor-narrow-width-fix.css';
-import '../styles/editor-active-workflow-patch.css';
 import '../styles/settings-workspace.css';
 
 export default function WorkspaceEditorScreen({
@@ -51,6 +50,33 @@ export default function WorkspaceEditorScreen({
   const settingsWorkspace = !mobileOperationsOnly && effectiveTab === 'settings';
   const editWorkspace = !mobileOperationsOnly && effectiveTab === 'edit';
   const operationsWorkspace = inboxWorkspace || statsWorkspace || settingsWorkspace;
+  const templateIntroWorkspace = !mobileOperationsOnly && canManageAdmin && startMode === 'template';
+
+  if (editWorkspace && !templateIntroWorkspace) {
+    return (
+      <WorkspaceEditShell
+        page={page}
+        tab={effectiveTab}
+        saved={saved}
+        saveStatus={saveStatus}
+        onSave={onSave}
+        onPreview={onPreview}
+        onDashboard={onDashboard}
+        previewUrl={previewUrl}
+        allowedTabs={allowedTabs}
+        changeTab={changeTab}
+        editPanelProps={editPanelProps}
+        stylePanelProps={stylePanelProps}
+        settingsPanelProps={settingsPanelProps}
+        previewPage={previewPage}
+        leads={leads}
+        addLead={addLead}
+        track={track}
+        selectedBlockId={selectedBlockId}
+        onSelectPreviewBlock={onSelectPreviewBlock}
+      />
+    );
+  }
 
   return (
     <div className={`builder-shell${canUseBuilder && startMode === 'template' && !mobileOperationsOnly ? ' template-intro-shell' : ''}${mobileOperationsOnly ? ' mobile-operations-shell' : ''}${editWorkspace ? ' edit-mode-shell' : ''}${inboxWorkspace ? ' inbox-workspace-shell' : ''}${statsWorkspace ? ' stats-dashboard-shell' : ''}${settingsWorkspace ? ' settings-workspace-shell' : ''}`}>
