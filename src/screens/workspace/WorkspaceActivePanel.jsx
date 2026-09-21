@@ -32,7 +32,7 @@ export function WorkspaceActivePanel({
   return (
     <>
       {canRenderBuilder && tab === 'edit' && (
-        <EditPanel {...editPanelProps} authUser={settingsPanelProps?.authUser || null} />
+        <EditPanel {...editPanelProps} stylePanelProps={stylePanelProps} authUser={settingsPanelProps?.authUser || null} />
       )}
 
       <LazyChunkBoundary resetKey={tab}>
