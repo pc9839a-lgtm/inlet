@@ -269,7 +269,6 @@ const editorBlockListsCss = await readFile('src/styles/editor-block-lists.css', 
 const previewWorkspaceReservationCss = await readFile('src/styles/preview-workspace-reservation.css', 'utf8');
 const previewFormsCss = await readFile('src/styles/preview-forms.css', 'utf8');
 const previewFormsSpacingCss = await readFile('src/styles/preview-forms-spacing.css', 'utf8');
-const previewFormsQuestionsCss = await readFile('src/styles/preview-forms-questions.css', 'utf8');
 const formEditorSource = await readFile('src/editor/blockEditors/FormEditor.jsx', 'utf8');
 const formEditorCss = await readFile('src/editor/blockEditors/FormEditor.css', 'utf8');
 const formDesignSectionSource = await readFile('src/editor/blockEditors/FormDesignSection.jsx', 'utf8');
@@ -284,7 +283,6 @@ const legacyFormEditorCss = (await Promise.all([
   'preview-forms-buttons.css',
   'preview-forms-controls.css',
   'preview-forms-design.css',
-  'preview-forms-questions.css',
   'preview-forms-render.css',
   'preview-forms-spacing.css',
   'preview-forms.css',
@@ -357,7 +355,7 @@ assert(formOptionEditor.includes('if (list.length <= 1) return') && formOptionEd
 assert(!baseComponentsOptionsCss.includes('.option-editor{') && !editorScreenOrderPolishCss.includes('.option-editor') && editorBlockListsCss.includes('.option-editor-row'), 'form option styles must have one active owner');
 assert(!editorAnimationCss.includes('gallery-edit') && !editorScreenOrderPolishCss.includes('gallery-edit') && !editorFinalCleanCss.includes('gallery-edit'), 'imported editor styles must not retain the removed gallery editor wrapper');
 assert(!previewWorkspaceReservationCss.includes('reservation-custom-card') && editorBlockListsCss.includes('.reservation-custom-head-row') && editorBlockListsCss.includes('.reservation-custom-body'), 'reservation custom-field styles must stay owned by the editor stylesheet');
-assert(!previewFormsCss.includes('form-question-') && !previewFormsSpacingCss.includes('form-question-') && !previewFormsQuestionsCss.includes('form-question-') && editorBlockListsCss.includes('.form-question-tools') && editorBlockListsCss.includes('.form-question-actions'), 'form question styles must stay owned by the editor stylesheet');
+assert(!previewFormsCss.includes('form-question-') && !previewFormsSpacingCss.includes('form-question-') && editorBlockListsCss.includes('.form-question-tools') && editorBlockListsCss.includes('.form-question-actions'), 'form question styles must stay owned by the editor stylesheet');
 assert(formEditorSource.includes("import './FormEditor.css'") && formEditorCss.includes('.form-basic-grid') && formEditorCss.includes('.form-advanced-group') && formEditorCss.includes('.question-compact-row'), 'FormEditor must own its active layout styles in its lazy chunk');
 assert(!formDesignSectionSource.includes('label="모서리"') && formDesignSectionSource.includes("[ 'solid', '기본' ]") && formDesignSectionSource.includes("[ 'round', '캡슐' ]") && formDesignSectionSource.includes("[ 'line', '테두리' ]"), 'form design controls must avoid overlapping radius settings and name distinct button shapes');
 assert(previewFormsDesignCss.includes('.form-input-round input') && previewFormsDesignCss.includes('border-radius:14px!important') && previewFormsDesignCss.includes('.form-input-box input') && previewFormsDesignCss.includes('border-radius:4px!important') && previewFormsDesignCss.includes('border-bottom:2px solid #cbd5e1!important'), 'form input choices must render visibly distinct round, box, and underline styles');
