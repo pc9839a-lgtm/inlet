@@ -602,6 +602,9 @@ async function collectDesktopMetrics(client) {
     const preview = document.querySelector('.preview-workspace');
     const frame = document.querySelector('.phone-frame');
     const header = document.querySelector('.panel-header');
+    const tabs = document.querySelector('.top-tabs');
+    const structure = document.querySelector('.editor-structure-pane');
+    const inspector = document.querySelector('.editor-inspector-pane');
     return {
       path: location.pathname,
       bodyScrollWidth: document.body?.scrollWidth || 0,
@@ -612,6 +615,10 @@ async function collectDesktopMetrics(client) {
       preview: rect(preview),
       frame: rect(frame),
       header: rect(header),
+      tabs: rect(tabs),
+      structure: rect(structure),
+      inspector: rect(inspector),
+      tabsRootLevel: !!tabs && tabs.parentElement === shell,
       mobile: shell?.classList.contains('mobile-operations-shell') || false,
       heroTitleVisible: !!frame && (frame.innerText || '').includes(${JSON.stringify(finalHeroTitle)}),
       fallback: !!document.querySelector('.app-error-screen, .error-screen, .block-render-fallback'),
@@ -634,6 +641,10 @@ async function collectNarrowDesktopMetrics(client) {
       shell: rect(document.querySelector('.builder-shell')),
       left: rect(document.querySelector('.left-workspace')),
       preview: rect(document.querySelector('.preview-workspace')),
+      tabs: rect(document.querySelector('.top-tabs')),
+      structure: rect(document.querySelector('.editor-structure-pane')),
+      inspector: rect(document.querySelector('.editor-inspector-pane')),
+      tabsRootLevel: document.querySelector('.top-tabs')?.parentElement === document.querySelector('.builder-shell'),
       mobile: document.querySelector('.builder-shell')?.classList.contains('mobile-operations-shell') || false,
       fallback: !!document.querySelector('.app-error-screen, .error-screen, .block-render-fallback'),
     };
@@ -685,6 +696,11 @@ function assertDesktop(metrics) {
   assertInsideViewport(metrics.shell, metrics.innerWidth, 'desktop builder shell');
   assertInsideViewport(metrics.left, metrics.innerWidth, 'desktop left workspace');
   assertInsideViewport(metrics.preview, metrics.innerWidth, 'desktop preview workspace');
+  assert(metrics.tabsRootLevel, 'desktop workspace tabs must be a direct builder-shell child');
+  assert(metrics.tabs?.width >= metrics.shell.width - 3, `desktop workspace tabs must span the shell: ${JSON.stringify({ tabs: metrics.tabs, shell: metrics.shell })}`);
+  assert(metrics.structure?.top >= metrics.tabs.bottom - 3, 'structure pane must start below the global workspace tabs');
+  assert(metrics.preview?.top >= metrics.tabs.bottom - 3, 'preview pane must start below the global workspace tabs');
+  assert(metrics.inspector?.top >= metrics.tabs.bottom - 3, 'inspector pane must start below the global workspace tabs');
   assert(metrics.frame?.width >= 400 && metrics.frame?.width <= 432, `desktop phone frame width is invalid: ${metrics.frame?.width}`);
   assert(metrics.heroTitleVisible, 'saved hero title is not visible in desktop preview');
 }
@@ -698,6 +714,11 @@ function assertNarrowDesktop(metrics, width) {
   assertInsideViewport(metrics.shell, width, 'narrow desktop builder shell');
   assertInsideViewport(metrics.left, width, 'narrow desktop left workspace');
   assertInsideViewport(metrics.preview, width, 'narrow desktop preview workspace');
+  assert(metrics.tabsRootLevel, 'narrow desktop workspace tabs must remain a direct builder-shell child');
+  assert(metrics.tabs?.width >= metrics.shell.width - 3, 'narrow desktop workspace tabs must remain full-width');
+  assert(metrics.structure?.top >= metrics.tabs.bottom - 3, 'narrow structure pane must start below the global tabs');
+  assert(metrics.preview?.top >= metrics.tabs.bottom - 3, 'narrow preview pane must start below the global tabs');
+  assert(metrics.inspector?.top >= metrics.tabs.bottom - 3, 'narrow inspector pane must start below the global tabs');
 }
 
 function assertMobile(metrics, viewport) {
