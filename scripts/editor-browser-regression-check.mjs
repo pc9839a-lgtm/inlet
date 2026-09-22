@@ -877,18 +877,22 @@ async function run() {
     const dragOrderAfter = await normalBlockOrder(client);
     assert(JSON.stringify(dragOrderAfter) !== JSON.stringify(dragOrderBefore), 'pointer drag did not change block order');
 
-    // E2E-11 / E2E-12: page/theme inspector previews the style draft, then applies it into the page draft.
-    await clickButtonByText(client, '.editor-inspector-modes', '페이지 · 테마');
-    await waitForBrowser(client, `!!document.querySelector('.editor-inspector-pane .style-panel')`, 'page theme inspector');
-    await clickButtonByText(client, '.style-subnav', '색상');
-    await waitForBrowser(client, `!!document.querySelector('.style-panel input[type="color"]')`, 'style accent input');
-    await setInputValue(client, '.style-panel input[type="color"]', updatedAccent);
-    await waitForBrowser(client, `!document.querySelector('.style-apply-btn')?.disabled`, 'style apply enabled');
-    assert(apiState.saveCount === 0, 'style preview must not publish automatically');
-    await clickSelector(client, '.style-apply-btn');
-    await waitForBrowser(client, `document.querySelector('.style-apply-btn')?.disabled === true`, 'style applied to page draft');
+    // E2E-11 / E2E-12: compact page theme inspector writes immediately to the local draft and remains undoable.
+    await clickButtonByText(client, '.editor-inspector-modes', '페이지');
+    await waitForBrowser(client, `!!document.querySelector('.page-theme-inspector')`, 'compact page theme inspector');
+    await clickButtonByText(client, '.page-theme-nav', '색상');
+    await waitForBrowser(client, `!!document.querySelector('.page-theme-inspector input[type="color"]')`, 'theme accent input');
+    const accentBeforeChange = await evaluate(client, `document.querySelector('.page-theme-inspector input[type="color"]')?.value`);
+    await setInputValue(client, '.page-theme-inspector input[type="color"]', updatedAccent);
+    await waitForBrowser(client, `document.querySelector('.page-theme-inspector input[type="color"]')?.value?.toLowerCase() === ${JSON.stringify(updatedAccent)}`, 'theme accent local update');
+    assert(apiState.saveCount === 0, 'theme edit must remain local before publish');
+    assert(!(await evaluate(client, `!!document.querySelector('.style-apply-btn, .style-reset-btn')`)), 'compact inspector must not expose staged apply/reset controls');
+    await clickSelector(client, '.panel-history-btn[aria-label="실행 취소"]');
+    await waitForBrowser(client, `document.querySelector('.page-theme-inspector input[type="color"]')?.value?.toLowerCase() === ${JSON.stringify(String(accentBeforeChange || '').toLowerCase())}`, 'undo compact theme edit');
+    await clickSelector(client, '.panel-history-btn[aria-label="다시 실행"]');
+    await waitForBrowser(client, `document.querySelector('.page-theme-inspector input[type="color"]')?.value?.toLowerCase() === ${JSON.stringify(updatedAccent)}`, 'redo compact theme edit');
 
-    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-list')`, 'structure pane after style apply');
+    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-list')`, 'structure pane after theme edit');
 
     // E2E-13: preview action must not close or freeze the editor; continue editing afterwards.
     await evaluate(client, `window.__pageroQaPreviewCalls = []; window.open = (...args) => { window.__pageroQaPreviewCalls.push(args); return { opener: null }; };`);
@@ -1005,7 +1009,7 @@ async function run() {
       publicVerifyCount: apiState.publicVerifyCount,
       mobileWidths: mobileViewports.map((item) => item.width),
       screenshots: 7,
-      realUseFlows: ['add-block', 'undo-redo', 'visibility', 'menu-reorder', 'pointer-drag-reorder', 'style-apply', 'preview-continue', 'publish-race', 'revision-restore-undo-redo', 'post-restore-publish-readback', 'narrow-desktop'],
+      realUseFlows: ['add-block', 'undo-redo', 'visibility', 'menu-reorder', 'pointer-drag-reorder', 'theme-immediate', 'preview-continue', 'publish-race', 'revision-restore-undo-redo', 'post-restore-publish-readback', 'narrow-desktop'],
     }, null, 2));
   } finally {
     await client?.close().catch(() => {});
