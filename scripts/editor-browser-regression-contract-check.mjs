@@ -29,6 +29,8 @@ const editorActiveWorkflowCssSource = await readFile('src/styles/editor-active-w
 
 assert(editorWorkspaceCssSource.includes('grid-template-columns: 280px minmax(520px, 1fr) 360px !important;'), 'active desktop editor must keep structure / canvas / inspector tracks');
 assert(!editorActiveWorkflowCssSource.includes('grid-template-columns: clamp(480px, 36vw, 540px) minmax(560px, 1fr) !important;'), 'active workflow patch must not collapse the desktop editor back to two columns');
+assert(editorWorkspaceCssSource.includes("border-radius: 0 !important;\n  background: #fff !important;\n  box-shadow: none !important;"), 'active editor top navigation must stay flat instead of returning to the rounded card shell');
+assert(editorWorkspaceCssSource.includes(".editor-inspector-pane :is(.selected-block-settings-card, .page-global-options-card, .style-panel)") && editorWorkspaceCssSource.includes('border-radius: 0 !important;'), 'active inspector surface must remain flat and card-free');
 
 assert(packageJson.scripts?.['browser:editor:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-browser-regression-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-image-library-browser-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-video-library-browser-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/media-library-settings-browser-check.mjs', 'browser:editor:qa must run editor, image/video reuse, and media settings E2E');
 assert(packageJson.scripts?.['browser:editor:image-library:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-image-library-browser-check.mjs', 'browser:editor:image-library:qa script is missing');
