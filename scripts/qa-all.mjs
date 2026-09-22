@@ -10,6 +10,7 @@ const steps = [
   ['pagero:maintenance:qa', ['scripts/pagero-maintenance-quality-check.mjs']],
   ['pagero:launch-smoke:contract:qa', ['scripts/pagero-launch-smoke-contract-check.mjs']],
   ['pagero:editor-shell:e1:qa', ['scripts/pagero-editor-shell-e1-quality-check.mjs']],
+  ['pagero:editor-css-owner:cleanup-1:qa', ['scripts/pagero-editor-css-owner-cleanup-1-quality-check.mjs']],
   ['pagero:section-patterns:e2:qa', ['scripts/pagero-section-patterns-e2-quality-check.mjs']],
   ['templates:qa', ['scripts/template-quality-check.mjs']],
   ['ai:qa', ['scripts/ai-quality-check.mjs']],
