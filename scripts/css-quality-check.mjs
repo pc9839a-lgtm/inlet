@@ -60,7 +60,6 @@ const cssFiles = [
   'src/styles/preview-forms-controls.css',
   'src/styles/preview-forms-spacing.css',
   'src/styles/preview-forms-questions.css',
-  'src/styles/preview-forms-advanced.css',
   'src/styles/preview-forms-bottom-color.css',
   'src/styles/preview-forms-description.css',
   'src/styles/preview-forms-buttons.css',
