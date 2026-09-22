@@ -4,8 +4,7 @@ import { GlobalFixedBlocks } from './editPanelParts/GlobalFixedBlocks.jsx';
 import { PageGlobalOptions } from './editPanelParts/PageGlobalOptions.jsx';
 import { ScreenOrderList } from './editPanelParts/ScreenOrderList.jsx';
 import { SelectedBlockSettings } from './editPanelParts/SelectedBlockSettings.jsx';
-
-const PageThemeStylePanel = React.lazy(() => import('../panels/StylePanel.jsx'));
+import { PageThemeInspector } from './editPanelParts/PageThemeInspector.jsx';
 
 export function EditPanelLayout({
   pageGlobalOptionsProps,
@@ -88,36 +87,41 @@ export function EditPanelLayout({
           </div>
         </div>
 
-        <nav className="editor-inspector-modes" aria-label="설정 대상">
-          <button
-            type="button"
-            className={inspectorMode === 'selection' ? 'active' : ''}
-            aria-pressed={inspectorMode === 'selection'}
-            disabled={!selectedBlockSettingsProps}
-            onClick={() => selectedBlockSettingsProps && setInspectorMode('selection')}
-          >
-            선택 요소
-          </button>
-          <button
-            type="button"
-            className={inspectorMode === 'page' ? 'active' : ''}
-            aria-pressed={inspectorMode === 'page'}
-            onClick={() => setInspectorMode('page')}
-          >
-            페이지 · 테마
-          </button>
-        </nav>
+        {selectedBlockSettingsProps && (
+          <nav className="editor-inspector-modes" aria-label="설정 대상">
+            <button
+              type="button"
+              className={inspectorMode === 'selection' ? 'active' : ''}
+              aria-pressed={inspectorMode === 'selection'}
+              onClick={() => setInspectorMode('selection')}
+            >
+              선택
+            </button>
+            <button
+              type="button"
+              className={inspectorMode === 'page' ? 'active' : ''}
+              aria-pressed={inspectorMode === 'page'}
+              onClick={() => setInspectorMode('page')}
+            >
+              페이지
+            </button>
+          </nav>
+        )}
 
         <div className="editor-inspector-scroll">
           {inspectorMode === 'selection' && selectedBlockSettingsProps ? (
             <SelectedBlockSettings {...selectedBlockSettingsProps} />
           ) : (
             <div className="editor-page-inspector">
-              <PageGlobalOptions {...pageGlobalOptionsProps} />
+              <section className="editor-inspector-section">
+                <div className="editor-inspector-section-title">페이지</div>
+                <PageGlobalOptions {...pageGlobalOptionsProps} showTitle={false} />
+              </section>
               {stylePanelProps && (
-                <React.Suspense fallback={<div className="editor-inspector-loading">테마 설정 불러오는 중</div>}>
-                  <PageThemeStylePanel {...stylePanelProps} />
-                </React.Suspense>
+                <section className="editor-inspector-section">
+                  <div className="editor-inspector-section-title">테마</div>
+                  <PageThemeInspector page={stylePanelProps.page} updateTheme={stylePanelProps.updateTheme} />
+                </section>
               )}
             </div>
           )}

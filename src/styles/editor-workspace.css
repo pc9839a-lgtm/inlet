@@ -433,29 +433,35 @@ body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .workspace-per
   min-width: 0;
 }
 
-body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .top-tabs {
-  grid-column: 1;
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) > .top-tabs {
+  grid-column: 1 / -1;
   grid-row: 2;
-  width: auto !important;
+  width: 100% !important;
   min-width: 0 !important;
   min-height: 46px !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
   gap: 4px !important;
-  margin: 10px 10px 8px !important;
-  padding: 4px !important;
-  border-radius: 10px !important;
+  margin: 0 !important;
+  padding: 5px 14px !important;
+  border-width: 0 0 1px !important;
+  border-radius: 0 !important;
+  background: #fff !important;
 }
 
-body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .top-tabs button {
-  min-width: 0 !important;
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) > .top-tabs button {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 96px !important;
   height: 36px !important;
   min-height: 36px !important;
-  padding: 0 6px !important;
-  gap: 5px !important;
-  font-size: 11px !important;
+  padding: 0 12px !important;
+  gap: 6px !important;
+  font-size: 12px !important;
 }
 
-body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .top-tabs button svg {
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) > .top-tabs button svg {
   width: 15px;
   height: 15px;
 }
@@ -474,7 +480,7 @@ body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-struct
 
 body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-inspector-pane {
   grid-column: 3;
-  grid-row: 2 / 4;
+  grid-row: 3;
   min-width: 0;
   min-height: 0;
   display: flex;
@@ -486,7 +492,7 @@ body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-inspec
 
 body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) > .preview-workspace {
   grid-column: 2;
-  grid-row: 2 / 4;
+  grid-row: 3;
   min-width: 0;
   min-height: 0;
   height: auto;
@@ -576,9 +582,14 @@ body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) :is(.editor-le
   color: var(--product-text);
 }
 
-body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) :is(.editor-left-modes, .editor-inspector-modes) button.active {
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-left-modes button.active {
   background: var(--product-text);
   color: #fff;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-inspector-modes button.active {
+  background: #eef4ff;
+  color: #1d4ed8;
 }
 
 body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) :is(.editor-left-modes, .editor-inspector-modes) button:disabled {
@@ -607,20 +618,229 @@ body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-page-i
   gap: 10px;
 }
 
-body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-inspector-pane :is(.selected-block-settings-card, .page-global-options-card, .style-panel) {
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-inspector-pane :is(.selected-block-settings-card, .page-global-options-card) {
   width: 100% !important;
   min-width: 0 !important;
   max-width: none !important;
   margin: 0 !important;
 }
 
-body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-inspector-pane .style-panel {
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-page-inspector .page-global-options-card {
   padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
   background: transparent !important;
+  box-shadow: none !important;
 }
 
-body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-inspector-pane .style-apply-bar {
-  position: static !important;
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-inspector-section {
+  display: grid;
+  gap: 8px;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-inspector-section + .editor-inspector-section {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--product-line);
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-inspector-section-title {
+  color: var(--product-muted);
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 900;
+  letter-spacing: .04em;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .page-theme-inspector {
+  display: grid;
+  gap: 10px;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .page-theme-nav {
+  display: flex;
+  gap: 12px;
+  min-width: 0;
+  border-bottom: 1px solid var(--product-line);
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .page-theme-nav button {
+  min-width: 0;
+  min-height: 34px;
+  padding: 0 1px 7px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--product-muted);
+  box-shadow: none;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .page-theme-nav button.active {
+  border-bottom-color: var(--product-accent, #2563eb);
+  background: transparent;
+  color: var(--product-text);
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .page-theme-fields {
+  display: grid;
+  gap: 10px;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .inspector-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .inspector-field > span,
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .inspector-image-field > label > span {
+  color: var(--product-muted);
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .inspector-field > select {
+  width: 100%;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--product-line-strong);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--product-text);
+  font-size: 11px;
+  font-weight: 750;
+  outline: none;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .inspector-segment {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--product-line);
+  border-radius: 8px;
+  background: var(--product-soft);
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .inspector-segment button {
+  min-width: 0;
+  min-height: 32px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--product-muted);
+  box-shadow: none;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .inspector-segment button.active {
+  background: #fff;
+  color: var(--product-text);
+  box-shadow: 0 1px 2px rgba(15,23,42,.08);
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .inspector-color-field > div,
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .inspector-range-field > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .inspector-color-field input[type='color'] {
+  width: 36px;
+  height: 32px;
+  flex: 0 0 36px;
+  padding: 2px;
+  border: 1px solid var(--product-line);
+  border-radius: 7px;
+  background: #fff;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .inspector-color-field b,
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .inspector-range-field b {
+  min-width: 0;
+  flex: 1 1 auto;
+  color: var(--product-text);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .inspector-color-field button {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--product-line);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--product-muted);
+  box-shadow: none;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .inspector-range-field input[type='range'] {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .inspector-color-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .inspector-color-presets button {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 2px solid #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px var(--product-line);
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .inspector-color-presets button.active {
+  box-shadow: 0 0 0 2px var(--product-text);
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .inspector-toggle-field {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .inspector-toggle-field button {
+  min-height: 32px;
+  padding: 0 9px;
+  border: 1px solid var(--product-line);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--product-muted);
+  box-shadow: none;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .inspector-toggle-field button.active {
+  border-color: #b9c7df;
+  background: #eef4ff;
+  color: #1d4ed8;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .inspector-image-field {
+  min-width: 0;
+}
+
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .inspector-image-field .image-input {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
 }
 
 body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-add-mode {
@@ -704,9 +924,6 @@ body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .screen-order-
     display: none;
   }
 
-  body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .top-tabs button span {
-    display: none;
-  }
 }
 
 
@@ -745,13 +962,6 @@ html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) > .
   grid-row: 1 !important;
 }
 
-html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) > .left-workspace > .top-tabs {
-  grid-column: 1 !important;
-  grid-row: 2 !important;
-  width: auto !important;
-  max-width: none !important;
-}
-
 html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-structure-pane {
   grid-column: 1 !important;
   grid-row: 3 !important;
@@ -761,7 +971,7 @@ html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .ed
 
 html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) > .preview-workspace {
   grid-column: 2 !important;
-  grid-row: 2 / 4 !important;
+  grid-row: 3 !important;
   width: auto !important;
   min-width: 0 !important;
   height: auto !important;
@@ -779,7 +989,7 @@ html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) > .
 
 html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-inspector-pane {
   grid-column: 3 !important;
-  grid-row: 2 / 4 !important;
+  grid-row: 3 !important;
   width: 360px !important;
   max-width: 360px !important;
 }
