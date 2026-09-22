@@ -12,7 +12,6 @@ const qaAll = await readFile('scripts/qa-all.mjs', 'utf8');
 const landingCss = await readFile('src/preview/LandingRenderer.css', 'utf8');
 const topnavRuntimeCss = await readFile('src/styles/preview-topnav-runtime-contract.css', 'utf8');
 const bottomTimerCss = await readFile('src/styles/preview-workspace-bottom-timer-effects.css', 'utf8');
-const legacyBottomTimerCss = await readFile('src/styles/preview-workspace-bottom-timer.css', 'utf8');
 const legacyTimerBottomCss = await readFile('src/styles/preview-workspace-timer-bottom.css', 'utf8');
 const timerUrgencyCss = await readFile('src/styles/preview-workspace-timer-urgency.css', 'utf8');
 const fixedUiCss = await readFile('src/styles/preview-fixed-ui-contract.css', 'utf8');
@@ -75,7 +74,6 @@ for (const token of [
 }
 assert(!bottomTimerCss.includes('data-timer-badge'), 'consolidated bottom timer CSS must not restore the floating promo badge');
 assert(!bottomTimerCss.includes('@media (max-width: 430px)'), 'bottom timer sizing must use the landing container instead of browser viewport width');
-assert(!legacyBottomTimerCss.includes('.bottom-timer'), 'legacy bottom timer manifest stub must not contain runtime selectors');
 assert(!legacyTimerBottomCss.includes('.bottom-timer'), 'legacy timer-bottom manifest stub must not contain runtime selectors');
 assert(!timerUrgencyCss.includes('.bottom-timer'), 'main timer urgency CSS must not style the fixed bottom timer');
 assert(!fixedUiCss.includes(':has(.bottom-timer) .bottom-timer'), 'fixed collision CSS must not own bottom timer geometry');
