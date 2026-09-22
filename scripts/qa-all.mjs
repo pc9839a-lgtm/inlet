@@ -13,6 +13,7 @@ const steps = [
   ['pagero:editor-css-owner:cleanup-1:qa', ['scripts/pagero-editor-css-owner-cleanup-1-quality-check.mjs']],
   ['pagero:editor-css-owner:cleanup-2:qa', ['scripts/pagero-editor-css-owner-cleanup-2-quality-check.mjs']],
   ['pagero:editor-css-owner:cleanup-3:qa', ['scripts/pagero-editor-css-owner-cleanup-3-quality-check.mjs']],
+  ['pagero:editor-global-nav:shell-4:qa', ['scripts/pagero-editor-global-nav-shell-4-quality-check.mjs']],
   ['pagero:section-patterns:e2:qa', ['scripts/pagero-section-patterns-e2-quality-check.mjs']],
   ['templates:qa', ['scripts/template-quality-check.mjs']],
   ['ai:qa', ['scripts/ai-quality-check.mjs']],
