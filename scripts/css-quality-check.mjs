@@ -24,7 +24,6 @@ const cssFiles = [
   'src/styles/base-public-live-loop.css',
   'src/styles/base-public-utility.css',
   'src/styles/base-start-mode.css',
-  'src/styles/editor.css',
   'src/styles/editor-rich.css',
   'src/styles/editor-blocks.css',
   'src/styles/editor-animation.css',
@@ -111,7 +110,6 @@ const cssFiles = [
   'src/styles/base-wayzi-footer.css',
 ];
 const lazyCssOwners = {
-  'src/styles/editor.css': 'src/app-styles.css',
   'src/styles/editor-rich.css': 'src/app-styles.css',
   'src/styles/editor-blocks.css': 'src/app-styles.css',
   'src/styles/editor-animation.css': 'src/app-styles.css',
@@ -165,7 +163,6 @@ const catchAllFileBaselines = {
   'src/styles/preview-workspace.css': 5246,
   'src/styles/preview-bottom.css': 9976,
   'src/styles/panels.css': 2227,
-  'src/styles/editor.css': 5617,
 };
 
 function assert(condition, message) {
