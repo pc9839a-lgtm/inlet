@@ -1,6 +1,7 @@
 import React from 'react';
 import { WorkspaceLeftPanel } from './workspace/WorkspaceLeftPanel.jsx';
 import { WorkspacePreviewPane } from './workspace/WorkspacePreviewPane.jsx';
+import { WorkspaceTabs } from './workspace/WorkspaceTabs.jsx';
 import '../styles/product-ui-tokens.css';
 import '../styles/workspace-shell.css';
 import '../styles/editor-workspace.css';
@@ -72,12 +73,17 @@ export default function WorkspaceEditorScreen({
         createFromTemplate={createFromTemplate}
         allowedTabs={allowedTabs}
         changeTab={changeTab}
+        hideTabs={editWorkspace}
         editPanelProps={editPanelProps}
         stylePanelProps={stylePanelProps}
         inboxPanelProps={inboxPanelProps}
         statsPanelProps={statsPanelProps}
         settingsPanelProps={settingsPanelProps}
       />
+
+      {editWorkspace && (
+        <WorkspaceTabs allowedTabs={allowedTabs} tab={effectiveTab} changeTab={changeTab} />
+      )}
 
       {!mobileOperationsOnly && !operationsWorkspace && <WorkspacePreviewPane
         page={page}
