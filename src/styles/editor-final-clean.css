@@ -1,11 +1,11 @@
 /* Pagero editor stable workspace owner */
-body:has(.builder-shell),
-#root:has(.builder-shell) {
+body:has(.builder-shell:not(.edit-mode-shell)),
+#root:has(.builder-shell:not(.edit-mode-shell)) {
   width: 100% !important;
   height: 100dvh !important;
   overflow: hidden !important;
 }
-body .builder-shell {
+body .builder-shell:not(.edit-mode-shell) {
   --pg-left-width: clamp(660px, 40vw, 720px);
   --pg-panel-width: min(100%, 680px);
   --pg-preview-width: min(540px, calc(100vw - var(--pg-left-width) - 72px));
@@ -18,7 +18,7 @@ body .builder-shell {
   overflow: hidden !important;
   align-items: stretch !important;
 }
-body .builder-shell .left-workspace {
+body .builder-shell:not(.edit-mode-shell) .left-workspace {
   width: 100% !important;
   height: 100dvh !important;
   min-height: 0 !important;
@@ -27,7 +27,7 @@ body .builder-shell .left-workspace {
   overflow-y: auto !important;
   scrollbar-gutter: stable !important;
 }
-body .builder-shell .work-panel {
+body .builder-shell:not(.edit-mode-shell) .work-panel {
   width: 100% !important;
   max-width: var(--pg-panel-width) !important;
   min-width: 0 !important;
@@ -37,14 +37,14 @@ body .builder-shell .work-panel {
   padding: 28px 24px 64px !important;
   overflow: visible !important;
 }
-body .builder-shell :is(.panel-header, .top-tabs, .edit-layout, .settings-panel, .style-panel, .inbox-panel, .stats-panel) {
+body .builder-shell:not(.edit-mode-shell) :is(.panel-header, .top-tabs, .edit-layout, .settings-panel, .style-panel, .inbox-panel, .stats-panel) {
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
   margin-left: 0 !important;
   margin-right: 0 !important;
 }
-body .builder-shell .preview-workspace {
+body .builder-shell:not(.edit-mode-shell) .preview-workspace {
   width: 100% !important;
   min-width: 0 !important;
   height: 100dvh !important;
@@ -55,7 +55,7 @@ body .builder-shell .preview-workspace {
   align-items: flex-start !important;
   justify-content: center !important;
 }
-body .builder-shell .preview-sticky {
+body .builder-shell:not(.edit-mode-shell) .preview-sticky {
   width: var(--pg-preview-width) !important;
   max-width: 100% !important;
   height: calc(100dvh - 56px) !important;
@@ -67,11 +67,11 @@ body .builder-shell .preview-sticky {
   align-items: stretch !important;
   gap: 12px !important;
 }
-body .builder-shell .preview-top {
+body .builder-shell:not(.edit-mode-shell) .preview-top {
   width: 100% !important;
   flex: 0 0 auto !important;
 }
-body .builder-shell .phone-frame {
+body .builder-shell:not(.edit-mode-shell) .phone-frame {
   width: min(460px, 100%) !important;
   max-width: 460px !important;
   height: calc(100dvh - 144px) !important;
@@ -80,62 +80,62 @@ body .builder-shell .phone-frame {
   margin: 0 auto !important;
   flex: 1 1 auto !important;
 }
-body .builder-shell .phone-frame .landing-page {
+body .builder-shell:not(.edit-mode-shell) .phone-frame .landing-page {
   width: 100% !important;
   height: 100% !important;
   overflow-x: hidden !important;
   overflow-y: auto !important;
 }
 @media (max-width: 1440px) {
-  body .builder-shell {
+  body .builder-shell:not(.edit-mode-shell) {
     --pg-left-width: 680px;
     --pg-panel-width: 640px;
     --pg-preview-width: min(500px, calc(100vw - 728px));
     grid-template-columns: var(--pg-left-width) minmax(560px, 1fr) !important;
   }
-  body .builder-shell .work-panel {
+  body .builder-shell:not(.edit-mode-shell) .work-panel {
     padding-left: 20px !important;
     padding-right: 20px !important;
   }
 }
 @media (max-width: 1280px) {
-  body .builder-shell {
+  body .builder-shell:not(.edit-mode-shell) {
     --pg-left-width: 640px;
     --pg-panel-width: 600px;
     --pg-preview-width: min(460px, calc(100vw - 684px));
     grid-template-columns: var(--pg-left-width) minmax(500px, 1fr) !important;
   }
-  body .builder-shell .phone-frame {
+  body .builder-shell:not(.edit-mode-shell) .phone-frame {
     width: min(430px, 100%) !important;
     max-width: 430px !important;
   }
 }
 @media (max-width: 1180px) {
-  body .builder-shell {
+  body .builder-shell:not(.edit-mode-shell) {
     height: auto !important;
     min-height: 100dvh !important;
     max-height: none !important;
     overflow: visible !important;
     grid-template-columns: minmax(0, 1fr) !important;
   }
-  body .builder-shell :is(.left-workspace, .preview-workspace, .preview-sticky) {
+  body .builder-shell:not(.edit-mode-shell) :is(.left-workspace, .preview-workspace, .preview-sticky) {
     height: auto !important;
     max-height: none !important;
     overflow: visible !important;
   }
-  body .builder-shell .work-panel {
+  body .builder-shell:not(.edit-mode-shell) .work-panel {
     max-width: 760px !important;
     min-height: 0 !important;
     padding: 18px 14px 28px !important;
   }
-  body .builder-shell .preview-workspace {
+  body .builder-shell:not(.edit-mode-shell) .preview-workspace {
     padding: 0 14px 28px !important;
   }
-  body .builder-shell .preview-sticky {
+  body .builder-shell:not(.edit-mode-shell) .preview-sticky {
     width: min(460px, 100%) !important;
     margin: 0 auto !important;
   }
-  body .builder-shell .phone-frame {
+  body .builder-shell:not(.edit-mode-shell) .phone-frame {
     width: min(430px, 100%) !important;
     max-width: 430px !important;
     height: 760px !important;
