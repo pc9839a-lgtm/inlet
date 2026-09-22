@@ -3,10 +3,10 @@ import './PageGlobalOptions.css';
 import { PageGlobalOptionsHeader } from './PageGlobalOptionsHeader.jsx';
 import { PageGlobalOptionsList } from './PageGlobalOptionsList.jsx';
 
-export function PageGlobalOptions({ page, updateTheme, updatePage, showTitle = true }) {
+export function PageGlobalOptions({ page, updateTheme, updatePage }) {
   return (
     <section className="card page-global-options-card">
-      {showTitle && <PageGlobalOptionsHeader />}
+      <PageGlobalOptionsHeader />
       <PageGlobalOptionsList
         page={page}
         updateTheme={updateTheme}

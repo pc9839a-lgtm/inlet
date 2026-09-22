@@ -1,0 +1,35 @@
+/* Narrow editor viewport: prevent the two-column workspace from forcing horizontal overflow. */
+@media (max-width: 1180px) {
+  body .builder-shell:not(.mobile-operations-shell):not(.inbox-workspace-shell):not(.stats-dashboard-shell):not(.settings-workspace-shell) {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100dvh !important;
+    max-height: none !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    overflow: visible !important;
+  }
+
+  body .builder-shell:not(.mobile-operations-shell):not(.inbox-workspace-shell):not(.stats-dashboard-shell):not(.settings-workspace-shell) .left-workspace {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+  }
+
+  body .builder-shell:not(.mobile-operations-shell):not(.inbox-workspace-shell):not(.stats-dashboard-shell):not(.settings-workspace-shell) .work-panel {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 760px !important;
+    margin-inline: auto !important;
+  }
+
+  html body #root .builder-shell:not(.mobile-operations-shell):not(.inbox-workspace-shell):not(.stats-dashboard-shell):not(.settings-workspace-shell) .preview-workspace {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}

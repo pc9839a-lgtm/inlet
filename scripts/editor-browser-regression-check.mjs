@@ -602,9 +602,6 @@ async function collectDesktopMetrics(client) {
     const preview = document.querySelector('.preview-workspace');
     const frame = document.querySelector('.phone-frame');
     const header = document.querySelector('.panel-header');
-    const tabs = document.querySelector('.top-tabs');
-    const structure = document.querySelector('.editor-structure-pane');
-    const inspector = document.querySelector('.editor-inspector-pane');
     return {
       path: location.pathname,
       bodyScrollWidth: document.body?.scrollWidth || 0,
@@ -615,10 +612,6 @@ async function collectDesktopMetrics(client) {
       preview: rect(preview),
       frame: rect(frame),
       header: rect(header),
-      tabs: rect(tabs),
-      structure: rect(structure),
-      inspector: rect(inspector),
-      tabsRootLevel: !!tabs && tabs.parentElement === shell,
       mobile: shell?.classList.contains('mobile-operations-shell') || false,
       heroTitleVisible: !!frame && (frame.innerText || '').includes(${JSON.stringify(finalHeroTitle)}),
       fallback: !!document.querySelector('.app-error-screen, .error-screen, .block-render-fallback'),
@@ -641,10 +634,6 @@ async function collectNarrowDesktopMetrics(client) {
       shell: rect(document.querySelector('.builder-shell')),
       left: rect(document.querySelector('.left-workspace')),
       preview: rect(document.querySelector('.preview-workspace')),
-      tabs: rect(document.querySelector('.top-tabs')),
-      structure: rect(document.querySelector('.editor-structure-pane')),
-      inspector: rect(document.querySelector('.editor-inspector-pane')),
-      tabsRootLevel: document.querySelector('.top-tabs')?.parentElement === document.querySelector('.builder-shell'),
       mobile: document.querySelector('.builder-shell')?.classList.contains('mobile-operations-shell') || false,
       fallback: !!document.querySelector('.app-error-screen, .error-screen, .block-render-fallback'),
     };
@@ -696,11 +685,6 @@ function assertDesktop(metrics) {
   assertInsideViewport(metrics.shell, metrics.innerWidth, 'desktop builder shell');
   assertInsideViewport(metrics.left, metrics.innerWidth, 'desktop left workspace');
   assertInsideViewport(metrics.preview, metrics.innerWidth, 'desktop preview workspace');
-  assert(metrics.tabsRootLevel, 'desktop workspace tabs must be a direct builder-shell child');
-  assert(metrics.tabs?.width >= metrics.shell.width - 3, `desktop workspace tabs must span the shell: ${JSON.stringify({ tabs: metrics.tabs, shell: metrics.shell })}`);
-  assert(metrics.structure?.top >= metrics.tabs.bottom - 3, 'structure pane must start below the global workspace tabs');
-  assert(metrics.preview?.top >= metrics.tabs.bottom - 3, 'preview pane must start below the global workspace tabs');
-  assert(metrics.inspector?.top >= metrics.tabs.bottom - 3, 'inspector pane must start below the global workspace tabs');
   assert(metrics.frame?.width >= 400 && metrics.frame?.width <= 432, `desktop phone frame width is invalid: ${metrics.frame?.width}`);
   assert(metrics.heroTitleVisible, 'saved hero title is not visible in desktop preview');
 }
@@ -714,11 +698,6 @@ function assertNarrowDesktop(metrics, width) {
   assertInsideViewport(metrics.shell, width, 'narrow desktop builder shell');
   assertInsideViewport(metrics.left, width, 'narrow desktop left workspace');
   assertInsideViewport(metrics.preview, width, 'narrow desktop preview workspace');
-  assert(metrics.tabsRootLevel, 'narrow desktop workspace tabs must remain a direct builder-shell child');
-  assert(metrics.tabs?.width >= metrics.shell.width - 3, 'narrow desktop workspace tabs must remain full-width');
-  assert(metrics.structure?.top >= metrics.tabs.bottom - 3, 'narrow structure pane must start below the global tabs');
-  assert(metrics.preview?.top >= metrics.tabs.bottom - 3, 'narrow preview pane must start below the global tabs');
-  assert(metrics.inspector?.top >= metrics.tabs.bottom - 3, 'narrow inspector pane must start below the global tabs');
 }
 
 function assertMobile(metrics, viewport) {
@@ -877,22 +856,18 @@ async function run() {
     const dragOrderAfter = await normalBlockOrder(client);
     assert(JSON.stringify(dragOrderAfter) !== JSON.stringify(dragOrderBefore), 'pointer drag did not change block order');
 
-    // E2E-11 / E2E-12: compact page theme inspector writes immediately to the local draft and remains undoable.
-    await clickButtonByText(client, '.editor-inspector-modes', '페이지');
-    await waitForBrowser(client, `!!document.querySelector('.page-theme-inspector')`, 'compact page theme inspector');
-    await clickButtonByText(client, '.page-theme-nav', '색상');
-    await waitForBrowser(client, `!!document.querySelector('.page-theme-inspector input[type="color"]')`, 'theme accent input');
-    const accentBeforeChange = await evaluate(client, `document.querySelector('.page-theme-inspector input[type="color"]')?.value`);
-    await setInputValue(client, '.page-theme-inspector input[type="color"]', updatedAccent);
-    await waitForBrowser(client, `document.querySelector('.page-theme-inspector input[type="color"]')?.value?.toLowerCase() === ${JSON.stringify(updatedAccent)}`, 'theme accent local update');
-    assert(apiState.saveCount === 0, 'theme edit must remain local before publish');
-    assert(!(await evaluate(client, `!!document.querySelector('.style-apply-btn, .style-reset-btn')`)), 'compact inspector must not expose staged apply/reset controls');
-    await clickSelector(client, '.panel-history-btn[aria-label="실행 취소"]');
-    await waitForBrowser(client, `document.querySelector('.page-theme-inspector input[type="color"]')?.value?.toLowerCase() === ${JSON.stringify(String(accentBeforeChange || '').toLowerCase())}`, 'undo compact theme edit');
-    await clickSelector(client, '.panel-history-btn[aria-label="다시 실행"]');
-    await waitForBrowser(client, `document.querySelector('.page-theme-inspector input[type="color"]')?.value?.toLowerCase() === ${JSON.stringify(updatedAccent)}`, 'redo compact theme edit');
+    // E2E-11 / E2E-12: page/theme inspector previews the style draft, then applies it into the page draft.
+    await clickButtonByText(client, '.editor-inspector-modes', '페이지 · 테마');
+    await waitForBrowser(client, `!!document.querySelector('.editor-inspector-pane .style-panel')`, 'page theme inspector');
+    await clickButtonByText(client, '.style-subnav', '색상');
+    await waitForBrowser(client, `!!document.querySelector('.style-panel input[type="color"]')`, 'style accent input');
+    await setInputValue(client, '.style-panel input[type="color"]', updatedAccent);
+    await waitForBrowser(client, `!document.querySelector('.style-apply-btn')?.disabled`, 'style apply enabled');
+    assert(apiState.saveCount === 0, 'style preview must not publish automatically');
+    await clickSelector(client, '.style-apply-btn');
+    await waitForBrowser(client, `document.querySelector('.style-apply-btn')?.disabled === true`, 'style applied to page draft');
 
-    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-list')`, 'structure pane after theme edit');
+    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-list')`, 'structure pane after style apply');
 
     // E2E-13: preview action must not close or freeze the editor; continue editing afterwards.
     await evaluate(client, `window.__pageroQaPreviewCalls = []; window.open = (...args) => { window.__pageroQaPreviewCalls.push(args); return { opener: null }; };`);
@@ -1009,7 +984,7 @@ async function run() {
       publicVerifyCount: apiState.publicVerifyCount,
       mobileWidths: mobileViewports.map((item) => item.width),
       screenshots: 7,
-      realUseFlows: ['add-block', 'undo-redo', 'visibility', 'menu-reorder', 'pointer-drag-reorder', 'theme-immediate', 'preview-continue', 'publish-race', 'revision-restore-undo-redo', 'post-restore-publish-readback', 'narrow-desktop'],
+      realUseFlows: ['add-block', 'undo-redo', 'visibility', 'menu-reorder', 'pointer-drag-reorder', 'style-apply', 'preview-continue', 'publish-race', 'revision-restore-undo-redo', 'post-restore-publish-readback', 'narrow-desktop'],
     }, null, 2));
   } finally {
     await client?.close().catch(() => {});

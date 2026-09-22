@@ -26,7 +26,6 @@ export function WorkspaceLeftPanel({
   createFromTemplate,
   allowedTabs,
   changeTab,
-  hideTabs = false,
   editPanelProps,
   stylePanelProps,
   inboxPanelProps,
@@ -65,7 +64,7 @@ export function WorkspaceLeftPanel({
           </LazyChunkBoundary>
         ) : (
           <>
-            {!hideTabs && <WorkspaceTabs allowedTabs={allowedTabs} tab={tab} changeTab={changeTab} />}
+            <WorkspaceTabs allowedTabs={allowedTabs} tab={tab} changeTab={changeTab} />
 
             <WorkspaceActivePanel
               canUseBuilder={canUseBuilder}

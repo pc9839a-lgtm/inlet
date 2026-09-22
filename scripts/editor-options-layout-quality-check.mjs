@@ -69,7 +69,7 @@ assert(shareCss.includes('grid-template-columns: repeat(2, minmax(0, 1fr))'), 'm
 assert(shareCss.includes('min-height: 42px'), 'mobile share position choices must keep large tap targets');
 assert(screenOrderCss.includes('@media (max-width: 760px)') && screenOrderCss.includes('.screen-order-v2-card { padding: 10px;'), 'screen order must retain its compact mobile card contract');
 assert(editLayout.includes('editor-structure-pane') && editLayout.includes('<ScreenOrderList {...screenOrderListProps} />'), 'screen order must live in the dedicated structure pane');
-assert(editLayout.includes('editor-inspector-pane') && editLayout.includes("editor-inspector-section-title\">페이지") && editLayout.includes('<PageGlobalOptions {...pageGlobalOptionsProps} showTitle={false} />'), 'page options must live in the compact page inspector without a duplicate heading');
+assert(editLayout.includes('editor-inspector-pane') && editLayout.includes('페이지 · 테마') && editLayout.includes('<PageGlobalOptions {...pageGlobalOptionsProps} />'), 'page options must live in the page/theme inspector instead of a parallel top-level editor mode');
 assert(editorLabels.includes("globalSettings: '\\uC804\\uC5ED \\uC124\\uC815'") && pageOptionsHeader.includes('T.globalSettings'), 'page options content heading must be global settings instead of repeating the tab label');
 assert(editorLabels.includes("normalBlocks: '\\uC77C\\uBC18 \\uBE14\\uB85D'") && screenOrderHeader.includes('T.normalBlocks'), 'screen order content heading must identify normal blocks instead of repeating the tab label');
 assert(mobileScreenOrderCss.includes('grid-template-columns: 44px minmax(0,1fr) 44px 44px'), 'mobile screen order must reserve full touch columns without horizontal overflow');

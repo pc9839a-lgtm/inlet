@@ -53,7 +53,7 @@ assert(browserSource.includes("clickButtonByText(client, '.add-panel', '구분�
 assert(browserSource.includes("#editor-block-editor-text .screen-order-v2-visibility-button") && browserSource.includes("#editor-block-editor-form .screen-order-v2-action") && browserSource.includes("'위로 이동'"), 'browser QA must verify visibility and order changes through the current screen-order V2 controls');
 assert(browserSource.includes("Input.dispatchMouseEvent") && browserSource.includes("pointer drag moved divider to first position") && browserSource.includes(".screen-order-v2-drag"), 'browser QA must verify reorder through real Chrome mouse input, not only menu actions');
 assert(screenOrderMovementSource.includes('const moveUp = () =>') && screenOrderMovementSource.includes('const moveDown = () =>') && !screenOrderMovementSource.includes('event.stopPropagation'), 'screen-order move actions must stay event-independent because the overflow menu invokes them without an event');
-assert(browserSource.includes("clickButtonByText(client, '.editor-inspector-modes', '페이지')") && browserSource.includes("updatedAccent") && browserSource.includes(".page-theme-inspector") && browserSource.includes("undo compact theme edit") && browserSource.includes("redo compact theme edit"), 'browser QA must update page theme immediately in the compact inspector and verify undo/redo before publish');
+assert(browserSource.includes("clickButtonByText(client, '.editor-inspector-modes', '페이지 · 테마')") && browserSource.includes("updatedAccent") && browserSource.includes(".style-apply-btn"), 'browser QA must preview and apply a page theme change from the unified inspector before publish');
 assert(browserSource.includes("window.__pageroQaPreviewCalls") && browserSource.includes("clickButtonByText(client, '.panel-actions', '미리보기')"), 'browser QA must verify preview can open without interrupting continued editing');
 assert(browserSource.includes("saveDelayMs = 900") && browserSource.includes("continuedHeroTitle") && browserSource.includes("newer local draft after delayed publish response"), 'browser QA must cover edits made while a publish response is in flight');
 assert(browserSource.includes("revisionHeroTitle") && browserSource.includes("finalHeroTitle") && browserSource.includes("'버전 기록'") && browserSource.includes("clickPointer(client, '.page-revision-history-section .page-revision-history-row .ghost-btn')"), 'browser QA must restore a prior revision through real Chrome pointer input in the settings UI');
@@ -105,7 +105,7 @@ assert(editHistorySource.includes('const MAX_HISTORY = 50') && editHistorySource
 console.log(JSON.stringify({
   ok: true,
   scope: 'authenticated-editor-browser-contract',
-  desktopFlow: ['login', 'dashboard', 'account-page', 'page-select', 'edit-panel', 'add-block', 'undo-redo', 'visibility', 'menu-reorder', 'pointer-drag-reorder', 'theme-immediate', 'preview-continue', 'publish-race', 'publish', 'reload', 'narrow-desktop'],
+  desktopFlow: ['login', 'dashboard', 'account-page', 'page-select', 'edit-panel', 'add-block', 'undo-redo', 'visibility', 'menu-reorder', 'pointer-drag-reorder', 'style-apply', 'preview-continue', 'publish-race', 'publish', 'reload', 'narrow-desktop'],
   imageLibraryFlow: ['image-block', 'open-library', 'project-scoped-list', 'select-existing-image', 'local-draft', 'publish', 'reload'],
   videoLibraryFlow: ['video-block', 'open-library', 'project-scoped-list', 'select-existing-video', 'playable-metadata', 'local-draft', 'publish', 'reload'],
   mobileWidths: [360, 390, 430],
