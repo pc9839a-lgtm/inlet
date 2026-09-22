@@ -1,12 +1,12 @@
 /* Final builder layout contract: one left scroll, stable preview width, identical tab surfaces. */
-body:has(.builder-shell),
-#root:has(.builder-shell) {
+body:has(.builder-shell:not(.edit-mode-shell)),
+#root:has(.builder-shell:not(.edit-mode-shell)) {
   width: 100%;
   height: 100dvh !important;
   overflow: hidden !important;
 }
 
-.builder-shell {
+.builder-shell:not(.edit-mode-shell) {
   --editor-left-width: clamp(680px, 42vw, 760px);
   --editor-panel-width: min(100%, 700px);
   --editor-preview-width: min(540px, calc(100vw - var(--editor-left-width) - 72px));
@@ -21,7 +21,7 @@ body:has(.builder-shell),
   background: radial-gradient(circle at 18% 0%, rgba(37,99,235,.08), transparent 30%), #eef1f6 !important;
 }
 
-.builder-shell .left-workspace {
+.builder-shell:not(.edit-mode-shell) .left-workspace {
   width: 100% !important;
   min-width: 0 !important;
   height: 100dvh !important;
@@ -33,7 +33,7 @@ body:has(.builder-shell),
   border-right: 1px solid #d9dee8 !important;
 }
 
-.builder-shell .work-panel {
+.builder-shell:not(.edit-mode-shell) .work-panel {
   width: 100% !important;
   max-width: var(--editor-panel-width) !important;
   min-width: 0 !important;
@@ -44,14 +44,14 @@ body:has(.builder-shell),
   overflow: visible !important;
 }
 
-.builder-shell .work-panel > *,
-.builder-shell .panel-header,
-.builder-shell .top-tabs,
-.builder-shell .edit-layout,
-.builder-shell .settings-panel,
-.builder-shell .stats-panel,
-.builder-shell .inbox-panel,
-.builder-shell .style-panel {
+.builder-shell:not(.edit-mode-shell) .work-panel > *,
+.builder-shell:not(.edit-mode-shell) .panel-header,
+.builder-shell:not(.edit-mode-shell) .top-tabs,
+.builder-shell:not(.edit-mode-shell) .edit-layout,
+.builder-shell:not(.edit-mode-shell) .settings-panel,
+.builder-shell:not(.edit-mode-shell) .stats-panel,
+.builder-shell:not(.edit-mode-shell) .inbox-panel,
+.builder-shell:not(.edit-mode-shell) .style-panel {
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
@@ -60,7 +60,7 @@ body:has(.builder-shell),
   box-sizing: border-box !important;
 }
 
-.builder-shell .preview-workspace {
+.builder-shell:not(.edit-mode-shell) .preview-workspace {
   min-width: 0 !important;
   width: 100% !important;
   height: 100dvh !important;
@@ -72,7 +72,7 @@ body:has(.builder-shell),
   align-items: flex-start !important;
 }
 
-.builder-shell .preview-workspace .preview-sticky {
+.builder-shell:not(.edit-mode-shell) .preview-workspace .preview-sticky {
   position: sticky !important;
   top: 28px !important;
   width: var(--editor-preview-width) !important;
@@ -86,12 +86,12 @@ body:has(.builder-shell),
   gap: 12px !important;
 }
 
-.builder-shell .preview-workspace .preview-top {
+.builder-shell:not(.edit-mode-shell) .preview-workspace .preview-top {
   width: 100% !important;
   flex: 0 0 auto !important;
 }
 
-.builder-shell .preview-workspace .phone-frame {
+.builder-shell:not(.edit-mode-shell) .preview-workspace .phone-frame {
   width: 100% !important;
   max-width: 540px !important;
   height: calc(100dvh - 144px) !important;
@@ -101,12 +101,12 @@ body:has(.builder-shell),
   margin: 0 auto !important;
 }
 
-.builder-shell .preview-workspace .phone-frame,
-.builder-shell .preview-workspace .phone-frame * {
+.builder-shell:not(.edit-mode-shell) .preview-workspace .phone-frame,
+.builder-shell:not(.edit-mode-shell) .preview-workspace .phone-frame * {
   box-sizing: border-box !important;
 }
 
-.builder-shell .preview-workspace .phone-frame .landing-page {
+.builder-shell:not(.edit-mode-shell) .preview-workspace .phone-frame .landing-page {
   width: 100% !important;
   height: 100% !important;
   overflow-x: hidden !important;
@@ -114,7 +114,7 @@ body:has(.builder-shell),
 }
 
 @media (min-width: 1680px) {
-  .builder-shell {
+  .builder-shell:not(.edit-mode-shell) {
     --editor-left-width: 760px;
     --editor-panel-width: 712px;
     --editor-preview-width: 540px;
@@ -122,25 +122,25 @@ body:has(.builder-shell),
 }
 
 @media (max-width: 1440px) {
-  .builder-shell {
+  .builder-shell:not(.edit-mode-shell) {
     --editor-left-width: 700px;
     --editor-panel-width: 660px;
     --editor-preview-width: min(540px, calc(100vw - 752px));
   }
 
-  .builder-shell .work-panel {
+  .builder-shell:not(.edit-mode-shell) .work-panel {
     padding-left: 20px !important;
     padding-right: 20px !important;
   }
 
-  .builder-shell .preview-workspace {
+  .builder-shell:not(.edit-mode-shell) .preview-workspace {
     padding-left: 20px !important;
     padding-right: 20px !important;
   }
 }
 
 @media (max-width: 1280px) {
-  .builder-shell {
+  .builder-shell:not(.edit-mode-shell) {
     --editor-left-width: 660px;
     --editor-panel-width: 620px;
     --editor-preview-width: min(500px, calc(100vw - 704px));
@@ -149,13 +149,13 @@ body:has(.builder-shell),
 }
 
 @media (max-width: 1180px) {
-  body:has(.builder-shell),
-  #root:has(.builder-shell) {
+  body:has(.builder-shell:not(.edit-mode-shell)),
+  #root:has(.builder-shell:not(.edit-mode-shell)) {
     height: auto !important;
     overflow: auto !important;
   }
 
-  .builder-shell {
+  .builder-shell:not(.edit-mode-shell) {
     height: auto !important;
     min-height: 100dvh !important;
     max-height: none !important;
@@ -163,30 +163,30 @@ body:has(.builder-shell),
     grid-template-columns: 1fr !important;
   }
 
-  .builder-shell .left-workspace,
-  .builder-shell .preview-workspace,
-  .builder-shell .preview-workspace .preview-sticky {
+  .builder-shell:not(.edit-mode-shell) .left-workspace,
+  .builder-shell:not(.edit-mode-shell) .preview-workspace,
+  .builder-shell:not(.edit-mode-shell) .preview-workspace .preview-sticky {
     height: auto !important;
     max-height: none !important;
     overflow: visible !important;
   }
 
-  .builder-shell .work-panel {
+  .builder-shell:not(.edit-mode-shell) .work-panel {
     max-width: 760px !important;
     min-height: 0 !important;
     padding: 18px 14px 28px !important;
   }
 
-  .builder-shell .preview-workspace {
+  .builder-shell:not(.edit-mode-shell) .preview-workspace {
     padding: 0 14px 28px !important;
   }
 
-  .builder-shell .preview-workspace .preview-sticky {
+  .builder-shell:not(.edit-mode-shell) .preview-workspace .preview-sticky {
     width: min(460px, 100%) !important;
     margin: 0 auto !important;
   }
 
-  .builder-shell .preview-workspace .phone-frame {
+  .builder-shell:not(.edit-mode-shell) .preview-workspace .phone-frame {
     width: min(430px, 100%) !important;
     height: 760px !important;
     min-height: 620px !important;
