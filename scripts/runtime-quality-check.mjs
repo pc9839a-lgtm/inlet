@@ -278,7 +278,6 @@ const legacyFormEditorCss = (await Promise.all([
   'base-components-html.css',
   'base-components-options.css',
   'base-components-rich.css',
-  'preview-forms-advanced.css',
   'preview-forms-basic.css',
   'preview-forms-bottom-color.css',
   'preview-forms-basic-grid.css',
