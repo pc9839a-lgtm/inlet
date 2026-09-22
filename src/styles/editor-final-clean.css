@@ -1,6 +1,6 @@
 /* Pagero editor stable workspace owner */
-body:has(.builder-shell:not(.edit-mode-shell)),
-#root:has(.builder-shell:not(.edit-mode-shell)) {
+body:has(.builder-shell),
+#root:has(.builder-shell) {
   width: 100% !important;
   height: 100dvh !important;
   overflow: hidden !important;
@@ -37,7 +37,7 @@ body .builder-shell:not(.edit-mode-shell) .work-panel {
   padding: 28px 24px 64px !important;
   overflow: visible !important;
 }
-body .builder-shell:not(.edit-mode-shell) :is(.panel-header, .top-tabs, .edit-layout, .settings-panel, .style-panel, .inbox-panel, .stats-panel) {
+body .builder-shell :is(.panel-header, .top-tabs, .edit-layout, .settings-panel, .style-panel, .inbox-panel, .stats-panel) {
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
