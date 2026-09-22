@@ -39,7 +39,6 @@ const previewCssFiles = [
   'src/styles/preview-cards.css',
   'src/styles/preview-download.css',
   'src/styles/preview-workspace.css',
-  'src/styles/preview-workspace-bottom-timer.css',
   'src/styles/preview-workspace-hero-media.css',
   'src/styles/preview-workspace-bottom-card.css',
   'src/styles/preview-workspace-topnav-override.css',
