@@ -1,31 +1,7 @@
 /* Active PageRO editor workflow patch. Scoped to WorkspaceEditorScreen edit tab only. */
-@media (min-width: 1181px) {
-  html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) {
-    grid-template-columns: clamp(480px, 36vw, 540px) minmax(560px, 1fr) !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell > .left-workspace {
-    min-width: 0 !important;
-    max-width: none !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .work-panel {
-    padding: 14px 14px 96px !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell > .preview-workspace {
-    min-width: 0 !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .preview-workspace .preview-sticky {
-    width: min(1040px, 100%) !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .preview-workspace .phone-frame {
-    width: 430px !important;
-    max-width: 100% !important;
-  }
-}
+/* Desktop geometry is owned by editor-workspace.css.
+ * Do not override edit-mode-shell columns here: the active DOM is
+ * structure / canvas / inspector and requires all three tracks. */
 
 /* Widget search added in #148 now receives styling on the actual editor path. */
 body .builder-shell.edit-mode-shell .edit-layout .widget-search {
