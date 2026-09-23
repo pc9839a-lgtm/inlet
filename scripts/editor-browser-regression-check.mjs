@@ -783,7 +783,7 @@ async function run() {
     assert(apiState.pageLoadCount >= 1, 'selected page was not loaded from the page API');
     await capture(client, 'desktop-editor-before');
 
-    const heroEditorSelector = '.editor-inspector-pane .selected-block-settings-card textarea[placeholder="핵심 제목을 입력하세요"]';
+    const heroEditorSelector = '.screen-order-v2-settings-panel textarea[placeholder="핵심 제목을 입력하세요"]';
     await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'separate hero editor textarea');
     const inlineEditorStillNested = await evaluate(client, `!!document.querySelector('#editor-block-editor-hero textarea[placeholder="핵심 제목을 입력하세요"]')`);
@@ -795,12 +795,11 @@ async function run() {
 
     // E2E-02 / E2E-03: add a real block, then undo and redo the add operation.
     const initialNormalBlockCount = await normalBlockCount(client);
-    await clickButtonByText(client, '.editor-left-modes', '추가');
+    await clickSelector(client, '.add-toggle');
     await waitForBrowser(client, `!!document.querySelector('#pagero-widget-search')`, 'block add panel');
     await clickButtonByText(client, '.section-add-modes', '기본 블록');
     await setInputValue(client, '#pagero-widget-search', '구분선');
     await clickButtonByText(client, '.add-panel', '구분선');
-    await clickButtonByText(client, '.editor-left-modes', '구조');
     await waitForBrowser(client, `document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item').length === ${initialNormalBlockCount + 1}`, 'added divider row');
     const addedDividerId = (await normalBlockOrder(client)).find((id) => !['editor-block-editor-hero', 'editor-block-editor-text', 'editor-block-editor-form'].includes(id));
     assert(addedDividerId, 'added divider block id was not resolved');
@@ -813,11 +812,10 @@ async function run() {
 
     // E2: add a recommended multi-block section pattern as one undoable local mutation.
     const beforePatternCount = await normalBlockCount(client);
-    await clickButtonByText(client, '.editor-left-modes', '추가');
+    await clickSelector(client, '.add-toggle');
     await waitForBrowser(client, `!!document.querySelector('.section-add-modes')`, 'section add modes');
     await clickButtonByText(client, '.section-add-modes', '추천 섹션');
     await clickSelector(client, '.section-pattern-card[aria-label="핵심 장점 + FAQ 섹션 추가"]');
-    await clickButtonByText(client, '.editor-left-modes', '구조');
     await waitForBrowser(client, `document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item').length === ${beforePatternCount + 2}`, 'recommended section pattern added');
     assert(apiState.saveCount === 0, 'section pattern insertion must remain local before publish');
     await clickSelector(client, '.panel-history-btn[aria-label="실행 취소"]');
@@ -857,8 +855,8 @@ async function run() {
     assert(JSON.stringify(dragOrderAfter) !== JSON.stringify(dragOrderBefore), 'pointer drag did not change block order');
 
     // E2E-11 / E2E-12: page/theme inspector previews the style draft, then applies it into the page draft.
-    await clickButtonByText(client, '.editor-inspector-modes', '페이지 · 테마');
-    await waitForBrowser(client, `!!document.querySelector('.editor-inspector-pane .style-panel')`, 'page theme inspector');
+    await clickButtonByText(client, '.edit-section-tabs', '페이지 옵션');
+    await waitForBrowser(client, `!!document.querySelector('.editor-page-options-stack .style-panel')`, 'page theme editor');
     await clickButtonByText(client, '.style-subnav', '색상');
     await waitForBrowser(client, `!!document.querySelector('.style-panel input[type="color"]')`, 'style accent input');
     await setInputValue(client, '.style-panel input[type="color"]', updatedAccent);
@@ -867,7 +865,8 @@ async function run() {
     await clickSelector(client, '.style-apply-btn');
     await waitForBrowser(client, `document.querySelector('.style-apply-btn')?.disabled === true`, 'style applied to page draft');
 
-    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-list')`, 'structure pane after style apply');
+    await clickButtonByText(client, '.edit-section-tabs', '화면 순서');
+    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-list')`, 'screen order after style apply');
 
     // E2E-13: preview action must not close or freeze the editor; continue editing afterwards.
     await evaluate(client, `window.__pageroQaPreviewCalls = []; window.open = (...args) => { window.__pageroQaPreviewCalls.push(args); return { opener: null }; };`);
