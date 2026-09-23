@@ -24,11 +24,6 @@ const addBlockOptionSource = await readFile('src/editor/editPanelParts/AddBlockO
 const addBlockDockCssSource = await readFile('src/styles/editor-widget-add-dock.css', 'utf8');
 const screenOrderMovementSource = await readFile('src/editor/editPanelParts/screenOrderMovement.js', 'utf8');
 const workspacePanelPropsSource = await readFile('src/runtime/createWorkspacePanelProps.js', 'utf8');
-const editorWorkspaceCssSource = await readFile('src/styles/editor-workspace.css', 'utf8');
-const editorActiveWorkflowCssSource = await readFile('src/styles/editor-active-workflow-patch.css', 'utf8');
-
-assert(editorWorkspaceCssSource.includes('grid-template-columns: 280px minmax(520px, 1fr) 360px !important;'), 'active desktop editor must keep structure / canvas / inspector tracks');
-assert(!editorActiveWorkflowCssSource.includes('grid-template-columns: clamp(480px, 36vw, 540px) minmax(560px, 1fr) !important;'), 'active workflow patch must not collapse the desktop editor back to two columns');
 
 assert(packageJson.scripts?.['browser:editor:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-browser-regression-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-image-library-browser-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-video-library-browser-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/media-library-settings-browser-check.mjs', 'browser:editor:qa must run editor, image/video reuse, and media settings E2E');
 assert(packageJson.scripts?.['browser:editor:image-library:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-image-library-browser-check.mjs', 'browser:editor:image-library:qa script is missing');
@@ -58,7 +53,7 @@ assert(browserSource.includes("clickButtonByText(client, '.add-panel', '구분�
 assert(browserSource.includes("#editor-block-editor-text .screen-order-v2-visibility-button") && browserSource.includes("#editor-block-editor-form .screen-order-v2-action") && browserSource.includes("'위로 이동'"), 'browser QA must verify visibility and order changes through the current screen-order V2 controls');
 assert(browserSource.includes("Input.dispatchMouseEvent") && browserSource.includes("pointer drag moved divider to first position") && browserSource.includes(".screen-order-v2-drag"), 'browser QA must verify reorder through real Chrome mouse input, not only menu actions');
 assert(screenOrderMovementSource.includes('const moveUp = () =>') && screenOrderMovementSource.includes('const moveDown = () =>') && !screenOrderMovementSource.includes('event.stopPropagation'), 'screen-order move actions must stay event-independent because the overflow menu invokes them without an event');
-assert(browserSource.includes("clickButtonByText(client, '.editor-inspector-modes', '페이지 · 테마')") && browserSource.includes("updatedAccent") && browserSource.includes(".style-apply-btn"), 'browser QA must preview and apply a page theme change from the unified inspector before publish');
+assert(browserSource.includes("clickButtonByText(client, '.edit-section-tabs', '페이지 옵션')") && browserSource.includes("updatedAccent") && browserSource.includes(".style-apply-btn"), 'browser QA must preview and apply a page theme change from the restored left editor before publish');
 assert(browserSource.includes("window.__pageroQaPreviewCalls") && browserSource.includes("clickButtonByText(client, '.panel-actions', '미리보기')"), 'browser QA must verify preview can open without interrupting continued editing');
 assert(browserSource.includes("saveDelayMs = 900") && browserSource.includes("continuedHeroTitle") && browserSource.includes("newer local draft after delayed publish response"), 'browser QA must cover edits made while a publish response is in flight');
 assert(browserSource.includes("revisionHeroTitle") && browserSource.includes("finalHeroTitle") && browserSource.includes("'버전 기록'") && browserSource.includes("clickPointer(client, '.page-revision-history-section .page-revision-history-row .ghost-btn')"), 'browser QA must restore a prior revision through real Chrome pointer input in the settings UI');
