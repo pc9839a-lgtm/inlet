@@ -438,47 +438,21 @@ body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .top-tabs {
   grid-row: 2;
   width: auto !important;
   min-width: 0 !important;
-  min-height: 50px !important;
+  min-height: 46px !important;
   grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap: 0 !important;
-  margin: 0 !important;
-  padding: 0 8px !important;
-  border: 0 !important;
-  border-bottom: 1px solid var(--product-line) !important;
-  border-radius: 0 !important;
-  background: #fff !important;
-  box-shadow: none !important;
+  gap: 4px !important;
+  margin: 10px 10px 8px !important;
+  padding: 4px !important;
+  border-radius: 10px !important;
 }
 
 body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .top-tabs button {
-  position: relative !important;
   min-width: 0 !important;
-  height: 49px !important;
-  min-height: 49px !important;
-  padding: 0 7px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 6px !important;
   gap: 5px !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  color: #7a8492 !important;
-  box-shadow: none !important;
   font-size: 11px !important;
-}
-
-body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .top-tabs button.active {
-  background: transparent !important;
-  color: #111827 !important;
-  box-shadow: none !important;
-}
-
-body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .top-tabs button.active::after {
-  content: '';
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: -1px;
-  height: 2px;
-  border-radius: 999px;
-  background: #111827;
 }
 
 body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .top-tabs button svg {
@@ -578,33 +552,33 @@ body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) :is(.editor-le
   flex: 0 0 auto;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 2px;
-  padding: 6px 10px;
+  gap: 4px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--product-line);
   background: #fff;
 }
 
 body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) :is(.editor-left-modes, .editor-inspector-modes) button {
   min-width: 0;
-  min-height: 34px;
+  min-height: 36px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 8px;
   background: transparent;
-  color: #7a8492;
+  color: var(--product-muted);
   box-shadow: none;
   font-size: 11px;
-  font-weight: 850;
+  font-weight: 900;
   cursor: pointer;
 }
 
 body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) :is(.editor-left-modes, .editor-inspector-modes) button:hover:not(:disabled) {
-  background: #f4f6f8;
-  color: #111827;
+  background: var(--product-soft);
+  color: var(--product-text);
 }
 
 body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) :is(.editor-left-modes, .editor-inspector-modes) button.active {
-  background: #f0f2f5;
-  color: #111827;
+  background: var(--product-text);
+  color: #fff;
 }
 
 body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) :is(.editor-left-modes, .editor-inspector-modes) button:disabled {
@@ -625,12 +599,12 @@ body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-struct
 }
 
 body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-inspector-scroll {
-  padding: 0 12px 28px;
+  padding: 10px 12px 32px;
 }
 
 body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-page-inspector {
   display: grid;
-  gap: 0;
+  gap: 10px;
 }
 
 body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-inspector-pane :is(.selected-block-settings-card, .page-global-options-card, .style-panel) {
@@ -638,21 +612,6 @@ body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-inspec
   min-width: 0 !important;
   max-width: none !important;
   margin: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-inspector-pane :is(.selected-block-settings-title, .page-global-options-title) {
-  margin: 0 !important;
-  padding: 13px 0 10px !important;
-  border-bottom: 1px solid #eef1f4 !important;
-}
-
-body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-inspector-pane .selected-block-settings-body {
-  padding: 0 !important;
 }
 
 body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .editor-inspector-pane .style-panel {
