@@ -28,7 +28,7 @@ assert(panel.includes('pagero.editor.recent-additions.v2') && panel.includes('pa
 assert(panel.includes('<AddSectionPatternGrid') && panel.includes('<AddBlockGroupGrid'), 'add surface must keep section patterns and basic blocks in one source');
 assert(picker.includes('section-pattern-card') && picker.includes('업종에 맞는 기본 전환 흐름'), 'industry section picker UI is missing');
 assert(dock.includes('embedded = false') && dock.includes('const panelOpen = embedded || addOpen'), 'embedded add surface must stay open independently of the old floating dock state');
-assert(layout.includes('<AddBlockDock {...addBlockDockProps} embedded />'), 'E1 left add mode must use the persistent embedded add surface');
+assert(layout.includes('<AddBlockDock {...addBlockDockProps} />'), 'restored left editor must keep E2 patterns in the existing add dock');
 
 assert(actions.includes('createSectionPatternBlocks') && actions.includes('const addSectionPattern = (patternId)'), 'runtime must expose section pattern insertion');
 assert(actions.includes("['bottombar', 'footer'].includes(item.type)"), 'section bundle must insert before trailing fixed blocks');
