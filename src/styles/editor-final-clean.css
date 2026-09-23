@@ -145,7 +145,7 @@ body .builder-shell:not(.edit-mode-shell) .phone-frame .landing-page {
 }
 
 /* Pagero editor block-list owner: keep rows simple and details separated. */
-body .builder-shell:not(.edit-mode-shell) .edit-layout {
+body .builder-shell .edit-layout {
   --pg-line: #dbe5f2;
   --pg-line-strong: #c6d6ea;
   --pg-ink: #0f172a;
@@ -156,7 +156,7 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout {
   --pg-green: #22c55e;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout :is(.page-global-options-card, .selected-block-settings-card) {
+body .builder-shell .edit-layout :is(.page-global-options-card, .selected-block-settings-card) {
   width: 100% !important;
   padding: 18px !important;
   border: 1px solid var(--pg-line) !important;
@@ -166,7 +166,7 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout :is(.page-global-options-
   overflow: visible !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout :is(.page-global-options-title, .selected-block-settings-title) {
+body .builder-shell .edit-layout :is(.page-global-options-title, .selected-block-settings-title) {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
@@ -175,7 +175,7 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout :is(.page-global-options-
   padding: 0 !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout :is(.page-global-options-title, .selected-block-settings-title) h2 {
+body .builder-shell .edit-layout :is(.page-global-options-title, .selected-block-settings-title) h2 {
   margin: 0 !important;
   color: var(--pg-ink) !important;
   font-size: 18px !important;
@@ -184,20 +184,20 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout :is(.page-global-options-
   letter-spacing: -0.02em !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-title p {
+body .builder-shell .edit-layout .selected-block-settings-title p {
   margin: 0 !important;
   color: var(--pg-muted) !important;
   font-size: 12px !important;
   font-weight: 850 !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .page-global-options-list {
+body .builder-shell .edit-layout .page-global-options-list {
   display: grid !important;
   gap: 10px !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .screen-drop-zone,
-body .builder-shell:not(.edit-mode-shell) .edit-layout .screen-drop-zone span {
+body .builder-shell .edit-layout .screen-drop-zone,
+body .builder-shell .edit-layout .screen-drop-zone span {
   display: none !important;
 }
 
@@ -209,8 +209,8 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout .screen-drop-zone span {
 
 
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .screen-icon-action,
-body .builder-shell:not(.edit-mode-shell) .edit-layout .fixed-open-button {
+body .builder-shell .edit-layout .screen-icon-action,
+body .builder-shell .edit-layout .fixed-open-button {
   display: inline-grid !important;
   place-items: center !important;
   width: 38px !important;
@@ -228,15 +228,15 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout .fixed-open-button {
 
 
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .screen-icon-action:hover,
-body .builder-shell:not(.edit-mode-shell) .edit-layout .fixed-open-button:hover,
-body .builder-shell:not(.edit-mode-shell) .edit-layout .screen-icon-action:focus-visible,
-body .builder-shell:not(.edit-mode-shell) .edit-layout .fixed-open-button:focus-visible {
+body .builder-shell .edit-layout .screen-icon-action:hover,
+body .builder-shell .edit-layout .fixed-open-button:hover,
+body .builder-shell .edit-layout .screen-icon-action:focus-visible,
+body .builder-shell .edit-layout .fixed-open-button:focus-visible {
   border-color: var(--pg-line-strong) !important;
   color: var(--pg-ink) !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .screen-icon-action[aria-expanded='true'] {
+body .builder-shell .edit-layout .screen-icon-action[aria-expanded='true'] {
   border-color: var(--pg-ink) !important;
   background: var(--pg-ink) !important;
   color: #fff !important;
@@ -252,7 +252,7 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout .screen-icon-action[aria-
 
 
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout :is(.switch-clean, .toggle-clean > button, .toggle > button) {
+body .builder-shell .edit-layout :is(.switch-clean, .toggle-clean > button, .toggle > button) {
   position: relative !important;
   display: inline-flex !important;
   align-items: center !important;
@@ -276,12 +276,12 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout :is(.switch-clean, .toggl
   text-indent: -9999px !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout :is(.switch-clean, .toggle-clean > button, .toggle > button)::before,
-body .builder-shell:not(.edit-mode-shell) .edit-layout :is(.switch-clean, .toggle-clean > button, .toggle > button)::after {
+body .builder-shell .edit-layout :is(.switch-clean, .toggle-clean > button, .toggle > button)::before,
+body .builder-shell .edit-layout :is(.switch-clean, .toggle-clean > button, .toggle > button)::after {
   content: none !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout :is(.switch-clean, .toggle-clean > button, .toggle > button) > i {
+body .builder-shell .edit-layout :is(.switch-clean, .toggle-clean > button, .toggle > button) > i {
   display: block !important;
   width: 22px !important;
   min-width: 22px !important;
@@ -295,12 +295,12 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout :is(.switch-clean, .toggl
   transition: transform .18s ease !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout :is(.switch-clean.active, .switch-clean[aria-checked='true'], .toggle-clean > button.active, .toggle-clean > button[aria-checked='true'], .toggle > button.active, .toggle > button[aria-checked='true']) {
+body .builder-shell .edit-layout :is(.switch-clean.active, .switch-clean[aria-checked='true'], .toggle-clean > button.active, .toggle-clean > button[aria-checked='true'], .toggle > button.active, .toggle > button[aria-checked='true']) {
   border-color: var(--pg-green) !important;
   background: var(--pg-green) !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout :is(.switch-clean.active, .switch-clean[aria-checked='true'], .toggle-clean > button.active, .toggle-clean > button[aria-checked='true'], .toggle > button.active, .toggle > button[aria-checked='true']) > i {
+body .builder-shell .edit-layout :is(.switch-clean.active, .switch-clean[aria-checked='true'], .toggle-clean > button.active, .toggle-clean > button[aria-checked='true'], .toggle > button.active, .toggle > button[aria-checked='true']) > i {
   transform: translateX(18px) !important;
 }
 
@@ -314,7 +314,7 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout :is(.switch-clean.active,
 
 
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout :is(.edit-animation-card, .fixed-block-card) {
+body .builder-shell .edit-layout :is(.edit-animation-card, .fixed-block-card) {
   border: 1px solid var(--pg-line) !important;
   border-radius: 18px !important;
   background: #fff !important;
@@ -322,7 +322,7 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout :is(.edit-animation-card,
   overflow: visible !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout :is(.fixed-block-head, .edit-animation-head) {
+body .builder-shell .edit-layout :is(.fixed-block-head, .edit-animation-head) {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) 52px 38px !important;
   align-items: center !important;
@@ -335,19 +335,19 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout :is(.fixed-block-head, .e
   box-shadow: none !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .edit-animation-head {
+body .builder-shell .edit-layout .edit-animation-head {
   grid-template-columns: minmax(0, 1fr) 52px !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .fixed-block-copy {
+body .builder-shell .edit-layout .fixed-block-copy {
   display: flex !important;
   align-items: center !important;
   gap: 8px !important;
   min-width: 0 !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .fixed-block-copy strong,
-body .builder-shell:not(.edit-mode-shell) .edit-layout .edit-animation-head b {
+body .builder-shell .edit-layout .fixed-block-copy strong,
+body .builder-shell .edit-layout .edit-animation-head b {
   min-width: 0 !important;
   overflow: hidden !important;
   color: var(--pg-ink) !important;
@@ -357,7 +357,7 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout .edit-animation-head b {
   white-space: nowrap !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .fixed-block-copy em {
+body .builder-shell .edit-layout .fixed-block-copy em {
   display: inline-flex !important;
   align-items: center !important;
   min-height: 22px !important;
@@ -371,15 +371,15 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout .fixed-block-copy em {
   white-space: nowrap !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .edit-animation-options {
+body .builder-shell .edit-layout .edit-animation-options {
   display: grid !important;
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   gap: 8px !important;
   padding: 0 10px 10px !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .edit-animation-options button,
-body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-body :is(.choice, .choice-clean, .weekday) button {
+body .builder-shell .edit-layout .edit-animation-options button,
+body .builder-shell .edit-layout .selected-block-settings-body :is(.choice, .choice-clean, .weekday) button {
   min-height: 40px !important;
   border: 1px solid var(--pg-line) !important;
   border-radius: 14px !important;
@@ -390,18 +390,18 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-
   font-weight: 850 !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .edit-animation-options button.active,
-body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-body :is(.choice, .choice-clean, .weekday) button:is(.active, [aria-pressed='true']) {
+body .builder-shell .edit-layout .edit-animation-options button.active,
+body .builder-shell .edit-layout .selected-block-settings-body :is(.choice, .choice-clean, .weekday) button:is(.active, [aria-pressed='true']) {
   border-color: var(--pg-ink) !important;
   background: var(--pg-ink) !important;
   color: #fff !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-card {
+body .builder-shell .edit-layout .selected-block-settings-card {
   margin-top: 12px !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-body.block-editor {
+body .builder-shell .edit-layout .selected-block-settings-body.block-editor {
   display: grid !important;
   gap: 12px !important;
   padding: 0 !important;
@@ -410,7 +410,7 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-
   box-shadow: none !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-body .step {
+body .builder-shell .edit-layout .selected-block-settings-body .step {
   border: 1px solid var(--pg-line) !important;
   border-radius: 18px !important;
   background: #fff !important;
@@ -418,7 +418,7 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-
   overflow: hidden !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-body button.step-title {
+body .builder-shell .edit-layout .selected-block-settings-body button.step-title {
   display: grid !important;
   grid-template-columns: 32px minmax(0, 1fr) 38px !important;
   align-items: center !important;
@@ -432,7 +432,7 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-
   box-shadow: none !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-body .step-title .step-icon {
+body .builder-shell .edit-layout .selected-block-settings-body .step-title .step-icon {
   display: inline-grid !important;
   place-items: center !important;
   width: 30px !important;
@@ -447,7 +447,7 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-
   box-shadow: none !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-body .step-title strong {
+body .builder-shell .edit-layout .selected-block-settings-body .step-title strong {
   min-width: 0 !important;
   overflow: hidden !important;
   color: var(--pg-ink) !important;
@@ -458,7 +458,7 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-
   white-space: nowrap !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-body .step-title .step-chevron {
+body .builder-shell .edit-layout .selected-block-settings-body .step-title .step-chevron {
   display: inline-grid !important;
   place-items: center !important;
   width: 34px !important;
@@ -471,18 +471,18 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-
   box-shadow: none !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-body .step-title .step-chevron::before {
+body .builder-shell .edit-layout .selected-block-settings-body .step-title .step-chevron::before {
   content: none !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-body .step-body {
+body .builder-shell .edit-layout .selected-block-settings-body .step-body {
   display: grid !important;
   gap: 10px !important;
   padding: 0 12px 12px !important;
   border-top: 1px solid #eef3f9 !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-body :is(.field, .range, .color, .choice, .choice-clean, .weekday, .anchor-control) {
+body .builder-shell .edit-layout .selected-block-settings-body :is(.field, .range, .color, .choice, .choice-clean, .weekday, .anchor-control) {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) !important;
   align-items: stretch !important;
@@ -495,7 +495,7 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-
   box-shadow: none !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-body :is(.toggle, .toggle-clean) {
+body .builder-shell .edit-layout .selected-block-settings-body :is(.toggle, .toggle-clean) {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: center !important;
@@ -508,15 +508,15 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-
   box-shadow: none !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-body :is(.field, .range, .color, .choice, .choice-clean, .toggle, .toggle-clean, .weekday, .anchor-control) > span,
-body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-body .anchor-control > span {
+body .builder-shell .edit-layout .selected-block-settings-body :is(.field, .range, .color, .choice, .choice-clean, .toggle, .toggle-clean, .weekday, .anchor-control) > span,
+body .builder-shell .edit-layout .selected-block-settings-body .anchor-control > span {
   color: var(--pg-ink) !important;
   font-size: 13px !important;
   font-weight: 900 !important;
   line-height: 1.25 !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-body :is(input, textarea, select) {
+body .builder-shell .edit-layout .selected-block-settings-body :is(input, textarea, select) {
   width: 100% !important;
   min-width: 0 !important;
   min-height: 44px !important;
@@ -529,21 +529,21 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-
   font-weight: 750 !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-body textarea {
+body .builder-shell .edit-layout .selected-block-settings-body textarea {
   min-height: 86px !important;
   resize: vertical !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-body :is(input, textarea, select):focus-visible,
+body .builder-shell .edit-layout .selected-block-settings-body :is(input, textarea, select):focus-visible,
 
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-body :is(.choice, .choice-clean, .weekday) > div {
+body .builder-shell .edit-layout .selected-block-settings-body :is(.choice, .choice-clean, .weekday) > div {
   display: grid !important;
   grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)) !important;
   gap: 8px !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-body :is(.image-input, .style-photo-upload) {
+body .builder-shell .edit-layout .selected-block-settings-body :is(.image-input, .style-photo-upload) {
   display: grid !important;
   grid-template-columns: 1fr !important;
   gap: 8px !important;
@@ -553,7 +553,7 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-
   background: transparent !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-body :is(.image-box, .image-box.single-plus, .image-preview, .stored-image-preview) {
+body .builder-shell .edit-layout .selected-block-settings-body :is(.image-box, .image-box.single-plus, .image-preview, .stored-image-preview) {
   width: 100% !important;
   max-height: 280px !important;
   aspect-ratio: 16 / 9 !important;
@@ -563,7 +563,7 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-
   overflow: hidden !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-body :is(.image-box, .image-box.single-plus, .image-preview, .stored-image-preview) > img {
+body .builder-shell .edit-layout .selected-block-settings-body :is(.image-box, .image-box.single-plus, .image-preview, .stored-image-preview) > img {
   width: 100% !important;
   height: 100% !important;
   object-fit: contain !important;
@@ -571,13 +571,13 @@ body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-
 }
 
 @media (max-width: 720px) {
-  body .builder-shell:not(.edit-mode-shell) .edit-layout :is(.page-global-options-card, .selected-block-settings-card) {
+  body .builder-shell .edit-layout :is(.page-global-options-card, .selected-block-settings-card) {
     padding: 14px !important;
   }
 
 
 
-  body .builder-shell:not(.edit-mode-shell) .edit-layout .selected-block-settings-body :is(.field, .range, .color, .choice, .choice-clean, .toggle, .toggle-clean, .weekday, .anchor-control) {
+  body .builder-shell .edit-layout .selected-block-settings-body :is(.field, .range, .color, .choice, .choice-clean, .toggle, .toggle-clean, .weekday, .anchor-control) {
     grid-template-columns: 1fr !important;
   }
 }

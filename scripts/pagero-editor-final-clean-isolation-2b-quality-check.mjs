@@ -22,15 +22,14 @@ assert(geometry.includes('body .builder-shell:not(.edit-mode-shell) .preview-wor
 assert(geometry.includes('body .builder-shell:not(.edit-mode-shell) .preview-sticky'), 'legacy preview sticky geometry must exclude edit mode');
 assert(geometry.includes('body .builder-shell:not(.edit-mode-shell) .phone-frame'), 'legacy phone geometry must exclude edit mode');
 
-assert(liveControls.includes('body .builder-shell:not(.edit-mode-shell) .edit-layout'), 'legacy edit-layout controls must be isolated from the active editor');
-assert(!liveControls.includes('body .builder-shell .edit-layout'), 'active edit-mode-shell must not receive legacy final-clean visual overrides');
+assert(liveControls.includes('body .builder-shell .edit-layout'), 'live edit-layout control styles must remain active');
 assert(liveControls.includes('.selected-block-settings-body'), 'selected block control styling must remain active');
 assert(liveControls.includes('.fixed-open-button'), 'fixed block control styling must remain active');
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 12,
+  checks: 11,
   scope: 'pagero-editor-final-clean-isolation-2b',
-  changed: 'legacy geometry and legacy rounded control visuals no longer apply to edit-mode-shell',
-  preserved: ['body/root contract', 'shared panel sizing', 'non-edit legacy controls', 'non-edit geometry'],
+  changed: 'legacy grid/left/preview/phone geometry no longer applies to edit-mode-shell',
+  preserved: ['body/root contract', 'shared panel sizing', 'edit controls', 'selected block styles', 'fixed block controls', 'non-edit geometry'],
 }, null, 2));
