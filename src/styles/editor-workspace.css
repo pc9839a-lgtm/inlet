@@ -421,3 +421,19 @@ body .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel {
   max-width: none !important;
   margin: 0 !important;
 }
+
+/* Active edit mode: compact only the fixed-area cards in the restored left editor. */
+body .builder-shell.edit-mode-shell .screen-order-fixed-blocks :is(.fixed-block-card, .edit-animation-card) {
+  margin: 0 0 6px !important;
+  border-radius: 10px !important;
+}
+
+body .builder-shell.edit-mode-shell .screen-order-fixed-blocks :is(.fixed-block-head, .edit-animation-head) {
+  min-height: 52px !important;
+  padding: 7px 10px !important;
+  border-radius: 10px !important;
+}
+
+body .builder-shell.edit-mode-shell .screen-order-fixed-blocks :is(.fixed-block-card, .edit-animation-card):last-child {
+  margin-bottom: 0 !important;
+}
