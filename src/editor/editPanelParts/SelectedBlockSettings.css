@@ -80,3 +80,52 @@
   margin-top: 2px !important;
   font-size: 11px !important;
 }
+
+/* Restored left editor: compact only the selected-element inner form. */
+.edit-layout .screen-order-v2-settings-panel .selected-block-settings-body.block-editor {
+  gap: 8px !important;
+  padding: 10px !important;
+}
+
+.edit-layout .screen-order-v2-settings-panel .selected-block-settings-body .step {
+  border-radius: 10px !important;
+}
+
+.edit-layout .screen-order-v2-settings-panel .selected-block-settings-body button.step-title {
+  grid-template-columns: 26px minmax(0, 1fr) 28px !important;
+  gap: 8px !important;
+  min-height: 44px !important;
+  padding: 0 10px !important;
+}
+
+.edit-layout .screen-order-v2-settings-panel .selected-block-settings-body .step-title span {
+  width: 24px !important;
+  height: 24px !important;
+  font-size: 12px !important;
+}
+
+.edit-layout .screen-order-v2-settings-panel .selected-block-settings-body .step-title strong {
+  font-size: 13px !important;
+}
+
+.edit-layout .screen-order-v2-settings-panel .selected-block-settings-body .step-title i {
+  width: 28px !important;
+  height: 28px !important;
+}
+
+.edit-layout .screen-order-v2-settings-panel .selected-block-settings-body .step-body {
+  gap: 8px !important;
+  padding: 10px !important;
+}
+
+.edit-layout .screen-order-v2-settings-panel .selected-block-settings-body :is(input, textarea, select) {
+  min-height: 40px !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+  border-radius: 9px !important;
+}
+
+.edit-layout .screen-order-v2-settings-panel .selected-block-settings-body textarea {
+  padding-top: 9px !important;
+  padding-bottom: 9px !important;
+}
