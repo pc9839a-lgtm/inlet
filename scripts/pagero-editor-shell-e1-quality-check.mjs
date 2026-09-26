@@ -27,10 +27,11 @@ assert(css.includes('grid-template-columns: minmax(660px, 720px) minmax(480px, 1
 assert(!css.includes('grid-template-columns: 280px minmax(520px, 1fr) 360px !important'), 'three-column production repair must stay removed');
 assert(!css.includes('editor-inspector-pane'), 'editor workspace CSS must not restore the right inspector column');
 assert(css.includes('editor-page-options-stack'), 'page options and theme controls need a left-panel stack');
+assert(css.includes('.screen-order-fixed-blocks :is(.fixed-block-card, .edit-animation-card)') && css.includes('border-radius: 10px !important') && css.includes('min-height: 52px !important'), 'restored left editor fixed-area cards must stay compact');
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 14,
+  checks: 15,
   scope: 'pagero-editor-shell-restored-two-column',
   shell: ['left-editor', 'preview'],
   separateStyleTab: false,
