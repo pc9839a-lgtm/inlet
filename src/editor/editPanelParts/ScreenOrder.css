@@ -119,13 +119,13 @@
 .screen-order-v2-head {
   width: 100%;
   min-width: 0;
-  min-height: 43px;
+  min-height: 38px;
   display: grid;
   grid-template-columns: 20px minmax(0,1fr) 30px 30px;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   margin: 0;
-  padding: 0 4px 0 2px;
+  padding: 0 3px 0 2px;
   overflow: visible;
   border: 0;
   border-radius: 0;
