@@ -35,46 +35,49 @@ body .builder-shell .edit-layout {
   gap: 10px;
 }
 
-/* Edit section tabs */
-body .builder-shell .edit-section-tabs {
-  width: 100%;
-  min-width: 0;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 3px;
-  padding: 3px;
-  overflow: hidden;
-  border: 0;
-  border-radius: 8px;
-  background: #eef1f5;
+/* Edit section tabs — visible owner for the active editor path. */
+body .builder-shell.edit-mode-shell .edit-section-tabs {
+  width: 100% !important;
+  min-width: 0 !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 3px !important;
+  min-height: 42px !important;
+  padding: 3px !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: #eef1f5 !important;
+  box-shadow: none !important;
 }
 
-body .builder-shell .edit-section-tabs button {
-  min-width: 0;
-  min-height: 36px;
-  padding: 0 10px;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--product-muted);
-  box-shadow: none;
-  font-size: 12px;
-  line-height: 1;
-  font-weight: 850;
-  cursor: pointer;
+body .builder-shell.edit-mode-shell .edit-section-tabs button {
+  min-width: 0 !important;
+  min-height: 36px !important;
+  height: 36px !important;
+  padding: 0 10px !important;
+  border: 1px solid transparent !important;
+  border-radius: 6px !important;
+  background: transparent !important;
+  color: var(--product-muted) !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  font-weight: 850 !important;
+  cursor: pointer !important;
 }
 
-body .builder-shell .edit-section-tabs button:hover {
-  background: rgba(255, 255, 255, .72);
-  color: var(--product-text);
+body .builder-shell.edit-mode-shell .edit-section-tabs button:hover {
+  background: rgba(255, 255, 255, .72) !important;
+  color: var(--product-text) !important;
 }
 
-body .builder-shell .edit-section-tabs button.active,
-body .builder-shell .edit-section-tabs button[aria-pressed='true'] {
-  border-color: #d9dde4;
-  background: #fff;
-  color: var(--product-text);
-  font-weight: 950;
+body .builder-shell.edit-mode-shell .edit-section-tabs button.active,
+body .builder-shell.edit-mode-shell .edit-section-tabs button[aria-pressed='true'] {
+  border-color: #d9dde4 !important;
+  background: #fff !important;
+  color: var(--product-text) !important;
+  font-weight: 950 !important;
 }
 
 body .builder-shell .edit-section-panel {
