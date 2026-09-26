@@ -9,6 +9,7 @@ const screen = await readFile('src/screens/WorkspaceEditorScreen.jsx', 'utf8');
 const active = await readFile('src/screens/workspace/WorkspaceActivePanel.jsx', 'utf8');
 const editPanel = await readFile('src/editor/EditPanel.jsx', 'utf8');
 const layout = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
+const screenOrderItem = await readFile('src/editor/editPanelParts/ScreenOrderItem.jsx', 'utf8');
 const css = await readFile('src/styles/editor-workspace.css', 'utf8');
 
 assert(!navigation.includes("['style', '스타일'"), 'editor navigation must not expose a duplicate style workspace tab');
@@ -17,8 +18,8 @@ assert(active.includes('stylePanelProps={stylePanelProps}'), 'edit workspace mus
 assert(editPanel.includes('stylePanelProps={stylePanelProps}'), 'EditPanel must forward theme controls');
 
 assert(layout.includes('edit-section-tabs') && layout.includes('페이지 옵션') && layout.includes('화면 순서'), 'left editor must expose page options and screen order modes');
-assert(layout.includes('screen-order-v2-settings-panel') && layout.includes('<SelectedBlockSettings'), 'selected block settings must remain inside the left editor flow');
-assert(layout.includes('<ScreenOrderList {...screenOrderListProps} />'), 'screen order must remain in the left editor');
+assert(screenOrderItem.includes('screen-order-v2-settings-panel') && screenOrderItem.includes('<SelectedBlockSettings {...selectedBlockSettingsProps} />'), 'selected block settings must remain inside the left editor flow directly below the selected row');
+assert(layout.includes('<ScreenOrderList') && layout.includes('selectedBlockSettingsProps={selectedBlockSettingsProps}'), 'screen order must remain in the left editor and receive selected settings');
 assert(layout.includes('<AddBlockDock {...addBlockDockProps} />'), 'section add dock must remain in the left editor');
 assert(layout.includes('<PageThemeStylePanel {...stylePanelProps} />'), 'page theme controls must remain available from page options');
 assert(!layout.includes('editor-structure-pane') && !layout.includes('editor-inspector-pane'), 'three-pane editor DOM must not return');
