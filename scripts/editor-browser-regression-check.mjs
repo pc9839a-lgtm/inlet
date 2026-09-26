@@ -796,9 +796,9 @@ async function run() {
     assert(apiState.pageLoadCount >= 1, 'selected page was not loaded from the page API');
 
     const editSectionTabStyle = await evaluate(client, `(() => {
-      const tabs = document.querySelector('.edit-section-tabs');
-      const active = tabs?.querySelector('button[aria-pressed="true"]');
-      const inactive = tabs?.querySelector('button[aria-pressed="false"]');
+      const tabs = document.querySelector('.edit-section-tabs[data-pagero-ui="edit-section-tabs-v2"]');
+      const active = tabs?.querySelector('.edit-section-tab[aria-pressed="true"]');
+      const inactive = tabs?.querySelector('.edit-section-tab[aria-pressed="false"]');
       if (!tabs || !active || !inactive) return null;
       const tabsStyle = getComputedStyle(tabs);
       const activeStyle = getComputedStyle(active);
@@ -810,13 +810,19 @@ async function run() {
         activeBackground: activeStyle.backgroundColor,
         activeColor: activeStyle.color,
         activeHeight: Math.round(active.getBoundingClientRect().height),
+        activeClassName: active.className,
+        activeDataSelected: active.getAttribute('data-selected'),
         inactiveBackground: inactiveStyle.backgroundColor,
+        inactiveClassName: inactive.className,
       };
     })()`);
-    assert(editSectionTabStyle, 'edit section tab computed styles were not resolved');
+    assert(editSectionTabStyle, 'isolated edit section tab computed styles were not resolved');
+    assert(editSectionTabStyle.activeClassName === 'edit-section-tab', `active edit section tab must not reuse the global active class: ${editSectionTabStyle.activeClassName}`);
+    assert(editSectionTabStyle.inactiveClassName === 'edit-section-tab', `inactive edit section tab class drifted: ${editSectionTabStyle.inactiveClassName}`);
+    assert(editSectionTabStyle.activeDataSelected === 'true', 'active edit section tab must expose data-selected=true');
     assert(editSectionTabStyle.tabsBackground === 'rgb(238, 241, 245)', `edit section tabs must use light gray segmented background, got ${editSectionTabStyle.tabsBackground}`);
     assert(editSectionTabStyle.tabsBorderTopWidth === '0px', `edit section tabs outer border must be removed, got ${editSectionTabStyle.tabsBorderTopWidth}`);
-    assert(editSectionTabStyle.tabsHeight <= 44, `edit section tabs container is too tall: ${editSectionTabStyle.tabsHeight}px`);
+    assert(editSectionTabStyle.tabsHeight === 42, `edit section tabs container must be exactly 42px tall: ${editSectionTabStyle.tabsHeight}px`);
     assert(editSectionTabStyle.activeBackground === 'rgb(255, 255, 255)', `active edit section tab must be white, got ${editSectionTabStyle.activeBackground}`);
     assert(editSectionTabStyle.activeColor !== 'rgb(255, 255, 255)', 'active edit section tab text must not be white-on-dark');
     assert(editSectionTabStyle.activeHeight === 36, `active edit section tab must be 36px tall, got ${editSectionTabStyle.activeHeight}px`);

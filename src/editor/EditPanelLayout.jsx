@@ -18,9 +18,14 @@ export function EditPanelLayout({
 
   return (
     <div className="edit-layout">
-      <nav className="edit-section-tabs" aria-label="편집 영역 선택">
+      <nav
+        className="edit-section-tabs"
+        data-pagero-ui="edit-section-tabs-v2"
+        aria-label="편집 영역 선택"
+      >
         <button
-          className={section === 'options' ? 'active' : ''}
+          className="edit-section-tab"
+          data-selected={section === 'options' ? 'true' : 'false'}
           type="button"
           aria-pressed={section === 'options'}
           onClick={() => setSection('options')}
@@ -28,7 +33,8 @@ export function EditPanelLayout({
           페이지 옵션
         </button>
         <button
-          className={section === 'order' ? 'active' : ''}
+          className="edit-section-tab"
+          data-selected={section === 'order' ? 'true' : 'false'}
           type="button"
           aria-pressed={section === 'order'}
           onClick={() => setSection('order')}
