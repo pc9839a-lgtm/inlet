@@ -11,6 +11,7 @@ const editPanel = await readFile('src/editor/EditPanel.jsx', 'utf8');
 const layout = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
 const screenOrderItem = await readFile('src/editor/editPanelParts/ScreenOrderItem.jsx', 'utf8');
 const css = await readFile('src/styles/editor-workspace.css', 'utf8');
+const workspaceCss = await readFile('src/styles/workspace-shell.css', 'utf8');
 
 assert(!navigation.includes("['style', '스타일'"), 'editor navigation must not expose a duplicate style workspace tab');
 assert(screen.includes("const effectiveTab = tab === 'style' ? 'edit' : tab;"), 'legacy style routes must still normalize into edit');
@@ -29,10 +30,12 @@ assert(!css.includes('grid-template-columns: 280px minmax(520px, 1fr) 360px !imp
 assert(!css.includes('editor-inspector-pane'), 'editor workspace CSS must not restore the right inspector column');
 assert(css.includes('editor-page-options-stack'), 'page options and theme controls need a left-panel stack');
 assert(css.includes('.screen-order-fixed-blocks :is(.fixed-block-card, .edit-animation-card)') && css.includes('border-radius: 10px !important') && css.includes('min-height: 52px !important'), 'restored left editor fixed-area cards must stay compact');
+assert(workspaceCss.includes('grid-template-columns: repeat(4, minmax(0, 1fr)) !important') && workspaceCss.includes('min-height: 46px !important') && workspaceCss.includes('height: 36px !important'), 'workspace top navigation must stay compact and use exactly four columns');
+assert(workspaceCss.includes('background: #f1f3f6 !important') && workspaceCss.includes('color: var(--product-text) !important'), 'active workspace tab must use the compact light selected state instead of a solid dark block');
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 15,
+  checks: 17,
   scope: 'pagero-editor-shell-restored-two-column',
   shell: ['left-editor', 'preview'],
   separateStyleTab: false,
