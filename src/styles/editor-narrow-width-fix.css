@@ -18,11 +18,12 @@
     overflow-y: visible !important;
   }
 
-  body .builder-shell:not(.mobile-operations-shell):not(.inbox-workspace-shell):not(.stats-dashboard-shell):not(.settings-workspace-shell) .work-panel {
+  body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .work-panel {
     width: 100% !important;
     min-width: 0 !important;
-    max-width: 760px !important;
-    margin-inline: auto !important;
+    max-width: none !important;
+    margin-inline: 0 !important;
+    padding-inline: 10px !important;
   }
 
   html body #root .builder-shell:not(.mobile-operations-shell):not(.inbox-workspace-shell):not(.stats-dashboard-shell):not(.settings-workspace-shell) .preview-workspace {

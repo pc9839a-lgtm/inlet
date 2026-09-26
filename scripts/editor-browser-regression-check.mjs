@@ -646,6 +646,8 @@ async function collectNarrowDesktopMetrics(client) {
       documentScrollWidth: document.documentElement?.scrollWidth || 0,
       shell: rect(document.querySelector('.builder-shell')),
       left: rect(document.querySelector('.left-workspace')),
+      workPanel: rect(document.querySelector('.work-panel')),
+      editLayout: rect(document.querySelector('.edit-layout')),
       preview: rect(document.querySelector('.preview-workspace')),
       mobile: document.querySelector('.builder-shell')?.classList.contains('mobile-operations-shell') || false,
       fallback: !!document.querySelector('.app-error-screen, .error-screen, .block-render-fallback'),
@@ -712,6 +714,10 @@ function assertNarrowDesktop(metrics, width) {
   assert(metrics.documentScrollWidth <= width + 3, `narrow desktop document overflow: ${metrics.documentScrollWidth} > ${width}`);
   assertInsideViewport(metrics.shell, width, 'narrow desktop builder shell');
   assertInsideViewport(metrics.left, width, 'narrow desktop left workspace');
+  assertInsideViewport(metrics.workPanel, width, 'narrow desktop work panel');
+  assertInsideViewport(metrics.editLayout, width, 'narrow desktop edit layout');
+  assert(metrics.workPanel?.width >= width - 4, `narrow desktop work panel did not expand: ${metrics.workPanel?.width}px of ${width}px`);
+  assert(metrics.editLayout?.width >= width - 48, `narrow desktop edit layout is still artificially capped: ${metrics.editLayout?.width}px of ${width}px`);
   assertInsideViewport(metrics.preview, width, 'narrow desktop preview workspace');
 }
 
