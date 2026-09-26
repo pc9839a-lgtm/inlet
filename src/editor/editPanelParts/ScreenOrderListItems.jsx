@@ -13,6 +13,7 @@ export function ScreenOrderListItems({
   removeBlock,
   reorderToIndex,
   renderBlockEditor,
+  selectedBlockSettingsProps = null,
 }) {
   const total = normalBlocks.length;
   const listRef = React.useRef(null);
@@ -45,6 +46,7 @@ export function ScreenOrderListItems({
           removeBlock={removeBlock}
           reorderToIndex={reorderToIndex}
           renderBlockEditor={renderBlockEditor}
+          selectedBlockSettingsProps={selectedBlockSettingsProps}
         />
       ))}
     </div>

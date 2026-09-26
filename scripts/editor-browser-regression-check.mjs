@@ -551,35 +551,48 @@ async function normalBlockCount(client) {
 }
 
 async function dragPointer(client, sourceSelector, targetSelector) {
-  const points = await evaluate(client, `(() => {
+  const sourcePoint = await evaluate(client, `(() => {
     const source = document.querySelector(${JSON.stringify(sourceSelector)});
-    const target = document.querySelector(${JSON.stringify(targetSelector)});
-    if (!source || !target) return null;
+    if (!source) return null;
     source.scrollIntoView({ block: 'center', inline: 'center' });
-    target.scrollIntoView({ block: 'center', inline: 'center' });
-    const sourceRect = source.getBoundingClientRect();
-    const targetRect = target.getBoundingClientRect();
-    return {
-      source: { x: sourceRect.left + sourceRect.width / 2, y: sourceRect.top + sourceRect.height / 2 },
-      target: { x: targetRect.left + targetRect.width / 2, y: targetRect.top + Math.max(2, targetRect.height / 2) },
-    };
+    const rect = source.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
   })()`);
-  assert(points?.source && points?.target, `Unable to resolve drag geometry: ${sourceSelector} -> ${targetSelector}`);
+  assert(sourcePoint, `Unable to resolve drag source geometry: ${sourceSelector}`);
 
-  await client.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: points.source.x, y: points.source.y });
-  await client.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: points.source.x, y: points.source.y, button: 'left', buttons: 1, clickCount: 1 });
-  for (let step = 1; step <= 8; step += 1) {
-    const ratio = step / 8;
+  await client.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: sourcePoint.x, y: sourcePoint.y });
+  await client.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: sourcePoint.x, y: sourcePoint.y, button: 'left', buttons: 1, clickCount: 1 });
+  await client.send('Input.dispatchMouseEvent', {
+    type: 'mouseMoved',
+    x: sourcePoint.x,
+    y: sourcePoint.y - 10,
+    button: 'left',
+    buttons: 1,
+  });
+  await wait(80);
+
+  const targetPoint = await evaluate(client, `(() => {
+    const target = document.querySelector(${JSON.stringify(targetSelector)});
+    if (!target) return null;
+    target.scrollIntoView({ block: 'center', inline: 'center' });
+    const rect = target.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + Math.max(2, rect.height / 2) };
+  })()`);
+  assert(targetPoint, `Unable to resolve drag target geometry: ${targetSelector}`);
+  await wait(100);
+
+  for (let step = 1; step <= 10; step += 1) {
+    const ratio = step / 10;
     await client.send('Input.dispatchMouseEvent', {
       type: 'mouseMoved',
-      x: points.source.x + (points.target.x - points.source.x) * ratio,
-      y: points.source.y + (points.target.y - points.source.y) * ratio,
+      x: sourcePoint.x + (targetPoint.x - sourcePoint.x) * ratio,
+      y: (sourcePoint.y - 10) + (targetPoint.y - (sourcePoint.y - 10)) * ratio,
       button: 'left',
       buttons: 1,
     });
     await wait(45);
   }
-  await client.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: points.target.x, y: points.target.y, button: 'left', buttons: 0, clickCount: 1 });
+  await client.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: targetPoint.x, y: targetPoint.y, button: 'left', buttons: 0, clickCount: 1 });
   await wait(250);
 }
 
@@ -785,9 +798,11 @@ async function run() {
 
     const heroEditorSelector = '.screen-order-v2-settings-panel textarea[placeholder="핵심 제목을 입력하세요"]';
     await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
-    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'separate hero editor textarea');
+    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'selected hero editor textarea');
+    await waitForBrowser(client, `!!document.querySelector('#editor-block-editor-hero + .screen-order-v2-settings-panel[data-inline-selected-settings="true"]')`, 'selected settings directly below hero row');
     const inlineEditorStillNested = await evaluate(client, `!!document.querySelector('#editor-block-editor-hero textarea[placeholder="핵심 제목을 입력하세요"]')`);
-    assert(!inlineEditorStillNested, 'screen order row must not contain the block detail editor');
+    assert(!inlineEditorStillNested, 'screen order row head must not contain the block detail editor');
+    await capture(client, 'desktop-editor-inline-settings');
     await setInputValue(client, heroEditorSelector, updatedHeroTitle);
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(updatedHeroTitle)})`, 'live hero preview');
     await wait(250);

@@ -3,7 +3,6 @@ import { AddBlockDock } from './editPanelParts/AddBlockDock.jsx';
 import { GlobalFixedBlocks } from './editPanelParts/GlobalFixedBlocks.jsx';
 import { PageGlobalOptions } from './editPanelParts/PageGlobalOptions.jsx';
 import { ScreenOrderList } from './editPanelParts/ScreenOrderList.jsx';
-import { SelectedBlockSettings } from './editPanelParts/SelectedBlockSettings.jsx';
 
 const PageThemeStylePanel = React.lazy(() => import('../panels/StylePanel.jsx'));
 
@@ -50,12 +49,10 @@ export function EditPanelLayout({
           </div>
         ) : (
           <>
-            <ScreenOrderList {...screenOrderListProps} />
-            {selectedBlockSettingsProps && (
-              <div className="screen-order-v2-settings-panel">
-                <SelectedBlockSettings {...selectedBlockSettingsProps} />
-              </div>
-            )}
+            <ScreenOrderList
+              {...screenOrderListProps}
+              selectedBlockSettingsProps={selectedBlockSettingsProps}
+            />
             <section className="screen-order-fixed-blocks" aria-label="고정 영역">
               <div className="section-title screen-order-fixed-blocks-title">
                 <h2>고정 영역</h2>
