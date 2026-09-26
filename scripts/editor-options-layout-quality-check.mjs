@@ -21,6 +21,9 @@ const screenOrderCss = await readFile('src/editor/editPanelParts/ScreenOrder.css
 const selectedBlockSettingsCss = await readFile('src/editor/editPanelParts/SelectedBlockSettings.css', 'utf8');
 const editorLabels = await readFile('src/editor/editPanelParts/editorLabels.js', 'utf8');
 const editLayout = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
+const screenOrderList = await readFile('src/editor/editPanelParts/ScreenOrderList.jsx', 'utf8');
+const screenOrderListItems = await readFile('src/editor/editPanelParts/ScreenOrderListItems.jsx', 'utf8');
+const screenOrderItem = await readFile('src/editor/editPanelParts/ScreenOrderItem.jsx', 'utf8');
 const sectionProps = await readFile('src/editor/createEditPanelSectionProps.js', 'utf8');
 const mobileScreenOrderCss = screenOrderCss.slice(screenOrderCss.indexOf('@media (max-width: 760px)'));
 const editorFinalCleanCss = await readFile('src/styles/editor-final-clean.css', 'utf8');
@@ -69,7 +72,7 @@ assert(!shareCard.includes('<em>공개 페이지 공유 버튼</em>'), 'share op
 assert(shareCss.includes('grid-template-columns: repeat(2, minmax(0, 1fr))'), 'mobile share position choices must use a readable 2x2 grid');
 assert(shareCss.includes('min-height: 42px'), 'mobile share position choices must keep large tap targets');
 assert(screenOrderCss.includes('@media (max-width: 760px)') && screenOrderCss.includes('.screen-order-v2-card { padding: 10px;'), 'screen order must retain its compact mobile card contract');
-assert(editLayout.includes('edit-section-tabs') && editLayout.includes('화면 순서') && editLayout.includes('<ScreenOrderList {...screenOrderListProps} />'), 'screen order must live in the restored left editor flow');
+assert(editLayout.includes('edit-section-tabs') && editLayout.includes('화면 순서') && editLayout.includes('<ScreenOrderList') && editLayout.includes('selectedBlockSettingsProps={selectedBlockSettingsProps}'), 'screen order must live in the restored left editor flow and receive selected settings');
 assert(editLayout.includes('페이지 옵션') && editLayout.includes('<PageGlobalOptions {...pageGlobalOptionsProps} />') && editLayout.includes('<PageThemeStylePanel {...stylePanelProps} />'), 'page options and theme controls must live in the restored left editor mode');
 assert(editorLabels.includes("globalSettings: '\\uC804\\uC5ED \\uC124\\uC815'") && pageOptionsHeader.includes('T.globalSettings'), 'page options content heading must be global settings instead of repeating the tab label');
 assert(editorLabels.includes("normalBlocks: '\\uC77C\\uBC18 \\uBE14\\uB85D'") && screenOrderHeader.includes('T.normalBlocks'), 'screen order content heading must identify normal blocks instead of repeating the tab label');
@@ -82,6 +85,8 @@ assert(/\.fixed-open-button\s*\{[^}]*width:\s*44px\s*!important;[^}]*height:\s*4
 assert(/\.fixed-block-switch\s*\{[^}]*height:\s*44px\s*!important;[\s\S]*?\.fixed-block-switch::before\s*\{[^}]*height:\s*28px\s*!important;/s.test(fixedBlocksCss), 'fixed block switch must keep a 44px hit target while preserving the compact 28px visual track');
 assert(screenOrderCss.includes('.screen-order-v2-item') && screenOrderCss.includes('.screen-order-v2-head') && screenOrderCss.includes('.screen-order-v2-menu'), 'screen order V2 stylesheet must remain the normal-block layout owner');
 assert(selectedBlockSettingsCss.includes('.selected-block-settings-card.card') && selectedBlockSettingsCss.includes('padding: 12px !important') && selectedBlockSettingsCss.includes('border-radius: 12px !important') && selectedBlockSettingsCss.includes('font-size: 15px !important'), 'selected-element settings card must stay compact inside the restored left editor');
+assert(screenOrderList.includes('selectedBlockSettingsProps') && screenOrderListItems.includes('selectedBlockSettingsProps') && screenOrderItem.includes('data-inline-selected-settings="true"') && screenOrderItem.includes('<SelectedBlockSettings {...selectedBlockSettingsProps} />'), 'selected-element settings must render immediately below the selected screen-order row');
+assert(!editLayout.includes('className="screen-order-v2-settings-panel"'), 'selected-element settings must not render after the whole screen-order list');
 assert(/\.screen-order-v2-head\s*\{[^}]*min-height:\s*38px;[^}]*gap:\s*2px;/s.test(screenOrderCss), 'desktop screen-order rows must keep the tightened 38px / 2px density');
 assert(legacyScreenOrderTokens.every((token) => !editorFinalCleanCss.includes(token)), 'editor-final-clean must not restore legacy normal-block selectors');
 assert(legacyScreenOrderTokens.every((token) => !screenOrderPolishCss.includes(token)), 'editor-screen-order-polish must not restore legacy normal-block selectors');
@@ -93,7 +98,7 @@ await assertMissingFile('src/editor/editPanelParts/useScreenOrderRowMenu.js');
 console.log(JSON.stringify({
   ok: true,
   scope: 'editor-options-layout',
-  checks: 37,
+  checks: 39,
   saveFlowTouched: false,
   globalOptionsSeparated: true,
   unifiedPageThemeInspector: true,
