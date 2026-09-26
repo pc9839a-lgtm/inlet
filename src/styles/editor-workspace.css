@@ -89,11 +89,11 @@ body .builder-shell .edit-layout .page-global-options-card {
   min-width: 0;
   max-width: 100%;
   margin: 0;
-  padding: 14px;
+  padding: 0;
   overflow: visible;
-  border: 1px solid var(--product-line);
-  border-radius: 12px;
-  background: #fff;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   box-shadow: none;
 }
 

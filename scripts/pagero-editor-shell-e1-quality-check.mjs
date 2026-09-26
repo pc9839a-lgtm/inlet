@@ -33,10 +33,11 @@ assert(css.includes('.screen-order-fixed-blocks :is(.fixed-block-card, .edit-ani
 assert(workspaceCss.includes('grid-template-columns: repeat(4, minmax(0, 1fr)) !important') && workspaceCss.includes('min-height: 46px !important') && workspaceCss.includes('height: 36px !important'), 'workspace top navigation must stay compact and use exactly four columns');
 assert(workspaceCss.includes('background: #f1f3f6 !important') && workspaceCss.includes('color: var(--product-text) !important'), 'active workspace tab must use the compact light selected state instead of a solid dark block');
 assert(css.includes('body .builder-shell .edit-section-tabs') && css.includes('background: #eef1f5;') && css.includes('border: 0;') && css.includes('min-height: 36px;') && css.includes('border-color: #d9dde4;') && css.includes('background: #fff;') && !css.includes(".edit-section-tabs button[aria-pressed='true'] {\n  background: var(--product-text);"), 'edit section tabs must stay compact and use a light segmented selected state without a dark active block');
+assert(css.includes('body .builder-shell .edit-layout .page-global-options-card') && css.includes('padding: 0;') && css.includes('border-radius: 0;') && css.includes('background: transparent;') && !css.includes('.page-global-options-card {\n  width: 100%;\n  min-width: 0;\n  max-width: 100%;\n  margin: 0;\n  padding: 14px;'), 'page options outer shell must stay flat without the restored white card chrome');
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 18,
+  checks: 19,
   scope: 'pagero-editor-shell-restored-two-column',
   shell: ['left-editor', 'preview'],
   separateStyleTab: false,
