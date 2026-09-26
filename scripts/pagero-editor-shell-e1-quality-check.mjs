@@ -32,7 +32,7 @@ assert(css.includes('editor-page-options-stack'), 'page options and theme contro
 assert(css.includes('.screen-order-fixed-blocks :is(.fixed-block-card, .edit-animation-card)') && css.includes('border-radius: 10px !important') && css.includes('min-height: 52px !important'), 'restored left editor fixed-area cards must stay compact');
 assert(workspaceCss.includes('grid-template-columns: repeat(4, minmax(0, 1fr)) !important') && workspaceCss.includes('min-height: 46px !important') && workspaceCss.includes('height: 36px !important'), 'workspace top navigation must stay compact and use exactly four columns');
 assert(workspaceCss.includes('background: #f1f3f6 !important') && workspaceCss.includes('color: var(--product-text) !important'), 'active workspace tab must use the compact light selected state instead of a solid dark block');
-assert(css.includes('body .builder-shell .edit-section-tabs') && css.includes('background: #eef1f5;') && css.includes('min-height: 36px;') && css.includes('border-color: #d9dde4;') && css.includes('background: #fff;'), 'edit section tabs must stay compact and use a light segmented selected state');
+assert(css.includes('body .builder-shell .edit-section-tabs') && css.includes('background: #eef1f5;') && css.includes('border: 0;') && css.includes('min-height: 36px;') && css.includes('border-color: #d9dde4;') && css.includes('background: #fff;') && !css.includes(".edit-section-tabs button[aria-pressed='true'] {\n  background: var(--product-text);"), 'edit section tabs must stay compact and use a light segmented selected state without a dark active block');
 
 console.log(JSON.stringify({
   ok: true,
