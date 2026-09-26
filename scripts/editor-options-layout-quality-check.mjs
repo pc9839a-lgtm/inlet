@@ -85,6 +85,7 @@ assert(/\.fixed-open-button\s*\{[^}]*width:\s*44px\s*!important;[^}]*height:\s*4
 assert(/\.fixed-block-switch\s*\{[^}]*height:\s*44px\s*!important;[\s\S]*?\.fixed-block-switch::before\s*\{[^}]*height:\s*28px\s*!important;/s.test(fixedBlocksCss), 'fixed block switch must keep a 44px hit target while preserving the compact 28px visual track');
 assert(screenOrderCss.includes('.screen-order-v2-item') && screenOrderCss.includes('.screen-order-v2-head') && screenOrderCss.includes('.screen-order-v2-menu'), 'screen order V2 stylesheet must remain the normal-block layout owner');
 assert(selectedBlockSettingsCss.includes('.selected-block-settings-card.card') && selectedBlockSettingsCss.includes('padding: 12px !important') && selectedBlockSettingsCss.includes('border-radius: 12px !important') && selectedBlockSettingsCss.includes('font-size: 15px !important'), 'selected-element settings card must stay compact inside the restored left editor');
+assert(selectedBlockSettingsCss.includes('.selected-block-settings-body button.step-title') && selectedBlockSettingsCss.includes('min-height: 44px !important') && selectedBlockSettingsCss.includes('grid-template-columns: 26px minmax(0, 1fr) 28px !important') && selectedBlockSettingsCss.includes('min-height: 40px !important') && selectedBlockSettingsCss.includes('border-radius: 9px !important'), 'selected-element inner form must keep compact step headers and controls');
 assert(screenOrderList.includes('selectedBlockSettingsProps') && screenOrderListItems.includes('selectedBlockSettingsProps') && screenOrderItem.includes('data-inline-selected-settings="true"') && screenOrderItem.includes('<SelectedBlockSettings {...selectedBlockSettingsProps} />'), 'selected-element settings must render immediately below the selected screen-order row');
 assert(!editLayout.includes('className="screen-order-v2-settings-panel"'), 'selected-element settings must not render after the whole screen-order list');
 assert(/\.screen-order-v2-head\s*\{[^}]*min-height:\s*38px;[^}]*gap:\s*2px;/s.test(screenOrderCss), 'desktop screen-order rows must keep the tightened 38px / 2px density');
@@ -98,7 +99,7 @@ await assertMissingFile('src/editor/editPanelParts/useScreenOrderRowMenu.js');
 console.log(JSON.stringify({
   ok: true,
   scope: 'editor-options-layout',
-  checks: 39,
+  checks: 40,
   saveFlowTouched: false,
   globalOptionsSeparated: true,
   unifiedPageThemeInspector: true,
