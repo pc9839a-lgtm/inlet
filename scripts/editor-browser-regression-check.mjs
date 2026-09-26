@@ -794,6 +794,34 @@ async function run() {
     await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('#editor-block-editor-hero') && !!document.querySelector('.phone-frame')`, 'desktop editor');
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes('저장 전 히어로 제목')`, 'initial editor preview');
     assert(apiState.pageLoadCount >= 1, 'selected page was not loaded from the page API');
+
+    const editSectionTabStyle = await evaluate(client, `(() => {
+      const tabs = document.querySelector('.edit-section-tabs');
+      const active = tabs?.querySelector('button[aria-pressed="true"]');
+      const inactive = tabs?.querySelector('button[aria-pressed="false"]');
+      if (!tabs || !active || !inactive) return null;
+      const tabsStyle = getComputedStyle(tabs);
+      const activeStyle = getComputedStyle(active);
+      const inactiveStyle = getComputedStyle(inactive);
+      return {
+        tabsBackground: tabsStyle.backgroundColor,
+        tabsBorderTopWidth: tabsStyle.borderTopWidth,
+        tabsHeight: Math.round(tabs.getBoundingClientRect().height),
+        activeBackground: activeStyle.backgroundColor,
+        activeColor: activeStyle.color,
+        activeHeight: Math.round(active.getBoundingClientRect().height),
+        inactiveBackground: inactiveStyle.backgroundColor,
+      };
+    })()`);
+    assert(editSectionTabStyle, 'edit section tab computed styles were not resolved');
+    assert(editSectionTabStyle.tabsBackground === 'rgb(238, 241, 245)', `edit section tabs must use light gray segmented background, got ${editSectionTabStyle.tabsBackground}`);
+    assert(editSectionTabStyle.tabsBorderTopWidth === '0px', `edit section tabs outer border must be removed, got ${editSectionTabStyle.tabsBorderTopWidth}`);
+    assert(editSectionTabStyle.tabsHeight <= 44, `edit section tabs container is too tall: ${editSectionTabStyle.tabsHeight}px`);
+    assert(editSectionTabStyle.activeBackground === 'rgb(255, 255, 255)', `active edit section tab must be white, got ${editSectionTabStyle.activeBackground}`);
+    assert(editSectionTabStyle.activeColor !== 'rgb(255, 255, 255)', 'active edit section tab text must not be white-on-dark');
+    assert(editSectionTabStyle.activeHeight === 36, `active edit section tab must be 36px tall, got ${editSectionTabStyle.activeHeight}px`);
+    assert(editSectionTabStyle.inactiveBackground === 'rgba(0, 0, 0, 0)', `inactive edit section tab must stay transparent, got ${editSectionTabStyle.inactiveBackground}`);
+
     await capture(client, 'desktop-editor-before');
 
     const heroEditorSelector = '.screen-order-v2-settings-panel textarea[placeholder="핵심 제목을 입력하세요"]';
