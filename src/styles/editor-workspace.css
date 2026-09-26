@@ -35,26 +35,32 @@ body .builder-shell .edit-layout {
   gap: 10px;
 }
 
-/* Edit section tabs — visible owner for the active editor path. */
-body .builder-shell.edit-mode-shell .edit-section-tabs {
+/* Edit section tabs — isolated owner. Do not reuse generic .active state. */
+html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] {
   width: 100% !important;
   min-width: 0 !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  max-height: 42px !important;
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  gap: 3px !important;
-  min-height: 42px !important;
+  gap: 2px !important;
+  margin: 0 !important;
   padding: 3px !important;
   overflow: hidden !important;
   border: 0 !important;
-  border-radius: 8px !important;
+  border-radius: 9px !important;
   background: #eef1f5 !important;
   box-shadow: none !important;
 }
 
-body .builder-shell.edit-mode-shell .edit-section-tabs button {
+html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab {
+  width: 100% !important;
   min-width: 0 !important;
-  min-height: 36px !important;
   height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  margin: 0 !important;
   padding: 0 10px !important;
   border: 1px solid transparent !important;
   border-radius: 6px !important;
@@ -65,18 +71,20 @@ body .builder-shell.edit-mode-shell .edit-section-tabs button {
   line-height: 1 !important;
   font-weight: 850 !important;
   cursor: pointer !important;
+  appearance: none !important;
 }
 
-body .builder-shell.edit-mode-shell .edit-section-tabs button:hover {
+html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab:hover {
   background: rgba(255, 255, 255, .72) !important;
   color: var(--product-text) !important;
 }
 
-body .builder-shell.edit-mode-shell .edit-section-tabs button.active,
-body .builder-shell.edit-mode-shell .edit-section-tabs button[aria-pressed='true'] {
+html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab[data-selected='true'],
+html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab[aria-pressed='true'] {
   border-color: #d9dde4 !important;
   background: #fff !important;
   color: var(--product-text) !important;
+  box-shadow: none !important;
   font-weight: 950 !important;
 }
 
