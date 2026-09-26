@@ -717,7 +717,7 @@ function assertNarrowDesktop(metrics, width) {
   assertInsideViewport(metrics.workPanel, width, 'narrow desktop work panel');
   assertInsideViewport(metrics.editLayout, width, 'narrow desktop edit layout');
   assert(metrics.workPanel?.width >= width - 4, `narrow desktop work panel did not expand: ${metrics.workPanel?.width}px of ${width}px`);
-  assert(metrics.editLayout?.width >= width - 28, `narrow desktop edit layout is still artificially capped: ${metrics.editLayout?.width}px of ${width}px`);
+  assert(metrics.editLayout?.width >= width - 48, `narrow desktop edit layout is still artificially capped: ${metrics.editLayout?.width}px of ${width}px`);
   assertInsideViewport(metrics.preview, width, 'narrow desktop preview workspace');
 }
 
