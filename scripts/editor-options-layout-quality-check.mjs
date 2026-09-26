@@ -18,6 +18,7 @@ const shareCard = await readFile('src/editor/editPanelParts/ShareOptionsCard.jsx
 const shareCss = await readFile('src/editor/editPanelParts/ShareOptionsCard.css', 'utf8');
 const screenOrderHeader = await readFile('src/editor/editPanelParts/ScreenOrderListHeader.jsx', 'utf8');
 const screenOrderCss = await readFile('src/editor/editPanelParts/ScreenOrder.css', 'utf8');
+const selectedBlockSettingsCss = await readFile('src/editor/editPanelParts/SelectedBlockSettings.css', 'utf8');
 const editorLabels = await readFile('src/editor/editPanelParts/editorLabels.js', 'utf8');
 const editLayout = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
 const sectionProps = await readFile('src/editor/createEditPanelSectionProps.js', 'utf8');
@@ -80,6 +81,7 @@ assert(editorControls.includes("className = ''") && editorControls.includes('cla
 assert(/\.fixed-open-button\s*\{[^}]*width:\s*44px\s*!important;[^}]*height:\s*44px\s*!important;/s.test(fixedBlocksCss), 'mobile fixed block open button must expose a 44px touch target');
 assert(/\.fixed-block-switch\s*\{[^}]*height:\s*44px\s*!important;[\s\S]*?\.fixed-block-switch::before\s*\{[^}]*height:\s*28px\s*!important;/s.test(fixedBlocksCss), 'fixed block switch must keep a 44px hit target while preserving the compact 28px visual track');
 assert(screenOrderCss.includes('.screen-order-v2-item') && screenOrderCss.includes('.screen-order-v2-head') && screenOrderCss.includes('.screen-order-v2-menu'), 'screen order V2 stylesheet must remain the normal-block layout owner');
+assert(selectedBlockSettingsCss.includes('.selected-block-settings-card.card') && selectedBlockSettingsCss.includes('padding: 12px !important') && selectedBlockSettingsCss.includes('border-radius: 12px !important') && selectedBlockSettingsCss.includes('font-size: 15px !important'), 'selected-element settings card must stay compact inside the restored left editor');
 assert(/\.screen-order-v2-head\s*\{[^}]*min-height:\s*38px;[^}]*gap:\s*2px;/s.test(screenOrderCss), 'desktop screen-order rows must keep the tightened 38px / 2px density');
 assert(legacyScreenOrderTokens.every((token) => !editorFinalCleanCss.includes(token)), 'editor-final-clean must not restore legacy normal-block selectors');
 assert(legacyScreenOrderTokens.every((token) => !screenOrderPolishCss.includes(token)), 'editor-screen-order-polish must not restore legacy normal-block selectors');
@@ -91,7 +93,7 @@ await assertMissingFile('src/editor/editPanelParts/useScreenOrderRowMenu.js');
 console.log(JSON.stringify({
   ok: true,
   scope: 'editor-options-layout',
-  checks: 36,
+  checks: 37,
   saveFlowTouched: false,
   globalOptionsSeparated: true,
   unifiedPageThemeInspector: true,
