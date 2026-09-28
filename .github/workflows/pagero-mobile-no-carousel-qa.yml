@@ -1,0 +1,86 @@
+name: Pagero mobile no-carousel QA
+
+on:
+  push:
+    branches:
+      - fix/mobile-no-horizontal-slider-20260928
+
+jobs:
+  mobile-static-stack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Prepare Korean font
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get -o DPkg::Lock::Timeout=45 update -qq
+          sudo apt-get -o DPkg::Lock::Timeout=45 install -y --no-install-recommends fonts-noto-cjk
+          fc-cache -f >/dev/null 2>&1 || true
+      - name: Materialize live root response
+        run: |
+          mkdir -p .tmp-root
+          cp -r public/* .tmp-root/
+          node --input-type=module <<'NODE'
+          import { writeFile } from 'node:fs/promises';
+          import { onRequest } from './functions/index.js';
+          const response = onRequest();
+          await writeFile('.tmp-root/index.html', await response.text(), 'utf8');
+          NODE
+          grep -q 'index-B0Q5rFVf.css?v=20260928-mobile-root-v3-static-stack' .tmp-root/index.html
+          cp scripts/browser-visual-quality-check.mjs scripts/.tmp-mobile-430.mjs
+          sed -i "s/{ name: 'mobile', width: 390, height: 844 }/{ name: 'mobile', width: 430, height: 932 }/" scripts/.tmp-mobile-430.mjs
+      - name: Resolve Chrome
+        run: |
+          CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME_BIN"
+          echo "INLET_BROWSER_QA_CHROME_PATH=$CHROME_BIN" >> "$GITHUB_ENV"
+      - name: Serve exact root
+        run: |
+          cd .tmp-root
+          python3 -m http.server 4193 --bind 127.0.0.1 >/tmp/pagero-mobile-stack.log 2>&1 &
+          echo $! >/tmp/pagero-mobile-stack.pid
+          cd ..
+          for i in $(seq 1 50); do
+            curl -fsS http://127.0.0.1:4193/ >/dev/null && exit 0
+            sleep .3
+          done
+          cat /tmp/pagero-mobile-stack.log
+          exit 1
+      - name: Verify 390px no horizontal carousel
+        env:
+          INLET_BROWSER_QA_URL: http://127.0.0.1:4193/
+          INLET_BROWSER_QA_REQUIRE: '1'
+          INLET_BROWSER_QA_VIEWPORTS: mobile
+          INLET_BROWSER_QA_EXPECT_SELECTOR: '.pagero-exact-home,.template-track,.template-marquee,.template-card,.screen-sequence,.graphic-flow,.marketing-showcase,.marketing-slide-list'
+          INLET_BROWSER_QA_EXPECT_TEXT: 'PAGERO,AI · 템플릿 · 블록,고르고 수정,개인회생,모바일 청첩장,분양,방문 예약,상담 랜딩,이벤트'
+          INLET_BROWSER_QA_EXPECT_COMPUTED: '.template-marquee|display|grid;.template-marquee|animation-name|none;.template-card:nth-child(7)|display|none;.graphic-flow|flex-direction|column;.marketing-simple-row.is-active|transform|none'
+          INLET_BROWSER_QA_SCREENSHOT_DIR: .tmp-mobile-stack-390
+        run: npm run browser:visual:qa
+      - name: Verify 430px no horizontal carousel
+        env:
+          INLET_BROWSER_QA_URL: http://127.0.0.1:4193/
+          INLET_BROWSER_QA_REQUIRE: '1'
+          INLET_BROWSER_QA_VIEWPORTS: mobile
+          INLET_BROWSER_QA_EXPECT_SELECTOR: '.pagero-exact-home,.template-track,.template-marquee,.template-card,.screen-sequence,.graphic-flow,.marketing-showcase,.marketing-slide-list'
+          INLET_BROWSER_QA_EXPECT_TEXT: 'PAGERO,AI · 템플릿 · 블록,고르고 수정,개인회생,모바일 청첩장,분양,방문 예약,상담 랜딩,이벤트'
+          INLET_BROWSER_QA_EXPECT_COMPUTED: '.template-marquee|display|grid;.template-marquee|animation-name|none;.template-card:nth-child(7)|display|none;.graphic-flow|flex-direction|column;.marketing-simple-row.is-active|transform|none'
+          INLET_BROWSER_QA_SCREENSHOT_DIR: .tmp-mobile-stack-430
+        run: node scripts/.tmp-mobile-430.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pagero-mobile-static-stack-${{ github.run_id }}
+          path: |
+            .tmp-mobile-stack-390
+            .tmp-mobile-stack-430
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 3
+      - if: always()
+        run: test -f /tmp/pagero-mobile-stack.pid && kill "$(cat /tmp/pagero-mobile-stack.pid)" 2>/dev/null || true
