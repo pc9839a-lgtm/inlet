@@ -794,67 +794,27 @@
 
 @media (max-width: 560px) {
   .pagerol-home-v2 .pagerol-nav {
-    top: 8px;
-    width: calc(100% - 16px);
-    min-height: 56px;
-    margin: 8px auto 0;
-    padding: 8px 9px 8px 14px;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 8px;
-    border-radius: 22px;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    border-radius: 26px;
+    padding: 12px 14px;
   }
 
-  .pagerol-home-v2 .pagerol-logo {
-    grid-column: 1;
-    justify-self: start;
-    display: block;
-    min-width: 0;
-    position: relative;
-    z-index: 1;
-    color: var(--ink);
-    font-size: 20px;
-    white-space: nowrap;
-  }
-
-  .pagerol-home-v2 .pagerol-nav nav {
+  .pagerol-home-v2 .pagerol-actions button:first-child {
     display: none;
   }
 
-  .pagerol-home-v2 .pagerol-actions {
-    grid-column: 2;
-    justify-self: end;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .pagerol-home-v2 .pagerol-actions button,
-  .pagerol-home-v2 .pagerol-actions button:first-child {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 38px;
-    padding: 0 11px;
-    font-size: 12px;
-    white-space: nowrap;
-  }
-
-  .pagerol-home-v2 .pagerol-actions button:first-child {
-    border: 1px solid rgba(16, 24, 40, .1);
-    background: rgba(255, 255, 255, .86);
-  }
-
   .pagerol-home-v2 .pagerol-hero {
-    padding: 40px 14px 48px;
+    padding: 50px 14px 48px;
   }
 
   .pagerol-home-v2 .pagerol-hero-copy h1 {
-    font-size: clamp(38px, 11vw, 48px);
+    font-size: clamp(45px, 14vw, 68px);
   }
 
   .pagerol-home-v2 .pagerol-hero-copy > span {
-    font-size: 15px;
+    font-size: 16px;
   }
 
   .pagerol-home-v2 .pagerol-phone-stage {
@@ -6063,8 +6023,18 @@
   animation-delay: -3.4s;
 }
 
+.pagerol-home-v2 .pagerol-showcase-card.card-5 {
+  right: 2%;
+  top: 112px;
+  z-index: 1;
+  transform: rotate(7deg);
+  opacity: .92;
+  animation-delay: -4.6s;
+}
+
 @media (max-width: 980px) {
-  .pagerol-home-v2 .pagerol-showcase-card.card-4 {
+  .pagerol-home-v2 .pagerol-showcase-card.card-4,
+  .pagerol-home-v2 .pagerol-showcase-card.card-5 {
     display: none;
   }
 
@@ -6079,116 +6049,37 @@
 
 @media (max-width: 760px) {
   .pagerol-home-v2 .pagerol-hero {
-    width: 100%;
-    min-height: auto;
-    padding: 36px 0 48px;
-    gap: 22px;
-    overflow: hidden;
-  }
-
-  .pagerol-home-v2 .pagerol-hero-copy {
-    padding: 0 18px;
-    box-sizing: border-box;
-  }
-
-  .pagerol-home-v2 .pagerol-hero .pagerol-hero-copy p {
-    height: 30px;
-    margin-bottom: 12px;
-    padding: 0 12px;
-    font-size: 12px;
+    padding: 104px 18px 44px;
+    gap: 28px;
   }
 
   .pagerol-home-v2 .pagerol-hero .pagerol-hero-copy h1 {
-    max-width: 390px;
-    font-size: clamp(36px, 10.6vw, 46px);
-    line-height: 1.02;
-    letter-spacing: -.065em;
-  }
-
-  .pagerol-home-v2 .pagerol-hero .pagerol-hero-copy .pagerol-hero-start {
-    width: min(100%, 280px);
-    min-width: 0;
-    height: 52px;
-    margin-top: 18px;
-    font-size: 15px;
+    font-size: clamp(38px, 11.4vw, 56px);
   }
 
   .pagerol-home-v2 .pagerol-hero .pagerol-hero-demo {
     width: 100%;
-    height: auto;
-    min-height: 0;
-    margin: 2px auto 0;
-    display: block;
-    overflow: visible;
+    height: 380px;
   }
 
-  .pagerol-home-v2 .pagerol-hero-showcase {
-    width: 100%;
-    height: auto;
-    padding: 8px 18px 18px;
-    display: flex;
-    gap: 12px;
-    overflow-x: auto;
-    overflow-y: visible;
-    scroll-snap-type: x mandatory;
-    scroll-padding-inline: 18px;
-    overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    box-sizing: border-box;
-    isolation: auto;
+  .pagerol-home-v2 .pagerol-showcase-card {
+    width: 190px;
+    min-height: 280px;
   }
 
-  .pagerol-home-v2 .pagerol-hero-showcase::-webkit-scrollbar {
-    display: none;
+  .pagerol-home-v2 .pagerol-showcase-card.card-1 {
+    width: 220px;
+    min-height: 330px;
   }
 
-  .pagerol-home-v2 .pagerol-showcase-card,
-  .pagerol-home-v2 .pagerol-showcase-card.card-1,
-  .pagerol-home-v2 .pagerol-showcase-card.card-2,
-  .pagerol-home-v2 .pagerol-showcase-card.card-3,
-  .pagerol-home-v2 .pagerol-showcase-card.card-4 {
-    position: relative;
-    left: auto;
-    right: auto;
-    top: auto;
-    display: block;
-    flex: 0 0 min(78vw, 292px);
-    width: min(78vw, 292px);
-    min-height: 300px;
-    transform: none;
-    opacity: 1;
-    animation: none;
-    scroll-snap-align: center;
-    scroll-snap-stop: always;
-  }
-}
-
-@media (max-width: 390px) {
-  .pagerol-home-v2 .pagerol-hero {
-    padding-top: 30px;
+  .pagerol-home-v2 .pagerol-showcase-card.card-2 {
+    left: -42px;
+    top: 58px;
   }
 
-  .pagerol-home-v2 .pagerol-hero-copy {
-    padding-inline: 14px;
-  }
-
-  .pagerol-home-v2 .pagerol-hero .pagerol-hero-copy h1 {
-    font-size: clamp(34px, 10.8vw, 42px);
-  }
-
-  .pagerol-home-v2 .pagerol-hero-showcase {
-    padding-inline: 14px;
-    scroll-padding-inline: 14px;
-  }
-
-  .pagerol-home-v2 .pagerol-showcase-card,
-  .pagerol-home-v2 .pagerol-showcase-card.card-1,
-  .pagerol-home-v2 .pagerol-showcase-card.card-2,
-  .pagerol-home-v2 .pagerol-showcase-card.card-3,
-  .pagerol-home-v2 .pagerol-showcase-card.card-4 {
-    flex-basis: min(82vw, 286px);
-    width: min(82vw, 286px);
+  .pagerol-home-v2 .pagerol-showcase-card.card-3 {
+    right: -42px;
+    top: 68px;
   }
 }
 
