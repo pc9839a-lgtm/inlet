@@ -34,7 +34,7 @@ assert(actions.includes("['bottombar', 'footer'].includes(item.type)"), 'section
 assert(actions.includes('commitLocalPageDraft') && actions.includes('...blocks'), 'section bundle must commit as one local page mutation');
 assert(sectionProps.includes('addSectionPattern') && dockProps.includes('addSectionPattern') && app.includes('addSectionPattern'), 'section pattern action prop chain is incomplete');
 
-assert(css.includes('.section-add-modes') && css.includes('.section-pattern-card') && css.includes('.section-pattern-tags'), 'internal section pattern styles are missing');
+assert(!css.includes('.section-add-modes') && !css.includes('.section-pattern-card') && !css.includes('.section-pattern-tags'), 'removed recommendation picker styles must not leak back into the primary editor bundle');
 assert(browser.includes("!!document.querySelector('.add-panel .widget-group-grid')"), 'browser regression must open the simplified block grid directly');
 assert(browser.includes("must not expose recommendation/industry mode tabs") && browser.includes("must not expose the removed search field"), 'browser regression must lock removal of recommendation tabs and search');
 
