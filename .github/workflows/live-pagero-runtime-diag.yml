@@ -1,0 +1,49 @@
+name: Live pagero mobile runtime diagnostic
+on:
+  push:
+    branches:
+      - diag/live-home-runtime-20260928
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Capture live HTML and headers
+        run: |
+          mkdir -p .tmp-live-diag
+          curl -sS -D .tmp-live-diag/root-headers.txt -H 'Cache-Control: no-cache, no-store' 'https://pagero.kr/?diag=202609281523' -o .tmp-live-diag/root.html
+          echo "=== scripts ===" > .tmp-live-diag/summary.txt
+          grep -oE '<script[^>]+src="[^"]+"' .tmp-live-diag/root.html >> .tmp-live-diag/summary.txt || true
+          echo "=== styles ===" >> .tmp-live-diag/summary.txt
+          grep -oE '<link[^>]+href="[^"]+"' .tmp-live-diag/root.html >> .tmp-live-diag/summary.txt || true
+          echo "=== exact/home strings in raw HTML ===" >> .tmp-live-diag/summary.txt
+          grep -oE 'pagero-exact-home|pagerol-home-v2|신청받고|모바일 페이지를' .tmp-live-diag/root.html | sort | uniq -c >> .tmp-live-diag/summary.txt || true
+      - name: Resolve Chrome
+        run: |
+          CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME_BIN"
+          echo "CHROME_BIN=$CHROME_BIN" >> "$GITHUB_ENV"
+      - name: Dump rendered mobile DOM
+        run: |
+          "$CHROME_BIN" --headless=new --no-sandbox --disable-gpu --hide-scrollbars --window-size=430,932             --virtual-time-budget=6000             --dump-dom 'https://pagero.kr/?diag=202609281523' > .tmp-live-diag/rendered-dom.html 2> .tmp-live-diag/chrome-stderr.txt
+          "$CHROME_BIN" --headless=new --no-sandbox --disable-gpu --hide-scrollbars --window-size=430,932             --virtual-time-budget=6000             --screenshot=.tmp-live-diag/live-mobile-430.png             'https://pagero.kr/?diag=202609281523' >> .tmp-live-diag/chrome-stderr.txt 2>&1 || true
+          {
+            echo "=== rendered class/string counts ==="
+            printf "pagero-exact-home: "; grep -o 'pagero-exact-home' .tmp-live-diag/rendered-dom.html | wc -l
+            printf "pagerol-home-v2: "; grep -o 'pagerol-home-v2' .tmp-live-diag/rendered-dom.html | wc -l
+            printf "신청받고: "; grep -o '신청받고' .tmp-live-diag/rendered-dom.html | wc -l
+            printf "빠르게 만드세요: "; grep -o '빠르게 만드세요' .tmp-live-diag/rendered-dom.html | wc -l
+            echo "=== rendered asset refs ==="
+            grep -oE '(src|href)="[^"]+\.(js|css)(\?[^"]*)?"' .tmp-live-diag/rendered-dom.html | sort -u
+          } >> .tmp-live-diag/summary.txt
+      - name: Show summary
+        run: cat .tmp-live-diag/summary.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: live-pagero-runtime-diag-${{ github.run_id }}
+          path: .tmp-live-diag
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 3
