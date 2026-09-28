@@ -281,6 +281,7 @@ const C63_HOME_HTML = `<!doctype html>
       .pagero-exact-home .fixed-inner {
         width: calc(100% - 20px) !important;
         height: 54px !important;
+        min-height: 54px !important;
         padding: 5px !important;
         border-radius: 18px !important;
       }
