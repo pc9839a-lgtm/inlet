@@ -451,17 +451,16 @@ body .builder-shell.edit-mode-shell .screen-order-fixed-blocks :is(.fixed-block-
   margin-bottom: 0 !important;
 }
 
-
-/* PC page-options / screen-order unified visual contract v1 */
-@media (min-width: 1181px) {
+/* PC page-options / screen-order visual parity v2
+   PC editor starts at 900px; mobile workspace is <=899px. */
+@media (min-width: 900px) {
   html body #root .builder-shell.edit-mode-shell .edit-layout {
-    --edit-section-line: #e1e7ef;
-    --edit-section-line-strong: #cfd8e5;
-    --edit-section-soft: #f8fafc;
-    --edit-section-selected: #f6f9ff;
-    --edit-section-ink: #101828;
-    --edit-section-muted: #667085;
-    gap: 10px !important;
+    --edit-parity-line: #d9e4f2;
+    --edit-parity-line-strong: #c4d2e2;
+    --edit-parity-soft: #f7fafd;
+    --edit-parity-selected: #f5f9ff;
+    --edit-parity-ink: #0f172a;
+    --edit-parity-muted: #64748b;
   }
 
   html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-panel {
@@ -472,100 +471,51 @@ body .builder-shell.edit-mode-shell .screen-order-fixed-blocks :is(.fixed-block-
     padding: 0 !important;
   }
 
-  /* Both tabs use the same transparent outer surface. */
-  html body #root .builder-shell.edit-mode-shell .edit-section-panel[data-editor-section='options'] .page-global-options-card,
-  html body #root .builder-shell.edit-mode-shell .edit-section-panel[data-editor-section='order'] .screen-order-v2-card {
+  /* Page Options is the visual source of truth. Both top-level panels use the same shell. */
+  html body #root .builder-shell.edit-mode-shell .edit-layout .page-global-options-card,
+  html body #root .builder-shell.edit-mode-shell .edit-layout .screen-order-v2-card {
     width: 100% !important;
     min-width: 0 !important;
     max-width: 100% !important;
     margin: 0 !important;
-    padding: 0 !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    background: transparent !important;
+    padding: 18px !important;
+    border: 1px solid var(--edit-parity-line) !important;
+    border-radius: 22px !important;
+    background: #fff !important;
     box-shadow: none !important;
     overflow: visible !important;
   }
 
-  /* Section headings are identical across 페이지 옵션 / 화면 순서. */
   html body #root .builder-shell.edit-mode-shell .edit-layout :is(
     .page-global-options-title,
-    .screen-order-v2-title,
-    .screen-order-fixed-blocks-title
+    .screen-order-v2-title
   ) {
-    min-height: 22px !important;
-    margin: 0 0 8px !important;
-    padding: 0 2px !important;
+    min-height: 24px !important;
+    margin: 0 0 14px !important;
+    padding: 0 !important;
     display: flex !important;
-    align-items: center !important;
+    align-items: flex-start !important;
     border: 0 !important;
     background: transparent !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .edit-layout :is(
     .page-global-options-title,
-    .screen-order-v2-title,
-    .screen-order-fixed-blocks-title
+    .screen-order-v2-title
   ) h2 {
     margin: 0 !important;
-    color: var(--edit-section-ink) !important;
-    font-size: 14px !important;
-    line-height: 1.3 !important;
-    font-weight: 900 !important;
-    letter-spacing: -.02em !important;
+    color: var(--edit-parity-ink) !important;
+    font-size: 20px !important;
+    line-height: 1.2 !important;
+    font-weight: 950 !important;
+    letter-spacing: -.035em !important;
   }
 
-  html body #root .builder-shell.edit-mode-shell .editor-page-options-stack {
-    display: grid !important;
-    gap: 14px !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .page-global-options-list {
-    display: grid !important;
-    gap: 8px !important;
-  }
-
-  /* Same card language for option rows, order rows and fixed rows. */
-  html body #root .builder-shell.edit-mode-shell .page-global-options-card :is(
-    .edit-animation-card,
-    .share-options-card
-  ),
-  html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks .fixed-block-card {
-    margin: 0 !important;
-    border: 1px solid var(--edit-section-line) !important;
-    border-radius: 10px !important;
-    background: #fff !important;
-    box-shadow: none !important;
-    overflow: hidden !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .page-global-options-card :is(
-    .edit-animation-head,
-    .share-options-head
-  ),
-  html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks .fixed-block-head {
-    min-height: 50px !important;
-    padding: 7px 10px !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    background: #fff !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .page-global-options-card :is(
-    .edit-animation-settings,
-    .share-position-control
-  ),
-  html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks .fixed-block-editor {
-    padding: 10px !important;
-    border-top: 1px solid #edf1f5 !important;
-    background: var(--edit-section-soft) !important;
-  }
-
-  /* Screen-order rows use the same bordered card treatment instead of a flat table. */
+  /* Screen order rows now use the same rounded-card language as Page Options. */
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-list {
     display: grid !important;
-    gap: 8px !important;
-    border-top: 0 !important;
+    gap: 10px !important;
+    border: 0 !important;
     background: transparent !important;
     overflow: visible !important;
   }
@@ -578,22 +528,22 @@ body .builder-shell.edit-mode-shell .screen-order-fixed-blocks :is(.fixed-block-
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-item {
     margin: 0 !important;
     overflow: visible !important;
-    border: 1px solid var(--edit-section-line) !important;
-    border-radius: 10px !important;
+    border: 1px solid var(--edit-parity-line) !important;
+    border-radius: 18px !important;
     background: #fff !important;
     box-shadow: none !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-item:hover {
-    border-color: var(--edit-section-line-strong) !important;
+    border-color: var(--edit-parity-line-strong) !important;
     background: #fff !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-item.is-open,
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true'] {
-    border-color: #aebfd8 !important;
-    background: var(--edit-section-selected) !important;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, .06) !important;
+    border-color: #b8cae0 !important;
+    background: var(--edit-parity-selected) !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .045) !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-item.is-open::before,
@@ -602,112 +552,145 @@ body .builder-shell.edit-mode-shell .screen-order-fixed-blocks :is(.fixed-block-
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-head {
-    min-height: 50px !important;
-    grid-template-columns: 28px minmax(0, 1fr) 34px 34px !important;
-    gap: 4px !important;
-    padding: 0 8px !important;
+    min-height: 62px !important;
+    grid-template-columns: 38px minmax(0, 1fr) 40px 40px !important;
+    gap: 6px !important;
+    padding: 0 10px !important;
     border: 0 !important;
-    border-radius: 9px !important;
+    border-radius: 17px !important;
     background: transparent !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-drag {
-    width: 28px !important;
-    min-width: 28px !important;
-    height: 34px !important;
-    min-height: 34px !important;
-    border-radius: 7px !important;
+    width: 36px !important;
+    min-width: 36px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    border-radius: 12px !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-title-wrap {
-    grid-template-columns: 22px minmax(0, 1fr) 18px !important;
-    gap: 8px !important;
+    grid-template-columns: 26px minmax(0, 1fr) 20px !important;
+    gap: 9px !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-type-icon {
-    width: 22px !important;
-    height: 22px !important;
+    width: 26px !important;
+    height: 26px !important;
+    border-radius: 8px !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-title-wrap strong {
-    color: var(--edit-section-ink) !important;
-    font-size: 13px !important;
-    line-height: 1.2 !important;
-    font-weight: 850 !important;
+    color: var(--edit-parity-ink) !important;
+    font-size: 15px !important;
+    line-height: 1.25 !important;
+    font-weight: 950 !important;
   }
 
   html body #root .builder-shell.edit-mode-shell :is(
     .screen-order-v2-visibility,
     .screen-order-v2-actions
   ) {
-    width: 34px !important;
-    min-width: 34px !important;
+    width: 40px !important;
+    min-width: 40px !important;
   }
 
   html body #root .builder-shell.edit-mode-shell :is(
     .screen-order-v2-visibility-button,
     .screen-order-v2-action
   ) {
-    width: 32px !important;
-    min-width: 32px !important;
-    height: 32px !important;
-    min-height: 32px !important;
-    border-radius: 7px !important;
+    width: 38px !important;
+    min-width: 38px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    border-radius: 13px !important;
   }
 
-  /* Selected block editor stays visually attached to its order row. */
+  /* Selected settings visually belong to the same family instead of looking like another product. */
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-settings-panel {
-    margin: 6px 0 2px !important;
+    margin: 10px 0 0 !important;
     padding: 0 !important;
     border: 0 !important;
+    background: transparent !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-settings-panel .selected-block-settings-card.card {
-    padding: 12px !important;
-    border: 1px solid var(--edit-section-line) !important;
-    border-radius: 10px !important;
+    padding: 18px !important;
+    border: 1px solid var(--edit-parity-line) !important;
+    border-radius: 18px !important;
     background: #fff !important;
     box-shadow: none !important;
   }
 
-  /* Fixed section follows the same spacing rhythm as normal blocks. */
+  /* Fixed area follows the exact same spacing, borders and typography. */
   html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks {
-    margin-top: 14px !important;
-    padding-top: 14px !important;
-    border-top: 1px solid var(--edit-section-line) !important;
+    margin-top: 16px !important;
+    padding-top: 16px !important;
+    border-top: 1px solid var(--edit-parity-line) !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks-title {
+    min-height: 22px !important;
+    margin: 0 0 10px !important;
+    padding: 0 !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks-title h2 {
+    margin: 0 !important;
+    color: var(--edit-parity-ink) !important;
+    font-size: 15px !important;
+    line-height: 1.3 !important;
+    font-weight: 950 !important;
+    letter-spacing: -.025em !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks .fixed-block-card {
-    margin-bottom: 8px !important;
+    margin: 0 0 10px !important;
+    border: 1px solid var(--edit-parity-line) !important;
+    border-radius: 18px !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks .fixed-block-card:last-child {
     margin-bottom: 0 !important;
   }
 
-  /* Page style controls use the same 10px cards and border tone as screen order. */
-  html body #root .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel-v17 {
-    gap: 8px !important;
+  html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks .fixed-block-head {
+    min-height: 62px !important;
+    padding: 10px 12px !important;
+    border: 0 !important;
+    border-radius: 17px !important;
+    background: #fff !important;
   }
 
-  html body #root .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel-v17 :is(
-    .style-apply-bar,
-    .style-subnav,
-    .style-card
-  ) {
-    border-color: var(--edit-section-line) !important;
-    border-radius: 10px !important;
+  html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks .fixed-block-editor {
+    padding: 12px !important;
+    border-top: 1px solid #edf2f8 !important;
+    background: var(--edit-parity-soft) !important;
+  }
+
+  /* The add dock no longer introduces a heavy black bar that clashes with Page Options. */
+  html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock {
+    border-color: var(--edit-parity-line) !important;
+    border-radius: 18px !important;
+    background: rgba(255, 255, 255, .98) !important;
+    box-shadow: 0 14px 36px rgba(15, 23, 42, .10) !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .add-toggle {
+    min-height: 48px !important;
+    border: 1px solid var(--edit-parity-line) !important;
+    border-radius: 14px !important;
+    background: #fff !important;
+    color: var(--edit-parity-ink) !important;
     box-shadow: none !important;
   }
 
-  html body #root .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel-v17 .style-card {
-    padding: 12px !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel-v17 .section-title h2,
-  html body #root .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel-v17 .style-apply-bar strong {
-    font-size: 14px !important;
-    font-weight: 900 !important;
-    letter-spacing: -.02em !important;
+  html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .add-toggle:hover,
+  html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .add-toggle:focus-visible {
+    border-color: var(--edit-parity-line-strong) !important;
+    background: var(--edit-parity-soft) !important;
   }
 }

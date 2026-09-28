@@ -1010,9 +1010,53 @@ async function run() {
 
     await setViewport(client, 1180, 900, false);
     await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('.preview-workspace')`, 'narrow desktop editor');
+
+    await clickButtonByText(client, '.edit-section-tabs', '페이지 옵션');
+    await waitForBrowser(client, `!!document.querySelector('.page-global-options-card')`, 'narrow desktop page options');
+    const pageOptionsShellStyle = await evaluate(client, `(() => {
+      const el = document.querySelector('.page-global-options-card');
+      const style = getComputedStyle(el);
+      return {
+        padding: style.paddingTop,
+        borderWidth: style.borderTopWidth,
+        borderRadius: style.borderTopLeftRadius,
+        background: style.backgroundColor,
+      };
+    })()`);
+    assert(pageOptionsShellStyle?.padding === '18px', `page options shell padding drifted at 1180px: ${JSON.stringify(pageOptionsShellStyle)}`);
+    assert(pageOptionsShellStyle?.borderWidth === '1px', `page options shell border drifted at 1180px: ${JSON.stringify(pageOptionsShellStyle)}`);
+    assert(pageOptionsShellStyle?.borderRadius === '22px', `page options shell radius drifted at 1180px: ${JSON.stringify(pageOptionsShellStyle)}`);
+    await capture(client, 'desktop-narrow-1180-page-options');
+
+    await clickButtonByText(client, '.edit-section-tabs', '화면 순서');
+    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-card')`, 'narrow desktop screen order');
+    const screenOrderShellStyle = await evaluate(client, `(() => {
+      const shell = document.querySelector('.screen-order-v2-card');
+      const row = document.querySelector('.screen-order-v2-item');
+      const add = document.querySelector('.fixed-add-dock .add-toggle');
+      const style = getComputedStyle(shell);
+      const rowStyle = row ? getComputedStyle(row) : null;
+      const addStyle = add ? getComputedStyle(add) : null;
+      return {
+        padding: style.paddingTop,
+        borderWidth: style.borderTopWidth,
+        borderRadius: style.borderTopLeftRadius,
+        background: style.backgroundColor,
+        rowRadius: rowStyle?.borderTopLeftRadius || '',
+        rowBorder: rowStyle?.borderTopWidth || '',
+        addBackground: addStyle?.backgroundColor || '',
+      };
+    })()`);
+    assert(screenOrderShellStyle?.padding === pageOptionsShellStyle.padding, `screen order shell padding must match page options: ${JSON.stringify(screenOrderShellStyle)} vs ${JSON.stringify(pageOptionsShellStyle)}`);
+    assert(screenOrderShellStyle?.borderWidth === pageOptionsShellStyle.borderWidth, `screen order shell border must match page options: ${JSON.stringify(screenOrderShellStyle)}`);
+    assert(screenOrderShellStyle?.borderRadius === pageOptionsShellStyle.borderRadius, `screen order shell radius must match page options: ${JSON.stringify(screenOrderShellStyle)}`);
+    assert(screenOrderShellStyle?.background === pageOptionsShellStyle.background, `screen order shell background must match page options: ${JSON.stringify(screenOrderShellStyle)}`);
+    assert(screenOrderShellStyle?.rowRadius === '18px' && screenOrderShellStyle?.rowBorder === '1px', `screen order rows must use rounded bordered cards: ${JSON.stringify(screenOrderShellStyle)}`);
+    assert(screenOrderShellStyle?.addBackground === 'rgb(255, 255, 255)', `block add dock must no longer be a black bar: ${JSON.stringify(screenOrderShellStyle)}`);
+    await capture(client, 'desktop-narrow-1180-screen-order');
+
     const narrowDesktopMetrics = await collectNarrowDesktopMetrics(client);
     assertNarrowDesktop(narrowDesktopMetrics, 1180);
-    await capture(client, 'desktop-narrow-1180');
 
     for (const viewport of mobileViewports) {
       await setViewport(client, viewport.width, viewport.height, true);
