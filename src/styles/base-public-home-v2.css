@@ -9561,13 +9561,15 @@
 
   .pagerol-preview-phone {
     width: 100%;
-    min-height: 330px;
+    min-height: 0;
     border-width: 6px;
     border-radius: 28px;
     box-shadow: 0 16px 42px rgba(16, 24, 40, .12);
   }
 
   .pagerol-preview-screen {
+    height: auto;
+    min-height: 0;
     padding: 12px;
   }
 
