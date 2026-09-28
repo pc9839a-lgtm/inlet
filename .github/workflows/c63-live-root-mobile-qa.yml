@@ -1,0 +1,72 @@
+name: C63 live-root mobile contract QA
+on:
+  push:
+    branches:
+      - fix/live-root-mobile-runtime-20260928
+
+jobs:
+  mobile-root:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Prepare Korean font
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get -o DPkg::Lock::Timeout=45 update -qq
+          sudo apt-get -o DPkg::Lock::Timeout=45 install -y --no-install-recommends fonts-noto-cjk
+          fc-cache -f >/dev/null 2>&1 || true
+      - name: Materialize exact root function response
+        run: |
+          mkdir -p .tmp-c63-root
+          cp -r public/c63-assets .tmp-c63-root/c63-assets
+          cp public/c63-life-bridge.css public/c63-life-bridge.js .tmp-c63-root/
+          node --input-type=module <<'NODE'
+          import { writeFile } from 'node:fs/promises';
+          import { onRequest } from './functions/index.js';
+          const response = onRequest();
+          await writeFile('.tmp-c63-root/index.html', await response.text(), 'utf8');
+          NODE
+          grep -q 'index-B0Q5rFVf.css?v=20260928-mobile-root-v2' .tmp-c63-root/index.html
+      - name: Resolve Chrome
+        run: |
+          CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME_BIN"
+          echo "INLET_BROWSER_QA_CHROME_PATH=$CHROME_BIN" >> "$GITHUB_ENV"
+      - name: Start exact root preview
+        run: |
+          cd .tmp-c63-root
+          python3 -m http.server 4192 --bind 127.0.0.1 >/tmp/c63-root.log 2>&1 &
+          echo $! >/tmp/c63-root.pid
+          cd ..
+          for i in $(seq 1 50); do
+            curl -fsS http://127.0.0.1:4192/ >/dev/null && exit 0
+            sleep .3
+          done
+          cat /tmp/c63-root.log
+          exit 1
+      - name: Verify mobile computed layout
+        env:
+          INLET_BROWSER_QA_URL: http://127.0.0.1:4192/
+          INLET_BROWSER_QA_REQUIRE: '1'
+          INLET_BROWSER_QA_VIEWPORTS: mobile
+          INLET_BROWSER_QA_EXPECT_SELECTOR: '.pagero-exact-home,.header .nav,#leads .split,#leads .mock-zone,#leads .form-phone,#leads .inbox-panel,.fixed-inner'
+          INLET_BROWSER_QA_EXPECT_TEXT: 'PAGERO,로그인,바로 시작하기,접수함,신청받고,바로 확인,신청 폼'
+          INLET_BROWSER_QA_EXPECT_COMPUTED: '.pagero-exact-home .header .nav|height|52px;.pagero-exact-home #leads .split|display|grid;.pagero-exact-home #leads .form-phone|position|relative;.pagero-exact-home #leads .inbox-panel|position|relative;.pagero-exact-home .fixed-inner|height|54px;.pagero-exact-home .fixed-text|display|none'
+          INLET_BROWSER_QA_SCREENSHOT_DIR: .tmp-c63-shot
+        run: npm run browser:visual:qa
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c63-live-root-mobile-${{ github.run_id }}
+          path: .tmp-c63-shot
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 3
+      - if: always()
+        run: test -f /tmp/c63-root.pid && kill "$(cat /tmp/c63-root.pid)" 2>/dev/null || true
