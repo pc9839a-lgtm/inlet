@@ -1,0 +1,97 @@
+name: Public home mobile viewport QA
+
+on:
+  pull_request:
+    paths:
+      - 'src/styles/base-public-home-v2.css'
+      - '.github/workflows/public-home-mobile-viewport-qa.yml'
+
+jobs:
+  public-home-viewports:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Prepare Korean font
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get -o DPkg::Lock::Timeout=45 update -qq
+          sudo apt-get -o DPkg::Lock::Timeout=45 install -y --no-install-recommends fonts-noto-cjk
+          fc-cache -f >/dev/null 2>&1 || true
+      - run: npm run build
+      - name: Resolve Chrome
+        run: |
+          CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME_BIN"
+          cat > /tmp/chrome-reduced-motion <<EOF
+          #!/usr/bin/env bash
+          exec "$CHROME_BIN" --force-prefers-reduced-motion=reduce "\$@"
+          EOF
+          chmod +x /tmp/chrome-reduced-motion
+          echo "INLET_BROWSER_QA_CHROME_PATH=/tmp/chrome-reduced-motion" >> "$GITHUB_ENV"
+      - name: Start preview
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4180 > /tmp/pagero-home-preview.log 2>&1 &
+          echo $! > /tmp/pagero-home-preview.pid
+          for attempt in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:4180/ >/dev/null && exit 0
+            sleep 0.5
+          done
+          cat /tmp/pagero-home-preview.log
+          exit 1
+      - name: Prepare viewport scripts
+        run: |
+          cp scripts/browser-visual-quality-check.mjs scripts/.tmp-public-home-360.mjs
+          cp scripts/browser-visual-quality-check.mjs scripts/.tmp-public-home-430.mjs
+          sed -i "s/{ name: 'mobile', width: 390, height: 844 }/{ name: 'mobile', width: 360, height: 800 }/" scripts/.tmp-public-home-360.mjs
+          sed -i "s/{ name: 'mobile', width: 390, height: 844 }/{ name: 'mobile', width: 430, height: 932 }/" scripts/.tmp-public-home-430.mjs
+      - name: Verify 360px
+        env:
+          INLET_BROWSER_QA_URL: http://127.0.0.1:4180/
+          INLET_BROWSER_QA_REQUIRE: '1'
+          INLET_BROWSER_QA_VIEWPORTS: mobile
+          INLET_BROWSER_QA_EXPECT_SELECTOR: '.pagerol-home-v2,.pagerol-logo,.pagerol-actions,.pagerol-hero,.pagerol-hero-showcase,.pagerol-workbench-section,.pagerol-stats'
+          INLET_BROWSER_QA_EXPECT_TEXT: '페이지로,로그인,시작하기,모바일 페이지를,빠르게 만드세요,바로 만들고,필요한 페이지를,생활에 필요한 정보를'
+          INLET_BROWSER_QA_SCREENSHOT_DIR: .tmp-public-home-360
+        run: node scripts/.tmp-public-home-360.mjs
+      - name: Verify 390px
+        env:
+          INLET_BROWSER_QA_URL: http://127.0.0.1:4180/
+          INLET_BROWSER_QA_REQUIRE: '1'
+          INLET_BROWSER_QA_VIEWPORTS: mobile
+          INLET_BROWSER_QA_EXPECT_SELECTOR: '.pagerol-home-v2,.pagerol-logo,.pagerol-actions,.pagerol-hero,.pagerol-hero-showcase,.pagerol-workbench-section,.pagerol-stats'
+          INLET_BROWSER_QA_EXPECT_TEXT: '페이지로,로그인,시작하기,모바일 페이지를,빠르게 만드세요,바로 만들고,필요한 페이지를,생활에 필요한 정보를'
+          INLET_BROWSER_QA_SCREENSHOT_DIR: .tmp-public-home-390
+        run: node scripts/browser-visual-quality-check.mjs
+      - name: Verify 430px
+        env:
+          INLET_BROWSER_QA_URL: http://127.0.0.1:4180/
+          INLET_BROWSER_QA_REQUIRE: '1'
+          INLET_BROWSER_QA_VIEWPORTS: mobile
+          INLET_BROWSER_QA_EXPECT_SELECTOR: '.pagerol-home-v2,.pagerol-logo,.pagerol-actions,.pagerol-hero,.pagerol-hero-showcase,.pagerol-workbench-section,.pagerol-stats'
+          INLET_BROWSER_QA_EXPECT_TEXT: '페이지로,로그인,시작하기,모바일 페이지를,빠르게 만드세요,바로 만들고,필요한 페이지를,생활에 필요한 정보를'
+          INLET_BROWSER_QA_SCREENSHOT_DIR: .tmp-public-home-430
+        run: node scripts/.tmp-public-home-430.mjs
+      - name: Upload viewport screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-home-mobile-viewports-${{ github.run_id }}
+          path: |
+            .tmp-public-home-360
+            .tmp-public-home-390
+            .tmp-public-home-430
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 7
+      - name: Stop preview
+        if: always()
+        run: |
+          if [ -f /tmp/pagero-home-preview.pid ]; then
+            kill "$(cat /tmp/pagero-home-preview.pid)" 2>/dev/null || true
+          fi
