@@ -35,7 +35,7 @@ const C63_HOME_HTML = `<!doctype html>
   <link rel="modulepreload" crossorigin href="/c63-assets/linkPreview-DHfzyAx0.js">
   <link rel="modulepreload" crossorigin href="/c63-assets/pageModel-DiUX99-Q.js">
   <link rel="modulepreload" crossorigin href="/c63-assets/monthRange-D959kZuv.js">
-  <link rel="stylesheet" crossorigin href="/c63-assets/index-B0Q5rFVf.css?v=20260928-mobile-root-v2">
+  <link rel="stylesheet" crossorigin href="/c63-assets/index-B0Q5rFVf.css?v=20260928-mobile-root-v3-static-stack">
   <link rel="stylesheet" href="/c63-life-bridge.css">
   <script defer src="/c63-life-bridge.js"></script>
   <style>
@@ -299,6 +299,89 @@ const C63_HOME_HTML = `<!doctype html>
 
       .pagero-exact-home .footer {
         padding-bottom: 88px !important;
+      }
+
+      /* Mobile content must read vertically: no horizontal carousels, marquees, or swipe rows. */
+      .pagero-exact-home .template-section,
+      .pagero-exact-home .template-track {
+        overflow: visible !important;
+      }
+      .pagero-exact-home .template-track {
+        margin-top: 28px !important;
+      }
+      .pagero-exact-home .template-marquee {
+        width: 100% !important;
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+        animation: none !important;
+        transform: none !important;
+        touch-action: pan-y !important;
+      }
+      .pagero-exact-home .template-card {
+        width: 100% !important;
+        min-height: 0 !important;
+        padding: 16px !important;
+        border-radius: 20px !important;
+        box-shadow: 0 10px 26px rgba(17, 24, 39, .07) !important;
+      }
+      .pagero-exact-home .template-card:nth-child(n + 7) {
+        display: none !important;
+      }
+      .pagero-exact-home .template-image {
+        height: 116px !important;
+        border-radius: 15px !important;
+      }
+      .pagero-exact-home .template-card h3 {
+        margin-top: 14px !important;
+        font-size: 19px !important;
+      }
+      .pagero-exact-home .template-card p {
+        margin-bottom: 10px !important;
+        font-size: 12px !important;
+      }
+      .pagero-exact-home .template-button {
+        height: 40px !important;
+        margin-top: 12px !important;
+      }
+
+      .pagero-exact-home .feature-layout,
+      .pagero-exact-home .create-grid,
+      .pagero-exact-home .marketing-grid,
+      .pagero-exact-home .marketing-showcase {
+        grid-template-columns: 1fr !important;
+      }
+      .pagero-exact-home .screen-sequence {
+        grid-template-columns: 1fr !important;
+      }
+      .pagero-exact-home .graphic-flow {
+        height: auto !important;
+        min-height: 0 !important;
+        padding: 16px !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        gap: 10px !important;
+      }
+      .pagero-exact-home .flow-line {
+        width: 5px !important;
+        height: 34px !important;
+        transform: none !important;
+      }
+      .pagero-exact-home .graphic-event-chips {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+      }
+      .pagero-exact-home .marketing-slide-list {
+        min-height: 0 !important;
+        padding: 14px !important;
+        gap: 8px !important;
+      }
+      .pagero-exact-home .marketing-simple-row,
+      .pagero-exact-home .marketing-simple-row.is-active {
+        min-height: 50px !important;
+        padding: 0 14px !important;
+        transform: none !important;
       }
 
       .pagero-ssr-fallback { padding: 28px 18px 56px; }
