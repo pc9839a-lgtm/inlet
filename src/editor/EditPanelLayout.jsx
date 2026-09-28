@@ -43,7 +43,7 @@ export function EditPanelLayout({
         </button>
       </nav>
 
-      <div className="edit-section-panel">
+      <div className="edit-section-panel" data-editor-section={section}>
         {section === 'options' ? (
           <div className="editor-page-options-stack">
             <PageGlobalOptions {...pageGlobalOptionsProps} />
