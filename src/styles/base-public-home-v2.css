@@ -9162,3 +9162,454 @@
     padding: 0 24px;
   }
 }
+
+/* Mobile-only optimization for the currently deployed pagero-exact-home. Desktop rules are untouched. */
+@media (max-width: 640px) {
+  .pagero-exact-home {
+    padding-bottom: 68px;
+  }
+
+  .pagero-exact-home .wrap {
+    width: calc(100% - 28px);
+  }
+
+  .pagero-exact-home .header {
+    top: 8px;
+  }
+
+  .pagero-exact-home .nav {
+    width: calc(100% - 20px);
+    height: 52px;
+    padding: 0 7px 0 11px;
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(17, 24, 39, .08);
+  }
+
+  .pagero-exact-home .logo {
+    gap: 7px;
+    font-size: 17px;
+    letter-spacing: -.055em;
+  }
+
+  .pagero-exact-home .logo-mark {
+    width: 26px;
+    height: 26px;
+    border-radius: 9px;
+  }
+
+  .pagero-exact-home .logo-mark::after {
+    top: 5px;
+    right: 5px;
+    width: 8px;
+    height: 8px;
+  }
+
+  .pagero-exact-home .header-actions {
+    gap: 4px !important;
+  }
+
+  .pagero-exact-home .header-btn,
+  .pagero-exact-home .header-login-btn {
+    height: 34px !important;
+    padding: 0 10px !important;
+    border-radius: 13px !important;
+    font-size: 11px !important;
+    box-shadow: none !important;
+    white-space: nowrap;
+  }
+
+  .pagero-exact-home .hero {
+    min-height: auto;
+    padding: 92px 0 52px;
+    align-items: flex-start;
+  }
+
+  .pagero-exact-home .hero-title {
+    font-size: clamp(38px, 11vw, 48px);
+    line-height: .96;
+    letter-spacing: -.075em;
+  }
+
+  .pagero-exact-home .hero-action {
+    margin-top: 24px;
+  }
+
+  .pagero-exact-home .main-btn {
+    height: 50px;
+    padding: 0 24px;
+    font-size: 14px;
+    box-shadow: 0 12px 30px rgba(11, 13, 18, .14);
+  }
+
+  .pagero-exact-home .hero-preview {
+    width: 100%;
+    max-width: 330px;
+    margin-top: 44px;
+  }
+
+  .pagero-exact-home .preview-main {
+    width: 100%;
+    height: 336px;
+    padding: 28px 20px 18px;
+    border-radius: 26px 26px 0 0;
+    animation: none;
+    box-shadow: 0 16px 40px rgba(17, 24, 39, .11);
+  }
+
+  .pagero-exact-home .phone-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 18px;
+    border-width: 10px;
+  }
+
+  .pagero-exact-home .phone-title {
+    font-size: 27px;
+  }
+
+  .pagero-exact-home .phone-desc {
+    margin: 7px 0 18px;
+    font-size: 13px;
+  }
+
+  .pagero-exact-home .phone-btn,
+  .pagero-exact-home .phone-row {
+    height: 42px;
+  }
+
+  .pagero-exact-home .phone-row {
+    margin-top: 10px;
+    padding: 0 14px;
+    border-radius: 13px;
+    font-size: 12px;
+  }
+
+  .pagero-exact-home .section,
+  .pagero-exact-home .feature-section,
+  .pagero-exact-home .final-section {
+    padding: 56px 0;
+  }
+
+  .pagero-exact-home .badge {
+    height: 30px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  .pagero-exact-home .section-title,
+  .pagero-exact-home .left-title {
+    font-size: clamp(32px, 9.5vw, 40px);
+    line-height: 1.02;
+    letter-spacing: -.065em;
+  }
+
+  .pagero-exact-home .feature-layout,
+  .pagero-exact-home .create-grid,
+  .pagero-exact-home .marketing-grid,
+  .pagero-exact-home .marketing-showcase {
+    margin-top: 34px;
+    gap: 14px;
+  }
+
+  .pagero-exact-home .feature-sticky-slot,
+  .pagero-exact-home .sticky-screen,
+  .pagero-exact-home .sticky-screen.is-fixed {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  .pagero-exact-home .sticky-screen,
+  .pagero-exact-home .feature-card,
+  .pagero-exact-home .chart-card,
+  .pagero-exact-home .tool-card {
+    padding: 16px;
+    border-radius: 22px;
+    box-shadow: 0 12px 32px rgba(17, 24, 39, .06);
+  }
+
+  .pagero-exact-home .screen-top,
+  .pagero-exact-home .graphic-window-bar {
+    height: 42px;
+    padding: 0 14px;
+    border-radius: 14px;
+  }
+
+  .pagero-exact-home .screen-sequence {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+    margin: 14px 0 18px;
+  }
+
+  .pagero-exact-home .screen-sequence button {
+    height: 40px;
+    padding: 0 8px;
+    gap: 6px;
+    border-radius: 12px;
+    font-size: 11px;
+  }
+
+  .pagero-exact-home .seq-no {
+    min-width: 22px;
+    width: 22px;
+    height: 22px;
+    border-radius: 8px;
+    font-size: 9px;
+  }
+
+  .pagero-exact-home .screen-title,
+  .pagero-exact-home .feature-card h3 {
+    font-size: 27px;
+  }
+
+  .pagero-exact-home .create-card {
+    min-height: 200px;
+    padding: 20px;
+    border-radius: 22px;
+    animation: none;
+  }
+
+  .pagero-exact-home .create-card::before {
+    right: 18px;
+    top: 18px;
+    width: 58px;
+    height: 58px;
+    border-radius: 18px;
+  }
+
+  .pagero-exact-home .create-card::after {
+    right: 31px;
+    top: 31px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .pagero-exact-home .create-card h3 {
+    margin-top: 54px;
+    font-size: 27px;
+  }
+
+  .pagero-exact-home .create-card h3::after {
+    height: 60px;
+    margin-top: 20px;
+    background-size: 100% 14px, 100% 14px, 100% 14px;
+    background-position: 0 0, 0 23px, 0 46px;
+  }
+
+  .pagero-exact-home .template-track {
+    margin-top: 34px;
+  }
+
+  .pagero-exact-home .template-card {
+    width: 224px;
+    min-height: 328px;
+    padding: 14px;
+    border-radius: 22px;
+  }
+
+  .pagero-exact-home .template-image {
+    height: 118px;
+    border-radius: 17px;
+  }
+
+  .pagero-exact-home .template-card h3 {
+    margin-top: 16px;
+    font-size: 20px;
+  }
+
+  .pagero-exact-home .template-button {
+    height: 42px;
+    margin-top: 16px;
+  }
+
+  .pagero-exact-home #leads .split {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+    align-items: start;
+  }
+
+  .pagero-exact-home #leads .left-title {
+    margin-top: 12px;
+    max-width: 340px;
+  }
+
+  .pagero-exact-home #leads .mock-zone {
+    min-height: 0 !important;
+    display: grid;
+    gap: 10px;
+    overflow: visible;
+    isolation: auto;
+  }
+
+  .pagero-exact-home #leads .mock-zone::before,
+  .pagero-exact-home #leads .mock-zone::after {
+    display: none;
+  }
+
+  .pagero-exact-home #leads .form-phone,
+  .pagero-exact-home #leads .inbox-panel {
+    position: relative !important;
+    inset: auto !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    width: 100% !important;
+    transform: none !important;
+    animation: none !important;
+    box-shadow: 0 14px 34px rgba(17, 24, 39, .08);
+  }
+
+  .pagero-exact-home #leads .form-phone {
+    height: auto !important;
+    min-height: 326px;
+    padding: 18px;
+    border-radius: 24px;
+  }
+
+  .pagero-exact-home #leads .inbox-panel {
+    margin: 0 !important;
+    padding: 18px;
+    border-radius: 24px;
+  }
+
+  .pagero-exact-home #leads .mock-title {
+    margin-bottom: 14px;
+    font-size: 19px;
+  }
+
+  .pagero-exact-home #leads .input-box {
+    height: 44px;
+    margin-bottom: 10px;
+    border-radius: 13px;
+  }
+
+  .pagero-exact-home #leads .submit-box {
+    height: 48px;
+    margin-top: 14px;
+  }
+
+  .pagero-exact-home #leads .lead-row {
+    height: 46px;
+    margin-top: 8px;
+    padding: 0 13px;
+    border-radius: 14px;
+    font-size: 12px;
+  }
+
+  .pagero-exact-home .marketing-event-card {
+    min-height: 300px;
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .pagero-exact-home .marketing-event-head h3,
+  .pagero-exact-home .chart-head h3 {
+    font-size: 24px;
+  }
+
+  .pagero-exact-home .marketing-dynamic-panel {
+    min-height: 190px;
+    margin-top: 24px;
+    border-radius: 18px;
+  }
+
+  .pagero-exact-home .marketing-slide-list {
+    min-height: 0;
+    padding: 14px;
+    gap: 9px;
+    border-radius: 22px;
+  }
+
+  .pagero-exact-home .marketing-simple-row {
+    min-height: 52px;
+    padding: 0 14px;
+    border-radius: 14px;
+    font-size: 16px;
+  }
+
+  .pagero-exact-home .marketing-simple-row span {
+    font-size: 12px;
+  }
+
+  .pagero-exact-home .final-section .main-btn {
+    margin-top: 22px;
+  }
+
+  .pagero-exact-home .footer {
+    padding: 36px 0 88px;
+  }
+
+  .pagero-exact-home .footer-inner {
+    gap: 18px;
+  }
+
+  .pagero-exact-home .footer-links {
+    gap: 12px 18px;
+    font-size: 12px;
+  }
+
+  .pagero-exact-home .fixed-cta {
+    bottom: max(8px, env(safe-area-inset-bottom));
+  }
+
+  .pagero-exact-home .fixed-inner {
+    width: calc(100% - 20px);
+    height: 54px;
+    padding: 5px;
+    border-radius: 18px;
+    box-shadow: 0 12px 32px rgba(17, 24, 39, .14);
+  }
+
+  .pagero-exact-home .fixed-text {
+    display: none;
+  }
+
+  .pagero-exact-home .fixed-btn {
+    width: 100%;
+    height: 44px;
+    padding: 0 16px;
+    border-radius: 14px;
+    font-size: 14px;
+    box-shadow: none;
+  }
+
+  .pagero-exact-home [data-reveal] {
+    filter: none;
+  }
+}
+
+@media (max-width: 380px) {
+  .pagero-exact-home .nav {
+    width: calc(100% - 12px);
+    padding-left: 8px;
+    padding-right: 5px;
+  }
+
+  .pagero-exact-home .logo {
+    font-size: 16px;
+    gap: 6px;
+  }
+
+  .pagero-exact-home .logo-mark {
+    width: 24px;
+    height: 24px;
+  }
+
+  .pagero-exact-home .header-btn,
+  .pagero-exact-home .header-login-btn {
+    padding: 0 8px !important;
+    font-size: 10px !important;
+  }
+
+  .pagero-exact-home .hero-title {
+    font-size: clamp(36px, 10.8vw, 42px);
+  }
+
+  .pagero-exact-home .section-title,
+  .pagero-exact-home .left-title {
+    font-size: clamp(30px, 9.2vw, 36px);
+  }
+}
