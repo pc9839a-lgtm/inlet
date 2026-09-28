@@ -1,0 +1,45 @@
+name: Live no-carousel v3 check
+on:
+  push:
+    branches:
+      - diag/live-no-carousel-v3-20260928
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Resolve Chrome
+        run: |
+          CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME_BIN"
+          echo "INLET_BROWSER_QA_CHROME_PATH=$CHROME_BIN" >> "$GITHUB_ENV"
+      - name: Verify live HTML cache-bust
+        run: |
+          mkdir -p .tmp-live
+          curl -fsS -H 'Cache-Control: no-cache, no-store' 'https://pagero.kr/?diag=no-carousel-v3-live' -o .tmp-live/root.html
+          grep -q 'index-B0Q5rFVf.css?v=20260928-mobile-root-v3-static-stack' .tmp-live/root.html
+      - name: Verify live computed styles
+        env:
+          INLET_BROWSER_QA_URL: https://pagero.kr/?diag=no-carousel-v3-live
+          INLET_BROWSER_QA_REQUIRE: '1'
+          INLET_BROWSER_QA_VIEWPORTS: mobile
+          INLET_BROWSER_QA_EXPECT_SELECTOR: '.pagero-exact-home,.template-track,.template-marquee,.template-card,.graphic-flow,.marketing-slide-list'
+          INLET_BROWSER_QA_EXPECT_TEXT: 'PAGERO,고르고 수정,개인회생,모바일 청첩장,분양,방문 예약,상담 랜딩,이벤트'
+          INLET_BROWSER_QA_EXPECT_COMPUTED: '.template-marquee|display|grid;.template-marquee|animation-name|none;.template-card:nth-child(7)|display|none;.graphic-flow|flex-direction|column;.marketing-simple-row.is-active|transform|none'
+          INLET_BROWSER_QA_SCREENSHOT_DIR: .tmp-live
+        run: npm run browser:visual:qa
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-no-carousel-v3-${{ github.run_id }}
+          path: .tmp-live
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 2
