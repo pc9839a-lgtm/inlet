@@ -51,7 +51,7 @@ jobs:
           sed -i "s/{ name: 'mobile', width: 390, height: 844 }/{ name: 'mobile', width: 360, height: 800 }/" scripts/.tmp-public-home-360.mjs
           sed -i "s/{ name: 'mobile', width: 390, height: 844 }/{ name: 'mobile', width: 430, height: 932 }/" scripts/.tmp-public-home-430.mjs
       - name: Verify 360px
-        env: &homeenv
+        env:
           INLET_BROWSER_QA_URL: http://127.0.0.1:4178/
           INLET_BROWSER_QA_REQUIRE: '1'
           INLET_BROWSER_QA_VIEWPORTS: mobile
@@ -62,12 +62,22 @@ jobs:
         run: node scripts/.tmp-public-home-360.mjs
       - name: Verify 390px
         env:
-          <<: *homeenv
+          INLET_BROWSER_QA_URL: http://127.0.0.1:4178/
+          INLET_BROWSER_QA_REQUIRE: '1'
+          INLET_BROWSER_QA_VIEWPORTS: mobile
+          INLET_BROWSER_QA_EXPECT_SELECTOR: '.pagerol-home-v2,.pagerol-logo,.pagerol-actions,.pagerol-hero,.pagerol-hero-showcase,.pagerol-showcase-card'
+          INLET_BROWSER_QA_EXPECT_TEXT: '페이지로,로그인,시작하기,모바일 페이지를,빠르게 만드세요'
+          INLET_BROWSER_QA_EXPECT_COMPUTED: '.pagerol-hero-showcase|overflow-x|auto;.pagerol-showcase-card|position|relative;.pagerol-logo|display|block;.pagerol-logo|grid-column-start|1;.pagerol-actions|grid-column-start|2;.pagerol-actions button:first-child|display|flex'
           INLET_BROWSER_QA_SCREENSHOT_DIR: .tmp-public-home-390
         run: node scripts/browser-visual-quality-check.mjs
       - name: Verify 430px
         env:
-          <<: *homeenv
+          INLET_BROWSER_QA_URL: http://127.0.0.1:4178/
+          INLET_BROWSER_QA_REQUIRE: '1'
+          INLET_BROWSER_QA_VIEWPORTS: mobile
+          INLET_BROWSER_QA_EXPECT_SELECTOR: '.pagerol-home-v2,.pagerol-logo,.pagerol-actions,.pagerol-hero,.pagerol-hero-showcase,.pagerol-showcase-card'
+          INLET_BROWSER_QA_EXPECT_TEXT: '페이지로,로그인,시작하기,모바일 페이지를,빠르게 만드세요'
+          INLET_BROWSER_QA_EXPECT_COMPUTED: '.pagerol-hero-showcase|overflow-x|auto;.pagerol-showcase-card|position|relative;.pagerol-logo|display|block;.pagerol-logo|grid-column-start|1;.pagerol-actions|grid-column-start|2;.pagerol-actions button:first-child|display|flex'
           INLET_BROWSER_QA_SCREENSHOT_DIR: .tmp-public-home-430
         run: node scripts/.tmp-public-home-430.mjs
       - name: Upload viewport screenshots
