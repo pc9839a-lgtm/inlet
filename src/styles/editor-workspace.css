@@ -671,26 +671,37 @@ body .builder-shell.edit-mode-shell .screen-order-fixed-blocks :is(.fixed-block-
     background: var(--edit-parity-soft) !important;
   }
 
-  /* The add dock no longer introduces a heavy black bar that clashes with Page Options. */
+  /* Keep the original dark block-add trigger and align it exactly with the panel above. */
   html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock {
-    border-color: var(--edit-parity-line) !important;
-    border-radius: 18px !important;
-    background: rgba(255, 255, 255, .98) !important;
-    box-shadow: 0 14px 36px rgba(15, 23, 42, .10) !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 12px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .add-toggle {
-    min-height: 48px !important;
-    border: 1px solid var(--edit-parity-line) !important;
-    border-radius: 14px !important;
-    background: #fff !important;
-    color: var(--edit-parity-ink) !important;
+    width: 100% !important;
+    min-height: 46px !important;
+    padding: 0 14px !important;
+    border: 0 !important;
+    border-radius: 10px !important;
+    background: #111827 !important;
+    color: #fff !important;
     box-shadow: none !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .add-toggle:hover,
   html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .add-toggle:focus-visible {
-    border-color: var(--edit-parity-line-strong) !important;
-    background: var(--edit-parity-soft) !important;
+    background: #202938 !important;
+    color: #fff !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock.open .add-panel {
+    right: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    margin-bottom: 8px !important;
   }
 }

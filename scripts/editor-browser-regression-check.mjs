@@ -1052,7 +1052,7 @@ async function run() {
     assert(screenOrderShellStyle?.borderRadius === pageOptionsShellStyle.borderRadius, `screen order shell radius must match page options: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.background === pageOptionsShellStyle.background, `screen order shell background must match page options: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.rowRadius === '18px' && screenOrderShellStyle?.rowBorder === '1px', `screen order rows must use rounded bordered cards: ${JSON.stringify(screenOrderShellStyle)}`);
-    assert(screenOrderShellStyle?.addBackground === 'rgb(255, 255, 255)', `block add dock must no longer be a black bar: ${JSON.stringify(screenOrderShellStyle)}`);
+    assert(screenOrderShellStyle?.addBackground === 'rgb(17, 24, 39)', `block add trigger must keep the original dark style: ${JSON.stringify(screenOrderShellStyle)}`);
     await capture(client, 'desktop-narrow-1180-screen-order');
 
     const narrowDesktopMetrics = await collectNarrowDesktopMetrics(client);
