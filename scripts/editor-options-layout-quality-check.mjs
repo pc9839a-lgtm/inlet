@@ -28,6 +28,7 @@ const sectionProps = await readFile('src/editor/createEditPanelSectionProps.js',
 const mobileScreenOrderCss = screenOrderCss.slice(screenOrderCss.indexOf('@media (max-width: 760px)'));
 const editorFinalCleanCss = await readFile('src/styles/editor-final-clean.css', 'utf8');
 const screenOrderPolishCss = await readFile('src/styles/editor-screen-order-polish.css', 'utf8');
+const editorWorkspaceCss = await readFile('src/styles/editor-workspace.css', 'utf8');
 const legacyScreenOrderTokens = [
   '.screen-order-card',
   '.screen-order-list',
@@ -88,6 +89,10 @@ assert(selectedBlockSettingsCss.includes('.selected-block-settings-card.card') &
 assert(selectedBlockSettingsCss.includes('.selected-block-settings-body button.step-title') && selectedBlockSettingsCss.includes('min-height: 44px !important') && selectedBlockSettingsCss.includes('grid-template-columns: 26px minmax(0, 1fr) 28px !important') && selectedBlockSettingsCss.includes('min-height: 40px !important') && selectedBlockSettingsCss.includes('border-radius: 9px !important'), 'selected-element inner form must keep compact step headers and controls');
 assert(screenOrderList.includes('selectedBlockSettingsProps') && screenOrderListItems.includes('selectedBlockSettingsProps') && screenOrderItem.includes('data-inline-selected-settings="true"') && screenOrderItem.includes('<SelectedBlockSettings {...selectedBlockSettingsProps} />'), 'selected-element settings must render immediately below the selected screen-order row');
 assert(!editLayout.includes('className="screen-order-v2-settings-panel"'), 'selected-element settings must not render after the whole screen-order list');
+assert(editLayout.includes('data-editor-section={section}'), 'edit section panel must expose the active subsection for deterministic PC styling');
+assert(editorWorkspaceCss.includes('PC page-options / screen-order unified visual contract v1'), 'PC editor must keep one explicit visual contract for page options and screen order');
+assert(editorWorkspaceCss.includes(".edit-section-panel[data-editor-section='options'] .page-global-options-card") && editorWorkspaceCss.includes(".edit-section-panel[data-editor-section='order'] .screen-order-v2-card"), 'page options and screen order must share the same outer-surface contract on PC');
+assert(editorWorkspaceCss.includes('.screen-order-v2-list') && editorWorkspaceCss.includes('gap: 8px !important') && editorWorkspaceCss.includes('.screen-order-v2-item'), 'PC screen order must use the same separated card rhythm as page options');
 assert(/\.screen-order-v2-head\s*\{[^}]*min-height:\s*38px;[^}]*gap:\s*2px;/s.test(screenOrderCss), 'desktop screen-order rows must keep the tightened 38px / 2px density');
 assert(legacyScreenOrderTokens.every((token) => !editorFinalCleanCss.includes(token)), 'editor-final-clean must not restore legacy normal-block selectors');
 assert(legacyScreenOrderTokens.every((token) => !screenOrderPolishCss.includes(token)), 'editor-screen-order-polish must not restore legacy normal-block selectors');
