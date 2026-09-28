@@ -23,10 +23,9 @@ assert(catalog.includes("group: 'recommended'") && catalog.includes("group: 'ind
 assert(catalog.includes("industry: '개인회생'") && catalog.includes("industry: '분양'") && catalog.includes("industry: '청첩장'"), 'industry patterns must cover the three current core template categories');
 assert(catalog.includes('createSectionPatternBlocks') && catalog.includes('sanitizeBlock'), 'section patterns must resolve to normal sanitized PageRo blocks');
 
-assert(panel.includes("['recommended', '추천 섹션']") && panel.includes("['industry', '업종별']") && panel.includes("['basic', '기본 블록']") && panel.includes("['recent', '최근 사용']"), 'add surface must expose the four E2 modes');
-assert(panel.includes('pagero.editor.recent-additions.v2') && panel.includes('pagero.editor.recent-blocks.v1'), 'recent additions must preserve backward compatibility with existing block recents');
-assert(panel.includes('<AddSectionPatternGrid') && panel.includes('<AddBlockGroupGrid'), 'add surface must keep section patterns and basic blocks in one source');
-assert(picker.includes('section-pattern-card') && picker.includes('업종에 맞는 기본 전환 흐름'), 'industry section picker UI is missing');
+assert(panel.includes('<AddBlockGroupGrid') && !panel.includes('<AddSectionPatternGrid'), 'primary add surface must expose only the simple block grid');
+assert(!panel.includes('추천 섹션') && !panel.includes('업종별') && !panel.includes('최근 사용') && !panel.includes('pagero-widget-search'), 'primary add surface must not expose recommendation tabs, recent mode, or search');
+assert(picker.includes('section-pattern-card') && picker.includes('업종에 맞는 기본 전환 흐름'), 'section pattern component may remain available internally even when removed from the primary add surface');
 assert(dock.includes('embedded = false') && dock.includes('const panelOpen = embedded || addOpen'), 'embedded add surface must stay open independently of the old floating dock state');
 assert(layout.includes('<AddBlockDock {...addBlockDockProps} />'), 'restored left editor must keep E2 patterns in the existing add dock');
 
@@ -35,16 +34,15 @@ assert(actions.includes("['bottombar', 'footer'].includes(item.type)"), 'section
 assert(actions.includes('commitLocalPageDraft') && actions.includes('...blocks'), 'section bundle must commit as one local page mutation');
 assert(sectionProps.includes('addSectionPattern') && dockProps.includes('addSectionPattern') && app.includes('addSectionPattern'), 'section pattern action prop chain is incomplete');
 
-assert(css.includes('.section-add-modes') && css.includes('.section-pattern-card') && css.includes('.section-pattern-tags'), 'E2 section picker styles are missing');
-assert(browser.includes("clickButtonByText(client, '.section-add-modes', '기본 블록')"), 'browser regression must follow the new basic block mode');
-assert(browser.includes(".section-pattern-card[aria-label=\"핵심 장점 + FAQ 섹션 추가\"]"), 'browser regression must add a real recommended section pattern');
-assert(browser.includes('undo recommended section pattern as one mutation') && browser.includes('redo recommended section pattern as one mutation'), 'browser regression must lock one-step undo/redo for multi-block section patterns');
+assert(css.includes('.section-add-modes') && css.includes('.section-pattern-card') && css.includes('.section-pattern-tags'), 'internal section pattern styles are missing');
+assert(browser.includes("!!document.querySelector('.add-panel .widget-group-grid')"), 'browser regression must open the simplified block grid directly');
+assert(browser.includes("must not expose recommendation/industry mode tabs") && browser.includes("must not expose the removed search field"), 'browser regression must lock removal of recommendation tabs and search');
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 20,
+  checks: 17,
   scope: 'pagero-section-patterns-e2',
-  primaryAddModes: ['recommended', 'industry', 'basic', 'recent'],
+  primaryAddModes: ['basic-block-grid-only'],
   industryCoverage: ['개인회생', '분양', '청첩장'],
   bundleMutation: 'single-undo-step',
   existingRendererReused: true,
