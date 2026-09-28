@@ -1,5 +1,5 @@
 name: Live pagero mobile runtime diagnostic
-# live-computed-check-20260928-1556
+# no-horizontal-slider-v3-live-check
 on:
   push:
     branches:
@@ -16,42 +16,31 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - name: Prepare Korean font
-        run: |
-          export DEBIAN_FRONTEND=noninteractive
-          sudo apt-get -o DPkg::Lock::Timeout=45 update -qq
-          sudo apt-get -o DPkg::Lock::Timeout=45 install -y --no-install-recommends fonts-noto-cjk
-          fc-cache -f >/dev/null 2>&1 || true
-      - name: Capture live root and CSS
-        run: |
-          mkdir -p .tmp-live-diag
-          stamp="$(date +%s)"
-          curl -sS -D .tmp-live-diag/root-headers.txt -H 'Cache-Control: no-cache, no-store' "https://pagero.kr/?diag=$stamp" -o .tmp-live-diag/root.html
-          curl -sS -D .tmp-live-diag/css-headers.txt -H 'Cache-Control: no-cache, no-store' "https://pagero.kr/c63-assets/index-B0Q5rFVf.css?v=20260928-mobile-root-v2&diag=$stamp" -o .tmp-live-diag/live.css
-          grep -q 'index-B0Q5rFVf.css?v=20260928-mobile-root-v2' .tmp-live-diag/root.html
-          grep -q 'Mobile-only optimization for the currently deployed pagero-exact-home' .tmp-live-diag/live.css
       - name: Resolve Chrome
         run: |
           CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
           test -n "$CHROME_BIN"
           echo "INLET_BROWSER_QA_CHROME_PATH=$CHROME_BIN" >> "$GITHUB_ENV"
-      - name: Verify live computed mobile layout
+      - name: Verify live root uses v3 cache bust
+        run: |
+          mkdir -p .tmp-live-v3
+          curl -fsS -H 'Cache-Control: no-cache, no-store' 'https://pagero.kr/?diag=no-carousel-v3' -o .tmp-live-v3/root.html
+          grep -q 'index-B0Q5rFVf.css?v=20260928-mobile-root-v3-static-stack' .tmp-live-v3/root.html
+      - name: Verify live mobile has no horizontal carousel
         env:
-          INLET_BROWSER_QA_URL: https://pagero.kr/?diag=live-computed-v2
+          INLET_BROWSER_QA_URL: https://pagero.kr/?diag=no-carousel-v3
           INLET_BROWSER_QA_REQUIRE: '1'
           INLET_BROWSER_QA_VIEWPORTS: mobile
-          INLET_BROWSER_QA_EXPECT_SELECTOR: '.pagero-exact-home,.header .nav,#leads .split,#leads .mock-zone,#leads .form-phone,#leads .inbox-panel,.fixed-inner'
-          INLET_BROWSER_QA_EXPECT_TEXT: 'PAGERO,로그인,바로 시작하기,접수함,신청받고,바로 확인,신청 폼'
-          INLET_BROWSER_QA_EXPECT_COMPUTED: '.pagero-exact-home .header .nav|height|52px;.pagero-exact-home #leads .split|display|grid;.pagero-exact-home #leads .form-phone|position|relative;.pagero-exact-home #leads .inbox-panel|position|relative;.pagero-exact-home .fixed-inner|height|54px;.pagero-exact-home .fixed-text|display|none'
-          INLET_BROWSER_QA_SCREENSHOT_DIR: .tmp-live-computed
+          INLET_BROWSER_QA_EXPECT_SELECTOR: '.pagero-exact-home,.template-track,.template-marquee,.template-card,.screen-sequence,.graphic-flow,.marketing-showcase,.marketing-slide-list'
+          INLET_BROWSER_QA_EXPECT_TEXT: 'PAGERO,고르고 수정,개인회생,모바일 청첩장,분양,방문 예약,상담 랜딩,이벤트'
+          INLET_BROWSER_QA_EXPECT_COMPUTED: '.template-marquee|display|grid;.template-marquee|animation-name|none;.template-card:nth-child(7)|display|none;.graphic-flow|flex-direction|column;.marketing-simple-row.is-active|transform|none'
+          INLET_BROWSER_QA_SCREENSHOT_DIR: .tmp-live-v3
         run: npm run browser:visual:qa
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: live-pagero-computed-${{ github.run_id }}
-          path: |
-            .tmp-live-diag
-            .tmp-live-computed
+          name: live-pagero-mobile-v3-${{ github.run_id }}
+          path: .tmp-live-v3
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 3
