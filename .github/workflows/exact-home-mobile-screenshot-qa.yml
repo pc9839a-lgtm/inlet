@@ -1,0 +1,118 @@
+name: Exact home mobile screenshot QA
+
+on:
+  pull_request:
+    paths:
+      - 'public/c63-assets/index-B0Q5rFVf.css'
+      - '.github/workflows/exact-home-mobile-screenshot-qa.yml'
+
+jobs:
+  exact-home-mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Install Korean font
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get -o DPkg::Lock::Timeout=45 update -qq
+          sudo apt-get -o DPkg::Lock::Timeout=45 install -y --no-install-recommends fonts-noto-cjk
+          fc-cache -f >/dev/null 2>&1 || true
+      - name: Prepare test page
+        run: |
+          cat > .tmp-exact-home-mobile.html <<'EOF'
+          <!doctype html>
+          <html lang="ko">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width,initial-scale=1">
+            <link rel="stylesheet" href="/public/c63-assets/index-B0Q5rFVf.css">
+            <style>body{margin:0;background:#fff}.qa-spacer{height:70px}</style>
+          </head>
+          <body>
+            <div class="pagero-exact-home">
+              <header class="header">
+                <nav class="nav">
+                  <a class="logo"><span class="logo-mark"></span>PAGERO</a>
+                  <div class="header-actions">
+                    <button class="header-login-btn">로그인</button>
+                    <button class="header-btn">바로 시작하기</button>
+                  </div>
+                </nav>
+              </header>
+              <div class="qa-spacer"></div>
+              <section class="section" id="leads">
+                <div class="wrap split">
+                  <div>
+                    <span class="badge">접수함</span>
+                    <h2 class="left-title">신청받고<br>바로 확인</h2>
+                  </div>
+                  <div class="mock-zone">
+                    <div class="form-phone">
+                      <div class="mock-title">신청 폼</div>
+                      <div class="input-box"></div>
+                      <div class="input-box"></div>
+                      <div class="input-box"></div>
+                      <div class="submit-box"></div>
+                    </div>
+                    <div class="inbox-panel">
+                      <div class="mock-title">접수함</div>
+                      <div class="lead-row">김도윤 <span>신규</span></div>
+                      <div class="lead-row">박민수 <span>확인</span></div>
+                      <div class="lead-row">이서연 <span>확인</span></div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+              <div class="fixed-cta">
+                <div class="fixed-inner">
+                  <div class="fixed-text">모바일 페이지를 <span>빠르게</span> 만드세요</div>
+                  <button class="fixed-btn">바로 시작하기</button>
+                </div>
+              </div>
+            </div>
+          </body>
+          </html>
+          EOF
+          cp scripts/browser-visual-quality-check.mjs scripts/.tmp-exact-home-430.mjs
+          sed -i "s/{ name: 'mobile', width: 390, height: 844 }/{ name: 'mobile', width: 430, height: 932 }/" scripts/.tmp-exact-home-430.mjs
+      - name: Resolve Chrome
+        run: |
+          CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME_BIN"
+          echo "INLET_BROWSER_QA_CHROME_PATH=$CHROME_BIN" >> "$GITHUB_ENV"
+      - name: Serve
+        run: |
+          python3 -m http.server 4191 --bind 127.0.0.1 >/tmp/exact-home-qa.log 2>&1 &
+          echo $! >/tmp/exact-home-qa.pid
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:4191/.tmp-exact-home-mobile.html >/dev/null && exit 0
+            sleep .3
+          done
+          exit 1
+      - name: Verify 430px exact home
+        env:
+          INLET_BROWSER_QA_URL: http://127.0.0.1:4191/.tmp-exact-home-mobile.html
+          INLET_BROWSER_QA_REQUIRE: '1'
+          INLET_BROWSER_QA_VIEWPORTS: mobile
+          INLET_BROWSER_QA_EXPECT_SELECTOR: '.pagero-exact-home,.nav,.header-actions,#leads .split,#leads .mock-zone,#leads .form-phone,#leads .inbox-panel,.fixed-inner'
+          INLET_BROWSER_QA_EXPECT_TEXT: 'PAGERO,로그인,바로 시작하기,접수함,신청받고,바로 확인,신청 폼'
+          INLET_BROWSER_QA_SCREENSHOT_DIR: .tmp-exact-home-shot
+        run: node scripts/.tmp-exact-home-430.mjs
+      - name: Upload screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: exact-home-mobile-430-font-${{ github.run_id }}
+          path: .tmp-exact-home-shot
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 3
+      - if: always()
+        run: |
+          test -f /tmp/exact-home-qa.pid && kill "$(cat /tmp/exact-home-qa.pid)" 2>/dev/null || true
