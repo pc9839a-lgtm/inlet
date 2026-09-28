@@ -1,4 +1,5 @@
 name: Live pagero mobile runtime diagnostic
+# rerun-after-root-fix-20260928-1554
 on:
   push:
     branches:
