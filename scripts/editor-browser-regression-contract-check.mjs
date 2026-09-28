@@ -92,12 +92,12 @@ assert(mediaSettingsBrowserSource.includes("'전체 2+'") && mediaSettingsBrowse
 assert(mediaSettingsBrowserSource.includes("width: 980") && mediaSettingsBrowserSource.includes("narrow media settings overflow"), 'media settings browser QA must cover narrow desktop overflow');
 assert(!mediaSettingsBrowserSource.includes('pagero.kr/api/auth/login') && !mediaSettingsBrowserSource.includes('productionPassword'), 'media settings browser QA must not use production credentials or production auth endpoints');
 
-assert(addBlockPanelSource.includes("const RECENT_ADDITIONS_KEY = 'pagero.editor.recent-additions.v2'") && addBlockPanelSource.includes("const LEGACY_RECENT_BLOCKS_KEY = 'pagero.editor.recent-blocks.v1'") && addBlockPanelSource.includes('const MAX_RECENT_ITEMS = 7'), 'add picker must keep a bounded browser-local recent list while migrating the legacy block history');
-assert(addBlockPanelSource.includes('window.localStorage.setItem(RECENT_ADDITIONS_KEY') && addBlockPanelSource.includes("['recent', '최근 사용']"), 'add picker must persist and expose recent sections/blocks without changing page data');
-assert(addBlockPanelSource.includes('aria-label="블록 카테고리"') && addBlockPanelSource.includes("setCategory('all')"), 'basic block mode must expose category shortcuts and reset to all for global search');
-assert(addBlockGridSource.includes("category === 'all' || categoryKey === category") && addBlockGridSource.includes('조건에 맞는 위젯이 없습니다.'), 'block add grid must filter categories and show a clear empty state');
-assert(addBlockOptionSource.includes("meta.preset || '', type"), 'block add options must preserve the catalog type for recent addition history');
-assert(addBlockDockCssSource.includes('.widget-category-filter button') && addBlockDockCssSource.includes('min-height: 44px !important;'), 'block add picker mobile actions must keep 44px touch targets');
+assert(addBlockPanelSource.includes('<AddBlockGroupGrid onAdd={onAdd} />'), 'block add surface must open directly to the basic block grid');
+assert(!addBlockPanelSource.includes('pagero-widget-search') && !addBlockPanelSource.includes('section-add-modes') && !addBlockPanelSource.includes('AddSectionPatternGrid'), 'block add surface must not expose search, recommendation modes, or section-pattern cards');
+assert(!addBlockPanelSource.includes('recent-additions') && !addBlockPanelSource.includes('최근 사용'), 'block add surface must not expose recent-use UI');
+assert(addBlockGridSource.includes("category === 'all' || categoryKey === category") && addBlockGridSource.includes('조건에 맞는 위젯이 없습니다.'), 'block grid filtering support may remain internal without exposing extra picker chrome');
+assert(addBlockOptionSource.includes("meta.preset || '', type"), 'block add options must preserve existing add-block catalog behavior');
+assert(addBlockDockCssSource.includes('.widget-group button') && addBlockDockCssSource.includes('min-height: 44px !important;'), 'block add buttons must keep 44px mobile touch targets');
 
 assert(panelHeaderSource.includes('undoPageEdit') && panelHeaderSource.includes('redoPageEdit') && panelHeaderSource.includes('Ctrl/Cmd+Z'), 'editor header must expose undo/redo controls and keyboard shortcuts');
 assert(editHistorySource.includes('const MAX_HISTORY = 50') && editHistorySource.includes('future = []'), 'editor history must cap snapshots and invalidate redo after fresh edits');
@@ -120,5 +120,5 @@ console.log(JSON.stringify({
   videoLibraryBrowserE2E: true,
   mediaSettingsBrowserE2E: true,
   pointerDragBrowserE2E: true,
-  blockAddPicker: ['recommended-sections', 'industry-sections', 'basic-blocks', 'recent-7', 'legacy-recent-migration', 'mobile-44px'],
+  blockAddPicker: ['basic-block-grid-only', 'no-search', 'no-recommendations', 'no-recent-ui', 'mobile-44px'],
 }, null, 2));
