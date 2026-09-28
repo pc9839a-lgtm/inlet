@@ -806,12 +806,24 @@
   }
 
   .pagerol-home-v2 .pagerol-logo {
+    grid-column: 1;
+    justify-self: start;
+    display: block;
     min-width: 0;
+    position: relative;
+    z-index: 1;
+    color: var(--ink);
     font-size: 20px;
     white-space: nowrap;
   }
 
+  .pagerol-home-v2 .pagerol-nav nav {
+    display: none;
+  }
+
   .pagerol-home-v2 .pagerol-actions {
+    grid-column: 2;
+    justify-self: end;
     display: flex;
     align-items: center;
     gap: 4px;
