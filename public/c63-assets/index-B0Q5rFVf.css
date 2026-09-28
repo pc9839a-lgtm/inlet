@@ -525,6 +525,7 @@
   .pagero-exact-home .fixed-inner {
     width: calc(100% - 20px);
     height: 54px;
+    min-height: 54px;
     padding: 5px;
     border-radius: 18px;
     box-shadow: 0 12px 32px rgba(17, 24, 39, .14);
