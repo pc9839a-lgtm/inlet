@@ -24,6 +24,13 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Prepare Korean font
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get -o DPkg::Lock::Timeout=45 update -qq
+          sudo apt-get -o DPkg::Lock::Timeout=45 install -y --no-install-recommends fonts-noto-cjk
+          fc-cache -f >/dev/null 2>&1 || true
+
       - name: Build
         run: npm run build
 
@@ -34,7 +41,12 @@ jobs:
             echo "Chrome/Chromium required" >&2
             exit 1
           fi
-          echo "INLET_BROWSER_QA_CHROME_PATH=$CHROME_BIN" >> "$GITHUB_ENV"
+          cat > /tmp/chrome-reduced-motion <<EOF
+          #!/usr/bin/env bash
+          exec "$CHROME_BIN" --force-prefers-reduced-motion=reduce "\$@"
+          EOF
+          chmod +x /tmp/chrome-reduced-motion
+          echo "INLET_BROWSER_QA_CHROME_PATH=/tmp/chrome-reduced-motion" >> "$GITHUB_ENV"
 
       - name: Start preview
         run: |
@@ -56,7 +68,7 @@ jobs:
           INLET_BROWSER_QA_VIEWPORTS: mobile
           INLET_BROWSER_QA_EXPECT_SELECTOR: '.pagerol-home-v2,.pagerol-nav,.pagerol-actions,.pagerol-hero,.pagerol-hero-showcase,.pagerol-showcase-card'
           INLET_BROWSER_QA_EXPECT_TEXT: '페이지로,로그인,시작하기,모바일 페이지를,빠르게 만드세요'
-          INLET_BROWSER_QA_EXPECT_COMPUTED: '.pagerol-hero-showcase|overflow-x|auto;.pagerol-showcase-card|position|relative;.pagerol-actions button:first-child|display|flex'
+          INLET_BROWSER_QA_EXPECT_COMPUTED: '.pagerol-hero-showcase|overflow-x|auto;.pagerol-showcase-card|position|relative;.pagerol-logo|display|block;.pagerol-logo|grid-column-start|1;.pagerol-actions|grid-column-start|2;.pagerol-actions button:first-child|display|flex'
           INLET_BROWSER_QA_SCREENSHOT_DIR: .tmp-public-home-mobile-visual
         run: npm run browser:visual:qa
 
