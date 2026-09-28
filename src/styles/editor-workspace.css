@@ -472,8 +472,8 @@ body .builder-shell.edit-mode-shell .screen-order-fixed-blocks :is(.fixed-block-
   }
 
   /* Page Options is the visual source of truth. Both top-level panels use the same shell. */
-  html body #root .builder-shell.edit-mode-shell .edit-section-panel[data-editor-section='options'] .page-global-options-card.card,
-  html body #root .builder-shell.edit-mode-shell .edit-section-panel[data-editor-section='order'] .screen-order-v2-card.card {
+  html body #root .builder-shell.edit-mode-shell .edit-layout .page-global-options-card,
+  html body #root .builder-shell.edit-mode-shell .edit-layout .screen-order-v2-card {
     width: 100% !important;
     min-width: 0 !important;
     max-width: 100% !important;
