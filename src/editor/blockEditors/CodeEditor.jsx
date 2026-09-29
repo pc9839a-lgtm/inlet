@@ -18,16 +18,19 @@ export default function CodeEditor({ s, set }) {
 
   return (
     <>
-      <label className="code-editor-name">
-        <span>구분 이름</span>
-        <input
-          type="text"
-          value={s.editorLabel || ''}
-          maxLength={40}
-          placeholder="예: 메인 비주얼 / 신청 폼 / 카카오 버튼"
-          onChange={(event) => set({ editorLabel: event.target.value.slice(0, 40) })}
-        />
-      </label>
+      <div className="anchor-control block-editor-anchor-control code-editor-name-control">
+        <span className="block-editor-anchor-label">구분 이름</span>
+        <div className="block-editor-anchor-value code-editor-name-value">
+          <input
+            type="text"
+            value={s.editorLabel || ''}
+            maxLength={40}
+            placeholder="예: 메인 비주얼 / 신청 폼 / 카카오 버튼"
+            onChange={(event) => set({ editorLabel: event.target.value.slice(0, 40) })}
+            aria-label="구분 이름"
+          />
+        </div>
+      </div>
 
       <EditorTabs
         tabs={[
