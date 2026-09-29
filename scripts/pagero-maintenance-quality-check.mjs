@@ -30,6 +30,7 @@ const forbidden = [
   'src/editor/EditWorkbench.jsx',
   'src/styles/edit-workbench-hotfix.css',
   'src/styles/edit-workbench-v3.css',
+  'src/styles/editor-panel-cleanup.css',
   'docs/editor-block-editor-ux-ui-spec.md',
   'docs/editor-block-editor-modernization-v2.md',
   'docs/PAGERO_CALLTAG_UI_UX_UNIFICATION_PLAN_KO.md',
