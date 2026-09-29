@@ -152,53 +152,12 @@
   .code-editor-box textarea { height: 190px; }
 }
 
-
-.code-editor-name {
-  box-sizing: border-box;
-  display: grid;
-  grid-template-columns: 82px minmax(0, 1fr);
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  margin: 14px 0 0;
-  padding: 0;
+/* Code block label intentionally reuses the native widget-code row.
+   Only the inner value grid differs because this row has no # prefix/copy action. */
+.block-editor-v2 .code-editor-name-value {
+  grid-template-columns: minmax(0, 1fr);
 }
 
-.code-editor-name > span {
-  display: block;
-  min-width: 0;
-  color: #344054;
-  font-size: 13px;
-  line-height: 1.35;
-  font-weight: 850;
-}
-
-.block-editor-v2 .code-editor-name > input {
-  box-sizing: border-box;
-  display: block;
-  width: 100%;
-  min-width: 0;
-  height: 42px;
-  min-height: 42px;
-  margin: 0;
-  padding: 0 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  background: #fff;
-  color: #101828;
-  box-shadow: none;
-  outline: 0;
-  font-size: 13px;
-  line-height: 1.35;
-  font-weight: 700;
-}
-
-.block-editor-v2 .code-editor-name > input::placeholder {
-  color: #98a2b3;
-  font-weight: 550;
-}
-
-.block-editor-v2 .code-editor-name > input:focus {
-  border-color: #7da2d6;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, .09);
+.block-editor-v2 .code-editor-name-value > input {
+  grid-column: 1;
 }
