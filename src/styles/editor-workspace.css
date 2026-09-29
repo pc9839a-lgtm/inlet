@@ -572,3 +572,42 @@ body .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel {
     outline: 3px solid rgba(37, 99, 235, .09) !important;
   }
 }
+
+
+/* 900-1180px editor geometry.
+   Absorbed from editor-narrow-width-fix.css so editor-workspace.css remains the sole geometry owner. */
+@media (min-width: 900px) and (max-width: 1180px) {
+  body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100dvh !important;
+    max-height: none !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    overflow: visible !important;
+  }
+
+  body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .left-workspace {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+  }
+
+  body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .work-panel {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin-inline: 0 !important;
+    padding-inline: 10px !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .preview-workspace {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}
