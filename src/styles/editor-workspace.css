@@ -606,22 +606,6 @@ body .builder-shell.edit-mode-shell .screen-order-fixed-blocks :is(.fixed-block-
     border-radius: 13px !important;
   }
 
-  /* Selected settings visually belong to the same family instead of looking like another product. */
-  html body #root .builder-shell.edit-mode-shell .screen-order-v2-settings-panel {
-    margin: 10px 0 0 !important;
-    padding: 0 !important;
-    border: 0 !important;
-    background: transparent !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .screen-order-v2-settings-panel .selected-block-settings-card.card {
-    padding: 18px !important;
-    border: 1px solid var(--edit-parity-line) !important;
-    border-radius: 18px !important;
-    background: #fff !important;
-    box-shadow: none !important;
-  }
-
   /* Fixed area follows the exact same spacing, borders and typography. */
   html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks {
     margin-top: 16px !important;

@@ -1,6 +1,5 @@
 import React from 'react';
 import { ScreenOrderItemDropTargets } from './ScreenOrderItemDropTargets.jsx';
-import { SelectedBlockSettings } from './SelectedBlockSettings.jsx';
 import { ScreenOrderRow } from './ScreenOrderRow.jsx';
 import { createScreenOrderItemModel } from './screenOrderItemModel.js';
 
@@ -12,13 +11,11 @@ export function ScreenOrderItem({
   dragId,
   setDragId,
   selectBlock,
-  openBlockSettings,
   toggleVisible,
   duplicateBlock,
   removeBlock,
   reorderToIndex,
   renderBlockEditor,
-  selectedBlockSettingsProps = null,
 }) {
   const { meta, controls, isLast } = createScreenOrderItemModel({
     block,
@@ -47,11 +44,13 @@ export function ScreenOrderItem({
         onRemove={() => removeBlock(block.id)}
         onDragStart={controls.dragStart}
         onDragEnd={controls.dragEnd}
-        renderBlockEditor={renderBlockEditor}
       />
-      {selected && selectedBlockSettingsProps && (
-        <div className="screen-order-v2-settings-panel" data-inline-selected-settings="true">
-          <SelectedBlockSettings {...selectedBlockSettingsProps} />
+      {selected && (
+        <div
+          className="screen-order-v2-inline-editor selected-block-settings-body block-editor"
+          data-inline-block-editor="true"
+        >
+          {renderBlockEditor(block)}
         </div>
       )}
     </ScreenOrderItemDropTargets>

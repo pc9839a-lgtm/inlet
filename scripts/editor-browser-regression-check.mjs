@@ -838,13 +838,12 @@ async function run() {
 
     await capture(client, 'desktop-editor-before');
 
-    const heroEditorSelector = '.screen-order-v2-settings-panel textarea[placeholder="핵심 제목을 입력하세요"]';
+    const heroEditorSelector = '.screen-order-v2-inline-editor textarea[placeholder="핵심 제목을 입력하세요"]';
     await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
-    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'selected hero editor textarea');
-    await waitForBrowser(client, `!!document.querySelector('#editor-block-editor-hero + .screen-order-v2-settings-panel[data-inline-selected-settings="true"]')`, 'selected settings directly below hero row');
-    const inlineEditorStillNested = await evaluate(client, `!!document.querySelector('#editor-block-editor-hero textarea[placeholder="핵심 제목을 입력하세요"]')`);
-    assert(!inlineEditorStillNested, 'screen order row head must not contain the block detail editor');
-    await capture(client, 'desktop-editor-inline-settings');
+    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'selected hero inline editor textarea');
+    await waitForBrowser(client, `!!document.querySelector('#editor-block-editor-hero + .screen-order-v2-inline-editor[data-inline-block-editor="true"]')`, 'inline block editor directly below hero row');
+    assert(!(await evaluate(client, `document.body.innerText.includes('선택한 블록 설정')`)), 'redundant selected block settings heading must stay removed');
+    await capture(client, 'desktop-editor-inline-editor');
     await setInputValue(client, heroEditorSelector, updatedHeroTitle);
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(updatedHeroTitle)})`, 'live hero preview');
     await wait(250);

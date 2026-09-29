@@ -18,7 +18,6 @@ const shareCard = await readFile('src/editor/editPanelParts/ShareOptionsCard.jsx
 const shareCss = await readFile('src/editor/editPanelParts/ShareOptionsCard.css', 'utf8');
 const screenOrderHeader = await readFile('src/editor/editPanelParts/ScreenOrderListHeader.jsx', 'utf8');
 const screenOrderCss = await readFile('src/editor/editPanelParts/ScreenOrder.css', 'utf8');
-const selectedBlockSettingsCss = await readFile('src/editor/editPanelParts/SelectedBlockSettings.css', 'utf8');
 const editorLabels = await readFile('src/editor/editPanelParts/editorLabels.js', 'utf8');
 const editLayout = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
 const screenOrderList = await readFile('src/editor/editPanelParts/ScreenOrderList.jsx', 'utf8');
@@ -73,7 +72,7 @@ assert(!shareCard.includes('<em>공개 페이지 공유 버튼</em>'), 'share op
 assert(shareCss.includes('grid-template-columns: repeat(2, minmax(0, 1fr))'), 'mobile share position choices must use a readable 2x2 grid');
 assert(shareCss.includes('min-height: 42px'), 'mobile share position choices must keep large tap targets');
 assert(screenOrderCss.includes('@media (max-width: 760px)') && screenOrderCss.includes('.screen-order-v2-card { padding: 10px;'), 'screen order must retain its compact mobile card contract');
-assert(editLayout.includes('edit-section-tabs') && editLayout.includes('화면 순서') && editLayout.includes('<ScreenOrderList') && editLayout.includes('selectedBlockSettingsProps={selectedBlockSettingsProps}'), 'screen order must live in the restored left editor flow and receive selected settings');
+assert(editLayout.includes('edit-section-tabs') && editLayout.includes('화면 순서') && editLayout.includes('<ScreenOrderList {...screenOrderListProps} />'), 'screen order must live in the restored left editor flow without a redundant selected-settings shell');
 assert(editLayout.includes('페이지 옵션') && editLayout.includes('<PageGlobalOptions {...pageGlobalOptionsProps} />') && editLayout.includes('<PageThemeStylePanel {...stylePanelProps} />'), 'page options and theme controls must live in the restored left editor mode');
 assert(editorLabels.includes("globalSettings: '\\uC804\\uC5ED \\uC124\\uC815'") && pageOptionsHeader.includes('T.globalSettings'), 'page options content heading must be global settings instead of repeating the tab label');
 assert(editorLabels.includes("normalBlocks: '\\uC77C\\uBC18 \\uBE14\\uB85D'") && screenOrderHeader.includes('T.normalBlocks'), 'screen order content heading must identify normal blocks instead of repeating the tab label');
@@ -85,10 +84,8 @@ assert(editorControls.includes("className = ''") && editorControls.includes('cla
 assert(/\.fixed-open-button\s*\{[^}]*width:\s*44px\s*!important;[^}]*height:\s*44px\s*!important;/s.test(fixedBlocksCss), 'mobile fixed block open button must expose a 44px touch target');
 assert(/\.fixed-block-switch\s*\{[^}]*height:\s*44px\s*!important;[\s\S]*?\.fixed-block-switch::before\s*\{[^}]*height:\s*28px\s*!important;/s.test(fixedBlocksCss), 'fixed block switch must keep a 44px hit target while preserving the compact 28px visual track');
 assert(screenOrderCss.includes('.screen-order-v2-item') && screenOrderCss.includes('.screen-order-v2-head') && screenOrderCss.includes('.screen-order-v2-menu'), 'screen order V2 stylesheet must remain the normal-block layout owner');
-assert(selectedBlockSettingsCss.includes('.selected-block-settings-card.card') && selectedBlockSettingsCss.includes('padding: 12px !important') && selectedBlockSettingsCss.includes('border-radius: 12px !important') && selectedBlockSettingsCss.includes('font-size: 15px !important'), 'selected-element settings card must stay compact inside the restored left editor');
-assert(selectedBlockSettingsCss.includes('.selected-block-settings-body button.step-title') && selectedBlockSettingsCss.includes('min-height: 44px !important') && selectedBlockSettingsCss.includes('grid-template-columns: 26px minmax(0, 1fr) 28px !important') && selectedBlockSettingsCss.includes('min-height: 40px !important') && selectedBlockSettingsCss.includes('border-radius: 9px !important'), 'selected-element inner form must keep compact step headers and controls');
-assert(screenOrderList.includes('selectedBlockSettingsProps') && screenOrderListItems.includes('selectedBlockSettingsProps') && screenOrderItem.includes('data-inline-selected-settings="true"') && screenOrderItem.includes('<SelectedBlockSettings {...selectedBlockSettingsProps} />'), 'selected-element settings must render immediately below the selected screen-order row');
-assert(!editLayout.includes('className="screen-order-v2-settings-panel"'), 'selected-element settings must not render after the whole screen-order list');
+assert(!screenOrderList.includes('selectedBlockSettingsProps') && !screenOrderListItems.includes('selectedBlockSettingsProps') && screenOrderItem.includes('data-inline-block-editor="true"') && screenOrderItem.includes('{renderBlockEditor(block)}'), 'selected block must render its editor directly below the row without the redundant settings card');
+assert(!editLayout.includes('selectedBlockSettingsProps') && !screenOrderItem.includes('SelectedBlockSettings'), 'redundant selected block settings component must stay removed');
 assert(editLayout.includes('data-editor-section={section}'), 'edit section panel must expose the active subsection for deterministic PC styling');
 assert(editorWorkspaceCss.includes('PC page-options / screen-order visual parity v2'), 'PC editor must keep one explicit visual contract for page options and screen order');
 assert(editorWorkspaceCss.includes('.edit-layout .page-global-options-card') && editorWorkspaceCss.includes('.edit-layout .screen-order-v2-card'), 'page options and screen order must share the same outer-surface contract on PC');
@@ -100,11 +97,15 @@ assert(['.screen-icon-action', '.fixed-open-button', '.switch-clean', '.fixed-bl
 await assertMissingFile('src/editor/editPanelParts/ScreenOrderRowActionMenu.jsx');
 await assertMissingFile('src/editor/editPanelParts/screenOrderRowMenuItems.js');
 await assertMissingFile('src/editor/editPanelParts/useScreenOrderRowMenu.js');
+await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettings.jsx');
+await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettingsBody.jsx');
+await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettingsHeader.jsx');
+await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettings.css');
 
 console.log(JSON.stringify({
   ok: true,
   scope: 'editor-options-layout',
-  checks: 40,
+  checks: 38,
   saveFlowTouched: false,
   globalOptionsSeparated: true,
   unifiedPageThemeInspector: true,

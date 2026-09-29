@@ -7,13 +7,11 @@ export function ScreenOrderListItems({
   dragId,
   setDragId,
   selectBlock,
-  openBlockSettings,
   toggleVisible,
   duplicateBlock,
   removeBlock,
   reorderToIndex,
   renderBlockEditor,
-  selectedBlockSettingsProps = null,
 }) {
   const total = normalBlocks.length;
   const listRef = React.useRef(null);
@@ -40,13 +38,11 @@ export function ScreenOrderListItems({
           dragId={dragId}
           setDragId={setDragId}
           selectBlock={selectBlock}
-          openBlockSettings={openBlockSettings}
           toggleVisible={toggleVisible}
           duplicateBlock={duplicateBlock}
           removeBlock={removeBlock}
           reorderToIndex={reorderToIndex}
           renderBlockEditor={renderBlockEditor}
-          selectedBlockSettingsProps={selectedBlockSettingsProps}
         />
       ))}
     </div>
