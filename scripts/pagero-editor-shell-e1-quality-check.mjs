@@ -15,7 +15,6 @@ const pageOptionsCss = await readFile('src/editor/editPanelParts/PageGlobalOptio
 const fixedBlocksCss = await readFile('src/editor/editPanelParts/FixedBlocksSection.css', 'utf8');
 const workspaceCss = await readFile('src/styles/workspace-shell.css', 'utf8');
 const activeWorkflowCss = await readFile('src/styles/editor-active-workflow-patch.css', 'utf8');
-const narrowEditorCss = await readFile('src/styles/editor-narrow-width-fix.css', 'utf8');
 
 assert(!navigation.includes("['style', '스타일'"), 'editor navigation must not expose a duplicate style workspace tab');
 assert(screen.includes("const effectiveTab = tab === 'style' ? 'edit' : tab;"), 'legacy style routes must still normalize into edit');
@@ -38,7 +37,7 @@ assert(fixedBlocksCss.includes('.screen-order-fixed-blocks :is(.fixed-block-card
 assert(workspaceCss.includes('grid-template-columns: repeat(4, minmax(0, 1fr)) !important') && workspaceCss.includes('min-height: 46px !important') && workspaceCss.includes('height: 36px !important'), 'workspace top navigation must stay compact and use exactly four columns');
 assert(workspaceCss.includes('background: #f1f3f6 !important') && workspaceCss.includes('color: var(--product-text) !important'), 'active workspace tab must use the compact light selected state instead of a solid dark block');
 assert(activeWorkflowCss.includes('grid-template-columns: clamp(580px, 44vw, 680px) minmax(500px, 1fr) !important;') && activeWorkflowCss.includes('padding: 12px 10px 96px !important;'), 'active desktop editor must keep the wider editing pane and tighter horizontal padding');
-assert(narrowEditorCss.includes('.builder-shell.edit-mode-shell:not(.mobile-operations-shell) .work-panel') && narrowEditorCss.includes('max-width: none !important;') && narrowEditorCss.includes('margin-inline: 0 !important;') && narrowEditorCss.includes('padding-inline: 10px !important;') && !narrowEditorCss.includes('max-width: 760px !important;'), '900-1180px desktop editor must not restore the old 760px content cap');
+assert(css.includes('@media (min-width: 900px) and (max-width: 1180px)') && css.includes('.builder-shell.edit-mode-shell:not(.mobile-operations-shell) .work-panel') && css.includes('max-width: none !important;') && css.includes('margin-inline: 0 !important;') && css.includes('padding-inline: 10px !important;') && !css.includes('max-width: 760px !important;'), '900-1180px desktop editor geometry must be owned by editor-workspace.css without the old 760px content cap');
 assert(
   css.includes("html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2']")
     && css.includes("html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab")
