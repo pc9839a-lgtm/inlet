@@ -44,3 +44,100 @@
   font-weight: 900 !important;
   white-space: nowrap !important;
 }
+
+
+/* Shared editor controls migrated from editor-final-clean.
+   Component cards remain owned by their component stylesheets. */
+body .builder-shell .edit-layout {
+  --pg-line: #dbe5f2;
+  --pg-line-strong: #c6d6ea;
+  --pg-ink: #0f172a;
+  --pg-muted: #64748b;
+  --pg-soft: #f8fafc;
+  --pg-selected: #f4f8ff;
+  --pg-blue: #2563eb;
+  --pg-green: #22c55e;
+}
+
+body .builder-shell .edit-layout .screen-icon-action,
+body .builder-shell .edit-layout .fixed-open-button {
+  display: inline-grid !important;
+  place-items: center !important;
+  width: 38px !important;
+  min-width: 38px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 0 !important;
+  border: 1px solid var(--pg-line) !important;
+  border-radius: 999px !important;
+  background: #fff !important;
+  color: #64748b !important;
+  box-shadow: none !important;
+  line-height: 1 !important;
+}
+
+body .builder-shell .edit-layout .screen-icon-action:hover,
+body .builder-shell .edit-layout .fixed-open-button:hover,
+body .builder-shell .edit-layout .screen-icon-action:focus-visible,
+body .builder-shell .edit-layout .fixed-open-button:focus-visible {
+  border-color: var(--pg-line-strong) !important;
+  color: var(--pg-ink) !important;
+}
+
+body .builder-shell .edit-layout .screen-icon-action[aria-expanded='true'] {
+  border-color: var(--pg-ink) !important;
+  background: var(--pg-ink) !important;
+  color: #fff !important;
+}
+
+body .builder-shell .edit-layout :is(.switch-clean, .toggle-clean > button, .toggle > button) {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: 46px !important;
+  min-width: 46px !important;
+  max-width: 46px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  max-height: 28px !important;
+  padding: 2px !important;
+  border: 1px solid #d7e1ec !important;
+  border-radius: 999px !important;
+  background: #e7edf5 !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+  overflow: hidden !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  text-indent: -9999px !important;
+}
+
+body .builder-shell .edit-layout :is(.switch-clean, .toggle-clean > button, .toggle > button)::before,
+body .builder-shell .edit-layout :is(.switch-clean, .toggle-clean > button, .toggle > button)::after {
+  content: none !important;
+}
+
+body .builder-shell .edit-layout :is(.switch-clean, .toggle-clean > button, .toggle > button) > i {
+  display: block !important;
+  width: 22px !important;
+  min-width: 22px !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: #fff !important;
+  box-shadow: 0 2px 7px rgba(15, 23, 42, .16) !important;
+  transform: translateX(0) !important;
+  transition: transform .18s ease !important;
+}
+
+body .builder-shell .edit-layout :is(.switch-clean.active, .switch-clean[aria-checked='true'], .toggle-clean > button.active, .toggle-clean > button[aria-checked='true'], .toggle > button.active, .toggle > button[aria-checked='true']) {
+  border-color: var(--pg-green) !important;
+  background: var(--pg-green) !important;
+}
+
+body .builder-shell .edit-layout :is(.switch-clean.active, .switch-clean[aria-checked='true'], .toggle-clean > button.active, .toggle-clean > button[aria-checked='true'], .toggle > button.active, .toggle > button[aria-checked='true']) > i {
+  transform: translateX(18px) !important;
+}

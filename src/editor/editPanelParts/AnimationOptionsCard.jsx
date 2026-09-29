@@ -1,4 +1,5 @@
 ﻿import React from 'react';
+import './AnimationOptionsCard.css';
 import { AnimationOptionsHeader } from './AnimationOptionsHeader.jsx';
 import { AnimationPlaybackOptions } from './AnimationPlaybackOptions.jsx';
 import { AnimationTypeOptions } from './AnimationTypeOptions.jsx';

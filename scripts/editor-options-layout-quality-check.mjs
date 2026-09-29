@@ -7,6 +7,8 @@ function assert(condition, message) {
 const pageOptions = await readFile('src/editor/editPanelParts/PageGlobalOptions.jsx', 'utf8');
 const pageOptionsHeader = await readFile('src/editor/editPanelParts/PageGlobalOptionsHeader.jsx', 'utf8');
 const pageOptionsList = await readFile('src/editor/editPanelParts/PageGlobalOptionsList.jsx', 'utf8');
+const animationOptionsCard = await readFile('src/editor/editPanelParts/AnimationOptionsCard.jsx', 'utf8');
+const animationOptionsCss = await readFile('src/editor/editPanelParts/AnimationOptionsCard.css', 'utf8');
 const pageOptionsProps = await readFile('src/editor/editPanelSectionProps/pageGlobalOptionsProps.js', 'utf8');
 const fixedBlocksProps = await readFile('src/editor/editPanelSectionProps/fixedBlocksProps.js', 'utf8');
 const fixedBlocks = await readFile('src/editor/editPanelParts/GlobalFixedBlocks.jsx', 'utf8');
@@ -27,6 +29,7 @@ const screenOrderRowIdentity = await readFile('src/editor/editPanelParts/ScreenO
 const codeEditor = await readFile('src/editor/blockEditors/CodeEditor.jsx', 'utf8');
 const codeEditorCss = await readFile('src/editor/blockEditors/CodeEditor.css', 'utf8');
 const editorFinalCleanCss = await readFile('src/styles/editor-final-clean.css', 'utf8');
+const editorSharedUiCss = await readFile('src/styles/editor-shared-ui.css', 'utf8');
 const sectionProps = await readFile('src/editor/createEditPanelSectionProps.js', 'utf8');
 const mobileScreenOrderCss = screenOrderCss.slice(screenOrderCss.indexOf('@media (max-width: 760px)'));
 const editorWorkspaceCss = await readFile('src/styles/editor-workspace.css', 'utf8');
@@ -101,7 +104,9 @@ assert(pageOptionsCss.includes('.page-global-options-card.card') && pageOptionsC
 assert(screenOrderCss.includes('.screen-order-v2-list') && screenOrderCss.includes('gap: 10px !important') && screenOrderCss.includes('.screen-order-v2-item') && !editorWorkspaceCss.includes('.screen-order-v2-card'), 'PC screen order card/list ownership must stay in ScreenOrder.css instead of editor-workspace.css');
 assert(/\.screen-order-v2-head\s*\{[^}]*min-height:\s*38px;[^}]*gap:\s*2px;/s.test(screenOrderCss), 'desktop screen-order rows must keep the tightened 38px / 2px density');
 assert(legacyScreenOrderTokens.every((token) => !editorFinalCleanCss.includes(token)), 'editor-final-clean must not restore legacy normal-block selectors');
-assert(['.screen-icon-action', '.fixed-open-button', '.switch-clean', '.fixed-block-head'].every((token) => editorFinalCleanCss.includes(token)), 'current shared fixed-block controls must remain styled after legacy cleanup');
+assert(['.screen-icon-action', '.fixed-open-button', '.switch-clean'].every((token) => editorSharedUiCss.includes(token)) && fixedBlocksCss.includes('.fixed-block-head'), 'shared controls and fixed-block visuals must live with their current owners');
+assert(animationOptionsCard.includes("import './AnimationOptionsCard.css';") && animationOptionsCss.includes('.edit-animation-card') && animationOptionsCss.includes('.edit-animation-options'), 'animation options must load and own their component CSS');
+assert(!editorFinalCleanCss.includes('.screen-icon-action') && !editorFinalCleanCss.includes('.switch-clean') && !editorFinalCleanCss.includes('.fixed-block-head') && !editorFinalCleanCss.includes('.edit-animation') && !editorFinalCleanCss.includes('.screen-drop-zone'), 'editor-final-clean must stay workspace-geometry-only');
 await assertMissingFile('src/styles/editor-screen-order-polish.css');
 await assertMissingFile('src/editor/editPanelParts/ScreenOrderRowActionMenu.jsx');
 await assertMissingFile('src/editor/editPanelParts/screenOrderRowMenuItems.js');
