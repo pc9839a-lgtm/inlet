@@ -27,10 +27,8 @@ const screenOrderRowIdentity = await readFile('src/editor/editPanelParts/ScreenO
 const codeEditor = await readFile('src/editor/blockEditors/CodeEditor.jsx', 'utf8');
 const codeEditorCss = await readFile('src/editor/blockEditors/CodeEditor.css', 'utf8');
 const editorFinalCleanCss = await readFile('src/styles/editor-final-clean.css', 'utf8');
-const editorScreenOrderPolishCss = await readFile('src/styles/editor-screen-order-polish.css', 'utf8');
 const sectionProps = await readFile('src/editor/createEditPanelSectionProps.js', 'utf8');
 const mobileScreenOrderCss = screenOrderCss.slice(screenOrderCss.indexOf('@media (max-width: 760px)'));
-const screenOrderPolishCss = await readFile('src/styles/editor-screen-order-polish.css', 'utf8');
 const editorWorkspaceCss = await readFile('src/styles/editor-workspace.css', 'utf8');
 const legacyScreenOrderTokens = [
   '.screen-order-card',
@@ -92,7 +90,6 @@ assert(!screenOrderList.includes('selectedBlockSettingsProps') && !screenOrderLi
 assert(!editLayout.includes('selectedBlockSettingsProps') && !screenOrderItem.includes('SelectedBlockSettings'), 'redundant selected block settings component must stay removed');
 assert(!screenOrderItem.includes('selected-block-settings-body') && screenOrderItem.includes('className="screen-order-v2-inline-editor"'), 'inline block editor must not carry the retired selected-settings CSS class');
 assert(!editorFinalCleanCss.includes('selected-block-settings-body') && !editorFinalCleanCss.includes('selected-block-settings-card'), 'editor-final-clean must not own retired selected-settings styles');
-assert(!editorScreenOrderPolishCss.includes('selected-block-settings-body') && !editorScreenOrderPolishCss.includes('selected-block-settings-card'), 'editor-screen-order-polish must not own retired selected-settings styles');
 assert(screenOrderCss.includes('Inline block-editor controls owned by ScreenOrder v1') && screenOrderCss.includes('.screen-order-v2-inline-editor .block-editor-v2'), 'ScreenOrder component stylesheet must own inline block-editor controls');
 assert(codeEditor.includes('editorLabel') && codeEditor.includes('구분 이름') && codeEditor.includes('maxLength={40}'), 'code editor must expose a persistent custom label field');
 assert(codeEditor.includes('block-editor-anchor-control code-editor-name-control') && codeEditor.includes('block-editor-anchor-label') && codeEditor.includes('block-editor-anchor-value code-editor-name-value'), 'code block label must reuse the exact widget-code row structure');
@@ -104,8 +101,8 @@ assert(pageOptionsCss.includes('.page-global-options-card.card') && pageOptionsC
 assert(screenOrderCss.includes('.screen-order-v2-list') && screenOrderCss.includes('gap: 10px !important') && screenOrderCss.includes('.screen-order-v2-item') && !editorWorkspaceCss.includes('.screen-order-v2-card'), 'PC screen order card/list ownership must stay in ScreenOrder.css instead of editor-workspace.css');
 assert(/\.screen-order-v2-head\s*\{[^}]*min-height:\s*38px;[^}]*gap:\s*2px;/s.test(screenOrderCss), 'desktop screen-order rows must keep the tightened 38px / 2px density');
 assert(legacyScreenOrderTokens.every((token) => !editorFinalCleanCss.includes(token)), 'editor-final-clean must not restore legacy normal-block selectors');
-assert(legacyScreenOrderTokens.every((token) => !screenOrderPolishCss.includes(token)), 'editor-screen-order-polish must not restore legacy normal-block selectors');
 assert(['.screen-icon-action', '.fixed-open-button', '.switch-clean', '.fixed-block-head'].every((token) => editorFinalCleanCss.includes(token)), 'current shared fixed-block controls must remain styled after legacy cleanup');
+await assertMissingFile('src/styles/editor-screen-order-polish.css');
 await assertMissingFile('src/editor/editPanelParts/ScreenOrderRowActionMenu.jsx');
 await assertMissingFile('src/editor/editPanelParts/screenOrderRowMenuItems.js');
 await assertMissingFile('src/editor/editPanelParts/useScreenOrderRowMenu.js');
