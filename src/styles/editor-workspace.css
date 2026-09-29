@@ -565,3 +565,10 @@ body .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel {
 html body #root .builder-shell.edit-mode-shell .preview-workspace [id^='block-'] {
   scroll-margin-block: 120px;
 }
+
+
+/* Editor preview viewport parity with the public landing width. */
+html body #root .builder-shell .preview-workspace .phone-frame {
+  width: 430px !important;
+  border: 8px solid #111827 !important;
+}

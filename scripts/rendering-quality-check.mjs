@@ -75,7 +75,6 @@ const files = {
   fixedBlockBody: await readFile('src/editor/editPanelParts/FixedBlockCardBody.jsx', 'utf8'),
   shareOptions: await readFile('src/editor/editPanelParts/ShareOptionsCard.jsx', 'utf8'),
   pageModel: await readFile('src/lib/pageModel.js', 'utf8'),
-  editorWorkspaceCss: await readFile('src/styles/editor-workspace-v2.css', 'utf8'),
   editPanel: await readFile('src/editor/EditPanel.jsx', 'utf8'),
   workspaceShellActions: await readFile('src/runtime/useWorkspaceShellActions.js', 'utf8'),
   fixedBlockSelection: await readFile('src/editor/useFixedBlockSelection.js', 'utf8'),

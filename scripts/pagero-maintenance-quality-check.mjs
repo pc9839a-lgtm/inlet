@@ -34,6 +34,7 @@ const forbidden = [
   'src/styles/editor-screen-order-polish.css',
   'src/styles/editor-narrow-width-fix.css',
   'src/styles/editor-active-workflow-patch.css',
+  'src/styles/editor-workspace-v2.css',
   'docs/editor-block-editor-ux-ui-spec.md',
   'docs/editor-block-editor-modernization-v2.md',
   'docs/PAGERO_CALLTAG_UI_UX_UNIFICATION_PLAN_KO.md',
