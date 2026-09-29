@@ -689,3 +689,132 @@ body .builder-shell.edit-mode-shell .screen-order-fixed-blocks :is(.fixed-block-
     margin-bottom: 8px !important;
   }
 }
+
+
+/* PC inline block editor readability v1 */
+@media (min-width: 900px) {
+  /* Give the selected row and its editor clear breathing room without restoring a wrapper card/title. */
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor {
+    width: auto !important;
+    margin: 14px 12px 20px !important;
+    padding: 0 2px 4px !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  /* Widget code: one readable horizontal row on desktop. */
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .block-editor-v2 .block-editor-anchor-control {
+    grid-template-columns: 82px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 12px !important;
+    margin: 0 !important;
+    padding: 0 0 16px !important;
+    border-bottom: 1px solid #e5eaf1 !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .block-editor-v2 .block-editor-anchor-label {
+    color: #344054 !important;
+    font-size: 13px !important;
+    line-height: 1.35 !important;
+    font-weight: 850 !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .block-editor-v2 .block-editor-anchor-value {
+    min-height: 42px !important;
+    border-color: #cbd5e1 !important;
+    border-radius: 10px !important;
+    background: #fff !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .block-editor-v2 .block-editor-anchor-value > b {
+    font-size: 13px !important;
+    font-weight: 800 !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .block-editor-v2 .block-editor-anchor-value > input {
+    min-height: 40px !important;
+    padding: 0 11px !important;
+    color: #101828 !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .block-editor-v2 .block-editor-anchor-value > button {
+    min-height: 40px !important;
+    padding: 0 12px !important;
+    color: #344054 !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+  }
+
+  /* Content/style tabs: larger type and a more deliberate gap before fields. */
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .editor-tabs-v2 {
+    padding-top: 14px !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .editor-tabs-v2-list {
+    gap: 3px !important;
+    padding: 3px !important;
+    border-radius: 10px !important;
+    background: #eef2f6 !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .block-editor-v2 .editor-tabs-v2-list > button {
+    min-width: 68px !important;
+    min-height: 36px !important;
+    padding: 0 12px !important;
+    border-radius: 8px !important;
+    color: #475467 !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .block-editor-v2 .editor-tabs-v2-list > button[aria-selected='true'] {
+    color: #101828 !important;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, .10) !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .editor-tabs-v2-panel {
+    gap: 18px !important;
+    padding: 18px 0 6px !important;
+  }
+
+  /* Labels and editable text were too small/light. */
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .editor-field-v2 {
+    gap: 9px !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .editor-field-v2-label strong,
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .block-editor-v2 .image-input > span {
+    color: #1d2939 !important;
+    font-size: 14px !important;
+    line-height: 1.35 !important;
+    font-weight: 850 !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .block-editor-v2 .editor-field-v2 :is(input, textarea, select) {
+    min-height: 46px !important;
+    padding: 11px 13px !important;
+    border-color: #c7d2e0 !important;
+    border-radius: 10px !important;
+    color: #101828 !important;
+    font-size: 15px !important;
+    line-height: 1.55 !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, .025) !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .block-editor-v2 .editor-field-v2 textarea {
+    min-height: 100px !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .block-editor-v2 .editor-field-v2--compact-text textarea {
+    min-height: 74px !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .block-editor-v2 .editor-field-v2 :is(input, textarea, select):focus-visible {
+    border-color: #7da2d6 !important;
+    outline: 3px solid rgba(37, 99, 235, .09) !important;
+  }
+}
