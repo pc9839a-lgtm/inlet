@@ -10,7 +10,7 @@ const fixedUiCss = await readFile('src/styles/preview-fixed-ui-contract.css', 'u
 const workspacePreview = await readFile('src/screens/workspace/WorkspacePreviewPane.jsx', 'utf8');
 const app = await readFile('src/App.jsx', 'utf8');
 const baseCss = await readFile('src/styles/base.css', 'utf8');
-const editorWorkspaceCss = await readFile('src/styles/editor-workspace-v2.css', 'utf8');
+const editorWorkspaceCss = await readFile('src/styles/editor-workspace.css', 'utf8');
 const publicCss = await readFile('src/styles/preview-public.css', 'utf8');
 
 const parityImport = "@import '../styles/preview-runtime-parity.css';";
