@@ -7,7 +7,6 @@ export function ScreenOrderListItems({
   dragId,
   setDragId,
   selectBlock,
-  openBlockSettings,
   toggleVisible,
   duplicateBlock,
   removeBlock,
@@ -39,7 +38,6 @@ export function ScreenOrderListItems({
           dragId={dragId}
           setDragId={setDragId}
           selectBlock={selectBlock}
-          openBlockSettings={openBlockSettings}
           toggleVisible={toggleVisible}
           duplicateBlock={duplicateBlock}
           removeBlock={removeBlock}
