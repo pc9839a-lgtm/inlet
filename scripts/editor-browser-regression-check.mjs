@@ -14,6 +14,13 @@ const revisionHeroTitle = '저장 버전 복원 검증';
 const finalHeroTitle = '버전 복원 후 추가 편집';
 const persistedCodeLabel = '신청 폼 코드';
 const updatedAccent = '#7c3aed';
+const desktopMatrix = [
+  { name: 'pc-900', width: 900, height: 900, narrow: true },
+  { name: 'pc-1024', width: 1024, height: 900, narrow: true },
+  { name: 'pc-1180', width: 1180, height: 900, narrow: true },
+  { name: 'pc-1440', width: 1440, height: 960, narrow: false },
+];
+
 const mobileViewports = [
   { name: 'mobile-360', width: 360, height: 800 },
   { name: 'mobile-390', width: 390, height: 844 },
@@ -1020,10 +1027,11 @@ async function run() {
     assertDesktop(desktopMetrics);
     await capture(client, 'desktop-editor-reloaded');
 
-    await setViewport(client, 1180, 900, false);
-    await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('.preview-workspace')`, 'narrow desktop editor');
+    for (const desktopViewport of desktopMatrix) {
+      await setViewport(client, desktopViewport.width, desktopViewport.height, false);
+      await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('.preview-workspace')`, `${desktopViewport.name} editor`);
 
-    await clickButtonByText(client, '.edit-section-tabs', '페이지 옵션');
+      await clickButtonByText(client, '.edit-section-tabs', '페이지 옵션');
     await waitForBrowser(client, `!!document.querySelector('.page-global-options-card')`, 'narrow desktop page options');
     const pageOptionsShellStyle = await evaluate(client, `(() => {
       const el = document.querySelector('.page-global-options-card');
@@ -1035,9 +1043,9 @@ async function run() {
         background: style.backgroundColor,
       };
     })()`);
-    assert(pageOptionsShellStyle?.padding === '18px', `page options shell padding drifted at 1180px: ${JSON.stringify(pageOptionsShellStyle)}`);
-    assert(pageOptionsShellStyle?.borderWidth === '1px', `page options shell border drifted at 1180px: ${JSON.stringify(pageOptionsShellStyle)}`);
-    assert(pageOptionsShellStyle?.borderRadius === '22px', `page options shell radius drifted at 1180px: ${JSON.stringify(pageOptionsShellStyle)}`);
+    assert(pageOptionsShellStyle?.padding === '18px', `page options shell padding drifted at desktop matrix width: ${JSON.stringify(pageOptionsShellStyle)}`);
+    assert(pageOptionsShellStyle?.borderWidth === '1px', `page options shell border drifted at desktop matrix width: ${JSON.stringify(pageOptionsShellStyle)}`);
+    assert(pageOptionsShellStyle?.borderRadius === '22px', `page options shell radius drifted at desktop matrix width: ${JSON.stringify(pageOptionsShellStyle)}`);
     await capture(client, 'desktop-narrow-1180-page-options');
 
     await clickButtonByText(client, '.edit-section-tabs', '화면 순서');
@@ -1066,8 +1074,9 @@ async function run() {
     assert(screenOrderShellStyle?.rowRadius === '18px' && screenOrderShellStyle?.rowBorder === '1px', `screen order rows must use rounded bordered cards: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.addBackground === 'rgb(17, 24, 39)', `block add trigger must keep the original dark style: ${JSON.stringify(screenOrderShellStyle)}`);
 
-    await clickSelector(client, '#editor-block-editor-text .screen-order-v2-head');
-    await waitForBrowser(client, `!!document.querySelector('#editor-block-editor-text + .screen-order-v2-inline-editor .editor-tabs-v2')`, 'narrow desktop inline text editor');
+      if (desktopViewport.width === 1180) {
+        await clickSelector(client, '#editor-block-editor-text .screen-order-v2-head');
+        await waitForBrowser(client, `!!document.querySelector('#editor-block-editor-text + .screen-order-v2-inline-editor .editor-tabs-v2')`, 'narrow desktop inline text editor');
     const inlineDetailStyle = await evaluate(client, `(() => {
       const inline = document.querySelector('#editor-block-editor-text + .screen-order-v2-inline-editor');
       const anchor = inline?.querySelector('.block-editor-anchor-control');
@@ -1093,10 +1102,18 @@ async function run() {
     assert(inlineDetailStyle?.labelFontSize === '14px', `inline editor labels must remain readable: ${JSON.stringify(inlineDetailStyle)}`);
     assert(inlineDetailStyle?.textareaFontSize === '15px', `inline editor text must remain readable: ${JSON.stringify(inlineDetailStyle)}`);
     assert(inlineDetailStyle?.tabHeight === 36, `inline editor tabs must keep 36px height: ${JSON.stringify(inlineDetailStyle)}`);
-    await capture(client, 'desktop-narrow-1180-screen-order-detail');
+        await capture(client, 'desktop-narrow-1180-screen-order-detail');
+      }
 
-    const narrowDesktopMetrics = await collectNarrowDesktopMetrics(client);
-    assertNarrowDesktop(narrowDesktopMetrics, 1180);
+      if (desktopViewport.narrow) {
+        const matrixMetrics = await collectNarrowDesktopMetrics(client);
+        assertNarrowDesktop(matrixMetrics, desktopViewport.width);
+      } else {
+        const matrixMetrics = await collectDesktopMetrics(client);
+        assertDesktop(matrixMetrics);
+      }
+      await capture(client, `desktop-matrix-${desktopViewport.width}`);
+    }
 
     for (const viewport of mobileViewports) {
       await setViewport(client, viewport.width, viewport.height, true);
