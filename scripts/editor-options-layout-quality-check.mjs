@@ -97,6 +97,10 @@ assert(['.screen-icon-action', '.fixed-open-button', '.switch-clean', '.fixed-bl
 await assertMissingFile('src/editor/editPanelParts/ScreenOrderRowActionMenu.jsx');
 await assertMissingFile('src/editor/editPanelParts/screenOrderRowMenuItems.js');
 await assertMissingFile('src/editor/editPanelParts/useScreenOrderRowMenu.js');
+await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettings.jsx');
+await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettingsBody.jsx');
+await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettingsHeader.jsx');
+await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettings.css');
 
 console.log(JSON.stringify({
   ok: true,
