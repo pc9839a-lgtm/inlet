@@ -303,10 +303,6 @@
 
 
 
-.edit-layout .selected-block-settings-card {
-  margin-top: 12px !important;
-}
-
 .edit-layout .selected-block-settings-body.block-editor {
   display: grid !important;
   gap: 12px !important;
