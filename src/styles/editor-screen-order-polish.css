@@ -7,40 +7,6 @@
   --editor-green: #22c55e;
 }
 
-.edit-layout .page-global-options-card.card {
-  width: 100% !important;
-  min-width: 0 !important;
-  padding: 18px !important;
-  border: 1px solid var(--editor-line) !important;
-  border-radius: 22px !important;
-  background: #fff !important;
-  box-shadow: none !important;
-}
-
-.edit-layout .page-global-options-card .section-title {
-  display: flex !important;
-  align-items: flex-start !important;
-  justify-content: space-between !important;
-  gap: 12px !important;
-  margin: 0 0 14px !important;
-}
-
-.edit-layout .page-global-options-card .section-title h2 {
-  margin: 0 !important;
-  color: var(--editor-ink) !important;
-  font-size: 20px !important;
-  line-height: 1.2 !important;
-  font-weight: 950 !important;
-}
-
-.edit-layout .page-global-options-card .section-title p {
-  margin: 3px 0 0 !important;
-  color: var(--editor-muted) !important;
-  font-size: 13px !important;
-  line-height: 1.4 !important;
-  font-weight: 800 !important;
-}
-
 .edit-layout :is(button, input, textarea, select) {
   font: inherit !important;
   letter-spacing: 0 !important;
@@ -99,66 +65,6 @@
 .edit-layout .editor-stack {
   display: grid !important;
   gap: 12px !important;
-}
-
-.edit-layout .page-global-options-card :is(.edit-animation-card, .fixed-block-card) {
-  margin: 0 !important;
-  padding: 0 !important;
-  border: 1px solid var(--editor-line) !important;
-  border-radius: 18px !important;
-  background: #fff !important;
-  box-shadow: none !important;
-  overflow: visible !important;
-}
-
-.edit-layout .page-global-options-card :is(.fixed-block-head.block-head, .edit-animation-head.block-head) {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) 54px 38px !important;
-  align-items: center !important;
-  gap: 10px !important;
-  min-height: 62px !important;
-  padding: 11px 12px !important;
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-.edit-layout .page-global-options-card .edit-animation-head.block-head {
-  grid-template-columns: minmax(0, 1fr) 54px !important;
-}
-
-.edit-layout .page-global-options-card .fixed-block-copy {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  min-width: 0 !important;
-}
-
-.edit-layout .page-global-options-card :is(.edit-animation-head b, .fixed-block-copy strong) {
-  min-width: 0 !important;
-  color: var(--editor-ink) !important;
-  font-size: 15px !important;
-  line-height: 1.25 !important;
-  font-weight: 950 !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
-}
-
-.edit-layout .page-global-options-card .fixed-block-copy em {
-  min-width: 0 !important;
-  max-width: 190px !important;
-  padding: 4px 8px !important;
-  border-radius: 999px !important;
-  background: #eef4ff !important;
-  color: var(--editor-muted) !important;
-  font-size: 11px !important;
-  line-height: 1.2 !important;
-  font-style: normal !important;
-  font-weight: 850 !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
 }
 
 .edit-layout .fixed-block-editor,
