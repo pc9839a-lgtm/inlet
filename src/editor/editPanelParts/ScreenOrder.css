@@ -728,3 +728,9 @@
   background: transparent !important;
   border: 0 !important;
 }
+
+
+/* Selected rows stay visible during preview/row synchronization. */
+body .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true'] {
+  scroll-margin-block: 84px;
+}
