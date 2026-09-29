@@ -7,7 +7,7 @@
   --editor-green: #22c55e;
 }
 
-.edit-layout :is(.page-global-options-card, .selected-block-settings-card).card {
+.edit-layout .page-global-options-card.card {
   width: 100% !important;
   min-width: 0 !important;
   padding: 18px !important;
@@ -17,7 +17,7 @@
   box-shadow: none !important;
 }
 
-.edit-layout :is(.page-global-options-card, .selected-block-settings-card) .section-title {
+.edit-layout .page-global-options-card .section-title {
   display: flex !important;
   align-items: flex-start !important;
   justify-content: space-between !important;
@@ -25,7 +25,7 @@
   margin: 0 0 14px !important;
 }
 
-.edit-layout :is(.page-global-options-card, .selected-block-settings-card) .section-title h2 {
+.edit-layout .page-global-options-card .section-title h2 {
   margin: 0 !important;
   color: var(--editor-ink) !important;
   font-size: 20px !important;
@@ -33,7 +33,7 @@
   font-weight: 950 !important;
 }
 
-.edit-layout :is(.page-global-options-card, .selected-block-settings-card) .section-title p {
+.edit-layout .page-global-options-card .section-title p {
   margin: 3px 0 0 !important;
   color: var(--editor-muted) !important;
   font-size: 13px !important;
