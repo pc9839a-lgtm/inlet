@@ -27,6 +27,31 @@ function list(value) {
   return value.map((item) => clean(item, 80)).filter(Boolean).join(', ');
 }
 
+async function digestHex(value = '') {
+  const bytes = new TextEncoder().encode(String(value));
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+async function sameSecret(actual = '', expected = '') {
+  if (!actual || !expected) return false;
+  const [a, b] = await Promise.all([digestHex(actual), digestHex(expected)]);
+  let diff = a.length ^ b.length;
+  const length = Math.max(a.length, b.length);
+  for (let i = 0; i < length; i += 1) {
+    diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  }
+  return diff === 0;
+}
+
+function maskPhone(value = '') {
+  const digits = clean(value, 30).replace(/\D+/g, '');
+  if (digits.length < 7) return '-';
+  return digits.slice(0, 3) + '-****-' + digits.slice(-4);
+}
+
 export async function onRequest({ request, env }) {
   if (request.method !== 'POST') {
     return json({ ok: false, error: 'METHOD_NOT_ALLOWED' }, 405);
