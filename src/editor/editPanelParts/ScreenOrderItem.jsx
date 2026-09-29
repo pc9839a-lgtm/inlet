@@ -44,7 +44,6 @@ export function ScreenOrderItem({
         onRemove={() => removeBlock(block.id)}
         onDragStart={controls.dragStart}
         onDragEnd={controls.dragEnd}
-        renderBlockEditor={renderBlockEditor}
       />
       {selected && (
         <div
