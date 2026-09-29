@@ -20,12 +20,14 @@ body .builder-shell:not(.edit-mode-shell) {
 }
 body .builder-shell:not(.edit-mode-shell) .left-workspace {
   width: 100% !important;
+  min-width: 0 !important;
   height: 100dvh !important;
   min-height: 0 !important;
   max-height: 100dvh !important;
   overflow-x: hidden !important;
   overflow-y: auto !important;
   scrollbar-gutter: stable !important;
+  border-right: 1px solid #d9dee8 !important;
 }
 body .builder-shell:not(.edit-mode-shell) .work-panel {
   width: 100% !important;
@@ -37,6 +39,15 @@ body .builder-shell:not(.edit-mode-shell) .work-panel {
   padding: 28px 24px 64px !important;
   overflow: visible !important;
 }
+body .builder-shell:not(.edit-mode-shell) .work-panel > * {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box !important;
+}
+
 body .builder-shell :is(.panel-header, .top-tabs, .edit-layout, .settings-panel, .style-panel, .inbox-panel, .stats-panel) {
   width: 100% !important;
   max-width: 100% !important;
@@ -56,6 +67,8 @@ body .builder-shell:not(.edit-mode-shell) .preview-workspace {
   justify-content: center !important;
 }
 body .builder-shell:not(.edit-mode-shell) .preview-sticky {
+  position: sticky !important;
+  top: 28px !important;
   width: var(--pg-preview-width) !important;
   max-width: 100% !important;
   height: calc(100dvh - 56px) !important;
@@ -80,6 +93,11 @@ body .builder-shell:not(.edit-mode-shell) .phone-frame {
   margin: 0 auto !important;
   flex: 1 1 auto !important;
 }
+body .builder-shell:not(.edit-mode-shell) .phone-frame,
+body .builder-shell:not(.edit-mode-shell) .phone-frame * {
+  box-sizing: border-box !important;
+}
+
 body .builder-shell:not(.edit-mode-shell) .phone-frame .landing-page {
   width: 100% !important;
   height: 100% !important;
