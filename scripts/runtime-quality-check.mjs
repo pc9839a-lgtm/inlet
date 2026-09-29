@@ -266,7 +266,7 @@ const baseComponentsOptionsCss = await readFile('src/styles/base-components-opti
 const editorAnimationCss = await readFile('src/styles/editor-animation.css', 'utf8');
 const editorSharedUiCss = await readFile('src/styles/editor-shared-ui.css', 'utf8');
 const editorFinalCleanCss = await readFile('src/styles/editor-final-clean.css', 'utf8');
-const editorWorkspaceCss = await readFile('src/styles/editor-workspace-v2.css', 'utf8');
+const workspaceShellCss = await readFile('src/styles/workspace-shell.css', 'utf8');
 const editorBlockListsCss = await readFile('src/styles/editor-block-lists.css', 'utf8');
 const previewWorkspaceReservationCss = await readFile('src/styles/preview-workspace-reservation.css', 'utf8');
 const previewFormsCss = await readFile('src/styles/preview-forms.css', 'utf8');
@@ -405,10 +405,10 @@ assert(workspaceStartMode.includes('export function shouldShowStartModeOverlay()
 assert(!app.includes('<StartModeOverlay') && !app.includes('showStartModeOverlay'), 'App must not render the disabled start mode overlay');
 assert(workspaceLeftPanel.includes("const showTemplateIntro = !mobileOperationsOnly && canManageAdmin && startMode === 'template'"), 'template controls must stay desktop and master-admin-only');
 assert(workspaceLeftPanel.includes('workspace-persistent-header'), 'workspace save header must remain outside the scrolling panel');
-assert(/\.builder-shell:not\(\.template-intro-shell\)\s*\{[\s\S]*?height:\s*100dvh[\s\S]*?overflow:\s*hidden[\s\S]*?padding-bottom:\s*0/.test(editorWorkspaceCss) && /\.builder-shell:not\(\.template-intro-shell\)\s*~\s*\.wayzi-global-footer\s*\{[\s\S]*?display:\s*none/.test(editorWorkspaceCss), 'workspace shell must own the viewport and hide the global footer so the save header cannot scroll off-screen');
-assert(/\.left-workspace\s*\{[\s\S]*?grid-template-rows:\s*auto minmax\(0, 1fr\)[\s\S]*?overflow:\s*hidden/.test(editorWorkspaceCss), 'workspace left column must keep the save header outside the scroll container');
-assert(/\.workspace-persistent-header\s*\{[\s\S]*?position:\s*sticky[\s\S]*?grid-row:\s*1/.test(editorWorkspaceCss), 'workspace save header must stay pinned in the first grid row');
-assert(/\.work-panel\s*\{[\s\S]*?grid-row:\s*2[\s\S]*?overflow-y:\s*auto/.test(editorWorkspaceCss), 'workspace panel content must own vertical scrolling');
+assert(/\.builder-shell:not\(\.template-intro-shell\)\s*\{[\s\S]*?height:\s*100dvh[\s\S]*?overflow:\s*hidden[\s\S]*?padding-bottom:\s*0/.test(workspaceShellCss) && /\.builder-shell:not\(\.template-intro-shell\)\s*~\s*\.wayzi-global-footer\s*\{[\s\S]*?display:\s*none/.test(workspaceShellCss), 'workspace shell must own the viewport and hide the global footer so the save header cannot scroll off-screen');
+assert(/\.left-workspace\s*\{[\s\S]*?grid-template-rows:\s*auto minmax\(0, 1fr\)[\s\S]*?overflow:\s*hidden/.test(workspaceShellCss), 'workspace left column must keep the save header outside the scroll container');
+assert(/\.workspace-persistent-header\s*\{[\s\S]*?position:\s*sticky[\s\S]*?grid-row:\s*1/.test(workspaceShellCss), 'workspace save header must stay pinned in the first grid row');
+assert(/\.work-panel\s*\{[\s\S]*?grid-row:\s*2[\s\S]*?overflow-y:\s*auto/.test(workspaceShellCss), 'workspace panel content must own vertical scrolling');
 assert(baseCss.includes('.panel-header{position:sticky!important;top:0!important;z-index:80!important') && !baseCss.includes('.panel-header{position:relative!important;top:auto!important'), 'editor panel header must remain sticky so the save action stays visible while scrolling');
 assert(app.includes('adminRoute') && app.includes("return /^\\/(?:admin|[^/?#]+\\/admin)\\/?$/.test(routePath)") && app.includes('<AdminPanel'), 'admin panel must stay on a private /admin route');
 assert(app.includes('const canWriteTabKey = (key) => canWriteTab(accessMode, page, authUser, key)') && app.includes('createBlockWriteGuard({'), 'App must enforce manager write permissions before mutation');
