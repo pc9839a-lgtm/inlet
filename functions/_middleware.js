@@ -138,7 +138,16 @@ async function handleRuntimeAsset(context, url) {
       ? /text\/css/i.test(contentType)
       : true;
 
-  if (response.ok && validType) return response;
+  if (response.ok && validType) {
+    const headers = applyNoStoreHeaders(new Headers(response.headers));
+    headers.set('X-Pagero-Runtime-Asset', 'no-store-v3');
+    headers.delete('Content-Length');
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    });
+  }
 
   // Cloudflare Pages' SPA fallback can answer a deleted hashed JS/CSS URL with
   // index.html. An old open tab then receives HTML for a module request and lands
