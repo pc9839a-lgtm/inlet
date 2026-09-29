@@ -25,6 +25,7 @@ const screenOrderListItems = await readFile('src/editor/editPanelParts/ScreenOrd
 const screenOrderItem = await readFile('src/editor/editPanelParts/ScreenOrderItem.jsx', 'utf8');
 const screenOrderRowIdentity = await readFile('src/editor/editPanelParts/ScreenOrderRowIdentity.jsx', 'utf8');
 const codeEditor = await readFile('src/editor/blockEditors/CodeEditor.jsx', 'utf8');
+const codeEditorCss = await readFile('src/editor/blockEditors/CodeEditor.css', 'utf8');
 const sectionProps = await readFile('src/editor/createEditPanelSectionProps.js', 'utf8');
 const mobileScreenOrderCss = screenOrderCss.slice(screenOrderCss.indexOf('@media (max-width: 760px)'));
 const editorFinalCleanCss = await readFile('src/styles/editor-final-clean.css', 'utf8');
@@ -89,6 +90,8 @@ assert(screenOrderCss.includes('.screen-order-v2-item') && screenOrderCss.includ
 assert(!screenOrderList.includes('selectedBlockSettingsProps') && !screenOrderListItems.includes('selectedBlockSettingsProps') && screenOrderItem.includes('data-inline-block-editor="true"') && screenOrderItem.includes('{renderBlockEditor(block)}'), 'selected block must render its editor directly below the row without the redundant settings card');
 assert(!editLayout.includes('selectedBlockSettingsProps') && !screenOrderItem.includes('SelectedBlockSettings'), 'redundant selected block settings component must stay removed');
 assert(codeEditor.includes('editorLabel') && codeEditor.includes('구분 이름') && codeEditor.includes('maxLength={40}'), 'code editor must expose a persistent custom label field');
+assert(codeEditorCss.includes('grid-template-columns: 82px minmax(0, 1fr);') && codeEditorCss.includes('.block-editor-v2 .code-editor-name > input'), 'code block label field must align to the same 82px label column as widget code');
+assert(!codeEditorCss.includes('@media (max-width: 720px) {\n  .code-editor-name'), 'PC code block label must not collapse into a stacked row through component CSS');
 assert(screenOrderRowIdentity.includes("block.type === 'code'") && screenOrderRowIdentity.includes('displayLabel') && screenOrderRowIdentity.includes('<strong title={displayLabel}>{displayLabel}</strong>'), 'screen order must display the custom code label beside 코드 입력');
 assert(editLayout.includes('data-editor-section={section}'), 'edit section panel must expose the active subsection for deterministic PC styling');
 assert(editorWorkspaceCss.includes('PC page-options / screen-order visual parity v2'), 'PC editor must keep one explicit visual contract for page options and screen order');
