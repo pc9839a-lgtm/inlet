@@ -23,6 +23,8 @@ const editLayout = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
 const screenOrderList = await readFile('src/editor/editPanelParts/ScreenOrderList.jsx', 'utf8');
 const screenOrderListItems = await readFile('src/editor/editPanelParts/ScreenOrderListItems.jsx', 'utf8');
 const screenOrderItem = await readFile('src/editor/editPanelParts/ScreenOrderItem.jsx', 'utf8');
+const screenOrderRowIdentity = await readFile('src/editor/editPanelParts/ScreenOrderRowIdentity.jsx', 'utf8');
+const codeEditor = await readFile('src/editor/blockEditors/CodeEditor.jsx', 'utf8');
 const sectionProps = await readFile('src/editor/createEditPanelSectionProps.js', 'utf8');
 const mobileScreenOrderCss = screenOrderCss.slice(screenOrderCss.indexOf('@media (max-width: 760px)'));
 const editorFinalCleanCss = await readFile('src/styles/editor-final-clean.css', 'utf8');
@@ -86,6 +88,8 @@ assert(/\.fixed-block-switch\s*\{[^}]*height:\s*44px\s*!important;[\s\S]*?\.fixe
 assert(screenOrderCss.includes('.screen-order-v2-item') && screenOrderCss.includes('.screen-order-v2-head') && screenOrderCss.includes('.screen-order-v2-menu'), 'screen order V2 stylesheet must remain the normal-block layout owner');
 assert(!screenOrderList.includes('selectedBlockSettingsProps') && !screenOrderListItems.includes('selectedBlockSettingsProps') && screenOrderItem.includes('data-inline-block-editor="true"') && screenOrderItem.includes('{renderBlockEditor(block)}'), 'selected block must render its editor directly below the row without the redundant settings card');
 assert(!editLayout.includes('selectedBlockSettingsProps') && !screenOrderItem.includes('SelectedBlockSettings'), 'redundant selected block settings component must stay removed');
+assert(codeEditor.includes('editorLabel') && codeEditor.includes('구분 이름') && codeEditor.includes('maxLength={40}'), 'code editor must expose a persistent custom label field');
+assert(screenOrderRowIdentity.includes("block.type === 'code'") && screenOrderRowIdentity.includes('displayLabel') && screenOrderRowIdentity.includes('<strong title={displayLabel}>{displayLabel}</strong>'), 'screen order must display the custom code label beside 코드 입력');
 assert(editLayout.includes('data-editor-section={section}'), 'edit section panel must expose the active subsection for deterministic PC styling');
 assert(editorWorkspaceCss.includes('PC page-options / screen-order visual parity v2'), 'PC editor must keep one explicit visual contract for page options and screen order');
 assert(editorWorkspaceCss.includes('.edit-layout .page-global-options-card') && editorWorkspaceCss.includes('.edit-layout .screen-order-v2-card'), 'page options and screen order must share the same outer-surface contract on PC');
