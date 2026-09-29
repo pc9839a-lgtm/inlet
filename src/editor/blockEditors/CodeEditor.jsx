@@ -18,6 +18,17 @@ export default function CodeEditor({ s, set }) {
 
   return (
     <>
+      <label className="code-editor-name">
+        <span>구분 이름</span>
+        <input
+          type="text"
+          value={s.editorLabel || ''}
+          maxLength={40}
+          placeholder="예: 메인 비주얼 / 신청 폼 / 카카오 버튼"
+          onChange={(event) => set({ editorLabel: event.target.value.slice(0, 40) })}
+        />
+      </label>
+
       <EditorTabs
         tabs={[
           {
