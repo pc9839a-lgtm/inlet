@@ -47,7 +47,7 @@ export function ScreenOrderItem({
       />
       {selected && (
         <div
-          className="screen-order-v2-inline-editor selected-block-settings-body block-editor"
+          className="screen-order-v2-inline-editor"
           data-inline-block-editor="true"
         >
           {renderBlockEditor(block)}

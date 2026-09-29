@@ -5,6 +5,7 @@ function assert(condition, message) {
 }
 
 const css = await readFile('src/styles/editor-final-clean.css', 'utf8');
+const screenOrderCss = await readFile('src/editor/editPanelParts/ScreenOrder.css', 'utf8');
 const marker = '/* Pagero editor block-list owner: keep rows simple and details separated. */';
 const markerIndex = css.indexOf(marker);
 assert(markerIndex >= 0, 'live editor control marker must remain');
@@ -23,13 +24,14 @@ assert(geometry.includes('body .builder-shell:not(.edit-mode-shell) .preview-sti
 assert(geometry.includes('body .builder-shell:not(.edit-mode-shell) .phone-frame'), 'legacy phone geometry must exclude edit mode');
 
 assert(liveControls.includes('body .builder-shell .edit-layout'), 'live edit-layout control styles must remain active');
-assert(liveControls.includes('.selected-block-settings-body'), 'selected block control styling must remain active');
+assert(!liveControls.includes('.selected-block-settings-body') && !liveControls.includes('.selected-block-settings-card'), 'retired selected-settings selectors must not remain in final-clean');
+assert(screenOrderCss.includes('Inline block-editor controls owned by ScreenOrder v1') && screenOrderCss.includes('.screen-order-v2-inline-editor .block-editor-v2'), 'inline selected block control styling must be owned by ScreenOrder.css');
 assert(liveControls.includes('.fixed-open-button'), 'fixed block control styling must remain active');
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 11,
+  checks: 12,
   scope: 'pagero-editor-final-clean-isolation-2b',
   changed: 'legacy grid/left/preview/phone geometry no longer applies to edit-mode-shell',
-  preserved: ['body/root contract', 'shared panel sizing', 'edit controls', 'selected block styles', 'fixed block controls', 'non-edit geometry'],
+  preserved: ['body/root contract', 'shared panel sizing', 'edit controls', 'inline block styles via ScreenOrder.css', 'fixed block controls', 'non-edit geometry'],
 }, null, 2));
