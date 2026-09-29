@@ -11,7 +11,6 @@ export function ScreenOrderItem({
   dragId,
   setDragId,
   selectBlock,
-  openBlockSettings,
   toggleVisible,
   duplicateBlock,
   removeBlock,
