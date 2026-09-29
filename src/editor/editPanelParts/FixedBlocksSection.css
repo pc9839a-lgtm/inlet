@@ -63,6 +63,19 @@
 
 
 
+/* Fixed-block editor internals previously supplied by the global polish layer. */
+.screen-order-fixed-blocks .fixed-block-editor {
+  display: grid !important;
+  gap: 10px !important;
+  border-top: 1px solid #edf2f8 !important;
+}
+
+.screen-order-fixed-blocks :is(.topnav-fixed-editor, .bottom-cta-editor, .footer-fixed-editor) {
+  display: grid !important;
+  gap: 10px !important;
+  padding: 0 12px 12px !important;
+}
+
 /* Fixed-block component owner for the active editor surface. */
 body .builder-shell.edit-mode-shell .screen-order-fixed-blocks :is(.fixed-block-card, .edit-animation-card) {
   margin: 0 0 6px !important;
