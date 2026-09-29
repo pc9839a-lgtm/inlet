@@ -1,0 +1,56 @@
+/* Animation options — component-owned editor surface. */
+body .builder-shell .edit-layout .page-global-options-card .edit-animation-card {
+  border: 1px solid var(--pg-line) !important;
+  border-radius: 18px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+body .builder-shell .edit-layout .page-global-options-card .edit-animation-head {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 52px !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-height: 62px !important;
+  padding: 9px 10px !important;
+  border: 0 !important;
+  border-radius: 18px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell .edit-layout .page-global-options-card .edit-animation-head b {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  color: var(--pg-ink) !important;
+  font-size: 16px !important;
+  font-weight: 950 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body .builder-shell .edit-layout .page-global-options-card .edit-animation-options {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  padding: 0 10px 10px !important;
+}
+
+body .builder-shell .edit-layout .page-global-options-card .edit-animation-options button {
+  min-width: 0 !important;
+  min-height: 40px !important;
+  border: 1px solid var(--pg-line) !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+  color: var(--pg-ink) !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  font-weight: 850 !important;
+}
+
+body .builder-shell .edit-layout .page-global-options-card .edit-animation-options button.active {
+  border-color: var(--pg-ink) !important;
+  background: var(--pg-ink) !important;
+  color: #fff !important;
+}
