@@ -63,6 +63,61 @@
 
 
 
+
+
+/* Fixed-block visual controls migrated from the global final-clean layer. */
+body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-block-card {
+  border: 1px solid var(--pg-line) !important;
+  border-radius: 18px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-block-head {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 52px 38px !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-height: 62px !important;
+  padding: 9px 10px !important;
+  border: 0 !important;
+  border-radius: 18px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-block-copy {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+}
+
+body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-block-copy strong {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  color: var(--pg-ink) !important;
+  font-size: 16px !important;
+  font-weight: 950 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-block-copy em {
+  display: inline-flex !important;
+  align-items: center !important;
+  min-height: 22px !important;
+  padding: 0 8px !important;
+  border-radius: 999px !important;
+  background: #f1f5f9 !important;
+  color: #64748b !important;
+  font-size: 11px !important;
+  font-style: normal !important;
+  font-weight: 850 !important;
+  white-space: nowrap !important;
+}
+
 /* Fixed-block editor internals previously supplied by the global polish layer. */
 .screen-order-fixed-blocks .fixed-block-editor {
   display: grid !important;
