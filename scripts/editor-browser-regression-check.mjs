@@ -12,6 +12,7 @@ const updatedHeroTitle = '브라우저 저장 검증 완료';
 const continuedHeroTitle = '발행 중 추가 편집 보존';
 const revisionHeroTitle = '저장 버전 복원 검증';
 const finalHeroTitle = '버전 복원 후 추가 편집';
+const persistedCodeLabel = '신청 폼 코드';
 const updatedAccent = '#7c3aed';
 const mobileViewports = [
   { name: 'mobile-360', width: 360, height: 800 },
@@ -228,6 +229,19 @@ function createQaPage() {
             { id: 'editor-name', label: '이름', type: 'name', required: true, options: [] },
             { id: 'editor-phone', label: '연락처', type: 'phone', required: true, options: [] },
           ],
+        },
+      },
+      {
+        id: 'editor-code',
+        type: 'code',
+        visible: true,
+        s: {
+          anchorId: 'editor-code',
+          editorLabel: '',
+          widgetMode: 'custom',
+          html: '<div>QA code block</div>',
+          css: '',
+          js: '',
         },
       },
       {
@@ -981,15 +995,26 @@ async function run() {
     await clickSelector(client, '.panel-history-btn[aria-label="다시 실행"]');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(finalHeroTitle)}`, 'redo post-restore edit');
 
+    // Code blocks must be distinguishable by a persisted editor-only custom label.
+    await clickSelector(client, '#editor-block-editor-code .screen-order-v2-head');
+    await waitForBrowser(client, `!!document.querySelector('#editor-block-editor-code + .screen-order-v2-inline-editor input[aria-label="구분 이름"]')`, 'code block custom label input');
+    await setInputValue(client, '#editor-block-editor-code + .screen-order-v2-inline-editor input[aria-label="구분 이름"]', persistedCodeLabel);
+    await waitForBrowser(client, `(document.querySelector('#editor-block-editor-code .screen-order-v2-title-wrap strong')?.textContent || '').includes(${JSON.stringify(persistedCodeLabel)})`, 'screen order custom code label');
+
     await clickSelector(client, '.panel-actions .primary-btn');
     await waitForState(() => apiState.saveCount === 3, 'publish restored revision with additional edit');
     await waitForState(() => apiState.publicVerifyCount >= 2, 'public verification after revision publish');
     assert(apiState.saveSnapshots[2]?.blocks?.find((block) => block.id === 'editor-hero')?.s?.title === finalHeroTitle, 'revision publish snapshot did not include the final hero title');
     assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === finalHeroTitle, 'server page did not keep the final post-restore edit');
+    assert(apiState.saveSnapshots[2]?.blocks?.find((block) => block.id === 'editor-code')?.s?.editorLabel === persistedCodeLabel, 'final publish snapshot did not include the code block custom label');
+    assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-code')?.s?.editorLabel === persistedCodeLabel, 'server page did not keep the code block custom label');
 
     await client.send('Page.reload', { ignoreCache: true });
     await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('.phone-frame')`, 'reloaded desktop editor');
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(finalHeroTitle)})`, 'saved page after reload');
+    await clickSelector(client, '#editor-block-editor-code .screen-order-v2-head');
+    await waitForBrowser(client, `document.querySelector('#editor-block-editor-code + .screen-order-v2-inline-editor input[aria-label="구분 이름"]')?.value === ${JSON.stringify(persistedCodeLabel)}`, 'persisted code block custom label after reload');
+    await waitForBrowser(client, `(document.querySelector('#editor-block-editor-code .screen-order-v2-title-wrap strong')?.textContent || '').includes(${JSON.stringify(persistedCodeLabel)})`, 'persisted screen-order code label after reload');
     assert(apiState.sessionCount >= 1, 'saved login session was not refreshed after reload');
     const desktopMetrics = await collectDesktopMetrics(client);
     assertDesktop(desktopMetrics);
