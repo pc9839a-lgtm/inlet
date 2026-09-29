@@ -22,6 +22,19 @@ function isRuntimeAssetPath(pathname = '') {
   return /^\/assets\/.+\.(?:js|css)$/i.test(String(pathname || ''));
 }
 
+function isContentHashedRuntimeAsset(pathname = '') {
+  return /^\/assets\/.+-[A-Za-z0-9_-]{8,}\.(?:js|css)$/i.test(String(pathname || ''));
+}
+
+function applyImmutableAssetHeaders(headers) {
+  headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+  headers.set('CDN-Cache-Control', 'public, max-age=31536000, immutable');
+  headers.set('Cloudflare-CDN-Cache-Control', 'public, max-age=31536000, immutable');
+  headers.delete('Pragma');
+  headers.delete('Expires');
+  return headers;
+}
+
 function hasRuntimeRecoveryQuery(url) {
   return RUNTIME_RECOVERY_QUERY_KEYS.some((key) => url.searchParams.has(key));
 }
@@ -139,8 +152,11 @@ async function handleRuntimeAsset(context, url) {
       : true;
 
   if (response.ok && validType) {
-    const headers = applyNoStoreHeaders(new Headers(response.headers));
-    headers.set('X-Pagero-Runtime-Asset', 'no-store-v3');
+    const hashed = isContentHashedRuntimeAsset(url.pathname);
+    const headers = hashed
+      ? applyImmutableAssetHeaders(new Headers(response.headers))
+      : applyNoStoreHeaders(new Headers(response.headers));
+    headers.set('X-Pagero-Runtime-Asset', hashed ? 'immutable-hash-v4' : 'no-store-fallback-v4');
     headers.delete('Content-Length');
     return new Response(response.body, {
       status: response.status,

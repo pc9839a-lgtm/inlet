@@ -204,6 +204,8 @@ const settingsPanel = await readFile('src/panels/SettingsPanel.jsx', 'utf8');
 const settingsPanelCss = await readFile('src/styles/panels-settings.css', 'utf8');
 const baseCss = await readFile('src/styles/base.css', 'utf8');
 const runtimeConfigSource = await readFile('src/config/runtimeConfig.js', 'utf8');
+const viteConfigSource = await readFile('vite.config.js', 'utf8');
+const pagesMiddlewareSource = await readFile('functions/_middleware.js', 'utf8');
 const previewFormBlocks = await readFile('src/preview/renderers/FormBlocks.jsx', 'utf8');
 const publicEmbedForm = await readFile('public/embed/form.js', 'utf8');
 const formEmbedSource = await readFile('src/lib/formEmbed.js', 'utf8');
@@ -290,6 +292,10 @@ const legacyFormEditorCss = (await Promise.all([
   'preview-widgets-links.css',
   'preview-widgets.css',
 ].map((file) => readFile(`src/styles/${file}`, 'utf8')))).join('\n');
+assert(viteConfigSource.includes("chunkFileNames: 'assets/[name]-[hash].js'") && viteConfigSource.includes("assetFileNames: 'assets/[name]-[hash][extname]'"), 'runtime JS/CSS assets must use content hashes instead of stable runtime filenames');
+assert(!viteConfigSource.includes('CodeEditor-runtime-v2.js') && !viteConfigSource.includes('[name]-runtime.js'), 'manual stable runtime asset names must stay removed');
+assert(pagesMiddlewareSource.includes('isContentHashedRuntimeAsset') && pagesMiddlewareSource.includes('max-age=31536000, immutable') && pagesMiddlewareSource.includes('immutable-hash-v4'), 'Pages middleware must cache content-hashed assets immutably');
+assert(pagesMiddlewareSource.includes('staleJavaScriptRecoveryResponse') && pagesMiddlewareSource.includes('staleCssRecoveryResponse'), 'stale hashed asset requests must keep runtime recovery');
 assert(main.includes('root.render(<AppErrorBoundary><MapEmbedApp /></AppErrorBoundary>)'), 'embed root render must stay wrapped in AppErrorBoundary');
 assert(main.includes('root.render(<AppErrorBoundary><PublicHomeEntry /></AppErrorBoundary>)'), 'public home root render must stay wrapped in AppErrorBoundary');
 assert(main.includes('root.render(<AppErrorBoundary><App /></AppErrorBoundary>)') || (main.includes('<AppErrorBoundary>') && main.includes('<App />')), 'app root render must stay wrapped in AppErrorBoundary');
