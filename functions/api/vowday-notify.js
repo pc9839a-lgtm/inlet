@@ -1,6 +1,5 @@
 import { sendSesEmail } from './_ses.js';
 
-const RELAY_SECRET = 'qGWKBBknHUqsYUaK2aTNZaUnechbl_ekUkH0Un8NSCE';
 const VOWDAY_TO = 'pc9839a@naver.com';
 const VOWDAY_FROM = 'VOWDAY <no-reply@pagero.kr>';
 
@@ -33,7 +32,11 @@ export async function onRequest({ request, env }) {
     return json({ ok: false, error: 'METHOD_NOT_ALLOWED' }, 405);
   }
 
-  if (request.headers.get('X-VOWDAY-Relay') !== RELAY_SECRET) {
+  const relaySecret = clean(env.VOWDAY_RELAY_SECRET, 200);
+  if (!relaySecret) {
+    return json({ ok: false, error: 'RELAY_SECRET_NOT_CONFIGURED' }, 503);
+  }
+  if (request.headers.get('X-VOWDAY-Relay') !== relaySecret) {
     return json({ ok: false, error: 'UNAUTHORIZED' }, 401);
   }
 
