@@ -61,6 +61,74 @@
   overflow-x: hidden;
 }
 
+
+
+/* Fixed-block component owner for the active editor surface. */
+body .builder-shell.edit-mode-shell .screen-order-fixed-blocks :is(.fixed-block-card, .edit-animation-card) {
+  margin: 0 0 6px !important;
+  border-radius: 10px !important;
+}
+
+body .builder-shell.edit-mode-shell .screen-order-fixed-blocks :is(.fixed-block-head, .edit-animation-head) {
+  min-height: 52px !important;
+  padding: 7px 10px !important;
+  border-radius: 10px !important;
+}
+
+body .builder-shell.edit-mode-shell .screen-order-fixed-blocks :is(.fixed-block-card, .edit-animation-card):last-child {
+  margin-bottom: 0 !important;
+}
+
+@media (min-width: 900px) {
+  html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks {
+    margin-top: 16px !important;
+    padding-top: 16px !important;
+    border-top: 1px solid #d9e4f2 !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks-title {
+    min-height: 22px !important;
+    margin: 0 0 10px !important;
+    padding: 0 !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks-title h2 {
+    margin: 0 !important;
+    color: #0f172a !important;
+    font-size: 15px !important;
+    line-height: 1.3 !important;
+    font-weight: 950 !important;
+    letter-spacing: -.025em !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks .fixed-block-card {
+    margin: 0 0 10px !important;
+    border: 1px solid #d9e4f2 !important;
+    border-radius: 18px !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks .fixed-block-card:last-child {
+    margin-bottom: 0 !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks .fixed-block-head {
+    min-height: 62px !important;
+    padding: 10px 12px !important;
+    border: 0 !important;
+    border-radius: 17px !important;
+    background: #fff !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks .fixed-block-editor {
+    padding: 12px !important;
+    border-top: 1px solid #edf2f8 !important;
+    background: #f7fafd !important;
+  }
+}
+
 @media (max-width: 760px) {
   .screen-order-fixed-blocks {
     margin-top: 10px;
