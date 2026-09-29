@@ -156,36 +156,6 @@ body .builder-shell .edit-layout {
   --pg-green: #22c55e;
 }
 
-body .builder-shell .edit-layout :is(.page-global-options-title, .selected-block-settings-title) {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  gap: 12px !important;
-  margin: 0 0 14px !important;
-  padding: 0 !important;
-}
-
-body .builder-shell .edit-layout :is(.page-global-options-title, .selected-block-settings-title) h2 {
-  margin: 0 !important;
-  color: var(--pg-ink) !important;
-  font-size: 18px !important;
-  font-weight: 950 !important;
-  line-height: 1.2 !important;
-  letter-spacing: -0.02em !important;
-}
-
-body .builder-shell .edit-layout .selected-block-settings-title p {
-  margin: 0 !important;
-  color: var(--pg-muted) !important;
-  font-size: 12px !important;
-  font-weight: 850 !important;
-}
-
-body .builder-shell .edit-layout .page-global-options-list {
-  display: grid !important;
-  gap: 10px !important;
-}
-
 body .builder-shell .edit-layout .screen-drop-zone,
 body .builder-shell .edit-layout .screen-drop-zone span {
   display: none !important;

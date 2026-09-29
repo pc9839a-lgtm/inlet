@@ -11,6 +11,7 @@ const editPanel = await readFile('src/editor/EditPanel.jsx', 'utf8');
 const layout = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
 const screenOrderItem = await readFile('src/editor/editPanelParts/ScreenOrderItem.jsx', 'utf8');
 const css = await readFile('src/styles/editor-workspace.css', 'utf8');
+const pageOptionsCss = await readFile('src/editor/editPanelParts/PageGlobalOptions.css', 'utf8');
 const workspaceCss = await readFile('src/styles/workspace-shell.css', 'utf8');
 const activeWorkflowCss = await readFile('src/styles/editor-active-workflow-patch.css', 'utf8');
 const narrowEditorCss = await readFile('src/styles/editor-narrow-width-fix.css', 'utf8');
@@ -47,7 +48,7 @@ assert(
   'isolated edit section tabs must own the exact compact geometry',
 );
 assert(css.includes("data-pagero-ui='edit-section-tabs-v2'") && css.includes("data-selected='true'") && css.includes('background: #eef1f5 !important;') && css.includes('background: #fff !important;') && css.includes('border-color: #d9dde4 !important;'), 'isolated edit section tabs must keep the light selected state');
-assert(css.includes('body .builder-shell .edit-layout .page-global-options-card') && css.includes('padding: 0;') && css.includes('border-radius: 0;') && css.includes('background: transparent;') && !css.includes('.page-global-options-card {\n  width: 100%;\n  min-width: 0;\n  max-width: 100%;\n  margin: 0;\n  padding: 14px;'), 'page options outer shell must stay flat without the restored white card chrome');
+assert(pageOptionsCss.includes('body .builder-shell .page-global-options-card') && pageOptionsCss.includes('padding: 0;') && pageOptionsCss.includes('border-radius: 0;') && pageOptionsCss.includes('background: transparent;') && !css.includes('page-global-options'), 'page options base contract must live in PageGlobalOptions.css and stay out of editor-workspace.css');
 
 console.log(JSON.stringify({
   ok: true,

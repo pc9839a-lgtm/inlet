@@ -86,6 +86,127 @@ body .builder-shell .page-global-options-card :is(.fixed-block-editor, .edit-ani
   overflow-x: hidden;
 }
 
+
+/* Page options runtime owner.
+   Keep page-option geometry and typography here instead of global editor override layers. */
+html body #root .builder-shell .edit-layout .page-global-options-card.card {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 18px !important;
+  overflow: visible !important;
+  border: 1px solid var(--editor-line, #d9e4f2) !important;
+  border-radius: 22px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+html body #root .builder-shell .edit-layout .page-global-options-title {
+  min-height: 24px !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  margin: 0 0 14px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+html body #root .builder-shell .edit-layout .page-global-options-title h2 {
+  margin: 0 !important;
+  color: var(--editor-ink, #0f172a) !important;
+  font-size: 18px !important;
+  line-height: 1.2 !important;
+  font-weight: 950 !important;
+  letter-spacing: -.02em !important;
+}
+
+html body #root .builder-shell .edit-layout .page-global-options-list {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  display: grid !important;
+  gap: 10px !important;
+}
+
+html body #root .builder-shell .edit-layout .page-global-options-card :is(.edit-animation-card, .fixed-block-card) {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  border: 1px solid var(--editor-line, #d9e4f2) !important;
+  border-radius: 18px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+html body #root .builder-shell .edit-layout .page-global-options-card :is(.fixed-block-head.block-head, .edit-animation-head.block-head) {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  min-height: 62px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 54px 38px !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin: 0 !important;
+  padding: 11px 12px !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+html body #root .builder-shell .edit-layout .page-global-options-card .edit-animation-head.block-head {
+  grid-template-columns: minmax(0, 1fr) 54px !important;
+}
+
+html body #root .builder-shell .edit-layout .page-global-options-card .fixed-block-copy {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+html body #root .builder-shell .edit-layout .page-global-options-card :is(.edit-animation-head b, .fixed-block-copy strong) {
+  min-width: 0 !important;
+  color: var(--editor-ink, #0f172a) !important;
+  font-size: 15px !important;
+  line-height: 1.25 !important;
+  font-weight: 950 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell .edit-layout .page-global-options-card .fixed-block-copy em {
+  min-width: 0 !important;
+  max-width: 190px !important;
+  padding: 4px 8px !important;
+  border-radius: 999px !important;
+  background: #eef4ff !important;
+  color: var(--editor-muted, #64748b) !important;
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+  font-style: normal !important;
+  font-weight: 850 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+@media (min-width: 900px) {
+  html body #root .builder-shell.edit-mode-shell .edit-layout .page-global-options-title h2 {
+    font-size: 20px !important;
+    letter-spacing: -.035em !important;
+  }
+}
+
 @media (max-width: 760px) {
   body .builder-shell .page-global-options-card {
     padding: 10px;
