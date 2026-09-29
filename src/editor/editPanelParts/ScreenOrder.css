@@ -320,3 +320,9 @@
   .screen-order-v2-menu { top: 45px; }
   .screen-order-v2-inline-editor { margin: 0; padding: 0; border-width: 1px 0 0; border-radius: 0 0 8px 8px; }
 }
+
+
+.screen-order-v2-item[data-selected='true'] .screen-order-v2-title-wrap strong,
+.screen-order-v2-item.is-open .screen-order-v2-title-wrap strong {
+  text-overflow: ellipsis;
+}
