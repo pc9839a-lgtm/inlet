@@ -289,41 +289,6 @@ body .builder-shell .edit-layout :is(.editor-segmented-v2, .image-mode-toolbar) 
   color: #fff;
 }
 
-/* Add block dock */
-body .builder-shell .edit-layout:has(.fixed-add-dock) {
-  padding-bottom: 84px;
-}
-
-body .builder-shell .edit-layout .fixed-add-dock {
-  position: fixed;
-  left: 16px;
-  bottom: 12px;
-  z-index: 1200;
-  width: min(688px, calc(100vw - 32px));
-  margin: 0;
-  padding: 6px;
-  overflow: visible;
-  border: 1px solid var(--product-line);
-  border-radius: 11px;
-  background: rgba(255,255,255,.97);
-  box-shadow: var(--product-shadow);
-  backdrop-filter: blur(12px);
-}
-
-body .builder-shell .edit-layout .fixed-add-dock .add-toggle {
-  min-height: 44px;
-  border-radius: 8px;
-  box-shadow: none;
-}
-
-body .builder-shell .edit-layout .fixed-add-dock.open .add-panel {
-  max-height: min(58dvh,520px);
-  margin: 0 0 6px;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
 /* Preview */
 html body #root .builder-shell .preview-workspace {
   min-width: 0;
@@ -366,22 +331,8 @@ html body #root .builder-shell .preview-workspace .phone-frame {
     padding-inline: 12px;
   }
 
-
-  body .builder-shell .edit-layout .fixed-add-dock {
-    left: 12px;
-    width: min(636px,calc(100vw - 24px));
-  }
 }
 
-@media (max-width: 760px) {
-  body .builder-shell .edit-layout .fixed-add-dock {
-    left: 10px;
-    right: 10px;
-    width: auto;
-    max-width: none;
-    bottom: 10px;
-  }
-}
 
 /* Restored two-column editor: left editor workspace / right preview. */
 body .builder-shell.edit-mode-shell .editor-page-options-stack {
@@ -409,39 +360,6 @@ body .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel {
     padding: 0 !important;
   }
 
-  /* Keep the original dark block-add trigger and align it exactly with the panel above. */
-  html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock {
-    padding: 0 !important;
-    border: 0 !important;
-    border-radius: 12px !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    backdrop-filter: none !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .add-toggle {
-    width: 100% !important;
-    min-height: 46px !important;
-    padding: 0 14px !important;
-    border: 0 !important;
-    border-radius: 10px !important;
-    background: #111827 !important;
-    color: #fff !important;
-    box-shadow: none !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .add-toggle:hover,
-  html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .add-toggle:focus-visible {
-    background: #202938 !important;
-    color: #fff !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock.open .add-panel {
-    right: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    margin-bottom: 8px !important;
-  }
 }
 
 
@@ -610,4 +528,40 @@ body .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel {
     max-height: none !important;
     overflow: visible !important;
   }
+}
+
+
+/* >=1181px active editor geometry.
+   Absorbed from editor-active-workflow-patch.css. */
+@media (min-width: 1181px) {
+  html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) {
+    grid-template-columns: clamp(580px, 44vw, 680px) minmax(500px, 1fr) !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell > .left-workspace {
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .work-panel {
+    padding: 12px 10px 96px !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell > .preview-workspace {
+    min-width: 0 !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .preview-workspace .preview-sticky {
+    width: min(1040px, 100%) !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .preview-workspace .phone-frame {
+    width: 430px !important;
+    max-width: 100% !important;
+  }
+}
+
+/* Keep preview synchronization from hiding the selected public block under sticky chrome. */
+html body #root .builder-shell.edit-mode-shell .preview-workspace [id^='block-'] {
+  scroll-margin-block: 120px;
 }
