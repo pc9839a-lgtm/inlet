@@ -326,3 +326,279 @@
 .screen-order-v2-item.is-open .screen-order-v2-title-wrap strong {
   text-overflow: ellipsis;
 }
+
+
+/* Inline block-editor controls owned by ScreenOrder v1 */
+/* Migrated from legacy selected-block-settings selectors. The inline editor owns these controls now. */
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2.block-editor {
+  display: grid !important;
+  gap: 12px !important;
+  padding: 16px !important;
+  border-top: 1px solid #edf2f8 !important;
+  background: #fbfdff !important;
+  box-shadow: none !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 .step {
+  margin: 0 !important;
+  border: 1px solid var(--editor-line) !important;
+  border-radius: 17px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 button.step-title {
+  display: grid !important;
+  grid-template-columns: 32px minmax(0, 1fr) 34px !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: 100% !important;
+  min-height: 56px !important;
+  padding: 0 12px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  color: var(--editor-ink) !important;
+  box-shadow: none !important;
+  text-align: left !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 button.step-title:is(:hover, :focus-visible) {
+  background: #f8fbff !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 .step-title span {
+  display: inline-grid !important;
+  place-items: center !important;
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 999px !important;
+  background: #eff6ff !important;
+  color: var(--editor-ink) !important;
+  font-size: 13px !important;
+  font-weight: 950 !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 .step-title strong {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  color: var(--editor-ink) !important;
+  font-size: 15px !important;
+  font-weight: 950 !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 .step-title i {
+  display: inline-grid !important;
+  place-items: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  border: 1px solid var(--editor-line) !important;
+  border-radius: 999px !important;
+  background: #fff !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 .step-title i::before {
+  content: 'v' !important;
+  color: var(--editor-muted) !important;
+  font-size: 14px !important;
+  font-style: normal !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 .step.open .step-title i::before {
+  content: '^' !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 .step-body {
+  display: grid !important;
+  gap: 10px !important;
+  padding: 14px !important;
+  border-top: 1px solid #edf2f8 !important;
+  background: #fff !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 :is(.field, .range, .color, .choice, .choice-clean, .weekday, .anchor-control) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  align-items: stretch !important;
+  gap: 6px !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 :is(.toggle, .toggle-clean) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-height: 48px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 :is(.field, .range, .color, .choice, .choice-clean, .toggle, .toggle-clean, .weekday, .anchor-control) > span,
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 .anchor-control > span {
+  margin: 0 !important;
+  color: var(--editor-ink) !important;
+  font-size: 13px !important;
+  line-height: 1.25 !important;
+  font-weight: 900 !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 :is(input, textarea, select) {
+  width: 100% !important;
+  min-height: 44px !important;
+  padding: 0 12px !important;
+  border: 1px solid var(--editor-line) !important;
+  border-radius: 13px !important;
+  background: #fff !important;
+  color: var(--editor-ink) !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 textarea {
+  padding-top: 11px !important;
+  padding-bottom: 11px !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 :is(input, textarea, select):focus {
+  border-color: #93b4e6 !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, .12) !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 :is(.choice, .choice-clean, .weekday) > div {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)) !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 :is(.two-col, .mini-list) {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 :is(.mini-detail, .form-question-card) {
+  border: 1px solid var(--editor-line) !important;
+  border-radius: 16px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 :is(.mini-detail > summary, .form-question-head-row) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 :is(.form-question-body, .mini-body) {
+  display: grid !important;
+  gap: 10px !important;
+  padding: 12px !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 .color-main {
+  display: grid !important;
+  grid-template-columns: 44px minmax(0, 1fr) 44px !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 .color-main input[type='color'] {
+  width: 44px !important;
+  min-width: 44px !important;
+  padding: 0 !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 :is(.image-input, .style-photo-upload) {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 10px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 :is(.image-box, .image-box.single-plus, .image-preview, .stored-image-preview, .style-photo-upload .image-box.single-plus) {
+  position: relative !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 100% !important;
+  min-height: 160px !important;
+  max-height: 280px !important;
+  aspect-ratio: 16 / 9 !important;
+  border: 1px dashed #c8d6e8 !important;
+  border-radius: 14px !important;
+  background: var(--editor-soft) !important;
+  overflow: hidden !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 :is(.image-box, .image-box.single-plus, .image-preview, .stored-image-preview, .style-photo-upload .image-box.single-plus) > img,
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 :is(.image-input, .style-photo-upload) img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 280px !important;
+  object-fit: contain !important;
+  object-position: center !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 .image-actions {
+  position: absolute !important;
+  inset: auto 10px 10px auto !important;
+  display: flex !important;
+  gap: 6px !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 :is(.anchor-control button, .image-actions button, .image-empty-button, .add-line-clean, .danger-btn-clean, .eyedropper, .mini-detail > summary, .mini-list button, .form-question-head-row button, .form-question-actions button) {
+  min-height: 38px !important;
+  min-width: 0 !important;
+  padding: 0 12px !important;
+  border: 1px solid var(--editor-line) !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  color: var(--editor-ink) !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 :is(.anchor-control button, .image-actions button, .image-empty-button, .add-line-clean, .danger-btn-clean, .eyedropper, .mini-detail > summary, .mini-list button, .form-question-head-row button, .form-question-actions button):is(:hover, :focus-visible) {
+  border-color: #b9cbe1 !important;
+  background: #f8fbff !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 :is(.image-actions button:last-child, .danger-btn-clean, button.danger) {
+  border-color: #fecaca !important;
+  color: #ef4444 !important;
+}
+
+.edit-layout .screen-order-v2-inline-editor .block-editor-v2 .image-empty-button {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 150px !important;
+  font-size: 24px !important;
+  color: var(--editor-muted) !important;
+  background: transparent !important;
+  border: 0 !important;
+}
