@@ -11,7 +11,6 @@ export function EditPanelLayout({
   fixedBlocksProps,
   screenOrderListProps,
   addBlockDockProps,
-  selectedBlockSettingsProps,
   stylePanelProps,
 }) {
   const [section, setSection] = React.useState('order');
@@ -55,10 +54,7 @@ export function EditPanelLayout({
           </div>
         ) : (
           <>
-            <ScreenOrderList
-              {...screenOrderListProps}
-              selectedBlockSettingsProps={selectedBlockSettingsProps}
-            />
+            <ScreenOrderList {...screenOrderListProps} />
             <section className="screen-order-fixed-blocks" aria-label="고정 영역">
               <div className="section-title screen-order-fixed-blocks-title">
                 <h2>고정 영역</h2>
