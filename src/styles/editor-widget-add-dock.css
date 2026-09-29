@@ -263,3 +263,117 @@
     min-height: 44px !important;
   }
 }
+
+
+/* Active editor dock geometry.
+   Sized by the editor pane rather than viewport; migrated from the retired workflow patch. */
+html body #root .builder-shell.edit-mode-shell .edit-layout:has(.fixed-add-dock) {
+  padding-bottom: 84px !important;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock {
+  position: sticky !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: 10px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 12px 0 0 !important;
+  padding: 6px !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  transform: none !important;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .add-toggle {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  min-height: 46px !important;
+  display: grid !important;
+  grid-template-columns: 22px minmax(0, 1fr) 22px !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 0 12px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: #111827 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .add-toggle:hover,
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .add-toggle:focus-visible {
+  background: #202938 !important;
+  color: #fff !important;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .add-toggle strong {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock.open {
+  max-height: calc(100dvh - 92px) !important;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock.open .add-panel {
+  position: relative !important;
+  inset: auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  max-height: min(62dvh, 620px) !important;
+  margin: 0 0 8px !important;
+  padding-inline: 0 !important;
+  box-sizing: border-box !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock :is(.widget-group-grid, .widget-group) {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .widget-group-grid {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .widget-group > div {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(126px, 1fr)) !important;
+  gap: 7px !important;
+  box-sizing: border-box !important;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .widget-group > div > button {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .widget-group > div > button strong {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
