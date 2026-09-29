@@ -328,6 +328,132 @@
 }
 
 
+
+
+/* Desktop ScreenOrder surface owner.
+   Moved out of editor-workspace.css so normal-block geometry stays component-local. */
+@media (min-width: 900px) {
+  html body #root .builder-shell.edit-mode-shell .edit-layout .screen-order-v2-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 18px !important;
+    border: 1px solid #d9e4f2 !important;
+    border-radius: 22px !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .edit-layout .screen-order-v2-title {
+    min-height: 24px !important;
+    margin: 0 0 14px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .edit-layout .screen-order-v2-title h2 {
+    margin: 0 !important;
+    color: #0f172a !important;
+    font-size: 20px !important;
+    line-height: 1.2 !important;
+    font-weight: 950 !important;
+    letter-spacing: -.035em !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-list {
+    display: grid !important;
+    gap: 10px !important;
+    border: 0 !important;
+    background: transparent !important;
+    overflow: visible !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-slot {
+    display: grid !important;
+    gap: 0 !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-item {
+    margin: 0 !important;
+    overflow: visible !important;
+    border: 1px solid #d9e4f2 !important;
+    border-radius: 18px !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-item:hover {
+    border-color: #c4d2e2 !important;
+    background: #fff !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-item.is-open,
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true'] {
+    border-color: #b8cae0 !important;
+    background: #f5f9ff !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .045) !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-item.is-open::before,
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true']::before {
+    display: none !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-head {
+    min-height: 62px !important;
+    grid-template-columns: 38px minmax(0, 1fr) 40px 40px !important;
+    gap: 6px !important;
+    padding: 0 10px !important;
+    border: 0 !important;
+    border-radius: 17px !important;
+    background: transparent !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-drag {
+    width: 36px !important;
+    min-width: 36px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    border-radius: 12px !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-title-wrap {
+    grid-template-columns: 26px minmax(0, 1fr) 20px !important;
+    gap: 9px !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-type-icon {
+    width: 26px !important;
+    height: 26px !important;
+    border-radius: 8px !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .screen-order-v2-title-wrap strong {
+    color: #0f172a !important;
+    font-size: 15px !important;
+    line-height: 1.25 !important;
+    font-weight: 950 !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell :is(.screen-order-v2-visibility, .screen-order-v2-actions) {
+    width: 40px !important;
+    min-width: 40px !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell :is(.screen-order-v2-visibility-button, .screen-order-v2-action) {
+    width: 38px !important;
+    min-width: 38px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    border-radius: 13px !important;
+  }
+}
+
 /* Inline block-editor controls owned by ScreenOrder v1 */
 /* Migrated from legacy selected-block-settings selectors. The inline editor owns these controls now. */
 .edit-layout .screen-order-v2-inline-editor .block-editor-v2.block-editor {
