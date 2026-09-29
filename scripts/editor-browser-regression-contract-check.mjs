@@ -24,6 +24,10 @@ const addBlockOptionSource = await readFile('src/editor/editPanelParts/AddBlockO
 const addBlockDockCssSource = await readFile('src/styles/editor-widget-add-dock.css', 'utf8');
 const screenOrderMovementSource = await readFile('src/editor/editPanelParts/screenOrderMovement.js', 'utf8');
 const workspacePanelPropsSource = await readFile('src/runtime/createWorkspacePanelProps.js', 'utf8');
+const pageOptionsCssSource = await readFile('src/editor/editPanelParts/PageGlobalOptions.css', 'utf8');
+const editorWorkspaceCssSource = await readFile('src/styles/editor-workspace.css', 'utf8');
+const editorFinalCleanCssSource = await readFile('src/styles/editor-final-clean.css', 'utf8');
+const editorScreenPolishCssSource = await readFile('src/styles/editor-screen-order-polish.css', 'utf8');
 
 assert(packageJson.scripts?.['browser:editor:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-browser-regression-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-image-library-browser-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-video-library-browser-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/media-library-settings-browser-check.mjs', 'browser:editor:qa must run editor, image/video reuse, and media settings E2E');
 assert(packageJson.scripts?.['browser:editor:image-library:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-image-library-browser-check.mjs', 'browser:editor:image-library:qa script is missing');
@@ -98,6 +102,10 @@ assert(!addBlockPanelSource.includes('recent-additions') && !addBlockPanelSource
 assert(addBlockGridSource.includes("category === 'all' || categoryKey === category") && addBlockGridSource.includes('조건에 맞는 위젯이 없습니다.'), 'block grid filtering support may remain internal without exposing extra picker chrome');
 assert(addBlockOptionSource.includes("meta.preset || '', type"), 'block add options must preserve existing add-block catalog behavior');
 assert(addBlockDockCssSource.includes('.widget-group button') && addBlockDockCssSource.includes('min-height: 44px !important;'), 'block add buttons must keep 44px mobile touch targets');
+
+assert(pageOptionsCssSource.includes('/* Page options runtime owner.') && pageOptionsCssSource.includes('.page-global-options-card.card') && pageOptionsCssSource.includes('.page-global-options-title h2'), 'PageGlobalOptions.css must own the page-options runtime surface');
+assert(!editorWorkspaceCssSource.includes('page-global-options') && !editorFinalCleanCssSource.includes('page-global-options') && !editorScreenPolishCssSource.includes('page-global-options'), 'global editor CSS must not override PageGlobalOptions component selectors');
+assert(!editorFinalCleanCssSource.includes('selected-block-settings-title'), 'deleted selected-block title CSS must not return');
 
 assert(panelHeaderSource.includes('undoPageEdit') && panelHeaderSource.includes('redoPageEdit') && panelHeaderSource.includes('Ctrl/Cmd+Z'), 'editor header must expose undo/redo controls and keyboard shortcuts');
 assert(editHistorySource.includes('const MAX_HISTORY = 50') && editHistorySource.includes('future = []'), 'editor history must cap snapshots and invalidate redo after fresh edits');
