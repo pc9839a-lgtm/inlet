@@ -30,7 +30,6 @@ const editorFinalCleanCss = await readFile('src/styles/editor-final-clean.css', 
 const editorScreenOrderPolishCss = await readFile('src/styles/editor-screen-order-polish.css', 'utf8');
 const sectionProps = await readFile('src/editor/createEditPanelSectionProps.js', 'utf8');
 const mobileScreenOrderCss = screenOrderCss.slice(screenOrderCss.indexOf('@media (max-width: 760px)'));
-const editorFinalCleanCss = await readFile('src/styles/editor-final-clean.css', 'utf8');
 const screenOrderPolishCss = await readFile('src/styles/editor-screen-order-polish.css', 'utf8');
 const editorWorkspaceCss = await readFile('src/styles/editor-workspace.css', 'utf8');
 const legacyScreenOrderTokens = [
