@@ -9,9 +9,14 @@ export default defineConfig({
         // forced to revalidate, so an open tab can load the current chunk after
         // a deploy instead of requesting a deleted old hash and entering a
         // reload loop.
-        chunkFileNames: 'assets/[name]-runtime.js',
+        chunkFileNames(chunkInfo) {
+          const name = String(chunkInfo?.name || '');
+          if (name === 'CodeEditor') return 'assets/[name]-runtime-v2.js';
+          return 'assets/[name]-runtime.js';
+        },
         assetFileNames(assetInfo) {
           const name = String(assetInfo?.name || '');
+          if (name === 'workspace-shell.css') return 'assets/[name]-runtime-v2[extname]';
           if (name.endsWith('.css')) return 'assets/[name]-runtime[extname]';
           return 'assets/[name]-[hash][extname]';
         },
