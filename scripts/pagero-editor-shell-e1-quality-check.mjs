@@ -22,8 +22,8 @@ assert(editPanel.includes('stylePanelProps={stylePanelProps}'), 'EditPanel must 
 
 assert(layout.includes('data-pagero-ui="edit-section-tabs-v2"') && layout.includes('className="edit-section-tab"') && layout.includes('페이지 옵션') && layout.includes('화면 순서'), 'left editor must expose isolated page options and screen order tabs');
 assert(!layout.includes("className={section === 'options' ? 'active' : ''}") && !layout.includes("className={section === 'order' ? 'active' : ''}"), 'edit section tabs must not reuse the global active class');
-assert(screenOrderItem.includes('screen-order-v2-settings-panel') && screenOrderItem.includes('<SelectedBlockSettings {...selectedBlockSettingsProps} />'), 'selected block settings must remain inside the left editor flow directly below the selected row');
-assert(layout.includes('<ScreenOrderList') && layout.includes('selectedBlockSettingsProps={selectedBlockSettingsProps}'), 'screen order must remain in the left editor and receive selected settings');
+assert(screenOrderItem.includes('screen-order-v2-inline-editor') && screenOrderItem.includes('data-inline-block-editor="true"') && screenOrderItem.includes('{renderBlockEditor(block)}'), 'selected block editor must render directly below the row without a redundant settings shell');
+assert(layout.includes('<ScreenOrderList {...screenOrderListProps} />') && !layout.includes('selectedBlockSettingsProps'), 'screen order must remain in the left editor without redundant selected-settings props');
 assert(layout.includes('<AddBlockDock {...addBlockDockProps} />'), 'section add dock must remain in the left editor');
 assert(layout.includes('<PageThemeStylePanel {...stylePanelProps} />'), 'page theme controls must remain available from page options');
 assert(!layout.includes('editor-structure-pane') && !layout.includes('editor-inspector-pane'), 'three-pane editor DOM must not return');
