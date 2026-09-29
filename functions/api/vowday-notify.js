@@ -22,6 +22,10 @@ function clean(value = '', max = 1000) {
     .slice(0, max);
 }
 
+function cleanLine(value = '', max = 1000) {
+  return clean(value, max).replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+}
+
 function list(value) {
   if (!Array.isArray(value)) return '';
   return value.map((item) => clean(item, 80)).filter(Boolean).join(', ');
@@ -72,13 +76,13 @@ export async function onRequest({ request, env }) {
     return json({ ok: false, error: 'INVALID_JSON' }, 400);
   }
 
-  const type = clean(data?.form_type, 20) === 'contract' ? '계약희망설문' : '예약문의';
-  const name = clean(data?.name, 40);
+  const type = cleanLine(data?.form_type, 20) === 'contract' ? '계약희망설문' : '예약문의';
+  const name = cleanLine(data?.name, 40);
   const phone = clean(data?.phone, 30).replace(/\D+/g, '');
-  const weddingDate = clean(data?.wedding_date, 20);
-  const weddingTime = clean(data?.wedding_time, 20);
-  const region = clean(data?.region, 80);
-  const venue = clean(data?.venue, 120);
+  const weddingDate = cleanLine(data?.wedding_date, 20);
+  const weddingTime = cleanLine(data?.wedding_time, 20);
+  const region = cleanLine(data?.region, 80);
+  const venue = cleanLine(data?.venue, 120);
 
   if (!name || phone.length < 10 || !weddingDate || !venue) {
     return json({ ok: false, error: 'INVALID_PAYLOAD' }, 400);
