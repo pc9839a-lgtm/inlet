@@ -10,27 +10,23 @@ jobs:
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
-      - name: Check live CodeEditor chunk
+      - name: Check live CodeEditor v2 chunk
         run: |
           mkdir -p .tmp-code-label
-          for base in "https://pagero.kr" "https://0cfc057a.inlet-8mr.pages.dev"; do
-            key="$(echo "$base" | sed 's#https://##;s#[./]#-#g')"
-            curl -fsS -D ".tmp-code-label/${key}-headers.txt" -H 'Cache-Control: no-cache, no-store' "$base/assets/CodeEditor-runtime.js?diag=20260929" -o ".tmp-code-label/${key}-CodeEditor.js"
-            {
-              echo "=== $base ==="
-              grep -o '구분 이름' ".tmp-code-label/${key}-CodeEditor.js" | head -5 || true
-              grep -o 'editorLabel' ".tmp-code-label/${key}-CodeEditor.js" | head -5 || true
-              wc -c ".tmp-code-label/${key}-CodeEditor.js"
-              cat ".tmp-code-label/${key}-headers.txt"
-            } >> .tmp-code-label/summary.txt
-          done
-          cat .tmp-code-label/summary.txt
-          grep -q '구분 이름' .tmp-code-label/pagero-kr-CodeEditor.js
-          grep -q 'editorLabel' .tmp-code-label/pagero-kr-CodeEditor.js
+          url='https://pagero.kr/assets/CodeEditor-runtime-v2.js?diag=20260929-v2'
+          curl -fsS -D .tmp-code-label/headers.txt -H 'Cache-Control: no-cache, no-store' "$url" -o .tmp-code-label/CodeEditor-v2.js
+          grep -q '구분 이름' .tmp-code-label/CodeEditor-v2.js
+          grep -q 'editorLabel' .tmp-code-label/CodeEditor-v2.js
+          grep -qi '^cache-control: no-store, no-cache, must-revalidate, max-age=0' .tmp-code-label/headers.txt
+          grep -qi '^x-pagero-runtime-asset: no-store-v3' .tmp-code-label/headers.txt
+          echo '=== headers ==='
+          cat .tmp-code-label/headers.txt
+          echo '=== code markers ==='
+          grep -o '구분 이름\|editorLabel' .tmp-code-label/CodeEditor-v2.js | head -10
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: code-label-live-diag-${{ github.run_id }}
+          name: code-label-live-v2-${{ github.run_id }}
           path: .tmp-code-label
           include-hidden-files: true
           if-no-files-found: error
