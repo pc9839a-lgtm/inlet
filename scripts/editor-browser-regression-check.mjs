@@ -1040,7 +1040,35 @@ async function run() {
     assert(screenOrderShellStyle?.background === pageOptionsShellStyle.background, `screen order shell background must match page options: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.rowRadius === '18px' && screenOrderShellStyle?.rowBorder === '1px', `screen order rows must use rounded bordered cards: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.addBackground === 'rgb(17, 24, 39)', `block add trigger must keep the original dark style: ${JSON.stringify(screenOrderShellStyle)}`);
-    await capture(client, 'desktop-narrow-1180-screen-order');
+
+    await clickSelector(client, '#editor-block-editor-text .screen-order-v2-head');
+    await waitForBrowser(client, `!!document.querySelector('#editor-block-editor-text + .screen-order-v2-inline-editor .editor-tabs-v2')`, 'narrow desktop inline text editor');
+    const inlineDetailStyle = await evaluate(client, `(() => {
+      const inline = document.querySelector('#editor-block-editor-text + .screen-order-v2-inline-editor');
+      const anchor = inline?.querySelector('.block-editor-anchor-control');
+      const label = inline?.querySelector('.editor-field-v2-label strong');
+      const textarea = inline?.querySelector('.editor-field-v2 textarea');
+      const tab = inline?.querySelector('.editor-tabs-v2-list > button');
+      if (!inline || !anchor || !label || !textarea || !tab) return null;
+      const inlineStyle = getComputedStyle(inline);
+      const anchorStyle = getComputedStyle(anchor);
+      const labelStyle = getComputedStyle(label);
+      const textareaStyle = getComputedStyle(textarea);
+      const tabStyle = getComputedStyle(tab);
+      return {
+        inlineMarginTop: inlineStyle.marginTop,
+        anchorColumns: anchorStyle.gridTemplateColumns,
+        labelFontSize: labelStyle.fontSize,
+        textareaFontSize: textareaStyle.fontSize,
+        textareaLineHeight: textareaStyle.lineHeight,
+        tabHeight: Math.round(tab.getBoundingClientRect().height),
+      };
+    })()`);
+    assert(inlineDetailStyle?.inlineMarginTop === '14px', `inline editor top spacing drifted: ${JSON.stringify(inlineDetailStyle)}`);
+    assert(inlineDetailStyle?.labelFontSize === '14px', `inline editor labels must remain readable: ${JSON.stringify(inlineDetailStyle)}`);
+    assert(inlineDetailStyle?.textareaFontSize === '15px', `inline editor text must remain readable: ${JSON.stringify(inlineDetailStyle)}`);
+    assert(inlineDetailStyle?.tabHeight === 36, `inline editor tabs must keep 36px height: ${JSON.stringify(inlineDetailStyle)}`);
+    await capture(client, 'desktop-narrow-1180-screen-order-detail');
 
     const narrowDesktopMetrics = await collectNarrowDesktopMetrics(client);
     assertNarrowDesktop(narrowDesktopMetrics, 1180);
