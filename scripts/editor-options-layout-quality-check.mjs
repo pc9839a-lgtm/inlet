@@ -33,6 +33,8 @@ const editorSharedUiCss = await readFile('src/styles/editor-shared-ui.css', 'utf
 const sectionProps = await readFile('src/editor/createEditPanelSectionProps.js', 'utf8');
 const mobileScreenOrderCss = screenOrderCss.slice(screenOrderCss.indexOf('@media (max-width: 760px)'));
 const editorWorkspaceCss = await readFile('src/styles/editor-workspace.css', 'utf8');
+const editorExpandedShellCss = await readFile('src/styles/editor-expanded-shell.css', 'utf8');
+const editorExpandedControlsCss = await readFile('src/styles/editor-expanded-controls.css', 'utf8');
 const legacyScreenOrderTokens = [
   '.screen-order-card',
   '.screen-order-list',
@@ -108,6 +110,7 @@ assert(legacyScreenOrderTokens.every((token) => !editorFinalCleanCss.includes(to
 assert(['.screen-icon-action', '.fixed-open-button', '.switch-clean'].every((token) => editorSharedUiCss.includes(token)) && fixedBlocksCss.includes('.fixed-block-head'), 'shared controls and fixed-block visuals must live with their current owners');
 assert(animationOptionsCard.includes("import './AnimationOptionsCard.css';") && animationOptionsCss.includes('.edit-animation-card') && animationOptionsCss.includes('.edit-animation-options'), 'animation options must load and own their component CSS');
 assert(animationOptionsCss.includes('.edit-animation-settings') && fixedBlocksCss.includes('Fixed editor body base surface formerly supplied by editor-workspace.css') && !editorWorkspaceCss.includes('.fixed-block-card') && !editorWorkspaceCss.includes('.edit-animation-card') && !editorWorkspaceCss.includes('.fixed-block-editor') && !editorWorkspaceCss.includes('.edit-animation-settings'), 'workspace geometry must not own fixed or animation card presentation');
+assert(editorExpandedShellCss.includes('Block editor shell details migrated from editor-workspace.css') && editorExpandedShellCss.includes('.block-editor-v2-header') && editorExpandedShellCss.includes('.editor-section-v2-trigger') && editorExpandedControlsCss.includes('Block editor controls migrated from editor-workspace.css') && editorExpandedControlsCss.includes('.editor-field-v2') && editorExpandedControlsCss.includes('.image-mode-toolbar') && !editorWorkspaceCss.includes('.block-editor-v2-header') && !editorWorkspaceCss.includes('.editor-field-v2') && !editorWorkspaceCss.includes('.editor-section-v2-trigger'), 'expanded UI styles must own block editor shell and controls instead of workspace geometry');
 assert(!editorFinalCleanCss.includes('.screen-icon-action') && !editorFinalCleanCss.includes('.switch-clean') && !editorFinalCleanCss.includes('.fixed-block-head') && !editorFinalCleanCss.includes('.edit-animation') && !editorFinalCleanCss.includes('.screen-drop-zone'), 'editor-final-clean must stay workspace-geometry-only');
 await assertMissingFile('src/styles/editor-screen-order-polish.css');
 await assertMissingFile('src/editor/editPanelParts/ScreenOrderRowActionMenu.jsx');
