@@ -1,4 +1,4 @@
-import { trafficChannelFromItem } from './trafficAttribution.js';
+import { isTestTraffic, trafficChannelFromItem } from './trafficAttribution.js';
 
 export const PERIOD_OPTIONS = [
   ['1d', '1일'],
@@ -117,6 +117,7 @@ export function buildStats(events = [], leads = [], period = '7d', now = new Dat
   let reservationSuccess = 0;
 
   (events || []).forEach((event) => {
+    if (isTestTraffic(event)) return;
     if (isDuplicateItem(event, seenEventIds)) return;
     if (!inRange(event, range)) return;
     filteredEvents.push(event);
@@ -144,6 +145,7 @@ export function buildStats(events = [], leads = [], period = '7d', now = new Dat
   });
 
   (leads || []).forEach((lead) => {
+    if (isTestTraffic(lead)) return;
     if (isDuplicateItem(lead, seenLeadIds)) return;
     const item = normalizeStatsLead(lead);
     if (!inRange(item, range)) return;
