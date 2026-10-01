@@ -90,6 +90,9 @@ export default function WorkspaceEditorScreen({
         track={track}
         selectedBlockId={selectedBlockId}
         onSelectPreviewBlock={onSelectPreviewBlock}
+        showConversionCockpit={editWorkspace && canUseBuilder}
+        onOpenInbox={allowedTabs.includes('inbox') ? () => changeTab('inbox') : undefined}
+        onOpenStats={allowedTabs.includes('stats') ? () => changeTab('stats') : undefined}
       />}
     </div>
   );

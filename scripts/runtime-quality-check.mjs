@@ -171,6 +171,7 @@ const bottomShareCss = await readFile('src/styles/preview-bottom-share.css', 'ut
 const leadDuplicatePolicy = await readFile('src/lib/leadDuplicatePolicy.js', 'utf8');
 const leadModel = await readFile('src/lib/leadModel.js', 'utf8');
 const statsMetrics = await readFile('src/lib/statsMetrics.js', 'utf8');
+const trafficAttributionSource = await readFile('src/lib/trafficAttribution.js', 'utf8');
 const utilityBlocks = await readFile('src/preview/renderers/UtilityBlocks.jsx', 'utf8');
 const infoBlocks = await readFile('src/preview/renderers/InfoBlocks.jsx', 'utf8');
 const searchBasicSection = await readFile('src/editor/blockEditors/SearchBasicSection.jsx', 'utf8');
@@ -229,6 +230,8 @@ const workspaceTabs = await readFile('src/screens/workspace/WorkspaceTabs.jsx', 
 const workspaceLeftPanel = await readFile('src/screens/workspace/WorkspaceLeftPanel.jsx', 'utf8');
 const mobileOperationsHeader = await readFile('src/screens/workspace/MobileOperationsHeader.jsx', 'utf8');
 const workspacePreviewPane = await readFile('src/screens/workspace/WorkspacePreviewPane.jsx', 'utf8');
+const conversionCockpitSource = await readFile('src/screens/workspace/ConversionCockpit.jsx', 'utf8');
+const conversionCockpitModelSource = await readFile('src/screens/workspace/conversionCockpitModel.js', 'utf8');
 const pageSaveAction = await readFile('src/runtime/usePageSaveAction.js', 'utf8');
 const blockWriteGuard = await readFile('src/runtime/createBlockWriteGuard.js', 'utf8');
 const pageDraftMutations = await readFile('src/runtime/pageDraftMutations.js', 'utf8');
@@ -433,6 +436,9 @@ assert(['useProtectedWorkspaceRedirect({ authUser, protectedWorkspacePath })', '
 assert(app.includes('const mobileWorkspace = useMobileWorkspaceMode()') && app.includes("accountAllowedTabs.filter((key) => key === 'inbox' || key === 'stats')"), 'mobile workspace must only expose inbox and stats');
 assert(workspaceActivePanel.includes('canUseBuilder && !mobileOperationsOnly') && workspaceActivePanel.includes("!mobileOperationsOnly && tab === 'settings'"), 'mobile workspace must not mount editor, style, or settings panels');
 assert(workspaceEditorScreen.includes('const previewWorkspace = !mobileOperationsOnly && !operationsWorkspace;') && workspaceEditorScreen.includes("previewWorkspace ? ' preview-workspace-shell' : ''") && workspaceEditorScreen.includes('{previewWorkspace && <WorkspacePreviewPane'), 'preview-bearing workspace class and preview rendering must share one source of truth');
+assert(workspacePreviewPane.includes('<ConversionCockpit') && workspaceEditorScreen.includes('showConversionCockpit={editWorkspace && canUseBuilder}') && workspaceEditorScreen.includes("changeTab('inbox')") && workspaceEditorScreen.includes("changeTab('stats')"), 'editor preview must expose the inquiry/conversion cockpit without changing operations routing');
+assert(conversionCockpitSource.includes('data-testid="conversion-test-link"') && conversionCockpitSource.includes('테스트 문의') && conversionCockpitSource.includes('실문의'), 'conversion cockpit must expose compact status and a test-inquiry action');
+assert(conversionCockpitModelSource.includes("pagero_test") && conversionCockpitModelSource.includes("utm_medium") && conversionCockpitModelSource.includes("conversion_test") && conversionCockpitModelSource.includes("block-"), 'editor test inquiry URL must use dedicated UTM/test markers and target the first inquiry block');
 assert(
   (app.includes("['topnav', 'bottombar', 'footer'].includes(target?.type)") && app.includes("setOpenId('');") && app.indexOf("['topnav', 'bottombar', 'footer'].includes(target?.type)") < app.indexOf('document.getElementById(`editor-block-${id}`)'))
   || (workspaceShellActions.includes("['topnav', 'bottombar', 'footer'].includes(target?.type)") && workspaceShellActions.includes("setOpenId('');") && workspaceShellActions.indexOf("['topnav', 'bottombar', 'footer'].includes(target?.type)") < workspaceShellActions.indexOf('document.getElementById(`editor-block-${id}`)')),
@@ -499,6 +505,12 @@ assert(leadDuplicatePolicy.includes('lead.kind') && leadDuplicatePolicy.includes
 assert(leadModel.includes("rawType.includes('방문') || rawType.includes('예약')"), 'lead model must detect readable Korean reservation type text');
 assert(statsMetrics.includes("const typeData = { 상담: 0, 예약: 0 }") && statsMetrics.includes('예약|방문|방문예약|reservation|booking|reserve'), 'stats metrics must use readable lead type labels');
 assert(statsMetrics.includes('lead.kind') && statsMetrics.includes('lead.category'), 'stats metrics must classify reservation leads from kind/category fields');
+assert(trafficAttributionSource.includes('export function isTestTraffic') && trafficAttributionSource.includes('pagero_test'), 'traffic attribution must identify editor test visits and inquiries');
+assert(statsMetrics.includes('if (isTestTraffic(event)) return;') && statsMetrics.includes('if (isTestTraffic(lead)) return;'), 'local statistics must exclude editor test traffic');
+assert(d1Adapter.includes('withoutD1TestEventScope') && d1Adapter.includes('withoutD1TestLeadScope') && d1Adapter.includes("pagero_test"), 'D1 aggregate statistics must exclude editor test traffic without a schema migration');
+assert(leadIntegrations.includes("reason: 'test-traffic'"), 'paid conversion integrations must not fire for editor test inquiries');
+assert(inboxPanel.includes('isTestTraffic') && inboxPanel.includes('inbox-ops-mini-badge test') && inboxPanel.includes('테스트 문의'), 'inbox must keep editor test inquiries visible and clearly labeled');
+assert(previewFormBlocks.includes('if (payload?.lead?.isTest) return;'), 'form browser conversion events must not fire for editor test inquiries');
 assert(landingRenderer.includes('class BlockErrorBoundary'), 'LandingRenderer must keep block-level error isolation');
 assert(landingRenderer.includes('componentDidUpdate(prevProps)'), 'BlockErrorBoundary must reset when block data changes');
 assert(utilityBlocks.includes("return typeof cleanup === 'function' ? cleanup : undefined;"), 'custom code cleanup must return only a function or undefined');

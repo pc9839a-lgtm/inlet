@@ -639,6 +639,7 @@ async function collectDesktopMetrics(client) {
     const workPanel = document.querySelector('.work-panel');
     const topTabs = document.querySelector('.top-tabs');
     const editTabs = document.querySelector('.edit-section-tabs');
+    const cockpit = document.querySelector('.conversion-cockpit');
     return {
       path: location.pathname,
       bodyScrollWidth: document.body?.scrollWidth || 0,
@@ -652,6 +653,7 @@ async function collectDesktopMetrics(client) {
       workPanel: rect(workPanel),
       topTabs: rect(topTabs),
       editTabs: rect(editTabs),
+      cockpit: rect(cockpit),
       shellGridColumns: shell ? getComputedStyle(shell).gridTemplateColumns : '',
       mobile: shell?.classList.contains('mobile-operations-shell') || false,
       heroTitleVisible: !!frame && (frame.innerText || '').includes(${JSON.stringify(finalHeroTitle)}),
@@ -679,6 +681,7 @@ async function collectNarrowDesktopMetrics(client) {
       preview: rect(document.querySelector('.preview-workspace')),
       topTabs: rect(document.querySelector('.top-tabs')),
       editTabs: rect(document.querySelector('.edit-section-tabs')),
+      cockpit: rect(document.querySelector('.conversion-cockpit')),
       shellGridColumns: getComputedStyle(document.querySelector('.builder-shell')).gridTemplateColumns,
       mobile: document.querySelector('.builder-shell')?.classList.contains('mobile-operations-shell') || false,
       fallback: !!document.querySelector('.app-error-screen, .error-screen, .block-render-fallback'),
@@ -742,6 +745,7 @@ function assertDesktop(metrics) {
   assertInsideViewport(metrics.workPanel, metrics.innerWidth, 'desktop work panel');
   assertInsideViewport(metrics.topTabs, metrics.innerWidth, 'desktop main tabs');
   assertInsideViewport(metrics.editTabs, metrics.innerWidth, 'desktop edit subsection tabs');
+  assertInsideViewport(metrics.cockpit, metrics.innerWidth, 'desktop conversion cockpit');
   assert(metrics.left?.right <= metrics.preview?.left + 3, `desktop editor and preview overlap: ${JSON.stringify({ left: metrics.left, preview: metrics.preview })}`);
   assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length >= 2, `desktop shell must keep two grid columns: ${metrics.shellGridColumns}`);
   assert(metrics.left?.width >= 575, `desktop editor pane is too narrow: ${metrics.left?.width}px`);
@@ -762,6 +766,7 @@ function assertNarrowDesktop(metrics, width) {
   assertInsideViewport(metrics.editLayout, width, 'narrow desktop edit layout');
   assertInsideViewport(metrics.topTabs, width, 'narrow desktop main tabs');
   assertInsideViewport(metrics.editTabs, width, 'narrow desktop edit subsection tabs');
+  assertInsideViewport(metrics.cockpit, width, 'narrow desktop conversion cockpit');
   assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === 1, `narrow desktop shell must stack into one grid column: ${metrics.shellGridColumns}`);
   assert(metrics.workPanel?.width >= width - 4, `narrow desktop work panel did not expand: ${metrics.workPanel?.width}px of ${width}px`);
   assert(metrics.editLayout?.width >= width - 48, `narrow desktop edit layout is still artificially capped: ${metrics.editLayout?.width}px of ${width}px`);
@@ -856,6 +861,32 @@ async function run() {
     await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('#editor-block-editor-hero') && !!document.querySelector('.phone-frame')`, 'desktop editor');
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes('저장 전 히어로 제목')`, 'initial editor preview');
     assert(apiState.pageLoadCount >= 1, 'selected page was not loaded from the page API');
+
+    await waitForBrowser(client, `!!document.querySelector('.conversion-cockpit [data-testid="conversion-test-link"]')`, 'conversion cockpit');
+    const conversionCockpitState = await evaluate(client, `(() => {
+      const cockpit = document.querySelector('.conversion-cockpit');
+      const link = cockpit?.querySelector('[data-testid="conversion-test-link"]');
+      if (!cockpit || !link) return null;
+      const url = new URL(link.href);
+      return {
+        text: cockpit.innerText || '',
+        test: url.searchParams.get('pagero_test'),
+        utmSource: url.searchParams.get('utm_source'),
+        utmMedium: url.searchParams.get('utm_medium'),
+        utmCampaign: url.searchParams.get('utm_campaign'),
+        hash: url.hash,
+      };
+    })()`);
+    assert(conversionCockpitState, 'conversion cockpit state was not resolved');
+    assert(conversionCockpitState.text.includes('문의') && conversionCockpitState.text.includes('전달') && conversionCockpitState.text.includes('추적') && conversionCockpitState.text.includes('실문의'), `conversion cockpit status is incomplete: ${JSON.stringify(conversionCockpitState)}`);
+    assert(
+      conversionCockpitState.test === '1'
+        && conversionCockpitState.utmSource === 'pagero_test'
+        && conversionCockpitState.utmMedium === 'editor'
+        && conversionCockpitState.utmCampaign === 'conversion_test'
+        && conversionCockpitState.hash === '#block-editor-form',
+      `editor test inquiry URL is not isolated: ${JSON.stringify(conversionCockpitState)}`,
+    );
 
     const editSectionTabStyle = await evaluate(client, `(() => {
       const tabs = document.querySelector('.edit-section-tabs[data-pagero-ui="edit-section-tabs-v2"]');
@@ -1188,6 +1219,7 @@ async function run() {
       mobileWidths: mobileViewports.map((item) => item.width),
       responsiveMatrixScreenshots: desktopMatrix.length + mobileViewports.length,
       responsiveGeometryLocked: true,
+      conversionCockpit: true,
       realUseFlows: ['add-block', 'undo-redo', 'visibility', 'menu-reorder', 'pointer-drag-reorder', 'style-apply', 'preview-continue', 'publish-race', 'revision-restore-undo-redo', 'post-restore-publish-readback', 'narrow-desktop'],
     }, null, 2));
   } finally {

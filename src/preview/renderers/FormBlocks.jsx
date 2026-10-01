@@ -90,6 +90,7 @@ function loadDaumPostcode() {
 }
 
 function fireInletConversion(payload) {
+  if (payload?.lead?.isTest) return;
   window.dataLayer = window.dataLayer || [];
   window.dataLayer.push({ event: 'inlet_form_submit', form_id: payload.formId, form_title: payload.title, lead_type: '상담신청' });
   window.dispatchEvent(new CustomEvent('inlet:form_submit', { detail: payload }));
@@ -228,6 +229,7 @@ export function RenderForm({ block, addLead, track }) {
       sourceBlockTitle: s.title || '상담 폼',
       brand: BRAND_NAME,
       channel: traffic.channel,
+      isTest: traffic.isTest,
       utmSource: traffic.utmSource,
       utmMedium: traffic.utmMedium,
       utmCampaign: traffic.utmCampaign,
@@ -680,6 +682,7 @@ export function RenderReservation({ block, addLead, track }) {
       sourceBlockTitle: s.title || '방문예약',
       brand: BRAND_NAME,
       channel: traffic.channel,
+      isTest: traffic.isTest,
       utmSource: traffic.utmSource,
       utmMedium: traffic.utmMedium,
       utmCampaign: traffic.utmCampaign,

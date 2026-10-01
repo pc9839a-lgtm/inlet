@@ -8,20 +8,23 @@ export function normalizeUtmValue(value = '') {
 
 export function trafficAttributionFromUrl(url = '') {
   const text = String(url || '').trim();
-  if (!text) return { utmSource: '', utmMedium: '', utmCampaign: '', channel: 'direct' };
+  if (!text) return { utmSource: '', utmMedium: '', utmCampaign: '', channel: 'direct', isTest: false };
   try {
     const parsed = new URL(text, 'https://pagero.local');
     const utmSource = normalizeUtmValue(parsed.searchParams.get('utm_source'));
     const utmMedium = normalizeUtmValue(parsed.searchParams.get('utm_medium'));
     const utmCampaign = normalizeUtmValue(parsed.searchParams.get('utm_campaign'));
+    const testMarker = String(parsed.searchParams.get('pagero_test') || '').trim().toLowerCase();
+    const isTest = utmSource === 'pagero_test' || ['1', 'true', 'yes'].includes(testMarker);
     return {
       utmSource,
       utmMedium,
       utmCampaign,
-      channel: utmSource || 'direct',
+      channel: isTest ? 'pagero_test' : (utmSource || 'direct'),
+      isTest,
     };
   } catch {
-    return { utmSource: '', utmMedium: '', utmCampaign: '', channel: 'direct' };
+    return { utmSource: '', utmMedium: '', utmCampaign: '', channel: 'direct', isTest: false };
   }
 }
 
@@ -53,8 +56,24 @@ export function currentTrafficAttribution() {
     channel,
     sourceUrl,
     referrer,
+    isTest: !!urlTraffic.isTest,
     sourceLabel: trafficSourceLabel({ ...urlTraffic, channel, referrer, sourceUrl }),
   };
+}
+
+export function isTestTraffic(item = {}) {
+  if (item?.isTest === true || item?.testTraffic === true) return true;
+  const source = item?.source || {};
+  const attribution = item?.attribution || {};
+  const values = item?.values || {};
+  const explicitUtm = normalizeUtmValue(
+    item?.utmSource || item?.utm_source || source?.utmSource || source?.utm_source
+    || attribution?.utmSource || attribution?.utm_source || values?.utmSource || values?.utm_source,
+  );
+  const explicitChannel = normalizeUtmValue(item?.channel || source?.channel || attribution?.channel || '');
+  if (explicitUtm === 'pagero_test' || explicitChannel === 'pagero_test') return true;
+  const sourceUrl = item?.sourceUrl || item?.source_url || item?.url || source?.sourceUrl || values?.sourceUrl || '';
+  return trafficAttributionFromUrl(sourceUrl).isTest === true;
 }
 
 export function trafficChannelFromItem(item = {}) {
@@ -78,6 +97,7 @@ export function trafficSourceLabel(item = {}) {
     instagram: '인스타그램',
     meta: '페이스북/메타',
     youtube: '유튜브',
+    pagero_test: '테스트',
   };
   if (item.utmCampaign) return `${labels[channel] || channel} · ${item.utmCampaign}`;
   return labels[channel] || channel || '직접 유입';

@@ -539,6 +539,7 @@ function fakeD1(options = {}) {
             rows.events
               .filter((row) => row.project_id === projectId && row.created_month === month)
               .filter((row) => inFakeDateRange(row, dateFrom, dateTo))
+              .filter((row) => fakeStatsScopeAllows(sql, row))
               .forEach((row) => {
                 const key = `${row.event_type}:${fakeEventDedupeKey(row)}`;
                 if (seen.has(key)) return;
@@ -558,6 +559,7 @@ function fakeD1(options = {}) {
             rows.events
               .filter((row) => row.project_id === projectId && row.created_month === month)
               .filter((row) => inFakeDateRange(row, dateFrom, dateTo))
+              .filter((row) => fakeStatsScopeAllows(sql, row))
               .forEach((row) => {
                 const name = row[dimension] || 'unknown';
                 const key = `${dimension}:${name}:${fakeEventDedupeKey(row)}`;
@@ -577,6 +579,7 @@ function fakeD1(options = {}) {
             rows.events
               .filter((row) => row.project_id === projectId && row.created_month === month)
               .filter((row) => inFakeDateRange(row, dateFrom, dateTo))
+              .filter((row) => fakeStatsScopeAllows(sql, row))
               .forEach((row) => {
                 const day = row.created_at.slice(0, 10);
                 const key = `${day}:${row.event_type}:${fakeEventDedupeKey(row)}`;
@@ -595,6 +598,7 @@ function fakeD1(options = {}) {
             rows.leads
               .filter((row) => row.project_id === projectId && row.created_month === month)
               .filter((row) => inFakeDateRange(row, dateFrom, dateTo))
+              .filter((row) => fakeStatsScopeAllows(sql, row))
               .forEach((row) => {
                 const key = [row.status, row.kind, row.delivery_status].join('|');
                 const prev = grouped.get(key) || {
@@ -614,6 +618,7 @@ function fakeD1(options = {}) {
             rows.leads
               .filter((row) => row.project_id === projectId && row.created_month === month)
               .filter((row) => inFakeDateRange(row, dateFrom, dateTo))
+              .filter((row) => fakeStatsScopeAllows(sql, row))
               .forEach((row) => {
                 const day = row.created_at.slice(0, 10);
                 const prev = grouped.get(day) || { day, db: 0 };
@@ -865,6 +870,13 @@ function inFakeDateRange(row, dateFrom = '', dateTo = '') {
   if (dateFrom && String(row.created_at) < String(dateFrom)) return false;
   if (dateTo && String(row.created_at) > String(dateTo)) return false;
   return true;
+}
+
+function fakeStatsScopeAllows(sql = '', row = {}) {
+  if (!sql.includes('pagero_test')) return true;
+  if (sql.includes('FROM events')) return String(row.channel || '') !== 'pagero_test';
+  const sourceUrl = String(row.source_url || '');
+  return !sourceUrl.includes('pagero_test=1') && !sourceUrl.includes('utm_source=pagero_test');
 }
 
 function fakeEventDedupeKey(row = {}) {
@@ -1159,6 +1171,14 @@ assert(oneLead?.id === 'lead-1' && oneLead.status === 'checked', 'lead get shoul
 await deleteD1Lead(db, { projectId: 'project-1', id: 'lead-1' });
 assert(db.rows.leads.length === 0, 'lead delete should remove D1 row');
 await upsertD1Lead(db, { ...sampleLead, status: 'checked' }, { projectId: 'project-1', pageSlug: 'landing' });
+await upsertD1Lead(db, {
+  ...sampleLead,
+  id: 'lead-test-traffic',
+  phone: '010-9999-0001',
+  isTest: true,
+  sourceUrl: 'https://example.com/?pagero_test=1&utm_source=pagero_test&utm_medium=editor',
+  createdAt: '2026-05-10T01:30:00.000Z',
+}, { projectId: 'project-1', pageSlug: 'landing' });
 
 const legacyLeadDb = fakeD1({ legacyLeadSchema: true });
 await upsertD1Lead(legacyLeadDb, sampleLead, { projectId: 'project-legacy', pageSlug: 'landing' });
@@ -1171,15 +1191,26 @@ await insertD1Event(db, { id: 'event-2', type: 'cta_click', channel: 'naver', de
 await insertD1Event(db, { id: 'event-2-duplicate', type: 'cta_click', dedupeKey: 'cta-same-1', channel: 'kakao', device: 'mobile', createdAt: '2026-05-10T02:05:05.000Z' }, { projectId: 'project-1', pageSlug: 'landing' });
 await insertD1Event(db, { id: 'event-2-duplicate-b', type: 'cta_click', dedupeKey: 'cta-same-1', channel: 'kakao', device: 'mobile', createdAt: '2026-05-10T02:05:10.000Z' }, { projectId: 'project-1', pageSlug: 'landing' });
 await insertD1Event(db, { id: 'event-3', type: 'form_submit_success', channel: 'google', device: 'desktop', createdAt: '2026-05-11T02:05:00.000Z' }, { projectId: 'project-1', pageSlug: 'landing' });
+await insertD1Event(db, {
+  id: 'event-test-traffic',
+  type: 'page_view',
+  channel: 'pagero_test',
+  device: 'desktop',
+  isTest: true,
+  sourceUrl: 'https://example.com/?pagero_test=1&utm_source=pagero_test&utm_medium=editor',
+  createdAt: '2026-05-10T02:06:00.000Z',
+}, { projectId: 'project-1', pageSlug: 'landing' });
 
 const legacyEventDb = fakeD1({ legacyEventSchema: true });
 await insertD1Event(legacyEventDb, { id: 'legacy-event-1', type: 'page_view', channel: 'naver', device: 'mobile', createdAt: '2026-05-10T02:00:00.000Z' }, { projectId: 'project-legacy', pageSlug: 'landing' });
 assert(legacyEventDb.rows.events.length === 1 && legacyEventDb.rows.events[0].id === 'legacy-event-1', 'event insert should fallback before dimension migration is applied');
 
 const eventPage = await listD1Events(db, { projectId: 'project-1', month: '2026-05', eventType: 'page_view', limit: 10 });
-assert(eventPage.records.length === 1 && eventPage.records[0].type === 'page_view', 'event list should decode events');
+assert(eventPage.records.length === 2 && eventPage.records.every((event) => event.type === 'page_view'), 'event list should decode both real and editor-test events');
+assert(eventPage.records.some((event) => event.channel === 'pagero_test'), 'raw event list should preserve editor test traffic for diagnostics');
 const d1Stats = await aggregateD1Stats(db, { projectId: 'project-1', month: '2026-05' });
-assert(d1Stats.totals.events === 4 && d1Stats.totals.leads === 1, 'D1 stats aggregate should count events and leads without row hydration');
+assert(d1Stats.totals.events === 4 && d1Stats.totals.leads === 1, 'D1 stats aggregate should count real events and leads without row hydration');
+assert(!Object.prototype.hasOwnProperty.call(d1Stats.summary.channelData, 'pagero_test'), 'D1 stats aggregate must exclude editor test traffic');
 assert(d1Stats.summary.pv === 1 && d1Stats.summary.cta === 2 && d1Stats.summary.submitSuccess === 1, 'D1 stats aggregate event funnel mismatch');
 assert(d1Stats.summary.db === 1 && d1Stats.summary.consultLeads === 1, 'D1 stats aggregate lead funnel mismatch');
 assert(d1Stats.summary.channelData.naver === 1 && d1Stats.summary.channelData.kakao === 1, 'D1 stats aggregate should dedupe channel counts');
@@ -1207,7 +1238,7 @@ assert(readyCoverage.some((item) => item.key === 'leads' && item.adapter === 'd1
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 58,
+  checks: 61,
   accounts: db.rows.accounts.length,
   projects: db.rows.projects.length,
   invites: db.rows.invites.length,

@@ -229,6 +229,19 @@ assert(noWindowResult.sent === false && noWindowResult.reason === 'browser-unava
 const disabledResult = sendConversionIntegrations({ id: 'disabled', type: '상담 신청' }, { ...page, integrations: { conversion: { enabled: false } } }, eventWindow);
 assert(disabledResult.sent === false && disabledResult.reason === 'disabled', 'disabled conversion must not dispatch');
 
+const testCallCountBefore = eventWindow.fbqCalls.length + eventWindow.gtagCalls.length + eventWindow.dataLayer.length;
+const testResult = sendConversionIntegrations({
+  id: 'editor-test-lead',
+  type: '상담 신청',
+  isTest: true,
+  channel: 'pagero_test',
+  utmSource: 'pagero_test',
+  sourceUrl: 'https://pagero.kr/qa?pagero_test=1&utm_source=pagero_test&utm_medium=editor',
+}, page, eventWindow);
+const testCallCountAfter = eventWindow.fbqCalls.length + eventWindow.gtagCalls.length + eventWindow.dataLayer.length;
+assert(testResult.sent === false && testResult.reason === 'test-traffic', 'editor test inquiry must not dispatch paid conversion events');
+assert(testCallCountAfter === testCallCountBefore, 'editor test inquiry must not add browser conversion calls');
+
 const liveChecks = [
   {
     name: 'Production conversion fixture',
@@ -254,7 +267,7 @@ function summarizeStatuses(items = []) {
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 49,
+  checks: 51,
   privacySafePayload: true,
   ga4DirectEvents: true,
   duplicateSuppression: true,

@@ -1414,9 +1414,11 @@ export async function aggregateD1Stats(db, { projectId, month, dateFrom = '', da
     return emptyD1StatsSummary(month);
   }
   const baseScope = d1MonthDateScope({ projectId, month, dateFrom, dateTo });
+  const eventBaseScope = withoutD1TestEventScope(baseScope);
+  const leadBaseScope = withoutD1TestLeadScope(baseScope);
   const safeChannel = normalizeD1ChannelFilter(channel);
-  const eventScope = withD1EventChannelScope(baseScope, safeChannel);
-  const leadScope = withD1LeadChannelScope(baseScope, safeChannel);
+  const eventScope = withD1EventChannelScope(eventBaseScope, safeChannel);
+  const leadScope = withD1LeadChannelScope(leadBaseScope, safeChannel);
 
   const [eventCounts, eventTrend, eventChannels, availableEventChannels, eventDevices, leadCounts, leadTrend] = await Promise.all([
     queryD1Rows(
@@ -1440,7 +1442,7 @@ export async function aggregateD1Stats(db, { projectId, month, dateFrom = '', da
       eventScope.params,
     ),
     queryD1EventDimension(db, eventScope, 'channel'),
-    queryD1EventDimension(db, baseScope, 'channel'),
+    queryD1EventDimension(db, eventBaseScope, 'channel'),
     queryD1EventDimension(db, eventScope, 'device'),
     queryD1Rows(
       db,
@@ -1498,6 +1500,20 @@ function d1DateBoundary(value = '', edge = 'start') {
     return new Date(`${text}${suffix}`).toISOString();
   }
   return text;
+}
+
+function withoutD1TestEventScope(scope = {}) {
+  return {
+    where: `${scope.where} AND COALESCE(NULLIF(channel, ''), 'unknown') <> 'pagero_test'`,
+    params: [...scope.params],
+  };
+}
+
+function withoutD1TestLeadScope(scope = {}) {
+  return {
+    where: `${scope.where} AND (source_url IS NULL OR (source_url NOT LIKE '%pagero_test=1%' AND source_url NOT LIKE '%utm_source=pagero_test%'))`,
+    params: [...scope.params],
+  };
 }
 
 function normalizeD1ChannelFilter(channel = '') {
