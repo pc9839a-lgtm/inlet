@@ -118,6 +118,19 @@ body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-block-copy em
   white-space: nowrap !important;
 }
 
+
+
+/* Fixed editor body base surface formerly supplied by editor-workspace.css. */
+body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-block-editor {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  padding: 12px !important;
+  overflow: visible !important;
+  border-top: 1px solid var(--product-line) !important;
+  background: #f8fafc !important;
+}
+
 /* Fixed-block editor internals previously supplied by the global polish layer. */
 .screen-order-fixed-blocks .fixed-block-editor {
   display: grid !important;
