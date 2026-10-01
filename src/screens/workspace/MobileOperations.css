@@ -80,8 +80,8 @@
   }
 
   body .builder-shell.mobile-operations-shell .top-tabs {
-    position: sticky;
-    top: 0;
+    position: sticky !important;
+    top: 0 !important;
     z-index: 20;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     margin-bottom: 10px !important;
