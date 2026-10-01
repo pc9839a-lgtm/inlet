@@ -97,8 +97,8 @@ body .builder-shell :is(.panel-header, .top-tabs, .edit-layout, .settings-panel,
   }
 }
 
-/* Mobile operations presentation migrated from editor-layout-final.css.
-   Keep this before the current workspace rules so later shell rules remain authoritative. */
+/* Mobile operations shell geometry migrated from editor-layout-final.css.
+   Visual header/empty/tab presentation is owned by MobileOperations.css. */
 @media (max-width: 899px) {
   body:has(.mobile-operations-shell),
   #root:has(.mobile-operations-shell) {
