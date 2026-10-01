@@ -79,12 +79,14 @@ export function createLeadCaptureAction({
       sourceUrl: lead.sourceUrl || traffic.sourceUrl,
       referrer: lead.referrer || traffic.referrer,
       sourceLabel: lead.sourceLabel || traffic.sourceLabel,
+      isTest: lead.isTest ?? traffic.isTest ?? false,
     });
     setLeads((l) => [savedLead, ...l]);
     setLeadPageMeta((meta) => ({ ...meta, total: Number(meta.total || 0) + 1 }));
     trackForPage(targetPage, {
       type: isReservationLead(savedLead) ? 'reservation_submit' : 'form_submit',
       label: savedLead.type,
+      isTest: savedLead.isTest,
     });
 
     const targetAuthUser = authForTargetPage(targetPage);
