@@ -17,6 +17,8 @@ const fixedBlocksCss = await readFile('src/editor/editPanelParts/FixedBlocksSect
 const workspaceCss = await readFile('src/styles/workspace-shell.css', 'utf8');
 const chromeCss = await readFile('src/screens/workspace/WorkspaceChrome.css', 'utf8');
 const leftPanel = await readFile('src/screens/workspace/WorkspaceLeftPanel.jsx', 'utf8');
+const workspaceScreen = await readFile('src/screens/WorkspaceEditorScreen.jsx', 'utf8');
+const operationsWorkspaceCss = await readFile('src/screens/workspace/OperationsWorkspace.css', 'utf8');
 const addDockCss = await readFile('src/styles/editor-widget-add-dock.css', 'utf8');
 const previewPaneCss = await readFile('src/screens/workspace/WorkspacePreviewPane.css', 'utf8');
 
@@ -60,10 +62,11 @@ assert(!css.includes('edit-section-tabs') && !css.includes('editor-page-options-
 assert(previewPaneCss.includes('WorkspacePreviewPane — owns editor preview presentation') && previewPaneCss.includes('.preview-workspace') && previewPaneCss.includes('.preview-sticky') && previewPaneCss.includes('.phone-frame') && previewPaneCss.includes('scroll-margin-block: 120px') && !css.includes('.preview-workspace') && !css.includes('.preview-sticky') && !css.includes('.phone-frame'), 'WorkspacePreviewPane.css must own preview presentation while editor-workspace.css stays geometry-only');
 assert(pageOptionsCss.includes('body .builder-shell .page-global-options-card') && pageOptionsCss.includes('padding: 0;') && pageOptionsCss.includes('border-radius: 0;') && pageOptionsCss.includes('background: transparent;') && !css.includes('page-global-options'), 'page options base contract must live in PageGlobalOptions.css and stay out of editor-workspace.css');
 assert(!workspaceCss.includes('body .builder-shell .panel-header {') && !workspaceCss.includes('body .builder-shell .top-tabs {'), 'workspace shell must not own PanelHeader or top-tabs presentation');
+assert(workspaceScreen.includes("import './workspace/OperationsWorkspace.css';") && operationsWorkspaceCss.includes('.inbox-workspace-shell') && operationsWorkspaceCss.includes('.stats-dashboard-shell') && operationsWorkspaceCss.includes('.settings-workspace-shell') && !workspaceCss.includes('.inbox-workspace-shell'), 'desktop operations geometry must be isolated from the common workspace shell');
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 22,
+  checks: 23,
   scope: 'pagero-editor-shell-restored-two-column',
   shell: ['left-editor', 'preview'],
   separateStyleTab: false,
