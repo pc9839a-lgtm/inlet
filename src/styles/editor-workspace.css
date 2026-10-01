@@ -22,39 +22,6 @@ body .builder-shell:not(.mobile-operations-shell):not(.inbox-workspace-shell):no
   box-sizing: border-box;
 }
 
-/* Preview */
-html body #root .builder-shell .preview-workspace {
-  min-width: 0;
-  padding: 18px 22px;
-  background: var(--product-bg);
-}
-
-html body #root .builder-shell .preview-workspace .preview-sticky {
-  width: min(430px,100%);
-  height: calc(100dvh - 36px);
-  max-height: calc(100dvh - 36px);
-  gap: 8px;
-}
-
-html body #root .builder-shell .preview-workspace .preview-top {
-  width: 100%;
-  margin: 0;
-}
-
-html body #root .builder-shell .preview-workspace .phone-frame {
-  width: 430px;
-  max-width: 100%;
-  height: calc(100dvh - 110px);
-  min-height: 620px;
-  max-height: 820px;
-  margin: 0 auto;
-  overflow: hidden;
-  border: 7px solid var(--product-text);
-  border-radius: 26px;
-  background: #fff;
-  box-shadow: 0 18px 50px rgba(17,24,39,.14);
-}
-
 @media (max-width: 1280px) {
   body .builder-shell:not(.mobile-operations-shell):not(.inbox-workspace-shell):not(.stats-dashboard-shell):not(.settings-workspace-shell) {
     grid-template-columns: minmax(600px, 660px) minmax(440px, 1fr);
@@ -94,14 +61,6 @@ html body #root .builder-shell .preview-workspace .phone-frame {
     margin-inline: 0 !important;
     padding-inline: 10px !important;
   }
-
-  html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .preview-workspace {
-    width: 100% !important;
-    min-width: 0 !important;
-    height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
-  }
 }
 
 
@@ -120,29 +79,4 @@ html body #root .builder-shell .preview-workspace .phone-frame {
   html body #root .builder-shell.edit-mode-shell .work-panel {
     padding: 12px 10px 96px !important;
   }
-
-  html body #root .builder-shell.edit-mode-shell > .preview-workspace {
-    min-width: 0 !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .preview-workspace .preview-sticky {
-    width: min(1040px, 100%) !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .preview-workspace .phone-frame {
-    width: 430px !important;
-    max-width: 100% !important;
-  }
-}
-
-/* Keep preview synchronization from hiding the selected public block under sticky chrome. */
-html body #root .builder-shell.edit-mode-shell .preview-workspace [id^='block-'] {
-  scroll-margin-block: 120px;
-}
-
-
-/* Editor preview viewport parity with the public landing width. */
-html body #root .builder-shell .preview-workspace .phone-frame {
-  width: 430px !important;
-  border: 8px solid #111827 !important;
 }
