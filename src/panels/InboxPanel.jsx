@@ -22,7 +22,7 @@ import {
   normalizeLeadItem,
 } from '../lib/leadModel.js';
 import { currentMonthValue, monthDateRange } from '../lib/monthRange.js';
-import { trafficSourceLabel } from '../lib/trafficAttribution.js';
+import { isTestTraffic, trafficSourceLabel } from '../lib/trafficAttribution.js';
 import InboxConnectionsPanel from './inbox/InboxConnectionsPanel.jsx';
 import IntakeDuplicatePolicyPanel from './inbox/DuplicatePolicyPanel.jsx';
 import {
@@ -485,6 +485,7 @@ export default function InboxPanel({
                         <span className="inbox-ops-name-cell">
                           <strong>{lead.name || '이름 없음'}</strong>
                           <small>{leadKindLabel(lead)}</small>
+                          {isTestTraffic(lead) ? <i className="inbox-ops-mini-badge test">테스트</i> : null}
                           {riskInfo ? <i className={`inbox-ops-mini-badge ${riskInfo.level}`}>{riskInfo.badge}</i> : null}
                           {deliveryInfo ? <i className="inbox-ops-mini-badge delivery">{deliveryInfo.label}</i> : null}
                         </span>
@@ -525,6 +526,7 @@ export default function InboxPanel({
                   <section className="inbox-ops-detail-section compact">
                     <LeadInfoRow label="접수 시간" value={fmtDate(selectedLead.createdAt)} />
                     <LeadInfoRow label="접수 유형" value={leadKindLabel(selectedLead)} />
+                    <LeadInfoRow label="접수 구분" value={isTestTraffic(selectedLead) ? '테스트 문의' : '실제 문의'} />
                     <LeadInfoRow label="유입 페이지" value={selectedLead.pageTitle || selectedLead.pageSlug || selectedLead.project || page.title} />
                     <LeadInfoRow label="이메일" value={selectedLead.email} />
                   </section>
