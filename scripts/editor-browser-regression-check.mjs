@@ -636,6 +636,9 @@ async function collectDesktopMetrics(client) {
     const preview = document.querySelector('.preview-workspace');
     const frame = document.querySelector('.phone-frame');
     const header = document.querySelector('.panel-header');
+    const workPanel = document.querySelector('.work-panel');
+    const topTabs = document.querySelector('.top-tabs');
+    const editTabs = document.querySelector('.edit-section-tabs');
     return {
       path: location.pathname,
       bodyScrollWidth: document.body?.scrollWidth || 0,
@@ -646,6 +649,10 @@ async function collectDesktopMetrics(client) {
       preview: rect(preview),
       frame: rect(frame),
       header: rect(header),
+      workPanel: rect(workPanel),
+      topTabs: rect(topTabs),
+      editTabs: rect(editTabs),
+      shellGridColumns: shell ? getComputedStyle(shell).gridTemplateColumns : '',
       mobile: shell?.classList.contains('mobile-operations-shell') || false,
       heroTitleVisible: !!frame && (frame.innerText || '').includes(${JSON.stringify(finalHeroTitle)}),
       fallback: !!document.querySelector('.app-error-screen, .error-screen, .block-render-fallback'),
@@ -670,6 +677,9 @@ async function collectNarrowDesktopMetrics(client) {
       workPanel: rect(document.querySelector('.work-panel')),
       editLayout: rect(document.querySelector('.edit-layout')),
       preview: rect(document.querySelector('.preview-workspace')),
+      topTabs: rect(document.querySelector('.top-tabs')),
+      editTabs: rect(document.querySelector('.edit-section-tabs')),
+      shellGridColumns: getComputedStyle(document.querySelector('.builder-shell')).gridTemplateColumns,
       mobile: document.querySelector('.builder-shell')?.classList.contains('mobile-operations-shell') || false,
       fallback: !!document.querySelector('.app-error-screen, .error-screen, .block-render-fallback'),
     };
@@ -687,7 +697,9 @@ async function collectMobileMetrics(client) {
     const left = document.querySelector('.left-workspace');
     const header = document.querySelector('.mobile-operations-header');
     const workPanel = document.querySelector('.work-panel');
-    const tabs = document.querySelector('.workspace-tabs');
+    const tabs = document.querySelector('.top-tabs');
+    const tabButtons = [...document.querySelectorAll('.top-tabs > button')];
+    const tabStyle = tabs ? getComputedStyle(tabs) : null;
     return {
       path: location.pathname,
       innerWidth,
@@ -698,6 +710,12 @@ async function collectMobileMetrics(client) {
       header: rect(header),
       workPanel: rect(workPanel),
       tabs: rect(tabs),
+      tabButtonRects: tabButtons.map(rect),
+      tabButtonCount: tabButtons.length,
+      activeTabCount: tabButtons.filter((button) => button.classList.contains('active')).length,
+      tabsGridColumns: tabStyle?.gridTemplateColumns || '',
+      tabsPosition: tabStyle?.position || '',
+      tabsTop: tabStyle?.top || '',
       mobile: shell?.classList.contains('mobile-operations-shell') || false,
       previewExists: !!document.querySelector('.preview-workspace, .phone-frame'),
       text: (document.body?.innerText || '').slice(0, 500),
@@ -721,6 +739,11 @@ function assertDesktop(metrics) {
   assertInsideViewport(metrics.shell, metrics.innerWidth, 'desktop builder shell');
   assertInsideViewport(metrics.left, metrics.innerWidth, 'desktop left workspace');
   assertInsideViewport(metrics.preview, metrics.innerWidth, 'desktop preview workspace');
+  assertInsideViewport(metrics.workPanel, metrics.innerWidth, 'desktop work panel');
+  assertInsideViewport(metrics.topTabs, metrics.innerWidth, 'desktop main tabs');
+  assertInsideViewport(metrics.editTabs, metrics.innerWidth, 'desktop edit subsection tabs');
+  assert(metrics.left?.right <= metrics.preview?.left + 3, `desktop editor and preview overlap: ${JSON.stringify({ left: metrics.left, preview: metrics.preview })}`);
+  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length >= 2, `desktop shell must keep two grid columns: ${metrics.shellGridColumns}`);
   assert(metrics.left?.width >= 575, `desktop editor pane is too narrow: ${metrics.left?.width}px`);
   assert(metrics.preview?.width >= 500, `desktop preview pane became too narrow: ${metrics.preview?.width}px`);
   assert(metrics.frame?.width >= 400 && metrics.frame?.width <= 432, `desktop phone frame width is invalid: ${metrics.frame?.width}`);
@@ -737,6 +760,9 @@ function assertNarrowDesktop(metrics, width) {
   assertInsideViewport(metrics.left, width, 'narrow desktop left workspace');
   assertInsideViewport(metrics.workPanel, width, 'narrow desktop work panel');
   assertInsideViewport(metrics.editLayout, width, 'narrow desktop edit layout');
+  assertInsideViewport(metrics.topTabs, width, 'narrow desktop main tabs');
+  assertInsideViewport(metrics.editTabs, width, 'narrow desktop edit subsection tabs');
+  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === 1, `narrow desktop shell must stack into one grid column: ${metrics.shellGridColumns}`);
   assert(metrics.workPanel?.width >= width - 4, `narrow desktop work panel did not expand: ${metrics.workPanel?.width}px of ${width}px`);
   assert(metrics.editLayout?.width >= width - 48, `narrow desktop edit layout is still artificially capped: ${metrics.editLayout?.width}px of ${width}px`);
   assertInsideViewport(metrics.preview, width, 'narrow desktop preview workspace');
@@ -754,6 +780,13 @@ function assertMobile(metrics, viewport) {
   assertInsideViewport(metrics.header, viewport.width, `${viewport.name} operations header`);
   assertInsideViewport(metrics.workPanel, viewport.width, `${viewport.name} work panel`);
   assertInsideViewport(metrics.tabs, viewport.width, `${viewport.name} tabs`);
+  assert(metrics.tabButtonCount === 2, `${viewport.name} must expose exactly two operations tabs: ${metrics.tabButtonCount}`);
+  assert(metrics.activeTabCount === 1, `${viewport.name} must keep exactly one active operations tab: ${metrics.activeTabCount}`);
+  assert(String(metrics.tabsGridColumns || '').trim().split(/\s+/).length === 2, `${viewport.name} tabs must render as two grid columns: ${metrics.tabsGridColumns}`);
+  assert(metrics.tabsPosition === 'sticky' && metrics.tabsTop === '0px', `${viewport.name} operations tabs must stay sticky at the top: ${JSON.stringify({ position: metrics.tabsPosition, top: metrics.tabsTop })}`);
+  assert(metrics.tabButtonRects.every((button) => button && button.width > 0 && button.height >= 36), `${viewport.name} operations tab hit areas are invalid: ${JSON.stringify(metrics.tabButtonRects)}`);
+  for (const [index, button] of metrics.tabButtonRects.entries()) assertInsideViewport(button, viewport.width, `${viewport.name} tab button ${index + 1}`);
+  assert(metrics.header?.bottom <= metrics.tabs?.top + 4, `${viewport.name} operations header overlaps the tab bar: ${JSON.stringify({ header: metrics.header, tabs: metrics.tabs })}`);
   assert(metrics.text.includes('모바일 운영'), `${viewport.name} mobile operations heading is missing`);
   assert(metrics.text.includes('접수함') && metrics.text.includes('통계'), `${viewport.name} operations tabs are missing`);
 }
@@ -1151,8 +1184,10 @@ async function run() {
       revisionListCount: apiState.revisionListCount,
       revisionRestoreUndoRedo: apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === finalHeroTitle,
       publicVerifyCount: apiState.publicVerifyCount,
+      desktopWidths: desktopMatrix.map((item) => item.width),
       mobileWidths: mobileViewports.map((item) => item.width),
-      screenshots: 7,
+      responsiveMatrixScreenshots: desktopMatrix.length + mobileViewports.length,
+      responsiveGeometryLocked: true,
       realUseFlows: ['add-block', 'undo-redo', 'visibility', 'menu-reorder', 'pointer-drag-reorder', 'style-apply', 'preview-continue', 'publish-race', 'revision-restore-undo-redo', 'post-restore-publish-readback', 'narrow-desktop'],
     }, null, 2));
   } finally {

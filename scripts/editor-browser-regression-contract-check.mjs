@@ -27,6 +27,7 @@ const workspacePanelPropsSource = await readFile('src/runtime/createWorkspacePan
 const pageOptionsCssSource = await readFile('src/editor/editPanelParts/PageGlobalOptions.css', 'utf8');
 const editorWorkspaceCssSource = await readFile('src/styles/editor-workspace.css', 'utf8');
 const workspaceShellCssSource = await readFile('src/styles/workspace-shell.css', 'utf8');
+const mobileOperationsCssSource = await readFile('src/screens/workspace/MobileOperations.css', 'utf8');
 
 assert(packageJson.scripts?.['browser:editor:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-browser-regression-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-image-library-browser-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-video-library-browser-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/media-library-settings-browser-check.mjs', 'browser:editor:qa must run editor, image/video reuse, and media settings E2E');
 assert(packageJson.scripts?.['browser:editor:image-library:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-image-library-browser-check.mjs', 'browser:editor:image-library:qa script is missing');
@@ -66,9 +67,12 @@ assert(browserSource.includes("'revision restore unsaved navigation guard'"), 'b
 assert(browserSource.includes("apiState.saveCount === 2") && browserSource.includes("apiState.saveCount === 3") && browserSource.includes("public verification after revision publish"), 'revision restore must remain local until explicit publish and then verify public readback');
 assert(workspacePanelPropsSource.includes('setPage: setNormalizedPage'), 'settings panel must route revision restore through the canonical normalized page mutation setter');
 assert(browserSource.includes("{ name: 'pc-900', width: 900") && browserSource.includes("{ name: 'pc-1024', width: 1024") && browserSource.includes("{ name: 'pc-1180', width: 1180") && browserSource.includes("{ name: 'pc-1440', width: 1440") && browserSource.includes("assertNarrowDesktop") && browserSource.includes("assertDesktop"), 'browser QA must cover 900/1024/1180/1440 desktop widths separately from mobile operations mode');
+assert(browserSource.includes("desktop editor and preview overlap") && browserSource.includes("desktop shell must keep two grid columns") && browserSource.includes("narrow desktop shell must stack into one grid column") && browserSource.includes("desktop edit subsection tabs"), 'desktop matrix must lock non-overlap, two-column desktop, stacked narrow desktop, and editor tab bounds');
 assert(browserSource.includes("publicVerifyCount") && browserSource.includes("saveCount === 0"), 'browser QA must verify that editing stays local until explicit publish and then verifies the public page');
 assert(browserSource.includes("{ name: 'mobile-360', width: 360") && browserSource.includes("{ name: 'mobile-390', width: 390") && browserSource.includes("{ name: 'mobile-430', width: 430"), 'browser QA must cover 360, 390, and 430 pixel mobile widths');
-assert(browserSource.includes("mobile-operations-shell") && browserSource.includes("bodyScrollWidth <= viewport.width + 3"), 'mobile editor regression must reject overflow and verify operations mode');
+assert(browserSource.includes("const tabs = document.querySelector('.top-tabs')") && !browserSource.includes("const tabs = document.querySelector('.workspace-tabs')"), 'mobile editor metrics must use the current top-tabs DOM owner');
+assert(mobileOperationsCssSource.includes('position: sticky !important;') && mobileOperationsCssSource.includes('top: 0 !important;'), 'mobile operations owner must win the cascade for sticky top tabs');
+assert(browserSource.includes("mobile-operations-shell") && browserSource.includes("bodyScrollWidth <= viewport.width + 3") && browserSource.includes("must expose exactly two operations tabs") && browserSource.includes("tabs must render as two grid columns") && browserSource.includes("operations tabs must stay sticky at the top") && browserSource.includes("operations header overlaps the tab bar"), 'mobile editor regression must lock overflow, two-tab grid, sticky tabs, and non-overlapping header geometry');
 assert(browserSource.includes("unexpectedApis.length === 0") && browserSource.includes("browserErrors.length === 0"), 'browser QA must fail on unexpected API calls or browser exceptions');
 assert(!browserSource.includes('pagero.kr/api/auth/login') && !browserSource.includes('productionPassword'), 'browser QA must not use production credentials or production auth endpoints');
 
@@ -116,7 +120,9 @@ console.log(JSON.stringify({
   desktopFlow: ['login', 'dashboard', 'account-page', 'page-select', 'edit-panel', 'add-block', 'undo-redo', 'visibility', 'menu-reorder', 'pointer-drag-reorder', 'style-apply', 'preview-continue', 'publish-race', 'publish', 'normal-reload-server-readback', 'clean-saved-state', 'narrow-desktop'],
   imageLibraryFlow: ['image-block', 'open-library', 'project-scoped-list', 'select-existing-image', 'local-draft', 'publish', 'reload'],
   videoLibraryFlow: ['video-block', 'open-library', 'project-scoped-list', 'select-existing-video', 'playable-metadata', 'local-draft', 'publish', 'reload'],
+  desktopWidths: [900, 1024, 1180, 1440],
   mobileWidths: [360, 390, 430],
+  responsiveGeometryLocked: true,
   productionCredentials: false,
   accountPageMock: true,
   activeEditorDom: 'EditPanel/ScreenOrderRow',
