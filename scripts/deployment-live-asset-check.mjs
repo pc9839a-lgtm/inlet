@@ -127,14 +127,14 @@ async function checkJsonRoute(baseUrl, pathname, label, expectedStatuses, params
 const baseUrl = normalizeBaseUrl(baseInput);
 const routeChecks = [];
 const root = await checkHtmlRoute(baseUrl, '/', 'Deployment root');
-routeChecks.push({ label: root.label, path: root.path, status: root.status, type: root.type, cache: root.cache });
+routeChecks.push({ label: root.label, path: root.path, status: root.status, type: root.type, cache: root.cache, finalUrl: root.finalUrl });
 
 for (const [pathname, label] of [
   ['/login', 'Login route'],
   ['/about', 'Static information route'],
 ]) {
   const result = await checkHtmlRoute(baseUrl, pathname, label);
-  routeChecks.push({ label: result.label, path: result.path, status: result.status, type: result.type, cache: result.cache });
+  routeChecks.push({ label: result.label, path: result.path, status: result.status, type: result.type, cache: result.cache, finalUrl: result.finalUrl });
 }
 
 routeChecks.push(await checkJsonRoute(
@@ -157,9 +157,16 @@ const html = root.html;
 const refs = new Set();
 const queue = [];
 for (const match of html.matchAll(/(?:src|href)=["']([^"']+\.(?:js|css)(?:[?#][^"']*)?)["']/g)) {
-  addAssetRef(refs, queue, root.finalUrl || baseUrl, match[1], baseUrl.origin);
+  // Cloudflare may redirect the root document to the custom domain while the
+  // exact deployment hostname still serves the same fingerprinted asset paths.
+  // Rebase root-relative Vite assets to the requested deployment origin so an
+  // exact-deployment check does not silently become a custom-domain check.
+  addAssetRef(refs, queue, baseUrl, match[1], baseUrl.origin);
 }
-assert(queue.length > 0, 'deployment HTML does not reference any JS/CSS assets');
+assert(
+  queue.length > 0,
+  `deployment HTML does not reference any JS/CSS assets (requested=${baseUrl.toString()}, final=${root.finalUrl || 'unknown'})`,
+);
 
 const checked = [];
 const maxAssets = 250;

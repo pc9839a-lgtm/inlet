@@ -2,6 +2,7 @@ import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 const root = process.cwd();
+const liveAssetCheckSource = await readFile('scripts/deployment-live-asset-check.mjs', 'utf8');
 const targetDir = path.resolve(process.env.INLET_DEPLOY_QA_DIR || path.join(root, 'dist'));
 const ALLOWED_UNREFERENCED_ASSETS = new Set([
   'assets/App-CoeQq7xJ.js',
@@ -174,6 +175,10 @@ const report = await inspectAssets();
 const cacheHeaders = await inspectCacheHeaders();
 const seoFiles = await inspectSeoFiles();
 
+assert(
+  liveAssetCheckSource.includes('addAssetRef(refs, queue, baseUrl, match[1], baseUrl.origin)'),
+  'live deployment asset verification must rebase root asset paths to the requested deployment origin',
+);
 assert(report.assets.length > 0, 'deployment artifact has no JS/CSS assets');
 const unhashedAssets = report.assets.filter((asset) => !/^assets\/.+[-.][A-Za-z0-9_-]{8,}\.(?:js|css)$/.test(asset.relative));
 assert(unhashedAssets.length === 0, `immutable deployment assets must be fingerprinted: ${unhashedAssets.map((asset) => asset.relative).join(', ')}`);
