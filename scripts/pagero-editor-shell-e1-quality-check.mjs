@@ -33,6 +33,7 @@ assert(css.includes('grid-template-columns: minmax(660px, 720px) minmax(480px, 1
 assert(!css.includes('grid-template-columns: 280px minmax(520px, 1fr) 360px !important'), 'three-column production repair must stay removed');
 assert(!css.includes('editor-inspector-pane'), 'editor workspace CSS must not restore the right inspector column');
 assert(!css.includes('screen-order-v2-inline-editor'), 'workspace geometry must not own inline block editor presentation');
+assert(!css.includes('.fixed-block-card') && !css.includes('.edit-animation-card') && !css.includes('.fixed-block-editor') && !css.includes('.edit-animation-settings'), 'workspace geometry must not own fixed or animation cards');
 assert(css.includes('editor-page-options-stack'), 'page options and theme controls need a left-panel stack');
 assert(fixedBlocksCss.includes('.screen-order-fixed-blocks :is(.fixed-block-card, .edit-animation-card)') && fixedBlocksCss.includes('border-radius: 10px !important') && fixedBlocksCss.includes('min-height: 52px !important') && !css.includes('.screen-order-fixed-blocks'), 'fixed-area cards must stay compact under FixedBlocksSection.css ownership');
 assert(workspaceCss.includes('grid-template-columns: repeat(4, minmax(0, 1fr)) !important') && workspaceCss.includes('min-height: 46px !important') && workspaceCss.includes('height: 36px !important'), 'workspace top navigation must stay compact and use exactly four columns');
