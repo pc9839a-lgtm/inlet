@@ -135,9 +135,13 @@ async function inspectCacheHeaders() {
   assert(/(?:^|\n)\/\s*\n\s+Cache-Control:\s*[^\n]*(?:no-cache|no-store)[^\n]*\n/i.test(headers), 'root HTML must not be cached across deployments');
   assert(/(?:^|\n)\/index\.html\s*\n\s+Cache-Control:\s*[^\n]*no-store[^\n]*\n/i.test(headers), 'index.html must use no-store');
   assert(
-    /(?:^|\n)\/assets\/\*\s*\n\s+Cache-Control:\s*public,\s*max-age=0,\s*must-revalidate\s*\n/i.test(headers)
-      || /(?:^|\n)\/assets\/\*\s*\n\s+Cache-Control:\s*public,\s*max-age=31536000,\s*immutable\s*\n/i.test(headers),
-    'asset cache policy must be explicitly deployment-safe',
+    /(?:^|\n)\/assets\/\*\s*\n\s+Cache-Control:\s*public,\s*max-age=31536000,\s*immutable\s*\n/i.test(headers),
+    'fingerprinted assets must use a one-year immutable browser cache policy',
+  );
+  assert(
+    /(?:^|\n)\/assets\/\*\s*\n[\s\S]*?CDN-Cache-Control:\s*public,\s*max-age=31536000,\s*immutable\s*\n/i.test(headers)
+      && /(?:^|\n)\/assets\/\*\s*\n[\s\S]*?Cloudflare-CDN-Cache-Control:\s*public,\s*max-age=31536000,\s*immutable\s*\n/i.test(headers),
+    'fingerprinted assets must use the same immutable policy at browser and CDN layers',
   );
 
   return { headersBytes: Buffer.byteLength(headers) };
@@ -171,6 +175,8 @@ const cacheHeaders = await inspectCacheHeaders();
 const seoFiles = await inspectSeoFiles();
 
 assert(report.assets.length > 0, 'deployment artifact has no JS/CSS assets');
+const unhashedAssets = report.assets.filter((asset) => !/^assets\/.+[-.][A-Za-z0-9_-]{8,}\.(?:js|css)$/.test(asset.relative));
+assert(unhashedAssets.length === 0, `immutable deployment assets must be fingerprinted: ${unhashedAssets.map((asset) => asset.relative).join(', ')}`);
 assert(report.missing.length === 0, `deployment artifact references missing assets: ${report.missing.join(', ')}`);
 assert(report.stale.length === 0, `deployment artifact has stale assets: ${report.stale.map((asset) => asset.relative).join(', ')}`);
 assert(report.rescueAssets.length === ALLOWED_UNREFERENCED_ASSETS.size, 'deployment artifact must retain every explicit stale-session rescue module');
@@ -181,6 +187,7 @@ console.log(JSON.stringify({
   ok: true,
   targetDir: targetDir.replaceAll(path.sep, '/'),
   missingAssetCount: report.missing.length,
+  unhashedAssetCount: unhashedAssets.length,
   staleAssetCount: report.stale.length,
   rescueAssetCount: report.rescueAssets.length,
   assetCount: report.assets.length,

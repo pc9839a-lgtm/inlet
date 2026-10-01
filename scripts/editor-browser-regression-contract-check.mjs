@@ -51,7 +51,8 @@ assert(browserSource.includes("`${origin}/login`") && browserSource.includes("in
 assert(browserSource.includes("pathname === '/api/auth/login'") && browserSource.includes("pathname === '/api/auth/session'"), 'browser QA must mock login and session refresh APIs');
 assert(browserSource.includes("pathname === '/api/projects'") && browserSource.includes(".service-landing-card"), 'browser QA must load and select a dashboard page');
 assert(browserSource.includes("pathname === '/api/account-page'") && browserSource.includes("#editor-block-editor-hero") && browserSource.includes(".screen-order-v2-head") && browserSource.includes(".screen-order-v2-inline-editor textarea[placeholder=\"핵심 제목을 입력하세요\"]") && browserSource.includes('브라우저 저장 검증 완료'), 'browser QA must open the current account page, edit the active inline block editor, and verify live preview');
-assert(browserSource.includes(".panel-actions .primary-btn") && browserSource.includes("Page.reload"), 'browser QA must publish and verify the page after reload');
+assert(browserSource.includes(".panel-actions .primary-btn") && browserSource.includes("await client.send('Page.reload');") && !browserSource.includes("await client.send('Page.reload', { ignoreCache: true });"), 'primary editor save/reload flow must use a normal browser reload instead of bypassing cache');
+assert(browserSource.includes('pageLoadsBeforeReload') && browserSource.includes('fresh account page read after reload') && browserSource.includes("primary-btn:not(:disabled)") && browserSource.includes('clean saved page must not keep the unsaved navigation guard after reload'), 'browser QA must prove normal reload performs a fresh server read, keeps the publish action usable, and clears the unsaved guard');
 assert(browserSource.includes("clickButtonByText(client, '.add-panel', '구분선')") && browserSource.includes("panel-history-btn[aria-label=\"실행 취소\"]") && browserSource.includes("panel-history-btn[aria-label=\"다시 실행\"]"), 'browser QA must add a block and verify undo/redo through the real editor controls');
 assert(browserSource.includes("#editor-block-editor-text .screen-order-v2-visibility-button") && browserSource.includes("#editor-block-editor-form .screen-order-v2-action") && browserSource.includes("'위로 이동'"), 'browser QA must verify visibility and order changes through the current screen-order V2 controls');
 assert(browserSource.includes("Input.dispatchMouseEvent") && browserSource.includes("pointer drag moved divider to first position") && browserSource.includes(".screen-order-v2-drag"), 'browser QA must verify reorder through real Chrome mouse input, not only menu actions');
@@ -112,7 +113,7 @@ assert(editHistorySource.includes('const MAX_HISTORY = 50') && editHistorySource
 console.log(JSON.stringify({
   ok: true,
   scope: 'authenticated-editor-browser-contract',
-  desktopFlow: ['login', 'dashboard', 'account-page', 'page-select', 'edit-panel', 'add-block', 'undo-redo', 'visibility', 'menu-reorder', 'pointer-drag-reorder', 'style-apply', 'preview-continue', 'publish-race', 'publish', 'reload', 'narrow-desktop'],
+  desktopFlow: ['login', 'dashboard', 'account-page', 'page-select', 'edit-panel', 'add-block', 'undo-redo', 'visibility', 'menu-reorder', 'pointer-drag-reorder', 'style-apply', 'preview-continue', 'publish-race', 'publish', 'normal-reload-server-readback', 'clean-saved-state', 'narrow-desktop'],
   imageLibraryFlow: ['image-block', 'open-library', 'project-scoped-list', 'select-existing-image', 'local-draft', 'publish', 'reload'],
   videoLibraryFlow: ['video-block', 'open-library', 'project-scoped-list', 'select-existing-video', 'playable-metadata', 'local-draft', 'publish', 'reload'],
   mobileWidths: [360, 390, 430],
