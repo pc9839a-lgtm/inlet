@@ -176,8 +176,10 @@ const cacheHeaders = await inspectCacheHeaders();
 const seoFiles = await inspectSeoFiles();
 
 assert(
-  liveAssetCheckSource.includes('addAssetRef(refs, queue, baseUrl, match[1], baseUrl.origin)'),
-  'live deployment asset verification must rebase root asset paths to the requested deployment origin',
+  liveAssetCheckSource.includes("const assetSeed = htmlRoutes.find")
+    && liveAssetCheckSource.includes("'Login route'")
+    && liveAssetCheckSource.includes('addAssetRef(refs, queue, baseUrl, match[1], baseUrl.origin)'),
+  'live deployment asset verification must seed from a current /assets/ SPA shell and keep assets on the requested deployment origin',
 );
 assert(report.assets.length > 0, 'deployment artifact has no JS/CSS assets');
 const unhashedAssets = report.assets.filter((asset) => !/^assets\/.+[-.][A-Za-z0-9_-]{8,}\.(?:js|css)$/.test(asset.relative));
