@@ -1,40 +1,20 @@
-/* PageRo edit workspace — sole owner for editor geometry. */
+/* PageRo editor workspace — outer edit-shell geometry only.
+   <=899px is handled by mobile-operations-shell and intentionally stays out of this file. */
 
-body .builder-shell:not(.mobile-operations-shell):not(.inbox-workspace-shell):not(.stats-dashboard-shell):not(.settings-workspace-shell) {
-  grid-template-columns: minmax(660px, 720px) minmax(480px, 1fr);
-  background: var(--product-bg);
-}
-
-body .builder-shell:not(.mobile-operations-shell):not(.inbox-workspace-shell):not(.stats-dashboard-shell):not(.settings-workspace-shell) .left-workspace {
-  min-width: 0;
-  overflow: hidden;
-  border-right: 1px solid var(--product-line);
-  background: var(--product-bg);
-}
-
-body .builder-shell:not(.mobile-operations-shell):not(.inbox-workspace-shell):not(.stats-dashboard-shell):not(.settings-workspace-shell) .work-panel {
-  width: auto;
-  min-width: 0;
-  max-width: none;
-  margin: 0;
-  padding: 14px 16px 96px;
-  overflow-x: hidden;
-  box-sizing: border-box;
-}
-
-@media (max-width: 1280px) {
-  body .builder-shell:not(.mobile-operations-shell):not(.inbox-workspace-shell):not(.stats-dashboard-shell):not(.settings-workspace-shell) {
-    grid-template-columns: minmax(600px, 660px) minmax(440px, 1fr);
+@media (min-width: 900px) {
+  body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) > .left-workspace {
+    border-right: 1px solid var(--product-line);
   }
 
-  body .builder-shell:not(.mobile-operations-shell):not(.inbox-workspace-shell):not(.stats-dashboard-shell):not(.settings-workspace-shell) .work-panel {
-    padding-inline: 12px;
+  body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .work-panel {
+    min-width: 0;
+    max-width: none;
+    margin-inline: 0;
+    overflow-x: hidden;
   }
-
 }
 
-/* 900-1180px editor geometry.
-   Absorbed from editor-narrow-width-fix.css so editor-workspace.css remains the sole geometry owner. */
+/* Tablet / narrow desktop: stack editor and preview vertically. */
 @media (min-width: 900px) and (max-width: 1180px) {
   body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) {
     width: 100% !important;
@@ -45,9 +25,8 @@ body .builder-shell:not(.mobile-operations-shell):not(.inbox-workspace-shell):no
     overflow: visible !important;
   }
 
-  body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .left-workspace {
+  body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) > .left-workspace {
     width: 100% !important;
-    min-width: 0 !important;
     height: auto !important;
     max-height: none !important;
     overflow-x: hidden !important;
@@ -63,16 +42,13 @@ body .builder-shell:not(.mobile-operations-shell):not(.inbox-workspace-shell):no
   }
 }
 
-
-/* >=1181px active editor geometry.
-   Absorbed from editor-active-workflow-patch.css. */
+/* Desktop: two-column editor / preview shell. */
 @media (min-width: 1181px) {
   html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) {
     grid-template-columns: clamp(580px, 44vw, 680px) minmax(500px, 1fr) !important;
   }
 
   html body #root .builder-shell.edit-mode-shell > .left-workspace {
-    min-width: 0 !important;
     max-width: none !important;
   }
 
