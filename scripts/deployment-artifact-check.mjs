@@ -131,6 +131,7 @@ async function inspectCacheHeaders() {
   const headersPath = path.join(targetDir, '_headers');
   assert(await exists(headersPath), `deployment artifact missing _headers: ${targetDir}`);
   const headers = await readFile(headersPath, 'utf8');
+const liveAssetCheckSource = await readFile('scripts/deployment-live-asset-check.mjs', 'utf8');
 
   assert(/(?:^|\n)\/\s*\n\s+Cache-Control:\s*[^\n]*(?:no-cache|no-store)[^\n]*\n/i.test(headers), 'root HTML must not be cached across deployments');
   assert(/(?:^|\n)\/index\.html\s*\n\s+Cache-Control:\s*[^\n]*no-store[^\n]*\n/i.test(headers), 'index.html must use no-store');
@@ -174,6 +175,10 @@ const report = await inspectAssets();
 const cacheHeaders = await inspectCacheHeaders();
 const seoFiles = await inspectSeoFiles();
 
+assert(
+  liveAssetCheckSource.includes('addAssetRef(refs, queue, baseUrl, match[1], baseUrl.origin)'),
+  'live deployment asset verification must rebase root asset paths to the requested deployment origin',
+);
 assert(report.assets.length > 0, 'deployment artifact has no JS/CSS assets');
 const unhashedAssets = report.assets.filter((asset) => !/^assets\/.+[-.][A-Za-z0-9_-]{8,}\.(?:js|css)$/.test(asset.relative));
 assert(unhashedAssets.length === 0, `immutable deployment assets must be fingerprinted: ${unhashedAssets.map((asset) => asset.relative).join(', ')}`);
