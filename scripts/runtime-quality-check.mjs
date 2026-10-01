@@ -509,6 +509,7 @@ assert(trafficAttributionSource.includes('export function isTestTraffic') && tra
 assert(statsMetrics.includes('if (isTestTraffic(event)) return;') && statsMetrics.includes('if (isTestTraffic(lead)) return;'), 'local statistics must exclude editor test traffic');
 assert(d1Adapter.includes('withoutD1TestEventScope') && d1Adapter.includes('withoutD1TestLeadScope') && d1Adapter.includes("pagero_test"), 'D1 aggregate statistics must exclude editor test traffic without a schema migration');
 assert(leadIntegrations.includes("reason: 'test-traffic'"), 'paid conversion integrations must not fire for editor test inquiries');
+assert(inboxPanel.includes('isTestTraffic') && inboxPanel.includes('inbox-ops-mini-badge test') && inboxPanel.includes('테스트 문의'), 'inbox must keep editor test inquiries visible and clearly labeled');
 assert(previewFormBlocks.includes('if (payload?.lead?.isTest) return;'), 'form browser conversion events must not fire for editor test inquiries');
 assert(landingRenderer.includes('class BlockErrorBoundary'), 'LandingRenderer must keep block-level error isolation');
 assert(landingRenderer.includes('componentDidUpdate(prevProps)'), 'BlockErrorBoundary must reset when block data changes');
