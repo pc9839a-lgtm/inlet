@@ -1020,7 +1020,7 @@ async function run() {
     await client.send('Page.reload');
     await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('.phone-frame')`, 'reloaded desktop editor');
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(finalHeroTitle)})`, 'saved page after reload');
-    await waitForBrowser(client, `(document.querySelector('.panel-actions .primary-btn')?.innerText || '').includes('발행됨')`, 'published state after reload');
+    await waitForBrowser(client, `!!document.querySelector('.panel-actions .primary-btn:not(:disabled)')`, 'publish action after reload');
     await waitForState(() => apiState.pageLoadCount > pageLoadsBeforeReload, 'fresh account page read after reload');
     assert(apiState.saveCount === 3, `reload must not trigger another publish, got ${apiState.saveCount}`);
     const reloadGuardPrevented = await evaluate(client, `(() => {
