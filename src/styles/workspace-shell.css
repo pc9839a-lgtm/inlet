@@ -1,15 +1,15 @@
 /* Shared PageRo x CallTag authenticated workspace shell.
    This file owns the global workspace header, main tabs, operation-shell geometry and scroll model. */
 
-/* Non-edit workspace geometry migrated from editor-final-clean.css.
-   Keep this before mode-specific shell rules so inbox/stats/settings/mobile owners remain authoritative. */
+/* Preview-bearing non-edit fallback geometry migrated from editor-final-clean.css.
+   Operations and mobile shells are excluded structurally instead of being restyled and overridden later. */
 body:has(.builder-shell),
 #root:has(.builder-shell) {
   width: 100% !important;
   height: 100dvh !important;
   overflow: hidden !important;
 }
-body .builder-shell:not(.edit-mode-shell) {
+body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) {
   --pg-left-width: clamp(660px, 40vw, 720px);
   --pg-panel-width: min(100%, 680px);
   display: grid !important;
@@ -21,7 +21,7 @@ body .builder-shell:not(.edit-mode-shell) {
   overflow: hidden !important;
   align-items: stretch !important;
 }
-body .builder-shell:not(.edit-mode-shell) .left-workspace {
+body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .left-workspace {
   width: 100% !important;
   min-width: 0 !important;
   height: 100dvh !important;
@@ -32,7 +32,7 @@ body .builder-shell:not(.edit-mode-shell) .left-workspace {
   scrollbar-gutter: stable !important;
   border-right: 1px solid #d9dee8 !important;
 }
-body .builder-shell:not(.edit-mode-shell) .work-panel {
+body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .work-panel {
   width: 100% !important;
   max-width: var(--pg-panel-width) !important;
   min-width: 0 !important;
@@ -42,7 +42,7 @@ body .builder-shell:not(.edit-mode-shell) .work-panel {
   padding: 28px 24px 64px !important;
   overflow: visible !important;
 }
-body .builder-shell:not(.edit-mode-shell) .work-panel > * {
+body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .work-panel > * {
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
@@ -60,37 +60,37 @@ body .builder-shell :is(.panel-header, .top-tabs, .edit-layout, .settings-panel,
 }
 
 @media (max-width: 1440px) {
-  body .builder-shell:not(.edit-mode-shell) {
+  body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) {
     --pg-left-width: 680px;
     --pg-panel-width: 640px;
     grid-template-columns: var(--pg-left-width) minmax(560px, 1fr) !important;
   }
-  body .builder-shell:not(.edit-mode-shell) .work-panel {
+  body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .work-panel {
     padding-left: 20px !important;
     padding-right: 20px !important;
   }
 }
 @media (max-width: 1280px) {
-  body .builder-shell:not(.edit-mode-shell) {
+  body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) {
     --pg-left-width: 640px;
     --pg-panel-width: 600px;
     grid-template-columns: var(--pg-left-width) minmax(500px, 1fr) !important;
   }
 }
 @media (max-width: 1180px) {
-  body .builder-shell:not(.edit-mode-shell) {
+  body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) {
     height: auto !important;
     min-height: 100dvh !important;
     max-height: none !important;
     overflow: visible !important;
     grid-template-columns: minmax(0, 1fr) !important;
   }
-  body .builder-shell:not(.edit-mode-shell) .left-workspace {
+  body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .left-workspace {
     height: auto !important;
     max-height: none !important;
     overflow: visible !important;
   }
-  body .builder-shell:not(.edit-mode-shell) .work-panel {
+  body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .work-panel {
     max-width: 760px !important;
     min-height: 0 !important;
     padding: 18px 14px 28px !important;
@@ -123,6 +123,7 @@ body .builder-shell :is(.panel-header, .top-tabs, .edit-layout, .settings-panel,
 
   .mobile-operations-shell .left-workspace {
     width: 100% !important;
+    min-width: 0 !important;
     min-height: 100dvh !important;
     height: auto !important;
     max-height: none !important;
@@ -132,8 +133,11 @@ body .builder-shell :is(.panel-header, .top-tabs, .edit-layout, .settings-panel,
 
   .mobile-operations-shell .work-panel {
     width: 100% !important;
+    min-width: 0 !important;
     max-width: 760px !important;
     min-height: 100dvh !important;
+    height: auto !important;
+    margin: 0 auto !important;
     padding: 12px 12px 32px !important;
   }
 
@@ -419,7 +423,9 @@ body:has(.builder-shell:is(.inbox-workspace-shell,.stats-dashboard-shell,.settin
 }
 
 body .builder-shell:is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-workspace-shell):not(.mobile-operations-shell) {
+  display: grid !important;
   grid-template-columns: minmax(0, 1fr) !important;
+  align-items: stretch !important;
   width: 100% !important;
   height: 100dvh !important;
   min-height: 0 !important;
@@ -434,6 +440,7 @@ body .builder-shell:is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-w
   max-width: none !important;
   height: 100% !important;
   min-height: 0 !important;
+  max-height: 100dvh !important;
   display: flex !important;
   flex-direction: column !important;
   overflow: hidden !important;
@@ -449,6 +456,7 @@ body .builder-shell:is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-w
   min-width: 0 !important;
   max-width: none !important;
   min-height: 0 !important;
+  height: auto !important;
   margin: 0 !important;
   padding: 12px 20px 48px !important;
   overflow-x: hidden !important;
@@ -457,12 +465,8 @@ body .builder-shell:is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-w
   background: var(--product-bg) !important;
 }
 
-body .builder-shell:is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-workspace-shell) > .preview-workspace {
-  display: none !important;
-}
-
-/* Editing and styling keep the split workspace but use the same visual language. */
-body .builder-shell:not(.mobile-operations-shell):not(.inbox-workspace-shell):not(.stats-dashboard-shell):not(.settings-workspace-shell) .work-panel {
+/* Preview-bearing editor/template shells share the same panel spacing. */
+body .builder-shell.preview-workspace-shell .work-panel {
   padding: 14px 18px 48px !important;
   background: var(--product-bg);
 }
