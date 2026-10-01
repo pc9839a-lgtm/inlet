@@ -2,6 +2,7 @@ import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 const root = process.cwd();
+const liveAssetCheckSource = await readFile('scripts/deployment-live-asset-check.mjs', 'utf8');
 const targetDir = path.resolve(process.env.INLET_DEPLOY_QA_DIR || path.join(root, 'dist'));
 const ALLOWED_UNREFERENCED_ASSETS = new Set([
   'assets/App-CoeQq7xJ.js',
@@ -131,7 +132,6 @@ async function inspectCacheHeaders() {
   const headersPath = path.join(targetDir, '_headers');
   assert(await exists(headersPath), `deployment artifact missing _headers: ${targetDir}`);
   const headers = await readFile(headersPath, 'utf8');
-const liveAssetCheckSource = await readFile('scripts/deployment-live-asset-check.mjs', 'utf8');
 
   assert(/(?:^|\n)\/\s*\n\s+Cache-Control:\s*[^\n]*(?:no-cache|no-store)[^\n]*\n/i.test(headers), 'root HTML must not be cached across deployments');
   assert(/(?:^|\n)\/index\.html\s*\n\s+Cache-Control:\s*[^\n]*no-store[^\n]*\n/i.test(headers), 'index.html must use no-store');
