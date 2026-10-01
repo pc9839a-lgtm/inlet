@@ -1,0 +1,111 @@
+/* ConversionCockpit — compact editor-only inquiry/conversion checkpoint. */
+.conversion-cockpit {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--product-line);
+  border-radius: 12px;
+  background: var(--product-panel);
+}
+
+.conversion-cockpit-statuses,
+.conversion-cockpit-actions {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.conversion-cockpit-status {
+  min-width: 0;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 7px;
+  border-radius: 8px;
+  background: var(--product-bg);
+  white-space: nowrap;
+}
+
+.conversion-cockpit-status b {
+  color: var(--product-muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.conversion-cockpit-status strong {
+  color: var(--product-text);
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.conversion-cockpit-actions > :is(a, button) {
+  min-height: 30px;
+  padding: 0 9px;
+  border: 1px solid var(--product-line);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--product-panel);
+  color: var(--product-text);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 900;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.conversion-cockpit-actions .conversion-cockpit-test {
+  border-color: var(--product-accent);
+  background: var(--product-accent);
+  color: #fff;
+}
+
+.conversion-cockpit-actions .conversion-cockpit-test:disabled {
+  border-color: var(--product-line);
+  background: var(--product-bg);
+  color: var(--product-muted);
+  cursor: default;
+}
+
+.conversion-cockpit-test-count {
+  color: var(--product-accent);
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+@media (max-width: 1180px) {
+  .conversion-cockpit {
+    flex-wrap: wrap;
+  }
+
+  .conversion-cockpit-statuses {
+    flex: 1 1 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .conversion-cockpit-statuses {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .conversion-cockpit-status {
+    justify-content: space-between;
+  }
+
+  .conversion-cockpit-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
