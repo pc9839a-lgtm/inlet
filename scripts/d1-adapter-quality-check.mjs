@@ -1206,7 +1206,8 @@ await insertD1Event(legacyEventDb, { id: 'legacy-event-1', type: 'page_view', ch
 assert(legacyEventDb.rows.events.length === 1 && legacyEventDb.rows.events[0].id === 'legacy-event-1', 'event insert should fallback before dimension migration is applied');
 
 const eventPage = await listD1Events(db, { projectId: 'project-1', month: '2026-05', eventType: 'page_view', limit: 10 });
-assert(eventPage.records.length === 1 && eventPage.records[0].type === 'page_view', 'event list should decode events');
+assert(eventPage.records.length === 2 && eventPage.records.every((event) => event.type === 'page_view'), 'event list should decode both real and editor-test events');
+assert(eventPage.records.some((event) => event.channel === 'pagero_test'), 'raw event list should preserve editor test traffic for diagnostics');
 const d1Stats = await aggregateD1Stats(db, { projectId: 'project-1', month: '2026-05' });
 assert(d1Stats.totals.events === 4 && d1Stats.totals.leads === 1, 'D1 stats aggregate should count real events and leads without row hydration');
 assert(!Object.prototype.hasOwnProperty.call(d1Stats.summary.channelData, 'pagero_test'), 'D1 stats aggregate must exclude editor test traffic');
@@ -1237,7 +1238,7 @@ assert(readyCoverage.some((item) => item.key === 'leads' && item.adapter === 'd1
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 60,
+  checks: 61,
   accounts: db.rows.accounts.length,
   projects: db.rows.projects.length,
   invites: db.rows.invites.length,
