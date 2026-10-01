@@ -25,7 +25,11 @@ function isAssetUrl(url, origin) {
 function addAssetRef(refs, queue, currentUrl, rawRef, origin) {
   try {
     const cleanRef = String(rawRef || '').replace(/&amp;/g, '&');
-    const resolved = new URL(cleanRef, currentUrl);
+    // Vite may emit runtime chunk refs as "assets/<file>" even when the
+    // importing chunk itself already lives under /assets/. Treat those as
+    // deployment-root assets, otherwise URL resolution produces /assets/assets/.
+    const normalizedRef = cleanRef.startsWith('assets/') ? `/${cleanRef}` : cleanRef;
+    const resolved = new URL(normalizedRef, currentUrl);
     resolved.hash = '';
     if (!isAssetUrl(resolved, origin)) return;
     const key = resolved.toString();
