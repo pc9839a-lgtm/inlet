@@ -126,7 +126,9 @@ async function checkJsonRoute(baseUrl, pathname, label, expectedStatuses, params
 
 const baseUrl = normalizeBaseUrl(baseInput);
 const routeChecks = [];
+const htmlRoutes = [];
 const root = await checkHtmlRoute(baseUrl, '/', 'Deployment root');
+htmlRoutes.push(root);
 routeChecks.push({ label: root.label, path: root.path, status: root.status, type: root.type, cache: root.cache, finalUrl: root.finalUrl });
 
 for (const [pathname, label] of [
@@ -134,6 +136,7 @@ for (const [pathname, label] of [
   ['/about', 'Static information route'],
 ]) {
   const result = await checkHtmlRoute(baseUrl, pathname, label);
+  htmlRoutes.push(result);
   routeChecks.push({ label: result.label, path: result.path, status: result.status, type: result.type, cache: result.cache, finalUrl: result.finalUrl });
 }
 
@@ -153,19 +156,25 @@ routeChecks.push(await checkJsonRoute(
   { public: 1, fresh: Date.now() },
 ));
 
-const html = root.html;
+const assetSeed = htmlRoutes.find((route) => /(?:src|href)=["'][^"']*\/assets\/[^"']+\.(?:js|css)(?:[?#][^"']*)?["']/i.test(route.html));
+assert(
+  assetSeed,
+  `no checked HTML route references the current /assets/ runtime (requested=${baseUrl.toString()})`,
+);
+
+const html = assetSeed.html;
 const refs = new Set();
 const queue = [];
 for (const match of html.matchAll(/(?:src|href)=["']([^"']+\.(?:js|css)(?:[?#][^"']*)?)["']/g)) {
-  // Cloudflare may redirect the root document to the custom domain while the
-  // exact deployment hostname still serves the same fingerprinted asset paths.
-  // Rebase root-relative Vite assets to the requested deployment origin so an
-  // exact-deployment check does not silently become a custom-domain check.
+  // Public "/" can be a server-rendered marketing shell with legacy c63 assets.
+  // Seed the current Vite graph from an authenticated-SPA HTML route (normally
+  // /login), while keeping every root-relative asset on the requested deployment
+  // origin so exact-deployment validation remains exact.
   addAssetRef(refs, queue, baseUrl, match[1], baseUrl.origin);
 }
 assert(
   queue.length > 0,
-  `deployment HTML does not reference any JS/CSS assets (requested=${baseUrl.toString()}, final=${root.finalUrl || 'unknown'})`,
+  `runtime shell did not yield any /assets/ JS/CSS references (seed=${assetSeed.path}, requested=${baseUrl.toString()})`,
 );
 
 const checked = [];
@@ -201,6 +210,8 @@ console.log(JSON.stringify({
   deploymentUrl: baseUrl.toString(),
   routeChecks,
   indexCache: root.cache,
+  assetSeedRoute: assetSeed.path,
+  assetSeedFinalUrl: assetSeed.finalUrl,
   checkedAssetCount: checked.length,
   checkedAssetBytes: checked.reduce((sum, asset) => sum + asset.bytes, 0),
   assets: checked.map((asset) => asset.path),
