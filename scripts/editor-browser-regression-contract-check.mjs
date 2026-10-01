@@ -26,7 +26,7 @@ const screenOrderMovementSource = await readFile('src/editor/editPanelParts/scre
 const workspacePanelPropsSource = await readFile('src/runtime/createWorkspacePanelProps.js', 'utf8');
 const pageOptionsCssSource = await readFile('src/editor/editPanelParts/PageGlobalOptions.css', 'utf8');
 const editorWorkspaceCssSource = await readFile('src/styles/editor-workspace.css', 'utf8');
-const editorFinalCleanCssSource = await readFile('src/styles/editor-final-clean.css', 'utf8');
+const workspaceShellCssSource = await readFile('src/styles/workspace-shell.css', 'utf8');
 
 assert(packageJson.scripts?.['browser:editor:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-browser-regression-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-image-library-browser-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-video-library-browser-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/media-library-settings-browser-check.mjs', 'browser:editor:qa must run editor, image/video reuse, and media settings E2E');
 assert(packageJson.scripts?.['browser:editor:image-library:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-image-library-browser-check.mjs', 'browser:editor:image-library:qa script is missing');
@@ -103,8 +103,8 @@ assert(addBlockOptionSource.includes("meta.preset || '', type"), 'block add opti
 assert(addBlockDockCssSource.includes('.widget-group button') && addBlockDockCssSource.includes('min-height: 44px !important;'), 'block add buttons must keep 44px mobile touch targets');
 
 assert(pageOptionsCssSource.includes('/* Page options runtime owner.') && pageOptionsCssSource.includes('.page-global-options-card.card') && pageOptionsCssSource.includes('.page-global-options-title h2'), 'PageGlobalOptions.css must own the page-options runtime surface');
-assert(!editorWorkspaceCssSource.includes('page-global-options') && !editorFinalCleanCssSource.includes('page-global-options'), 'global editor CSS must not override PageGlobalOptions component selectors');
-assert(!editorFinalCleanCssSource.includes('selected-block-settings-title'), 'deleted selected-block title CSS must not return');
+assert(!editorWorkspaceCssSource.includes('page-global-options') && !workspaceShellCssSource.includes('page-global-options'), 'workspace geometry CSS must not override PageGlobalOptions component selectors');
+assert(!workspaceShellCssSource.includes('selected-block-settings-title'), 'deleted selected-block title CSS must not return through workspace shell');
 
 assert(panelHeaderSource.includes('undoPageEdit') && panelHeaderSource.includes('redoPageEdit') && panelHeaderSource.includes('Ctrl/Cmd+Z'), 'editor header must expose undo/redo controls and keyboard shortcuts');
 assert(editHistorySource.includes('const MAX_HISTORY = 50') && editHistorySource.includes('future = []'), 'editor history must cap snapshots and invalidate redo after fresh edits');

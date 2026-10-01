@@ -1,6 +1,102 @@
 /* Shared PageRo x CallTag authenticated workspace shell.
    This file owns the global workspace header, main tabs, operation-shell geometry and scroll model. */
 
+/* Non-edit workspace geometry migrated from editor-final-clean.css.
+   Keep this before mode-specific shell rules so inbox/stats/settings/mobile owners remain authoritative. */
+body:has(.builder-shell),
+#root:has(.builder-shell) {
+  width: 100% !important;
+  height: 100dvh !important;
+  overflow: hidden !important;
+}
+body .builder-shell:not(.edit-mode-shell) {
+  --pg-left-width: clamp(660px, 40vw, 720px);
+  --pg-panel-width: min(100%, 680px);
+  display: grid !important;
+  grid-template-columns: var(--pg-left-width) minmax(620px, 1fr) !important;
+  width: 100% !important;
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+  align-items: stretch !important;
+}
+body .builder-shell:not(.edit-mode-shell) .left-workspace {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 100dvh !important;
+  min-height: 0 !important;
+  max-height: 100dvh !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  scrollbar-gutter: stable !important;
+  border-right: 1px solid #d9dee8 !important;
+}
+body .builder-shell:not(.edit-mode-shell) .work-panel {
+  width: 100% !important;
+  max-width: var(--pg-panel-width) !important;
+  min-width: 0 !important;
+  min-height: 100dvh !important;
+  height: auto !important;
+  margin: 0 auto !important;
+  padding: 28px 24px 64px !important;
+  overflow: visible !important;
+}
+body .builder-shell:not(.edit-mode-shell) .work-panel > * {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box !important;
+}
+
+body .builder-shell :is(.panel-header, .top-tabs, .edit-layout, .settings-panel, .style-panel, .inbox-panel, .stats-panel) {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+@media (max-width: 1440px) {
+  body .builder-shell:not(.edit-mode-shell) {
+    --pg-left-width: 680px;
+    --pg-panel-width: 640px;
+    grid-template-columns: var(--pg-left-width) minmax(560px, 1fr) !important;
+  }
+  body .builder-shell:not(.edit-mode-shell) .work-panel {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+}
+@media (max-width: 1280px) {
+  body .builder-shell:not(.edit-mode-shell) {
+    --pg-left-width: 640px;
+    --pg-panel-width: 600px;
+    grid-template-columns: var(--pg-left-width) minmax(500px, 1fr) !important;
+  }
+}
+@media (max-width: 1180px) {
+  body .builder-shell:not(.edit-mode-shell) {
+    height: auto !important;
+    min-height: 100dvh !important;
+    max-height: none !important;
+    overflow: visible !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  body .builder-shell:not(.edit-mode-shell) .left-workspace {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  body .builder-shell:not(.edit-mode-shell) .work-panel {
+    max-width: 760px !important;
+    min-height: 0 !important;
+    padding: 18px 14px 28px !important;
+  }
+}
+
 /* Mobile operations presentation migrated from editor-layout-final.css.
    Keep this before the current workspace rules so later shell rules remain authoritative. */
 @media (max-width: 899px) {

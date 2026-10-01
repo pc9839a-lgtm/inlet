@@ -265,7 +265,6 @@ const formOptionEditor = await readFile('src/editor/blockEditors/FormOptionEdito
 const baseComponentsOptionsCss = await readFile('src/styles/base-components-options.css', 'utf8');
 const editorAnimationCss = await readFile('src/styles/editor-animation.css', 'utf8');
 const editorSharedUiCss = await readFile('src/styles/editor-shared-ui.css', 'utf8');
-const editorFinalCleanCss = await readFile('src/styles/editor-final-clean.css', 'utf8');
 const workspaceShellCss = await readFile('src/styles/workspace-shell.css', 'utf8');
 const editorBlockListsCss = await readFile('src/styles/editor-block-lists.css', 'utf8');
 const previewWorkspaceReservationCss = await readFile('src/styles/preview-workspace-reservation.css', 'utf8');
@@ -359,7 +358,7 @@ assert(signalBlocks.includes("(s.title ?? '실시간 접수현황') &&"), 'activ
 assert(formOptionEditor.includes("import { Plus, Trash2 } from 'lucide-react'") && formOptionEditor.includes('className="option-editor-row"'), 'form options must use compact labeled rows and icon actions');
 assert(formOptionEditor.includes('if (list.length <= 1) return') && formOptionEditor.includes('disabled={list.length <= 1}') && !formOptionEditor.includes('.filter((item) => String(item).trim())'), 'form option editing must preserve in-progress text and keep at least one choice');
 assert(!baseComponentsOptionsCss.includes('.option-editor{') && !editorSharedUiCss.includes('.option-editor') && editorBlockListsCss.includes('.option-editor-row'), 'form option styles must have one active owner');
-assert(!editorAnimationCss.includes('gallery-edit') && !editorSharedUiCss.includes('gallery-edit') && !editorFinalCleanCss.includes('gallery-edit'), 'imported editor styles must not retain the removed gallery editor wrapper');
+assert(!editorAnimationCss.includes('gallery-edit') && !editorSharedUiCss.includes('gallery-edit') && !workspaceShellCss.includes('gallery-edit'), 'imported editor styles and workspace shell must not retain the removed gallery editor wrapper');
 assert(!previewWorkspaceReservationCss.includes('reservation-custom-card') && editorBlockListsCss.includes('.reservation-custom-head-row') && editorBlockListsCss.includes('.reservation-custom-body'), 'reservation custom-field styles must stay owned by the editor stylesheet');
 assert(!previewFormsCss.includes('form-question-') && !previewFormsSpacingCss.includes('form-question-') && editorBlockListsCss.includes('.form-question-tools') && editorBlockListsCss.includes('.form-question-actions'), 'form question styles must stay owned by the editor stylesheet');
 assert(formEditorSource.includes("import './FormEditor.css'") && formEditorCss.includes('.form-basic-grid') && formEditorCss.includes('.form-advanced-group') && formEditorCss.includes('.question-compact-row'), 'FormEditor must own its active layout styles in its lazy chunk');
