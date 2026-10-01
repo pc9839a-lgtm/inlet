@@ -223,6 +223,7 @@ const createPageUrlCheck = await readFile('src/runtime/useCreatePageUrlCheck.js'
 const settingsDraftActions = await readFile('src/panels/settings/settingsDraftActions.js', 'utf8');
 const settingsAdvancedGroup = await readFile('src/panels/settings/AdvancedSettingsGroup.jsx', 'utf8');
 const settingsSection = await readFile('src/panels/settings/SettingsSection.jsx', 'utf8');
+const workspaceEditorScreen = await readFile('src/screens/WorkspaceEditorScreen.jsx', 'utf8');
 const workspaceActivePanel = await readFile('src/screens/workspace/WorkspaceActivePanel.jsx', 'utf8');
 const workspaceTabs = await readFile('src/screens/workspace/WorkspaceTabs.jsx', 'utf8');
 const workspaceLeftPanel = await readFile('src/screens/workspace/WorkspaceLeftPanel.jsx', 'utf8');
