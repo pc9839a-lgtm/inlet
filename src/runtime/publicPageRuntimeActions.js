@@ -26,6 +26,7 @@ export function createPageEventTracker({
       sourceUrl: ev.sourceUrl || traffic.sourceUrl,
       referrer: ev.referrer || traffic.referrer,
       sourceLabel: ev.sourceLabel || traffic.sourceLabel,
+      isTest: ev.isTest ?? traffic.isTest ?? false,
       device: ev.device || detectDeviceType(),
       createdAt: new Date().toISOString(),
     };
