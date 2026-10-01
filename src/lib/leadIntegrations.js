@@ -1,4 +1,5 @@
 import { normalizeIntegrations, uid } from './pageModel.js';
+import { isTestTraffic } from './trafficAttribution.js';
 import { BRAND_NAME } from '../config/brand.js';
 import { publicLandingUrl, runtimeConfig } from '../config/runtimeConfig.js';
 import { trackingConfig } from './conversionTracking.js';
@@ -342,6 +343,7 @@ export function conversionEventPayload(lead = {}, page = {}) {
 export function sendConversionIntegrations(lead = {}, page = {}, win = browserWindow()) {
   const config = trackingConfig(page);
   const payload = conversionEventPayload(lead, page);
+  if (isTestTraffic(lead)) return { sent: false, duplicate: false, eventName: payload.event, channels: [], reason: 'test-traffic' };
   if (!config.enabled) return { sent: false, duplicate: false, eventName: payload.event, channels: [], reason: 'disabled' };
   if (!win) return { sent: false, duplicate: false, eventName: payload.event, channels: [], reason: 'browser-unavailable' };
 
