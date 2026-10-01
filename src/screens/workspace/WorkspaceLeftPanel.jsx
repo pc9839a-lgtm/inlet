@@ -6,6 +6,7 @@ import { ClientAdminHeader } from './ClientAdminHeader.jsx';
 import { MobileOperationsHeader } from './MobileOperationsHeader.jsx';
 import { WorkspaceActivePanel } from './WorkspaceActivePanel.jsx';
 import { WorkspaceTabs } from './WorkspaceTabs.jsx';
+import './WorkspaceChrome.css';
 
 export function WorkspaceLeftPanel({
   canUseBuilder,

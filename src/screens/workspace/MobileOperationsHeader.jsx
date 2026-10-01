@@ -1,5 +1,6 @@
 import React from 'react';
 import { Smartphone } from 'lucide-react';
+import './MobileOperations.css';
 
 export function MobileOperationsHeader({ page }) {
   return (

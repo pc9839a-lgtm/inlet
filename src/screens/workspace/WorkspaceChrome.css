@@ -1,0 +1,227 @@
+/* Shared authenticated workspace chrome.
+   Owns persistent header, PanelHeader actions and main workspace tabs. */
+
+body .builder-shell .workspace-persistent-header {
+  position: relative;
+  z-index: 20;
+  width: 100%;
+  background: var(--product-panel);
+}
+
+body .builder-shell .panel-header {
+  width: 100% !important;
+  height: var(--product-topbar-h) !important;
+  min-height: var(--product-topbar-h) !important;
+  max-height: var(--product-topbar-h) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: var(--product-space-4) !important;
+  margin: 0 !important;
+  padding: 0 20px !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--product-line) !important;
+  border-radius: 0 !important;
+  background: rgba(255, 255, 255, .97) !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+body .builder-shell .panel-title,
+body .builder-shell .operations-panel-title {
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: var(--product-space-3) !important;
+  margin: 0 !important;
+}
+
+body .builder-shell .panel-title > p,
+body .builder-shell .operations-panel-title > p {
+  max-width: 210px;
+  margin: 0 !important;
+  overflow: hidden;
+  color: var(--product-muted) !important;
+  font-size: 12px !important;
+  line-height: 1.2 !important;
+  font-weight: 800 !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body .builder-shell .panel-title > h1,
+body .builder-shell .operations-panel-title-row > h1 {
+  margin: 0 !important;
+  color: var(--product-text) !important;
+  font-size: 20px !important;
+  line-height: 1.1 !important;
+  font-weight: 950 !important;
+  letter-spacing: -.04em !important;
+  white-space: nowrap;
+}
+
+body .builder-shell .operations-panel-title-row {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--product-space-2);
+}
+
+body .builder-shell .panel-save-status,
+body .builder-shell .operations-save-status {
+  width: auto !important;
+  min-width: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  margin: 0 !important;
+  padding: 4px 8px !important;
+  border-radius: 999px !important;
+  background: var(--product-soft) !important;
+  line-height: 1 !important;
+}
+
+body .builder-shell .panel-save-status strong,
+body .builder-shell .operations-save-status strong {
+  font-size: 10px !important;
+  line-height: 1 !important;
+  white-space: nowrap;
+}
+
+body .builder-shell .panel-save-status small {
+  display: none !important;
+}
+
+body .builder-shell .panel-actions {
+  flex: 0 0 auto;
+  display: flex !important;
+  align-items: center !important;
+  gap: var(--product-space-2) !important;
+}
+
+body .builder-shell .panel-actions button {
+  height: 36px !important;
+  min-height: 36px !important;
+  min-width: 0 !important;
+  padding: 0 12px !important;
+  border-radius: var(--product-radius-control) !important;
+  border: 1px solid var(--product-line) !important;
+  background: var(--product-panel) !important;
+  color: #30353d !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+}
+
+body .builder-shell .panel-actions .primary-btn {
+  border-color: var(--product-text) !important;
+  background: var(--product-text) !important;
+  color: #fff !important;
+}
+
+body .builder-shell .work-panel {
+  box-sizing: border-box;
+}
+
+body .builder-shell .top-tabs {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 46px !important;
+  max-height: none !important;
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 3px !important;
+  margin: 10px 0 12px !important;
+  padding: 4px !important;
+  border: 1px solid var(--product-line) !important;
+  border-radius: 10px !important;
+  background: var(--product-panel) !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+}
+
+body .builder-shell .top-tabs button {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  padding: 0 8px !important;
+  border: 1px solid transparent !important;
+  border-radius: 7px !important;
+  background: transparent !important;
+  color: var(--product-muted) !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  font-weight: 850 !important;
+  white-space: nowrap;
+}
+
+body .builder-shell .top-tabs button:hover {
+  background: var(--product-soft) !important;
+  color: var(--product-text) !important;
+}
+
+body .builder-shell .top-tabs button.active {
+  border-color: #d9dde4 !important;
+  background: #f1f3f6 !important;
+  color: var(--product-text) !important;
+  font-weight: 950 !important;
+}
+
+@media (max-width: 820px) {
+
+  body .builder-shell .panel-header {
+    height: 56px !important;
+    min-height: 56px !important;
+    max-height: 56px !important;
+    padding: 0 10px !important;
+  }
+
+  body .builder-shell .panel-title > p,
+  body .builder-shell .operations-panel-title > p {
+    display: none !important;
+  }
+
+  body .builder-shell .panel-title > h1,
+  body .builder-shell .operations-panel-title-row > h1 {
+    font-size: 18px !important;
+  }
+
+  body .builder-shell .panel-actions button {
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 9px !important;
+    font-size: 11px !important;
+  }
+
+  body .builder-shell .top-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    min-height: 44px !important;
+    gap: 2px !important;
+    padding: 3px !important;
+    overflow: hidden !important;
+  }
+
+  body .builder-shell .top-tabs button {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 5px !important;
+    gap: 4px !important;
+    font-size: 11px !important;
+  }
+
+  body .builder-shell .top-tabs button svg {
+    width: 15px !important;
+    height: 15px !important;
+    flex: 0 0 15px !important;
+  }
+}
