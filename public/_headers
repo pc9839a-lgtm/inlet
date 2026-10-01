@@ -23,9 +23,9 @@
   Cache-Control: no-store, no-cache, must-revalidate, max-age=0
 
 /assets/*
-  Cache-Control: public, max-age=0, must-revalidate
-  CDN-Cache-Control: public, max-age=0, must-revalidate
-  Cloudflare-CDN-Cache-Control: public, max-age=0, must-revalidate
+  Cache-Control: public, max-age=31536000, immutable
+  CDN-Cache-Control: public, max-age=31536000, immutable
+  Cloudflare-CDN-Cache-Control: public, max-age=31536000, immutable
   X-Content-Type-Options: nosniff
 
 /c63-assets/*
