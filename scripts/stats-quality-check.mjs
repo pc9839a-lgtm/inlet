@@ -33,6 +33,7 @@ const events = [
   { id: 'pv-after-kst', type: 'page_view', channel: 'direct', device: 'desktop', createdAt: afterKstToday },
   { id: 'pv-yesterday', type: 'page_view', channel: 'direct', device: 'tablet', createdAt: yesterday },
   { id: 'pv-old', type: 'page_view', channel: 'direct', device: 'desktop', createdAt: old },
+  { id: 'test-pv', type: 'page_view', channel: 'pagero_test', utmSource: 'pagero_test', sourceUrl: 'https://example.com/?pagero_test=1&utm_source=pagero_test', isTest: true, device: 'desktop', createdAt: today },
 ];
 
 const leads = [
@@ -46,6 +47,7 @@ const leads = [
   { id: 'lead-after-kst', type: '상담신청', status: '신규', createdAt: afterKstToday },
   { id: 'lead-yesterday', type: '상담신청', status: '신규', createdAt: yesterday },
   { id: 'lead-old', type: '상담신청', status: '신규', createdAt: old },
+  { id: 'lead-test', type: '상담신청', status: '신규', sourceUrl: 'https://example.com/?pagero_test=1&utm_source=pagero_test', utmSource: 'pagero_test', isTest: true, createdAt: today },
 ];
 
 const range = getPeriodRange('today', now);
@@ -63,7 +65,9 @@ assert(todayStats.reservationAttempt === 1, `reservation attempt mismatch: ${tod
 assert(todayStats.reservationSuccess === 1, `reservation success mismatch: ${todayStats.reservationSuccess}`);
 assert(todayStats.db === 4, `today db mismatch: ${todayStats.db}`);
 assert(todayStats.filteredEvents.length === 10, 'duplicate events and Seoul boundary events should be ignored');
-assert(todayStats.filteredLeads.length === 4, 'duplicate leads and Seoul boundary leads should be ignored');
+assert(todayStats.filteredLeads.length === 4, 'duplicate, Seoul boundary, and editor-test leads should be ignored');
+assert(!todayStats.filteredEvents.some((event) => event.id === 'test-pv'), 'editor test events must stay out of local statistics');
+assert(!todayStats.filteredLeads.some((lead) => lead.id === 'lead-test'), 'editor test leads must stay out of local statistics');
 assert(todayStats.consultLeads === 2, `consult lead mismatch: ${todayStats.consultLeads}`);
 assert(todayStats.reservationLeads === 2, `reservation lead mismatch: ${todayStats.reservationLeads}`);
 assert(todayStats.conversion === '200.0', `conversion mismatch: ${todayStats.conversion}`);
@@ -143,5 +147,6 @@ assert(leadCaptureActions.includes('referrer') && leadCaptureActions.includes('s
 const trafficAttribution = await readFile('src/lib/trafficAttribution.js', 'utf8');
 assert(trafficAttribution.includes('trafficAttributionFromUrl') && trafficAttribution.includes('utm_source'), 'traffic attribution should parse UTM source');
 assert(trafficAttribution.includes('trafficChannelFromReferrer') && trafficAttribution.includes('sourceLabel'), 'traffic attribution should fall back to referrer and source label');
+assert(trafficAttribution.includes('export function isTestTraffic') && trafficAttribution.includes('pagero_test'), 'traffic attribution should identify editor test traffic');
 
-console.log(JSON.stringify({ ok: true, checks: 64 }, null, 2));
+console.log(JSON.stringify({ ok: true, checks: 67 }, null, 2));
