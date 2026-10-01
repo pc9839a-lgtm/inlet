@@ -79,6 +79,7 @@ const editorWorkspaceCss = await readFile('src/styles/editor-workspace.css', 'ut
 const workspaceShellCss = await readFile('src/styles/workspace-shell.css', 'utf8');
 const workspaceChromeCss = await readFile('src/screens/workspace/WorkspaceChrome.css', 'utf8');
 const mobileOperationsCss = await readFile('src/screens/workspace/MobileOperations.css', 'utf8');
+const operationsWorkspaceCss = await readFile('src/screens/workspace/OperationsWorkspace.css', 'utf8');
 for (const legacySelector of ['.screen-order-item', '.screen-order-head', '.screen-title-wrap', '.screen-drag-handle', '.screen-row-action-menu']) {
   assert(!editorWorkspaceCss.includes(legacySelector), `legacy screen-order selector reintroduced in editor-workspace.css: ${legacySelector}`);
 }
@@ -88,6 +89,12 @@ assert(editorWorkspaceCss.length <= 2600 && editorWorkspaceImportantCount <= 20,
 assert(!editorWorkspaceCss.includes(':not(.inbox-workspace-shell)') && !editorWorkspaceCss.includes(':not(.stats-dashboard-shell)') && !editorWorkspaceCss.includes(':not(.settings-workspace-shell)'), 'editor-workspace.css must target edit-mode-shell directly instead of broad negative shell selectors');
 assert(workspaceShellCss.includes('.preview-workspace-shell') && !workspaceShellCss.includes('body .builder-shell:not(.edit-mode-shell) {') && !workspaceShellCss.includes(':is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-workspace-shell) > .preview-workspace'), 'operations shells must not inherit preview-bearing fallback geometry or keep a dead preview hide rule');
 assert(!workspaceShellCss.includes('.mobile-operations-header') && !workspaceShellCss.includes('body .builder-shell .panel-header {') && !workspaceShellCss.includes('body .builder-shell .top-tabs {'), 'workspace-shell.css must remain geometry/scroll-only for mobile/chrome presentation');
+assert(!workspaceShellCss.includes('.inbox-workspace-shell') && !workspaceShellCss.includes('.stats-dashboard-shell') && !workspaceShellCss.includes('.settings-workspace-shell'), 'desktop operations variants must stay out of the common workspace shell');
+assert(workspaceSource.includes("import './workspace/OperationsWorkspace.css';") && operationsWorkspaceCss.includes(':is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-workspace-shell)') && operationsWorkspaceCss.includes(':is(.settings-panel,.inbox-panel,.stats-panel)'), 'OperationsWorkspace.css must own desktop operations shell and panel normalization');
+const workspaceShellImportantCount = (workspaceShellCss.match(/!important/g) || []).length;
+const operationsWorkspaceImportantCount = (operationsWorkspaceCss.match(/!important/g) || []).length;
+assert(workspaceShellCss.length <= 7000 && workspaceShellImportantCount <= 100, `workspace-shell.css exceeded common shell budget: ${workspaceShellCss.length} bytes / ${workspaceShellImportantCount} !important`);
+assert(operationsWorkspaceCss.length <= 4000 && operationsWorkspaceImportantCount <= 50, `OperationsWorkspace.css exceeded operations owner budget: ${operationsWorkspaceCss.length} bytes / ${operationsWorkspaceImportantCount} !important`);
 assert(workspaceChromeCss.length <= 7000 && mobileOperationsCss.length <= 2400, `workspace presentation owners exceeded budget: chrome=${workspaceChromeCss.length}, mobile=${mobileOperationsCss.length}`);
 
 
