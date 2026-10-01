@@ -3,6 +3,7 @@ import { WorkspaceLeftPanel } from './workspace/WorkspaceLeftPanel.jsx';
 import { WorkspacePreviewPane } from './workspace/WorkspacePreviewPane.jsx';
 import '../styles/product-ui-tokens.css';
 import '../styles/workspace-shell.css';
+import './workspace/OperationsWorkspace.css';
 import '../styles/editor-workspace.css';
 import '../styles/settings-workspace.css';
 
