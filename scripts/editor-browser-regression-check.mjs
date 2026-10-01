@@ -1016,9 +1016,19 @@ async function run() {
     assert(apiState.saveSnapshots[2]?.blocks?.find((block) => block.id === 'editor-code')?.s?.editorLabel === persistedCodeLabel, 'final publish snapshot did not include the code block custom label');
     assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-code')?.s?.editorLabel === persistedCodeLabel, 'server page did not keep the code block custom label');
 
-    await client.send('Page.reload', { ignoreCache: true });
+    const pageLoadsBeforeReload = apiState.pageLoadCount;
+    await client.send('Page.reload');
     await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('.phone-frame')`, 'reloaded desktop editor');
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(finalHeroTitle)})`, 'saved page after reload');
+    await waitForBrowser(client, `(document.querySelector('.panel-actions .primary-btn')?.innerText || '').includes('발행됨')`, 'published state after reload');
+    await waitForState(() => apiState.pageLoadCount > pageLoadsBeforeReload, 'fresh account page read after reload');
+    assert(apiState.saveCount === 3, `reload must not trigger another publish, got ${apiState.saveCount}`);
+    const reloadGuardPrevented = await evaluate(client, `(() => {
+      const event = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented;
+    })()`);
+    assert(reloadGuardPrevented === false, 'clean saved page must not keep the unsaved navigation guard after reload');
     await clickSelector(client, '#editor-block-editor-code .screen-order-v2-head');
     await waitForBrowser(client, `document.querySelector('#editor-block-editor-code + .screen-order-v2-inline-editor input[aria-label="구분 이름"]')?.value === ${JSON.stringify(persistedCodeLabel)}`, 'persisted code block custom label after reload');
     await waitForBrowser(client, `(document.querySelector('#editor-block-editor-code .screen-order-v2-title-wrap strong')?.textContent || '').includes(${JSON.stringify(persistedCodeLabel)})`, 'persisted screen-order code label after reload');
@@ -1136,6 +1146,8 @@ async function run() {
       pageLoadCount: apiState.pageLoadCount,
       saveCount: apiState.saveCount,
       saveRaceProtected: apiState.saveSnapshots[1]?.blocks?.find((block) => block.id === 'editor-hero')?.s?.title === continuedHeroTitle,
+      normalReloadServerReadback: apiState.pageLoadCount > pageLoadsBeforeReload,
+      cleanAfterReload: reloadGuardPrevented === false,
       revisionListCount: apiState.revisionListCount,
       revisionRestoreUndoRedo: apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === finalHeroTitle,
       publicVerifyCount: apiState.publicVerifyCount,
