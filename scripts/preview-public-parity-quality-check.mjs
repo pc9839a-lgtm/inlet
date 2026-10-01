@@ -10,7 +10,7 @@ const fixedUiCss = await readFile('src/styles/preview-fixed-ui-contract.css', 'u
 const workspacePreview = await readFile('src/screens/workspace/WorkspacePreviewPane.jsx', 'utf8');
 const app = await readFile('src/App.jsx', 'utf8');
 const baseCss = await readFile('src/styles/base.css', 'utf8');
-const editorWorkspaceCss = await readFile('src/styles/editor-workspace.css', 'utf8');
+const workspacePreviewCss = await readFile('src/screens/workspace/WorkspacePreviewPane.css', 'utf8');
 const publicCss = await readFile('src/styles/preview-public.css', 'utf8');
 
 const parityImport = "@import '../styles/preview-runtime-parity.css';";
@@ -27,7 +27,8 @@ assert(app.includes("import PreviewRenderer from './preview/LandingRenderer.jsx'
 assert(workspacePreview.includes('className="phone-frame"'), 'Editor preview must keep the phone-frame runtime host');
 assert(app.includes('className="public-landing-viewport"'), 'Public landing route must keep the public runtime host');
 assert(baseCss.includes('*{box-sizing:border-box}'), 'Runtime width parity depends on border-box sizing');
-assert(editorWorkspaceCss.includes('width: 430px !important') && editorWorkspaceCss.includes('border: 8px solid #111827 !important'), 'Editor phone frame must keep a 414px inner viewport');
+assert(workspacePreview.includes("import './WorkspacePreviewPane.css';"), 'WorkspacePreviewPane must load its component-owned preview CSS');
+assert(workspacePreviewCss.includes('width: 430px !important') && workspacePreviewCss.includes('border: 8px solid #111827 !important'), 'Editor phone frame must keep a 414px inner viewport under WorkspacePreviewPane.css ownership');
 assert(publicCss.includes('width: min(414px, 100vw)') || publicCss.includes('max-width: 414px'), 'Public runtime must keep the 414px viewport contract');
 
 for (const token of [

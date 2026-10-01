@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import './WorkspacePreviewPane.css';
 import PreviewRenderer from '../../preview/LandingRenderer.jsx';
 
 export function WorkspacePreviewPane({
