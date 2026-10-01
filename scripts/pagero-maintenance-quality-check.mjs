@@ -80,6 +80,9 @@ for (const legacySelector of ['.screen-order-item', '.screen-order-head', '.scre
   assert(!editorWorkspaceCss.includes(legacySelector), `legacy screen-order selector reintroduced in editor-workspace.css: ${legacySelector}`);
 }
 assert(await exists('src/editor/editPanelParts/ScreenOrder.css'), 'ScreenOrder.css must remain the current screen-order CSS owner');
+const editorWorkspaceImportantCount = (editorWorkspaceCss.match(/!important/g) || []).length;
+assert(editorWorkspaceCss.length <= 2600 && editorWorkspaceImportantCount <= 20, `editor-workspace.css exceeded final geometry budget: ${editorWorkspaceCss.length} bytes / ${editorWorkspaceImportantCount} !important`);
+assert(!editorWorkspaceCss.includes(':not(.inbox-workspace-shell)') && !editorWorkspaceCss.includes(':not(.stats-dashboard-shell)') && !editorWorkspaceCss.includes(':not(.settings-workspace-shell)'), 'editor-workspace.css must target edit-mode-shell directly instead of broad negative shell selectors');
 
 const docsIndex = await readFile('docs/README.md', 'utf8');
 assert(docsIndex.includes('PAGERO_EDITOR_PRODUCT_DIRECTION_KO.md'), 'docs index must point to current editor product direction');
