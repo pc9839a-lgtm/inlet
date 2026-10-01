@@ -54,3 +54,20 @@ body .builder-shell .edit-layout .page-global-options-card .edit-animation-optio
   background: var(--pg-ink) !important;
   color: #fff !important;
 }
+
+body .builder-shell .edit-layout .page-global-options-card .edit-animation-settings {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  padding: 12px !important;
+  overflow: visible !important;
+  border-top: 1px solid var(--product-line) !important;
+  background: #f8fafc !important;
+}
+
+@media (max-width: 760px) {
+  body .builder-shell .edit-layout .page-global-options-card .edit-animation-settings {
+    padding: 10px !important;
+  }
+}
+
