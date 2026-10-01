@@ -178,3 +178,53 @@ body .builder-shell .edit-layout .block-editor-v2 .editor-section-v2-trigger {
     min-width: 0 !important;
   }
 }
+
+/* Block editor shell details migrated from editor-workspace.css.
+   Keep these presentation rules with BlockEditorShell / EditorSection ownership. */
+body .builder-shell .edit-layout .block-editor-v2-header {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+}
+
+body .builder-shell .edit-layout :is(.block-editor-v2-icon, .editor-section-v2-icon) {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: var(--product-soft);
+  color: var(--product-muted);
+}
+
+body .builder-shell .edit-layout .block-editor-v2-heading strong,
+body .builder-shell .edit-layout :is(.editor-section-v2-copy strong, .editor-control-v2-copy strong) {
+  color: var(--product-text);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+body .builder-shell .edit-layout .block-editor-v2-heading strong {
+  font-size: 13px;
+}
+
+body .builder-shell .edit-layout .editor-section-v2-trigger {
+  min-width: 0;
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+body .builder-shell .edit-layout .editor-section-v2-body {
+  min-width: 0;
+  display: grid;
+  gap: 11px;
+  padding: 12px 4px 16px;
+}
+
