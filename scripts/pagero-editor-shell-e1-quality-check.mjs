@@ -11,6 +11,7 @@ const editPanel = await readFile('src/editor/EditPanel.jsx', 'utf8');
 const layout = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
 const screenOrderItem = await readFile('src/editor/editPanelParts/ScreenOrderItem.jsx', 'utf8');
 const css = await readFile('src/styles/editor-workspace.css', 'utf8');
+const editPanelLayoutCss = await readFile('src/editor/EditPanelLayout.css', 'utf8');
 const pageOptionsCss = await readFile('src/editor/editPanelParts/PageGlobalOptions.css', 'utf8');
 const fixedBlocksCss = await readFile('src/editor/editPanelParts/FixedBlocksSection.css', 'utf8');
 const workspaceCss = await readFile('src/styles/workspace-shell.css', 'utf8');
@@ -35,7 +36,7 @@ assert(!css.includes('editor-inspector-pane'), 'editor workspace CSS must not re
 assert(!css.includes('screen-order-v2-inline-editor'), 'workspace geometry must not own inline block editor presentation');
 assert(!css.includes('.fixed-block-card') && !css.includes('.edit-animation-card') && !css.includes('.fixed-block-editor') && !css.includes('.edit-animation-settings'), 'workspace geometry must not own fixed or animation cards');
 assert(!css.includes('.block-editor-v2-header') && !css.includes('.editor-field-v2') && !css.includes('.editor-section-v2-trigger') && !css.includes('.editor-segmented-v2') && !css.includes('.image-mode-toolbar'), 'workspace geometry must not own block editor internals');
-assert(css.includes('editor-page-options-stack'), 'page options and theme controls need a left-panel stack');
+assert(editPanelLayoutCss.includes('editor-page-options-stack'), 'page options and theme controls need a left-panel stack owned by EditPanelLayout.css');
 assert(fixedBlocksCss.includes('.screen-order-fixed-blocks :is(.fixed-block-card, .edit-animation-card)') && fixedBlocksCss.includes('border-radius: 10px !important') && fixedBlocksCss.includes('min-height: 52px !important') && !css.includes('.screen-order-fixed-blocks'), 'fixed-area cards must stay compact under FixedBlocksSection.css ownership');
 assert(workspaceCss.includes('grid-template-columns: repeat(4, minmax(0, 1fr)) !important') && workspaceCss.includes('min-height: 46px !important') && workspaceCss.includes('height: 36px !important'), 'workspace top navigation must stay compact and use exactly four columns');
 assert(workspaceCss.includes('background: #f1f3f6 !important') && workspaceCss.includes('color: var(--product-text) !important'), 'active workspace tab must use the compact light selected state instead of a solid dark block');
@@ -43,15 +44,16 @@ assert(css.includes('/* >=1181px active editor geometry.') && css.includes('grid
 assert(addDockCss.includes('/* Active editor dock geometry.') && addDockCss.includes('position: sticky !important;') && addDockCss.includes('max-height: min(62dvh, 620px) !important;') && !css.includes('.fixed-add-dock'), 'active editor add dock must be owned by editor-widget-add-dock.css');
 assert(css.includes('@media (min-width: 900px) and (max-width: 1180px)') && css.includes('.builder-shell.edit-mode-shell:not(.mobile-operations-shell) .work-panel') && css.includes('max-width: none !important;') && css.includes('margin-inline: 0 !important;') && css.includes('padding-inline: 10px !important;') && !css.includes('max-width: 760px !important;'), '900-1180px desktop editor geometry must be owned by editor-workspace.css without the old 760px content cap');
 assert(
-  css.includes("html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2']")
-    && css.includes("html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab")
-    && css.includes(">.edit-section-tab[data-selected='true']") === false
-    && css.includes(".edit-section-tab[data-selected='true']")
-    && css.includes('height: 42px !important;')
-    && css.includes('height: 36px !important;'),
-  'isolated edit section tabs must own the exact compact geometry',
+  editPanelLayoutCss.includes("html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2']")
+    && editPanelLayoutCss.includes("html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab")
+    && editPanelLayoutCss.includes(">.edit-section-tab[data-selected='true']") === false
+    && editPanelLayoutCss.includes(".edit-section-tab[data-selected='true']")
+    && editPanelLayoutCss.includes('height: 42px !important;')
+    && editPanelLayoutCss.includes('height: 36px !important;'),
+  'EditPanelLayout.css must own the exact compact subsection tab geometry',
 );
-assert(css.includes("data-pagero-ui='edit-section-tabs-v2'") && css.includes("data-selected='true'") && css.includes('background: #eef1f5 !important;') && css.includes('background: #fff !important;') && css.includes('border-color: #d9dde4 !important;'), 'isolated edit section tabs must keep the light selected state');
+assert(editPanelLayoutCss.includes("data-pagero-ui='edit-section-tabs-v2'") && editPanelLayoutCss.includes("data-selected='true'") && editPanelLayoutCss.includes('background: #eef1f5 !important;') && editPanelLayoutCss.includes('background: #fff !important;') && editPanelLayoutCss.includes('border-color: #d9dde4 !important;'), 'EditPanelLayout.css must keep the light selected state');
+assert(!css.includes('edit-section-tabs') && !css.includes('editor-page-options-stack'), 'workspace geometry must not own EditPanelLayout subsection UI');
 assert(pageOptionsCss.includes('body .builder-shell .page-global-options-card') && pageOptionsCss.includes('padding: 0;') && pageOptionsCss.includes('border-radius: 0;') && pageOptionsCss.includes('background: transparent;') && !css.includes('page-global-options'), 'page options base contract must live in PageGlobalOptions.css and stay out of editor-workspace.css');
 
 console.log(JSON.stringify({

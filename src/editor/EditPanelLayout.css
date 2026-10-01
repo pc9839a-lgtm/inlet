@@ -1,0 +1,101 @@
+/* EditPanelLayout — owns the editor subsection shell, tabs and local panel stack. */
+
+body .builder-shell .edit-layout,
+body .builder-shell .edit-layout * {
+  box-sizing: border-box;
+}
+
+body .builder-shell .edit-layout {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  display: grid;
+  gap: 10px;
+}
+
+/* Edit section tabs — isolated owner. Do not reuse generic .active state. */
+html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  max-height: 42px !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 2px !important;
+  margin: 0 !important;
+  padding: 3px !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  border-radius: 9px !important;
+  background: #eef1f5 !important;
+  box-shadow: none !important;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  margin: 0 !important;
+  padding: 0 10px !important;
+  border: 1px solid transparent !important;
+  border-radius: 6px !important;
+  background: transparent !important;
+  color: var(--product-muted) !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  font-weight: 850 !important;
+  cursor: pointer !important;
+  appearance: none !important;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab:hover {
+  background: rgba(255, 255, 255, .72) !important;
+  color: var(--product-text) !important;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab[data-selected='true'],
+html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab[aria-pressed='true'] {
+  border-color: #d9dde4 !important;
+  background: #fff !important;
+  color: var(--product-text) !important;
+  box-shadow: none !important;
+  font-weight: 950 !important;
+}
+
+body .builder-shell .edit-section-panel {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Restored two-column editor: left editor workspace / right preview. */
+body .builder-shell.edit-mode-shell .editor-page-options-stack {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+
+body .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+/* PC editor section-panel and add-dock layout.
+   Component surfaces are owned by their component stylesheets. */
+@media (min-width: 900px) {
+  html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-panel {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+}
