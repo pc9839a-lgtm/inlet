@@ -22,6 +22,7 @@ const screenOrderHeader = await readFile('src/editor/editPanelParts/ScreenOrderL
 const screenOrderCss = await readFile('src/editor/editPanelParts/ScreenOrder.css', 'utf8');
 const editorLabels = await readFile('src/editor/editPanelParts/editorLabels.js', 'utf8');
 const editLayout = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
+const editPanelLayoutCss = await readFile('src/editor/EditPanelLayout.css', 'utf8');
 const screenOrderList = await readFile('src/editor/editPanelParts/ScreenOrderList.jsx', 'utf8');
 const screenOrderListItems = await readFile('src/editor/editPanelParts/ScreenOrderListItems.jsx', 'utf8');
 const screenOrderItem = await readFile('src/editor/editPanelParts/ScreenOrderItem.jsx', 'utf8');
@@ -102,6 +103,7 @@ assert(codeEditor.includes('block-editor-anchor-control code-editor-name-control
 assert(!codeEditorCss.includes('.code-editor-name {') && codeEditorCss.includes('.code-editor-name-value'), 'code block label must not keep a duplicate row layout in component CSS');
 assert(screenOrderRowIdentity.includes("block.type === 'code'") && screenOrderRowIdentity.includes('displayLabel') && screenOrderRowIdentity.includes('<strong title={displayLabel}>{displayLabel}</strong>'), 'screen order must display the custom code label beside 코드 입력');
 assert(editLayout.includes('data-editor-section={section}'), 'edit section panel must expose the active subsection for deterministic PC styling');
+assert(editLayout.includes("import './EditPanelLayout.css';") && editPanelLayoutCss.includes('edit-section-tabs-v2') && editPanelLayoutCss.includes('.editor-page-options-stack') && !editorWorkspaceCss.includes('edit-section-tabs') && !editorWorkspaceCss.includes('editor-page-options-stack'), 'EditPanelLayout must load and own subsection tabs/panel stack instead of editor-workspace.css');
 assert(screenOrderCss.includes('Desktop ScreenOrder surface owner') && fixedBlocksCss.includes('Fixed-block component owner for the active editor surface'), 'screen order and fixed blocks must keep explicit component-owned PC visual contracts');
 assert(pageOptionsCss.includes('.page-global-options-card.card') && pageOptionsCss.includes('padding: 18px !important') && pageOptionsCss.includes('border-radius: 22px !important') && screenOrderCss.includes('.edit-layout .screen-order-v2-card') && screenOrderCss.includes('padding: 18px !important') && screenOrderCss.includes('border-radius: 22px !important'), 'page options and screen order must preserve the same PC outer-surface geometry in component CSS');
 assert(screenOrderCss.includes('.screen-order-v2-list') && screenOrderCss.includes('gap: 10px !important') && screenOrderCss.includes('.screen-order-v2-item') && !editorWorkspaceCss.includes('.screen-order-v2-card'), 'PC screen order card/list ownership must stay in ScreenOrder.css instead of editor-workspace.css');
