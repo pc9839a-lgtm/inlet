@@ -27,6 +27,7 @@ const workspacePanelPropsSource = await readFile('src/runtime/createWorkspacePan
 const pageOptionsCssSource = await readFile('src/editor/editPanelParts/PageGlobalOptions.css', 'utf8');
 const editorWorkspaceCssSource = await readFile('src/styles/editor-workspace.css', 'utf8');
 const workspaceShellCssSource = await readFile('src/styles/workspace-shell.css', 'utf8');
+const mobileOperationsCssSource = await readFile('src/screens/workspace/MobileOperations.css', 'utf8');
 
 assert(packageJson.scripts?.['browser:editor:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-browser-regression-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-image-library-browser-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-video-library-browser-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/media-library-settings-browser-check.mjs', 'browser:editor:qa must run editor, image/video reuse, and media settings E2E');
 assert(packageJson.scripts?.['browser:editor:image-library:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-image-library-browser-check.mjs', 'browser:editor:image-library:qa script is missing');
@@ -70,6 +71,7 @@ assert(browserSource.includes("desktop editor and preview overlap") && browserSo
 assert(browserSource.includes("publicVerifyCount") && browserSource.includes("saveCount === 0"), 'browser QA must verify that editing stays local until explicit publish and then verifies the public page');
 assert(browserSource.includes("{ name: 'mobile-360', width: 360") && browserSource.includes("{ name: 'mobile-390', width: 390") && browserSource.includes("{ name: 'mobile-430', width: 430"), 'browser QA must cover 360, 390, and 430 pixel mobile widths');
 assert(browserSource.includes("const tabs = document.querySelector('.top-tabs')") && !browserSource.includes("const tabs = document.querySelector('.workspace-tabs')"), 'mobile editor metrics must use the current top-tabs DOM owner');
+assert(mobileOperationsCssSource.includes('position: sticky !important;') && mobileOperationsCssSource.includes('top: 0 !important;'), 'mobile operations owner must win the cascade for sticky top tabs');
 assert(browserSource.includes("mobile-operations-shell") && browserSource.includes("bodyScrollWidth <= viewport.width + 3") && browserSource.includes("must expose exactly two operations tabs") && browserSource.includes("tabs must render as two grid columns") && browserSource.includes("operations tabs must stay sticky at the top") && browserSource.includes("operations header overlaps the tab bar"), 'mobile editor regression must lock overflow, two-tab grid, sticky tabs, and non-overlapping header geometry');
 assert(browserSource.includes("unexpectedApis.length === 0") && browserSource.includes("browserErrors.length === 0"), 'browser QA must fail on unexpected API calls or browser exceptions');
 assert(!browserSource.includes('pagero.kr/api/auth/login') && !browserSource.includes('productionPassword'), 'browser QA must not use production credentials or production auth endpoints');
