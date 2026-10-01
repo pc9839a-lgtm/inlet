@@ -1,4 +1,5 @@
 import React from 'react';
+import './EditPanelLayout.css';
 import { AddBlockDock } from './editPanelParts/AddBlockDock.jsx';
 import { GlobalFixedBlocks } from './editPanelParts/GlobalFixedBlocks.jsx';
 import { PageGlobalOptions } from './editPanelParts/PageGlobalOptions.jsx';
