@@ -227,6 +227,7 @@ const workspaceEditorScreen = await readFile('src/screens/WorkspaceEditorScreen.
 const workspaceActivePanel = await readFile('src/screens/workspace/WorkspaceActivePanel.jsx', 'utf8');
 const workspaceTabs = await readFile('src/screens/workspace/WorkspaceTabs.jsx', 'utf8');
 const workspaceLeftPanel = await readFile('src/screens/workspace/WorkspaceLeftPanel.jsx', 'utf8');
+const mobileOperationsHeader = await readFile('src/screens/workspace/MobileOperationsHeader.jsx', 'utf8');
 const workspacePreviewPane = await readFile('src/screens/workspace/WorkspacePreviewPane.jsx', 'utf8');
 const pageSaveAction = await readFile('src/runtime/usePageSaveAction.js', 'utf8');
 const blockWriteGuard = await readFile('src/runtime/createBlockWriteGuard.js', 'utf8');
@@ -404,6 +405,7 @@ assert(app.includes('tabFromLocation(TAB_KEYS') && app.includes('hasTabDeepLink(
 assert(workspaceStartMode.includes('export function shouldShowStartModeOverlay()') && workspaceStartMode.includes('return false;'), 'workspace start mode overlay must stay disabled after the repeated modal regression');
 assert(!app.includes('<StartModeOverlay') && !app.includes('showStartModeOverlay'), 'App must not render the disabled start mode overlay');
 assert(workspaceLeftPanel.includes("const showTemplateIntro = !mobileOperationsOnly && canManageAdmin && startMode === 'template'"), 'template controls must stay desktop and master-admin-only');
+assert(workspaceLeftPanel.includes("import './WorkspaceChrome.css';") && mobileOperationsHeader.includes("import './MobileOperations.css';"), 'workspace chrome and mobile operations styles must stay component-loaded');
 assert(workspaceLeftPanel.includes('workspace-persistent-header'), 'workspace save header must remain outside the scrolling panel');
 assert(/\.builder-shell:not\(\.template-intro-shell\)\s*\{[\s\S]*?height:\s*100dvh[\s\S]*?overflow:\s*hidden[\s\S]*?padding-bottom:\s*0/.test(workspaceShellCss) && /\.builder-shell:not\(\.template-intro-shell\)\s*~\s*\.wayzi-global-footer\s*\{[\s\S]*?display:\s*none/.test(workspaceShellCss), 'workspace shell must own the viewport and hide the global footer so the save header cannot scroll off-screen');
 assert(/\.left-workspace\s*\{[\s\S]*?grid-template-rows:\s*auto minmax\(0, 1fr\)[\s\S]*?overflow:\s*hidden/.test(workspaceShellCss), 'workspace left column must keep the save header outside the scroll container');
