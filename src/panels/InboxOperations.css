@@ -407,6 +407,7 @@
 .inbox-workspace-shell .inbox-ops-mini-badge.danger { background: var(--product-danger-soft); color: var(--product-danger); }
 .inbox-workspace-shell .inbox-ops-mini-badge.warning { background: var(--product-warn-soft); color: var(--product-warn); }
 .inbox-workspace-shell .inbox-ops-mini-badge.delivery { background: var(--product-accent-soft); color: var(--product-accent); }
+.inbox-workspace-shell .inbox-ops-mini-badge.test { background: var(--product-accent-soft); color: var(--product-accent); }
 
 .inbox-workspace-shell .inbox-ops-empty {
   min-height: 110px;
