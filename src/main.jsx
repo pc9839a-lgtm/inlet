@@ -2,22 +2,12 @@ import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
 import { AppErrorBoundary } from './components/AppErrorBoundary.jsx';
 import MapEmbedApp from './map/MapEmbedApp.jsx';
-import PublicHomeRoute from './screens/PublicHomeRoute.jsx';
 import { installSplitPhoneInputs } from './lib/splitPhoneInputs.js';
 import './styles.css';
 
-const APP_QUERY_PARAMS = ['auth', 'code', 'state', 'session', 'token', 'provider', 'tab', 'mode', 'invite', 'admin'];
 const LEGACY_CHUNK_RELOAD_PREFIX = 'pagero-chunk-reload-v5:';
 const RUNTIME_RECOVERY_KEY = 'pagero-runtime-recovery-v1';
 const RUNTIME_STABLE_RESET_MS = 3000;
-
-function isRootPublicHomeLocation(locationObject = window.location) {
-  if (!locationObject) return false;
-  const pathname = String(locationObject.pathname || '/').replace(/\/+$/, '') || '/';
-  if (pathname !== '/') return false;
-  const search = new URLSearchParams(locationObject.search || '');
-  return !APP_QUERY_PARAMS.some((key) => search.has(key));
-}
 
 function markPageAsNotranslate() {
   if (typeof document === 'undefined') return;
@@ -140,15 +130,6 @@ installDomMutationGuard();
 installRuntimeRecovery();
 installSplitPhoneInputs();
 
-function PublicHomeEntry() {
-  return (
-    <PublicHomeRoute
-      onLogin={() => { window.location.href = '/login'; }}
-      onSignup={() => { window.location.href = '/signup'; }}
-    />
-  );
-}
-
 const root = createRoot(document.getElementById('root'));
 
 async function renderWorkspaceApp() {
@@ -163,8 +144,6 @@ async function renderWorkspaceApp() {
 
 if (window.location.pathname.startsWith('/embed/')) {
   root.render(<AppErrorBoundary><MapEmbedApp /></AppErrorBoundary>);
-} else if (isRootPublicHomeLocation(window.location)) {
-  root.render(<AppErrorBoundary><PublicHomeEntry /></AppErrorBoundary>);
 } else {
   void renderWorkspaceApp();
 }

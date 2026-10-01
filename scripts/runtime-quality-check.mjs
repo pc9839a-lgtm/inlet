@@ -299,7 +299,9 @@ assert(!viteConfigSource.includes('CodeEditor-runtime-v2.js') && !viteConfigSour
 assert(pagesMiddlewareSource.includes('isContentHashedRuntimeAsset') && pagesMiddlewareSource.includes('max-age=31536000, immutable') && pagesMiddlewareSource.includes('immutable-hash-v4'), 'Pages middleware must cache content-hashed assets immutably');
 assert(pagesMiddlewareSource.includes('staleJavaScriptRecoveryResponse') && pagesMiddlewareSource.includes('staleCssRecoveryResponse'), 'stale hashed asset requests must keep runtime recovery');
 assert(main.includes('root.render(<AppErrorBoundary><MapEmbedApp /></AppErrorBoundary>)'), 'embed root render must stay wrapped in AppErrorBoundary');
-assert(main.includes('root.render(<AppErrorBoundary><PublicHomeEntry /></AppErrorBoundary>)'), 'public home root render must stay wrapped in AppErrorBoundary');
+assert(!main.includes('PublicHomeEntry') && !main.includes("import PublicHomeRoute from './screens/PublicHomeRoute.jsx'"), 'root entry must not bypass App with the retired public marketing home');
+assert(!app.includes("import PublicHome from './screens/PublicHomeRoute.jsx'") && !app.includes('<PublicHome '), 'unauthenticated App fallback must not render the retired public marketing home');
+assert(app.includes('key="root-login"') && app.includes('initialMode="login"'), 'unauthenticated root must render the login surface');
 assert(main.includes('root.render(<AppErrorBoundary><App /></AppErrorBoundary>)') || (main.includes('<AppErrorBoundary>') && main.includes('<App />')), 'app root render must stay wrapped in AppErrorBoundary');
 assert(app.includes("const InboxPanel = lazy(() => import('./panels/InboxPanel.jsx'))"), 'InboxPanel must stay lazy-loaded');
 assert(app.includes("const StatsPanel = lazy(() => import('./panels/StatsPanel.jsx'))"), 'StatsPanel must stay lazy-loaded');

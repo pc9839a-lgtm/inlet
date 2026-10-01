@@ -49,7 +49,6 @@ import { useWorkspaceTabFallback } from './runtime/useWorkspaceTabFallback.js';
 import { useWorkspaceEditorEffects } from './runtime/useWorkspaceEditorEffects.js';
 import { useMobileWorkspaceMode } from './runtime/useMobileWorkspaceMode.js';
 import WorkspaceEditorScreen from './screens/WorkspaceEditorScreen.jsx';
-import PublicHome from './screens/PublicHomeRoute.jsx';
 import PreviewRenderer from './preview/LandingRenderer.jsx';
 import { BRAND_KO, BRAND_NAME } from './config/brand.js';
 import { META } from './config/blockMeta.jsx';
@@ -1156,7 +1155,15 @@ function App() {
       );
     }
 
-    return withWayziFooter(<Suspense fallback={<LazyPanelFallback />}><PublicHome onLogin={()=>setAuthView('login')} onSignup={()=>setAuthView('signup')}/></Suspense>);
+    return withWayziFooter(
+      <Suspense fallback={<LazyPanelFallback />}>
+        <AuthScreen
+          key="root-login"
+          initialMode="login"
+          onAuth={acceptAuth}
+        />
+      </Suspense>
+    );
   }
 
   if (adminRoute) {
