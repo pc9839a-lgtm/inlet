@@ -119,6 +119,8 @@ assert(!statsPanel.includes('\uB9C8\uC6B0\uC2A4\uB97C \uC62C\uB9AC\uBA74') && !s
 assert(statsPanel.includes('stats-v4-tooltip') && statsPanel.includes('onMouseEnter'), 'stats line chart should expose hover details');
 assert(statsPanel.includes('fmtDateOnly') && !statsPanel.includes('fmtDate(lead.createdAt)'), 'recent leads should show date only without time');
 assert(statsPanel.includes('serverStats') && statsPanel.includes('normalizeServerStats'), 'stats panel should render server aggregate payloads');
+assert(statsPanel.includes("import { isTestTraffic, trafficChannelFromItem }") && statsPanel.includes("(leads || []).filter((lead) => !isTestTraffic(lead))"), 'server-backed recent leads must hide editor test inquiries');
+assert(statsPanel.includes("Math.max(Number(stats.db || 0), stats.filteredLeads.length)"), 'server stats visible lead count must follow real aggregate DB count instead of raw test-inclusive pagination total');
 assert(statsPanel.includes('stats-v4-funnel-card') && statsPanel.includes('formStartRate') && statsPanel.includes('formCompletionRate') && statsPanel.includes('reservationCompletionRate'), 'stats panel should expose server-backed form and reservation funnel completion');
 assert(statsPanel.includes('stats-v4-change') && statsPanel.includes('countMetricChange') && statsPanel.includes('rateMetricChange'), 'stats panel should show previous-period changes on summary metrics');
 assert(!statsPanel.includes('DeliveryLogCard') && !statsPanel.includes('\uC804\uC1A1 \uB85C\uADF8') && !statsPanel.includes('\uC678\uBD80 \uC804\uC1A1'), 'stats panel should not expose delivery log cards');
@@ -149,4 +151,4 @@ assert(trafficAttribution.includes('trafficAttributionFromUrl') && trafficAttrib
 assert(trafficAttribution.includes('trafficChannelFromReferrer') && trafficAttribution.includes('sourceLabel'), 'traffic attribution should fall back to referrer and source label');
 assert(trafficAttribution.includes('export function isTestTraffic') && trafficAttribution.includes('pagero_test'), 'traffic attribution should identify editor test traffic');
 
-console.log(JSON.stringify({ ok: true, checks: 67 }, null, 2));
+console.log(JSON.stringify({ ok: true, checks: 69 }, null, 2));
