@@ -16,6 +16,7 @@ const pageOptionsCss = await readFile('src/editor/editPanelParts/PageGlobalOptio
 const fixedBlocksCss = await readFile('src/editor/editPanelParts/FixedBlocksSection.css', 'utf8');
 const workspaceCss = await readFile('src/styles/workspace-shell.css', 'utf8');
 const addDockCss = await readFile('src/styles/editor-widget-add-dock.css', 'utf8');
+const previewPaneCss = await readFile('src/screens/workspace/WorkspacePreviewPane.css', 'utf8');
 
 assert(!navigation.includes("['style', '스타일'"), 'editor navigation must not expose a duplicate style workspace tab');
 assert(screen.includes("const effectiveTab = tab === 'style' ? 'edit' : tab;"), 'legacy style routes must still normalize into edit');
@@ -54,6 +55,7 @@ assert(
 );
 assert(editPanelLayoutCss.includes("data-pagero-ui='edit-section-tabs-v2'") && editPanelLayoutCss.includes("data-selected='true'") && editPanelLayoutCss.includes('background: #eef1f5 !important;') && editPanelLayoutCss.includes('background: #fff !important;') && editPanelLayoutCss.includes('border-color: #d9dde4 !important;'), 'EditPanelLayout.css must keep the light selected state');
 assert(!css.includes('edit-section-tabs') && !css.includes('editor-page-options-stack'), 'workspace geometry must not own EditPanelLayout subsection UI');
+assert(previewPaneCss.includes('WorkspacePreviewPane — owns editor preview presentation') && previewPaneCss.includes('.preview-workspace') && previewPaneCss.includes('.preview-sticky') && previewPaneCss.includes('.phone-frame') && previewPaneCss.includes('scroll-margin-block: 120px') && !css.includes('.preview-workspace') && !css.includes('.preview-sticky') && !css.includes('.phone-frame'), 'WorkspacePreviewPane.css must own preview presentation while editor-workspace.css stays geometry-only');
 assert(pageOptionsCss.includes('body .builder-shell .page-global-options-card') && pageOptionsCss.includes('padding: 0;') && pageOptionsCss.includes('border-radius: 0;') && pageOptionsCss.includes('background: transparent;') && !css.includes('page-global-options'), 'page options base contract must live in PageGlobalOptions.css and stay out of editor-workspace.css');
 
 console.log(JSON.stringify({
