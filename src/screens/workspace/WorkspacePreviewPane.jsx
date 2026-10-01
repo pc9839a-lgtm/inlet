@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import ConversionCockpit from './ConversionCockpit.jsx';
 import './WorkspacePreviewPane.css';
 import PreviewRenderer from '../../preview/LandingRenderer.jsx';
 
@@ -38,15 +39,15 @@ export function WorkspacePreviewPane({
           <a className="preview-link" href={previewUrl} target="_blank" rel="noreferrer">{previewUrl}</a>
         </div>
         {showConversionCockpit ? (
-        <ConversionCockpit
-          page={page}
-          leads={leads}
-          previewUrl={previewUrl}
-          onOpenInbox={onOpenInbox}
-          onOpenStats={onOpenStats}
-        />
-      ) : null}
-      <div className="phone-frame">
+          <ConversionCockpit
+            page={page}
+            leads={leads}
+            previewUrl={previewUrl}
+            onOpenInbox={onOpenInbox}
+            onOpenStats={onOpenStats}
+          />
+        ) : null}
+        <div className="phone-frame">
           <PreviewRenderer
             page={previewPage}
             leads={leads}
