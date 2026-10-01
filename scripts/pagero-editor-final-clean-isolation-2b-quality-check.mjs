@@ -20,10 +20,16 @@ const fixedBlocksCss = await readFile('src/editor/editPanelParts/FixedBlocksSect
 const animationCss = await readFile('src/editor/editPanelParts/AnimationOptionsCard.css', 'utf8');
 const screenOrderCss = await readFile('src/editor/editPanelParts/ScreenOrder.css', 'utf8');
 const previewPaneCss = await readFile('src/screens/workspace/WorkspacePreviewPane.css', 'utf8');
+const workspaceChromeCss = await readFile('src/screens/workspace/WorkspaceChrome.css', 'utf8');
+const editPanelLayoutCss = await readFile('src/editor/EditPanelLayout.css', 'utf8');
+const operationsWorkspaceCss = await readFile('src/screens/workspace/OperationsWorkspace.css', 'utf8');
 
 assert(!(await exists('src/styles/editor-final-clean.css')) && !appStyles.includes('editor-final-clean.css'), 'editor-final-clean.css must stay retired and unloaded');
 assert(workspaceShellCss.includes('body:has(.builder-shell),'), 'shared body/root workspace contract must remain active under workspace-shell.css');
-assert(workspaceShellCss.includes('body .builder-shell :is(.panel-header, .top-tabs, .edit-layout, .settings-panel, .style-panel, .inbox-panel, .stats-panel)'), 'shared panel width normalization must remain active under workspace-shell.css');
+assert(!workspaceShellCss.includes('body .builder-shell :is(.panel-header, .top-tabs, .edit-layout, .settings-panel, .style-panel, .inbox-panel, .stats-panel)'), 'common workspace shell must not reintroduce cross-component panel normalization');
+assert(workspaceChromeCss.includes('body .builder-shell .panel-header') && workspaceChromeCss.includes('body .builder-shell .top-tabs'), 'workspace chrome must own header and main tab width/presentation');
+assert(editPanelLayoutCss.includes('body .builder-shell .edit-layout') && editPanelLayoutCss.includes('.editor-page-options-stack'), 'EditPanelLayout must own editor panel sizing');
+assert(operationsWorkspaceCss.includes(':is(.settings-panel,.inbox-panel,.stats-panel)'), 'OperationsWorkspace must own operations panel width normalization');
 
 assert(workspaceShellCss.includes('body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) {'), 'non-edit grid geometry must exclude edit mode under workspace-shell.css');
 assert(workspaceShellCss.includes('body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .left-workspace'), 'non-edit left geometry must exclude edit mode under workspace-shell.css');
@@ -39,8 +45,8 @@ assert(screenOrderCss.includes('Inline block-editor controls owned by ScreenOrde
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 14,
+  checks: 17,
   scope: 'pagero-editor-final-clean-isolation-2b',
-  changed: 'editor-final-clean retired; shell geometry absorbed by workspace-shell',
-  preserved: ['body/root contract via workspace-shell.css', 'shared panel sizing', 'non-edit shell geometry', 'preview via WorkspacePreviewPane.css', 'shared controls via editor-shared-ui.css', 'fixed blocks via FixedBlocksSection.css', 'animation via AnimationOptionsCard.css', 'inline block styles via ScreenOrder.css'],
+  changed: 'editor-final-clean retired; common shell, chrome, editor and operations owners are isolated',
+  preserved: ['body/root contract via workspace-shell.css', 'component-owned panel sizing', 'non-edit shell geometry', 'preview via WorkspacePreviewPane.css', 'shared controls via editor-shared-ui.css', 'fixed blocks via FixedBlocksSection.css', 'animation via AnimationOptionsCard.css', 'inline block styles via ScreenOrder.css'],
 }, null, 2));
