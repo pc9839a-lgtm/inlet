@@ -49,9 +49,10 @@ export default function WorkspaceEditorScreen({
   const settingsWorkspace = !mobileOperationsOnly && effectiveTab === 'settings';
   const editWorkspace = !mobileOperationsOnly && effectiveTab === 'edit';
   const operationsWorkspace = inboxWorkspace || statsWorkspace || settingsWorkspace;
+  const previewWorkspace = !mobileOperationsOnly && !operationsWorkspace;
 
   return (
-    <div className={`builder-shell${canUseBuilder && startMode === 'template' && !mobileOperationsOnly ? ' template-intro-shell' : ''}${mobileOperationsOnly ? ' mobile-operations-shell' : ''}${editWorkspace ? ' edit-mode-shell' : ''}${inboxWorkspace ? ' inbox-workspace-shell' : ''}${statsWorkspace ? ' stats-dashboard-shell' : ''}${settingsWorkspace ? ' settings-workspace-shell' : ''}`}>
+    <div className={`builder-shell${previewWorkspace ? ' preview-workspace-shell' : ''}${canUseBuilder && startMode === 'template' && !mobileOperationsOnly ? ' template-intro-shell' : ''}${mobileOperationsOnly ? ' mobile-operations-shell' : ''}${editWorkspace ? ' edit-mode-shell' : ''}${inboxWorkspace ? ' inbox-workspace-shell' : ''}${statsWorkspace ? ' stats-dashboard-shell' : ''}${settingsWorkspace ? ' settings-workspace-shell' : ''}`}>
 
       <WorkspaceLeftPanel
         canUseBuilder={canUseBuilder}
@@ -79,7 +80,7 @@ export default function WorkspaceEditorScreen({
         settingsPanelProps={settingsPanelProps}
       />
 
-      {!mobileOperationsOnly && !operationsWorkspace && <WorkspacePreviewPane
+      {previewWorkspace && <WorkspacePreviewPane
         page={page}
         previewUrl={previewUrl}
         previewPage={previewPage}

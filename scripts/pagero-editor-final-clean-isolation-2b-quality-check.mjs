@@ -25,10 +25,10 @@ assert(!(await exists('src/styles/editor-final-clean.css')) && !appStyles.includ
 assert(workspaceShellCss.includes('body:has(.builder-shell),'), 'shared body/root workspace contract must remain active under workspace-shell.css');
 assert(workspaceShellCss.includes('body .builder-shell :is(.panel-header, .top-tabs, .edit-layout, .settings-panel, .style-panel, .inbox-panel, .stats-panel)'), 'shared panel width normalization must remain active under workspace-shell.css');
 
-assert(workspaceShellCss.includes('body .builder-shell:not(.edit-mode-shell) {'), 'non-edit grid geometry must exclude edit mode under workspace-shell.css');
-assert(workspaceShellCss.includes('body .builder-shell:not(.edit-mode-shell) .left-workspace'), 'non-edit left geometry must exclude edit mode under workspace-shell.css');
-assert(workspaceShellCss.includes('body .builder-shell:not(.edit-mode-shell) .work-panel'), 'non-edit work-panel geometry must exclude edit mode under workspace-shell.css');
-assert(previewPaneCss.includes('body .builder-shell:not(.edit-mode-shell) .preview-workspace') && previewPaneCss.includes('body .builder-shell:not(.edit-mode-shell) .preview-sticky') && previewPaneCss.includes('body .builder-shell:not(.edit-mode-shell) .phone-frame'), 'non-edit preview geometry must stay scoped outside edit mode under WorkspacePreviewPane.css');
+assert(workspaceShellCss.includes('body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) {'), 'non-edit grid geometry must exclude edit mode under workspace-shell.css');
+assert(workspaceShellCss.includes('body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .left-workspace'), 'non-edit left geometry must exclude edit mode under workspace-shell.css');
+assert(workspaceShellCss.includes('body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .work-panel'), 'non-edit work-panel geometry must exclude edit mode under workspace-shell.css');
+assert(previewPaneCss.includes('body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .preview-workspace') && previewPaneCss.includes('body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .preview-sticky') && previewPaneCss.includes('body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .phone-frame'), 'non-edit preview geometry must stay scoped outside edit mode under WorkspacePreviewPane.css');
 assert(!workspaceShellCss.includes('.preview-sticky') && !workspaceShellCss.includes('.phone-frame'), 'workspace shell must not absorb preview-sticky or phone-frame presentation');
 
 assert(!workspaceShellCss.includes('.switch-clean') && !workspaceShellCss.includes('.fixed-open-button') && !workspaceShellCss.includes('.fixed-block-head') && !workspaceShellCss.includes('.edit-animation') && !workspaceShellCss.includes('.screen-drop-zone'), 'workspace shell must stay free of editor component presentation');

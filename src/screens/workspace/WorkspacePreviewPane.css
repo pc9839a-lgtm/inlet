@@ -72,11 +72,11 @@ html body #root .builder-shell .preview-workspace .phone-frame {
 
 /* Non-edit preview geometry formerly carried by editor-final-clean.css.
    WorkspacePreviewPane owns preview presentation in every workspace mode. */
-body .builder-shell:not(.edit-mode-shell) {
+body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) {
   --pg-preview-width: min(540px, calc(100vw - var(--pg-left-width) - 72px));
 }
 
-body .builder-shell:not(.edit-mode-shell) .preview-workspace {
+body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .preview-workspace {
   width: 100% !important;
   min-width: 0 !important;
   height: 100dvh !important;
@@ -88,7 +88,7 @@ body .builder-shell:not(.edit-mode-shell) .preview-workspace {
   justify-content: center !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .preview-sticky {
+body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .preview-sticky {
   position: sticky !important;
   top: 28px !important;
   width: var(--pg-preview-width) !important;
@@ -103,12 +103,12 @@ body .builder-shell:not(.edit-mode-shell) .preview-sticky {
   gap: 12px !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .preview-top {
+body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .preview-top {
   width: 100% !important;
   flex: 0 0 auto !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .phone-frame {
+body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .phone-frame {
   width: min(460px, 100%) !important;
   max-width: 460px !important;
   height: calc(100dvh - 144px) !important;
@@ -118,12 +118,12 @@ body .builder-shell:not(.edit-mode-shell) .phone-frame {
   flex: 1 1 auto !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .phone-frame,
-body .builder-shell:not(.edit-mode-shell) .phone-frame * {
+body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .phone-frame,
+body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .phone-frame * {
   box-sizing: border-box !important;
 }
 
-body .builder-shell:not(.edit-mode-shell) .phone-frame .landing-page {
+body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .phone-frame .landing-page {
   width: 100% !important;
   height: 100% !important;
   overflow-x: hidden !important;
@@ -131,39 +131,39 @@ body .builder-shell:not(.edit-mode-shell) .phone-frame .landing-page {
 }
 
 @media (max-width: 1440px) {
-  body .builder-shell:not(.edit-mode-shell) {
+  body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) {
     --pg-preview-width: min(500px, calc(100vw - 728px));
   }
 }
 
 @media (max-width: 1280px) {
-  body .builder-shell:not(.edit-mode-shell) {
+  body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) {
     --pg-preview-width: min(460px, calc(100vw - 684px));
   }
 
-  body .builder-shell:not(.edit-mode-shell) .phone-frame {
+  body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .phone-frame {
     width: min(430px, 100%) !important;
     max-width: 430px !important;
   }
 }
 
 @media (max-width: 1180px) {
-  body .builder-shell:not(.edit-mode-shell) :is(.preview-workspace, .preview-sticky) {
+  body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) :is(.preview-workspace, .preview-sticky) {
     height: auto !important;
     max-height: none !important;
     overflow: visible !important;
   }
 
-  body .builder-shell:not(.edit-mode-shell) .preview-workspace {
+  body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .preview-workspace {
     padding: 0 14px 28px !important;
   }
 
-  body .builder-shell:not(.edit-mode-shell) .preview-sticky {
+  body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .preview-sticky {
     width: min(460px, 100%) !important;
     margin: 0 auto !important;
   }
 
-  body .builder-shell:not(.edit-mode-shell) .phone-frame {
+  body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .phone-frame {
     width: min(430px, 100%) !important;
     max-width: 430px !important;
     height: 760px !important;
