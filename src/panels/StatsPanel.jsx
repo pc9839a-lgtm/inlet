@@ -3,7 +3,7 @@ import { GitBranch, Inbox, LayoutDashboard, Megaphone } from 'lucide-react';
 import { leadKindLabel, leadPrimaryContact } from '../lib/leadModel.js';
 import { currentMonthValue } from '../lib/monthRange.js';
 import { PERIOD_OPTIONS, buildStats as buildStatsMetrics, countBy as countByMetrics, statLabel } from '../lib/statsMetrics.js';
-import { trafficChannelFromItem } from '../lib/trafficAttribution.js';
+import { isTestTraffic, trafficChannelFromItem } from '../lib/trafficAttribution.js';
 import './StatsPanel.css';
 
 const STATS_VIEWS = [
@@ -99,7 +99,7 @@ function normalizeServerStats(serverStats, leads = []) {
     deviceData: summary.deviceData || {},
     ctaLabelData: summary.ctaLabelData || {},
     filteredEvents: [],
-    filteredLeads: leads || [],
+    filteredLeads: (leads || []).filter((lead) => !isTestTraffic(lead)),
   };
 }
 
@@ -316,7 +316,9 @@ export default function StatsPanel({
     return buildStatsMetrics(scopedEvents, scopedLeads, period);
   }, [baseStats, period, scopedEvents, scopedLeads, serverMode]);
   const partialData = statsPartial || (!serverMode && hasPartialStatsData({ statsPartial, eventPageMeta, leadPageMeta }));
-  const recentLeadTotal = Number(leadPageMeta?.total || stats.filteredLeads.length);
+  const recentLeadTotal = serverMode
+    ? Math.max(Number(stats.db || 0), stats.filteredLeads.length)
+    : Number(leadPageMeta?.total || stats.filteredLeads.length);
   const activeLabel = STATS_VIEWS.find((item) => item.id === activeView)?.label || '개요';
 
   useEffect(() => {
