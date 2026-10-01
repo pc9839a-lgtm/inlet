@@ -11,6 +11,9 @@ export function WorkspacePreviewPane({
   track,
   selectedBlockId,
   onSelectPreviewBlock,
+  showConversionCockpit = false,
+  onOpenInbox,
+  onOpenStats,
 }) {
   const previewRef = useRef(null);
 
@@ -34,7 +37,16 @@ export function WorkspacePreviewPane({
           </div>
           <a className="preview-link" href={previewUrl} target="_blank" rel="noreferrer">{previewUrl}</a>
         </div>
-        <div className="phone-frame">
+        {showConversionCockpit ? (
+        <ConversionCockpit
+          page={page}
+          leads={leads}
+          previewUrl={previewUrl}
+          onOpenInbox={onOpenInbox}
+          onOpenStats={onOpenStats}
+        />
+      ) : null}
+      <div className="phone-frame">
           <PreviewRenderer
             page={previewPage}
             leads={leads}
