@@ -340,7 +340,7 @@
     margin: 0 !important;
     padding: 14px !important;
     border: 1px solid #d9e4f2 !important;
-    border-radius: 8px !important;
+    border-radius: 7px !important;
     background: #fff !important;
     box-shadow: none !important;
     overflow: visible !important;
@@ -382,7 +382,7 @@
     margin: 0 !important;
     overflow: visible !important;
     border: 1px solid #d9e4f2 !important;
-    border-radius: 10px !important;
+    border-radius: 8px !important;
     background: #fff !important;
     box-shadow: none !important;
   }
@@ -424,7 +424,7 @@
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-title-wrap {
     grid-template-columns: 26px minmax(0, 1fr) 20px !important;
-    gap: 9px !important;
+    gap: 6px !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-type-icon {
@@ -435,7 +435,7 @@
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-title-wrap strong {
     color: #0f172a !important;
-    font-size: 14px !important;
+    font-size: 13px !important;
     line-height: 1.25 !important;
     font-weight: 950 !important;
   }
@@ -481,7 +481,7 @@
   gap: 10px !important;
   width: 100% !important;
   min-height: 56px !important;
-  padding: 0 12px !important;
+  padding: 0 10px !important;
   border: 0 !important;
   border-radius: 0 !important;
   background: #fff !important;
@@ -502,7 +502,7 @@
   border-radius: 999px !important;
   background: #eff6ff !important;
   color: var(--editor-ink) !important;
-  font-size: 13px !important;
+  font-size: 12px !important;
   font-weight: 950 !important;
 }
 
@@ -512,7 +512,7 @@
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
   color: var(--editor-ink) !important;
-  font-size: 15px !important;
+  font-size: 14px !important;
   font-weight: 950 !important;
 }
 
@@ -579,7 +579,7 @@
 .edit-layout .screen-order-v2-inline-editor .block-editor-v2 .anchor-control > span {
   margin: 0 !important;
   color: var(--editor-ink) !important;
-  font-size: 13px !important;
+  font-size: 12px !important;
   line-height: 1.25 !important;
   font-weight: 900 !important;
 }
@@ -741,8 +741,8 @@ body .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true'] 
   /* Give the selected row and its editor clear breathing room without restoring a wrapper card/title. */
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor {
     width: auto !important;
-    margin: 14px 12px 20px !important;
-    padding: 0 2px 4px !important;
+    margin: 10px 8px 14px !important;
+    padding: 0 0 2px !important;
     border: 0 !important;
     background: transparent !important;
     box-shadow: none !important;
@@ -754,7 +754,7 @@ body .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true'] 
     align-items: center !important;
     gap: 12px !important;
     margin: 0 !important;
-    padding: 0 0 16px !important;
+    padding: 0 0 12px !important;
     border-bottom: 1px solid #e5eaf1 !important;
   }
 
@@ -766,9 +766,9 @@ body .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true'] 
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .block-editor-v2 .block-editor-anchor-value {
-    min-height: 42px !important;
+    min-height: 38px !important;
     border-color: #cbd5e1 !important;
-    border-radius: 10px !important;
+    border-radius: 8px !important;
     background: #fff !important;
   }
 
@@ -778,7 +778,7 @@ body .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true'] 
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .block-editor-v2 .block-editor-anchor-value > input {
-    min-height: 40px !important;
+    min-height: 32px !important;
     padding: 0 11px !important;
     color: #101828 !important;
     font-size: 13px !important;
@@ -795,18 +795,18 @@ body .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true'] 
 
   /* Content/style tabs: larger type and a more deliberate gap before fields. */
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .editor-tabs-v2 {
-    padding-top: 14px !important;
+    padding-top: 10px !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .editor-tabs-v2-list {
-    gap: 3px !important;
-    padding: 3px !important;
-    border-radius: 10px !important;
+    gap: 2px !important;
+    padding: 2px !important;
+    border-radius: 8px !important;
     background: #eef2f6 !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .block-editor-v2 .editor-tabs-v2-list > button {
-    min-width: 68px !important;
+    min-width: 64px !important;
     min-height: 36px !important;
     padding: 0 12px !important;
     border-radius: 8px !important;
@@ -821,8 +821,8 @@ body .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true'] 
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .editor-tabs-v2-panel {
-    gap: 18px !important;
-    padding: 18px 0 6px !important;
+    gap: 12px !important;
+    padding: 12px 0 4px !important;
   }
 
   /* Labels and editable text were too small/light. */
@@ -839,8 +839,8 @@ body .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true'] 
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .block-editor-v2 .editor-field-v2 :is(input, textarea, select) {
-    min-height: 46px !important;
-    padding: 11px 13px !important;
+    min-height: 42px !important;
+    padding: 9px 11px !important;
     border-color: #c7d2e0 !important;
     border-radius: 10px !important;
     color: #101828 !important;
@@ -851,15 +851,15 @@ body .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true'] 
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .block-editor-v2 .editor-field-v2 textarea {
-    min-height: 100px !important;
+    min-height: 84px !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .block-editor-v2 .editor-field-v2--compact-text textarea {
-    min-height: 74px !important;
+    min-height: 64px !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor .block-editor-v2 .editor-field-v2 :is(input, textarea, select):focus-visible {
     border-color: #7da2d6 !important;
-    outline: 3px solid rgba(37, 99, 235, .09) !important;
+    outline: 2px solid rgba(37, 99, 235, .09) !important;
   }
 }
