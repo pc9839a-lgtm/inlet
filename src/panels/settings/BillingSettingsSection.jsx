@@ -91,7 +91,10 @@ export default function BillingSettingsSection({ authUser }) {
         </div>
       </div>
 
-      <p className="settings-message">웹 자동결제 준비 중 · 유료 플랜은 가입 문의로 연결됩니다.</p>
+      <div className="billing-settings-status" role="status">
+        <span>자동결제</span><strong>준비 중</strong>
+        <span>유료 플랜</span><strong>가입 문의</strong>
+      </div>
       {error && <p className="settings-message error" role="alert">{error}</p>}
       {loading && !finance ? <div className="settings-loading">요금제 확인 중</div> : null}
 
