@@ -61,8 +61,11 @@ for (const token of [
 }
 
 assert(
-  currentDomainUi.includes("updateIntegrations('domain'") && currentDomainUi.includes('hostname'),
-  'current domain editor must keep integrations.domain.hostname as the saved UI contract',
+  currentDomainUi.includes('function pageWithDomain(page, domain)')
+    && currentDomainUi.includes('integrations:')
+    && currentDomainUi.includes('domain,')
+    && currentDomainUi.includes('onSavePage(nextPage)'),
+  'current domain editor must keep integrations.domain.hostname on the revision-safe page save contract',
 );
 assert(
   currentMiddleware.includes("$.integrations.domain.hostname"),

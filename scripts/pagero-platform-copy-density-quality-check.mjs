@@ -112,7 +112,7 @@ assert(settingsControlPanelCss.includes('Ownership transfer — status-first acc
 assert(settingsPanel.includes("const projectSettingsWritable = canWriteTab(accessMode, page, authUser, 'settings');"), 'settings must derive project write access from the canonical tab permission');
 assert(settingsPanel.includes('const canManageProjectUsers = isBuilderMode(accessMode);'), 'owner-level user management must be tied to canonical builder access');
 assert(!settingsPanelBody.includes('SettingsModeSwitch') && settingsPanelBody.includes('label="페이지"') && settingsPanelBody.includes('label="서비스"') && settingsPanelBody.includes('label="고급"'), 'settings sidebar must use direct product groups without a duplicate basic/advanced mode switch');
-assert(settingsPanelBody.includes("id === 'domain' && (clientAdminMode || !projectSettingsWritable)") && settingsPanelBody.includes("id === 'reset' && !canManageProjectUsers"), 'domain and destructive settings must stay role-gated');
+assert(settingsPanelBody.includes("id === 'domain' && (!ownerFinanceAccess || !projectSettingsWritable)") && settingsPanelBody.includes("id === 'reset' && !canManageProjectUsers"), 'domain and destructive settings must stay role-gated');
 assert(settingsPanelBody.includes("id === 'duplicate' && !canDuplicatePage"), 'unavailable duplicate action must stay out of settings navigation');
 assert(settingsPrimarySections.includes('forceReadOnly={!projectSettingsWritable}'), 'page basics must respect read-only settings access');
 assert(pageBasicSettings.includes('const readOnly = locked || clientAdminMode || forceReadOnly;') && pageBasicSettings.includes('onSave={forceReadOnly ? undefined : onSave}'), 'read-only project settings must not expose save/edit actions');

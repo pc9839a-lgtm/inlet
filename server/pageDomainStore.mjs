@@ -75,14 +75,14 @@ export async function assertD1PageBelongsToProject(db, projectId = '', pageId = 
   return page;
 }
 
-export async function assertOwnedD1PageDomain(db, { projectId = '', pageId = '', hostname = '' } = {}) {
+export async function assertOwnedD1PageDomain(db, { projectId = '', pageId = '', hostname = '', allowDisconnected = false } = {}) {
   await assertD1PageBelongsToProject(db, projectId, pageId);
   const record = await getD1PageDomainByPageId(db, pageId);
   if (!record) throw domainError('저장된 개인 도메인 정보를 찾을 수 없습니다.', 404, 'DOMAIN_CONNECTION_NOT_FOUND');
   if (String(record.project_id || '') !== String(projectId || '')) {
     throw domainError('현재 프로젝트의 도메인 정보가 아닙니다.', 403, 'DOMAIN_PROJECT_MISMATCH');
   }
-  if (String(record.status || '') === 'disconnected') {
+  if (String(record.status || '') === 'disconnected' && !allowDisconnected) {
     throw domainError('이미 해제된 도메인입니다.', 409, 'DOMAIN_ALREADY_DISCONNECTED');
   }
   const requested = normalizeDomainHostname(hostname);

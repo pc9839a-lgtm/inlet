@@ -80,6 +80,7 @@ export default function SettingsPanel({
       onAccountUpdate={onAccountUpdate}
       onLogout={onLogout}
       onReset={onReset}
+      onSavePage={onSavePage}
       ownership={ownership}
       page={page}
       sections={sections}

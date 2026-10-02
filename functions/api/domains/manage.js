@@ -44,6 +44,7 @@ export async function onRequest({ request, env }) {
       projectId: project.projectId,
       pageId,
       hostname: body.hostname || body.customDomain || '',
+      allowDisconnected: action === 'detach',
     });
 
     if (action === 'detach') {
