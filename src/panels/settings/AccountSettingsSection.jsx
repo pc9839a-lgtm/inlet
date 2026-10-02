@@ -16,7 +16,7 @@ export default function AccountSettingsSection({ authUser, onAccountUpdate, onLo
   const [activeTab, setActiveTab] = useState('profile');
 
   if (!account.authUser) {
-    return <p className="account-settings-empty">로그인된 계정 정보가 없습니다.</p>;
+    return <p className="account-settings-empty">계정 정보 없음</p>;
   }
 
   return (
