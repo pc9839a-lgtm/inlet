@@ -11,6 +11,26 @@ Before modifying or deploying Pagero, read:
 The production root source of truth is `functions/index.js`, not a file named
 `functions/frozenHome.js` and not the local Vite home alone.
 
+## Current Runtime Distinction
+
+Do not confuse the protected public root with the SPA workspace.
+
+* `/` public root: served by `functions/index.js`; C63 public home remains protected.
+* authenticated app/workspace: SPA path handled by `src/main.jsx` -> `src/App.jsx`.
+* `/embed/*`: `MapEmbedApp`.
+* public page slugs: `PreviewRenderer`.
+* auth/invite/dashboard/workspace: routed inside `App.jsx`.
+
+A change to the SPA root fallback does not by itself redefine the public `/`
+response when Pages Functions serves the canonical home.
+
+Current PageRo implementation status and backlog live only in
+`docs/PAGERO_INTERNAL_OPTIMIZATION_MASTER_KO.md`. E0-E4 and the P6 settings UX
+pass are complete. Do not recreate completed editor/CSS/cockpit/AI/UI-density
+work unless a current-main bug is reproduced. B3 production launch smoke is
+currently skipped by owner request. The next planned product backlog starts at
+P5 custom-domain operationalization.
+
 ## Production Home Lock - Highest Priority
 
 The current production root at `https://pagero.kr/` is the canonical Pagero

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Code2,
   Copy,
@@ -46,7 +46,6 @@ const ADVANCED_NAV = [
 
 const ALL_NAV = [...PRIMARY_NAV, ...SERVICE_NAV, ...ADVANCED_NAV];
 const ADVANCED_IDS = new Set(ADVANCED_NAV.map(([id]) => id));
-const OWNER_ONLY_IDS = new Set(['billing', 'referral', 'partner', 'settlement']);
 
 function SettingsNavGroup({ label, items, selectedSection, selectSection }) {
   return (
@@ -69,36 +68,6 @@ function SettingsNavGroup({ label, items, selectedSection, selectSection }) {
   );
 }
 
-function SettingsModeSwitch({ mode, setMode, advancedEnabled }) {
-  if (!advancedEnabled) return null;
-
-  return (
-    <nav className="settings-nav-group settings-mode-switch" aria-label="설정 구분">
-      <span className="settings-nav-label">설정 구분</span>
-      <div className="settings-nav-items">
-        <button
-          type="button"
-          className={`settings-nav-item ${mode === 'basic' ? 'active' : ''}`}
-          aria-pressed={mode === 'basic'}
-          onClick={() => setMode('basic')}
-        >
-          <FileText size={18} aria-hidden="true" />
-          <span>기본 설정</span>
-        </button>
-        <button
-          type="button"
-          className={`settings-nav-item ${mode === 'advanced' ? 'active' : ''}`}
-          aria-pressed={mode === 'advanced'}
-          onClick={() => setMode('advanced')}
-        >
-          <Code2 size={18} aria-hidden="true" />
-          <span>고급 설정</span>
-        </button>
-      </div>
-    </nav>
-  );
-}
-
 export default function SettingsPanelBody({
   authUser,
   canDeleteMedia,
@@ -115,6 +84,7 @@ export default function SettingsPanelBody({
   onReset,
   ownership,
   page,
+  projectSettingsWritable,
   sections,
   setPage,
   transferRequest,
@@ -131,49 +101,55 @@ export default function SettingsPanelBody({
   } = duplicateSettings;
   const { openSection, setAdvancedOpen, setOpenSection } = sections;
   const ownerFinanceAccess = canManageProjectUsers && !clientAdminMode;
-  const initialSection = (() => {
-    const requested = openSection || 'basic';
-    if (clientAdminMode && ADVANCED_IDS.has(requested)) return 'basic';
-    if (!canReadMedia && requested === 'media') return 'basic';
-    if (!canManageProjectUsers && requested === 'managers') return 'basic';
-    if (!ownerFinanceAccess && OWNER_ONLY_IDS.has(requested)) return 'basic';
-    return requested;
-  })();
-  const [selectedSection, setSelectedSection] = useState(initialSection);
-  const [settingsMode, setSettingsMode] = useState(
-    !clientAdminMode && ADVANCED_IDS.has(initialSection) ? 'advanced' : 'basic',
-  );
-  const selectedLabel = ALL_NAV.find(([id]) => id === selectedSection)?.[1] || '페이지 기본';
 
-  const primaryItems = PRIMARY_NAV.filter(([id]) => {
+  const primaryItems = useMemo(() => PRIMARY_NAV.filter(([id]) => {
     if (id === 'managers' && !canManageProjectUsers) return false;
     if (id === 'media' && !canReadMedia) return false;
+    if (id === 'domain' && (clientAdminMode || !projectSettingsWritable)) return false;
     return true;
-  });
-  const basicItems = ownerFinanceAccess ? [...primaryItems, ...SERVICE_NAV] : primaryItems;
-  const modeItems = settingsMode === 'advanced' ? ADVANCED_NAV : basicItems;
-  const modeLabel = settingsMode === 'advanced' ? '고급' : '기본';
+  }), [canManageProjectUsers, canReadMedia, clientAdminMode, projectSettingsWritable]);
+
+  const serviceItems = useMemo(
+    () => ownerFinanceAccess ? SERVICE_NAV : [],
+    [ownerFinanceAccess],
+  );
+
+  const advancedItems = useMemo(() => {
+    if (clientAdminMode || !projectSettingsWritable) return [];
+    return ADVANCED_NAV.filter(([id]) => {
+      if (id === 'duplicate' && !canDuplicatePage) return false;
+      if (id === 'reset' && !canManageProjectUsers) return false;
+      return true;
+    });
+  }, [canDuplicatePage, canManageProjectUsers, clientAdminMode, projectSettingsWritable]);
+
+  const availableItems = useMemo(
+    () => [...primaryItems, ...serviceItems, ...advancedItems],
+    [advancedItems, primaryItems, serviceItems],
+  );
+  const availableIds = useMemo(() => new Set(availableItems.map(([id]) => id)), [availableItems]);
+  const initialSection = availableIds.has(openSection) ? openSection : (primaryItems[0]?.[0] || 'account');
+  const [selectedSection, setSelectedSection] = useState(initialSection);
+  const selectedLabel = ALL_NAV.find(([id]) => id === selectedSection)?.[1] || '페이지 기본';
 
   const selectSection = (id) => {
-    const nextMode = ADVANCED_IDS.has(id) ? 'advanced' : 'basic';
-    setSettingsMode(nextMode);
+    if (!availableIds.has(id)) return;
     setSelectedSection(id);
-    setAdvancedOpen(nextMode === 'advanced');
+    setAdvancedOpen(ADVANCED_IDS.has(id));
     setOpenSection(id);
   };
 
-  const selectMode = (nextMode) => {
-    if (nextMode === settingsMode) return;
-    const nextSection = nextMode === 'advanced' ? ADVANCED_NAV[0][0] : basicItems[0]?.[0] || 'basic';
-    setSettingsMode(nextMode);
-    setSelectedSection(nextSection);
-    setAdvancedOpen(nextMode === 'advanced');
-    setOpenSection(nextSection);
-  };
+  useEffect(() => {
+    if (availableIds.has(selectedSection)) return;
+    const fallback = primaryItems[0]?.[0] || 'account';
+    setSelectedSection(fallback);
+    setAdvancedOpen(false);
+    setOpenSection(fallback);
+  }, [availableIds, primaryItems, selectedSection, setAdvancedOpen, setOpenSection]);
 
   const visibleSections = {
     ...sections,
-    advancedOpen: settingsMode === 'advanced',
+    advancedOpen: ADVANCED_IDS.has(selectedSection),
     openSection: selectedSection,
     setOpenSection: (nextSection) => {
       if (nextSection) selectSection(nextSection);
@@ -183,17 +159,28 @@ export default function SettingsPanelBody({
   return (
     <div className="settings-v3-root settings-v4-flat">
       <aside className="settings-v3-sidebar">
-        <SettingsModeSwitch
-          mode={settingsMode}
-          setMode={selectMode}
-          advancedEnabled={!clientAdminMode}
-        />
         <SettingsNavGroup
-          label={modeLabel}
-          items={modeItems}
+          label="페이지"
+          items={primaryItems}
           selectedSection={selectedSection}
           selectSection={selectSection}
         />
+        {serviceItems.length > 0 && (
+          <SettingsNavGroup
+            label="서비스"
+            items={serviceItems}
+            selectedSection={selectedSection}
+            selectSection={selectSection}
+          />
+        )}
+        {advancedItems.length > 0 && (
+          <SettingsNavGroup
+            label="고급"
+            items={advancedItems}
+            selectedSection={selectedSection}
+            selectSection={selectSection}
+          />
+        )}
       </aside>
 
       <main className="settings-v3-main">
@@ -222,6 +209,7 @@ export default function SettingsPanelBody({
               onAccountUpdate={onAccountUpdate}
               onLogout={onLogout}
               ownership={ownership}
+              projectSettingsWritable={projectSettingsWritable}
               sections={visibleSections}
               transferRequest={transferRequest}
               updateIntegrations={updateIntegrations}
@@ -231,12 +219,14 @@ export default function SettingsPanelBody({
               activeSection={selectedSection}
               authUser={authUser}
               canDuplicatePage={canDuplicatePage}
+              canResetProject={canManageProjectUsers}
               clientAdminMode={clientAdminMode}
               duplicateSettings={duplicateSettings}
               drafts={drafts}
               integrations={integrations}
               onReset={onReset}
               page={page}
+              projectSettingsWritable={projectSettingsWritable}
               sections={visibleSections}
               setPage={setPage}
               updateIntegrations={updateIntegrations}

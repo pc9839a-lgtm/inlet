@@ -5,12 +5,13 @@ export default function PageBasicSettingsSection({
   authUser,
   basicDraft,
   clientAdminMode,
+  forceReadOnly = false,
   locked,
   onEdit,
   onSave,
   setBasicDraft,
 }) {
-  const readOnly = locked || clientAdminMode;
+  const readOnly = locked || clientAdminMode || forceReadOnly;
   const inputStyle = {
     height: '44px',
     minHeight: '44px',
@@ -20,8 +21,8 @@ export default function PageBasicSettingsSection({
     <SettingsSection
       id="basic"
       locked={locked}
-      onSave={onSave}
-      onEdit={onEdit}
+      onSave={forceReadOnly ? undefined : onSave}
+      onEdit={forceReadOnly ? undefined : onEdit}
       className="page-basic-settings-card settings-flat-form-section"
     >
       <div className="settings-form-grid page-basic-settings-grid">

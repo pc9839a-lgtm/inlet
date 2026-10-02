@@ -1,6 +1,6 @@
 # PageRo 문서 인덱스
 
-갱신일: 2026-09-20 KST
+갱신일: 2026-10-02 KST
 
 이 폴더는 **현재 운영에 필요한 문서만 유지**한다. 완료된 패치 기록, 특정 날짜의 핫픽스 메모, 이미 대체된 UI 명세를 current source처럼 남기지 않는다.
 
@@ -15,6 +15,26 @@
 5. `PAGERO_PLAN_POLICY_KO.md` — PageRo 요금 정책
 
 PageRo 작업 중 위 문서와 과거 문서가 충돌하면 위 목록을 우선한다.
+
+### 다른 AI 빠른 시작
+
+새 AI/에이전트는 아래 순서만 지키면 된다.
+
+1. current `main` HEAD 확인
+2. open PR 확인
+3. `AGENTS.md` 보호 규칙 확인
+4. `PAGERO_INTERNAL_OPTIMIZATION_MASTER_KO.md`에서 완료/남은 backlog 확인
+5. 실제 import/route/source 확인
+6. 완료 영역은 재작업하지 않고 남은 backlog만 진행
+
+현재 핵심 상태:
+
+- E0~E4 완료
+- P6 설정 UX 완료
+- B3 production smoke는 사용자 요청으로 스킵
+- 다음 backlog는 P5 개인 도메인 → P7 웹 결제 → P9 접근성 → P8 대량 데이터 → E5 A/B test
+- open PageRo PR #233~#235는 오래된 개인 도메인 draft이므로 그대로 병합 금지
+- AI 확장은 사용자가 다시 요청하기 전까지 후순위
 
 ## 2. 운영 Runbook
 

@@ -950,20 +950,22 @@ requireAll(opsQa, [
 
 const pageroInternalMaster = await read('docs/PAGERO_INTERNAL_OPTIMIZATION_MASTER_KO.md');
 requireAll(pageroInternalMaster, [
-  'PageRo 내부 기능 / 출시 마스터',
-  '현재 최우선:',
-  'E1 편집기 shell 단순화',
-  'B0 — 유지보수 정리 — 완료 (#246)',
+  'PageRo 내부 기능 / 작업 기준',
+  '현재 완료 상태',
+  'E1 편집기 shell',
+  'E3 문의·전환 cockpit',
+  'E4 AI first-page',
+  'P6 설정 UX',
   'WorkspaceEditorScreen → WorkspaceLeftPanel → WorkspaceActivePanel → EditPanel → EditPanelLayout',
-  'B1 — production save deployment gate',
-  'B2 — Revision restore ↔ Undo/Redo',
-  'B3 — 실제 신규 사용자 launch smoke',
-  '#233 → #234 → #235',
-  'B4 — 미완료 기능 오해 방지 — 완료 (#251)',
-  'PAGERO_EDITOR_PRODUCT_DIRECTION_KO.md',
+  'B3 — 신규 사용자 production smoke',
+  'P5 — 개인 도메인 운영화',
+  'P7 — 웹 자동결제',
+  'P9 — 전체 접근성',
+  '#233~#235',
+  'PAGERO_MAINTENANCE_HANDOFF_KO.md',
   'npm run qa:all',
   'npm run deployment:qa',
-  'production deploy',
+  '운영 배포',
 ], 'Pagero current execution master');
 
 console.log(JSON.stringify({

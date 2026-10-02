@@ -29,6 +29,11 @@ const inviteAccept = await readFile('src/screens/InviteAcceptScreen.jsx', 'utf8'
 const managerOwnership = await readFile('src/panels/settings/ManagerOwnershipTransfer.jsx', 'utf8');
 const ownershipTransfer = await readFile('src/lib/ownershipTransfer.js', 'utf8');
 const settingsControlPanelCss = await readFile('src/styles/settings-control-panel.css', 'utf8');
+const settingsPanel = await readFile('src/panels/SettingsPanel.jsx', 'utf8');
+const settingsPanelBody = await readFile('src/panels/settings/SettingsPanelBody.jsx', 'utf8');
+const settingsPrimarySections = await readFile('src/panels/settings/SettingsPrimarySections.jsx', 'utf8');
+const pageBasicSettings = await readFile('src/panels/settings/PageBasicSettingsSection.jsx', 'utf8');
+const settingsAdvancedAndReset = await readFile('src/panels/settings/SettingsAdvancedAndReset.jsx', 'utf8');
 
 assert(dashboard.includes('service-dashboard-toolbar'), 'dashboard must use compact product toolbar');
 assert(!dashboard.includes('랜딩 제작, 접수 확인, 통계를 한 화면에서 관리합니다.'), 'dashboard marketing explanation must stay removed');
@@ -104,9 +109,19 @@ assert(ownershipTransfer.includes("requested: '관리자 확인 중'") && owners
 assert(!ownershipTransfer.includes('내부 관리자가 요청을 확인 중입니다.') && !ownershipTransfer.includes('소유권이 새 계정으로 이전되었습니다.'), 'ownership status prose must stay removed');
 assert(settingsControlPanelCss.includes('Ownership transfer — status-first access control.') && settingsControlPanelCss.includes('.ownership-transfer-head'), 'ownership transfer must keep compact platform layout');
 
+assert(settingsPanel.includes("const projectSettingsWritable = canWriteTab(accessMode, page, authUser, 'settings');"), 'settings must derive project write access from the canonical tab permission');
+assert(settingsPanel.includes('const canManageProjectUsers = isBuilderMode(accessMode);'), 'owner-level user management must be tied to canonical builder access');
+assert(!settingsPanelBody.includes('SettingsModeSwitch') && settingsPanelBody.includes('label="페이지"') && settingsPanelBody.includes('label="서비스"') && settingsPanelBody.includes('label="고급"'), 'settings sidebar must use direct product groups without a duplicate basic/advanced mode switch');
+assert(settingsPanelBody.includes("id === 'domain' && (clientAdminMode || !projectSettingsWritable)") && settingsPanelBody.includes("id === 'reset' && !canManageProjectUsers"), 'domain and destructive settings must stay role-gated');
+assert(settingsPanelBody.includes("id === 'duplicate' && !canDuplicatePage"), 'unavailable duplicate action must stay out of settings navigation');
+assert(settingsPrimarySections.includes('forceReadOnly={!projectSettingsWritable}'), 'page basics must respect read-only settings access');
+assert(pageBasicSettings.includes('const readOnly = locked || clientAdminMode || forceReadOnly;') && pageBasicSettings.includes('onSave={forceReadOnly ? undefined : onSave}'), 'read-only project settings must not expose save/edit actions');
+assert(settingsAdvancedAndReset.includes('if (clientAdminMode || !projectSettingsWritable) return null;'), 'advanced project settings must not render without write access');
+assert(settingsAdvancedAndReset.includes("activeSection === 'reset' && canResetProject"), 'project reset must remain owner-level only');
+
 console.log(JSON.stringify({
   ok: true,
-  checks: 62,
+  checks: 71,
   scope: 'pagero-platform-copy-density',
   dashboard: 'compact-saas-shell',
   createFlow: 'action-first',
@@ -118,5 +133,6 @@ console.log(JSON.stringify({
   generalSettings: 'functional-copy-only',
   editor: 'compact-product-ui',
   access: 'status-first',
+  settingsAccess: 'role-aware-direct-nav',
   aiLogicTouched: false,
 }, null, 2));
