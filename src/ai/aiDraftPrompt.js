@@ -1,4 +1,4 @@
-import { AI_ALLOWED_BLOCK_TYPES } from './aiDraftSchema';
+import { AI_ALLOWED_BLOCK_TYPES } from './aiDraftSchema.js';
 
 function templateGuide(style = 'auto') {
   const guides = {
