@@ -27,7 +27,7 @@ export function AddBlockGroupGrid({ onAdd, query = '', category = 'all' }) {
     .filter(({ items }) => items.length > 0);
 
   if (!groups.length) {
-    return <div className="widget-add-empty" role="status">조건에 맞는 위젯이 없습니다.</div>;
+    return <div className="widget-add-empty" role="status">위젯 없음</div>;
   }
 
   return (
