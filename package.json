@@ -4,6 +4,7 @@
     "dev": "vite --host 0.0.0.0",
     "server": "node server/index.mjs",
     "ai:qa": "node scripts/ai-quality-check.mjs",
+    "pagero:ai-first-page:e4:qa": "node scripts/pagero-ai-first-page-e4-quality-check.mjs",
     "stats:qa": "node scripts/stats-quality-check.mjs",
     "revision:qa": "node scripts/revision-quality-check.mjs",
     "templates:qa": "node scripts/template-quality-check.mjs",
