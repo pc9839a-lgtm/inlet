@@ -42,7 +42,7 @@
 
 .settings-workspace-shell .billing-plan-card {
   min-width: 0;
-  min-height: 520px;
+  min-height: 330px;
   display: flex;
   flex-direction: column;
   padding: 24px 20px 18px;
@@ -266,7 +266,7 @@
   }
 
   .settings-workspace-shell .billing-plan-card {
-    min-height: 430px;
+    min-height: 300px;
   }
 }
 
@@ -282,7 +282,7 @@
   }
 
   .settings-workspace-shell .billing-plan-card {
-    min-height: 420px;
+    min-height: 290px;
     padding: 20px 16px 16px;
   }
 
@@ -303,4 +303,33 @@
     width: 100%;
     min-width: 0;
   }
+}
+
+.settings-workspace-shell .billing-settings-head {
+  min-height: 42px;
+}
+
+.settings-workspace-shell .billing-plan-card {
+  padding: 18px 16px 14px;
+}
+
+.settings-workspace-shell .billing-plan-features {
+  margin-top: 16px;
+  gap: 9px;
+}
+
+.settings-workspace-shell .billing-plan-action {
+  min-height: 42px;
+  font-size: 13px;
+}
+
+.settings-workspace-shell .billing-addon-head {
+  min-height: 44px;
+}
+
+.settings-workspace-shell .billing-addon-row {
+  min-height: 72px;
+  grid-template-columns: 190px minmax(0, 1fr) 100px;
+  gap: 14px;
+  padding: 12px 14px;
 }
