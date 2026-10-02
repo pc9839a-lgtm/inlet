@@ -4,7 +4,7 @@ import { persistPage } from '../lib/pageRepository.js';
 import { projectContext } from '../lib/projectContext.js';
 import { sanitizePageSlug } from '../lib/pageSlugs.js';
 import { defaultPage, normalizePageForSave, uid } from '../lib/pageModel.js';
-import { normalizeAiDraftInput } from '../ai/aiDraftSchema.js';
+import { createAiFirstPage, aiFirstPageBrief } from '../ai/aiFirstPageFlow.js';
 
 export function useCreatePageActions({
   page,
@@ -48,32 +48,71 @@ export function useCreatePageActions({
   });
 
   const createWithAi = async (draftInput = null) => {
-    if (!canManageAdmin) return;
+    if (!canManageAdmin) return null;
     const requestedSlug = sanitizePageSlug(draftInput?.slug || defaultPage.slug || 'my-page', 'my-page');
     const nextContext = projectContext({ slug: requestedSlug }, authUser);
-    if (draftInput && typeof draftInput === 'object') {
-      const nextInput = normalizeAiDraftInput({
-        ...(defaultPage.ai?.draftInput || {}),
-        ...draftInput,
-        slug: requestedSlug,
-      });
-      const nextPage = freshCreatedPage({
-        ...defaultPage,
-        slug: requestedSlug,
-        ai: {
-          ...(defaultPage.ai || {}),
-          draftInput: nextInput,
-          updatedAt: new Date().toISOString(),
+    const nextInput = aiFirstPageBrief({
+      ...(defaultPage.ai?.draftInput || {}),
+      ...(draftInput && typeof draftInput === 'object' ? draftInput : {}),
+      slug: requestedSlug,
+    });
+    const generatedAt = new Date().toISOString();
+
+    const basePage = freshCreatedPage({
+      ...defaultPage,
+      slug: requestedSlug,
+      ai: {
+        ...(defaultPage.ai || {}),
+        draftInput: nextInput,
+        firstPage: {
+          status: 'generating',
+          source: '',
+          warning: '',
+          generatedAt,
         },
-      }, nextContext);
-      const saved = await saveCreatedPageToServer(nextPage, '페이지');
-      setPage(saved?.page || nextPage);
+        updatedAt: generatedAt,
+      },
+    }, nextContext);
+
+    // Create the project shell first so server-side AI can resolve the new project scope.
+    const baseSaved = await saveCreatedPageToServer(basePage, '페이지');
+    const persistedBase = baseSaved?.page || basePage;
+    const firstPage = await createAiFirstPage({
+      basePage: persistedBase,
+      input: nextInput,
+      authUser,
+    });
+    const completedAt = new Date().toISOString();
+    const completedPage = normalizePageForSave({
+      ...firstPage.page,
+      slug: requestedSlug,
+      ai: {
+        ...(firstPage.page.ai || {}),
+        draftInput: firstPage.brief,
+        firstPage: {
+          status: 'ready',
+          source: firstPage.source,
+          warning: firstPage.warning || '',
+          generatedAt: completedAt,
+        },
+        updatedAt: completedAt,
+      },
+    });
+    const finalSaved = await saveCreatedPageToServer(completedPage, 'AI 첫 페이지');
+    const finalPage = finalSaved?.page || completedPage;
+    setPage(finalPage);
+
+    if (firstPage.source !== 'ai') {
+      showToast('AI 연결을 확인하지 못해 입력한 내용 기준의 편집 가능한 기본 구조로 시작합니다.', 'info');
     }
+
     setCreateOpen(false);
     saveLocalJson(START_MODE_KEY, 'ai', '시작 선택', { quietSuccess: true });
     setStartMode('ai');
     setTab('edit');
+    setOpenId('');
     openWorkspace('manual');
+    return { page: finalPage, source: firstPage.source, warning: firstPage.warning || '' };
   };
 
   const createManual = async (footerInfo = {}) => {
