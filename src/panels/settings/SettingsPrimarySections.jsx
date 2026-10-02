@@ -19,6 +19,7 @@ export default function SettingsPrimarySections({
   onAccountUpdate,
   onLogout,
   ownership,
+  projectSettingsWritable,
   sections,
   transferRequest,
   updateIntegrations,
@@ -40,6 +41,7 @@ export default function SettingsPrimarySections({
           authUser={authUser}
           basicDraft={basicDraft}
           clientAdminMode={clientAdminMode}
+          forceReadOnly={!projectSettingsWritable}
           locked={lockedSections.basic}
           onSave={saveBasic}
           onEdit={() => editSection('basic')}
