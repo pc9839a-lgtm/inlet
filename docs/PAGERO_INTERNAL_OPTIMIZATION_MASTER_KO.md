@@ -23,6 +23,7 @@ PageRo는 범용 디자인 툴이 아니라 **광고용 문의 페이지 제작 
 | E4 AI first-page | 구현 완료 | editable PageRo blocks + 발행 checklist |
 | UI 밀도/설명문 정리 | 완료 | 대시보드/인증/접수함/통계/설정/편집기/접근 흐름 |
 | P6 설정 UX | 완료 | 역할별 nav, owner-only destructive action, read-only settings 보호 |
+| 문서 구조 정리 | 완료 | current SOURCE/RUNBOOK inventory + docs hygiene QA |
 | 저장/Undo/Redo/Revision | 완료 및 회귀 QA 존재 | save/reload/revision 계약 유지 |
 | 배포 asset/cache graph | 완료 | live graph + cache 검증 |
 | production D1 save roundtrip | 배포 gate에 존재 | 실제 deploy workflow에서 검증 |
@@ -40,7 +41,7 @@ PageRo는 범용 디자인 툴이 아니라 **광고용 문의 페이지 제작 
 - 로그인/대시보드/접수함/통계의 설명문 제거
 - 설정/편집기 compact density
 
-최근 완료 축은 PR #321~#349에 반영되어 있다. PR 번호를 구현 기준으로 쓰지 말고 **현재 main source를 기준으로 확인**한다.
+완료 여부는 PR 번호가 아니라 **현재 main source와 QA contract**를 기준으로 확인한다.
 
 ## 3. 현재 실제 runtime
 
@@ -268,7 +269,18 @@ npm run browser:templates-mobile:qa
 - 완료된 패치를 다시 고도화 명목으로 반복하지 않는다.
 - 사용자가 지적한 실제 화면/버그가 있으면 문서보다 재현 결과를 우선한다.
 
-## 12. 다른 AI가 작업을 시작할 때
+## 12. 문서 사용 규칙
+
+문서 전체 목록과 역할은 `docs/README.md`만 본다.
+
+- 새 문서를 만들기 전에 기존 SOURCE/RUNBOOK에 흡수 가능한지 먼저 확인
+- 날짜별 운영 스냅샷과 완료 패치 메모를 장기 보관하지 않음
+- 인증 보안은 `ops-auth-security-policy.md` 단일 SOURCE 사용
+- SES 운영 검증은 `ops-ses-auth-email-production-verification.md` 단일 RUNBOOK 사용
+- 문서 추가/삭제 시 `docs/README.md` inventory를 같이 갱신
+- `npm run docs:qa` 통과 필수
+
+## 13. 다른 AI가 작업을 시작할 때
 
 1. `AGENTS.md`
 2. `docs/README.md`

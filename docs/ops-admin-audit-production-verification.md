@@ -1,6 +1,6 @@
 # Admin Audit Production Verification
 
-This runbook verifies the production behavior introduced by PR #43 without treating branch-only QA as production completion.
+This runbook verifies the current production behavior of the admin audit surface without treating branch-only QA as production completion.
 
 ## Scope
 

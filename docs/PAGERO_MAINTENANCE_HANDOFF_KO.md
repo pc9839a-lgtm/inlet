@@ -86,6 +86,8 @@ Git history가 백업이다.
 
 순서로 남긴다.
 
+문서 inventory는 `docs/README.md`가 단일 기준이다. 문서를 추가·삭제하면 inventory를 같이 갱신하고 `npm run docs:qa`를 통과시킨다.
+
 ## 5. 코드 정리 규칙
 
 삭제 가능 조건:
@@ -153,6 +155,7 @@ UI PR에 D1/API schema 변경을 섞지 않는다.
 기본 release gate:
 
 ```bash
+npm run docs:qa
 npm run qa:all
 npm run build
 npm run deployment:qa

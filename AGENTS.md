@@ -31,6 +31,17 @@ work unless a current-main bug is reproduced. B3 production launch smoke is
 currently skipped by owner request. The next planned product backlog starts at
 P5 custom-domain operationalization.
 
+## Documentation Source Rules
+
+Before adding or editing repository documentation:
+
+* read `docs/README.md` first
+* every `docs/*.md` file must be classified in that index
+* update an existing SOURCE/RUNBOOK instead of creating dated patch notes
+* do not reintroduce retired CallLink/dated billing/push snapshots or split auth-security memos
+* run `npm run docs:qa` after documentation changes
+* Git history is the archive for deleted patch notes and one-off verification snapshots
+
 ## Production Home Lock - Highest Priority
 
 The current production root at `https://pagero.kr/` is the canonical Pagero

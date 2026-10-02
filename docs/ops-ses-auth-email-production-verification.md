@@ -1,5 +1,8 @@
 # SES Auth Email Production Verification
 
+- 상태: RUNBOOK / 현재 운영 검증 기준
+- 갱신일: 2026-10-02 KST
+
 페이지로 인증 이메일의 AWS SES 운영 준비 상태를 검증하는 읽기 전용 절차다.
 
 이 검증은 이메일을 발송하지 않는다. 가입 인증, 비밀번호 재설정, 이메일 변경, 매니저 초대, 소유권 이전 알림의 실제 발송 검증은 별도의 승인된 테스트 수신함으로 진행해야 한다.
@@ -51,6 +54,25 @@ SES 읽기 전용 최소 권한을 사용한다.
   - 예: `pagero.kr`
 
 발신 주소는 identity와 정확히 일치하거나 해당 도메인 아래에 있어야 한다.
+
+## 운영 전 체크리스트
+
+아래 항목은 별도 checklist 문서로 분리하지 않고 이 runbook에서 함께 관리한다.
+
+- GitHub `production` environment 승인자 설정
+- 읽기 전용 IAM access key 등록
+- `PAGERO_AUTH_EMAIL_FROM` 등록
+- `PAGERO_SES_IDENTITY` 등록
+- SES production access 승인
+- SES sending 활성화
+- identity verified
+- DKIM success
+- DMARC TXT 확인
+- custom MAIL FROM 사용 시 상태 success
+- custom MAIL FROM 사용 시 Amazon SES SPF 확인
+- read-only workflow가 `verified-live`
+- artifact에 key·주소·도메인 원문 미노출
+- 별도 승인 전 실제 이메일 발송 금지
 
 ## 실행 옵션
 
