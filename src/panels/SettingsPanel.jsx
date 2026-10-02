@@ -36,7 +36,8 @@ export default function SettingsPanel({
   const serverPage = isServerPageMode();
   const clientAdminMode = isClientAdminMode(accessMode);
   const managerMode = isManagerMode(accessMode);
-  const canManageProjectUsers = !managerMode;
+  const projectSettingsWritable = canWriteTab(accessMode, page, authUser, 'settings');
+  const canManageProjectUsers = !managerMode && !clientAdminMode;
   const canReadMedia = canReadTab(accessMode, page, authUser, 'edit');
   const canDeleteMedia = canWriteTab(accessMode, page, authUser, 'edit');
   const sections = useSettingsPanelSections();
@@ -71,6 +72,7 @@ export default function SettingsPanel({
       canDuplicatePage={canDuplicatePage}
       canManageProjectUsers={canManageProjectUsers}
       canReadMedia={canReadMedia}
+      projectSettingsWritable={projectSettingsWritable}
       clientAdminMode={clientAdminMode}
       duplicateSettings={duplicateSettings}
       drafts={drafts}
