@@ -377,3 +377,47 @@ html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .wid
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
 }
+
+
+/* Editor add dock — compact product density. */
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock.open .add-panel {
+  border-radius: 9px !important;
+  box-shadow: 0 8px 24px rgba(15,23,42,.08) !important;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .widget-group {
+  gap: 5px !important;
+  padding: 5px 2px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .widget-group > div {
+  gap: 6px !important;
+}
+
+html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .widget-group button {
+  border-radius: 7px !important;
+  box-shadow: none !important;
+}
+
+@media (min-width: 761px) {
+  html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock {
+    padding: 4px !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .add-toggle {
+    min-height: 42px !important;
+    border-radius: 8px !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .edit-layout .widget-category-filter button {
+    min-height: 32px !important;
+    border-radius: 7px !important;
+  }
+
+  html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .widget-group button {
+    min-height: 38px !important;
+  }
+}
