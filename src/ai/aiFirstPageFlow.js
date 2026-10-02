@@ -103,7 +103,8 @@ function fallbackActionTarget(input = {}) {
 }
 
 function fallbackActionLabel(input = {}, target = 'form') {
-  if (input.cta) return compact(input.cta, 24);
+  const requestedCta = String(input.cta || '').trim();
+  if (requestedCta && requestedCta !== '상담 신청하기') return compact(requestedCta, 24);
   if (target === 'reservation') return '방문 예약하기';
   if (input.goal === '견적문의') return '견적 문의하기';
   if (input.goal === '이벤트 신청') return '신청하기';
