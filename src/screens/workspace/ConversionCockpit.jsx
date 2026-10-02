@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { conversionCockpitModel } from './conversionCockpitModel.js';
+import PublishChecklist from './PublishChecklist.jsx';
 import './ConversionCockpit.css';
 
 function StatusItem({ label, value, title = '' }) {
@@ -33,6 +34,7 @@ export default function ConversionCockpit({
       </div>
 
       <div className="conversion-cockpit-actions">
+        <PublishChecklist page={page} />
         {model.canTest ? (
           <a
             className="conversion-cockpit-test"
