@@ -82,6 +82,7 @@ export default function SettingsPanelBody({
   onAccountUpdate,
   onLogout,
   onReset,
+  onSavePage,
   ownership,
   page,
   projectSettingsWritable,
@@ -105,9 +106,9 @@ export default function SettingsPanelBody({
   const primaryItems = useMemo(() => PRIMARY_NAV.filter(([id]) => {
     if (id === 'managers' && !canManageProjectUsers) return false;
     if (id === 'media' && !canReadMedia) return false;
-    if (id === 'domain' && (clientAdminMode || !projectSettingsWritable)) return false;
+    if (id === 'domain' && (!ownerFinanceAccess || !projectSettingsWritable)) return false;
     return true;
-  }), [canManageProjectUsers, canReadMedia, clientAdminMode, projectSettingsWritable]);
+  }), [canManageProjectUsers, canReadMedia, ownerFinanceAccess, projectSettingsWritable]);
 
   const serviceItems = useMemo(
     () => ownerFinanceAccess ? SERVICE_NAV : [],
@@ -208,6 +209,7 @@ export default function SettingsPanelBody({
               managerSettings={managerSettings}
               onAccountUpdate={onAccountUpdate}
               onLogout={onLogout}
+              onSavePage={onSavePage}
               ownership={ownership}
               projectSettingsWritable={projectSettingsWritable}
               sections={visibleSections}
