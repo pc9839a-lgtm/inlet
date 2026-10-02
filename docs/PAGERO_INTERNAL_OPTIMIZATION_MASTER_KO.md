@@ -154,16 +154,21 @@ production D1 write가 발생하므로 자동으로 실행하지 않는다.
 
 ### P5 — 개인 도메인 운영화
 
-미완료:
+current-main 코드 재구성 완료:
 
-- canonical ownership 최종 정합
-- Cloudflare provider attach/detach
-- DNS verify
-- SSL lifecycle/status
-- 운영 migration
-- 실제 테스트 도메인 smoke
+- PR #352: canonical `page_domains` ownership / backfill / collision / release / schema QA
+- PR #353: Cloudflare Pages provider register/verify/detach / DNS verify / SSL status / retry / fail-closed cleanup / owner signed-session API
+- PR #354: settings UI → revision-safe page save → provider verify 연결 / canonical 상태 표시 / idempotent detach 재시도
+- 대체된 오래된 draft #233~#235는 2026-10-02 closed
 
-open PR #233~#235는 오래된 draft stack이다. **그대로 병합하지 않는다.** current main과 diff/API를 다시 감사하고 필요한 코드만 새 PR로 옮긴다.
+아직 운영 완료가 아닌 항목:
+
+- production D1 migration `0015_page_domain_ownership.sql` 적용
+- production provider secret/env readiness 확인
+- 실제 테스트 도메인 attach → DNS verify → SSL active → detach smoke
+- production custom-host router를 canonical `page_domains` 기준으로 전환할지 migration/smoke 후 최종 검증
+
+위 항목은 production write 또는 실제 provider side effect가 있으므로 별도 승인 전 실행하지 않는다.
 
 ### P7 — 웹 자동결제
 
@@ -218,7 +223,7 @@ B3 production smoke는 현재 스킵한다.
 
 다음 순서:
 
-1. P5 개인 도메인 current-main 재구성
+1. P5 개인 도메인 production migration/provider smoke 승인 후 운영 검증
 2. P7 웹 결제
 3. P9 접근성 audit
 4. P8 대량 데이터
@@ -231,7 +236,7 @@ AI 기능은 E4까지 구현되어 있다. 사용자가 다시 요청하기 전�
 작업 전 open PR을 반드시 확인한다.
 
 - current main보다 오래된 stacked PR은 바로 병합하지 않는다.
-- 특히 PageRo 개인 도메인 #233~#235는 참고용으로만 본다.
+- PageRo 개인 도메인 #233~#235는 #352~#354로 대체되어 closed다. 과거 설계 참고가 필요할 때만 읽는다.
 - CallTag PR은 PageRo 작업과 섞지 않는다.
 - 이미 main에서 대체된 PR은 close/재작성 여부를 먼저 판단한다.
 
