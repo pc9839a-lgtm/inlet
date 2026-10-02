@@ -931,10 +931,10 @@ async function run() {
     assert(editSectionTabStyle.activeDataSelected === 'true', 'active edit section tab must expose data-selected=true');
     assert(editSectionTabStyle.tabsBackground === 'rgb(238, 241, 245)', `edit section tabs must use light gray segmented background, got ${editSectionTabStyle.tabsBackground}`);
     assert(editSectionTabStyle.tabsBorderTopWidth === '0px', `edit section tabs outer border must be removed, got ${editSectionTabStyle.tabsBorderTopWidth}`);
-    assert(editSectionTabStyle.tabsHeight === 42, `edit section tabs container must be exactly 42px tall: ${editSectionTabStyle.tabsHeight}px`);
+    assert(editSectionTabStyle.tabsHeight === 38, `edit section tabs container must be exactly 38px tall: ${editSectionTabStyle.tabsHeight}px`);
     assert(editSectionTabStyle.activeBackground === 'rgb(255, 255, 255)', `active edit section tab must be white, got ${editSectionTabStyle.activeBackground}`);
     assert(editSectionTabStyle.activeColor !== 'rgb(255, 255, 255)', 'active edit section tab text must not be white-on-dark');
-    assert(editSectionTabStyle.activeHeight === 36, `active edit section tab must be 36px tall, got ${editSectionTabStyle.activeHeight}px`);
+    assert(editSectionTabStyle.activeHeight === 32, `active edit section tab must be 32px tall, got ${editSectionTabStyle.activeHeight}px`);
     assert(editSectionTabStyle.inactiveBackground === 'rgba(0, 0, 0, 0)', `inactive edit section tab must stay transparent, got ${editSectionTabStyle.inactiveBackground}`);
 
     await capture(client, 'desktop-editor-before');
