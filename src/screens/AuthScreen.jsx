@@ -180,12 +180,10 @@ function AuthScreen({ onAuth, initialMode = 'login', onBack }) {
         {onBack && <button className="auth-back" type="button" onClick={onBack}>← 메인으로</button>}
         <div className="auth-brand">
           <strong>페이지로</strong>
-          <span>고객 인입 랜딩 빌더</span>
         </div>
 
         <div className="auth-copy">
-          <h1>{mode === 'login' ? '로그인' : '페이지로 시작하기'}</h1>
-          <p>고객이 들어오는 첫 화면을 만들고 관리하세요.</p>
+          <h1>{mode === 'login' ? '로그인' : mode === 'signup' ? '회원가입' : '비밀번호 변경'}</h1>
         </div>
 
         <form className="auth-form" onSubmit={submit}>
@@ -220,7 +218,7 @@ function AuthScreen({ onAuth, initialMode = 'login', onBack }) {
                 spellCheck="false"
                 maxLength={20}
               />
-              <small>입력하면 페이지로 클래식 7일 이용권이 적용됩니다.</small>
+              <small>클래식 7일 적용</small>
             </label>
           )}
 
@@ -262,11 +260,11 @@ function AuthScreen({ onAuth, initialMode = 'login', onBack }) {
         </form>
 
         <button className="auth-switch" type="button" onClick={()=>{ setError(''); setNotice(''); setEmailVerified(false); setMode(mode === 'login' ? 'signup' : 'login'); }}>
-          {mode === 'login' ? '아직 계정이 없나요? 회원가입' : '이미 계정이 있나요? 로그인'}
+          {mode === 'login' ? '회원가입' : '로그인'}
         </button>
         {mode === 'login' && (
           <button className="auth-switch" type="button" onClick={()=>{ setError(''); setNotice(''); setEmailVerified(false); setMode('reset'); }}>
-            이메일 인증 후 비밀번호 변경
+            비밀번호 변경
           </button>
         )}
       </section>
