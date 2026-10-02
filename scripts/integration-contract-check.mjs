@@ -965,7 +965,7 @@ requireAll(pageroInternalMaster, [
   'PAGERO_MAINTENANCE_HANDOFF_KO.md',
   'npm run qa:all',
   'npm run deployment:qa',
-  'production deploy',
+  '운영 배포',
 ], 'Pagero current execution master');
 
 console.log(JSON.stringify({
