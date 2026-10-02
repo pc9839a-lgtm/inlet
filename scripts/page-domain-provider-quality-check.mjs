@@ -198,6 +198,8 @@ for (const source of [checkRoute, manageRoute]) {
 assert(checkRoute.includes('assertD1PageBelongsToProject'), 'domain check must verify page/project binding server-side');
 assert(manageRoute.includes('assertOwnedD1PageDomain'), 'domain mutation must verify canonical ownership server-side');
 assert(manageRoute.includes("['verify', 'detach']"), 'domain mutation action allowlist must stay narrow');
+assert(manageRoute.includes("allowDisconnected: action === 'detach'"), 'detach must be safely retryable after provider cleanup when page save needs a retry');
+assert(storeSource.includes('allowDisconnected = false'), 'canonical ownership guard must expose an explicit disconnected retry gate');
 assert(migrationSource.includes('idx_page_domains_hostname_owner'), 'provider layer requires canonical ownership migration');
 
 console.log(JSON.stringify({
