@@ -192,8 +192,7 @@ function DashboardCreateFlow({ page, templates = [], onAi, onManual, onTemplate,
       <div className="home-create-head">
         <div>
           <span>새 랜딩 만들기</span>
-          <h2>{step === 'menu' ? '시작 방식을 선택하세요.' : step === 'url' ? 'URL을 먼저 확인합니다.' : step === 'ai' ? 'AI로 초안을 만듭니다.' : step === 'manual' ? '기본 정보만 넣고 시작합니다.' : '템플릿을 선택하세요.'}</h2>
-          <p>{step === 'menu' ? '아래 3가지 방식 중 하나를 선택하면 이 화면에서 다음 단계가 바로 열립니다.' : '필요한 정보만 입력하고 다음 단계로 진행합니다.'}</p>
+          <h2>{step === 'menu' ? '새 랜딩' : step === 'url' ? 'URL 설정' : step === 'ai' ? 'AI' : step === 'manual' ? '기본 정보' : '템플릿'}</h2>
         </div>
         <button type="button" onClick={onClose}>닫기</button>
       </div>
@@ -201,15 +200,12 @@ function DashboardCreateFlow({ page, templates = [], onAi, onManual, onTemplate,
       <div className="home-create-options">
         <button type="button" className={pendingMode === 'ai' ? 'active primary' : ''} onClick={() => startUrlStep('ai')}>
           <strong>AI 만들기</strong>
-          <span>업종과 서비스 정보를 입력하면 바로 편집 가능한 첫 페이지를 만듭니다.</span>
         </button>
         <button type="button" className={pendingMode === 'manual' ? 'active primary' : ''} onClick={() => startUrlStep('manual')}>
           <strong>직접 만들기</strong>
-          <span>푸터 기본정보만 입력하고 바로 편집합니다.</span>
         </button>
         <button type="button" className={pendingMode === 'template' ? 'active primary' : ''} onClick={() => startUrlStep('template')}>
-          <strong>템플릿 만들기</strong>
-          <span>실제 예시 화면을 슬라이드로 보고 선택합니다.</span>
+          <strong>템플릿</strong>
         </button>
       </div>
 
@@ -396,9 +392,7 @@ function UrlStartStep({ initialSlug = '', modeLabel = '', onBack, onConfirm, onC
   return (
     <div className="create-step-panel create-url-step">
       <div className="create-modal-title">
-        <span>URL 설정</span>
-        <h2 id="create-landing-title">페이지 주소를 먼저 정합니다.</h2>
-        <p>{modeLabel ? `${modeLabel} 전에 URL 중복 여부를 확인합니다.` : 'URL 중복 여부를 확인한 뒤 페이지를 만듭니다.'}</p>
+        <h2 id="create-landing-title">URL 설정</h2>
       </div>
       <label className="create-url-field">
         <span>기본 도메인 URL</span>
@@ -471,26 +465,21 @@ function CreateLandingModal({ page, onClose, onAi, onManual, onTemplate, onCheck
         {step === 'menu' && (
           <>
             <div className="create-modal-title">
-              <span>새 랜딩 만들기</span>
-              <h2 id="create-landing-title">어떻게 시작할까요?</h2>
-              <p>시작 방식만 먼저 고르고, 다음 화면에서 필요한 정보만 입력합니다.</p>
+              <h2 id="create-landing-title">새 랜딩</h2>
             </div>
 
             <div className="create-options create-mode-options">
               {!canCreateLanding && createLandingStatus && <p className="create-url-status error">{createLandingStatus}</p>}
               <button type="button" className="primary" disabled={!canCreateLanding} onClick={() => startUrlStep('ai')}>
                 <strong>AI 만들기</strong>
-                <span>업종과 서비스 정보를 입력하면 바로 편집 가능한 첫 페이지를 만듭니다.</span>
               </button>
 
               <button type="button" disabled={!canCreateLanding} onClick={() => startUrlStep('manual')}>
                 <strong>직접 만들기</strong>
-                <span>푸터 기본정보만 입력하고 바로 편집합니다.</span>
               </button>
 
               <button type="button" disabled={!canCreateLanding} onClick={() => startUrlStep('template')}>
-                <strong>템플릿 만들기</strong>
-                <span>실제 예시 화면을 넘겨보고 선택합니다.</span>
+                <strong>템플릿</strong>
               </button>
             </div>
           </>
@@ -520,9 +509,7 @@ function CreateLandingModal({ page, onClose, onAi, onManual, onTemplate, onCheck
         {step === 'manual' && (
           <div className="create-step-panel">
             <div className="create-modal-title">
-              <span>직접 만들기</span>
-              <h2 id="create-landing-title">기본 정보만 넣고 시작합니다.</h2>
-              <p>푸터에 들어갈 최소 정보만 먼저 입력합니다. 나머지는 편집 화면에서 구성합니다.</p>
+              <h2 id="create-landing-title">기본 정보</h2>
             </div>
             <div className="create-footer-form">
               <label><span>상호명</span><input value={footer.company} onChange={(e) => setFooterField('company', e.target.value)} placeholder="예: 페이지로 상담센터" /></label>
