@@ -177,6 +177,7 @@ assert(
 
 // Custom-domain ownership is part of the normal D1 schema release gate.
 await import('./page-domain-core-quality-check.mjs');
+await import('./page-domain-provider-quality-check.mjs');
 
 console.log(JSON.stringify({
   ok: true,
@@ -189,6 +190,7 @@ console.log(JSON.stringify({
   blockedLeadMigration: '0004_lead_blocked_submissions.sql',
   authEmailMigration: '0005_auth_email_verifications.sql',
   pageDomainMigration: '0015_page_domain_ownership.sql',
+  pageDomainProviderQa: 'page-domain-provider-quality-check.mjs',
   adapter: 'server/storage/d1Adapter.mjs',
   runtimeAdapter: 'server/storage/runtimeAdapter.mjs',
 }, null, 2));
