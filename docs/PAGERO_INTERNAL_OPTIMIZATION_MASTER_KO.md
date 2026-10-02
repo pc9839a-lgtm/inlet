@@ -1,383 +1,242 @@
-# PageRo 내부 기능 / 출시 마스터
+# PageRo 내부 기능 / 작업 기준
 
 - 상태: 현재 실행 기준 / 단일 소스
-- 갱신일: 2026-09-20 KST
+- 갱신일: 2026-10-02 KST
 - 저장소: `pc9839a-lgtm/inlet`
 - 운영 브랜치: `main`
-- 검증 기준 main SHA: `a000ec652d7ac7bf0d068c726be9ffe86e09a2db`
-- 마지막 기능 production 검증 SHA: `f51674687248549d7465bd0c65baf66df75e1853`
 - 운영 도메인: `https://pagero.kr/`
-- 현재 최우선: **E2 섹션 패턴 → E3 문의/전환 cockpit → E4 AI first-page**
 
-이 문서는 과거 패치 일지를 보관하지 않는다. 현재 코드 상태, 실제 남은 문제, 실행 순서만 유지한다.
+> 다른 AI는 이 문서를 읽기 전에 반드시 현재 `main` HEAD와 open PR을 먼저 확인한다. 아래 상태표는 작업 방향을 정하는 기준이며, 오래된 branch/SHA를 재사용하지 않는다.
 
-## 1. 현재 판정
+## 1. 제품 한 줄
 
-| 영역 | 상태 | 비고 |
+PageRo는 범용 디자인 툴이 아니라 **광고용 문의 페이지 제작 → 유입 → 문의 → 접수함 → 전환 확인**을 한 제품 안에서 처리하는 도구다.
+
+## 2. 현재 완료 상태
+
+| 영역 | 상태 | 기준 |
 | --- | --- | --- |
-| 운영 메인 | 보호 / 동결 | `functions/index.js` 기준 |
-| 편집기 기본 구조 | main 반영 | 블록 목록 / 선택 설정 / 미리보기 |
-| 저장 / trailing save | 구현·회귀 존재 | delayed save 중 최신 입력 보호 |
-| Undo / Redo | 구현 | 일반 mutation history |
-| Revision | main 반영 / QA 통과 | #248에서 restore ↔ undo/redo ↔ republish 회귀 고정 |
-| 이미지/영상 재사용 | production 검증 이력 있음 | P3 기능 SHA `c899c3b7...` |
-| 문의 폼 / 공개 페이지 | QA 존재 | form/public browser regression |
-| 모바일 공개 페이지 | QA 존재 | 360 / 390 / 430 |
-| 모바일 앱 화면 | 운영 중심 | 편집보다 접수함/통계 우선 |
-| 개인 도메인 | 부분 구현 | provider/DNS/SSL 자동 lifecycle 미완료 |
-| 웹 자동결제 | 미완료 | `pre_checkout`; 현재 문의형 checkout |
-| 대량 데이터 | 기반 있음 | 대규모 운영 부하 검증은 후순위 |
-| 전체 접근성 | 부분 검증 | 최종 audit 후순위 |
+| E0 유지보수 정리 | 완료 | dead path/docs/CSS owner 정리 |
+| E1 편집기 shell | 완료 | 구조/추가 + canvas + inspector |
+| E2 섹션 패턴 | 완료 | 추천/업종별/기본/최근 사용 |
+| E3 문의·전환 cockpit | 완료 | 테스트 문의, 전달/추적 상태, 테스트 트래픽 분리 |
+| E4 AI first-page | 구현 완료 | editable PageRo blocks + 발행 checklist |
+| UI 밀도/설명문 정리 | 완료 | 대시보드/인증/접수함/통계/설정/편집기/접근 흐름 |
+| P6 설정 UX | 완료 | 역할별 nav, owner-only destructive action, read-only settings 보호 |
+| 저장/Undo/Redo/Revision | 완료 및 회귀 QA 존재 | save/reload/revision 계약 유지 |
+| 배포 asset/cache graph | 완료 | live graph + cache 검증 |
+| production D1 save roundtrip | 배포 gate에 존재 | 실제 deploy workflow에서 검증 |
 
-## 2. 현재 release blocker
+### 완료 영역은 다시 만들지 않는다
 
-### B0 — 유지보수 정리 — 완료 (#246)
+실제 버그가 재현되지 않는 한 아래를 새 작업처럼 다시 손대지 않는다.
 
-2026-09-20 `main`에 병합 완료했다. production home/API/D1/schema/save runtime은 변경하지 않았고, dead editor path·stale docs·중복 CSS owner·backup residue를 정리했다.
+- editor CSS ownership / workspace geometry / preview shell
+- PC·모바일 반응형 회귀 보강
+- E1 editor shell
+- E2 section pattern
+- E3 conversion cockpit
+- E4 AI first-page
+- 로그인/대시보드/접수함/통계의 설명문 제거
+- 설정/편집기 compact density
 
-원칙:
+최근 완료 축은 PR #321~#349에 반영되어 있다. PR 번호를 구현 기준으로 쓰지 말고 **현재 main source를 기준으로 확인**한다.
 
-- import 0건 dead code 삭제
-- repo 내부 수동 backup 파일 삭제
-- 완료된 구현 명세/핫픽스 문서 삭제
-- 동일 영역 source-of-truth는 1개만 유지
-- 오래된 open PR은 current plan 여부를 판정해 정리
-- 새 기능 전에 현재 실제 진입 경로를 먼저 확인
-- `final`, `fix`, `hotfix`, `v2/v3` 이름의 병렬 기준 문서를 만들지 않음
+## 3. 현재 실제 runtime
 
-현재 cleanup 작업:
+### 공개 루트
 
-- 브랜치: `chore/pagero-maintenance-reset-20260920`
-- dead `EditWorkbench` 경로 제거
-- 미사용 workbench CSS 제거
-- repository backup marker 제거
-- 과거 editor/UI/hotfix/deploy 문서 제거
-- `docs/README.md`를 문서 인덱스로 추가
-- 편집기 방향은 `PAGERO_EDITOR_PRODUCT_DIRECTION_KO.md` 하나로 통합
+`/`의 공개 메인은 Cloudflare Pages Functions의 `functions/index.js`가 기준이다.
 
-### B1 — production save deployment gate — 완료 (#250)
+- root marker: `.pagero-exact-home`
+- frozen C63 asset + life bridge 보호
+- 내부 앱 수정 때문에 공개 루트 디자인/문구/구조를 바꾸지 않는다.
 
-현재 main 기준 production save probe를 다시 감사했다.
+### SPA / 앱
 
-이전 production deploy run에서:
+`src/main.jsx`는 `/embed/*`만 `MapEmbedApp`으로 분기하고, 나머지 SPA 진입은 `App`으로 연결한다.
 
-- Pages upload: 성공
-- deployment metadata: 성공
-- exact deployment readiness: 성공
-- `pagero.kr/api/readiness`: 성공
-- production save QA session mint: 404
-- 최종 결과: `production_save_roundtrip_failed`
+`App.jsx`에서:
 
-제품 저장 실패가 확인된 것이 아니라 배포 직후 custom-domain/rotated QA secret 경합 가능성이 남아 있다.
+- 공개 slug → `PreviewRenderer`
+- 초대 → `InviteAcceptScreen`
+- 인증 → `AuthScreen`
+- 로그인 후 비작업공간 → `Dashboard`
+- 작업공간 → `WorkspaceEditorScreen`
 
-기존 `#244`는 #246 정리 뒤 main과 동일한 빈 브랜치가 되어 closed 상태가 되었고, `#249`는 #248 병합 뒤 base 충돌로 대체했다.
+공개 `/` 서버 홈과 SPA 인증 화면을 같은 것으로 취급하지 않는다.
 
-현재 보강 PR:
+## 4. 현재 편집기 경로
 
-- `#250 fix(pagero): restore production save mint retry on current main`
-- QA session mint 404만 최대 12회 / 2.5초 간격 bounded retry
-- 404 외 상태는 즉시 실패
-- retry window 소진 시 실패
-- deploy workflow와 offline contract QA에서 retry 범위를 고정
-- `#250` main 병합 완료 (`36bb08ba...`)
-- main QA 5종 통과
-- Cloudflare production deploy 성공
-- deployed readiness 성공
-- production D1 save roundtrip 성공
+`WorkspaceEditorScreen → WorkspaceLeftPanel → WorkspaceActivePanel → EditPanel → EditPanelLayout`
 
-B1은 운영 재검증까지 완료했다.
+주요 owner:
 
-### B2 — Revision restore ↔ Undo/Redo — main 병합 완료 (#248)
+| 영역 | source |
+| --- | --- |
+| editor shell | `src/screens/WorkspaceEditorScreen.jsx` |
+| left workspace | `src/screens/workspace/WorkspaceLeftPanel.jsx` |
+| preview/canvas | `src/screens/workspace/WorkspacePreviewPane.jsx` |
+| active panel | `src/screens/workspace/WorkspaceActivePanel.jsx` |
+| edit panel | `src/editor/EditPanel.jsx` |
+| block order | `src/editor/editPanelParts/ScreenOrder*.jsx/css` |
+| settings | `src/panels/SettingsPanel.jsx`, `src/panels/settings/**` |
+| save | `src/runtime/usePageSaveAction.js` |
+| history | `src/runtime/pageEditHistory.js` |
+| revision | `src/lib/pageRevisionRestore.js`, `PageRevisionHistorySection.jsx` |
+| conversion cockpit | `src/screens/workspace/ConversionCockpit.jsx` |
+| production root | `functions/index.js` |
 
-1차 실제 wiring 감사 결과, `PageRevisionHistorySection`의 `setPage`는 raw setter가 아니다.
+제거된 과거 editor path를 fallback 명목으로 복구하지 않는다.
 
-`createWorkspacePanelProps.settingsPanelProps.setPage = setNormalizedPage`
-→ SettingsPanel
-→ SettingsAdvancedAndReset
-→ PageRevisionHistorySection
+## 5. 설정 권한 기준
 
-`setNormalizedPage`는 `commitLocalPageDraft → recordPageEditMutation` 경로를 사용한다. 따라서 revision restore 자체의 canonical history 연결은 이미 존재하며, production save API/schema를 바꿀 필요는 없다.
+설정은 `authContext.js`의 tab read/write 권한을 기준으로 판단한다.
 
-P4에서 실제로 찾은 빈틈/패치:
+### builder / owner
 
-- settings v3의 pointer interaction이 local dirty/recovery intent selector에 포함되지 않음
-- revision restore 직후 recovery draft flush가 user intent를 소모하면서 global unsaved guard가 false로 남을 수 있음
-- `.settings-v3-root`를 사용자 편집 감지 범위에 추가
-- user-driven signature change를 recovery draft로 flush할 때 `setWorkspaceUnsavedDirty(true)` 유지
-- revision restore → Undo → Redo → 추가 수정 → 재발행 → reload → public readback 브라우저 E2E 추가
-- 실제 Chrome pointer로 revision restore와 native unsaved navigation guard 검증
-- API shape / D1 schema / public renderer / save runtime 의미 변경 없음
+- 페이지 설정
+- 미디어
+- 개인 도메인
+- 계정
+- 매니저/소유권
+- 요금제/추천인/파트너/정산
+- 고급 설정
+- 초기화
 
-결과:
+### manager
 
-- `#248` main 병합 완료
-- `qa:all` 통과
-- editor / form / template-mobile browser regression 통과
-- production-home/API/D1/schema 의미 변경 없음
-- `f5167468...` production deploy 및 production save roundtrip 성공
+- `settings.write=true`일 때 프로젝트 설정 변경 가능
+- 매니저/소유권, owner finance, 초기화는 불가
+- 미디어 권한은 `edit` read/write와 별도 연동
+- read-only settings에서는 페이지 기본을 수정하지 못함
 
-### B3 — 실제 신규 사용자 launch smoke — 실행 준비 완료 / 사용자 요청으로 실운영 실행 보류
+### client-admin
 
-mock browser QA와 QA 전용 production save probe만으로 beta launch를 끝내지 않는다.
+- owner finance / 매니저 / 소유권 / 고급 / 개인 도메인 변경 불가
+- 페이지 기본은 read-only
+- 계정 정보는 본인 계정 범위에서 사용
 
-실제 운영 환경에서 한 번은 다음을 연속 검증한다.
+권한을 UI 숨김만으로 추정하지 말고 실제 `canReadTab/canWriteTab` 경로를 함께 확인한다.
 
-`회원가입 → 이메일 인증 → 로그인 → 첫 페이지 생성 → 템플릿 선택 → 수정 → 발행 → 공개 URL → 테스트 문의 → 접수함 확인`
+## 6. UI 문구 기준
 
-실행 기준은 `docs/ops-pagero-production-launch-smoke.md` 하나로 고정한다.
+PageRo 내부 제품 UI에서는 설명문보다 기능명·상태·값을 우선한다.
 
-현재 준비 완료:
+제거/축약 대상:
 
-- 실제 SES 이메일 인증 경로 사용
-- 회원가입 후 재로그인 포함
-- shipped template `quote-request` 선택
-- 수정/발행 후 공개 URL readback
-- 공개 문의 1건 제출
-- 접수함 readback
-- 테스트 문의 삭제
-- 테스트 페이지 삭제/보관
-- 인증코드/비밀번호/session token/전체 전화번호는 증빙에 기록 금지
-- `scripts/pagero-launch-smoke-contract-check.mjs`를 `qa:all`에 포함
+- 제목 아래에서 기능을 다시 설명하는 문장
+- `~할 수 있습니다`, `~확인합니다`, `~관리합니다` 식 중복 안내
+- 마케팅형 hero/pitch
+- 버튼만 봐도 알 수 있는 도움말
 
-production D1 write가 발생하므로 실제 실행은 별도 명시적 승인 후 수행한다.
+유지 대상:
 
-이 시나리오가 beta launch 최종 gate다.
+- 입력 검증 오류
+- 권한 부족
+- 저장 실패/충돌
+- 결제 실패
+- 삭제/초기화/소유권 이전 같은 위험 경고
+- 사용자가 다음 행동을 결정하는 데 필요한 상태
 
-### B4 — 미완료 기능 오해 방지 — 완료 (#251)
+## 7. 현재 남은 실제 backlog
 
-#251에서 beta UI를 실제 제공 범위에 맞췄다.
+### B3 — 신규 사용자 production smoke
 
-- 개인 도메인 `연결` → `주소 저장`
-- 자동 도메인 연결 / SSL 자동 적용은 준비 중으로 표시
-- 유료 요금제 버튼은 `가입 문의`
-- SSL 추가서비스는 `도입 문의`
-- `/subscribe`는 자동결제가 아니라 가입 문의 페이지로 명확화
-- provider / 결제 / DNS / SSL 실제 동작은 변경하지 않음
+현재 **사용자 요청으로 스킵**한다.
 
-current main 반영 SHA: `a000ec65...`
+필요 시 별도 승인 후:
 
-## 3. Beta 출시 기준
+`회원가입 → 이메일 인증 → 로그인 → 첫 페이지 → 수정 → 발행 → 공개 URL → 테스트 문의 → 접수함`
 
-다음이 모두 끝나면 P5~P9 전체 완료를 기다리지 않고 beta를 열 수 있다.
-
-1. 유지보수 cleanup QA 통과
-2. #250 production deployment gate 재검증 — 완료
-3. Revision restore ↔ Undo/Redo 연결 검증 — 완료 (#248)
-4. 신규 사용자 production smoke 통과
-5. 개인도메인/자동결제의 미완료 상태를 UI에서 명확히 처리 — 완료 (#251)
-6. 공개 페이지 / 문의 제출 / 접수함 핵심 흐름 정상
-
-과거 launch gate PR #166의 핵심 결론은 현재도 방향상 유효하다.
-
-- beta: core 기능 기준 가능
-- paid self-serve: web billing 완료 전 불가
-
-오래된 #166 PR 자체를 current 구현 기준으로 사용하지 않는다.
-
-## 4. Beta 이후 backlog
+production D1 write가 발생하므로 자동으로 실행하지 않는다.
 
 ### P5 — 개인 도메인 운영화
 
-draft stack:
+미완료:
 
-`#233 → #234 → #235`
-
-필요:
-
-- canonical ownership
+- canonical ownership 최종 정합
 - Cloudflare provider attach/detach
 - DNS verify
-- SSL 상태
+- SSL lifecycle/status
 - 운영 migration
 - 실제 테스트 도메인 smoke
 
-### P6 — 설정 UX
+open PR #233~#235는 오래된 draft stack이다. **그대로 병합하지 않는다.** current main과 diff/API를 다시 감사하고 필요한 코드만 새 PR로 옮긴다.
 
-새 설정 시스템을 만들지 않는다.
+### P7 — 웹 자동결제
 
-정리 대상:
-
-- 메뉴 수
-- owner/manager/client-admin 권한
-- 저장형/즉시반영형 feedback
-- narrow/mobile overflow
-- destructive action
-
-### P7 — 웹 결제
+현재 self-serve billing 미완료.
 
 필요:
 
 - 실제 PG checkout
 - provider 검증
-- recurring token/billing key
+- recurring billing key/token
 - webhook signature
 - idempotency
 - renewal / grace / cancel / refund
 - receipt/history
 - 운영 smoke
 
-### P8 — 대량 데이터
-
-실사용량이 커진 뒤:
-
-- 10k / 50k 이상 leads
-- query plan
-- CSV streaming
-- retention
-- backup / restore
+실제 청구 활성화는 사용자 승인 없이 하지 않는다.
 
 ### P9 — 전체 접근성
 
-현재 static QA를 최종 제품 audit와 혼동하지 않는다.
-
-추가 검증:
+남은 최종 audit:
 
 - keyboard-only
-- focus trap / return
+- focus trap / focus return
 - 200% zoom
 - contrast
 - screen reader semantics
 - mobile keyboard viewport
 
-## 5. 편집기 제품 방향
+### P8 — 대량 데이터
 
-편집기 제품 방향은 아래 문서만 사용한다.
+실사용량 증가 후 진행:
 
-`docs/PAGERO_EDITOR_PRODUCT_DIRECTION_KO.md`
+- leads 10k / 50k
+- query plan
+- CSV streaming
+- retention
+- backup / restore
 
-핵심:
+### E5 — A/B test
 
-**광고용 문의 페이지를 빠르게 만들고, 문의를 바로 관리하고, 유입/전환까지 한곳에서 보는 도구.**
+실사용 전환 데이터 이후 진행:
 
-PageRo는 Framer/Wix의 디자인 자유도를 복제하는 범용 builder가 아니다.
+- page variant
+- A/B test
+- conversion comparison
+- winning variant publish
 
-편집기 개편 우선순위:
+## 8. 현재 작업 우선순위
 
-1. 유지보수 구조 정상화
-2. shell 단순화
-3. 구조/추가 + canvas + inspector
-4. edit/style 중복 이동 제거
-5. 완성형 section preset
-6. 문의/전환 cockpit
-7. AI first-page flow
-8. 실사용 데이터 이후 A/B test
+B3 production smoke는 현재 스킵한다.
 
+다음 순서:
 
-## 5-1. E1 편집기 shell 단순화 — 진행 중
+1. P5 개인 도메인 current-main 재구성
+2. P7 웹 결제
+3. P9 접근성 audit
+4. P8 대량 데이터
+5. E5 A/B test
 
-현재 패치 브랜치: `feat/pagero-editor-shell-e1-20260921`
+AI 기능은 E4까지 구현되어 있다. 사용자가 다시 요청하기 전까지 AI 확장보다 위 backlog를 우선한다.
 
-1차 범위:
+## 9. open PR 처리 규칙
 
-- 데스크톱 편집기를 `구조 / 캔버스 / Inspector` 3열로 재배치
-- 왼쪽은 `구조 / 추가` 두 모드만 유지
-- 가운데는 실제 페이지 캔버스
-- 오른쪽은 `선택 요소 / 페이지·테마` contextual inspector
-- 별도 `스타일` workspace 탭 제거
-- 과거 `style` URL은 `edit` workspace로 호환 처리
-- 기존 AddBlockDock source를 재사용하되 하단 floating dock이 아니라 왼쪽 추가 모드 안에서 표시
-- 새 병렬 editor source는 만들지 않음
+작업 전 open PR을 반드시 확인한다.
 
-이번 범위에서 하지 않는 것:
+- current main보다 오래된 stacked PR은 바로 병합하지 않는다.
+- 특히 PageRo 개인 도메인 #233~#235는 참고용으로만 본다.
+- CallTag PR은 PageRo 작업과 섞지 않는다.
+- 이미 main에서 대체된 PR은 close/재작성 여부를 먼저 판단한다.
 
-- 섹션 preset 재설계(E2)
-- 테스트 문의/UTM/tracking cockpit(E3)
-- AI first-page(E4)
-- save/API/D1/schema 변경
+## 10. QA / 배포
 
-완료 기준:
-
-- qa:all
-- editor/browser/form/template-mobile regression
-- desktop/narrow desktop에서 구조·캔버스·Inspector 동시 식별
-- 기존 style URL 회귀 없음
-- production home/API/D1/schema diff 없음
-
-
-## 5-2. E2 섹션 패턴 — 진행 중
-
-stacked branch: `feat/pagero-section-patterns-e2-20260921`
-
-목표:
-
-- 블록 하나씩 조립하는 흐름보다 완성형 섹션 묶음을 먼저 제안
-- 왼쪽 `추가`를 `추천 섹션 / 업종별 / 기본 블록 / 최근 사용` 4모드로 단순화
-- 현재 핵심 업종 3종(개인회생 / 분양 / 청첩장)부터 패턴 제공
-- 패턴은 새 렌더러를 만들지 않고 기존 PageRo 블록 여러 개를 묶어서 생성
-- 여러 블록 패턴도 한 번의 local mutation으로 추가되어 Undo 1회로 전체 제거
-- bottombar/footer 앞에 삽입해 일반 콘텐츠 순서를 유지
-- 기존 최근 블록 localStorage와 호환
-
-현재 패턴:
-
-- 상담 히어로 + 문의
-- 핵심 장점 + FAQ
-- 오시는 길 + 방문 예약
-- 개인회생 진단 섹션
-- 분양 상담 + 방문 예약
-- 예식 안내 + 오시는 길
-
-비변경:
-
-- save API
-- D1/schema
-- public renderer
-- 기존 개별 블록 편집기
-
-완료 기준:
-
-- E2 quality contract PASS
-- 실제 브라우저에서 추천 섹션 추가 → Undo 1회 → Redo 1회
-- 기존 기본 블록 추가 회귀 PASS
-- editor/form/template-mobile 전체 회귀 PASS
-
-## 6. 현재 실제 편집기 경로
-
-`WorkspaceEditorScreen → WorkspaceLeftPanel → WorkspaceActivePanel → EditPanel → EditPanelLayout`
-
-이 경로가 current source다.
-
-제거된 dead path를 다시 복구하지 않는다.
-
-주요 owner:
-
-| 영역 | 우선 파일 |
-| --- | --- |
-| editor shell | `src/screens/WorkspaceEditorScreen.jsx` |
-| left workspace | `src/screens/workspace/WorkspaceLeftPanel.jsx` |
-| active panel | `src/screens/workspace/WorkspaceActivePanel.jsx` |
-| edit panel | `src/editor/EditPanel.jsx` |
-| edit layout | `src/editor/EditPanelLayout.jsx` |
-| block order | `src/editor/editPanelParts/ScreenOrder*.jsx/css` |
-| save | `src/runtime/usePageSaveAction.js` |
-| history | `src/runtime/pageEditHistory.js` |
-| revision | `src/lib/pageRevisionRestore.js`, `PageRevisionHistorySection.jsx` |
-| media | media context/picker/settings + `fileRepository.js` |
-| settings | `src/panels/SettingsPanel.jsx`, `src/panels/settings/**` |
-| production root | `functions/index.js` — 내부 작업에서 보호 |
-
-## 7. 작업 단위
-
-한 PR에 다음을 섞지 않는다.
-
-- maintenance cleanup
-- editor redesign
-- save/API/schema
-- domain provider
-- billing provider
-- production home redesign
-
-권장 순서:
-
-1. cleanup PR
-2. release-blocker PR
-3. editor shell PR
-4. section/pattern PR
-5. conversion cockpit PR
-
-## 8. QA 기준
-
-최소:
+최소 QA:
 
 ```bash
 npm run qa:all
@@ -389,37 +248,36 @@ npm run browser:forms:qa
 npm run browser:templates-mobile:qa
 ```
 
-편집기 변경 추가 확인:
+작업에 따라 추가:
 
-- desktop
-- narrow desktop
-- public mobile 360 / 390 / 430
-- keyboard
-- pointer
+- desktop / narrow desktop
+- mobile 360 / 390 / 430
+- keyboard/pointer
 - console error 0
 - horizontal overflow 0
 - protected production-home diff 0
 
-## 9. 중단 조건
+운영 배포, production D1 write, 실제 결제, custom-domain provider attach/detach, 실사용자 데이터 삭제는 사용자 승인 범위를 확인한다.
 
-별도 승인 없이 실행하지 않는다.
+## 11. 작업 원칙
 
-- production D1 write
-- 실제 결제/청구 활성화
-- Cloudflare custom domain 실제 attach/detach
-- 실사용자 데이터 파괴/대량 삭제
-- production home 디자인/문구 변경
-- production deploy
+- 실제 import/route를 먼저 확인한다.
+- 같은 기능을 새 병렬 component/CSS로 만들지 않는다.
+- `*-final.css`, `*-fix.css` 식 patch layer를 추가하지 않는다.
+- 한 PR에 UI와 billing/domain provider/schema를 섞지 않는다.
+- 완료된 패치를 다시 고도화 명목으로 반복하지 않는다.
+- 사용자가 지적한 실제 화면/버그가 있으면 문서보다 재현 결과를 우선한다.
 
-## 10. 문서 기준
-
-PageRo current source:
+## 12. 다른 AI가 작업을 시작할 때
 
 1. `AGENTS.md`
 2. `docs/README.md`
-3. `docs/PAGERO_MAINTENANCE_HANDOFF_KO.md`
+3. `PAGERO_MAINTENANCE_HANDOFF_KO.md`
 4. 이 문서
-5. `docs/PAGERO_EDITOR_PRODUCT_DIRECTION_KO.md`
-6. `docs/PAGERO_PLAN_POLICY_KO.md`
+5. 필요한 영역의 실제 source
+6. current main HEAD
+7. open PR
 
-완료된 패치 문서를 다시 current source로 사용하지 않는다.
+이 순서로 확인한다.
+
+**과거 대화 요약이나 오래된 PR 설명보다 current main source가 우선이다.**
