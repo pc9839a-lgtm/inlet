@@ -62,6 +62,26 @@ for (const file of retired) {
   assert(!entries.includes(file), 'retired doc must not return: ' + file);
 }
 
+const currentDocContents = [];
+for (const file of entries) {
+  currentDocContents.push({
+    file,
+    content: await readFile(path.join(docsDir, file), 'utf8'),
+  });
+}
+
+for (const retiredFile of retired) {
+  for (const doc of currentDocContents) {
+    assert(!doc.content.includes(retiredFile), 'current doc references retired file ' + retiredFile + ': ' + doc.file);
+  }
+}
+
+for (const doc of currentDocContents) {
+  assert(!doc.content.includes('병합 SHA:'), 'historical merge SHA snapshot must not remain in current docs: ' + doc.file);
+  assert(!doc.content.includes('Workflow Run ID:'), 'historical workflow run snapshot must not remain in current docs: ' + doc.file);
+  assert(!doc.content.includes('Job ID:'), 'historical job snapshot must not remain in current docs: ' + doc.file);
+}
+
 const forbiddenName = /(?:^|[-_])(final|fix|hotfix)(?:[-_.]|$)|[-_]v\d+(?:[-_.]|$)|_20\d{6,8}(?:_|\.|$)/i;
 for (const file of entries) {
   assert(!forbiddenName.test(file), 'dated/patch-layer doc filename is forbidden: ' + file);
