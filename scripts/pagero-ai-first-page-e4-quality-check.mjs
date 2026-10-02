@@ -88,6 +88,7 @@ for (const sample of samples) {
 }
 
 const createActions = await readFile('src/runtime/useCreatePageActions.js', 'utf8');
+const firstPageFlow = await readFile('src/ai/aiFirstPageFlow.js', 'utf8');
 const createFlow = await readFile('src/screens/CreateLandingFlow.jsx', 'utf8');
 const schema = await readFile('src/ai/aiDraftSchema.js', 'utf8');
 const prompt = await readFile('src/ai/aiDraftPrompt.js', 'utf8');
@@ -96,7 +97,7 @@ const cockpit = await readFile('src/screens/workspace/ConversionCockpit.jsx', 'u
 const checklistUi = await readFile('src/screens/workspace/PublishChecklist.jsx', 'utf8');
 
 assert(createActions.includes('createAiFirstPage') && createActions.includes("status: 'generating'") && createActions.includes("status: 'ready'"), 'AI create action must generate and persist an actual first page');
-assert(createActions.includes("source: firstPage.source") && createActions.includes('brief-fallback'), 'AI create action must retain first-page source/fallback state');
+assert(createActions.includes("source: firstPage.source") && firstPageFlow.includes("source = 'brief-fallback'"), 'AI create action must retain first-page source/fallback state');
 assert(createFlow.includes('핵심 혜택') && createFlow.includes('지역') && createFlow.includes('받고 싶은 문의 항목'), 'E4 create brief must expose the product-direction fields');
 assert(createFlow.includes('AI 첫 페이지 만들기') && createFlow.includes('첫 페이지 만드는 중'), 'E4 create flow must expose immediate generation state');
 assert(schema.includes("region: ''") && schema.includes("inquiryFields: ''"), 'AI brief schema must persist region and inquiry fields');
