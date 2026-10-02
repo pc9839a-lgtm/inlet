@@ -115,11 +115,9 @@ export default function CustomDomainSettingsSection({ authUser, integrations, up
   return (
     <SettingsSection id="domain" className="settings-domain-section">
       <div className="domain-settings-screen">
-        <p className="settings-message">베타 운영: 개인 도메인 자동 연결과 SSL 자동 적용은 준비 중입니다. 현재는 도메인 주소 저장과 DNS 정보 확인, 도입 문의만 가능합니다.</p>
         <section className="domain-setting-row domain-dns-row-v2">
           <div className="domain-setting-label">
             <strong>DNS</strong>
-            <span>연결 준비용 CNAME 정보입니다. 현재는 DNS를 변경하지 않아도 됩니다.</span>
           </div>
           <div className="domain-dns-values">
             <div><span>유형</span><code>CNAME</code></div>
@@ -159,7 +157,7 @@ export default function CustomDomainSettingsSection({ authUser, integrations, up
         <section className="domain-setting-row domain-ssl-row">
           <div className="domain-setting-label">
             <strong>HTTPS · SSL</strong>
-            <span>{sslIncludedByPlan ? '프로 요금제 포함 · 자동 적용 준비중' : sslEnabled ? '이용 권한 있음 · 자동 적용 준비중' : '도입 문의'}</span>
+            <span>{sslIncludedByPlan ? '프로 포함' : sslEnabled ? '사용 가능' : '미사용'}</span>
           </div>
           <div className="domain-ssl-action">
             {sslEnabled || sslIncludedByPlan ? (

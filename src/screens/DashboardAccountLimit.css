@@ -116,3 +116,164 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+
+/* Service dashboard — compact SaaS/product shell. */
+.service-home-shell {
+  min-height: 100vh;
+  padding: 0 !important;
+  background: #f5f6f8 !important;
+}
+
+.service-home-header {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 58px !important;
+  margin: 0 !important;
+  padding: 0 24px !important;
+  border: 0 !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+.service-home-header .service-brand {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.service-home-header .service-brand strong {
+  font-size: 18px !important;
+  letter-spacing: -.04em !important;
+}
+
+.service-dashboard {
+  width: min(1280px, calc(100% - 40px)) !important;
+  margin: 0 auto !important;
+  padding: 24px 0 40px !important;
+  gap: 14px !important;
+}
+
+.service-dashboard-toolbar {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.service-dashboard-toolbar h1 {
+  margin: 0;
+  color: #111827;
+  font-size: 24px;
+  line-height: 1.1;
+  font-weight: 950;
+  letter-spacing: -.04em;
+}
+
+.service-dashboard-toolbar .primary-btn,
+.service-dashboard .home-section-title .primary-btn,
+.service-dashboard .landing-card-actions button {
+  min-height: 36px;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+.service-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.service-summary-grid article {
+  min-height: 84px;
+  padding: 14px 16px;
+  border: 1px solid #e1e5ea;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: none;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+}
+
+.service-summary-grid article > span {
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.service-summary-grid article > strong {
+  min-width: 0;
+  color: #111827;
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 950;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.service-summary-grid article > small {
+  min-width: 0;
+  color: #9ca3af;
+  font-size: 11px;
+  font-weight: 750;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.service-dashboard .home-section {
+  padding: 16px !important;
+  border: 1px solid #e1e5ea !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+.service-dashboard .home-section-title h2 {
+  font-size: 16px !important;
+  letter-spacing: -.025em !important;
+}
+
+.service-dashboard .landing-card,
+.service-dashboard .empty-landing {
+  margin-top: 10px !important;
+  padding: 14px !important;
+  border-color: #e5e7eb !important;
+  border-radius: 10px !important;
+}
+
+.service-account-danger-zone {
+  padding: 12px 14px !important;
+  border-radius: 10px !important;
+}
+
+@media (max-width: 820px) {
+  .service-home-header {
+    min-height: 56px !important;
+    padding: 0 14px !important;
+    align-items: center !important;
+    flex-direction: row !important;
+  }
+
+  .service-dashboard {
+    width: calc(100% - 24px) !important;
+    padding: 16px 0 28px !important;
+  }
+
+  .service-dashboard-toolbar h1 {
+    font-size: 21px;
+  }
+
+  .service-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .service-summary-grid article {
+    min-height: 76px;
+    padding: 12px;
+  }
+}
