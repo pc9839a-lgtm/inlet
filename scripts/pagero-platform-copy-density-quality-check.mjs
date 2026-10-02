@@ -12,6 +12,8 @@ const createFlowCss = await readFile('src/styles/panels-create-flow.css', 'utf8'
 const billing = await readFile('src/panels/settings/BillingSettingsSection.jsx', 'utf8');
 const billingCss = await readFile('src/panels/settings/BillingSettingsSection.css', 'utf8');
 const domain = await readFile('src/panels/settings/CustomDomainSettingsSection.jsx', 'utf8');
+const auth = await readFile('src/screens/AuthScreen.jsx', 'utf8');
+const authCss = await readFile('src/styles/panels-home-auth.css', 'utf8');
 
 assert(dashboard.includes('service-dashboard-toolbar'), 'dashboard must use compact product toolbar');
 assert(!dashboard.includes('랜딩 제작, 접수 확인, 통계를 한 화면에서 관리합니다.'), 'dashboard marketing explanation must stay removed');
@@ -38,12 +40,20 @@ assert(!domain.includes('베타 운영: 개인 도메인'), 'domain beta paragra
 assert(!domain.includes('현재는 DNS를 변경하지 않아도 됩니다.'), 'domain DNS explanation must stay removed');
 assert(domain.includes("sslIncludedByPlan ? '프로 포함' : sslEnabled ? '사용 가능' : '미사용'"), 'domain SSL must use compact status copy');
 
+assert(!auth.includes('고객 인입 랜딩 빌더'), 'auth brand subtitle must stay removed');
+assert(!auth.includes('고객이 들어오는 첫 화면을 만들고 관리하세요.'), 'auth marketing explanation must stay removed');
+assert(!auth.includes('아직 계정이 없나요?') && !auth.includes('이미 계정이 있나요?'), 'auth switch prompts must stay concise');
+assert(!auth.includes('이메일 인증 후 비밀번호 변경'), 'auth password action must stay concise');
+assert(auth.includes("mode === 'signup' ? '회원가입' : '비밀번호 변경'"), 'auth mode titles must be functional labels');
+assert(authCss.includes('border-radius: 16px !important;') && authCss.includes('background: #f5f6f8 !important;'), 'auth must keep flat SaaS surface styling');
+
 console.log(JSON.stringify({
   ok: true,
-  checks: 20,
+  checks: 26,
   scope: 'pagero-platform-copy-density',
   dashboard: 'compact-saas-shell',
   createFlow: 'action-first',
   settings: ['pricing-data-first', 'domain-status-first'],
+  auth: 'functional-copy-only',
   aiLogicTouched: false,
 }, null, 2));
