@@ -170,7 +170,7 @@ function draftTextBlob(draft = {}) {
 }
 
 function keywordTokens(input = {}) {
-  return [input.prompt, input.industry, input.serviceName, input.benefit, input.targetCustomer, input.keyMessage]
+  return [input.prompt, input.industry, input.serviceName, input.region, input.inquiryFields, input.benefit, input.targetCustomer, input.keyMessage]
     .join(' ')
     .split(/[^\p{L}\p{N}]+/u)
     .map((token) => token.trim())
