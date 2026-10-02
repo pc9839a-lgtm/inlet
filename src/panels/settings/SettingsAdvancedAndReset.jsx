@@ -6,17 +6,19 @@ export default function SettingsAdvancedAndReset({
   activeSection,
   authUser,
   canDuplicatePage,
+  canResetProject = false,
   clientAdminMode,
   duplicateSettings,
   drafts,
   integrations,
   onReset,
   page,
+  projectSettingsWritable,
   sections,
   setPage,
   updateIntegrations,
 }) {
-  if (clientAdminMode) return null;
+  if (clientAdminMode || !projectSettingsWritable) return null;
 
   const { openSection, setOpenSection } = sections;
   const {
@@ -76,7 +78,7 @@ export default function SettingsAdvancedAndReset({
         />
       )}
 
-      {activeSection === 'reset' && (
+      {activeSection === 'reset' && canResetProject && (
         <ResetSettingsSection
           onReset={onReset}
           openSection={openSection}
