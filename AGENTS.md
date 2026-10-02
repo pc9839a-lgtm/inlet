@@ -28,8 +28,9 @@ Current PageRo implementation status and backlog live only in
 `docs/PAGERO_INTERNAL_OPTIMIZATION_MASTER_KO.md`. E0-E4 and the P6 settings UX
 pass are complete. Do not recreate completed editor/CSS/cockpit/AI/UI-density
 work unless a current-main bug is reproduced. B3 production launch smoke is
-currently skipped by owner request. The next planned product backlog starts at
-P5 custom-domain operationalization.
+currently skipped by owner request. P5 custom-domain code reconstruction landed
+through PR #352-#354; production migration/provider smoke remains approval-gated.
+After P5 operating validation, the next planned product backlog starts at P7.
 
 ## Documentation Source Rules
 
