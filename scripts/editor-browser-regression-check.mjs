@@ -1048,7 +1048,6 @@ async function run() {
     // edit again, publish, then verify the final server/public readback survives reload.
     await clickButtonByText(client, '.top-tabs', '설정');
     await waitForBrowser(client, `!!document.querySelector('.settings-v3-root')`, 'settings panel');
-    await clickButtonByText(client, '.settings-mode-switch', '고급 설정');
     await waitForBrowser(client, `[...document.querySelectorAll('.settings-v3-sidebar button')].some((button) => button.textContent.trim() === '버전 기록')`, 'advanced settings navigation');
     await clickButtonByText(client, '.settings-v3-sidebar', '버전 기록');
     await waitForBrowser(client, `!!document.querySelector('.page-revision-history-section') && (document.querySelector('.page-revision-history-section')?.innerText || '').includes('버전 2')`, 'revision history list');
