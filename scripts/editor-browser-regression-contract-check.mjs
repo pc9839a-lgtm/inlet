@@ -52,6 +52,7 @@ assert(browserSource.includes("`${origin}/login`") && browserSource.includes("in
 assert(browserSource.includes("pathname === '/api/auth/login'") && browserSource.includes("pathname === '/api/auth/session'"), 'browser QA must mock login and session refresh APIs');
 assert(browserSource.includes("pathname === '/api/projects'") && browserSource.includes(".service-landing-card"), 'browser QA must load and select a dashboard page');
 assert(browserSource.includes('.conversion-cockpit') && browserSource.includes('conversion-test-link') && browserSource.includes("utmSource === 'pagero_test'") && browserSource.includes("utmCampaign === 'conversion_test'") && browserSource.includes("'#block-editor-form'"), 'browser QA must verify the E3 conversion cockpit and isolated test-inquiry URL');
+assert(browserSource.includes('.publish-checklist') && browserSource.includes("'연락처/사업자'") && browserSource.includes('items.length === 6'), 'browser QA must verify the E4 pre-publish checklist');
 assert(browserSource.includes("pathname === '/api/account-page'") && browserSource.includes("#editor-block-editor-hero") && browserSource.includes(".screen-order-v2-head") && browserSource.includes(".screen-order-v2-inline-editor textarea[placeholder=\"핵심 제목을 입력하세요\"]") && browserSource.includes('브라우저 저장 검증 완료'), 'browser QA must open the current account page, edit the active inline block editor, and verify live preview');
 assert(browserSource.includes(".panel-actions .primary-btn") && browserSource.includes("await client.send('Page.reload');") && !browserSource.includes("await client.send('Page.reload', { ignoreCache: true });"), 'primary editor save/reload flow must use a normal browser reload instead of bypassing cache');
 assert(browserSource.includes('pageLoadsBeforeReload') && browserSource.includes('fresh account page read after reload') && browserSource.includes("primary-btn:not(:disabled)") && browserSource.includes('clean saved page must not keep the unsaved navigation guard after reload'), 'browser QA must prove normal reload performs a fresh server read, keeps the publish action usable, and clears the unsaved guard');
@@ -125,6 +126,7 @@ console.log(JSON.stringify({
   mobileWidths: [360, 390, 430],
   responsiveGeometryLocked: true,
   conversionCockpit: true,
+  publishChecklist: true,
   productionCredentials: false,
   accountPageMock: true,
   activeEditorDom: 'EditPanel/ScreenOrderRow',
