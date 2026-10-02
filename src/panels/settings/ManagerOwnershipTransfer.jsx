@@ -25,16 +25,15 @@ export default function ManagerOwnershipTransfer({
           <strong>{ownership.clientEmail || '없음'}</strong>
         </div>
         <button type="button" className="manager-fold-btn" onClick={() => setShowTransfer(!showTransfer)}>
-          {showTransfer ? '소유권 이전 닫기' : '소유권 이전'}
+          {showTransfer ? '닫기' : '소유권 이전'}
         </button>
       </div>
 
       {showTransfer && (
         <div className="ownership-transfer-box settings-danger-zone-lite">
-          <div className="ownership-transfer-copy">
-            <span>민감한 권한</span>
+          <div className="ownership-transfer-head">
             <strong>소유권 이전</strong>
-            <p>대상 매니저를 선택해 요청하면 내부 관리자의 최종 승인 후 소유권이 변경됩니다.</p>
+            <span>관리자 승인</span>
           </div>
           <div className="ownership-transfer-controls">
             <select value={transferManagerId} onChange={(event) => setTransferManagerId(event.target.value)} disabled={!eligibleTransferManagers.length}>
