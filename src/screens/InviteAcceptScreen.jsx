@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   authAccountErrorMessage,
   confirmEmailVerification,
@@ -46,14 +46,6 @@ export default function InviteAcceptScreen({ token, authUser = null, onAccepted,
   const currentEmail = normalizeEmail(form.email);
   const emailMatches = !!invitedEmail && currentEmail === invitedEmail;
   const canSubmit = !!invite && !!currentEmail && emailMatches && (mode !== 'signup' || emailVerified);
-
-  const helperText = useMemo(() => {
-    if (!invite) return '';
-    if (!currentEmail) return '초대받은 이메일로 로그인하거나 회원가입해 주세요.';
-    if (!emailMatches) return '초대받은 이메일을 확인해 주세요.';
-    if (mode === 'signup' && !emailVerified) return '회원가입은 이메일 인증 완료 후 진행됩니다.';
-    return '이 이메일로 초대된 페이지를 바로 불러옵니다.';
-  }, [currentEmail, emailMatches, emailVerified, invite, mode]);
 
   useEffect(() => {
     let alive = true;
@@ -187,22 +179,25 @@ export default function InviteAcceptScreen({ token, authUser = null, onAccepted,
         {onBack && <button className="auth-back" type="button" onClick={onBack}>메인으로</button>}
         <div className="auth-brand">
           <strong>페이지로</strong>
-          <span>매니저 초대</span>
         </div>
         <div className="auth-copy">
-          <h1>{mode === 'signup' ? '회원가입 후 참여' : '로그인 후 참여'}</h1>
-          <p>초대받은 이메일과 현재 계정 이메일이 일치해야 페이지가 열립니다.</p>
+          <h1>매니저 초대</h1>
         </div>
         {loading ? (
-          <p className="auth-error">초대 정보를 확인하는 중입니다.</p>
+          <p className="auth-notice">확인 중</p>
         ) : (
           <form className="auth-form" onSubmit={submit}>
-            {invite && <p className={emailMatches ? 'auth-notice' : 'auth-error'}>{invite.email} 계정으로 초대되었습니다.</p>}
-            {authUser && (
-              <p className={emailMatches ? 'auth-notice' : 'auth-error'}>
-                현재 로그인: {authUser.email || '이메일 없음'}
-                {!emailMatches && onLogout ? ' - 다른 이메일이면 로그아웃 후 다시 로그인하세요.' : ''}
-              </p>
+            {invite && (
+              <div className="invite-access-status" aria-label="초대 상태">
+                <div><span>초대 이메일</span><strong>{invite.email}</strong></div>
+                {authUser && <div><span>현재 계정</span><strong>{authUser.email || '이메일 없음'}</strong></div>}
+                <div>
+                  <span>상태</span>
+                  <strong className={emailMatches ? 'ok' : 'error'}>
+                    {!emailMatches ? '이메일 불일치' : mode === 'signup' && !emailVerified ? '인증 필요' : '확인'}
+                  </strong>
+                </div>
+              </div>
             )}
             {mode === 'signup' && (
               <label>
@@ -241,7 +236,7 @@ export default function InviteAcceptScreen({ token, authUser = null, onAccepted,
                 </button>
               </>
             )}
-            {helperText && <p className={emailMatches ? 'auth-notice' : 'auth-error'}>{helperText}</p>}
+            {!emailMatches && <p className="auth-error">초대 이메일과 동일한 계정이 필요합니다.</p>}
             {notice && <p className="auth-notice">{notice}</p>}
             {error && <p className="auth-error">{error}</p>}
             <button type="submit" disabled={saving || !canSubmit}>{saving ? '처리 중' : '초대 페이지 열기'}</button>
@@ -250,7 +245,7 @@ export default function InviteAcceptScreen({ token, authUser = null, onAccepted,
         {authUser && onLogout && <button className="auth-switch" type="button" onClick={onLogout}>다른 계정으로 로그인</button>}
         {!authUser && (
           <button className="auth-switch" type="button" onClick={() => { setError(''); setNotice(''); setMode(mode === 'login' ? 'signup' : 'login'); setEmailVerified(false); }}>
-            {mode === 'login' ? '계정이 없으면 회원가입' : '이미 계정이 있으면 로그인'}
+            {mode === 'login' ? '회원가입' : '로그인'}
           </button>
         )}
       </section>
