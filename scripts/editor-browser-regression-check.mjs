@@ -893,7 +893,7 @@ async function run() {
       if (!checklist) return null;
       return {
         summary: checklist.querySelector('summary')?.innerText || '',
-        text: checklist.innerText || '',
+        text: checklist.textContent || '',
         items: [...checklist.querySelectorAll('.publish-checklist-popover > span')].map((item) => item.textContent.trim()),
       };
     })()`);
