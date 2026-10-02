@@ -51,7 +51,7 @@ export default function PageRevisionHistorySection({ page, authUser, setPage }) 
     const summary = revisionSummary(revision);
     if (!revision?.page) return;
     const confirmed = window.confirm(
-      `버전 ${summary.revision || '-'}을 현재 편집본으로 불러올까요?\n\n저장 버튼을 누르기 전까지 공개 페이지는 변경되지 않습니다.`,
+      `버전 ${summary.revision || '-'}을 불러올까요?\n\n저장 전까지 공개 페이지는 유지됩니다.`,
     );
     if (!confirmed) return;
     setPage(pageFromRevisionDraft(page, revision));
@@ -62,18 +62,18 @@ export default function PageRevisionHistorySection({ page, authUser, setPage }) 
     <SettingsSection id="history" className="settings-flat-section page-revision-history-section">
       <div className="settings-flat-block page-revision-history-intro">
         <strong>저장 버전</strong>
-        <span className="settings-flat-value">과거 저장본을 현재 편집본으로 불러옵니다. 공개 페이지는 다시 저장하기 전까지 바뀌지 않습니다.</span>
+        <span className="settings-flat-value">불러오기 후 저장 시 공개 반영</span>
       </div>
 
       {restoredRevision !== 0 && (
         <div className="settings-flat-block page-revision-history-notice" role="status">
           <strong>버전 {restoredRevision > 0 ? restoredRevision : '-'} 불러옴</strong>
-          <span className="settings-flat-value">내용을 확인한 뒤 저장하면 현재 공개 페이지에 반영됩니다.</span>
+          <span className="settings-flat-value">저장 시 공개 반영</span>
         </div>
       )}
 
       {loading && (
-        <div className="settings-flat-block"><span className="settings-flat-value">저장 이력을 불러오는 중입니다.</span></div>
+        <div className="settings-flat-block"><span className="settings-flat-value">불러오는 중</span></div>
       )}
 
       {!loading && error && (
@@ -84,7 +84,7 @@ export default function PageRevisionHistorySection({ page, authUser, setPage }) 
       )}
 
       {!loading && !error && revisions.length === 0 && (
-        <div className="settings-flat-block"><span className="settings-flat-value">아직 저장된 이전 버전이 없습니다.</span></div>
+        <div className="settings-flat-block"><span className="settings-flat-value">이전 버전 없음</span></div>
       )}
 
       {!loading && !error && revisions.map((revision) => {
