@@ -22,6 +22,9 @@ const settingsPrimary = await readFile('src/panels/settings/SettingsPrimarySecti
 const accountSettings = await readFile('src/panels/settings/AccountSettingsSection.jsx', 'utf8');
 const revisionHistory = await readFile('src/panels/settings/PageRevisionHistorySection.jsx', 'utf8');
 const seoSettings = await readFile('src/panels/settings/SeoSettingsSection.jsx', 'utf8');
+const editLayout = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
+const addBlockGroupGrid = await readFile('src/editor/editPanelParts/AddBlockGroupGrid.jsx', 'utf8');
+const addDockCss = await readFile('src/styles/editor-widget-add-dock.css', 'utf8');
 
 assert(dashboard.includes('service-dashboard-toolbar'), 'dashboard must use compact product toolbar');
 assert(!dashboard.includes('랜딩 제작, 접수 확인, 통계를 한 화면에서 관리합니다.'), 'dashboard marketing explanation must stay removed');
@@ -82,9 +85,14 @@ assert(revisionHistory.includes('불러오기 후 저장 시 공개 반영') && 
 assert(!revisionHistory.includes('과거 저장본을 현재 편집본으로 불러옵니다.') && !revisionHistory.includes('내용을 확인한 뒤 저장하면 현재 공개 페이지에 반영됩니다.'), 'revision history explanatory copy must stay removed');
 assert(!seoSettings.includes('필요한 경우에만 입력'), 'SEO helper sentence must stay removed');
 
+assert(!editLayout.includes('테마 설정 불러오는 중') && editLayout.includes('editor-inspector-loading">불러오는 중'), 'editor inspector loading state must stay concise');
+assert(!addBlockGroupGrid.includes('조건에 맞는 위젯이 없습니다.') && addBlockGroupGrid.includes('widget-add-empty" role="status">위젯 없음'), 'widget search empty state must stay concise');
+assert(addDockCss.includes('Editor add dock — compact product density') && addDockCss.includes('border-radius: 7px !important;'), 'widget add dock must keep compact product controls');
+assert(addDockCss.includes('border: 0 !important;') && addDockCss.includes('background: transparent !important;'), 'widget groups must stay flat instead of nested marketing cards');
+
 console.log(JSON.stringify({
   ok: true,
-  checks: 49,
+  checks: 53,
   scope: 'pagero-platform-copy-density',
   dashboard: 'compact-saas-shell',
   createFlow: 'action-first',
@@ -94,5 +102,6 @@ console.log(JSON.stringify({
   inbox: 'action-first',
   mobileStats: 'status-only',
   generalSettings: 'functional-copy-only',
+  editor: 'compact-product-ui',
   aiLogicTouched: false,
 }, null, 2));

@@ -105,9 +105,11 @@ assert(screenOrderRowIdentity.includes("block.type === 'code'") && screenOrderRo
 assert(editLayout.includes('data-editor-section={section}'), 'edit section panel must expose the active subsection for deterministic PC styling');
 assert(editLayout.includes("import './EditPanelLayout.css';") && editPanelLayoutCss.includes('edit-section-tabs-v2') && editPanelLayoutCss.includes('.editor-page-options-stack') && !editorWorkspaceCss.includes('edit-section-tabs') && !editorWorkspaceCss.includes('editor-page-options-stack'), 'EditPanelLayout must load and own subsection tabs/panel stack instead of editor-workspace.css');
 assert(screenOrderCss.includes('Desktop ScreenOrder surface owner') && fixedBlocksCss.includes('Fixed-block component owner for the active editor surface'), 'screen order and fixed blocks must keep explicit component-owned PC visual contracts');
-assert(pageOptionsCss.includes('.page-global-options-card.card') && pageOptionsCss.includes('padding: 18px !important') && pageOptionsCss.includes('border-radius: 22px !important') && screenOrderCss.includes('.edit-layout .screen-order-v2-card') && screenOrderCss.includes('padding: 18px !important') && screenOrderCss.includes('border-radius: 22px !important'), 'page options and screen order must preserve the same PC outer-surface geometry in component CSS');
-assert(screenOrderCss.includes('.screen-order-v2-list') && screenOrderCss.includes('gap: 10px !important') && screenOrderCss.includes('.screen-order-v2-item') && !editorWorkspaceCss.includes('.screen-order-v2-card'), 'PC screen order card/list ownership must stay in ScreenOrder.css instead of editor-workspace.css');
+assert(pageOptionsCss.includes('.page-global-options-card.card') && pageOptionsCss.includes('padding: 14px !important') && pageOptionsCss.includes('border-radius: 12px !important') && screenOrderCss.includes('PC product-density final contract') && screenOrderCss.includes('padding: 14px !important') && screenOrderCss.includes('border-radius: 12px !important'), 'page options and screen order must preserve the compact PC product-surface geometry in component CSS');
+assert(screenOrderCss.includes('.screen-order-v2-list') && screenOrderCss.includes('gap: 6px !important') && screenOrderCss.includes('.screen-order-v2-item') && !editorWorkspaceCss.includes('.screen-order-v2-card'), 'PC screen order card/list ownership must stay compact in ScreenOrder.css instead of editor-workspace.css');
 assert(/\.screen-order-v2-head\s*\{[^}]*min-height:\s*38px;[^}]*gap:\s*2px;/s.test(screenOrderCss), 'desktop screen-order rows must keep the tightened 38px / 2px density');
+assert(screenOrderCss.includes('min-height: 48px !important;') && screenOrderCss.includes('grid-template-columns: 34px minmax(0, 1fr) 36px 36px !important'), 'PC screen-order rows must keep the final compact product geometry');
+assert(screenOrderCss.includes('min-height: 42px !important;') && screenOrderCss.includes('min-height: 84px !important;') && screenOrderCss.includes('min-height: 64px !important;'), 'PC inline editor fields must keep the compact input and textarea heights');
 assert(legacyScreenOrderTokens.every((token) => !workspaceShellCss.includes(token)), 'workspace shell must not restore legacy normal-block selectors');
 assert(['.screen-icon-action', '.fixed-open-button', '.switch-clean'].every((token) => editorSharedUiCss.includes(token)) && fixedBlocksCss.includes('.fixed-block-head'), 'shared controls and fixed-block visuals must live with their current owners');
 assert(animationOptionsCard.includes("import './AnimationOptionsCard.css';") && animationOptionsCss.includes('.edit-animation-card') && animationOptionsCss.includes('.edit-animation-options'), 'animation options must load and own their component CSS');
@@ -127,7 +129,7 @@ await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettings.css');
 console.log(JSON.stringify({
   ok: true,
   scope: 'editor-options-layout',
-  checks: 38,
+  checks: 40,
   saveFlowTouched: false,
   globalOptionsSeparated: true,
   unifiedPageThemeInspector: true,

@@ -10,16 +10,16 @@ body .builder-shell .edit-layout {
   min-width: 0;
   max-width: 100%;
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 /* Edit section tabs — isolated owner. Do not reuse generic .active state. */
 html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] {
   width: 100% !important;
   min-width: 0 !important;
-  height: 42px !important;
-  min-height: 42px !important;
-  max-height: 42px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  max-height: 38px !important;
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   gap: 2px !important;
@@ -27,7 +27,7 @@ html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs
   padding: 3px !important;
   overflow: hidden !important;
   border: 0 !important;
-  border-radius: 9px !important;
+  border-radius: 8px !important;
   background: #eef1f5 !important;
   box-shadow: none !important;
 }
@@ -35,9 +35,9 @@ html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs
 html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab {
   width: 100% !important;
   min-width: 0 !important;
-  height: 36px !important;
-  min-height: 36px !important;
-  max-height: 36px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
   margin: 0 !important;
   padding: 0 10px !important;
   border: 1px solid transparent !important;

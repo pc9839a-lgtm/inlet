@@ -105,7 +105,7 @@ assert(!mediaSettingsBrowserSource.includes('pagero.kr/api/auth/login') && !medi
 assert(addBlockPanelSource.includes('<AddBlockGroupGrid onAdd={onAdd} />'), 'block add surface must open directly to the basic block grid');
 assert(!addBlockPanelSource.includes('pagero-widget-search') && !addBlockPanelSource.includes('section-add-modes') && !addBlockPanelSource.includes('AddSectionPatternGrid'), 'block add surface must not expose search, recommendation modes, or section-pattern cards');
 assert(!addBlockPanelSource.includes('recent-additions') && !addBlockPanelSource.includes('최근 사용'), 'block add surface must not expose recent-use UI');
-assert(addBlockGridSource.includes("category === 'all' || categoryKey === category") && addBlockGridSource.includes('조건에 맞는 위젯이 없습니다.'), 'block grid filtering support may remain internal without exposing extra picker chrome');
+assert(addBlockGridSource.includes("category === 'all' || categoryKey === category") && addBlockGridSource.includes('위젯 없음'), 'block grid filtering support may remain internal with a concise empty state and without extra picker chrome');
 assert(addBlockOptionSource.includes("meta.preset || '', type"), 'block add options must preserve existing add-block catalog behavior');
 assert(addBlockDockCssSource.includes('.widget-group button') && addBlockDockCssSource.includes('min-height: 44px !important;'), 'block add buttons must keep 44px mobile touch targets');
 

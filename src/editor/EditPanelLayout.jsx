@@ -48,7 +48,7 @@ export function EditPanelLayout({
           <div className="editor-page-options-stack">
             <PageGlobalOptions {...pageGlobalOptionsProps} />
             {stylePanelProps && (
-              <React.Suspense fallback={<div className="editor-inspector-loading">테마 설정 불러오는 중</div>}>
+              <React.Suspense fallback={<div className="editor-inspector-loading">불러오는 중</div>}>
                 <PageThemeStylePanel {...stylePanelProps} />
               </React.Suspense>
             )}
