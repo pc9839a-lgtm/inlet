@@ -333,3 +333,35 @@
   gap: 14px;
   padding: 12px 14px;
 }
+
+
+.settings-workspace-shell .billing-settings-status {
+  width: fit-content;
+  min-height: 32px;
+  margin: 0 0 14px;
+  padding: 0 10px;
+  border: 1px solid var(--product-line);
+  border-radius: 8px;
+  display: inline-grid;
+  grid-template-columns: auto auto auto auto;
+  align-items: center;
+  gap: 6px 10px;
+  background: var(--product-soft);
+  color: var(--product-muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.settings-workspace-shell .billing-settings-status strong {
+  color: var(--product-text);
+  font-size: 11px;
+  font-weight: 950;
+}
+
+@media (max-width: 520px) {
+  .settings-workspace-shell .billing-settings-status {
+    width: 100%;
+    box-sizing: border-box;
+    grid-template-columns: auto 1fr;
+  }
+}
