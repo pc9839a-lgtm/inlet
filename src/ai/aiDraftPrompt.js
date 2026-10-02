@@ -1,4 +1,4 @@
-import { AI_ALLOWED_BLOCK_TYPES } from './aiDraftSchema';
+import { AI_ALLOWED_BLOCK_TYPES } from './aiDraftSchema.js';
 
 function templateGuide(style = 'auto') {
   const guides = {
@@ -35,6 +35,8 @@ export function buildAiDraftPrompt(input) {
 - 첫 화면만 봐도 무엇을 파는지, 누구에게 필요한지, 왜 지금 행동해야 하는지 보여야 한다.
 - 각 text 블록은 서로 다른 역할을 맡는다: 문제 공감, 선택 기준, 진행 흐름, 안심 근거, 조건 확인 중 하나.
 - form/reservation 질문은 이름/연락처 외에 실제 상담 판단에 필요한 업종별 질문을 2개 이상 넣는다.
+- 사용자가 "받고 싶은 문의 항목"을 입력했으면 그 항목을 form/reservation 질문에 우선 반영한다.
+- 지역이 입력되면 허위 주소를 만들지 말고, 입력된 지역명 범위에서만 카피에 반영한다.
 - CTA는 행동별로 다르게 쓴다. 예: "상담 신청", "방문 예약", "잔여 호실 확인", "조건 확인".
 - body는 모바일에서 읽기 좋게 1~2문장으로 쓰되, 최소 35자 이상 정보량을 가진다.
 - 분양/부동산 입력이면 잔여 호실, 관심 타입, 예산대, 실거주/투자 목적, 모델하우스 방문 가능 시간 같은 질문을 우선한다.
@@ -50,6 +52,8 @@ creativeSeed: ${input.creativeSeed || 'none'}
 자유 요청: ${input.prompt || '없음'}
 업종: ${input.industry || '입력 없음'}
 서비스/브랜드명: ${input.serviceName || '입력 없음'}
+지역: ${input.region || '입력 없음'}
+받고 싶은 문의 항목: ${input.inquiryFields || '입력 없음'}
 목적: ${input.goal || '상담 신청'}
 핵심 혜택: ${input.benefit || '입력 없음'}
 CTA: ${input.cta || '상담 신청'}

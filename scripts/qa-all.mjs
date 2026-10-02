@@ -14,6 +14,7 @@ const steps = [
   ['pagero:editor-layout-final:isolation-2a:qa', ['scripts/pagero-editor-layout-final-isolation-2a-quality-check.mjs']],
   ['pagero:editor-final-clean:isolation-2b:qa', ['scripts/pagero-editor-final-clean-isolation-2b-quality-check.mjs']],
   ['pagero:section-patterns:e2:qa', ['scripts/pagero-section-patterns-e2-quality-check.mjs']],
+  ['pagero:ai-first-page:e4:qa', ['scripts/pagero-ai-first-page-e4-quality-check.mjs']],
   ['templates:qa', ['scripts/template-quality-check.mjs']],
   ['ai:qa', ['scripts/ai-quality-check.mjs']],
   ['stats:qa', ['scripts/stats-quality-check.mjs']],

@@ -181,15 +181,19 @@ export async function testOpenAiKey(apiKey = '', model = 'gpt-4.1') {
 export async function generateAiDraft(input = {}, model = 'gpt-4.1', apiKey = '') {
   const key = requireOpenAiKey(apiKey);
   const prompt = [
-    'Return only valid JSON for an editable mobile landing page draft.',
-    'Use Korean copy. Required shape: { "pageTitle": string, "brandName": string, "qualityNote": string, "primaryAction": { "label": string, "target": "form" }, "theme": object, "blocks": array }.',
+    'Return only valid JSON for an editable mobile PageRo landing page draft. Do not use markdown.',
+    'Use Korean copy and only user-provided facts. Never invent price, address, phone number, results, guarantees, dates, or external URLs.',
+    'Required shape: { "pageTitle": string, "brandName": string, "templateStyle": "trust|promo|booking|story|compare", "qualityNote": string, "primaryAction": { "label": string, "target": "form|reservation|phone|url", "url": string }, "theme": object, "blocks": array }.',
     'Allowed block types: hero, text, links, form, reservation, faq, map, timer, spacer, divider.',
-    `User request: ${JSON.stringify(input || {})}`,
+    'Create 5 to 8 editable content blocks. Start with hero. Include the requested conversion action. If form is used, include name, phone and at least one industry-specific question. If reservation is used, include at least one customField.',
+    'Use the input.region only as a region label unless an exact address was provided. If input.inquiryFields is present, prioritize those labels in form/reservation fields.',
+    'Do not generate topnav, bottombar or footer. Those are derived by PageRo after generation.',
+    `User brief: ${JSON.stringify(input || {})}`,
   ].join('\n');
   const data = await callOpenAi({ key, model, input: prompt, max_output_tokens: 2500, temperature: 0.7 });
   const text = responseText(data);
   const draft = JSON.parse(extractJson(text));
-  if (!Array.isArray(draft.blocks) || draft.blocks.length < 1) throw aiError('AI draft response did not include editable blocks.', 502, { code: 'AI_DRAFT_BAD_RESPONSE' });
+  if (!Array.isArray(draft.blocks) || draft.blocks.length < 4) throw aiError('AI draft response did not include enough editable blocks.', 502, { code: 'AI_DRAFT_BAD_RESPONSE' });
   return draft;
 }
 
