@@ -50,6 +50,8 @@ creativeSeed: ${input.creativeSeed || 'none'}
 자유 요청: ${input.prompt || '없음'}
 업종: ${input.industry || '입력 없음'}
 서비스/브랜드명: ${input.serviceName || '입력 없음'}
+지역: ${input.region || '입력 없음'}
+받고 싶은 문의 항목: ${input.inquiryFields || '입력 없음'}
 목적: ${input.goal || '상담 신청'}
 핵심 혜택: ${input.benefit || '입력 없음'}
 CTA: ${input.cta || '상담 신청'}
