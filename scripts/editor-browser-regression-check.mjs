@@ -1133,9 +1133,9 @@ async function run() {
         background: style.backgroundColor,
       };
     })()`);
-    assert(pageOptionsShellStyle?.padding === '18px', `page options shell padding drifted at desktop matrix width: ${JSON.stringify(pageOptionsShellStyle)}`);
+    assert(pageOptionsShellStyle?.padding === '14px', `page options shell padding drifted at desktop matrix width: ${JSON.stringify(pageOptionsShellStyle)}`);
     assert(pageOptionsShellStyle?.borderWidth === '1px', `page options shell border drifted at desktop matrix width: ${JSON.stringify(pageOptionsShellStyle)}`);
-    assert(pageOptionsShellStyle?.borderRadius === '22px', `page options shell radius drifted at desktop matrix width: ${JSON.stringify(pageOptionsShellStyle)}`);
+    assert(pageOptionsShellStyle?.borderRadius === '12px', `page options shell radius drifted at desktop matrix width: ${JSON.stringify(pageOptionsShellStyle)}`);
     await capture(client, 'desktop-narrow-1180-page-options');
 
     await clickButtonByText(client, '.edit-section-tabs', '화면 순서');
@@ -1161,7 +1161,7 @@ async function run() {
     assert(screenOrderShellStyle?.borderWidth === pageOptionsShellStyle.borderWidth, `screen order shell border must match page options: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.borderRadius === pageOptionsShellStyle.borderRadius, `screen order shell radius must match page options: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.background === pageOptionsShellStyle.background, `screen order shell background must match page options: ${JSON.stringify(screenOrderShellStyle)}`);
-    assert(screenOrderShellStyle?.rowRadius === '18px' && screenOrderShellStyle?.rowBorder === '1px', `screen order rows must use rounded bordered cards: ${JSON.stringify(screenOrderShellStyle)}`);
+    assert(screenOrderShellStyle?.rowRadius === '10px' && screenOrderShellStyle?.rowBorder === '1px', `screen order rows must use compact bordered cards: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.addBackground === 'rgb(17, 24, 39)', `block add trigger must keep the original dark style: ${JSON.stringify(screenOrderShellStyle)}`);
 
       if (desktopViewport.width === 1180) {
@@ -1188,10 +1188,10 @@ async function run() {
         tabHeight: Math.round(tab.getBoundingClientRect().height),
       };
     })()`);
-    assert(inlineDetailStyle?.inlineMarginTop === '14px', `inline editor top spacing drifted: ${JSON.stringify(inlineDetailStyle)}`);
-    assert(inlineDetailStyle?.labelFontSize === '14px', `inline editor labels must remain readable: ${JSON.stringify(inlineDetailStyle)}`);
-    assert(inlineDetailStyle?.textareaFontSize === '15px', `inline editor text must remain readable: ${JSON.stringify(inlineDetailStyle)}`);
-    assert(inlineDetailStyle?.tabHeight === 36, `inline editor tabs must keep 36px height: ${JSON.stringify(inlineDetailStyle)}`);
+    assert(inlineDetailStyle?.inlineMarginTop === '10px', `inline editor top spacing drifted: ${JSON.stringify(inlineDetailStyle)}`);
+    assert(inlineDetailStyle?.labelFontSize === '13px', `inline editor labels must remain readable: ${JSON.stringify(inlineDetailStyle)}`);
+    assert(inlineDetailStyle?.textareaFontSize === '14px', `inline editor text must remain readable: ${JSON.stringify(inlineDetailStyle)}`);
+    assert(inlineDetailStyle?.tabHeight === 32, `inline editor tabs must keep 32px height: ${JSON.stringify(inlineDetailStyle)}`);
         await capture(client, 'desktop-narrow-1180-screen-order-detail');
       }
 
