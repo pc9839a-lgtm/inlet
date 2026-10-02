@@ -672,3 +672,112 @@ html body #root .builder-shell.settings-workspace-shell textarea:focus-visible {
   html body #root .builder-shell.settings-workspace-shell .settings-field-help,
   html body #root .builder-shell.settings-workspace-shell .settings-field-error { margin-left: 0 !important; }
 }
+
+
+/* Ownership transfer — status-first access control. */
+html body #root .builder-shell.settings-workspace-shell .manager-owner-summary {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .manager-owner-summary > div {
+  min-width: 0 !important;
+  min-height: 48px !important;
+  padding: 8px 10px !important;
+  border: 1px solid var(--settings-line) !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .manager-owner-summary > div span {
+  display: block !important;
+  margin: 0 0 3px !important;
+  color: var(--settings-muted) !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .manager-owner-summary > div strong {
+  display: block !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  color: var(--settings-text) !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .ownership-transfer-box {
+  display: grid !important;
+  gap: 10px !important;
+  padding: 12px !important;
+  border: 1px solid #f1c9c7 !important;
+  border-radius: 10px !important;
+  background: #fffafa !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .ownership-transfer-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .ownership-transfer-head strong {
+  color: var(--settings-text) !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .ownership-transfer-head span {
+  min-height: 24px !important;
+  padding: 0 8px !important;
+  border-radius: 999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  background: #fef3f2 !important;
+  color: var(--settings-danger) !important;
+  font-size: 10px !important;
+  font-weight: 850 !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .ownership-transfer-controls {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 8px !important;
+  align-items: center !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .ownership-transfer-status {
+  min-width: 0 !important;
+  padding: 10px !important;
+  border: 1px solid var(--settings-line) !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .ownership-transfer-status > div {
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 3px !important;
+}
+
+html body #root .builder-shell.settings-workspace-shell .ownership-transfer-status :is(strong,span,small) {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 760px) {
+  html body #root .builder-shell.settings-workspace-shell .manager-owner-summary {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  html body #root .builder-shell.settings-workspace-shell .ownership-transfer-controls {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}

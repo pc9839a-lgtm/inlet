@@ -9,13 +9,13 @@ export const OWNERSHIP_TRANSFER_STATUS_LABELS = {
 };
 
 export const OWNERSHIP_TRANSFER_STATUS_COPY = {
-  requested: '내부 관리자가 요청을 확인 중입니다.',
-  'pending-admin-approval': '내부 관리자가 요청을 확인 중입니다.',
-  waiting_billing_clearance: '기존 결제 만료 또는 해지 확인 후 다음 단계로 진행합니다.',
-  approved: '승인되었습니다. 결제 정리가 끝나면 이전 완료 처리합니다.',
-  rejected: '요청이 거절되었습니다. 기존 소유권은 유지됩니다.',
-  completed: '소유권이 새 계정으로 이전되었습니다.',
-  canceled: '요청이 취소되었습니다. 기존 소유권은 유지됩니다.',
+  requested: '관리자 확인 중',
+  'pending-admin-approval': '관리자 확인 중',
+  waiting_billing_clearance: '결제 정리 대기',
+  approved: '승인 완료',
+  rejected: '기존 소유권 유지',
+  completed: '이전 완료',
+  canceled: '기존 소유권 유지',
 };
 
 export const OWNERSHIP_TRANSFER_BILLING_LABELS = {
@@ -30,7 +30,7 @@ export function ownershipTransferStatusLabel(status = '') {
 }
 
 export function ownershipTransferStatusCopy(status = '') {
-  return OWNERSHIP_TRANSFER_STATUS_COPY[status] || '요청 상태를 다시 확인하세요.';
+  return OWNERSHIP_TRANSFER_STATUS_COPY[status] || '상태 확인';
 }
 
 export function ownershipTransferBillingLabel(status = '') {
