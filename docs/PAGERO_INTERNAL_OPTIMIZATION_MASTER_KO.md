@@ -154,6 +154,8 @@ production D1 write가 발생하므로 자동으로 실행하지 않는다.
 
 ### P5 — 개인 도메인 운영화
 
+P5 개인 도메인 current-main 재구성: **완료**.
+
 current-main 코드 재구성 완료:
 
 - PR #352: canonical `page_domains` ownership / backfill / collision / release / schema QA
