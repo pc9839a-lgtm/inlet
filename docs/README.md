@@ -23,10 +23,12 @@
 
 - E0~E4 완료
 - P6 설정 UX 완료
+- P5 current-main 코드 재구성 완료: #352 ownership core → #353 provider/DNS/SSL → #354 settings server workflow
+- P5 운영 반영은 미완료: production migration + provider env 확인 + 실제 테스트 도메인 smoke가 별도 승인 대기
 - B3 production smoke는 사용자 요청으로 스킵
-- 다음 backlog: P5 개인 도메인 → P7 웹 결제 → P9 접근성 → P8 대량 데이터 → E5 A/B test
+- 다음 backlog: P5 운영 검증 → P7 웹 결제 → P9 접근성 → P8 대량 데이터 → E5 A/B test
 - AI 확장은 사용자 재요청 전까지 후순위
-- 오래된 PageRo domain PR #233~#235는 그대로 병합하지 않고 current main 기준으로 재감사
+- 오래된 PageRo domain PR #233~#235는 current-main 재구성으로 대체되어 2026-10-02 closed
 
 ## 2. 문서 역할
 
