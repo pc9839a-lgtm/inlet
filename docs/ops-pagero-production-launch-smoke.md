@@ -1,5 +1,9 @@
 # PageRo production 신규 사용자 launch smoke
 
+- 상태: RUNBOOK / 실행 보류
+- 갱신일: 2026-10-02 KST
+- 현재 결정: 사용자 요청으로 production smoke 실행 스킵
+
 목적: beta 오픈 전 실제 운영 환경에서 신규 사용자 핵심 흐름을 한 번 연속 검증한다.
 
 ## 실행 금지 조건
@@ -74,4 +78,4 @@
 - B1 production save deployment gate: 완료
 - B2 Revision restore ↔ Undo/Redo: 완료
 - B4 개인도메인/웹결제 beta 표기: 완료
-- B3 신규 사용자 production launch smoke: 실제 실행만 남음
+- B3 신규 사용자 production launch smoke: 실행 보류 / 사용자 재승인 시만 진행
