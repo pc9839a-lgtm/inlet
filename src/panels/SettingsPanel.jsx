@@ -2,6 +2,7 @@ import { isServerPageMode } from '../config/runtimeConfig.js';
 import {
   canReadTab,
   canWriteTab,
+  isBuilderMode,
   isClientAdminMode,
   isManagerMode,
   normalizeOwnershipSettings,
@@ -37,7 +38,7 @@ export default function SettingsPanel({
   const clientAdminMode = isClientAdminMode(accessMode);
   const managerMode = isManagerMode(accessMode);
   const projectSettingsWritable = canWriteTab(accessMode, page, authUser, 'settings');
-  const canManageProjectUsers = !managerMode && !clientAdminMode;
+  const canManageProjectUsers = isBuilderMode(accessMode);
   const canReadMedia = canReadTab(accessMode, page, authUser, 'edit');
   const canDeleteMedia = canWriteTab(accessMode, page, authUser, 'edit');
   const sections = useSettingsPanelSections();
