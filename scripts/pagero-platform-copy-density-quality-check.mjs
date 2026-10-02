@@ -110,7 +110,7 @@ assert(!ownershipTransfer.includes('내부 관리자가 요청을 확인 중입�
 assert(settingsControlPanelCss.includes('Ownership transfer — status-first access control.') && settingsControlPanelCss.includes('.ownership-transfer-head'), 'ownership transfer must keep compact platform layout');
 
 assert(settingsPanel.includes("const projectSettingsWritable = canWriteTab(accessMode, page, authUser, 'settings');"), 'settings must derive project write access from the canonical tab permission');
-assert(settingsPanel.includes('const canManageProjectUsers = !managerMode && !clientAdminMode;'), 'client-admin and manager roles must not receive owner-level user management');
+assert(settingsPanel.includes('const canManageProjectUsers = isBuilderMode(accessMode);'), 'owner-level user management must be tied to canonical builder access');
 assert(!settingsPanelBody.includes('SettingsModeSwitch') && settingsPanelBody.includes('label="페이지"') && settingsPanelBody.includes('label="서비스"') && settingsPanelBody.includes('label="고급"'), 'settings sidebar must use direct product groups without a duplicate basic/advanced mode switch');
 assert(settingsPanelBody.includes("id === 'domain' && (clientAdminMode || !projectSettingsWritable)") && settingsPanelBody.includes("id === 'reset' && !canManageProjectUsers"), 'domain and destructive settings must stay role-gated');
 assert(settingsPanelBody.includes("id === 'duplicate' && !canDuplicatePage"), 'unavailable duplicate action must stay out of settings navigation');
