@@ -261,11 +261,24 @@ export async function createAiFirstPage({ basePage, input, authUser = null, apiK
     draft = fallbackAiFirstPageDraft(brief, warning);
   }
 
-  const page = applyAiDraftToPage(basePage, draft, {
-    mode: 'replace',
-    updateTheme: true,
-    updateFixed: true,
-  });
+  let page;
+  try {
+    page = applyAiDraftToPage(basePage, draft, {
+      mode: 'replace',
+      updateTheme: true,
+      updateFixed: true,
+    });
+  } catch (error) {
+    if (source !== 'ai') throw error;
+    source = 'brief-fallback';
+    warning = String(error?.message || error || 'AI 초안 적용에 실패했습니다.');
+    draft = fallbackAiFirstPageDraft(brief, warning);
+    page = applyAiDraftToPage(basePage, draft, {
+      mode: 'replace',
+      updateTheme: true,
+      updateFixed: true,
+    });
+  }
 
   return {
     page,
