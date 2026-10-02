@@ -94,10 +94,10 @@ html body #root .builder-shell .edit-layout .page-global-options-card.card {
   min-width: 0 !important;
   max-width: 100% !important;
   margin: 0 !important;
-  padding: 18px !important;
+  padding: 14px !important;
   overflow: visible !important;
   border: 1px solid var(--editor-line, #d9e4f2) !important;
-  border-radius: 22px !important;
+  border-radius: 12px !important;
   background: #fff !important;
   box-shadow: none !important;
 }
@@ -108,7 +108,7 @@ html body #root .builder-shell .edit-layout .page-global-options-title {
   align-items: flex-start !important;
   justify-content: space-between !important;
   gap: 12px !important;
-  margin: 0 0 14px !important;
+  margin: 0 0 10px !important;
   padding: 0 !important;
   border: 0 !important;
   background: transparent !important;
@@ -128,7 +128,7 @@ html body #root .builder-shell .edit-layout .page-global-options-list {
   min-width: 0 !important;
   max-width: 100% !important;
   display: grid !important;
-  gap: 10px !important;
+  gap: 7px !important;
 }
 
 html body #root .builder-shell .edit-layout .page-global-options-card :is(.edit-animation-card, .fixed-block-card) {
@@ -139,7 +139,7 @@ html body #root .builder-shell .edit-layout .page-global-options-card :is(.edit-
   padding: 0 !important;
   overflow: visible !important;
   border: 1px solid var(--editor-line, #d9e4f2) !important;
-  border-radius: 18px !important;
+  border-radius: 10px !important;
   background: #fff !important;
   box-shadow: none !important;
 }
@@ -148,20 +148,20 @@ html body #root .builder-shell .edit-layout .page-global-options-card :is(.fixed
   width: 100% !important;
   min-width: 0 !important;
   max-width: 100% !important;
-  min-height: 62px !important;
+  min-height: 48px !important;
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) 54px 38px !important;
+  grid-template-columns: minmax(0, 1fr) 48px 34px !important;
   align-items: center !important;
   gap: 10px !important;
   margin: 0 !important;
-  padding: 11px 12px !important;
+  padding: 8px 10px !important;
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
 }
 
 html body #root .builder-shell .edit-layout .page-global-options-card .edit-animation-head.block-head {
-  grid-template-columns: minmax(0, 1fr) 54px !important;
+  grid-template-columns: minmax(0, 1fr) 48px !important;
 }
 
 html body #root .builder-shell .edit-layout .page-global-options-card .fixed-block-copy {
@@ -176,7 +176,7 @@ html body #root .builder-shell .edit-layout .page-global-options-card .fixed-blo
 html body #root .builder-shell .edit-layout .page-global-options-card :is(.edit-animation-head b, .fixed-block-copy strong) {
   min-width: 0 !important;
   color: var(--editor-ink, #0f172a) !important;
-  font-size: 15px !important;
+  font-size: 13px !important;
   line-height: 1.25 !important;
   font-weight: 950 !important;
   overflow: hidden !important;
@@ -188,7 +188,7 @@ html body #root .builder-shell .edit-layout .page-global-options-card .fixed-blo
   min-width: 0 !important;
   max-width: 190px !important;
   padding: 4px 8px !important;
-  border-radius: 999px !important;
+  border-radius: 6px !important;
   background: #eef4ff !important;
   color: var(--editor-muted, #64748b) !important;
   font-size: 11px !important;
@@ -202,7 +202,7 @@ html body #root .builder-shell .edit-layout .page-global-options-card .fixed-blo
 
 @media (min-width: 900px) {
   html body #root .builder-shell.edit-mode-shell .edit-layout .page-global-options-title h2 {
-    font-size: 20px !important;
+    font-size: 16px !important;
     letter-spacing: -.035em !important;
   }
 }
