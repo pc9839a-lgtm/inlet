@@ -53,8 +53,8 @@ assert(
     && editPanelLayoutCss.includes("html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab")
     && editPanelLayoutCss.includes(">.edit-section-tab[data-selected='true']") === false
     && editPanelLayoutCss.includes(".edit-section-tab[data-selected='true']")
-    && editPanelLayoutCss.includes('height: 42px !important;')
-    && editPanelLayoutCss.includes('height: 36px !important;'),
+    && editPanelLayoutCss.includes('height: 38px !important;')
+    && editPanelLayoutCss.includes('height: 32px !important;'),
   'EditPanelLayout.css must own the exact compact subsection tab geometry',
 );
 assert(editPanelLayoutCss.includes("data-pagero-ui='edit-section-tabs-v2'") && editPanelLayoutCss.includes("data-selected='true'") && editPanelLayoutCss.includes('background: #eef1f5 !important;') && editPanelLayoutCss.includes('background: #fff !important;') && editPanelLayoutCss.includes('border-color: #d9dde4 !important;'), 'EditPanelLayout.css must keep the light selected state');
