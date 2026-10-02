@@ -237,7 +237,6 @@ export default function MasterAdminPanel({ page, leads = [], events = [], update
         <div>
           <span className="admin-eyebrow">MASTER CONSOLE</span>
           <h1>전체 서비스 관리자</h1>
-          <p>회원, 페이지, 결제, 파일 사용량, 접수 추이와 운영 리스크를 개인정보 노출 없이 확인합니다.</p>
         </div>
         <div className="admin-hero-actions">
           <button type="button" onClick={loadMasterSnapshot} disabled={snapshotLoading}>
@@ -249,7 +248,7 @@ export default function MasterAdminPanel({ page, leads = [], events = [], update
 
       <div className={`admin-mode-strip ${limitedMode ? 'is-limited' : 'is-live'}`}>
         <strong>{limitedMode ? '제한 모드' : '전체 운영 모드'}</strong>
-        <span>{snapshotError || (limitedMode ? '전체 관리자 API가 연결되지 않아 현재 로그인 프로젝트 기준으로 표시합니다.' : '전체 DB 기준 운영 데이터가 연결되어 있습니다.')}</span>
+        <span>{snapshotError || (limitedMode ? '현재 프로젝트 기준' : '전체 DB')}</span>
       </div>
 
       <nav className="admin-master-tabs" aria-label="관리자 메뉴">
@@ -299,7 +298,7 @@ function Overview({ summary, leadSummaryRows, risks }) {
       <Metric label="이번 달 접수" value={summary.monthLeads} />
       <Metric label="파일 사용 페이지" value={summary.filePages} />
       <section className="admin-master-card span-2">
-        <CardTitle title="페이지별 접수 상위" desc="개별 고객 정보 없이 페이지 단위 접수량만 봅니다." />
+        <CardTitle title="페이지별 접수 상위" />
         <SimpleTable columns={['페이지', '소유 회원', '전체', '오늘', '이번 달']} rows={topPages.map((row) => [
           row.title || row.slug || row.id,
           row.ownerEmail || row.owner_email || row.owner_account_email || '-',
@@ -309,11 +308,11 @@ function Overview({ summary, leadSummaryRows, risks }) {
         ])} />
       </section>
       <section className="admin-master-card span-2">
-        <CardTitle title="운영 리스크" desc="비용, 결제, 과사용, 스팸 의심 항목을 먼저 확인합니다." />
+        <CardTitle title="운영 리스크" />
         <RiskList risks={risks.slice(0, 5)} />
       </section>
       <section className="admin-master-card span-4">
-        <CardTitle title="서비스 구성 요약" desc="전체 서비스 운영에 필요한 핵심 수치만 모았습니다." />
+        <CardTitle title="서비스 구성 요약" />
         <div className="admin-summary-strip">
           <Badge label="활성 페이지" value={summary.activeProjects} />
           <Badge label="오늘 접수" value={summary.todayLeads} />
@@ -373,7 +372,7 @@ function AccountsView({ accounts }) {
 
   return (
     <section className="admin-master-card">
-      <CardTitle title="회원 관리" desc="회원별 보유 페이지, 유료 페이지, 플랜과 최근 활동만 확인합니다." />
+      <CardTitle title="회원 관리" />
       <div className="admin-list-toolbar" role="search" aria-label="회원 검색 및 필터">
         <label className="admin-search-field">
           <Search size={18} aria-hidden="true" />
@@ -457,7 +456,7 @@ function ProjectsView({ projects, updatePage, currentProjectId }) {
 
   return (
     <section className="admin-master-card">
-      <CardTitle title="페이지 관리" desc="페이지별 소유자, 플랜, 접수량, 파일 사용 여부와 최근 수정일을 봅니다." />
+      <CardTitle title="페이지 관리" />
       <div className="admin-list-toolbar" role="search" aria-label="페이지 검색 및 필터">
         <label className="admin-search-field">
           <Search size={18} aria-hidden="true" />
@@ -503,7 +502,7 @@ function ProjectsView({ projects, updatePage, currentProjectId }) {
 function LeadSummaryView({ rows }) {
   return (
     <section className="admin-master-card">
-      <CardTitle title="접수 현황" desc="마스터 화면에서는 고객명, 연락처, 문의 내용은 표시하지 않습니다." />
+      <CardTitle title="접수 현황 · 개인정보 제외" />
       <SimpleTable columns={['페이지', 'URL', '소유 회원', '전체 접수', '오늘', '이번 달', '중복/스팸', '최근 접수']} rows={rows.map((row) => [
         row.title || row.slug || row.id,
         `/${row.slug || '-'}`,
@@ -530,7 +529,7 @@ function BillingView({ projects, accounts, summary }) {
       <Metric label="활성 구독" value={summary.activeSubscriptions || 0} />
       <Metric label="미납 구독" value={summary.pastDueSubscriptions || 0} tone="warn" />
       <section className="admin-master-card span-2">
-        <CardTitle title="회원 결제 요약" desc="유료 전환과 미납 리스크를 회원 단위로 확인합니다." />
+        <CardTitle title="회원 결제 요약" />
         <SimpleTable columns={['회원', '이메일', '플랜', '결제 상태', '유료 페이지']} rows={accounts.map((account) => [
           account.name || '-',
           account.email || '-',
@@ -540,7 +539,7 @@ function BillingView({ projects, accounts, summary }) {
         ])} />
       </section>
       <section className="admin-master-card span-2">
-        <CardTitle title="페이지 결제 요약" desc="파일 업로드 같은 유료 기능 권한을 페이지 단위로 봅니다." />
+        <CardTitle title="페이지 결제 요약" />
         <SimpleTable columns={['페이지', '플랜', '결제 상태', '결제액', '최근 결제', '파일 권한']} rows={projects.map((project) => [
           project.title || project.slug || project.id,
           project.plan || 'free',
@@ -562,7 +561,7 @@ function FilesView({ rows, summary }) {
       <Metric label="다운로드 추정" value={summary.fileDownloads} />
       <Metric label="무료 파일 사용" value={rows.filter((row) => !isPaidProject(row) && (row.usesFileWidget || Number(row.fileCount || 0) > 0)).length} tone="warn" />
       <section className="admin-master-card span-4">
-        <CardTitle title="파일/스토리지" desc="R2 비용 관리를 위해 파일은 페이지 단위로만 집계합니다." />
+        <CardTitle title="파일/스토리지" />
         <SimpleTable columns={['페이지', '소유 회원', '플랜', '파일 수', '저장 용량', '다운로드', '업로드 권한']} rows={rows.map((row) => [
           row.title || row.slug || row.id,
           row.ownerEmail || row.owner_email || row.owner_account_email || '-',
@@ -580,7 +579,7 @@ function FilesView({ rows, summary }) {
 function RisksView({ risks }) {
   return (
     <section className="admin-master-card">
-      <CardTitle title="운영 리스크" desc="조치가 필요한 페이지와 비용 리스크를 먼저 정리합니다." />
+      <CardTitle title="운영 리스크" />
       <RiskList risks={risks} />
     </section>
   );
@@ -598,14 +597,14 @@ function OpsView({ transferQueue, transferLoading, transferBusyId, loadTransferQ
       <Metric label="재시도 큐" value={summary.retryableDeliveries || 0} tone={summary.retryableDeliveries ? 'warn' : ''} />
       <Metric label="감사 로그" value={summary.auditLogs || 0} />
       <section className="admin-master-card span-2">
-        <CardTitle title="운영 도구" desc="전체 운영자가 직접 실행하는 최소 조치만 둡니다." />
+        <CardTitle title="운영 도구" />
         <div className="admin-tool-list">
           <button type="button" onClick={resetStartMode}>시작 화면 다시 선택</button>
           <button type="button" onClick={loadTransferQueue} disabled={transferLoading}>{transferLoading ? '확인 중' : '소유권 이전 새로고침'}</button>
         </div>
       </section>
       <section className="admin-master-card span-2">
-        <CardTitle title="소유권 이전 승인" desc="결제 상태 확인 후 승인, 완료, 거절합니다." />
+        <CardTitle title="소유권 이전 승인" />
         <div className="admin-transfer-list">
           {!transferLoading && transferQueue.length === 0 && <div className="admin-empty">대기 중인 소유권 이전 요청이 없습니다.</div>}
           {transferQueue.map((request) => {
@@ -637,25 +636,25 @@ function buildRisks({ projects, leadSummaryRows, fileRows, summary }) {
   const risks = [];
   const freeFileRows = fileRows.filter((row) => !isPaidProject(row) && (row.usesFileWidget || Number(row.fileCount || 0) > 0));
   if (freeFileRows.length) {
-    risks.push({ level: 'high', title: '무료 페이지 파일 사용', count: freeFileRows.length, detail: '유료 플랜 조건과 파일 권한을 확인해야 합니다.' });
+    risks.push({ level: 'high', title: '무료 페이지 파일 사용', count: freeFileRows.length, detail: '플랜·파일 권한 확인' });
   }
   const heavyLeads = leadSummaryRows.filter((row) => Number(row.todayLeads || 0) >= 50 || Number(row.monthLeads || 0) >= 500);
   if (heavyLeads.length) {
-    risks.push({ level: 'warn', title: '접수 과다 페이지', count: heavyLeads.length, detail: '광고 성과인지 스팸 유입인지 확인이 필요합니다.' });
+    risks.push({ level: 'warn', title: '접수 과다 페이지', count: heavyLeads.length, detail: '광고·스팸 구분' });
   }
   const pastDue = projects.filter((project) => ['past_due', 'expired'].includes(String(project.billingStatus || project.billing_status || '').toLowerCase()));
   if (pastDue.length) {
-    risks.push({ level: 'high', title: '결제 이상 페이지', count: pastDue.length, detail: '미납 또는 만료 상태의 유료 기능 사용 여부를 확인합니다.' });
+    risks.push({ level: 'high', title: '결제 이상 페이지', count: pastDue.length, detail: '미납·만료 권한 확인' });
   }
   const heavyFiles = fileRows.filter((row) => Number(row.fileBytes || 0) >= 1024 * 1024 * 1024 || Number(row.downloadCount || 0) >= 10000);
   if (heavyFiles.length) {
-    risks.push({ level: 'warn', title: '파일 비용 증가', count: heavyFiles.length, detail: 'R2 저장량과 다운로드 추이를 확인합니다.' });
+    risks.push({ level: 'warn', title: '파일 비용 증가', count: heavyFiles.length, detail: '저장량·다운로드 확인' });
   }
   if (Number(summary.blockedLeads || 0) > 0) {
-    risks.push({ level: 'info', title: '중복/스팸 차단', count: summary.blockedLeads, detail: '차단 정책이 정상 작동 중인지 월별로 확인합니다.' });
+    risks.push({ level: 'info', title: '중복/스팸 차단', count: summary.blockedLeads, detail: '차단 정책 점검' });
   }
   if (!risks.length) {
-    risks.push({ level: 'good', title: '즉시 조치 리스크 없음', count: 0, detail: '현재 집계 기준으로 심각한 운영 리스크가 없습니다.' });
+    risks.push({ level: 'good', title: '즉시 조치 리스크 없음', count: 0, detail: '정상' });
   }
   return risks;
 }
