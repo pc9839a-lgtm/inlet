@@ -240,17 +240,14 @@ export default function CustomDomainSettingsSection({
     }
   };
 
+  const planSslLabel = sslIncludedByPlan ? '프로 포함' : sslEnabled ? '사용 가능' : '미사용';
   const sslLabel = providerSslStatus === 'active'
     ? '인증서 활성'
     : providerSslStatus === 'failed'
       ? 'SSL 확인 필요'
       : providerSslStatus === 'pending'
         ? 'SSL 확인 중'
-        : sslIncludedByPlan
-          ? '프로 요금제 포함'
-          : sslEnabled
-            ? '이용 중'
-            : '월 1,000원';
+        : planSslLabel;
 
   return (
     <SettingsSection id="domain" className="settings-domain-section">
@@ -330,7 +327,7 @@ export default function CustomDomainSettingsSection({
               <span className="settings-status-badge">{providerSslStatus === 'failed' ? '확인 필요' : '대기'}</span>
             ) : !sslLoading ? (
               <button type="button" className="settings-primary-button compact" disabled={checkoutBusy} onClick={startSslCheckout}>
-                {checkoutBusy ? '이동 중' : 'SSL 신청'}
+                {checkoutBusy ? '이동 중' : '도입 문의'}
               </button>
             ) : null}
           </div>
