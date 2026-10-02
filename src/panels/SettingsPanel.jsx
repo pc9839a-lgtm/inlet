@@ -4,7 +4,6 @@ import {
   canWriteTab,
   isBuilderMode,
   isClientAdminMode,
-  isManagerMode,
   normalizeOwnershipSettings,
 } from '../lib/authContext.js';
 import { normalizeIntegrations } from '../lib/pageModel.js';
@@ -36,7 +35,6 @@ export default function SettingsPanel({
   const transferRequest = page.ownership?.transferRequest || null;
   const serverPage = isServerPageMode();
   const clientAdminMode = isClientAdminMode(accessMode);
-  const managerMode = isManagerMode(accessMode);
   const projectSettingsWritable = canWriteTab(accessMode, page, authUser, 'settings');
   const canManageProjectUsers = isBuilderMode(accessMode);
   const canReadMedia = canReadTab(accessMode, page, authUser, 'edit');
