@@ -230,7 +230,6 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
       <header className="home-header service-home-header">
         <div className="home-brand service-brand">
           <strong>페이지로</strong>
-          <span>랜딩 운영 콘솔</span>
         </div>
         <div className="service-header-actions">
           <span className="service-plan-badge">{planLabel}</span>
@@ -242,12 +241,8 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
       </header>
 
       <main className="home-main service-dashboard">
-        <section className="service-dashboard-hero">
-          <div>
-            <span>PAGERO</span>
-            <h1>페이지로</h1>
-            <p>랜딩 제작, 접수 확인, 통계를 한 화면에서 관리합니다.</p>
-          </div>
+        <section className="service-dashboard-toolbar">
+          <h1>대시보드</h1>
           <button className="primary-btn" type="button" disabled={createDisabled} onClick={openCreate}>{createButtonLabel}</button>
         </section>
 
@@ -270,7 +265,6 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
           <article>
             <span>접수</span>
             <strong>{totalLeadCount}건</strong>
-            <small>전체 랜딩 기준</small>
           </article>
         </section>
 
@@ -294,7 +288,6 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
             <div className="service-account-danger-zone">
               <div>
                 <strong>회원 탈퇴</strong>
-                <p>탈퇴하면 페이지로 계정 이용이 즉시 중지되고 로그아웃됩니다.</p>
               </div>
               {!withdrawOpen ? (
                 <button
@@ -351,7 +344,7 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
 
         <section className="home-section service-page-list" aria-busy={pagesLoading}>
           <div className="home-section-title">
-            <h2>내 랜딩페이지</h2>
+            <h2>랜딩페이지</h2>
             <button className="primary-btn" type="button" disabled={createDisabled} onClick={openCreate}>{createButtonLabel}</button>
           </div>
           {createLimitReached && (
