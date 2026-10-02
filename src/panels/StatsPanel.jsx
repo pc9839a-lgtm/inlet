@@ -156,7 +156,7 @@ function fmtDateOnly(value) {
 function StatsTrend({ data }) {
   const [hover, setHover] = useState(null);
   const total = data.reduce((sum, row) => sum + Number(row.pv || 0) + Number(row.cta || 0) + Number(row.db || 0), 0);
-  if (!total) return <div className="stats-v4-empty">선택한 기간에 표시할 데이터가 없습니다.</div>;
+  if (!total) return <div className="stats-v4-empty">데이터 없음</div>;
   const max = Math.max(1, ...data.flatMap((row) => [row.pv, row.cta, row.db]));
   const width = 720;
   const height = 220;
@@ -239,7 +239,7 @@ function RecentLeads({ leads, total }) {
         <h2>최근 접수</h2>
         <p>{total > leads.length ? `전체 ${total}건 중 최근 ${leads.length}건` : `${leads.length}건`}</p>
       </div>
-      {!leads.length ? <div className="stats-v4-empty">접수 데이터가 없습니다.</div> : (
+      {!leads.length ? <div className="stats-v4-empty">접수 없음</div> : (
         <div className="stats-v4-lead-list">
           {leads.slice(0, 8).map((lead) => (
             <div key={lead.id || lead.createdAt}>
@@ -368,7 +368,7 @@ export default function StatsPanel({
           </label>
         </section>
 
-        {partialData && <div className="stats-v4-notice" role="status">일부 데이터만 표시 중입니다.</div>}
+        {partialData && <div className="stats-v4-notice" role="status">일부 데이터</div>}
 
         {activeView === 'overview' && (
           <div className="stats-v4-view">

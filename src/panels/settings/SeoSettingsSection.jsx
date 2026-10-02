@@ -152,7 +152,6 @@ export default function SeoSettingsSection({
         <section className="seo-setting-row" style={compactRowStyle}>
           <div className="seo-setting-label" style={{ paddingTop: 0 }}>
             <strong>검색 도구 인증</strong>
-            <span>필요한 경우에만 입력</span>
           </div>
           <div className="seo-verification-grid">
             <SettingsField

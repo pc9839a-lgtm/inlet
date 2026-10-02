@@ -30,7 +30,7 @@ export default function SettingsPrimarySections({
   return (
     <>
       {activeSection === 'account' && (
-        <SettingsSection id="account" title="계정 정보" description="프로필과 비밀번호 관리" openSection={openSection} setOpenSection={setOpenSection} className="account-settings-section">
+        <SettingsSection id="account" title="계정 정보" openSection={openSection} setOpenSection={setOpenSection} className="account-settings-section">
           <AccountSettingsSection authUser={authUser} onAccountUpdate={onAccountUpdate} onLogout={onLogout} />
         </SettingsSection>
       )}

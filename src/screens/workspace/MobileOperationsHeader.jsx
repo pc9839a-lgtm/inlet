@@ -9,7 +9,6 @@ export function MobileOperationsHeader({ page }) {
       <div>
         <p>{page.title}</p>
         <h1>모바일 운영</h1>
-        <span>접수 현황과 통계를 확인할 수 있습니다.</span>
       </div>
     </header>
   );
