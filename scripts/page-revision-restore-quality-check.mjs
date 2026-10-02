@@ -126,7 +126,7 @@ assert(advancedSource.includes('PageRevisionHistorySection') && advancedSource.i
 assert(sectionSource.includes('fetchPageRevisions(page, authUser)'), 'version history UI must use the authenticated revision list API');
 assert(sectionSource.includes('pageFromRevisionDraft(page, revision)'), 'version history restore must load a draft into the editor');
 assert(workspacePanelPropsSource.includes('setPage: setNormalizedPage'), 'settings revision restore must receive the canonical normalized page mutation setter');
-assert(sectionSource.includes('저장 버튼을 누르기 전까지 공개 페이지는 변경되지 않습니다.'), 'revision restore UI must explain that public content is unchanged before save');
+assert(sectionSource.includes('저장 전까지 공개 페이지는 유지됩니다.'), 'revision restore UI must keep the pre-save public-page safety warning in compact form');
 assert(!sectionSource.includes('restorePageRevision('), 'revision history UI must not call the immediate server restore endpoint');
 assert(pageRepositorySource.includes('export async function fetchPageRevisions'), 'page repository must retain the revision list API');
 assert(pageRepositorySource.includes('export async function restorePageRevision'), 'legacy direct server restore API may remain available but must not be wired to this UI');
