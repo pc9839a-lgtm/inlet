@@ -46,7 +46,6 @@ const ADVANCED_NAV = [
 
 const ALL_NAV = [...PRIMARY_NAV, ...SERVICE_NAV, ...ADVANCED_NAV];
 const ADVANCED_IDS = new Set(ADVANCED_NAV.map(([id]) => id));
-const OWNER_ONLY_IDS = new Set(['billing', 'referral', 'partner', 'settlement']);
 
 function SettingsNavGroup({ label, items, selectedSection, selectSection }) {
   return (
@@ -106,9 +105,9 @@ export default function SettingsPanelBody({
   const primaryItems = useMemo(() => PRIMARY_NAV.filter(([id]) => {
     if (id === 'managers' && !canManageProjectUsers) return false;
     if (id === 'media' && !canReadMedia) return false;
-    if (id === 'domain' && !projectSettingsWritable) return false;
+    if (id === 'domain' && (clientAdminMode || !projectSettingsWritable)) return false;
     return true;
-  }), [canManageProjectUsers, canReadMedia, projectSettingsWritable]);
+  }), [canManageProjectUsers, canReadMedia, clientAdminMode, projectSettingsWritable]);
 
   const serviceItems = useMemo(
     () => ownerFinanceAccess ? SERVICE_NAV : [],
@@ -210,6 +209,7 @@ export default function SettingsPanelBody({
               onAccountUpdate={onAccountUpdate}
               onLogout={onLogout}
               ownership={ownership}
+              projectSettingsWritable={projectSettingsWritable}
               sections={visibleSections}
               transferRequest={transferRequest}
               updateIntegrations={updateIntegrations}
@@ -219,6 +219,7 @@ export default function SettingsPanelBody({
               activeSection={selectedSection}
               authUser={authUser}
               canDuplicatePage={canDuplicatePage}
+              canResetProject={canManageProjectUsers}
               clientAdminMode={clientAdminMode}
               duplicateSettings={duplicateSettings}
               drafts={drafts}
