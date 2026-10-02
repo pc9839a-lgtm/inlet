@@ -201,7 +201,7 @@ function DashboardCreateFlow({ page, templates = [], onAi, onManual, onTemplate,
       <div className="home-create-options">
         <button type="button" className={pendingMode === 'ai' ? 'active primary' : ''} onClick={() => startUrlStep('ai')}>
           <strong>AI 만들기</strong>
-          <span>AI 설정과 초안 입력 화면으로 시작합니다.</span>
+          <span>업종과 서비스 정보를 입력하면 바로 편집 가능한 첫 페이지를 만듭니다.</span>
         </button>
         <button type="button" className={pendingMode === 'manual' ? 'active primary' : ''} onClick={() => startUrlStep('manual')}>
           <strong>직접 만들기</strong>
@@ -270,29 +270,66 @@ function AiStartBasics({ onStart }) {
     prompt: '',
     industry: '',
     serviceName: '',
+    benefit: '',
+    region: '',
+    inquiryFields: '',
     goal: '상담신청',
     contactMethod: '상담폼',
   });
-  const set = (key, value) => setForm((current) => ({ ...current, [key]: value }));
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState('');
+  const set = (key, value) => {
+    setError('');
+    setForm((current) => ({ ...current, [key]: value }));
+  };
+  const canStart = !!form.industry.trim() && !!form.serviceName.trim() && !creating;
+
+  const startFirstPage = async () => {
+    if (!canStart) {
+      setError('업종과 서비스명을 먼저 입력해주세요.');
+      return;
+    }
+    setCreating(true);
+    setError('');
+    try {
+      await onStart?.({ ...form, inputMode: 'detail' });
+    } catch (createError) {
+      setError(String(createError?.message || createError || '첫 페이지 생성에 실패했습니다.'));
+    } finally {
+      setCreating(false);
+    }
+  };
 
   return (
     <div className="create-ai-basics">
       <div className="create-ai-basics-head">
-        <strong>기본 정보 저장</strong>
-        <p>API 키 없이도 제작 방향을 먼저 저장합니다. 이후 AI 설정에서 키를 연결하면 이 입력값으로 바로 초안을 만들 수 있습니다.</p>
+        <strong>첫 페이지 정보</strong>
+        <p>업종과 서비스 정보를 넣으면 바로 수정 가능한 PageRo 블록으로 첫 페이지를 만듭니다.</p>
       </div>
 
       <label className="wide">
         <span>만들고 싶은 페이지</span>
-        <textarea value={form.prompt} onChange={(e)=>set('prompt', e.target.value)} placeholder="예: 부평 피부관리샵 첫 방문 예약 랜딩. 민감성 피부 상담, 예약폼이 필요해." />
+        <textarea value={form.prompt} onChange={(e)=>set('prompt', e.target.value)} placeholder="예: 첫 방문 고객이 상담 내용을 이해하고 바로 예약할 수 있는 랜딩" />
       </label>
       <label>
-        <span>업종/키워드</span>
-        <input value={form.industry} onChange={(e)=>set('industry', e.target.value)} placeholder="예: 피부관리샵, 세무 상담" />
+        <span>업종</span>
+        <input value={form.industry} onChange={(e)=>set('industry', e.target.value)} placeholder="예: 피부관리샵, 개인회생, 분양" />
       </label>
       <label>
         <span>서비스명</span>
         <input value={form.serviceName} onChange={(e)=>set('serviceName', e.target.value)} placeholder="예: 바른케어" />
+      </label>
+      <label>
+        <span>핵심 혜택</span>
+        <input value={form.benefit} onChange={(e)=>set('benefit', e.target.value)} placeholder="예: 첫 방문 상담, 조건 확인" />
+      </label>
+      <label>
+        <span>지역</span>
+        <input value={form.region} onChange={(e)=>set('region', e.target.value)} placeholder="예: 인천 부평, 수원" />
+      </label>
+      <label className="wide">
+        <span>받고 싶은 문의 항목</span>
+        <input value={form.inquiryFields} onChange={(e)=>set('inquiryFields', e.target.value)} placeholder="예: 희망 일정, 현재 상황, 관심 항목" />
       </label>
       <label>
         <span>목적</span>
@@ -315,7 +352,10 @@ function AiStartBasics({ onStart }) {
         </select>
       </label>
 
-      <button type="button" onClick={() => onStart?.({ ...form, inputMode: 'detail' })}>저장하고 AI 설정 열기</button>
+      {error ? <p className="create-ai-error" role="alert">{error}</p> : null}
+      <button type="button" disabled={!canStart} onClick={startFirstPage}>
+        {creating ? '첫 페이지 만드는 중' : 'AI 첫 페이지 만들기'}
+      </button>
     </div>
   );
 }
@@ -440,7 +480,7 @@ function CreateLandingModal({ page, onClose, onAi, onManual, onTemplate, onCheck
               {!canCreateLanding && createLandingStatus && <p className="create-url-status error">{createLandingStatus}</p>}
               <button type="button" className="primary" disabled={!canCreateLanding} onClick={() => startUrlStep('ai')}>
                 <strong>AI 만들기</strong>
-                <span>AI 설정과 초안 입력 화면으로 시작합니다.</span>
+                <span>업종과 서비스 정보를 입력하면 바로 편집 가능한 첫 페이지를 만듭니다.</span>
               </button>
 
               <button type="button" disabled={!canCreateLanding} onClick={() => startUrlStep('manual')}>
@@ -470,8 +510,8 @@ function CreateLandingModal({ page, onClose, onAi, onManual, onTemplate, onCheck
           <div className="create-step-panel">
             <div className="create-modal-title">
               <span>AI 만들기</span>
-              <h2 id="create-landing-title">기본 정보를 먼저 저장합니다.</h2>
-              <p>API 키는 지금 입력하지 않습니다. 제작 방향만 저장하고 AI 설정 화면에서 나중에 연결합니다.</p>
+              <h2 id="create-landing-title">첫 페이지를 바로 만듭니다.</h2>
+              <p>업종, 서비스명, 핵심 혜택, 지역, 문의받을 항목을 기준으로 기본 구조와 카피를 생성합니다.</p>
             </div>
             <AiStartBasics onStart={(input) => onAi?.(withUrl(input))}/>
           </div>
