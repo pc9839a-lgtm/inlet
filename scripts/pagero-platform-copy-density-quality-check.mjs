@@ -25,6 +25,10 @@ const seoSettings = await readFile('src/panels/settings/SeoSettingsSection.jsx',
 const editLayout = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
 const addBlockGroupGrid = await readFile('src/editor/editPanelParts/AddBlockGroupGrid.jsx', 'utf8');
 const addDockCss = await readFile('src/styles/editor-widget-add-dock.css', 'utf8');
+const inviteAccept = await readFile('src/screens/InviteAcceptScreen.jsx', 'utf8');
+const managerOwnership = await readFile('src/panels/settings/ManagerOwnershipTransfer.jsx', 'utf8');
+const ownershipTransfer = await readFile('src/lib/ownershipTransfer.js', 'utf8');
+const settingsControlPanelCss = await readFile('src/styles/settings-control-panel.css', 'utf8');
 
 assert(dashboard.includes('service-dashboard-toolbar'), 'dashboard must use compact product toolbar');
 assert(!dashboard.includes('랜딩 제작, 접수 확인, 통계를 한 화면에서 관리합니다.'), 'dashboard marketing explanation must stay removed');
@@ -90,9 +94,19 @@ assert(!addBlockGroupGrid.includes('조건에 맞는 위젯이 없습니다.') &
 assert(addDockCss.includes('Editor add dock — compact product density') && addDockCss.includes('border-radius: 7px !important;'), 'widget add dock must keep compact product controls');
 assert(addDockCss.includes('border: 0 !important;') && addDockCss.includes('background: transparent !important;'), 'widget groups must stay flat instead of nested marketing cards');
 
+assert(inviteAccept.includes('<h1>매니저 초대</h1>'), 'manager invite must use a functional screen title');
+assert(inviteAccept.includes('invite-access-status') && inviteAccept.includes('<span>초대 이메일</span>') && inviteAccept.includes('<span>상태</span>'), 'manager invite must present access data as status rows');
+assert(!inviteAccept.includes('초대받은 이메일과 현재 계정 이메일이 일치해야 페이지가 열립니다.'), 'manager invite explanatory hero copy must stay removed');
+assert(!inviteAccept.includes('계정이 없으면 회원가입') && !inviteAccept.includes('이미 계정이 있으면 로그인'), 'manager invite mode switch must stay concise');
+assert(!managerOwnership.includes('민감한 권한') && !managerOwnership.includes('대상 매니저를 선택해 요청하면 내부 관리자의 최종 승인 후 소유권이 변경됩니다.'), 'ownership transfer explanatory copy must stay removed');
+assert(managerOwnership.includes('<span>관리자 승인</span>') && managerOwnership.includes("{showTransfer ? '닫기' : '소유권 이전'}"), 'ownership transfer must expose compact approval status and controls');
+assert(ownershipTransfer.includes("requested: '관리자 확인 중'") && ownershipTransfer.includes("waiting_billing_clearance: '결제 정리 대기'") && ownershipTransfer.includes("completed: '이전 완료'"), 'ownership transfer status copy must remain data-like');
+assert(!ownershipTransfer.includes('내부 관리자가 요청을 확인 중입니다.') && !ownershipTransfer.includes('소유권이 새 계정으로 이전되었습니다.'), 'ownership status prose must stay removed');
+assert(settingsControlPanelCss.includes('Ownership transfer — status-first access control.') && settingsControlPanelCss.includes('.ownership-transfer-head'), 'ownership transfer must keep compact platform layout');
+
 console.log(JSON.stringify({
   ok: true,
-  checks: 53,
+  checks: 62,
   scope: 'pagero-platform-copy-density',
   dashboard: 'compact-saas-shell',
   createFlow: 'action-first',
@@ -103,5 +117,6 @@ console.log(JSON.stringify({
   mobileStats: 'status-only',
   generalSettings: 'functional-copy-only',
   editor: 'compact-product-ui',
+  access: 'status-first',
   aiLogicTouched: false,
 }, null, 2));
