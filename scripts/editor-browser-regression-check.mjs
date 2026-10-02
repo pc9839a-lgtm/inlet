@@ -888,6 +888,22 @@ async function run() {
       `editor test inquiry URL is not isolated: ${JSON.stringify(conversionCockpitState)}`,
     );
 
+    const publishChecklistState = await evaluate(client, `(() => {
+      const checklist = document.querySelector('.publish-checklist');
+      if (!checklist) return null;
+      return {
+        summary: checklist.querySelector('summary')?.innerText || '',
+        text: checklist.innerText || '',
+        items: [...checklist.querySelectorAll('.publish-checklist-popover > span')].map((item) => item.textContent.trim()),
+      };
+    })()`);
+    assert(publishChecklistState, 'E4 publish checklist was not rendered');
+    assert(publishChecklistState.summary.includes('발행'), `publish checklist summary is missing: ${JSON.stringify(publishChecklistState)}`);
+    for (const label of ['브랜드', '핵심 문구', '문의 행동', '문의 항목', '연락처/사업자', '공개 URL']) {
+      assert(publishChecklistState.text.includes(label), `publish checklist item missing: ${label}`);
+    }
+    assert(publishChecklistState.items.length === 6, `publish checklist must expose six checks: ${JSON.stringify(publishChecklistState)}`);
+
     const editSectionTabStyle = await evaluate(client, `(() => {
       const tabs = document.querySelector('.edit-section-tabs[data-pagero-ui="edit-section-tabs-v2"]');
       const active = tabs?.querySelector('.edit-section-tab[aria-pressed="true"]');
@@ -1220,6 +1236,7 @@ async function run() {
       responsiveMatrixScreenshots: desktopMatrix.length + mobileViewports.length,
       responsiveGeometryLocked: true,
       conversionCockpit: true,
+      publishChecklist: true,
       realUseFlows: ['add-block', 'undo-redo', 'visibility', 'menu-reorder', 'pointer-drag-reorder', 'style-apply', 'preview-continue', 'publish-race', 'revision-restore-undo-redo', 'post-restore-publish-readback', 'narrow-desktop'],
     }, null, 2));
   } finally {
