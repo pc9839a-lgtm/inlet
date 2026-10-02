@@ -16,6 +16,12 @@ const auth = await readFile('src/screens/AuthScreen.jsx', 'utf8');
 const authCss = await readFile('src/styles/panels-home-auth.css', 'utf8');
 const masterAdmin = await readFile('src/panels/MasterAdminPanel.jsx', 'utf8');
 const inbox = await readFile('src/panels/InboxPanel.jsx', 'utf8');
+const mobileOperationsHeader = await readFile('src/screens/workspace/MobileOperationsHeader.jsx', 'utf8');
+const stats = await readFile('src/panels/StatsPanel.jsx', 'utf8');
+const settingsPrimary = await readFile('src/panels/settings/SettingsPrimarySections.jsx', 'utf8');
+const accountSettings = await readFile('src/panels/settings/AccountSettingsSection.jsx', 'utf8');
+const revisionHistory = await readFile('src/panels/settings/PageRevisionHistorySection.jsx', 'utf8');
+const seoSettings = await readFile('src/panels/settings/SeoSettingsSection.jsx', 'utf8');
 
 assert(dashboard.includes('service-dashboard-toolbar'), 'dashboard must use compact product toolbar');
 assert(!dashboard.includes('랜딩 제작, 접수 확인, 통계를 한 화면에서 관리합니다.'), 'dashboard marketing explanation must stay removed');
@@ -35,7 +41,8 @@ assert(createFlowCss.includes('grid-template-columns: repeat(3, minmax(0, 1fr));
 assert(!billing.includes('billing-plan-pitch'), 'pricing marketing pitch must stay removed');
 assert(!billing.includes('billing-plan-why'), 'pricing recommendation prose must stay removed');
 assert(!billing.includes('이런 경우 추천'), 'pricing recommendation sentence must stay removed');
-assert(billing.includes('웹 자동결제 준비 중 · 유료 플랜은 가입 문의로 연결됩니다.'), 'essential billing status must remain concise');
+assert(!billing.includes('웹 자동결제 준비 중 · 유료 플랜은 가입 문의로 연결됩니다.'), 'billing prose status must stay removed');
+assert(billing.includes('billing-settings-status') && billing.includes('<span>자동결제</span><strong>준비 중</strong>') && billing.includes('<span>유료 플랜</span><strong>가입 문의</strong>'), 'billing must expose product-style status data');
 assert(billingCss.includes('min-height: 330px;'), 'pricing cards must remain compact');
 
 assert(!domain.includes('베타 운영: 개인 도메인'), 'domain beta paragraph must stay removed');
@@ -63,9 +70,21 @@ assert(!inbox.includes('반복 제출과 중복 연락처를 처리하는 기준
 assert(!inbox.includes('접수 데이터를 이메일, Google Sheets, Webhook으로 전달합니다.'), 'inbox connection explanation must stay removed');
 assert(inbox.includes('placeholder="이름 · 연락처 · 문의"') && inbox.includes('<small className="inbox-ops-help">자동 저장</small>'), 'inbox must keep compact functional copy');
 
+assert(!mobileOperationsHeader.includes('접수 현황과 통계를 확인할 수 있습니다.'), 'mobile operations header explanation must stay removed');
+assert(mobileOperationsHeader.includes('<h1>모바일 운영</h1>'), 'mobile operations functional title must remain');
+assert(!stats.includes('선택한 기간에 표시할 데이터가 없습니다.') && stats.includes('stats-v4-empty">데이터 없음'), 'stats empty state must stay compact');
+assert(!stats.includes('접수 데이터가 없습니다.') && stats.includes('stats-v4-empty">접수 없음'), 'stats lead empty state must stay compact');
+assert(!stats.includes('일부 데이터만 표시 중입니다.') && stats.includes('stats-v4-notice') && stats.includes('일부 데이터'), 'stats partial-data status must stay concise');
+
+assert(!settingsPrimary.includes('description="프로필과 비밀번호 관리"'), 'account settings helper description must stay removed');
+assert(accountSettings.includes('계정 정보 없음') && !accountSettings.includes('로그인된 계정 정보가 없습니다.'), 'account settings empty state must stay compact');
+assert(revisionHistory.includes('불러오기 후 저장 시 공개 반영') && revisionHistory.includes('저장 시 공개 반영'), 'revision history must keep concise publish-impact status');
+assert(!revisionHistory.includes('과거 저장본을 현재 편집본으로 불러옵니다.') && !revisionHistory.includes('내용을 확인한 뒤 저장하면 현재 공개 페이지에 반영됩니다.'), 'revision history explanatory copy must stay removed');
+assert(!seoSettings.includes('필요한 경우에만 입력'), 'SEO helper sentence must stay removed');
+
 console.log(JSON.stringify({
   ok: true,
-  checks: 38,
+  checks: 49,
   scope: 'pagero-platform-copy-density',
   dashboard: 'compact-saas-shell',
   createFlow: 'action-first',
@@ -73,5 +92,7 @@ console.log(JSON.stringify({
   auth: 'functional-copy-only',
   admin: 'data-first',
   inbox: 'action-first',
+  mobileStats: 'status-only',
+  generalSettings: 'functional-copy-only',
   aiLogicTouched: false,
 }, null, 2));
