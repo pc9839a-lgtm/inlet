@@ -79,7 +79,7 @@ function leadDeliveryInfo(lead = {}) {
   if (!['failed', 'partial'].includes(status)) return null;
   return {
     label: status === 'failed' ? '알림 실패' : '일부 실패',
-    summary: lead.delivery?.summary || '연결된 알림 전송을 확인해주세요.',
+    summary: lead.delivery?.summary || '알림 전송 확인 필요',
   };
 }
 
@@ -376,7 +376,6 @@ export default function InboxPanel({
             <main className="inbox-ops-main">
               <header className="inbox-ops-main-head">
                 <div>
-                  <small>고객 문의 관리</small>
                   <h2>접수함</h2>
                 </div>
                 <span>{displaySummary}</span>
@@ -405,7 +404,7 @@ export default function InboxPanel({
               <section className="inbox-ops-toolbar">
                 <label className="inbox-ops-search">
                   <Search size={18} />
-                  <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="이름, 연락처, 문의 내용을 검색하세요" />
+                  <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="이름 · 연락처 · 문의" />
                 </label>
                 <input type="month" value={month} onChange={(event) => setMonth(event.target.value || currentMonthValue())} aria-label="조회 월" />
                 <select
@@ -463,8 +462,8 @@ export default function InboxPanel({
                   <span>상태</span>
                 </div>
 
-                {syncing ? <div className="inbox-ops-empty">접수함을 불러오는 중입니다.</div> : null}
-                {!syncing && !filtered.length ? <div className="inbox-ops-empty">조건에 맞는 접수가 없습니다.</div> : null}
+                {syncing ? <div className="inbox-ops-empty">불러오는 중</div> : null}
+                {!syncing && !filtered.length ? <div className="inbox-ops-empty">접수 없음</div> : null}
 
                 <div className="inbox-ops-table-body">
                   {filtered.map((lead) => {
@@ -500,7 +499,7 @@ export default function InboxPanel({
 
                 <footer className="inbox-ops-table-footer">
                   <span>{filtered.length} / {serverTotal}건</span>
-                  {hasMoreLeads ? <button type="button" onClick={loadMore} disabled={syncing}>더 불러오기</button> : <b>마지막 목록입니다.</b>}
+                  {hasMoreLeads ? <button type="button" onClick={loadMore} disabled={syncing}>더 불러오기</button> : <b>마지막</b>}
                 </footer>
               </section>
             </main>
@@ -509,8 +508,7 @@ export default function InboxPanel({
               {!selectedLead ? (
                 <div className="inbox-ops-detail-empty">
                   <InboxIcon size={28} />
-                  <strong>문의를 선택하세요</strong>
-                  <span>왼쪽 목록에서 문의를 선택하면 상세 내용이 표시됩니다.</span>
+                  <strong>문의 선택</strong>
                 </div>
               ) : (
                 <>
@@ -552,7 +550,7 @@ export default function InboxPanel({
                   <section className="inbox-ops-detail-section">
                     <h4>메모</h4>
                     <DebouncedMemoInput value={selectedLead.memo || ''} onCommit={(memo) => updateLeadSafe(selectedLead.id, { memo })} />
-                    <small className="inbox-ops-help">입력한 메모는 접수 데이터에 자동 저장됩니다.</small>
+                    <small className="inbox-ops-help">자동 저장</small>
                   </section>
 
                   <section className="inbox-ops-detail-section">
@@ -614,9 +612,7 @@ export default function InboxPanel({
         ) : (
           <main className="inbox-ops-management">
             <header>
-              <small>접수함 관리</small>
               <h2>{sectionMode === 'duplicate' ? '중복 접수 정책' : '외부 연동'}</h2>
-              <p>{sectionMode === 'duplicate' ? '반복 제출과 중복 연락처를 처리하는 기준을 설정합니다.' : '접수 데이터를 이메일, Google Sheets, Webhook으로 전달합니다.'}</p>
             </header>
             {sectionMode === 'duplicate'
               ? <IntakeDuplicatePolicyPanel page={page} authUser={authUser} updatePage={updatePage} />

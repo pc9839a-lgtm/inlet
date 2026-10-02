@@ -14,6 +14,8 @@ const billingCss = await readFile('src/panels/settings/BillingSettingsSection.cs
 const domain = await readFile('src/panels/settings/CustomDomainSettingsSection.jsx', 'utf8');
 const auth = await readFile('src/screens/AuthScreen.jsx', 'utf8');
 const authCss = await readFile('src/styles/panels-home-auth.css', 'utf8');
+const masterAdmin = await readFile('src/panels/MasterAdminPanel.jsx', 'utf8');
+const inbox = await readFile('src/panels/InboxPanel.jsx', 'utf8');
 
 assert(dashboard.includes('service-dashboard-toolbar'), 'dashboard must use compact product toolbar');
 assert(!dashboard.includes('랜딩 제작, 접수 확인, 통계를 한 화면에서 관리합니다.'), 'dashboard marketing explanation must stay removed');
@@ -47,13 +49,29 @@ assert(!auth.includes('이메일 인증 후 비밀번호 변경'), 'auth passwor
 assert(auth.includes("mode === 'signup' ? '회원가입' : '비밀번호 변경'"), 'auth mode titles must be functional labels');
 assert(authCss.includes('border-radius: 16px !important;') && authCss.includes('background: #f5f6f8 !important;'), 'auth must keep flat SaaS surface styling');
 
+assert(!masterAdmin.includes('회원, 페이지, 결제, 파일 사용량, 접수 추이와 운영 리스크를 개인정보 노출 없이 확인합니다.'), 'master admin hero explanation must stay removed');
+assert(!masterAdmin.includes('개별 고객 정보 없이 페이지 단위 접수량만 봅니다.'), 'master admin card explanations must stay removed');
+assert(!masterAdmin.includes('전체 서비스 운영에 필요한 핵심 수치만 모았습니다.'), 'master admin summary explanation must stay removed');
+assert(!masterAdmin.includes('회원별 보유 페이지, 유료 페이지, 플랜과 최근 활동만 확인합니다.'), 'master admin member explanation must stay removed');
+assert(!masterAdmin.includes('유료 플랜 조건과 파일 권한을 확인해야 합니다.'), 'risk details must stay status-like, not prose');
+assert(masterAdmin.includes("detail: '플랜·파일 권한 확인'") && masterAdmin.includes("detail: '광고·스팸 구분'"), 'master admin risk details must remain compact action labels');
+
+assert(!inbox.includes('<small>고객 문의 관리</small>'), 'inbox duplicate subtitle must stay removed');
+assert(!inbox.includes('왼쪽 목록에서 문의를 선택하면 상세 내용이 표시됩니다.'), 'inbox empty-state explanation must stay removed');
+assert(!inbox.includes('입력한 메모는 접수 데이터에 자동 저장됩니다.'), 'inbox memo helper sentence must stay removed');
+assert(!inbox.includes('반복 제출과 중복 연락처를 처리하는 기준을 설정합니다.'), 'inbox duplicate policy explanation must stay removed');
+assert(!inbox.includes('접수 데이터를 이메일, Google Sheets, Webhook으로 전달합니다.'), 'inbox connection explanation must stay removed');
+assert(inbox.includes('placeholder="이름 · 연락처 · 문의"') && inbox.includes('<small className="inbox-ops-help">자동 저장</small>'), 'inbox must keep compact functional copy');
+
 console.log(JSON.stringify({
   ok: true,
-  checks: 26,
+  checks: 38,
   scope: 'pagero-platform-copy-density',
   dashboard: 'compact-saas-shell',
   createFlow: 'action-first',
   settings: ['pricing-data-first', 'domain-status-first'],
   auth: 'functional-copy-only',
+  admin: 'data-first',
+  inbox: 'action-first',
   aiLogicTouched: false,
 }, null, 2));
