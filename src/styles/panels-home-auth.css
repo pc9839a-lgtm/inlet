@@ -1,1 +1,99 @@
 .auth-back{border:0;background:transparent;color:#64748b;font-size:13px;font-weight:900;cursor:pointer;padding:0;margin-bottom:20px}
+
+
+/* Auth — compact product surface. */
+.auth-shell {
+  background: #f5f6f8 !important;
+}
+
+.auth-card {
+  width: min(400px, 100%) !important;
+  padding: 24px !important;
+  border: 1px solid #e1e5ea !important;
+  border-radius: 16px !important;
+  background: #fff !important;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, .08) !important;
+}
+
+.auth-brand {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.auth-brand strong {
+  font-size: 20px !important;
+  letter-spacing: -.04em !important;
+}
+
+.auth-copy {
+  margin-top: 28px !important;
+}
+
+.auth-copy h1 {
+  font-size: 28px !important;
+  letter-spacing: -.045em !important;
+}
+
+.auth-copy p,
+.auth-brand span {
+  display: none !important;
+}
+
+.auth-form {
+  margin-top: 20px !important;
+  gap: 9px !important;
+}
+
+.auth-form input {
+  height: 44px !important;
+  border-radius: 9px !important;
+  background: #fff !important;
+  font-size: 14px !important;
+}
+
+.auth-form .auth-google-btn,
+.auth-form > button[type="submit"],
+.auth-form > .ghost-btn {
+  height: 44px !important;
+  min-height: 44px !important;
+  border-radius: 9px !important;
+  box-shadow: none !important;
+  font-size: 14px !important;
+}
+
+.auth-form > button[type="submit"] {
+  border: 1px solid #111827 !important;
+  background: #111827 !important;
+  color: #fff !important;
+}
+
+.auth-divider {
+  margin: 2px 0 !important;
+}
+
+.auth-switch {
+  margin-top: 12px !important;
+  color: #4b5563 !important;
+  font-size: 12px !important;
+  font-weight: 850 !important;
+}
+
+.auth-back {
+  margin-bottom: 22px;
+  color: #4b5563;
+  font-size: 12px;
+}
+
+@media (max-width: 520px) {
+  .auth-shell {
+    place-items: start center !important;
+    padding: 14px !important;
+  }
+
+  .auth-card {
+    width: 100% !important;
+    margin-top: 14px;
+    padding: 20px !important;
+    border-radius: 14px !important;
+  }
+}
