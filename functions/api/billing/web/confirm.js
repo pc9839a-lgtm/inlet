@@ -1,5 +1,4 @@
 import {
-  apiTokenAuthorized,
   assertD1,
   handleApiError,
   jsonResponse,
@@ -9,9 +8,17 @@ import {
 import { productPriceKrw, recordReferralCommission } from '../_commissions.js';
 import { ensureBillingSchema, resolveEntitlement } from '../_shared.js';
 import { recordPaymentEvent } from '../_paymentHistory.js';
+import {
+  assertWebBillingChargingReady,
+  assertWebBillingProvider,
+  findWebOrder,
+  webBillingError,
+  webProduct,
+} from '../_webBilling.js';
 
 const METHODS = 'POST, OPTIONS';
 const WEB_PRODUCTS = new Set(['pagero_monthly', 'pagero_pro_monthly', 'all_monthly']);
+const PAGERO_PRODUCTS = new Set(['pagero_monthly', 'pagero_pro_monthly']);
 const CALLTAG_PRODUCTS = new Set(['all_monthly', 'call_monthly', 'message_monthly']);
 
 function text(value, max = 240) {
@@ -38,16 +45,16 @@ export async function onRequest({ request, env }) {
   }
 
   try {
-    if (!apiTokenAuthorized(request, env)) {
-      throw billingError('결제 제공자 인증이 필요합니다.', 401, 'WEB_BILLING_PROVIDER_REQUIRED');
-    }
+    const readiness = assertWebBillingChargingReady(env);
+    assertWebBillingProvider(request, env);
 
     const db = assertD1(env);
     await ensureBillingSchema(db);
     const input = await readJson(request);
     const ownerId = text(input.ownerId, 120);
     const productCode = text(input.productCode, 120);
-    const paymentReference = text(input.paymentReference || input.orderId, 240);
+    const webOrderId = text(input.webOrderId || input.orderKey, 180);
+    const paymentReference = text(input.paymentReference || input.providerPaymentId || input.orderId, 240);
     const externalSubscriptionId = text(input.externalSubscriptionId || paymentReference, 240);
     const status = ['active', 'grace', 'cancelled'].includes(String(input.status || '').toLowerCase())
       ? String(input.status).toLowerCase()
@@ -55,12 +62,37 @@ export async function onRequest({ request, env }) {
     const startedAt = text(input.startedAt || new Date().toISOString(), 40);
     const nextBillingAt = text(input.nextBillingAt, 40);
     const expiresAt = text(input.expiresAt, 40);
-    const amountKrw = Math.round(Number(input.amountKrw || productPriceKrw(productCode)));
+    let amountKrw = Math.round(Number(input.amountKrw || productPriceKrw(productCode)));
+    let webOrder = null;
 
     if (!ownerId) throw billingError('결제 계정 정보가 없습니다.', 400, 'WEB_BILLING_OWNER_REQUIRED');
-    if (!WEB_PRODUCTS.has(productCode)) throw billingError('페이지로 웹에서는 콜태그 통합권만 결제할 수 있습니다.', 400, 'WEB_PRODUCT_INVALID');
+    if (!WEB_PRODUCTS.has(productCode)) throw billingError('결제 상품을 확인해주세요.', 400, 'WEB_PRODUCT_INVALID');
     if (!paymentReference) throw billingError('결제 고유번호가 없습니다.', 400, 'WEB_PAYMENT_REFERENCE_REQUIRED');
-    if (!Number.isFinite(amountKrw) || amountKrw <= 0) throw billingError('결제 금액이 올바르지 않습니다.', 400, 'WEB_PAYMENT_AMOUNT_INVALID');
+
+    if (PAGERO_PRODUCTS.has(productCode)) {
+      if (!webOrderId) throw webBillingError('페이지로 결제 주문번호가 없습니다.', 400, 'WEB_ORDER_ID_REQUIRED');
+      webOrder = await findWebOrder(db, { orderId: webOrderId, ownerId });
+      if (!webOrder) throw webBillingError('결제 주문을 찾을 수 없습니다.', 404, 'WEB_ORDER_NOT_FOUND');
+      if (String(webOrder.product_code || '') !== productCode) {
+        throw webBillingError('결제 주문의 상품이 일치하지 않습니다.', 409, 'WEB_ORDER_PRODUCT_MISMATCH');
+      }
+      if (String(webOrder.provider || '') && String(webOrder.provider || '') !== readiness.provider) {
+        throw webBillingError('결제 주문의 제공자가 일치하지 않습니다.', 409, 'WEB_ORDER_PROVIDER_MISMATCH');
+      }
+      const expectedAmount = Number(webOrder.amount_krw || 0);
+      const serverProduct = webProduct(productCode);
+      if (!serverProduct || expectedAmount !== serverProduct.amountKrw) {
+        throw webBillingError('결제 주문 금액을 확인할 수 없습니다.', 409, 'WEB_ORDER_AMOUNT_INVALID');
+      }
+      if (input.amountKrw !== undefined && Math.round(Number(input.amountKrw)) !== expectedAmount) {
+        throw webBillingError('결제 금액이 주문 금액과 일치하지 않습니다.', 409, 'WEB_PAYMENT_AMOUNT_MISMATCH');
+      }
+      amountKrw = expectedAmount;
+    }
+
+    if (!Number.isFinite(amountKrw) || amountKrw <= 0) {
+      throw billingError('결제 금액이 올바르지 않습니다.', 400, 'WEB_PAYMENT_AMOUNT_INVALID');
+    }
 
     if (CALLTAG_PRODUCTS.has(productCode)) {
       const playConflict = await db.prepare(`
@@ -103,7 +135,7 @@ export async function onRequest({ request, env }) {
       status,
       externalSubscriptionId,
       tokenHash,
-      paymentReference,
+      webOrder?.order_key || paymentReference,
       startedAt,
       nextBillingAt,
       expiresAt,
@@ -115,6 +147,26 @@ export async function onRequest({ request, env }) {
       WHERE channel = 'web' AND purchase_token_hash = ?
       LIMIT 1
     `).bind(tokenHash).first();
+
+    if (webOrder?.id) {
+      await db.prepare(`
+        UPDATE billing_web_orders
+        SET status = 'paid',
+            provider = ?,
+            provider_payment_id = ?,
+            paid_at = ?,
+            failure_code = '',
+            failure_message = '',
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+          AND status IN ('created', 'provider_pending', 'paid')
+      `).bind(
+        readiness.provider,
+        text(input.providerPaymentId || paymentReference, 180),
+        text(input.paidAt || startedAt, 40),
+        webOrder.id,
+      ).run();
+    }
 
     try {
       await recordPaymentEvent(db, {
@@ -147,6 +199,7 @@ export async function onRequest({ request, env }) {
       ok: true,
       entitlement: await resolveEntitlement(db, ownerId),
       commission,
+      webOrderId: webOrder?.order_key || '',
     }, METHODS);
   } catch (error) {
     return handleApiError(request, env, error, METHODS);
