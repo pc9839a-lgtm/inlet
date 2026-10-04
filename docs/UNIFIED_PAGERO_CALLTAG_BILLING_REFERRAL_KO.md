@@ -42,6 +42,14 @@
 
 콜태그 화면에는 클래식·프로를 별도로 노출하지 않는다. 기존 `call_monthly`, `message_monthly` 데이터가 있더라도 사용자 화면에서는 콜태그 통합으로 정규화한다.
 
+### 아직 결제 상품으로 확정하지 않은 항목
+
+- 개인 도메인·HTTPS·SSL의 플랜 포함 여부와 별도 요금은 아직 owner 확정 전이다.
+- `pagero_domain_monthly` 같은 별도 도메인 결제 상품을 checkout/confirm에 노출하거나 승인하지 않는다.
+- 프로 요금제에 SSL이 포함된다고 가정하지 않는다.
+- 콜태그 `all_monthly` 구독이 페이지로 클래식을 자동 포함한다고 가정하지 않는다.
+- 위 권한은 `PAGERO_PLAN_POLICY_KO.md`에 따라 owner가 별도로 확정한 뒤 서버 entitlement로 구현한다.
+
 ## 설정 메뉴
 
 페이지 편집기 → 설정 → 서비스
