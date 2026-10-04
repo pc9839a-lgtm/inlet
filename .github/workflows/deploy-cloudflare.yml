@@ -141,6 +141,33 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
+      - name: Ensure production custom-domain provider secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${DOMAIN_CLOUDFLARE_API_TOKEN:-}" ] || [ -z "${DOMAIN_CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            echo "::error::Cloudflare credentials required for custom-domain runtime are missing."
+            exit 1
+          fi
+
+          printf '%s' "$DOMAIN_CLOUDFLARE_API_TOKEN" | npx wrangler pages secret put INLET_CLOUDFLARE_API_TOKEN --project-name inlet >/tmp/domain-provider-token-put.log 2>&1
+          printf '%s' "$DOMAIN_CLOUDFLARE_ACCOUNT_ID" | npx wrangler pages secret put INLET_CLOUDFLARE_ACCOUNT_ID --project-name inlet >/tmp/domain-provider-account-put.log 2>&1
+          printf '%s' 'inlet' | npx wrangler pages secret put INLET_CLOUDFLARE_PAGES_PROJECT --project-name inlet >/tmp/domain-provider-project-put.log 2>&1
+
+          npx wrangler pages secret list --project-name inlet 2>&1 | tee /tmp/pages-secrets-domain-provider.txt
+          for name in INLET_CLOUDFLARE_API_TOKEN INLET_CLOUDFLARE_ACCOUNT_ID INLET_CLOUDFLARE_PAGES_PROJECT; do
+            if ! grep -Eq "(^|[^A-Za-z0-9_])${name}([^A-Za-z0-9_]|$)" /tmp/pages-secrets-domain-provider.txt; then
+              echo "::error::${name} was not confirmed after custom-domain provider setup."
+              exit 1
+            fi
+          done
+          echo "Custom-domain provider runtime secrets confirmed without exposing values."
+        env:
+          DOMAIN_CLOUDFLARE_API_TOKEN: ${{ secrets.INLET_CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
+          DOMAIN_CLOUDFLARE_ACCOUNT_ID: ${{ secrets.INLET_CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Rotate production save QA secret
         shell: bash
         run: |
@@ -223,6 +250,12 @@ jobs:
           const secretBinding = deployment?.env_vars?.INLET_SESSION_SECRET_V2;
           const secretBindingType = String(secretBinding?.type || 'missing');
           const secretBindingPresent = secretBindingType === 'secret_text';
+          const domainProviderBindings = {
+            INLET_CLOUDFLARE_API_TOKEN: String(deployment?.env_vars?.INLET_CLOUDFLARE_API_TOKEN?.type || 'missing'),
+            INLET_CLOUDFLARE_ACCOUNT_ID: String(deployment?.env_vars?.INLET_CLOUDFLARE_ACCOUNT_ID?.type || 'missing'),
+            INLET_CLOUDFLARE_PAGES_PROJECT: String(deployment?.env_vars?.INLET_CLOUDFLARE_PAGES_PROJECT?.type || 'missing'),
+          };
+          const domainProviderReady = Object.values(domainProviderBindings).every((type) => type === 'secret_text');
           const commitMatches = commitHash === expectedSha;
 
           console.log(JSON.stringify({
@@ -233,6 +266,8 @@ jobs:
             sessionSecretV2BindingPresent: secretBindingPresent,
             sessionSecretV2BindingType: secretBindingType,
             legacySessionSecretBindingType: legacySecretBindingType,
+            domainProviderBindings,
+            domainProviderReady,
             secretValueLogged: false,
           }, null, 2));
 
@@ -242,6 +277,7 @@ jobs:
             `commit_matches=${commitMatches}`,
             `session_secret_present=${secretBindingPresent}`,
             `session_secret_type=${secretBindingType}`,
+            `domain_provider_ready=${domainProviderReady}`,
             '',
           ].join('\n'));
 
@@ -259,6 +295,10 @@ jobs:
           }
           if (!secretBindingPresent) {
             console.error(`::error::Deployment ${shortId} does not contain INLET_SESSION_SECRET_V2 as a secret_text binding.`);
+            process.exit(1);
+          }
+          if (!domainProviderReady) {
+            console.error(`::error::Deployment ${shortId} is missing one or more custom-domain provider secret bindings.`);
             process.exit(1);
           }
           NODE
