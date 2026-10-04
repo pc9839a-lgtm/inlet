@@ -1,6 +1,7 @@
 import { handleApiError, jsonResponse, optionsResponse } from '../_shared.js';
 import { CALL_METHODS, callSession } from '../call/_shared.js';
 import { googlePlayBillingReadiness } from './_readiness.js';
+import { webBillingReadiness } from './_webBilling.js';
 
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, CALL_METHODS);
@@ -13,15 +14,17 @@ export async function onRequest({ request, env }) {
   try {
     await callSession(request, env);
     const googlePlay = googlePlayBillingReadiness(env);
+    const web = webBillingReadiness(env);
     return jsonResponse(request, env, 200, {
       ok: true,
       serverNow: new Date().toISOString(),
       billingReadiness: {
         googlePlay,
         web: {
-          available: false,
-          stage: 'pre_checkout',
-          message: '웹 결제 checkout과 webhook을 준비하고 있습니다.',
+          ...web,
+          message: web.available
+            ? '웹 결제 서버 준비가 완료되었습니다.'
+            : '웹 자동결제는 아직 활성화되지 않았습니다.',
         },
       },
     }, CALL_METHODS);
