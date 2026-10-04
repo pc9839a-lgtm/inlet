@@ -41,7 +41,7 @@ const verifyIndex = connectBlock.indexOf('verifyPageDomain(');
 assert(checkIndex >= 0 && saveIndex > checkIndex && verifyIndex > saveIndex, 'connect workflow must be check -> page save -> provider verify');
 
 const detachStart = settingsSource.indexOf('const removeDomain = async () => {');
-const detachEnd = settingsSource.indexOf('const startSslCheckout = async () => {');
+const detachEnd = settingsSource.indexOf('const copyDns = async () => {');
 assert(detachStart >= 0 && detachEnd > detachStart, 'detach workflow block missing');
 const detachBlock = settingsSource.slice(detachStart, detachEnd);
 const providerDetachIndex = detachBlock.indexOf('detachPageDomain(');
