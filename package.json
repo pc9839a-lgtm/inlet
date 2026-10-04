@@ -105,6 +105,7 @@
     "pagero:maintenance:qa": "node scripts/pagero-maintenance-quality-check.mjs",
     "docs:qa": "node scripts/docs-hygiene-quality-check.mjs",
     "pagero:platform-copy-density:qa": "node scripts/pagero-platform-copy-density-quality-check.mjs",
+    "pagero:web-billing:p7:qa": "node scripts/pagero-web-billing-p7-quality-check.mjs",
     "pagero:launch-smoke:contract:qa": "node scripts/pagero-launch-smoke-contract-check.mjs"
   },
   "dependencies": {

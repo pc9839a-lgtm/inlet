@@ -1,6 +1,7 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse, readJson } from '../../_shared.js';
 import { CALL_METHODS, callSession } from '../../call/_shared.js';
 import { listSubscriptions, resolveEntitlement } from '../_shared.js';
+import { webBillingReadiness } from '../_webBilling.js';
 
 const WEB_PRODUCTS = new Set(['pagero_monthly', 'pagero_pro_monthly', 'all_monthly']);
 const PAGERO_PRODUCTS = new Set(['pagero_monthly', 'pagero_pro_monthly']);
@@ -74,6 +75,7 @@ export async function onRequest({ request, env }) {
         currentProductCode: active?.productCode || '',
         accountEntitlement: entitlement.status || 'inactive',
       },
+      billingReadiness: webBillingReadiness(env),
     }, CALL_METHODS);
   } catch (error) {
     return handleApiError(request, env, error, CALL_METHODS);
