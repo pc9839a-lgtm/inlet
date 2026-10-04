@@ -116,6 +116,7 @@ export default function CustomDomainSettingsSection({
     : normalizeHostname(serverDomain?.hostname || savedHostname);
   const dnsTarget = normalizeHostname(dnsState?.target || savedDomain.dnsTarget || DNS_TARGET) || DNS_TARGET;
   const recordName = useMemo(() => dnsRecordName(normalizedHostname || displayHostname), [normalizedHostname, displayHostname]);
+  const apexDomain = recordName === '@';
   const status = domainState(serverDomain || savedDomain, displayHostname);
   const hostnameInvalid = Boolean(hostname.trim()) && !isValidHostname(normalizedHostname);
   const providerSslStatus = String(serverDomain?.sslStatus || '').toLowerCase();
@@ -232,6 +233,10 @@ export default function CustomDomainSettingsSection({
   };
 
   const copyDns = async () => {
+    if (apexDomain) {
+      setNotice('루트 도메인은 도메인 업체에서 네임서버를 Cloudflare로 변경해야 합니다.');
+      return;
+    }
     try {
       await copyText(`CNAME\t${recordName}\t${dnsTarget}`);
       setNotice('DNS 정보 복사 완료');
@@ -257,12 +262,12 @@ export default function CustomDomainSettingsSection({
             <strong>DNS</strong>
           </div>
           <div className="domain-dns-values">
-            <div><span>유형</span><code>CNAME</code></div>
+            <div><span>유형</span><code>{apexDomain ? '네임서버' : 'CNAME'}</code></div>
             <div><span>호스트</span><code>{recordName}</code></div>
-            <div><span>대상</span><code>{dnsTarget}</code></div>
+            <div><span>대상</span><code>{apexDomain ? 'Cloudflare' : dnsTarget}</code></div>
           </div>
           <button type="button" className="settings-secondary-button compact" onClick={copyDns}>
-            <Clipboard size={14} aria-hidden="true" /> 복사
+            <Clipboard size={14} aria-hidden="true" /> {apexDomain ? '안내' : '복사'}
           </button>
         </section>
 
