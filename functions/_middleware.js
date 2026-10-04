@@ -192,9 +192,40 @@ async function handlePageroSpaShell(context, url) {
   });
 }
 
+function canonicalCustomDomainKey(hostname = '') {
+  const host = String(hostname || '').trim().toLowerCase().replace(/:\d+$/, '');
+  return host.startsWith('www.') ? host.slice(4) : host;
+}
+
 async function customDomainPageSlug(env = {}, hostname = '') {
   const host = String(hostname || '').trim().toLowerCase().replace(/:\d+$/, '');
   if (!host || !env.DB || typeof env.DB.prepare !== 'function') return '';
+  const hostnameKey = canonicalCustomDomainKey(host);
+
+  try {
+    const row = await env.DB.prepare(`
+      SELECT pages.slug
+      FROM page_domains
+      JOIN pages ON pages.id = page_domains.page_id
+      LEFT JOIN projects ON projects.id = page_domains.project_id
+      WHERE page_domains.hostname_key = ?
+        AND page_domains.status = 'active'
+        AND COALESCE(projects.status, 'active') <> 'archived'
+      ORDER BY page_domains.updated_at DESC, pages.updated_at DESC, pages.revision DESC
+      LIMIT 1
+    `).bind(hostnameKey).first();
+    return String(row?.slug || '').replace(/[^a-zA-Z0-9-_]/g, '');
+  } catch (error) {
+    const message = String(error?.message || error);
+    if (!/no such table:\s*page_domains/i.test(message)) {
+      console.warn('Canonical custom domain lookup failed:', message);
+      return '';
+    }
+  }
+
+  // Rollout compatibility only: before migration 0015 exists in production,
+  // continue reading the legacy page JSON. Once page_domains exists, an empty
+  // canonical result must stay empty so a disconnected claim cannot be revived.
   const alternate = host.startsWith('www.') ? host.slice(4) : `www.${host}`;
   try {
     const row = await env.DB.prepare(`
@@ -208,7 +239,7 @@ async function customDomainPageSlug(env = {}, hostname = '') {
     `).bind(host, alternate).first();
     return String(row?.slug || '').replace(/[^a-zA-Z0-9-_]/g, '');
   } catch (error) {
-    console.warn('Custom domain lookup failed:', String(error?.message || error));
+    console.warn('Legacy custom domain lookup failed:', String(error?.message || error));
     return '';
   }
 }
