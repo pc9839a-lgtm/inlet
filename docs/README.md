@@ -1,7 +1,7 @@
 # PageRo 문서 인덱스
 
 - 상태: INDEX / 문서 단일 진입점
-- 갱신일: 2026-10-02 KST
+- 갱신일: 2026-10-04 KST
 
 이 폴더에는 **현재 코드와 운영에서 다시 사용할 문서만 유지**한다. 완료된 PR 메모, 날짜별 검증 스냅샷, 이미 대체된 보안 패치 문서, 과거 브랜드 문서는 Git history로 돌리고 repository에는 남기지 않는다.
 
@@ -24,9 +24,10 @@
 - E0~E4 완료
 - P6 설정 UX 완료
 - P5 current-main 코드 재구성 완료: #352 ownership core → #353 provider/DNS/SSL → #354 settings server workflow
-- P5 운영 반영은 미완료: production migration + provider env 확인 + 실제 테스트 도메인 smoke가 별도 승인 대기
+- P5 production D1 migration + provider env + canonical custom-host router 운영 반영 완료
+- P5 외부 실도메인 DNS/SSL smoke는 기존 운영 브랜드 도메인을 재사용하지 않고, 별도 테스트 도메인 확보 시 후순위 실행
 - B3 production smoke는 사용자 요청으로 스킵
-- 다음 backlog: P5 운영 검증 → P7 웹 결제 → P9 접근성 → P8 대량 데이터 → E5 A/B test
+- 다음 backlog: P7 웹 결제 → P9 접근성 → P8 대량 데이터 → E5 A/B test
 - AI 확장은 사용자 재요청 전까지 후순위
 - 오래된 PageRo domain PR #233~#235는 current-main 재구성으로 대체되어 2026-10-02 closed
 
