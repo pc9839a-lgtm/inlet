@@ -225,7 +225,7 @@ export function mapCloudflarePagesDomain(result = {}, dns = {}) {
   const sslStatus = validationStatus === 'active' ? 'active' : (sslFailed ? 'failed' : 'pending');
   const domainStatus = providerFailed || sslFailed
     ? 'failed'
-    : (providerReady && sslStatus === 'active' && dns?.matched === true ? 'active' : 'verifying');
+    : (providerReady && sslStatus === 'active' ? 'active' : 'verifying');
   const providerMessage = String(result?.verification_data?.error_message || result?.validation_data?.error_message || '').trim();
   return {
     provider: PROVIDER_NAME,
