@@ -114,6 +114,24 @@
 - 콜태그 Google Play 구독은 콜태그 웹 중복 결제만 차단한다.
 - 콜태그 구독이 페이지로 클래식·프로 결제를 막지 않는다.
 
+## 페이지로 웹 결제 P7 기반
+
+페이지로 웹 자동결제는 provider를 아직 확정하지 않았고 실제 청구도 비활성 상태다.
+
+현재 기반 계약:
+
+- 주문 원장: `billing_web_orders`
+- webhook 수신 원장: `billing_webhook_events`
+- PageRo 웹 주문 상품: `pagero_monthly`, `pagero_pro_monthly`
+- 주문 금액은 서버 고정값 3,500원 / 5,500원으로 검증
+- 주문 idempotency: `owner_id + idempotency_key`
+- webhook idempotency: `provider + event_id`
+- webhook 서명: HMAC-SHA256 + timestamp replay window
+- 실제 provider 활성화 전에는 generic webhook이 구독 entitlement를 직접 변경하지 않음
+- `INLET_WEB_BILLING_ORDER_WRITE_ENABLED`와 `INLET_WEB_BILLING_CHARGING_ENABLED`가 모두 명시적으로 준비되지 않으면 실제 결제로 진행하지 않음
+
+production `0016_pagero_web_billing_foundation.sql` 적용과 실제 PG 활성화는 별도 운영 단계다.
+
 ## 공용 API
 
 ### 구독
