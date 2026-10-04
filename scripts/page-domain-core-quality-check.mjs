@@ -68,8 +68,15 @@ assert(
   'current domain editor must keep integrations.domain.hostname on the revision-safe page save contract',
 );
 assert(
-  currentMiddleware.includes("$.integrations.domain.hostname"),
-  'current custom-domain router must still read integrations.domain.hostname',
+  currentMiddleware.includes('FROM page_domains')
+    && currentMiddleware.includes("page_domains.status = 'active'")
+    && currentMiddleware.includes('canonicalCustomDomainKey'),
+  'custom-domain routing must use active canonical page_domains ownership after migration',
+);
+assert(
+  currentMiddleware.includes("$.integrations.domain.hostname")
+    && currentMiddleware.includes('no such table:\\s*page_domains'),
+  'legacy page-json routing may exist only as a pre-migration missing-table fallback',
 );
 
 // Existing-data backfill: apex/www duplicates must not become two active owners.

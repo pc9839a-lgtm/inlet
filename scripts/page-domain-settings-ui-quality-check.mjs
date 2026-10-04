@@ -63,6 +63,9 @@ assert(primarySource.includes('<CustomDomainSettingsSection') && primarySource.i
 assert(bodySource.includes("id === 'domain' && (!ownerFinanceAccess || !projectSettingsWritable)"), 'custom-domain navigation must remain owner-only and writable-only');
 assert(settingsSource.includes("typeof onSavePage !== 'function'"), 'domain connection must fail closed when revision-safe page save is unavailable');
 assert(!settingsSource.includes("updateIntegrations('domain'"), 'domain workflow must not use a local-only integration save fallback');
+assert(settingsSource.includes("const apexDomain = recordName === '@'"), 'domain settings must distinguish apex from subdomain DNS setup');
+assert(settingsSource.includes("apexDomain ? '네임서버' : 'CNAME'"), 'apex domains must not be instructed to create a CNAME at @');
+assert(settingsSource.includes('네임서버를 Cloudflare로 변경해야 합니다.'), 'apex domains must surface the Cloudflare nameserver requirement');
 
 console.log(JSON.stringify({
   ok: true,

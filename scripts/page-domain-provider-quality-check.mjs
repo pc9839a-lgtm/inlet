@@ -149,7 +149,7 @@ assert.equal(mapCloudflarePagesDomain({
   status: 'active',
   verification_data: { status: 'active' },
   validation_data: { status: 'active' },
-}, { matched: false }).domainStatus, 'verifying');
+}, { matched: false }).domainStatus, 'active');
 assert.equal(mapCloudflarePagesDomain({
   status: 'blocked',
   verification_data: { status: 'error', error_message: 'blocked' },
@@ -209,6 +209,7 @@ console.log(JSON.stringify({
   cloudflareRedirects: 'blocked',
   providerAuthorization: 'server-owned',
   providerState: 'page_domains canonical; page_json revision-isolated',
+  providerActiveAuthoritative: true,
   actions: ['check', 'verify', 'detach'],
   retryMinutes: [5, 15, 30, 60, 180, 360],
   protectedRootChanged: false,
