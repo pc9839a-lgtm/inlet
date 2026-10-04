@@ -7,10 +7,8 @@ import {
   verifyPageDomain,
 } from '../../lib/pageDomainRepository.js';
 import SettingsSection from './SettingsSection.jsx';
-import useAccountFinance from './useAccountFinance.js';
 
 const DNS_TARGET = 'inlet-8mr.pages.dev';
-const DOMAIN_PRODUCT = 'pagero_domain_monthly';
 const MULTI_PART_SUFFIXES = ['co.kr', 'or.kr', 'go.kr', 'ne.kr', 'ac.kr', 're.kr', 'pe.kr', 'co.uk', 'com.au', 'co.jp'];
 
 function normalizeHostname(value = '') {
@@ -41,15 +39,15 @@ function domainState(domain, hostname) {
   return { key: 'pending', label: 'DNS 대기' };
 }
 
-function nextDomainConfig(savedDomain, hostname, dnsTarget, sslEnabled) {
+function nextDomainConfig(savedDomain, hostname, dnsTarget) {
   return {
     ...(savedDomain || {}),
     hostname,
     dnsTarget: dnsTarget || DNS_TARGET,
     status: 'pending',
-    httpsManaged: sslEnabled,
-    sslManaged: sslEnabled,
-    sslStatus: sslEnabled ? 'pending' : 'not_enabled',
+    httpsManaged: true,
+    sslManaged: true,
+    sslStatus: 'pending',
     requestedAt: new Date().toISOString(),
   };
 }
@@ -105,11 +103,6 @@ export default function CustomDomainSettingsSection({
   const [dnsState, setDnsState] = useState(null);
   const [operationBusy, setOperationBusy] = useState('');
   const [notice, setNotice] = useState('');
-  const { finance, loading, busy, error: financeError, checkout } = useAccountFinance(authUser);
-  const sslEnabled = finance?.domain?.enabled === true;
-  const sslIncludedByPlan = finance?.domain?.includedByPlan === true;
-  const sslLoading = loading && !finance;
-  const checkoutBusy = busy === `domain:${DOMAIN_PRODUCT}`;
   const normalizedHostname = useMemo(() => normalizeHostname(hostname), [hostname]);
   const displayHostname = String(serverDomain?.domainStatus || '') === 'disconnected'
     ? savedHostname
@@ -156,7 +149,7 @@ export default function CustomDomainSettingsSection({
     try {
       const checked = await checkPageDomain(page, authUser, normalizedHostname);
       const target = normalizeHostname(checked?.dns?.target || dnsTarget) || DNS_TARGET;
-      const domain = nextDomainConfig(savedDomain, normalizedHostname, target, sslEnabled);
+      const domain = nextDomainConfig(savedDomain, normalizedHostname, target);
       const nextPage = pageWithDomain(page, domain);
 
       const saved = await onSavePage(nextPage);
@@ -226,11 +219,6 @@ export default function CustomDomainSettingsSection({
     }
   };
 
-  const startSslCheckout = async () => {
-    setNotice('');
-    const moved = await checkout('domain', DOMAIN_PRODUCT);
-    if (!moved) setNotice('결제 화면을 열지 못했습니다.');
-  };
 
   const copyDns = async () => {
     if (apexDomain) {
@@ -245,14 +233,13 @@ export default function CustomDomainSettingsSection({
     }
   };
 
-  const planSslLabel = sslIncludedByPlan ? '프로 포함' : sslEnabled ? '사용 가능' : '미사용';
   const sslLabel = providerSslStatus === 'active'
     ? '인증서 활성'
     : providerSslStatus === 'failed'
       ? 'SSL 확인 필요'
       : providerSslStatus === 'pending'
         ? 'SSL 확인 중'
-        : planSslLabel;
+        : displayHostname ? 'SSL 대기' : '도메인 연결 후 자동 적용';
 
   return (
     <SettingsSection id="domain" className="settings-domain-section">
@@ -328,20 +315,17 @@ export default function CustomDomainSettingsSection({
           <div className="domain-ssl-action">
             {providerSslStatus === 'active' ? (
               <span className="settings-status-badge success">적용</span>
-            ) : sslEnabled || sslIncludedByPlan ? (
+            ) : displayHostname ? (
               <span className="settings-status-badge">{providerSslStatus === 'failed' ? '확인 필요' : '대기'}</span>
-            ) : !sslLoading ? (
-              <button type="button" className="settings-primary-button compact" disabled={checkoutBusy} onClick={startSslCheckout}>
-                {checkoutBusy ? '이동 중' : '도입 문의'}
-              </button>
-            ) : null}
+            ) : (
+              <span className="settings-status-badge">자동 적용</span>
+            )}
           </div>
         </section>
 
         {serverDomain?.lastCheckedAt && (
           <p className="settings-message" role="status">최근 확인: {new Date(serverDomain.lastCheckedAt).toLocaleString('ko-KR')}</p>
         )}
-        {financeError && <p className="settings-message error" role="alert">{financeError}</p>}
         {notice && <p className="settings-message" role="status">{notice}</p>}
       </div>
     </SettingsSection>

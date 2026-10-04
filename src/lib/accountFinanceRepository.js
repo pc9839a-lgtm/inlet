@@ -11,28 +11,17 @@ const PRICING = Object.freeze({
       code: 'pagero_free',
       name: '무료',
       amountKrw: 0,
-      description: '기본 페이지 제작과 운영',
       included: true,
     },
     {
       code: 'pagero_monthly',
       name: '클래식',
       amountKrw: 3500,
-      description: '페이지 운영과 고객 접수 관리',
     },
     {
       code: 'pagero_pro_monthly',
       name: '프로',
       amountKrw: 5500,
-      description: '고급 연동 + HTTPS/SSL 관리 포함',
-    },
-  ],
-  domain: [
-    {
-      code: 'pagero_domain_monthly',
-      name: 'HTTPS · SSL 관리',
-      amountKrw: 1000,
-      description: 'SSL 인증서 발급·갱신 및 HTTPS 관리',
     },
   ],
   calltag: [
@@ -40,7 +29,7 @@ const PRICING = Object.freeze({
       code: 'all_monthly',
       name: '통합권',
       amountKrw: 6000,
-      description: '페이지로 클래식 + 콜태그 전화관리 + 문자자동화',
+      description: '콜태그 통합 이용권',
     },
   ],
 });
@@ -112,9 +101,7 @@ function subscriptionForService(subscriptions = [], service = '') {
   const candidates = subscriptions.filter(isSubscriptionActive);
   const productPriority = service === 'pagero'
     ? ['pagero_pro_monthly', 'pagero_monthly']
-    : service === 'domain'
-      ? ['pagero_domain_monthly']
-      : ['all_monthly', 'call_monthly', 'message_monthly'];
+    : ['all_monthly', 'call_monthly', 'message_monthly'];
   const selected = productPriority
     .map((productCode) => candidates.find((item) => item.productCode === productCode))
     .find(Boolean);
@@ -141,10 +128,8 @@ function normalizeFinance({ authUser, subscriptionsData, referralData, summaryDa
     .map((item) => item.productCode);
   const bundleSubscription = activeRaw.find((item) => item.productCode === 'all_monthly') || null;
   const pageroSubscription = subscriptionForService(rawSubscriptions, 'pagero');
-  const domainSubscription = subscriptionForService(rawSubscriptions, 'domain');
   const calltagSubscription = subscriptionForService(rawSubscriptions, 'calltag');
-  const subscriptions = [pageroSubscription, calltagSubscription, domainSubscription].filter(Boolean);
-  const domainIncludedByPlan = pageroSubscription?.planCode === 'pagero_pro_monthly';
+  const subscriptions = [pageroSubscription, calltagSubscription].filter(Boolean);
   const subscriptionHistory = rawSubscriptions.map((item) => {
     const plan = pricingPlan(item.productCode);
     return {
@@ -165,20 +150,10 @@ function normalizeFinance({ authUser, subscriptionsData, referralData, summaryDa
     subscriptions,
     subscriptionHistory,
     entitlement: subscriptionsData?.entitlement || null,
-    pagero: {
-      includedClassicByBundle: !!bundleSubscription,
-    },
     calltag: {
       activePlanCodes: calltagActivePlanCodes,
       bundleActive: !!bundleSubscription,
-      bundleIncludes: ['pagero_monthly', 'call_monthly', 'message_monthly'],
-    },
-    domain: {
-      enabled: domainIncludedByPlan || !!domainSubscription,
-      includedByPlan: domainIncludedByPlan,
-      addonActive: !!domainSubscription,
-      monthlyKrw: 1000,
-      httpsIncluded: true,
+      bundleIncludes: ['call_monthly', 'message_monthly'],
     },
     referral: {
       code: String(referral.code || referral.mine?.code || ''),
@@ -270,7 +245,7 @@ export async function createAccountCheckout(authUser = null, service = '', planC
     throw new ApiError(decision.message || '이미 이용 중인 구독이 있습니다.', 409, decision);
   }
 
-  if (service === 'pagero' || service === 'domain') {
+  if (service === 'pagero') {
     return `/subscribe?product=${encodeURIComponent(productCode)}`;
   }
   return `https://calltag.pagero.kr/subscribe?product=${encodeURIComponent(productCode)}`;
