@@ -1,7 +1,7 @@
 # PageRo 내부 기능 / 작업 기준
 
 - 상태: 현재 실행 기준 / 단일 소스
-- 갱신일: 2026-10-02 KST
+- 갱신일: 2026-10-04 KST
 - 저장소: `pc9839a-lgtm/inlet`
 - 운영 브랜치: `main`
 - 운영 도메인: `https://pagero.kr/`
@@ -163,18 +163,26 @@ current-main 코드 재구성 완료:
 - PR #354: settings UI → revision-safe page save → provider verify 연결 / canonical 상태 표시 / idempotent detach 재시도
 - 대체된 오래된 draft #233~#235는 2026-10-02 closed
 
-아직 운영 완료가 아닌 항목:
+운영 반영 상태:
 
-- production D1 migration `0015_page_domain_ownership.sql` 적용
-- production provider secret/env readiness 확인
-- 실제 테스트 도메인 attach → DNS verify → SSL active → detach smoke
-- production custom-host router를 canonical `page_domains` 기준으로 전환할지 migration/smoke 후 최종 검증
+- production D1 migration `0015_page_domain_ownership.sql` 적용 완료
+- production provider secret/env readiness 확인 완료
+- production custom-host router는 canonical `page_domains` active ownership 기준으로 전환 완료
+- 별도 외부 테스트 도메인을 새로 구매해야 하는 end-to-end DNS/SSL smoke는 현재 생략한다. 기존 운영 브랜드 도메인을 테스트용으로 재사용하지 않는다.
 
-위 항목은 production write 또는 실제 provider side effect가 있으므로 별도 승인 전 실행하지 않는다.
+P5의 코드·DB·provider 운영 기반은 반영됐으며, 별도 테스트 도메인 확보가 필요한 live smoke만 후순위 검증 항목으로 남긴다.
 
 ### P7 — 웹 자동결제
 
 현재 self-serve billing 미완료.
+
+P7 시작 전 정책 baseline:
+
+- 페이지로 유료 플랜은 클래식 3,500원 / 프로 5,500원 두 개만 사용
+- 플랜별 세부 entitlement는 owner 확정 전까지 UI·서버에서 임의로 만들지 않음
+- 개인 도메인/SSL 별도 결제 상품은 미확정이므로 checkout 대상에서 제외
+- 콜태그 `all_monthly`는 페이지로 클래식을 자동 포함하지 않음
+- 실제 PG 청구 활성화 전까지 현재 문의형 진입을 유지
 
 필요:
 
@@ -225,11 +233,11 @@ B3 production smoke는 현재 스킵한다.
 
 다음 순서:
 
-1. P5 개인 도메인 production migration/provider smoke 승인 후 운영 검증
-2. P7 웹 결제
-3. P9 접근성 audit
-4. P8 대량 데이터
-5. E5 A/B test
+1. P7 웹 결제
+2. P9 접근성 audit
+3. P8 대량 데이터
+4. E5 A/B test
+5. P5 외부 테스트 도메인 live smoke는 별도 테스트 도메인 확보 시 실행
 
 AI 기능은 E4까지 구현되어 있다. 사용자가 다시 요청하기 전까지 AI 확장보다 위 backlog를 우선한다.
 
