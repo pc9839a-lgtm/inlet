@@ -16,6 +16,7 @@ const operationsSource = await readFile('server/pageDomainOperations.mjs', 'utf8
 const checkRoute = await readFile('functions/api/domains/check.js', 'utf8');
 const manageRoute = await readFile('functions/api/domains/manage.js', 'utf8');
 const migrationSource = await readFile('migrations/0015_page_domain_ownership.sql', 'utf8');
+const deployWorkflow = await readFile('.github/workflows/deploy-cloudflare.yml', 'utf8');
 
 const env = {
   INLET_CLOUDFLARE_ACCOUNT_ID: 'account-123',
@@ -201,6 +202,16 @@ assert(manageRoute.includes("['verify', 'detach']"), 'domain mutation action all
 assert(manageRoute.includes("allowDisconnected: action === 'detach'"), 'detach must be safely retryable after provider cleanup when page save needs a retry');
 assert(storeSource.includes('allowDisconnected = false'), 'canonical ownership guard must expose an explicit disconnected retry gate');
 assert(migrationSource.includes('idx_page_domains_hostname_owner'), 'provider layer requires canonical ownership migration');
+for (const token of [
+  'Ensure production custom-domain provider secrets',
+  'INLET_CLOUDFLARE_API_TOKEN',
+  'INLET_CLOUDFLARE_ACCOUNT_ID',
+  'INLET_CLOUDFLARE_PAGES_PROJECT',
+  'domainProviderReady',
+]) {
+  assert(deployWorkflow.includes(token), `production deploy must provision/verify custom-domain provider binding: ${token}`);
+}
+assert(!deployWorkflow.includes('echo "$DOMAIN_CLOUDFLARE_API_TOKEN"'), 'provider token must never be echoed by deployment workflow');
 
 console.log(JSON.stringify({
   ok: true,
