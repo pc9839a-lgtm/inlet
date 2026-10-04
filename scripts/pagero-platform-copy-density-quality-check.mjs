@@ -59,7 +59,7 @@ assert(billingCss.includes('min-height: 330px;'), 'pricing cards must remain com
 
 assert(!domain.includes('베타 운영: 개인 도메인'), 'domain beta paragraph must stay removed');
 assert(!domain.includes('현재는 DNS를 변경하지 않아도 됩니다.'), 'domain DNS explanation must stay removed');
-assert(domain.includes("sslIncludedByPlan ? '프로 포함' : sslEnabled ? '사용 가능' : '미사용'"), 'domain SSL must use compact status copy');
+assert(domain.includes("'도메인 연결 후 자동 적용'") && domain.includes('settings-status-badge">자동 적용'), 'domain SSL must use compact provider-status copy');
 
 assert(!auth.includes('고객 인입 랜딩 빌더'), 'auth brand subtitle must stay removed');
 assert(!auth.includes('고객이 들어오는 첫 화면을 만들고 관리하세요.'), 'auth marketing explanation must stay removed');
