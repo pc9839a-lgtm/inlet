@@ -25,9 +25,9 @@ CREATE TABLE IF NOT EXISTS page_experiments (
 CREATE INDEX IF NOT EXISTS idx_page_experiments_page_status
   ON page_experiments(project_id, page_id, status, updated_at DESC);
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_page_experiments_one_running
+CREATE UNIQUE INDEX IF NOT EXISTS idx_page_experiments_one_open
   ON page_experiments(page_id)
-  WHERE status = 'running';
+  WHERE status IN ('draft', 'running', 'paused');
 
 CREATE TABLE IF NOT EXISTS page_variants (
   id TEXT PRIMARY KEY,
