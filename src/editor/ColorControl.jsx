@@ -21,7 +21,7 @@ export function Color({ label, value, onChange }) {
       <div className="color-main color-main-v15">
         <input type="color" value={value || '#111827'} onChange={(event) => onChange(event.target.value)} />
         <button type="button" className="eyedropper" onClick={pick} title="미리보기에서 색상 추출" aria-label={`${label} 색상 추출`}>
-          <Pipette size={19} />
+          <Pipette size={19} aria-hidden="true" />
         </button>
       </div>
     </label>
