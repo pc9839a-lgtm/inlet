@@ -22,7 +22,7 @@ export function WorkspaceActivePanel({
 
   if (mobileOperationsOnly && !['inbox', 'stats'].includes(tab)) {
     return (
-      <section className="mobile-operations-empty">
+      <section className="mobile-operations-empty" role="status">
         <h2>모바일 운영 권한이 없습니다.</h2>
         <p>접수함 또는 통계 읽기 권한이 필요합니다.</p>
       </section>
@@ -30,7 +30,13 @@ export function WorkspaceActivePanel({
   }
 
   return (
-    <>
+    <section
+      id={`workspace-panel-${tab}`}
+      className="workspace-active-panel"
+      role="tabpanel"
+      tabIndex={-1}
+      aria-labelledby={`workspace-tab-${tab}`}
+    >
       {canRenderBuilder && tab === 'edit' && (
         <EditPanel {...editPanelProps} stylePanelProps={stylePanelProps} authUser={settingsPanelProps?.authUser || null} />
       )}
@@ -43,6 +49,6 @@ export function WorkspaceActivePanel({
           {!mobileOperationsOnly && tab === 'settings' && <SettingsPanel {...settingsPanelProps} />}
         </Suspense>
       </LazyChunkBoundary>
-    </>
+    </section>
   );
 }

@@ -27,6 +27,8 @@ const files = {
   ])).join('\n'),
   codeEditor: await readFile('src/editor/blockEditors/CodeEditorModal.jsx', 'utf8'),
   workspaceTabs: await readFile('src/screens/workspace/WorkspaceTabs.jsx', 'utf8'),
+  workspacePanel: await readFile('src/screens/workspace/WorkspaceActivePanel.jsx', 'utf8'),
+  panelHeader: await readFile('src/builder/PanelHeader.jsx', 'utf8'),
   settingsBody: await readFile('src/panels/settings/SettingsPanelBody.jsx', 'utf8'),
   statsPanel: await readFile('src/panels/StatsPanel.jsx', 'utf8'),
   createModalCss: await readFile('src/styles/panels-create-modal.css', 'utf8'),
@@ -36,6 +38,7 @@ const files = {
   homeShellCss: await readFile('src/styles/panels-home-shell.css', 'utf8'),
   productTokens: await readFile('src/styles/product-ui-tokens.css', 'utf8'),
   workspaceShellCss: await readFile('src/styles/workspace-shell.css', 'utf8'),
+  workspaceChromeCss: await readFile('src/screens/workspace/WorkspaceChrome.css', 'utf8'),
   appStylesEntry: await readFile('src/app-styles.css', 'utf8'),
   homeCss: await readFile('src/screens/HomeScreens.css', 'utf8'),
 };
@@ -94,17 +97,31 @@ assert(
 assert(files.home.includes('aria-expanded={accountOpen}'), 'dashboard account disclosure should expose expanded state');
 assert(files.home.includes('aria-controls="dashboard-account-settings"'), 'dashboard disclosure should name controlled region');
 assert(files.home.includes('aria-live="polite"'), 'dashboard async page list should expose polite updates');
-assert(files.workspaceTabs.includes('aria-label="작업 메뉴"'), 'workspace navigation should have an accessible name');
-assert(files.workspaceTabs.includes('aria-current={tab === key'), 'workspace navigation should expose the active item');
+assert(files.workspaceTabs.includes('role="tablist"') && files.workspaceTabs.includes('aria-label="작업 메뉴"'), 'workspace navigation should expose a named tablist');
+assert(files.workspaceTabs.includes('role="tab"'), 'workspace navigation items should use tab semantics');
+assert(files.workspaceTabs.includes('aria-selected={active}'), 'workspace navigation should expose selected state');
+assert(files.workspaceTabs.includes('tabIndex={active ? 0 : -1}'), 'workspace tabs should use roving tab focus');
+assert(files.workspaceTabs.includes('aria-controls={`workspace-panel-${key}`}'), 'workspace tabs should name controlled panels');
+for (const key of ['ArrowLeft', 'ArrowRight', 'Home', 'End']) {
+  assert(files.workspaceTabs.includes(key), `workspace tab keyboard navigation missing: ${key}`);
+}
 assert(files.workspaceTabs.includes('aria-hidden="true"'), 'workspace nav icons should stay decorative');
+assert(files.workspacePanel.includes('role="tabpanel"'), 'workspace active content should use tabpanel semantics');
+assert(files.workspacePanel.includes('aria-labelledby={`workspace-tab-${tab}`}'), 'workspace tabpanel should reference active tab');
+assert(files.workspacePanel.includes('tabIndex={-1}'), 'workspace tabpanel should support programmatic focus');
 assert(files.settingsBody.includes('aria-current={selectedSection === id'), 'settings navigation should expose active section');
 assert(files.settingsBody.includes('aria-controls="settings-active-panel"'), 'settings navigation should identify its controlled content');
+assert(files.settingsBody.includes('role="region"'), 'settings active content should expose a region landmark');
+assert(files.settingsBody.includes('aria-labelledby="settings-active-title"'), 'settings active region should reference the visible heading');
+assert(files.settingsBody.includes('id="settings-active-title"'), 'settings heading should provide the active-region label');
 
 assert(
   files.statsPanel.includes('role="img"') && files.statsPanel.includes('aria-label='),
   'stats chart should expose image role and label'
 );
 assert(files.statsPanel.includes('role="status"'), 'stats partial notice should use status semantics');
+assert(files.panelHeader.includes('role="status"') && files.panelHeader.includes('aria-atomic="true"'), 'save feedback should announce atomically');
+assert((files.panelHeader.match(/aria-hidden="true"/g) || []).length >= 3, 'decorative header icons should be hidden from assistive tech');
 
 for (const [label, source] of [
   ['create modal', files.createModalCss],
@@ -119,8 +136,13 @@ assert(files.createModalCss.includes('100dvh'), 'create dialog should use dynami
 assert(files.formCss.includes('100dvh'), 'HTML dialog should use dynamic viewport height');
 assert(files.codeCss.includes('100dvh'), 'code dialog should use dynamic viewport height');
 assert(files.workspaceShellCss.includes('@media (max-width: 1180px)'), 'workspace must reflow before narrow/zoomed desktop becomes two-column overflow');
+assert(files.workspaceShellCss.includes('100dvh'), 'workspace shell should use dynamic viewport units');
 assert(files.createModalCss.includes('@media (max-height:520px),(max-width:640px)'), 'create dialog should reflow for short mobile-keyboard viewports');
+assert(files.workspaceTabs && files.editorSharedCss, 'workspace accessibility sources should load');
 assert(files.formCss.includes('@media (max-height: 520px)'), 'HTML dialog should reflow for short mobile-keyboard viewports');
+assert(files.workspaceChromeCss.includes('@media (max-width: 640px), (max-height: 600px)'), 'workspace chrome should reflow for zoomed or keyboard-short viewports');
+assert(files.workspaceChromeCss.includes('scroll-padding-bottom: max(96px, env(safe-area-inset-bottom))'), 'short workspace viewports should preserve bottom scroll room');
+assert(files.workspaceChromeCss.includes('overflow-x: auto !important'), 'workspace tabs should remain reachable when zoomed');
 
 assert(files.createModalCss.includes('prefers-reduced-motion:reduce'), 'modal motion should respect reduced-motion preference');
 assert(files.editorSharedCss.includes('prefers-reduced-motion:reduce'), 'workspace motion should respect reduced-motion preference');
@@ -144,7 +166,7 @@ assert(!unlabeledIconButtons.length, 'icon-only close buttons should have aria-l
 
 console.log(JSON.stringify({
   ok: true,
-  checks: dialogContracts.length + 32,
+  checks: dialogContracts.length + 48,
   keyboardOnly: true,
   focusTrap: true,
   focusReturn: true,
