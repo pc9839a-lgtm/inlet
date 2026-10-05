@@ -589,14 +589,14 @@ export default function InboxPanel({
 
                   <div className="inbox-ops-detail-actions">
                     <button type="button" className="secondary" onClick={() => copyLead(selectedLead)}>
-                      <Copy size={17} /> 문의 복사
+                      <Copy size={17} aria-hidden="true" /> 문의 복사
                     </button>
                     <button type="button" className="primary" onClick={() => updateLeadSafe(selectedLead.id, { status: '종료' })}>
-                      <CheckCircle2 size={17} /> 완료 처리
+                      <CheckCircle2 size={17} aria-hidden="true" /> 완료 처리
                     </button>
                     {deleteLead ? (
-                      <button type="button" className="danger" onClick={() => deleteLead(selectedLead.id)} title="접수 삭제">
-                        <Trash2 size={17} />
+                      <button type="button" className="danger" onClick={() => deleteLead(selectedLead.id)} title="접수 삭제" aria-label="접수 삭제">
+                        <Trash2 size={17} aria-hidden="true" />
                       </button>
                     ) : null}
                   </div>
