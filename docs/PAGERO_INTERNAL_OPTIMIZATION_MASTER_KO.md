@@ -242,11 +242,13 @@ P8-1 synthetic volume baseline은 완료했다.
 - lead inbox의 기본 pagination을 `created_at DESC, id DESC` keyset cursor로 전환
 - 기존 숫자 offset cursor는 구버전 호환 입력으로만 유지하고 다음 페이지부터 keyset cursor를 반환
 - 기존 `idx_leads_project_month`, `idx_leads_project_status`, `idx_leads_delivery_status` 사용 계약 고정
+- CSV export는 count 없는 500건 keyset scan + ReadableStream으로 전환
+- dynamic form 컬럼은 1차 shape scan 후 2차 row stream으로 유지
+- 요청당 50,000건 safety ceiling을 두고 초과 시 필터 축소를 요구
 - production 데이터/D1 write 없이 성능 퇴행을 검사
 
 남은 항목:
 
-- CSV streaming
 - retention
 - backup / restore
 - 실제 사용량이 커진 뒤 production query plan 재확인
