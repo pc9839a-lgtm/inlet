@@ -138,17 +138,29 @@ function runScenario(count) {
       [...common, 50, 0],
       { expectIndex: 'idx_leads_project_month' },
     ),
-    benchmark(
-      db,
-      'deep-page-offset',
-      `SELECT id, name, status, delivery_status, created_at
-       FROM leads
-       WHERE project_id = ? AND created_month = ?
-       ORDER BY created_at DESC
-       LIMIT ? OFFSET ?`,
-      [...common, 50, Math.min(20_000, Math.floor(count * 0.5))],
-      { expectIndex: 'idx_leads_project_month' },
-    ),
+    (() => {
+      const offset = Math.min(20_000, Math.floor(count * 0.5));
+      const cursorRow = db.prepare(`
+        SELECT id, created_at
+        FROM leads
+        WHERE project_id = ? AND created_month = ?
+        ORDER BY created_at DESC, id DESC
+        LIMIT 1 OFFSET ?
+      `).get(...common, offset);
+      assert(cursorRow?.id && cursorRow?.created_at, 'deep keyset cursor fixture missing');
+      return benchmark(
+        db,
+        'deep-page-keyset',
+        `SELECT id, name, status, delivery_status, created_at
+         FROM leads
+         WHERE project_id = ? AND created_month = ?
+           AND (created_at < ? OR (created_at = ? AND id < ?))
+         ORDER BY created_at DESC, id DESC
+         LIMIT ?`,
+        [...common, cursorRow.created_at, cursorRow.created_at, cursorRow.id, 50],
+        { expectIndex: 'idx_leads_project_month' },
+      );
+    })(),
     benchmark(
       db,
       'status-filter',
@@ -212,6 +224,18 @@ function runScenario(count) {
 const results = SCENARIOS.map(runScenario);
 assert(results.every((scenario) => scenario.checks.length === 6), 'all P8 benchmark checks must run');
 
+const d1AdapterSource = await import('node:fs/promises').then(({ readFile }) => readFile('server/storage/d1Adapter.mjs', 'utf8'));
+const leadsApiSource = await import('node:fs/promises').then(({ readFile }) => readFile('functions/api/leads.js', 'utf8'));
+const leadRepositorySource = await import('node:fs/promises').then(({ readFile }) => readFile('src/lib/leadRepository.js', 'utf8'));
+
+assert(d1AdapterSource.includes('parseD1LeadCursor(cursor)'), 'D1 lead pagination must parse opaque cursors');
+assert(d1AdapterSource.includes('(created_at < ? OR (created_at = ? AND id < ?))'), 'D1 lead pagination must use a stable keyset boundary');
+assert(d1AdapterSource.includes('ORDER BY created_at DESC, id DESC LIMIT ?'), 'D1 lead pagination must use deterministic ordering');
+assert(d1AdapterSource.includes('encodeD1LeadCursor(last.created_at, last.id)'), 'D1 lead pagination must return an opaque keyset cursor');
+assert(d1AdapterSource.includes("pagination: cursorState.mode === 'offset' && cursorState.offset > 0 ? 'offset-compat' : 'keyset'"), 'legacy numeric cursor must remain compatibility-only');
+assert(leadsApiSource.includes("cursor: url.searchParams.get('cursor') || ''"), 'Pages API must preserve opaque cursors');
+assert(leadRepositorySource.includes("cursor: options.cursor ?? ''"), 'browser repository must preserve opaque cursors');
+
 console.log(JSON.stringify({
   ok: true,
   scope: 'pagero-p8-large-data-baseline',
@@ -223,7 +247,8 @@ console.log(JSON.stringify({
     indexedStatusFilter: true,
     indexedDeliveryFilter: true,
     scopedTextSearchUsesProjectMonthIndex: true,
-    offsetPaginationStillPresent: true,
+    primaryLeadPagination: 'keyset',
+    legacyOffsetCompatibility: true,
     csvStreamingNotCoveredYet: true,
   },
 }, null, 2));
