@@ -55,6 +55,10 @@ const files = {
   mobileWorkspaceMode: await readFile('src/runtime/useMobileWorkspaceMode.js', 'utf8'),
   appStylesEntry: await readFile('src/app-styles.css', 'utf8'),
   homeCss: await readFile('src/screens/HomeScreens.css', 'utf8'),
+  packageJson: await readFile('package.json', 'utf8'),
+  qaAll: await readFile('scripts/qa-all.mjs', 'utf8'),
+  qaWorkflow: await readFile('.github/workflows/qa.yml', 'utf8'),
+  editorBrowserQa: await readFile('scripts/editor-browser-regression-check.mjs', 'utf8'),
 };
 
 const dialogContracts = [
@@ -207,6 +211,43 @@ assert(files.createModalCss.includes('var(--pagero-visual-viewport-top,0px)') &&
 assert(files.codeCss.includes('var(--pagero-visual-viewport-height,100dvh)') && files.formCss.includes('var(--pagero-visual-viewport-height,100dvh)'), 'editor modals must shrink to the visible keyboard viewport');
 assert(files.homeShellCss.includes('@media (max-height:600px)') && files.homeShellCss.includes('var(--pagero-keyboard-inset,0px)'), 'auth/dashboard input surfaces must keep keyboard-short scroll room');
 
+// P9-7 accessibility regression gate: CI must keep both the static contract and
+// the real-browser P9 coverage wired into pull requests.
+assert(files.packageJson.includes('"accessibility:qa": "node scripts/accessibility-quality-check.mjs"'), 'package accessibility:qa command must remain mapped to the accessibility gate');
+assert(files.qaAll.includes("['accessibility:qa', ['scripts/accessibility-quality-check.mjs']]"), 'full offline QA must include accessibility:qa');
+assert(files.qaWorkflow.includes('pull_request:'), 'QA workflow must run on pull requests');
+assert(files.qaWorkflow.includes('accessibility-regression:'), 'QA workflow must expose a dedicated accessibility regression job');
+assert(files.qaWorkflow.includes('run: npm run accessibility:qa'), 'dedicated accessibility CI job must execute accessibility:qa directly');
+assert(files.qaWorkflow.includes('editor-browser-regression:') && files.qaWorkflow.includes('npm run browser:editor:qa'), 'CI must keep the authenticated editor browser regression job enabled');
+
+const browserAccessibilityContracts = [
+  ['P9-1 keyboard-only browser coverage', [
+    "keyboardOnlyP91: ['Enter', 'Space', 'Tab', 'Shift+Tab', 'Escape']",
+    'pointer-only drag handle must not create a dead Tab stop',
+    'dropdown Escape close',
+  ]],
+  ['P9-2 focus management browser coverage', [
+    "focusManagementP92: ['modal-trap', 'modal-return', 'workspace-transition-recovery']",
+    'forward Tab from outside must be recovered into the modal',
+    'focus recovery after inbox transition',
+  ]],
+  ['P9-3 200% zoom browser coverage', [
+    "zoom200P93: ['desktop-builder-preserved', 'no-page-horizontal-scroll', 'add-dock-no-fixed-overlap', 'settings-single-column-reflow']",
+    'zoom-200 settings body overflow',
+    'add dock must not become a viewport-fixed overlap',
+  ]],
+  ['P9-6 mobile keyboard browser coverage', [
+    "mobileKeyboardP96: ['360', '390', '430', 'focused-input-visible', 'modal-actions-visible', 'no-fixed-overlap']",
+    'focused input is obscured',
+    'keyboard-short code modal save action is clipped',
+  ]],
+];
+for (const [label, tokens] of browserAccessibilityContracts) {
+  for (const token of tokens) {
+    assert(files.editorBrowserQa.includes(token), `${label} missing runtime assertion: ${token}`);
+  }
+}
+
 assert(files.createModalCss.includes('prefers-reduced-motion:reduce'), 'modal motion should respect reduced-motion preference');
 assert(files.editorSharedCss.includes('prefers-reduced-motion:reduce'), 'workspace motion should respect reduced-motion preference');
 assert(files.homeShellCss.includes('prefers-reduced-motion:reduce'), 'dashboard motion should respect reduced-motion preference');
@@ -250,7 +291,7 @@ assert(!unlabeledIconButtons.length, 'icon-only close buttons should have aria-l
 
 console.log(JSON.stringify({
   ok: true,
-  checks: dialogContracts.length + 94,
+  checks: dialogContracts.length + 112,
   keyboardOnly: true,
   focusTrap: true,
   focusReturn: true,
@@ -260,4 +301,6 @@ console.log(JSON.stringify({
   navigationSemantics: true,
   screenReaderSemanticsP95: true,
   contrastBaseline: 'wcag-aa-explicit-state-cues',
+  accessibilityRegressionP97: ['dedicated-ci-job', 'qa-all-lock', 'editor-browser-lock', 'p9-1', 'p9-2', 'p9-3', 'p9-4-static', 'p9-5-static', 'p9-6'],
+  ciGateMode: 'direct-accessibility-plus-full-offline-plus-browser',
 }, null, 2));
