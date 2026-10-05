@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 export default function SettingsField({
   label,
   value = '',
@@ -17,7 +19,14 @@ export default function SettingsField({
   inputMode,
   className = '',
 }) {
+  const generatedId = useId();
+  const controlId = name || `settings-field-${generatedId}`;
+  const helpId = hint ? `${controlId}-help` : undefined;
+  const errorId = error ? `${controlId}-error` : undefined;
+  const describedBy = [helpId, errorId].filter(Boolean).join(' ') || undefined;
+
   const controlProps = {
+    id: controlId,
     value: value ?? '',
     disabled,
     readOnly,
@@ -27,6 +36,8 @@ export default function SettingsField({
     inputMode,
     style: controlStyle,
     'aria-invalid': error ? 'true' : undefined,
+    'aria-describedby': describedBy,
+    'aria-errormessage': errorId,
     onChange: (event) => onChange(event.target.value),
   };
 
@@ -36,7 +47,7 @@ export default function SettingsField({
 
   return (
     <div className={`settings-field-with-help ${className}`.trim()}>
-      <label className="settings-control-group">
+      <label className="settings-control-group" htmlFor={controlId}>
         <span>{label}</span>
         {prefix ? (
           <div className="prefix-field">
@@ -46,9 +57,9 @@ export default function SettingsField({
         ) : control}
       </label>
       {error ? (
-        <small className="settings-field-error" role="alert">{error}</small>
+        <small id={errorId} className="settings-field-error" role="alert">{error}</small>
       ) : hint ? (
-        <small className="settings-field-help">{hint}</small>
+        <small id={helpId} className="settings-field-help">{hint}</small>
       ) : null}
     </div>
   );
