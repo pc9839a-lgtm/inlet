@@ -87,7 +87,7 @@ export async function onRequest({ request, env }) {
         dateFrom: url.searchParams.get('dateFrom') || '',
         dateTo: url.searchParams.get('dateTo') || '',
         channel: url.searchParams.get('channel') || '',
-        cursor: Number(url.searchParams.get('cursor') || 0),
+        cursor: url.searchParams.get('cursor') || '',
         limit: Number(url.searchParams.get('limit') || 50),
       });
       return jsonResponse(request, env, 200, {
