@@ -114,6 +114,8 @@ The migration workflow must never upload plaintext production SQL, must never ap
 - Worker 3: add QA fixture for migration detection and no data loss warnings.
 - Worker 4: include storage policy in launch checklist and PII retention policy.
 - Completed patch: guarded D1 preflight, encrypted export, exact pending-list check, post-backup pre-apply state recheck, post-apply verification, and recovery evidence workflow.
+- Completed P8-5 code/QA: encrypted artifact verification plus a manual-only disposable Cloudflare D1 restore drill; offline QA actually restores a synthetic encrypted backup into a disposable SQLite test DB.
+- Live disposable Cloudflare restore remains an explicit operator action and is never substituted for production restore approval.
 
 ## Verification
 
@@ -121,5 +123,7 @@ The migration workflow must never upload plaintext production SQL, must never ap
 - `npm run server:smoke:pages`
 - `npm run server:smoke:leads`
 - `npm run d1:migration:safety:qa`
+- `npm run d1:restore:drill:qa`
 - Manual: create local-only page, switch to server mode, confirm migration prompt appears.
 - Manual production operation: run D1 preflight first; do not run `backup-and-apply` without owner approval and reviewed pending migrations.
+- Manual recovery drill: select a valid encrypted backup run and use `artifact-verify` first. Run `restore-drill` only on `main` with `I_APPROVE_D1_DISPOSABLE_RESTORE`; verify disposable cleanup before closing the drill.
