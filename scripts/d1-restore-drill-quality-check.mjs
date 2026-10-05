@@ -158,7 +158,7 @@ const runbookSource = await readFile('docs/ops-d1-migration-safety.md', 'utf8');
 
 for (const token of [
   'I_APPROVE_D1_DISPOSABLE_RESTORE',
-  'restore-drill is restricted to the main branch',
+  'disposable D1 restore drill is restricted to the main branch',
   'productionDatabaseTouched: false',
   'DROP TABLE _pagero_restore_probe',
   'deleteDisposableDatabase',
