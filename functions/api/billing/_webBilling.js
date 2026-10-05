@@ -1,3 +1,5 @@
+import { webBillingProviderAdapterReady } from './providers/_registry.js';
+
 const WEB_PRODUCTS = Object.freeze({
   pagero_monthly: Object.freeze({ code: 'pagero_monthly', amountKrw: 3500, currency: 'KRW' }),
   pagero_pro_monthly: Object.freeze({ code: 'pagero_pro_monthly', amountKrw: 5500, currency: 'KRW' }),
@@ -27,10 +29,16 @@ export function webBillingReadiness(env = {}) {
   const orderWriteEnabled = enabled(env.INLET_WEB_BILLING_ORDER_WRITE_ENABLED);
   const chargingEnabled = enabled(env.INLET_WEB_BILLING_CHARGING_ENABLED);
   const providerConfigured = Boolean(provider && providerTokenConfigured);
-  const available = providerConfigured && webhookSecretConfigured && orderWriteEnabled && chargingEnabled;
+  const providerAdapterReady = webBillingProviderAdapterReady(provider);
+  const available = providerConfigured
+    && providerAdapterReady
+    && webhookSecretConfigured
+    && orderWriteEnabled
+    && chargingEnabled;
 
   let stage = 'available';
   if (!provider) stage = 'provider_selection';
+  else if (!providerAdapterReady) stage = 'provider_adapter_missing';
   else if (!providerTokenConfigured) stage = 'provider_credentials';
   else if (!webhookSecretConfigured) stage = 'webhook_secret';
   else if (!orderWriteEnabled) stage = 'order_write_disabled';
@@ -41,6 +49,7 @@ export function webBillingReadiness(env = {}) {
     stage,
     provider,
     providerConfigured,
+    providerAdapterReady,
     webhookConfigured: webhookSecretConfigured,
     orderWriteEnabled,
     chargingEnabled,
@@ -86,43 +95,20 @@ export function assertWebBillingProvider(request, env = {}) {
   return true;
 }
 
-export async function verifyWebBillingWebhook(request, env = {}, rawBody = '') {
-  const readiness = webBillingReadiness(env);
-  if (!readiness.providerConfigured || !readiness.webhookConfigured || !readiness.chargingEnabled) {
-    throw webBillingError(
-      '웹 결제 webhook은 아직 활성화되지 않았습니다.',
-      503,
-      'WEB_BILLING_WEBHOOK_DISABLED',
-      { stage: readiness.stage },
-    );
-  }
+export function webBillingWebhookMaxSkewMs() {
+  return MAX_WEBHOOK_SKEW_MS;
+}
 
-  const timestamp = String(request.headers.get('X-Pagero-Webhook-Timestamp') || '').trim();
-  const signature = String(request.headers.get('X-Pagero-Webhook-Signature') || '').trim().toLowerCase();
-  const eventId = token(request.headers.get('X-Pagero-Webhook-Id'), 180);
-  const unixMs = Number(timestamp);
+export async function webBillingPayloadSha256(rawBody = '') {
+  return sha256Hex(rawBody);
+}
 
-  if (!eventId) {
-    throw webBillingError('Webhook 이벤트 식별자가 없습니다.', 400, 'WEBHOOK_EVENT_ID_REQUIRED');
-  }
-  if (!Number.isFinite(unixMs) || Math.abs(Date.now() - unixMs) > MAX_WEBHOOK_SKEW_MS) {
-    throw webBillingError('Webhook 요청 시간이 유효하지 않습니다.', 401, 'WEBHOOK_TIMESTAMP_INVALID');
-  }
-  if (!/^[a-f0-9]{64}$/.test(signature)) {
-    throw webBillingError('Webhook 서명이 올바르지 않습니다.', 401, 'WEBHOOK_SIGNATURE_INVALID');
-  }
+export async function webBillingHmacSha256(secret = '', message = '') {
+  return hmacHex(secret, message);
+}
 
-  const secret = String(env.INLET_WEB_BILLING_WEBHOOK_SECRET || '').trim();
-  const expected = await hmacHex(secret, `${timestamp}.${rawBody}`);
-  if (!constantTimeEqual(expected, signature)) {
-    throw webBillingError('Webhook 서명이 일치하지 않습니다.', 401, 'WEBHOOK_SIGNATURE_INVALID');
-  }
-
-  return {
-    provider: readiness.provider,
-    eventId,
-    payloadSha256: await sha256Hex(rawBody),
-  };
+export function webBillingConstantTimeEqual(left = '', right = '') {
+  return constantTimeEqual(left, right);
 }
 
 export function webBillingError(message, status = 400, code = 'WEB_BILLING_ERROR', extra = {}) {
