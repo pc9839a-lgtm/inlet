@@ -32,6 +32,12 @@ const mobileViewports = [
   { name: 'mobile-430', width: 430, height: 932 },
 ];
 
+const mobileKeyboardViewports = mobileViewports.map((viewport) => ({
+  name: `${viewport.name}-keyboard`,
+  width: viewport.width,
+  height: 360,
+}));
+
 function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
@@ -1197,6 +1203,37 @@ async function run() {
     await waitForBrowser(client, `!!document.querySelector('.code-editor-modal-card[role="dialog"]')`, 'code editor modal open');
     await waitForBrowser(client, `document.activeElement?.closest?.('.code-editor-modal-card') !== null`, 'code editor modal initial focus');
 
+    // P9-6: emulate a keyboard-short visual viewport while an editor textarea is focused.
+    await setViewport(client, 390, 360, false);
+    await focusSelector(client, '.code-editor-modal-card textarea');
+    const keyboardModal = await evaluate(client, `(() => {
+      const rect = (element) => {
+        if (!element) return null;
+        const box = element.getBoundingClientRect();
+        return { top: box.top, bottom: box.bottom, left: box.left, right: box.right, width: box.width, height: box.height };
+      };
+      const card = document.querySelector('.code-editor-modal-card');
+      const textarea = card?.querySelector('textarea');
+      const action = card?.querySelector('.code-editor-modal-actions button');
+      const root = getComputedStyle(document.documentElement);
+      return {
+        innerHeight,
+        visualHeight: Math.round(window.visualViewport?.height || innerHeight),
+        cssVisualHeight: parseFloat(root.getPropertyValue('--pagero-visual-viewport-height')) || 0,
+        card: rect(card),
+        textarea: rect(textarea),
+        action: rect(action),
+        activeInside: document.activeElement === textarea,
+      };
+    })()`);
+    assert(keyboardModal.activeInside, 'keyboard-short code modal textarea must retain focus');
+    assert(keyboardModal.card?.top >= -2 && keyboardModal.card?.bottom <= keyboardModal.innerHeight + 2, `keyboard-short code modal escaped visible viewport: ${JSON.stringify(keyboardModal)}`);
+    assert(keyboardModal.action?.bottom <= keyboardModal.card?.bottom + 1, `keyboard-short code modal save action is clipped: ${JSON.stringify(keyboardModal)}`);
+    assert(Math.abs(keyboardModal.cssVisualHeight - keyboardModal.visualHeight) <= 2, `visual viewport CSS contract did not update: ${JSON.stringify(keyboardModal)}`);
+    await capture(client, 'mobile-keyboard-code-modal-390');
+    await setViewport(client, 1440, 960, false);
+    await waitForBrowser(client, `!!document.querySelector('.code-editor-modal-card[role="dialog"]')`, 'code editor modal after keyboard viewport restore');
+
     await focusSelector(client, '.panel-actions .primary-btn');
     await pressKeyboardKey(client, 'Tab');
     assert(await evaluate(client, `document.activeElement?.closest?.('.code-editor-modal-card') !== null`), 'forward Tab from outside must be recovered into the modal');
@@ -1414,12 +1451,56 @@ async function run() {
     await clickButtonByText(client, '.top-tabs', '편집');
     await waitForBrowser(client, `!!document.querySelector('.builder-shell.edit-mode-shell:not(.mobile-operations-shell)')`, 'desktop editor restored after zoom audit');
 
-    for (const viewport of mobileViewports) {
+    for (let index = 0; index < mobileViewports.length; index += 1) {
+      const viewport = mobileViewports[index];
+      const keyboardViewport = mobileKeyboardViewports[index];
       await setViewport(client, viewport.width, viewport.height, true);
       await waitForBrowser(client, `!!document.querySelector('.builder-shell.mobile-operations-shell') && !!document.querySelector('.mobile-operations-header')`, `${viewport.name} operations view`);
       const metrics = await collectMobileMetrics(client);
       assertMobile(metrics, viewport);
       await capture(client, viewport.name);
+
+      await focusSelector(client, '.inbox-ops-search input');
+      await setViewport(client, keyboardViewport.width, keyboardViewport.height, true);
+      await waitForBrowser(client, `!!document.querySelector('.builder-shell.mobile-operations-shell') && document.activeElement === document.querySelector('.inbox-ops-search input')`, `${keyboardViewport.name} focused search`);
+      const keyboardMetrics = await evaluate(client, `(() => {
+        const rect = (element) => {
+          if (!element) return null;
+          const box = element.getBoundingClientRect();
+          return { top: box.top, bottom: box.bottom, left: box.left, right: box.right, width: box.width, height: box.height };
+        };
+        const input = document.querySelector('.inbox-ops-search input');
+        const workPanel = document.querySelector('.work-panel');
+        const tabs = document.querySelector('.top-tabs');
+        const rootStyle = getComputedStyle(document.documentElement);
+        const fixedOverlap = [...document.querySelectorAll('body *')].some((element) => {
+          if (element === input || element.contains(input)) return false;
+          const style = getComputedStyle(element);
+          if (style.position !== 'fixed' || style.visibility === 'hidden' || style.display === 'none') return false;
+          const box = element.getBoundingClientRect();
+          const target = input.getBoundingClientRect();
+          return box.width > 0 && box.height > 0
+            && box.left < target.right && box.right > target.left
+            && box.top < target.bottom && box.bottom > target.top;
+        });
+        return {
+          innerHeight,
+          visualHeight: Math.round(window.visualViewport?.height || innerHeight),
+          cssVisualHeight: parseFloat(rootStyle.getPropertyValue('--pagero-visual-viewport-height')) || 0,
+          input: rect(input),
+          tabs: rect(tabs),
+          workPanelScrollPaddingBottom: parseFloat(getComputedStyle(workPanel).scrollPaddingBottom) || 0,
+          active: document.activeElement === input,
+          fixedOverlap,
+        };
+      })()`);
+      assert(keyboardMetrics.active, `${keyboardViewport.name} input focus was lost after viewport shrink`);
+      assert(keyboardMetrics.input?.top >= -2 && keyboardMetrics.input?.bottom <= keyboardMetrics.innerHeight + 2, `${keyboardViewport.name} focused input is obscured: ${JSON.stringify(keyboardMetrics)}`);
+      assert(keyboardMetrics.tabs?.bottom <= keyboardMetrics.input?.top + 2, `${keyboardViewport.name} sticky tabs overlap focused input: ${JSON.stringify(keyboardMetrics)}`);
+      assert(!keyboardMetrics.fixedOverlap, `${keyboardViewport.name} fixed UI overlaps focused input`);
+      assert(keyboardMetrics.workPanelScrollPaddingBottom >= 96, `${keyboardViewport.name} lacks keyboard-safe scroll padding: ${JSON.stringify(keyboardMetrics)}`);
+      assert(Math.abs(keyboardMetrics.cssVisualHeight - keyboardMetrics.visualHeight) <= 2, `${keyboardViewport.name} visual viewport CSS var is stale: ${JSON.stringify(keyboardMetrics)}`);
+      await capture(client, keyboardViewport.name);
     }
 
     assert(!apiState.interceptError, `API interception failed: ${apiState.interceptError?.message || apiState.interceptError}`);
@@ -1442,13 +1523,16 @@ async function run() {
       publicVerifyCount: apiState.publicVerifyCount,
       desktopWidths: desktopMatrix.map((item) => item.width),
       mobileWidths: mobileViewports.map((item) => item.width),
-      responsiveMatrixScreenshots: desktopMatrix.length + zoom200Matrix.length + mobileViewports.length + 1,
+      mobileKeyboardWidths: mobileKeyboardViewports.map((item) => item.width),
+      mobileKeyboardHeight: 360,
+      responsiveMatrixScreenshots: desktopMatrix.length + zoom200Matrix.length + mobileViewports.length + mobileKeyboardViewports.length + 2,
       responsiveGeometryLocked: true,
       zoom200P93: ['desktop-builder-preserved', 'no-page-horizontal-scroll', 'add-dock-no-fixed-overlap', 'settings-single-column-reflow'],
       conversionCockpit: true,
       publishChecklist: true,
       keyboardOnlyP91: ['Enter', 'Space', 'Tab', 'Shift+Tab', 'Escape'],
       focusManagementP92: ['modal-trap', 'modal-return', 'workspace-transition-recovery'],
+      mobileKeyboardP96: ['360', '390', '430', 'focused-input-visible', 'modal-actions-visible', 'no-fixed-overlap'],
       realUseFlows: ['focus-recovery-workspace-transition', 'modal-focus-trap-return', 'keyboard-row-activation', 'keyboard-dropdown', 'add-block', 'undo-redo', 'visibility', 'menu-reorder', 'pointer-drag-reorder', 'style-apply', 'preview-continue', 'publish-race', 'revision-restore-undo-redo', 'post-restore-publish-readback', 'narrow-desktop'],
     }, null, 2));
   } finally {
