@@ -229,7 +229,7 @@ const leadsApiSource = await import('node:fs/promises').then(({ readFile }) => r
 const leadRepositorySource = await import('node:fs/promises').then(({ readFile }) => readFile('src/lib/leadRepository.js', 'utf8'));
 const csvExportSource = await import('node:fs/promises').then(({ readFile }) => readFile('functions/api/leads/export.csv.js', 'utf8'));
 
-assert(d1AdapterSource.includes('parseD1LeadCursor(cursor)'), 'D1 lead pagination must parse opaque cursors');
+assert(d1AdapterSource.includes('function parseD1LeadCursor') && (d1AdapterSource.match(/parseD1LeadCursor\(options\.cursor\)/g) || []).length >= 2, 'D1 lead pagination and export scans must parse opaque cursors');
 assert(d1AdapterSource.includes('(created_at < ? OR (created_at = ? AND id < ?))'), 'D1 lead pagination must use a stable keyset boundary');
 assert(d1AdapterSource.includes('ORDER BY created_at DESC, id DESC LIMIT ?'), 'D1 lead pagination must use deterministic ordering');
 assert(d1AdapterSource.includes('encodeD1LeadCursor(last.created_at, last.id)'), 'D1 lead pagination must return an opaque keyset cursor');
