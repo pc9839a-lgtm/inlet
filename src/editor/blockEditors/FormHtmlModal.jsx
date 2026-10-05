@@ -10,7 +10,7 @@ export function FormHtmlModal({ form, page, onClose, generateStandaloneFormHtml 
 
   return createPortal(
     <div className="inlet-html-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose?.(); }}>
-      <div ref={dialogRef} className="inlet-html-modal compact" role="dialog" aria-modal="true" aria-labelledby="inlet-html-modal-title">
+      <div ref={dialogRef} className="inlet-html-modal compact" role="dialog" aria-modal="true" aria-labelledby="inlet-html-modal-title" tabIndex={-1}>
         <FormHtmlModalHeader
           title={T.formCode}
           description={T.modalDesc}
