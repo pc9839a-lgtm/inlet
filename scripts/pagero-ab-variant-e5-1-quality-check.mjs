@@ -195,7 +195,7 @@ for (const token of [
 }
 
 const storeSource = await readFile('server/storage/pageExperimentStore.mjs', 'utf8');
-assert(storeSource.includes("WHERE status IN ('draft', 'running', 'paused')"), 'store must treat draft/running/paused as the single open experiment');
+assert(storeSource.includes("OPEN_EXPERIMENT_STATUSES = new Set(['draft', 'running', 'paused'])"), 'store must treat draft/running/paused as open states');
 assert(storeSource.includes("Only draft experiment variants can be edited."), 'running variants must be immutable');
 assert(!storeSource.includes('UPDATE pages'), 'variant store must not mutate canonical pages');
 assert(!storeSource.includes('INSERT INTO page_revisions'), 'variant store must not append canonical revisions');
