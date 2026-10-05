@@ -82,6 +82,7 @@ for (const token of [
   'event.shiftKey',
   'previousFocus',
   'previousFocus?.isConnected',
+  '!dialog.contains(active)',
   'button:not([disabled])',
   "document.addEventListener('keydown', onKeyDown, true)",
 ]) {
@@ -102,6 +103,9 @@ assert(files.workspaceTabs.includes('role="tab"'), 'workspace navigation items s
 assert(files.workspaceTabs.includes('aria-selected={active}'), 'workspace navigation should expose selected state');
 assert(files.workspaceTabs.includes('tabIndex={active ? 0 : -1}'), 'workspace tabs should use roving tab focus');
 assert(files.workspaceTabs.includes('aria-controls={`workspace-panel-${key}`}'), 'workspace tabs should name controlled panels');
+assert(files.workspaceTabs.includes('previousTabRef'), 'workspace focus recovery should remember the previous tab');
+assert(files.workspaceTabs.includes('focusLost'), 'workspace focus recovery should detect lost focus');
+assert(files.workspaceTabs.includes('tabRefs.current.get(tab)?.focus'), 'workspace focus recovery should move focus to the active tab when the source unmounts');
 for (const key of ['ArrowLeft', 'ArrowRight', 'Home', 'End']) {
   assert(files.workspaceTabs.includes(key), `workspace tab keyboard navigation missing: ${key}`);
 }
@@ -114,6 +118,9 @@ assert(files.settingsBody.includes('aria-controls="settings-active-panel"'), 'se
 assert(files.settingsBody.includes('role="region"'), 'settings active content should expose a region landmark');
 assert(files.settingsBody.includes('aria-labelledby="settings-active-title"'), 'settings active region should reference the visible heading');
 assert(files.settingsBody.includes('id="settings-active-title"'), 'settings heading should provide the active-region label');
+assert(files.settingsBody.includes('previousSectionRef'), 'settings focus recovery should remember the previous section');
+assert(files.settingsBody.includes('navButtonRefs'), 'settings focus recovery should retain section navigation targets');
+assert(files.settingsBody.includes('focusLost'), 'settings focus recovery should detect lost focus after section changes');
 
 assert(
   files.statsPanel.includes('role="img"') && files.statsPanel.includes('aria-label='),
@@ -166,7 +173,7 @@ assert(!unlabeledIconButtons.length, 'icon-only close buttons should have aria-l
 
 console.log(JSON.stringify({
   ok: true,
-  checks: dialogContracts.length + 48,
+  checks: dialogContracts.length + 55,
   keyboardOnly: true,
   focusTrap: true,
   focusReturn: true,
