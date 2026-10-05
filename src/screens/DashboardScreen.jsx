@@ -348,7 +348,7 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
           </section>
         )}
 
-        <section className="home-section service-page-list" aria-busy={pagesLoading}>
+        <section className="home-section service-page-list" aria-busy={pagesLoading} aria-live="polite">
           <div className="home-section-title">
             <h2>랜딩페이지</h2>
             <button className="primary-btn" type="button" disabled={createDisabled} onClick={openCreate}>{createButtonLabel}</button>
