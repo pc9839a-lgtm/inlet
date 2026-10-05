@@ -9,6 +9,7 @@ const leadDedupeMigration = await readFile('migrations/0002_lead_dedupe_fields.s
 const eventDimensionsMigration = await readFile('migrations/0003_event_dimensions.sql', 'utf8');
 const blockedLeadMigration = await readFile('migrations/0004_lead_blocked_submissions.sql', 'utf8');
 const authEmailMigration = await readFile('migrations/0005_auth_email_verifications.sql', 'utf8');
+const pageExperimentMigration = await readFile('migrations/0017_page_ab_experiments.sql', 'utf8');
 const adapter = await readFile('server/storage/d1Adapter.mjs', 'utf8');
 const runtimeAdapter = await readFile('server/storage/runtimeAdapter.mjs', 'utf8');
 const wrangler = await readFile('wrangler.jsonc', 'utf8');
@@ -138,6 +139,24 @@ for (const token of [
 }
 
 for (const token of [
+  'CREATE TABLE IF NOT EXISTS page_experiments',
+  'CREATE TABLE IF NOT EXISTS page_variants',
+  'idx_page_experiments_one_open',
+  'idx_page_variants_experiment',
+  'assignment_salt',
+  'source_revision_id',
+  'source_revision INTEGER',
+  'traffic_weight INTEGER',
+  'UNIQUE(experiment_id, variant_key)',
+]) {
+  assert(pageExperimentMigration.includes(token), `D1 page experiment migration missing token: ${token}`);
+}
+
+for (const table of ['page_experiments', 'page_variants']) {
+  assert(adapter.includes(`'${table}'`), `D1 adapter table list missing E5 table: ${table}`);
+}
+
+for (const token of [
   'isD1MissingLeadDedupeColumnError',
   'isD1MissingEventDimensionColumnError',
   'upsertD1LeadLegacy',
@@ -190,6 +209,7 @@ console.log(JSON.stringify({
   eventDimensionsMigration: '0003_event_dimensions.sql',
   blockedLeadMigration: '0004_lead_blocked_submissions.sql',
   authEmailMigration: '0005_auth_email_verifications.sql',
+  pageExperimentMigration: '0017_page_ab_experiments.sql',
   pageDomainMigration: '0015_page_domain_ownership.sql',
   pageDomainProviderQa: 'page-domain-provider-quality-check.mjs',
   pageDomainSettingsUiQa: 'page-domain-settings-ui-quality-check.mjs',
