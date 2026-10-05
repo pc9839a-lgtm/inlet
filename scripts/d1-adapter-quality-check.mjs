@@ -684,8 +684,13 @@ function fakeD1(options = {}) {
             const hasSearch = sql.includes('LOWER(name) LIKE ?');
             const search = hasSearch ? String(this.params[paramIndex++]).replace(/%/g, '').toLowerCase() : '';
             if (hasSearch) paramIndex += 4;
+            const hasKeyset = sql.includes('(created_at < ? OR (created_at = ? AND id < ?))');
+            const keysetCreatedAt = hasKeyset ? String(this.params[paramIndex++]) : '';
+            if (hasKeyset) paramIndex += 1;
+            const keysetId = hasKeyset ? String(this.params[paramIndex++]) : '';
             const limit = Number(this.params[paramIndex++]);
-            const offset = Number(this.params[paramIndex++]);
+            const hasOffset = sql.includes(' OFFSET ?');
+            const offset = hasOffset ? Number(this.params[paramIndex++] || 0) : 0;
             const filtered = rows.leads
               .filter((row) => row.project_id === projectId && row.created_month === month)
               .filter((row) => inFakeDateRange(row, dateFrom, dateTo))
@@ -695,7 +700,10 @@ function fakeD1(options = {}) {
               .filter((row) => !kind || row.kind === kind)
               .filter((row) => !deliveryStatus || row.delivery_status === deliveryStatus)
               .filter((row) => !search || fakeLeadSearchText(row).includes(search))
-              .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+              .filter((row) => !hasKeyset
+                || String(row.created_at) < keysetCreatedAt
+                || (String(row.created_at) === keysetCreatedAt && String(row.id) < keysetId))
+              .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)) || String(b.id).localeCompare(String(a.id)));
             return { results: filtered.slice(offset, offset + limit), meta: { rows_read: filtered.length } };
           }
           if (sql.includes('FROM events')) {
