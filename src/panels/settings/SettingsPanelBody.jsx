@@ -57,6 +57,8 @@ function SettingsNavGroup({ label, items, selectedSection, selectSection }) {
             key={id}
             type="button"
             className={`settings-nav-item ${selectedSection === id ? 'active' : ''}`}
+            aria-current={selectedSection === id ? 'page' : undefined}
+            aria-controls="settings-active-panel"
             onClick={() => selectSection(id)}
           >
             <Icon size={18} aria-hidden="true" />
@@ -190,7 +192,7 @@ export default function SettingsPanelBody({
             <h1>{selectedLabel}</h1>
           </header>
 
-          <div className="settings-v3-content">
+          <div id="settings-active-panel" className="settings-v3-content" aria-label={`${selectedLabel} 설정`}>
             {selectedSection === 'media' && canReadMedia && (
               <MediaLibrarySettings
                 page={page}

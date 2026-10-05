@@ -174,6 +174,8 @@ P5의 코드·DB·provider 운영 기반은 반영됐으며, 별도 테스트 �
 
 ### P7 — 웹 자동결제
 
+P7 웹 결제: 실제 PG adapter 연동과 청구 활성화는 현재 홀드한다.
+
 현재 self-serve billing은 **기반 구현 단계**이며 실제 청구는 비활성 상태다.
 
 확정 정책 baseline:
@@ -212,14 +214,22 @@ P7 기반 구현:
 
 ### P9 — 전체 접근성
 
-남은 최종 audit:
+P9 접근성 audit의 코드 보강과 자동 회귀 gate는 완료했다.
 
-- keyboard-only
-- focus trap / focus return
-- 200% zoom
-- contrast
-- screen reader semantics
-- mobile keyboard viewport
+완료:
+
+- keyboard-only 핵심 경로: dialog/tab/disclosure를 native control + 명시적 active semantics로 유지
+- 모든 current modal 계열에 focus trap / Escape close / 이전 focus return 공통 계약 적용
+- 200% zoom·짧은 viewport에서 modal을 dynamic viewport height + 내부 scroll로 유지
+- dashboard/workspace의 focus-visible 표시 강화
+- 작은 오류/보조 텍스트의 저대비 색상을 상향 조정
+- workspace/settings navigation에 accessible name / aria-current / aria-controls 추가
+- dialog title, alert/status, decorative icon semantics 보강
+- mobile keyboard가 viewport 높이를 줄이는 경우 modal 상단 정렬·scroll 가능
+- prefers-reduced-motion 대응
+- `npm run accessibility:qa`에 위 계약을 release gate로 고정
+
+실제 NVDA/VoiceOver 같은 보조기술 수동 spot check는 출시 검증 시 추가할 수 있으나 현재 코드 backlog blocker로 두지 않는다.
 
 ### P8 — 대량 데이터
 
@@ -246,11 +256,10 @@ B3 production smoke는 현재 스킵한다.
 
 다음 순서:
 
-1. P7 웹 결제
-2. P9 접근성 audit
-3. P8 대량 데이터
-4. E5 A/B test
-5. P5 외부 테스트 도메인 live smoke는 별도 테스트 도메인 확보 시 실행
+1. P7 실제 PG 연동은 현재 홀드
+2. P8 대량 데이터
+3. E5 A/B test
+4. P5 외부 테스트 도메인 live smoke는 별도 테스트 도메인 확보 시 실행
 
 AI 기능은 E4까지 구현되어 있다. 사용자가 다시 요청하기 전까지 AI 확장보다 위 backlog를 우선한다.
 

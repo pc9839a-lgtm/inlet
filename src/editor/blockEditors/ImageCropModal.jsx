@@ -11,7 +11,7 @@ import { useImageCropTargetWidth } from './useImageCropTargetWidth.js';
 export function ImageCropModal({ src, s, set, blockId, onClose }) {
   const { draft, setDraft, resetDraft } = useImageCropDraft(src, s);
   const targetWidth = useImageCropTargetWidth(blockId, src);
-  useImageCropDialog(onClose);
+  const dialogRef = useImageCropDialog(onClose);
 
   const apply = () => {
     set({
@@ -24,8 +24,16 @@ export function ImageCropModal({ src, s, set, blockId, onClose }) {
   };
 
   return createPortal(
-    <div className="crop-modal-backdrop" role="dialog" aria-modal="true">
-      <div className="crop-modal" style={{ '--crop-target-width': `${targetWidth}px` }}>
+    <div className="crop-modal-backdrop" role="presentation">
+      <div
+        ref={dialogRef}
+        className="crop-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="image-crop-dialog-title"
+        tabIndex={-1}
+        style={{ '--crop-target-width': `${targetWidth}px` }}
+      >
         <ImageCropHeader onClose={onClose} />
 
         {!src ? (

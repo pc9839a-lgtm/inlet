@@ -1,23 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { notify } from '../../lib/uiFeedback.js';
 import { T } from './formEditorModel.js';
+import { useAccessibleDialog } from '../../lib/useAccessibleDialog.js';
 
 export function useFormHtmlModal({ form, page, onClose, generateStandaloneFormHtml }) {
   const code = useMemo(() => (
     typeof generateStandaloneFormHtml === 'function' ? generateStandaloneFormHtml(form, page) : ''
   ), [form, page, generateStandaloneFormHtml]);
   const [showCode, setShowCode] = useState(false);
-  const dialogRef = useRef(null);
-
-  useEffect(() => {
-    const focusable = dialogRef.current?.querySelector?.('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-    focusable?.focus?.();
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape') onClose?.();
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onClose]);
+  const dialogRef = useAccessibleDialog(onClose);
 
   const copy = async () => {
     try {

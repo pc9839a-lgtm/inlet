@@ -1,6 +1,7 @@
-import React, { Suspense, useEffect, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { authAccountErrorMessage } from '../lib/authAccounts.js';
 import { pageSlugIssues, sanitizePageSlug } from '../lib/pageSlugs.js';
+import { useAccessibleDialog } from '../lib/useAccessibleDialog.js';
 
 function TemplatePanelSlot({ Component, page, templates, onApply }) {
   if (!Component) return null;
@@ -423,7 +424,7 @@ function CreateLandingModal({ page, onClose, onAi, onManual, onTemplate, onCheck
   const [step, setStep] = useState('menu');
   const [pendingMode, setPendingMode] = useState('');
   const [confirmedUrl, setConfirmedUrl] = useState(null);
-  const dialogRef = useRef(null);
+  const dialogRef = useAccessibleDialog(onClose);
   const [footer, setFooter] = useState({
     company: '',
     owner: '',
@@ -443,19 +444,9 @@ function CreateLandingModal({ page, onClose, onAi, onManual, onTemplate, onCheck
   };
   const withUrl = (payload = {}) => ({ ...payload, ...(confirmedUrl || {}) });
 
-  useEffect(() => {
-    const focusable = dialogRef.current?.querySelector?.('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-    focusable?.focus?.();
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape') onClose?.();
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onClose]);
-
   return (
     <div className="create-modal-backdrop" role="presentation">
-      <section ref={dialogRef} className={`create-modal create-flow-${step}`} role="dialog" aria-modal="true" aria-labelledby="create-landing-title">
+      <section ref={dialogRef} className={`create-modal create-flow-${step}`} role="dialog" aria-modal="true" aria-labelledby="create-landing-title" tabIndex={-1}>
         <button className="create-modal-close" type="button" onClick={onClose} aria-label="닫기">×</button>
 
         {step !== 'menu' && (
