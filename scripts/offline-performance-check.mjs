@@ -151,7 +151,7 @@ assert(inboxLeadSync.includes('monthDateRange(inboxFilters.month)'), 'Inbox serv
 assert(appSource.includes("deliveryStatus: 'all'"), 'Inbox server fetch should keep delivery status out of the visible filter contract');
 assert(statsSummarySync.includes('statsDateRange(statsMonth'), 'Stats server fetch should be capped to selected month and day-range period');
 assert(inboxPanel.includes('type="month"'), 'Inbox UI should expose month selection');
-assert(inboxPanel.includes("deliveryStatus: 'all'") && inboxPanel.includes('<Download size={17} /> CSV'), 'Inbox UI should expose monthly CSV without delivery filter noise');
+assert(inboxPanel.includes("deliveryStatus: 'all'") && inboxPanel.includes('<Download size={17} aria-hidden="true" /> CSV'), 'Inbox UI should expose monthly CSV without delivery filter noise');
 assert(inboxPanel.includes('더 불러오기') && inboxPanel.includes('서버 ${serverTotal}건 중 ${loadedCount}건 로드'), 'Inbox UI should clearly indicate partial server pagination');
 assert(leadRepository.includes('dateFrom') && leadRepository.includes('dateTo') && leadRepository.includes('deliveryStatus'), 'Lead repository should pass date/delivery filters');
 assert(eventRepository.includes('dateFrom') && eventRepository.includes('dateTo'), 'Event repository should pass date filters');
