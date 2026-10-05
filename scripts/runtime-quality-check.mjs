@@ -181,6 +181,7 @@ const contentBlocks = await readFile('src/preview/renderers/ContentBlocks.jsx', 
 const signalBlocks = await readFile('src/preview/renderers/SignalBlocks.jsx', 'utf8');
 const faqEditorModel = await readFile('src/editor/blockEditors/faqEditorModel.js', 'utf8');
 const builderFeedback = await readFile('src/builder/BuilderFeedback.jsx', 'utf8');
+const accessibleDialog = await readFile('src/lib/useAccessibleDialog.js', 'utf8');
 const conflictUtils = await readFile('src/builder/conflictUtils.js', 'utf8');
 const editorControls = await readFile('src/editor/controls.jsx', 'utf8');
 const imageInputPreview = await readFile('src/editor/ImageInputPreview.jsx', 'utf8');
@@ -515,7 +516,7 @@ assert(landingRenderer.includes('class BlockErrorBoundary'), 'LandingRenderer mu
 assert(landingRenderer.includes('componentDidUpdate(prevProps)'), 'BlockErrorBoundary must reset when block data changes');
 assert(utilityBlocks.includes("return typeof cleanup === 'function' ? cleanup : undefined;"), 'custom code cleanup must return only a function or undefined');
 assert(builderFeedback.includes('role="dialog"') && builderFeedback.includes('aria-modal="true"'), 'modals must keep dialog semantics');
-assert(builderFeedback.includes("event.key === 'Escape'") && builderFeedback.includes("querySelector?.('button"), 'modals must keep Escape close and initial focus behavior');
+assert(builderFeedback.includes('useAccessibleDialog(') && accessibleDialog.includes("event.key === 'Escape'") && accessibleDialog.includes("event.key !== 'Tab'") && accessibleDialog.includes('previousFocus?.isConnected'), 'modals must keep Escape close, focus trap, and focus return behavior');
 assert(builderFeedback.includes('aria-label="닫기"'), 'icon close buttons must keep accessible names');
 assert(conflictUtils.includes("'PAGE_PUBLIC_VERIFY_FAILED'") && conflictUtils.includes("'PAGE_SLUG_CONFLICT'") && conflictUtils.includes("code === 'PAGE_REVISION_CONFLICT'"), 'Page conflict handling must not treat public verification or URL conflicts as revision conflicts');
 assert(imageInputPreview.includes('aria-label={`${label} 교체`}') && imageInputPreview.includes('aria-label={`${label} 삭제`}') && imageInputPreview.includes('aria-label={`${label} 업로드`}'), 'image actions must keep accessible replace, delete, and upload names');
