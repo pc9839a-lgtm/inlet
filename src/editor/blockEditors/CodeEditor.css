@@ -161,3 +161,22 @@
 .block-editor-v2 .code-editor-name-value > input {
   grid-column: 1;
 }
+
+
+.code-editor-modal-card :is(button,textarea):focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 2px;
+}
+
+@media (max-height: 520px) {
+  .code-editor-modal {
+    place-items: start center;
+    overflow-y: auto;
+    padding: 10px;
+  }
+
+  .code-editor-modal-card {
+    height: calc(100dvh - 20px);
+    max-height: calc(100dvh - 20px);
+  }
+}
