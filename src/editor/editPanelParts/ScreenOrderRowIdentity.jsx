@@ -20,10 +20,8 @@ export function ScreenOrderRowIdentity({ block, meta, open, onDragStart, onDragE
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
         onClick={stop}
-        role="button"
-        tabIndex={0}
         title={T.dragToReorder}
-        aria-label={`${displayLabel} 순서 이동`}
+        aria-hidden="true"
       >
         <GripVertical size={16} />
       </div>
