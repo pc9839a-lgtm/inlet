@@ -60,7 +60,7 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
         <div className="operations-panel-title-row">
           <h1>{title}</h1>
           {showSaveAlert && (
-            <div className="panel-save-status operations-save-status" title={saveStatus.detail || saveStatus.label} aria-live="polite">
+            <div className="panel-save-status operations-save-status" role="status" aria-atomic="true" title={saveStatus.detail || saveStatus.label} aria-live="polite">
               <strong style={{ color: saveStateColors[saveStatus.tone] }}>{saveStatus.label}</strong>
             </div>
           )}
@@ -71,10 +71,10 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
         {historyEnabled && (
           <>
             <button className="ghost-btn panel-history-btn" type="button" onClick={undoPageEdit} disabled={!historyState.canUndo} title="실행 취소 (Ctrl/Cmd+Z)" aria-label="실행 취소">
-              <Undo2 size={15} />
+              <Undo2 size={15} aria-hidden="true" />
             </button>
             <button className="ghost-btn panel-history-btn" type="button" onClick={redoPageEdit} disabled={!historyState.canRedo} title="다시 실행 (Ctrl/Cmd+Shift+Z)" aria-label="다시 실행">
-              <Redo2 size={15} />
+              <Redo2 size={15} aria-hidden="true" />
             </button>
           </>
         )}
@@ -86,7 +86,7 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
           onClick={onSave}
           title="편집 내용은 브라우저에 자동 임시보관됩니다. 발행하면 공개 페이지에 반영됩니다."
         >
-          <Save size={14} />{saved ? '발행됨' : '발행'}
+          <Save size={14} aria-hidden="true" />{saved ? '발행됨' : '발행'}
         </button>
       </div>
     </header>
