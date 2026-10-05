@@ -58,7 +58,13 @@ function DuplicatePolicySelect({ label, description, value, options, onChange, b
 
 function DuplicatePolicySwitch({ label, description, checked, onChange, badge = '' }) {
   return (
-    <button type="button" className={'inbox-policy-switch compact policy-control-card ' + (checked ? 'on' : '')} onClick={() => onChange(!checked)}>
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      className={'inbox-policy-switch compact policy-control-card ' + (checked ? 'on' : '')}
+      onClick={() => onChange(!checked)}
+    >
       <span>
         <b>{label}</b>
         <small>{description}</small>
@@ -173,7 +179,13 @@ export default function IntakeDuplicatePolicyPanel({ page, authUser, updatePage 
 
   return (
     <section className={'card inbox-policy-card policy-settings-v2 ' + (open ? 'open' : '')}>
-      <button type="button" className="inbox-policy-head policy-settings-head" onClick={() => setOpen(!open)}>
+      <button
+        type="button"
+        className="inbox-policy-head policy-settings-head"
+        aria-expanded={open}
+        aria-controls="duplicate-policy-body"
+        onClick={() => setOpen(!open)}
+      >
         <span>
           <strong>차단 기준</strong>
           <small>반복 제출을 차단할 조건과 중복 연락처 처리 방식을 설정합니다.</small>
@@ -183,7 +195,7 @@ export default function IntakeDuplicatePolicyPanel({ page, authUser, updatePage 
       </button>
 
       {open && (
-        <div className="inbox-policy-body policy-settings-body">
+        <div id="duplicate-policy-body" className="inbox-policy-body policy-settings-body">
           <section className="policy-settings-section">
             <header>
               <span>01</span>
@@ -257,7 +269,7 @@ export default function IntakeDuplicatePolicyPanel({ page, authUser, updatePage 
                 <small>자동 차단되거나 중복으로 판정된 접수를 기간별로 확인합니다.</small>
               </span>
               <div>
-                <input type="month" value={month} onChange={(event) => setMonth(event.target.value || currentMonthValue())} />
+                <input type="month" aria-label="차단 내역 조회 월" value={month} onChange={(event) => setMonth(event.target.value || currentMonthValue())} />
                 <button type="button" disabled={history.loading} onClick={() => loadHistory()}>{history.loading ? '조회 중' : '조회'}</button>
               </div>
             </div>
@@ -268,9 +280,9 @@ export default function IntakeDuplicatePolicyPanel({ page, authUser, updatePage 
               <span>차단 사유</span>
             </div>
 
-            {history.error && <span className="inbox-policy-error">{history.error}</span>}
+            {history.error && <span className="inbox-policy-error" role="alert">{history.error}</span>}
             {history.loading ? (
-              <span className="inbox-policy-empty policy-empty-v2">차단 내역을 불러오는 중입니다.</span>
+              <span className="inbox-policy-empty policy-empty-v2" role="status">차단 내역을 불러오는 중입니다.</span>
             ) : !visibleHistory.length ? (
               <span className="inbox-policy-empty policy-empty-v2">
                 <b>차단 내역이 없습니다.</b>
