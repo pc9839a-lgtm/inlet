@@ -1189,7 +1189,8 @@ function encodeD1LeadCursor(createdAt = '', id = '') {
   const safeCreatedAt = String(createdAt || '').trim();
   const safeId = String(id || '').trim();
   if (!safeCreatedAt || !safeId) return null;
-  return `k~${encodeURIComponent(safeCreatedAt)}~${encodeURIComponent(safeId)}`;
+  const encodePart = (value) => encodeURIComponent(value).replace(/~/g, '%7E');
+  return `k~${encodePart(safeCreatedAt)}~${encodePart(safeId)}`;
 }
 
 export async function insertD1BlockedLeadSubmission(db, entry = {}, context = {}) {
