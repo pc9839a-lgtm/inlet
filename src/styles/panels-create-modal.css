@@ -53,3 +53,36 @@
 .create-options > button > span {
   display: none;
 }
+
+.create-modal-backdrop{
+  overflow-y:auto;
+  overscroll-behavior:contain;
+}
+.create-modal{
+  max-height:calc(100vh - 48px);
+  max-height:calc(100dvh - 48px);
+}
+.create-modal :is(button,a,input,textarea,select,[tabindex]):focus-visible{
+  outline:3px solid #2563eb;
+  outline-offset:2px;
+}
+@media (max-height:520px),(max-width:640px){
+  .create-modal-backdrop{
+    place-items:start center;
+    padding:12px;
+  }
+  .create-modal{
+    max-height:calc(100vh - 24px);
+    max-height:calc(100dvh - 24px);
+    scroll-padding-bottom:24px;
+  }
+}
+@media (prefers-reduced-motion:reduce){
+  .create-modal *,
+  .toast-notice *{
+    scroll-behavior:auto!important;
+    transition-duration:.01ms!important;
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+  }
+}
