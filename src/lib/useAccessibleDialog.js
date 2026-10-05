@@ -64,7 +64,13 @@ export function useAccessibleDialog(onClose, { lockScroll = false } = {}) {
       const last = focusable[focusable.length - 1];
       const active = document.activeElement;
 
-      if (event.shiftKey && (active === first || !dialog.contains(active))) {
+      if (!dialog.contains(active)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus({ preventScroll: true });
+        return;
+      }
+
+      if (event.shiftKey && active === first) {
         event.preventDefault();
         last.focus({ preventScroll: true });
       } else if (!event.shiftKey && active === last) {

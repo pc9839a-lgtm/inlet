@@ -1,8 +1,9 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { NAV } from '../../builder/navigation.js';
 
 export function WorkspaceTabs({ allowedTabs, tab, changeTab }) {
   const tabRefs = useRef(new Map());
+  const previousTabRef = useRef(tab);
   const items = useMemo(
     () => NAV.filter(([key]) => allowedTabs.includes(key)),
     [allowedTabs],
@@ -14,6 +15,22 @@ export function WorkspaceTabs({ allowedTabs, tab, changeTab }) {
     const [nextKey] = items[normalized];
     tabRefs.current.get(nextKey)?.focus();
   };
+
+  useEffect(() => {
+    const previousTab = previousTabRef.current;
+    previousTabRef.current = tab;
+    if (previousTab === tab || typeof document === 'undefined') return;
+
+    const active = document.activeElement;
+    const focusLost = !active
+      || active === document.body
+      || active === document.documentElement
+      || !active.isConnected;
+
+    if (focusLost) {
+      tabRefs.current.get(tab)?.focus?.({ preventScroll: true });
+    }
+  }, [tab]);
 
   const onKeyDown = (event, index) => {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;

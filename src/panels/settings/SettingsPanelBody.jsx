@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Code2,
   Copy,
@@ -47,7 +47,7 @@ const ADVANCED_NAV = [
 const ALL_NAV = [...PRIMARY_NAV, ...SERVICE_NAV, ...ADVANCED_NAV];
 const ADVANCED_IDS = new Set(ADVANCED_NAV.map(([id]) => id));
 
-function SettingsNavGroup({ label, items, selectedSection, selectSection }) {
+function SettingsNavGroup({ label, items, selectedSection, selectSection, registerNavButton }) {
   const labelId = `settings-nav-${label}-label`;
   return (
     <nav className="settings-nav-group" aria-labelledby={labelId}>
@@ -56,6 +56,7 @@ function SettingsNavGroup({ label, items, selectedSection, selectSection }) {
         {items.map(([id, itemLabel, Icon]) => (
           <button
             key={id}
+            ref={(node) => registerNavButton?.(id, node)}
             type="button"
             className={`settings-nav-item ${selectedSection === id ? 'active' : ''}`}
             aria-current={selectedSection === id ? 'page' : undefined}
@@ -134,6 +135,8 @@ export default function SettingsPanelBody({
   const availableIds = useMemo(() => new Set(availableItems.map(([id]) => id)), [availableItems]);
   const initialSection = availableIds.has(openSection) ? openSection : (primaryItems[0]?.[0] || 'account');
   const [selectedSection, setSelectedSection] = useState(initialSection);
+  const navButtonRefs = useRef(new Map());
+  const previousSectionRef = useRef(selectedSection);
   const selectedLabel = ALL_NAV.find(([id]) => id === selectedSection)?.[1] || '페이지 기본';
 
   const selectSection = (id) => {
@@ -150,6 +153,27 @@ export default function SettingsPanelBody({
     setAdvancedOpen(false);
     setOpenSection(fallback);
   }, [availableIds, primaryItems, selectedSection, setAdvancedOpen, setOpenSection]);
+
+  useEffect(() => {
+    const previousSection = previousSectionRef.current;
+    previousSectionRef.current = selectedSection;
+    if (previousSection === selectedSection || typeof document === 'undefined') return;
+
+    const active = document.activeElement;
+    const focusLost = !active
+      || active === document.body
+      || active === document.documentElement
+      || !active.isConnected;
+
+    if (focusLost) {
+      navButtonRefs.current.get(selectedSection)?.focus?.({ preventScroll: true });
+    }
+  }, [selectedSection]);
+
+  const registerNavButton = (id, node) => {
+    if (node) navButtonRefs.current.set(id, node);
+    else navButtonRefs.current.delete(id);
+  };
 
   const visibleSections = {
     ...sections,
@@ -168,6 +192,7 @@ export default function SettingsPanelBody({
           items={primaryItems}
           selectedSection={selectedSection}
           selectSection={selectSection}
+          registerNavButton={registerNavButton}
         />
         {serviceItems.length > 0 && (
           <SettingsNavGroup

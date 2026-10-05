@@ -971,6 +971,24 @@ async function run() {
     assert(editSectionTabStyle.activeHeight === 32, `active edit section tab must be 32px tall, got ${editSectionTabStyle.activeHeight}px`);
     assert(editSectionTabStyle.inactiveBackground === 'rgba(0, 0, 0, 0)', `inactive edit section tab must stay transparent, got ${editSectionTabStyle.inactiveBackground}`);
 
+    // P9-2: a tab transition triggered from content that disappears must recover focus.
+    const inboxTransitionFocused = await evaluate(client, `(() => {
+      const button = [...document.querySelectorAll('.conversion-cockpit-actions button')]
+        .find((item) => item.textContent.trim() === '접수함');
+      if (!button) return false;
+      button.focus();
+      return document.activeElement === button;
+    })()`);
+    assert(inboxTransitionFocused, 'conversion cockpit inbox trigger was not focusable');
+    await evaluate(client, `[...document.querySelectorAll('.conversion-cockpit-actions button')].find((item) => item.textContent.trim() === '접수함')?.click(); true`);
+    await waitForBrowser(client, `document.querySelector('#workspace-tab-inbox')?.getAttribute('aria-selected') === 'true'`, 'inbox workspace transition');
+    await waitForBrowser(client, `document.activeElement?.id === 'workspace-tab-inbox'`, 'focus recovery after inbox transition');
+
+    await focusSelector(client, '#workspace-tab-edit');
+    await clickSelector(client, '#workspace-tab-edit');
+    await waitForBrowser(client, `document.querySelector('#workspace-tab-edit')?.getAttribute('aria-selected') === 'true'`, 'return to edit workspace');
+    assert(await evaluate(client, `document.activeElement?.id === 'workspace-tab-edit'`), 'workspace tab focus should remain stable after returning to edit');
+
     await capture(client, 'desktop-editor-before');
 
     // P9-1: real keyboard-only operation for editor rows and overflow dropdown.
@@ -1167,6 +1185,27 @@ async function run() {
     await setInputValue(client, '#editor-block-editor-code + .screen-order-v2-inline-editor input[aria-label="구분 이름"]', persistedCodeLabel);
     await waitForBrowser(client, `(document.querySelector('#editor-block-editor-code .screen-order-v2-title-wrap strong')?.textContent || '').includes(${JSON.stringify(persistedCodeLabel)})`, 'screen order custom code label');
 
+    // P9-2: modal focus must stay contained and return to the opener on Escape.
+    const codeModalTrigger = '#editor-block-editor-code + .screen-order-v2-inline-editor .code-editor-head button';
+    await focusSelector(client, codeModalTrigger);
+    await clickSelector(client, codeModalTrigger);
+    await waitForBrowser(client, `!!document.querySelector('.code-editor-modal-card[role="dialog"]')`, 'code editor modal open');
+    await waitForBrowser(client, `document.activeElement?.closest?.('.code-editor-modal-card') !== null`, 'code editor modal initial focus');
+
+    await focusSelector(client, '.panel-actions .primary-btn');
+    await pressKeyboardKey(client, 'Tab');
+    assert(await evaluate(client, `document.activeElement?.closest?.('.code-editor-modal-card') !== null`), 'forward Tab from outside must be recovered into the modal');
+
+    await focusSelector(client, '.code-editor-modal-actions button');
+    await pressKeyboardKey(client, 'Tab');
+    assert(await evaluate(client, `document.activeElement === document.querySelector('.code-editor-modal-head button')`), 'Tab from the last modal control must wrap to the first');
+    await pressKeyboardKey(client, 'Tab', { shift: true });
+    assert(await evaluate(client, `document.activeElement === document.querySelector('.code-editor-modal-actions button')`), 'Shift+Tab from the first modal control must wrap to the last');
+
+    await pressKeyboardKey(client, 'Escape');
+    await waitForBrowser(client, `!document.querySelector('.code-editor-modal-card')`, 'code editor modal Escape close');
+    await waitForBrowser(client, `document.activeElement === document.querySelector(${JSON.stringify(codeModalTrigger)})`, 'modal focus return to opener');
+
     await clickSelector(client, '.panel-actions .primary-btn');
     await waitForState(() => apiState.saveCount === 3, 'publish restored revision with additional edit');
     await waitForState(() => apiState.publicVerifyCount >= 2, 'public verification after revision publish');
@@ -1317,7 +1356,8 @@ async function run() {
       conversionCockpit: true,
       publishChecklist: true,
       keyboardOnlyP91: ['Enter', 'Space', 'Tab', 'Shift+Tab', 'Escape'],
-      realUseFlows: ['keyboard-row-activation', 'keyboard-dropdown', 'add-block', 'undo-redo', 'visibility', 'menu-reorder', 'pointer-drag-reorder', 'style-apply', 'preview-continue', 'publish-race', 'revision-restore-undo-redo', 'post-restore-publish-readback', 'narrow-desktop'],
+      focusManagementP92: ['modal-trap', 'modal-return', 'workspace-transition-recovery'],
+      realUseFlows: ['focus-recovery-workspace-transition', 'modal-focus-trap-return', 'keyboard-row-activation', 'keyboard-dropdown', 'add-block', 'undo-redo', 'visibility', 'menu-reorder', 'pointer-drag-reorder', 'style-apply', 'preview-continue', 'publish-race', 'revision-restore-undo-redo', 'post-restore-publish-readback', 'narrow-desktop'],
     }, null, 2));
   } finally {
     await client?.close().catch(() => {});
