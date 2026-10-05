@@ -227,14 +227,23 @@ assert(results.every((scenario) => scenario.checks.length === 6), 'all P8 benchm
 const d1AdapterSource = await import('node:fs/promises').then(({ readFile }) => readFile('server/storage/d1Adapter.mjs', 'utf8'));
 const leadsApiSource = await import('node:fs/promises').then(({ readFile }) => readFile('functions/api/leads.js', 'utf8'));
 const leadRepositorySource = await import('node:fs/promises').then(({ readFile }) => readFile('src/lib/leadRepository.js', 'utf8'));
+const csvExportSource = await import('node:fs/promises').then(({ readFile }) => readFile('functions/api/leads/export.csv.js', 'utf8'));
 
-assert(d1AdapterSource.includes('parseD1LeadCursor(cursor)'), 'D1 lead pagination must parse opaque cursors');
+assert(d1AdapterSource.includes('function parseD1LeadCursor') && (d1AdapterSource.match(/parseD1LeadCursor\(options\.cursor\)/g) || []).length >= 2, 'D1 lead pagination and export scans must parse opaque cursors');
 assert(d1AdapterSource.includes('(created_at < ? OR (created_at = ? AND id < ?))'), 'D1 lead pagination must use a stable keyset boundary');
 assert(d1AdapterSource.includes('ORDER BY created_at DESC, id DESC LIMIT ?'), 'D1 lead pagination must use deterministic ordering');
 assert(d1AdapterSource.includes('encodeD1LeadCursor(last.created_at, last.id)'), 'D1 lead pagination must return an opaque keyset cursor');
 assert(d1AdapterSource.includes("pagination: cursorState.mode === 'offset' && cursorState.offset > 0 ? 'offset-compat' : 'keyset'"), 'legacy numeric cursor must remain compatibility-only');
 assert(leadsApiSource.includes("cursor: url.searchParams.get('cursor') || ''"), 'Pages API must preserve opaque cursors');
 assert(leadRepositorySource.includes("cursor: options.cursor ?? ''"), 'browser repository must preserve opaque cursors');
+assert(d1AdapterSource.includes('export async function scanD1Leads'), 'large exports must use a count-free D1 lead scanner');
+assert(d1AdapterSource.includes('countQuerySkipped: true'), 'large export scans must not run a COUNT query for every page');
+assert(csvExportSource.includes('const EXPORT_PAGE_SIZE = 500'), 'CSV streaming should use bounded 500-row D1 batches');
+assert(csvExportSource.includes('const MAX_EXPORT_ROWS = 50_000'), 'CSV export should have an explicit 50k safety ceiling');
+assert(csvExportSource.includes('new ReadableStream({'), 'CSV export response must stream rows instead of building one giant string');
+assert(csvExportSource.includes('discoverExportShape') && csvExportSource.includes('createCsvStream'), 'CSV export should separate header discovery from row streaming');
+assert(csvExportSource.includes("'X-Pagero-Export-Mode': 'stream'"), 'CSV response should expose streaming mode');
+assert(!csvExportSource.includes('const leads = [];') && !csvExportSource.includes('leads.push(...page.records)'), 'CSV export must not accumulate the full result set in memory');
 
 console.log(JSON.stringify({
   ok: true,
@@ -249,6 +258,8 @@ console.log(JSON.stringify({
     scopedTextSearchUsesProjectMonthIndex: true,
     primaryLeadPagination: 'keyset',
     legacyOffsetCompatibility: true,
-    csvStreamingNotCoveredYet: true,
+    csvStreaming: true,
+    csvMaxRowsPerRequest: 50000,
+    csvBatchSize: 500,
   },
 }, null, 2));

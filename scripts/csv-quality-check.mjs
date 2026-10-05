@@ -82,6 +82,10 @@ const serverSource = await readFile('server/index.mjs', 'utf8');
 const functionsCsvSource = await readFile('functions/api/leads/export.csv.js', 'utf8');
 assert(!serverSource.includes('외부 전송 상태') && !serverSource.includes('외부 전송 로그'), 'server CSV exports should not expose delivery status/log columns');
 assert(!functionsCsvSource.includes('답변 전체') && !functionsCsvSource.includes('입력값 전체') && !functionsCsvSource.includes('answersText(lead.answers)') && !functionsCsvSource.includes('valuesText(lead.values)'), 'functions CSV exports should expose form fields as columns instead of bundled answer/value text');
+assert(functionsCsvSource.includes("import { scanD1Leads }"), 'server CSV export should use the count-free D1 scanner');
+assert(functionsCsvSource.includes('new ReadableStream({'), 'server CSV export should stream response chunks');
+assert(functionsCsvSource.includes('const EXPORT_PAGE_SIZE = 500') && functionsCsvSource.includes('const MAX_EXPORT_ROWS = 50_000'), 'server CSV export should use bounded batches and an explicit 50k ceiling');
+assert(!functionsCsvSource.includes('const leads = [];') && !functionsCsvSource.includes('leads.push(...page.records)'), 'server CSV export should not retain the full result set');
 assert(!serverSource.includes('leadsToCsvV2') && !serverSource.includes('function leadsToCsvExport('), 'legacy server CSV exporters should be removed');
 
 const filtered = filterLeadsForCsv(sampleLeads, {
@@ -155,4 +159,4 @@ globalThis.Blob = originalBlob;
 globalThis.URL = originalUrl;
 globalThis.document = originalDocument;
 
-console.log(JSON.stringify({ ok: true, checks: 20 }, null, 2));
+console.log(JSON.stringify({ ok: true, checks: 24 }, null, 2));
