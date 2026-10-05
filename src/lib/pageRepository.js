@@ -1,6 +1,7 @@
 import { isServerPageMode } from '../config/runtimeConfig.js';
 import { hasAccountProjectAccess } from './accountProjectAccess.js';
 import { ApiError, apiFetch, postJson, projectAuthHeaders } from './apiClient.js';
+import { pageRoExperimentVisitorId } from './abVisitorIdentity.js';
 import { normalizePageForSave } from './pageModel.js';
 import { optimizePageForServerSave } from './pageSaveOptimizer.js';
 import { projectContext } from './projectContext.js';
@@ -124,9 +125,17 @@ export async function fetchServerPage(slug, context = {}) {
   });
 }
 
-export async function fetchPublicServerPage(slug) {
+export async function fetchPublicServerPage(slug, options = {}) {
   const safeSlug = pageSlug(slug);
-  const res = await apiFetch(`/api/pages/${encodeURIComponent(safeSlug)}?public=1&fresh=${Date.now()}`, {
+  const params = new URLSearchParams({
+    public: '1',
+    fresh: String(Date.now()),
+  });
+  if (options.assignment !== false) {
+    const visitorId = pageRoExperimentVisitorId();
+    if (visitorId) params.set('abv', visitorId);
+  }
+  const res = await apiFetch(`/api/pages/${encodeURIComponent(safeSlug)}?${params.toString()}`, {
     cache: 'no-store',
     headers: noStoreHeaders(),
   });
@@ -209,7 +218,7 @@ async function verifyPublicPageSave(savedPage = {}) {
   const slug = pageSlug(savedPage);
   let publicPage = null;
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    publicPage = await fetchPublicServerPage(slug);
+    publicPage = await fetchPublicServerPage(slug, { assignment: false });
     if (publicPageMatchesSaved(publicPage, savedPage)) return publicPage;
     if (attempt < 2) await sleep(250 * (attempt + 1));
   }
