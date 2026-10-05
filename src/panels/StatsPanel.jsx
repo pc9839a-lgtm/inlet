@@ -107,10 +107,10 @@ function countMetricChange(current, previous) {
   if (previous == null) return null;
   const currentValue = Number(current || 0);
   const previousValue = Number(previous || 0);
-  if (!previousValue) return currentValue ? { label: '신규', tone: 'up' } : { label: '0%', tone: 'flat' };
+  if (!previousValue) return currentValue ? { label: '↑ 신규', tone: 'up' } : { label: '= 0%', tone: 'flat' };
   const change = ((currentValue - previousValue) / previousValue) * 100;
   return {
-    label: (change > 0 ? '+' : '') + change.toFixed(1) + '%',
+    label: (change > 0 ? '↑ +' : change < 0 ? '↓ ' : '= ') + change.toFixed(1) + '%',
     tone: change > 0 ? 'up' : change < 0 ? 'down' : 'flat',
   };
 }
@@ -119,7 +119,7 @@ function rateMetricChange(current, previous) {
   if (previous == null) return null;
   const change = Number(current || 0) - Number(previous || 0);
   return {
-    label: (change > 0 ? '+' : '') + change.toFixed(1) + '%p',
+    label: (change > 0 ? '↑ +' : change < 0 ? '↓ ' : '= ') + change.toFixed(1) + '%p',
     tone: change > 0 ? 'up' : change < 0 ? 'down' : 'flat',
   };
 }
