@@ -118,6 +118,7 @@ function DebouncedMemoInput({ value, onCommit }) {
   return (
     <textarea
       rows={4}
+      aria-label="접수 메모"
       placeholder="메모를 입력하세요."
       value={draft}
       onChange={(event) => setDraft(event.target.value)}
@@ -130,12 +131,13 @@ function DebouncedMemoInput({ value, onCommit }) {
 
 function StatusPills({ value, onChange }) {
   return (
-    <div className="status-pill-row inbox-ops-status-pills">
+    <div className="status-pill-row inbox-ops-status-pills" role="group" aria-label="접수 상태 변경">
       {LEAD_STATUS.map((item) => (
         <button
           key={item}
           type="button"
           className={`${value === item ? 'active' : ''} tone-${statusTone(item)}`}
+          aria-pressed={value === item}
           onClick={() => onChange(item)}
         >
           {item}
@@ -178,8 +180,8 @@ function LeadConflictNotice({ conflict, onReload, onRetry, onDismiss }) {
 
 function SidebarItem({ active, icon: Icon, label, count, onClick }) {
   return (
-    <button type="button" className={`inbox-ops-side-item ${active ? 'active' : ''}`} onClick={onClick}>
-      <Icon size={18} />
+    <button type="button" className={`inbox-ops-side-item ${active ? 'active' : ''}`} aria-current={active ? 'page' : undefined} onClick={onClick}>
+      <Icon size={18} aria-hidden="true" />
       <span>{label}</span>
       {Number.isFinite(Number(count)) ? <b>{count}</b> : null}
     </button>
@@ -344,7 +346,7 @@ export default function InboxPanel({
   return (
     <div className={`simple-panel inbox-panel inbox-ops-root mode-${sectionMode}`}>
       <div className="inbox-ops-layout">
-        <aside className="inbox-ops-sidebar">
+        <aside className="inbox-ops-sidebar" aria-label="접수함 메뉴">
           <div className="inbox-ops-sidebar-title">
             <span>접수함</span>
             <small>{monthItems.length}건</small>
@@ -385,17 +387,17 @@ export default function InboxPanel({
                 <article>
                   <span>오늘 신규</span>
                   <strong>{todayNewCount}</strong>
-                  <InboxIcon size={18} />
+                  <InboxIcon size={18} aria-hidden="true" />
                 </article>
                 <article>
                   <span>처리중</span>
                   <strong>{processingCount}</strong>
-                  <Clock3 size={18} />
+                  <Clock3 size={18} aria-hidden="true" />
                 </article>
                 <article>
                   <span>완료</span>
                   <strong>{doneCount}</strong>
-                  <CheckCircle2 size={18} />
+                  <CheckCircle2 size={18} aria-hidden="true" />
                 </article>
               </section>
 
@@ -403,8 +405,8 @@ export default function InboxPanel({
 
               <section className="inbox-ops-toolbar">
                 <label className="inbox-ops-search">
-                  <Search size={18} />
-                  <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="이름 · 연락처 · 문의" />
+                  <Search size={18} aria-hidden="true" />
+                  <input aria-label="접수 검색" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="이름 · 연락처 · 문의" />
                 </label>
                 <input type="month" value={month} onChange={(event) => setMonth(event.target.value || currentMonthValue())} aria-label="조회 월" />
                 <select
@@ -427,8 +429,8 @@ export default function InboxPanel({
                   <option value="all">상태 전체</option>
                   {LEAD_STATUS.map((item) => <option key={item} value={item}>{item}</option>)}
                 </select>
-                <button type="button" className="inbox-ops-icon-button" onClick={reloadLeads} disabled={syncing} title="새로고침">
-                  <RefreshCw size={18} />
+                <button type="button" className="inbox-ops-icon-button" onClick={reloadLeads} disabled={syncing} title="새로고침" aria-label="접수 목록 새로고침">
+                  <RefreshCw size={18} aria-hidden="true" />
                 </button>
                 {exportLeadsCsv ? (
                   <button
@@ -442,7 +444,7 @@ export default function InboxPanel({
                       q: query.trim(),
                     })}
                   >
-                    <Download size={17} /> CSV
+                    <Download size={17} aria-hidden="true" /> CSV
                   </button>
                 ) : null}
               </section>
@@ -504,10 +506,10 @@ export default function InboxPanel({
               </section>
             </main>
 
-            <aside className="inbox-ops-detail">
+            <aside className="inbox-ops-detail" aria-label="선택한 접수 상세">
               {!selectedLead ? (
                 <div className="inbox-ops-detail-empty">
-                  <InboxIcon size={28} />
+                  <InboxIcon size={28} aria-hidden="true" />
                   <strong>문의 선택</strong>
                 </div>
               ) : (
@@ -587,14 +589,14 @@ export default function InboxPanel({
 
                   <div className="inbox-ops-detail-actions">
                     <button type="button" className="secondary" onClick={() => copyLead(selectedLead)}>
-                      <Copy size={17} /> 문의 복사
+                      <Copy size={17} aria-hidden="true" /> 문의 복사
                     </button>
                     <button type="button" className="primary" onClick={() => updateLeadSafe(selectedLead.id, { status: '종료' })}>
-                      <CheckCircle2 size={17} /> 완료 처리
+                      <CheckCircle2 size={17} aria-hidden="true" /> 완료 처리
                     </button>
                     {deleteLead ? (
-                      <button type="button" className="danger" onClick={() => deleteLead(selectedLead.id)} title="접수 삭제">
-                        <Trash2 size={17} />
+                      <button type="button" className="danger" onClick={() => deleteLead(selectedLead.id)} title="접수 삭제" aria-label="접수 삭제">
+                        <Trash2 size={17} aria-hidden="true" />
                       </button>
                     ) : null}
                   </div>
@@ -602,7 +604,7 @@ export default function InboxPanel({
                   {copyFallback?.id === selectedLead.id ? (
                     <section className="inbox-ops-copy-fallback" aria-live="polite">
                       <h4>복사할 내용</h4>
-                      <textarea readOnly value={copyFallback.text} onFocus={(event) => event.currentTarget.select()} />
+                      <textarea aria-label="복사할 접수 내용" readOnly value={copyFallback.text} onFocus={(event) => event.currentTarget.select()} />
                     </section>
                   ) : null}
                 </>

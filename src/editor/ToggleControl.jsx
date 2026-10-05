@@ -4,12 +4,14 @@ export function Toggle({ label, checked, onChange, disabled = false }) {
       <span>{label}</span>
       <button
         type="button"
+        role="switch"
+        aria-checked={checked}
         aria-label={label}
         className={checked ? 'active' : ''}
         disabled={disabled}
         onClick={() => !disabled && onChange(!checked)}
       >
-        <i></i>
+        <i aria-hidden="true"></i>
       </button>
     </div>
   );
