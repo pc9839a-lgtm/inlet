@@ -35,7 +35,7 @@ export async function fetchServerLeads(page, authUser = null, options = {}) {
   const context = projectContext(page, authUser);
   const params = contextParams(context, {
     limit: options.limit || 500,
-    cursor: options.cursor || 0,
+    cursor: options.cursor ?? '',
     kind: options.kind || '',
     status: options.status || '',
     q: options.q || '',
@@ -67,7 +67,7 @@ export async function fetchAllServerLeads(page, authUser = null, options = {}) {
   const limit = Math.max(1, Math.min(5000, Number(options.limit || 2000)));
   const max = Math.max(limit, Math.min(20000, Number(options.max || 10000)));
   const result = [];
-  let cursor = 0;
+  let cursor = '';
   let lastPage = { total: 0, nextCursor: null, hasMore: false };
 
   while (result.length < max) {
