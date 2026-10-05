@@ -92,7 +92,7 @@ Required warning copy:
 
 > CSV contains personal information such as phone, email, address, memo, answers, and delivery logs. Download only to an approved device/location and delete the file when the task is complete.
 
-## Implementation Status And Tasks
+## Implementation Tasks
 
 - D1 retention: lead, delivery log, AI draft, and conservative event retention have a bounded cleanup/report endpoint plus fail-closed runner.
 - Audit retention: the existing dedicated audit retention endpoint/workflow remains separate and keeps its 730-day default/minimum policy.
