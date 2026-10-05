@@ -11,7 +11,7 @@ const REQUIRED_TABLES = Object.freeze([
   'calltag_google_forms_oauth_sessions',
   'calltag_google_forms_connections',
   'calltag_push_devices',
-  'pagero_leads',
+  'calltag_pagero_leads',
 ]);
 
 function json(status, payload) {
