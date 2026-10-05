@@ -41,8 +41,41 @@ const STATEMENTS = [
     ON calltag_google_forms_connections(owner_id, status, updated_at DESC)`,
 ];
 
+const googleFormsSchemaReady = new WeakSet();
+const googleFormsSchemaInFlight = new WeakMap();
+
 export async function ensureGoogleFormsSchema(db) {
   if (!db?.prepare) throw leadError('Google Forms database is not configured.', 503, 'CALLTAG_GOOGLE_FORMS_DB_REQUIRED');
-  await ensureUniversalLeadSchema(db);
-  for (const statement of STATEMENTS) await db.prepare(statement).run();
+  if (googleFormsSchemaReady.has(db)) return;
+
+  const existing = googleFormsSchemaInFlight.get(db);
+  if (existing) return existing;
+
+  const task = (async () => {
+    await ensureUniversalLeadSchema(db);
+    try {
+      await db.prepare(`
+        SELECT id, owner_id, status
+        FROM calltag_google_forms_oauth_sessions
+        LIMIT 1
+      `).first();
+      await db.prepare(`
+        SELECT id, owner_id, form_id, status
+        FROM calltag_google_forms_connections
+        LIMIT 1
+      `).first();
+      googleFormsSchemaReady.add(db);
+      return;
+    } catch {}
+
+    for (const statement of STATEMENTS) await db.prepare(statement).run();
+    googleFormsSchemaReady.add(db);
+  })();
+
+  googleFormsSchemaInFlight.set(db, task);
+  try {
+    await task;
+  } finally {
+    googleFormsSchemaInFlight.delete(db);
+  }
 }
