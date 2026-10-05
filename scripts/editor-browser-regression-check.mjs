@@ -547,6 +547,40 @@ async function clickButtonByText(client, scopeSelector, text) {
   assert(clicked, `Unable to click button "${text}" in ${scopeSelector}`);
 }
 
+const KEYBOARD_KEYS = {
+  Tab: { key: 'Tab', code: 'Tab', virtualKeyCode: 9 },
+  Enter: { key: 'Enter', code: 'Enter', virtualKeyCode: 13 },
+  Space: { key: ' ', code: 'Space', virtualKeyCode: 32 },
+  Escape: { key: 'Escape', code: 'Escape', virtualKeyCode: 27 },
+};
+
+async function pressKeyboardKey(client, keyName, { shift = false } = {}) {
+  const config = KEYBOARD_KEYS[keyName];
+  assert(config, `Unsupported browser QA key: ${keyName}`);
+  const modifiers = shift ? 8 : 0;
+  const base = {
+    key: config.key,
+    code: config.code,
+    windowsVirtualKeyCode: config.virtualKeyCode,
+    nativeVirtualKeyCode: config.virtualKeyCode,
+    modifiers,
+  };
+  await client.send('Input.dispatchKeyEvent', { type: 'keyDown', ...base });
+  await client.send('Input.dispatchKeyEvent', { type: 'keyUp', ...base });
+  await wait(120);
+}
+
+async function focusSelector(client, selector) {
+  const focused = await evaluate(client, `(() => {
+    const element = document.querySelector(${JSON.stringify(selector)});
+    if (!element) return false;
+    element.scrollIntoView({ block: 'center', inline: 'center' });
+    element.focus();
+    return document.activeElement === element;
+  })()`);
+  assert(focused, `Unable to focus ${selector}`);
+}
+
 async function clickPointer(client, selector) {
   const point = await evaluate(client, `(() => {
     const element = document.querySelector(${JSON.stringify(selector)});
@@ -939,6 +973,50 @@ async function run() {
 
     await capture(client, 'desktop-editor-before');
 
+    // P9-1: real keyboard-only operation for editor rows and overflow dropdown.
+    const heroTitleSelector = '#editor-block-editor-hero .screen-order-v2-title-wrap';
+    const heroVisibilitySelector = '#editor-block-editor-hero .screen-order-v2-visibility-button';
+    const formActionSelector = '#editor-block-editor-form .screen-order-v2-action';
+
+    const dragKeyboardState = await evaluate(client, `(() => {
+      const drag = document.querySelector('#editor-block-editor-hero .screen-order-v2-drag');
+      return drag ? { tabIndex: drag.tabIndex, role: drag.getAttribute('role'), ariaHidden: drag.getAttribute('aria-hidden') } : null;
+    })()`);
+    assert(dragKeyboardState, 'hero drag handle was not found for keyboard audit');
+    assert(dragKeyboardState.tabIndex < 0, `pointer-only drag handle must not create a dead Tab stop: ${JSON.stringify(dragKeyboardState)}`);
+    assert(!dragKeyboardState.role, `pointer-only drag handle must not expose a non-operable button role: ${JSON.stringify(dragKeyboardState)}`);
+
+    await focusSelector(client, heroTitleSelector);
+    await pressKeyboardKey(client, 'Enter');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroTitleSelector)})?.getAttribute('aria-pressed') === 'true'`, 'hero row Enter activation');
+    await waitForBrowser(client, `!!document.querySelector('#editor-block-editor-hero + .screen-order-v2-inline-editor[data-inline-block-editor="true"]')`, 'hero inline editor from Enter');
+
+    await focusSelector(client, heroVisibilitySelector);
+    await pressKeyboardKey(client, 'Space');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroVisibilitySelector)})?.getAttribute('aria-checked') === 'false'`, 'hero visibility Space activation off');
+    await pressKeyboardKey(client, 'Space');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroVisibilitySelector)})?.getAttribute('aria-checked') === 'true'`, 'hero visibility Space activation on');
+
+    await focusSelector(client, formActionSelector);
+    await pressKeyboardKey(client, 'Enter');
+    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-menu')`, 'form action dropdown from Enter');
+    await waitForBrowser(client, `document.activeElement?.matches?.('.screen-order-v2-menu button:not(:disabled)')`, 'dropdown first keyboard action focus');
+    const firstMenuActionText = await evaluate(client, 'document.activeElement?.textContent?.trim() || ""');
+    await pressKeyboardKey(client, 'Tab');
+    assert(await evaluate(client, `document.activeElement?.closest?.('.screen-order-v2-menu') !== null`), 'Tab must move within the open block action dropdown');
+    assert((await evaluate(client, 'document.activeElement?.textContent?.trim() || ""')) !== firstMenuActionText, 'Tab must advance to the next dropdown action');
+    await pressKeyboardKey(client, 'Tab', { shift: true });
+    assert((await evaluate(client, 'document.activeElement?.textContent?.trim() || ""')) === firstMenuActionText, 'Shift+Tab must return to the previous dropdown action');
+    await pressKeyboardKey(client, 'Escape');
+    await waitForBrowser(client, `!document.querySelector('.screen-order-v2-menu')`, 'dropdown Escape close');
+    assert(await evaluate(client, `document.activeElement === document.querySelector(${JSON.stringify(formActionSelector)})`), 'Escape must return dropdown focus to its trigger');
+
+    await pressKeyboardKey(client, 'Space');
+    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-menu')`, 'form action dropdown from Space');
+    await waitForBrowser(client, `document.activeElement?.matches?.('.screen-order-v2-menu button:not(:disabled)')`, 'Space-opened dropdown action focus');
+    await pressKeyboardKey(client, 'Escape');
+    await waitForBrowser(client, `!document.querySelector('.screen-order-v2-menu')`, 'Space-opened dropdown Escape close');
+
     const heroEditorSelector = '.screen-order-v2-inline-editor textarea[placeholder="핵심 제목을 입력하세요"]';
     await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'selected hero inline editor textarea');
@@ -1236,7 +1314,8 @@ async function run() {
       responsiveGeometryLocked: true,
       conversionCockpit: true,
       publishChecklist: true,
-      realUseFlows: ['add-block', 'undo-redo', 'visibility', 'menu-reorder', 'pointer-drag-reorder', 'style-apply', 'preview-continue', 'publish-race', 'revision-restore-undo-redo', 'post-restore-publish-readback', 'narrow-desktop'],
+      keyboardOnlyP91: ['Enter', 'Space', 'Tab', 'Shift+Tab', 'Escape'],
+      realUseFlows: ['keyboard-row-activation', 'keyboard-dropdown', 'add-block', 'undo-redo', 'visibility', 'menu-reorder', 'pointer-drag-reorder', 'style-apply', 'preview-continue', 'publish-race', 'revision-restore-undo-redo', 'post-restore-publish-readback', 'narrow-desktop'],
     }, null, 2));
   } finally {
     await client?.close().catch(() => {});
