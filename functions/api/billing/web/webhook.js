@@ -1,9 +1,12 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../../_shared.js';
 import {
   recordWebhookReceipt,
-  verifyWebBillingWebhook,
   webBillingError,
+  webBillingPayloadSha256,
+  webBillingReadiness,
+  webBillingWebhookMaxSkewMs,
 } from '../_webBilling.js';
+import { assertWebBillingProviderAdapter } from '../providers/_registry.js';
 
 const METHODS = 'POST, OPTIONS';
 
@@ -20,7 +23,23 @@ export async function onRequest({ request, env }) {
       throw webBillingError('Webhook 본문 크기가 올바르지 않습니다.', 400, 'WEBHOOK_BODY_INVALID');
     }
 
-    const verified = await verifyWebBillingWebhook(request, env, rawBody);
+    const readiness = webBillingReadiness(env);
+    if (!readiness.providerConfigured || !readiness.providerAdapterReady || !readiness.webhookConfigured || !readiness.chargingEnabled) {
+      throw webBillingError(
+        '웹 결제 webhook은 아직 활성화되지 않았습니다.',
+        503,
+        'WEB_BILLING_WEBHOOK_DISABLED',
+        { stage: readiness.stage },
+      );
+    }
+    const adapter = assertWebBillingProviderAdapter(readiness.provider);
+    const verified = await adapter.verifyWebhook({
+      request,
+      env,
+      rawBody,
+      maxSkewMs: webBillingWebhookMaxSkewMs(),
+      payloadSha256: await webBillingPayloadSha256(rawBody),
+    });
     let payload = {};
     try {
       payload = JSON.parse(rawBody);
@@ -30,10 +49,10 @@ export async function onRequest({ request, env }) {
 
     const eventType = String(payload?.type || payload?.eventType || '').trim().slice(0, 120);
     const receipt = await recordWebhookReceipt(db, {
-      provider: verified.provider,
-      eventId: verified.eventId,
+      provider: readiness.provider,
+      eventId: String(verified?.eventId || ''),
       eventType,
-      payloadSha256: verified.payloadSha256,
+      payloadSha256: String(verified?.payloadSha256 || await webBillingPayloadSha256(rawBody)),
     });
 
     return jsonResponse(request, env, 200, {

@@ -11,6 +11,7 @@ const steps = [
   ['docs:qa', ['scripts/docs-hygiene-quality-check.mjs']],
   ['pagero:platform-copy-density:qa', ['scripts/pagero-platform-copy-density-quality-check.mjs']],
   ['pagero:web-billing:p7:qa', ['scripts/pagero-web-billing-p7-quality-check.mjs']],
+  ['pagero:web-billing:provider-boundary:qa', ['scripts/pagero-web-billing-provider-boundary-quality-check.mjs']],
   ['pagero:launch-smoke:contract:qa', ['scripts/pagero-launch-smoke-contract-check.mjs']],
   ['pagero:editor-shell:e1:qa', ['scripts/pagero-editor-shell-e1-quality-check.mjs']],
   ['pagero:editor-css-owner:cleanup-1b:qa', ['scripts/pagero-editor-css-owner-cleanup-1b-quality-check.mjs']],

@@ -126,11 +126,14 @@
 - 주문 금액은 서버 고정값 3,500원 / 5,500원으로 검증
 - 주문 idempotency: `owner_id + idempotency_key`
 - webhook idempotency: `provider + event_id`
-- webhook 서명: HMAC-SHA256 + timestamp replay window
-- 실제 provider 활성화 전에는 generic webhook이 구독 entitlement를 직접 변경하지 않음
-- `INLET_WEB_BILLING_ORDER_WRITE_ENABLED`와 `INLET_WEB_BILLING_CHARGING_ENABLED`가 모두 명시적으로 준비되지 않으면 실제 결제로 진행하지 않음
+- webhook 검증은 실제 PG를 선택한 뒤 provider 전용 adapter가 해당 PG의 공식 서명 규칙으로 처리한다. 범용 가짜 헤더 규칙을 제품 계약으로 가정하지 않는다.
+- provider adapter가 없으면 readiness는 `provider_adapter_missing`으로 fail-closed 처리한다.
+- 내부 normalized lifecycle은 결제 성공/실패, 갱신, grace, 취소, 부분/전액 환불 상태 전이를 별도 계약으로 관리한다.
+- 실제 provider 활성화 전에는 generic webhook이 구독 entitlement를 직접 변경하지 않는다.
+- 읽기 전용 `GET /api/billing/web/history`는 web order와 payment event를 같은 계정 범위로 반환한다.
+- `INLET_WEB_BILLING_ORDER_WRITE_ENABLED`와 `INLET_WEB_BILLING_CHARGING_ENABLED`가 모두 명시적으로 준비되지 않으면 실제 결제로 진행하지 않는다.
 
-production `0016_pagero_web_billing_foundation.sql` 적용과 실제 PG 활성화는 별도 운영 단계다.
+production `0016_pagero_web_billing_foundation.sql`은 적용 완료됐다. 현재 production 원장의 web order / webhook event는 0건이며 실제 PG 활성화는 별도 운영 단계다.
 
 ## 공용 API
 
@@ -140,6 +143,7 @@ production `0016_pagero_web_billing_foundation.sql` 적용과 실제 PG 활성�
 - `GET /api/billing/entitlements`
 - `POST /api/billing/web/precheck`
 - `POST /api/billing/web/confirm`
+- `GET /api/billing/web/history`
 - `POST /api/billing/google/verify`
 - `POST /api/billing/google/restore`
 

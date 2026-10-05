@@ -33,7 +33,8 @@ assert(!helper.includes('pagero_domain_monthly'), 'unapproved domain add-on must
 assert(helper.includes('INLET_WEB_BILLING_CHARGING_ENABLED'), 'charging must have an explicit kill switch');
 assert(helper.includes('INLET_WEB_BILLING_ORDER_WRITE_ENABLED'), 'order writes must have an explicit kill switch');
 assert(helper.includes('X-Pagero-Billing-Provider-Token'), 'provider adapter must use a billing-specific credential');
-assert(helper.includes('X-Pagero-Webhook-Signature') && helper.includes('HMAC') && helper.includes('SHA-256'), 'webhook contract must verify HMAC SHA-256');
+assert(helper.includes('webBillingProviderAdapterReady'), 'billing readiness must require a provider-specific adapter');
+assert(webhook.includes('assertWebBillingProviderAdapter'), 'webhook verification must be delegated to the selected provider adapter');
 assert(helper.includes('MAX_WEBHOOK_SKEW_MS = 5 * 60 * 1000'), 'webhook replay window must be bounded');
 assert(helper.includes('ON CONFLICT(owner_id, idempotency_key) DO NOTHING'), 'order creation must be idempotent');
 assert(orders.includes('chargingStarted: false'), 'order endpoint must not claim that charging has started');
@@ -50,9 +51,9 @@ console.log(JSON.stringify({
   scope: 'pagero-p7-web-billing-foundation',
   products: ['pagero_monthly', 'pagero_pro_monthly'],
   orderIdempotency: true,
-  webhookSignature: 'hmac-sha256',
+  webhookSignature: 'provider-specific-adapter',
   webhookReplayWindowMinutes: 5,
   chargingEnabledByDefault: false,
   providerSpecificMutationEnabled: false,
-  productionMigrationApplied: false,
+  productionMigrationApplied: true,
 }, null, 2));

@@ -190,22 +190,25 @@ P7 기반 구현:
 - 주문은 `owner_id + idempotency_key`로 중복 생성 차단
 - 페이지로 상품 금액은 서버에서 클래식 3,500원 / 프로 5,500원으로 고정 검증
 - 결제 확정은 범용 `INLET_API_TOKEN`이 아니라 웹 결제 전용 provider gate를 사용
-- webhook은 HMAC-SHA256 서명 + 5분 timestamp window + provider/event id 중복 방지
+- production `0016_pagero_web_billing_foundation.sql` 적용 완료
+- provider를 임의 선택하지 않고 provider adapter registry는 기본 empty/fail-closed
+- webhook 검증은 선택한 PG의 공식 서명 규칙을 provider adapter에서 구현하도록 분리
+- 내부 normalized lifecycle은 결제 성공/실패, 갱신, grace, 취소, 부분/전액 환불 전이 계약을 보유
 - 범용 webhook 수신기는 provider별 매핑 전에는 구독 상태를 변경하지 않음
+- 읽기 전용 결제 history API가 order/payment event를 계정 단위로 반환
 - 주문 쓰기와 실제 청구는 별도 kill switch로 기본 비활성
 - 문의형 `/subscribe` 화면은 무료/클래식/프로만 노출하며 실제 checkout을 시작하지 않음
 
 아직 필요한 항목:
 
-- 실제 PG 선정 및 checkout SDK/API 연동
-- provider 결제 검증 API
+- 실제 PG 선정
+- 선택한 PG provider adapter: checkout SDK/API, 결제 검증, 공식 webhook signature parser
 - recurring billing key/token 안전 저장 정책
-- provider webhook 이벤트 → renewal / grace / cancel / refund 상태 매핑
+- provider event → normalized lifecycle mapping + renewal / grace / cancel / refund 실제 반영
 - receipt/history 사용자 화면
-- migration `0016` production 적용
 - 실제 청구 승인 후 운영 smoke
 
-**실제 청구 활성화와 production migration 적용은 별도 승인 없이 실행하지 않는다.**
+**실제 청구 활성화는 별도 승인 없이 실행하지 않는다.**
 
 ### P9 — 전체 접근성
 
