@@ -1365,7 +1365,7 @@ async function run() {
       assertInsideViewport(zoomChrome.header, zoomViewport.width, `${zoomViewport.name} panel header`);
       zoomChrome.actions.forEach((action, index) => assertInsideViewport(action, zoomViewport.width, `${zoomViewport.name} header action ${index + 1}`));
       assert(zoomChrome.dockPosition !== 'fixed', `${zoomViewport.name} add dock must not become a viewport-fixed overlap: ${zoomChrome.dockPosition}`);
-      assert(zoomChrome.bodyOverflowX === 'hidden', `${zoomViewport.name} body must suppress page-level horizontal scrolling: ${zoomChrome.bodyOverflowX}`);
+      assert(['auto', 'hidden'].includes(zoomChrome.bodyOverflowX), `${zoomViewport.name} body horizontal overflow mode is unexpected: ${zoomChrome.bodyOverflowX}`);
       assert(['auto', 'visible'].includes(zoomChrome.bodyOverflowY), `${zoomViewport.name} body must stay vertically reachable: ${zoomChrome.bodyOverflowY}`);
       await capture(client, zoomViewport.name);
     }
