@@ -95,8 +95,9 @@ body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .work-panel > 
   body:has(.mobile-operations-shell),
   #root:has(.mobile-operations-shell) {
     height: auto !important;
-    min-height: 100dvh !important;
+    min-height: var(--pagero-visual-viewport-height, 100dvh) !important;
     overflow: auto !important;
+    scroll-padding-bottom: max(96px, calc(var(--pagero-keyboard-inset, 0px) + 24px), env(safe-area-inset-bottom)) !important;
   }
 
   .builder-shell.mobile-operations-shell {
@@ -107,7 +108,7 @@ body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .work-panel > 
     --workspace-accent: #2563eb;
     display: block !important;
     width: 100% !important;
-    min-height: 100dvh !important;
+    min-height: var(--pagero-visual-viewport-height, 100dvh) !important;
     height: auto !important;
     max-height: none !important;
     overflow: visible !important;
@@ -116,7 +117,7 @@ body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .work-panel > 
   .mobile-operations-shell .left-workspace {
     width: 100% !important;
     min-width: 0 !important;
-    min-height: 100dvh !important;
+    min-height: var(--pagero-visual-viewport-height, 100dvh) !important;
     height: auto !important;
     max-height: none !important;
     overflow: visible !important;
@@ -127,10 +128,10 @@ body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .work-panel > 
     width: 100% !important;
     min-width: 0 !important;
     max-width: 760px !important;
-    min-height: 100dvh !important;
+    min-height: var(--pagero-visual-viewport-height, 100dvh) !important;
     height: auto !important;
     margin: 0 auto !important;
-    padding: 12px 12px 32px !important;
+    padding: 12px 12px max(32px, calc(var(--pagero-keyboard-inset, 0px) + 20px)) !important;
   }
 
   .builder-shell.mobile-operations-shell ~ .wayzi-global-footer {
