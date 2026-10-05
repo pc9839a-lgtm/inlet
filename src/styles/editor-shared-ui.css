@@ -142,6 +142,10 @@ body .builder-shell .edit-layout :is(.switch-clean.active, .switch-clean[aria-ch
   transform: translateX(18px) !important;
 }
 
+.builder-shell :is(input,textarea)::placeholder{
+  color:var(--product-placeholder,#667085)!important;
+  opacity:1!important;
+}
 .builder-shell :is(button,a,input,textarea,select,[tabindex]):focus-visible{
   outline:3px solid #2563eb!important;
   outline-offset:2px!important;

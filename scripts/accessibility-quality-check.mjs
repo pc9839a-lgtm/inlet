@@ -31,6 +31,9 @@ const files = {
   panelHeader: await readFile('src/builder/PanelHeader.jsx', 'utf8'),
   settingsBody: await readFile('src/panels/settings/SettingsPanelBody.jsx', 'utf8'),
   statsPanel: await readFile('src/panels/StatsPanel.jsx', 'utf8'),
+  statsCss: await readFile('src/panels/StatsPanel.css', 'utf8'),
+  inboxCss: await readFile('src/panels/InboxPanel.css', 'utf8'),
+  settingsWorkspaceCss: await readFile('src/styles/settings-workspace.css', 'utf8'),
   createModalCss: await readFile('src/styles/panels-create-modal.css', 'utf8'),
   formCss: await readFile('src/editor/blockEditors/FormEditor.css', 'utf8'),
   codeCss: await readFile('src/editor/blockEditors/CodeEditor.css', 'utf8'),
@@ -162,7 +165,28 @@ assert(files.createModalCss.includes('prefers-reduced-motion:reduce'), 'modal mo
 assert(files.editorSharedCss.includes('prefers-reduced-motion:reduce'), 'workspace motion should respect reduced-motion preference');
 assert(files.homeShellCss.includes('prefers-reduced-motion:reduce'), 'dashboard motion should respect reduced-motion preference');
 
+function relativeLuminance(hex) {
+  const rgb = String(hex).replace('#', '').match(/.{2}/g).map((value) => Number.parseInt(value, 16) / 255);
+  const linear = rgb.map((value) => value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
+}
+
+function contrastRatio(foreground, background) {
+  const a = relativeLuminance(foreground);
+  const b = relativeLuminance(background);
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+}
+
 assert(files.productTokens.includes('--product-muted-2: #667085;'), 'secondary product text token should meet the strengthened contrast baseline');
+assert(files.productTokens.includes('--product-placeholder: #667085;'), 'placeholder text must use the accessible secondary text token');
+assert(files.productTokens.includes('--product-disabled-text: #475467;'), 'disabled controls must use explicit readable text instead of opacity');
+assert(contrastRatio('#667085', '#ffffff') >= 4.5, 'placeholder/muted text must meet WCAG AA contrast on white');
+assert(contrastRatio('#475467', '#f2f4f7') >= 4.5, 'disabled control text must meet WCAG AA contrast on disabled background');
+assert(files.settingsWorkspaceCss.includes('::placeholder') && files.settingsWorkspaceCss.includes('opacity: 1;'), 'settings placeholders must not inherit translucent browser placeholder styling');
+assert(files.settingsWorkspaceCss.includes('opacity: 1;') && files.settingsWorkspaceCss.includes('var(--product-disabled-text)'), 'settings disabled buttons must not communicate state through opacity alone');
+assert(!files.inboxCss.includes('#94a3b8'), 'inbox helper text must not use the old low-contrast gray');
+assert(files.statsPanel.includes("'↑ +'") && files.statsPanel.includes("'↓ '") && files.statsPanel.includes("'= '"), 'metric change direction must remain visible without relying on green/red color');
+assert(files.settingsWorkspaceCss.includes(".settings-message::before { content: '✓ '") && files.settingsWorkspaceCss.includes(".settings-message.error::before { content: '! '"), 'success and error feedback must have a non-color visual cue');
 assert(!files.homeShellCss.includes('color:#ef4444;font-size:12px'), 'small auth error text should not use the low-contrast red');
 assert(!files.editorSharedCss.includes('color:#94a3b8!important'), 'small editor chrome text should not use the old low-contrast gray');
 
@@ -180,7 +204,7 @@ assert(!unlabeledIconButtons.length, 'icon-only close buttons should have aria-l
 
 console.log(JSON.stringify({
   ok: true,
-  checks: dialogContracts.length + 60,
+  checks: dialogContracts.length + 69,
   keyboardOnly: true,
   focusTrap: true,
   focusReturn: true,
@@ -188,5 +212,5 @@ console.log(JSON.stringify({
   mobileKeyboardViewport: true,
   reducedMotion: true,
   navigationSemantics: true,
-  contrastBaseline: 'strengthened',
+  contrastBaseline: 'wcag-aa-explicit-state-cues',
 }, null, 2));
