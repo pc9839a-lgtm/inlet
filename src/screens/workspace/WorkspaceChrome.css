@@ -235,7 +235,7 @@ body .builder-shell .workspace-active-panel:focus {
 
 @media (max-width: 640px), (max-height: 600px) {
   body .builder-shell .work-panel {
-    scroll-padding-bottom: max(96px, env(safe-area-inset-bottom));
+    scroll-padding-bottom: max(96px, calc(var(--pagero-keyboard-inset, 0px) + 24px), env(safe-area-inset-bottom));
   }
 
   body .builder-shell .top-tabs {
