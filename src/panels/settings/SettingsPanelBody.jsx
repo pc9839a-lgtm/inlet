@@ -215,7 +215,7 @@ export default function SettingsPanelBody({
       <main className="settings-v3-main">
         <div className="settings-v3-content-wrap">
           <header className="settings-page-head settings-page-head-compact">
-            <h1 id="settings-active-title">{selectedLabel}</h1>
+            <h2 id="settings-active-title">{selectedLabel}</h2>
           </header>
 
           <div
