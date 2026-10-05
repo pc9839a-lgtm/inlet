@@ -48,9 +48,10 @@ const ALL_NAV = [...PRIMARY_NAV, ...SERVICE_NAV, ...ADVANCED_NAV];
 const ADVANCED_IDS = new Set(ADVANCED_NAV.map(([id]) => id));
 
 function SettingsNavGroup({ label, items, selectedSection, selectSection }) {
+  const labelId = `settings-nav-${label}-label`;
   return (
-    <nav className="settings-nav-group" aria-label={`${label} 설정`}>
-      <span className="settings-nav-label">{label}</span>
+    <nav className="settings-nav-group" aria-labelledby={labelId}>
+      <span id={labelId} className="settings-nav-label">{label}</span>
       <div className="settings-nav-items">
         {items.map(([id, itemLabel, Icon]) => (
           <button
@@ -189,10 +190,16 @@ export default function SettingsPanelBody({
       <main className="settings-v3-main">
         <div className="settings-v3-content-wrap">
           <header className="settings-page-head settings-page-head-compact">
-            <h1>{selectedLabel}</h1>
+            <h1 id="settings-active-title">{selectedLabel}</h1>
           </header>
 
-          <div id="settings-active-panel" className="settings-v3-content" aria-label={`${selectedLabel} 설정`}>
+          <div
+            id="settings-active-panel"
+            className="settings-v3-content"
+            role="region"
+            tabIndex={-1}
+            aria-labelledby="settings-active-title"
+          >
             {selectedSection === 'media' && canReadMedia && (
               <MediaLibrarySettings
                 page={page}
