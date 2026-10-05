@@ -30,7 +30,14 @@ const files = {
   workspacePanel: await readFile('src/screens/workspace/WorkspaceActivePanel.jsx', 'utf8'),
   panelHeader: await readFile('src/builder/PanelHeader.jsx', 'utf8'),
   settingsBody: await readFile('src/panels/settings/SettingsPanelBody.jsx', 'utf8'),
+  settingsField: await readFile('src/panels/settings/SettingsField.jsx', 'utf8'),
   statsPanel: await readFile('src/panels/StatsPanel.jsx', 'utf8'),
+  inboxPanel: await readFile('src/panels/InboxPanel.jsx', 'utf8'),
+  inboxConnections: await readFile('src/panels/inbox/InboxConnectionsPanel.jsx', 'utf8'),
+  duplicatePolicy: await readFile('src/panels/inbox/DuplicatePolicyPanel.jsx', 'utf8'),
+  editorField: await readFile('src/editor/ui/EditorField.jsx', 'utf8'),
+  toggleControl: await readFile('src/editor/ToggleControl.jsx', 'utf8'),
+  choiceControl: await readFile('src/editor/ChoiceControl.jsx', 'utf8'),
   statsCss: await readFile('src/panels/StatsPanel.css', 'utf8'),
   inboxCss: await readFile('src/panels/InboxPanel.css', 'utf8'),
   settingsWorkspaceCss: await readFile('src/styles/settings-workspace.css', 'utf8'),
@@ -135,6 +142,32 @@ assert(files.statsPanel.includes('role="status"'), 'stats partial notice should 
 assert(files.panelHeader.includes('role="status"') && files.panelHeader.includes('aria-atomic="true"'), 'save feedback should announce atomically');
 assert((files.panelHeader.match(/aria-hidden="true"/g) || []).length >= 3, 'decorative header icons should be hidden from assistive tech');
 
+// P9-5 screen-reader semantics: one workspace h1, nested section/card headings,
+// explicit form relationships, stateful controls, live feedback, and icon-only names.
+assert(files.panelHeader.includes('<h1>{title}</h1>'), 'workspace PanelHeader must remain the primary h1');
+assert(files.settingsBody.includes('<h2 id="settings-active-title">{selectedLabel}</h2>'), 'settings active section should nest under the workspace h1');
+assert(files.statsPanel.includes('<h2>{activeLabel}</h2>'), 'stats active view should nest under the workspace h1');
+assert(files.statsPanel.includes('<h3>최근 접수</h3>') && files.statsPanel.includes('stats-v4-card-title"><h3>'), 'stats cards should nest below the active stats h2');
+
+assert(files.settingsField.includes('useId') && files.settingsField.includes('htmlFor={controlId}'), 'settings controls must have stable programmatic labels');
+assert(files.settingsField.includes("'aria-describedby': describedBy") && files.settingsField.includes("'aria-errormessage': errorId"), 'settings help and errors must be bound to their controls');
+assert(files.editorField.includes("'aria-errormessage': errorId") && files.editorField.includes('htmlFor={controlId}'), 'editor field errors must be bound to the actual control id');
+
+for (const token of ['aria-label="접수 검색"', 'aria-label="접수 메모"', 'aria-label="복사할 접수 내용"', 'aria-label="접수 목록 새로고침"']) {
+  assert(files.inboxPanel.includes(token), `inbox screen-reader label missing: ${token}`);
+}
+assert(files.inboxPanel.includes('aria-current={active ? \'page\' : undefined}') && files.inboxPanel.includes('aria-pressed={value === item}'), 'inbox selected navigation and status controls must expose state');
+assert(files.duplicatePolicy.includes('role="switch"') && files.duplicatePolicy.includes('aria-checked={checked}'), 'duplicate policy switches must expose checked state');
+assert(files.duplicatePolicy.includes('aria-label="차단 내역 조회 월"') && files.duplicatePolicy.includes('role="alert"') && files.duplicatePolicy.includes('role="status"'), 'duplicate history form and async feedback must be announced');
+
+assert(files.inboxConnections.includes('aria-pressed={active}'), 'integration segmented choices must expose pressed state');
+assert(files.inboxConnections.includes('role="switch"') && files.inboxConnections.includes('aria-checked={checked}') && files.inboxConnections.includes('aria-label={label}'), 'integration switches must expose switch semantics and names');
+assert(files.inboxConnections.includes("role={resultIsOk(result) ? 'status' : 'alert'}") && files.inboxConnections.includes("aria-live={resultIsOk(result) ? 'polite' : 'assertive'}"), 'integration async results must expose live-region semantics');
+assert(files.inboxConnections.includes('aria-expanded={open}') && files.inboxConnections.includes('aria-controls="inbox-connections-body"') && files.inboxConnections.includes('aria-expanded={advancedOpen}'), 'integration disclosures must expose expanded relationships');
+
+assert(files.toggleControl.includes('role="switch"') && files.toggleControl.includes('aria-checked={checked}'), 'legacy editor toggles must expose switch state');
+assert(files.choiceControl.includes('role="group" aria-label={label}') && files.choiceControl.includes('aria-pressed={String(value) === String(optionValue)}'), 'editor choice groups must expose labels and selected state');
+
 for (const [label, source] of [
   ['create modal', files.createModalCss],
   ['HTML modal', files.formCss],
@@ -204,7 +237,7 @@ assert(!unlabeledIconButtons.length, 'icon-only close buttons should have aria-l
 
 console.log(JSON.stringify({
   ok: true,
-  checks: dialogContracts.length + 69,
+  checks: dialogContracts.length + 85,
   keyboardOnly: true,
   focusTrap: true,
   focusReturn: true,
@@ -212,5 +245,6 @@ console.log(JSON.stringify({
   mobileKeyboardViewport: true,
   reducedMotion: true,
   navigationSemantics: true,
+  screenReaderSemanticsP95: true,
   contrastBaseline: 'wcag-aa-explicit-state-cues',
 }, null, 2));
