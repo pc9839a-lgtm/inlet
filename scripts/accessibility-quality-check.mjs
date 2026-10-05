@@ -148,7 +148,7 @@ assert(files.workspaceShellCss.includes('@media (max-width: 1180px)'), 'workspac
 assert(files.mobileWorkspaceMode.includes("const COARSE_POINTER_QUERY = '(pointer: coarse)'"), 'mobile operations mode must distinguish coarse-pointer mobile from desktop browser zoom');
 assert(files.mobileWorkspaceMode.includes('widthMedia.matches && pointerMedia.matches'), 'mobile workspace must require both narrow width and coarse pointer');
 assert(files.editorWorkspaceCss.includes('@media (max-width: 1180px)'), 'editor must reflow below 1180px without a 900px lower bound');
-assert(files.editorWorkspaceCss.includes('overflow-y: auto !important;'), 'zoomed desktop editor must remain vertically reachable');
+assert(files.editorWorkspaceCss.includes('overflow: auto !important;'), 'zoomed desktop editor must remain scroll-reachable');
 assert(files.editorWorkspaceCss.includes('.edit-mode-shell:not(.mobile-operations-shell)'), 'zoom reflow must not override true mobile operations mode');
 assert(files.workspaceShellCss.includes('100dvh'), 'workspace shell should use dynamic viewport units');
 assert(files.createModalCss.includes('@media (max-height:520px),(max-width:640px)'), 'create dialog should reflow for short mobile-keyboard viewports');
