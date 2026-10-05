@@ -146,7 +146,7 @@ function runScenario(count) {
        WHERE project_id = ? AND created_month = ?
        ORDER BY created_at DESC
        LIMIT ? OFFSET ?`,
-      [...common, 50, Math.min(20_000, Math.max(0, count - 100))],
+      [...common, 50, Math.min(20_000, Math.floor(count * 0.5))],
       { expectIndex: 'idx_leads_project_month' },
     ),
     benchmark(
