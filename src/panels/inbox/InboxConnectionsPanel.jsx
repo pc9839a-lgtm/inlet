@@ -13,16 +13,24 @@ import {
 
 function MiniToggle({ active, children, onClick }) {
   return (
-    <button type="button" className={`mini-toggle ${active ? 'active' : ''}`} onClick={onClick}>
+    <button
+      type="button"
+      className={`mini-toggle ${active ? 'active' : ''}`}
+      aria-pressed={active}
+      onClick={onClick}
+    >
       {children}
     </button>
   );
 }
 
-function InlineSwitch({ checked, onChange, disabled = false }) {
+function InlineSwitch({ checked, onChange, disabled = false, label = '연동 사용' }) {
   return (
     <button
       type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
       className={`inline-switch ${checked ? 'on' : ''}`}
       onClick={() => !disabled && onChange(!checked)}
       disabled={disabled}
@@ -340,9 +348,15 @@ export default function InboxConnectionsPanel({ page, authUser = null, updateInt
   };
 
   return (
-    <section className={`card inbox-connect-card easy-mode v4 ${open ? 'open' : ''}`}>
-      <button className="inbox-connect-head" type="button" onClick={() => setOpen(!open)}>
-        <div><h2>연동</h2></div>
+    <section className={`card inbox-connect-card easy-mode v4 ${open ? 'open' : ''}`} aria-labelledby="inbox-connections-title">
+      <button
+        className="inbox-connect-head"
+        type="button"
+        aria-expanded={open}
+        aria-controls="inbox-connections-body"
+        onClick={() => setOpen(!open)}
+      >
+        <div><h2 id="inbox-connections-title">연동</h2></div>
         <div className="connect-head-right">
           <span>{counts.ok}개 연결</span>
           {counts.warn > 0 && <i>{counts.warn}개 확인 필요</i>}
@@ -350,13 +364,21 @@ export default function InboxConnectionsPanel({ page, authUser = null, updateInt
         </div>
       </button>
       {open && (
-        <div className="inbox-connect-body compact">
-          {result && <div className={`connection-result ${resultIsOk(result) ? 'ok' : 'error'}`}><span>{result}</span></div>}
+        <div id="inbox-connections-body" className="inbox-connect-body compact">
+          {result && (
+            <div
+              className={`connection-result ${resultIsOk(result) ? 'ok' : 'error'}`}
+              role={resultIsOk(result) ? 'status' : 'alert'}
+              aria-live={resultIsOk(result) ? 'polite' : 'assertive'}
+            >
+              <span>{result}</span>
+            </div>
+          )}
 
           <div className="connection-item connect-v4 open">
             <div className="connection-row">
               <div className="connection-row-main"><strong>이메일 알림</strong><small>{emailState.text}</small></div>
-              <InlineSwitch checked={!!draftIntegrations.email.enabled} onChange={(enabled) => patch('email', { enabled, ...(emailLocked ? { to: accountEmail, lockedToAccount: true } : {}) })} />
+              <InlineSwitch label="이메일 알림 사용" checked={!!draftIntegrations.email.enabled} onChange={(enabled) => patch('email', { enabled, ...(emailLocked ? { to: accountEmail, lockedToAccount: true } : {}) })} />
             </div>
             {draftIntegrations.email.enabled && (
               <div className="connection-detail-box compact">
@@ -383,7 +405,7 @@ export default function InboxConnectionsPanel({ page, authUser = null, updateInt
           <div className="connection-item connect-v4 open">
             <div className="connection-row">
               <div className="connection-row-main"><strong>Google Sheets</strong><small>{sheetsState.text} · 입력폼 자동 컬럼</small></div>
-              <InlineSwitch checked={!!draftIntegrations.sheets.enabled} onChange={(enabled) => sheetPatch({ enabled, status: enabled ? draftIntegrations.sheets.status || 'disconnected' : 'disconnected', lastError: enabled ? '' : draftIntegrations.sheets.lastError })} />
+              <InlineSwitch label="Google Sheets 사용" checked={!!draftIntegrations.sheets.enabled} onChange={(enabled) => sheetPatch({ enabled, status: enabled ? draftIntegrations.sheets.status || 'disconnected' : 'disconnected', lastError: enabled ? '' : draftIntegrations.sheets.lastError })} />
             </div>
             {draftIntegrations.sheets.enabled && (
               <div className="connection-detail-box compact">
@@ -429,20 +451,26 @@ export default function InboxConnectionsPanel({ page, authUser = null, updateInt
                     </div>
                   </>
                 )}
-                {draftIntegrations.sheets.lastError && <div className="connection-result error"><span>{draftIntegrations.sheets.lastError}</span></div>}
+                {draftIntegrations.sheets.lastError && <div className="connection-result error" role="alert"><span>{draftIntegrations.sheets.lastError}</span></div>}
               </div>
             )}
           </div>
 
-          <button type="button" className="connection-advanced-toggle" onClick={() => setAdvancedOpen(!advancedOpen)}>
+          <button
+            type="button"
+            className="connection-advanced-toggle"
+            aria-expanded={advancedOpen}
+            aria-controls="connection-advanced-panel"
+            onClick={() => setAdvancedOpen(!advancedOpen)}
+          >
             <span>고급 연동</span>
             <b>{draftIntegrations.webhook.enabled ? webhookState.text : '선택 사항'}</b>
           </button>
           {advancedOpen && (
-            <div className="connection-item connect-v4 open advanced">
+            <div id="connection-advanced-panel" className="connection-item connect-v4 open advanced">
               <div className="connection-row">
                 <div className="connection-row-main"><strong>Webhook</strong><small>{webhookState.text}</small></div>
-                <InlineSwitch checked={!!draftIntegrations.webhook.enabled} onChange={(enabled) => patch('webhook', { enabled })} />
+                <InlineSwitch label="Webhook 사용" checked={!!draftIntegrations.webhook.enabled} onChange={(enabled) => patch('webhook', { enabled })} />
               </div>
               {draftIntegrations.webhook.enabled && (
                 <div className="connection-detail-box compact">
