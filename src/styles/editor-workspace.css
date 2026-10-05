@@ -19,10 +19,7 @@ body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .work-panel {
   body:has(.builder-shell.edit-mode-shell:not(.mobile-operations-shell)),
   #root:has(.builder-shell.edit-mode-shell:not(.mobile-operations-shell)) {
     height: auto !important;
-    min-height: 100dvh !important;
-    max-height: none !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
+    overflow: auto !important;
   }
   body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) {
     width: 100% !important;
