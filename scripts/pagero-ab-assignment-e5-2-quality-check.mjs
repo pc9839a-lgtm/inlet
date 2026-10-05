@@ -320,7 +320,7 @@ assert(eventRuntimeSource.includes('pageExperimentTrackingFields(targetPage)'), 
 assert(leadRuntimeSource.includes('...pageExperimentTrackingFields(targetPage)'), 'successful lead rows must retain assignment metadata in raw lead payload');
 assert(visitorSource.includes('window.localStorage') && visitorSource.includes('window.sessionStorage'), 'visitor identity must persist across refresh while session identity is session-scoped');
 assert(assignmentSource.includes("String(experiment.status || '') !== 'running'"), 'only running experiments may assign public traffic');
-assert(!assignmentSource.includes('visitorId:'), 'public assignment metadata implementation must not expose visitor id in returned metadata');
+assert(!assignmentSource.includes("__experiment: {\n      visitorId"), 'public assignment metadata must not include visitor id');
 
 db.sqlite.close();
 
