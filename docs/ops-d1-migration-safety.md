@@ -176,19 +176,84 @@ Never import the export directly into production as the first recovery attempt.
 
 A backup-and-apply workflow is not considered operationally complete until at least one encrypted export has been restored into a disposable D1 database.
 
-The drill must record:
+GitHub Actions workflow:
 
-- source production commit SHA
-- encrypted artifact digest
-- decryption verification result
-- disposable database identifier
-- schema and migration-history result
-- representative table counts
-- page read result
-- form or reservation write result using disposable data only
-- cleanup result
+- name: `D1 Disposable Restore Drill`
+- file: `.github/workflows/d1-restore-drill.yml`
+- trigger: manual `workflow_dispatch` only
+- source: a prior `D1 Migration Safety` run id that contains `d1-migration-safety-<run_id>`
+- default mode: `artifact-verify`
+- live mode: `restore-drill`
+- Cloudflare account mutation is protected by the `production` GitHub environment
 
-Never use live customer writes to prove a disposable restore drill.
+### Artifact verification mode
+
+`artifact-verify` performs no Cloudflare D1 write.
+
+It:
+
+1. downloads the encrypted backup artifact from the selected migration-safety run
+2. verifies encrypted SHA-256
+3. derives the backup HMAC key from `PAGERO_D1_BACKUP_ENCRYPTION_KEY` and verifies HMAC-SHA256
+4. decrypts only inside the Actions workspace
+5. verifies decrypted SQL SHA-256 and byte size against the manifest
+6. confirms the plaintext looks like a SQL backup
+7. deletes decrypted SQL and the temporary restore config before evidence upload
+8. uploads only non-secret JSON evidence
+
+### Live disposable restore mode
+
+`restore-drill` is intentionally harder to enable. All of the following must be true:
+
+- selected workflow branch is `main`
+- `allow_disposable_writes=true`
+- approval phrase is exactly `I_APPROVE_D1_DISPOSABLE_RESTORE`
+- source backup run id is numeric and resolves to an encrypted backup artifact
+- `PAGERO_D1_BACKUP_ENCRYPTION_KEY` is available
+- Cloudflare account id and a D1 Write token are available
+- production database name is available only as a safety exclusion target
+
+The runner then:
+
+1. performs the full artifact verification above
+2. generates a target name beginning with `pagero-restore-drill-`
+3. refuses any target whose name equals the production database name
+4. creates a new disposable Cloudflare D1 database
+5. writes a temporary Wrangler config that points only at that disposable database
+6. imports the decrypted SQL with `wrangler d1 execute --remote --file ... --yes`
+7. reads restored schema and representative row counts from the disposable database
+8. creates, reads, and drops `_pagero_restore_probe` to prove test-database write/read operation
+9. deletes the disposable D1 database in `finally`
+10. deletes plaintext SQL and the temporary Wrangler config before artifact upload
+11. emits only table names, counts, digest evidence, database-id suffix, and cleanup status
+
+The production database is never an import or Time Travel restore target in this workflow. A production restore remains a separate incident operation with separate owner approval.
+
+If disposable database deletion fails, the evidence status becomes `cleanup-required`; use the recorded database name/id suffix to locate and remove the test database before closing the drill.
+
+### Drill evidence
+
+The drill records:
+
+- source production commit SHA from the backup manifest
+- source backup workflow run id
+- encrypted artifact SHA-256
+- decryption/plaintext SHA-256 verification result
+- disposable database name and id suffix only
+- restored table names
+- representative table counts without row contents
+- disposable write/read probe result
+- cleanup attempted/success result
+- `productionDatabaseTouched=false`
+- `secretValuesIncluded=false`
+
+Never use live customer writes to prove a restore drill.
+
+### Offline regression QA
+
+`npm run d1:restore:drill:qa` builds a synthetic encrypted backup, verifies its SHA/HMAC/plaintext digest, decrypts it, and actually restores the SQL into an in-memory disposable SQLite test database. It also proves a write/read probe and rejects a tampered encrypted artifact.
+
+This offline test does not replace the manually approved Cloudflare D1 disposable drill; it prevents the restore path from becoming untested between live drills.
 
 ## Artifact Security
 
@@ -221,7 +286,8 @@ The workflow must fail before migration apply when:
 
 ```bash
 npm run d1:migration:safety:qa
+npm run d1:restore:drill:qa
 npm run qa:all
 ```
 
-The QA contract verifies manual-only execution, exact-list matching, post-backup pre-apply consistency, encryption requirements, plaintext exclusion, secret non-disclosure, backup-before-apply ordering, and the absence of automatic restore execution.
+The QA contracts verify migration safety plus encrypted-backup restoreability, tamper detection, a real disposable test-database restore, manual-only Cloudflare restore execution, production-target exclusion, plaintext cleanup, and disposable-database cleanup.
