@@ -32,7 +32,8 @@
 - P9 접근성: focus trap/return, keyboard focus, zoom/mobile viewport, contrast, navigation semantics, reduced-motion QA 보강
 - P7 실제 PG adapter 연동은 현재 홀드
 - P8 대량 데이터: 10k/50k benchmark + lead inbox keyset pagination + bounded CSV streaming + fail-closed retention 구현, production 데이터 삭제 없음
-- 다음 backlog: P8 backup/restore 실제 복구 검증 → E5 A/B test
+- P8 backup/restore: encrypted artifact 검증 + 실제 disposable test DB restore QA + manual Cloudflare D1 restore drill 구현, production restore/write 실행 없음
+- 다음 개발 backlog: E5 A/B test; P8 live disposable drill은 유효한 encrypted production backup 확보 + 별도 승인 시 운영 검증
 - AI 확장은 사용자 재요청 전까지 후순위
 - 오래된 PageRo domain PR #233~#235는 current-main 재구성으로 대체되어 2026-10-02 closed
 
