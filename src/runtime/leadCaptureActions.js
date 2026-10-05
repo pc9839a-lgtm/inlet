@@ -1,3 +1,6 @@
+import { pageRoExperimentIdentity } from '../lib/abVisitorIdentity.js';
+import { pageExperimentTrackingFields } from './publicPageRuntimeActions.js';
+
 export function createLeadDeliveryActions({
   page,
   authUser,
@@ -62,9 +65,11 @@ export function createLeadCaptureAction({
   syncLeadPatch,
   upsertVisibleLead,
   showToast,
+  experimentIdentity = pageRoExperimentIdentity,
 }) {
   return function addLeadForPage(targetPage, lead) {
     const traffic = currentTrafficAttribution();
+    const identity = experimentIdentity();
     const savedLead = normalizeLeadItem({
       id: uid(),
       status: '신규',
@@ -80,6 +85,9 @@ export function createLeadCaptureAction({
       referrer: lead.referrer || traffic.referrer,
       sourceLabel: lead.sourceLabel || traffic.sourceLabel,
       isTest: lead.isTest ?? traffic.isTest ?? false,
+      visitorId: String(lead.visitorId || identity.visitorId || ''),
+      sessionId: String(lead.sessionId || identity.sessionId || ''),
+      ...pageExperimentTrackingFields(targetPage),
     });
     setLeads((l) => [savedLead, ...l]);
     setLeadPageMeta((meta) => ({ ...meta, total: Number(meta.total || 0) + 1 }));

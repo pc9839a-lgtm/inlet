@@ -5,8 +5,8 @@
 - 범위: PageRo 페이지 제작·편집·미리보기·발행 경험
 - 선행조건: 저장소/문서 정리와 release blocker 안정화가 우선
 
-- 구현 상태: E0~E4 main 반영 완료 / E5-1 variant model 구현·QA 단계
-- 현재 우선순위: E5를 variant model → stable assignment → conversion comparison → winner publish 순으로 진행
+- 구현 상태: E0~E4 main 반영 완료 / E5-1 variant model + E5-2 stable assignment 구현·QA 단계
+- 현재 우선순위: E5-3 conversion comparison → E5-4 winner publish 순으로 진행
 - AI 확장: E4 첫 페이지 생성까지 구현됨. 사용자 재요청 전에는 후순위
 
 ## 1. 문제 정의
@@ -281,7 +281,7 @@ AI 출력:
 순차 구현:
 
 - E5-1 page variant model: canonical `pages/page_revisions`와 분리된 experiment/variant snapshot 모델. variant 편집은 공개본과 revision chain을 수정하지 않는다.
-- E5-2 A/B test assignment: running experiment에서 동일 visitor가 새로고침해도 동일 variant를 받는 stable assignment.
+- E5-2 A/B test assignment: 구현·QA. 브라우저 localStorage의 pseudonymous visitor id로 running experiment를 결정론적으로 분배하고 새로고침/재방문에도 같은 variant를 유지. session id는 sessionStorage로 분리.
 - E5-3 conversion comparison: variant별 방문·문의·전환율을 비교하고 test traffic은 제외.
 - E5-4 winning variant publish: winner snapshot을 canonical page의 새 revision으로 승격하고 기존 canonical revision으로 즉시 rollback 가능.
 
@@ -292,6 +292,14 @@ E5-1 모델 원칙:
 - variant는 `source_revision_id/source_revision`으로 출처만 참조하고 canonical revision 번호를 소비하지 않음.
 - running 상태에서는 variant snapshot 편집을 잠가 실험 중 내용 변경으로 측정 기준이 흔들리지 않게 함.
 - winner publish 전까지 `pages`와 `page_revisions`는 절대 변경하지 않음.
+
+E5-2 분배 원칙:
+
+- public page fetch만 `abv` visitor id를 보내며 서버 응답에는 visitor id를 다시 노출하지 않음.
+- `draft/paused/completed/canceled` experiment는 canonical page를 그대로 반환하고 `running` 상태만 분배.
+- variant snapshot의 `id/projectId/slug/revision/publishedAt`은 공개 응답에서 canonical identity로 강제하여 URL/revision 위조를 막음.
+- page save 직후 공개본 검증은 A/B 분배를 우회하여 canonical revision 검증을 유지.
+- page_view/CTA/form conversion event와 저장된 lead raw payload에 visitor/session + experiment/variant 메타를 연결해 E5-3 비교의 원천 데이터를 확보.
 
 ## 10. 성공 기준
 

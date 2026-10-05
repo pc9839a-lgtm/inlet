@@ -352,6 +352,78 @@ export async function updateD1PageVariantDraft(db, {
   return getD1PageVariant(db, { projectId, pageId, experimentId, variantKey: key });
 }
 
+export async function setD1PageExperimentStatus(db, {
+  projectId,
+  pageId,
+  experimentId,
+  status,
+} = {}) {
+  assertD1(db);
+  const safeProjectId = String(projectId || '').trim();
+  const safePageId = String(pageId || '').trim();
+  const safeExperimentId = String(experimentId || '').trim();
+  const nextStatus = String(status || '').trim().toLowerCase();
+  const experiment = await getD1PageExperiment(db, {
+    projectId: safeProjectId,
+    pageId: safePageId,
+    experimentId: safeExperimentId,
+  });
+  if (!experiment) {
+    const error = new Error('Experiment not found.');
+    error.status = 404;
+    error.code = 'PAGE_EXPERIMENT_NOT_FOUND';
+    throw error;
+  }
+
+  const allowed = {
+    draft: new Set(['running', 'canceled']),
+    running: new Set(['paused', 'completed']),
+    paused: new Set(['running', 'completed', 'canceled']),
+    completed: new Set(),
+    canceled: new Set(),
+  };
+  if (!allowed[experiment.status]?.has(nextStatus)) {
+    throw conflict(
+      `Experiment cannot transition from ${experiment.status} to ${nextStatus}.`,
+      'PAGE_EXPERIMENT_STATUS_TRANSITION_INVALID',
+    );
+  }
+
+  if (nextStatus === 'running') {
+    const active = experiment.variants.filter((variant) => variant.status === 'active' && variant.trafficWeight > 0);
+    const totalWeight = active.reduce((sum, variant) => sum + Number(variant.trafficWeight || 0), 0);
+    if (active.length < 2 || totalWeight !== 100) {
+      throw conflict(
+        'Running experiment requires at least two active variants with total traffic weight 100.',
+        'PAGE_EXPERIMENT_TRAFFIC_INVALID',
+      );
+    }
+  }
+
+  const now = new Date().toISOString();
+  const startedAt = nextStatus === 'running' && !experiment.startedAt ? now : (experiment.startedAt || null);
+  const endedAt = TERMINAL_EXPERIMENT_STATUSES.has(nextStatus) ? now : null;
+  await db.prepare(`
+    UPDATE page_experiments
+    SET status = ?, started_at = ?, ended_at = ?, updated_at = ?
+    WHERE id = ? AND project_id = ? AND page_id = ?
+  `).bind(
+    nextStatus,
+    startedAt,
+    endedAt,
+    now,
+    safeExperimentId,
+    safeProjectId,
+    safePageId,
+  ).run();
+
+  return getD1PageExperiment(db, {
+    projectId: safeProjectId,
+    pageId: safePageId,
+    experimentId: safeExperimentId,
+  });
+}
+
 export function pageExperimentIsOpen(status = '') {
   return OPEN_EXPERIMENT_STATUSES.has(String(status || ''));
 }
