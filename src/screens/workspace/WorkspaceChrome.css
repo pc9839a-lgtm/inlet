@@ -222,7 +222,6 @@ body .builder-shell .top-tabs button.active {
   }
 }
 
-
 /* P9 accessibility: semantic tab panel stays shrink-safe at browser zoom. */
 body .builder-shell .workspace-active-panel {
   min-width: 0;
