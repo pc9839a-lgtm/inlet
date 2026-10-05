@@ -29,6 +29,22 @@ jobs:
       - name: Full offline QA
         run: npm run qa:all
 
+  accessibility-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Accessibility regression gate
+        run: npm run accessibility:qa
+
   browser-regression:
     runs-on: ubuntu-latest
     timeout-minutes: 20
