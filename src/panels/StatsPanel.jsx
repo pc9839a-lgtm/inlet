@@ -236,7 +236,7 @@ function RecentLeads({ leads, total }) {
   return (
     <section className="stats-v4-card stats-v4-leads-card">
       <div className="stats-v4-card-title">
-        <h2>최근 접수</h2>
+        <h3>최근 접수</h3>
         <p>{total > leads.length ? `전체 ${total}건 중 최근 ${leads.length}건` : `${leads.length}건`}</p>
       </div>
       {!leads.length ? <div className="stats-v4-empty">접수 없음</div> : (
