@@ -23,7 +23,9 @@ export function ScreenOrderRowActions({
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState(null);
   const triggerRef = useRef(null);
+  const menuRef = useRef(null);
   const canDuplicate = canDuplicateScreenOrderBlock(block);
+  const menuId = `screen-order-actions-${block.id}`;
 
   const updateMenuPosition = useCallback(() => {
     const trigger = triggerRef.current;
@@ -58,6 +60,26 @@ export function ScreenOrderRowActions({
     };
   }, [menuOpen, updateMenuPosition]);
 
+  useEffect(() => {
+    if (!menuOpen || !menuPosition) return undefined;
+
+    const focusFirstAction = () => {
+      menuRef.current?.querySelector?.('button:not([disabled])')?.focus?.({ preventScroll: true });
+    };
+    queueMicrotask(focusFirstAction);
+
+    const onKeyDown = (event) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      event.stopPropagation();
+      setMenuOpen(false);
+      queueMicrotask(() => triggerRef.current?.focus?.({ preventScroll: true }));
+    };
+
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => document.removeEventListener('keydown', onKeyDown, true);
+  }, [menuOpen, menuPosition]);
+
   const run = (action) => {
     setMenuOpen(false);
     action?.();
@@ -69,10 +91,21 @@ export function ScreenOrderRowActions({
     setMenuOpen((open) => !open);
   };
 
+  const toggleMenuByKey = (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (!menuOpen) updateMenuPosition();
+    setMenuOpen((open) => !open);
+  };
+
   const menu = menuOpen && menuPosition && typeof document !== 'undefined' ? createPortal(
     <div
+      ref={menuRef}
+      id={menuId}
       className="screen-order-v2-menu"
-      role="menu"
+      role="group"
+      aria-label={`${meta.label} 작업`}
       onClick={stop}
       style={{
         position: 'fixed',
@@ -82,17 +115,17 @@ export function ScreenOrderRowActions({
         zIndex: 10000,
       }}
     >
-      <button type="button" role="menuitem" disabled={!canMoveUp} onClick={() => run(onMoveUp)}>
+      <button type="button" disabled={!canMoveUp} onClick={() => run(onMoveUp)}>
         <ArrowUp size={14} /> {T.moveUp}
       </button>
-      <button type="button" role="menuitem" disabled={!canMoveDown} onClick={() => run(onMoveDown)}>
+      <button type="button" disabled={!canMoveDown} onClick={() => run(onMoveDown)}>
         <ArrowDown size={14} /> {T.moveDown}
       </button>
       <div className="screen-order-v2-menu-divider" aria-hidden="true" />
-      <button type="button" role="menuitem" disabled={!canDuplicate} onClick={() => run(onDuplicate)}>
+      <button type="button" disabled={!canDuplicate} onClick={() => run(onDuplicate)}>
         <Copy size={14} /> 복제
       </button>
-      <button type="button" role="menuitem" className="danger" onClick={() => run(onRemove)}>
+      <button type="button" className="danger" onClick={() => run(onRemove)}>
         <Trash2 size={14} /> 삭제
       </button>
     </div>,
@@ -106,11 +139,13 @@ export function ScreenOrderRowActions({
         type="button"
         className="screen-order-v2-action screen-order-v2-more"
         onClick={toggleMenu}
+        onKeyDown={toggleMenuByKey}
         title="더보기"
         aria-label={`${meta.label} 더보기`}
         aria-expanded={menuOpen}
+        aria-controls={menuOpen ? menuId : undefined}
       >
-        <MoreHorizontal size={17} />
+        <MoreHorizontal size={17} aria-hidden="true" />
       </button>
 
       {menu}
