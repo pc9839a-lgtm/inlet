@@ -1,0 +1,66 @@
+name: Fix CallTag provider credential key live
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-calltag-provider-key-live.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      - name: Configure stable provider credential encryption key
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          KEY="$(openssl rand -hex 48)"
+          printf '%s' "$KEY" | node_modules/wrangler/bin/wrangler.js pages secret put CALLTAG_PROVIDER_CREDENTIAL_KEY --project-name inlet >/tmp/secret-put.log
+          unset KEY
+          grep -E 'Success|Uploaded|secret' /tmp/secret-put.log || cat /tmp/secret-put.log
+
+      - name: Report GitHub-side Meta credential availability
+        env:
+          META_ID: ${{ secrets.CALLTAG_META_APP_ID }}
+          META_SECRET: ${{ secrets.CALLTAG_META_APP_SECRET }}
+          META_REDIRECT: ${{ secrets.CALLTAG_META_OAUTH_REDIRECT_URI }}
+        shell: bash
+        run: |
+          [ -n "$META_ID" ] && echo "GITHUB_META_APP_ID_PRESENT=true" || echo "GITHUB_META_APP_ID_PRESENT=false"
+          [ -n "$META_SECRET" ] && echo "GITHUB_META_APP_SECRET_PRESENT=true" || echo "GITHUB_META_APP_SECRET_PRESENT=false"
+          [ -n "$META_REDIRECT" ] && echo "GITHUB_META_REDIRECT_PRESENT=true" || echo "GITHUB_META_REDIRECT_PRESENT=false"
+
+      - name: Build and redeploy production Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run build
+          npx wrangler pages deploy dist --project-name inlet --branch main --commit-hash "$GITHUB_SHA" --commit-message "Restore CallTag provider credential key"
+
+      - name: Verify provider key name exists
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          node_modules/wrangler/bin/wrangler.js pages secret list --project-name inlet > /tmp/secrets.txt
+          grep -Fq 'CALLTAG_PROVIDER_CREDENTIAL_KEY' /tmp/secrets.txt
+          echo "CALLTAG_PROVIDER_CREDENTIAL_KEY_PRESENT=true"
