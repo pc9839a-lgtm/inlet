@@ -18,7 +18,6 @@ body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .work-panel {
   html:has(.builder-shell.edit-mode-shell:not(.mobile-operations-shell)),
   body:has(.builder-shell.edit-mode-shell:not(.mobile-operations-shell)),
   #root:has(.builder-shell.edit-mode-shell:not(.mobile-operations-shell)) {
-    height: auto !important;
     overflow: auto !important;
   }
   body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) {
