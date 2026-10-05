@@ -1,3 +1,5 @@
+import { useAccessibleDialog } from '../../lib/useAccessibleDialog.js';
+
 export default function PageDuplicateUrlModal({
   canDuplicatePage,
   duplicateBlocked,
@@ -7,9 +9,11 @@ export default function PageDuplicateUrlModal({
   onDuplicate,
   setDuplicateField,
 }) {
+  const dialogRef = useAccessibleDialog(onClose);
+
   return (
     <div className="settings-modal-backdrop" role="presentation">
-      <section className="settings-url-modal" role="dialog" aria-modal="true" aria-labelledby="duplicate-url-title">
+      <section ref={dialogRef} className="settings-url-modal" role="dialog" aria-modal="true" aria-labelledby="duplicate-url-title" tabIndex={-1}>
         <div className="settings-url-modal-head">
           <div>
             <span>페이지 복제</span>
@@ -19,8 +23,8 @@ export default function PageDuplicateUrlModal({
         </div>
 
         <div className="settings-url-choice" role="group" aria-label="도메인 선택">
-          <button type="button" className={duplicateDraft.domainType === 'default' ? 'active' : ''} onClick={() => setDuplicateField('domainType', 'default')}>기본 제공 도메인</button>
-          <button type="button" className={duplicateDraft.domainType === 'custom' ? 'active' : ''} onClick={() => setDuplicateField('domainType', 'custom')}>개인 도메인</button>
+          <button type="button" aria-pressed={duplicateDraft.domainType === 'default'} className={duplicateDraft.domainType === 'default' ? 'active' : ''} onClick={() => setDuplicateField('domainType', 'default')}>기본 제공 도메인</button>
+          <button type="button" aria-pressed={duplicateDraft.domainType === 'custom'} className={duplicateDraft.domainType === 'custom' ? 'active' : ''} onClick={() => setDuplicateField('domainType', 'custom')}>개인 도메인</button>
         </div>
 
         <div className="settings-url-form">
@@ -37,7 +41,7 @@ export default function PageDuplicateUrlModal({
           )}
         </div>
 
-        {duplicateIssues.length > 0 && <p className="settings-url-error">{duplicateIssues[0]}</p>}
+        {duplicateIssues.length > 0 && <p className="settings-url-error" role="alert">{duplicateIssues[0]}</p>}
         {!canDuplicatePage && <p className="settings-url-lock">유료 기능 잠금 상태입니다. 결제 기능이 연결되면 이 URL 설정으로 페이지 복제를 진행합니다.</p>}
 
         <div className="settings-url-modal-actions">
