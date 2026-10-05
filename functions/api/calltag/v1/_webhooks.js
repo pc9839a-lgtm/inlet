@@ -80,7 +80,6 @@ export async function createWebhookConnection(db, ownerId = '', input = {}) {
 export async function listWebhookConnections(db, ownerId = '') {
   await ensureWebhookSchema(db);
   const safeOwnerId = safeOwner(ownerId);
-  await cleanupExpiredWebhookPayloads(db);
   const result = await db.prepare(`
     SELECT * FROM calltag_webhook_connections
     WHERE owner_id = ?
