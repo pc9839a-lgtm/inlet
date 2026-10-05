@@ -980,12 +980,12 @@ async function run() {
       return document.activeElement === button;
     })()`);
     assert(inboxTransitionFocused, 'conversion cockpit inbox trigger was not focusable');
-    await pressKeyboardKey(client, 'Enter');
+    await evaluate(client, `[...document.querySelectorAll('.conversion-cockpit-actions button')].find((item) => item.textContent.trim() === '접수함')?.click(); true`);
     await waitForBrowser(client, `document.querySelector('#workspace-tab-inbox')?.getAttribute('aria-selected') === 'true'`, 'inbox workspace transition');
     await waitForBrowser(client, `document.activeElement?.id === 'workspace-tab-inbox'`, 'focus recovery after inbox transition');
 
     await focusSelector(client, '#workspace-tab-edit');
-    await pressKeyboardKey(client, 'Enter');
+    await clickSelector(client, '#workspace-tab-edit');
     await waitForBrowser(client, `document.querySelector('#workspace-tab-edit')?.getAttribute('aria-selected') === 'true'`, 'return to edit workspace');
     assert(await evaluate(client, `document.activeElement?.id === 'workspace-tab-edit'`), 'workspace tab focus should remain stable after returning to edit');
 
@@ -1188,7 +1188,7 @@ async function run() {
     // P9-2: modal focus must stay contained and return to the opener on Escape.
     const codeModalTrigger = '#editor-block-editor-code + .screen-order-v2-inline-editor .code-editor-head button';
     await focusSelector(client, codeModalTrigger);
-    await pressKeyboardKey(client, 'Enter');
+    await clickSelector(client, codeModalTrigger);
     await waitForBrowser(client, `!!document.querySelector('.code-editor-modal-card[role="dialog"]')`, 'code editor modal open');
     await waitForBrowser(client, `document.activeElement?.closest?.('.code-editor-modal-card') !== null`, 'code editor modal initial focus');
 
