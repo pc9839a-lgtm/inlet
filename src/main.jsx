@@ -116,6 +116,19 @@ function installVisualViewportContract() {
     rootStyle.setProperty('--pagero-visual-viewport-height', `${visibleHeight}px`);
     rootStyle.setProperty('--pagero-visual-viewport-top', `${offsetTop}px`);
     rootStyle.setProperty('--pagero-keyboard-inset', `${keyboardInset}px`);
+
+    const active = document.activeElement;
+    const editable = active?.matches?.('input, textarea, select, [contenteditable="true"]');
+    if (editable) {
+      const box = active.getBoundingClientRect();
+      const visibleTop = offsetTop;
+      const visibleBottom = offsetTop + visibleHeight;
+      if (box.top < visibleTop + 12 || box.bottom > visibleBottom - 12) {
+        window.requestAnimationFrame(() => {
+          if (document.activeElement === active) active.scrollIntoView({ block: 'center', inline: 'nearest' });
+        });
+      }
+    }
   };
 
   update();
