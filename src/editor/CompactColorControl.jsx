@@ -7,7 +7,7 @@ export function Color({ label, value, onChange }) {
       <div>
         <input type="color" value={value || '#111827'} onChange={(e) => onChange(e.target.value)} />
         <button type="button" onClick={() => onChange('')}>전역</button>
-        <Pipette size={14} />
+        <Pipette size={14} aria-hidden="true" />
       </div>
     </label>
   );
