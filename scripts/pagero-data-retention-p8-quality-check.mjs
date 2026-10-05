@@ -173,6 +173,7 @@ const endpointSource = await readFile('functions/api/admin/data/retention.js', '
 const runnerSource = await readFile('scripts/pagero-data-retention-safe-runner.mjs', 'utf8');
 const auditSource = await readFile('functions/api/admin/audit/retention.js', 'utf8');
 const policySource = await readFile('docs/ops-pii-retention-export-policy.md', 'utf8');
+const workflowSource = await readFile('.github/workflows/pagero-data-retention.yml', 'utf8');
 
 assert(endpointSource.includes('DELETE FROM ${table}') && endpointSource.includes('ORDER BY created_at ASC, id ASC'), 'retention deletes must be oldest-first and bounded');
 assert(endpointSource.includes("eventRetentionClass: 'conservative-potential-pii'"), 'raw event PII guard must remain explicit');
@@ -180,10 +181,13 @@ assert(runnerSource.includes("PAGERO_DATA_RETENTION_WRITE") && runnerSource.incl
 assert(runnerSource.includes("redirect: 'error'"), 'retention runner must not forward secrets through redirects');
 assert(auditSource.includes("INLET_AUDIT_RETENTION_DAYS") && auditSource.includes("audit.retention_completed"), 'existing audit retention must remain operational');
 assert(policySource.includes('현재 PageRo event') || policySource.includes('Current PageRo event'), 'privacy policy must document conservative event retention');
+assert(workflowSource.includes('environment: production'), 'live retention workflow must use the protected production environment');
+assert(workflowSource.includes("vars.PAGERO_DATA_RETENTION_WRITE || '0'"), 'scheduled retention must default to dry-run when write variable is absent');
+assert(workflowSource.includes('I_APPROVE_PAGERO_DATA_RETENTION'), 'manual live retention must surface the exact approval phrase');
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 34,
+  checks: 37,
   defaults,
   dryRunCandidates: dryRun.totalCandidates,
   executedDeletes: executed.totalDeleted,
