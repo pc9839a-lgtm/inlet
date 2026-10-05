@@ -5,11 +5,14 @@ function assert(condition, message) {
 }
 
 const files = {
+  dialogHook: await readFile('src/lib/useAccessibleDialog.js', 'utf8'),
   feedback: await readFile('src/builder/BuilderFeedback.jsx', 'utf8'),
   home: (await Promise.all([
     readFile('src/screens/HomeScreens.jsx', 'utf8'),
     readFile('src/screens/CreateLandingFlow.jsx', 'utf8'),
+    readFile('src/screens/DashboardScreen.jsx', 'utf8'),
   ])).join('\n'),
+  duplicateModal: await readFile('src/panels/settings/PageDuplicateUrlModal.jsx', 'utf8'),
   formEditor: (await Promise.all([
     readFile('src/editor/blockEditors/FormEditor.jsx', 'utf8'),
     readFile('src/editor/blockEditors/FormHtmlModal.jsx', 'utf8'),
@@ -22,8 +25,17 @@ const files = {
     readFile('src/editor/blockEditors/ImageCropHeader.jsx', 'utf8'),
     readFile('src/editor/blockEditors/useImageCropDialog.js', 'utf8'),
   ])).join('\n'),
+  codeEditor: await readFile('src/editor/blockEditors/CodeEditorModal.jsx', 'utf8'),
+  workspaceTabs: await readFile('src/screens/workspace/WorkspaceTabs.jsx', 'utf8'),
+  settingsBody: await readFile('src/panels/settings/SettingsPanelBody.jsx', 'utf8'),
   statsPanel: await readFile('src/panels/StatsPanel.jsx', 'utf8'),
   createModalCss: await readFile('src/styles/panels-create-modal.css', 'utf8'),
+  formCss: await readFile('src/editor/blockEditors/FormEditor.css', 'utf8'),
+  codeCss: await readFile('src/editor/blockEditors/CodeEditor.css', 'utf8'),
+  editorSharedCss: await readFile('src/styles/editor-shared-ui.css', 'utf8'),
+  homeShellCss: await readFile('src/styles/panels-home-shell.css', 'utf8'),
+  productTokens: await readFile('src/styles/product-ui-tokens.css', 'utf8'),
+  workspaceShellCss: await readFile('src/styles/workspace-shell.css', 'utf8'),
   appStylesEntry: await readFile('src/app-styles.css', 'utf8'),
   homeCss: await readFile('src/screens/HomeScreens.css', 'utf8'),
 };
@@ -33,35 +45,91 @@ const dialogContracts = [
   [files.feedback, 'builder feedback dialogs use aria-modal', 'aria-modal="true"'],
   [files.feedback, 'builder feedback dialogs use labelled headings', 'aria-labelledby='],
   [files.feedback, 'builder feedback close buttons are labelled', 'aria-label="닫기"'],
-  [files.feedback, 'builder feedback supports Escape close', "event.key === 'Escape'"],
+  [files.feedback, 'builder feedback dialogs use shared focus trap', 'useAccessibleDialog('],
   [files.home, 'create modal uses dialog role', 'role="dialog"'],
   [files.home, 'create modal uses aria-modal', 'aria-modal="true"'],
   [files.home, 'create modal has accessible title', 'aria-labelledby="create-landing-title"'],
   [files.home, 'create modal close button is labelled', 'aria-label="닫기"'],
-  [files.home, 'create modal supports Escape close', "event.key === 'Escape'"],
+  [files.home, 'create modal uses shared focus trap', 'useAccessibleDialog(onClose)'],
+  [files.duplicateModal, 'duplicate modal uses dialog role', 'role="dialog"'],
+  [files.duplicateModal, 'duplicate modal uses shared focus trap', 'useAccessibleDialog(onClose)'],
+  [files.duplicateModal, 'duplicate modal exposes pressed domain choice', 'aria-pressed='],
   [files.formEditor, 'HTML modal uses dialog role', 'role="dialog"'],
   [files.formEditor, 'HTML modal uses aria-modal', 'aria-modal="true"'],
   [files.formEditor, 'HTML modal has accessible title', 'aria-labelledby="inlet-html-modal-title"'],
   [files.formEditor, 'HTML modal close button is labelled', 'aria-label={closeLabel}'],
-  [files.formEditor, 'HTML modal supports Escape close', "event.key === 'Escape'"],
+  [files.formEditor, 'HTML modal uses shared focus trap', 'useAccessibleDialog(onClose)'],
   [files.imageEditor, 'image crop modal uses dialog role', 'role="dialog"'],
   [files.imageEditor, 'image crop modal uses aria-modal', 'aria-modal="true"'],
+  [files.imageEditor, 'image crop modal has accessible title', 'aria-labelledby="image-crop-dialog-title"'],
   [files.imageEditor, 'image crop close button is labelled', 'aria-label="닫기"'],
-  [files.imageEditor, 'image crop supports Escape close', "event.key === 'Escape'"],
+  [files.imageEditor, 'image crop uses shared focus trap', 'useAccessibleDialog(onClose, { lockScroll: true })'],
+  [files.codeEditor, 'code editor uses dialog role', 'role="dialog"'],
+  [files.codeEditor, 'code editor has accessible title', 'aria-labelledby="code-editor-modal-title"'],
+  [files.codeEditor, 'code editor uses shared focus trap', 'useAccessibleDialog(onClose, { lockScroll: true })'],
 ];
 
 for (const [source, label, token] of dialogContracts) {
   assert(source.includes(token), `accessibility contract failed: ${label}`);
 }
 
-assert(files.feedback.includes('focusable?.focus?.()'), 'feedback dialogs should focus first interactive control');
-assert(files.home.includes('focusable?.focus?.()'), 'create modal should focus first interactive control');
-assert(files.formEditor.includes('focusable?.focus?.()'), 'HTML modal should focus first interactive control');
+for (const token of [
+  "event.key === 'Escape'",
+  "event.key !== 'Tab'",
+  'event.shiftKey',
+  'previousFocus',
+  'previousFocus?.isConnected',
+  'button:not([disabled])',
+  "document.addEventListener('keydown', onKeyDown, true)",
+]) {
+  assert(files.dialogHook.includes(token), `dialog focus contract missing: ${token}`);
+}
+
+assert(
+  [files.feedback, files.home, files.duplicateModal, files.formEditor, files.imageEditor, files.codeEditor]
+    .every((source) => source.includes('tabIndex={-1}')),
+  'all modal focus containers should support programmatic focus'
+);
+
+assert(files.home.includes('aria-expanded={accountOpen}'), 'dashboard account disclosure should expose expanded state');
+assert(files.home.includes('aria-controls="dashboard-account-settings"'), 'dashboard disclosure should name controlled region');
+assert(files.home.includes('aria-live="polite"'), 'dashboard async page list should expose polite updates');
+assert(files.workspaceTabs.includes('aria-label="작업 메뉴"'), 'workspace navigation should have an accessible name');
+assert(files.workspaceTabs.includes('aria-current={tab === key'), 'workspace navigation should expose the active item');
+assert(files.workspaceTabs.includes('aria-hidden="true"'), 'workspace nav icons should stay decorative');
+assert(files.settingsBody.includes('aria-current={selectedSection === id'), 'settings navigation should expose active section');
+assert(files.settingsBody.includes('aria-controls="settings-active-panel"'), 'settings navigation should identify its controlled content');
+
 assert(
   files.statsPanel.includes('role="img"') && files.statsPanel.includes('aria-label='),
   'stats chart should expose image role and label'
 );
 assert(files.statsPanel.includes('role="status"'), 'stats partial notice should use status semantics');
+
+for (const [label, source] of [
+  ['create modal', files.createModalCss],
+  ['HTML modal', files.formCss],
+  ['code modal', files.codeCss],
+  ['workspace', files.editorSharedCss],
+  ['dashboard', files.homeShellCss],
+]) {
+  assert(source.includes(':focus-visible'), `${label} should preserve visible keyboard focus`);
+}
+assert(files.createModalCss.includes('100dvh'), 'create dialog should use dynamic viewport height');
+assert(files.formCss.includes('100dvh'), 'HTML dialog should use dynamic viewport height');
+assert(files.codeCss.includes('100dvh'), 'code dialog should use dynamic viewport height');
+assert(files.workspaceShellCss.includes('@media (max-width: 1180px)'), 'workspace must reflow before narrow/zoomed desktop becomes two-column overflow');
+assert(files.createModalCss.includes('@media (max-height:520px),(max-width:640px)'), 'create dialog should reflow for short mobile-keyboard viewports');
+assert(files.formCss.includes('@media (max-height: 520px)'), 'HTML dialog should reflow for short mobile-keyboard viewports');
+
+assert(files.createModalCss.includes('prefers-reduced-motion:reduce'), 'modal motion should respect reduced-motion preference');
+assert(files.editorSharedCss.includes('prefers-reduced-motion:reduce'), 'workspace motion should respect reduced-motion preference');
+assert(files.homeShellCss.includes('prefers-reduced-motion:reduce'), 'dashboard motion should respect reduced-motion preference');
+
+assert(files.productTokens.includes('--product-muted-2: #667085;'), 'secondary product text token should meet the strengthened contrast baseline');
+assert(!files.homeShellCss.includes('color:#ef4444;font-size:12px'), 'small auth error text should not use the low-contrast red');
+assert(!files.editorSharedCss.includes('color:#94a3b8!important'), 'small editor chrome text should not use the old low-contrast gray');
+
 assert(files.createModalCss.includes('.sr-only'), 'screen-reader-only utility should exist for hidden modal titles');
 assert(files.appStylesEntry.includes("@import './styles/panels-create-modal.css';"), 'builder feedback modal CSS must be loaded by the workspace style bundle');
 assert(!files.homeCss.includes('panels-create-modal.css'), 'home screen should not separately own workspace feedback modal CSS');
@@ -70,10 +138,19 @@ const unlabeledIconButtons = [
   ...files.feedback.matchAll(/<button(?![^>]*(?:aria-label|title|>\s*[\p{L}\p{N}]))[^>]*>\s*[×✕]\s*<\/button>/gu),
   ...files.home.matchAll(/<button(?![^>]*(?:aria-label|title|>\s*[\p{L}\p{N}]))[^>]*>\s*[×✕]\s*<\/button>/gu),
   ...files.formEditor.matchAll(/<button(?![^>]*(?:aria-label|title|>\s*[\p{L}\p{N}]))[^>]*>\s*[×✕]\s*<\/button>/gu),
+  ...files.imageEditor.matchAll(/<button(?![^>]*(?:aria-label|title|>\s*[\p{L}\p{N}]))[^>]*>\s*[×✕]\s*<\/button>/gu),
 ];
 assert(!unlabeledIconButtons.length, 'icon-only close buttons should have aria-label or title');
 
 console.log(JSON.stringify({
   ok: true,
-  checks: dialogContracts.length + 9,
+  checks: dialogContracts.length + 32,
+  keyboardOnly: true,
+  focusTrap: true,
+  focusReturn: true,
+  zoom200Contract: true,
+  mobileKeyboardViewport: true,
+  reducedMotion: true,
+  navigationSemantics: true,
+  contrastBaseline: 'strengthened',
 }, null, 2));
