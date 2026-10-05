@@ -196,9 +196,15 @@
   box-shadow: 0 0 0 3px rgba(49, 94, 231, .08);
 }
 
+.settings-workspace-shell :is(input,select,textarea)::placeholder {
+  color: var(--product-placeholder);
+  opacity: 1;
+}
+
 .settings-workspace-shell :is(input,select,textarea):disabled {
-  background: #f2f4f7;
-  color: #667085;
+  background: var(--product-disabled-bg);
+  color: var(--product-disabled-text);
+  border-color: var(--product-disabled-line);
 }
 
 .settings-workspace-shell .prefix-field {
@@ -261,7 +267,10 @@
 }
 
 .settings-workspace-shell :is(.settings-primary-button,.settings-secondary-button,.settings-danger-button,.manager-fold-btn):disabled {
-  opacity: .45;
+  opacity: 1;
+  border-color: var(--product-disabled-line);
+  background: var(--product-disabled-bg);
+  color: var(--product-disabled-text);
   cursor: not-allowed;
 }
 
@@ -279,6 +288,7 @@
   align-items: center;
   justify-content: center;
   padding: 0 8px;
+  border: 1px solid var(--product-disabled-line);
   border-radius: 999px;
   background: #eef0f3;
   color: #505762;
@@ -290,11 +300,13 @@
 
 .settings-workspace-shell .settings-status-badge.success,
 .settings-workspace-shell .manager-state-pill.on {
+  border-color: #a6d8c3;
   background: var(--product-good-soft);
   color: var(--product-good);
 }
 
 .settings-workspace-shell .manager-state-pill.off {
+  border-color: #f1b6b1;
   background: var(--product-danger-soft);
   color: var(--product-danger);
 }
@@ -306,12 +318,16 @@
 
 .settings-workspace-shell .settings-message {
   margin: 10px 0 0;
+  padding-left: 10px;
+  border-left: 3px solid var(--product-good);
   color: var(--product-good);
   font-size: 12px;
   font-weight: 800;
 }
 
-.settings-workspace-shell .settings-message.error { color: var(--product-danger); }
+.settings-workspace-shell .settings-message::before { content: '✓ '; font-weight: 950; }
+.settings-workspace-shell .settings-message.error { border-left-color: var(--product-danger); color: var(--product-danger); }
+.settings-workspace-shell .settings-message.error::before { content: '! '; }
 .settings-workspace-shell .settings-loading,
 .settings-workspace-shell .settings-empty-copy,
 .settings-workspace-shell .account-settings-empty { color: var(--product-muted); font-size: 12px; }
