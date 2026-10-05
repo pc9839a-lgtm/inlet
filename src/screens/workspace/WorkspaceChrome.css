@@ -177,10 +177,20 @@ body .builder-shell .top-tabs button.active {
 @media (max-width: 820px) {
 
   body .builder-shell .panel-header {
-    height: 56px !important;
-    min-height: 56px !important;
-    max-height: 56px !important;
-    padding: 0 10px !important;
+    height: auto !important;
+    min-height: 96px !important;
+    max-height: none !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 8px !important;
+    padding: 8px 10px !important;
+  }
+
+  body .builder-shell .panel-actions {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 4px !important;
   }
 
   body .builder-shell .panel-title > p,
