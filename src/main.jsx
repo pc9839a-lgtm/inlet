@@ -114,6 +114,7 @@ function installVisualViewportContract() {
     const offsetTop = Math.max(0, Math.round(viewport?.offsetTop || 0));
     const keyboardInset = Math.max(0, layoutHeight - visibleHeight - offsetTop);
     rootStyle.setProperty('--pagero-visual-viewport-height', `${visibleHeight}px`);
+    rootStyle.setProperty('--pagero-visual-viewport-top', `${offsetTop}px`);
     rootStyle.setProperty('--pagero-keyboard-inset', `${keyboardInset}px`);
   };
 
