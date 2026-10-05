@@ -275,11 +275,11 @@ P8-5 backup / restore 코드·QA 완료:
 순차 진행 중:
 
 - E5-1 page variant model: 구현·QA. `0017_page_ab_experiments.sql` + isolated variant snapshot store. canonical page/revision 비변경 계약 고정.
-- E5-2 stable visitor assignment: 다음 개발 항목.
-- E5-3 conversion comparison: E5-2 이후.
+- E5-2 stable visitor assignment: 구현·QA. localStorage visitor id + deterministic server assignment + public variant composition + event/lead assignment metadata 연결.
+- E5-3 conversion comparison: 다음 개발 항목.
 - E5-4 winner publish + rollback: 마지막.
 
-E5 migration은 코드/QA만 준비하며 production D1에는 별도 migration 승인 전까지 적용하지 않는다.
+E5 migration은 코드/QA만 준비하며 production D1에는 별도 migration 승인 전까지 적용하지 않는다. E5-2 역시 production traffic에는 아직 적용하지 않는다.
 
 ## 8. 현재 작업 우선순위
 
