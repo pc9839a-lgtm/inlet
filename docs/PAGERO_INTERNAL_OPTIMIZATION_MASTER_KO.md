@@ -233,13 +233,22 @@ P9 접근성 audit의 코드 보강과 자동 회귀 gate는 완료했다.
 
 ### P8 — 대량 데이터
 
-실사용량 증가 후 진행:
+P8-1 synthetic volume baseline은 완료했다.
 
-- leads 10k / 50k
-- query plan
+완료:
+
+- 10k / 50k lead fixture를 CI에서 생성하는 offline benchmark gate
+- 최신 목록, deep offset, 상태 필터, 전달 상태 필터, 월별 count, scoped text search의 query plan 검사
+- 기존 `idx_leads_project_month`, `idx_leads_project_status`, `idx_leads_delivery_status` 사용 계약 고정
+- production 데이터/D1 write 없이 성능 퇴행을 검사
+
+남은 항목:
+
+- offset pagination을 장기적으로 cursor/keyset 방식으로 전환할지 검토
 - CSV streaming
 - retention
 - backup / restore
+- 실제 사용량이 커진 뒤 production query plan 재확인
 
 ### E5 — A/B test
 

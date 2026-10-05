@@ -31,7 +31,8 @@
 - 실제 PG는 아직 선택하지 않았고 청구는 OFF
 - P9 접근성: focus trap/return, keyboard focus, zoom/mobile viewport, contrast, navigation semantics, reduced-motion QA 보강
 - P7 실제 PG adapter 연동은 현재 홀드
-- 다음 backlog: P8 대량 데이터 → E5 A/B test
+- P8 대량 데이터: 10k/50k synthetic query-plan baseline 추가, production write 없음
+- 다음 backlog: P8 pagination/CSV/retention/restore → E5 A/B test
 - AI 확장은 사용자 재요청 전까지 후순위
 - 오래된 PageRo domain PR #233~#235는 current-main 재구성으로 대체되어 2026-10-02 closed
 

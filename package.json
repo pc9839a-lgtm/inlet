@@ -107,6 +107,7 @@
     "pagero:platform-copy-density:qa": "node scripts/pagero-platform-copy-density-quality-check.mjs",
     "pagero:web-billing:p7:qa": "node scripts/pagero-web-billing-p7-quality-check.mjs",
     "pagero:web-billing:provider-boundary:qa": "node scripts/pagero-web-billing-provider-boundary-quality-check.mjs",
+    "pagero:large-data:p8:qa": "node scripts/pagero-large-data-p8-quality-check.mjs",
     "pagero:launch-smoke:contract:qa": "node scripts/pagero-launch-smoke-contract-check.mjs"
   },
   "dependencies": {
