@@ -90,6 +90,7 @@ const steps = [
   ['d1:schema:qa', ['scripts/d1-schema-quality-check.mjs']],
   ['d1:adapter:qa', ['scripts/d1-adapter-quality-check.mjs']],
   ['d1:migration:safety:qa', ['scripts/d1-migration-safety-quality-check.mjs']],
+  ['d1:restore:drill:qa', ['scripts/d1-restore-drill-quality-check.mjs']],
   ['d1:baseline:audit:qa', ['scripts/d1-baseline-audit-quality-check.mjs']],
   ['d1:baseline:write:qa', ['scripts/d1-baseline-history-write-quality-check.mjs']],
   ['ops:qa', ['scripts/ops-readiness-check.mjs']],
