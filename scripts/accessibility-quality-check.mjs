@@ -38,6 +38,7 @@ const files = {
   homeShellCss: await readFile('src/styles/panels-home-shell.css', 'utf8'),
   productTokens: await readFile('src/styles/product-ui-tokens.css', 'utf8'),
   workspaceShellCss: await readFile('src/styles/workspace-shell.css', 'utf8'),
+  workspaceChromeCss: await readFile('src/screens/workspace/WorkspaceChrome.css', 'utf8'),
   appStylesEntry: await readFile('src/app-styles.css', 'utf8'),
   homeCss: await readFile('src/screens/HomeScreens.css', 'utf8'),
 };
@@ -139,6 +140,9 @@ assert(files.workspaceShellCss.includes('100dvh'), 'workspace shell should use d
 assert(files.createModalCss.includes('@media (max-height:520px),(max-width:640px)'), 'create dialog should reflow for short mobile-keyboard viewports');
 assert(files.workspaceTabs && files.editorSharedCss, 'workspace accessibility sources should load');
 assert(files.formCss.includes('@media (max-height: 520px)'), 'HTML dialog should reflow for short mobile-keyboard viewports');
+assert(files.workspaceChromeCss.includes('@media (max-width: 640px), (max-height: 600px)'), 'workspace chrome should reflow for zoomed or keyboard-short viewports');
+assert(files.workspaceChromeCss.includes('scroll-padding-bottom: max(96px, env(safe-area-inset-bottom))'), 'short workspace viewports should preserve bottom scroll room');
+assert(files.workspaceChromeCss.includes('overflow-x: auto !important'), 'workspace tabs should remain reachable when zoomed');
 
 assert(files.createModalCss.includes('prefers-reduced-motion:reduce'), 'modal motion should respect reduced-motion preference');
 assert(files.editorSharedCss.includes('prefers-reduced-motion:reduce'), 'workspace motion should respect reduced-motion preference');
