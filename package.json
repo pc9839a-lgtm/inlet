@@ -113,6 +113,7 @@
     "pagero:web-billing:provider-boundary:qa": "node scripts/pagero-web-billing-provider-boundary-quality-check.mjs",
     "pagero:large-data:p8:qa": "node scripts/pagero-large-data-p8-quality-check.mjs",
     "pagero:ab-variant:e5-1:qa": "node scripts/pagero-ab-variant-e5-1-quality-check.mjs",
+    "pagero:ab-assignment:e5-2:qa": "node scripts/pagero-ab-assignment-e5-2-quality-check.mjs",
     "pagero:launch-smoke:contract:qa": "node scripts/pagero-launch-smoke-contract-check.mjs"
   },
   "dependencies": {
