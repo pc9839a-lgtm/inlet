@@ -29,7 +29,13 @@ jobs:
           set -euo pipefail
           WRANGLER="node_modules/wrangler/bin/wrangler.js"
           SQL="SELECT name FROM sqlite_master WHERE type='table' AND name IN ('calltag_lead_customers','calltag_lead_events','calltag_api_keys','calltag_lead_audit','calltag_webhook_connections','calltag_webhook_mapping_versions','calltag_webhook_raw_events','calltag_meta_connections','calltag_meta_oauth_sessions','calltag_google_forms_oauth_sessions','calltag_google_forms_connections','calltag_push_devices','pagero_leads') ORDER BY name;"
-          node "$WRANGLER" d1 execute inlet-prod --remote --command "$SQL" --json > /tmp/d1.json
+          set +e
+          node "$WRANGLER" d1 execute inlet-prod --remote --command "$SQL" --json > /tmp/d1.json 2>/tmp/d1.err
+          D1_RC=$?
+          set -e
+          echo "D1_RC=$D1_RC"
+          cat /tmp/d1.err || true
+          if [ "$D1_RC" -eq 0 ]; then
           node - <<'NODE'
           const fs=require('fs');
           const d=JSON.parse(fs.readFileSync('/tmp/d1.json','utf8'));
@@ -46,8 +52,14 @@ jobs:
           const missing=need.filter(name=>!got.has(name));
           console.log('D1_MISSING=' + JSON.stringify(missing));
           NODE
+          fi
 
-          node "$WRANGLER" pages secret list --project-name inlet > /tmp/secrets.txt || true
+          set +e
+          node "$WRANGLER" pages secret list --project-name inlet > /tmp/secrets.txt 2>/tmp/secrets.err
+          SECRET_RC=$?
+          set -e
+          echo "SECRET_RC=$SECRET_RC"
+          cat /tmp/secrets.err || true
           node - <<'NODE'
           const fs=require('fs');
           const t=fs.readFileSync('/tmp/secrets.txt','utf8');
