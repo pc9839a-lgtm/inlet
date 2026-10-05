@@ -77,7 +77,9 @@ export function createWebhookReceiver() {
       url: req.url,
       body: raw ? JSON.parse(raw) : null,
     });
-    if (req.url?.includes('/slow')) await delay(1000);
+    // Server integration timeout has a 1000ms minimum. Keep the mock endpoint
+    // comfortably slower than that so the timeout smoke cannot race the response.
+    if (req.url?.includes('/slow')) await delay(1500);
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify({ ok: true }));
   });
