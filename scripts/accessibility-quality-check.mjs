@@ -302,4 +302,5 @@ console.log(JSON.stringify({
   screenReaderSemanticsP95: true,
   contrastBaseline: 'wcag-aa-explicit-state-cues',
   accessibilityRegressionP97: ['dedicated-ci-job', 'qa-all-lock', 'editor-browser-lock', 'p9-1', 'p9-2', 'p9-3', 'p9-4-static', 'p9-5-static', 'p9-6'],
+  ciGateMode: 'direct-accessibility-plus-full-offline-plus-browser',
 }, null, 2));
