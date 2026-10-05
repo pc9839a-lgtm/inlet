@@ -13,6 +13,7 @@ const steps = [
   ['pagero:web-billing:p7:qa', ['scripts/pagero-web-billing-p7-quality-check.mjs']],
   ['pagero:web-billing:provider-boundary:qa', ['scripts/pagero-web-billing-provider-boundary-quality-check.mjs']],
   ['pagero:large-data:p8:qa', ['scripts/pagero-large-data-p8-quality-check.mjs']],
+  ['pagero:ab-variant:e5-1:qa', ['scripts/pagero-ab-variant-e5-1-quality-check.mjs']],
   ['pagero:data-retention:p8:qa', ['scripts/pagero-data-retention-p8-quality-check.mjs']],
   ['pagero:launch-smoke:contract:qa', ['scripts/pagero-launch-smoke-contract-check.mjs']],
   ['pagero:editor-shell:e1:qa', ['scripts/pagero-editor-shell-e1-quality-check.mjs']],
