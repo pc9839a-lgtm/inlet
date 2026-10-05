@@ -1133,7 +1133,8 @@ export async function listD1Leads(db, { projectId, month, status = '', kind = ''
   }
 
   const countParams = [...params];
-  if (cursorState.mode === 'keyset') {
+  const hasKeysetCursor = cursorState.mode === 'keyset' && !!cursorState.createdAt && !!cursorState.id;
+  if (hasKeysetCursor) {
     filters.push('(created_at < ? OR (created_at = ? AND id < ?))');
     params.push(cursorState.createdAt, cursorState.createdAt, cursorState.id);
   }
@@ -1147,7 +1148,8 @@ export async function listD1Leads(db, { projectId, month, status = '', kind = ''
     `SELECT * FROM leads WHERE ${filters.join(' AND ')} ORDER BY created_at DESC, id DESC LIMIT ?${offsetClause}`,
     queryParams,
   );
-  const total = await countD1Rows(db, `SELECT COUNT(*) AS total FROM leads WHERE ${filters.slice(0, cursorState.mode === 'keyset' ? -1 : undefined).join(' AND ')}`, countParams);
+  const countFilters = hasKeysetCursor ? filters.slice(0, -1) : filters;
+  const total = await countD1Rows(db, `SELECT COUNT(*) AS total FROM leads WHERE ${countFilters.join(' AND ')}`, countParams);
   const visibleRows = result.records.slice(0, safeLimit);
   const hasMore = result.records.length > safeLimit;
   const last = visibleRows[visibleRows.length - 1] || null;
