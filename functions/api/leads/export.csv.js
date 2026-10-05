@@ -1,7 +1,11 @@
-import { listD1Leads } from '../../../server/storage/d1Adapter.mjs';
+import { scanD1Leads } from '../../../server/storage/d1Adapter.mjs';
 import { assertD1, authorizeProject, handleApiError, optionsResponse, projectFromRequest } from '../_shared.js';
 
 const METHODS = 'GET, OPTIONS';
+const EXPORT_PAGE_SIZE = 500;
+const MAX_EXPORT_ROWS = 50_000;
+const MAX_EXPORT_PAGES = Math.ceil(MAX_EXPORT_ROWS / EXPORT_PAGE_SIZE);
+
 const CSV_HEADERS = [
   '\uC811\uC218 ID',
   '\uC811\uC218\uC77C',
@@ -74,42 +78,108 @@ export async function onRequest({ request, env }) {
     await authorizeProject(request, env, project, { tab: 'inbox' });
 
     const ids = parseCsvIds(url.searchParams.get('ids') || '');
-    const leads = [];
-    let cursor = '';
-    for (let guard = 0; guard < 50; guard += 1) {
-      const page = await listD1Leads(db, {
-        projectId: project.projectId,
-        month,
-        dateFrom: url.searchParams.get('dateFrom') || '',
-        dateTo: url.searchParams.get('dateTo') || '',
-        channel: url.searchParams.get('channel') || '',
-        status: url.searchParams.get('status') || '',
-        kind: url.searchParams.get('kind') || '',
-        deliveryStatus: url.searchParams.get('deliveryStatus') || '',
-        q: url.searchParams.get('q') || '',
-        cursor,
-        limit: 100,
-      });
-      leads.push(...page.records);
-      if (!page.hasMore || page.nextCursor == null) break;
-      cursor = page.nextCursor;
-    }
+    const scanOptions = {
+      projectId: project.projectId,
+      month,
+      dateFrom: url.searchParams.get('dateFrom') || '',
+      dateTo: url.searchParams.get('dateTo') || '',
+      channel: url.searchParams.get('channel') || '',
+      status: url.searchParams.get('status') || '',
+      kind: url.searchParams.get('kind') || '',
+      deliveryStatus: url.searchParams.get('deliveryStatus') || '',
+      q: url.searchParams.get('q') || '',
+      limit: EXPORT_PAGE_SIZE,
+    };
 
-    const exportLeads = ids.size ? leads.filter((lead) => ids.has(String(lead.id || ''))) : leads;
-    const csv = toCsv(exportLeads);
+    const shape = await discoverExportShape(db, scanOptions, ids);
     const filename = `${safeFileName(project.slug || project.projectId || 'pagero')}-leads-${month}.csv`;
-    return new Response(`\ufeff${csv}`, {
+    const stream = createCsvStream(db, scanOptions, ids, shape.dynamicHeaders);
+
+    return new Response(stream, {
       status: 200,
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
         'Content-Disposition': `attachment; filename="${filename}"`,
         'Cache-Control': 'no-store',
+        'X-Pagero-Export-Mode': 'stream',
+        'X-Pagero-Export-Rows': String(shape.rowCount),
         ...corsHeadersForCsv(request, env),
       },
     });
   } catch (error) {
     return handleApiError(request, env, error, METHODS);
   }
+}
+
+async function discoverExportShape(db, scanOptions, ids) {
+  const dynamicHeaders = new Map();
+  let rowCount = 0;
+  let cursor = '';
+
+  for (let pageIndex = 0; pageIndex < MAX_EXPORT_PAGES; pageIndex += 1) {
+    const page = await scanD1Leads(db, { ...scanOptions, cursor });
+    const selected = selectExportLeads(page.records, ids);
+    rowCount += selected.length;
+    collectDynamicFieldHeaders(selected, dynamicHeaders);
+
+    if (ids.size && rowCount >= ids.size) {
+      return { dynamicHeaders, rowCount };
+    }
+    if (!page.hasMore || !page.nextCursor) {
+      return { dynamicHeaders, rowCount };
+    }
+    if (pageIndex === MAX_EXPORT_PAGES - 1) {
+      throw csvLimitError();
+    }
+    cursor = page.nextCursor;
+  }
+
+  return { dynamicHeaders, rowCount };
+}
+
+function createCsvStream(db, scanOptions, ids, dynamicHeaders) {
+  const encoder = new TextEncoder();
+  return new ReadableStream({
+    async start(controller) {
+      try {
+        controller.enqueue(encoder.encode(`\ufeff${csvHeaderLine(dynamicHeaders)}\r\n`));
+        let cursor = '';
+        let emitted = 0;
+
+        for (let pageIndex = 0; pageIndex < MAX_EXPORT_PAGES; pageIndex += 1) {
+          const page = await scanD1Leads(db, { ...scanOptions, cursor });
+          const selected = selectExportLeads(page.records, ids);
+          if (selected.length) {
+            const chunk = selected.map((lead) => csvRowLine(lead, dynamicHeaders)).join('\r\n');
+            controller.enqueue(encoder.encode(`${chunk}\r\n`));
+            emitted += selected.length;
+          }
+
+          if (ids.size && emitted >= ids.size) break;
+          if (!page.hasMore || !page.nextCursor) break;
+          if (pageIndex === MAX_EXPORT_PAGES - 1) throw csvLimitError();
+          cursor = page.nextCursor;
+        }
+
+        controller.close();
+      } catch (error) {
+        controller.error(error);
+      }
+    },
+  });
+}
+
+function selectExportLeads(leads = [], ids = new Set()) {
+  return ids.size
+    ? leads.filter((lead) => ids.has(String(lead.id || '')))
+    : leads;
+}
+
+function csvLimitError() {
+  const error = new Error('CSV export supports up to 50,000 rows per request. Narrow the month or filters and try again.');
+  error.status = 413;
+  error.code = 'CSV_EXPORT_ROW_LIMIT';
+  return error;
 }
 
 function parseCsvIds(value = '') {
@@ -119,33 +189,40 @@ function parseCsvIds(value = '') {
     .filter(Boolean));
 }
 
+function csvHeaderLine(dynamicHeaders = new Map()) {
+  return [...CSV_HEADERS, ...dynamicHeaders.values()].map(csvCell).join(',');
+}
+
+function csvRowLine(lead = {}, dynamicHeaders = new Map()) {
+  const dynamicHeaderLabels = [...dynamicHeaders.values()];
+  const dynamicFields = dynamicFieldMap(lead, dynamicHeaders);
+  const source = lead.source || {};
+  return [
+    lead.id || '',
+    dateOnly(lead.createdAt || ''),
+    lead.kind || lead.type || '',
+    lead.status || '',
+    lead.name || lead.values?.name || '',
+    lead.phone || lead.values?.phone || '',
+    lead.email || lead.values?.email || '',
+    lead.pageSlug || '',
+    lead.sourceUrl || source.sourceUrl || source.url || source.pageUrl || lead.values?.sourceUrl || '',
+    lead.referrer || source.referrer || lead.values?.referrer || '',
+    lead.channel || source.channel || lead.sourceLabel || source.sourceLabel || '',
+    lead.utmSource || lead.utm_source || source.utmSource || source.utm_source || lead.values?.utmSource || '',
+    lead.utmMedium || lead.utm_medium || source.utmMedium || source.utm_medium || lead.values?.utmMedium || '',
+    lead.utmCampaign || lead.utm_campaign || source.utmCampaign || source.utm_campaign || lead.values?.utmCampaign || '',
+    lead.memo || lead.message || lead.values?.memo || '',
+    ...dynamicHeaderLabels.map((header) => dynamicFields[header] || ''),
+  ].map(csvCell).join(',');
+}
+
 function toCsv(leads = []) {
   const dynamicHeaders = collectDynamicFieldHeaders(leads);
-  const dynamicHeaderLabels = [...dynamicHeaders.values()];
-  const rows = [[...CSV_HEADERS, ...dynamicHeaderLabels]];
-  for (const lead of leads) {
-    const dynamicFields = dynamicFieldMap(lead, dynamicHeaders);
-    const source = lead.source || {};
-    rows.push([
-      lead.id || '',
-      dateOnly(lead.createdAt || ''),
-      lead.kind || lead.type || '',
-      lead.status || '',
-      lead.name || lead.values?.name || '',
-      lead.phone || lead.values?.phone || '',
-      lead.email || lead.values?.email || '',
-      lead.pageSlug || '',
-      lead.sourceUrl || source.sourceUrl || source.url || source.pageUrl || lead.values?.sourceUrl || '',
-      lead.referrer || source.referrer || lead.values?.referrer || '',
-      lead.channel || source.channel || lead.sourceLabel || source.sourceLabel || '',
-      lead.utmSource || lead.utm_source || source.utmSource || source.utm_source || lead.values?.utmSource || '',
-      lead.utmMedium || lead.utm_medium || source.utmMedium || source.utm_medium || lead.values?.utmMedium || '',
-      lead.utmCampaign || lead.utm_campaign || source.utmCampaign || source.utm_campaign || lead.values?.utmCampaign || '',
-      lead.memo || lead.message || lead.values?.memo || '',
-      ...dynamicHeaderLabels.map((header) => dynamicFields[header] || ''),
-    ]);
-  }
-  return rows.map((row) => row.map(csvCell).join(',')).join('\r\n');
+  return [
+    csvHeaderLine(dynamicHeaders),
+    ...leads.map((lead) => csvRowLine(lead, dynamicHeaders)),
+  ].join('\r\n');
 }
 
 function cleanFieldLabel(value = '') {
@@ -162,9 +239,9 @@ function flatValue(value) {
   return String(value ?? '');
 }
 
-function collectDynamicFieldHeaders(leads = []) {
-  const keyToHeader = new Map();
-  const usedHeaders = new Set();
+function collectDynamicFieldHeaders(leads = [], existing = new Map()) {
+  const keyToHeader = existing;
+  const usedHeaders = new Set(keyToHeader.values());
   const add = (rawKey, rawLabel) => {
     const key = cleanFieldLabel(rawKey);
     const label = cleanFieldLabel(rawLabel || rawKey);
@@ -238,6 +315,7 @@ function corsHeadersForCsv(request, env = {}) {
     'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Methods': METHODS,
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Inlet-Api-Token, X-Inlet-Owner-Id, X-Inlet-Project-Id, X-Inlet-Session',
+    'Access-Control-Expose-Headers': 'Content-Disposition, X-Pagero-Export-Mode, X-Pagero-Export-Rows',
     Vary: 'Origin',
   };
 }
@@ -252,3 +330,10 @@ function csvError(request, env, status, message) {
     },
   });
 }
+
+export const __csvTest = {
+  collectDynamicFieldHeaders,
+  csvHeaderLine,
+  csvRowLine,
+  toCsv,
+};
