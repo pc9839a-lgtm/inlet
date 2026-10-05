@@ -233,7 +233,13 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
         </div>
         <div className="service-header-actions">
           <span className="service-plan-badge">{planLabel}</span>
-          <button className="ghost-btn" type="button" onClick={() => setAccountOpen((open) => !open)}>
+          <button
+            className="ghost-btn"
+            type="button"
+            aria-expanded={accountOpen}
+            aria-controls="dashboard-account-settings"
+            onClick={() => setAccountOpen((open) => !open)}
+          >
             {accountOpen ? '닫기' : '계정'}
           </button>
           <button className="ghost-btn" type="button" onClick={onLogout}>로그아웃</button>
@@ -269,7 +275,7 @@ function DashboardPolished({ user, page, leads, onEdit, onLogout, onAccountUpdat
         </section>
 
         {accountOpen && (
-          <section className="home-section service-account-edit">
+          <section id="dashboard-account-settings" className="home-section service-account-edit" aria-label="계정 설정">
             <div className="home-section-title"><h2>계정 설정</h2></div>
             <form className="home-account-form" onSubmit={saveAccount}>
               <label>
