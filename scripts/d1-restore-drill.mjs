@@ -391,6 +391,19 @@ async function main() {
       productionDatabaseTouched: false,
       secretValuesIncluded: false,
     };
+  } catch (error) {
+    evidence = {
+      ok: false,
+      status: disposable?.databaseId ? 'failed-live-disposable-restore' : 'failed-artifact-verification',
+      mode,
+      sourceRunId,
+      sourceRepositorySha: String(verified?.manifest?.repositorySha || ''),
+      disposableDatabaseName: disposable?.name || '',
+      disposableDatabaseIdSuffix: disposable?.databaseId ? disposable.databaseId.slice(-8) : '',
+      error: redact(error?.message || error),
+      productionDatabaseTouched: false,
+      secretValuesIncluded: false,
+    };
   } finally {
     await rm(path.join(outputDir, 'pagero-d1-restore.sql'), { force: true });
     await rm(path.join(outputDir, 'wrangler.restore-drill.json'), { force: true });
@@ -418,7 +431,7 @@ async function main() {
   }
 
   if (!evidence?.ok) {
-    throw new Error(cleanup.error || 'D1 restore drill failed');
+    process.exitCode = 1;
   }
 }
 
