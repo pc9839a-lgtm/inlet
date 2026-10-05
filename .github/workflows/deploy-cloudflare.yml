@@ -431,6 +431,28 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Verify CallTag external integration CRUD
+        id: calltag_external_smoke
+        if: steps.readiness.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        env:
+          CALLTAG_EXTERNAL_SMOKE_BASE_URL: https://pagero.kr
+          CALLTAG_EXTERNAL_SMOKE_MINT_ATTEMPTS: '12'
+          CALLTAG_EXTERNAL_SMOKE_MINT_DELAY_MS: '2500'
+        run: |
+          set -o pipefail
+          node scripts/calltag-external-production-smoke.mjs | tee calltag-external-production-smoke-result.json
+
+      - name: Upload CallTag external integration evidence
+        if: always() && steps.calltag_external_smoke.outcome != 'skipped'
+        uses: actions/upload-artifact@v4
+        with:
+          name: calltag-external-production-smoke-${{ github.run_id }}
+          path: calltag-external-production-smoke-result.json
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Record deployment result
         if: always()
         shell: bash
@@ -441,6 +463,7 @@ jobs:
           readiness_outcome="${{ steps.readiness.outcome }}"
           asset_check_outcome="${{ steps.asset_check.outcome }}"
           production_save_outcome="${{ steps.production_save.outcome }}"
+          calltag_external_smoke_outcome="${{ steps.calltag_external_smoke.outcome }}"
           if [ "$outcome" != "success" ]; then
             reason="deploy_command_failed"
             if grep -Eqi "CLOUDFLARE_API_TOKEN|CLOUDFLARE_ACCOUNT_ID|non-interactive environment|not set" /tmp/cloudflare-deploy.log 2>/dev/null; then
@@ -462,6 +485,9 @@ jobs:
           elif [ "$production_save_outcome" != "success" ]; then
             outcome="failure"
             reason="production_save_roundtrip_failed"
+          elif [ "$calltag_external_smoke_outcome" != "success" ]; then
+            outcome="failure"
+            reason="calltag_external_integration_smoke_failed"
           fi
 
           {
@@ -478,12 +504,13 @@ jobs:
             echo "Exact deployment readiness: \`${{ steps.readiness.outputs.exact_deployment_ready || 'unknown' }}\`"
             echo "Asset/cache graph: \`${asset_check_outcome:-not-run}\`"
             echo "Production save roundtrip: \`${production_save_outcome:-not-run}\`"
+            echo "CallTag external integration CRUD: \`${calltag_external_smoke_outcome:-not-run}\`"
             if [ -n "${{ steps.readiness.outputs.deployment_url }}" ]; then
               echo "Deployment URL: ${{ steps.readiness.outputs.deployment_url }}"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Fail when Cloudflare deployment, readiness, asset graph, or live save failed
-        if: steps.cloudflare_deploy.outcome != 'success' || steps.deployment_meta.outcome != 'success' || steps.readiness.outcome != 'success' || (steps.readiness.outcome == 'success' && steps.asset_check.outcome != 'success') || (steps.readiness.outcome == 'success' && steps.production_save.outcome != 'success')
+      - name: Fail when Cloudflare deployment, readiness, asset graph, live save, or CallTag external smoke failed
+        if: steps.cloudflare_deploy.outcome != 'success' || steps.deployment_meta.outcome != 'success' || steps.readiness.outcome != 'success' || (steps.readiness.outcome == 'success' && steps.asset_check.outcome != 'success') || (steps.readiness.outcome == 'success' && steps.production_save.outcome != 'success') || (steps.readiness.outcome == 'success' && steps.calltag_external_smoke.outcome != 'success')
         run: exit 1
 
