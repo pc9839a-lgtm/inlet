@@ -1,4 +1,5 @@
 ﻿import { useEffect, useRef } from 'react';
+import { useAccessibleDialog } from '../lib/useAccessibleDialog.js';
 import { createPortal } from 'react-dom';
 
 const pageConflictErrorStyle = {
@@ -25,33 +26,15 @@ const previewCopyInputStyle = {
   fontWeight: 850,
 };
 
-function useDialogKeyboard(onClose) {
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const node = ref.current;
-    const focusable = node?.querySelector?.('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-    focusable?.focus?.();
-
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape') onClose?.();
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onClose]);
-
-  return ref;
-}
-
 export function PageConflictModal({ conflict, onClose, onUseLatest, onForceSave }) {
   const diff = Array.isArray(conflict?.diff) ? conflict.diff : [];
   const hasServerPage = !!conflict?.serverPage;
   const updatedAt = conflict?.serverPage?.updatedAt || conflict?.serverPage?.savedAt || '';
-  const dialogRef = useDialogKeyboard(onClose);
+  const dialogRef = useAccessibleDialog(onClose);
 
   return createPortal(
     <div className="create-modal-backdrop" role="presentation">
-      <section ref={dialogRef} className="create-modal page-conflict-modal" role="dialog" aria-modal="true" aria-labelledby="page-conflict-title">
+      <section ref={dialogRef} className="create-modal page-conflict-modal" role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="page-conflict-title">
         <button type="button" className="create-modal-close" onClick={onClose} aria-label="닫기">×</button>
         <div className="create-modal-title page-conflict-title">
           <span>저장 충돌</span>
@@ -102,7 +85,7 @@ export function PageConflictModal({ conflict, onClose, onUseLatest, onForceSave 
 
 export function PreviewCopyModal({ issue, onClose, onRetry }) {
   const inputRef = useRef(null);
-  const dialogRef = useDialogKeyboard(onClose);
+  const dialogRef = useAccessibleDialog(onClose);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -115,7 +98,7 @@ export function PreviewCopyModal({ issue, onClose, onRetry }) {
 
   return createPortal(
     <div className="create-modal-backdrop" role="presentation">
-      <section ref={dialogRef} className="create-modal confirm-modal" role="dialog" aria-modal="true" aria-labelledby="preview-copy-title">
+      <section ref={dialogRef} className="create-modal confirm-modal" role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="preview-copy-title">
         <button type="button" className="create-modal-close" onClick={onClose} aria-label="닫기">×</button>
         <div className="create-modal-title">
           <span>미리보기 주소</span>
@@ -153,11 +136,11 @@ export function ConfirmModal({ dialog, onClose }) {
     onClose();
     await action?.();
   };
-  const dialogRef = useDialogKeyboard(close);
+  const dialogRef = useAccessibleDialog(close);
 
   return createPortal(
     <div className="create-modal-backdrop" role="presentation">
-      <section ref={dialogRef} className="create-modal confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+      <section ref={dialogRef} className="create-modal confirm-modal" role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="confirm-modal-title">
         <button type="button" className="create-modal-close" onClick={close} aria-label="닫기">×</button>
         <div className="create-modal-title">
           <span>{dialog?.danger ? '주의' : '확인'}</span>
