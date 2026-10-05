@@ -225,3 +225,30 @@ body .builder-shell .top-tabs button.active {
     flex: 0 0 15px !important;
   }
 }
+
+
+/* P9 accessibility: semantic tab panel stays shrink-safe at browser zoom. */
+body .builder-shell .workspace-active-panel {
+  min-width: 0;
+  max-width: 100%;
+}
+
+body .builder-shell .workspace-active-panel:focus {
+  outline: none;
+}
+
+@media (max-width: 640px), (max-height: 600px) {
+  body .builder-shell .work-panel {
+    scroll-padding-bottom: max(96px, env(safe-area-inset-bottom));
+  }
+
+  body .builder-shell .top-tabs {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: thin;
+  }
+
+  body .builder-shell .top-tabs button {
+    min-width: 72px !important;
+  }
+}
