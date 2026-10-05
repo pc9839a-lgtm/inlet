@@ -86,3 +86,25 @@
     animation-iteration-count:1!important;
   }
 }
+
+
+/* P9-6: virtual-keyboard viewport contract. */
+.create-modal-backdrop{
+  top:var(--pagero-visual-viewport-top,0px);
+  bottom:auto;
+  height:var(--pagero-visual-viewport-height,100dvh);
+}
+.create-modal{
+  max-height:calc(var(--pagero-visual-viewport-height,100dvh) - 48px);
+  scroll-padding-bottom:max(24px,calc(var(--pagero-keyboard-inset,0px) + 24px),env(safe-area-inset-bottom));
+}
+.toast-notice{
+  bottom:max(24px,calc(var(--pagero-keyboard-inset,0px) + 12px),env(safe-area-inset-bottom));
+}
+@media (max-height:600px),(max-width:640px){
+  .create-modal-backdrop{place-items:start center;padding:12px}
+  .create-modal{
+    max-height:calc(var(--pagero-visual-viewport-height,100dvh) - 24px);
+    scroll-padding-bottom:max(32px,calc(var(--pagero-keyboard-inset,0px) + 24px),env(safe-area-inset-bottom));
+  }
+}

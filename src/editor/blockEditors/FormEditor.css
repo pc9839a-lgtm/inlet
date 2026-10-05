@@ -356,3 +356,20 @@ body .builder-shell .edit-layout .block-editor-v2 .inlet-export-card button {
     height: 34dvh;
   }
 }
+
+
+/* P9-6: keep HTML editor controls reachable when the virtual keyboard reduces the visible viewport. */
+.inlet-html-modal-backdrop{
+  top:var(--pagero-visual-viewport-top,0px);
+  bottom:auto;
+  height:var(--pagero-visual-viewport-height,100dvh);
+}
+.inlet-html-modal{
+  max-height:calc(var(--pagero-visual-viewport-height,100dvh) - 48px);
+  scroll-padding-bottom:max(24px,calc(var(--pagero-keyboard-inset,0px) + 24px),env(safe-area-inset-bottom));
+}
+@media (max-width:640px),(max-height:600px){
+  .inlet-html-modal{
+    max-height:calc(var(--pagero-visual-viewport-height,100dvh) - 24px);
+  }
+}

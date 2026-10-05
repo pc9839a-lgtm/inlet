@@ -29,3 +29,17 @@
     animation-iteration-count:1!important;
   }
 }
+
+
+/* P9-6: keyboard-short dashboard/auth viewport. */
+.auth-shell,.home-shell{min-height:100dvh}
+@media (max-height:600px){
+  .auth-shell{
+    place-items:start center;
+    overflow-y:auto;
+    padding-bottom:max(24px,calc(var(--pagero-keyboard-inset,0px) + 24px),env(safe-area-inset-bottom));
+    scroll-padding-bottom:max(96px,calc(var(--pagero-keyboard-inset,0px) + 24px),env(safe-area-inset-bottom));
+  }
+  .auth-card{margin:auto 0}
+  .home-shell{scroll-padding-bottom:max(96px,calc(var(--pagero-keyboard-inset,0px) + 24px),env(safe-area-inset-bottom))}
+}

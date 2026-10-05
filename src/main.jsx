@@ -103,6 +103,41 @@ function recoverRuntimeAssetFailure(value) {
   return true;
 }
 
+function installVisualViewportContract() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  const viewport = window.visualViewport;
+  const rootStyle = document.documentElement.style;
+
+  const update = () => {
+    const visibleHeight = Math.max(1, Math.round(viewport?.height || window.innerHeight || 1));
+    const layoutHeight = Math.max(visibleHeight, Math.round(window.innerHeight || visibleHeight));
+    const offsetTop = Math.max(0, Math.round(viewport?.offsetTop || 0));
+    const keyboardInset = Math.max(0, layoutHeight - visibleHeight - offsetTop);
+    rootStyle.setProperty('--pagero-visual-viewport-height', `${visibleHeight}px`);
+    rootStyle.setProperty('--pagero-visual-viewport-top', `${offsetTop}px`);
+    rootStyle.setProperty('--pagero-keyboard-inset', `${keyboardInset}px`);
+
+    const active = document.activeElement;
+    const editable = active?.matches?.('input, textarea, select, [contenteditable="true"]');
+    if (editable) {
+      const box = active.getBoundingClientRect();
+      const visibleTop = offsetTop;
+      const visibleBottom = offsetTop + visibleHeight;
+      if (box.top < visibleTop + 12 || box.bottom > visibleBottom - 12) {
+        window.requestAnimationFrame(() => {
+          if (document.activeElement === active) active.scrollIntoView({ block: 'center', inline: 'nearest' });
+        });
+      }
+    }
+  };
+
+  update();
+  window.addEventListener('resize', update, { passive: true });
+  window.addEventListener('orientationchange', update, { passive: true });
+  viewport?.addEventListener('resize', update, { passive: true });
+  viewport?.addEventListener('scroll', update, { passive: true });
+}
+
 function installRuntimeRecovery() {
   window.addEventListener('error', (event) => {
     recoverRuntimeAssetFailure(event?.error || event?.message || event?.target?.src || '');
@@ -128,6 +163,7 @@ function installRuntimeRecovery() {
 markPageAsNotranslate();
 installDomMutationGuard();
 installRuntimeRecovery();
+installVisualViewportContract();
 installSplitPhoneInputs();
 
 const root = createRoot(document.getElementById('root'));
