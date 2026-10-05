@@ -1091,12 +1091,93 @@ export async function listD1OwnershipTransferRequests(db, { projectId, status = 
   };
 }
 
-export async function listD1Leads(db, { projectId, month, status = '', kind = '', deliveryStatus = '', q = '', dateFrom = '', dateTo = '', channel = '', cursor = '', limit = 50 } = {}) {
+export async function listD1Leads(db, options = {}) {
   assertD1Binding(db);
-  const safeLimit = Math.max(1, Math.min(100, Number(limit || 50)));
-  const cursorState = parseD1LeadCursor(cursor);
+  const safeLimit = Math.max(1, Math.min(100, Math.trunc(Number(options.limit || 50))));
+  const scope = d1LeadListScope(options);
+  const filters = [...scope.filters];
+  const params = [...scope.params];
+  const cursorState = parseD1LeadCursor(options.cursor);
+  const hasKeysetCursor = applyD1LeadCursor(filters, params, cursorState);
+
+  const queryParams = [...params, safeLimit + 1];
+  const offsetClause = cursorState.mode === 'offset' && cursorState.offset > 0 ? ' OFFSET ?' : '';
+  if (offsetClause) queryParams.push(cursorState.offset);
+
+  const result = await queryD1Rows(
+    db,
+    `SELECT * FROM leads WHERE ${filters.join(' AND ')} ORDER BY created_at DESC, id DESC LIMIT ?${offsetClause}`,
+    queryParams,
+  );
+  const total = await countD1Rows(
+    db,
+    `SELECT COUNT(*) AS total FROM leads WHERE ${scope.filters.join(' AND ')}`,
+    scope.params,
+  );
+  const visibleRows = result.records.slice(0, safeLimit);
+  const hasMore = result.records.length > safeLimit;
+  const last = visibleRows[visibleRows.length - 1] || null;
+  return {
+    records: visibleRows.map(decodeD1Lead),
+    total,
+    nextCursor: hasMore && last ? encodeD1LeadCursor(last.created_at, last.id) : null,
+    hasMore,
+    meta: {
+      ...result.meta,
+      pagination: cursorState.mode === 'offset' && cursorState.offset > 0 ? 'offset-compat' : 'keyset',
+      keysetApplied: hasKeysetCursor,
+    },
+  };
+}
+
+export async function scanD1Leads(db, options = {}) {
+  assertD1Binding(db);
+  const safeLimit = Math.max(1, Math.min(500, Math.trunc(Number(options.limit || 500))));
+  const scope = d1LeadListScope(options);
+  const filters = [...scope.filters];
+  const params = [...scope.params];
+  const cursorState = parseD1LeadCursor(options.cursor);
+  const hasKeysetCursor = applyD1LeadCursor(filters, params, cursorState);
+
+  const queryParams = [...params, safeLimit + 1];
+  const offsetClause = cursorState.mode === 'offset' && cursorState.offset > 0 ? ' OFFSET ?' : '';
+  if (offsetClause) queryParams.push(cursorState.offset);
+
+  const result = await queryD1Rows(
+    db,
+    `SELECT * FROM leads WHERE ${filters.join(' AND ')} ORDER BY created_at DESC, id DESC LIMIT ?${offsetClause}`,
+    queryParams,
+  );
+  const visibleRows = result.records.slice(0, safeLimit);
+  const hasMore = result.records.length > safeLimit;
+  const last = visibleRows[visibleRows.length - 1] || null;
+  return {
+    records: visibleRows.map(decodeD1Lead),
+    nextCursor: hasMore && last ? encodeD1LeadCursor(last.created_at, last.id) : null,
+    hasMore,
+    meta: {
+      ...result.meta,
+      pagination: cursorState.mode === 'offset' && cursorState.offset > 0 ? 'offset-compat' : 'keyset',
+      keysetApplied: hasKeysetCursor,
+      countQuerySkipped: true,
+    },
+  };
+}
+
+function d1LeadListScope({
+  projectId,
+  month,
+  status = '',
+  kind = '',
+  deliveryStatus = '',
+  q = '',
+  dateFrom = '',
+  dateTo = '',
+  channel = '',
+} = {}) {
   const filters = ['project_id = ?', 'created_month = ?'];
   const params = [projectId, month];
+
   if (dateFrom) {
     filters.push('created_at >= ?');
     params.push(d1DateBoundary(dateFrom, 'start'));
@@ -1105,6 +1186,7 @@ export async function listD1Leads(db, { projectId, month, status = '', kind = ''
     filters.push('created_at <= ?');
     params.push(d1DateBoundary(dateTo, 'end'));
   }
+
   const safeChannel = normalizeD1ChannelFilter(channel);
   if (safeChannel) {
     if (safeChannel === 'direct' || safeChannel === 'unknown') {
@@ -1114,6 +1196,7 @@ export async function listD1Leads(db, { projectId, month, status = '', kind = ''
       params.push(`%utm_source=${safeChannel}%`);
     }
   }
+
   if (status) {
     filters.push('status = ?');
     params.push(status);
@@ -1132,37 +1215,16 @@ export async function listD1Leads(db, { projectId, month, status = '', kind = ''
     params.push(needle, needle, needle, needle, needle);
   }
 
-  const countParams = [...params];
+  return { filters, params };
+}
+
+function applyD1LeadCursor(filters, params, cursorState = {}) {
   const hasKeysetCursor = cursorState.mode === 'keyset' && !!cursorState.createdAt && !!cursorState.id;
   if (hasKeysetCursor) {
     filters.push('(created_at < ? OR (created_at = ? AND id < ?))');
     params.push(cursorState.createdAt, cursorState.createdAt, cursorState.id);
   }
-
-  const queryParams = [...params, safeLimit + 1];
-  const offsetClause = cursorState.mode === 'offset' && cursorState.offset > 0 ? ' OFFSET ?' : '';
-  if (offsetClause) queryParams.push(cursorState.offset);
-
-  const result = await queryD1Rows(
-    db,
-    `SELECT * FROM leads WHERE ${filters.join(' AND ')} ORDER BY created_at DESC, id DESC LIMIT ?${offsetClause}`,
-    queryParams,
-  );
-  const countFilters = hasKeysetCursor ? filters.slice(0, -1) : filters;
-  const total = await countD1Rows(db, `SELECT COUNT(*) AS total FROM leads WHERE ${countFilters.join(' AND ')}`, countParams);
-  const visibleRows = result.records.slice(0, safeLimit);
-  const hasMore = result.records.length > safeLimit;
-  const last = visibleRows[visibleRows.length - 1] || null;
-  return {
-    records: visibleRows.map(decodeD1Lead),
-    total,
-    nextCursor: hasMore && last ? encodeD1LeadCursor(last.created_at, last.id) : null,
-    hasMore,
-    meta: {
-      ...result.meta,
-      pagination: cursorState.mode === 'offset' && cursorState.offset > 0 ? 'offset-compat' : 'keyset',
-    },
-  };
+  return hasKeysetCursor;
 }
 
 function parseD1LeadCursor(value = '') {
