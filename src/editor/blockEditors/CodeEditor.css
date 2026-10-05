@@ -180,3 +180,21 @@
     max-height: calc(100dvh - 20px);
   }
 }
+
+
+/* P9-6: visual viewport may be shorter than the layout viewport while the keyboard is open. */
+.code-editor-modal{
+  top:var(--pagero-visual-viewport-top,0px);
+  bottom:auto;
+  height:var(--pagero-visual-viewport-height,100dvh);
+}
+.code-editor-modal-card{
+  height:min(720px,calc(var(--pagero-visual-viewport-height,100dvh) - 48px));
+  max-height:calc(var(--pagero-visual-viewport-height,100dvh) - 48px);
+}
+@media (max-width:720px),(max-height:600px){
+  .code-editor-modal-card{
+    height:calc(var(--pagero-visual-viewport-height,100dvh) - 20px);
+    max-height:calc(var(--pagero-visual-viewport-height,100dvh) - 20px);
+  }
+}
