@@ -252,10 +252,22 @@ P8-1~4의 코드/회귀 계약은 완료했다. production 실데이터 삭제�
 - `pagero:data-retention:p8:qa`를 `qa:all` release gate에 포함
 - production 데이터/D1 write 없이 P8-1~4 구현/회귀 검증
 
-남은 항목:
+P8-5 backup / restore 코드·QA 완료:
 
-- P8-5 backup / restore 실제 복구 검증
-- JSONL backup/quarantine retention 실행 연결
+- 기존 migration safety encrypted export를 source artifact로 재사용
+- SHA-256 + HMAC + 복호화 plaintext digest를 모두 검증
+- synthetic encrypted backup을 CI에서 실제 disposable SQLite test DB에 restore
+- manual-only `D1 Disposable Restore Drill` workflow 추가
+- live restore drill은 `main` + disposable write switch + `I_APPROVE_D1_DISPOSABLE_RESTORE`가 모두 있어야 실행
+- restore 대상은 새 `pagero-restore-drill-*` D1만 허용하고 production DB는 대상에서 제외
+- restored schema/count + test DB write/read probe 확인 후 disposable DB 삭제
+- plaintext SQL / 임시 Wrangler config는 artifact upload 전에 삭제
+- production restore는 자동화하지 않음
+
+후속 운영 항목:
+
+- 실제 encrypted production backup artifact가 확보된 시점에 별도 승인 후 Cloudflare disposable D1 live drill 1회 수행
+- JSONL backup/quarantine retention cleanup은 일반 ops backlog로 유지
 - 실제 사용량이 커진 뒤 production query plan 재확인
 
 ### E5 — A/B test
