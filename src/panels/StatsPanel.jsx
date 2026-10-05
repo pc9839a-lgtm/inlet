@@ -216,7 +216,7 @@ function StatCard({ title, data }) {
   const max = Math.max(1, ...entries.map(([, value]) => value));
   return (
     <section className="stats-v4-card stats-v4-stat-card">
-      <div className="stats-v4-card-title"><h2>{title}</h2></div>
+      <div className="stats-v4-card-title"><h3>{title}</h3></div>
       {!entries.length ? <div className="stats-v4-empty">데이터 없음</div> : (
         <div className="stats-v4-stat-list">
           {entries.slice(0, 8).map(([key, value]) => (
@@ -345,7 +345,7 @@ export default function StatsPanel({
 
       <main className="stats-v4-main">
         <header className="stats-v4-page-head">
-          <h1>{activeLabel}</h1>
+          <h2>{activeLabel}</h2>
           {stats.comparison && <span>직전 동일 기간 대비</span>}
         </header>
 
@@ -383,11 +383,11 @@ export default function StatsPanel({
 
             <section className="stats-v4-split stats-v4-overview-split">
               <div className="stats-v4-card stats-v4-trend-card">
-                <div className="stats-v4-card-title"><h2>성과 흐름</h2></div>
+                <div className="stats-v4-card-title"><h3>성과 흐름</h3></div>
                 <StatsTrend data={stats.trend} />
               </div>
               <div className="stats-v4-card stats-v4-funnel-card">
-                <div className="stats-v4-card-title"><h2>전환 단계</h2></div>
+                <div className="stats-v4-card-title"><h3>전환 단계</h3></div>
                 <div className="stats-v4-funnel-list">
                   <FunnelRow title="상담 시작" startLabel="조회" startValue={stats.pv} endLabel="폼 시작" endValue={stats.formStart} rate={stats.formStartRate} />
                   <FunnelRow title="상담 제출" startLabel="제출 시도" startValue={stats.submitAttempt} endLabel="제출 완료" endValue={stats.submitSuccess} rate={stats.formCompletionRate} />
@@ -402,7 +402,7 @@ export default function StatsPanel({
           <div className="stats-v4-view">
             <section className="stats-v4-split">
               <div className="stats-v4-card stats-v4-funnel-card">
-                <div className="stats-v4-card-title"><h2>전환 단계</h2></div>
+                <div className="stats-v4-card-title"><h3>전환 단계</h3></div>
                 <div className="stats-v4-funnel-list">
                   <FunnelRow title="상담 시작" startLabel="조회" startValue={stats.pv} endLabel="폼 시작" endValue={stats.formStart} rate={stats.formStartRate} />
                   <FunnelRow title="상담 제출" startLabel="제출 시도" startValue={stats.submitAttempt} endLabel="제출 완료" endValue={stats.submitSuccess} rate={stats.formCompletionRate} />
