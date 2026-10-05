@@ -233,7 +233,7 @@ P9 접근성 audit의 코드 보강과 자동 회귀 gate는 완료했다.
 
 ### P8 — 대량 데이터
 
-P8-1 synthetic volume baseline은 완료했다.
+P8-1~4의 코드/회귀 계약은 완료했다. production 실데이터 삭제는 실행하지 않았다.
 
 완료:
 
@@ -245,12 +245,17 @@ P8-1 synthetic volume baseline은 완료했다.
 - CSV export는 count 없는 500건 keyset scan + ReadableStream으로 전환
 - dynamic form 컬럼은 1차 shape scan 후 2차 row stream으로 유지
 - 요청당 50,000건 safety ceiling을 두고 초과 시 필터 축소를 요구
-- production 데이터/D1 write 없이 성능 퇴행을 검사
+- lead 180일 / delivery log 30일 / AI draft 30일의 bounded retention endpoint와 dry-run report
+- 현재 event payload가 PII-free로 보장되지 않으므로 event 자동 보존기간은 180일 상한으로 보수 적용
+- 기존 audit retention은 별도 endpoint/workflow에서 730일 기본 정책 유지
+- PageRo data retention write는 전용 secret + `PAGERO_DATA_RETENTION_WRITE=1` + 승인 문구가 모두 있어야 실행
+- `pagero:data-retention:p8:qa`를 `qa:all` release gate에 포함
+- production 데이터/D1 write 없이 P8-1~4 구현/회귀 검증
 
 남은 항목:
 
-- retention
-- backup / restore
+- P8-5 backup / restore 실제 복구 검증
+- JSONL backup/quarantine retention 실행 연결
 - 실제 사용량이 커진 뒤 production query plan 재확인
 
 ### E5 — A/B test
