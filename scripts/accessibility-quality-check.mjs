@@ -291,7 +291,7 @@ assert(!unlabeledIconButtons.length, 'icon-only close buttons should have aria-l
 
 console.log(JSON.stringify({
   ok: true,
-  checks: dialogContracts.length + 113,
+  checks: dialogContracts.length + 112,
   keyboardOnly: true,
   focusTrap: true,
   focusReturn: true,
