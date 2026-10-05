@@ -89,8 +89,12 @@ export async function upsertCallProfile(db, input = {}) {
   const phone = String(input.phone || '').replace(/\D/g, '').slice(0, 20);
   const brandName = normalizeText(input.brandName, 100);
   const industry = normalizeText(input.industry, 100);
-  if (!ownerId || !email || !name || !phone || !brandName || !industry) {
-    throw callError('Required profile information is missing.', 400, { code: 'CALL_PROFILE_REQUIRED' });
+  if (!ownerId || !email || !name || !phone) {
+    throw callError('Required profile information is missing.', 400, {
+      code: 'CALL_PROFILE_REQUIRED',
+      requiredFields: ['name', 'phone', 'email'],
+      optionalFields: ['brandName', 'industry'],
+    });
   }
   await db.prepare(`
     INSERT INTO calllink_profiles (owner_id, email, name, phone, brand_name, industry, created_at, updated_at)
