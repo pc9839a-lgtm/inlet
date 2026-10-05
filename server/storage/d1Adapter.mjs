@@ -1091,10 +1091,10 @@ export async function listD1OwnershipTransferRequests(db, { projectId, status = 
   };
 }
 
-export async function listD1Leads(db, { projectId, month, status = '', kind = '', deliveryStatus = '', q = '', dateFrom = '', dateTo = '', channel = '', cursor = 0, limit = 50 } = {}) {
+export async function listD1Leads(db, { projectId, month, status = '', kind = '', deliveryStatus = '', q = '', dateFrom = '', dateTo = '', channel = '', cursor = '', limit = 50 } = {}) {
   assertD1Binding(db);
   const safeLimit = Math.max(1, Math.min(100, Number(limit || 50)));
-  const safeCursor = Math.max(0, Number(cursor || 0));
+  const cursorState = parseD1LeadCursor(cursor);
   const filters = ['project_id = ?', 'created_month = ?'];
   const params = [projectId, month];
   if (dateFrom) {
@@ -1131,20 +1131,66 @@ export async function listD1Leads(db, { projectId, month, status = '', kind = ''
     filters.push('(LOWER(name) LIKE ? OR LOWER(phone) LIKE ? OR LOWER(email) LIKE ? OR LOWER(contact_key) LIKE ? OR LOWER(values_json) LIKE ?)');
     params.push(needle, needle, needle, needle, needle);
   }
-  params.push(safeLimit, safeCursor);
+
+  const countParams = [...params];
+  const hasKeysetCursor = cursorState.mode === 'keyset' && !!cursorState.createdAt && !!cursorState.id;
+  if (hasKeysetCursor) {
+    filters.push('(created_at < ? OR (created_at = ? AND id < ?))');
+    params.push(cursorState.createdAt, cursorState.createdAt, cursorState.id);
+  }
+
+  const queryParams = [...params, safeLimit + 1];
+  const offsetClause = cursorState.mode === 'offset' && cursorState.offset > 0 ? ' OFFSET ?' : '';
+  if (offsetClause) queryParams.push(cursorState.offset);
+
   const result = await queryD1Rows(
     db,
-    `SELECT * FROM leads WHERE ${filters.join(' AND ')} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-    params,
+    `SELECT * FROM leads WHERE ${filters.join(' AND ')} ORDER BY created_at DESC, id DESC LIMIT ?${offsetClause}`,
+    queryParams,
   );
-  const total = await countD1Rows(db, `SELECT COUNT(*) AS total FROM leads WHERE ${filters.join(' AND ')}`, params.slice(0, -2));
+  const countFilters = hasKeysetCursor ? filters.slice(0, -1) : filters;
+  const total = await countD1Rows(db, `SELECT COUNT(*) AS total FROM leads WHERE ${countFilters.join(' AND ')}`, countParams);
+  const visibleRows = result.records.slice(0, safeLimit);
+  const hasMore = result.records.length > safeLimit;
+  const last = visibleRows[visibleRows.length - 1] || null;
   return {
-    records: result.records.map(decodeD1Lead),
+    records: visibleRows.map(decodeD1Lead),
     total,
-    nextCursor: safeCursor + result.records.length < total ? safeCursor + result.records.length : null,
-    hasMore: safeCursor + result.records.length < total,
-    meta: result.meta,
+    nextCursor: hasMore && last ? encodeD1LeadCursor(last.created_at, last.id) : null,
+    hasMore,
+    meta: {
+      ...result.meta,
+      pagination: cursorState.mode === 'offset' && cursorState.offset > 0 ? 'offset-compat' : 'keyset',
+    },
   };
+}
+
+function parseD1LeadCursor(value = '') {
+  const raw = String(value ?? '').trim();
+  if (!raw || raw === '0') return { mode: 'keyset', createdAt: '', id: '', offset: 0 };
+  if (/^\d+$/.test(raw)) {
+    return { mode: 'offset', createdAt: '', id: '', offset: Math.max(0, Number(raw || 0)) };
+  }
+  const match = /^k~([^~]+)~([^~]+)$/.exec(raw);
+  if (!match) return { mode: 'keyset', createdAt: '', id: '', offset: 0 };
+  try {
+    const createdAt = decodeURIComponent(match[1]);
+    const id = decodeURIComponent(match[2]);
+    if (!createdAt || !id || !Number.isFinite(Date.parse(createdAt))) {
+      return { mode: 'keyset', createdAt: '', id: '', offset: 0 };
+    }
+    return { mode: 'keyset', createdAt, id, offset: 0 };
+  } catch {
+    return { mode: 'keyset', createdAt: '', id: '', offset: 0 };
+  }
+}
+
+function encodeD1LeadCursor(createdAt = '', id = '') {
+  const safeCreatedAt = String(createdAt || '').trim();
+  const safeId = String(id || '').trim();
+  if (!safeCreatedAt || !safeId) return null;
+  const encodePart = (value) => encodeURIComponent(value).replace(/~/g, '%7E');
+  return `k~${encodePart(safeCreatedAt)}~${encodePart(safeId)}`;
 }
 
 export async function insertD1BlockedLeadSubmission(db, entry = {}, context = {}) {

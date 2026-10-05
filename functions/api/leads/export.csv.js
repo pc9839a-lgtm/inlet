@@ -75,7 +75,7 @@ export async function onRequest({ request, env }) {
 
     const ids = parseCsvIds(url.searchParams.get('ids') || '');
     const leads = [];
-    let cursor = 0;
+    let cursor = '';
     for (let guard = 0; guard < 50; guard += 1) {
       const page = await listD1Leads(db, {
         projectId: project.projectId,

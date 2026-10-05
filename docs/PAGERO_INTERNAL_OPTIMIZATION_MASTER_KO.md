@@ -238,13 +238,14 @@ P8-1 synthetic volume baseline은 완료했다.
 완료:
 
 - 10k / 50k lead fixture를 CI에서 생성하는 offline benchmark gate
-- 최신 목록, deep offset, 상태 필터, 전달 상태 필터, 월별 count, scoped text search의 query plan 검사
+- 최신 목록, deep keyset, 상태 필터, 전달 상태 필터, 월별 count, scoped text search의 query plan 검사
+- lead inbox의 기본 pagination을 `created_at DESC, id DESC` keyset cursor로 전환
+- 기존 숫자 offset cursor는 구버전 호환 입력으로만 유지하고 다음 페이지부터 keyset cursor를 반환
 - 기존 `idx_leads_project_month`, `idx_leads_project_status`, `idx_leads_delivery_status` 사용 계약 고정
 - production 데이터/D1 write 없이 성능 퇴행을 검사
 
 남은 항목:
 
-- offset pagination을 장기적으로 cursor/keyset 방식으로 전환할지 검토
 - CSV streaming
 - retention
 - backup / restore
