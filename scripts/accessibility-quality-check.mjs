@@ -5,6 +5,8 @@ function assert(condition, message) {
 }
 
 const files = {
+  indexHtml: await readFile('index.html', 'utf8'),
+  mainEntry: await readFile('src/main.jsx', 'utf8'),
   dialogHook: await readFile('src/lib/useAccessibleDialog.js', 'utf8'),
   feedback: await readFile('src/builder/BuilderFeedback.jsx', 'utf8'),
   home: (await Promise.all([
@@ -194,6 +196,16 @@ assert(files.workspaceChromeCss.includes('@media (max-width: 640px), (max-height
 assert(files.workspaceChromeCss.includes('scroll-padding-bottom: max(96px, env(safe-area-inset-bottom))'), 'short workspace viewports should preserve bottom scroll room');
 assert(files.workspaceChromeCss.includes('overflow-x: auto !important'), 'workspace tabs should remain reachable when zoomed');
 
+// P9-6 mobile virtual-keyboard viewport contract.
+assert(files.indexHtml.includes('interactive-widget=resizes-content'), 'viewport meta should request content resize when the virtual keyboard opens');
+assert(files.mainEntry.includes('window.visualViewport') && files.mainEntry.includes('--pagero-visual-viewport-height') && files.mainEntry.includes('--pagero-keyboard-inset'), 'runtime must mirror the visual viewport and keyboard inset into CSS variables');
+assert(files.mainEntry.includes("viewport?.addEventListener('resize', update") && files.mainEntry.includes("viewport?.addEventListener('scroll', update"), 'visual viewport contract must update on keyboard resize and offset changes');
+assert(files.workspaceShellCss.includes('var(--pagero-visual-viewport-height, 100dvh)') && files.workspaceShellCss.includes('var(--pagero-keyboard-inset, 0px)'), 'mobile operations shell must use visible viewport height and keyboard-safe scroll room');
+assert(files.workspaceChromeCss.includes('calc(var(--pagero-keyboard-inset, 0px) + 24px)'), 'workspace short viewport must reserve keyboard inset');
+assert(files.createModalCss.includes('var(--pagero-visual-viewport-top,0px)') && files.createModalCss.includes('var(--pagero-visual-viewport-height,100dvh)'), 'create modal must stay inside the actual visual viewport');
+assert(files.codeCss.includes('var(--pagero-visual-viewport-height,100dvh)') && files.formCss.includes('var(--pagero-visual-viewport-height,100dvh)'), 'editor modals must shrink to the visible keyboard viewport');
+assert(files.homeShellCss.includes('@media (max-height:600px)') && files.homeShellCss.includes('var(--pagero-keyboard-inset,0px)'), 'auth/dashboard input surfaces must keep keyboard-short scroll room');
+
 assert(files.createModalCss.includes('prefers-reduced-motion:reduce'), 'modal motion should respect reduced-motion preference');
 assert(files.editorSharedCss.includes('prefers-reduced-motion:reduce'), 'workspace motion should respect reduced-motion preference');
 assert(files.homeShellCss.includes('prefers-reduced-motion:reduce'), 'dashboard motion should respect reduced-motion preference');
@@ -237,12 +249,12 @@ assert(!unlabeledIconButtons.length, 'icon-only close buttons should have aria-l
 
 console.log(JSON.stringify({
   ok: true,
-  checks: dialogContracts.length + 85,
+  checks: dialogContracts.length + 93,
   keyboardOnly: true,
   focusTrap: true,
   focusReturn: true,
   zoom200Contract: true,
-  mobileKeyboardViewport: true,
+  mobileKeyboardViewport: 'visual-viewport-backed',
   reducedMotion: true,
   navigationSemantics: true,
   screenReaderSemanticsP95: true,
