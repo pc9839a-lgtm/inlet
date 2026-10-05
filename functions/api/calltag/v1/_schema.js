@@ -97,7 +97,40 @@ const SCHEMA_STATEMENTS = [
     ON calltag_lead_audit(api_key_id, created_at DESC)`,
 ];
 
+const universalSchemaReady = new WeakSet();
+const universalSchemaInFlight = new WeakMap();
+
 export async function ensureUniversalLeadSchema(db) {
   if (!db?.prepare) throw leadError('Lead database is not configured.', 503, 'CALLTAG_LEAD_DB_REQUIRED');
-  for (const statement of SCHEMA_STATEMENTS) await db.prepare(statement).run();
+  if (universalSchemaReady.has(db)) return;
+
+  const existing = universalSchemaInFlight.get(db);
+  if (existing) return existing;
+
+  const task = (async () => {
+    try {
+      await db.prepare(`
+        SELECT id, owner_id, status
+        FROM calltag_lead_events
+        LIMIT 1
+      `).first();
+      await db.prepare(`
+        SELECT id, owner_id, status
+        FROM calltag_api_keys
+        LIMIT 1
+      `).first();
+      universalSchemaReady.add(db);
+      return;
+    } catch {}
+
+    for (const statement of SCHEMA_STATEMENTS) await db.prepare(statement).run();
+    universalSchemaReady.add(db);
+  })();
+
+  universalSchemaInFlight.set(db, task);
+  try {
+    await task;
+  } finally {
+    universalSchemaInFlight.delete(db);
+  }
 }
