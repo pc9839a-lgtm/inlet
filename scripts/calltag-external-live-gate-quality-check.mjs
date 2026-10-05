@@ -15,7 +15,7 @@ for (const table of [
   'calltag_meta_connections',
   'calltag_google_forms_connections',
   'calltag_push_devices',
-  'pagero_leads',
+  'calltag_pagero_leads',
 ]) {
   assert.ok(readiness.includes(table), `CallTag readiness table missing: ${table}`);
 }
