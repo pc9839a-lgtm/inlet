@@ -68,14 +68,46 @@ const WEBHOOK_SCHEMA_STATEMENTS = [
     ON calltag_webhook_raw_events(owner_id, status, id DESC)`,
 ];
 
+const webhookSchemaReady = new WeakSet();
+const webhookSchemaInFlight = new WeakMap();
+
 export async function ensureWebhookSchema(db) {
   if (!db?.prepare) throw leadError('Webhook database is not configured.', 503, 'CALLTAG_WEBHOOK_DB_REQUIRED');
-  await ensureUniversalLeadSchema(db);
-  for (const statement of WEBHOOK_SCHEMA_STATEMENTS) await db.prepare(statement).run();
+  if (webhookSchemaReady.has(db)) return;
+
+  const existing = webhookSchemaInFlight.get(db);
+  if (existing) return existing;
+
+  const task = (async () => {
+    await ensureUniversalLeadSchema(db);
+    try {
+      await db.prepare(`
+        SELECT id, owner_id, status, endpoint_hash
+        FROM calltag_webhook_connections
+        LIMIT 1
+      `).first();
+      await db.prepare(`
+        SELECT id, connection_id, expires_at
+        FROM calltag_webhook_raw_events
+        LIMIT 1
+      `).first();
+      webhookSchemaReady.add(db);
+      return;
+    } catch {}
+
+    for (const statement of WEBHOOK_SCHEMA_STATEMENTS) await db.prepare(statement).run();
+    webhookSchemaReady.add(db);
+  })();
+
+  webhookSchemaInFlight.set(db, task);
+  try {
+    await task;
+  } finally {
+    webhookSchemaInFlight.delete(db);
+  }
 }
 
 export async function cleanupExpiredWebhookPayloads(db) {
-  await ensureWebhookSchema(db);
   try {
     const result = await db.prepare(`
       DELETE FROM calltag_webhook_raw_events
