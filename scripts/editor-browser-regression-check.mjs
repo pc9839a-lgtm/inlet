@@ -21,6 +21,11 @@ const desktopMatrix = [
   { name: 'pc-1440', width: 1440, height: 960, narrow: false },
 ];
 
+const zoom200Matrix = [
+  { name: 'zoom-200-from-1440', width: 720, height: 450 },
+  { name: 'zoom-200-from-1280', width: 640, height: 400 },
+];
+
 const mobileViewports = [
   { name: 'mobile-360', width: 360, height: 800 },
   { name: 'mobile-390', width: 390, height: 844 },
@@ -1323,6 +1328,92 @@ async function run() {
       await capture(client, `desktop-matrix-${desktopViewport.width}`);
     }
 
+    // P9-3: 200% desktop zoom is represented by the halved CSS viewport while
+    // keeping a fine-pointer desktop input mode. Builder/settings must remain usable
+    // instead of being replaced by the mobile operations-only surface.
+    for (const zoomViewport of zoom200Matrix) {
+      await setViewport(client, zoomViewport.width, zoomViewport.height, false);
+      await waitForBrowser(client, `!!document.querySelector('.builder-shell.edit-mode-shell:not(.mobile-operations-shell)') && !!document.querySelector('.preview-workspace')`, `${zoomViewport.name} editor reflow`);
+
+      const zoomMetrics = await collectNarrowDesktopMetrics(client);
+      assertNarrowDesktop(zoomMetrics, zoomViewport.width);
+
+      const zoomChrome = await evaluate(client, `(() => {
+        const rect = (element) => {
+          if (!element) return null;
+          const box = element.getBoundingClientRect();
+          return { left: box.left, right: box.right, top: box.top, bottom: box.bottom, width: box.width, height: box.height };
+        };
+        const dock = document.querySelector('.fixed-add-dock');
+        const add = document.querySelector('.fixed-add-dock .add-toggle');
+        const header = document.querySelector('.panel-header');
+        const actions = [...document.querySelectorAll('.panel-actions button')].map(rect);
+        const dockStyle = dock ? getComputedStyle(dock) : null;
+        return {
+          dock: rect(dock),
+          add: rect(add),
+          header: rect(header),
+          actions,
+          dockPosition: dockStyle?.position || '',
+          bodyOverflowX: getComputedStyle(document.body).overflowX,
+          bodyOverflowY: getComputedStyle(document.body).overflowY,
+        };
+      })()`);
+
+      assertInsideViewport(zoomChrome.dock, zoomViewport.width, `${zoomViewport.name} add dock`);
+      assertInsideViewport(zoomChrome.add, zoomViewport.width, `${zoomViewport.name} add button`);
+      assertInsideViewport(zoomChrome.header, zoomViewport.width, `${zoomViewport.name} panel header`);
+      zoomChrome.actions.forEach((action, index) => assertInsideViewport(action, zoomViewport.width, `${zoomViewport.name} header action ${index + 1}`));
+      assert(zoomChrome.dockPosition !== 'fixed', `${zoomViewport.name} add dock must not become a viewport-fixed overlap: ${zoomChrome.dockPosition}`);
+      assert(['auto', 'hidden'].includes(zoomChrome.bodyOverflowX), `${zoomViewport.name} body horizontal overflow mode is unexpected: ${zoomChrome.bodyOverflowX}`);
+      assert(['auto', 'visible'].includes(zoomChrome.bodyOverflowY), `${zoomViewport.name} body must stay vertically reachable: ${zoomChrome.bodyOverflowY}`);
+      await capture(client, zoomViewport.name);
+    }
+
+    // Settings must also reflow at the 200% equivalent viewport without page-level
+    // horizontal scrolling or a clipped active panel.
+    await setViewport(client, 640, 400, false);
+    await clickButtonByText(client, '.top-tabs', '설정');
+    await waitForBrowser(client, `!!document.querySelector('.builder-shell.settings-workspace-shell:not(.mobile-operations-shell) .settings-v3-root')`, 'zoom-200 settings workspace');
+    await clickButtonByText(client, '.settings-v3-sidebar', 'SEO 설정');
+    await waitForBrowser(client, `(document.querySelector('#settings-active-title')?.textContent || '').includes('SEO')`, 'zoom-200 SEO settings section');
+
+    const zoomSettings = await evaluate(client, `(() => {
+      const rect = (element) => {
+        if (!element) return null;
+        const box = element.getBoundingClientRect();
+        return { left: box.left, right: box.right, top: box.top, bottom: box.bottom, width: box.width, height: box.height };
+      };
+      const sidebar = document.querySelector('.settings-v3-sidebar');
+      const main = document.querySelector('.settings-v3-main');
+      const panel = document.querySelector('#settings-active-panel');
+      const content = document.querySelector('.settings-v3-content-wrap');
+      return {
+        innerWidth,
+        bodyScrollWidth: document.body?.scrollWidth || 0,
+        documentScrollWidth: document.documentElement?.scrollWidth || 0,
+        sidebar: rect(sidebar),
+        main: rect(main),
+        panel: rect(panel),
+        content: rect(content),
+        sidebarOverflowX: sidebar ? getComputedStyle(sidebar).overflowX : '',
+        rootColumns: getComputedStyle(document.querySelector('.settings-v3-root')).gridTemplateColumns,
+      };
+    })()`);
+    assert(zoomSettings.bodyScrollWidth <= 643, `zoom-200 settings body overflow: ${zoomSettings.bodyScrollWidth}`);
+    assert(zoomSettings.documentScrollWidth <= 643, `zoom-200 settings document overflow: ${zoomSettings.documentScrollWidth}`);
+    assertInsideViewport(zoomSettings.sidebar, 640, 'zoom-200 settings sidebar');
+    assertInsideViewport(zoomSettings.main, 640, 'zoom-200 settings main');
+    assertInsideViewport(zoomSettings.panel, 640, 'zoom-200 settings active panel');
+    assertInsideViewport(zoomSettings.content, 640, 'zoom-200 settings content');
+    assert(String(zoomSettings.rootColumns || '').trim().split(/\s+/).length === 1, `zoom-200 settings must collapse to one column: ${zoomSettings.rootColumns}`);
+    assert(zoomSettings.sidebarOverflowX === 'auto', `zoom-200 settings nav should scroll internally instead of clipping the page: ${zoomSettings.sidebarOverflowX}`);
+    await capture(client, 'zoom-200-settings');
+
+    await setViewport(client, 1440, 960, false);
+    await clickButtonByText(client, '.top-tabs', '편집');
+    await waitForBrowser(client, `!!document.querySelector('.builder-shell.edit-mode-shell:not(.mobile-operations-shell)')`, 'desktop editor restored after zoom audit');
+
     for (const viewport of mobileViewports) {
       await setViewport(client, viewport.width, viewport.height, true);
       await waitForBrowser(client, `!!document.querySelector('.builder-shell.mobile-operations-shell') && !!document.querySelector('.mobile-operations-header')`, `${viewport.name} operations view`);
@@ -1351,8 +1442,9 @@ async function run() {
       publicVerifyCount: apiState.publicVerifyCount,
       desktopWidths: desktopMatrix.map((item) => item.width),
       mobileWidths: mobileViewports.map((item) => item.width),
-      responsiveMatrixScreenshots: desktopMatrix.length + mobileViewports.length,
+      responsiveMatrixScreenshots: desktopMatrix.length + zoom200Matrix.length + mobileViewports.length + 1,
       responsiveGeometryLocked: true,
+      zoom200P93: ['desktop-builder-preserved', 'no-page-horizontal-scroll', 'add-dock-no-fixed-overlap', 'settings-single-column-reflow'],
       conversionCockpit: true,
       publishChecklist: true,
       keyboardOnlyP91: ['Enter', 'Space', 'Tab', 'Shift+Tab', 'Escape'],

@@ -1,21 +1,25 @@
 /* PageRo editor workspace — outer edit-shell geometry only.
-   <=899px is handled by mobile-operations-shell and intentionally stays out of this file. */
+   True mobile uses mobile-operations-shell; fine-pointer desktop stays editable even
+   when browser zoom reduces the CSS viewport below the mobile width breakpoint. */
 
-@media (min-width: 900px) {
-  body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) > .left-workspace {
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) > .left-workspace {
     border-right: 1px solid var(--product-line);
   }
 
-  body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .work-panel {
-    min-width: 0;
-    max-width: none;
-    margin-inline: 0;
-    overflow-x: hidden;
-  }
+body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .work-panel {
+  min-width: 0;
+  max-width: none;
+  margin-inline: 0;
+  overflow-x: hidden;
 }
 
-/* Tablet / narrow desktop: stack editor and preview vertically. */
-@media (min-width: 900px) and (max-width: 1180px) {
+/* Tablet / narrow desktop / desktop browser zoom: stack editor and preview vertically. */
+@media (max-width: 1180px) {
+  html:has(.builder-shell.edit-mode-shell:not(.mobile-operations-shell)),
+  body:has(.builder-shell.edit-mode-shell:not(.mobile-operations-shell)),
+  #root:has(.builder-shell.edit-mode-shell:not(.mobile-operations-shell)) {
+    overflow: auto !important;
+  }
   body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) {
     width: 100% !important;
     height: auto !important;

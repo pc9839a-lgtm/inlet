@@ -38,7 +38,9 @@ const files = {
   homeShellCss: await readFile('src/styles/panels-home-shell.css', 'utf8'),
   productTokens: await readFile('src/styles/product-ui-tokens.css', 'utf8'),
   workspaceShellCss: await readFile('src/styles/workspace-shell.css', 'utf8'),
+  editorWorkspaceCss: await readFile('src/styles/editor-workspace.css', 'utf8'),
   workspaceChromeCss: await readFile('src/screens/workspace/WorkspaceChrome.css', 'utf8'),
+  mobileWorkspaceMode: await readFile('src/runtime/useMobileWorkspaceMode.js', 'utf8'),
   appStylesEntry: await readFile('src/app-styles.css', 'utf8'),
   homeCss: await readFile('src/screens/HomeScreens.css', 'utf8'),
 };
@@ -143,6 +145,11 @@ assert(files.createModalCss.includes('100dvh'), 'create dialog should use dynami
 assert(files.formCss.includes('100dvh'), 'HTML dialog should use dynamic viewport height');
 assert(files.codeCss.includes('100dvh'), 'code dialog should use dynamic viewport height');
 assert(files.workspaceShellCss.includes('@media (max-width: 1180px)'), 'workspace must reflow before narrow/zoomed desktop becomes two-column overflow');
+assert(files.mobileWorkspaceMode.includes("const COARSE_POINTER_QUERY = '(pointer: coarse)'"), 'mobile operations mode must distinguish coarse-pointer mobile from desktop browser zoom');
+assert(files.mobileWorkspaceMode.includes('widthMedia.matches && pointerMedia.matches'), 'mobile workspace must require both narrow width and coarse pointer');
+assert(files.editorWorkspaceCss.includes('@media (max-width: 1180px)'), 'editor must reflow below 1180px without a 900px lower bound');
+assert(files.editorWorkspaceCss.includes('overflow: auto !important;'), 'zoomed desktop editor must remain scroll-reachable');
+assert(files.editorWorkspaceCss.includes('.edit-mode-shell:not(.mobile-operations-shell)'), 'zoom reflow must not override true mobile operations mode');
 assert(files.workspaceShellCss.includes('100dvh'), 'workspace shell should use dynamic viewport units');
 assert(files.createModalCss.includes('@media (max-height:520px),(max-width:640px)'), 'create dialog should reflow for short mobile-keyboard viewports');
 assert(files.workspaceTabs && files.editorSharedCss, 'workspace accessibility sources should load');
@@ -173,7 +180,7 @@ assert(!unlabeledIconButtons.length, 'icon-only close buttons should have aria-l
 
 console.log(JSON.stringify({
   ok: true,
-  checks: dialogContracts.length + 55,
+  checks: dialogContracts.length + 60,
   keyboardOnly: true,
   focusTrap: true,
   focusReturn: true,
