@@ -1,5 +1,10 @@
 import { decodeD1Page, decodeD1PageRevision, getD1PageBySlug, getD1ProjectById, upsertD1Page } from '../../../server/storage/d1Adapter.mjs';
 import {
+  publicPageFromExperimentAssignment,
+  resolveRunningPageExperimentAssignment,
+  sanitizeExperimentVisitorId,
+} from '../../../server/pageExperimentAssignment.mjs';
+import {
   assertExpectedPageVersion,
   assertTargetSlugAvailable,
   assertUpdatePageIdentity,
@@ -245,6 +250,15 @@ export async function onRequest({ request, env, params }) {
         const { project: publicProject } = result;
         if (!page) return pageNotFoundResponse(request, env);
         page = await recoverDyjhIncidentPage(db, page, slug);
+        const visitorId = sanitizeExperimentVisitorId(url.searchParams.get('abv') || '');
+        if (visitorId) {
+          const assignment = await resolveRunningPageExperimentAssignment(db, {
+            projectId: page.projectId,
+            pageId: page.id,
+            visitorId,
+          });
+          page = publicPageFromExperimentAssignment(page, assignment);
+        }
         return jsonResponse(request, env, 200, { ok: true, page: publicPagePayload(page, publicProject) }, METHODS, {
           cacheControl: PUBLIC_PAGE_CACHE_CONTROL,
           headers: PUBLIC_PAGE_HEADERS,
