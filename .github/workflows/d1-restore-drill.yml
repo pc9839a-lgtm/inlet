@@ -1,0 +1,98 @@
+name: D1 Disposable Restore Drill
+
+on:
+  workflow_dispatch:
+    inputs:
+      backup_run_id:
+        description: D1 Migration Safety run id containing an encrypted backup artifact
+        required: true
+        type: string
+      mode:
+        description: Verify artifact only or restore it into a disposable Cloudflare D1 database
+        required: true
+        default: artifact-verify
+        type: choice
+        options:
+          - artifact-verify
+          - restore-drill
+      allow_disposable_writes:
+        description: Required only for restore-drill; creates and deletes a disposable D1 database
+        required: true
+        default: false
+        type: boolean
+      approval_phrase:
+        description: restore-drill requires I_APPROVE_D1_DISPOSABLE_RESTORE
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: pagero-d1-restore-drill
+  cancel-in-progress: false
+
+jobs:
+  restore-drill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+
+    steps:
+      - name: Checkout selected revision
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download encrypted backup artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.backup_run_id }}
+        run: |
+          set -euo pipefail
+          mkdir -p .tmp-d1-restore-source
+          gh run download "$SOURCE_RUN_ID" \
+            --name "d1-migration-safety-$SOURCE_RUN_ID" \
+            --dir .tmp-d1-restore-source
+
+      - name: Verify backup or run disposable restore
+        run: npm run d1:restore:drill
+        env:
+          INLET_D1_RESTORE_MODE: ${{ inputs.mode }}
+          PAGERO_D1_RESTORE_SOURCE_RUN_ID: ${{ inputs.backup_run_id }}
+          PAGERO_D1_RESTORE_WRITE: ${{ inputs.allow_disposable_writes == true && '1' || '0' }}
+          PAGERO_D1_RESTORE_APPROVAL: ${{ inputs.approval_phrase }}
+          PAGERO_D1_RESTORE_ARTIFACT_DIR: .tmp-d1-restore-source
+          PAGERO_D1_RESTORE_OUTPUT_DIR: .tmp-d1-restore-drill
+          PAGERO_D1_DATABASE_NAME: ${{ secrets.PAGERO_D1_DATABASE_NAME }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PAGERO_D1_BACKUP_ENCRYPTION_KEY: ${{ secrets.PAGERO_D1_BACKUP_ENCRYPTION_KEY }}
+
+      - name: Assert plaintext cleanup
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -f .tmp-d1-restore-drill/pagero-d1-restore.sql
+          test ! -f .tmp-d1-restore-drill/wrangler.restore-drill.json
+
+      - name: Upload non-secret restore evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: d1-restore-drill-${{ github.run_id }}
+          path: .tmp-d1-restore-drill/*.json
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 30
