@@ -42,6 +42,7 @@ const steps = [
   ['calltag:connect-ux-polish:qa', ['scripts/calltag-connect-ux-polish-quality-check.mjs']],
   ['calltag:integration-activity:qa', ['scripts/calltag-integration-activity-quality-check.mjs']],
   ['calltag:e2e-test:qa', ['scripts/calltag-e2e-test-quality-check.mjs']],
+  ['calltag:external-live-gate:qa', ['scripts/calltag-external-live-gate-quality-check.mjs']],
   ['server:smoke:auth', ['scripts/server-smoke-auth.mjs']],
   ['server:smoke:leads', ['scripts/server-smoke-leads.mjs']],
   ['lead:capture:qa', ['scripts/lead-capture-quality-check.mjs']],
