@@ -9,11 +9,26 @@ try{oauthSessionId=sessionStorage.getItem(OAUTH_SESSION_KEY)||''}catch{}
 function notice(el,message,type='ok'){el.textContent=message;el.className=`notice show ${type}`}
 function clearNotice(el){el.textContent='';el.className='notice'}
 function authHeaders(json=false){return {...(json?{'Content-Type':'application/json'}:{}),...(session?{'X-Inlet-Session':session}:{})}}
+const CONNECT_DETAIL_BY_SECTION={
+  meta:'metaDetail',
+  'google-forms':'googleFormsDetail',
+  google:'googleFormsDetail',
+  webhook:'webhookDetail',
+  api:'apiDetail',
+  'direct-api':'apiDetail',
+  activity:'activityDetail',
+};
+function requestedDetailId(){
+  try{
+    const section=(new URL(location.href).searchParams.get('section')||'').trim().toLowerCase();
+    return CONNECT_DETAIL_BY_SECTION[section]||'metaDetail';
+  }catch{return 'metaDetail'}
+}
 function setAuthed(value){
   $('loginPanel').classList.toggle('hidden',value);
   document.querySelectorAll('[data-auth-only]').forEach((el)=>el.classList.toggle('hidden',!value));
   $('logout').classList.toggle('hidden',!value);
-  if(value){resetMetaStartButton();showDetail('metaDetail',false)}
+  if(value){resetMetaStartButton();showDetail(requestedDetailId(),false)}
 }
 function clearTransientAuthUi(){
   rememberOauthSession('');
