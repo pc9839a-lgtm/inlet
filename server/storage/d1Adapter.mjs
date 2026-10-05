@@ -7,6 +7,8 @@ export const D1_SCHEMA_TABLES = [
   'invites',
   'pages',
   'page_revisions',
+  'page_experiments',
+  'page_variants',
   'leads',
   'events',
   'lead_blocked_submissions',

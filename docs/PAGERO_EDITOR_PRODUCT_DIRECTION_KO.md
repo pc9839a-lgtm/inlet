@@ -5,8 +5,8 @@
 - 범위: PageRo 페이지 제작·편집·미리보기·발행 경험
 - 선행조건: 저장소/문서 정리와 release blocker 안정화가 우선
 
-- 구현 상태: E0~E4 main 반영 완료 / E5는 실사용 데이터 이후
-- 현재 우선순위: 편집기 재개편이 아니라 P5 개인 도메인, P7 결제, P9 접근성
+- 구현 상태: E0~E4 main 반영 완료 / E5-1 variant model 구현·QA 단계
+- 현재 우선순위: E5를 variant model → stable assignment → conversion comparison → winner publish 순으로 진행
 - AI 확장: E4 첫 페이지 생성까지 구현됨. 사용자 재요청 전에는 후순위
 
 ## 1. 문제 정의
@@ -276,12 +276,22 @@ AI 출력:
 - 업종별 기본 구조
 - 발행 전 checklist
 
-### E5 — 실사용 데이터 이후
+### E5 — A/B 전환 최적화
 
-- page variant
-- A/B test
-- conversion comparison
-- winning variant publish
+순차 구현:
+
+- E5-1 page variant model: canonical `pages/page_revisions`와 분리된 experiment/variant snapshot 모델. variant 편집은 공개본과 revision chain을 수정하지 않는다.
+- E5-2 A/B test assignment: running experiment에서 동일 visitor가 새로고침해도 동일 variant를 받는 stable assignment.
+- E5-3 conversion comparison: variant별 방문·문의·전환율을 비교하고 test traffic은 제외.
+- E5-4 winning variant publish: winner snapshot을 canonical page의 새 revision으로 승격하고 기존 canonical revision으로 즉시 rollback 가능.
+
+E5-1 모델 원칙:
+
+- 페이지마다 `draft/running/paused` 상태의 open experiment는 하나만 허용.
+- experiment 생성 시 현재 canonical revision을 A/B 각각의 독립 snapshot으로 복제.
+- variant는 `source_revision_id/source_revision`으로 출처만 참조하고 canonical revision 번호를 소비하지 않음.
+- running 상태에서는 variant snapshot 편집을 잠가 실험 중 내용 변경으로 측정 기준이 흔들리지 않게 함.
+- winner publish 전까지 `pages`와 `page_revisions`는 절대 변경하지 않음.
 
 ## 10. 성공 기준
 
