@@ -1018,7 +1018,9 @@ async function run() {
     await waitForBrowser(client, `!document.querySelector('.screen-order-v2-menu')`, 'Space-opened dropdown Escape close');
 
     const heroEditorSelector = '.screen-order-v2-inline-editor textarea[placeholder="핵심 제목을 입력하세요"]';
-    await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
+    if (!(await evaluate(client, `document.querySelector(${JSON.stringify(heroTitleSelector)})?.getAttribute('aria-pressed') === 'true'`))) {
+      await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
+    }
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'selected hero inline editor textarea');
     await waitForBrowser(client, `!!document.querySelector('#editor-block-editor-hero + .screen-order-v2-inline-editor[data-inline-block-editor="true"]')`, 'inline block editor directly below hero row');
     assert(!(await evaluate(client, `document.body.innerText.includes('선택한 블록 설정')`)), 'redundant selected block settings heading must stay removed');
