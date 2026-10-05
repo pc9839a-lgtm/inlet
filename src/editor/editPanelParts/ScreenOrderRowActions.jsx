@@ -91,6 +91,14 @@ export function ScreenOrderRowActions({
     setMenuOpen((open) => !open);
   };
 
+  const toggleMenuByKey = (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (!menuOpen) updateMenuPosition();
+    setMenuOpen((open) => !open);
+  };
+
   const menu = menuOpen && menuPosition && typeof document !== 'undefined' ? createPortal(
     <div
       ref={menuRef}
@@ -131,6 +139,7 @@ export function ScreenOrderRowActions({
         type="button"
         className="screen-order-v2-action screen-order-v2-more"
         onClick={toggleMenu}
+        onKeyDown={toggleMenuByKey}
         title="더보기"
         aria-label={`${meta.label} 더보기`}
         aria-expanded={menuOpen}
