@@ -141,3 +141,21 @@ body .builder-shell .edit-layout :is(.switch-clean.active, .switch-clean[aria-ch
 body .builder-shell .edit-layout :is(.switch-clean.active, .switch-clean[aria-checked='true'], .toggle-clean > button.active, .toggle-clean > button[aria-checked='true'], .toggle > button.active, .toggle > button[aria-checked='true']) > i {
   transform: translateX(18px) !important;
 }
+
+.builder-shell :is(button,a,input,textarea,select,[tabindex]):focus-visible{
+  outline:3px solid #2563eb!important;
+  outline-offset:2px!important;
+}
+.builder-shell :is(button,a,input,textarea,select)[disabled]{
+  cursor:not-allowed;
+}
+@media (prefers-reduced-motion:reduce){
+  .builder-shell *,
+  .builder-shell *::before,
+  .builder-shell *::after{
+    scroll-behavior:auto!important;
+    transition-duration:.01ms!important;
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+  }
+}
