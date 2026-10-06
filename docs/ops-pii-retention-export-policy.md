@@ -28,18 +28,23 @@ Owner: Worker 4 policy, Worker 1 data implementation, Worker 2 operator UX.
 - Leads and reservations: 180 days default.
 - Delivery logs: 30 days default, keep status summary longer if needed.
 - Events without PII: 13 months default.
+- Current PageRo event rows are not yet guaranteed PII-free because `payload_json` preserves the submitted event object. Until the event write contract is narrowed to an analytics-only schema, automated runtime retention uses a stricter 180-day maximum for all PageRo events.
 - AI drafts: 30 days default.
 - Failed integration payloads: 14 days default unless operator retries.
 - JSONL backups containing leads: 30 days default unless retained for incident investigation.
 - JSONL quarantine files containing malformed lead rows: 14 days default after repair review.
 
-Retention config names to add:
+Retention runtime config:
 
-- `INLET_LEAD_RETENTION_DAYS`
-- `INLET_DELIVERY_LOG_RETENTION_DAYS`
-- `INLET_AI_DRAFT_RETENTION_DAYS`
-- `INLET_JSONL_BACKUP_RETENTION_DAYS`
-- `INLET_JSONL_QUARANTINE_RETENTION_DAYS`
+- `INLET_LEAD_RETENTION_DAYS` — default 180 days.
+- `INLET_DELIVERY_LOG_RETENTION_DAYS` — default 30 days.
+- `INLET_AI_DRAFT_RETENTION_DAYS` — default 30 days.
+- `INLET_EVENT_RETENTION_DAYS` — default 180 days and currently capped at 180 while event payloads are potentially PII-bearing.
+- `INLET_DATA_RETENTION_BATCH_LIMIT` — default 500 explicit deletes per table/run, maximum 5000.
+- `INLET_JSONL_BACKUP_RETENTION_DAYS` — 30-day policy target; implementation is part of P8 backup/restore closeout.
+- `INLET_JSONL_QUARANTINE_RETENTION_DAYS` — 14-day policy target; implementation is part of P8 backup/restore closeout.
+
+The PageRo D1 cleanup endpoint is `POST /api/admin/data/retention`. It requires a dedicated `INLET_DATA_RETENTION_SECRET`; API/session/audit secrets are not reused. The safe runner defaults to dry-run. Actual deletion additionally requires both `PAGERO_DATA_RETENTION_WRITE=1` and the exact approval phrase `I_APPROVE_PAGERO_DATA_RETENTION`.
 
 ## Masking Rules
 
@@ -89,16 +94,21 @@ Required warning copy:
 
 ## Implementation Tasks
 
-- Worker 1: add retention config env vars and cleanup/report command.
-- Worker 1: add delivery log export endpoint or CLI.
+- D1 retention: lead, delivery log, AI draft, and conservative event retention have a bounded cleanup/report endpoint plus fail-closed runner.
+- Audit retention: the existing dedicated audit retention endpoint/workflow remains separate and keeps its 730-day default/minimum policy.
+- Production deletion is not enabled by code alone. The production environment must supply the dedicated secret and explicit write/approval gates.
+- JSONL backup/quarantine expiry and D1 restore verification remain part of P8 backup/restore closeout.
+- Worker 1: add delivery log export endpoint or CLI if operators require a separate log export.
 - Worker 2: add masking toggle and export warning modal.
 - Worker 2: add delete confirmation copy that names PII impact.
-- Worker 3: add CSV sample QA for Korean text, formula neutralization, reservation fields, and delivery logs.
-- Worker 4: keep `.env.example` and operator checklist aligned with retention env vars when implementation lands.
+- Worker 3: keep CSV sample QA for Korean text, formula neutralization, reservation fields, and delivery logs.
+- Worker 4: keep `.env.example` and operator checklist aligned with retention env vars.
 
 ## Verification
 
+- `npm run pagero:data-retention:p8:qa`
 - `npm run server:smoke:leads`
 - `npm run csv:qa`
+- `npm run pagero:data-retention:run` is live-safe and dry-run unless the explicit write gate is enabled.
 - Manual: export sample CSV and inspect in Excel/Sheets.
-- Manual: verify delete removes lead and retry state.
+- Manual: verify lead deletion removes its associated delivery retry state.

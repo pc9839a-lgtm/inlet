@@ -1,0 +1,60 @@
+name: PageRo Data Retention
+
+on:
+  schedule:
+    - cron: '27 3 2 * *'
+  workflow_dispatch:
+    inputs:
+      execute:
+        description: Actually delete eligible rows instead of dry-run
+        required: false
+        default: false
+        type: boolean
+      approval:
+        description: Type I_APPROVE_PAGERO_DATA_RETENTION when execute is enabled
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pagero-data-retention
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+    env:
+      PAGERO_DATA_RETENTION_URL: ${{ vars.PAGERO_DATA_RETENTION_URL }}
+      PAGERO_DATA_RETENTION_ALLOWED_ORIGINS: ${{ vars.PAGERO_DATA_RETENTION_ALLOWED_ORIGINS }}
+      PAGERO_DATA_RETENTION_SECRET: ${{ secrets.PAGERO_DATA_RETENTION_SECRET }}
+      PAGERO_DATA_RETENTION_WRITE: ${{ github.event_name == 'workflow_dispatch' && inputs.execute && '1' || vars.PAGERO_DATA_RETENTION_WRITE || '0' }}
+      PAGERO_DATA_RETENTION_APPROVAL: ${{ github.event_name == 'workflow_dispatch' && inputs.approval || vars.PAGERO_DATA_RETENTION_APPROVAL || '' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Run guarded PageRo retention
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run pagero:data-retention:run | tee pagero-data-retention-result.json
+
+      - name: Upload retention evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pagero-data-retention-evidence-${{ github.run_id }}
+          path: pagero-data-retention-result.json
+          if-no-files-found: error
+          retention-days: 30
