@@ -1,9 +1,8 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../_shared.js';
 import { CALL_METHODS, callSession } from '../call/_shared.js';
-import { referralSummary } from '../billing/_shared.js';
+import { callTagReferralSummary } from './_calltag-ledger.js';
 
-// The shared summary query counts paid conversions only when verification_state = 'verified'.
-// Signup referral passes use verification_state = 'promotional' and are never counted as paid.
+// CallTag summary is service-isolated: only CallTag referrals, products and commissions count.
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, CALL_METHODS);
   if (request.method !== 'GET') {
@@ -15,7 +14,7 @@ export async function onRequest({ request, env }) {
   try {
     const db = assertD1(env);
     const session = await callSession(request, env);
-    const summary = await referralSummary(db, session.ownerId);
+    const summary = await callTagReferralSummary(db, session.ownerId);
     summary.commissionRatePercent = 20;
     summary.rewardMode = 'cash_commission';
     summary.partnerCenterAvailable = true;
