@@ -1,5 +1,6 @@
 import { ensureBillingAccount, resolveEntitlement } from './_shared.js';
 import { ensureCallTagReferralSchema } from '../referrals/_calltag-store.js';
+import { readCallTagReferralProgramConfig } from '../referrals/_calltag-program.js';
 
 export const CALLTAG_BASE_TRIAL_DAYS = 7;
 export const CALLTAG_REFERRAL_BONUS_DAYS = 5;
@@ -20,6 +21,7 @@ export async function enforceCallTagTrialPolicy(db, ownerId = '') {
   const safeOwnerId = String(ownerId || '').trim().slice(0, 120);
   const account = await ensureBillingAccount(db, safeOwnerId);
   await ensureCallTagReferralSchema(db);
+  const program = await readCallTagReferralProgramConfig(db);
   const referral = await db.prepare(`
     SELECT id, referral_code, bonus_days, status, applied_at
     FROM calltag_referrals
@@ -28,10 +30,13 @@ export async function enforceCallTagTrialPolicy(db, ownerId = '') {
   `).bind(safeOwnerId).first();
 
   const startedMs = Date.parse(String(account?.trial_started_at || '')) || Date.now();
-  const signupReferralBonusDays = referral?.id ? CALLTAG_REFERRAL_BONUS_DAYS : 0;
+  const signupReferralBonusDays = referral?.id
+    ? Math.max(0, Number(referral.bonus_days || 0))
+    : 0;
   const storedBonusDays = Math.max(0, Number(account?.referral_bonus_days || 0));
   const bonusDays = Math.max(storedBonusDays, signupReferralBonusDays);
-  const policyDays = CALLTAG_BASE_TRIAL_DAYS + bonusDays;
+  const baseTrialDays = Math.max(1, Number(program.baseTrialDays || CALLTAG_BASE_TRIAL_DAYS));
+  const policyDays = baseTrialDays + bonusDays;
   const policyEndsAt = new Date(startedMs + policyDays * DAY_MS).toISOString();
   const existingEndsMs = Date.parse(String(account?.trial_ends_at || '')) || 0;
   const policyEndsMs = Date.parse(policyEndsAt);
@@ -47,16 +52,8 @@ export async function enforceCallTagTrialPolicy(db, ownerId = '') {
     WHERE owner_id = ?
   `).bind(bonusDays, finalEndsAt, safeOwnerId).run();
 
-  if (referral?.id && Number(referral.bonus_days || 0) !== CALLTAG_REFERRAL_BONUS_DAYS) {
-    await db.prepare(`
-      UPDATE calltag_referrals
-      SET bonus_days = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `).bind(CALLTAG_REFERRAL_BONUS_DAYS, referral.id).run();
-  }
-
   return {
-    baseDays: CALLTAG_BASE_TRIAL_DAYS,
+    baseDays: baseTrialDays,
     referralApplied: !!referral?.id,
     signupReferralBonusDays,
     referralBonusDays: bonusDays,
@@ -69,14 +66,15 @@ export async function enforceCallTagTrialPolicy(db, ownerId = '') {
 export async function resolveCallTagEntitlement(db, ownerId = '') {
   const policy = await enforceCallTagTrialPolicy(db, ownerId);
   const entitlement = await resolveEntitlement(db, ownerId);
+  const program = await readCallTagReferralProgramConfig(db);
   entitlement.trial = {
     ...(entitlement.trial || {}),
     scope: 'all',
-    baseDays: CALLTAG_BASE_TRIAL_DAYS,
+    baseDays: policy.baseDays,
     referralBonusDays: policy.referralBonusDays,
     signupReferralBonusDays: policy.signupReferralBonusDays,
     referrerRewardMode: 'cash_commission',
-    referrerCommissionRatePercent: 20,
+    referrerCommissionRatePercent: program.commissionRatePercent,
     totalDays: policy.totalDays,
     startsAt: policy.startsAt,
     endsAt: entitlement.trial?.endsAt || policy.endsAt,
