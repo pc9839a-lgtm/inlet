@@ -185,6 +185,7 @@ function normalizeFinance({ authUser, subscriptionsData, referralData, summaryDa
       friendBenefitMessage: String(summary.friendBenefitMessage || ''),
       benefitMessage: String(summary.benefitMessage || ''),
       recurringMessage: String(summary.recurringMessage || ''),
+      pausedMessage: String(summary.pausedMessage || ''),
     },
     settlement: {
       scope: String(summary.scope || 'legacy'),
