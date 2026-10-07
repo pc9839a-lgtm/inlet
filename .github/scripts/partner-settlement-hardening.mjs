@@ -141,17 +141,20 @@ assert.ok(!partnerRate.includes('UPDATE partner_commissions'), 'rate update must
 includesAll(portal, ['export const MIN_PAYOUT_KRW = 10000', 'available < MIN_PAYOUT_KRW', 'PARTNER_PAYOUT_MINIMUM_NOT_MET'], 'minimum payout');
 
 
-// 9) Unpaid cash carries forward across month boundaries instead of expiring at month-end.
+// 9) CallTag unpaid cash carries forward across month boundaries; PageRo policy stays unchanged.
 const availableStart = portal.indexOf('export async function availableCommissionAmount');
-const availableEnd = portal.indexOf('export async function hasRecentConsent', availableStart);
-const availableChunk = portal.slice(availableStart, availableEnd);
-assert.ok(availableStart >= 0 && availableEnd > availableStart, 'availableCommissionAmount block missing');
-assert.ok(!availableChunk.includes('earned_month = ?'), 'available payout must not be restricted to current earned month');
+const calltagAvailableStart = portal.indexOf("if (normalized === 'CALLTAG' || normalized === 'ALL')", availableStart);
+const pageroAvailableStart = portal.indexOf("if (normalized === 'PAGERO' || normalized === 'ALL')", calltagAvailableStart);
+const calltagAvailableChunk = portal.slice(calltagAvailableStart, pageroAvailableStart);
+assert.ok(availableStart >= 0 && calltagAvailableStart >= 0 && pageroAvailableStart > calltagAvailableStart, 'availableCommissionAmount CallTag block missing');
+assert.ok(!calltagAvailableChunk.includes('earned_month = ?'), 'CallTag available payout must carry forward unpaid earnings');
 
 const payableStart = settlementPay.indexOf('async function currentPayable');
-const payableChunk = settlementPay.slice(payableStart, payableStart + 4200);
-assert.ok(payableStart >= 0, 'currentPayable block missing');
-assert.ok(!payableChunk.includes('earned_month = ?'), 'admin payout must include carried-forward unpaid commissions');
+const calltagPayableStart = settlementPay.indexOf("if (service === 'CALLTAG' || service === 'ALL')", payableStart);
+const pageroPayableStart = settlementPay.indexOf("if (service === 'PAGERO' || service === 'ALL')", calltagPayableStart);
+const calltagPayableChunk = settlementPay.slice(calltagPayableStart, pageroPayableStart);
+assert.ok(payableStart >= 0 && calltagPayableStart >= 0 && pageroPayableStart > calltagPayableStart, 'currentPayable CallTag block missing');
+assert.ok(!calltagPayableChunk.includes('earned_month = ?'), 'CallTag admin payout must include carried-forward unpaid commissions');
 
 // 10) Refunds after settlement create compensating cash adjustments instead of rewriting paid history.
 includesAll(commissions, [
