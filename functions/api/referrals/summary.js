@@ -1,6 +1,7 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../_shared.js';
 import { CALL_METHODS, callSession } from '../call/_shared.js';
 import { ensureCallTagReferralSchema } from './_calltag-store.js';
+import { readCallTagReferralProgramConfig } from './_calltag-program.js';
 
 const CALLTAG_PRODUCTS_SQL = "'call_monthly', 'message_monthly', 'all_monthly'";
 
@@ -12,6 +13,7 @@ async function callTagReferralSummary(db, ownerId = '') {
   await ensureCallTagReferralSchema(db);
   const safeOwnerId = text(ownerId);
   const month = new Date().toISOString().slice(0, 7);
+  const program = await readCallTagReferralProgramConfig(db);
 
   const counts = await db.prepare(`
     SELECT
@@ -51,10 +53,19 @@ async function callTagReferralSummary(db, ownerId = '') {
     activePaidCount: Number(counts?.active_paid_count || 0),
     estimatedRevenueKrw: Number(revenue?.estimated_revenue || 0),
     confirmedRevenueKrw: Number(revenue?.confirmed_revenue || 0),
-    commissionRatePercent: 20,
+    programEnabled: program.enabled,
+    signupEnabled: program.signupEnabled,
+    commissionEnabled: program.commissionEnabled,
+    commissionRatePercent: program.commissionRatePercent,
+    friendBonusDays: program.inviteeBonusDays,
+    baseTrialDays: program.baseTrialDays,
+    minimumPayoutKrw: program.minimumPayoutKrw,
     rewardMode: 'cash_commission',
-    partnerCenterAvailable: true,
-    partnerCenterUrl: 'https://pagero.kr/partner?service=CALLTAG',
+    partnerCenterAvailable: program.enabled && program.partnerCenterEnabled,
+    partnerCenterUrl: program.partnerCenterUrl,
+    shareMessage: program.shareMessage,
+    benefitMessage: program.benefitMessage,
+    recurringMessage: program.recurringMessage,
   };
 }
 
