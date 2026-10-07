@@ -2,7 +2,6 @@ import { ensureBillingAccount, resolveEntitlement } from './_shared.js';
 
 export const CALLTAG_BASE_TRIAL_DAYS = 7;
 export const CALLTAG_REFERRAL_BONUS_DAYS = 5;
-export const CALLTAG_REFERRER_REWARD_DAYS = 5;
 export const CALLTAG_REFERRAL_TOTAL_DAYS = 12;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -10,10 +9,10 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  * CallTag access policy:
  * - normal signup: ALL IN ONE 7-day trial
  * - signup referral code: invitee +5 days, total 12 days
- * - every successful referred signup: referrer +5 days
- * - referrer reward has no lifetime referral-count cap
+ * - the referred member receives the +5 day signup benefit
+ * - the referrer reward is handled separately as a 20% paid-subscription cash commission
  *
- * referral_bonus_days stores the cumulative CallTag access-day bonus. This function
+ * referral_bonus_days stores the referred member's access-day bonus. This function
  * is idempotent and never shortens a longer expiry already granted to the account.
  */
 export async function enforceCallTagTrialPolicy(db, ownerId = '') {
@@ -74,8 +73,8 @@ export async function resolveCallTagEntitlement(db, ownerId = '') {
     baseDays: CALLTAG_BASE_TRIAL_DAYS,
     referralBonusDays: policy.referralBonusDays,
     signupReferralBonusDays: policy.signupReferralBonusDays,
-    referrerRewardDaysPerSignup: CALLTAG_REFERRER_REWARD_DAYS,
-    referrerRewardUnlimited: true,
+    referrerRewardMode: 'cash_commission',
+    referrerCommissionRatePercent: 20,
     totalDays: policy.totalDays,
     startsAt: policy.startsAt,
     endsAt: entitlement.trial?.endsAt || policy.endsAt,
