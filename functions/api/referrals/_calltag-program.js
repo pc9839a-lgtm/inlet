@@ -8,8 +8,9 @@ const DEFAULT_CONFIG = Object.freeze({
   minimumPayoutKrw: 10000,
   partnerCenterEnabled: true,
   partnerCenterUrl: 'https://pagero.kr/partner?service=CALLTAG',
-  shareMessage: '콜태그 가입할 때 추천인 코드를 입력하면 무료체험이 추가돼요.',
-  benefitMessage: '추천 회원의 콜태그 유료 결제액 일부가 추천수익으로 적립됩니다.',
+  shareMessage: '콜태그 가입할 때 추천인 코드를 입력하면 무료체험이 {bonusDays}일 추가돼요.',
+  friendBenefitMessage: '친구 혜택 · 회원가입할 때 추천인 코드를 입력하면 무료체험 +{bonusDays}일',
+  benefitMessage: '내 수익 · 추천 회원의 콜태그 유료 결제액의 {rate}%',
   recurringMessage: '추천 회원이 유료 구독을 유지해 새 결제가 확인될 때마다 같은 비율로 적립됩니다.',
 });
 
@@ -44,6 +45,7 @@ export async function ensureCallTagReferralProgramConfig(db) {
       partner_center_enabled INTEGER NOT NULL DEFAULT 1,
       partner_center_url TEXT NOT NULL DEFAULT 'https://pagero.kr/partner?service=CALLTAG',
       share_message TEXT NOT NULL DEFAULT '',
+      friend_benefit_message TEXT NOT NULL DEFAULT '',
       benefit_message TEXT NOT NULL DEFAULT '',
       recurring_message TEXT NOT NULL DEFAULT '',
       updated_by_owner_id TEXT NOT NULL DEFAULT '',
@@ -56,13 +58,14 @@ export async function ensureCallTagReferralProgramConfig(db) {
       singleton_id, enabled, signup_enabled, commission_enabled,
       commission_rate_bps, base_trial_days, invitee_bonus_days,
       minimum_payout_krw, partner_center_enabled, partner_center_url,
-      share_message, benefit_message, recurring_message,
+      share_message, friend_benefit_message, benefit_message, recurring_message,
       created_at, updated_at
     ) VALUES (1, 1, 1, 1, 2000, 7, 5, 10000, 1,
       'https://pagero.kr/partner?service=CALLTAG',
-      ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
   `).bind(
     DEFAULT_CONFIG.shareMessage,
+    DEFAULT_CONFIG.friendBenefitMessage,
     DEFAULT_CONFIG.benefitMessage,
     DEFAULT_CONFIG.recurringMessage,
   ).run();
@@ -74,7 +77,7 @@ export async function readCallTagReferralProgramConfig(db) {
     SELECT enabled, signup_enabled, commission_enabled, commission_rate_bps,
            base_trial_days, invitee_bonus_days, minimum_payout_krw,
            partner_center_enabled, partner_center_url,
-           share_message, benefit_message, recurring_message,
+           share_message, friend_benefit_message, benefit_message, recurring_message,
            updated_by_owner_id, updated_at
     FROM calltag_referral_program_config
     WHERE singleton_id = 1
@@ -93,6 +96,7 @@ export async function readCallTagReferralProgramConfig(db) {
     partnerCenterEnabled: bool(row?.partner_center_enabled, DEFAULT_CONFIG.partnerCenterEnabled),
     partnerCenterUrl: text(row?.partner_center_url, DEFAULT_CONFIG.partnerCenterUrl, 500),
     shareMessage: text(row?.share_message, DEFAULT_CONFIG.shareMessage, 300),
+    friendBenefitMessage: text(row?.friend_benefit_message, DEFAULT_CONFIG.friendBenefitMessage, 300),
     benefitMessage: text(row?.benefit_message, DEFAULT_CONFIG.benefitMessage, 300),
     recurringMessage: text(row?.recurring_message, DEFAULT_CONFIG.recurringMessage, 300),
     updatedByOwnerId: text(row?.updated_by_owner_id, '', 120),
@@ -127,6 +131,9 @@ export async function updateCallTagReferralProgramConfig(db, input = {}, actorOw
     shareMessage: input.shareMessage === undefined
       ? current.shareMessage
       : text(input.shareMessage, current.shareMessage, 300),
+    friendBenefitMessage: input.friendBenefitMessage === undefined
+      ? current.friendBenefitMessage
+      : text(input.friendBenefitMessage, current.friendBenefitMessage, 300),
     benefitMessage: input.benefitMessage === undefined
       ? current.benefitMessage
       : text(input.benefitMessage, current.benefitMessage, 300),
@@ -151,6 +158,7 @@ export async function updateCallTagReferralProgramConfig(db, input = {}, actorOw
         partner_center_enabled = ?,
         partner_center_url = ?,
         share_message = ?,
+        friend_benefit_message = ?,
         benefit_message = ?,
         recurring_message = ?,
         updated_by_owner_id = ?,
@@ -167,6 +175,7 @@ export async function updateCallTagReferralProgramConfig(db, input = {}, actorOw
     next.partnerCenterEnabled ? 1 : 0,
     next.partnerCenterUrl,
     next.shareMessage,
+    next.friendBenefitMessage,
     next.benefitMessage,
     next.recurringMessage,
     text(actorOwnerId, '', 120),
