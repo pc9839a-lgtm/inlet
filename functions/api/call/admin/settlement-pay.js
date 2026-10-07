@@ -119,7 +119,7 @@ export async function onRequest({ request, env }) {
             FROM partner_commissions pc
             LEFT JOIN billing_subscriptions s ON s.id = pc.subscription_id
             WHERE pc.referrer_owner_id = pr.owner_id
-              AND (pc.earned_month = pr.settlement_month OR pc.payment_reference LIKE 'google_play_refund:%')
+              AND (pc.earned_month = pr.settlement_month OR pc.commission_amount_krw < 0)
               AND pc.status = 'confirmed'
               AND ${serviceFilter}
               AND datetime(COALESCE(NULLIF(pc.confirmed_at, ''), pc.created_at)) <= datetime(pr.requested_at)
@@ -150,10 +150,10 @@ export async function onRequest({ request, env }) {
         JOIN partner_payout_requests pr
           ON pr.request_id = ?
          AND pr.owner_id = pc.referrer_owner_id
-         AND (pr.settlement_month = pc.earned_month OR pc.payment_reference LIKE 'google_play_refund:%')
+         AND (pr.settlement_month = pc.earned_month OR pc.commission_amount_krw < 0)
          AND pr.status = 'requested'
         WHERE pc.referrer_owner_id = ?
-          AND (pc.earned_month = ? OR pc.payment_reference LIKE 'google_play_refund:%')
+          AND (pc.earned_month = ? OR pc.commission_amount_krw < 0)
           AND pc.status = 'confirmed'
           AND ${serviceFilter}
           AND datetime(COALESCE(NULLIF(pc.confirmed_at, ''), pc.created_at)) <= datetime(pr.requested_at)
@@ -295,7 +295,7 @@ async function currentPayable(db, ownerId, month, serviceFilter, requestedAt) {
     FROM partner_commissions pc
     LEFT JOIN billing_subscriptions s ON s.id = pc.subscription_id
     WHERE pc.referrer_owner_id = ?
-      AND (pc.earned_month = ? OR pc.payment_reference LIKE 'google_play_refund:%')
+      AND (pc.earned_month = ? OR pc.commission_amount_krw < 0)
       AND pc.status = 'confirmed'
       AND ${serviceFilter}
       AND datetime(COALESCE(NULLIF(pc.confirmed_at, ''), pc.created_at)) <= datetime(?)
