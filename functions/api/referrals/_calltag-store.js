@@ -1,3 +1,5 @@
+import { ensureBillingSchema } from '../billing/_shared.js';
+
 /**
  * CallTag-only referral relationship storage.
  *
@@ -5,6 +7,7 @@
  * the same account can have an independent referral relationship per service.
  */
 export async function ensureCallTagReferralSchema(db) {
+  await ensureBillingSchema(db);
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS calltag_referral_identity_claims (
       phone_hash TEXT PRIMARY KEY,
