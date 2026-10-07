@@ -48,6 +48,34 @@ jobs:
           node --check functions/api/partner/payout-profile.js
           node --check functions/api/partner/settlements/request.js
           node --check functions/api/partner/policies.js
+          node --check functions/api/referrals/_calltag-ledger.js
+          node --check functions/api/billing/google/rtdn.js
+
+      - name: Require and install Google Play RTDN secret
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${GOOGLE_PLAY_RTDN_SECRET:-}" ]; then
+            echo "::error::GOOGLE_PLAY_RTDN_SECRET repository secret is required before CallTag cash-referral production deploy."
+            exit 1
+          fi
+          printf '%s' "$GOOGLE_PLAY_RTDN_SECRET"             | npx wrangler pages secret put GOOGLE_PLAY_RTDN_SECRET --project-name inlet >/tmp/rtdn-secret-put.log 2>&1
+          npx wrangler pages secret list --project-name inlet 2>&1 | tee /tmp/rtdn-secrets.txt
+          if ! grep -Eq '(^|[^A-Za-z0-9_])GOOGLE_PLAY_RTDN_SECRET([^A-Za-z0-9_]|$)' /tmp/rtdn-secrets.txt; then
+            echo "::error::GOOGLE_PLAY_RTDN_SECRET was not confirmed in the Pages environment."
+            exit 1
+          fi
+          echo "Google Play RTDN secret binding confirmed."
+        env:
+          GOOGLE_PLAY_RTDN_SECRET: ${{ secrets.GOOGLE_PLAY_RTDN_SECRET }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Apply production D1 migrations
+        run: npx wrangler d1 migrations apply DB --remote --config wrangler.jsonc
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Build production bundle
         run: npm run build
