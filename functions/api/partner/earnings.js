@@ -34,8 +34,8 @@ export async function onRequest({ request, env }) {
             .slice(0, 500);
 
     const items = rows.map((row) => {
-      const base = amount(row.base_amount_krw);
-      const commission = amount(row.commission_amount_krw);
+      const base = signedAmount(row.base_amount_krw);
+      const commission = signedAmount(row.commission_amount_krw);
       return {
         id: amount(row.id),
         occurredAt: safeIso(row.created_at),
@@ -47,8 +47,10 @@ export async function onRequest({ request, env }) {
         recognizedRevenue: base,
         partnerRate: base > 0 ? Math.round((commission / base) * 100) : (service === 'CALLTAG' ? 20 : rate),
         partnerEarning: commission,
-        status: Number(row.paid || 0) === 1
-          ? 'PAID'
+        status: commission < 0
+          ? 'REVERSED'
+          : Number(row.paid || 0) === 1
+            ? 'PAID'
           : String(row.status || '').toLowerCase() === 'confirmed'
             ? 'CONFIRMED'
             : String(row.status || '').toLowerCase() === 'cancelled'
@@ -115,4 +117,12 @@ async function pageroRows(context) {
     LIMIT 500
   `).bind(context.ownerId).all();
   return Array.isArray(result?.results) ? result.results : [];
+}
+
+
+function signedAmount(value) {
+  const parsed = Number(value || 0);
+  return Number.isFinite(parsed)
+    ? Math.max(Number.MIN_SAFE_INTEGER, Math.min(Number.MAX_SAFE_INTEGER, Math.trunc(parsed)))
+    : 0;
 }
