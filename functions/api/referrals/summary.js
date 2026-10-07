@@ -1,7 +1,10 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../_shared.js';
 import { CALL_METHODS, callSession } from '../call/_shared.js';
 import { ensureCallTagReferralSchema } from './_calltag-store.js';
-import { readCallTagReferralProgramConfig } from './_calltag-program.js';
+import {
+  readCallTagReferralProgramConfig,
+  renderCallTagReferralProgramText,
+} from './_calltag-program.js';
 
 const CALLTAG_PRODUCTS_SQL = "'call_monthly', 'message_monthly', 'all_monthly'";
 
@@ -63,9 +66,10 @@ async function callTagReferralSummary(db, ownerId = '') {
     rewardMode: 'cash_commission',
     partnerCenterAvailable: program.partnerCenterEnabled,
     partnerCenterUrl: program.partnerCenterUrl,
-    shareMessage: program.shareMessage,
-    benefitMessage: program.benefitMessage,
-    recurringMessage: program.recurringMessage,
+    shareMessage: renderCallTagReferralProgramText(program, program.shareMessage),
+    friendBenefitMessage: renderCallTagReferralProgramText(program, program.friendBenefitMessage),
+    benefitMessage: renderCallTagReferralProgramText(program, program.benefitMessage),
+    recurringMessage: renderCallTagReferralProgramText(program, program.recurringMessage),
   };
 }
 
