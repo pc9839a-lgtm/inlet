@@ -140,6 +140,28 @@ assert.ok(!partnerRate.includes('UPDATE partner_commissions'), 'rate update must
 // 8) Minimum payout is explicitly enforced server-side.
 includesAll(portal, ['export const MIN_PAYOUT_KRW = 10000', 'available < MIN_PAYOUT_KRW', 'PARTNER_PAYOUT_MINIMUM_NOT_MET'], 'minimum payout');
 
+
+// 9) Unpaid cash carries forward across month boundaries instead of expiring at month-end.
+const availableStart = portal.indexOf('export async function availableCommissionAmount');
+const availableEnd = portal.indexOf('export async function hasRecentConsent', availableStart);
+const availableChunk = portal.slice(availableStart, availableEnd);
+assert.ok(availableStart >= 0 && availableEnd > availableStart, 'availableCommissionAmount block missing');
+assert.ok(!availableChunk.includes('earned_month = ?'), 'available payout must not be restricted to current earned month');
+
+const payableStart = settlementPay.indexOf('async function currentPayable');
+const payableChunk = settlementPay.slice(payableStart, payableStart + 4200);
+assert.ok(payableStart >= 0, 'currentPayable block missing');
+assert.ok(!payableChunk.includes('earned_month = ?'), 'admin payout must include carried-forward unpaid commissions');
+
+// 10) Refunds after settlement create compensating cash adjustments instead of rewriting paid history.
+includesAll(commissions, [
+  'reconcileCallTagReferralCommission',
+  'callTagCommissionSettlementLock',
+  'callTagCommissionLedgerNet',
+  'deltaCommissionKrw',
+  ':adj:',
+], 'settlement-safe refund adjustment');
+
 console.log('partner settlement hardening contract: OK');
 console.log(JSON.stringify({
   protectedByStepup: true,
@@ -153,5 +175,7 @@ console.log(JSON.stringify({
   rateChangeFutureOnly: true,
   calltagFixedRatePercent: 20,
   isolatedCalltagSettlementLedger: true,
+  carryForwardUnpaid: true,
+  refundClawbackAdjustments: true,
   minimumPayoutKrw: 10000,
 }, null, 2));
