@@ -71,6 +71,7 @@ const checks = {
   'post signup referral API is disabled': source.referralApply.includes("'REFERRAL_SIGNUP_ONLY'") && !source.referralApply.includes('applyReferralCode'),
   'partner revenue uses one server ledger': source.migration.includes('partner_commissions') && source.commissions.includes('referrer_owner_id') && source.commissions.includes('referred_owner_id'),
   'commission defaults to twenty percent and supports controlled fifty percent': source.partnerFinance.includes('const ALLOWED_RATE_BPS = new Set([2000, 5000])') && source.partnerFinance.includes('commission_rate_bps INTEGER NOT NULL DEFAULT 2000') && source.commissions.includes('resolvePartnerCommissionRateBps') && source.commissions.includes('Math.floor(baseAmountKrw * commissionRateBps / 10000)'),
+  'CallTag referral cash commission is fixed at twenty percent': source.commissions.includes("CALLTAG_CASH_COMMISSION_PRODUCTS") && source.commissions.includes("CALLTAG_COMMISSION_RATE_BPS = 2000") && !source.commissions.includes('CALLTAG_REFERRAL_TIME_REWARD_ONLY'),
   'commission writes are idempotent': source.migration.includes('UNIQUE(payment_reference)') && source.commissions.includes('INSERT OR IGNORE INTO partner_commissions'),
   'Pagero Classic commission base is 3500': source.commissions.includes('pagero_monthly: 3500'),
   'Pagero Pro commission base is 5500': source.commissions.includes('pagero_pro_monthly: 5500'),
