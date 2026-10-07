@@ -143,11 +143,11 @@ includesAll(commissions, [
   "service_scope IN ('ALL', 'CALLTAG')",
 ], 'refund recovery');
 includesAll(portal, [
-  "pc.earned_month = ? OR pc.payment_reference LIKE 'google_play_refund:%'",
+  "pc.earned_month = ? OR pc.commission_amount_krw < 0",
 ], 'portal recovery carry-forward');
 includesAll(settlementPay, [
-  "pc.earned_month = pr.settlement_month OR pc.payment_reference LIKE 'google_play_refund:%'",
-  "pr.settlement_month = pc.earned_month OR pc.payment_reference LIKE 'google_play_refund:%'",
+  "pc.earned_month = pr.settlement_month OR pc.commission_amount_krw < 0",
+  "pr.settlement_month = pc.earned_month OR pc.commission_amount_krw < 0",
 ], 'admin recovery carry-forward');
 
 console.log('partner settlement hardening contract: OK');
