@@ -363,7 +363,8 @@ export async function verifyGoogleSubscription(env = {}, db, ownerId = '', input
   const mapped = mapPlayState(purchase?.subscriptionState);
   const expiresAt = iso(matched?.expiryTime);
   const active = ACTIVE_STATES.has(mapped) && (!expiresAt || Date.parse(expiresAt) > Date.now());
-  if (!active && mapped !== 'pending') {
+  const allowInactive = input?.allowInactive === true;
+  if (!active && mapped !== 'pending' && !allowInactive) {
     throw billingError('활성 상태의 Google Play 구독이 아닙니다.', 409, 'PLAY_SUBSCRIPTION_INACTIVE', { state: mapped });
   }
 
