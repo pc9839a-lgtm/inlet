@@ -69,7 +69,7 @@ const failed = Object.entries(checks)
   .filter(([, passed]) => !passed)
   .map(([name]) => name);
 
-for (const [name, passed]) of Object.entries(checks)) {
+for (const [name, passed] of Object.entries(checks)) {
   console.log(`${passed ? 'ok' : 'failed'} - ${name}`);
 }
 
