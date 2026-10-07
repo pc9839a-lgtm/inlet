@@ -6,7 +6,8 @@ const LEGACY_SETTLEMENT_URL = 'https://calltag.pagero.kr/web/settlement';
 const CALLTAG_SETTLEMENT_URL = 'https://pagero.kr/partner?service=CALLTAG';
 
 function money(value = 0) {
-  return `${Math.max(0, Number(value || 0)).toLocaleString('ko-KR')}원`;
+  const amount = Number(value || 0);
+  return `${(Number.isFinite(amount) ? amount : 0).toLocaleString('ko-KR')}원`;
 }
 
 export default function SettlementSettingsSection({ authUser }) {
