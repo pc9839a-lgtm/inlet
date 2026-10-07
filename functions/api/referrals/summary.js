@@ -16,8 +16,10 @@ export async function onRequest({ request, env }) {
     const db = assertD1(env);
     const session = await callSession(request, env);
     const summary = await referralSummary(db, session.ownerId);
-    summary.partnerCenterAvailable = false;
-    summary.partnerCenterUrl = '';
+    summary.commissionRatePercent = 20;
+    summary.rewardMode = 'cash_commission';
+    summary.partnerCenterAvailable = true;
+    summary.partnerCenterUrl = 'https://pagero.kr/partner?service=CALLTAG';
     return jsonResponse(request, env, 200, { ok: true, summary }, CALL_METHODS);
   } catch (error) {
     return handleApiError(request, env, error, CALL_METHODS);
