@@ -175,8 +175,8 @@ export async function onRequest({ request, env }) {
     ]);
 
     const commissions = (Array.isArray(commissionResult?.results) ? commissionResult.results : []).map((row) => {
-      const base = amount(row.base_amount_krw);
-      const commission = amount(row.commission_amount_krw);
+      const base = signedAmount(row.base_amount_krw);
+      const commission = signedAmount(row.commission_amount_krw);
       return {
         id: Math.max(0, Math.trunc(Number(row.id || 0))),
         service: String(row.ledger_scope || '').slice(0, 12),
@@ -299,4 +299,12 @@ function safePayoutType(value) {
 function maskLast4(value, prefix) {
   const last4 = String(value || '').replace(/\D/g, '').slice(-4);
   return last4 ? `${prefix}${last4}` : '';
+}
+
+
+function signedAmount(value) {
+  const parsed = Number(value || 0);
+  return Number.isFinite(parsed)
+    ? Math.max(Number.MIN_SAFE_INTEGER, Math.min(Number.MAX_SAFE_INTEGER, Math.trunc(parsed)))
+    : 0;
 }
