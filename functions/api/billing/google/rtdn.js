@@ -509,21 +509,31 @@ export async function onRequest({ request, env }) {
     }
 
     if (eventKind === 'voided_purchase') {
+      const mapped = purchaseTokenHash
+        ? await subscriptionForToken(db, purchaseTokenHash)
+        : null;
       await updateEvent(db, messageId, {
         status: 'deferred_voided',
         detailCode: 'STEP5_REFUND_REVERSAL_PENDING',
         purchaseTokenHash,
         orderId,
+        ownerId: mapped?.owner_id || '',
+        productCode: mapped?.product_code || '',
       });
       return noContent();
     }
 
     if (eventKind === 'pending_refund_review') {
+      const mapped = purchaseTokenHash
+        ? await subscriptionForToken(db, purchaseTokenHash)
+        : null;
       await updateEvent(db, messageId, {
         status: 'deferred_refund_review',
         detailCode: 'STEP5_REFUND_REVIEW_PENDING',
         purchaseTokenHash,
         orderId,
+        ownerId: mapped?.owner_id || '',
+        productCode: mapped?.product_code || '',
       });
       return noContent();
     }
