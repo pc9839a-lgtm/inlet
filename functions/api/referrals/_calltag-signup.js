@@ -59,7 +59,7 @@ async function referralPhoneHash(rawPhone = '', env = {}) {
     .join('');
 }
 
-async function ensureReferralIdentitySchema(db) {
+export async function ensureCallTagReferralIdentitySchema(db) {
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS calltag_referral_identity_claims (
       phone_hash TEXT PRIMARY KEY,
@@ -78,7 +78,7 @@ async function ensureReferralIdentitySchema(db) {
  * The durable ledger stores only an HMAC fingerprint of the normalized phone number, never raw PII.
  */
 export async function assertCallTagReferralIdentityAvailable(db, rawPhone = '', env = {}) {
-  await ensureReferralIdentitySchema(db);
+  await ensureCallTagReferralIdentitySchema(db);
   const phone = normalizeReferralPhone(rawPhone);
   const phoneHash = await referralPhoneHash(phone, env);
 
@@ -145,7 +145,7 @@ export async function applyCallTagSignupReferralCode(
   }
 
   await ensureBillingAccount(db, safeOwnerId);
-  await ensureReferralIdentitySchema(db);
+  await ensureCallTagReferralIdentitySchema(db);
 
   const existing = await db.prepare(`
     SELECT id
