@@ -12,6 +12,7 @@ import { isCalltagFinanceAdmin } from './_financeSecurity.js';
 import { ensureBillingSchema } from '../../billing/_shared.js';
 import { ensurePartnerFinanceSchema, normalizeSettlementMonth } from '../../billing/_partnerFinance.js';
 import { ensurePartnerPortalSchema } from '../../partner/_portal.js';
+import { ensureCallTagReferralSchema } from '../../referrals/_calltag-ledger.js';
 
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return adminOptions();
@@ -27,6 +28,7 @@ export async function onRequest({ request, env }) {
       ensureBillingSchema(env.DB),
       ensurePartnerFinanceSchema(env.DB),
       ensurePartnerPortalSchema(env.DB),
+      ensureCallTagReferralSchema(env.DB),
     ]);
 
     const profile = await env.DB.prepare(`
@@ -50,42 +52,97 @@ export async function onRequest({ request, env }) {
     const [referralStats, commissionResult, settlementResult, payoutRequestResult, payoutProfile] = await Promise.all([
       env.DB.prepare(`
         SELECT
-          COUNT(*) AS referred_count,
-          SUM(CASE WHEN EXISTS (
-            SELECT 1 FROM billing_subscriptions s
-            WHERE s.owner_id = r.referred_owner_id
-              AND s.verification_state = 'verified'
-              AND s.status IN ('active','grace','cancelled')
-              AND (s.expires_at = '' OR julianday(s.expires_at) > julianday('now'))
-          ) THEN 1 ELSE 0 END) AS active_paid_count
-        FROM referrals r
-        WHERE r.referrer_owner_id = ?
-      `).bind(ownerId).first(),
+          (
+            SELECT COUNT(*) FROM calltag_referrals cr
+            WHERE cr.referrer_owner_id = ?
+          ) + (
+            SELECT COUNT(*) FROM referrals r
+            WHERE r.referrer_owner_id = ?
+              AND EXISTS (
+                SELECT 1 FROM billing_subscriptions s
+                WHERE s.owner_id = r.referred_owner_id
+                  AND s.product_code IN ('pagero_monthly','pagero_pro_monthly','pagero_domain_monthly')
+              )
+          ) AS referred_count,
+          (
+            SELECT COUNT(*) FROM calltag_referrals cr
+            WHERE cr.referrer_owner_id = ?
+              AND EXISTS (
+                SELECT 1 FROM billing_subscriptions s
+                WHERE s.owner_id = cr.referred_owner_id
+                  AND s.product_code IN ('call_monthly','message_monthly','all_monthly')
+                  AND s.verification_state = 'verified'
+                  AND s.status IN ('active','grace','cancelled')
+                  AND (s.expires_at = '' OR julianday(s.expires_at) > julianday('now'))
+              )
+          ) + (
+            SELECT COUNT(*) FROM referrals r
+            WHERE r.referrer_owner_id = ?
+              AND EXISTS (
+                SELECT 1 FROM billing_subscriptions s
+                WHERE s.owner_id = r.referred_owner_id
+                  AND s.product_code IN ('pagero_monthly','pagero_pro_monthly','pagero_domain_monthly')
+                  AND s.verification_state = 'verified'
+                  AND s.status IN ('active','grace','cancelled')
+                  AND (s.expires_at = '' OR julianday(s.expires_at) > julianday('now'))
+              )
+          ) AS active_paid_count
+      `).bind(ownerId, ownerId, ownerId, ownerId).first(),
       env.DB.prepare(`
-        SELECT
-          pc.id,
-          pc.referred_owner_id,
-          referred.email AS referred_email,
-          referred.phone AS referred_phone,
-          s.product_code,
-          pc.base_amount_krw,
-          pc.commission_amount_krw,
-          pc.status,
-          pc.confirmed_at,
-          pc.created_at,
-          CASE WHEN EXISTS (
-            SELECT 1
-            FROM partner_settlement_items psi
-            JOIN partner_settlements ps ON ps.settlement_id = psi.settlement_id
-            WHERE psi.commission_id = pc.id AND ps.status = 'paid'
-          ) THEN 1 ELSE 0 END AS paid
-        FROM partner_commissions pc
-        LEFT JOIN calllink_profiles referred ON referred.owner_id = pc.referred_owner_id
-        LEFT JOIN billing_subscriptions s ON s.id = pc.subscription_id
-        WHERE pc.referrer_owner_id = ? AND pc.earned_month = ?
-        ORDER BY pc.created_at DESC, pc.id DESC
+        SELECT *
+        FROM (
+          SELECT
+            pc.id,
+            'CALLTAG' AS ledger_scope,
+            pc.referred_owner_id,
+            referred.email AS referred_email,
+            referred.phone AS referred_phone,
+            pc.product_code,
+            pc.base_amount_krw,
+            pc.commission_amount_krw,
+            pc.status,
+            pc.confirmed_at,
+            pc.created_at,
+            CASE WHEN EXISTS (
+              SELECT 1
+              FROM calltag_partner_settlement_items psi
+              JOIN partner_settlements ps ON ps.settlement_id = psi.settlement_id
+              WHERE psi.commission_id = pc.id AND ps.status = 'paid'
+            ) THEN 1 ELSE 0 END AS paid
+          FROM calltag_partner_commissions pc
+          LEFT JOIN calllink_profiles referred ON referred.owner_id = pc.referred_owner_id
+          WHERE pc.referrer_owner_id = ? AND pc.earned_month = ?
+
+          UNION ALL
+
+          SELECT
+            pc.id,
+            'PAGERO' AS ledger_scope,
+            pc.referred_owner_id,
+            referred.email AS referred_email,
+            referred.phone AS referred_phone,
+            s.product_code,
+            pc.base_amount_krw,
+            pc.commission_amount_krw,
+            pc.status,
+            pc.confirmed_at,
+            pc.created_at,
+            CASE WHEN EXISTS (
+              SELECT 1
+              FROM partner_settlement_items psi
+              JOIN partner_settlements ps ON ps.settlement_id = psi.settlement_id
+              WHERE psi.commission_id = pc.id AND ps.status = 'paid'
+            ) THEN 1 ELSE 0 END AS paid
+          FROM partner_commissions pc
+          LEFT JOIN calllink_profiles referred ON referred.owner_id = pc.referred_owner_id
+          LEFT JOIN billing_subscriptions s ON s.id = pc.subscription_id
+          WHERE pc.referrer_owner_id = ?
+            AND pc.earned_month = ?
+            AND s.product_code IN ('pagero_monthly','pagero_pro_monthly','pagero_domain_monthly')
+        )
+        ORDER BY datetime(created_at) DESC, id DESC
         LIMIT 300
-      `).bind(ownerId, month).all(),
+      `).bind(ownerId, month, ownerId, month).all(),
       env.DB.prepare(`
         SELECT
           settlement_month,
@@ -118,10 +175,11 @@ export async function onRequest({ request, env }) {
     ]);
 
     const commissions = (Array.isArray(commissionResult?.results) ? commissionResult.results : []).map((row) => {
-      const base = amount(row.base_amount_krw);
-      const commission = amount(row.commission_amount_krw);
+      const base = signedAmount(row.base_amount_krw);
+      const commission = signedAmount(row.commission_amount_krw);
       return {
         id: Math.max(0, Math.trunc(Number(row.id || 0))),
+        service: String(row.ledger_scope || '').slice(0, 12),
         referredOwnerId: String(row.referred_owner_id || '').slice(0, 120),
         referredEmail: maskEmail(row.referred_email),
         referredPhone: maskPhone(row.referred_phone),
@@ -189,6 +247,7 @@ export async function onRequest({ request, env }) {
         phone: maskPhone(profile.phone),
         referralCode: String(profile.referral_code || '').slice(0, 20),
         commissionRatePercent: Number(profile.commission_rate_bps || 2000) === 5000 ? 50 : 20,
+        calltagCommissionRatePercent: 20,
         status: String(profile.partner_status || 'active').slice(0, 20),
         referredCount: amount(referralStats?.referred_count),
         activePaidCount: amount(referralStats?.active_paid_count),
@@ -240,4 +299,12 @@ function safePayoutType(value) {
 function maskLast4(value, prefix) {
   const last4 = String(value || '').replace(/\D/g, '').slice(-4);
   return last4 ? `${prefix}${last4}` : '';
+}
+
+
+function signedAmount(value) {
+  const parsed = Number(value || 0);
+  return Number.isFinite(parsed)
+    ? Math.max(Number.MIN_SAFE_INTEGER, Math.min(Number.MAX_SAFE_INTEGER, Math.trunc(parsed)))
+    : 0;
 }

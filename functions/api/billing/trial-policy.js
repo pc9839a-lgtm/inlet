@@ -1,4 +1,8 @@
 import { ensureBillingAccount, resolveEntitlement } from './_shared.js';
+import {
+  callTagReferralForReferred,
+  ensureCallTagReferralSchema,
+} from '../referrals/_calltag-ledger.js';
 
 export const CALLTAG_BASE_TRIAL_DAYS = 7;
 export const CALLTAG_REFERRAL_BONUS_DAYS = 5;
@@ -18,12 +22,8 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export async function enforceCallTagTrialPolicy(db, ownerId = '') {
   const safeOwnerId = String(ownerId || '').trim().slice(0, 120);
   const account = await ensureBillingAccount(db, safeOwnerId);
-  const referral = await db.prepare(`
-    SELECT id, referral_code, bonus_days, status, applied_at
-    FROM referrals
-    WHERE referred_owner_id = ?
-    LIMIT 1
-  `).bind(safeOwnerId).first();
+  await ensureCallTagReferralSchema(db);
+  const referral = await callTagReferralForReferred(db, safeOwnerId);
 
   const startedMs = Date.parse(String(account?.trial_started_at || '')) || Date.now();
   const signupReferralBonusDays = referral?.id ? CALLTAG_REFERRAL_BONUS_DAYS : 0;
@@ -47,7 +47,7 @@ export async function enforceCallTagTrialPolicy(db, ownerId = '') {
 
   if (referral?.id && Number(referral.bonus_days || 0) !== CALLTAG_REFERRAL_BONUS_DAYS) {
     await db.prepare(`
-      UPDATE referrals
+      UPDATE calltag_referrals
       SET bonus_days = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `).bind(CALLTAG_REFERRAL_BONUS_DAYS, referral.id).run();

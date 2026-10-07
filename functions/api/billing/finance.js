@@ -1,6 +1,11 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../_shared.js';
 import { getSessionAccount } from '../auth/_auth.js';
 import { ensureBillingSchema } from './_shared.js';
+import { resolveCallTagEntitlement } from './trial-policy.js';
+import {
+  callTagReferralForReferred,
+  callTagReferralSummary,
+} from '../referrals/_calltag-ledger.js';
 
 const METHODS = 'GET, OPTIONS';
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -187,6 +192,8 @@ export async function onRequest({ request, env }) {
     const { user } = await getSessionAccount(request, env);
     const ownerId = text(user?.ownerId || user?.id, 120);
     if (!ownerId) throw new Error('로그인 계정을 확인할 수 없습니다.');
+    const productClient = text(request.headers.get('X-Pagero-Product'), 40).toLowerCase();
+    const calltagClient = productClient === 'calltag';
 
     await ensureSchemaOnce(db);
     const account = await ensureBillingAccountFast(db, ownerId);
@@ -235,15 +242,27 @@ export async function onRequest({ request, env }) {
     const subscriptions = rows(subscriptionsResult).map(subscriptionPublic);
     const referralCodeRow = firstRow(referralCodeResult) || {};
     const code = await ensureReferralCodeFast(db, ownerId, referralCodeRow.code);
-    const applied = firstRow(appliedResult) || null;
+    let applied = firstRow(appliedResult) || null;
     const counts = firstRow(countsResult) || {};
     const revenue = firstRow(revenueResult) || {};
+    let scopedSummary = {
+      referredCount: Number(counts.referred_count || 0),
+      activePaidCount: Number(counts.active_paid_count || 0),
+      estimatedRevenueKrw: Number(revenue.estimated_revenue || 0),
+      confirmedRevenueKrw: Number(revenue.confirmed_revenue || 0),
+    };
+    let scopedEntitlement = entitlementFrom(account, subscriptions);
+    if (calltagClient) {
+      applied = await callTagReferralForReferred(db, ownerId);
+      scopedSummary = await callTagReferralSummary(db, ownerId);
+      scopedEntitlement = await resolveCallTagEntitlement(db, ownerId);
+    }
     const shareUrl = code ? `https://pagero.kr/r/${encodeURIComponent(code)}` : '';
 
     return jsonResponse(request, env, 200, {
       ok: true,
       subscriptions,
-      entitlement: entitlementFrom(account, subscriptions),
+      entitlement: scopedEntitlement,
       referral: {
         mine: { code, shareUrl, createdAt: iso(referralCodeRow.created_at) },
         code,
@@ -254,12 +273,11 @@ export async function onRequest({ request, env }) {
         appliedAt: iso(applied?.applied_at),
       },
       summary: {
-        referredCount: Number(counts.referred_count || 0),
-        activePaidCount: Number(counts.active_paid_count || 0),
-        estimatedRevenueKrw: Number(revenue.estimated_revenue || 0),
-        confirmedRevenueKrw: Number(revenue.confirmed_revenue || 0),
-        partnerCenterAvailable: false,
-        partnerCenterUrl: '',
+        ...scopedSummary,
+        partnerCenterAvailable: calltagClient,
+        partnerCenterUrl: calltagClient ? 'https://pagero.kr/partner?service=CALLTAG' : '',
+        commissionRatePercent: calltagClient ? 20 : undefined,
+        rewardMode: calltagClient ? 'cash_commission' : undefined,
       },
     }, METHODS);
   } catch (error) {

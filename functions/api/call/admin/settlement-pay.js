@@ -16,6 +16,7 @@ import {
   ensurePartnerFinanceSchema,
   normalizeSettlementMonth,
 } from '../../billing/_partnerFinance.js';
+import { ensureCallTagReferralSchema } from '../../referrals/_calltag-ledger.js';
 import { ensurePartnerPortalSchema } from '../../partner/_portal.js';
 
 export async function onRequest({ request, env }) {
@@ -36,6 +37,7 @@ export async function onRequest({ request, env }) {
       ensureBillingSchema(env.DB),
       ensurePartnerFinanceSchema(env.DB),
       ensurePartnerPortalSchema(env.DB),
+      ensureCallTagReferralSchema(env.DB),
     ]);
 
     const payoutRequest = await env.DB.prepare(`
@@ -45,6 +47,7 @@ export async function onRequest({ request, env }) {
       WHERE request_id = ? AND owner_id = ?
       LIMIT 1
     `).bind(requestId, ownerId).first();
+
     if (!payoutRequest?.request_id) {
       return adminJson(404, { ok: false, error: '지급요청을 찾을 수 없습니다.', code: 'CALLTAG_ADMIN_PAYOUT_REQUEST_NOT_FOUND' });
     }
@@ -77,12 +80,11 @@ export async function onRequest({ request, env }) {
     }
 
     const service = normalizeService(payoutRequest.service_scope);
-    const serviceFilter = serviceSql('s', service);
     const payable = await currentPayable(
       env.DB,
       ownerId,
       month,
-      serviceFilter,
+      service,
       payoutRequest.requested_at,
     );
     if (!payable.count || !payable.amountKrw) {
@@ -99,7 +101,7 @@ export async function onRequest({ request, env }) {
     }
 
     const settlementId = createSettlementId();
-    const batch = await env.DB.batch([
+    const statements = [
       env.DB.prepare(`
         INSERT INTO partner_settlements (
           settlement_id, partner_owner_id, settlement_month, commission_count,
@@ -114,23 +116,6 @@ export async function onRequest({ request, env }) {
           AND pr.status = 'requested'
           AND pr.amount_krw = ?
           AND pr.settlement_month = ?
-          AND ? = COALESCE((
-            SELECT SUM(pc.commission_amount_krw)
-            FROM partner_commissions pc
-            LEFT JOIN billing_subscriptions s ON s.id = pc.subscription_id
-            WHERE pc.referrer_owner_id = pr.owner_id
-              AND pc.earned_month = pr.settlement_month
-              AND pc.status = 'confirmed'
-              AND ${serviceFilter}
-              AND datetime(COALESCE(NULLIF(pc.confirmed_at, ''), pc.created_at)) <= datetime(pr.requested_at)
-              AND NOT EXISTS (
-                SELECT 1
-                FROM partner_settlement_items psi
-                JOIN partner_settlements ps ON ps.settlement_id = psi.settlement_id
-                WHERE psi.commission_id = pc.id
-                  AND ps.status IN ('processing','paid','review')
-              )
-          ), 0)
       `).bind(
         settlementId,
         identity.ownerId,
@@ -138,9 +123,39 @@ export async function onRequest({ request, env }) {
         ownerId,
         requestedAmountKrw,
         month,
-        requestedAmountKrw,
       ),
-      env.DB.prepare(`
+    ];
+
+    if (service === 'CALLTAG' || service === 'ALL') {
+      statements.push(env.DB.prepare(`
+        INSERT OR IGNORE INTO calltag_partner_settlement_items (
+          settlement_id, commission_id, base_amount_krw, commission_amount_krw, created_at
+        )
+        SELECT ?, pc.id, pc.base_amount_krw, pc.commission_amount_krw, CURRENT_TIMESTAMP
+        FROM calltag_partner_commissions pc
+        JOIN partner_payout_requests pr
+          ON pr.request_id = ?
+         AND pr.owner_id = pc.referrer_owner_id
+         AND pr.status = 'requested'
+        WHERE pc.referrer_owner_id = ?
+          AND pc.status = 'confirmed'
+          AND datetime(COALESCE(NULLIF(pc.confirmed_at, ''), pc.created_at)) <= datetime(pr.requested_at)
+          AND EXISTS (
+            SELECT 1 FROM partner_settlements ps
+            WHERE ps.settlement_id = ? AND ps.status = 'processing'
+          )
+          AND NOT EXISTS (
+            SELECT 1
+            FROM calltag_partner_settlement_items psi
+            JOIN partner_settlements ps2 ON ps2.settlement_id = psi.settlement_id
+            WHERE psi.commission_id = pc.id
+              AND ps2.status IN ('processing','paid','review')
+          )
+      `).bind(settlementId, requestId, ownerId, settlementId));
+    }
+
+    if (service === 'PAGERO' || service === 'ALL') {
+      statements.push(env.DB.prepare(`
         INSERT OR IGNORE INTO partner_settlement_items (
           settlement_id, commission_id, base_amount_krw, commission_amount_krw, created_at
         )
@@ -155,7 +170,7 @@ export async function onRequest({ request, env }) {
         WHERE pc.referrer_owner_id = ?
           AND pc.earned_month = ?
           AND pc.status = 'confirmed'
-          AND ${serviceFilter}
+          AND s.product_code IN ('pagero_monthly','pagero_pro_monthly','pagero_domain_monthly')
           AND datetime(COALESCE(NULLIF(pc.confirmed_at, ''), pc.created_at)) <= datetime(pr.requested_at)
           AND EXISTS (
             SELECT 1 FROM partner_settlements ps
@@ -168,31 +183,47 @@ export async function onRequest({ request, env }) {
             WHERE psi.commission_id = pc.id
               AND ps2.status IN ('processing','paid','review')
           )
-      `).bind(settlementId, requestId, ownerId, month, settlementId),
+      `).bind(settlementId, requestId, ownerId, month, settlementId));
+    }
+
+    statements.push(
       env.DB.prepare(`
         UPDATE partner_settlements
         SET
-          commission_count = (SELECT COUNT(*) FROM partner_settlement_items WHERE settlement_id = ?),
-          gross_sales_krw = COALESCE((SELECT SUM(base_amount_krw) FROM partner_settlement_items WHERE settlement_id = ?), 0),
-          payout_amount_krw = COALESCE((SELECT SUM(commission_amount_krw) FROM partner_settlement_items WHERE settlement_id = ?), 0),
+          commission_count =
+            (SELECT COUNT(*) FROM partner_settlement_items WHERE settlement_id = ?)
+            + (SELECT COUNT(*) FROM calltag_partner_settlement_items WHERE settlement_id = ?),
+          gross_sales_krw =
+            COALESCE((SELECT SUM(base_amount_krw) FROM partner_settlement_items WHERE settlement_id = ?), 0)
+            + COALESCE((SELECT SUM(base_amount_krw) FROM calltag_partner_settlement_items WHERE settlement_id = ?), 0),
+          payout_amount_krw =
+            COALESCE((SELECT SUM(commission_amount_krw) FROM partner_settlement_items WHERE settlement_id = ?), 0)
+            + COALESCE((SELECT SUM(commission_amount_krw) FROM calltag_partner_settlement_items WHERE settlement_id = ?), 0),
           status = CASE
-            WHEN COALESCE((SELECT SUM(commission_amount_krw) FROM partner_settlement_items WHERE settlement_id = ?), 0) = ?
-             AND (SELECT COUNT(*) FROM partner_settlement_items WHERE settlement_id = ?) > 0
+            WHEN (
+              COALESCE((SELECT SUM(commission_amount_krw) FROM partner_settlement_items WHERE settlement_id = ?), 0)
+              + COALESCE((SELECT SUM(commission_amount_krw) FROM calltag_partner_settlement_items WHERE settlement_id = ?), 0)
+            ) = ?
+            AND (
+              (SELECT COUNT(*) FROM partner_settlement_items WHERE settlement_id = ?)
+              + (SELECT COUNT(*) FROM calltag_partner_settlement_items WHERE settlement_id = ?)
+            ) > 0
             THEN 'paid' ELSE 'review' END,
           paid_at = CASE
-            WHEN COALESCE((SELECT SUM(commission_amount_krw) FROM partner_settlement_items WHERE settlement_id = ?), 0) = ?
+            WHEN (
+              COALESCE((SELECT SUM(commission_amount_krw) FROM partner_settlement_items WHERE settlement_id = ?), 0)
+              + COALESCE((SELECT SUM(commission_amount_krw) FROM calltag_partner_settlement_items WHERE settlement_id = ?), 0)
+            ) = ?
             THEN CURRENT_TIMESTAMP ELSE '' END,
           updated_at = CURRENT_TIMESTAMP
         WHERE settlement_id = ? AND status = 'processing'
       `).bind(
-        settlementId,
-        settlementId,
-        settlementId,
-        settlementId,
-        requestedAmountKrw,
-        settlementId,
-        settlementId,
-        requestedAmountKrw,
+        settlementId, settlementId,
+        settlementId, settlementId,
+        settlementId, settlementId,
+        settlementId, settlementId, requestedAmountKrw,
+        settlementId, settlementId,
+        settlementId, settlementId, requestedAmountKrw,
         settlementId,
       ),
       env.DB.prepare(`
@@ -220,8 +251,9 @@ export async function onRequest({ request, env }) {
         FROM partner_settlements
         WHERE settlement_id = ? AND status = 'paid'
       `).bind(identity.ownerId, ownerId, month, settlementId),
-    ]);
+    );
 
+    const batch = await env.DB.batch(statements);
     const inserted = Number(batch?.[0]?.meta?.changes ?? batch?.[0]?.changes ?? 0) > 0;
     if (!inserted) {
       return adminJson(409, {
@@ -287,33 +319,56 @@ export async function onRequest({ request, env }) {
   }
 }
 
-async function currentPayable(db, ownerId, month, serviceFilter, requestedAt) {
-  const row = await db.prepare(`
-    SELECT
-      COUNT(*) AS count,
-      COALESCE(SUM(pc.commission_amount_krw), 0) AS amount_krw
-    FROM partner_commissions pc
-    LEFT JOIN billing_subscriptions s ON s.id = pc.subscription_id
-    WHERE pc.referrer_owner_id = ?
-      AND pc.earned_month = ?
-      AND pc.status = 'confirmed'
-      AND ${serviceFilter}
-      AND datetime(COALESCE(NULLIF(pc.confirmed_at, ''), pc.created_at)) <= datetime(?)
-      AND NOT EXISTS (
-        SELECT 1
-        FROM partner_settlement_items psi
-        JOIN partner_settlements ps ON ps.settlement_id = psi.settlement_id
-        WHERE psi.commission_id = pc.id
-          AND ps.status IN ('processing','paid','review')
-      )
-  `).bind(ownerId, month, requestedAt).first();
-  return { count: positiveInt(row?.count), amountKrw: positiveInt(row?.amount_krw) };
-}
+async function currentPayable(db, ownerId, month, service, requestedAt) {
+  let count = 0;
+  let amountKrw = 0;
 
-function serviceSql(alias, service) {
-  if (service === 'PAGERO') return `${alias}.product_code IN ('pagero_monthly','pagero_pro_monthly','pagero_domain_monthly')`;
-  if (service === 'CALLTAG') return `${alias}.product_code IN ('call_monthly','message_monthly','all_monthly')`;
-  return '1=1';
+  if (service === 'CALLTAG' || service === 'ALL') {
+    const row = await db.prepare(`
+      SELECT
+        COUNT(*) AS count,
+        COALESCE(SUM(pc.commission_amount_krw), 0) AS amount_krw
+      FROM calltag_partner_commissions pc
+      WHERE pc.referrer_owner_id = ?
+        AND pc.status = 'confirmed'
+        AND datetime(COALESCE(NULLIF(pc.confirmed_at, ''), pc.created_at)) <= datetime(?)
+        AND NOT EXISTS (
+          SELECT 1
+          FROM calltag_partner_settlement_items psi
+          JOIN partner_settlements ps ON ps.settlement_id = psi.settlement_id
+          WHERE psi.commission_id = pc.id
+            AND ps.status IN ('processing','paid','review')
+        )
+    `).bind(ownerId, requestedAt).first();
+    count += positiveInt(row?.count);
+    amountKrw += positiveInt(row?.amount_krw);
+  }
+
+  if (service === 'PAGERO' || service === 'ALL') {
+    const row = await db.prepare(`
+      SELECT
+        COUNT(*) AS count,
+        COALESCE(SUM(pc.commission_amount_krw), 0) AS amount_krw
+      FROM partner_commissions pc
+      LEFT JOIN billing_subscriptions s ON s.id = pc.subscription_id
+      WHERE pc.referrer_owner_id = ?
+        AND pc.earned_month = ?
+        AND pc.status = 'confirmed'
+        AND s.product_code IN ('pagero_monthly','pagero_pro_monthly','pagero_domain_monthly')
+        AND datetime(COALESCE(NULLIF(pc.confirmed_at, ''), pc.created_at)) <= datetime(?)
+        AND NOT EXISTS (
+          SELECT 1
+          FROM partner_settlement_items psi
+          JOIN partner_settlements ps ON ps.settlement_id = psi.settlement_id
+          WHERE psi.commission_id = pc.id
+            AND ps.status IN ('processing','paid','review')
+        )
+    `).bind(ownerId, month, requestedAt).first();
+    count += positiveInt(row?.count);
+    amountKrw += positiveInt(row?.amount_krw);
+  }
+
+  return { count, amountKrw };
 }
 
 function normalizeService(value) {

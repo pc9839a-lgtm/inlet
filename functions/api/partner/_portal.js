@@ -4,6 +4,7 @@ import {
   resolvePartnerCommissionRateBps,
 } from '../billing/_partnerFinance.js';
 import { ensureCalllinkSchema } from '../call/_shared.js';
+import { ensureCallTagReferralSchema } from '../referrals/_calltag-ledger.js';
 import { requireSettlementStepup } from './_security.js';
 
 export const PARTNER_PORTAL_METHODS = 'GET, POST, PUT, OPTIONS';
@@ -26,6 +27,7 @@ export async function partnerPortalContext(request, env) {
     ensureBillingSchema(env.DB),
     ensurePartnerFinanceSchema(env.DB),
     ensureCalllinkSchema(env.DB),
+    ensureCallTagReferralSchema(env.DB),
     ensurePartnerPortalSchema(env.DB),
   ]);
   const referral = await ensureReferralCode(env.DB, auth.ownerId);
@@ -190,7 +192,9 @@ export function nextSettlementAt() {
   return new Date(Date.UTC(year, month, 15, 0, 0, 0)).toISOString();
 }
 
-export async function commissionRatePercent(db, ownerId) {
+export async function commissionRatePercent(db, ownerId, service = 'ALL') {
+  const normalized = normalizeService(service);
+  if (normalized === 'CALLTAG') return 20;
   const bps = await resolvePartnerCommissionRateBps(db, ownerId);
   return bps === 5000 ? 50 : 20;
 }
@@ -214,24 +218,49 @@ export async function pendingPayoutRequest(db, ownerId, service = 'ALL') {
 }
 
 export async function availableCommissionAmount(db, ownerId, service = 'ALL') {
-  const condition = serviceCondition('s', service);
-  const row = await db.prepare(`
-    SELECT COALESCE(SUM(pc.commission_amount_krw), 0) AS amount_krw
-    FROM partner_commissions pc
-    LEFT JOIN billing_subscriptions s ON s.id = pc.subscription_id
-    WHERE pc.referrer_owner_id = ?
-      AND pc.earned_month = ?
-      AND pc.status = 'confirmed'
-      AND ${condition}
-      AND NOT EXISTS (
-        SELECT 1
-        FROM partner_settlement_items psi
-        JOIN partner_settlements ps ON ps.settlement_id = psi.settlement_id
-        WHERE psi.commission_id = pc.id
-          AND ps.status IN ('processing','paid','review')
-      )
-  `).bind(ownerId, currentMonth()).first();
-  return amount(row?.amount_krw);
+  const normalized = normalizeService(service);
+  const month = currentMonth();
+  let total = 0;
+
+  if (normalized === 'CALLTAG' || normalized === 'ALL') {
+    const calltag = await db.prepare(`
+      SELECT COALESCE(SUM(pc.commission_amount_krw), 0) AS amount_krw
+      FROM calltag_partner_commissions pc
+      WHERE pc.referrer_owner_id = ?
+        AND pc.status = 'confirmed'
+        AND NOT EXISTS (
+          SELECT 1
+          FROM calltag_partner_settlement_items psi
+          JOIN partner_settlements ps ON ps.settlement_id = psi.settlement_id
+          WHERE psi.commission_id = pc.id
+            AND ps.status IN ('processing','paid','review')
+        )
+    `).bind(ownerId).first();
+    total += amount(calltag?.amount_krw);
+  }
+
+  if (normalized === 'PAGERO' || normalized === 'ALL') {
+    const pageroCondition = serviceCondition('s', 'PAGERO');
+    const pagero = await db.prepare(`
+      SELECT COALESCE(SUM(pc.commission_amount_krw), 0) AS amount_krw
+      FROM partner_commissions pc
+      LEFT JOIN billing_subscriptions s ON s.id = pc.subscription_id
+      WHERE pc.referrer_owner_id = ?
+        AND pc.earned_month = ?
+        AND pc.status = 'confirmed'
+        AND ${pageroCondition}
+        AND NOT EXISTS (
+          SELECT 1
+          FROM partner_settlement_items psi
+          JOIN partner_settlements ps ON ps.settlement_id = psi.settlement_id
+          WHERE psi.commission_id = pc.id
+            AND ps.status IN ('processing','paid','review')
+        )
+    `).bind(ownerId, month).first();
+    total += amount(pagero?.amount_krw);
+  }
+
+  return amount(total);
 }
 
 export async function hasRecentConsent(db, ownerId, action) {

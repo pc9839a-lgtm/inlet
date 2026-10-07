@@ -363,7 +363,8 @@ export async function verifyGoogleSubscription(env = {}, db, ownerId = '', input
   const mapped = mapPlayState(purchase?.subscriptionState);
   const expiresAt = iso(matched?.expiryTime);
   const active = ACTIVE_STATES.has(mapped) && (!expiresAt || Date.parse(expiresAt) > Date.now());
-  if (!active && mapped !== 'pending') {
+  const allowInactive = input?.allowInactive === true;
+  if (!active && mapped !== 'pending' && !allowInactive) {
     throw billingError('활성 상태의 Google Play 구독이 아닙니다.', 409, 'PLAY_SUBSCRIPTION_INACTIVE', { state: mapped });
   }
 
@@ -381,7 +382,12 @@ export async function verifyGoogleSubscription(env = {}, db, ownerId = '', input
 
   const startedAt = iso(purchase?.startTime);
   const autoRenewing = matched?.autoRenewingPlan?.autoRenewEnabled ? 1 : 0;
-  const externalId = text(purchase?.latestOrderId || input.orderId, 240);
+  const externalId = text(
+    matched?.latestSuccessfulOrderId
+      || purchase?.latestOrderId
+      || input.orderId,
+    240,
+  );
   await db.prepare(`
     INSERT INTO billing_subscriptions (
       owner_id, product_code, channel, status, external_subscription_id,
@@ -469,7 +475,7 @@ function referralCodePublic(row = {}) {
   };
 }
 
-async function googlePlaySubscription(env, packageName, purchaseToken) {
+export async function googlePlaySubscription(env, packageName, purchaseToken) {
   const token = await googlePlayAccessToken(env);
   let response;
   try {
@@ -519,6 +525,83 @@ async function acknowledgeGoogleSubscription(env, packageName, productId, purcha
       googleStatus: Number(response.status || 0),
     });
   }
+}
+
+export async function googlePlayOrder(env = {}, packageName = '', orderId = '') {
+  const safePackage = text(packageName, 200);
+  const safeOrderId = text(orderId, 240);
+  if (!safePackage || !safeOrderId) {
+    throw billingError('Google Play 주문정보가 없습니다.', 400, 'PLAY_ORDER_REQUIRED');
+  }
+  const token = await googlePlayAccessToken(env);
+  let response;
+  try {
+    response = await fetch(
+      `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(safePackage)}/orders/${encodeURIComponent(safeOrderId)}`,
+      {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+        redirect: 'error',
+        signal: AbortSignal.timeout(15000),
+      }
+    );
+  } catch (error) {
+    throw billingError('Google Play 주문 확인 서버에 연결하지 못했습니다.', 502, 'PLAY_ORDER_NETWORK_FAILED');
+  }
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw billingError('Google Play 주문을 확인하지 못했습니다.', 502, 'PLAY_ORDER_FAILED', {
+      googleStatus: Number(response.status || 0),
+    });
+  }
+  return body;
+}
+
+function googleMoneyKrw(money = {}) {
+  const currency = text(money?.currencyCode, 12).toUpperCase();
+  if (currency !== 'KRW') return 0;
+  const units = Number(money?.units || 0);
+  const nanos = Number(money?.nanos || 0);
+  if (!Number.isFinite(units) || !Number.isFinite(nanos)) return 0;
+  return Math.max(0, Math.round(units + (nanos / 1_000_000_000)));
+}
+
+export function googlePlayOrderAmountKrw(order = {}) {
+  return googleMoneyKrw(order?.total || {});
+}
+
+export function googlePlayOrderNetPaidKrw(order = {}) {
+  const state = String(order?.state || '').toUpperCase();
+  if (state === 'CANCELED' || state === 'REFUNDED') return 0;
+
+  const original = googlePlayOrderAmountKrw(order);
+  const partialRefunds = Array.isArray(order?.orderHistory?.partialRefundEvents)
+    ? order.orderHistory.partialRefundEvents
+    : [];
+  let refunded = 0;
+  for (const event of partialRefunds) {
+    if (String(event?.state || '').toUpperCase() !== 'PROCESSED_SUCCESSFULLY') continue;
+    refunded += googleMoneyKrw(event?.refundDetails?.total || {});
+  }
+  return Math.max(0, original - refunded);
+}
+
+export function googlePlayOrderIsPayable(order = {}) {
+  const state = String(order?.state || '').toUpperCase();
+  return state === 'PROCESSED' || state === 'PARTIALLY_REFUNDED';
+}
+
+export function googlePlayOrderIsRefundPending(order = {}) {
+  return String(order?.state || '').toUpperCase() === 'PENDING_REFUND';
+}
+
+export function googlePlayOrderIsVoided(order = {}) {
+  const state = String(order?.state || '').toUpperCase();
+  return state === 'CANCELED' || state === 'REFUNDED';
+}
+
+export async function purchaseTokenHash(value = '') {
+  return sha256(value);
 }
 
 async function googlePlayAccessToken(env = {}) {

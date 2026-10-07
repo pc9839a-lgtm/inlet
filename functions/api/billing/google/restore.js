@@ -1,8 +1,15 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse, readJson } from '../../_shared.js';
 import { CALL_METHODS, callSession } from '../../call/_shared.js';
-import { recordReferralCommission } from '../_commissions.js';
+import { reconcileCallTagReferralCommission } from '../_commissions.js';
 import { assertGooglePlayBillingReady } from '../_readiness.js';
-import { restoreGoogleSubscriptions } from '../_shared.js';
+import {
+  googlePlayOrder,
+  googlePlayOrderIsPayable,
+  googlePlayOrderIsRefundPending,
+  googlePlayOrderIsVoided,
+  googlePlayOrderNetPaidKrw,
+  restoreGoogleSubscriptions,
+} from '../_shared.js';
 import { filterGooglePurchasesForOwner } from './_ownership.js';
 
 export async function onRequest({ request, env }) {
@@ -54,28 +61,64 @@ export async function onRequest({ request, env }) {
             || purchase?.orderId
             || '',
         ).trim();
-        const commission = await recordReferralCommission(db, {
-          referredOwnerId: session.ownerId,
-          productCode,
-          paymentReference,
-          subscriptionId: subscription?.id,
-          channel: 'google_play',
-          status: 'confirmed',
-        });
-        commissions.push(commission);
+        if (!paymentReference) {
+          commissions.push({ created: false, reason: 'PLAY_ORDER_REFERENCE_MISSING', productCode });
+          continue;
+        }
+        try {
+          const order = await googlePlayOrder(env, 'kr.pagero.calltag', paymentReference);
+          const netPaidKrw = googlePlayOrderNetPaidKrw(order);
+          const eventKey = String(order?.lastEventTime || order?.state || 'restore');
+          if (googlePlayOrderIsVoided(order)) {
+            commissions.push(await reconcileCallTagReferralCommission(db, {
+              referredOwnerId: session.ownerId,
+              productCode,
+              paymentReference,
+              subscriptionId: subscription?.id,
+              baseAmountKrw: 0,
+              channel: 'google_play',
+              status: 'cancelled',
+              eventKey,
+            }));
+          } else if (googlePlayOrderIsRefundPending(order)) {
+            commissions.push(await reconcileCallTagReferralCommission(db, {
+              referredOwnerId: session.ownerId,
+              productCode,
+              paymentReference,
+              subscriptionId: subscription?.id,
+              baseAmountKrw: netPaidKrw,
+              channel: 'google_play',
+              status: 'estimated',
+              eventKey,
+            }));
+          } else if (googlePlayOrderIsPayable(order)) {
+            commissions.push(netPaidKrw > 0
+              ? await reconcileCallTagReferralCommission(db, {
+                  referredOwnerId: session.ownerId,
+                  productCode,
+                  paymentReference,
+                  subscriptionId: subscription?.id,
+                  baseAmountKrw: netPaidKrw,
+                  channel: 'google_play',
+                  status: 'confirmed',
+                  eventKey,
+                })
+              : { reconciled: false, reason: 'PLAY_ORDER_KRW_AMOUNT_UNAVAILABLE', productCode });
+          } else {
+            commissions.push({ reconciled: false, reason: 'PLAY_ORDER_NOT_PROCESSED', productCode });
+          }
+        } catch (orderError) {
+          console.warn(
+            'calltag-referral-order-restore',
+            String(orderError?.details?.code || orderError?.message || 'PLAY_ORDER_FAILED').slice(0, 120),
+          );
+          commissions.push({ created: false, reason: 'PLAY_ORDER_LOOKUP_FAILED', productCode });
+        }
       }
     }
 
-    if (!commissions.length && entitlement?.subscription) {
-      commissions.push(await recordReferralCommission(db, {
-        referredOwnerId: session.ownerId,
-        productCode: entitlement.productCode,
-        paymentReference: entitlement.subscription.orderId || entitlement.subscription.externalSubscriptionId,
-        subscriptionId: entitlement.subscription.id,
-        channel: 'google_play',
-        status: 'confirmed',
-      }));
-    }
+    // Do not estimate referral cash from catalog prices. A commission is created only
+    // after the Google Orders API confirms the processed order and actual KRW amount.
 
     entitlement.billingAvailability = {
       googlePlay: assertGooglePlayBillingReady(env),
