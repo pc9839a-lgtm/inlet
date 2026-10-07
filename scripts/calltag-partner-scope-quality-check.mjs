@@ -33,8 +33,10 @@ const checks = {
   'partner portal prepares dedicated CallTag referral schema':
     source.portal.includes('ensureCallTagReferralSchema(env.DB)')
       && source.portal.includes("normalizeService(service) === 'CALLTAG' ? 'calltag_referrals' : 'referrals'"),
-  'CallTag partner rate is fixed at twenty percent':
-    source.portal.includes("if (normalizeService(service) === 'CALLTAG') return 20"),
+  'CallTag partner rate stays isolated and server controlled':
+    source.portal.includes("if (normalizeService(service) === 'CALLTAG')")
+      && source.portal.includes('readCallTagReferralProgramConfig(db)')
+      && source.portal.includes('program.commissionRatePercent'),
   'CallTag dashboard counts dedicated referral relationships':
     source.dashboard.includes('const referralTable = referralTableForService(service)')
       && source.dashboard.includes('FROM ${referralTable} r'),
@@ -50,12 +52,12 @@ const checks = {
       && source.finance.includes("const referralTable = isCallTag ? 'calltag_referrals' : 'referrals'")
       && source.finance.includes("s.product_code IN ('call_monthly','message_monthly','all_monthly')")
       && source.finance.includes("cs.product_code IN ('call_monthly','message_monthly','all_monthly')"),
-  'CallTag finance keeps seven-day base trial':
-    source.finance.includes('const baseTrialDays = isCallTag ? 7 : 3')
+  'CallTag finance base trial is server controlled with seven-day default':
+    source.finance.includes('callTagProgram?.baseTrialDays || 7')
       && source.finance.includes('baseDays: Math.max(1, Number(baseTrialDays || 3))'),
-  'CallTag finance returns scoped partner-center link':
+  'CallTag finance returns server-controlled scoped partner-center link':
     source.finance.includes("scope: isCallTag ? 'calltag' : 'legacy'")
-      && source.finance.includes("https://pagero.kr/partner?service=CALLTAG"),
+      && source.finance.includes('callTagProgram?.partnerCenterUrl'),
   'CallTag web host sends product scoping header':
     source.repository.includes("headers['X-Pagero-Product'] = 'calltag'")
       && source.repository.includes("host === 'calltag.pagero.kr'"),
