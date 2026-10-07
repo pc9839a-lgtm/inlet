@@ -285,7 +285,7 @@ export async function onRequest({ request, env }) {
         commissionRatePercent: isCallTag ? Number(callTagProgram?.commissionRatePercent || 0) : 20,
         friendBonusDays: isCallTag ? Number(callTagProgram?.inviteeBonusDays || 0) : 0,
         minimumPayoutKrw: isCallTag ? Number(callTagProgram?.minimumPayoutKrw || 10000) : 10000,
-        partnerCenterAvailable: isCallTag ? !!(callTagProgram?.enabled && callTagProgram?.partnerCenterEnabled) : false,
+        partnerCenterAvailable: isCallTag ? !!(callTagProgram?.partnerCenterEnabled) : false,
         partnerCenterUrl: isCallTag ? String(callTagProgram?.partnerCenterUrl || '') : '',
         shareMessage: isCallTag ? String(callTagProgram?.shareMessage || '') : '',
         benefitMessage: isCallTag ? String(callTagProgram?.benefitMessage || '') : '',
