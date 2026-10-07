@@ -2,7 +2,10 @@ import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../_sha
 import { getSessionAccount } from '../auth/_auth.js';
 import { ensureBillingSchema } from './_shared.js';
 import { ensureCallTagReferralSchema } from '../referrals/_calltag-store.js';
-import { readCallTagReferralProgramConfig } from '../referrals/_calltag-program.js';
+import {
+  readCallTagReferralProgramConfig,
+  renderCallTagReferralProgramText,
+} from '../referrals/_calltag-program.js';
 
 const METHODS = 'GET, OPTIONS';
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -287,9 +290,10 @@ export async function onRequest({ request, env }) {
         minimumPayoutKrw: isCallTag ? Number(callTagProgram?.minimumPayoutKrw || 10000) : 10000,
         partnerCenterAvailable: isCallTag ? !!(callTagProgram?.partnerCenterEnabled) : false,
         partnerCenterUrl: isCallTag ? String(callTagProgram?.partnerCenterUrl || '') : '',
-        shareMessage: isCallTag ? String(callTagProgram?.shareMessage || '') : '',
-        benefitMessage: isCallTag ? String(callTagProgram?.benefitMessage || '') : '',
-        recurringMessage: isCallTag ? String(callTagProgram?.recurringMessage || '') : '',
+        shareMessage: isCallTag ? renderCallTagReferralProgramText(callTagProgram, callTagProgram?.shareMessage) : '',
+        friendBenefitMessage: isCallTag ? renderCallTagReferralProgramText(callTagProgram, callTagProgram?.friendBenefitMessage) : '',
+        benefitMessage: isCallTag ? renderCallTagReferralProgramText(callTagProgram, callTagProgram?.benefitMessage) : '',
+        recurringMessage: isCallTag ? renderCallTagReferralProgramText(callTagProgram, callTagProgram?.recurringMessage) : '',
       },
     }, METHODS);
   } catch (error) {
