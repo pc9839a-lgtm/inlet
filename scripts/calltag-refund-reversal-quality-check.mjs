@@ -31,11 +31,11 @@ const checks = {
     files.commissions.includes("status IN ('processing', 'review')")
       && files.commissions.includes("UPDATE partner_settlements"),
   'paid recovery debt carries into later payout months':
-    files.portal.includes("pc.earned_month = ? OR pc.payment_reference LIKE 'google_play_refund:%'")
-      && files.settlementPay.includes("pc.earned_month = ? OR pc.payment_reference LIKE 'google_play_refund:%'")
-      && files.settlementPay.includes("pr.settlement_month = pc.earned_month OR pc.payment_reference LIKE 'google_play_refund:%'"),
+    files.portal.includes("pc.earned_month = ? OR pc.commission_amount_krw < 0")
+      && files.settlementPay.includes("pc.earned_month = ? OR pc.commission_amount_krw < 0")
+      && files.settlementPay.includes("pr.settlement_month = pc.earned_month OR pc.commission_amount_krw < 0"),
   'admin settlement snapshot uses same recovery carry-forward rule':
-    files.settlementPay.includes("pc.earned_month = pr.settlement_month OR pc.payment_reference LIKE 'google_play_refund:%'"),
+    files.settlementPay.includes("pc.earned_month = pr.settlement_month OR pc.commission_amount_krw < 0"),
   'RTDN reverses only final void and not pending chargeback review':
     files.rtdn.includes('reverseGooglePlayReferralCommission')
       && files.rtdn.includes('CHARGEBACK_REVIEW_PENDING_NO_REVERSAL'),
