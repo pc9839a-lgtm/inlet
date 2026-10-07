@@ -67,6 +67,7 @@
 | RUNBOOK | `ops-d1-migration-safety.md` | D1 migration 안전 절차 |
 | RUNBOOK | `ops-deployment-cache-seo-checklist.md` | 배포·캐시·SEO 검증 |
 | RUNBOOK | `ops-google-sheets-production-verification.md` | Google Sheets 운영 검증 |
+| RUNBOOK | `CALLTAG_GOOGLE_PLAY_RTDN_SETUP_KO.md` | CallTag Google Play RTDN Push·갱신 처리 운영 설정 |
 | RUNBOOK | `ops-live-integration-matrix.md` | live integration 상태 판정 |
 | RUNBOOK | `ops-operator-readiness-checklist.md` | 출시/운영자 readiness |
 | RUNBOOK | `ops-pagero-production-launch-smoke.md` | 신규 사용자 production smoke — 현재 실행 스킵 |
