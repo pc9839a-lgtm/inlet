@@ -8,6 +8,9 @@ on:
       - 'functions/api/auth/logout.js'
       - 'functions/api/billing/_commissions.js'
       - 'functions/api/billing/_partnerFinance.js'
+      - 'functions/api/referrals/_calltag-ledger.js'
+      - 'functions/api/billing/google/rtdn.js'
+      - 'migrations/0017_calltag_referral_cash_isolation.sql'
       - 'functions/api/call/admin/**'
       - 'functions/api/partner/**'
       - '.github/scripts/partner-settlement-hardening.mjs'
@@ -23,6 +26,9 @@ on:
       - 'functions/api/auth/logout.js'
       - 'functions/api/billing/_commissions.js'
       - 'functions/api/billing/_partnerFinance.js'
+      - 'functions/api/referrals/_calltag-ledger.js'
+      - 'functions/api/billing/google/rtdn.js'
+      - 'migrations/0017_calltag_referral_cash_isolation.sql'
       - 'functions/api/call/admin/**'
       - 'functions/api/partner/**'
       - '.github/scripts/partner-settlement-hardening.mjs'
@@ -47,6 +53,8 @@ jobs:
           node --check functions/api/auth/logout.js
           node --check functions/api/billing/_commissions.js
           node --check functions/api/billing/_partnerFinance.js
+          node --check functions/api/referrals/_calltag-ledger.js
+          node --check functions/api/billing/google/rtdn.js
           node --check functions/api/call/admin/_financeSecurity.js
           node --check functions/api/call/admin/partners.js
           node --check functions/api/call/admin/partner.js
@@ -82,6 +90,12 @@ jobs:
           grep -q "revokeFreshSensitiveSessions" functions/api/call/admin/partner-totp-reset.js
           grep -q "CHECK(commission_rate_bps IN (2000, 5000))" functions/api/billing/_partnerFinance.js
           grep -q "resolvePartnerCommissionRateBps" functions/api/billing/_commissions.js
+          grep -q "CALLTAG_COMMISSION_RATE_BPS = 2000" functions/api/billing/_commissions.js
+          grep -q "calltag_partner_commissions" functions/api/billing/_commissions.js
+          grep -q "calltag_referrals" functions/api/referrals/_calltag-ledger.js
+          grep -q "calltag_partner_settlement_items" functions/api/billing/_partnerFinance.js
+          grep -q "GOOGLE_PLAY_RTDN_SECRET" functions/api/billing/google/rtdn.js
+          grep -q "voidedPurchaseNotification" functions/api/billing/google/rtdn.js
           grep -q "requireSettlementStepup" functions/api/partner/_portal.js
           grep -q "PARTNER_FRESH_TTL_SECONDS = 5 \* 60" functions/api/partner/_fresh.js
           grep -q "PARTNER_TOTP_FRESH_REQUIRED" functions/api/partner/_fresh.js
@@ -92,8 +106,11 @@ jobs:
           grep -q "clearPartnerFreshCookie" functions/api/partner/logout.js
           grep -q "revokeFreshSensitiveSessions" functions/api/partner/totp/recover.js
           grep -q "partner_commissions" functions/api/partner/dashboard.js
+          grep -q "calltag_partner_commissions" functions/api/partner/dashboard.js
           grep -q "partner_commissions" functions/api/partner/earnings.js
+          grep -q "calltag_partner_commissions" functions/api/partner/earnings.js
           grep -q "billing_subscriptions" functions/api/partner/referrals.js
+          grep -q "calltag_referrals" functions/api/partner/referrals.js
           grep -q "partner_payout_profiles" functions/api/partner/_portal.js
           grep -q "partner_payout_requests" functions/api/partner/_portal.js
           grep -q "PARTNER_TOTP_ENCRYPTION_KEY" functions/api/partner/_portal.js
@@ -111,6 +128,7 @@ jobs:
           grep -q "requestId" functions/api/call/admin/settlement-pay.js
           grep -q "partner_payout_requests" functions/api/call/admin/settlement-pay.js
           grep -q "service_scope" functions/api/call/admin/settlement-pay.js
+          grep -q "calltag_partner_settlement_items" functions/api/call/admin/settlement-pay.js
           grep -q "status = CASE" functions/api/call/admin/settlement-pay.js
           grep -q "processed_at" functions/api/call/admin/settlement-pay.js
           grep -q "CallTag Partner Settlement QA" .github/workflows/deploy-calltag-partner-settlement.yml
