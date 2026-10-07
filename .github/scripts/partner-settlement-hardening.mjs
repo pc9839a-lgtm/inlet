@@ -135,6 +135,21 @@ assert.ok(!partnerRate.includes('UPDATE partner_commissions'), 'rate update must
 // 8) Minimum payout is explicitly enforced server-side.
 includesAll(portal, ['export const MIN_PAYOUT_KRW = 10000', 'available < MIN_PAYOUT_KRW', 'PARTNER_PAYOUT_MINIMUM_NOT_MET'], 'minimum payout');
 
+// 9) Paid Google Play refund recoveries carry forward until a future settlement consumes them.
+includesAll(commissions, [
+  'reverseGooglePlayReferralCommission',
+  "google_play_refund:",
+  '-originalCommissionAmountKrw',
+  "service_scope IN ('ALL', 'CALLTAG')",
+], 'refund recovery');
+includesAll(portal, [
+  "pc.earned_month = ? OR pc.payment_reference LIKE 'google_play_refund:%'",
+], 'portal recovery carry-forward');
+includesAll(settlementPay, [
+  "pc.earned_month = pr.settlement_month OR pc.payment_reference LIKE 'google_play_refund:%'",
+  "pr.settlement_month = pc.earned_month OR pc.payment_reference LIKE 'google_play_refund:%'",
+], 'admin recovery carry-forward');
+
 console.log('partner settlement hardening contract: OK');
 console.log(JSON.stringify({
   protectedByStepup: true,
@@ -147,4 +162,5 @@ console.log(JSON.stringify({
   pageroProducts: portalPagero,
   rateChangeFutureOnly: true,
   minimumPayoutKrw: 10000,
+  refundRecoveryCarryForward: true,
 }, null, 2));
