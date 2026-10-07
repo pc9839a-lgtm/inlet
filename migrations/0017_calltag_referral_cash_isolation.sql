@@ -1,4 +1,4 @@
--- CallTag referral cash isolation and commission service scoping.
+-- CallTag referral ownership and cash commissions are isolated from PageRo.
 CREATE TABLE IF NOT EXISTS calltag_referral_identity_claims (
   phone_hash TEXT PRIMARY KEY,
   referred_owner_id TEXT NOT NULL,
@@ -25,8 +25,27 @@ CREATE TABLE IF NOT EXISTS calltag_referrals (
 CREATE INDEX IF NOT EXISTS idx_calltag_referrals_referrer_status
 ON calltag_referrals(referrer_owner_id, status, applied_at DESC);
 
--- Backfill CallTag relations created before service isolation. The durable
--- identity table is CallTag-only, so it safely identifies historical CallTag referrals.
+CREATE TABLE IF NOT EXISTS calltag_partner_commissions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  referrer_owner_id TEXT NOT NULL,
+  referred_owner_id TEXT NOT NULL,
+  subscription_id INTEGER,
+  product_code TEXT NOT NULL,
+  payment_reference TEXT NOT NULL,
+  base_amount_krw INTEGER NOT NULL DEFAULT 0,
+  commission_amount_krw INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'estimated',
+  earned_month TEXT NOT NULL DEFAULT '',
+  confirmed_at TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(payment_reference)
+);
+
+CREATE INDEX IF NOT EXISTS idx_calltag_commissions_referrer_month
+ON calltag_partner_commissions(referrer_owner_id, earned_month, status);
+
+-- Backfill CallTag relations created before service isolation. The identity ledger is CallTag-only.
 INSERT OR IGNORE INTO calltag_referrals (
   referrer_owner_id, referred_owner_id, referral_code, bonus_days,
   status, applied_at, first_paid_at, created_at, updated_at
@@ -38,25 +57,26 @@ FROM referrals r
 JOIN calltag_referral_identity_claims c
   ON c.referred_owner_id = r.referred_owner_id;
 
-ALTER TABLE partner_commissions ADD COLUMN service_scope TEXT NOT NULL DEFAULT 'legacy';
-ALTER TABLE partner_commissions ADD COLUMN product_code TEXT NOT NULL DEFAULT '';
-
-UPDATE partner_commissions
-SET product_code = COALESCE((
-  SELECT s.product_code
-  FROM billing_subscriptions s
-  WHERE s.id = partner_commissions.subscription_id
-  LIMIT 1
-), product_code)
-WHERE product_code = '';
-
-UPDATE partner_commissions
-SET service_scope = CASE
-  WHEN product_code IN ('call_monthly', 'message_monthly', 'all_monthly') THEN 'calltag'
-  WHEN product_code IN ('pagero_monthly', 'pagero_pro_monthly', 'pagero_domain_monthly') THEN 'pagero'
-  ELSE service_scope
-END
-WHERE service_scope = 'legacy';
-
-CREATE INDEX IF NOT EXISTS idx_partner_commissions_service_referrer_month
-ON partner_commissions(service_scope, referrer_owner_id, earned_month, status);
+-- Backfill any CallTag commissions written into the old shared partner ledger before isolation.
+INSERT OR IGNORE INTO calltag_partner_commissions (
+  referrer_owner_id, referred_owner_id, subscription_id, product_code,
+  payment_reference, base_amount_krw, commission_amount_krw, status,
+  earned_month, confirmed_at, created_at, updated_at
+)
+SELECT
+  pc.referrer_owner_id,
+  pc.referred_owner_id,
+  pc.subscription_id,
+  s.product_code,
+  pc.payment_reference,
+  pc.base_amount_krw,
+  pc.commission_amount_krw,
+  pc.status,
+  pc.earned_month,
+  pc.confirmed_at,
+  pc.created_at,
+  pc.updated_at
+FROM partner_commissions pc
+JOIN billing_subscriptions s
+  ON s.id = pc.subscription_id
+WHERE s.product_code IN ('call_monthly', 'message_monthly', 'all_monthly');
