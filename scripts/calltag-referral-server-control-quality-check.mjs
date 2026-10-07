@@ -48,7 +48,8 @@ const checks = {
     source.summary.includes('programEnabled: program.enabled')
       && source.summary.includes('commissionRatePercent: program.commissionRatePercent')
       && source.summary.includes('friendBonusDays: program.inviteeBonusDays')
-      && source.summary.includes('shareMessage: program.shareMessage'),
+      && source.summary.includes('shareMessage: renderCallTagReferralProgramText')
+      && source.summary.includes('pausedMessage: renderCallTagReferralProgramText'),
   'web finance uses the same runtime config':
     source.finance.includes('readCallTagReferralProgramConfig')
       && source.finance.includes('minimumPayoutKrw')
