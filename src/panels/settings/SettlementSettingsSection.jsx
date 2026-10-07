@@ -14,6 +14,8 @@ export default function SettlementSettingsSection({ authUser }) {
   const { finance, loading, error, refresh } = useAccountFinance(authUser);
   const settlement = finance?.settlement?.combined || {};
   const calltagScoped = finance?.settlement?.scope === 'calltag';
+  const rate = Number(finance?.settlement?.commissionRatePercent || 0);
+  const minimum = Number(finance?.settlement?.minimumPayoutKrw || 0);
   const settlementUrl = calltagScoped
     ? (finance?.settlement?.partnerCenterUrl || CALLTAG_SETTLEMENT_URL)
     : LEGACY_SETTLEMENT_URL;
@@ -38,7 +40,10 @@ export default function SettlementSettingsSection({ authUser }) {
             <div className="settings-compact-row"><span>누적 확정</span><strong>{money(settlement.confirmedRevenueKrw)}</strong><em /></div>
             <div className="settings-compact-row"><span>추천 가입</span><strong>{Number(settlement.referredCount || 0)}명</strong><em /></div>
             <div className="settings-compact-row"><span>유료 전환</span><strong>{Number(settlement.activePaidCount || 0)}명</strong><em /></div>
-            <div className="settings-compact-row"><span>정산율</span><strong>20%</strong><em>{calltagScoped ? '콜태그 추천수익' : '페이지로 · 콜태그'}</em></div>
+            <div className="settings-compact-row"><span>정산율</span><strong>{calltagScoped ? `${rate}%` : '20%'}</strong><em>{calltagScoped ? '콜태그 추천수익' : '페이지로 · 콜태그'}</em></div>
+            {calltagScoped && minimum > 0 && (
+              <div className="settings-compact-row"><span>지급 신청</span><strong>{money(minimum)} 이상</strong><em /></div>
+            )}
             <div className="settings-compact-row settings-compact-row-action">
               <span>상세 내역</span>
               <strong>{calltagScoped ? '콜태그 정산' : '통합 정산'}</strong>
