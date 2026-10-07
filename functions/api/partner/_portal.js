@@ -220,7 +220,7 @@ export async function availableCommissionAmount(db, ownerId, service = 'ALL') {
     FROM partner_commissions pc
     LEFT JOIN billing_subscriptions s ON s.id = pc.subscription_id
     WHERE pc.referrer_owner_id = ?
-      AND pc.earned_month = ?
+      AND (pc.earned_month = ? OR pc.payment_reference LIKE 'google_play_refund:%')
       AND pc.status = 'confirmed'
       AND ${condition}
       AND NOT EXISTS (
