@@ -294,6 +294,7 @@ export async function onRequest({ request, env }) {
         friendBenefitMessage: isCallTag ? renderCallTagReferralProgramText(callTagProgram, callTagProgram?.friendBenefitMessage) : '',
         benefitMessage: isCallTag ? renderCallTagReferralProgramText(callTagProgram, callTagProgram?.benefitMessage) : '',
         recurringMessage: isCallTag ? renderCallTagReferralProgramText(callTagProgram, callTagProgram?.recurringMessage) : '',
+        pausedMessage: isCallTag ? renderCallTagReferralProgramText(callTagProgram, callTagProgram?.pausedMessage) : '',
       },
     }, METHODS);
   } catch (error) {
