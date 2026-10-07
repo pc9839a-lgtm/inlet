@@ -339,7 +339,7 @@ async function currentPayable(db, ownerId, month, service, requestedAt) {
           WHERE psi.commission_id = pc.id
             AND ps.status IN ('processing','paid','review')
         )
-    `).bind(ownerId, month, requestedAt).first();
+    `).bind(ownerId, requestedAt).first();
     count += positiveInt(row?.count);
     amountKrw += positiveInt(row?.amount_krw);
   }
@@ -363,7 +363,7 @@ async function currentPayable(db, ownerId, month, service, requestedAt) {
           WHERE psi.commission_id = pc.id
             AND ps.status IN ('processing','paid','review')
         )
-    `).bind(ownerId, requestedAt).first();
+    `).bind(ownerId, month, requestedAt).first();
     count += positiveInt(row?.count);
     amountKrw += positiveInt(row?.amount_krw);
   }
