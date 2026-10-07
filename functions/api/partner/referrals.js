@@ -7,6 +7,7 @@ import {
   maskName,
   normalizeService,
   partnerPortalContext,
+  referralTableForService,
   safeIso,
   serviceCondition,
   serviceForProduct,
@@ -22,6 +23,7 @@ export async function onRequest({ request, env }) {
     const service = normalizeService(new URL(request.url).searchParams.get('service') || 'ALL');
     const condition = serviceCondition('s', service);
     const commissionCondition = serviceCondition('cs', service);
+    const referralTable = referralTableForService(service);
     const month = currentMonth();
     const result = await context.db.prepare(`
       SELECT
@@ -55,7 +57,7 @@ export async function onRequest({ request, env }) {
             AND pc.status IN ('estimated','confirmed')
             AND ${commissionCondition}
         ) AS recognized_amount
-      FROM referrals r
+      FROM ${referralTable} r
       LEFT JOIN calllink_profiles p ON p.owner_id = r.referred_owner_id
       LEFT JOIN billing_accounts ba ON ba.owner_id = r.referred_owner_id
       WHERE r.referrer_owner_id = ?
@@ -81,7 +83,12 @@ export async function onRequest({ request, env }) {
       subscriptionStatus: subscriptionState(row.subscription_status),
       recognizedAmountThisMonth: amount(row.recognized_amount),
     }));
-    return jsonResponse(request, env, 200, { ok: true, service, items }, PARTNER_PORTAL_METHODS);
+    return jsonResponse(request, env, 200, {
+      ok: true,
+      service,
+      referralScope: service === 'CALLTAG' ? 'calltag' : 'legacy',
+      items,
+    }, PARTNER_PORTAL_METHODS);
   } catch (error) {
     return handleApiError(request, env, error, PARTNER_PORTAL_METHODS);
   }
