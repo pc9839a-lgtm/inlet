@@ -182,6 +182,7 @@ function normalizeFinance({ authUser, subscriptionsData, referralData, summaryDa
       minimumPayoutKrw: Number(summary.minimumPayoutKrw || 0),
       partnerCenterUrl: String(summary.partnerCenterUrl || ''),
       shareMessage: String(summary.shareMessage || ''),
+      friendBenefitMessage: String(summary.friendBenefitMessage || ''),
       benefitMessage: String(summary.benefitMessage || ''),
       recurringMessage: String(summary.recurringMessage || ''),
     },
