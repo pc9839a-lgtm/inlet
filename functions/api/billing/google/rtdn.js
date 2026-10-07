@@ -1,16 +1,17 @@
 import { assertD1 } from '../../_shared.js';
 import {
   googlePlayOrder,
-  googlePlayOrderAmountKrw,
   googlePlayOrderIsPayable,
+  googlePlayOrderIsRefundPending,
   googlePlayOrderIsVoided,
+  googlePlayOrderNetPaidKrw,
   googlePlaySubscription,
   purchaseTokenHash,
   verifyGoogleSubscription,
 } from '../_shared.js';
 import {
   cancelReferralCommission,
-  recordReferralCommission,
+  reconcileCallTagReferralCommission,
 } from '../_commissions.js';
 
 const PACKAGE_NAME = 'kr.pagero.calltag';
@@ -132,40 +133,59 @@ async function processSubscriptionNotification(db, env, notification) {
   if (!orderId) return { ok: true, ignored: 'ORDER_ID_MISSING' };
 
   const order = await googlePlayOrder(env, PACKAGE_NAME, orderId);
+  const netPaidKrw = googlePlayOrderNetPaidKrw(order);
+  const eventKey = String(order?.lastEventTime || order?.state || notification?.notificationType || 'rtdn');
+
+  let commission;
   if (googlePlayOrderIsVoided(order)) {
-    const cancelled = await cancelReferralCommission(db, {
+    commission = await reconcileCallTagReferralCommission(db, {
+      referredOwnerId: owner.owner_id,
+      productCode,
       paymentReference: orderId,
+      subscriptionId: subscription?.id,
+      baseAmountKrw: 0,
       channel: 'google_play',
+      status: 'cancelled',
+      eventKey,
     });
-    return { ok: true, orderId, productCode, cancelled };
-  }
-  if (!googlePlayOrderIsPayable(order)) {
+  } else if (googlePlayOrderIsRefundPending(order)) {
+    commission = await reconcileCallTagReferralCommission(db, {
+      referredOwnerId: owner.owner_id,
+      productCode,
+      paymentReference: orderId,
+      subscriptionId: subscription?.id,
+      baseAmountKrw: netPaidKrw,
+      channel: 'google_play',
+      status: 'estimated',
+      eventKey,
+    });
+  } else if (googlePlayOrderIsPayable(order)) {
+    if (netPaidKrw <= 0) {
+      return { ok: true, orderId, productCode, ignored: 'KRW_AMOUNT_UNAVAILABLE' };
+    }
+    commission = await reconcileCallTagReferralCommission(db, {
+      referredOwnerId: owner.owner_id,
+      productCode,
+      paymentReference: orderId,
+      subscriptionId: subscription?.id,
+      baseAmountKrw: netPaidKrw,
+      channel: 'google_play',
+      status: 'confirmed',
+      eventKey,
+    });
+  } else {
     return { ok: true, orderId, productCode, ignored: 'ORDER_NOT_PROCESSED' };
   }
-
-  const amountKrw = googlePlayOrderAmountKrw(order);
-  if (amountKrw <= 0) {
-    return { ok: true, orderId, productCode, ignored: 'KRW_AMOUNT_UNAVAILABLE' };
-  }
-
-  const commission = await recordReferralCommission(db, {
-    referredOwnerId: owner.owner_id,
-    productCode,
-    paymentReference: orderId,
-    subscriptionId: subscription?.id,
-    baseAmountKrw: amountKrw,
-    channel: 'google_play',
-    status: 'confirmed',
-  });
-  return { ok: true, orderId, productCode, amountKrw, commission };
+  return { ok: true, orderId, productCode, netPaidKrw, commission };
 }
 
-async function processVoidedPurchase(db, notification) {
+async function processVoidedPurchase(db, notification, eventKey = '') {
   const orderId = text(notification?.orderId, 240);
   if (!orderId) return { ok: true, ignored: 'VOIDED_ORDER_ID_MISSING' };
   const cancelled = await cancelReferralCommission(db, {
     paymentReference: orderId,
     channel: 'google_play',
+    eventKey: eventKey || `voided_${notification?.voidedTimeMillis || notification?.voidedReason || 'event'}`,
   });
   return {
     ok: true,
@@ -208,7 +228,11 @@ export async function onRequestPost({ request, env }) {
         payload.subscriptionNotification,
       );
     } else if (payload.voidedPurchaseNotification) {
-      result = await processVoidedPurchase(db, payload.voidedPurchaseNotification);
+      result = await processVoidedPurchase(
+        db,
+        payload.voidedPurchaseNotification,
+        String(payload.eventTimeMillis || ''),
+      );
     } else if (payload.testNotification) {
       result = { ok: true, test: true };
     } else {
