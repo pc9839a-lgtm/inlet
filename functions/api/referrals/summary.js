@@ -61,7 +61,7 @@ async function callTagReferralSummary(db, ownerId = '') {
     baseTrialDays: program.baseTrialDays,
     minimumPayoutKrw: program.minimumPayoutKrw,
     rewardMode: 'cash_commission',
-    partnerCenterAvailable: program.enabled && program.partnerCenterEnabled,
+    partnerCenterAvailable: program.partnerCenterEnabled,
     partnerCenterUrl: program.partnerCenterUrl,
     shareMessage: program.shareMessage,
     benefitMessage: program.benefitMessage,
