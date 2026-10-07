@@ -1,3 +1,5 @@
+import { ensureBillingSchema } from '../billing/_shared.js';
+
 const CALLTAG_PRODUCTS = new Set(['call_monthly', 'message_monthly', 'all_monthly']);
 
 let schemaPromise = null;
@@ -13,6 +15,38 @@ export function isCallTagProduct(productCode = '') {
 export async function ensureCallTagReferralSchema(db) {
   if (schemaPromise) return schemaPromise;
   schemaPromise = (async () => {
+    await ensureBillingSchema(db);
+    for (const statement of [
+      "ALTER TABLE partner_commissions ADD COLUMN service_scope TEXT NOT NULL DEFAULT 'legacy'",
+      "ALTER TABLE partner_commissions ADD COLUMN product_code TEXT NOT NULL DEFAULT ''",
+    ]) {
+      try {
+        await db.prepare(statement).run();
+      } catch (error) {
+        const message = String(error?.message || '').toLowerCase();
+        if (!message.includes('duplicate column') && !message.includes('already exists')) throw error;
+      }
+    }
+    await db.prepare(`
+      UPDATE partner_commissions
+      SET product_code = COALESCE((
+        SELECT s.product_code
+        FROM billing_subscriptions s
+        WHERE s.id = partner_commissions.subscription_id
+        LIMIT 1
+      ), product_code)
+      WHERE product_code = ''
+    `).run();
+    await db.prepare(`
+      UPDATE partner_commissions
+      SET service_scope = CASE
+        WHEN product_code IN ('call_monthly', 'message_monthly', 'all_monthly') THEN 'calltag'
+        WHEN product_code IN ('pagero_monthly', 'pagero_pro_monthly', 'pagero_domain_monthly') THEN 'pagero'
+        ELSE service_scope
+      END
+      WHERE service_scope = 'legacy'
+    `).run();
+
     await db.prepare(`
       CREATE TABLE IF NOT EXISTS calltag_referral_identity_claims (
         phone_hash TEXT PRIMARY KEY,
