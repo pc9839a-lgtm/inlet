@@ -12,6 +12,10 @@ import {
   CALLTAG_REFERRAL_TOTAL_DAYS,
   enforceCallTagTrialPolicy,
 } from '../billing/trial-policy.js';
+import {
+  callTagReferralForReferred,
+  ensureCallTagReferralSchema,
+} from './_calltag-ledger.js';
 
 export { normalizeSignupReferralCode, validateSignupReferralCode };
 
@@ -60,17 +64,7 @@ async function referralPhoneHash(rawPhone = '', env = {}) {
 }
 
 async function ensureReferralIdentitySchema(db) {
-  await db.prepare(`
-    CREATE TABLE IF NOT EXISTS calltag_referral_identity_claims (
-      phone_hash TEXT PRIMARY KEY,
-      referred_owner_id TEXT NOT NULL,
-      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-    )
-  `).run();
-  await db.prepare(`
-    CREATE INDEX IF NOT EXISTS idx_calltag_referral_identity_owner
-    ON calltag_referral_identity_claims(referred_owner_id)
-  `).run();
+  await ensureCallTagReferralSchema(db);
 }
 
 /**
@@ -99,7 +93,7 @@ export async function assertCallTagReferralIdentityAvailable(db, rawPhone = '', 
   // Backfill protection for referrals created before the durable phone ledger existed.
   const historical = await db.prepare(`
     SELECT r.referred_owner_id
-    FROM referrals r
+    FROM calltag_referrals r
     JOIN accounts a ON a.id = r.referred_owner_id
     WHERE a.phone = ?
     LIMIT 1
@@ -147,12 +141,7 @@ export async function applyCallTagSignupReferralCode(
   await ensureBillingAccount(db, safeOwnerId);
   await ensureReferralIdentitySchema(db);
 
-  const existing = await db.prepare(`
-    SELECT id
-    FROM referrals
-    WHERE referred_owner_id = ?
-    LIMIT 1
-  `).bind(safeOwnerId).first();
+  const existing = await callTagReferralForReferred(db, safeOwnerId);
   if (existing?.id) {
     throw billingError('이미 추천인 등록을 완료했습니다.', 409, 'REFERRAL_ALREADY_APPLIED');
   }
@@ -162,7 +151,7 @@ export async function applyCallTagSignupReferralCode(
 
   const statements = [
     db.prepare(`
-      INSERT INTO referrals (
+      INSERT INTO calltag_referrals (
         referrer_owner_id,
         referred_owner_id,
         referral_code,
