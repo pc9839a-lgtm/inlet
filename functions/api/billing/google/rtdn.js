@@ -5,7 +5,10 @@ import {
   googlePlayOrderPaidAmountKrw,
   verifyGoogleSubscription,
 } from '../_shared.js';
-import { recordReferralCommission } from '../_commissions.js';
+import {
+  recordReferralCommission,
+  reverseGooglePlayReferralCommission,
+} from '../_commissions.js';
 import { callTagReferralForOwner } from '../../referrals/_calltag-store.js';
 
 const METHODS = 'POST, OPTIONS';
@@ -18,7 +21,6 @@ const TERMINAL_EVENT_STATUSES = new Set([
   'processed',
   'ignored',
   'test',
-  'deferred_voided',
   'deferred_refund_review',
 ]);
 
@@ -474,9 +476,8 @@ export async function onRequest({ request, env }) {
 
     const subscriptionType = Number(payload?.subscriptionNotification?.notificationType || 0);
     const voidedToken = text(payload?.voidedPurchaseNotification?.purchaseToken, 4096);
-    const refundToken = text(payload?.pendingRefundReviewNotification?.purchaseToken, 4096);
     const purchaseToken = text(
-      payload?.subscriptionNotification?.purchaseToken || voidedToken || refundToken,
+      payload?.subscriptionNotification?.purchaseToken || voidedToken,
       4096,
     );
     const purchaseTokenHash = purchaseToken ? await sha256(purchaseToken) : '';
@@ -509,31 +510,82 @@ export async function onRequest({ request, env }) {
     }
 
     if (eventKind === 'voided_purchase') {
+      const notification = payload.voidedPurchaseNotification || {};
+      const productType = Number(notification.productType || 0);
+      const refundType = Number(notification.refundType || 0);
+
+      // CallTag sells subscriptions only. Quantity-based partial refunds apply to
+      // multi-quantity one-time products and must not touch subscription commissions.
+      if (productType && productType !== 1) {
+        await updateEvent(db, messageId, {
+          status: 'ignored',
+          detailCode: 'VOIDED_NON_SUBSCRIPTION_IGNORED',
+          purchaseTokenHash,
+          orderId,
+        });
+        return noContent();
+      }
+
       const mapped = purchaseTokenHash
         ? await subscriptionForToken(db, purchaseTokenHash)
         : null;
+      const reversal = await reverseGooglePlayReferralCommission(db, {
+        orderId,
+        sourceEventId: messageId,
+        refundType,
+      });
+
+      if (!reversal.reversed && reversal.reason === 'PLAY_VOID_COMMISSION_NOT_FOUND') {
+        if (mapped?.owner_id) {
+          const referral = await callTagReferralForOwner(db, mapped.owner_id);
+          if (!referral?.id) {
+            await updateEvent(db, messageId, {
+              status: 'processed',
+              detailCode: 'VOIDED_WITHOUT_REFERRAL_COMMISSION',
+              purchaseTokenHash,
+              orderId,
+              ownerId: mapped.owner_id,
+              productCode: mapped.product_code,
+            });
+            return noContent();
+          }
+        }
+
+        await updateEvent(db, messageId, {
+          status: 'retry_refund_unmatched',
+          detailCode: 'PLAY_VOID_COMMISSION_NOT_FOUND',
+          purchaseTokenHash,
+          orderId,
+          ownerId: mapped?.owner_id || '',
+          productCode: mapped?.product_code || '',
+        });
+        return retryResponse(
+          request,
+          env,
+          'PLAY_VOID_COMMISSION_NOT_FOUND',
+          '환불 대상 추천수익 원장을 다시 확인해야 합니다.',
+        );
+      }
+
       await updateEvent(db, messageId, {
-        status: 'deferred_voided',
-        detailCode: 'STEP5_REFUND_REVERSAL_PENDING',
+        status: 'processed',
+        detailCode: text(reversal.reason || 'REFERRAL_COMMISSION_REVERSED', 120),
         purchaseTokenHash,
         orderId,
-        ownerId: mapped?.owner_id || '',
-        productCode: mapped?.product_code || '',
+        ownerId: reversal.referredOwnerId || mapped?.owner_id || '',
+        productCode: reversal.productCode || mapped?.product_code || '',
       });
       return noContent();
     }
 
     if (eventKind === 'pending_refund_review') {
-      const mapped = purchaseTokenHash
-        ? await subscriptionForToken(db, purchaseTokenHash)
-        : null;
+      // This is a chargeback request under review, not a final void. Preserve the
+      // order reference for operations, but do not reverse money until Play sends
+      // a final VoidedPurchaseNotification.
       await updateEvent(db, messageId, {
         status: 'deferred_refund_review',
-        detailCode: 'STEP5_REFUND_REVIEW_PENDING',
-        purchaseTokenHash,
+        detailCode: 'CHARGEBACK_REVIEW_PENDING_NO_REVERSAL',
         orderId,
-        ownerId: mapped?.owner_id || '',
-        productCode: mapped?.product_code || '',
       });
       return noContent();
     }
