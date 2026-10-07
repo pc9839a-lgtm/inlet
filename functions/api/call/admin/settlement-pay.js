@@ -83,6 +83,7 @@ export async function onRequest({ request, env }) {
     const payable = await currentPayable(
       env.DB,
       ownerId,
+      month,
       service,
       payoutRequest.requested_at,
     );
@@ -164,8 +165,10 @@ export async function onRequest({ request, env }) {
         JOIN partner_payout_requests pr
           ON pr.request_id = ?
          AND pr.owner_id = pc.referrer_owner_id
+         AND pr.settlement_month = pc.earned_month
          AND pr.status = 'requested'
         WHERE pc.referrer_owner_id = ?
+          AND pc.earned_month = ?
           AND pc.status = 'confirmed'
           AND s.product_code IN ('pagero_monthly','pagero_pro_monthly','pagero_domain_monthly')
           AND datetime(COALESCE(NULLIF(pc.confirmed_at, ''), pc.created_at)) <= datetime(pr.requested_at)
@@ -180,7 +183,7 @@ export async function onRequest({ request, env }) {
             WHERE psi.commission_id = pc.id
               AND ps2.status IN ('processing','paid','review')
           )
-      `).bind(settlementId, requestId, ownerId, settlementId));
+      `).bind(settlementId, requestId, ownerId, month, settlementId));
     }
 
     statements.push(
@@ -316,7 +319,7 @@ export async function onRequest({ request, env }) {
   }
 }
 
-async function currentPayable(db, ownerId, service, requestedAt) {
+async function currentPayable(db, ownerId, month, service, requestedAt) {
   let count = 0;
   let amountKrw = 0;
 
@@ -336,7 +339,7 @@ async function currentPayable(db, ownerId, service, requestedAt) {
           WHERE psi.commission_id = pc.id
             AND ps.status IN ('processing','paid','review')
         )
-    `).bind(ownerId, requestedAt).first();
+    `).bind(ownerId, month, requestedAt).first();
     count += positiveInt(row?.count);
     amountKrw += positiveInt(row?.amount_krw);
   }
@@ -349,6 +352,7 @@ async function currentPayable(db, ownerId, service, requestedAt) {
       FROM partner_commissions pc
       LEFT JOIN billing_subscriptions s ON s.id = pc.subscription_id
       WHERE pc.referrer_owner_id = ?
+        AND pc.earned_month = ?
         AND pc.status = 'confirmed'
         AND s.product_code IN ('pagero_monthly','pagero_pro_monthly','pagero_domain_monthly')
         AND datetime(COALESCE(NULLIF(pc.confirmed_at, ''), pc.created_at)) <= datetime(?)
