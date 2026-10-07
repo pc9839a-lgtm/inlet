@@ -219,6 +219,7 @@ export async function pendingPayoutRequest(db, ownerId, service = 'ALL') {
 
 export async function availableCommissionAmount(db, ownerId, service = 'ALL') {
   const normalized = normalizeService(service);
+  const month = currentMonth();
   let total = 0;
 
   if (normalized === 'CALLTAG' || normalized === 'ALL') {
@@ -245,6 +246,7 @@ export async function availableCommissionAmount(db, ownerId, service = 'ALL') {
       FROM partner_commissions pc
       LEFT JOIN billing_subscriptions s ON s.id = pc.subscription_id
       WHERE pc.referrer_owner_id = ?
+        AND pc.earned_month = ?
         AND pc.status = 'confirmed'
         AND ${pageroCondition}
         AND NOT EXISTS (
@@ -254,7 +256,7 @@ export async function availableCommissionAmount(db, ownerId, service = 'ALL') {
           WHERE psi.commission_id = pc.id
             AND ps.status IN ('processing','paid','review')
         )
-    `).bind(ownerId).first();
+    `).bind(ownerId, month).first();
     total += amount(pagero?.amount_krw);
   }
 
