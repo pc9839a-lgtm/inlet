@@ -219,7 +219,6 @@ export async function pendingPayoutRequest(db, ownerId, service = 'ALL') {
 
 export async function availableCommissionAmount(db, ownerId, service = 'ALL') {
   const normalized = normalizeService(service);
-  const month = currentMonth();
   let total = 0;
 
   if (normalized === 'CALLTAG' || normalized === 'ALL') {
@@ -227,7 +226,6 @@ export async function availableCommissionAmount(db, ownerId, service = 'ALL') {
       SELECT COALESCE(SUM(pc.commission_amount_krw), 0) AS amount_krw
       FROM calltag_partner_commissions pc
       WHERE pc.referrer_owner_id = ?
-        AND pc.earned_month = ?
         AND pc.status = 'confirmed'
         AND NOT EXISTS (
           SELECT 1
@@ -236,7 +234,7 @@ export async function availableCommissionAmount(db, ownerId, service = 'ALL') {
           WHERE psi.commission_id = pc.id
             AND ps.status IN ('processing','paid','review')
         )
-    `).bind(ownerId, month).first();
+    `).bind(ownerId).first();
     total += amount(calltag?.amount_krw);
   }
 
@@ -247,7 +245,6 @@ export async function availableCommissionAmount(db, ownerId, service = 'ALL') {
       FROM partner_commissions pc
       LEFT JOIN billing_subscriptions s ON s.id = pc.subscription_id
       WHERE pc.referrer_owner_id = ?
-        AND pc.earned_month = ?
         AND pc.status = 'confirmed'
         AND ${pageroCondition}
         AND NOT EXISTS (
@@ -257,7 +254,7 @@ export async function availableCommissionAmount(db, ownerId, service = 'ALL') {
           WHERE psi.commission_id = pc.id
             AND ps.status IN ('processing','paid','review')
         )
-    `).bind(ownerId, month).first();
+    `).bind(ownerId).first();
     total += amount(pagero?.amount_krw);
   }
 
