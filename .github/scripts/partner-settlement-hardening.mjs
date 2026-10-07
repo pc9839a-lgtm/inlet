@@ -98,16 +98,19 @@ includesAll(recoverTotp, [
   'revokeFreshSensitiveSessions(env.DB, result.auth.ownerId)',
 ], 'email TOTP recovery fresh revocation');
 
-// 5) CALLTAG/PAGERO service partitions must be disjoint and identical between request and admin payout paths.
+// 5) CALLTAG/PAGERO service partitions stay disjoint. CallTag cash now uses a dedicated ledger.
 const portalCalltag = parseProducts(portal, 'CALLTAG', 'serviceCondition');
 const portalPagero = parseProducts(portal, 'PAGERO', 'serviceCondition');
-const adminCalltag = parseProducts(settlementPay, 'CALLTAG', 'serviceSql');
-const adminPagero = parseProducts(settlementPay, 'PAGERO', 'serviceSql');
-assert.deepEqual(portalCalltag, adminCalltag, 'CALLTAG products differ between request and payout');
-assert.deepEqual(portalPagero, adminPagero, 'PAGERO products differ between request and payout');
 assert.equal(portalCalltag.filter((x) => portalPagero.includes(x)).length, 0, 'CALLTAG/PAGERO product sets overlap');
 assert.deepEqual(portalCalltag, ['all_monthly', 'call_monthly', 'message_monthly']);
 assert.deepEqual(portalPagero, ['pagero_domain_monthly', 'pagero_monthly', 'pagero_pro_monthly']);
+includesAll(settlementPay, [
+  "service === 'CALLTAG' || service === 'ALL'",
+  "service === 'PAGERO' || service === 'ALL'",
+  'calltag_partner_commissions',
+  'calltag_partner_settlement_items',
+  "s.product_code IN ('pagero_monthly','pagero_pro_monthly','pagero_domain_monthly')",
+], 'settlement service partitions');
 
 // 6) A payout is tied to the immutable payout request snapshot, not arbitrary current payable balance.
 includesAll(settlementPay, [
@@ -125,6 +128,8 @@ includesAll(commissions, [
   'resolvePartnerCommissionRateBps(db, referrerOwnerId)',
   'commissionAmountKrw = Math.floor(baseAmountKrw * commissionRateBps / 10000)',
   'INSERT OR IGNORE INTO partner_commissions',
+  'INSERT OR IGNORE INTO calltag_partner_commissions',
+  'CALLTAG_COMMISSION_RATE_BPS = 2000',
 ], 'commission snapshot');
 includesAll(partnerRate, [
   "appliesTo: 'future_commissions'",
@@ -146,5 +151,7 @@ console.log(JSON.stringify({
   calltagProducts: portalCalltag,
   pageroProducts: portalPagero,
   rateChangeFutureOnly: true,
+  calltagFixedRatePercent: 20,
+  isolatedCalltagSettlementLedger: true,
   minimumPayoutKrw: 10000,
 }, null, 2));
