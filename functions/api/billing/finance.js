@@ -2,6 +2,7 @@ import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../_sha
 import { getSessionAccount } from '../auth/_auth.js';
 import { ensureBillingSchema } from './_shared.js';
 import { ensureCallTagReferralSchema } from '../referrals/_calltag-store.js';
+import { readCallTagReferralProgramConfig } from '../referrals/_calltag-program.js';
 
 const METHODS = 'GET, OPTIONS';
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -192,9 +193,13 @@ export async function onRequest({ request, env }) {
     await ensureSchemaOnce(db);
     const productClient = text(request.headers.get('X-Pagero-Product'), 40).toLowerCase();
     const isCallTag = productClient === 'calltag';
-    if (isCallTag) await ensureCallTagReferralSchema(db);
+    let callTagProgram = null;
+    if (isCallTag) {
+      await ensureCallTagReferralSchema(db);
+      callTagProgram = await readCallTagReferralProgramConfig(db);
+    }
     const referralTable = isCallTag ? 'calltag_referrals' : 'referrals';
-    const baseTrialDays = isCallTag ? 7 : 3;
+    const baseTrialDays = isCallTag ? Number(callTagProgram?.baseTrialDays || 7) : 3;
     const subscriptionScope = isCallTag
       ? "AND s.product_code IN ('call_monthly','message_monthly','all_monthly')"
       : '';
@@ -274,8 +279,17 @@ export async function onRequest({ request, env }) {
         activePaidCount: Number(counts.active_paid_count || 0),
         estimatedRevenueKrw: Number(revenue.estimated_revenue || 0),
         confirmedRevenueKrw: Number(revenue.confirmed_revenue || 0),
-        partnerCenterAvailable: isCallTag,
-        partnerCenterUrl: isCallTag ? 'https://pagero.kr/partner?service=CALLTAG' : '',
+        programEnabled: isCallTag ? !!callTagProgram?.enabled : true,
+        signupEnabled: isCallTag ? !!callTagProgram?.signupEnabled : true,
+        commissionEnabled: isCallTag ? !!callTagProgram?.commissionEnabled : true,
+        commissionRatePercent: isCallTag ? Number(callTagProgram?.commissionRatePercent || 0) : 20,
+        friendBonusDays: isCallTag ? Number(callTagProgram?.inviteeBonusDays || 0) : 0,
+        minimumPayoutKrw: isCallTag ? Number(callTagProgram?.minimumPayoutKrw || 10000) : 10000,
+        partnerCenterAvailable: isCallTag ? !!(callTagProgram?.enabled && callTagProgram?.partnerCenterEnabled) : false,
+        partnerCenterUrl: isCallTag ? String(callTagProgram?.partnerCenterUrl || '') : '',
+        shareMessage: isCallTag ? String(callTagProgram?.shareMessage || '') : '',
+        benefitMessage: isCallTag ? String(callTagProgram?.benefitMessage || '') : '',
+        recurringMessage: isCallTag ? String(callTagProgram?.recurringMessage || '') : '',
       },
     }, METHODS);
   } catch (error) {
