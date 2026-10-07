@@ -1,6 +1,6 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../_shared.js';
 import { CALL_METHODS, callSession } from '../call/_shared.js';
-import { ensureCallTagReferralIdentitySchema } from './_calltag-signup.js';
+import { ensureCallTagReferralSchema } from './_calltag-store.js';
 
 const CALLTAG_PRODUCTS_SQL = "'call_monthly', 'message_monthly', 'all_monthly'";
 
@@ -9,7 +9,7 @@ function text(value, max = 120) {
 }
 
 async function callTagReferralSummary(db, ownerId = '') {
-  await ensureCallTagReferralIdentitySchema(db);
+  await ensureCallTagReferralSchema(db);
   const safeOwnerId = text(ownerId);
   const month = new Date().toISOString().slice(0, 7);
 
@@ -25,9 +25,7 @@ async function callTagReferralSummary(db, ownerId = '') {
           AND s.status IN ('active', 'grace', 'cancelled')
           AND (s.expires_at = '' OR julianday(s.expires_at) > julianday('now'))
       ) THEN r.referred_owner_id END) AS active_paid_count
-    FROM referrals r
-    INNER JOIN calltag_referral_identity_claims c
-      ON c.referred_owner_id = r.referred_owner_id
+    FROM calltag_referrals r
     WHERE r.referrer_owner_id = ?
   `).bind(safeOwnerId).first();
 
@@ -38,8 +36,9 @@ async function callTagReferralSummary(db, ownerId = '') {
       SUM(CASE WHEN pc.status = 'confirmed'
         THEN pc.commission_amount_krw ELSE 0 END) AS confirmed_revenue
     FROM partner_commissions pc
-    INNER JOIN calltag_referral_identity_claims c
-      ON c.referred_owner_id = pc.referred_owner_id
+    INNER JOIN calltag_referrals r
+      ON r.referred_owner_id = pc.referred_owner_id
+     AND r.referrer_owner_id = pc.referrer_owner_id
     INNER JOIN billing_subscriptions s
       ON s.id = pc.subscription_id
      AND s.product_code IN (${CALLTAG_PRODUCTS_SQL})

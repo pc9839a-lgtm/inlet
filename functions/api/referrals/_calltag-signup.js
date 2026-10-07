@@ -7,6 +7,10 @@ import {
   validateSignupReferralCode,
 } from './_signup.js';
 import {
+  callTagReferralForOwner,
+  ensureCallTagReferralSchema,
+} from './_calltag-store.js';
+import {
   CALLTAG_BASE_TRIAL_DAYS,
   CALLTAG_REFERRAL_BONUS_DAYS,
   CALLTAG_REFERRAL_TOTAL_DAYS,
@@ -59,26 +63,12 @@ async function referralPhoneHash(rawPhone = '', env = {}) {
     .join('');
 }
 
-export async function ensureCallTagReferralIdentitySchema(db) {
-  await db.prepare(`
-    CREATE TABLE IF NOT EXISTS calltag_referral_identity_claims (
-      phone_hash TEXT PRIMARY KEY,
-      referred_owner_id TEXT NOT NULL,
-      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-    )
-  `).run();
-  await db.prepare(`
-    CREATE INDEX IF NOT EXISTS idx_calltag_referral_identity_owner
-    ON calltag_referral_identity_claims(referred_owner_id)
-  `).run();
-}
-
 /**
  * Blocks referral-benefit reuse after reinstall, account deletion, or signup with a different email.
  * The durable ledger stores only an HMAC fingerprint of the normalized phone number, never raw PII.
  */
 export async function assertCallTagReferralIdentityAvailable(db, rawPhone = '', env = {}) {
-  await ensureCallTagReferralIdentitySchema(db);
+  await ensureCallTagReferralSchema(db);
   const phone = normalizeReferralPhone(rawPhone);
   const phoneHash = await referralPhoneHash(phone, env);
 
@@ -89,32 +79,22 @@ export async function assertCallTagReferralIdentityAvailable(db, rawPhone = '', 
     LIMIT 1
   `).bind(phoneHash).first();
   if (claimed?.referred_owner_id) {
-    throw billingError(
-      '이 연락처는 이미 추천 혜택을 받은 이력이 있습니다.',
-      409,
-      'REFERRAL_PHONE_ALREADY_USED',
-    );
-  }
+    const relationship = await callTagReferralForOwner(db, claimed.referred_owner_id);
+    if (relationship?.id) {
+      throw billingError(
+        '이 연락처는 이미 추천 혜택을 받은 이력이 있습니다.',
+        409,
+        'REFERRAL_PHONE_ALREADY_USED',
+      );
+    }
 
-  // Backfill protection for referrals created before the durable phone ledger existed.
-  const historical = await db.prepare(`
-    SELECT r.referred_owner_id
-    FROM referrals r
-    JOIN accounts a ON a.id = r.referred_owner_id
-    WHERE a.phone = ?
-    LIMIT 1
-  `).bind(phone).first();
-  if (historical?.referred_owner_id) {
+    // Legacy versions could reserve this phone because of an unrelated PageRo
+    // referral. Without a CallTag relationship that stale claim must not block
+    // an independent CallTag referral.
     await db.prepare(`
-      INSERT OR IGNORE INTO calltag_referral_identity_claims (
-        phone_hash, referred_owner_id, created_at
-      ) VALUES (?, ?, CURRENT_TIMESTAMP)
-    `).bind(phoneHash, String(historical.referred_owner_id)).run();
-    throw billingError(
-      '이 연락처는 이미 추천 혜택을 받은 이력이 있습니다.',
-      409,
-      'REFERRAL_PHONE_ALREADY_USED',
-    );
+      DELETE FROM calltag_referral_identity_claims
+      WHERE phone_hash = ?
+    `).bind(phoneHash).run();
   }
 
   return { phoneHash };
@@ -145,14 +125,9 @@ export async function applyCallTagSignupReferralCode(
   }
 
   await ensureBillingAccount(db, safeOwnerId);
-  await ensureCallTagReferralIdentitySchema(db);
+  await ensureCallTagReferralSchema(db);
 
-  const existing = await db.prepare(`
-    SELECT id
-    FROM referrals
-    WHERE referred_owner_id = ?
-    LIMIT 1
-  `).bind(safeOwnerId).first();
+  const existing = await callTagReferralForOwner(db, safeOwnerId);
   if (existing?.id) {
     throw billingError('이미 추천인 등록을 완료했습니다.', 409, 'REFERRAL_ALREADY_APPLIED');
   }
@@ -162,7 +137,7 @@ export async function applyCallTagSignupReferralCode(
 
   const statements = [
     db.prepare(`
-      INSERT INTO referrals (
+      INSERT INTO calltag_referrals (
         referrer_owner_id,
         referred_owner_id,
         referral_code,
