@@ -556,23 +556,47 @@ export async function googlePlayOrder(env = {}, packageName = '', orderId = '') 
   return body;
 }
 
-export function googlePlayOrderAmountKrw(order = {}) {
-  const money = order?.total || {};
-  const currency = text(money.currencyCode, 12).toUpperCase();
+function googleMoneyKrw(money = {}) {
+  const currency = text(money?.currencyCode, 12).toUpperCase();
   if (currency !== 'KRW') return 0;
-  const units = Number(money.units || 0);
-  const nanos = Number(money.nanos || 0);
+  const units = Number(money?.units || 0);
+  const nanos = Number(money?.nanos || 0);
   if (!Number.isFinite(units) || !Number.isFinite(nanos)) return 0;
   return Math.max(0, Math.round(units + (nanos / 1_000_000_000)));
 }
 
+export function googlePlayOrderAmountKrw(order = {}) {
+  return googleMoneyKrw(order?.total || {});
+}
+
+export function googlePlayOrderNetPaidKrw(order = {}) {
+  const state = String(order?.state || '').toUpperCase();
+  if (state === 'CANCELED' || state === 'REFUNDED') return 0;
+
+  const original = googlePlayOrderAmountKrw(order);
+  const partialRefunds = Array.isArray(order?.orderHistory?.partialRefundEvents)
+    ? order.orderHistory.partialRefundEvents
+    : [];
+  let refunded = 0;
+  for (const event of partialRefunds) {
+    if (String(event?.state || '').toUpperCase() !== 'PROCESSED_SUCCESSFULLY') continue;
+    refunded += googleMoneyKrw(event?.refundDetails?.total || {});
+  }
+  return Math.max(0, original - refunded);
+}
+
 export function googlePlayOrderIsPayable(order = {}) {
-  return String(order?.state || '').toUpperCase() === 'PROCESSED';
+  const state = String(order?.state || '').toUpperCase();
+  return state === 'PROCESSED' || state === 'PARTIALLY_REFUNDED';
+}
+
+export function googlePlayOrderIsRefundPending(order = {}) {
+  return String(order?.state || '').toUpperCase() === 'PENDING_REFUND';
 }
 
 export function googlePlayOrderIsVoided(order = {}) {
   const state = String(order?.state || '').toUpperCase();
-  return ['CANCELED', 'PENDING_REFUND', 'PARTIALLY_REFUNDED', 'REFUNDED'].includes(state);
+  return state === 'CANCELED' || state === 'REFUNDED';
 }
 
 export async function purchaseTokenHash(value = '') {
