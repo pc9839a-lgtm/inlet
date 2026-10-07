@@ -1,15 +1,13 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse, readJson } from '../../_shared.js';
 import { CALL_METHODS, callSession } from '../../call/_shared.js';
-import {
-  cancelReferralCommission,
-  recordReferralCommission,
-} from '../_commissions.js';
+import { reconcileCallTagReferralCommission } from '../_commissions.js';
 import { assertGooglePlayBillingReady } from '../_readiness.js';
 import {
   googlePlayOrder,
-  googlePlayOrderAmountKrw,
   googlePlayOrderIsPayable,
+  googlePlayOrderIsRefundPending,
   googlePlayOrderIsVoided,
+  googlePlayOrderNetPaidKrw,
   verifyGoogleSubscription,
 } from '../_shared.js';
 import { assertGooglePurchaseOwnership } from './_ownership.js';
@@ -65,27 +63,45 @@ export async function onRequest({ request, env }) {
           'kr.pagero.calltag',
           paymentReference,
         );
+        const netPaidKrw = googlePlayOrderNetPaidKrw(order);
+        const eventKey = String(order?.lastEventTime || order?.state || 'verify');
         if (googlePlayOrderIsVoided(order)) {
-          commission = await cancelReferralCommission(db, {
+          commission = await reconcileCallTagReferralCommission(db, {
+            referredOwnerId: session.ownerId,
+            productCode,
             paymentReference,
+            subscriptionId: subscription?.id,
+            baseAmountKrw: 0,
             channel: 'google_play',
+            status: 'cancelled',
+            eventKey,
           });
-          commission.cancelled = true;
+        } else if (googlePlayOrderIsRefundPending(order)) {
+          commission = await reconcileCallTagReferralCommission(db, {
+            referredOwnerId: session.ownerId,
+            productCode,
+            paymentReference,
+            subscriptionId: subscription?.id,
+            baseAmountKrw: netPaidKrw,
+            channel: 'google_play',
+            status: 'estimated',
+            eventKey,
+          });
         } else if (googlePlayOrderIsPayable(order)) {
-          const actualAmountKrw = googlePlayOrderAmountKrw(order);
-          commission = actualAmountKrw > 0
-            ? await recordReferralCommission(db, {
+          commission = netPaidKrw > 0
+            ? await reconcileCallTagReferralCommission(db, {
                 referredOwnerId: session.ownerId,
                 productCode,
                 paymentReference,
                 subscriptionId: subscription?.id,
-                baseAmountKrw: actualAmountKrw,
+                baseAmountKrw: netPaidKrw,
                 channel: 'google_play',
                 status: 'confirmed',
+                eventKey,
               })
-            : { created: false, reason: 'PLAY_ORDER_KRW_AMOUNT_UNAVAILABLE' };
+            : { reconciled: false, reason: 'PLAY_ORDER_KRW_AMOUNT_UNAVAILABLE' };
         } else {
-          commission = { created: false, reason: 'PLAY_ORDER_NOT_PROCESSED' };
+          commission = { reconciled: false, reason: 'PLAY_ORDER_NOT_PROCESSED' };
         }
       } catch (orderError) {
         console.warn(
