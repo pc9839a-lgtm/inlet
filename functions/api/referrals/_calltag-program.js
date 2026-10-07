@@ -184,6 +184,17 @@ export async function updateCallTagReferralProgramConfig(db, input = {}, actorOw
   return readCallTagReferralProgramConfig(db);
 }
 
+export function renderCallTagReferralProgramText(program = {}, value = '') {
+  const rate = Number(program.commissionRatePercent || 0);
+  const bonusDays = Number(program.inviteeBonusDays || 0);
+  const minimumPayoutKrw = Number(program.minimumPayoutKrw || 0);
+  return String(value || '')
+    .replaceAll('{rate}', String(rate))
+    .replaceAll('{bonusDays}', String(bonusDays))
+    .replaceAll('{baseTrialDays}', String(Number(program.baseTrialDays || 0)))
+    .replaceAll('{minimumPayoutKrw}', minimumPayoutKrw.toLocaleString('ko-KR'));
+}
+
 export function callTagReferralProgramDefaults() {
   return { ...DEFAULT_CONFIG };
 }
