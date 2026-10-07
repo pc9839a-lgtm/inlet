@@ -4,6 +4,7 @@ import {
   resolvePartnerCommissionRateBps,
 } from '../billing/_partnerFinance.js';
 import { ensureCalllinkSchema } from '../call/_shared.js';
+import { ensureCallTagReferralSchema } from '../referrals/_calltag-store.js';
 import { requireSettlementStepup } from './_security.js';
 
 export const PARTNER_PORTAL_METHODS = 'GET, POST, PUT, OPTIONS';
@@ -27,6 +28,7 @@ export async function partnerPortalContext(request, env) {
     ensurePartnerFinanceSchema(env.DB),
     ensureCalllinkSchema(env.DB),
     ensurePartnerPortalSchema(env.DB),
+    ensureCallTagReferralSchema(env.DB),
   ]);
   const referral = await ensureReferralCode(env.DB, auth.ownerId);
   return { ...auth, db: env.DB, referral };
@@ -137,6 +139,16 @@ export function serviceCondition(alias = 's', service = 'ALL') {
   return '1=1';
 }
 
+export function referralTableForService(service = 'ALL') {
+  return normalizeService(service) === 'CALLTAG' ? 'calltag_referrals' : 'referrals';
+}
+
+export function signedAmount(value) {
+  const parsed = Number(value || 0);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.max(Number.MIN_SAFE_INTEGER, Math.min(Number.MAX_SAFE_INTEGER, Math.trunc(parsed)));
+}
+
 export function amount(value) {
   const parsed = Number(value || 0);
   return Number.isFinite(parsed) && parsed > 0 ? Math.min(Number.MAX_SAFE_INTEGER, Math.trunc(parsed)) : 0;
@@ -190,7 +202,8 @@ export function nextSettlementAt() {
   return new Date(Date.UTC(year, month, 15, 0, 0, 0)).toISOString();
 }
 
-export async function commissionRatePercent(db, ownerId) {
+export async function commissionRatePercent(db, ownerId, service = 'ALL') {
+  if (normalizeService(service) === 'CALLTAG') return 20;
   const bps = await resolvePartnerCommissionRateBps(db, ownerId);
   return bps === 5000 ? 50 : 20;
 }
