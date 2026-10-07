@@ -12,6 +12,7 @@ const DEFAULT_CONFIG = Object.freeze({
   friendBenefitMessage: '친구 혜택 · 회원가입할 때 추천인 코드를 입력하면 무료체험 +{bonusDays}일',
   benefitMessage: '내 수익 · 추천 회원의 콜태그 유료 결제액의 {rate}%',
   recurringMessage: '추천 회원이 유료 구독을 유지해 새 결제가 확인될 때마다 같은 비율로 적립됩니다.',
+  pausedMessage: '현재 신규 추천인 코드 등록이 일시 중지되어 있습니다.',
 });
 
 function bool(value, fallback = false) {
@@ -48,6 +49,7 @@ export async function ensureCallTagReferralProgramConfig(db) {
       friend_benefit_message TEXT NOT NULL DEFAULT '',
       benefit_message TEXT NOT NULL DEFAULT '',
       recurring_message TEXT NOT NULL DEFAULT '',
+      paused_message TEXT NOT NULL DEFAULT '',
       updated_by_owner_id TEXT NOT NULL DEFAULT '',
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -58,16 +60,17 @@ export async function ensureCallTagReferralProgramConfig(db) {
       singleton_id, enabled, signup_enabled, commission_enabled,
       commission_rate_bps, base_trial_days, invitee_bonus_days,
       minimum_payout_krw, partner_center_enabled, partner_center_url,
-      share_message, friend_benefit_message, benefit_message, recurring_message,
+      share_message, friend_benefit_message, benefit_message, recurring_message, paused_message,
       created_at, updated_at
     ) VALUES (1, 1, 1, 1, 2000, 7, 5, 10000, 1,
       'https://pagero.kr/partner?service=CALLTAG',
-      ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
   `).bind(
     DEFAULT_CONFIG.shareMessage,
     DEFAULT_CONFIG.friendBenefitMessage,
     DEFAULT_CONFIG.benefitMessage,
     DEFAULT_CONFIG.recurringMessage,
+    DEFAULT_CONFIG.pausedMessage,
   ).run();
 }
 
@@ -77,7 +80,7 @@ export async function readCallTagReferralProgramConfig(db) {
     SELECT enabled, signup_enabled, commission_enabled, commission_rate_bps,
            base_trial_days, invitee_bonus_days, minimum_payout_krw,
            partner_center_enabled, partner_center_url,
-           share_message, friend_benefit_message, benefit_message, recurring_message,
+           share_message, friend_benefit_message, benefit_message, recurring_message, paused_message,
            updated_by_owner_id, updated_at
     FROM calltag_referral_program_config
     WHERE singleton_id = 1
@@ -99,6 +102,7 @@ export async function readCallTagReferralProgramConfig(db) {
     friendBenefitMessage: text(row?.friend_benefit_message, DEFAULT_CONFIG.friendBenefitMessage, 300),
     benefitMessage: text(row?.benefit_message, DEFAULT_CONFIG.benefitMessage, 300),
     recurringMessage: text(row?.recurring_message, DEFAULT_CONFIG.recurringMessage, 300),
+    pausedMessage: text(row?.paused_message, DEFAULT_CONFIG.pausedMessage, 300),
     updatedByOwnerId: text(row?.updated_by_owner_id, '', 120),
     updatedAt: text(row?.updated_at, '', 80),
   };
@@ -140,6 +144,9 @@ export async function updateCallTagReferralProgramConfig(db, input = {}, actorOw
     recurringMessage: input.recurringMessage === undefined
       ? current.recurringMessage
       : text(input.recurringMessage, current.recurringMessage, 300),
+    pausedMessage: input.pausedMessage === undefined
+      ? current.pausedMessage
+      : text(input.pausedMessage, current.pausedMessage, 300),
   };
 
   if (!/^https:\/\//i.test(next.partnerCenterUrl)) {
@@ -161,6 +168,7 @@ export async function updateCallTagReferralProgramConfig(db, input = {}, actorOw
         friend_benefit_message = ?,
         benefit_message = ?,
         recurring_message = ?,
+        paused_message = ?,
         updated_by_owner_id = ?,
         updated_at = CURRENT_TIMESTAMP
     WHERE singleton_id = 1
@@ -178,6 +186,7 @@ export async function updateCallTagReferralProgramConfig(db, input = {}, actorOw
     next.friendBenefitMessage,
     next.benefitMessage,
     next.recurringMessage,
+    next.pausedMessage,
     text(actorOwnerId, '', 120),
   ).run();
 
