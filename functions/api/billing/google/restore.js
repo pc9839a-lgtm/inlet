@@ -34,12 +34,31 @@ export async function onRequest({ request, env }) {
 
     const commissions = [];
     for (const purchase of purchases) {
-      const paymentReference = String(purchase?.orderId || '').trim();
       for (const productCode of Array.isArray(purchase?.products) ? purchase.products.slice(0, 3) : []) {
+        // restoreGoogleSubscriptions() verifies the purchase token against Google first and updates
+        // billing_subscriptions with Google's latestOrderId. Use that server-verified order ID so
+        // each renewal can create one idempotent commission instead of reusing the original client ID.
+        const subscription = await db.prepare(`
+          SELECT id, order_id, external_subscription_id
+          FROM billing_subscriptions
+          WHERE owner_id = ?
+            AND channel = 'google_play'
+            AND product_code = ?
+            AND verification_state = 'verified'
+          ORDER BY updated_at DESC, id DESC
+          LIMIT 1
+        `).bind(session.ownerId, productCode).first();
+        const paymentReference = String(
+          subscription?.order_id
+            || subscription?.external_subscription_id
+            || purchase?.orderId
+            || '',
+        ).trim();
         const commission = await recordReferralCommission(db, {
           referredOwnerId: session.ownerId,
           productCode,
           paymentReference,
+          subscriptionId: subscription?.id,
           channel: 'google_play',
           status: 'confirmed',
         });
