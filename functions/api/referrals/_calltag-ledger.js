@@ -16,35 +16,27 @@ export async function ensureCallTagReferralSchema(db) {
   if (schemaPromise) return schemaPromise;
   schemaPromise = (async () => {
     await ensureBillingSchema(db);
-    for (const statement of [
-      "ALTER TABLE partner_commissions ADD COLUMN service_scope TEXT NOT NULL DEFAULT 'legacy'",
-      "ALTER TABLE partner_commissions ADD COLUMN product_code TEXT NOT NULL DEFAULT ''",
-    ]) {
-      try {
-        await db.prepare(statement).run();
-      } catch (error) {
-        const message = String(error?.message || '').toLowerCase();
-        if (!message.includes('duplicate column') && !message.includes('already exists')) throw error;
-      }
-    }
     await db.prepare(`
-      UPDATE partner_commissions
-      SET product_code = COALESCE((
-        SELECT s.product_code
-        FROM billing_subscriptions s
-        WHERE s.id = partner_commissions.subscription_id
-        LIMIT 1
-      ), product_code)
-      WHERE product_code = ''
+      CREATE TABLE IF NOT EXISTS calltag_partner_commissions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        referrer_owner_id TEXT NOT NULL,
+        referred_owner_id TEXT NOT NULL,
+        subscription_id INTEGER,
+        product_code TEXT NOT NULL,
+        payment_reference TEXT NOT NULL,
+        base_amount_krw INTEGER NOT NULL DEFAULT 0,
+        commission_amount_krw INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'estimated',
+        earned_month TEXT NOT NULL DEFAULT '',
+        confirmed_at TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(payment_reference)
+      )
     `).run();
     await db.prepare(`
-      UPDATE partner_commissions
-      SET service_scope = CASE
-        WHEN product_code IN ('call_monthly', 'message_monthly', 'all_monthly') THEN 'calltag'
-        WHEN product_code IN ('pagero_monthly', 'pagero_pro_monthly', 'pagero_domain_monthly') THEN 'pagero'
-        ELSE service_scope
-      END
-      WHERE service_scope = 'legacy'
+      CREATE INDEX IF NOT EXISTS idx_calltag_commissions_referrer_month
+      ON calltag_partner_commissions(referrer_owner_id, earned_month, status)
     `).run();
 
     await db.prepare(`
@@ -135,9 +127,8 @@ export async function callTagReferralSummary(db, ownerId = '') {
         THEN commission_amount_krw ELSE 0 END) AS estimated_revenue,
       SUM(CASE WHEN status = 'confirmed'
         THEN commission_amount_krw ELSE 0 END) AS confirmed_revenue
-    FROM partner_commissions
+    FROM calltag_partner_commissions
     WHERE referrer_owner_id = ?
-      AND service_scope = 'calltag'
   `).bind(month, safeOwnerId).first();
 
   return {
