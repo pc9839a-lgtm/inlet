@@ -45,6 +45,18 @@ CREATE TABLE IF NOT EXISTS calltag_partner_commissions (
 CREATE INDEX IF NOT EXISTS idx_calltag_commissions_referrer_month
 ON calltag_partner_commissions(referrer_owner_id, earned_month, status);
 
+CREATE TABLE IF NOT EXISTS calltag_partner_settlement_items (
+  settlement_id TEXT NOT NULL,
+  commission_id INTEGER NOT NULL UNIQUE,
+  base_amount_krw INTEGER NOT NULL DEFAULT 0,
+  commission_amount_krw INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY(settlement_id, commission_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_calltag_partner_settlement_items_settlement
+ON calltag_partner_settlement_items(settlement_id, commission_id);
+
 -- Backfill CallTag relations created before service isolation. The identity ledger is CallTag-only.
 INSERT OR IGNORE INTO calltag_referrals (
   referrer_owner_id, referred_owner_id, referral_code, bonus_days,
@@ -79,4 +91,20 @@ SELECT
 FROM partner_commissions pc
 JOIN billing_subscriptions s
   ON s.id = pc.subscription_id
+WHERE s.product_code IN ('call_monthly', 'message_monthly', 'all_monthly');
+
+-- Preserve already-settled historical CallTag commissions if any were paid from the old shared ledger.
+INSERT OR IGNORE INTO calltag_partner_settlement_items (
+  settlement_id, commission_id, base_amount_krw, commission_amount_krw, created_at
+)
+SELECT
+  psi.settlement_id,
+  cpc.id,
+  psi.base_amount_krw,
+  psi.commission_amount_krw,
+  psi.created_at
+FROM partner_settlement_items psi
+JOIN partner_commissions pc ON pc.id = psi.commission_id
+JOIN billing_subscriptions s ON s.id = pc.subscription_id
+JOIN calltag_partner_commissions cpc ON cpc.payment_reference = pc.payment_reference
 WHERE s.product_code IN ('call_monthly', 'message_monthly', 'all_monthly');
