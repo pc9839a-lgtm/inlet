@@ -118,7 +118,7 @@ const checks = {
   'settings navigation separates referral partner settlement': ['추천인', '파트너', '정산'].every((text) => ui.navigation.includes(text)),
   'settings renders partner and settlement sections': ui.sections.includes('PartnerSettingsSection') && ui.sections.includes('SettlementSettingsSection'),
   'partner section exposes code copy and performance': ui.partner.includes('파트너 코드') && ui.partner.includes('copyPartnerCode') && ui.partner.includes('추천 가입') && ui.partner.includes('유료 전환') && ui.partner.includes('20%'),
-  'settlement section links exact CallTag settlement page': ui.settlement.includes("const SETTLEMENT_URL = 'https://calltag.pagero.kr/web/settlement'") && ui.settlement.includes('통합 정산'),
+  'settlement section links scoped CallTag settlement page': ui.settlement.includes("const CALLTAG_SETTLEMENT_URL = 'https://pagero.kr/partner?service=CALLTAG'") && ui.settlement.includes("calltagScoped ? '콜태그 정산' : '통합 정산'"),
   'referral settings remains signup only': ui.referral.includes('회원가입 시 1회') && ui.referral.includes('클래식 7일') && !ui.referral.includes('<input') && !ui.referral.includes('applyReferral'),
   'settings hook has no post signup referral action': !ui.financeHook.includes('applyAccountReferralCode') && !ui.financeHook.includes('applyReferral'),
   'signup form exposes optional referral code': ui.auth.includes('추천인 코드 <em>선택</em>') && ui.auth.includes('auth-referral-field') && source.signupReferral.includes('const SIGNUP_CLASSIC_DAYS = 7'),

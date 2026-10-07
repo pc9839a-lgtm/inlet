@@ -2,10 +2,12 @@ import { Clipboard, RefreshCw } from 'lucide-react';
 import SettingsSection from './SettingsSection.jsx';
 import useAccountFinance from './useAccountFinance.js';
 
-const SETTLEMENT_URL = 'https://calltag.pagero.kr/web/settlement';
+const LEGACY_SETTLEMENT_URL = 'https://calltag.pagero.kr/web/settlement';
+const CALLTAG_SETTLEMENT_URL = 'https://pagero.kr/partner?service=CALLTAG';
 
 function money(value = 0) {
-  return `${Math.max(0, Number(value || 0)).toLocaleString('ko-KR')}원`;
+  const amount = Number(value || 0);
+  return `${(Number.isFinite(amount) ? amount : 0).toLocaleString('ko-KR')}원`;
 }
 
 async function copyText(value = '') {
@@ -27,6 +29,10 @@ export default function PartnerSettingsSection({ authUser }) {
   const { finance, loading, error, notice, refresh, setNotice } = useAccountFinance(authUser);
   const referral = finance?.referral || {};
   const settlement = finance?.settlement?.combined || {};
+  const calltagScoped = finance?.settlement?.scope === 'calltag';
+  const settlementUrl = calltagScoped
+    ? (finance?.settlement?.partnerCenterUrl || referral.partnerCenterUrl || CALLTAG_SETTLEMENT_URL)
+    : LEGACY_SETTLEMENT_URL;
 
   const copyPartnerCode = async () => {
     if (!referral.code) return;
@@ -69,7 +75,7 @@ export default function PartnerSettingsSection({ authUser }) {
             <div className="settings-compact-row settings-compact-row-action">
               <span>정산</span>
               <strong>결제 금액의 20%</strong>
-              <a className="settings-primary-button compact" href={SETTLEMENT_URL} target="_blank" rel="noreferrer">보기</a>
+              <a className="settings-primary-button compact" href={settlementUrl} target="_blank" rel="noreferrer">보기</a>
             </div>
           </div>
         )}

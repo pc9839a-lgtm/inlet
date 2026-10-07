@@ -43,5 +43,8 @@ jobs:
       - name: Verify CallTag refund commission reversal handling
         run: node scripts/calltag-refund-reversal-quality-check.mjs
 
+      - name: Verify CallTag partner scope isolation
+        run: node scripts/calltag-partner-scope-quality-check.mjs
+
       - name: Verify production build
         run: npm run build

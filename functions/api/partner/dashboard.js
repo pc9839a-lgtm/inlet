@@ -12,9 +12,11 @@ import {
   partnerPortalContext,
   pendingPayoutRequest,
   productLabel,
+  referralTableForService,
   safeIso,
   serviceCondition,
   serviceForProduct,
+  signedAmount,
 } from './_portal.js';
 
 export async function onRequest({ request, env }) {
@@ -26,6 +28,7 @@ export async function onRequest({ request, env }) {
     const context = await partnerPortalContext(request, env);
     const service = normalizeService(new URL(request.url).searchParams.get('service') || 'ALL');
     const condition = serviceCondition('s', service);
+    const referralTable = referralTableForService(service);
     const month = currentMonth();
 
     const [referralStats, revenue, paid, recentResult, payoutProfile, pending] = await Promise.all([
@@ -43,7 +46,7 @@ export async function onRequest({ request, env }) {
               AND s.status IN ('active','grace','cancelled')
               AND (s.expires_at = '' OR julianday(s.expires_at) > julianday('now'))
           ) THEN 1 END) AS paid_count
-        FROM referrals r
+        FROM ${referralTable} r
         WHERE r.referrer_owner_id = ?
       `).bind(service, context.ownerId).first(),
       context.db.prepare(`
@@ -84,26 +87,32 @@ export async function onRequest({ request, env }) {
     ]);
 
     const available = await availableCommissionAmount(context.db, context.ownerId, service);
-    const rate = await commissionRatePercent(context.db, context.ownerId);
+    const rate = await commissionRatePercent(context.db, context.ownerId, service);
     const recentRows = Array.isArray(recentResult?.results) ? recentResult.results : [];
-    const recentEarnings = recentRows.map((row) => ({
-      id: amount(row.id),
-      occurredAt: safeIso(row.created_at),
-      service: serviceForProduct(row.product_code),
-      memberNameMasked: maskName(row.referred_name) || '추천 회원',
-      productName: productLabel(row.product_code),
-      paymentAmount: amount(row.base_amount_krw),
-      recognizedRevenue: amount(row.base_amount_krw),
-      partnerRate: row.base_amount_krw ? Math.round((Number(row.commission_amount_krw || 0) / Number(row.base_amount_krw || 1)) * 100) : rate,
-      partnerEarning: amount(row.commission_amount_krw),
-      status: Number(row.paid || 0) === 1
-        ? 'PAID'
-        : String(row.status || '').toLowerCase() === 'confirmed'
-          ? 'CONFIRMED'
-          : String(row.status || '').toLowerCase() === 'cancelled'
-            ? 'REVERSED'
-            : 'ESTIMATED',
-    }));
+    const recentEarnings = recentRows.map((row) => {
+      const base = signedAmount(row.base_amount_krw);
+      const earning = signedAmount(row.commission_amount_krw);
+      return {
+        id: amount(row.id),
+        occurredAt: safeIso(row.created_at),
+        service: serviceForProduct(row.product_code),
+        memberNameMasked: maskName(row.referred_name) || '추천 회원',
+        productName: productLabel(row.product_code),
+        paymentAmount: Math.abs(base),
+        recognizedRevenue: base,
+        partnerRate: base ? Math.round((Math.abs(earning) / Math.abs(base)) * 100) : rate,
+        partnerEarning: earning,
+        status: earning < 0
+          ? 'REVERSED'
+          : Number(row.paid || 0) === 1
+            ? 'PAID'
+            : String(row.status || '').toLowerCase() === 'confirmed'
+              ? 'CONFIRMED'
+              : String(row.status || '').toLowerCase() === 'cancelled'
+                ? 'REVERSED'
+                : 'ESTIMATED',
+      };
+    });
 
     const profileReady = !!payoutProfile?.owner_id;
     const canRequestSettlement = available >= MIN_PAYOUT_KRW && !pending && profileReady;
@@ -115,6 +124,7 @@ export async function onRequest({ request, env }) {
     return jsonResponse(request, env, 200, {
       ok: true,
       service,
+      referralScope: service === 'CALLTAG' ? 'calltag' : 'legacy',
       month,
       referralCode: context.referral?.code || '',
       inviteUrl: context.referral?.shareUrl || '',
