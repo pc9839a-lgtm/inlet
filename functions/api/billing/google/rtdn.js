@@ -110,6 +110,7 @@ async function processSubscriptionNotification(db, env, notification) {
     productId: productCode,
     purchaseToken,
     orderId: owner.order_id || '',
+    allowInactive: true,
   });
 
   const subscription = await db.prepare(`
