@@ -1,3 +1,7 @@
+const CONFIG_CACHE_MS = 30_000;
+let schemaReadyPromise = null;
+let configCache = { value: null, expiresAt: 0 };
+
 const DEFAULT_CONFIG = Object.freeze({
   enabled: true,
   signupEnabled: true,
@@ -33,6 +37,8 @@ function text(value, fallback = '', max = 500) {
 
 export async function ensureCallTagReferralProgramConfig(db) {
   if (!db?.prepare) throw new Error('CallTag referral program database is required.');
+  if (schemaReadyPromise) return schemaReadyPromise;
+  schemaReadyPromise = (async () => {
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS calltag_referral_program_config (
       singleton_id INTEGER PRIMARY KEY CHECK(singleton_id = 1),
@@ -72,10 +78,18 @@ export async function ensureCallTagReferralProgramConfig(db) {
     DEFAULT_CONFIG.recurringMessage,
     DEFAULT_CONFIG.pausedMessage,
   ).run();
+  })().catch((error) => {
+    schemaReadyPromise = null;
+    throw error;
+  });
+  return schemaReadyPromise;
 }
 
 export async function readCallTagReferralProgramConfig(db) {
   await ensureCallTagReferralProgramConfig(db);
+  if (configCache.value && configCache.expiresAt > Date.now()) {
+    return { ...configCache.value };
+  }
   const row = await db.prepare(`
     SELECT enabled, signup_enabled, commission_enabled, commission_rate_bps,
            base_trial_days, invitee_bonus_days, minimum_payout_krw,
@@ -87,7 +101,7 @@ export async function readCallTagReferralProgramConfig(db) {
     LIMIT 1
   `).first();
 
-  return {
+  const config = {
     enabled: bool(row?.enabled, DEFAULT_CONFIG.enabled),
     signupEnabled: bool(row?.signup_enabled, DEFAULT_CONFIG.signupEnabled),
     commissionEnabled: bool(row?.commission_enabled, DEFAULT_CONFIG.commissionEnabled),
@@ -106,6 +120,8 @@ export async function readCallTagReferralProgramConfig(db) {
     updatedByOwnerId: text(row?.updated_by_owner_id, '', 120),
     updatedAt: text(row?.updated_at, '', 80),
   };
+  configCache = { value: config, expiresAt: Date.now() + CONFIG_CACHE_MS };
+  return { ...config };
 }
 
 export async function updateCallTagReferralProgramConfig(db, input = {}, actorOwnerId = '') {
@@ -150,7 +166,10 @@ export async function updateCallTagReferralProgramConfig(db, input = {}, actorOw
   };
 
   if (!/^https:\/\//i.test(next.partnerCenterUrl)) {
-    throw new Error('CallTag partner center URL must use HTTPS.');
+    const error = new Error('CallTag partner center URL must use HTTPS.');
+    error.status = 400;
+    error.details = { code: 'CALLTAG_REFERRAL_PROGRAM_URL_INVALID' };
+    throw error;
   }
 
   await db.prepare(`
@@ -190,6 +209,7 @@ export async function updateCallTagReferralProgramConfig(db, input = {}, actorOw
     text(actorOwnerId, '', 120),
   ).run();
 
+  configCache = { value: null, expiresAt: 0 };
   return readCallTagReferralProgramConfig(db);
 }
 
