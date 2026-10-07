@@ -381,7 +381,7 @@ export async function verifyGoogleSubscription(env = {}, db, ownerId = '', input
 
   const startedAt = iso(purchase?.startTime);
   const autoRenewing = matched?.autoRenewingPlan?.autoRenewEnabled ? 1 : 0;
-  const externalId = text(purchase?.latestOrderId || input.orderId, 240);
+  const externalId = text(matched?.latestSuccessfulOrderId || purchase?.latestOrderId || input.orderId, 240);
   await db.prepare(`
     INSERT INTO billing_subscriptions (
       owner_id, product_code, channel, status, external_subscription_id,
@@ -492,6 +492,87 @@ async function googlePlaySubscription(env, packageName, purchaseToken) {
     });
   }
   return body;
+}
+
+export async function googlePlayOrderPaidAmountKrw(
+  env = {},
+  packageName = '',
+  orderId = '',
+  productId = '',
+) {
+  const safePackageName = text(packageName, 200);
+  const safeOrderId = text(orderId, 240);
+  const safeProductId = text(productId, 120);
+  if (safePackageName !== 'kr.pagero.calltag' || !safeOrderId || !safeProductId) {
+    return { ok: false, amountKrw: 0, reason: 'PLAY_ORDER_INPUT_INCOMPLETE' };
+  }
+
+  const token = await googlePlayAccessToken(env);
+  let response;
+  try {
+    response = await fetch(
+      `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(safePackageName)}/orders/${encodeURIComponent(safeOrderId)}`,
+      {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+        redirect: 'error',
+        signal: AbortSignal.timeout(15000),
+      }
+    );
+  } catch (error) {
+    return { ok: false, amountKrw: 0, reason: 'PLAY_ORDER_NETWORK_FAILED' };
+  }
+
+  const order = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    return {
+      ok: false,
+      amountKrw: 0,
+      reason: 'PLAY_ORDER_LOOKUP_FAILED',
+      googleStatus: Number(response.status || 0),
+    };
+  }
+
+  if (String(order?.state || '').toUpperCase() !== 'PROCESSED') {
+    return {
+      ok: false,
+      amountKrw: 0,
+      reason: 'PLAY_ORDER_NOT_PROCESSED',
+      state: text(order?.state, 40),
+    };
+  }
+
+  const items = Array.isArray(order?.lineItems) ? order.lineItems : [];
+  const line = items.find((item) => text(item?.productId, 120) === safeProductId);
+  if (!line?.total) {
+    return { ok: false, amountKrw: 0, reason: 'PLAY_ORDER_PRODUCT_TOTAL_MISSING' };
+  }
+
+  const currencyCode = text(line.total.currencyCode, 12).toUpperCase();
+  if (currencyCode !== 'KRW') {
+    return {
+      ok: false,
+      amountKrw: 0,
+      reason: 'PLAY_ORDER_NON_KRW',
+      currencyCode,
+    };
+  }
+
+  const units = Number(line.total.units || 0);
+  const nanos = Number(line.total.nanos || 0);
+  const amountKrw = Math.round(units + (nanos / 1_000_000_000));
+  if (!Number.isFinite(amountKrw) || amountKrw <= 0) {
+    return { ok: false, amountKrw: 0, reason: 'PLAY_ORDER_AMOUNT_INVALID' };
+  }
+
+  return {
+    ok: true,
+    amountKrw,
+    currencyCode,
+    orderId: text(order?.orderId || safeOrderId, 240),
+    state: 'PROCESSED',
+    amountSource: 'google_play_orders_api',
+  };
 }
 
 async function acknowledgeGoogleSubscription(env, packageName, productId, purchaseToken) {
