@@ -1,6 +1,7 @@
 import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../_shared.js';
 import { getSessionAccount } from '../auth/_auth.js';
 import { ensureBillingSchema } from './_shared.js';
+import { ensureCallTagReferralSchema } from '../referrals/_calltag-store.js';
 
 const METHODS = 'GET, OPTIONS';
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -75,7 +76,7 @@ function randomReferralCode() {
   return value;
 }
 
-async function ensureBillingAccountFast(db, ownerId) {
+async function ensureBillingAccountFast(db, ownerId, baseTrialDays = 3) {
   let account = await db.prepare(`
     SELECT owner_id, trial_started_at, trial_ends_at, referral_bonus_days
     FROM billing_accounts
@@ -85,7 +86,7 @@ async function ensureBillingAccountFast(db, ownerId) {
   if (account) return account;
 
   const now = new Date();
-  const trialEnds = new Date(now.getTime() + (3 * DAY_MS));
+  const trialEnds = new Date(now.getTime() + (Math.max(1, Number(baseTrialDays || 3)) * DAY_MS));
   await db.prepare(`
     INSERT OR IGNORE INTO billing_accounts (
       owner_id, trial_started_at, trial_ends_at, referral_bonus_days, created_at, updated_at
@@ -131,7 +132,7 @@ async function ensureReferralCodeFast(db, ownerId, existingCode = '') {
   return '';
 }
 
-function entitlementFrom(account = {}, subscriptions = []) {
+function entitlementFrom(account = {}, subscriptions = [], baseTrialDays = 3) {
   const active = subscriptions.filter((item) => {
     if (!['active', 'grace', 'cancelled'].includes(item.status)) return false;
     if (!['all_monthly', 'call_monthly', 'message_monthly'].includes(item.productCode)) return false;
@@ -166,7 +167,7 @@ function entitlementFrom(account = {}, subscriptions = []) {
     trial: {
       active: trialActive,
       scope: 'all',
-      baseDays: 3,
+      baseDays: Math.max(1, Number(baseTrialDays || 3)),
       referralBonusDays: Number(account.referral_bonus_days || 0),
       startsAt: trialStartedAt,
       endsAt: trialEndsAt,
@@ -189,7 +190,18 @@ export async function onRequest({ request, env }) {
     if (!ownerId) throw new Error('로그인 계정을 확인할 수 없습니다.');
 
     await ensureSchemaOnce(db);
-    const account = await ensureBillingAccountFast(db, ownerId);
+    const productClient = text(request.headers.get('X-Pagero-Product'), 40).toLowerCase();
+    const isCallTag = productClient === 'calltag';
+    if (isCallTag) await ensureCallTagReferralSchema(db);
+    const referralTable = isCallTag ? 'calltag_referrals' : 'referrals';
+    const baseTrialDays = isCallTag ? 7 : 3;
+    const subscriptionScope = isCallTag
+      ? "AND s.product_code IN ('call_monthly','message_monthly','all_monthly')"
+      : '';
+    const commissionScope = isCallTag
+      ? "AND cs.product_code IN ('call_monthly','message_monthly','all_monthly')"
+      : '';
+    const account = await ensureBillingAccountFast(db, ownerId, baseTrialDays);
     const month = new Date().toISOString().slice(0, 7);
 
     const [subscriptionsResult, referralCodeResult, appliedResult, countsResult, revenueResult] = await db.batch([
@@ -205,7 +217,7 @@ export async function onRequest({ request, env }) {
       db.prepare('SELECT code, created_at, updated_at FROM referral_codes WHERE owner_id = ? LIMIT 1').bind(ownerId),
       db.prepare(`
         SELECT referral_code, bonus_days, status, applied_at
-        FROM referrals
+        FROM ${referralTable}
         WHERE referred_owner_id = ?
         LIMIT 1
       `).bind(ownerId),
@@ -213,12 +225,13 @@ export async function onRequest({ request, env }) {
         SELECT
           COUNT(DISTINCT r.id) AS referred_count,
           COUNT(DISTINCT CASE WHEN s.id IS NOT NULL THEN r.referred_owner_id END) AS active_paid_count
-        FROM referrals r
+        FROM ${referralTable} r
         LEFT JOIN billing_subscriptions s
           ON s.owner_id = r.referred_owner_id
          AND s.verification_state = 'verified'
          AND s.status IN ('active', 'grace', 'cancelled')
          AND (s.expires_at = '' OR julianday(s.expires_at) > julianday('now'))
+         ${subscriptionScope}
         WHERE r.referrer_owner_id = ?
       `).bind(ownerId),
       db.prepare(`
@@ -227,8 +240,10 @@ export async function onRequest({ request, env }) {
             THEN commission_amount_krw ELSE 0 END) AS estimated_revenue,
           SUM(CASE WHEN status = 'confirmed'
             THEN commission_amount_krw ELSE 0 END) AS confirmed_revenue
-        FROM partner_commissions
-        WHERE referrer_owner_id = ?
+        FROM partner_commissions pc
+        LEFT JOIN billing_subscriptions cs ON cs.id = pc.subscription_id
+        WHERE pc.referrer_owner_id = ?
+          ${commissionScope}
       `).bind(month, ownerId),
     ]);
 
@@ -243,7 +258,7 @@ export async function onRequest({ request, env }) {
     return jsonResponse(request, env, 200, {
       ok: true,
       subscriptions,
-      entitlement: entitlementFrom(account, subscriptions),
+      entitlement: entitlementFrom(account, subscriptions, baseTrialDays),
       referral: {
         mine: { code, shareUrl, createdAt: iso(referralCodeRow.created_at) },
         code,
@@ -254,12 +269,13 @@ export async function onRequest({ request, env }) {
         appliedAt: iso(applied?.applied_at),
       },
       summary: {
+        scope: isCallTag ? 'calltag' : 'legacy',
         referredCount: Number(counts.referred_count || 0),
         activePaidCount: Number(counts.active_paid_count || 0),
         estimatedRevenueKrw: Number(revenue.estimated_revenue || 0),
         confirmedRevenueKrw: Number(revenue.confirmed_revenue || 0),
-        partnerCenterAvailable: false,
-        partnerCenterUrl: '',
+        partnerCenterAvailable: isCallTag,
+        partnerCenterUrl: isCallTag ? 'https://pagero.kr/partner?service=CALLTAG' : '',
       },
     }, METHODS);
   } catch (error) {
