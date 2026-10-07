@@ -1,7 +1,8 @@
 import { ensureBillingSchema } from './_shared.js';
 import { resolvePartnerCommissionRateBps } from './_partnerFinance.js';
 
-const CALLTAG_TIME_REWARD_PRODUCTS = new Set(['call_monthly', 'message_monthly', 'all_monthly']);
+const CALLTAG_CASH_COMMISSION_PRODUCTS = new Set(['call_monthly', 'message_monthly', 'all_monthly']);
+const CALLTAG_COMMISSION_RATE_BPS = 2000;
 
 const PRODUCT_PRICE_KRW = Object.freeze({
   pagero_monthly: 3500,
@@ -42,12 +43,6 @@ export async function recordReferralCommission(db, input = {}) {
     ? String(input.status)
     : 'confirmed';
 
-  // CallTag referrals use access-time rewards only: +5 days per successful referred signup.
-  // Monetary commission remains available for non-CallTag/PageRo partner products.
-  if (CALLTAG_TIME_REWARD_PRODUCTS.has(productCode)) {
-    return { created: false, reason: 'CALLTAG_REFERRAL_TIME_REWARD_ONLY' };
-  }
-
   if (!referredOwnerId || !paymentReference || !baseAmountKrw) {
     return { created: false, reason: 'COMMISSION_INPUT_INCOMPLETE' };
   }
@@ -63,7 +58,11 @@ export async function recordReferralCommission(db, input = {}) {
   }
 
   const referrerOwnerId = String(referral.referrer_owner_id);
-  const commissionRateBps = await resolvePartnerCommissionRateBps(db, referrerOwnerId);
+  // CallTag marketing referrals use a fixed 20% recurring cash commission.
+  // Other partner products keep the controlled partner profile rate policy.
+  const commissionRateBps = CALLTAG_CASH_COMMISSION_PRODUCTS.has(productCode)
+    ? CALLTAG_COMMISSION_RATE_BPS
+    : await resolvePartnerCommissionRateBps(db, referrerOwnerId);
   const commissionAmountKrw = Math.floor(baseAmountKrw * commissionRateBps / 10000);
   if (!commissionAmountKrw) {
     return { created: false, reason: 'COMMISSION_AMOUNT_ZERO' };

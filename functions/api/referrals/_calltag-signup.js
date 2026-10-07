@@ -9,14 +9,12 @@ import {
 import {
   CALLTAG_BASE_TRIAL_DAYS,
   CALLTAG_REFERRAL_BONUS_DAYS,
-  CALLTAG_REFERRER_REWARD_DAYS,
   CALLTAG_REFERRAL_TOTAL_DAYS,
   enforceCallTagTrialPolicy,
 } from '../billing/trial-policy.js';
 
 export { normalizeSignupReferralCode, validateSignupReferralCode };
 
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 function normalizeReferralPhone(value = '') {
   const digits = String(value || '').replace(/\D/g, '');
@@ -125,8 +123,8 @@ export async function assertCallTagReferralIdentityAvailable(db, rawPhone = '', 
 /**
  * CallTag app signup only.
  * - new member using a referral code: base 7 + invitee bonus 5 = 12 days
- * - referrer: +5 access days for every successful unique referred signup
- * - no lifetime cap on the number of referrer rewards
+ * - referrer: 20% cash commission on each verified CallTag paid subscription payment
+ * - commission is recorded by the billing verification path, not at signup
  * - the same phone identity can receive referral benefits only once for life
  */
 export async function applyCallTagSignupReferralCode(
@@ -147,7 +145,6 @@ export async function applyCallTagSignupReferralCode(
   }
 
   await ensureBillingAccount(db, safeOwnerId);
-  const referrerAccount = await ensureBillingAccount(db, validated.referrerOwnerId);
   await ensureReferralIdentitySchema(db);
 
   const existing = await db.prepare(`
@@ -162,13 +159,6 @@ export async function applyCallTagSignupReferralCode(
 
   const phoneHash = String(identity.phoneHash || '').trim()
     || (await assertCallTagReferralIdentityAvailable(db, identity.phone || '', identity.env || {})).phoneHash;
-
-  const nowMs = Date.now();
-  const currentReferrerEndsMs = Date.parse(String(referrerAccount?.trial_ends_at || '')) || 0;
-  const rewardBaseMs = Math.max(nowMs, currentReferrerEndsMs);
-  const referrerRewardEndsAt = new Date(
-    rewardBaseMs + CALLTAG_REFERRER_REWARD_DAYS * DAY_MS,
-  ).toISOString();
 
   const statements = [
     db.prepare(`
@@ -195,17 +185,6 @@ export async function applyCallTagSignupReferralCode(
         created_at
       ) VALUES (?, ?, CURRENT_TIMESTAMP)
     `).bind(phoneHash, safeOwnerId),
-    db.prepare(`
-      UPDATE billing_accounts
-      SET referral_bonus_days = referral_bonus_days + ?,
-          trial_ends_at = ?,
-          updated_at = CURRENT_TIMESTAMP
-      WHERE owner_id = ?
-    `).bind(
-      CALLTAG_REFERRER_REWARD_DAYS,
-      referrerRewardEndsAt,
-      validated.referrerOwnerId,
-    ),
   ];
 
   if (typeof db.batch === 'function') {
@@ -214,11 +193,9 @@ export async function applyCallTagSignupReferralCode(
     // Test/local compatibility. Production Cloudflare D1 uses atomic batch().
     await statements[0].run();
     await statements[1].run();
-    await statements[2].run();
   }
 
   const policy = await enforceCallTagTrialPolicy(db, safeOwnerId);
-  const referrerPolicy = await enforceCallTagTrialPolicy(db, validated.referrerOwnerId);
 
   return {
     code: validated.code,
@@ -229,8 +206,7 @@ export async function applyCallTagSignupReferralCode(
     scope: 'all',
     startsAt: policy.startsAt,
     expiresAt: policy.endsAt,
-    referrerRewardDays: CALLTAG_REFERRER_REWARD_DAYS,
-    referrerRewardUnlimited: true,
-    referrerRewardExpiresAt: referrerPolicy.endsAt,
+    referrerRewardMode: 'cash_commission',
+    referrerCommissionRatePercent: 20,
   };
 }
