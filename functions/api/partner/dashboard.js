@@ -51,14 +51,16 @@ export async function onRequest({ request, env }) {
         service: serviceForProduct(row.product_code),
         memberNameMasked: maskName(row.referred_name) || '추천 회원',
         productName: productLabel(row.product_code),
-        paymentAmount: amount(row.base_amount_krw),
-        recognizedRevenue: amount(row.base_amount_krw),
+        paymentAmount: signedAmount(row.base_amount_krw),
+        recognizedRevenue: signedAmount(row.base_amount_krw),
         partnerRate: row.base_amount_krw
           ? Math.round((Number(row.commission_amount_krw || 0) / Number(row.base_amount_krw || 1)) * 100)
           : rate,
-        partnerEarning: amount(row.commission_amount_krw),
-        status: Number(row.paid || 0) === 1
-          ? 'PAID'
+        partnerEarning: signedAmount(row.commission_amount_krw),
+        status: signedAmount(row.commission_amount_krw) < 0
+          ? 'REVERSED'
+          : Number(row.paid || 0) === 1
+            ? 'PAID'
           : String(row.status || '').toLowerCase() === 'confirmed'
             ? 'CONFIRMED'
             : String(row.status || '').toLowerCase() === 'cancelled'
@@ -232,4 +234,12 @@ function metricResult(stats, revenue, paid, recent) {
     totalPaidAmount: amount(paid?.paid_krw),
     recentRows: Array.isArray(recent?.results) ? recent.results : [],
   };
+}
+
+
+function signedAmount(value) {
+  const parsed = Number(value || 0);
+  return Number.isFinite(parsed)
+    ? Math.max(Number.MIN_SAFE_INTEGER, Math.min(Number.MAX_SAFE_INTEGER, Math.trunc(parsed)))
+    : 0;
 }
