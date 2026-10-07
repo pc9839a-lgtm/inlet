@@ -132,8 +132,13 @@ includesAll(partnerRate, [
 ], 'rate update');
 assert.ok(!partnerRate.includes('UPDATE partner_commissions'), 'rate update must not rewrite historical commissions');
 
-// 8) Minimum payout is explicitly enforced server-side.
-includesAll(portal, ['export const MIN_PAYOUT_KRW = 10000', 'available < MIN_PAYOUT_KRW', 'PARTNER_PAYOUT_MINIMUM_NOT_MET'], 'minimum payout');
+// 8) Minimum payout is explicitly enforced server-side and can be scoped for CallTag.
+includesAll(portal, [
+  'export const MIN_PAYOUT_KRW = 10000',
+  'minimumPayoutKrw',
+  'available < minimum',
+  'PARTNER_PAYOUT_MINIMUM_NOT_MET',
+], 'minimum payout');
 
 // 9) Paid Google Play refund recoveries carry forward until a future settlement consumes them.
 includesAll(commissions, [
@@ -161,6 +166,7 @@ console.log(JSON.stringify({
   calltagProducts: portalCalltag,
   pageroProducts: portalPagero,
   rateChangeFutureOnly: true,
-  minimumPayoutKrw: 10000,
+  minimumPayoutDefaultKrw: 10000,
+  minimumPayoutServerControlled: true,
   refundRecoveryCarryForward: true,
 }, null, 2));

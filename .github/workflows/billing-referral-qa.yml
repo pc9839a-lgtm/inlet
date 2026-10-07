@@ -46,5 +46,8 @@ jobs:
       - name: Verify CallTag partner scope isolation
         run: node scripts/calltag-partner-scope-quality-check.mjs
 
+      - name: Verify CallTag referral server control
+        run: node scripts/calltag-referral-server-control-quality-check.mjs
+
       - name: Verify production build
         run: npm run build

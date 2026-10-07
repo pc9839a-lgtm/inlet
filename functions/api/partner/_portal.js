@@ -5,6 +5,7 @@ import {
 } from '../billing/_partnerFinance.js';
 import { ensureCalllinkSchema } from '../call/_shared.js';
 import { ensureCallTagReferralSchema } from '../referrals/_calltag-store.js';
+import { readCallTagReferralProgramConfig } from '../referrals/_calltag-program.js';
 import { requireSettlementStepup } from './_security.js';
 
 export const PARTNER_PORTAL_METHODS = 'GET, POST, PUT, OPTIONS';
@@ -203,9 +204,20 @@ export function nextSettlementAt() {
 }
 
 export async function commissionRatePercent(db, ownerId, service = 'ALL') {
-  if (normalizeService(service) === 'CALLTAG') return 20;
+  if (normalizeService(service) === 'CALLTAG') {
+    const program = await readCallTagReferralProgramConfig(db);
+    return Number(program.commissionRatePercent || 0);
+  }
   const bps = await resolvePartnerCommissionRateBps(db, ownerId);
   return bps === 5000 ? 50 : 20;
+}
+
+export async function minimumPayoutKrw(db, service = 'ALL') {
+  if (normalizeService(service) === 'CALLTAG') {
+    const program = await readCallTagReferralProgramConfig(db);
+    return Math.max(1000, Number(program.minimumPayoutKrw || MIN_PAYOUT_KRW));
+  }
+  return MIN_PAYOUT_KRW;
 }
 
 export async function pendingPayoutRequest(db, ownerId, service = 'ALL') {
@@ -389,8 +401,12 @@ export async function createPayoutRequest(db, ownerId, service = 'ALL') {
   const pending = await pendingPayoutRequest(db, ownerId, normalized);
   if (pending) throw portalError('이미 처리 중인 지급 요청이 있습니다.', 409, 'PARTNER_PAYOUT_REQUEST_PENDING');
   const available = await availableCommissionAmount(db, ownerId, normalized);
-  if (available < MIN_PAYOUT_KRW) {
-    throw portalError(`${MIN_PAYOUT_KRW.toLocaleString('ko-KR')}원 이상부터 지급 요청할 수 있습니다.`, 409, 'PARTNER_PAYOUT_MINIMUM_NOT_MET', { availableAmount: available });
+  const minimum = await minimumPayoutKrw(db, normalized);
+  if (available < minimum) {
+    throw portalError(`${minimum.toLocaleString('ko-KR')}원 이상부터 지급 요청할 수 있습니다.`, 409, 'PARTNER_PAYOUT_MINIMUM_NOT_MET', {
+      availableAmount: available,
+      minimumPayoutKrw: minimum,
+    });
   }
   const requestId = payoutRequestId();
   const month = currentMonth();

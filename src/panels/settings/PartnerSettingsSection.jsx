@@ -30,6 +30,7 @@ export default function PartnerSettingsSection({ authUser }) {
   const referral = finance?.referral || {};
   const settlement = finance?.settlement?.combined || {};
   const calltagScoped = finance?.settlement?.scope === 'calltag';
+  const rate = Number(referral.commissionRatePercent || finance?.settlement?.commissionRatePercent || 0);
   const settlementUrl = calltagScoped
     ? (finance?.settlement?.partnerCenterUrl || referral.partnerCenterUrl || CALLTAG_SETTLEMENT_URL)
     : LEGACY_SETTLEMENT_URL;
@@ -74,7 +75,7 @@ export default function PartnerSettingsSection({ authUser }) {
             </div>
             <div className="settings-compact-row settings-compact-row-action">
               <span>정산</span>
-              <strong>결제 금액의 20%</strong>
+              <strong>{calltagScoped ? `결제 금액의 ${rate}%` : '결제 금액의 20%'}</strong>
               <a className="settings-primary-button compact" href={settlementUrl} target="_blank" rel="noreferrer">보기</a>
             </div>
           </div>

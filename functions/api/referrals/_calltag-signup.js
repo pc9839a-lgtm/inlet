@@ -16,6 +16,7 @@ import {
   CALLTAG_REFERRAL_TOTAL_DAYS,
   enforceCallTagTrialPolicy,
 } from '../billing/trial-policy.js';
+import { readCallTagReferralProgramConfig } from './_calltag-program.js';
 
 export { normalizeSignupReferralCode, validateSignupReferralCode };
 
@@ -113,7 +114,17 @@ export async function applyCallTagSignupReferralCode(
   rawCode = '',
   identity = {},
 ) {
-  const validated = await validateSignupReferralCode(db, rawCode);
+  const normalizedCode = normalizeSignupReferralCode(rawCode);
+  if (!normalizedCode) return null;
+  const program = await readCallTagReferralProgramConfig(db);
+  if (!program.enabled || !program.signupEnabled) {
+    throw billingError(
+      '현재 추천인 코드 신규 등록이 일시 중지되어 있습니다.',
+      409,
+      'REFERRAL_PROGRAM_PAUSED',
+    );
+  }
+  const validated = await validateSignupReferralCode(db, normalizedCode);
   if (!validated) return null;
 
   const safeOwnerId = String(ownerId || '').trim().slice(0, 120);
@@ -151,7 +162,7 @@ export async function applyCallTagSignupReferralCode(
       validated.referrerOwnerId,
       safeOwnerId,
       validated.code,
-      CALLTAG_REFERRAL_BONUS_DAYS,
+      program.inviteeBonusDays,
     ),
     db.prepare(`
       INSERT INTO calltag_referral_identity_claims (
@@ -174,14 +185,14 @@ export async function applyCallTagSignupReferralCode(
 
   return {
     code: validated.code,
-    bonusDays: CALLTAG_REFERRAL_BONUS_DAYS,
-    baseDays: CALLTAG_BASE_TRIAL_DAYS,
-    totalDays: CALLTAG_REFERRAL_TOTAL_DAYS,
+    bonusDays: program.inviteeBonusDays,
+    baseDays: program.baseTrialDays,
+    totalDays: program.baseTrialDays + program.inviteeBonusDays,
     productCode: 'all_monthly',
     scope: 'all',
     startsAt: policy.startsAt,
     expiresAt: policy.endsAt,
     referrerRewardMode: 'cash_commission',
-    referrerCommissionRatePercent: 20,
+    referrerCommissionRatePercent: program.commissionRatePercent,
   };
 }
