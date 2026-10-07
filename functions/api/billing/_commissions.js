@@ -38,14 +38,22 @@ export async function recordReferralCommission(db, input = {}) {
   const rawReference = text(input.paymentReference, 240);
   const channel = text(input.channel || 'billing', 40) || 'billing';
   const paymentReference = rawReference ? `${channel}:${rawReference}`.slice(0, 240) : '';
-  const baseAmountKrw = safeAmount(input.baseAmountKrw, productPriceKrw(productCode));
+  const requireExactAmount = input.requireExactAmount === true;
+  const baseAmountKrw = requireExactAmount
+    ? safeAmount(input.baseAmountKrw, 0)
+    : safeAmount(input.baseAmountKrw, productPriceKrw(productCode));
   const subscriptionId = Number(input.subscriptionId || 0) || null;
   const status = ['estimated', 'confirmed', 'cancelled'].includes(String(input.status || ''))
     ? String(input.status)
     : 'confirmed';
 
   if (!referredOwnerId || !paymentReference || !baseAmountKrw) {
-    return { created: false, reason: 'COMMISSION_INPUT_INCOMPLETE' };
+    return {
+      created: false,
+      reason: requireExactAmount && !baseAmountKrw
+        ? 'COMMISSION_EXACT_AMOUNT_REQUIRED'
+        : 'COMMISSION_INPUT_INCOMPLETE',
+    };
   }
 
   const isCallTagProduct = CALLTAG_CASH_COMMISSION_PRODUCTS.has(productCode);
