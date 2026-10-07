@@ -236,10 +236,10 @@ export async function onRequest({ request, env }) {
       `).bind(ownerId),
       db.prepare(`
         SELECT
-          SUM(CASE WHEN earned_month = ? AND status IN ('estimated', 'confirmed')
-            THEN commission_amount_krw ELSE 0 END) AS estimated_revenue,
-          SUM(CASE WHEN status = 'confirmed'
-            THEN commission_amount_krw ELSE 0 END) AS confirmed_revenue
+          SUM(CASE WHEN pc.earned_month = ? AND pc.status IN ('estimated', 'confirmed')
+            THEN pc.commission_amount_krw ELSE 0 END) AS estimated_revenue,
+          SUM(CASE WHEN pc.status = 'confirmed'
+            THEN pc.commission_amount_krw ELSE 0 END) AS confirmed_revenue
         FROM partner_commissions pc
         LEFT JOIN billing_subscriptions cs ON cs.id = pc.subscription_id
         WHERE pc.referrer_owner_id = ?
