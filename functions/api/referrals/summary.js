@@ -70,6 +70,7 @@ async function callTagReferralSummary(db, ownerId = '') {
     friendBenefitMessage: renderCallTagReferralProgramText(program, program.friendBenefitMessage),
     benefitMessage: renderCallTagReferralProgramText(program, program.benefitMessage),
     recurringMessage: renderCallTagReferralProgramText(program, program.recurringMessage),
+    pausedMessage: renderCallTagReferralProgramText(program, program.pausedMessage),
   };
 }
 
