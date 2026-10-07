@@ -40,5 +40,8 @@ jobs:
       - name: Verify CallTag Google Play RTDN renewal handling
         run: node scripts/calltag-rtdn-quality-check.mjs
 
+      - name: Verify CallTag refund commission reversal handling
+        run: node scripts/calltag-refund-reversal-quality-check.mjs
+
       - name: Verify production build
         run: npm run build

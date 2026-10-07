@@ -100,13 +100,17 @@ Play Console에서 CallTag 앱을 연 뒤:
 
 정상 처리 또는 이미 처리된 messageId는 204로 ACK한다.
 
-## 7. Step 5 경계
+## 7. 환불·취소 추천수익 역처리
 
-이번 단계에서는 환불 금액을 커미션에서 차감하지 않는다.
+`voidedPurchaseNotification`이 정기결제(`productType=1`)에 대해 도착하면 해당 `orderId`의 CallTag 추천수익을 즉시 역처리한다.
 
-다만 아래 이벤트는 버리지 않고 `google_play_rtdn_events`에 저장한다.
+- 아직 지급되지 않은 추천수익: 원 수익을 `cancelled` 처리하여 지급 대상에서 제외
+- 이미 지급된 추천수익: 동일 주문번호 기준으로 음수 recovery 원장을 1회 생성
+- recovery 원장은 생성 월이 지나도 정산될 때까지 다음 지급가능액에서 계속 차감
+- 환불 발생 후 아직 처리되지 않은 CallTag 지급요청은 금액 스냅샷이 오래된 것으로 보고 자동 취소
+- 처리 중 또는 검토 중이지만 실제 지급완료 전인 정산 건은 취소하여 재계산 가능하게 함
+- 동일 `orderId`와 동일 RTDN 재전송은 중복 차감하지 않음
 
-- `voidedPurchaseNotification`
-- `pendingRefundReviewNotification`
+`pendingRefundReviewNotification`은 아직 최종 환불이 아니라 chargeback 검토 요청이므로 금액을 미리 차감하지 않는다. 최종 `voidedPurchaseNotification`이 도착했을 때만 금전 원장을 변경한다.
 
-Step 5에서 이 보존 데이터를 기준으로 환불/취소/chargeback 커미션 역처리를 구현한다.
+CallTag는 정기결제만 판매하므로 다중 수량 일회성 상품용 부분 환불 알림은 추천수익 원장을 변경하지 않는다.

@@ -66,10 +66,14 @@ const checks = {
     source.rtdn.includes('purchase_token_hash TEXT NOT NULL')
       && !source.rtdn.includes('purchase_token TEXT NOT NULL')
       && !source.rtdn.includes('payload_json'),
-  'voided purchases are preserved for the separate refund reversal step':
-    source.rtdn.includes("status: 'deferred_voided'")
-      && source.rtdn.includes('STEP5_REFUND_REVERSAL_PENDING')
-      && !source.rtdn.includes('UPDATE partner_commissions SET status'),
+  'voided subscription purchases trigger referral commission reversal':
+    source.rtdn.includes('reverseGooglePlayReferralCommission')
+      && source.rtdn.includes("eventKind === 'voided_purchase'")
+      && source.rtdn.includes("productType && productType !== 1")
+      && source.rtdn.includes('refundType'),
+  'pending chargeback review is preserved without premature reversal':
+    source.rtdn.includes("eventKind === 'pending_refund_review'")
+      && source.rtdn.includes('CHARGEBACK_REVIEW_PENDING_NO_REVERSAL'),
   'successful Push processing acknowledges with 204':
     source.rtdn.includes('function noContent()')
       && source.rtdn.includes('status: 204'),
