@@ -34,15 +34,26 @@ const PRICING = Object.freeze({
   ],
 });
 
+function financeProductScope() {
+  if (typeof window === 'undefined') return 'legacy';
+  const host = String(window.location?.hostname || '').trim().toLowerCase();
+  return host === 'calltag.pagero.kr' || host.endsWith('.calltag.pagero.kr')
+    ? 'calltag'
+    : 'legacy';
+}
+
 function sessionHeaders(authUser = null) {
   const session = String(authUser?.session || '').trim();
-  return session ? { 'X-Inlet-Session': session } : {};
+  const headers = session ? { 'X-Inlet-Session': session } : {};
+  if (financeProductScope() === 'calltag') headers['X-Pagero-Product'] = 'calltag';
+  return headers;
 }
 
 function financeCacheKey(authUser = null) {
   const account = String(authUser?.ownerId || authUser?.id || authUser?.email || '').trim().toLowerCase();
   const session = String(authUser?.session || '').trim();
-  return account && session ? `${account}:${session.slice(-24)}` : '';
+  const scope = financeProductScope();
+  return account && session ? `${scope}:${account}:${session.slice(-24)}` : '';
 }
 
 async function readJsonResponse(response, fallback) {
@@ -164,8 +175,11 @@ function normalizeFinance({ authUser, subscriptionsData, referralData, summaryDa
       referralCount: Number(summary.referredCount || 0),
       activePaidCount: Number(summary.activePaidCount || 0),
       commissionRatePercent: 20,
+      partnerCenterUrl: String(summary.partnerCenterUrl || ''),
     },
     settlement: {
+      scope: String(summary.scope || 'legacy'),
+      partnerCenterUrl: String(summary.partnerCenterUrl || ''),
       combined: {
         estimatedRevenueKrw: Number(summary.estimatedRevenueKrw || 0),
         confirmedRevenueKrw: Number(summary.confirmedRevenueKrw || 0),
