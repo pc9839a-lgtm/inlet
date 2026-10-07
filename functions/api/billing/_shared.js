@@ -363,12 +363,14 @@ export async function verifyGoogleSubscription(env = {}, db, ownerId = '', input
   const mapped = mapPlayState(purchase?.subscriptionState);
   const expiresAt = iso(matched?.expiryTime);
   const active = ACTIVE_STATES.has(mapped) && (!expiresAt || Date.parse(expiresAt) > Date.now());
-  if (!active && mapped !== 'pending') {
+  const allowInactiveState = input.allowInactiveState === true;
+  if (!active && mapped !== 'pending' && !allowInactiveState) {
     throw billingError('활성 상태의 Google Play 구독이 아닙니다.', 409, 'PLAY_SUBSCRIPTION_INACTIVE', { state: mapped });
   }
 
   const tokenHash = await sha256(purchaseToken);
-  const conflict = await db.prepare(`
+  const skipChannelConflict = input.skipChannelConflict === true;
+  const conflict = skipChannelConflict ? null : await db.prepare(`
     SELECT id, channel, product_code FROM billing_subscriptions
     WHERE owner_id = ? AND channel != 'google_play'
       AND status IN ('active', 'grace', 'cancelled')
