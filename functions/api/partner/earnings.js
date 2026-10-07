@@ -10,6 +10,7 @@ import {
   safeIso,
   serviceCondition,
   serviceForProduct,
+  signedAmount,
 } from './_portal.js';
 
 export async function onRequest({ request, env }) {
@@ -21,7 +22,7 @@ export async function onRequest({ request, env }) {
     const context = await partnerPortalContext(request, env);
     const service = normalizeService(new URL(request.url).searchParams.get('service') || 'ALL');
     const condition = serviceCondition('s', service);
-    const rate = await commissionRatePercent(context.db, context.ownerId);
+    const rate = await commissionRatePercent(context.db, context.ownerId, service);
     const result = await context.db.prepare(`
       SELECT
         pc.id,
@@ -47,8 +48,8 @@ export async function onRequest({ request, env }) {
     `).bind(context.ownerId).all();
     const rows = Array.isArray(result?.results) ? result.results : [];
     const items = rows.map((row) => {
-      const base = amount(row.base_amount_krw);
-      const commission = amount(row.commission_amount_krw);
+      const base = signedAmount(row.base_amount_krw);
+      const commission = signedAmount(row.commission_amount_krw);
       return {
         id: amount(row.id),
         occurredAt: safeIso(row.created_at),
@@ -56,20 +57,27 @@ export async function onRequest({ request, env }) {
         service: serviceForProduct(row.product_code),
         memberNameMasked: maskName(row.referred_name) || '추천 회원',
         productName: productLabel(row.product_code),
-        paymentAmount: base,
+        paymentAmount: Math.abs(base),
         recognizedRevenue: base,
-        partnerRate: base > 0 ? Math.round((commission / base) * 100) : rate,
+        partnerRate: base ? Math.round((Math.abs(commission) / Math.abs(base)) * 100) : rate,
         partnerEarning: commission,
-        status: Number(row.paid || 0) === 1
-          ? 'PAID'
-          : String(row.status || '').toLowerCase() === 'confirmed'
-            ? 'CONFIRMED'
-            : String(row.status || '').toLowerCase() === 'cancelled'
-              ? 'REVERSED'
-              : 'ESTIMATED',
+        status: commission < 0
+          ? 'REVERSED'
+          : Number(row.paid || 0) === 1
+            ? 'PAID'
+            : String(row.status || '').toLowerCase() === 'confirmed'
+              ? 'CONFIRMED'
+              : String(row.status || '').toLowerCase() === 'cancelled'
+                ? 'REVERSED'
+                : 'ESTIMATED',
       };
     });
-    return jsonResponse(request, env, 200, { ok: true, service, items }, PARTNER_PORTAL_METHODS);
+    return jsonResponse(request, env, 200, {
+      ok: true,
+      service,
+      commissionScope: service === 'CALLTAG' ? 'calltag' : 'legacy',
+      items,
+    }, PARTNER_PORTAL_METHODS);
   } catch (error) {
     return handleApiError(request, env, error, PARTNER_PORTAL_METHODS);
   }
