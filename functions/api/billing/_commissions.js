@@ -5,6 +5,7 @@ import {
 } from './_partnerFinance.js';
 import { ensurePartnerPortalSchema } from '../partner/_portal.js';
 import { ensureCallTagReferralSchema } from '../referrals/_calltag-store.js';
+import { readCallTagReferralProgramConfig } from '../referrals/_calltag-program.js';
 
 const CALLTAG_CASH_COMMISSION_PRODUCTS = new Set(['call_monthly', 'message_monthly', 'all_monthly']);
 const CALLTAG_COMMISSION_RATE_BPS = 2000;
@@ -61,7 +62,14 @@ export async function recordReferralCommission(db, input = {}) {
   }
 
   const isCallTagProduct = CALLTAG_CASH_COMMISSION_PRODUCTS.has(productCode);
-  if (isCallTagProduct) await ensureCallTagReferralSchema(db);
+  let callTagProgram = null;
+  if (isCallTagProduct) {
+    await ensureCallTagReferralSchema(db);
+    callTagProgram = await readCallTagReferralProgramConfig(db);
+    if (!callTagProgram.enabled || !callTagProgram.commissionEnabled) {
+      return { created: false, reason: 'CALLTAG_COMMISSION_PAUSED' };
+    }
+  }
   const referralTable = isCallTagProduct ? 'calltag_referrals' : 'referrals';
 
   const referral = await db.prepare(`
@@ -78,7 +86,7 @@ export async function recordReferralCommission(db, input = {}) {
   // CallTag marketing referrals use a fixed 20% recurring cash commission.
   // Other partner products keep the controlled partner profile rate policy.
   const commissionRateBps = isCallTagProduct
-    ? CALLTAG_COMMISSION_RATE_BPS
+    ? Number(callTagProgram?.commissionRateBps || CALLTAG_COMMISSION_RATE_BPS)
     : await resolvePartnerCommissionRateBps(db, referrerOwnerId);
   const commissionAmountKrw = Math.floor(baseAmountKrw * commissionRateBps / 10000);
   if (!commissionAmountKrw) {
