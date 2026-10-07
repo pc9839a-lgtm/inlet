@@ -2,7 +2,8 @@ import { ExternalLink, RefreshCw } from 'lucide-react';
 import SettingsSection from './SettingsSection.jsx';
 import useAccountFinance from './useAccountFinance.js';
 
-const SETTLEMENT_URL = 'https://calltag.pagero.kr/web/settlement';
+const LEGACY_SETTLEMENT_URL = 'https://calltag.pagero.kr/web/settlement';
+const CALLTAG_SETTLEMENT_URL = 'https://pagero.kr/partner?service=CALLTAG';
 
 function money(value = 0) {
   return `${Math.max(0, Number(value || 0)).toLocaleString('ko-KR')}원`;
@@ -11,6 +12,10 @@ function money(value = 0) {
 export default function SettlementSettingsSection({ authUser }) {
   const { finance, loading, error, refresh } = useAccountFinance(authUser);
   const settlement = finance?.settlement?.combined || {};
+  const calltagScoped = finance?.settlement?.scope === 'calltag';
+  const settlementUrl = calltagScoped
+    ? (finance?.settlement?.partnerCenterUrl || CALLTAG_SETTLEMENT_URL)
+    : LEGACY_SETTLEMENT_URL;
 
   return (
     <SettingsSection id="settlement" className="settings-settlement-card settings-flat-section">
@@ -32,11 +37,11 @@ export default function SettlementSettingsSection({ authUser }) {
             <div className="settings-compact-row"><span>누적 확정</span><strong>{money(settlement.confirmedRevenueKrw)}</strong><em /></div>
             <div className="settings-compact-row"><span>추천 가입</span><strong>{Number(settlement.referredCount || 0)}명</strong><em /></div>
             <div className="settings-compact-row"><span>유료 전환</span><strong>{Number(settlement.activePaidCount || 0)}명</strong><em /></div>
-            <div className="settings-compact-row"><span>정산율</span><strong>20%</strong><em>페이지로 · 콜태그</em></div>
+            <div className="settings-compact-row"><span>정산율</span><strong>20%</strong><em>{calltagScoped ? '콜태그 추천수익' : '페이지로 · 콜태그'}</em></div>
             <div className="settings-compact-row settings-compact-row-action">
               <span>상세 내역</span>
-              <strong>통합 정산</strong>
-              <a className="settings-primary-button compact" href={SETTLEMENT_URL} target="_blank" rel="noreferrer">
+              <strong>{calltagScoped ? '콜태그 정산' : '통합 정산'}</strong>
+              <a className="settings-primary-button compact" href={settlementUrl} target="_blank" rel="noreferrer">
                 보기 <ExternalLink size={14} aria-hidden="true" />
               </a>
             </div>
