@@ -1,12 +1,12 @@
 import { handleApiError, jsonResponse, optionsResponse } from '../_shared.js';
 import {
-  MIN_PAYOUT_KRW,
   PARTNER_PORTAL_METHODS,
   amount,
   availableCommissionAmount,
   commissionRatePercent,
   currentMonth,
   maskName,
+  minimumPayoutKrw,
   nextSettlementAt,
   normalizeService,
   partnerPortalContext,
@@ -87,6 +87,7 @@ export async function onRequest({ request, env }) {
     ]);
 
     const available = await availableCommissionAmount(context.db, context.ownerId, service);
+    const minimum = await minimumPayoutKrw(context.db, service);
     const rate = await commissionRatePercent(context.db, context.ownerId, service);
     const recentRows = Array.isArray(recentResult?.results) ? recentResult.results : [];
     const recentEarnings = recentRows.map((row) => {
@@ -115,8 +116,8 @@ export async function onRequest({ request, env }) {
     });
 
     const profileReady = !!payoutProfile?.owner_id;
-    const canRequestSettlement = available >= MIN_PAYOUT_KRW && !pending && profileReady;
-    let requestDisabledReason = `${MIN_PAYOUT_KRW.toLocaleString('ko-KR')}원 이상부터 신청할 수 있습니다.`;
+    const canRequestSettlement = available >= minimum && !pending && profileReady;
+    let requestDisabledReason = `${minimum.toLocaleString('ko-KR')}원 이상부터 신청할 수 있습니다.`;
     if (!profileReady) requestDisabledReason = '정산정보를 먼저 저장해주세요.';
     else if (pending) requestDisabledReason = '지급 요청이 처리 중입니다.';
     else if (available >= MIN_PAYOUT_KRW) requestDisabledReason = '지급 요청이 가능합니다.';
@@ -138,6 +139,7 @@ export async function onRequest({ request, env }) {
       availableAmount: pending ? 0 : available,
       totalPaidAmount: amount(paid?.paid_krw),
       commissionRatePercent: rate,
+      minimumPayoutKrw: minimum,
       nextSettlementAt: nextSettlementAt(),
       nextSettlementLabel: '매월 15일 지급',
       canRequestSettlement,
