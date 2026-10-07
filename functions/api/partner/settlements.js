@@ -34,33 +34,30 @@ export async function onRequest({ request, env }) {
           ps.status,
           ps.paid_at,
           ps.created_at,
-          CASE
-            WHEN COUNT(DISTINCT CASE
-              WHEN s.product_code IN ('pagero_monthly','pagero_pro_monthly','pagero_domain_monthly') THEN 'PAGERO'
-              ELSE 'CALLTAG'
-            END) = 1
-            THEN MAX(CASE
-              WHEN s.product_code IN ('pagero_monthly','pagero_pro_monthly','pagero_domain_monthly') THEN 'PAGERO'
-              ELSE 'CALLTAG'
-            END)
-            ELSE 'ALL'
-          END AS service_scope,
-          SUM(CASE
-            WHEN ? = 'ALL' THEN 1
-            WHEN ? = 'PAGERO' AND s.product_code IN ('pagero_monthly','pagero_pro_monthly','pagero_domain_monthly') THEN 1
-            WHEN ? = 'CALLTAG' AND s.product_code IN ('call_monthly','message_monthly','all_monthly') THEN 1
-            ELSE 0
-          END) AS matching_items
+          COALESCE((
+            SELECT pr.service_scope
+            FROM partner_payout_requests pr
+            WHERE pr.settlement_id = ps.settlement_id
+              AND pr.owner_id = ps.partner_owner_id
+            ORDER BY datetime(pr.processed_at) DESC, datetime(pr.requested_at) DESC
+            LIMIT 1
+          ), 'ALL') AS service_scope
         FROM partner_settlements ps
-        LEFT JOIN partner_settlement_items psi ON psi.settlement_id = ps.settlement_id
-        LEFT JOIN partner_commissions pc ON pc.id = psi.commission_id
-        LEFT JOIN billing_subscriptions s ON s.id = pc.subscription_id
         WHERE ps.partner_owner_id = ?
-        GROUP BY ps.settlement_id
-        HAVING ? = 'ALL' OR matching_items > 0
+          AND (
+            ? = 'ALL'
+            OR COALESCE((
+              SELECT pr.service_scope
+              FROM partner_payout_requests pr
+              WHERE pr.settlement_id = ps.settlement_id
+                AND pr.owner_id = ps.partner_owner_id
+              ORDER BY datetime(pr.processed_at) DESC, datetime(pr.requested_at) DESC
+              LIMIT 1
+            ), 'ALL') IN ('ALL', ?)
+          )
         ORDER BY ps.created_at DESC
         LIMIT 100
-      `).bind(service, service, service, context.ownerId, service).all(),
+      `).bind(context.ownerId, service, service).all(),
     ]);
 
     const requests = (Array.isArray(requestResult?.results) ? requestResult.results : []).map((row) => ({
