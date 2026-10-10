@@ -191,20 +191,39 @@ async function main() {
     if (readiness.data?.checks?.googleForms?.nativeOauthReady !== true) {
       fail('CallTag Google Forms OAuth runtime is not ready');
     }
+    // Fail closed for production release: Meta / Firebase must be ready, not merely present
+    // as optional information in an otherwise green CRUD smoke report.
+    if (readiness.data?.checks?.meta?.oauthReady !== true) {
+      fail('CallTag Meta OAuth is not ready in production');
+    }
+    if (readiness.data?.checks?.firebase?.ready !== true) {
+      fail('CallTag Firebase configuration is not ready in production');
+    }
+    const pushReadiness = await requestJson('/api/call/push/readiness');
+    if (!pushReadiness.response.ok || pushReadiness.data?.ready !== true
+        || pushReadiness.data?.firebase?.configured !== true
+        || pushReadiness.data?.d1?.bound !== true
+        || pushReadiness.data?.d1?.pushDevicesTable !== true) {
+      fail('CallTag production FCM/D1 push readiness failed', {
+        httpStatus: pushReadiness.response.status,
+      });
+    }
     evidence.checks.push({
       name: 'runtime-readiness',
       status: 'ready',
-      metaOauthReady: readiness.data?.checks?.meta?.oauthReady === true,
+      metaOauthReady: true,
+      firebaseConfigReady: true,
+      pushReadiness: true,
     });
 
     const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const webhookName = `${qaPrefix}Google Forms ${stamp}`;
+    const webhookName = `${qaPrefix}Webhook ${stamp}`;
     const webhookCreate = await requestJson('/api/calltag/v1/connections', {
       method: 'POST',
       session,
       body: {
         name: webhookName,
-        sourceName: 'Google Forms',
+        sourceName: 'CallTag QA',
         rawRetentionDays: 1,
       },
     });
@@ -216,12 +235,12 @@ async function main() {
         code: String(webhookCreate.data?.code || webhookCreate.data?.details?.code || ''),
       });
     }
-    evidence.checks.push({ name: 'google-forms-webhook-create', status: 'ready' });
+    evidence.checks.push({ name: 'webhook-create', status: 'ready' });
 
     const webhookList = await requireOk('/api/calltag/v1/connections', session);
     const createdWebhook = (Array.isArray(webhookList.connections) ? webhookList.connections : [])
       .find((item) => String(item?.id || '') === webhookId && String(item?.status || '') === 'active');
-    if (!createdWebhook || String(createdWebhook.sourceName || '') !== 'Google Forms') {
+    if (!createdWebhook || String(createdWebhook.sourceName || '') !== 'CallTag QA') {
       fail('CallTag Webhook readback failed');
     }
     evidence.checks.push({ name: 'webhook-readback', status: 'ready' });
