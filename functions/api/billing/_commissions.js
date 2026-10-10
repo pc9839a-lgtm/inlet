@@ -10,6 +10,18 @@ import { readCallTagReferralProgramConfig } from '../referrals/_calltag-program.
 const CALLTAG_CASH_COMMISSION_PRODUCTS = new Set(['call_monthly', 'message_monthly', 'all_monthly']);
 const CALLTAG_COMMISSION_RATE_BPS = 2000;
 
+// Treat 0 as an explicit server configuration, never as "missing".
+// Previously "configured 0" fell back to 20% via the || operator.
+export function resolveCallTagCommissionRateBps(program = {}) {
+  const configured = program?.commissionRateBps;
+  if (configured === undefined || configured === null || configured === '') {
+    return CALLTAG_COMMISSION_RATE_BPS;
+  }
+  const parsed = Number(configured);
+  return Number.isInteger(parsed) && parsed >= 0 && parsed <= 5000
+    ? parsed : CALLTAG_COMMISSION_RATE_BPS;
+}
+
 const PRODUCT_PRICE_KRW = Object.freeze({
   pagero_monthly: 3500,
   pagero_pro_monthly: 5500,
@@ -86,7 +98,7 @@ export async function recordReferralCommission(db, input = {}) {
   // CallTag marketing referrals use a fixed 20% recurring cash commission.
   // Other partner products keep the controlled partner profile rate policy.
   const commissionRateBps = isCallTagProduct
-    ? Number(callTagProgram?.commissionRateBps || CALLTAG_COMMISSION_RATE_BPS)
+    ? resolveCallTagCommissionRateBps(callTagProgram)
     : await resolvePartnerCommissionRateBps(db, referrerOwnerId);
   const commissionAmountKrw = Math.floor(baseAmountKrw * commissionRateBps / 10000);
   if (!commissionAmountKrw) {
