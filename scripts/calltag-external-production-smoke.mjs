@@ -191,21 +191,46 @@ async function main() {
     if (readiness.data?.checks?.googleForms?.nativeOauthReady !== true) {
       fail('CallTag Google Forms OAuth runtime is not ready');
     }
+    // Fail closed for production release: Meta / Firebase must be ready, not merely present
+    // as optional information in an otherwise green CRUD smoke report.
+    if (readiness.data?.checks?.meta?.oauthReady !== true) {
+      fail('CallTag Meta OAuth is not ready in production');
+    }
+    if (readiness.data?.checks?.firebase?.ready !== true) {
+      fail('CallTag Firebase configuration is not ready in production');
+    }
+    const pushReadiness = await requestJson('/api/call/push/readiness');
+    if (!pushReadiness.response.ok || pushReadiness.data?.ready !== true
+        || pushReadiness.data?.firebase?.configured !== true
+        || pushReadiness.data?.d1?.bound !== true
+        || pushReadiness.data?.d1?.pushDevicesTable !== true) {
+      fail('CallTag production FCM/D1 push readiness failed', {
+        httpStatus: pushReadiness.response.status,
+      });
+    }
     evidence.checks.push({
       name: 'runtime-readiness',
       status: 'ready',
-      metaOauthReady: readiness.data?.checks?.meta?.oauthReady === true,
+      metaOauthReady: true,
+      firebaseConfigReady: true,
+      pushReadiness: true,
     });
 
     const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const webhookName = `${qaPrefix}Google Forms ${stamp}`;
+    const webhookName = `${qaPrefix}Webhook ${stamp}`;
     const webhookCreate = await requestJson('/api/calltag/v1/connections', {
       method: 'POST',
       session,
       body: {
         name: webhookName,
-        sourceName: 'Google Forms',
+        sourceName: 'CallTag QA',
         rawRetentionDays: 1,
+        mapping: {
+          name: '/name',
+          phone: '/phone',
+          content: '/message',
+          externalId: '/event_id',
+        },
       },
     });
     webhookId = String(webhookCreate.data?.connection?.id || '');
@@ -216,15 +241,51 @@ async function main() {
         code: String(webhookCreate.data?.code || webhookCreate.data?.details?.code || ''),
       });
     }
-    evidence.checks.push({ name: 'google-forms-webhook-create', status: 'ready' });
+    evidence.checks.push({ name: 'webhook-create', status: 'ready' });
 
     const webhookList = await requireOk('/api/calltag/v1/connections', session);
     const createdWebhook = (Array.isArray(webhookList.connections) ? webhookList.connections : [])
       .find((item) => String(item?.id || '') === webhookId && String(item?.status || '') === 'active');
-    if (!createdWebhook || String(createdWebhook.sourceName || '') !== 'Google Forms') {
+    if (!createdWebhook || String(createdWebhook.sourceName || '') !== 'CallTag QA') {
       fail('CallTag Webhook readback failed');
     }
     evidence.checks.push({ name: 'webhook-readback', status: 'ready' });
+
+    // The QA session belongs to a dedicated non-master fixture. These synthetic records
+    // are intentionally persisted for audit; NEVER run with a real customer session.
+    const testPhone = '01000000000';
+    const webhookPath = String(webhookCreate.data?.endpointPath || '');
+    if (!/^\/api\/calltag\/v1\/hooks\/ctwh_[A-Za-z0-9_-]+$/.test(webhookPath)) {
+      fail('CallTag QA Webhook endpoint path is invalid');
+    }
+    const webhookPayload = {
+      event_id: `qa-webhook-${stamp}`,
+      name: 'CallTag QA Webhook',
+      phone: testPhone,
+      message: 'Synthetic Webhook mapped lead release check',
+    };
+    const webhookHeaders = { 'Idempotency-Key': `qa-webhook-${stamp}` };
+    const mappedWebhook = await requestJson(webhookPath, {
+      method: 'POST', body: webhookPayload, headers: webhookHeaders,
+    });
+    const webhookEventId = String(mappedWebhook.data?.eventId || '');
+    if (mappedWebhook.response.status !== 202
+        || mappedWebhook.data?.status !== 'MAPPED'
+        || !webhookEventId) {
+      fail('CallTag QA mapped Webhook lead POST failed', { status: mappedWebhook.response.status });
+    }
+    evidence.checks.push({ name: 'mapped-webhook-lead-post', status: 'ready' });
+
+    const webhookDuplicate = await requestJson(webhookPath, {
+      method: 'POST', body: webhookPayload, headers: webhookHeaders,
+    });
+    if (webhookDuplicate.response.status !== 202
+        || String(webhookDuplicate.data?.eventId || '') !== webhookEventId
+        || webhookDuplicate.data?.result !== 'DUPLICATE_IGNORED') {
+      fail('CallTag QA mapped Webhook lead idempotency failed',
+        { status: webhookDuplicate.response.status });
+    }
+    evidence.checks.push({ name: 'mapped-webhook-idempotency', status: 'ready' });
 
     const apiCreate = await requestJson('/api/calltag/v1/keys', {
       method: 'POST',
@@ -250,6 +311,36 @@ async function main() {
     if (!createdKey) fail('CallTag Direct API key readback failed');
     evidence.checks.push({ name: 'direct-api-key-readback', status: 'ready' });
 
+    const apiLead = {
+      event_id: `qa-direct-${stamp}`,
+      source: { type: 'direct_api', name: 'CallTag QA Direct API', provider: 'direct_api' },
+      customer: { name: 'CallTag QA Direct API', phone: testPhone },
+      inquiry: { content: 'Synthetic Direct API lead release check', fields: [] },
+      metadata: { test: true, generatedBy: 'calltag_external_production_smoke' },
+    };
+    const leadHeaders = {
+      Authorization: `Bearer ${apiKey}`,
+      'Idempotency-Key': `qa-direct-${stamp}`,
+    };
+    const apiLeadPost = await requestJson('/api/calltag/v1/leads', {
+      method: 'POST', body: apiLead, headers: leadHeaders,
+    });
+    const directEventId = String(apiLeadPost.data?.eventId || '');
+    if (apiLeadPost.response.status !== 201 || !directEventId) {
+      fail('CallTag QA Direct API lead POST failed', { status: apiLeadPost.response.status });
+    }
+    evidence.checks.push({ name: 'direct-api-lead-post', status: 'ready' });
+
+    const apiLeadDuplicate = await requestJson('/api/calltag/v1/leads', {
+      method: 'POST', body: apiLead, headers: leadHeaders,
+    });
+    if (apiLeadDuplicate.response.status !== 200
+        || String(apiLeadDuplicate.data?.eventId || '') !== directEventId
+        || apiLeadDuplicate.data?.result !== 'DUPLICATE_IGNORED') {
+      fail('CallTag QA Direct API idempotency failed', { status: apiLeadDuplicate.response.status });
+    }
+    evidence.checks.push({ name: 'direct-api-lead-idempotency', status: 'ready' });
+
     await revokeWebhook(session, webhookId);
     webhookId = '';
     await revokeApiKey(session, apiKeyId);
@@ -265,7 +356,7 @@ async function main() {
     }
   }
 
-  evidence.ok = evidence.checks.length === 7
+  evidence.ok = evidence.checks.length === 11
     && evidence.checks.every((check) => check.status === 'ready')
     && !evidence.cleanupError;
 
