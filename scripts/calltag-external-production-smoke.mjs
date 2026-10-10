@@ -225,6 +225,12 @@ async function main() {
         name: webhookName,
         sourceName: 'CallTag QA',
         rawRetentionDays: 1,
+        mapping: {
+          name: '/name',
+          phone: '/phone',
+          content: '/message',
+          externalId: '/event_id',
+        },
       },
     });
     webhookId = String(webhookCreate.data?.connection?.id || '');
@@ -244,6 +250,42 @@ async function main() {
       fail('CallTag Webhook readback failed');
     }
     evidence.checks.push({ name: 'webhook-readback', status: 'ready' });
+
+    // The QA session belongs to a dedicated non-master fixture. These synthetic records
+    // are intentionally persisted for audit; NEVER run with a real customer session.
+    const testPhone = '01000000000';
+    const webhookPath = String(webhookCreate.data?.endpointPath || '');
+    if (!/^\/api\/calltag\/v1\/hooks\/ctwh_[A-Za-z0-9_-]+$/.test(webhookPath)) {
+      fail('CallTag QA Webhook endpoint path is invalid');
+    }
+    const webhookPayload = {
+      event_id: `qa-webhook-${stamp}`,
+      name: 'CallTag QA Webhook',
+      phone: testPhone,
+      message: 'Synthetic Webhook mapped lead release check',
+    };
+    const webhookHeaders = { 'Idempotency-Key': `qa-webhook-${stamp}` };
+    const mappedWebhook = await requestJson(webhookPath, {
+      method: 'POST', body: webhookPayload, headers: webhookHeaders,
+    });
+    const webhookEventId = String(mappedWebhook.data?.eventId || '');
+    if (mappedWebhook.response.status !== 202
+        || mappedWebhook.data?.status !== 'MAPPED'
+        || !webhookEventId) {
+      fail('CallTag QA mapped Webhook lead POST failed', { status: mappedWebhook.response.status });
+    }
+    evidence.checks.push({ name: 'mapped-webhook-lead-post', status: 'ready' });
+
+    const webhookDuplicate = await requestJson(webhookPath, {
+      method: 'POST', body: webhookPayload, headers: webhookHeaders,
+    });
+    if (webhookDuplicate.response.status !== 202
+        || String(webhookDuplicate.data?.eventId || '') !== webhookEventId
+        || webhookDuplicate.data?.result !== 'DUPLICATE_IGNORED') {
+      fail('CallTag QA mapped Webhook lead idempotency failed',
+        { status: webhookDuplicate.response.status });
+    }
+    evidence.checks.push({ name: 'mapped-webhook-idempotency', status: 'ready' });
 
     const apiCreate = await requestJson('/api/calltag/v1/keys', {
       method: 'POST',
@@ -269,6 +311,36 @@ async function main() {
     if (!createdKey) fail('CallTag Direct API key readback failed');
     evidence.checks.push({ name: 'direct-api-key-readback', status: 'ready' });
 
+    const apiLead = {
+      event_id: `qa-direct-${stamp}`,
+      source: { type: 'direct_api', name: 'CallTag QA Direct API', provider: 'direct_api' },
+      customer: { name: 'CallTag QA Direct API', phone: testPhone },
+      inquiry: { content: 'Synthetic Direct API lead release check', fields: [] },
+      metadata: { test: true, generatedBy: 'calltag_external_production_smoke' },
+    };
+    const leadHeaders = {
+      Authorization: `Bearer ${apiKey}`,
+      'Idempotency-Key': `qa-direct-${stamp}`,
+    };
+    const apiLeadPost = await requestJson('/api/calltag/v1/leads', {
+      method: 'POST', body: apiLead, headers: leadHeaders,
+    });
+    const directEventId = String(apiLeadPost.data?.eventId || '');
+    if (apiLeadPost.response.status !== 201 || !directEventId) {
+      fail('CallTag QA Direct API lead POST failed', { status: apiLeadPost.response.status });
+    }
+    evidence.checks.push({ name: 'direct-api-lead-post', status: 'ready' });
+
+    const apiLeadDuplicate = await requestJson('/api/calltag/v1/leads', {
+      method: 'POST', body: apiLead, headers: leadHeaders,
+    });
+    if (apiLeadDuplicate.response.status !== 200
+        || String(apiLeadDuplicate.data?.eventId || '') !== directEventId
+        || apiLeadDuplicate.data?.result !== 'DUPLICATE_IGNORED') {
+      fail('CallTag QA Direct API idempotency failed', { status: apiLeadDuplicate.response.status });
+    }
+    evidence.checks.push({ name: 'direct-api-lead-idempotency', status: 'ready' });
+
     await revokeWebhook(session, webhookId);
     webhookId = '';
     await revokeApiKey(session, apiKeyId);
@@ -284,7 +356,7 @@ async function main() {
     }
   }
 
-  evidence.ok = evidence.checks.length === 7
+  evidence.ok = evidence.checks.length === 11
     && evidence.checks.every((check) => check.status === 'ready')
     && !evidence.cleanupError;
 
