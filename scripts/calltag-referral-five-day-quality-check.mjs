@@ -21,7 +21,7 @@ const checks = {
   'legacy CallTag seven-day referral bonus is absent': !files.policy.includes('CALLTAG_REFERRAL_BONUS_DAYS = 7'),
   'legacy CallTag fourteen-day referral total is absent': !files.policy.includes('CALLTAG_REFERRAL_TOTAL_DAYS = 14'),
   'CallTag referrer no longer receives signup access days': !files.calltagSignupReferral.includes('referral_bonus_days = referral_bonus_days + ?') && !files.policy.includes('CALLTAG_REFERRER_REWARD_DAYS'),
-  'CallTag cash commissions default to 20 percent and can be server controlled': files.commissions.includes('CALLTAG_CASH_COMMISSION_PRODUCTS') && files.commissions.includes('CALLTAG_COMMISSION_RATE_BPS = 2000') && files.commissions.includes('callTagProgram?.commissionRateBps') && !files.commissions.includes('CALLTAG_REFERRAL_TIME_REWARD_ONLY'),
+  'CallTag cash commissions default to 20 percent and can be server controlled': files.commissions.includes('CALLTAG_CASH_COMMISSION_PRODUCTS') && files.commissions.includes('CALLTAG_COMMISSION_RATE_BPS = 2000') && files.commissions.includes('resolveCallTagCommissionRateBps(callTagProgram)') && !files.commissions.includes('CALLTAG_REFERRAL_TIME_REWARD_ONLY'),
   'CallTag referral trial scope is all in one': files.policy.includes("scope: 'all'") && files.calltagSignupReferral.includes("productCode: 'all_monthly'"),
   'billing endpoint scopes CallTag policy by product header': files.entitlements.includes("productClient === 'calltag'") && files.entitlements.includes('resolveCallTagEntitlement'),
   'CallTag app signup validates referral before account creation': files.callRegister.indexOf('validateSignupReferralCode') >= 0 && files.callRegister.indexOf('validateSignupReferralCode') < files.callRegister.indexOf('registerAccount({'),
