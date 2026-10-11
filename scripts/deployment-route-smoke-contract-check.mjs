@@ -8,6 +8,8 @@ const deployScript = await readFile('scripts/deploy-pages.mjs', 'utf8');
 const liveCheck = await readFile('scripts/deployment-live-asset-check.mjs', 'utf8');
 const packageJson = JSON.parse(await readFile('package.json', 'utf8'));
 const qaAll = await readFile('scripts/qa-all.mjs', 'utf8');
+const deployWorkflow = await readFile('.github/workflows/deploy-cloudflare.yml', 'utf8');
+const productionBrowser = await readFile('scripts/production-browser-quality-check.mjs', 'utf8');
 
 const deployCall = "'pages', 'deploy'";
 const liveCheckCall = "'scripts/deployment-live-asset-check.mjs', deploymentUrl";
@@ -49,6 +51,34 @@ assert(liveCheck.includes('routeChecks,'), 'Deployment smoke output must include
 assert(liveCheck.includes('checkedAssetCount'), 'Deployment smoke gate must retain the full asset graph check');
 assert(!/method\s*:\s*['\"](?:POST|PUT|PATCH|DELETE)['\"]/i.test(liveCheck), 'Deployment route smoke gate must remain read-only');
 
+// The deployed browser gate checks rendered legal content, not just a 200 SPA shell.
+for (const required of [
+  'id: pagero_browser_smoke',
+  "if: steps.asset_check.outcome == 'success'",
+  "INLET_PRODUCTION_BROWSER_QA_REQUIRE: '1'",
+  "INLET_PRODUCTION_QA_INCLUDE_AUTHENTICATED: '0'",
+  "INLET_PRODUCTION_QA_INCLUDE_MOCKS: '0'",
+  'npm run browser:production:qa',
+  'pagero-public-browser-',
+  "steps.pagero_browser_smoke.outcome != 'success'",
+]) {
+  assert(deployWorkflow.includes(required), `deployment workflow is missing browser launch gate: ${required}`);
+}
+for (const required of [
+  "name: 'public home desktop'",
+  "name: 'public home mobile'",
+  "name: 'public about route'",
+  "name: 'public contact route'",
+  "name: 'public privacy route'",
+  "name: 'public terms route'",
+  "'개인정보처리방침,수집하는 개인정보 항목,개인정보 수집 목적'",
+  "'이용약관,이용자의 책임,서비스 목적'",
+  "if (testCase.authenticated && !includeAuthenticatedCases) return false",
+  "if (testCase.mocked && !includeMockCases) return false",
+]) {
+  assert(productionBrowser.includes(required), `production browser gate must verify actual public content: ${required}`);
+}
+
 assert(packageJson.scripts?.['deployment:smoke:contract:qa'] === 'node scripts/deployment-route-smoke-contract-check.mjs', 'package script deployment:smoke:contract:qa is missing');
 assert(qaAll.includes("['deployment:smoke:contract:qa', ['scripts/deployment-route-smoke-contract-check.mjs']]"), 'qa:all must enforce the deployment route smoke contract');
 
@@ -61,4 +91,6 @@ console.log(JSON.stringify({
   functionsRoutes: ['/api/admin/summary', '/api/pages/:missingSlug?public=1'],
   readOnly: true,
   deployBlocking: true,
+  realBrowserProductionGate: true,
+  renderedLegalContent: true,
 }, null, 2));
