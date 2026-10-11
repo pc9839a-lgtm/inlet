@@ -8,6 +8,7 @@ const rendererCss = await readFile('src/preview/LandingRenderer.css', 'utf8');
 const parityCss = await readFile('src/styles/preview-runtime-parity.css', 'utf8');
 const fixedUiCss = await readFile('src/styles/preview-fixed-ui-contract.css', 'utf8');
 const workspacePreview = await readFile('src/screens/workspace/WorkspacePreviewPane.jsx', 'utf8');
+const workspaceScreen = await readFile('src/screens/WorkspaceEditorScreen.jsx', 'utf8');
 const app = await readFile('src/App.jsx', 'utf8');
 const baseCss = await readFile('src/styles/base.css', 'utf8');
 const workspacePreviewCss = await readFile('src/screens/workspace/WorkspacePreviewPane.css', 'utf8');
@@ -25,6 +26,9 @@ assert(fixedUiImportIndex === lastImportIndex, 'Fixed UI collision contract must
 assert(workspacePreview.includes("import PreviewRenderer from '../../preview/LandingRenderer.jsx'"), 'Editor preview must use LandingRenderer');
 assert(app.includes("import PreviewRenderer from './preview/LandingRenderer.jsx'"), 'Public landing route must use LandingRenderer');
 assert(workspacePreview.includes('className="phone-frame"'), 'Editor preview must keep the phone-frame runtime host');
+assert(!workspacePreview.includes('showConversionCockpit') && !workspacePreview.includes('onOpenInbox') && !workspacePreview.includes('onOpenStats') && !workspaceScreen.includes('showConversionCockpit='), 'Retired preview management toolbar props must not be forwarded');
+assert(!workspacePreviewCss.includes('.preview-top') && !workspacePreviewCss.includes('100dvh - 144px') && !workspacePreviewCss.includes('100dvh - 110px'), 'Removed preview chrome must not leave CSS or reserved vertical space');
+assert(workspacePreviewCss.includes('height: calc(100dvh - 56px) !important') && workspacePreviewCss.includes('min-height: 0 !important'), 'Non-edit preview should use all available viewport height without a hidden header reserve');
 assert(app.includes('className="public-landing-viewport"'), 'Public landing route must keep the public runtime host');
 assert(baseCss.includes('*{box-sizing:border-box}'), 'Runtime width parity depends on border-box sizing');
 assert(workspacePreview.includes("import './WorkspacePreviewPane.css';"), 'WorkspacePreviewPane must load its component-owned preview CSS');
