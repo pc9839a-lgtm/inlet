@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { sendSesEmail } from '../functions/api/_ses.js';
+import { enforceFreeEmailAlertRecipient, isFreePlan } from '../functions/api/pages/[slug].js';
 import {
   buildLeadDeliveryJobs,
   failedDeliveryProviders,
@@ -116,6 +117,25 @@ const storedDeliveryPage = normalizeDeliveryPage(
   { slug: 'public-page' },
 );
 assert(pages.includes('function enforceFreeEmailAlertRecipient') && pages.includes('lockedToAccount: true') && pages.includes('identity?.email'), 'hosted page saves must enforce free plan email alert recipient from the signed account');
+for (const paid of ['classic', 'pro', 'paid', 'premium', 'business', 'agency', 'enterprise', ' CLASSIC ']) {
+  assert(isFreePlan(paid) === false, `paid tier ${paid} must not use free-plan email restrictions`);
+}
+for (const free of ['free', '', 'trial']) {
+  assert(isFreePlan(free) === true, `free tier ${free} must keep account-locked alert recipient`);
+}
+const alertPage = {
+  plan: 'classic',
+  integrations: { email: { enabled: true, to: 'team@example.test', consult: true } },
+};
+const signedOwner = { email: 'owner@example.test' };
+const classicAlert = enforceFreeEmailAlertRecipient(alertPage, {}, signedOwner);
+assert(classicAlert === alertPage && classicAlert.integrations.email.to === 'team@example.test', 'classic paid pages must retain their configured alert recipient');
+const proAlert = enforceFreeEmailAlertRecipient({ ...alertPage, plan: 'pro' }, {}, signedOwner);
+assert(proAlert.integrations.email.to === 'team@example.test', 'pro paid pages must retain their configured alert recipient');
+const freeAlert = enforceFreeEmailAlertRecipient({ ...alertPage, plan: 'free' }, {}, signedOwner);
+assert(freeAlert.integrations.email.to === 'owner@example.test' && freeAlert.integrations.email.lockedToAccount === true, 'free pages must use the signed account email');
+assert(alertPage.integrations.email.to === 'team@example.test', 'free-plan restrictions must never mutate a shared page object');
+
 assert(pages.includes('async function fallbackFreeEmailAlertRecipient') && pages.includes('SELECT email FROM accounts WHERE id = ? LIMIT 1') && pages.includes('getD1ProjectById'), 'hosted page saves must fallback to project owner email when the session email is unavailable');
 assert(storedDeliveryPage.integrations.email.enabled === true, 'public lead payload must not disable stored email alerts');
 assert(storedDeliveryPage.integrations.email.to === 'pc9839a@naver.com', 'stored email alert recipient should remain authoritative');
