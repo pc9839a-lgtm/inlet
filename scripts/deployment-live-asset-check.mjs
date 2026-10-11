@@ -84,6 +84,7 @@ async function checkHtmlRoute(baseUrl, pathname, label) {
   const type = String(response.headers.get('content-type') || '').toLowerCase();
   const cache = String(response.headers.get('cache-control') || '').toLowerCase();
   const html = await response.text();
+  const robots = String(response.headers.get('x-robots-tag') || '').toLowerCase();
 
   assert(type.includes('text/html'), `${label} must return HTML, received ${type || 'unknown content type'}`);
   assert(htmlCacheIsSafe(cache), `${label} HTML cache policy is unsafe: ${cache || 'missing'}`);
@@ -95,6 +96,7 @@ async function checkHtmlRoute(baseUrl, pathname, label) {
     status: response.status,
     type,
     cache,
+    robots,
     finalUrl: response.url,
     html,
   };
@@ -128,6 +130,27 @@ async function checkJsonRoute(baseUrl, pathname, label, expectedStatuses, params
   };
 }
 
+
+async function checkCrawlerFile(baseUrl, pathname, label, expectedType, requiredTokens) {
+  const url = smokeUrl(baseUrl, pathname);
+  const response = await fetchWithRetry(url);
+  const type = String(response.headers.get('content-type') || '').toLowerCase();
+  const content = await response.text();
+
+  assert(type.includes(expectedType), `${label} must return ${expectedType}, received ${type || 'unknown content type'}`);
+  assert(content.trim(), `${label} returned an empty response`);
+  assert(!/<(?:!doctype|html|head|body)\\b/i.test(content), `${label} returned the SPA HTML fallback`);
+  for (const token of requiredTokens) {
+    assert(content.includes(token), `${label} is missing required token ${token}`);
+  }
+  return { label, path: pathname, status: response.status, type };
+}
+
+function assertPrivateRouteNoindex(route) {
+  const policy = String(route.robots || '').toLowerCase();
+  assert(/(?:^|,)\\s*noindex\\b/.test(policy), `${route.label} must send X-Robots-Tag: noindex (received: ${policy || 'missing'})`);
+}
+
 const baseUrl = normalizeBaseUrl(baseInput);
 const routeChecks = [];
 const htmlRoutes = [];
@@ -137,12 +160,33 @@ routeChecks.push({ label: root.label, path: root.path, status: root.status, type
 
 for (const [pathname, label] of [
   ['/login', 'Login route'],
+  ['/signup', 'Signup route'],
   ['/about', 'Static information route'],
+  ['/contact', 'Contact route'],
+  ['/privacy', 'Privacy policy route'],
+  ['/terms', 'Terms of service route'],
+  ['/app', 'Authenticated workspace shell'],
 ]) {
   const result = await checkHtmlRoute(baseUrl, pathname, label);
+  if (['/login', '/signup', '/app'].includes(pathname)) assertPrivateRouteNoindex(result);
   htmlRoutes.push(result);
-  routeChecks.push({ label: result.label, path: result.path, status: result.status, type: result.type, cache: result.cache, finalUrl: result.finalUrl });
+  routeChecks.push({ label: result.label, path: result.path, status: result.status, type: result.type, cache: result.cache, robots: result.robots, finalUrl: result.finalUrl });
 }
+
+routeChecks.push(await checkCrawlerFile(
+  baseUrl,
+  '/robots.txt',
+  'Public crawler policy',
+  'text/plain',
+  ['User-agent: *', 'Disallow: /app', 'Disallow: /api', 'Sitemap: https://pagero.kr/sitemap.xml'],
+));
+routeChecks.push(await checkCrawlerFile(
+  baseUrl,
+  '/sitemap.xml',
+  'Public sitemap',
+  'xml',
+  ['<urlset', '<loc>https://pagero.kr/</loc>', '<loc>https://pagero.kr/privacy</loc>', '<loc>https://pagero.kr/terms</loc>'],
+));
 
 routeChecks.push(await checkJsonRoute(
   baseUrl,
