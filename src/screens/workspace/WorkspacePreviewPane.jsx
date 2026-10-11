@@ -3,17 +3,12 @@ import './WorkspacePreviewPane.css';
 import PreviewRenderer from '../../preview/LandingRenderer.jsx';
 
 export function WorkspacePreviewPane({
-  page,
-  previewUrl,
   previewPage,
   leads,
   addLead,
   track,
   selectedBlockId,
   onSelectPreviewBlock,
-  showConversionCockpit = false,
-  onOpenInbox,
-  onOpenStats,
 }) {
   const previewRef = useRef(null);
 
