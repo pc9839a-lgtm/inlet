@@ -790,7 +790,7 @@ function assertDesktop(metrics) {
   assertInsideViewport(metrics.workPanel, metrics.innerWidth, 'desktop work panel');
   assertInsideViewport(metrics.topTabs, metrics.innerWidth, 'desktop main tabs');
   assertInsideViewport(metrics.editTabs, metrics.innerWidth, 'desktop edit subsection tabs');
-  assertInsideViewport(metrics.cockpit, metrics.innerWidth, 'desktop conversion cockpit');
+  assert(!metrics.cockpit, 'desktop preview must not expose the removed conversion cockpit');
   assert(metrics.left?.right <= metrics.preview?.left + 3, `desktop editor and preview overlap: ${JSON.stringify({ left: metrics.left, preview: metrics.preview })}`);
   assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length >= 2, `desktop shell must keep two grid columns: ${metrics.shellGridColumns}`);
   assert(metrics.left?.width >= 575, `desktop editor pane is too narrow: ${metrics.left?.width}px`);
@@ -811,7 +811,7 @@ function assertNarrowDesktop(metrics, width) {
   assertInsideViewport(metrics.editLayout, width, 'narrow desktop edit layout');
   assertInsideViewport(metrics.topTabs, width, 'narrow desktop main tabs');
   assertInsideViewport(metrics.editTabs, width, 'narrow desktop edit subsection tabs');
-  assertInsideViewport(metrics.cockpit, width, 'narrow desktop conversion cockpit');
+  assert(!metrics.cockpit, 'narrow desktop preview must not expose the removed conversion cockpit');
   assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === 1, `narrow desktop shell must stack into one grid column: ${metrics.shellGridColumns}`);
   assert(metrics.workPanel?.width >= width - 4, `narrow desktop work panel did not expand: ${metrics.workPanel?.width}px of ${width}px`);
   assert(metrics.editLayout?.width >= width - 48, `narrow desktop edit layout is still artificially capped: ${metrics.editLayout?.width}px of ${width}px`);
