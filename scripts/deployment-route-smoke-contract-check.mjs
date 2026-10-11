@@ -71,7 +71,7 @@ for (const required of [
   "name: 'public contact route'",
   "name: 'public privacy route'",
   "name: 'public terms route'",
-  "'수집하는 개인정보 항목'",
+  "'개인정보처리방침,수집하는 개인정보 항목,개인정보 수집 목적'",
   "'이용약관,이용자의 책임,서비스 목적'",
   "if (testCase.authenticated && !includeAuthenticatedCases) return false",
   "if (testCase.mocked && !includeMockCases) return false",
