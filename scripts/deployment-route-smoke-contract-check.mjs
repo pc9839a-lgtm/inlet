@@ -29,7 +29,7 @@ for (const token of [
   "'Public crawler policy'",
   "'Public sitemap'",
   "assertPrivateRouteNoindex(result)",
-  "assert(!/<(?:!doctype|html|head|body)\\\\b/i.test(content)",
+  "checkCrawlerFile(baseUrl, pathname, label, expectedType, requiredTokens)",
   "'/api/admin/summary'",
   "'Protected admin Functions route'",
   "'Public page Functions route'",
