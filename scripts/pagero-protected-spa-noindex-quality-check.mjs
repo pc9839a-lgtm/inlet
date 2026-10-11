@@ -16,7 +16,7 @@ async function testRoute(path, { expectNoindex, expectShell = true, expectReset 
     env: {
       ASSETS: {
         async fetch(assetRequest) {
-          const assetUrl = new URL(assetRequest.url);
+          const assetUrl = assetRequest instanceof URL ? assetRequest : new URL(assetRequest.url);
           assert(assetUrl.pathname === '/index.html', 'protected SPA routes must reuse the canonical index.html');
           assetFetchCount += 1;
           return new Response(shellHtml, {
