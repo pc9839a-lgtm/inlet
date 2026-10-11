@@ -82,17 +82,12 @@ export default function WorkspaceEditorScreen({
       />
 
       {previewWorkspace && <WorkspacePreviewPane
-        page={page}
-        previewUrl={previewUrl}
         previewPage={previewPage}
         leads={leads}
         addLead={addLead}
         track={track}
         selectedBlockId={selectedBlockId}
         onSelectPreviewBlock={onSelectPreviewBlock}
-        showConversionCockpit={editWorkspace && canUseBuilder}
-        onOpenInbox={allowedTabs.includes('inbox') ? () => changeTab('inbox') : undefined}
-        onOpenStats={allowedTabs.includes('stats') ? () => changeTab('stats') : undefined}
       />}
     </div>
   );
