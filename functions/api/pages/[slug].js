@@ -52,9 +52,9 @@ function methodNotAllowedResponse(request, env) {
   return jsonResponse(request, env, 405, { ok: false, error: '허용되지 않는 요청 방식입니다.', message: '허용되지 않는 요청 방식입니다.' }, METHODS);
 }
 
-function isFreePlan(value = '') {
+export function isFreePlan(value = '') {
   const plan = String(value || 'free').trim().toLowerCase();
-  return !['paid', 'pro', 'premium', 'business', 'agency', 'enterprise'].includes(plan);
+  return !['classic', 'paid', 'pro', 'premium', 'business', 'agency', 'enterprise'].includes(plan);
 }
 
 function normalizeEmail(value = '') {
@@ -114,7 +114,7 @@ async function fallbackFreeEmailAlertRecipient(db, project = {}) {
   return normalizeEmail(account?.email || '');
 }
 
-function enforceFreeEmailAlertRecipient(page = {}, project = {}, identity = null, fallbackEmail = '') {
+export function enforceFreeEmailAlertRecipient(page = {}, project = {}, identity = null, fallbackEmail = '') {
   const email = normalizeEmail(identity?.email || fallbackEmail);
   if (!email) return page;
   const plan = page.plan || page.billingPlan || page.billing?.plan || project.plan || project.billingPlan || 'free';
