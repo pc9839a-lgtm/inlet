@@ -787,6 +787,7 @@ function assertDesktop(metrics) {
   assertInsideViewport(metrics.shell, metrics.innerWidth, 'desktop builder shell');
   assertInsideViewport(metrics.left, metrics.innerWidth, 'desktop left workspace');
   assertInsideViewport(metrics.preview, metrics.innerWidth, 'desktop preview workspace');
+  assert(metrics.frame?.top <= (metrics.preview?.top || 0) + 36, 'desktop phone preview must start near the top without a management bar gap');
   assertInsideViewport(metrics.workPanel, metrics.innerWidth, 'desktop work panel');
   assertInsideViewport(metrics.topTabs, metrics.innerWidth, 'desktop main tabs');
   assertInsideViewport(metrics.editTabs, metrics.innerWidth, 'desktop edit subsection tabs');
@@ -1502,7 +1503,7 @@ async function run() {
       responsiveMatrixScreenshots: desktopMatrix.length + zoom200Matrix.length + mobileViewports.length + mobileKeyboardViewports.length + 2,
       responsiveGeometryLocked: true,
       zoom200P93: ['desktop-builder-preserved', 'no-page-horizontal-scroll', 'add-dock-no-fixed-overlap', 'settings-single-column-reflow'],
-      conversionCockpit: true,
+      conversionCockpit: false,
       publishChecklist: true,
       keyboardOnlyP91: ['Enter', 'Space', 'Tab', 'Shift+Tab', 'Escape'],
       focusManagementP92: ['modal-trap', 'modal-return', 'workspace-transition-recovery'],

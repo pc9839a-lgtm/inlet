@@ -14,16 +14,11 @@ html body #root .builder-shell .preview-workspace .preview-sticky {
   gap: 8px;
 }
 
-html body #root .builder-shell .preview-workspace .preview-top {
-  width: 100%;
-  margin: 0;
-}
-
 html body #root .builder-shell .preview-workspace .phone-frame {
   width: 430px;
   max-width: 100%;
-  height: calc(100dvh - 110px);
-  min-height: 620px;
+  height: calc(100dvh - 36px);
+  min-height: 0;
   max-height: 820px;
   margin: 0 auto;
   overflow: hidden;
@@ -103,16 +98,11 @@ body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .preview-stick
   gap: 12px !important;
 }
 
-body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .preview-top {
-  width: 100% !important;
-  flex: 0 0 auto !important;
-}
-
 body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .phone-frame {
   width: min(460px, 100%) !important;
   max-width: 460px !important;
-  height: calc(100dvh - 144px) !important;
-  min-height: 680px !important;
+  height: calc(100dvh - 56px) !important;
+  min-height: 0 !important;
   max-height: 820px !important;
   margin: 0 auto !important;
   flex: 1 1 auto !important;
