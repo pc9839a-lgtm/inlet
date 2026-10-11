@@ -139,7 +139,7 @@ async function checkCrawlerFile(baseUrl, pathname, label, expectedType, required
 
   assert(type.includes(expectedType), `${label} must return ${expectedType}, received ${type || 'unknown content type'}`);
   assert(content.trim(), `${label} returned an empty response`);
-  assert(!/<(?:!doctype|html|head|body)\\b/i.test(content), `${label} returned the SPA HTML fallback`);
+  assert(!/<(?:!doctype|html|head|body)\b/i.test(content), `${label} returned the SPA HTML fallback`);
   for (const token of requiredTokens) {
     assert(content.includes(token), `${label} is missing required token ${token}`);
   }
@@ -148,7 +148,7 @@ async function checkCrawlerFile(baseUrl, pathname, label, expectedType, required
 
 function assertPrivateRouteNoindex(route) {
   const policy = String(route.robots || '').toLowerCase();
-  assert(/(?:^|,)\\s*noindex\\b/.test(policy), `${route.label} must send X-Robots-Tag: noindex (received: ${policy || 'missing'})`);
+  assert(/(?:^|,)\s*noindex\b/.test(policy), `${route.label} must send X-Robots-Tag: noindex (received: ${policy || 'missing'})`);
 }
 
 const baseUrl = normalizeBaseUrl(baseInput);
