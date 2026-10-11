@@ -907,47 +907,21 @@ async function run() {
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes('저장 전 히어로 제목')`, 'initial editor preview');
     assert(apiState.pageLoadCount >= 1, 'selected page was not loaded from the page API');
 
-    await waitForBrowser(client, `!!document.querySelector('.conversion-cockpit [data-testid="conversion-test-link"]')`, 'conversion cockpit');
-    const conversionCockpitState = await evaluate(client, `(() => {
-      const cockpit = document.querySelector('.conversion-cockpit');
-      const link = cockpit?.querySelector('[data-testid="conversion-test-link"]');
-      if (!cockpit || !link) return null;
-      const url = new URL(link.href);
-      return {
-        text: cockpit.innerText || '',
-        test: url.searchParams.get('pagero_test'),
-        utmSource: url.searchParams.get('utm_source'),
-        utmMedium: url.searchParams.get('utm_medium'),
-        utmCampaign: url.searchParams.get('utm_campaign'),
-        hash: url.hash,
-      };
-    })()`);
-    assert(conversionCockpitState, 'conversion cockpit state was not resolved');
-    assert(conversionCockpitState.text.includes('문의') && conversionCockpitState.text.includes('전달') && conversionCockpitState.text.includes('추적') && conversionCockpitState.text.includes('실문의'), `conversion cockpit status is incomplete: ${JSON.stringify(conversionCockpitState)}`);
+    // The editor preview should contain the phone itself, without the redundant
+    // canvas URL header or the inquiry/publish control strip above it.
+    const previewManagementUi = await evaluate(client, `(() => ({
+      canvasHeading: !!document.querySelector('.preview-top'),
+      conversionCockpit: !!document.querySelector('.conversion-cockpit'),
+      publishChecklist: !!document.querySelector('.publish-checklist'),
+      frame: !!document.querySelector('.phone-frame'),
+    }))()`);
     assert(
-      conversionCockpitState.test === '1'
-        && conversionCockpitState.utmSource === 'pagero_test'
-        && conversionCockpitState.utmMedium === 'editor'
-        && conversionCockpitState.utmCampaign === 'conversion_test'
-        && conversionCockpitState.hash === '#block-editor-form',
-      `editor test inquiry URL is not isolated: ${JSON.stringify(conversionCockpitState)}`,
+      previewManagementUi.frame
+        && !previewManagementUi.canvasHeading
+        && !previewManagementUi.conversionCockpit
+        && !previewManagementUi.publishChecklist,
+      `editor preview must not render the removed management toolbar: ${JSON.stringify(previewManagementUi)}`,
     );
-
-    const publishChecklistState = await evaluate(client, `(() => {
-      const checklist = document.querySelector('.publish-checklist');
-      if (!checklist) return null;
-      return {
-        summary: checklist.querySelector('summary')?.innerText || '',
-        text: checklist.textContent || '',
-        items: [...checklist.querySelectorAll('.publish-checklist-popover > span')].map((item) => item.textContent.trim()),
-      };
-    })()`);
-    assert(publishChecklistState, 'E4 publish checklist was not rendered');
-    assert(publishChecklistState.summary.includes('발행'), `publish checklist summary is missing: ${JSON.stringify(publishChecklistState)}`);
-    for (const label of ['브랜드', '핵심 문구', '문의 행동', '문의 항목', '연락처/사업자', '공개 URL']) {
-      assert(publishChecklistState.text.includes(label), `publish checklist item missing: ${label}`);
-    }
-    assert(publishChecklistState.items.length === 6, `publish checklist must expose six checks: ${JSON.stringify(publishChecklistState)}`);
 
     const editSectionTabStyle = await evaluate(client, `(() => {
       const tabs = document.querySelector('.edit-section-tabs[data-pagero-ui="edit-section-tabs-v2"]');
@@ -982,16 +956,16 @@ async function run() {
     assert(editSectionTabStyle.activeHeight === 32, `active edit section tab must be 32px tall, got ${editSectionTabStyle.activeHeight}px`);
     assert(editSectionTabStyle.inactiveBackground === 'rgba(0, 0, 0, 0)', `inactive edit section tab must stay transparent, got ${editSectionTabStyle.inactiveBackground}`);
 
-    // P9-2: a tab transition triggered from content that disappears must recover focus.
+    // Inbox remains accessible through the persistent workspace tab,
+    // and keyboard focus must recover after the workspace transition.
     const inboxTransitionFocused = await evaluate(client, `(() => {
-      const button = [...document.querySelectorAll('.conversion-cockpit-actions button')]
-        .find((item) => item.textContent.trim() === '접수함');
+      const button = document.querySelector('#workspace-tab-inbox');
       if (!button) return false;
       button.focus();
       return document.activeElement === button;
     })()`);
-    assert(inboxTransitionFocused, 'conversion cockpit inbox trigger was not focusable');
-    await evaluate(client, `[...document.querySelectorAll('.conversion-cockpit-actions button')].find((item) => item.textContent.trim() === '접수함')?.click(); true`);
+    assert(inboxTransitionFocused, 'inbox workspace tab was not focusable');
+    await clickSelector(client, '#workspace-tab-inbox');
     await waitForBrowser(client, `document.querySelector('#workspace-tab-inbox')?.getAttribute('aria-selected') === 'true'`, 'inbox workspace transition');
     await waitForBrowser(client, `document.activeElement?.id === 'workspace-tab-inbox'`, 'focus recovery after inbox transition');
 
