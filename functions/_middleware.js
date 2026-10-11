@@ -49,10 +49,11 @@ function applyNoStoreHeaders(headers, { clearSiteCache = false } = {}) {
   return headers;
 }
 
-function noStoreHtmlResponse(response, { clearSiteCache = false, runtimeVersion = 'edge-reset-v2' } = {}) {
+function noStoreHtmlResponse(response, { clearSiteCache = false, runtimeVersion = 'edge-reset-v2', noindex = false } = {}) {
   const headers = applyNoStoreHeaders(new Headers(response.headers), { clearSiteCache });
   headers.set('Content-Type', 'text/html; charset=utf-8');
   headers.set('X-Pagero-Runtime-Shell', runtimeVersion);
+  if (noindex) headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
   headers.delete('Content-Length');
   return new Response(response.body, {
     status: response.status,
@@ -119,6 +120,7 @@ function runtimeResetResponse(url) {
   const headers = applyNoStoreHeaders(new Headers(), { clearSiteCache: true });
   headers.set('Content-Type', 'text/html; charset=utf-8');
   headers.set('X-Pagero-Runtime-Shell', 'edge-reset-page-v2');
+  headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
   return new Response(runtimeResetHtml(next), { status: 200, headers });
 }
 
@@ -188,6 +190,7 @@ async function handlePageroSpaShell(context, url) {
   const response = await context.env.ASSETS.fetch(assetUrl);
   return noStoreHtmlResponse(response, {
     clearSiteCache: recovery,
+    noindex: protectedRoute,
     runtimeVersion: recovery ? 'edge-hard-reset-v2' : 'edge-shell-v2',
   });
 }
