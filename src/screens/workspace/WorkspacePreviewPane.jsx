@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react';
-import ConversionCockpit from './ConversionCockpit.jsx';
 import './WorkspacePreviewPane.css';
 import PreviewRenderer from '../../preview/LandingRenderer.jsx';
 
@@ -31,22 +30,6 @@ export function WorkspacePreviewPane({
   return (
     <main className="preview-workspace" ref={previewRef}>
       <div className="preview-sticky">
-        <div className="preview-top">
-          <div className="preview-title">
-            <span>페이지 캔버스</span>
-            <strong>/{page.slug}</strong>
-          </div>
-          <a className="preview-link" href={previewUrl} target="_blank" rel="noreferrer">{previewUrl}</a>
-        </div>
-        {showConversionCockpit ? (
-          <ConversionCockpit
-            page={page}
-            leads={leads}
-            previewUrl={previewUrl}
-            onOpenInbox={onOpenInbox}
-            onOpenStats={onOpenStats}
-          />
-        ) : null}
         <div className="phone-frame">
           <PreviewRenderer
             page={previewPage}
