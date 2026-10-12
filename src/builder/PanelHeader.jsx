@@ -96,11 +96,11 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
           </>
         )}
         {backupEnabled && historyEnabled && (
-          <details className="panel-backup-action" ref={backupMenuRef}>
-            <summary aria-label="편집본 백업 및 복원">백업</summary>
-            <div className="panel-backup-dropdown">
-              <button type="button" onClick={() => { closeBackupMenu(); onBackup?.(); }}>파일 저장</button>
-              <button type="button" onClick={selectBackupFile}>파일 복원</button>
+          <details className="panel-backup-action" ref={backupMenuRef} style={{ position: 'relative', flex: '0 0 auto' }}>
+            <summary aria-label="편집본 백업 및 복원" style={{ display: 'flex', alignItems: 'center', minHeight: 36, padding: '0 10px', border: '1px solid var(--product-line)', borderRadius: 'var(--product-radius-control)', background: 'var(--product-panel)', color: '#30353d', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>백업</summary>
+            <div className="panel-backup-dropdown" style={{ position: 'absolute', top: 'calc(100% + 5px)', right: 0, zIndex: 60, display: 'grid', gap: 4, minWidth: 118, padding: 6, border: '1px solid var(--product-line)', borderRadius: 'var(--product-radius-control)', background: 'var(--product-panel)', boxShadow: '0 8px 24px rgba(0,0,0,.14)' }}>
+              <button className="ghost-btn" type="button" onClick={() => { closeBackupMenu(); onBackup?.(); }}>파일 저장</button>
+              <button className="ghost-btn" type="button" onClick={selectBackupFile}>파일 복원</button>
             </div>
           </details>
         )}
