@@ -6,7 +6,7 @@ import { clearPageDraft } from './pageDraftStore.js';
 import { inactivePageSaveMessage, isPageOperationTargetActive, pageOperationIdentity } from './pageOperationIdentity.js';
 import { recoverCommittedPageSave } from './pageSaveReplayRecovery.js';
 import { attachExistingPageIdentity, pageSaveMode } from './savePageIdentity.js';
-import { nextTrailingSaveRequest } from './saveQueuePolicy.js';
+import { nextTrailingSaveRequest, resumeExplicitSaveForActivePage } from './saveQueuePolicy.js';
 import {
   SAVE_BLOCKED_FEEDBACK,
   STYLE_CONFIRM_FEEDBACK,
@@ -45,9 +45,13 @@ export function usePageSaveAction({
 
   const saveNow = async (pageOverride = null) => {
     if (saveInFlightRef.current) {
+      const queuedPage = pageOverride != null
+        ? { ...(latestPageRef.current || page), ...pageOverride }
+        : (latestPageRef.current || page);
       queuedSaveRequestRef.current = {
         hasOverride: pageOverride != null,
         pageOverride,
+        targetIdentity: pageOperationIdentity(queuedPage),
       };
       markSaveStatus('warning', '저장 대기', '현재 저장이 끝나면 최신 수정분을 이어서 저장합니다.');
       return saveInFlightRef.current;
@@ -67,6 +71,19 @@ export function usePageSaveAction({
         const automaticRequest = finalResult?.pendingChanges
           ? (finalResult.page || latestPageRef.current || null)
           : null;
+        // Do not discard a save explicitly requested on page B while page A
+        // was in flight. Only B's own still-active request may resume.
+        const resumedRequest = resumeExplicitSaveForActivePage({
+          result: finalResult,
+          queuedTargetIdentity: queued?.targetIdentity || '',
+          activeTargetIdentity: pageOperationIdentity(latestPageRef.current || page),
+          queuedRequest,
+        });
+        if (resumedRequest) {
+          markSaveStatus('warning', '추가 수정 저장 중', '현재 페이지의 저장 요청을 이어서 처리합니다.');
+          request = resumedRequest;
+          continue;
+        }
         const next = nextTrailingSaveRequest({
           result: finalResult,
           queued: !!queued,
