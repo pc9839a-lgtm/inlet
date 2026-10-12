@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { isServerPageMode } from '../config/runtimeConfig.js';
+import { PAGE_DRAFTS_KEY } from '../config/storageKeys.js';
 import { fetchServerPage } from '../lib/pageRepository.js';
 import { normalizePageForSave } from '../lib/pageModel.js';
 import { projectContext } from '../lib/projectContext.js';
@@ -11,6 +12,9 @@ import {
 } from './pageDraftStore.js';
 
 const REMOTE_CHECK_DEBOUNCE_MS = 1200;
+// A focused editor can stay open for hours without a focus/visibility event.
+// Keep the background read bounded; hidden tabs never poll.
+export const REMOTE_VISIBLE_POLL_MS = 45000;
 
 function pageUpdatedAt(page = {}) {
   return String(page.updatedAt || page.savedAt || page.createdAt || '').trim();
@@ -36,6 +40,16 @@ export function remotePageFreshnessDecision({ baselinePage, currentPage, serverP
   if (serverSignature === currentSignature) return { action: 'adopt-server', reason: 'same-content-newer-server' };
   if (currentSignature !== baselineSignature) return { action: 'preserve-local', reason: 'local-and-server-diverged' };
   return { action: 'adopt-server', reason: 'clean-local-server-advanced' };
+}
+
+// An independent tab removes its recovery draft after a successful publish.
+// The storage event does not carry trusted page data: it only prompts a fresh
+// authenticated server read. The interval remains the fallback if no draft key
+// existed, or the save happened on another browser/device.
+export function isRemoteDraftClearEventForPage(event, page, authUser) {
+  if (!event || event.newValue !== null || !event.key || !page) return false;
+  const identity = pageDraftIdentity(page, authUser);
+  return String(event.key).startsWith(`${PAGE_DRAFTS_KEY}::entry::${identity}::`);
 }
 
 export function usePageRemoteFreshness({
@@ -84,6 +98,10 @@ export function usePageRemoteFreshness({
         const normalizedServerPage = normalizePageForSave({ ...serverPage, __accountProjectAccess: true });
         const activePage = normalizePageForSave(latestPageRef.current || page || {});
         if (pageDraftIdentity(activePage, authUser) !== identity) return;
+        // A local publish may have updated the page while this GET was in
+        // flight. Never apply the old response over its newer revision.
+        if (baselineRef.current !== baseline
+          || pageVersionKey(activePage) !== pageVersionKey(currentPage)) return;
 
         const decision = remotePageFreshnessDecision({
           baselinePage: baseline.page,
@@ -132,10 +150,22 @@ export function usePageRemoteFreshness({
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') checkRemoteFreshness();
     };
+    const handleDraftStorage = (event) => {
+      if (document.visibilityState !== 'visible') return;
+      if (!isRemoteDraftClearEventForPage(event, latestPageRef.current || page, authUser)) return;
+      checkRemoteFreshness();
+    };
+    const checkWhileVisible = () => {
+      if (document.visibilityState === 'visible') checkRemoteFreshness();
+    };
+    const pollTimer = window.setInterval(checkWhileVisible, REMOTE_VISIBLE_POLL_MS);
     window.addEventListener('focus', checkRemoteFreshness);
+    window.addEventListener('storage', handleDraftStorage);
     document.addEventListener('visibilitychange', handleVisibility);
     return () => {
+      window.clearInterval(pollTimer);
       window.removeEventListener('focus', checkRemoteFreshness);
+      window.removeEventListener('storage', handleDraftStorage);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [authUser, latestPageRef, page.id, page.slug, page.projectId, page.ownerId, publicLandingSlug, setPage]);
