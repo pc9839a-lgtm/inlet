@@ -33,6 +33,32 @@ function preserveRecoveryDraft(page, authUser) {
   });
 }
 
+/**
+ * Preserve the page whose request failed after the user navigated away.
+ * Never overwrite a draft saved later by that old page's pending-edit flush.
+ * Do not write the current visible page as a substitute for the failed one.
+ */
+export function preserveInactiveFailedSaveDraft({
+  page,
+  authUser,
+  saveStartedAt = 0,
+  storage,
+  sourceId,
+} = {}) {
+  if (!page) return { ok: false, reason: 'unavailable', draft: null };
+  const existing = readPageDraft({ page, authUser, storage, sourceId });
+  if (existing?.page && Number(existing.editedAt || 0) >= Number(saveStartedAt || 0)) {
+    return { ok: true, reason: 'newer-existing-draft', draft: existing, preservedExisting: true };
+  }
+  return savePageDraftResult({
+    page,
+    authUser,
+    storage,
+    sourceId,
+    interactionConfirmed: true,
+  });
+}
+
 async function compactRecoveryPage(page) {
   if (!page) return page;
   try {
