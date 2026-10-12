@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
-import { nextTrailingSaveRequest } from '../src/runtime/saveQueuePolicy.js';
+import { nextTrailingSaveRequest, resumeExplicitSaveForActivePage } from '../src/runtime/saveQueuePolicy.js';
+import { pageOperationIdentity } from '../src/runtime/pageOperationIdentity.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -20,6 +21,48 @@ const inactive = nextTrailingSaveRequest({
   automaticRequest: { title: 'automatic' },
 });
 assert(!inactive.continue, `inactive page saves must stop the queue: ${JSON.stringify(inactive)}`);
+
+const pageA = { id: 'page-A', slug: 'old-a', ownerId: 'owner', projectId: 'project' };
+const pageB = { id: 'page-B', slug: 'new-b', ownerId: 'owner', projectId: 'project', title: 'B 저장 요청' };
+const pageC = { id: 'page-C', slug: 'page-c', ownerId: 'owner', projectId: 'project' };
+const inactiveA = { ok: true, reason: 'inactive-page' };
+const resumeB = resumeExplicitSaveForActivePage({
+  result: inactiveA,
+  queuedTargetIdentity: pageOperationIdentity(pageB),
+  activeTargetIdentity: pageOperationIdentity(pageB),
+  queuedRequest: pageB,
+});
+assert(resumeB === pageB, 'page B explicitly saved during A save must still be processed after A finishes');
+const failedA = resumeExplicitSaveForActivePage({
+  result: { ok: false, reason: 'inactive-page' },
+  queuedTargetIdentity: pageOperationIdentity(pageB),
+  activeTargetIdentity: pageOperationIdentity(pageB),
+  queuedRequest: pageB,
+});
+assert(failedA === pageB, 'failure on inactive page A must not discard B explicit save');
+for (const [reason, queuedPage, activePage] of [
+  ['outdated A click', pageA, pageB],
+  ['B then C switch', pageB, pageC],
+]) {
+  assert(resumeExplicitSaveForActivePage({
+    result: inactiveA,
+    queuedTargetIdentity: pageOperationIdentity(queuedPage),
+    activeTargetIdentity: pageOperationIdentity(activePage),
+    queuedRequest: queuedPage,
+  }) === null, `never save an outdated page after switching: ${reason}`);
+}
+assert(resumeExplicitSaveForActivePage({
+  result: { ok: false, reason: 'network-error' },
+  queuedTargetIdentity: pageOperationIdentity(pageB),
+  activeTargetIdentity: pageOperationIdentity(pageB),
+  queuedRequest: pageB,
+}) === null, 'regular save failures must not trigger unintended extra writes');
+assert(resumeExplicitSaveForActivePage({
+  result: inactiveA,
+  queuedTargetIdentity: pageOperationIdentity(pageB),
+  activeTargetIdentity: pageOperationIdentity(pageB),
+}) === null, 'a page switch without a queued explicit save must never auto-publish');
+
 
 const explicit = nextTrailingSaveRequest({
   result: { ok: true, pendingChanges: true },
@@ -45,6 +88,9 @@ const styleSaveSource = await readFile('src/runtime/usePersistStyleSaveAction.js
 const packageJson = JSON.parse(await readFile('package.json', 'utf8'));
 
 assert(pageSaveSource.includes('const queuedSaveRequestRef = useRef(null);'), 'page saves must keep a trailing request ref');
+assert(pageSaveSource.includes('targetIdentity: pageOperationIdentity(queuedPage)'), 'queued clicks must capture the target page identity at click time');
+assert(pageSaveSource.includes('resumeExplicitSaveForActivePage({') && pageSaveSource.includes('if (resumedRequest)'), 'the in-flight queue must drain an explicit active-page save even after an old page becomes inactive');
+
 assert(pageSaveSource.includes('while (true)') && pageSaveSource.includes('finalResult = await runSaveCycle(request);'), 'page saves must drain sequentially instead of issuing concurrent writes');
 assert(pageSaveSource.includes("markSaveStatus('warning', '저장 대기'"), 'a second save click during an active save must surface queued state');
 assert(pageSaveSource.includes('queued.hasOverride ? queued.pageOverride : (latestPageRef.current || finalResult?.page || null)'), 'ordinary queued saves must resolve the latest page at drain time instead of capturing a stale snapshot');
@@ -69,6 +115,7 @@ console.log(JSON.stringify({
   automaticTrailingSave: true,
   latestAtDrainTime: true,
   pageSwitchStopsQueue: true,
+  explicitNewPageClickSurvivesOldPageSave: true,
   failureStopsQueue: true,
   styleQueueCovered: true,
 }, null, 2));
