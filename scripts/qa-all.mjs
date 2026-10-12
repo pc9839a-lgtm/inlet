@@ -50,6 +50,7 @@ const steps = [
   ['lead:capture:qa', ['scripts/lead-capture-quality-check.mjs']],
   ['server:smoke:events', ['scripts/server-smoke-events.mjs']],
   ['server:smoke:pages', ['scripts/server-smoke-pages.mjs']],
+  ['page:editor:authenticated-http:e2e:qa', ['scripts/page-editor-authenticated-http-e2e-check.mjs']],
   ['server:smoke:integrations', ['scripts/server-smoke-integrations.mjs']],
   ['page:save:qa', ['scripts/page-save-identity-quality-check.mjs']],
   ['page:save:public-verification:qa', ['scripts/page-public-verification-quality-check.mjs']],
