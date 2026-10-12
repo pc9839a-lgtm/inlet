@@ -1,5 +1,41 @@
 const MAX_HISTORY = 50;
 
+// Unsaved pages can share the same default slug and lack a server page id.
+// Give each in-memory editor page a stable, private history scope instead of
+// grouping every draft in one global "unsaved" undo/redo stack.
+const unsavedPageScopes = new WeakMap();
+let nextUnsavedScope = 0;
+
+function pageId(page = {}) {
+  return String(page.id || page.pageId || '').trim();
+}
+
+function pageOwnerProject(page = {}) {
+  return `${String(page.ownerId || page.ownerAccountId || '').trim()}:${String(page.projectId || '').trim()}`;
+}
+
+function unsavedPageScopeId(page) {
+  let scopeId = unsavedPageScopes.get(page);
+  if (!scopeId) {
+    nextUnsavedScope += 1;
+    scopeId = `draft-${nextUnsavedScope}`;
+    unsavedPageScopes.set(page, scopeId);
+  }
+  return scopeId;
+}
+
+function carryUnsavedScope(previousPage, nextPage) {
+  if (pageId(previousPage) || pageId(nextPage)) return;
+  if (pageOwnerProject(previousPage) !== pageOwnerProject(nextPage)) return;
+  // A changed slug may represent selection of a different unsaved page.
+  // Reset its history rather than risking a cross-page undo.
+  if (String(previousPage.slug || '') !== String(nextPage.slug || '')) return;
+  if (!unsavedPageScopes.has(nextPage)) {
+    unsavedPageScopes.set(nextPage, unsavedPageScopeId(previousPage));
+  }
+}
+
+
 let past = [];
 let future = [];
 let applyingHistory = false;
@@ -16,18 +52,22 @@ let stateSnapshot = {
 
 function clonePage(page) {
   if (!page || typeof page !== 'object') return page;
+  let cloned = null;
   if (typeof structuredClone === 'function') {
-    try { return structuredClone(page); } catch {}
+    try { cloned = structuredClone(page); } catch {}
   }
-  return JSON.parse(JSON.stringify(page));
+  if (!cloned) cloned = JSON.parse(JSON.stringify(page));
+  // Copy this only in memory: no history marker is added to a published page.
+  const scopeId = unsavedPageScopes.get(page);
+  if (scopeId && !pageId(page)) unsavedPageScopes.set(cloned, scopeId);
+  return cloned;
 }
 
 function pageScope(page = {}) {
-  const projectId = String(page.projectId || '').trim();
-  const ownerId = String(page.ownerId || page.ownerAccountId || '').trim();
-  const pageId = String(page.id || page.pageId || '').trim();
-  if (pageId) return `${ownerId}:${projectId}:${pageId}`;
-  return `${ownerId}:${projectId}:unsaved`;
+  const ownerProject = pageOwnerProject(page);
+  const persistedId = pageId(page);
+  if (persistedId) return `${ownerProject}:id:${persistedId}`;
+  return `${ownerProject}:unsaved:${unsavedPageScopeId(page)}`;
 }
 
 function samePageContent(left, right) {
@@ -87,11 +127,19 @@ export function syncPageEditHistoryScope(page) {
 }
 
 export function recordPageEditMutation(previousPage, nextPage) {
-  if (applyingHistory || !previousPage || !nextPage) return;
+  if (!previousPage || !nextPage) return;
+  // Normalize/commit clones a page for every keystroke. Carry its private
+  // identity across that edit and across undo/redo snapshots.
+  carryUnsavedScope(previousPage, nextPage);
+  if (applyingHistory) return;
 
   const previousScope = pageScope(previousPage);
   const nextScope = pageScope(nextPage);
   if (!activeScope) activeScope = previousScope || nextScope;
+  if (activeScope !== previousScope) {
+    activeScope = previousScope;
+    resetStacks();
+  }
 
   if (previousScope && nextScope && previousScope !== nextScope) {
     activeScope = nextScope;
@@ -121,6 +169,14 @@ export function undoPageEdit() {
   const target = past[past.length - 1];
 
   configuredSetPage((currentPage) => {
+    // Effects that synchronize history scope run after rendering. Block an
+    // immediate shortcut/click on a newly selected page before that effect.
+    const currentScope = pageScope(currentPage);
+    if (currentScope !== activeScope || pageScope(target) !== currentScope) {
+      activeScope = currentScope;
+      resetStacks();
+      return currentPage;
+    }
     past = past.slice(0, -1);
     future.push(clonePage(currentPage));
     if (future.length > MAX_HISTORY) future = future.slice(future.length - MAX_HISTORY);
@@ -140,6 +196,14 @@ export function redoPageEdit() {
   const target = future[future.length - 1];
 
   configuredSetPage((currentPage) => {
+    // Effects that synchronize history scope run after rendering. Block an
+    // immediate shortcut/click on a newly selected page before that effect.
+    const currentScope = pageScope(currentPage);
+    if (currentScope !== activeScope || pageScope(target) !== currentScope) {
+      activeScope = currentScope;
+      resetStacks();
+      return currentPage;
+    }
     future = future.slice(0, -1);
     past.push(clonePage(currentPage));
     trimPast();
