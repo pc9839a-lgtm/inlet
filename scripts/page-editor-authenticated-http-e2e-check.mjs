@@ -51,7 +51,7 @@ await withServer(async ({ baseUrl, dataDir }) => {
   const endpoint = `/api/pages/${slug}`;
   const readEndpoint = `${endpoint}?${new URLSearchParams(project)}`;
   const initialPage = {
-    slug, projectId, ownerId, title: 'ED-R11 initial',
+    id: `page-${id}`, slug, projectId, ownerId, title: 'ED-R11 initial',
     theme: { accent: '#263A5D' },
     blocks: [{ id: 'hero', type: 'hero', visible: true, s: { title: 'start', body: 'Local-only test page' } }],
   };
