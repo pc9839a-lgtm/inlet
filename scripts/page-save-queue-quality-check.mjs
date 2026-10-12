@@ -147,6 +147,14 @@ const packageJson = JSON.parse(await readFile('package.json', 'utf8'));
 
 assert(pageSaveSource.includes('serializeEditorSave(authUser, async () => {') && styleSaveSource.includes('serializeEditorSave(authUser, async () => {'), 'both publish actions must use the same cross-type save coordinator');
 assert(pageSaveSource.includes('requestedIdentity') && styleSaveSource.includes('requestedIdentity'), 'queued writes must not retarget a different active page after waiting for the shared save lock');
+assert(
+  pageSaveSource.includes('let firstCycle = true;')
+    && pageSaveSource.includes("firstCycle = false;")
+    && pageSaveSource.includes("reason: 'inactive-page', page: latestPageRef.current || page")
+    && pageSaveSource.indexOf('let firstCycle = true;') < pageSaveSource.indexOf('const resumedRequest = resumeExplicitSaveForActivePage({'),
+  'the shared-lock stale A check must feed the existing #402 B queued-save drain instead of returning early',
+);
+
 assert(pageSaveSource.includes('const queuedSaveRequestRef = useRef(null);'), 'page saves must keep a trailing request ref');
 assert(pageSaveSource.includes('targetIdentity: pageOperationIdentity(queuedPage)'), 'queued clicks must capture the target page identity at click time');
 assert(pageSaveSource.includes('resumeExplicitSaveForActivePage({') && pageSaveSource.includes('if (resumedRequest)'), 'the in-flight queue must drain an explicit active-page save even after an old page becomes inactive');
