@@ -30,7 +30,9 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
 
   useEffect(() => {
     syncPageEditHistoryScope(page);
-  }, [page?.id, page?.pageId, page?.projectId, page?.ownerId, page?.ownerAccountId]);
+  }, [page]);
+  // A different unsaved page may have the same slug/project/owner as the
+  // previous one; object-scoped identity must be checked on page replacement.
 
   useEffect(() => subscribePageEditHistory(() => setHistoryState(getPageEditHistoryState())), []);
 
