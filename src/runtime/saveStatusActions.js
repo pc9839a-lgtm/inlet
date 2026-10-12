@@ -1,6 +1,13 @@
 export function createSaveStatusMarker(setSaveStatus) {
-  return function markSaveStatus(tone, label, detail = '') {
-    setSaveStatus({ tone, label, detail, at: new Date().toISOString() });
+  return function markSaveStatus(tone, label, detail = '', options = {}) {
+    // Optional page scope applies only to the success flash. Other status
+    // call sites keep their existing signature and feedback behavior.
+    const savedPageIdentity = typeof options?.savedPageIdentity === 'string'
+      ? options.savedPageIdentity : '';
+    setSaveStatus({
+      tone, label, detail, at: new Date().toISOString(),
+      ...(savedPageIdentity ? { savedPageIdentity } : {}),
+    });
   };
 }
 
