@@ -52,6 +52,12 @@ export function isRemoteDraftClearEventForPage(event, page, authUser) {
   return String(event.key).startsWith(`${PAGE_DRAFTS_KEY}::entry::${identity}::`);
 }
 
+export function remoteFreshnessRequestStillCurrent({ requestedPage, activePage, authUser }) {
+  if (!requestedPage || !activePage) return false;
+  return pageDraftIdentity(activePage, authUser) === pageDraftIdentity(requestedPage, authUser)
+    && pageVersionKey(activePage) === pageVersionKey(requestedPage);
+}
+
 export function usePageRemoteFreshness({
   publicLandingSlug,
   authUser,
@@ -97,11 +103,10 @@ export function usePageRemoteFreshness({
         if (!serverPage) return;
         const normalizedServerPage = normalizePageForSave({ ...serverPage, __accountProjectAccess: true });
         const activePage = normalizePageForSave(latestPageRef.current || page || {});
-        if (pageDraftIdentity(activePage, authUser) !== identity) return;
         // A local publish may have updated the page while this GET was in
         // flight. Never apply the old response over its newer revision.
         if (baselineRef.current !== baseline
-          || pageVersionKey(activePage) !== pageVersionKey(currentPage)) return;
+          || !remoteFreshnessRequestStillCurrent({ requestedPage: currentPage, activePage, authUser })) return;
 
         const decision = remotePageFreshnessDecision({
           baselinePage: baseline.page,
