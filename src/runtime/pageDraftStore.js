@@ -60,6 +60,53 @@ function draftStorageKey(identity, sourceId) {
   return `${identity}::${encodeURIComponent(text(sourceId) || 'shared')}`;
 }
 
+const ISOLATED_DRAFT_PREFIX = `${PAGE_DRAFTS_KEY}::entry::`;
+
+function isolatedDraftStorageKey(identity, sourceId) {
+  return `${ISOLATED_DRAFT_PREFIX}${draftStorageKey(identity, sourceId)}`;
+}
+
+function readIsolatedDraft(storage, key) {
+  const target = safeStorage(storage);
+  if (!target) return null;
+  try {
+    const draft = JSON.parse(target.getItem(key) || 'null');
+    return draft && typeof draft === 'object' && draft.page && draft.identity ? draft : null;
+  } catch {
+    return null;
+  }
+}
+
+function listIsolatedDraftEntries(storage) {
+  const target = safeStorage(storage);
+  if (!target) return [];
+  try {
+    const entries = [];
+    for (let index = 0; index < target.length; index += 1) {
+      const key = target.key(index);
+      if (!key?.startsWith(ISOLATED_DRAFT_PREFIX)) continue;
+      const draft = readIsolatedDraft(target, key);
+      if (draft) entries.push([key, draft]);
+    }
+    return entries;
+  } catch {
+    return [];
+  }
+}
+
+function writeIsolatedDraft(storage, identity, sourceId, draft) {
+  const target = safeStorage(storage);
+  if (!target) return { ok: false, reason: 'unavailable', error: new Error('localStorage is not available') };
+  try {
+    // A tab writes only its own key. Unlike the old shared JSON envelope,
+    // two tabs cannot overwrite one another with stale read-modify-write data.
+    target.setItem(isolatedDraftStorageKey(identity, sourceId), JSON.stringify(draft));
+    return { ok: true, reason: '', error: null };
+  } catch (error) {
+    return { ok: false, reason: storageFailureReason(error), error };
+  }
+}
+
 function readEnvelope(storage) {
   const target = safeStorage(storage);
   if (!target) return { version: DRAFT_VERSION, drafts: {} };
@@ -229,8 +276,6 @@ export function savePageDraftResult({
   const normalized = normalizePageForSave(page || {});
   const identity = pageDraftIdentity(normalized, authUser);
   const resolvedSourceId = text(sourceId) || pageDraftSourceId();
-  const envelope = readEnvelope(storage);
-  const storageKey = draftStorageKey(identity, resolvedSourceId);
   const draft = {
     version: DRAFT_VERSION,
     identity,
@@ -241,17 +286,7 @@ export function savePageDraftResult({
     baseUpdatedAt: text(normalized.updatedAt || normalized.savedAt || normalized.createdAt),
     page: sanitizeValue(normalized),
   };
-  envelope.drafts = pruneDrafts({
-    ...envelope.drafts,
-    [storageKey]: draft,
-  }, editedAt);
-  if (!envelope.drafts[storageKey]) {
-    envelope.drafts = Object.fromEntries([
-      [storageKey, draft],
-      ...Object.entries(envelope.drafts).slice(0, Math.max(0, MAX_DRAFTS - 1)),
-    ]);
-  }
-  const writeResult = writeEnvelopeResult(envelope, storage, storageKey);
+  const writeResult = writeIsolatedDraft(storage, identity, resolvedSourceId, draft);
   return writeResult.ok
     ? { ...writeResult, draft }
     : { ...writeResult, draft: null };
@@ -264,22 +299,47 @@ export function savePageDraft(options = {}) {
 export function readPageDraft({ page, authUser, storage, sourceId, includeOtherSources = false } = {}) {
   const identity = pageDraftIdentity(page, authUser);
   const resolvedSourceId = text(sourceId) || pageDraftSourceId();
-  const drafts = readEnvelope(storage).drafts;
-  const exact = drafts[draftStorageKey(identity, resolvedSourceId)] || drafts[identity] || null;
+  const isolated = readIsolatedDraft(storage, isolatedDraftStorageKey(identity, resolvedSourceId));
+  if (isolated) return isolated;
+
+  // Backwards compatibility for drafts saved before per-tab keys shipped.
+  const legacyDrafts = readEnvelope(storage).drafts;
+  const exact = legacyDrafts[draftStorageKey(identity, resolvedSourceId)] || legacyDrafts[identity] || null;
   if (exact || !includeOtherSources) return exact;
-  const candidates = Object.entries(drafts)
-    .filter(([key, draft]) => key === identity || draft?.identity === identity)
-    .map(([, draft]) => draft)
-    .filter(Boolean)
-    .sort((left, right) => Number(right.editedAt || 0) - Number(left.editedAt || 0));
+
+  const candidates = [
+    ...listIsolatedDraftEntries(storage)
+      .map(([, draft]) => draft)
+      .filter((draft) => draft.identity === identity),
+    ...Object.entries(legacyDrafts)
+      .filter(([key, draft]) => key === identity || draft?.identity === identity)
+      .map(([, draft]) => draft),
+  ].filter(Boolean).sort((left, right) => Number(right.editedAt || 0) - Number(left.editedAt || 0));
   return candidates[0] || null;
 }
 
 export function clearPageDraft({ page, authUser, storage, sourceId, allSources = false } = {}) {
+  const target = safeStorage(storage);
+  if (!target) return false;
   const identity = pageDraftIdentity(page, authUser);
   const resolvedSourceId = text(sourceId) || pageDraftSourceId();
-  const envelope = readEnvelope(storage);
   const exactKey = draftStorageKey(identity, resolvedSourceId);
+
+  // Remove only the selected tab's durable draft during ordinary saves.
+  // Enumerate other tabs solely when explicitly requested by recovery UI
+  // or when removing drafts by page identity without account context.
+  const isolatedKeys = allSources || !authUser
+    ? listIsolatedDraftEntries(target)
+      .filter(([, draft]) => draft.identity === identity || (!authUser && sameDraftPage(draft.page, page)))
+      .map(([key]) => key)
+    : [isolatedDraftStorageKey(identity, resolvedSourceId)];
+  try {
+    for (const key of isolatedKeys) target.removeItem(key);
+  } catch {
+    return false;
+  }
+
+  const envelope = readEnvelope(target);
   let changed = false;
   for (const [key, draft] of Object.entries(envelope.drafts)) {
     const identityMatch = key === identity || draft?.identity === identity;
@@ -296,7 +356,7 @@ export function clearPageDraft({ page, authUser, storage, sourceId, allSources =
   }
   if (!changed) return true;
   envelope.drafts = pruneDrafts(envelope.drafts);
-  return writeEnvelope(envelope, storage);
+  return writeEnvelope(envelope, target);
 }
 
 export function evaluatePageDraft({ draft, serverPage, now = Date.now() } = {}) {
