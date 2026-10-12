@@ -27,6 +27,14 @@ class MemoryStorage {
   removeItem(key) {
     this.values.delete(key);
   }
+
+  get length() {
+    return this.values.size;
+  }
+
+  key(index) {
+    return [...this.values.keys()][index] ?? null;
+  }
 }
 
 // Keep fixtures inside the seven-day draft retention window. Fixed calendar dates make this
@@ -64,6 +72,26 @@ const tabBDraft = savePageDraft({
   storage,
 });
 assert(tabADraft?.sourceId === 'tab-a' && tabBDraft?.sourceId === 'tab-b', 'each editor tab must own a distinct draft source');
+const durableKeys = [...storage.values.keys()].filter((key) => key.includes('::entry::'));
+assert(durableKeys.length === 2 && durableKeys[0] !== durableKeys[1], 'tabs must persist to two independent atomic localStorage keys');
+assert(
+  !storage.values.has('inlet-page-drafts-v1'),
+  'new draft writes must not rewrite the shared legacy JSON envelope where stale interleaved tabs can erase each other',
+);
+const interleavedStorage = new MemoryStorage();
+interleavedStorage.setItem('inlet-page-drafts-v1', JSON.stringify({ version: 1, drafts: {} }));
+for (let attempt = 0; attempt < 100; attempt += 1) {
+  savePageDraft({ page: { ...tabAPage, title: `A-${attempt}` }, authUser, sourceId: 'race-a', storage: interleavedStorage });
+  savePageDraft({ page: { ...tabBPage, title: `B-${attempt}` }, authUser, sourceId: 'race-b', storage: interleavedStorage });
+  assert(readPageDraft({ page: serverPage, authUser, sourceId: 'race-a', storage: interleavedStorage })?.page?.title === `A-${attempt}`, 'A must survive an interleaved B write');
+  assert(readPageDraft({ page: serverPage, authUser, sourceId: 'race-b', storage: interleavedStorage })?.page?.title === `B-${attempt}`, 'B must survive an interleaved A write');
+}
+assert(
+  JSON.parse(interleavedStorage.getItem('inlet-page-drafts-v1')).drafts
+  && Object.keys(JSON.parse(interleavedStorage.getItem('inlet-page-drafts-v1')).drafts).length === 0,
+  'new tabs must not modify the legacy shared envelope',
+);
+
 assert(readPageDraft({ page: serverPage, authUser, sourceId: 'tab-a', storage })?.page?.title === '탭 A 미저장 작업', 'tab A must read only its own recovery draft');
 assert(readPageDraft({ page: serverPage, authUser, sourceId: 'tab-b', storage })?.page?.title === '탭 B 미저장 작업', 'tab B must read only its own recovery draft');
 assert(clearPageDraft({ page: serverPage, authUser, sourceId: 'tab-a', storage }), 'tab A draft clear must succeed');
@@ -114,6 +142,9 @@ const qaAllSource = await readFile('scripts/qa-all.mjs', 'utf8');
 
 assert(draftStoreSource.includes("DRAFT_SOURCE_SESSION_KEY = 'inlet-page-draft-source-v1'"), 'draft source id must be stable for a browser tab session');
 assert(draftStoreSource.includes('draftStorageKey(identity, resolvedSourceId)'), 'draft storage keys must include the editor source id');
+assert(draftStoreSource.includes('ISOLATED_DRAFT_PREFIX') && draftStoreSource.includes('writeIsolatedDraft(storage, identity, resolvedSourceId, draft)'), 'new drafts must persist to independent source-scoped keys');
+assert(draftStoreSource.includes('const legacyDrafts = readEnvelope(storage).drafts;'), 'old JSON-envelope drafts must remain recoverable after migration');
+
 assert(draftStoreSource.includes('includeOtherSources = false'), 'foreign drafts must not be read during ordinary active-tab persistence');
 assert(accountWorkspaceSource.includes('includeOtherSources: true'), 'page-load recovery must still discover orphaned drafts from a closed tab');
 assert(accountWorkspaceSource.includes('sourceId: draft.sourceId'), 'recovery cancel/discard must clear the exact selected draft source');
@@ -130,6 +161,9 @@ console.log(JSON.stringify({
   scope: 'page-multi-editor-concurrency',
   protections: {
     perTabDraftIsolation: true,
+    independentAtomicDraftKeys: true,
+    interleavedHundredWritesPreserved: true,
+    legacyEnvelopeReadCompatibility: true,
     crossTabDraftClearIsolation: true,
     orphanedDraftRecovery: true,
     focusRemoteRefresh: true,
