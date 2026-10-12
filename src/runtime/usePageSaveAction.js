@@ -17,6 +17,7 @@ import {
   commitPendingLocalChangesAfterSave,
   commitSavedPageResult,
   handlePagePersistError,
+  preserveInactiveFailedSaveDraft,
   settlePendingPublicVerification,
 } from './pagePersistFlow.js';
 import { attachPublicPageSaveVerification } from './publicPageSaveVerification.js';
@@ -154,6 +155,7 @@ export function usePageSaveAction({
     const targetIdentity = pageOperationIdentity(nextPage);
     const activePage = () => latestPageRef.current || page;
     const targetIsActive = () => isPageOperationTargetActive(targetIdentity, activePage());
+    const saveStartedAt = Date.now();
     let result = null;
     try {
       if (saveMode === 'update-existing') {
@@ -163,8 +165,19 @@ export function usePageSaveAction({
       }
     } catch (error) {
       if (!targetIsActive()) {
-        showToast(inactivePageSaveMessage('page', true), 'error');
-        return { ok: false, error, reason: 'inactive-page', page: activePage() };
+        // Preserve A's own request snapshot, never the currently visible B.
+        const recovery = preserveInactiveFailedSaveDraft({
+          page: nextPage,
+          authUser,
+          saveStartedAt,
+        });
+        showToast(
+          recovery.ok
+            ? '이전 페이지 저장 실패 · 편집 내용은 임시 보관했습니다.'
+            : '이전 페이지 저장 실패 · 임시 보관 실패, 화면을 닫지 마세요.',
+          recovery.ok ? 'warning' : 'error',
+        );
+        return { ok: false, error, reason: 'inactive-page', page: activePage(), recoveryDraftSaved: recovery.ok };
       }
       const replayedResult = await recoverCommittedPageSave({ error, page: nextPage, authUser });
       if (replayedResult) {
@@ -193,8 +206,19 @@ export function usePageSaveAction({
       });
     } catch (error) {
       if (!targetIsActive()) {
-        showToast(inactivePageSaveMessage('page', true), 'error');
-        return { ok: false, error, reason: 'inactive-page', page: activePage() };
+        // Preserve A's own request snapshot, never the currently visible B.
+        const recovery = preserveInactiveFailedSaveDraft({
+          page: nextPage,
+          authUser,
+          saveStartedAt,
+        });
+        showToast(
+          recovery.ok
+            ? '이전 페이지 저장 실패 · 편집 내용은 임시 보관했습니다.'
+            : '이전 페이지 저장 실패 · 임시 보관 실패, 화면을 닫지 마세요.',
+          recovery.ok ? 'warning' : 'error',
+        );
+        return { ok: false, error, reason: 'inactive-page', page: activePage(), recoveryDraftSaved: recovery.ok };
       }
       await handlePagePersistError({
         error,
