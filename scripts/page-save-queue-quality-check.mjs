@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { serializeEditorSave } from '../src/runtime/editorSaveCoordinator.js';
-import { nextTrailingSaveRequest, resumeExplicitSaveForActivePage } from '../src/runtime/saveQueuePolicy.js';
+import { nextTrailingSaveRequest, resolveQueuedPageOverride, resumeExplicitSaveForActivePage } from '../src/runtime/saveQueuePolicy.js';
 import { pageOperationIdentity } from '../src/runtime/pageOperationIdentity.js';
 
 function assert(condition, message) {
@@ -122,6 +122,55 @@ assert(resumeExplicitSaveForActivePage({
 }) === null, 'a page switch without a queued explicit save must never auto-publish');
 
 
+// A clicked save override is not a complete, timeless replacement page.
+// Preserve the user's later edits while applying only untouched fields from
+// the queued click. Both objects, arrays and server-owned version are covered.
+const queuedBase = {
+  id: 'page-B', ownerId: 'owner', projectId: 'project', revision: 4,
+  title: 'before-click', slug: 'page-b',
+  theme: { accent: '#000', font: 'first' },
+  meta: { headline: 'before', description: 'initial' },
+  blocks: [{ id: 'hero', text: 'before' }],
+};
+const overrideAtClick = {
+  title: 'queued title',
+  revision: 4, updatedAt: 'outdated',
+  theme: { accent: '#123' },
+  meta: { headline: 'queued heading' },
+  blocks: [{ id: 'hero', text: 'queued image' }],
+};
+const afterClickEdit = {
+  ...queuedBase,
+  revision: 5, updatedAt: '2026-10-12T05:00:00.000Z',
+  title: 'typed after click',
+  theme: { ...queuedBase.theme, font: 'last font' },
+  meta: { ...queuedBase.meta, description: 'typed last' },
+  blocks: [{ id: 'hero', text: 'typed after click' }],
+};
+const resolvedOverride = resolveQueuedPageOverride({
+  basePage: queuedBase,
+  latestPage: afterClickEdit,
+  pageOverride: overrideAtClick,
+});
+assert(resolvedOverride.title === 'typed after click', 'a last-second title edit must win over a queued override');
+assert(resolvedOverride.theme.accent === '#123' && resolvedOverride.theme.font === 'last font', 'unmodified queued theme fields may apply without erasing later theme edits');
+assert(resolvedOverride.meta.headline === 'queued heading' && resolvedOverride.meta.description === 'typed last', 'nested overrides may not undo unrelated later metadata edits');
+assert(resolvedOverride.blocks[0].text === 'typed after click', 'last edits to an array of page blocks must win over the stale queued array');
+assert(resolvedOverride.revision === 5 && resolvedOverride.updatedAt === afterClickEdit.updatedAt, 'server-owned revision/timestamps must come from the latest page');
+assert(afterClickEdit.theme.accent === '#000' && queuedBase.title === 'before-click', 'queued override merge must not mutate source pages');
+
+const untouchedQueuedResult = resolveQueuedPageOverride({
+  basePage: queuedBase,
+  latestPage: { ...queuedBase },
+  pageOverride: overrideAtClick,
+});
+assert(untouchedQueuedResult.title === 'queued title', 'a queued explicit change must persist if the user did not edit that field again');
+assert(untouchedQueuedResult.blocks[0].text === 'queued image', 'queued block override should apply if no intervening block edits exist');
+assert(resolveQueuedPageOverride({ basePage: queuedBase, latestPage: afterClickEdit, pageOverride: null }) === afterClickEdit, 'ordinary queued save without override must always read the latest page');
+
+const switchedPageIdentity = pageOperationIdentity({ ...pageB, id: 'page-C' });
+assert(pageOperationIdentity(pageB) !== switchedPageIdentity, 'queued B save must be skipped after changing to C');
+
 const explicit = nextTrailingSaveRequest({
   result: { ok: true, pendingChanges: true },
   queued: true,
@@ -161,7 +210,8 @@ assert(pageSaveSource.includes('resumeExplicitSaveForActivePage({') && pageSaveS
 
 assert(pageSaveSource.includes('while (true)') && pageSaveSource.includes('await runSaveCycle(request);'), 'page saves must drain sequentially instead of issuing concurrent writes');
 assert(pageSaveSource.includes("markSaveStatus('warning', '저장 대기'"), 'a second save click during an active save must surface queued state');
-assert(pageSaveSource.includes('queued.hasOverride ? queued.pageOverride : (latestPageRef.current || finalResult?.page || null)'), 'ordinary queued saves must resolve the latest page at drain time instead of capturing a stale snapshot');
+assert(pageSaveSource.includes('basePage: normalizePageForSave(latestPageRef.current || page)') && pageSaveSource.includes('resolveQueuedPageOverride({'), 'queued overrides must capture click-time baseline and rebase the patch over the latest fields');
+assert(pageSaveSource.includes('queued.targetIdentity === pageOperationIdentity(latestQueuedPage)') && pageSaveSource.includes('queued: queuedIsActive,'), 'a stale queued override must never be applied to a newly active different page');
 assert(pageSaveSource.includes('automaticRequest = finalResult?.pendingChanges') && pageSaveSource.includes("reason: 'inactive-page'"), 'page save queue must auto-follow pending edits while retaining inactive-page isolation');
 assert(pageSaveSource.includes("message: '저장 중 변경된 내용을 자동으로 이어서 저장합니다.'"), 'page save-race feedback must explain automatic trailing persistence');
 assert(pageSaveSource.includes('if (saveInFlightRef.current === task) saveInFlightRef.current = null;') && pageSaveSource.includes('queuedSaveRequestRef.current = null;'), 'page save queue must clear in-flight and queued state after completion or failure');
@@ -192,6 +242,9 @@ console.log(JSON.stringify({
   explicitTrailingSave: true,
   automaticTrailingSave: true,
   latestAtDrainTime: true,
+  queuedOverrideThreeWayMerge: true,
+  laterSameFieldEditWins: true,
+  staleQueuedPageRejected: true,
   pageSwitchStopsQueue: true,
   explicitNewPageClickSurvivesOldPageSave: true,
   failureStopsQueue: true,
