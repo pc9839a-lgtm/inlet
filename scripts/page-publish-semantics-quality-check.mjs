@@ -11,7 +11,7 @@ const unsavedGuard = await readFile('src/runtime/workspaceUnsavedGuard.js', 'utf
 const saveAction = await readFile('src/runtime/usePageSaveAction.js', 'utf8');
 const browserQa = await readFile('scripts/editor-browser-regression-check.mjs', 'utf8');
 
-assert(header.includes("{saved ? '발행됨' : '발행'}"), 'server persistence button must be labeled as publish');
+assert(header.includes("{savedOnCurrentPage ? '발행됨' : '발행'}") && header.includes("saveStatus?.savedPageIdentity === pageOperationIdentity(page)"), 'server publish button must show completion only for the active saved page');
 assert(header.includes('자동 임시보관됩니다') && header.includes('공개 페이지에 반영됩니다'), 'publish button must explain local draft versus public effect');
 assert(feedback.includes("title: local ? '브라우저에 임시저장됨' : '발행됨'"), 'save feedback must distinguish local temporary storage from server publish');
 assert(feedback.includes('공개 반영 확인 중') && feedback.includes('공개 반영 확인 필요'), 'publish feedback must retain public verification states');
