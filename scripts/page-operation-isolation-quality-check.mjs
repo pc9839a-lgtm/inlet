@@ -1,4 +1,7 @@
 import { readFile } from 'node:fs/promises';
+import { preserveInactiveFailedSaveDraft } from '../src/runtime/pagePersistFlow.js';
+import { readPageDraft, savePageDraftResult } from '../src/runtime/pageDraftStore.js';
+
 import {
   inactivePageSaveMessage,
   isPageOperationTargetActive,
@@ -60,6 +63,64 @@ assert(!isPageOperationTargetActive(targetA, pageAOtherOwner), 'an account or ow
 assert(inactivePageSaveMessage('page').includes('현재 페이지는 그대로 유지'), 'inactive page save success must explain that the current page was preserved');
 assert(inactivePageSaveMessage('style', true).includes('스타일 저장에 실패'), 'inactive style save failure must use a scoped message');
 
+const recoveryStorage = {
+  values: new Map(),
+  getItem(key) { return this.values.get(key) ?? null; },
+  setItem(key, value) { this.values.set(key, String(value)); },
+  removeItem(key) { this.values.delete(key); },
+  get length() { return this.values.size; },
+  key(index) { return [...this.values.keys()][index] ?? null; },
+};
+const recoveryAuthUser = { ownerId: 'owner-1', workspaceId: 'project-1' };
+const failedASnapshot = { ...pageA, title: '저장 실패한 A 원본 작업' };
+const startedAt = Date.now() - 4000;
+const recovered = preserveInactiveFailedSaveDraft({
+  page: failedASnapshot,
+  authUser: recoveryAuthUser,
+  saveStartedAt: startedAt,
+  sourceId: 'editor-a',
+  storage: recoveryStorage,
+});
+assert(recovered.ok, 'inactive failed A must be preserved even after the editor navigated to B');
+assert(
+  readPageDraft({ page: pageA, authUser: recoveryAuthUser, sourceId: 'editor-a', storage: recoveryStorage })?.page?.title === failedASnapshot.title,
+  'inactive failure must write A request contents, never the currently active B page',
+);
+assert(!readPageDraft({ page: pageB, authUser: recoveryAuthUser, sourceId: 'editor-a', storage: recoveryStorage }), 'inactive A recovery must never change B draft');
+
+const newerA = { ...failedASnapshot, title: 'A에서 이후에 추가로 편집한 최신 내용' };
+savePageDraftResult({
+  page: newerA,
+  authUser: recoveryAuthUser,
+  editedAt: startedAt + 5000,
+  sourceId: 'editor-a',
+  storage: recoveryStorage,
+});
+const keptNewer = preserveInactiveFailedSaveDraft({
+  page: failedASnapshot,
+  authUser: recoveryAuthUser,
+  saveStartedAt: startedAt + 1000,
+  sourceId: 'editor-a',
+  storage: recoveryStorage,
+});
+assert(keptNewer.ok && keptNewer.preservedExisting, 'older failed requests must not overwrite a newer A recovery snapshot');
+assert(
+  readPageDraft({ page: pageA, authUser: recoveryAuthUser, sourceId: 'editor-a', storage: recoveryStorage })?.page?.title === newerA.title,
+  'newer edits made before leaving A must remain recoverable after old request fails',
+);
+const deniedStorage = {
+  getItem() { return null; },
+  setItem() { const error = new Error('quota'); error.name = 'QuotaExceededError'; error.code = 22; throw error; },
+};
+const deniedRecovery = preserveInactiveFailedSaveDraft({
+  page: failedASnapshot,
+  authUser: recoveryAuthUser,
+  saveStartedAt: startedAt,
+  sourceId: 'editor-denied',
+  storage: deniedStorage,
+});
+assert(deniedRecovery.ok === false && deniedRecovery.reason === 'quota', 'failed inactive recovery must never claim a successful draft backup');
+
 const pageSaveAction = await readFile('src/runtime/usePageSaveAction.js', 'utf8');
 const styleSaveAction = await readFile('src/runtime/usePersistStyleSaveAction.js', 'utf8');
 const pageConflictSource = await readFile('src/builder/usePageConflict.js', 'utf8');
@@ -75,6 +136,8 @@ for (const [label, source] of [
   assert(source.includes('const targetIdentity = pageOperationIdentity(nextPage);'), `${label} must capture its target before the request`);
   assert(source.includes('const targetIsActive = () => isPageOperationTargetActive(targetIdentity, activePage());'), `${label} must compare the response target with the current page`);
   assert(source.includes("reason: 'inactive-page'"), `${label} must return an explicit inactive-page result`);
+  assert(source.split('preserveInactiveFailedSaveDraft({').length - 1 === 2, `${label} must preserve the inactive target draft after both transport and response-validation failures`);
+  assert(source.includes('page: nextPage,') && source.includes('saveStartedAt,'), `${label} failure recovery must use the saved A snapshot, not live B editor state`);
   assert(source.includes('clearPageDraft({ page: nextPage, authUser });'), `${label} must clear the completed inactive page draft`);
   assert(source.includes('clearPageDraft({ page: savedTargetPage, authUser });'), `${label} must clear the server-normalized inactive page draft`);
   assert(source.indexOf('if (!targetIsActive())') < source.indexOf('handlePagePersistError({'), `${label} failures must be isolated before opening a conflict UI`);
@@ -105,6 +168,8 @@ console.log(JSON.stringify({
   guardedOperations: ['page-save-success', 'page-save-failure', 'style-save-success', 'style-save-failure'],
   identityDimensions: ['project', 'owner', 'stable-page-id-or-draft-slug'],
   renameDuringSaveRetainsIdentity: true,
+  inactiveFailedPageDraftRecovery: true,
+  newerRecoveryDraftNeverOverwritten: true,
   conflictUx: {
     automaticDraft: true,
     primaryChoices: 2,
