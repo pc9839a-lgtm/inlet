@@ -166,12 +166,19 @@ assert(pageSaveSource.includes('automaticRequest = finalResult?.pendingChanges')
 assert(pageSaveSource.includes("message: '저장 중 변경된 내용을 자동으로 이어서 저장합니다.'"), 'page save-race feedback must explain automatic trailing persistence');
 assert(pageSaveSource.includes('if (saveInFlightRef.current === task) saveInFlightRef.current = null;') && pageSaveSource.includes('queuedSaveRequestRef.current = null;'), 'page save queue must clear in-flight and queued state after completion or failure');
 
-assert(styleSaveSource.includes('const queuedStyleSaveRef = useRef(false);'), 'style saves must keep a trailing request flag');
+assert(styleSaveSource.includes('const queuedStyleSaveRef = useRef(null);'), 'style saves must preserve the queued target identity');
+assert(
+  styleSaveSource.includes('queuedStyleSaveRef.current = pageOperationIdentity(latestPageRef.current || page);')
+    && styleSaveSource.includes('queuedTargetIdentity === activeTargetIdentity')
+    && styleSaveSource.includes('resumeExplicitSaveForActivePage({')
+    && styleSaveSource.includes('let firstCycle = true;'),
+  'style saves must resume only the still-active explicitly queued page, including after an initial shared-lock wait',
+);
 assert(styleSaveSource.includes('const previewThemeAtSave = latestStylePreviewThemeRef.current;') && styleSaveSource.includes('const previewBlocksAtSave = latestStylePreviewBlocksRef.current;'), 'each style save cycle must snapshot the latest preview at cycle start');
-assert(styleSaveSource.includes('while (true)') && styleSaveSource.includes('finalResult = await runStyleSaveCycle();'), 'style saves must drain sequentially instead of issuing concurrent writes');
+assert(styleSaveSource.includes('while (true)') && styleSaveSource.includes('await runStyleSaveCycle();'), 'style saves must drain sequentially instead of issuing concurrent writes');
 assert(styleSaveSource.includes('automaticRequest: finalResult?.pendingChanges ? true : null'), 'style changes made during save must trigger an automatic trailing style save');
 assert(styleSaveSource.includes("message: '저장 중 변경된 스타일을 자동으로 이어서 저장합니다.'"), 'style save-race feedback must explain automatic trailing persistence');
-assert(styleSaveSource.includes('if (styleSaveInFlightRef.current === task) styleSaveInFlightRef.current = null;') && styleSaveSource.includes('queuedStyleSaveRef.current = false;'), 'style save queue must clear in-flight and queued state after completion or failure');
+assert(styleSaveSource.includes('if (styleSaveInFlightRef.current === task) styleSaveInFlightRef.current = null;') && styleSaveSource.includes('queuedStyleSaveRef.current = null;'), 'style save queue must clear in-flight and queued state after completion or failure');
 
 assert(packageJson.scripts?.['page:save:queue:qa'] === 'node scripts/page-save-queue-quality-check.mjs', 'package page:save:queue:qa script missing');
 
@@ -189,4 +196,5 @@ console.log(JSON.stringify({
   explicitNewPageClickSurvivesOldPageSave: true,
   failureStopsQueue: true,
   styleQueueCovered: true,
+  stylePageSwitchQueuedTargetProtected: true,
 }, null, 2));

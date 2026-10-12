@@ -6,7 +6,7 @@ import { clearPageDraft } from './pageDraftStore.js';
 import { inactivePageSaveMessage, isPageOperationTargetActive, pageOperationIdentity } from './pageOperationIdentity.js';
 import { recoverCommittedPageSave } from './pageSaveReplayRecovery.js';
 import { attachExistingPageIdentity, pageSaveMode } from './savePageIdentity.js';
-import { nextTrailingSaveRequest } from './saveQueuePolicy.js';
+import { nextTrailingSaveRequest, resumeExplicitSaveForActivePage } from './saveQueuePolicy.js';
 import { STYLE_SAVED_TOAST } from './pageSaveFeedback.js';
 import {
   commitPendingLocalChangesAfterSave,
@@ -36,7 +36,7 @@ export function usePersistStyleSaveAction({
   setSaved,
 }) {
   const styleSaveInFlightRef = useRef(null);
-  const queuedStyleSaveRef = useRef(false);
+  const queuedStyleSaveRef = useRef(null);
   const latestStylePreviewThemeRef = useRef(stylePreviewTheme);
   const latestStylePreviewBlocksRef = useRef(stylePreviewBlocks);
   latestStylePreviewThemeRef.current = stylePreviewTheme;
@@ -52,24 +52,39 @@ export function usePersistStyleSaveAction({
 
   const persistStyleNow = async () => {
     if (styleSaveInFlightRef.current) {
-      queuedStyleSaveRef.current = true;
+      queuedStyleSaveRef.current = pageOperationIdentity(latestPageRef.current || page);
       markSaveStatus('warning', '저장 대기', '현재 저장이 끝나면 최신 스타일을 이어서 저장합니다.');
       return styleSaveInFlightRef.current;
     }
 
     const requestedIdentity = pageOperationIdentity(latestPageRef.current || page);
     const task = serializeEditorSave(authUser, async () => {
-      // Another save type may have held the account lock while the user
-      // switched pages. Never let an old click publish the new active page.
-      if (!isPageOperationTargetActive(requestedIdentity, latestPageRef.current || page)) {
-        return { ok: false, reason: 'inactive-page', page: latestPageRef.current || page };
-      }
       let finalResult = null;
+      let firstCycle = true;
 
       while (true) {
-        finalResult = await runStyleSaveCycle();
-        const queued = queuedStyleSaveRef.current;
-        queuedStyleSaveRef.current = false;
+        // The initial A click may have waited behind another editor save.
+        // If the user is now editing B, ignore A but still honor a queued
+        // explicit save click for the currently active B page.
+        finalResult = firstCycle
+          && !isPageOperationTargetActive(requestedIdentity, latestPageRef.current || page)
+          ? { ok: false, reason: 'inactive-page', page: latestPageRef.current || page }
+          : await runStyleSaveCycle();
+        firstCycle = false;
+        const queuedTargetIdentity = queuedStyleSaveRef.current;
+        queuedStyleSaveRef.current = null;
+        const activeTargetIdentity = pageOperationIdentity(latestPageRef.current || page);
+        const queued = !!queuedTargetIdentity && queuedTargetIdentity === activeTargetIdentity;
+        const resumedRequest = resumeExplicitSaveForActivePage({
+          result: finalResult,
+          queuedTargetIdentity: queuedTargetIdentity || '',
+          activeTargetIdentity,
+          queuedRequest: queued ? true : null,
+        });
+        if (resumedRequest) {
+          markSaveStatus('warning', '추가 수정 저장 중', '현재 페이지의 스타일 저장을 이어서 처리합니다.');
+          continue;
+        }
         const next = nextTrailingSaveRequest({
           result: finalResult,
           queued,
@@ -89,7 +104,7 @@ export function usePersistStyleSaveAction({
       return await task;
     } finally {
       if (styleSaveInFlightRef.current === task) styleSaveInFlightRef.current = null;
-      queuedStyleSaveRef.current = false;
+      queuedStyleSaveRef.current = null;
     }
   };
 
