@@ -26,3 +26,19 @@ export function nextTrailingSaveRequest({
 
   return { continue: false, request: null, reason: 'stable' };
 }
+
+/**
+ * A completed save for page A must never mutate page B. However, an explicit
+ * save click on B while A was in flight must not be discarded with A's
+ * inactive-page result. Resume only if the queued click still targets B.
+ */
+export function resumeExplicitSaveForActivePage({
+  result,
+  queuedTargetIdentity = '',
+  activeTargetIdentity = '',
+  queuedRequest = null,
+} = {}) {
+  if (result?.reason !== 'inactive-page') return null;
+  if (!queuedRequest || !queuedTargetIdentity || queuedTargetIdentity !== activeTargetIdentity) return null;
+  return queuedRequest;
+}
