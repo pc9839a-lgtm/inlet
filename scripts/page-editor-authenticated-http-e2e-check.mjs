@@ -28,7 +28,7 @@ await withServer(async ({ baseUrl, dataDir }) => {
   const slug = `ed-r11-${id}`;
   const password = 'testPassword123!';
   const issue = await api(baseUrl, 'POST', '/api/auth/email-verification', { email, purpose: 'signup' });
-  assert(issue.status === 200 && /^\\d{6}$/.test(issue.data.verification?.token || ''), 'mock email verification must issue an isolated code');
+  assert(issue.status === 200 && /^[0-9]{6}$/.test(issue.data.verification?.token || ''), 'mock email verification must issue an isolated code');
   const confirm = await api(baseUrl, 'POST', '/api/auth/email-verification/confirm', { email, token: issue.data.verification.token });
   assert(confirm.status === 200, 'local test email verification must succeed');
   const registration = await api(baseUrl, 'POST', '/api/auth/register', {
