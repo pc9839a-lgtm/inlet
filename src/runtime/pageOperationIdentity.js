@@ -7,7 +7,13 @@ export function pageOperationIdentity(page = {}) {
   const ownerId = text(page.ownerId || page.ownerAccountId || page.accountId || 'owner');
   const pageId = text(page.id || page.pageId || '');
   const slug = text(page.slug || page.url || 'page');
-  return [projectId, ownerId, pageId || slug, slug].map((part) => encodeURIComponent(part)).join(':');
+  // A persisted page keeps its identity when its public URL (slug) is edited.
+  // Including slug here wrongly marks a rename during an in-flight save as a
+  // switch to another page, skipping reconciliation and the trailing save.
+  // Unsaved pages without an id still use the slug as their fallback identity.
+  return [projectId, ownerId, pageId ? `id:${pageId}` : `slug:${slug}`]
+    .map((part) => encodeURIComponent(part))
+    .join(':');
 }
 
 export function isPageOperationTargetActive(targetIdentity, currentPage = {}) {
