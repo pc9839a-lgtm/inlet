@@ -34,6 +34,26 @@ const pageAOtherOwner = { ...pageA, ownerId: 'owner-2' };
 const targetA = pageOperationIdentity(pageA);
 assert(targetA === pageOperationIdentity(pageAAfterServerSave), 'server revision metadata must not change the page operation identity');
 assert(isPageOperationTargetActive(targetA, pageAAfterServerSave), 'the same page must remain an active save target after server metadata changes');
+const renamedDuringSave = { ...pageA, slug: 'new-public-address', title: '주소 수정 중 추가 편집' };
+assert(
+  isPageOperationTargetActive(targetA, renamedDuringSave),
+  'renaming the slug during a save must keep the persisted page active for rebasing and trailing save',
+);
+assert(
+  pageOperationIdentity(pageA) === pageOperationIdentity(renamedDuringSave),
+  'published page identity must be keyed by stable page id rather than the editable public slug',
+);
+const unsavedA = { projectId: 'project-1', ownerId: 'owner-1', slug: 'unsaved-a' };
+const unsavedB = { ...unsavedA, slug: 'unsaved-b' };
+assert(
+  !isPageOperationTargetActive(pageOperationIdentity(unsavedA), unsavedB),
+  'before a page id exists, separate draft slugs must not share an operation identity',
+);
+assert(
+  !isPageOperationTargetActive(targetA, { ...pageA, id: 'different-page', slug: pageA.slug }),
+  'different persisted page ids must never accept an older save response even with the same slug',
+);
+
 assert(!isPageOperationTargetActive(targetA, pageB), 'a different page must invalidate a pending save response');
 assert(!isPageOperationTargetActive(targetA, pageAOtherProject), 'a project switch must invalidate a pending save response');
 assert(!isPageOperationTargetActive(targetA, pageAOtherOwner), 'an account or owner switch must invalidate a pending save response');
@@ -83,7 +103,8 @@ console.log(JSON.stringify({
   ok: true,
   scope: 'page-operation-isolation',
   guardedOperations: ['page-save-success', 'page-save-failure', 'style-save-success', 'style-save-failure'],
-  identityDimensions: ['project', 'owner', 'page-id', 'slug'],
+  identityDimensions: ['project', 'owner', 'stable-page-id-or-draft-slug'],
+  renameDuringSaveRetainsIdentity: true,
   conflictUx: {
     automaticDraft: true,
     primaryChoices: 2,
