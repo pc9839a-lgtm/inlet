@@ -119,6 +119,7 @@ export function WorkspaceLeftPanel({
             }
             const restored = restorePageDraft({ draft: validated.draft, serverPage: latest });
             const result = savePageDraftResult({ page: restored, authUser: account, interactionConfirmed: true });
+            window.dispatchEvent(new CustomEvent('builder:manual-draft-restored'));
             settingsPanelProps.setPage(restored);
             backupToast(result.ok
               ? '편집본을 복원했습니다. 내용을 확인한 뒤 발행해주세요.'
