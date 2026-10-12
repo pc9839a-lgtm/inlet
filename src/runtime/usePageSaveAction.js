@@ -7,7 +7,7 @@ import { clearPageDraft } from './pageDraftStore.js';
 import { inactivePageSaveMessage, isPageOperationTargetActive, pageOperationIdentity } from './pageOperationIdentity.js';
 import { recoverCommittedPageSave } from './pageSaveReplayRecovery.js';
 import { attachExistingPageIdentity, pageSaveMode } from './savePageIdentity.js';
-import { nextTrailingSaveRequest, resumeExplicitSaveForActivePage } from './saveQueuePolicy.js';
+import { nextTrailingSaveRequest, resolveQueuedPageOverride, resumeExplicitSaveForActivePage } from './saveQueuePolicy.js';
 import {
   SAVE_BLOCKED_FEEDBACK,
   STYLE_CONFIRM_FEEDBACK,
@@ -53,6 +53,9 @@ export function usePageSaveAction({
       queuedSaveRequestRef.current = {
         hasOverride: pageOverride != null,
         pageOverride,
+        // Snapshot B at the click time. The queued override must not undo
+        // later edits on B when A finally finishes saving.
+        basePage: normalizePageForSave(latestPageRef.current || page),
         targetIdentity: pageOperationIdentity(queuedPage),
       };
       markSaveStatus('warning', '저장 대기', '현재 저장이 끝나면 최신 수정분을 이어서 저장합니다.');
@@ -76,8 +79,19 @@ export function usePageSaveAction({
         firstCycle = false;
         const queued = queuedSaveRequestRef.current;
         queuedSaveRequestRef.current = null;
-        const queuedRequest = queued
-          ? (queued.hasOverride ? queued.pageOverride : (latestPageRef.current || finalResult?.page || null))
+        const latestQueuedPage = latestPageRef.current || finalResult?.page || page;
+        // Only a click still targeting the active page can be drained.
+        // In particular B's old override must never publish onto page C.
+        const queuedIsActive = !!queued
+          && queued.targetIdentity === pageOperationIdentity(latestQueuedPage);
+        const queuedRequest = queuedIsActive
+          ? (queued.hasOverride
+            ? resolveQueuedPageOverride({
+              basePage: queued.basePage,
+              latestPage: latestQueuedPage,
+              pageOverride: queued.pageOverride,
+            })
+            : latestQueuedPage)
           : null;
         const automaticRequest = finalResult?.pendingChanges
           ? (finalResult.page || latestPageRef.current || null)
@@ -97,7 +111,7 @@ export function usePageSaveAction({
         }
         const next = nextTrailingSaveRequest({
           result: finalResult,
-          queued: !!queued,
+          queued: queuedIsActive,
           queuedRequest,
           automaticRequest,
         });
