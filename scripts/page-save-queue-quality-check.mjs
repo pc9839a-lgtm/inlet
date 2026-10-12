@@ -1,9 +1,67 @@
 import { readFile } from 'node:fs/promises';
+import { serializeEditorSave } from '../src/runtime/editorSaveCoordinator.js';
 import { nextTrailingSaveRequest, resumeExplicitSaveForActivePage } from '../src/runtime/saveQueuePolicy.js';
 import { pageOperationIdentity } from '../src/runtime/pageOperationIdentity.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
+}
+
+// Real async FIFO regression across the two independent UI save buttons.
+const lockOwner = { accountId: 'editor-coordinator-account' };
+let releaseFirstSave;
+const blockedFirstSave = new Promise((resolve) => { releaseFirstSave = resolve; });
+const saveOrder = [];
+const firstPublish = serializeEditorSave(lockOwner, async () => {
+  saveOrder.push('page:start');
+  await blockedFirstSave;
+  saveOrder.push('page:done');
+  return 'page-ok';
+});
+const secondPublish = serializeEditorSave(lockOwner, async () => {
+  saveOrder.push('style:start');
+  saveOrder.push('style:done');
+  return 'style-ok';
+});
+await Promise.resolve();
+await Promise.resolve();
+assert(saveOrder.join(',') === 'page:start', 'style publishing must not run while a page publish is in flight');
+releaseFirstSave();
+const firstResults = await Promise.all([firstPublish, secondPublish]);
+assert(firstResults.join(',') === 'page-ok,style-ok', 'both queued publish operations must complete');
+assert(saveOrder.join(',') === 'page:start,page:done,style:start,style:done', 'page and style saves must be FIFO, not concurrent');
+
+const reverseOrder = [];
+let releaseStyle;
+const waitForStyle = new Promise((resolve) => { releaseStyle = resolve; });
+const styleFirst = serializeEditorSave(lockOwner, async () => {
+  reverseOrder.push('style:start');
+  await waitForStyle;
+  reverseOrder.push('style:done');
+});
+const pageSecond = serializeEditorSave(lockOwner, async () => {
+  reverseOrder.push('page:start');
+});
+await Promise.resolve();
+await Promise.resolve();
+assert(reverseOrder.join(',') === 'style:start', 'page publishing must wait for active style publishing');
+releaseStyle();
+await Promise.all([styleFirst, pageSecond]);
+assert(reverseOrder.join(',') === 'style:start,style:done,page:start', 'style then page must preserve ordered writes');
+
+const rejectedSave = serializeEditorSave(lockOwner, async () => {
+  throw new Error('synthetic failure');
+});
+const afterFailure = serializeEditorSave(lockOwner, async () => 'recovered-save');
+await assertPromiseRejects(rejectedSave, 'failure must propagate to the original editor');
+assert(await afterFailure === 'recovered-save', 'failed saves must release the shared lock');
+const otherAccountResult = await serializeEditorSave({ accountId: 'other-editor' }, async () => 'other-account-ok');
+assert(otherAccountResult === 'other-account-ok', 'different accounts must not block each other');
+
+async function assertPromiseRejects(task, message) {
+  let failedAsExpected = false;
+  try { await task; } catch { failedAsExpected = true; }
+  assert(failedAsExpected, message);
 }
 
 const failed = nextTrailingSaveRequest({
@@ -87,11 +145,21 @@ const pageSaveSource = await readFile('src/runtime/usePageSaveAction.js', 'utf8'
 const styleSaveSource = await readFile('src/runtime/usePersistStyleSaveAction.js', 'utf8');
 const packageJson = JSON.parse(await readFile('package.json', 'utf8'));
 
+assert(pageSaveSource.includes('serializeEditorSave(authUser, async () => {') && styleSaveSource.includes('serializeEditorSave(authUser, async () => {'), 'both publish actions must use the same cross-type save coordinator');
+assert(pageSaveSource.includes('requestedIdentity') && styleSaveSource.includes('requestedIdentity'), 'queued writes must not retarget a different active page after waiting for the shared save lock');
+assert(
+  pageSaveSource.includes('let firstCycle = true;')
+    && pageSaveSource.includes("firstCycle = false;")
+    && pageSaveSource.includes("reason: 'inactive-page', page: latestPageRef.current || page")
+    && pageSaveSource.indexOf('let firstCycle = true;') < pageSaveSource.indexOf('const resumedRequest = resumeExplicitSaveForActivePage({'),
+  'the shared-lock stale A check must feed the existing #402 B queued-save drain instead of returning early',
+);
+
 assert(pageSaveSource.includes('const queuedSaveRequestRef = useRef(null);'), 'page saves must keep a trailing request ref');
 assert(pageSaveSource.includes('targetIdentity: pageOperationIdentity(queuedPage)'), 'queued clicks must capture the target page identity at click time');
 assert(pageSaveSource.includes('resumeExplicitSaveForActivePage({') && pageSaveSource.includes('if (resumedRequest)'), 'the in-flight queue must drain an explicit active-page save even after an old page becomes inactive');
 
-assert(pageSaveSource.includes('while (true)') && pageSaveSource.includes('finalResult = await runSaveCycle(request);'), 'page saves must drain sequentially instead of issuing concurrent writes');
+assert(pageSaveSource.includes('while (true)') && pageSaveSource.includes('await runSaveCycle(request);'), 'page saves must drain sequentially instead of issuing concurrent writes');
 assert(pageSaveSource.includes("markSaveStatus('warning', '저장 대기'"), 'a second save click during an active save must surface queued state');
 assert(pageSaveSource.includes('queued.hasOverride ? queued.pageOverride : (latestPageRef.current || finalResult?.page || null)'), 'ordinary queued saves must resolve the latest page at drain time instead of capturing a stale snapshot');
 assert(pageSaveSource.includes('automaticRequest = finalResult?.pendingChanges') && pageSaveSource.includes("reason: 'inactive-page'"), 'page save queue must auto-follow pending edits while retaining inactive-page isolation');
@@ -111,6 +179,9 @@ console.log(JSON.stringify({
   ok: true,
   scope: 'page-save-queue',
   serializedWrites: true,
+  sharedPageAndStyleCoordinator: true,
+  strictTwoWayFifo: true,
+  rejectedSaveReleasesLock: true,
   explicitTrailingSave: true,
   automaticTrailingSave: true,
   latestAtDrainTime: true,

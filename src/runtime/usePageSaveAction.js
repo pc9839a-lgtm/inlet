@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { serializeEditorSave } from './editorSaveCoordinator.js';
 import { persistPage } from '../lib/pageRepository.js';
 import { normalizePageForSave } from '../lib/pageModel.js';
 import { assertValidPageSaveResult } from '../lib/pageSaveResultValidation.js';
@@ -57,12 +58,21 @@ export function usePageSaveAction({
       return saveInFlightRef.current;
     }
 
-    const task = (async () => {
+    const requestedIdentity = pageOperationIdentity(latestPageRef.current || page);
+    const task = serializeEditorSave(authUser, async () => {
       let request = pageOverride;
       let finalResult = null;
+      let firstCycle = true;
 
       while (true) {
-        finalResult = await runSaveCycle(request);
+        // If A was queued behind style publishing and the user switched to B,
+        // skip A without skipping an explicit B click already queued by #402.
+        // The existing inactive-page branch below may safely drain B.
+        finalResult = firstCycle
+          && !isPageOperationTargetActive(requestedIdentity, latestPageRef.current || page)
+          ? { ok: false, reason: 'inactive-page', page: latestPageRef.current || page }
+          : await runSaveCycle(request);
+        firstCycle = false;
         const queued = queuedSaveRequestRef.current;
         queuedSaveRequestRef.current = null;
         const queuedRequest = queued
@@ -97,7 +107,7 @@ export function usePageSaveAction({
       }
 
       return finalResult;
-    })();
+    });
 
     saveInFlightRef.current = task;
     try {

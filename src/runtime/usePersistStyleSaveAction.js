@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { serializeEditorSave } from './editorSaveCoordinator.js';
 import { persistPage } from '../lib/pageRepository.js';
 import { assertValidPageSaveResult } from '../lib/pageSaveResultValidation.js';
 import { clearPageDraft } from './pageDraftStore.js';
@@ -56,7 +57,13 @@ export function usePersistStyleSaveAction({
       return styleSaveInFlightRef.current;
     }
 
-    const task = (async () => {
+    const requestedIdentity = pageOperationIdentity(latestPageRef.current || page);
+    const task = serializeEditorSave(authUser, async () => {
+      // Another save type may have held the account lock while the user
+      // switched pages. Never let an old click publish the new active page.
+      if (!isPageOperationTargetActive(requestedIdentity, latestPageRef.current || page)) {
+        return { ok: false, reason: 'inactive-page', page: latestPageRef.current || page };
+      }
       let finalResult = null;
 
       while (true) {
@@ -75,7 +82,7 @@ export function usePersistStyleSaveAction({
       }
 
       return finalResult;
-    })();
+    });
 
     styleSaveInFlightRef.current = task;
     try {
