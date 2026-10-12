@@ -4,6 +4,7 @@ import {
   clearPageDraft,
   evaluatePageDraft,
   pageDraftStorageFailureMessage,
+  pageDraftIdentity,
   readPageDraft,
   restorePageDraft,
   savePageDraft,
@@ -81,6 +82,25 @@ const rawDraftStorage = [...storage.values.values()].join('\n');
 assert(!rawDraftStorage.includes('draft-fixture-ai-value'), 'draft storage must redact API keys');
 assert(!rawDraftStorage.includes('draft-fixture-sheet-ref'), 'draft storage must redact token references');
 assert(readPageDraft({ page: serverPage, authUser, storage })?.page?.title === '저장 전 편집본', 'same account and page must read its draft');
+const legacyStorage = new MemoryStorage();
+const legacyIdentity = pageDraftIdentity(editedPage, authUser);
+const legacySourceId = 'legacy-tab';
+legacyStorage.setItem('inlet-page-drafts-v1', JSON.stringify({
+  version: 1,
+  drafts: {
+    [`${legacyIdentity}::${encodeURIComponent(legacySourceId)}`]: { ...draft, sourceId: legacySourceId },
+  },
+}));
+assert(
+  readPageDraft({ page: serverPage, authUser, storage: legacyStorage, sourceId: legacySourceId })?.page?.title === '저장 전 편집본',
+  'legacy envelope drafts must still be recoverable after the per-tab storage migration',
+);
+assert(
+  clearPageDraft({ page: serverPage, authUser, storage: legacyStorage, sourceId: legacySourceId })
+    && !readPageDraft({ page: serverPage, authUser, storage: legacyStorage, sourceId: legacySourceId }),
+  'legacy envelope drafts must still clear after a successful publish',
+);
+
 assert(!readPageDraft({ page: serverPage, authUser: { ...authUser, ownerId: 'owner-2' }, storage }), 'drafts must be isolated by owner');
 
 const recoverable = evaluatePageDraft({ draft, serverPage, now: editedAt + 1000 });
