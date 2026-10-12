@@ -140,6 +140,44 @@ const securityResult = savePageDraftResult({
 assert(securityResult.ok === false && securityResult.reason === 'security', 'browser storage permission failures must be classified separately');
 assert(pageDraftStorageFailureMessage(securityResult).includes('로컬 저장을 차단'), 'storage permission failure guidance must explain the browser block');
 
+// Some browsers throw before getItem/setItem: accessing window.localStorage itself
+// raises SecurityError. This must not crash the editor, recovery prompts, or save.
+const originalWindowDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'window');
+try {
+  Object.defineProperty(globalThis, 'window', {
+    configurable: true,
+    value: {
+      get localStorage() {
+        const error = new Error('Access to localStorage is disabled');
+        error.name = 'SecurityError';
+        throw error;
+      },
+      get sessionStorage() {
+        const error = new Error('Access to sessionStorage is disabled');
+        error.name = 'SecurityError';
+        throw error;
+      },
+    },
+  });
+  assert(readPageDraft({ page: editedPage, authUser }) === null, 'blocked localStorage getter must not crash draft reads');
+  const blockedDraft = savePageDraftResult({ page: editedPage, authUser });
+  assert(
+    blockedDraft.ok === false && blockedDraft.draft === null && blockedDraft.reason === 'unavailable',
+    'blocked localStorage getter must fail explicitly without claiming the draft was saved',
+  );
+  assert(
+    pageDraftStorageFailureMessage(blockedDraft).includes('이 화면을 닫지 말고'),
+    'blocked localStorage must direct users to preserve the in-memory editor state',
+  );
+} finally {
+  if (originalWindowDescriptor) {
+    Object.defineProperty(globalThis, 'window', originalWindowDescriptor);
+  } else {
+    delete globalThis.window;
+  }
+}
+
+
 const failedRecoveryFeedback = pageSaveErrorFeedback(new Error('server save failed'), false, {
   saved: false,
   message: quotaMessage,
@@ -216,6 +254,7 @@ console.log(JSON.stringify({
   latestPageLayoutSync: true,
   quotaFailureClassified: true,
   securityFailureClassified: true,
+  blockedLocalStorageGetterHandled: true,
   failedRecoveryNeverClaimsBackup: true,
   failedRecoveryKeepsScreenOpenWarning: true,
   storageFailureToastDeduped: true,

@@ -12,7 +12,14 @@ let fallbackDraftSourceId = '';
 function safeStorage(storage) {
   if (storage) return storage;
   if (typeof window === 'undefined') return null;
-  return window.localStorage || null;
+  // Accessing the localStorage property itself can throw SecurityError
+  // (privacy settings, sandboxed frames, restricted browser contexts).
+  // Treat this as unavailable storage, not as an editor render exception.
+  try {
+    return window.localStorage || null;
+  } catch {
+    return null;
+  }
 }
 
 function safeSessionStorage(storage) {
