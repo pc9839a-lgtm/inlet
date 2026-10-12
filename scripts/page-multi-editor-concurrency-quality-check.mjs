@@ -141,7 +141,7 @@ assert(sameContentDecision.action === 'adopt-server' && sameContentDecision.reas
 
 // A publish from tab A removes A's own durable draft. Tab B gets only a
 // storage-event hint, then independently fetches the authoritative server copy.
-const tabADraftKey = [...storage.values.keys()].find((key) => key.includes('::entry::') && key.endsWith('::tab-a'));
+const tabADraftKey = durableKeys.find((key) => key.includes('::entry::') && key.endsWith('::tab-a'));
 assert(!!tabADraftKey, 'test must locate the saved tab A draft key');
 assert(
   isRemoteDraftClearEventForPage({ key: tabADraftKey, newValue: null }, serverPage, authUser),
