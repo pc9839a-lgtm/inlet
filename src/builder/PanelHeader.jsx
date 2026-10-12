@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Redo2, Save, Undo2 } from 'lucide-react';
 import {
   getPageEditHistoryState,
@@ -13,8 +13,23 @@ const saveStateColors = {
   error: '#b42318',
 };
 
-export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPreview, onDashboard, previewUrl }) {
+export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPreview, onDashboard, previewUrl, backupEnabled = false, onBackup, onImportBackup }) {
   const [historyState, setHistoryState] = useState(() => getPageEditHistoryState());
+  const backupFileInputRef = useRef(null);
+  const backupMenuRef = useRef(null);
+
+  const closeBackupMenu = () => {
+    if (backupMenuRef.current) backupMenuRef.current.open = false;
+  };
+  const selectBackupFile = () => {
+    closeBackupMenu();
+    backupFileInputRef.current?.click();
+  };
+  const importBackupFile = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (file && typeof onImportBackup === 'function') onImportBackup(file);
+  };
   const titles = {
     edit: '편집',
     templates: '템플릿',
@@ -79,6 +94,25 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
               <Redo2 size={15} aria-hidden="true" />
             </button>
           </>
+        )}
+        {backupEnabled && historyEnabled && (
+          <details className="panel-backup-action" ref={backupMenuRef}>
+            <summary aria-label="편집본 백업 및 복원">백업</summary>
+            <div className="panel-backup-dropdown">
+              <button type="button" onClick={() => { closeBackupMenu(); onBackup?.(); }}>파일 저장</button>
+              <button type="button" onClick={selectBackupFile}>파일 복원</button>
+            </div>
+          </details>
+        )}
+        {backupEnabled && (
+          <input
+            ref={backupFileInputRef}
+            type="file"
+            hidden
+            accept=".json,application/json"
+            aria-label="PageRo 편집본 백업 파일"
+            onChange={importBackupFile}
+          />
         )}
         <button className="ghost-btn" type="button" onClick={onDashboard}>메인</button>
         <button className="ghost-btn" type="button" onClick={onPreview} title={previewUrl}>미리보기</button>
