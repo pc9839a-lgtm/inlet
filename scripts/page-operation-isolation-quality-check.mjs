@@ -136,7 +136,7 @@ for (const [label, source] of [
   assert(source.includes('const targetIdentity = pageOperationIdentity(nextPage);'), `${label} must capture its target before the request`);
   assert(source.includes('const targetIsActive = () => isPageOperationTargetActive(targetIdentity, activePage());'), `${label} must compare the response target with the current page`);
   assert(source.includes("reason: 'inactive-page'"), `${label} must return an explicit inactive-page result`);
-  assert((source.match(/preserveInactiveFailedSaveDraft\\(\\{/g) || []).length === 2, `${label} must preserve the inactive target draft after both transport and response-validation failures`);
+  assert(source.split('preserveInactiveFailedSaveDraft({').length - 1 === 2, `${label} must preserve the inactive target draft after both transport and response-validation failures`);
   assert(source.includes('page: nextPage,') && source.includes('saveStartedAt,'), `${label} failure recovery must use the saved A snapshot, not live B editor state`);
   assert(source.includes('clearPageDraft({ page: nextPage, authUser });'), `${label} must clear the completed inactive page draft`);
   assert(source.includes('clearPageDraft({ page: savedTargetPage, authUser });'), `${label} must clear the server-normalized inactive page draft`);
