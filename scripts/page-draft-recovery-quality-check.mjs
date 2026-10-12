@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { defaultPage, normalizePageForSave } from '../src/lib/pageModel.js';
 import {
   clearPageDraft,
+  createPortablePageBackup,
   evaluatePageDraft,
   pageDraftStorageFailureMessage,
   pageDraftIdentity,
@@ -9,6 +10,7 @@ import {
   restorePageDraft,
   savePageDraft,
   savePageDraftResult,
+  validatePortablePageBackup,
 } from '../src/runtime/pageDraftStore.js';
 import { pageSaveErrorFeedback } from '../src/runtime/pageSaveFeedback.js';
 
@@ -112,6 +114,22 @@ assert(restored.revision === serverPage.revision && restored.updatedAt === serve
 assert(restored.ai?.apiKey !== 'draft-fixture-ai-value', 'draft recovery must never reintroduce a locally supplied API key');
 assert(restored.ai?.apiKey === serverPage.ai?.apiKey, 'draft recovery must preserve the existing client AI key policy');
 assert(restored.integrations?.sheets?.accessTokenRef === 'server-fixture-sheet-ref', 'redacted token references must be preserved from the server page');
+
+const portableBackup = createPortablePageBackup({ page: editedPage, authUser, exportedAt: editedAt });
+const portableJson = JSON.stringify(portableBackup);
+assert(portableBackup.kind === 'pagero-page-draft-backup' && portableBackup.version === 1, 'manual backup must be explicitly typed and versioned');
+assert(!portableJson.includes('draft-fixture-ai-value') && !portableJson.includes('draft-fixture-sheet-ref'), 'manual export must omit API credentials and token references');
+const validatedPortable = validatePortablePageBackup({ backup: JSON.parse(portableJson), page: serverPage, authUser });
+assert(validatedPortable.ok === true && validatedPortable.serverChanged === false, 'manual backup must accept its original page without requiring localStorage');
+const restoredPortable = restorePageDraft({ draft: validatedPortable.draft, serverPage });
+assert(restoredPortable.title === editedPage.title && restoredPortable.meta.desc === editedPage.meta.desc, 'manual import should recover real edited contents');
+assert(restoredPortable.revision === serverPage.revision && restoredPortable.id === serverPage.id, 'manual import must retain canonical server revision and page identity');
+assert(restoredPortable.ai?.apiKey === serverPage.ai?.apiKey, 'manual import must preserve server-only credential values');
+assert(validatePortablePageBackup({ backup: portableBackup, page: serverPage, authUser: { ...authUser, ownerId: 'other-owner' } }).reason === 'page-mismatch', 'manual import must reject a different account');
+assert(validatePortablePageBackup({ backup: portableBackup, page: { ...serverPage, id: 'other-page' }, authUser }).reason === 'page-mismatch', 'manual import must reject a different page');
+assert(validatePortablePageBackup({ backup: { ...portableBackup, kind: 'unknown' }, page: serverPage, authUser }).reason === 'invalid-format', 'unknown backup formats must fail closed');
+assert(validatePortablePageBackup({ backup: { ...portableBackup, draft: { ...portableBackup.draft, page: { ...portableBackup.draft.page, blocks: null } } }, page: serverPage, authUser }).reason === 'invalid-format', 'malformed block backups must fail closed');
+assert(validatePortablePageBackup({ backup: portableBackup, page: { ...serverPage, revision: 6 }, authUser }).serverChanged === true, 'changed server revisions must warn before import');
 
 const newerServer = normalizePageForSave({
   ...serverPage,
@@ -223,6 +241,8 @@ const persistFlowSource = await readFile('src/runtime/pagePersistFlow.js', 'utf8
 const pageSaveActionSource = await readFile('src/runtime/usePageSaveAction.js', 'utf8');
 const styleSaveActionSource = await readFile('src/runtime/usePersistStyleSaveAction.js', 'utf8');
 const pageSaveFeedbackSource = await readFile('src/runtime/pageSaveFeedback.js', 'utf8');
+const workspaceLeftSource = await readFile('src/screens/workspace/WorkspaceLeftPanel.jsx', 'utf8');
+const panelHeaderSource = await readFile('src/builder/PanelHeader.jsx', 'utf8');
 const storageKeysSource = await readFile('src/config/storageKeys.js', 'utf8');
 const packageJson = JSON.parse(await readFile('package.json', 'utf8'));
 const qaAllSource = await readFile('scripts/qa-all.mjs', 'utf8');
@@ -253,6 +273,9 @@ assert(pageSaveFeedbackSource.includes('recovery?.saved === false') && pageSaveF
 assert(pageSaveActionSource.includes('recoveryPage: activePage()') && pageSaveActionSource.includes('authUser,'), 'page save failures must snapshot the currently active edited page');
 assert(styleSaveActionSource.includes('recoveryPageWithLatestStyle') && styleSaveActionSource.includes('latestStylePreviewThemeRef.current') && styleSaveActionSource.includes('latestStylePreviewBlocksRef.current'), 'style recovery must include the latest pending preview theme and blocks');
 assert(styleSaveActionSource.includes('recoveryPage: recoveryPageWithLatestStyle(activePage())') && styleSaveActionSource.includes('recoveryPage: recoveryPageWithLatestStyle(currentAfterSave)'), 'style save failures and save-race success must both persist a complete recovery draft');
+assert(workspaceLeftSource.includes('createPortablePageBackup({') && workspaceLeftSource.includes('validatePortablePageBackup({') && workspaceLeftSource.includes('restorePageDraft({') && workspaceLeftSource.includes('savePageDraftResult({'), 'active workspace must wire manual download and explicit import without touching server APIs');
+assert(workspaceLeftSource.includes('pageDraftContentSignature(latest) !== originalSignature') && workspaceLeftSource.includes("confirmLabel: '파일 복원'"), 'an import confirmation must reject newer unsaved edits instead of silently replacing them');
+assert(panelHeaderSource.includes('onImportBackup') && panelHeaderSource.includes('accept=".json,application/json"') && panelHeaderSource.includes('onBackup'), 'the current editor header must expose backup and file restore actions');
 assert(storageKeysSource.includes("PAGE_DRAFTS_KEY = 'inlet-page-drafts-v1'"), 'page draft storage key must be versioned');
 assert(packageJson.scripts?.['page:draft:qa'] === 'node scripts/page-draft-recovery-quality-check.mjs', 'package page:draft:qa script missing');
 assert(qaAllSource.includes("['page:draft:qa', ['scripts/page-draft-recovery-quality-check.mjs']]"), 'qa:all must enforce draft recovery QA');
@@ -275,6 +298,8 @@ console.log(JSON.stringify({
   quotaFailureClassified: true,
   securityFailureClassified: true,
   blockedLocalStorageGetterHandled: true,
+  manualExportImportWithoutStorage: true,
+  manualBackupAccountPageIdentity: true,
   failedRecoveryNeverClaimsBackup: true,
   failedRecoveryKeepsScreenOpenWarning: true,
   storageFailureToastDeduped: true,
