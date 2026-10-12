@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Redo2, Save, Undo2 } from 'lucide-react';
+import { pageOperationIdentity } from '../runtime/pageOperationIdentity.js';
 import {
   getPageEditHistoryState,
   redoPageEdit,
@@ -26,6 +27,7 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
   };
   const title = titles[tab] || titles.edit;
   const showSaveAlert = saveStatus && (saveStatus.tone === 'warning' || saveStatus.tone === 'error');
+  const savedOnCurrentPage = saved && saveStatus?.savedPageIdentity === pageOperationIdentity(page);
   const historyEnabled = tab === 'edit' || tab === 'style' || tab === 'settings';
 
   useEffect(() => {
@@ -88,7 +90,7 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
           onClick={onSave}
           title="편집 내용은 브라우저에 자동 임시보관됩니다. 발행하면 공개 페이지에 반영됩니다."
         >
-          <Save size={14} aria-hidden="true" />{saved ? '발행됨' : '발행'}
+          <Save size={14} aria-hidden="true" />{savedOnCurrentPage ? '발행됨' : '발행'}
         </button>
       </div>
     </header>
