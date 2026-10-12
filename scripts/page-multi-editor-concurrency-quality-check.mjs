@@ -5,7 +5,12 @@ import {
   readPageDraft,
   savePageDraft,
 } from '../src/runtime/pageDraftStore.js';
-import { remotePageFreshnessDecision } from '../src/runtime/usePageRemoteFreshness.js';
+import {
+  REMOTE_VISIBLE_POLL_MS,
+  isRemoteDraftClearEventForPage,
+  remoteFreshnessRequestStillCurrent,
+  remotePageFreshnessDecision,
+} from '../src/runtime/usePageRemoteFreshness.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -134,6 +139,40 @@ const sameContentDecision = remotePageFreshnessDecision({
 });
 assert(sameContentDecision.action === 'adopt-server' && sameContentDecision.reason === 'same-content-newer-server', `same content saved elsewhere must rebase to the new server revision: ${JSON.stringify(sameContentDecision)}`);
 
+// A publish from tab A removes A's own durable draft. Tab B gets only a
+// storage-event hint, then independently fetches the authoritative server copy.
+const tabADraftKey = [...storage.values.keys()].find((key) => key.includes('::entry::') && key.endsWith('::tab-a'));
+assert(!!tabADraftKey, 'test must locate the saved tab A draft key');
+assert(
+  isRemoteDraftClearEventForPage({ key: tabADraftKey, newValue: null }, serverPage, authUser),
+  'a matching cross-tab draft removal must request an authenticated server refresh',
+);
+assert(
+  !isRemoteDraftClearEventForPage({ key: tabADraftKey, newValue: 'replacement draft' }, serverPage, authUser),
+  'ordinary draft edits must not trigger repeated server reads',
+);
+assert(
+  !isRemoteDraftClearEventForPage({ key: tabADraftKey, newValue: null }, { ...serverPage, id: 'another-page' }, authUser),
+  'another page draft clear must not prompt a refresh for the current page',
+);
+assert(
+  !isRemoteDraftClearEventForPage({ key: tabADraftKey, newValue: null }, serverPage, { ...authUser, ownerId: 'different-owner' }),
+  'a different owner must not trigger a cross-account freshness request',
+);
+assert(REMOTE_VISIBLE_POLL_MS >= 30000 && REMOTE_VISIBLE_POLL_MS <= 60000, 'visible-server poll must remain bounded to 30-60 seconds');
+assert(
+  remoteFreshnessRequestStillCurrent({ requestedPage: serverPage, activePage: localDirtyPage, authUser }),
+  'editing without a server revision change should still allow a response to be checked safely',
+);
+assert(
+  !remoteFreshnessRequestStillCurrent({ requestedPage: serverPage, activePage: remoteServerPage, authUser }),
+  'a server response initiated before a local publish must never overwrite its newer revision',
+);
+assert(
+  !remoteFreshnessRequestStillCurrent({ requestedPage: serverPage, activePage: { ...serverPage, id: 'page-switched' }, authUser }),
+  'a server response for page A must not be applied after the editor switches to page B',
+);
+
 const draftStoreSource = await readFile('src/runtime/pageDraftStore.js', 'utf8');
 const accountWorkspaceSource = await readFile('src/runtime/useAccountWorkspacePage.js', 'utf8');
 const remoteFreshnessSource = await readFile('src/runtime/usePageRemoteFreshness.js', 'utf8');
@@ -151,6 +190,23 @@ assert(accountWorkspaceSource.includes('sourceId: draft.sourceId'), 'recovery ca
 assert(accountWorkspaceSource.includes('usePageRemoteFreshness({'), 'workspace page lifecycle must watch for saves from another tab or device');
 assert(remoteFreshnessSource.includes("window.addEventListener('focus', checkRemoteFreshness)"), 'remote freshness must re-check when the editor regains focus');
 assert(remoteFreshnessSource.includes("document.addEventListener('visibilitychange', handleVisibility)"), 'remote freshness must re-check when a background tab becomes visible');
+assert(
+  remoteFreshnessSource.includes('window.setInterval(checkWhileVisible, REMOTE_VISIBLE_POLL_MS)')
+    && remoteFreshnessSource.includes("document.visibilityState === 'visible'")
+    && remoteFreshnessSource.includes('window.clearInterval(pollTimer)'),
+  'visible editors must poll for changes while open; hidden/unmounted editors must not keep polling',
+);
+assert(
+  remoteFreshnessSource.includes("window.addEventListener('storage', handleDraftStorage)")
+    && remoteFreshnessSource.includes("window.removeEventListener('storage', handleDraftStorage)"),
+  'same-origin draft-clear notifications must be scoped and unsubscribed when switching pages',
+);
+assert(
+  remoteFreshnessSource.includes('baselineRef.current !== baseline')
+    && remoteFreshnessSource.includes('remoteFreshnessRequestStillCurrent({ requestedPage: currentPage, activePage, authUser })'),
+  'in-flight older server responses must not overwrite newer local saves or switched pages',
+);
+
 assert(remoteFreshnessSource.includes('const recoveryDraft = savePageDraft({') && remoteFreshnessSource.includes('다른 곳에서 저장된 변경이 있습니다. 현재 작업은 임시 보관했습니다.'), 'remote divergence must snapshot local work and surface a warning');
 assert(remoteFreshnessSource.includes('clearPageDraft({ page: activePage, authUser })') && remoteFreshnessSource.includes("decision.action === 'adopt-server'"), 'clean local state may discard only its own stale draft when adopting the server');
 assert(!persistFlowSource.includes('allSources: true'), 'ordinary save success must never delete recovery drafts owned by another editor tab');
@@ -171,5 +227,8 @@ console.log(JSON.stringify({
     remoteCleanAutoAdopt: true,
     remoteDivergenceLocalSnapshot: true,
     sameContentRevisionRebase: true,
+    visiblePollingBounded: true,
+    crossTabDraftClearSignal: true,
+    outdatedRemoteResponseRejected: true,
   },
 }, null, 2));
