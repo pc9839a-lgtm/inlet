@@ -34,8 +34,10 @@ export function schedulePageSavedIndicatorReset({
   latestPageRef,
   setSaved,
   delayMs = 1000,
-  schedule = setTimeout,
-  cancel = clearTimeout,
+  // Browser host timer functions must be called on their own global object,
+  // not as the `cancel` property of a WeakMap entry (Illegal invocation).
+  schedule = (callback, timeout) => setTimeout(callback, timeout),
+  cancel = (timer) => clearTimeout(timer),
 } = {}) {
   if (!latestPageRef || typeof setSaved !== 'function') return false;
   cancelPageSavedIndicatorReset(latestPageRef);
