@@ -1,4 +1,6 @@
-const LIFE_UPSTREAM_ORIGIN = 'https://life.pagero.kr';
+// Read from an immutable verified content deployment. The legacy hostname now
+// issues a 301 redirect and must never be used as the reverse-proxy upstream.
+const LIFE_UPSTREAM_ORIGIN = 'https://82068076.life-pagero.pages.dev';
 const LIFE_PUBLIC_ORIGIN = 'https://pagero.kr/life';
 const LIFE_PREFIX = '/life';
 
@@ -88,7 +90,7 @@ function prepareHeaders(sourceHeaders) {
   headers.delete('content-encoding');
   headers.delete('etag');
   headers.set('X-Pagero-Life-Proxy', '1');
-  headers.set('X-Pagero-Life-Upstream', 'life.pagero.kr');
+  headers.set('X-Pagero-Life-Upstream', 'verified-immutable-life-snapshot');
   return headers;
 }
 
