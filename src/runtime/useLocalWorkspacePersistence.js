@@ -85,17 +85,28 @@ export function useLocalWorkspacePersistence({
       }
     };
 
+
+    const markManualDraftRestore = () => {
+      // An explicit file recovery is an edit even when the user never typed
+      // into a text field. Keep the unsaved/exit guard active until published.
+      lastUserEditIntentRef.current = Date.now();
+      serverDraftDirtyRef.current = true;
+      setWorkspaceUnsavedDirty(true);
+    };
+
     const options = { capture: true, passive: true };
     window.addEventListener('input', markUserEditIntent, options);
     window.addEventListener('change', markUserEditIntent, options);
     window.addEventListener('pointerdown', markUserEditIntent, options);
     window.addEventListener('keydown', markUserEditIntent, true);
+    window.addEventListener('builder:manual-draft-restored', markManualDraftRestore);
 
     return () => {
       window.removeEventListener('input', markUserEditIntent, true);
       window.removeEventListener('change', markUserEditIntent, true);
       window.removeEventListener('pointerdown', markUserEditIntent, true);
       window.removeEventListener('keydown', markUserEditIntent, true);
+      window.removeEventListener('builder:manual-draft-restored', markManualDraftRestore);
     };
   }, [authUser?.session, publicLandingSlug]);
 

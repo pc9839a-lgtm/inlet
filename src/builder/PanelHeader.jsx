@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Redo2, Save, Undo2 } from 'lucide-react';
+import { pageOperationIdentity } from '../runtime/pageOperationIdentity.js';
 import {
   getPageEditHistoryState,
   redoPageEdit,
@@ -13,8 +14,23 @@ const saveStateColors = {
   error: '#b42318',
 };
 
-export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPreview, onDashboard, previewUrl }) {
+export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPreview, onDashboard, previewUrl, backupEnabled = false, onBackup, onImportBackup }) {
   const [historyState, setHistoryState] = useState(() => getPageEditHistoryState());
+  const backupFileInputRef = useRef(null);
+  const backupMenuRef = useRef(null);
+
+  const closeBackupMenu = () => {
+    if (backupMenuRef.current) backupMenuRef.current.open = false;
+  };
+  const selectBackupFile = () => {
+    closeBackupMenu();
+    backupFileInputRef.current?.click();
+  };
+  const importBackupFile = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (file && typeof onImportBackup === 'function') onImportBackup(file);
+  };
   const titles = {
     edit: '편집',
     templates: '템플릿',
@@ -26,6 +42,7 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
   };
   const title = titles[tab] || titles.edit;
   const showSaveAlert = saveStatus && (saveStatus.tone === 'warning' || saveStatus.tone === 'error');
+  const savedOnCurrentPage = saved && saveStatus?.savedPageIdentity === pageOperationIdentity(page);
   const historyEnabled = tab === 'edit' || tab === 'style' || tab === 'settings';
 
   useEffect(() => {
@@ -80,6 +97,25 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
             </button>
           </>
         )}
+        {backupEnabled && historyEnabled && (
+          <details className="panel-backup-action" ref={backupMenuRef} style={{ position: 'relative', flex: '0 0 auto' }}>
+            <summary aria-label="편집본 백업 및 복원" style={{ display: 'flex', alignItems: 'center', minHeight: 36, padding: '0 10px', border: '1px solid var(--product-line)', borderRadius: 'var(--product-radius-control)', background: 'var(--product-panel)', color: '#30353d', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>백업</summary>
+            <div className="panel-backup-dropdown" style={{ position: 'absolute', top: 'calc(100% + 5px)', right: 0, zIndex: 60, display: 'grid', gap: 4, minWidth: 118, padding: 6, border: '1px solid var(--product-line)', borderRadius: 'var(--product-radius-control)', background: 'var(--product-panel)', boxShadow: '0 8px 24px rgba(0,0,0,.14)' }}>
+              <button className="ghost-btn" type="button" onClick={() => { closeBackupMenu(); onBackup?.(); }}>파일 저장</button>
+              <button className="ghost-btn" type="button" onClick={selectBackupFile}>파일 복원</button>
+            </div>
+          </details>
+        )}
+        {backupEnabled && (
+          <input
+            ref={backupFileInputRef}
+            type="file"
+            hidden
+            accept=".json,application/json"
+            aria-label="PageRo 편집본 백업 파일"
+            onChange={importBackupFile}
+          />
+        )}
         <button className="ghost-btn" type="button" onClick={onDashboard}>메인</button>
         <button className="ghost-btn" type="button" onClick={onPreview} title={previewUrl}>미리보기</button>
         <button
@@ -88,7 +124,7 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
           onClick={onSave}
           title="편집 내용은 브라우저에 자동 임시보관됩니다. 발행하면 공개 페이지에 반영됩니다."
         >
-          <Save size={14} aria-hidden="true" />{saved ? '발행됨' : '발행'}
+          <Save size={14} aria-hidden="true" />{savedOnCurrentPage ? '발행됨' : '발행'}
         </button>
       </div>
     </header>

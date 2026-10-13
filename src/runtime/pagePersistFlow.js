@@ -1,4 +1,5 @@
 import { STORAGE_KEY } from '../config/storageKeys.js';
+import { pageOperationIdentity } from './pageOperationIdentity.js';
 import { normalizePageForSave } from '../lib/pageModel.js';
 import { optimizePageForServerSave } from '../lib/pageSaveOptimizer.js';
 import {
@@ -16,6 +17,37 @@ import {
   pageSaveSuccessFeedback,
 } from './pageSaveFeedback.js';
 import { setWorkspaceUnsavedDirty } from './workspaceUnsavedGuard.js';
+
+// One active flash per workspace ref. A previous page's timeout must not
+// clear a newer successful publish's "발행됨" state.
+const savedIndicatorTimeouts = new WeakMap();
+
+export function cancelPageSavedIndicatorReset(latestPageRef) {
+  const previous = latestPageRef && savedIndicatorTimeouts.get(latestPageRef);
+  if (!previous) return false;
+  previous.cancel(previous.timer);
+  savedIndicatorTimeouts.delete(latestPageRef);
+  return true;
+}
+
+export function schedulePageSavedIndicatorReset({
+  latestPageRef,
+  setSaved,
+  delayMs = 1000,
+  schedule = setTimeout,
+  cancel = clearTimeout,
+} = {}) {
+  if (!latestPageRef || typeof setSaved !== 'function') return false;
+  cancelPageSavedIndicatorReset(latestPageRef);
+  const generation = Symbol('saved-indicator-generation');
+  const timer = schedule(() => {
+    if (savedIndicatorTimeouts.get(latestPageRef)?.generation !== generation) return;
+    savedIndicatorTimeouts.delete(latestPageRef);
+    setSaved(false);
+  }, delayMs);
+  savedIndicatorTimeouts.set(latestPageRef, { generation, timer, cancel });
+  return true;
+}
 
 function preserveRecoveryDraft(page, authUser) {
   if (!page) {
@@ -176,6 +208,7 @@ export function commitPendingLocalChangesAfterSave({
   latestPageRef.current = rebasedPage;
   setPage(rebasedPage);
   saveLocalJson(STORAGE_KEY, rebasedPage, PAGE_SAVE_LABEL, { quietSuccess: true });
+  cancelPageSavedIndicatorReset(latestPageRef);
   setSaved(false);
   setWorkspaceUnsavedDirty(true);
 
@@ -293,9 +326,11 @@ export function commitSavedPageResult({
 
   setWorkspaceUnsavedDirty(verificationPending);
   setSaved(true);
-  setTimeout(() => setSaved(false), 1000);
+  schedulePageSavedIndicatorReset({ latestPageRef, setSaved });
   const feedback = pageSaveSuccessFeedback(result, scope);
-  markSaveStatus(feedback.level, feedback.title, feedback.message);
+  markSaveStatus(feedback.level, feedback.title, feedback.message, {
+    savedPageIdentity: pageOperationIdentity(savedPage),
+  });
 
   if (verificationPending) {
     settlePendingPublicVerification({
