@@ -920,13 +920,13 @@ async function run() {
     await clickButtonByText(client, '.panel-backup-dropdown', '파일 저장');
     let downloadedBackupName = '';
     for (let attempt = 0; attempt < 75; attempt += 1) {
-      downloadedBackupName = (await readdir(backupDownloadDir)).find((file) => /^pagero-editor-e2e-backup-[0-9]{4}-[0-9]{2}-[0-9]{2}\\.json$/.test(file)) || '';
+      downloadedBackupName = (await readdir(backupDownloadDir)).find((file) => /^pagero-editor-e2e-backup-[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$/.test(file)) || '';
       if (downloadedBackupName) break;
       await wait(100);
     }
     assert(downloadedBackupName, 'real Chrome backup file download did not complete');
     const backupFiles = await readdir(backupDownloadDir);
-    const backupName = backupFiles.find((file) => /^pagero-editor-e2e-backup-[0-9]{4}-[0-9]{2}-[0-9]{2}\\.json$/.test(file));
+    const backupName = backupFiles.find((file) => /^pagero-editor-e2e-backup-[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$/.test(file));
     assert(backupName, 'Chrome downloaded backup filename is missing');
     const backupPath = path.join(backupDownloadDir, backupName);
     const backupText = await readFile(backupPath, 'utf8');
