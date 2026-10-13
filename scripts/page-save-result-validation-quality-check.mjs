@@ -169,6 +169,7 @@ for (const [label, source] of [['page', pageAction], ['style', styleAction]]) {
 
 assert(repository.includes("identity.mode || 'create-new'") && repository.includes("identity.projectId || 'project'") && repository.includes("Math.max(0, Number(expectedRevision || 0))"), 'validation request id must remain aligned with repository saveRequestId construction');
 assert(persistFlow.includes('clearPageDraft({ page: nextPage, authUser })') && persistFlow.includes('setWorkspaceUnsavedDirty(false)'), 'successful commit remains the only path that clears draft and dirty state after validation');
+assert((persistFlow.match(/savedPageIdentity: pageOperationIdentity\(savedPage\)/g) || []).length >= 2, 'both immediate save and asynchronous public verification must retain page-scoped success identity');
 
 // ED-R10: A's obsolete completion timeout must never clear B's newer
 // successful publish indicator, even if an already-queued callback runs.
