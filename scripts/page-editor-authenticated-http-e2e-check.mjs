@@ -1,9 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { assert, authHeaders, delay, fetchWithTimeout, withServer } from './lib/serverSmokeHarness.mjs';
+import { sameCommittedPageContent, isCommittedSaveRetryConflict } from '../src/runtime/pageSaveReplayRecovery.js';
+import { clearPageDraft, readPageDraft, savePageDraft } from '../src/runtime/pageDraftStore.js';
 
 // ED-R11: real local HTTP API + temporary JSONL disk + signed sessions.
 // No mocked /api/pages responses. No writes to a live or shared environment.
-const runtimeResult = { signedLogin: false, readback: false, slowNetwork: false, concurrentTabs: false, staleWriteRejected: false, reconnection: false, iterations: 0 };
+const runtimeResult = { signedLogin: false, readback: false, slowNetwork: false, concurrentTabs: false, staleWriteRejected: false, reconnection: false, failedBeforeSendPreserved: false, lostAckRecovered: false, duplicateRevisionBlocked: false, divergentChangesProtected: false, iterations: 0 };
 
 async function api(baseUrl, method, endpoint, body, session = '', timeoutMs = 8000) {
   const res = await fetchWithTimeout(`${baseUrl}${endpoint}`, {
@@ -135,6 +137,117 @@ await withServer(async ({ baseUrl, dataDir }) => {
   assert(fromFreshSession.status === 200 && fromFreshSession.data.page?.title === 'B after refresh', 'fresh login must load B newest committed page');
   const publicRead = await api(baseUrl, 'GET', `${endpoint}?public=1&fresh=${Date.now()}`);
   assert(publicRead.status === 200 && publicRead.data.page?.title === 'B after refresh', 'published page must reflect newest authenticated save');
+
+  // ED-R12: disconnected before request transmission cannot mutate the server.
+  // Persist a real page-draft-store copy, then restore and publish after link return.
+  const entries = new Map();
+  const isolatedStorage = {
+    getItem: (key) => entries.has(key) ? entries.get(key) : null,
+    setItem: (key, value) => { entries.set(key, String(value)); },
+    removeItem: (key) => { entries.delete(key); },
+    key: (index) => [...entries.keys()][index] ?? null,
+    get length() { return entries.size; },
+  };
+  const offlineBase = fromFreshSession.data.page;
+  const offlinePage = { ...offlineBase, title: 'ED-R12 offline draft, then reconnected',
+    blocks: offlineBase.blocks.map(block => block.id === 'hero'
+      ? { ...block, s: { ...block.s, title: 'ED-R12 offline hero survives' } }
+      : block) };
+  const offlineDraft = savePageDraft({ page: offlinePage, authUser: login.data.user,
+    storage: isolatedStorage, sourceId: 'disconnected-editor' });
+  assert(offlineDraft?.page?.title === offlinePage.title, 'disconnected edit must remain in isolated draft storage');
+
+  const aborted = new AbortController();
+  aborted.abort();
+  let offlineRejected = false;
+  try {
+    await fetch(`${baseUrl}${endpoint}`, {
+      method: 'POST', signal: aborted.signal,
+      headers: authHeaders({ 'Content-Type': 'application/json', 'X-Inlet-Session': sessionA }),
+      body: JSON.stringify({ project, expectedUpdatedAt: offlineBase.updatedAt, page: offlinePage }),
+    });
+  } catch (error) {
+    offlineRejected = error?.name === 'AbortError';
+  }
+  assert(offlineRejected, 'disconnected request must be rejected before reaching HTTP server');
+  const afterOffline = await api(baseUrl, 'GET', readEndpoint, null, sessionB);
+  assert(afterOffline.status === 200 && afterOffline.data.page.title === 'B after refresh',
+    'offline request must not mutate authoritative page');
+  assert(readPageDraft({ page: offlineBase, authUser: login.data.user, storage: isolatedStorage, sourceId: 'disconnected-editor' })?.page?.title === offlinePage.title,
+    'offline draft must survive transport failure');
+  runtimeResult.failedBeforeSendPreserved = true;
+
+  const reconnectedWrite = await api(baseUrl, 'POST', endpoint, {
+    project, expectedUpdatedAt: afterOffline.data.page.updatedAt, page: offlinePage,
+  }, sessionA);
+  assert(reconnectedWrite.status === 200 && reconnectedWrite.data.page?.title === offlinePage.title,
+    'offline draft must be published after network reconnection');
+  const reconnectRead = await api(baseUrl, 'GET', readEndpoint, null, sessionB);
+  assert(reconnectRead.data.page?.blocks?.[0]?.s?.title === 'ED-R12 offline hero survives',
+    'reconnected full page read must preserve offline edited block content');
+  assert(clearPageDraft({ page: offlineBase, authUser: login.data.user, storage: isolatedStorage, sourceId: 'disconnected-editor' }),
+    'successfully published offline draft must be clearable');
+  assert(!readPageDraft({ page: offlineBase, authUser: login.data.user, storage: isolatedStorage, sourceId: 'disconnected-editor' }),
+    'successfully published offline draft must no longer be offered for recovery');
+
+  // First HTTP request reaches the real server and commits. The simulated
+  // client loses ONLY its acknowledgement and resends the identical stale
+  // write. Recovery must read the authoritative server result and prove
+  // identical content, not mark the second 409 as a second successful write.
+  const beforeDroppedAck = reconnectRead.data.page;
+  const lostAckPage = { ...beforeDroppedAck, title: 'ED-R12 committed response lost',
+    blocks: beforeDroppedAck.blocks.map(block => block.id === 'hero'
+      ? { ...block, s: { ...block.s, title: 'ED-R12 exactly once hero' } }
+      : block) };
+  const lostAckPayload = { project, expectedUpdatedAt: beforeDroppedAck.updatedAt, page: lostAckPage };
+  let simulatedLostAck = false;
+  try {
+    const accepted = await api(baseUrl, 'POST', endpoint, lostAckPayload, sessionA);
+    assert(accepted.status === 200, 'first request must be committed before response loss is injected');
+    // The transport hands no success result to the editor even though the
+    // database write has finished; this throws in the simulated client.
+    throw new TypeError('ED_R12_RESPONSE_DROPPED_AFTER_COMMIT');
+  } catch (error) {
+    simulatedLostAck = error?.message === 'ED_R12_RESPONSE_DROPPED_AFTER_COMMIT';
+  }
+  assert(simulatedLostAck, 'test must simulate a lost acknowledgement after the actual write');
+  const replay = await api(baseUrl, 'POST', endpoint, lostAckPayload, sessionA);
+  assert(replay.status === 409 && replay.data?.code === 'PAGE_REVISION_CONFLICT',
+    'replayed stale request after committed response loss must return 409');
+  assert(isCommittedSaveRetryConflict({ status: replay.status, details: replay.data }),
+    '409 replay must be recognized as a possible already committed save');
+  const serverAfterReplay = await api(baseUrl, 'GET', readEndpoint, null, sessionB);
+  assert(serverAfterReplay.status === 200 && serverAfterReplay.data.page?.title === lostAckPage.title,
+    'retry cannot lose committed content');
+  assert(Number(serverAfterReplay.data.page.revision) === Number(beforeDroppedAck.revision) + 1,
+    'lost acknowledgement and retry must produce exactly one server revision');
+  assert(sameCommittedPageContent(serverAfterReplay.data.page, lostAckPage),
+    'already committed content must be proven byte-equivalent after normalizing version fields');
+  runtimeResult.lostAckRecovered = true;
+  runtimeResult.duplicateRevisionBlocked = true;
+
+  // If another editor truly changed the server after the uncertain write,
+  // the first editor cannot falsely claim that its attempted content won.
+  const distinctServerPage = {
+    ...serverAfterReplay.data.page, title: 'ED-R12 another editor superseded the uncertain write',
+  };
+  const distinctWrite = await api(baseUrl, 'POST', endpoint, {
+    project, expectedUpdatedAt: serverAfterReplay.data.page.updatedAt, page: distinctServerPage,
+  }, sessionB);
+  assert(distinctWrite.status === 200, 'second editor must be able to publish a newer divergent version');
+  const ambiguousRetry = await api(baseUrl, 'POST', endpoint, lostAckPayload, sessionA);
+  assert(ambiguousRetry.status === 409 && ambiguousRetry.data?.code === 'PAGE_REVISION_CONFLICT',
+    'stale original editor cannot overwrite divergent content after response loss');
+  const finalRead = await api(baseUrl, 'GET', readEndpoint, null, sessionA);
+  assert(finalRead.status === 200 && finalRead.data.page?.title === distinctServerPage.title,
+    'newest legitimate server edit must survive stale replay');
+  assert(!sameCommittedPageContent(finalRead.data.page, lostAckPage),
+    'different content must not be auto-recovered as a successful stale retry');
+  const publicAfterFaults = await api(baseUrl, 'GET', `${endpoint}?public=1&fresh=${Date.now()}`);
+  assert(publicAfterFaults.status === 200 && publicAfterFaults.data.page?.title === distinctServerPage.title,
+    'public latest page must reflect the truly last committed revision after network faults');
+  runtimeResult.divergentChangesProtected = true;
+
   runtimeResult.reconnection = true;
 
   // Never record login tokens, verification codes, PII or complete page payload.
