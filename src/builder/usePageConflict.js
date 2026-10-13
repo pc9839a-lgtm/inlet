@@ -106,6 +106,7 @@ export function usePageConflict({
     clearPageDraft({ page: pageConflict.localPage, authUser });
     clearPageDraft({ page: nextPage, authUser });
     if (latestPageRef) latestPageRef.current = nextPage;
+    window.dispatchEvent(new CustomEvent('builder:conflict-resolution-committed', { detail: { page: nextPage } }));
     cancelPageSavedIndicatorReset(latestPageRef);
     setPage(nextPage);
     saveJson(STORAGE_KEY, nextPage);
@@ -157,6 +158,7 @@ export function usePageConflict({
       clearPageDraft({ page: pageConflict.localPage, authUser });
       clearPageDraft({ page: savedPage, authUser });
       if (latestPageRef) latestPageRef.current = savedPage;
+      window.dispatchEvent(new CustomEvent('builder:conflict-resolution-committed', { detail: { page: savedPage } }));
       setPage(savedPage);
       saveJson(STORAGE_KEY, savedPage);
       setWorkspaceUnsavedDirty(false);
