@@ -9,7 +9,8 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: inlet-cloudflare-production
+  # A QA workflow_run from a non-main branch must not cancel an active production deployment.
+  group: ${{ (github.event_name == 'workflow_dispatch' || github.event.workflow_run.head_branch == 'main') && 'inlet-cloudflare-production' || format('inlet-cloudflare-nonproduction-{0}', github.run_id) }}
   cancel-in-progress: true
 
 jobs:
