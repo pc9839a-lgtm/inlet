@@ -101,6 +101,8 @@ function enrichRootFallback(html) {
     next = next.replace(lifeStart, `${brandSection}${lifeStart}`);
   }
 
+  const toolLink = '<section class="pagero-ssr-life"><h2>랜딩페이지 광고비, 계약까지 계산해 보세요</h2><p>광고비와 클릭당 비용, 문의 전환율, 계약 전환율을 직접 입력해 문의당 광고비·계약당 광고비·손익분기점을 계산할 수 있습니다.</p><p><a href="/tools/lead-calculator/">광고 랜딩페이지 손익 계산기 바로가기 →</a></p></section>';
+  if (next.includes(lifeStart) && !next.includes('광고 랜딩페이지 손익 계산기 바로가기')) next = next.replace(lifeStart, toolLink + lifeStart);
   next = next.replace(/https:\/\/life\.pagero\.kr\//g, 'https://pagero.kr/life/');
   return next;
 }
