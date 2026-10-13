@@ -1,8 +1,8 @@
-import { assertD1, handleApiError, jsonResponse, optionsResponse, sessionIdentity } from '../_shared.js';
+import { assertD1, handleApiError, jsonResponse, optionsResponse } from '../_shared.js';
+import { requirePlatformMaster } from './_auth.js';
 import { projectDownloadsPrefix } from '../files/_files.js';
 
 const ADMIN_METHODS = 'GET, OPTIONS';
-const DEFAULT_MASTER_EMAILS = ['admin@pagero.kr', 'roadfor@kakao.com', 'pc9839a@naver.com'];
 const OPERATIONAL_PROJECT_WHERE = `
   COALESCE(projects.status, 'active') <> 'deleted'
   AND lower(COALESCE(projects.slug, '')) NOT LIKE 'hosted-route-qa-%'
@@ -19,8 +19,7 @@ export async function onRequest({ request, env }) {
   if (request.method !== 'GET') return jsonResponse(request, env, 405, { ok: false, error: 'Method not allowed.' }, ADMIN_METHODS);
   try {
     const db = assertD1(env);
-    const identity = await sessionIdentity(request, env);
-    assertPlatformMaster(identity, env);
+    const identity = await requirePlatformMaster(request, env);
     const snapshot = await buildD1MasterSummary(db, env);
     return jsonResponse(request, env, 200, {
       ok: true,
@@ -32,21 +31,6 @@ export async function onRequest({ request, env }) {
   } catch (error) {
     return handleApiError(request, env, error, ADMIN_METHODS);
   }
-}
-
-function assertPlatformMaster(identity = null, env = {}) {
-  const email = String(identity?.email || '').trim().toLowerCase();
-  const role = String(identity?.role || '').trim().toLowerCase().replace(/[-\s]/g, '_');
-  const emails = String(env.INLET_PLATFORM_MASTER_EMAILS || '')
-    .split(',')
-    .map((item) => item.trim().toLowerCase())
-    .filter(Boolean);
-  const allowedEmails = [...new Set([...DEFAULT_MASTER_EMAILS, ...emails])];
-  if (allowedEmails.includes(email) || ['platformmaster', 'platform_master', 'superadmin', 'serviceadmin'].includes(role)) return true;
-  const error = new Error('전체 관리자 권한이 필요합니다.');
-  error.status = identity ? 403 : 401;
-  error.details = { code: 'PLATFORM_MASTER_REQUIRED' };
-  throw error;
 }
 
 async function buildD1MasterSummary(db, env = {}) {
