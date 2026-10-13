@@ -1612,6 +1612,86 @@ async function run() {
     assert(await evaluate(secondClient, "(document.querySelector('.phone-frame')?.innerText || '').includes(" + JSON.stringify(tabBLocalTitle) + ")"), 'tab B local unsaved work must survive conflict');
     await capture(secondClient, 'editor-two-tab-conflict');
 
+    // A real 409 must preserve an isolated browser draft, not merely leave
+    // the unsaved text visible in the current React state.
+    const conflictDraftBeforeReload = await evaluate(secondClient, `(() => {
+      const raw = Object.keys(localStorage).filter((key) => key.includes(':page-conflict-draft:'));
+      return raw.some((key) => (localStorage.getItem(key) || '').includes('ED-R11 B탭 미발행 변경'));
+    })()`);
+    assert(conflictDraftBeforeReload, 'B conflict snapshot must survive in browser localStorage');
+
+    // ED-R11-2: Reload the stale editor and explicitly recover the orphaned
+    // per-tab draft. The other tab's latest server revision must stay intact.
+    await secondClient.send('Page.reload');
+    await waitForBrowser(secondClient, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)')`, 'tab B reload after conflict');
+    await waitForBrowser(secondClient, `!!document.querySelector('.confirm-modal[role="dialog"]') && (document.querySelector('.confirm-modal')?.innerText || '').includes('임시 편집본')`, 'B recovery dialog after reload');
+    await clickSelector(secondClient, '.confirm-modal .confirm-primary');
+    await waitForBrowser(secondClient, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(tabBLocalTitle)})`, 'B local work recovered after reload');
+    assert(apiState.saveCount === 4, 'restoring a conflict draft must not auto-publish');
+    const recoveredDraftUnsavedGuard = await evaluate(secondClient, `(() => {
+      const event = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented;
+    })()`);
+    assert(recoveredDraftUnsavedGuard, 'recovered draft must remain protected until explicitly published');
+
+    // A publishes again after B's recovery, so B's restored work is stale.
+    const tabASecondTitle = 'ED-R11 A탭 다시 발행한 최신본';
+    await setInputValue(client, twoTabHeroInput, tabASecondTitle);
+    await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(tabASecondTitle)})`, 'tab A second edit');
+    await clickSelector(client, '.panel-actions .primary-btn');
+    await waitForState(() => apiState.saveCount === 5, 'tab A second publish');
+
+    if (!await evaluate(secondClient, `!!document.querySelector(${JSON.stringify(twoTabHeroInput)})`)) {
+      await clickSelector(secondClient, '#editor-block-editor-hero .screen-order-v2-head');
+    }
+    await clickSelector(secondClient, '.panel-actions .primary-btn');
+    await waitForState(() => apiState.revisionConflictCount === 2, 'recovered B draft is stale again');
+    await waitForBrowser(secondClient, `!!document.querySelector('.page-conflict-modal[role="dialog"]')`, 'B second conflict');
+    await clickButtonByText(secondClient, '.page-conflict-actions', '최신본 불러오기');
+    await waitForBrowser(secondClient, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(tabASecondTitle)})`, 'B explicitly adopts A latest');
+    assert(apiState.saveCount === 5, 'adopting latest server version must not publish');
+    const latestLoadGuard = await evaluate(secondClient, `(() => {
+      const event = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented;
+    })()`);
+    assert(!latestLoadGuard, 'choosing server latest must clear unsaved navigation guard');
+    const archivedConflictSnapshot = await evaluate(secondClient, `Object.keys(localStorage).some((key) =>
+      key.includes(':page-conflict-draft:') &&
+      (localStorage.getItem(key) || '').includes('ED-R11 B탭 미발행 변경')
+    )`);
+    assert(archivedConflictSnapshot, 'explicit latest choice must not delete recoverable conflict snapshot');
+
+    // ED-R11-3: user explicitly selects "my work" after another conflicting
+    // save. The local page must be rebased to the newest server revision before
+    // overwrite, and successful resolution must leave a clean page.
+    const tabBFinalTitle = 'ED-R11 B탭 충돌 해결 재발행';
+    const tabAThirdTitle = 'ED-R11 A탭 세 번째 최신본';
+    await setInputValue(secondClient, twoTabHeroInput, tabBFinalTitle);
+    await waitForBrowser(secondClient, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(tabBFinalTitle)})`, 'B final work before conflict');
+    await setInputValue(client, twoTabHeroInput, tabAThirdTitle);
+    await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(tabAThirdTitle)})`, 'A third work before publish');
+    await clickSelector(client, '.panel-actions .primary-btn');
+    await waitForState(() => apiState.saveCount === 6, 'A third publish');
+    await clickSelector(secondClient, '.panel-actions .primary-btn');
+    await waitForState(() => apiState.revisionConflictCount === 3, 'B third stale write rejected');
+    await waitForBrowser(secondClient, `!!document.querySelector('.page-conflict-modal[role="dialog"]')`, 'B third conflict dialog');
+    await clickButtonByText(secondClient, '.page-conflict-actions', '내 작업으로 저장');
+    await waitForState(() => apiState.saveCount === 7, 'B user-approved overwrite publishes');
+    await waitForBrowser(secondClient, `!document.querySelector('.page-conflict-modal[role="dialog"]')`, 'B conflict dialog closes after verified save');
+    assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === tabBFinalTitle, 'B approved overwrite must become authoritative');
+    await waitForBrowser(secondClient, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(tabBFinalTitle)})`, 'B editor reads its approved publication');
+    const overwriteGuard = await evaluate(secondClient, `(() => {
+      const event = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented;
+    })()`);
+    assert(!overwriteGuard, 'verified overwrite must clear unsaved navigation guard');
+    await capture(secondClient, 'editor-two-tab-conflict-recovered-and-published');
+
+
+
     assert(!apiState.interceptError, `API interception failed: ${apiState.interceptError?.message || apiState.interceptError}`);
     assert(apiState.unexpectedApis.length === 0, `Unexpected API requests: ${apiState.unexpectedApis.join(', ')}`);
     assert(browserErrors.length === 0, `Browser exceptions: ${browserErrors.join('\n')}`);
@@ -1628,7 +1708,10 @@ async function run() {
       portableFileDownloadAndRestore: true,
       wrongPageBackupBlocked: true,
       restoredUnsavedGuard,
-      realTwoTabConflictProtected: apiState.revisionConflictCount === 1 && apiState.saveCount === 4,
+      realTwoTabConflictProtected: apiState.revisionConflictCount === 3 && apiState.saveCount === 7,
+      conflictDraftReloadRecovered: recoveredDraftUnsavedGuard && conflictDraftBeforeReload,
+      latestVersionChosenCleanly: !latestLoadGuard && archivedConflictSnapshot,
+      approvedConflictOverwritePublished: !overwriteGuard && apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === tabBFinalTitle,
       normalReloadServerReadback: apiState.pageLoadCount > pageLoadsBeforeReload,
       cleanAfterReload: reloadGuardPrevented === false,
       revisionListCount: apiState.revisionListCount,
