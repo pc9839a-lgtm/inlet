@@ -97,7 +97,8 @@ assert(workflow.includes('npm run browser:landing:qa'), 'browser regression job 
 assert(workflow.includes('actions/upload-artifact@v4'), 'browser screenshots must be uploaded as a workflow artifact');
 assert(workflow.includes('.tmp-landing-browser-regression'), 'browser screenshot artifact path missing');
 assert(workflow.includes('include-hidden-files: true'), 'hidden browser screenshot directory must be included in the artifact');
-assert(deployWorkflow.includes('workflow_run:') && deployWorkflow.includes('- QA') && deployWorkflow.includes("github.event.workflow_run.conclusion == 'success'") && deployWorkflow.includes("github.event.workflow_run.head_branch == 'main'"), 'production deployment must remain gated on the complete successful QA workflow');
+assert(deployWorkflow.includes('workflow_dispatch:') && !deployWorkflow.includes('workflow_run:'), 'production deployment must be manually dispatched rather than triggered by QA completion');
+assert(deployWorkflow.includes("run.conclusion === 'success'") && deployWorkflow.includes("run.head_sha === sha") && deployWorkflow.includes('I_APPROVE_PAGERO_PRODUCTION_DEPLOY'), 'production deployment must verify explicit approval and successful QA of the exact SHA');
 assert(deployWorkflow.includes('ref: ${{ steps.source.outputs.sha }}'), 'production deployment must checkout the exact SHA that passed QA');
 
 console.log(JSON.stringify({

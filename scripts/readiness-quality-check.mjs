@@ -227,7 +227,7 @@ for (const token of [
 ]) {
   assert(workflow.includes(token), `deployment readiness/security gate missing ${token}`);
 }
-assert(workflow.includes('--data \'{"production_branch":"main"}\''), 'production branch repair must explicitly set main');
+assert(workflow.includes("Refusing to mutate project settings.") && !workflow.includes('--request PATCH'), 'production branch mismatch must fail closed without modifying Cloudflare settings');
 assert(workflow.indexOf('Ensure Cloudflare production branch') < workflow.indexOf('Ensure production session secret'), 'production branch must be confirmed before secret and deploy checks');
 assert(workflow.indexOf('Ensure production session secret') < workflow.indexOf('Deploy assets and Pages Functions'), 'session secret bootstrap must happen before deploy');
 assert(workflow.indexOf('probe_readiness "$deployment_url/api/readiness" exact-deployment') < workflow.indexOf('probe_readiness "https://pagero.kr/api/readiness" production-domain'), 'exact deployment readiness must be diagnosed before the production domain');
