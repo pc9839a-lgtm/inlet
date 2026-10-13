@@ -356,6 +356,17 @@ async function handleCalltagRequest(context, url) {
 
 export async function onRequest(context) {
   const url = new URL(context.request.url);
+
+  // Consolidate the legacy living-information hostname into the single
+  // canonical /life/ section before any SPA or asset fallback can run.
+  if (url.hostname.toLowerCase() === 'life.pagero.kr') {
+    const target = new URL('https://pagero.kr/life/');
+    const suffix = url.pathname.replace(/^\/+/, '').replace(/^life\/+/, '');
+    target.pathname = '/life/' + suffix;
+    target.search = url.search;
+    return Response.redirect(target.toString(), 301);
+  }
+
   if (url.pathname.startsWith('/api/')) return context.next();
 
   if (url.hostname === 'call.pagero.kr' || url.hostname === 'calltag.pagero.kr') {
