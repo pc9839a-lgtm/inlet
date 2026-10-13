@@ -915,7 +915,7 @@ async function run() {
     // ED-R08 integrated Chrome QA: download an actual JSON backup, attempt a
     // wrong-page upload, then import the real downloaded file through Chrome's
     // file-input protocol. No publish is allowed until the user chooses it.
-    await waitForBrowser(client, `!!document.querySelector('.panel-backup-action summary') && !!document.querySelector('.panel-backup-action input[type="file"]')`, 'backup and restore menu in authenticated editor');
+    await waitForBrowser(client, `!!document.querySelector('.panel-backup-action summary') && !!document.querySelector('.panel-backup-action ~ input[type="file"][accept*="json"]')`, 'backup and restore menu in authenticated editor');
     await clickSelector(client, '.panel-backup-action summary');
     await clickButtonByText(client, '.panel-backup-dropdown', '파일 저장');
     let downloadedBackupName = '';
