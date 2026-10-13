@@ -27,7 +27,12 @@ jobs:
               payload=json.load(resp)
               print('Pages project list HTTP:',resp.status)
           except urllib.error.HTTPError as e:
-            \n            try:\n              err=json.loads(e.read().decode())\n              messages=[x.get('message') for x in err.get('errors',[])]\n            except Exception: messages=[]\n            print('Pages project list unavailable, HTTP:',e.code, 'messages:',messages)
+            try:
+              err=json.loads(e.read().decode())
+              messages=[x.get('message') for x in err.get('errors',[])]
+            except Exception:
+              messages=[]
+            print('Pages project list unavailable, HTTP:',e.code, 'messages:',messages)
             sys.exit(1)
           if not payload.get('success'):sys.exit('Pages API reported failure')
           projects=payload.get('result',[])
