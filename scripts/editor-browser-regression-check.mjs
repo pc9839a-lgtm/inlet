@@ -1694,6 +1694,20 @@ async function run() {
 
     assert(!apiState.interceptError, `API interception failed: ${apiState.interceptError?.message || apiState.interceptError}`);
     assert(apiState.unexpectedApis.length === 0, `Unexpected API requests: ${apiState.unexpectedApis.join(', ')}`);
+    if (browserErrors.length) {
+      // Diagnostic only on regression failure: map the first minified stack
+      // frame back to its surrounding public frontend bundle source.
+      const firstFrame = browserErrors[0].match(/(https?:\\/\\/[^\\s)]+\\.js):(\\d+):(\\d+)/);
+      if (firstFrame) {
+        const [,, lineText, columnText] = firstFrame;
+        const bundleExcerpt = await evaluate(client, `(async () => {
+          const raw = await fetch(${JSON.stringify(firstFrame[1])}).then((response) => response.text());
+          const scriptLine = raw.split('\\n')[${Number(lineText) - 1}] || '';
+          return scriptLine.slice(Math.max(0, ${Number(columnText)} - 320), ${Number(columnText)} + 400);
+        })()`);
+        console.error('ED-R11 browser exception bundle excerpt:', bundleExcerpt);
+      }
+    }
     assert(browserErrors.length === 0, `Browser exceptions: ${browserErrors.join('\n')}`);
 
     console.log(JSON.stringify({
