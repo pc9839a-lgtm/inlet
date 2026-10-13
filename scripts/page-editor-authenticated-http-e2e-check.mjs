@@ -213,6 +213,8 @@ await withServer(async ({ baseUrl, dataDir }) => {
     simulatedLostAck = error?.message === 'ED_R12_RESPONSE_DROPPED_AFTER_COMMIT';
   }
   assert(simulatedLostAck, 'test must simulate a lost acknowledgement after the actual write');
+  const revisionsAtCommit = await api(baseUrl, 'GET', `${endpoint}/revisions?${new URLSearchParams(project)}`, null, sessionB);
+  assert(revisionsAtCommit.status === 200 && revisionsAtCommit.data.revisions?.[0]?.id, 'committed write must have a revision history entry');
   const replay = await api(baseUrl, 'POST', endpoint, lostAckPayload, sessionA);
   assert(replay.status === 409 && replay.data?.code === 'PAGE_REVISION_CONFLICT',
     'replayed stale request after committed response loss must return 409');
@@ -221,9 +223,11 @@ await withServer(async ({ baseUrl, dataDir }) => {
   const serverAfterReplay = await api(baseUrl, 'GET', readEndpoint, null, sessionB);
   assert(serverAfterReplay.status === 200 && serverAfterReplay.data.page?.title === lostAckPage.title,
     'retry cannot lose committed content');
-  assert(Number(serverAfterReplay.data.page.revision) === Number(originalCommittedVersion.revision)
-    && serverAfterReplay.data.page.updatedAt === originalCommittedVersion.updatedAt,
-    'replaying an uncertain write must not create a second committed revision');
+  const revisionsAfterReplay = await api(baseUrl, 'GET', `${endpoint}/revisions?${new URLSearchParams(project)}`, null, sessionB);
+  assert(revisionsAfterReplay.status === 200
+    && revisionsAfterReplay.data.revisions?.[0]?.id === revisionsAtCommit.data.revisions[0].id
+    && revisionsAfterReplay.data.revisions.length === revisionsAtCommit.data.revisions.length,
+    'duplicate replay must not add another server revision history entry');
   assert(sameCommittedPageContent(serverAfterReplay.data.page, lostAckPage),
     'already committed content must be proven byte-equivalent after normalizing version fields');
   runtimeResult.lostAckRecovered = true;
