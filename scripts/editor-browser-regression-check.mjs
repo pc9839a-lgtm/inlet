@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -43,6 +43,12 @@ function assert(condition, message) {
 }
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const CDP_COMMAND_TIMEOUT_MS = 25000;
+let activeQaStep = 'initialization';
+function qaStep(label) {
+  activeQaStep = String(label);
+  console.log('[editor-qa]', activeQaStep);
+}
 
 function resolveChrome() {
   return [
@@ -61,7 +67,9 @@ function resolveChrome() {
 }
 
 async function fetchJson(url, init = {}) {
-  const response = await fetch(url, init);
+  // Chrome's debugging HTTP endpoint can also stall without returning an error.
+  // Bound every poll so waitForChrome's outer deadline remains meaningful.
+  const response = await fetch(url, { signal: AbortSignal.timeout(5000), ...init });
   if (!response.ok) throw new Error(`HTTP ${response.status}: ${url}`);
   return response.json();
 }
@@ -86,8 +94,15 @@ function createCdp(webSocketUrl) {
   const listeners = new Map();
   let nextId = 1;
   const opened = new Promise((resolve, reject) => {
-    socket.addEventListener('open', resolve, { once: true });
-    socket.addEventListener('error', reject, { once: true });
+    const deadline = setTimeout(() => reject(new Error('CDP WebSocket open timed out')), CDP_COMMAND_TIMEOUT_MS);
+    const openedOk = () => { clearTimeout(deadline); resolve(); };
+    const openedFailed = () => { clearTimeout(deadline); reject(new Error('CDP WebSocket open failed')); };
+    socket.addEventListener('open', openedOk, { once: true });
+    socket.addEventListener('error', openedFailed, { once: true });
+    socket.addEventListener('close', () => {
+      clearTimeout(deadline);
+      reject(new Error('CDP WebSocket closed before opening'));
+    }, { once: true });
   });
 
   socket.addEventListener('message', (event) => {
@@ -95,6 +110,7 @@ function createCdp(webSocketUrl) {
     if (payload.id && pending.has(payload.id)) {
       const request = pending.get(payload.id);
       pending.delete(payload.id);
+      clearTimeout(request.timer);
       if (payload.error) request.reject(new Error(payload.error.message || 'CDP error'));
       else request.resolve(payload.result || {});
       return;
@@ -105,7 +121,10 @@ function createCdp(webSocketUrl) {
   });
 
   socket.addEventListener('close', () => {
-    for (const request of pending.values()) request.reject(new Error('CDP socket closed'));
+    for (const request of pending.values()) {
+      clearTimeout(request.timer);
+      request.reject(new Error('CDP socket closed during ' + request.method + ' at ' + activeQaStep));
+    }
     pending.clear();
   });
 
@@ -113,8 +132,23 @@ function createCdp(webSocketUrl) {
     async send(method, params = {}) {
       await opened;
       const id = nextId++;
-      const response = new Promise((resolve, reject) => pending.set(id, { resolve, reject }));
-      socket.send(JSON.stringify({ id, method, params }));
+      const response = new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+          pending.delete(id);
+          reject(new Error('CDP command timed out: ' + method + ' (' + CDP_COMMAND_TIMEOUT_MS + 'ms) at ' + activeQaStep));
+        }, CDP_COMMAND_TIMEOUT_MS);
+        pending.set(id, { resolve, reject, timer, method });
+      });
+      try {
+        socket.send(JSON.stringify({ id, method, params }));
+      } catch (error) {
+        const request = pending.get(id);
+        if (request) {
+          clearTimeout(request.timer);
+          pending.delete(id);
+          request.reject(error);
+        }
+      }
       return response;
     },
     on(method, listener) {
@@ -300,9 +334,9 @@ function parsePostData(value = '') {
   }
 }
 
-function createApiMock(client) {
+function createApiMock(client, sharedState = null) {
   const user = createQaUser();
-  const state = {
+  const state = sharedState || {
     currentPage: createQaPage(),
     loginCount: 0,
     sessionCount: 0,
@@ -311,6 +345,8 @@ function createApiMock(client) {
     publicVerifyCount: 0,
     saveCount: 0,
     saveDelayMs: 0,
+    strictRevisionCheck: false,
+    revisionConflictCount: 0,
     saveSnapshots: [],
     revisionListCount: 0,
     leadLoadCount: 0,
@@ -415,6 +451,17 @@ function createApiMock(client) {
 
       if (method === 'POST' && slug === state.currentPage.slug) {
         const incomingPage = body.page || {};
+        if (state.strictRevisionCheck && body.expectedUpdatedAt !== state.currentPage.updatedAt) {
+          state.revisionConflictCount += 1;
+          await fulfill(requestId, 409, {
+            ok: false,
+            code: 'PAGE_REVISION_CONFLICT',
+            error: 'Page revision conflict',
+            latest: { updatedAt: state.currentPage.updatedAt, revision: state.currentPage.revision },
+            page: state.currentPage,
+          });
+          return;
+        }
         state.saveCount += 1;
         const saveNumber = state.saveCount;
         state.saveSnapshots.push(structuredClone(incomingPage));
@@ -489,6 +536,7 @@ async function evaluate(client, expression) {
 }
 
 async function waitForBrowser(client, expression, label, timeoutMs = 18000) {
+  qaStep(label);
   const started = Date.now();
   let last = null;
   while (Date.now() - started < timeoutMs) {
@@ -500,6 +548,7 @@ async function waitForBrowser(client, expression, label, timeoutMs = 18000) {
 }
 
 async function waitForState(check, label, timeoutMs = 15000) {
+  qaStep(label);
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
     if (check()) return;
@@ -663,6 +712,7 @@ async function dragPointer(client, sourceSelector, targetSelector) {
 }
 
 async function capture(client, name) {
+  qaStep('screenshot: ' + name);
   const image = await client.send('Page.captureScreenshot', { format: 'png', fromSurface: true, captureBeyondViewport: false });
   const target = path.join(screenshotDir, `${name}.png`);
   await writeFile(target, Buffer.from(image.data, 'base64'));
@@ -847,11 +897,14 @@ async function run() {
   assert(chrome, 'Chrome or Chromium executable was not found');
   await mkdir(screenshotDir, { recursive: true });
   const profileDir = await mkdtemp(path.join(tmpdir(), 'inlet-editor-browser-'));
+  const backupDownloadDir = path.join(profileDir, 'backup-e2e');
   const browserErrors = [];
   let child = null;
   let client = null;
+  let secondClient = null;
 
   try {
+    qaStep('starting Chrome');
     child = spawn(chrome, [
       '--headless=new',
       '--disable-gpu',
@@ -862,9 +915,25 @@ async function run() {
       `--user-data-dir=${profileDir}`,
       'about:blank',
     ], { stdio: ['ignore', 'ignore', 'pipe'] });
-    child.stderr?.on('data', () => {});
-
-    await waitForChrome(debugPort);
+    const chromeStderr = [];
+    child.stderr?.on('data', (chunk) => {
+      chromeStderr.push(String(chunk));
+      if (chromeStderr.length > 60) chromeStderr.shift();
+    });
+    child.on('error', (error) => {
+      chromeStderr.push('Chrome spawn error: ' + error.message);
+    });
+    console.log('[editor-qa] chrome executable:', chrome, 'debug port:', debugPort, 'pid:', child.pid || 'unavailable');
+    try {
+      await waitForChrome(debugPort);
+    } catch (error) {
+      const reason = chromeStderr.join('').slice(-6000).trim();
+      throw new Error(error.message
+        + '; chrome exit=' + String(child.exitCode)
+        + '; signal=' + String(child.signalCode)
+        + (reason ? '; chrome stderr=' + reason : '; chrome produced no stderr'));
+    }
+    await mkdir(backupDownloadDir, { recursive: true });
     const targets = await fetchJson(`http://127.0.0.1:${debugPort}/json/list`);
     const target = targets.find((item) => item.type === 'page' && item.webSocketDebuggerUrl);
     assert(target, 'Chrome page target was not found');
@@ -874,11 +943,23 @@ async function run() {
       browserErrors.push(exceptionDetails?.exception?.description || exceptionDetails?.text || 'Browser exception');
     });
 
+    await client.send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: backupDownloadDir });
+    await client.send('DOM.enable');
     await client.send('Page.enable');
+    // A real unsaved-work warning must be acknowledged for an automated reload.
+    // Without a CDP dialog handler, Page.reload can remain pending indefinitely.
+    client.on('Page.javascriptDialogOpening', (dialog) => {
+      if (dialog.type === 'beforeunload') {
+        client.send('Page.handleJavaScriptDialog', { accept: true }).catch((error) => {
+          browserErrors.push('beforeunload dialog handling: ' + error.message);
+        });
+      }
+    });
     await client.send('Runtime.enable');
     await client.send('Network.enable');
     await client.send('Fetch.enable', { patterns: [{ urlPattern: '*://*/*', requestStage: 'Request' }] });
     const apiState = createApiMock(client);
+    qaStep('launch authenticated editor');
 
     await setViewport(client, 1280, 900, false);
     await client.send('Page.navigate', { url: `${origin}/login` });
@@ -907,6 +988,67 @@ async function run() {
     await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('#editor-block-editor-hero') && !!document.querySelector('.phone-frame')`, 'desktop editor');
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes('저장 전 히어로 제목')`, 'initial editor preview');
     assert(apiState.pageLoadCount >= 1, 'selected page was not loaded from the page API');
+
+    // ED-R08 integrated Chrome QA: download an actual JSON backup, attempt a
+    // wrong-page upload, then import the real downloaded file through Chrome's
+    // file-input protocol. No publish is allowed until the user chooses it.
+    await waitForBrowser(client, `!!document.querySelector('.panel-backup-action summary') && !!document.querySelector('.panel-backup-action ~ input[type="file"][accept*="json"]')`, 'backup and restore menu in authenticated editor');
+    await clickSelector(client, '.panel-backup-action summary');
+    await clickButtonByText(client, '.panel-backup-dropdown', '파일 저장');
+    let downloadedBackupName = '';
+    for (let attempt = 0; attempt < 75; attempt += 1) {
+      downloadedBackupName = (await readdir(backupDownloadDir)).find((file) => /^pagero-editor-e2e-backup-[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$/.test(file)) || '';
+      if (downloadedBackupName) break;
+      await wait(100);
+    }
+    assert(downloadedBackupName, 'real Chrome backup file download did not complete');
+    const backupFiles = await readdir(backupDownloadDir);
+    const backupName = backupFiles.find((file) => /^pagero-editor-e2e-backup-[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$/.test(file));
+    assert(backupName, 'Chrome downloaded backup filename is missing');
+    const backupPath = path.join(backupDownloadDir, backupName);
+    const backupText = await readFile(backupPath, 'utf8');
+    const portableBackup = JSON.parse(backupText);
+    assert(portableBackup.kind === 'pagero-page-draft-backup' && portableBackup.version === 1, 'downloaded backup format must be portable JSON v1');
+    assert(portableBackup.draft?.page?.id === 'editor-e2e-page', 'downloaded backup must match active page');
+    assert(portableBackup.draft?.page?.blocks?.find((block) => block.id === 'editor-hero')?.s?.title === '저장 전 히어로 제목', 'download must include current unpublished editor content');
+    assert(!backupText.includes('editor-e2e-session'), 'backup must never include login session material');
+
+    const uploadFileToEditor = async (absolutePath) => {
+      const documentNode = await client.send('DOM.getDocument');
+      const inputNode = await client.send('DOM.querySelector', {
+        nodeId: documentNode.root.nodeId,
+        selector: '.panel-backup-action ~ input[type="file"][accept*="json"]',
+      });
+      assert(inputNode.nodeId > 0, 'backup file input must be in the authenticated header');
+      await client.send('DOM.setFileInputFiles', { files: [absolutePath], nodeId: inputNode.nodeId });
+    };
+
+    const mismatchedBackup = { ...portableBackup, identity: 'wrong-account:other-page' };
+    const invalidBackupPath = path.join(backupDownloadDir, 'wrong-page.json');
+    await writeFile(invalidBackupPath, JSON.stringify(mismatchedBackup));
+    await uploadFileToEditor(invalidBackupPath);
+    await waitForBrowser(client, `(document.querySelector('.toast-notice')?.innerText || '').includes('다른 계정이나 페이지')`, 'cross-page backup import rejected');
+    assert(!await evaluate(client, `!!document.querySelector('.confirm-modal[role="dialog"]')`), 'invalid backup must not open restore confirmation');
+    assert(apiState.saveCount === 0, 'invalid backup must not publish');
+
+    await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
+    const backupHeroInput = '#editor-block-editor-hero + .screen-order-v2-inline-editor textarea[placeholder="핵심 제목을 입력하세요"]';
+    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(backupHeroInput)})`, 'hero editor before backup restore');
+    await setInputValue(client, backupHeroInput, 'ED-R08 복원 전 임시 수정');
+    await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes('ED-R08 복원 전 임시 수정')`, 'live edit before backup restore');
+    await uploadFileToEditor(backupPath);
+    await waitForBrowser(client, `(document.querySelector('.confirm-modal[role="dialog"]')?.innerText || '').includes('편집본 파일 복원')`, 'backup restore confirmation');
+    await clickSelector(client, '.confirm-modal .confirm-primary');
+    await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes('저장 전 히어로 제목') && !(document.querySelector('.phone-frame')?.innerText || '').includes('ED-R08 복원 전 임시 수정')`, 'downloaded file restored original hero');
+    assert(apiState.saveCount === 0, 'manual file restore must not auto-publish');
+    const restoredUnsavedGuard = await evaluate(client, `(() => {
+      const event = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented;
+    })()`);
+    assert(restoredUnsavedGuard, 'manual backup restore must mark the page as unpublished');
+    await capture(client, 'editor-backup-restore-success');
+
 
     // The editor preview should contain the phone itself, without the redundant
     // canvas URL header or the inquiry/publish control strip above it.
@@ -1478,8 +1620,165 @@ async function run() {
       await capture(client, keyboardViewport.name);
     }
 
+
+    qaStep('ED-R11 cross-tab conflict regression');
+    // ED-R11: two real Chrome tabs use one simulated server state.
+    await setViewport(client, 1440, 960, false);
+    await waitForBrowser(client, "!!document.querySelector('.builder-shell:not(.mobile-operations-shell)')", 'tab A desktop editor');
+    await clickButtonByText(client, '.top-tabs', '편집');
+    await waitForBrowser(client, "!!document.querySelector('#editor-block-editor-hero')", 'tab A hero block');
+    const twoTabHeroInput = '#editor-block-editor-hero + .screen-order-v2-inline-editor textarea[placeholder="핵심 제목을 입력하세요"]';
+    if (!await evaluate(client, "!!document.querySelector(" + JSON.stringify(twoTabHeroInput) + ")")) {
+      await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
+    }
+    await waitForBrowser(client, "!!document.querySelector(" + JSON.stringify(twoTabHeroInput) + ")", 'tab A hero input');
+
+    const newTarget = await client.send('Target.createTarget', { url: 'about:blank' });
+    assert(newTarget.targetId, 'real second Chrome tab must open');
+    const openTabs = await fetchJson('http://127.0.0.1:' + debugPort + '/json/list');
+    const secondTarget = openTabs.find((item) => item.id === newTarget.targetId && item.webSocketDebuggerUrl);
+    assert(secondTarget, 'Chrome must expose the second tab CDP target');
+    secondClient = createCdp(secondTarget.webSocketDebuggerUrl);
+    secondClient.on('Runtime.exceptionThrown', ({ exceptionDetails }) => {
+      browserErrors.push(exceptionDetails?.exception?.description || exceptionDetails?.text || 'Second-tab browser exception');
+    });
+    await secondClient.send('Page.enable');
+    secondClient.on('Page.javascriptDialogOpening', (dialog) => {
+      if (dialog.type === 'beforeunload') {
+        secondClient.send('Page.handleJavaScriptDialog', { accept: true }).catch((error) => {
+          browserErrors.push('second tab beforeunload handling: ' + error.message);
+        });
+      }
+    });
+    await secondClient.send('Runtime.enable');
+    await secondClient.send('Network.enable');
+    await secondClient.send('Fetch.enable', { patterns: [{ urlPattern: '*://*/*', requestStage: 'Request' }] });
+    createApiMock(secondClient, apiState);
+    await secondClient.send('Page.navigate', { url: origin + '/app' });
+    await waitForBrowser(secondClient, "!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('#editor-block-editor-hero')", 'tab B authenticated editor');
+    await waitForBrowser(secondClient, "(document.querySelector('.phone-frame')?.innerText || '').includes(" + JSON.stringify(finalHeroTitle) + ")", 'tab B server snapshot');
+
+    apiState.strictRevisionCheck = true;
+    const tabASuccessTitle = 'ED-R11 A탭 최신 서버 발행';
+    const tabBLocalTitle = 'ED-R11 B탭 미발행 변경';
+    if (!await evaluate(secondClient, "!!document.querySelector(" + JSON.stringify(twoTabHeroInput) + ")")) {
+      await clickSelector(secondClient, '#editor-block-editor-hero .screen-order-v2-head');
+    }
+    await waitForBrowser(secondClient, "!!document.querySelector(" + JSON.stringify(twoTabHeroInput) + ")", 'tab B hero input');
+    await setInputValue(secondClient, twoTabHeroInput, tabBLocalTitle);
+    await waitForBrowser(secondClient, "(document.querySelector('.phone-frame')?.innerText || '').includes(" + JSON.stringify(tabBLocalTitle) + ")", 'tab B local stale edit');
+
+    await setInputValue(client, twoTabHeroInput, tabASuccessTitle);
+    await waitForBrowser(client, "(document.querySelector('.phone-frame')?.innerText || '').includes(" + JSON.stringify(tabASuccessTitle) + ")", 'tab A local edit');
+    await clickSelector(client, '.panel-actions .primary-btn');
+    await waitForState(() => apiState.saveCount === 4, 'tab A newer publish');
+    await waitForBrowser(client, "(document.querySelector('.panel-actions .primary-btn')?.textContent || '').includes('발행됨')", 'tab A scoped save success');
+    assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === tabASuccessTitle, 'tab A must become authoritative');
+
+    await clickSelector(secondClient, '.panel-actions .primary-btn');
+    await waitForState(() => apiState.revisionConflictCount >= 1, 'tab B stale publish denied');
+    await waitForBrowser(secondClient, "!!document.querySelector('.page-conflict-modal[role=dialog]')", 'tab B conflict dialog');
+    assert(apiState.saveCount === 4, 'tab B conflict must not count as persisted save');
+    assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === tabASuccessTitle, 'stale tab B must not overwrite A');
+    assert(await evaluate(secondClient, "(document.querySelector('.phone-frame')?.innerText || '').includes(" + JSON.stringify(tabBLocalTitle) + ")"), 'tab B local unsaved work must survive conflict');
+    await capture(secondClient, 'editor-two-tab-conflict');
+
+    // A real 409 must preserve an isolated browser draft, not merely leave
+    // the unsaved text visible in the current React state.
+    const conflictDraftBeforeReload = await evaluate(secondClient, `(() => {
+      const raw = Object.keys(localStorage).filter((key) => key.includes(':page-conflict-draft:'));
+      return raw.some((key) => (localStorage.getItem(key) || '').includes('ED-R11 B탭 미발행 변경'));
+    })()`);
+    assert(conflictDraftBeforeReload, 'B conflict snapshot must survive in browser localStorage');
+
+    // ED-R11-2: Reload the stale editor and explicitly recover the orphaned
+    // per-tab draft. The other tab's latest server revision must stay intact.
+    await secondClient.send('Page.reload');
+    await waitForBrowser(secondClient, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)')`, 'tab B reload after conflict');
+    await waitForBrowser(secondClient, `!!document.querySelector('.confirm-modal[role="dialog"]') && (document.querySelector('.confirm-modal')?.innerText || '').includes('임시 편집본')`, 'B recovery dialog after reload');
+    await clickSelector(secondClient, '.confirm-modal .confirm-primary');
+    await waitForBrowser(secondClient, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(tabBLocalTitle)})`, 'B local work recovered after reload');
+    assert(apiState.saveCount === 4, 'restoring a conflict draft must not auto-publish');
+    const recoveredDraftUnsavedGuard = await evaluate(secondClient, `(() => {
+      const event = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented;
+    })()`);
+    assert(recoveredDraftUnsavedGuard, 'recovered draft must remain protected until explicitly published');
+
+    // A publishes again after B's recovery, so B's restored work is stale.
+    const tabASecondTitle = 'ED-R11 A탭 다시 발행한 최신본';
+    await setInputValue(client, twoTabHeroInput, tabASecondTitle);
+    await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(tabASecondTitle)})`, 'tab A second edit');
+    await clickSelector(client, '.panel-actions .primary-btn');
+    await waitForState(() => apiState.saveCount === 5, 'tab A second publish');
+
+    if (!await evaluate(secondClient, `!!document.querySelector(${JSON.stringify(twoTabHeroInput)})`)) {
+      await clickSelector(secondClient, '#editor-block-editor-hero .screen-order-v2-head');
+    }
+    await clickSelector(secondClient, '.panel-actions .primary-btn');
+    await waitForState(() => apiState.revisionConflictCount === 2, 'recovered B draft is stale again');
+    await waitForBrowser(secondClient, `!!document.querySelector('.page-conflict-modal[role="dialog"]')`, 'B second conflict');
+    await clickButtonByText(secondClient, '.page-conflict-actions', '최신본 불러오기');
+    await waitForBrowser(secondClient, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(tabASecondTitle)})`, 'B explicitly adopts A latest');
+    assert(apiState.saveCount === 5, 'adopting latest server version must not publish');
+    const latestLoadGuard = await evaluate(secondClient, `(() => {
+      const event = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented;
+    })()`);
+    assert(!latestLoadGuard, 'choosing server latest must clear unsaved navigation guard');
+    const archivedConflictSnapshot = await evaluate(secondClient, `Object.keys(localStorage).some((key) =>
+      key.includes(':page-conflict-draft:') &&
+      (localStorage.getItem(key) || '').includes('ED-R11 B탭 미발행 변경')
+    )`);
+    assert(archivedConflictSnapshot, 'explicit latest choice must not delete recoverable conflict snapshot');
+
+    // ED-R11-3: user explicitly selects "my work" after another conflicting
+    // save. The local page must be rebased to the newest server revision before
+    // overwrite, and successful resolution must leave a clean page.
+    const tabBFinalTitle = 'ED-R11 B탭 충돌 해결 재발행';
+    const tabAThirdTitle = 'ED-R11 A탭 세 번째 최신본';
+    await setInputValue(secondClient, twoTabHeroInput, tabBFinalTitle);
+    await waitForBrowser(secondClient, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(tabBFinalTitle)})`, 'B final work before conflict');
+    await setInputValue(client, twoTabHeroInput, tabAThirdTitle);
+    await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(tabAThirdTitle)})`, 'A third work before publish');
+    await clickSelector(client, '.panel-actions .primary-btn');
+    await waitForState(() => apiState.saveCount === 6, 'A third publish');
+    await clickSelector(secondClient, '.panel-actions .primary-btn');
+    await waitForState(() => apiState.revisionConflictCount === 3, 'B third stale write rejected');
+    await waitForBrowser(secondClient, `!!document.querySelector('.page-conflict-modal[role="dialog"]')`, 'B third conflict dialog');
+    await clickButtonByText(secondClient, '.page-conflict-actions', '내 작업으로 저장');
+    await waitForState(() => apiState.saveCount === 7, 'B user-approved overwrite publishes');
+    await waitForBrowser(secondClient, `!document.querySelector('.page-conflict-modal[role="dialog"]')`, 'B conflict dialog closes after verified save');
+    assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === tabBFinalTitle, 'B approved overwrite must become authoritative');
+    await waitForBrowser(secondClient, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(tabBFinalTitle)})`, 'B editor reads its approved publication');
+    const overwriteGuard = await evaluate(secondClient, `(() => {
+      const event = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented;
+    })()`);
+    assert(!overwriteGuard, 'verified overwrite must clear unsaved navigation guard');
+    await capture(secondClient, 'editor-two-tab-conflict-recovered-and-published');
+
+
+
     assert(!apiState.interceptError, `API interception failed: ${apiState.interceptError?.message || apiState.interceptError}`);
     assert(apiState.unexpectedApis.length === 0, `Unexpected API requests: ${apiState.unexpectedApis.join(', ')}`);
+    if (browserErrors.length) {
+      // Diagnostic only on regression failure: map the first minified stack
+      // frame back to its surrounding public frontend bundle source.
+      const firstFrame = browserErrors[0].match(/(https?:\/\/[^\s)]+\.js):(\d+):(\d+)/);
+      if (firstFrame) {
+        const [,, lineText, columnText] = firstFrame;
+        const bundleExcerpt = await evaluate(client, `(async () => {
+          const raw = await fetch(${JSON.stringify(firstFrame[1])}).then((response) => response.text());
+          const scriptLine = raw.split(String.fromCharCode(10))[${Number(lineText) - 1}] || '';
+          return scriptLine.slice(Math.max(0, ${Number(columnText)} - 320), ${Number(columnText)} + 400);
+        })()`);
+        console.error('ED-R11 browser exception bundle excerpt:', bundleExcerpt);
+      }
+    }
     assert(browserErrors.length === 0, `Browser exceptions: ${browserErrors.join('\n')}`);
 
     console.log(JSON.stringify({
@@ -1491,6 +1790,13 @@ async function run() {
       pageLoadCount: apiState.pageLoadCount,
       saveCount: apiState.saveCount,
       saveRaceProtected: apiState.saveSnapshots[1]?.blocks?.find((block) => block.id === 'editor-hero')?.s?.title === continuedHeroTitle,
+      portableFileDownloadAndRestore: true,
+      wrongPageBackupBlocked: true,
+      restoredUnsavedGuard,
+      realTwoTabConflictProtected: apiState.revisionConflictCount === 3 && apiState.saveCount === 7,
+      conflictDraftReloadRecovered: recoveredDraftUnsavedGuard && conflictDraftBeforeReload,
+      latestVersionChosenCleanly: !latestLoadGuard && archivedConflictSnapshot,
+      approvedConflictOverwritePublished: !overwriteGuard && apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === tabBFinalTitle,
       normalReloadServerReadback: apiState.pageLoadCount > pageLoadsBeforeReload,
       cleanAfterReload: reloadGuardPrevented === false,
       revisionListCount: apiState.revisionListCount,
@@ -1511,6 +1817,8 @@ async function run() {
       realUseFlows: ['focus-recovery-workspace-transition', 'modal-focus-trap-return', 'keyboard-row-activation', 'keyboard-dropdown', 'add-block', 'undo-redo', 'visibility', 'menu-reorder', 'pointer-drag-reorder', 'style-apply', 'preview-continue', 'publish-race', 'revision-restore-undo-redo', 'post-restore-publish-readback', 'narrow-desktop'],
     }, null, 2));
   } finally {
+    console.log('[editor-qa] cleanup at:', activeQaStep);
+    await secondClient?.close().catch(() => {});
     await client?.close().catch(() => {});
     if (child && !child.killed) child.kill('SIGTERM');
     await rm(profileDir, { recursive: true, force: true, maxRetries: 4, retryDelay: 100 });

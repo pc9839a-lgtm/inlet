@@ -296,6 +296,68 @@ export function savePageDraft(options = {}) {
   return savePageDraftResult(options).draft;
 }
 
+const PORTABLE_BACKUP_KIND = 'pagero-page-draft-backup';
+const PORTABLE_BACKUP_VERSION = 1;
+
+/**
+ * Explicit file backup for browsers that reject localStorage. Never write a
+ * manual backup into the browser or include credential/token material.
+ */
+export function createPortablePageBackup({ page, authUser, exportedAt = Date.now() } = {}) {
+  if (!page || !authUser) throw new Error('An authenticated page is required');
+  const normalized = normalizePageForSave(page);
+  const identity = pageDraftIdentity(normalized, authUser);
+  return {
+    kind: PORTABLE_BACKUP_KIND,
+    version: PORTABLE_BACKUP_VERSION,
+    identity,
+    exportedAt: new Date(exportedAt).toISOString(),
+    draft: {
+      version: DRAFT_VERSION,
+      identity,
+      editedAt: exportedAt,
+      interactionConfirmed: true,
+      baseRevision: Number(normalized.revision || 0),
+      baseUpdatedAt: text(normalized.updatedAt || normalized.savedAt || normalized.createdAt),
+      page: sanitizeValue(normalized),
+    },
+  };
+}
+
+/**
+ * Reject wrong-account/wrong-page files before calling restorePageDraft.
+ * Import never publishes; the current server identity/revision stay authoritative.
+ */
+export function validatePortablePageBackup({ backup, page, authUser } = {}) {
+  if (!page || !authUser || !backup || typeof backup !== 'object'
+    || backup.kind !== PORTABLE_BACKUP_KIND || backup.version !== PORTABLE_BACKUP_VERSION
+    || !backup.draft || typeof backup.draft !== 'object'
+    || !backup.draft.page || typeof backup.draft.page !== 'object'
+    || !Array.isArray(backup.draft.page.blocks)) {
+    return { ok: false, reason: 'invalid-format' };
+  }
+  const identity = pageDraftIdentity(page, authUser);
+  if (backup.identity !== identity || backup.draft.identity !== identity
+    || pageDraftIdentity(backup.draft.page, authUser) !== identity) {
+    return { ok: false, reason: 'page-mismatch' };
+  }
+  if (!Number.isFinite(Number(backup.draft.baseRevision))
+    || Number(backup.draft.baseRevision) < 0) return { ok: false, reason: 'invalid-format' };
+  const draft = {
+    ...backup.draft,
+    interactionConfirmed: true,
+    page: sanitizeValue(backup.draft.page),
+  };
+  // Do not blindly accept server-owned identity/version fields from a file.
+  return {
+    ok: true,
+    draft,
+    serverChanged: Number(draft.baseRevision) !== Number(page.revision || 0)
+      || (Boolean(draft.baseUpdatedAt) && Boolean(page.updatedAt)
+        && draft.baseUpdatedAt !== page.updatedAt),
+  };
+}
+
 export function readPageDraft({ page, authUser, storage, sourceId, includeOtherSources = false } = {}) {
   const identity = pageDraftIdentity(page, authUser);
   const resolvedSourceId = text(sourceId) || pageDraftSourceId();

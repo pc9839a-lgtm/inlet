@@ -1,5 +1,11 @@
 import { readFile } from 'node:fs/promises';
 import {
+  cancelPageSavedIndicatorReset,
+  schedulePageSavedIndicatorReset,
+} from '../src/runtime/pagePersistFlow.js';
+import { pageOperationIdentity } from '../src/runtime/pageOperationIdentity.js';
+import { createSaveStatusMarker } from '../src/runtime/saveStatusActions.js';
+import {
   assertValidPageSaveResult,
   expectedPageSaveRequestId,
   INVALID_SAVE_RESULT_CODE,
@@ -163,6 +169,61 @@ for (const [label, source] of [['page', pageAction], ['style', styleAction]]) {
 
 assert(repository.includes("identity.mode || 'create-new'") && repository.includes("identity.projectId || 'project'") && repository.includes("Math.max(0, Number(expectedRevision || 0))"), 'validation request id must remain aligned with repository saveRequestId construction');
 assert(persistFlow.includes('clearPageDraft({ page: nextPage, authUser })') && persistFlow.includes('setWorkspaceUnsavedDirty(false)'), 'successful commit remains the only path that clears draft and dirty state after validation');
+assert((persistFlow.match(/savedPageIdentity: pageOperationIdentity\(savedPage\)/g) || []).length >= 2, 'both immediate save and asynchronous public verification must retain page-scoped success identity');
+
+// ED-R10: A's obsolete completion timeout must never clear B's newer
+// successful publish indicator, even if an already-queued callback runs.
+const pendingTimers = new Map();
+let nextTimerId = 0;
+let savedState = false;
+const setSavedState = (value) => { savedState = value; };
+const schedule = (callback) => {
+  const id = ++nextTimerId;
+  pendingTimers.set(id, callback);
+  return id;
+};
+const canceledTimers = [];
+const cancel = (id) => { canceledTimers.push(id); pendingTimers.delete(id); };
+const latestPageRef = { current: { id: 'A', ownerId: 'owner-a', projectId: 'project-a', slug: 'original-a' } };
+savedState = true;
+assert(schedulePageSavedIndicatorReset({ latestPageRef, setSaved: setSavedState, schedule, cancel }), 'first saved indication must schedule a timeout');
+const oldCallback = pendingTimers.get(1);
+const ownerScoped = createSaveStatusMarker((value) => { lastSaveStatus = value; });
+let lastSaveStatus = {};
+ownerScoped('ok', '발행 완료', '', { savedPageIdentity: pageOperationIdentity(latestPageRef.current) });
+const aStatus = lastSaveStatus;
+latestPageRef.current = { id: 'B', ownerId: 'owner-a', projectId: 'project-a', slug: 'b' };
+assert(aStatus.savedPageIdentity !== pageOperationIdentity(latestPageRef.current), 'A success label must be hidden when B becomes active');
+savedState = true;
+assert(schedulePageSavedIndicatorReset({ latestPageRef, setSaved: setSavedState, schedule, cancel }), 'B success must schedule its own timeout');
+assert(canceledTimers.includes(1), 'B save must cancel A timeout');
+oldCallback();
+assert(savedState === true, 'stale A callback must not dismiss B saved state');
+assert(pendingTimers.size === 1, 'only B timeout must be pending');
+pendingTimers.get(2)();
+assert(savedState === false, 'B timeout must dismiss its own indication');
+assert(cancelPageSavedIndicatorReset(latestPageRef) === false, 'settled timeout must release tracking');
+
+savedState = true;
+schedulePageSavedIndicatorReset({ latestPageRef, setSaved: setSavedState, schedule, cancel });
+assert(cancelPageSavedIndicatorReset(latestPageRef) === true, 'pending changes must cancel a prior success timer');
+const abandonedCallback = pendingTimers.get(3);
+assert(abandonedCallback === undefined, 'canceled callback must no longer be scheduled');
+assert(savedState === true, 'canceling a success timer must not mutate unrelated state');
+
+const savedPageWithRenamedSlug = { ...latestPageRef.current, slug: 'b-renamed' };
+assert(pageOperationIdentity(savedPageWithRenamedSlug) === pageOperationIdentity(latestPageRef.current), 'stored page ID must survive slug rename in scoped success indicator');
+ownerScoped('warning', '추가 수정 있음');
+assert(!Object.hasOwn(lastSaveStatus, 'savedPageIdentity'), 'non-success feedback must not inherit previous page scope');
+
+const headerSource = await readFile('src/builder/PanelHeader.jsx', 'utf8');
+const statusSource = await readFile('src/runtime/saveStatusActions.js', 'utf8');
+assert(headerSource.includes("saved && saveStatus?.savedPageIdentity === pageOperationIdentity(page)"), 'header must scope saved badge by active page identity');
+assert(statusSource.includes('savedPageIdentity'), 'success status marker must preserve optional saved page scope');
+assert(persistFlow.includes('schedulePageSavedIndicatorReset({ latestPageRef, setSaved })') && persistFlow.includes('cancelPageSavedIndicatorReset(latestPageRef)'), 'save commit and pending edits must participate in a single cancellable timer sequence');
+assert(!persistFlow.includes('setTimeout(() => setSaved(false), 1000)'), 'old unscoped independent saved timers must not return');
+assert(persistFlow.includes('cancel = (timer) => clearTimeout(timer)') && persistFlow.includes('schedule = (callback, timeout) => setTimeout(callback, timeout)'), 'browser host timer defaults must keep global invocation context during scoped cancellation');
+
 
 console.log(JSON.stringify({
   ok: true,
@@ -174,4 +235,7 @@ console.log(JSON.stringify({
   requestIdEchoRequired: true,
   replayRecoveryCompatible: true,
   pageAndStyleParity: true,
+  scopedSavedIndicator: true,
+  staleTimerCancellation: true,
+  pageSwitchAndSlugRename: true,
 }, null, 2));

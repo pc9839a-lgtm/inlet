@@ -85,17 +85,50 @@ export function useLocalWorkspacePersistence({
       }
     };
 
+
+    const markManualDraftRestore = () => {
+      // An explicit file recovery is an edit even when the user never typed
+      // into a text field. Keep the unsaved/exit guard active until published.
+      lastUserEditIntentRef.current = Date.now();
+      serverDraftDirtyRef.current = true;
+      setWorkspaceUnsavedDirty(true);
+    };
+
+    const markConflictResolutionCommitted = (event) => {
+      // A conflict modal may resolve while a previous editor keystroke is still
+      // inside the five-second user-intent window. Reset the baseline now,
+      // before a near-immediate reload can re-save the stale draft as dirty.
+      const committedPage = normalizePageForSave(event?.detail?.page || latestPageRef.current || {});
+      if (serverDraftTimerRef.current) clearTimeout(serverDraftTimerRef.current);
+      serverDraftTimerRef.current = null;
+      serverDraftDirtyRef.current = false;
+      lastUserEditIntentRef.current = 0;
+      draftStorageFailureNoticeRef.current = '';
+      serverBaselineRef.current = {
+        identity: pageDraftIdentity(committedPage, authUser),
+        revision: Number(committedPage.revision || 0),
+        updatedAt: String(committedPage.updatedAt || committedPage.savedAt || committedPage.createdAt || ''),
+        signature: pageDraftContentSignature(committedPage),
+        observedAt: Date.now(),
+      };
+      setWorkspaceUnsavedDirty(false);
+    };
+
     const options = { capture: true, passive: true };
     window.addEventListener('input', markUserEditIntent, options);
     window.addEventListener('change', markUserEditIntent, options);
     window.addEventListener('pointerdown', markUserEditIntent, options);
     window.addEventListener('keydown', markUserEditIntent, true);
+    window.addEventListener('builder:manual-draft-restored', markManualDraftRestore);
+    window.addEventListener('builder:conflict-resolution-committed', markConflictResolutionCommitted);
 
     return () => {
       window.removeEventListener('input', markUserEditIntent, true);
       window.removeEventListener('change', markUserEditIntent, true);
       window.removeEventListener('pointerdown', markUserEditIntent, true);
       window.removeEventListener('keydown', markUserEditIntent, true);
+      window.removeEventListener('builder:manual-draft-restored', markManualDraftRestore);
+      window.removeEventListener('builder:conflict-resolution-committed', markConflictResolutionCommitted);
     };
   }, [authUser?.session, publicLandingSlug]);
 

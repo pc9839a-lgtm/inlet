@@ -3,6 +3,7 @@ import {
   PAGE_EDIT_HISTORY_LIMIT,
   clearPageEditHistory,
   configurePageEditHistory,
+  getPageEditHistoryDiagnostics,
   getPageEditHistoryState,
   redoPageEdit,
   syncPageEditHistoryScope,
@@ -110,12 +111,79 @@ currentPage = commitPage({ ...currentPage, slug: 'draft-c-renamed' });
 await Promise.resolve();
 assert(!getPageEditHistoryState().canUndo, 'an id-less page changing identity must fail safe and reset stale undo history');
 
+
+// Large-page regression: 128 blocks with unchanged heavy image data must not
+// be copied into each of 50 title undo entries.
+const heavyImage = 'data:image/png;base64,' + 'Z'.repeat(12_000);
+const largePage = {
+  id: 'heavy-page', ownerId: 'owner-h', projectId: 'project-h',
+  slug: 'heavy-page', title: 'H0',
+  meta: { title: 'SEO', desc: 'Initial' },
+  blocks: Array.from({ length: 128 }, (_, index) => ({
+    id: 'block-' + index, type: 'image',
+    s: { image: heavyImage + index, caption: 'Original ' + index },
+  })),
+};
+currentPage = largePage;
+latestPageRef.current = largePage;
+syncPageEditHistoryScope(currentPage);
+clearPageEditHistory();
+await Promise.resolve();
+const heavyStarted = performance.now();
+for (let index = 1; index <= PAGE_EDIT_HISTORY_LIMIT; index += 1) {
+  currentPage = commitPage({ ...currentPage, title: 'H' + index });
+}
+await Promise.resolve();
+const heavyEditDurationMs = Math.round(performance.now() - heavyStarted);
+const heavyState = getPageEditHistoryDiagnostics();
+assert(heavyState.pastEntries === 50, 'large-page title edits must retain 50 undo steps');
+assert(heavyState.retainedBytes < 80_000, 'unchanged heavy images must not occupy repeated undo snapshots');
+assert(heavyState.retainedBytes <= heavyState.maxBytes, 'history must obey the hard memory budget');
+for (let index = PAGE_EDIT_HISTORY_LIMIT - 1; index >= 0; index -= 1) {
+  assert(undoPageEdit(), 'large-page undo must remain available');
+  assert(currentPage.title === 'H' + index, 'large-page undo must reconstruct exact title');
+}
+await Promise.resolve();
+assert(currentPage.blocks.length === 128 && currentPage.blocks[60].s.image === heavyImage + '60', 'undo must preserve unchanged large block data');
+for (let index = 1; index <= PAGE_EDIT_HISTORY_LIMIT; index += 1) {
+  assert(redoPageEdit(), 'large-page redo must remain available');
+  assert(currentPage.title === 'H' + index, 'large-page redo must reconstruct exact title');
+}
+await Promise.resolve();
+assert(!getPageEditHistoryState().canRedo && currentPage.blocks[60].s.image === heavyImage + '60', 'large-page redo must not corrupt unchanged data');
+
+// Nested object edits, added/removed properties and block reorders must be exact.
+currentPage = commitPage({
+  ...currentPage,
+  blocks: currentPage.blocks.map((block, index) => index === 64
+    ? { ...block, s: { ...block.s, caption: 'changed on block 64' } }
+    : block),
+});
+await Promise.resolve();
+assert(getPageEditHistoryDiagnostics().retainedBytes < 100_000, 'one changed block caption must not clone all other images');
+assert(undoPageEdit() && currentPage.blocks[64].s.caption === 'Original 64', 'nested block edit must undo');
+assert(redoPageEdit() && currentPage.blocks[64].s.caption === 'changed on block 64', 'nested block edit must redo');
+
+currentPage = commitPage({ ...currentPage, meta: { title: 'SEO' } });
+assert(!Object.hasOwn(currentPage.meta, 'desc'), 'property deletion setup');
+assert(undoPageEdit() && currentPage.meta.desc === 'Initial', 'deleted property must be restored');
+assert(redoPageEdit() && !Object.hasOwn(currentPage.meta, 'desc'), 'redo must remove deleted property again');
+
+const originalFirstId = currentPage.blocks[0].id;
+const originalLastId = currentPage.blocks.at(-1).id;
+currentPage = commitPage({ ...currentPage, blocks: [...currentPage.blocks].reverse() });
+assert(currentPage.blocks[0].id === originalLastId, 'block reorder setup');
+assert(undoPageEdit() && currentPage.blocks[0].id === originalFirstId, 'whole array reorder must undo without index corruption');
+assert(redoPageEdit() && currentPage.blocks[0].id === originalLastId, 'whole array reorder must redo without index corruption');
+assert(getPageEditHistoryDiagnostics().retainedBytes <= getPageEditHistoryDiagnostics().maxBytes, 'large array history must remain bounded');
+
 const headerSource = await readFile('src/builder/PanelHeader.jsx', 'utf8');
 const mutationSource = await readFile('src/runtime/pageEditMutations.js', 'utf8');
 assert(headerSource.includes('syncPageEditHistoryScope(page)') && headerSource.includes('}, [page]);'), 'page history must sync when an id-less page object changes, even with identical URL and owner');
 const historySource = await readFile('src/runtime/pageEditHistory.js', 'utf8');
 assert(historySource.includes('unsavedPageScopes = new WeakMap()') && historySource.includes('carryUnsavedScope(previousPage, nextPage)'), 'draft mutation clones must inherit their original private history identity');
-assert(historySource.includes('if (currentScope !== activeScope || pageScope(target) !== currentScope)'), 'Undo and Redo must reject stale page targets before the scope synchronization effect runs');
+assert(historySource.includes('if (currentScope !== activeScope || target.scope !== currentScope)'), 'Undo and Redo must reject stale page targets before the scope synchronization effect runs');
+assert(historySource.includes('previousValueChanges(previousPage, nextPage)') && historySource.includes('trimHistory()'), 'history must retain bounded field-level deltas instead of 50 full-page snapshots');
 assert(headerSource.includes('Ctrl/Cmd+Z') && headerSource.includes('redoPageEdit') && headerSource.includes('undoPageEdit'), 'editor header must expose undo redo controls and shortcuts');
 assert(mutationSource.includes('configurePageEditHistory({ setPage, commitPage: commitLocalPageDraft })'), 'page mutations must connect history to the canonical setPage path');
 assert(mutationCount >= PAGE_EDIT_HISTORY_LIMIT, 'history application must still use the canonical local mutation commit');
@@ -131,4 +199,10 @@ console.log(JSON.stringify({
   immediateUndoBeforeEffectGuard: true,
   undoRedoForUnsavedDraft: true,
   canonicalCommitPreserved: true,
+  largeBlockCount: 128,
+  largePageUndoSteps: PAGE_EDIT_HISTORY_LIMIT,
+  largePageEditDurationMs: heavyEditDurationMs,
+  retainedHistoryBytes: getPageEditHistoryDiagnostics().retainedBytes,
+  retainedHistoryBudget: getPageEditHistoryDiagnostics().maxBytes,
+  nestedChangesAndReorder: true,
 }, null, 2));

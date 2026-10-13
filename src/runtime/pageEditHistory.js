@@ -1,4 +1,5 @@
 const MAX_HISTORY = 50;
+const MAX_HISTORY_BYTES = 8 * 1024 * 1024;
 
 // Unsaved pages can share the same default slug and lack a server page id.
 // Give each in-memory editor page a stable, private history scope instead of
@@ -50,18 +51,132 @@ let stateSnapshot = {
   redoCount: 0,
 };
 
-function clonePage(page) {
-  if (!page || typeof page !== 'object') return page;
-  let cloned = null;
-  if (typeof structuredClone === 'function') {
-    try { cloned = structuredClone(page); } catch {}
-  }
-  if (!cloned) cloned = JSON.parse(JSON.stringify(page));
-  // Copy this only in memory: no history marker is added to a published page.
-  const scopeId = unsavedPageScopes.get(page);
-  if (scopeId && !pageId(page)) unsavedPageScopes.set(cloned, scopeId);
-  return cloned;
+// Store only the previous values of fields that actually changed. Full-page
+// snapshots duplicated large unchanged image/block payloads on every keystroke.
+function plainRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+    && (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null);
 }
+
+function cloneChangedValue(value) {
+  if (value === null || typeof value !== 'object') return value;
+  if (typeof structuredClone === 'function') {
+    try { return structuredClone(value); } catch {}
+  }
+  return JSON.parse(JSON.stringify(value));
+}
+
+function hasOwn(value, key) {
+  return value !== null && (typeof value === 'object' || typeof value === 'function')
+    && Object.prototype.hasOwnProperty.call(value, key);
+}
+
+function arrayIdentityChanged(before, after) {
+  return before.some((item, index) => {
+    const next = after[index];
+    return (plainRecord(item) && hasOwn(item, 'id'))
+      || (plainRecord(next) && hasOwn(next, 'id'))
+      ? item?.id !== next?.id : false;
+  });
+}
+
+function previousValueChanges(before, after, path = [], operations = []) {
+  if (Object.is(before, after)) return operations;
+  if (Array.isArray(before) && Array.isArray(after)
+    && before.length === after.length && !arrayIdentityChanged(before, after)) {
+    before.forEach((item, index) => previousValueChanges(item, after[index], [...path, index], operations));
+    return operations;
+  }
+  if (plainRecord(before) && plainRecord(after)) {
+    for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) {
+      const hadBefore = hasOwn(before, key);
+      const hasAfter = hasOwn(after, key);
+      if (hadBefore && hasAfter) {
+        previousValueChanges(before[key], after[key], [...path, key], operations);
+      } else {
+        operations.push({
+          path: [...path, key],
+          exists: hadBefore,
+          value: hadBefore ? cloneChangedValue(before[key]) : undefined,
+        });
+      }
+    }
+    return operations;
+  }
+  operations.push({ path, exists: true, value: cloneChangedValue(before) });
+  return operations;
+}
+
+function readPath(root, path) {
+  if (!path.length) return { exists: true, value: root };
+  let value = root;
+  for (const key of path) {
+    if (!hasOwn(value, key)) return { exists: false, value: undefined };
+    value = value[key];
+  }
+  return { exists: true, value };
+}
+
+function applyOperation(root, operation) {
+  const { path, exists, value } = operation;
+  if (!path.length) return exists ? cloneChangedValue(value) : undefined;
+  const ancestors = [root];
+  let parent = root;
+  for (let index = 0; index < path.length - 1; index += 1) {
+    parent = parent?.[path[index]];
+    ancestors.push(parent);
+  }
+  let updated = Array.isArray(parent) ? parent.slice() : { ...(plainRecord(parent) ? parent : {}) };
+  const leaf = path[path.length - 1];
+  if (exists) updated[leaf] = cloneChangedValue(value);
+  else delete updated[leaf];
+  for (let index = path.length - 2; index >= 0; index -= 1) {
+    const ancestor = ancestors[index];
+    const ancestorCopy = Array.isArray(ancestor) ? ancestor.slice() : { ...ancestor };
+    ancestorCopy[path[index]] = updated;
+    updated = ancestorCopy;
+  }
+  return updated;
+}
+
+function patchBytes(operations) {
+  // A bounded estimate of JS string payloads (UTF-16) plus patch metadata.
+  return JSON.stringify(operations).length * 2;
+}
+
+function historyEntry(scope, operations) {
+  return { scope, operations, bytes: patchBytes(operations) };
+}
+
+function replayHistory(currentPage, entry) {
+  let nextPage = currentPage;
+  const inverse = [];
+  for (const operation of entry.operations) {
+    const current = readPath(nextPage, operation.path);
+    inverse.push({
+      path: operation.path,
+      exists: current.exists,
+      value: current.exists ? cloneChangedValue(current.value) : undefined,
+    });
+    nextPage = applyOperation(nextPage, operation);
+  }
+  return { nextPage, inverse: historyEntry(entry.scope, inverse) };
+}
+
+function historyBytes() {
+  return [...past, ...future].reduce((total, entry) => total + entry.bytes, 0);
+}
+function trimHistory() {
+  while (past.length > MAX_HISTORY) past.shift();
+  while (future.length > MAX_HISTORY) future.shift();
+  // Rare large block/image replacement may exceed the budget. Discard oldest
+  // history rather than retaining potentially unbounded megabyte snapshots.
+  while ((past.length || future.length) && historyBytes() > MAX_HISTORY_BYTES) {
+    if (past.length) past.shift();
+    else future.shift();
+  }
+}
+
 
 function pageScope(page = {}) {
   const ownerProject = pageOwnerProject(page);
@@ -70,14 +185,6 @@ function pageScope(page = {}) {
   return `${ownerProject}:unsaved:${unsavedPageScopeId(page)}`;
 }
 
-function samePageContent(left, right) {
-  if (left === right) return true;
-  try {
-    return JSON.stringify(left) === JSON.stringify(right);
-  } catch {
-    return false;
-  }
-}
 
 function refreshSnapshot() {
   stateSnapshot = {
@@ -105,9 +212,6 @@ function resetStacks({ notifyListeners = true } = {}) {
   else refreshSnapshot();
 }
 
-function trimPast() {
-  if (past.length > MAX_HISTORY) past = past.slice(past.length - MAX_HISTORY);
-}
 
 export function configurePageEditHistory({ setPage, commitPage } = {}) {
   if (typeof setPage === 'function') configuredSetPage = setPage;
@@ -147,11 +251,12 @@ export function recordPageEditMutation(previousPage, nextPage) {
     return;
   }
 
-  if (samePageContent(previousPage, nextPage)) return;
+  const operations = previousValueChanges(previousPage, nextPage);
+  if (!operations.length) return;
 
-  past.push(clonePage(previousPage));
-  trimPast();
+  past.push(historyEntry(previousScope, operations));
   future = [];
+  trimHistory();
   notifySoon();
 }
 
@@ -169,20 +274,19 @@ export function undoPageEdit() {
   const target = past[past.length - 1];
 
   configuredSetPage((currentPage) => {
-    // Effects that synchronize history scope run after rendering. Block an
-    // immediate shortcut/click on a newly selected page before that effect.
     const currentScope = pageScope(currentPage);
-    if (currentScope !== activeScope || pageScope(target) !== currentScope) {
+    if (currentScope !== activeScope || target.scope !== currentScope) {
       activeScope = currentScope;
       resetStacks();
       return currentPage;
     }
-    past = past.slice(0, -1);
-    future.push(clonePage(currentPage));
-    if (future.length > MAX_HISTORY) future = future.slice(future.length - MAX_HISTORY);
+    const { nextPage, inverse } = replayHistory(currentPage, target);
+    past.pop();
+    future.push(inverse);
+    trimHistory();
     applyingHistory = true;
     try {
-      return configuredCommitPage(clonePage(target));
+      return configuredCommitPage(nextPage);
     } finally {
       applyingHistory = false;
       notifySoon();
@@ -196,20 +300,19 @@ export function redoPageEdit() {
   const target = future[future.length - 1];
 
   configuredSetPage((currentPage) => {
-    // Effects that synchronize history scope run after rendering. Block an
-    // immediate shortcut/click on a newly selected page before that effect.
     const currentScope = pageScope(currentPage);
-    if (currentScope !== activeScope || pageScope(target) !== currentScope) {
+    if (currentScope !== activeScope || target.scope !== currentScope) {
       activeScope = currentScope;
       resetStacks();
       return currentPage;
     }
-    future = future.slice(0, -1);
-    past.push(clonePage(currentPage));
-    trimPast();
+    const { nextPage, inverse } = replayHistory(currentPage, target);
+    future.pop();
+    past.push(inverse);
+    trimHistory();
     applyingHistory = true;
     try {
-      return configuredCommitPage(clonePage(target));
+      return configuredCommitPage(nextPage);
     } finally {
       applyingHistory = false;
       notifySoon();
@@ -223,3 +326,7 @@ export function clearPageEditHistory() {
 }
 
 export const PAGE_EDIT_HISTORY_LIMIT = MAX_HISTORY;
+
+export function getPageEditHistoryDiagnostics() {
+  return { pastEntries: past.length, futureEntries: future.length, retainedBytes: historyBytes(), maxBytes: MAX_HISTORY_BYTES };
+}

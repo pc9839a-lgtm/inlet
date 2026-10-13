@@ -142,7 +142,7 @@ assert(feedbackSource.includes("title: local ? '브라우저에 임시저장됨'
 assert(feedbackSource.includes("toast: '발행 실패 · 작업은 자동 임시보관됨'") && !feedbackSource.includes("'서버 저장에 실패했습니다. ' + detail"), 'publish failure toast must stay concise and must not expose long transport errors');
 assert(saveStatusSource.includes("markSaveStatus('ok', '브라우저에 임시저장됨', '')") && saveStatusSource.includes("showToast(message, 'error')"), 'local persistence feedback must explicitly describe temporary browser storage');
 assert(panelHeaderSource.includes("saveStatus.tone === 'warning' || saveStatus.tone === 'error'"), 'editor header must show status text only for actionable warning/error states');
-assert(panelHeaderSource.includes("{saved ? '발행됨' : '발행'}") && panelHeaderSource.includes('자동 임시보관됩니다') && !panelHeaderSource.includes("idle: '#6c727e'") && !panelHeaderSource.includes("ok: '#147a50'"), 'normal server persistence state must be represented as publish while local editing remains temporary');
+assert(panelHeaderSource.includes("{savedOnCurrentPage ? '발행됨' : '발행'}") && panelHeaderSource.includes("saved && saveStatus?.savedPageIdentity === pageOperationIdentity(page)") && panelHeaderSource.includes('자동 임시보관됩니다') && !panelHeaderSource.includes("idle: '#6c727e'") && !panelHeaderSource.includes("ok: '#147a50'"), 'server publication must show a page-scoped success flash while local editing remains temporary');
 
 await import('./page-save-result-validation-quality-check.mjs');
 await import('./page-save-queue-quality-check.mjs');

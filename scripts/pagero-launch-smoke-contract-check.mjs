@@ -16,6 +16,10 @@ const inbox = await readFile('src/panels/InboxPanel.jsx', 'utf8');
 const inboxSync = await readFile('src/runtime/useInboxLeadSync.js', 'utf8');
 
 assert(runbook.includes('production 실행에 대한 명시적 승인'), 'launch smoke runbook must require explicit production approval');
+assert(runbook.includes('플랫폼 관리자 허용 목록') && runbook.includes('기존 등록 계정'), 'launch smoke must prohibit privileged and already registered signup identities');
+assert(runbook.includes('기존 계정에 연결된 번호') && runbook.includes('불확실하면 가입이나 인증을 진행하지 않는다'), 'launch smoke must avoid ambiguous phone reuse');
+assert(runbook.includes('비밀번호 재설정, 재가입, 권한 변경') && runbook.includes('다른 계정의 자료는 절대 삭제하지 않는다'), 'launch smoke must not mutate administrator or unrelated tenant data');
+assert(runbook.includes('CI·GitHub 로그·PR·채팅에 기록하지 않는다'), 'launch smoke evidence must keep credential and OTP input out of persistent logs and chat');
 assert(runbook.includes('실제 production D1 write'), 'launch smoke runbook must call out production writes');
 assert(runbook.includes('신규 회원가입') && runbook.includes('6자리 인증메일'), 'launch smoke must include real signup email verification');
 assert(runbook.includes('로그아웃 후 동일 계정으로 다시 로그인'), 'launch smoke must include fresh login after signup');
