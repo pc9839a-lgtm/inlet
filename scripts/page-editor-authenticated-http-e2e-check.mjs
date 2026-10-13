@@ -201,9 +201,11 @@ await withServer(async ({ baseUrl, dataDir }) => {
       : block) };
   const lostAckPayload = { project, expectedUpdatedAt: beforeDroppedAck.updatedAt, page: lostAckPage };
   let simulatedLostAck = false;
+  let originalCommittedVersion = null;
   try {
     const accepted = await api(baseUrl, 'POST', endpoint, lostAckPayload, sessionA);
     assert(accepted.status === 200, 'first request must be committed before response loss is injected');
+    originalCommittedVersion = accepted.data.page;
     // The transport hands no success result to the editor even though the
     // database write has finished; this throws in the simulated client.
     throw new TypeError('ED_R12_RESPONSE_DROPPED_AFTER_COMMIT');
@@ -219,8 +221,9 @@ await withServer(async ({ baseUrl, dataDir }) => {
   const serverAfterReplay = await api(baseUrl, 'GET', readEndpoint, null, sessionB);
   assert(serverAfterReplay.status === 200 && serverAfterReplay.data.page?.title === lostAckPage.title,
     'retry cannot lose committed content');
-  assert(Number(serverAfterReplay.data.page.revision) === Number(beforeDroppedAck.revision) + 1,
-    'lost acknowledgement and retry must produce exactly one server revision');
+  assert(Number(serverAfterReplay.data.page.revision) === Number(originalCommittedVersion.revision)
+    && serverAfterReplay.data.page.updatedAt === originalCommittedVersion.updatedAt,
+    'replaying an uncertain write must not create a second committed revision');
   assert(sameCommittedPageContent(serverAfterReplay.data.page, lostAckPage),
     'already committed content must be proven byte-equivalent after normalizing version fields');
   runtimeResult.lostAckRecovered = true;
