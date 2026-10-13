@@ -915,9 +915,24 @@ async function run() {
       `--user-data-dir=${profileDir}`,
       'about:blank',
     ], { stdio: ['ignore', 'ignore', 'pipe'] });
-    child.stderr?.on('data', () => {});
-
-    await waitForChrome(debugPort);
+    const chromeStderr = [];
+    child.stderr?.on('data', (chunk) => {
+      chromeStderr.push(String(chunk));
+      if (chromeStderr.length > 60) chromeStderr.shift();
+    });
+    child.on('error', (error) => {
+      chromeStderr.push('Chrome spawn error: ' + error.message);
+    });
+    console.log('[editor-qa] chrome executable:', chrome, 'debug port:', debugPort, 'pid:', child.pid || 'unavailable');
+    try {
+      await waitForChrome(debugPort);
+    } catch (error) {
+      const reason = chromeStderr.join('').slice(-6000).trim();
+      throw new Error(error.message
+        + '; chrome exit=' + String(child.exitCode)
+        + '; signal=' + String(child.signalCode)
+        + (reason ? '; chrome stderr=' + reason : '; chrome produced no stderr'));
+    }
     await mkdir(backupDownloadDir, { recursive: true });
     const targets = await fetchJson(`http://127.0.0.1:${debugPort}/json/list`);
     const target = targets.find((item) => item.type === 'page' && item.webSocketDebuggerUrl);
