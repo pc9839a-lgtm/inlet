@@ -1,6 +1,7 @@
 const ROOT_TITLE = '페이지로 | 모바일 랜딩페이지 제작·접수 관리';
 const ROOT_DESCRIPTION = '페이지로(PAGERO)는 상담 신청, 방문 예약, 견적 문의, 이벤트 접수용 모바일 랜딩페이지를 만들고 접수 내역과 전환 통계까지 한곳에서 관리하는 웹 기반 제작·운영 서비스입니다.';
 const ROOT_CANONICAL = 'https://pagero.kr/';
+const ROOT_NAVER_VERIFICATION = '2b53120b247214ee096be40c7c15795e42a8a24c';
 
 function escapeHtml(value = '') {
   return String(value ?? '')
@@ -101,6 +102,8 @@ function enrichRootFallback(html) {
     next = next.replace(lifeStart, `${brandSection}${lifeStart}`);
   }
 
+  const toolLink = '<section class="pagero-ssr-life"><h2>랜딩페이지 광고비, 계약까지 계산해 보세요</h2><p>광고비와 클릭당 비용, 문의 전환율, 계약 전환율을 직접 입력해 문의당 광고비·계약당 광고비·손익분기점을 계산할 수 있습니다.</p><p><a href="/tools/lead-calculator/">광고 랜딩페이지 손익 계산기 바로가기 →</a></p></section>';
+  if (next.includes(lifeStart) && !next.includes('광고 랜딩페이지 손익 계산기 바로가기')) next = next.replace(lifeStart, toolLink + lifeStart);
   next = next.replace(/https:\/\/life\.pagero\.kr\//g, 'https://pagero.kr/life/');
   return next;
 }
@@ -114,6 +117,7 @@ export async function injectPageroRootSeo(url, response) {
   html = replaceOrInject(html, /<title\b[^>]*>[\s\S]*?<\/title>/i, `<title>${escapeHtml(ROOT_TITLE)}</title>`);
   html = replaceOrInject(html, /<meta\s+name=["']description["'][^>]*>/i, `<meta name="description" content="${escapeHtml(ROOT_DESCRIPTION)}">`);
   html = replaceOrInject(html, /<link\s+rel=["']canonical["'][^>]*>/i, `<link rel="canonical" href="${ROOT_CANONICAL}">`);
+  html = replaceOrInject(html, /<meta\s+name=["']naver-site-verification["'][^>]*>/i, `<meta name="naver-site-verification" content="${ROOT_NAVER_VERIFICATION}">`);
   if (!html.includes('PAGERO_ROOT_SEO_V1')) html = html.replace(/<\/head>/i, `${rootHeadTags()}\n</head>`);
   html = enrichRootFallback(html);
 

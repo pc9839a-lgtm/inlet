@@ -19,6 +19,26 @@ assert.match(html, /"@type":"WebApplication"/);
 assert.match(html, /https:\/\/pagero\.kr\/life\/car\/car-inspection-period\//);
 assert.doesNotMatch(html, /https:\/\/life\.pagero\.kr\//);
 assert.equal((html.match(/PAGERO_ROOT_SEO_V1/g) || []).length, 1);
+assert.match(html, /<meta name="naver-site-verification" content="2b53120b247214ee096be40c7c15795e42a8a24c">/);
+assert.equal((html.match(/name="naver-site-verification"/g) || []).length, 1);
+
+const previouslyVerifiedSource = source.replace('</head>', '<meta name="naver-site-verification" content="old-token"></head>');
+const updatedResponse = await injectPageroRootSeo(
+  new URL('https://pagero.kr/'),
+  new Response(previouslyVerifiedSource, { status: 200, headers: { 'content-type': 'text/html; charset=utf-8' } }),
+);
+const updatedHtml = await updatedResponse.text();
+assert.equal((updatedHtml.match(/name="naver-site-verification"/g) || []).length, 1);
+assert.match(updatedHtml, /content="2b53120b247214ee096be40c7c15795e42a8a24c"/);
+assert.doesNotMatch(updatedHtml, /content="old-token"/);
+
+const httpResponse = await injectPageroRootSeo(
+  new URL('http://pagero.kr/'),
+  new Response(source, { status: 200, headers: { 'content-type': 'text/html; charset=utf-8' } }),
+);
+const httpHtml = await httpResponse.text();
+assert.match(httpHtml, /<link rel="canonical" href="https:\/\/pagero.kr\/">/);
+assert.match(httpHtml, /name="naver-site-verification"/);
 
 const untouched = await injectPageroRootSeo(
   new URL('https://pagero.kr/about'),
