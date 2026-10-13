@@ -6,6 +6,11 @@ import { save as saveJson, storageErrorMessage } from '../lib/storage.js';
 import { saveConflictDraft } from './localConflictDrafts.js';
 import { STORAGE_KEY } from '../config/storageKeys.js';
 import { isPageConflictError } from './conflictUtils.js';
+import { clearPageDraft, restorePageDraft } from '../runtime/pageDraftStore.js';
+import { cancelPageSavedIndicatorReset, schedulePageSavedIndicatorReset } from '../runtime/pagePersistFlow.js';
+import { pageOperationIdentity } from '../runtime/pageOperationIdentity.js';
+import { assertValidPageSaveResult } from '../lib/pageSaveResultValidation.js';
+import { setWorkspaceUnsavedDirty } from '../runtime/workspaceUnsavedGuard.js';
 
 async function loadLatestConflictPage(localPage, authUser) {
   const slug = String(localPage?.slug || '').trim();
@@ -51,6 +56,9 @@ export function usePageConflict({
   setPageConflict,
   setPage,
   setStylePreviewTheme,
+  setSaved = () => {},
+  markSaveStatus = () => {},
+  latestPageRef = null,
 }) {
   const openPageConflict = async (localPage, error) => {
     let serverPage = null;
@@ -93,8 +101,17 @@ export function usePageConflict({
   const useLatestServerPage = () => {
     if (!pageConflict?.serverPage) return;
     const nextPage = normalizePageForSave(pageConflict.serverPage);
+    // The conflict copy remains in localConflictDrafts, but explicitly choosing
+    // the server must not leave this tab's stale recovery draft or unload guard.
+    clearPageDraft({ page: pageConflict.localPage, authUser });
+    clearPageDraft({ page: nextPage, authUser });
+    if (latestPageRef) latestPageRef.current = nextPage;
+    cancelPageSavedIndicatorReset(latestPageRef);
     setPage(nextPage);
     saveJson(STORAGE_KEY, nextPage);
+    setSaved(false);
+    markSaveStatus('info', '최신본 불러옴', '서버에 저장된 최신 페이지를 불러왔습니다.');
+    setWorkspaceUnsavedDirty(false);
     setStylePreviewTheme(null);
     setPageConflict(null);
   };
@@ -116,16 +133,38 @@ export function usePageConflict({
     if (!pageConflict?.localPage || !pageConflict?.serverPage) return false;
     try {
       const latestUpdatedAt = pageConflict.serverPage.updatedAt || pageConflict.serverPage.savedAt || '';
-      const nextPage = normalizePageForSave(pageConflict.localPage);
+      // Rebase only server-owned identity/version fields. Keeping the local
+      // stale revision causes an immediate second conflict on some backends.
+      const nextPage = restorePageDraft({
+        draft: { page: normalizePageForSave(pageConflict.localPage) },
+        serverPage: pageConflict.serverPage,
+      });
       const result = await persistPage(nextPage, authUser, {
         tab: 'edit',
         expectedUpdatedAt: latestUpdatedAt,
+        expectedRevision: Number(nextPage.revision || 0),
         saveMode: 'update-existing',
         verifyPublic: true,
       });
-      const savedPage = normalizePageForSave(result?.page || nextPage);
+      assertValidPageSaveResult({
+        result,
+        requestPage: result?.clientPage || nextPage,
+        saveMode: 'update-existing',
+        expectedRevision: Number(nextPage.revision || 0),
+        requireSaveRequestId: true,
+      });
+      const savedPage = normalizePageForSave(result.page);
+      clearPageDraft({ page: pageConflict.localPage, authUser });
+      clearPageDraft({ page: savedPage, authUser });
+      if (latestPageRef) latestPageRef.current = savedPage;
       setPage(savedPage);
       saveJson(STORAGE_KEY, savedPage);
+      setWorkspaceUnsavedDirty(false);
+      setSaved(true);
+      schedulePageSavedIndicatorReset({ latestPageRef, setSaved });
+      markSaveStatus('success', '발행 완료', '내 작업으로 최신 페이지에 발행했습니다.', {
+        savedPageIdentity: pageOperationIdentity(savedPage),
+      });
       setStylePreviewTheme(null);
       setPageConflict(null);
       return true;
