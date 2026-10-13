@@ -4,12 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: Read-only preflight or encrypted backup followed by migration apply
+        description: Read-only preflight, encrypted backup-only, or approved migration apply
         required: true
         default: preflight
         type: choice
         options:
           - preflight
+          - backup-only
           - backup-and-apply
       expected_pending:
         description: Exact comma-separated pending migration filenames in execution order
@@ -22,7 +23,7 @@ on:
         default: false
         type: boolean
       approval_phrase:
-        description: Baseline uses I_APPROVE_D1_BASELINE_0001_0009; migration apply uses I_APPROVE_D1_MIGRATIONS
+        description: Backup-only uses I_APPROVE_D1_ENCRYPTED_BACKUP; migrations use I_APPROVE_D1_MIGRATIONS; baseline uses I_APPROVE_D1_BASELINE_0001_0009
         required: false
         default: ''
         type: string

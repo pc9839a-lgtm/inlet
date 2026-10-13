@@ -40,6 +40,19 @@ Read-only checks:
 
 No export, migration apply, restore, schema write, or data write occurs.
 
+### `backup-only` — 암호화 백업 전용 / D1 쓰기 없음
+
+운영 데이터의 복구 가능성을 준비할 때 마이그레이션을 실행할 필요 없이 기존 암호화 백업 경로를 독립 실행한다.
+
+1. GitHub Actions → `D1 Migration Safety` → `Run workflow` → `main`.
+2. mode = `backup-only`, `allow_writes=false`, `expected_pending` 비움.
+3. `approval_phrase=I_APPROVE_D1_ENCRYPTED_BACKUP`, `require_live=true`.
+4. workflow는 운영 D1을 `wrangler d1 export --remote`로 읽고 SQL을 AES-256 암호화하여 원문 SQL을 제거한다. DB 변경/마이그레이션 apply/restore 없음.
+5. 암호화된 `.sql.enc`, 무비밀 `.manifest.json`, 복구 지시 `.rollback.txt`만 artifact에 보관한다. 키 및 다운로드 접근 권한과 저장 주기(30일)는 운영자가 관리한다.
+6. 백업 실행이 통과하더라도 **복원 성공을 의미하지 않는다**. 별도로 사용자가 승인한 disposable D1 환경에만 import한 뒤 스키마·계정·페이지·문의·revision의 무결성을 검증해야 한다.
+
+backup-only는 전용 승인 문구·main 제한·32자 이상 암호화 키가 없거나 쓰기 스위치가 켜져 있으면 실패한다. 이 모드의 artifact는 민감한 운영 데이터의 암호화본이므로 제한된 담당자만 접근한다.
+
 ### `backup-and-apply`
 
 This mode is allowed only when all gates pass:
