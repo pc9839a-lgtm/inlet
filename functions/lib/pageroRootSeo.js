@@ -102,8 +102,10 @@ function enrichRootFallback(html) {
     next = next.replace(lifeStart, `${brandSection}${lifeStart}`);
   }
 
+  const qaLink = '<section class="pagero-ssr-life"><h2>광고를 시작하기 전에 직접 검사해 보세요</h2><p>신청폼 오류·모바일 입력·개인정보 동의·실제 문의 접수·전환 집계를 확인하는 12개 항목 점검표입니다.</p><p><a href="/guide/landing-page-prelaunch/">랜딩페이지 오픈 전 점검표 →</a></p></section>';
   const toolLink = '<section class="pagero-ssr-life"><h2>랜딩페이지 광고비, 계약까지 계산해 보세요</h2><p>광고비와 클릭당 비용, 문의 전환율, 계약 전환율을 직접 입력해 문의당 광고비·계약당 광고비·손익분기점을 계산할 수 있습니다.</p><p><a href="/tools/lead-calculator/">광고 랜딩페이지 손익 계산기 바로가기 →</a></p></section>';
   if (next.includes(lifeStart) && !next.includes('광고 랜딩페이지 손익 계산기 바로가기')) next = next.replace(lifeStart, toolLink + lifeStart);
+  if (next.includes(lifeStart) && !next.includes('랜딩페이지 오픈 전 점검표 →')) next = next.replace(lifeStart, qaLink + lifeStart);
   next = next.replace(/https:\/\/life\.pagero\.kr\//g, 'https://pagero.kr/life/');
   return next;
 }
