@@ -29,6 +29,31 @@ jobs:
       - name: Full offline QA
         run: npm run qa:all
 
+  pagero-production-readonly-launch-preflight:
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Verify public production endpoints without mutations
+        run: node scripts/pagero-production-readonly-launch-check.mjs
+
+      - name: Verify hosted production API signed-session and D1
+        env:
+          INLET_PUBLIC_API_URL: https://pagero.kr
+          INLET_HOSTED_API_QA_REQUIRE: '1'
+        run: node scripts/hosted-api-quality-check.mjs
+
   accessibility-regression:
     runs-on: ubuntu-latest
     timeout-minutes: 5
