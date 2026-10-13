@@ -1,8 +1,8 @@
 # PageRo production 신규 사용자 launch smoke
 
-- 상태: RUNBOOK / 실행 보류
-- 갱신일: 2026-10-02 KST
-- 현재 결정: 테스트 준비 중. 비관리자 신규 계정 확보·인증 실수신 및 담당자 확인 전에는 production 쓰기 테스트 보류
+- 상태: RUNBOOK / B3 실사용 테스트 사용자 선택에 따라 스킵 (실행·통과 아님)
+- 갱신일: 2026-10-13 KST
+- 현재 결정: 사용자 요청으로 B3 신규 사용자 production smoke 스킵. 가입·이메일 인증·발행·문의 접수·삭제 실서버 E2E는 미실행이며 통과로 기록하지 않는다.
 
 목적: beta 오픈 전 실제 운영 환경에서 신규 사용자 핵심 흐름을 한 번 연속 검증한다.
 
@@ -83,4 +83,4 @@
 - B1 production save deployment gate: 완료
 - B2 Revision restore ↔ Undo/Redo: 완료
 - B4 개인도메인/웹결제 beta 표기: 완료
-- B3 신규 사용자 production launch smoke: 운영 테스트 준비 승인 / 관리자 외 신규 테스트 계정과 실수신 인증 조건 충족 전 실행 보류
+- B3 신규 사용자 production launch smoke: 사용자 요청으로 스킵 / 미실행·미검증 / 신규 테스트 이메일·전화번호 추가 요청 없음
