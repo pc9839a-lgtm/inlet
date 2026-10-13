@@ -55,6 +55,8 @@ const steps = [
   ['page:save:qa', ['scripts/page-save-identity-quality-check.mjs']],
   ['page:save:public-verification:qa', ['scripts/page-public-verification-quality-check.mjs']],
   ['page:save:replay:qa', ['scripts/page-save-replay-recovery-quality-check.mjs']],
+  ['page:save:network:qa', ['scripts/page-save-network-recovery-quality-check.mjs']],
+  ['page:save:result:qa', ['scripts/page-save-result-validation-quality-check.mjs']],
   ['production:save:roundtrip:contract:qa', ['scripts/production-save-roundtrip-contract-check.mjs']],
   ['account:page-limit:qa', ['scripts/account-page-limit-quality-check.mjs']],
   ['account:page-limit:live:contract:qa', ['scripts/account-page-limit-production-contract-check.mjs']],
