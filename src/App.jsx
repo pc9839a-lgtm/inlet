@@ -534,6 +534,9 @@ function App() {
     setPageConflict,
     setPage,
     setStylePreviewTheme,
+    setSaved,
+    markSaveStatus: createSaveStatusMarker(setSaveStatus),
+    latestPageRef,
   });
   const hasPendingStyle = useMemo(
     () => (
