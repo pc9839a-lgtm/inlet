@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>광고 랜딩페이지 손익분기 계산기 | 페이지로</title>
+<meta name="description" content="광고비·클릭당비용·문의전환율·계약전환율·계약당 이익으로 예상 문의 수, 고객획득비용과 광고 손익분기점을 직접 계산하는 무료 도구.">
+<link rel="canonical" href="https://pagero.kr/tools/lead-calculator/">
+<meta name="robots" content="index,follow"><meta name="google-adsense-account" content="ca-pub-1906196934401001">
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#17253b;background:#f7f9fc}
+a{color:#1556ab}.shell{width:min(1000px,calc(100% - 36px));margin:auto}
+header{background:#122e55;color:#fff}header>.shell{padding:18px 0;display:flex;justify-content:space-between;gap:20px;align-items:center}
+header a{color:#fff;text-decoration:none}nav{display:flex;gap:18px;font-size:14px}
+main{padding:60px 0 80px}h1{font-size:clamp(32px,5vw,52px);letter-spacing:-.05em;line-height:1.18;margin:12px 0}
+.subtitle{max-width:810px;font-size:17px;line-height:1.8;color:#586579;margin-bottom:32px}.eyebrow{font-size:13px;letter-spacing:.1em;font-weight:900;color:#1657a1}
+.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;background:#fff;border:1px solid #dfe6f0;border-radius:20px;padding:26px}
+label{display:block;font-weight:750;font-size:14px}label small{font-weight:450;color:#65748a;display:block;margin:6px 0;line-height:1.5}
+input{display:block;width:100%;margin-top:8px;height:46px;padding:12px;border:1px solid #afbdd0;border-radius:10px;font:inherit}
+input:focus{outline:2px solid #2475dc;outline-offset:1px}
+button{border:0;background:#15365b;color:white;padding:12px 20px;font-weight:750;border-radius:10px;cursor:pointer;margin:18px 0}
+.results{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0 32px}
+.result{padding:22px;background:#fff;border:1px solid #e0e7ef;border-radius:16px}
+.result span{font-size:13px;color:#5b697f}.result strong{display:block;font-size:clamp(22px,2.8vw,32px);letter-spacing:-.04em;font-variant-numeric:tabular-nums;margin:12px 0}
+.result small{font-size:12px;color:#69798e;line-height:1.5}
+.notice{background:#eaf2ff;color:#163456;padding:17px 20px;border-radius:13px;font-weight:750}
+.explain{margin-top:42px;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.explain article{background:#fff;border:1px solid #dfe6f0;border-radius:18px;padding:22px}
+h2{font-size:21px;letter-spacing:-.025em;margin:0 0 12px}p,li{line-height:1.85;color:#586579}ul{padding-left:22px}
+footer{border-top:1px solid #dfe6f0;padding:30px 0;font-size:14px;color:#637187}
+@media(max-width:700px){main{padding:38px 0}.formgrid,.explain{grid-template-columns:1fr}.results{grid-template-columns:1fr 1fr}.result{padding:17px}}
+@media(max-width:420px){.results{grid-template-columns:1fr}nav{gap:9px}}
+</style></head>
+<body>
+<header><div class="shell"><a href="/"><strong>페이지로 PAGERO</strong></a><nav aria-label="메뉴"><a href="/life/">생활정보</a><a href="/about">서비스 소개</a><a href="/contact">문의</a></nav></div></header>
+<main class="shell">
+<p class="eyebrow">LANDING PAGE ECONOMICS</p>
+<h1>광고는 클릭이 아니라<br>계약까지 계산해야 합니다.</h1>
+<p class="subtitle">광고비와 예상 클릭 단가, 문의 전환율, 계약 전환율을 넣으면 <strong>문의당 광고비와 계약당 광고비</strong>를 즉시 계산합니다. 계약당 이익과 비교해 손익분기 조건을 확인해보세요. 비용 데이터는 직접 입력하며 서버로 전송하지 않습니다.</p>
+<section class="formgrid" aria-label="광고성과 입력">
+<label>전체 광고 예산 (원)<small>동일한 캠페인·기간의 총 지출 예정액</small><input id="spend" type="number" min="0" step="1000" inputmode="numeric" placeholder="광고비 직접 입력"></label>
+<label>클릭당 예상 비용 (원)<small>광고 플랫폼의 최근 CPC 또는 예상 견적 기준</small><input id="cpc" type="number" min="0" step="1" inputmode="numeric" placeholder="예상 CPC 입력"></label>
+<label>랜딩페이지 문의 전환율 (%)<small>방문·클릭 중 실제 문의로 전환되는 비율</small><input id="leadRate" type="number" min="0" max="100" step="0.1" inputmode="decimal" placeholder="문의전환율 입력"></label>
+<label>문의 → 계약 전환율 (%)<small>접수된 문의 가운데 계약이 성사되는 비율</small><input id="salesRate" type="number" min="0" max="100" step="0.1" inputmode="decimal" placeholder="계약전환율 입력"></label>
+<label>계약 1건당 공헌이익 (원)<small>매출이 아닌 원가·수수료 등 직접 변동비를 뺀 금액 (광고비 제외)</small><input id="margin" type="number" min="0" step="1000" inputmode="numeric" placeholder="계약당 이익 입력"></label>
+<label>성과 확인 기간 (일)<small>일 평균 성과 계산에만 사용합니다.</small><input id="days" type="number" min="1" max="365" step="1" value="30" inputmode="numeric"></label>
+</section>
+<button type="button" id="clear">입력값 지우기</button>
+<section class="results" aria-live="polite">
+<div class="result"><span>예상 클릭 수</span><strong id="clicks">—</strong><small>광고 예산 ÷ CPC</small></div>
+<div class="result"><span>예상 문의 수</span><strong id="leads">—</strong><small>클릭 수 × 문의 전환율</small></div>
+<div class="result"><span>예상 계약 수</span><strong id="sales">—</strong><small>문의 수 × 계약 전환율</small></div>
+<div class="result"><span>문의 1건당 광고비 (CPL)</span><strong id="cpl">—</strong><small>광고비 ÷ 예상 문의 수</small></div>
+<div class="result"><span>계약 1건당 광고비 (CPA)</span><strong id="cpa">—</strong><small>광고비 ÷ 예상 계약 수</small></div>
+<div class="result"><span>추정 광고차감 공헌이익</span><strong id="net">—</strong><small>계약 공헌이익 합계 − 광고 예산</small></div>
+</section>
+<p class="notice" id="breakeven" aria-live="polite">항목을 입력하면 손익분기 문의 전환율이 표시됩니다.</p>
+<section class="explain">
+<article><h2>이 계산기로 알 수 있는 것</h2><ul><li>방문자가 많아도 문의가 적으면 어디를 개선해야 하는지</li><li>계약이 적을 때 문의 전환율과 영업 전환율 중 어느 항목을 확인할지</li><li>광고를 확대해도 되는지 판단할 손익분기 조건</li><li>서로 다른 랜딩페이지의 실측 전환율을 넣어 비교하는 방법</li></ul></article>
+<article><h2>결과 해석 시 주의사항</h2><ul><li>입력값을 일정하다고 가정한 <strong>예상치</strong>이며 실제 계약 건수를 보장하지 않습니다.</li><li>소수점으로 표시되는 계약 수는 확률적 기대값이므로 실제 성과와 차이가 납니다.</li><li>환불, 반복 구매, 고정 운영비, 세금은 계산에 포함하지 않습니다.</li><li>문의 품질이나 영업 담당자의 처리 시간도 별도로 검토해야 합니다.</li></ul></article>
+</section>
+<p>관련 안내: <a href="/">페이지로 랜딩페이지 제작</a> · <a href="/life/">생활비서 정보 콘텐츠</a> · <a href="/privacy">개인정보처리방침</a></p>
+</main><footer><div class="shell">© 2026 페이지로 · <a href="/about">서비스 소개</a> · <a href="/contact">문의</a> · <a href="/terms">이용약관</a></div></footer>
+<script>
+(function(){
+'use strict';
+const ids=['spend','cpc','leadRate','salesRate','margin','days'];const fmt=function(n){return new Intl.NumberFormat('ko-KR',{maximumFractionDigits:1}).format(n)};
+function show(id,val){document.getElementById(id).textContent=val}
+function read(id){const text=document.getElementById(id).value;return text.trim()===''?null:Number(text)}
+function calc(){const data=Object.fromEntries(ids.map(function(id){return[id,read(id)]}));const all=ids.every(function(id){return data[id]!==null&&Number.isFinite(data[id])});const valid=all&&data.spend>0&&data.cpc>0&&data.margin>0&&data.leadRate>=0&&data.leadRate<=100&&data.salesRate>=0&&data.salesRate<=100&&data.days>=1;
+ if(!valid){['clicks','leads','sales','cpl','cpa','net'].forEach(function(id){show(id,'—')});show('breakeven','광고비·클릭 단가·전환율·계약당 공헌이익을 모두 입력하면 계산됩니다.');return}
+ const clicks=data.spend/data.cpc,leads=clicks*data.leadRate/100,sales=leads*data.salesRate/100;
+ show('clicks',fmt(clicks)+'회');show('leads',fmt(leads)+'건');show('sales',fmt(sales)+'건');
+ show('cpl',leads>0?fmt(data.spend/leads)+'원':'계산 불가');show('cpa',sales>0?fmt(data.spend/sales)+'원':'계산 불가');
+ const net=sales*data.margin-data.spend;show('net',fmt(net)+'원');
+ if(data.salesRate===0){show('breakeven','계약 전환율이 0%이면 광고비 손익분기점에 도달할 수 없습니다.');return}
+ const required=100*data.cpc/(data.margin*(data.salesRate/100));
+ show('breakeven',required>100?'현재 클릭 단가·계약 전환율·공헌이익 조건에서는 문의 전환율 100%라도 손익분기점에 도달하기 어렵습니다.':'이 조건에서 광고비 손익분기 문의 전환율은 약 '+fmt(required)+'%입니다. 입력한 문의 전환율: '+fmt(data.leadRate)+'%.');
+}
+document.addEventListener('input',function(e){if(e.target.matches('input'))calc()});
+document.getElementById('clear').addEventListener('click',function(){ids.forEach(function(id){document.getElementById(id).value=''});document.getElementById('days').value='30';calc()});
+calc();
+})();
+</script></body></html>
