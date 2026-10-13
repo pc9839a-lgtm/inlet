@@ -300,9 +300,9 @@ function parsePostData(value = '') {
   }
 }
 
-function createApiMock(client) {
+function createApiMock(client, sharedState = null) {
   const user = createQaUser();
-  const state = {
+  const state = sharedState || {
     currentPage: createQaPage(),
     loginCount: 0,
     sessionCount: 0,
@@ -311,6 +311,8 @@ function createApiMock(client) {
     publicVerifyCount: 0,
     saveCount: 0,
     saveDelayMs: 0,
+    strictRevisionCheck: false,
+    revisionConflictCount: 0,
     saveSnapshots: [],
     revisionListCount: 0,
     leadLoadCount: 0,
@@ -415,6 +417,17 @@ function createApiMock(client) {
 
       if (method === 'POST' && slug === state.currentPage.slug) {
         const incomingPage = body.page || {};
+        if (state.strictRevisionCheck && body.expectedUpdatedAt !== state.currentPage.updatedAt) {
+          state.revisionConflictCount += 1;
+          await fulfill(requestId, 409, {
+            ok: false,
+            code: 'PAGE_REVISION_CONFLICT',
+            error: 'Page revision conflict',
+            latest: { updatedAt: state.currentPage.updatedAt, revision: state.currentPage.revision },
+            page: state.currentPage,
+          });
+          return;
+        }
         state.saveCount += 1;
         const saveNumber = state.saveCount;
         state.saveSnapshots.push(structuredClone(incomingPage));
@@ -851,6 +864,7 @@ async function run() {
   const browserErrors = [];
   let child = null;
   let client = null;
+  let secondClient = null;
 
   try {
     child = spawn(chrome, [
@@ -1579,6 +1593,7 @@ async function run() {
       realUseFlows: ['focus-recovery-workspace-transition', 'modal-focus-trap-return', 'keyboard-row-activation', 'keyboard-dropdown', 'add-block', 'undo-redo', 'visibility', 'menu-reorder', 'pointer-drag-reorder', 'style-apply', 'preview-continue', 'publish-race', 'revision-restore-undo-redo', 'post-restore-publish-readback', 'narrow-desktop'],
     }, null, 2));
   } finally {
+    await secondClient?.close().catch(() => {});
     await client?.close().catch(() => {});
     if (child && !child.killed) child.kill('SIGTERM');
     await rm(profileDir, { recursive: true, force: true, maxRetries: 4, retryDelay: 100 });
