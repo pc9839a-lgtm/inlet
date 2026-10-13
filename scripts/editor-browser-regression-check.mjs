@@ -1557,6 +1557,61 @@ async function run() {
       await capture(client, keyboardViewport.name);
     }
 
+
+    // ED-R11: two real Chrome tabs use one simulated server state.
+    await setViewport(client, 1440, 960, false);
+    await waitForBrowser(client, "!!document.querySelector('.builder-shell:not(.mobile-operations-shell)')", 'tab A desktop editor');
+    await clickButtonByText(client, '.top-tabs', '편집');
+    await waitForBrowser(client, "!!document.querySelector('#editor-block-editor-hero')", 'tab A hero block');
+    const twoTabHeroInput = '#editor-block-editor-hero + .screen-order-v2-inline-editor textarea[placeholder="핵심 제목을 입력하세요"]';
+    if (!await evaluate(client, "!!document.querySelector(" + JSON.stringify(twoTabHeroInput) + ")")) {
+      await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
+    }
+    await waitForBrowser(client, "!!document.querySelector(" + JSON.stringify(twoTabHeroInput) + ")", 'tab A hero input');
+
+    const newTarget = await client.send('Target.createTarget', { url: 'about:blank' });
+    assert(newTarget.targetId, 'real second Chrome tab must open');
+    const openTabs = await fetchJson('http://127.0.0.1:' + debugPort + '/json/list');
+    const secondTarget = openTabs.find((item) => item.id === newTarget.targetId && item.webSocketDebuggerUrl);
+    assert(secondTarget, 'Chrome must expose the second tab CDP target');
+    secondClient = createCdp(secondTarget.webSocketDebuggerUrl);
+    secondClient.on('Runtime.exceptionThrown', ({ exceptionDetails }) => {
+      browserErrors.push(exceptionDetails?.exception?.description || exceptionDetails?.text || 'Second-tab browser exception');
+    });
+    await secondClient.send('Page.enable');
+    await secondClient.send('Runtime.enable');
+    await secondClient.send('Network.enable');
+    await secondClient.send('Fetch.enable', { patterns: [{ urlPattern: '*://*/*', requestStage: 'Request' }] });
+    createApiMock(secondClient, apiState);
+    await secondClient.send('Page.navigate', { url: origin + '/app' });
+    await waitForBrowser(secondClient, "!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('#editor-block-editor-hero')", 'tab B authenticated editor');
+    await waitForBrowser(secondClient, "(document.querySelector('.phone-frame')?.innerText || '').includes(" + JSON.stringify(finalHeroTitle) + ")", 'tab B server snapshot');
+
+    apiState.strictRevisionCheck = true;
+    const tabASuccessTitle = 'ED-R11 A탭 최신 서버 발행';
+    const tabBLocalTitle = 'ED-R11 B탭 미발행 변경';
+    if (!await evaluate(secondClient, "!!document.querySelector(" + JSON.stringify(twoTabHeroInput) + ")")) {
+      await clickSelector(secondClient, '#editor-block-editor-hero .screen-order-v2-head');
+    }
+    await waitForBrowser(secondClient, "!!document.querySelector(" + JSON.stringify(twoTabHeroInput) + ")", 'tab B hero input');
+    await setInputValue(secondClient, twoTabHeroInput, tabBLocalTitle);
+    await waitForBrowser(secondClient, "(document.querySelector('.phone-frame')?.innerText || '').includes(" + JSON.stringify(tabBLocalTitle) + ")", 'tab B local stale edit');
+
+    await setInputValue(client, twoTabHeroInput, tabASuccessTitle);
+    await waitForBrowser(client, "(document.querySelector('.phone-frame')?.innerText || '').includes(" + JSON.stringify(tabASuccessTitle) + ")", 'tab A local edit');
+    await clickSelector(client, '.panel-actions .primary-btn');
+    await waitForState(() => apiState.saveCount === 4, 'tab A newer publish');
+    await waitForBrowser(client, "(document.querySelector('.panel-actions .primary-btn')?.textContent || '').includes('발행됨')", 'tab A scoped save success');
+    assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === tabASuccessTitle, 'tab A must become authoritative');
+
+    await clickSelector(secondClient, '.panel-actions .primary-btn');
+    await waitForState(() => apiState.revisionConflictCount >= 1, 'tab B stale publish denied');
+    await waitForBrowser(secondClient, "!!document.querySelector('.page-conflict-modal[role=dialog]')", 'tab B conflict dialog');
+    assert(apiState.saveCount === 4, 'tab B conflict must not count as persisted save');
+    assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === tabASuccessTitle, 'stale tab B must not overwrite A');
+    assert(await evaluate(secondClient, "(document.querySelector('.phone-frame')?.innerText || '').includes(" + JSON.stringify(tabBLocalTitle) + ")"), 'tab B local unsaved work must survive conflict');
+    await capture(secondClient, 'editor-two-tab-conflict');
+
     assert(!apiState.interceptError, `API interception failed: ${apiState.interceptError?.message || apiState.interceptError}`);
     assert(apiState.unexpectedApis.length === 0, `Unexpected API requests: ${apiState.unexpectedApis.join(', ')}`);
     assert(browserErrors.length === 0, `Browser exceptions: ${browserErrors.join('\n')}`);
@@ -1573,6 +1628,7 @@ async function run() {
       portableFileDownloadAndRestore: true,
       wrongPageBackupBlocked: true,
       restoredUnsavedGuard,
+      realTwoTabConflictProtected: apiState.revisionConflictCount === 1 && apiState.saveCount === 4,
       normalReloadServerReadback: apiState.pageLoadCount > pageLoadsBeforeReload,
       cleanAfterReload: reloadGuardPrevented === false,
       revisionListCount: apiState.revisionListCount,
