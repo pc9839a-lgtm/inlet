@@ -4,11 +4,12 @@ import path from 'node:path';
 
 const root = process.cwd();
 
-// This runner is the offline half of the release gate. Browser regressions run in parallel,
-// and production deployment is allowed only after the complete QA workflow succeeds.
+// This runner is the offline half of the release gate. Browser regressions run in parallel.
+// Successful QA is necessary but never sufficient: production deployment requires manual approval.
 const steps = [
   ['pagero:maintenance:qa', ['scripts/pagero-maintenance-quality-check.mjs']],
   ['docs:qa', ['scripts/docs-hygiene-quality-check.mjs']],
+  ['pagero:production:deploy:gate:qa', ['scripts/pagero-production-deploy-gate-quality-check.mjs']],
   ['pagero:platform-copy-density:qa', ['scripts/pagero-platform-copy-density-quality-check.mjs']],
   ['pagero:web-billing:p7:qa', ['scripts/pagero-web-billing-p7-quality-check.mjs']],
   ['pagero:web-billing:provider-boundary:qa', ['scripts/pagero-web-billing-provider-boundary-quality-check.mjs']],
