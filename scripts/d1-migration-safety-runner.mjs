@@ -8,6 +8,7 @@ import { pathToFileURL } from 'node:url';
 const ROOT = process.cwd();
 const OUTPUT_DIR_NAME = '.tmp-d1-migration-safety';
 const APPROVAL_PHRASE = 'I_APPROVE_D1_MIGRATIONS';
+const BACKUP_ONLY_APPROVAL = 'I_APPROVE_D1_ENCRYPTED_BACKUP';
 const MIN_KEY_LENGTH = 32;
 
 function stripJsonComments(source = '') {
@@ -40,8 +41,16 @@ export function evaluateSafetyGate({
   liveConfigured = false,
 } = {}) {
   const errors = [];
-  if (!['preflight', 'backup-and-apply'].includes(mode)) errors.push('unsupported mode');
+  if (!['preflight', 'backup-only', 'backup-and-apply'].includes(mode)) errors.push('unsupported mode');
   if (!liveConfigured) errors.push('Cloudflare live credentials and D1 database configuration are required');
+
+  if (mode === 'backup-only') {
+    if (branch !== 'main') errors.push('backup-only is restricted to the main branch');
+    if (writeEnabled) errors.push('backup-only refuses INLET_D1_MIGRATION_WRITE=1');
+    if (approval !== BACKUP_ONLY_APPROVAL) errors.push(`backup-only requires approval phrase ${BACKUP_ONLY_APPROVAL}`);
+    if (expectedPending.length) errors.push('backup-only does not accept an expected migration list');
+    if (String(encryptionSecret || '').length < MIN_KEY_LENGTH) errors.push(`backup encryption key must be at least ${MIN_KEY_LENGTH} characters`);
+  }
 
   if (mode === 'backup-and-apply') {
     if (branch !== 'main') errors.push('write mode is restricted to the main branch');
@@ -387,7 +396,7 @@ async function main() {
 
   if (!liveConfigured) {
     const skipped = {
-      ok: !requireLive,
+      ok: !requireLive && mode === 'preflight',
       status: 'skipped-live',
       mode,
       reason: 'Cloudflare account, token, database id, or database name is missing.',
@@ -396,7 +405,7 @@ async function main() {
     };
     await writeJson(path.join(output, 'd1-migration-preflight.json'), skipped);
     console.log(JSON.stringify(skipped, null, 2));
-    if (requireLive) process.exitCode = 1;
+    if (requireLive || mode !== 'preflight') process.exitCode = 1;
     return;
   }
 
@@ -460,6 +469,21 @@ async function main() {
     encryptionSecret,
     baseManifest,
   });
+
+  if (mode === 'backup-only') {
+    const manifest = {
+      ...backup.manifest,
+      ok: true,
+      status: 'verified-live',
+      encryptedBackupOnly: true,
+      databaseWrites: false,
+      migrationApply: { attempted: false, reason: 'backup-only' },
+      restoreDrill: { attempted: false, reason: 'disposable D1 restore requires separate approval' },
+    };
+    await writeJson(backup.manifestPath, manifest);
+    console.log(JSON.stringify(manifest, null, 2));
+    return;
+  }
 
   const immediatelyBeforeApply = await remoteMigrationState(live, config.migrationsTable);
   const pendingImmediatelyBeforeApply = pendingMigrations(localRows, immediatelyBeforeApply.applied);
