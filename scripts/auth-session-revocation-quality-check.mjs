@@ -1,4 +1,5 @@
 import { accountSessionVersion, createSessionToken, getSessionAccount } from '../functions/api/auth/_auth.js';
+import { requirePlatformMaster } from '../functions/api/admin/_auth.js';
 import { authAccountErrorMessage } from '../src/lib/authAccounts.js';
 
 function assert(condition, message) {
@@ -158,9 +159,56 @@ assert(
   'revoked sessions need a clear Korean login message',
 );
 
+// Platform-wide administration must enforce D1-backed session revocation,
+// even if a previously signed token still has the old allowlisted email.
+const adminState = { row: accountRow({
+  id: 'user_platform_master_qa',
+  email: 'admin@pagero.kr',
+  password_hash: 'admin-password-hash-v1',
+}) };
+const adminEnv = {
+  DB: createAccountDb(adminState),
+  INLET_SESSION_SECRET: env.INLET_SESSION_SECRET,
+};
+const adminToken = await createSessionToken({
+  ownerId: adminState.row.id,
+  email: adminState.row.email,
+  role: 'manager',
+}, adminEnv);
+const initialAdmin = await requirePlatformMaster(requestFor(adminToken), adminEnv);
+assert(initialAdmin.ownerId === adminState.row.id && initialAdmin.email === adminState.row.email,
+  'allowlisted active verified administrator must be recognized regardless of role string');
+
+adminState.row = { ...adminState.row, password_hash: 'admin-password-hash-v2' };
+await captureCode(() => requirePlatformMaster(requestFor(adminToken), adminEnv), 'AUTH_SESSION_REVOKED');
+const adminRotated = await createSessionToken({
+  ownerId: adminState.row.id,
+  email: adminState.row.email,
+  role: 'manager',
+}, adminEnv);
+await requirePlatformMaster(requestFor(adminRotated), adminEnv);
+
+adminState.row = { ...adminState.row, status: 'suspended' };
+await captureCode(() => requirePlatformMaster(requestFor(adminRotated), adminEnv), 'AUTH_ACCOUNT_SUSPENDED', 403);
+adminState.row = { ...adminState.row, status: 'active', email_verified_at: '' };
+await captureCode(() => requirePlatformMaster(requestFor(adminRotated), adminEnv), 'EMAIL_VERIFICATION_REQUIRED', 403);
+
+adminState.row = accountRow({
+  id: 'user_not_platform_master_qa',
+  email: 'ordinary-account@example.test',
+  password_hash: 'ordinary-password-hash-v1',
+});
+const forgedRole = await createSessionToken({
+  ownerId: adminState.row.id,
+  email: adminState.row.email,
+  role: 'superadmin',
+}, adminEnv);
+await captureCode(() => requirePlatformMaster(requestFor(forgedRole), adminEnv), 'PLATFORM_MASTER_REQUIRED', 403);
+await captureCode(() => requirePlatformMaster(requestFor(''), adminEnv), 'AUTH_SESSION_INVALID');
+
 console.log(JSON.stringify({
   ok: true,
-  checks: 10,
+  checks: 17,
   contracts: [
     'new-session-security-version',
     'profile-edit-session-stability',
@@ -169,5 +217,10 @@ console.log(JSON.stringify({
     'suspension-denied',
     'legacy-session-transition',
     'owner-binding',
+    'platform-admin-current-session',
+    'platform-admin-password-revocation',
+    'platform-admin-suspension',
+    'platform-admin-email-verification',
+    'platform-admin-role-cannot-bypass-allowlist',
   ],
 }, null, 2));
