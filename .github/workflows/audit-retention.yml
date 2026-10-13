@@ -5,11 +5,16 @@ on:
     - cron: '17 3 1 * *'
   workflow_dispatch:
     inputs:
-      dry_run:
-        description: Count eligible rows without deleting them
+      execute:
+        description: Actually delete eligible audit rows (default is read-only dry-run)
         required: false
         default: false
         type: boolean
+      approval:
+        description: Type I_APPROVE_PAGERO_AUDIT_RETENTION when execute is enabled
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: read
@@ -27,7 +32,7 @@ jobs:
       PAGERO_AUDIT_RETENTION_URL: ${{ vars.PAGERO_AUDIT_RETENTION_URL }}
       PAGERO_AUDIT_RETENTION_ALLOWED_ORIGINS: ${{ vars.PAGERO_AUDIT_RETENTION_ALLOWED_ORIGINS }}
       PAGERO_AUDIT_RETENTION_SECRET: ${{ secrets.PAGERO_AUDIT_RETENTION_SECRET }}
-      PAGERO_AUDIT_RETENTION_DRY_RUN: ${{ inputs.dry_run || false }}
+      PAGERO_AUDIT_RETENTION_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.execute == true && inputs.approval == 'I_APPROVE_PAGERO_AUDIT_RETENTION' && 'false' || 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,6 +41,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+
+      - name: Reject invalid manual deletion request
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.execute == true && inputs.approval != 'I_APPROVE_PAGERO_AUDIT_RETENTION' }}
+        run: |
+          echo "::error::Explicit valid audit deletion approval phrase required."
+          exit 1
 
       # Missing Secrets are failed-live, never skipped-live. The runner maps dry_run to the API dryRun body.
       - name: Remove expired audit rows

@@ -280,6 +280,10 @@ assert.doesNotMatch(accountEmailSource, /metadata:\s*\{[^}]*currentPassword\s*:/
 assert.doesNotMatch(accountEmailSource, /metadata:\s*\{[^}]*token\s*:/s);
 assert.doesNotMatch(routeOnlyAuditSource, /PLATFORM_MASTER_EMAILS|DEFAULT_MASTER_EMAILS/);
 assert.match(retentionSource, /action NOT LIKE 'audit\.retention_%'/);
+assert.match(retentionWorkflow, /github\.event_name == 'workflow_dispatch' && inputs\.execute == true && inputs\.approval == 'I_APPROVE_PAGERO_AUDIT_RETENTION' && 'false' \|\| 'true'/, 'audit retention schedules must stay read-only');
+assert.match(retentionWorkflow, /inputs\.approval != 'I_APPROVE_PAGERO_AUDIT_RETENTION'/, 'invalid audit deletion approval must abort');
+assert.match(retentionWorkflow, /default: false/, 'manual audit deletion must default off');
+assert.match(retentionWorkflow, /cron: '17 3 1 \* \*'/, 'monthly audit count reporting must remain');
 assert.doesNotMatch(retentionWorkflow, /echo[^\n]*\$\{?RETENTION_SECRET|\bset\s+-x\b/);
 
 console.log(JSON.stringify({

@@ -97,6 +97,7 @@ Required warning copy:
 - D1 retention: lead, delivery log, AI draft, and conservative event retention have a bounded cleanup/report endpoint plus fail-closed runner.
 - Audit retention: the existing dedicated audit retention endpoint/workflow remains separate and keeps its 730-day default/minimum policy.
 - Production deletion is not enabled by code alone. The production environment must supply the dedicated secret and explicit write/approval gates.
+- Scheduled PageRo data and audit retention workflows run dry-run only, regardless of configured persistent variables. Actual deletes require an explicitly approved manual workflow dispatch; do not let GitHub Variables implicitly authorize scheduled deletion.
 - JSONL backup/quarantine expiry and D1 restore verification remain part of P8 backup/restore closeout.
 - Worker 1: add delivery log export endpoint or CLI if operators require a separate log export.
 - Worker 2: add masking toggle and export warning modal.

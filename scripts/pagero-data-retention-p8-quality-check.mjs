@@ -182,7 +182,11 @@ assert(runnerSource.includes("redirect: 'error'"), 'retention runner must not fo
 assert(auditSource.includes("INLET_AUDIT_RETENTION_DAYS") && auditSource.includes("audit.retention_completed"), 'existing audit retention must remain operational');
 assert(policySource.includes('현재 PageRo event') || policySource.includes('Current PageRo event'), 'privacy policy must document conservative event retention');
 assert(workflowSource.includes('environment: production'), 'live retention workflow must use the protected production environment');
-assert(workflowSource.includes("vars.PAGERO_DATA_RETENTION_WRITE || '0'"), 'scheduled retention must default to dry-run when write variable is absent');
+assert(!workflowSource.includes('vars.PAGERO_DATA_RETENTION_WRITE'), 'scheduled retention must never inherit persistent write authorization');
+assert(!workflowSource.includes('vars.PAGERO_DATA_RETENTION_APPROVAL'), 'scheduled retention must never inherit persistent approval');
+assert(workflowSource.includes("github.event_name == 'workflow_dispatch' && inputs.execute == true && inputs.approval == 'I_APPROVE_PAGERO_DATA_RETENTION' && '1' || '0'"), 'only explicitly approved manual dispatch may delete PageRo data');
+assert(workflowSource.includes("inputs.approval != 'I_APPROVE_PAGERO_DATA_RETENTION'"), 'invalid manual PageRo deletion approval must abort');
+assert(workflowSource.includes("cron: '27 3 2 * *'"), 'scheduled PageRo retention dry-run must remain visible');
 assert(workflowSource.includes('I_APPROVE_PAGERO_DATA_RETENTION'), 'manual live retention must surface the exact approval phrase');
 
 console.log(JSON.stringify({
