@@ -222,7 +222,7 @@ INLET_AUDIT_RETENTION_SECRET=<충분히 긴 별도 랜덤 문자열>
 .github/workflows/audit-retention.yml
 ```
 
-매월 1일 UTC 03:17에 실행되며 수동 dry-run도 지원합니다.
+매월 1일 UTC 03:17에 **대상 건수만 조회하는 dry-run**으로 실행됩니다. 실제 삭제는 수동 실행에서 `execute=true`와 승인 문구 `I_APPROVE_PAGERO_AUDIT_RETENTION`이 일치할 때만 가능합니다. 자동 삭제는 허용하지 않습니다.
 
 GitHub 설정:
 
