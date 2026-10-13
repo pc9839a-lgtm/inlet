@@ -1,0 +1,84 @@
+name: Canonicalize legacy LIFE hostname
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/canonical-life-domain-rule.yml
+  workflow_dispatch:
+
+jobs:
+  redirect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - name: Add scoped Cloudflare 301 redirect rule without modifying unrelated rules
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os, json, urllib.request, urllib.error, sys, time
+          token=os.environ.get('CF_TOKEN','')
+          if not token:
+            sys.exit('ERROR: Cloudflare token missing; domain-level redirect not installed')
+          base='https://api.cloudflare.com/client/v4'
+          def call(method,path,data=None):
+            raw=json.dumps(data).encode() if data is not None else None
+            req=urllib.request.Request(base+path,data=raw,method=method,
+              headers={'Authorization':'Bearer '+token,'Content-Type':'application/json','Accept':'application/json'})
+            try:
+              with urllib.request.urlopen(req,timeout=25) as resp:
+                result=json.load(resp)
+                return resp.status,result
+            except urllib.error.HTTPError as err:
+              try: output=json.loads(err.read().decode())
+              except: output={}
+              return err.code,output
+          status, zones=call('GET','/zones?name=pagero.kr&per_page=50')
+          if status!=200 or not zones.get('success'):
+            print('ERROR: unable to list Cloudflare zone. HTTP',status, 'messages', [x.get('message') for x in zones.get('errors',[])])
+            sys.exit(1)
+          matches=[z for z in zones.get('result',[]) if z.get('name')=='pagero.kr']
+          if len(matches)!=1: sys.exit('ERROR: pagero.kr zone not uniquely accessible')
+          zoneid=matches[0]['id']
+          basepath=f'/zones/{zoneid}/rulesets'
+          phase='http_request_dynamic_redirect'
+          code, existing=call('GET',basepath+f'/phases/{phase}/entrypoint')
+          description='PAGERO canonical LIFE hostname 301'
+          expression='(http.host eq "life.pagero.kr")'
+          target_expression='concat("https://pagero.kr/life", http.request.uri.path)'
+          rule={'description':description,'enabled':True,'expression':expression,'action':'redirect',
+                'action_parameters':{'from_value':{'status_code':301,
+                'target_url':{'expression':target_expression},'preserve_query_string':True}}}
+          if code==200 and existing.get('success'):
+            obj=existing.get('result',{})
+            rules=obj.get('rules',[])
+            same=[r for r in rules if r.get('description')==description]
+            if same:
+              current=same[0]
+              if current.get('expression')!=expression or current.get('action_parameters')!=rule['action_parameters']:
+                sys.exit('ERROR: existing canonical rule differs; refused to replace or overwrite')
+              print('Existing rule already matches the desired 301 redirect. No write required.')
+            else:
+              code,created=call('POST',basepath+'/'+obj['id']+'/rules',rule)
+              if code not in (200,201) or not created.get('success'):
+                print('ERROR: cannot add one isolated redirect rule. HTTP',code, [x.get('message') for x in created.get('errors',[])])
+                sys.exit(1)
+              print('Added canonical redirect rule to existing zone ruleset')
+          elif code==404:
+            payload={'name':'PAGERO legacy LIFE hostname canonicalization','kind':'zone','phase':phase,'rules':[rule]}
+            code,created=call('POST',basepath,payload)
+            if code not in (200,201) or not created.get('success'):
+              print('ERROR: failed to create redirect phase rule. HTTP',code, [x.get('message') for x in created.get('errors',[])])
+              sys.exit(1)
+            print('Created new zone-level canonical redirect ruleset')
+          else:
+            print('ERROR: cannot inspect current redirect rules. HTTP',code,[x.get('message') for x in existing.get('errors',[])])
+            sys.exit(1)
+          time.sleep(3)
+          code,confirmed=call('GET',basepath+f'/phases/{phase}/entrypoint')
+          checks=[r for r in confirmed.get('result',{}).get('rules',[]) if r.get('description')==description and r.get('enabled')]
+          if code!=200 or len(checks)!=1:
+            sys.exit('ERROR: active canonical redirect rule not confirmed')
+          print('OK: life.pagero.kr -> https://pagero.kr/life + original path, HTTP 301 (query preserved). Existing rules preserved.')
+          PY
