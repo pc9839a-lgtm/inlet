@@ -199,6 +199,7 @@ const pageApi = await readFile('functions/api/pages/[slug].js', 'utf8');
 const pageSaveOptimizer = await readFile('src/lib/pageSaveOptimizer.js', 'utf8');
 const d1Adapter = await readFile('server/storage/d1Adapter.mjs', 'utf8');
 const adminSummary = await readFile('functions/api/admin/summary.js', 'utf8');
+const platformMasterPolicy = await readFile('functions/api/_platformMaster.js', 'utf8');
 const pageSlugs = await readFile('src/lib/pageSlugs.js', 'utf8');
 const leadIntegrations = await readFile('src/lib/leadIntegrations.js', 'utf8');
 const apiClientSource = await readFile('src/lib/apiClient.js', 'utf8');
@@ -550,7 +551,7 @@ assert(apiClientSource.includes('이미 사용 중인 페이지 주소입니다.
 assert(!/[�]|諛|獄|揆|濡쒓렇|沅뚰븳|\?꾩|\?섏|\?붿|\?대\?/.test(apiClientSource), 'API client user-facing errors must not contain mojibake text');
 assert(pageSaveOptimizer.includes('D1_PAGE_JSON_SAFE_BYTES = 1_750_000') && pageSaveOptimizer.includes('DATA_IMAGE_TOTAL_TARGET_BYTES = 600_000') && pageSaveOptimizer.includes('optimizePageForServerSave') && pageRepository.includes('clientPage: pageWithContext'), 'Oversized embedded images must be optimized below the D1 write ceiling and committed back to the editor state');
 assert(d1Adapter.includes('D1_PAGE_JSON_MAX_BYTES = 1_850_000') && d1Adapter.includes('assertD1PageJsonSize(row.page_json)'), 'D1 page and revision writes must reject oversized JSON before issuing a database mutation');
-assert(app.includes('pc9839a@naver.com') && localServer.includes('pc9839a@naver.com') && adminSummary.includes('pc9839a@naver.com') && adminSummary.includes('...DEFAULT_MASTER_EMAILS, ...emails'), 'Platform master allowlists must include the requested account across browser, server, and Pages Functions runtimes');
+assert(app.includes('pc9839a@naver.com') && localServer.includes('pc9839a@naver.com') && platformMasterPolicy.includes('pc9839a@naver.com') && platformMasterPolicy.includes('...DEFAULT_PLATFORM_MASTER_EMAILS, ...configured') && adminSummary.includes('requirePlatformMaster'), 'Platform master allowlists must preserve existing accounts while requiring validated D1 sessions');
 assert(pageRepository.includes('verifyPublicPageSave') && pageRepository.includes('PAGE_PUBLIC_VERIFY_FAILED') && pageRepository.includes('options.verifyPublic !== false') && pageRepository.includes('publicPageRenderFingerprint'), 'Page saves must verify the public landing route and render fingerprint after server save');
 assert(pageRepository.includes("cache: 'no-store'") && pageRepository.includes("'Cache-Control': 'no-cache, no-store'") && pageRepository.includes("Pragma: 'no-cache'"), 'Page repository must bypass browser cache when loading or verifying saved public pages');
 assert(pageRepository.includes('for (let attempt = 0; attempt < 3; attempt += 1)') && pageRepository.includes('await sleep(250 * (attempt + 1))'), 'Page public verification must retry briefly before reporting a save mismatch');

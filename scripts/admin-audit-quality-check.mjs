@@ -221,6 +221,8 @@ const [
 ]);
 
 assert.match(adminAuth, /isPlatformMasterIdentity/);
+assert.match(adminAuth, /getSessionAccount/);
+assert.doesNotMatch(adminAuth, /sessionIdentity/, 'admin must not accept unrevoked signature without current account state');
 assert.match(adminAuth, /PLATFORM_MASTER_REQUIRED/);
 assert.doesNotMatch(adminAuth, /superadmin|serviceadmin|platform_master.*role/i);
 assert.match(adminMiddleware, /requirePlatformMaster/);

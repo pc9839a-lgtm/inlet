@@ -117,6 +117,8 @@
 
 - `scripts/auth-session-revocation-quality-check.mjs`
 
+관리자 API에서도 동일한 `getSessionAccount` 검사를 필수로 사용한다. 서명된 토큰의 이메일·role만으로 전체 관리자 권한을 부여하지 않으며, 현재 D1 계정의 일치하는 owner ID, 활성 상태, 인증 완료, 세션 버전을 재확인한다. 비밀번호 변경·계정 정지·이메일 변경으로 폐기된 토큰은 관리자 조회/삭제/수정에도 사용할 수 없다.
+
 ## 6. 인증메일 provider 안전성
 
 Production에서는 mock delivery를 인증 수단으로 사용하지 않는다.
