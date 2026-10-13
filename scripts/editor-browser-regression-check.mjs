@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -847,6 +847,7 @@ async function run() {
   assert(chrome, 'Chrome or Chromium executable was not found');
   await mkdir(screenshotDir, { recursive: true });
   const profileDir = await mkdtemp(path.join(tmpdir(), 'inlet-editor-browser-'));
+  const backupDownloadDir = path.join(profileDir, 'backup-e2e');
   const browserErrors = [];
   let child = null;
   let client = null;
@@ -865,6 +866,7 @@ async function run() {
     child.stderr?.on('data', () => {});
 
     await waitForChrome(debugPort);
+    await mkdir(backupDownloadDir, { recursive: true });
     const targets = await fetchJson(`http://127.0.0.1:${debugPort}/json/list`);
     const target = targets.find((item) => item.type === 'page' && item.webSocketDebuggerUrl);
     assert(target, 'Chrome page target was not found');
@@ -874,6 +876,8 @@ async function run() {
       browserErrors.push(exceptionDetails?.exception?.description || exceptionDetails?.text || 'Browser exception');
     });
 
+    await client.send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: backupDownloadDir });
+    await client.send('DOM.enable');
     await client.send('Page.enable');
     await client.send('Runtime.enable');
     await client.send('Network.enable');
@@ -907,6 +911,67 @@ async function run() {
     await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('#editor-block-editor-hero') && !!document.querySelector('.phone-frame')`, 'desktop editor');
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes('저장 전 히어로 제목')`, 'initial editor preview');
     assert(apiState.pageLoadCount >= 1, 'selected page was not loaded from the page API');
+
+    // ED-R08 integrated Chrome QA: download an actual JSON backup, attempt a
+    // wrong-page upload, then import the real downloaded file through Chrome's
+    // file-input protocol. No publish is allowed until the user chooses it.
+    await waitForBrowser(client, `!!document.querySelector('.panel-backup-action summary') && !!document.querySelector('.panel-backup-action input[type="file"]')`, 'backup and restore menu in authenticated editor');
+    await clickSelector(client, '.panel-backup-action summary');
+    await clickButtonByText(client, '.panel-backup-dropdown', '파일 저장');
+    let downloadedBackupName = '';
+    for (let attempt = 0; attempt < 75; attempt += 1) {
+      downloadedBackupName = (await readdir(backupDownloadDir)).find((file) => /^pagero-editor-e2e-backup-[0-9]{4}-[0-9]{2}-[0-9]{2}\\.json$/.test(file)) || '';
+      if (downloadedBackupName) break;
+      await wait(100);
+    }
+    assert(downloadedBackupName, 'real Chrome backup file download did not complete');
+    const backupFiles = await readdir(backupDownloadDir);
+    const backupName = backupFiles.find((file) => /^pagero-editor-e2e-backup-[0-9]{4}-[0-9]{2}-[0-9]{2}\\.json$/.test(file));
+    assert(backupName, 'Chrome downloaded backup filename is missing');
+    const backupPath = path.join(backupDownloadDir, backupName);
+    const backupText = await readFile(backupPath, 'utf8');
+    const portableBackup = JSON.parse(backupText);
+    assert(portableBackup.kind === 'pagero-page-draft-backup' && portableBackup.version === 1, 'downloaded backup format must be portable JSON v1');
+    assert(portableBackup.draft?.page?.id === 'editor-e2e-page', 'downloaded backup must match active page');
+    assert(portableBackup.draft?.page?.blocks?.find((block) => block.id === 'editor-hero')?.s?.title === '저장 전 히어로 제목', 'download must include current unpublished editor content');
+    assert(!backupText.includes('editor-e2e-session'), 'backup must never include login session material');
+
+    const uploadFileToEditor = async (absolutePath) => {
+      const documentNode = await client.send('DOM.getDocument');
+      const inputNode = await client.send('DOM.querySelector', {
+        nodeId: documentNode.root.nodeId,
+        selector: '.panel-backup-action ~ input[type="file"][accept*="json"]',
+      });
+      assert(inputNode.nodeId > 0, 'backup file input must be in the authenticated header');
+      await client.send('DOM.setFileInputFiles', { files: [absolutePath], nodeId: inputNode.nodeId });
+    };
+
+    const mismatchedBackup = { ...portableBackup, identity: 'wrong-account:other-page' };
+    const invalidBackupPath = path.join(backupDownloadDir, 'wrong-page.json');
+    await writeFile(invalidBackupPath, JSON.stringify(mismatchedBackup));
+    await uploadFileToEditor(invalidBackupPath);
+    await waitForBrowser(client, `(document.querySelector('.toast-notice')?.innerText || '').includes('다른 계정이나 페이지')`, 'cross-page backup import rejected');
+    assert(!await evaluate(client, `!!document.querySelector('.confirm-modal[role="dialog"]')`), 'invalid backup must not open restore confirmation');
+    assert(apiState.saveCount === 0, 'invalid backup must not publish');
+
+    await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
+    const backupHeroInput = '#editor-block-editor-hero + .screen-order-v2-inline-editor textarea[placeholder="핵심 제목을 입력하세요"]';
+    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(backupHeroInput)})`, 'hero editor before backup restore');
+    await setInputValue(client, backupHeroInput, 'ED-R08 복원 전 임시 수정');
+    await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes('ED-R08 복원 전 임시 수정')`, 'live edit before backup restore');
+    await uploadFileToEditor(backupPath);
+    await waitForBrowser(client, `(document.querySelector('.confirm-modal[role="dialog"]')?.innerText || '').includes('편집본 파일 복원')`, 'backup restore confirmation');
+    await clickSelector(client, '.confirm-modal .confirm-primary');
+    await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes('저장 전 히어로 제목') && !(document.querySelector('.phone-frame')?.innerText || '').includes('ED-R08 복원 전 임시 수정')`, 'downloaded file restored original hero');
+    assert(apiState.saveCount === 0, 'manual file restore must not auto-publish');
+    const restoredUnsavedGuard = await evaluate(client, `(() => {
+      const event = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented;
+    })()`);
+    assert(restoredUnsavedGuard, 'manual backup restore must mark the page as unpublished');
+    await capture(client, 'editor-backup-restore-success');
+
 
     // The editor preview should contain the phone itself, without the redundant
     // canvas URL header or the inquiry/publish control strip above it.
@@ -1491,6 +1556,9 @@ async function run() {
       pageLoadCount: apiState.pageLoadCount,
       saveCount: apiState.saveCount,
       saveRaceProtected: apiState.saveSnapshots[1]?.blocks?.find((block) => block.id === 'editor-hero')?.s?.title === continuedHeroTitle,
+      portableFileDownloadAndRestore: true,
+      wrongPageBackupBlocked: true,
+      restoredUnsavedGuard,
       normalReloadServerReadback: apiState.pageLoadCount > pageLoadsBeforeReload,
       cleanAfterReload: reloadGuardPrevented === false,
       revisionListCount: apiState.revisionListCount,
