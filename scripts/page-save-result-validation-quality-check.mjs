@@ -222,6 +222,8 @@ assert(headerSource.includes("saved && saveStatus?.savedPageIdentity === pageOpe
 assert(statusSource.includes('savedPageIdentity'), 'success status marker must preserve optional saved page scope');
 assert(persistFlow.includes('schedulePageSavedIndicatorReset({ latestPageRef, setSaved })') && persistFlow.includes('cancelPageSavedIndicatorReset(latestPageRef)'), 'save commit and pending edits must participate in a single cancellable timer sequence');
 assert(!persistFlow.includes('setTimeout(() => setSaved(false), 1000)'), 'old unscoped independent saved timers must not return');
+assert(persistFlow.includes('cancel = (timer) => clearTimeout(timer)') && persistFlow.includes('schedule = (callback, timeout) => setTimeout(callback, timeout)'), 'browser host timer defaults must keep global invocation context during scoped cancellation');
+
 
 console.log(JSON.stringify({
   ok: true,
