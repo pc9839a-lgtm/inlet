@@ -1,0 +1,49 @@
+name: Recover LIFE static origin
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/inspect-life-deployment-snapshots.yml]
+  workflow_dispatch:
+jobs:
+  snapshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    env:
+      CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Find immutable pre-redirect LIFE snapshots
+        run: |
+          python - <<'PY'
+          import os,urllib.request,urllib.error,json,sys
+          account=os.environ.get('CF_ACCOUNT','')
+          token=os.environ.get('CF_TOKEN','')
+          if not account or not token:sys.exit('Cloudflare auth absent')
+          url=f'https://api.cloudflare.com/client/v4/accounts/{account}/pages/projects/life-pagero/deployments'
+          req=urllib.request.Request(url,headers={'Authorization':'Bearer '+token})
+          try:
+            with urllib.request.urlopen(req,timeout=25) as r:data=json.load(r)
+          except urllib.error.HTTPError as e:
+            print('List deployment error',e.code,e.read().decode()[:800])
+            raise
+          if not data.get('success'):sys.exit('Failed to list deployments: '+str(data.get('errors')))
+          deployments=data.get('result') or []
+          print('DEPLOYMENTS:',len(deployments),flush=True)
+          candidates=[]
+          for d in deployments[:35]:
+            link=d.get('url','')
+            print('SCAFFOLD',json.dumps({'id':d.get('id'),'url':link,'environment':d.get('environment'),'created_on':d.get('created_on'),'branch':(d.get('deployment_trigger') or {}).get('metadata',{}).get('branch')}),flush=True)
+            if not link or '6a936e3e.life-pagero.pages.dev' in link:continue
+            try:
+              with urllib.request.urlopen(urllib.request.Request(link,headers={'User-Agent':'Mozilla/5.0'}),timeout=12) as r:
+                html=r.read(140000).decode('utf-8','replace')
+                code=r.status
+                landed=r.geturl()
+              valid=code==200 and '생활비서' in html and 'pagero.kr/life' not in landed
+              print('PROBE',link,'status',code,'valid_html',valid,'landed',landed,flush=True)
+              if valid:candidates.append({'id':d.get('id'),'url':link,'created_on':d.get('created_on')})
+            except Exception as e:
+              print('PROBE ERROR',link,type(e).__name__,str(e)[:140],flush=True)
+          print('VIABLE_SNAPSHOTS',json.dumps(candidates,ensure_ascii=False),flush=True)
+          if not candidates:sys.exit('No healthy snapshot found: need rebuild from life-pagero source')
+          PY
