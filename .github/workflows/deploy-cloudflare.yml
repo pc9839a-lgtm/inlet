@@ -1,44 +1,87 @@
 name: Deploy Cloudflare Pages
 
+# QA remains automatic, but production deployment requires an explicit, reviewed
+# manual run against the exact, already-tested HEAD of main.
 on:
-  workflow_run:
-    workflows:
-      - QA
-    types:
-      - completed
   workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact current main SHA that passed a main-push QA workflow
+        required: true
+        type: string
+      approval_phrase:
+        description: Type I_APPROVE_PAGERO_PRODUCTION_DEPLOY
+        required: true
+        type: string
 
 concurrency:
-  # A QA workflow_run from a non-main branch must not cancel an active production deployment.
-  group: ${{ (github.event_name == 'workflow_dispatch' || github.event.workflow_run.head_branch == 'main') && 'inlet-cloudflare-production' || format('inlet-cloudflare-nonproduction-{0}', github.run_id) }}
-  cancel-in-progress: true
+  group: inlet-cloudflare-production
+  cancel-in-progress: false
 
 jobs:
   deploy:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (
-        github.event.workflow_run.conclusion == 'success' &&
-        (
-          github.event.workflow_run.head_branch == 'main' ||
-          github.event.workflow_run.head_sha == github.sha
-        )
-      )
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    environment: production
     permissions:
       contents: read
+      actions: read
 
     steps:
+      - name: Verify explicit owner approval and tested main SHA
+        shell: bash
+        env:
+          APPROVED_SHA: ${{ inputs.expected_sha }}
+          APPROVAL_PHRASE: ${{ inputs.approval_phrase }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ] || [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Only explicit main-branch workflow_dispatch may deploy production."
+            exit 1
+          fi
+          if [ "$APPROVAL_PHRASE" != "I_APPROVE_PAGERO_PRODUCTION_DEPLOY" ]; then
+            echo "::error::Exact deployment approval phrase is required."
+            exit 1
+          fi
+          if ! [[ "$APPROVED_SHA" =~ ^[0-9a-f]{40}$ ]] || [ "$APPROVED_SHA" != "$GITHUB_SHA" ]; then
+            echo "::error::Approved SHA must exactly match the selected main workflow SHA."
+            exit 1
+          fi
+
+          main_api="$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/branches/main"
+          qa_api="$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/workflows/qa.yml/runs?branch=main&head_sha=$GITHUB_SHA&event=push&per_page=50"
+          curl --fail-with-body --silent --show-error --retry 2 \
+            -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "$main_api" -o /tmp/pagero-approved-main.json
+          curl --fail-with-body --silent --show-error --retry 2 \
+            -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "$qa_api" -o /tmp/pagero-approved-qa.json
+
+          node - /tmp/pagero-approved-main.json /tmp/pagero-approved-qa.json "$GITHUB_SHA" <<'NODE'
+          const fs = require('node:fs');
+          const main = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+          const qa = JSON.parse(fs.readFileSync(process.argv[3], 'utf8'));
+          const sha = process.argv[4];
+          if (main?.commit?.sha !== sha) {
+            console.error('::error::main moved since deployment was approved.');
+            process.exit(1);
+          }
+          const tested = Array.isArray(qa?.workflow_runs) && qa.workflow_runs.some(run =>
+            run.head_sha === sha && run.head_branch === 'main' &&
+            run.event === 'push' && run.status === 'completed' && run.conclusion === 'success');
+          if (!tested) {
+            console.error('::error::No successful main-push QA run found for the approved SHA.');
+            process.exit(1);
+          }
+          console.log('Approved current main and successful exact-SHA QA confirmed.');
+          NODE
+
       - name: Resolve source SHA
         id: source
         shell: bash
-        run: |
-          if [ "$GITHUB_EVENT_NAME" = "workflow_run" ]; then
-            echo "sha=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
-          fi
+        run: echo "sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
 
       - name: Checkout tested source
         uses: actions/checkout@v4
@@ -76,14 +119,8 @@ jobs:
           )"
 
           if [ "$production_branch" != "main" ]; then
-            echo "Cloudflare Pages production branch is '$production_branch'; updating it to main."
-            curl --silent --show-error --fail-with-body \
-              --request PATCH \
-              --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-              --header 'Content-Type: application/json' \
-              --data '{"production_branch":"main"}' \
-              "$project_api" \
-              --output /tmp/pages-project-update.json
+            echo "::error::Cloudflare Pages production branch is '$production_branch', expected main. Refusing to mutate project settings."
+            exit 1
           fi
 
           curl --silent --show-error --fail-with-body \
@@ -191,6 +228,24 @@ jobs:
 
       - name: Build production bundle
         run: npm run build
+
+      - name: Recheck current main before uploading production
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error --retry 2 \
+            -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/branches/main" -o /tmp/pagero-main-before-upload.json
+          node - /tmp/pagero-main-before-upload.json "$GITHUB_SHA" <<'NODE'
+          const fs = require('node:fs');
+          const state = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+          if (state?.commit?.sha !== process.argv[3]) {
+            console.error('::error::main moved during build; production upload blocked.');
+            process.exit(1);
+          }
+          NODE
 
       - name: Deploy assets and Pages Functions
         id: cloudflare_deploy
