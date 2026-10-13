@@ -263,7 +263,9 @@ export function settlePendingPublicVerification({
       if (surfaceStatus && activeSavedVersion) {
         setWorkspaceUnsavedDirty(false);
         const feedback = pageSaveSuccessFeedback(settledResult, scope);
-        markSaveStatus(feedback.level, feedback.title, feedback.message);
+        markSaveStatus(feedback.level, feedback.title, feedback.message, {
+          savedPageIdentity: pageOperationIdentity(savedPage),
+        });
         if (successToast) showToast(successToast, 'success');
       }
       return status;
