@@ -31,6 +31,34 @@ const safeGate = evaluateSafetyGate({
 });
 assert.equal(safeGate.ok, true, safeGate.errors.join('; '));
 
+const backupOnlyBase = {
+  mode: 'backup-only',
+  branch: 'main',
+  writeEnabled: false,
+  approval: 'I_APPROVE_D1_ENCRYPTED_BACKUP',
+  pending,
+  expectedPending: [],
+  encryptionSecret: 'x'.repeat(32),
+  liveConfigured: true,
+};
+const backupOnlyGate = evaluateSafetyGate(backupOnlyBase);
+assert.equal(backupOnlyGate.ok, true, backupOnlyGate.errors.join('; '));
+
+for (const [name, patch, expectedMessage] of [
+  ['backup wrong branch', { branch: 'staging' }, 'main branch'],
+  ['backup must never write', { writeEnabled: true }, 'refuses INLET_D1_MIGRATION_WRITE=1'],
+  ['backup requires approval', { approval: '' }, 'I_APPROVE_D1_ENCRYPTED_BACKUP'],
+  ['backup forbids migration list', { expectedPending: pending }, 'does not accept an expected migration list'],
+  ['backup encryption key', { encryptionSecret: '' }, 'at least 32'],
+  ['backup remote access', { liveConfigured: false }, 'Cloudflare live credentials'],
+]) {
+  const result = evaluateSafetyGate({ ...backupOnlyBase, ...patch });
+  assert.equal(result.ok, false, `${name} should fail closed`);
+  assert.ok(result.errors.some((msg) => msg.includes(expectedMessage)), `${name} missing expected guard`);
+}
+
+
+
 for (const [name, patch, expectedMessage] of [
   ['branch', { branch: 'agent/test' }, 'main branch'],
   ['write switch', { writeEnabled: false }, 'INLET_D1_MIGRATION_WRITE=1'],
@@ -98,6 +126,8 @@ for (const [name, patch, expectedMessage] of [
   );
 }
 
+// Backup-only must use the encrypted export path and finish before the
+// first migration-state recheck/apply; never treat it as a restore drill.
 const entrypoint = await read('scripts/d1-migration-safety.mjs');
 const script = await read('scripts/d1-migration-safety-runner.mjs');
 const workflow = await read('.github/workflows/d1-migration-safety.yml');
@@ -147,6 +177,11 @@ assert.ok(
   'production restore must never execute automatically',
 );
 assert.ok(!script.includes("'--yes'"), 'D1 export must use --skip-confirmation');
+assert.ok(script.includes("if (mode === 'backup-only')"), 'independent backup-only branch must exist');
+assert.ok(script.indexOf("if (mode === 'backup-only') {\n    const manifest =") < script.indexOf('await applyMigrations(config.databaseName)'), 'backup-only must return before migrations apply');
+assert.ok(script.includes('databaseWrites: false') && script.includes("migrationApply: { attempted: false, reason: 'backup-only' }"), 'backup-only must report zero writes and no migration apply');
+assert.ok(script.includes('disposable D1 restore requires separate approval'), 'backup alone must never be represented as completed restore drill');
+
 assert.ok(!script.includes('console.log(encryptionSecret)'), 'encryption secret must not be logged');
 assert.ok(!script.includes('console.log(apiToken)'), 'Cloudflare token must not be logged');
 assert.ok(entrypoint.includes("'d1-migration-safety-runner.mjs'"));
@@ -155,6 +190,8 @@ assert.ok(entrypoint.includes("stdio: 'inherit'"));
 for (const token of [
   'workflow_dispatch:',
   'backup-and-apply',
+  'backup-only',
+  'I_APPROVE_D1_ENCRYPTED_BACKUP',
   'allow_writes',
   'expected_pending',
   'approval_phrase',
