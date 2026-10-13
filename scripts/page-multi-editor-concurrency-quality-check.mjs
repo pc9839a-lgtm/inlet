@@ -177,6 +177,8 @@ const draftStoreSource = await readFile('src/runtime/pageDraftStore.js', 'utf8')
 const accountWorkspaceSource = await readFile('src/runtime/useAccountWorkspacePage.js', 'utf8');
 const remoteFreshnessSource = await readFile('src/runtime/usePageRemoteFreshness.js', 'utf8');
 const persistFlowSource = await readFile('src/runtime/pagePersistFlow.js', 'utf8');
+const conflictHookSource = await readFile('src/builder/usePageConflict.js', 'utf8');
+const localPersistenceSource = await readFile('src/runtime/useLocalWorkspacePersistence.js', 'utf8');
 const qaAllSource = await readFile('scripts/qa-all.mjs', 'utf8');
 
 assert(draftStoreSource.includes("DRAFT_SOURCE_SESSION_KEY = 'inlet-page-draft-source-v1'"), 'draft source id must be stable for a browser tab session');
@@ -188,6 +190,8 @@ assert(draftStoreSource.includes('includeOtherSources = false'), 'foreign drafts
 assert(accountWorkspaceSource.includes('includeOtherSources: true'), 'page-load recovery must still discover orphaned drafts from a closed tab');
 assert(accountWorkspaceSource.includes('sourceId: draft.sourceId'), 'recovery cancel/discard must clear the exact selected draft source');
 assert(accountWorkspaceSource.includes('usePageRemoteFreshness({'), 'workspace page lifecycle must watch for saves from another tab or device');
+assert(conflictHookSource.includes("new CustomEvent('builder:conflict-resolution-committed'") && localPersistenceSource.includes("window.addEventListener('builder:conflict-resolution-committed', markConflictResolutionCommitted)"), 'adopting server latest and force-publishing after conflict must update the active editor recovery baseline before unload');
+assert(localPersistenceSource.includes('serverBaselineRef.current = {') && localPersistenceSource.includes('lastUserEditIntentRef.current = 0;') && localPersistenceSource.includes('setWorkspaceUnsavedDirty(false);'), 'resolved conflict must clear pending user intent, recovery dirty state, and unload guard');
 assert(remoteFreshnessSource.includes("window.addEventListener('focus', checkRemoteFreshness)"), 'remote freshness must re-check when the editor regains focus');
 assert(remoteFreshnessSource.includes("document.addEventListener('visibilitychange', handleVisibility)"), 'remote freshness must re-check when a background tab becomes visible');
 assert(
