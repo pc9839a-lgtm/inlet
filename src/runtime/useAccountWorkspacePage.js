@@ -114,6 +114,9 @@ function offerPageDraftRecovery({ serverPage, authUser, latestPageRef, localPage
         if (draft.sourceId && adoptedDraft?.sourceId && draft.sourceId !== adoptedDraft.sourceId) {
           clearPageDraft({ page: serverPage, authUser, sourceId: draft.sourceId });
         }
+        // A confirmed recovery is an unpublished edit even without keyboard
+        // input; activate the same durable draft/unload guard as file recovery.
+        window.dispatchEvent(new CustomEvent('builder:manual-draft-restored'));
         latestPageRef.current = restored;
         localPageMutationRef.current += 1;
         setPage(restored);
