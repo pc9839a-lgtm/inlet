@@ -182,6 +182,15 @@ dead file 삭제 후 build가 통과하지 않으면 실제 사용처를 놓친 
 
 운영 배포는 사용자의 명시적 승인 후에만 수행한다.
 
+현재 적용할 배포 운영 계약:
+- `main` push와 QA 성공은 **자동 운영 배포를 트리거하지 않는다**.
+- GitHub Actions `Deploy Cloudflare Pages`를 `main`에서 **수동 실행**한다.
+- `expected_sha`에 **현재 main 전체 40자리 SHA**, `approval_phrase`에 `I_APPROVE_PAGERO_PRODUCTION_DEPLOY`를 입력한다.
+- workflow는 실행 시작과 실제 업로드 직전에 현재 `main` 일치를 재검증하고, **동일 SHA의 main push QA 성공**이 없으면 실패한다.
+- GitHub `production` environment required reviewers를 저장소 설정에서 지정해야 사람의 독립적인 승인 절차도 강제된다. 이 설정은 코드만으로 확인할 수 없다.
+- 기존 운영 배포는 이 문서/코드 PR 병합만으로 재실행하지 않는다.
+- Cloudflare Pages에 별도 Git 연동 자동 배포가 설정되어 있다면 Cloudflare 대시보드에서도 비활성화 확인이 필요하다. GitHub Actions gate만으로 Cloudflare 외부 자동 트리거까지 차단된다고 주장하지 않는다.
+
 금지:
 
 - main force push
