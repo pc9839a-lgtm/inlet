@@ -20,14 +20,14 @@ jobs:
           token=os.getenv('CF_TOKEN','')
           account=os.getenv('CF_ACCOUNT','')
           if not token or not account:sys.exit('Missing required Pages credentials')
-          url='https://api.cloudflare.com/client/v4/accounts/'+account+'/pages/projects?per_page=100'
+          url='https://api.cloudflare.com/client/v4/accounts/'+account+'/pages/projects?per_page=20'
           request=urllib.request.Request(url,headers={'Authorization':'Bearer '+token,'Accept':'application/json'})
           try:
             with urllib.request.urlopen(request,timeout=25) as resp:
               payload=json.load(resp)
               print('Pages project list HTTP:',resp.status)
           except urllib.error.HTTPError as e:
-            print('Pages project list unavailable, HTTP:',e.code)
+            \n            try:\n              err=json.loads(e.read().decode())\n              messages=[x.get('message') for x in err.get('errors',[])]\n            except Exception: messages=[]\n            print('Pages project list unavailable, HTTP:',e.code, 'messages:',messages)
             sys.exit(1)
           if not payload.get('success'):sys.exit('Pages API reported failure')
           projects=payload.get('result',[])
