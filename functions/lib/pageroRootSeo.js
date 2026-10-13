@@ -1,6 +1,7 @@
 const ROOT_TITLE = '페이지로 | 모바일 랜딩페이지 제작·접수 관리';
 const ROOT_DESCRIPTION = '페이지로(PAGERO)는 상담 신청, 방문 예약, 견적 문의, 이벤트 접수용 모바일 랜딩페이지를 만들고 접수 내역과 전환 통계까지 한곳에서 관리하는 웹 기반 제작·운영 서비스입니다.';
 const ROOT_CANONICAL = 'https://pagero.kr/';
+const ROOT_NAVER_VERIFICATION = '2b53120b247214ee096be40c7c15795e42a8a24c';
 
 function escapeHtml(value = '') {
   return String(value ?? '')
@@ -116,6 +117,7 @@ export async function injectPageroRootSeo(url, response) {
   html = replaceOrInject(html, /<title\b[^>]*>[\s\S]*?<\/title>/i, `<title>${escapeHtml(ROOT_TITLE)}</title>`);
   html = replaceOrInject(html, /<meta\s+name=["']description["'][^>]*>/i, `<meta name="description" content="${escapeHtml(ROOT_DESCRIPTION)}">`);
   html = replaceOrInject(html, /<link\s+rel=["']canonical["'][^>]*>/i, `<link rel="canonical" href="${ROOT_CANONICAL}">`);
+  html = replaceOrInject(html, /<meta\s+name=["']naver-site-verification["'][^>]*>/i, `<meta name="naver-site-verification" content="${ROOT_NAVER_VERIFICATION}">`);
   if (!html.includes('PAGERO_ROOT_SEO_V1')) html = html.replace(/<\/head>/i, `${rootHeadTags()}\n</head>`);
   html = enrichRootFallback(html);
 
