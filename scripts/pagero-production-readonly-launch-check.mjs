@@ -10,6 +10,8 @@ const endpoints = [
   { name: 'crawler-sitemap', path: '/sitemap.xml', contentType: /(?:xml|text\/plain)/i, content: /<(?:urlset|sitemapindex)(?:\s|>)/i, note: 'sitemap XML is not SPA fallback' },
   { name: 'hosted-api-health', path: '/api/health', contentType: /json/i, json: (v) => v?.ok === true && v?.service === 'pagero-api' && v?.auth?.sourceOfTruth === 'signed-session' && v?.storage?.active === 'd1', note: 'real production API, signed session, D1' },
   { name: 'operator-readiness', path: '/api/readiness', contentType: /json/i, json: (v) => v && typeof v === 'object' && v?.ok === true, note: 'health/readiness JSON endpoint' },
+  { name: 'anonymous-admin-denied', path: '/api/admin/summary', expectedStatuses: [401, 403], contentType: /json/i, json: (v) => v?.ok === false, note: 'anonymous access cannot read platform master data' },
+  { name: 'anonymous-account-page-denied', path: '/api/account-page', expectedStatuses: [401, 403], contentType: /json/i, json: (v) => v?.ok === false, note: 'anonymous access cannot read account-owned pages' },
 ];
 async function probe(item) {
   try {
@@ -25,7 +27,7 @@ async function probe(item) {
     const raw = (await response.text()).slice(0, 500000);
     let parsed = null;
     if (item.json) { try { parsed = JSON.parse(raw); } catch {} }
-    const statusOk = response.status === 200;
+    const statusOk = item.expectedStatuses ? item.expectedStatuses.includes(response.status) : response.status === 200;
     const contentTypeOk = item.contentType.test(contentType);
     const contentOk = item.json ? item.json(parsed) : item.content.test(raw);
     return {
