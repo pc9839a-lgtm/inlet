@@ -180,6 +180,7 @@ export default function PageroCanonicalHome({ onLogin, onSignup }) {
         <nav aria-label="메인 메뉴">
           <a href="#pages">활용</a>
           <a href="/tools/lead-calculator/">광고 손익 계산</a>
+          <a href="/guide/landing-page-prelaunch/">광고 전 점검표</a>
           <a href="#life">생활정보</a>
         </nav>
         <div className="pagerol-actions">
@@ -249,6 +250,7 @@ export default function PageroCanonicalHome({ onLogin, onSignup }) {
             <span>노코드 모바일 랜딩페이지 빌더</span>
           </div>
           <nav aria-label="페이지로 하단 메뉴">
+            <a href="/guide/landing-page-prelaunch/">랜딩페이지 오픈 전 점검표</a>
             <a href="/tools/lead-calculator/">광고 손익 계산기</a>
             <a href="/life/">생활비서</a>
             <a href="/about">소개</a>
