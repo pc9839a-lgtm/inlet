@@ -1,0 +1,46 @@
+name: Inspect legacy LIFE Pages hosting
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/inspect-life-pages-hosting.yml
+  workflow_dispatch:
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    env:
+      CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Identify only project serving legacy life hostname
+        run: |
+          python - <<'PY'
+          import os,json,urllib.request,urllib.error,sys
+          token=os.getenv('CF_TOKEN','')
+          account=os.getenv('CF_ACCOUNT','')
+          if not token or not account:sys.exit('Missing required Pages credentials')
+          url='https://api.cloudflare.com/client/v4/accounts/'+account+'/pages/projects?per_page=100'
+          request=urllib.request.Request(url,headers={'Authorization':'Bearer '+token,'Accept':'application/json'})
+          try:
+            with urllib.request.urlopen(request,timeout=25) as resp:
+              payload=json.load(resp)
+              print('Pages project list HTTP:',resp.status)
+          except urllib.error.HTTPError as e:
+            print('Pages project list unavailable, HTTP:',e.code)
+            sys.exit(1)
+          if not payload.get('success'):sys.exit('Pages API reported failure')
+          projects=payload.get('result',[])
+          print('Projects visible to deployment token:',len(projects))
+          for proj in projects:
+            domains=proj.get('domains',[])
+            if isinstance(domains,str):domains=[domains]
+            matches=[host for host in domains if 'life.pagero.kr' in host.lower()]
+            if matches:
+              print('LEGACY LIFE PAGES PROJECT:',json.dumps({
+                'project_name':proj.get('name'),
+                'production_branch':proj.get('production_branch'),
+                'legacy_host_present':bool(matches),
+                'all_domains':domains,
+              },ensure_ascii=False))
+          PY
