@@ -20,7 +20,7 @@ jobs:
           token=os.getenv('CF_TOKEN','')
           account=os.getenv('CF_ACCOUNT','')
           if not token or not account:sys.exit('Missing required Pages credentials')
-          url='https://api.cloudflare.com/client/v4/accounts/'+account+'/pages/projects?per_page=20'
+          url='https://api.cloudflare.com/client/v4/accounts/'+account+'/pages/projects'
           request=urllib.request.Request(url,headers={'Authorization':'Bearer '+token,'Accept':'application/json'})
           try:
             with urllib.request.urlopen(request,timeout=25) as resp:
