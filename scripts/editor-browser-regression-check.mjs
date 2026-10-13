@@ -43,6 +43,12 @@ function assert(condition, message) {
 }
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const CDP_COMMAND_TIMEOUT_MS = 25000;
+let activeQaStep = 'initialization';
+function qaStep(label) {
+  activeQaStep = String(label);
+  console.log('[editor-qa]', activeQaStep);
+}
 
 function resolveChrome() {
   return [
@@ -61,7 +67,9 @@ function resolveChrome() {
 }
 
 async function fetchJson(url, init = {}) {
-  const response = await fetch(url, init);
+  // Chrome's debugging HTTP endpoint can also stall without returning an error.
+  // Bound every poll so waitForChrome's outer deadline remains meaningful.
+  const response = await fetch(url, { signal: AbortSignal.timeout(5000), ...init });
   if (!response.ok) throw new Error(`HTTP ${response.status}: ${url}`);
   return response.json();
 }
@@ -86,8 +94,15 @@ function createCdp(webSocketUrl) {
   const listeners = new Map();
   let nextId = 1;
   const opened = new Promise((resolve, reject) => {
-    socket.addEventListener('open', resolve, { once: true });
-    socket.addEventListener('error', reject, { once: true });
+    const deadline = setTimeout(() => reject(new Error('CDP WebSocket open timed out')), CDP_COMMAND_TIMEOUT_MS);
+    const openedOk = () => { clearTimeout(deadline); resolve(); };
+    const openedFailed = () => { clearTimeout(deadline); reject(new Error('CDP WebSocket open failed')); };
+    socket.addEventListener('open', openedOk, { once: true });
+    socket.addEventListener('error', openedFailed, { once: true });
+    socket.addEventListener('close', () => {
+      clearTimeout(deadline);
+      reject(new Error('CDP WebSocket closed before opening'));
+    }, { once: true });
   });
 
   socket.addEventListener('message', (event) => {
@@ -95,6 +110,7 @@ function createCdp(webSocketUrl) {
     if (payload.id && pending.has(payload.id)) {
       const request = pending.get(payload.id);
       pending.delete(payload.id);
+      clearTimeout(request.timer);
       if (payload.error) request.reject(new Error(payload.error.message || 'CDP error'));
       else request.resolve(payload.result || {});
       return;
@@ -105,7 +121,10 @@ function createCdp(webSocketUrl) {
   });
 
   socket.addEventListener('close', () => {
-    for (const request of pending.values()) request.reject(new Error('CDP socket closed'));
+    for (const request of pending.values()) {
+      clearTimeout(request.timer);
+      request.reject(new Error('CDP socket closed during ' + request.method + ' at ' + activeQaStep));
+    }
     pending.clear();
   });
 
@@ -113,8 +132,23 @@ function createCdp(webSocketUrl) {
     async send(method, params = {}) {
       await opened;
       const id = nextId++;
-      const response = new Promise((resolve, reject) => pending.set(id, { resolve, reject }));
-      socket.send(JSON.stringify({ id, method, params }));
+      const response = new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+          pending.delete(id);
+          reject(new Error('CDP command timed out: ' + method + ' (' + CDP_COMMAND_TIMEOUT_MS + 'ms) at ' + activeQaStep));
+        }, CDP_COMMAND_TIMEOUT_MS);
+        pending.set(id, { resolve, reject, timer, method });
+      });
+      try {
+        socket.send(JSON.stringify({ id, method, params }));
+      } catch (error) {
+        const request = pending.get(id);
+        if (request) {
+          clearTimeout(request.timer);
+          pending.delete(id);
+          request.reject(error);
+        }
+      }
       return response;
     },
     on(method, listener) {
@@ -502,6 +536,7 @@ async function evaluate(client, expression) {
 }
 
 async function waitForBrowser(client, expression, label, timeoutMs = 18000) {
+  qaStep(label);
   const started = Date.now();
   let last = null;
   while (Date.now() - started < timeoutMs) {
@@ -513,6 +548,7 @@ async function waitForBrowser(client, expression, label, timeoutMs = 18000) {
 }
 
 async function waitForState(check, label, timeoutMs = 15000) {
+  qaStep(label);
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
     if (check()) return;
@@ -676,6 +712,7 @@ async function dragPointer(client, sourceSelector, targetSelector) {
 }
 
 async function capture(client, name) {
+  qaStep('screenshot: ' + name);
   const image = await client.send('Page.captureScreenshot', { format: 'png', fromSurface: true, captureBeyondViewport: false });
   const target = path.join(screenshotDir, `${name}.png`);
   await writeFile(target, Buffer.from(image.data, 'base64'));
@@ -867,6 +904,7 @@ async function run() {
   let secondClient = null;
 
   try {
+    qaStep('starting Chrome');
     child = spawn(chrome, [
       '--headless=new',
       '--disable-gpu',
@@ -893,10 +931,20 @@ async function run() {
     await client.send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: backupDownloadDir });
     await client.send('DOM.enable');
     await client.send('Page.enable');
+    // A real unsaved-work warning must be acknowledged for an automated reload.
+    // Without a CDP dialog handler, Page.reload can remain pending indefinitely.
+    client.on('Page.javascriptDialogOpening', (dialog) => {
+      if (dialog.type === 'beforeunload') {
+        client.send('Page.handleJavaScriptDialog', { accept: true }).catch((error) => {
+          browserErrors.push('beforeunload dialog handling: ' + error.message);
+        });
+      }
+    });
     await client.send('Runtime.enable');
     await client.send('Network.enable');
     await client.send('Fetch.enable', { patterns: [{ urlPattern: '*://*/*', requestStage: 'Request' }] });
     const apiState = createApiMock(client);
+    qaStep('launch authenticated editor');
 
     await setViewport(client, 1280, 900, false);
     await client.send('Page.navigate', { url: `${origin}/login` });
@@ -1558,6 +1606,7 @@ async function run() {
     }
 
 
+    qaStep('ED-R11 cross-tab conflict regression');
     // ED-R11: two real Chrome tabs use one simulated server state.
     await setViewport(client, 1440, 960, false);
     await waitForBrowser(client, "!!document.querySelector('.builder-shell:not(.mobile-operations-shell)')", 'tab A desktop editor');
@@ -1579,6 +1628,13 @@ async function run() {
       browserErrors.push(exceptionDetails?.exception?.description || exceptionDetails?.text || 'Second-tab browser exception');
     });
     await secondClient.send('Page.enable');
+    secondClient.on('Page.javascriptDialogOpening', (dialog) => {
+      if (dialog.type === 'beforeunload') {
+        secondClient.send('Page.handleJavaScriptDialog', { accept: true }).catch((error) => {
+          browserErrors.push('second tab beforeunload handling: ' + error.message);
+        });
+      }
+    });
     await secondClient.send('Runtime.enable');
     await secondClient.send('Network.enable');
     await secondClient.send('Fetch.enable', { patterns: [{ urlPattern: '*://*/*', requestStage: 'Request' }] });
@@ -1746,6 +1802,7 @@ async function run() {
       realUseFlows: ['focus-recovery-workspace-transition', 'modal-focus-trap-return', 'keyboard-row-activation', 'keyboard-dropdown', 'add-block', 'undo-redo', 'visibility', 'menu-reorder', 'pointer-drag-reorder', 'style-apply', 'preview-continue', 'publish-race', 'revision-restore-undo-redo', 'post-restore-publish-readback', 'narrow-desktop'],
     }, null, 2));
   } finally {
+    console.log('[editor-qa] cleanup at:', activeQaStep);
     await secondClient?.close().catch(() => {});
     await client?.close().catch(() => {});
     if (child && !child.killed) child.kill('SIGTERM');
