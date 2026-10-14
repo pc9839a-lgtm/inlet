@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'functions/api/call/admin/**'
+      - 'functions/api/call/_shared.js'
+      - 'functions/api/call/google/_shared.js'
       - 'functions/api/billing/_adminEntitlements.js'
       - 'functions/api/billing/entitlements.js'
       - 'functions/api/billing/_paymentHistory.js'
@@ -17,6 +19,8 @@ on:
       - 'agent/calltag-admin-minimal-risk'
     paths:
       - 'functions/api/call/admin/**'
+      - 'functions/api/call/_shared.js'
+      - 'functions/api/call/google/_shared.js'
       - 'functions/api/billing/_adminEntitlements.js'
       - 'functions/api/billing/entitlements.js'
       - 'functions/api/billing/_paymentHistory.js'
