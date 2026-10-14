@@ -118,24 +118,9 @@ export async function ensurePendingEntitlement(db, ownerId = '') {
     INSERT INTO calllink_entitlements (
       owner_id, status, plan_code, paid_until, source, created_at, updated_at
     ) VALUES (?, 'active', ?, '', 'beta', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-    ON CONFLICT(owner_id) DO UPDATE SET
-      status = CASE
-        WHEN calllink_entitlements.status = 'suspended' THEN 'suspended'
-        ELSE 'active'
-      END,
-      plan_code = CASE
-        WHEN calllink_entitlements.status = 'suspended' THEN calllink_entitlements.plan_code
-        ELSE excluded.plan_code
-      END,
-      paid_until = CASE
-        WHEN calllink_entitlements.status = 'suspended' THEN calllink_entitlements.paid_until
-        ELSE ''
-      END,
-      source = CASE
-        WHEN calllink_entitlements.status = 'suspended' THEN calllink_entitlements.source
-        ELSE 'beta'
-      END,
-      updated_at = CURRENT_TIMESTAMP
+    -- The default beta record is created only once. Never overwrite any
+    -- existing manual grant, paid plan, suspension, or grant history on login.
+    ON CONFLICT(owner_id) DO NOTHING
   `).bind(ownerId, CALLLINK_BETA_PLAN).run();
   return getCallEntitlement(db, ownerId);
 }
