@@ -53,6 +53,19 @@ No export, migration apply, restore, schema write, or data write occurs.
 
 backup-only는 전용 승인 문구·main 제한·32자 이상 암호화 키가 없거나 쓰기 스위치가 켜져 있으면 실패한다. 이 모드의 artifact는 민감한 운영 데이터의 암호화본이므로 제한된 담당자만 접근한다.
 
+### 암호화 백업 파일의 격리 복원 검증 (운영 DB에 쓰지 않음)
+
+1. `D1 Migration Safety`에서 `backup-only`를 수동 실행하고 결과가 `verified-live`인지 확인한다. 실제 백업이 아직 없다면 검증을 시작하지 않는다.
+2. 성공한 백업 workflow의 `run ID`를 기록한다. 생성된 암호화 백업 artifact는 보존기간 30일 내에만 가져올 수 있다.
+3. GitHub Actions → `PageRo D1 Encrypted Backup Offline Restore` → `main` 수동 실행.
+4. `backup_run_id`에 백업 작업 run ID 입력. `approval_phrase`에 `I_APPROVE_PAGERO_D1_OFFLINE_RESTORE` 입력.
+5. 검증 작업은 동일 run ID의 암호화 백업만 내려받아 SHA-256/HMAC, 암호화 키, 복호화된 SQL SHA-256 및 크기를 대조하고, **임시 인메모리 SQLite**에 가져와 `PRAGMA integrity_check`, 외래키 검사, 계정·프로젝트·페이지·문의 테이블 수량을 검증한다.
+6. 복호화한 SQL은 결과에 포함하지 않고 즉시 제거한다. 산출물은 개인정보 없는 `pagero-d1-restore-evidence.json`만 보관한다.
+7. 최종 `remoteDisposableD1Restore: not-run`은 정확한 의미다. **이 검증은 로컬 SQLite 복원을 증명하며, Cloudflare의 disposable D1 복원 성공을 아직 입증하지 않는다.** 실제 격리 D1 복원은 별도 저장소·권한·개인정보 처리기간 및 실행 승인이 확보된 뒤 수행한다.
+
+운영 DB 자체 복원, 백업 artifact 외부 공개, 실사용자 데이터 출력 금지.
+
+
 ### `backup-and-apply`
 
 This mode is allowed only when all gates pass:
