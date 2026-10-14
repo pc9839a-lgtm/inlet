@@ -1,3 +1,5 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css");
+
 .pagerol-home-v2 {
   --ink: #101828;
   --muted: #667085;
@@ -9,7 +11,7 @@
     radial-gradient(circle at 50% 0%, rgba(47, 107, 255, .12), transparent 36%),
     linear-gradient(180deg, #fbfcff 0%, #f3f6fb 54%, #ffffff 100%);
   color: var(--ink);
-  font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  font-family: "Pretendard Variable", "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
 }
 
 .pagerol-home-v2 button {
