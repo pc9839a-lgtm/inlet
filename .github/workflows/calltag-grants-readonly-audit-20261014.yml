@@ -1,0 +1,48 @@
+name: CallTag Grants Read-only Audit 20261014
+
+on:
+  push:
+    branches:
+      - audit/calltag-grants-readonly-20261014
+    paths:
+      - .github/workflows/calltag-grants-readonly-audit-20261014.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  readonly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Inspect aggregate grant evidence in production D1 (SELECT only; no PII)
+        env:
+          CLOUDFLARE_API_TOKEN: \${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: \${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          q() {
+            local label="$1" sql="$2"
+            echo "=== $label ==="
+            if node node_modules/wrangler/bin/wrangler.js d1 execute inlet-prod --remote --command "$sql" --json >/tmp/calltag-grants-query.json 2>/tmp/calltag-grants-query-error; then
+              node -e 'const fs=require("fs"); const d=JSON.parse(fs.readFileSync("/tmp/calltag-grants-query.json","utf8")); const r=Array.isArray(d)?d[0]?.results:d?.results; console.log(JSON.stringify(r||[]));'
+            else
+              echo "READ_QUERY_FAILED"
+              sed -n '1,2p' /tmp/calltag-grants-query-error | cut -c 1-220
+            fi
+          }
+          q "tables" "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('accounts','calllink_profiles','calllink_entitlements','calltag_admin_entitlements','billing_accounts','billing_subscriptions','calltag_admin_audit') ORDER BY name;"
+          q "record_counts" "SELECT (SELECT COUNT(*) FROM accounts WHERE status='active') active_accounts, (SELECT COUNT(*) FROM calllink_profiles) profiles, (SELECT COUNT(*) FROM calllink_entitlements) legacy_entitlements, (SELECT COUNT(*) FROM calltag_admin_entitlements) admin_grants, (SELECT COUNT(*) FROM billing_accounts) billing_accounts, (SELECT COUNT(*) FROM billing_subscriptions) billing_subscriptions;"
+          q "legacy_plan_summary" "SELECT status, CASE WHEN plan_code IN ('beta_free','calllink_paid','call_monthly','message_monthly','all_monthly') THEN plan_code ELSE 'other' END plan_kind, CASE WHEN source IN ('beta','pagero_payment','manual','admin','admin_grant','promotion','legacy') THEN source ELSE 'other' END source_kind, COUNT(*) members, SUM(CASE WHEN paid_until!='' AND datetime(paid_until)>datetime('now') THEN 1 ELSE 0 END) future_paid_until FROM calllink_entitlements GROUP BY status, plan_kind, source_kind ORDER BY members DESC LIMIT 40;"
+          q "legacy_overwrite_signals" "SELECT COUNT(*) total, SUM(CASE WHEN plan_code='beta_free' AND source='beta' THEN 1 ELSE 0 END) beta_defaults, SUM(CASE WHEN plan_code='beta_free' AND source='beta' AND datetime(updated_at)>datetime(created_at) THEN 1 ELSE 0 END) beta_rows_updated_since_creation, SUM(CASE WHEN source!='beta' OR plan_code!='beta_free' OR paid_until!='' THEN 1 ELSE 0 END) nondefault_legacy_rows, SUM(CASE WHEN plan_code='beta_free' AND source='beta' AND datetime(updated_at)>=datetime('2026-09-01') THEN 1 ELSE 0 END) beta_touched_since_sep FROM calllink_entitlements;"
+          q "admin_grant_summary" "SELECT status, scope, COUNT(*) rows, SUM(CASE WHEN expires_at!='' AND datetime(expires_at)>datetime('now') THEN 1 ELSE 0 END) future_expiry FROM calltag_admin_entitlements GROUP BY status, scope ORDER BY rows DESC;"
+          q "grant_source_mismatch" "SELECT SUM(CASE WHEN e.owner_id IS NOT NULL AND a.owner_id IS NULL AND (e.plan_code!='beta_free' OR e.source!='beta' OR e.paid_until!='') THEN 1 ELSE 0 END) legacy_nondefault_without_new_grant, SUM(CASE WHEN a.owner_id IS NOT NULL AND e.owner_id IS NULL THEN 1 ELSE 0 END) new_grants_without_legacy FROM (SELECT owner_id FROM calllink_entitlements UNION SELECT owner_id FROM calltag_admin_entitlements) owners LEFT JOIN calllink_entitlements e ON e.owner_id=owners.owner_id LEFT JOIN calltag_admin_entitlements a ON a.owner_id=owners.owner_id;"
+          q "grant_audit_action_counts" "SELECT action, COUNT(*) rows FROM calltag_admin_audit WHERE action IN ('member.entitlement.grant','member.entitlement.revoke') GROUP BY action ORDER BY action;"
