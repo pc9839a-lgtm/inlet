@@ -36,9 +36,11 @@ jobs:
               node -e 'const fs=require("fs"); const d=JSON.parse(fs.readFileSync("/tmp/calltag-grants-query.json","utf8")); const r=Array.isArray(d)?d[0]?.results:d?.results; console.log(JSON.stringify(r||[]));'
             else
               echo "READ_QUERY_FAILED"
-              sed -n '1,2p' /tmp/calltag-grants-query-error | cut -c 1-220
+              node -e 'const fs=require("fs");for (const path of ["/tmp/calltag-grants-query-error","/tmp/calltag-grants-query.json"]){let v=fs.readFileSync(path,"utf8").slice(0,1000).replace(/[A-Za-z0-9_\-]{40,}/g,"[REDACTED]");if(v.trim())console.log(path.includes("error")?"stderr:":"stdout:",v.slice(0,500));}'
             fi
           }
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then echo "SECRET_TOKEN_MISSING"; fi
+          if [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then echo "SECRET_ACCOUNT_ID_MISSING"; fi
           q "tables" "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('accounts','calllink_profiles','calllink_entitlements','calltag_admin_entitlements','billing_accounts','billing_subscriptions','calltag_admin_audit') ORDER BY name;"
           q "record_counts" "SELECT (SELECT COUNT(*) FROM accounts WHERE status='active') active_accounts, (SELECT COUNT(*) FROM calllink_profiles) profiles, (SELECT COUNT(*) FROM calllink_entitlements) legacy_entitlements, (SELECT COUNT(*) FROM calltag_admin_entitlements) admin_grants, (SELECT COUNT(*) FROM billing_accounts) billing_accounts, (SELECT COUNT(*) FROM billing_subscriptions) billing_subscriptions;"
           q "legacy_plan_summary" "SELECT status, CASE WHEN plan_code IN ('beta_free','calllink_paid','call_monthly','message_monthly','all_monthly') THEN plan_code ELSE 'other' END plan_kind, CASE WHEN source IN ('beta','pagero_payment','manual','admin','admin_grant','promotion','legacy') THEN source ELSE 'other' END source_kind, COUNT(*) members, SUM(CASE WHEN paid_until!='' AND datetime(paid_until)>datetime('now') THEN 1 ELSE 0 END) future_paid_until FROM calllink_entitlements GROUP BY status, plan_kind, source_kind ORDER BY members DESC LIMIT 40;"
