@@ -75,7 +75,7 @@ async function main() {
   if (candidates.length !== 1) throw new Error('expected-exactly-one-real-backup-manifest');
   const manifest = JSON.parse(await readFile(path.join(artifacts, candidates[0]), 'utf8'));
   const backup = manifest?.backup;
-  if (!backup || !manifest.ok || !/^pagero-d1-[0-9]{14}\.sql\.enc$/.test(String(backup.encryptedFile || ''))) {
+  if (!backup || manifest.ok !== true || manifest.mode !== 'backup-only' || manifest.encryptedBackupOnly !== true || !/^pagero-d1-[0-9]{14}\.sql\.enc$/.test(String(backup.encryptedFile || ''))) {
     throw new Error('unverified-or-invalid-encrypted-export-manifest');
   }
   if (backup.cipher !== 'aes-256-cbc' || backup.kdf !== 'pbkdf2-sha256-200000' || backup.plaintextUploaded !== false) {
@@ -150,7 +150,7 @@ if (invoked === import.meta.url) {
     console.error(JSON.stringify({
       ok: false,
       scope: 'pagero-d1-encrypted-backup-offline-restore',
-      reason: String(error?.message || 'restore-verification-failed').slice(0, 120),
+      reason: 'restore-verification-failed-check-private-workflow-status',
       secretValuesIncluded: false,
     }));
     process.exitCode = 1;
