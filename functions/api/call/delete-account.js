@@ -97,7 +97,9 @@ export async function onRequest({ request, env }) {
     const deletedEmail = `deleted-${crypto.randomUUID()}@deleted.invalid`;
     statements.push(db.prepare(`
       UPDATE accounts
-      SET status = 'deleted_pending_retention',
+      -- accounts.status CHECK allows 'deleted', not 'deleted_pending_retention'.
+      -- Auth normalizes the stored 'deleted' value to deleted_pending_retention.
+      SET status = 'deleted',
           email = ?,
           name = '',
           phone = NULL,
