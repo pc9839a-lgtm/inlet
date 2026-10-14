@@ -11,6 +11,7 @@ import {
   entitlementPublic,
   getCallProfile,
   profilePublic,
+  ensureCalllinkSchema,
 } from '../_shared.js';
 
 const GOOGLE_AUTH_BASE = 'https://accounts.google.com/o/oauth2/v2/auth';
@@ -161,6 +162,26 @@ export async function findOrCreateGoogleAccount(db, googleProfile = {}) {
   return authUserPublic(created);
 }
 
+// Google OAuth creates a shared Pagero account first. When it is used in
+// CallTag, provision its minimal CallTag profile (no invented phone number).
+// The admin membership screen uses this profile for Google-only signups.
+export async function ensureGoogleCallProfile(db, user = {}) {
+  const ownerId = String(user.ownerId || user.id || '').trim();
+  const email = normalizeEmail(user.email || '');
+  if (!ownerId || !email) throw oauthError('Google 계정 식별정보가 없습니다.', 400, 'GOOGLE_PROFILE_INVALID');
+  await ensureCalllinkSchema(db);
+  const existing = await getCallProfile(db, ownerId);
+  if (existing) return existing;
+  const name = String(user.name || email).trim().slice(0, 80) || email;
+  await db.prepare(`
+    INSERT INTO calllink_profiles (
+      owner_id, email, name, phone, brand_name, industry, created_at, updated_at
+    ) VALUES (?, ?, ?, '', '개인', '기타', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    ON CONFLICT(owner_id) DO NOTHING
+  `).bind(ownerId, email, name).run();
+  return getCallProfile(db, ownerId);
+}
+
 export async function createGoogleLoginTicket(db, user = {}) {
   await ensureGoogleTicketSchema(db);
   const ticket = `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, '');
@@ -200,7 +221,7 @@ export async function consumeGoogleLoginTicket(db, ticket = '', env = {}) {
     throw oauthError('Google 로그인 계정을 찾지 못했습니다.', 404, 'GOOGLE_ACCOUNT_NOT_FOUND');
   }
   const user = authUserPublic(account);
-  const profile = await getCallProfile(db, user.ownerId);
+  const profile = await ensureGoogleCallProfile(db, user);
   const entitlement = await ensurePendingEntitlement(db, user.ownerId);
   const session = await createSessionToken({
     ownerId: user.ownerId,
