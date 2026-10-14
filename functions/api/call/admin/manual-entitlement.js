@@ -30,13 +30,18 @@ export async function onRequest({ request, env }) {
       ? Object.fromEntries(new URL(request.url).searchParams.entries())
       : await readBody(request);
     const ownerId = ownerIdInput(input.ownerId || '');
-    const profile = await env.DB.prepare(`
-      SELECT owner_id
-      FROM calllink_profiles
-      WHERE owner_id = ?
+    // Both email signups (calllink_profiles) and Google-only CallTag users
+    // (calllink_entitlements + accounts) are eligible for manual grants.
+    // Never accept an arbitrary unrelated Pagero account ID.
+    const member = await env.DB.prepare(`
+      SELECT owner_id FROM calllink_profiles WHERE owner_id = ?
+      UNION
+      SELECT e.owner_id FROM calllink_entitlements e
+      JOIN accounts a ON a.id = e.owner_id
+      WHERE e.owner_id = ? AND a.status = 'active'
       LIMIT 1
-    `).bind(ownerId).first();
-    if (!profile?.owner_id) {
+    `).bind(ownerId, ownerId).first();
+    if (!member?.owner_id) {
       throw callError('회원을 찾을 수 없습니다.', 404, { code: 'CALLTAG_ADMIN_MEMBER_NOT_FOUND' });
     }
 

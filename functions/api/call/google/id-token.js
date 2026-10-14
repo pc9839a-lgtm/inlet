@@ -3,11 +3,11 @@ import { createSessionToken } from '../../auth/_auth.js';
 import {
   ensurePendingEntitlement,
   entitlementPublic,
-  getCallProfile,
   profilePublic,
 } from '../_shared.js';
 import {
   findOrCreateGoogleAccount,
+  ensureGoogleCallProfile,
   googleClientId,
   oauthError,
 } from './_shared.js';
@@ -35,7 +35,7 @@ export async function onRequest({ request, env }) {
     const legacyNative = input.legacyNative === true;
     const googleProfile = await verifyGoogleIdToken(idToken, nonce, env, legacyNative);
     const user = await findOrCreateGoogleAccount(db, googleProfile);
-    const profile = await getCallProfile(db, user.ownerId);
+    const profile = await ensureGoogleCallProfile(db, user);
     const entitlement = await ensurePendingEntitlement(db, user.ownerId);
     const session = await createSessionToken({
       ownerId: user.ownerId,

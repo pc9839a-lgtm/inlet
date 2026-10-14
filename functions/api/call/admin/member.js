@@ -22,9 +22,20 @@ export async function onRequest({ request, env }) {
     const ownerId = ownerIdInput(new URL(request.url).searchParams.get('ownerId') || '');
 
     const profile = await env.DB.prepare(`
-      SELECT owner_id, email, phone, created_at, updated_at
-      FROM calllink_profiles
-      WHERE owner_id = ?
+      SELECT m.owner_id,
+             COALESCE(NULLIF(p.email, ''), a.email, '') AS email,
+             COALESCE(NULLIF(p.phone, ''), a.phone, '') AS phone,
+             COALESCE(NULLIF(p.created_at, ''), a.created_at, '') AS created_at,
+             COALESCE(NULLIF(p.updated_at, ''), a.updated_at, '') AS updated_at
+      FROM (
+        SELECT owner_id FROM calllink_profiles
+        UNION
+        SELECT e.owner_id FROM calllink_entitlements e
+        JOIN accounts aa ON aa.id = e.owner_id AND aa.status = 'active'
+      ) m
+      LEFT JOIN calllink_profiles p ON p.owner_id = m.owner_id
+      LEFT JOIN accounts a ON a.id = m.owner_id
+      WHERE m.owner_id = ?
       LIMIT 1
     `).bind(ownerId).first();
     if (!profile?.owner_id) {

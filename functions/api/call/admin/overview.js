@@ -12,11 +12,19 @@ import { productPriceKrw } from '../../billing/_commissions.js';
 const CALLTAG_PRODUCTS_SQL = "'call_monthly','message_monthly','all_monthly'";
 const SAFE_TABLES = new Set([
   'calllink_profiles',
+  'calllink_entitlements',
+  'accounts',
   'billing_accounts',
   'billing_subscriptions',
   'partner_commissions',
 ]);
 const PLAY_FEE_RATE = 0.15;
+const CALLTAG_MEMBER_SOURCE_SQL = `(
+  SELECT owner_id FROM calllink_profiles
+  UNION
+  SELECT e.owner_id FROM calllink_entitlements e
+  JOIN accounts a ON a.id = e.owner_id AND a.status = 'active'
+)`;
 
 export async function onRequest({ request, env }) {
   if (request.method === 'OPTIONS') return adminOptions();
@@ -89,7 +97,7 @@ async function totalMembersMetric(db, schema, degraded) {
     degraded.push('members');
     return 0;
   }
-  return safeScalar(db, `SELECT COUNT(*) AS value FROM calllink_profiles`, degraded, 'members');
+  return safeScalar(db, `SELECT COUNT(*) AS value FROM ${CALLTAG_MEMBER_SOURCE_SQL}`, degraded, 'members');
 }
 
 async function newMembersMetric(db, schema, degraded) {
@@ -99,7 +107,11 @@ async function newMembersMetric(db, schema, degraded) {
   }
   return safeScalar(
     db,
-    `SELECT COUNT(*) AS value FROM calllink_profiles WHERE datetime(created_at) >= datetime('now', '-7 days')`,
+    `SELECT COUNT(*) AS value
+     FROM ${CALLTAG_MEMBER_SOURCE_SQL} m
+     LEFT JOIN calllink_profiles p ON p.owner_id = m.owner_id
+     LEFT JOIN accounts a ON a.id = m.owner_id
+     WHERE datetime(COALESCE(NULLIF(p.created_at, ''), a.created_at, '')) >= datetime('now', '-7 days')`,
     degraded,
     'members_recent',
   );
@@ -126,7 +138,7 @@ async function trialMembersMetric(db, schema, degraded) {
   return safeScalar(db, `
     SELECT COUNT(*) AS value
     FROM billing_accounts b
-    JOIN calllink_profiles p ON p.owner_id = b.owner_id
+    JOIN ${CALLTAG_MEMBER_SOURCE_SQL} p ON p.owner_id = b.owner_id
     WHERE datetime(b.trial_ends_at) > datetime('now')
     ${exclusion}
   `, degraded, 'trial');
@@ -140,7 +152,7 @@ async function activePaidMetric(db, schema, degraded) {
   return safeScalar(db, `
     SELECT COUNT(DISTINCT s.owner_id) AS value
     FROM billing_subscriptions s
-    JOIN calllink_profiles p ON p.owner_id = s.owner_id
+    JOIN ${CALLTAG_MEMBER_SOURCE_SQL} p ON p.owner_id = s.owner_id
     WHERE s.product_code IN (${CALLTAG_PRODUCTS_SQL})
       AND s.status IN ('active','grace','cancelled')
       AND (COALESCE(s.expires_at, '') = '' OR datetime(s.expires_at) > datetime('now'))
@@ -158,7 +170,7 @@ async function paymentReviewMetric(db, schema, degraded) {
   return safeScalar(db, `
     SELECT COUNT(DISTINCT s.owner_id) AS value
     FROM billing_subscriptions s
-    JOIN calllink_profiles p ON p.owner_id = s.owner_id
+    JOIN ${CALLTAG_MEMBER_SOURCE_SQL} p ON p.owner_id = s.owner_id
     WHERE s.product_code IN (${CALLTAG_PRODUCTS_SQL})
       AND ${verification}
   `, degraded, 'billing_review');
@@ -189,7 +201,7 @@ async function monthlyRevenueEstimate(db, schema, degraded) {
     const result = await db.prepare(`
       SELECT s.product_code, s.channel, COUNT(*) AS subscription_count
       FROM billing_subscriptions s
-      JOIN calllink_profiles p ON p.owner_id = s.owner_id
+      JOIN ${CALLTAG_MEMBER_SOURCE_SQL} p ON p.owner_id = s.owner_id
       WHERE s.product_code IN (${CALLTAG_PRODUCTS_SQL})
         AND s.status IN ('active','grace')
         AND s.verification_state = 'verified'
@@ -238,56 +250,34 @@ function emptyRevenueEstimate() {
 }
 
 async function recentCalltagMembers(db, schema, degraded) {
-  if (!hasColumns(schema, 'calllink_profiles', ['owner_id'])) {
+  if (!hasTable(schema, 'calllink_profiles') || !hasTable(schema, 'calllink_entitlements') || !hasTable(schema, 'accounts')) {
     degraded.push('member_list');
     return [];
   }
-
-  const profile = schema.get('calllink_profiles') || new Set();
-  const accounts = schema.get('billing_accounts') || new Set();
-  const subscriptionsSchema = schema.get('billing_subscriptions') || new Set();
-
-  const select = [
-    'p.owner_id AS owner_id',
-    profile.has('email') ? 'p.email AS email' : "'' AS email",
-    profile.has('phone') ? 'p.phone AS phone' : "'' AS phone",
-    profile.has('created_at') ? 'p.created_at AS created_at' : "'' AS created_at",
-    profile.has('updated_at') ? 'p.updated_at AS updated_at' : "'' AS updated_at",
-  ];
-
-  let accountJoin = '';
-  if (accounts.has('owner_id')) {
-    accountJoin = 'LEFT JOIN billing_accounts b ON b.owner_id = p.owner_id';
-    select.push(accounts.has('trial_ends_at') ? 'b.trial_ends_at AS trial_ends_at' : "'' AS trial_ends_at");
-    select.push(accounts.has('referral_bonus_days') ? 'b.referral_bonus_days AS referral_bonus_days' : '0 AS referral_bonus_days');
-  } else {
-    select.push("'' AS trial_ends_at", '0 AS referral_bonus_days');
-  }
-
-  const orderBy = profile.has('created_at') ? 'datetime(p.created_at) DESC' : 'p.owner_id DESC';
   let rows = [];
   try {
     const result = await db.prepare(`
-      SELECT ${select.join(',\n')}
-      FROM calllink_profiles p
-      ${accountJoin}
-      ORDER BY ${orderBy}
+      SELECT m.owner_id,
+             COALESCE(NULLIF(p.email, ''), a.email, '') AS email,
+             COALESCE(NULLIF(p.phone, ''), a.phone, '') AS phone,
+             COALESCE(NULLIF(p.created_at, ''), a.created_at, '') AS created_at,
+             COALESCE(NULLIF(p.updated_at, ''), a.updated_at, '') AS updated_at,
+             COALESCE(b.trial_ends_at, '') AS trial_ends_at,
+             COALESCE(b.referral_bonus_days, 0) AS referral_bonus_days
+      FROM ${CALLTAG_MEMBER_SOURCE_SQL} m
+      LEFT JOIN calllink_profiles p ON p.owner_id = m.owner_id
+      LEFT JOIN accounts a ON a.id = m.owner_id
+      LEFT JOIN billing_accounts b ON b.owner_id = m.owner_id
+      ORDER BY datetime(COALESCE(NULLIF(p.created_at, ''), a.created_at, '')) DESC, m.owner_id DESC
       LIMIT 40
     `).all();
     rows = Array.isArray(result?.results) ? result.results : [];
   } catch (error) {
     console.warn('calltag-admin-member-list-degraded', String(error?.message || 'query_failed').slice(0, 120));
     degraded.push('member_list');
-    try {
-      const fallback = await db.prepare(`SELECT owner_id FROM calllink_profiles ORDER BY owner_id DESC LIMIT 40`).all();
-      rows = (Array.isArray(fallback?.results) ? fallback.results : []).map((row) => ({ owner_id: row.owner_id }));
-    } catch {
-      rows = [];
-    }
+    return [];
   }
-
-  const subscriptionsByOwner = await recentMemberSubscriptions(db, rows, subscriptionsSchema, degraded);
-
+  const subscriptionsByOwner = await recentMemberSubscriptions(db, rows, schema.get('billing_subscriptions') || new Set(), degraded);
   return rows.map((row) => {
     const subscriptions = subscriptionsByOwner.get(String(row.owner_id || '')) || [];
     return {

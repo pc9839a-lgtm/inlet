@@ -5,6 +5,8 @@ function assert(condition, message) {
 }
 
 const source = await readFile('functions/api/call/delete-account.js', 'utf8');
+const schema = await readFile('migrations/0001_inlet_core.sql', 'utf8');
+const auth = await readFile('functions/api/auth/_auth.js', 'utf8');
 
 for (const table of [
   'calltag_google_forms_oauth_sessions',
@@ -37,7 +39,9 @@ assert(source.includes('rawPhoneRetainedForReferralAbusePrevention: false'), 'de
 assert(source.includes('DELETE FROM auth_email_verifications'), 'email verification artifacts must be deleted');
 assert(source.includes('email = ?'), 'account email must be replaced with a deletion tombstone');
 assert(source.includes("name = ''") && source.includes('phone = NULL') && source.includes("password_hash = ''"), 'direct account profile/auth fields must be cleared');
-assert(source.includes("status = 'deleted_pending_retention'"), 'deleted account tombstone status must remain fail-closed');
+assert(schema.includes("'deleted'"), 'stored deleted state must be permitted by D1 CHECK');
+assert(source.includes("SET status = 'deleted'"), 'account deletion must use the schema-allowed status value');
+assert(auth.includes("if (status === 'deleted') return 'deleted_pending_retention';"), 'deleted state must remain fail-closed at auth boundary');
 assert(source.includes('await db.batch(statements)'), 'server deletion must execute as one D1 batch');
 
 console.log(JSON.stringify({
