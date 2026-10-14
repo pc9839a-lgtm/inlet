@@ -58,8 +58,8 @@ assertIncludes('functions/api/call/_shared.js', [
 // A prior upsert overwrote plan_code and paid_until with beta defaults.
 const callShared = textByFile.get('functions/api/call/_shared.js') || '';
 const initialEntitlement = callShared.slice(callShared.indexOf('export async function ensurePendingEntitlement'), callShared.indexOf('export async function getCallProfile'));
-assert(initialEntitlement.includes('ON CONFLICT(owner_id) DO NOTHING'), 'existing CallTag entitlements must be preserved on login');
-assert(!initialEntitlement.includes('plan_code = CASE') && !initialEntitlement.includes('paid_until = CASE'), 'login must never overwrite manual grant fields');
+if (!initialEntitlement.includes('ON CONFLICT(owner_id) DO NOTHING')) throw new Error('existing CallTag entitlements must be preserved on login');
+if (initialEntitlement.includes('plan_code = CASE') || initialEntitlement.includes('paid_until = CASE')) throw new Error('login must never overwrite manual grant fields');
 
 assertIncludes('functions/api/call/admin/entitlement.js', [
   'assertCallAdmin',
