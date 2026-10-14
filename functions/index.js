@@ -12,6 +12,8 @@ const C63_HOME_HTML = `<!doctype html>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1906196934401001" crossorigin="anonymous"></script>
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css" />
   <title>페이지로</title>
   <script>
     (() => {
@@ -411,6 +413,48 @@ const C63_HOME_HTML = `<!doctype html>
       .pagero-exact-home .section-title,
       .pagero-exact-home .left-title {
         font-size: clamp(30px, 9.2vw, 36px) !important;
+      }
+    }
+
+    /* Main landing typography repair: use the loaded Korean webfont and avoid over-compressed glyphs. */
+    .pagero-exact-home {
+      font-family: "Pretendard Variable", "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", -apple-system, BlinkMacSystemFont, sans-serif !important;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    .pagero-exact-home .hero-title {
+      font-weight: 900 !important;
+      letter-spacing: -.055em !important;
+      line-height: .96 !important;
+    }
+    .pagero-exact-home .section-title,
+    .pagero-exact-home .left-title {
+      font-weight: 900 !important;
+      letter-spacing: -.045em !important;
+      line-height: 1.04 !important;
+    }
+    .pagero-exact-home .logo {
+      font-weight: 900 !important;
+      letter-spacing: -.035em !important;
+    }
+    .pagero-exact-home .header-btn,
+    .pagero-exact-home .main-btn,
+    .pagero-exact-home .fixed-btn {
+      font-weight: 900 !important;
+      letter-spacing: -.02em !important;
+    }
+    @media (max-width: 760px) {
+      .pagero-exact-home .hero-title {
+        letter-spacing: -.045em !important;
+        line-height: 1 !important;
+      }
+      .pagero-exact-home .section-title,
+      .pagero-exact-home .left-title {
+        letter-spacing: -.04em !important;
+        line-height: 1.05 !important;
+      }
+      .pagero-exact-home .logo {
+        letter-spacing: -.025em !important;
       }
     }
   </style>
