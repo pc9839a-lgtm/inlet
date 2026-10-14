@@ -1,0 +1,50 @@
+name: PageRo Cloudflare Auto-deploy Safety
+
+# This workflow never deploys a site or writes to D1.
+# Changes to Cloudflare Git branch control require an independent approval phrase.
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Check Cloudflare Git autodeploy, or explicitly disable it
+        required: true
+        type: choice
+        default: audit
+        options:
+          - audit
+          - disable
+      approval_phrase:
+        description: For disable mode type I_APPROVE_DISABLE_PAGERO_CLOUDFLARE_AUTODEPLOY
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pagero-cloudflare-project-settings
+  cancel-in-progress: false
+
+jobs:
+  inspect-or-disable-git-autodeploy:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: production
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Inspect or explicitly disable Git production auto-deploy
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PAGERO_CLOUDFLARE_AUTODEPLOY_MODE: ${{ inputs.mode }}
+          PAGERO_CLOUDFLARE_AUTODEPLOY_APPROVAL: ${{ inputs.approval_phrase }}
+        run: node scripts/pagero-cloudflare-git-autodeploy-guard.mjs

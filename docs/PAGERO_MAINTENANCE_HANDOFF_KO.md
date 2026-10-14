@@ -189,7 +189,11 @@ dead file 삭제 후 build가 통과하지 않으면 실제 사용처를 놓친 
 - workflow는 실행 시작과 실제 업로드 직전에 현재 `main` 일치를 재검증하고, **동일 SHA의 main push QA 성공**이 없으면 실패한다.
 - GitHub `production` environment required reviewers를 저장소 설정에서 지정해야 사람의 독립적인 승인 절차도 강제된다. 이 설정은 코드만으로 확인할 수 없다.
 - 기존 운영 배포는 이 문서/코드 PR 병합만으로 재실행하지 않는다.
-- Cloudflare Pages에 별도 Git 연동 자동 배포가 설정되어 있다면 Cloudflare 대시보드에서도 비활성화 확인이 필요하다. GitHub Actions gate만으로 Cloudflare 외부 자동 트리거까지 차단된다고 주장하지 않는다.
+- Cloudflare Pages가 Git 연동 상태라면 자동 Production 배포가 GitHub Actions와 별개로 실행될 수 있다.
+- 운영 배포 전에 `scripts/pagero-cloudflare-git-autodeploy-guard.mjs`를 Cloudflare 토큰으로 GET 검사한다. `source.config.production_deployments_enabled=true` 또는 설정 미확인 상태면 배포를 차단한다.
+- Git 자동 Production 배포 비활성화는 GitHub Actions `PageRo Cloudflare Auto-deploy Safety`의 `mode=disable`과 `I_APPROVE_DISABLE_PAGERO_CLOUDFLARE_AUTODEPLOY` 수동 승인을 요구한다. 변경 후 Cloudflare 프로젝트 설정을 GET 재조회해 `false` 확인. Pages Preview 배포 설정/도메인/브랜치는 변경하지 않는다.
+- Cloudflare 자체 Git 설정의 실제 운영 상태는 workflow 수동 실행 전까지 **미확인**이다. `main` 병합만으로 검사나 설정 변경이 실행됐다고 간주하지 않는다.
+- 계정/토큰이 부족하면 실패로 처리하며 브라우저의 Cloudflare 대시보드 Workers & Pages → inlet → Build → Branch control에서 자동 Production 배포 설정을 직접 확인할 수 있다.
 
 금지:
 

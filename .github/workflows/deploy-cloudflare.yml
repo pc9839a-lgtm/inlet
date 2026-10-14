@@ -147,6 +147,13 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
+      - name: Verify Cloudflare Git auto-deploy is disabled
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PAGERO_CLOUDFLARE_AUTODEPLOY_MODE: audit
+        run: node scripts/pagero-cloudflare-git-autodeploy-guard.mjs
+
       - name: Ensure production session secret
         shell: bash
         run: |

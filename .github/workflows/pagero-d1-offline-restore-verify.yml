@@ -1,0 +1,78 @@
+name: PageRo D1 Encrypted Backup Offline Restore
+
+on:
+  workflow_dispatch:
+    inputs:
+      backup_run_id:
+        description: GitHub Actions run ID of a successful D1 Migration Safety backup-only run
+        required: true
+        type: string
+      approval_phrase:
+        description: Type I_APPROVE_PAGERO_D1_OFFLINE_RESTORE
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: pagero-d1-offline-restore-drill
+  cancel-in-progress: false
+
+jobs:
+  encrypted-backup-restore:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    steps:
+      - name: Checkout reviewed main
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Fail closed without explicit signed-off restore verification
+        env:
+          SOURCE_RUN_ID: ${{ inputs.backup_run_id }}
+          APPROVAL_PHRASE: ${{ inputs.approval_phrase }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" && "$GITHUB_REF" == "refs/heads/main" ]] || exit 1
+          [[ "$SOURCE_RUN_ID" =~ ^[1-9][0-9]{0,17}$ ]] || exit 1
+          [[ "$APPROVAL_PHRASE" == "I_APPROVE_PAGERO_D1_OFFLINE_RESTORE" ]] || exit 1
+
+      - name: Download previous encrypted backup artifact, never plaintext
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.backup_run_id }}
+        run: |
+          set -euo pipefail
+          mkdir -p .tmp-pagero-d1-restore-verify/artifact
+          chmod 700 .tmp-pagero-d1-restore-verify
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name "d1-migration-safety-$SOURCE_RUN_ID" \
+            --dir .tmp-pagero-d1-restore-verify/artifact
+
+      - name: Verify encryption and import into ephemeral SQLite
+        env:
+          PAGERO_D1_BACKUP_ENCRYPTION_KEY: ${{ secrets.PAGERO_D1_BACKUP_ENCRYPTION_KEY }}
+          PAGERO_D1_RESTORE_APPROVAL: ${{ inputs.approval_phrase }}
+          PAGERO_D1_RESTORE_SOURCE_RUN_ID: ${{ inputs.backup_run_id }}
+        run: node scripts/pagero-d1-encrypted-backup-restore-check.mjs
+
+      - name: Upload counts-only recovery verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pagero-d1-offline-restore-evidence-${{ github.run_id }}
+          path: .tmp-pagero-d1-restore-verify/pagero-d1-restore-evidence.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Remove transient encrypted archive and any plaintext
+        if: always()
+        run: rm -rf .tmp-pagero-d1-restore-verify
