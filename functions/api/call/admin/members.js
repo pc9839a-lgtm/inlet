@@ -24,20 +24,34 @@ export async function onRequest({ request, env }) {
     const offset = (page - 1) * PAGE_SIZE;
     const pattern = `%${escapeLike(query.toLowerCase())}%`;
     const where = query
-      ? `WHERE lower(COALESCE(owner_id, '')) LIKE ? ESCAPE '\\'
-          OR lower(COALESCE(email, '')) LIKE ? ESCAPE '\\'
-          OR lower(COALESCE(phone, '')) LIKE ? ESCAPE '\\'`
+      ? `WHERE (lower(COALESCE(m.owner_id, '')) LIKE ? ESCAPE '\\'
+          OR lower(COALESCE(NULLIF(p.email, ''), a.email, '')) LIKE ? ESCAPE '\\'
+          OR lower(COALESCE(NULLIF(p.phone, ''), a.phone, '')) LIKE ? ESCAPE '\\')`
       : '';
+    // CallTag profile OR authenticated Google CallTag entitlement, never all Pagero users.
+    const membersFrom = `
+      FROM (
+        SELECT owner_id FROM calllink_profiles
+        UNION
+        SELECT e.owner_id FROM calllink_entitlements e
+        JOIN accounts aa ON aa.id = e.owner_id AND aa.status = 'active'
+      ) m
+      LEFT JOIN calllink_profiles p ON p.owner_id = m.owner_id
+      LEFT JOIN accounts a ON a.id = m.owner_id`;
     const bindings = query ? [pattern, pattern, pattern] : [];
 
-    const count = await env.DB.prepare(`SELECT COUNT(*) AS value FROM calllink_profiles ${where}`)
+    const count = await env.DB.prepare(`SELECT COUNT(*) AS value ${membersFrom} ${where}`)
       .bind(...bindings).first();
     const total = clampNumber(count?.value, 0, 10_000_000);
     const result = await env.DB.prepare(`
-      SELECT owner_id, email, phone, created_at, updated_at
-      FROM calllink_profiles
+      SELECT m.owner_id,
+             COALESCE(NULLIF(p.email, ''), a.email, '') AS email,
+             COALESCE(NULLIF(p.phone, ''), a.phone, '') AS phone,
+             COALESCE(NULLIF(p.created_at, ''), a.created_at, '') AS created_at,
+             COALESCE(NULLIF(p.updated_at, ''), a.updated_at, '') AS updated_at
+      ${membersFrom}
       ${where}
-      ORDER BY datetime(created_at) DESC, owner_id DESC
+      ORDER BY datetime(COALESCE(NULLIF(p.created_at, ''), a.created_at, '')) DESC, m.owner_id DESC
       LIMIT ? OFFSET ?
     `).bind(...bindings, PAGE_SIZE, offset).all();
     const rows = Array.isArray(result?.results) ? result.results : [];
