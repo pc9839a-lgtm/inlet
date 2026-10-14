@@ -102,6 +102,19 @@ const docsIndex = await readFile('docs/README.md', 'utf8');
 assert(docsIndex.includes('PAGERO_EDITOR_PRODUCT_DIRECTION_KO.md'), 'docs index must point to current editor product direction');
 assert(docsIndex.includes('PAGERO_INTERNAL_OPTIMIZATION_MASTER_KO.md'), 'docs index must point to current execution master');
 
+const productionRootSource = await readFile('functions/index.js', 'utf8');
+assert(
+  productionRootSource.includes('pretendardvariable-dynamic-subset.css')
+    && productionRootSource.includes('font-family: "Pretendard Variable", "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic"'),
+  'production PageRo root must load and explicitly use the Pretendard Korean webfont',
+);
+assert(
+  productionRootSource.includes('.pagero-exact-home .hero-title {')
+    && productionRootSource.includes('font-weight: 900 !important;')
+    && productionRootSource.includes('letter-spacing: -.055em !important;'),
+  'production PageRo hero typography must avoid synthetic 950 weight and over-compressed Korean tracking',
+);
+
 console.log(JSON.stringify({
   ok: true,
   scope: 'pagero-maintenance-contract',
