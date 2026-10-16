@@ -594,7 +594,12 @@ async function run() {
     })()`);
     await setViewport(client, 1280, 900, false);
     await client.send('Page.navigate', { url: `${origin}/app?tab=inbox` });
-    await waitForBrowser(client, `!!document.querySelector('.inbox-panel') && (document.body?.innerText || '').includes('상담 고객') && (document.body?.innerText || '').includes('예약 고객')`, 'inbox lead reflection');
+    await waitForBrowser(client, `!!document.querySelector('.inbox-panel') && document.querySelectorAll('.inbox-ops-table-row').length === 2 && (document.body?.innerText || '').includes('개인정보 가리기 켜짐')`, 'inbox masked lead reflection');
+    const maskedList = await evaluate(client, `(() => [...document.querySelectorAll('.inbox-ops-table-row')].map(row => row.innerText).join(' '))()`);
+    assert(!maskedList.includes('상담 고객') && !maskedList.includes('예약 고객') && !maskedList.includes('01033334444'), 'inbox list must mask customer PII by default');
+    assert(!(await evaluate(client, `!!document.querySelector('.inbox-ops-detail-head')`)), 'inbox must not expose full detail without deliberate selection');
+    await click(client, '.inbox-ops-table-row:first-child');
+    await waitForBrowser(client, `!!document.querySelector('.inbox-ops-detail-head') && ((document.querySelector('.inbox-ops-detail-head')?.innerText || '').includes('상담 고객') || (document.querySelector('.inbox-ops-detail-head')?.innerText || '').includes('예약 고객'))`, 'inbox deliberate detail reveal');
     const inboxMetrics = await evaluate(client, `(() => ({
       path: location.pathname,
       innerWidth,

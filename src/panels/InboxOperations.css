@@ -580,3 +580,39 @@
   .inbox-workspace-shell .inbox-ops-detail-actions { grid-template-columns: 1fr 1fr 38px; }
   .inbox-workspace-shell .lead-conflict-notice { align-items: stretch; flex-direction: column; }
 }
+
+
+.inbox-workspace-shell .inbox-ops-privacy-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  margin: -3px 0 12px;
+}
+.inbox-workspace-shell .inbox-ops-privacy-controls button {
+  min-height: 30px;
+  padding: 0 11px;
+  border: 1px solid var(--product-line);
+  border-radius: 8px;
+  background: var(--product-soft);
+  color: var(--product-text);
+  font-size: 11px;
+  font-weight: 850;
+}
+.inbox-workspace-shell .inbox-ops-privacy-controls small {
+  color: var(--product-muted);
+  font-size: 10px;
+}
+.inbox-workspace-shell .inbox-ops-pii-export-warning {
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid #e9c98a;
+  border-radius: 10px;
+  background: #fff9eb;
+  color: #73520a;
+}
+.inbox-workspace-shell .inbox-ops-pii-export-warning strong { display: block; font-size: 12px; }
+.inbox-workspace-shell .inbox-ops-pii-export-warning p { margin: 5px 0 10px; font-size: 11px; line-height: 1.5; }
+.inbox-workspace-shell .inbox-ops-pii-export-warning > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.inbox-workspace-shell .inbox-ops-pii-export-warning button { min-height: 32px; padding: 0 12px; border: 1px solid #e4c17e; border-radius: 7px; background: #fff; color: #73520a; font-size: 11px; font-weight: 850; }
+.inbox-workspace-shell .inbox-ops-pii-export-warning button:first-child { background: #73520a; border-color: #73520a; color: #fff; }
