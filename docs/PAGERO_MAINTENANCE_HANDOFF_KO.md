@@ -12,11 +12,13 @@
 현재 기준 요약:
 - E0~E4 및 P6 설정 UX는 완료 영역이다.
 - P5 개인 도메인 current-main 코드 재구성은 #352~#354로 완료됐다.
-- P5에서 남은 것은 production D1 migration, provider 환경 확인, 실제 테스트 도메인 attach/verify/detach smoke다. 모두 별도 승인 대상이다.
+- P5 production D1 migration·provider 환경 및 canonical router 운영 반영은 완료됐다. 남은 것은 별도 외부 테스트 도메인을 이용한 DNS/SSL attach/verify/detach live smoke이며, 사용자가 준비·승인할 때만 실행한다.
 - B3 production 신규 사용자 smoke는 사용자 요청으로 현재 스킵한다.
-- P5 운영 검증 뒤 제품 backlog는 P7 웹 결제 → P9 접근성 순서다.
+- P9 접근성 코드·회귀 검증은 완료됐다. P7 실제 PG 연동/청구 활성화는 사용자 결정 전 홀드이며, 진행할 검증·리스크는 `PAGERO_INTERNAL_OPTIMIZATION_MASTER_KO.md`의 '실제 미해결 항목' 표만 따른다.
 - 오래된 개인 도메인 draft #233~#235는 대체 PR이 병합되어 2026-10-02 closed 상태다.
 - 완료 영역을 "고도화" 명목으로 반복 패치하지 않는다. 실제 current-main 버그가 재현될 때만 다시 연다.
+- ED-R01~R10 수정 코드는 current main에 반영됐다. 별도 열려 있는 #411~#414를 중복 병합하거나 신규 개발 대상으로 재등록하지 않는다. 실제 Cloudflare staging 다중 탭 장시간 검증은 미완료다.
+- #417~#422의 배포·백업·관리자 인증 관련 코드 병합과 Cloudflare 설정/운영 배포/복원 실행 증빙은 구분한다. 운영 배포 여부가 확인되지 않으면 완료로 표시하지 않는다.
 
 ## 1. 운영 메인 보호
 
