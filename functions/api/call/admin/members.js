@@ -98,7 +98,7 @@ export async function onRequest({ request, env }) {
             recorded: Boolean(adminEntitlements.has(ownerId) || grantAudits.has(ownerId) || legacyManualGrant(legacyEntitlements.get(ownerId))),
             source: adminEntitlements.has(ownerId) ? 'admin' : grantAudits.has(ownerId) ? 'audit' : legacyManualGrant(legacyEntitlements.get(ownerId)) ? 'legacy_manual' : '',
           },
-          purchaseHistory: verifiedPurchases.get(ownerId) || { recorded: false, refunded: false, channel: '', productCode: '', verifiedAt: '' },
+          purchaseHistory: verifiedPurchases.get(ownerId) || { recorded: false, refunded: false, evidence: '', channel: '', productCode: '', verifiedAt: '' },
         };
       }),
       generatedAt: new Date().toISOString(),
@@ -174,7 +174,7 @@ async function loadVerifiedPurchases(db, ownerIds, tables) {
       for (const row of (Array.isArray(rows?.results) ? rows.results : [])) {
         const owner = String(row.owner_id || '');
         if (!owner || map.has(owner)) continue;
-        map.set(owner, { recorded: true, refunded: String(row.status) === 'refunded', channel: token(row.channel, 32), productCode: token(row.product_code, 80), verifiedAt: safeIso(row.last_verified_at) });
+        map.set(owner, { recorded: true, refunded: String(row.status) === 'refunded', evidence: 'subscription_verified', channel: token(row.channel, 32), productCode: token(row.product_code, 80), verifiedAt: safeIso(row.last_verified_at) });
       }
     } catch (error) { console.warn('calltag-admin-purchase-verification-unavailable', String(error?.message || 'query_failed').slice(0, 100)); }
   }
@@ -187,8 +187,9 @@ async function loadVerifiedPurchases(db, ownerIds, tables) {
         ORDER BY datetime(paid_at) DESC, id DESC`).bind(...ownerIds).all();
       for (const row of (Array.isArray(rows?.results) ? rows.results : [])) {
         const owner = String(row.owner_id || '');
-        if (!owner || map.has(owner)) continue;
-        map.set(owner, { recorded: true, refunded: false, channel: token(row.channel, 32), productCode: token(row.product_code, 80), verifiedAt: safeIso(row.paid_at) });
+        if (!owner) continue;
+        // A positive, provider-confirmed charge outranks subscription verification.
+        map.set(owner, { recorded: true, refunded: false, evidence: 'confirmed_charge', channel: token(row.channel, 32), productCode: token(row.product_code, 80), verifiedAt: safeIso(row.paid_at) });
       }
     } catch (error) { console.warn('calltag-admin-payment-events-unavailable', String(error?.message || 'query_failed').slice(0, 100)); }
   }
