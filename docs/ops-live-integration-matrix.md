@@ -42,8 +42,8 @@ Do not convert `skipped-live` into a local QA failure. A launch record may inclu
 
 - Worker 4: local SMTP mock fixture remains for lead delivery integrations and idempotency evidence through `npm run integration:mock:qa`.
 - Worker 1: AWS SES auth email delivery is the live signup/password-reset email path for Pages Functions.
-- Worker 1: delivery status inspection now has `/api/leads/delivery-logs` and `/api/leads/retry-queue`; future work is UI surfacing and retention cleanup.
-- Worker 2: expose AI live generation status clearly in settings.
+- Worker 1: `/api/leads/delivery-logs` and `/api/leads/retry-queue` are read-only and surfaced in the inbox delivery activity screen. UI never directly triggers server retry. Retention cleanup remains a separate operations decision.
+- Worker 2: AI settings distinguish stored key presence, connection test during the current session, and draft generation result. Offline tests do not prove live provider readiness.
 - Worker 3: add conversion event evidence checklist for public route.
 - Worker 4: keep this matrix updated whenever an integration is added.
 

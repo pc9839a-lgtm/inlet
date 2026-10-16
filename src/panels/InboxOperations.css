@@ -616,3 +616,22 @@
 .inbox-workspace-shell .inbox-ops-pii-export-warning > div { display: flex; flex-wrap: wrap; gap: 8px; }
 .inbox-workspace-shell .inbox-ops-pii-export-warning button { min-height: 32px; padding: 0 12px; border: 1px solid #e4c17e; border-radius: 7px; background: #fff; color: #73520a; font-size: 11px; font-weight: 850; }
 .inbox-workspace-shell .inbox-ops-pii-export-warning button:first-child { background: #73520a; border-color: #73520a; color: #fff; }
+
+/* INT-UX: read-only delivery activity in the inbox management surface. */
+.inbox-workspace-shell .inbox-ops-root.mode-delivery .inbox-ops-layout { grid-template-columns: 220px minmax(0, 1fr); }
+.inbox-ops-delivery { display: grid; gap: 18px; padding: 20px 22px; min-width: 0; }
+.inbox-ops-delivery-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.inbox-ops-delivery-top h3, .inbox-ops-delivery h4 { margin: 0; font-size: 16px; font-weight: 850; }
+.inbox-ops-delivery-top button { min-height: 40px; padding: 0 14px; border: 1px solid #dbe3ef; border-radius: 10px; background: #fff; }
+.inbox-ops-delivery-summary { display: flex; flex-wrap: wrap; gap: 10px; }
+.inbox-ops-delivery-summary span { padding: 10px 13px; background: #f3f6fa; border-radius: 10px; font-size: 13px; }
+.inbox-ops-delivery-summary strong { margin-left: 8px; }
+.inbox-ops-delivery-items { display: grid; gap: 8px; }
+.inbox-ops-delivery-entry { display: flex; gap: 12px; justify-content: space-between; align-items: flex-start; min-width: 0; padding: 13px 14px; border: 1px solid #e5eaf0; border-radius: 10px; }
+.inbox-ops-delivery-entry > div { display: grid; gap: 5px; min-width: 0; }
+.inbox-ops-delivery-entry b { font-size: 13px; font-weight: 800; }
+.inbox-ops-delivery-entry small { font-size: 12px; color: #64748b; overflow-wrap: anywhere; }
+.inbox-ops-delivery-entry em { flex: none; font-size: 12px; font-style: normal; font-weight: 800; color: #334155; }
+.inbox-ops-delivery-muted { margin: 0; font-size: 12px; color: #64748b; }
+.inbox-ops-delivery-alert { padding: 12px; border-radius: 10px; background: #fff4f4; color: #b91c1c; }
+@media (max-width: 800px) { .inbox-workspace-shell .inbox-ops-root.mode-delivery .inbox-ops-layout { grid-template-columns: 1fr; } .inbox-ops-delivery { padding: 16px; } }

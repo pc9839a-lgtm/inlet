@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { deliveryFailureHint, deliveryLeadRef, deliveryQueueText, deliveryStatusText } from '../src/lib/deliveryActivityView.js';
+
+const inbox = readFileSync(new URL('../src/panels/InboxPanel.jsx', import.meta.url), 'utf8');
+const panel = readFileSync(new URL('../src/panels/inbox/DeliveryActivityPanel.jsx', import.meta.url), 'utf8');
+const retry = readFileSync(new URL('../src/runtime/useLeadDeliveryRetryActions.js', import.meta.url), 'utf8');
+const ai = readFileSync(new URL('../src/ai/AiPanel.jsx', import.meta.url), 'utf8');
+
+assert.match(inbox, /label="전송 내역"/);
+assert.match(inbox, /<DeliveryActivityPanel page=\{page\} authUser=\{authUser\}/);
+assert.match(inbox, /!isServerLeadMode\(\) && failedDeliveryCount/);
+assert.match(inbox, /!isServerLeadMode\(\) && retryLeadDelivery/);
+assert.match(retry, /if \(isServerLeadMode\(\)\) return;/);
+assert.match(panel, /api\/leads\/delivery-logs/);
+assert.match(panel, /api\/leads\/retry-queue/);
+assert.match(panel, /projectAuthHeaders\(context\)/);
+assert.match(panel, /apiFetch\(/);
+assert.doesNotMatch(panel, /method: ['"]POST['"]|retryLeadDelivery|sendLeadIntegrations/);
+assert.match(ai, /setLiveCheck\('verified'\)/);
+assert.match(ai, /setLiveCheck\('failed'\)/);
+assert.match(ai, /setGenerationState\('success'\)/);
+assert.match(ai, /serverKeyLoading/);
+assert.equal(deliveryStatusText('dead-letter'), '재시도 종료');
+assert.equal(deliveryQueueText({ canRetry: true, nextRetryAt: '2026-10-17T00:00:00Z' }), '재시도 대기');
+assert.equal(deliveryQueueText({ deadLetter: true, canRetry: true }), '재시도 종료');
+assert.equal(deliveryFailureHint({ error: 'POST https://private.invalid?token=secret failed' }), '외부 전송 오류');
+assert.equal(deliveryFailureHint({ error: 'upstream 429 rate limit' }), '요청 제한');
+assert.equal(deliveryLeadRef('my-sensitive-lead-123456789'), '…456789');
+console.log('[pagero:int-ux:qa] PASS: scoped read-only activity, safe retry boundary, AI live status and sanitized labels');

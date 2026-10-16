@@ -25,6 +25,8 @@ import { currentMonthValue, monthDateRange } from '../lib/monthRange.js';
 import { maskLeadContact, maskLeadName } from '../lib/leadPrivacy.js';
 import { isTestTraffic, trafficSourceLabel } from '../lib/trafficAttribution.js';
 import InboxConnectionsPanel from './inbox/InboxConnectionsPanel.jsx';
+import DeliveryActivityPanel from './inbox/DeliveryActivityPanel.jsx';
+import { isServerLeadMode } from '../config/runtimeConfig.js';
 import IntakeDuplicatePolicyPanel from './inbox/DuplicatePolicyPanel.jsx';
 import {
   fmtDateOnly,
@@ -369,6 +371,7 @@ export default function InboxPanel({
           <nav className="inbox-ops-side-nav secondary" aria-label="접수함 관리">
             <SidebarItem active={sectionMode === 'duplicate'} icon={SlidersHorizontal} label="중복 정책" onClick={() => setSectionMode('duplicate')} />
             <SidebarItem active={sectionMode === 'connections'} icon={Settings2} label="외부 연동" onClick={() => setSectionMode('connections')} />
+            <SidebarItem active={sectionMode === 'delivery'} icon={RefreshCw} label="전송 내역" onClick={() => setSectionMode('delivery')} />
           </nav>
 
           <div className="inbox-ops-side-mini">
@@ -471,7 +474,7 @@ export default function InboxPanel({
                 </div>
               ) : null}
 
-              {failedDeliveryCount > 0 && retryFailedDeliveries ? (
+              {!isServerLeadMode() && failedDeliveryCount > 0 && retryFailedDeliveries ? (
                 <button type="button" className="inbox-ops-retry-banner" onClick={retryFailedDeliveries} disabled={syncing}>
                   알림 전송 실패 {failedDeliveryCount}건 다시 보내기
                 </button>
@@ -600,7 +603,7 @@ export default function InboxPanel({
                       <h4>알림 전송</h4>
                       <LeadInfoRow label="상태" value={selectedDeliveryInfo.label} />
                       <LeadInfoRow label="결과" value={selectedDeliveryInfo.summary} />
-                      {retryLeadDelivery ? <button type="button" onClick={() => retryLeadDelivery(selectedLead)}>다시 보내기</button> : null}
+                      {!isServerLeadMode() && retryLeadDelivery ? <button type="button" onClick={() => retryLeadDelivery(selectedLead)}>다시 보내기</button> : null}
                     </section>
                   ) : null}
 
@@ -636,11 +639,13 @@ export default function InboxPanel({
         ) : (
           <main className="inbox-ops-management">
             <header>
-              <h2>{sectionMode === 'duplicate' ? '중복 접수 정책' : '외부 연동'}</h2>
+              <h2>{sectionMode === 'duplicate' ? '중복 접수 정책' : sectionMode === 'delivery' ? '전송 내역' : '외부 연동'}</h2>
             </header>
             {sectionMode === 'duplicate'
               ? <IntakeDuplicatePolicyPanel page={page} authUser={authUser} updatePage={updatePage} />
-              : <InboxConnectionsPanel page={page} authUser={authUser} updateIntegrations={updateIntegrations} onSavePage={onSavePage} />}
+              : sectionMode === 'delivery'
+                ? <DeliveryActivityPanel page={page} authUser={authUser} />
+                : <InboxConnectionsPanel page={page} authUser={authUser} updateIntegrations={updateIntegrations} onSavePage={onSavePage} />}
           </main>
         )}
       </div>
