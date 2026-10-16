@@ -4,7 +4,7 @@ await runSmoke('server-smoke-events', async ({ baseUrl }) => {
   const project = { projectId: 'smoke-events', slug: 'smoke-events' };
   const query = new URLSearchParams(project).toString();
   const events = [
-    { id: 'event-a', type: 'page_view', label: 'home', channel: 'direct', device: 'desktop', createdAt: new Date().toISOString() },
+    { id: 'event-a', type: 'page_view', label: 'home', channel: 'direct', device: 'desktop', createdAt: new Date().toISOString(), phone: '010-9876-5432', email: 'private@example.com', sourceUrl: 'https://example.com/?email=private%40example.com', details: { memo: 'secret message' } },
     { id: 'event-b', type: 'cta_click', label: 'call', channel: 'direct', device: 'mobile', createdAt: new Date().toISOString() },
     { id: 'event-c', type: 'form_submit', label: 'consult', channel: 'ads', device: 'mobile', createdAt: new Date().toISOString() },
   ];
@@ -13,6 +13,10 @@ await runSmoke('server-smoke-events', async ({ baseUrl }) => {
     const { res } = await json({ baseUrl }, 'POST', '/api/events', { project, event });
     assert(res.ok, `event save failed: ${event.id}`);
   }
+
+  const privacyEvent = await json({ baseUrl }, 'GET', `/api/events?${query}&limit=10`);
+  const privacyRaw = JSON.stringify(privacyEvent.data.events || []);
+  assert(!privacyRaw.includes('private@example.com') && !privacyRaw.includes('010-9876-5432') && !privacyRaw.includes('secret message') && !privacyRaw.includes('sourceUrl'), 'analytics event storage must not return arbitrary PII');
 
   const duplicateEvent = await json({ baseUrl }, 'POST', '/api/events', { project, event: { ...events[1], id: 'event-b-dup' } });
   assert(duplicateEvent.data.event?.deduped === true, 'event dedupe failed');

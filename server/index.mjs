@@ -11,6 +11,7 @@ import { duplicateWindowMs as duplicatePolicyWindowMs, isReservationLead as isRe
 import { buildStats as buildStatsSummary } from '../src/lib/statsMetrics.js';
 import { trafficAttributionFromUrl, trafficChannelFromItem } from '../src/lib/trafficAttribution.js';
 import { appendJsonlRecord, queryJsonlRecords, readJsonlRecords, writeJsonlRecords } from './storage/jsonlAdapter.mjs';
+import { sanitizeAnalyticsEvent } from '../src/lib/analyticsEventPrivacy.js';
 import { createStorageRuntime, storageRuntimeCoverage, storageRuntimeHealth, storageRuntimePlan } from './storage/runtimeAdapter.mjs';
 import { aggregateD1Stats, deleteD1AiDraft, deleteD1Lead, findD1LeadsByContact, findD1LeadsByIntakeSignals, getD1AccountByEmail, getD1AccountByPhone, getD1Lead, getD1PageBySlug, getD1PageRevision, getD1ProjectAccess, getD1PublicPageBySlug, insertD1AuditLog, insertD1BlockedLeadSubmission, insertD1Event, insertD1PageRevision, listD1AiDrafts, listD1BlockedLeadSubmissions, listD1DeliveryLogs, listD1DeliveryRetryQueue, listD1Events, listD1Leads, listD1OwnershipTransferRequests, listD1PageRevisions, replaceD1ProjectMembers, upsertD1Account, upsertD1AiDraft, upsertD1Invite, upsertD1Lead, upsertD1OwnershipTransferRequest, upsertD1Page, upsertD1Project, upsertD1ProjectMember } from './storage/d1Adapter.mjs';
 import { sendSesEmail } from '../functions/api/_ses.js';
@@ -2724,27 +2725,8 @@ async function saveEvent(body = {}) {
   }
 
   const project = hasProject(body.project) ? normalizeProject(body.project) : {};
-  const sourceAttribution = trafficAttributionFromUrl(event.sourceUrl || event.source_url || event.url || '');
-  const attribution = {
-    ...sourceAttribution,
-    utmSource: event.utmSource || event.utm_source || sourceAttribution.utmSource,
-    utmMedium: event.utmMedium || event.utm_medium || sourceAttribution.utmMedium,
-    utmCampaign: event.utmCampaign || event.utm_campaign || sourceAttribution.utmCampaign,
-  };
-  const saved = {
-    ...event,
-    id: event.id || randomId(),
-    type: String(event.type || ''),
-    label: String(event.label || ''),
-    channel: String(attribution.utmSource || 'direct'),
-    utmSource: String(attribution.utmSource || ''),
-    utmMedium: String(attribution.utmMedium || ''),
-    utmCampaign: String(attribution.utmCampaign || ''),
-    sourceUrl: String(event.sourceUrl || event.source_url || event.url || ''),
-    device: String(event.device || 'desktop'),
-    createdAt: event.createdAt || new Date().toISOString(),
-    ...(hasProject(project) ? { project } : {}),
-  };
+  const sanitized = sanitizeAnalyticsEvent(event);
+  const saved = { ...sanitized, id: sanitized.id || randomId() };
   if (storageRuntime.active === 'd1' && hasProject(project)) {
     return insertD1Event(storageRuntime.d1, saved, {
       projectId: project.projectId,

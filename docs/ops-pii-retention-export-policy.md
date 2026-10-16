@@ -28,7 +28,7 @@ Owner: Worker 4 policy, Worker 1 data implementation, Worker 2 operator UX.
 - Leads and reservations: 180 days default.
 - Delivery logs: 30 days default, keep status summary longer if needed.
 - Events without PII: 13 months default.
-- Current PageRo event rows are not yet guaranteed PII-free because `payload_json` preserves the submitted event object. Until the event write contract is narrowed to an analytics-only schema, automated runtime retention uses a stricter 180-day maximum for all PageRo events.
+- Historical PageRo event rows may contain PII because earlier `payload_json` preserved arbitrary submitted fields. EVT-MIN now narrows **new** D1 and local JSONL event writes to explicitly approved analytics fields; raw URLs, free-text labels not in the approved category set, memo, answers, contact details and unrecognized keys are dropped. **Historical rows remain subject to the existing conservative 180-day maximum; no backfill or production deletion has been executed.**
 - AI drafts: 30 days default.
 - Failed integration payloads: 14 days default unless operator retries.
 - JSONL backups containing leads: 30 days default unless retained for incident investigation.

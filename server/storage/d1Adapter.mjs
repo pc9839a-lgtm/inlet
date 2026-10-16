@@ -1,3 +1,4 @@
+import { sanitizeAnalyticsEvent } from '../../src/lib/analyticsEventPrivacy.js';
 import { trafficAttributionFromUrl } from '../../src/lib/trafficAttribution.js';
 
 export const D1_SCHEMA_TABLES = [
@@ -489,13 +490,13 @@ export function decodeD1BlockedLeadSubmission(row = {}) {
   };
 }
 
-export function encodeD1Event(event = {}, context = {}) {
-  const createdAt = String(event.createdAt || event.created_at || new Date().toISOString());
-  const sourceAttribution = trafficAttributionFromUrl(event.sourceUrl || event.source_url || event.url || '');
-  const utmSource = String(event.utmSource || event.utm_source || sourceAttribution.utmSource || '').trim().toLowerCase();
-  const utmMedium = String(event.utmMedium || event.utm_medium || sourceAttribution.utmMedium || '').trim().toLowerCase();
-  const utmCampaign = String(event.utmCampaign || event.utm_campaign || sourceAttribution.utmCampaign || '').trim().toLowerCase();
-  const explicitChannel = String(event.channel || event.sourceChannel || event.source || '').trim().toLowerCase();
+export function encodeD1Event(inputEvent = {}, context = {}) {
+  const event = sanitizeAnalyticsEvent(inputEvent);
+  const createdAt = event.createdAt;
+  const utmSource = event.utmSource;
+  const utmMedium = event.utmMedium;
+  const utmCampaign = event.utmCampaign;
+  const explicitChannel = event.channel;
   return {
     id: String(event.id || d1Id()),
     project_id: String(context.projectId || event.projectId || event.project?.projectId || ''),
@@ -507,7 +508,7 @@ export function encodeD1Event(event = {}, context = {}) {
     dedupe_key: String(event.dedupeKey || event.dedupe_key || ''),
     channel: utmSource || explicitChannel || 'direct',
     device: String(event.device || event.deviceType || 'unknown').trim().toLowerCase() || 'unknown',
-    payload_json: encodeD1Json({ raw: { ...event, utmSource, utmMedium, utmCampaign } }),
+    payload_json: encodeD1Json({ raw: event }),
     created_month: d1CreatedMonth(event.createdMonth || createdAt),
     created_at: createdAt,
   };
