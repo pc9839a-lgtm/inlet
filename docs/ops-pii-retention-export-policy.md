@@ -98,7 +98,7 @@ Required warning copy:
 - Audit retention: the existing dedicated audit retention endpoint/workflow remains separate and keeps its 730-day default/minimum policy.
 - Production deletion is not enabled by code alone. The production environment must supply the dedicated secret and explicit write/approval gates.
 - Scheduled PageRo data and audit retention workflows run dry-run only, regardless of configured persistent variables. Actual deletes require an explicitly approved manual workflow dispatch; do not let GitHub Variables implicitly authorize scheduled deletion.
-- JSONL backup/quarantine expiry and D1 restore verification remain part of P8 backup/restore closeout.
+- JSONL backup/quarantine expiry is now provided as an approval-gated, dry-run-first local adapter utility (see P8-R below); **actual production cleanup has not been executed**. D1 restore verification remains an independent P8 backup/restore closeout.
 - Worker 1: add delivery log export endpoint or CLI if operators require a separate log export.
 - Worker 2: add masking toggle and export warning modal.
 - Worker 2: add delete confirmation copy that names PII impact.
@@ -113,3 +113,10 @@ Required warning copy:
 - `npm run pagero:data-retention:run` is live-safe and dry-run unless the explicit write gate is enabled.
 - Manual: export sample CSV and inspect in Excel/Sheets.
 - Manual: verify lead deletion removes its associated delivery retry state.
+
+JSONL file retention **execution** (`P8-R`, local JSONL adapter only):
+
+- `node scripts/pagero-jsonl-retention.mjs --data-dir /absolute/approved/data/root` runs a read-only **dry-run** by default. The root and one-level `projects/<projectId>` scopes are inspected; only generated `leads.jsonl.*.bak`, `events.jsonl.*.bak`, and `*-invalid.jsonl` in `.backups`/`.quarantine` are eligible. Symlinks, other file types, and live `*.jsonl` are excluded.
+- Files older than 30 days in `.backups` or 14 days in `.quarantine` are eligible **except** that the newest two backups (per record type/project) and newest one quarantine file (per record type/project) remain protected for recovery. This recovery exception can extend past the default retention interval and must be reviewed in privacy operations.
+- Execution is **not scheduled**. Explicit `--execute` requires `PAGERO_JSONL_RETENTION_WRITE=1`, `PAGERO_JSONL_RETENTION_APPROVAL=I_APPROVE_PAGERO_JSONL_RETENTION`, and `PAGERO_JSONL_RETENTION_ALLOWED_ROOT` exactly matching the absolute data root. At most 50 candidate files per run, oldest first, with metadata revalidation. Do not approve or run deletion on customer data without separate authorization and backup/recovery review.
+- Does **not** touch Cloudflare D1, Pages, R2, or production data unless an operator explicitly points it at an approved mounted data directory with the above write gates. Test command: `node scripts/pagero-jsonl-retention-quality-check.mjs`.
