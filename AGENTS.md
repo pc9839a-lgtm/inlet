@@ -83,6 +83,14 @@ side effect of unrelated work. Protected scope includes:
 SEO-only changes may update `public/robots.txt`, `public/sitemap.xml`,
 `public/ads.txt`, and crawler headers when they do not alter the rendered main.
 
+## Shared `inlet` production release — code gate complete, account verification open
+
+PR #429 (merged to main on 2026-10-16) retired the alternate `inlet` Pages writer workflows, guarded the CallTag Access bootstrap/OTP setup with manual approval, and expanded `scripts/pagero-production-deploy-gate-quality-check.mjs` to inspect workflow writers. **Do not re-open the same code patch** without a reproducible current-main regression.
+
+**Still open:** the GitHub `pagero-main-protection` ruleset was active but targeted no branch (`conditions.ref_name.include=[]`) when last checked; `main.protected=false`. The Cloudflare Pages `inlet` Git auto-deploy switch, `production` environment reviewer enforcement, and current deployed SHA have not been verified. These require authorized administration/operational evidence and are distinct from PR #429's merged code.
+
+The only intended `inlet` release path is reviewed, exact-SHA manual `.github/workflows/deploy-cloudflare.yml` with passing current-main QA. Never assume a merge equals a Cloudflare deployment. Pending *patches*, *operational verifications*, and *intentional holds* are managed only in `docs/PAGERO_INTERNAL_OPTIMIZATION_MASTER_KO.md`.
+
 ## Main Integration Rules
 
 Do not deploy a dirty worktree. Use a clean integration worktree and preserve

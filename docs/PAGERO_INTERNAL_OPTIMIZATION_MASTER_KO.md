@@ -1,7 +1,7 @@
 # PageRo 내부 기능 / 작업 기준
 
 - 상태: 현재 실행 기준 / 단일 소스
-- 갱신일: 2026-10-12 KST
+- 갱신일: 2026-10-16 KST
 - 저장소: `pc9839a-lgtm/inlet`
 - 운영 브랜치: `main`
 - 운영 도메인: `https://pagero.kr/`
@@ -142,6 +142,48 @@ PageRo 내부 제품 UI에서는 설명문보다 기능명·상태·값을 우�
 
 ## 7. 현재 남은 실제 backlog
 
+### 미해결 패치 및 검증 목록 — current-main 검증 기준 (2026-10-16)
+
+> **현재 실행 기준표.** “패치”는 코드/UI 보완이 필요한 항목, “운영 설정·검증”은 이미 있는 코드의 실운영 증거/관리자 설정을 확인하는 작업이다. 재현되지 않은 문제는 장애로 단정하지 않는다. 완료 코드의 중복 재개발을 금지한다. `main`/실제 배포 SHA는 작업 직전에 재조회한다.
+>
+> **완료 → 제외:** DEP-00(기존 GitHub Actions `inlet` 자동 배포·main 자동 push 경로 퇴역), DEP-01의 **코드 측 자동 설정 쓰기 제한**은 PR #429가 `main`에 2026-10-16 병합되어 `qa:all` 및 브라우저 QA 성공. #417~#422의 수동 배포·암호화 백업·SQLite 복구 검사 코드도 완료. **Cloudflare 자체 Git 자동배포 OFF, 실제 운영 배포 버전 및 GitHub 관리자 규칙 적용 여부는 별개 검증 대상.**
+>
+> **GitHub ruleset 상태:** `pagero-main-protection`은 active지만 2026-10-16 조회 시 `conditions.ref_name.include=[]`로 대상 브랜치가 비어 있음. `main.protected=false`. 필수 QA 6개만 지정되고 `strict_required_status_checks_policy=false`; `accessibility-regression`은 미포함. 이것은 **설정 미완료**이며 GitHub 관리 화면 권한이 필요함.
+
+#### A. 지금 남은 실제 패치 (코드·UI)
+
+| ID | 우선 | 패치할 내용 | 근거·수정 영역 | 완료 기준 |
+| --- | --- | --- | --- | --- |
+| P8-R | **P1** | 백업/격리 JSONL 파일의 보존기한 정리 실행기 연결 | `docs/ops-pii-retention-export-policy.md`, `ops-storage-migration-policy.md`. `.backups` 30일, `.quarantine` 14일 정책만 명시되어 있고 cleanup 작업 미완료 | dry-run, 안전한 경로 한정, 만료 파일만 처리, 보존/복원 대상 보호, QA. 실제 고객 자료 삭제·운영 스케줄 쓰기는 별도 승인 |
+| PII-UI | **P1 / 코드 상태 재확인 후** | 리드/예약 목록의 기본 마스킹, CSV 내보내기 개인정보 경고, 삭제 시 백업·격리 사본 보존 안내 | `ops-pii-retention-export-policy.md`에 Worker 2 구현 작업으로 남음. 현재 화면/코드에 이미 반영된 부분은 완료 처리하고 **미구현 조각만** 패치 | 전화·메일·주소 목록 기본 보호, 상세 열기 구분, CSV 경고, 삭제 영향 안내를 실제 UI/QA로 증명 |
+| EVT-MIN | **P2** | 이벤트 `payload_json`의 PII 최소화 및 분석 전용 필드 계약 | 정책상 현 event 제출 객체가 PII-free 보장되지 않음. 현행 180일 보수적 보존은 **이미 완료**, 되돌리지 않음 | 이벤트 필드 allowlist·불필요한 개인정보 제외·수집/전환 회귀 QA, 적용 전후 데이터 호환성 검증 |
+| ST-MIG | **P2 / 사용 시** | 브라우저에 남은 로컬 leads/events의 서버 이관 방법 및 사용자 확인 배너 | `ops-storage-migration-policy.md` Worker 1/2 미완료 항목. 기존 서버 페이지 저장·복구 코드는 완료 | 중복 없이 export/import 또는 안내된 CLI, 마이그레이션 확인, 실패 시 기존 데이터 유지, 실제 기능 사용 시에만 작업 |
+| INT-UX | **P2 / 활성 기능 한정** | 전달 로그/재시도 큐 노출 및 AI 생성 live 상태 표시 | `ops-live-integration-matrix.md`의 향후 UI 작업. `/api/leads/delivery-logs`, `/api/leads/retry-queue`는 이미 존재하므로 **API 재구현 금지** | 기존 API 활용, 전달 실패/재시도 및 live 모드 상태를 사용자에게 구별해 표시하고 UI QA 통과 |
+| DOC-01 | **P2 / 저장소 정리** | 대체된 열린 PR 정리 및 문서의 오래된 완료 상태 제거 | #415가 ED-R08~R11 반영. #411~#414는 중복, #368~#370은 오래된 stacked PR | main diff/요구사항 재확인 후 중복 PR만 종료; E5 및 미완료 복구 작업은 무조건 완료 처리하거나 임의 병합하지 않음 |
+
+#### B. 코드 재개발이 아닌 운영 설정·실증 (별도 승인 필요)
+
+| ID | 우선 | 남은 확인 | 완료 조건 |
+| --- | --- | --- | --- |
+| OPS-02 | **P1** | GitHub `main` ruleset 실제 적용, required status checks·최신 main 재검사, `production` environment reviewers | `main` 대상 지정, 필수 검증 중 `accessibility-regression` 포함 여부 결정/설정, merge/force-push 동작 확인. required reviewers는 권한·요금제 지원 범위 확인. 현재 **설정 미완료** |
+| OPS-01 | **P1** | Cloudflare Pages `inlet`의 Git 자동 Production 배포 OFF 여부 | 관리 콘솔 또는 승인된 `PageRo Cloudflare Auto-deploy Safety` **audit** 결과 확보. GitHub Actions 차단과 별개 |
+| OPS-05 | **P1** | 실제 Cloudflare 운영 deployment SHA·운영 버전 및 관리자 세션/폰트 반영 | 배포 기록과 공개 읽기 전용 검사 일치. PR #429 `main` 병합만으로 Cloudflare Pages 코드 반영을 가정하지 않음 |
+| OPS-03 | **P1** | 운영 D1 암호화 백업 artifact → 격리 SQLite 복원 증거 | 성공한 `backup-only` run ID, 해시/HMAC·SQLite integrity/FK 결과 등. 운영 D1 write 금지 |
+| OPS-04 | **P1** | 일회용(disposable) Cloudflare D1 실제 복구 훈련 | 별도 승인 후 일회용 DB에서 import/read/write/cleanup 검증. 고객 운영 DB에 시험 복원 금지 |
+| ED-V01 | **P1** | staging 실로그인 편집기 두 탭·30분·느린 네트워크·저장 전환 실사용 검증 | 테스트 전용 계정/데이터, 발행 readback 및 무손실 결과. ED-R01~R11 코드 재구현 금지 |
+| INT-V | **P2** | 사용 중인 SES·외부 webhook·광고 계정·AI 실환경 검증 | 실제 활성 연동만 테스트하고 `pass/fail/skipped-live`와 근거 기록. mock QA 통과를 live 통과라고 기록하지 않음 |
+| P5-V | **P2 / 조건부** | 개인 도메인 DNS/SSL attach→verify→detach | 별도 테스트 도메인 확보/승인 후 실행. P5 코드·migration/provider는 완료 |
+| P8-Q | **P3 / 규모 증가 시** | 운영 대량 리드 SQL query plan 및 CSV 응답 성능 | 데이터 규모 조건 충족 시 읽기 전용 검증. 10k/50k fixture·keyset·streaming 코드 완료 |
+
+#### C. 명시적으로 보류한 과제 — 버그/지금 할 패치에서 제외
+
+- **B3:** 회원가입→인증→첫 발행→테스트 문의 production E2E는 사용자 요청으로 현재 스킵.
+- **P7:** PG 사업자 선정·실제 자동 결제·청구 활성화는 승인 전 홀드. 주문 원장/차단 기반은 구현 완료.
+- **E5:** 페이지별 A/B test는 실사용 전환 데이터 확보 후 진행. 기존 #369~#370 자동 병합 금지.
+- **AI 확장:** E4 first-page 구현 완료. 사용자 재요청 이전에는 확장 보류.
+
+**반복 패치 금지:** E0~E4, P5 기반, P6, P8-1~4, P9, ED-R01~R11의 이미 병합된 범위, #417~#422, #429. 실제 current-main 재현 버그가 나오면 새 ID로 등록하고 증거와 영향 범위를 적는다.
+
 ### B3 — 신규 사용자 production smoke
 
 현재 **사용자 요청으로 스킵**한다.
@@ -267,47 +309,29 @@ P8-1~4의 코드/회귀 계약은 완료했다. production 실데이터 삭제�
 - conversion comparison
 - winning variant publish
 
-### 편집기 안정화 — 상시 리스크 레지스터
+### 편집기 저장·복구 — 완료 코드와 검증 공백
 
-**기준:** 현재 `main`의 실제 편집기·저장 경로를 점검한 내용. 기존 E1/E2/P6 완료 판정은 유지한다. 여기서 '위험'은 사용자에게 이미 발생했다고 확인된 장애를 뜻하지 않는다. 코드상 **확인된 취약 경로**와 아직 **실사용 재현이 필요한 시나리오**를 구분한다. 우선순위는 데이터 유실 가능성(P1) → 저장 오작동(P1) → 편집 체감(P2) 순서다. 이 표는 현재 작업 기준이며, 수정 후에는 회귀 테스트와 함께 해당 항목의 상태를 갱신한다.
-
-**이미 반영된 보호 조건 (현재 main):**
-
-- 저장된 같은 페이지의 공개 주소(slug)를 바꿔도 저장 작업의 대상 식별은 page ID 기준으로 유지한다. `src/runtime/pageOperationIdentity.js`.
-- 브라우저가 `window.localStorage` 프로퍼티 접근부터 차단해도 임시 초안 코드가 예외로 중단되지 않고 저장 실패를 명시한다. `src/runtime/pageDraftStore.js`.
-- A 페이지 저장 중 B로 이동해 B의 저장을 **명시적으로** 누른 경우, B가 여전히 활성 페이지라면 큐를 진행하고 A의 오래된 응답은 B에 반영하지 않는다. `src/runtime/usePageSaveAction.js`, `saveQueuePolicy.js`.
-- 위 조건은 코드/오프라인 회귀 기준으로 반영됐다. 모든 브라우저·여러 탭·느린 네트워크의 실제 사용 시나리오가 전부 검증됐다는 뜻은 아니다.
-
-| ID | 우선순위 | 위험 발생 조건 (패치 이전 포함) | 현재 상태 | 조치 및 추가 확인 기준 |
-| --- | --- | --- | --- | --- |
-| ED-R01 | **P1** | (패치 전) 일반 발행(`usePageSaveAction.js`)과 스타일 발행(`usePersistStyleSaveAction.js`)은 각각 별도의 `useRef` 대기열을 사용하고 **동일 페이지에 각각 `persistPage`**를 호출한다. 빠르게 번갈아 누르면 서버 revision 경쟁·충돌 UI가 발생할 위험이 있다. | **#404 패치 완료 · main 병합 · 전체 CI 통과**. 실사용 장시간/교차 탭 검증은 별도 | 두 발행 경로를 **페이지별 단일 직렬 쓰기 큐**로 통합. 일반→스타일 / 스타일→일반 동시 클릭 시 최종 변경 모두 저장되고 불필요한 충돌이 없어야 한다. |
-| ED-R02 | **P1** | (패치 전) 스타일 큐는 `queuedStyleSaveRef`라는 boolean만 기록한다. A 스타일 저장 중 B로 이동한 다음 B 저장을 눌러도, A 결과가 `inactive-page`이면 `nextTrailingSaveRequest`가 큐를 중단한다. #402에 해당하는 일반 페이지 큐 보호가 스타일 경로에는 없다. | **#405 패치 완료 · main 병합 · 전체 CI 통과**. 실제 B→C 전환 검증은 별도 | 스타일 대기 요청에도 프로젝트·페이지 identity 기록. **현재 활성 B의 명시적 저장만** 이어서 처리하고 B→C로 이동하면 폐기. |
-| ED-R03 | **P1** | (패치 전) 임시 초안은 탭별 `sourceId`를 붙이지만, 모든 탭이 **같은 `PAGE_DRAFTS_KEY` JSON envelope**를 읽어 수정 후 통째로 `setItem` 한다(`pageDraftStore.js`). 탭 A/B가 비슷한 시점에 읽고 쓰면 뒤의 쓰기가 앞 탭의 초안을 덮을 수 있다. 현재 다중 탭 QA는 **순차 쓰기** 검사다. | **#406 패치 완료 · main 병합 · 전체 CI 통과**. 탭 복제/다중 브라우저 조합은 별도 | 탭별 저장 키 분리 또는 재읽기/병합·변경 통지 프로토콜. 교차 탭 동시 초안 저장 100회에서도 A/B 복구본이 모두 남아야 한다. |
-| ED-R04 | **P1** | (패치 전) 편집 대상 A가 비활성화된 뒤 A의 서버 저장이 실패하면, `usePageSaveAction.js` 및 스타일 저장 경로는 화면 분리를 우선하여 **해당 분기에서 복구 초안을 직접 확보하지 않고 반환**한다. 별도 자동 초안 flush가 실패했을 때 A 편집분을 잃을 수 있다. | **#407 패치 완료 · main 병합 · 전체 CI 통과**. 저장소 제한+전환 실사용 검증은 별도 | 비활성 **실패한 A의 원본**만 안전하게 초안 보존하고 현재 B 화면은 변경하지 않기. 네트워크 실패·페이지 전환·저장소 제한 조합에서 데이터 보존 판정. |
-| ED-R05 | **P2** | `pageEditHistory.js`의 ID 없는 페이지 scope는 소유자·프로젝트가 같으면 모두 `unsaved`로 묶인다. 같은 작업공간의 여러 신규 임시 페이지에서 Undo/Redo 기록이 섞일 여지가 있다. | scope 규칙 확인, UI 재현 필요 | 신규 페이지별 임시 고유 ID를 history scope에 사용. 새 페이지 B에서 Undo가 A의 내용을 복구하지 않아야 한다. |
-| ED-R06 | **P2** | 다른 탭·기기에서 발생한 저장 확인(`usePageRemoteFreshness.js`)은 **focus / visibilitychange 시점**에만 요청한다. 탭을 계속 띄운 상태에서는 원격 변경 알림이 늦을 수 있다. 서버의 revision 충돌 차단과는 별개인 사용성 위험이다. | 이벤트 트리거 확인, 실제 지연 측정 필요 | `BroadcastChannel`/storage 알림 또는 제한된 주기 확인을 검토. 원격 변경과 현재 편집분이 다른 경우 **자동 덮어쓰지 않고** 충돌 안내. |
-| ED-R07 | **P2** | 일반 발행 대기열에서 `pageOverride`가 지정된 요청은 override 객체를 저장해 두었다가 재사용한다. 대기 중 동일 B 페이지의 추가 수정이 생기면 오래된 override 필드가 최신 내용을 덮을 가능성이 있다. | override 전달 코드 확인, 변경 필드 재현 필요 | override의 패치 의도와 클릭 당시 버전을 분리하거나 큐 소비 시 최신 페이지에 안전 병합. 저장 완료 후 마지막 입력값 일치. |
-| ED-R08 | **P2** | 브라우저 저장소 사용 불가·용량 한도 초과 시 안내와 오류 처리는 존재하지만 **영속 임시 초안이 없는 상태 자체**는 남는다. 즉 이 상태에서 브라우저를 종료하면 서버 미발행 편집은 복원되지 않을 수 있다. | **PR #411 구현 · QA 6개 job 통과(해당 커밋)**. 저장소 차단·파일 복원 실브라우저 수동 검증은 별도 | 편집기 헤더에서 계정/페이지 고정 JSON 백업, 파일 복원 시 계정·페이지 검사/명시적 확인/서버 revision 보호. 복원 후 미발행 상태를 유지하며 저장소 실패를 성공으로 표시하지 않는다. |
-| ED-R09 | **P2** | (패치 전) `pageEditHistory.js`는 페이지 전체를 `structuredClone`/JSON 복제하여 Undo 기록 최대 50개를 보관했다. 이미지/블록이 많으면 반복 편집 때 메모리 사용이 증가했다. | **변경 필드 기반 역방향 delta 및 8 MiB 예산 구현 · 해당 커밋 CI 6개 작업 통과**. 실제 브라우저 입력 지연은 추가 측정 필요 | 128블록·대형 이미지·50회 Undo/Redo 자동 회귀에서 전체 이미지 데이터 중복을 회피하고, 블록 변경·순서 이동·계정/초안 격리/Redo 의미를 유지한다. |
-| ED-R10 | **P2** | (패치 전) `pagePersistFlow.js`는 발행 성공 시 독립적인 1초 타이머를 생성해 오래된 타이머가 다른 페이지의 새 `발행됨` 표시를 끌 위험이 있었다. | **PR #413 코드 패치 · CI 6개 작업 통과**. 실제 운영 브라우저 전환 테스트는 별도 | 이전 성공 타이머 취소와 세대 토큰 검증, 재수정 시 타이머 취소, 저장 대상의 stable `pageOperationIdentity`를 헤더 성공 표시에 바인딩한다. A 저장→B 전환/저장, 같은 페이지 slug 변경 테스트. |
-| ED-R11 | **P1 / 검증 공백** | `scripts/editor-browser-regression-check.mjs`의 주요 저장 응답은 **가상 API로 모킹**한다. 공개 브라우저 운영 smoke는 비로그인 경로이므로 실제 로그인 편집기 장시간·다중 탭·느린 네트워크 결합 검증을 대체하지 못한다. | **별도 임시 JSONL 서버 + 서명 세션으로 실제 HTTP 발행·두 클라이언트 동시 읽기·지연된 오래된 저장 409 차단·반복 저장/재로그인 공개 readback 자동 테스트 추가. 해당 커밋 CI 6개 작업 통과.** 실제 Cloudflare staging 브라우저 E2E 미실시 | `npm run page:editor:authenticated-http:e2e:qa`는 격리된 로컬 API를 실행해 저장 API를 모킹하지 않는다. 남은 검증은 승인된 staging 테스트 계정에서 **실제 Chrome 두 탭·입력 30분·네트워크 3G/500ms·발행 중 탭 전환·새로고침·공개 URL readback**으로 수행. 실제 운영 사용자 데이터/문의/페이지 사용 금지. |
-
-**진행 상태:** ED-R01~R04는 #404~#407에서 코드 패치 및 CI 검증을 마쳤다. 운영 배포/실사용 브라우저 재현까지 완료했다는 의미는 아니다. 다음은 ED-R05~R10 개선 및 ED-R11 실사용 E2E 검증 공백 보완이다. '코드 패치'와 '실사용 완전 검증'을 혼동하지 않는다.
-
-**수정 금지 경계:** `functions/index.js` 및 C63 메인 불변. 개인 도메인/실결제/실사용자 페이지 삭제와 혼합하지 않는다. 실제 운영 사용자 데이터 쓰기·실결제·production deploy는 별도 승인 범위를 따른다.
+- ED-R01~ED-R04는 #404~#407에서 코드 보완·main 병합, 회귀 QA 완료.
+- ED-R05~ED-R07은 #408~#410에서 코드 보완·main 병합, 회귀 QA 완료.
+- ED-R08~ED-R11은 통합 #415로 main 병합. #411~#414 단독 PR은 아직 open이지만 **중복 병합하거나 신규 작업처럼 재개하지 않는다.**
+- ED-R11의 격리 JSONL + signed-session 실제 로컬 HTTP API QA가 추가됐다. 이를 **실제 Cloudflare D1/staging 장시간 2탭 Chrome 검증**으로 오인하지 않는다.
+- 미해결 항목은 위 단일 등록표의 **ED-V01**에만 유지. 과거 ED-R01~R11 상세 위험표와 개별 패치 기록은 Git history/PR #403~#415에서 확인한다.
 
 ## 8. 현재 작업 우선순위
 
-B3 production smoke는 현재 스킵한다.
+B3 production smoke는 현재 스킵한다. P7 실제 PG 연동도 홀드한다. E5 A/B test는 실사용 데이터 이후 진행한다. 이 보류 사항은 현재 장애/필수 패치로 취급하지 않는다.
 
-다음 순서:
+P8 대량 데이터: P8-1~4는 완료. 남은 것은 **P8-R JSONL 보존 정리 코드**, 운영 복구 증빙 OPS-03/04, 규모 증가 시 P8-Q 확인이다.
 
-1. P7 실제 PG 연동은 현재 홀드
-2. P8 대량 데이터
-3. E5 A/B test
-4. P5 외부 테스트 도메인 live smoke는 별도 테스트 도메인 확보 시 실행
+**실행 순서(중복 패치 금지):**
+1. **OPS-02 / OPS-01:** GitHub Ruleset 브랜치 타깃과 Cloudflare Git auto-deploy 확인 (관리자 설정).
+2. **OPS-05 / OPS-03:** 운영 배포 SHA 증빙, D1 backup-only 암호화 파일→SQLite 복원 실행.
+3. **P8-R / PII-UI:** 아직 구현하지 않은 파일 보존·사용자 개인정보 보호 UI만 확인 후 패치.
+4. **ED-V01 / OPS-04:** staging 실브라우저/격리 D1 검증 (별도 승인·테스트 자원).
+5. **EVT-MIN / ST-MIG / INT-UX:** 사용 중인 기능의 실제 코드/화면 미구현 여부 판정 후 독립 PR.
+6. **DOC-01 / INT-V / P5-V / P8-Q:** 중복 PR 정리, 필요한 실서비스 검증/조건부 확인.
 
-AI 기능은 E4까지 구현되어 있다. 사용자가 다시 요청하기 전까지 AI 확장보다 위 backlog를 우선한다.
+자동배포 우회 DEP-00 코드는 PR #429 병합으로 완료되었으므로 다시 개발하지 않는다. `main` 병합, QA 성공과 실제 Cloudflare 배포를 혼동하지 않는다.
 
 ## 9. open PR 처리 규칙
 

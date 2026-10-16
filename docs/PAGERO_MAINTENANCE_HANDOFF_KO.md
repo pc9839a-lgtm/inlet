@@ -1,7 +1,7 @@
 # PageRo 유지보수 / 배포 규칙
 
 - 상태: 현재 운영 보호 기준
-- 갱신일: 2026-10-02 KST
+- 갱신일: 2026-10-16 KST
 - 저장소: `pc9839a-lgtm/inlet`
 - 운영 도메인: `https://pagero.kr/`
 
@@ -12,11 +12,13 @@
 현재 기준 요약:
 - E0~E4 및 P6 설정 UX는 완료 영역이다.
 - P5 개인 도메인 current-main 코드 재구성은 #352~#354로 완료됐다.
-- P5에서 남은 것은 production D1 migration, provider 환경 확인, 실제 테스트 도메인 attach/verify/detach smoke다. 모두 별도 승인 대상이다.
+- P5 production D1 migration·provider 환경 및 canonical router 운영 반영은 완료됐다. 남은 것은 별도 외부 테스트 도메인을 이용한 DNS/SSL attach/verify/detach live smoke이며, 사용자가 준비·승인할 때만 실행한다.
 - B3 production 신규 사용자 smoke는 사용자 요청으로 현재 스킵한다.
-- P5 운영 검증 뒤 제품 backlog는 P7 웹 결제 → P9 접근성 순서다.
+- P9 접근성 코드·회귀 검증은 완료됐다. P7 실제 PG 연동/청구 활성화는 사용자 결정 전 홀드이며, 진행할 검증·리스크는 `PAGERO_INTERNAL_OPTIMIZATION_MASTER_KO.md`의 '실제 미해결 항목' 표만 따른다.
 - 오래된 개인 도메인 draft #233~#235는 대체 PR이 병합되어 2026-10-02 closed 상태다.
 - 완료 영역을 "고도화" 명목으로 반복 패치하지 않는다. 실제 current-main 버그가 재현될 때만 다시 연다.
+- ED-R01~R10 수정 코드는 current main에 반영됐다. 별도 열려 있는 #411~#414를 중복 병합하거나 신규 개발 대상으로 재등록하지 않는다. 실제 Cloudflare staging 다중 탭 장시간 검증은 미완료다.
+- #417~#422의 배포·백업·관리자 인증 관련 코드 병합과 Cloudflare 설정/운영 배포/복원 실행 증빙은 구분한다. 운영 배포 여부가 확인되지 않으면 완료로 표시하지 않는다.
 
 ## 1. 운영 메인 보호
 
@@ -183,6 +185,9 @@ dead file 삭제 후 build가 통과하지 않으면 실제 사용처를 놓친 
 운영 배포는 사용자의 명시적 승인 후에만 수행한다.
 
 현재 적용할 배포 운영 계약:
+
+**현재 완료/잔여 구분 (2026-10-16):** PR #429로 다른 GitHub Actions의 자동 `inlet` 배포·레거시 main 자동 쓰기 코드 경로를 퇴역했고, 이후 `main`에 병합되어 QA가 통과했다. 다시 같은 배포 스크립트를 패치하지 않는다. **남은 운영 설정:** GitHub ruleset의 main 대상(현재 비어 있음), Production 승인 설정, Cloudflare Git 자동배포 상태, 실제 제공 중인 배포 SHA. 이들은 별도 관리/검증 대상이며 이번 코드 병합이 해결했다는 뜻이 아니다.
+
 - `main` push와 QA 성공은 **자동 운영 배포를 트리거하지 않는다**.
 - GitHub Actions `Deploy Cloudflare Pages`를 `main`에서 **수동 실행**한다.
 - `expected_sha`에 **현재 main 전체 40자리 SHA**, `approval_phrase`에 `I_APPROVE_PAGERO_PRODUCTION_DEPLOY`를 입력한다.

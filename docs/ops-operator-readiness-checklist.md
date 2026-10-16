@@ -86,6 +86,12 @@ Do not mark a launch candidate live-ready until each enabled integration has eit
 
 ## Deployment Cache
 
+### Production deployment provenance and alternate writer gate
+
+Before approving a PageRo release, **do not rely only on** `Deploy Cloudflare Pages` workflow checks. Verify the `inlet` project is not writable by automatic PR/Issue/push/`workflow_run` workflows, indirectly through `npm run deploy:pages`, or Cloudflare Git integration. The former alternate GitHub Actions `inlet` writers were retired by merged PR #429; do not confuse historical automated deploy success with a current write path. Confirm the rule still holds for current main and separately audit Cloudflare Git settings, production environment reviewers, and the deployed SHA. Verify required reviewers + branch ruleset + exact approved SHA separately; record the actual Cloudflare deployment id, deployed commit, deploy initiator and change window. If another job can still publish the production project without owner approval, mark release control **FAIL** even when `qa:all` passes.
+
+
+
 - Build output directory cleaned or deployed atomically.
 - Stale assets not served after deploy.
 - Cache busting strategy confirmed.

@@ -1,7 +1,7 @@
 # PageRo 문서 인덱스
 
 - 상태: INDEX / 문서 단일 진입점
-- 갱신일: 2026-10-06 KST
+- 갱신일: 2026-10-16 KST
 
 이 폴더에는 **현재 코드와 운영에서 다시 사용할 문서만 유지**한다. 완료된 PR 메모, 날짜별 검증 스냅샷, 이미 대체된 보안 패치 문서, 과거 브랜드 문서는 Git history로 돌리고 repository에는 남기지 않는다.
 
@@ -32,7 +32,9 @@
 - P9 접근성: focus trap/return, keyboard focus, zoom/mobile viewport, contrast, navigation semantics, reduced-motion QA 보강
 - P7 실제 PG adapter 연동은 현재 홀드
 - P8 대량 데이터: 10k/50k benchmark + lead inbox keyset pagination + bounded CSV streaming + fail-closed retention 구현, production 데이터 삭제 없음
-- 다음 backlog: P8 backup/restore 실제 복구 검증 → production query plan 재확인 → E5 A/B test
+- **완료(#429):** 별도 GitHub Actions `inlet` 자동 운영 배포/레거시 main 자동 쓰기 경로 퇴역, 수동 승인 워크플로 및 전체 경로 QA 보강. main 병합·CI 성공 확인. **Cloudflare 자체 Git 자동배포 및 운영 실제 배포 반영은 미확인**
+- 다음 미해결: GitHub Ruleset `main` 대상 지정(현재 비어 있음)·Cloudflare Git 자동배포 OFF 실확인 → D1 백업/복구 증빙 → P8-R JSONL 정리·개인정보 UI 보강 → editor staging 실검증
+- **패치 목록 단일 기준:** `PAGERO_INTERNAL_OPTIMIZATION_MASTER_KO.md`의 A(코드 패치), B(운영/실증), C(보류). P8 backup/restore live drill은 별도 승인. 운영 query plan은 규모 증가 시 재검증, E5 A/B test는 실사용 데이터 이후
 - AI 확장은 사용자 재요청 전까지 후순위
 - 오래된 PageRo domain PR #233~#235는 current-main 재구성으로 대체되어 2026-10-02 closed
 
