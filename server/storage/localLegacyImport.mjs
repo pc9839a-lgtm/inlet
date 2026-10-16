@@ -24,7 +24,10 @@ function sourceIdentity(item, project) {
 async function migrationId(kind, projectId, originalId) {
   const bytes = new TextEncoder().encode(['pagero-local-v1',kind,projectId,originalId].join(':'));
   const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
-  return 'local_' + (kind === 'leads' ? 'l_' : 'e_') + Array.from(hash.slice(0, 20), value => value.toString(16).padStart(2,'0')).join('');
+  const digest = Array.from(hash.slice(0, 20), value => value.toString(16).padStart(2,'0')).join('');
+  // Event privacy sanitizer forbids long numeric runs in opaque IDs.
+  // Fixed 8-char hex groups keep the ID stable and always admissible.
+  return 'local_' + (kind === 'leads' ? 'l_' : 'e_') + (digest.match(/.{1,8}/g) || []).join('-');
 }
 
 export async function prepareLegacyImport(input = {}, project = {}) {
