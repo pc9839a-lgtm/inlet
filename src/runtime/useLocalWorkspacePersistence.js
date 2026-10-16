@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
-import { isServerPageMode } from '../config/runtimeConfig.js';
+import { isServerLeadMode, isServerPageMode } from '../config/runtimeConfig.js';
 import { AUTH_KEY, EVENTS_KEY, LEADS_KEY, STORAGE_KEY } from '../config/storageKeys.js';
 import { normalizeAuthUser } from '../lib/authIdentity.js';
 import { normalizePageForSave } from '../lib/pageModel.js';
@@ -242,10 +242,12 @@ export function useLocalWorkspacePersistence({
   }, [authUser, latestPageRef, page, publicLandingSlug]);
 
   useEffect(() => {
+    if (isServerLeadMode()) return; // Preserve legacy local leads when server rows are fetched.
     saveLocalJson(LEADS_KEY, leads, '접수 데이터', { quietSuccess: true });
   }, [leads]);
 
   useEffect(() => {
+    if (isServerLeadMode()) return; // Preserve old event queue pending a deliberate decision.
     saveLocalJson(EVENTS_KEY, events, '통계 이벤트', { quietSuccess: true });
   }, [events]);
 
