@@ -5,7 +5,11 @@ import './LegacyLocalDataBanner.css';
 
 function readSummary() {
   if (typeof window === 'undefined') return { items: [], total: 0, needsAttention: false, hasErrors: false };
-  return inspectLegacyLocalData(window.localStorage);
+  try {
+    return inspectLegacyLocalData(window.localStorage);
+  } catch {
+    return { items: [{ kind: 'leads', count: 0, invalid: false, unreadable: true }], total: 0, needsAttention: true, hasErrors: true };
+  }
 }
 
 export default function LegacyLocalDataBanner({ authUser = null }) {
