@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   AI_MODEL_OPTIONS,
   AI_STORAGE_NOTICE,
-  getAiStatusLabel,
   isValidOpenAiKey,
   maskApiKey,
   normalizeAiSettings,
@@ -216,6 +215,10 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
   const [applyOptions, setApplyOptions] = useState({ updateTheme: true, updateFixed: true });
   const [error, setError] = useState('');
   const [serverKeyStatus, setServerKeyStatus] = useState(null);
+  const [serverKeyLoading, setServerKeyLoading] = useState(false);
+  const [serverKeyError, setServerKeyError] = useState('');
+  const [liveCheck, setLiveCheck] = useState('idle');
+  const [generationState, setGenerationState] = useState('idle');
   const draftHistory = Array.isArray(ai.draftHistory) ? ai.draftHistory : [];
   const recommendedTemplate = useMemo(() => recommendTemplateForInput(input), [input.goal]);
   const hasPrompt = String(input.prompt || '').trim().length > 0;
@@ -247,6 +250,10 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
   useEffect(() => {
     if (!serverAi) return undefined;
     let alive = true;
+    setServerKeyStatus(null);
+    setServerKeyLoading(true);
+    setServerKeyError('');
+    setLiveCheck('idle');
     fetchServerAiKeyStatus(page, authUser)
       .then((status) => {
         if (!alive) return;
@@ -261,7 +268,11 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
           });
         }
       })
-      .catch((err) => console.warn('Server AI key status failed:', err));
+      .catch((err) => {
+        if (alive) setServerKeyError('조회 실패');
+        console.warn('Server AI key status failed:', err);
+      })
+      .finally(() => { if (alive) setServerKeyLoading(false); });
     return () => { alive = false; };
   }, [serverAi, page.slug, page.projectId, authUser?.session]);
 
@@ -282,6 +293,7 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
         try {
           const status = await saveServerAiKey(key, page, authUser);
           setServerKeyStatus(status);
+          setLiveCheck('idle');
           setApiKeyDraft('');
           updateAi({
             ...ai,
@@ -328,6 +340,7 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
       try {
         const status = await deleteServerAiKey(page, authUser);
         setServerKeyStatus(status);
+        setLiveCheck('idle');
         setApiKeyDraft('');
         updateAi({
           ...ai,
@@ -362,9 +375,11 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
     }
 
     setTesting(true);
+    setLiveCheck('checking');
     updateAi({ ...ai, apiKey: serverAi || !canStoreClientKey ? '' : key, enabled: true, lastTestStatus: 'testing', lastTestMessage: '연결 확인 중' });
     try {
       await testOpenAiKey({ apiKey: key, model: ai.model, page, authUser });
+      setLiveCheck('verified');
       updateAi({
         ...ai,
         apiKey: serverAi || !canStoreClientKey ? '' : key,
@@ -374,6 +389,7 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
         updatedAt: new Date().toISOString(),
       });
     } catch (err) {
+      setLiveCheck('failed');
       updateAi({
         ...ai,
         apiKey: serverAi || !canStoreClientKey ? '' : key,
@@ -402,6 +418,7 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
     }
 
     setGenerating(true);
+    setGenerationState('loading');
     try {
       const autoTemplatePatch = input.templateStyle === 'auto'
         ? {
@@ -423,6 +440,7 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
       const result = await generateAiDraft({ apiKey: clientApiKey, model: ai.model, input: inputForGenerate, page, authUser });
       const item = draftHistoryItem(result, inputForGenerate, ai.model);
       setDraft({ ...result, historyId: item.id });
+      setGenerationState('success');
       setExcludedBlockKeys([]);
       updateAi({
         ...ai,
@@ -432,6 +450,7 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
       });
       saveServerAiDraft(item, page, authUser).catch((err) => console.warn('Server AI draft save failed:', err));
     } catch (err) {
+      setGenerationState('failed');
       setError(String(err?.message || err).slice(0, 420));
     } finally {
       setGenerating(false);
@@ -492,7 +511,7 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
                 <input type="password" value={apiKeyDraft} onChange={(event) => setApiKeyDraft(event.target.value)} placeholder="sk-..." />
                 <small>{apiKeyDraft ? connectionNote : serverAiKeyLabel(serverKeyStatus)}</small>
               </label>
-              <em className={`status-${ai.lastTestStatus || 'idle'}`}>{getAiStatusLabel(ai.lastTestStatus)}</em>
+              <em className={`status-${liveCheck === 'verified' ? 'success' : liveCheck === 'failed' ? 'failed' : liveCheck === 'checking' ? 'testing' : 'idle'}`}>{liveCheck === 'verified' ? '실시간 연결 확인' : liveCheck === 'checking' ? '확인 중' : liveCheck === 'failed' ? '연결 실패' : '연결 미검증'}</em>
             </div>
           ) : (
             <div className="ai-access-main">
@@ -513,6 +532,15 @@ export function AiPanel({ page, updateAi, setPage, authUser = null }) {
               {ai.lastTestMessage || AI_STORAGE_NOTICE}
             </p>
           )}
+        </div>
+
+        <div className="ai-live-status" role="status" aria-live="polite">
+          <span>{serverAi ? '서버 AI' : '브라우저 AI'}</span>
+          <strong>{serverAi
+            ? serverKeyLoading ? '키 조회 중' : serverKeyError ? serverKeyError : serverKeyStatus?.connected ? '서버 키 저장됨' : '서버 키 미등록 · 환경키 별도'
+            : isValidOpenAiKey(clientApiKey) ? '키 입력됨' : '키 미입력'}</strong>
+          <span>{liveCheck === 'verified' ? '연결 테스트 성공' : liveCheck === 'checking' ? '연결 확인 중' : liveCheck === 'failed' ? '연결 테스트 실패' : '실제 연결 미확인'}</span>
+          <span>{generationState === 'loading' ? '초안 생성 중' : generationState === 'success' ? '이번 세션 생성 완료' : generationState === 'failed' ? '초안 생성 실패' : '생성 기록 없음'}</span>
         </div>
 
         <div className="ai-simple-start">
