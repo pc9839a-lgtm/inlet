@@ -88,7 +88,13 @@ export async function onRequest({ request, env }) {
             SELECT p.owner_id, p.email AS email, 1 AS shown FROM calllink_profiles p WHERE p.owner_id IN (${slots})
             UNION ALL
             SELECT a.id AS owner_id, a.email AS email,
-                   CASE WHEN a.status='active' AND EXISTS (SELECT 1 FROM calllink_entitlements e WHERE e.owner_id=a.id) THEN 1 ELSE 0 END AS shown
+                   CASE WHEN a.status='active' AND (
+                     EXISTS (SELECT 1 FROM calllink_entitlements e WHERE e.owner_id=a.id)
+                     OR EXISTS (SELECT 1 FROM billing_subscriptions s
+                       WHERE s.owner_id=a.id AND s.product_code IN (${PRODUCT_SQL})
+                         AND s.verification_state='verified'
+                         AND s.channel IN ('google_play','play','web'))
+                   ) THEN 1 ELSE 0 END AS shown
             FROM accounts a WHERE a.id IN (${slots})
           )
         `).bind(...chunk, ...chunk).all();

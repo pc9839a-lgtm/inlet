@@ -18,7 +18,15 @@ export async function onRequest({ request, env }) {
     if (!env.DB?.prepare) return adminJson(503, { ok: false, error: '관리자 저장소가 연결되지 않았습니다.', code: 'CALLTAG_ADMIN_DB_REQUIRED' });
     const identity = await requireCalltagAdmin(request, env);
     const ownerId = ownerIdInput(new URL(request.url).searchParams.get('ownerId') || '');
-    const profile = await env.DB.prepare('SELECT owner_id FROM calllink_profiles WHERE owner_id = ? LIMIT 1').bind(ownerId).first();
+    const profile = await env.DB.prepare(`
+      SELECT owner_id FROM calllink_profiles WHERE owner_id = ?
+      UNION
+      SELECT s.owner_id FROM billing_subscriptions s
+      JOIN accounts a ON a.id = s.owner_id AND a.status = 'active'
+      WHERE s.owner_id = ? AND s.product_code IN (${CALLTAG_PRODUCTS_SQL})
+        AND s.verification_state = 'verified'
+      LIMIT 1
+    `).bind(ownerId, ownerId).first();
     if (!profile?.owner_id) return adminJson(404, { ok: false, error: '회원을 찾을 수 없습니다.', code: 'CALLTAG_ADMIN_MEMBER_NOT_FOUND' });
 
     let payments = [];
