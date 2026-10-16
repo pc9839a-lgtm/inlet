@@ -24,6 +24,12 @@ const CALLTAG_MEMBER_SOURCE_SQL = `(
   UNION
   SELECT e.owner_id FROM calllink_entitlements e
   JOIN accounts a ON a.id = e.owner_id AND a.status = 'active'
+  UNION
+  SELECT s.owner_id FROM billing_subscriptions s
+  JOIN accounts ba ON ba.id = s.owner_id AND ba.status = 'active'
+  WHERE s.product_code IN (${CALLTAG_PRODUCTS_SQL})
+    AND s.verification_state = 'verified'
+    AND s.channel IN ('google_play','play','web')
 )`;
 
 export async function onRequest({ request, env }) {
