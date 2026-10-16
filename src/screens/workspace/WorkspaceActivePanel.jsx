@@ -38,7 +38,7 @@ export function WorkspaceActivePanel({
       tabIndex={-1}
       aria-labelledby={`workspace-tab-${tab}`}
     >
-      <LegacyLocalDataBanner authUser={settingsPanelProps?.authUser || inboxPanelProps?.authUser || null} />
+      {canUseBuilder && !mobileOperationsOnly && <LegacyLocalDataBanner authUser={settingsPanelProps?.authUser || inboxPanelProps?.authUser || null} />}
       {canRenderBuilder && tab === 'edit' && (
         <EditPanel {...editPanelProps} stylePanelProps={stylePanelProps} authUser={settingsPanelProps?.authUser || null} />
       )}
