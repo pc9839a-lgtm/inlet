@@ -1,0 +1,87 @@
+name: CallTag Live Subscription Read-Only Proof
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/calltag-subscription-readonly-proof.yml'
+  pull_request:
+    paths:
+      - '.github/workflows/calltag-subscription-readonly-proof.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    if: ${{ github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Read ONLY production D1 subscription state, never expose tokens or orders
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          test -n "${CLOUDFLARE_API_TOKEN:-}"
+          test -n "${CLOUDFLARE_ACCOUNT_ID:-}"
+          cli="node_modules/wrangler/bin/wrangler.js"
+          read_only() {
+            local label="$1" sql="$2"
+            node "$cli" d1 execute inlet-prod --remote --command "$sql" --json > /tmp/calltag-readonly.json
+            node - "$label" <<'NODE'
+          const fs=require('node:fs');
+          const label=process.argv[2];
+          const data=JSON.parse(fs.readFileSync('/tmp/calltag-readonly.json','utf8'));
+          const rows=Array.isArray(data)?data[0]?.results:data.results;
+          if(!Array.isArray(rows))throw new Error('Query did not return rows: '+label);
+          console.log('READ_ONLY_RESULT',JSON.stringify({label,rows}));
+          NODE
+          }
+          read_only subscription_totals "SELECT channel, status, verification_state, COUNT(*) AS records, COUNT(DISTINCT owner_id) AS owners FROM billing_subscriptions WHERE product_code IN ('call_monthly','message_monthly','all_monthly') GROUP BY channel,status,verification_state ORDER BY channel,status,verification_state;"
+          read_only current_access "SELECT COUNT(DISTINCT owner_id) AS access_owner_count FROM billing_subscriptions WHERE product_code IN ('call_monthly','message_monthly','all_monthly') AND status IN ('active','grace','cancelled') AND (expires_at='' OR julianday(expires_at)>julianday('now'));"
+          read_only confirmed_charge_count "SELECT COUNT(DISTINCT owner_id) AS charged_owners FROM billing_payment_events WHERE product_code IN ('call_monthly','message_monthly','all_monthly') AND event_type='charge' AND payment_status='paid' AND amount_krw>0 AND amount_source IN ('provider_confirmed','play_earnings_report','google_play_orders_api');"
+          read_only possible_account_matches "WITH candidate AS (
+            SELECT id AS owner_id, email FROM accounts WHERE lower(email) LIKE 'gg%@gmail.com' OR lower(email) LIKE 'aq%@naver.com'
+            UNION SELECT owner_id,email FROM calllink_profiles WHERE lower(email) LIKE 'gg%@gmail.com' OR lower(email) LIKE 'aq%@naver.com'
+          )
+          SELECT c.owner_id AS owner_id,
+            substr(c.email,1,2)||'*****@'||substr(c.email,instr(c.email,'@')+1) AS masked_email,
+            (SELECT COUNT(*) FROM billing_subscriptions s WHERE s.owner_id=c.owner_id AND s.product_code IN ('call_monthly','message_monthly','all_monthly')) AS subscription_records,
+            (SELECT group_concat(s.channel||':'||s.product_code||':'||s.status||':'||s.verification_state||':renew='||coalesce(s.auto_renewing,0),' | ') FROM billing_subscriptions s WHERE s.owner_id=c.owner_id AND s.product_code IN ('call_monthly','message_monthly','all_monthly')) AS subscription_states,
+            (SELECT COUNT(*) FROM billing_subscriptions s WHERE s.owner_id=c.owner_id AND s.status IN ('active','grace','cancelled') AND s.product_code IN ('call_monthly','message_monthly','all_monthly') AND (s.expires_at='' OR julianday(s.expires_at)>julianday('now'))) AS active_access_count,
+            (SELECT COUNT(*) FROM billing_payment_events e WHERE e.owner_id=c.owner_id AND e.product_code IN ('call_monthly','message_monthly','all_monthly') AND e.event_type='charge' AND e.payment_status='paid' AND e.amount_krw>0 AND e.amount_source IN ('provider_confirmed','play_earnings_report','google_play_orders_api')) AS confirmed_charge_count
+          FROM candidate c ORDER BY c.owner_id LIMIT 20;"
+          rm -f /tmp/calltag-readonly.json
+      - name: Read Cloudflare inlet production deployment SHA, no runtime writes
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error --retry 2 \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/inlet/deployments?per_page=20" > /tmp/calltag-deploys.json
+          node <<'NODE'
+          const fs=require('node:fs');
+          const j=JSON.parse(fs.readFileSync('/tmp/calltag-deploys.json','utf8'));
+          if(j.success!==true||!Array.isArray(j.result))throw Error('No Cloudflare deployment metadata');
+          const deployments=j.result.filter(x=>x.environment==='production');
+          console.log('PRODUCTION_INLET_DEPLOY',JSON.stringify(deployments.slice(0,3).map(x=>({
+            id:x.short_id,createdAt:x.created_on,
+            sha:x.deployment_trigger?.metadata?.commit_hash,
+            branch:x.deployment_trigger?.metadata?.branch,
+            success:x.latest_stage?.status==='success'
+          }))));
+          NODE
+          rm -f /tmp/calltag-deploys.json
