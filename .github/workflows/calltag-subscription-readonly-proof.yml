@@ -32,12 +32,23 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -euo pipefail
-          test -n "${CLOUDFLARE_API_TOKEN:-}"
-          test -n "${CLOUDFLARE_ACCOUNT_ID:-}"
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then echo 'DIAG_MISSING_CLOUDFLARE_API_TOKEN'; exit 1; fi
+          if [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then echo 'DIAG_MISSING_CLOUDFLARE_ACCOUNT_ID'; exit 1; fi
+          echo 'DIAG_CREDENTIALS_PRESENT';
           cli="node_modules/wrangler/bin/wrangler.js"
           read_only() {
             local label="$1" sql="$2"
-            node "$cli" d1 execute inlet-prod --remote --command "$sql" --json > /tmp/calltag-readonly.json
+            echo "DIAG_QUERY_START $label"
+            if ! node "$cli" d1 execute inlet-prod --remote --command "$sql" --json > /tmp/calltag-readonly.json 2>/tmp/calltag-wrangler-stderr; then
+              echo "DIAG_QUERY_FAILED $label"
+              node - <<'NODEERR'
+const fs=require('node:fs');
+const error=fs.readFileSync('/tmp/calltag-wrangler-stderr','utf8');
+const normalized=error.replace(/Bearer\\s+[^\\s]+/gi,'Bearer [MASKED]').slice(0,800);
+console.log('DIAG_ERROR_CLASS',normalized||'no stderr');
+NODEERR
+              exit 1
+            fi
             node - "$label" <<'NODE'
           const fs=require('node:fs');
           const label=process.argv[2];
