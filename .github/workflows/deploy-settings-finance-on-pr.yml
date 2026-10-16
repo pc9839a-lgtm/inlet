@@ -1,52 +1,21 @@
-name: Deploy settings finance update
+# This former write-capable workflow is retired to prevent bypassing the
+# approved, exact-SHA manual production release of the shared inlet project.
+# Keep this inert redirect until all legacy references are removed in a
+# separate, reviewed cleanup. It must not run on push/PR/issues/workflow_run.
+name: "Deploy settings finance update (retired)"
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
-concurrency:
-  group: settings-finance-deploy-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
-
 jobs:
-  deploy:
-    if: startsWith(github.event.pull_request.title, '[SETTINGS_FINANCE_DEPLOY]')
+  retired:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 2
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Verify unified billing and referral contracts
-        run: node scripts/billing-referral-quality-check.mjs
-
-      - name: Build production assets
-        run: npm run build
-
-      - name: Capture deployed source
-        id: source
-        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-
-      - name: Deploy latest main
-        run: >-
-          npx wrangler pages deploy dist
-          --project-name inlet
-          --branch main
-          --commit-hash "${{ steps.source.outputs.sha }}"
-          --commit-message "Settings finance deployment ${{ steps.source.outputs.sha }}"
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Redirect to approved production release
+        run: |
+          echo "::notice::Legacy workflow retired: no Cloudflare deployment, runtime mutation, or branch write is performed."
+          echo "Use the manually approved Deploy Cloudflare Pages workflow on the exact tested main SHA."
