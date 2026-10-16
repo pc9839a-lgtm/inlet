@@ -107,9 +107,10 @@ The migration workflow must never upload plaintext production SQL, must never ap
 
 ## Implementation Tasks
 
-- Worker 1: add server import endpoint or documented CLI for local lead/event migration.
+- Worker 1 (pending): add an authorized server import endpoint or documented CLI for local lead/event migration; must be idempotent and must not trigger lead notifications.
+- ST-MIG safety stage: server mode no longer overwrites the original browser leads/events keys when new server rows load. The workspace shows a legacy-data warning and offers an explicit lossless JSON backup of just the raw leads/events strings. It never deletes, uploads, or marks data migrated. The archive may contain PII; handle it securely. Actual import and server-side readback remain pending.
 - Worker 1: add retention cleanup for `.backups` and `.quarantine` with dry-run.
-- Worker 2: add local migration banner for page/leads/events when switching to server mode.
+- Worker 2: local leads/events migration warning and backup are implemented (first stage); page migration warning and confirmed import remain pending.
 - Worker 2: keep recovery draft manager and oversized image cleanup available from Settings/editor.
 - Worker 3: add QA fixture for migration detection and no data loss warnings.
 - Worker 4: include storage policy in launch checklist and PII retention policy.

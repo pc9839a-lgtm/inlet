@@ -1,0 +1,35 @@
+.pagero-legacy-data-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  margin-bottom: 14px;
+  padding: 15px 18px;
+  border: 1px solid #d9e0e8;
+  border-radius: 12px;
+  background: #f8fafc;
+  box-sizing: border-box;
+}
+.pagero-legacy-data-copy { display: grid; gap: 5px; min-width: 0; }
+.pagero-legacy-data-copy strong { font-size: 13px; font-weight: 750; color: #1e293b; }
+.pagero-legacy-data-copy p { margin: 0; font-size: 12px; font-weight: 650; color: #475569; }
+.pagero-legacy-data-copy small { max-width: 800px; font-size: 11px; line-height: 1.55; color: #64748b; }
+.pagero-legacy-data-copy .pagero-legacy-data-error { color: #b42318; }
+.pagero-legacy-data-banner button {
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid #253449;
+  border-radius: 8px;
+  background: #253449;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+.pagero-legacy-data-banner button:focus-visible { outline: 2px solid #64748b; outline-offset: 3px; }
+@media (max-width: 720px) {
+  .pagero-legacy-data-banner { flex-direction: column; align-items: stretch; padding: 14px; }
+  .pagero-legacy-data-banner button { width: 100%; }
+}
