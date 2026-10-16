@@ -27,8 +27,8 @@ Owner: Worker 5 QA/ops. Coordinate product or server behavior changes with the o
 
 1. Run local QA gates and confirm `live:qa` has no `fail` rows. Missing SMTP/OAuth/AI/conversion credentials may remain `skipped-live` only when explicitly accepted in the launch record.
 2. Clean generated local artifacts with `npm run artifact:clean`, then confirm strict artifact QA reports no `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, `preview.zip`, or `.tmp-browser-visual` artifacts.
-3. Commit the QA/deploy/docs patch and push to GitHub `main` only after the local gates pass.
-4. Deploy Cloudflare Pages from the pushed commit, not from uncommitted local files.
+3. Before any release commit is considered production-ready, verify all alternate `inlet` writer workflows are gated, required branch/environment reviews are configured, and the target SHA passed current-main QA. Stop if DEP-00 is still unresolved.
+4. After explicit owner approval, invoke the intended manual `Deploy Cloudflare Pages` workflow on `main` with the exact reviewed 40-character `expected_sha` and required approval phrase. Confirm the Cloudflare Git auto-production-deploy setting is disabled; do not use a PR title, Issue, push, or success of another QA as a release trigger. Build/deploy only the approved `main` artifact; never deploy uncommitted local files.
 5. Record the Git commit SHA, Cloudflare Pages deployment id, production URL, and whether Pages Functions are active.
 6. After deploy, run hosted checks against the production URL:
    - `INLET_PUBLIC_API_URL=https://<production-host> INLET_HOSTED_API_QA_REQUIRE=1 npm run api:hosted:qa`
