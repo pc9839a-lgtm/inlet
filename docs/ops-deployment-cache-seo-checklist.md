@@ -22,6 +22,9 @@ Owner: Worker 5 QA/ops. Coordinate product or server behavior changes with the o
 
 ## GitHub To Cloudflare Pages Release Order
 
+> **운영 안전 주의:** 아래 순서는 의도된 승인 절차다. 현재 GitHub 저장소에는 이 절차를 우회하는 별도 운영 배포 workflow가 남아 있으며(마스터 DEP-00), 자동 `workflow_run` 배포 성공 이력까지 확인됐다. 따라서 이 체크리스트만 따르면 운영 자동배포가 완전히 통제된다는 의미가 아니다. 전체 경로 제거/승인 게이트 통합이 먼저다. QA나 main 병합만으로 운영 배포 완료를 주장하지 않는다.
+
+
 1. Run local QA gates and confirm `live:qa` has no `fail` rows. Missing SMTP/OAuth/AI/conversion credentials may remain `skipped-live` only when explicitly accepted in the launch record.
 2. Clean generated local artifacts with `npm run artifact:clean`, then confirm strict artifact QA reports no `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, `preview.zip`, or `.tmp-browser-visual` artifacts.
 3. Commit the QA/deploy/docs patch and push to GitHub `main` only after the local gates pass.
