@@ -32,6 +32,12 @@ export async function onRequest({ request, env }) {
         UNION
         SELECT e.owner_id FROM calllink_entitlements e
         JOIN accounts aa ON aa.id = e.owner_id AND aa.status = 'active'
+        UNION
+        SELECT s.owner_id FROM billing_subscriptions s
+        JOIN accounts ba ON ba.id = s.owner_id AND ba.status = 'active'
+        WHERE s.product_code IN (${CALLTAG_PRODUCTS_SQL})
+          AND s.verification_state = 'verified'
+          AND s.channel IN ('google_play','play','web')
       ) m
       LEFT JOIN calllink_profiles p ON p.owner_id = m.owner_id
       LEFT JOIN accounts a ON a.id = m.owner_id
@@ -42,7 +48,7 @@ export async function onRequest({ request, env }) {
       throw callError('회원을 찾을 수 없습니다.', 404, { code: 'CALLTAG_ADMIN_MEMBER_NOT_FOUND' });
     }
 
-    const [billingAccount, subscriptions, referral, partner] = await Promise.all([
+    const [billingAccount, subscriptions, referral, partner, legacyEntitlement] = await Promise.all([
       firstSafe(env.DB, `
         SELECT trial_started_at, trial_ends_at, referral_bonus_days
         FROM billing_accounts
@@ -73,6 +79,15 @@ export async function onRequest({ request, env }) {
         WHERE pc.referrer_owner_id = ?
           AND s.product_code IN (${CALLTAG_PRODUCTS_SQL})
       `, [ownerId]),
+      // Historical CallTag/CallLink entitlement records were stored in a
+      // separate table from the new admin grants. This SELECT does not grant
+      // access or modify any historical records.
+      firstSafe(env.DB, `
+        SELECT status, plan_code, paid_until, source, created_at, updated_at
+        FROM calllink_entitlements
+        WHERE owner_id = ?
+        LIMIT 1
+      `, [ownerId]),
     ]);
 
     await recordAdminAudit(env.DB, request, env, identity, 'member.read', ownerId);
@@ -91,6 +106,14 @@ export async function onRequest({ request, env }) {
         startedAt: safeIso(billingAccount.trial_started_at),
         endsAt: safeIso(billingAccount.trial_ends_at),
         referralBonusDays: clampNumber(billingAccount.referral_bonus_days, 0, 31),
+      } : null,
+      legacyEntitlement: legacyEntitlement ? {
+        status: safeToken(legacyEntitlement.status, 32),
+        planCode: safeToken(legacyEntitlement.plan_code, 80),
+        source: safeToken(legacyEntitlement.source, 80),
+        paidUntil: safeIso(legacyEntitlement.paid_until),
+        createdAt: safeIso(legacyEntitlement.created_at),
+        updatedAt: safeIso(legacyEntitlement.updated_at),
       } : null,
       subscriptions: subscriptions.map((row) => ({
         productCode: String(row.product_code || '').slice(0, 80),
@@ -144,6 +167,10 @@ function isMissingTable(error) {
 function safeIso(value) {
   const parsed = Date.parse(String(value || ''));
   return Number.isFinite(parsed) ? new Date(parsed).toISOString() : '';
+}
+
+function safeToken(value, max = 80) {
+  return String(value || '').trim().replace(/[^A-Za-z0-9._:-]/g, '').slice(0, max);
 }
 
 function clampNumber(value, min, max) {

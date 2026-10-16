@@ -1,14 +1,17 @@
 name: Configure CallTag Admin OTP Login
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - .github/workflows/calltag-admin-otp-bootstrap.yml
   workflow_dispatch:
+    inputs:
+      approval_phrase:
+        description: Type I_APPROVE_CALLTAG_ADMIN_OTP_BOOTSTRAP after reviewing the production change
+        required: true
+        type: string
 
 jobs:
   otp:
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.approval_phrase == 'I_APPROVE_CALLTAG_ADMIN_OTP_BOOTSTRAP' }}
+    environment: production
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

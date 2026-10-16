@@ -1,11 +1,12 @@
 name: Bootstrap CallTag Admin Cloudflare Access
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - .github/workflows/calltag-admin-cloudflare-bootstrap.yml
   workflow_dispatch:
+    inputs:
+      approval_phrase:
+        description: Type I_APPROVE_CALLTAG_ADMIN_CLOUDFLARE_BOOTSTRAP after reviewing the production change
+        required: true
+        type: string
 
 concurrency:
   group: calltag-admin-cloudflare-bootstrap
@@ -13,6 +14,8 @@ concurrency:
 
 jobs:
   bootstrap:
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.approval_phrase == 'I_APPROVE_CALLTAG_ADMIN_CLOUDFLARE_BOOTSTRAP' }}
+    environment: production
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

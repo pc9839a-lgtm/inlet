@@ -1,73 +1,21 @@
-name: Patch Page Save Capacity
+# This former write-capable workflow is retired to prevent bypassing the
+# approved, exact-SHA manual production release of the shared inlet project.
+# Keep this inert redirect until all legacy references are removed in a
+# separate, reviewed cleanup. It must not run on push/PR/issues/workflow_run.
+name: "Patch Page Save Capacity (retired)"
 
 on:
-  push:
-    paths:
-      - '.github/workflows/patch-custom-code-bgm-runtime.yml'
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch:
+  retired:
     runs-on: ubuntu-latest
+    timeout-minutes: 2
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Raise page JSON save capacity within D1 hard limit
-        shell: bash
+      - name: Redirect to approved production release
         run: |
-          set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-
-          server_path = Path('server/storage/d1Adapter.mjs')
-          server_text = server_path.read_text()
-          old_server = 'const D1_PAGE_JSON_MAX_BYTES = 1_000_000;'
-          new_server = 'const D1_PAGE_JSON_MAX_BYTES = 1_850_000;'
-          if new_server not in server_text:
-              if old_server not in server_text:
-                  raise SystemExit('D1 page JSON server limit marker not found')
-              server_text = server_text.replace(old_server, new_server, 1)
-          server_path.write_text(server_text)
-
-          client_path = Path('src/lib/pageSaveOptimizer.js')
-          client_text = client_path.read_text()
-          old_client = 'const D1_PAGE_JSON_SAFE_BYTES = 900_000;'
-          new_client = 'const D1_PAGE_JSON_SAFE_BYTES = 1_750_000;'
-          if new_client not in client_text:
-              if old_client not in client_text:
-                  raise SystemExit('Page save optimizer limit marker not found')
-              client_text = client_text.replace(old_client, new_client, 1)
-          client_path.write_text(client_text)
-
-          runtime_qa_path = Path('scripts/runtime-quality-check.mjs')
-          runtime_qa_text = runtime_qa_path.read_text()
-          runtime_qa_text = runtime_qa_text.replace("D1_PAGE_JSON_SAFE_BYTES = 900_000", "D1_PAGE_JSON_SAFE_BYTES = 1_750_000")
-          runtime_qa_text = runtime_qa_text.replace("D1_PAGE_JSON_MAX_BYTES = 1_000_000", "D1_PAGE_JSON_MAX_BYTES = 1_850_000")
-          runtime_qa_path.write_text(runtime_qa_text)
-
-          d1_qa_path = Path('scripts/d1-adapter-quality-check.mjs')
-          d1_qa_text = d1_qa_path.read_text()
-          d1_qa_text = d1_qa_text.replace("content: 'x'.repeat(1_000_100)", "content: 'x'.repeat(1_850_100)")
-          d1_qa_path.write_text(d1_qa_text)
-          PY
-
-      - name: Commit capacity fix
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add server/storage/d1Adapter.mjs src/lib/pageSaveOptimizer.js scripts/runtime-quality-check.mjs scripts/d1-adapter-quality-check.mjs
-          if git diff --cached --quiet; then
-            echo 'No changes.'
-            exit 0
-          fi
-          git commit -m 'test(pagero): align D1 save capacity rejection case'
-          git pull --rebase origin main
-          git push origin HEAD:main
-
-# release-qa-kick: 2026-08-29T00:45+09:00
+          echo "::notice::Legacy workflow retired: no Cloudflare deployment, runtime mutation, or branch write is performed."
+          echo "Use the manually approved Deploy Cloudflare Pages workflow on the exact tested main SHA."
