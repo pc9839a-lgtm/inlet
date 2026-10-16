@@ -94,6 +94,7 @@ const steps = [
   ['api:hosted:qa', ['scripts/hosted-api-quality-check.mjs']],
   ['api:hosted:routes:qa', ['scripts/hosted-api-routes-quality-check.mjs']],
   ['jsonl:qa', ['scripts/jsonl-ops-quality-check.mjs']],
+  ['jsonl:retention:p8r:qa', ['scripts/pagero-jsonl-retention-quality-check.mjs']],
   ['d1:schema:qa', ['scripts/d1-schema-quality-check.mjs']],
   ['d1:adapter:qa', ['scripts/d1-adapter-quality-check.mjs']],
   ['d1:migration:safety:qa', ['scripts/d1-migration-safety-quality-check.mjs']],
