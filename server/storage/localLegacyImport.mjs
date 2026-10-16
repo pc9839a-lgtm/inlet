@@ -81,15 +81,25 @@ export async function commitLegacyImport(db, plan, project) {
   for (const record of plan.records) {
     const existing = await db.prepare('SELECT id, project_id FROM '+table+' WHERE id = ? LIMIT 1').bind(record.id).first();
     if (existing && existing.project_id !== project.projectId) reject('이관 ID의 소유권 충돌을 감지했습니다.',409);
+    let created = !existing;
     if (!existing) {
       const values = columns.map(col => record.row[col] ?? null);
       const sql = 'INSERT OR IGNORE INTO '+table+' ('+columns.join(', ')+') VALUES ('+columns.map(()=>'?').join(', ')+')';
-      await db.prepare(sql).bind(...values).run();
+      const write = await db.prepare(sql).bind(...values).run();
+      if (write?.meta && Number(write.meta.changes) === 0) created = false;
     }
-    const readback = await db.prepare('SELECT id, project_id FROM '+table+' WHERE id = ? AND project_id = ? LIMIT 1')
+    const readbackColumns = table === 'leads'
+      ? 'id, project_id, delivery_status, created_at'
+      : 'id, project_id, event_type, channel, created_at';
+    const readback = await db.prepare('SELECT '+readbackColumns+' FROM '+table+' WHERE id = ? AND project_id = ? LIMIT 1')
       .bind(record.id,project.projectId).first();
     if (!readback) reject('서버 이관 결과를 재조회하지 못했습니다. 로컬 원본을 유지하세요.',503);
-    if (existing) alreadyPresent++; else inserted++;
+    if (created && (readback.created_at !== record.row.created_at
+      || (table === 'leads' && readback.delivery_status !== 'none')
+      || (table === 'events' && (readback.event_type !== record.row.event_type || readback.channel !== record.row.channel)))) {
+      reject('이관 결과 필드 검증이 일치하지 않습니다. 원본을 보존하고 확인하세요.',503);
+    }
+    if (created) inserted++; else alreadyPresent++;
     verified++;
   }
   return {kind:plan.kind,total:plan.records.length,inserted,alreadyPresent,verified,originalPreserved:true};
