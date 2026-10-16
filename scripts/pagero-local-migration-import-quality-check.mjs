@@ -40,12 +40,14 @@ function fakeDb(){
       return {bind(...args){return{
         async first(){
           const row=tables[table].get(args[0])||null;
+          if(sql.includes('AND project_id = ?')) console.log('fixture-readback', table, !!row, row?.project_id === args[1], typeof args[0]);
           return row && (!sql.includes('AND project_id = ?')||row.project_id===args[1])?row:null;
         },
         async run(){
           const cols=sql.match(/\(([^)]+)\) VALUES/)?.[1]?.split(',').map(x=>x.trim());
           if(!cols)throw Error('missing insert columns');
           const row=Object.fromEntries(cols.map((col,i)=>[col,args[i]]));
+          console.log('fixture-insert', table, typeof row.id, typeof row.project_id, row.project_id === project.projectId, cols.length);
           if(!tables[table].has(row.id)){tables[table].set(row.id,row);mutations++}
           return {success:true};
         }
