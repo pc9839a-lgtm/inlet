@@ -7,6 +7,8 @@ export function useLeadDeliveryRetryActions({
   syncLeadPatch,
 }) {
   const retryLeadDelivery = (lead) => {
+    // Server delivery is owned by the backend queue; never replay client integrations.
+    if (isServerLeadMode()) return;
     const pending = { status: 'pending', summary: '외부 전송 재시도 중', logs: lead.delivery?.logs || [] };
     setLeads((list) => list.map((item) => item.id === lead.id ? { ...item, delivery: pending } : item));
     if (!isServerLeadMode()) syncLeadPatch(lead.id, { delivery: pending });
@@ -33,6 +35,7 @@ export function useLeadDeliveryRetryActions({
   };
 
   const retryFailedDeliveries = () => {
+    if (isServerLeadMode()) return;
     const failed = leads.filter((lead) => ['failed', 'partial'].includes(lead.delivery?.status));
     if (!failed.length) return;
     failed.forEach((lead) => retryLeadDelivery(lead));
