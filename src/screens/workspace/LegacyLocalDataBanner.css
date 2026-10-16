@@ -33,3 +33,12 @@
   .pagero-legacy-data-banner { flex-direction: column; align-items: stretch; padding: 14px; }
   .pagero-legacy-data-banner button { width: 100%; }
 }
+
+.pagero-legacy-data-actions { flex: 0 0 190px; display: grid; align-content: start; gap: 8px; }
+.pagero-legacy-data-actions button { width: 100%; }
+.pagero-legacy-migration-confirm { display: grid; gap: 10px; padding-top: 8px; }
+.pagero-legacy-migration-confirm label { display: flex; gap: 9px; align-items: flex-start; color: #334155; font-size: 11px; line-height: 1.5; }
+.pagero-legacy-migration-confirm label input { flex: 0 0 auto; margin-top: 1px; }
+.pagero-legacy-migration-confirm > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.pagero-legacy-data-banner button:disabled { opacity: .45; cursor: not-allowed; }
+@media (max-width: 720px) { .pagero-legacy-data-actions { flex: 0 0 auto; width: 100%; } }
