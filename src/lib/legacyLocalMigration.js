@@ -60,3 +60,40 @@ export function buildLegacyLocalArchive(storage, exportedAt = new Date().toISOSt
     snapshots,
   };
 }
+
+
+// Only explicitly project-scoped, identifiable rows may reach the server
+// importer. Unscoped/mixed-project rows stay in the manual recovery archive.
+export function collectScopedLegacyRows(storage, context = {}) {
+  const eligible = { leads: [], events: [] };
+  let excluded = 0;
+  const projectId = String(context.projectId || '').trim();
+  const slug = String(context.slug || '').trim();
+  if (!projectId || !slug) return { eligible, excluded: 0, unreadable: true, reason: '프로젝트를 먼저 선택하세요.' };
+  for (const { kind, key } of SOURCES) {
+    let rows;
+    try {
+      const raw = storage?.getItem(key);
+      rows = raw === null || raw === undefined ? [] : JSON.parse(raw);
+    } catch {
+      return { eligible, excluded: 0, unreadable: true, reason: '로컬 원본을 읽을 수 없습니다.' };
+    }
+    if (!Array.isArray(rows)) return { eligible, excluded: 0, unreadable: true, reason: '로컬 자료의 형식이 올바르지 않습니다.' };
+    for (const item of rows) {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) { excluded++; continue; }
+      const ids = [item.projectId, item.project?.projectId, item.project?.id]
+        .filter(value => value !== undefined && value !== null && String(value).trim());
+      const slugs = [item.pageSlug, item.page?.slug, item.project?.slug]
+        .filter(value => value !== undefined && value !== null && String(value).trim());
+      if (!ids.length || ids.some(x => String(x) !== projectId)
+        || slugs.some(x => String(x) !== slug)
+        || !/^[a-zA-Z0-9_-]{1,120}$/.test(String(item.id || ''))
+        || (kind === 'events' && !String(item.type || item.eventType || '').trim())) {
+        excluded++;
+        continue;
+      }
+      eligible[kind].push(item);
+    }
+  }
+  return { eligible, excluded, unreadable: false, reason: '' };
+}
