@@ -1,6 +1,6 @@
 # Storage Migration Policy
 
-Status: approved implementation policy.
+Status: approved storage and migration policy (not a live verification status report; see `PAGERO_INTERNAL_OPTIMIZATION_MASTER_KO.md` for pending runtime checks).
 Owner: Worker 4 policy, Worker 1 storage implementation, Worker 2 migration UX.
 
 ## Scope
