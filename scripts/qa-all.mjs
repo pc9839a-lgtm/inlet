@@ -10,6 +10,7 @@ const steps = [
   ['pagero:maintenance:qa', ['scripts/pagero-maintenance-quality-check.mjs']],
   ['docs:qa', ['scripts/docs-hygiene-quality-check.mjs']],
   ['pagero:local-migration:qa', ['scripts/pagero-local-migration-quality-check.mjs']],
+  ['pagero:local-migration:import:qa', ['scripts/pagero-local-migration-import-quality-check.mjs']],
   ['pagero:production:deploy:gate:qa', ['scripts/pagero-production-deploy-gate-quality-check.mjs']],
   ['pagero:cloudflare:git-autodeploy:qa', ['scripts/pagero-cloudflare-git-autodeploy-quality-check.mjs']],
   ['pagero:platform-copy-density:qa', ['scripts/pagero-platform-copy-density-quality-check.mjs']],
