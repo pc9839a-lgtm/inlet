@@ -41,12 +41,7 @@ jobs:
             echo "DIAG_QUERY_START $label"
             if ! node "$cli" d1 execute inlet-prod --remote --command "$sql" --json > /tmp/calltag-readonly.json 2>/tmp/calltag-wrangler-stderr; then
               echo "DIAG_QUERY_FAILED $label"
-              node - <<'NODEERR'
-const fs=require('node:fs');
-const error=fs.readFileSync('/tmp/calltag-wrangler-stderr','utf8');
-const normalized=error.replace(/Bearer\\s+[^\\s]+/gi,'Bearer [MASKED]').slice(0,800);
-console.log('DIAG_ERROR_CLASS',normalized||'no stderr');
-NODEERR
+              node -e 'const fs=require("node:fs");const e=fs.readFileSync("/tmp/calltag-wrangler-stderr","utf8");console.log("DIAG_ERROR_CLASS",(e.includes("Unauthorized")?"Unauthorized":e.includes("not found")?"not_found":e.includes("Forbidden")?"Forbidden":e.slice(0,450).replace(/Bearer[^\\n]*/gi,"[MASKED]"))||"no stderr")'
               exit 1
             fi
             node - "$label" <<'NODE'
