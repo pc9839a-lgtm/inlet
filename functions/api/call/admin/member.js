@@ -32,6 +32,12 @@ export async function onRequest({ request, env }) {
         UNION
         SELECT e.owner_id FROM calllink_entitlements e
         JOIN accounts aa ON aa.id = e.owner_id AND aa.status = 'active'
+        UNION
+        SELECT s.owner_id FROM billing_subscriptions s
+        JOIN accounts ba ON ba.id = s.owner_id AND ba.status = 'active'
+        WHERE s.product_code IN (${CALLTAG_PRODUCTS_SQL})
+          AND s.verification_state = 'verified'
+          AND s.channel IN ('google_play','play','web')
       ) m
       LEFT JOIN calllink_profiles p ON p.owner_id = m.owner_id
       LEFT JOIN accounts a ON a.id = m.owner_id
