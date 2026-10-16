@@ -1335,3 +1335,15 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* INT-UX: real-session status, distinct from saved key settings. */
+.ai-panel-simple .ai-live-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  font-size: 12px;
+  color: #475569;
+}
+.ai-panel-simple .ai-live-status strong { color: #1e293b; font-weight: 850; }
+.ai-panel-simple .ai-live-status span:first-child { color: #0f172a; font-weight: 850; }
