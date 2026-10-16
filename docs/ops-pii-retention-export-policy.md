@@ -41,8 +41,8 @@ Retention runtime config:
 - `INLET_AI_DRAFT_RETENTION_DAYS` — default 30 days.
 - `INLET_EVENT_RETENTION_DAYS` — default 180 days and currently capped at 180 while event payloads are potentially PII-bearing.
 - `INLET_DATA_RETENTION_BATCH_LIMIT` — default 500 explicit deletes per table/run, maximum 5000.
-- `INLET_JSONL_BACKUP_RETENTION_DAYS` — 30-day policy target; implementation is part of P8 backup/restore closeout.
-- `INLET_JSONL_QUARANTINE_RETENTION_DAYS` — 14-day policy target; implementation is part of P8 backup/restore closeout.
+- `INLET_JSONL_BACKUP_RETENTION_DAYS` — historical 30-day policy target; the P8-R local cleanup CLI uses its fixed 30-day safety threshold, **not** this environment variable. Do not assume setting this variable schedules cleanup.
+- `INLET_JSONL_QUARANTINE_RETENTION_DAYS` — historical 14-day policy target; the P8-R local cleanup CLI uses its fixed 14-day threshold, **not** this environment variable. Do not assume setting this variable schedules cleanup.
 
 The PageRo D1 cleanup endpoint is `POST /api/admin/data/retention`. It requires a dedicated `INLET_DATA_RETENTION_SECRET`; API/session/audit secrets are not reused. The safe runner defaults to dry-run. Actual deletion additionally requires both `PAGERO_DATA_RETENTION_WRITE=1` and the exact approval phrase `I_APPROVE_PAGERO_DATA_RETENTION`.
 
@@ -100,8 +100,8 @@ Required warning copy:
 - Scheduled PageRo data and audit retention workflows run dry-run only, regardless of configured persistent variables. Actual deletes require an explicitly approved manual workflow dispatch; do not let GitHub Variables implicitly authorize scheduled deletion.
 - JSONL backup/quarantine expiry is now provided as an approval-gated, dry-run-first local adapter utility (see P8-R below); **actual production cleanup has not been executed**. D1 restore verification remains an independent P8 backup/restore closeout.
 - Worker 1: add delivery log export endpoint or CLI if operators require a separate log export.
-- Worker 2: add masking toggle and export warning modal.
-- Worker 2: add delete confirmation copy that names PII impact.
+- Worker 2: **completed in #443** — inbox list masking is enabled by default; full lead details require direct selection, CSV export requires privacy confirmation.
+- Worker 2: **completed in #443** — deletion confirmation warns that backups/quarantine copies can remain until separate retention cleanup.
 - Worker 3: keep CSV sample QA for Korean text, formula neutralization, reservation fields, and delivery logs.
 - Worker 4: keep `.env.example` and operator checklist aligned with retention env vars.
 
