@@ -16,6 +16,7 @@ permissions:
 jobs:
   diagnose:
     if: ${{ github.event_name != 'pull_request' }}
+    environment: production
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -56,6 +57,8 @@ jobs:
           read_only subscription_totals "SELECT channel, status, verification_state, COUNT(*) AS records, COUNT(DISTINCT owner_id) AS owners FROM billing_subscriptions WHERE product_code IN ('call_monthly','message_monthly','all_monthly') GROUP BY channel,status,verification_state ORDER BY channel,status,verification_state;"
           read_only current_access "SELECT COUNT(DISTINCT owner_id) AS access_owner_count FROM billing_subscriptions WHERE product_code IN ('call_monthly','message_monthly','all_monthly') AND status IN ('active','grace','cancelled') AND (expires_at='' OR julianday(expires_at)>julianday('now'));"
           read_only confirmed_charge_count "SELECT COUNT(DISTINCT owner_id) AS charged_owners FROM billing_payment_events WHERE product_code IN ('call_monthly','message_monthly','all_monthly') AND event_type='charge' AND payment_status='paid' AND amount_krw>0 AND amount_source IN ('provider_confirmed','play_earnings_report','google_play_orders_api');"
+          read_only subscription_member_expiry "SELECT s.owner_id,COALESCE(substr(a.email,1,2)||'*****@'||substr(a.email,instr(a.email,'@')+1),'') AS masked_email,s.product_code,s.channel,s.status,s.verification_state,s.auto_renewing,s.expires_at,CASE WHEN s.expires_at IS NULL OR s.expires_at='' THEN 'missing' WHEN datetime(s.expires_at) IS NULL THEN 'unparseable' WHEN datetime(s.expires_at)>datetime('now') THEN 'future' ELSE 'past' END AS expiry_class,s.last_verified_at FROM billing_subscriptions s LEFT JOIN accounts a ON a.id=s.owner_id WHERE s.product_code IN ('call_monthly','message_monthly','all_monthly') ORDER BY s.owner_id,s.expires_at LIMIT 20;"
+          read_only rtdn_table_presence "SELECT name AS table_name FROM sqlite_master WHERE type='table' AND name IN ('google_play_rtdn_events','billing_subscriptions','billing_payment_events') ORDER BY name;"
           read_only possible_account_matches "WITH candidate AS (
             SELECT id AS owner_id, email FROM accounts WHERE lower(email) LIKE 'gg%@gmail.com' OR lower(email) LIKE 'aq%@naver.com'
             UNION SELECT owner_id,email FROM calllink_profiles WHERE lower(email) LIKE 'gg%@gmail.com' OR lower(email) LIKE 'aq%@naver.com'
