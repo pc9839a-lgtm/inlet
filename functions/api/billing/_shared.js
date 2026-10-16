@@ -535,7 +535,7 @@ export async function reconcileGoogleSubscriptionByOrder(env = {}, db, row = {})
   const token = text(provider?.purchaseToken, 4096);
   if (!token) return { ok: false, reason: 'play_token_unavailable' };
   if ((await sha256(token)).toLowerCase() !== knownHash.toLowerCase()) {
-    return { ok: false, reason: 'purchase_token_mismatch' };
+    return { ok: false, reason: 'owner_binding_mismatch' };
   }
   if (!Array.isArray(provider?.lineItems)
       || !provider.lineItems.some((item) => text(item?.productId, 120) === productId)) {
