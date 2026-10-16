@@ -33,8 +33,9 @@
 - P7 실제 PG adapter 연동은 현재 홀드
 - P8 대량 데이터: 10k/50k benchmark + lead inbox keyset pagination + bounded CSV streaming + fail-closed retention 구현, production 데이터 삭제 없음
 - **완료(#429):** 별도 GitHub Actions `inlet` 자동 운영 배포/레거시 main 자동 쓰기 경로 퇴역, 수동 승인 워크플로 및 전체 경로 QA 보강. main 병합·CI 성공 확인. **Cloudflare 자체 Git 자동배포 및 운영 실제 배포 반영은 미확인**
+- **코드 완료(#445):** 신규 D1/JSONL 분석 이벤트의 원본 URL·임의 연락처/메모·객체 저장 제한. 기존 이벤트 보존/운영 삭제 정책은 변경하지 않음.
 - **코드 완료(#440/#443):** P8-R JSONL 파일 보존 유틸(기본 dry-run·별도 실행 승인), PII-UI 접수함 목록 마스킹·CSV 개인정보 경고·삭제 안내. 운영에서 고객 파일 정리 실행이나 Cloudflare 배포는 하지 않음.
-- 다음 미해결: GitHub Ruleset `main` 대상 지정(현재 비어 있음)·Cloudflare Git 자동배포 OFF 실확인 → D1 백업/복구 증빙 → EVT-MIN·ST-MIG·INT-UX 실제 코드 미구현 검토 → editor staging 실검증
+- 다음 미해결: GitHub Ruleset `main` 대상 지정(현재 비어 있음)·Cloudflare Git 자동배포 OFF 실확인 → D1 백업/복구 증빙 → ST-MIG·INT-UX 실제 코드 미구현 검토 및 DOC-01 중복 PR 정리 → editor staging 실검증
 - **패치 목록 단일 기준:** `PAGERO_INTERNAL_OPTIMIZATION_MASTER_KO.md`의 A(코드 패치), B(운영/실증), C(보류). P8 backup/restore live drill은 별도 승인. 운영 query plan은 규모 증가 시 재검증, E5 A/B test는 실사용 데이터 이후
 - AI 확장은 사용자 재요청 전까지 후순위
 - 오래된 PageRo domain PR #233~#235는 current-main 재구성으로 대체되어 2026-10-02 closed
