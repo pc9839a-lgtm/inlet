@@ -185,6 +185,9 @@ dead file 삭제 후 build가 통과하지 않으면 실제 사용처를 놓친 
 운영 배포는 사용자의 명시적 승인 후에만 수행한다.
 
 현재 적용할 배포 운영 계약:
+
+**주의 (2026-10-16 current-main 감사):** 아래는 **목표 운영 규칙**이지 저장소의 모든 배포 경로에 적용됐다는 검증 결과가 아니다. `deploy-settings-finance-on-push.yml`, `deploy-settings-finance-on-pr.yml`, `deploy-auth-email-on-pr.yml`, `deploy-auth-email-on-issue.yml`, `capture-auth-email-live.yml`, `deploy-calltag-admin.yml`, `deploy-calltag-partner-settlement.yml` 등이 수동 메인 배포 gate 외부에서 동일 Pages 프로젝트 `inlet`을 직접 배포한다. `deploy-auth-storage-diagnostic.yml`, `hotfix-auth-verification-id.yml`는 `npm run deploy:pages`로 같은 프로젝트 배포를 호출한다. #422 병합 이후 자동 `workflow_run`의 실제 배포 단계 성공 증빙도 확인됐다. DEP-00 조치 전에는 **GitHub Actions 전체에서 자동 운영 배포 차단 완료로 판정 금지**. Cloudflare Git 연결 여부와 이 GitHub Actions 문제는 별개다.
+
 - `main` push와 QA 성공은 **자동 운영 배포를 트리거하지 않는다**.
 - GitHub Actions `Deploy Cloudflare Pages`를 `main`에서 **수동 실행**한다.
 - `expected_sha`에 **현재 main 전체 40자리 SHA**, `approval_phrase`에 `I_APPROVE_PAGERO_PRODUCTION_DEPLOY`를 입력한다.
