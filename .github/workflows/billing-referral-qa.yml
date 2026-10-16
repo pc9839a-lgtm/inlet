@@ -37,6 +37,9 @@ jobs:
       - name: Verify CallTag referral five-day policy isolation
         run: node scripts/calltag-referral-five-day-quality-check.mjs
 
+      - name: Verify CallTag commission rate zero and default policy
+        run: node scripts/calltag-commission-rate-quality-check.mjs
+
       - name: Verify CallTag Google Play RTDN renewal handling
         run: node scripts/calltag-rtdn-quality-check.mjs
 
