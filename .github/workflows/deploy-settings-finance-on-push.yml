@@ -1,77 +1,21 @@
-name: Deploy settings finance live
+# This former write-capable workflow is retired to prevent bypassing the
+# approved, exact-SHA manual production release of the shared inlet project.
+# Keep this inert redirect until all legacy references are removed in a
+# separate, reviewed cleanup. It must not run on push/PR/issues/workflow_run.
+name: "Deploy settings finance live (retired)"
 
 on:
-  push:
-    branches:
-      - ops/settings-finance-live
+  workflow_dispatch:
 
 permissions:
-  contents: write
-
-concurrency:
-  group: settings-finance-live
-  cancel-in-progress: true
+  contents: read
 
 jobs:
-  deploy:
+  retired:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 2
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Verify unified billing and referral contracts
-        run: node scripts/billing-referral-quality-check.mjs
-
-      - name: Build production assets
-        run: npm run build
-
-      - name: Capture deployed source
-        id: source
-        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-
-      - name: Deploy latest main
-        run: >-
-          npx wrangler pages deploy dist
-          --project-name inlet
-          --branch main
-          --commit-hash "${{ steps.source.outputs.sha }}"
-          --commit-message "Settings finance live ${{ steps.source.outputs.sha }}"
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-
-      - name: Record successful deployment source
-        env:
-          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+      - name: Redirect to approved production release
         run: |
-          git fetch origin main
-          git checkout -B main origin/main
-          mkdir -p .deployment
-          RECORDED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          cat > .deployment/cloudflare-status.json <<JSON
-          {
-            "sourceSha": "${SOURCE_SHA}",
-            "outcome": "success",
-            "reason": "none",
-            "recordedAt": "${RECORDED_AT}"
-          }
-          JSON
-          if git diff --quiet -- .deployment/cloudflare-status.json; then
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .deployment/cloudflare-status.json
-          git commit -m "Record Cloudflare deployment result [skip deploy]"
-          git push origin HEAD:main
+          echo "::notice::Legacy workflow retired: no Cloudflare deployment, runtime mutation, or branch write is performed."
+          echo "Use the manually approved Deploy Cloudflare Pages workflow on the exact tested main SHA."

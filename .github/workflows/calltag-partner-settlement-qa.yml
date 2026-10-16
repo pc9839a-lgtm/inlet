@@ -113,8 +113,12 @@ jobs:
           grep -q "service_scope" functions/api/call/admin/settlement-pay.js
           grep -q "status = CASE" functions/api/call/admin/settlement-pay.js
           grep -q "processed_at" functions/api/call/admin/settlement-pay.js
-          grep -q "CallTag Partner Settlement QA" .github/workflows/deploy-calltag-partner-settlement.yml
-          grep -q "wrangler pages deploy dist" .github/workflows/deploy-calltag-partner-settlement.yml
+          grep -q "Deploy CallTag Partner Settlement Backend (retired)" .github/workflows/deploy-calltag-partner-settlement.yml
+          grep -q "workflow_dispatch:" .github/workflows/deploy-calltag-partner-settlement.yml
+          if grep -Eq '^[[:space:]]+(push|pull_request|issues|workflow_run):' .github/workflows/deploy-calltag-partner-settlement.yml; then
+            echo 'Legacy partner settlement deploy workflow must remain manual-only and inert.' >&2
+            exit 1
+          fi
           if grep -E -n 'purchase_token|purchaseToken|order_id|payment_reference|external_subscription_id|password_hash|account_number_ciphertext|business_number_ciphertext' functions/api/partner/dashboard.js functions/api/partner/referrals.js functions/api/partner/earnings.js functions/api/partner/settlements.js functions/api/partner/_payout-notification.js; then
             echo 'Sensitive billing/account field exposed in partner response/notification surface.' >&2
             exit 1
