@@ -146,6 +146,8 @@ PageRo 내부 제품 UI에서는 설명문보다 기능명·상태·값을 우�
 
 > **현재 실행 기준표.** “패치”는 코드/UI 보완이 필요한 항목, “운영 설정·검증”은 이미 있는 코드의 실운영 증거/관리자 설정을 확인하는 작업이다. 재현되지 않은 문제는 장애로 단정하지 않는다. 완료 코드의 중복 재개발을 금지한다. `main`/실제 배포 SHA는 작업 직전에 재조회한다.
 >
+> **2026-10-16 코드 패치 완료(재개발 금지):** P8-R은 #440에서 로컬 JSONL 백업/격리 파일 보존기간을 기본 dry-run·승인 제한·최신 복구본 보호 방식으로 구현/QA 검증했다. **운영 고객 데이터 정리 실행은 미실시**. PII-UI는 #443에서 접수 목록 이름·연락처 기본 마스킹, 직접 선택 시 상세 노출, CSV 사전 개인정보 경고, 삭제 후 백업 사본 가능성 안내를 구현/QA 검증했다. **운영 Cloudflare 배포 반영은 미검증**. 두 기능은 미해결 코드 패치에서 제외한다.
+>
 > **완료 → 제외:** DEP-00(기존 GitHub Actions `inlet` 자동 배포·main 자동 push 경로 퇴역), DEP-01의 **코드 측 자동 설정 쓰기 제한**은 PR #429가 `main`에 2026-10-16 병합되어 `qa:all` 및 브라우저 QA 성공. #417~#422의 수동 배포·암호화 백업·SQLite 복구 검사 코드도 완료. **Cloudflare 자체 Git 자동배포 OFF, 실제 운영 배포 버전 및 GitHub 관리자 규칙 적용 여부는 별개 검증 대상.**
 >
 > **GitHub ruleset 상태:** `pagero-main-protection`은 active지만 2026-10-16 조회 시 `conditions.ref_name.include=[]`로 대상 브랜치가 비어 있음. `main.protected=false`. 필수 QA 6개만 지정되고 `strict_required_status_checks_policy=false`; `accessibility-regression`은 미포함. 이것은 **설정 미완료**이며 GitHub 관리 화면 권한이 필요함.
@@ -154,8 +156,6 @@ PageRo 내부 제품 UI에서는 설명문보다 기능명·상태·값을 우�
 
 | ID | 우선 | 패치할 내용 | 근거·수정 영역 | 완료 기준 |
 | --- | --- | --- | --- | --- |
-| P8-R | **P1** | 백업/격리 JSONL 파일의 보존기한 정리 실행기 연결 | `docs/ops-pii-retention-export-policy.md`, `ops-storage-migration-policy.md`. `.backups` 30일, `.quarantine` 14일 정책만 명시되어 있고 cleanup 작업 미완료 | dry-run, 안전한 경로 한정, 만료 파일만 처리, 보존/복원 대상 보호, QA. 실제 고객 자료 삭제·운영 스케줄 쓰기는 별도 승인 |
-| PII-UI | **P1 / 코드 상태 재확인 후** | 리드/예약 목록의 기본 마스킹, CSV 내보내기 개인정보 경고, 삭제 시 백업·격리 사본 보존 안내 | `ops-pii-retention-export-policy.md`에 Worker 2 구현 작업으로 남음. 현재 화면/코드에 이미 반영된 부분은 완료 처리하고 **미구현 조각만** 패치 | 전화·메일·주소 목록 기본 보호, 상세 열기 구분, CSV 경고, 삭제 영향 안내를 실제 UI/QA로 증명 |
 | EVT-MIN | **P2** | 이벤트 `payload_json`의 PII 최소화 및 분석 전용 필드 계약 | 정책상 현 event 제출 객체가 PII-free 보장되지 않음. 현행 180일 보수적 보존은 **이미 완료**, 되돌리지 않음 | 이벤트 필드 allowlist·불필요한 개인정보 제외·수집/전환 회귀 QA, 적용 전후 데이터 호환성 검증 |
 | ST-MIG | **P2 / 사용 시** | 브라우저에 남은 로컬 leads/events의 서버 이관 방법 및 사용자 확인 배너 | `ops-storage-migration-policy.md` Worker 1/2 미완료 항목. 기존 서버 페이지 저장·복구 코드는 완료 | 중복 없이 export/import 또는 안내된 CLI, 마이그레이션 확인, 실패 시 기존 데이터 유지, 실제 기능 사용 시에만 작업 |
 | INT-UX | **P2 / 활성 기능 한정** | 전달 로그/재시도 큐 노출 및 AI 생성 live 상태 표시 | `ops-live-integration-matrix.md`의 향후 UI 작업. `/api/leads/delivery-logs`, `/api/leads/retry-queue`는 이미 존재하므로 **API 재구현 금지** | 기존 API 활용, 전달 실패/재시도 및 live 모드 상태를 사용자에게 구별해 표시하고 UI QA 통과 |
@@ -165,6 +165,7 @@ PageRo 내부 제품 UI에서는 설명문보다 기능명·상태·값을 우�
 
 | ID | 우선 | 남은 확인 | 완료 조건 |
 | --- | --- | --- | --- |
+| OPS-R | **P2 / 운영 승인 필요** | P8-R 보존기간 정리 실행 여부 | #440의 도구는 dry-run/승인 게이트까지만 구현됐음. 고객 자료가 있는 JSONL 디렉터리는 보존 예외(최신 백업 2개, 격리 파일 1개)와 별도 승인 검토 후 실행. 실제 고객 자료 자동삭제 스케줄 없음 |
 | OPS-02 | **P1** | GitHub `main` ruleset 실제 적용, required status checks·최신 main 재검사, `production` environment reviewers | `main` 대상 지정, 필수 검증 중 `accessibility-regression` 포함 여부 결정/설정, merge/force-push 동작 확인. required reviewers는 권한·요금제 지원 범위 확인. 현재 **설정 미완료** |
 | OPS-01 | **P1** | Cloudflare Pages `inlet`의 Git 자동 Production 배포 OFF 여부 | 관리 콘솔 또는 승인된 `PageRo Cloudflare Auto-deploy Safety` **audit** 결과 확보. GitHub Actions 차단과 별개 |
 | OPS-05 | **P1** | 실제 Cloudflare 운영 deployment SHA·운영 버전 및 관리자 세션/폰트 반영 | 배포 기록과 공개 읽기 전용 검사 일치. PR #429 `main` 병합만으로 Cloudflare Pages 코드 반영을 가정하지 않음 |
@@ -321,17 +322,17 @@ P8-1~4의 코드/회귀 계약은 완료했다. production 실데이터 삭제�
 
 B3 production smoke는 현재 스킵한다. P7 실제 PG 연동도 홀드한다. E5 A/B test는 실사용 데이터 이후 진행한다. 이 보류 사항은 현재 장애/필수 패치로 취급하지 않는다.
 
-P8 대량 데이터: P8-1~4는 완료. 남은 것은 **P8-R JSONL 보존 정리 코드**, 운영 복구 증빙 OPS-03/04, 규모 증가 시 P8-Q 확인이다.
+P8 대량 데이터: P8-1~4 및 **P8-R 로컬 JSONL 보존 정리 코드**는 완료. 실제 운영 정리 실행(OPS-R)과 복구 증빙 OPS-03/04, 규모 증가 시 P8-Q만 남았다. PII-UI 코드도 #443에서 완료.
 
 **실행 순서(중복 패치 금지):**
 1. **OPS-02 / OPS-01:** GitHub Ruleset 브랜치 타깃과 Cloudflare Git auto-deploy 확인 (관리자 설정).
 2. **OPS-05 / OPS-03:** 운영 배포 SHA 증빙, D1 backup-only 암호화 파일→SQLite 복원 실행.
-3. **P8-R / PII-UI:** 아직 구현하지 않은 파일 보존·사용자 개인정보 보호 UI만 확인 후 패치.
+3. **OPS-R / OPS-05:** #440/#443 코드 재패치 없이 운영 자료 정리 승인 여부와 실제 배포 반영만 확인.
 4. **ED-V01 / OPS-04:** staging 실브라우저/격리 D1 검증 (별도 승인·테스트 자원).
 5. **EVT-MIN / ST-MIG / INT-UX:** 사용 중인 기능의 실제 코드/화면 미구현 여부 판정 후 독립 PR.
 6. **DOC-01 / INT-V / P5-V / P8-Q:** 중복 PR 정리, 필요한 실서비스 검증/조건부 확인.
 
-자동배포 우회 DEP-00 코드는 PR #429 병합으로 완료되었으므로 다시 개발하지 않는다. `main` 병합, QA 성공과 실제 Cloudflare 배포를 혼동하지 않는다.
+자동배포 우회 DEP-00(#429), JSONL 보존 실행기 P8-R(#440), 접수함 개인정보 UI PII-UI(#443)는 이미 main 병합되어 다시 개발하지 않는다. `main` 병합, QA 성공과 실제 Cloudflare 배포를 혼동하지 않는다.
 
 ## 9. open PR 처리 규칙
 
