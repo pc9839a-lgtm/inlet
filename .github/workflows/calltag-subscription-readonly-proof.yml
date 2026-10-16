@@ -68,7 +68,31 @@ jobs:
             (SELECT COUNT(*) FROM billing_payment_events e WHERE e.owner_id=c.owner_id AND e.product_code IN ('call_monthly','message_monthly','all_monthly') AND e.event_type='charge' AND e.payment_status='paid' AND e.amount_krw>0 AND e.amount_source IN ('provider_confirmed','play_earnings_report','google_play_orders_api')) AS confirmed_charge_count
           FROM candidate c ORDER BY c.owner_id LIMIT 20;"
           rm -f /tmp/calltag-readonly.json
+      - name: Direct Cloudflare D1 REST read-only SELECT fallback
+        if: always()
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ] || [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then echo "DIAG_API_CREDENTIAL_MISSING"; exit 0; fi
+          database_id="$(node -p 'JSON.parse(require("fs").readFileSync("wrangler.jsonc","utf8")).d1_databases.find(x=>x.binding==="DB").database_id')"
+          query() {
+            local label="$1" sql="$2" code
+            payload="$(node -e 'process.stdout.write(JSON.stringify({sql:process.argv[1]}))' "$sql")"
+            code="$(curl --silent --show-error --max-time 30 --output /tmp/calltag-api-result.json --write-out '%{http_code}' \
+              -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" -H "Content-Type: application/json" \
+              --data "$payload" "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/d1/database/${database_id}/query" || true)"
+            node -e 'const fs=require("node:fs");let d={};try{d=JSON.parse(fs.readFileSync("/tmp/calltag-api-result.json","utf8"))}catch{}const label=process.argv[1],http=process.argv[2];const rows=Array.isArray(d.result)?d.result[0]?.results:[];const errs=Array.isArray(d.errors)?d.errors.map(x=>({code:x.code,message:String(x.message||"").slice(0,90)})):[];console.log("DIRECT_D1_READ",JSON.stringify({label,http,success:d.success===true,rows:Array.isArray(rows)?rows.slice(0,25):[],errors:errs}))' "$label" "$code"
+          }
+          query active_subscription_summary "SELECT channel,status,verification_state,COUNT(*) AS records,COUNT(DISTINCT owner_id) AS owners FROM billing_subscriptions WHERE product_code IN ('call_monthly','message_monthly','all_monthly') GROUP BY channel,status,verification_state;"
+          query possible_email_matches "WITH c AS (SELECT id AS owner_id,email FROM accounts WHERE lower(email) LIKE 'gg%@gmail.com' OR lower(email) LIKE 'aq%@naver.com' UNION SELECT owner_id,email FROM calllink_profiles WHERE lower(email) LIKE 'gg%@gmail.com' OR lower(email) LIKE 'aq%@naver.com') SELECT c.owner_id, substr(c.email,1,2)||'*****@'||substr(c.email,instr(c.email,'@')+1) AS masked_email, (SELECT group_concat(s.channel||':'||s.status||':'||s.verification_state||':renew='||s.auto_renewing,' | ') FROM billing_subscriptions s WHERE s.owner_id=c.owner_id AND s.product_code IN ('call_monthly','message_monthly','all_monthly')) AS subscription_states FROM c ORDER BY c.owner_id LIMIT 25;"
+          rm -f /tmp/calltag-api-result.json
+
+
       - name: Read Cloudflare inlet production deployment SHA, no runtime writes
+        if: always()
         shell: bash
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
