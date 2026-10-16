@@ -1,6 +1,6 @@
 # Pagero D1 Migration Safety Runbook
 
-Status: code complete on the landing-only migration-safety patch branch. Production execution remains approval-gated.
+Status: backup-only + encrypted backup offline SQLite restore validation workflows merged to main (#418, #422). Actual production backup/restore artifact evidence and remote disposable D1 restore remain approval-gated and unverified. Do not confuse a CI contract pass with a completed live recovery drill.
 
 ## Purpose
 
