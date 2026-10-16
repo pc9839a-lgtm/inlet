@@ -16,6 +16,7 @@ permissions:
 jobs:
   diagnose:
     if: ${{ github.event_name != 'pull_request' }}
+    environment: production
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
