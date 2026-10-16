@@ -146,7 +146,7 @@ PageRo 내부 제품 UI에서는 설명문보다 기능명·상태·값을 우�
 
 > **이 표만 미해결 작업의 우선순위로 사용한다.** `구현`, `main 병합`, `CI 성공`, `운영 배포`, `실제 검증`은 다른 상태다. 아래는 이미 수정된 코드를 재작성하는 목록이 아니다. 운영 로그/Cloudflare 환경을 확인하지 못한 경우 **미확인**으로 쓰며 장애 발생으로 단정하지 않는다.
 >
-> 검토 기준: main `5b0e7f771929268320e0b27eb301ebce22daf262` (PR #425), 같은 SHA의 main QA 성공. PR #415, #417~#419, #421~#422, #425 병합 확인. `main` branch `protected=false` GitHub API 확인. Cloudflare 운영 설정, 수동 workflow 실행 증빙, 실제 Pages 배포는 별도로 확인하지 못함.
+> 검토 기준: 2026-10-16 조회 당시 current `main`(#425 포함) 및 해당 main QA 성공. 검토 시점 SHA는 Git history/Actions로 재조회하고, 이 문장에 적힌 특정 SHA를 향후 배포 기준으로 재사용하지 않는다. PR #415, #417~#419, #421~#422, #425 병합 확인. `main` branch `protected=false` GitHub API 확인. Cloudflare 운영 설정, 수동 workflow 실행 증빙, 실제 Pages 배포는 별도로 확인하지 못함.
 
 | ID | 우선순위 | 아직 해결되지 않은 내용 | 증거 / 현재 범위 | 완료 판정에 필요한 작업 |
 | --- | --- | --- | --- | --- |
