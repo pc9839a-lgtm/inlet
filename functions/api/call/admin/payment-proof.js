@@ -24,7 +24,7 @@ export async function onRequest({ request, env }) {
     const orderId = String(evidence.order_id || '').trim();
     const productCode = String(evidence.product_code || '');
     if (!orderId) {
-      return adminJson(200, { ok: true, ownerId, result: 'order_id_missing', confirmed: false, productCode });
+      return adminJson(200, { ok: true, ownerId, result: 'play_reference_missing', confirmed: false, productCode });
     }
     let proof;
     try {
