@@ -180,7 +180,7 @@ assert(endpointSource.includes("eventRetentionClass: 'conservative-potential-pii
 assert(runnerSource.includes("PAGERO_DATA_RETENTION_WRITE") && runnerSource.includes("I_APPROVE_PAGERO_DATA_RETENTION"), 'live deletion runner must remain fail-closed');
 assert(runnerSource.includes("redirect: 'error'"), 'retention runner must not forward secrets through redirects');
 assert(auditSource.includes("INLET_AUDIT_RETENTION_DAYS") && auditSource.includes("audit.retention_completed"), 'existing audit retention must remain operational');
-assert(policySource.includes('현재 PageRo event') || policySource.includes('Current PageRo event'), 'privacy policy must document conservative event retention');
+assert(policySource.includes('Historical PageRo event rows') && policySource.includes('180-day maximum'), 'privacy policy must preserve conservative retention for historical event PII');
 assert(workflowSource.includes('environment: production'), 'live retention workflow must use the protected production environment');
 assert(!workflowSource.includes('vars.PAGERO_DATA_RETENTION_WRITE'), 'scheduled retention must never inherit persistent write authorization');
 assert(!workflowSource.includes('vars.PAGERO_DATA_RETENTION_APPROVAL'), 'scheduled retention must never inherit persistent approval');
