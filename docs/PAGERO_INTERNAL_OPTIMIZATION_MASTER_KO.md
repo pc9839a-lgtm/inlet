@@ -142,32 +142,47 @@ PageRo 내부 제품 UI에서는 설명문보다 기능명·상태·값을 우�
 
 ## 7. 현재 남은 실제 backlog
 
-### 실제 미해결 항목 — 2026-10-16 current-main 재점검
+### 미해결 패치 및 검증 목록 — current-main 검증 기준 (2026-10-16)
 
-> **이 표만 미해결 작업의 우선순위로 사용한다.** `구현`, `main 병합`, `CI 성공`, `운영 배포`, `실제 검증`은 다른 상태다. 아래는 이미 수정된 코드를 재작성하는 목록이 아니다. 운영 로그/Cloudflare 환경을 확인하지 못한 경우 **미확인**으로 쓰며 장애 발생으로 단정하지 않는다.
+> **현재 실행 기준표.** “패치”는 코드/UI 보완이 필요한 항목, “운영 설정·검증”은 이미 있는 코드의 실운영 증거/관리자 설정을 확인하는 작업이다. 재현되지 않은 문제는 장애로 단정하지 않는다. 완료 코드의 중복 재개발을 금지한다. `main`/실제 배포 SHA는 작업 직전에 재조회한다.
 >
-> 검토 기준: 2026-10-16 조회 당시 current `main`(#425 포함) 및 해당 main QA 성공. 검토 시점 SHA는 Git history/Actions로 재조회하고, 이 문장에 적힌 특정 SHA를 향후 배포 기준으로 재사용하지 않는다. PR #415, #417~#419, #421~#422, #425 병합 확인. `main` branch `protected=false` GitHub API 확인. Cloudflare Pages 프로젝트 Git 설정 및 실제 제공 중인 배포 SHA는 별도로 확인하지 못함. **다른 GitHub Actions를 통한 자동 `inlet` 배포 경로와 성공 실행 이력은 확인**했다.
+> **완료 → 제외:** DEP-00(기존 GitHub Actions `inlet` 자동 배포·main 자동 push 경로 퇴역), DEP-01의 **코드 측 자동 설정 쓰기 제한**은 PR #429가 `main`에 2026-10-16 병합되어 `qa:all` 및 브라우저 QA 성공. #417~#422의 수동 배포·암호화 백업·SQLite 복구 검사 코드도 완료. **Cloudflare 자체 Git 자동배포 OFF, 실제 운영 배포 버전 및 GitHub 관리자 규칙 적용 여부는 별개 검증 대상.**
+>
+> **GitHub ruleset 상태:** `pagero-main-protection`은 active지만 2026-10-16 조회 시 `conditions.ref_name.include=[]`로 대상 브랜치가 비어 있음. `main.protected=false`. 필수 QA 6개만 지정되고 `strict_required_status_checks_policy=false`; `accessibility-regression`은 미포함. 이것은 **설정 미완료**이며 GitHub 관리 화면 권한이 필요함.
 
-| ID | 우선순위 | 아직 해결되지 않은 내용 | 증거 / 현재 범위 | 완료 판정에 필요한 작업 |
+#### A. 지금 남은 실제 패치 (코드·UI)
+
+| ID | 우선 | 패치할 내용 | 근거·수정 영역 | 완료 기준 |
 | --- | --- | --- | --- | --- |
-| DEP-00 | **P0 / 코드·실행 증거 확인** | **#417/#422 배포 승인 가드 외의 다수 workflow가 `inlet` 운영 배포를 직접 호출해 승인 체계를 우회** | 직접 `wrangler pages deploy --project-name inlet --branch main` 호출: `deploy-settings-finance-on-push.yml`, `deploy-settings-finance-on-pr.yml`, `deploy-auth-email-on-pr.yml`, `deploy-auth-email-on-issue.yml`, `capture-auth-email-live.yml`, `deploy-calltag-admin.yml`, `deploy-calltag-partner-settlement.yml`. `deploy-auth-storage-diagnostic.yml`·`hotfix-auth-verification-id.yml`는 `npm run deploy:pages`(동일 `inlet` 배포) 호출. #422 병합 이후 자동 `workflow_run` 배포 2건(2026-10-14)에서 실제 `Deploy assets and Pages Functions` step 성공 확인 | 프로젝트 `inlet`에 쓰기 가능한 **모든** workflow·script·Git 연동을 열거하고, 승인되지 않은 운영 업로드/Secret 변경을 차단. 단일 수동 승인 + 최신 main 동일 SHA QA + 운영 전 Cloudflare GET 검사 + job-level required reviewers 계약으로 통일. 자동 검증은 단일 `deploy-cloudflare.yml`가 아니라 **전체 workflow corpus**에서 직접·간접 Pages 배포를 검색하도록 확장. 운영 설정 수정·workflow 비활성화/삭제는 별도 승인 후 |
-| DEP-01 | **P1 / 변경 위험** | CI 경로 일부는 운영에 직접 쓰는 명령 또는 운영 프로젝트 Secret 변경을 포함하지만 `main` workflow 코드 변경만으로 실행될 수 있음 | `calltag-admin-cloudflare-bootstrap.yml`의 `pages secret put`와 `deploy-auth-storage-diagnostic.yml`·`hotfix-auth-verification-id.yml`의 `push` trigger 확인. 실제 Secret 변경 실행 발생 여부는 별도 검증 | 모든 운영 변경 작업의 event/branch/environment/approval/QA SHA/쓰기 목적지 점검. 민감 작업은 별도 수동승인으로 제한하고 read-only 점검과 분리. Secret 실제 값은 조회·문서화 금지 |
-| OPS-01 | **P1 / 운영 확인** | Cloudflare Pages `inlet` 프로젝트의 Git 자동 Production 배포가 실제 OFF인지 **미확인** | #417 GitHub 자동배포 차단, #422 Cloudflare GET 검사·fail-closed 코드까지 **main 병합**. Cloudflare 실설정 조회 실행은 미확인. **DEP-00의 다른 GitHub Actions 업로드 차단과 별개 문제** | 승인된 수동 `PageRo Cloudflare Auto-deploy Safety` `audit` 실행→실제 `production_deployments_enabled=false` 또는 Git source 없음 증빙. 켜져 있으면 별도 승인 후 `disable`. 기존 코드 다시 만들지 않기 |
-| OPS-02 | **P1 / 접근 통제** | GitHub `main` branch 보호가 꺼져 있음; `production` environment required reviewers 설정도 **미검증** | GitHub branch API에서 `protected=false` 확인. 규칙셋/Environment 우회 조건은 미확인. #417의 수동 gate는 단일 workflow에만 적용되며 다른 업로드 경로가 존재 | 운영 승인 없는 직접 push/우회 배포를 막는 ruleset·required QA 및 production reviewers 실제 설정/검증. 구성 실패 시 승인 없는 운영 배포 금지 |
-| OPS-03 | **P1 / 복원 증빙** | 실제 운영 D1 암호화 `backup-only` 산출물과 복호화→격리 SQLite 복원 **성공 실행 증빙 미확인** | #418 백업 전용 workflow, #422 AES/HMAC·SQL·SQLite 검증 **코드 병합**. 코드/QA 성공≠운영 백업 artifact 및 복원 실행 | `verified-live` 암호화 백업 run ID→승인된 `PageRo D1 Encrypted Backup Offline Restore` 실행→해시/HMAC·integrity/FK/핵심 테이블 카운트 artifact 확인. 운영 D1 쓰기 없음 |
-| OPS-04 | **P1 / 실제 D1 복구** | Cloudflare **disposable D1** 데이터베이스 import/read/write/cleanup 복구 훈련 성공 증빙 없음 | #422 복원 범위는 임시 **SQLite**까지이며 `remoteDisposableD1Restore=not-run`. 과거 stacked #368은 현 main과 독립적으로 정합성 검토 필요 | 별도 승인·일회용 D1·개인정보 취급 승인 확보 후 SQL restore, migration/테이블 수, 테스트 데이터 read/write, cleanup 증빙. 운영 D1로 시험 복원 금지 |
-| OPS-05 | **P1 / 운영 반영 확인** | #421 관리자 폐기 세션 검증 및 #425 메인 Pretendard 패치의 **운영 반영 여부 미확인** | 두 PR 모두 main 병합, 최신 main QA 성공. PR 설명상 병합만으로 production deploy 하지 않음 | Cloudflare 배포 이력에서 배포된 SHA 확인 후 기존 관리자 세션 거부·실제 웹폰트 로딩을 읽기 전용 검증. production deploy는 별도 승인 |
-| ED-V01 | **P1 / 실사용 검증** | 실제 Cloudflare staging 로그인 편집기 Chrome **두 탭·30분 입력·3G/500ms·저장 중 전환·readback** 검증 미실시 | ED-R01~R10 코드 패치 완료. #415로 ED-R08~R11 통합 코드 main 병합 및 로컬 서명 세션 HTTP QA 추가. **실제 staging 브라우저 결과는 별도** | 격리된 staging·테스트 계정에서 브라우저 검증 및 데이터 무손실 증빙. 운영 고객 계정·페이지 사용 금지 |
-| B3 | **P1 / 사용자 보류** | 신규 가입→SES 인증메일 수신→로그인→첫 페이지 발행→문의 접수함→정리 **production E2E 미실행** | `ops-pagero-production-launch-smoke.md`: 사용자 요청으로 명시적 **스킵**. 기존 QA 성공을 이 항목의 통과로 대체하지 않음 | 사용자가 실행을 다시 승인하고 독립 테스트 이메일/전화번호를 준비할 때만 실행. 그 전에는 의도된 보류로 표기 |
-| P8-R | **P2 / 데이터 보존** | JSONL 백업 30일 및 격리(quarantine) 14일 보존기간의 **실행·정리 연결 미완료** | `ops-pii-retention-export-policy.md` 구현 작업으로 명시. #419로 D1 leads/audit 자동 **삭제 위험은 해결**됐으므로 되돌리지 않음 | JSONL 보존 정책에 맞는 최소권한·dry-run/승인 실행, 백업·격리 파일 정리 증빙. production 삭제는 별도 승인 |
-| P5-V | **P2 / 선택적 검증** | 개인 도메인 **실제 외부 DNS/SSL attach→verify→detach E2E 미실행** | #352~#357 및 production migration/provider 기반은 완료. 미실행 이유는 별도 테스트 도메인 부재 | 기존 브랜드 도메인은 건드리지 않고 전용 테스트 도메인 확보 후 승인 범위 내 검증 |
-| INT-V | **P2 / 외부 연동 검증** | SES 실메일, 외부 CRM webhook, 광고 매체 전환 진단, 유료 AI API의 실제 계정별 live 증빙이 통합 확정되지 않음 | `ops-live-integration-matrix.md`: mock/pass와 `skipped-live`를 구분하도록 정의. **모든 기능 장애라는 의미 아님** | 활성 기능에 한해 각 provider 실행 결과와 `skipped-live` 허용·책임자를 기록. 비활성 기능을 배포 blocker로 자동 승격하지 않음 |
-| P8-Q | **P3 / 규모 증가 시** | 실제 운영 리드 규모에서 index/query plan·CSV 응답 품질 재검증 필요 | 10k/50k 오프라인 fixture, keyset, CSV streaming은 구현 완료 | 실제 부하가 기준치를 충족하면 읽기 전용 production explain/성능 점검 |
-| DOC-01 | **P2 / 작업 중 정리** | 완료 PR이 여전히 열린 개별 PR #411~#414 및 오래된 stacked #368~#370으로 보이는 **중복/정합성 위험** | #415 통합 PR이 main 병합됨. #368→#369→#370은 오래된 base를 참조하는 open stack. 코드 완성 여부를 열린 PR 수로 판단 금지 | head/base와 main diff를 비교해 superseded PR은 중복 병합하지 않고 검토 후 close; E5 구현 필요 시 current main에서 별도 재구성 |
+| P8-R | **P1** | 백업/격리 JSONL 파일의 보존기한 정리 실행기 연결 | `docs/ops-pii-retention-export-policy.md`, `ops-storage-migration-policy.md`. `.backups` 30일, `.quarantine` 14일 정책만 명시되어 있고 cleanup 작업 미완료 | dry-run, 안전한 경로 한정, 만료 파일만 처리, 보존/복원 대상 보호, QA. 실제 고객 자료 삭제·운영 스케줄 쓰기는 별도 승인 |
+| PII-UI | **P1 / 코드 상태 재확인 후** | 리드/예약 목록의 기본 마스킹, CSV 내보내기 개인정보 경고, 삭제 시 백업·격리 사본 보존 안내 | `ops-pii-retention-export-policy.md`에 Worker 2 구현 작업으로 남음. 현재 화면/코드에 이미 반영된 부분은 완료 처리하고 **미구현 조각만** 패치 | 전화·메일·주소 목록 기본 보호, 상세 열기 구분, CSV 경고, 삭제 영향 안내를 실제 UI/QA로 증명 |
+| EVT-MIN | **P2** | 이벤트 `payload_json`의 PII 최소화 및 분석 전용 필드 계약 | 정책상 현 event 제출 객체가 PII-free 보장되지 않음. 현행 180일 보수적 보존은 **이미 완료**, 되돌리지 않음 | 이벤트 필드 allowlist·불필요한 개인정보 제외·수집/전환 회귀 QA, 적용 전후 데이터 호환성 검증 |
+| ST-MIG | **P2 / 사용 시** | 브라우저에 남은 로컬 leads/events의 서버 이관 방법 및 사용자 확인 배너 | `ops-storage-migration-policy.md` Worker 1/2 미완료 항목. 기존 서버 페이지 저장·복구 코드는 완료 | 중복 없이 export/import 또는 안내된 CLI, 마이그레이션 확인, 실패 시 기존 데이터 유지, 실제 기능 사용 시에만 작업 |
+| INT-UX | **P2 / 활성 기능 한정** | 전달 로그/재시도 큐 노출 및 AI 생성 live 상태 표시 | `ops-live-integration-matrix.md`의 향후 UI 작업. `/api/leads/delivery-logs`, `/api/leads/retry-queue`는 이미 존재하므로 **API 재구현 금지** | 기존 API 활용, 전달 실패/재시도 및 live 모드 상태를 사용자에게 구별해 표시하고 UI QA 통과 |
+| DOC-01 | **P2 / 저장소 정리** | 대체된 열린 PR 정리 및 문서의 오래된 완료 상태 제거 | #415가 ED-R08~R11 반영. #411~#414는 중복, #368~#370은 오래된 stacked PR | main diff/요구사항 재확인 후 중복 PR만 종료; E5 및 미완료 복구 작업은 무조건 완료 처리하거나 임의 병합하지 않음 |
 
-**일부러 제외한 완료 항목:** E0~E4, P6, P9 코드/QA, P5 코드·migration/provider 기반, P8 10k/50k benchmark·keyset·CSV streaming·D1 bounded retention, ED-R01~R10의 수정 코드, #417 GitHub 수동 배포 gate, #418 암호화 백업 코드, #419 예약 실데이터 삭제 방지 코드, #421 관리자 폐기 세션 검증 코드, #422 Cloudflare 검사·SQLite 복원 검사 코드. **운영 미검증은 해당 코드의 재구현 사유가 아님.**
+#### B. 코드 재개발이 아닌 운영 설정·실증 (별도 승인 필요)
 
-**계획 보류(결함으로 취급 금지):** P7 실제 PG 선정/청구 ON은 사용자 승인 전 홀드. E5 A/B 실험은 실사용 전환 데이터 이후, 현 open stacked #369~#370을 current main에 자동 병합하지 않음. B3와 P5 전용 외부 도메인 smoke도 별도 승인/준비 전 자동 실행하지 않음.
+| ID | 우선 | 남은 확인 | 완료 조건 |
+| --- | --- | --- | --- |
+| OPS-02 | **P1** | GitHub `main` ruleset 실제 적용, required status checks·최신 main 재검사, `production` environment reviewers | `main` 대상 지정, 필수 검증 중 `accessibility-regression` 포함 여부 결정/설정, merge/force-push 동작 확인. required reviewers는 권한·요금제 지원 범위 확인. 현재 **설정 미완료** |
+| OPS-01 | **P1** | Cloudflare Pages `inlet`의 Git 자동 Production 배포 OFF 여부 | 관리 콘솔 또는 승인된 `PageRo Cloudflare Auto-deploy Safety` **audit** 결과 확보. GitHub Actions 차단과 별개 |
+| OPS-05 | **P1** | 실제 Cloudflare 운영 deployment SHA·운영 버전 및 관리자 세션/폰트 반영 | 배포 기록과 공개 읽기 전용 검사 일치. PR #429 `main` 병합만으로 Cloudflare Pages 코드 반영을 가정하지 않음 |
+| OPS-03 | **P1** | 운영 D1 암호화 백업 artifact → 격리 SQLite 복원 증거 | 성공한 `backup-only` run ID, 해시/HMAC·SQLite integrity/FK 결과 등. 운영 D1 write 금지 |
+| OPS-04 | **P1** | 일회용(disposable) Cloudflare D1 실제 복구 훈련 | 별도 승인 후 일회용 DB에서 import/read/write/cleanup 검증. 고객 운영 DB에 시험 복원 금지 |
+| ED-V01 | **P1** | staging 실로그인 편집기 두 탭·30분·느린 네트워크·저장 전환 실사용 검증 | 테스트 전용 계정/데이터, 발행 readback 및 무손실 결과. ED-R01~R11 코드 재구현 금지 |
+| INT-V | **P2** | 사용 중인 SES·외부 webhook·광고 계정·AI 실환경 검증 | 실제 활성 연동만 테스트하고 `pass/fail/skipped-live`와 근거 기록. mock QA 통과를 live 통과라고 기록하지 않음 |
+| P5-V | **P2 / 조건부** | 개인 도메인 DNS/SSL attach→verify→detach | 별도 테스트 도메인 확보/승인 후 실행. P5 코드·migration/provider는 완료 |
+| P8-Q | **P3 / 규모 증가 시** | 운영 대량 리드 SQL query plan 및 CSV 응답 성능 | 데이터 규모 조건 충족 시 읽기 전용 검증. 10k/50k fixture·keyset·streaming 코드 완료 |
+
+#### C. 명시적으로 보류한 과제 — 버그/지금 할 패치에서 제외
+
+- **B3:** 회원가입→인증→첫 발행→테스트 문의 production E2E는 사용자 요청으로 현재 스킵.
+- **P7:** PG 사업자 선정·실제 자동 결제·청구 활성화는 승인 전 홀드. 주문 원장/차단 기반은 구현 완료.
+- **E5:** 페이지별 A/B test는 실사용 전환 데이터 확보 후 진행. 기존 #369~#370 자동 병합 금지.
+- **AI 확장:** E4 first-page 구현 완료. 사용자 재요청 이전에는 확장 보류.
+
+**반복 패치 금지:** E0~E4, P5 기반, P6, P8-1~4, P9, ED-R01~R11의 이미 병합된 범위, #417~#422, #429. 실제 current-main 재현 버그가 나오면 새 ID로 등록하고 증거와 영향 범위를 적는다.
 
 ### B3 — 신규 사용자 production smoke
 
@@ -304,22 +319,19 @@ P8-1~4의 코드/회귀 계약은 완료했다. production 실데이터 삭제�
 
 ## 8. 현재 작업 우선순위
 
-B3 production smoke는 현재 스킵한다. P7 실제 PG 연동도 정책상 홀드한다. 미완료가 곧 운영 장애는 아니다.
+B3 production smoke는 현재 스킵한다. P7 실제 PG 연동도 홀드한다. E5 A/B test는 실사용 데이터 이후 진행한다. 이 보류 사항은 현재 장애/필수 패치로 취급하지 않는다.
 
-P8 대량 데이터: P8-1~4의 성능·pagination·CSV·bounded retention 코드와 QA는 완료 상태다. 새로 개발할 작업이 아니라 P8-R/OPS-03~04의 운영 복구 증빙 및 규모 증가 시 P8-Q 확인만 남는다.
+P8 대량 데이터: P8-1~4는 완료. 남은 것은 **P8-R JSONL 보존 정리 코드**, 운영 복구 증빙 OPS-03/04, 규모 증가 시 P8-Q 확인이다.
 
-우선 순서:
+**실행 순서(중복 패치 금지):**
+1. **OPS-02 / OPS-01:** GitHub Ruleset 브랜치 타깃과 Cloudflare Git auto-deploy 확인 (관리자 설정).
+2. **OPS-05 / OPS-03:** 운영 배포 SHA 증빙, D1 backup-only 암호화 파일→SQLite 복원 실행.
+3. **P8-R / PII-UI:** 아직 구현하지 않은 파일 보존·사용자 개인정보 보호 UI만 확인 후 패치.
+4. **ED-V01 / OPS-04:** staging 실브라우저/격리 D1 검증 (별도 승인·테스트 자원).
+5. **EVT-MIN / ST-MIG / INT-UX:** 사용 중인 기능의 실제 코드/화면 미구현 여부 판정 후 독립 PR.
+6. **DOC-01 / INT-V / P5-V / P8-Q:** 중복 PR 정리, 필요한 실서비스 검증/조건부 확인.
 
-1. **DEP-00 P0**: `inlet` 운영 배포 승인 우회 경로 전체 차단 설계 및 별도 승인 후 코드/환경 패치
-2. **OPS-02 / DEP-01 P1**: main ruleset, environment reviewer 및 운영 쓰기 workflow 계약 통일
-3. **OPS-01 / OPS-05 P1**: Cloudflare Git 설정 + 실제 운영 배포 SHA/버전 읽기 전용 검증
-4. **OPS-03 / OPS-04 P1**: 암호화 백업 실행 증거 → 임시 SQLite → 승인된 disposable D1 복구 drill 순서
-5. **ED-V01 P1**: 스테이징 로그인 편집기 다중 탭·실브라우저 검증
-6. **P8-R / INT-V P2**: JSONL 보존기간 및 사용 중 외부 서비스 실환경 확인
-7. **P5-V / P8-Q P2~P3**: 테스트 도메인/규모 조건 충족 시 확인
-8. **E5 A/B test**: 실사용 데이터 및 설계 승인 후에만 재개, 오래된 stacked PR 자동 병합 금지
-
-AI 기능은 E4까지 구현되어 있다. 사용자가 다시 요청하기 전까지 AI 확장보다 위 backlog를 우선한다.
+자동배포 우회 DEP-00 코드는 PR #429 병합으로 완료되었으므로 다시 개발하지 않는다. `main` 병합, QA 성공과 실제 Cloudflare 배포를 혼동하지 않는다.
 
 ## 9. open PR 처리 규칙
 

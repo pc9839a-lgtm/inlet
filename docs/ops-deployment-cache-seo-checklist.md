@@ -22,12 +22,12 @@ Owner: Worker 5 QA/ops. Coordinate product or server behavior changes with the o
 
 ## GitHub To Cloudflare Pages Release Order
 
-> **운영 안전 주의:** 아래 순서는 의도된 승인 절차다. 현재 GitHub 저장소에는 이 절차를 우회하는 별도 운영 배포 workflow가 남아 있으며(마스터 DEP-00), 자동 `workflow_run` 배포 성공 이력까지 확인됐다. 따라서 이 체크리스트만 따르면 운영 자동배포가 완전히 통제된다는 의미가 아니다. 전체 경로 제거/승인 게이트 통합이 먼저다. QA나 main 병합만으로 운영 배포 완료를 주장하지 않는다.
+> **운영 배포 경계:** PR #429로 별도 GitHub Actions 자동 `inlet` writer는 main에서 퇴역됐다. 하지만 ruleset main 대상/production 환경 reviewer/Cloudflare Git 자동배포 설정/현재 배포 SHA는 아직 계정 수준 검증이 필요하다. 코드 QA PASS ≠ Cloudflare 운영 검증 PASS.
 
 
 1. Run local QA gates and confirm `live:qa` has no `fail` rows. Missing SMTP/OAuth/AI/conversion credentials may remain `skipped-live` only when explicitly accepted in the launch record.
 2. Clean generated local artifacts with `npm run artifact:clean`, then confirm strict artifact QA reports no `dist-check-*`, `.tmp-*`, `inlet-deploy-artifact-*`, `preview.zip`, or `.tmp-browser-visual` artifacts.
-3. Before any release commit is considered production-ready, verify all alternate `inlet` writer workflows are gated, required branch/environment reviews are configured, and the target SHA passed current-main QA. Stop if DEP-00 is still unresolved.
+3. Before any release commit is considered production-ready, verify all alternate `inlet` writer workflows are gated, required branch/environment reviews are configured, and the target SHA passed current-main QA. Stop if any alternate writer has reappeared or account-level protections are unverified.
 4. After explicit owner approval, invoke the intended manual `Deploy Cloudflare Pages` workflow on `main` with the exact reviewed 40-character `expected_sha` and required approval phrase. Confirm the Cloudflare Git auto-production-deploy setting is disabled; do not use a PR title, Issue, push, or success of another QA as a release trigger. Build/deploy only the approved `main` artifact; never deploy uncommitted local files.
 5. Record the Git commit SHA, Cloudflare Pages deployment id, production URL, and whether Pages Functions are active.
 6. After deploy, run hosted checks against the production URL:

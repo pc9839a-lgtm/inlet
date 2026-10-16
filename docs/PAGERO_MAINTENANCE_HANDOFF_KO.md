@@ -1,7 +1,7 @@
 # PageRo 유지보수 / 배포 규칙
 
 - 상태: 현재 운영 보호 기준
-- 갱신일: 2026-10-02 KST
+- 갱신일: 2026-10-16 KST
 - 저장소: `pc9839a-lgtm/inlet`
 - 운영 도메인: `https://pagero.kr/`
 
@@ -186,7 +186,7 @@ dead file 삭제 후 build가 통과하지 않으면 실제 사용처를 놓친 
 
 현재 적용할 배포 운영 계약:
 
-**주의 (2026-10-16 current-main 감사):** 아래는 **목표 운영 규칙**이지 저장소의 모든 배포 경로에 적용됐다는 검증 결과가 아니다. `deploy-settings-finance-on-push.yml`, `deploy-settings-finance-on-pr.yml`, `deploy-auth-email-on-pr.yml`, `deploy-auth-email-on-issue.yml`, `capture-auth-email-live.yml`, `deploy-calltag-admin.yml`, `deploy-calltag-partner-settlement.yml` 등이 수동 메인 배포 gate 외부에서 동일 Pages 프로젝트 `inlet`을 직접 배포한다. `deploy-auth-storage-diagnostic.yml`, `hotfix-auth-verification-id.yml`는 `npm run deploy:pages`로 같은 프로젝트 배포를 호출한다. #422 병합 이후 자동 `workflow_run`의 실제 배포 단계 성공 증빙도 확인됐다. DEP-00 조치 전에는 **GitHub Actions 전체에서 자동 운영 배포 차단 완료로 판정 금지**. Cloudflare Git 연결 여부와 이 GitHub Actions 문제는 별개다.
+**현재 완료/잔여 구분 (2026-10-16):** PR #429로 다른 GitHub Actions의 자동 `inlet` 배포·레거시 main 자동 쓰기 코드 경로를 퇴역했고, 이후 `main`에 병합되어 QA가 통과했다. 다시 같은 배포 스크립트를 패치하지 않는다. **남은 운영 설정:** GitHub ruleset의 main 대상(현재 비어 있음), Production 승인 설정, Cloudflare Git 자동배포 상태, 실제 제공 중인 배포 SHA. 이들은 별도 관리/검증 대상이며 이번 코드 병합이 해결했다는 뜻이 아니다.
 
 - `main` push와 QA 성공은 **자동 운영 배포를 트리거하지 않는다**.
 - GitHub Actions `Deploy Cloudflare Pages`를 `main`에서 **수동 실행**한다.
