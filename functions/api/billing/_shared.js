@@ -4,7 +4,7 @@ const PRODUCT_CODES = new Set([
   'message_monthly',
   'all_monthly',
 ]);
-const CALLTAG_PRODUCT_CODES = new Set(['call_monthly', 'message_monthly']);
+const CALLTAG_PRODUCT_CODES = new Set(['call_monthly', 'message_monthly', 'all_monthly']);
 const ACTIVE_STATES = new Set(['active', 'grace', 'cancelled']);
 const TRIAL_BASE_DAYS = 3;
 const REFERRAL_BONUS_DAYS = 5;
@@ -494,6 +494,93 @@ async function googlePlaySubscription(env, packageName, purchaseToken) {
     });
   }
   return body;
+}
+
+/**
+ * Recover a renewal purchase token from a server-stored Play order reference.
+ * Reconciliation is fail-closed: the provider token hash and product must match
+ * the exact existing CallTag record before ANY subscription row is updated.
+ * Never return, persist, or log the raw purchase token.
+ */
+export async function reconcileGoogleSubscriptionByOrder(env = {}, db, row = {}) {
+  const ownerId = text(row.owner_id, 120);
+  const orderId = text(row.order_id, 240);
+  const productId = text(row.product_code, 120);
+  const knownHash = text(row.purchase_token_hash, 128);
+  if (!ownerId || !orderId || !/^[a-f0-9]{64}$/i.test(knownHash)
+      || !CALLTAG_PRODUCT_CODES.has(productId)
+      || String(row.channel || '') !== 'google_play') {
+    return { ok: false, reason: 'record_incomplete' };
+  }
+  let provider;
+  try {
+    const authorization = await googlePlayAccessToken(env);
+    const response = await fetch(
+      `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/kr.pagero.calltag/orders/${encodeURIComponent(orderId)}`,
+      {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${authorization}`, Accept: 'application/json' },
+        redirect: 'error',
+        signal: AbortSignal.timeout(12000),
+      },
+    );
+    if (!response.ok) return {
+      ok: false, reason: 'provider_unavailable',
+      providerHttpStatus: [401, 403, 404].includes(response.status) ? response.status : 0,
+    };
+    provider = await response.json().catch(() => ({}));
+  } catch (error) {
+    return { ok: false, reason: 'provider_unavailable' };
+  }
+  const token = text(provider?.purchaseToken, 4096);
+  if (!token) return { ok: false, reason: 'play_token_unavailable' };
+  if ((await sha256(token)).toLowerCase() !== knownHash.toLowerCase()) {
+    return { ok: false, reason: 'purchase_token_mismatch' };
+  }
+  if (!Array.isArray(provider?.lineItems)
+      || !provider.lineItems.some((item) => text(item?.productId, 120) === productId)) {
+    return { ok: false, reason: 'product_mismatch' };
+  }
+  // Recheck token ownership immediately before writing, so an account moved
+  // during an in-flight provider request is not silently reassigned.
+  const stillOwned = await db.prepare(`
+    SELECT id FROM billing_subscriptions
+    WHERE id = ? AND owner_id = ? AND channel = 'google_play'
+      AND purchase_token_hash = ? AND product_code = ?
+    LIMIT 1
+  `).bind(Number(row.id || 0), ownerId, knownHash, productId).first();
+  if (!stillOwned) return { ok: false, reason: 'account_changed' };
+  try {
+    await verifyGoogleSubscription(env, db, ownerId, {
+      packageName: 'kr.pagero.calltag',
+      productId,
+      purchaseToken: token,
+      allowInactiveState: true,
+      skipChannelConflict: true,
+    });
+  } catch (error) {
+    return {
+      ok: false,
+      reason: 'subscription_verification_failed',
+      providerHttpStatus: [401, 403, 404].includes(Number(error?.details?.googleStatus || 0))
+        ? Number(error.details.googleStatus) : 0,
+    };
+  }
+  const verified = await db.prepare(`
+    SELECT status, expires_at, auto_renewing
+    FROM billing_subscriptions
+    WHERE id = ? AND owner_id = ? AND purchase_token_hash = ?
+    LIMIT 1
+  `).bind(Number(row.id || 0), ownerId, knownHash).first();
+  const current = ['active', 'grace', 'cancelled'].includes(String(verified?.status || ''))
+    && Date.parse(String(verified?.expires_at || '')) > Date.now();
+  return {
+    ok: true,
+    active: current,
+    status: text(verified?.status, 24),
+    autoRenewing: current && Number(verified?.auto_renewing || 0) === 1,
+    reason: current ? 'verified_current' : 'verified_not_current',
+  };
 }
 
 export async function googlePlayOrderPaidAmountKrw(
