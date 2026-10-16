@@ -22,6 +22,7 @@ import {
   normalizeLeadItem,
 } from '../lib/leadModel.js';
 import { currentMonthValue, monthDateRange } from '../lib/monthRange.js';
+import { maskLeadContact, maskLeadName } from '../lib/leadPrivacy.js';
 import { isTestTraffic, trafficSourceLabel } from '../lib/trafficAttribution.js';
 import InboxConnectionsPanel from './inbox/InboxConnectionsPanel.jsx';
 import IntakeDuplicatePolicyPanel from './inbox/DuplicatePolicyPanel.jsx';
@@ -219,6 +220,8 @@ export default function InboxPanel({
   const [openId, setOpenId] = useState('');
   const [sectionMode, setSectionMode] = useState('leads');
   const [copyFallback, setCopyFallback] = useState(null);
+  const [maskListPII, setMaskListPII] = useState(true);
+  const [pendingCsvFilters, setPendingCsvFilters] = useState(null);
   const selectedMonthRange = useMemo(() => monthDateRange(month), [month]);
   const updateLeadSafe = updateLead || (() => {});
   const reloadLeads = onReloadLeads || onReloadLeadConflict || (() => {});
@@ -294,7 +297,8 @@ export default function InboxPanel({
       if (openId) setOpenId('');
       return;
     }
-    if (!openId || !filtered.some((lead) => lead.id === openId)) setOpenId(filtered[0].id);
+    // No automatic selection: opening full PII in the detail pane must be deliberate.
+    if (openId && !filtered.some((lead) => lead.id === openId)) setOpenId('');
   }, [filtered, openId, sectionMode]);
 
   const selectedLead = useMemo(
@@ -436,7 +440,7 @@ export default function InboxPanel({
                   <button
                     type="button"
                     className="inbox-ops-toolbar-button"
-                    onClick={() => exportLeadsCsv(filtered, {
+                    onClick={() => setPendingCsvFilters({
                       month,
                       kind: filter,
                       status: statusFilter,
@@ -448,6 +452,24 @@ export default function InboxPanel({
                   </button>
                 ) : null}
               </section>
+
+              <div className="inbox-ops-privacy-controls">
+                <button type="button" aria-pressed={maskListPII} onClick={() => setMaskListPII((value) => !value)}>
+                  {maskListPII ? '개인정보 가리기 켜짐' : '개인정보 가리기 꺼짐'}
+                </button>
+                <small>접수 목록은 기본으로 가려집니다. 상세 내용을 보려면 접수를 직접 선택하세요.</small>
+              </div>
+
+              {pendingCsvFilters && exportLeadsCsv ? (
+                <div className="inbox-ops-pii-export-warning" role="group" aria-label="개인정보 CSV 다운로드 확인">
+                  <strong>개인정보 포함 CSV</strong>
+                  <p>전화번호·이메일·주소·문의 내용이 포함될 수 있습니다. 승인된 기기와 장소에만 저장하고 작업 후 삭제하세요.</p>
+                  <div>
+                    <button type="button" onClick={() => { const filters = pendingCsvFilters; setPendingCsvFilters(null); exportLeadsCsv(filtered, filters); }}>확인 후 다운로드</button>
+                    <button type="button" onClick={() => setPendingCsvFilters(null)}>취소</button>
+                  </div>
+                </div>
+              ) : null}
 
               {failedDeliveryCount > 0 && retryFailedDeliveries ? (
                 <button type="button" className="inbox-ops-retry-banner" onClick={retryFailedDeliveries} disabled={syncing}>
@@ -484,13 +506,13 @@ export default function InboxPanel({
                         }}
                       >
                         <span className="inbox-ops-name-cell">
-                          <strong>{lead.name || '이름 없음'}</strong>
+                          <strong>{maskListPII ? maskLeadName(lead.name) : (lead.name || '이름 없음')}</strong>
                           <small>{leadKindLabel(lead)}</small>
                           {isTestTraffic(lead) ? <i className="inbox-ops-mini-badge test">테스트</i> : null}
                           {riskInfo ? <i className={`inbox-ops-mini-badge ${riskInfo.level}`}>{riskInfo.badge}</i> : null}
                           {deliveryInfo ? <i className="inbox-ops-mini-badge delivery">{deliveryInfo.label}</i> : null}
                         </span>
-                        <span>{leadPrimaryContact(lead) || '-'}</span>
+                        <span>{maskListPII ? maskLeadContact(leadPrimaryContact(lead)) : (leadPrimaryContact(lead) || '-')}</span>
                         <span>{lead.pageTitle || lead.pageSlug || lead.project || page.title || '-'}</span>
                         <span>{fmtDateOnly(lead.createdAt)}</span>
                         <StatusBadge status={lead.status} />

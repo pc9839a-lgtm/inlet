@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { downloadLeadsCsv, filterLeadsForCsv, leadsToCsv } from '../src/lib/leadCsv.js';
+import { maskLeadName, maskLeadContact, maskLeadAddress } from '../src/lib/leadPrivacy.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -159,4 +160,17 @@ globalThis.Blob = originalBlob;
 globalThis.URL = originalUrl;
 globalThis.document = originalDocument;
 
-console.log(JSON.stringify({ ok: true, checks: 24 }, null, 2));
+const inboxSource = await readFile('src/panels/InboxPanel.jsx', 'utf8');
+const mutationSource = await readFile('src/runtime/useLeadMutationActions.js', 'utf8');
+assert(maskLeadName('홍길동') === '홍**', 'lead name must mask in table');
+assert(maskLeadContact('010-1234-5678') === '010-****-5678', 'phone must be masked');
+assert(maskLeadContact('01012345678') === '010-****-5678', 'digit phone must be masked');
+assert(maskLeadContact('user@example.com') === 'u***r@example.com', 'email must be masked');
+assert(maskLeadContact('no contact') === '***', 'unrecognized contact must not leak');
+assert(maskLeadAddress('서울특별시 강남구 테헤란로 1') === '서울특별시 강남구 (상세주소 숨김)', 'address must hide detail');
+assert(inboxSource.includes('const [maskListPII, setMaskListPII] = useState(true)'), 'inbox masking must start enabled');
+assert(inboxSource.includes('maskListPII ? maskLeadName(lead.name)') && inboxSource.includes('maskListPII ? maskLeadContact(leadPrimaryContact(lead))'), 'list rows must mask');
+assert(!inboxSource.includes("setOpenId(filtered[0].id)"), 'full detail must never auto-select first lead');
+assert(inboxSource.includes('setPendingCsvFilters(') && inboxSource.includes('확인 후 다운로드'), 'CSV must wait for explicit privacy confirmation');
+assert(mutationSource.includes('백업·격리 파일의 사본'), 'deletion must warn that backup copies persist');
+console.log(JSON.stringify({ ok: true, checks: 35, piiListMaskedByDefault: true, csvConfirmation: true }, null, 2));

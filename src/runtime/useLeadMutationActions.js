@@ -166,7 +166,7 @@ export function useLeadMutationActions({
   const deleteLead = (id) => {
     requestConfirm({
       title: '접수 데이터를 삭제할까요?',
-      message: '삭제 후에는 이 화면에서 바로 되돌릴 수 없습니다.',
+      message: '삭제 후에는 접수함에서 바로 되돌릴 수 없습니다. 기존 백업·격리 파일의 사본은 별도 보존기간 동안 남아 있을 수 있습니다.',
       confirmLabel: '삭제',
       danger: true,
       onConfirm: () => performDeleteLead(id),
