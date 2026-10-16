@@ -42,11 +42,11 @@ try {
     await writeFile(path.join(outside, '.backups', 'leads.jsonl.' + stamp + '.leads-rewrite.bak'), 'outside');
     const planned = await planJsonlRetention({ dataDir: root, now });
     assert.equal(planned.inspected, 7, 'only normal generated files are included');
-    assert.equal(planned.candidates.length, 2, 'preserve two newest backups and one newest quarantine per file');
+    assert.equal(planned.candidates.length, 3, 'expire one lead backup and two quarantine files while preserving latest artifacts');
     assert(planned.candidates.every(x => !x.relativePath.includes('linked-project')), 'skip symlink projects');
     const preview = await runJsonlRetention({ dataDir: root, now });
-    assert(preview.dryRun && preview.deleted === 0 && preview.expired === 2);
-    assert.equal((await readdir(backups)).length, 5, 'dry-run must not delete files');
+    assert(preview.dryRun && preview.deleted === 0 && preview.expired === 3);
+    assert.equal((await readdir(backups)).length, 6, 'dry-run must not delete files');
     await assert.rejects(() => runJsonlRetention({ dataDir: root, now, execute: true, env: {} }), /approval/);
     await assert.rejects(() => runJsonlRetention({ dataDir: root, now, execute: true, env: {
       PAGERO_JSONL_RETENTION_WRITE: '1', PAGERO_JSONL_RETENTION_APPROVAL: 'I_APPROVE_PAGERO_JSONL_RETENTION',
@@ -56,13 +56,13 @@ try {
     const limited = await runJsonlRetention({ dataDir: root, now, execute: true, env, maxDeletes: 1 });
     assert.equal(limited.deleted, 1);
     const remaining = await runJsonlRetention({ dataDir: root, now, execute: true, env });
-    assert.equal(remaining.deleted, 1);
+    assert.equal(remaining.deleted, 2);
     const idempotent = await runJsonlRetention({ dataDir: root, now, execute: true, env });
     assert.equal(idempotent.deleted, 0);
     assert.equal(await readFile(current, 'utf8'), 'CUSTOMER DATA MUST REMAIN');
     assert.equal(await readFile(unrelated, 'utf8'), 'unrelated data');
-    assert.equal((await readdir(backups)).filter(x => x.endsWith('.bak')).length, 4, 'one old backup removed; retained two latest leads and only events backup');
-    assert.equal((await readdir(quarantine)).length, 2, 'older quarantine removed while newest stays');
+    assert.equal((await readdir(backups)).filter(x => x.endsWith('.bak')).length, 4, 'three protected backups and one unrelated suffix-shaped file remain');
+    assert.equal((await readdir(quarantine)).length, 1, 'two expired quarantine records removed while newest stays');
   } finally {
     await rm(outside, { recursive: true, force: true });
   }
