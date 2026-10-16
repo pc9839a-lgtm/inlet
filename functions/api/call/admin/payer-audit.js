@@ -108,7 +108,7 @@ export async function onRequest({ request, env }) {
       || Number(b.hasCurrentSubscription) - Number(a.hasCurrentSubscription)
       || a.ownerId.localeCompare(b.ownerId));
     await recordAdminAudit(env.DB, request, env, actor, 'members.payer-audit.read');
-    return adminJson(200, { ok: true, available: true, truncated,
+    return adminJson(200, { ok: true, available: true, truncated: truncated || result.length > LIMIT,
       sources: { subscriptions: subscribed.length, payments: charged.length, legacy: former.length },
       summary: { candidates: result.length, chargeRecorded: result.filter(x=>x.recordedCharge).length,
         verifiedSubscription: result.filter(x=>x.hasVerifiedSubscription).length,
