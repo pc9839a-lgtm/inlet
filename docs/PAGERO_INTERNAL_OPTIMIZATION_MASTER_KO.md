@@ -158,7 +158,7 @@ PageRo 내부 제품 UI에서는 설명문보다 기능명·상태·값을 우�
 
 | ID | 우선 | 패치할 내용 | 근거·수정 영역 | 완료 기준 |
 | --- | --- | --- | --- | --- |
-| ST-MIG | **P2 / 일부 구현** | 레거시 로컬 leads/events 최종 서버 이관·readback 검증 | 안전 1차: 서버 모드 기존 localStorage 덮어쓰기 방지, 데이터 감지 배너와 원본 JSON 수동 백업 제공. **자동 import·원본 삭제 없음**. 남은 것은 소유권 검증 import/readback 및 필요 시 페이지 데이터 경고 | 동일 프로젝트 확인, 중복 생성·알림 재전송 방지, 실패 시 로컬 자료 보존, 서버 읽기 검증 후 사용자 확인에 따른 완료 기록 |
+
 | INT-UX | **P2 / 활성 기능 한정** | 전달 로그/재시도 큐 노출 및 AI 생성 live 상태 표시 | `ops-live-integration-matrix.md`의 향후 UI 작업. `/api/leads/delivery-logs`, `/api/leads/retry-queue`는 이미 존재하므로 **API 재구현 금지** | 기존 API 활용, 전달 실패/재시도 및 live 모드 상태를 사용자에게 구별해 표시하고 UI QA 통과 |
 | DOC-01 | **P2 / 저장소 정리 일부 완료** | 오래된 stacked PR #368~#370 정합성 검토 | 이미 통합된 #411~#414는 2026-10-16 중복 종료 완료(#415가 ED-R08~R11 반영). #368~#370은 오래된 P8 복구/E5 A/B stack으로 계속 열려 있음 | #368의 현재 복구 코드 차이 및 #369~#370의 E5 사용 시점/현 main 적합성 별도 검토 후 종료 또는 재구성. 승인 없이 자동 병합 금지 |
 
@@ -166,6 +166,7 @@ PageRo 내부 제품 UI에서는 설명문보다 기능명·상태·값을 우�
 
 | ID | 우선 | 남은 확인 | 완료 조건 |
 | --- | --- | --- | --- |
+| ST-MIG-V | **P2 / 운영 검증** | 승인된 로컬 이관 실사용 E2E | 브라우저 원본 보존·수동 JSON 백업·프로젝트 확인·전용 API·중복 방지·서버 읽기 확인 코드는 구현. INLET_LOCAL_MIGRATION_ENABLED 기본 OFF | 일회용 프로젝트/격리 D1에서 승인된 E2E 검증 후 실사용 활성화 검토. 출처 불명 원본 수동 대조, 운영 고객 데이터 쓰기 없음 |
 | OPS-R | **P2 / 운영 승인 필요** | P8-R 보존기간 정리 실행 여부 | #440의 도구는 dry-run/승인 게이트까지만 구현됐음. 고객 자료가 있는 JSONL 디렉터리는 보존 예외(최신 백업 2개, 격리 파일 1개)와 별도 승인 검토 후 실행. 실제 고객 자료 자동삭제 스케줄 없음 |
 | OPS-02 | **P1** | GitHub `main` ruleset 실제 적용, required status checks·최신 main 재검사, `production` environment reviewers | `main` 대상 지정, 필수 검증 중 `accessibility-regression` 포함 여부 결정/설정, merge/force-push 동작 확인. required reviewers는 권한·요금제 지원 범위 확인. 현재 **설정 미완료** |
 | OPS-01 | **P1** | Cloudflare Pages `inlet`의 Git 자동 Production 배포 OFF 여부 | 관리 콘솔 또는 승인된 `PageRo Cloudflare Auto-deploy Safety` **audit** 결과 확보. GitHub Actions 차단과 별개 |
@@ -330,7 +331,7 @@ P8 대량 데이터: P8-1~4 및 **P8-R 로컬 JSONL 보존 정리 코드**는 �
 2. **OPS-05 / OPS-03:** 운영 배포 SHA 증빙, D1 backup-only 암호화 파일→SQLite 복원 실행.
 3. **OPS-R / OPS-05:** #440/#443 코드 재패치 없이 운영 자료 정리 승인 여부와 실제 배포 반영만 확인.
 4. **ED-V01 / OPS-04:** staging 실브라우저/격리 D1 검증 (별도 승인·테스트 자원).
-5. **ST-MIG / INT-UX:** 실제 사용 시나리오와 코드 미구현 여부를 먼저 확인한 뒤 독립 PR로 진행. EVT-MIN은 #445 완료.
+5. **INT-UX:** 활성 사용자의 연동 상태 UI를 기존 API로 연결. ST-MIG 서버 import 코드는 구현되고 실제 운영 E2E만 ST-MIG-V에 남김. EVT-MIN은 #445 완료.
 6. **DOC-01 / INT-V / P5-V / P8-Q:** 중복 PR 정리, 필요한 실서비스 검증/조건부 확인.
 
 자동배포 우회 DEP-00(#429), JSONL 보존 실행기 P8-R(#440), 접수함 개인정보 UI PII-UI(#443), 신규 이벤트 개인정보 최소화 EVT-MIN(#445)은 이미 main 병합되어 다시 개발하지 않는다. `main` 병합, QA 성공과 실제 Cloudflare 배포를 혼동하지 않는다.

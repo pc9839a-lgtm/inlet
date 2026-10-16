@@ -107,10 +107,10 @@ The migration workflow must never upload plaintext production SQL, must never ap
 
 ## Implementation Tasks
 
-- Worker 1 (pending): add an authorized server import endpoint or documented CLI for local lead/event migration; must be idempotent and must not trigger lead notifications.
-- ST-MIG safety stage: server mode no longer overwrites the original browser leads/events keys when new server rows load. The workspace shows a legacy-data warning and offers an explicit lossless JSON backup of just the raw leads/events strings. It never deletes, uploads, or marks data migrated. The archive may contain PII; handle it securely. Actual import and server-side readback remain pending.
+- Worker 1 code complete (manual enable pending): signed-session owner-only route /api/local-migration requires exact D1 project owner and slug, uses deterministic scoped IDs and INSERT OR IGNORE, reads back every row and never calls outbound lead delivery. Disabled unless INLET_LOCAL_MIGRATION_ENABLED=1; no live import performed.
+- ST-MIG browser UI: server mode preserves old browser lead/event keys. Original JSON download first, explicit current-project filtering (unscoped rows excluded), manual confirmation and preview, then batches up to 20 records (maximum 100 per action), imported without sending notifications. Each batch is read back; existing rows are skipped, originals never removed. If a batch fails, earlier batches can be retried safely. Downloaded JSON can contain PII. Actual production readback is pending operator-approved live test.
 - Worker 1: add retention cleanup for `.backups` and `.quarantine` with dry-run.
-- Worker 2: local leads/events migration warning and backup are implemented (first stage); page migration warning and confirmed import remain pending.
+- Worker 2: local leads/events warning + backup + explicit confirmed import UI implemented. Legacy page recovery is handled separately; review additional page migration messaging only if a reproducible case arises.
 - Worker 2: keep recovery draft manager and oversized image cleanup available from Settings/editor.
 - Worker 3: add QA fixture for migration detection and no data loss warnings.
 - Worker 4: include storage policy in launch checklist and PII retention policy.
@@ -124,3 +124,5 @@ The migration workflow must never upload plaintext production SQL, must never ap
 - `npm run d1:migration:safety:qa`
 - Manual: create local-only page, switch to server mode, confirm migration prompt appears.
 - Manual production operation: run D1 preflight first; do not run `backup-and-apply` without owner approval and reviewed pending migrations.
+
+Operator activation: keep INLET_LOCAL_MIGRATION_ENABLED absent/off until explicit written approval, a current encrypted D1 backup, and a disposable staging import/readback test. Production customer import never runs from CI or PR merge. Do not use the normal public /api/leads POST endpoint for historical import. Rows without exact projectId/slug association remain local for manual reconciliation; do not infer ownership from the current login. This workflow must not delete browser originals or trigger webhooks/SMS/email. 
