@@ -56,10 +56,11 @@ export async function onRequest({ request, env }) {
     `).bind(...bindings, PAGE_SIZE, offset).all();
     const rows = Array.isArray(result?.results) ? result.results : [];
     const ownerIds = rows.map((row) => String(row?.owner_id || '')).filter(Boolean);
-    const [accounts, subscriptions, adminEntitlements] = await Promise.all([
+    const [accounts, subscriptions, adminEntitlements, legacyEntitlements] = await Promise.all([
       loadAccounts(env.DB, ownerIds),
       loadSubscriptions(env.DB, ownerIds),
       loadAdminEntitlements(env.DB, ownerIds),
+      loadLegacyEntitlements(env.DB, ownerIds),
     ]);
 
     await recordAdminAudit(env.DB, request, env, identity, 'members.search');
@@ -82,6 +83,7 @@ export async function onRequest({ request, env }) {
           referralBonusDays: clampNumber(accounts.get(ownerId)?.referral_bonus_days, 0, 31),
           subscriptions: subscriptions.get(ownerId) || [],
           adminEntitlement: adminEntitlements.get(ownerId) || null,
+          legacyEntitlement: legacyEntitlements.get(ownerId) || null,
         };
       }),
       generatedAt: new Date().toISOString(),
@@ -144,6 +146,39 @@ async function loadSubscriptions(db, ownerIds) {
     }
   } catch {}
   return map;
+}
+
+// Historical records are shown for reconciliation only. This query does not
+// grant, revoke, renew, or infer active app feature access.
+async function loadLegacyEntitlements(db, ownerIds) {
+  const resultMap = new Map();
+  if (!ownerIds.length) return resultMap;
+  try {
+    const slots = ownerIds.map(() => '?').join(',');
+    const result = await db.prepare(`
+      SELECT owner_id, status, plan_code, source, paid_until, created_at, updated_at
+      FROM calllink_entitlements
+      WHERE owner_id IN (${slots})
+    `).bind(...ownerIds).all();
+    for (const row of (Array.isArray(result?.results) ? result.results : [])) {
+      const ownerId = String(row.owner_id || '');
+      if (!ownerId) continue;
+      const planCode = token(row.plan_code, 80);
+      const source = token(row.source, 80);
+      resultMap.set(ownerId, {
+        status: token(row.status, 24),
+        planCode,
+        source,
+        paidUntil: safeIso(row.paid_until),
+        updatedAt: safeIso(row.updated_at),
+        // beta_free is not evidence that a user was never previously granted access.
+        nonDefaultRecord: planCode !== 'beta_free' || source !== 'beta' || Boolean(row.paid_until),
+      });
+    }
+  } catch (error) {
+    console.warn('calltag-admin-legacy-records-unavailable', String(error?.message || 'query_failed').slice(0, 120));
+  }
+  return resultMap;
 }
 
 async function loadAdminEntitlements(db, ownerIds) {
