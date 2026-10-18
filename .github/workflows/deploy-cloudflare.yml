@@ -144,13 +144,13 @@ jobs:
           fi
           echo "Cloudflare Pages production branch confirmed: main."
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.INLET_CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: eec4828f6c3ab1c52683f0d47767e8fc
 
       - name: Verify Cloudflare Git auto-deploy is disabled
         env:
           CLOUDFLARE_ACCOUNT_ID: eec4828f6c3ab1c52683f0d47767e8fc
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.INLET_CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
           PAGERO_CLOUDFLARE_AUTODEPLOY_MODE: audit
         run: node scripts/pagero-cloudflare-git-autodeploy-guard.mjs
 
@@ -183,7 +183,7 @@ jobs:
           fi
           echo "INLET_SESSION_SECRET_V2 created and confirmed without exposing its value."
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.INLET_CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: eec4828f6c3ab1c52683f0d47767e8fc
 
       - name: Ensure production custom-domain provider secrets
@@ -210,7 +210,7 @@ jobs:
         env:
           DOMAIN_CLOUDFLARE_API_TOKEN: ${{ secrets.INLET_CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
           DOMAIN_CLOUDFLARE_ACCOUNT_ID: ${{ secrets.INLET_CLOUDFLARE_ACCOUNT_ID || 'eec4828f6c3ab1c52683f0d47767e8fc' }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.INLET_CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: eec4828f6c3ab1c52683f0d47767e8fc
 
       - name: Rotate production save QA secret
@@ -230,7 +230,7 @@ jobs:
           fi
           echo "Production save QA secret rotated and masked for this deployment."
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.INLET_CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: eec4828f6c3ab1c52683f0d47767e8fc
 
       - name: Build production bundle
@@ -267,7 +267,7 @@ jobs:
             --commit-message "Deploy ${{ steps.source.outputs.sha }}" \
             2>&1 | tee /tmp/cloudflare-deploy.log
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.INLET_CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: eec4828f6c3ab1c52683f0d47767e8fc
 
       - name: Verify deployment environment metadata
@@ -366,7 +366,7 @@ jobs:
           }
           NODE
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.INLET_CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: eec4828f6c3ab1c52683f0d47767e8fc
 
       - name: Verify deployed readiness
