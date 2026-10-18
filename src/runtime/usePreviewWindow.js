@@ -1,17 +1,25 @@
 export function usePreviewWindow({ previewUrl, setPreviewCopyIssue, showToast }) {
   const openPreview = () => {
-    if (typeof window === 'undefined') return;
-    const opened = window.open(previewUrl, '_blank', 'noopener,noreferrer');
-    if (opened) {
-      opened.opener = null;
+    if (typeof document === 'undefined') return;
+    try {
+      // An anchor with rel=noopener avoids window.open's ambiguous null
+      // return value and never grants the target access to window.opener.
+      const link = document.createElement('a');
+      link.href = previewUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
       setPreviewCopyIssue(null);
-      return;
+    } catch {
+      setPreviewCopyIssue({
+        url: previewUrl,
+        message: '새 창을 열지 못했습니다. 아래 주소를 직접 열어주세요.',
+      });
+      showToast('새 창을 열지 못했습니다. 주소를 직접 열어주세요.', 'warning');
     }
-    setPreviewCopyIssue({
-      url: previewUrl,
-      message: 'The browser blocked the preview window. Open the URL below directly.',
-    });
-    showToast('The preview window was blocked. Open the URL directly.', 'warning');
   };
 
   return { openPreview };
