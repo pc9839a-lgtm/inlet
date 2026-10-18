@@ -1,5 +1,5 @@
 import { renderLazyEditor } from '../runtime/LazyRuntimeBoundary.jsx';
-import { AnchorControl } from './AnchorControl.jsx';
+import { BlockAdvancedAnchorSettings } from './BlockAdvancedAnchorSettings.jsx';
 import { BottomBarEditor, FooterEditor, TopNavEditor } from './blockEditorRegistry.jsx';
 import TargetControl from './TargetControl.jsx';
 import { BlockEditorShell } from './ui/index.js';
@@ -9,8 +9,8 @@ function renderFixedBlockEditor(Editor, block, props, updateBlock) {
 
   return (
     <BlockEditorShell blockType={block.type}>
-      <AnchorControl block={block} value={block.s?.anchorId || ''} set={set} />
       {renderLazyEditor(Editor, { ...props, s: block.s || {}, set })}
+      <BlockAdvancedAnchorSettings block={block} set={set} />
     </BlockEditorShell>
   );
 }

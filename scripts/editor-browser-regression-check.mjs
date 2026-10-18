@@ -1209,6 +1209,29 @@ async function run() {
     assert(await evaluate(client,
       `document.querySelector(${JSON.stringify(heroAdvanced)})?.open === false`),
       'D02 advanced anchor must close without dropping its value');
+    // Fixed top-navigation blocks use a separate renderer and must share
+    // the same disclosure placement and genuinely collapsed anchor controls.
+    await clickSelector(client, '#editor-block-editor-topnav .fixed-open-button');
+    await waitForBrowser(client,
+      `!!document.querySelector('#editor-block-editor-topnav .block-editor-advanced-settings')`,
+      'D02 fixed top navigation advanced anchor settings');
+    const fixedAdvancedState = await evaluate(client, `(() => {
+      const details = document.querySelector('#editor-block-editor-topnav .block-editor-advanced-settings');
+      const root = details?.closest('.block-editor-v2-content');
+      const input = details?.querySelector('.block-editor-anchor-value input');
+      return details && input ? {
+        open: details.open,
+        last: root?.lastElementChild === details,
+        hidden: input.getClientRects().length === 0,
+      } : null;
+    })()`);
+    assert(fixedAdvancedState && !fixedAdvancedState.open
+      && fixedAdvancedState.last && fixedAdvancedState.hidden,
+      `D02 fixed editor anchor must be hidden after its content: ${JSON.stringify(fixedAdvancedState)}`);
+    await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
+    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`,
+      'hero settings reselected after fixed anchor check');
+
 
     assert(!(await evaluate(client, `document.body.innerText.includes('선택한 블록 설정')`)), 'redundant selected block settings heading must stay removed');
     await capture(client, 'desktop-editor-inline-editor');

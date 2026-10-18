@@ -1,6 +1,6 @@
 import '../lib/directVideoRuntime.js';
 import './directVideoOverrides.css';
-import { AnchorControl } from './AnchorControl.jsx';
+import { BlockAdvancedAnchorSettings } from './BlockAdvancedAnchorSettings.jsx';
 import { LazyEditorBoundary } from './LazyEditorBoundary.jsx';
 import { BlockEditorShell } from './ui/index.js';
 
@@ -20,11 +20,7 @@ export default function BlockEditor({ block, page, updateBlock, editors, editorD
       <LazyEditorBoundary resetKey={`${block.id}:${block.type}`}>
         <Editor {...props} />
       </LazyEditorBoundary>
-      <details className="block-editor-advanced-settings">
-        <summary>고급 설정 · 이동 앵커</summary>
-        <p className="block-editor-advanced-description">버튼의 화면 이동 대상에 사용하는 주소입니다.</p>
-        <AnchorControl block={block} value={s.anchorId || ''} set={set} />
-      </details>
+      <BlockAdvancedAnchorSettings block={block} set={set} />
     </BlockEditorShell>
   );
 }

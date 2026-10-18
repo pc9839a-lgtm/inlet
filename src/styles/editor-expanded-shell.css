@@ -20,6 +20,17 @@
   border-radius: 4px;
 }
 
+.block-editor-v2 .block-editor-advanced-settings:not([open]) > .block-editor-advanced-body {
+  /* Nested legacy controls use display:grid!important; keep the closed body hidden. */
+  display: none !important;
+}
+
+.block-editor-v2 .block-editor-advanced-settings[open] > .block-editor-advanced-body {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+}
+
 .block-editor-v2 .block-editor-advanced-description {
   margin: 0 0 8px;
   color: var(--editor-v2-muted);
