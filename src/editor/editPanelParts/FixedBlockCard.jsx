@@ -6,7 +6,7 @@ export function FixedBlockCard({ block, className, title, badge, renderEditor, o
   if (!block) return null;
 
   return (
-    <section className={`fixed-block-card ${className} ${open ? 'open selected' : ''}`}>
+    <section id={`editor-block-${block.id}`} className={`fixed-block-card ${className} ${open ? 'open selected' : ''}`}>
       <FixedBlockCardHeader
         title={title}
         badge={badge}
