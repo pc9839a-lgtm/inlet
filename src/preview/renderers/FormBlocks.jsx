@@ -142,7 +142,7 @@ function slots(start = '10:00', end = '18:00', interval = 30) {
   return arr;
 }
 
-export function RenderForm({ block, addLead, track }) {
+export function RenderForm({ block, addLead, track, editorPreview = false }) {
   const s = block.s || {};
   const [done, setDone] = useState(false);
   const [vals, setVals] = useState({});
@@ -229,7 +229,7 @@ export function RenderForm({ block, addLead, track }) {
       sourceBlockTitle: s.title || '상담 폼',
       brand: BRAND_NAME,
       channel: traffic.channel,
-      isTest: traffic.isTest,
+      isTest: editorPreview || traffic.isTest,
       utmSource: traffic.utmSource,
       utmMedium: traffic.utmMedium,
       utmCampaign: traffic.utmCampaign,
@@ -263,7 +263,7 @@ export function RenderForm({ block, addLead, track }) {
       setSubmitting(false);
       return;
     }
-    rememberDuplicateLeadPolicy(block.id, { phone, email }, s);
+    if (!editorPreview) rememberDuplicateLeadPolicy(block.id, { phone, email }, s);
     track?.({ type: 'form_submit_success', label: s.title || '상담 폼' });
     fireInletConversion({ formId: block.id, title: s.title || '상담 폼', lead });
     setDone(true);
@@ -570,7 +570,7 @@ function ReservationCustomField({ field, value, onChange }) {
   );
 }
 
-export function RenderReservation({ block, addLead, track }) {
+export function RenderReservation({ block, addLead, track, editorPreview = false }) {
   const s = block.s || {};
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
@@ -713,7 +713,7 @@ export function RenderReservation({ block, addLead, track }) {
       return;
     }
     track?.({ type: 'reservation_submit_success', label: s.title || '방문 예약' });
-    rememberDuplicateLeadPolicy(block.id, { phone, email: '' }, duplicateSettings);
+    if (!editorPreview) rememberDuplicateLeadPolicy(block.id, { phone, email: '' }, duplicateSettings);
     setDone(true);
     setDuplicatePrompt('');
     setF({ name: '', phone: '', date: '', time: '', custom: {} });
