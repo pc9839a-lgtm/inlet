@@ -1,17 +1,17 @@
-﻿import { TargetModeTabs } from './TargetModeTabs.jsx';
+import { TargetModeTabs } from './TargetModeTabs.jsx';
 import { TargetUrlField } from './TargetUrlField.jsx';
 import { TargetWidgetSelect } from './TargetWidgetSelect.jsx';
-import { getSafeUrl, getTargetControlState, TARGET_LABELS } from './targetControlModel.js';
+import { changeTargetMode, getTargetControlState, TARGET_LABELS } from './targetControlModel.js';
 
-export default function TargetControl({ label = TARGET_LABELS.move, target, url, page, onChange, lastWidgetTarget }) {
+export default function TargetControl({
+  label = TARGET_LABELS.move, target, url, page, onChange,
+  lastWidgetTarget, lastUrl, lastPhoneUrl,
+}) {
   const { blocks, currentWidget, mode } = getTargetControlState({ page, target, lastWidgetTarget });
 
-  const setMode = (next) => {
-    if (next === 'url') {
-      onChange({ target: 'url', url: getSafeUrl(url), lastWidgetTarget: currentWidget });
-      return;
-    }
-    onChange({ target: currentWidget, url: '', lastWidgetTarget: currentWidget });
+  const setMode = (nextMode) => {
+    if (nextMode === mode) return;
+    onChange(changeTargetMode({ nextMode, mode, url, lastUrl, lastPhoneUrl, currentWidget }));
   };
 
   return (
@@ -28,7 +28,18 @@ export default function TargetControl({ label = TARGET_LABELS.move, target, url,
             onChange={(value) => onChange({ target: value, url: '', lastWidgetTarget: value })}
           />
         )}
-        {mode === 'url' && <TargetUrlField value={url} onChange={(value) => onChange({ target: 'url', url: value, lastWidgetTarget: currentWidget })} />}
+        {(mode === 'url' || mode === 'phone') && (
+          <TargetUrlField
+            mode={mode}
+            value={url}
+            onChange={(value) => onChange({
+              target: mode,
+              url: value,
+              lastWidgetTarget: currentWidget,
+              ...(mode === 'phone' ? { lastPhoneUrl: value } : { lastUrl: value }),
+            })}
+          />
+        )}
       </div>
     </div>
   );
