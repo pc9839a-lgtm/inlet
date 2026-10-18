@@ -61,6 +61,23 @@ export function ScreenOrderRowActions({
   }, [menuOpen, updateMenuPosition]);
 
   useEffect(() => {
+    if (!menuOpen) return undefined;
+    const closeOutside = (event) => {
+      if (triggerRef.current?.contains(event.target) || menuRef.current?.contains(event.target)) return;
+      setMenuOpen(false);
+    };
+    const closeForAnotherRow = (event) => {
+      if (event.detail?.id !== block.id) setMenuOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOutside, true);
+    window.addEventListener('pagero:screen-order-menu-open', closeForAnotherRow);
+    return () => {
+      document.removeEventListener('pointerdown', closeOutside, true);
+      window.removeEventListener('pagero:screen-order-menu-open', closeForAnotherRow);
+    };
+  }, [menuOpen, block.id]);
+
+  useEffect(() => {
     if (!menuOpen || !menuPosition) return undefined;
 
     const focusFirstAction = () => {
@@ -87,7 +104,10 @@ export function ScreenOrderRowActions({
 
   const toggleMenu = (event) => {
     stop(event);
-    if (!menuOpen) updateMenuPosition();
+    if (!menuOpen) {
+      updateMenuPosition();
+      window.dispatchEvent(new CustomEvent('pagero:screen-order-menu-open', { detail: { id: block.id } }));
+    }
     setMenuOpen((open) => !open);
   };
 
@@ -95,7 +115,10 @@ export function ScreenOrderRowActions({
     if (event.key !== 'Enter' && event.key !== ' ') return;
     event.preventDefault();
     event.stopPropagation();
-    if (!menuOpen) updateMenuPosition();
+    if (!menuOpen) {
+      updateMenuPosition();
+      window.dispatchEvent(new CustomEvent('pagero:screen-order-menu-open', { detail: { id: block.id } }));
+    }
     setMenuOpen((open) => !open);
   };
 
