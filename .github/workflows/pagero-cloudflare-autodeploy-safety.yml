@@ -45,7 +45,7 @@ jobs:
         env:
           # Account ID is non-secret; use the verified inlet owner account.
           CLOUDFLARE_ACCOUNT_ID: eec4828f6c3ab1c52683f0d47767e8fc
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.INLET_CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
           PAGERO_CLOUDFLARE_AUTODEPLOY_MODE: ${{ inputs.mode }}
           PAGERO_CLOUDFLARE_AUTODEPLOY_APPROVAL: ${{ inputs.approval_phrase }}
         run: node scripts/pagero-cloudflare-git-autodeploy-guard.mjs
