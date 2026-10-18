@@ -15,6 +15,13 @@ export function useWorkspaceEditorEffects({
     setStylePreviewTheme(null);
   }, [page.projectId, page.slug, setStylePreviewTheme]);
 
+  // After leaving the editor for operational tabs there is no mounted style
+  // inspector. Do not let an old clean preview theme become a new unsaved
+  // change when a server revision is restored in Settings.
+  useEffect(() => {
+    if (tab !== 'edit' && tab !== 'style') setStylePreviewTheme(null);
+  }, [tab, setStylePreviewTheme]);
+
   useEffect(() => {
     if (!workspaceOpen || tab !== 'edit') return;
     const collapseKey = `${page.projectId || ''}:${page.slug || ''}`;
