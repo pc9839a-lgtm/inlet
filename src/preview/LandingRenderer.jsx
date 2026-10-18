@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Share2 } from 'lucide-react';
 import { installConversionTracking, installPageHeadMeta } from '../lib/conversionTracking.js';
 import { normalizeExternalUrl } from '../lib/linkPreview.js';
-import { simulateEditorPreviewLead, visiblePreviewBlocks } from '../runtime/previewTarget.js';
+import { isEditorPreviewSafeMediaBlock, simulateEditorPreviewLead, visiblePreviewBlocks } from '../runtime/previewTarget.js';
 import './LandingRenderer.css';
 import { RenderCards as ContentRenderCards, RenderHero as ContentRenderHero, RenderText as ContentRenderText } from './renderers/ContentBlocks.jsx';
 import { RenderForm as FormRenderForm, RenderReservation as FormRenderReservation } from './renderers/FormBlocks.jsx';
@@ -433,7 +433,7 @@ function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, g
   if(block.type==='activity')return <SignalRenderActivity block={renderBlock} leads={leads}/>;
   if(block.type==='spacer')return <LayoutRenderSpacer block={renderBlock}/>;
   if(block.type==='divider')return <LayoutRenderDivider block={renderBlock}/>;
-  if(block.type==='code')return editorPreview
+  if(block.type==='code')return editorPreview && !isEditorPreviewSafeMediaBlock(renderBlock, typeof window !== 'undefined' ? window.location.origin : '')
     ? <section id={`block-${block.id}`} className="landing-section code-widget-empty" role="note">코드 블록 실행은 편집 미리보기에서 중지됩니다.</section>
     : <UtilityRenderCode block={renderBlock}/>;
   if(block.type==='search')return <UtilityRenderPageSearch block={renderBlock}/>;

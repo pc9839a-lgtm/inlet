@@ -1,4 +1,5 @@
 import { isServerPageMode, publicLandingUrl } from '../config/runtimeConfig.js';
+import { getVideoSource } from '../lib/youtubeEmbed.js';
 
 // The current workspace draft is ephemeral and is never written to a public URL.
 // App.jsx already constructs this model on every draft change, including style previews.
@@ -41,4 +42,21 @@ export function createPreviewPage({ page, stylePreviewTheme = null, stylePreview
   const draft = { ...nextPage, mapSiteId };
   currentEditorDraftPreview = draft;
   return draft;
+}
+
+// Editor preview executes neither custom HTML nor third-party video embeds.
+// A same-origin file download may load media metadata, but cannot execute JS.
+export function isEditorPreviewSafeMediaBlock(block, currentOrigin = '') {
+  if (block?.type !== 'code' || block.s?.widgetMode !== 'youtube') return false;
+  const source = getVideoSource(block.s.videoUrl || block.s.youtubeUrl || '');
+  if (source?.kind !== 'file') return false;
+  if (/^data:video\//i.test(source.src)) return true;
+  if (!currentOrigin) return false;
+  try {
+    const address = new URL(source.src);
+    return address.origin === new URL(currentOrigin).origin
+      && address.pathname === '/api/files/download';
+  } catch {
+    return false;
+  }
 }

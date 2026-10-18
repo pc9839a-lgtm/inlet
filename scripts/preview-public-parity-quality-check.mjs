@@ -1,4 +1,4 @@
-import { createPreviewPage, getEditorDraftPreviewPage, simulateEditorPreviewLead, visiblePreviewBlocks, previewUrlForPage } from '../src/runtime/previewTarget.js';
+import { createPreviewPage, getEditorDraftPreviewPage, isEditorPreviewSafeMediaBlock, simulateEditorPreviewLead, visiblePreviewBlocks, previewUrlForPage } from '../src/runtime/previewTarget.js';
 import { usePreviewWindow } from '../src/runtime/usePreviewWindow.js';
 import { readFile } from 'node:fs/promises';
 
@@ -70,6 +70,17 @@ assert(fixedUiCss.includes('padding-bottom: calc(max(88px, var(--page-fixed-bott
 assert(fixedUiCss.includes('scroll-padding-bottom: calc(max(88px, var(--page-fixed-bottom-height, 0px)) + 10px) !important'), 'Anchor scrolling must reserve measured fixed action space without excess padding');
 assert(!parityCss.includes('@media (max-width: 420px)'), 'Runtime parity must use container width instead of the browser viewport width');
 
+
+// Execute the media allowlist against stored video blocks. Ordinary code and
+// third-party embeds are not permitted to run inside editor previews.
+const localVideo = { type: 'code', s: { widgetMode: 'youtube', videoUrl: 'http://localhost:4174/api/files/download?key=project%2Fvideos%2Fdemo.mp4' } };
+const testOrigin = 'http://localhost:4174';
+assert(isEditorPreviewSafeMediaBlock(localVideo, testOrigin), 'editor preview must retain same-origin library video playback/metadata');
+assert(!isEditorPreviewSafeMediaBlock(localVideo, 'http://other.example'), 'cross-origin preview must not load this file');
+assert(!isEditorPreviewSafeMediaBlock({ type: 'code', s: { widgetMode: 'youtube', videoUrl: 'https://external.example/video.mp4' } }, testOrigin), 'external video must stay isolated');
+assert(!isEditorPreviewSafeMediaBlock({ type: 'code', s: { widgetMode: 'youtube', videoUrl: 'https://youtu.be/xYz12345678' } }, testOrigin), 'third-party iframe must stay blocked in editor');
+assert(!isEditorPreviewSafeMediaBlock({ type: 'code', s: { widgetMode: 'custom', html: '<script>alert(1)</script>' } }, testOrigin), 'custom code must not execute in editor');
+assert(!isEditorPreviewSafeMediaBlock({ type: 'code', s: { widgetMode: 'youtube', videoUrl: 'http://localhost:4174/random.mp4' } }, testOrigin), 'untrusted same-origin paths must not bypass the allowlist');
 
 // Editor draft preview and public landing share the renderer but must NOT
 // share write, delivery, analytics, or publish side effects.
