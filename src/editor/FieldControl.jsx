@@ -12,8 +12,8 @@ export function Field({ label, value, onChange, textarea, type = 'text', prefix 
       <div className={prefix ? 'prefix-field' : ''}>
         {prefix && <em>{prefix}</em>}
         {textarea
-          ? <textarea value={value || ''} disabled={disabled} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} />
-          : <input type={type} value={value || ''} disabled={disabled} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} />}
+          ? <textarea value={value ?? ''} disabled={disabled} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} />
+          : <input type={type} value={value ?? ''} disabled={disabled} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} />}
       </div>
     </label>
   );
