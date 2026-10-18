@@ -1,12 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
-export function useCodeDraft(html) {
-  const [draft, setDraft] = useState(html || '');
+// The unapplied HTML lives in the page's local draft, not component state.
+// Switching blocks or remounting this editor must not erase it.
+export function useCodeDraft(html, codeDraft, update) {
   const [modalOpen, setModalOpen] = useState(false);
-
-  useEffect(() => {
-    setDraft(html || '');
-  }, [html]);
-
+  const draft = typeof codeDraft === 'string' ? codeDraft : (html || '');
+  const setDraft = (value) => update({ codeDraft: String(value).slice(0, 40000) });
   return { draft, setDraft, modalOpen, setModalOpen };
 }
