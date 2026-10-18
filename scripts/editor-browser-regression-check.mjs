@@ -1239,10 +1239,18 @@ async function run() {
     await clickButtonByText(client, '.edit-section-tabs', '화면 순서');
     await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-list')`, 'screen order after style apply');
 
-    // E2E-13: preview action must not close or freeze the editor; continue editing afterwards.
-    await evaluate(client, `window.__pageroQaPreviewCalls = []; window.open = (...args) => { window.__pageroQaPreviewCalls.push(args); return { opener: null }; };`);
+    // E2E-13: the header shows the latest draft without opening the live
+    // published slug, and the editor remains editable after closing it.
+    await evaluate(client, `window.__pageroQaPreviewCalls = []; window.open = (...args) => { window.__pageroQaPreviewCalls.push(args); return null; };`);
     await clickButtonByText(client, '.panel-actions', '미리보기');
-    await waitForBrowser(client, `window.__pageroQaPreviewCalls?.length === 1`, 'preview window request');
+    await waitForBrowser(client, `!!document.querySelector('.editor-draft-preview-dialog')`, 'unsaved draft preview dialog');
+    const draftPreviewState = await evaluate(client, `(() => ({
+      visible: !!document.querySelector('.editor-draft-preview-phone .landing-page'),
+      publishedLink: document.querySelector('.editor-draft-preview-actions a')?.getAttribute('rel') || '',
+      openedCount: window.__pageroQaPreviewCalls?.length || 0,
+    }))()`);
+    assert(draftPreviewState.visible && draftPreviewState.publishedLink.includes('noopener') && draftPreviewState.openedCount === 0, 'draft must be shown without opening the live URL');
+    await clickButtonByText(client, '.editor-draft-preview-actions', '닫기');
     assert((await evaluate(client, 'location.pathname')) === '/app', 'preview action must keep the editor page active');
     await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'hero editor after preview');
