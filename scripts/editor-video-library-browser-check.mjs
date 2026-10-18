@@ -354,17 +354,17 @@ async function run() {
     await client.send('Page.reload', { ignoreCache: true });
     await waitForBrowser(client, `window.__qaVideoReloadMarker !== 'departing-document' && !!document.querySelector(${JSON.stringify(videoRowHeadSelector)})`, 'reloaded editor video row');
     await waitForState(() => apiState.pageLoadCount > pageReadsBeforeReload, 'fresh server video page read after reload');
-    // The editor may restore the previously selected block on reload. Its
-    // row is a toggle, so clicking an already-open row would close it.
-    const videoEditorAlreadyOpen = await evaluate(client, `!!document.querySelector('#editor-block-editor-video .screen-order-v2-inline-editor .video-library-action')`);
-    if (!videoEditorAlreadyOpen) await clickSelector(client, videoRowHeadSelector);
+    // Block selection may survive the reload. The inline editor is a
+    // *sibling* of the row, not its child. Never toggle a selected row closed.
+    const videoRowSelected = await evaluate(client, `document.querySelector('#editor-block-editor-video')?.getAttribute('data-selected') === 'true'`);
+    if (!videoRowSelected) await clickSelector(client, videoRowHeadSelector);
     try {
-      await waitForBrowser(client, `(document.querySelector('#editor-block-editor-video .screen-order-v2-inline-editor')?.innerText || '').includes('서버 저장 완료 · ${libraryFileName}')`, 'selected video editor state after reload');
+      await waitForBrowser(client, `(document.querySelector('#editor-block-editor-video + .screen-order-v2-inline-editor')?.innerText || '').includes('서버 저장 완료 · ${libraryFileName}')`, 'selected video editor state after reload');
     } catch (error) {
       const detail = await evaluate(client, `(() => {
         const row = document.querySelector('#editor-block-editor-video');
         const video = document.querySelector('.phone-frame #block-editor-video');
-        const input = row?.querySelector('.screen-order-v2-inline-editor');
+        const input = row?.nextElementSibling?.classList?.contains('screen-order-v2-inline-editor') ? row.nextElementSibling : null;
         return {
           selected: row?.getAttribute('data-selected'),
           rowText: row?.innerText?.slice(0, 1000),
@@ -376,7 +376,7 @@ async function run() {
         };
       })()`);
       console.log('[editor-video] reload diagnostic', JSON.stringify({
-        preClickOpen: videoEditorAlreadyOpen,
+        rowSelectedBeforeClick: videoRowSelected,
         detail,
         serverVideo: apiState.currentPage.blocks.find(b => b.id === 'editor-video')?.s,
         saveCount: apiState.saveCount,
