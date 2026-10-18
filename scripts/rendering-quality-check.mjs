@@ -216,7 +216,7 @@ assert(files.previewCss.includes('.image-gallery-grid-4') && files.previewCss.in
 assert(files.widgetStyles.includes('set({ logoSize: value })') && files.widgetStyles.includes('set({ menuStyle: value })') && files.widgetStyles.includes('set({ sticky: value })'), 'topnav editor controls missing');
 assert(files.widgetStyles.includes('BottomBarStylePanel') && files.landing.includes("s.buttonColorMode === 'custom'"), 'bottom bar style/color contract missing');
 assert(files.widgetStyles.includes('label="목록 움직임"') && files.signal.includes('activity-anim-${anim}'), 'activity movement contract missing');
-assert(files.codeEditor.includes("set({ html: draft, css: '', js: '', runJs: false })"), 'code apply should preserve selected height');
+assert(files.codeEditor.includes("set({ html: draft, codeDraft: null, css: '', js: '', runJs: false })"), 'code apply must commit the draft, clear the staging field, and preserve selected height');
 assert(files.searchDisplay.includes('label="실시간 검색"'), 'search live toggle missing');
 assert(files.dividerEditor.includes('width < 100 &&') && files.dividerEditor.includes('label="정렬"'), 'divider conditional alignment missing');
 
