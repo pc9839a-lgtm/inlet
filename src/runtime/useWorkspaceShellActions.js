@@ -47,17 +47,16 @@ export function useWorkspaceShellActions({
     if (!canUseBuilder) return;
     if (!id) return;
     const target = page.blocks.find((block) => block.id === id);
-    if (['topnav', 'bottombar', 'footer'].includes(target?.type)) {
-      setOpenId('');
-      return;
-    }
+    if (!target) return;
     const run = () => {
       clearPendingStyle();
       setTab('edit');
       setOpenId(id);
-      requestAnimationFrame(() => {
-        document.getElementById(`editor-block-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      });
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(() => {
+          document.getElementById(`editor-block-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+      }
     };
     if (!confirmLeaveStyleChanges(run)) return;
     run();
