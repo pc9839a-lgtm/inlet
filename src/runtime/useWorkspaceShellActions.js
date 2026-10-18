@@ -48,7 +48,17 @@ export function useWorkspaceShellActions({
     if (!id) return;
     const target = page.blocks.find((block) => block.id === id);
     if (['topnav', 'bottombar', 'footer'].includes(target?.type)) {
-      setOpenId('');
+      const openFixedSettings = () => {
+        clearPendingStyle();
+        setTab('edit');
+        setOpenId('');
+        requestAnimationFrame(() => {
+          window.dispatchEvent(new CustomEvent('pagero:select-fixed-block', { detail: { id } }));
+          document.querySelector('.screen-order-fixed-blocks')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+      };
+      if (!confirmLeaveStyleChanges(openFixedSettings)) return;
+      openFixedSettings();
       return;
     }
     const run = () => {
