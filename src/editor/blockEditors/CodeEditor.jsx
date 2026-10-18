@@ -5,14 +5,18 @@ import CodeEditorBox from './CodeEditorBox.jsx';
 import CodeEditorModal from './CodeEditorModal.jsx';
 import { useCodeDraft } from './useCodeDraft.js';
 
-export default function CodeEditor({ s, set }) {
-  const { draft, setDraft, modalOpen, setModalOpen } = useCodeDraft(s.html);
+export default function CodeEditor({ s, set, blockId, codeDraftForBlock, onCodeDraftChange, clearCodeDraft }) {
+  const stagedDraft = codeDraftForBlock?.(blockId, s.html || '');
+  const { draft, setDraft, modalOpen, setModalOpen } = useCodeDraft(
+    s.html, stagedDraft, onCodeDraftChange ? (value) => onCodeDraftChange(blockId, value) : undefined,
+  );
 
   // 과거 저장된 BGM 프리셋은 편집 기능을 노출하지 않는다.
   if (s.widgetMode === 'bgm') return null;
 
   const apply = () => {
     set({ html: draft, css: '', js: '', runJs: false });
+    clearCodeDraft?.(blockId);
     setModalOpen(false);
   };
 

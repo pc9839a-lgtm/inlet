@@ -10,7 +10,6 @@ import { attachExistingPageIdentity, pageSaveMode } from './savePageIdentity.js'
 import { nextTrailingSaveRequest, resolveQueuedPageOverride, resumeExplicitSaveForActivePage } from './saveQueuePolicy.js';
 import {
   SAVE_BLOCKED_FEEDBACK,
-  STYLE_CONFIRM_FEEDBACK,
   WRITE_BLOCKED_FEEDBACK,
 } from './pageSaveFeedback.js';
 import {
@@ -27,6 +26,8 @@ export function usePageSaveAction({
   tab,
   canWriteCurrentTab,
   hasPendingStyle,
+  hasPendingCode = false,
+  applyPendingDrafts,
   page,
   authUser,
   latestPageRef,
@@ -44,8 +45,14 @@ export function usePageSaveAction({
 }) {
   const saveInFlightRef = useRef(null);
   const queuedSaveRequestRef = useRef(null);
+  // An in-flight save can cross renders; confirmations inspect the latest staged drafts.
+  const pendingRef = useRef(null);
+  pendingRef.current = { hasPendingStyle, hasPendingCode, applyPendingDrafts, persistStyleNow };
 
-  const saveNow = async (pageOverride = null) => {
+  const saveNow = async (pageOverride = null, confirmedDrafts = false) => {
+    // PanelHeader passes this callback directly to onClick; a React event
+    // must never be interpreted as a page override.
+    if (typeof pageOverride?.preventDefault === 'function') pageOverride = null;
     if (saveInFlightRef.current) {
       const queuedPage = pageOverride != null
         ? { ...(latestPageRef.current || page), ...pageOverride }
@@ -75,7 +82,7 @@ export function usePageSaveAction({
         finalResult = firstCycle
           && !isPageOperationTargetActive(requestedIdentity, latestPageRef.current || page)
           ? { ok: false, reason: 'inactive-page', page: latestPageRef.current || page }
-          : await runSaveCycle(request);
+          : await runSaveCycle(request, firstCycle && confirmedDrafts);
         firstCycle = false;
         const queued = queuedSaveRequestRef.current;
         queuedSaveRequestRef.current = null;
@@ -133,7 +140,7 @@ export function usePageSaveAction({
     }
   };
 
-  async function runSaveCycle(pageOverride = null) {
+  async function runSaveCycle(pageOverride = null, confirmedDrafts = false) {
     if (!allowedTabs.includes(tab)) {
       markSaveStatus(SAVE_BLOCKED_FEEDBACK.level, SAVE_BLOCKED_FEEDBACK.title, SAVE_BLOCKED_FEEDBACK.message);
       return { ok: false, reason: 'tab-blocked' };
@@ -143,15 +150,28 @@ export function usePageSaveAction({
       showToast(WRITE_BLOCKED_FEEDBACK.toast, WRITE_BLOCKED_FEEDBACK.level);
       return { ok: false, reason: 'write-blocked' };
     }
-    if (tab === 'style' && hasPendingStyle) {
+    if (!confirmedDrafts && (pendingRef.current.hasPendingStyle || pendingRef.current.hasPendingCode)) {
+      const confirmationTarget = pageOperationIdentity(latestPageRef.current || page);
       requestConfirm({
-        title: STYLE_CONFIRM_FEEDBACK.title,
-        message: STYLE_CONFIRM_FEEDBACK.message,
-        confirmLabel: STYLE_CONFIRM_FEEDBACK.confirmLabel,
-        onConfirm: persistStyleNow,
+        title: '미적용 변경을 발행할까요?',
+        message: '공통 스타일과 코드의 미적용 초안을 현재 페이지에 적용한 뒤 발행합니다.',
+        confirmLabel: '적용 후 발행',
+        onConfirm: () => {
+          if (!isPageOperationTargetActive(confirmationTarget, latestPageRef.current || page)) return;
+          // Keep the existing serialized style save/replay path for style-only
+          // confirms; code drafts use the unified page materialization path.
+          if (!pendingRef.current.hasPendingCode && pendingRef.current.hasPendingStyle) {
+            void pendingRef.current.persistStyleNow?.();
+            return;
+          }
+          const confirmedPage = pendingRef.current.applyPendingDrafts?.();
+          if (confirmedPage) void saveNow(confirmedPage, true);
+        },
       });
-      return { ok: false, reason: 'style-confirm-required' };
+      return { ok: false, reason: 'draft-confirm-required' };
     }
+
+    markSaveStatus('warning', '발행 중', '변경 내용을 서버에 저장하고 있습니다.', { phase: 'publishing' });
 
     const sourcePage = pageOverride
       ? normalizePageForSave({ ...(latestPageRef.current || page), ...pageOverride })
