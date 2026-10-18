@@ -121,7 +121,7 @@ assert(previewRenderer.includes('if (editorPreview && (target === \'url\' || tar
 assert(previewRenderer.includes("if(block.type==='code')return editorPreview"), 'Arbitrary JS/widget code must be disabled in draft preview');
 assert(previewModal.includes('현재 초안 미리보기') && previewModal.includes('발행본 보기'), 'Draft and published views must be distinguishable');
 assert(previewModal.includes('rel="noopener noreferrer"') && previewModal.includes('target="_blank"'), 'Published links must retain noopener security');
-assert(previewModal.includes("navigator.clipboard?.writeText(url)") && previewModal.includes('onClick={copyPreviewUrl}'), 'Retry copy must perform clipboard write rather than open a window');
+assert(previewModal.includes("navigator.clipboard.writeText(url)") && previewModal.includes('onClick={copyPreviewUrl}'), 'Retry copy must perform clipboard write rather than open a window');
 assert(!previewWindowSource.includes('window.open('), 'Header preview must not guess popup blocking from noopener null');
 assert(workspacePreviewCss.includes('.editor-draft-preview-dialog'), 'Draft preview overlay must be sized independently of page publishing');
 
