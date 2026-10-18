@@ -149,7 +149,7 @@ for (const [source, exportToken, classToken] of rendererContracts) {
 
 assert(files.landing.indexOf("block.type==='topnav'") < files.landing.indexOf("block.type==='hero'"), 'topnav should render before hero');
 assert(files.landing.includes('BlockErrorBoundary'), 'block error boundary should wrap preview blocks');
-assert(files.landing.includes('installConversionTracking(page)') && files.landing.includes('if (templatePreview) return;'), 'conversion tracking should skip template preview');
+assert(files.landing.includes('installConversionTracking(page)') && files.landing.includes('if (templatePreview || editorPreview) return;'), 'conversion tracking must skip template and editor preview');
 assert(files.landing.includes("page.theme.animPlayback === 'loop'") && files.landing.includes('prepareForReentry'), 'animation loop should replay on viewport re-entry');
 assert(files.animationCard.includes('updateTheme({ animPlayback })') && files.animationPlayback.includes('ANIMATION_PLAYBACK_OPTIONS'), 'animation playback editor contract missing');
 
