@@ -117,7 +117,8 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
           />
         )}
         <button className="ghost-btn" type="button" onClick={onDashboard}>메인</button>
-        <button className="ghost-btn" type="button" onClick={onPreview} title={previewUrl}>미리보기</button>
+        <button className="ghost-btn" type="button" onClick={() => document.querySelector('.phone-frame')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })} title="편집 중인 초안은 오른쪽 미리보기에 표시됩니다.">초안 미리보기</button>
+        <button className="ghost-btn" type="button" onClick={onPreview} title={previewUrl}>공개본 보기</button>
         <button
           className="primary-btn"
           type="button"
