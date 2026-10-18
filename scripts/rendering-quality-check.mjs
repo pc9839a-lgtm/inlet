@@ -240,7 +240,7 @@ assert(files.publicFormEmbed.includes("cache: 'no-store'") && !files.publicFormE
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_TEMPLATE_ROUTES'), 'browser QA template route support missing');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_STATE_PRESET') && files.browserVisualQa.includes('owner-settings'), 'browser QA authenticated presets missing');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_SET_INPUT') && files.browserVisualQa.includes('INLET_BROWSER_QA_EXPECT_COMPUTED'), 'browser QA interaction/computed checks missing');
-assert(files.workspaceShellActions.includes("if (['topnav', 'bottombar', 'footer'].includes(target?.type))"), 'fixed block selection guard missing');
+assert(files.workspaceShellActions.includes('if (!target) return;') && files.workspaceShellActions.includes('setOpenId(id)'), 'preview selection must distinguish missing IDs from valid normal and fixed blocks');
 assert(
   files.fixedBlockSelection.includes("React.useState('')")
     && files.fixedBlocksProps.includes('openId: selection.fixedOpenId')
