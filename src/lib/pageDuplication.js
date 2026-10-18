@@ -52,21 +52,47 @@ export function canUsePageDuplication(page = {}) {
   );
 }
 
-function refreshNestedIds(value) {
-  if (Array.isArray(value)) return value.map((item) => refreshNestedIds(item));
+function refreshNestedIds(value, idMap) {
+  if (Array.isArray(value)) return value.map((item) => refreshNestedIds(item, idMap));
   if (!value || typeof value !== 'object') return value;
   const next = {};
   for (const [key, item] of Object.entries(value)) {
-    next[key] = key === 'id' ? uid() : refreshNestedIds(item);
+    if (key === 'id') {
+      const freshId = uid();
+      if (item !== null && item !== undefined && String(item)) idMap.set(String(item), freshId);
+      next[key] = freshId;
+    } else {
+      next[key] = refreshNestedIds(item, idMap);
+    }
   }
   return next;
 }
 
+function relinkDuplicatedBlockTargets(value, idMap) {
+  if (Array.isArray(value)) return value.map((item) => relinkDuplicatedBlockTargets(item, idMap));
+  if (typeof value === 'string') {
+    // Keep external URLs, phone links and non-block anchors untouched.
+    if (value.startsWith('block:')) {
+      const id = value.slice('block:'.length);
+      return idMap.has(id) ? `block:${idMap.get(id)}` : value;
+    }
+    if (value.startsWith('#block-')) {
+      const id = value.slice('#block-'.length);
+      return idMap.has(id) ? `#block-${idMap.get(id)}` : value;
+    }
+    return value;
+  }
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(Object.entries(value).map(([key, item]) => [
+    key, relinkDuplicatedBlockTargets(item, idMap),
+  ]));
+}
+
 function duplicateBlocks(blocks = []) {
-  return ensureUniqueAnchors((blocks || []).map((block) => ({
-    ...refreshNestedIds(clone(block)),
-    id: uid(),
-  })));
+  const idMap = new Map();
+  // Pass 1: generate all IDs. Pass 2: relink references once forward targets exist.
+  const duplicated = (blocks || []).map((block) => refreshNestedIds(clone(block), idMap));
+  return ensureUniqueAnchors(duplicated.map((block) => relinkDuplicatedBlockTargets(block, idMap)));
 }
 
 export function createDuplicatedPage(sourcePage = {}, input = {}) {
