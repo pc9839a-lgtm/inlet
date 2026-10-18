@@ -1169,6 +1169,40 @@ async function run() {
     }
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'selected hero inline editor textarea');
     await waitForBrowser(client, `!!document.querySelector('#editor-block-editor-hero + .screen-order-v2-inline-editor[data-inline-block-editor="true"]')`, 'inline block editor directly below hero row');
+    // D01: exercise the actual selected inspector DOM and CSS scroll contract.
+    // A taller editor must scroll internally, without changing block order.
+    const inspectorScroll = await evaluate(client, `(() => {
+      const panel = document.querySelector('#editor-block-editor-hero + .screen-order-v2-inline-editor[data-scroll-region="block-settings"]');
+      const content = panel?.querySelector('.block-editor-v2');
+      if (!panel || !content) return null;
+      const original = content.style.minHeight;
+      let result;
+      try {
+        content.style.minHeight = '1600px';
+        panel.scrollTop = 320;
+        const style = getComputedStyle(panel);
+        result = {
+          role: panel.getAttribute('role'),
+          label: panel.getAttribute('aria-label'),
+          tabIndex: panel.tabIndex,
+          overflowY: style.overflowY,
+          maxHeight: parseFloat(style.maxHeight),
+          height: panel.clientHeight,
+          contentHeight: panel.scrollHeight,
+          scrollTop: panel.scrollTop,
+        };
+      } finally {
+        content.style.minHeight = original;
+        panel.scrollTop = 0;
+      }
+      return result;
+    })()`);
+    assert(inspectorScroll?.role === 'region' && inspectorScroll.tabIndex === 0
+      && inspectorScroll.label?.includes('상세 설정'), `D01 keyboard-scroll region must be accessible: ${JSON.stringify(inspectorScroll)}`);
+    assert(inspectorScroll.overflowY === 'auto' && inspectorScroll.maxHeight > 0
+      && inspectorScroll.contentHeight > inspectorScroll.height && inspectorScroll.scrollTop > 0,
+      `D01 long block inspector must scroll independently on desktop: ${JSON.stringify(inspectorScroll)}`);
+
     assert(!(await evaluate(client, `document.body.innerText.includes('선택한 블록 설정')`)), 'redundant selected block settings heading must stay removed');
     await capture(client, 'desktop-editor-inline-editor');
     await setInputValue(client, heroEditorSelector, updatedHeroTitle);

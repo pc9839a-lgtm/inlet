@@ -49,6 +49,10 @@ export function ScreenOrderItem({
         <div
           className="screen-order-v2-inline-editor"
           data-inline-block-editor="true"
+          data-scroll-region="block-settings"
+          role="region"
+          tabIndex={0}
+          aria-label={`${meta.label} 상세 설정`}
         >
           {renderBlockEditor(block)}
         </div>
