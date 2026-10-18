@@ -353,7 +353,32 @@ async function run() {
     // row is a toggle, so clicking an already-open row would close it.
     const videoEditorAlreadyOpen = await evaluate(client, `!!document.querySelector('#editor-block-editor-video .screen-order-v2-inline-editor .video-library-action')`);
     if (!videoEditorAlreadyOpen) await clickSelector(client, videoRowHeadSelector);
-    await waitForBrowser(client, `(document.querySelector('#editor-block-editor-video .screen-order-v2-inline-editor')?.innerText || '').includes('서버 저장 완료 · ${libraryFileName}')`, 'selected video editor state after reload');
+    try {
+      await waitForBrowser(client, `(document.querySelector('#editor-block-editor-video .screen-order-v2-inline-editor')?.innerText || '').includes('서버 저장 완료 · ${libraryFileName}')`, 'selected video editor state after reload');
+    } catch (error) {
+      const detail = await evaluate(client, `(() => {
+        const row = document.querySelector('#editor-block-editor-video');
+        const video = document.querySelector('.phone-frame #block-editor-video');
+        const input = row?.querySelector('.screen-order-v2-inline-editor');
+        return {
+          selected: row?.getAttribute('data-selected'),
+          rowText: row?.innerText?.slice(0, 1000),
+          editorText: input?.innerText?.slice(0, 1000),
+          editorHTML: input?.outerHTML?.slice(0, 1000),
+          previewHTML: video?.outerHTML?.slice(0, 500),
+          pagePath: location.pathname,
+          visibleDialog: document.querySelector('[role="dialog"]')?.outerHTML?.slice(0, 250),
+        };
+      })()`);
+      console.log('[editor-video] reload diagnostic', JSON.stringify({
+        preClickOpen: videoEditorAlreadyOpen,
+        detail,
+        serverVideo: apiState.currentPage.blocks.find(b => b.id === 'editor-video')?.s,
+        saveCount: apiState.saveCount,
+        pageReads: apiState.pageLoadCount,
+      }));
+      throw error;
+    }
     await waitForBrowser(client, `(() => {
       const video = document.querySelector('.phone-frame #block-editor-video video');
       return !!video && video.src === ${JSON.stringify(selectedVideoValue)} && video.readyState >= 1;
