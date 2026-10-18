@@ -7,7 +7,7 @@ export function TargetModeTabs({ mode, onChange }) {
         ['widget', TARGET_LABELS.widget],
         ['url', TARGET_LABELS.link],
       ].map(([key, text]) => (
-        <button key={key} type="button" className={mode === key ? 'active' : ''} onClick={() => onChange(key)}>{text}</button>
+        <button key={key} type="button" className={mode === key ? 'active' : ''} aria-pressed={mode === key} onClick={() => onChange(key)}>{text}</button>
       ))}
     </div>
   );
