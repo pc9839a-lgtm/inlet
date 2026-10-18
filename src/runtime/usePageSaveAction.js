@@ -143,7 +143,7 @@ export function usePageSaveAction({
       showToast(WRITE_BLOCKED_FEEDBACK.toast, WRITE_BLOCKED_FEEDBACK.level);
       return { ok: false, reason: 'write-blocked' };
     }
-    if (tab === 'style' && hasPendingStyle) {
+    if (hasPendingStyle) {
       requestConfirm({
         title: STYLE_CONFIRM_FEEDBACK.title,
         message: STYLE_CONFIRM_FEEDBACK.message,
