@@ -9,9 +9,11 @@ export function useWorkspaceEditorEffects({
   setOpenId,
   setAddOpen,
 }) {
+  // Preserve the staged theme while switching between '페이지 옵션' and
+  // '화면 순서'. Reset it only when opening a different page.
   useEffect(() => {
-    if (tab !== 'style') setStylePreviewTheme(null);
-  }, [tab, setStylePreviewTheme]);
+    setStylePreviewTheme(null);
+  }, [page.projectId, page.slug, setStylePreviewTheme]);
 
   useEffect(() => {
     if (!workspaceOpen || tab !== 'edit') return;
