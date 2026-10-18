@@ -144,8 +144,23 @@ function patchBytes(operations) {
   return JSON.stringify(operations).length * 2;
 }
 
-function historyEntry(scope, operations) {
-  return { scope, operations, bytes: patchBytes(operations) };
+function historyEntry(scope, operations, group = '', at = 0) {
+  return { scope, operations, bytes: patchBytes(operations), group, at };
+}
+
+// Only adjacent changes to the same scalar field within a short editing burst
+// may share one undo entry. Structural edits always break the group.
+function continuousEditGroup(operations, nextPage) {
+  if (operations.length !== 1) return '';
+  const operation = operations[0];
+  const next = readPath(nextPage, operation.path);
+  if (!next.exists || !operation.exists) return '';
+  const before = operation.value;
+  const after = next.value;
+  const textEdit = typeof before === 'string' && typeof after === 'string';
+  const rangeEdit = typeof before === 'number' && typeof after === 'number';
+  if (!textEdit && !rangeEdit) return '';
+  return `${textEdit ? 'text' : 'range'}:${JSON.stringify(operation.path)}`;
 }
 
 function replayHistory(currentPage, entry) {
@@ -254,7 +269,18 @@ export function recordPageEditMutation(previousPage, nextPage) {
   const operations = previousValueChanges(previousPage, nextPage);
   if (!operations.length) return;
 
-  past.push(historyEntry(previousScope, operations));
+  const group = continuousEditGroup(operations, nextPage);
+  const now = Date.now();
+  const prior = past[past.length - 1];
+  const windowMs = group.startsWith('range:') ? 350 : 900;
+  if (group && prior?.scope === previousScope && prior.group === group
+    && now - prior.at <= windowMs && !future.length) {
+    // Retain the first previous value so undo returns to the beginning of
+    // the gesture, not merely the previous character/slider tick.
+    prior.at = now;
+  } else {
+    past.push(historyEntry(previousScope, operations, group, now));
+  }
   future = [];
   trimHistory();
   notifySoon();

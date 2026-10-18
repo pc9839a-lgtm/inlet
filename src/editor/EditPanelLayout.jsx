@@ -30,7 +30,7 @@ export function EditPanelLayout({
           aria-pressed={section === 'options'}
           onClick={() => setSection('options')}
         >
-          페이지 옵션
+          페이지 옵션{stylePanelProps?.hasPendingStyle ? ' · 미적용' : ''}
         </button>
         <button
           className="edit-section-tab"

@@ -18,7 +18,8 @@ export default function CodeEditorModal({ draft, onDraftChange, onClose, onApply
           <button type="button" onClick={onClose}>닫기</button>
         </div>
         <textarea
-          value={draft}
+          aria-label="HTML 코드 초안"
+        value={draft}
           onChange={(event) => onDraftChange(event.target.value)}
           placeholder="HTML / CSS / JavaScript 코드를 붙여넣으세요"
           spellCheck={false}
