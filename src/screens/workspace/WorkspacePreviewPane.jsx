@@ -5,7 +5,7 @@ import PreviewRenderer from '../../preview/LandingRenderer.jsx';
 export function WorkspacePreviewPane({
   previewPage,
   leads,
-   selectedBlockId,
+  selectedBlockId,
   onSelectPreviewBlock,
 }) {
   const previewRef = useRef(null);
@@ -28,7 +28,6 @@ export function WorkspacePreviewPane({
             page={previewPage}
             editorPreview
             leads={leads}
-            // Preview submissions are local UI demonstrations only.
             addLead={async (lead) => ({ ...lead, isTest: true })}
             track={() => {}}
             selectedBlockId={selectedBlockId}
