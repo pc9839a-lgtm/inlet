@@ -12,6 +12,8 @@ export default function TopNavMenuItemFields({ menu, page, TargetControl, onChan
         target={menu.target}
         url={menu.url}
         lastWidgetTarget={menu.lastWidgetTarget}
+        lastUrl={menu.lastUrl}
+        lastPhoneUrl={menu.lastPhoneUrl}
         page={page}
         onChange={onChange}
       />
