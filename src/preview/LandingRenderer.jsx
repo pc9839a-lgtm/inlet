@@ -136,12 +136,12 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
   const blocks = page.blocks.filter(b=>b.visible && !(b.type === 'topnav' && (suppressTopNav || b.s?.omitRender)));
   const bottom = blocks.find(b=>b.type==='bottombar');
   const normalRaw = blocks.filter(b=>b.type!=='bottombar');
-  const heroBlock = normalRaw.find((b)=>b.type === 'hero');
   const topNavBlock = normalRaw.find((b)=>b.type === 'topnav');
+  // Top navigation is a fixed region. Every other block, including HERO,
+  // renders in the exact order chosen in the screen-order editor.
   const normal = [
     ...(topNavBlock ? [topNavBlock] : []),
-    ...(heroBlock ? [heroBlock] : []),
-    ...normalRaw.filter((b)=>b.id !== heroBlock?.id && b.id !== topNavBlock?.id),
+    ...normalRaw.filter((b)=>b.id !== topNavBlock?.id),
   ];
   const pageRef = useRef(null);
   const [formInputActive, setFormInputActive] = useState(false);

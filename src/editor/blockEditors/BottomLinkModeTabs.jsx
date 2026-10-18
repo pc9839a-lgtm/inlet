@@ -9,6 +9,7 @@ export default function BottomLinkModeTabs({ mode, onChange }) {
           key={key}
           type="button"
           className={mode === key ? 'active' : ''}
+          aria-pressed={mode === key}
           onClick={() => onChange(key)}
         >
           {text}
