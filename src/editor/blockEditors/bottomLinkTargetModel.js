@@ -1,13 +1,16 @@
+import { getTargetControlState } from '../targetControlModel.js';
 import { normalizeBottomTarget } from './bottomBarEditorModel.js';
 
 export function resolveBottomLinkTarget(button, blocks = []) {
-  const normalized = normalizeBottomTarget(button.target, blocks);
-  const savedWidget = normalizeBottomTarget(button.lastWidgetTarget, blocks);
-  const first = blocks[0]?.id ? `block:${blocks[0].id}` : 'hero';
-  const currentWidget = normalized.startsWith('block:')
-    ? normalized
-    : (savedWidget.startsWith('block:') ? savedWidget : first);
-  const mode = normalized === 'url' ? 'url' : 'widget';
-
-  return { normalized, currentWidget, mode };
+  const state = getTargetControlState({
+    page: { blocks },
+    target: button.target,
+    lastWidgetTarget: button.lastWidgetTarget,
+  });
+  return {
+    normalized: normalizeBottomTarget(button.target, blocks),
+    currentWidget: state.currentWidget,
+    mode: state.mode,
+    invalidWidgetTarget: state.invalidWidgetTarget,
+  };
 }

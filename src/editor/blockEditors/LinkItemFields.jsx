@@ -13,6 +13,8 @@ export default function LinkItemFields({ item, page, TargetControl, onUpdate }) 
         target={item.target || 'url'}
         url={item.url}
         lastWidgetTarget={item.lastWidgetTarget}
+        lastUrl={item.lastUrl}
+        lastPhoneUrl={item.lastPhoneUrl}
         page={page}
         onChange={onUpdate}
       />
