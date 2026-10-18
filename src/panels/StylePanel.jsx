@@ -73,7 +73,7 @@ function StyleSegment({ label, value, onChange, options = [] }) {
       <span>{label}</span>
       <div className={`style-segment style-segment-count-${options.length}`} data-count={options.length}>
         {options.map(([key, text]) => (
-          <button key={key} type="button" className={String(value) === String(key) ? 'active' : ''} onClick={() => onChange(key)}>
+          <button key={key} type="button" className={String(value) === String(key) ? 'active' : ''} aria-pressed={String(value) === String(key)} onClick={() => onChange(key)}>
             {text}
           </button>
         ))}
@@ -101,7 +101,7 @@ function StyleColorLine({ label, value, onChange, fallback = '#111827' }) {
     <div className="style-line style-color-line">
       <span>{label}</span>
       <div className="style-color-control">
-        <input type="color" value={color} onChange={(event) => onChange(event.target.value)} />
+        <input type="color" aria-label={label} value={color} onChange={(event) => onChange(event.target.value)} />
         <b>{color}</b>
         <button type="button" onClick={pick} title={T.pickColor} aria-label={`${label} ${T.pickColor}`}><Pipette size={16} /></button>
       </div>
@@ -114,7 +114,7 @@ function StyleRangeLine({ label, value, min = 0, max = 100, onChange, suffix = '
     <div className="style-line style-range-line">
       <span>{label}</span>
       <div className="style-range-control">
-        <input type="range" min={min} max={max} value={value ?? 0} onChange={(event) => onChange(Number(event.target.value))} />
+        <input type="range" aria-label={label} min={min} max={max} value={value ?? 0} onChange={(event) => onChange(Number(event.target.value))} />
         <b>{value ?? 0}{suffix}</b>
       </div>
     </div>
@@ -187,7 +187,7 @@ export default function StylePanel({ page, updateTheme, onPreviewThemeChange }) 
 
       <div className="style-subnav">
         {[[ 'background', T.bg ], [ 'color', T.color ], [ 'text', T.text ]].map(([key, label]) => (
-          <button key={key} type="button" className={section === key ? 'active' : ''} onClick={() => setSection(key)}>{label}</button>
+          <button key={key} type="button" className={section === key ? 'active' : ''} aria-pressed={section === key} onClick={() => setSection(key)}>{label}</button>
         ))}
       </div>
 
