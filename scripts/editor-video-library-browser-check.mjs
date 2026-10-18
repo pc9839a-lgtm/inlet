@@ -323,10 +323,20 @@ async function run() {
     await clickSelector(client, `.image-library-picker-item[title="${libraryFileName}"]`);
     await waitForBrowser(client, `!document.querySelector('.image-library-picker[role="dialog"]')`, 'video library dialog close');
     await waitForBrowser(client, `(document.querySelector('.screen-order-v2-inline-editor')?.innerText || '').includes('서버 저장 완료 · ${libraryFileName}')`, 'selected video editor state');
-    await waitForBrowser(client, `(() => {
-      const video = document.querySelector('.phone-frame #block-editor-video video');
-      return !!video && video.src === ${JSON.stringify(selectedVideoValue)} && video.readyState >= 1;
-    })()`, 'selected playable video preview');
+    try {
+      await waitForBrowser(client, `(() => {
+        const video = document.querySelector('.phone-frame #block-editor-video video');
+        return !!video && video.src === ${JSON.stringify(selectedVideoValue)} && video.readyState >= 1;
+      })()`, 'selected playable video preview');
+    } catch (error) {
+      const videoState = await evaluate(client, `(() => {
+        const video = document.querySelector('.phone-frame #block-editor-video video');
+        const block = document.querySelector('.phone-frame #block-editor-video');
+        return { blockHtml: block?.outerHTML?.slice(0, 800), videoSrc: video?.src, readyState: video?.readyState, networkState: video?.networkState, errorCode: video?.error?.code, errorMessage: video?.error?.message, currentSrc: video?.currentSrc };
+      })()`);
+      console.log('[editor-video] metadata diagnostic', JSON.stringify({ videoState, downloadCount: apiState.videoDownloadCount, unexpected: apiState.unexpectedApis }));
+      throw error;
+    }
     await capture(client, 'desktop-video-library-selected');
 
     await wait(350);
