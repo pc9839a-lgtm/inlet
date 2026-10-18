@@ -8,7 +8,12 @@ import { useNormalBlockSelection } from './useNormalBlockSelection.js';
 
 export function useEditPanelSelection({ page, openId, setOpenId, setAddOpen }) {
   const { topNavBlock, bottomBlock, footerBlock, normalBlocks } = React.useMemo(() => getEditPanelSelectionBlocks(page), [page]);
-  const { fixedOpenId, toggleBlockOpen } = useFixedBlockSelection({ setAddOpen });
+  const { fixedOpenId, toggleBlockOpen } = useFixedBlockSelection({
+    setAddOpen,
+    setOpenId,
+    openId,
+    fixedBlockIds: [topNavBlock?.id, bottomBlock?.id, footerBlock?.id].filter(Boolean),
+  });
   const { normalSelectedId, selectBlock, openBlockSettings } = useNormalBlockSelection({
     normalBlocks,
     openId,
