@@ -682,7 +682,7 @@ export function RenderReservation({ block, addLead, track, editorPreview = false
       sourceBlockTitle: s.title || '방문예약',
       brand: BRAND_NAME,
       channel: traffic.channel,
-      isTest: traffic.isTest,
+      isTest: editorPreview || traffic.isTest,
       utmSource: traffic.utmSource,
       utmMedium: traffic.utmMedium,
       utmCampaign: traffic.utmCampaign,
