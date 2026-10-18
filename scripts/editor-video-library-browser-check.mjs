@@ -349,8 +349,11 @@ async function run() {
 
     await client.send('Page.reload', { ignoreCache: true });
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(videoRowHeadSelector)})`, 'reloaded editor video row');
-    await clickSelector(client, videoRowHeadSelector);
-    await waitForBrowser(client, `(document.querySelector('.screen-order-v2-inline-editor')?.innerText || '').includes('서버 저장 완료 · ${libraryFileName}')`, 'selected video editor state after reload');
+    // The editor may restore the previously selected block on reload. Its
+    // row is a toggle, so clicking an already-open row would close it.
+    const videoEditorAlreadyOpen = await evaluate(client, `!!document.querySelector('#editor-block-editor-video .screen-order-v2-inline-editor .video-library-action')`);
+    if (!videoEditorAlreadyOpen) await clickSelector(client, videoRowHeadSelector);
+    await waitForBrowser(client, `(document.querySelector('#editor-block-editor-video .screen-order-v2-inline-editor')?.innerText || '').includes('서버 저장 완료 · ${libraryFileName}')`, 'selected video editor state after reload');
     await waitForBrowser(client, `(() => {
       const video = document.querySelector('.phone-frame #block-editor-video video');
       return !!video && video.src === ${JSON.stringify(selectedVideoValue)} && video.readyState >= 1;
