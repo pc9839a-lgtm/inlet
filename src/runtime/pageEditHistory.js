@@ -254,7 +254,33 @@ export function recordPageEditMutation(previousPage, nextPage) {
   const operations = previousValueChanges(previousPage, nextPage);
   if (!operations.length) return;
 
-  past.push(historyEntry(previousScope, operations));
+  // Continuous edits to the same scalar field count as one user action.
+  // Keep the first pre-edit value so Undo restores the entire typing gesture;
+  // never coalesce structural block operations or edits after Undo.
+  const change = operations.length === 1 ? operations[0] : null;
+  const nextScalar = change ? readPath(nextPage, change.path).value : undefined;
+  const groupable = change?.exists
+    && (typeof change.value === 'string' || typeof change.value === 'number')
+    && typeof nextScalar === typeof change.value
+    && change.path.length > 0;
+  const groupKey = groupable ? JSON.stringify(change.path) : '';
+  const now = Date.now();
+  const latest = past[past.length - 1];
+  const canCoalesce = groupable && future.length === 0
+    && latest?.scope === previousScope
+    && latest?.groupKey === groupKey
+    && now - (latest?.groupAt || 0) < 700;
+
+  if (canCoalesce) {
+    latest.groupAt = now;
+  } else {
+    const entry = historyEntry(previousScope, operations);
+    if (groupable) {
+      entry.groupKey = groupKey;
+      entry.groupAt = now;
+    }
+    past.push(entry);
+  }
   future = [];
   trimHistory();
   notifySoon();
