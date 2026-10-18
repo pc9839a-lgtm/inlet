@@ -1,3 +1,36 @@
+/* D02: keep navigation anchors available without occupying the primary editor. */
+.block-editor-v2 .block-editor-advanced-settings {
+  min-width: 0;
+  margin-top: 12px;
+  border-top: 1px solid var(--editor-v2-line);
+}
+
+.block-editor-v2 .block-editor-advanced-settings > summary {
+  padding: 11px 0;
+  color: var(--editor-v2-muted);
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.block-editor-v2 .block-editor-advanced-settings > summary:focus-visible {
+  outline: 2px solid var(--editor-v2-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.block-editor-v2 .block-editor-advanced-description {
+  margin: 0 0 8px;
+  color: var(--editor-v2-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.block-editor-v2 .block-editor-advanced-settings .block-editor-anchor-control {
+  border-bottom: 0;
+}
+
 .block-editor-v2 {
   --editor-v2-surface: #fff;
   --editor-v2-soft: #f8fafc;

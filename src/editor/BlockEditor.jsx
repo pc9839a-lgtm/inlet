@@ -17,10 +17,14 @@ export default function BlockEditor({ block, page, updateBlock, editors, editorD
 
   return (
     <BlockEditorShell blockType={editorType}>
-      <AnchorControl block={block} value={s.anchorId || ''} set={set} />
       <LazyEditorBoundary resetKey={`${block.id}:${block.type}`}>
         <Editor {...props} />
       </LazyEditorBoundary>
+      <details className="block-editor-advanced-settings">
+        <summary>고급 설정 · 이동 앵커</summary>
+        <p className="block-editor-advanced-description">버튼의 화면 이동 대상에 사용하는 주소입니다.</p>
+        <AnchorControl block={block} value={s.anchorId || ''} set={set} />
+      </details>
     </BlockEditorShell>
   );
 }
