@@ -224,7 +224,7 @@ const publishedStatus = { tone: 'ok', label: '발행됨', savedPageIdentity: pag
 assert(visibleEditorPublishState({ page: requestPage, saved: false, saveStatus: publishedStatus }).label === '발행됨', 'completed publication must remain visible after the transient saved flash ends');
 assert(visibleEditorPublishState({ page: { ...requestPage, id: 'another-page' }, saved: true, saveStatus: publishedStatus }).label !== '발행됨', 'publication state must never leak across pages');
 
-assert(persistFlow.includes('schedulePageSavedIndicatorReset({ latestPageRef, setSaved })') && persistFlow.includes('cancelPageSavedIndicatorReset(latestPageRef)'), 'save commit and pending edits must participate in a single cancellable timer sequence');
+assert(!persistFlow.includes('schedulePageSavedIndicatorReset({ latestPageRef, setSaved })') && persistFlow.includes('cancelPageSavedIndicatorReset(latestPageRef)'), 'save commit must leave persistent page-scoped publish status while pending edits cancel transient timers');
 assert(!persistFlow.includes('setTimeout(() => setSaved(false), 1000)'), 'old unscoped independent saved timers must not return');
 assert(persistFlow.includes('cancel = (timer) => clearTimeout(timer)') && persistFlow.includes('schedule = (callback, timeout) => setTimeout(callback, timeout)'), 'browser host timer defaults must keep global invocation context during scoped cancellation');
 
