@@ -1,3 +1,5 @@
+import { createPreviewPage, getEditorDraftPreviewPage, simulateEditorPreviewLead, visiblePreviewBlocks, previewUrlForPage } from '../src/runtime/previewTarget.js';
+import { usePreviewWindow } from '../src/runtime/usePreviewWindow.js';
 import { readFile } from 'node:fs/promises';
 
 function assert(condition, message) {
@@ -67,6 +69,61 @@ assert(parityCss.includes('grid-template-columns: repeat(var(--bottom-button-cou
 assert(fixedUiCss.includes('padding-bottom: calc(max(88px, var(--page-fixed-bottom-height, 0px)) + 10px) !important'), 'Final fixed UI contract must prefer measured bottom height with a compact reserve');
 assert(fixedUiCss.includes('scroll-padding-bottom: calc(max(88px, var(--page-fixed-bottom-height, 0px)) + 10px) !important'), 'Anchor scrolling must reserve measured fixed action space without excess padding');
 assert(!parityCss.includes('@media (max-width: 420px)'), 'Runtime parity must use container width instead of the browser viewport width');
+
+
+// Editor draft preview and public landing share the renderer but must NOT
+// share write, delivery, analytics, or publish side effects.
+const previewRenderer = await readFile('src/preview/LandingRenderer.jsx', 'utf8');
+const previewModal = await readFile('src/builder/BuilderFeedback.jsx', 'utf8');
+const previewWindowSource = await readFile('src/runtime/usePreviewWindow.js', 'utf8');
+const previewSource = await readFile('src/screens/workspace/WorkspacePreviewPane.jsx', 'utf8');
+
+const draftPage = { title: '비공개 초안', slug: 'draft-qa', theme: { accent: '#123456' }, blocks: [
+  { id: 'text-a', type: 'text', visible: true },
+  { id: 'hero-b', type: 'hero', visible: true },
+  { id: 'nav-c', type: 'topnav', visible: true },
+  { id: 'bottom-d', type: 'bottombar', visible: true },
+] };
+const visible = visiblePreviewBlocks(draftPage);
+assert(visible.map((block) => block.id).join(',') === 'text-a,hero-b,nav-c,bottom-d', 'Visible blocks must retain user ordering');
+assert(previewRenderer.includes('const normal = blocks.filter(b=>b.type!==\'bottombar\');'), 'Normal landing blocks must not hoist HERO or navigation');
+assert(previewRenderer.includes('visiblePreviewBlocks(page)'), 'Landing renderer must use the tested block order model');
+const preview = createPreviewPage({ page: draftPage, stylePreviewTheme: { accent: '#abcdef' }, mapSiteId: 'test-map' });
+assert(preview !== draftPage && getEditorDraftPreviewPage() === preview, 'Current unsaved draft must be available to header preview');
+assert(preview.theme.accent === '#abcdef' && preview.blocks[0].id === 'text-a', 'Pending style and block changes must reach draft preview');
+assert(previewUrlForPage(draftPage).includes('draft-qa'), 'Published URL remains a separate, explicit destination');
+let openedCount = 0;
+let copiedIssue = null;
+let warned = 0;
+const existingWindow = globalThis.window;
+globalThis.window = { open: () => { openedCount += 1; return null; } };
+try {
+  usePreviewWindow({
+    previewUrl: 'https://pagero.kr/draft-qa',
+    setPreviewCopyIssue: (issue) => { copiedIssue = issue; },
+    showToast: () => { warned += 1; },
+  }).openPreview();
+  assert(copiedIssue?.kind === 'draft' && copiedIssue.page === preview, 'Header preview must show unsaved draft, not published URL');
+  assert(copiedIssue.publishedUrl === 'https://pagero.kr/draft-qa', 'Published destination must remain separately available');
+  assert(openedCount === 0 && warned === 0, 'Draft action must not open public URL or misdiagnose a noopener null return');
+} finally {
+  globalThis.window = existingWindow;
+}
+const lead = { name: '모의 이름', isTest: false };
+const simulated = await simulateEditorPreviewLead(lead);
+assert(lead.isTest === true && simulated.isTest === true, 'Form submission object must carry isTest=true before legacy conversion guard');
+assert(previewSource.includes('editorPreview') && !previewSource.includes('addLead={addLead}') && !previewSource.includes('track={track}'), 'Editor canvas must not receive production callbacks');
+assert(previewRenderer.includes('editorPreview ? simulateEditorPreviewLead : addLead'), 'Editor mode must select mocked lead action');
+assert(previewRenderer.includes('editorPreview ? undefined : track'), 'Editor mode must block analytics callbacks');
+assert(previewRenderer.includes('templatePreview || editorPreview') && previewRenderer.includes('installConversionTracking(page)'), 'Editor mode must not install conversion pixels');
+assert(previewRenderer.includes('if (!editorPreview && !templatePreview) track?.'), 'Editor mode must not track page views');
+assert(previewRenderer.includes('if (editorPreview && (target === \'url\' || target === \'phone\')) return;'), 'External actions must be inert in draft previews');
+assert(previewRenderer.includes("if(block.type==='code')return editorPreview"), 'Arbitrary JS/widget code must be disabled in draft preview');
+assert(previewModal.includes('현재 초안 미리보기') && previewModal.includes('발행본 보기'), 'Draft and published views must be distinguishable');
+assert(previewModal.includes('rel="noopener noreferrer"') && previewModal.includes('target="_blank"'), 'Published links must retain noopener security');
+assert(previewModal.includes("navigator.clipboard?.writeText(url)") && previewModal.includes('onClick={copyPreviewUrl}'), 'Retry copy must perform clipboard write rather than open a window');
+assert(!previewWindowSource.includes('window.open('), 'Header preview must not guess popup blocking from noopener null');
+assert(workspacePreviewCss.includes('.editor-draft-preview-dialog'), 'Draft preview overlay must be sized independently of page publishing');
 
 console.log(JSON.stringify({
   ok: true,
