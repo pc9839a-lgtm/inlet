@@ -1240,9 +1240,9 @@ async function run() {
     await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-list')`, 'screen order after style apply');
 
     // E2E-13: preview action must not close or freeze the editor; continue editing afterwards.
-    await evaluate(client, `window.__pageroQaPreviewCalls = []; window.open = (...args) => { window.__pageroQaPreviewCalls.push(args); return { opener: null }; };`);
-    await clickButtonByText(client, '.panel-actions', '미리보기');
-    await waitForBrowser(client, `window.__pageroQaPreviewCalls?.length === 1`, 'preview window request');
+    await evaluate(client, `window.__pageroQaPreviewCalls = []; const clickOriginal = HTMLAnchorElement.prototype.click; HTMLAnchorElement.prototype.click = function () { if (this.target === '_blank') { window.__pageroQaPreviewCalls.push({ url: this.href, rel: this.rel }); return; } return clickOriginal.call(this); };`);
+    await clickButtonByText(client, '.panel-actions', '공개본 보기');
+    await waitForBrowser(client, `window.__pageroQaPreviewCalls?.length === 1 && window.__pageroQaPreviewCalls[0].rel.includes('noopener')`, 'published preview safe new tab request');
     assert((await evaluate(client, 'location.pathname')) === '/app', 'preview action must keep the editor page active');
     await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'hero editor after preview');
