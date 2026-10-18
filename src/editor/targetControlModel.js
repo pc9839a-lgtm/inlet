@@ -16,7 +16,7 @@ export function getTargetBlocks(page) {
 export function normalizeTarget(target, blocks = []) {
   const raw = String(target || '');
   if (!raw || raw === 'url' || raw === 'phone' || raw.startsWith('block:')) return raw;
-  const byType = blocks.find((block) => block.type === raw);
+  const byType = blocks.find((block) => block.id === raw || block.s?.anchorId === raw || block.type === raw);
   return byType ? `block:${byType.id}` : raw;
 }
 
