@@ -1,6 +1,7 @@
-﻿import { useEffect, useRef } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { useAccessibleDialog } from '../lib/useAccessibleDialog.js';
 import { createPortal } from 'react-dom';
+import PreviewRenderer from '../preview/LandingRenderer.jsx';
 
 const pageConflictErrorStyle = {
   margin: '10px 0 0',
@@ -83,27 +84,74 @@ export function PageConflictModal({ conflict, onClose, onUseLatest, onForceSave 
   );
 }
 
-export function PreviewCopyModal({ issue, onClose, onRetry }) {
+export function PreviewCopyModal({ issue, onClose }) {
   const inputRef = useRef(null);
   const dialogRef = useAccessibleDialog(onClose);
+  const [copyStatus, setCopyStatus] = useState('');
 
   useEffect(() => {
+    if (issue?.kind === 'draft') return;
     inputRef.current?.focus();
     inputRef.current?.select();
-  }, [issue?.url]);
+  }, [issue?.kind, issue?.url]);
 
-  const openPreview = () => {
-    window.open(issue?.url || '', '_blank', 'noopener,noreferrer');
+  // This action copies the URL; it must never retry window.open().
+  const copyPreviewUrl = async () => {
+    const url = String(issue?.url || '');
+    let copied = false;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        copied = true;
+      }
+    } catch {
+      // Clipboard permissions can be denied in a secure context.
+    }
+    if (!copied) {
+      try {
+        inputRef.current?.focus();
+        inputRef.current?.select();
+        copied = document.execCommand('copy');
+      } catch {
+        copied = false;
+      }
+    }
+    setCopyStatus(copied ? '주소가 복사되었습니다.' : '복사할 수 없습니다. 주소를 선택해 직접 복사해주세요.');
   };
+
+  if (issue?.kind === 'draft') {
+    return createPortal(
+      <div className="create-modal-backdrop editor-draft-preview-backdrop" role="presentation">
+        <section ref={dialogRef} className="create-modal editor-draft-preview-dialog" role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="editor-draft-preview-title">
+          <header className="editor-draft-preview-header">
+            <div>
+              <h2 id="editor-draft-preview-title">현재 초안 미리보기</h2>
+              <p>발행하지 않은 변경 사항도 표시됩니다. 문의·추적·외부 코드는 실행되지 않습니다.</p>
+            </div>
+            <div className="editor-draft-preview-actions">
+              {issue.publishedUrl && <a href={issue.publishedUrl} target="_blank" rel="noopener noreferrer" title="현재 발행 주소를 새 창으로 열기 (미발행 페이지는 표시되지 않을 수 있음)">발행본 보기</a>}
+              <button type="button" onClick={onClose}>닫기</button>
+            </div>
+          </header>
+          <div className="editor-draft-preview-stage">
+            <div className="phone-frame editor-draft-preview-phone">
+              <PreviewRenderer page={issue.page} leads={[]} editorPreview />
+            </div>
+          </div>
+        </section>
+      </div>,
+      document.body,
+    );
+  }
 
   return createPortal(
     <div className="create-modal-backdrop" role="presentation">
       <section ref={dialogRef} className="create-modal confirm-modal" role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="preview-copy-title">
         <button type="button" className="create-modal-close" onClick={onClose} aria-label="닫기">×</button>
         <div className="create-modal-title">
-          <span>미리보기 주소</span>
+          <span>발행 주소</span>
           <h2 id="preview-copy-title">주소를 직접 복사해주세요.</h2>
-          <p>{issue?.message || '브라우저 권한 또는 보안 설정 때문에 자동 복사가 막혔습니다. 아래 주소를 선택해서 복사할 수 있습니다.'}</p>
+          <p>{issue?.message || '아래 발행 주소를 선택하거나 복사할 수 있습니다.'}</p>
         </div>
         <input
           ref={inputRef}
@@ -112,11 +160,12 @@ export function PreviewCopyModal({ issue, onClose, onRetry }) {
           readOnly
           onFocus={(event) => event.currentTarget.select()}
           onClick={(event) => event.currentTarget.select()}
-          aria-label="미리보기 주소"
+          aria-label="발행 주소"
         />
+        {copyStatus && <p role="status">{copyStatus}</p>}
         <div className="confirm-modal-actions">
-          <button type="button" className="confirm-cancel" onClick={openPreview}>새 창으로 열기</button>
-          <button type="button" className="confirm-cancel" onClick={onRetry}>다시 복사</button>
+          {issue?.url && <a className="confirm-cancel" href={issue.url} target="_blank" rel="noopener noreferrer">발행본 보기</a>}
+          <button type="button" className="confirm-cancel" onClick={copyPreviewUrl}>다시 복사</button>
           <button type="button" className="confirm-primary" onClick={onClose}>확인</button>
         </div>
       </section>
