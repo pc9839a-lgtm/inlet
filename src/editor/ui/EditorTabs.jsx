@@ -11,13 +11,27 @@ export function EditorTabs({ tabs = [], defaultTab }) {
     if (activeTab && activeTab.id !== activeId) setActiveId(activeTab.id);
   }, [activeId, activeTab]);
 
+  const handleTabKeyDown = (event, index) => {
+    let nextIndex = index;
+    if (event.key === 'ArrowRight') nextIndex = (index + 1) % visibleTabs.length;
+    else if (event.key === 'ArrowLeft') nextIndex = (index - 1 + visibleTabs.length) % visibleTabs.length;
+    else if (event.key === 'Home') nextIndex = 0;
+    else if (event.key === 'End') nextIndex = visibleTabs.length - 1;
+    else return;
+
+    event.preventDefault();
+    const nextTab = visibleTabs[nextIndex];
+    setActiveId(nextTab.id);
+    event.currentTarget.parentElement?.querySelectorAll('[role="tab"]')[nextIndex]?.focus();
+  };
+
   if (!activeTab) return null;
 
   return (
     <div className="editor-tabs-v2">
       {visibleTabs.length > 1 && (
         <div className="editor-tabs-v2-list" role="tablist" aria-label="편집 항목">
-          {visibleTabs.map((tab) => {
+          {visibleTabs.map((tab, index) => {
             const selected = tab.id === activeTab.id;
             const tabId = `editor-tab-${generatedId}-${tab.id}`;
             const panelId = `editor-tab-panel-${generatedId}-${tab.id}`;
@@ -32,6 +46,7 @@ export function EditorTabs({ tabs = [], defaultTab }) {
                 aria-controls={panelId}
                 tabIndex={selected ? 0 : -1}
                 onClick={() => setActiveId(tab.id)}
+                onKeyDown={(event) => handleTabKeyDown(event, index)}
               >
                 {tab.label}
               </button>
