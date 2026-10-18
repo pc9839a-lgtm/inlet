@@ -124,7 +124,7 @@ export default function PanelHeader({ page, tab, saved, saveStatus, hasUnapplied
           title="편집 내용은 브라우저에 자동 임시보관됩니다. 발행하면 공개 페이지에 반영됩니다."
           aria-busy={publishing}
         >
-          <Save size={14} aria-hidden="true" />{publishing ? '발행 중' : publishState.tone === 'ok' && saved && publishState.label === '발행됨' ? '발행됨' : '발행'}
+          <Save size={14} aria-hidden="true" />{publishing ? '발행 중' : publishState.tone === 'ok' && publishState.label === '발행됨' ? '발행됨' : '발행'}
         </button>
       </div>
     </header>

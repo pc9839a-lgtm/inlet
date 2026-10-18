@@ -6,7 +6,7 @@ export function visibleEditorPublishState({ page, saved, saveStatus, hasUnapplie
   if (hasUnappliedDrafts) return { label: '미적용 변경 · 미발행', tone: 'warning', detail: '변경을 적용한 후 발행해야 공개 페이지에 반영됩니다.' };
   if (saveStatus?.tone === 'error') return { label: saveStatus.label, tone: 'error', detail: saveStatus.detail };
   if (saveStatus?.tone === 'warning') return { label: saveStatus.label, tone: 'warning', detail: saveStatus.detail };
-  if (saved && samePage && saveStatus?.tone === 'ok') return { label: saveStatus.label, tone: 'ok', detail: '공개 페이지에 반영된 발행 결과입니다.', at: saveStatus.at };
+  if (samePage && saveStatus?.tone === 'ok') return { label: saveStatus.label, tone: 'ok', detail: '공개 페이지에 반영된 발행 결과입니다.', at: saveStatus.at };
   if (saveStatus?.phase === 'dirty') return { label: '공개 미반영 · 편집 중', tone: 'idle', detail: '변경 내용은 공개 페이지에 아직 반영되지 않았습니다.' };
   if (saveStatus?.label === '브라우저에 임시저장됨') return { label: '브라우저 임시보관 · 미발행', tone: 'idle', detail: '공개 페이지에 반영하려면 발행하세요.' };
   return { label: page?.publishedAt ? '이전 발행본 있음' : '발행 전', tone: 'idle', detail: '변경 사항을 공개하려면 발행하세요.' };

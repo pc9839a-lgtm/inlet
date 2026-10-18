@@ -80,7 +80,17 @@ export function ScreenOrderRowActions({
       triggerRef.current?.contains(target) || menuRef.current?.contains(target)
     );
     const closeIfOutside = (event) => {
-      if (!isInsideMenu(event.target)) setMenuOpen(false);
+      if (isInsideMenu(event.target)) return;
+      if (event.type === 'focusin') {
+        // React and the portal can move focus during a keyboard activation.
+        // Resolve the final active element after that focus transfer, while
+        // still closing when the user really tabs outside the menu.
+        queueMicrotask(() => {
+          if (!isInsideMenu(document.activeElement)) setMenuOpen(false);
+        });
+        return;
+      }
+      setMenuOpen(false);
     };
     const closeOtherMenu = (event) => {
       if (event.detail !== menuId) setMenuOpen(false);
