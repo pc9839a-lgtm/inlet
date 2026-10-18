@@ -131,6 +131,7 @@ export function usePersistStyleSaveAction({
     const expectedUpdatedAt = styleSourcePage.updatedAt || styleSourcePage.savedAt || styleSourcePage.createdAt || page.updatedAt || page.savedAt || page.createdAt || '';
     const expectedRevision = Number(styleSourcePage.revision || 0);
     const saveStartedAt = Date.now();
+    markSaveStatus('warning', '발행 중', '공통 스타일을 서버에 저장하고 있습니다.', { phase: 'publishing' });
     let result = null;
     try {
       if (saveMode === 'update-existing') {

@@ -63,10 +63,25 @@ function refreshNestedIds(value) {
 }
 
 function duplicateBlocks(blocks = []) {
-  return ensureUniqueAnchors((blocks || []).map((block) => ({
-    ...refreshNestedIds(clone(block)),
-    id: uid(),
-  })));
+  // Assign top-level block IDs before rewriting any references inside nested menus/buttons.
+  const idMap = new Map((blocks || []).filter((block) => block?.id)
+    .map((block) => [String(block.id), uid()]));
+  const remapBlockTargets = (value) => {
+    if (Array.isArray(value)) return value.map(remapBlockTargets);
+    if (!value || typeof value !== 'object') return value;
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => {
+      if (typeof item === 'string' && (key === 'target' || key.endsWith('Target')) && item.startsWith('block:')) {
+        const replacement = idMap.get(item.slice(6));
+        return [key, replacement ? `block:${replacement}` : item];
+      }
+      return [key, remapBlockTargets(item)];
+    }));
+  };
+  return ensureUniqueAnchors((blocks || []).map((block) => {
+    const copied = refreshNestedIds(clone(block));
+    copied.id = idMap.get(String(block.id)) || uid();
+    return remapBlockTargets(copied);
+  }));
 }
 
 export function createDuplicatedPage(sourcePage = {}, input = {}) {

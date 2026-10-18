@@ -329,8 +329,9 @@ export function commitSavedPageResult({
   }
 
   setWorkspaceUnsavedDirty(verificationPending);
+  // Publication remains visible until the next local mutation or page switch.
+  cancelPageSavedIndicatorReset(latestPageRef);
   setSaved(true);
-  schedulePageSavedIndicatorReset({ latestPageRef, setSaved });
   const feedback = pageSaveSuccessFeedback(result, scope);
   markSaveStatus(feedback.level, feedback.title, feedback.message, {
     savedPageIdentity: pageOperationIdentity(savedPage),

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pipette } from 'lucide-react';
 import { ImageInput } from '../editor/controls.jsx';
 import { notify } from '../lib/uiFeedback.js';
@@ -73,7 +73,7 @@ function StyleSegment({ label, value, onChange, options = [] }) {
       <span>{label}</span>
       <div className={`style-segment style-segment-count-${options.length}`} data-count={options.length}>
         {options.map(([key, text]) => (
-          <button key={key} type="button" className={String(value) === String(key) ? 'active' : ''} onClick={() => onChange(key)}>
+          <button key={key} type="button" className={String(value) === String(key) ? 'active' : ''} aria-pressed={String(value) === String(key)} aria-label={`${label}: ${text}`} onClick={() => onChange(key)}>
             {text}
           </button>
         ))}
@@ -101,7 +101,7 @@ function StyleColorLine({ label, value, onChange, fallback = '#111827' }) {
     <div className="style-line style-color-line">
       <span>{label}</span>
       <div className="style-color-control">
-        <input type="color" value={color} onChange={(event) => onChange(event.target.value)} />
+        <input type="color" aria-label={label} value={color} onChange={(event) => onChange(event.target.value)} />
         <b>{color}</b>
         <button type="button" onClick={pick} title={T.pickColor} aria-label={`${label} ${T.pickColor}`}><Pipette size={16} /></button>
       </div>
@@ -114,7 +114,7 @@ function StyleRangeLine({ label, value, min = 0, max = 100, onChange, suffix = '
     <div className="style-line style-range-line">
       <span>{label}</span>
       <div className="style-range-control">
-        <input type="range" min={min} max={max} value={value ?? 0} onChange={(event) => onChange(Number(event.target.value))} />
+        <input type="range" aria-label={label} min={min} max={max} value={value ?? 0} onChange={(event) => onChange(Number(event.target.value))} />
         <b>{value ?? 0}{suffix}</b>
       </div>
     </div>
@@ -150,17 +150,14 @@ function getPageBg(theme = {}) {
 }
 
 // Runtime QA compatibility marker: aria-label={`${label} 색상 추출`}
-export default function StylePanel({ page, updateTheme, onPreviewThemeChange }) {
+export default function StylePanel({ page, updateTheme, stagedTheme = null, onPreviewThemeChange }) {
   const [section, setSection] = useState('background');
-  const [draftTheme, setDraftTheme] = useState(page.theme || {});
+  // The editor owns the un-applied theme, not this mountable subsection.
+  const draftTheme = stagedTheme ?? page.theme ?? {};
   const bgMode = draftTheme.bgMode || 'solid';
   const dirty = JSON.stringify(draftTheme) !== JSON.stringify(page.theme || {});
 
-  useEffect(() => { setDraftTheme(page.theme || {}); }, [page.theme]);
-  useEffect(() => { onPreviewThemeChange?.(draftTheme); }, [draftTheme, onPreviewThemeChange]);
-  useEffect(() => () => onPreviewThemeChange?.(null), [onPreviewThemeChange]);
-
-  const updateDraft = (patch) => setDraftTheme((theme) => ({ ...theme, ...patch }));
+  const updateDraft = (patch) => onPreviewThemeChange?.({ ...draftTheme, ...patch });
   const applyStyle = () => {
     if (!dirty) {
       notify(T.noChanges);
@@ -170,7 +167,7 @@ export default function StylePanel({ page, updateTheme, onPreviewThemeChange }) 
     onPreviewThemeChange?.(null);
     notify(T.applied, 'success');
   };
-  const resetDraft = () => setDraftTheme(page.theme || {});
+  const resetDraft = () => onPreviewThemeChange?.(null);
 
   return (
     <div className="simple-panel style-panel style-panel-v17 style-panel-staged">
@@ -187,7 +184,7 @@ export default function StylePanel({ page, updateTheme, onPreviewThemeChange }) 
 
       <div className="style-subnav">
         {[[ 'background', T.bg ], [ 'color', T.color ], [ 'text', T.text ]].map(([key, label]) => (
-          <button key={key} type="button" className={section === key ? 'active' : ''} onClick={() => setSection(key)}>{label}</button>
+          <button key={key} type="button" className={section === key ? 'active' : ''} aria-pressed={section === key} onClick={() => setSection(key)}>{label}</button>
         ))}
       </div>
 
@@ -201,7 +198,7 @@ export default function StylePanel({ page, updateTheme, onPreviewThemeChange }) 
           {bgMode === 'solid' && (
             <div className="style-panel-box">
               <StyleColorLine label={T.bgColor} value={draftTheme.bgSolid || draftTheme.bg} fallback="#F5F7FA" onChange={(next) => updateDraft({ bgSolid: next, bg: next, bgPreset: 'custom' })} />
-              <div className="style-line style-preset-line"><span>{T.preset}</span><div className="style-preset-row-v16">{BG_PRESETS.map((color) => <button key={color} type="button" className={(draftTheme.bg || draftTheme.bgSolid) === color ? 'active' : ''} style={{ background: color }} onClick={() => updateDraft({ bg: color, bgSolid: color, bgPreset: color })} title={color} />)}</div></div>
+              <div className="style-line style-preset-line"><span>{T.preset}</span><div className="style-preset-row-v16">{BG_PRESETS.map((color) => <button key={color} type="button" className={(draftTheme.bg || draftTheme.bgSolid) === color ? 'active' : ''} aria-label={`${T.preset} ${color}`} aria-pressed={(draftTheme.bg || draftTheme.bgSolid) === color} style={{ background: color }} onClick={() => updateDraft({ bg: color, bgSolid: color, bgPreset: color })} title={color} />)}</div></div>
             </div>
           )}
 
@@ -218,7 +215,7 @@ export default function StylePanel({ page, updateTheme, onPreviewThemeChange }) 
               <div className="style-photo-upload"><ImageInput label={T.bgImage} value={draftTheme.bgImage} onChange={(next) => updateDraft({ bgImage: next, bgOverlay: draftTheme.bgOverlay ?? true })} /></div>
               <StyleSegment label={T.ratio} value={draftTheme.bgImageFit || 'cover'} onChange={(next) => updateDraft({ bgImageFit: next })} options={[[ 'cover', T.fill ], [ 'contain', T.contain ], [ 'auto', T.original ]]} />
               <StyleSegment label={T.position} value={draftTheme.bgImagePosition || 'center'} onChange={(next) => updateDraft({ bgImagePosition: next })} options={[[ 'center', T.center ], [ 'top', T.top ], [ 'bottom', T.bottom ]]} />
-              <div className="style-overlay-card-v16"><div className="style-overlay-title"><strong>{T.overlay}</strong><button type="button" className={draftTheme.bgOverlay !== false ? 'active' : ''} onClick={() => updateDraft({ bgOverlay: !(draftTheme.bgOverlay !== false) })}>{draftTheme.bgOverlay !== false ? 'ON' : 'OFF'}</button></div>{draftTheme.bgOverlay !== false && (<><StyleColorLine label={T.color} value={draftTheme.bgOverlayColor || '#F5F7FA'} fallback="#F5F7FA" onChange={(next) => updateDraft({ bgOverlayColor: next })} /><StyleRangeLine label={T.opacity} value={draftTheme.bgOverlayOpacity ?? 72} min={0} max={90} suffix="%" onChange={(next) => updateDraft({ bgOverlayOpacity: next })} /></>)}</div>
+              <div className="style-overlay-card-v16"><div className="style-overlay-title"><strong>{T.overlay}</strong><button type="button" className={draftTheme.bgOverlay !== false ? 'active' : ''} aria-label={T.overlay} aria-pressed={draftTheme.bgOverlay !== false} onClick={() => updateDraft({ bgOverlay: !(draftTheme.bgOverlay !== false) })}>{draftTheme.bgOverlay !== false ? 'ON' : 'OFF'}</button></div>{draftTheme.bgOverlay !== false && (<><StyleColorLine label={T.color} value={draftTheme.bgOverlayColor || '#F5F7FA'} fallback="#F5F7FA" onChange={(next) => updateDraft({ bgOverlayColor: next })} /><StyleRangeLine label={T.opacity} value={draftTheme.bgOverlayOpacity ?? 72} min={0} max={90} suffix="%" onChange={(next) => updateDraft({ bgOverlayOpacity: next })} /></>)}</div>
               <div className="style-bg-preview-v16" style={{ background: getPageBg(draftTheme), backgroundSize: draftTheme.bgImageFit === 'contain' ? 'contain' : draftTheme.bgImageFit === 'auto' ? 'auto' : 'cover', backgroundPosition: draftTheme.bgImagePosition || 'center' }} />
             </div>
           )}

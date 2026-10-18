@@ -9,7 +9,7 @@ export default function DownloadFileUploadControl({ item, inputRef, uploading, o
           {item.fileName || (uploading ? '업로드 중' : '파일 선택')}
         </button>
         {item.sizeLabel && <em>{item.sizeLabel}</em>}
-        {item.fileUrl && <button type="button" className="download-remove-file" onClick={onClear}>삭제</button>}
+        {(item.fileName || item.fileUrl) && <button type="button" className="download-remove-file" onClick={onClear}>삭제</button>}
       </div>
       <input ref={inputRef} type="file" accept={DOWNLOAD_FILE_ACCEPT} hidden disabled={uploading} onChange={(event) => onPick(event.target.files?.[0])} />
     </div>

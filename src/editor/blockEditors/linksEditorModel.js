@@ -15,6 +15,8 @@ export function normalizeLinkItem(item = {}) {
     target: item.target || 'url',
     url,
     lastWidgetTarget: item.lastWidgetTarget || '',
+    lastUrl: item.lastUrl || (item.target === 'url' ? url : ''),
+    lastPhoneUrl: item.lastPhoneUrl || (item.target === 'phone' ? url : ''),
   };
 }
 
