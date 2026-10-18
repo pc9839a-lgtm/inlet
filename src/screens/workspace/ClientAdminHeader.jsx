@@ -9,7 +9,7 @@ export function ClientAdminHeader({ page, onDashboard, onPreview, previewUrl }) 
       </div>
       <div className="panel-actions">
         <button className="ghost-btn" type="button" onClick={onDashboard}>메인</button>
-        <button className="ghost-btn" type="button" onClick={onPreview} title={previewUrl}>미리보기</button>
+        <button className="ghost-btn" type="button" onClick={onPreview} title={previewUrl}>공개본 보기</button>
       </div>
     </header>
   );
