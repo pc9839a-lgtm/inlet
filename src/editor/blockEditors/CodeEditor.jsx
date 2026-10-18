@@ -6,13 +6,13 @@ import CodeEditorModal from './CodeEditorModal.jsx';
 import { useCodeDraft } from './useCodeDraft.js';
 
 export default function CodeEditor({ s, set }) {
-  const { draft, setDraft, modalOpen, setModalOpen } = useCodeDraft(s.html);
+  const { draft, setDraft, modalOpen, setModalOpen } = useCodeDraft(s.html, s.codeDraft, set);
 
   // 과거 저장된 BGM 프리셋은 편집 기능을 노출하지 않는다.
   if (s.widgetMode === 'bgm') return null;
 
   const apply = () => {
-    set({ html: draft, css: '', js: '', runJs: false });
+    set({ html: draft, codeDraft: null, css: '', js: '', runJs: false });
     setModalOpen(false);
   };
 

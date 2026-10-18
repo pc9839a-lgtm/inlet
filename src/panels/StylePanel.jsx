@@ -150,15 +150,14 @@ function getPageBg(theme = {}) {
 }
 
 // Runtime QA compatibility marker: aria-label={`${label} 색상 추출`}
-export default function StylePanel({ page, updateTheme, onPreviewThemeChange }) {
+export default function StylePanel({ page, pendingTheme = null, updateTheme, onPreviewThemeChange }) {
   const [section, setSection] = useState('background');
-  const [draftTheme, setDraftTheme] = useState(page.theme || {});
+  const [draftTheme, setDraftTheme] = useState(() => pendingTheme || page.theme || {});
   const bgMode = draftTheme.bgMode || 'solid';
   const dirty = JSON.stringify(draftTheme) !== JSON.stringify(page.theme || {});
 
-  useEffect(() => { setDraftTheme(page.theme || {}); }, [page.theme]);
+  useEffect(() => { setDraftTheme(pendingTheme || page.theme || {}); }, [page.theme, pendingTheme]);
   useEffect(() => { onPreviewThemeChange?.(draftTheme); }, [draftTheme, onPreviewThemeChange]);
-  useEffect(() => () => onPreviewThemeChange?.(null), [onPreviewThemeChange]);
 
   const updateDraft = (patch) => setDraftTheme((theme) => ({ ...theme, ...patch }));
   const applyStyle = () => {

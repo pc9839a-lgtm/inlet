@@ -111,6 +111,16 @@ export function usePersistStyleSaveAction({
 
   async function runStyleSaveCycle() {
     if (blockWrite('style')) return { ok: false, reason: 'write-blocked' };
+    const hasUnappliedCode = (latestPageRef.current || page).blocks?.some((block) => (
+      block.type === 'code'
+      && typeof block.s?.codeDraft === 'string'
+      && block.s.codeDraft !== (block.s.html || '')
+    ));
+    if (hasUnappliedCode) {
+      markSaveStatus('warning', '코드 적용 필요', '미적용 코드를 적용한 뒤 발행해주세요.');
+      showToast('미적용 코드를 적용한 뒤 발행해주세요.', 'warning');
+      return { ok: false, reason: 'code-draft-not-applied' };
+    }
     const basePage = latestPageRef.current || page;
     const previewThemeAtSave = latestStylePreviewThemeRef.current;
     const previewBlocksAtSave = latestStylePreviewBlocksRef.current;

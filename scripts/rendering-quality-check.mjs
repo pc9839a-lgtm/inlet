@@ -149,7 +149,7 @@ for (const [source, exportToken, classToken] of rendererContracts) {
 
 assert(files.landing.indexOf("block.type==='topnav'") < files.landing.indexOf("block.type==='hero'"), 'topnav should render before hero');
 assert(files.landing.includes('BlockErrorBoundary'), 'block error boundary should wrap preview blocks');
-assert(files.landing.includes('installConversionTracking(page)') && files.landing.includes('if (templatePreview) return;'), 'conversion tracking should skip template preview');
+assert(files.landing.includes('installConversionTracking(page)') && files.landing.includes('if (templatePreview || editorPreview) return;'), 'conversion tracking must skip template and editor preview');
 assert(files.landing.includes("page.theme.animPlayback === 'loop'") && files.landing.includes('prepareForReentry'), 'animation loop should replay on viewport re-entry');
 assert(files.animationCard.includes('updateTheme({ animPlayback })') && files.animationPlayback.includes('ANIMATION_PLAYBACK_OPTIONS'), 'animation playback editor contract missing');
 
@@ -216,7 +216,7 @@ assert(files.previewCss.includes('.image-gallery-grid-4') && files.previewCss.in
 assert(files.widgetStyles.includes('set({ logoSize: value })') && files.widgetStyles.includes('set({ menuStyle: value })') && files.widgetStyles.includes('set({ sticky: value })'), 'topnav editor controls missing');
 assert(files.widgetStyles.includes('BottomBarStylePanel') && files.landing.includes("s.buttonColorMode === 'custom'"), 'bottom bar style/color contract missing');
 assert(files.widgetStyles.includes('label="목록 움직임"') && files.signal.includes('activity-anim-${anim}'), 'activity movement contract missing');
-assert(files.codeEditor.includes("set({ html: draft, css: '', js: '', runJs: false })"), 'code apply should preserve selected height');
+assert(files.codeEditor.includes("set({ html: draft, codeDraft: null, css: '', js: '', runJs: false })"), 'code apply must commit the draft, clear the staging field, and preserve selected height');
 assert(files.searchDisplay.includes('label="실시간 검색"'), 'search live toggle missing');
 assert(files.dividerEditor.includes('width < 100 &&') && files.dividerEditor.includes('label="정렬"'), 'divider conditional alignment missing');
 

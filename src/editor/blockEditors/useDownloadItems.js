@@ -3,9 +3,20 @@ import { createDownloadItem, normalizeDownloadItem } from './downloadEditorModel
 export function useDownloadItems(s, set) {
   const items = (s.items || []).map(normalizeDownloadItem);
 
-  const updateItem = (id, patch) => set({ items: items.map((item) => (item.id === id ? { ...item, ...patch } : item)) });
-  const removeItem = (id) => set({ items: items.filter((item) => item.id !== id) });
-  const addItem = () => set({ items: [...items, createDownloadItem(items.length)] });
+  // Every mutation rebases on the latest block settings, not the render
+  // captured when a file upload started.
+  const updateItem = (id, patch) => set((current) => {
+    const latest = (current.items || []).map(normalizeDownloadItem);
+    if (!latest.some((entry) => entry.id === id)) return null;
+    return { items: latest.map((entry) => (entry.id === id ? { ...entry, ...patch } : entry)) };
+  });
+  const removeItem = (id) => set((current) => ({
+    items: (current.items || []).map(normalizeDownloadItem).filter((entry) => entry.id !== id),
+  }));
+  const addItem = () => set((current) => {
+    const latest = (current.items || []).map(normalizeDownloadItem);
+    return { items: [...latest, createDownloadItem(latest.length)] };
+  });
 
   return { items, updateItem, removeItem, addItem };
 }

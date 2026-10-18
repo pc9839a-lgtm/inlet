@@ -902,7 +902,7 @@ function App() {
     showToast,
   });
   const confirmLeaveStyleChanges = (onConfirm) => {
-    if (tab !== 'style' || !hasPendingStyle) return true;
+    if (!hasPendingStyle) return true;
     requestConfirm({
       title: '저장하지 않은 스타일 변경이 있습니다.',
       message: '저장하지 않고 이동하면 현재 미리보기 스타일은 버려집니다.',
@@ -1257,6 +1257,7 @@ function App() {
   } = createWorkspacePanelProps({
     page,
     authUser,
+    pendingTheme: stylePreviewTheme,
     updateTheme,
     updateStyleBlocks,
     setStylePreviewTheme,

@@ -131,7 +131,7 @@ function BgEffectLayer({ effect }) {
   );
 }
 
-function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '', onSelectBlock, templatePreview = false, publicView = false }) {
+function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '', onSelectBlock, templatePreview = false, editorPreview = false, publicView = false }) {
   const suppressTopNav = page.slug === 'our-wedding-day' || page.title === '모바일 청첩장';
   const blocks = page.blocks.filter(b=>b.visible && !(b.type === 'topnav' && (suppressTopNav || b.s?.omitRender)));
   const bottom = blocks.find(b=>b.type==='bottombar');
@@ -151,13 +151,13 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
   const bottomHasTimer = !!bottom?.s?.timerEnabled && !!syncedTimer;
   const bottomActive = !!bottom && (bottomHasButtons || bottomHasTimer);
 
-  useEffect(()=>{track?.({type:'page_view',label:'페이지뷰'});},[]);
+  useEffect(()=>{if (!editorPreview) track?.({type:'page_view',label:'페이지뷰'});},[editorPreview]);
 
   useEffect(() => {
-    if (templatePreview) return;
+    if (templatePreview || editorPreview) return;
     installPageHeadMeta(page);
     installConversionTracking(page);
-  }, [templatePreview, page.title, page.meta?.title, page.meta?.desc, page.meta?.favicon, page.meta?.og, page.meta?.console, page.meta?.naverWebmaster, page.meta?.gtm, page.meta?.ga4, page.meta?.googleAdsTag, page.meta?.pixel, page.meta?.ads, page.meta?.naver, page.meta?.kakao, page.integrations?.conversion]);
+  }, [templatePreview, editorPreview, page.title, page.meta?.title, page.meta?.desc, page.meta?.favicon, page.meta?.og, page.meta?.console, page.meta?.naverWebmaster, page.meta?.gtm, page.meta?.ga4, page.meta?.googleAdsTag, page.meta?.pixel, page.meta?.ads, page.meta?.naver, page.meta?.kakao, page.integrations?.conversion]);
 
   useEffect(() => {
     const hash = decodeURIComponent(window.location.hash || '').replace(/^#/, '');
@@ -338,6 +338,7 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
   };
 
   const go = (target, url, labelText) => {
+    if (editorPreview) return; // Never open external actions from the editor canvas.
     track?.({type:'cta_click',label:labelText||target});
     if (target==='url' && url) return window.open(normalizeExternalUrl(url) || url,'_blank','noopener,noreferrer');
     if (target==='phone') return window.open(url||'tel:01000000000');
@@ -360,7 +361,7 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
 
   const pageNode = (
     <div ref={pageRef} onClickCapture={templatePreview || publicView ? undefined : handlePreviewSelect} className={pageClassName} style={{'--accent':page.theme.accent,'--button':page.theme.accent,'--button-text':'#ffffff','--bg':pageBg,'--card':page.theme.card,'--text':page.theme.text,'--radius':`${page.theme.radius}px`,'--bg-effect-opacity':bgEffectOpacity,'--page-fixed-top-height':`${fixedUiHeights.top}px`,'--page-fixed-bottom-height':`${fixedUiHeights.bottom}px`,background:pageBg,color:page.theme.text,backgroundSize:bgSize,backgroundPosition:bgPosition,backgroundRepeat:'no-repeat'}}>
-      <div className="landing-content">{normal.map(b=><RenderBlock key={b.id} page={page} block={b} blocks={blocks} leads={leads} addLead={addLead} track={track} go={go}/>)}</div>
+      <div className="landing-content">{normal.map(b=><RenderBlock key={b.id} page={page} block={b} blocks={blocks} leads={leads} addLead={addLead} track={track} go={go} editorPreview={editorPreview}/>)}</div>
       <BgEffectLayer effect={bgEffect} />
       {page.share?.enabled !== false && <PageShareButton page={page} publicView={publicView} />}
       {!publicView && bottomNode}
@@ -416,7 +417,7 @@ function RenderBlock(props) {
   );
 }
 
-function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, go }) {
+function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, go, editorPreview = false }) {
   const globalAlign = pickSafe(page?.theme?.globalAlign, ['left','center','right'], '');
   const renderBlock = globalAlign
     ? { ...block, s: { ...(block.s || {}), align: globalAlign, textAlign: globalAlign } }
@@ -437,8 +438,8 @@ function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, g
   if(block.type==='divider')return <LayoutRenderDivider block={renderBlock}/>;
   if(block.type==='code')return <UtilityRenderCode block={renderBlock}/>;
   if(block.type==='search')return <UtilityRenderPageSearch block={renderBlock}/>;
-  if(block.type==='form')return <FormRenderForm block={renderBlock} addLead={addLead} track={track}/>;
-  if(block.type==='reservation')return <FormRenderReservation block={renderBlock} addLead={addLead} track={track}/>;
+  if(block.type==='form')return <FormRenderForm block={renderBlock} addLead={addLead} track={track} editorPreview={editorPreview}/>;
+  if(block.type==='reservation')return <FormRenderReservation block={renderBlock} addLead={addLead} track={track} editorPreview={editorPreview}/>;
   if(block.type==='footer')return <LayoutRenderFooter block={renderBlock}/>;
   return <section className="landing-section block-render-fallback"><strong>지원하지 않는 블록</strong></section>;
 }

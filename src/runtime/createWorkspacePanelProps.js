@@ -3,6 +3,7 @@ import { canUsePageDuplication } from '../lib/pageDuplication.js';
 export function createWorkspacePanelProps({
   page,
   authUser,
+  pendingTheme,
   updateTheme,
   updateStyleBlocks,
   setStylePreviewTheme,
@@ -49,6 +50,7 @@ export function createWorkspacePanelProps({
   return {
     stylePanelProps: {
       page,
+      pendingTheme,
       updateTheme,
       updateBlocks: updateStyleBlocks,
       onPreviewThemeChange: setStylePreviewTheme,

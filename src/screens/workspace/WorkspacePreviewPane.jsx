@@ -5,8 +5,6 @@ import PreviewRenderer from '../../preview/LandingRenderer.jsx';
 export function WorkspacePreviewPane({
   previewPage,
   leads,
-  addLead,
-  track,
   selectedBlockId,
   onSelectPreviewBlock,
 }) {
@@ -28,9 +26,10 @@ export function WorkspacePreviewPane({
         <div className="phone-frame">
           <PreviewRenderer
             page={previewPage}
+            editorPreview
             leads={leads}
-            addLead={addLead}
-            track={track}
+            addLead={async (lead) => ({ ...lead, isTest: true })}
+            track={() => {}}
             selectedBlockId={selectedBlockId}
             onSelectBlock={onSelectPreviewBlock}
           />

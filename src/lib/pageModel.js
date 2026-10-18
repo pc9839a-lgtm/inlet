@@ -357,6 +357,7 @@ function sanitizeBlock(block) {
 
   if (block?.type === 'code') {
     s.html = String(s.html || '').slice(0, 40000);
+    s.codeDraft = typeof s.codeDraft === 'string' ? s.codeDraft.slice(0, 40000) : null;
     s.css = String(s.css || '').slice(0, 40000);
     s.js = String(s.js || '').slice(0, 30000);
     s.runJs = !!s.runJs;

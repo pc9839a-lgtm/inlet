@@ -143,7 +143,19 @@ export function usePageSaveAction({
       showToast(WRITE_BLOCKED_FEEDBACK.toast, WRITE_BLOCKED_FEEDBACK.level);
       return { ok: false, reason: 'write-blocked' };
     }
-    if (tab === 'style' && hasPendingStyle) {
+    // A staged HTML edit is saved in the local page draft but is not rendered
+    // until '적용' is clicked. Never publish a page with unapplied code.
+    const pendingCode = (latestPageRef.current || page).blocks?.some((block) => (
+      block.type === 'code'
+      && typeof block.s?.codeDraft === 'string'
+      && block.s.codeDraft !== (block.s.html || '')
+    ));
+    if (pendingCode) {
+      markSaveStatus('warning', '코드 적용 필요', '미적용 코드가 있습니다. 코드 블록에서 적용을 누른 뒤 발행해주세요.');
+      showToast('미적용 코드가 있습니다. 코드를 적용한 뒤 발행해주세요.', 'warning');
+      return { ok: false, reason: 'code-draft-not-applied' };
+    }
+    if (hasPendingStyle) {
       requestConfirm({
         title: STYLE_CONFIRM_FEEDBACK.title,
         message: STYLE_CONFIRM_FEEDBACK.message,
