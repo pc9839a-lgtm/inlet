@@ -141,11 +141,22 @@ assert((persistFlow.match(/quietSuccess: true/g) || []).length >= 2, 'server sav
 assert(feedbackSource.includes("title: local ? '브라우저에 임시저장됨' : '발행됨'") && feedbackSource.includes("message: ''"), 'successful feedback must distinguish local temporary persistence from public publishing');
 assert(feedbackSource.includes("toast: '발행 실패 · 작업은 자동 임시보관됨'") && !feedbackSource.includes("'서버 저장에 실패했습니다. ' + detail"), 'publish failure toast must stay concise and must not expose long transport errors');
 assert(saveStatusSource.includes("markSaveStatus('ok', '브라우저에 임시저장됨', '')") && saveStatusSource.includes("showToast(message, 'error')"), 'local persistence feedback must explicitly describe temporary browser storage');
-assert(panelHeaderSource.includes("saveStatus.tone === 'warning' || saveStatus.tone === 'error'"), 'editor header must show status text only for actionable warning/error states');
-assert(panelHeaderSource.includes("{savedOnCurrentPage ? '발행됨' : '발행'}") && panelHeaderSource.includes("saved && saveStatus?.savedPageIdentity === pageOperationIdentity(page)") && panelHeaderSource.includes('자동 임시보관됩니다') && !panelHeaderSource.includes("idle: '#6c727e'") && !panelHeaderSource.includes("ok: '#147a50'"), 'server publication must show a page-scoped success flash while local editing remains temporary');
+assert(panelHeaderSource.includes('visibleEditorPublishState({') && panelHeaderSource.includes('aria-live="polite"') && panelHeaderSource.includes('aria-busy={publishing}'), 'editor header must expose publishing, staged, and published states');
+assert(panelHeaderSource.includes("publishState.label === '발행됨'") && panelHeaderSource.includes('자동 임시보관됩니다'), 'page-scoped publication must remain separate from local draft storage');
 
 await import('./page-save-result-validation-quality-check.mjs');
 await import('./page-save-queue-quality-check.mjs');
 await import('./page-save-network-recovery-quality-check.mjs');
 
 console.log(JSON.stringify({ ok: true, checks: 40, resultValidation: true, trailingSaveQueue: true, networkRecovery: true, draftPublishSemantics: true }, null, 2));
+
+
+// Exercise the current publish-state policy with distinct page identities.
+const { visibleEditorPublishState } = await import('../src/runtime/saveStatusActions.js');
+const { pageOperationIdentity } = await import('../src/runtime/pageOperationIdentity.js');
+const examplePage = { id: 'qa-published-page', projectId: 'qa-project', ownerId: 'qa-owner', slug: 'qa-slug' };
+const pageIdentity = pageOperationIdentity(examplePage);
+assert(visibleEditorPublishState({ page: examplePage, saved: false, saveStatus: { phase: 'publishing' } }).label === '발행 중', 'in-progress publication must be distinguishable');
+assert(visibleEditorPublishState({ page: examplePage, saved: false, hasUnappliedDrafts: true }).label.includes('미적용'), 'staged changes must not look published');
+assert(visibleEditorPublishState({ page: examplePage, saved: true, saveStatus: { tone: 'ok', label: '발행됨', savedPageIdentity: pageIdentity } }).label === '발행됨', 'same-page publication should be visible');
+assert(visibleEditorPublishState({ page: { ...examplePage, id: 'another-page' }, saved: true, saveStatus: { tone: 'ok', label: '발행됨', savedPageIdentity: pageIdentity } }).label !== '발행됨', 'other page must not inherit saved state');
