@@ -18,7 +18,13 @@ export function useEditorBlockActions({
     if (blockWrite('edit')) return;
     setPage((p) => commitLocalPageDraft({
       ...p,
-      blocks: ensureUniqueAnchors(p.blocks.map((b) => b.id === id ? sanitizeBlock({ ...b, s: { ...b.s, ...patch } }) : b)),
+      blocks: ensureUniqueAnchors(p.blocks.map((b) => {
+        if (b.id !== id) return b;
+        // Resolve functional patches against the latest committed block settings.
+        // Async uploads must never replay an older render's entire items array.
+        const nextPatch = typeof patch === 'function' ? patch(b.s || {}) : patch;
+        return nextPatch == null ? b : sanitizeBlock({ ...b, s: { ...b.s, ...nextPatch } });
+      })),
     }));
   };
 
