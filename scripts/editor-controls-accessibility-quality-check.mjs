@@ -27,7 +27,7 @@ for (const text of ['aria-selected={selected}', 'tabIndex={selected ? 0 : -1}',
 for (const text of ["document.addEventListener('pointerdown'", "document.addEventListener('focusin'",
   "document.addEventListener('keydown'", 'document.addEventListener(MENU_OPEN_EVENT',
   'previousSelectedRef.current !== selected', 'triggerRef.current.focus',
-  'aria-expanded={menuOpen}', 'aria-haspopup="true"', 'nextRow?.isConnected']) contains('menu', text);
+  'aria-expanded={menuOpen}', 'aria-haspopup="true"', 'onKeyDown={toggleMenuByKey}', 'nextRow?.isConnected']) contains('menu', text);
 contains('row', 'selected={open}');
 assert.equal(sources.field.match(/value=\{value \?\? ''\}/g)?.length, 2);
 assert.ok(!sources.field.includes("value={value || ''}"));

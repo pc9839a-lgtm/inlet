@@ -517,7 +517,7 @@ assert(builderFeedback.includes('useAccessibleDialog(') && accessibleDialog.incl
 assert(builderFeedback.includes('aria-label="닫기"'), 'icon close buttons must keep accessible names');
 assert(conflictUtils.includes("'PAGE_PUBLIC_VERIFY_FAILED'") && conflictUtils.includes("'PAGE_SLUG_CONFLICT'") && conflictUtils.includes("code === 'PAGE_REVISION_CONFLICT'"), 'Page conflict handling must not treat public verification or URL conflicts as revision conflicts');
 assert(imageInputPreview.includes('aria-label={`${label} 교체`}') && imageInputPreview.includes('aria-label={`${label} 삭제`}') && imageInputPreview.includes('aria-label={`${label} 업로드`}'), 'image actions must keep accessible replace, delete, and upload names');
-assert(colorControl.includes('aria-label={`${label} 색상 추출`}') && stylePanel.includes('aria-label={`${label} 색상 추출`}'), 'eyedropper icon buttons must keep accessible names');
+assert(colorControl.includes('aria-label={`${label} 색상 추출`}') && stylePanel.includes('aria-label={`${label} ${T.pickColor}`}') && stylePanel.includes("pickColor: '\\uC0C9\\uC0C1 \\uCD94\\uCD9C'"), 'eyedropper icon buttons must keep accessible names');
 
 assert(richField.includes('<textarea') && richField.includes("querySelectorAll('br')") && richField.includes("replaceWith('\\n')") && richField.includes('onChange={(event) => onChange(textToHtml(event.target.value))}'), 'RichField must preserve textarea line breaks and save content edits immediately');
 assert(!richField.includes('type="color"') && !richField.includes("document.execCommand('foreColor'"), 'RichField must not expose per-widget color formatting controls');

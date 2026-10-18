@@ -1144,12 +1144,7 @@ async function run() {
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroVisibilitySelector)})?.getAttribute('aria-checked') === 'true'`, 'hero visibility Space activation on');
 
     await focusSelector(client, formActionSelector);
-    await evaluate(client, `window.__pageroMenuDebug = { focuses: [], clicks: [] };
-      document.addEventListener('focusin', e => window.__pageroMenuDebug.focuses.push((e.target?.className?.baseVal || e.target?.className || e.target?.tagName || '').toString().slice(0,100)), true);
-      document.addEventListener('click', e => window.__pageroMenuDebug.clicks.push((e.target?.className?.baseVal || e.target?.className || e.target?.tagName || '').toString().slice(0,100)), true);
-      new MutationObserver(() => { if (!window.__pageroMenuDebug) return; window.__pageroMenuDebug.menuExists = !!document.querySelector('.screen-order-v2-menu'); window.__pageroMenuDebug.renders = (window.__pageroMenuDebug.renders || 0) + 1; }).observe(document.body, { childList: true, subtree: true });`);
     await pressKeyboardKey(client, 'Enter');
-    console.log('[editor-qa] menu activation diagnostic', JSON.stringify(await evaluate(client, `({ debug: window.__pageroMenuDebug, active: document.activeElement?.outerHTML?.slice(0,250), formTrigger: document.querySelector('#editor-block-editor-form .screen-order-v2-action')?.outerHTML?.slice(0,250), openMenus: document.querySelectorAll('.screen-order-v2-menu').length })`)));
     await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-menu')`, 'form action dropdown from Enter');
     await waitForBrowser(client, `document.activeElement?.matches?.('.screen-order-v2-menu button:not(:disabled)')`, 'dropdown first keyboard action focus');
     const firstMenuActionText = await evaluate(client, 'document.activeElement?.textContent?.trim() || ""');

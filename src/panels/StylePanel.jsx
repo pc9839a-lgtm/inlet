@@ -149,7 +149,6 @@ function getPageBg(theme = {}) {
   return theme.bgSolid || theme.bg || '#F5F7FA';
 }
 
-// Runtime QA compatibility marker: aria-label={`${label} 색상 추출`}
 export default function StylePanel({ page, updateTheme, stagedTheme = null, onPreviewThemeChange }) {
   const [section, setSection] = useState('background');
   // The editor owns the un-applied theme, not this mountable subsection.
