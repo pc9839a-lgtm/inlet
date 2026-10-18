@@ -347,8 +347,13 @@ async function run() {
     assert(savedVideoBlock?.s?.videoUrl === selectedVideoValue, `published video block URL mismatch: ${savedVideoBlock?.s?.videoUrl || ''}`);
     assert(savedVideoBlock?.s?.videoFileName === libraryFileName, `published video filename mismatch: ${savedVideoBlock?.s?.videoFileName || ''}`);
 
+    // CDP's Page.reload acknowledges navigation before React mounts the new
+    // document. A row query alone can accidentally match the departing page.
+    const pageReadsBeforeReload = apiState.pageLoadCount;
+    await evaluate(client, "window.__qaVideoReloadMarker = 'departing-document'; true");
     await client.send('Page.reload', { ignoreCache: true });
-    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(videoRowHeadSelector)})`, 'reloaded editor video row');
+    await waitForBrowser(client, `window.__qaVideoReloadMarker !== 'departing-document' && !!document.querySelector(${JSON.stringify(videoRowHeadSelector)})`, 'reloaded editor video row');
+    await waitForState(() => apiState.pageLoadCount > pageReadsBeforeReload, 'fresh server video page read after reload');
     // The editor may restore the previously selected block on reload. Its
     // row is a toggle, so clicking an already-open row would close it.
     const videoEditorAlreadyOpen = await evaluate(client, `!!document.querySelector('#editor-block-editor-video .screen-order-v2-inline-editor .video-library-action')`);
