@@ -17,6 +17,13 @@ async function post(body) {
   if(!response.ok||data?.ok!==true)throw new Error('CALLTAG_REPAIR_API_'+response.status+'_'+String(data?.code||'FAIL').slice(0,64));
   return data;
 }
+const identity=await post({mode:'identity'});
+console.log('CALLTAG_GOOGLE_PLAY_SERVICE_ACCOUNT',JSON.stringify({
+  serviceAccountEmail:identity.serviceAccountEmail||'',
+  serviceAccountFormatValid:identity.serviceAccountFormatValid===true,
+  privateKeyConfigured:identity.privateKeyConfigured===true,
+  packageName:identity.packageName||''
+}));
 const preview=await post({mode:'preview'});
 const candidates=Array.isArray(preview.results)?preview.results:[];
 const valid=candidates.filter(x=>x.providerVerified===true&&x.state==='verified_paid_owner_match');
