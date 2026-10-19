@@ -69,8 +69,15 @@ const api=await readFile('functions/api/local-migration.js','utf8');
 assert(api.includes('requireSignedSession:true') && api.includes('INLET_LOCAL_MIGRATION_ENABLED'));
 assert(api.includes('originalBackupConfirmed') && api.includes('LEGACY_IMPORT_CONFIRM'));
 assert(!api.includes('sendLeadDelivery(') && !api.includes('sendSavedLeadDelivery'));
-const banner=await readFile('src/screens/workspace/LegacyLocalDataBanner.jsx','utf8');
-assert(banner.includes('확인 후 서버 이관') && banner.includes('backedUpSnapshotRef'));
-assert(!banner.includes('localStorage.removeItem') && !banner.includes('localStorage.clear()'));
+const active = await readFile('src/screens/workspace/WorkspaceActivePanel.jsx', 'utf8');
+assert(!active.includes('LegacyLocalDataBanner'), 'the retired import UI must stay absent from the workspace');
+await assert.rejects(
+  readFile('src/screens/workspace/LegacyLocalDataBanner.jsx', 'utf8'),
+  { code: 'ENOENT' },
+);
+await assert.rejects(
+  readFile('src/screens/workspace/LegacyLocalDataBanner.css', 'utf8'),
+  { code: 'ENOENT' },
+);
 assert.equal(LEGACY_IMPORT_CONFIRM,'I_CONFIRM_LOCAL_DATA_IMPORT');
 console.log(JSON.stringify({ok:true,name:'pagero-local-migration-import',repeatedWrites:db.mutations,readback:true,originalPreserved:true}));

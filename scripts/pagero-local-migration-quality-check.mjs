@@ -44,9 +44,16 @@ assert(inspectLegacyLocalData(blocked).hasErrors, 'read error must not be hidden
 assert.throws(() => buildLegacyLocalArchive(blocked), /읽을 수 없습니다/);
 const source = await readFile('src/runtime/useLocalWorkspacePersistence.js', 'utf8');
 assert(source.includes("if (isServerLeadMode()) return;") && source.includes("saveLocalJson(LEADS_KEY, leads") && source.includes("saveLocalJson(EVENTS_KEY, events"), 'server mode must preserve existing local legacy data instead of overwriting it with server rows');
-const banner = await readFile('src/screens/workspace/LegacyLocalDataBanner.jsx', 'utf8');
 const active = await readFile('src/screens/workspace/WorkspaceActivePanel.jsx', 'utf8');
-assert(banner.includes('buildLegacyLocalArchive(window.localStorage)') && banner.includes('로컬 원본 백업 (JSON)'), 'backup must be an explicit user click');
-assert(!banner.includes('localStorage.removeItem') && !banner.includes('persistLead(') && !banner.includes('persistEvent('), 'banner must not clear or silently upload data');
-assert(active.includes('<LegacyLocalDataBanner authUser='), 'workspace must offer the recovery banner in server mode');
+assert(!active.includes('LegacyLocalDataBanner') && !active.includes('pagero-legacy-data-banner'), 'workspace must not render the retired browser migration banner');
+await assert.rejects(
+  readFile('src/screens/workspace/LegacyLocalDataBanner.jsx', 'utf8'),
+  { code: 'ENOENT' },
+  'retired local migration UI must not linger in the codebase',
+);
+await assert.rejects(
+  readFile('src/screens/workspace/LegacyLocalDataBanner.css', 'utf8'),
+  { code: 'ENOENT' },
+  'retired migration UI stylesheet must be deleted with its component',
+);
 console.log(JSON.stringify({ ok: true, name: 'pagero-stmig-local-backup', noSilentMerge: true, preservedMalformedData: true, noAuthExport: true }));
