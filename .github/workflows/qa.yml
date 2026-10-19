@@ -35,6 +35,9 @@ jobs:
       - name: Verify provider-backed subscription auto-repair safety
         run: node scripts/calltag-stale-subscription-repair-quality-check.mjs
 
+      - name: Verify Google Play OAuth transport retry
+        run: node scripts/calltag-google-play-oauth-transport-quality-check.mjs
+
   pagero-production-readonly-launch-preflight:
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest

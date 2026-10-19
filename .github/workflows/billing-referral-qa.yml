@@ -49,6 +49,9 @@ jobs:
       - name: Verify provider-backed CallTag subscription auto-repair
         run: node scripts/calltag-stale-subscription-repair-quality-check.mjs
 
+      - name: Verify Google Play OAuth transport retry
+        run: node scripts/calltag-google-play-oauth-transport-quality-check.mjs
+
       - name: Verify CallTag refund commission reversal handling
         run: node scripts/calltag-refund-reversal-quality-check.mjs
 

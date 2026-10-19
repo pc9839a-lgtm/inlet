@@ -59,6 +59,9 @@ async function officialOrderMatch(env,row) {
       ok:false,
       reason:permitted.has(code) ? code : (allowedNames.has(name) ? 'RUNTIME_'+name : 'GOOGLE_PLAY_AUTH_UNKNOWN'),
       googleStatus:[401,403,404].includes(Number(error?.details?.googleStatus)) ? Number(error.details.googleStatus) : 0,
+      transportCause:['TypeError','AbortError','TimeoutError','ReferenceError','NotSupportedError','OperationError','NetworkFailure'].includes(String(error?.details?.causeCategory))
+        ? String(error.details.causeCategory) : '',
+      transportAttempts:Math.max(0,Math.min(3,Number(error?.details?.attempts||0))),
     };
   }
 }
@@ -84,7 +87,8 @@ export async function onRequest({request,env}) {
     for(let i=0;i<rows.length;i++){
       const row=rows[i],check=checks[i];
       const one={id:Number(row.id),productCode:row.product_code,providerVerified:check.ok,
-        activeNow:false,state:check.reason,providerHttpStatus:check.googleStatus||0};
+        activeNow:false,state:check.reason,providerHttpStatus:check.googleStatus||0,
+        transportCause:check.transportCause||'',transportAttempts:check.transportAttempts||0};
       if(mode==='apply'&&check.ok){
         try{
           const fresh=await reconcileGoogleSubscriptionByOrder(env,db,row);

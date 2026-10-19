@@ -23,7 +23,8 @@ const valid=candidates.filter(x=>x.providerVerified===true&&x.state==='verified_
 console.log('CALLTAG_GOOGLE_PLAY_STALE_PROOF',JSON.stringify({
   examined:preview.examined,googlePaidMatched:valid.length,
   failures:candidates.filter(x=>!x.providerVerified).map(x=>({
-    productCode:x.productCode,state:x.state,providerHttpStatus:x.providerHttpStatus
+    productCode:x.productCode,state:x.state,providerHttpStatus:x.providerHttpStatus,
+    transportCause:x.transportCause,transportAttempts:x.transportAttempts
   }))
 }));
 const results=[];
