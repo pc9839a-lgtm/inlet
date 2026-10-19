@@ -1291,6 +1291,32 @@ async function run() {
     const dragOrderAfter = await normalBlockOrder(client);
     assert(JSON.stringify(dragOrderAfter) !== JSON.stringify(dragOrderBefore), 'pointer drag did not change block order');
 
+    // F05: move HERO below a visible form through the actual editor UI.
+    // The previous renderer hoisted HERO regardless of the stored order.
+    await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-action');
+    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-menu')`,
+      'F05 hero action menu');
+    await clickButtonByText(client, '.screen-order-v2-menu', '아래로 이동');
+    await waitForBrowser(client, `(() => {
+      const rows = [...document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item')].map((x) => x.id);
+      return rows.indexOf('editor-block-editor-form') < rows.indexOf('editor-block-editor-hero');
+    })()`, 'F05 hero moved below form in editor');
+    const f05Order = await evaluate(client, `(() => {
+      const visibleIds = [...document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item:not(.is-hidden)')]
+        .map((row) => row.id.replace(/^editor-block-/, ''));
+      const previewIds = [...document.querySelectorAll('.phone-frame .landing-content > [id^="block-"]')]
+        .map((el) => el.id.replace(/^block-/, ''))
+        .filter((id) => visibleIds.includes(id));
+      return { visibleIds, previewIds };
+    })()`);
+    assert(f05Order.visibleIds.includes('editor-form')
+      && f05Order.visibleIds.indexOf('editor-form') < f05Order.visibleIds.indexOf('editor-hero'),
+      'F05 fixture must put HERO behind form, not merely verify the default order');
+    assert(JSON.stringify(f05Order.previewIds) === JSON.stringify(f05Order.visibleIds),
+      'F05 live preview order must match editor order including HERO: ' + JSON.stringify(f05Order));
+    assert(apiState.saveCount === 0, 'F05 reordering must remain a local draft until explicit publish');
+
+
     // E2E-11 / E2E-12: page/theme inspector previews the style draft, then applies it into the page draft.
     await clickButtonByText(client, '.edit-section-tabs', '페이지 옵션');
     await waitForBrowser(client, `!!document.querySelector('.editor-page-options-stack .style-panel')`, 'page theme editor');
@@ -1354,6 +1380,13 @@ async function run() {
       openedCount: window.__pageroQaPreviewCalls?.length || 0,
     }))()`);
     assert(draftPreviewState.visible && draftPreviewState.publishedLink.includes('noopener') && draftPreviewState.openedCount === 0, 'draft must be shown without opening the live URL');
+    const f05HeaderPreviewOrder = await evaluate(client, `[...document.querySelectorAll(
+      '.editor-draft-preview-phone .landing-content > [id^="block-"]'
+    )].map((el) => el.id.replace(/^block-/, '')).filter((id) => ${JSON.stringify(f05Order.visibleIds)}.includes(id))`);
+    assert(JSON.stringify(f05HeaderPreviewOrder) === JSON.stringify(f05Order.visibleIds),
+      'F05 header draft renderer must retain HERO below form and match editor order: '
+        + JSON.stringify(f05HeaderPreviewOrder));
+
     await clickButtonByText(client, '.editor-draft-preview-actions', '닫기');
     assert((await evaluate(client, 'location.pathname')) === '/app', 'preview action must keep the editor page active');
     await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
@@ -1370,16 +1403,30 @@ async function run() {
     await waitForState(() => apiState.publicVerifyCount >= 1, 'first publish public verification');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(continuedHeroTitle)}`, 'newer local draft after delayed publish response');
     assert(apiState.saveSnapshots[0]?.blocks?.find((block) => block.id === 'editor-hero')?.s?.title === updatedHeroTitle, 'first server snapshot should contain the pre-race title');
+    const f05FirstPublishedOrder = (apiState.saveSnapshots[0]?.blocks || [])
+      .filter((block) => !['topnav', 'bottombar', 'footer'].includes(block.type) && block.visible !== false)
+      .map((block) => block.id);
+    assert(JSON.stringify(f05FirstPublishedOrder) === JSON.stringify(f05Order.visibleIds),
+      'F05 persisted block order must equal editor and preview order: '
+        + JSON.stringify({ f05FirstPublishedOrder, f05Order }));
+
     assert(apiState.saveSnapshots[0]?.theme?.accent === updatedAccent, 'style change was not included in the first publish snapshot');
 
     await waitForState(() => apiState.saveCount >= 2, 'automatic trailing publish');
     assert(apiState.saveCount === 2, `pending edit should require exactly one automatic trailing save, got ${apiState.saveCount}`);
     assert(apiState.saveSnapshots[1]?.blocks?.find((block) => block.id === 'editor-hero')?.s?.title === continuedHeroTitle, 'automatic trailing save did not capture the latest hero title');
+    const f05TrailingOrder = (apiState.saveSnapshots[1]?.blocks || [])
+      .filter((block) => !['topnav', 'bottombar', 'footer'].includes(block.type) && block.visible !== false)
+      .map((block) => block.id);
+    assert(JSON.stringify(f05TrailingOrder) === JSON.stringify(f05Order.visibleIds),
+      'F05 trailing publish must preserve HERO position despite async saves');
+
     await waitForState(() => apiState.publicVerifyCount >= 1, 'latest public verification after trailing save');
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(continuedHeroTitle)})`, 'latest saved editor preview');
     assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === continuedHeroTitle, 'latest server page does not contain the continued hero title');
     assert(apiState.currentPage.theme?.accent === updatedAccent, 'latest server page does not contain the applied accent');
     assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-text')?.visible === false, 'visibility change did not persist');
+
     await capture(client, 'desktop-editor-saved');
 
     // P4: restore a prior server revision into the editor draft, verify undo/redo,
@@ -1492,6 +1539,22 @@ async function run() {
     await waitForBrowser(client, `!!document.querySelector('.panel-actions .primary-btn:not(:disabled)')`, 'publish action after reload');
     await waitForState(() => apiState.pageLoadCount > pageLoadsBeforeReload, 'fresh account page read after reload');
     assert(apiState.saveCount === 3, `reload must not trigger another publish, got ${apiState.saveCount}`);
+    const f05AfterReload = await evaluate(client, `(() => {
+      const visibleIds = [...document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item:not(.is-hidden)')]
+        .map((row) => row.id.replace(/^editor-block-/, ''));
+      const previewIds = [...document.querySelectorAll('.phone-frame .landing-content > [id^="block-"]')]
+        .map((el) => el.id.replace(/^block-/, ''))
+        .filter((id) => visibleIds.includes(id));
+      return { visibleIds, previewIds };
+    })()`);
+    assert(JSON.stringify(f05AfterReload.visibleIds) === JSON.stringify(f05AfterReload.previewIds),
+      'F05 renderer must match persisted order after reload: ' + JSON.stringify(f05AfterReload));
+    const f05RevisionOrder = (apiState.currentPage.blocks || [])
+      .filter((block) => !['topnav', 'bottombar', 'footer'].includes(block.type) && block.visible !== false)
+      .map((block) => block.id);
+    assert(JSON.stringify(f05AfterReload.visibleIds) === JSON.stringify(f05RevisionOrder),
+      'F05 intentionally restored older revision must also render its own saved block order');
+
     const reloadGuardPrevented = await evaluate(client, `(() => {
       const event = new Event('beforeunload', { cancelable: true });
       window.dispatchEvent(event);
