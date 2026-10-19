@@ -39,4 +39,16 @@ const preview=await (await call()).json();
 assert.equal(preview.ok,true);
 assert.equal(preview.examined,0);
 assert.equal(preview.applied,false);
+// A service account email is not an API credential; share it only after the
+// existing strong production-QA secret gate, never expose private key contents.
+env.GOOGLE_PLAY_CLIENT_EMAIL='server-play@some-project.iam.gserviceaccount.com';
+env.GOOGLE_PLAY_PRIVATE_KEY='-----BEGIN PRIVATE KEY-----\\nTEST-ONLY\\n-----END PRIVATE KEY-----';
+const identity=await (await call({body:{mode:'identity'}})).json();
+assert.equal(identity.ok,true);
+assert.equal(identity.serviceAccountEmail,'server-play@some-project.iam.gserviceaccount.com');
+assert.equal(identity.serviceAccountFormatValid,true);
+assert.equal(identity.privateKeyConfigured,true);
+assert(!JSON.stringify(identity).includes('TEST-ONLY'),'no secret content in response');
+assert.equal((await call({key:'bad',body:{mode:'identity'}})).status,404);
+console.log('ok - Play service-account identity available only after QA-secret authentication');
 console.log('CallTag secure provider-backed subscription repair checks passed');
