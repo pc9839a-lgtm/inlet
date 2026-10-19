@@ -5,6 +5,7 @@ import { createScreenOrderItemModel } from './screenOrderItemModel.js';
 
 export function ScreenOrderItem({
   block,
+  identity,
   index,
   total,
   selected,
@@ -30,6 +31,7 @@ export function ScreenOrderItem({
     <ScreenOrderItemDropTargets controls={controls} isLast={isLast}>
       <ScreenOrderRow
         block={block}
+        identity={identity}
         index={index}
         meta={meta}
         open={selected}
@@ -49,6 +51,10 @@ export function ScreenOrderItem({
         <div
           className="screen-order-v2-inline-editor"
           data-inline-block-editor="true"
+          data-scroll-region="block-settings"
+          role="region"
+          tabIndex={0}
+          aria-label={`${meta.label} 상세 설정`}
         >
           {renderBlockEditor(block)}
         </div>

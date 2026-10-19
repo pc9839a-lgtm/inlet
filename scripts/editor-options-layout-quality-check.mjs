@@ -27,6 +27,7 @@ const screenOrderList = await readFile('src/editor/editPanelParts/ScreenOrderLis
 const screenOrderListItems = await readFile('src/editor/editPanelParts/ScreenOrderListItems.jsx', 'utf8');
 const screenOrderItem = await readFile('src/editor/editPanelParts/ScreenOrderItem.jsx', 'utf8');
 const screenOrderRowIdentity = await readFile('src/editor/editPanelParts/ScreenOrderRowIdentity.jsx', 'utf8');
+const screenOrderIdentityModel = await readFile('src/editor/editPanelParts/screenOrderIdentityModel.js', 'utf8');
 const codeEditor = await readFile('src/editor/blockEditors/CodeEditor.jsx', 'utf8');
 const codeEditorCss = await readFile('src/editor/blockEditors/CodeEditor.css', 'utf8');
 const workspaceShellCss = await readFile('src/styles/workspace-shell.css', 'utf8');
@@ -101,7 +102,7 @@ assert(screenOrderCss.includes('Desktop inline block-editor readability owner �
 assert(codeEditor.includes('editorLabel') && codeEditor.includes('구분 이름') && codeEditor.includes('maxLength={40}'), 'code editor must expose a persistent custom label field');
 assert(codeEditor.includes('block-editor-anchor-control code-editor-name-control') && codeEditor.includes('block-editor-anchor-label') && codeEditor.includes('block-editor-anchor-value code-editor-name-value'), 'code block label must reuse the exact widget-code row structure');
 assert(!codeEditorCss.includes('.code-editor-name {') && codeEditorCss.includes('.code-editor-name-value'), 'code block label must not keep a duplicate row layout in component CSS');
-assert(screenOrderRowIdentity.includes("block.type === 'code'") && screenOrderRowIdentity.includes('displayLabel') && screenOrderRowIdentity.includes('<strong title={displayLabel}>{displayLabel}</strong>'), 'screen order must display the custom code label beside 코드 입력');
+assert(screenOrderIdentityModel.includes("block?.type === 'code'") && screenOrderIdentityModel.includes('previewText(s.editorLabel)') && screenOrderRowIdentity.includes('identity?.customLabel') && screenOrderRowIdentity.includes('displayLabel') && screenOrderRowIdentity.includes('<strong title={displayLabel}>{displayLabel}</strong>'), 'screen order must preserve the code editor custom label beside 코드 입력 after D03 identity extraction');
 assert(editLayout.includes('data-editor-section={section}'), 'edit section panel must expose the active subsection for deterministic PC styling');
 assert(editLayout.includes("import './EditPanelLayout.css';") && editPanelLayoutCss.includes('edit-section-tabs-v2') && editPanelLayoutCss.includes('.editor-page-options-stack') && !editorWorkspaceCss.includes('edit-section-tabs') && !editorWorkspaceCss.includes('editor-page-options-stack'), 'EditPanelLayout must load and own subsection tabs/panel stack instead of editor-workspace.css');
 assert(screenOrderCss.includes('Desktop ScreenOrder surface owner') && fixedBlocksCss.includes('Fixed-block component owner for the active editor surface'), 'screen order and fixed blocks must keep explicit component-owned PC visual contracts');

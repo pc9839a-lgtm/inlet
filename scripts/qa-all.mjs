@@ -80,6 +80,7 @@ const steps = [
   ['timer:workflow:qa', ['scripts/timer-settings-workflow-quality-check.mjs']],
   ['topnav:balance:qa', ['scripts/topnav-row-balance-quality-check.mjs']],
   ['editor:options:qa', ['scripts/editor-options-layout-quality-check.mjs']],
+  ['editor:block-identity:qa', ['scripts/editor-block-identity-quality-check.mjs']],
   ['browser:landing:contract:qa', ['scripts/landing-browser-regression-contract-check.mjs']],
   ['browser:editor:contract:qa', ['scripts/editor-browser-regression-contract-check.mjs']],
   ['browser:forms:contract:qa', ['scripts/form-reservation-browser-regression-contract-check.mjs']],
