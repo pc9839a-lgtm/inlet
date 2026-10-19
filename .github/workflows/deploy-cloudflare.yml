@@ -574,6 +574,24 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Restore verified CallTag Google Play subscriptions
+        id: calltag_subscription_repair
+        if: steps.readiness.outcome == 'success' && steps.cloudflare_deploy.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          node scripts/calltag-production-subscription-restore.mjs | tee calltag-subscription-repair-result.log
+
+      - name: Upload verified CallTag subscription recovery evidence
+        if: always() && steps.calltag_subscription_repair.outcome != 'skipped'
+        uses: actions/upload-artifact@v4
+        with:
+          name: calltag-subscription-repair-${{ github.run_id }}
+          path: calltag-subscription-repair-result.log
+          if-no-files-found: warn
+          retention-days: 30
+
       - name: Record deployment result
         if: always()
         shell: bash
