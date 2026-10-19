@@ -1426,6 +1426,30 @@ async function run() {
     assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === continuedHeroTitle, 'latest server page does not contain the continued hero title');
     assert(apiState.currentPage.theme?.accent === updatedAccent, 'latest server page does not contain the applied accent');
     assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-text')?.visible === false, 'visibility change did not persist');
+
+    // F05: read the freshly published order back through the normal editor
+    // loading path *before* intentionally restoring an older server revision.
+    const f05PageReadsBefore = apiState.pageLoadCount;
+    await client.send('Page.reload');
+    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-list')
+      && !!document.querySelector('.phone-frame .landing-content')`,
+      'F05 published page editor reloaded');
+    await waitForState(() => apiState.pageLoadCount > f05PageReadsBefore,
+      'F05 published server page read after reload');
+    const f05PublishedReloadOrder = await evaluate(client, `(() => {
+      const visibleIds = [...document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item:not(.is-hidden)')]
+        .map((row) => row.id.replace(/^editor-block-/, ''));
+      const previewIds = [...document.querySelectorAll('.phone-frame .landing-content > [id^="block-"]')]
+        .map((el) => el.id.replace(/^block-/, ''))
+        .filter((id) => visibleIds.includes(id));
+      return { visibleIds, previewIds };
+    })()`);
+    assert(JSON.stringify(f05PublishedReloadOrder.visibleIds) === JSON.stringify(f05Order.visibleIds)
+      && JSON.stringify(f05PublishedReloadOrder.previewIds) === JSON.stringify(f05Order.visibleIds),
+      'F05 reloaded published order must preserve HERO after form: '
+        + JSON.stringify({ before: f05Order, after: f05PublishedReloadOrder }));
+    assert(apiState.saveCount === 2, 'F05 loading published page must not create an extra save');
+
     await capture(client, 'desktop-editor-saved');
 
     // P4: restore a prior server revision into the editor draft, verify undo/redo,
@@ -1548,8 +1572,11 @@ async function run() {
     })()`);
     assert(JSON.stringify(f05AfterReload.visibleIds) === JSON.stringify(f05AfterReload.previewIds),
       'F05 renderer must match persisted order after reload: ' + JSON.stringify(f05AfterReload));
-    assert(f05AfterReload.visibleIds.indexOf('editor-form') < f05AfterReload.visibleIds.indexOf('editor-hero'),
-      'F05 reload must retain HERO after form rather than hoist it');
+    const f05RevisionOrder = (apiState.currentPage.blocks || [])
+      .filter((block) => !['topnav', 'bottombar', 'footer'].includes(block.type) && block.visible !== false)
+      .map((block) => block.id);
+    assert(JSON.stringify(f05AfterReload.visibleIds) === JSON.stringify(f05RevisionOrder),
+      'F05 intentionally restored older revision must also render its own saved block order');
 
     const reloadGuardPrevented = await evaluate(client, `(() => {
       const event = new Event('beforeunload', { cancelable: true });
