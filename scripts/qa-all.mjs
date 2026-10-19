@@ -28,6 +28,7 @@ const steps = [
   ['pagero:ai-first-page:e4:qa', ['scripts/pagero-ai-first-page-e4-quality-check.mjs']],
   ['editor:download-upload-race:qa', ['scripts/editor-download-upload-race-regression-check.mjs']],
   ['editor:copy-link-targets:qa', ['scripts/editor-copy-link-targets-quality-check.mjs']],
+  ['editor:block-identity:qa', ['scripts/editor-block-identity-quality-check.mjs']],
   ['editor:controls-accessibility:qa', ['scripts/editor-controls-accessibility-quality-check.mjs']],
   ['templates:qa', ['scripts/template-quality-check.mjs']],
   ['ai:qa', ['scripts/ai-quality-check.mjs']],
