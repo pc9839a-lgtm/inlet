@@ -142,7 +142,7 @@ function slots(start = '10:00', end = '18:00', interval = 30) {
   return arr;
 }
 
-export function RenderForm({ block, addLead, track }) {
+export function RenderForm({ block, addLead, track, editorPreview = false }) {
   const s = block.s || {};
   const [done, setDone] = useState(false);
   const [vals, setVals] = useState({});
@@ -191,7 +191,7 @@ export function RenderForm({ block, addLead, track }) {
     const phone = digitsOnly(phoneAnswer?.value || '');
     const email = String(formatAnswerValue(emailAnswer?.value || '')).trim().toLowerCase();
 
-    const duplicate = checkDuplicateLeadPolicy(block.id, { phone, email }, s);
+    const duplicate = editorPreview ? { blocked: false, warned: false } : checkDuplicateLeadPolicy(block.id, { phone, email }, s);
     if (duplicate.blocked) {
       track?.({ type: 'form_duplicate_blocked', label: duplicate.reason });
       setNotice({ tone: 'error', message: duplicate.message });
@@ -203,7 +203,7 @@ export function RenderForm({ block, addLead, track }) {
       return;
     }
 
-    const traffic = currentTrafficAttribution();
+    const traffic = editorPreview ? { channel: 'pagero_test', isTest: true } : currentTrafficAttribution();
     const leadValues = {
       ...byLabel,
       ...(traffic.sourceUrl ? { sourceUrl: traffic.sourceUrl } : {}),
@@ -218,7 +218,7 @@ export function RenderForm({ block, addLead, track }) {
       type: '상담신청',
       formId: block.id,
       duplicateWindow: s.duplicateWindow || '24h',
-      clientId: formClientId(),
+      clientId: editorPreview ? 'editor-preview' : formClientId(),
       name: String(formatAnswerValue(nameAnswer?.value || '')),
       phone,
       email,
@@ -263,9 +263,9 @@ export function RenderForm({ block, addLead, track }) {
       setSubmitting(false);
       return;
     }
-    rememberDuplicateLeadPolicy(block.id, { phone, email }, s);
+    if (!editorPreview) rememberDuplicateLeadPolicy(block.id, { phone, email }, s);
     track?.({ type: 'form_submit_success', label: s.title || '상담 폼' });
-    fireInletConversion({ formId: block.id, title: s.title || '상담 폼', lead });
+    if (!editorPreview) fireInletConversion({ formId: block.id, title: s.title || '상담 폼', lead });
     setDone(true);
     setVals({});
     setStarted(false);
@@ -570,7 +570,7 @@ function ReservationCustomField({ field, value, onChange }) {
   );
 }
 
-export function RenderReservation({ block, addLead, track }) {
+export function RenderReservation({ block, addLead, track, editorPreview = false }) {
   const s = block.s || {};
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
@@ -631,7 +631,7 @@ export function RenderReservation({ block, addLead, track }) {
       duplicateEmail: 'off',
       duplicateWindow: s.duplicateWindow || '1d',
     };
-    const duplicate = checkDuplicateLeadPolicy(block.id, { phone, email: '' }, duplicateSettings);
+    const duplicate = editorPreview ? { blocked: false, warned: false } : checkDuplicateLeadPolicy(block.id, { phone, email: '' }, duplicateSettings);
     if (duplicate.blocked) {
       setError('이미 접수된 연락처입니다.');
       return;
@@ -649,13 +649,13 @@ export function RenderReservation({ block, addLead, track }) {
       value: sanitizeQuestionValue(field, f.custom?.[field.id] || ''),
     }));
     const customValues = Object.fromEntries(customAnswers.map((answer) => [answer.label, answer.value]));
-    const traffic = currentTrafficAttribution();
+    const traffic = editorPreview ? { channel: 'pagero_test', isTest: true } : currentTrafficAttribution();
 
     const lead = {
       type: '방문예약',
       formId: block.id,
       duplicateWindow: duplicateSettings.duplicateWindow,
-      clientId: formClientId(),
+      clientId: editorPreview ? 'editor-preview' : formClientId(),
       name: f.name,
       phone,
       message: `${f.date} ${f.time}`,
@@ -713,7 +713,7 @@ export function RenderReservation({ block, addLead, track }) {
       return;
     }
     track?.({ type: 'reservation_submit_success', label: s.title || '방문 예약' });
-    rememberDuplicateLeadPolicy(block.id, { phone, email: '' }, duplicateSettings);
+    if (!editorPreview) rememberDuplicateLeadPolicy(block.id, { phone, email: '' }, duplicateSettings);
     setDone(true);
     setDuplicatePrompt('');
     setF({ name: '', phone: '', date: '', time: '', custom: {} });

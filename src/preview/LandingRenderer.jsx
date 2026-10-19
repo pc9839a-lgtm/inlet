@@ -437,8 +437,8 @@ function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, g
     ? <section id={`block-${block.id}`} className="landing-section code-widget-empty" role="note">코드 블록 실행은 편집 미리보기에서 중지됩니다.</section>
     : <UtilityRenderCode block={renderBlock}/>;
   if(block.type==='search')return <UtilityRenderPageSearch block={renderBlock}/>;
-  if(block.type==='form')return <FormRenderForm block={renderBlock} addLead={addLead} track={track}/>;
-  if(block.type==='reservation')return <FormRenderReservation block={renderBlock} addLead={addLead} track={track}/>;
+  if(block.type==='form')return <FormRenderForm block={renderBlock} addLead={addLead} track={track} editorPreview={editorPreview}/>;
+  if(block.type==='reservation')return <FormRenderReservation block={renderBlock} addLead={addLead} track={track} editorPreview={editorPreview}/>;
   if(block.type==='footer')return <LayoutRenderFooter block={renderBlock}/>;
   return <section className="landing-section block-render-fallback"><strong>지원하지 않는 블록</strong></section>;
 }
