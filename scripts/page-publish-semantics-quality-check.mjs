@@ -30,7 +30,8 @@ assert(browserQa.includes('saveCount === 0'), 'browser regression must prove ord
 assert(browserQa.includes('publicVerifyCount'), 'browser regression must still verify public effect after publish');
 // F02 must be proven by Chrome state transitions, not only string presence.
 assert(!workspaceEffects.includes("tab !== 'style'") && !workspaceEffects.includes('setStylePreviewTheme(null)'), 'workspace tab effects must never discard staged style');
-assert(app.includes('const changeTab = (nextTab) => {') && !app.includes('if (!confirmLeaveStyleChanges(run)) return;'), 'workspace tabs must preserve unapplied style; only real page exits may discard it');
+const tabChangeScope = app.split('const changeTab = (nextTab) => {')[1]?.split('const previewUrl =')[0] || '';
+assert(tabChangeScope.includes('replaceLocationTab(') && !tabChangeScope.includes('clearPendingStyle()') && !tabChangeScope.includes('confirmLeaveStyleChanges('), 'workspace tabs must preserve unapplied style; only real page exits may discard it');
 assert(browserQa.includes('F02 tab-independent confirmation for an unapplied style') && browserQa.includes('F02 staged accent survives workspace switch'), 'F02 live Chrome checks must cover both cross-tab confirmation and restored style');
 
 console.log(JSON.stringify({
