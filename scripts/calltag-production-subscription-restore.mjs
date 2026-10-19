@@ -24,7 +24,9 @@ console.log('CALLTAG_GOOGLE_PLAY_STALE_PROOF',JSON.stringify({
   examined:preview.examined,googlePaidMatched:valid.length,
   failures:candidates.filter(x=>!x.providerVerified).map(x=>({
     productCode:x.productCode,state:x.state,providerHttpStatus:x.providerHttpStatus,
-    transportCause:x.transportCause,transportAttempts:x.transportAttempts
+    transportCause:x.transportCause,transportAttempts:x.transportAttempts,
+    providerErrorStatus:x.providerErrorStatus,
+    providerErrorReason:x.providerErrorReason,authChallenge:x.authChallenge
   }))
 }));
 const results=[];
