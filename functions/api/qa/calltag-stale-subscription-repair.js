@@ -44,7 +44,23 @@ async function officialOrderMatch(env,row) {
       return {ok:false,reason:'purchase_token_owner_mismatch'};
     }
     return {ok:true,reason:'verified_paid_owner_match'};
-  } catch { return {ok:false,reason:'google_play_verification_error'}; }
+  } catch (error) {
+    // Expose only a known error category, never the exception message, JWT,
+    // purchase token, key material or provider response body.
+    const code = String(error?.details?.code || error?.code || '').trim();
+    const permitted = new Set([
+      'PLAY_AUTH_FAILED','PLAY_AUTH_NETWORK_FAILED','PLAY_PRIVATE_KEY_REQUIRED',
+      'PLAY_ORDER_LOOKUP_FAILED','PLAY_ORDER_NETWORK_FAILED',
+      'PLAY_ORDER_INPUT_INCOMPLETE','PLAY_SUBSCRIPTION_LOOKUP_FAILED',
+    ]);
+    const name = String(error?.name || '');
+    const allowedNames = new Set(['DataError','InvalidCharacterError','OperationError','NotSupportedError','TypeError','ReferenceError']);
+    return {
+      ok:false,
+      reason:permitted.has(code) ? code : (allowedNames.has(name) ? 'RUNTIME_'+name : 'GOOGLE_PLAY_AUTH_UNKNOWN'),
+      googleStatus:[401,403,404].includes(Number(error?.details?.googleStatus)) ? Number(error.details.googleStatus) : 0,
+    };
+  }
 }
 export async function onRequest({request,env}) {
   if(request.method!=='POST'||!authorized(request,env)) return reply(404,{ok:false,code:'NOT_FOUND'});
