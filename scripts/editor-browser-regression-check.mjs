@@ -1175,6 +1175,48 @@ async function run() {
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(updatedHeroTitle)})`, 'live hero preview');
     await wait(250);
     assert(apiState.saveCount === 0, 'editing must not submit a server save before the save button is pressed');
+    // D03: live title edits update row context without saving or changing ids.
+    const heroRowIdentity = await evaluate(client, `(() => {
+      const row = document.querySelector('#editor-block-editor-hero .screen-order-v2-title-wrap');
+      return row ? {
+        name: row.querySelector('.screen-order-v2-identity-copy strong')?.textContent,
+        detail: row.querySelector('.screen-order-v2-identity-detail')?.textContent,
+        accessibleName: row.getAttribute('aria-label'),
+      } : null;
+    })()`);
+    assert(heroRowIdentity?.name === '히어로'
+      && heroRowIdentity.detail === updatedHeroTitle
+      && heroRowIdentity.accessibleName.includes(updatedHeroTitle),
+      `D03 hero row should identify its live title: ${JSON.stringify(heroRowIdentity)}`);
+
+    // Duplicate a real text block through the UI and verify the two rows get
+    // different ordinal identities, then undo to avoid affecting later QA.
+    await clickSelector(client, '#editor-block-editor-text .screen-order-v2-action');
+    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-menu')`, 'D03 text duplicate menu');
+    await clickButtonByText(client, '.screen-order-v2-menu', '복제');
+    await waitForBrowser(client,
+      `document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item[data-block-type="text"]').length === 2`,
+      'D03 two identical text types after duplication');
+    const repeatedText = await evaluate(client, `(() => [...document.querySelectorAll(
+      '.screen-order-v2-list .screen-order-v2-item[data-block-type="text"]'
+    )].map((row) => ({
+      id: row.id,
+      label: row.querySelector('.screen-order-v2-identity-copy strong')?.textContent,
+      detail: row.querySelector('.screen-order-v2-identity-detail')?.textContent,
+      accessibleName: row.querySelector('.screen-order-v2-title-wrap')?.getAttribute('aria-label'),
+    })))()`);
+    assert(repeatedText.length === 2 && repeatedText[0].id !== repeatedText[1].id
+      && repeatedText[0].label === '텍스트 1' && repeatedText[1].label === '텍스트 2'
+      && repeatedText.every((row) => row.detail === '편집기 회귀 방지'
+        && row.accessibleName?.includes(row.label)),
+      `D03 repeated block identity must remain distinct and accessible: ${JSON.stringify(repeatedText)}`);
+    await clickSelector(client, '.panel-history-btn[aria-label="실행 취소"]');
+    await waitForBrowser(client, `(() => {
+      const rows = document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item[data-block-type="text"]');
+      return rows.length === 1 && rows[0].querySelector('.screen-order-v2-identity-copy strong')?.textContent === '텍스트';
+    })()`, 'D03 undo duplicate restores singleton label');
+    assert(apiState.saveCount === 0, 'D03 row identities must not trigger server saves');
+
 
     // E2E-02 / E2E-03: the block-add dock is intentionally simple: open it and add a block directly.
     const initialNormalBlockCount = await normalBlockCount(client);

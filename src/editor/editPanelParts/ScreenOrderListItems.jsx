@@ -1,5 +1,6 @@
 import React from 'react';
 import { ScreenOrderItem } from './ScreenOrderItem.jsx';
+import { createScreenOrderIdentities } from './screenOrderIdentityModel.js';
 
 export function ScreenOrderListItems({
   normalBlocks,
@@ -14,6 +15,7 @@ export function ScreenOrderListItems({
   renderBlockEditor,
 }) {
   const total = normalBlocks.length;
+  const rowIdentities = createScreenOrderIdentities(normalBlocks);
   const listRef = React.useRef(null);
 
   React.useEffect(() => {
@@ -32,6 +34,7 @@ export function ScreenOrderListItems({
         <ScreenOrderItem
           key={block.id}
           block={block}
+          identity={rowIdentities[index]}
           index={index}
           total={total}
           selected={selectedId === block.id}

@@ -5,6 +5,7 @@ import { createScreenOrderItemModel } from './screenOrderItemModel.js';
 
 export function ScreenOrderItem({
   block,
+  identity,
   index,
   total,
   selected,
@@ -30,6 +31,7 @@ export function ScreenOrderItem({
     <ScreenOrderItemDropTargets controls={controls} isLast={isLast}>
       <ScreenOrderRow
         block={block}
+        identity={identity}
         index={index}
         meta={meta}
         open={selected}
