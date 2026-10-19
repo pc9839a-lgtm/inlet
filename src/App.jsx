@@ -770,9 +770,6 @@ function App() {
     page,
     workspaceOpen,
     editInitialCollapseRef,
-    // Legacy effect assumed a standalone style tab and cleared staged styles
-    // whenever tab !== 'style'. StylePanel now lives in the edit tab.
-    setStylePreviewTheme: () => {},
     setOpenId,
     setAddOpen,
   });
@@ -1042,19 +1039,16 @@ function App() {
     setSaved,
   });
   const changeTab = (nextTab) => {
-    if (!allowedTabs.includes(nextTab)) return;
-    if (nextTab === tab) return;
-    const run = () => {
-      clearPendingStyle();
-      replaceLocationTab(TAB_KEYS, nextTab);
-      setTab(nextTab);
-      if (nextTab === 'edit') {
-        setOpenId('');
-        setAddOpen(false);
-      }
-    };
-    if (!confirmLeaveStyleChanges(run)) return;
-    run();
+    if (!allowedTabs.includes(nextTab) || nextTab === tab) return;
+    // Switching workspace tabs is not leaving the page. The staged style is
+    // owned by App and must survive StylePanel unmount/remount until explicit
+    // apply, reset, publish or an actual page/workspace exit.
+    replaceLocationTab(TAB_KEYS, nextTab);
+    setTab(nextTab);
+    if (nextTab === 'edit') {
+      setOpenId('');
+      setAddOpen(false);
+    }
   };
   const previewUrl = previewUrlForPage(page);
   const { templateChoices, loadTemplateModule } = useLandingTemplates({

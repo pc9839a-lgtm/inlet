@@ -1233,6 +1233,44 @@ async function run() {
     await setInputValue(client, '.style-panel input[type="color"]', updatedAccent);
     await waitForBrowser(client, `!document.querySelector('.style-apply-btn')?.disabled`, 'style apply enabled');
     assert(apiState.saveCount === 0, 'style preview must not publish automatically');
+
+    // F02: an unapplied style survives leaving the edit tab and remounting
+    // StylePanel. The top-level publish action must offer confirmation even
+    // while another allowed workspace tab (the inbox) is selected.
+    await clickSelector(client, '#workspace-tab-inbox');
+    await waitForBrowser(client,
+      `document.querySelector('#workspace-tab-inbox')?.getAttribute('aria-selected') === 'true'`,
+      'F02 inbox tab selected while unapplied style is staged');
+    assert(!await evaluate(client, `!!document.querySelector('.confirm-modal')`),
+      'F02 changing workspace tabs must not ask to discard a style draft');
+    assert(apiState.saveCount === 0, 'F02 workspace tab switch must not publish');
+    await clickSelector(client, '.panel-actions .primary-btn');
+    await waitForBrowser(client,
+      `document.querySelector('.confirm-modal #confirm-modal-title')?.textContent?.includes('미적용 변경을 발행할까요?')`,
+      'F02 tab-independent confirmation for an unapplied style');
+    assert(apiState.saveCount === 0, 'F02 confirmation must not publish without user approval');
+    await clickSelector(client, '.confirm-modal .confirm-cancel');
+    await waitForBrowser(client, `!document.querySelector('.confirm-modal')`,
+      'F02 cancelled confirmation keeps draft unsaved');
+    await clickSelector(client, '#workspace-tab-edit');
+    await waitForBrowser(client,
+      `document.querySelector('#workspace-tab-edit')?.getAttribute('aria-selected') === 'true'`,
+      'F02 back to edit tab');
+    await waitForBrowser(client,
+      `document.querySelector('.edit-section-tabs .edit-section-tab:first-child')?.textContent?.includes('미적용')`,
+      'F02 unapplied style badge survives workspace switch');
+    if (!(await evaluate(client, `!!document.querySelector('.editor-page-options-stack .style-panel')`))) {
+      await clickSelector(client, '.edit-section-tabs .edit-section-tab:first-child');
+    }
+    await waitForBrowser(client, `!!document.querySelector('.editor-page-options-stack .style-panel')`,
+      'F02 style panel remounted after returning to edit');
+    await clickButtonByText(client, '.style-subnav', '색상');
+    await waitForBrowser(client,
+      `document.querySelector('.style-panel input[type="color"]')?.value === ${JSON.stringify(updatedAccent)}`,
+      'F02 staged accent survives workspace switch');
+    assert(await evaluate(client, `document.querySelector('.style-apply-btn')?.disabled === false`),
+      'F02 restored staged style must remain unapplied');
+    assert(apiState.saveCount === 0, 'F02 cancelled publish and tab switches must make no server writes');
     await clickSelector(client, '.style-apply-btn');
     await waitForBrowser(client, `document.querySelector('.style-apply-btn')?.disabled === true`, 'style applied to page draft');
 
