@@ -38,7 +38,10 @@ async function officialOrderMatch(env,row) {
     const check=await googlePlayOrderPaidAmountKrw(env,PKG,row.order_id,row.product_code);
     if(check?.ok!==true) return {
       ok:false,reason:String(check?.reason||'play_order_unverified').slice(0,64),
-      googleStatus:[401,403,404].includes(Number(check?.googleStatus))?Number(check.googleStatus):0
+      googleStatus:[401,403,404].includes(Number(check?.googleStatus))?Number(check.googleStatus):0,
+      providerErrorStatus:String(check?.providerErrorStatus||'').slice(0,40),
+      providerErrorReason:String(check?.providerErrorReason||'').slice(0,40),
+      authChallenge:String(check?.authChallenge||'').slice(0,40),
     };
     if(!check.purchaseTokenHash||String(check.purchaseTokenHash).toLowerCase()!==String(row.purchase_token_hash||'').toLowerCase()) {
       return {ok:false,reason:'purchase_token_owner_mismatch'};
@@ -88,7 +91,9 @@ export async function onRequest({request,env}) {
       const row=rows[i],check=checks[i];
       const one={id:Number(row.id),productCode:row.product_code,providerVerified:check.ok,
         activeNow:false,state:check.reason,providerHttpStatus:check.googleStatus||0,
-        transportCause:check.transportCause||'',transportAttempts:check.transportAttempts||0};
+        transportCause:check.transportCause||'',transportAttempts:check.transportAttempts||0,
+        providerErrorStatus:check.providerErrorStatus||'',
+        providerErrorReason:check.providerErrorReason||'',authChallenge:check.authChallenge||''};
       if(mode==='apply'&&check.ok){
         try{
           const fresh=await reconcileGoogleSubscriptionByOrder(env,db,row);

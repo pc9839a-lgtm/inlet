@@ -612,11 +612,31 @@ export async function googlePlayOrderPaidAmountKrw(
 
   const order = await response.json().catch(() => ({}));
   if (!response.ok) {
+    const reason = String(order?.error?.status || '').toUpperCase();
+    const allowedProviderReasons = new Set([
+      'UNAUTHENTICATED', 'PERMISSION_DENIED', 'NOT_FOUND',
+      'FAILED_PRECONDITION', 'RESOURCE_EXHAUSTED', 'INVALID_ARGUMENT',
+      'UNAVAILABLE', 'INTERNAL', 'UNKNOWN',
+    ]);
+    const rawErrors = Array.isArray(order?.error?.errors) ? order.error.errors : [];
+    const errorReason = String(rawErrors[0]?.reason || '').toLowerCase();
+    const allowedErrorReasons = new Set([
+      'autherror', 'insufficientpermissions', 'accessnotconfigured',
+      'forbidden', 'notfound', 'invalidcredentials', 'required',
+      'dailylimitexceeded', 'ratelimitexceeded',
+    ]);
+    const challenge = String(response.headers.get('www-authenticate') || '').toLowerCase();
+    const authChallenge = /error=["']?invalid_token/.test(challenge) ? 'invalid_token'
+      : /error=["']?insufficient_scope/.test(challenge) ? 'insufficient_scope'
+      : challenge.startsWith('bearer') ? 'bearer_challenge_other' : 'none';
     return {
       ok: false,
       amountKrw: 0,
       reason: 'PLAY_ORDER_LOOKUP_FAILED',
       googleStatus: Number(response.status || 0),
+      providerErrorStatus: allowedProviderReasons.has(reason) ? reason : 'OTHER',
+      providerErrorReason: allowedErrorReasons.has(errorReason) ? errorReason : 'other',
+      authChallenge,
     };
   }
 
