@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { createDuplicatedPage } from '../src/lib/pageDuplication.js';
+import { canUsePageDuplication, createDuplicatedPage } from '../src/lib/pageDuplication.js';
+import { createDuplicatePageAction } from '../src/runtime/createDuplicatePageAction.js';
 import {
   changeTargetMode,
   getSafePhoneUrl,
@@ -147,4 +148,109 @@ for (const path of ['src/editor/TargetWidgetSelect.jsx', 'src/editor/blockEditor
   assert.match(text, /aria-invalid=\{invalid\}/, `${path}: broken references need aria-invalid`);
   assert.match(text, /role="alert"/, `${path}: broken references need a visible message`);
 }
+
+// F03 integration test: call the real settings "duplicate page" action and
+// inspect the resulting page in memory, not only the model's source text.
+// The action deliberately has no server-write dependency or client API calls.
+const actionSource = structuredClone(source);
+actionSource.features = { pageDuplication: true };
+actionSource.blocks.find((block) => block.type === 'links').s.items.push({
+  id: 'external-original',
+  label: '외부 상담',
+  target: 'url',
+  url: 'https://example.org/contact?from=block:hero-original',
+  lastWidgetTarget: 'block:form-original',
+});
+const originalSnapshot = JSON.stringify(actionSource);
+let mutationCount = 0;
+let setPageCount = 0;
+let startModeWriteCount = 0;
+let setPageValue = null;
+let navigationTab = '';
+const latestPageRef = { current: actionSource };
+const duplicateWithUrl = createDuplicatePageAction({
+  page: actionSource,
+  blockWrite(scope) {
+    assert.equal(scope, 'settings', 'duplication must check settings write permission');
+    return false;
+  },
+  canUsePageDuplication,
+  createDuplicatedPage,
+  latestPageRef,
+  markLocalPageMutation() { mutationCount += 1; },
+  setPage(next) { setPageValue = next; setPageCount += 1; },
+  setLeads(items) { assert.deepEqual(items, []); },
+  setEvents(items) { assert.deepEqual(items, []); },
+  setOpenId(id) { assert.equal(id, ''); },
+  setTab(tab) { navigationTab = tab; },
+  replaceLocationTab(keys, tab) {
+    assert.deepEqual(keys, ['edit', 'settings']);
+    assert.equal(tab, 'edit');
+  },
+  tabKeys: ['edit', 'settings'],
+  saveLocalJson(key, value) {
+    assert.equal(key, 'qa-start-mode', 'duplication must only persist the start mode');
+    assert.equal(value, 'manual');
+    startModeWriteCount += 1;
+  },
+  startModeKey: 'qa-start-mode',
+  showToast(text, level) {
+    assert.match(text, /runtime-copy/);
+    assert.equal(level, 'success');
+  },
+});
+const actionResult = duplicateWithUrl({ slug: 'runtime-copy', domainType: 'default' });
+assert.equal(actionResult.ok, true, 'the real page duplicate action must succeed');
+assert.equal(actionResult.page, setPageValue, 'UI receives the resulting duplicated page');
+assert.equal(latestPageRef.current, setPageValue, 'editor preview/save state switches to the duplicate');
+assert.equal(setPageValue.slug, 'runtime-copy');
+assert.equal(navigationTab, 'edit');
+assert.equal(mutationCount, 1);
+assert.equal(setPageCount, 1);
+assert.equal(startModeWriteCount, 1, 'only the start-mode preference may be persisted by duplication');
+assert.equal(JSON.stringify(actionSource), originalSnapshot, 'original page and original link targets must not change');
+const actionForm = setPageValue.blocks.find((block) => block.type === 'form');
+const actionHero = setPageValue.blocks.find((block) => block.type === 'hero');
+const actionNav = setPageValue.blocks.find((block) => block.type === 'topnav');
+const actionLinks = setPageValue.blocks.find((block) => block.type === 'links');
+const actionBottom = setPageValue.blocks.find((block) => block.type === 'bottombar');
+const actionTimer = setPageValue.blocks.find((block) => block.type === 'timer');
+assert.ok(actionForm?.id && actionForm.id !== 'form-original');
+assert.ok(actionHero?.id && actionHero.id !== 'hero-original');
+const formRef = 'block:' + actionForm.id;
+const heroRef = 'block:' + actionHero.id;
+for (const [label, target, expected] of [
+  ['topnav menu', actionNav.s.menus[0].target, formRef],
+  ['nested topnav menu', actionNav.s.menusV2[0].target, heroRef],
+  ['link item', actionLinks.s.items[0].target, formRef],
+  ['link remembered widget', actionLinks.s.items[0].lastWidgetTarget, heroRef],
+  ['bottom CTA', actionBottom.s.buttons[0].target, formRef],
+  ['bottom remembered widget', actionBottom.s.buttons[0].lastWidgetTarget, heroRef],
+  ['timer CTA', actionTimer.s.ctaTarget, formRef],
+]) {
+  assert.equal(target, expected, label + ' must follow newly duplicated blocks');
+  assert.ok(isValidWidgetTarget(target, setPageValue.blocks), label + ' must resolve on duplicated page');
+}
+const external = actionLinks.s.items.find((item) => item.label === '외부 상담');
+assert.ok(external, 'external link survives duplication');
+assert.equal(external.target, 'url');
+assert.equal(external.url, 'https://example.org/contact?from=block:hero-original',
+  'external URL containing block: is not an internal target');
+assert.equal(external.lastWidgetTarget, formRef, 'remembered widget in external URL item must follow clone');
+assert.equal(actionLinks.s.items[1].target, 'phone');
+assert.equal(actionLinks.s.items[1].url, 'tel:01012345678');
+assert.equal(actionBottom.s.buttons[1].target, 'phone');
+assert.equal(actionBottom.s.buttons[1].url, 'tel:0212345678');
+assert.equal(actionLinks.s.items.find((item) => item.label === '끊어진 링크').target,
+  'block:deleted-original', 'orphaned references must not jump to a wrong cloned block');
+
+// A permission-denied duplicate must not call the page construction path.
+const denied = createDuplicatePageAction({
+  page: actionSource,
+  blockWrite: () => true,
+  createDuplicatedPage: () => { throw new Error('forbidden duplicate must not clone'); },
+});
+assert.equal(denied({ slug: 'denied-copy' }).ok, false);
+console.log('F03 real duplicate action: all internal references resolve; source, phone, URL, orphans and permissions preserved');
+
 console.log('editor copy/link target QA: duplicate refs, modes, phone memory, broken refs and aria state passed');
