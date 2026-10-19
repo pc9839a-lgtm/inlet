@@ -128,3 +128,65 @@ jobs:
           }))));
           NODE
           rm -f /tmp/calltag-deploys.json
+
+      - name: Inspect RTDN production secret metadata without exposing values
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: eec4828f6c3ab1c52683f0d47767e8fc
+        run: |
+          node <<'NODE'
+          const names = [
+            'GOOGLE_PLAY_RTDN_VERIFICATION_TOKEN',
+            'GOOGLE_PLAY_RTDN_AUDIENCE',
+            'GOOGLE_PLAY_RTDN_SERVICE_ACCOUNT',
+            'GOOGLE_PLAY_CLIENT_EMAIL',
+            'GOOGLE_PLAY_PRIVATE_KEY',
+          ];
+          const endpoint = 'https://api.cloudflare.com/client/v4/accounts/'
+            + encodeURIComponent(process.env.CLOUDFLARE_ACCOUNT_ID)
+            + '/pages/projects/inlet';
+          const response = await fetch(endpoint, {
+            headers: { Authorization: 'Bearer ' + process.env.CLOUDFLARE_API_TOKEN, Accept: 'application/json' },
+            signal: AbortSignal.timeout(15000),
+          });
+          const data = await response.json().catch(() => ({}));
+          const productionVars = data?.result?.deployment_configs?.production?.env_vars;
+          const known = productionVars && typeof productionVars === 'object';
+          const flags = names.map(name => {
+            const entry = known ? productionVars[name] : undefined;
+            return { name, listed: Boolean(entry), secret: entry?.type === 'secret_text' };
+          });
+          console.log('RTDN_PRODUCTION_SECRET_METADATA', JSON.stringify({
+            http: response.status,
+            projectReadable: response.ok && data?.success === true,
+            productionEnvMetadataVisible: Boolean(known),
+            fields: flags,
+          }));
+          if (!response.ok || data?.success !== true) process.exitCode = 1;
+          NODE
+
+      - name: Probe public RTDN route with safe GET only
+        shell: bash
+        run: |
+          node <<'NODE'
+          const url = 'https://pagero.kr/api/billing/google/rtdn';
+          try {
+            const response = await fetch(url, {
+              method: 'GET',
+              redirect: 'manual',
+              headers: { Accept: 'application/json' },
+              signal: AbortSignal.timeout(12000),
+            });
+            const body = await response.text().catch(() => '');
+            console.log('RTDN_PUBLIC_ROUTE_PROBE', JSON.stringify({
+              http: response.status,
+              expectedMethodRejection: response.status === 405 && body.includes('METHOD_NOT_ALLOWED'),
+              redirected: response.status >= 300 && response.status < 400,
+            }));
+          } catch (err) {
+            console.log('RTDN_PUBLIC_ROUTE_PROBE', JSON.stringify({
+              reachable: false, errorType: String(err?.name || 'network')
+            }));
+          }
+          NODE
