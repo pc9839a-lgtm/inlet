@@ -45,7 +45,7 @@ async function routeTest(url, expectedAsset) {
     env: {
       ASSETS: {
         async fetch(request) {
-          got = new URL(request.url).pathname;
+          got = new URL(typeof request === 'string' ? request : request?.url || String(request)).pathname;
           const mime = got.endsWith('.css') ? 'text/css'
             : got.endsWith('.js') ? 'text/javascript' : 'text/html';
           return new Response('<html><body>route-smoke</body></html>', {
