@@ -91,7 +91,9 @@ export async function onRequest({request,env}) {
       const row=rows[i],check=checks[i];
       const one={id:Number(row.id),productCode:row.product_code,providerVerified:check.ok,
         activeNow:false,state:check.reason,providerHttpStatus:check.googleStatus||0,
-        transportCause:check.transportCause||'',transportAttempts:check.transportAttempts||0};
+        transportCause:check.transportCause||'',transportAttempts:check.transportAttempts||0,
+        providerErrorStatus:check.providerErrorStatus||'',
+        providerErrorReason:check.providerErrorReason||'',authChallenge:check.authChallenge||''};
       if(mode==='apply'&&check.ok){
         try{
           const fresh=await reconcileGoogleSubscriptionByOrder(env,db,row);
