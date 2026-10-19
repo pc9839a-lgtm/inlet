@@ -5,14 +5,9 @@ export function useWorkspaceEditorEffects({
   page,
   workspaceOpen,
   editInitialCollapseRef,
-  setStylePreviewTheme,
   setOpenId,
   setAddOpen,
 }) {
-  useEffect(() => {
-    if (tab !== 'style') setStylePreviewTheme(null);
-  }, [tab, setStylePreviewTheme]);
-
   useEffect(() => {
     if (!workspaceOpen || tab !== 'edit') return;
     const collapseKey = `${page.projectId || ''}:${page.slug || ''}`;
