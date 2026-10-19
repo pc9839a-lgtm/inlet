@@ -504,7 +504,8 @@ async function googlePlaySubscription(env, packageName, purchaseToken) {
  */
 export async function reconcileGoogleSubscriptionByOrder(env = {}, db, row = {}) {
   const ownerId = text(row.owner_id, 120);
-  const orderId = text(row.order_id, 240);
+  // An operator-supplied renewal order is allowed only after separate provider proof and stored token-hash matching.
+  const orderId = text(row.reconcile_order_id || row.order_id, 240);
   const productId = text(row.product_code, 120);
   const knownHash = text(row.purchase_token_hash, 128);
   if (!ownerId || !orderId || !/^[a-f0-9]{64}$/i.test(knownHash)
@@ -661,6 +662,8 @@ export async function googlePlayOrderPaidAmountKrw(
     orderId: text(order?.orderId || safeOrderId, 240),
     state: 'PROCESSED',
     amountSource: 'google_play_orders_api',
+    purchaseTokenHash: order?.purchaseToken ? await sha256(text(order.purchaseToken, 4096)) : '',
+    paidAt: iso(order?.createTime),
   };
 }
 
