@@ -101,7 +101,7 @@ const checks = {
   'raw Google purchase token is not stored': source.migration.includes('purchase_token_hash') && !source.migration.includes('purchase_token TEXT'),
   'Google Play package is fixed': source.shared.includes("packageName !== 'kr.pagero.calltag'"),
   'Google Play uses Android Publisher API': source.shared.includes('androidpublisher.googleapis.com/androidpublisher/v3/applications/'),
-  'Google Play requests block redirects': source.shared.includes("redirect: 'error'"),
+  'Google Play OAuth retains strict first request and edge-safe fallback': source.shared.includes("options.redirect = 'error'") && source.shared.includes("'https://oauth2.googleapis.com/token'") && source.shared.includes("'https://www.googleapis.com/oauth2/v4/token'"),
   'Google Play requests have timeouts': source.shared.includes('AbortSignal.timeout(15000)'),
   'verify is blocked before publisher verification': verifyGateIndex >= 0 && verifyActionIndex >= 0 && verifyGateIndex < verifyActionIndex,
   'restore is blocked before publisher verification': restoreGateIndex >= 0 && restoreActionIndex >= 0 && restoreGateIndex < restoreActionIndex,

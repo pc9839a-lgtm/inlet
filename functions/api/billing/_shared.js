@@ -480,8 +480,7 @@ async function googlePlaySubscription(env, packageName, purchaseToken) {
       {
         method: 'GET',
         headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-        redirect: 'error',
-        signal: AbortSignal.timeout(15000),
+
       }
     );
   } catch (error) {
@@ -521,8 +520,7 @@ export async function reconcileGoogleSubscriptionByOrder(env = {}, db, row = {})
       {
         method: 'GET',
         headers: { Authorization: `Bearer ${authorization}`, Accept: 'application/json' },
-        redirect: 'error',
-        signal: AbortSignal.timeout(12000),
+
       },
     );
     if (!response.ok) return {
@@ -605,8 +603,7 @@ export async function googlePlayOrderPaidAmountKrw(
       {
         method: 'GET',
         headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-        redirect: 'error',
-        signal: AbortSignal.timeout(15000),
+
       }
     );
   } catch (error) {
@@ -680,8 +677,7 @@ async function acknowledgeGoogleSubscription(env, packageName, productId, purcha
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({}),
-        redirect: 'error',
-        signal: AbortSignal.timeout(15000),
+
       }
     );
   } catch (error) {

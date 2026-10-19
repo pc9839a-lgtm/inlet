@@ -44,3 +44,39 @@ try{
   assert.equal(orders,1);
   console.log('ok - transient Google OAuth transport failure retries without real credentials');
 }finally{globalThis.fetch=original;}
+
+const orderStart=source.indexOf('export async function googlePlayOrderPaidAmountKrw');
+const verificationStart=source.indexOf('async function googlePlaySubscription');
+const reconcileStart=source.indexOf('export async function reconcileGoogleSubscriptionByOrder');
+const ackStart=source.indexOf('async function acknowledgeGoogleSubscription');
+for(const [label,start,next] of [
+  ['Orders',orderStart,ackStart],
+  ['Subscription v2',verificationStart,source.indexOf('export async function reconcileGoogleSubscriptionByOrder')],
+  ['Order reconciliation',reconcileStart,orderStart],
+  ['Acknowledge',ackStart,source.indexOf('async function googlePlayAccessToken')]
+]) {
+  assert(start>=0&&next>start,label+' source bounds');
+  const section=source.slice(start,next);
+  assert(!section.includes("signal: AbortSignal.timeout("),label+' must not use edge-sensitive abort options');
+  assert(!section.includes("redirect: 'error'"),label+' must not use edge-sensitive redirect options');
+}
+let readCalls=0;
+try {
+  globalThis.fetch=async (url,options)=>{
+    assert(String(url).includes('/orders/'),'only official Google Play order lookup expected');
+    assert.equal(options.redirect,undefined,'no redirect override');
+    assert.equal(options.signal,undefined,'no AbortSignal override');
+    assert.equal(options.headers.Authorization,'Bearer fake-test-token');
+    readCalls++;
+    return new Response(JSON.stringify({
+      state:'PROCESSED',orderId:'other-test-order',purchaseToken:'test-token',
+      createTime:'2026-10-15T06:40:00Z',
+      lineItems:[{productId:'call_monthly',total:{currencyCode:'KRW',units:'1900',nanos:0}}],
+    }),{status:200,headers:{'content-type':'application/json'}});
+  };
+  const proof=await googlePlayOrderPaidAmountKrw(env,'kr.pagero.calltag','other-test-order','call_monthly');
+  assert.equal(proof.ok,true);
+  assert.equal(proof.amountKrw,1900);
+  assert.equal(readCalls,1);
+  console.log('ok - edge-compatible official Google Play Orders transport');
+}finally{globalThis.fetch=original;}
