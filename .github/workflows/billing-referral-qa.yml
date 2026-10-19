@@ -46,6 +46,9 @@ jobs:
       - name: Verify admin-operated subscription recovery UI
         run: node scripts/calltag-admin-subscription-recovery-ui-quality-check.mjs
 
+      - name: Verify provider-backed CallTag subscription auto-repair
+        run: node scripts/calltag-stale-subscription-repair-quality-check.mjs
+
       - name: Verify CallTag refund commission reversal handling
         run: node scripts/calltag-refund-reversal-quality-check.mjs
 
