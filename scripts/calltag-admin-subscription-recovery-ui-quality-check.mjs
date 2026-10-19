@@ -33,3 +33,64 @@ for (const [key,pass] of Object.entries(cases)) {
   console.log('ok',key);
 }
 console.log('CallTag subscription recovery UI contract:',Object.keys(cases).length,'checks pass');
+
+
+// End-to-end middleware routing proof. This catches a Pages deploy that passes
+// generic readiness but rewrites the recovery HTML/CSS/JS to the SPA shell.
+const { onRequest } = await import('../functions/_middleware.js');
+async function routeTest(url, expectedAsset) {
+  let got = '';
+  const context = {
+    request: new Request(url),
+    env: {
+      ASSETS: {
+        async fetch(request) {
+          got = new URL(typeof request === 'string' ? request : request?.url || String(request)).pathname;
+          const mime = got.endsWith('.css') ? 'text/css'
+            : got.endsWith('.js') ? 'text/javascript' : 'text/html';
+          return new Response('<html><body>route-smoke</body></html>', {
+            status: 200, headers: {'Content-Type': mime},
+          });
+        },
+      },
+    },
+    next: async () => new Response('next-unchanged', {status: 299}),
+  };
+  const response = await onRequest(context);
+  assert.equal(got,expectedAsset,url);
+  assert.equal(response.status,200,url);
+  assert.equal(response.headers.get('x-calltag-recovery-route'),'standalone-v1',url);
+  assert.match(response.headers.get('cache-control') || '',/no-store/,url);
+  assert.match(response.headers.get('x-robots-tag') || '',/noindex/,url);
+  return response;
+}
+for (const host of ['calltag.pagero.kr','pagero.kr','sample-123.pages.dev']) {
+  for (const [requestPath,assetPath] of [
+    ['/admin/subscription-recovery/','/admin/subscription-recovery/index.html'],
+    ['/admin/subscription-recovery/index.html','/admin/subscription-recovery/index.html'],
+    ['/admin/subscription-recovery/app.js','/admin/subscription-recovery/app.js'],
+    ['/admin/subscription-recovery/style.css','/admin/subscription-recovery/style.css'],
+  ]) await routeTest('https://' + host + requestPath,assetPath);
+}
+console.log('ok - exact standalone HTML/JS/CSS recovery routes served on all expected hosts');
+
+// Keep the existing administrator API protected and unaffected by static routing.
+{
+  const url = 'https://calltag.pagero.kr/api/call/admin/subscription-reconcile';
+  const response = await onRequest({
+    request: new Request(url),
+    env: {ASSETS:{fetch:async () => {throw new Error('API unexpectedly served as static asset');}}},
+    next:async () => new Response('api-passthrough',{status:200}),
+  });
+  assert.equal(await response.text(),'api-passthrough');
+}
+// Never hijack the existing CallTag /admin route; fix only the new recovery page.
+{
+  const response = await onRequest({
+    request:new Request('https://calltag.pagero.kr/admin'),
+    env:{ASSETS:{fetch:async () => {throw new Error('Existing admin route hijacked');}}},
+    next:async () => new Response('legacy-admin',{status:200}),
+  });
+  assert.equal(await response.text(),'legacy-admin');
+}
+console.log('ok - existing protected admin API and site routes remain unchanged');
