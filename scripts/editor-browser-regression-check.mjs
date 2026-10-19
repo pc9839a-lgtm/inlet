@@ -1245,12 +1245,12 @@ async function run() {
       'D02 advanced anchor must close without dropping its value');
     // Fixed top-navigation blocks use a separate renderer and must share
     // the same disclosure placement and genuinely collapsed anchor controls.
-    await clickSelector(client, '#editor-block-editor-topnav .fixed-open-button');
+    await clickSelector(client, '.topnav-fixed-card .fixed-open-button');
     await waitForBrowser(client,
-      `!!document.querySelector('#editor-block-editor-topnav .block-editor-advanced-settings')`,
+      `!!document.querySelector('.topnav-fixed-card .block-editor-advanced-settings')`,
       'D02 fixed top navigation advanced anchor settings');
     const fixedAdvancedState = await evaluate(client, `(() => {
-      const details = document.querySelector('#editor-block-editor-topnav .block-editor-advanced-settings');
+      const details = document.querySelector('.topnav-fixed-card .block-editor-advanced-settings');
       const root = details?.closest('.block-editor-v2-content');
       const input = details?.querySelector('.block-editor-anchor-value input');
       return details && input ? {
