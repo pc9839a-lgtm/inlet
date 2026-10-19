@@ -1262,9 +1262,14 @@ async function run() {
     assert(fixedAdvancedState && !fixedAdvancedState.open
       && fixedAdvancedState.last && fixedAdvancedState.hidden,
       `D02 fixed editor anchor must be hidden after its content: ${JSON.stringify(fixedAdvancedState)}`);
-    await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
+    await clickSelector(client, '.topnav-fixed-card .fixed-open-button');
+    await waitForBrowser(client, `!document.querySelector('.topnav-fixed-card .block-editor-advanced-settings')`,
+      'D02 fixed navigation settings closed after inspection');
+    if (!(await evaluate(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`))) {
+      await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
+    }
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`,
-      'hero settings reselected after fixed anchor check');
+      'hero settings available after fixed anchor check');
 
 
     assert(!(await evaluate(client, `document.body.innerText.includes('선택한 블록 설정')`)), 'redundant selected block settings heading must stay removed');
