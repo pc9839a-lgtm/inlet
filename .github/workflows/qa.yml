@@ -29,6 +29,9 @@ jobs:
       - name: Full offline QA
         run: npm run qa:all
 
+      - name: Verify QA-gated automatic production release
+        run: node scripts/pagero-production-auto-release-contract-check.mjs
+
   pagero-production-readonly-launch-preflight:
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
