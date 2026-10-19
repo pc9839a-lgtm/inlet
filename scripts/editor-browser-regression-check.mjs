@@ -352,6 +352,7 @@ function createApiMock(client, sharedState = null) {
     leadLoadCount: 0,
     loginBody: null,
     unexpectedApis: [],
+    externalRequests: [],
     interceptError: null,
   };
 
@@ -367,6 +368,13 @@ function createApiMock(client, sharedState = null) {
 
   const handler = async ({ requestId, request }) => {
     const url = new URL(request.url);
+    // The F04 QA must not send *any* external requests. Inspect attempted
+    // pixel/analytics requests without delivering real ad impressions.
+    if (['http:', 'https:'].includes(url.protocol) && !['localhost', '127.0.0.1'].includes(url.hostname)) {
+      state.externalRequests.push(request.url);
+      await client.send('Fetch.failRequest', { requestId, errorReason: 'BlockedByClient' });
+      return;
+    }
     if (!url.pathname.startsWith('/api/')) {
       await client.send('Fetch.continueRequest', { requestId });
       return;
@@ -959,6 +967,16 @@ async function run() {
     await client.send('Network.enable');
     await client.send('Fetch.enable', { patterns: [{ urlPattern: '*://*/*', requestStage: 'Request' }] });
     const apiState = createApiMock(client);
+    // Valid conversion tags make accidentally installing tracking observable.
+    apiState.currentPage.meta = {
+      ...apiState.currentPage.meta,
+      gtm: 'GTM-F04QA', ga4: 'G-F04QA123', googleAdsTag: 'AW-12345678',
+      pixel: '123456789012345', naver: 's_f04qa', kakao: '1234567890',
+    };
+    apiState.currentPage.integrations.conversion = {
+      enabled: true, dataLayer: true, metaPixel: true,
+      googleAds: true, naver: true, kakao: true,
+    };
     qaStep('launch authenticated editor');
 
     await setViewport(client, 1280, 900, false);
@@ -988,6 +1006,54 @@ async function run() {
     await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('#editor-block-editor-hero') && !!document.querySelector('.phone-frame')`, 'desktop editor');
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes('저장 전 히어로 제목')`, 'initial editor preview');
     assert(apiState.pageLoadCount >= 1, 'selected page was not loaded from the page API');
+    // F04: execute a real editor form with valid tracking IDs in the page.
+    // Only fake same-origin APIs are accessible; outbound origins are blocked.
+    const f04Before = await evaluate(client, `(() => {
+      window.__f04ConversionCount = 0;
+      window.addEventListener('inlet:form_submit', () => { window.__f04ConversionCount += 1; });
+      return {
+        keys: Object.keys(localStorage).filter((key) => key === 'pagero_client_id' || key.startsWith('inlet-duplicate-')).sort(),
+        clientCookie: document.cookie.includes('pagero_client_id='),
+        dataLayerLength: window.dataLayer?.length || 0,
+      };
+    })()`);
+    const f04ApiBefore = apiState.unexpectedApis.length;
+    const f04ExternalBefore = apiState.externalRequests.length;
+    await waitForBrowser(client,
+      `!!document.querySelector('.phone-frame .editor-preview #block-editor-form form')`,
+      'F04 consultation form mounted in editor preview');
+    await setInputValue(client, '.phone-frame #block-editor-form input[type="text"]', '미리보기 QA');
+    await setInputValue(client, '.phone-frame #block-editor-form input[type="tel"]', '01098765432');
+    await clickSelector(client, '.phone-frame #block-editor-form input[type="checkbox"]');
+    await clickSelector(client, '.phone-frame #block-editor-form button[type="submit"]');
+    await waitForBrowser(client, `!!document.querySelector('.phone-frame #block-editor-form .success')`,
+      'F04 simulated consultation succeeded without a stored lead');
+    const f04After = await evaluate(client, `(() => ({
+      keys: Object.keys(localStorage).filter((key) => key === 'pagero_client_id' || key.startsWith('inlet-duplicate-')).sort(),
+      clientCookie: document.cookie.includes('pagero_client_id='),
+      dataLayerLength: window.dataLayer?.length || 0,
+      conversionCount: window.__f04ConversionCount,
+      injectedPixelScripts: [...document.querySelectorAll('script[src]')].map((el) => el.src).filter(
+        (url) => ['googletagmanager.com', 'facebook.net/en_US/fbevents', 'wcs.naver.net', 'kas/static/kp.js'].some((token) => url.includes(token))
+      ),
+    }))()`);
+    assert(JSON.stringify(f04After.keys) === JSON.stringify(f04Before.keys)
+      && f04After.clientCookie === f04Before.clientCookie,
+      'F04 preview must not write visitor identity or duplicate leads: ' + JSON.stringify({ f04Before, f04After }));
+    assert(f04After.conversionCount === 0
+      && f04After.dataLayerLength === f04Before.dataLayerLength
+      && f04After.injectedPixelScripts.length === 0,
+      'F04 editor preview must not fire conversion or install advertising scripts: ' + JSON.stringify(f04After));
+    assert(apiState.unexpectedApis.length === f04ApiBefore && apiState.saveCount === 0,
+      'F04 preview must not call lead, event, analytics or save endpoints: '
+        + JSON.stringify(apiState.unexpectedApis.slice(f04ApiBefore)));
+    assert(apiState.externalRequests.length === f04ExternalBefore,
+      'F04 preview attempted outbound third-party tracking: '
+        + JSON.stringify(apiState.externalRequests.slice(f04ExternalBefore)));
+    await clickSelector(client, '.phone-frame #block-editor-form .success button');
+    await waitForBrowser(client, `!!document.querySelector('.phone-frame #block-editor-form form')`,
+      'F04 consultation preview reset without persisting');
+
 
     // ED-R08 integrated Chrome QA: download an actual JSON backup, attempt a
     // wrong-page upload, then import the real downloaded file through Chrome's
