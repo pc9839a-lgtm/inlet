@@ -73,3 +73,24 @@ for (const host of ['calltag.pagero.kr','pagero.kr','sample-123.pages.dev']) {
   ]) await routeTest('https://' + host + requestPath,assetPath);
 }
 console.log('ok - exact standalone HTML/JS/CSS recovery routes served on all expected hosts');
+
+// Keep the existing administrator API protected and unaffected by static routing.
+{
+  const url = 'https://calltag.pagero.kr/api/call/admin/subscription-reconcile';
+  const response = await onRequest({
+    request: new Request(url),
+    env: {ASSETS:{fetch:async () => {throw new Error('API unexpectedly served as static asset');}}},
+    next:async () => new Response('api-passthrough',{status:200}),
+  });
+  assert.equal(await response.text(),'api-passthrough');
+}
+// Never hijack the existing CallTag /admin route; fix only the new recovery page.
+{
+  const response = await onRequest({
+    request:new Request('https://calltag.pagero.kr/admin'),
+    env:{ASSETS:{fetch:async () => {throw new Error('Existing admin route hijacked');}}},
+    next:async () => new Response('legacy-admin',{status:200}),
+  });
+  assert.equal(await response.text(),'legacy-admin');
+}
+console.log('ok - existing protected admin API and site routes remain unchanged');
