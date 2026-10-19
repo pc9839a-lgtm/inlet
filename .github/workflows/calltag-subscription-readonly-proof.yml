@@ -30,7 +30,7 @@ jobs:
         shell: bash
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_ACCOUNT_ID: eec4828f6c3ab1c52683f0d47767e8fc
         run: |
           set -euo pipefail
           if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then echo 'DIAG_MISSING_CLOUDFLARE_API_TOKEN'; exit 1; fi
@@ -59,6 +59,14 @@ jobs:
           read_only confirmed_charge_count "SELECT COUNT(DISTINCT owner_id) AS charged_owners FROM billing_payment_events WHERE product_code IN ('call_monthly','message_monthly','all_monthly') AND event_type='charge' AND payment_status='paid' AND amount_krw>0 AND amount_source IN ('provider_confirmed','play_earnings_report','google_play_orders_api');"
           read_only subscription_member_expiry "SELECT s.owner_id,COALESCE(substr(a.email,1,2)||'*****@'||substr(a.email,instr(a.email,'@')+1),'') AS masked_email,s.product_code,s.channel,s.status,s.verification_state,s.auto_renewing,s.expires_at,CASE WHEN s.expires_at IS NULL OR s.expires_at='' THEN 'missing' WHEN datetime(s.expires_at) IS NULL THEN 'unparseable' WHEN datetime(s.expires_at)>datetime('now') THEN 'future' ELSE 'past' END AS expiry_class,s.last_verified_at FROM billing_subscriptions s LEFT JOIN accounts a ON a.id=s.owner_id WHERE s.product_code IN ('call_monthly','message_monthly','all_monthly') ORDER BY s.owner_id,s.expires_at LIMIT 20;"
           read_only rtdn_table_presence "SELECT name AS table_name FROM sqlite_master WHERE type='table' AND name IN ('google_play_rtdn_events','billing_subscriptions','billing_payment_events') ORDER BY name;"
+          # Query aggregate receipt counters only when the RTDN table exists;
+          # absence is a diagnostic result, not a reason to fabricate messages.
+          if node -e 'const fs=require("node:fs");const d=JSON.parse(fs.readFileSync("/tmp/calltag-readonly.json","utf8"));const r=Array.isArray(d)?d[0]?.results:d.results;process.exit(Array.isArray(r)&&r.some(x=>x.table_name==="google_play_rtdn_events")?0:1)'; then
+            read_only rtdn_event_summary "SELECT COUNT(*) AS total_receipts, COALESCE(SUM(CASE WHEN event_kind='test' THEN 1 ELSE 0 END),0) AS test_receipts, COALESCE(SUM(CASE WHEN event_kind='subscription' THEN 1 ELSE 0 END),0) AS subscription_receipts, COALESCE(SUM(CASE WHEN created_at >= datetime('now','-7 days') THEN 1 ELSE 0 END),0) AS receipts_7d, MAX(created_at) AS last_receipt_at FROM google_play_rtdn_events;"
+            read_only rtdn_event_statuses "SELECT event_kind,status,COUNT(*) AS receipts FROM google_play_rtdn_events GROUP BY event_kind,status ORDER BY receipts DESC LIMIT 15;"
+          else
+            echo 'RTDN_EVENT_TABLE_ABSENT'
+          fi
           read_only possible_account_matches "WITH candidate AS (
             SELECT id AS owner_id, email FROM accounts WHERE lower(email) LIKE 'gg%@gmail.com' OR lower(email) LIKE 'aq%@naver.com'
             UNION SELECT owner_id,email FROM calllink_profiles WHERE lower(email) LIKE 'gg%@gmail.com' OR lower(email) LIKE 'aq%@naver.com'
@@ -76,7 +84,7 @@ jobs:
         shell: bash
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_ACCOUNT_ID: eec4828f6c3ab1c52683f0d47767e8fc
         run: |
           set -euo pipefail
           if [ -z "${CLOUDFLARE_API_TOKEN:-}" ] || [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then echo "DIAG_API_CREDENTIAL_MISSING"; exit 0; fi
@@ -90,6 +98,7 @@ jobs:
             node -e 'const fs=require("node:fs");let d={};try{d=JSON.parse(fs.readFileSync("/tmp/calltag-api-result.json","utf8"))}catch{}const label=process.argv[1],http=process.argv[2];const rows=Array.isArray(d.result)?d.result[0]?.results:[];const errs=Array.isArray(d.errors)?d.errors.map(x=>({code:x.code,message:String(x.message||"").slice(0,90)})):[];console.log("DIRECT_D1_READ",JSON.stringify({label,http,success:d.success===true,rows:Array.isArray(rows)?rows.slice(0,25):[],errors:errs}))' "$label" "$code"
           }
           query active_subscription_summary "SELECT channel,status,verification_state,COUNT(*) AS records,COUNT(DISTINCT owner_id) AS owners FROM billing_subscriptions WHERE product_code IN ('call_monthly','message_monthly','all_monthly') GROUP BY channel,status,verification_state;"
+          query rtdn_table_presence "SELECT name AS table_name FROM sqlite_master WHERE type='table' AND name='google_play_rtdn_events' LIMIT 1;"
           query possible_email_matches "WITH c AS (SELECT id AS owner_id,email FROM accounts WHERE lower(email) LIKE 'gg%@gmail.com' OR lower(email) LIKE 'aq%@naver.com' UNION SELECT owner_id,email FROM calllink_profiles WHERE lower(email) LIKE 'gg%@gmail.com' OR lower(email) LIKE 'aq%@naver.com') SELECT c.owner_id, substr(c.email,1,2)||'*****@'||substr(c.email,instr(c.email,'@')+1) AS masked_email, (SELECT group_concat(s.channel||':'||s.status||':'||s.verification_state||':renew='||s.auto_renewing,' | ') FROM billing_subscriptions s WHERE s.owner_id=c.owner_id AND s.product_code IN ('call_monthly','message_monthly','all_monthly')) AS subscription_states FROM c ORDER BY c.owner_id LIMIT 25;"
           rm -f /tmp/calltag-api-result.json
 
@@ -99,7 +108,7 @@ jobs:
         shell: bash
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_ACCOUNT_ID: eec4828f6c3ab1c52683f0d47767e8fc
         run: |
           set -euo pipefail
           curl --fail-with-body --silent --show-error --retry 2 \
@@ -114,7 +123,8 @@ jobs:
             id:x.short_id,createdAt:x.created_on,
             sha:x.deployment_trigger?.metadata?.commit_hash,
             branch:x.deployment_trigger?.metadata?.branch,
-            success:x.latest_stage?.status==='success'
+            success:x.latest_stage?.status==='success',
+            matchesWorkflowSha:x.deployment_trigger?.metadata?.commit_hash===process.env.GITHUB_SHA
           }))));
           NODE
           rm -f /tmp/calltag-deploys.json
