@@ -1256,7 +1256,12 @@ async function run() {
     await waitForBrowser(client,
       `document.querySelector('#workspace-tab-edit')?.getAttribute('aria-selected') === 'true'`,
       'F02 back to edit tab');
-    await clickButtonByText(client, '.edit-section-tabs', '페이지 옵션');
+    await waitForBrowser(client,
+      `!!document.querySelector('.edit-section-tabs')`,
+      'F02 edit controls mounted after returning from inbox');
+    if (!(await evaluate(client, `!!document.querySelector('.editor-page-options-stack .style-panel')`))) {
+      await clickButtonByText(client, '.edit-section-tabs', '페이지 옵션');
+    }
     await waitForBrowser(client, `!!document.querySelector('.editor-page-options-stack .style-panel')`,
       'F02 style panel remounted after returning to edit');
     await clickButtonByText(client, '.style-subnav', '색상');
