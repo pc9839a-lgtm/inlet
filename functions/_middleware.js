@@ -369,6 +369,33 @@ export async function onRequest(context) {
 
   if (url.pathname.startsWith('/api/')) return context.next();
 
+  // Standalone CallTag subscription recovery must bypass the PageRo SPA fallback
+  // and the CallTag home/login route map. Serve the exact HTML, JS and CSS assets
+  // from the deployed Pages bundle; every sensitive API request remains protected
+  // by Cloudflare Access and the CallTag administrator allowlist.
+  const recoveryPath = url.pathname.replace(/\/+$/, '') || '/';
+  const recoveryAssets = {
+    '/admin/subscription-recovery': '/admin/subscription-recovery/index.html',
+    '/admin/subscription-recovery/index.html': '/admin/subscription-recovery/index.html',
+    '/admin/subscription-recovery/app.js': '/admin/subscription-recovery/app.js',
+    '/admin/subscription-recovery/style.css': '/admin/subscription-recovery/style.css',
+  };
+  if ((url.hostname === 'calltag.pagero.kr' || url.hostname === 'pagero.kr' || url.hostname.endsWith('.pages.dev'))
+      && Object.hasOwn(recoveryAssets, recoveryPath)) {
+    const assetUrl = new URL(context.request.url);
+    assetUrl.pathname = recoveryAssets[recoveryPath];
+    assetUrl.search = '';
+    const response = await context.env.ASSETS.fetch(assetUrl);
+    const headers = applyNoStoreHeaders(new Headers(response.headers));
+    headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+    headers.set('X-CallTag-Recovery-Route', 'standalone-v1');
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    });
+  }
+
   if (url.hostname === 'call.pagero.kr' || url.hostname === 'calltag.pagero.kr') {
     return handleCalltagRequest(context, url);
   }

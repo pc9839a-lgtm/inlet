@@ -1,8 +1,13 @@
 name: Deploy Cloudflare Pages
 
-# QA remains automatic, but production deployment requires an explicit, reviewed
-# manual run against the exact, already-tested HEAD of main.
+# Production deploys automatically after a successful QA push run on main.
+# The existing exact-SHA owner-approved manual fallback remains available.
+# Every deployment rechecks the current main SHA and the completed main QA result.
 on:
+  workflow_run:
+    workflows: ["QA"]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
     inputs:
       expected_sha:
@@ -20,7 +25,7 @@ concurrency:
 
 jobs:
   deploy:
-    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
+    if: ${{ (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_run' && github.event.workflow_run.name == 'QA' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.conclusion == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: production
@@ -29,29 +34,47 @@ jobs:
       actions: read
 
     steps:
-      - name: Verify explicit owner approval and tested main SHA
+      - name: Verify QA-approved exact current main SHA
+        id: approval
         shell: bash
         env:
-          APPROVED_SHA: ${{ inputs.expected_sha }}
+          APPROVED_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || inputs.expected_sha }}
           APPROVAL_PHRASE: ${{ inputs.approval_phrase }}
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          if [ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ] || [ "$GITHUB_REF" != "refs/heads/main" ]; then
-            echo "::error::Only explicit main-branch workflow_dispatch may deploy production."
+          if [ "$GITHUB_REF" != "refs/heads/main" ] || ! [[ "$APPROVED_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Production requires current main and an exact commit SHA."
             exit 1
           fi
-          if [ "$APPROVAL_PHRASE" != "I_APPROVE_PAGERO_PRODUCTION_DEPLOY" ]; then
-            echo "::error::Exact deployment approval phrase is required."
-            exit 1
-          fi
-          if ! [[ "$APPROVED_SHA" =~ ^[0-9a-f]{40}$ ]] || [ "$APPROVED_SHA" != "$GITHUB_SHA" ]; then
-            echo "::error::Approved SHA must exactly match the selected main workflow SHA."
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ "$APPROVAL_PHRASE" != "I_APPROVE_PAGERO_PRODUCTION_DEPLOY" ] || [ "$APPROVED_SHA" != "$GITHUB_SHA" ]; then
+              echo "::error::Manual deployment requires owner approval and an exact matching main SHA."
+              exit 1
+            fi
+          elif [ "$GITHUB_EVENT_NAME" = "workflow_run" ]; then
+            node - "$GITHUB_EVENT_PATH" "$APPROVED_SHA" "$GITHUB_REPOSITORY" <<'NODE'
+          const fs = require('node:fs');
+          const event = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+          const sha = process.argv[3];
+          const repository = process.argv[4];
+          const run = event.workflow_run || {};
+          if (run.name !== 'QA' || run.event !== 'push' || run.conclusion !== 'success'
+            || run.status !== 'completed' || run.head_branch !== 'main'
+            || run.head_sha !== sha || run.head_repository?.full_name !== repository
+            || event.repository?.full_name !== repository) {
+            console.error('::error::Not a successful completed first-party main-push QA run for the target SHA.');
+            process.exit(1);
+          }
+          console.log('First-party main-push QA event validated.');
+          NODE
+          else
+            echo "::error::Unsupported production deployment trigger."
             exit 1
           fi
 
           main_api="$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/branches/main"
-          qa_api="$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/workflows/qa.yml/runs?branch=main&head_sha=$GITHUB_SHA&event=push&per_page=50"
+          qa_api="$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/workflows/qa.yml/runs?branch=main&head_sha=$APPROVED_SHA&event=push&per_page=50"
           curl --fail-with-body --silent --show-error --retry 2 \
             -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
             "$main_api" -o /tmp/pagero-approved-main.json
@@ -59,7 +82,7 @@ jobs:
             -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
             "$qa_api" -o /tmp/pagero-approved-qa.json
 
-          node - /tmp/pagero-approved-main.json /tmp/pagero-approved-qa.json "$GITHUB_SHA" <<'NODE'
+          node - /tmp/pagero-approved-main.json /tmp/pagero-approved-qa.json "$APPROVED_SHA" <<'NODE'
           const fs = require('node:fs');
           const main = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
           const qa = JSON.parse(fs.readFileSync(process.argv[3], 'utf8'));
@@ -75,13 +98,14 @@ jobs:
             console.error('::error::No successful main-push QA run found for the approved SHA.');
             process.exit(1);
           }
-          console.log('Approved current main and successful exact-SHA QA confirmed.');
+          console.log('Current main and successful exact-SHA QA confirmed.');
           NODE
+          echo "sha=$APPROVED_SHA" >> "$GITHUB_OUTPUT"
 
       - name: Resolve source SHA
         id: source
         shell: bash
-        run: echo "sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+        run: echo "sha=${{ steps.approval.outputs.sha }}" >> "$GITHUB_OUTPUT"
 
       - name: Checkout tested source
         uses: actions/checkout@v4
@@ -245,7 +269,7 @@ jobs:
           curl --fail-with-body --silent --show-error --retry 2 \
             -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/branches/main" -o /tmp/pagero-main-before-upload.json
-          node - /tmp/pagero-main-before-upload.json "$GITHUB_SHA" <<'NODE'
+          node - /tmp/pagero-main-before-upload.json "${{ steps.source.outputs.sha }}" <<'NODE'
           const fs = require('node:fs');
           const state = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
           if (state?.commit?.sha !== process.argv[3]) {
@@ -548,6 +572,24 @@ jobs:
           name: calltag-external-production-smoke-${{ github.run_id }}
           path: calltag-external-production-smoke-result.json
           if-no-files-found: error
+          retention-days: 30
+
+      - name: Restore verified CallTag Google Play subscriptions
+        id: calltag_subscription_repair
+        if: steps.readiness.outcome == 'success' && steps.cloudflare_deploy.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          node scripts/calltag-production-subscription-restore.mjs | tee calltag-subscription-repair-result.log
+
+      - name: Upload verified CallTag subscription recovery evidence
+        if: always() && steps.calltag_subscription_repair.outcome != 'skipped'
+        uses: actions/upload-artifact@v4
+        with:
+          name: calltag-subscription-repair-${{ github.run_id }}
+          path: calltag-subscription-repair-result.log
+          if-no-files-found: warn
           retention-days: 30
 
       - name: Record deployment result

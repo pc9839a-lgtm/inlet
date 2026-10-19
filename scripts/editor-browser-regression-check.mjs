@@ -1235,12 +1235,157 @@ async function run() {
     }
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'selected hero inline editor textarea');
     await waitForBrowser(client, `!!document.querySelector('#editor-block-editor-hero + .screen-order-v2-inline-editor[data-inline-block-editor="true"]')`, 'inline block editor directly below hero row');
+    // D01: exercise the actual selected inspector DOM and CSS scroll contract.
+    // A taller editor must scroll internally, without changing block order.
+    const inspectorScroll = await evaluate(client, `(() => {
+      const panel = document.querySelector('#editor-block-editor-hero + .screen-order-v2-inline-editor[data-scroll-region="block-settings"]');
+      const content = panel?.querySelector('.block-editor-v2');
+      if (!panel || !content) return null;
+      const original = content.style.minHeight;
+      let result;
+      try {
+        content.style.minHeight = '1600px';
+        panel.scrollTop = 320;
+        const style = getComputedStyle(panel);
+        result = {
+          role: panel.getAttribute('role'),
+          label: panel.getAttribute('aria-label'),
+          tabIndex: panel.tabIndex,
+          overflowY: style.overflowY,
+          maxHeight: parseFloat(style.maxHeight),
+          height: panel.clientHeight,
+          contentHeight: panel.scrollHeight,
+          scrollTop: panel.scrollTop,
+        };
+      } finally {
+        content.style.minHeight = original;
+        panel.scrollTop = 0;
+      }
+      return result;
+    })()`);
+    assert(inspectorScroll?.role === 'region' && inspectorScroll.tabIndex === 0
+      && inspectorScroll.label?.includes('상세 설정'), `D01 keyboard-scroll region must be accessible: ${JSON.stringify(inspectorScroll)}`);
+    assert(inspectorScroll.overflowY === 'auto' && inspectorScroll.maxHeight > 0
+      && inspectorScroll.contentHeight > inspectorScroll.height && inspectorScroll.scrollTop > 0,
+      `D01 long block inspector must scroll independently on desktop: ${JSON.stringify(inspectorScroll)}`);
+
+    // D02: the anchor moves to a native, collapsed advanced disclosure; the
+    // existing anchorId must remain editable and drive the live preview anchor.
+    const heroAdvanced = '#editor-block-editor-hero + .screen-order-v2-inline-editor .block-editor-advanced-settings';
+    const heroAnchorInput = `${heroAdvanced} .block-editor-anchor-value input`;
+    const initialAdvancedState = await evaluate(client, `(() => {
+      const details = document.querySelector(${JSON.stringify(heroAdvanced)});
+      const editor = details?.closest('.block-editor-v2-content');
+      const input = details?.querySelector('.block-editor-anchor-value input');
+      return details && input ? {
+        open: details.open,
+        last: editor?.lastElementChild === details,
+        visibleBeforeOpening: input.getClientRects().length > 0,
+        original: input.value,
+        summary: details.querySelector('summary')?.textContent.trim(),
+      } : null;
+    })()`);
+    assert(initialAdvancedState?.open === false
+      && initialAdvancedState.last && !initialAdvancedState.visibleBeforeOpening
+      && initialAdvancedState.original === 'editor-hero'
+      && initialAdvancedState.summary?.includes('고급 설정'),
+      `D02 anchor should start hidden after primary editor fields: ${JSON.stringify(initialAdvancedState)}`);
+    await clickSelector(client, `${heroAdvanced} > summary`);
+    await waitForBrowser(client,
+      `document.querySelector(${JSON.stringify(heroAdvanced)})?.open === true`,
+      'D02 advanced anchor disclosure opens');
+    assert(await evaluate(client,
+      `document.querySelector(${JSON.stringify(heroAnchorInput)})?.getClientRects().length > 0`),
+      'D02 expanded anchor input must be visible and reachable');
+    await setInputValue(client, heroAnchorInput, 'editor-hero-d02');
+    await waitForBrowser(client,
+      `document.querySelector(${JSON.stringify(heroAnchorInput)})?.value === 'editor-hero-d02' && !!document.querySelector('.phone-frame #editor-hero-d02')`,
+      'D02 anchor update reaches preview landing DOM');
+    await setInputValue(client, heroAnchorInput, 'editor-hero');
+    await waitForBrowser(client,
+      `document.querySelector(${JSON.stringify(heroAnchorInput)})?.value === 'editor-hero' && !!document.querySelector('.phone-frame #editor-hero')`,
+      'D02 original anchor restored without changing save behavior');
+    await clickSelector(client, `${heroAdvanced} > summary`);
+    assert(await evaluate(client,
+      `document.querySelector(${JSON.stringify(heroAdvanced)})?.open === false`),
+      'D02 advanced anchor must close without dropping its value');
+    // Fixed top-navigation blocks use a separate renderer and must share
+    // the same disclosure placement and genuinely collapsed anchor controls.
+    await clickSelector(client, '.topnav-fixed-card .fixed-open-button');
+    await waitForBrowser(client,
+      `!!document.querySelector('.topnav-fixed-card .block-editor-advanced-settings')`,
+      'D02 fixed top navigation advanced anchor settings');
+    const fixedAdvancedState = await evaluate(client, `(() => {
+      const details = document.querySelector('.topnav-fixed-card .block-editor-advanced-settings');
+      const root = details?.closest('.block-editor-v2-content');
+      const input = details?.querySelector('.block-editor-anchor-value input');
+      return details && input ? {
+        open: details.open,
+        last: root?.lastElementChild === details,
+        hidden: input.getClientRects().length === 0,
+      } : null;
+    })()`);
+    assert(fixedAdvancedState && !fixedAdvancedState.open
+      && fixedAdvancedState.last && fixedAdvancedState.hidden,
+      `D02 fixed editor anchor must be hidden after its content: ${JSON.stringify(fixedAdvancedState)}`);
+    await clickSelector(client, '.topnav-fixed-card .fixed-open-button');
+    await waitForBrowser(client, `!document.querySelector('.topnav-fixed-card .block-editor-advanced-settings')`,
+      'D02 fixed navigation settings closed after inspection');
+    if (!(await evaluate(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`))) {
+      await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
+    }
+    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`,
+      'hero settings available after fixed anchor check');
+
+
     assert(!(await evaluate(client, `document.body.innerText.includes('선택한 블록 설정')`)), 'redundant selected block settings heading must stay removed');
     await capture(client, 'desktop-editor-inline-editor');
     await setInputValue(client, heroEditorSelector, updatedHeroTitle);
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(updatedHeroTitle)})`, 'live hero preview');
     await wait(250);
     assert(apiState.saveCount === 0, 'editing must not submit a server save before the save button is pressed');
+
+    // D03: live title edits update row context without saving or changing ids.
+    const heroRowIdentity = await evaluate(client, `(() => {
+      const row = document.querySelector('#editor-block-editor-hero .screen-order-v2-title-wrap');
+      return row ? {
+        name: row.querySelector('.screen-order-v2-identity-copy strong')?.textContent,
+        detail: row.querySelector('.screen-order-v2-identity-detail')?.textContent,
+        accessibleName: row.getAttribute('aria-label'),
+      } : null;
+    })()`);
+    assert(heroRowIdentity?.name === '히어로'
+      && heroRowIdentity.detail === updatedHeroTitle
+      && heroRowIdentity.accessibleName.includes(updatedHeroTitle),
+      `D03 hero row should identify its live title: ${JSON.stringify(heroRowIdentity)}`);
+
+    // Duplicate a real text block through the UI and verify the two rows get
+    // different ordinal identities, then undo to avoid affecting later QA.
+    await clickSelector(client, '#editor-block-editor-text .screen-order-v2-action');
+    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-menu')`, 'D03 text duplicate menu');
+    await clickButtonByText(client, '.screen-order-v2-menu', '복제');
+    await waitForBrowser(client,
+      `document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item[data-block-type="text"]').length === 2`,
+      'D03 two identical text types after duplication');
+    const repeatedText = await evaluate(client, `(() => [...document.querySelectorAll(
+      '.screen-order-v2-list .screen-order-v2-item[data-block-type="text"]'
+    )].map((row) => ({
+      id: row.id,
+      label: row.querySelector('.screen-order-v2-identity-copy strong')?.textContent,
+      detail: row.querySelector('.screen-order-v2-identity-detail')?.textContent,
+      accessibleName: row.querySelector('.screen-order-v2-title-wrap')?.getAttribute('aria-label'),
+    })))()`);
+    assert(repeatedText.length === 2 && repeatedText[0].id !== repeatedText[1].id
+      && repeatedText[0].label === '텍스트 1' && repeatedText[1].label === '텍스트 2'
+      && repeatedText.every((row) => row.detail === '편집기 회귀 방지'
+        && row.accessibleName?.includes(row.label)),
+      `D03 repeated block identity must remain distinct and accessible: ${JSON.stringify(repeatedText)}`);
+    await clickSelector(client, '.panel-history-btn[aria-label="실행 취소"]');
+    await waitForBrowser(client, `(() => {
+      const rows = document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item[data-block-type="text"]');
+      return rows.length === 1 && rows[0].querySelector('.screen-order-v2-identity-copy strong')?.textContent === '텍스트';
+    })()`, 'D03 undo duplicate restores singleton label');
+    assert(apiState.saveCount === 0, 'D03 row identities must not trigger server saves');
 
     // E2E-02 / E2E-03: the block-add dock is intentionally simple: open it and add a block directly.
     const initialNormalBlockCount = await normalBlockCount(client);

@@ -1,6 +1,6 @@
 import '../lib/directVideoRuntime.js';
 import './directVideoOverrides.css';
-import { AnchorControl } from './AnchorControl.jsx';
+import { BlockAdvancedAnchorSettings } from './BlockAdvancedAnchorSettings.jsx';
 import { LazyEditorBoundary } from './LazyEditorBoundary.jsx';
 import { BlockEditorShell } from './ui/index.js';
 
@@ -17,10 +17,10 @@ export default function BlockEditor({ block, page, updateBlock, editors, editorD
 
   return (
     <BlockEditorShell blockType={editorType}>
-      <AnchorControl block={block} value={s.anchorId || ''} set={set} />
       <LazyEditorBoundary resetKey={`${block.id}:${block.type}`}>
         <Editor {...props} />
       </LazyEditorBoundary>
+      <BlockAdvancedAnchorSettings block={block} set={set} />
     </BlockEditorShell>
   );
 }

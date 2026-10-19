@@ -1,6 +1,5 @@
 import React, { Suspense } from 'react';
 import EditPanel from '../../editor/EditPanel.jsx';
-import LegacyLocalDataBanner from './LegacyLocalDataBanner.jsx';
 import { LazyChunkBoundary, LazyPanelFallback } from '../../runtime/LazyRuntimeBoundary.jsx';
 import {
   InboxPanel,
@@ -38,7 +37,6 @@ export function WorkspaceActivePanel({
       tabIndex={-1}
       aria-labelledby={`workspace-tab-${tab}`}
     >
-      {canUseBuilder && !mobileOperationsOnly && <LegacyLocalDataBanner authUser={settingsPanelProps?.authUser || inboxPanelProps?.authUser || null} page={inboxPanelProps?.page || settingsPanelProps?.page || {}} />}
       {canRenderBuilder && tab === 'edit' && (
         <EditPanel {...editPanelProps} stylePanelProps={stylePanelProps} authUser={settingsPanelProps?.authUser || null} />
       )}

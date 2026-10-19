@@ -480,8 +480,7 @@ async function googlePlaySubscription(env, packageName, purchaseToken) {
       {
         method: 'GET',
         headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-        redirect: 'error',
-        signal: AbortSignal.timeout(15000),
+
       }
     );
   } catch (error) {
@@ -504,7 +503,8 @@ async function googlePlaySubscription(env, packageName, purchaseToken) {
  */
 export async function reconcileGoogleSubscriptionByOrder(env = {}, db, row = {}) {
   const ownerId = text(row.owner_id, 120);
-  const orderId = text(row.order_id, 240);
+  // An operator-supplied renewal order is allowed only after separate provider proof and stored token-hash matching.
+  const orderId = text(row.reconcile_order_id || row.order_id, 240);
   const productId = text(row.product_code, 120);
   const knownHash = text(row.purchase_token_hash, 128);
   if (!ownerId || !orderId || !/^[a-f0-9]{64}$/i.test(knownHash)
@@ -520,8 +520,7 @@ export async function reconcileGoogleSubscriptionByOrder(env = {}, db, row = {})
       {
         method: 'GET',
         headers: { Authorization: `Bearer ${authorization}`, Accept: 'application/json' },
-        redirect: 'error',
-        signal: AbortSignal.timeout(12000),
+
       },
     );
     if (!response.ok) return {
@@ -604,8 +603,7 @@ export async function googlePlayOrderPaidAmountKrw(
       {
         method: 'GET',
         headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-        redirect: 'error',
-        signal: AbortSignal.timeout(15000),
+
       }
     );
   } catch (error) {
@@ -614,11 +612,31 @@ export async function googlePlayOrderPaidAmountKrw(
 
   const order = await response.json().catch(() => ({}));
   if (!response.ok) {
+    const reason = String(order?.error?.status || '').toUpperCase();
+    const allowedProviderReasons = new Set([
+      'UNAUTHENTICATED', 'PERMISSION_DENIED', 'NOT_FOUND',
+      'FAILED_PRECONDITION', 'RESOURCE_EXHAUSTED', 'INVALID_ARGUMENT',
+      'UNAVAILABLE', 'INTERNAL', 'UNKNOWN',
+    ]);
+    const rawErrors = Array.isArray(order?.error?.errors) ? order.error.errors : [];
+    const errorReason = String(rawErrors[0]?.reason || '').toLowerCase();
+    const allowedErrorReasons = new Set([
+      'autherror', 'insufficientpermissions', 'accessnotconfigured',
+      'forbidden', 'notfound', 'invalidcredentials', 'required',
+      'dailylimitexceeded', 'ratelimitexceeded',
+    ]);
+    const challenge = String(response.headers.get('www-authenticate') || '').toLowerCase();
+    const authChallenge = /error=["']?invalid_token/.test(challenge) ? 'invalid_token'
+      : /error=["']?insufficient_scope/.test(challenge) ? 'insufficient_scope'
+      : challenge.startsWith('bearer') ? 'bearer_challenge_other' : 'none';
     return {
       ok: false,
       amountKrw: 0,
       reason: 'PLAY_ORDER_LOOKUP_FAILED',
       googleStatus: Number(response.status || 0),
+      providerErrorStatus: allowedProviderReasons.has(reason) ? reason : 'OTHER',
+      providerErrorReason: allowedErrorReasons.has(errorReason) ? errorReason : 'other',
+      authChallenge,
     };
   }
 
@@ -661,6 +679,8 @@ export async function googlePlayOrderPaidAmountKrw(
     orderId: text(order?.orderId || safeOrderId, 240),
     state: 'PROCESSED',
     amountSource: 'google_play_orders_api',
+    purchaseTokenHash: order?.purchaseToken ? await sha256(text(order.purchaseToken, 4096)) : '',
+    paidAt: iso(order?.createTime),
   };
 }
 
@@ -677,8 +697,7 @@ async function acknowledgeGoogleSubscription(env, packageName, productId, purcha
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({}),
-        redirect: 'error',
-        signal: AbortSignal.timeout(15000),
+
       }
     );
   } catch (error) {
@@ -703,20 +722,46 @@ async function googlePlayAccessToken(env = {}) {
     iat: now,
     exp: now + 3600,
   });
+  // Certain edge runtimes reject AbortSignal.timeout/redirect:error before
+  // an outbound request is sent. Fall back only to official Google OAuth
+  // endpoints, never to an application-controlled proxy or logging service.
+  const form = new URLSearchParams({
+    grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+    assertion,
+  });
+  const endpoints = [
+    'https://oauth2.googleapis.com/token',
+    'https://oauth2.googleapis.com/token',
+    'https://www.googleapis.com/oauth2/v4/token',
+  ];
   let response;
-  try {
-    response = await fetch('https://oauth2.googleapis.com/token', {
+  let lastError;
+  let lastAttempt = 0;
+  for (let i = 0; i < endpoints.length; i++) {
+    const options = {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-        assertion,
-      }),
-      redirect: 'error',
-      signal: AbortSignal.timeout(15000),
+      body: form.toString(),
+    };
+    try {
+      if (i === 0) {
+        options.redirect = 'error';
+        if (typeof AbortSignal?.timeout === 'function') options.signal = AbortSignal.timeout(15000);
+      }
+      response = await fetch(endpoints[i], options);
+      break;
+    } catch (error) {
+      lastError = error;
+      lastAttempt = i + 1;
+    }
+  }
+  if (!response) {
+    const name = String(lastError?.name || '');
+    const allowedNames = new Set(['TypeError','AbortError','TimeoutError','ReferenceError','NotSupportedError','OperationError']);
+    throw billingError('Google Play 인증 서버에 연결하지 못했습니다.', 503, 'PLAY_AUTH_NETWORK_FAILED', {
+      causeCategory: allowedNames.has(name) ? name : 'NetworkFailure',
+      attempts: lastAttempt,
     });
-  } catch (error) {
-    throw billingError('Google Play 인증 서버에 연결하지 못했습니다.', 503, 'PLAY_AUTH_NETWORK_FAILED');
   }
   const body = await response.json().catch(() => ({}));
   if (!response.ok || !body.access_token) {

@@ -6,6 +6,7 @@ import { createScreenOrderRowInteraction } from './screenOrderRowInteraction.js'
 
 export function ScreenOrderRow({
   block,
+  identity,
   index,
   meta,
   open,
@@ -28,11 +29,13 @@ export function ScreenOrderRow({
       id={`editor-block-${block.id}`}
       className={`screen-order-v2-item${open ? ' is-open' : ''}${!block.visible ? ' is-hidden' : ''}${dragId === block.id ? ' is-dragging' : ''}`}
       data-order={index + 1}
+      data-block-type={block.type}
       data-selected={open ? 'true' : 'false'}
     >
       <div className="screen-order-v2-head" onClick={selectRow}>
         <ScreenOrderRowIdentity
           block={block}
+          identity={identity}
           index={index}
           meta={meta}
           open={open}
