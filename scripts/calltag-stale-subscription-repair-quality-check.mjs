@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {onRequest} from '../functions/api/qa/calltag-stale-subscription-repair.js';
-import {Script} from 'node:vm';
+const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
 const src=readFileSync('functions/api/qa/calltag-stale-subscription-repair.js','utf8');
 const runner=readFileSync('scripts/calltag-production-subscription-restore.mjs','utf8');
 const deployment=readFileSync('.github/workflows/deploy-cloudflare.yml','utf8');
-new Script(runner.replace(/^\/\/.*$/gm,''),{filename:'calltag-production-subscription-restore.mjs'});
+new AsyncFunction(runner);
 for (const [name,condition] of Object.entries({
   'Production host only':src.includes("url.hostname!=='pagero.kr'"),
   'Secret length and constant comparison':src.includes('expected.length>=64&&actual.length>=64&&safeCompare'),
