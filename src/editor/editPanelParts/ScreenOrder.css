@@ -1016,3 +1016,39 @@ html body #root .builder-shell.edit-mode-shell
   outline: 2px solid var(--product-accent);
   outline-offset: 2px;
 }
+
+/* D03 — screen-order identity: a compact title and optional descriptive line. */
+.screen-order-v2-title-wrap .screen-order-v2-identity-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+  text-align: left;
+}
+.screen-order-v2-title-wrap .screen-order-v2-identity-copy strong,
+.screen-order-v2-title-wrap .screen-order-v2-identity-detail {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.screen-order-v2-title-wrap .screen-order-v2-identity-detail {
+  color: #667085;
+  font-size: 11px;
+  line-height: 1.3;
+  font-weight: 500;
+}
+.screen-order-v2-type-icon { position: relative; }
+.screen-order-v2-type-icon .screen-order-v2-thumbnail {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 5px;
+  background: #fff;
+  object-fit: cover;
+}
+.screen-order-v2-type-icon .screen-order-v2-thumbnail[hidden] {
+  display: none;
+}
