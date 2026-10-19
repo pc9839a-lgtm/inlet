@@ -1034,7 +1034,7 @@ async function run() {
       dataLayerLength: window.dataLayer?.length || 0,
       conversionCount: window.__f04ConversionCount,
       injectedPixelScripts: [...document.querySelectorAll('script[src]')].map((el) => el.src).filter(
-        (url) => /googletagmanager\.com|facebook\.net\/en_US\/fbevents|wcs\.naver\.net|kas\/static\/kp\.js/.test(url)
+        (url) => ['googletagmanager.com', 'facebook.net/en_US/fbevents', 'wcs.naver.net', 'kas/static/kp.js'].some((token) => url.includes(token))
       ),
     }))()`);
     assert(JSON.stringify(f04After.keys) === JSON.stringify(f04Before.keys)
