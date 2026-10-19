@@ -706,20 +706,46 @@ async function googlePlayAccessToken(env = {}) {
     iat: now,
     exp: now + 3600,
   });
+  // Certain edge runtimes reject AbortSignal.timeout/redirect:error before
+  // an outbound request is sent. Fall back only to official Google OAuth
+  // endpoints, never to an application-controlled proxy or logging service.
+  const form = new URLSearchParams({
+    grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+    assertion,
+  });
+  const endpoints = [
+    'https://oauth2.googleapis.com/token',
+    'https://oauth2.googleapis.com/token',
+    'https://www.googleapis.com/oauth2/v4/token',
+  ];
   let response;
-  try {
-    response = await fetch('https://oauth2.googleapis.com/token', {
+  let lastError;
+  let lastAttempt = 0;
+  for (let i = 0; i < endpoints.length; i++) {
+    const options = {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-        assertion,
-      }),
-      redirect: 'error',
-      signal: AbortSignal.timeout(15000),
+      body: form.toString(),
+    };
+    try {
+      if (i === 0) {
+        options.redirect = 'error';
+        if (typeof AbortSignal?.timeout === 'function') options.signal = AbortSignal.timeout(15000);
+      }
+      response = await fetch(endpoints[i], options);
+      break;
+    } catch (error) {
+      lastError = error;
+      lastAttempt = i + 1;
+    }
+  }
+  if (!response) {
+    const name = String(lastError?.name || '');
+    const allowedNames = new Set(['TypeError','AbortError','TimeoutError','ReferenceError','NotSupportedError','OperationError']);
+    throw billingError('Google Play 인증 서버에 연결하지 못했습니다.', 503, 'PLAY_AUTH_NETWORK_FAILED', {
+      causeCategory: allowedNames.has(name) ? name : 'NetworkFailure',
+      attempts: lastAttempt,
     });
-  } catch (error) {
-    throw billingError('Google Play 인증 서버에 연결하지 못했습니다.', 503, 'PLAY_AUTH_NETWORK_FAILED');
   }
   const body = await response.json().catch(() => ({}));
   if (!response.ok || !body.access_token) {
