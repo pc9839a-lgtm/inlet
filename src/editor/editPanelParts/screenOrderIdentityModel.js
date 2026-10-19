@@ -2,14 +2,14 @@
 function previewText(value) {
   if (typeof value !== 'string') return '';
   return value
-    .replace(/<script\\b[^>]*>[\\s\\S]*?<\\/script>/gi, ' ')
-    .replace(/<style\\b[^>]*>[\\s\\S]*?<\\/style>/gi, ' ')
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ')
     .replace(/<[^>]*>/g, ' ')
     .replace(/&(?:nbsp|#160);/gi, ' ')
     .replace(/&amp;/gi, '&')
     .replace(/&lt;/gi, '<')
     .replace(/&gt;/gi, '>')
-    .replace(/\\s+/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim()
     .slice(0, 100);
 }
@@ -21,9 +21,9 @@ function blockVisualType(block) {
 function safeImageUrl(value) {
   if (typeof value !== 'string') return '';
   const url = value.trim();
-  if (/^https?:\\/\\/[^\\s]+$/i.test(url)) return url;
-  if (/^\\/(?!\\/)[^\\s]*$/.test(url)) return url;
-  if (/^data:image\\/(?:png|jpeg|webp|gif|avif);base64,[a-z0-9+/=]+$/i.test(url)) return url;
+  if (/^https?:\/\/[^\s]+$/i.test(url)) return url;
+  if (/^\/(?!\/)[^\s]*$/.test(url)) return url;
+  if (/^data:image\/(?:png|jpeg|webp|gif|avif);base64,[a-z0-9+/=]+$/i.test(url)) return url;
   return '';
 }
 
