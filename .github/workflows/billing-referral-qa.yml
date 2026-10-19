@@ -52,6 +52,9 @@ jobs:
       - name: Verify Google Play OAuth transport retry
         run: node scripts/calltag-google-play-oauth-transport-quality-check.mjs
 
+      - name: Verify sanitized Google Play auth diagnostics
+        run: node scripts/calltag-google-play-401-diagnostic-quality-check.mjs
+
       - name: Verify CallTag refund commission reversal handling
         run: node scripts/calltag-refund-reversal-quality-check.mjs
 
