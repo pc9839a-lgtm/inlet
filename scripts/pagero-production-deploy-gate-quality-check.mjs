@@ -5,16 +5,22 @@ const source = readFileSync('.github/workflows/deploy-cloudflare.yml', 'utf8');
 const header = source.split(/^concurrency:\s*$/m)[0];
 const job = source.split(/^jobs:\s*$/m)[1] || '';
 
-assert.match(header, /^on:\s*\n  workflow_dispatch:\s*\n/m, 'deployment must be manually dispatched');
-assert.doesNotMatch(header, /^  (workflow_run|push|pull_request|schedule):/m, 'deployment must never be triggered automatically');
+assert.match(header, /^on:\s*\n  workflow_run:\s*\n    workflows: \["QA"\]\s*\n    types: \[completed\]\s*\n    branches: \[main\]/m, 'production deployment must run only after completed main QA');
+assert.match(header, /^  workflow_dispatch:/m, 'manual deployment fallback must remain');
+assert.doesNotMatch(header, /^  (push|pull_request|schedule):/m, 'production deployment must not listen directly to unverified commits or PRs');
 assert.match(header, /expected_sha:\s*\n\s+description:[^\n]+\n\s+required: true/m, 'expected SHA input is mandatory');
 assert.match(header, /approval_phrase:\s*\n\s+description:[^\n]+\n\s+required: true/m, 'explicit approval input is mandatory');
 assert.match(source, /group: inlet-cloudflare-production\s*\n  cancel-in-progress: false/, 'production deploy cannot cancel active runs');
 assert.match(job, /environment: production/, 'production protection environment must be set');
-assert.match(job, /github\.ref == 'refs\/heads\/main'/, 'only main may deploy');
+assert.match(job, /github\.ref == 'refs\/heads\/main'/, 'manual deploys are restricted to main');
+assert.match(job, /github\.event\.workflow_run\.event == 'push'/, 'automatic deploys require a main push QA run');
+assert.match(job, /github\.event\.workflow_run\.head_branch == 'main'/, 'automatic deploys must use main');
+assert.match(job, /github\.event\.workflow_run\.conclusion == 'success'/, 'automatic deploys need successful QA');
+assert.match(job, /run\.head_repository\?\.full_name !== repository/, 'automatic deploy QA must originate from this repository');
+assert.match(job, /run\.head_sha !== sha/, 'automatic deploy must use the completed QA SHA');
 assert.match(job, /APPROVAL_PHRASE" != "I_APPROVE_PAGERO_PRODUCTION_DEPLOY"/, 'deployment requires exact approval phrase');
 assert.match(job, /APPROVED_SHA" != "\$GITHUB_SHA"/, 'approved SHA must match dispatched SHA');
-assert.match(job, /actions\/workflows\/qa\.yml\/runs\?branch=main&head_sha=\$GITHUB_SHA&event=push/, 'exact successful main QA must be checked through GitHub API');
+assert.match(job, /actions\/workflows\/qa\.yml\/runs\?branch=main&head_sha=\$APPROVED_SHA&event=push/, 'exact successful main QA must be checked through GitHub API');
 assert.match(job, /run\.conclusion === 'success'/, 'only successful QA may deploy');
 assert.match(job, /run\.head_sha === sha/, 'QA must refer to the exact SHA');
 assert.match(job, /Recheck current main before uploading production/, 'main movement must abort before upload');
@@ -66,4 +72,4 @@ assert.doesNotMatch(otp, /^  (?:push|pull_request|workflow_run|issues|schedule):
 assert.match(otp, /environment: production/, 'OTP bootstrap requires production environment');
 assert.match(otp, /I_APPROVE_CALLTAG_ADMIN_OTP_BOOTSTRAP/, 'OTP bootstrap requires independent approval');
 
-console.log(JSON.stringify({ ok: true, name: 'pagero-production-explicit-deploy-gate', checks: 18, workflowsInspected: workflowNames.length, productionWrites: false }));
+console.log(JSON.stringify({ ok: true, name: 'pagero-production-qa-gated-deploy', checks: 23, workflowsInspected: workflowNames.length, productionWrites: false }));
