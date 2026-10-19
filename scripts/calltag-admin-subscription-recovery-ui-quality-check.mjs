@@ -33,3 +33,43 @@ for (const [key,pass] of Object.entries(cases)) {
   console.log('ok',key);
 }
 console.log('CallTag subscription recovery UI contract:',Object.keys(cases).length,'checks pass');
+
+
+// End-to-end middleware routing proof. This catches a Pages deploy that passes
+// generic readiness but rewrites the recovery HTML/CSS/JS to the SPA shell.
+const { onRequest } = await import('../functions/_middleware.js');
+async function routeTest(url, expectedAsset) {
+  let got = '';
+  const context = {
+    request: new Request(url),
+    env: {
+      ASSETS: {
+        async fetch(request) {
+          got = new URL(request.url).pathname;
+          const mime = got.endsWith('.css') ? 'text/css'
+            : got.endsWith('.js') ? 'text/javascript' : 'text/html';
+          return new Response('<html><body>route-smoke</body></html>', {
+            status: 200, headers: {'Content-Type': mime},
+          });
+        },
+      },
+    },
+    next: async () => new Response('next-unchanged', {status: 299}),
+  };
+  const response = await onRequest(context);
+  assert.equal(got,expectedAsset,url);
+  assert.equal(response.status,200,url);
+  assert.equal(response.headers.get('x-calltag-recovery-route'),'standalone-v1',url);
+  assert.match(response.headers.get('cache-control') || '',/no-store/,url);
+  assert.match(response.headers.get('x-robots-tag') || '',/noindex/,url);
+  return response;
+}
+for (const host of ['calltag.pagero.kr','pagero.kr','sample-123.pages.dev']) {
+  for (const [requestPath,assetPath] of [
+    ['/admin/subscription-recovery/','/admin/subscription-recovery/index.html'],
+    ['/admin/subscription-recovery/index.html','/admin/subscription-recovery/index.html'],
+    ['/admin/subscription-recovery/app.js','/admin/subscription-recovery/app.js'],
+    ['/admin/subscription-recovery/style.css','/admin/subscription-recovery/style.css'],
+  ]) await routeTest('https://' + host + requestPath,assetPath);
+}
+console.log('ok - exact standalone HTML/JS/CSS recovery routes served on all expected hosts');
