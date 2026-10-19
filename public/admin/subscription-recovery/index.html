@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>CallTag | 구독 결제 복구</title>
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="heading">
+      <p class="eyebrow">CALLTAG · ADMIN ONLY</p>
+      <h1>Google Play 구독 복구</h1>
+      <p class="lede">실제 결제 내역을 Google 공식 API에 다시 확인하고, 기존 콜태그 회원과 일치하는 거래만 복구합니다.</p>
+      <p class="security">이 페이지는 주문번호를 저장하지 않습니다. 관리자 API는 Cloudflare Access 인증과 운영자 허용 목록을 모두 검증합니다.</p>
+    </header>
+
+    <section class="panel" aria-labelledby="batch-title">
+      <div class="step">01 · 원본 결제 검증</div>
+      <h2 id="batch-title">Google Play 주문번호 입력</h2>
+      <p class="muted">Play Console에서 확인한 <strong>정상 처리됨</strong> 주문만 입력하세요. 환불 주문은 제외합니다. 한 줄에 주문번호와 상품코드를 입력하며, 두 값의 순서는 상관없습니다.</p>
+      <label for="orders">주문번호 및 상품코드 <span class="hint">최대 12건</span></label>
+      <textarea id="orders" rows="8" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="GPA.XXXX-XXXX-XXXX-XXXXX..1  call_monthly&#10;GPA.XXXX-XXXX-XXXX-XXXXX..1  message_monthly"></textarea>
+      <div class="actions">
+        <button id="preview" class="primary" type="button">결제 내역 검증하기</button>
+        <button id="reset" class="subtle" type="button">입력 지우기</button>
+      </div>
+      <p id="input-error" class="error" role="alert" hidden></p>
+    </section>
+
+    <section class="panel" aria-labelledby="result-title">
+      <div class="step">02 · 결과 확인</div>
+      <h2 id="result-title">검증 결과</h2>
+      <p id="progress" class="muted" aria-live="polite">주문번호를 입력하고 검증을 실행하세요. 검증 단계에서는 구독·결제 정보를 수정하지 않습니다.</p>
+      <div id="totals" class="totals" hidden>
+        <div><span>조회 건수</span><strong id="examined">—</strong></div>
+        <div><span>결제 확인</span><strong id="paid">—</strong></div>
+        <div><span>기존 회원 연결</span><strong id="matched">—</strong></div>
+      </div>
+      <div class="table-scroll"><table id="results" hidden>
+        <thead><tr><th>번호</th><th>상품</th><th>결제 검증</th><th>회원 연결</th><th>상태</th></tr></thead>
+        <tbody id="result-rows"></tbody>
+      </table></div>
+      <div class="actions">
+        <button id="apply" class="primary" type="button" disabled>검증된 결제 복구 적용</button>
+      </div>
+      <p class="muted fine">모든 주문이 Google Play에서 유료 결제로 확인되고 기존 회원과 정확히 연결되어야 적용할 수 있습니다. 적용 후에도 현재 이용 권한은 Google 구독 상태를 재검증한 결과에 따릅니다.</p>
+    </section>
+
+    <section class="panel secondary" aria-labelledby="stale-title">
+      <div class="step">기존 가입자 우선 복구</div>
+      <h2 id="stale-title">만료 표시된 기존 구독 재검증</h2>
+      <p class="muted">주문번호를 입력하지 않고도 DB에 이미 등록된 구독 최대 5건을 Google Play에서 다시 확인할 수 있습니다. 이 작업은 검증 성공 시 구독 만료일을 갱신하지만 <strong>결제 원장을 채우지는 않습니다.</strong></p>
+      <div class="actions">
+        <button id="refresh" type="button" class="outline">기존 구독 5건 다시 확인</button>
+      </div>
+      <p id="refresh-result" class="muted" aria-live="polite"></p>
+    </section>
+    <footer>실제 유료 구매를 확인하지 않은 계정에는 유료 혜택을 임의로 지급하지 않습니다.</footer>
+  </main>
+</body>
+</html>
