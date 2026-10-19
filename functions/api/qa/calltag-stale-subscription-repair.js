@@ -74,6 +74,18 @@ export async function onRequest({request,env}) {
   try { input=await request.json(); }
   catch {return reply(400,{ok:false,code:'INVALID_JSON'});}
   const mode=String(input?.mode||'');
+  if(mode==='identity'){
+    const email=String(env.GOOGLE_PLAY_CLIENT_EMAIL||'').trim().toLowerCase();
+    const valid=/^[a-z0-9][a-z0-9._-]*@[a-z0-9][a-z0-9.-]*\.iam\.gserviceaccount\.com$/.test(email);
+    return reply(200,{
+      ok:true,
+      mode:'identity',
+      serviceAccountEmail:valid ? email : '',
+      serviceAccountFormatValid:valid,
+      privateKeyConfigured:Boolean(String(env.GOOGLE_PLAY_PRIVATE_KEY||'').includes('PRIVATE KEY')),
+      packageName:PKG,
+    });
+  }
   if(!['preview','apply'].includes(mode)) return reply(400,{ok:false,code:'INVALID_MODE'});
   const ids=input?.ids;
   if(mode==='apply'&&(!Array.isArray(ids)||ids.length<1||ids.length>LIMIT
