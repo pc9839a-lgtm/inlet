@@ -14,6 +14,11 @@ export default function CodeEditor({ s, set, blockId, codeDraftForBlock, onCodeD
   // 과거 저장된 BGM 프리셋은 편집 기능을 노출하지 않는다.
   if (s.widgetMode === 'bgm') return null;
 
+  const codePending = draft !== (s.html || '');
+  const codeDraftHint = codePending
+    ? '코드 미적용 · 적용 후 편집본에 반영됩니다. 공개는 발행 후입니다.'
+    : '코드 적용됨 · 편집 미리보기에서는 실행되지 않습니다. 공개는 발행 후입니다.';
+
   const apply = () => {
     set({ html: draft, css: '', js: '', runJs: false });
     clearCodeDraft?.(blockId);
@@ -41,7 +46,7 @@ export default function CodeEditor({ s, set, blockId, codeDraftForBlock, onCodeD
           {
             id: 'code',
             label: '코드',
-            content: <CodeEditorBox draft={draft} onDraftChange={setDraft} onOpenModal={() => setModalOpen(true)} onApply={apply} />,
+            content: <CodeEditorBox draft={draft} onDraftChange={setDraft} onOpenModal={() => setModalOpen(true)} onApply={apply} codePending={codePending} codeDraftHint={codeDraftHint} />,
           },
           {
             id: 'style',
@@ -50,7 +55,7 @@ export default function CodeEditor({ s, set, blockId, codeDraftForBlock, onCodeD
           },
         ]}
       />
-      {modalOpen && <CodeEditorModal draft={draft} onDraftChange={setDraft} onClose={() => setModalOpen(false)} onApply={apply} />}
+      {modalOpen && <CodeEditorModal draft={draft} onDraftChange={setDraft} onClose={() => setModalOpen(false)} onApply={apply} codePending={codePending} codeDraftHint={codeDraftHint} />}
     </>
   );
 }

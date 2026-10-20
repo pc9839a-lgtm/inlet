@@ -1,4 +1,4 @@
-export default function CodeEditorBox({ draft, onDraftChange, onOpenModal, onApply }) {
+export default function CodeEditorBox({ draft, onDraftChange, onOpenModal, onApply, codePending, codeDraftHint }) {
   return (
     <div className="code-editor-box">
       <div className="code-editor-head">
@@ -13,7 +13,7 @@ export default function CodeEditorBox({ draft, onDraftChange, onOpenModal, onApp
         spellCheck={false}
       />
       <div className="code-editor-actions">
-        <span>HTML·CSS·JavaScript를 격리된 영역에서 실행합니다.</span>
+        <span data-code-draft-state={codePending ? 'pending' : 'applied'}>{codeDraftHint}</span>
         <button type="button" onClick={onApply}>적용</button>
       </div>
     </div>

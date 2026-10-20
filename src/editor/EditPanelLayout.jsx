@@ -51,6 +51,9 @@ export function EditPanelLayout({
         </button>
       </nav>
 
+      <p className="edit-workflow-hint">
+        일반 입력은 미리보기에서 바로 확인됩니다. 공통 스타일·코드는 '적용' 후 편집본에 포함되며, 공개는 '발행' 후입니다.
+      </p>
       <div className="edit-section-panel" data-editor-section={section}>
         {section === 'options' ? (
           <div className="editor-page-options-stack">

@@ -1,6 +1,6 @@
 import { useAccessibleDialog } from '../../lib/useAccessibleDialog.js';
 
-export default function CodeEditorModal({ draft, onDraftChange, onClose, onApply }) {
+export default function CodeEditorModal({ draft, onDraftChange, onClose, onApply, codePending, codeDraftHint }) {
   const dialogRef = useAccessibleDialog(onClose, { lockScroll: true });
 
   return (
@@ -25,7 +25,7 @@ export default function CodeEditorModal({ draft, onDraftChange, onClose, onApply
           spellCheck={false}
         />
         <div className="code-editor-modal-actions">
-          <span>HTML·CSS·JavaScript를 격리된 영역에서 실행합니다.</span>
+          <span data-code-draft-state={codePending ? 'pending' : 'applied'}>{codeDraftHint}</span>
           <button type="button" onClick={onApply}>적용</button>
         </div>
       </div>
