@@ -1139,21 +1139,6 @@ async function run() {
     for (const width of [360, 390, 430]) {
       await clickSelector(client, `.preview-width-option[data-content-width="${width}"]`);
       await waitForBrowser(client, `document.querySelector('.preview-width-option[data-content-width="${width}"]')?.getAttribute('aria-pressed') === 'true'`, `D04 selected ${width}px`);
-      const widthDiagnostic = await evaluate(client, `(() => {
-        const item = document.querySelector('.preview-workspace .landing-page');
-        const frame = document.querySelector('.preview-workspace .phone-frame');
-        const sticky = document.querySelector('.preview-workspace .preview-sticky');
-        return {
-          requested: ${width},
-          computed: getComputedStyle(frame).width,
-          frame: frame.getBoundingClientRect().width,
-          sticky: sticky.getBoundingClientRect().width,
-          rendered: item?.getBoundingClientRect().width,
-          measured: document.querySelector('.preview-width-measured')?.dataset.measuredWidth,
-          inlineVariable: document.querySelector('.preview-workspace')?.style.getPropertyValue('--editor-preview-content-width'),
-        };
-      })()`);
-      console.log('[editor-qa] D04 width diagnostic', JSON.stringify(widthDiagnostic));
       await waitForBrowser(client, `(() => {
         const content = document.querySelector('.preview-workspace .phone-frame > .landing-page');
         const actual = Number(document.querySelector('.preview-width-measured')?.dataset.measuredWidth);

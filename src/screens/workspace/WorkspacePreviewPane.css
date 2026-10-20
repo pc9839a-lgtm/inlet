@@ -129,6 +129,8 @@ html body #root .builder-shell.edit-mode-shell .preview-width-measured {
 }
 
 html body #root .builder-shell.edit-mode-shell .preview-workspace .phone-frame {
+  /* Public landing retains its 414px cap; the editor alone uses the chosen width. */
+  --landing-runtime-width: var(--editor-preview-content-width, 390px);
   box-sizing: border-box;
   width: min(calc(var(--editor-preview-content-width, 390px) + 16px), 100%) !important;
   max-width: 100% !important;
