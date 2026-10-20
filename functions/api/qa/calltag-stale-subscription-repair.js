@@ -1,5 +1,6 @@
 import { assertD1 } from '../_shared.js';
 import { googlePlayOrderPaidAmountKrw, reconcileGoogleSubscriptionByOrder } from '../billing/_shared.js';
+import { auditPlayEarningsOrderCoverage } from '../billing/_playEarningsHistory.js';
 const PKG = 'kr.pagero.calltag';
 const LIMIT = 5;
 const reply = (status, body) => new Response(JSON.stringify(body), { status, headers: {
@@ -85,6 +86,49 @@ export async function onRequest({request,env}) {
       privateKeyConfigured:Boolean(String(env.GOOGLE_PLAY_PRIVATE_KEY||'').includes('PRIVATE KEY')),
       packageName:PKG,
     });
+  }
+  if(mode==='inventory'){
+    try {
+      const db=assertD1(env);
+      const rows=await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('billing_subscriptions','billing_payment_events','calllink_entitlements','calltag_admin_entitlements','calltag_play_earnings_monthly')").all();
+      const present=new Set((rows?.results||[]).map(x=>String(x.name)));
+      const queries=[
+        ['registered_subscriptions',"SELECT product_code,channel,status,verification_state,COUNT(*) AS subscriptions,COUNT(DISTINCT owner_id) AS members FROM billing_subscriptions GROUP BY product_code,channel,status,verification_state ORDER BY subscriptions DESC"],
+        ['verified_paid_ledger',"SELECT channel,payment_status,event_type,COUNT(*) AS events,COUNT(DISTINCT owner_id) AS members FROM billing_payment_events GROUP BY channel,payment_status,event_type ORDER BY events DESC"],
+        ['legacy_entitlements',"SELECT plan_code,status,source,COUNT(*) AS records,COUNT(DISTINCT owner_id) AS members FROM calllink_entitlements GROUP BY plan_code,status,source ORDER BY records DESC"],
+        ['admin_granted_access',"SELECT scope,status,COUNT(*) AS accounts FROM calltag_admin_entitlements GROUP BY scope,status ORDER BY accounts DESC"],
+        ['cached_play_report_months',"SELECT report_month,transaction_count FROM calltag_play_earnings_monthly ORDER BY report_month DESC LIMIT 6"],
+      ];
+      const required={
+        registered_subscriptions:'billing_subscriptions',
+        verified_paid_ledger:'billing_payment_events',
+        legacy_entitlements:'calllink_entitlements',
+        admin_granted_access:'calltag_admin_entitlements',
+        cached_play_report_months:'calltag_play_earnings_monthly',
+      };
+      const inventory={};
+      for(const [label,sql] of queries){
+        if(!present.has(required[label])) {inventory[label]={available:false};continue;}
+        try{
+          const record=await db.prepare(sql).all();
+          inventory[label]={available:true,rows:(record?.results||[]).slice(0,30)};
+        }catch {inventory[label]={available:false};}
+      }
+      let reportCoverage;
+      try {
+        reportCoverage=await auditPlayEarningsOrderCoverage(env,db,3);
+      }catch(error) {
+        const safe=new Set([
+          'PLAY_REPORT_PERMISSION_REQUIRED','PLAY_REPORT_STORAGE_FAILED',
+          'PLAY_REPORT_GOOGLE_AUTH_FAILED','PLAY_REPORT_GOOGLE_AUTH_NETWORK_FAILED',
+          'PLAY_REPORT_CREDENTIALS_REQUIRED','PLAY_REPORT_PRIVATE_KEY_REQUIRED',
+          'PLAY_REPORT_FILE_INVALID','PLAY_REPORT_ZIP_INVALID',
+          'PLAY_REPORT_COLUMNS_CHANGED','PLAY_REPORT_NOT_FOUND'
+        ]);
+        reportCoverage={available:false,reason:safe.has(error?.code)?error.code:'PLAY_REPORT_UNAVAILABLE'};
+      }
+      return reply(200,{ok:true,mode:'inventory',readOnly:true,inventory,reportCoverage});
+    }catch{return reply(503,{ok:false,code:'READ_ONLY_INVENTORY_UNAVAILABLE'});}
   }
   if(!['preview','apply'].includes(mode)) return reply(400,{ok:false,code:'INVALID_MODE'});
   const ids=input?.ids;

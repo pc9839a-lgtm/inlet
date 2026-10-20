@@ -24,6 +24,21 @@ console.log('CALLTAG_GOOGLE_PLAY_SERVICE_ACCOUNT',JSON.stringify({
   privateKeyConfigured:identity.privateKeyConfigured===true,
   packageName:identity.packageName||''
 }));
+// Diagnostic inventories never write. Logs contain only counts and categories.
+try {
+  const inventory=await post({mode:'inventory'});
+  console.log('CALLTAG_PAYER_COMPLETENESS_AUDIT',JSON.stringify({
+    readOnly:inventory.readOnly===true,
+    inventory:inventory.inventory||{},
+    reportCoverage:inventory.reportCoverage||{},
+  }));
+}catch(error) {
+  console.log('CALLTAG_PAYER_COMPLETENESS_AUDIT',JSON.stringify({
+    readOnly:true,available:false,
+    errorCode:String(error?.message||'').startsWith('CALLTAG_REPAIR_API_')
+      ?'PROVIDER_READ_ONLY_QUERY_FAILED':'READ_ONLY_AUDIT_UNAVAILABLE',
+  }));
+}
 const preview=await post({mode:'preview'});
 const candidates=Array.isArray(preview.results)?preview.results:[];
 const valid=candidates.filter(x=>x.providerVerified===true&&x.state==='verified_paid_owner_match');
