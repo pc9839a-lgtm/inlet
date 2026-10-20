@@ -85,10 +85,39 @@ assert(browserSource.includes("{ name: 'pc-900', width: 900") && browserSource.i
 const previewPaneSource = await readFile('src/screens/workspace/WorkspacePreviewPane.jsx', 'utf8');
 const editPanelLayoutSource = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
 const screenOrderListItemsSource = await readFile('src/editor/editPanelParts/ScreenOrderListItems.jsx', 'utf8');
+const formEditorSource = await readFile('src/editor/blockEditors/FormEditor.jsx', 'utf8');
+const timerEditorSource = await readFile('src/editor/blockEditors/TimerEditor.jsx', 'utf8');
+const stylePanelSource = await readFile('src/panels/StylePanel.jsx', 'utf8');
+const codeEditorSource = await readFile('src/editor/blockEditors/CodeEditor.jsx', 'utf8');
+const codeBoxSource = await readFile('src/editor/blockEditors/CodeEditorBox.jsx', 'utf8');
+const codeModalSource = await readFile('src/editor/blockEditors/CodeEditorModal.jsx', 'utf8');
 assert(previewPaneSource.includes("frameRef.current?.querySelector('.landing-page')")
   && previewPaneSource.includes('scroller.scrollTop = next')
   && !previewPaneSource.includes('target?.scrollIntoView'),
   'D05 preview selection must scroll only inside the phone content, never the window');
+assert(formEditorSource.includes("id: 'content',\n          label: '내용'")
+  && timerEditorSource.includes("id: 'basic',\n          label: '내용'")
+  && timerEditorSource.includes("id: 'design',\n          label: '스타일'"),
+  'D06 shared editor tabs must use consistent visible content/style terms and preserve persisted tab IDs');
+assert(editPanelLayoutSource.includes('edit-workflow-hint')
+  && editPanelLayoutSource.includes("공통 스타일·코드는 '적용' 후")
+  && editPanelLayoutSource.includes("공개는 '발행' 후"),
+  'D06 editor must distinguish local draft, apply, and publish');
+assert(stylePanelSource.includes('스타일 미적용')
+  && stylePanelSource.includes('스타일 적용됨')
+  && stylePanelSource.includes('공개하려면 발행하세요.'),
+  'D06 common style must expose pending and applied draft state without mislabeling publish');
+assert(codeEditorSource.includes('codePending')
+  && codeBoxSource.includes('data-code-draft-state')
+  && codeModalSource.includes('data-code-draft-state')
+  && !codeBoxSource.includes('격리된 영역에서 실행합니다.')
+  && !codeModalSource.includes('격리된 영역에서 실행합니다.'),
+  'D06 code editor and modal must consistently describe pending vs applied state and preview execution');
+assert(browserSource.includes('D06 form tabs use content/style vocabulary')
+  && browserSource.includes('D06 code draft pending before apply')
+  && browserSource.includes('D06 code apply must not publish')
+  && browserSource.includes('D06 pending style must say it is preview-only'),
+  'D06 isolated Chrome regression must cover terminology and apply/publish separation');
 assert(!editPanelLayoutSource.includes('scrollIntoView')
   && !screenOrderListItemsSource.includes('scrollIntoView'),
   'D05 normal editor selection must not trigger duplicate document scroll effects');

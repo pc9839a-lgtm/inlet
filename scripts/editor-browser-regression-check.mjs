@@ -1488,13 +1488,31 @@ async function run() {
     assert(apiState.saveCount === 0, 'F05 reordering must remain a local draft until explicit publish');
 
 
+    // D06: the form uses the same visible "내용 / 스타일" vocabulary as
+    // hero, text, link, and other block editors without changing tab IDs.
+    if (!(await evaluate(client, `document.querySelector('#editor-block-editor-form')?.dataset.selected === 'true'`))) {
+      await clickSelector(client, '#editor-block-editor-form .screen-order-v2-head');
+    }
+    await waitForBrowser(client, `(() => {
+      const panel = document.querySelector('#editor-block-editor-form + .screen-order-v2-inline-editor');
+      const labels = [...(panel?.querySelectorAll('.editor-tabs-v2-list button') || [])].map((tab) => tab.textContent.trim());
+      return labels.includes('내용') && labels.includes('스타일') && !labels.includes('기본');
+    })()`, 'D06 form tabs use content/style vocabulary');
+    assert(apiState.saveCount === 0, 'D06 switching editor tabs must not auto-publish');
+
     // E2E-11 / E2E-12: page/theme inspector previews the style draft, then applies it into the page draft.
     await clickButtonByText(client, '.edit-section-tabs', '페이지 옵션');
     await waitForBrowser(client, `!!document.querySelector('.editor-page-options-stack .style-panel')`, 'page theme editor');
+    assert(await evaluate(client, `(document.querySelector('.edit-workflow-hint')?.innerText || '').includes('발행')`),
+      'D06 editor must explain that applying edits and publishing are different steps');
+    assert(await evaluate(client, `(document.querySelector('.style-apply-bar span')?.innerText || '').includes('스타일 적용됨')`),
+      'D06 initially applied style status must be explicit');
     await clickButtonByText(client, '.style-subnav', '색상');
     await waitForBrowser(client, `!!document.querySelector('.style-panel input[type="color"]')`, 'style accent input');
     await setInputValue(client, '.style-panel input[type="color"]', updatedAccent);
     await waitForBrowser(client, `!document.querySelector('.style-apply-btn')?.disabled`, 'style apply enabled');
+    assert(await evaluate(client, `(document.querySelector('.style-apply-bar span')?.innerText || '').includes('스타일 미적용')`),
+      'D06 pending style must say it is preview-only until applied');
     assert(apiState.saveCount === 0, 'style preview must not publish automatically');
 
     // F02: an unapplied style survives leaving the edit tab and remounting
@@ -1536,6 +1554,8 @@ async function run() {
     assert(apiState.saveCount === 0, 'F02 cancelled publish and tab switches must make no server writes');
     await clickSelector(client, '.style-apply-btn');
     await waitForBrowser(client, `document.querySelector('.style-apply-btn')?.disabled === true`, 'style applied to page draft');
+    assert(await evaluate(client, `(document.querySelector('.style-apply-bar span')?.innerText || '').includes('스타일 적용됨')`),
+      'D06 style apply must clearly distinguish page draft from public publish');
 
     await clickButtonByText(client, '.edit-section-tabs', '화면 순서');
     await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-list')`, 'screen order after style apply');
@@ -1642,6 +1662,18 @@ async function run() {
     await waitForBrowser(client, `!!document.querySelector('#editor-block-editor-code + .screen-order-v2-inline-editor input[aria-label="구분 이름"]')`, 'code block custom label input');
     await setInputValue(client, '#editor-block-editor-code + .screen-order-v2-inline-editor input[aria-label="구분 이름"]', persistedCodeLabel);
     await waitForBrowser(client, `(document.querySelector('#editor-block-editor-code .screen-order-v2-title-wrap strong')?.textContent || '').includes(${JSON.stringify(persistedCodeLabel)})`, 'screen order custom code label');
+
+    // D06: code has a separate apply phase. Editing alone never publishes,
+    // while applying updates only the local page draft.
+    const codeDraftSelector = '#editor-block-editor-code + .screen-order-v2-inline-editor .code-editor-box textarea';
+    const codeOriginal = await evaluate(client, `document.querySelector(${JSON.stringify(codeDraftSelector)})?.value ?? ''`);
+    await waitForBrowser(client, `!!document.querySelector('.code-editor-actions [data-code-draft-state="applied"]')`, 'D06 code initially applied');
+    await setInputValue(client, codeDraftSelector, `${codeOriginal}\n<!-- D06 staged code regression -->`);
+    await waitForBrowser(client, `!!document.querySelector('.code-editor-actions [data-code-draft-state="pending"]')`, 'D06 code draft pending before apply');
+    assert(apiState.saveCount === 2, 'D06 pending code edits must not publish');
+    await clickSelector(client, '.code-editor-actions button');
+    await waitForBrowser(client, `!!document.querySelector('.code-editor-actions [data-code-draft-state="applied"]')`, 'D06 code applied to page draft');
+    assert(apiState.saveCount === 2, 'D06 code apply must not publish');
 
     // P9-2: modal focus must stay contained and return to the opener on Escape.
     const codeModalTrigger = '#editor-block-editor-code + .screen-order-v2-inline-editor .code-editor-head button';

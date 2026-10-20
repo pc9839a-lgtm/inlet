@@ -18,7 +18,7 @@ export default function FormEditor({ s, set, page, blockId, generateStandaloneFo
       tabs={[
         {
           id: 'content',
-          label: '기본',
+          label: '내용',
           content: <FormBasicSection s={s} set={set} />,
         },
         {

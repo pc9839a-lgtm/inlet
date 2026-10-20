@@ -64,12 +64,12 @@ export default function TimerEditor({ s, set, page, updateBlock }) {
       tabs={[
         {
           id: 'basic',
-          label: '기본',
+          label: '내용',
           content: <TimerContentSection s={s} set={set} />,
         },
         {
           id: 'design',
-          label: '디자인',
+          label: '스타일',
           content: <TimerDesignSection s={s} set={set} />,
         },
         {
