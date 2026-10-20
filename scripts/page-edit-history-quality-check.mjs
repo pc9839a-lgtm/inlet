@@ -38,10 +38,10 @@ await Promise.resolve();
 currentPage = commitPage({ ...currentPage, title: 'A1' });
 currentPage = commitPage({ ...currentPage, title: 'A2' });
 await Promise.resolve();
-assert(getPageEditHistoryState().undoCount === 2, 'two edits must create two undo entries');
+assert(getPageEditHistoryState().undoCount === 1, 'consecutive title typing should be grouped into one undo gesture');
 assert(undoPageEdit(), 'undo must execute when history exists');
 await Promise.resolve();
-assert(currentPage.title === 'A1', 'undo must restore the previous page snapshot');
+assert(currentPage.title === 'A0', 'undo of grouped typing must restore the first value');
 assert(getPageEditHistoryState().redoCount === 1, 'undo must create one redo entry');
 assert(redoPageEdit(), 'redo must execute after undo');
 await Promise.resolve();
@@ -55,8 +55,17 @@ assert(!getPageEditHistoryState().canRedo, 'a fresh edit after undo must discard
 
 clearPageEditHistory();
 await Promise.resolve();
-for (let index = 0; index < PAGE_EDIT_HISTORY_LIMIT + 8; index += 1) {
-  currentPage = commitPage({ ...currentPage, title: `A-${index}` });
+// Distinct typing gestures are separated by more than the 900 ms coalescing window.
+const originalDateNow = Date.now;
+let qaClock = originalDateNow();
+Date.now = () => qaClock;
+try {
+  for (let index = 0; index < PAGE_EDIT_HISTORY_LIMIT + 8; index += 1) {
+    qaClock += 1000;
+    currentPage = commitPage({ ...currentPage, title: `A-${index}` });
+  }
+} finally {
+  Date.now = originalDateNow;
 }
 await Promise.resolve();
 assert(getPageEditHistoryState().undoCount === PAGE_EDIT_HISTORY_LIMIT, 'undo history must stay capped at the configured limit');
@@ -76,7 +85,7 @@ syncPageEditHistoryScope(currentPage);
 currentPage = commitPage({ ...currentPage, title: 'Draft A1' });
 currentPage = commitPage({ ...currentPage, title: 'Draft A2' });
 await Promise.resolve();
-assert(getPageEditHistoryState().undoCount === 2, 'edits to an id-less draft must retain their own undo history');
+assert(getPageEditHistoryState().undoCount === 1, 'adjacent typing on an id-less draft must retain one isolated undo gesture');
 
 const unsavedDraftB = { ...unsavedDraftA, title: 'Draft B0' };
 currentPage = unsavedDraftB;
@@ -130,8 +139,15 @@ syncPageEditHistoryScope(currentPage);
 clearPageEditHistory();
 await Promise.resolve();
 const heavyStarted = performance.now();
-for (let index = 1; index <= PAGE_EDIT_HISTORY_LIMIT; index += 1) {
-  currentPage = commitPage({ ...currentPage, title: 'H' + index });
+let qaHeavyClock = originalDateNow();
+Date.now = () => qaHeavyClock;
+try {
+  for (let index = 1; index <= PAGE_EDIT_HISTORY_LIMIT; index += 1) {
+    qaHeavyClock += 1000;
+    currentPage = commitPage({ ...currentPage, title: 'H' + index });
+  }
+} finally {
+  Date.now = originalDateNow;
 }
 await Promise.resolve();
 const heavyEditDurationMs = Math.round(performance.now() - heavyStarted);

@@ -50,6 +50,7 @@ export function ScreenOrderRow({
         <ScreenOrderRowActions
           block={block}
           meta={meta}
+          selected={open}
           canMoveUp={canMoveUp}
           canMoveDown={canMoveDown}
           onMoveUp={onMoveUp}

@@ -15,12 +15,13 @@ import { NAV } from './builder/navigation.js';
 import { useBuilderFeedback } from './builder/useBuilderFeedback.js';
 import { usePageConflict } from './builder/usePageConflict.js';
 import { usePageSaveAction } from './runtime/usePageSaveAction.js';
-import { commitLocalPageDraft as commitLocalPageDraftValue, markLocalPageMutation as markLocalPageMutationValue } from './runtime/pageDraftMutations.js';
+import { applyPendingEditorDrafts, commitLocalPageDraft as commitLocalPageDraftValue, markLocalPageMutation as markLocalPageMutationValue } from './runtime/pageDraftMutations.js';
 import { createPageEditMutations } from './runtime/pageEditMutations.js';
 import { normalizeFreeEmailIntegrations as normalizeFreeEmailIntegrationsForAccount } from './runtime/pageIntegrationMutations.js';
 import { usePageSaveHelpers } from './runtime/usePageSaveHelpers.js';
 import { usePersistStyleSaveAction } from './runtime/usePersistStyleSaveAction.js';
 import { createLocalJsonSaver, createSaveStatusMarker } from './runtime/saveStatusActions.js';
+import { pageOperationIdentity } from './runtime/pageOperationIdentity.js';
 import { usePendingStyleBeforeUnload } from './runtime/usePendingStyleBeforeUnload.js';
 import { createWorkspacePanelProps } from './runtime/createWorkspacePanelProps.js';
 import { useCreatePageActions } from './runtime/useCreatePageActions.js';
@@ -509,6 +510,7 @@ function App() {
   const accountPageLoadRef = useRef('');
   const latestPageRef = useRef(page);
   const localPageMutationRef = useRef(0);
+  const lastMutationStatusRef = useRef(0);
   const editInitialCollapseRef = useRef('');
   const { toast, confirmDialog, setToast, setConfirmDialog, showToast, requestConfirm } = useBuilderFeedback();
   const [connectionsEditing, setConnectionsEditing] = useState(true);
@@ -522,6 +524,11 @@ function App() {
   const [authView, setAuthView] = useState('');
   const [stylePreviewTheme, setStylePreviewTheme] = useState(null);
   const [stylePreviewBlocks, setStylePreviewBlocks] = useState(null);
+  // A code editor can unmount when the user selects another block.
+  // Unapplied HTML is scoped by page and block, not by the component mount.
+  const [codeDraftsByPage, setCodeDraftsByPage] = useState({});
+  const currentEditorPageIdentity = pageOperationIdentity(page);
+  const codeDraftsForPage = codeDraftsByPage[currentEditorPageIdentity] || {};
   const [publicServerPage, setPublicServerPage] = useState(null);
   const [publicPageLoading, setPublicPageLoading] = useState(false);
   const [publicPageLoaded, setPublicPageLoaded] = useState(false);
@@ -545,10 +552,48 @@ function App() {
     ),
     [stylePreviewTheme, stylePreviewBlocks, page.theme, page.blocks],
   );
+  const hasPendingCode = (page.blocks || []).some((block) =>
+    block.type === 'code'
+    && Object.prototype.hasOwnProperty.call(codeDraftsForPage, block.id)
+    && codeDraftsForPage[block.id] !== (block.s?.html || '')
+  );
   const clearPendingStyle = () => {
-    if (hasPendingStyle) setStylePreviewTheme(null);
-    if (hasPendingStyle) setStylePreviewBlocks(null);
+    setStylePreviewTheme(null);
+    setStylePreviewBlocks(null);
   };
+  // Do not transfer one page's drafts into another. A new server ID (or
+  // changing the slug of an unsaved page) is not itself a page switch.
+  const stageOwnerRef = useRef({ identity: currentEditorPageIdentity, page, mutation: localPageMutationRef.current });
+  useEffect(() => {
+    const previous = stageOwnerRef.current;
+    if (previous.identity !== currentEditorPageIdentity) {
+      const sameOwnerProject = previous.page?.projectId === page.projectId
+        && previous.page?.ownerId === page.ownerId;
+      const assignedServerId = sameOwnerProject && !previous.page?.id && !!page.id
+        && previous.page?.slug === page.slug;
+      const renamedUnsavedPage = sameOwnerProject && !previous.page?.id && !page.id
+        && previous.mutation !== localPageMutationRef.current;
+      if (assignedServerId || renamedUnsavedPage) {
+        const formerIdentity = previous.identity;
+        setCodeDraftsByPage((all) => {
+          if (!all[formerIdentity]) return all;
+          const updated = { ...all, [currentEditorPageIdentity]: {
+            ...all[formerIdentity], ...(all[currentEditorPageIdentity] || {}),
+          } };
+          delete updated[formerIdentity];
+          return updated;
+        });
+      } else {
+        clearPendingStyle();
+        setSaved(false);
+        setSaveStatus({ tone: 'idle', label: '발행 상태 확인', detail: '현재 페이지의 발행 상태를 확인해 주세요.' });
+      }
+    }
+    stageOwnerRef.current = { identity: currentEditorPageIdentity, page, mutation: localPageMutationRef.current };
+  }, [currentEditorPageIdentity, page]);
+  useEffect(() => {
+    if (!workspaceOpen) clearPendingStyle();
+  }, [workspaceOpen]);
   const ownerAdminModeEnabled = isOwnerAdminModeEnabled();
   const accessMode = useMemo(() => accessModeFor({ authUser, page, clientAdminEnabled: ownerAdminModeEnabled }), [authUser, ownerAdminModeEnabled, page]);
   const canUseBuilder = canUseBuilderSurface(accessMode, page, authUser);
@@ -725,7 +770,6 @@ function App() {
     page,
     workspaceOpen,
     editInitialCollapseRef,
-    setStylePreviewTheme,
     setOpenId,
     setAddOpen,
   });
@@ -749,7 +793,17 @@ function App() {
     clearPendingStyle,
     setTab,
   });
-  usePendingStyleBeforeUnload(hasPendingStyle);
+  usePendingStyleBeforeUnload(hasPendingStyle || hasPendingCode);
+  useEffect(() => {
+    if (localPageMutationRef.current === lastMutationStatusRef.current) return;
+    lastMutationStatusRef.current = localPageMutationRef.current;
+    setSaved(false);
+    setSaveStatus((current) => current.phase === 'publishing' ? current : ({
+      tone: 'idle', label: '공개 미반영', phase: 'dirty',
+      detail: '브라우저 임시보관을 시도하며 발행 전에는 공개되지 않습니다.',
+      at: new Date().toISOString(),
+    }));
+  }, [page]);
 
   const blockWrite = createBlockWriteGuard({
     canWriteTabKey,
@@ -902,7 +956,7 @@ function App() {
     showToast,
   });
   const confirmLeaveStyleChanges = (onConfirm) => {
-    if (tab !== 'style' || !hasPendingStyle) return true;
+    if (!hasPendingStyle) return true;
     requestConfirm({
       title: '저장하지 않은 스타일 변경이 있습니다.',
       message: '저장하지 않고 이동하면 현재 미리보기 스타일은 버려집니다.',
@@ -942,11 +996,33 @@ function App() {
     setSaved,
   });
 
+  const applyPendingDrafts = () => {
+    const latest = latestPageRef.current || page;
+    const identity = pageOperationIdentity(latest);
+    const pendingCode = codeDraftsByPage[identity] || {};
+    const next = applyPendingEditorDrafts(latest, {
+      theme: stylePreviewTheme,
+      blocks: stylePreviewBlocks,
+      codeDrafts: pendingCode,
+    });
+    const committed = commitLocalPageDraft(next);
+    setPage(committed);
+    clearPendingStyle();
+    setCodeDraftsByPage((all) => {
+      const updated = { ...all };
+      delete updated[identity];
+      return updated;
+    });
+    return committed;
+  };
+
   const { saveNow } = usePageSaveAction({
     allowedTabs,
     tab,
     canWriteCurrentTab,
     hasPendingStyle,
+    hasPendingCode,
+    applyPendingDrafts,
     page,
     authUser,
     latestPageRef,
@@ -963,19 +1039,16 @@ function App() {
     setSaved,
   });
   const changeTab = (nextTab) => {
-    if (!allowedTabs.includes(nextTab)) return;
-    if (nextTab === tab) return;
-    const run = () => {
-      clearPendingStyle();
-      replaceLocationTab(TAB_KEYS, nextTab);
-      setTab(nextTab);
-      if (nextTab === 'edit') {
-        setOpenId('');
-        setAddOpen(false);
-      }
-    };
-    if (!confirmLeaveStyleChanges(run)) return;
-    run();
+    if (!allowedTabs.includes(nextTab) || nextTab === tab) return;
+    // Switching workspace tabs is not leaving the page. The staged style is
+    // owned by App and must survive StylePanel unmount/remount until explicit
+    // apply, reset, publish or an actual page/workspace exit.
+    replaceLocationTab(TAB_KEYS, nextTab);
+    setTab(nextTab);
+    if (nextTab === 'edit') {
+      setOpenId('');
+      setAddOpen(false);
+    }
   };
   const previewUrl = previewUrlForPage(page);
   const { templateChoices, loadTemplateModule } = useLandingTemplates({
@@ -997,18 +1070,20 @@ function App() {
   });
   const {
     chooseStartMode,
-    reopenStartChoice,
+    reopenStartChoice: reopenStartChoiceDirect,
     selectPreviewBlock,
     openWorkspace,
-    closeWorkspace,
+    closeWorkspace: closeWorkspaceDirect,
   } = useWorkspaceShellActions({
     page,
     allowedTabs,
     canUseBuilder,
     canManageAdmin,
     startMode,
-    confirmLeaveStyleChanges,
-    clearPendingStyle,
+    // Selecting another block on the same page must never discard the staged
+    // theme. Guard only actions that leave the editor, below.
+    confirmLeaveStyleChanges: () => true,
+    clearPendingStyle: () => {},
     saveLocalJson,
     setStartMode,
     setTab,
@@ -1016,6 +1091,19 @@ function App() {
     setAddOpen,
     setWorkspaceOpen,
   });
+
+  const closeWorkspace = () => {
+    if (!confirmLeaveStyleChanges(closeWorkspaceDirect)) return;
+    closeWorkspaceDirect();
+  };
+  const reopenStartChoice = () => {
+    const run = () => {
+      clearPendingStyle();
+      reopenStartChoiceDirect();
+    };
+    if (!confirmLeaveStyleChanges(run)) return;
+    run();
+  };
 
   const openDashboardPage = (item = {}) => {
     const slug = String(item.slug || '').trim();
@@ -1033,6 +1121,7 @@ function App() {
       ownerId: item.ownerId || authUser?.ownerId || '',
     });
     accountPageLoadRef.current = '';
+    clearPendingStyle();
     latestPageRef.current = targetPage;
     setPage(targetPage);
     setTab('edit');
@@ -1246,7 +1335,18 @@ function App() {
     duplicateBlock,
     reorderToIndex,
     ...fixedBlockRenderers,
-    renderBlockEditor: (block) => <BlockEditor block={block} page={page} updateBlock={updateBlock} editors={BLOCK_EDITORS} editorDeps={{ Color, Range, RichField, TargetControl, WidgetDesignControls, generateStandaloneFormHtml, authUser }} />,
+    renderBlockEditor: (block) => <BlockEditor block={block} page={page} updateBlock={updateBlock} editors={BLOCK_EDITORS} editorDeps={{
+      Color, Range, RichField, TargetControl, WidgetDesignControls, generateStandaloneFormHtml, authUser,
+      codeDraftForBlock: (blockId, html) => Object.prototype.hasOwnProperty.call(codeDraftsForPage, blockId) ? codeDraftsForPage[blockId] : html,
+      onCodeDraftChange: (blockId, html) => setCodeDraftsByPage((all) => ({
+        ...all, [currentEditorPageIdentity]: { ...(all[currentEditorPageIdentity] || {}), [blockId]: html },
+      })),
+      clearCodeDraft: (blockId) => setCodeDraftsByPage((all) => {
+        const updated = { ...(all[currentEditorPageIdentity] || {}) };
+        delete updated[blockId];
+        return { ...all, [currentEditorPageIdentity]: updated };
+      }),
+    }} />,
   };
 
   const {
@@ -1315,7 +1415,7 @@ function App() {
         page={page}
         tab={activeWorkspaceTab}
         saved={saved}
-        saveStatus={saveStatus}
+        saveStatus={{ ...saveStatus, hasUnappliedDrafts: hasPendingStyle || hasPendingCode }}
         onSave={saveNow}
         onPreview={openPreview}
         onDashboard={closeWorkspace}
@@ -1330,7 +1430,7 @@ function App() {
         allowedTabs={allowedTabs}
         changeTab={changeTab}
         editPanelProps={editPanelProps}
-        stylePanelProps={stylePanelProps}
+        stylePanelProps={{ ...stylePanelProps, stagedTheme: stylePreviewTheme, hasPendingStyle }}
         inboxPanelProps={inboxPanelProps}
         statsPanelProps={statsPanelProps}
         settingsPanelProps={settingsPanelProps}

@@ -352,6 +352,7 @@ function createApiMock(client, sharedState = null) {
     leadLoadCount: 0,
     loginBody: null,
     unexpectedApis: [],
+    externalRequests: [],
     interceptError: null,
   };
 
@@ -367,6 +368,13 @@ function createApiMock(client, sharedState = null) {
 
   const handler = async ({ requestId, request }) => {
     const url = new URL(request.url);
+    // The F04 QA must not send *any* external requests. Inspect attempted
+    // pixel/analytics requests without delivering real ad impressions.
+    if (['http:', 'https:'].includes(url.protocol) && !['localhost', '127.0.0.1'].includes(url.hostname)) {
+      state.externalRequests.push(request.url);
+      await client.send('Fetch.failRequest', { requestId, errorReason: 'BlockedByClient' });
+      return;
+    }
     if (!url.pathname.startsWith('/api/')) {
       await client.send('Fetch.continueRequest', { requestId });
       return;
@@ -959,6 +967,16 @@ async function run() {
     await client.send('Network.enable');
     await client.send('Fetch.enable', { patterns: [{ urlPattern: '*://*/*', requestStage: 'Request' }] });
     const apiState = createApiMock(client);
+    // Valid conversion tags make accidentally installing tracking observable.
+    apiState.currentPage.meta = {
+      ...apiState.currentPage.meta,
+      gtm: 'GTM-F04QA', ga4: 'G-F04QA123', googleAdsTag: 'AW-12345678',
+      pixel: '123456789012345', naver: 's_f04qa', kakao: '1234567890',
+    };
+    apiState.currentPage.integrations.conversion = {
+      enabled: true, dataLayer: true, metaPixel: true,
+      googleAds: true, naver: true, kakao: true,
+    };
     qaStep('launch authenticated editor');
 
     await setViewport(client, 1280, 900, false);
@@ -988,6 +1006,54 @@ async function run() {
     await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('#editor-block-editor-hero') && !!document.querySelector('.phone-frame')`, 'desktop editor');
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes('저장 전 히어로 제목')`, 'initial editor preview');
     assert(apiState.pageLoadCount >= 1, 'selected page was not loaded from the page API');
+    // F04: execute a real editor form with valid tracking IDs in the page.
+    // Only fake same-origin APIs are accessible; outbound origins are blocked.
+    const f04Before = await evaluate(client, `(() => {
+      window.__f04ConversionCount = 0;
+      window.addEventListener('inlet:form_submit', () => { window.__f04ConversionCount += 1; });
+      return {
+        keys: Object.keys(localStorage).filter((key) => key === 'pagero_client_id' || key.startsWith('inlet-duplicate-')).sort(),
+        clientCookie: document.cookie.includes('pagero_client_id='),
+        dataLayerLength: window.dataLayer?.length || 0,
+      };
+    })()`);
+    const f04ApiBefore = apiState.unexpectedApis.length;
+    const f04ExternalBefore = apiState.externalRequests.length;
+    await waitForBrowser(client,
+      `!!document.querySelector('.phone-frame .editor-preview #block-editor-form form')`,
+      'F04 consultation form mounted in editor preview');
+    await setInputValue(client, '.phone-frame #block-editor-form input[type="text"]', '미리보기 QA');
+    await setInputValue(client, '.phone-frame #block-editor-form input[type="tel"]', '01098765432');
+    await clickSelector(client, '.phone-frame #block-editor-form input[type="checkbox"]');
+    await clickSelector(client, '.phone-frame #block-editor-form button[type="submit"]');
+    await waitForBrowser(client, `!!document.querySelector('.phone-frame #block-editor-form .success')`,
+      'F04 simulated consultation succeeded without a stored lead');
+    const f04After = await evaluate(client, `(() => ({
+      keys: Object.keys(localStorage).filter((key) => key === 'pagero_client_id' || key.startsWith('inlet-duplicate-')).sort(),
+      clientCookie: document.cookie.includes('pagero_client_id='),
+      dataLayerLength: window.dataLayer?.length || 0,
+      conversionCount: window.__f04ConversionCount,
+      injectedPixelScripts: [...document.querySelectorAll('script[src]')].map((el) => el.src).filter(
+        (url) => ['googletagmanager.com', 'facebook.net/en_US/fbevents', 'wcs.naver.net', 'kas/static/kp.js'].some((token) => url.includes(token))
+      ),
+    }))()`);
+    assert(JSON.stringify(f04After.keys) === JSON.stringify(f04Before.keys)
+      && f04After.clientCookie === f04Before.clientCookie,
+      'F04 preview must not write visitor identity or duplicate leads: ' + JSON.stringify({ f04Before, f04After }));
+    assert(f04After.conversionCount === 0
+      && f04After.dataLayerLength === f04Before.dataLayerLength
+      && f04After.injectedPixelScripts.length === 0,
+      'F04 editor preview must not fire conversion or install advertising scripts: ' + JSON.stringify(f04After));
+    assert(apiState.unexpectedApis.length === f04ApiBefore && apiState.saveCount === 0,
+      'F04 preview must not call lead, event, analytics or save endpoints: '
+        + JSON.stringify(apiState.unexpectedApis.slice(f04ApiBefore)));
+    assert(apiState.externalRequests.length === f04ExternalBefore,
+      'F04 preview attempted outbound third-party tracking: '
+        + JSON.stringify(apiState.externalRequests.slice(f04ExternalBefore)));
+    await clickSelector(client, '.phone-frame #block-editor-form .success button');
+    await waitForBrowser(client, `!!document.querySelector('.phone-frame #block-editor-form form')`,
+      'F04 consultation preview reset without persisting');
+
 
     // ED-R08 integrated Chrome QA: download an actual JSON backup, attempt a
     // wrong-page upload, then import the real downloaded file through Chrome's
@@ -1370,6 +1436,32 @@ async function run() {
     const dragOrderAfter = await normalBlockOrder(client);
     assert(JSON.stringify(dragOrderAfter) !== JSON.stringify(dragOrderBefore), 'pointer drag did not change block order');
 
+    // F05: move HERO below a visible form through the actual editor UI.
+    // The previous renderer hoisted HERO regardless of the stored order.
+    await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-action');
+    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-menu')`,
+      'F05 hero action menu');
+    await clickButtonByText(client, '.screen-order-v2-menu', '아래로 이동');
+    await waitForBrowser(client, `(() => {
+      const rows = [...document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item')].map((x) => x.id);
+      return rows.indexOf('editor-block-editor-form') < rows.indexOf('editor-block-editor-hero');
+    })()`, 'F05 hero moved below form in editor');
+    const f05Order = await evaluate(client, `(() => {
+      const visibleIds = [...document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item:not(.is-hidden)')]
+        .map((row) => row.id.replace(/^editor-block-/, ''));
+      const previewIds = [...document.querySelectorAll('.phone-frame .landing-content > [id^="block-"]')]
+        .map((el) => el.id.replace(/^block-/, ''))
+        .filter((id) => visibleIds.includes(id));
+      return { visibleIds, previewIds };
+    })()`);
+    assert(f05Order.visibleIds.includes('editor-form')
+      && f05Order.visibleIds.indexOf('editor-form') < f05Order.visibleIds.indexOf('editor-hero'),
+      'F05 fixture must put HERO behind form, not merely verify the default order');
+    assert(JSON.stringify(f05Order.previewIds) === JSON.stringify(f05Order.visibleIds),
+      'F05 live preview order must match editor order including HERO: ' + JSON.stringify(f05Order));
+    assert(apiState.saveCount === 0, 'F05 reordering must remain a local draft until explicit publish');
+
+
     // E2E-11 / E2E-12: page/theme inspector previews the style draft, then applies it into the page draft.
     await clickButtonByText(client, '.edit-section-tabs', '페이지 옵션');
     await waitForBrowser(client, `!!document.querySelector('.editor-page-options-stack .style-panel')`, 'page theme editor');
@@ -1378,16 +1470,69 @@ async function run() {
     await setInputValue(client, '.style-panel input[type="color"]', updatedAccent);
     await waitForBrowser(client, `!document.querySelector('.style-apply-btn')?.disabled`, 'style apply enabled');
     assert(apiState.saveCount === 0, 'style preview must not publish automatically');
+
+    // F02: an unapplied style survives leaving the edit tab and remounting
+    // StylePanel. The top-level publish action must offer confirmation even
+    // while another allowed workspace tab (the inbox) is selected.
+    await clickSelector(client, '#workspace-tab-inbox');
+    await waitForBrowser(client,
+      `document.querySelector('#workspace-tab-inbox')?.getAttribute('aria-selected') === 'true'`,
+      'F02 inbox tab selected while unapplied style is staged');
+    assert(!await evaluate(client, `!!document.querySelector('.confirm-modal')`),
+      'F02 changing workspace tabs must not ask to discard a style draft');
+    assert(apiState.saveCount === 0, 'F02 workspace tab switch must not publish');
+    await clickSelector(client, '.panel-actions .primary-btn');
+    await waitForBrowser(client,
+      `document.querySelector('.confirm-modal #confirm-modal-title')?.textContent?.includes('미적용 변경을 발행할까요?')`,
+      'F02 tab-independent confirmation for an unapplied style');
+    assert(apiState.saveCount === 0, 'F02 confirmation must not publish without user approval');
+    await clickSelector(client, '.confirm-modal .confirm-cancel');
+    await waitForBrowser(client, `!document.querySelector('.confirm-modal')`,
+      'F02 cancelled confirmation keeps draft unsaved');
+    await clickSelector(client, '#workspace-tab-edit');
+    await waitForBrowser(client,
+      `document.querySelector('#workspace-tab-edit')?.getAttribute('aria-selected') === 'true'`,
+      'F02 back to edit tab');
+    await waitForBrowser(client,
+      `document.querySelector('.edit-section-tabs .edit-section-tab:first-child')?.textContent?.includes('미적용')`,
+      'F02 unapplied style badge survives workspace switch');
+    if (!(await evaluate(client, `!!document.querySelector('.editor-page-options-stack .style-panel')`))) {
+      await clickSelector(client, '.edit-section-tabs .edit-section-tab:first-child');
+    }
+    await waitForBrowser(client, `!!document.querySelector('.editor-page-options-stack .style-panel')`,
+      'F02 style panel remounted after returning to edit');
+    await clickButtonByText(client, '.style-subnav', '색상');
+    await waitForBrowser(client,
+      `document.querySelector('.style-panel input[type="color"]')?.value === ${JSON.stringify(updatedAccent)}`,
+      'F02 staged accent survives workspace switch');
+    assert(await evaluate(client, `document.querySelector('.style-apply-btn')?.disabled === false`),
+      'F02 restored staged style must remain unapplied');
+    assert(apiState.saveCount === 0, 'F02 cancelled publish and tab switches must make no server writes');
     await clickSelector(client, '.style-apply-btn');
     await waitForBrowser(client, `document.querySelector('.style-apply-btn')?.disabled === true`, 'style applied to page draft');
 
     await clickButtonByText(client, '.edit-section-tabs', '화면 순서');
     await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-list')`, 'screen order after style apply');
 
-    // E2E-13: preview action must not close or freeze the editor; continue editing afterwards.
-    await evaluate(client, `window.__pageroQaPreviewCalls = []; window.open = (...args) => { window.__pageroQaPreviewCalls.push(args); return { opener: null }; };`);
+    // E2E-13: the header shows the latest draft without opening the live
+    // published slug, and the editor remains editable after closing it.
+    await evaluate(client, `window.__pageroQaPreviewCalls = []; window.open = (...args) => { window.__pageroQaPreviewCalls.push(args); return null; };`);
     await clickButtonByText(client, '.panel-actions', '미리보기');
-    await waitForBrowser(client, `window.__pageroQaPreviewCalls?.length === 1`, 'preview window request');
+    await waitForBrowser(client, `!!document.querySelector('.editor-draft-preview-dialog')`, 'unsaved draft preview dialog');
+    const draftPreviewState = await evaluate(client, `(() => ({
+      visible: !!document.querySelector('.editor-draft-preview-phone .landing-page'),
+      publishedLink: document.querySelector('.editor-draft-preview-actions a')?.getAttribute('rel') || '',
+      openedCount: window.__pageroQaPreviewCalls?.length || 0,
+    }))()`);
+    assert(draftPreviewState.visible && draftPreviewState.publishedLink.includes('noopener') && draftPreviewState.openedCount === 0, 'draft must be shown without opening the live URL');
+    const f05HeaderPreviewOrder = await evaluate(client, `[...document.querySelectorAll(
+      '.editor-draft-preview-phone .landing-content > [id^="block-"]'
+    )].map((el) => el.id.replace(/^block-/, '')).filter((id) => ${JSON.stringify(f05Order.visibleIds)}.includes(id))`);
+    assert(JSON.stringify(f05HeaderPreviewOrder) === JSON.stringify(f05Order.visibleIds),
+      'F05 header draft renderer must retain HERO below form and match editor order: '
+        + JSON.stringify(f05HeaderPreviewOrder));
+
+    await clickButtonByText(client, '.editor-draft-preview-actions', '닫기');
     assert((await evaluate(client, 'location.pathname')) === '/app', 'preview action must keep the editor page active');
     await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'hero editor after preview');
@@ -1403,16 +1548,30 @@ async function run() {
     await waitForState(() => apiState.publicVerifyCount >= 1, 'first publish public verification');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(continuedHeroTitle)}`, 'newer local draft after delayed publish response');
     assert(apiState.saveSnapshots[0]?.blocks?.find((block) => block.id === 'editor-hero')?.s?.title === updatedHeroTitle, 'first server snapshot should contain the pre-race title');
+    const f05FirstPublishedOrder = (apiState.saveSnapshots[0]?.blocks || [])
+      .filter((block) => !['topnav', 'bottombar', 'footer'].includes(block.type) && block.visible !== false)
+      .map((block) => block.id);
+    assert(JSON.stringify(f05FirstPublishedOrder) === JSON.stringify(f05Order.visibleIds),
+      'F05 persisted block order must equal editor and preview order: '
+        + JSON.stringify({ f05FirstPublishedOrder, f05Order }));
+
     assert(apiState.saveSnapshots[0]?.theme?.accent === updatedAccent, 'style change was not included in the first publish snapshot');
 
     await waitForState(() => apiState.saveCount >= 2, 'automatic trailing publish');
     assert(apiState.saveCount === 2, `pending edit should require exactly one automatic trailing save, got ${apiState.saveCount}`);
     assert(apiState.saveSnapshots[1]?.blocks?.find((block) => block.id === 'editor-hero')?.s?.title === continuedHeroTitle, 'automatic trailing save did not capture the latest hero title');
+    const f05TrailingOrder = (apiState.saveSnapshots[1]?.blocks || [])
+      .filter((block) => !['topnav', 'bottombar', 'footer'].includes(block.type) && block.visible !== false)
+      .map((block) => block.id);
+    assert(JSON.stringify(f05TrailingOrder) === JSON.stringify(f05Order.visibleIds),
+      'F05 trailing publish must preserve HERO position despite async saves');
+
     await waitForState(() => apiState.publicVerifyCount >= 1, 'latest public verification after trailing save');
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(continuedHeroTitle)})`, 'latest saved editor preview');
     assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === continuedHeroTitle, 'latest server page does not contain the continued hero title');
     assert(apiState.currentPage.theme?.accent === updatedAccent, 'latest server page does not contain the applied accent');
     assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-text')?.visible === false, 'visibility change did not persist');
+
     await capture(client, 'desktop-editor-saved');
 
     // P4: restore a prior server revision into the editor draft, verify undo/redo,
@@ -1525,6 +1684,22 @@ async function run() {
     await waitForBrowser(client, `!!document.querySelector('.panel-actions .primary-btn:not(:disabled)')`, 'publish action after reload');
     await waitForState(() => apiState.pageLoadCount > pageLoadsBeforeReload, 'fresh account page read after reload');
     assert(apiState.saveCount === 3, `reload must not trigger another publish, got ${apiState.saveCount}`);
+    const f05AfterReload = await evaluate(client, `(() => {
+      const visibleIds = [...document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item:not(.is-hidden)')]
+        .map((row) => row.id.replace(/^editor-block-/, ''));
+      const previewIds = [...document.querySelectorAll('.phone-frame .landing-content > [id^="block-"]')]
+        .map((el) => el.id.replace(/^block-/, ''))
+        .filter((id) => visibleIds.includes(id));
+      return { visibleIds, previewIds };
+    })()`);
+    assert(JSON.stringify(f05AfterReload.visibleIds) === JSON.stringify(f05AfterReload.previewIds),
+      'F05 renderer must match persisted order after reload: ' + JSON.stringify(f05AfterReload));
+    const f05RevisionOrder = (apiState.currentPage.blocks || [])
+      .filter((block) => !['topnav', 'bottombar', 'footer'].includes(block.type) && block.visible !== false)
+      .map((block) => block.id);
+    assert(JSON.stringify(f05AfterReload.visibleIds) === JSON.stringify(f05RevisionOrder),
+      'F05 intentionally restored older revision must also render its own saved block order');
+
     const reloadGuardPrevented = await evaluate(client, `(() => {
       const event = new Event('beforeunload', { cancelable: true });
       window.dispatchEvent(event);

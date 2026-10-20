@@ -208,7 +208,7 @@ assert(pageSaveSource.includes('const queuedSaveRequestRef = useRef(null);'), 'p
 assert(pageSaveSource.includes('targetIdentity: pageOperationIdentity(queuedPage)'), 'queued clicks must capture the target page identity at click time');
 assert(pageSaveSource.includes('resumeExplicitSaveForActivePage({') && pageSaveSource.includes('if (resumedRequest)'), 'the in-flight queue must drain an explicit active-page save even after an old page becomes inactive');
 
-assert(pageSaveSource.includes('while (true)') && pageSaveSource.includes('await runSaveCycle(request);'), 'page saves must drain sequentially instead of issuing concurrent writes');
+assert(pageSaveSource.includes('while (true)') && pageSaveSource.includes('await runSaveCycle(request, firstCycle && confirmedDrafts);'), 'page saves must drain sequentially instead of issuing concurrent writes');
 assert(pageSaveSource.includes("markSaveStatus('warning', '저장 대기'"), 'a second save click during an active save must surface queued state');
 assert(pageSaveSource.includes('basePage: normalizePageForSave(latestPageRef.current || page)') && pageSaveSource.includes('resolveQueuedPageOverride({'), 'queued overrides must capture click-time baseline and rebase the patch over the latest fields');
 assert(pageSaveSource.includes('queued.targetIdentity === pageOperationIdentity(latestQueuedPage)') && pageSaveSource.includes('queued: queuedIsActive,'), 'a stale queued override must never be applied to a newly active different page');

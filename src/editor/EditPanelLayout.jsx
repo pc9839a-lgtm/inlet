@@ -15,6 +15,20 @@ export function EditPanelLayout({
   stylePanelProps,
 }) {
   const [section, setSection] = React.useState('order');
+  const selectedBlockId = fixedBlocksProps?.openId || screenOrderListProps?.selectedId;
+
+  React.useEffect(() => {
+    if (selectedBlockId) setSection('order');
+  }, [selectedBlockId]);
+
+  React.useEffect(() => {
+    if (!selectedBlockId || section !== 'order' || typeof window === 'undefined') return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(`editor-block-${selectedBlockId}`)
+        ?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [section, selectedBlockId]);
 
   return (
     <div className="edit-layout">
@@ -30,7 +44,7 @@ export function EditPanelLayout({
           aria-pressed={section === 'options'}
           onClick={() => setSection('options')}
         >
-          페이지 옵션
+          페이지 옵션{stylePanelProps?.hasPendingStyle ? ' · 미적용' : ''}
         </button>
         <button
           className="edit-section-tab"

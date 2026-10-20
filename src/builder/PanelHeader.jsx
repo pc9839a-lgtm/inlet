@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Redo2, Save, Undo2 } from 'lucide-react';
-import { pageOperationIdentity } from '../runtime/pageOperationIdentity.js';
+import { visibleEditorPublishState } from '../runtime/saveStatusActions.js';
 import {
   getPageEditHistoryState,
   redoPageEdit,
@@ -14,7 +14,7 @@ const saveStateColors = {
   error: '#b42318',
 };
 
-export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPreview, onDashboard, previewUrl, backupEnabled = false, onBackup, onImportBackup }) {
+export default function PanelHeader({ page, tab, saved, saveStatus, hasUnappliedDrafts = false, onSave, onPreview, onDashboard, previewUrl, backupEnabled = false, onBackup, onImportBackup }) {
   const [historyState, setHistoryState] = useState(() => getPageEditHistoryState());
   const backupFileInputRef = useRef(null);
   const backupMenuRef = useRef(null);
@@ -41,8 +41,8 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
     admin: '관리자',
   };
   const title = titles[tab] || titles.edit;
-  const showSaveAlert = saveStatus && (saveStatus.tone === 'warning' || saveStatus.tone === 'error');
-  const savedOnCurrentPage = saved && saveStatus?.savedPageIdentity === pageOperationIdentity(page);
+  const publishState = visibleEditorPublishState({ page, saved, saveStatus, hasUnappliedDrafts: hasUnappliedDrafts || saveStatus?.hasUnappliedDrafts });
+  const publishing = saveStatus?.phase === 'publishing';
   const historyEnabled = tab === 'edit' || tab === 'style' || tab === 'settings';
 
   useEffect(() => {
@@ -78,11 +78,10 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
         <p>{page.title}</p>
         <div className="operations-panel-title-row">
           <h1>{title}</h1>
-          {showSaveAlert && (
-            <div className="panel-save-status operations-save-status" role="status" aria-atomic="true" title={saveStatus.detail || saveStatus.label} aria-live="polite">
-              <strong style={{ color: saveStateColors[saveStatus.tone] }}>{saveStatus.label}</strong>
-            </div>
-          )}
+          <div className="panel-save-status operations-save-status" role="status" aria-atomic="true" title={publishState.detail || publishState.label} aria-live="polite">
+            <strong style={{ color: saveStateColors[publishState.tone] || 'var(--product-muted)' }}>{publishState.label}</strong>
+            {publishState.at && <time dateTime={publishState.at} title={publishState.at} style={{ marginLeft: 6, fontSize: 10 }}>{new Date(publishState.at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</time>}
+          </div>
         </div>
       </div>
 
@@ -123,8 +122,9 @@ export default function PanelHeader({ page, tab, saved, saveStatus, onSave, onPr
           type="button"
           onClick={onSave}
           title="편집 내용은 브라우저에 자동 임시보관됩니다. 발행하면 공개 페이지에 반영됩니다."
+          aria-busy={publishing}
         >
-          <Save size={14} aria-hidden="true" />{savedOnCurrentPage ? '발행됨' : '발행'}
+          <Save size={14} aria-hidden="true" />{publishing ? '발행 중' : publishState.tone === 'ok' && publishState.label === '발행됨' ? '발행됨' : '발행'}
         </button>
       </div>
     </header>

@@ -149,7 +149,7 @@ for (const [source, exportToken, classToken] of rendererContracts) {
 
 assert(files.landing.indexOf("block.type==='topnav'") < files.landing.indexOf("block.type==='hero'"), 'topnav should render before hero');
 assert(files.landing.includes('BlockErrorBoundary'), 'block error boundary should wrap preview blocks');
-assert(files.landing.includes('installConversionTracking(page)') && files.landing.includes('if (templatePreview) return;'), 'conversion tracking should skip template preview');
+assert(files.landing.includes('installConversionTracking(page)') && files.landing.includes('if (templatePreview || editorPreview) return;') && files.landing.includes("if (!editorPreview && !templatePreview) track?.({type:'page_view'"), 'conversion tracking should skip template preview');
 assert(files.landing.includes("page.theme.animPlayback === 'loop'") && files.landing.includes('prepareForReentry'), 'animation loop should replay on viewport re-entry');
 assert(files.animationCard.includes('updateTheme({ animPlayback })') && files.animationPlayback.includes('ANIMATION_PLAYBACK_OPTIONS'), 'animation playback editor contract missing');
 
@@ -240,7 +240,7 @@ assert(files.publicFormEmbed.includes("cache: 'no-store'") && !files.publicFormE
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_TEMPLATE_ROUTES'), 'browser QA template route support missing');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_STATE_PRESET') && files.browserVisualQa.includes('owner-settings'), 'browser QA authenticated presets missing');
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_SET_INPUT') && files.browserVisualQa.includes('INLET_BROWSER_QA_EXPECT_COMPUTED'), 'browser QA interaction/computed checks missing');
-assert(files.workspaceShellActions.includes("if (['topnav', 'bottombar', 'footer'].includes(target?.type))"), 'fixed block selection guard missing');
+assert(files.workspaceShellActions.includes('if (!target) return;') && files.workspaceShellActions.includes('setOpenId(id)'), 'preview selection must distinguish missing IDs from valid normal and fixed blocks');
 assert(
   files.fixedBlockSelection.includes("React.useState('')")
     && files.fixedBlocksProps.includes('openId: selection.fixedOpenId')

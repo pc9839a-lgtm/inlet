@@ -323,10 +323,20 @@ async function run() {
     await clickSelector(client, `.image-library-picker-item[title="${libraryFileName}"]`);
     await waitForBrowser(client, `!document.querySelector('.image-library-picker[role="dialog"]')`, 'video library dialog close');
     await waitForBrowser(client, `(document.querySelector('.screen-order-v2-inline-editor')?.innerText || '').includes('서버 저장 완료 · ${libraryFileName}')`, 'selected video editor state');
-    await waitForBrowser(client, `(() => {
-      const video = document.querySelector('.phone-frame #block-editor-video video');
-      return !!video && video.src === ${JSON.stringify(selectedVideoValue)} && video.readyState >= 1;
-    })()`, 'selected playable video preview');
+    try {
+      await waitForBrowser(client, `(() => {
+        const video = document.querySelector('.phone-frame #block-editor-video video');
+        return !!video && video.src === ${JSON.stringify(selectedVideoValue)} && video.readyState >= 1;
+      })()`, 'selected playable video preview');
+    } catch (error) {
+      const videoState = await evaluate(client, `(() => {
+        const video = document.querySelector('.phone-frame #block-editor-video video');
+        const block = document.querySelector('.phone-frame #block-editor-video');
+        return { blockHtml: block?.outerHTML?.slice(0, 800), videoSrc: video?.src, readyState: video?.readyState, networkState: video?.networkState, errorCode: video?.error?.code, errorMessage: video?.error?.message, currentSrc: video?.currentSrc };
+      })()`);
+      console.log('[editor-video] metadata diagnostic', JSON.stringify({ videoState, downloadCount: apiState.videoDownloadCount, unexpected: apiState.unexpectedApis }));
+      throw error;
+    }
     await capture(client, 'desktop-video-library-selected');
 
     await wait(350);
@@ -337,10 +347,43 @@ async function run() {
     assert(savedVideoBlock?.s?.videoUrl === selectedVideoValue, `published video block URL mismatch: ${savedVideoBlock?.s?.videoUrl || ''}`);
     assert(savedVideoBlock?.s?.videoFileName === libraryFileName, `published video filename mismatch: ${savedVideoBlock?.s?.videoFileName || ''}`);
 
+    // CDP's Page.reload acknowledges navigation before React mounts the new
+    // document. A row query alone can accidentally match the departing page.
+    const pageReadsBeforeReload = apiState.pageLoadCount;
+    await evaluate(client, "window.__qaVideoReloadMarker = 'departing-document'; true");
     await client.send('Page.reload', { ignoreCache: true });
-    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(videoRowHeadSelector)})`, 'reloaded editor video row');
-    await clickSelector(client, videoRowHeadSelector);
-    await waitForBrowser(client, `(document.querySelector('.screen-order-v2-inline-editor')?.innerText || '').includes('서버 저장 완료 · ${libraryFileName}')`, 'selected video editor state after reload');
+    await waitForBrowser(client, `window.__qaVideoReloadMarker !== 'departing-document' && !!document.querySelector(${JSON.stringify(videoRowHeadSelector)})`, 'reloaded editor video row');
+    await waitForState(() => apiState.pageLoadCount > pageReadsBeforeReload, 'fresh server video page read after reload');
+    // Block selection may survive the reload. The inline editor is a
+    // *sibling* of the row, not its child. Never toggle a selected row closed.
+    const videoRowSelected = await evaluate(client, `document.querySelector('#editor-block-editor-video')?.getAttribute('data-selected') === 'true'`);
+    if (!videoRowSelected) await clickSelector(client, videoRowHeadSelector);
+    try {
+      await waitForBrowser(client, `(document.querySelector('#editor-block-editor-video + .screen-order-v2-inline-editor')?.innerText || '').includes('서버 저장 완료 · ${libraryFileName}')`, 'selected video editor state after reload');
+    } catch (error) {
+      const detail = await evaluate(client, `(() => {
+        const row = document.querySelector('#editor-block-editor-video');
+        const video = document.querySelector('.phone-frame #block-editor-video');
+        const input = row?.nextElementSibling?.classList?.contains('screen-order-v2-inline-editor') ? row.nextElementSibling : null;
+        return {
+          selected: row?.getAttribute('data-selected'),
+          rowText: row?.innerText?.slice(0, 1000),
+          editorText: input?.innerText?.slice(0, 1000),
+          editorHTML: input?.outerHTML?.slice(0, 1000),
+          previewHTML: video?.outerHTML?.slice(0, 500),
+          pagePath: location.pathname,
+          visibleDialog: document.querySelector('[role="dialog"]')?.outerHTML?.slice(0, 250),
+        };
+      })()`);
+      console.log('[editor-video] reload diagnostic', JSON.stringify({
+        rowSelectedBeforeClick: videoRowSelected,
+        detail,
+        serverVideo: apiState.currentPage.blocks.find(b => b.id === 'editor-video')?.s,
+        saveCount: apiState.saveCount,
+        pageReads: apiState.pageLoadCount,
+      }));
+      throw error;
+    }
     await waitForBrowser(client, `(() => {
       const video = document.querySelector('.phone-frame #block-editor-video video');
       return !!video && video.src === ${JSON.stringify(selectedVideoValue)} && video.readyState >= 1;

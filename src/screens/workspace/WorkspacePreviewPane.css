@@ -162,3 +162,69 @@ body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .phone-frame .
   }
 }
 
+
+/* Top-bar draft preview is an isolated, unsaved, interactive editor canvas. */
+.editor-draft-preview-backdrop { z-index: 10000; }
+.editor-draft-preview-dialog {
+  width: min(620px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  height: min(940px, calc(100dvh - 24px));
+  max-height: calc(100dvh - 24px);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.editor-draft-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.editor-draft-preview-header h2 { margin: 0; font-size: 16px; }
+.editor-draft-preview-header p { margin: 4px 0 0; font-size: 12px; color: #596170; }
+.editor-draft-preview-actions { display: flex; align-items: center; gap: 10px; }
+.editor-draft-preview-actions a, .editor-draft-preview-actions button {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  padding: 9px 11px;
+  color: #111827;
+  font-size: 12px;
+  font-weight: 750;
+  text-decoration: none;
+  cursor: pointer;
+}
+.editor-draft-preview-stage {
+  display: flex;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 12px;
+  background: #e9edf2;
+  overflow: hidden;
+}
+.editor-draft-preview-dialog .editor-draft-preview-phone {
+  width: min(430px, 100%);
+  height: 100%;
+  max-height: none;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+  background: #fff;
+  border: 8px solid #111827;
+  border-radius: 26px;
+}
+.editor-draft-preview-phone > .landing-page {
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+@media (max-width: 520px) {
+  .editor-draft-preview-header { align-items: flex-start; padding: 12px; }
+  .editor-draft-preview-dialog { height: calc(100dvh - 12px); max-height: calc(100dvh - 12px); }
+  .editor-draft-preview-stage { padding: 6px; }
+}

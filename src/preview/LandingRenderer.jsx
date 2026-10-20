@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Share2 } from 'lucide-react';
 import { installConversionTracking, installPageHeadMeta } from '../lib/conversionTracking.js';
 import { normalizeExternalUrl } from '../lib/linkPreview.js';
+import { isEditorPreviewSafeMediaBlock, simulateEditorPreviewLead, visiblePreviewBlocks } from '../runtime/previewTarget.js';
 import './LandingRenderer.css';
 import { RenderCards as ContentRenderCards, RenderHero as ContentRenderHero, RenderText as ContentRenderText } from './renderers/ContentBlocks.jsx';
 import { RenderForm as FormRenderForm, RenderReservation as FormRenderReservation } from './renderers/FormBlocks.jsx';
@@ -131,18 +132,12 @@ function BgEffectLayer({ effect }) {
   );
 }
 
-function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '', onSelectBlock, templatePreview = false, publicView = false }) {
-  const suppressTopNav = page.slug === 'our-wedding-day' || page.title === '모바일 청첩장';
-  const blocks = page.blocks.filter(b=>b.visible && !(b.type === 'topnav' && (suppressTopNav || b.s?.omitRender)));
+function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '', onSelectBlock, templatePreview = false, editorPreview = false, publicView = false }) {
+  const blocks = visiblePreviewBlocks(page);
   const bottom = blocks.find(b=>b.type==='bottombar');
-  const normalRaw = blocks.filter(b=>b.type!=='bottombar');
-  const heroBlock = normalRaw.find((b)=>b.type === 'hero');
-  const topNavBlock = normalRaw.find((b)=>b.type === 'topnav');
-  const normal = [
-    ...(topNavBlock ? [topNavBlock] : []),
-    ...(heroBlock ? [heroBlock] : []),
-    ...normalRaw.filter((b)=>b.id !== heroBlock?.id && b.id !== topNavBlock?.id),
-  ];
+  // Preserve the editor's exact order, including a HERO placed after text.
+  // The fixed bottom bar remains outside the normal content flow.
+  const normal = blocks.filter(b=>b.type!=='bottombar');
   const pageRef = useRef(null);
   const [formInputActive, setFormInputActive] = useState(false);
   const [fixedUiHeights, setFixedUiHeights] = useState({ top: 0, bottom: 0 });
@@ -151,13 +146,13 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
   const bottomHasTimer = !!bottom?.s?.timerEnabled && !!syncedTimer;
   const bottomActive = !!bottom && (bottomHasButtons || bottomHasTimer);
 
-  useEffect(()=>{track?.({type:'page_view',label:'페이지뷰'});},[]);
+  useEffect(()=>{ if (!editorPreview && !templatePreview) track?.({type:'page_view',label:'페이지뷰'}); },[editorPreview, templatePreview]);
 
   useEffect(() => {
-    if (templatePreview) return;
+    if (templatePreview || editorPreview) return;
     installPageHeadMeta(page);
     installConversionTracking(page);
-  }, [templatePreview, page.title, page.meta?.title, page.meta?.desc, page.meta?.favicon, page.meta?.og, page.meta?.console, page.meta?.naverWebmaster, page.meta?.gtm, page.meta?.ga4, page.meta?.googleAdsTag, page.meta?.pixel, page.meta?.ads, page.meta?.naver, page.meta?.kakao, page.integrations?.conversion]);
+  }, [templatePreview, editorPreview, page.title, page.meta?.title, page.meta?.desc, page.meta?.favicon, page.meta?.og, page.meta?.console, page.meta?.naverWebmaster, page.meta?.gtm, page.meta?.ga4, page.meta?.googleAdsTag, page.meta?.pixel, page.meta?.ads, page.meta?.naver, page.meta?.kakao, page.integrations?.conversion]);
 
   useEffect(() => {
     const hash = decodeURIComponent(window.location.hash || '').replace(/^#/, '');
@@ -338,7 +333,10 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
   };
 
   const go = (target, url, labelText) => {
-    track?.({type:'cta_click',label:labelText||target});
+    if (!editorPreview) track?.({type:'cta_click',label:labelText||target});
+    // Draft interactions may scroll within the preview, but must not launch
+    // real calls, outbound links, or analytics actions.
+    if (editorPreview && (target === 'url' || target === 'phone')) return;
     if (target==='url' && url) return window.open(normalizeExternalUrl(url) || url,'_blank','noopener,noreferrer');
     if (target==='phone') return window.open(url||'tel:01000000000');
     const rawTarget = String(target || '');
@@ -356,13 +354,13 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
   const bgEffectOpacity = Math.max(0.1, Math.min(0.9, Number(page.theme.bgEffectOpacity ?? 45) / 100));
   const globalAlign = pickSafe(page.theme.globalAlign, ['left','center','right'], '');
   const bottomNode = bottomActive ? <RenderBottom block={bottom} blocks={blocks} accent={page.theme.accent} buttonEffect={buttonEffect} go={go} publicView={publicView} hiddenForForm={formInputActive}/> : null;
-  const pageClassName = `landing-page font-${page.theme.font} font-family-${page.theme.fontFamily || 'pretendard'} ${globalAlign ? `global-align-${globalAlign}` : ''} bgmode-${page.theme.bgMode || 'solid'} bg-effect-${bgEffect} button-effect-${buttonEffect} ${publicView ? 'public-render' : ''} ${templatePreview ? 'template-preview' : ''} ${bottomActive ? 'has-bottom-bar' : ''} ${formInputActive ? 'is-form-input-active' : ''} ${page.theme.animOn ? `anim-on anim-${page.theme.animType || 'fade'} anim-${page.theme.animPlayback === 'loop' ? 'loop' : 'once'}` : ''}`;
+  const pageClassName = `landing-page font-${page.theme.font} font-family-${page.theme.fontFamily || 'pretendard'} ${globalAlign ? `global-align-${globalAlign}` : ''} bgmode-${page.theme.bgMode || 'solid'} bg-effect-${bgEffect} button-effect-${buttonEffect} ${publicView ? 'public-render' : ''} ${templatePreview ? 'template-preview' : ''} ${editorPreview ? 'editor-preview' : ''} ${bottomActive ? 'has-bottom-bar' : ''} ${formInputActive ? 'is-form-input-active' : ''} ${page.theme.animOn ? `anim-on anim-${page.theme.animType || 'fade'} anim-${page.theme.animPlayback === 'loop' ? 'loop' : 'once'}` : ''}`;
 
   const pageNode = (
     <div ref={pageRef} onClickCapture={templatePreview || publicView ? undefined : handlePreviewSelect} className={pageClassName} style={{'--accent':page.theme.accent,'--button':page.theme.accent,'--button-text':'#ffffff','--bg':pageBg,'--card':page.theme.card,'--text':page.theme.text,'--radius':`${page.theme.radius}px`,'--bg-effect-opacity':bgEffectOpacity,'--page-fixed-top-height':`${fixedUiHeights.top}px`,'--page-fixed-bottom-height':`${fixedUiHeights.bottom}px`,background:pageBg,color:page.theme.text,backgroundSize:bgSize,backgroundPosition:bgPosition,backgroundRepeat:'no-repeat'}}>
-      <div className="landing-content">{normal.map(b=><RenderBlock key={b.id} page={page} block={b} blocks={blocks} leads={leads} addLead={addLead} track={track} go={go}/>)}</div>
+      <div className="landing-content">{normal.map(b=><RenderBlock key={b.id} page={page} block={b} blocks={blocks} leads={leads} addLead={editorPreview ? simulateEditorPreviewLead : addLead} track={editorPreview ? undefined : track} go={go} editorPreview={editorPreview}/>)}</div>
       <BgEffectLayer effect={bgEffect} />
-      {page.share?.enabled !== false && <PageShareButton page={page} publicView={publicView} />}
+      {!editorPreview && page.share?.enabled !== false && <PageShareButton page={page} publicView={publicView} />}
       {!publicView && bottomNode}
     </div>
   );
@@ -416,7 +414,7 @@ function RenderBlock(props) {
   );
 }
 
-function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, go }) {
+function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, go, editorPreview = false }) {
   const globalAlign = pickSafe(page?.theme?.globalAlign, ['left','center','right'], '');
   const renderBlock = globalAlign
     ? { ...block, s: { ...(block.s || {}), align: globalAlign, textAlign: globalAlign } }
@@ -435,10 +433,12 @@ function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, g
   if(block.type==='activity')return <SignalRenderActivity block={renderBlock} leads={leads}/>;
   if(block.type==='spacer')return <LayoutRenderSpacer block={renderBlock}/>;
   if(block.type==='divider')return <LayoutRenderDivider block={renderBlock}/>;
-  if(block.type==='code')return <UtilityRenderCode block={renderBlock}/>;
+  if(block.type==='code')return editorPreview && !isEditorPreviewSafeMediaBlock(renderBlock, typeof window !== 'undefined' ? window.location.origin : '')
+    ? <section id={`block-${block.id}`} className="landing-section code-widget-empty" role="note">코드 블록 실행은 편집 미리보기에서 중지됩니다.</section>
+    : <UtilityRenderCode block={renderBlock}/>;
   if(block.type==='search')return <UtilityRenderPageSearch block={renderBlock}/>;
-  if(block.type==='form')return <FormRenderForm block={renderBlock} addLead={addLead} track={track}/>;
-  if(block.type==='reservation')return <FormRenderReservation block={renderBlock} addLead={addLead} track={track}/>;
+  if(block.type==='form')return <FormRenderForm block={renderBlock} addLead={addLead} track={track} editorPreview={editorPreview}/>;
+  if(block.type==='reservation')return <FormRenderReservation block={renderBlock} addLead={addLead} track={track} editorPreview={editorPreview}/>;
   if(block.type==='footer')return <LayoutRenderFooter block={renderBlock}/>;
   return <section className="landing-section block-render-fallback"><strong>지원하지 않는 블록</strong></section>;
 }
