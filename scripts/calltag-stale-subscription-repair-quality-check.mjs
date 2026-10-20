@@ -22,7 +22,7 @@ for (const [name,condition] of Object.entries({
 })) assert.equal(condition,true,name);
 const secret='s'.repeat(70);
 const env={INLET_PRODUCTION_QA_SECRET:secret,DB:{
-  prepare:()=>({bind:()=>({all:async()=>({results:[]})})})
+  prepare:()=>({all:async()=>({results:[]}),bind:()=>({all:async()=>({results:[]})})})
 }};
 async function call({url='https://pagero.kr/api/qa/calltag-stale-subscription-repair',key=secret,body={mode:'preview'},method='POST'}={}) {
   return onRequest({env,request:new Request(url,{
