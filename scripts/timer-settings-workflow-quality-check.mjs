@@ -16,9 +16,9 @@ const pageModel = await readFile('src/lib/pageModel.js', 'utf8');
 
 for (const tab of [
   "id: 'basic'",
-  "label: '기본'",
+  "label: '내용'",
   "id: 'design'",
-  "label: '디자인'",
+  "label: '스타일'",
   "id: 'bottom'",
   "label: '하단 고정'",
 ]) {
