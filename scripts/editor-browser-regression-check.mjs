@@ -845,7 +845,7 @@ function assertDesktop(metrics) {
   assertInsideViewport(metrics.shell, metrics.innerWidth, 'desktop builder shell');
   assertInsideViewport(metrics.left, metrics.innerWidth, 'desktop left workspace');
   assertInsideViewport(metrics.preview, metrics.innerWidth, 'desktop preview workspace');
-  assert(metrics.frame?.top <= (metrics.preview?.top || 0) + 36, 'desktop phone preview must start near the top without a management bar gap');
+  assert(metrics.frame?.top <= (metrics.preview?.top || 0) + 94, 'desktop phone preview must follow its compact width selector');
   assertInsideViewport(metrics.workPanel, metrics.innerWidth, 'desktop work panel');
   assertInsideViewport(metrics.topTabs, metrics.innerWidth, 'desktop main tabs');
   assertInsideViewport(metrics.editTabs, metrics.innerWidth, 'desktop edit subsection tabs');
@@ -1131,6 +1131,32 @@ async function run() {
         && !previewManagementUi.publishChecklist,
       `editor preview must not render the removed management toolbar: ${JSON.stringify(previewManagementUi)}`,
     );
+
+    // D04: changing the editor-only viewport must resize actual rendered
+    // landing content (excluding the phone border), preserve the draft, and
+    // never publish a page or change the public renderer.
+    const d04WidthSamples = [];
+    for (const width of [360, 390, 430]) {
+      await clickSelector(client, `.preview-width-option[data-content-width="${width}"]`);
+      await waitForBrowser(client, `document.querySelector('.preview-width-option[data-content-width="${width}"]')?.getAttribute('aria-pressed') === 'true'`, `D04 selected ${width}px`);
+      await waitForBrowser(client, `(() => {
+        const content = document.querySelector('.preview-workspace .phone-frame > .landing-page');
+        const actual = Number(document.querySelector('.preview-width-measured')?.dataset.measuredWidth);
+        return !!content && Math.abs(content.getBoundingClientRect().width - ${width}) <= 2
+          && actual === ${width}
+          && document.querySelectorAll('.preview-width-option[aria-pressed="true"]').length === 1
+          && document.querySelector('.preview-width-option[data-content-width="${width}"]')?.getAttribute('aria-pressed') === 'true';
+      })()`, `D04 actual content width ${width}px`);
+      d04WidthSamples.push(await evaluate(client, `(() => ({
+        selected: document.querySelector('.preview-width-option[aria-pressed="true"]')?.dataset.contentWidth,
+        actual: Math.round(document.querySelector('.preview-workspace .landing-page')?.getBoundingClientRect().width || 0),
+        frame: Math.round(document.querySelector('.preview-workspace .phone-frame')?.getBoundingClientRect().width || 0),
+      }))()`));
+    }
+    await clickSelector(client, '.preview-width-option[data-content-width="390"]');
+    assert(d04WidthSamples.every((item) => Number(item.selected) === item.actual && item.frame >= item.actual + 14),
+      `D04 selected and measured content widths must agree without counting phone borders: ${JSON.stringify(d04WidthSamples)}`);
+    assert(apiState.saveCount === 0, 'D04 width selection must not publish');
 
     const editSectionTabStyle = await evaluate(client, `(() => {
       const tabs = document.querySelector('.edit-section-tabs[data-pagero-ui="edit-section-tabs-v2"]');

@@ -65,6 +65,78 @@ html body #root .builder-shell .preview-workspace .phone-frame {
   border: 8px solid #111827 !important;
 }
 
+/* D04: editor-only selectable viewport. Widths refer to rendered landing content;
+   the 8px phone borders are excluded from the selected and measured values. */
+html body #root .builder-shell.edit-mode-shell .preview-workspace .preview-sticky {
+  width: min(480px, 100%) !important;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+html body #root .builder-shell.edit-mode-shell .preview-workspace .preview-width-toolbar {
+  align-self: center;
+  width: min(446px, 100%);
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  color: var(--product-muted);
+  font-size: 12px;
+}
+
+html body #root .builder-shell.edit-mode-shell .preview-width-options {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 9px;
+  background: var(--product-panel);
+  border: 1px solid var(--product-line);
+}
+
+html body #root .builder-shell.edit-mode-shell .preview-width-option {
+  min-width: 41px;
+  min-height: 30px;
+  padding: 5px 7px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--product-muted);
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+html body #root .builder-shell.edit-mode-shell .preview-width-option[aria-pressed='true'] {
+  background: var(--product-text);
+  color: #fff;
+}
+
+html body #root .builder-shell.edit-mode-shell .preview-width-option:focus-visible {
+  outline: 2px solid var(--product-text);
+  outline-offset: 2px;
+}
+
+html body #root .builder-shell.edit-mode-shell .preview-width-measured {
+  min-width: 74px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+html body #root .builder-shell.edit-mode-shell .preview-workspace .phone-frame {
+  /* Public landing retains its 414px cap; the editor alone uses the chosen width. */
+  --landing-runtime-width: var(--editor-preview-content-width, 390px);
+  box-sizing: border-box;
+  width: min(calc(var(--editor-preview-content-width, 390px) + 16px), 100%) !important;
+  max-width: 100% !important;
+  height: min(820px, calc(100dvh - 108px)) !important;
+}
+
 /* Non-edit preview geometry formerly carried by editor-final-clean.css.
    WorkspacePreviewPane owns preview presentation in every workspace mode. */
 body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) {

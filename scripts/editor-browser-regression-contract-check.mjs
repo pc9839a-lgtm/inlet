@@ -27,6 +27,8 @@ const workspacePanelPropsSource = await readFile('src/runtime/createWorkspacePan
 const pageOptionsCssSource = await readFile('src/editor/editPanelParts/PageGlobalOptions.css', 'utf8');
 const editorWorkspaceCssSource = await readFile('src/styles/editor-workspace.css', 'utf8');
 const workspaceShellCssSource = await readFile('src/styles/workspace-shell.css', 'utf8');
+const workspacePreviewSource = await readFile('src/screens/workspace/WorkspacePreviewPane.jsx', 'utf8');
+const workspacePreviewCssSource = await readFile('src/screens/workspace/WorkspacePreviewPane.css', 'utf8');
 const mobileOperationsCssSource = await readFile('src/screens/workspace/MobileOperations.css', 'utf8');
 
 assert(packageJson.scripts?.['browser:editor:qa'] === 'node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-browser-regression-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-image-library-browser-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/editor-video-library-browser-check.mjs && node --import ./scripts/editor-browser-cdp-compat.mjs scripts/media-library-settings-browser-check.mjs', 'browser:editor:qa must run editor, image/video reuse, and media settings E2E');
@@ -51,6 +53,17 @@ assert(workflowSource.includes('include-hidden-files: true'), 'hidden browser sc
 assert(browserSource.includes("`${origin}/login`") && browserSource.includes("input[placeholder=\"email@example.com\"]"), 'browser QA must start from the real login screen');
 assert(browserSource.includes("pathname === '/api/auth/login'") && browserSource.includes("pathname === '/api/auth/session'"), 'browser QA must mock login and session refresh APIs');
 assert(browserSource.includes("pathname === '/api/projects'") && browserSource.includes(".service-landing-card"), 'browser QA must load and select a dashboard page');
+assert(workspacePreviewSource.includes('PREVIEW_CONTENT_WIDTHS = [360, 390, 430]')
+  && workspacePreviewSource.includes('data-content-width={width}')
+  && workspacePreviewSource.includes('aria-pressed={contentWidth === width}')
+  && workspacePreviewSource.includes('new ResizeObserver(measure)')
+  && workspacePreviewSource.includes("querySelector('.landing-page')"),
+  'D04 editor preview must expose accessible content widths and measure actual rendered landing pixels');
+assert(workspacePreviewCssSource.includes('var(--editor-preview-content-width, 390px)')
+  && workspacePreviewCssSource.includes('.builder-shell.edit-mode-shell .preview-workspace .phone-frame'),
+  'D04 CSS viewport selection must be scoped to editor mode, never public landing');
+assert(browserSource.includes('D04 actual content width') && browserSource.includes('d04WidthSamples'),
+  'D04 real editor Chrome regression must click all three widths and verify actual pixels');
 assert(browserSource.includes('previewManagementUi') && browserSource.includes('!previewManagementUi.canvasHeading') && browserSource.includes('!previewManagementUi.conversionCockpit') && browserSource.includes('!previewManagementUi.publishChecklist'), 'browser QA must verify the redundant preview management bars are absent');
 assert(browserSource.includes("clickSelector(client, '#workspace-tab-inbox')") && browserSource.includes('inboxTransitionFocused'), 'browser QA must verify inbox remains available and keyboard accessible via the workspace tab');
 assert(browserSource.includes("pathname === '/api/account-page'") && browserSource.includes("#editor-block-editor-hero") && browserSource.includes(".screen-order-v2-head") && browserSource.includes(".screen-order-v2-inline-editor textarea[placeholder=\"핵심 제목을 입력하세요\"]") && browserSource.includes('브라우저 저장 검증 완료'), 'browser QA must open the current account page, edit the active inline block editor, and verify live preview');
