@@ -51,6 +51,62 @@ export async function syncPlayEarningsHistory(env, db, requestedMonth = '', back
   };
 }
 
+// Aggregated, read-only reconciliation: report sales are NOT synonymous with
+// active subscribers. Never expose GPA order IDs or customer identifiers.
+export async function auditPlayEarningsOrderCoverage(env = {}, db, maximumMonths = 3) {
+  const bucket = text(env.GOOGLE_PLAY_REPORT_BUCKET, 200) || DEFAULT_REPORT_BUCKET;
+  const groups = await listEarningsGroups(env, bucket);
+  const months = [...groups.keys()].sort().reverse().slice(0, Math.max(1, Math.min(4, maximumMonths)));
+  const records = await db.prepare(
+    "SELECT order_id,product_code FROM billing_subscriptions WHERE channel='google_play' AND COALESCE(order_id,'')!=''"
+  ).all();
+  const known = new Map();
+  for (const row of (Array.isArray(records?.results) ? records.results : [])) {
+    const family = orderFamily(row.order_id);
+    if (!family) continue;
+    known.set(family + ':' + String(row.product_code || ''), true);
+    known.set(family + ':*', true);
+  }
+  const results = [];
+  for (const month of months) {
+    const eventSeen = new Set();
+    const paidOrderIds = new Set();
+    const paidFamilies = new Set();
+    const unknownFamilies = new Set();
+    let chargeEvents = 0;
+    let refunds = 0;
+    for (const object of (groups.get(month) || [])) {
+      const report = await importEarningsObject(env, bucket, object.name, month);
+      for (const event of report.events) {
+        const family = orderFamily(event.orderId);
+        if (!family) continue;
+        const key = [event.orderId,event.productCode,event.eventType].join(':');
+        if (eventSeen.has(key)) continue;
+        eventSeen.add(key);
+        if (event.eventType === 'refund') { refunds++; continue; }
+        if (event.eventType !== 'charge' || event.status !== 'paid' || event.amountKrw <= 0) continue;
+        chargeEvents++;
+        paidOrderIds.add(event.orderId);
+        paidFamilies.add(family);
+        if (!known.has(family + ':' + event.productCode) && !known.has(family + ':*')) {
+          unknownFamilies.add(family);
+        }
+      }
+    }
+    results.push({
+      month,
+      chargeEvents,
+      distinctPaidOrders:paidOrderIds.size,
+      distinctPaidOrderFamilies:paidFamilies.size,
+      paidFamiliesWithoutStoredSubscription:unknownFamilies.size,
+      refundEvents:refunds,
+      reportFiles:(groups.get(month)||[]).length,
+    });
+  }
+  return { availableReportMonths:[...groups.keys()].sort().reverse().slice(0,12),
+    scannedMonths:results.length, reports:results };
+}
+
 export async function ensureSchemas(db) {
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS calltag_play_earnings_monthly (

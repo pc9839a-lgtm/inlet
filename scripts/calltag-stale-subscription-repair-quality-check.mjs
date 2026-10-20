@@ -22,7 +22,7 @@ for (const [name,condition] of Object.entries({
 })) assert.equal(condition,true,name);
 const secret='s'.repeat(70);
 const env={INLET_PRODUCTION_QA_SECRET:secret,DB:{
-  prepare:()=>({bind:()=>({all:async()=>({results:[]})})})
+  prepare:()=>({all:async()=>({results:[]}),bind:()=>({all:async()=>({results:[]})})})
 }};
 async function call({url='https://pagero.kr/api/qa/calltag-stale-subscription-repair',key=secret,body={mode:'preview'},method='POST'}={}) {
   return onRequest({env,request:new Request(url,{
@@ -39,4 +39,33 @@ const preview=await (await call()).json();
 assert.equal(preview.ok,true);
 assert.equal(preview.examined,0);
 assert.equal(preview.applied,false);
+// A service account email is not an API credential; share it only after the
+// existing strong production-QA secret gate, never expose private key contents.
+env.GOOGLE_PLAY_CLIENT_EMAIL='server-play@some-project.iam.gserviceaccount.com';
+env.GOOGLE_PLAY_PRIVATE_KEY='-----BEGIN PRIVATE KEY-----\\nTEST-ONLY\\n-----END PRIVATE KEY-----';
+const identity=await (await call({body:{mode:'identity'}})).json();
+assert.equal(identity.ok,true);
+assert.equal(identity.serviceAccountEmail,'server-play@some-project.iam.gserviceaccount.com');
+assert.equal(identity.serviceAccountFormatValid,true);
+assert.equal(identity.privateKeyConfigured,true);
+assert(!JSON.stringify(identity).includes('TEST-ONLY'),'no secret content in response');
+assert.equal((await call({key:'bad',body:{mode:'identity'}})).status,404);
+console.log('ok - Play service-account identity available only after QA-secret authentication');
+// A payment completeness audit never writes: counts and statuses only.
+const playEarningsSource=readFileSync('functions/api/billing/_playEarningsHistory.js','utf8');
+const auditStart=playEarningsSource.indexOf('export async function auditPlayEarningsOrderCoverage');
+const auditEnd=playEarningsSource.indexOf('export async function ensureSchemas',auditStart);
+assert(auditStart>0&&auditEnd>auditStart,'read-only earnings function exists');
+const auditCode=playEarningsSource.slice(auditStart,auditEnd);
+assert(!/\b(INSERT|UPDATE|DELETE|REPLACE|\.run\()\b/i.test(auditCode),'Google earnings inventory must be read-only');
+assert(auditCode.includes('paidFamiliesWithoutStoredSubscription'),'unmatched order-family count retained');
+const inventory=await (await call({body:{mode:'inventory'}})).json();
+assert.equal(inventory.ok,true);
+assert.equal(inventory.mode,'inventory');
+assert.equal(inventory.readOnly,true);
+assert.equal(inventory.inventory.registered_subscriptions.available,false);
+assert.equal(inventory.reportCoverage.available,false);
+assert(!JSON.stringify(inventory).includes('TEST-ONLY'),'secrets are never returned');
+assert.equal((await call({key:'bad',body:{mode:'inventory'}})).status,404);
+console.log('ok - aggregate-only unmatched payer inventory, gated by production QA secret');
 console.log('CallTag secure provider-backed subscription repair checks passed');
