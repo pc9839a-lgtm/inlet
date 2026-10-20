@@ -1819,6 +1819,24 @@ async function run() {
       }
 
       if (desktopViewport.narrow) {
+        // D05: a row the user is already viewing must not make the stacked
+        // preview scroll the outer page to the preview area.
+        const beforeD05 = await evaluate(client, `(() => {
+          const row = document.querySelector('#editor-block-editor-form .screen-order-v2-head');
+          if (!row) return null;
+          row.scrollIntoView({ behavior: 'instant', block: 'center' });
+          const before = document.scrollingElement?.scrollTop ?? window.scrollY;
+          row.click();
+          return { before, viewport: innerWidth };
+        })()`);
+        assert(beforeD05 && beforeD05.viewport === desktopViewport.width, 'D05 stacked editor row click setup failed');
+        await waitForBrowser(client,
+          `document.querySelector('#editor-block-editor-form')?.dataset.selected === 'true'`,
+          `D05 narrow desktop row selection ${desktopViewport.width}px`);
+        await wait(160);
+        const afterD05 = await evaluate(client, 'document.scrollingElement?.scrollTop ?? window.scrollY');
+        assert(Math.abs(afterD05 - beforeD05.before) <= 4,
+          `D05 row selection changed outer scroll at ${desktopViewport.width}px: ${beforeD05.before} -> ${afterD05}`);
         const matrixMetrics = await collectNarrowDesktopMetrics(client);
         assertNarrowDesktop(matrixMetrics, desktopViewport.width);
       } else {
