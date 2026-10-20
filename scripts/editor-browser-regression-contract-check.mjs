@@ -87,7 +87,7 @@ const editPanelLayoutSource = await readFile('src/editor/EditPanelLayout.jsx', '
 const screenOrderListItemsSource = await readFile('src/editor/editPanelParts/ScreenOrderListItems.jsx', 'utf8');
 assert(previewPaneSource.includes("frameRef.current?.querySelector('.landing-page')")
   && previewPaneSource.includes('scroller.scrollTop = next')
-  && !previewPaneSource.includes('scrollIntoView()') ,
+  && !previewPaneSource.includes('target?.scrollIntoView'),
   'D05 preview selection must scroll only inside the phone content, never the window');
 assert(!editPanelLayoutSource.includes('scrollIntoView')
   && !screenOrderListItemsSource.includes('scrollIntoView'),
