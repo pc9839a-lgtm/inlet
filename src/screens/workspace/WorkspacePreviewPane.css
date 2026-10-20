@@ -68,6 +68,7 @@ html body #root .builder-shell .preview-workspace .phone-frame {
 /* D04: editor-only selectable viewport. Widths refer to rendered landing content;
    the 8px phone borders are excluded from the selected and measured values. */
 html body #root .builder-shell.edit-mode-shell .preview-workspace .preview-sticky {
+  width: min(480px, 100%) !important;
   display: flex;
   flex-direction: column;
   gap: 8px;
