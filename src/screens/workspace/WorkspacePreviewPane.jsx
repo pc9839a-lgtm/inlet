@@ -18,9 +18,19 @@ export function WorkspacePreviewPane({
   useEffect(() => {
     if (!selectedBlockId || typeof window === 'undefined') return undefined;
     const frame = window.requestAnimationFrame(() => {
+      const scroller = frameRef.current?.querySelector('.landing-page');
       const target = previewRef.current?.querySelector('[data-preview-selected="true"]')
         || previewRef.current?.querySelector(`#block-${selectedBlockId}`);
-      target?.scrollIntoView?.({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+      if (!scroller || !target || !scroller.contains(target)) return;
+
+      // D05: scroll only the phone's landing content. scrollIntoView() scrolls
+      // the page itself when editor and preview stack on narrow desktop.
+      const viewport = scroller.getBoundingClientRect();
+      const block = target.getBoundingClientRect();
+      const offset = (block.top + block.height / 2) - (viewport.top + viewport.height / 2);
+      const maxScroll = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+      const next = Math.max(0, Math.min(maxScroll, scroller.scrollTop + offset));
+      if (Math.abs(scroller.scrollTop - next) > 1) scroller.scrollTop = next;
     });
     return () => window.cancelAnimationFrame(frame);
   }, [selectedBlockId]);

@@ -21,14 +21,8 @@ export function EditPanelLayout({
     if (selectedBlockId) setSection('order');
   }, [selectedBlockId]);
 
-  React.useEffect(() => {
-    if (!selectedBlockId || section !== 'order' || typeof window === 'undefined') return undefined;
-    const frame = window.requestAnimationFrame(() => {
-      document.getElementById(`editor-block-${selectedBlockId}`)
-        ?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [section, selectedBlockId]);
+  // D05: row selection must not auto-scroll the outer editor. An explicit
+  // preview-to-editor click is handled by useWorkspaceShellActions.
 
   return (
     <div className="edit-layout">

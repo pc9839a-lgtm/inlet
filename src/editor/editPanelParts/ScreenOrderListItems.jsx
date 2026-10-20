@@ -16,20 +16,11 @@ export function ScreenOrderListItems({
 }) {
   const total = normalBlocks.length;
   const rowIdentities = createScreenOrderIdentities(normalBlocks);
-  const listRef = React.useRef(null);
-
-  React.useEffect(() => {
-    if (!selectedId || typeof window === 'undefined') return undefined;
-    const frame = window.requestAnimationFrame(() => {
-      listRef.current
-        ?.querySelector('[data-selected="true"]')
-        ?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [selectedId, normalBlocks.length]);
+  // D05: removing a redundant auto-scroll keeps row clicks from moving the
+  // document and fighting preview-to-editor navigation.
 
   return (
-    <div className="screen-order-v2-list" ref={listRef}>
+    <div className="screen-order-v2-list">
       {normalBlocks.map((block, index) => (
         <ScreenOrderItem
           key={block.id}

@@ -82,6 +82,19 @@ assert(browserSource.includes("'revision restore unsaved navigation guard'"), 'b
 assert(browserSource.includes("apiState.saveCount === 2") && browserSource.includes("apiState.saveCount === 3") && browserSource.includes("public verification after revision publish"), 'revision restore must remain local until explicit publish and then verify public readback');
 assert(workspacePanelPropsSource.includes('setPage: setNormalizedPage'), 'settings panel must route revision restore through the canonical normalized page mutation setter');
 assert(browserSource.includes("{ name: 'pc-900', width: 900") && browserSource.includes("{ name: 'pc-1024', width: 1024") && browserSource.includes("{ name: 'pc-1180', width: 1180") && browserSource.includes("{ name: 'pc-1440', width: 1440") && browserSource.includes("assertNarrowDesktop") && browserSource.includes("assertDesktop"), 'browser QA must cover 900/1024/1180/1440 desktop widths separately from mobile operations mode');
+const previewPaneSource = await readFile('src/screens/workspace/WorkspacePreviewPane.jsx', 'utf8');
+const editPanelLayoutSource = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
+const screenOrderListItemsSource = await readFile('src/editor/editPanelParts/ScreenOrderListItems.jsx', 'utf8');
+assert(previewPaneSource.includes("frameRef.current?.querySelector('.landing-page')")
+  && previewPaneSource.includes('scroller.scrollTop = next')
+  && !previewPaneSource.includes('target?.scrollIntoView'),
+  'D05 preview selection must scroll only inside the phone content, never the window');
+assert(!editPanelLayoutSource.includes('scrollIntoView')
+  && !screenOrderListItemsSource.includes('scrollIntoView'),
+  'D05 normal editor selection must not trigger duplicate document scroll effects');
+assert(browserSource.includes('D05 row selection changed outer scroll')
+  && browserSource.includes('beforeD05'),
+  'D05 isolated browser QA must verify narrow desktop scroll stability');
 assert(browserSource.includes("desktop editor and preview overlap") && browserSource.includes("desktop shell must keep two grid columns") && browserSource.includes("narrow desktop shell must stack into one grid column") && browserSource.includes("desktop edit subsection tabs"), 'desktop matrix must lock non-overlap, two-column desktop, stacked narrow desktop, and editor tab bounds');
 assert(browserSource.includes("publicVerifyCount") && browserSource.includes("saveCount === 0"), 'browser QA must verify that editing stays local until explicit publish and then verifies the public page');
 assert(browserSource.includes("{ name: 'mobile-360', width: 360") && browserSource.includes("{ name: 'mobile-390', width: 390") && browserSource.includes("{ name: 'mobile-430', width: 430"), 'browser QA must cover 360, 390, and 430 pixel mobile widths');
