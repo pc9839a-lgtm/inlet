@@ -31,6 +31,7 @@ export function WorkspaceLeftPanel({
   editPanelProps,
   inspectorHost,
   onActivateInspector,
+  previewSelectionRequest,
   stylePanelProps,
   inboxPanelProps,
   statsPanelProps,
@@ -179,6 +180,7 @@ export function WorkspaceLeftPanel({
               editPanelProps={editPanelProps}
               inspectorHost={inspectorHost}
               onActivateInspector={onActivateInspector}
+              previewSelectionRequest={previewSelectionRequest}
               stylePanelProps={stylePanelProps}
               inboxPanelProps={inboxPanelProps}
               statsPanelProps={statsPanelProps}
