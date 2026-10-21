@@ -104,7 +104,7 @@ export default function WorkspaceEditorScreen({
       />}
       {editWorkspace && canUseBuilder && (
         <aside id="pagero-settings-panel" className="editor-inspector-host"
-          ref={setInspectorHost} aria-label="선택한 블록 상세 설정" />
+          ref={setInspectorHost} role="region" tabIndex={0} aria-label="선택한 블록 상세 설정" />
       )}
     </div>
   );
