@@ -29,6 +29,7 @@ export function WorkspaceLeftPanel({
   allowedTabs,
   changeTab,
   editPanelProps,
+  inspectorHost,
   stylePanelProps,
   inboxPanelProps,
   statsPanelProps,
@@ -159,7 +160,7 @@ export function WorkspaceLeftPanel({
     <aside className="left-workspace">
       {!showTemplateIntro && <div className="workspace-persistent-header">{header}</div>}
 
-      <section className="work-panel">
+      <section className="work-panel" id="pagero-block-panel">
         {showTemplateIntro ? (
           <LazyChunkBoundary resetKey="templates">
             <Suspense fallback={<LazyPanelFallback />}>
@@ -175,6 +176,7 @@ export function WorkspaceLeftPanel({
               mobileOperationsOnly={mobileOperationsOnly}
               tab={tab}
               editPanelProps={editPanelProps}
+              inspectorHost={inspectorHost}
               stylePanelProps={stylePanelProps}
               inboxPanelProps={inboxPanelProps}
               statsPanelProps={statsPanelProps}
