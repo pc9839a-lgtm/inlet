@@ -47,6 +47,7 @@ export default function WorkspaceEditorScreen({
   const [inspectorHost, setInspectorHost] = React.useState(null);
   const [blockListOpen, setBlockListOpen] = React.useState(false);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const [previewSelectionRequest, setPreviewSelectionRequest] = React.useState(0);
   const effectiveTab = tab === 'style' ? 'edit' : tab;
   const inboxWorkspace = !mobileOperationsOnly && effectiveTab === 'inbox';
   const statsWorkspace = !mobileOperationsOnly && effectiveTab === 'stats';
@@ -68,6 +69,9 @@ export default function WorkspaceEditorScreen({
   const handleSelectPreviewBlock = React.useCallback((id) => {
     if (!id) return;
     onSelectPreviewBlock?.(id);
+    // An already-selected block may be clicked while page options are open.
+    // Still switch the inspector back to block settings on every canvas click.
+    setPreviewSelectionRequest((request) => request + 1);
     openInspector();
   }, [onSelectPreviewBlock, openInspector]);
 
@@ -105,6 +109,7 @@ export default function WorkspaceEditorScreen({
         editPanelProps={editPanelProps}
         inspectorHost={inspectorHost}
         onActivateInspector={openInspector}
+        previewSelectionRequest={previewSelectionRequest}
         stylePanelProps={stylePanelProps}
         inboxPanelProps={inboxPanelProps}
         statsPanelProps={statsPanelProps}
