@@ -70,7 +70,7 @@ assert(screenOrderList.includes('ScreenOrderListItems') &&
   'block list must preserve ordering, selection, and row operations');
 assert(fixedBlocks.includes('inlineEditor={inlineEditor}') &&
   fixedCard.includes('open && inlineEditor') &&
-  layout.includes('<GlobalFixedBlocks {...fixedBlocksProps} inlineEditor={false} />'),
+  layout.includes('<GlobalFixedBlocks {...fixedBlocksProps} inlineEditor={false}'),
   'fixed-area list rows must select without duplicating editor inputs');
 assert(layout.includes('<AddBlockDock {...addBlockDockProps} />') &&
   layout.includes('<PageThemeStylePanel {...stylePanelProps} />'),
@@ -126,9 +126,32 @@ assert(workspaceCss.includes('.preview-workspace-shell') &&
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 26,
+  checks: 31,
   scope: 'pagero-editor-shell-three-pane',
   shell: ['block-list', 'canvas', 'inspector'],
   legacyStyleRouteNormalized: true,
   publicRuntimeTouched: false,
 }, null, 2));
+
+const fixedSelection = await read('src/editor/useFixedBlockSelection.js');
+const normalSelection = await read('src/editor/useNormalBlockSelection.js');
+const previewSelection = await read('src/runtime/useWorkspaceShellActions.js');
+assert(fixedSelection.includes('fixedBlockIds.includes(openId) ? openId') &&
+  !fixedSelection.includes('useState(') &&
+  fixedSelection.includes('setOpenId((current) => (current === blockId'),
+  'fixed block selection must derive immediately from canonical openId');
+assert(normalSelection.includes('setOpenId(blockId)') &&
+  normalSelection.includes('setOpenId((current) => (current === blockId'),
+  'programmatic normal block selection must be idempotent but row toggles may close');
+assert(previewSelection.includes("row?.closest('.work-panel')") &&
+  !previewSelection.includes('scrollIntoView(') &&
+  previewSelection.includes('list.scrollTop ='),
+  'preview selection must only scroll the block list when visible');
+assert(screen.includes('onSelectPreviewBlock={handleSelectPreviewBlock}') &&
+  screen.includes('setSettingsOpen(true)') &&
+  screen.includes('setBlockListOpen(false)'),
+  'canvas selection must reveal the inspector at narrow breakpoints');
+assert(layout.includes('onActivateInspector?.()') &&
+  layout.includes('toggleBlockOpen={(id) =>') &&
+  layout.includes('selectBlock={(id) =>'),
+  'fixed/normal list and global settings must converge on the same inspector');
