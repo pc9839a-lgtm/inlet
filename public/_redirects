@@ -1,1 +1,4 @@
+/life https://life.pagero.kr/ 301
+/life/ https://life.pagero.kr/ 301
+/life/* https://life.pagero.kr/:splat 301
 /* /index.html 200
