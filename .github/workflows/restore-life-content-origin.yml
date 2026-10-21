@@ -1,4 +1,5 @@
 # Refresh current editorial LIFE content while preserving legacy-host 301 and noindex preview origin.
+# Editorial publication: apply verified EV subsidy supplemental sections after compressed content bundles.
 name: Restore renewable LIFE content origin
 on:
   push:
