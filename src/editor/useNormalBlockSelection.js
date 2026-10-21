@@ -15,9 +15,12 @@ export function useNormalBlockSelection({
     setOpenId((current) => (current === blockId ? '' : blockId));
   }, [setAddOpen, setOpenId]);
 
+  // Navigation from a preview or newly inserted block must be idempotent.
+  // Toggling the active row is intentionally limited to direct row clicks.
   const openBlockSettings = React.useCallback((blockId) => {
-    selectBlock(blockId);
-  }, [selectBlock]);
+    setAddOpen(false);
+    setOpenId(blockId);
+  }, [setAddOpen, setOpenId]);
 
   return { normalSelectedId, selectBlock, openBlockSettings };
 }
