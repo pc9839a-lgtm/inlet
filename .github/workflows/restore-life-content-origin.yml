@@ -1,3 +1,4 @@
+# Refresh current editorial LIFE content while preserving legacy-host 301 and noindex preview origin.
 name: Restore renewable LIFE content origin
 on:
   push:
