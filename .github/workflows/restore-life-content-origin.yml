@@ -60,6 +60,15 @@ jobs:
           test -f dist/car/car-inspection-period/index.html
           grep -q '생활비서' dist/index.html
           grep -q 'pagero.kr/life/' dist/index.html
+          # Guarantee both standalone grant guides retain their reviewed primary-source evidence.
+          test -f dist/support/government-support-search/index.html
+          test -f dist/support/support-eligibility-check/index.html
+          grep -q '신청할 수 있다' dist/support/government-support-search/index.html
+          grep -q 'plus.gov.kr/portal/benefitV2/benefitEasyFind' dist/support/government-support-search/index.html
+          grep -q '자격충족·신청완료·선정완료' dist/support/support-eligibility-check/index.html
+          grep -q 'article-data-table' dist/support/support-eligibility-check/index.html
+          echo 'PASS: reviewed grant-guide decision tables exist in immutable Pages build'
+
       - name: Deploy host-sensitive split (legacy 301; origin 200)
         shell: bash
         run: |
