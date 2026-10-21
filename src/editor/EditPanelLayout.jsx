@@ -17,6 +17,7 @@ export function EditPanelLayout({
   stylePanelProps,
   inspectorHost,
   onActivateInspector,
+  previewSelectionRequest = 0,
 }) {
   const [section, setSection] = React.useState('order');
   const selectedBlockId = fixedBlocksProps?.openId || screenOrderListProps?.selectedId;
@@ -24,6 +25,12 @@ export function EditPanelLayout({
   React.useEffect(() => {
     if (selectedBlockId) setSection('order');
   }, [selectedBlockId]);
+
+  React.useEffect(() => {
+    // Even when the clicked preview block ID has not changed, a canvas click
+    // should return from page options to the selected block's settings.
+    if (previewSelectionRequest > 0) setSection('order');
+  }, [previewSelectionRequest]);
 
   const selectedNormal = screenOrderListProps?.normalBlocks?.find(
     (block) => block.id === screenOrderListProps.selectedId
