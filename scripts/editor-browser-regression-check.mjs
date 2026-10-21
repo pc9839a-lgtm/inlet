@@ -1918,6 +1918,8 @@ async function run() {
           dockPosition: dockStyle?.position || '',
           bodyOverflowX: getComputedStyle(document.body).overflowX,
           bodyOverflowY: getComputedStyle(document.body).overflowY,
+          inspectorOverflowY: getComputedStyle(document.querySelector('.editor-inspector-host')).overflowY,
+          blockDrawerToggle: getComputedStyle(document.querySelector('.editor-block-list-toggle')).display,
         };
       })()`);
 
@@ -1927,7 +1929,8 @@ async function run() {
       zoomChrome.actions.forEach((action, index) => assertInsideViewport(action, zoomViewport.width, `${zoomViewport.name} header action ${index + 1}`));
       assert(zoomChrome.dockPosition !== 'fixed', `${zoomViewport.name} add dock must not become a viewport-fixed overlap: ${zoomChrome.dockPosition}`);
       assert(['auto', 'hidden'].includes(zoomChrome.bodyOverflowX), `${zoomViewport.name} body horizontal overflow mode is unexpected: ${zoomChrome.bodyOverflowX}`);
-      assert(['auto', 'visible'].includes(zoomChrome.bodyOverflowY), `${zoomViewport.name} body must stay vertically reachable: ${zoomChrome.bodyOverflowY}`);
+      assert(zoomChrome.inspectorOverflowY === 'auto' && zoomChrome.blockDrawerToggle !== 'none',
+        `${zoomViewport.name} must preserve independent inspector scroll and a reachable block drawer: ${JSON.stringify(zoomChrome)}`);
       await capture(client, zoomViewport.name);
     }
 
