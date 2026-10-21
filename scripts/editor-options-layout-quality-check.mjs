@@ -127,6 +127,14 @@ await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettingsBody.jsx
 await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettingsHeader.jsx');
 await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettings.css');
 
+const fixedSelection = await readFile('src/editor/useFixedBlockSelection.js', 'utf8');
+const previewSelection = await readFile('src/runtime/useWorkspaceShellActions.js', 'utf8');
+assert(!fixedSelection.includes('useState('), 'fixed block selection must not lag via mirrored local state');
+assert(fixedSelection.includes('fixedBlockIds.includes(openId) ? openId'), 'fixed selection must follow canonical openId');
+assert(previewSelection.includes("row?.closest('.work-panel')"), 'preview selection must scroll within block panel only');
+assert(!previewSelection.includes('scrollIntoView('), 'preview selection must not scroll the document');
+assert(editLayout.includes('onActivateInspector?.()'), 'inspector must open from block and global settings navigation');
+
 console.log(JSON.stringify({
   ok: true,
   scope: 'editor-options-layout',
@@ -161,11 +169,3 @@ assert(fixedCard.includes('open && inlineEditor') && screenOrderItem.includes('<
 assert(editorWorkspaceCss.includes('grid-template-columns: 220px minmax(0, 1fr) 320px') &&
        editorWorkspaceCss.includes('[data-block-list-open='),
   'three-pane desktop editor and compact-PC block drawer must coexist');
-
-const fixedSelection = await readFile('src/editor/useFixedBlockSelection.js', 'utf8');
-const previewSelection = await readFile('src/runtime/useWorkspaceShellActions.js', 'utf8');
-assert(!fixedSelection.includes('useState('), 'fixed block selection must not lag via mirrored local state');
-assert(fixedSelection.includes('fixedBlockIds.includes(openId) ? openId'), 'fixed selection must follow canonical openId');
-assert(previewSelection.includes("row?.closest('.work-panel')"), 'preview selection must scroll within block panel only');
-assert(!previewSelection.includes('scrollIntoView('), 'preview selection must not scroll the document');
-assert(editLayout.includes('onActivateInspector?.()'), 'inspector must open from block and global settings navigation');
