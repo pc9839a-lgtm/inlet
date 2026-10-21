@@ -60,32 +60,28 @@ jobs:
           test -f dist/car/car-inspection-period/index.html
           grep -q '생활비서' dist/index.html
           grep -q 'pagero.kr/life/' dist/index.html
+          # Two historic JSON filenames are re-used by the compressed bundle for
+          # published 2026 policy pages. Verify the actual slug and prevent generic
+          # grant-help overlays from silently contaminating those policy articles.
           python - <<'PY'
           from pathlib import Path
-          import json, re
-          for slug in ('government-support-search', 'support-eligibility-check'):
-              source=Path('content/posts/support') / (slug + '.json')
-              # cwd is life-site; this diagnoses whether bundles changed the publication flag
-              post=json.loads(source.read_text(encoding='utf-8'))
-              out=Path('dist/support') / slug / 'index.html'
-              html=out.read_text(encoding='utf-8') if out.exists() else ''
-              title=re.search(r'<title[^>]*>(.*?)</title>',html,re.I|re.S)
-              print('EDITORIAL_GUARD', slug,'json-noindex',post.get('noindex'),'category',post.get('category'),'slug',post.get('slug'),
-                    'part_count',len((post.get('series') or {}).get('parts',[])),
-                    'generated',out.exists(),
-                    'htmlbytes',len(html),
-                    'title',title.group(1)[:80] if title else '-',
-                    'source_evidence',('article-data-table' in html),
-                    flush=True)
+          import json
+          pages = {
+              'government-support-search': ('energy-voucher-2026', '에너지바우처', '찾았다\'와 \'신청할 수 있다'),
+              'support-eligibility-check': ('earned-income-tax-credit-late-2026', '근로장려금', '자격충족·신청완료·선정완료'),
+          }
+          for original,(slug,subject,wrong_fragment) in pages.items():
+              data = json.loads((Path('content/posts/support') / (original + '.json')).read_text(encoding='utf-8'))
+              page = Path('dist/support') / slug / 'index.html'
+              if data.get('category') != 'support' or data.get('slug') != slug:
+                  raise SystemExit('Unexpected restored policy slug: '+original+' -> '+str(data.get('slug')))
+              if not page.is_file():
+                  raise SystemExit('Expected policy page not published: '+str(page))
+              html = page.read_text(encoding='utf-8')
+              if subject not in html or wrong_fragment in html:
+                  raise SystemExit('Policy article topic/evidence contaminated: '+slug)
+              print('PASS POLICY PAGE:',slug,'bytes',len(html),flush=True)
           PY
-          # Guarantee both standalone grant guides retain their reviewed primary-source evidence.
-          test -f dist/support/government-support-search/index.html
-          test -f dist/support/support-eligibility-check/index.html
-          grep -q '신청할 수 있다' dist/support/government-support-search/index.html
-          grep -q 'plus.gov.kr/portal/benefitV2/benefitEasyFind' dist/support/government-support-search/index.html
-          grep -q '자격충족·신청완료·선정완료' dist/support/support-eligibility-check/index.html
-          grep -q 'article-data-table' dist/support/support-eligibility-check/index.html
-          echo 'PASS: reviewed grant-guide decision tables exist in immutable Pages build'
 
       - name: Deploy host-sensitive split (legacy 301; origin 200)
         shell: bash
