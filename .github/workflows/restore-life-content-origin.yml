@@ -70,7 +70,7 @@ jobs:
               out=Path('dist/support') / slug / 'index.html'
               html=out.read_text(encoding='utf-8') if out.exists() else ''
               title=re.search(r'<title[^>]*>(.*?)</title>',html,re.I|re.S)
-              print('EDITORIAL_GUARD', slug,'json-noindex',post.get('noindex'),
+              print('EDITORIAL_GUARD', slug,'json-noindex',post.get('noindex'),'category',post.get('category'),'slug',post.get('slug'),
                     'part_count',len((post.get('series') or {}).get('parts',[])),
                     'generated',out.exists(),
                     'htmlbytes',len(html),
