@@ -736,6 +736,7 @@ async function collectDesktopMetrics(client) {
     };
     const shell = document.querySelector('.builder-shell');
     const left = document.querySelector('.left-workspace');
+    const inspector = document.querySelector('.editor-inspector-host');
     const preview = document.querySelector('.preview-workspace');
     const frame = document.querySelector('.phone-frame');
     const header = document.querySelector('.panel-header');
@@ -750,6 +751,7 @@ async function collectDesktopMetrics(client) {
       innerWidth,
       shell: rect(shell),
       left: rect(left),
+      inspector: rect(inspector),
       preview: rect(preview),
       frame: rect(frame),
       header: rect(header),
@@ -779,6 +781,8 @@ async function collectNarrowDesktopMetrics(client) {
       documentScrollWidth: document.documentElement?.scrollWidth || 0,
       shell: rect(document.querySelector('.builder-shell')),
       left: rect(document.querySelector('.left-workspace')),
+      inspector: rect(document.querySelector('.editor-inspector-host')),
+      drawerOpen: document.querySelector('.builder-shell')?.dataset.blockListOpen === 'true',
       workPanel: rect(document.querySelector('.work-panel')),
       editLayout: rect(document.querySelector('.edit-layout')),
       preview: rect(document.querySelector('.preview-workspace')),
@@ -850,31 +854,32 @@ function assertDesktop(metrics) {
   assertInsideViewport(metrics.topTabs, metrics.innerWidth, 'desktop main tabs');
   assertInsideViewport(metrics.editTabs, metrics.innerWidth, 'desktop edit subsection tabs');
   assert(!metrics.cockpit, 'desktop preview must not expose the removed conversion cockpit');
-  assert(metrics.left?.right <= metrics.preview?.left + 3, `desktop editor and preview overlap: ${JSON.stringify({ left: metrics.left, preview: metrics.preview })}`);
-  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length >= 2, `desktop shell must keep two grid columns: ${metrics.shellGridColumns}`);
-  assert(metrics.left?.width >= 575, `desktop editor pane is too narrow: ${metrics.left?.width}px`);
-  assert(metrics.preview?.width >= 500, `desktop preview pane became too narrow: ${metrics.preview?.width}px`);
+  assert(metrics.workPanel?.right <= metrics.preview?.left + 3, `desktop block list overlaps preview: ${JSON.stringify(metrics)}`);
+  assert(metrics.preview?.right <= metrics.inspector?.left + 3, `desktop canvas overlaps inspector: ${JSON.stringify(metrics)}`);
+  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === 3, `desktop shell must have three columns: ${metrics.shellGridColumns}`);
+  assert(metrics.workPanel?.width >= 210, `desktop block list is too narrow: ${metrics.workPanel?.width}px`);
+  assert(metrics.inspector?.width >= 300, `desktop inspector is too narrow: ${metrics.inspector?.width}px`);
+  assert(metrics.preview?.width >= 390, `desktop preview pane became too narrow: ${metrics.preview?.width}px`);
   assert(metrics.frame?.width >= 400 && metrics.frame?.width <= 432, `desktop phone frame width is invalid: ${metrics.frame?.width}`);
   assert(metrics.heroTitleVisible, 'saved hero title is not visible in desktop preview');
 }
 
 function assertNarrowDesktop(metrics, width) {
   assert(metrics.path === '/app', `narrow desktop editor route changed: ${metrics.path}`);
-  assert(!metrics.mobile, 'narrow desktop unexpectedly entered mobile operations mode');
-  assert(!metrics.fallback, 'narrow desktop rendered an error fallback');
-  assert(metrics.bodyScrollWidth <= width + 3, `narrow desktop body overflow: ${metrics.bodyScrollWidth} > ${width}`);
-  assert(metrics.documentScrollWidth <= width + 3, `narrow desktop document overflow: ${metrics.documentScrollWidth} > ${width}`);
-  assertInsideViewport(metrics.shell, width, 'narrow desktop builder shell');
-  assertInsideViewport(metrics.left, width, 'narrow desktop left workspace');
-  assertInsideViewport(metrics.workPanel, width, 'narrow desktop work panel');
-  assertInsideViewport(metrics.editLayout, width, 'narrow desktop edit layout');
-  assertInsideViewport(metrics.topTabs, width, 'narrow desktop main tabs');
-  assertInsideViewport(metrics.editTabs, width, 'narrow desktop edit subsection tabs');
-  assert(!metrics.cockpit, 'narrow desktop preview must not expose the removed conversion cockpit');
-  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === 1, `narrow desktop shell must stack into one grid column: ${metrics.shellGridColumns}`);
-  assert(metrics.workPanel?.width >= width - 4, `narrow desktop work panel did not expand: ${metrics.workPanel?.width}px of ${width}px`);
-  assert(metrics.editLayout?.width >= width - 48, `narrow desktop edit layout is still artificially capped: ${metrics.editLayout?.width}px of ${width}px`);
-  assertInsideViewport(metrics.preview, width, 'narrow desktop preview workspace');
+  assert(!metrics.mobile && !metrics.fallback, 'narrow desktop must remain in the editor');
+  assert(metrics.bodyScrollWidth <= width + 3 && metrics.documentScrollWidth <= width + 3,
+    `narrow desktop body overflow: ${metrics.bodyScrollWidth} / ${metrics.documentScrollWidth} > ${width}`);
+  assertInsideViewport(metrics.shell, width, 'narrow editor shell');
+  assertInsideViewport(metrics.preview, width, 'narrow editor canvas');
+  if (width > 700) {
+    assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === 2,
+      `laptop editor must show canvas + inspector: ${metrics.shellGridColumns}`);
+    assert(metrics.inspector?.width >= 260, `laptop inspector must remain usable: ${metrics.inspector?.width}px`);
+  } else {
+    assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === 1,
+      `zoomed editor must reduce to one visible canvas column: ${metrics.shellGridColumns}`);
+  }
+  assert(metrics.workPanel, 'block-list drawer must remain mounted to preserve editor state');
 }
 
 function assertMobile(metrics, viewport) {
