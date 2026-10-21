@@ -60,6 +60,24 @@ jobs:
           test -f dist/car/car-inspection-period/index.html
           grep -q '생활비서' dist/index.html
           grep -q 'pagero.kr/life/' dist/index.html
+          python - <<'PY'
+          from pathlib import Path
+          import json, re
+          for slug in ('government-support-search', 'support-eligibility-check'):
+              source=Path('content/posts/support') / (slug + '.json')
+              # cwd is life-site; this diagnoses whether bundles changed the publication flag
+              post=json.loads(source.read_text(encoding='utf-8'))
+              out=Path('dist/support') / slug / 'index.html'
+              html=out.read_text(encoding='utf-8') if out.exists() else ''
+              title=re.search(r'<title[^>]*>(.*?)</title>',html,re.I|re.S)
+              print('EDITORIAL_GUARD', slug,'json-noindex',post.get('noindex'),
+                    'part_count',len((post.get('series') or {}).get('parts',[])),
+                    'generated',out.exists(),
+                    'htmlbytes',len(html),
+                    'title',title.group(1)[:80] if title else '-',
+                    'source_evidence',('article-data-table' in html),
+                    flush=True)
+          PY
           # Guarantee both standalone grant guides retain their reviewed primary-source evidence.
           test -f dist/support/government-support-search/index.html
           test -f dist/support/support-eligibility-check/index.html
