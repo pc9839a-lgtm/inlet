@@ -54,7 +54,16 @@ export function useWorkspaceShellActions({
       setOpenId(id);
       if (typeof requestAnimationFrame === 'function') {
         requestAnimationFrame(() => {
-          document.getElementById(`editor-block-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const row = document.getElementById(`editor-block-${id}`);
+          const list = row?.closest('.work-panel');
+          if (!row || !list || !list.clientHeight) return;
+          // Scroll only the layer list, not the editor's canvas or document.
+          const rowBounds = row.getBoundingClientRect();
+          const listBounds = list.getBoundingClientRect();
+          const offset = rowBounds.top + rowBounds.height / 2
+            - listBounds.top - listBounds.height / 2;
+          const maxScroll = Math.max(0, list.scrollHeight - list.clientHeight);
+          list.scrollTop = Math.max(0, Math.min(maxScroll, list.scrollTop + offset));
         });
       }
     };
