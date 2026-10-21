@@ -124,15 +124,6 @@ assert(workspaceCss.includes('.preview-workspace-shell') &&
   operationsWorkspaceCss.includes('.inbox-workspace-shell'),
   'workspace and operations styles must preserve their existing ownership');
 
-console.log(JSON.stringify({
-  ok: true,
-  checks: 31,
-  scope: 'pagero-editor-shell-three-pane',
-  shell: ['block-list', 'canvas', 'inspector'],
-  legacyStyleRouteNormalized: true,
-  publicRuntimeTouched: false,
-}, null, 2));
-
 const fixedSelection = await read('src/editor/useFixedBlockSelection.js');
 const normalSelection = await read('src/editor/useNormalBlockSelection.js');
 const previewSelection = await read('src/runtime/useWorkspaceShellActions.js');
@@ -155,3 +146,12 @@ assert(layout.includes('onActivateInspector?.()') &&
   layout.includes('toggleBlockOpen={(id) =>') &&
   layout.includes('selectBlock={(id) =>'),
   'fixed/normal list and global settings must converge on the same inspector');
+
+console.log(JSON.stringify({
+  ok: true,
+  checks: 31,
+  scope: 'pagero-editor-shell-three-pane',
+  shell: ['block-list', 'canvas', 'inspector'],
+  legacyStyleRouteNormalized: true,
+  publicRuntimeTouched: false,
+}, null, 2));
