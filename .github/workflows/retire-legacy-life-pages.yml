@@ -1,3 +1,4 @@
+# Deploy only after confirming isolated life-pagero project; immutable /life proxy origin is separate.
 name: Retire duplicate life.pagero.kr site
 on:
   push:
