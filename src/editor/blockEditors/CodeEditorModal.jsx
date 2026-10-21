@@ -1,9 +1,10 @@
+import { createPortal } from 'react-dom';
 import { useAccessibleDialog } from '../../lib/useAccessibleDialog.js';
 
 export default function CodeEditorModal({ draft, onDraftChange, onClose, onApply, codePending, codeDraftHint }) {
   const dialogRef = useAccessibleDialog(onClose, { lockScroll: true });
 
-  return (
+  return typeof document !== 'undefined' ? createPortal(
     <div className="code-editor-modal" role="presentation">
       <div
         ref={dialogRef}
@@ -29,6 +30,7 @@ export default function CodeEditorModal({ draft, onDraftChange, onClose, onApply
           <button type="button" onClick={onApply}>적용</button>
         </div>
       </div>
-    </div>
-  );
+    </div>,
+    document.body,
+  ) : null;
 }
