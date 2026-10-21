@@ -55,6 +55,22 @@ export default function WorkspaceEditorScreen({
   const operationsWorkspace = inboxWorkspace || statsWorkspace || settingsWorkspace;
   const previewWorkspace = !mobileOperationsOnly && !operationsWorkspace;
 
+  const openInspector = React.useCallback(() => {
+    setBlockListOpen(false);
+    setSettingsOpen(true);
+  }, []);
+
+  // Keep the selected block accessible when a narrow editor collapses its panels.
+  React.useEffect(() => {
+    if (editWorkspace && selectedBlockId) openInspector();
+  }, [editWorkspace, selectedBlockId, openInspector]);
+
+  const handleSelectPreviewBlock = React.useCallback((id) => {
+    if (!id) return;
+    onSelectPreviewBlock?.(id);
+    openInspector();
+  }, [onSelectPreviewBlock, openInspector]);
+
   return (
     <div className={`builder-shell${previewWorkspace ? ' preview-workspace-shell' : ''}${canUseBuilder && startMode === 'template' && !mobileOperationsOnly ? ' template-intro-shell' : ''}${mobileOperationsOnly ? ' mobile-operations-shell' : ''}${editWorkspace ? ' edit-mode-shell' : ''}${inboxWorkspace ? ' inbox-workspace-shell' : ''}${statsWorkspace ? ' stats-dashboard-shell' : ''}${settingsWorkspace ? ' settings-workspace-shell' : ''}`} data-block-list-open={blockListOpen} data-settings-open={settingsOpen}>
 
@@ -88,6 +104,7 @@ export default function WorkspaceEditorScreen({
         changeTab={changeTab}
         editPanelProps={editPanelProps}
         inspectorHost={inspectorHost}
+        onActivateInspector={openInspector}
         stylePanelProps={stylePanelProps}
         inboxPanelProps={inboxPanelProps}
         statsPanelProps={statsPanelProps}
@@ -100,7 +117,7 @@ export default function WorkspaceEditorScreen({
         addLead={addLead}
         track={track}
         selectedBlockId={selectedBlockId}
-        onSelectPreviewBlock={onSelectPreviewBlock}
+        onSelectPreviewBlock={handleSelectPreviewBlock}
       />}
       {editWorkspace && canUseBuilder && (
         <aside id="pagero-settings-panel" className="editor-inspector-host"
