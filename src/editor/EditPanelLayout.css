@@ -127,7 +127,7 @@ body .builder-shell.edit-mode-shell .editor-inspector-empty {
   font-size: 13px;
   line-height: 1.5;
 }
-body .builder-shell.edit-mode-shell .editor-inspector-layout .screen-order-v2-inline-editor {
+html body #root .builder-shell.edit-mode-shell .editor-inspector-layout .screen-order-v2-inline-editor {
   margin: 0 !important;
   max-height: none !important;
   overflow: visible !important;
