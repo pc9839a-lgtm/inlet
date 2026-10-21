@@ -172,6 +172,25 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Prepare Korean browser font
+        timeout-minutes: 7
+        shell: bash
+        run: |
+          set -u
+          if fc-match "Noto Sans CJK KR" | grep -qi "NotoSansCJK"; then
+            echo "Noto Sans CJK KR is already available."
+            exit 0
+          fi
+          export DEBIAN_FRONTEND=noninteractive
+          if timeout 90s sudo apt-get -o DPkg::Lock::Timeout=45 update -qq \
+            && timeout 300s sudo apt-get -o DPkg::Lock::Timeout=45 install -y --no-install-recommends fonts-noto-cjk; then
+            fc-cache -f >/dev/null 2>&1 || true
+          else
+            echo "::warning::Korean font package install timed out or failed; continuing with the runner/Chrome fallback font."
+            sudo dpkg --configure -a >/dev/null 2>&1 || true
+          fi
+          fc-match "Noto Sans CJK KR" || true
+
       - name: Build authenticated editor assets
         env:
           VITE_INLET_PAGE_MODE: server
