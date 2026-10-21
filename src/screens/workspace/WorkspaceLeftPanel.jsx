@@ -30,6 +30,7 @@ export function WorkspaceLeftPanel({
   changeTab,
   editPanelProps,
   inspectorHost,
+  onActivateInspector,
   stylePanelProps,
   inboxPanelProps,
   statsPanelProps,
@@ -177,6 +178,7 @@ export function WorkspaceLeftPanel({
               tab={tab}
               editPanelProps={editPanelProps}
               inspectorHost={inspectorHost}
+              onActivateInspector={onActivateInspector}
               stylePanelProps={stylePanelProps}
               inboxPanelProps={inboxPanelProps}
               statsPanelProps={statsPanelProps}
