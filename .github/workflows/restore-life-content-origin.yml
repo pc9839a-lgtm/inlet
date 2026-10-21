@@ -2,6 +2,7 @@
 # Editorial publication: apply verified EV subsidy supplemental sections after compressed content bundles.
 # Editorial publication: publish car transfer costs, eligibility, and case-comparison sections.
 # Editorial publication: synchronize verified vehicle-tax relief and actual registration-cost comparisons.
+# Editorial release 2026-10-21: reviewed TS vehicle inspection reservation and penalty comparison, preserving legacy redirects.
 name: Restore renewable LIFE content origin
 on:
   push:
