@@ -43,6 +43,12 @@ function loadHook(key, symbol, context) {
 }
 
 const scrollTargets = [];
+const scrollList = {
+  scrollTop: 0,
+  scrollHeight: 1800,
+  clientHeight: 400,
+  getBoundingClientRect: () => ({ top: 0, height: 400 }),
+};
 const changedTabs = [];
 const changedIds = [];
 const blocks = [
@@ -53,7 +59,14 @@ const blocks = [
 const selectPreview = loadHook('shell', 'useWorkspaceShellActions', {
   DASHBOARD_KEY: 'dashboard', START_MODE_KEY: 'start', confirmWorkspaceLeaveSync: () => true,
   requestAnimationFrame: (callback) => callback(),
-  document: { getElementById(id) { return { scrollIntoView() { scrollTargets.push(id); } }; } },
+  document: { getElementById(id) {
+    scrollTargets.push(id);
+    return {
+      closest(selector) { assert.equal(selector, '.work-panel'); return scrollList; },
+      getBoundingClientRect() { return { top: 360, height: 80 }; },
+      scrollIntoView() { throw new Error('must not scroll the whole page'); },
+    };
+  } },
 })({
   page: { blocks }, canUseBuilder: true, canManageAdmin: true, allowedTabs: ['edit'],
   confirmLeaveStyleChanges: () => true, clearPendingStyle: () => {},
@@ -68,6 +81,8 @@ selectPreview('missing');
 assert.deepEqual(changedIds, ['ordinary-1', 'topnav-1', 'footer-1']);
 assert.deepEqual(changedTabs, ['edit', 'edit', 'edit']);
 assert.deepEqual(scrollTargets, ['editor-block-ordinary-1', 'editor-block-topnav-1', 'editor-block-footer-1']);
+assert(scrollList.scrollTop > 0 && scrollList.scrollTop <= scrollList.scrollHeight - scrollList.clientHeight,
+  'preview selection must scroll the block list only, within its bounds');
 
 let openId = 'topnav-1';
 const setOpenId = (next) => { openId = typeof next === 'function' ? next(openId) : next; };
@@ -117,6 +132,9 @@ normalHook(normalArgs).selectBlock('ordinary-1');
 assert.equal(normalHook(normalArgs).normalSelectedId, 'ordinary-1');
 normalHook(normalArgs).selectBlock('ordinary-1');
 assert.equal(openId, '', 'normal row selection should toggle closed');
+normalHook(normalArgs).openBlockSettings('ordinary-1');
+normalHook(normalArgs).openBlockSettings('ordinary-1');
+assert.equal(openId, 'ordinary-1', 'programmatic normal block opening must not toggle off');
 setOpenId('footer-1');
 assert.equal(normalHook(normalArgs).normalSelectedId, '', 'switching to fixed should clear normal selection');
 

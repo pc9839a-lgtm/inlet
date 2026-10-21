@@ -354,8 +354,7 @@ async function run() {
     await client.send('Page.reload', { ignoreCache: true });
     await waitForBrowser(client, `window.__qaVideoReloadMarker !== 'departing-document' && !!document.querySelector(${JSON.stringify(videoRowHeadSelector)})`, 'reloaded editor video row');
     await waitForState(() => apiState.pageLoadCount > pageReadsBeforeReload, 'fresh server video page read after reload');
-    // Block selection may survive reload. The editor now lives in the
-    // independent inspector portal; do not toggle a selected row closed.
+    // Block selection may survive reload. Inspect the independent right panel without toggling a selected row.
     const videoRowSelected = await evaluate(client, `document.querySelector('#editor-block-editor-video')?.getAttribute('data-selected') === 'true'`);
     if (!videoRowSelected) await clickSelector(client, videoRowHeadSelector);
     try {

@@ -242,10 +242,12 @@ assert(files.browserVisualQa.includes('INLET_BROWSER_QA_STATE_PRESET') && files.
 assert(files.browserVisualQa.includes('INLET_BROWSER_QA_SET_INPUT') && files.browserVisualQa.includes('INLET_BROWSER_QA_EXPECT_COMPUTED'), 'browser QA interaction/computed checks missing');
 assert(files.workspaceShellActions.includes('if (!target) return;') && files.workspaceShellActions.includes('setOpenId(id)'), 'preview selection must distinguish missing IDs from valid normal and fixed blocks');
 assert(
-  files.fixedBlockSelection.includes("React.useState('')")
+  files.fixedBlockSelection.includes("fixedBlockIds.includes(openId) ? openId : ''")
+    && !files.fixedBlockSelection.includes('React.useState(')
+    && files.fixedBlockSelection.includes('setOpenId((current) => (current === blockId')
     && files.fixedBlocksProps.includes('openId: selection.fixedOpenId')
     && !files.pageGlobalOptionsProps.includes('selection.fixedOpenId'),
-  'fixed editor selection state contract missing',
+  'fixed editor selection must derive directly from the shared openId',
 );
 
 const productionBrowserQa = await readFile('scripts/production-browser-quality-check.mjs', 'utf8');

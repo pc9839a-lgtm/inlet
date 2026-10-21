@@ -1508,6 +1508,18 @@ async function run() {
     // E2E-11 / E2E-12: page/theme inspector previews the style draft, then applies it into the page draft.
     await clickButtonByText(client, '.edit-section-tabs', '페이지 옵션');
     await waitForBrowser(client, `!!document.querySelector('.editor-page-options-stack .style-panel')`, 'page theme editor');
+
+    // B: Clicking the SAME selected block in the canvas must leave page options
+    // and show its block inspector, not silently preserve the global form.
+    assert(await evaluate(client, `document.querySelector('#editor-block-editor-form')?.dataset.selected === 'true'`),
+      'canvas reselect QA requires the form row to remain selected');
+    await clickSelector(client, '.phone-frame #block-editor-form');
+    await waitForBrowser(client,
+      `document.querySelector('.editor-inspector-layout')?.dataset.inspectorSection === 'order' && !!document.querySelector('.editor-inspector-host .screen-order-v2-inline-editor .editor-tabs-v2')`,
+      'same-block canvas reselect returns to block inspector');
+    await clickButtonByText(client, '.edit-section-tabs', '페이지 옵션');
+    await waitForBrowser(client, `!!document.querySelector('.editor-page-options-stack .style-panel')`,
+      'global options remain reachable after canvas reselect');
     assert(await evaluate(client, `(document.querySelector('.style-apply-bar span')?.innerText || '').includes('스타일 적용됨')`),
       'D06 initially applied style status must be explicit');
     await clickButtonByText(client, '.style-subnav', '색상');

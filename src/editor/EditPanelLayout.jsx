@@ -16,6 +16,8 @@ export function EditPanelLayout({
   addBlockDockProps,
   stylePanelProps,
   inspectorHost,
+  onActivateInspector,
+  previewSelectionRequest = 0,
 }) {
   const [section, setSection] = React.useState('order');
   const selectedBlockId = fixedBlocksProps?.openId || screenOrderListProps?.selectedId;
@@ -23,6 +25,12 @@ export function EditPanelLayout({
   React.useEffect(() => {
     if (selectedBlockId) setSection('order');
   }, [selectedBlockId]);
+
+  React.useEffect(() => {
+    // Even when the clicked preview block ID has not changed, a canvas click
+    // should return from page options to the selected block's settings.
+    if (previewSelectionRequest > 0) setSection('order');
+  }, [previewSelectionRequest]);
 
   const selectedNormal = screenOrderListProps?.normalBlocks?.find(
     (block) => block.id === screenOrderListProps.selectedId
@@ -75,22 +83,24 @@ export function EditPanelLayout({
           aria-label="편집 영역 선택">
           <button className="edit-section-tab" type="button"
             data-selected={section === 'order' ? 'true' : 'false'}
-            aria-pressed={section === 'order'} onClick={() => setSection('order')}>
+            aria-pressed={section === 'order'} onClick={() => { setSection('order'); onActivateInspector?.(); }}>
             블록 설정
           </button>
           <button className="edit-section-tab" type="button"
             data-selected={section === 'options' ? 'true' : 'false'}
-            aria-pressed={section === 'options'} onClick={() => setSection('options')}>
+            aria-pressed={section === 'options'} onClick={() => { setSection('options'); onActivateInspector?.(); }}>
             페이지 옵션{stylePanelProps?.hasPendingStyle ? ' · 미적용' : ''}
           </button>
         </nav>
         <div className="edit-section-panel" data-editor-section={section}>
-          <ScreenOrderList {...screenOrderListProps} />
+          <ScreenOrderList {...screenOrderListProps}
+            selectBlock={(id) => { screenOrderListProps.selectBlock(id); onActivateInspector?.(); }} />
           <section className="screen-order-fixed-blocks" aria-label="고정 영역">
             <div className="section-title screen-order-fixed-blocks-title">
               <h2>고정 영역</h2>
             </div>
-            <GlobalFixedBlocks {...fixedBlocksProps} inlineEditor={false} />
+            <GlobalFixedBlocks {...fixedBlocksProps} inlineEditor={false}
+              toggleBlockOpen={(id) => { fixedBlocksProps.toggleBlockOpen(id); onActivateInspector?.(); }} />
           </section>
         </div>
         <AddBlockDock {...addBlockDockProps} />

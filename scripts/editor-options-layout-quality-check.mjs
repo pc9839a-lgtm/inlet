@@ -72,7 +72,7 @@ assert(pageOptionsList.includes('AnimationOptionsCard') && pageOptionsList.inclu
 assert(!pageOptionsProps.includes('topNavBlock') && !pageOptionsProps.includes('bottomBlock') && !pageOptionsProps.includes('footerBlock'), 'page option props must stay global-only');
 assert(fixedBlocksProps.includes('topNavBlock: selection.topNavBlock') && fixedBlocksProps.includes('bottomBlock: selection.bottomBlock') && fixedBlocksProps.includes('footerBlock: selection.footerBlock'), 'fixed block props must own top, bottom, and footer editors');
 assert(sectionProps.includes('fixedBlocksProps: createFixedBlocksProps'), 'edit panel section props must expose fixed blocks separately');
-assert(editLayout.includes('<GlobalFixedBlocks {...fixedBlocksProps} inlineEditor={false} />'), 'screen order mode must own the fixed block editor group');
+assert(editLayout.includes('<GlobalFixedBlocks {...fixedBlocksProps} inlineEditor={false}'), 'screen order mode must own the fixed block editor group');
 assert(editLayout.includes('aria-label="고정 영역"') && editLayout.includes('<h2>고정 영역</h2>'), 'fixed blocks must be clearly labeled outside page options');
 assert(fixedBlocks.includes("import './FixedBlocksSection.css';"), 'fixed block group must load its own styles after leaving page options');
 assert(fixedBlocksCss.includes('.screen-order-fixed-blocks .fixed-block-card') && fixedBlocksCss.includes('.screen-order-fixed-blocks .fixed-block-editor'), 'fixed block section must own card and editor layout');
@@ -81,7 +81,7 @@ assert(!shareCard.includes('<em>공개 페이지 공유 버튼</em>'), 'share op
 assert(shareCss.includes('grid-template-columns: repeat(2, minmax(0, 1fr))'), 'mobile share position choices must use a readable 2x2 grid');
 assert(shareCss.includes('min-height: 42px'), 'mobile share position choices must keep large tap targets');
 assert(screenOrderCss.includes('@media (max-width: 760px)') && screenOrderCss.includes('.screen-order-v2-card { padding: 10px;'), 'screen order must retain its compact mobile card contract');
-assert(editLayout.includes('edit-section-tabs') && editLayout.includes('블록 설정') && editLayout.includes('<ScreenOrderList {...screenOrderListProps} />'), 'screen order must live in the restored left editor flow without a redundant selected-settings shell');
+assert(editLayout.includes('edit-section-tabs') && editLayout.includes('블록 설정') && editLayout.includes('<ScreenOrderList {...screenOrderListProps}'), 'screen order must live in the restored left editor flow without a redundant selected-settings shell');
 assert(editLayout.includes('페이지 옵션') && editLayout.includes('<PageGlobalOptions {...pageGlobalOptionsProps} />') && editLayout.includes('<PageThemeStylePanel {...stylePanelProps} />'), 'page options and theme controls must live in the restored left editor mode');
 assert(editorLabels.includes("globalSettings: '\\uC804\\uC5ED \\uC124\\uC815'") && pageOptionsHeader.includes('T.globalSettings'), 'page options content heading must be global settings instead of repeating the tab label');
 assert(editorLabels.includes("normalBlocks: '\\uC77C\\uBC18 \\uBE14\\uB85D'") && screenOrderHeader.includes('T.normalBlocks'), 'screen order content heading must identify normal blocks instead of repeating the tab label');
@@ -127,10 +127,18 @@ await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettingsBody.jsx
 await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettingsHeader.jsx');
 await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettings.css');
 
+const fixedSelection = await readFile('src/editor/useFixedBlockSelection.js', 'utf8');
+const previewSelection = await readFile('src/runtime/useWorkspaceShellActions.js', 'utf8');
+assert(!fixedSelection.includes('useState('), 'fixed block selection must not lag via mirrored local state');
+assert(fixedSelection.includes('fixedBlockIds.includes(openId) ? openId'), 'fixed selection must follow canonical openId');
+assert(previewSelection.includes("row?.closest('.work-panel')"), 'preview selection must scroll within block panel only');
+assert(!previewSelection.includes('scrollIntoView('), 'preview selection must not scroll the document');
+assert(editLayout.includes('onActivateInspector?.()'), 'inspector must open from block and global settings navigation');
+
 console.log(JSON.stringify({
   ok: true,
   scope: 'editor-options-layout',
-  checks: 45,
+  checks: 50,
   saveFlowTouched: false,
   globalOptionsSeparated: true,
   unifiedPageThemeInspector: true,

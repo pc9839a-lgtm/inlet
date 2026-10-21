@@ -9,6 +9,8 @@ export default function EditPanel({
   authUser = null,
   stylePanelProps = null,
   inspectorHost = null,
+  onActivateInspector = null,
+  previewSelectionRequest = 0,
   openId,
   setOpenId,
   addOpen,
@@ -57,6 +59,8 @@ export default function EditPanel({
         {...sectionProps}
         stylePanelProps={stylePanelProps}
         inspectorHost={inspectorHost}
+        onActivateInspector={onActivateInspector}
+        previewSelectionRequest={previewSelectionRequest}
       />
     </EditorMediaLibraryProvider>
   );
