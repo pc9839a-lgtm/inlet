@@ -12,3 +12,4 @@ Disallow: /embed
 Disallow: /*/admin
 
 Sitemap: https://pagero.kr/sitemap.xml
+Sitemap: https://pagero.kr/life/sitemap.xml
