@@ -44,6 +44,9 @@ export default function WorkspaceEditorScreen({
   selectedBlockId,
   onSelectPreviewBlock,
 }) {
+  const [inspectorHost, setInspectorHost] = React.useState(null);
+  const [blockListOpen, setBlockListOpen] = React.useState(false);
+  const [settingsOpen, setSettingsOpen] = React.useState(false);
   const effectiveTab = tab === 'style' ? 'edit' : tab;
   const inboxWorkspace = !mobileOperationsOnly && effectiveTab === 'inbox';
   const statsWorkspace = !mobileOperationsOnly && effectiveTab === 'stats';
@@ -53,7 +56,16 @@ export default function WorkspaceEditorScreen({
   const previewWorkspace = !mobileOperationsOnly && !operationsWorkspace;
 
   return (
-    <div className={`builder-shell${previewWorkspace ? ' preview-workspace-shell' : ''}${canUseBuilder && startMode === 'template' && !mobileOperationsOnly ? ' template-intro-shell' : ''}${mobileOperationsOnly ? ' mobile-operations-shell' : ''}${editWorkspace ? ' edit-mode-shell' : ''}${inboxWorkspace ? ' inbox-workspace-shell' : ''}${statsWorkspace ? ' stats-dashboard-shell' : ''}${settingsWorkspace ? ' settings-workspace-shell' : ''}`}>
+    <div className={`builder-shell${previewWorkspace ? ' preview-workspace-shell' : ''}${canUseBuilder && startMode === 'template' && !mobileOperationsOnly ? ' template-intro-shell' : ''}${mobileOperationsOnly ? ' mobile-operations-shell' : ''}${editWorkspace ? ' edit-mode-shell' : ''}${inboxWorkspace ? ' inbox-workspace-shell' : ''}${statsWorkspace ? ' stats-dashboard-shell' : ''}${settingsWorkspace ? ' settings-workspace-shell' : ''}`} data-block-list-open={blockListOpen} data-settings-open={settingsOpen}>
+
+      {editWorkspace && canUseBuilder && (
+        <>
+          <button type="button" className="editor-block-list-toggle" aria-controls="pagero-block-panel"
+            aria-expanded={blockListOpen} onClick={() => setBlockListOpen((open) => !open)}>블록</button>
+          <button type="button" className="editor-settings-toggle" aria-controls="pagero-settings-panel"
+            aria-expanded={settingsOpen} onClick={() => setSettingsOpen((open) => !open)}>설정</button>
+        </>
+      )}
 
       <WorkspaceLeftPanel
         canUseBuilder={canUseBuilder}
@@ -75,6 +87,7 @@ export default function WorkspaceEditorScreen({
         allowedTabs={allowedTabs}
         changeTab={changeTab}
         editPanelProps={editPanelProps}
+        inspectorHost={inspectorHost}
         stylePanelProps={stylePanelProps}
         inboxPanelProps={inboxPanelProps}
         statsPanelProps={statsPanelProps}
@@ -89,6 +102,10 @@ export default function WorkspaceEditorScreen({
         selectedBlockId={selectedBlockId}
         onSelectPreviewBlock={onSelectPreviewBlock}
       />}
+      {editWorkspace && canUseBuilder && (
+        <aside id="pagero-settings-panel" className="editor-inspector-host"
+          ref={setInspectorHost} aria-label="선택한 블록 상세 설정" />
+      )}
     </div>
   );
 }
