@@ -9,7 +9,6 @@ on:
       - public/ads.txt
       - public/robots.txt
       - public/_redirects
-      - 'functions/life/[[path]].js'
       - scripts/adsense-build-check.mjs
       - scripts/build.mjs
   workflow_dispatch:
