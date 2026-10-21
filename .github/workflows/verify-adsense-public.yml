@@ -1,0 +1,56 @@
+name: Verify live pagero.kr AdSense endpoints
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/verify-adsense-public.yml
+      - index.html
+      - public/ads.txt
+      - public/robots.txt
+      - public/_redirects
+      - scripts/adsense-build-check.mjs
+      - scripts/build.mjs
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Validate published ads.txt and life redirects
+        shell: bash
+        run: |
+          python - <<'PY'
+          import time, urllib.request, urllib.error
+          checks = {
+            'https://pagero.kr/': ('text/html','ca-pub-1906196934401001', None),
+            'https://pagero.kr/ads.txt': ('text/plain','google.com, pub-1906196934401001, DIRECT, f08c47fec0942fa0',None),
+            'https://pagero.kr/robots.txt': ('text/plain','Sitemap: https://pagero.kr/sitemap.xml', None),
+            'https://pagero.kr/life/': ('text/html', '생활비서','https://life.pagero.kr/'),
+          }
+          pending=dict(checks)
+          for attempt in range(1,11):
+            print(f'attempt {attempt}/10; pending={len(pending)}',flush=True)
+            for url,(mime,needle,expected_final) in list(pending.items()):
+              try:
+                req=urllib.request.Request(url,headers={
+                  'User-Agent':'Mozilla/5.0 (compatible; PageRoAdSenseSmoke/1.0)',
+                  'Cache-Control':'no-cache'})
+                with urllib.request.urlopen(req,timeout=12) as response:
+                  data=response.read(1200000).decode('utf-8','replace')
+                  ctype=response.headers.get('Content-Type','').lower()
+                  final=response.url
+                  ok=response.status==200 and mime in ctype and needle in data and (not expected_final or final==expected_final)
+                print(f'{url}: final={final} mime={ctype} ok={ok}',flush=True)
+                if ok: del pending[url]
+              except Exception as error:
+                print(f'RETRY {url}: {str(error)[:130]}',flush=True)
+            if not pending:break
+            if attempt<10:time.sleep(20)
+          if pending:raise SystemExit('FAIL production endpoint(s): '+', '.join(pending))
+          print('PASS: published AdSense identity, ads.txt, robots and legacy life redirect',flush=True)
+          PY
