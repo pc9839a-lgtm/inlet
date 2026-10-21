@@ -48,7 +48,7 @@ export function EditPanelLayout({
         <>
           <h2 className="editor-inspector-heading">블록 설정</h2>
           <div key={selectedNormal.id} className="screen-order-v2-inline-editor editor-inspector-body"
-            data-scroll-region="inspector" role="region"
+            data-scroll-region="inspector" role="region" tabIndex={0}
             aria-label="선택한 블록 상세 설정">
             {screenOrderListProps.renderBlockEditor(selectedNormal)}
           </div>
