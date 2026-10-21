@@ -9,6 +9,7 @@ export default function EditPanel({
   authUser = null,
   stylePanelProps = null,
   inspectorHost = null,
+  onActivateInspector = null,
   openId,
   setOpenId,
   addOpen,
@@ -57,6 +58,7 @@ export default function EditPanel({
         {...sectionProps}
         stylePanelProps={stylePanelProps}
         inspectorHost={inspectorHost}
+        onActivateInspector={onActivateInspector}
       />
     </EditorMediaLibraryProvider>
   );
