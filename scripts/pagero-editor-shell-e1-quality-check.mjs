@@ -142,6 +142,10 @@ assert(screen.includes('onSelectPreviewBlock={handleSelectPreviewBlock}') &&
   screen.includes('setSettingsOpen(true)') &&
   screen.includes('setBlockListOpen(false)'),
   'canvas selection must reveal the inspector at narrow breakpoints');
+assert(screen.includes('setPreviewSelectionRequest((request) => request + 1)') &&
+  layout.includes('previewSelectionRequest > 0') &&
+  layout.includes('[previewSelectionRequest]'),
+  'repeated canvas selection must return from page options to block settings');
 assert(layout.includes('onActivateInspector?.()') &&
   layout.includes('toggleBlockOpen={(id) =>') &&
   layout.includes('selectBlock={(id) =>'),
@@ -149,7 +153,7 @@ assert(layout.includes('onActivateInspector?.()') &&
 
 console.log(JSON.stringify({
   ok: true,
-  checks: 31,
+  checks: 32,
   scope: 'pagero-editor-shell-three-pane',
   shell: ['block-list', 'canvas', 'inspector'],
   legacyStyleRouteNormalized: true,
