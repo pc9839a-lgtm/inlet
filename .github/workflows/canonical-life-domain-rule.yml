@@ -1,3 +1,4 @@
+# Reconcile the legacy life.pagero.kr 301 against the canonical /life/ proxy.
 name: Canonicalize legacy LIFE hostname
 on:
   push:
