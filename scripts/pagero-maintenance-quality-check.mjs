@@ -85,7 +85,9 @@ for (const legacySelector of ['.screen-order-item', '.screen-order-head', '.scre
 }
 assert(await exists('src/editor/editPanelParts/ScreenOrder.css'), 'ScreenOrder.css must remain the current screen-order CSS owner');
 const editorWorkspaceImportantCount = (editorWorkspaceCss.match(/!important/g) || []).length;
-assert(editorWorkspaceCss.length <= 2600 && editorWorkspaceImportantCount <= 20, `editor-workspace.css exceeded final geometry budget: ${editorWorkspaceCss.length} bytes / ${editorWorkspaceImportantCount} !important`);
+// Three-pane geometry requires editor-specific list/inspector drawer rules.
+// Budget them explicitly instead of retaining the obsolete two-column cap.
+assert(editorWorkspaceCss.length <= 6000 && editorWorkspaceImportantCount <= 65, `editor-workspace.css exceeded three-pane geometry budget: ${editorWorkspaceCss.length} bytes / ${editorWorkspaceImportantCount} !important`);
 assert(!editorWorkspaceCss.includes(':not(.inbox-workspace-shell)') && !editorWorkspaceCss.includes(':not(.stats-dashboard-shell)') && !editorWorkspaceCss.includes(':not(.settings-workspace-shell)'), 'editor-workspace.css must target edit-mode-shell directly instead of broad negative shell selectors');
 assert(workspaceShellCss.includes('.preview-workspace-shell') && !workspaceShellCss.includes('body .builder-shell:not(.edit-mode-shell) {') && !workspaceShellCss.includes(':is(.inbox-workspace-shell,.stats-dashboard-shell,.settings-workspace-shell) > .preview-workspace'), 'operations shells must not inherit preview-bearing fallback geometry or keep a dead preview hide rule');
 assert(!workspaceShellCss.includes('.mobile-operations-header') && !workspaceShellCss.includes('body .builder-shell .panel-header {') && !workspaceShellCss.includes('body .builder-shell .top-tabs {'), 'workspace-shell.css must remain geometry/scroll-only for mobile/chrome presentation');
