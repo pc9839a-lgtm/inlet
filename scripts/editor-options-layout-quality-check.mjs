@@ -130,7 +130,7 @@ await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettings.css');
 console.log(JSON.stringify({
   ok: true,
   scope: 'editor-options-layout',
-  checks: 40,
+  checks: 45,
   saveFlowTouched: false,
   globalOptionsSeparated: true,
   unifiedPageThemeInspector: true,
