@@ -14,6 +14,7 @@ export function WorkspaceActivePanel({
   tab,
   editPanelProps,
   inspectorHost,
+  onActivateInspector,
   stylePanelProps,
   inboxPanelProps,
   statsPanelProps,
@@ -39,7 +40,7 @@ export function WorkspaceActivePanel({
       aria-labelledby={`workspace-tab-${tab}`}
     >
       {canRenderBuilder && tab === 'edit' && (
-        <EditPanel {...editPanelProps} inspectorHost={inspectorHost} stylePanelProps={stylePanelProps} authUser={settingsPanelProps?.authUser || null} />
+        <EditPanel {...editPanelProps} inspectorHost={inspectorHost} onActivateInspector={onActivateInspector} stylePanelProps={stylePanelProps} authUser={settingsPanelProps?.authUser || null} />
       )}
 
       <LazyChunkBoundary resetKey={tab}>
