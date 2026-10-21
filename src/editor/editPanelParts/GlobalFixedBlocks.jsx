@@ -3,13 +3,13 @@ import './FixedBlocksSection.css';
 import { createFixedBlockDescriptors } from './fixedBlockDescriptors.js';
 import { FixedBlockCard } from './FixedBlockCard.jsx';
 
-export function GlobalFixedBlocks(props) {
+export function GlobalFixedBlocks({ inlineEditor = true, ...props }) {
   const descriptors = createFixedBlockDescriptors(props);
 
   return (
     <>
       {descriptors.map(({ key, ...cardProps }) => (
-        <FixedBlockCard key={key} {...cardProps} />
+        <FixedBlockCard key={key} {...cardProps} inlineEditor={inlineEditor} />
       ))}
     </>
   );
