@@ -43,9 +43,9 @@ jobs:
                       end=response.url
                       headers=response.headers
                   robots=headers.get('X-Robots-Tag','')
-                  canonical=re.search(r'<link\\s+rel=["\\']canonical["\\']\\s+href=["\\']([^"\\']+)',body,re.I)
+                  canonical=re.search(r'<link[^>]*rel="canonical"[^>]*href="([^"]+)"',body,re.I)
                   canonical=canonical.group(1) if canonical else '(none)'
-                  meta=re.search(r'<meta\\s+name=["\\']robots["\\']\\s+content=["\\']([^"\\']+)',body,re.I)
+                  meta=re.search(r'<meta[^>]*name="robots"[^>]*content="([^"]+)"',body,re.I)
                   meta=meta.group(1) if meta else '(none)'
                   ads='pub-1906196934401001' in body
                   return {'url':url,'status':code,'final':end,'robots_header':robots,'meta_robots':meta,'canonical':canonical,'pub_present':ads}
