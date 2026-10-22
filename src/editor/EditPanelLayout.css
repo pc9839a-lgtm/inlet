@@ -13,15 +13,6 @@ body .builder-shell .edit-layout {
   gap: 8px;
 }
 
-/* D06: one concise rule for draft, apply, and publish across all editor sections. */
-body .builder-shell.edit-mode-shell .edit-workflow-hint {
-  margin: 0;
-  color: var(--product-muted);
-  font-size: 11px;
-  line-height: 1.45;
-  font-weight: 650;
-}
-
 /* Edit section tabs — isolated owner. Do not reuse generic .active state. */
 html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] {
   width: 100% !important;
@@ -79,6 +70,10 @@ body .builder-shell .edit-section-panel {
   width: 100%;
   min-width: 0;
   max-width: 100%;
+}
+
+html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks[hidden] {
+  display: none !important;
 }
 
 /* Restored two-column editor: left editor workspace / right preview. */

@@ -51,10 +51,13 @@ export function useWorkspaceShellActions({
     const run = () => {
       clearPendingStyle();
       setTab('edit');
+      setAddOpen(false);
       setOpenId(id);
       if (typeof requestAnimationFrame === 'function') {
         requestAnimationFrame(() => {
-          document.getElementById(`editor-block-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const settings = document.getElementById(`editor-block-settings-${id}`);
+          const editorTarget = settings || document.getElementById(`editor-block-${id}`);
+          editorTarget?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         });
       }
     };
