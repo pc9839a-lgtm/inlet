@@ -6,6 +6,8 @@ on:
     paths:
       - .github/workflows/verify-adsense-public.yml
       - index.html
+      - functions/life/**
+      - functions/index.js
       - public/ads.txt
       - public/robots.txt
       - public/_redirects
@@ -31,6 +33,7 @@ jobs:
             'https://pagero.kr/ads.txt': ('text/plain','google.com, pub-1906196934401001, DIRECT, f08c47fec0942fa0',None),
             'https://pagero.kr/robots.txt': ('text/plain','Sitemap: https://pagero.kr/sitemap.xml', None),
             'https://pagero.kr/life/': ('text/html', '생활비서','https://pagero.kr/life/'),
+            'https://pagero.kr/life/car/car-inspection-period/': ('text/html', '자동차','https://pagero.kr/life/car/car-inspection-period/'),
           }
           pending=dict(checks)
           for attempt in range(1,11):
@@ -44,7 +47,10 @@ jobs:
                   data=response.read(1200000).decode('utf-8','replace')
                   ctype=response.headers.get('Content-Type','').lower()
                   final=response.url
-                  ok=response.status==200 and mime in ctype and needle in data and (not expected_final or final==expected_final)
+                  robots_header=response.headers.get('X-Robots-Tag','').lower()
+                  canonical_life=url.startswith('https://pagero.kr/life/') and mime=='text/html'
+                  robots_ok=not canonical_life or 'noindex' not in robots_header
+                  ok=response.status==200 and mime in ctype and needle in data and (not expected_final or final==expected_final) and robots_ok
                 print(f'{url}: final={final} mime={ctype} ok={ok}',flush=True)
                 if ok: del pending[url]
               except Exception as error:

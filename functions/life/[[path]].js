@@ -89,6 +89,11 @@ function prepareHeaders(sourceHeaders) {
   headers.delete('content-length');
   headers.delete('content-encoding');
   headers.delete('etag');
+  // The Pages.dev content origin is intentionally noindex. Do not forward
+  // that origin-only X-Robots-Tag to the public pagero.kr/life canonical host.
+  // Article HTML retains its own index/noindex metadata, including noindex
+  // on continuation pages, so public SEO semantics remain page-specific.
+  headers.delete('X-Robots-Tag');
   headers.set('X-Pagero-Life-Proxy', '1');
   headers.set('X-Pagero-Life-Upstream', 'verified-immutable-life-snapshot');
   return headers;
