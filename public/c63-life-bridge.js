@@ -79,6 +79,59 @@
     return section;
   };
 
+  // Actual public home is the frozen C63 bundle, not src/screens/PageroCanonicalHome.
+  // Append this service area through the existing LIFE bridge so it survives C63
+  // hydration and uses the same footer insertion point as PAGERO LIFE.
+  const createCallTagSection = () => {
+    const section = document.createElement('section');
+    section.className = 'c63-calltag-bridge';
+    section.id = 'c63-calltag';
+    section.setAttribute('aria-labelledby', 'c63-calltag-title');
+
+    const inner = document.createElement('div');
+    inner.className = 'c63-life-inner';
+    const head = document.createElement('div');
+    head.className = 'c63-life-head';
+    const copy = document.createElement('div');
+    const eyebrow = document.createElement('span');
+    eyebrow.className = 'c63-life-eyebrow';
+    eyebrow.textContent = 'PAGERO · CALLTAG';
+    const title = document.createElement('h2');
+    title.id = 'c63-calltag-title';
+    title.textContent = '문의가 오면, 그다음 관리까지';
+    const description = document.createElement('p');
+    description.textContent = '콜태그는 신규 고객 문의 알림, 통화 후 상담 메모, 후속 안내 문자와 재연락 일정을 관리하는 Android 고객관리 앱입니다.';
+    copy.append(eyebrow, title, description);
+
+    const more = document.createElement('a');
+    more.className = 'c63-life-more';
+    more.href = 'https://calltag.pagero.kr/';
+    more.textContent = '콜태그 알아보기';
+    head.append(copy, more);
+
+    const features = document.createElement('div');
+    features.className = 'c63-calltag-features';
+    const points = [
+      ['신규 고객 알림', '새로 들어온 문의를 확인하고 후속 연락을 준비합니다.'],
+      ['통화 메모', '통화가 끝난 뒤 상담 내용과 다음 할 일을 기록합니다.'],
+      ['안내 문자 자동화', '설정한 안내 문자를 통해 통화 후 고객 응대를 이어갑니다.'],
+    ];
+    for (const [name, explanation] of points) {
+      const article = document.createElement('article');
+      article.className = 'c63-calltag-feature';
+      const heading = document.createElement('h3');
+      heading.textContent = name;
+      const details = document.createElement('p');
+      details.textContent = explanation;
+      article.append(heading, details);
+      features.appendChild(article);
+    }
+
+    inner.append(head, features);
+    section.appendChild(inner);
+    return section;
+  };
+
   const install = () => {
     const root = document.getElementById('root');
     const home = root?.querySelector('.pagero-exact-home');
@@ -92,10 +145,14 @@
     ensureLink(footerLinks, '/privacy', '\uAC1C\uC778\uC815\uBCF4\uCC98\uB9AC\uBC29\uCE68');
     ensureLink(footerLinks, '/life/', '\uC0DD\uD65C\uBE44\uC11C');
     ensureLink(footerLinks, 'https://awards.pagero.kr/', '\uBE0C\uB79C\uB4DC\uC5B4\uC6CC\uC988');
+    ensureLink(footerLinks, 'https://calltag.pagero.kr/', '콜태그');
 
+    const footer = home.querySelector('footer');
     if (!home.querySelector('.c63-life-bridge')) {
-      const footer = home.querySelector('footer');
       home.insertBefore(createLifeSection(), footer || null);
+    }
+    if (!home.querySelector('.c63-calltag-bridge')) {
+      home.insertBefore(createCallTagSection(), footer || null);
     }
   };
 
