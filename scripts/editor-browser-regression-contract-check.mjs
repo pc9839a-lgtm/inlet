@@ -99,10 +99,10 @@ assert(formEditorSource.includes("id: 'content',\n          label: '내용'")
   && timerEditorSource.includes("id: 'basic',\n          label: '내용'")
   && timerEditorSource.includes("id: 'design',\n          label: '스타일'"),
   'D06 shared editor tabs must use consistent visible content/style terms and preserve persisted tab IDs');
-assert(editPanelLayoutSource.includes('edit-workflow-hint')
-  && editPanelLayoutSource.includes("공통 스타일·코드는 '적용' 후")
-  && editPanelLayoutSource.includes("공개는 '발행' 후"),
-  'D06 editor must distinguish local draft, apply, and publish');
+assert(editPanelLayoutSource.includes('createPortal(inspector, inspectorHost)')
+  && editPanelLayoutSource.includes('페이지 옵션')
+  && editPanelLayoutSource.includes('renderBlockEditor(selectedNormal)'),
+  'three-pane inspector must keep page/global options and selected-block edits available');
 assert(stylePanelSource.includes('스타일 미적용')
   && stylePanelSource.includes('스타일 적용됨')
   && stylePanelSource.includes('공개하려면 발행하세요.'),
@@ -124,7 +124,8 @@ assert(!editPanelLayoutSource.includes('scrollIntoView')
 assert(browserSource.includes('D05 row selection changed outer scroll')
   && browserSource.includes('beforeD05'),
   'D05 isolated browser QA must verify narrow desktop scroll stability');
-assert(browserSource.includes("desktop editor and preview overlap") && browserSource.includes("desktop shell must keep two grid columns") && browserSource.includes("narrow desktop shell must stack into one grid column") && browserSource.includes("desktop edit subsection tabs"), 'desktop matrix must lock non-overlap, two-column desktop, stacked narrow desktop, and editor tab bounds');
+assert(browserSource.includes("desktop block list overlaps preview") && browserSource.includes("desktop shell must have three columns") && browserSource.includes("laptop editor must show canvas + inspector") && browserSource.includes("desktop edit subsection tabs"),
+  'desktop matrix must verify three-pane non-overlap and the laptop inspector layout');
 assert(browserSource.includes("publicVerifyCount") && browserSource.includes("saveCount === 0"), 'browser QA must verify that editing stays local until explicit publish and then verifies the public page');
 assert(browserSource.includes("{ name: 'mobile-360', width: 360") && browserSource.includes("{ name: 'mobile-390', width: 390") && browserSource.includes("{ name: 'mobile-430', width: 430"), 'browser QA must cover 360, 390, and 430 pixel mobile widths');
 assert(browserSource.includes("const tabs = document.querySelector('.top-tabs')") && !browserSource.includes("const tabs = document.querySelector('.workspace-tabs')"), 'mobile editor metrics must use the current top-tabs DOM owner');

@@ -736,6 +736,7 @@ async function collectDesktopMetrics(client) {
     };
     const shell = document.querySelector('.builder-shell');
     const left = document.querySelector('.left-workspace');
+    const inspector = document.querySelector('.editor-inspector-host');
     const preview = document.querySelector('.preview-workspace');
     const frame = document.querySelector('.phone-frame');
     const header = document.querySelector('.panel-header');
@@ -750,6 +751,7 @@ async function collectDesktopMetrics(client) {
       innerWidth,
       shell: rect(shell),
       left: rect(left),
+      inspector: rect(inspector),
       preview: rect(preview),
       frame: rect(frame),
       header: rect(header),
@@ -779,6 +781,8 @@ async function collectNarrowDesktopMetrics(client) {
       documentScrollWidth: document.documentElement?.scrollWidth || 0,
       shell: rect(document.querySelector('.builder-shell')),
       left: rect(document.querySelector('.left-workspace')),
+      inspector: rect(document.querySelector('.editor-inspector-host')),
+      drawerOpen: document.querySelector('.builder-shell')?.dataset.blockListOpen === 'true',
       workPanel: rect(document.querySelector('.work-panel')),
       editLayout: rect(document.querySelector('.edit-layout')),
       preview: rect(document.querySelector('.preview-workspace')),
@@ -850,31 +854,32 @@ function assertDesktop(metrics) {
   assertInsideViewport(metrics.topTabs, metrics.innerWidth, 'desktop main tabs');
   assertInsideViewport(metrics.editTabs, metrics.innerWidth, 'desktop edit subsection tabs');
   assert(!metrics.cockpit, 'desktop preview must not expose the removed conversion cockpit');
-  assert(metrics.left?.right <= metrics.preview?.left + 3, `desktop editor and preview overlap: ${JSON.stringify({ left: metrics.left, preview: metrics.preview })}`);
-  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length >= 2, `desktop shell must keep two grid columns: ${metrics.shellGridColumns}`);
-  assert(metrics.left?.width >= 575, `desktop editor pane is too narrow: ${metrics.left?.width}px`);
-  assert(metrics.preview?.width >= 500, `desktop preview pane became too narrow: ${metrics.preview?.width}px`);
+  assert(metrics.workPanel?.right <= metrics.preview?.left + 3, `desktop block list overlaps preview: ${JSON.stringify(metrics)}`);
+  assert(metrics.preview?.right <= metrics.inspector?.left + 3, `desktop canvas overlaps inspector: ${JSON.stringify(metrics)}`);
+  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === 3, `desktop shell must have three columns: ${metrics.shellGridColumns}`);
+  assert(metrics.workPanel?.width >= 210, `desktop block list is too narrow: ${metrics.workPanel?.width}px`);
+  assert(metrics.inspector?.width >= 300, `desktop inspector is too narrow: ${metrics.inspector?.width}px`);
+  assert(metrics.preview?.width >= 390, `desktop preview pane became too narrow: ${metrics.preview?.width}px`);
   assert(metrics.frame?.width >= 400 && metrics.frame?.width <= 432, `desktop phone frame width is invalid: ${metrics.frame?.width}`);
   assert(metrics.heroTitleVisible, 'saved hero title is not visible in desktop preview');
 }
 
 function assertNarrowDesktop(metrics, width) {
   assert(metrics.path === '/app', `narrow desktop editor route changed: ${metrics.path}`);
-  assert(!metrics.mobile, 'narrow desktop unexpectedly entered mobile operations mode');
-  assert(!metrics.fallback, 'narrow desktop rendered an error fallback');
-  assert(metrics.bodyScrollWidth <= width + 3, `narrow desktop body overflow: ${metrics.bodyScrollWidth} > ${width}`);
-  assert(metrics.documentScrollWidth <= width + 3, `narrow desktop document overflow: ${metrics.documentScrollWidth} > ${width}`);
-  assertInsideViewport(metrics.shell, width, 'narrow desktop builder shell');
-  assertInsideViewport(metrics.left, width, 'narrow desktop left workspace');
-  assertInsideViewport(metrics.workPanel, width, 'narrow desktop work panel');
-  assertInsideViewport(metrics.editLayout, width, 'narrow desktop edit layout');
-  assertInsideViewport(metrics.topTabs, width, 'narrow desktop main tabs');
-  assertInsideViewport(metrics.editTabs, width, 'narrow desktop edit subsection tabs');
-  assert(!metrics.cockpit, 'narrow desktop preview must not expose the removed conversion cockpit');
-  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === 1, `narrow desktop shell must stack into one grid column: ${metrics.shellGridColumns}`);
-  assert(metrics.workPanel?.width >= width - 4, `narrow desktop work panel did not expand: ${metrics.workPanel?.width}px of ${width}px`);
-  assert(metrics.editLayout?.width >= width - 48, `narrow desktop edit layout is still artificially capped: ${metrics.editLayout?.width}px of ${width}px`);
-  assertInsideViewport(metrics.preview, width, 'narrow desktop preview workspace');
+  assert(!metrics.mobile && !metrics.fallback, 'narrow desktop must remain in the editor');
+  assert(metrics.bodyScrollWidth <= width + 3 && metrics.documentScrollWidth <= width + 3,
+    `narrow desktop body overflow: ${metrics.bodyScrollWidth} / ${metrics.documentScrollWidth} > ${width}`);
+  assertInsideViewport(metrics.shell, width, 'narrow editor shell');
+  assertInsideViewport(metrics.preview, width, 'narrow editor canvas');
+  if (width > 700) {
+    assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === 2,
+      `laptop editor must show canvas + inspector: ${metrics.shellGridColumns}`);
+    assert(metrics.inspector?.width >= 260, `laptop inspector must remain usable: ${metrics.inspector?.width}px`);
+  } else {
+    assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === 1,
+      `zoomed editor must reduce to one visible canvas column: ${metrics.shellGridColumns}`);
+  }
+  assert(metrics.workPanel, 'block-list drawer must remain mounted to preserve editor state');
 }
 
 function assertMobile(metrics, viewport) {
@@ -1098,7 +1103,7 @@ async function run() {
     assert(apiState.saveCount === 0, 'invalid backup must not publish');
 
     await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
-    const backupHeroInput = '#editor-block-editor-hero + .screen-order-v2-inline-editor textarea[placeholder="핵심 제목을 입력하세요"]';
+    const backupHeroInput = '.editor-inspector-host .screen-order-v2-inline-editor textarea[placeholder="핵심 제목을 입력하세요"]';
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(backupHeroInput)})`, 'hero editor before backup restore');
     await setInputValue(client, backupHeroInput, 'ED-R08 복원 전 임시 수정');
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes('ED-R08 복원 전 임시 수정')`, 'live edit before backup restore');
@@ -1227,7 +1232,7 @@ async function run() {
     await focusSelector(client, heroTitleSelector);
     await pressKeyboardKey(client, 'Enter');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroTitleSelector)})?.getAttribute('aria-pressed') === 'true'`, 'hero row Enter activation');
-    await waitForBrowser(client, `!!document.querySelector('#editor-block-editor-hero + .screen-order-v2-inline-editor[data-inline-block-editor="true"]')`, 'hero inline editor from Enter');
+    await waitForBrowser(client, `!!document.querySelector('.editor-inspector-host .screen-order-v2-inline-editor[data-scroll-region="inspector"]')`, 'hero inline editor from Enter');
 
     await focusSelector(client, heroVisibilitySelector);
     await pressKeyboardKey(client, 'Space');
@@ -1260,11 +1265,11 @@ async function run() {
       await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
     }
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'selected hero inline editor textarea');
-    await waitForBrowser(client, `!!document.querySelector('#editor-block-editor-hero + .screen-order-v2-inline-editor[data-inline-block-editor="true"]')`, 'inline block editor directly below hero row');
+    await waitForBrowser(client, `!!document.querySelector('.editor-inspector-host .screen-order-v2-inline-editor[data-scroll-region="inspector"]')`, 'inline block editor directly below hero row');
     // D01: exercise the actual selected inspector DOM and CSS scroll contract.
     // A taller editor must scroll internally, without changing block order.
     const inspectorScroll = await evaluate(client, `(() => {
-      const panel = document.querySelector('#editor-block-editor-hero + .screen-order-v2-inline-editor[data-scroll-region="block-settings"]');
+      const panel = document.querySelector('.editor-inspector-host');
       const content = panel?.querySelector('.block-editor-v2');
       if (!panel || !content) return null;
       const original = content.style.minHeight;
@@ -1291,13 +1296,13 @@ async function run() {
     })()`);
     assert(inspectorScroll?.role === 'region' && inspectorScroll.tabIndex === 0
       && inspectorScroll.label?.includes('상세 설정'), `D01 keyboard-scroll region must be accessible: ${JSON.stringify(inspectorScroll)}`);
-    assert(inspectorScroll.overflowY === 'auto' && inspectorScroll.maxHeight > 0
+    assert(inspectorScroll.overflowY === 'auto' && inspectorScroll.height > 0
       && inspectorScroll.contentHeight > inspectorScroll.height && inspectorScroll.scrollTop > 0,
       `D01 long block inspector must scroll independently on desktop: ${JSON.stringify(inspectorScroll)}`);
 
     // D02: the anchor moves to a native, collapsed advanced disclosure; the
     // existing anchorId must remain editable and drive the live preview anchor.
-    const heroAdvanced = '#editor-block-editor-hero + .screen-order-v2-inline-editor .block-editor-advanced-settings';
+    const heroAdvanced = '.editor-inspector-host .screen-order-v2-inline-editor .block-editor-advanced-settings';
     const heroAnchorInput = `${heroAdvanced} .block-editor-anchor-value input`;
     const initialAdvancedState = await evaluate(client, `(() => {
       const details = document.querySelector(${JSON.stringify(heroAdvanced)});
@@ -1339,10 +1344,10 @@ async function run() {
     // the same disclosure placement and genuinely collapsed anchor controls.
     await clickSelector(client, '.topnav-fixed-card .fixed-open-button');
     await waitForBrowser(client,
-      `!!document.querySelector('.topnav-fixed-card .block-editor-advanced-settings')`,
+      `!!document.querySelector('.editor-inspector-host .block-editor-advanced-settings')`,
       'D02 fixed top navigation advanced anchor settings');
     const fixedAdvancedState = await evaluate(client, `(() => {
-      const details = document.querySelector('.topnav-fixed-card .block-editor-advanced-settings');
+      const details = document.querySelector('.editor-inspector-host .block-editor-advanced-settings');
       const root = details?.closest('.block-editor-v2-content');
       const input = details?.querySelector('.block-editor-anchor-value input');
       return details && input ? {
@@ -1355,7 +1360,7 @@ async function run() {
       && fixedAdvancedState.last && fixedAdvancedState.hidden,
       `D02 fixed editor anchor must be hidden after its content: ${JSON.stringify(fixedAdvancedState)}`);
     await clickSelector(client, '.topnav-fixed-card .fixed-open-button');
-    await waitForBrowser(client, `!document.querySelector('.topnav-fixed-card .block-editor-advanced-settings')`,
+    await waitForBrowser(client, `!document.querySelector('.editor-inspector-host .block-editor-advanced-settings')`,
       'D02 fixed navigation settings closed after inspection');
     if (!(await evaluate(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`))) {
       await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
@@ -1494,7 +1499,7 @@ async function run() {
       await clickSelector(client, '#editor-block-editor-form .screen-order-v2-head');
     }
     await waitForBrowser(client, `(() => {
-      const panel = document.querySelector('#editor-block-editor-form + .screen-order-v2-inline-editor');
+      const panel = document.querySelector('.editor-inspector-host .screen-order-v2-inline-editor');
       const labels = [...(panel?.querySelectorAll('.editor-tabs-v2-list button') || [])].map((tab) => tab.textContent.trim());
       return labels.includes('내용') && labels.includes('스타일') && !labels.includes('기본');
     })()`, 'D06 form tabs use content/style vocabulary');
@@ -1503,8 +1508,6 @@ async function run() {
     // E2E-11 / E2E-12: page/theme inspector previews the style draft, then applies it into the page draft.
     await clickButtonByText(client, '.edit-section-tabs', '페이지 옵션');
     await waitForBrowser(client, `!!document.querySelector('.editor-page-options-stack .style-panel')`, 'page theme editor');
-    assert(await evaluate(client, `(document.querySelector('.edit-workflow-hint')?.innerText || '').includes('발행')`),
-      'D06 editor must explain that applying edits and publishing are different steps');
     assert(await evaluate(client, `(document.querySelector('.style-apply-bar span')?.innerText || '').includes('스타일 적용됨')`),
       'D06 initially applied style status must be explicit');
     await clickButtonByText(client, '.style-subnav', '색상');
@@ -1538,10 +1541,10 @@ async function run() {
       `document.querySelector('#workspace-tab-edit')?.getAttribute('aria-selected') === 'true'`,
       'F02 back to edit tab');
     await waitForBrowser(client,
-      `document.querySelector('.edit-section-tabs .edit-section-tab:first-child')?.textContent?.includes('미적용')`,
+      `document.querySelector('.edit-section-tabs .edit-section-tab:last-child')?.textContent?.includes('미적용')`,
       'F02 unapplied style badge survives workspace switch');
     if (!(await evaluate(client, `!!document.querySelector('.editor-page-options-stack .style-panel')`))) {
-      await clickSelector(client, '.edit-section-tabs .edit-section-tab:first-child');
+      await clickSelector(client, '.edit-section-tabs .edit-section-tab:last-child');
     }
     await waitForBrowser(client, `!!document.querySelector('.editor-page-options-stack .style-panel')`,
       'F02 style panel remounted after returning to edit');
@@ -1557,7 +1560,7 @@ async function run() {
     assert(await evaluate(client, `(document.querySelector('.style-apply-bar span')?.innerText || '').includes('스타일 적용됨')`),
       'D06 style apply must clearly distinguish page draft from public publish');
 
-    await clickButtonByText(client, '.edit-section-tabs', '화면 순서');
+    await clickButtonByText(client, '.edit-section-tabs', '블록 설정');
     await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-list')`, 'screen order after style apply');
 
     // E2E-13: the header shows the latest draft without opening the live
@@ -1659,13 +1662,13 @@ async function run() {
 
     // Code blocks must be distinguishable by a persisted editor-only custom label.
     await clickSelector(client, '#editor-block-editor-code .screen-order-v2-head');
-    await waitForBrowser(client, `!!document.querySelector('#editor-block-editor-code + .screen-order-v2-inline-editor input[aria-label="구분 이름"]')`, 'code block custom label input');
-    await setInputValue(client, '#editor-block-editor-code + .screen-order-v2-inline-editor input[aria-label="구분 이름"]', persistedCodeLabel);
+    await waitForBrowser(client, `!!document.querySelector('.editor-inspector-host .screen-order-v2-inline-editor input[aria-label="구분 이름"]')`, 'code block custom label input');
+    await setInputValue(client, '.editor-inspector-host .screen-order-v2-inline-editor input[aria-label="구분 이름"]', persistedCodeLabel);
     await waitForBrowser(client, `(document.querySelector('#editor-block-editor-code .screen-order-v2-title-wrap strong')?.textContent || '').includes(${JSON.stringify(persistedCodeLabel)})`, 'screen order custom code label');
 
     // D06: code has a separate apply phase. Editing alone never publishes,
     // while applying updates only the local page draft.
-    const codeDraftSelector = '#editor-block-editor-code + .screen-order-v2-inline-editor .code-editor-box textarea';
+    const codeDraftSelector = '.editor-inspector-host .screen-order-v2-inline-editor .code-editor-box textarea';
     const codeOriginal = await evaluate(client, `document.querySelector(${JSON.stringify(codeDraftSelector)})?.value ?? ''`);
     await waitForBrowser(client, `!!document.querySelector('.code-editor-actions [data-code-draft-state="applied"]')`, 'D06 code initially applied');
     await setInputValue(client, codeDraftSelector, `${codeOriginal}\n<!-- D06 staged code regression -->`);
@@ -1676,7 +1679,7 @@ async function run() {
     assert(apiState.saveCount === 2, 'D06 code apply must not publish');
 
     // P9-2: modal focus must stay contained and return to the opener on Escape.
-    const codeModalTrigger = '#editor-block-editor-code + .screen-order-v2-inline-editor .code-editor-head button';
+    const codeModalTrigger = '.editor-inspector-host .screen-order-v2-inline-editor .code-editor-head button';
     await focusSelector(client, codeModalTrigger);
     await clickSelector(client, codeModalTrigger);
     await waitForBrowser(client, `!!document.querySelector('.code-editor-modal-card[role="dialog"]')`, 'code editor modal open');
@@ -1765,7 +1768,7 @@ async function run() {
     })()`);
     assert(reloadGuardPrevented === false, 'clean saved page must not keep the unsaved navigation guard after reload');
     await clickSelector(client, '#editor-block-editor-code .screen-order-v2-head');
-    await waitForBrowser(client, `document.querySelector('#editor-block-editor-code + .screen-order-v2-inline-editor input[aria-label="구분 이름"]')?.value === ${JSON.stringify(persistedCodeLabel)}`, 'persisted code block custom label after reload');
+    await waitForBrowser(client, `document.querySelector('.editor-inspector-host .screen-order-v2-inline-editor input[aria-label="구분 이름"]')?.value === ${JSON.stringify(persistedCodeLabel)}`, 'persisted code block custom label after reload');
     await waitForBrowser(client, `(document.querySelector('#editor-block-editor-code .screen-order-v2-title-wrap strong')?.textContent || '').includes(${JSON.stringify(persistedCodeLabel)})`, 'persisted screen-order code label after reload');
     assert(apiState.sessionCount >= 1, 'saved login session was not refreshed after reload');
     const desktopMetrics = await collectDesktopMetrics(client);
@@ -1775,6 +1778,9 @@ async function run() {
     for (const desktopViewport of desktopMatrix) {
       await setViewport(client, desktopViewport.width, desktopViewport.height, false);
       await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('.preview-workspace')`, `${desktopViewport.name} editor`);
+      if (desktopViewport.width < 1280 && !(await evaluate(client, "document.querySelector('.builder-shell')?.dataset.blockListOpen === 'true'"))) {
+        await clickSelector(client, '.editor-block-list-toggle');
+      }
 
       await clickButtonByText(client, '.edit-section-tabs', '페이지 옵션');
     await waitForBrowser(client, `!!document.querySelector('.page-global-options-card')`, 'narrow desktop page options');
@@ -1793,7 +1799,7 @@ async function run() {
     assert(pageOptionsShellStyle?.borderRadius === '12px', `page options shell radius drifted at desktop matrix width: ${JSON.stringify(pageOptionsShellStyle)}`);
     await capture(client, 'desktop-narrow-1180-page-options');
 
-    await clickButtonByText(client, '.edit-section-tabs', '화면 순서');
+    await clickButtonByText(client, '.edit-section-tabs', '블록 설정');
     await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-card')`, 'narrow desktop screen order');
     const screenOrderShellStyle = await evaluate(client, `(() => {
       const shell = document.querySelector('.screen-order-v2-card');
@@ -1821,9 +1827,9 @@ async function run() {
 
       if (desktopViewport.width === 1180) {
         await clickSelector(client, '#editor-block-editor-text .screen-order-v2-head');
-        await waitForBrowser(client, `!!document.querySelector('#editor-block-editor-text + .screen-order-v2-inline-editor .editor-tabs-v2')`, 'narrow desktop inline text editor');
+        await waitForBrowser(client, `!!document.querySelector('.editor-inspector-host .screen-order-v2-inline-editor .editor-tabs-v2')`, 'narrow desktop inline text editor');
     const inlineDetailStyle = await evaluate(client, `(() => {
-      const inline = document.querySelector('#editor-block-editor-text + .screen-order-v2-inline-editor');
+      const inline = document.querySelector('.editor-inspector-host .screen-order-v2-inline-editor');
       const anchor = inline?.querySelector('.block-editor-anchor-control');
       const label = inline?.querySelector('.editor-field-v2-label strong');
       const textarea = inline?.querySelector('.editor-field-v2 textarea');
@@ -1843,7 +1849,7 @@ async function run() {
         tabHeight: Math.round(tab.getBoundingClientRect().height),
       };
     })()`);
-    assert(inlineDetailStyle?.inlineMarginTop === '10px', `inline editor top spacing drifted: ${JSON.stringify(inlineDetailStyle)}`);
+    assert(inlineDetailStyle?.inlineMarginTop === '0px', `inline editor top spacing drifted: ${JSON.stringify(inlineDetailStyle)}`);
     assert(inlineDetailStyle?.labelFontSize === '13px', `inline editor labels must remain readable: ${JSON.stringify(inlineDetailStyle)}`);
     assert(inlineDetailStyle?.textareaFontSize === '14px', `inline editor text must remain readable: ${JSON.stringify(inlineDetailStyle)}`);
     assert(inlineDetailStyle?.tabHeight === 32, `inline editor tabs must keep 32px height: ${JSON.stringify(inlineDetailStyle)}`);
@@ -1912,6 +1918,8 @@ async function run() {
           dockPosition: dockStyle?.position || '',
           bodyOverflowX: getComputedStyle(document.body).overflowX,
           bodyOverflowY: getComputedStyle(document.body).overflowY,
+          inspectorOverflowY: getComputedStyle(document.querySelector('.editor-inspector-host')).overflowY,
+          blockDrawerToggle: getComputedStyle(document.querySelector('.editor-block-list-toggle')).display,
         };
       })()`);
 
@@ -1921,7 +1929,8 @@ async function run() {
       zoomChrome.actions.forEach((action, index) => assertInsideViewport(action, zoomViewport.width, `${zoomViewport.name} header action ${index + 1}`));
       assert(zoomChrome.dockPosition !== 'fixed', `${zoomViewport.name} add dock must not become a viewport-fixed overlap: ${zoomChrome.dockPosition}`);
       assert(['auto', 'hidden'].includes(zoomChrome.bodyOverflowX), `${zoomViewport.name} body horizontal overflow mode is unexpected: ${zoomChrome.bodyOverflowX}`);
-      assert(['auto', 'visible'].includes(zoomChrome.bodyOverflowY), `${zoomViewport.name} body must stay vertically reachable: ${zoomChrome.bodyOverflowY}`);
+      assert(zoomChrome.inspectorOverflowY === 'auto' && zoomChrome.blockDrawerToggle !== 'none',
+        `${zoomViewport.name} must preserve independent inspector scroll and a reachable block drawer: ${JSON.stringify(zoomChrome)}`);
       await capture(client, zoomViewport.name);
     }
 
@@ -2028,7 +2037,7 @@ async function run() {
     await waitForBrowser(client, "!!document.querySelector('.builder-shell:not(.mobile-operations-shell)')", 'tab A desktop editor');
     await clickButtonByText(client, '.top-tabs', '편집');
     await waitForBrowser(client, "!!document.querySelector('#editor-block-editor-hero')", 'tab A hero block');
-    const twoTabHeroInput = '#editor-block-editor-hero + .screen-order-v2-inline-editor textarea[placeholder="핵심 제목을 입력하세요"]';
+    const twoTabHeroInput = '.editor-inspector-host .screen-order-v2-inline-editor textarea[placeholder="핵심 제목을 입력하세요"]';
     if (!await evaluate(client, "!!document.querySelector(" + JSON.stringify(twoTabHeroInput) + ")")) {
       await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
     }

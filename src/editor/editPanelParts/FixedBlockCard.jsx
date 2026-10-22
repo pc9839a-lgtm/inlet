@@ -2,7 +2,7 @@ import React from 'react';
 import { FixedBlockCardBody } from './FixedBlockCardBody.jsx';
 import { FixedBlockCardHeader } from './FixedBlockCardHeader.jsx';
 
-export function FixedBlockCard({ block, className, title, badge, renderEditor, open, onToggleOpen, onToggleVisible }) {
+export function FixedBlockCard({ block, className, title, badge, renderEditor, open, onToggleOpen, onToggleVisible, inlineEditor = true }) {
   if (!block) return null;
 
   return (
@@ -15,7 +15,7 @@ export function FixedBlockCard({ block, className, title, badge, renderEditor, o
         onToggleOpen={onToggleOpen}
         onToggleVisible={onToggleVisible}
       />
-      {open && <FixedBlockCardBody block={block} renderEditor={renderEditor} />}
+      {open && inlineEditor && <FixedBlockCardBody block={block} renderEditor={renderEditor} />}
     </section>
   );
 }

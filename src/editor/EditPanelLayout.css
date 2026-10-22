@@ -108,3 +108,27 @@ body .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel {
   }
 
 }
+
+/* Inspector content is portaled; the block list and settings scroll independently. */
+body .builder-shell.edit-mode-shell .editor-inspector-layout {
+  display: block;
+  padding: 16px 14px 32px;
+}
+body .builder-shell.edit-mode-shell .editor-inspector-heading {
+  margin: 0 0 12px;
+  color: var(--product-text);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+body .builder-shell.edit-mode-shell .editor-inspector-empty {
+  margin: 0;
+  color: var(--product-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+html body #root .builder-shell.edit-mode-shell .editor-inspector-layout .screen-order-v2-inline-editor {
+  margin: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
