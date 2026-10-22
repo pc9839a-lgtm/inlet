@@ -1,0 +1,48 @@
+name: Confirm LIFE published official comparison articles
+on:
+  push:
+    branches: [audit/adsense-domain-inventory-20261022]
+    paths:
+      - .github/workflows/verify-life-facts-live.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check three public canonical articles for current evidence and corrected vaccine date
+        shell: bash
+        run: |
+          python - <<'PY'
+          import time,urllib.request,re
+          root='https://pagero.kr/life/support/'
+          cases={
+            'emergency-welfare-livelihood-2026':'상황별 긴급복지 생계지원 판단 비교',
+            'flu-vaccination-children-2026':'9월 16일 일정 변경을 반영한 1회·2회 접종 비교',
+            'disabled-child-allowance-2026':'장애정도·급여유형별 실제 지원액 비교',
+          }
+          pending=dict(cases)
+          for attempt in range(1,14):
+            for slug,anchor in list(pending.items()):
+              url=root+slug+'/'
+              try:
+                req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 PageRoEditorialLiveQA','Cache-Control':'no-cache'})
+                with urllib.request.urlopen(req,timeout=16) as response:
+                  status=response.status
+                  h=response.headers
+                  text=response.read(500000).decode('utf-8','replace')
+                okay=(status==200 and anchor in text and '<table' in text
+                      and 'noindex' not in h.get('X-Robots-Tag','').lower()
+                      and 'href="https://pagero.kr/life/support/'+slug+'/"' in text)
+                if slug=='flu-vaccination-children-2026':
+                  okay=okay and '9월 21일' in text and '일주일 뒤인 9월 28일' not in text
+                print('CHECK',attempt,slug,'HTTP',status,'PASS',okay,flush=True)
+                if okay:pending.pop(slug)
+              except Exception as exc:print('RETRY',attempt,slug,type(exc).__name__,str(exc)[:130],flush=True)
+            if not pending:break
+            if attempt<13:time.sleep(14)
+          if pending:raise SystemExit('FAIL: current official comparison content not public for '+','.join(pending))
+          print('PASS: three factual article improvements are live on pagero.kr/life/',flush=True)
+          PY
