@@ -1,0 +1,84 @@
+name: AdSense public render and 45-guide discovery audit
+on:
+  push:
+    branches: [audit/adsense-public-render-crawl-20261022, main]
+    paths:
+      - scripts/adsense-public-crawl.mjs
+      - .github/workflows/adsense-public-render-crawl.yml
+  pull_request:
+    paths:
+      - scripts/adsense-public-crawl.mjs
+      - .github/workflows/adsense-public-render-crawl.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  indexability-and-discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Load published LIFE editorial source as manifest of expected articles
+        uses: actions/checkout@v4
+        with:
+          repository: pc9839a-lgtm/life-pagero
+          ref: main
+          path: life-source
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Rehydrate published LIFE articles; do not deploy or modify remote site
+        run: npm run build
+        working-directory: life-source
+      - name: Crawl live PageRo home, LIFE hub, both sitemaps, and all published guides
+        run: node scripts/adsense-public-crawl.mjs
+      - name: Save inspectable report even on failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: adsense-public-crawl-report
+          path: artifacts/adsense-public-crawl.json
+          retention-days: 14
+          if-no-files-found: ignore
+  visible-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Find real Chrome executable
+        shell: bash
+        run: |
+          browser="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
+          test -n "$browser"
+          echo "INLET_BROWSER_QA_CHROME_PATH=$browser" >> "$GITHUB_ENV"
+      - name: Verify hydrated, publicly visible home (desktop)
+        env:
+          INLET_BROWSER_QA_URL: https://pagero.kr/
+          INLET_BROWSER_QA_REQUIRE: '1'
+          INLET_BROWSER_QA_VIEWPORTS: desktop
+          INLET_BROWSER_QA_EXPECT_SELECTOR: ".pagero-exact-home .c63-life-bridge,.pagero-exact-home .c63-life-post,.pagero-exact-home .c63-calltag-bridge,.pagero-exact-home .footer-links a[href='/life/']"
+          INLET_BROWSER_QA_EXPECT_TEXT: "생활에 필요한 정보,생활정보 전체보기,문의가 오면"
+          INLET_BROWSER_QA_EXPECT_COMPUTED: ".pagero-exact-home .c63-life-bridge|display|block;.pagero-exact-home .c63-calltag-bridge|display|block"
+        run: node scripts/browser-visual-quality-check.mjs
+      - name: Verify hydrated, publicly visible home (mobile)
+        env:
+          INLET_BROWSER_QA_URL: https://pagero.kr/
+          INLET_BROWSER_QA_REQUIRE: '1'
+          INLET_BROWSER_QA_VIEWPORTS: mobile
+          INLET_BROWSER_QA_EXPECT_SELECTOR: ".pagero-exact-home .c63-life-bridge,.pagero-exact-home .c63-life-post,.pagero-exact-home .c63-calltag-bridge,.pagero-exact-home .footer-links a[href='/life/']"
+          INLET_BROWSER_QA_EXPECT_TEXT: "생활에 필요한 정보,생활정보 전체보기,문의가 오면"
+          INLET_BROWSER_QA_EXPECT_COMPUTED: ".pagero-exact-home .c63-life-bridge|display|block;.pagero-exact-home .c63-calltag-bridge|display|block"
+        run: node scripts/browser-visual-quality-check.mjs
+      - name: Verify LIFE 45-guide editorial archive is visible after rendering
+        env:
+          INLET_BROWSER_QA_URL: https://pagero.kr/life/
+          INLET_BROWSER_QA_REQUIRE: '1'
+          INLET_BROWSER_QA_VIEWPORTS: mobile
+          INLET_BROWSER_QA_EXPECT_SELECTOR: ".life-archive-grid,.life-archive-group,.life-archive-note"
+          INLET_BROWSER_QA_EXPECT_TEXT: "분야별 생활정보 전체보기,LIFE EDITORIAL ARCHIVE"
+          INLET_BROWSER_QA_EXPECT_COMPUTED: ".life-archive-grid|display|grid"
+        run: node scripts/browser-visual-quality-check.mjs
