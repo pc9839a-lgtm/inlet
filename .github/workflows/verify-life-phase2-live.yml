@@ -1,0 +1,63 @@
+name: Verify AdSense phase 2 editorial content on public LIFE canonical
+on:
+  workflow_run:
+    workflows: ["Deploy Cloudflare Pages"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-public:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - name: Confirm all 5 revised primary pages are truly public and indexable
+        shell: bash
+        run: |
+          python - <<'PY'
+          import time,urllib.request
+          home='https://pagero.kr/life/'
+          expected={
+             'car/car-inspection-period/':['내 차량의 정기검사·종합검사 구분 사례','정기검사 공식 설명'],
+             'support/culture-card-2026/':['발급·자동재충전·연말 사용기한 비교','2026년 12월 31일'],
+             'support/energy-voucher-2026/':['에너지바우처는 월 지급액이 아닌 연간 총액입니다','295,200원'],
+             'support/earned-income-tax-credit-late-2026/':['기한 후 신청 전 가구유형·총소득·재산 비교','2억 4천만 원'],
+             'car/used-car-transfer-cost/':['이전비용 계산 결과와 실제 납부액은 다를 수 있습니다','등록비용 간편계산'],
+          }
+          def get(url):
+             req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 (PageRoPhase2EditorialPublicQA)','Cache-Control':'no-cache'})
+             with urllib.request.urlopen(req,timeout=14) as r:
+                return r.status,r.headers,r.read(700000).decode('utf-8','replace')
+          pending=dict(expected)
+          for attempt in range(1,19):
+             for page,markers in list(pending.items()):
+                url=home+page
+                try:
+                   status,headers,html=get(url)
+                   good=(status==200
+                         and 'text/html' in headers.get('Content-Type','')
+                         and '2026년 10월 23일 확인' in html
+                         and '<table' in html
+                         and all(s in html for s in markers)
+                         and '<link rel="canonical" href="'+url+'">' in html
+                         and 'noindex' not in headers.get('X-Robots-Tag','').lower()
+                         and '<meta name="robots" content="index,follow' in html)
+                   print('PUBLIC_ARTICLE',attempt,page,'HTTP',status,'verified',good,flush=True)
+                   if good:pending.pop(page)
+                except Exception as err:print('RETRY',page,type(err).__name__,str(err)[:110],flush=True)
+             if not pending:break
+             if attempt<18:time.sleep(13)
+          if pending:raise SystemExit('FAIL expected reviewed article content is not public: '+','.join(pending))
+          status,headers,sitemap=get(home+'sitemap.xml')
+          count=sitemap.count('<loc>')
+          if status!=200 or count<50 or any(home+path not in sitemap for path in expected):
+             raise SystemExit(f'FAIL public LIFE sitemap not synchronized: status={status} urls={count}')
+          status,headers,index=get(home)
+          if status!=200 or 'LIFE EDITORIAL ARCHIVE' not in index:
+             raise SystemExit('FAIL public LIFE publisher homepage is not discoverable')
+          if any('href="/life/'+page+'"' not in index for page in expected):
+             raise SystemExit('FAIL editorial homepage missing revised article links')
+          print('PASS: all five strengthened guides live, indexable and discoverable, sitemap',count,'URLs',flush=True)
+          PY
