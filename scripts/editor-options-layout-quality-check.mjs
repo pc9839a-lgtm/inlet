@@ -5,7 +5,6 @@ function assert(condition, message) {
 }
 
 const pageOptions = await readFile('src/editor/editPanelParts/PageGlobalOptions.jsx', 'utf8');
-const pageOptionsHeader = await readFile('src/editor/editPanelParts/PageGlobalOptionsHeader.jsx', 'utf8');
 const pageOptionsList = await readFile('src/editor/editPanelParts/PageGlobalOptionsList.jsx', 'utf8');
 const animationOptionsCard = await readFile('src/editor/editPanelParts/AnimationOptionsCard.jsx', 'utf8');
 const animationOptionsCss = await readFile('src/editor/editPanelParts/AnimationOptionsCard.css', 'utf8');
@@ -67,7 +66,7 @@ async function assertMissingFile(relativePath) {
 
 assert(pageOptions.includes("import './PageGlobalOptions.css';"), 'page options must load its compact layout owner');
 assert(pageOptionsCss.includes('max-width: 100%') && pageOptionsCss.includes('overflow-x: hidden'), 'page options must clamp nested editor width and horizontal overflow');
-assert(pageOptionsCss.includes('@media (max-width: 760px)') && pageOptionsCss.includes('padding: 10px'), 'page options must keep a dedicated mobile card layout');
+assert(pageOptionsCss.includes('@media (max-width: 760px)') && pageOptionsCss.includes('min-height: 44px'), 'page settings disclosures must retain mobile-sized controls');
 assert(!pageOptionsList.includes('GlobalFixedBlocks'), 'page options must not render fixed block editors');
 assert(pageOptionsList.includes('AnimationOptionsCard') && pageOptionsList.includes('ShareOptionsCard'), 'page options must retain global animation and share controls');
 assert(!pageOptionsProps.includes('topNavBlock') && !pageOptionsProps.includes('bottomBlock') && !pageOptionsProps.includes('footerBlock'), 'page option props must stay global-only');
@@ -83,8 +82,8 @@ assert(shareCss.includes('grid-template-columns: repeat(2, minmax(0, 1fr))'), 'm
 assert(shareCss.includes('min-height: 42px'), 'mobile share position choices must keep large tap targets');
 assert(screenOrderCss.includes('@media (max-width: 760px)') && screenOrderCss.includes('.screen-order-v2-card { padding: 10px;'), 'screen order must retain its compact mobile card contract');
 assert(editLayout.includes('edit-section-tabs') && editLayout.includes('블록') && editLayout.includes('<ScreenOrderList {...screenOrderListProps} />'), 'screen order must live in the restored left editor flow without a redundant selected-settings shell');
-assert(editLayout.includes('페이지 옵션') && editLayout.includes('<PageGlobalOptions {...pageGlobalOptionsProps} />') && editLayout.includes('<PageThemeStylePanel {...stylePanelProps} />'), 'page options and theme controls must live in the restored left editor mode');
-assert(editorLabels.includes("globalSettings: '\\uC804\\uC5ED \\uC124\\uC815'") && pageOptionsHeader.includes('T.globalSettings'), 'page options content heading must be global settings instead of repeating the tab label');
+assert(editLayout.includes('페이지 설정') && editLayout.includes('<PageGlobalOptions {...pageGlobalOptionsProps}') && editLayout.includes('updateTheme={updatePageTheme}') && editLayout.includes('<PageThemeStylePanel {...stylePanelProps} />'), 'page options and theme controls must live in the restored left editor mode');
+assert(!pageOptions.includes('PageGlobalOptionsHeader') && pageOptions.includes('aria-label="페이지 동작"'), 'page behavior must have an accessible group label without repeating a visible settings heading');
 assert(editorLabels.includes("normalBlocks: '\\uC77C\\uBC18 \\uBE14\\uB85D'") && screenOrderHeader.includes('T.normalBlocks'), 'screen order content heading must identify normal blocks instead of repeating the tab label');
 assert(mobileScreenOrderCss.includes('grid-template-columns: 44px minmax(0,1fr) 44px 44px'), 'mobile screen order must reserve full touch columns without horizontal overflow');
 assert(/\.screen-order-v2-drag\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;/s.test(mobileScreenOrderCss), 'mobile drag handle must expose a 44px touch target');
@@ -107,17 +106,18 @@ assert(screenOrderIdentityModel.includes("block?.type === 'code'") && screenOrde
 assert(editLayout.includes('data-editor-section={section}'), 'edit section panel must expose the active subsection for deterministic PC styling');
 assert(editLayout.includes("import './EditPanelLayout.css';") && editPanelLayoutCss.includes('edit-section-tabs-v2') && editPanelLayoutCss.includes('.editor-page-options-stack') && !editorWorkspaceCss.includes('edit-section-tabs') && !editorWorkspaceCss.includes('editor-page-options-stack'), 'EditPanelLayout must load and own subsection tabs/panel stack instead of editor-workspace.css');
 assert(screenOrderCss.includes('Desktop ScreenOrder surface owner') && fixedBlocksCss.includes('Fixed-block component owner for the active editor surface'), 'screen order and fixed blocks must keep explicit component-owned PC visual contracts');
-assert(pageOptionsCss.includes('.page-global-options-card.card') && pageOptionsCss.includes('padding: 14px !important') && pageOptionsCss.includes('border-radius: 12px !important') && screenOrderCss.includes('border-radius: 0 !important'), 'page options and flat screen-order rows must retain separate component surface owners');
+assert(pageOptionsCss.includes('border-radius: 0;') && pageOptionsCss.includes('.page-option-head') && screenOrderCss.includes('border-radius: 0 !important'), 'page settings and block rows must retain separate flat component surface owners');
 assert(screenOrderCss.includes('.screen-order-v2-list') && screenOrderCss.includes('gap: 0 !important') && screenOrderCss.includes('border-bottom: 1px solid var(--product-line) !important') && !editorWorkspaceCss.includes('.screen-order-v2-card'), 'PC screen order must retain a flat compact list in its component owner');
 assert(/\.screen-order-v2-head\s*\{[^}]*min-height:\s*38px;[^}]*gap:\s*2px;/s.test(screenOrderCss), 'desktop screen-order rows must keep the tightened 38px / 2px density');
 assert(screenOrderCss.includes('min-height: 44px !important;') && screenOrderCss.includes('grid-template-columns: 34px minmax(0, 1fr) 36px 36px !important'), 'PC screen-order rows must retain readable compact geometry and both existing action controls');
 assert(screenOrderCss.includes('min-height: 42px !important;') && screenOrderCss.includes('min-height: 84px !important;') && screenOrderCss.includes('min-height: 64px !important;'), 'PC inline editor fields must keep the compact input and textarea heights');
 assert(legacyScreenOrderTokens.every((token) => !workspaceShellCss.includes(token)), 'workspace shell must not restore legacy normal-block selectors');
 assert(['.screen-icon-action', '.fixed-open-button', '.switch-clean'].every((token) => editorSharedUiCss.includes(token)) && fixedBlocksCss.includes('.fixed-block-head'), 'shared controls and fixed-block visuals must live with their current owners');
-assert(animationOptionsCard.includes("import './AnimationOptionsCard.css';") && animationOptionsCss.includes('.edit-animation-card') && animationOptionsCss.includes('.edit-animation-options'), 'animation options must load and own their component CSS');
+assert(animationOptionsCard.includes("import './AnimationOptionsCard.css';") && animationOptionsCss.includes('.edit-animation-settings') && animationOptionsCss.includes('.edit-animation-options'), 'animation options must load and own their component CSS');
 assert(animationOptionsCss.includes('.edit-animation-settings') && fixedBlocksCss.includes('Fixed editor body base surface formerly supplied by editor-workspace.css') && !editorWorkspaceCss.includes('.fixed-block-card') && !editorWorkspaceCss.includes('.edit-animation-card') && !editorWorkspaceCss.includes('.fixed-block-editor') && !editorWorkspaceCss.includes('.edit-animation-settings'), 'workspace geometry must not own fixed or animation card presentation');
 assert(editorExpandedShellCss.includes('Block editor shell details migrated from editor-workspace.css') && editorExpandedShellCss.includes('.block-editor-v2-header') && editorExpandedShellCss.includes('.editor-section-v2-trigger') && editorExpandedControlsCss.includes('Block editor controls migrated from editor-workspace.css') && editorExpandedControlsCss.includes('.editor-field-v2') && editorExpandedControlsCss.includes('.image-mode-toolbar') && !editorWorkspaceCss.includes('.block-editor-v2-header') && !editorWorkspaceCss.includes('.editor-field-v2') && !editorWorkspaceCss.includes('.editor-section-v2-trigger'), 'expanded UI styles must own block editor shell and controls instead of workspace geometry');
 assert(!workspaceShellCss.includes('.screen-icon-action') && !workspaceShellCss.includes('.switch-clean') && !workspaceShellCss.includes('.fixed-block-head') && !workspaceShellCss.includes('.edit-animation') && !workspaceShellCss.includes('.screen-drop-zone'), 'workspace shell must stay geometry-only for editor component ownership');
+await assertMissingFile('src/editor/editPanelParts/PageGlobalOptionsHeader.jsx');
 await assertMissingFile('src/styles/editor-final-clean.css');
 await assertMissingFile('src/styles/editor-screen-order-polish.css');
 await assertMissingFile('src/editor/editPanelParts/ScreenOrderRowActionMenu.jsx');

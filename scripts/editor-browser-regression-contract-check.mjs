@@ -73,7 +73,7 @@ assert(browserSource.includes("clickButtonByText(client, '.add-panel', '구분�
 assert(browserSource.includes("#editor-block-editor-text .screen-order-v2-visibility-button") && browserSource.includes("#editor-block-editor-form .screen-order-v2-action") && browserSource.includes("'위로 이동'"), 'browser QA must verify visibility and order changes through the current screen-order V2 controls');
 assert(browserSource.includes("Input.dispatchMouseEvent") && browserSource.includes("pointer drag moved divider to first position") && browserSource.includes(".screen-order-v2-drag"), 'browser QA must verify reorder through real Chrome mouse input, not only menu actions');
 assert(screenOrderMovementSource.includes('const moveUp = () =>') && screenOrderMovementSource.includes('const moveDown = () =>') && !screenOrderMovementSource.includes('event.stopPropagation'), 'screen-order move actions must stay event-independent because the overflow menu invokes them without an event');
-assert(browserSource.includes("clickButtonByText(client, '.edit-section-tabs', '페이지 옵션')") && browserSource.includes("updatedAccent") && browserSource.includes(".style-apply-btn"), 'browser QA must preview and apply a page theme change from the restored left editor before publish');
+assert(browserSource.includes("clickButtonByText(client, '.edit-section-tabs', '페이지 설정')") && browserSource.includes("updatedAccent") && browserSource.includes(".style-apply-btn"), 'browser QA must preview and apply a page theme change from the restored left editor before publish');
 assert(browserSource.includes("window.__pageroQaPreviewCalls") && browserSource.includes("clickButtonByText(client, '.panel-actions', '미리보기')"), 'browser QA must verify preview can open without interrupting continued editing');
 assert(browserSource.includes("saveDelayMs = 900") && browserSource.includes("continuedHeroTitle") && browserSource.includes("newer local draft after delayed publish response"), 'browser QA must cover edits made while a publish response is in flight');
 assert(browserSource.includes("revisionHeroTitle") && browserSource.includes("finalHeroTitle") && browserSource.includes("'버전 기록'") && browserSource.includes("clickPointer(client, '.page-revision-history-section .page-revision-history-row .ghost-btn')"), 'browser QA must restore a prior revision through real Chrome pointer input in the settings UI');
@@ -127,6 +127,11 @@ assert(browserSource.includes('stageTwoSettings')
   && browserSource.includes('unapplied code draft survives list navigation')
   && browserSource.includes('preview reselects the previous block after page options'),
   'stage 2 browser QA must preserve settings navigation, keyboard focus, staged code and preview selection');
+assert(browserSource.includes('stageThreePageSettings')
+  && browserSource.includes('one reset discards pending design and animation changes')
+  && browserSource.includes('applying the staged design must retain page animation edits')
+  && browserSource.includes('share position must persist through design apply and publish'),
+  'stage 3 browser QA must preserve page settings disclosure, unified theme apply/reset and share persistence');
 assert(browserSource.includes("desktop editor and preview overlap") && browserSource.includes("desktop shell must keep two grid columns") && browserSource.includes("narrow desktop shell must stack into one grid column") && browserSource.includes("desktop edit subsection tabs"), 'desktop matrix must lock non-overlap, two-column desktop, stacked narrow desktop, and editor tab bounds');
 assert(browserSource.includes("publicVerifyCount") && browserSource.includes("saveCount === 0"), 'browser QA must verify that editing stays local until explicit publish and then verifies the public page');
 assert(browserSource.includes("{ name: 'mobile-360', width: 360") && browserSource.includes("{ name: 'mobile-390', width: 390") && browserSource.includes("{ name: 'mobile-430', width: 430"), 'browser QA must cover 360, 390, and 430 pixel mobile widths');
@@ -167,7 +172,7 @@ assert(addBlockGridSource.includes("category === 'all' || categoryKey === catego
 assert(addBlockOptionSource.includes("meta.preset || '', type"), 'block add options must preserve existing add-block catalog behavior');
 assert(addBlockDockCssSource.includes('.widget-group button') && addBlockDockCssSource.includes('min-height: 44px !important;'), 'block add buttons must keep 44px mobile touch targets');
 
-assert(pageOptionsCssSource.includes('/* Page options runtime owner.') && pageOptionsCssSource.includes('.page-global-options-card.card') && pageOptionsCssSource.includes('.page-global-options-title h2'), 'PageGlobalOptions.css must own the page-options runtime surface');
+assert(pageOptionsCssSource.includes('Page-wide behavior rows.') && pageOptionsCssSource.includes('.page-option-head') && pageOptionsCssSource.includes('.page-option-expand'), 'PageGlobalOptions.css must own the flat page behavior rows and disclosure controls');
 assert(!editorWorkspaceCssSource.includes('page-global-options') && !workspaceShellCssSource.includes('page-global-options'), 'workspace geometry CSS must not override PageGlobalOptions component selectors');
 assert(!workspaceShellCssSource.includes('selected-block-settings-title'), 'deleted selected-block title CSS must not return through workspace shell');
 

@@ -27,7 +27,7 @@ assert(screen.includes("const effectiveTab = tab === 'style' ? 'edit' : tab;"), 
 assert(active.includes('stylePanelProps={stylePanelProps}'), 'edit workspace must receive theme controls');
 assert(editPanel.includes('stylePanelProps={stylePanelProps}'), 'EditPanel must forward theme controls');
 
-assert(layout.includes('data-pagero-ui="edit-section-tabs-v2"') && layout.includes('className="edit-section-tab"') && layout.includes('페이지 옵션') && layout.includes('블록'), 'left editor must expose isolated page options and screen order tabs');
+assert(layout.includes('data-pagero-ui="edit-section-tabs-v2"') && layout.includes('className="edit-section-tab"') && layout.includes('페이지 설정') && layout.includes('블록'), 'left editor must expose isolated page options and screen order tabs');
 assert(!layout.includes("className={section === 'options' ? 'active' : ''}") && !layout.includes("className={section === 'order' ? 'active' : ''}"), 'edit section tabs must not reuse the global active class');
 assert(!screenOrderItem.includes('renderBlockEditor') && !screenOrderItem.includes('data-inline-block-editor'), 'block list rows must no longer expand the selected settings inline');
 assert(layout.includes('<ScreenOrderList {...screenOrderListProps} />') && !layout.includes('selectedBlockSettingsProps'), 'screen order must remain in the left editor without redundant selected-settings props');
