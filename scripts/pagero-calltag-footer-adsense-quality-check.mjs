@@ -8,10 +8,11 @@ const server=fs.readFileSync('functions/index.js','utf8');
 const publicPages=fs.readFileSync('functions/lib/publicPageMeta.js','utf8');
 const domain='https://calltag.pagero.kr/';
 
-assert(app.includes("const PublicHomeRoute = lazy(() => import('./screens/PublicHomeRoute.jsx'))"));
-assert(app.includes('<PublicHomeRoute') && app.includes("window.location.assign('/login')"));
-assert(app.includes("window.location.assign('/signup')"));
-assert(!app.includes('key="root-login"'),'Public root must not hydrate to a login-only page');
+assert(app.includes('key="root-login"') && app.includes('initialMode="login"'),
+  'Existing login-first app contract must not be broken');
+assert(app.includes("['생활비서', '/life/']"));
+assert(app.includes("['콜태그(CallTag)', 'https://calltag.pagero.kr/']"),
+  'Actual hydrated footer must link to official CallTag site');
 assert(app.includes("pathname === '/login'") && app.includes("pathname === '/signup'"));
 assert(home.includes('id="life"') && home.includes('id="calltag"'));
 assert(home.includes('콜태그(CallTag)') && home.includes(domain));
@@ -36,4 +37,4 @@ assert(rendered.includes('콜태그 공식 사이트') && rendered.includes(doma
 assert(rendered.includes('PAGERO_ROOT_SEO_V1'));
 assert(rendered.includes('<link rel="canonical" href="https://pagero.kr/">'));
 assert(!rendered.includes('https://life.pagero.kr/'));
-console.log('PASS PageRo public root: CallTag + LIFE are visible with JS disabled and after React hydration; login routes preserved; tenant AdSense isolated.');
+console.log('PASS PageRo SEO fallback has CallTag and LIFE; hydrated login footer links both; existing auth and tenant-ad isolation preserved.');
