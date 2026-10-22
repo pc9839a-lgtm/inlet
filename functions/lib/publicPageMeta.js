@@ -184,6 +184,15 @@ export async function handlePublicOgImageRequest(context, url) {
   }
 }
 
+
+// PageRo's shared SPA HTML contains the publisher verification/Auto Ads snippet.
+// Public customer-built pages must NEVER inherit the platform's monetization tag.
+export function stripPlatformAdsFromCustomerPage(html = '') {
+  return String(html)
+    .replace(/<meta\b(?=[^>]*\bname\s*=\s*["']google-adsense-account["'])[^>]*>\s*/gi, '')
+    .replace(/<script\b(?=[^>]*\bsrc\s*=\s*["']https:\/\/pagead2\.googlesyndication\.com\/pagead\/js\/adsbygoogle\.js(?:\?[^"']*)?["'])[^>]*>\s*<\/script>\s*/gi, '');
+}
+
 export async function injectPublicPageMeta(context, url, response) {
   if (context.request.method !== 'GET') return response;
   if (!response?.ok) return response;
@@ -206,7 +215,7 @@ export async function injectPublicPageMeta(context, url, response) {
   const image = shareImageUrl(meta, row, url, slug);
   const imageType = shareImageType(meta);
 
-  let html = await response.text();
+  let html = stripPlatformAdsFromCustomerPage(await response.text());
   html = replaceDocumentTitle(html, title);
   html = injectHeadTags(html, metadataTags({
     title,
