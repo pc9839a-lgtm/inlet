@@ -593,10 +593,21 @@ async function setInputValue(client, selector, value) {
   assert(result, `Unable to set input value for ${selector}`);
 }
 
+async function showBlockList(client) {
+  const returned = await evaluate(client, `(() => {
+    const back = document.querySelector('.screen-order-v2-settings-back');
+    if (!back) return false;
+    back.click();
+    return true;
+  })()`);
+  if (returned) await waitForBrowser(client, `!document.querySelector('.screen-order-v2-settings') && document.querySelector('.screen-order-v2-list-view')?.getClientRects().length > 0 && document.activeElement?.matches('.screen-order-v2-title-wrap')`, 'return to block list');
+}
+
 async function clickSelector(client, selector) {
+  if (/^#editor-block-(?!settings-)|^\.topnav-fixed-card|^\.fixed-add-dock/.test(selector)) await showBlockList(client);
   const clicked = await evaluate(client, `(() => {
     const element = document.querySelector(${JSON.stringify(selector)});
-    if (!element) return false;
+    if (!element || element.getClientRects().length === 0) return false;
     element.scrollIntoView({ block: 'center', inline: 'center' });
     element.click();
     return true;
@@ -605,6 +616,7 @@ async function clickSelector(client, selector) {
 }
 
 async function clickButtonByText(client, scopeSelector, text) {
+  if (scopeSelector.startsWith('.fixed-add-dock')) await showBlockList(client);
   const clicked = await evaluate(client, `(() => {
     const scope = document.querySelector(${JSON.stringify(scopeSelector)}) || document;
     const button = [...scope.querySelectorAll('button')].find((item) => item.textContent.trim() === ${JSON.stringify(text)});
@@ -640,6 +652,7 @@ async function pressKeyboardKey(client, keyName, { shift = false } = {}) {
 }
 
 async function focusSelector(client, selector) {
+  if (/^#editor-block-(?!settings-)/.test(selector)) await showBlockList(client);
   const focused = await evaluate(client, `(() => {
     const element = document.querySelector(${JSON.stringify(selector)});
     if (!element) return false;
@@ -651,6 +664,7 @@ async function focusSelector(client, selector) {
 }
 
 async function clickPointer(client, selector) {
+  if (/^#editor-block-(?!settings-)|^\.fixed-add-dock/.test(selector)) await showBlockList(client);
   const point = await evaluate(client, `(() => {
     const element = document.querySelector(${JSON.stringify(selector)});
     if (!element) return null;
@@ -675,6 +689,7 @@ async function normalBlockCount(client) {
 }
 
 async function dragPointer(client, sourceSelector, targetSelector) {
+  await showBlockList(client);
   const sourcePoint = await evaluate(client, `(() => {
     const source = document.querySelector(${JSON.stringify(sourceSelector)});
     if (!source) return null;
@@ -1142,7 +1157,7 @@ async function run() {
     assert(apiState.saveCount === 0, 'invalid backup must not publish');
 
     await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
-    const backupHeroInput = '#editor-block-editor-hero + .screen-order-v2-inline-editor textarea[placeholder="핵심 제목을 입력하세요"]';
+    const backupHeroInput = '#editor-block-settings-editor-hero textarea[placeholder="핵심 제목을 입력하세요"]';
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(backupHeroInput)})`, 'hero editor before backup restore');
     await setInputValue(client, backupHeroInput, 'ED-R08 복원 전 임시 수정');
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes('ED-R08 복원 전 임시 수정')`, 'live edit before backup restore');
@@ -1271,7 +1286,7 @@ async function run() {
     await focusSelector(client, heroTitleSelector);
     await pressKeyboardKey(client, 'Enter');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroTitleSelector)})?.getAttribute('aria-pressed') === 'true'`, 'hero row Enter activation');
-    await waitForBrowser(client, `!!document.querySelector('#editor-block-editor-hero + .screen-order-v2-inline-editor[data-inline-block-editor="true"]')`, 'hero inline editor from Enter');
+    await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-hero[data-block-settings-id="editor-hero"]')`, 'focused hero settings from Enter');
 
     await focusSelector(client, heroVisibilitySelector);
     await pressKeyboardKey(client, 'Space');
@@ -1299,16 +1314,16 @@ async function run() {
     await pressKeyboardKey(client, 'Escape');
     await waitForBrowser(client, `!document.querySelector('.screen-order-v2-menu')`, 'Space-opened dropdown Escape close');
 
-    const heroEditorSelector = '.screen-order-v2-inline-editor textarea[placeholder="핵심 제목을 입력하세요"]';
+    const heroEditorSelector = '.screen-order-v2-settings textarea[placeholder="핵심 제목을 입력하세요"]';
     if (!(await evaluate(client, `document.querySelector(${JSON.stringify(heroTitleSelector)})?.getAttribute('aria-pressed') === 'true'`))) {
       await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
     }
-    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'selected hero inline editor textarea');
-    await waitForBrowser(client, `!!document.querySelector('#editor-block-editor-hero + .screen-order-v2-inline-editor[data-inline-block-editor="true"]')`, 'inline block editor directly below hero row');
+    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'focused hero settings textarea');
+    await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-hero[data-block-settings-id="editor-hero"]')`, 'hero settings render separately from the list');
     // D01: exercise the actual selected inspector DOM and CSS scroll contract.
     // A taller editor must scroll internally, without changing block order.
     const inspectorScroll = await evaluate(client, `(() => {
-      const panel = document.querySelector('#editor-block-editor-hero + .screen-order-v2-inline-editor[data-scroll-region="block-settings"]');
+      const panel = document.querySelector('#editor-block-settings-editor-hero[data-scroll-region="block-settings"]');
       const content = panel?.querySelector('.block-editor-v2');
       if (!panel || !content) return null;
       const original = content.style.minHeight;
@@ -1341,7 +1356,7 @@ async function run() {
 
     // D02: the anchor moves to a native, collapsed advanced disclosure; the
     // existing anchorId must remain editable and drive the live preview anchor.
-    const heroAdvanced = '#editor-block-editor-hero + .screen-order-v2-inline-editor .block-editor-advanced-settings';
+    const heroAdvanced = '#editor-block-settings-editor-hero .block-editor-advanced-settings';
     const heroAnchorInput = `${heroAdvanced} .block-editor-anchor-value input`;
     const initialAdvancedState = await evaluate(client, `(() => {
       const details = document.querySelector(${JSON.stringify(heroAdvanced)});
@@ -1409,7 +1424,7 @@ async function run() {
 
 
     assert(!(await evaluate(client, `document.body.innerText.includes('선택한 블록 설정')`)), 'redundant selected block settings heading must stay removed');
-    await capture(client, 'desktop-editor-inline-editor');
+    await capture(client, 'desktop-editor-settings');
     await setInputValue(client, heroEditorSelector, updatedHeroTitle);
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(updatedHeroTitle)})`, 'live hero preview');
     await wait(250);
@@ -1429,40 +1444,75 @@ async function run() {
       && heroRowIdentity.accessibleName.includes(updatedHeroTitle),
       `D03 hero row should identify its live title: ${JSON.stringify(heroRowIdentity)}`);
 
+    const stageTwoSettings = await evaluate(client, `(() => {
+      const panel = document.querySelector('#editor-block-settings-editor-hero');
+      const list = document.querySelector('.screen-order-v2-list-view');
+      const back = document.querySelector('.screen-order-v2-settings-back');
+      return {
+        listHidden: getComputedStyle(list).display === 'none',
+        separateFromRows: !!panel && !panel.closest('.screen-order-v2-list'),
+        rowEditors: document.querySelectorAll('.screen-order-v2-slot .block-editor-v2').length,
+        title: document.querySelector('.screen-order-v2-settings-title h2')?.textContent,
+        backVisible: back?.getClientRects().length > 0,
+        panelWidth: panel?.getBoundingClientRect().width,
+        paneWidth: document.querySelector('.left-workspace').getBoundingClientRect().width,
+        fixedHidden: getComputedStyle(document.querySelector('.screen-order-fixed-blocks')).display === 'none',
+        addHidden: !document.querySelector('.fixed-add-dock'),
+        helperCopyRemoved: !document.querySelector('.edit-workflow-hint'),
+      };
+    })()`);
+    assert(stageTwoSettings.listHidden && stageTwoSettings.separateFromRows && stageTwoSettings.rowEditors === 0
+      && stageTwoSettings.title === updatedHeroTitle && stageTwoSettings.backVisible
+      && stageTwoSettings.panelWidth > 0 && stageTwoSettings.panelWidth <= stageTwoSettings.paneWidth
+      && stageTwoSettings.fixedHidden && stageTwoSettings.addHidden && stageTwoSettings.helperCopyRemoved,
+      'stage 2 must focus the selected block without expanding rows or mixing unrelated controls: ' + JSON.stringify(stageTwoSettings));
+    const orderBeforeBack = await normalBlockOrder(client);
+    await clickSelector(client, '.screen-order-v2-settings-back');
+    await waitForBrowser(client, `document.activeElement === document.querySelector('#editor-block-editor-hero .screen-order-v2-title-wrap')`, 'back returns keyboard focus to the original row');
+    assert(JSON.stringify(await normalBlockOrder(client)) === JSON.stringify(orderBeforeBack), 'settings navigation must preserve block order');
+
     const stageOneList = await evaluate(client, `(() => {
       const card = getComputedStyle(document.querySelector('.screen-order-v2-card'));
       const list = getComputedStyle(document.querySelector('.screen-order-v2-list'));
-      const selected = document.querySelector('#editor-block-editor-hero');
-      const row = getComputedStyle(selected);
-      const head = selected.querySelector('.screen-order-v2-head').getBoundingClientRect();
-      const marker = getComputedStyle(selected, '::before');
-      const other = document.querySelector('.screen-order-v2-item[data-selected="false"]');
+      const item = document.querySelector('#editor-block-editor-hero');
+      const row = getComputedStyle(item);
+      const head = item.querySelector('.screen-order-v2-head').getBoundingClientRect();
       return {
         outerBorder: card.borderTopWidth, outerPadding: card.paddingTop,
         gap: list.rowGap, rowBorder: row.borderTopWidth, rowRadius: row.borderRadius,
-        height: head.height, selectedColor: row.backgroundColor,
-        otherColor: getComputedStyle(other).backgroundColor,
-        markerWidth: marker.width, markerDisplay: marker.display,
+        height: head.height,
         chevrons: document.querySelectorAll('.screen-order-v2-chevron').length,
-        visibility: !!selected.querySelector('.screen-order-v2-visibility-button'),
-        actions: !!selected.querySelector('.screen-order-v2-action'),
+        visibility: !!item.querySelector('.screen-order-v2-visibility-button'),
+        actions: !!item.querySelector('.screen-order-v2-action'),
         paneWidth: document.querySelector('.left-workspace').getBoundingClientRect().width,
         panelWidth: document.querySelector('.work-panel').getBoundingClientRect().width,
         layoutWidth: document.querySelector('.edit-layout').getBoundingClientRect().width,
-        rowWidth: selected.getBoundingClientRect().width,
+        rowWidth: item.getBoundingClientRect().width,
       };
     })()`);
     assert(stageOneList.outerBorder === '0px' && stageOneList.outerPadding === '0px'
       && stageOneList.gap === '0px' && stageOneList.rowBorder === '0px'
-      && stageOneList.rowRadius === '0px' && stageOneList.height >= 44 && stageOneList.height <= 46,
-      'stage 1 block list must render flat rows with readable click targets: ' + JSON.stringify(stageOneList));
-    assert(stageOneList.selectedColor !== stageOneList.otherColor && stageOneList.markerWidth === '3px'
-      && stageOneList.markerDisplay === 'block' && stageOneList.chevrons === 0
-      && stageOneList.visibility && stageOneList.actions,
-      'stage 1 must clearly identify selection and retain visibility/action controls: ' + JSON.stringify(stageOneList));
+      && stageOneList.rowRadius === '0px' && stageOneList.height >= 44 && stageOneList.height <= 46
+      && stageOneList.chevrons === 0 && stageOneList.visibility && stageOneList.actions,
+      'stage 1 list must retain flat rows and visible action controls after settings navigation: ' + JSON.stringify(stageOneList));
     assert(stageOneList.panelWidth <= stageOneList.paneWidth + 1
       && stageOneList.layoutWidth <= stageOneList.panelWidth + 1,
       'editor controls must fit inside the desktop sidebar rather than being clipped: ' + JSON.stringify(stageOneList));
+    await clickSelector(client, '.fixed-add-dock .add-toggle');
+    await waitForBrowser(client, `!!document.querySelector('.add-panel')`, 'add picker before preview selection');
+    await clickPointer(client, '.phone-frame #block-editor-hero');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(updatedHeroTitle)}`, 'preview click opens focused settings with the existing content');
+    await clickPointer(client, '.phone-frame #block-editor-hero');
+    assert(await evaluate(client, `!!document.querySelector('#editor-block-settings-editor-hero')`), 'reselecting the same preview block must keep its settings open');
+    await clickSelector(client, '.screen-order-v2-settings-back');
+    assert(!await evaluate(client, `!!document.querySelector('.add-panel')`), 'preview selection must close the previous add picker');
+    await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(updatedHeroTitle)}`, 'content survives returning to list and reopening settings');
+    await clickButtonByText(client, '.edit-section-tabs', '페이지 옵션');
+    await waitForBrowser(client, `!!document.querySelector('.editor-page-options-stack .style-panel')`, 'page options after block selection');
+    await clickPointer(client, '.phone-frame #block-editor-hero');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(updatedHeroTitle)}`, 'preview reselects the previous block after page options');
+    assert(apiState.saveCount === 0, 'settings navigation must not publish the page');
 
     // Duplicate a real text block through the UI and verify the two rows get
     // different ordinal identities, then undo to avoid affecting later QA.
@@ -1575,7 +1625,7 @@ async function run() {
       await clickSelector(client, '#editor-block-editor-form .screen-order-v2-head');
     }
     await waitForBrowser(client, `(() => {
-      const panel = document.querySelector('#editor-block-editor-form + .screen-order-v2-inline-editor');
+      const panel = document.querySelector('#editor-block-settings-editor-form');
       const labels = [...(panel?.querySelectorAll('.editor-tabs-v2-list button') || [])].map((tab) => tab.textContent.trim());
       return labels.includes('내용') && labels.includes('스타일') && !labels.includes('기본');
     })()`, 'D06 form tabs use content/style vocabulary');
@@ -1584,8 +1634,8 @@ async function run() {
     // E2E-11 / E2E-12: page/theme inspector previews the style draft, then applies it into the page draft.
     await clickButtonByText(client, '.edit-section-tabs', '페이지 옵션');
     await waitForBrowser(client, `!!document.querySelector('.editor-page-options-stack .style-panel')`, 'page theme editor');
-    assert(await evaluate(client, `(document.querySelector('.edit-workflow-hint')?.innerText || '').includes('발행')`),
-      'D06 editor must explain that applying edits and publishing are different steps');
+    assert(!await evaluate(client, `!!document.querySelector('.edit-workflow-hint')`),
+      'focused editor must omit redundant global helper copy');
     assert(await evaluate(client, `(document.querySelector('.style-apply-bar span')?.innerText || '').includes('스타일 적용됨')`),
       'D06 initially applied style status must be explicit');
     await clickButtonByText(client, '.style-subnav', '색상');
@@ -1638,7 +1688,7 @@ async function run() {
     assert(await evaluate(client, `(document.querySelector('.style-apply-bar span')?.innerText || '').includes('스타일 적용됨')`),
       'D06 style apply must clearly distinguish page draft from public publish');
 
-    await clickButtonByText(client, '.edit-section-tabs', '화면 순서');
+    await clickButtonByText(client, '.edit-section-tabs', '블록');
     await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-list')`, 'screen order after style apply');
 
     // E2E-13: the header shows the latest draft without opening the live
@@ -1740,24 +1790,28 @@ async function run() {
 
     // Code blocks must be distinguishable by a persisted editor-only custom label.
     await clickSelector(client, '#editor-block-editor-code .screen-order-v2-head');
-    await waitForBrowser(client, `!!document.querySelector('#editor-block-editor-code + .screen-order-v2-inline-editor input[aria-label="구분 이름"]')`, 'code block custom label input');
-    await setInputValue(client, '#editor-block-editor-code + .screen-order-v2-inline-editor input[aria-label="구분 이름"]', persistedCodeLabel);
+    await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-code input[aria-label="구분 이름"]')`, 'code block custom label input');
+    await setInputValue(client, '#editor-block-settings-editor-code input[aria-label="구분 이름"]', persistedCodeLabel);
     await waitForBrowser(client, `(document.querySelector('#editor-block-editor-code .screen-order-v2-title-wrap strong')?.textContent || '').includes(${JSON.stringify(persistedCodeLabel)})`, 'screen order custom code label');
 
     // D06: code has a separate apply phase. Editing alone never publishes,
     // while applying updates only the local page draft.
-    const codeDraftSelector = '#editor-block-editor-code + .screen-order-v2-inline-editor .code-editor-box textarea';
+    const codeDraftSelector = '#editor-block-settings-editor-code .code-editor-box textarea';
     const codeOriginal = await evaluate(client, `document.querySelector(${JSON.stringify(codeDraftSelector)})?.value ?? ''`);
     await waitForBrowser(client, `!!document.querySelector('.code-editor-actions [data-code-draft-state="applied"]')`, 'D06 code initially applied');
     await setInputValue(client, codeDraftSelector, `${codeOriginal}\n<!-- D06 staged code regression -->`);
     await waitForBrowser(client, `!!document.querySelector('.code-editor-actions [data-code-draft-state="pending"]')`, 'D06 code draft pending before apply');
     assert(apiState.saveCount === 2, 'D06 pending code edits must not publish');
+    await clickSelector(client, '.screen-order-v2-settings-back');
+    await clickSelector(client, '#editor-block-editor-code .screen-order-v2-head');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(codeDraftSelector)})?.value === ${JSON.stringify(`${codeOriginal}\n<!-- D06 staged code regression -->`)}`, 'unapplied code draft survives list navigation');
+    assert(await evaluate(client, `!!document.querySelector('.code-editor-actions [data-code-draft-state="pending"]')`), 'returning to code settings must retain the pending apply state');
     await clickSelector(client, '.code-editor-actions button');
     await waitForBrowser(client, `!!document.querySelector('.code-editor-actions [data-code-draft-state="applied"]')`, 'D06 code applied to page draft');
     assert(apiState.saveCount === 2, 'D06 code apply must not publish');
 
     // P9-2: modal focus must stay contained and return to the opener on Escape.
-    const codeModalTrigger = '#editor-block-editor-code + .screen-order-v2-inline-editor .code-editor-head button';
+    const codeModalTrigger = '#editor-block-settings-editor-code .code-editor-head button';
     await focusSelector(client, codeModalTrigger);
     await clickSelector(client, codeModalTrigger);
     await waitForBrowser(client, `!!document.querySelector('.code-editor-modal-card[role="dialog"]')`, 'code editor modal open');
@@ -1846,7 +1900,7 @@ async function run() {
     })()`);
     assert(reloadGuardPrevented === false, 'clean saved page must not keep the unsaved navigation guard after reload');
     await clickSelector(client, '#editor-block-editor-code .screen-order-v2-head');
-    await waitForBrowser(client, `document.querySelector('#editor-block-editor-code + .screen-order-v2-inline-editor input[aria-label="구분 이름"]')?.value === ${JSON.stringify(persistedCodeLabel)}`, 'persisted code block custom label after reload');
+    await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-code input[aria-label="구분 이름"]')?.value === ${JSON.stringify(persistedCodeLabel)}`, 'persisted code block custom label after reload');
     await waitForBrowser(client, `(document.querySelector('#editor-block-editor-code .screen-order-v2-title-wrap strong')?.textContent || '').includes(${JSON.stringify(persistedCodeLabel)})`, 'persisted screen-order code label after reload');
     assert(apiState.sessionCount >= 1, 'saved login session was not refreshed after reload');
     const desktopMetrics = await collectDesktopMetrics(client);
@@ -1874,7 +1928,8 @@ async function run() {
     assert(pageOptionsShellStyle?.borderRadius === '12px', `page options shell radius drifted at desktop matrix width: ${JSON.stringify(pageOptionsShellStyle)}`);
     await capture(client, 'desktop-narrow-1180-page-options');
 
-    await clickButtonByText(client, '.edit-section-tabs', '화면 순서');
+    await clickButtonByText(client, '.edit-section-tabs', '블록');
+    await showBlockList(client);
     await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-card')`, 'narrow desktop screen order');
     const screenOrderShellStyle = await evaluate(client, `(() => {
       const shell = document.querySelector('.screen-order-v2-card');
@@ -1901,9 +1956,9 @@ async function run() {
 
       if (desktopViewport.width === 1180) {
         await clickSelector(client, '#editor-block-editor-text .screen-order-v2-head');
-        await waitForBrowser(client, `!!document.querySelector('#editor-block-editor-text + .screen-order-v2-inline-editor .editor-tabs-v2')`, 'narrow desktop inline text editor');
+        await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-text .editor-tabs-v2')`, 'narrow desktop inline text editor');
     const inlineDetailStyle = await evaluate(client, `(() => {
-      const inline = document.querySelector('#editor-block-editor-text + .screen-order-v2-inline-editor');
+      const inline = document.querySelector('#editor-block-settings-editor-text');
       const anchor = inline?.querySelector('.block-editor-anchor-control');
       const label = inline?.querySelector('.editor-field-v2-label strong');
       const textarea = inline?.querySelector('.editor-field-v2 textarea');
@@ -1923,7 +1978,7 @@ async function run() {
         tabHeight: Math.round(tab.getBoundingClientRect().height),
       };
     })()`);
-    assert(inlineDetailStyle?.inlineMarginTop === '10px', `inline editor top spacing drifted: ${JSON.stringify(inlineDetailStyle)}`);
+    assert(inlineDetailStyle?.inlineMarginTop === '0px', `inline editor top spacing drifted: ${JSON.stringify(inlineDetailStyle)}`);
     assert(inlineDetailStyle?.labelFontSize === '13px', `inline editor labels must remain readable: ${JSON.stringify(inlineDetailStyle)}`);
     assert(inlineDetailStyle?.textareaFontSize === '14px', `inline editor text must remain readable: ${JSON.stringify(inlineDetailStyle)}`);
     assert(inlineDetailStyle?.tabHeight === 32, `inline editor tabs must keep 32px height: ${JSON.stringify(inlineDetailStyle)}`);
@@ -1931,6 +1986,7 @@ async function run() {
       }
 
       if (desktopViewport.narrow) {
+        await showBlockList(client);
         // D05: a row the user is already viewing must not make the stacked
         // preview scroll the outer page to the preview area.
         const beforeD05 = await evaluate(client, `(() => {
@@ -1951,9 +2007,13 @@ async function run() {
           `document.getElementById(${JSON.stringify(beforeD05.itemId)})?.dataset.selected === 'true'`,
           `D05 narrow desktop row selection ${desktopViewport.width}px`);
         await wait(160);
-        const afterD05 = await evaluate(client, 'document.scrollingElement?.scrollTop ?? window.scrollY');
-        assert(Math.abs(afterD05 - beforeD05.before) <= 4,
-          `D05 row selection changed outer scroll at ${desktopViewport.width}px: ${beforeD05.before} -> ${afterD05}`);
+        const focusedSettings = await evaluate(client, `(() => {
+          const back = document.querySelector('.screen-order-v2-settings-back');
+          const rect = back?.getBoundingClientRect();
+          return { focused: document.activeElement === back, top: rect?.top, bottom: rect?.bottom, height: innerHeight };
+        })()`);
+        assert(focusedSettings.focused && focusedSettings.top >= 0 && focusedSettings.bottom <= focusedSettings.height,
+          `focused settings navigation must keep the back control visible at ${desktopViewport.width}px: ${JSON.stringify(focusedSettings)}`);
         const matrixMetrics = await collectNarrowDesktopMetrics(client);
         assertNarrowDesktop(matrixMetrics, desktopViewport.width);
       } else {
@@ -2108,7 +2168,7 @@ async function run() {
     await waitForBrowser(client, "!!document.querySelector('.builder-shell:not(.mobile-operations-shell)')", 'tab A desktop editor');
     await clickButtonByText(client, '.top-tabs', '편집');
     await waitForBrowser(client, "!!document.querySelector('#editor-block-editor-hero')", 'tab A hero block');
-    const twoTabHeroInput = '#editor-block-editor-hero + .screen-order-v2-inline-editor textarea[placeholder="핵심 제목을 입력하세요"]';
+    const twoTabHeroInput = '#editor-block-settings-editor-hero textarea[placeholder="핵심 제목을 입력하세요"]';
     if (!await evaluate(client, "!!document.querySelector(" + JSON.stringify(twoTabHeroInput) + ")")) {
       await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
     }
@@ -2266,6 +2326,7 @@ async function run() {
       ok: true,
       scope: 'authenticated-editor-browser-regression',
       stageOneBlockList: stageOneList,
+      stageTwoSettings,
       customCodePreview: ['html-css-visible', 'javascript-click', 'dynamic-height', 'parent-session-isolated', 'api-write-blocked'],
       loginCount: apiState.loginCount,
       sessionCount: apiState.sessionCount,

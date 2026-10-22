@@ -12,7 +12,6 @@ export function ScreenOrderListItems({
   duplicateBlock,
   removeBlock,
   reorderToIndex,
-  renderBlockEditor,
 }) {
   const total = normalBlocks.length;
   const rowIdentities = createScreenOrderIdentities(normalBlocks);
@@ -36,7 +35,6 @@ export function ScreenOrderListItems({
           duplicateBlock={duplicateBlock}
           removeBlock={removeBlock}
           reorderToIndex={reorderToIndex}
-          renderBlockEditor={renderBlockEditor}
         />
       ))}
     </div>

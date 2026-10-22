@@ -53,7 +53,10 @@ const blocks = [
 const selectPreview = loadHook('shell', 'useWorkspaceShellActions', {
   DASHBOARD_KEY: 'dashboard', START_MODE_KEY: 'start', confirmWorkspaceLeaveSync: () => true,
   requestAnimationFrame: (callback) => callback(),
-  document: { getElementById(id) { return { scrollIntoView() { scrollTargets.push(id); } }; } },
+  document: { getElementById(id) {
+    if (id.startsWith('editor-block-settings-') && id !== 'editor-block-settings-ordinary-1') return null;
+    return { scrollIntoView() { scrollTargets.push(id); } };
+  } },
 })({
   page: { blocks }, canUseBuilder: true, canManageAdmin: true, allowedTabs: ['edit'],
   confirmLeaveStyleChanges: () => true, clearPendingStyle: () => {},
@@ -67,7 +70,7 @@ selectPreview('footer-1');
 selectPreview('missing');
 assert.deepEqual(changedIds, ['ordinary-1', 'topnav-1', 'footer-1']);
 assert.deepEqual(changedTabs, ['edit', 'edit', 'edit']);
-assert.deepEqual(scrollTargets, ['editor-block-ordinary-1', 'editor-block-topnav-1', 'editor-block-footer-1']);
+assert.deepEqual(scrollTargets, ['editor-block-settings-ordinary-1', 'editor-block-topnav-1', 'editor-block-footer-1']);
 
 let openId = 'topnav-1';
 const setOpenId = (next) => { openId = typeof next === 'function' ? next(openId) : next; };

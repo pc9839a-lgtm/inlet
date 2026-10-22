@@ -307,11 +307,11 @@ async function run() {
     await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector(${JSON.stringify(videoRowHeadSelector)})`, 'desktop editor video row');
     await wait(180);
     await clickSelector(client, videoRowHeadSelector);
-    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-inline-editor .video-library-action')`, 'video block library action');
+    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-settings .video-library-action')`, 'video block library action');
     assert(apiState.saveCount === 0, 'opening the video editor must not publish the page');
     await capture(client, 'desktop-video-library-before');
 
-    await clickSelector(client, '.screen-order-v2-inline-editor .video-library-action');
+    await clickSelector(client, '.screen-order-v2-settings .video-library-action');
     await waitForState(() => apiState.mediaListCount === 1, 'project video list request');
     await waitForBrowser(client, `!!document.querySelector('.image-library-picker[role="dialog"]') && !!document.querySelector('.image-library-picker-item[title="${libraryFileName}"]')`, 'video library dialog');
     const mediaRequest = apiState.mediaListRequests[0] || {};
@@ -322,7 +322,7 @@ async function run() {
 
     await clickSelector(client, `.image-library-picker-item[title="${libraryFileName}"]`);
     await waitForBrowser(client, `!document.querySelector('.image-library-picker[role="dialog"]')`, 'video library dialog close');
-    await waitForBrowser(client, `(document.querySelector('.screen-order-v2-inline-editor')?.innerText || '').includes('서버 저장 완료 · ${libraryFileName}')`, 'selected video editor state');
+    await waitForBrowser(client, `(document.querySelector('.screen-order-v2-settings')?.innerText || '').includes('서버 저장 완료 · ${libraryFileName}')`, 'selected video editor state');
     try {
       await waitForBrowser(client, `(() => {
         const video = document.querySelector('.phone-frame #block-editor-video video');
@@ -354,17 +354,17 @@ async function run() {
     await client.send('Page.reload', { ignoreCache: true });
     await waitForBrowser(client, `window.__qaVideoReloadMarker !== 'departing-document' && !!document.querySelector(${JSON.stringify(videoRowHeadSelector)})`, 'reloaded editor video row');
     await waitForState(() => apiState.pageLoadCount > pageReadsBeforeReload, 'fresh server video page read after reload');
-    // Block selection may survive the reload. The inline editor is a
-    // *sibling* of the row, not its child. Never toggle a selected row closed.
+    // Block selection may survive reload. Its settings render separately from
+    // the hidden list. Never toggle an already selected row closed.
     const videoRowSelected = await evaluate(client, `document.querySelector('#editor-block-editor-video')?.getAttribute('data-selected') === 'true'`);
     if (!videoRowSelected) await clickSelector(client, videoRowHeadSelector);
     try {
-      await waitForBrowser(client, `(document.querySelector('#editor-block-editor-video + .screen-order-v2-inline-editor')?.innerText || '').includes('서버 저장 완료 · ${libraryFileName}')`, 'selected video editor state after reload');
+      await waitForBrowser(client, `(document.querySelector('#editor-block-settings-editor-video')?.innerText || '').includes('서버 저장 완료 · ${libraryFileName}')`, 'selected video editor state after reload');
     } catch (error) {
       const detail = await evaluate(client, `(() => {
         const row = document.querySelector('#editor-block-editor-video');
         const video = document.querySelector('.phone-frame #block-editor-video');
-        const input = row?.nextElementSibling?.classList?.contains('screen-order-v2-inline-editor') ? row.nextElementSibling : null;
+        const input = document.querySelector('#editor-block-settings-editor-video');
         return {
           selected: row?.getAttribute('data-selected'),
           rowText: row?.innerText?.slice(0, 1000),

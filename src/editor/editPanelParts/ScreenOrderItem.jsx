@@ -16,7 +16,6 @@ export function ScreenOrderItem({
   duplicateBlock,
   removeBlock,
   reorderToIndex,
-  renderBlockEditor,
 }) {
   const { meta, controls, isLast } = createScreenOrderItemModel({
     block,
@@ -47,18 +46,6 @@ export function ScreenOrderItem({
         onDragStart={controls.dragStart}
         onDragEnd={controls.dragEnd}
       />
-      {selected && (
-        <div
-          className="screen-order-v2-inline-editor"
-          data-inline-block-editor="true"
-          data-scroll-region="block-settings"
-          role="region"
-          tabIndex={0}
-          aria-label={`${meta.label} 상세 설정`}
-        >
-          {renderBlockEditor(block)}
-        </div>
-      )}
     </ScreenOrderItemDropTargets>
   );
 }

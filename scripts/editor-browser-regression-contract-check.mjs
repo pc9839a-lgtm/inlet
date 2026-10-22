@@ -66,7 +66,7 @@ assert(browserSource.includes('D04 actual content width') && browserSource.inclu
   'D04 real editor Chrome regression must click all three widths and verify actual pixels');
 assert(browserSource.includes('previewManagementUi') && browserSource.includes('!previewManagementUi.canvasHeading') && browserSource.includes('!previewManagementUi.conversionCockpit') && browserSource.includes('!previewManagementUi.publishChecklist'), 'browser QA must verify the redundant preview management bars are absent');
 assert(browserSource.includes("clickSelector(client, '#workspace-tab-inbox')") && browserSource.includes('inboxTransitionFocused'), 'browser QA must verify inbox remains available and keyboard accessible via the workspace tab');
-assert(browserSource.includes("pathname === '/api/account-page'") && browserSource.includes("#editor-block-editor-hero") && browserSource.includes(".screen-order-v2-head") && browserSource.includes(".screen-order-v2-inline-editor textarea[placeholder=\"핵심 제목을 입력하세요\"]") && browserSource.includes('브라우저 저장 검증 완료'), 'browser QA must open the current account page, edit the active inline block editor, and verify live preview');
+assert(browserSource.includes("pathname === '/api/account-page'") && browserSource.includes("#editor-block-editor-hero") && browserSource.includes(".screen-order-v2-head") && browserSource.includes(".screen-order-v2-settings textarea[placeholder=\"핵심 제목을 입력하세요\"]") && browserSource.includes('브라우저 저장 검증 완료'), 'browser QA must open the current account page, edit the active inline block editor, and verify live preview');
 assert(browserSource.includes(".panel-actions .primary-btn") && browserSource.includes("await client.send('Page.reload');") && !browserSource.includes("await client.send('Page.reload', { ignoreCache: true });"), 'primary editor save/reload flow must use a normal browser reload instead of bypassing cache');
 assert(browserSource.includes('pageLoadsBeforeReload') && browserSource.includes('fresh account page read after reload') && browserSource.includes("primary-btn:not(:disabled)") && browserSource.includes('clean saved page must not keep the unsaved navigation guard after reload'), 'browser QA must prove normal reload performs a fresh server read, keeps the publish action usable, and clears the unsaved guard');
 assert(browserSource.includes("clickButtonByText(client, '.add-panel', '구분선')") && browserSource.includes("panel-history-btn[aria-label=\"실행 취소\"]") && browserSource.includes("panel-history-btn[aria-label=\"다시 실행\"]"), 'browser QA must add a block and verify undo/redo through the real editor controls');
@@ -99,10 +99,8 @@ assert(formEditorSource.includes("id: 'content',\n          label: '내용'")
   && timerEditorSource.includes("id: 'basic',\n          label: '내용'")
   && timerEditorSource.includes("id: 'design',\n          label: '스타일'"),
   'D06 shared editor tabs must use consistent visible content/style terms and preserve persisted tab IDs');
-assert(editPanelLayoutSource.includes('edit-workflow-hint')
-  && editPanelLayoutSource.includes("공통 스타일·코드는 '적용' 후")
-  && editPanelLayoutSource.includes("공개는 '발행' 후"),
-  'D06 editor must distinguish local draft, apply, and publish');
+assert(!editPanelLayoutSource.includes('edit-workflow-hint'),
+  'focused editing must not repeat the draft/apply/publish explanation above every block');
 assert(stylePanelSource.includes('스타일 미적용')
   && stylePanelSource.includes('스타일 적용됨')
   && stylePanelSource.includes('공개하려면 발행하세요.'),
@@ -121,9 +119,14 @@ assert(browserSource.includes('D06 form tabs use content/style vocabulary')
 assert(!editPanelLayoutSource.includes('scrollIntoView')
   && !screenOrderListItemsSource.includes('scrollIntoView'),
   'D05 normal editor selection must not trigger duplicate document scroll effects');
-assert(browserSource.includes('D05 row selection changed outer scroll')
+assert(browserSource.includes('focused settings navigation must keep the back control visible')
   && browserSource.includes('beforeD05'),
-  'D05 isolated browser QA must verify narrow desktop scroll stability');
+  'focused settings navigation must keep its back control reachable on narrow desktop');
+assert(browserSource.includes('stageTwoSettings')
+  && browserSource.includes('back returns keyboard focus to the original row')
+  && browserSource.includes('unapplied code draft survives list navigation')
+  && browserSource.includes('preview reselects the previous block after page options'),
+  'stage 2 browser QA must preserve settings navigation, keyboard focus, staged code and preview selection');
 assert(browserSource.includes("desktop editor and preview overlap") && browserSource.includes("desktop shell must keep two grid columns") && browserSource.includes("narrow desktop shell must stack into one grid column") && browserSource.includes("desktop edit subsection tabs"), 'desktop matrix must lock non-overlap, two-column desktop, stacked narrow desktop, and editor tab bounds');
 assert(browserSource.includes("publicVerifyCount") && browserSource.includes("saveCount === 0"), 'browser QA must verify that editing stays local until explicit publish and then verifies the public page');
 assert(browserSource.includes("{ name: 'mobile-360', width: 360") && browserSource.includes("{ name: 'mobile-390', width: 390") && browserSource.includes("{ name: 'mobile-430', width: 430"), 'browser QA must cover 360, 390, and 430 pixel mobile widths');

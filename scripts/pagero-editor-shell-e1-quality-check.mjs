@@ -27,9 +27,9 @@ assert(screen.includes("const effectiveTab = tab === 'style' ? 'edit' : tab;"), 
 assert(active.includes('stylePanelProps={stylePanelProps}'), 'edit workspace must receive theme controls');
 assert(editPanel.includes('stylePanelProps={stylePanelProps}'), 'EditPanel must forward theme controls');
 
-assert(layout.includes('data-pagero-ui="edit-section-tabs-v2"') && layout.includes('className="edit-section-tab"') && layout.includes('페이지 옵션') && layout.includes('화면 순서'), 'left editor must expose isolated page options and screen order tabs');
+assert(layout.includes('data-pagero-ui="edit-section-tabs-v2"') && layout.includes('className="edit-section-tab"') && layout.includes('페이지 옵션') && layout.includes('블록'), 'left editor must expose isolated page options and screen order tabs');
 assert(!layout.includes("className={section === 'options' ? 'active' : ''}") && !layout.includes("className={section === 'order' ? 'active' : ''}"), 'edit section tabs must not reuse the global active class');
-assert(screenOrderItem.includes('screen-order-v2-inline-editor') && screenOrderItem.includes('data-inline-block-editor="true"') && screenOrderItem.includes('{renderBlockEditor(block)}'), 'selected block editor must render directly below the row without a redundant settings shell');
+assert(!screenOrderItem.includes('renderBlockEditor') && !screenOrderItem.includes('data-inline-block-editor'), 'block list rows must no longer expand the selected settings inline');
 assert(layout.includes('<ScreenOrderList {...screenOrderListProps} />') && !layout.includes('selectedBlockSettingsProps'), 'screen order must remain in the left editor without redundant selected-settings props');
 assert(layout.includes('<AddBlockDock {...addBlockDockProps} />'), 'section add dock must remain in the left editor');
 assert(layout.includes('<PageThemeStylePanel {...stylePanelProps} />'), 'page theme controls must remain available from page options');
@@ -38,7 +38,7 @@ assert(!layout.includes('editor-structure-pane') && !layout.includes('editor-ins
 assert(css.includes('PageRo editor workspace — outer edit-shell geometry only') && css.includes('.edit-mode-shell:not(.mobile-operations-shell)') && css.includes('@media (max-width: 1180px)') && !css.includes('@media (max-width: 1280px)'), 'editor workspace CSS must keep explicit desktop geometry plus the <=1180px zoom/narrow reflow contract without the dead max-1280 layer');
 assert(!css.includes('grid-template-columns: 280px minmax(520px, 1fr) 360px !important'), 'three-column production repair must stay removed');
 assert(!css.includes('editor-inspector-pane'), 'editor workspace CSS must not restore the right inspector column');
-assert(!css.includes('screen-order-v2-inline-editor'), 'workspace geometry must not own inline block editor presentation');
+assert(!css.includes('screen-order-v2-settings'), 'workspace geometry must not own inline block editor presentation');
 assert(!css.includes('.fixed-block-card') && !css.includes('.edit-animation-card') && !css.includes('.fixed-block-editor') && !css.includes('.edit-animation-settings'), 'workspace geometry must not own fixed or animation cards');
 assert(!css.includes('.block-editor-v2-header') && !css.includes('.editor-field-v2') && !css.includes('.editor-section-v2-trigger') && !css.includes('.editor-segmented-v2') && !css.includes('.image-mode-toolbar'), 'workspace geometry must not own block editor internals');
 assert(editPanelLayoutCss.includes('editor-page-options-stack'), 'page options and theme controls need a left-panel stack owned by EditPanelLayout.css');

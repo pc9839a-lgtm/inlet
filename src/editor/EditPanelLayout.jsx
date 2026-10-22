@@ -21,6 +21,12 @@ export function EditPanelLayout({
     if (selectedBlockId) setSection('order');
   }, [selectedBlockId]);
 
+  const openPageOptions = () => {
+    if (screenOrderListProps?.selectedId) screenOrderListProps.selectBlock(screenOrderListProps.selectedId);
+    else if (fixedBlocksProps?.openId) fixedBlocksProps.toggleBlockOpen(fixedBlocksProps.openId);
+    setSection('options');
+  };
+
   // D05: row selection must not auto-scroll the outer editor. An explicit
   // preview-to-editor click is handled by useWorkspaceShellActions.
 
@@ -36,7 +42,7 @@ export function EditPanelLayout({
           data-selected={section === 'options' ? 'true' : 'false'}
           type="button"
           aria-pressed={section === 'options'}
-          onClick={() => setSection('options')}
+          onClick={openPageOptions}
         >
           페이지 옵션{stylePanelProps?.hasPendingStyle ? ' · 미적용' : ''}
         </button>
@@ -47,13 +53,10 @@ export function EditPanelLayout({
           aria-pressed={section === 'order'}
           onClick={() => setSection('order')}
         >
-          화면 순서
+          블록
         </button>
       </nav>
 
-      <p className="edit-workflow-hint">
-        일반 입력은 미리보기에서 바로 확인됩니다. 공통 스타일·코드는 '적용' 후 편집본에 포함되며, 공개는 '발행' 후입니다.
-      </p>
       <div className="edit-section-panel" data-editor-section={section}>
         {section === 'options' ? (
           <div className="editor-page-options-stack">
@@ -67,7 +70,7 @@ export function EditPanelLayout({
         ) : (
           <>
             <ScreenOrderList {...screenOrderListProps} />
-            <section className="screen-order-fixed-blocks" aria-label="고정 영역">
+            <section className="screen-order-fixed-blocks" aria-label="고정 영역" hidden={!!screenOrderListProps?.selectedId}>
               <div className="section-title screen-order-fixed-blocks-title">
                 <h2>고정 영역</h2>
               </div>
@@ -77,7 +80,7 @@ export function EditPanelLayout({
         )}
       </div>
 
-      {section === 'order' && <AddBlockDock {...addBlockDockProps} />}
+      {section === 'order' && !screenOrderListProps?.selectedId && <AddBlockDock {...addBlockDockProps} />}
     </div>
   );
 }
