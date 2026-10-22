@@ -32,6 +32,12 @@ const LIFE_CARDS = [
   ['/life/car/car-registration-certificate-reissue/', '자동차등록증 재발급', '온라인·방문 재발급 방법과 준비사항을 정리합니다.'],
 ];
 
+const CALLTAG_CARDS = [
+  ['신규 고객 문의 알림', '새로 들어온 고객 문의를 확인하고 후속 연락을 놓치지 않도록 관리합니다.'],
+  ['통화 후 상담 메모', '통화가 끝난 뒤 상담 내용과 다음 연락 일정을 고객별로 기록합니다.'],
+  ['후속 안내 문자', '필요한 안내 문자를 설정하고 상담 이후 고객 응대를 정리합니다.'],
+];
+
 const LIFE_LINK_STYLE = {
   color: 'inherit',
   textDecoration: 'none',
@@ -244,6 +250,20 @@ export default function PageroCanonicalHome({ onLogin, onSignup }) {
           <a href="/life/" style={LIFE_ALL_STYLE}>생활비서 전체보기 →</a>
         </section>
 
+        <section className="pagerol-stats" id="calltag" aria-label="페이지로 연계 서비스 콜태그">
+          <h2>고객 문의 이후의 관리도<br />콜태그에서 이어갑니다</h2>
+          <p style={LIFE_LEAD_STYLE}>콜태그(CallTag)는 통화 후 상담 메모, 신규 고객 문의 알림, 후속 안내 문자와 재연락 일정을 관리하는 별도의 Android 고객관리 앱입니다. 페이지로의 랜딩페이지 제작·접수 기능과 구분해 안내합니다.</p>
+          <div className="pagerol-stat-grid">
+            {CALLTAG_CARDS.map(([title, body]) => (
+              <article key={title}>
+                <strong>{title}</strong>
+                <p>{body}</p>
+              </article>
+            ))}
+          </div>
+          <a href="https://calltag.pagero.kr/" style={LIFE_ALL_STYLE}>콜태그 서비스 안내 →</a>
+        </section>
+
         <footer className="pagerol-home-footer" aria-label="페이지로 서비스 정보">
           <div>
             <strong>페이지로</strong>
@@ -253,6 +273,7 @@ export default function PageroCanonicalHome({ onLogin, onSignup }) {
             <a href="/guide/landing-page-prelaunch/">랜딩페이지 오픈 전 점검표</a>
             <a href="/tools/lead-calculator/">광고 손익 계산기</a>
             <a href="/life/">생활비서</a>
+            <a href="https://calltag.pagero.kr/">콜태그(CallTag)</a>
             <a href="/about">소개</a>
             <a href="/contact">문의</a>
             <a href="/privacy">개인정보처리방침</a>

@@ -386,6 +386,8 @@ const WAYZI_STATIC_PAGES = {
 };
 
 const WAYZI_FOOTER_MENU = [
+  ['생활비서', '/life/'],
+  ['콜태그(CallTag)', 'https://calltag.pagero.kr/'],
   ['사이트소개', '/about'],
   ['문의안내', '/contact'],
   ['개인정보처리방침', '/privacy'],
@@ -429,6 +431,7 @@ function WayziFooter() {
       <div className="wayzi-footer-brand">
         <strong>WAYZI</strong>
         <span>대표 김도윤 · 사업자번호 538-42-01450</span>
+        <span>생활비서: 자동차·정부지원 정보 · 콜태그: 통화 후 고객관리 앱</span>
       </div>
       <nav className="wayzi-footer-menu" aria-label="WAYZI 하단 메뉴">
         {WAYZI_FOOTER_MENU.map(([label, href]) => <a key={href} href={href}>{label}</a>)}
