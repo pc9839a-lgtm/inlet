@@ -26,8 +26,8 @@ jobs:
                           return r.status, r.headers, r.read(1500000).decode('utf-8','replace')
                   status,headers,html=fetch(home)
                   cssstatus,cssheaders,css=fetch(style)
-                  paths=set(re.findall(r'href=["\\']/life/(?:car|support)/[a-z0-9-]+/["\\']',html))
-                  paths={p.rstrip('"\\'') for p in paths}
+                  paths=set(re.findall(r'''href=["'](/life/(?:car|support)/[a-z0-9-]+/)["']''',html))
+                  # Each link is captured as a normalized article path.
                   all_links = len(paths)
                   ok=(status==200 and cssstatus==200 and
                       'text/css' in cssheaders.get('Content-Type','') and
