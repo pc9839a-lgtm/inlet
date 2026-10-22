@@ -1,0 +1,46 @@
+name: Verify PageRo LIFE complete editorial index
+on:
+  push:
+    branches: [audit/adsense-domain-inventory-20261022]
+    paths: ['.github/workflows/verify-life-archive-live.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check published 45-article index and stylesheet after production deploy
+        shell: bash
+        run: |
+          python - <<'PY'
+          import urllib.request,re,time
+          home='https://pagero.kr/life/'
+          style='https://pagero.kr/life/life-editorial-20261022.css'
+          for attempt in range(1,17):
+              try:
+                  def fetch(url):
+                      req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 (PageRoLIFEEditorialCheck)','Cache-Control':'no-cache'})
+                      with urllib.request.urlopen(req,timeout=15) as r:
+                          return r.status, r.headers, r.read(1500000).decode('utf-8','replace')
+                  status,headers,html=fetch(home)
+                  cssstatus,cssheaders,css=fetch(style)
+                  paths=set(re.findall(r'href=["\\']/life/(?:car|support)/[a-z0-9-]+/["\\']',html))
+                  paths={p.rstrip('"\\'') for p in paths}
+                  all_links = len(paths)
+                  ok=(status==200 and cssstatus==200 and
+                      'text/css' in cssheaders.get('Content-Type','') and
+                      'LIFE EDITORIAL ARCHIVE' in html and
+                      'life-archive-grid' in css and
+                      'life-editorial-20261022.css' in html and
+                      all_links==45 and
+                      'noindex' not in headers.get('X-Robots-Tag','').lower())
+                  print('TRY',attempt,'HTML',status,'CSS',cssstatus,'LINKS',all_links,'OK',ok,flush=True)
+                  if ok:
+                      print('PASS: published first page exposes all 45 LIFE guides and versioned CSS on pagero.kr/life/',flush=True)
+                      break
+              except Exception as e:print('WAIT',attempt,type(e).__name__,str(e)[:120],flush=True)
+              if attempt==16:raise SystemExit('FAIL: PageRo LIFE archive not fully published yet')
+              time.sleep(16)
+          PY
